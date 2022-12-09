@@ -192,6 +192,14 @@ select format_type('bpchar'::regtype, null);
 -- this behavior difference is intentional
 select format_type('bpchar'::regtype, -1);
 
+-- Test non-error-throwing APIs using widget, which still throws errors
+SELECT pg_input_is_valid('(1,2,3)', 'widget');
+SELECT pg_input_is_valid('(1,2)', 'widget');  -- hard error expected
+SELECT pg_input_is_valid('{"(1,2,3)"}', 'widget[]');
+SELECT pg_input_is_valid('{"(1,2)"}', 'widget[]');  -- hard error expected
+SELECT pg_input_is_valid('("(1,2,3)")', 'mytab');
+SELECT pg_input_is_valid('("(1,2)")', 'mytab');  -- hard error expected
+
 -- Test creation of an operator over a user-defined type
 
 CREATE FUNCTION pt_in_widget(point, widget)

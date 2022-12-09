@@ -24683,6 +24683,107 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
   </sect2>
 
+  <sect2 id="functions-info-validity">
+   <title>Data Validity Checking Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-info-validity-table"/>
+    can be helpful for checking validity of proposed input data.
+   </para>
+
+   <table id="functions-info-validity-table">
+    <title>Data Validity Checking Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_input_is_valid</primary>
+        </indexterm>
+        <function>pg_input_is_valid</function> (
+          <parameter>string</parameter> <type>text</type>,
+          <parameter>type</parameter> <type>text</type>
+        )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Tests whether the given <parameter>string</parameter> is valid
+        input for the specified data type, returning true or false.
+       </para>
+       <para>
+        This function will only work as desired if the data type's input
+        function has been updated to report invalid input as
+        a <quote>soft</quote> error.  Otherwise, invalid input will abort
+        the transaction, just as if the string had been cast to the type
+        directly.
+        </para>
+        <para>
+         <literal>pg_input_is_valid('42', 'integer')</literal>
+         <returnvalue>t</returnvalue>
+        </para>
+        <para>
+         <literal>pg_input_is_valid('42000000000', 'integer')</literal>
+         <returnvalue>f</returnvalue>
+        </para>
+        <para>
+         <literal>pg_input_is_valid('1234.567', 'numeric(7,4)')</literal>
+         <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_input_error_message</primary>
+        </indexterm>
+        <function>pg_input_error_message</function> (
+          <parameter>string</parameter> <type>text</type>,
+          <parameter>type</parameter> <type>text</type>
+        )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Tests whether the given <parameter>string</parameter> is valid
+        input for the specified data type; if not, return the error
+        message that would have been thrown.  If the input is valid, the
+        result is NULL.  The inputs are the same as
+        for <function>pg_input_is_valid</function>.
+       </para>
+       <para>
+        This function will only work as desired if the data type's input
+        function has been updated to report invalid input as
+        a <quote>soft</quote> error.  Otherwise, invalid input will abort
+        the transaction, just as if the string had been cast to the type
+        directly.
+        </para>
+        <para>
+         <literal>pg_input_error_message('42000000000', 'integer')</literal>
+         <returnvalue>value "42000000000" is out of range for type integer</returnvalue>
+        </para>
+        <para>
+         <literal>pg_input_error_message('1234.567', 'numeric(7,4)')</literal>
+         <returnvalue>numeric field overflow</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
   <sect2 id="functions-info-snapshot">
    <title>Transaction ID and Snapshot Information Functions</title>
 

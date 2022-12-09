@@ -32,6 +32,8 @@
 #include "common/keywords.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
+#include "parser/parse_type.h"
 #include "parser/scansup.h"
 #include "pgstat.h"
 #include "postmaster/syslogger.h"
@@ -44,6 +46,25 @@
 #include "utils/lsyscache.h"
 #include "utils/ruleutils.h"
 #include "utils/timestamp.h"
+
+
+/*
+ * structure to cache metadata needed in pg_input_is_valid_common
+ */
+typedef struct ValidIOData
+{
+	Oid			typoid;
+	int32		typmod;
+	bool		typname_constant;
+	Oid			typiofunc;
+	Oid			typioparam;
+	FmgrInfo	inputproc;
+} ValidIOData;
+
+static bool pg_input_is_valid_common(FunctionCallInfo fcinfo,
+									 text *txt, text *typname,
+									 ErrorSaveContext *escontext);
+
 
 /*
  * Common subroutine for num_nulls() and num_nonnulls().
@@ -637,6 +658,114 @@ pg_column_is_updatable(PG_FUNCTION_ARGS)
 #define REQ_EVENTS ((1 << CMD_UPDATE) | (1 << CMD_DELETE))
 
 	PG_RETURN_BOOL((events & REQ_EVENTS) == REQ_EVENTS);
+}
+
+
+/*
+ * pg_input_is_valid - test whether string is valid input for datatype.
+ *
+ * Returns true if OK, false if not.
+ *
+ * This will only work usefully if the datatype's input function has been
+ * updated to return "soft" errors via errsave/ereturn.
+ */
+Datum
+pg_input_is_valid(PG_FUNCTION_ARGS)
+{
+	text	   *txt = PG_GETARG_TEXT_PP(0);
+	text	   *typname = PG_GETARG_TEXT_PP(1);
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+	PG_RETURN_BOOL(pg_input_is_valid_common(fcinfo, txt, typname,
+											&escontext));
+}
+
+/*
+ * pg_input_error_message - test whether string is valid input for datatype.
+ *
+ * Returns NULL if OK, else the primary message string from the error.
+ *
+ * This will only work usefully if the datatype's input function has been
+ * updated to return "soft" errors via errsave/ereturn.
+ */
+Datum
+pg_input_error_message(PG_FUNCTION_ARGS)
+{
+	text	   *txt = PG_GETARG_TEXT_PP(0);
+	text	   *typname = PG_GETARG_TEXT_PP(1);
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+	/* Enable details_wanted */
+	escontext.details_wanted = true;
+
+	if (pg_input_is_valid_common(fcinfo, txt, typname,
+								 &escontext))
+		PG_RETURN_NULL();
+
+	Assert(escontext.error_occurred);
+	Assert(escontext.error_data != NULL);
+	Assert(escontext.error_data->message != NULL);
+
+	PG_RETURN_TEXT_P(cstring_to_text(escontext.error_data->message));
+}
+
+/* Common subroutine for the above */
+static bool
+pg_input_is_valid_common(FunctionCallInfo fcinfo,
+						 text *txt, text *typname,
+						 ErrorSaveContext *escontext)
+{
+	char	   *str = text_to_cstring(txt);
+	ValidIOData *my_extra;
+	Datum		converted;
+
+	/*
+	 * We arrange to look up the needed I/O info just once per series of
+	 * calls, assuming the data type doesn't change underneath us.
+	 */
+	my_extra = (ValidIOData *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra =
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   sizeof(ValidIOData));
+		my_extra = (ValidIOData *) fcinfo->flinfo->fn_extra;
+		my_extra->typoid = InvalidOid;
+		/* Detect whether typname argument is constant. */
+		my_extra->typname_constant = get_fn_expr_arg_stable(fcinfo->flinfo, 1);
+	}
+
+	/*
+	 * If the typname argument is constant, we only need to parse it the first
+	 * time through.
+	 */
+	if (my_extra->typoid == InvalidOid || !my_extra->typname_constant)
+	{
+		char	   *typnamestr = text_to_cstring(typname);
+		Oid			typoid;
+
+		/* Parse type-name argument to obtain type OID and encoded typmod. */
+		parseTypeString(typnamestr, &typoid, &my_extra->typmod, false);
+
+		/* Update type-specific info if typoid changed. */
+		if (my_extra->typoid != typoid)
+		{
+			getTypeInputInfo(typoid,
+							 &my_extra->typiofunc,
+							 &my_extra->typioparam);
+			fmgr_info_cxt(my_extra->typiofunc, &my_extra->inputproc,
+						  fcinfo->flinfo->fn_mcxt);
+			my_extra->typoid = typoid;
+		}
+	}
+
+	/* Now we can try to perform the conversion. */
+	return InputFunctionCallSafe(&my_extra->inputproc,
+								 str,
+								 my_extra->typioparam,
+								 my_extra->typmod,
+								 (Node *) escontext,
+								 &converted);
 }
 
 

@@ -7060,6 +7060,14 @@
   prorettype => 'regnamespace', proargtypes => 'text',
   prosrc => 'to_regnamespace' },
 
+{ oid => '8050', descr => 'test whether string is valid input for data type',
+  proname => 'pg_input_is_valid', provolatile => 's', prorettype => 'bool',
+  proargtypes => 'text text', prosrc => 'pg_input_is_valid' },
+{ oid => '8051',
+  descr => 'get error message if string is not valid input for data type',
+  proname => 'pg_input_error_message', provolatile => 's', prorettype => 'text',
+  proargtypes => 'text text', prosrc => 'pg_input_error_message' },
+
 { oid => '1268',
   descr => 'parse qualified identifier to array of identifiers',
   proname => 'parse_ident', prorettype => '_text', proargtypes => 'text bool',
