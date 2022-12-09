@@ -4246,7 +4246,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 	/* Use the specified time zone, if any. */
 	if (tm.tm_zone)
 	{
-		int			dterr = DecodeTimezone(unconstify(char *, tm.tm_zone), &tz);
+		int			dterr = DecodeTimezone(tm.tm_zone, &tz);
 
 		if (dterr)
 			DateTimeParseError(dterr, text_to_cstring(date_txt), "timestamptz");
@@ -4343,7 +4343,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 
 				if (tm.tm_zone)
 				{
-					int			dterr = DecodeTimezone(unconstify(char *, tm.tm_zone), tz);
+					int			dterr = DecodeTimezone(tm.tm_zone, tz);
 
 					if (dterr)
 						DateTimeParseError(dterr, text_to_cstring(date_txt), "timestamptz");
@@ -4429,7 +4429,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 
 			if (tm.tm_zone)
 			{
-				int			dterr = DecodeTimezone(unconstify(char *, tm.tm_zone), tz);
+				int			dterr = DecodeTimezone(tm.tm_zone, tz);
 
 				if (dterr)
 					RETURN_ERROR(DateTimeParseError(dterr, text_to_cstring(date_txt), "timetz"));

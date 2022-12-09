@@ -3145,7 +3145,7 @@ DecodeNumberField(int len, char *str, int fmask,
  * Return 0 if okay (and set *tzp), a DTERR code if not okay.
  */
 int
-DecodeTimezone(char *str, int *tzp)
+DecodeTimezone(const char *str, int *tzp)
 {
 	int			tz;
 	int			hr,
@@ -3223,7 +3223,7 @@ DecodeTimezone(char *str, int *tzp)
  *	will be related in format.
  */
 int
-DecodeTimezoneAbbrev(int field, char *lowtoken,
+DecodeTimezoneAbbrev(int field, const char *lowtoken,
 					 int *offset, pg_tz **tz)
 {
 	int			type;
@@ -3278,7 +3278,7 @@ DecodeTimezoneAbbrev(int field, char *lowtoken,
  *	will be related in format.
  */
 int
-DecodeSpecial(int field, char *lowtoken, int *val)
+DecodeSpecial(int field, const char *lowtoken, int *val)
 {
 	int			type;
 	const datetkn *tp;
@@ -3985,7 +3985,7 @@ DecodeISO8601Interval(char *str,
  *	will be related in format.
  */
 int
-DecodeUnits(int field, char *lowtoken, int *val)
+DecodeUnits(int field, const char *lowtoken, int *val)
 {
 	int			type;
 	const datetkn *tp;

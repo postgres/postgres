@@ -296,7 +296,7 @@ extern int	ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 extern int	DecodeDateTime(char **field, int *ftype,
 						   int nf, int *dtype,
 						   struct pg_tm *tm, fsec_t *fsec, int *tzp);
-extern int	DecodeTimezone(char *str, int *tzp);
+extern int	DecodeTimezone(const char *str, int *tzp);
 extern int	DecodeTimeOnly(char **field, int *ftype,
 						   int nf, int *dtype,
 						   struct pg_tm *tm, fsec_t *fsec, int *tzp);
@@ -322,10 +322,10 @@ extern void EncodeSpecialTimestamp(Timestamp dt, char *str);
 extern int	ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
 						 struct pg_tm *tm);
 
-extern int	DecodeTimezoneAbbrev(int field, char *lowtoken,
+extern int	DecodeTimezoneAbbrev(int field, const char *lowtoken,
 								 int *offset, pg_tz **tz);
-extern int	DecodeSpecial(int field, char *lowtoken, int *val);
-extern int	DecodeUnits(int field, char *lowtoken, int *val);
+extern int	DecodeSpecial(int field, const char *lowtoken, int *val);
+extern int	DecodeUnits(int field, const char *lowtoken, int *val);
 
 extern int	j2day(int date);
 
