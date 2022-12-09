@@ -1231,6 +1231,7 @@ CREATE TABLE measurement_y2007m01 (
 ) WITH (autovacuum_enabled=off);
 ALTER TABLE measurement_y2007m01 DROP COLUMN filler;
 ALTER TABLE measurement_y2007m01 INHERIT measurement;
+INSERT INTO measurement VALUES (0, '2005-07-21', 5, 15);
 
 CREATE OR REPLACE FUNCTION measurement_insert_trigger()
 RETURNS TRIGGER AS $$
@@ -1264,6 +1265,7 @@ INSERT INTO measurement VALUES (1, '2007-01-17', 10, 10);
 SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate;
 
 CREATE TABLE new_measurement (LIKE measurement) WITH (autovacuum_enabled=off);
+INSERT INTO new_measurement VALUES (0, '2005-07-21', 25, 20);
 INSERT INTO new_measurement VALUES (1, '2006-03-01', 20, 10);
 INSERT INTO new_measurement VALUES (1, '2006-02-16', 50, 10);
 INSERT INTO new_measurement VALUES (2, '2006-02-10', 20, 20);
@@ -1271,6 +1273,21 @@ INSERT INTO new_measurement VALUES (1, '2006-03-27', NULL, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-17', NULL, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-15', 5, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-16', 10, 10);
+
+BEGIN;
+MERGE INTO ONLY measurement m
+ USING new_measurement nm ON
+      (m.city_id = nm.city_id and m.logdate=nm.logdate)
+WHEN MATCHED AND nm.peaktemp IS NULL THEN DELETE
+WHEN MATCHED THEN UPDATE
+     SET peaktemp = greatest(m.peaktemp, nm.peaktemp),
+        unitsales = m.unitsales + coalesce(nm.unitsales, 0)
+WHEN NOT MATCHED THEN INSERT
+     (city_id, logdate, peaktemp, unitsales)
+   VALUES (city_id, logdate, peaktemp, unitsales);
+
+SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate, peaktemp;
+ROLLBACK;
 
 MERGE into measurement m
  USING new_measurement nm ON
@@ -1284,6 +1301,23 @@ WHEN NOT MATCHED THEN INSERT
    VALUES (city_id, logdate, peaktemp, unitsales);
 
 SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate;
+
+BEGIN;
+MERGE INTO new_measurement nm
+ USING ONLY measurement m ON
+      (nm.city_id = m.city_id and nm.logdate=m.logdate)
+WHEN MATCHED THEN DELETE;
+
+SELECT * FROM new_measurement ORDER BY city_id, logdate;
+ROLLBACK;
+
+MERGE INTO new_measurement nm
+ USING measurement m ON
+      (nm.city_id = m.city_id and nm.logdate=m.logdate)
+WHEN MATCHED THEN DELETE;
+
+SELECT * FROM new_measurement ORDER BY city_id, logdate;
+
 DROP TABLE measurement, new_measurement CASCADE;
 DROP FUNCTION measurement_insert_trigger();
 
