@@ -69,6 +69,37 @@ ERROR:  malformed record literal: "(Joe,Blow) /"
 LINE 1: select '(Joe,Blow) /'::fullname;
                ^
 DETAIL:  Junk after right parenthesis.
+-- test non-error-throwing API
+SELECT pg_input_is_valid('(1,2)', 'complex');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('(1,2', 'complex');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('(1,zed)', 'complex');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('(1,zed)', 'complex');
+                pg_input_error_message                 
+-------------------------------------------------------
+ invalid input syntax for type double precision: "zed"
+(1 row)
+
+SELECT pg_input_error_message('(1,1e400)', 'complex');
+              pg_input_error_message               
+---------------------------------------------------
+ "1e400" is out of range for type double precision
+(1 row)
+
 create temp table quadtable(f1 int, q quad);
 insert into quadtable values (1, ((3.3,4.4),(5.5,6.6)));
 insert into quadtable values (2, ((null,4.4),(5.5,6.6)));

@@ -189,7 +189,7 @@ static float8
 single_decode(char *num, char **endptr_p,
 			  const char *type_name, const char *orig_string)
 {
-	return float8in_internal(num, endptr_p, type_name, orig_string);
+	return float8in_internal(num, endptr_p, type_name, orig_string, NULL);
 }								/* single_decode() */
 
 static void
@@ -212,7 +212,7 @@ pair_decode(char *str, float8 *x, float8 *y, char **endptr_p,
 	if ((has_delim = (*str == LDELIM)))
 		str++;
 
-	*x = float8in_internal(str, &str, type_name, orig_string);
+	*x = float8in_internal(str, &str, type_name, orig_string, NULL);
 
 	if (*str++ != DELIM)
 		ereport(ERROR,
@@ -220,7 +220,7 @@ pair_decode(char *str, float8 *x, float8 *y, char **endptr_p,
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						type_name, orig_string)));
 
-	*y = float8in_internal(str, &str, type_name, orig_string);
+	*y = float8in_internal(str, &str, type_name, orig_string, NULL);
 
 	if (has_delim)
 	{

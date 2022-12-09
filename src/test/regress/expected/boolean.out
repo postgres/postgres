@@ -142,6 +142,25 @@ SELECT bool '' AS error;
 ERROR:  invalid input syntax for type boolean: ""
 LINE 1: SELECT bool '' AS error;
                     ^
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('true', 'bool');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('asdf', 'bool');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('junk', 'bool');
+            pg_input_error_message             
+-----------------------------------------------
+ invalid input syntax for type boolean: "junk"
+(1 row)
+
 -- and, or, not in qualifications
 SELECT bool 't' or bool 'f' AS true;
  true 

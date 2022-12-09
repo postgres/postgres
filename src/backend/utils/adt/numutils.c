@@ -88,15 +88,24 @@ decimalLength64(const uint64 v)
 /*
  * Convert input string to a signed 16 bit integer.
  *
- * Allows any number of leading or trailing whitespace characters. Will throw
- * ereport() upon bad input format or overflow.
+ * Allows any number of leading or trailing whitespace characters.
  *
+ * pg_strtoint16() will throw ereport() upon bad input format or overflow;
+ * while pg_strtoint16_safe() instead returns such complaints in *escontext,
+ * if it's an ErrorSaveContext.
+*
  * NB: Accumulate input as an unsigned number, to deal with two's complement
  * representation of the most negative number, which can't be represented as a
  * signed positive number.
  */
 int16
 pg_strtoint16(const char *s)
+{
+	return pg_strtoint16_safe(s, NULL);
+}
+
+int16
+pg_strtoint16_safe(const char *s, Node *escontext)
 {
 	const char *ptr = s;
 	uint16		tmp = 0;
@@ -149,25 +158,26 @@ pg_strtoint16(const char *s)
 	return (int16) tmp;
 
 out_of_range:
-	ereport(ERROR,
+	ereturn(escontext, 0,
 			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 			 errmsg("value \"%s\" is out of range for type %s",
 					s, "smallint")));
 
 invalid_syntax:
-	ereport(ERROR,
+	ereturn(escontext, 0,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"smallint", s)));
-
-	return 0;					/* keep compiler quiet */
 }
 
 /*
  * Convert input string to a signed 32 bit integer.
  *
- * Allows any number of leading or trailing whitespace characters. Will throw
- * ereport() upon bad input format or overflow.
+ * Allows any number of leading or trailing whitespace characters.
+ *
+ * pg_strtoint32() will throw ereport() upon bad input format or overflow;
+ * while pg_strtoint32_safe() instead returns such complaints in *escontext,
+ * if it's an ErrorSaveContext.
  *
  * NB: Accumulate input as an unsigned number, to deal with two's complement
  * representation of the most negative number, which can't be represented as a
@@ -175,6 +185,12 @@ invalid_syntax:
  */
 int32
 pg_strtoint32(const char *s)
+{
+	return pg_strtoint32_safe(s, NULL);
+}
+
+int32
+pg_strtoint32_safe(const char *s, Node *escontext)
 {
 	const char *ptr = s;
 	uint32		tmp = 0;
@@ -227,25 +243,26 @@ pg_strtoint32(const char *s)
 	return (int32) tmp;
 
 out_of_range:
-	ereport(ERROR,
+	ereturn(escontext, 0,
 			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 			 errmsg("value \"%s\" is out of range for type %s",
 					s, "integer")));
 
 invalid_syntax:
-	ereport(ERROR,
+	ereturn(escontext, 0,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"integer", s)));
-
-	return 0;					/* keep compiler quiet */
 }
 
 /*
  * Convert input string to a signed 64 bit integer.
  *
- * Allows any number of leading or trailing whitespace characters. Will throw
- * ereport() upon bad input format or overflow.
+ * Allows any number of leading or trailing whitespace characters.
+ *
+ * pg_strtoint64() will throw ereport() upon bad input format or overflow;
+ * while pg_strtoint64_safe() instead returns such complaints in *escontext,
+ * if it's an ErrorSaveContext.
  *
  * NB: Accumulate input as an unsigned number, to deal with two's complement
  * representation of the most negative number, which can't be represented as a
@@ -253,6 +270,12 @@ invalid_syntax:
  */
 int64
 pg_strtoint64(const char *s)
+{
+	return pg_strtoint64_safe(s, NULL);
+}
+
+int64
+pg_strtoint64_safe(const char *s, Node *escontext)
 {
 	const char *ptr = s;
 	uint64		tmp = 0;
@@ -305,18 +328,16 @@ pg_strtoint64(const char *s)
 	return (int64) tmp;
 
 out_of_range:
-	ereport(ERROR,
+	ereturn(escontext, 0,
 			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 			 errmsg("value \"%s\" is out of range for type %s",
 					s, "bigint")));
 
 invalid_syntax:
-	ereport(ERROR,
+	ereturn(escontext, 0,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"bigint", s)));
-
-	return 0;					/* keep compiler quiet */
 }
 
 /*

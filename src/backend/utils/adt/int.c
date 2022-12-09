@@ -64,7 +64,7 @@ int2in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_INT16(pg_strtoint16(num));
+	PG_RETURN_INT16(pg_strtoint16_safe(num, fcinfo->context));
 }
 
 /*
@@ -291,7 +291,7 @@ int4in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_INT32(pg_strtoint32(num));
+	PG_RETURN_INT32(pg_strtoint32_safe(num, fcinfo->context));
 }
 
 /*

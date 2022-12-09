@@ -113,6 +113,12 @@ SELECT a FROM arrtest WHERE a[2] IS NULL;
 DELETE FROM arrtest WHERE a[2] IS NULL AND b IS NULL;
 SELECT a,b,c FROM arrtest;
 
+-- test non-error-throwing API
+SELECT pg_input_is_valid('{1,2,3}', 'integer[]');
+SELECT pg_input_is_valid('{1,2', 'integer[]');
+SELECT pg_input_is_valid('{1,zed}', 'integer[]');
+SELECT pg_input_error_message('{1,zed}', 'integer[]');
+
 -- test mixed slice/scalar subscripting
 select '{{1,2,3},{4,5,6},{7,8,9}}'::int[];
 select ('{{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];

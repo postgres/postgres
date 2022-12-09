@@ -42,6 +42,31 @@ SELECT * FROM INT8_TBL;
  4567890123456789 | -4567890123456789
 (5 rows)
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34', 'int8');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('asdf', 'int8');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('10000000000000000000', 'int8');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('10000000000000000000', 'int8');
+                    pg_input_error_message                    
+--------------------------------------------------------------
+ value "10000000000000000000" is out of range for type bigint
+(1 row)
+
 -- int8/int8 cmp
 SELECT * FROM INT8_TBL WHERE q2 = 4567890123456789;
         q1        |        q2        

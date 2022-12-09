@@ -2199,6 +2199,49 @@ SELECT * FROM num_input_test;
  -Infinity
 (13 rows)
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34.5', 'numeric');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('34xyz', 'numeric');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('1e400000', 'numeric');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('1e400000', 'numeric');
+     pg_input_error_message     
+--------------------------------
+ value overflows numeric format
+(1 row)
+
+SELECT pg_input_is_valid('1234.567', 'numeric(8,4)');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('1234.567', 'numeric(7,4)');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('1234.567', 'numeric(7,4)');
+ pg_input_error_message 
+------------------------
+ numeric field overflow
+(1 row)
+
 --
 -- Test precision and scale typemods
 --

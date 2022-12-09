@@ -52,7 +52,7 @@ int8in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_INT64(pg_strtoint64(num));
+	PG_RETURN_INT64(pg_strtoint64_safe(num, fcinfo->context));
 }
 
 

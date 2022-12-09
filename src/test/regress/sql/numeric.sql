@@ -1053,6 +1053,15 @@ INSERT INTO num_input_test(n1) VALUES ('+ infinity');
 
 SELECT * FROM num_input_test;
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34.5', 'numeric');
+SELECT pg_input_is_valid('34xyz', 'numeric');
+SELECT pg_input_is_valid('1e400000', 'numeric');
+SELECT pg_input_error_message('1e400000', 'numeric');
+SELECT pg_input_is_valid('1234.567', 'numeric(8,4)');
+SELECT pg_input_is_valid('1234.567', 'numeric(7,4)');
+SELECT pg_input_error_message('1234.567', 'numeric(7,4)');
+
 --
 -- Test precision and scale typemods
 --

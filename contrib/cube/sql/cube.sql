@@ -79,6 +79,12 @@ SELECT '1,2a'::cube AS cube; -- 7
 SELECT '1..2'::cube AS cube; -- 7
 SELECT '-1e-700'::cube AS cube; -- out of range
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('(1,2)', 'cube');
+SELECT pg_input_is_valid('[(1),]', 'cube');
+SELECT pg_input_is_valid('-1e-700', 'cube');
+SELECT pg_input_error_message('-1e-700', 'cube');
+
 --
 -- Testing building cubes from float8 values
 --

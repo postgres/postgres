@@ -123,8 +123,9 @@ cube_in(PG_FUNCTION_ARGS)
 
 	cube_scanner_init(str, &scanbuflen);
 
-	cube_yyparse(&result, scanbuflen);
+	cube_yyparse(&result, scanbuflen, fcinfo->context);
 
+	/* We might as well run this even on failure. */
 	cube_scanner_finish();
 
 	PG_RETURN_NDBOX_P(result);

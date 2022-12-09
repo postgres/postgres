@@ -497,8 +497,9 @@ static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
 static void zero_var(NumericVar *var);
 
-static const char *set_var_from_str(const char *str, const char *cp,
-									NumericVar *dest);
+static bool set_var_from_str(const char *str, const char *cp,
+							 NumericVar *dest, const char **endptr,
+							 Node *escontext);
 static void set_var_from_num(Numeric num, NumericVar *dest);
 static void init_var_from_num(Numeric num, NumericVar *dest);
 static void set_var_from_var(const NumericVar *value, NumericVar *dest);
@@ -512,8 +513,8 @@ static Numeric duplicate_numeric(Numeric num);
 static Numeric make_result(const NumericVar *var);
 static Numeric make_result_opt_error(const NumericVar *var, bool *have_error);
 
-static void apply_typmod(NumericVar *var, int32 typmod);
-static void apply_typmod_special(Numeric num, int32 typmod);
+static bool apply_typmod(NumericVar *var, int32 typmod, Node *escontext);
+static bool apply_typmod_special(Numeric num, int32 typmod, Node *escontext);
 
 static bool numericvar_to_int32(const NumericVar *var, int32 *result);
 static bool numericvar_to_int64(const NumericVar *var, int64 *result);
@@ -617,11 +618,11 @@ Datum
 numeric_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
+	Node	   *escontext = fcinfo->context;
 	Numeric		res;
 	const char *cp;
 
@@ -679,10 +680,12 @@ numeric_in(PG_FUNCTION_ARGS)
 		 * Use set_var_from_str() to parse a normal numeric value
 		 */
 		NumericVar	value;
+		bool		have_error;
 
 		init_var(&value);
 
-		cp = set_var_from_str(str, cp, &value);
+		if (!set_var_from_str(str, cp, &value, &cp, escontext))
+			PG_RETURN_NULL();
 
 		/*
 		 * We duplicate a few lines of code here because we would like to
@@ -693,16 +696,23 @@ numeric_in(PG_FUNCTION_ARGS)
 		while (*cp)
 		{
 			if (!isspace((unsigned char) *cp))
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type %s: \"%s\"",
 								"numeric", str)));
 			cp++;
 		}
 
-		apply_typmod(&value, typmod);
+		if (!apply_typmod(&value, typmod, escontext))
+			PG_RETURN_NULL();
 
-		res = make_result(&value);
+		res = make_result_opt_error(&value, &have_error);
+
+		if (have_error)
+			ereturn(escontext, (Datum) 0,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("value overflows numeric format")));
+
 		free_var(&value);
 
 		PG_RETURN_NUMERIC(res);
@@ -712,7 +722,7 @@ numeric_in(PG_FUNCTION_ARGS)
 	while (*cp)
 	{
 		if (!isspace((unsigned char) *cp))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"numeric", str)));
@@ -720,7 +730,8 @@ numeric_in(PG_FUNCTION_ARGS)
 	}
 
 	/* As above, throw any typmod error after finishing syntax check */
-	apply_typmod_special(res, typmod);
+	if (!apply_typmod_special(res, typmod, escontext))
+		PG_RETURN_NULL();
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -1058,7 +1069,7 @@ numeric_recv(PG_FUNCTION_ARGS)
 	{
 		trunc_var(&value, value.dscale);
 
-		apply_typmod(&value, typmod);
+		(void) apply_typmod(&value, typmod, NULL);
 
 		res = make_result(&value);
 	}
@@ -1067,7 +1078,7 @@ numeric_recv(PG_FUNCTION_ARGS)
 		/* apply_typmod_special wants us to make the Numeric first */
 		res = make_result(&value);
 
-		apply_typmod_special(res, typmod);
+		(void) apply_typmod_special(res, typmod, NULL);
 	}
 
 	free_var(&value);
@@ -1180,7 +1191,7 @@ numeric		(PG_FUNCTION_ARGS)
 	 */
 	if (NUMERIC_IS_SPECIAL(num))
 	{
-		apply_typmod_special(num, typmod);
+		(void) apply_typmod_special(num, typmod, NULL);
 		PG_RETURN_NUMERIC(duplicate_numeric(num));
 	}
 
@@ -1231,7 +1242,7 @@ numeric		(PG_FUNCTION_ARGS)
 	init_var(&var);
 
 	set_var_from_num(num, &var);
-	apply_typmod(&var, typmod);
+	(void) apply_typmod(&var, typmod, NULL);
 	new = make_result(&var);
 
 	free_var(&var);
@@ -4395,6 +4406,7 @@ float8_numeric(PG_FUNCTION_ARGS)
 	Numeric		res;
 	NumericVar	result;
 	char		buf[DBL_DIG + 100];
+	const char *endptr;
 
 	if (isnan(val))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
@@ -4412,7 +4424,7 @@ float8_numeric(PG_FUNCTION_ARGS)
 	init_var(&result);
 
 	/* Assume we need not worry about leading/trailing spaces */
-	(void) set_var_from_str(buf, buf, &result);
+	(void) set_var_from_str(buf, buf, &result, &endptr, NULL);
 
 	res = make_result(&result);
 
@@ -4488,6 +4500,7 @@ float4_numeric(PG_FUNCTION_ARGS)
 	Numeric		res;
 	NumericVar	result;
 	char		buf[FLT_DIG + 100];
+	const char *endptr;
 
 	if (isnan(val))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
@@ -4505,7 +4518,7 @@ float4_numeric(PG_FUNCTION_ARGS)
 	init_var(&result);
 
 	/* Assume we need not worry about leading/trailing spaces */
-	(void) set_var_from_str(buf, buf, &result);
+	(void) set_var_from_str(buf, buf, &result, &endptr, NULL);
 
 	res = make_result(&result);
 
@@ -6804,14 +6817,19 @@ zero_var(NumericVar *var)
  *	Parse a string and put the number into a variable
  *
  * This function does not handle leading or trailing spaces.  It returns
- * the end+1 position parsed, so that caller can check for trailing
- * spaces/garbage if deemed necessary.
+ * the end+1 position parsed into *endptr, so that caller can check for
+ * trailing spaces/garbage if deemed necessary.
  *
  * cp is the place to actually start parsing; str is what to use in error
  * reports.  (Typically cp would be the same except advanced over spaces.)
+ *
+ * Returns true on success, false on failure (if escontext points to an
+ * ErrorSaveContext; otherwise errors are thrown).
  */
-static const char *
-set_var_from_str(const char *str, const char *cp, NumericVar *dest)
+static bool
+set_var_from_str(const char *str, const char *cp,
+				 NumericVar *dest, const char **endptr,
+				 Node *escontext)
 {
 	bool		have_dp = false;
 	int			i;
@@ -6849,7 +6867,7 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 	}
 
 	if (!isdigit((unsigned char) *cp))
-		ereport(ERROR,
+		ereturn(escontext, false,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"numeric", str)));
@@ -6873,7 +6891,7 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 		else if (*cp == '.')
 		{
 			if (have_dp)
-				ereport(ERROR,
+				ereturn(escontext, false,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type %s: \"%s\"",
 								"numeric", str)));
@@ -6897,7 +6915,7 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 		cp++;
 		exponent = strtol(cp, &endptr, 10);
 		if (endptr == cp)
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"numeric", str)));
@@ -6912,7 +6930,7 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 		 * for consistency use the same ereport errcode/text as make_result().
 		 */
 		if (exponent >= INT_MAX / 2 || exponent <= -(INT_MAX / 2))
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value overflows numeric format")));
 		dweight += (int) exponent;
@@ -6963,7 +6981,9 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 	strip_var(dest);
 
 	/* Return end+1 position for caller */
-	return cp;
+	*endptr = cp;
+
+	return true;
 }
 
 
@@ -7455,9 +7475,12 @@ make_result(const NumericVar *var)
  *
  *	Do bounds checking and rounding according to the specified typmod.
  *	Note that this is only applied to normal finite values.
+ *
+ * Returns true on success, false on failure (if escontext points to an
+ * ErrorSaveContext; otherwise errors are thrown).
  */
-static void
-apply_typmod(NumericVar *var, int32 typmod)
+static bool
+apply_typmod(NumericVar *var, int32 typmod, Node *escontext)
 {
 	int			precision;
 	int			scale;
@@ -7467,7 +7490,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 
 	/* Do nothing if we have an invalid typmod */
 	if (!is_valid_numeric_typmod(typmod))
-		return;
+		return true;
 
 	precision = numeric_typmod_precision(typmod);
 	scale = numeric_typmod_scale(typmod);
@@ -7514,7 +7537,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 #error unsupported NBASE
 #endif
 				if (ddigits > maxdigits)
-					ereport(ERROR,
+					ereturn(escontext, false,
 							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 							 errmsg("numeric field overflow"),
 							 errdetail("A field with precision %d, scale %d must round to an absolute value less than %s%d.",
@@ -7528,6 +7551,8 @@ apply_typmod(NumericVar *var, int32 typmod)
 			ddigits -= DEC_DIGITS;
 		}
 	}
+
+	return true;
 }
 
 /*
@@ -7535,9 +7560,12 @@ apply_typmod(NumericVar *var, int32 typmod)
  *
  *	Do bounds checking according to the specified typmod, for an Inf or NaN.
  *	For convenience of most callers, the value is presented in packed form.
+ *
+ * Returns true on success, false on failure (if escontext points to an
+ * ErrorSaveContext; otherwise errors are thrown).
  */
-static void
-apply_typmod_special(Numeric num, int32 typmod)
+static bool
+apply_typmod_special(Numeric num, int32 typmod, Node *escontext)
 {
 	int			precision;
 	int			scale;
@@ -7551,16 +7579,16 @@ apply_typmod_special(Numeric num, int32 typmod)
 	 * any finite number of digits.
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return;
+		return true;
 
 	/* Do nothing if we have a default typmod (-1) */
 	if (!is_valid_numeric_typmod(typmod))
-		return;
+		return true;
 
 	precision = numeric_typmod_precision(typmod);
 	scale = numeric_typmod_scale(typmod);
 
-	ereport(ERROR,
+	ereturn(escontext, false,
 			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 			 errmsg("numeric field overflow"),
 			 errdetail("A field with precision %d, scale %d cannot hold an infinite value.",

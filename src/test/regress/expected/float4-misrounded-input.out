@@ -81,6 +81,31 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('123            5');
 ERROR:  invalid input syntax for type real: "123            5"
 LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('123            5');
                                            ^
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34.5', 'float4');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('xyz', 'float4');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('1e400', 'float4');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('1e400', 'float4');
+        pg_input_error_message         
+---------------------------------------
+ "1e400" is out of range for type real
+(1 row)
+
 -- special inputs
 SELECT 'NaN'::float4;
  float4 

@@ -45,6 +45,31 @@ SELECT * FROM INT4_TBL;
  -2147483647
 (5 rows)
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34', 'int4');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('asdf', 'int4');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('1000000000000', 'int4');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('1000000000000', 'int4');
+                 pg_input_error_message                 
+--------------------------------------------------------
+ value "1000000000000" is out of range for type integer
+(1 row)
+
 SELECT i.* FROM INT4_TBL i WHERE i.f1 <> int2 '0';
      f1      
 -------------

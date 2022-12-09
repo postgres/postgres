@@ -163,6 +163,7 @@ Datum
 float4in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	char	   *orig_num;
 	float		val;
 	char	   *endptr;
@@ -183,7 +184,7 @@ float4in(PG_FUNCTION_ARGS)
 	 * strtod() on different platforms.
 	 */
 	if (*num == '\0')
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"real", orig_num)));
@@ -257,13 +258,13 @@ float4in(PG_FUNCTION_ARGS)
 				(val >= HUGE_VALF || val <= -HUGE_VALF)
 #endif
 				)
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("\"%s\" is out of range for type real",
 								orig_num)));
 		}
 		else
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"real", orig_num)));
@@ -275,7 +276,7 @@ float4in(PG_FUNCTION_ARGS)
 
 	/* if there is any junk left at the end of the string, bail out */
 	if (*endptr != '\0')
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"real", orig_num)));
@@ -337,51 +338,39 @@ float8in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
+	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num,
+									   fcinfo->context));
 }
 
-/* Convenience macro: set *have_error flag (if provided) or throw error */
-#define RETURN_ERROR(throw_error, have_error) \
-do { \
-	if (have_error) { \
-		*have_error = true; \
-		return 0.0; \
-	} else { \
-		throw_error; \
-	} \
-} while (0)
-
 /*
- * float8in_internal_opt_error - guts of float8in()
+ * float8in_internal - guts of float8in()
  *
  * This is exposed for use by functions that want a reasonably
  * platform-independent way of inputting doubles.  The behavior is
- * essentially like strtod + ereport on error, but note the following
+ * essentially like strtod + ereturn on error, but note the following
  * differences:
  * 1. Both leading and trailing whitespace are skipped.
- * 2. If endptr_p is NULL, we throw error if there's trailing junk.
+ * 2. If endptr_p is NULL, we report error if there's trailing junk.
  * Otherwise, it's up to the caller to complain about trailing junk.
  * 3. In event of a syntax error, the report mentions the given type_name
  * and prints orig_string as the input; this is meant to support use of
  * this function with types such as "box" and "point", where what we are
  * parsing here is just a substring of orig_string.
  *
+ * If escontext points to an ErrorSaveContext node, that is filled instead
+ * of throwing an error; the caller must check SOFT_ERROR_OCCURRED()
+ * to detect errors.
+ *
  * "num" could validly be declared "const char *", but that results in an
  * unreasonable amount of extra casting both here and in callers, so we don't.
- *
- * When "*have_error" flag is provided, it's set instead of throwing an
- * error.  This is helpful when caller need to handle errors by itself.
  */
-double
-float8in_internal_opt_error(char *num, char **endptr_p,
-							const char *type_name, const char *orig_string,
-							bool *have_error)
+float8
+float8in_internal(char *num, char **endptr_p,
+				  const char *type_name, const char *orig_string,
+				  struct Node *escontext)
 {
 	double		val;
 	char	   *endptr;
-
-	if (have_error)
-		*have_error = false;
 
 	/* skip leading whitespace */
 	while (*num != '\0' && isspace((unsigned char) *num))
@@ -392,11 +381,10 @@ float8in_internal_opt_error(char *num, char **endptr_p,
 	 * strtod() on different platforms.
 	 */
 	if (*num == '\0')
-		RETURN_ERROR(ereport(ERROR,
-							 (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							  errmsg("invalid input syntax for type %s: \"%s\"",
-									 type_name, orig_string))),
-					 have_error);
+		ereturn(escontext, 0,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						type_name, orig_string)));
 
 	errno = 0;
 	val = strtod(num, &endptr);
@@ -469,20 +457,17 @@ float8in_internal_opt_error(char *num, char **endptr_p,
 				char	   *errnumber = pstrdup(num);
 
 				errnumber[endptr - num] = '\0';
-				RETURN_ERROR(ereport(ERROR,
-									 (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-									  errmsg("\"%s\" is out of range for type double precision",
-											 errnumber))),
-							 have_error);
+				ereturn(escontext, 0,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("\"%s\" is out of range for type double precision",
+								errnumber)));
 			}
 		}
 		else
-			RETURN_ERROR(ereport(ERROR,
-								 (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								  errmsg("invalid input syntax for type "
-										 "%s: \"%s\"",
-										 type_name, orig_string))),
-						 have_error);
+			ereturn(escontext, 0,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for type %s: \"%s\"",
+							type_name, orig_string)));
 	}
 
 	/* skip trailing whitespace */
@@ -493,25 +478,12 @@ float8in_internal_opt_error(char *num, char **endptr_p,
 	if (endptr_p)
 		*endptr_p = endptr;
 	else if (*endptr != '\0')
-		RETURN_ERROR(ereport(ERROR,
-							 (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							  errmsg("invalid input syntax for type "
-									 "%s: \"%s\"",
-									 type_name, orig_string))),
-					 have_error);
+		ereturn(escontext, 0,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						type_name, orig_string)));
 
 	return val;
-}
-
-/*
- * Interface to float8in_internal_opt_error() without "have_error" argument.
- */
-double
-float8in_internal(char *num, char **endptr_p,
-				  const char *type_name, const char *orig_string)
-{
-	return float8in_internal_opt_error(num, endptr_p, type_name,
-									   orig_string, NULL);
 }
 
 

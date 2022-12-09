@@ -17,6 +17,12 @@ INSERT INTO INT4_TBL(f1) VALUES ('');
 
 SELECT * FROM INT4_TBL;
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34', 'int4');
+SELECT pg_input_is_valid('asdf', 'int4');
+SELECT pg_input_is_valid('1000000000000', 'int4');
+SELECT pg_input_error_message('1000000000000', 'int4');
+
 SELECT i.* FROM INT4_TBL i WHERE i.f1 <> int2 '0';
 
 SELECT i.* FROM INT4_TBL i WHERE i.f1 <> int4 '0';

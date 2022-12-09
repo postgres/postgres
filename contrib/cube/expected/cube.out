@@ -325,6 +325,31 @@ SELECT '-1e-700'::cube AS cube; -- out of range
 ERROR:  "-1e-700" is out of range for type double precision
 LINE 1: SELECT '-1e-700'::cube AS cube;
                ^
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('(1,2)', 'cube');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('[(1),]', 'cube');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('-1e-700', 'cube');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('-1e-700', 'cube');
+               pg_input_error_message                
+-----------------------------------------------------
+ "-1e-700" is out of range for type double precision
+(1 row)
+
 --
 -- Testing building cubes from float8 values
 --

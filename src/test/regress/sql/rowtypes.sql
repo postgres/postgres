@@ -31,6 +31,13 @@ select '[]'::fullname;          -- bad
 select ' (Joe,Blow)  '::fullname;  -- ok, extra whitespace
 select '(Joe,Blow) /'::fullname;  -- bad
 
+-- test non-error-throwing API
+SELECT pg_input_is_valid('(1,2)', 'complex');
+SELECT pg_input_is_valid('(1,2', 'complex');
+SELECT pg_input_is_valid('(1,zed)', 'complex');
+SELECT pg_input_error_message('(1,zed)', 'complex');
+SELECT pg_input_error_message('(1,1e400)', 'complex');
+
 create temp table quadtable(f1 int, q quad);
 
 insert into quadtable values (1, ((3.3,4.4),(5.5,6.6)));

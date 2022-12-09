@@ -34,6 +34,12 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('5.   0');
 INSERT INTO FLOAT8_TBL(f1) VALUES ('    - 3');
 INSERT INTO FLOAT8_TBL(f1) VALUES ('123           5');
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34.5', 'float8');
+SELECT pg_input_is_valid('xyz', 'float8');
+SELECT pg_input_is_valid('1e4000', 'float8');
+SELECT pg_input_error_message('1e4000', 'float8');
+
 -- special inputs
 SELECT 'NaN'::float8;
 SELECT 'nan'::float8;

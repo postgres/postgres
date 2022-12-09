@@ -36,6 +36,12 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('5.   0');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('     - 3.0');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('123            5');
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34.5', 'float4');
+SELECT pg_input_is_valid('xyz', 'float4');
+SELECT pg_input_is_valid('1e400', 'float4');
+SELECT pg_input_error_message('1e400', 'float4');
+
 -- special inputs
 SELECT 'NaN'::float4;
 SELECT 'nan'::float4;

@@ -447,7 +447,11 @@ extern void array_free_iterator(ArrayIterator iterator);
 extern int	ArrayGetOffset(int n, const int *dim, const int *lb, const int *indx);
 extern int	ArrayGetOffset0(int n, const int *tup, const int *scale);
 extern int	ArrayGetNItems(int ndim, const int *dims);
+extern int	ArrayGetNItemsSafe(int ndim, const int *dims,
+							   struct Node *escontext);
 extern void ArrayCheckBounds(int ndim, const int *dims, const int *lb);
+extern bool ArrayCheckBoundsSafe(int ndim, const int *dims, const int *lb,
+								 struct Node *escontext);
 extern void mda_get_range(int n, int *span, const int *st, const int *endp);
 extern void mda_get_prod(int n, const int *range, int *prod);
 extern void mda_get_offset_values(int n, int *dist, const int *prod, const int *span);

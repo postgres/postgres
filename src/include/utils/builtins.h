@@ -44,8 +44,11 @@ extern int	namestrcmp(Name name, const char *str);
 
 /* numutils.c */
 extern int16 pg_strtoint16(const char *s);
+extern int16 pg_strtoint16_safe(const char *s, Node *escontext);
 extern int32 pg_strtoint32(const char *s);
+extern int32 pg_strtoint32_safe(const char *s, Node *escontext);
 extern int64 pg_strtoint64(const char *s);
+extern int64 pg_strtoint64_safe(const char *s, Node *escontext);
 extern int	pg_itoa(int16 i, char *a);
 extern int	pg_ultoa_n(uint32 value, char *a);
 extern int	pg_ulltoa_n(uint64 value, char *a);

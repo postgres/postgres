@@ -45,6 +45,31 @@ SELECT * FROM INT2_TBL;
  -32767
 (5 rows)
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34', 'int2');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('asdf', 'int2');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('50000', 'int2');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('50000', 'int2');
+             pg_input_error_message              
+-------------------------------------------------
+ value "50000" is out of range for type smallint
+(1 row)
+
 SELECT * FROM INT2_TBL AS f(a, b);
 ERROR:  table "f" has 1 columns available but 2 columns specified
 SELECT * FROM (TABLE int2_tbl) AS s (a, b);

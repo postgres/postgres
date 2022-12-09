@@ -182,6 +182,31 @@ SELECT a,b,c FROM arrtest;
  [4:4]={NULL}  | {3,4}                 | {foo,new_word}
 (3 rows)
 
+-- test non-error-throwing API
+SELECT pg_input_is_valid('{1,2,3}', 'integer[]');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('{1,2', 'integer[]');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('{1,zed}', 'integer[]');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('{1,zed}', 'integer[]');
+            pg_input_error_message            
+----------------------------------------------
+ invalid input syntax for type integer: "zed"
+(1 row)
+
 -- test mixed slice/scalar subscripting
 select '{{1,2,3},{4,5,6},{7,8,9}}'::int[];
            int4            

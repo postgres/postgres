@@ -17,6 +17,12 @@ INSERT INTO INT2_TBL(f1) VALUES ('');
 
 SELECT * FROM INT2_TBL;
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34', 'int2');
+SELECT pg_input_is_valid('asdf', 'int2');
+SELECT pg_input_is_valid('50000', 'int2');
+SELECT pg_input_error_message('50000', 'int2');
+
 SELECT * FROM INT2_TBL AS f(a, b);
 
 SELECT * FROM (TABLE int2_tbl) AS s (a, b);
