@@ -1886,6 +1886,7 @@ CREATE TABLE measurement_y2007m01 (
 ) WITH (autovacuum_enabled=off);
 ALTER TABLE measurement_y2007m01 DROP COLUMN filler;
 ALTER TABLE measurement_y2007m01 INHERIT measurement;
+INSERT INTO measurement VALUES (0, '2005-07-21', 5, 15);
 CREATE OR REPLACE FUNCTION measurement_insert_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -1917,15 +1918,17 @@ INSERT INTO measurement VALUES (1, '2007-01-17', 10, 10);
 SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate;
        tableoid       | city_id |  logdate   | peaktemp | unitsales 
 ----------------------+---------+------------+----------+-----------
+ measurement          |       0 | 07-21-2005 |        5 |        15
  measurement_y2006m02 |       1 | 02-10-2006 |       35 |        10
  measurement_y2006m02 |       1 | 02-16-2006 |       45 |        20
  measurement_y2006m03 |       1 | 03-17-2006 |       25 |        10
  measurement_y2006m03 |       1 | 03-27-2006 |       15 |        40
  measurement_y2007m01 |       1 | 01-15-2007 |       10 |        10
  measurement_y2007m01 |       1 | 01-17-2007 |       10 |        10
-(6 rows)
+(7 rows)
 
 CREATE TABLE new_measurement (LIKE measurement) WITH (autovacuum_enabled=off);
+INSERT INTO new_measurement VALUES (0, '2005-07-21', 25, 20);
 INSERT INTO new_measurement VALUES (1, '2006-03-01', 20, 10);
 INSERT INTO new_measurement VALUES (1, '2006-02-16', 50, 10);
 INSERT INTO new_measurement VALUES (2, '2006-02-10', 20, 20);
@@ -1933,6 +1936,37 @@ INSERT INTO new_measurement VALUES (1, '2006-03-27', NULL, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-17', NULL, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-15', 5, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-16', 10, 10);
+BEGIN;
+MERGE INTO ONLY measurement m
+ USING new_measurement nm ON
+      (m.city_id = nm.city_id and m.logdate=nm.logdate)
+WHEN MATCHED AND nm.peaktemp IS NULL THEN DELETE
+WHEN MATCHED THEN UPDATE
+     SET peaktemp = greatest(m.peaktemp, nm.peaktemp),
+        unitsales = m.unitsales + coalesce(nm.unitsales, 0)
+WHEN NOT MATCHED THEN INSERT
+     (city_id, logdate, peaktemp, unitsales)
+   VALUES (city_id, logdate, peaktemp, unitsales);
+SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate, peaktemp;
+       tableoid       | city_id |  logdate   | peaktemp | unitsales 
+----------------------+---------+------------+----------+-----------
+ measurement          |       0 | 07-21-2005 |       25 |        35
+ measurement_y2006m02 |       1 | 02-10-2006 |       35 |        10
+ measurement_y2006m02 |       1 | 02-16-2006 |       45 |        20
+ measurement_y2006m02 |       1 | 02-16-2006 |       50 |        10
+ measurement_y2006m03 |       1 | 03-01-2006 |       20 |        10
+ measurement_y2006m03 |       1 | 03-17-2006 |       25 |        10
+ measurement_y2006m03 |       1 | 03-27-2006 |       15 |        40
+ measurement_y2006m03 |       1 | 03-27-2006 |          |          
+ measurement_y2007m01 |       1 | 01-15-2007 |        5 |          
+ measurement_y2007m01 |       1 | 01-15-2007 |       10 |        10
+ measurement_y2007m01 |       1 | 01-16-2007 |       10 |        10
+ measurement_y2007m01 |       1 | 01-17-2007 |       10 |        10
+ measurement_y2007m01 |       1 | 01-17-2007 |          |          
+ measurement_y2006m02 |       2 | 02-10-2006 |       20 |        20
+(14 rows)
+
+ROLLBACK;
 MERGE into measurement m
  USING new_measurement nm ON
       (m.city_id = nm.city_id and m.logdate=nm.logdate)
@@ -1946,6 +1980,7 @@ WHEN NOT MATCHED THEN INSERT
 SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate;
        tableoid       | city_id |  logdate   | peaktemp | unitsales 
 ----------------------+---------+------------+----------+-----------
+ measurement          |       0 | 07-21-2005 |       25 |        35
  measurement_y2006m02 |       1 | 02-10-2006 |       35 |        10
  measurement_y2006m02 |       1 | 02-16-2006 |       50 |        30
  measurement_y2006m03 |       1 | 03-01-2006 |       20 |        10
@@ -1953,7 +1988,36 @@ SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate;
  measurement_y2007m01 |       1 | 01-15-2007 |       10 |        10
  measurement_y2007m01 |       1 | 01-16-2007 |       10 |        10
  measurement_y2006m02 |       2 | 02-10-2006 |       20 |        20
+(8 rows)
+
+BEGIN;
+MERGE INTO new_measurement nm
+ USING ONLY measurement m ON
+      (nm.city_id = m.city_id and nm.logdate=m.logdate)
+WHEN MATCHED THEN DELETE;
+SELECT * FROM new_measurement ORDER BY city_id, logdate;
+ city_id |  logdate   | peaktemp | unitsales 
+---------+------------+----------+-----------
+       1 | 02-16-2006 |       50 |        10
+       1 | 03-01-2006 |       20 |        10
+       1 | 03-27-2006 |          |          
+       1 | 01-15-2007 |        5 |          
+       1 | 01-16-2007 |       10 |        10
+       1 | 01-17-2007 |          |          
+       2 | 02-10-2006 |       20 |        20
 (7 rows)
+
+ROLLBACK;
+MERGE INTO new_measurement nm
+ USING measurement m ON
+      (nm.city_id = m.city_id and nm.logdate=m.logdate)
+WHEN MATCHED THEN DELETE;
+SELECT * FROM new_measurement ORDER BY city_id, logdate;
+ city_id |  logdate   | peaktemp | unitsales 
+---------+------------+----------+-----------
+       1 | 03-27-2006 |          |          
+       1 | 01-17-2007 |          |          
+(2 rows)
 
 DROP TABLE measurement, new_measurement CASCADE;
 NOTICE:  drop cascades to 3 other objects

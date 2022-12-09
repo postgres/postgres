@@ -22,13 +22,13 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH <replaceable class="parameter">with_query</replaceable> [, ...] ]
-MERGE INTO <replaceable class="parameter">target_table_name</replaceable> [ [ AS ] <replaceable class="parameter">target_alias</replaceable> ]
+MERGE INTO [ ONLY ] <replaceable class="parameter">target_table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">target_alias</replaceable> ]
 USING <replaceable class="parameter">data_source</replaceable> ON <replaceable class="parameter">join_condition</replaceable>
 <replaceable class="parameter">when_clause</replaceable> [...]
 
 <phrase>where <replaceable class="parameter">data_source</replaceable> is:</phrase>
 
-{ <replaceable class="parameter">source_table_name</replaceable> | ( <replaceable class="parameter">source_query</replaceable> ) } [ [ AS ] <replaceable class="parameter">source_alias</replaceable> ]
+{ [ ONLY ] <replaceable class="parameter">source_table_name</replaceable> [ * ] | ( <replaceable class="parameter">source_query</replaceable> ) } [ [ AS ] <replaceable class="parameter">source_alias</replaceable> ]
 
 <phrase>and <replaceable class="parameter">when_clause</replaceable> is:</phrase>
 
@@ -129,6 +129,14 @@ DELETE
     <listitem>
      <para>
       The name (optionally schema-qualified) of the target table to merge into.
+      If <literal>ONLY</literal> is specified before the table name, matching
+      rows are updated or deleted in the named table only.  If
+      <literal>ONLY</literal> is not specified, matching rows are also updated
+      or deleted in any tables inheriting from the named table.  Optionally,
+      <literal>*</literal> can be specified after the table name to explicitly
+      indicate that descendant tables are included.  The
+      <literal>ONLY</literal> keyword and <literal>*</literal> option do not
+      affect insert actions, which always insert into the named table only.
      </para>
     </listitem>
    </varlistentry>
@@ -151,7 +159,12 @@ DELETE
     <listitem>
      <para>
       The name (optionally schema-qualified) of the source table, view, or
-      transition table.
+      transition table.  If <literal>ONLY</literal> is specified before the
+      table name, matching rows are included from the named table only.  If
+      <literal>ONLY</literal> is not specified, matching rows are also included
+      from any tables inheriting from the named table.  Optionally,
+      <literal>*</literal> can be specified after the table name to explicitly
+      indicate that descendant tables are included.
      </para>
     </listitem>
    </varlistentry>
