@@ -71,6 +71,7 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
+#include "nodes/miscnodes.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgworker.h"
@@ -610,6 +611,128 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	 */
 	CHECK_FOR_INTERRUPTS();
 }
+
+
+/*
+ * errsave_start --- begin a "soft" error-reporting cycle
+ *
+ * If "context" isn't an ErrorSaveContext node, this behaves as
+ * errstart(ERROR, domain), and the errsave() macro ends up acting
+ * exactly like ereport(ERROR, ...).
+ *
+ * If "context" is an ErrorSaveContext node, but the node creator only wants
+ * notification of the fact of a soft error without any details, we just set
+ * the error_occurred flag in the ErrorSaveContext node and return false,
+ * which will cause us to skip the remaining error processing steps.
+ *
+ * Otherwise, create and initialize error stack entry and return true.
+ * Subsequently, errmsg() and perhaps other routines will be called to further
+ * populate the stack entry.  Finally, errsave_finish() will be called to
+ * tidy up.
+ */
+bool
+errsave_start(struct Node *context, const char *domain)
+{
+	ErrorSaveContext *escontext;
+	ErrorData  *edata;
+
+	/*
+	 * Do we have a context for soft error reporting?  If not, just punt to
+	 * errstart().
+	 */
+	if (context == NULL || !IsA(context, ErrorSaveContext))
+		return errstart(ERROR, domain);
+
+	/* Report that a soft error was detected */
+	escontext = (ErrorSaveContext *) context;
+	escontext->error_occurred = true;
+
+	/* Nothing else to do if caller wants no further details */
+	if (!escontext->details_wanted)
+		return false;
+
+	/*
+	 * Okay, crank up a stack entry to store the info in.
+	 */
+
+	recursion_depth++;
+
+	/* Initialize data for this error frame */
+	edata = get_error_stack_entry();
+	edata->elevel = LOG;		/* signal all is well to errsave_finish */
+	set_stack_entry_domain(edata, domain);
+	/* Select default errcode based on the assumed elevel of ERROR */
+	edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
+
+	/*
+	 * Any allocations for this error state level should go into the caller's
+	 * context.  We don't need to pollute ErrorContext, or even require it to
+	 * exist, in this code path.
+	 */
+	edata->assoc_context = CurrentMemoryContext;
+
+	recursion_depth--;
+	return true;
+}
+
+/*
+ * errsave_finish --- end a "soft" error-reporting cycle
+ *
+ * If errsave_start() decided this was a regular error, behave as
+ * errfinish().  Otherwise, package up the error details and save
+ * them in the ErrorSaveContext node.
+ */
+void
+errsave_finish(struct Node *context, const char *filename, int lineno,
+			   const char *funcname)
+{
+	ErrorSaveContext *escontext = (ErrorSaveContext *) context;
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* verify stack depth before accessing *edata */
+	CHECK_STACK_DEPTH();
+
+	/*
+	 * If errsave_start punted to errstart, then elevel will be ERROR or
+	 * perhaps even PANIC.  Punt likewise to errfinish.
+	 */
+	if (edata->elevel >= ERROR)
+	{
+		errfinish(filename, lineno, funcname);
+		pg_unreachable();
+	}
+
+	/*
+	 * Else, we should package up the stack entry contents and deliver them to
+	 * the caller.
+	 */
+	recursion_depth++;
+
+	/* Save the last few bits of error state into the stack entry */
+	set_stack_entry_location(edata, filename, lineno, funcname);
+
+	/* Replace the LOG value that errsave_start inserted */
+	edata->elevel = ERROR;
+
+	/*
+	 * We skip calling backtrace and context functions, which are more likely
+	 * to cause trouble than provide useful context; they might act on the
+	 * assumption that a transaction abort is about to occur.
+	 */
+
+	/*
+	 * Make a copy of the error info for the caller.  All the subsidiary
+	 * strings are already in the caller's context, so it's sufficient to
+	 * flat-copy the stack entry.
+	 */
+	escontext->error_data = palloc_object(ErrorData);
+	memcpy(escontext->error_data, edata, sizeof(ErrorData));
+
+	/* Exit error-handling context */
+	errordata_stack_depth--;
+	recursion_depth--;
+}
+
 
 /*
  * get_error_stack_entry --- allocate and initialize a new stack entry

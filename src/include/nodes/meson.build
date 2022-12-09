@@ -16,6 +16,7 @@ node_support_input_i = [
   'nodes/bitmapset.h',
   'nodes/extensible.h',
   'nodes/lockoptions.h',
+  'nodes/miscnodes.h',
   'nodes/replnodes.h',
   'nodes/supportnodes.h',
   'nodes/value.h',

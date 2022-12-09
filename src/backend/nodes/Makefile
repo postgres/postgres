@@ -56,6 +56,7 @@ node_headers = \
 	nodes/bitmapset.h \
 	nodes/extensible.h \
 	nodes/lockoptions.h \
+	nodes/miscnodes.h \
 	nodes/replnodes.h \
 	nodes/supportnodes.h \
 	nodes/value.h \

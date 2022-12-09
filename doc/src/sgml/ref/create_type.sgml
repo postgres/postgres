@@ -900,6 +900,17 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    function is written in C.
   </para>
 
+  <para>
+   In <productname>PostgreSQL</productname> version 16 and later,
+   it is desirable for base types' input functions to
+   return <quote>soft</quote> errors using the
+   new <function>errsave()</function>/<function>ereturn()</function>
+   mechanism, rather than throwing <function>ereport()</function>
+   exceptions as in previous versions.
+   See <filename>src/backend/utils/fmgr/README</filename> for more
+   information.
+  </para>
+
  </refsect1>
 
  <refsect1>

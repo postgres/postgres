@@ -18,6 +18,10 @@
 
 #include "lib/stringinfo.h"
 
+/* We cannot include nodes.h yet, so forward-declare struct Node */
+struct Node;
+
+
 /* Error level codes */
 #define DEBUG5		10			/* Debugging messages, in categories of
 								 * decreasing detail. */
@@ -233,6 +237,63 @@ extern int	getinternalerrposition(void);
  */
 #define elog(elevel, ...)  \
 	ereport(elevel, errmsg_internal(__VA_ARGS__))
+
+
+/*----------
+ * Support for reporting "soft" errors that don't require a full transaction
+ * abort to clean up.  This is to be used in this way:
+ *		errsave(context,
+ *				errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+ *				errmsg("invalid input syntax for type %s: \"%s\"",
+ *					   "boolean", in_str),
+ *				... other errxxx() fields as needed ...);
+ *
+ * "context" is a node pointer or NULL, and the remaining auxiliary calls
+ * provide the same error details as in ereport().  If context is not a
+ * pointer to an ErrorSaveContext node, then errsave(context, ...)
+ * behaves identically to ereport(ERROR, ...).  If context is a pointer
+ * to an ErrorSaveContext node, then the information provided by the
+ * auxiliary calls is stored in the context node and control returns
+ * normally.  The caller of errsave() must then do any required cleanup
+ * and return control back to its caller.  That caller must check the
+ * ErrorSaveContext node to see whether an error occurred before
+ * it can trust the function's result to be meaningful.
+ *
+ * errsave_domain() allows a message domain to be specified; it is
+ * precisely analogous to ereport_domain().
+ *----------
+ */
+#define errsave_domain(context, domain, ...)	\
+	do { \
+		struct Node *context_ = (context); \
+		pg_prevent_errno_in_scope(); \
+		if (errsave_start(context_, domain)) \
+			__VA_ARGS__, errsave_finish(context_, __FILE__, __LINE__, __func__); \
+	} while(0)
+
+#define errsave(context, ...)	\
+	errsave_domain(context, TEXTDOMAIN, __VA_ARGS__)
+
+/*
+ * "ereturn(context, dummy_value, ...);" is exactly the same as
+ * "errsave(context, ...); return dummy_value;".  This saves a bit
+ * of typing in the common case where a function has no cleanup
+ * actions to take after reporting a soft error.  "dummy_value"
+ * can be empty if the function returns void.
+ */
+#define ereturn_domain(context, dummy_value, domain, ...)	\
+	do { \
+		errsave_domain(context, domain, __VA_ARGS__); \
+		return dummy_value; \
+	} while(0)
+
+#define ereturn(context, dummy_value, ...)	\
+	ereturn_domain(context, dummy_value, TEXTDOMAIN, __VA_ARGS__)
+
+extern bool errsave_start(struct Node *context, const char *domain);
+extern void errsave_finish(struct Node *context,
+						   const char *filename, int lineno,
+						   const char *funcname);
 
 
 /* Support for constructing error strings separately from ereport() calls */

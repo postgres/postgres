@@ -23,6 +23,7 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "nodes/miscnodes.h"
 #include "nodes/nodeFuncs.h"
 #include "pgstat.h"
 #include "utils/acl.h"
@@ -1547,6 +1548,70 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 	}
 
 	return result;
+}
+
+/*
+ * Call a previously-looked-up datatype input function, with non-exception
+ * handling of "soft" errors.
+ *
+ * This is basically like InputFunctionCall, but the converted Datum is
+ * returned into *result while the function result is true for success or
+ * false for failure.  Also, the caller may pass an ErrorSaveContext node.
+ * (We declare that as "fmNodePtr" to avoid including nodes.h in fmgr.h.)
+ *
+ * If escontext points to an ErrorSaveContext, any "soft" errors detected by
+ * the input function will be reported by filling the escontext struct and
+ * returning false.  (The caller can choose to test SOFT_ERROR_OCCURRED(),
+ * but checking the function result instead is usually cheaper.)
+ *
+ * If escontext does not point to an ErrorSaveContext, errors are reported
+ * via ereport(ERROR), so that there is no functional difference from
+ * InputFunctionCall; the result will always be true if control returns.
+ */
+bool
+InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
+					  Oid typioparam, int32 typmod,
+					  fmNodePtr escontext,
+					  Datum *result)
+{
+	LOCAL_FCINFO(fcinfo, 3);
+
+	if (str == NULL && flinfo->fn_strict)
+	{
+		*result = (Datum) 0;	/* just return null result */
+		return true;
+	}
+
+	InitFunctionCallInfoData(*fcinfo, flinfo, 3, InvalidOid, escontext, NULL);
+
+	fcinfo->args[0].value = CStringGetDatum(str);
+	fcinfo->args[0].isnull = false;
+	fcinfo->args[1].value = ObjectIdGetDatum(typioparam);
+	fcinfo->args[1].isnull = false;
+	fcinfo->args[2].value = Int32GetDatum(typmod);
+	fcinfo->args[2].isnull = false;
+
+	*result = FunctionCallInvoke(fcinfo);
+
+	/* Result value is garbage, and could be null, if an error was reported */
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return false;
+
+	/* Otherwise, should get null result if and only if str is NULL */
+	if (str == NULL)
+	{
+		if (!fcinfo->isnull)
+			elog(ERROR, "input function %u returned non-NULL",
+				 flinfo->fn_oid);
+	}
+	else
+	{
+		if (fcinfo->isnull)
+			elog(ERROR, "input function %u returned NULL",
+				 flinfo->fn_oid);
+	}
+
+	return true;
 }
 
 /*

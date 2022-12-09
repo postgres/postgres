@@ -68,6 +68,7 @@ my @all_input_files = qw(
   nodes/bitmapset.h
   nodes/extensible.h
   nodes/lockoptions.h
+  nodes/miscnodes.h
   nodes/replnodes.h
   nodes/supportnodes.h
   nodes/value.h
@@ -89,6 +90,7 @@ my @nodetag_only_files = qw(
   executor/tuptable.h
   foreign/fdwapi.h
   nodes/lockoptions.h
+  nodes/miscnodes.h
   nodes/replnodes.h
   nodes/supportnodes.h
 );

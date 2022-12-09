@@ -643,6 +643,7 @@ EquivalenceClass
 EquivalenceMember
 ErrorContextCallback
 ErrorData
+ErrorSaveContext
 EstimateDSMForeignScan_function
 EstimationInfo
 EventTriggerCacheEntry
