@@ -69,7 +69,8 @@ static int	DetermineTimeZoneOffsetInternal(struct pg_tm *tm, pg_tz *tzp,
 static bool DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t,
 												  const char *abbr, pg_tz *tzp,
 												  int *offset, int *isdst);
-static pg_tz *FetchDynamicTimeZone(TimeZoneAbbrevTable *tbl, const datetkn *tp);
+static pg_tz *FetchDynamicTimeZone(TimeZoneAbbrevTable *tbl, const datetkn *tp,
+								   DateTimeErrorExtra *extra);
 
 
 const int	day_tab[2][13] =
@@ -951,6 +952,9 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
  * Return 0 if full date, 1 if only time, and negative DTERR code if problems.
  * (Currently, all callers treat 1 as an error return too.)
  *
+ * Inputs are field[] and ftype[] arrays, of length nf.
+ * Other arguments are outputs.
+ *
  *		External format(s):
  *				"<weekday> <month>-<day>-<year> <hour>:<minute>:<second>"
  *				"Fri Feb-7-1997 15:23:27"
@@ -972,7 +976,8 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-			   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp)
+			   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp,
+			   DateTimeErrorExtra *extra)
 {
 	int			fmask = 0,
 				tmask,
@@ -1112,15 +1117,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						namedTz = pg_tzset(field[i]);
 						if (!namedTz)
 						{
-							/*
-							 * We should return an error code instead of
-							 * ereport'ing directly, but then there is no way
-							 * to report the bad time zone name.
-							 */
-							ereport(ERROR,
-									(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									 errmsg("time zone \"%s\" not recognized",
-											field[i])));
+							extra->dtee_timezone = field[i];
+							return DTERR_BAD_TIMEZONE;
 						}
 						/* we'll apply the zone setting below */
 						tmask = DTK_M(TZ);
@@ -1376,7 +1374,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			case DTK_STRING:
 			case DTK_SPECIAL:
 				/* timezone abbrevs take precedence over built-in tokens */
-				type = DecodeTimezoneAbbrev(i, field[i], &val, &valtz);
+				dterr = DecodeTimezoneAbbrev(i, field[i],
+											 &type, &val, &valtz, extra);
+				if (dterr)
+					return dterr;
 				if (type == UNKNOWN_FIELD)
 					type = DecodeSpecial(i, field[i], &val);
 				if (type == IGNORE_DTF)
@@ -1912,6 +1913,9 @@ DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t, const char *abbr, pg_tz *tzp,
  * Interpret parsed string as time fields only.
  * Returns 0 if successful, DTERR code if bogus input detected.
  *
+ * Inputs are field[] and ftype[] arrays, of length nf.
+ * Other arguments are outputs.
+ *
  * Note that support for time zone is here for
  * SQL TIME WITH TIME ZONE, but it reveals
  * bogosity with SQL date/time standards, since
@@ -1922,7 +1926,8 @@ DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t, const char *abbr, pg_tz *tzp,
  */
 int
 DecodeTimeOnly(char **field, int *ftype, int nf,
-			   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp)
+			   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp,
+			   DateTimeErrorExtra *extra)
 {
 	int			fmask = 0,
 				tmask,
@@ -2018,15 +2023,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						namedTz = pg_tzset(field[i]);
 						if (!namedTz)
 						{
-							/*
-							 * We should return an error code instead of
-							 * ereport'ing directly, but then there is no way
-							 * to report the bad time zone name.
-							 */
-							ereport(ERROR,
-									(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									 errmsg("time zone \"%s\" not recognized",
-											field[i])));
+							extra->dtee_timezone = field[i];
+							return DTERR_BAD_TIMEZONE;
 						}
 						/* we'll apply the zone setting below */
 						ftype[i] = DTK_TZ;
@@ -2278,7 +2276,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 			case DTK_STRING:
 			case DTK_SPECIAL:
 				/* timezone abbrevs take precedence over built-in tokens */
-				type = DecodeTimezoneAbbrev(i, field[i], &val, &valtz);
+				dterr = DecodeTimezoneAbbrev(i, field[i],
+											 &type, &val, &valtz, extra);
+				if (dterr)
+					return dterr;
 				if (type == UNKNOWN_FIELD)
 					type = DecodeSpecial(i, field[i], &val);
 				if (type == IGNORE_DTF)
@@ -3211,11 +3212,17 @@ DecodeTimezone(const char *str, int *tzp)
 /* DecodeTimezoneAbbrev()
  * Interpret string as a timezone abbreviation, if possible.
  *
- * Returns an abbreviation type (TZ, DTZ, or DYNTZ), or UNKNOWN_FIELD if
+ * Sets *ftype to an abbreviation type (TZ, DTZ, or DYNTZ), or UNKNOWN_FIELD if
  * string is not any known abbreviation.  On success, set *offset and *tz to
  * represent the UTC offset (for TZ or DTZ) or underlying zone (for DYNTZ).
  * Note that full timezone names (such as America/New_York) are not handled
  * here, mostly for historical reasons.
+ *
+ * The function result is 0 or a DTERR code; in the latter case, *extra
+ * is filled as needed.  Note that unknown-abbreviation is not considered
+ * an error case.  Also note that many callers assume that the DTERR code
+ * is one that DateTimeParseError does not require "str" or "datatype"
+ * strings for.
  *
  * Given string must be lowercased already.
  *
@@ -3224,9 +3231,9 @@ DecodeTimezone(const char *str, int *tzp)
  */
 int
 DecodeTimezoneAbbrev(int field, const char *lowtoken,
-					 int *offset, pg_tz **tz)
+					 int *ftype, int *offset, pg_tz **tz,
+					 DateTimeErrorExtra *extra)
 {
-	int			type;
 	const datetkn *tp;
 
 	tp = abbrevcache[field];
@@ -3241,18 +3248,20 @@ DecodeTimezoneAbbrev(int field, const char *lowtoken,
 	}
 	if (tp == NULL)
 	{
-		type = UNKNOWN_FIELD;
+		*ftype = UNKNOWN_FIELD;
 		*offset = 0;
 		*tz = NULL;
 	}
 	else
 	{
 		abbrevcache[field] = tp;
-		type = tp->type;
-		if (type == DYNTZ)
+		*ftype = tp->type;
+		if (tp->type == DYNTZ)
 		{
 			*offset = 0;
-			*tz = FetchDynamicTimeZone(zoneabbrevtbl, tp);
+			*tz = FetchDynamicTimeZone(zoneabbrevtbl, tp, extra);
+			if (*tz == NULL)
+				return DTERR_BAD_ZONE_ABBREV;
 		}
 		else
 		{
@@ -3261,7 +3270,7 @@ DecodeTimezoneAbbrev(int field, const char *lowtoken,
 		}
 	}
 
-	return type;
+	return 0;
 }
 
 
@@ -4014,15 +4023,21 @@ DecodeUnits(int field, const char *lowtoken, int *val)
 /*
  * Report an error detected by one of the datetime input processing routines.
  *
- * dterr is the error code, str is the original input string, datatype is
- * the name of the datatype we were trying to accept.
+ * dterr is the error code, and *extra contains any auxiliary info we need
+ * for the error report.  extra can be NULL if not needed for the particular
+ * dterr value.
+ *
+ * str is the original input string, and datatype is the name of the datatype
+ * we were trying to accept.  (For some DTERR codes, these are not used and
+ * can be NULL.)
  *
  * Note: it might seem useless to distinguish DTERR_INTERVAL_OVERFLOW and
  * DTERR_TZDISP_OVERFLOW from DTERR_FIELD_OVERFLOW, but SQL99 mandates three
  * separate SQLSTATE codes, so ...
  */
 void
-DateTimeParseError(int dterr, const char *str, const char *datatype)
+DateTimeParseError(int dterr, DateTimeErrorExtra *extra,
+				   const char *str, const char *datatype)
 {
 	switch (dterr)
 	{
@@ -4051,6 +4066,20 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
 					(errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
 					 errmsg("time zone displacement out of range: \"%s\"",
 							str)));
+			break;
+		case DTERR_BAD_TIMEZONE:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("time zone \"%s\" not recognized",
+							extra->dtee_timezone)));
+			break;
+		case DTERR_BAD_ZONE_ABBREV:
+			ereport(ERROR,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("time zone \"%s\" not recognized",
+							extra->dtee_timezone),
+					 errdetail("This time zone name appears in the configuration file for time zone abbreviation \"%s\".",
+							   extra->dtee_abbrev)));
 			break;
 		case DTERR_BAD_FORMAT:
 		default:
@@ -4880,9 +4909,12 @@ InstallTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl)
 
 /*
  * Helper subroutine to locate pg_tz timezone for a dynamic abbreviation.
+ *
+ * On failure, returns NULL and fills *extra for a DTERR_BAD_ZONE_ABBREV error.
  */
 static pg_tz *
-FetchDynamicTimeZone(TimeZoneAbbrevTable *tbl, const datetkn *tp)
+FetchDynamicTimeZone(TimeZoneAbbrevTable *tbl, const datetkn *tp,
+					 DateTimeErrorExtra *extra)
 {
 	DynamicZoneAbbrev *dtza;
 
@@ -4896,18 +4928,12 @@ FetchDynamicTimeZone(TimeZoneAbbrevTable *tbl, const datetkn *tp)
 	if (dtza->tz == NULL)
 	{
 		dtza->tz = pg_tzset(dtza->zone);
-
-		/*
-		 * Ideally we'd let the caller ereport instead of doing it here, but
-		 * then there is no way to report the bad time zone name.
-		 */
 		if (dtza->tz == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("time zone \"%s\" not recognized",
-							dtza->zone),
-					 errdetail("This time zone name appears in the configuration file for time zone abbreviation \"%s\".",
-							   tp->token)));
+		{
+			/* Ooops, bogus zone name in config file entry */
+			extra->dtee_timezone = dtza->zone;
+			extra->dtee_abbrev = tp->token;
+		}
 	}
 	return dtza->tz;
 }
@@ -4993,10 +5019,14 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 			{
 				/* Determine the current meaning of the abbrev */
 				pg_tz	   *tzp;
+				DateTimeErrorExtra extra;
 				TimestampTz now;
 				int			isdst;
 
-				tzp = FetchDynamicTimeZone(zoneabbrevtbl, tp);
+				tzp = FetchDynamicTimeZone(zoneabbrevtbl, tp, &extra);
+				if (tzp == NULL)
+					DateTimeParseError(DTERR_BAD_ZONE_ABBREV, &extra,
+									   NULL, NULL);
 				now = GetCurrentTransactionStartTimestamp();
 				gmtoffset = -DetermineTimeZoneAbbrevOffsetTS(now,
 															 tp->token,

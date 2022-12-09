@@ -4790,12 +4790,14 @@ check_recovery_target_time(char **newval, void **extra, GucSource source)
 			char	   *field[MAXDATEFIELDS];
 			int			ftype[MAXDATEFIELDS];
 			char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+			DateTimeErrorExtra dtextra;
 			TimestampTz timestamp;
 
 			dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 								  field, ftype, MAXDATEFIELDS, &nf);
 			if (dterr == 0)
-				dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+				dterr = DecodeDateTime(field, ftype, nf,
+									   &dtype, tm, &fsec, &tz, &dtextra);
 			if (dterr != 0)
 				return false;
 			if (dtype != DTK_DATE)

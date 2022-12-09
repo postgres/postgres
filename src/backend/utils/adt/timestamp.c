@@ -161,13 +161,15 @@ timestamp_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	DateTimeErrorExtra extra;
 
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
-		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+		dterr = DecodeDateTime(field, ftype, nf,
+							   &dtype, tm, &fsec, &tz, &extra);
 	if (dterr != 0)
-		DateTimeParseError(dterr, str, "timestamp");
+		DateTimeParseError(dterr, &extra, str, "timestamp");
 
 	switch (dtype)
 	{
@@ -419,13 +421,15 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	DateTimeErrorExtra extra;
 
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
-		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+		dterr = DecodeDateTime(field, ftype, nf,
+							   &dtype, tm, &fsec, &tz, &extra);
 	if (dterr != 0)
-		DateTimeParseError(dterr, str, "timestamp with time zone");
+		DateTimeParseError(dterr, &extra, str, "timestamp with time zone");
 
 	switch (dtype)
 	{
@@ -470,7 +474,7 @@ static int
 parse_sane_timezone(struct pg_tm *tm, text *zone)
 {
 	char		tzname[TZ_STRLEN_MAX + 1];
-	int			rt;
+	int			dterr;
 	int			tz;
 
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
@@ -497,19 +501,20 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 						"numeric time zone", tzname),
 				 errhint("Numeric time zones must have \"-\" or \"+\" as first character.")));
 
-	rt = DecodeTimezone(tzname, &tz);
-	if (rt != 0)
+	dterr = DecodeTimezone(tzname, &tz);
+	if (dterr != 0)
 	{
 		char	   *lowzone;
 		int			type,
 					val;
 		pg_tz	   *tzp;
+		DateTimeErrorExtra extra;
 
-		if (rt == DTERR_TZDISP_OVERFLOW)
+		if (dterr == DTERR_TZDISP_OVERFLOW)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("numeric time zone \"%s\" out of range", tzname)));
-		else if (rt != DTERR_BAD_FORMAT)
+		else if (dterr != DTERR_BAD_FORMAT)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("time zone \"%s\" not recognized", tzname)));
@@ -518,7 +523,9 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 		lowzone = downcase_truncate_identifier(tzname,
 											   strlen(tzname),
 											   false);
-		type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
+		dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
+		if (dterr)
+			DateTimeParseError(dterr, &extra, NULL, NULL);
 
 		if (type == TZ || type == DTZ)
 		{
@@ -897,6 +904,7 @@ interval_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[256];
+	DateTimeErrorExtra extra;
 
 	itm_in->tm_year = 0;
 	itm_in->tm_mon = 0;
@@ -923,7 +931,7 @@ interval_in(PG_FUNCTION_ARGS)
 	{
 		if (dterr == DTERR_FIELD_OVERFLOW)
 			dterr = DTERR_INTERVAL_OVERFLOW;
-		DateTimeParseError(dterr, str, "interval");
+		DateTimeParseError(dterr, &extra, str, "interval");
 	}
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -4291,9 +4299,11 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 	TimestampTz result;
 	char		tzname[TZ_STRLEN_MAX + 1];
 	char	   *lowzone;
-	int			type,
+	int			dterr,
+				type,
 				val;
 	pg_tz	   *tzp;
+	DateTimeErrorExtra extra;
 
 	/*
 	 * timestamptz_zone() doesn't look up the zone for infinite inputs, so we
@@ -4312,7 +4322,9 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 										   strlen(tzname),
 										   false);
 
-	type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
+	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
+	if (dterr)
+		DateTimeParseError(dterr, &extra, NULL, NULL);
 
 	if (type == TZ || type == DTZ)
 	{
@@ -5412,9 +5424,11 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
 	char	   *lowzone;
-	int			type,
+	int			dterr,
+				type,
 				val;
 	pg_tz	   *tzp;
+	DateTimeErrorExtra extra;
 	struct pg_tm tm;
 	fsec_t		fsec;
 
@@ -5436,7 +5450,9 @@ timestamp_zone(PG_FUNCTION_ARGS)
 										   strlen(tzname),
 										   false);
 
-	type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
+	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
+	if (dterr)
+		DateTimeParseError(dterr, &extra, NULL, NULL);
 
 	if (type == TZ || type == DTZ)
 	{
@@ -5666,9 +5682,11 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
 	char	   *lowzone;
-	int			type,
+	int			dterr,
+				type,
 				val;
 	pg_tz	   *tzp;
+	DateTimeErrorExtra extra;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
@@ -5688,7 +5706,9 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 										   strlen(tzname),
 										   false);
 
-	type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
+	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
+	if (dterr)
+		DateTimeParseError(dterr, &extra, NULL, NULL);
 
 	if (type == TZ || type == DTZ)
 	{

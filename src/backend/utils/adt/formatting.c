@@ -4246,10 +4246,12 @@ to_timestamp(PG_FUNCTION_ARGS)
 	/* Use the specified time zone, if any. */
 	if (tm.tm_zone)
 	{
+		DateTimeErrorExtra extra;
 		int			dterr = DecodeTimezone(tm.tm_zone, &tz);
 
 		if (dterr)
-			DateTimeParseError(dterr, text_to_cstring(date_txt), "timestamptz");
+			DateTimeParseError(dterr, &extra, text_to_cstring(date_txt),
+							   "timestamptz");
 	}
 	else
 		tz = DetermineTimeZoneOffset(&tm, session_timezone);
@@ -4343,10 +4345,13 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 
 				if (tm.tm_zone)
 				{
+					DateTimeErrorExtra extra;
 					int			dterr = DecodeTimezone(tm.tm_zone, tz);
 
 					if (dterr)
-						DateTimeParseError(dterr, text_to_cstring(date_txt), "timestamptz");
+						DateTimeParseError(dterr, &extra,
+										   text_to_cstring(date_txt),
+										   "timestamptz");
 				}
 				else
 				{
@@ -4429,10 +4434,13 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 
 			if (tm.tm_zone)
 			{
+				DateTimeErrorExtra extra;
 				int			dterr = DecodeTimezone(tm.tm_zone, tz);
 
 				if (dterr)
-					RETURN_ERROR(DateTimeParseError(dterr, text_to_cstring(date_txt), "timetz"));
+					RETURN_ERROR(DateTimeParseError(dterr, &extra,
+													text_to_cstring(date_txt),
+													"timetz"));
 			}
 			else
 			{
@@ -4781,7 +4789,7 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 			 * said DTERR_MD_FIELD_OVERFLOW, because we don't want to print an
 			 * irrelevant hint about datestyle.
 			 */
-			RETURN_ERROR(DateTimeParseError(DTERR_FIELD_OVERFLOW, date_str, "timestamp"));
+			RETURN_ERROR(DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL, date_str, "timestamp"));
 		}
 	}
 
@@ -4791,7 +4799,7 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 		tm->tm_sec < 0 || tm->tm_sec >= SECS_PER_MINUTE ||
 		*fsec < INT64CONST(0) || *fsec >= USECS_PER_SEC)
 	{
-		RETURN_ERROR(DateTimeParseError(DTERR_FIELD_OVERFLOW, date_str, "timestamp"));
+		RETURN_ERROR(DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL, date_str, "timestamp"));
 	}
 
 	/* Save parsed time-zone into tm->tm_zone if it was specified */
@@ -4802,7 +4810,7 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 		if (tmfc.tzh < 0 || tmfc.tzh > MAX_TZDISP_HOUR ||
 			tmfc.tzm < 0 || tmfc.tzm >= MINS_PER_HOUR)
 		{
-			RETURN_ERROR(DateTimeParseError(DTERR_TZDISP_OVERFLOW, date_str, "timestamp"));
+			RETURN_ERROR(DateTimeParseError(DTERR_TZDISP_OVERFLOW, NULL, date_str, "timestamp"));
 		}
 
 		tz = psprintf("%c%02d:%02d",
