@@ -4031,50 +4031,54 @@ DecodeUnits(int field, const char *lowtoken, int *val)
  * we were trying to accept.  (For some DTERR codes, these are not used and
  * can be NULL.)
  *
+ * If escontext points to an ErrorSaveContext node, that is filled instead
+ * of throwing an error.
+ *
  * Note: it might seem useless to distinguish DTERR_INTERVAL_OVERFLOW and
  * DTERR_TZDISP_OVERFLOW from DTERR_FIELD_OVERFLOW, but SQL99 mandates three
  * separate SQLSTATE codes, so ...
  */
 void
 DateTimeParseError(int dterr, DateTimeErrorExtra *extra,
-				   const char *str, const char *datatype)
+				   const char *str, const char *datatype,
+				   Node *escontext)
 {
 	switch (dterr)
 	{
 		case DTERR_FIELD_OVERFLOW:
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
 					 errmsg("date/time field value out of range: \"%s\"",
 							str)));
 			break;
 		case DTERR_MD_FIELD_OVERFLOW:
 			/* <nanny>same as above, but add hint about DateStyle</nanny> */
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
 					 errmsg("date/time field value out of range: \"%s\"",
 							str),
 					 errhint("Perhaps you need a different \"datestyle\" setting.")));
 			break;
 		case DTERR_INTERVAL_OVERFLOW:
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_INTERVAL_FIELD_OVERFLOW),
 					 errmsg("interval field value out of range: \"%s\"",
 							str)));
 			break;
 		case DTERR_TZDISP_OVERFLOW:
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
 					 errmsg("time zone displacement out of range: \"%s\"",
 							str)));
 			break;
 		case DTERR_BAD_TIMEZONE:
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("time zone \"%s\" not recognized",
 							extra->dtee_timezone)));
 			break;
 		case DTERR_BAD_ZONE_ABBREV:
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("time zone \"%s\" not recognized",
 							extra->dtee_timezone),
@@ -4083,7 +4087,7 @@ DateTimeParseError(int dterr, DateTimeErrorExtra *extra,
 			break;
 		case DTERR_BAD_FORMAT:
 		default:
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							datatype, str)));
@@ -5026,7 +5030,7 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 				tzp = FetchDynamicTimeZone(zoneabbrevtbl, tp, &extra);
 				if (tzp == NULL)
 					DateTimeParseError(DTERR_BAD_ZONE_ABBREV, &extra,
-									   NULL, NULL);
+									   NULL, NULL, NULL);
 				now = GetCurrentTransactionStartTimestamp();
 				gmtoffset = -DetermineTimeZoneAbbrevOffsetTS(now,
 															 tp->token,

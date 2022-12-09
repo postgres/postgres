@@ -131,6 +131,37 @@ SELECT '25:00:00 PDT'::timetz;  -- not allowed
 ERROR:  date/time field value out of range: "25:00:00 PDT"
 LINE 1: SELECT '25:00:00 PDT'::timetz;
                ^
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('12:00:00 PDT', 'timetz');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('25:00:00 PDT', 'timetz');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('15:36:39 America/New_York', 'timetz');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('25:00:00 PDT', 'timetz');
+               pg_input_error_message               
+----------------------------------------------------
+ date/time field value out of range: "25:00:00 PDT"
+(1 row)
+
+SELECT pg_input_error_message('15:36:39 America/New_York', 'timetz');
+                             pg_input_error_message                             
+--------------------------------------------------------------------------------
+ invalid input syntax for type time with time zone: "15:36:39 America/New_York"
+(1 row)
+
 --
 -- TIME simple math
 --

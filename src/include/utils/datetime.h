@@ -16,7 +16,6 @@
 #ifndef DATETIME_H
 #define DATETIME_H
 
-#include "nodes/nodes.h"
 #include "utils/timestamp.h"
 
 /* this struct is declared in utils/tzparser.h: */
@@ -318,8 +317,8 @@ extern int	DecodeISO8601Interval(char *str,
 								  int *dtype, struct pg_itm_in *itm_in);
 
 extern void DateTimeParseError(int dterr, DateTimeErrorExtra *extra,
-							   const char *str,
-							   const char *datatype) pg_attribute_noreturn();
+							   const char *str, const char *datatype,
+							   struct Node *escontext);
 
 extern int	DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp);
 extern int	DetermineTimeZoneAbbrevOffset(struct pg_tm *tm, const char *abbr, pg_tz *tzp);
@@ -343,7 +342,7 @@ extern int	DecodeUnits(int field, const char *lowtoken, int *val);
 
 extern int	j2day(int date);
 
-extern Node *TemporalSimplify(int32 max_precis, Node *node);
+extern struct Node *TemporalSimplify(int32 max_precis, struct Node *node);
 
 extern bool CheckDateTokenTables(void);
 
@@ -351,8 +350,7 @@ extern TimeZoneAbbrevTable *ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs,
 												   int n);
 extern void InstallTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl);
 
-extern void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
-extern bool AdjustTimestampForTypmodError(Timestamp *time, int32 typmod,
-										  bool *error);
+extern bool AdjustTimestampForTypmod(Timestamp *time, int32 typmod,
+									 struct Node *escontext);
 
 #endif							/* DATETIME_H */

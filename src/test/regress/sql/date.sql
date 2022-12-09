@@ -193,6 +193,13 @@ SELECT date '4714-11-23 BC';  -- out of range
 SELECT date '5874897-12-31';
 SELECT date '5874898-01-01';  -- out of range
 
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('now', 'date');
+SELECT pg_input_is_valid('garbage', 'date');
+SELECT pg_input_is_valid('6874898-01-01', 'date');
+SELECT pg_input_error_message('garbage', 'date');
+SELECT pg_input_error_message('6874898-01-01', 'date');
+
 RESET datestyle;
 
 --

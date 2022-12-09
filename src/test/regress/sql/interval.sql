@@ -32,6 +32,13 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months 12 hours');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('badly formatted interval');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('1.5 weeks', 'interval');
+SELECT pg_input_is_valid('garbage', 'interval');
+SELECT pg_input_is_valid('@ 30 eons ago', 'interval');
+SELECT pg_input_error_message('garbage', 'interval');
+SELECT pg_input_error_message('@ 30 eons ago', 'interval');
+
 -- test interval operators
 
 SELECT * FROM INTERVAL_TBL;

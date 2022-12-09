@@ -94,6 +94,13 @@ INSERT INTO TIMESTAMP_TBL VALUES ('19970210 173201 America/New_York');
 -- this fails (even though TZ is a no-op, we still look it up)
 INSERT INTO TIMESTAMP_TBL VALUES ('19970710 173201 America/Does_not_exist');
 
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('now', 'timestamp');
+SELECT pg_input_is_valid('garbage', 'timestamp');
+SELECT pg_input_is_valid('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamp');
+SELECT pg_input_error_message('garbage', 'timestamp');
+SELECT pg_input_error_message('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamp');
+
 -- Check date conversion and date arithmetic
 INSERT INTO TIMESTAMP_TBL VALUES ('1997-06-10 18:32:01 PDT');
 

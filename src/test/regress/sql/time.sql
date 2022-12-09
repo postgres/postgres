@@ -40,6 +40,13 @@ SELECT '23:59:60.01'::time;  -- not allowed
 SELECT '24:01:00'::time;  -- not allowed
 SELECT '25:00:00'::time;  -- not allowed
 
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('12:00:00', 'time');
+SELECT pg_input_is_valid('25:00:00', 'time');
+SELECT pg_input_is_valid('15:36:39 America/New_York', 'time');
+SELECT pg_input_error_message('25:00:00', 'time');
+SELECT pg_input_error_message('15:36:39 America/New_York', 'time');
+
 --
 -- TIME simple math
 --

@@ -72,6 +72,37 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 ERROR:  invalid input syntax for type interval: "@ 30 eons ago"
 LINE 1: INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
                                               ^
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('1.5 weeks', 'interval');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('garbage', 'interval');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('@ 30 eons ago', 'interval');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('garbage', 'interval');
+              pg_input_error_message               
+---------------------------------------------------
+ invalid input syntax for type interval: "garbage"
+(1 row)
+
+SELECT pg_input_error_message('@ 30 eons ago', 'interval');
+                 pg_input_error_message                  
+---------------------------------------------------------
+ invalid input syntax for type interval: "@ 30 eons ago"
+(1 row)
+
 -- test interval operators
 SELECT * FROM INTERVAL_TBL;
        f1        

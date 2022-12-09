@@ -111,6 +111,7 @@ Datum
 date_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	DateADT		date;
 	fsec_t		fsec;
 	struct pg_tm tt,
@@ -130,7 +131,10 @@ date_in(PG_FUNCTION_ARGS)
 		dterr = DecodeDateTime(field, ftype, nf,
 							   &dtype, tm, &fsec, &tzp, &extra);
 	if (dterr != 0)
-		DateTimeParseError(dterr, &extra, str, "date");
+	{
+		DateTimeParseError(dterr, &extra, str, "date", escontext);
+		PG_RETURN_NULL();
+	}
 
 	switch (dtype)
 	{
@@ -150,13 +154,13 @@ date_in(PG_FUNCTION_ARGS)
 			PG_RETURN_DATEADT(date);
 
 		default:
-			DateTimeParseError(DTERR_BAD_FORMAT, &extra, str, "date");
-			break;
+			DateTimeParseError(DTERR_BAD_FORMAT, &extra, str, "date", escontext);
+			PG_RETURN_NULL();
 	}
 
 	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("date out of range: \"%s\"", str)));
 
@@ -164,7 +168,7 @@ date_in(PG_FUNCTION_ARGS)
 
 	/* Now check for just-out-of-range dates */
 	if (!IS_VALID_DATE(date))
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("date out of range: \"%s\"", str)));
 
@@ -1384,11 +1388,11 @@ Datum
 time_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
+	Node	   *escontext = fcinfo->context;
 	TimeADT		result;
 	fsec_t		fsec;
 	struct pg_tm tt,
@@ -1408,7 +1412,10 @@ time_in(PG_FUNCTION_ARGS)
 		dterr = DecodeTimeOnly(field, ftype, nf,
 							   &dtype, tm, &fsec, &tz, &extra);
 	if (dterr != 0)
-		DateTimeParseError(dterr, &extra, str, "time");
+	{
+		DateTimeParseError(dterr, &extra, str, "time", escontext);
+		PG_RETURN_NULL();
+	}
 
 	tm2time(tm, fsec, &result);
 	AdjustTimeForTypmod(&result, typmod);
@@ -2272,11 +2279,11 @@ Datum
 timetz_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
+	Node	   *escontext = fcinfo->context;
 	TimeTzADT  *result;
 	fsec_t		fsec;
 	struct pg_tm tt,
@@ -2296,7 +2303,11 @@ timetz_in(PG_FUNCTION_ARGS)
 		dterr = DecodeTimeOnly(field, ftype, nf,
 							   &dtype, tm, &fsec, &tz, &extra);
 	if (dterr != 0)
-		DateTimeParseError(dterr, &extra, str, "time with time zone");
+	{
+		DateTimeParseError(dterr, &extra, str, "time with time zone",
+						   escontext);
+		PG_RETURN_NULL();
+	}
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 	tm2timetz(tm, fsec, tz, result);
@@ -3071,7 +3082,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 
 	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
 	if (dterr)
-		DateTimeParseError(dterr, &extra, NULL, NULL);
+		DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
 
 	if (type == TZ || type == DTZ)
 	{

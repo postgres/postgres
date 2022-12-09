@@ -74,7 +74,8 @@ typedef struct
 
 static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
 static Timestamp dt2local(Timestamp dt, int timezone);
-static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
+static bool AdjustIntervalForTypmod(Interval *interval, int32 typmod,
+									Node *escontext);
 static TimestampTz timestamp2timestamptz(Timestamp timestamp);
 static Timestamp timestamptz2timestamp(TimestampTz timestamp);
 
@@ -145,11 +146,11 @@ Datum
 timestamp_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
+	Node	   *escontext = fcinfo->context;
 	Timestamp	result;
 	fsec_t		fsec;
 	struct pg_tm tt,
@@ -169,13 +170,16 @@ timestamp_in(PG_FUNCTION_ARGS)
 		dterr = DecodeDateTime(field, ftype, nf,
 							   &dtype, tm, &fsec, &tz, &extra);
 	if (dterr != 0)
-		DateTimeParseError(dterr, &extra, str, "timestamp");
+	{
+		DateTimeParseError(dterr, &extra, str, "timestamp", escontext);
+		PG_RETURN_NULL();
+	}
 
 	switch (dtype)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range: \"%s\"", str)));
 			break;
@@ -198,7 +202,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 			TIMESTAMP_NOEND(result);
 	}
 
-	AdjustTimestampForTypmod(&result, typmod);
+	AdjustTimestampForTypmod(&result, typmod, escontext);
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -257,7 +261,7 @@ timestamp_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 
-	AdjustTimestampForTypmod(&timestamp, typmod);
+	AdjustTimestampForTypmod(&timestamp, typmod, NULL);
 
 	PG_RETURN_TIMESTAMP(timestamp);
 }
@@ -328,17 +332,20 @@ timestamp_scale(PG_FUNCTION_ARGS)
 
 	result = timestamp;
 
-	AdjustTimestampForTypmod(&result, typmod);
+	AdjustTimestampForTypmod(&result, typmod, NULL);
 
 	PG_RETURN_TIMESTAMP(result);
 }
 
 /*
- * AdjustTimestampForTypmodError --- round off a timestamp to suit given typmod
+ * AdjustTimestampForTypmod --- round off a timestamp to suit given typmod
  * Works for either timestamp or timestamptz.
+ *
+ * Returns true on success, false on failure (if escontext points to an
+ * ErrorSaveContext; otherwise errors are thrown).
  */
 bool
-AdjustTimestampForTypmodError(Timestamp *time, int32 typmod, bool *error)
+AdjustTimestampForTypmod(Timestamp *time, int32 typmod, Node *escontext)
 {
 	static const int64 TimestampScales[MAX_TIMESTAMP_PRECISION + 1] = {
 		INT64CONST(1000000),
@@ -364,18 +371,10 @@ AdjustTimestampForTypmodError(Timestamp *time, int32 typmod, bool *error)
 		&& (typmod != -1) && (typmod != MAX_TIMESTAMP_PRECISION))
 	{
 		if (typmod < 0 || typmod > MAX_TIMESTAMP_PRECISION)
-		{
-			if (error)
-			{
-				*error = true;
-				return false;
-			}
-
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("timestamp(%d) precision must be between %d and %d",
 							typmod, 0, MAX_TIMESTAMP_PRECISION)));
-		}
 
 		if (*time >= INT64CONST(0))
 		{
@@ -392,12 +391,6 @@ AdjustTimestampForTypmodError(Timestamp *time, int32 typmod, bool *error)
 	return true;
 }
 
-void
-AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
-{
-	(void) AdjustTimestampForTypmodError(time, typmod, NULL);
-}
-
 /* timestamptz_in()
  * Convert a string to internal form.
  */
@@ -405,11 +398,11 @@ Datum
 timestamptz_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
+	Node	   *escontext = fcinfo->context;
 	TimestampTz result;
 	fsec_t		fsec;
 	struct pg_tm tt,
@@ -429,13 +422,17 @@ timestamptz_in(PG_FUNCTION_ARGS)
 		dterr = DecodeDateTime(field, ftype, nf,
 							   &dtype, tm, &fsec, &tz, &extra);
 	if (dterr != 0)
-		DateTimeParseError(dterr, &extra, str, "timestamp with time zone");
+	{
+		DateTimeParseError(dterr, &extra, str, "timestamp with time zone",
+						   escontext);
+		PG_RETURN_NULL();
+	}
 
 	switch (dtype)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range: \"%s\"", str)));
 			break;
@@ -458,7 +455,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 			TIMESTAMP_NOEND(result);
 	}
 
-	AdjustTimestampForTypmod(&result, typmod);
+	AdjustTimestampForTypmod(&result, typmod, escontext);
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }
@@ -525,7 +522,7 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 											   false);
 		dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
 		if (dterr)
-			DateTimeParseError(dterr, &extra, NULL, NULL);
+			DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
 
 		if (type == TZ || type == DTZ)
 		{
@@ -824,7 +821,7 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 
-	AdjustTimestampForTypmod(&timestamp, typmod);
+	AdjustTimestampForTypmod(&timestamp, typmod, NULL);
 
 	PG_RETURN_TIMESTAMPTZ(timestamp);
 }
@@ -873,7 +870,7 @@ timestamptz_scale(PG_FUNCTION_ARGS)
 
 	result = timestamp;
 
-	AdjustTimestampForTypmod(&result, typmod);
+	AdjustTimestampForTypmod(&result, typmod, NULL);
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }
@@ -889,11 +886,11 @@ Datum
 interval_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
+	Node	   *escontext = fcinfo->context;
 	Interval   *result;
 	struct pg_itm_in tt,
 			   *itm_in = &tt;
@@ -931,7 +928,8 @@ interval_in(PG_FUNCTION_ARGS)
 	{
 		if (dterr == DTERR_FIELD_OVERFLOW)
 			dterr = DTERR_INTERVAL_OVERFLOW;
-		DateTimeParseError(dterr, &extra, str, "interval");
+		DateTimeParseError(dterr, &extra, str, "interval", escontext);
+		PG_RETURN_NULL();
 	}
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -940,7 +938,7 @@ interval_in(PG_FUNCTION_ARGS)
 	{
 		case DTK_DELTA:
 			if (itmin2interval(itm_in, result) != 0)
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("interval out of range")));
 			break;
@@ -950,7 +948,7 @@ interval_in(PG_FUNCTION_ARGS)
 				 dtype, str);
 	}
 
-	AdjustIntervalForTypmod(result, typmod);
+	AdjustIntervalForTypmod(result, typmod, escontext);
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -994,7 +992,7 @@ interval_recv(PG_FUNCTION_ARGS)
 	interval->day = pq_getmsgint(buf, sizeof(interval->day));
 	interval->month = pq_getmsgint(buf, sizeof(interval->month));
 
-	AdjustIntervalForTypmod(interval, typmod);
+	AdjustIntervalForTypmod(interval, typmod, NULL);
 
 	PG_RETURN_INTERVAL_P(interval);
 }
@@ -1318,7 +1316,7 @@ interval_scale(PG_FUNCTION_ARGS)
 	result = palloc(sizeof(Interval));
 	*result = *interval;
 
-	AdjustIntervalForTypmod(result, typmod);
+	AdjustIntervalForTypmod(result, typmod, NULL);
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -1326,9 +1324,13 @@ interval_scale(PG_FUNCTION_ARGS)
 /*
  *	Adjust interval for specified precision, in both YEAR to SECOND
  *	range and sub-second precision.
+ *
+ * Returns true on success, false on failure (if escontext points to an
+ * ErrorSaveContext; otherwise errors are thrown).
  */
-static void
-AdjustIntervalForTypmod(Interval *interval, int32 typmod)
+static bool
+AdjustIntervalForTypmod(Interval *interval, int32 typmod,
+						Node *escontext)
 {
 	static const int64 IntervalScales[MAX_INTERVAL_PRECISION + 1] = {
 		INT64CONST(1000000),
@@ -1468,7 +1470,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		if (precision != INTERVAL_FULL_PRECISION)
 		{
 			if (precision < 0 || precision > MAX_INTERVAL_PRECISION)
-				ereport(ERROR,
+				ereturn(escontext, false,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("interval(%d) precision must be between %d and %d",
 								precision, 0, MAX_INTERVAL_PRECISION)));
@@ -1489,6 +1491,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			}
 		}
 	}
+
+	return true;
 }
 
 /*
@@ -1609,7 +1613,7 @@ current_timestamp(PG_FUNCTION_ARGS)
 
 	ts = GetCurrentTransactionStartTimestamp();
 	if (typmod >= 0)
-		AdjustTimestampForTypmod(&ts, typmod);
+		AdjustTimestampForTypmod(&ts, typmod, NULL);
 	return TimestampTzGetDatum(ts);
 }
 
@@ -1630,7 +1634,7 @@ sql_localtimestamp(PG_FUNCTION_ARGS)
 
 	ts = timestamptz2timestamp(GetCurrentTransactionStartTimestamp());
 	if (typmod >= 0)
-		AdjustTimestampForTypmod(&ts, typmod);
+		AdjustTimestampForTypmod(&ts, typmod, NULL);
 	return TimestampGetDatum(ts);
 }
 
@@ -4324,7 +4328,7 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 
 	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
 	if (dterr)
-		DateTimeParseError(dterr, &extra, NULL, NULL);
+		DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
 
 	if (type == TZ || type == DTZ)
 	{
@@ -5452,7 +5456,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
 	if (dterr)
-		DateTimeParseError(dterr, &extra, NULL, NULL);
+		DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
 
 	if (type == TZ || type == DTZ)
 	{
@@ -5708,7 +5712,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 
 	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
 	if (dterr)
-		DateTimeParseError(dterr, &extra, NULL, NULL);
+		DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
 
 	if (type == TZ || type == DTZ)
 	{
