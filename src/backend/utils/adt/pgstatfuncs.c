@@ -50,58 +50,58 @@ CppConcat(pg_stat_get_,stat)(PG_FUNCTION_ARGS)					\
 		result = (int64) (tabentry->stat);						\
 																\
 	PG_RETURN_INT64(result);									\
-}																\
+}
 
 /* pg_stat_get_analyze_count */
-PG_STAT_GET_RELENTRY_INT64(analyze_count);
+PG_STAT_GET_RELENTRY_INT64(analyze_count)
 
 /* pg_stat_get_autoanalyze_count */
-PG_STAT_GET_RELENTRY_INT64(autoanalyze_count);
+PG_STAT_GET_RELENTRY_INT64(autoanalyze_count)
 
 /* pg_stat_get_autovacuum_count */
-PG_STAT_GET_RELENTRY_INT64(autovacuum_count);
+PG_STAT_GET_RELENTRY_INT64(autovacuum_count)
 
 /* pg_stat_get_blocks_fetched */
-PG_STAT_GET_RELENTRY_INT64(blocks_fetched);
+PG_STAT_GET_RELENTRY_INT64(blocks_fetched)
 
 /* pg_stat_get_blocks_hit */
-PG_STAT_GET_RELENTRY_INT64(blocks_hit);
+PG_STAT_GET_RELENTRY_INT64(blocks_hit)
 
 /* pg_stat_get_dead_tuples */
-PG_STAT_GET_RELENTRY_INT64(dead_tuples);
+PG_STAT_GET_RELENTRY_INT64(dead_tuples)
 
 /* pg_stat_get_ins_since_vacuum */
-PG_STAT_GET_RELENTRY_INT64(ins_since_vacuum);
+PG_STAT_GET_RELENTRY_INT64(ins_since_vacuum)
 
 /* pg_stat_get_live_tuples */
-PG_STAT_GET_RELENTRY_INT64(live_tuples);
+PG_STAT_GET_RELENTRY_INT64(live_tuples)
 
 /* pg_stat_get_mods_since_analyze */
-PG_STAT_GET_RELENTRY_INT64(mod_since_analyze);
+PG_STAT_GET_RELENTRY_INT64(mod_since_analyze)
 
 /* pg_stat_get_numscans */
-PG_STAT_GET_RELENTRY_INT64(numscans);
+PG_STAT_GET_RELENTRY_INT64(numscans)
 
 /* pg_stat_get_tuples_deleted */
-PG_STAT_GET_RELENTRY_INT64(tuples_deleted);
+PG_STAT_GET_RELENTRY_INT64(tuples_deleted)
 
 /* pg_stat_get_tuples_fetched */
-PG_STAT_GET_RELENTRY_INT64(tuples_fetched);
+PG_STAT_GET_RELENTRY_INT64(tuples_fetched)
 
 /* pg_stat_get_tuples_hot_updated */
-PG_STAT_GET_RELENTRY_INT64(tuples_hot_updated);
+PG_STAT_GET_RELENTRY_INT64(tuples_hot_updated)
 
 /* pg_stat_get_tuples_inserted */
-PG_STAT_GET_RELENTRY_INT64(tuples_inserted);
+PG_STAT_GET_RELENTRY_INT64(tuples_inserted)
 
 /* pg_stat_get_tuples_returned */
-PG_STAT_GET_RELENTRY_INT64(tuples_returned);
+PG_STAT_GET_RELENTRY_INT64(tuples_returned)
 
 /* pg_stat_get_tuples_updated */
-PG_STAT_GET_RELENTRY_INT64(tuples_updated);
+PG_STAT_GET_RELENTRY_INT64(tuples_updated)
 
 /* pg_stat_get_vacuum_count */
-PG_STAT_GET_RELENTRY_INT64(vacuum_count);
+PG_STAT_GET_RELENTRY_INT64(vacuum_count)
 
 #define PG_STAT_GET_RELENTRY_TIMESTAMPTZ(stat)					\
 Datum															\
@@ -120,22 +120,22 @@ CppConcat(pg_stat_get_,stat)(PG_FUNCTION_ARGS)					\
 		PG_RETURN_NULL();										\
 	else														\
 		PG_RETURN_TIMESTAMPTZ(result);							\
-}																\
+}
 
 /* pg_stat_get_last_analyze_time */
-PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_analyze_time);
+PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_analyze_time)
 
 /* pg_stat_get_last_autoanalyze_time */
-PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_autoanalyze_time);
+PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_autoanalyze_time)
 
 /* pg_stat_get_last_autovacuum_time */
-PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_autovacuum_time);
+PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_autovacuum_time)
 
 /* pg_stat_get_last_vacuum_time */
-PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_vacuum_time);
+PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_vacuum_time)
 
 /* pg_stat_get_lastscan */
-PG_STAT_GET_RELENTRY_TIMESTAMPTZ(lastscan);
+PG_STAT_GET_RELENTRY_TIMESTAMPTZ(lastscan)
 
 Datum
 pg_stat_get_function_calls(PG_FUNCTION_ARGS)
@@ -952,70 +952,70 @@ CppConcat(pg_stat_get_db_,stat)(PG_FUNCTION_ARGS)				\
 		result = (int64) (dbentry->stat);						\
 																\
 	PG_RETURN_INT64(result);									\
-}																\
+}
 
 /* pg_stat_get_db_blocks_fetched */
-PG_STAT_GET_DBENTRY_INT64(blocks_fetched);
+PG_STAT_GET_DBENTRY_INT64(blocks_fetched)
 
 /* pg_stat_get_db_blocks_hit */
-PG_STAT_GET_DBENTRY_INT64(blocks_hit);
+PG_STAT_GET_DBENTRY_INT64(blocks_hit)
 
 /* pg_stat_get_db_conflict_bufferpin */
-PG_STAT_GET_DBENTRY_INT64(conflict_bufferpin);
+PG_STAT_GET_DBENTRY_INT64(conflict_bufferpin)
 
 /* pg_stat_get_db_conflict_lock */
-PG_STAT_GET_DBENTRY_INT64(conflict_lock);
+PG_STAT_GET_DBENTRY_INT64(conflict_lock)
 
 /* pg_stat_get_db_conflict_snapshot */
-PG_STAT_GET_DBENTRY_INT64(conflict_snapshot);
+PG_STAT_GET_DBENTRY_INT64(conflict_snapshot)
 
 /* pg_stat_get_db_conflict_startup_deadlock */
-PG_STAT_GET_DBENTRY_INT64(conflict_startup_deadlock);
+PG_STAT_GET_DBENTRY_INT64(conflict_startup_deadlock)
 
 /* pg_stat_get_db_conflict_tablespace */
-PG_STAT_GET_DBENTRY_INT64(conflict_tablespace);
+PG_STAT_GET_DBENTRY_INT64(conflict_tablespace)
 
 /* pg_stat_get_db_deadlocks */
-PG_STAT_GET_DBENTRY_INT64(deadlocks);
+PG_STAT_GET_DBENTRY_INT64(deadlocks)
 
 /* pg_stat_get_db_sessions */
-PG_STAT_GET_DBENTRY_INT64(sessions);
+PG_STAT_GET_DBENTRY_INT64(sessions)
 
 /* pg_stat_get_db_sessions_abandoned */
-PG_STAT_GET_DBENTRY_INT64(sessions_abandoned);
+PG_STAT_GET_DBENTRY_INT64(sessions_abandoned)
 
 /* pg_stat_get_db_sessions_fatal */
-PG_STAT_GET_DBENTRY_INT64(sessions_fatal);
+PG_STAT_GET_DBENTRY_INT64(sessions_fatal)
 
 /* pg_stat_get_db_sessions_killed */
-PG_STAT_GET_DBENTRY_INT64(sessions_killed);
+PG_STAT_GET_DBENTRY_INT64(sessions_killed)
 
 /* pg_stat_get_db_temp_bytes */
-PG_STAT_GET_DBENTRY_INT64(temp_bytes);
+PG_STAT_GET_DBENTRY_INT64(temp_bytes)
 
 /* pg_stat_get_db_temp_files */
-PG_STAT_GET_DBENTRY_INT64(temp_files);
+PG_STAT_GET_DBENTRY_INT64(temp_files)
 
 /* pg_stat_get_db_tuples_deleted */
-PG_STAT_GET_DBENTRY_INT64(tuples_deleted);
+PG_STAT_GET_DBENTRY_INT64(tuples_deleted)
 
 /* pg_stat_get_db_tuples_fetched */
-PG_STAT_GET_DBENTRY_INT64(tuples_fetched);
+PG_STAT_GET_DBENTRY_INT64(tuples_fetched)
 
 /* pg_stat_get_db_tuples_inserted */
-PG_STAT_GET_DBENTRY_INT64(tuples_inserted);
+PG_STAT_GET_DBENTRY_INT64(tuples_inserted)
 
 /* pg_stat_get_db_tuples_returned */
-PG_STAT_GET_DBENTRY_INT64(tuples_returned);
+PG_STAT_GET_DBENTRY_INT64(tuples_returned)
 
 /* pg_stat_get_db_tuples_updated */
-PG_STAT_GET_DBENTRY_INT64(tuples_updated);
+PG_STAT_GET_DBENTRY_INT64(tuples_updated)
 
 /* pg_stat_get_db_xact_commit */
-PG_STAT_GET_DBENTRY_INT64(xact_commit);
+PG_STAT_GET_DBENTRY_INT64(xact_commit)
 
 /* pg_stat_get_db_xact_rollback */
-PG_STAT_GET_DBENTRY_INT64(xact_rollback);
+PG_STAT_GET_DBENTRY_INT64(xact_rollback)
 
 
 Datum
@@ -1109,22 +1109,22 @@ CppConcat(pg_stat_get_db_,stat)(PG_FUNCTION_ARGS)				\
 		result = ((double) dbentry->stat) / 1000.0;				\
 																\
 	PG_RETURN_FLOAT8(result);									\
-}																\
+}
 
 /* pg_stat_get_db_active_time */
-PG_STAT_GET_DBENTRY_FLOAT8(active_time);
+PG_STAT_GET_DBENTRY_FLOAT8(active_time)
 
 /* pg_stat_get_db_blk_read_time */
-PG_STAT_GET_DBENTRY_FLOAT8(blk_read_time);
+PG_STAT_GET_DBENTRY_FLOAT8(blk_read_time)
 
 /* pg_stat_get_db_blk_write_time */
-PG_STAT_GET_DBENTRY_FLOAT8(blk_write_time);
+PG_STAT_GET_DBENTRY_FLOAT8(blk_write_time)
 
 /* pg_stat_get_db_idle_in_transaction_time */
-PG_STAT_GET_DBENTRY_FLOAT8(idle_in_transaction_time);
+PG_STAT_GET_DBENTRY_FLOAT8(idle_in_transaction_time)
 
 /* pg_stat_get_db_session_time */
-PG_STAT_GET_DBENTRY_FLOAT8(session_time);
+PG_STAT_GET_DBENTRY_FLOAT8(session_time)
 
 Datum
 pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS)
