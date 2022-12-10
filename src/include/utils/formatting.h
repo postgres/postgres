@@ -28,6 +28,6 @@ extern char *asc_initcap(const char *buff, size_t nbytes);
 
 extern Datum parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 							Oid *typid, int32 *typmod, int *tz,
-							bool *have_error);
+							struct Node *escontext);
 
 #endif

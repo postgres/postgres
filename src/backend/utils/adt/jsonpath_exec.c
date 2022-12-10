@@ -1808,7 +1808,7 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		text	   *template;
 		char	   *template_str;
 		int			template_len;
-		bool		have_error = false;
+		ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 		jspGetArg(jsp, &elem);
 
@@ -1822,9 +1822,9 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 		value = parse_datetime(datetime, template, collid, true,
 							   &typid, &typmod, &tz,
-							   jspThrowErrors(cxt) ? NULL : &have_error);
+							   jspThrowErrors(cxt) ? NULL : (Node *) &escontext);
 
-		if (have_error)
+		if (escontext.error_occurred)
 			res = jperError;
 		else
 			res = jperOk;
@@ -1859,7 +1859,7 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		/* loop until datetime format fits */
 		for (i = 0; i < lengthof(fmt_str); i++)
 		{
-			bool		have_error = false;
+			ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 			if (!fmt_txt[i])
 			{
@@ -1872,9 +1872,9 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 			value = parse_datetime(datetime, fmt_txt[i], collid, true,
 								   &typid, &typmod, &tz,
-								   &have_error);
+								   (Node *) &escontext);
 
-			if (!have_error)
+			if (!escontext.error_occurred)
 			{
 				res = jperOk;
 				break;
