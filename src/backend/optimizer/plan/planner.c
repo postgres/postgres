@@ -826,6 +826,9 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 												EXPRKIND_LIMIT);
 		wc->endOffset = preprocess_expression(root, wc->endOffset,
 											  EXPRKIND_LIMIT);
+		wc->runCondition = (List *) preprocess_expression(root,
+														  (Node *) wc->runCondition,
+														  EXPRKIND_TARGET);
 	}
 
 	parse->limitOffset = preprocess_expression(root, parse->limitOffset,
