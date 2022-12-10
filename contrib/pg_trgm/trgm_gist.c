@@ -55,15 +55,21 @@ PG_FUNCTION_INFO_V1(gtrgm_options);
 Datum
 gtrgm_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "not implemented");
-	PG_RETURN_DATUM(0);
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type %s", "gtrgm")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 Datum
 gtrgm_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "not implemented");
-	PG_RETURN_DATUM(0);
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type %s", "gtrgm")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 static TRGM *
