@@ -239,6 +239,11 @@ INSERT INTO tab (domcol) VALUES ((SELECT domcol FROM tab WHERE false));
    DOMAIN</command>), adjust the function definition, and re-add the
    constraint, thereby rechecking it against stored data.
   </para>
+
+  <para>
+   It's also good practice to ensure that domain <literal>CHECK</literal>
+   expressions will not throw errors.
+  </para>
  </refsect1>
 
  <refsect1>
