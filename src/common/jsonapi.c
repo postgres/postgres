@@ -298,9 +298,9 @@ parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 		return result;
 
 	/* invoke the callback */
-	(*sfunc) (sem->semstate, val, tok);
+	result = (*sfunc) (sem->semstate, val, tok);
 
-	return JSON_SUCCESS;
+	return result;
 }
 
 static JsonParseErrorType
@@ -335,7 +335,11 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 	isnull = tok == JSON_TOKEN_NULL;
 
 	if (ostart != NULL)
-		(*ostart) (sem->semstate, fname, isnull);
+	{
+		result = (*ostart) (sem->semstate, fname, isnull);
+		if (result != JSON_SUCCESS)
+			return result;
+	}
 
 	switch (tok)
 	{
@@ -352,7 +356,12 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 		return result;
 
 	if (oend != NULL)
-		(*oend) (sem->semstate, fname, isnull);
+	{
+		result = (*oend) (sem->semstate, fname, isnull);
+		if (result != JSON_SUCCESS)
+			return result;
+	}
+
 	return JSON_SUCCESS;
 }
 
@@ -373,7 +382,11 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 #endif
 
 	if (ostart != NULL)
-		(*ostart) (sem->semstate);
+	{
+		result = (*ostart) (sem->semstate);
+		if (result != JSON_SUCCESS)
+			return result;
+	}
 
 	/*
 	 * Data inside an object is at a higher nesting level than the object
@@ -417,7 +430,11 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 	lex->lex_level--;
 
 	if (oend != NULL)
-		(*oend) (sem->semstate);
+	{
+		result = (*oend) (sem->semstate);
+		if (result != JSON_SUCCESS)
+			return result;
+	}
 
 	return JSON_SUCCESS;
 }
@@ -429,13 +446,16 @@ parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
 	json_aelem_action aend = sem->array_element_end;
 	JsonTokenType tok = lex_peek(lex);
 	JsonParseErrorType result;
-
 	bool		isnull;
 
 	isnull = tok == JSON_TOKEN_NULL;
 
 	if (astart != NULL)
-		(*astart) (sem->semstate, isnull);
+	{
+		result = (*astart) (sem->semstate, isnull);
+		if (result != JSON_SUCCESS)
+			return result;
+	}
 
 	/* an array element is any object, array or scalar */
 	switch (tok)
@@ -454,7 +474,11 @@ parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
 		return result;
 
 	if (aend != NULL)
-		(*aend) (sem->semstate, isnull);
+	{
+		result = (*aend) (sem->semstate, isnull);
+		if (result != JSON_SUCCESS)
+			return result;
+	}
 
 	return JSON_SUCCESS;
 }
@@ -475,7 +499,11 @@ parse_array(JsonLexContext *lex, JsonSemAction *sem)
 #endif
 
 	if (astart != NULL)
-		(*astart) (sem->semstate);
+	{
+		result = (*astart) (sem->semstate);
+		if (result != JSON_SUCCESS)
+			return result;
+	}
 
 	/*
 	 * Data inside an array is at a higher nesting level than the array
@@ -508,7 +536,11 @@ parse_array(JsonLexContext *lex, JsonSemAction *sem)
 	lex->lex_level--;
 
 	if (aend != NULL)
-		(*aend) (sem->semstate);
+	{
+		result = (*aend) (sem->semstate);
+		if (result != JSON_SUCCESS)
+			return result;
+	}
 
 	return JSON_SUCCESS;
 }
@@ -1139,6 +1171,9 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 			return _("Unicode high surrogate must not follow a high surrogate.");
 		case JSON_UNICODE_LOW_SURROGATE:
 			return _("Unicode low surrogate must follow a high surrogate.");
+		case JSON_SEM_ACTION_FAILED:
+			/* fall through to the error code after switch */
+			break;
 	}
 
 	/*

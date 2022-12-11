@@ -63,13 +63,13 @@ typedef struct JsonbAggState
 
 static inline Datum jsonb_from_cstring(char *json, int len);
 static size_t checkStringLen(size_t len);
-static void jsonb_in_object_start(void *pstate);
-static void jsonb_in_object_end(void *pstate);
-static void jsonb_in_array_start(void *pstate);
-static void jsonb_in_array_end(void *pstate);
-static void jsonb_in_object_field_start(void *pstate, char *fname, bool isnull);
+static JsonParseErrorType jsonb_in_object_start(void *pstate);
+static JsonParseErrorType jsonb_in_object_end(void *pstate);
+static JsonParseErrorType jsonb_in_array_start(void *pstate);
+static JsonParseErrorType jsonb_in_array_end(void *pstate);
+static JsonParseErrorType jsonb_in_object_field_start(void *pstate, char *fname, bool isnull);
 static void jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal);
-static void jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype);
+static JsonParseErrorType jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype);
 static void jsonb_categorize_type(Oid typoid,
 								  JsonbTypeCategory *tcategory,
 								  Oid *outfuncoid);
@@ -291,39 +291,47 @@ checkStringLen(size_t len)
 	return len;
 }
 
-static void
+static JsonParseErrorType
 jsonb_in_object_start(void *pstate)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_BEGIN_OBJECT, NULL);
+
+	return JSON_SUCCESS;
 }
 
-static void
+static JsonParseErrorType
 jsonb_in_object_end(void *pstate)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_END_OBJECT, NULL);
+
+	return JSON_SUCCESS;
 }
 
-static void
+static JsonParseErrorType
 jsonb_in_array_start(void *pstate)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_BEGIN_ARRAY, NULL);
+
+	return JSON_SUCCESS;
 }
 
-static void
+static JsonParseErrorType
 jsonb_in_array_end(void *pstate)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_END_ARRAY, NULL);
+
+	return JSON_SUCCESS;
 }
 
-static void
+static JsonParseErrorType
 jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
@@ -335,6 +343,8 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 	v.val.string.val = fname;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_KEY, &v);
+
+	return JSON_SUCCESS;
 }
 
 static void
@@ -367,7 +377,7 @@ jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal)
 /*
  * For jsonb we always want the de-escaped value - that's what's in token
  */
-static void
+static JsonParseErrorType
 jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
@@ -443,6 +453,8 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 				elog(ERROR, "unexpected parent of nested structure");
 		}
 	}
+
+	return JSON_SUCCESS;
 }
 
 /*
