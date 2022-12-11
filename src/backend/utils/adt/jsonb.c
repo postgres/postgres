@@ -33,6 +33,7 @@ typedef struct JsonbInState
 {
 	JsonbParseState *parseState;
 	JsonbValue *res;
+	Node	   *escontext;
 } JsonbInState;
 
 /* unlike with json categories, we need to treat json and jsonb differently */
@@ -61,8 +62,8 @@ typedef struct JsonbAggState
 	Oid			val_output_func;
 } JsonbAggState;
 
-static inline Datum jsonb_from_cstring(char *json, int len);
-static size_t checkStringLen(size_t len);
+static inline Datum jsonb_from_cstring(char *json, int len, Node *escontext);
+static bool checkStringLen(size_t len, Node *escontext);
 static JsonParseErrorType jsonb_in_object_start(void *pstate);
 static JsonParseErrorType jsonb_in_object_end(void *pstate);
 static JsonParseErrorType jsonb_in_array_start(void *pstate);
@@ -98,7 +99,7 @@ jsonb_in(PG_FUNCTION_ARGS)
 {
 	char	   *json = PG_GETARG_CSTRING(0);
 
-	return jsonb_from_cstring(json, strlen(json));
+	return jsonb_from_cstring(json, strlen(json), fcinfo->context);
 }
 
 /*
@@ -122,7 +123,7 @@ jsonb_recv(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "unsupported jsonb version number %d", version);
 
-	return jsonb_from_cstring(str, nbytes);
+	return jsonb_from_cstring(str, nbytes, NULL);
 }
 
 /*
@@ -251,9 +252,12 @@ jsonb_typeof(PG_FUNCTION_ARGS)
  * Turns json string into a jsonb Datum.
  *
  * Uses the json parser (with hooks) to construct a jsonb.
+ *
+ * If escontext points to an ErrorSaveContext, errors are reported there
+ * instead of being thrown.
  */
 static inline Datum
-jsonb_from_cstring(char *json, int len)
+jsonb_from_cstring(char *json, int len, Node *escontext)
 {
 	JsonLexContext *lex;
 	JsonbInState state;
@@ -263,6 +267,7 @@ jsonb_from_cstring(char *json, int len)
 	memset(&sem, 0, sizeof(sem));
 	lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
 
+	state.escontext = escontext;
 	sem.semstate = (void *) &state;
 
 	sem.object_start = jsonb_in_object_start;
@@ -272,23 +277,24 @@ jsonb_from_cstring(char *json, int len)
 	sem.scalar = jsonb_in_scalar;
 	sem.object_field_start = jsonb_in_object_field_start;
 
-	pg_parse_json_or_ereport(lex, &sem);
+	if (!pg_parse_json_or_errsave(lex, &sem, escontext))
+		return (Datum) 0;
 
 	/* after parsing, the item member has the composed jsonb structure */
 	PG_RETURN_POINTER(JsonbValueToJsonb(state.res));
 }
 
-static size_t
-checkStringLen(size_t len)
+static bool
+checkStringLen(size_t len, Node *escontext)
 {
 	if (len > JENTRY_OFFLENMASK)
-		ereport(ERROR,
+		ereturn(escontext, false,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("string too long to represent as jsonb string"),
 				 errdetail("Due to an implementation restriction, jsonb strings cannot exceed %d bytes.",
 						   JENTRY_OFFLENMASK)));
 
-	return len;
+	return true;
 }
 
 static JsonParseErrorType
@@ -339,7 +345,9 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 
 	Assert(fname != NULL);
 	v.type = jbvString;
-	v.val.string.len = checkStringLen(strlen(fname));
+	v.val.string.len = strlen(fname);
+	if (!checkStringLen(v.val.string.len, _state->escontext))
+		return JSON_SEM_ACTION_FAILED;
 	v.val.string.val = fname;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_KEY, &v);
@@ -390,7 +398,9 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 		case JSON_TOKEN_STRING:
 			Assert(token != NULL);
 			v.type = jbvString;
-			v.val.string.len = checkStringLen(strlen(token));
+			v.val.string.len = strlen(token);
+			if (!checkStringLen(v.val.string.len, _state->escontext))
+				return JSON_SEM_ACTION_FAILED;
 			v.val.string.val = token;
 			break;
 		case JSON_TOKEN_NUMBER:
@@ -401,10 +411,11 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 			 */
 			Assert(token != NULL);
 			v.type = jbvNumeric;
-			numd = DirectFunctionCall3(numeric_in,
-									   CStringGetDatum(token),
-									   ObjectIdGetDatum(InvalidOid),
-									   Int32GetDatum(-1));
+			if (!DirectInputFunctionCallSafe(numeric_in, token,
+											 InvalidOid, -1,
+											 _state->escontext,
+											 &numd))
+				return JSON_SEM_ACTION_FAILED;
 			v.val.numeric = DatumGetNumeric(numd);
 			break;
 		case JSON_TOKEN_TRUE:
@@ -738,6 +749,9 @@ jsonb_categorize_type(Oid typoid,
  *
  * If key_scalar is true, the value is stored as a key, so insist
  * it's of an acceptable type, and force it to be a jbvString.
+ *
+ * Note: currently, we assume that result->escontext is NULL and errors
+ * will be thrown.
  */
 static void
 datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
@@ -910,7 +924,8 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 			default:
 				outputstr = OidOutputFunctionCall(outfuncoid, val);
 				jb.type = jbvString;
-				jb.val.string.len = checkStringLen(strlen(outputstr));
+				jb.val.string.len = strlen(outputstr);
+				(void) checkStringLen(jb.val.string.len, NULL);
 				jb.val.string.val = outputstr;
 				break;
 		}
@@ -1648,6 +1663,7 @@ jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 	 * shallow clone is sufficient as we aren't going to change any of the
 	 * values, just add the final array end marker.
 	 */
+	memset(&result, 0, sizeof(JsonbInState));
 
 	result.parseState = clone_parse_state(arg->res->parseState);
 
@@ -1880,6 +1896,7 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 	 * going to change any of the values, just add the final object end
 	 * marker.
 	 */
+	memset(&result, 0, sizeof(JsonbInState));
 
 	result.parseState = clone_parse_state(arg->res->parseState);
 

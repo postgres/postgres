@@ -320,6 +320,25 @@ LINE 1: SELECT '{
 DETAIL:  Expected JSON value, but found "}".
 CONTEXT:  JSON data, line 4: ...yveryveryveryveryveryveryveryverylongfieldname":}
 -- ERROR missing value for last field
+-- test non-error-throwing input
+select pg_input_is_valid('{"a":true}', 'json');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+select pg_input_is_valid('{"a":true', 'json');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('{"a":true', 'json');
+       pg_input_error_message       
+------------------------------------
+ invalid input syntax for type json
+(1 row)
+
 --constructors
 -- array_to_json
 SELECT array_to_json(array(select 1 as a));

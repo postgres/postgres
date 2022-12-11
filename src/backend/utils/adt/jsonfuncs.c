@@ -25,6 +25,7 @@
 #include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -490,21 +491,31 @@ static JsonParseErrorType transform_string_values_object_field_start(void *state
 static JsonParseErrorType transform_string_values_array_element_start(void *state, bool isnull);
 static JsonParseErrorType transform_string_values_scalar(void *state, char *token, JsonTokenType tokentype);
 
+
 /*
- * pg_parse_json_or_ereport
+ * pg_parse_json_or_errsave
  *
  * This function is like pg_parse_json, except that it does not return a
  * JsonParseErrorType. Instead, in case of any failure, this function will
+ * save error data into *escontext if that's an ErrorSaveContext, otherwise
  * ereport(ERROR).
+ *
+ * Returns a boolean indicating success or failure (failure will only be
+ * returned when escontext is an ErrorSaveContext).
  */
-void
-pg_parse_json_or_ereport(JsonLexContext *lex, JsonSemAction *sem)
+bool
+pg_parse_json_or_errsave(JsonLexContext *lex, JsonSemAction *sem,
+						 Node *escontext)
 {
 	JsonParseErrorType result;
 
 	result = pg_parse_json(lex, sem);
 	if (result != JSON_SUCCESS)
-		json_ereport_error(result, lex);
+	{
+		json_errsave_error(result, lex, escontext);
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -608,17 +619,25 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
  * Report a JSON error.
  */
 void
-json_ereport_error(JsonParseErrorType error, JsonLexContext *lex)
+json_errsave_error(JsonParseErrorType error, JsonLexContext *lex,
+				   Node *escontext)
 {
 	if (error == JSON_UNICODE_HIGH_ESCAPE ||
+		error == JSON_UNICODE_UNTRANSLATABLE ||
 		error == JSON_UNICODE_CODE_POINT_ZERO)
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
 				 errmsg("unsupported Unicode escape sequence"),
 				 errdetail_internal("%s", json_errdetail(error, lex)),
 				 report_json_context(lex)));
+	else if (error == JSON_SEM_ACTION_FAILED)
+	{
+		/* semantic action function had better have reported something */
+		if (!SOFT_ERROR_OCCURRED(escontext))
+			elog(ERROR, "JSON semantic action function did not provide error information");
+	}
 	else
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s", "json"),
 				 errdetail_internal("%s", json_errdetail(error, lex)),
@@ -1274,7 +1293,7 @@ get_array_start(void *state)
 
 			error = json_count_array_elements(_state->lex, &nelements);
 			if (error != JSON_SUCCESS)
-				json_ereport_error(error, _state->lex);
+				json_errsave_error(error, _state->lex, NULL);
 
 			if (-_state->path_indexes[lex_level] <= nelements)
 				_state->path_indexes[lex_level] += nelements;

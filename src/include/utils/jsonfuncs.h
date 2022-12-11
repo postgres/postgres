@@ -39,11 +39,16 @@ typedef text *(*JsonTransformStringValuesAction) (void *state, char *elem_value,
 /* build a JsonLexContext from a text datum */
 extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
 
-/* try to parse json, and ereport(ERROR) on failure */
-extern void pg_parse_json_or_ereport(JsonLexContext *lex, JsonSemAction *sem);
+/* try to parse json, and errsave(escontext) on failure */
+extern bool pg_parse_json_or_errsave(JsonLexContext *lex, JsonSemAction *sem,
+									 struct Node *escontext);
 
-/* report an error during json lexing or parsing */
-extern void json_ereport_error(JsonParseErrorType error, JsonLexContext *lex);
+#define pg_parse_json_or_ereport(lex, sem) \
+	(void) pg_parse_json_or_errsave(lex, sem, NULL)
+
+/* save an error during json lexing or parsing */
+extern void json_errsave_error(JsonParseErrorType error, JsonLexContext *lex,
+							   struct Node *escontext);
 
 extern uint32 parse_jsonb_index_flags(Jsonb *jb);
 extern void iterate_jsonb_values(Jsonb *jb, uint32 flags, void *state,

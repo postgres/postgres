@@ -81,6 +81,11 @@ SELECT '{
 		"averyveryveryveryveryveryveryveryveryverylongfieldname":}'::json;
 -- ERROR missing value for last field
 
+-- test non-error-throwing input
+select pg_input_is_valid('{"a":true}', 'json');
+select pg_input_is_valid('{"a":true', 'json');
+select pg_input_error_message('{"a":true', 'json');
+
 --constructors
 -- array_to_json
 

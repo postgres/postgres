@@ -791,19 +791,16 @@ json_lex_string(JsonLexContext *lex)
 
 					/*
 					 * Add the represented character to lex->strval.  In the
-					 * backend, we can let pg_unicode_to_server() handle any
-					 * required character set conversion; in frontend, we can
-					 * only deal with trivial conversions.
-					 *
-					 * Note: pg_unicode_to_server() will throw an error for a
-					 * conversion failure, rather than returning a failure
-					 * indication.  That seems OK.
+					 * backend, we can let pg_unicode_to_server_noerror()
+					 * handle any required character set conversion; in
+					 * frontend, we can only deal with trivial conversions.
 					 */
 #ifndef FRONTEND
 					{
 						char		cbuf[MAX_UNICODE_EQUIVALENT_STRING + 1];
 
-						pg_unicode_to_server(ch, (unsigned char *) cbuf);
+						if (!pg_unicode_to_server_noerror(ch, (unsigned char *) cbuf))
+							return JSON_UNICODE_UNTRANSLATABLE;
 						appendStringInfoString(lex->strval, cbuf);
 					}
 #else
@@ -1167,6 +1164,10 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 		case JSON_UNICODE_HIGH_ESCAPE:
 			/* note: this case is only reachable in frontend not backend */
 			return _("Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8.");
+		case JSON_UNICODE_UNTRANSLATABLE:
+			/* note: this case is only reachable in backend not frontend */
+			return psprintf(_("Unicode escape value could not be translated to the server's encoding %s."),
+							GetDatabaseEncodingName());
 		case JSON_UNICODE_HIGH_SURROGATE:
 			return _("Unicode high surrogate must not follow a high surrogate.");
 		case JSON_UNICODE_LOW_SURROGATE:

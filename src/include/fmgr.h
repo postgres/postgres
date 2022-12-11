@@ -704,6 +704,10 @@ extern bool InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
 								  Oid typioparam, int32 typmod,
 								  fmNodePtr escontext,
 								  Datum *result);
+extern bool DirectInputFunctionCallSafe(PGFunction func, char *str,
+										Oid typioparam, int32 typmod,
+										fmNodePtr escontext,
+										Datum *result);
 extern Datum OidInputFunctionCall(Oid functionId, char *str,
 								  Oid typioparam, int32 typmod);
 extern char *OutputFunctionCall(FmgrInfo *flinfo, Datum val);

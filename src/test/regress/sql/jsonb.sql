@@ -86,6 +86,12 @@ SELECT '{
 		"averyveryveryveryveryveryveryveryveryverylongfieldname":}'::jsonb;
 -- ERROR missing value for last field
 
+-- test non-error-throwing input
+select pg_input_is_valid('{"a":true}', 'jsonb');
+select pg_input_is_valid('{"a":true', 'jsonb');
+select pg_input_error_message('{"a":true', 'jsonb');
+select pg_input_error_message('{"a":1e1000000}', 'jsonb');
+
 -- make sure jsonb is passed through json generators without being escaped
 SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
 

@@ -81,9 +81,10 @@ json_in(PG_FUNCTION_ARGS)
 
 	/* validate it */
 	lex = makeJsonLexContext(result, false);
-	pg_parse_json_or_ereport(lex, &nullSemAction);
+	if (!pg_parse_json_or_errsave(lex, &nullSemAction, fcinfo->context))
+		PG_RETURN_NULL();
 
-	/* Internal representation is the same as text, for now */
+	/* Internal representation is the same as text */
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -1337,7 +1338,7 @@ json_typeof(PG_FUNCTION_ARGS)
 	/* Lex exactly one token from the input and check its type. */
 	result = json_lex(lex);
 	if (result != JSON_SUCCESS)
-		json_ereport_error(result, lex);
+		json_errsave_error(result, lex, NULL);
 	tok = lex->token_type;
 	switch (tok)
 	{
