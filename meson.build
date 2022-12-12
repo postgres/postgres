@@ -1773,6 +1773,9 @@ negative_warning_flags = [
   'format-truncation',
   'stringop-truncation',
 
+  # Suppress clang 16's strict warnings about function casts
+  'cast-function-type-strict',
+
   # To make warning_level=2 / -Wextra work, we'd need at least the following
   # 'clobbered',
   # 'missing-field-initializers',
