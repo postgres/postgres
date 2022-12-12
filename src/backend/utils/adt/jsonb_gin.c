@@ -896,9 +896,10 @@ gin_extract_jsonb_query(PG_FUNCTION_ARGS)
 			/* Nulls in the array are ignored */
 			if (key_nulls[i])
 				continue;
+			/* We rely on the array elements not being toasted */
 			entries[j++] = make_text_key(JGINFLAG_KEY,
-										 VARDATA(key_datums[i]),
-										 VARSIZE(key_datums[i]) - VARHDRSZ);
+										 VARDATA_ANY(key_datums[i]),
+										 VARSIZE_ANY_EXHDR(key_datums[i]));
 		}
 
 		*nentries = j;
