@@ -184,7 +184,9 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 							  prefix, privs->data, type);
 			if (nspname && *nspname)
 				appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
-			appendPQExpBuffer(firstsql, "%s FROM ", name);
+			if (name && *name)
+				appendPQExpBuffer(firstsql, "%s ", name);
+			appendPQExpBufferStr(firstsql, "FROM ");
 			if (grantee->len == 0)
 				appendPQExpBufferStr(firstsql, "PUBLIC;\n");
 			else
@@ -253,7 +255,9 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 									  prefix, privs->data, type);
 					if (nspname && *nspname)
 						appendPQExpBuffer(thissql, "%s.", fmtId(nspname));
-					appendPQExpBuffer(thissql, "%s TO ", name);
+					if (name && *name)
+						appendPQExpBuffer(thissql, "%s ", name);
+					appendPQExpBufferStr(thissql, "TO ");
 					if (grantee->len == 0)
 						appendPQExpBufferStr(thissql, "PUBLIC;\n");
 					else
@@ -265,7 +269,9 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 									  prefix, privswgo->data, type);
 					if (nspname && *nspname)
 						appendPQExpBuffer(thissql, "%s.", fmtId(nspname));
-					appendPQExpBuffer(thissql, "%s TO ", name);
+					if (name && *name)
+						appendPQExpBuffer(thissql, "%s ", name);
+					appendPQExpBufferStr(thissql, "TO ");
 					if (grantee->len == 0)
 						appendPQExpBufferStr(thissql, "PUBLIC");
 					else

@@ -563,7 +563,7 @@ my %tests = (
 		regexp => qr/^
 			\QALTER DEFAULT PRIVILEGES \E
 			\QFOR ROLE regress_dump_test_role IN SCHEMA dump_test \E
-			\QGRANT SELECT ON TABLES  TO regress_dump_test_role;\E
+			\QGRANT SELECT ON TABLES TO regress_dump_test_role;\E
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
@@ -582,7 +582,7 @@ my %tests = (
 		regexp => qr/^
 			\QALTER DEFAULT PRIVILEGES \E
 			\QFOR ROLE regress_dump_test_role IN SCHEMA dump_test \E
-			\QGRANT ALL ON FUNCTIONS  TO regress_dump_test_role;\E
+			\QGRANT ALL ON FUNCTIONS TO regress_dump_test_role;\E
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
@@ -600,7 +600,7 @@ my %tests = (
 		regexp => qr/^
 			\QALTER DEFAULT PRIVILEGES \E
 			\QFOR ROLE regress_dump_test_role \E
-			\QREVOKE ALL ON FUNCTIONS  FROM PUBLIC;\E
+			\QREVOKE ALL ON FUNCTIONS FROM PUBLIC;\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 		unlike => { no_privs => 1, },
@@ -615,10 +615,10 @@ my %tests = (
 		regexp => qr/^
 			\QALTER DEFAULT PRIVILEGES \E
 			\QFOR ROLE regress_dump_test_role \E
-			\QREVOKE ALL ON TABLES  FROM regress_dump_test_role;\E\n
+			\QREVOKE ALL ON TABLES FROM regress_dump_test_role;\E\n
 			\QALTER DEFAULT PRIVILEGES \E
 			\QFOR ROLE regress_dump_test_role \E
-			\QGRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,VACUUM,ANALYZE,UPDATE ON TABLES  TO regress_dump_test_role;\E
+			\QGRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,VACUUM,ANALYZE,UPDATE ON TABLES TO regress_dump_test_role;\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 		unlike => { no_privs => 1, },
