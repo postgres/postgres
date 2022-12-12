@@ -1765,31 +1765,73 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <title>Configuration Settings</title>
 
   <para>
-   Logical replication requires several configuration options to be set.
+   Logical replication requires several configuration options to be set. Most
+   options are relevant only on one side of the replication. However,
+   <varname>max_replication_slots</varname> is used on both the publisher and
+   the subscriber, but it has a different meaning for each.
   </para>
 
-  <para>
-   On the publisher side, <varname>wal_level</varname> must be set to
-   <literal>logical</literal>, and <varname>max_replication_slots</varname>
-   must be set to at least the number of subscriptions expected to connect,
-   plus some reserve for table synchronization.  And
-   <varname>max_wal_senders</varname> should be set to at least the same as
-   <varname>max_replication_slots</varname> plus the number of physical
-   replicas that are connected at the same time.
-  </para>
+  <sect2 id="logical-replication-config-publisher">
+   <title>Publishers</title>
 
-  <para>
-   <varname>max_replication_slots</varname> must also be set on the subscriber.
-   It should be set to at least the number of subscriptions that will be added
-   to the subscriber, plus some reserve for table synchronization.
-   <varname>max_logical_replication_workers</varname> must be set to at least
-   the number of subscriptions, again plus some reserve for the table
-   synchronization.  Additionally the <varname>max_worker_processes</varname>
-   may need to be adjusted to accommodate for replication workers, at least
-   (<varname>max_logical_replication_workers</varname>
-   + <literal>1</literal>).  Note that some extensions and parallel queries
-   also take worker slots from <varname>max_worker_processes</varname>.
-  </para>
+   <para>
+    <link linkend="guc-wal-level"><varname>wal_level</varname></link> must be
+    set to <literal>logical</literal>.
+   </para>
+
+   <para>
+    <link linkend="guc-max-replication-slots"><varname>max_replication_slots</varname></link>
+    must be set to at least the number of subscriptions expected to connect,
+    plus some reserve for table synchronization.
+   </para>
+
+   <para>
+    <link linkend="guc-max-wal-senders"><varname>max_wal_senders</varname></link>
+    should be set to at least the same as
+    <varname>max_replication_slots</varname>, plus the number of physical
+    replicas that are connected at the same time.
+   </para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-config-subscriber">
+   <title>Subscribers</title>
+
+   <para>
+    <link linkend="guc-max-replication-slots-subscriber"><varname>max_replication_slots</varname></link>
+    must be set to at least the number of subscriptions that will be added to
+    the subscriber, plus some reserve for table synchronization.
+   </para>
+
+   <para>
+    <link linkend="guc-max-logical-replication-workers"><varname>max_logical_replication_workers</varname></link>
+    must be set to at least the number of subscriptions (for apply workers), plus
+    some reserve for the table synchronization workers.
+   </para>
+
+   <para>
+    <link linkend="guc-max-worker-processes"><varname>max_worker_processes</varname></link>
+    may need to be adjusted to accommodate for replication workers, at least
+    (<link linkend="guc-max-logical-replication-workers"><varname>max_logical_replication_workers</varname></link>
+    + <literal>1</literal>). Note, some extensions and parallel queries also
+    take worker slots from <varname>max_worker_processes</varname>.
+   </para>
+
+   <para>
+    <link linkend="guc-max-sync-workers-per-subscription"><varname>max_sync_workers_per_subscription</varname></link>
+     controls the amount of parallelism of the initial data copy during the
+     subscription initialization or when new tables are added.
+   </para>
+
+   <para>
+    Logical replication workers are also affected by
+    <link linkend="guc-wal-receiver-timeout"><varname>wal_receiver_timeout</varname></link>,
+    <link linkend="guc-wal-receiver-status-interval"><varname>wal_receiver_status_interval</varname></link> and
+    <link linkend="guc-wal-retrieve-retry-interval"><varname>wal_receiver_retry_interval</varname></link>.
+   </para>
+
+  </sect2>
+
  </sect1>
 
  <sect1 id="logical-replication-quick-setup">

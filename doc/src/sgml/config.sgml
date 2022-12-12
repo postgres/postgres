@@ -4156,7 +4156,13 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
     <para>
      These settings control the behavior of the built-in
      <firstterm>streaming replication</firstterm> feature (see
-     <xref linkend="streaming-replication"/>).  Servers will be either a
+     <xref linkend="streaming-replication"/>), and the built-in
+     <firstterm>logical replication</firstterm> feature (see
+     <xref linkend="logical-replication"/>).
+    </para>
+
+    <para>
+     For <emphasis>streaming replication</emphasis>, servers will be either a
      primary or a standby server.  Primaries can send data, while standbys
      are always receivers of replicated data.  When cascading replication
      (see <xref linkend="cascading-replication"/>) is used, standby servers
@@ -4164,6 +4170,17 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      Parameters are mainly for sending and standby servers, though some
      parameters have meaning only on the primary server.  Settings may vary
      across the cluster without problems if that is required.
+    </para>
+
+    <para>
+     For <emphasis>logical replication</emphasis>, <firstterm>publishers</firstterm>
+     (servers that do <link linkend="sql-createpublication"><command>CREATE PUBLICATION</command></link>)
+     replicate data to <firstterm>subscribers</firstterm>
+     (servers that do <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>).
+     Servers can also be publishers and subscribers at the same time. Note,
+     the following sections refer to publishers as "senders". For more details
+     about logical replication configuration settings refer to
+     <xref linkend="logical-replication-config"/>.
     </para>
 
     <sect2 id="runtime-config-replication-sender">
@@ -4213,6 +4230,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <term><varname>max_replication_slots</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>max_replication_slots</varname> configuration parameter</primary>
+        <secondary>in a sending server</secondary>
        </indexterm>
        </term>
        <listitem>
@@ -4229,14 +4247,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         </para>
 
         <para>
-         On the subscriber side, specifies how many replication origins (see
-         <xref linkend="replication-origins"/>) can be tracked simultaneously,
-         effectively limiting how many logical replication subscriptions can
-         be created on the server. Setting it to a lower value than the current
-         number of tracked replication origins (reflected in
-         <link linkend="view-pg-replication-origin-status">pg_replication_origin_status</link>,
-         not <link linkend="catalog-pg-replication-origin">pg_replication_origin</link>)
-         will prevent the server from starting.
+         Note that this parameter also applies on the subscriber side, but with
+         a different meaning.
         </para>
        </listitem>
       </varlistentry>
@@ -4914,16 +4926,38 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
      <para>
       These settings control the behavior of a logical replication subscriber.
       Their values on the publisher are irrelevant.
-     </para>
-
-     <para>
-      Note that <varname>wal_receiver_timeout</varname>,
-      <varname>wal_receiver_status_interval</varname> and
-      <varname>wal_retrieve_retry_interval</varname> configuration parameters
-      affect the logical replication workers as well.
+      See <xref linkend="logical-replication-config"/> for more details.
      </para>
 
      <variablelist>
+
+     <varlistentry id="guc-max-replication-slots-subscriber" xreflabel="max_replication_slots">
+      <term><varname>max_replication_slots</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>max_replication_slots</varname> configuration parameter</primary>
+        <secondary>in a subscriber</secondary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies how many replication origins (see
+        <xref linkend="replication-origins"/>) can be tracked simultaneously,
+        effectively limiting how many logical replication subscriptions can
+        be created on the server. Setting it to a lower value than the current
+        number of tracked replication origins (reflected in
+        <link linkend="view-pg-replication-origin-status">pg_replication_origin_status</link>)
+        will prevent the server from starting.
+        <literal>max_replication_slots</literal> must be set to at least the
+        number of subscriptions that will be added to the subscriber, plus some
+        reserve for table synchronization.
+       </para>
+
+       <para>
+        Note that this parameter also applies on a sending server, but with
+        a different meaning.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry id="guc-max-logical-replication-workers" xreflabel="max_logical_replication_workers">
       <term><varname>max_logical_replication_workers</varname> (<type>integer</type>)
