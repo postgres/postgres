@@ -109,45 +109,21 @@ main(int argc, char *argv[])
 	handle_help_version_opts(argc, argv, "reindexdb", help);
 
 	/* process command-line options */
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqS:d:ast:i:j:v", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "ad:eh:i:j:qp:sS:t:U:vwW", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
-			case 'h':
-				host = pg_strdup(optarg);
-				break;
-			case 'p':
-				port = pg_strdup(optarg);
-				break;
-			case 'U':
-				username = pg_strdup(optarg);
-				break;
-			case 'w':
-				prompt_password = TRI_NO;
-				break;
-			case 'W':
-				prompt_password = TRI_YES;
-				break;
-			case 'e':
-				echo = true;
-				break;
-			case 'q':
-				quiet = true;
-				break;
-			case 'S':
-				simple_string_list_append(&schemas, optarg);
+			case 'a':
+				alldb = true;
 				break;
 			case 'd':
 				dbname = pg_strdup(optarg);
 				break;
-			case 'a':
-				alldb = true;
+			case 'e':
+				echo = true;
 				break;
-			case 's':
-				syscatalog = true;
-				break;
-			case 't':
-				simple_string_list_append(&tables, optarg);
+			case 'h':
+				host = pg_strdup(optarg);
 				break;
 			case 'i':
 				simple_string_list_append(&indexes, optarg);
@@ -157,8 +133,32 @@ main(int argc, char *argv[])
 									  &concurrentCons))
 					exit(1);
 				break;
+			case 'q':
+				quiet = true;
+				break;
+			case 'p':
+				port = pg_strdup(optarg);
+				break;
+			case 's':
+				syscatalog = true;
+				break;
+			case 'S':
+				simple_string_list_append(&schemas, optarg);
+				break;
+			case 't':
+				simple_string_list_append(&tables, optarg);
+				break;
+			case 'U':
+				username = pg_strdup(optarg);
+				break;
 			case 'v':
 				verbose = true;
+				break;
+			case 'w':
+				prompt_password = TRI_NO;
+				break;
+			case 'W':
+				prompt_password = TRI_YES;
 				break;
 			case 1:
 				concurrently = true;

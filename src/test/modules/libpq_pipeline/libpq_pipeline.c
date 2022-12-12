@@ -1705,13 +1705,10 @@ main(int argc, char **argv)
 	PGresult   *res;
 	int			c;
 
-	while ((c = getopt(argc, argv, "t:r:")) != -1)
+	while ((c = getopt(argc, argv, "r:t:")) != -1)
 	{
 		switch (c)
 		{
-			case 't':			/* trace file */
-				tracefile = pg_strdup(optarg);
-				break;
 			case 'r':			/* numrows */
 				errno = 0;
 				numrows = strtol(optarg, NULL, 10);
@@ -1721,6 +1718,9 @@ main(int argc, char **argv)
 							optarg);
 					exit(1);
 				}
+				break;
+			case 't':			/* trace file */
+				tracefile = pg_strdup(optarg);
 				break;
 		}
 	}

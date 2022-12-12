@@ -79,15 +79,36 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeO:D:T:E:l:S:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "D:eE:h:l:O:p:S:T:U:wW", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
+			case 'D':
+				tablespace = pg_strdup(optarg);
+				break;
+			case 'e':
+				echo = true;
+				break;
+			case 'E':
+				encoding = pg_strdup(optarg);
+				break;
 			case 'h':
 				host = pg_strdup(optarg);
 				break;
+			case 'l':
+				locale = pg_strdup(optarg);
+				break;
+			case 'O':
+				owner = pg_strdup(optarg);
+				break;
 			case 'p':
 				port = pg_strdup(optarg);
+				break;
+			case 'S':
+				strategy = pg_strdup(optarg);
+				break;
+			case 'T':
+				template = pg_strdup(optarg);
 				break;
 			case 'U':
 				username = pg_strdup(optarg);
@@ -98,32 +119,11 @@ main(int argc, char *argv[])
 			case 'W':
 				prompt_password = TRI_YES;
 				break;
-			case 'e':
-				echo = true;
-				break;
-			case 'O':
-				owner = pg_strdup(optarg);
-				break;
-			case 'D':
-				tablespace = pg_strdup(optarg);
-				break;
-			case 'T':
-				template = pg_strdup(optarg);
-				break;
-			case 'E':
-				encoding = pg_strdup(optarg);
-				break;
-			case 'S':
-				strategy = pg_strdup(optarg);
-				break;
 			case 1:
 				lc_collate = pg_strdup(optarg);
 				break;
 			case 2:
 				lc_ctype = pg_strdup(optarg);
-				break;
-			case 'l':
-				locale = pg_strdup(optarg);
 				break;
 			case 3:
 				maintenance_db = pg_strdup(optarg);

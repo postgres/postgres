@@ -155,18 +155,63 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:zZFat:fvj:P:n:N:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "ad:efFh:j:n:N:p:P:qt:U:vwWzZ", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
+			case 'a':
+				objfilter |= OBJFILTER_ALL_DBS;
+				break;
+			case 'd':
+				objfilter |= OBJFILTER_DATABASE;
+				dbname = pg_strdup(optarg);
+				break;
+			case 'e':
+				echo = true;
+				break;
+			case 'f':
+				vacopts.full = true;
+				break;
+			case 'F':
+				vacopts.freeze = true;
+				break;
 			case 'h':
 				host = pg_strdup(optarg);
+				break;
+			case 'j':
+				if (!option_parse_int(optarg, "-j/--jobs", 1, INT_MAX,
+									  &concurrentCons))
+					exit(1);
+				break;
+			case 'n':
+				objfilter |= OBJFILTER_SCHEMA;
+				simple_string_list_append(&objects, optarg);
+				break;
+			case 'N':
+				objfilter |= OBJFILTER_SCHEMA_EXCLUDE;
+				simple_string_list_append(&objects, optarg);
 				break;
 			case 'p':
 				port = pg_strdup(optarg);
 				break;
+			case 'P':
+				if (!option_parse_int(optarg, "-P/--parallel", 0, INT_MAX,
+									  &vacopts.parallel_workers))
+					exit(1);
+				break;
+			case 'q':
+				quiet = true;
+				break;
+			case 't':
+				objfilter |= OBJFILTER_TABLE;
+				simple_string_list_append(&objects, optarg);
+				tbl_count++;
+				break;
 			case 'U':
 				username = pg_strdup(optarg);
+				break;
+			case 'v':
+				vacopts.verbose = true;
 				break;
 			case 'w':
 				prompt_password = TRI_NO;
@@ -174,63 +219,12 @@ main(int argc, char *argv[])
 			case 'W':
 				prompt_password = TRI_YES;
 				break;
-			case 'e':
-				echo = true;
-				break;
-			case 'q':
-				quiet = true;
-				break;
-			case 'd':
-				objfilter |= OBJFILTER_DATABASE;
-				dbname = pg_strdup(optarg);
-				break;
 			case 'z':
 				vacopts.and_analyze = true;
 				break;
 			case 'Z':
 				vacopts.analyze_only = true;
 				break;
-			case 'F':
-				vacopts.freeze = true;
-				break;
-			case 'a':
-				objfilter |= OBJFILTER_ALL_DBS;
-				break;
-			case 't':
-				{
-					objfilter |= OBJFILTER_TABLE;
-					simple_string_list_append(&objects, optarg);
-					tbl_count++;
-					break;
-				}
-			case 'f':
-				vacopts.full = true;
-				break;
-			case 'v':
-				vacopts.verbose = true;
-				break;
-			case 'j':
-				if (!option_parse_int(optarg, "-j/--jobs", 1, INT_MAX,
-									  &concurrentCons))
-					exit(1);
-				break;
-			case 'P':
-				if (!option_parse_int(optarg, "-P/--parallel", 0, INT_MAX,
-									  &vacopts.parallel_workers))
-					exit(1);
-				break;
-			case 'n':
-				{
-					objfilter |= OBJFILTER_SCHEMA;
-					simple_string_list_append(&objects, optarg);
-					break;
-				}
-			case 'N':
-				{
-					objfilter |= OBJFILTER_SCHEMA_EXCLUDE;
-					simple_string_list_append(&objects, optarg);
-					break;
-				}
 			case 2:
 				maintenance_db = pg_strdup(optarg);
 				break;

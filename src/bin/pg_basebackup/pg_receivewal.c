@@ -43,7 +43,7 @@
 static char *basedir = NULL;
 static int	verbose = 0;
 static int	compresslevel = 0;
-static int	noloop = 0;
+static bool	noloop = false;
 static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
 static volatile sig_atomic_t time_to_stop = false;
 static bool do_create_slot = false;
@@ -677,31 +677,30 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:d:E:h:p:U:s:S:nwWvZ:",
+	while ((c = getopt_long(argc, argv, "d:D:E:h:np:s:S:U:vwWZ:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
+			case 'd':
+				connection_string = pg_strdup(optarg);
+				break;
 			case 'D':
 				basedir = pg_strdup(optarg);
 				break;
-			case 'd':
-				connection_string = pg_strdup(optarg);
+			case 'E':
+				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
+					pg_fatal("could not parse end position \"%s\"", optarg);
+				endpos = ((uint64) hi) << 32 | lo;
 				break;
 			case 'h':
 				dbhost = pg_strdup(optarg);
 				break;
+			case 'n':
+				noloop = true;
+				break;
 			case 'p':
 				dbport = pg_strdup(optarg);
-				break;
-			case 'U':
-				dbuser = pg_strdup(optarg);
-				break;
-			case 'w':
-				dbgetpassword = -1;
-				break;
-			case 'W':
-				dbgetpassword = 1;
 				break;
 			case 's':
 				if (!option_parse_int(optarg, "-s/--status-interval", 0,
@@ -713,22 +712,22 @@ main(int argc, char **argv)
 			case 'S':
 				replication_slot = pg_strdup(optarg);
 				break;
-			case 'E':
-				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
-					pg_fatal("could not parse end position \"%s\"", optarg);
-				endpos = ((uint64) hi) << 32 | lo;
-				break;
-			case 'n':
-				noloop = 1;
+			case 'U':
+				dbuser = pg_strdup(optarg);
 				break;
 			case 'v':
 				verbose++;
+				break;
+			case 'w':
+				dbgetpassword = -1;
+				break;
+			case 'W':
+				dbgetpassword = 1;
 				break;
 			case 'Z':
 				parse_compress_options(optarg, &compression_algorithm_str,
 									   &compression_detail);
 				break;
-/* action */
 			case 1:
 				do_create_slot = true;
 				break;

@@ -471,7 +471,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "cD:deNPf:v", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "cdD:ef:NPv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -480,6 +480,9 @@ main(int argc, char *argv[])
 				break;
 			case 'd':
 				mode = PG_MODE_DISABLE;
+				break;
+			case 'D':
+				DataDir = optarg;
 				break;
 			case 'e':
 				mode = PG_MODE_ENABLE;
@@ -494,14 +497,11 @@ main(int argc, char *argv[])
 			case 'N':
 				do_sync = false;
 				break;
-			case 'v':
-				verbose = true;
-				break;
-			case 'D':
-				DataDir = optarg;
-				break;
 			case 'P':
 				showprogress = true;
+				break;
+			case 'v':
+				verbose = true;
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
