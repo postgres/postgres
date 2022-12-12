@@ -1057,6 +1057,7 @@ sendFileWithContent(bbsink *sink, const char *filename, const char *content,
 		memcpy(sink->bbs_buffer, content, nbytes);
 		bbsink_archive_contents(sink, nbytes);
 		bytes_done += nbytes;
+		content += nbytes;
 	}
 
 	_tarWritePadding(sink, len);
