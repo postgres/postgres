@@ -205,11 +205,11 @@ shell_get_sink(bbsink *next_sink, void *detail_arg)
  * making substitutions as appropriate for escape sequences.
  */
 static char *
-shell_construct_command(char *base_command, const char *filename,
-						char *target_detail)
+shell_construct_command(const char *base_command, const char *filename,
+						const char *target_detail)
 {
 	StringInfoData buf;
-	char	   *c;
+	const char *c;
 
 	initStringInfo(&buf);
 	for (c = base_command; *c != '\0'; ++c)
