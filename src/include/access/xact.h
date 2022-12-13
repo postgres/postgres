@@ -114,6 +114,13 @@ extern int	MyXactFlags;
 #define XACT_FLAGS_NEEDIMMEDIATECOMMIT			(1U << 2)
 
 /*
+ * XACT_FLAGS_PIPELINING - set when we complete an extended-query-protocol
+ * Execute message.  This is useful for detecting that an implicit transaction
+ * block has been created via pipelining.
+ */
+#define XACT_FLAGS_PIPELINING					(1U << 3)
+
+/*
  *	start- and end-of-transaction callbacks for dynamically loaded modules
  */
 typedef enum

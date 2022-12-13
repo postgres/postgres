@@ -1093,9 +1093,10 @@ SELCT 1/0;<!-- this typo is intentional -->
     implicit <command>ROLLBACK</command> if they failed.  However, there
     are a few DDL commands (such as <command>CREATE DATABASE</command>)
     that cannot be executed inside a transaction block.  If one of
-    these is executed in a pipeline, it will, upon success, force an
-    immediate commit to preserve database consistency.
-    A Sync immediately following one of these has no effect except to
+    these is executed in a pipeline, it will fail unless it is the first
+    command in the pipeline.  Furthermore, upon success it will force an
+    immediate commit to preserve database consistency.  Thus a Sync
+    immediately following one of these commands has no effect except to
     respond with ReadyForQuery.
    </para>
 
@@ -1103,7 +1104,7 @@ SELCT 1/0;<!-- this typo is intentional -->
     When using this method, completion of the pipeline must be determined
     by counting ReadyForQuery messages and waiting for that to reach the
     number of Syncs sent.  Counting command completion responses is
-    unreliable, since some of the commands may not be executed and thus not
+    unreliable, since some of the commands may be skipped and thus not
     produce a completion message.
    </para>
   </sect2>
