@@ -2225,6 +2225,12 @@ exec_execute_message(const char *portal_name, long max_rows)
 			CommandCounterIncrement();
 
 			/*
+			 * Set XACT_FLAGS_PIPELINING whenever we complete an Execute
+			 * message without immediately committing the transaction.
+			 */
+			MyXactFlags |= XACT_FLAGS_PIPELINING;
+
+			/*
 			 * Disable statement timeout whenever we complete an Execute
 			 * message.  The next protocol message will start a fresh timeout.
 			 */
@@ -2239,6 +2245,12 @@ exec_execute_message(const char *portal_name, long max_rows)
 		/* Portal run not complete, so send PortalSuspended */
 		if (whereToSendOutput == DestRemote)
 			pq_putemptymessage('s');
+
+		/*
+		 * Set XACT_FLAGS_PIPELINING whenever we suspend an Execute message,
+		 * too.
+		 */
+		MyXactFlags |= XACT_FLAGS_PIPELINING;
 	}
 
 	/*
