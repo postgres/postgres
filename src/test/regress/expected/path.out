@@ -80,3 +80,28 @@ SELECT popen(f1) AS open_path FROM PATH_TBL;
  [(11,12),(13,14)]
 (9 rows)
 
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('[(1,2),(3)]', 'path');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('[(1,2),(3)]', 'path');
+              pg_input_error_message               
+---------------------------------------------------
+ invalid input syntax for type path: "[(1,2),(3)]"
+(1 row)
+
+SELECT pg_input_is_valid('[(1,2,6),(3,4,6)]', 'path');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('[(1,2,6),(3,4,6)]', 'path');
+                 pg_input_error_message                  
+---------------------------------------------------------
+ invalid input syntax for type path: "[(1,2,6),(3,4,6)]"
+(1 row)
+

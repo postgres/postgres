@@ -85,3 +85,64 @@ select '{nan, 1, nan}'::line = '{nan, 1, nan}'::line as true,
  t    | f
 (1 row)
 
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('{1, 1}', 'line');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('{1, 1}', 'line');
+            pg_input_error_message            
+----------------------------------------------
+ invalid input syntax for type line: "{1, 1}"
+(1 row)
+
+SELECT pg_input_is_valid('{0, 0, 0}', 'line');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('{0, 0, 0}', 'line');
+                 pg_input_error_message                  
+---------------------------------------------------------
+ invalid line specification: A and B cannot both be zero
+(1 row)
+
+SELECT pg_input_is_valid('{1, 1, a}', 'line');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('{1, 1, a}', 'line');
+             pg_input_error_message              
+-------------------------------------------------
+ invalid input syntax for type line: "{1, 1, a}"
+(1 row)
+
+SELECT pg_input_is_valid('{1, 1, 1e400}', 'line');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('{1, 1, 1e400}', 'line');
+              pg_input_error_message               
+---------------------------------------------------
+ "1e400" is out of range for type double precision
+(1 row)
+
+SELECT pg_input_is_valid('(1, 1), (1, 1e400)', 'line');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('(1, 1), (1, 1e400)', 'line');
+              pg_input_error_message               
+---------------------------------------------------
+ "1e400" is out of range for type double precision
+(1 row)
+

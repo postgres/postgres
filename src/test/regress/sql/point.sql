@@ -96,3 +96,7 @@ SELECT COUNT(*) FROM point_gist_tbl WHERE f1 ~= '(0.0000018,0.0000018)'::point;
 RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
+
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('1,y', 'point');
+SELECT pg_input_error_message('1,y', 'point');

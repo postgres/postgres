@@ -42,3 +42,9 @@ SELECT f1 AS closed_path FROM PATH_TBL WHERE isclosed(f1);
 SELECT pclose(f1) AS closed_path FROM PATH_TBL;
 
 SELECT popen(f1) AS open_path FROM PATH_TBL;
+
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('[(1,2),(3)]', 'path');
+SELECT pg_input_error_message('[(1,2),(3)]', 'path');
+SELECT pg_input_is_valid('[(1,2,6),(3,4,6)]', 'path');
+SELECT pg_input_error_message('[(1,2,6),(3,4,6)]', 'path');

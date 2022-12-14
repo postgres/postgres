@@ -523,3 +523,9 @@ SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
 SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
+
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('(1', 'circle');
+SELECT pg_input_error_message('1,', 'circle');
+SELECT pg_input_is_valid('(1,2),-1', 'circle');
+SELECT pg_input_error_message('(1,2),-1', 'circle');

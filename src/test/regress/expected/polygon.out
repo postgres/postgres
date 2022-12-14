@@ -306,3 +306,28 @@ WHERE seq.id IS NULL OR idx.id IS NULL;
 RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('(2.0,0.8,0.1)', 'polygon');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('(2.0,0.8,0.1)', 'polygon');
+                 pg_input_error_message                 
+--------------------------------------------------------
+ invalid input syntax for type polygon: "(2.0,0.8,0.1)"
+(1 row)
+
+SELECT pg_input_is_valid('(2.0,xyz)', 'polygon');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('(2.0,xyz)', 'polygon');
+               pg_input_error_message               
+----------------------------------------------------
+ invalid input syntax for type polygon: "(2.0,xyz)"
+(1 row)
+
