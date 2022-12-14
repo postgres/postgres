@@ -496,7 +496,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_LAST
 	};
 
-	StaticAssertStmt(EEOP_LAST + 1 == lengthof(dispatch_table),
+	StaticAssertStmt(lengthof(dispatch_table) == EEOP_LAST + 1,
 					 "dispatch_table out of whack with ExprEvalOp");
 
 	if (unlikely(state == NULL))
