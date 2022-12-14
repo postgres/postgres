@@ -88,6 +88,12 @@ SELECT '-9223372036854775808'::money;
 SELECT '(1)'::money;
 SELECT '($123,456.78)'::money;
 
+-- test non-error-throwing API
+SELECT pg_input_is_valid('\x0001', 'money');
+SELECT pg_input_error_message('\x0001', 'money');
+SELECT pg_input_is_valid('192233720368547758.07', 'money');
+SELECT pg_input_error_message('192233720368547758.07', 'money');
+
 -- documented minimums and maximums
 SELECT '-92233720368547758.08'::money;
 SELECT '92233720368547758.07'::money;

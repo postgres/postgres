@@ -331,6 +331,31 @@ SELECT '($123,456.78)'::money;
  -$123,456.78
 (1 row)
 
+-- test non-error-throwing API
+SELECT pg_input_is_valid('\x0001', 'money');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('\x0001', 'money');
+            pg_input_error_message             
+-----------------------------------------------
+ invalid input syntax for type money: "\x0001"
+(1 row)
+
+SELECT pg_input_is_valid('192233720368547758.07', 'money');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('192233720368547758.07', 'money');
+                    pg_input_error_message                    
+--------------------------------------------------------------
+ value "192233720368547758.07" is out of range for type money
+(1 row)
+
 -- documented minimums and maximums
 SELECT '-92233720368547758.08'::money;
             money            

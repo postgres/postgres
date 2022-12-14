@@ -31,7 +31,7 @@ typedef struct
 	hyperLogLogState abbr_card; /* cardinality estimator */
 } uuid_sortsupport_state;
 
-static void string_to_uuid(const char *source, pg_uuid_t *uuid);
+static void string_to_uuid(const char *source, pg_uuid_t *uuid, Node *escontext);
 static int	uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2);
 static int	uuid_fast_cmp(Datum x, Datum y, SortSupport ssup);
 static bool uuid_abbrev_abort(int memtupcount, SortSupport ssup);
@@ -44,7 +44,7 @@ uuid_in(PG_FUNCTION_ARGS)
 	pg_uuid_t  *uuid;
 
 	uuid = (pg_uuid_t *) palloc(sizeof(*uuid));
-	string_to_uuid(uuid_str, uuid);
+	string_to_uuid(uuid_str, uuid, fcinfo->context);
 	PG_RETURN_UUID_P(uuid);
 }
 
@@ -87,7 +87,7 @@ uuid_out(PG_FUNCTION_ARGS)
  * digits, is the only one used for output.)
  */
 static void
-string_to_uuid(const char *source, pg_uuid_t *uuid)
+string_to_uuid(const char *source, pg_uuid_t *uuid, Node *escontext)
 {
 	const char *src = source;
 	bool		braces = false;
@@ -130,7 +130,7 @@ string_to_uuid(const char *source, pg_uuid_t *uuid)
 	return;
 
 syntax_error:
-	ereport(ERROR,
+	ereturn(escontext,,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"uuid", source)));

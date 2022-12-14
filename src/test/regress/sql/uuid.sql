@@ -23,6 +23,10 @@ INSERT INTO guid1(guid_field) VALUES('{22222222-2222-2222-2222-222222222222 ');
 INSERT INTO guid1(guid_field) VALUES('11111111-1111-1111-G111-111111111111');
 INSERT INTO guid1(guid_field) VALUES('11+11111-1111-1111-1111-111111111111');
 
+-- test non-error-throwing API
+SELECT pg_input_is_valid('11', 'uuid');
+SELECT pg_input_error_message('11', 'uuid');
+
 --inserting three input formats
 INSERT INTO guid1(guid_field) VALUES('11111111-1111-1111-1111-111111111111');
 INSERT INTO guid1(guid_field) VALUES('{22222222-2222-2222-2222-222222222222}');

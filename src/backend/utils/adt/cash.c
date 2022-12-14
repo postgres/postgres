@@ -96,6 +96,7 @@ Datum
 cash_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Cash		result;
 	Cash		value = 0;
 	Cash		dec = 0;
@@ -209,7 +210,7 @@ cash_in(PG_FUNCTION_ARGS)
 
 			if (pg_mul_s64_overflow(value, 10, &value) ||
 				pg_sub_s64_overflow(value, digit, &value))
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("value \"%s\" is out of range for type %s",
 								str, "money")));
@@ -234,7 +235,7 @@ cash_in(PG_FUNCTION_ARGS)
 	{
 		/* remember we build the value in the negative */
 		if (pg_sub_s64_overflow(value, 1, &value))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type %s",
 							str, "money")));
@@ -244,7 +245,7 @@ cash_in(PG_FUNCTION_ARGS)
 	for (; dec < fpoint; dec++)
 	{
 		if (pg_mul_s64_overflow(value, 10, &value))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type %s",
 							str, "money")));
@@ -271,7 +272,7 @@ cash_in(PG_FUNCTION_ARGS)
 		else if (strncmp(s, csymbol, strlen(csymbol)) == 0)
 			s += strlen(csymbol);
 		else
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"money", str)));
@@ -284,7 +285,7 @@ cash_in(PG_FUNCTION_ARGS)
 	if (sgn > 0)
 	{
 		if (value == PG_INT64_MIN)
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type %s",
 							str, "money")));
