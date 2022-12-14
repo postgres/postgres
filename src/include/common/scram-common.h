@@ -23,9 +23,6 @@
 /* Length of SCRAM keys (client and server) */
 #define SCRAM_KEY_LEN				PG_SHA256_DIGEST_LENGTH
 
-/* length of HMAC */
-#define SHA256_HMAC_B				PG_SHA256_BLOCK_LENGTH
-
 /*
  * Size of random nonce generated in the authentication exchange.  This
  * is in "raw" number of bytes, the actual nonces sent over the wire are
