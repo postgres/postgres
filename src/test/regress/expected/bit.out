@@ -746,3 +746,64 @@ TABLE bit_defaults;
  1001 | 0101 | 1001 | 0101
 (1 row)
 
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('01010001', 'bit(10)');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('01010001', 'bit(10)');
+             pg_input_error_message              
+-------------------------------------------------
+ bit string length 8 does not match type bit(10)
+(1 row)
+
+SELECT pg_input_is_valid('01010Z01', 'bit(8)');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('01010Z01', 'bit(8)');
+     pg_input_error_message      
+---------------------------------
+ "Z" is not a valid binary digit
+(1 row)
+
+SELECT pg_input_is_valid('x01010Z01', 'bit(32)');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('x01010Z01', 'bit(32)');
+        pg_input_error_message        
+--------------------------------------
+ "Z" is not a valid hexadecimal digit
+(1 row)
+
+SELECT pg_input_is_valid('01010Z01', 'varbit');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('01010Z01', 'varbit');
+     pg_input_error_message      
+---------------------------------
+ "Z" is not a valid binary digit
+(1 row)
+
+SELECT pg_input_is_valid('x01010Z01', 'varbit');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('x01010Z01', 'varbit');
+        pg_input_error_message        
+--------------------------------------
+ "Z" is not a valid hexadecimal digit
+(1 row)
+

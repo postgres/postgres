@@ -1056,3 +1056,40 @@ SELECT a FROM (VALUES
  ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 (91 rows)
 
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('1234', 'cidr');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('1234', 'cidr');
+           pg_input_error_message           
+--------------------------------------------
+ invalid input syntax for type cidr: "1234"
+(1 row)
+
+SELECT pg_input_is_valid('192.168.198.200/24', 'cidr');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('192.168.198.200/24', 'cidr');
+          pg_input_error_message          
+------------------------------------------
+ invalid cidr value: "192.168.198.200/24"
+(1 row)
+
+SELECT pg_input_is_valid('1234', 'inet');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('1234', 'inet');
+           pg_input_error_message           
+--------------------------------------------
+ invalid input syntax for type inet: "1234"
+(1 row)
+

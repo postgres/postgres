@@ -252,3 +252,12 @@ SELECT a FROM (VALUES
   ('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/0'::inet),
   ('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128'::inet)
 ) AS i(a) ORDER BY a;
+
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('1234', 'cidr');
+SELECT pg_input_error_message('1234', 'cidr');
+SELECT pg_input_is_valid('192.168.198.200/24', 'cidr');
+SELECT pg_input_error_message('192.168.198.200/24', 'cidr');
+
+SELECT pg_input_is_valid('1234', 'inet');
+SELECT pg_input_error_message('1234', 'inet');

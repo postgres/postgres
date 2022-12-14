@@ -158,3 +158,28 @@ SELECT  b | '01:02:03:04:05:06' FROM macaddr_data;
 (12 rows)
 
 DROP TABLE macaddr_data;
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('08:00:2b:01:02:ZZ', 'macaddr');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('08:00:2b:01:02:ZZ', 'macaddr');
+                   pg_input_error_message                   
+------------------------------------------------------------
+ invalid input syntax for type macaddr: "08:00:2b:01:02:ZZ"
+(1 row)
+
+SELECT pg_input_is_valid('08:00:2b:01:02:', 'macaddr');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('08:00:2b:01:02:', 'macaddr');
+                  pg_input_error_message                  
+----------------------------------------------------------
+ invalid input syntax for type macaddr: "08:00:2b:01:02:"
+(1 row)
+

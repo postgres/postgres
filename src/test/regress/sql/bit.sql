@@ -229,3 +229,16 @@ CREATE TABLE bit_defaults(
 \d bit_defaults
 INSERT INTO bit_defaults DEFAULT VALUES;
 TABLE bit_defaults;
+
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('01010001', 'bit(10)');
+SELECT pg_input_error_message('01010001', 'bit(10)');
+SELECT pg_input_is_valid('01010Z01', 'bit(8)');
+SELECT pg_input_error_message('01010Z01', 'bit(8)');
+SELECT pg_input_is_valid('x01010Z01', 'bit(32)');
+SELECT pg_input_error_message('x01010Z01', 'bit(32)');
+
+SELECT pg_input_is_valid('01010Z01', 'varbit');
+SELECT pg_input_error_message('01010Z01', 'varbit');
+SELECT pg_input_is_valid('x01010Z01', 'varbit');
+SELECT pg_input_error_message('x01010Z01', 'varbit');
