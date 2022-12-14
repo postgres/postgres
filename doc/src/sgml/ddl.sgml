@@ -1692,8 +1692,7 @@ ALTER TABLE products RENAME TO items;
    <literal>TRUNCATE</literal>, <literal>REFERENCES</literal>, <literal>TRIGGER</literal>,
    <literal>CREATE</literal>, <literal>CONNECT</literal>, <literal>TEMPORARY</literal>,
    <literal>EXECUTE</literal>, <literal>USAGE</literal>, <literal>SET</literal>,
-   <literal>ALTER SYSTEM</literal>, <literal>VACUUM</literal>, and
-   <literal>ANALYZE</literal>.
+   <literal>ALTER SYSTEM</literal>, and <literal>MAINTAIN</literal>.
    The privileges applicable to a particular
    object vary depending on the object's type (table, function, etc.).
    More detail about the meanings of these privileges appears below.
@@ -1985,19 +1984,13 @@ REVOKE ALL ON accounts FROM PUBLIC;
     </varlistentry>
 
    <varlistentry>
-    <term><literal>VACUUM</literal></term>
+    <term><literal>MAINTAIN</literal></term>
     <listitem>
      <para>
-      Allows <command>VACUUM</command> on a relation.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>ANALYZE</literal></term>
-    <listitem>
-     <para>
-      Allows <command>ANALYZE</command> on a relation.
+      Allows <command>VACUUM</command>, <command>ANALYZE</command>,
+      <command>CLUSTER</command>, <command>REFRESH MATERIALIZED VIEW</command>,
+      <command>REINDEX</command>, and <command>LOCK TABLE</command> on a
+      relation.
      </para>
     </listitem>
    </varlistentry>
@@ -2151,13 +2144,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
       <entry><literal>PARAMETER</literal></entry>
      </row>
      <row>
-      <entry><literal>VACUUM</literal></entry>
-      <entry><literal>v</literal></entry>
-      <entry><literal>TABLE</literal></entry>
-     </row>
-     <row>
-      <entry><literal>ANALYZE</literal></entry>
-      <entry><literal>z</literal></entry>
+      <entry><literal>MAINTAIN</literal></entry>
+      <entry><literal>m</literal></entry>
       <entry><literal>TABLE</literal></entry>
      </row>
      </tbody>
@@ -2250,7 +2238,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </row>
      <row>
       <entry><literal>TABLE</literal> (and table-like objects)</entry>
-      <entry><literal>arwdDxtvz</literal></entry>
+      <entry><literal>arwdDxtm</literal></entry>
       <entry>none</entry>
       <entry><literal>\dp</literal></entry>
      </row>
@@ -2308,12 +2296,12 @@ GRANT SELECT (col1), UPDATE (col1) ON mytable TO miriam_rw;
    would show:
 <programlisting>
 =&gt; \dp mytable
-                                   Access privileges
- Schema |  Name   | Type  |    Access privileges    |   Column privileges   | Policies
---------+---------+-------+-------------------------+-----------------------+----------
- public | mytable | table | miriam=arwdDxtvz/miriam+| col1:                +|
-        |         |       | =r/miriam              +|   miriam_rw=rw/miriam |
-        |         |       | admin=arw/miriam        |                       |
+                                  Access privileges
+ Schema |  Name   | Type  |   Access privileges    |   Column privileges   | Policies
+--------+---------+-------+------------------------+-----------------------+----------
+ public | mytable | table | miriam=arwdDxtm/miriam+| col1:                +|
+        |         |       | =r/miriam             +|   miriam_rw=rw/miriam |
+        |         |       | admin=arw/miriam       |                       |
 (1 row)
 </programlisting>
   </para>

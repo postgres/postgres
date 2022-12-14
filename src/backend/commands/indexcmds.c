@@ -26,6 +26,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_inherits.h"
@@ -2754,6 +2755,7 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	char		relkind;
 	struct ReindexIndexCallbackState *state = arg;
 	LOCKMODE	table_lockmode;
+	Oid			table_oid;
 
 	/*
 	 * Lock level here should match table lock in reindex_index() for
@@ -2793,14 +2795,16 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 				 errmsg("\"%s\" is not an index", relation->relname)));
 
 	/* Check permissions */
-	if (!object_ownercheck(RelationRelationId, relId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_INDEX, relation->relname);
+	table_oid = IndexGetRelation(relId, true);
+	if (!object_ownercheck(RelationRelationId, relId, GetUserId()) &&
+		OidIsValid(table_oid) &&
+		pg_class_aclcheck(table_oid, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK)
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_INDEX,
+					   relation->relname);
 
 	/* Lock heap before index to avoid deadlock. */
 	if (relId != oldRelId)
 	{
-		Oid			table_oid = IndexGetRelation(relId, true);
-
 		/*
 		 * If the OID isn't valid, it means the index was concurrently
 		 * dropped, which is not a problem for us; just return normally.
@@ -2835,7 +2839,7 @@ ReindexTable(RangeVar *relation, ReindexParams *params, bool isTopLevel)
 									   (params->options & REINDEXOPT_CONCURRENTLY) != 0 ?
 									   ShareUpdateExclusiveLock : ShareLock,
 									   0,
-									   RangeVarCallbackOwnsTable, NULL);
+									   RangeVarCallbackMaintainsTable, NULL);
 
 	if (get_rel_relkind(heapOid) == RELKIND_PARTITIONED_TABLE)
 		ReindexPartitions(heapOid, params, isTopLevel);
@@ -2917,7 +2921,8 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	{
 		objectOid = get_namespace_oid(objectName, false);
 
-		if (!object_ownercheck(NamespaceRelationId, objectOid, GetUserId()))
+		if (!object_ownercheck(NamespaceRelationId, objectOid, GetUserId()) &&
+			!has_privs_of_role(GetUserId(), ROLE_PG_MAINTAIN))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA,
 						   objectName);
 	}
@@ -2929,7 +2934,8 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("can only reindex the currently open database")));
-		if (!object_ownercheck(DatabaseRelationId, objectOid, GetUserId()))
+		if (!object_ownercheck(DatabaseRelationId, objectOid, GetUserId()) &&
+			!has_privs_of_role(GetUserId(), ROLE_PG_MAINTAIN))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   get_database_name(objectOid));
 	}
@@ -3001,15 +3007,17 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			continue;
 
 		/*
-		 * The table can be reindexed if the user is superuser, the table
-		 * owner, or the database/schema owner (but in the latter case, only
-		 * if it's not a shared relation).  object_ownercheck includes the
-		 * superuser case, and depending on objectKind we already know that
-		 * the user has permission to run REINDEX on this database or schema
-		 * per the permission checks at the beginning of this routine.
+		 * The table can be reindexed if the user has been granted MAINTAIN on
+		 * the table or the user is a superuser, the table owner, or the
+		 * database/schema owner (but in the latter case, only if it's not a
+		 * shared relation).  object_ownercheck includes the superuser case,
+		 * and depending on objectKind we already know that the user has
+		 * permission to run REINDEX on this database or schema per the
+		 * permission checks at the beginning of this routine.
 		 */
 		if (classtuple->relisshared &&
-			!object_ownercheck(RelationRelationId, relid, GetUserId()))
+			!object_ownercheck(RelationRelationId, relid, GetUserId()) &&
+			pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK)
 			continue;
 
 		/*

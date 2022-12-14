@@ -19,7 +19,7 @@ DETAIL:  privileges for table deptest
 REVOKE SELECT ON deptest FROM GROUP regress_dep_group;
 DROP GROUP regress_dep_group;
 -- can't drop the user if we revoke the privileges partially
-REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, VACUUM, ANALYZE ON deptest FROM regress_dep_user;
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, MAINTAIN ON deptest FROM regress_dep_user;
 DROP USER regress_dep_user;
 ERROR:  role "regress_dep_user" cannot be dropped because some objects depend on it
 DETAIL:  privileges for table deptest
@@ -63,21 +63,21 @@ CREATE TABLE deptest (a serial primary key, b text);
 GRANT ALL ON deptest1 TO regress_dep_user2;
 RESET SESSION AUTHORIZATION;
 \z deptest1
-                                                 Access privileges
- Schema |   Name   | Type  |                   Access privileges                    | Column privileges | Policies 
---------+----------+-------+--------------------------------------------------------+-------------------+----------
- public | deptest1 | table | regress_dep_user0=arwdDxtvz/regress_dep_user0         +|                   | 
-        |          |       | regress_dep_user1=a*r*w*d*D*x*t*v*z*/regress_dep_user0+|                   | 
-        |          |       | regress_dep_user2=arwdDxtvz/regress_dep_user1          |                   | 
+                                                Access privileges
+ Schema |   Name   | Type  |                  Access privileges                   | Column privileges | Policies 
+--------+----------+-------+------------------------------------------------------+-------------------+----------
+ public | deptest1 | table | regress_dep_user0=arwdDxtm/regress_dep_user0        +|                   | 
+        |          |       | regress_dep_user1=a*r*w*d*D*x*t*m*/regress_dep_user0+|                   | 
+        |          |       | regress_dep_user2=arwdDxtm/regress_dep_user1         |                   | 
 (1 row)
 
 DROP OWNED BY regress_dep_user1;
 -- all grants revoked
 \z deptest1
                                             Access privileges
- Schema |   Name   | Type  |               Access privileges               | Column privileges | Policies 
---------+----------+-------+-----------------------------------------------+-------------------+----------
- public | deptest1 | table | regress_dep_user0=arwdDxtvz/regress_dep_user0 |                   | 
+ Schema |   Name   | Type  |              Access privileges               | Column privileges | Policies 
+--------+----------+-------+----------------------------------------------+-------------------+----------
+ public | deptest1 | table | regress_dep_user0=arwdDxtm/regress_dep_user0 |                   | 
 (1 row)
 
 -- table was dropped

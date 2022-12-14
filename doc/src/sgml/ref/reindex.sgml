@@ -293,15 +293,20 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { DA
 
   <para>
    Reindexing a single index or table requires being the owner of that
-   index or table.  Reindexing a schema or database requires being the
-   owner of that schema or database.  Note specifically that it's thus
+   index or table, having privileges of the
+   <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+   role, or having the <literal>MAINTAIN</literal> privilege on the
+   table.  Reindexing a schema or database requires being the
+   owner of that schema or database or having privileges of the
+   <literal>pg_maintain</literal> role.  Note specifically that it's thus
    possible for non-superusers to rebuild indexes of tables owned by
    other users.  However, as a special exception, when
    <command>REINDEX DATABASE</command>, <command>REINDEX SCHEMA</command>
    or <command>REINDEX SYSTEM</command> is issued by a non-superuser,
    indexes on shared catalogs will be skipped unless the user owns the
-   catalog (which typically won't be the case).  Of course, superusers
-   can always reindex anything.
+   catalog (which typically won't be the case), has privileges of the
+   <literal>pg_maintain</literal> role, or has the <literal>MAINTAIN</literal>
+   privilege on the catalog.  Of course, superusers can always reindex anything.
   </para>
 
   <para>

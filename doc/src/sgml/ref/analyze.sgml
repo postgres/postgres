@@ -148,16 +148,15 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
   <title>Notes</title>
 
   <para>
-   To analyze a table, one must ordinarily have the <literal>ANALYZE</literal>
+   To analyze a table, one must ordinarily have the <literal>MAINTAIN</literal>
    privilege on the table or be the table's owner, a superuser, or a role with
    privileges of the
-   <link linkend="predefined-roles-table"><literal>pg_analyze_all_tables</literal></link>
-   role.
-   However, database owners are allowed to
+   <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+   role.  However, database owners are allowed to
    analyze all tables in their databases, except shared catalogs.
    (The restriction for shared catalogs means that a true database-wide
    <command>ANALYZE</command> can only be performed by superusers and roles
-   with privileges of <literal>pg_analyze_all_tables</literal>.)
+   with privileges of <literal>pg_maintain</literal>.)
    <command>ANALYZE</command> will skip over any tables that the calling user
    does not have permission to analyze.
   </para>

@@ -165,11 +165,17 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
   <title>Notes</title>
 
    <para>
-    <literal>LOCK TABLE ... IN ACCESS SHARE MODE</literal> requires <literal>SELECT</literal>
-    privileges on the target table.  <literal>LOCK TABLE ... IN ROW EXCLUSIVE
-    MODE</literal> requires <literal>INSERT</literal>, <literal>UPDATE</literal>, <literal>DELETE</literal>,
-    or <literal>TRUNCATE</literal> privileges on the target table. All other forms of
-    <command>LOCK</command> require table-level <literal>UPDATE</literal>, <literal>DELETE</literal>,
+    To lock a table, one must ordinarily have the <literal>MAINTAIN</literal>
+    privilege on the table or be the table's owner, a superuser, or a role
+    with privileges of the
+    <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+    role. <literal>LOCK TABLE ... IN ACCESS SHARE MODE</literal> is allowed
+    with <literal>SELECT</literal> privileges on the target
+    table.  <literal>LOCK TABLE ... IN ROW EXCLUSIVE MODE</literal> is allowed
+    with <literal>INSERT</literal>, <literal>UPDATE</literal>, <literal>DELETE</literal>,
+    or <literal>TRUNCATE</literal> privileges on the target table. All other
+    forms of <command>LOCK</command> are allowed with
+    table-level <literal>UPDATE</literal>, <literal>DELETE</literal>,
     or <literal>TRUNCATE</literal> privileges.
    </para>
 

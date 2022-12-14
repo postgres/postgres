@@ -69,9 +69,11 @@ CLUSTER [VERBOSE]
   <para>
    <command>CLUSTER</command> without any parameter reclusters all the
    previously-clustered tables in the current database that the calling user
-   owns, or all such tables if called by a superuser.  This
-   form of <command>CLUSTER</command> cannot be executed inside a transaction
-   block.
+   owns or has the <literal>MAINTAIN</literal> privilege for, or all such tables
+   if called by a superuser or a role with privileges of the
+   <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+   role.  This form of <command>CLUSTER</command> cannot be
+   executed inside a transaction block.
   </para>
 
   <para>

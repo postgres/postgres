@@ -336,9 +336,7 @@ WARNING:  permission denied to analyze "vacowned_part2", skipping it
 VACUUM (ANALYZE) vacowned_parted;
 WARNING:  permission denied to vacuum "vacowned_parted", skipping it
 WARNING:  permission denied to vacuum "vacowned_part1", skipping it
-WARNING:  permission denied to analyze "vacowned_part1", skipping it
 WARNING:  permission denied to vacuum "vacowned_part2", skipping it
-WARNING:  permission denied to analyze "vacowned_part2", skipping it
 VACUUM (ANALYZE) vacowned_part1;
 WARNING:  permission denied to vacuum "vacowned_part1", skipping it
 VACUUM (ANALYZE) vacowned_part2;
@@ -360,7 +358,6 @@ ANALYZE vacowned_part2;
 WARNING:  permission denied to analyze "vacowned_part2", skipping it
 VACUUM (ANALYZE) vacowned_parted;
 WARNING:  permission denied to vacuum "vacowned_part2", skipping it
-WARNING:  permission denied to analyze "vacowned_part2", skipping it
 VACUUM (ANALYZE) vacowned_part1;
 VACUUM (ANALYZE) vacowned_part2;
 WARNING:  permission denied to vacuum "vacowned_part2", skipping it
@@ -383,7 +380,6 @@ WARNING:  permission denied to analyze "vacowned_part2", skipping it
 VACUUM (ANALYZE) vacowned_parted;
 WARNING:  permission denied to vacuum "vacowned_parted", skipping it
 WARNING:  permission denied to vacuum "vacowned_part2", skipping it
-WARNING:  permission denied to analyze "vacowned_part2", skipping it
 VACUUM (ANALYZE) vacowned_part1;
 VACUUM (ANALYZE) vacowned_part2;
 WARNING:  permission denied to vacuum "vacowned_part2", skipping it
@@ -408,9 +404,7 @@ ANALYZE vacowned_part2;
 WARNING:  permission denied to analyze "vacowned_part2", skipping it
 VACUUM (ANALYZE) vacowned_parted;
 WARNING:  permission denied to vacuum "vacowned_part1", skipping it
-WARNING:  permission denied to analyze "vacowned_part1", skipping it
 WARNING:  permission denied to vacuum "vacowned_part2", skipping it
-WARNING:  permission denied to analyze "vacowned_part2", skipping it
 VACUUM (ANALYZE) vacowned_part1;
 WARNING:  permission denied to vacuum "vacowned_part1", skipping it
 VACUUM (ANALYZE) vacowned_part2;

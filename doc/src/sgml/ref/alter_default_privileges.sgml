@@ -28,7 +28,7 @@ ALTER DEFAULT PRIVILEGES
 
 <phrase>where <replaceable class="parameter">abbreviated_grant_or_revoke</replaceable> is one of:</phrase>
 
-GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | VACUUM | ANALYZE }
+GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | MAINTAIN }
     [, ...] | ALL [ PRIVILEGES ] }
     ON TABLES
     TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
@@ -51,7 +51,7 @@ GRANT { USAGE | CREATE | ALL [ PRIVILEGES ] }
     TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 REVOKE [ GRANT OPTION FOR ]
-    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | VACUUM | ANALYZE }
+    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | MAINTAIN }
     [, ...] | ALL [ PRIVILEGES ] }
     ON TABLES
     FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]

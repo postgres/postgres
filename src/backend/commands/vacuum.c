@@ -557,7 +557,6 @@ vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
 								 bits32 options)
 {
 	char	   *relname;
-	AclMode		mode = 0;
 
 	Assert((options & (VACOPT_VACUUM | VACOPT_ANALYZE)) != 0);
 
@@ -567,15 +566,11 @@ vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
 	 *   - the role is a superuser
 	 *   - the role owns the relation
 	 *   - the role owns the current database and the relation is not shared
-	 *   - the role has been granted privileges to vacuum/analyze the relation
+	 *   - the role has been granted the MAINTAIN privilege on the relation
 	 */
-	if (options & VACOPT_VACUUM)
-		mode |= ACL_VACUUM;
-	if (options & VACOPT_ANALYZE)
-		mode |= ACL_ANALYZE;
 	if (object_ownercheck(RelationRelationId, relid, GetUserId()) ||
 		(object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared) ||
-		pg_class_aclcheck(relid, GetUserId(), mode) == ACLCHECK_OK)
+		pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) == ACLCHECK_OK)
 		return true;
 
 	relname = NameStr(reltuple->relname);
@@ -1800,9 +1795,7 @@ vac_truncate_clog(TransactionId frozenXID,
  *		be stale.
  *
  *		Returns true if it's okay to proceed with a requested ANALYZE
- *		operation on this table.  Note that if vacuuming fails because the user
- *		does not have the required privileges, this function returns true since
- *		the user might have been granted privileges to ANALYZE the relation.
+ *		operation on this table.
  *
  *		Doing one heap at a time incurs extra overhead, since we need to
  *		check that the heap exists again just before we vacuum it.  The
@@ -1902,12 +1895,12 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	 */
 	if (!vacuum_is_permitted_for_relation(RelationGetRelid(rel),
 										  rel->rd_rel,
-										  VACOPT_VACUUM))
+										  params->options & VACOPT_VACUUM))
 	{
 		relation_close(rel, lmode);
 		PopActiveSnapshot();
 		CommitTransactionCommand();
-		return true;	/* user might have the ANALYZE privilege */
+		return false;
 	}
 
 	/*

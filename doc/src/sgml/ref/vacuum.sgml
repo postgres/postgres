@@ -356,16 +356,15 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
   <title>Notes</title>
 
    <para>
-    To vacuum a table, one must ordinarily have the <literal>VACUUM</literal>
+    To vacuum a table, one must ordinarily have the <literal>MAINTAIN</literal>
     privilege on the table or be the table's owner, a superuser, or a role with
     privileges of the
-    <link linkend="predefined-roles-table"><literal>pg_vacuum_all_tables</literal></link>
-    role.
-    However, database owners are allowed to
+    <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+    role.  However, database owners are allowed to
     vacuum all tables in their databases, except shared catalogs.
     (The restriction for shared catalogs means that a true database-wide
     <command>VACUUM</command> can only be performed by superusers and roles
-    with privileges of <literal>pg_vacuum_all_tables</literal>.)
+    with privileges of <literal>pg_maintain</literal>.)
     <command>VACUUM</command> will skip over any tables that the calling user
     does not have permission to vacuum.
    </para>

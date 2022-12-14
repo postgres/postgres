@@ -7502,13 +7502,6 @@ privilege:	SELECT opt_column_list
 				n->cols = NIL;
 				$$ = n;
 			}
-		| analyze_keyword
-			{
-				AccessPriv *n = makeNode(AccessPriv);
-				n->priv_name = pstrdup("analyze");
-				n->cols = NIL;
-				$$ = n;
-			}
 		| ColId opt_column_list
 			{
 				AccessPriv *n = makeNode(AccessPriv);

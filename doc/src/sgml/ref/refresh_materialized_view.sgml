@@ -32,7 +32,10 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</
   <para>
    <command>REFRESH MATERIALIZED VIEW</command> completely replaces the
    contents of a materialized view.  To execute this command you must be the
-   owner of the materialized view.  The old contents are discarded.  If
+   owner of the materialized view, have privileges of the
+   <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+   role, or have the <literal>MAINTAIN</literal>
+   privilege on the materialized view.  The old contents are discarded.  If
    <literal>WITH DATA</literal> is specified (or defaults) the backing query
    is executed to provide the new data, and the materialized view is left in a
    scannable state.  If <literal>WITH NO DATA</literal> is specified no new

@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 REVOKE [ GRANT OPTION FOR ]
-    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | VACUUM | ANALYZE }
+    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | MAINTAIN }
     [, ...] | ALL [ PRIVILEGES ] }
     ON { [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
          | ALL TABLES IN SCHEMA <replaceable>schema_name</replaceable> [, ...] }

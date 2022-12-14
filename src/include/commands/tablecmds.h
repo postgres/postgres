@@ -95,8 +95,9 @@ extern void AtEOSubXact_on_commit_actions(bool isCommit,
 										  SubTransactionId mySubid,
 										  SubTransactionId parentSubid);
 
-extern void RangeVarCallbackOwnsTable(const RangeVar *relation,
-									  Oid relId, Oid oldRelId, void *arg);
+extern void RangeVarCallbackMaintainsTable(const RangeVar *relation,
+										   Oid relId, Oid oldRelId,
+										   void *arg);
 
 extern void RangeVarCallbackOwnsRelation(const RangeVar *relation,
 										 Oid relId, Oid oldRelId, void *arg);

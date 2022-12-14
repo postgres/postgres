@@ -1853,66 +1853,73 @@ DROP ROLE regress_roleoption_protagonist;
 DROP ROLE regress_roleoption_donor;
 DROP ROLE regress_roleoption_recipient;
 
--- VACUUM and ANALYZE
-CREATE ROLE regress_no_priv;
-CREATE ROLE regress_only_vacuum;
-CREATE ROLE regress_only_analyze;
-CREATE ROLE regress_both;
-CREATE ROLE regress_only_vacuum_all IN ROLE pg_vacuum_all_tables;
-CREATE ROLE regress_only_analyze_all IN ROLE pg_analyze_all_tables;
-CREATE ROLE regress_both_all IN ROLE pg_vacuum_all_tables, pg_analyze_all_tables;
+-- MAINTAIN
+CREATE ROLE regress_no_maintain;
+CREATE ROLE regress_maintain;
+CREATE ROLE regress_maintain_all IN ROLE pg_maintain;
 
-CREATE TABLE vacanalyze_test (a INT);
-GRANT VACUUM ON vacanalyze_test TO regress_only_vacuum, regress_both;
-GRANT ANALYZE ON vacanalyze_test TO regress_only_analyze, regress_both;
+CREATE TABLE maintain_test (a INT);
+CREATE INDEX ON maintain_test (a);
+GRANT MAINTAIN ON maintain_test TO regress_maintain;
+CREATE MATERIALIZED VIEW refresh_test AS SELECT 1;
+GRANT MAINTAIN ON refresh_test TO regress_maintain;
+CREATE SCHEMA reindex_test;
 
-SET ROLE regress_no_priv;
-VACUUM vacanalyze_test;
-ANALYZE vacanalyze_test;
-VACUUM (ANALYZE) vacanalyze_test;
+-- negative tests; should fail
+SET ROLE regress_no_maintain;
+VACUUM maintain_test;
+ANALYZE maintain_test;
+VACUUM (ANALYZE) maintain_test;
+CLUSTER maintain_test USING maintain_test_a_idx;
+REFRESH MATERIALIZED VIEW refresh_test;
+REINDEX TABLE maintain_test;
+REINDEX INDEX maintain_test_a_idx;
+REINDEX SCHEMA reindex_test;
+BEGIN;
+LOCK TABLE maintain_test IN ACCESS SHARE MODE;
+COMMIT;
+BEGIN;
+LOCK TABLE maintain_test IN ACCESS EXCLUSIVE MODE;
+COMMIT;
 RESET ROLE;
 
-SET ROLE regress_only_vacuum;
-VACUUM vacanalyze_test;
-ANALYZE vacanalyze_test;
-VACUUM (ANALYZE) vacanalyze_test;
+SET ROLE regress_maintain;
+VACUUM maintain_test;
+ANALYZE maintain_test;
+VACUUM (ANALYZE) maintain_test;
+CLUSTER maintain_test USING maintain_test_a_idx;
+REFRESH MATERIALIZED VIEW refresh_test;
+REINDEX TABLE maintain_test;
+REINDEX INDEX maintain_test_a_idx;
+REINDEX SCHEMA reindex_test;
+BEGIN;
+LOCK TABLE maintain_test IN ACCESS SHARE MODE;
+COMMIT;
+BEGIN;
+LOCK TABLE maintain_test IN ACCESS EXCLUSIVE MODE;
+COMMIT;
 RESET ROLE;
 
-SET ROLE regress_only_analyze;
-VACUUM vacanalyze_test;
-ANALYZE vacanalyze_test;
-VACUUM (ANALYZE) vacanalyze_test;
+SET ROLE regress_maintain_all;
+VACUUM maintain_test;
+ANALYZE maintain_test;
+VACUUM (ANALYZE) maintain_test;
+CLUSTER maintain_test USING maintain_test_a_idx;
+REFRESH MATERIALIZED VIEW refresh_test;
+REINDEX TABLE maintain_test;
+REINDEX INDEX maintain_test_a_idx;
+REINDEX SCHEMA reindex_test;
+BEGIN;
+LOCK TABLE maintain_test IN ACCESS SHARE MODE;
+COMMIT;
+BEGIN;
+LOCK TABLE maintain_test IN ACCESS EXCLUSIVE MODE;
+COMMIT;
 RESET ROLE;
 
-SET ROLE regress_both;
-VACUUM vacanalyze_test;
-ANALYZE vacanalyze_test;
-VACUUM (ANALYZE) vacanalyze_test;
-RESET ROLE;
-
-SET ROLE regress_only_vacuum_all;
-VACUUM vacanalyze_test;
-ANALYZE vacanalyze_test;
-VACUUM (ANALYZE) vacanalyze_test;
-RESET ROLE;
-
-SET ROLE regress_only_analyze_all;
-VACUUM vacanalyze_test;
-ANALYZE vacanalyze_test;
-VACUUM (ANALYZE) vacanalyze_test;
-RESET ROLE;
-
-SET ROLE regress_both_all;
-VACUUM vacanalyze_test;
-ANALYZE vacanalyze_test;
-VACUUM (ANALYZE) vacanalyze_test;
-RESET ROLE;
-
-DROP TABLE vacanalyze_test;
-DROP ROLE regress_no_priv;
-DROP ROLE regress_only_vacuum;
-DROP ROLE regress_only_analyze;
-DROP ROLE regress_both;
-DROP ROLE regress_only_vacuum_all;
-DROP ROLE regress_only_analyze_all;
-DROP ROLE regress_both_all;
+DROP TABLE maintain_test;
+DROP MATERIALIZED VIEW refresh_test;
+DROP SCHEMA reindex_test;
+DROP ROLE regress_no_maintain;
+DROP ROLE regress_maintain;
+DROP ROLE regress_maintain_all;

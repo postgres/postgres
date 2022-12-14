@@ -300,6 +300,9 @@ LockTableAclCheck(Oid reloid, LOCKMODE lockmode, Oid userid)
 	else
 		aclmask = ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
 
+	/* MAINTAIN privilege allows all lock modes */
+	aclmask |= ACL_MAINTAIN;
+
 	aclresult = pg_class_aclcheck(reloid, userid, aclmask);
 
 	return aclresult;
