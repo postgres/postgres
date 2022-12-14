@@ -141,6 +141,7 @@ Datum
 int2vectorin(PG_FUNCTION_ARGS)
 {
 	char	   *intString = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	int2vector *result;
 	int			n;
 
@@ -160,19 +161,19 @@ int2vectorin(PG_FUNCTION_ARGS)
 		l = strtol(intString, &endp, 10);
 
 		if (intString == endp)
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"smallint", intString)));
 
 		if (errno == ERANGE || l < SHRT_MIN || l > SHRT_MAX)
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type %s", intString,
 							"smallint")));
 
 		if (*endp && *endp != ' ')
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"integer", intString)));
@@ -183,7 +184,7 @@ int2vectorin(PG_FUNCTION_ARGS)
 	while (*intString && isspace((unsigned char) *intString))
 		intString++;
 	if (*intString)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("int2vector has too many elements")));
 

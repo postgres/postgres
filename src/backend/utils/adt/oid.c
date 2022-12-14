@@ -19,6 +19,7 @@
 
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
+#include "nodes/miscnodes.h"
 #include "nodes/value.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -31,15 +32,26 @@
  *	 USER I/O ROUTINES														 *
  *****************************************************************************/
 
+/*
+ * Parse a single OID and return its value.
+ *
+ * If endloc isn't NULL, store a pointer to the rest of the string there,
+ * so that caller can parse the rest.  Otherwise, it's an error if anything
+ * but whitespace follows.
+ *
+ * If escontext points to an ErrorSaveContext node, that is filled instead
+ * of throwing an error; the caller must check SOFT_ERROR_OCCURRED()
+ * to detect errors.
+ */
 static Oid
-oidin_subr(const char *s, char **endloc)
+oidin_subr(const char *s, char **endloc, Node *escontext)
 {
 	unsigned long cvt;
 	char	   *endptr;
 	Oid			result;
 
 	if (*s == '\0')
-		ereport(ERROR,
+		ereturn(escontext, InvalidOid,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"oid", s)));
@@ -53,19 +65,19 @@ oidin_subr(const char *s, char **endloc)
 	 * handled by the second "if" consistent across platforms.
 	 */
 	if (errno && errno != ERANGE && errno != EINVAL)
-		ereport(ERROR,
+		ereturn(escontext, InvalidOid,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"oid", s)));
 
 	if (endptr == s && *s != '\0')
-		ereport(ERROR,
+		ereturn(escontext, InvalidOid,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"oid", s)));
 
 	if (errno == ERANGE)
-		ereport(ERROR,
+		ereturn(escontext, InvalidOid,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("value \"%s\" is out of range for type %s",
 						s, "oid")));
@@ -81,7 +93,7 @@ oidin_subr(const char *s, char **endloc)
 		while (*endptr && isspace((unsigned char) *endptr))
 			endptr++;
 		if (*endptr)
-			ereport(ERROR,
+			ereturn(escontext, InvalidOid,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"oid", s)));
@@ -104,7 +116,7 @@ oidin_subr(const char *s, char **endloc)
 #if OID_MAX != ULONG_MAX
 	if (cvt != (unsigned long) result &&
 		cvt != (unsigned long) ((int) result))
-		ereport(ERROR,
+		ereturn(escontext, InvalidOid,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("value \"%s\" is out of range for type %s",
 						s, "oid")));
@@ -119,7 +131,7 @@ oidin(PG_FUNCTION_ARGS)
 	char	   *s = PG_GETARG_CSTRING(0);
 	Oid			result;
 
-	result = oidin_subr(s, NULL);
+	result = oidin_subr(s, NULL, fcinfo->context);
 	PG_RETURN_OID(result);
 }
 
@@ -194,6 +206,7 @@ Datum
 oidvectorin(PG_FUNCTION_ARGS)
 {
 	char	   *oidString = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	oidvector  *result;
 	int			n;
 
@@ -205,12 +218,14 @@ oidvectorin(PG_FUNCTION_ARGS)
 			oidString++;
 		if (*oidString == '\0')
 			break;
-		result->values[n] = oidin_subr(oidString, &oidString);
+		result->values[n] = oidin_subr(oidString, &oidString, escontext);
+		if (SOFT_ERROR_OCCURRED(escontext))
+			PG_RETURN_NULL();
 	}
 	while (*oidString && isspace((unsigned char) *oidString))
 		oidString++;
 	if (*oidString)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("oidvector has too many elements")));
 
@@ -324,7 +339,7 @@ oidparse(Node *node)
 			 * constants by the lexer.  Accept these if they are valid OID
 			 * strings.
 			 */
-			return oidin_subr(castNode(Float, node)->fval, NULL);
+			return oidin_subr(castNode(Float, node)->fval, NULL, NULL);
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 	}

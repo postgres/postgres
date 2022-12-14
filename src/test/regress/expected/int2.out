@@ -70,6 +70,25 @@ SELECT pg_input_error_message('50000', 'int2');
  value "50000" is out of range for type smallint
 (1 row)
 
+-- While we're here, check int2vector as well
+SELECT pg_input_is_valid(' 1 3  5 ', 'int2vector');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_error_message('1 asdf', 'int2vector');
+             pg_input_error_message             
+------------------------------------------------
+ invalid input syntax for type smallint: "asdf"
+(1 row)
+
+SELECT pg_input_error_message('50000', 'int2vector');
+             pg_input_error_message              
+-------------------------------------------------
+ value "50000" is out of range for type smallint
+(1 row)
+
 SELECT * FROM INT2_TBL AS f(a, b);
 ERROR:  table "f" has 1 columns available but 2 columns specified
 SELECT * FROM (TABLE int2_tbl) AS s (a, b);

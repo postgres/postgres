@@ -15,6 +15,10 @@ INSERT INTO PG_LSN_TBL VALUES (' 0/12345678');
 INSERT INTO PG_LSN_TBL VALUES ('ABCD/');
 INSERT INTO PG_LSN_TBL VALUES ('/ABCD');
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('16AE7F7', 'pg_lsn');
+SELECT pg_input_error_message('16AE7F7', 'pg_lsn');
+
 -- Min/Max aggregation
 SELECT MIN(f1), MAX(f1) FROM PG_LSN_TBL;
 

@@ -285,7 +285,7 @@ buf_finalize(StringInfo buf)
  * parse snapshot from cstring
  */
 static pg_snapshot *
-parse_snapshot(const char *str)
+parse_snapshot(const char *str, Node *escontext)
 {
 	FullTransactionId xmin;
 	FullTransactionId xmax;
@@ -341,11 +341,10 @@ parse_snapshot(const char *str)
 	return buf_finalize(buf);
 
 bad_format:
-	ereport(ERROR,
+	ereturn(escontext, NULL,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"pg_snapshot", str_start)));
-	return NULL;				/* keep compiler quiet */
 }
 
 /*
@@ -447,7 +446,7 @@ pg_snapshot_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	pg_snapshot *snap;
 
-	snap = parse_snapshot(str);
+	snap = parse_snapshot(str, fcinfo->context);
 
 	PG_RETURN_POINTER(snap);
 }

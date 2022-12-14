@@ -2233,6 +2233,49 @@ SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
 SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
 	'SELECT, fake_privilege', FALSE);  -- error
 ERROR:  unrecognized privilege type: "fake_privilege"
+-- Test non-throwing aclitem I/O
+SELECT pg_input_is_valid('regress_priv_user1=r/regress_priv_user2', 'aclitem');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('regress_priv_user1=r/', 'aclitem');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('regress_priv_user1=r/', 'aclitem');
+     pg_input_error_message      
+---------------------------------
+ a name must follow the "/" sign
+(1 row)
+
+SELECT pg_input_is_valid('regress_priv_user1=r/regress_no_such_user', 'aclitem');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('regress_priv_user1=r/regress_no_such_user', 'aclitem');
+           pg_input_error_message           
+--------------------------------------------
+ role "regress_no_such_user" does not exist
+(1 row)
+
+SELECT pg_input_is_valid('regress_priv_user1=rY', 'aclitem');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('regress_priv_user1=rY', 'aclitem');
+                  pg_input_error_message                  
+----------------------------------------------------------
+ invalid mode character: must be one of "arwdDxtXUCTcsAm"
+(1 row)
+
 --
 -- Testing blanket default grants is very hazardous since it might change
 -- the privileges attached to objects created by concurrent regression tests.

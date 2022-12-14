@@ -28,6 +28,20 @@ INSERT INTO OID_TBL(f1) VALUES ('-23582358720398502385');
 
 SELECT * FROM OID_TBL;
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('1234', 'oid');
+SELECT pg_input_is_valid('01XYZ', 'oid');
+SELECT pg_input_error_message('01XYZ', 'oid');
+SELECT pg_input_is_valid('9999999999', 'oid');
+SELECT pg_input_error_message('9999999999', 'oid');
+
+-- While we're here, check oidvector as well
+SELECT pg_input_is_valid(' 1 2  4 ', 'oidvector');
+SELECT pg_input_is_valid('01 01XYZ', 'oidvector');
+SELECT pg_input_error_message('01 01XYZ', 'oidvector');
+SELECT pg_input_is_valid('01 9999999999', 'oidvector');
+SELECT pg_input_error_message('01 9999999999', 'oidvector');
+
 SELECT o.* FROM OID_TBL o WHERE o.f1 = 1234;
 
 SELECT o.* FROM OID_TBL o WHERE o.f1 <> '1234';

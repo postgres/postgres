@@ -57,6 +57,7 @@ Datum
 tidin(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	char	   *p,
 			   *coord[NTIDARGS];
 	int			i;
@@ -71,7 +72,7 @@ tidin(PG_FUNCTION_ARGS)
 			coord[i++] = p + 1;
 
 	if (i < NTIDARGS)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"tid", str)));
@@ -79,7 +80,7 @@ tidin(PG_FUNCTION_ARGS)
 	errno = 0;
 	cvt = strtoul(coord[0], &badp, 10);
 	if (errno || *badp != DELIM)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"tid", str)));
@@ -93,7 +94,7 @@ tidin(PG_FUNCTION_ARGS)
 #if SIZEOF_LONG > 4
 	if (cvt != (unsigned long) blockNumber &&
 		cvt != (unsigned long) ((int32) blockNumber))
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"tid", str)));
@@ -102,7 +103,7 @@ tidin(PG_FUNCTION_ARGS)
 	cvt = strtoul(coord[1], &badp, 10);
 	if (errno || *badp != RDELIM ||
 		cvt > USHRT_MAX)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"tid", str)));

@@ -1430,6 +1430,15 @@ SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
 SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
 	'SELECT, fake_privilege', FALSE);  -- error
 
+-- Test non-throwing aclitem I/O
+SELECT pg_input_is_valid('regress_priv_user1=r/regress_priv_user2', 'aclitem');
+SELECT pg_input_is_valid('regress_priv_user1=r/', 'aclitem');
+SELECT pg_input_error_message('regress_priv_user1=r/', 'aclitem');
+SELECT pg_input_is_valid('regress_priv_user1=r/regress_no_such_user', 'aclitem');
+SELECT pg_input_error_message('regress_priv_user1=r/regress_no_such_user', 'aclitem');
+SELECT pg_input_is_valid('regress_priv_user1=rY', 'aclitem');
+SELECT pg_input_error_message('regress_priv_user1=rY', 'aclitem');
+
 --
 -- Testing blanket default grants is very hazardous since it might change
 -- the privileges attached to objects created by concurrent regression tests.

@@ -81,11 +81,11 @@ static List *cached_roles[] = {NIL, NIL, NIL};
 static uint32 cached_db_hash;
 
 
-static const char *getid(const char *s, char *n);
+static const char *getid(const char *s, char *n, Node *escontext);
 static void putid(char *p, const char *s);
 static Acl *allocacl(int n);
 static void check_acl(const Acl *acl);
-static const char *aclparse(const char *s, AclItem *aip);
+static const char *aclparse(const char *s, AclItem *aip, Node *escontext);
 static bool aclitem_match(const AclItem *a1, const AclItem *a2);
 static int	aclitemComparator(const void *arg1, const void *arg2);
 static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
@@ -135,9 +135,12 @@ static void RoleMembershipCacheCallback(Datum arg, int cacheid, uint32 hashvalue
  *		in 's', after any quotes.  Also:
  *		- loads the identifier into 'n'.  (If no identifier is found, 'n'
  *		  contains an empty string.)  'n' must be NAMEDATALEN bytes.
+ *
+ * Errors are reported via ereport, unless escontext is an ErrorSaveData node,
+ * in which case we log the error there and return NULL.
  */
 static const char *
-getid(const char *s, char *n)
+getid(const char *s, char *n, Node *escontext)
 {
 	int			len = 0;
 	bool		in_quotes = false;
@@ -169,7 +172,7 @@ getid(const char *s, char *n)
 
 		/* Add the character to the string */
 		if (len >= NAMEDATALEN - 1)
-			ereport(ERROR,
+			ereturn(escontext, NULL,
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("identifier too long"),
 					 errdetail("Identifier must be less than %d characters.",
@@ -236,9 +239,12 @@ putid(char *p, const char *s)
  *		specification.  Also:
  *		- loads the structure pointed to by 'aip' with the appropriate
  *		  UID/GID, id type identifier and mode type values.
+ *
+ * Errors are reported via ereport, unless escontext is an ErrorSaveData node,
+ * in which case we log the error there and return NULL.
  */
 static const char *
-aclparse(const char *s, AclItem *aip)
+aclparse(const char *s, AclItem *aip, Node *escontext)
 {
 	AclMode		privs,
 				goption,
@@ -248,25 +254,30 @@ aclparse(const char *s, AclItem *aip)
 
 	Assert(s && aip);
 
-	s = getid(s, name);
+	s = getid(s, name, escontext);
+	if (s == NULL)
+		return NULL;
 	if (*s != '=')
 	{
 		/* we just read a keyword, not a name */
 		if (strcmp(name, "group") != 0 && strcmp(name, "user") != 0)
-			ereport(ERROR,
+			ereturn(escontext, NULL,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("unrecognized key word: \"%s\"", name),
 					 errhint("ACL key word must be \"group\" or \"user\".")));
-		s = getid(s, name);		/* move s to the name beyond the keyword */
+		/* move s to the name beyond the keyword */
+		s = getid(s, name, escontext);
+		if (s == NULL)
+			return NULL;
 		if (name[0] == '\0')
-			ereport(ERROR,
+			ereturn(escontext, NULL,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("missing name"),
 					 errhint("A name must follow the \"group\" or \"user\" key word.")));
 	}
 
 	if (*s != '=')
-		ereport(ERROR,
+		ereturn(escontext, NULL,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("missing \"=\" sign")));
 
@@ -328,7 +339,7 @@ aclparse(const char *s, AclItem *aip)
 				read = 0;
 				break;
 			default:
-				ereport(ERROR,
+				ereturn(escontext, NULL,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid mode character: must be one of \"%s\"",
 								ACL_ALL_RIGHTS_STR)));
@@ -340,7 +351,13 @@ aclparse(const char *s, AclItem *aip)
 	if (name[0] == '\0')
 		aip->ai_grantee = ACL_ID_PUBLIC;
 	else
-		aip->ai_grantee = get_role_oid(name, false);
+	{
+		aip->ai_grantee = get_role_oid(name, true);
+		if (!OidIsValid(aip->ai_grantee))
+			ereturn(escontext, NULL,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("role \"%s\" does not exist", name)));
+	}
 
 	/*
 	 * XXX Allow a degree of backward compatibility by defaulting the grantor
@@ -348,12 +365,18 @@ aclparse(const char *s, AclItem *aip)
 	 */
 	if (*s == '/')
 	{
-		s = getid(s + 1, name2);
+		s = getid(s + 1, name2, escontext);
+		if (s == NULL)
+			return NULL;
 		if (name2[0] == '\0')
-			ereport(ERROR,
+			ereturn(escontext, NULL,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("a name must follow the \"/\" sign")));
-		aip->ai_grantor = get_role_oid(name2, false);
+		aip->ai_grantor = get_role_oid(name2, true);
+		if (!OidIsValid(aip->ai_grantor))
+			ereturn(escontext, NULL,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("role \"%s\" does not exist", name2)));
 	}
 	else
 	{
@@ -569,14 +592,19 @@ Datum
 aclitemin(PG_FUNCTION_ARGS)
 {
 	const char *s = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	AclItem    *aip;
 
 	aip = (AclItem *) palloc(sizeof(AclItem));
-	s = aclparse(s, aip);
+
+	s = aclparse(s, aip, escontext);
+	if (s == NULL)
+		PG_RETURN_NULL();
+
 	while (isspace((unsigned char) *s))
 		++s;
 	if (*s)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("extra garbage at the end of the ACL specification")));
 

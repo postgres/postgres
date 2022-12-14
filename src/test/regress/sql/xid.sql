@@ -68,6 +68,13 @@ select '0:1:'::pg_snapshot;
 select '12:13:0'::pg_snapshot;
 select '12:16:14,13'::pg_snapshot;
 
+-- also try it with non-error-throwing API
+select pg_input_is_valid('12:13:', 'pg_snapshot');
+select pg_input_is_valid('31:12:', 'pg_snapshot');
+select pg_input_error_message('31:12:', 'pg_snapshot');
+select pg_input_is_valid('12:16:14,13', 'pg_snapshot');
+select pg_input_error_message('12:16:14,13', 'pg_snapshot');
+
 create temp table snapshot_test (
 	nr	integer,
 	snap	pg_snapshot

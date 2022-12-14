@@ -17,6 +17,31 @@ SELECT '(1,65536)'::tid;  -- error
 ERROR:  invalid input syntax for type tid: "(1,65536)"
 LINE 1: SELECT '(1,65536)'::tid;
                ^
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('(0)', 'tid');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('(0)', 'tid');
+          pg_input_error_message          
+------------------------------------------
+ invalid input syntax for type tid: "(0)"
+(1 row)
+
+SELECT pg_input_is_valid('(0,-1)', 'tid');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('(0,-1)', 'tid');
+           pg_input_error_message            
+---------------------------------------------
+ invalid input syntax for type tid: "(0,-1)"
+(1 row)
+
 -- tests for functions related to TID handling
 CREATE TABLE tid_tab (a int);
 -- min() and max() for TIDs
