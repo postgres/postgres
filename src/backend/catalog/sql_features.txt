@@ -527,6 +527,7 @@ T652	SQL-dynamic statements in SQL routines			NO
 T653	SQL-schema statements in external routines			YES	
 T654	SQL-dynamic statements in external routines			NO	
 T655	Cyclically dependent routines			YES	
+T661	Non-decimal integer literals			YES	SQL:202x draft
 T811	Basic SQL/JSON constructor functions			NO	
 T812	SQL/JSON: JSON_OBJECTAGG			NO	
 T813	SQL/JSON: JSON_ARRAYAGG with ORDER BY			NO	

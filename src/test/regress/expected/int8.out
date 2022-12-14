@@ -952,3 +952,95 @@ SELECT lcm((-9223372036854775808)::int8, 1::int8); -- overflow
 ERROR:  bigint out of range
 SELECT lcm(9223372036854775807::int8, 9223372036854775806::int8); -- overflow
 ERROR:  bigint out of range
+-- non-decimal literals
+SELECT int8 '0b100101';
+ int8 
+------
+   37
+(1 row)
+
+SELECT int8 '0o273';
+ int8 
+------
+  187
+(1 row)
+
+SELECT int8 '0x42F';
+ int8 
+------
+ 1071
+(1 row)
+
+SELECT int8 '0b';
+ERROR:  invalid input syntax for type bigint: "0b"
+LINE 1: SELECT int8 '0b';
+                    ^
+SELECT int8 '0o';
+ERROR:  invalid input syntax for type bigint: "0o"
+LINE 1: SELECT int8 '0o';
+                    ^
+SELECT int8 '0x';
+ERROR:  invalid input syntax for type bigint: "0x"
+LINE 1: SELECT int8 '0x';
+                    ^
+-- cases near overflow
+SELECT int8 '0b111111111111111111111111111111111111111111111111111111111111111';
+        int8         
+---------------------
+ 9223372036854775807
+(1 row)
+
+SELECT int8 '0b1000000000000000000000000000000000000000000000000000000000000000';
+ERROR:  value "0b1000000000000000000000000000000000000000000000000000000000000000" is out of range for type bigint
+LINE 1: SELECT int8 '0b100000000000000000000000000000000000000000000...
+                    ^
+SELECT int8 '0o777777777777777777777';
+        int8         
+---------------------
+ 9223372036854775807
+(1 row)
+
+SELECT int8 '0o1000000000000000000000';
+ERROR:  value "0o1000000000000000000000" is out of range for type bigint
+LINE 1: SELECT int8 '0o1000000000000000000000';
+                    ^
+SELECT int8 '0x7FFFFFFFFFFFFFFF';
+        int8         
+---------------------
+ 9223372036854775807
+(1 row)
+
+SELECT int8 '0x8000000000000000';
+ERROR:  value "0x8000000000000000" is out of range for type bigint
+LINE 1: SELECT int8 '0x8000000000000000';
+                    ^
+SELECT int8 '-0b1000000000000000000000000000000000000000000000000000000000000000';
+         int8         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT int8 '-0b1000000000000000000000000000000000000000000000000000000000000001';
+ERROR:  value "-0b1000000000000000000000000000000000000000000000000000000000000001" is out of range for type bigint
+LINE 1: SELECT int8 '-0b10000000000000000000000000000000000000000000...
+                    ^
+SELECT int8 '-0o1000000000000000000000';
+         int8         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT int8 '-0o1000000000000000000001';
+ERROR:  value "-0o1000000000000000000001" is out of range for type bigint
+LINE 1: SELECT int8 '-0o1000000000000000000001';
+                    ^
+SELECT int8 '-0x8000000000000000';
+         int8         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT int8 '-0x8000000000000001';
+ERROR:  value "-0x8000000000000001" is out of range for type bigint
+LINE 1: SELECT int8 '-0x8000000000000001';
+                    ^

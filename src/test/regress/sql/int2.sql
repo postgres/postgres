@@ -110,3 +110,29 @@ FROM (VALUES (-2.5::numeric),
              (0.5::numeric),
              (1.5::numeric),
              (2.5::numeric)) t(x);
+
+
+-- non-decimal literals
+
+SELECT int2 '0b100101';
+SELECT int2 '0o273';
+SELECT int2 '0x42F';
+
+SELECT int2 '0b';
+SELECT int2 '0o';
+SELECT int2 '0x';
+
+-- cases near overflow
+SELECT int2 '0b111111111111111';
+SELECT int2 '0b1000000000000000';
+SELECT int2 '0o77777';
+SELECT int2 '0o100000';
+SELECT int2 '0x7FFF';
+SELECT int2 '0x8000';
+
+SELECT int2 '-0b1000000000000000';
+SELECT int2 '-0b1000000000000001';
+SELECT int2 '-0o100000';
+SELECT int2 '-0o100001';
+SELECT int2 '-0x8000';
+SELECT int2 '-0x8001';

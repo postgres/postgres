@@ -695,6 +695,40 @@ $function$
     </para>
 
     <para>
+     Additionally, non-decimal integer constants can be used in these forms:
+<synopsis>
+0x<replaceable>hexdigits</replaceable>
+0o<replaceable>octdigits</replaceable>
+0b<replaceable>bindigits</replaceable>
+</synopsis>
+     <replaceable>hexdigits</replaceable> is one or more hexadecimal digits
+     (0-9, A-F), <replaceable>octdigits</replaceable> is one or more octal
+     digits (0-7), <replaceable>bindigits</replaceable> is one or more binary
+     digits (0 or 1).  Hexadecimal digits and the radix prefixes can be in
+     upper or lower case.  Note that only integers can have non-decimal forms,
+     not numbers with fractional parts.
+    </para>
+
+    <para>
+     These are some examples of this:
+<literallayout>0b100101
+0B10011001
+0o273
+0O755
+0x42f
+0XFFFF
+</literallayout>
+    </para>
+
+    <note>
+     <para>
+      Nondecimal integer constants are currently only supported in the range
+      of the <type>bigint</type> type (see <xref
+      linkend="datatype-numeric-table"/>).
+     </para>
+    </note>
+
+    <para>
      <indexterm><primary>integer</primary></indexterm>
      <indexterm><primary>bigint</primary></indexterm>
      <indexterm><primary>numeric</primary></indexterm>

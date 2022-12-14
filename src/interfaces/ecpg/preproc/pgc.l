@@ -57,7 +57,7 @@ static bool		include_next;
 #define startlit()	(literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
 static void addlitchar(unsigned char ychar);
-static int	process_integer_literal(const char *token, YYSTYPE *lval);
+static int	process_integer_literal(const char *token, YYSTYPE *lval, int base);
 static void parse_include(void);
 static bool ecpg_isspace(char ch);
 static bool isdefine(void);
@@ -351,25 +351,40 @@ operator		{op_chars}+
  * Unary minus is not part of a number here.  Instead we pass it separately to
  * the parser, and there it gets coerced via doNegate().
  *
- * {decimalfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
+ * {numericfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
  *
  * {realfail} is added to prevent the need for scanner
  * backup when the {real} rule fails to match completely.
  */
-digit			[0-9]
+decdigit		[0-9]
+hexdigit		[0-9A-Fa-f]
+octdigit		[0-7]
+bindigit		[0-1]
 
-integer			{digit}+
-decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-decimalfail		{digit}+\.\.
-real			({integer}|{decimal})[Ee][-+]?{digit}+
-realfail		({integer}|{decimal})[Ee][-+]
+decinteger		{decdigit}+
+hexinteger		0[xX]{hexdigit}+
+octinteger		0[oO]{octdigit}+
+bininteger		0[bB]{bindigit}+
 
-integer_junk	{integer}{ident_start}
-decimal_junk	{decimal}{ident_start}
+hexfail			0[xX]
+octfail			0[oO]
+binfail			0[bB]
+
+numeric			(({decinteger}\.{decinteger}?)|(\.{decinteger}))
+numericfail		{decdigit}+\.\.
+
+real			({decinteger}|{numeric})[Ee][-+]?{decdigit}+
+realfail		({decinteger}|{numeric})[Ee][-+]
+
+decinteger_junk	{decinteger}{ident_start}
+hexinteger_junk	{hexinteger}{ident_start}
+octinteger_junk	{octinteger}{ident_start}
+bininteger_junk	{bininteger}{ident_start}
+numeric_junk	{numeric}{ident_start}
 real_junk		{real}{ident_start}
 
-param			\${integer}
-param_junk		\${integer}{ident_start}
+param			\${decinteger}
+param_junk		\${decinteger}{ident_start}
 
 /* special characters for other dbms */
 /* we have to react differently in compat mode */
@@ -399,9 +414,6 @@ include_next	[iI][nN][cC][lL][uU][dD][eE]_[nN][eE][xX][tT]
 import			[iI][mM][pP][oO][rR][tT]
 undef			[uU][nN][dD][eE][fF]
 
-/* C version of hex number */
-xch				0[xX][0-9A-Fa-f]*
-
 ccomment		"//".*\n
 
 if				[iI][fF]
@@ -414,7 +426,7 @@ endif			[eE][nN][dD][iI][fF]
 struct			[sS][tT][rR][uU][cC][tT]
 
 exec_sql		{exec}{space}*{sql}{space}*
-ipdigit			({digit}|{digit}{digit}|{digit}{digit}{digit})
+ipdigit			({decdigit}|{decdigit}{decdigit}|{decdigit}{decdigit}{decdigit})
 ip				{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
 
 /* we might want to parse all cpp include files */
@@ -932,17 +944,20 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 }  /* <SQL> */
 
 <C,SQL>{
-{integer}		{
-					return process_integer_literal(yytext, &base_yylval);
+{decinteger}	{
+					return process_integer_literal(yytext, &base_yylval, 10);
 				}
-{decimal}		{
+{hexinteger}	{
+					return process_integer_literal(yytext, &base_yylval, 16);
+				}
+{numeric}		{
 					base_yylval.str = mm_strdup(yytext);
 					return FCONST;
 				}
-{decimalfail}	{
+{numericfail}	{
 					/* throw back the .., and treat as integer */
 					yyless(yyleng - 2);
-					return process_integer_literal(yytext, &base_yylval);
+					return process_integer_literal(yytext, &base_yylval, 10);
 				}
 {real}			{
 					base_yylval.str = mm_strdup(yytext);
@@ -951,22 +966,38 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 {realfail}		{
 					/*
 					 * throw back the [Ee][+-], and figure out whether what
-					 * remains is an {integer} or {decimal}.
+					 * remains is an {decinteger} or {numeric}.
 					 */
 					yyless(yyleng - 2);
-					return process_integer_literal(yytext, &base_yylval);
+					return process_integer_literal(yytext, &base_yylval, 10);
 				}
 } /* <C,SQL> */
 
 <SQL>{
+{octinteger}	{
+					return process_integer_literal(yytext, &base_yylval, 8);
+				}
+{bininteger}	{
+					return process_integer_literal(yytext, &base_yylval, 2);
+				}
+
 	/*
 	 * Note that some trailing junk is valid in C (such as 100LL), so we
 	 * contain this to SQL mode.
 	 */
-{integer_junk}	{
+{decinteger_junk}	{
 					mmfatal(PARSE_ERROR, "trailing junk after numeric literal");
 				}
-{decimal_junk}	{
+{hexinteger_junk}	{
+					mmfatal(PARSE_ERROR, "trailing junk after numeric literal");
+				}
+{octinteger_junk}	{
+					mmfatal(PARSE_ERROR, "trailing junk after numeric literal");
+				}
+{bininteger_junk}	{
+					mmfatal(PARSE_ERROR, "trailing junk after numeric literal");
+				}
+{numeric_junk}	{
 					mmfatal(PARSE_ERROR, "trailing junk after numeric literal");
 				}
 {real_junk}		{
@@ -1036,19 +1067,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 							return S_ANYTHING;
 					 }
 <C>{ccomment}		{ ECHO; }
-<C>{xch}			{
-						char* endptr;
-
-						errno = 0;
-						base_yylval.ival = strtoul((char *) yytext, &endptr, 16);
-						if (*endptr != '\0' || errno == ERANGE)
-						{
-							errno = 0;
-							base_yylval.str = mm_strdup(yytext);
-							return SCONST;
-						}
-						return ICONST;
-					}
 <C>{cppinclude}		{
 						if (system_includes)
 						{
@@ -1573,17 +1591,17 @@ addlitchar(unsigned char ychar)
 }
 
 /*
- * Process {integer}.  Note this will also do the right thing with {decimal},
- * ie digits and a decimal point.
+ * Process {decinteger}, {hexinteger}, etc.  Note this will also do the right
+ * thing with {numeric}, ie digits and a decimal point.
  */
 static int
-process_integer_literal(const char *token, YYSTYPE *lval)
+process_integer_literal(const char *token, YYSTYPE *lval, int base)
 {
 	int			val;
 	char	   *endptr;
 
 	errno = 0;
-	val = strtoint(token, &endptr, 10);
+	val = strtoint(base == 10 ? token : token + 2, &endptr, base);
 	if (*endptr != '\0' || errno == ERANGE)
 	{
 		/* integer too large (or contains decimal pt), treat it as a float */
