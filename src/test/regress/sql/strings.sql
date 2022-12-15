@@ -85,6 +85,12 @@ SELECT E'DeAdBeEf'::bytea;
 SELECT E'De\\000dBeEf'::bytea;
 SELECT E'De\\123dBeEf'::bytea;
 
+-- Test non-error-throwing API too
+SELECT pg_input_is_valid(E'\\xDeAdBeE', 'bytea');
+SELECT pg_input_error_message(E'\\xDeAdBeE', 'bytea');
+SELECT pg_input_error_message(E'\\xDeAdBeEx', 'bytea');
+SELECT pg_input_error_message(E'foo\\99bar', 'bytea');
+
 --
 -- test conversions between various string types
 -- E021-10 implicit casting among the character data types

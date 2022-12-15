@@ -295,6 +295,7 @@ Datum
 byteain(PG_FUNCTION_ARGS)
 {
 	char	   *inputText = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	char	   *tp;
 	char	   *rp;
 	int			bc;
@@ -307,7 +308,8 @@ byteain(PG_FUNCTION_ARGS)
 
 		bc = (len - 2) / 2 + VARHDRSZ;	/* maximum possible length */
 		result = palloc(bc);
-		bc = hex_decode(inputText + 2, len - 2, VARDATA(result));
+		bc = hex_decode_safe(inputText + 2, len - 2, VARDATA(result),
+							 escontext);
 		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
 
 		PG_RETURN_BYTEA_P(result);
@@ -331,7 +333,7 @@ byteain(PG_FUNCTION_ARGS)
 			/*
 			 * one backslash, not followed by another or ### valid octal
 			 */
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s", "bytea")));
 		}
@@ -372,7 +374,7 @@ byteain(PG_FUNCTION_ARGS)
 			/*
 			 * We should never get here. The first pass should not allow it.
 			 */
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s", "bytea")));
 		}

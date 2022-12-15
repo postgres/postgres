@@ -111,3 +111,22 @@ SELECT * FROM VARCHAR_TBL;
  abcd
 (4 rows)
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('abcd  ', 'varchar(4)');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('abcde', 'varchar(4)');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('abcde', 'varchar(4)');
+            pg_input_error_message            
+----------------------------------------------
+ value too long for type character varying(4)
+(1 row)
+

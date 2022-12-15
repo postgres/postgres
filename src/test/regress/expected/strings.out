@@ -273,6 +273,31 @@ SELECT E'De\\123dBeEf'::bytea;
  DeSdBeEf
 (1 row)
 
+-- Test non-error-throwing API too
+SELECT pg_input_is_valid(E'\\xDeAdBeE', 'bytea');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message(E'\\xDeAdBeE', 'bytea');
+             pg_input_error_message             
+------------------------------------------------
+ invalid hexadecimal data: odd number of digits
+(1 row)
+
+SELECT pg_input_error_message(E'\\xDeAdBeEx', 'bytea');
+     pg_input_error_message     
+--------------------------------
+ invalid hexadecimal digit: "x"
+(1 row)
+
+SELECT pg_input_error_message(E'foo\\99bar', 'bytea');
+       pg_input_error_message        
+-------------------------------------
+ invalid input syntax for type bytea
+(1 row)
+
 --
 -- test conversions between various string types
 -- E021-10 implicit casting among the character data types

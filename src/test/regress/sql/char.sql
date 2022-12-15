@@ -72,6 +72,11 @@ INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
 
 SELECT * FROM CHAR_TBL;
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('abcd  ', 'char(4)');
+SELECT pg_input_is_valid('abcde', 'char(4)');
+SELECT pg_input_error_message('abcde', 'char(4)');
+
 --
 -- Also test "char", which is an ad-hoc one-byte type.  It can only
 -- really store ASCII characters, but we allow high-bit-set characters
