@@ -71,8 +71,6 @@
 #include "tcop/cmdtag.h"
 
 
-/* buffer size to use for command completion tags */
-#define COMPLETION_TAG_BUFSIZE	64
 
 
 /* ----------------
