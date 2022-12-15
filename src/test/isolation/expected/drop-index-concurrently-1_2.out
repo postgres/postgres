@@ -1,17 +1,17 @@
 Parsed test spec with 3 sessions
 
-starting permutation: noseq chkiso prepi preps begin explaini explains select2 drop insert2 end2 selecti selects end
-step noseq: SET enable_seqscan = false;
+starting permutation: chkiso prepi preps begin disableseq explaini enableseq explains select2 drop insert2 end2 selecti selects end
 step chkiso: SELECT (setting in ('read committed','read uncommitted')) AS is_read_committed FROM pg_settings WHERE name = 'default_transaction_isolation';
 is_read_committed
 -----------------
 f                
 (1 row)
 
-step prepi: PREPARE getrow_idx AS SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
-step preps: PREPARE getrow_seq AS SELECT * FROM test_dc WHERE data::text=34::text ORDER BY id,data;
+step prepi: PREPARE getrow_idxscan AS SELECT * FROM test_dc WHERE data = 34 ORDER BY id,data;
+step preps: PREPARE getrow_seqscan AS SELECT * FROM test_dc WHERE data = 34 ORDER BY id,data;
 step begin: BEGIN;
-step explaini: EXPLAIN (COSTS OFF) EXECUTE getrow_idx;
+step disableseq: SET enable_seqscan = false;
+step explaini: EXPLAIN (COSTS OFF) EXECUTE getrow_idxscan;
 QUERY PLAN                                    
 ----------------------------------------------
 Sort                                          
@@ -20,16 +20,17 @@ Sort
         Index Cond: (data = 34)               
 (4 rows)
 
-step explains: EXPLAIN (COSTS OFF) EXECUTE getrow_seq;
-QUERY PLAN                                    
-----------------------------------------------
-Sort                                          
-  Sort Key: id, data                          
-  ->  Index Scan using test_dc_pkey on test_dc
-        Filter: ((data)::text = '34'::text)   
+step enableseq: SET enable_seqscan = true;
+step explains: EXPLAIN (COSTS OFF) EXECUTE getrow_seqscan;
+QUERY PLAN                 
+---------------------------
+Sort                       
+  Sort Key: id             
+  ->  Seq Scan on test_dc  
+        Filter: (data = 34)
 (4 rows)
 
-step select2: SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
+step select2: SELECT * FROM test_dc WHERE data = 34 ORDER BY id,data;
 id|data
 --+----
 34|  34
@@ -38,13 +39,13 @@ id|data
 step drop: DROP INDEX CONCURRENTLY test_dc_data; <waiting ...>
 step insert2: INSERT INTO test_dc(data) SELECT * FROM generate_series(1, 100);
 step end2: COMMIT;
-step selecti: EXECUTE getrow_idx;
+step selecti: EXECUTE getrow_idxscan;
 id|data
 --+----
 34|  34
 (1 row)
 
-step selects: EXECUTE getrow_seq;
+step selects: EXECUTE getrow_seqscan;
 id|data
 --+----
 34|  34
