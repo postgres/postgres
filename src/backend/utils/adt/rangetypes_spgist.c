@@ -265,7 +265,7 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 
 	/* Construct "centroid" range from medians of lower and upper bounds */
 	centroid = range_serialize(typcache, &lowerBounds[nonEmptyCount / 2],
-							   &upperBounds[nonEmptyCount / 2], false);
+							   &upperBounds[nonEmptyCount / 2], false, NULL);
 	out->hasPrefix = true;
 	out->prefixDatum = RangeTypePGetDatum(centroid);
 

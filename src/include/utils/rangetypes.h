@@ -143,14 +143,16 @@ extern RangeType *range_intersect_internal(TypeCacheEntry *typcache, const Range
 extern TypeCacheEntry *range_get_typcache(FunctionCallInfo fcinfo,
 										  Oid rngtypid);
 extern RangeType *range_serialize(TypeCacheEntry *typcache, RangeBound *lower,
-								  RangeBound *upper, bool empty);
+								  RangeBound *upper, bool empty,
+								  struct Node *escontext);
 extern void range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 							  RangeBound *lower, RangeBound *upper,
 							  bool *empty);
 extern char range_get_flags(const RangeType *range);
 extern void range_set_contain_empty(RangeType *range);
 extern RangeType *make_range(TypeCacheEntry *typcache, RangeBound *lower,
-							 RangeBound *upper, bool empty);
+							 RangeBound *upper, bool empty,
+							 struct Node *escontext);
 extern int	range_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *b1,
 							 const RangeBound *b2);
 extern int	range_cmp_bound_values(TypeCacheEntry *typcache, const RangeBound *b1,

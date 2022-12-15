@@ -274,6 +274,37 @@ select '{(a,a)}'::textmultirange;
  {}
 (1 row)
 
+-- Also try it with non-error-throwing API
+select pg_input_is_valid('{[1,2], [4,5]}', 'int4multirange');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+select pg_input_is_valid('{[1,2], [4,5]', 'int4multirange');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('{[1,2], [4,5]', 'int4multirange');
+            pg_input_error_message             
+-----------------------------------------------
+ malformed multirange literal: "{[1,2], [4,5]"
+(1 row)
+
+select pg_input_is_valid('{[1,2], [4,zed]}', 'int4multirange');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('{[1,2], [4,zed]}', 'int4multirange');
+            pg_input_error_message            
+----------------------------------------------
+ invalid input syntax for type integer: "zed"
+(1 row)
+
 --
 -- test the constructor
 ---

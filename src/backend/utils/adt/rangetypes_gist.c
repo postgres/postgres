@@ -876,7 +876,7 @@ range_super_union(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
 		((flags2 & RANGE_CONTAIN_EMPTY) || !(flags1 & RANGE_CONTAIN_EMPTY)))
 		return r2;
 
-	result = make_range(typcache, result_lower, result_upper, false);
+	result = make_range(typcache, result_lower, result_upper, false, NULL);
 
 	if ((flags1 & RANGE_CONTAIN_EMPTY) || (flags2 & RANGE_CONTAIN_EMPTY))
 		range_set_contain_empty(result);

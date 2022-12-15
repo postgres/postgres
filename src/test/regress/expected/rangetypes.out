@@ -175,6 +175,73 @@ select '(a,a)'::textrange;
  empty
 (1 row)
 
+-- Also try it with non-error-throwing API
+select pg_input_is_valid('(1,4)', 'int4range');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+select pg_input_is_valid('(1,4', 'int4range');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('(1,4', 'int4range');
+     pg_input_error_message      
+---------------------------------
+ malformed range literal: "(1,4"
+(1 row)
+
+select pg_input_is_valid('(4,1)', 'int4range');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('(4,1)', 'int4range');
+                      pg_input_error_message                       
+-------------------------------------------------------------------
+ range lower bound must be less than or equal to range upper bound
+(1 row)
+
+select pg_input_is_valid('(4,zed)', 'int4range');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('(4,zed)', 'int4range');
+            pg_input_error_message            
+----------------------------------------------
+ invalid input syntax for type integer: "zed"
+(1 row)
+
+select pg_input_is_valid('[1,2147483647]', 'int4range');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('[1,2147483647]', 'int4range');
+ pg_input_error_message 
+------------------------
+ integer out of range
+(1 row)
+
+select pg_input_is_valid('[2000-01-01,5874897-12-31]', 'daterange');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('[2000-01-01,5874897-12-31]', 'daterange');
+ pg_input_error_message 
+------------------------
+ date out of range
+(1 row)
+
 --
 -- create some test data and test the operators
 --

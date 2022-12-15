@@ -221,7 +221,8 @@ multirangesel(PG_FUNCTION_ARGS)
 			upper.val = ((Const *) other)->constvalue;
 			upper.infinite = false;
 			upper.lower = false;
-			constrange = range_serialize(typcache->rngtype, &lower, &upper, false);
+			constrange = range_serialize(typcache->rngtype, &lower, &upper,
+										 false, NULL);
 			constmultirange = make_multirange(typcache->type_id, typcache->rngtype,
 											  1, &constrange);
 		}

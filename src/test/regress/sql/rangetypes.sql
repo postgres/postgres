@@ -40,6 +40,19 @@ select '[a,a)'::textrange;
 select '(a,a]'::textrange;
 select '(a,a)'::textrange;
 
+-- Also try it with non-error-throwing API
+select pg_input_is_valid('(1,4)', 'int4range');
+select pg_input_is_valid('(1,4', 'int4range');
+select pg_input_error_message('(1,4', 'int4range');
+select pg_input_is_valid('(4,1)', 'int4range');
+select pg_input_error_message('(4,1)', 'int4range');
+select pg_input_is_valid('(4,zed)', 'int4range');
+select pg_input_error_message('(4,zed)', 'int4range');
+select pg_input_is_valid('[1,2147483647]', 'int4range');
+select pg_input_error_message('[1,2147483647]', 'int4range');
+select pg_input_is_valid('[2000-01-01,5874897-12-31]', 'daterange');
+select pg_input_error_message('[2000-01-01,5874897-12-31]', 'daterange');
+
 --
 -- create some test data and test the operators
 --

@@ -311,7 +311,8 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				bound_hist_values[i] = PointerGetDatum(range_serialize(typcache,
 																	   &lowers[pos],
 																	   &uppers[pos],
-																	   false));
+																	   false,
+																	   NULL));
 				pos += delta;
 				posfrac += deltafrac;
 				if (posfrac >= (num_hist - 1))
