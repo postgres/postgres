@@ -2749,7 +2749,7 @@ estimate_path_cost_size(PlannerInfo *root,
 		 */
 		if (fpinfo->rel_startup_cost >= 0 && fpinfo->rel_total_cost >= 0)
 		{
-			Assert(fpinfo->retrieved_rows >= 1);
+			Assert(fpinfo->retrieved_rows >= 0);
 
 			rows = fpinfo->rows;
 			retrieved_rows = fpinfo->retrieved_rows;
