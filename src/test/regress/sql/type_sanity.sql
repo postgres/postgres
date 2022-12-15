@@ -105,32 +105,6 @@ WHERE t1.typinput = p1.oid AND NOT
       p1.proargtypes[1] = 'oid'::regtype AND
       p1.proargtypes[2] = 'int4'::regtype));
 
--- Check for type of the variadic array parameter's elements.
--- provariadic should be ANYOID if the type of the last element is ANYOID,
--- ANYELEMENTOID if the type of the last element is ANYARRAYOID,
--- ANYCOMPATIBLEOID if the type of the last element is ANYCOMPATIBLEARRAYOID,
--- and otherwise the element type corresponding to the array type.
-
-SELECT oid::regprocedure, provariadic::regtype, proargtypes::regtype[]
-FROM pg_proc
-WHERE provariadic != 0
-AND case proargtypes[array_length(proargtypes, 1)-1]
-	WHEN '"any"'::regtype THEN '"any"'::regtype
-	WHEN 'anyarray'::regtype THEN 'anyelement'::regtype
-	WHEN 'anycompatiblearray'::regtype THEN 'anycompatible'::regtype
-	ELSE (SELECT t.oid
-		  FROM pg_type t
-		  WHERE t.typarray = proargtypes[array_length(proargtypes, 1)-1])
-	END  != provariadic;
-
--- Check that all and only those functions with a variadic type have
--- a variadic argument.
-SELECT oid::regprocedure, proargmodes, provariadic
-FROM pg_proc
-WHERE (proargmodes IS NOT NULL AND 'v' = any(proargmodes))
-    IS DISTINCT FROM
-    (provariadic != 0);
-
 -- As of 8.0, this check finds refcursor, which is borrowing
 -- other types' I/O routines
 SELECT t1.oid, t1.typname, p1.oid, p1.proname

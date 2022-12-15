@@ -344,6 +344,32 @@ WHERE proallargtypes IS NOT NULL AND
         FROM generate_series(1, array_length(proallargtypes, 1)) g(i)
         WHERE proargmodes IS NULL OR proargmodes[i] IN ('i', 'b', 'v'));
 
+-- Check for type of the variadic array parameter's elements.
+-- provariadic should be ANYOID if the type of the last element is ANYOID,
+-- ANYELEMENTOID if the type of the last element is ANYARRAYOID,
+-- ANYCOMPATIBLEOID if the type of the last element is ANYCOMPATIBLEARRAYOID,
+-- and otherwise the element type corresponding to the array type.
+
+SELECT oid::regprocedure, provariadic::regtype, proargtypes::regtype[]
+FROM pg_proc
+WHERE provariadic != 0
+AND case proargtypes[array_length(proargtypes, 1)-1]
+	WHEN '"any"'::regtype THEN '"any"'::regtype
+	WHEN 'anyarray'::regtype THEN 'anyelement'::regtype
+	WHEN 'anycompatiblearray'::regtype THEN 'anycompatible'::regtype
+	ELSE (SELECT t.oid
+		  FROM pg_type t
+		  WHERE t.typarray = proargtypes[array_length(proargtypes, 1)-1])
+	END  != provariadic;
+
+-- Check that all and only those functions with a variadic type have
+-- a variadic argument.
+SELECT oid::regprocedure, proargmodes, provariadic
+FROM pg_proc
+WHERE (proargmodes IS NOT NULL AND 'v' = any(proargmodes))
+    IS DISTINCT FROM
+    (provariadic != 0);
+
 -- Check for prosupport functions with the wrong signature
 SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
