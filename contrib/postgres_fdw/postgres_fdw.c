@@ -1646,7 +1646,7 @@ postgresReScanForeignScan(ForeignScanState *node)
 		return;
 
 	/*
-	 * If the node is async-capable, and an asynchronous fetch for it has been
+	 * If the node is async-capable, and an asynchronous fetch for it has
 	 * begun, the asynchronous fetch might not have yet completed.  Check if
 	 * the node is async-capable, and an asynchronous fetch for it is still in
 	 * progress; if so, complete the asynchronous fetch before restarting the
