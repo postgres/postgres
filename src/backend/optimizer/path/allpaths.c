@@ -3207,70 +3207,52 @@ generate_useful_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_r
 				continue;
 
 			/*
-			 * Consider regular sort for the cheapest partial path (for each
-			 * useful pathkeys). We know the path is not sorted, because we'd
-			 * not get here otherwise.
+			 * Try at least sorting the cheapest path and also try
+			 * incrementally sorting any path which is partially sorted
+			 * already (no need to deal with paths which have presorted keys
+			 * when incremental sort is disabled unless it's the cheapest
+			 * input path).
+			 */
+			if (subpath != cheapest_partial_path &&
+				(presorted_keys == 0 || !enable_incremental_sort))
+				continue;
+
+			/*
+			 * Consider regular sort for any path that's not presorted or if
+			 * incremental sort is disabled.  We've no need to consider both
+			 * sort and incremental sort on the same path.  We assume that
+			 * incremental sort is always faster when there are presorted
+			 * keys.
 			 *
 			 * This is not redundant with the gather paths created in
 			 * generate_gather_paths, because that doesn't generate ordered
 			 * output. Here we add an explicit sort to match the useful
 			 * ordering.
 			 */
-			if (cheapest_partial_path == subpath)
+			if (presorted_keys == 0 || !enable_incremental_sort)
 			{
-				Path	   *tmp;
-
-				tmp = (Path *) create_sort_path(root,
-												rel,
-												subpath,
-												useful_pathkeys,
-												-1.0);
-
-				rows = tmp->rows * tmp->parallel_workers;
-
-				path = create_gather_merge_path(root, rel,
-												tmp,
-												rel->reltarget,
-												tmp->pathkeys,
-												NULL,
-												rowsp);
-
-				add_path(rel, &path->path);
-
-				/* Fall through */
+				subpath = (Path *) create_sort_path(root,
+													rel,
+													subpath,
+													useful_pathkeys,
+													-1.0);
+				rows = subpath->rows * subpath->parallel_workers;
 			}
+			else
+				subpath = (Path *) create_incremental_sort_path(root,
+																rel,
+																subpath,
+																useful_pathkeys,
+																presorted_keys,
+																-1);
+			path = create_gather_merge_path(root, rel,
+											subpath,
+											rel->reltarget,
+											subpath->pathkeys,
+											NULL,
+											rowsp);
 
-			/*
-			 * Consider incremental sort, but only when the subpath is already
-			 * partially sorted on a pathkey prefix.
-			 */
-			if (enable_incremental_sort && presorted_keys > 0)
-			{
-				Path	   *tmp;
-
-				/*
-				 * We should have already excluded pathkeys of length 1
-				 * because then presorted_keys > 0 would imply is_sorted was
-				 * true.
-				 */
-				Assert(list_length(useful_pathkeys) != 1);
-
-				tmp = (Path *) create_incremental_sort_path(root,
-															rel,
-															subpath,
-															useful_pathkeys,
-															presorted_keys,
-															-1);
-
-				path = create_gather_merge_path(root, rel,
-												tmp,
-												rel->reltarget,
-												tmp->pathkeys,
-												NULL,
-												rowsp);
-
-				add_path(rel, &path->path);
-			}
+			add_path(rel, &path->path);
 		}
 	}
 }

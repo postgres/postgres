@@ -1959,8 +1959,8 @@ cost_incremental_sort(Path *path,
 					  double input_tuples, int width, Cost comparison_cost, int sort_mem,
 					  double limit_tuples)
 {
-	Cost		startup_cost = 0,
-				run_cost = 0,
+	Cost		startup_cost,
+				run_cost,
 				input_run_cost = input_total_cost - input_startup_cost;
 	double		group_tuples,
 				input_groups;
@@ -1969,10 +1969,9 @@ cost_incremental_sort(Path *path,
 				group_input_run_cost;
 	List	   *presortedExprs = NIL;
 	ListCell   *l;
-	int			i = 0;
 	bool		unknown_varno = false;
 
-	Assert(presorted_keys != 0);
+	Assert(presorted_keys > 0 && presorted_keys < list_length(pathkeys));
 
 	/*
 	 * We want to be sure the cost of a sort is never estimated as zero, even
@@ -2025,12 +2024,11 @@ cost_incremental_sort(Path *path,
 		/* expression not containing any Vars with "varno 0" */
 		presortedExprs = lappend(presortedExprs, member->em_expr);
 
-		i++;
-		if (i >= presorted_keys)
+		if (foreach_current_index(l) + 1 >= presorted_keys)
 			break;
 	}
 
-	/* Estimate number of groups with equal presorted keys. */
+	/* Estimate the number of groups with equal presorted keys. */
 	if (!unknown_varno)
 		input_groups = estimate_num_groups(root, presortedExprs, input_tuples,
 										   NULL, NULL);
@@ -2039,22 +2037,19 @@ cost_incremental_sort(Path *path,
 	group_input_run_cost = input_run_cost / input_groups;
 
 	/*
-	 * Estimate average cost of sorting of one group where presorted keys are
-	 * equal.  Incremental sort is sensitive to distribution of tuples to the
-	 * groups, where we're relying on quite rough assumptions.  Thus, we're
-	 * pessimistic about incremental sort performance and increase its average
-	 * group size by half.
+	 * Estimate the average cost of sorting of one group where presorted keys
+	 * are equal.
 	 */
 	cost_tuplesort(&group_startup_cost, &group_run_cost,
-				   1.5 * group_tuples, width, comparison_cost, sort_mem,
+				   group_tuples, width, comparison_cost, sort_mem,
 				   limit_tuples);
 
 	/*
 	 * Startup cost of incremental sort is the startup cost of its first group
 	 * plus the cost of its input.
 	 */
-	startup_cost += group_startup_cost
-		+ input_startup_cost + group_input_run_cost;
+	startup_cost = group_startup_cost + input_startup_cost +
+		group_input_run_cost;
 
 	/*
 	 * After we started producing tuples from the first group, the cost of
@@ -2062,17 +2057,20 @@ cost_incremental_sort(Path *path,
 	 * group, plus the total cost to process the remaining groups, plus the
 	 * remaining cost of input.
 	 */
-	run_cost += group_run_cost
-		+ (group_run_cost + group_startup_cost) * (input_groups - 1)
-		+ group_input_run_cost * (input_groups - 1);
+	run_cost = group_run_cost + (group_run_cost + group_startup_cost) *
+		(input_groups - 1) + group_input_run_cost * (input_groups - 1);
 
 	/*
 	 * Incremental sort adds some overhead by itself. Firstly, it has to
 	 * detect the sort groups. This is roughly equal to one extra copy and
-	 * comparison per tuple. Secondly, it has to reset the tuplesort context
-	 * for every group.
+	 * comparison per tuple.
 	 */
 	run_cost += (cpu_tuple_cost + comparison_cost) * input_tuples;
+
+	/*
+	 * Additionally, we charge double cpu_tuple_cost for each input group to
+	 * account for the tuplesort_reset that's performed after each group.
+	 */
 	run_cost += 2.0 * cpu_tuple_cost * input_groups;
 
 	path->rows = input_tuples;

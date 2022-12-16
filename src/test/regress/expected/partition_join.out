@@ -1173,8 +1173,9 @@ EXPLAIN (COSTS OFF)
 SELECT t1.a, t2.b FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JOIN (SELECT * FROM prt2 WHERE b > 250) t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
                         QUERY PLAN                         
 -----------------------------------------------------------
- Sort
+ Incremental Sort
    Sort Key: prt1.a, prt2.b
+   Presorted Key: prt1.a
    ->  Merge Left Join
          Merge Cond: (prt1.a = prt2.b)
          ->  Sort
@@ -1191,7 +1192,7 @@ SELECT t1.a, t2.b FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JOIN (SELECT *
                            Filter: (b > 250)
                      ->  Seq Scan on prt2_p3 prt2_2
                            Filter: (b > 250)
-(18 rows)
+(19 rows)
 
 SELECT t1.a, t2.b FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JOIN (SELECT * FROM prt2 WHERE b > 250) t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
   a  |  b  
