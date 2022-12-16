@@ -613,6 +613,15 @@ with recursive test as (
 ) cycle x set is_cycle using path
 select * from test;
 
+with recursive test as (
+  select 0 as x
+  union all
+  select (x + 1) % 10
+  from test
+    where not is_cycle  -- redundant, but legal
+) cycle x set is_cycle using path
+select * from test;
+
 -- multiple CTEs
 with recursive
 graph(f, t, label) as (
