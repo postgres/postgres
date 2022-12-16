@@ -18,6 +18,37 @@ SELECT * FROM xmltest;
   2 | <value>two</value>
 (2 rows)
 
+-- test non-throwing API, too
+SELECT pg_input_is_valid('<value>one</value>', 'xml');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('<value>one</', 'xml');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('<value>one</', 'xml');
+ pg_input_error_message 
+------------------------
+ invalid XML content
+(1 row)
+
+SELECT pg_input_is_valid('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+            pg_input_error_message            
+----------------------------------------------
+ invalid XML content: invalid XML declaration
+(1 row)
+
 SELECT xmlcomment('test');
  xmlcomment  
 -------------

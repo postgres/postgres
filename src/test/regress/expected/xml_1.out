@@ -22,6 +22,22 @@ SELECT * FROM xmltest;
 ----+------
 (0 rows)
 
+-- test non-throwing API, too
+SELECT pg_input_is_valid('<value>one</value>', 'xml');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT pg_input_is_valid('<value>one</', 'xml');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT pg_input_error_message('<value>one</', 'xml');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT pg_input_is_valid('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT pg_input_error_message('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT xmlcomment('test');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
