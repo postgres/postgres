@@ -12,6 +12,9 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Can be changed to test the other modes.
+my $mode = $ENV{PG_TEST_PG_UPGRADE_MODE} || '--copy';
+
 # Generate a database with a name made of a range of ASCII characters.
 sub generate_db
 {
@@ -75,6 +78,8 @@ my $tempdir    = PostgreSQL::Test::Utils::tempdir;
 my $dump1_file = "$tempdir/dump1.sql";
 my $dump2_file = "$tempdir/dump2.sql";
 
+note "testing using transfer mode $mode";
+
 # Initialize node to upgrade
 my $oldnode =
   PostgreSQL::Test::Cluster->new('old_node',
@@ -128,6 +133,7 @@ else
 	# --inputdir points to the path of the input files.
 	my $inputdir = "$srcdir/src/test/regress";
 
+	note 'running regression tests in old instance';
 	my $rc =
 	  system($ENV{PG_REGRESS}
 		  . " $extra_opts "
@@ -256,7 +262,8 @@ command_fails(
 		'-s',         $newnode->host,
 		'-p',         $oldnode->port,
 		'-P',         $newnode->port,
-		'--check'
+		$mode,
+		'--check',
 	],
 	'run of pg_upgrade --check for new instance with incorrect binary path');
 ok(-d $newnode->data_dir . "/pg_upgrade_output.d",
@@ -270,7 +277,8 @@ command_ok(
 		'-D',         $newnode->data_dir, '-b', $oldbindir,
 		'-B',         $newbindir,         '-s', $newnode->host,
 		'-p',         $oldnode->port,     '-P', $newnode->port,
-		'--check'
+		$mode,
+		'--check',
 	],
 	'run of pg_upgrade --check for new instance');
 ok(!-d $newnode->data_dir . "/pg_upgrade_output.d",
@@ -282,7 +290,8 @@ command_ok(
 		'pg_upgrade', '--no-sync',        '-d', $oldnode->data_dir,
 		'-D',         $newnode->data_dir, '-b', $oldbindir,
 		'-B',         $newbindir,         '-s', $newnode->host,
-		'-p',         $oldnode->port,     '-P', $newnode->port
+		'-p',         $oldnode->port,     '-P', $newnode->port,
+		$mode,
 	],
 	'run of pg_upgrade for new instance');
 ok( !-d $newnode->data_dir . "/pg_upgrade_output.d",

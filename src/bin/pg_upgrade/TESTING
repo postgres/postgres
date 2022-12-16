@@ -3,6 +3,7 @@ THE SHORT VERSION
 
 On non-Windows machines, you can execute the testing process
 described below by running the following command in this directory:
+
 	make check
 
 This will run the TAP tests to run pg_upgrade, performing an upgrade
@@ -17,7 +18,17 @@ export olddump=...somewhere/dump.sql	(old version's dump)
 export oldinstall=...otherversion/	(old version's install base path)
 
 Finally, the tests can be done by running
+
 	make check
+
+You can also test the different transfer modes (--copy, --link,
+--clone) by setting the environment variable PG_TEST_PG_UPGRADE_MODE
+to the respective command-line option, like
+
+	make check PG_TEST_PG_UPGRADE_MODE=--link
+
+The default is --copy.  Note that the other modes are not supported on
+all operating systems.
 
 DETAILS
 -------
