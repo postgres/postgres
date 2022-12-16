@@ -81,6 +81,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
+#include "nodes/miscnodes.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -894,41 +895,18 @@ bool
 xml_is_document(xmltype *arg)
 {
 #ifdef USE_LIBXML
-	bool		result;
-	volatile xmlDocPtr doc = NULL;
-	MemoryContext ccxt = CurrentMemoryContext;
+	xmlDocPtr	doc;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/* We want to catch ereport(INVALID_XML_DOCUMENT) and return false */
-	PG_TRY();
-	{
-		doc = xml_parse((text *) arg, XMLOPTION_DOCUMENT, true,
-						GetDatabaseEncoding(), NULL);
-		result = true;
-	}
-	PG_CATCH();
-	{
-		ErrorData  *errdata;
-		MemoryContext ecxt;
-
-		ecxt = MemoryContextSwitchTo(ccxt);
-		errdata = CopyErrorData();
-		if (errdata->sqlerrcode == ERRCODE_INVALID_XML_DOCUMENT)
-		{
-			FlushErrorState();
-			result = false;
-		}
-		else
-		{
-			MemoryContextSwitchTo(ecxt);
-			PG_RE_THROW();
-		}
-	}
-	PG_END_TRY();
-
+	/*
+	 * We'll report "true" if no soft error is reported by xml_parse().
+	 */
+	doc = xml_parse((text *) arg, XMLOPTION_DOCUMENT, true,
+					GetDatabaseEncoding(), (Node *) &escontext);
 	if (doc)
 		xmlFreeDoc(doc);
 
-	return result;
+	return !escontext.error_occurred;
 #else							/* not USE_LIBXML */
 	NO_XML_SUPPORT();
 	return false;
@@ -4320,26 +4298,18 @@ xpath_exists(PG_FUNCTION_ARGS)
 static bool
 wellformed_xml(text *data, XmlOptionType xmloption_arg)
 {
-	bool		result;
-	volatile xmlDocPtr doc = NULL;
+	xmlDocPtr	doc;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/* We want to catch any exceptions and return false */
-	PG_TRY();
-	{
-		doc = xml_parse(data, xmloption_arg, true, GetDatabaseEncoding(), NULL);
-		result = true;
-	}
-	PG_CATCH();
-	{
-		FlushErrorState();
-		result = false;
-	}
-	PG_END_TRY();
-
+	/*
+	 * We'll report "true" if no soft error is reported by xml_parse().
+	 */
+	doc = xml_parse(data, xmloption_arg, true,
+					GetDatabaseEncoding(), (Node *) &escontext);
 	if (doc)
 		xmlFreeDoc(doc);
 
-	return result;
+	return !escontext.error_occurred;
 }
 #endif
 
