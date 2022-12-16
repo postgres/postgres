@@ -231,6 +231,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--copy</option></term>
+      <listitem>
+       <para>
+        Copy files to the new cluster.  This is the default.  (See also
+        <option>--link</option> and <option>--clone</option>.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-?</option></term>
       <term><option>--help</option></term>
       <listitem><para>show help, then exit</para></listitem>
