@@ -15,16 +15,18 @@
  * Non-empty lists have a header, which will not be relocated as long as the
  * list remains non-empty, and an expansible data array.
  *
- * We support three types of lists:
+ * We support four types of lists:
  *
  *	T_List: lists of pointers
  *		(in practice usually pointers to Nodes, but not always;
  *		declared as "void *" to minimize casting annoyances)
  *	T_IntList: lists of integers
  *	T_OidList: lists of Oids
+ *	T_XidList: lists of TransactionIds
+ *		(the XidList infrastructure is less complete than the other cases)
  *
- * (At the moment, ints and Oids are the same size, but they may not
- * always be so; try to be careful to maintain the distinction.)
+ * (At the moment, ints, Oids, and XIDs are the same size, but they may not
+ * always be so; be careful to use the appropriate list type for your data.)
  *
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
@@ -50,7 +52,7 @@ typedef union ListCell
 
 typedef struct List
 {
-	NodeTag		type;			/* T_List, T_IntList, or T_OidList */
+	NodeTag		type;			/* T_List, T_IntList, T_OidList, or T_XidList */
 	int			length;			/* number of elements currently present */
 	int			max_length;		/* allocated length of elements[] */
 	ListCell   *elements;		/* re-allocatable array of cells */
