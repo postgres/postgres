@@ -21,7 +21,13 @@
 #define SCRAM_SHA_256_PLUS_NAME "SCRAM-SHA-256-PLUS"	/* with channel binding */
 
 /* Length of SCRAM keys (client and server) */
-#define SCRAM_KEY_LEN				PG_SHA256_DIGEST_LENGTH
+#define SCRAM_SHA_256_KEY_LEN				PG_SHA256_DIGEST_LENGTH
+
+/*
+ * Size of buffers used internally by SCRAM routines, that should be the
+ * maximum of SCRAM_SHA_*_KEY_LEN among the hash methods supported.
+ */
+#define SCRAM_MAX_KEY_LEN					SCRAM_SHA_256_KEY_LEN
 
 /*
  * Size of random nonce generated in the authentication exchange.  This
@@ -43,17 +49,22 @@
  */
 #define SCRAM_DEFAULT_ITERATIONS	4096
 
-extern int	scram_SaltedPassword(const char *password, const char *salt,
-								 int saltlen, int iterations, uint8 *result,
-								 const char **errstr);
-extern int	scram_H(const uint8 *input, int len, uint8 *result,
+extern int	scram_SaltedPassword(const char *password,
+								 pg_cryptohash_type hash_type, int key_length,
+								 const char *salt, int saltlen, int iterations,
+								 uint8 *result, const char **errstr);
+extern int	scram_H(const uint8 *input, pg_cryptohash_type hash_type,
+					int key_length, uint8 *result,
 					const char **errstr);
-extern int	scram_ClientKey(const uint8 *salted_password, uint8 *result,
-							const char **errstr);
-extern int	scram_ServerKey(const uint8 *salted_password, uint8 *result,
-							const char **errstr);
+extern int	scram_ClientKey(const uint8 *salted_password,
+							pg_cryptohash_type hash_type, int key_length,
+							uint8 *result, const char **errstr);
+extern int	scram_ServerKey(const uint8 *salted_password,
+							pg_cryptohash_type hash_type, int key_length,
+							uint8 *result, const char **errstr);
 
-extern char *scram_build_secret(const char *salt, int saltlen, int iterations,
+extern char *scram_build_secret(pg_cryptohash_type hash_type, int key_length,
+								const char *salt, int saltlen, int iterations,
 								const char *password, const char **errstr);
 
 #endif							/* SCRAM_COMMON_H */
