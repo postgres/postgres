@@ -114,7 +114,7 @@ my %pgdump_runs = (
 			program => $ENV{'GZIP_PROGRAM'},
 			args    => [ '-f', "$tempdir/compression_gzip_dir/blobs.toc", ],
 		},
-		# Verify that only data files where compressed
+		# Verify that only data files were compressed
 		glob_patterns => [
 			"$tempdir/compression_gzip_dir/toc.dat",
 			"$tempdir/compression_gzip_dir/*.dat.gz",
