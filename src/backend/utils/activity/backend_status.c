@@ -855,7 +855,9 @@ pgstat_read_current_status(void)
 			localentry->backend_id = i;
 			BackendIdGetTransactionIds(i,
 									   &localentry->backend_xid,
-									   &localentry->backend_xmin);
+									   &localentry->backend_xmin,
+									   &localentry->backend_subxact_count,
+									   &localentry->backend_subxact_overflowed);
 
 			localentry++;
 			localappname += NAMEDATALEN;

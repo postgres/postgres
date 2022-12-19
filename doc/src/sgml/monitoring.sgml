@@ -5674,6 +5674,24 @@ FROM pg_stat_get_backend_idset() AS backendid;
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_stat_get_backend_subxact</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_subxact</function> ( <type>integer</type> )
+        <returnvalue>record</returnvalue>
+       </para>
+       <para>
+        Returns a record of information about the subtransactions of the
+        backend with the specified ID.
+        The fields returned are <parameter>subxact_count</parameter>, which
+        is the number of subtransactions in the backend's subtransaction cache,
+        and <parameter>subxact_overflow</parameter>, which indicates whether
+        the backend's subtransaction cache is overflowed or not.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_stat_get_backend_userid</primary>
         </indexterm>
         <function>pg_stat_get_backend_userid</function> ( <type>integer</type> )
