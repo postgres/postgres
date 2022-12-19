@@ -93,6 +93,11 @@ recreate them if you need to make changes. "make sslfiles-clean" is required
 in order to recreate the full set of keypairs and certificates. To rebuild
 separate files, touch (or remove) the files in question and run "make sslfiles".
 
+Note
+====
+
+These certificates are also used in other tests, e.g. the LDAP tests.
+
 TODO
 ====
 

@@ -14,7 +14,6 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 export with_ldap
-export OPENSSL
 
 check:
 	$(prove_check)

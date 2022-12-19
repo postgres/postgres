@@ -3,6 +3,7 @@
 
 use strict;
 use warnings;
+use File::Copy;
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
 use Test::More;
@@ -113,17 +114,13 @@ append_to_file(
 mkdir $ldap_datadir or die;
 mkdir $slapd_certs  or die;
 
-my $openssl = $ENV{OPENSSL};
-
-system_or_bail $openssl, "req", "-new", "-nodes", "-keyout",
-  "$slapd_certs/ca.key", "-x509", "-out", "$slapd_certs/ca.crt", "-subj",
-  "/CN=CA";
-system_or_bail $openssl, "req", "-new", "-nodes", "-keyout",
-  "$slapd_certs/server.key", "-out", "$slapd_certs/server.csr", "-subj",
-  "/CN=server";
-system_or_bail $openssl, "x509", "-req", "-in", "$slapd_certs/server.csr",
-  "-CA", "$slapd_certs/ca.crt", "-CAkey", "$slapd_certs/ca.key",
-  "-CAcreateserial", "-out", "$slapd_certs/server.crt";
+# use existing certs from nearby SSL test suite
+copy "../ssl/ssl/server_ca.crt", "$slapd_certs/ca.crt"
+  || die "copying ca.crt: $!";
+copy "../ssl/ssl/server-cn-only.crt", "$slapd_certs/server.crt"
+  || die "copying server.crt: $!";;
+copy "../ssl/ssl/server-cn-only.key", "$slapd_certs/server.key"
+  || die "copying server.key: $!";;
 
 system_or_bail $slapd, '-f', $slapd_conf, '-h', "$ldap_url $ldaps_url";
 

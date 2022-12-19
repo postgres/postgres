@@ -10,7 +10,6 @@ tests += {
     ],
     'env': {
       'with_ldap': ldap.found() ? 'yes' : 'no',
-      'OPENSSL': openssl.path(),
     },
   },
 }
