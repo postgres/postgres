@@ -5311,6 +5311,29 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-presorted-aggregate" xreflabel="enable_presorted_aggregate">
+      <term><varname>enable_presorted_aggregate</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_presorted_aggregate</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Controls if the query planner will produce a plan which will provide
+        rows which are presorted in the order required for the query's
+        <literal>ORDER BY</literal> / <literal>DISTINCT</literal> aggregate
+        functions.  When disabled, the query planner will produce a plan which
+        will always require the executor to perform a sort before performing
+        aggregation of each aggregate function containing an
+        <literal>ORDER BY</literal> or <literal>DISTINCT</literal> clause.
+        When enabled, the planner will try to produce a more efficient plan
+        which provides input to the aggregate functions which is presorted in
+        the order they require for aggregation.  The default value is
+        <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-seqscan" xreflabel="enable_seqscan">
       <term><varname>enable_seqscan</varname> (<type>boolean</type>)
       <indexterm>

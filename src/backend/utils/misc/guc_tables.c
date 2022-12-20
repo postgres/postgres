@@ -972,6 +972,21 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"enable_presorted_aggregate", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables the planner's ability to produce plans which "
+						 "provide presorted input for ORDER BY / DISTINCT aggregate "
+						 "functions."),
+			gettext_noop("Allows the query planner to build plans which provide "
+						 "presorted input for aggregate functions with an ORDER BY / "
+						 "DISTINCT clause.  When disabled, implicit sorts are always "
+						 "performed during execution."),
+			GUC_EXPLAIN
+		},
+		&enable_presorted_aggregate,
+		true,
+		NULL, NULL, NULL
+	},
+	{
 		{"enable_async_append", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of async append plans."),
 			NULL,

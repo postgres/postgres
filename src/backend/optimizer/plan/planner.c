@@ -3191,7 +3191,8 @@ make_pathkeys_for_groupagg(PlannerInfo *root, List *groupClause, List *tlist,
 	 * sets.  All handling specific to ordered aggregates must be done by the
 	 * executor in that case.
 	 */
-	if (root->numOrderedAggs == 0 || root->parse->groupingSets != NIL)
+	if (root->numOrderedAggs == 0 || root->parse->groupingSets != NIL ||
+		!enable_presorted_aggregate)
 		return grouppathkeys;
 
 	/*

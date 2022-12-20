@@ -546,6 +546,12 @@ select
 from tenk1
 group by ten;
 
+-- Ensure no ordering is requested when enable_presorted_aggregate is off
+set enable_presorted_aggregate to off;
+explain (costs off)
+select sum(two order by two) from tenk1;
+reset enable_presorted_aggregate;
+
 --
 -- Test combinations of DISTINCT and/or ORDER BY
 --
