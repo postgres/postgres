@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 encodings = {
   'cyrillic_and_mic': ['cyrillic_and_mic/cyrillic_and_mic.c'],
   'euc2004_sjis2004': ['euc2004_sjis2004/euc2004_sjis2004.c'],

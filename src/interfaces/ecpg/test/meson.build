@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 # can't run ecpg to build test dependencies, at least not without an emulator
 if meson.is_cross_build()
   subdir_done()

@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 test_fsync_sources = files(
   'pg_test_fsync.c',
 )

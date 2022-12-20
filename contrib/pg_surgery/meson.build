@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_surgery_sources = files(
   'heap_surgery.c',
 )

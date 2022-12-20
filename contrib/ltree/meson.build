@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 ltree_sources = files(
   '_ltree_gist.c',
   '_ltree_op.c',

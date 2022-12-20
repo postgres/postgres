@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_archivecleanup_sources = files(
   'pg_archivecleanup.c',
 )

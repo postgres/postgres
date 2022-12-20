@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_controldata_sources = files(
   'pg_controldata.c',
 )

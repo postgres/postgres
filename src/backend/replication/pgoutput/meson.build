@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pgoutput_sources = files(
   'pgoutput.c',
 )

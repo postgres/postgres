@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 btree_gist_sources = files(
   'btree_bit.c',
   'btree_bool.c',

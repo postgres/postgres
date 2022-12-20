@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 subdir('initdb')
 subdir('pg_amcheck')
 subdir('pg_archivecleanup')

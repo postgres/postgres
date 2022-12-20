@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_waldump_sources = files(
   'compat.c',
   'pg_waldump.c',

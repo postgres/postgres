@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_test_timing_sources = files(
   'pg_test_timing.c'
 )

@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 # used by frontend programs like pg_waldump
 rmgr_desc_sources = files(
   'brindesc.c',

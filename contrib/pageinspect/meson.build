@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pageinspect_sources = files(
   'brinfuncs.c',
   'btreefuncs.c',

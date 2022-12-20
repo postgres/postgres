@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 ecpglib_sources = files(
   'connect.c',
   'data.c',

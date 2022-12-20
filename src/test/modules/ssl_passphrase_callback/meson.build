@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 if not ssl.found()
   subdir_done()
 endif

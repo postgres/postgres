@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 # .. so that includes of hstore/hstore.h work
 hstore_inc = include_directories('.', '../')
 

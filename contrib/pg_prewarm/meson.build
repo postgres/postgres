@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_prewarm_sources = files(
   'autoprewarm.c',
   'pg_prewarm.c',

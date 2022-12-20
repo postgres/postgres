@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 unaccent_sources = files(
   'unaccent.c',
 )

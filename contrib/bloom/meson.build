@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 bloom_sources = files(
   'blcost.c',
   'blinsert.c',

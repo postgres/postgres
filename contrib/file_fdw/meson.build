@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 file_fdw_sources = files(
   'file_fdw.c',
 )

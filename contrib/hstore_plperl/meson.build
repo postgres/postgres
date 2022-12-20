@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 if not perl_dep.found()
   subdir_done()
 endif

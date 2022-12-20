@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 tablefunc_sources = files(
   'tablefunc.c',
 )

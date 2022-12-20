@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_freespacemap_sources = files(
   'pg_freespacemap.c',
 )

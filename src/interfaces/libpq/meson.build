@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 # test/ is entered via top-level meson.build, that way it can use the default
 # args for executables (which depend on libpq).
 

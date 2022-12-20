@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_walinspect_sources = files('pg_walinspect.c')
 
 if host_system == 'windows'

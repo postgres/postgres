@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 postgres_fdw_sources = files(
   'connection.c',
   'deparse.c',

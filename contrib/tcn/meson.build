@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 tcn_sources = files(
   'tcn.c',
 )

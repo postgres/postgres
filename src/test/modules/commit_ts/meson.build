@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 tests += {
   'name': 'commit_ts',
   'sd': meson.current_source_dir(),

@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 old_snapshot_sources = files(
   'time_mapping.c',
 )

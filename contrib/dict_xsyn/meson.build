@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 dict_xsyn_sources = files(
   'dict_xsyn.c',
 )

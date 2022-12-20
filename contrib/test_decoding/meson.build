@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 test_decoding_sources = files(
   'test_decoding.c',
 )

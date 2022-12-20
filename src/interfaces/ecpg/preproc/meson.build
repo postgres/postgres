@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 ecpg_sources = files(
   '../ecpglib/typename.c',
   'c_keywords.c',

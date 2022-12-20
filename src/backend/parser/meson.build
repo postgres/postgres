@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 backend_sources += files(
   'analyze.c',
   'parse_agg.c',

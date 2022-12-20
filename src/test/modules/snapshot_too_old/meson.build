@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 tests += {
   'name': 'snapshot_too_old',
   'sd': meson.current_source_dir(),

@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 common_sources = files(
   'archive.c',
   'base64.c',

@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 UNICODE_VERSION = '15.0.0'
 
 unicode_data = {}

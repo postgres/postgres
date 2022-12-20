@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_visibility_sources = files(
   'pg_visibility.c',
 )

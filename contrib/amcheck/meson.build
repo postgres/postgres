@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 amcheck_sources = files(
   'verify_heapam.c',
   'verify_nbtree.c',

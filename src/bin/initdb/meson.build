@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 initdb_sources = files(
   'findtimezone.c',
   'initdb.c'

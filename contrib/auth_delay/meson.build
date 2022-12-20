@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 auth_delay_sources = files(
   'auth_delay.c',
 )

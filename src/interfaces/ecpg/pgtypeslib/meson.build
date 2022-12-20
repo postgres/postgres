@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 ecpg_pgtypes_sources = files(
   'common.c',
   'datetime.c',

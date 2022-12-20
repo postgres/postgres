@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 basebackup_to_shell_sources = files(
   'basebackup_to_shell.c',
 )

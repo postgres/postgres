@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 contrib_mod_args = pg_mod_args
 
 contrib_data_dir = dir_data_extension

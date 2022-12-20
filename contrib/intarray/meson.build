@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 intarray_sources = files(
   '_int_bool.c',
   '_int_gin.c',

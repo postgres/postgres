@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 # could use install_data's preserve_path option in >=0.64.0
 
 install_data(

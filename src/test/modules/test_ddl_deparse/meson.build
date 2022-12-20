@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 # FIXME: prevent install during main install, but not during test :/
 
 test_ddl_deparse_sources = files(

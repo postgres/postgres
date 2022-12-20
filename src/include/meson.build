@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_config_ext = configure_file(
   input: 'pg_config_ext.h.meson',
   output: 'pg_config_ext.h',

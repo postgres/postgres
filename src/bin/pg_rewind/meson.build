@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_rewind_sources = files(
   'datapagemap.c',
   'file_ops.c',

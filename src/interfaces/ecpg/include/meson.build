@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 ecpg_inc = include_directories('.')
 
 ecpg_conf_keys = [

@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 dict_int_sources = files(
   'dict_int.c',
 )

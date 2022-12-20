@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 tsm_system_rows_sources = files(
   'tsm_system_rows.c',
 )

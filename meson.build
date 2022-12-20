@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 # Entry point for building PostgreSQL with meson
 #
 # Good starting points for writing meson.build files are:

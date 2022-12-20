@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pg_trgm_sources = files(
   'trgm_gin.c',
   'trgm_gist.c',

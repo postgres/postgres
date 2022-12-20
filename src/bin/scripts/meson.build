@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 scripts_common = static_library('libscripts_common',
   files('common.c'),
   dependencies: [frontend_code, libpq],

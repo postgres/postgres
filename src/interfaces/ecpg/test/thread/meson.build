@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 pgc_files = [
   'thread_implicit',
   'thread',

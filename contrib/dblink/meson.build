@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 dblink_sources = files(
   'dblink.c',
 )

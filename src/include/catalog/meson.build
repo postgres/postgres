@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 catalog_headers = [
   'pg_proc.h',
   'pg_type.h',

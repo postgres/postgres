@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 lwlocknames = custom_target('lwlocknames',
   input: files('../../backend/storage/lmgr/lwlocknames.txt'),
   output: ['lwlocknames.h', 'lwlocknames.c'],

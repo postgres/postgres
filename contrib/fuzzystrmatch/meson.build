@@ -1,3 +1,5 @@
+# Copyright (c) 2022, PostgreSQL Global Development Group
+
 fuzzystrmatch_sources = files(
   'fuzzystrmatch.c',
   'dmetaphone.c',
