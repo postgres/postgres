@@ -433,6 +433,59 @@ pg_walfile_name(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Extract the sequence number and the timeline ID from given a WAL file
+ * name.
+ */
+Datum
+pg_dissect_walfile_name(PG_FUNCTION_ARGS)
+{
+#define PG_DISSECT_WALFILE_NAME_COLS 2
+	char	   *fname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *fname_upper;
+	char	   *p;
+	TimeLineID	tli;
+	XLogSegNo	segno;
+	Datum		values[PG_DISSECT_WALFILE_NAME_COLS] = {0};
+	bool		isnull[PG_DISSECT_WALFILE_NAME_COLS] = {0};
+	TupleDesc	tupdesc;
+	HeapTuple	tuple;
+	char		buf[256];
+	Datum		result;
+
+	fname_upper = pstrdup(fname);
+
+	/* Capitalize WAL file name. */
+	for (p = fname_upper; *p; p++)
+		*p = pg_toupper((unsigned char) *p);
+
+	if (!IsXLogFileName(fname_upper))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid WAL file name \"%s\"", fname)));
+
+	XLogFromFileName(fname_upper, &tli, &segno, wal_segment_size);
+
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	/* Convert to numeric. */
+	snprintf(buf, sizeof buf, UINT64_FORMAT, segno);
+	values[0] = DirectFunctionCall3(numeric_in,
+									CStringGetDatum(buf),
+									ObjectIdGetDatum(0),
+									Int32GetDatum(-1));
+
+	values[1] = Int64GetDatum(tli);
+
+	tuple = heap_form_tuple(tupdesc, values, isnull);
+	result = HeapTupleGetDatum(tuple);
+
+	PG_RETURN_DATUM(result);
+
+#undef PG_DISSECT_WALFILE_NAME_COLS
+}
+
+/*
  * pg_wal_replay_pause - Request to pause recovery
  *
  * Permission checking for this function is managed through the normal

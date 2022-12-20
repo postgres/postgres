@@ -6372,6 +6372,13 @@
 { oid => '2851', descr => 'wal filename, given a wal location',
   proname => 'pg_walfile_name', prorettype => 'text', proargtypes => 'pg_lsn',
   prosrc => 'pg_walfile_name' },
+{ oid => '8205',
+  descr => 'sequence number and timeline ID given a wal filename',
+  proname => 'pg_dissect_walfile_name', provolatile => 's',
+  prorettype => 'record', proargtypes => 'text',
+  proallargtypes => '{text,numeric,int8}', proargmodes => '{i,o,o}',
+  proargnames => '{file_name,segno,timeline_id}',
+  prosrc => 'pg_dissect_walfile_name' },
 
 { oid => '3165', descr => 'difference in bytes, given two wal locations',
   proname => 'pg_wal_lsn_diff', prorettype => 'numeric',
