@@ -842,7 +842,6 @@ pgstat_read_current_status(void)
 			CHECK_FOR_INTERRUPTS();
 		}
 
-		beentry++;
 		/* Only valid entries get included into the local array */
 		if (localentry->backendStatus.st_procpid > 0)
 		{
@@ -871,6 +870,8 @@ pgstat_read_current_status(void)
 #endif
 			localNumBackends++;
 		}
+
+		beentry++;
 	}
 
 	/* Set the pointer only after completion of a valid table */
