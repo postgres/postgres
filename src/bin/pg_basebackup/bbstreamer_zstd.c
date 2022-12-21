@@ -113,7 +113,7 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, pg_compress_specification *comp
 
 	return &streamer->base;
 #else
-	pg_fatal("this build does not support zstd compression");
+	pg_fatal("this build does not support compression with %s", "ZSTD");
 	return NULL;				/* keep compiler quiet */
 #endif
 }
@@ -268,7 +268,7 @@ bbstreamer_zstd_decompressor_new(bbstreamer *next)
 
 	return &streamer->base;
 #else
-	pg_fatal("this build does not support zstd compression");
+	pg_fatal("this build does not support compression with %s", "ZSTD");
 	return NULL;				/* keep compiler quiet */
 #endif
 }

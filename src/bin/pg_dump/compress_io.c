@@ -101,7 +101,7 @@ AllocateCompressor(const pg_compress_specification compression_spec,
 
 #ifndef HAVE_LIBZ
 	if (compression_spec.algorithm == PG_COMPRESSION_GZIP)
-		pg_fatal("not built with zlib support");
+		pg_fatal("this build does not support compression with %s", "gzip");
 #endif
 
 	cs = (CompressorState *) pg_malloc0(sizeof(CompressorState));
@@ -135,7 +135,7 @@ ReadDataFromArchive(ArchiveHandle *AH,
 #ifdef HAVE_LIBZ
 		ReadDataFromArchiveZlib(AH, readF);
 #else
-		pg_fatal("not built with zlib support");
+		pg_fatal("this build does not support compression with %s", "gzip");
 #endif
 	}
 }
@@ -153,7 +153,7 @@ WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 #ifdef HAVE_LIBZ
 			WriteDataToArchiveZlib(AH, cs, data, dLen);
 #else
-			pg_fatal("not built with zlib support");
+			pg_fatal("this build does not support compression with %s", "gzip");
 #endif
 			break;
 		case PG_COMPRESSION_NONE:
@@ -482,7 +482,7 @@ cfopen_write(const char *path, const char *mode,
 		fp = cfopen(fname, mode, compression_spec);
 		free_keep_errno(fname);
 #else
-		pg_fatal("not built with zlib support");
+		pg_fatal("this build does not support compression with %s", "gzip");
 		fp = NULL;				/* keep compiler quiet */
 #endif
 	}
@@ -526,7 +526,7 @@ cfopen(const char *path, const char *mode,
 			fp = NULL;
 		}
 #else
-		pg_fatal("not built with zlib support");
+		pg_fatal("this build does not support compression with %s", "gzip");
 #endif
 	}
 	else
