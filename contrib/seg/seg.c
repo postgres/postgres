@@ -923,9 +923,13 @@ restore(char *result, float val, int n)
 
 	/*
 	 * Put a cap on the number of significant digits to avoid garbage in the
-	 * output and ensure we don't overrun the result buffer.
+	 * output and ensure we don't overrun the result buffer.  (n should not be
+	 * negative, but check to protect ourselves against corrupted data.)
 	 */
-	n = Min(n, FLT_DIG);
+	if (n <= 0)
+		n = FLT_DIG;
+	else
+		n = Min(n, FLT_DIG);
 
 	/* remember the sign */
 	sign = (val < 0 ? 1 : 0);
