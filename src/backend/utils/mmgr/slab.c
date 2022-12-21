@@ -691,16 +691,20 @@ SlabFree(void *pointer)
 		dlist_push_head(&slab->blocklist[newBlocklistIdx], &block->node);
 
 		/*
-		 * It's possible that we've no blocks in the blocklist at the
-		 * curBlocklistIndex position.  When this happens we must find the
-		 * next blocklist index which contains blocks.  We can be certain
-		 * we'll find a block as at least one must exist for the chunk we're
-		 * currently freeing.
+		 * The blocklist[curBlocklistIdx] may now be empty or we may now be
+		 * able to use a lower-element blocklist.  We'll need to redetermine
+		 * what the slab->curBlocklistIndex is if the current blocklist was
+		 * changed or if a lower element one was changed.  We must ensure we
+		 * use the list with the fullest block(s).
 		 */
-		if (slab->curBlocklistIndex == curBlocklistIdx &&
-			dlist_is_empty(&slab->blocklist[curBlocklistIdx]))
+		if (slab->curBlocklistIndex >= curBlocklistIdx)
 		{
 			slab->curBlocklistIndex = SlabFindNextBlockListIndex(slab);
+
+			/*
+			 * We know there must be a block with at least 1 unused chunk as
+			 * we just pfree'd one.  Ensure curBlocklistIndex reflects this.
+			 */
 			Assert(slab->curBlocklistIndex > 0);
 		}
 	}
