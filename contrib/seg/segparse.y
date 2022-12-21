@@ -3,6 +3,7 @@
 
 #include "postgres.h"
 
+#include <float.h>
 #include <math.h>
 
 #include "fmgr.h"
@@ -19,6 +20,8 @@
 #define YYFREE   pfree
 
 static float seg_atof(const char *value);
+
+static int sig_digits(const char *value);
 
 static char strbuf[25] = {
 	'0', '0', '0', '0', '0',
@@ -62,9 +65,9 @@ range: boundary PLUMIN deviation
 		result->lower = $1.val - $3.val;
 		result->upper = $1.val + $3.val;
 		sprintf(strbuf, "%g", result->lower);
-		result->l_sigd = Max(Min(6, significant_digits(strbuf)), Max($1.sigd, $3.sigd));
+		result->l_sigd = Max(sig_digits(strbuf), Max($1.sigd, $3.sigd));
 		sprintf(strbuf, "%g", result->upper);
-		result->u_sigd = Max(Min(6, significant_digits(strbuf)), Max($1.sigd, $3.sigd));
+		result->u_sigd = Max(sig_digits(strbuf), Max($1.sigd, $3.sigd));
 		result->l_ext = '\0';
 		result->u_ext = '\0';
 	}
@@ -121,7 +124,7 @@ boundary: SEGFLOAT
 		float		val = seg_atof($1);
 
 		$$.ext = '\0';
-		$$.sigd = significant_digits($1);
+		$$.sigd = sig_digits($1);
 		$$.val = val;
 	}
 	| EXTENSION SEGFLOAT
@@ -130,7 +133,7 @@ boundary: SEGFLOAT
 		float		val = seg_atof($2);
 
 		$$.ext = $1[0];
-		$$.sigd = significant_digits($2);
+		$$.sigd = sig_digits($2);
 		$$.val = val;
 	}
 	;
@@ -141,7 +144,7 @@ deviation: SEGFLOAT
 		float		val = seg_atof($1);
 
 		$$.ext = '\0';
-		$$.sigd = significant_digits($1);
+		$$.sigd = sig_digits($1);
 		$$.val = val;
 	}
 	;
@@ -156,4 +159,13 @@ seg_atof(const char *value)
 
 	datum = DirectFunctionCall1(float4in, CStringGetDatum(value));
 	return DatumGetFloat4(datum);
+}
+
+static int
+sig_digits(const char *value)
+{
+	int			n = significant_digits(value);
+
+	/* Clamp, to ensure value will fit in sigd fields */
+	return Min(n, FLT_DIG);
 }
