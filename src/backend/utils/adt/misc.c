@@ -427,18 +427,9 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(5);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
-						   CHAROID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "barelabel",
-						   BOOLOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "catdesc",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "baredesc",
-						   TEXTOID, -1, 0);
-
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+		funcctx->tuple_desc = tupdesc;
 		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 		MemoryContextSwitchTo(oldcontext);
@@ -515,20 +506,8 @@ pg_get_catalog_foreign_keys(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(6);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "fktable",
-						   REGCLASSOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "fkcols",
-						   TEXTARRAYOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "pktable",
-						   REGCLASSOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "pkcols",
-						   TEXTARRAYOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "is_array",
-						   BOOLOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "is_opt",
-						   BOOLOID, -1, 0);
-
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
 		/*

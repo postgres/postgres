@@ -2397,14 +2397,8 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	if (relation)
 		relation_close(relation, AccessShareLock);
 
-	tupdesc = CreateTemplateTupleDesc(3);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "classid",
-					   OIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "objid",
-					   OIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "objsubid",
-					   INT4OID, -1, 0);
-	tupdesc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	values[0] = ObjectIdGetDatum(addr.classId);
 	values[1] = ObjectIdGetDatum(addr.objectId);
@@ -4244,21 +4238,8 @@ pg_identify_object(PG_FUNCTION_ARGS)
 	address.objectId = objid;
 	address.objectSubId = objsubid;
 
-	/*
-	 * Construct a tuple descriptor for the result row.  This must match this
-	 * function's pg_proc entry!
-	 */
-	tupdesc = CreateTemplateTupleDesc(4);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "type",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "schema",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "name",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "identity",
-					   TEXTOID, -1, 0);
-
-	tupdesc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	if (is_objectclass_supported(address.classId))
 	{
@@ -4374,19 +4355,8 @@ pg_identify_object_as_address(PG_FUNCTION_ARGS)
 	address.objectId = objid;
 	address.objectSubId = objsubid;
 
-	/*
-	 * Construct a tuple descriptor for the result row.  This must match this
-	 * function's pg_proc entry!
-	 */
-	tupdesc = CreateTemplateTupleDesc(3);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "type",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "object_names",
-					   TEXTARRAYOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "object_args",
-					   TEXTARRAYOID, -1, 0);
-
-	tupdesc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	/* object type, which can never be NULL */
 	values[0] = CStringGetTextDatum(getObjectTypeDescription(&address, true));

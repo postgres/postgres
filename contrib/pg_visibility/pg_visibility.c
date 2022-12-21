@@ -291,10 +291,8 @@ pg_visibility_map_summary(PG_FUNCTION_ARGS)
 		ReleaseBuffer(vmbuffer);
 	relation_close(rel, AccessShareLock);
 
-	tupdesc = CreateTemplateTupleDesc(2);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "all_visible", INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "all_frozen", INT8OID, -1, 0);
-	tupdesc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	values[0] = Int64GetDatum(all_visible);
 	values[1] = Int64GetDatum(all_frozen);

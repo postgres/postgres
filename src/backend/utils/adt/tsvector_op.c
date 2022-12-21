@@ -647,7 +647,9 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 						   INT2ARRAYOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "weights",
 						   TEXTARRAYOID, -1, 0);
-		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+		funcctx->tuple_desc = tupdesc;
 
 		funcctx->user_fctx = PG_GETARG_TSVECTOR_COPY(0);
 
@@ -2302,14 +2304,9 @@ ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 		}
 	Assert(stat->stackpos <= stat->maxdepth);
 
-	tupdesc = CreateTemplateTupleDesc(3);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "ndoc",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "nentry",
-					   INT4OID, -1, 0);
-	funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+	funcctx->tuple_desc = tupdesc;
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	MemoryContextSwitchTo(oldcontext);

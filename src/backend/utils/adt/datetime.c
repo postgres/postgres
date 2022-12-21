@@ -4983,19 +4983,10 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 		*pindex = 0;
 		funcctx->user_fctx = (void *) pindex;
 
-		/*
-		 * build tupdesc for result tuples. This must match this function's
-		 * pg_proc entry!
-		 */
-		tupdesc = CreateTemplateTupleDesc(3);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "abbrev",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "utc_offset",
-						   INTERVALOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "is_dst",
-						   BOOLOID, -1, 0);
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+		funcctx->tuple_desc = tupdesc;
 
-		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 		MemoryContextSwitchTo(oldcontext);
 	}
 

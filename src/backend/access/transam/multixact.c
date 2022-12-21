@@ -3373,12 +3373,9 @@ pg_get_multixact_members(PG_FUNCTION_ARGS)
 												false);
 		multi->iter = 0;
 
-		tupdesc = CreateTemplateTupleDesc(2);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "xid",
-						   XIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "mode",
-						   TEXTOID, -1, 0);
-
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+		funccxt->tuple_desc = tupdesc;
 		funccxt->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funccxt->user_fctx = multi;
 
