@@ -24,6 +24,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -178,6 +179,9 @@ static Node *
 pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 								  Relids *relids)
 {
+	/* Since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (jtnode == NULL)
 	{
 		*relids = NULL;
@@ -677,6 +681,11 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 						   AppendRelInfo *containing_appendrel,
 						   bool deletion_ok)
 {
+	/* Since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+	/* Also, since it's a bit expensive, let's check for query cancel. */
+	CHECK_FOR_INTERRUPTS();
+
 	Assert(jtnode != NULL);
 	if (IsA(jtnode, RangeTblRef))
 	{
@@ -1824,6 +1833,9 @@ is_simple_union_all(Query *subquery)
 static bool
 is_simple_union_all_recurse(Node *setOp, Query *setOpQuery, List *colTypes)
 {
+	/* Since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (IsA(setOp, RangeTblRef))
 	{
 		RangeTblRef *rtr = (RangeTblRef *) setOp;
