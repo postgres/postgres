@@ -8863,7 +8863,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 */
 	newcons = AddRelationNewConstraints(rel, NIL,
 										list_make1(copyObject(constr)),
-										recursing | is_readd,	/* allow_merge */
+										recursing || is_readd,	/* allow_merge */
 										!recursing, /* is_local */
 										is_readd,	/* is_internal */
 										NULL);	/* queryString not available
