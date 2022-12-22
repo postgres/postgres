@@ -71,6 +71,24 @@ extern void SlabCheck(MemoryContext context);
 #endif
 
 /*
+ * These functions support the implementation of palloc_aligned() and are not
+ * part of a fully-fledged MemoryContext type.
+ */
+extern void AlignedAllocFree(void *pointer);
+extern void *AlignedAllocRealloc(void *pointer, Size size);
+extern MemoryContext AlignedAllocGetChunkContext(void *pointer);
+extern Size AlignedAllocGetChunkSpace(void *pointer);
+
+/*
+ * How many extra bytes do we need to request in order to ensure that we can
+ * align a pointer to 'alignto'.  Since palloc'd pointers are already aligned
+ * to MAXIMUM_ALIGNOF we can subtract that amount.  We also need to make sure
+ * there is enough space for the redirection MemoryChunk.
+ */
+#define PallocAlignedExtraBytes(alignto) \
+	((alignto) + (sizeof(MemoryChunk) - MAXIMUM_ALIGNOF))
+
+/*
  * MemoryContextMethodID
  *		A unique identifier for each MemoryContext implementation which
  *		indicates the index into the mcxt_methods[] array. See mcxt.c.
@@ -92,8 +110,8 @@ typedef enum MemoryContextMethodID
 	MCTX_ASET_ID,
 	MCTX_GENERATION_ID,
 	MCTX_SLAB_ID,
-	MCTX_UNUSED4_ID,			/* available */
-	MCTX_UNUSED5_ID				/* 111 occurs in wipe_mem'd memory */
+	MCTX_ALIGNED_REDIRECT_ID,
+	MCTX_UNUSED4_ID				/* 111 occurs in wipe_mem'd memory */
 } MemoryContextMethodID;
 
 /*

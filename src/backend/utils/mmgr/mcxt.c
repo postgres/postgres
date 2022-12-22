@@ -30,6 +30,7 @@
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/memutils_internal.h"
+#include "utils/memutils_memorychunk.h"
 
 
 static void BogusFree(void *pointer);
@@ -84,6 +85,21 @@ static const MemoryContextMethods mcxt_methods[] = {
 	[MCTX_SLAB_ID].check = SlabCheck,
 #endif
 
+	/* alignedalloc.c */
+	[MCTX_ALIGNED_REDIRECT_ID].alloc = NULL,	/* not required */
+	[MCTX_ALIGNED_REDIRECT_ID].free_p = AlignedAllocFree,
+	[MCTX_ALIGNED_REDIRECT_ID].realloc = AlignedAllocRealloc,
+	[MCTX_ALIGNED_REDIRECT_ID].reset = NULL,	/* not required */
+	[MCTX_ALIGNED_REDIRECT_ID].delete_context = NULL,	/* not required */
+	[MCTX_ALIGNED_REDIRECT_ID].get_chunk_context = AlignedAllocGetChunkContext,
+	[MCTX_ALIGNED_REDIRECT_ID].get_chunk_space = AlignedAllocGetChunkSpace,
+	[MCTX_ALIGNED_REDIRECT_ID].is_empty = NULL, /* not required */
+	[MCTX_ALIGNED_REDIRECT_ID].stats = NULL,	/* not required */
+#ifdef MEMORY_CONTEXT_CHECKING
+	[MCTX_ALIGNED_REDIRECT_ID].check = NULL,	/* not required */
+#endif
+
+
 	/*
 	 * Unused (as yet) IDs should have dummy entries here.  This allows us to
 	 * fail cleanly if a bogus pointer is passed to pfree or the like.  It
@@ -110,11 +126,6 @@ static const MemoryContextMethods mcxt_methods[] = {
 	[MCTX_UNUSED4_ID].realloc = BogusRealloc,
 	[MCTX_UNUSED4_ID].get_chunk_context = BogusGetChunkContext,
 	[MCTX_UNUSED4_ID].get_chunk_space = BogusGetChunkSpace,
-
-	[MCTX_UNUSED5_ID].free_p = BogusFree,
-	[MCTX_UNUSED5_ID].realloc = BogusRealloc,
-	[MCTX_UNUSED5_ID].get_chunk_context = BogusGetChunkContext,
-	[MCTX_UNUSED5_ID].get_chunk_space = BogusGetChunkSpace,
 };
 
 /*
@@ -1299,6 +1310,125 @@ palloc_extended(Size size, int flags)
 }
 
 /*
+ * MemoryContextAllocAligned
+ *		Allocate 'size' bytes of memory in 'context' aligned to 'alignto'
+ *		bytes.
+ *
+ * Currently, we align addresses by requesting additional bytes from the
+ * MemoryContext's standard allocator function and then aligning the returned
+ * address by the required alignment.  This means that the given MemoryContext
+ * must support providing us with a chunk of memory that's larger than 'size'.
+ * For allocators such as Slab, that's not going to work, as slab only allows
+ * chunks of the size that's specified when the context is created.
+ *
+ * 'alignto' must be a power of 2.
+ * 'flags' may be 0 or set the same as MemoryContextAllocExtended().
+ */
+void *
+MemoryContextAllocAligned(MemoryContext context,
+						  Size size, Size alignto, int flags)
+{
+	MemoryChunk *alignedchunk;
+	Size		alloc_size;
+	void	   *unaligned;
+	void	   *aligned;
+
+	/* wouldn't make much sense to waste that much space */
+	Assert(alignto < (128 * 1024 * 1024));
+
+	/* ensure alignto is a power of 2 */
+	Assert((alignto & (alignto - 1)) == 0);
+
+	/*
+	 * If the alignment requirements are less than what we already guarantee
+	 * then just use the standard allocation function.
+	 */
+	if (unlikely(alignto <= MAXIMUM_ALIGNOF))
+		return MemoryContextAllocExtended(context, size, flags);
+
+	/*
+	 * We implement aligned pointers by simply allocating enough memory for
+	 * the requested size plus the alignment and an additional "redirection"
+	 * MemoryChunk.  This additional MemoryChunk is required for operations
+	 * such as pfree when used on the pointer returned by this function.  We
+	 * use this redirection MemoryChunk in order to find the pointer to the
+	 * memory that was returned by the MemoryContextAllocExtended call below.
+	 * We do that by "borrowing" the block offset field and instead of using
+	 * that to find the offset into the owning block, we use it to find the
+	 * original allocated address.
+	 *
+	 * Here we must allocate enough extra memory so that we can still align
+	 * the pointer returned by MemoryContextAllocExtended and also have enough
+	 * space for the redirection MemoryChunk.  Since allocations will already
+	 * be at least aligned by MAXIMUM_ALIGNOF, we can subtract that amount
+	 * from the allocation size to save a little memory.
+	 */
+	alloc_size = size + PallocAlignedExtraBytes(alignto);
+
+#ifdef MEMORY_CONTEXT_CHECKING
+	/* ensure there's space for a sentinal byte */
+	alloc_size += 1;
+#endif
+
+	/* perform the actual allocation */
+	unaligned = MemoryContextAllocExtended(context, alloc_size, flags);
+
+	/* set the aligned pointer */
+	aligned = (void *) TYPEALIGN(alignto, (char *) unaligned +
+								 sizeof(MemoryChunk));
+
+	alignedchunk = PointerGetMemoryChunk(aligned);
+
+	/*
+	 * We set the redirect MemoryChunk so that the block offset calculation is
+	 * used to point back to the 'unaligned' allocated chunk.  This allows us
+	 * to use MemoryChunkGetBlock() to find the unaligned chunk when we need
+	 * to perform operations such as pfree() and repalloc().
+	 *
+	 * We store 'alignto' in the MemoryChunk's 'value' so that we know what
+	 * the alignment was set to should we ever be asked to realloc this
+	 * pointer.
+	 */
+	MemoryChunkSetHdrMask(alignedchunk, unaligned, alignto,
+						  MCTX_ALIGNED_REDIRECT_ID);
+
+	/* double check we produced a correctly aligned pointer */
+	Assert((void *) TYPEALIGN(alignto, aligned) == aligned);
+
+#ifdef MEMORY_CONTEXT_CHECKING
+	alignedchunk->requested_size = size;
+	/* set mark to catch clobber of "unused" space */
+	set_sentinel(aligned, size);
+#endif
+
+	/* Mark the bytes before the redirection header as noaccess */
+	VALGRIND_MAKE_MEM_NOACCESS(unaligned,
+							   (char *) alignedchunk - (char *) unaligned);
+	return aligned;
+}
+
+/*
+ * palloc_aligned
+ *		Allocate 'size' bytes returning a pointer that's aligned to the
+ *		'alignto' boundary.
+ *
+ * Currently, we align addresses by requesting additional bytes from the
+ * MemoryContext's standard allocator function and then aligning the returned
+ * address by the required alignment.  This means that the given MemoryContext
+ * must support providing us with a chunk of memory that's larger than 'size'.
+ * For allocators such as Slab, that's not going to work, as slab only allows
+ * chunks of the size that's specified when the context is created.
+ *
+ * 'alignto' must be a power of 2.
+ * 'flags' may be 0 or set the same as MemoryContextAllocExtended().
+ */
+void *
+palloc_aligned(Size size, Size alignto, int flags)
+{
+	return MemoryContextAllocAligned(CurrentMemoryContext, size, alignto, flags);
+}
+
+/*
  * pfree
  *		Release an allocated chunk.
  */
@@ -1306,11 +1436,16 @@ void
 pfree(void *pointer)
 {
 #ifdef USE_VALGRIND
+	MemoryContextMethodID method = GetMemoryChunkMethodID(pointer);
 	MemoryContext context = GetMemoryChunkContext(pointer);
 #endif
 
 	MCXT_METHOD(pointer, free_p) (pointer);
-	VALGRIND_MEMPOOL_FREE(context, pointer);
+
+#ifdef USE_VALGRIND
+	if (method != MCTX_ALIGNED_REDIRECT_ID)
+		VALGRIND_MEMPOOL_FREE(context, pointer);
+#endif
 }
 
 /*
@@ -1320,6 +1455,9 @@ pfree(void *pointer)
 void *
 repalloc(void *pointer, Size size)
 {
+#ifdef USE_VALGRIND
+	MemoryContextMethodID method = GetMemoryChunkMethodID(pointer);
+#endif
 #if defined(USE_ASSERT_CHECKING) || defined(USE_VALGRIND)
 	MemoryContext context = GetMemoryChunkContext(pointer);
 #endif
@@ -1346,7 +1484,10 @@ repalloc(void *pointer, Size size)
 						   size, cxt->name)));
 	}
 
-	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
+#ifdef USE_VALGRIND
+	if (method != MCTX_ALIGNED_REDIRECT_ID)
+		VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
+#endif
 
 	return ret;
 }

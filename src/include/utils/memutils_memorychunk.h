@@ -156,7 +156,7 @@ MemoryChunkSetHdrMask(MemoryChunk *chunk, void *block,
 {
 	Size		blockoffset = (char *) chunk - (char *) block;
 
-	Assert((char *) chunk > (char *) block);
+	Assert((char *) chunk >= (char *) block);
 	Assert(blockoffset <= MEMORYCHUNK_MAX_BLOCKOFFSET);
 	Assert(value <= MEMORYCHUNK_MAX_VALUE);
 	Assert((int) methodid <= MEMORY_CONTEXT_METHODID_MASK);

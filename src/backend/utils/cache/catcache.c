@@ -763,7 +763,6 @@ InitCatCache(int id,
 {
 	CatCache   *cp;
 	MemoryContext oldcxt;
-	size_t		sz;
 	int			i;
 
 	/*
@@ -807,8 +806,8 @@ InitCatCache(int id,
 	 *
 	 * Note: we rely on zeroing to initialize all the dlist headers correctly
 	 */
-	sz = sizeof(CatCache) + PG_CACHE_LINE_SIZE;
-	cp = (CatCache *) CACHELINEALIGN(palloc0(sz));
+	cp = (CatCache *) palloc_aligned(sizeof(CatCache), PG_CACHE_LINE_SIZE,
+									 MCXT_ALLOC_ZERO);
 	cp->cc_bucket = palloc0(nbuckets * sizeof(dlist_head));
 
 	/*

@@ -73,10 +73,13 @@ extern void *MemoryContextAllocZero(MemoryContext context, Size size);
 extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
 extern void *MemoryContextAllocExtended(MemoryContext context,
 										Size size, int flags);
+extern void *MemoryContextAllocAligned(MemoryContext context,
+									   Size size, Size alignto, int flags);
 
 extern void *palloc(Size size);
 extern void *palloc0(Size size);
 extern void *palloc_extended(Size size, int flags);
+extern void *palloc_aligned(Size size, Size alignto, int flags);
 extern pg_nodiscard void *repalloc(void *pointer, Size size);
 extern pg_nodiscard void *repalloc_extended(void *pointer,
 											Size size, int flags);
