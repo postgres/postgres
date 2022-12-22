@@ -4518,7 +4518,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 			 classoid == OperatorRelationId ||
 			 classoid == OperatorClassRelationId ||
 			 classoid == OperatorFamilyRelationId ||
-			 classoid == NamespaceRelationId ||
 			 classoid == TSConfigRelationId ||
 			 classoid == TSDictionaryRelationId ||
 			 classoid == TSParserRelationId ||
