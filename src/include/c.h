@@ -324,7 +324,25 @@
  * pretty trivial: VA_ARGS_NARGS_() returns its 64th argument, and we set up
  * the call so that that is the appropriate one of the list of constants.
  * This idea is due to Laurent Deniau.
+ *
+ * MSVC has an implementation of __VA_ARGS__ that doesn't conform to the
+ * standard unless you use the /Zc:preprocessor compiler flag, but that
+ * isn't available before Visual Studio 2019.  For now, use a different
+ * definition that also works on older compilers.
  */
+#ifdef _MSC_VER
+#define EXPAND(args) args
+#define VA_ARGS_NARGS(...) \
+	VA_ARGS_NARGS_ EXPAND((__VA_ARGS__, \
+				   63,62,61,60,                   \
+				   59,58,57,56,55,54,53,52,51,50, \
+				   49,48,47,46,45,44,43,42,41,40, \
+				   39,38,37,36,35,34,33,32,31,30, \
+				   29,28,27,26,25,24,23,22,21,20, \
+				   19,18,17,16,15,14,13,12,11,10, \
+				   9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
+#else
+
 #define VA_ARGS_NARGS(...) \
 	VA_ARGS_NARGS_(__VA_ARGS__, \
 				   63,62,61,60,                   \
@@ -334,6 +352,8 @@
 				   29,28,27,26,25,24,23,22,21,20, \
 				   19,18,17,16,15,14,13,12,11,10, \
 				   9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+#endif
+
 #define VA_ARGS_NARGS_( \
 	_01,_02,_03,_04,_05,_06,_07,_08,_09,_10, \
 	_11,_12,_13,_14,_15,_16,_17,_18,_19,_20, \
