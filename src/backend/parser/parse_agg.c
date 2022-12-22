@@ -1025,6 +1025,10 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 				 /* matched, no refname */ ;
 			else
 				continue;
+
+			/*
+			 * Also see similar de-duplication code in optimize_window_clauses
+			 */
 			if (equal(refwin->partitionClause, windef->partitionClause) &&
 				equal(refwin->orderClause, windef->orderClause) &&
 				refwin->frameOptions == windef->frameOptions &&

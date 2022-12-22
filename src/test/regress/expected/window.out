@@ -3312,6 +3312,79 @@ FROM empsalary GROUP BY depname;
  14600 |          3 |              | sales
 (3 rows)
 
+--
+-- Test SupportRequestOptimizeWindowClause's ability to de-duplicate
+-- WindowClauses
+--
+-- Ensure WindowClause frameOptions are changed so that only a single
+-- WindowAgg exists in the plan.
+EXPLAIN (COSTS OFF)
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    dense_rank() OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                       CURRENT ROW AND CURRENT ROW) drnk
+FROM empsalary;
+               QUERY PLAN               
+----------------------------------------
+ WindowAgg
+   ->  Sort
+         Sort Key: depname, enroll_date
+         ->  Seq Scan on empsalary
+(4 rows)
+
+-- Ensure WindowFuncs which cannot support their WindowClause's frameOptions
+-- being changed are untouched
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    count(*) OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                   CURRENT ROW AND CURRENT ROW) cnt
+FROM empsalary;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ WindowAgg
+   Output: empno, depname, (row_number() OVER (?)), (rank() OVER (?)), count(*) OVER (?), enroll_date
+   ->  WindowAgg
+         Output: depname, enroll_date, empno, row_number() OVER (?), rank() OVER (?)
+         ->  Sort
+               Output: depname, enroll_date, empno
+               Sort Key: empsalary.depname, empsalary.enroll_date
+               ->  Seq Scan on pg_temp.empsalary
+                     Output: depname, enroll_date, empno
+(9 rows)
+
+-- Ensure the above query gives us the expected results
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    count(*) OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                   CURRENT ROW AND CURRENT ROW) cnt
+FROM empsalary;
+ empno |  depname  | rn | rnk | cnt 
+-------+-----------+----+-----+-----
+     8 | develop   |  1 |   1 |   1
+    10 | develop   |  2 |   2 |   1
+    11 | develop   |  3 |   3 |   1
+     9 | develop   |  4 |   4 |   2
+     7 | develop   |  5 |   4 |   2
+     2 | personnel |  1 |   1 |   1
+     5 | personnel |  2 |   2 |   1
+     1 | sales     |  1 |   1 |   1
+     3 | sales     |  2 |   2 |   1
+     4 | sales     |  3 |   3 |   1
+(10 rows)
+
 -- Test pushdown of quals into a subquery containing window functions
 -- pushdown is safe because all PARTITION BY clauses include depname:
 EXPLAIN (COSTS OFF)

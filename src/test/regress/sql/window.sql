@@ -972,6 +972,48 @@ SELECT sum(salary), row_number() OVER (ORDER BY depname), sum(
     depname
 FROM empsalary GROUP BY depname;
 
+--
+-- Test SupportRequestOptimizeWindowClause's ability to de-duplicate
+-- WindowClauses
+--
+
+-- Ensure WindowClause frameOptions are changed so that only a single
+-- WindowAgg exists in the plan.
+EXPLAIN (COSTS OFF)
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    dense_rank() OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                       CURRENT ROW AND CURRENT ROW) drnk
+FROM empsalary;
+
+-- Ensure WindowFuncs which cannot support their WindowClause's frameOptions
+-- being changed are untouched
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    count(*) OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                   CURRENT ROW AND CURRENT ROW) cnt
+FROM empsalary;
+
+-- Ensure the above query gives us the expected results
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    count(*) OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                   CURRENT ROW AND CURRENT ROW) cnt
+FROM empsalary;
+
 -- Test pushdown of quals into a subquery containing window functions
 
 -- pushdown is safe because all PARTITION BY clauses include depname:

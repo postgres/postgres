@@ -41,6 +41,7 @@
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
 #endif
+#include "nodes/supportnodes.h"
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -208,6 +209,8 @@ static PathTarget *make_partial_grouping_target(PlannerInfo *root,
 												PathTarget *grouping_target,
 												Node *havingQual);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
+static void optimize_window_clauses(PlannerInfo *root,
+									WindowFuncLists *wflists);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
 static PathTarget *make_window_input_target(PlannerInfo *root,
 											PathTarget *final_target,
@@ -1430,7 +1433,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			wflists = find_window_functions((Node *) root->processed_tlist,
 											list_length(parse->windowClause));
 			if (wflists->numWindowFuncs > 0)
+			{
+				/*
+				 * See if any modifications can be made to each WindowClause
+				 * to allow the executor to execute the WindowFuncs more
+				 * quickly.
+				 */
+				optimize_window_clauses(root, wflists);
+
 				activeWindows = select_active_windows(root, wflists);
+			}
 			else
 				parse->hasWindowFuncs = false;
 		}
@@ -5430,6 +5442,150 @@ postprocess_setop_tlist(List *new_tlist, List *orig_tlist)
 	if (orig_tlist_item != NULL)
 		elog(ERROR, "resjunk output columns are not implemented");
 	return new_tlist;
+}
+
+/*
+ * optimize_window_clauses
+ *		Call each WindowFunc's prosupport function to see if we're able to
+ *		make any adjustments to any of the WindowClause's so that the executor
+ *		can execute the window functions in a more optimal way.
+ *
+ * Currently we only allow adjustments to the WindowClause's frameOptions.  We
+ * may allow more things to be done here in the future.
+ */
+static void
+optimize_window_clauses(PlannerInfo *root, WindowFuncLists *wflists)
+{
+	List	   *windowClause = root->parse->windowClause;
+	ListCell   *lc;
+
+	foreach(lc, windowClause)
+	{
+		WindowClause *wc = lfirst_node(WindowClause, lc);
+		ListCell   *lc2;
+		int			optimizedFrameOptions = 0;
+
+		Assert(wc->winref <= wflists->maxWinRef);
+
+		/* skip any WindowClauses that have no WindowFuncs */
+		if (wflists->windowFuncs[wc->winref] == NIL)
+			continue;
+
+		foreach(lc2, wflists->windowFuncs[wc->winref])
+		{
+			SupportRequestOptimizeWindowClause req;
+			SupportRequestOptimizeWindowClause *res;
+			WindowFunc *wfunc = lfirst_node(WindowFunc, lc2);
+			Oid			prosupport;
+
+			prosupport = get_func_support(wfunc->winfnoid);
+
+			/* Check if there's a support function for 'wfunc' */
+			if (!OidIsValid(prosupport))
+				break;			/* can't optimize this WindowClause */
+
+			req.type = T_SupportRequestOptimizeWindowClause;
+			req.window_clause = wc;
+			req.window_func = wfunc;
+			req.frameOptions = wc->frameOptions;
+
+			/* call the support function */
+			res = (SupportRequestOptimizeWindowClause *)
+				DatumGetPointer(OidFunctionCall1(prosupport,
+												 PointerGetDatum(&req)));
+
+			/*
+			 * Skip to next WindowClause if the support function does not
+			 * support this request type.
+			 */
+			if (res == NULL)
+				break;
+
+			/*
+			 * Save these frameOptions for the first WindowFunc for this
+			 * WindowClause.
+			 */
+			if (foreach_current_index(lc2) == 0)
+				optimizedFrameOptions = res->frameOptions;
+
+			/*
+			 * On subsequent WindowFuncs, if the frameOptions are not the same
+			 * then we're unable to optimize the frameOptions for this
+			 * WindowClause.
+			 */
+			else if (optimizedFrameOptions != res->frameOptions)
+				break;			/* skip to the next WindowClause, if any */
+		}
+
+		/* adjust the frameOptions if all WindowFunc's agree that it's ok */
+		if (lc2 == NULL && wc->frameOptions != optimizedFrameOptions)
+		{
+			ListCell   *lc3;
+
+			/* apply the new frame options */
+			wc->frameOptions = optimizedFrameOptions;
+
+			/*
+			 * We now check to see if changing the frameOptions has caused
+			 * this WindowClause to be a duplicate of some other WindowClause.
+			 * This can only happen if we have multiple WindowClauses, so
+			 * don't bother if there's only 1.
+			 */
+			if (list_length(windowClause) == 1)
+				continue;
+
+			/*
+			 * Do the duplicate check and reuse the existing WindowClause if
+			 * we find a duplicate.
+			 */
+			foreach(lc3, windowClause)
+			{
+				WindowClause *existing_wc = lfirst_node(WindowClause, lc3);
+
+				/* skip over the WindowClause we're currently editing */
+				if (existing_wc == wc)
+					continue;
+
+				/*
+				 * Perform the same duplicate check that is done in
+				 * transformWindowFuncCall.
+				 */
+				if (equal(wc->partitionClause, existing_wc->partitionClause) &&
+					equal(wc->orderClause, existing_wc->orderClause) &&
+					wc->frameOptions == existing_wc->frameOptions &&
+					equal(wc->startOffset, existing_wc->startOffset) &&
+					equal(wc->endOffset, existing_wc->endOffset))
+				{
+					ListCell   *lc4;
+
+					/*
+					 * Now move each WindowFunc in 'wc' into 'existing_wc'.
+					 * This required adjusting each WindowFunc's winref and
+					 * moving the WindowFuncs in 'wc' to the list of
+					 * WindowFuncs in 'existing_wc'.
+					 */
+					foreach(lc4, wflists->windowFuncs[wc->winref])
+					{
+						WindowFunc *wfunc = lfirst_node(WindowFunc, lc4);
+
+						wfunc->winref = existing_wc->winref;
+					}
+
+					/* move list items */
+					wflists->windowFuncs[existing_wc->winref] = list_concat(wflists->windowFuncs[existing_wc->winref],
+																			wflists->windowFuncs[wc->winref]);
+					wflists->windowFuncs[wc->winref] = NIL;
+
+					/*
+					 * transformWindowFuncCall() should have made sure there
+					 * are no other duplicates, so we needn't bother looking
+					 * any further.
+					 */
+					break;
+				}
+			}
+		}
+	}
 }
 
 /*
