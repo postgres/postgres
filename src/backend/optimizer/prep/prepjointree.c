@@ -128,7 +128,7 @@ static bool find_dependent_phvs_in_jointree(PlannerInfo *root,
 											Node *node, int varno);
 static void substitute_phv_relids(Node *node,
 								  int varno, Relids subrelids);
-static void fix_append_rel_relids(List *append_rel_list, int varno,
+static void fix_append_rel_relids(PlannerInfo *root, int varno,
 								  Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
 
@@ -1232,14 +1232,14 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * already checked that this won't require introducing multiple subrelids
 	 * into the single-slot AppendRelInfo structs.
 	 */
-	if (parse->hasSubLinks || root->glob->lastPHId != 0 ||
-		root->append_rel_list)
+	if (root->glob->lastPHId != 0 || root->append_rel_list)
 	{
 		Relids		subrelids;
 
 		subrelids = get_relids_in_jointree((Node *) subquery->jointree, false);
-		substitute_phv_relids((Node *) parse, varno, subrelids);
-		fix_append_rel_relids(root->append_rel_list, varno, subrelids);
+		if (root->glob->lastPHId != 0)
+			substitute_phv_relids((Node *) parse, varno, subrelids);
+		fix_append_rel_relids(root, varno, subrelids);
 	}
 
 	/*
@@ -1418,7 +1418,10 @@ pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
 
 		/*
 		 * Recursively apply pull_up_subqueries to the new child RTE.  (We
-		 * must build the AppendRelInfo first, because this will modify it.)
+		 * must build the AppendRelInfo first, because this will modify it;
+		 * indeed, that's the only part of the upper query where Vars
+		 * referencing childRTindex can exist at this point.)
+		 *
 		 * Note that we can pass NULL for containing-join info even if we're
 		 * actually under an outer join, because the child's expressions
 		 * aren't going to propagate up to the join.  Also, we ignore the
@@ -2120,6 +2123,25 @@ perform_pullup_replace_vars(PlannerInfo *root,
 	ListCell   *lc;
 
 	/*
+	 * If we are considering an appendrel child subquery (that is, a UNION ALL
+	 * member query that we're pulling up), then the only part of the upper
+	 * query that could reference the child yet is the translated_vars list of
+	 * the associated AppendRelInfo.  Furthermore, we do not need to insert
+	 * PHVs in the AppendRelInfo --- there isn't any outer join between.
+	 */
+	if (containing_appendrel)
+	{
+		bool		save_need_phvs = rvcontext->need_phvs;
+
+		rvcontext->need_phvs = false;
+		containing_appendrel->translated_vars = (List *)
+			pullup_replace_vars((Node *) containing_appendrel->translated_vars,
+								rvcontext);
+		rvcontext->need_phvs = save_need_phvs;
+		return;
+	}
+
+	/*
 	 * Replace all of the top query's references to the subquery's outputs
 	 * with copies of the adjusted subtlist items, being careful not to
 	 * replace any of the jointree structure.  (This'd be a lot cleaner if we
@@ -2172,22 +2194,14 @@ perform_pullup_replace_vars(PlannerInfo *root,
 	parse->havingQual = pullup_replace_vars(parse->havingQual, rvcontext);
 
 	/*
-	 * Replace references in the translated_vars lists of appendrels.  When
-	 * pulling up an appendrel member, we do not need PHVs in the list of the
-	 * parent appendrel --- there isn't any outer join between.  Elsewhere,
-	 * use PHVs for safety.  (This analysis could be made tighter but it seems
-	 * unlikely to be worth much trouble.)
+	 * Replace references in the translated_vars lists of appendrels.
 	 */
 	foreach(lc, root->append_rel_list)
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
-		bool		save_need_phvs = rvcontext->need_phvs;
 
-		if (appinfo == containing_appendrel)
-			rvcontext->need_phvs = false;
 		appinfo->translated_vars = (List *)
 			pullup_replace_vars((Node *) appinfo->translated_vars, rvcontext);
-		rvcontext->need_phvs = save_need_phvs;
 	}
 
 	/*
@@ -3358,7 +3372,7 @@ remove_result_refs(PlannerInfo *root, int varno, Node *newjtloc)
 		subrelids = get_relids_in_jointree(newjtloc, false);
 		Assert(!bms_is_empty(subrelids));
 		substitute_phv_relids((Node *) root->parse, varno, subrelids);
-		fix_append_rel_relids(root->append_rel_list, varno, subrelids);
+		fix_append_rel_relids(root, varno, subrelids);
 	}
 
 	/*
@@ -3577,7 +3591,7 @@ substitute_phv_relids(Node *node, int varno, Relids subrelids)
  * We assume we may modify the AppendRelInfo nodes in-place.
  */
 static void
-fix_append_rel_relids(List *append_rel_list, int varno, Relids subrelids)
+fix_append_rel_relids(PlannerInfo *root, int varno, Relids subrelids)
 {
 	ListCell   *l;
 	int			subvarno = -1;
@@ -3588,7 +3602,7 @@ fix_append_rel_relids(List *append_rel_list, int varno, Relids subrelids)
 	 * AppendRelInfo nodes refer to it.  So compute it on first use. Note that
 	 * bms_singleton_member will complain if set is not singleton.
 	 */
-	foreach(l, append_rel_list)
+	foreach(l, root->append_rel_list)
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
 
@@ -3603,8 +3617,9 @@ fix_append_rel_relids(List *append_rel_list, int varno, Relids subrelids)
 		}
 
 		/* Also fix up any PHVs in its translated vars */
-		substitute_phv_relids((Node *) appinfo->translated_vars,
-							  varno, subrelids);
+		if (root->glob->lastPHId != 0)
+			substitute_phv_relids((Node *) appinfo->translated_vars,
+								  varno, subrelids);
 	}
 }
 
