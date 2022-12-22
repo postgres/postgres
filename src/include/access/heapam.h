@@ -38,6 +38,7 @@
 
 typedef struct BulkInsertStateData *BulkInsertState;
 struct TupleTableSlot;
+struct VacuumCutoffs;
 
 #define MaxLockTupleMode	LockTupleExclusive
 
@@ -178,8 +179,7 @@ extern TM_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);
 extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
-									  TransactionId relfrozenxid, TransactionId relminmxid,
-									  TransactionId cutoff_xid, TransactionId cutoff_multi,
+									  const struct VacuumCutoffs *cutoffs,
 									  HeapTupleFreeze *frz, bool *totally_frozen,
 									  TransactionId *relfrozenxid_out,
 									  MultiXactId *relminmxid_out);
@@ -188,9 +188,9 @@ extern void heap_freeze_execute_prepared(Relation rel, Buffer buffer,
 										 HeapTupleFreeze *tuples, int ntuples);
 extern bool heap_freeze_tuple(HeapTupleHeader tuple,
 							  TransactionId relfrozenxid, TransactionId relminmxid,
-							  TransactionId cutoff_xid, TransactionId cutoff_multi);
-extern bool heap_tuple_would_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
-									MultiXactId cutoff_multi,
+							  TransactionId FreezeLimit, TransactionId MultiXactCutoff);
+extern bool heap_tuple_would_freeze(HeapTupleHeader tuple,
+									const struct VacuumCutoffs *cutoffs,
 									TransactionId *relfrozenxid_out,
 									MultiXactId *relminmxid_out);
 extern bool heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple);

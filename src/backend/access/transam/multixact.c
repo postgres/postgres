@@ -2813,14 +2813,11 @@ ReadMultiXactCounts(uint32 *multixacts, MultiXactOffset *members)
  * As the fraction of the member space currently in use grows, we become
  * more aggressive in clamping this value.  That not only causes autovacuum
  * to ramp up, but also makes any manual vacuums the user issues more
- * aggressive.  This happens because vacuum_set_xid_limits() clamps the
- * freeze table and the minimum freeze age based on the effective
+ * aggressive.  This happens because vacuum_get_cutoffs() will clamp the
+ * freeze table and the minimum freeze age cutoffs based on the effective
  * autovacuum_multixact_freeze_max_age this function returns.  In the worst
  * case, we'll claim the freeze_max_age to zero, and every vacuum of any
- * table will try to freeze every multixact.
- *
- * It's possible that these thresholds should be user-tunable, but for now
- * we keep it simple.
+ * table will freeze every multixact.
  */
 int
 MultiXactMemberFreezeThreshold(void)

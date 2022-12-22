@@ -826,10 +826,7 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	TupleDesc	oldTupDesc PG_USED_FOR_ASSERTS_ONLY;
 	TupleDesc	newTupDesc PG_USED_FOR_ASSERTS_ONLY;
 	VacuumParams params;
-	TransactionId OldestXmin,
-				FreezeXid;
-	MultiXactId OldestMxact,
-				MultiXactCutoff;
+	struct VacuumCutoffs cutoffs;
 	bool		use_sort;
 	double		num_tuples = 0,
 				tups_vacuumed = 0,
@@ -918,23 +915,24 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * not to be aggressive about this.
 	 */
 	memset(&params, 0, sizeof(VacuumParams));
-	vacuum_set_xid_limits(OldHeap, &params, &OldestXmin, &OldestMxact,
-						  &FreezeXid, &MultiXactCutoff);
+	vacuum_get_cutoffs(OldHeap, &params, &cutoffs);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
 	 * backwards, so take the max.
 	 */
 	if (TransactionIdIsValid(OldHeap->rd_rel->relfrozenxid) &&
-		TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
-		FreezeXid = OldHeap->rd_rel->relfrozenxid;
+		TransactionIdPrecedes(cutoffs.FreezeLimit,
+							  OldHeap->rd_rel->relfrozenxid))
+		cutoffs.FreezeLimit = OldHeap->rd_rel->relfrozenxid;
 
 	/*
 	 * MultiXactCutoff, similarly, shouldn't go backwards either.
 	 */
 	if (MultiXactIdIsValid(OldHeap->rd_rel->relminmxid) &&
-		MultiXactIdPrecedes(MultiXactCutoff, OldHeap->rd_rel->relminmxid))
-		MultiXactCutoff = OldHeap->rd_rel->relminmxid;
+		MultiXactIdPrecedes(cutoffs.MultiXactCutoff,
+							OldHeap->rd_rel->relminmxid))
+		cutoffs.MultiXactCutoff = OldHeap->rd_rel->relminmxid;
 
 	/*
 	 * Decide whether to use an indexscan or seqscan-and-optional-sort to scan
@@ -973,13 +971,14 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * values (e.g. because the AM doesn't use freezing).
 	 */
 	table_relation_copy_for_cluster(OldHeap, NewHeap, OldIndex, use_sort,
-									OldestXmin, &FreezeXid, &MultiXactCutoff,
+									cutoffs.OldestXmin, &cutoffs.FreezeLimit,
+									&cutoffs.MultiXactCutoff,
 									&num_tuples, &tups_vacuumed,
 									&tups_recently_dead);
 
 	/* return selected values to caller, get set as relfrozenxid/minmxid */
-	*pFreezeXid = FreezeXid;
-	*pCutoffMulti = MultiXactCutoff;
+	*pFreezeXid = cutoffs.FreezeLimit;
+	*pCutoffMulti = cutoffs.MultiXactCutoff;
 
 	/* Reset rd_toastoid just to be tidy --- it shouldn't be looked at again */
 	NewHeap->rd_toastoid = InvalidOid;

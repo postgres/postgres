@@ -236,6 +236,45 @@ typedef struct VacuumParams
 } VacuumParams;
 
 /*
+ * VacuumCutoffs is immutable state that describes the cutoffs used by VACUUM.
+ * Established at the beginning of each VACUUM operation.
+ */
+struct VacuumCutoffs
+{
+	/*
+	 * Existing pg_class fields at start of VACUUM
+	 */
+	TransactionId relfrozenxid;
+	MultiXactId relminmxid;
+
+	/*
+	 * OldestXmin is the Xid below which tuples deleted by any xact (that
+	 * committed) should be considered DEAD, not just RECENTLY_DEAD.
+	 *
+	 * OldestMxact is the Mxid below which MultiXacts are definitely not seen
+	 * as visible by any running transaction.
+	 *
+	 * OldestXmin and OldestMxact are also the most recent values that can
+	 * ever be passed to vac_update_relstats() as frozenxid and minmulti
+	 * arguments at the end of VACUUM.  These same values should be passed
+	 * when it turns out that VACUUM will leave no unfrozen XIDs/MXIDs behind
+	 * in the table.
+	 */
+	TransactionId OldestXmin;
+	MultiXactId OldestMxact;
+
+	/*
+	 * FreezeLimit is the Xid below which all Xids are definitely frozen or
+	 * removed in pages VACUUM scans and cleanup locks.
+	 *
+	 * MultiXactCutoff is the value below which all MultiXactIds are
+	 * definitely removed from Xmax in pages VACUUM scans and cleanup locks.
+	 */
+	TransactionId FreezeLimit;
+	MultiXactId MultiXactCutoff;
+};
+
+/*
  * VacDeadItems stores TIDs whose index tuples are deleted by index vacuuming.
  */
 typedef struct VacDeadItems
@@ -286,13 +325,9 @@ extern void vac_update_relstats(Relation relation,
 								bool *frozenxid_updated,
 								bool *minmulti_updated,
 								bool in_outer_xact);
-extern bool vacuum_set_xid_limits(Relation rel, const VacuumParams *params,
-								  TransactionId *OldestXmin,
-								  MultiXactId *OldestMxact,
-								  TransactionId *FreezeLimit,
-								  MultiXactId *MultiXactCutoff);
-extern bool vacuum_xid_failsafe_check(TransactionId relfrozenxid,
-									  MultiXactId relminmxid);
+extern bool vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
+							   struct VacuumCutoffs *cutoffs);
+extern bool vacuum_xid_failsafe_check(const struct VacuumCutoffs *cutoffs);
 extern void vac_update_datfrozenxid(void);
 extern void vacuum_delay_point(void);
 extern bool vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
