@@ -864,6 +864,9 @@ FreeWaitEventSet(WaitEventSet *set)
  * - WL_SOCKET_CONNECTED: Wait for socket connection to be established,
  *	 can be combined with other WL_SOCKET_* events (on non-Windows
  *	 platforms, this is the same as WL_SOCKET_WRITEABLE)
+ * - WL_SOCKET_ACCEPT: Wait for new connection to a server socket,
+ *	 can be combined with other WL_SOCKET_* events (on non-Windows
+ *	 platforms, this is the same as WL_SOCKET_READABLE)
  * - WL_SOCKET_CLOSED: Wait for socket to be closed by remote peer.
  * - WL_EXIT_ON_PM_DEATH: Exit immediately if the postmaster dies
  *
@@ -874,7 +877,7 @@ FreeWaitEventSet(WaitEventSet *set)
  * i.e. it must be a process-local latch initialized with InitLatch, or a
  * shared latch associated with the current process by calling OwnLatch.
  *
- * In the WL_SOCKET_READABLE/WRITEABLE/CONNECTED cases, EOF and error
+ * In the WL_SOCKET_READABLE/WRITEABLE/CONNECTED/ACCEPT cases, EOF and error
  * conditions cause the socket to be reported as readable/writable/connected,
  * so that the caller can deal with the condition.
  *
@@ -1312,6 +1315,8 @@ WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event)
 			flags |= FD_WRITE;
 		if (event->events & WL_SOCKET_CONNECTED)
 			flags |= FD_CONNECT;
+		if (event->events & WL_SOCKET_ACCEPT)
+			flags |= FD_ACCEPT;
 
 		if (*handle == WSA_INVALID_EVENT)
 		{
@@ -2066,6 +2071,12 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 		{
 			/* connected */
 			occurred_events->events |= WL_SOCKET_CONNECTED;
+		}
+		if ((cur_event->events & WL_SOCKET_ACCEPT) &&
+			(resEvents.lNetworkEvents & FD_ACCEPT))
+		{
+			/* incoming connection could be accepted */
+			occurred_events->events |= WL_SOCKET_ACCEPT;
 		}
 		if (resEvents.lNetworkEvents & FD_CLOSE)
 		{
