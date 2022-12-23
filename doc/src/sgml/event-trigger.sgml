@@ -1194,8 +1194,9 @@ noddl(PG_FUNCTION_ARGS)
     trigdata = (EventTriggerData *) fcinfo->context;
 
     ereport(ERROR,
-        (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-                 errmsg("command \"%s\" denied", trigdata->tag)));
+            (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+             errmsg("command \"%s\" denied",
+                    GetCommandTagName(trigdata->tag))));
 
     PG_RETURN_NULL();
 }
