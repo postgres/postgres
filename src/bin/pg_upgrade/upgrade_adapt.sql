@@ -72,10 +72,10 @@ DO $stmt$
     FROM pg_class
     WHERE relname !~ '^pg_'
       AND relhasoids
-      AND relkind in ('r','m')
+      AND relkind in ('r', 'f')
     ORDER BY 1
   LOOP
-    execute 'ALTER TABLE ' || rec || ' SET WITHOUT OIDS';
+    EXECUTE 'ALTER TABLE ' || quote_ident(rec) || ' SET WITHOUT OIDS';
   END LOOP;
   END; $stmt$;
 \endif
