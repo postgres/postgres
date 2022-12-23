@@ -1580,6 +1580,29 @@ DROP TABLE parent_tbl CASCADE;
 
 DROP FUNCTION row_before_insupd_trigfunc;
 
+-- Try a more complex permutation of WCO where there are multiple levels of
+-- partitioned tables with columns not all in the same order
+CREATE TABLE parent_tbl (a int, b text, c numeric) PARTITION BY RANGE(a);
+CREATE TABLE sub_parent (c numeric, a int, b text) PARTITION BY RANGE(a);
+ALTER TABLE parent_tbl ATTACH PARTITION sub_parent FOR VALUES FROM (1) TO (10);
+CREATE TABLE child_local (b text, c numeric, a int);
+CREATE FOREIGN TABLE child_foreign (b text, c numeric, a int)
+  SERVER loopback OPTIONS (table_name 'child_local');
+ALTER TABLE sub_parent ATTACH PARTITION child_foreign FOR VALUES FROM (1) TO (10);
+CREATE VIEW rw_view AS SELECT * FROM parent_tbl WHERE a < 5 WITH CHECK OPTION;
+
+INSERT INTO parent_tbl (a) VALUES(1),(5);
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE rw_view SET b = 'text', c = 123.456;
+UPDATE rw_view SET b = 'text', c = 123.456;
+SELECT * FROM parent_tbl ORDER BY a;
+
+DROP VIEW rw_view;
+DROP TABLE child_local;
+DROP FOREIGN TABLE child_foreign;
+DROP TABLE sub_parent;
+DROP TABLE parent_tbl;
+
 -- ===================================================================
 -- test serial columns (ie, sequence-based defaults)
 -- ===================================================================

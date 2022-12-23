@@ -52,7 +52,7 @@ static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
 static Bitmapset *translate_col_privs_multilevel(PlannerInfo *root,
 												 RelOptInfo *rel,
 												 RelOptInfo *top_parent_rel,
-												 Bitmapset *top_parent_cols);
+												 Bitmapset *parent_cols);
 static void expand_appendrel_subquery(PlannerInfo *root, RelOptInfo *rel,
 									  RangeTblEntry *rte, Index rti);
 
@@ -923,28 +923,26 @@ apply_child_basequals(PlannerInfo *root, RelOptInfo *parentrel,
 
 /*
  * translate_col_privs_multilevel
- * 		Recursively translates the column numbers contained in
- * 		'top_parent_cols' to the columns numbers of a descendent relation
- * 		given by 'relid'
+ *		Recursively translates the column numbers contained in 'parent_cols'
+ *		to the columns numbers of a descendent relation given by 'rel'
  */
 static Bitmapset *
 translate_col_privs_multilevel(PlannerInfo *root, RelOptInfo *rel,
 							   RelOptInfo *top_parent_rel,
-							   Bitmapset *top_parent_cols)
+							   Bitmapset *parent_cols)
 {
-	Bitmapset  *result;
 	AppendRelInfo *appinfo;
 
-	if (top_parent_cols == NULL)
+	if (parent_cols == NULL)
 		return NULL;
 
 	/* Recurse if immediate parent is not the top parent. */
 	if (rel->parent != top_parent_rel)
 	{
 		if (rel->parent)
-			result = translate_col_privs_multilevel(root, rel->parent,
-													top_parent_rel,
-													top_parent_cols);
+			parent_cols = translate_col_privs_multilevel(root, rel->parent,
+														 top_parent_rel,
+														 parent_cols);
 		else
 			elog(ERROR, "rel with relid %u is not a child rel", rel->relid);
 	}
@@ -953,7 +951,5 @@ translate_col_privs_multilevel(PlannerInfo *root, RelOptInfo *rel,
 	appinfo = root->append_rel_array[rel->relid];
 	Assert(appinfo != NULL);
 
-	result = translate_col_privs(top_parent_cols, appinfo->translated_vars);
-
-	return result;
+	return translate_col_privs(parent_cols, appinfo->translated_vars);
 }
