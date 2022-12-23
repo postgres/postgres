@@ -283,6 +283,22 @@ InitializeLatchSupport(void)
 #ifdef WAIT_USE_SIGNALFD
 	sigset_t	signalfd_mask;
 
+	if (IsUnderPostmaster)
+	{
+		/*
+		 * It would probably be safe to re-use the inherited signalfd since
+		 * signalfds only see the current process's pending signals, but it
+		 * seems less surprising to close it and create our own.
+		 */
+		if (signal_fd != -1)
+		{
+			/* Release postmaster's signal FD; ignore any error */
+			(void) close(signal_fd);
+			signal_fd = -1;
+			ReleaseExternalFD();
+		}
+	}
+
 	/* Block SIGURG, because we'll receive it through a signalfd. */
 	sigaddset(&UnBlockSig, SIGURG);
 
