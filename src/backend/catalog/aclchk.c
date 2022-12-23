@@ -6100,7 +6100,7 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(objoid));
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for foreign data wrapper %u",
+			elog(ERROR, "cache lookup failed for foreign server %u",
 				 objoid);
 
 		aclDatum = SysCacheGetAttr(FOREIGNSERVEROID, tuple,
@@ -6186,7 +6186,7 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(objoid));
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for function %u", objoid);
+			elog(ERROR, "cache lookup failed for schema %u", objoid);
 
 		aclDatum = SysCacheGetAttr(NAMESPACEOID, tuple,
 								   Anum_pg_namespace_nspacl, &isNull);
@@ -6228,7 +6228,7 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(objoid));
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for function %u", objoid);
+			elog(ERROR, "cache lookup failed for type %u", objoid);
 
 		aclDatum = SysCacheGetAttr(TYPEOID, tuple, Anum_pg_type_typacl,
 								   &isNull);
