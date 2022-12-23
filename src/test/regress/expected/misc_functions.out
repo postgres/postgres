@@ -619,26 +619,26 @@ SELECT count(*) > 0 AS ok FROM pg_control_system();
  t
 (1 row)
 
--- pg_dissect_walfile_name
-SELECT * FROM pg_dissect_walfile_name(NULL);
- segno | timeline_id 
--------+-------------
-       |            
+-- pg_split_walfile_name
+SELECT * FROM pg_split_walfile_name(NULL);
+ segment_number | timeline_id 
+----------------+-------------
+                |            
 (1 row)
 
-SELECT * FROM pg_dissect_walfile_name('invalid');
+SELECT * FROM pg_split_walfile_name('invalid');
 ERROR:  invalid WAL file name "invalid"
-SELECT segno > 0 AS ok_segno, timeline_id
-  FROM pg_dissect_walfile_name('000000010000000100000000');
- ok_segno | timeline_id 
-----------+-------------
- t        |           1
+SELECT segment_number > 0 AS ok_segment_number, timeline_id
+  FROM pg_split_walfile_name('000000010000000100000000');
+ ok_segment_number | timeline_id 
+-------------------+-------------
+ t                 |           1
 (1 row)
 
-SELECT segno > 0 AS ok_segno, timeline_id
-  FROM pg_dissect_walfile_name('ffffffFF00000001000000af');
- ok_segno | timeline_id 
-----------+-------------
- t        |  4294967295
+SELECT segment_number > 0 AS ok_segment_number, timeline_id
+  FROM pg_split_walfile_name('ffffffFF00000001000000af');
+ ok_segment_number | timeline_id 
+-------------------+-------------
+ t                 |  4294967295
 (1 row)
 

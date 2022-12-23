@@ -26101,15 +26101,15 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>pg_dissect_walfile_name</primary>
+         <primary>pg_split_walfile_name</primary>
         </indexterm>
-        <function>pg_dissect_walfile_name</function> ( <parameter>file_name</parameter> <type>text</type> )
+        <function>pg_split_walfile_name</function> ( <parameter>file_name</parameter> <type>text</type> )
         <returnvalue>record</returnvalue>
-        ( <parameter>segno</parameter> <type>numeric</type>,
+        ( <parameter>segment_number</parameter> <type>numeric</type>,
         <parameter>timeline_id</parameter> <type>bigint</type> )
        </para>
        <para>
-        Extracts the file sequence number and timeline ID from a WAL file
+        Extracts the sequence number and timeline ID from a WAL file
         name.
        </para></entry>
       </row>
@@ -26172,13 +26172,13 @@ postgres=# SELECT * FROM pg_walfile_name_offset((pg_backup_stop()).lsn);
    </para>
 
    <para>
-    <function>pg_dissect_walfile_name</function> is useful to compute a
+    <function>pg_split_walfile_name</function> is useful to compute a
     <acronym>LSN</acronym> from a file offset and WAL file name, for example:
 <programlisting>
 postgres=# \set file_name '000000010000000100C000AB'
 postgres=# \set offset 256
-postgres=# SELECT '0/0'::pg_lsn + pd.segno * ps.setting::int + :offset AS lsn
-  FROM pg_dissect_walfile_name(:'file_name') pd,
+postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset AS lsn
+  FROM pg_split_walfile_name(:'file_name') pd,
        pg_show_all_settings() ps
   WHERE ps.name = 'wal_segment_size';
       lsn

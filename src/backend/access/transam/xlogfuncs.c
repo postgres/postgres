@@ -437,16 +437,16 @@ pg_walfile_name(PG_FUNCTION_ARGS)
  * name.
  */
 Datum
-pg_dissect_walfile_name(PG_FUNCTION_ARGS)
+pg_split_walfile_name(PG_FUNCTION_ARGS)
 {
-#define PG_DISSECT_WALFILE_NAME_COLS 2
+#define PG_SPLIT_WALFILE_NAME_COLS 2
 	char	   *fname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *fname_upper;
 	char	   *p;
 	TimeLineID	tli;
 	XLogSegNo	segno;
-	Datum		values[PG_DISSECT_WALFILE_NAME_COLS] = {0};
-	bool		isnull[PG_DISSECT_WALFILE_NAME_COLS] = {0};
+	Datum		values[PG_SPLIT_WALFILE_NAME_COLS] = {0};
+	bool		isnull[PG_SPLIT_WALFILE_NAME_COLS] = {0};
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
 	char		buf[256];
@@ -482,7 +482,7 @@ pg_dissect_walfile_name(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATUM(result);
 
-#undef PG_DISSECT_WALFILE_NAME_COLS
+#undef PG_SPLIT_WALFILE_NAME_COLS
 }
 
 /*
