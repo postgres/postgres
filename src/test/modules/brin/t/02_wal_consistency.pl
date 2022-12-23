@@ -60,7 +60,7 @@ begin
 end
 $$;
 });
-my $end_lsn = $whiskey->lsn('insert');
+my $end_lsn = $whiskey->lsn('flush');
 
 my ($ret, $out, $err) = $whiskey->psql(
 	'postgres', qq{
