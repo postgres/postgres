@@ -103,6 +103,7 @@ PostgreSQL documentation
   </para>
 
   <warning>
+   <title>Warning: Failures while Rewinding</title>
    <para>
     If <application>pg_rewind</application> fails while processing, then
     the data folder of the target is likely not in a state that can be

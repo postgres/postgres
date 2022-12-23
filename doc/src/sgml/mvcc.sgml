@@ -1676,11 +1676,13 @@ SELECT pg_advisory_lock(q.id) FROM
     </para>
 
     <warning>
+     <title>Warning: Serializable Transactions and Data Replication</title>
      <para>
       This level of integrity protection using Serializable transactions
-      does not yet extend to hot standby mode (<xref linkend="hot-standby"/>).
-      Because of that, those using hot standby may want to use Repeatable
-      Read and explicit locking on the primary.
+      does not yet extend to hot standby mode (<xref linkend="hot-standby"/>)
+      or logical replicas.
+      Because of that, those using hot standby or logical replication
+      may want to use Repeatable Read and explicit locking on the primary.
      </para>
     </warning>
    </sect2>

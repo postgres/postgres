@@ -1310,25 +1310,29 @@ test_sub=# SELECT * FROM child ORDER BY a;
    ignoring any column lists.
   </para>
 
-  <sect2 id="logical-replication-col-list-combining">
-   <title>Combining Multiple Column Lists</title>
-
-   <warning>
+   <warning id="logical-replication-col-list-combining">
+    <title>Warning: Combining Column Lists from Multiple Publications</title>
     <para>
-     It is not supported to have a subscription comprising several publications
-     where the same table has been published with different column lists.
-     This means changing the column lists of the tables being subscribed could
-     cause inconsistency of column lists among publications, in which case
-     the <xref linkend="sql-alterpublication"/> will be successful but later
-     the walsender on the publisher, or the subscriber may throw an error. In
-     this scenario, the user needs to recreate the subscription after adjusting
-     the column list or drop the problematic publication using
-     <literal>ALTER SUBSCRIPTION ... DROP PUBLICATION</literal> and then add it
-     back after adjusting the column list.
+     There's currently no support for subscriptions comprising several
+     publications where the same table has been published with different
+     column lists.  <xref linkend="sql-createsubscription"/> disallows
+     creating such subscriptions, but it is still possible to get into
+     that situation by adding or altering column lists on the publication
+     side after a subscription has been created.
+    </para>
+    <para>
+     This means changing the column lists of tables on publications that are
+     already subscribed could lead to errors being thrown on the subscriber
+     side.
+    </para>
+    <para>
+     If a subscription is affected by this problem, the only way to resume
+     replication is to adjust one of the column lists on the publication
+     side so that they all match; and then either recreate the subscription,
+     or use <literal>ALTER SUBSCRIPTION ... DROP PUBLICATION</literal> to
+     remove one of the offending publications and add it again.
     </para>
    </warning>
-
-  </sect2>
 
   <sect2 id="logical-replication-col-list-examples">
    <title>Examples</title>
