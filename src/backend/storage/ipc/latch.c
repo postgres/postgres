@@ -869,6 +869,23 @@ FreeWaitEventSet(WaitEventSet *set)
 	pfree(set);
 }
 
+/*
+ * Free a previously created WaitEventSet in a child process after a fork().
+ */
+void
+FreeWaitEventSetAfterFork(WaitEventSet *set)
+{
+#if defined(WAIT_USE_EPOLL)
+	close(set->epoll_fd);
+	ReleaseExternalFD();
+#elif defined(WAIT_USE_KQUEUE)
+	/* kqueues are not normally inherited by child processes */
+	ReleaseExternalFD();
+#endif
+
+	pfree(set);
+}
+
 /* ---
  * Add an event to the set. Possible events are:
  * - WL_LATCH_SET: Wait for the latch to be set
