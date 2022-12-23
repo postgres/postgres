@@ -1273,3 +1273,23 @@ FROM test_seg WHERE s @> '11.2..11.3' OR s IS NULL ORDER BY s;
            |            |          
 (144 rows)
 
+-- test non error throwing API
+SELECT str as seg,
+       pg_input_is_valid(str,'seg') as ok,
+       pg_input_error_message(str,'seg') as errmsg
+FROM unnest(ARRAY['-1 .. 1'::text,
+                  '100(+-)1',
+                  '',
+                  'ABC',
+                  '1 e7',
+                  '1e700']) str;
+   seg    | ok |                errmsg                 
+----------+----+---------------------------------------
+ -1 .. 1  | t  | 
+ 100(+-)1 | t  | 
+          | f  | bad seg representation
+ ABC      | f  | bad seg representation
+ 1 e7     | f  | bad seg representation
+ 1e700    | f  | "1e700" is out of range for type real
+(6 rows)
+

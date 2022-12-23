@@ -4,6 +4,8 @@
  */
 #include "postgres.h"
 
+#include "nodes/miscnodes.h"
+
 /*
  * NB: include segparse.h only AFTER including segdata.h, because segdata.h
  * contains the definition for SEG.
@@ -65,11 +67,15 @@ float        ({integer}|{real})([eE]{integer})?
 /* LCOV_EXCL_STOP */
 
 void
-seg_yyerror(SEG *result, const char *message)
+seg_yyerror(SEG *result, struct Node *escontext, const char *message)
 {
+	/* if we already reported an error, don't overwrite it */
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return;
+
 	if (*yytext == YY_END_OF_BUFFER_CHAR)
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("bad seg representation"),
 				 /* translator: %s is typically "syntax error" */
@@ -77,7 +83,7 @@ seg_yyerror(SEG *result, const char *message)
 	}
 	else
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("bad seg representation"),
 				 /* translator: first %s is typically "syntax error" */

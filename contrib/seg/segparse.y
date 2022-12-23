@@ -7,7 +7,9 @@
 #include <math.h>
 
 #include "fmgr.h"
+#include "nodes/miscnodes.h"
 #include "utils/builtins.h"
+#include "utils/float.h"
 
 #include "segdata.h"
 
@@ -19,7 +21,7 @@
 #define YYMALLOC palloc
 #define YYFREE   pfree
 
-static float seg_atof(const char *value);
+static bool seg_atof(char *value, float *result, struct Node *escontext);
 
 static int sig_digits(const char *value);
 
@@ -35,6 +37,7 @@ static char strbuf[25] = {
 
 /* BISON Declarations */
 %parse-param {SEG *result}
+%parse-param {struct Node *escontext}
 %expect 0
 %name-prefix="seg_yy"
 
@@ -77,7 +80,7 @@ range: boundary PLUMIN deviation
 		result->lower = $1.val;
 		result->upper = $3.val;
 		if ( result->lower > result->upper ) {
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("swapped boundaries: %g is greater than %g",
 							result->lower, result->upper)));
@@ -121,7 +124,10 @@ range: boundary PLUMIN deviation
 boundary: SEGFLOAT
 	{
 		/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
-		float		val = seg_atof($1);
+		float		val;
+
+		if (!seg_atof($1, &val, escontext))
+			YYABORT;
 
 		$$.ext = '\0';
 		$$.sigd = sig_digits($1);
@@ -130,7 +136,10 @@ boundary: SEGFLOAT
 	| EXTENSION SEGFLOAT
 	{
 		/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
-		float		val = seg_atof($2);
+		float		val;
+
+		if (!seg_atof($2, &val, escontext))
+			YYABORT;
 
 		$$.ext = $1[0];
 		$$.sigd = sig_digits($2);
@@ -141,7 +150,10 @@ boundary: SEGFLOAT
 deviation: SEGFLOAT
 	{
 		/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
-		float		val = seg_atof($1);
+		float		val;
+
+		if (!seg_atof($1, &val, escontext))
+			YYABORT;
 
 		$$.ext = '\0';
 		$$.sigd = sig_digits($1);
@@ -152,13 +164,13 @@ deviation: SEGFLOAT
 %%
 
 
-static float
-seg_atof(const char *value)
+static bool
+seg_atof(char *value, float *result, struct Node *escontext)
 {
-	Datum		datum;
-
-	datum = DirectFunctionCall1(float4in, CStringGetDatum(value));
-	return DatumGetFloat4(datum);
+	*result = float4in_internal(value, NULL, "seg", value, escontext);
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return false;
+	return true;
 }
 
 static int

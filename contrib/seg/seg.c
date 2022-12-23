@@ -108,8 +108,8 @@ seg_in(PG_FUNCTION_ARGS)
 
 	seg_scanner_init(str);
 
-	if (seg_yyparse(result) != 0)
-		seg_yyerror(result, "bogus input");
+	if (seg_yyparse(result, fcinfo->context) != 0)
+		seg_yyerror(result, fcinfo->context, "bogus input");
 
 	seg_scanner_finish();
 

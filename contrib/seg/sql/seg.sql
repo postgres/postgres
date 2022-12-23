@@ -238,3 +238,16 @@ SELECT * FROM test_seg WHERE s @> '11..11.3' GROUP BY s;
 -- Test functions
 SELECT seg_lower(s), seg_center(s), seg_upper(s)
 FROM test_seg WHERE s @> '11.2..11.3' OR s IS NULL ORDER BY s;
+
+
+-- test non error throwing API
+
+SELECT str as seg,
+       pg_input_is_valid(str,'seg') as ok,
+       pg_input_error_message(str,'seg') as errmsg
+FROM unnest(ARRAY['-1 .. 1'::text,
+                  '100(+-)1',
+                  '',
+                  'ABC',
+                  '1 e7',
+                  '1e700']) str;

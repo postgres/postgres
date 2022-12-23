@@ -16,9 +16,10 @@ extern int	significant_digits(const char *s);
 
 /* in segscan.l */
 extern int	seg_yylex(void);
-extern void seg_yyerror(SEG *result, const char *message) pg_attribute_noreturn();
+extern void seg_yyerror(SEG *result, struct Node *escontext,
+						const char *message);
 extern void seg_scanner_init(const char *str);
 extern void seg_scanner_finish(void);
 
 /* in segparse.y */
-extern int	seg_yyparse(SEG *result);
+extern int	seg_yyparse(SEG *result, struct Node *escontext);
