@@ -19,7 +19,8 @@ SELECT
   ver <= 906 AS oldpgversion_le96,
   ver <= 1000 AS oldpgversion_le10,
   ver <= 1100 AS oldpgversion_le11,
-  ver <= 1300 AS oldpgversion_le13
+  ver <= 1300 AS oldpgversion_le13,
+  ver <= 1500 AS oldpgversion_le15
   FROM (SELECT current_setting('server_version_num')::int / 100 AS ver) AS v;
 \gset
 
@@ -88,4 +89,31 @@ DROP OPERATOR public.#@# (pg_catalog.int8, NONE);
 DROP OPERATOR public.#%# (pg_catalog.int8, NONE);
 DROP OPERATOR public.!=- (pg_catalog.int8, NONE);
 DROP OPERATOR public.#@%# (pg_catalog.int8, NONE);
+\endif
+
+-- Objects last appearing in 15.
+-- The internal format of "aclitem" has changed in 16, so replace it with
+-- text type in tables.
+\if :oldpgversion_le15
+DO $$
+  DECLARE
+    rec text;
+	col text;
+  BEGIN
+  FOR rec in
+    SELECT oid::regclass::text
+    FROM pg_class
+    WHERE relname !~ '^pg_'
+      AND relkind IN ('r')
+    ORDER BY 1
+  LOOP
+    FOR col in SELECT attname FROM pg_attribute
+      WHERE attrelid::regclass::text = rec
+      AND atttypid = 'aclitem'::regtype
+    LOOP
+      EXECUTE 'ALTER TABLE ' || quote_ident(rec) || ' ALTER COLUMN ' ||
+        quote_ident(col) || ' SET DATA TYPE text';
+    END LOOP;
+  END LOOP;
+  END; $$;
 \endif
