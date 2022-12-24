@@ -107,6 +107,15 @@ SELECT '12345679'::ISSN = '9771234567003'::EAN13 AS "ok",
        'M-1234-5678-5'::ISMN = '9790123456785'::EAN13 AS "ok",
        '9791234567896'::EAN13 != '123456789X'::ISBN AS "nope";
 
+-- test non-error-throwing input API
+SELECT str as isn, typ as "type",
+       pg_input_is_valid(str,typ) as ok,
+       pg_input_error_message(str,typ) as errmsg
+FROM (VALUES ('9780123456786', 'UPC'),
+             ('postgresql...','EAN13'),
+             ('9771234567003','ISSN'))
+      AS a(str,typ);
+
 --
 -- cleanup
 --
