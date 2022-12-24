@@ -41,6 +41,8 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
+static bool parseNumericOid(char *string, Oid *result, Node *escontext);
+static bool parseDashOrOid(char *string, Oid *result, Node *escontext);
 static void parseNameAndArgTypes(const char *string, bool allowNone,
 								 List **names, int *nargs, Oid *argtypes);
 
@@ -61,23 +63,13 @@ Datum
 regprocin(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
-	RegProcedure result = InvalidOid;
+	RegProcedure result;
 	List	   *names;
 	FuncCandidateList clist;
 
-	/* '-' ? */
-	if (strcmp(pro_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (pro_name_or_oid[0] >= '0' &&
-		pro_name_or_oid[0] <= '9' &&
-		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(pro_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(pro_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* Else it's a name, possibly schema-qualified */
 
@@ -230,25 +222,15 @@ Datum
 regprocedurein(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
-	RegProcedure result = InvalidOid;
+	RegProcedure result;
 	List	   *names;
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	FuncCandidateList clist;
 
-	/* '-' ? */
-	if (strcmp(pro_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (pro_name_or_oid[0] >= '0' &&
-		pro_name_or_oid[0] <= '9' &&
-		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(pro_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(pro_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
@@ -502,23 +484,13 @@ Datum
 regoperin(PG_FUNCTION_ARGS)
 {
 	char	   *opr_name_or_oid = PG_GETARG_CSTRING(0);
-	Oid			result = InvalidOid;
+	Oid			result;
 	List	   *names;
 	FuncCandidateList clist;
 
-	/* '0' ? */
-	if (strcmp(opr_name_or_oid, "0") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (opr_name_or_oid[0] >= '0' &&
-		opr_name_or_oid[0] <= '9' &&
-		strspn(opr_name_or_oid, "0123456789") == strlen(opr_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(opr_name_or_oid)));
+	/* Handle "0" or numeric OID */
+	if (parseNumericOid(opr_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* Else it's a name, possibly schema-qualified */
 
@@ -679,19 +651,9 @@ regoperatorin(PG_FUNCTION_ARGS)
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
 
-	/* '0' ? */
-	if (strcmp(opr_name_or_oid, "0") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (opr_name_or_oid[0] >= '0' &&
-		opr_name_or_oid[0] <= '9' &&
-		strspn(opr_name_or_oid, "0123456789") == strlen(opr_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(opr_name_or_oid)));
+	/* Handle "0" or numeric OID */
+	if (parseNumericOid(opr_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
@@ -941,22 +903,12 @@ Datum
 regclassin(PG_FUNCTION_ARGS)
 {
 	char	   *class_name_or_oid = PG_GETARG_CSTRING(0);
-	Oid			result = InvalidOid;
+	Oid			result;
 	List	   *names;
 
-	/* '-' ? */
-	if (strcmp(class_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (class_name_or_oid[0] >= '0' &&
-		class_name_or_oid[0] <= '9' &&
-		strspn(class_name_or_oid, "0123456789") == strlen(class_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(class_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(class_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* Else it's a name, possibly schema-qualified */
 
@@ -1093,22 +1045,12 @@ Datum
 regcollationin(PG_FUNCTION_ARGS)
 {
 	char	   *collation_name_or_oid = PG_GETARG_CSTRING(0);
-	Oid			result = InvalidOid;
+	Oid			result;
 	List	   *names;
 
-	/* '-' ? */
-	if (strcmp(collation_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (collation_name_or_oid[0] >= '0' &&
-		collation_name_or_oid[0] <= '9' &&
-		strspn(collation_name_or_oid, "0123456789") == strlen(collation_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(collation_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(collation_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* Else it's a name, possibly schema-qualified */
 
@@ -1145,7 +1087,6 @@ to_regcollation(PG_FUNCTION_ARGS)
 	 */
 	names = stringToQualifiedNameList(collation_name);
 
-	/* We might not even have permissions on this relation; don't lock it. */
 	result = get_collation_oid(names, true);
 
 	if (OidIsValid(result))
@@ -1251,22 +1192,12 @@ Datum
 regtypein(PG_FUNCTION_ARGS)
 {
 	char	   *typ_name_or_oid = PG_GETARG_CSTRING(0);
-	Oid			result = InvalidOid;
+	Oid			result;
 	int32		typmod;
 
-	/* '-' ? */
-	if (strcmp(typ_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (typ_name_or_oid[0] >= '0' &&
-		typ_name_or_oid[0] <= '9' &&
-		strspn(typ_name_or_oid, "0123456789") == strlen(typ_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(typ_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(typ_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* Else it's a type name, possibly schema-qualified or decorated */
 
@@ -1390,19 +1321,9 @@ regconfigin(PG_FUNCTION_ARGS)
 	Oid			result;
 	List	   *names;
 
-	/* '-' ? */
-	if (strcmp(cfg_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (cfg_name_or_oid[0] >= '0' &&
-		cfg_name_or_oid[0] <= '9' &&
-		strspn(cfg_name_or_oid, "0123456789") == strlen(cfg_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(cfg_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(cfg_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
@@ -1501,19 +1422,9 @@ regdictionaryin(PG_FUNCTION_ARGS)
 	Oid			result;
 	List	   *names;
 
-	/* '-' ? */
-	if (strcmp(dict_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (dict_name_or_oid[0] >= '0' &&
-		dict_name_or_oid[0] <= '9' &&
-		strspn(dict_name_or_oid, "0123456789") == strlen(dict_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(dict_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(dict_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
@@ -1612,19 +1523,9 @@ regrolein(PG_FUNCTION_ARGS)
 	Oid			result;
 	List	   *names;
 
-	/* '-' ? */
-	if (strcmp(role_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (role_name_or_oid[0] >= '0' &&
-		role_name_or_oid[0] <= '9' &&
-		strspn(role_name_or_oid, "0123456789") == strlen(role_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(role_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(role_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
@@ -1737,19 +1638,9 @@ regnamespacein(PG_FUNCTION_ARGS)
 	Oid			result;
 	List	   *names;
 
-	/* '-' ? */
-	if (strcmp(nsp_name_or_oid, "-") == 0)
-		PG_RETURN_OID(InvalidOid);
-
-	/* Numeric OID? */
-	if (nsp_name_or_oid[0] >= '0' &&
-		nsp_name_or_oid[0] <= '9' &&
-		strspn(nsp_name_or_oid, "0123456789") == strlen(nsp_name_or_oid))
-	{
-		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-													  CStringGetDatum(nsp_name_or_oid)));
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(nsp_name_or_oid, &result, fcinfo->context))
 		PG_RETURN_OID(result);
-	}
 
 	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
@@ -1910,6 +1801,53 @@ stringToQualifiedNameList(const char *string)
 /*****************************************************************************
  *	 SUPPORT ROUTINES														 *
  *****************************************************************************/
+
+/*
+ * Given a C string, see if it is all-digits (and not empty).
+ * If so, convert directly to OID and return true.
+ * If it is not all-digits, return false.
+ *
+ * If escontext is an ErrorSaveContext node, any error in oidin() will be
+ * reported there instead of being thrown (but we still return true).
+ */
+static bool
+parseNumericOid(char *string, Oid *result, Node *escontext)
+{
+	if (string[0] >= '0' && string[0] <= '9' &&
+		strspn(string, "0123456789") == strlen(string))
+	{
+		Datum		oid_datum;
+
+		/* We need not care here whether oidin() fails or not. */
+		(void) DirectInputFunctionCallSafe(oidin, string,
+										   InvalidOid, -1,
+										   escontext,
+										   &oid_datum);
+		*result = DatumGetObjectId(oid_datum);
+		return true;
+	}
+
+	/* Prevent uninitialized-variable warnings from stupider compilers. */
+	*result = InvalidOid;
+	return false;
+}
+
+/*
+ * As above, but also accept "-" as meaning 0 (InvalidOid).
+ */
+static bool
+parseDashOrOid(char *string, Oid *result, Node *escontext)
+{
+	/* '-' ? */
+	if (strcmp(string, "-") == 0)
+	{
+		*result = InvalidOid;
+		return true;
+	}
+
+	/* Numeric OID? */
+	return parseNumericOid(string, result, escontext);
+}
 
 /*
  * Given a C string, parse it into a qualified function or operator name
