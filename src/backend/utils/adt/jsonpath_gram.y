@@ -38,9 +38,11 @@ static JsonPathParseItem *makeItemUnary(JsonPathItemType type,
 static JsonPathParseItem *makeItemList(List *list);
 static JsonPathParseItem *makeIndexArray(List *list);
 static JsonPathParseItem *makeAny(int first, int last);
-static JsonPathParseItem *makeItemLikeRegex(JsonPathParseItem *expr,
-											JsonPathString *pattern,
-											JsonPathString *flags);
+static bool makeItemLikeRegex(JsonPathParseItem *expr,
+							  JsonPathString *pattern,
+							  JsonPathString *flags,
+							  JsonPathParseItem ** result,
+							  struct Node *escontext);
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
@@ -57,6 +59,9 @@ static JsonPathParseItem *makeItemLikeRegex(JsonPathParseItem *expr,
 %expect 0
 %name-prefix="jsonpath_yy"
 %parse-param {JsonPathParseResult **result}
+%parse-param {struct Node *escontext}
+%lex-param {JsonPathParseResult **result}
+%lex-param {struct Node *escontext}
 
 %union
 {
@@ -163,9 +168,20 @@ predicate:
 									{ $$ = makeItemUnary(jpiIsUnknown, $2); }
 	| expr STARTS_P WITH_P starts_with_initial
 									{ $$ = makeItemBinary(jpiStartsWith, $1, $4); }
-	| expr LIKE_REGEX_P STRING_P	{ $$ = makeItemLikeRegex($1, &$3, NULL); }
+	| expr LIKE_REGEX_P STRING_P
+	{
+		JsonPathParseItem *jppitem;
+		if (! makeItemLikeRegex($1, &$3, NULL, &jppitem, escontext))
+			YYABORT;
+		$$ = jppitem;
+	}
 	| expr LIKE_REGEX_P STRING_P FLAG_P STRING_P
-									{ $$ = makeItemLikeRegex($1, &$3, &$5); }
+	{
+		JsonPathParseItem *jppitem;
+		if (! makeItemLikeRegex($1, &$3, &$5, &jppitem, escontext))
+			YYABORT;
+		$$ = jppitem;
+	}
 	;
 
 starts_with_initial:
@@ -472,9 +488,10 @@ makeAny(int first, int last)
 	return v;
 }
 
-static JsonPathParseItem *
+static bool
 makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
-				  JsonPathString *flags)
+				  JsonPathString *flags, JsonPathParseItem ** result,
+				  struct Node *escontext)
 {
 	JsonPathParseItem *v = makeItemType(jpiLikeRegex);
 	int			i;
@@ -506,7 +523,7 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 				v->value.like_regex.flags |= JSP_REGEX_QUOTE;
 				break;
 			default:
-				ereport(ERROR,
+				ereturn(escontext, false,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("invalid input syntax for type %s", "jsonpath"),
 						 errdetail("Unrecognized flag character \"%.*s\" in LIKE_REGEX predicate.",
@@ -515,22 +532,48 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 		}
 	}
 
-	/* Convert flags to what RE_compile_and_cache needs */
-	cflags = jspConvertRegexFlags(v->value.like_regex.flags);
+	/* Convert flags to what pg_regcomp needs */
+	if ( !jspConvertRegexFlags(v->value.like_regex.flags, &cflags, escontext))
+		 return false;
 
 	/* check regex validity */
-	(void) RE_compile_and_cache(cstring_to_text_with_len(pattern->val,
-														 pattern->len),
-								cflags, DEFAULT_COLLATION_OID);
+	{
+		regex_t     re_tmp;
+		pg_wchar   *wpattern;
+		int         wpattern_len;
+		int         re_result;
 
-	return v;
+		wpattern = (pg_wchar *) palloc((pattern->len + 1) * sizeof(pg_wchar));
+		wpattern_len = pg_mb2wchar_with_len(pattern->val,
+											wpattern,
+											pattern->len);
+
+		if ((re_result = pg_regcomp(&re_tmp, wpattern, wpattern_len, cflags,
+									DEFAULT_COLLATION_OID)) != REG_OKAY)
+		{
+			char        errMsg[100];
+
+			/* See regexp.c for explanation */
+			CHECK_FOR_INTERRUPTS();
+			pg_regerror(re_result, &re_tmp, errMsg, sizeof(errMsg));
+			ereturn(escontext, false,
+					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+					 errmsg("invalid regular expression: %s", errMsg)));
+		}
+
+		pg_regfree(&re_tmp);
+	}
+
+	*result = v;
+
+	return true;
 }
 
 /*
  * Convert from XQuery regex flags to those recognized by our regex library.
  */
-int
-jspConvertRegexFlags(uint32 xflags)
+bool
+jspConvertRegexFlags(uint32 xflags, int *result, struct Node *escontext)
 {
 	/* By default, XQuery is very nearly the same as Spencer's AREs */
 	int			cflags = REG_ADVANCED;
@@ -561,18 +604,12 @@ jspConvertRegexFlags(uint32 xflags)
 		 * XQuery-style ignore-whitespace mode.
 		 */
 		if (xflags & JSP_REGEX_WSPACE)
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("XQuery \"x\" flag (expanded regular expressions) is not implemented")));
 	}
 
-	/*
-	 * We'll never need sub-match details at execution.  While
-	 * RE_compile_and_execute would set this flag anyway, force it on here to
-	 * ensure that the regex cache entries created by makeItemLikeRegex are
-	 * useful.
-	 */
-	cflags |= REG_NOSUB;
+	*result = cflags;
 
-	return cflags;
+	return true;
 }

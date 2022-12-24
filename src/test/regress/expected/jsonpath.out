@@ -1032,3 +1032,21 @@ select '1?(2>3)'::jsonpath;
  (1)?(2 > 3)
 (1 row)
 
+-- test non-error-throwing API
+SELECT str as jsonpath,
+       pg_input_is_valid(str,'jsonpath') as ok,
+       pg_input_error_message(str,'jsonpath') as errmsg
+FROM unnest(ARRAY['$ ? (@ like_regex "pattern" flag "smixq")'::text,
+                  '$ ? (@ like_regex "pattern" flag "a")',
+                  '@ + 1',
+                  '00',
+                  '1a']) str;
+                 jsonpath                  | ok |                                errmsg                                 
+-------------------------------------------+----+-----------------------------------------------------------------------
+ $ ? (@ like_regex "pattern" flag "smixq") | t  | 
+ $ ? (@ like_regex "pattern" flag "a")     | f  | invalid input syntax for type jsonpath
+ @ + 1                                     | f  | @ is not allowed in root expressions
+ 00                                        | f  | trailing junk after numeric literal at or near "00" of jsonpath input
+ 1a                                        | f  | trailing junk after numeric literal at or near "1a" of jsonpath input
+(5 rows)
+

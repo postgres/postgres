@@ -66,16 +66,19 @@
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
+#include "nodes/miscnodes.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
 #include "utils/jsonpath.h"
 
 
-static Datum jsonPathFromCstring(char *in, int len);
+static Datum jsonPathFromCstring(char *in, int len, struct Node *escontext);
 static char *jsonPathToCstring(StringInfo out, JsonPath *in,
 							   int estimated_len);
-static int	flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
+static bool	flattenJsonPathParseItem(StringInfo buf, int *result,
+									 struct Node *escontext,
+									 JsonPathParseItem *item,
 									 int nestingLevel, bool insideArraySubscript);
 static void alignStringInfoInt(StringInfo buf);
 static int32 reserveSpaceForItemPointer(StringInfo buf);
@@ -95,7 +98,7 @@ jsonpath_in(PG_FUNCTION_ARGS)
 	char	   *in = PG_GETARG_CSTRING(0);
 	int			len = strlen(in);
 
-	return jsonPathFromCstring(in, len);
+	return jsonPathFromCstring(in, len, fcinfo->context);
 }
 
 /*
@@ -119,7 +122,7 @@ jsonpath_recv(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "unsupported jsonpath version number: %d", version);
 
-	return jsonPathFromCstring(str, nbytes);
+	return jsonPathFromCstring(str, nbytes, NULL);
 }
 
 /*
@@ -165,24 +168,29 @@ jsonpath_send(PG_FUNCTION_ARGS)
  * representation of jsonpath.
  */
 static Datum
-jsonPathFromCstring(char *in, int len)
+jsonPathFromCstring(char *in, int len, struct Node *escontext)
 {
-	JsonPathParseResult *jsonpath = parsejsonpath(in, len);
+	JsonPathParseResult *jsonpath = parsejsonpath(in, len, escontext);
 	JsonPath   *res;
 	StringInfoData buf;
+
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return (Datum) 0;
+
+	if (!jsonpath)
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"", "jsonpath",
+						in)));
 
 	initStringInfo(&buf);
 	enlargeStringInfo(&buf, 4 * len /* estimation */ );
 
 	appendStringInfoSpaces(&buf, JSONPATH_HDRSZ);
 
-	if (!jsonpath)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type %s: \"%s\"", "jsonpath",
-						in)));
-
-	flattenJsonPathParseItem(&buf, jsonpath->expr, 0, false);
+	if (!flattenJsonPathParseItem(&buf, NULL, escontext,
+								  jsonpath->expr, 0, false))
+		return (Datum) 0;
 
 	res = (JsonPath *) buf.data;
 	SET_VARSIZE(res, buf.len);
@@ -225,9 +233,10 @@ jsonPathToCstring(StringInfo out, JsonPath *in, int estimated_len)
  * Recursive function converting given jsonpath parse item and all its
  * children into a binary representation.
  */
-static int
-flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
-						 int nestingLevel, bool insideArraySubscript)
+static bool
+flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
+						 JsonPathParseItem *item, int nestingLevel,
+						 bool insideArraySubscript)
 {
 	/* position from beginning of jsonpath data */
 	int32		pos = buf->len - JSONPATH_HDRSZ;
@@ -295,16 +304,22 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 				int32		left = reserveSpaceForItemPointer(buf);
 				int32		right = reserveSpaceForItemPointer(buf);
 
-				chld = !item->value.args.left ? pos :
-					flattenJsonPathParseItem(buf, item->value.args.left,
-											 nestingLevel + argNestingLevel,
-											 insideArraySubscript);
+				if (!item->value.args.left)
+					chld = pos;
+				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
+													item->value.args.left,
+													nestingLevel + argNestingLevel,
+													insideArraySubscript))
+					return false;
 				*(int32 *) (buf->data + left) = chld - pos;
 
-				chld = !item->value.args.right ? pos :
-					flattenJsonPathParseItem(buf, item->value.args.right,
-											 nestingLevel + argNestingLevel,
-											 insideArraySubscript);
+				if (!item->value.args.right)
+					chld = pos;
+				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
+													item->value.args.right,
+													nestingLevel + argNestingLevel,
+													insideArraySubscript))
+					return false;
 				*(int32 *) (buf->data + right) = chld - pos;
 			}
 			break;
@@ -323,9 +338,11 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 									   item->value.like_regex.patternlen);
 				appendStringInfoChar(buf, '\0');
 
-				chld = flattenJsonPathParseItem(buf, item->value.like_regex.expr,
-												nestingLevel,
-												insideArraySubscript);
+				if (! flattenJsonPathParseItem(buf, &chld, escontext,
+											   item->value.like_regex.expr,
+											   nestingLevel,
+											   insideArraySubscript))
+					return false;
 				*(int32 *) (buf->data + offs) = chld - pos;
 			}
 			break;
@@ -341,10 +358,13 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 			{
 				int32		arg = reserveSpaceForItemPointer(buf);
 
-				chld = !item->value.arg ? pos :
-					flattenJsonPathParseItem(buf, item->value.arg,
-											 nestingLevel + argNestingLevel,
-											 insideArraySubscript);
+				if (!item->value.arg)
+					chld = pos;
+				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
+													item->value.arg,
+													nestingLevel + argNestingLevel,
+													insideArraySubscript))
+					return false;
 				*(int32 *) (buf->data + arg) = chld - pos;
 			}
 			break;
@@ -357,13 +377,13 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 			break;
 		case jpiCurrent:
 			if (nestingLevel <= 0)
-				ereport(ERROR,
+				ereturn(escontext, false,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("@ is not allowed in root expressions")));
 			break;
 		case jpiLast:
 			if (!insideArraySubscript)
-				ereport(ERROR,
+				ereturn(escontext, false,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("LAST is allowed only in array subscripts")));
 			break;
@@ -383,15 +403,22 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 				{
 					int32	   *ppos;
 					int32		topos;
-					int32		frompos =
-					flattenJsonPathParseItem(buf,
-											 item->value.array.elems[i].from,
-											 nestingLevel, true) - pos;
+					int32		frompos;
+
+					if (! flattenJsonPathParseItem(buf, &frompos, escontext,
+												   item->value.array.elems[i].from,
+												   nestingLevel, true))
+						return false;
+					frompos -= pos;
 
 					if (item->value.array.elems[i].to)
-						topos = flattenJsonPathParseItem(buf,
-														 item->value.array.elems[i].to,
-														 nestingLevel, true) - pos;
+					{
+						if (! flattenJsonPathParseItem(buf, &topos, escontext,
+													   item->value.array.elems[i].to,
+													   nestingLevel, true))
+							return false;
+						topos -= pos;
+					}
 					else
 						topos = 0;
 
@@ -424,12 +451,17 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 
 	if (item->next)
 	{
-		chld = flattenJsonPathParseItem(buf, item->next, nestingLevel,
-										insideArraySubscript) - pos;
+		if (! flattenJsonPathParseItem(buf, &chld, escontext,
+									   item->next, nestingLevel,
+									   insideArraySubscript))
+			return false;
+		chld -= pos;
 		*(int32 *) (buf->data + next) = chld;
 	}
 
-	return pos;
+	if (result)
+		*result = pos;
+	return true;
 }
 
 /*

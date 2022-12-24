@@ -1721,7 +1721,8 @@ executeLikeRegex(JsonPathItem *jsp, JsonbValue *str, JsonbValue *rarg,
 		cxt->regex =
 			cstring_to_text_with_len(jsp->content.like_regex.pattern,
 									 jsp->content.like_regex.patternlen);
-		cxt->cflags = jspConvertRegexFlags(jsp->content.like_regex.flags);
+		(void) jspConvertRegexFlags(jsp->content.like_regex.flags,
+									&(cxt->cflags), NULL);
 	}
 
 	if (RE_compile_and_execute(cxt->regex, str->val.string.val,

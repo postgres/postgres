@@ -187,3 +187,14 @@ select '1..e3'::jsonpath;
 select '(1.).e'::jsonpath;
 select '(1.).e3'::jsonpath;
 select '1?(2>3)'::jsonpath;
+
+-- test non-error-throwing API
+
+SELECT str as jsonpath,
+       pg_input_is_valid(str,'jsonpath') as ok,
+       pg_input_error_message(str,'jsonpath') as errmsg
+FROM unnest(ARRAY['$ ? (@ like_regex "pattern" flag "smixq")'::text,
+                  '$ ? (@ like_regex "pattern" flag "a")',
+                  '@ + 1',
+                  '00',
+                  '1a']) str;

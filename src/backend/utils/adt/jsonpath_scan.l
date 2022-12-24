@@ -25,6 +25,7 @@
 #include "jsonpath_gram.h"
 
 #include "mb/pg_wchar.h"
+#include "nodes/miscnodes.h"
 #include "nodes/pg_list.h"
 }
 
@@ -39,8 +40,8 @@ static int	scanbuflen;
 static void addstring(bool init, char *s, int l);
 static void addchar(bool init, char c);
 static enum yytokentype checkKeyword(void);
-static void parseUnicode(char *s, int l);
-static void parseHexChar(char *s);
+static bool parseUnicode(char *s, int l, struct Node *escontext);
+static bool parseHexChar(char *s, struct Node *escontext);
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
@@ -147,25 +148,48 @@ hex_fail	\\x{hex_dig}{0,1}
 
 <xnq,xq,xvq>\\v				{ addchar(false, '\v'); }
 
-<xnq,xq,xvq>{unicode}+		{ parseUnicode(yytext, yyleng); }
+<xnq,xq,xvq>{unicode}+		{
+								if (!parseUnicode(yytext, yyleng, escontext))
+									yyterminate();
+							}
 
-<xnq,xq,xvq>{hex_char}		{ parseHexChar(yytext); }
+<xnq,xq,xvq>{hex_char}		{
+								if (!parseHexChar(yytext, escontext))
+									yyterminate();
+							}
 
-<xnq,xq,xvq>{unicode}*{unicodefail}	{ jsonpath_yyerror(NULL, "invalid unicode sequence"); }
+<xnq,xq,xvq>{unicode}*{unicodefail} {
+								jsonpath_yyerror(NULL, escontext,
+												 "invalid unicode sequence");
+								yyterminate();
+							}
 
-<xnq,xq,xvq>{hex_fail}		{ jsonpath_yyerror(NULL, "invalid hex character sequence"); }
+<xnq,xq,xvq>{hex_fail}		{
+								jsonpath_yyerror(NULL, escontext,
+												 "invalid hex character sequence");
+								yyterminate();
+							}
 
 <xnq,xq,xvq>{unicode}+\\	{
 								/* throw back the \\, and treat as unicode */
 								yyless(yyleng - 1);
-								parseUnicode(yytext, yyleng);
+								if (!parseUnicode(yytext, yyleng, escontext))
+									yyterminate();
 							}
 
 <xnq,xq,xvq>\\.				{ addchar(false, yytext[1]); }
 
-<xnq,xq,xvq>\\				{ jsonpath_yyerror(NULL, "unexpected end after backslash"); }
+<xnq,xq,xvq>\\				{
+							  jsonpath_yyerror(NULL, escontext,
+											   "unexpected end after backslash");
+							  yyterminate();
+							}
 
-<xq,xvq><<EOF>>				{ jsonpath_yyerror(NULL, "unexpected end of quoted string"); }
+<xq,xvq><<EOF>>				{
+							  jsonpath_yyerror(NULL, escontext,
+											   "unexpected end of quoted string");
+							  yyterminate();
+							}
 
 <xq>\"							{
 									yylval->str = scanstring;
@@ -187,8 +211,12 @@ hex_fail	\\x{hex_dig}{0,1}
 
 <xc>\*							{ }
 
-<xc><<EOF>>						{ jsonpath_yyerror(NULL, "unexpected end of comment"); }
-
+<xc><<EOF>>						{
+									jsonpath_yyerror(
+										NULL, escontext,
+										"unexpected end of comment");
+									yyterminate();
+								}
 \&\&							{ return AND_P; }
 
 \|\|							{ return OR_P; }
@@ -253,11 +281,30 @@ hex_fail	\\x{hex_dig}{0,1}
 									return INT_P;
 								}
 
-{realfail}						{ jsonpath_yyerror(NULL, "invalid numeric literal"); }
-{integer_junk}					{ jsonpath_yyerror(NULL, "trailing junk after numeric literal"); }
-{decimal_junk}					{ jsonpath_yyerror(NULL, "trailing junk after numeric literal"); }
-{real_junk}						{ jsonpath_yyerror(NULL, "trailing junk after numeric literal"); }
-
+{realfail}						{
+									jsonpath_yyerror(
+										NULL, escontext,
+										"invalid numeric literal");
+									yyterminate();
+								}
+{integer_junk}					{
+									jsonpath_yyerror(
+										NULL, escontext,
+										"trailing junk after numeric literal");
+									yyterminate();
+								}
+{decimal_junk}					{
+									jsonpath_yyerror(
+										NULL, escontext,
+										"trailing junk after numeric literal");
+									yyterminate();
+								}
+{real_junk}						{
+									jsonpath_yyerror(
+										NULL, escontext,
+										"trailing junk after numeric literal");
+									yyterminate();
+								}
 \"								{
 									addchar(true, '\0');
 									BEGIN xq;
@@ -281,18 +328,23 @@ hex_fail	\\x{hex_dig}{0,1}
 /* LCOV_EXCL_STOP */
 
 void
-jsonpath_yyerror(JsonPathParseResult **result, const char *message)
+jsonpath_yyerror(JsonPathParseResult **result, struct Node *escontext,
+				 const char *message)
 {
+	/* don't overwrite escontext if it's already been set */
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return;
+
 	if (*yytext == YY_END_OF_BUFFER_CHAR)
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 /* translator: %s is typically "syntax error" */
 				 errmsg("%s at end of jsonpath input", _(message))));
 	}
 	else
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 /* translator: first %s is typically "syntax error" */
 				 errmsg("%s at or near \"%s\" of jsonpath input",
@@ -463,14 +515,14 @@ addchar(bool init, char c)
 
 /* Interface to jsonpath parser */
 JsonPathParseResult *
-parsejsonpath(const char *str, int len)
+parsejsonpath(const char *str, int len, struct Node *escontext)
 {
 	JsonPathParseResult	*parseresult;
 
 	jsonpath_scanner_init(str, len);
 
-	if (jsonpath_yyparse((void *) &parseresult) != 0)
-		jsonpath_yyerror(NULL, "bogus input"); /* shouldn't happen */
+	if (jsonpath_yyparse((void *) &parseresult, escontext) != 0)
+		jsonpath_yyerror(NULL, escontext, "bogus input"); /* shouldn't happen */
 
 	jsonpath_scanner_finish();
 
@@ -478,27 +530,36 @@ parsejsonpath(const char *str, int len)
 }
 
 /* Turn hex character into integer */
-static int
-hexval(char c)
+static bool
+hexval(char c, int *result, struct Node *escontext)
 {
 	if (c >= '0' && c <= '9')
-		return c - '0';
+	{
+		*result = c - '0';
+		return true;
+	}
 	if (c >= 'a' && c <= 'f')
-		return c - 'a' + 0xA;
+	{
+		*result = c - 'a' + 0xA;
+		return true;
+	}
 	if (c >= 'A' && c <= 'F')
-		return c - 'A' + 0xA;
-	jsonpath_yyerror(NULL, "invalid hexadecimal digit");
-	return 0; /* not reached */
+	{
+		*result = c - 'A' + 0xA;
+		return true;
+	}
+	jsonpath_yyerror(NULL, escontext, "invalid hexadecimal digit");
+	return false;
 }
 
 /* Add given unicode character to scanstring */
-static void
-addUnicodeChar(int ch)
+static bool
+addUnicodeChar(int ch, struct Node *escontext)
 {
 	if (ch == 0)
 	{
 		/* We can't allow this, since our TEXT type doesn't */
-		ereport(ERROR,
+		ereturn(escontext, false,
 				(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
 				 errmsg("unsupported Unicode escape sequence"),
 				  errdetail("\\u0000 cannot be converted to text.")));
@@ -507,30 +568,42 @@ addUnicodeChar(int ch)
 	{
 		char		cbuf[MAX_UNICODE_EQUIVALENT_STRING + 1];
 
-		pg_unicode_to_server(ch, (unsigned char *) cbuf);
+		/*
+		 * If we're trapping the error status, call the noerror form of the
+		 * conversion function. Otherwise call the normal form which provides
+		 * more detailed errors.
+		 */
+
+		if (! escontext  || ! IsA(escontext, ErrorSaveContext))
+			pg_unicode_to_server(ch, (unsigned char *) cbuf);
+		else if (!pg_unicode_to_server_noerror(ch, (unsigned char *) cbuf))
+			ereturn(escontext, false,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("could not convert unicode to server encoding")));
 		addstring(false, cbuf, strlen(cbuf));
 	}
+	return true;
 }
 
 /* Add unicode character, processing any surrogate pairs */
-static void
-addUnicode(int ch, int *hi_surrogate)
+static bool
+addUnicode(int ch, int *hi_surrogate, struct Node *escontext)
 {
 	if (is_utf16_surrogate_first(ch))
 	{
 		if (*hi_surrogate != -1)
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s", "jsonpath"),
 					 errdetail("Unicode high surrogate must not follow "
 							   "a high surrogate.")));
 		*hi_surrogate = ch;
-		return;
+		return true;
 	}
 	else if (is_utf16_surrogate_second(ch))
 	{
 		if (*hi_surrogate == -1)
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s", "jsonpath"),
 					 errdetail("Unicode low surrogate must follow a high "
@@ -540,22 +613,22 @@ addUnicode(int ch, int *hi_surrogate)
 	}
 	else if (*hi_surrogate != -1)
 	{
-		ereport(ERROR,
+		ereturn(escontext, false,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s", "jsonpath"),
 				 errdetail("Unicode low surrogate must follow a high "
 						   "surrogate.")));
 	}
 
-	addUnicodeChar(ch);
+	return addUnicodeChar(ch, escontext);
 }
 
 /*
  * parseUnicode was adopted from json_lex_string() in
  * src/backend/utils/adt/json.c
  */
-static void
-parseUnicode(char *s, int l)
+static bool
+parseUnicode(char *s, int l, struct Node *escontext)
 {
 	int			i = 2;
 	int			hi_surrogate = -1;
@@ -563,41 +636,57 @@ parseUnicode(char *s, int l)
 	for (i = 2; i < l; i += 2)	/* skip '\u' */
 	{
 		int			ch = 0;
-		int			j;
+		int			j, si;
 
 		if (s[i] == '{')	/* parse '\u{XX...}' */
 		{
 			while (s[++i] != '}' && i < l)
-				ch = (ch << 4) | hexval(s[i]);
+			{
+				if (!hexval(s[i], &si, escontext))
+					return false;
+				ch = (ch << 4) | si;
+			}
 			i++;	/* skip '}' */
 		}
 		else		/* parse '\uXXXX' */
 		{
 			for (j = 0; j < 4 && i < l; j++)
-				ch = (ch << 4) | hexval(s[i++]);
+			{
+				if (!hexval(s[i++], &si, escontext))
+					return false;
+				ch = (ch << 4) | si;
+			}
 		}
 
-		addUnicode(ch, &hi_surrogate);
+		if (! addUnicode(ch, &hi_surrogate, escontext))
+			return false;
 	}
 
 	if (hi_surrogate != -1)
 	{
-		ereport(ERROR,
+		ereturn(escontext, false,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s", "jsonpath"),
 				 errdetail("Unicode low surrogate must follow a high "
 						   "surrogate.")));
 	}
+
+	return true;
 }
 
 /* Parse sequence of hex-encoded characters */
-static void
-parseHexChar(char *s)
+static bool
+parseHexChar(char *s, struct Node *escontext)
 {
-	int			ch = (hexval(s[2]) << 4) |
-					  hexval(s[3]);
+	int s2, s3, ch;
+	if (!hexval(s[2], &s2, escontext))
+		return false;
+	if (!hexval(s[3], &s3, escontext))
+		return false;
 
-	addUnicodeChar(ch);
+	ch = (s2 << 4) | s3;
+
+	return addUnicodeChar(ch, escontext);
 }
 
 /*
