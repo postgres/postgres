@@ -95,25 +95,21 @@ DROP OPERATOR public.#@%# (pg_catalog.int8, NONE);
 -- The internal format of "aclitem" has changed in 16, so replace it with
 -- text type in tables.
 \if :oldpgversion_le15
-DO $$
+DO $stmt$
   DECLARE
-    rec text;
-	col text;
+    rec record;
   BEGIN
   FOR rec in
-    SELECT oid::regclass::text
-    FROM pg_class
-    WHERE relname !~ '^pg_'
-      AND relkind IN ('r')
+    SELECT oid::regclass::text as rel, attname as col
+    FROM pg_class c, pg_attribute a
+    WHERE c.relname !~ '^pg_'
+      AND c.relkind IN ('r')
+      AND a.attrelid = c.oid
+      AND a.atttypid = 'aclitem'::regtype
     ORDER BY 1
   LOOP
-    FOR col in SELECT attname FROM pg_attribute
-      WHERE attrelid::regclass::text = rec
-      AND atttypid = 'aclitem'::regtype
-    LOOP
-      EXECUTE 'ALTER TABLE ' || quote_ident(rec) || ' ALTER COLUMN ' ||
-        quote_ident(col) || ' SET DATA TYPE text';
-    END LOOP;
+    EXECUTE 'ALTER TABLE ' || quote_ident(rec.rel) || ' ALTER COLUMN ' ||
+      quote_ident(rec.col) || ' SET DATA TYPE text';
   END LOOP;
-  END; $$;
+  END; $stmt$;
 \endif
