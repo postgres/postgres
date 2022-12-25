@@ -942,7 +942,7 @@ isn_out(PG_FUNCTION_ARGS)
 	char	   *result;
 	char		buf[MAXEAN13LEN + 1];
 
-	(void) ean2string(val, fcinfo->context, buf, true);
+	(void) ean2string(val, false, buf, true);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -958,7 +958,7 @@ ean13_out(PG_FUNCTION_ARGS)
 	char	   *result;
 	char		buf[MAXEAN13LEN + 1];
 
-	(void) ean2string(val, fcinfo->context, buf, false);
+	(void) ean2string(val, false, buf, false);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
