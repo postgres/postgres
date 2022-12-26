@@ -23,9 +23,13 @@
 #include "access/xlogrecord.h"
 #include "access/xlogstats.h"
 #include "common/fe_memutils.h"
+#include "common/file_perm.h"
+#include "common/file_utils.h"
 #include "common/logging.h"
+#include "common/relpath.h"
 #include "getopt_long.h"
 #include "rmgrdesc.h"
+#include "storage/bufpage.h"
 
 /*
  * NOTE: For any code change or issue fix here, it is highly recommended to
@@ -70,6 +74,9 @@ typedef struct XLogDumpConfig
 	bool		filter_by_relation_block_enabled;
 	ForkNumber	filter_by_relation_forknum;
 	bool		filter_by_fpw;
+
+	/* save options */
+	char	   *save_fullpage_path;
 } XLogDumpConfig;
 
 
@@ -110,6 +117,37 @@ verify_directory(const char *directory)
 		return false;
 	closedir(dir);
 	return true;
+}
+
+/*
+ * Create if necessary the directory storing the full-page images extracted
+ * from the WAL records read.
+ */
+static void
+create_fullpage_directory(char *path)
+{
+	int			ret;
+
+	switch ((ret = pg_check_dir(path)))
+	{
+		case 0:
+			/* Does not exist, so create it */
+			if (pg_mkdir_p(path, pg_dir_create_mode) < 0)
+				pg_fatal("could not create directory \"%s\": %m", path);
+			break;
+		case 1:
+			/* Present and empty, so do nothing */
+			break;
+		case 2:
+		case 3:
+		case 4:
+			/* Exists and not empty */
+			pg_fatal("directory \"%s\" exists but is not empty", path);
+			break;
+		default:
+			/* Trouble accessing directory */
+			pg_fatal("could not access directory \"%s\": %m", path);
+	}
 }
 
 /*
@@ -440,6 +478,62 @@ XLogRecordHasFPW(XLogReaderState *record)
 }
 
 /*
+ * Function to externally save all FPWs stored in the given WAL record.
+ * Decompression is applied to all the blocks saved, if necessary.
+ */
+static void
+XLogRecordSaveFPWs(XLogReaderState *record, const char *savepath)
+{
+	int			block_id;
+
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
+	{
+		PGAlignedBlock buf;
+		Page		page;
+		char		filename[MAXPGPATH];
+		char		forkname[FORKNAMECHARS + 2];	/* _ + terminating zero */
+		FILE	   *file;
+		BlockNumber blk;
+		RelFileLocator rnode;
+		ForkNumber	fork;
+
+		if (!XLogRecHasBlockRef(record, block_id))
+			continue;
+
+		if (!XLogRecHasBlockImage(record, block_id))
+			continue;
+
+		page = (Page) buf.data;
+
+		/* Full page exists, so let's save it */
+		if (!RestoreBlockImage(record, block_id, page))
+			pg_fatal("%s", record->errormsg_buf);
+
+		(void) XLogRecGetBlockTagExtended(record, block_id,
+										  &rnode, &fork, &blk, NULL);
+
+		if (fork >= 0 && fork <= MAX_FORKNUM)
+			sprintf(forkname, "_%s", forkNames[fork]);
+		else
+			pg_fatal("invalid fork number: %u", fork);
+
+		snprintf(filename, MAXPGPATH, "%s/%08X-%08X.%u.%u.%u.%u%s", savepath,
+				 LSN_FORMAT_ARGS(record->ReadRecPtr),
+				 rnode.spcOid, rnode.dbOid, rnode.relNumber, blk, forkname);
+
+		file = fopen(filename, PG_BINARY_W);
+		if (!file)
+			pg_fatal("could not open file \"%s\": %m", filename);
+
+		if (fwrite(page, BLCKSZ, 1, file) != 1)
+			pg_fatal("could not write file \"%s\": %m", filename);
+
+		if (fclose(file) != 0)
+			pg_fatal("could not write file \"%s\": %m", filename);
+	}
+}
+
+/*
  * Print a record to stdout
  */
 static void
@@ -679,6 +773,8 @@ usage(void)
 			 "                         (default: 1 or the value used in STARTSEG)\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -w, --fullpage         only show records with a full page write\n"));
+	printf(_("      --save-fullpage=PATH\n"
+			 "                         save full page images\n"));
 	printf(_("  -x, --xid=XID          only show records with transaction ID XID\n"));
 	printf(_("  -z, --stats[=record]   show statistics instead of records\n"
 			 "                         (optionally, show per-record statistics)\n"));
@@ -719,6 +815,7 @@ main(int argc, char **argv)
 		{"xid", required_argument, NULL, 'x'},
 		{"version", no_argument, NULL, 'V'},
 		{"stats", optional_argument, NULL, 'z'},
+		{"save-fullpage", required_argument, NULL, 1},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -770,6 +867,7 @@ main(int argc, char **argv)
 	config.filter_by_relation_block_enabled = false;
 	config.filter_by_relation_forknum = InvalidForkNumber;
 	config.filter_by_fpw = false;
+	config.save_fullpage_path = NULL;
 	config.stats = false;
 	config.stats_per_record = false;
 
@@ -942,6 +1040,9 @@ main(int argc, char **argv)
 					}
 				}
 				break;
+			case 1:
+				config.save_fullpage_path = pg_strdup(optarg);
+				break;
 			default:
 				goto bad_argument;
 		}
@@ -971,6 +1072,9 @@ main(int argc, char **argv)
 			goto bad_argument;
 		}
 	}
+
+	if (config.save_fullpage_path != NULL)
+		create_fullpage_directory(config.save_fullpage_path);
 
 	/* parse files as start/end boundaries, extract path if not specified */
 	if (optind < argc)
@@ -1153,6 +1257,10 @@ main(int argc, char **argv)
 			else
 				XLogDumpDisplayRecord(&config, xlogreader_state);
 		}
+
+		/* save full pages if requested */
+		if (config.save_fullpage_path != NULL)
+			XLogRecordSaveFPWs(xlogreader_state, config.save_fullpage_path);
 
 		/* check whether we printed enough */
 		config.already_displayed_records++;

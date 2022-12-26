@@ -241,6 +241,72 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+       <term><option>--save-fullpage=<replaceable>save_path</replaceable></option></term>
+       <listitem>
+       <para>
+        Save full page images found in the WAL records to the
+        <replaceable>save_path</replaceable> directory. The images saved
+        are subject to the same filtering and limiting criteria as the
+        records displayed.
+       </para>
+       <para>
+        The full page images are saved with the following file name format:
+        <literal><replaceable>LSN</replaceable>.<replaceable>RELTABLESPACE</replaceable>.<replaceable>DATOID</replaceable>.<replaceable>RELNODE</replaceable>.<replaceable>BLKNO</replaceable><replaceable>FORK</replaceable></literal>
+
+        The file names are composed of the following parts:
+        <informaltable>
+         <tgroup cols="2">
+          <thead>
+           <row>
+            <entry>Component</entry>
+            <entry>Description</entry>
+           </row>
+          </thead>
+
+          <tbody>
+           <row>
+            <entry>LSN</entry>
+            <entry>The <acronym>LSN</acronym> of the record with this image,
+             formatted as two 8-character hexadecimal numbers
+             <literal>%08X-%08X</literal></entry>
+           </row>
+
+           <row>
+            <entry>RELTABLESPACE</entry>
+            <entry>tablespace OID of the block</entry>
+           </row>
+
+           <row>
+            <entry>DATOID</entry>
+            <entry>database OID of the block</entry>
+           </row>
+
+           <row>
+            <entry>RELNODE</entry>
+            <entry>filenode of the block</entry>
+           </row>
+
+           <row>
+            <entry>BLKNO</entry>
+            <entry>block number of the block</entry>
+           </row>
+
+           <row>
+            <entry>FORK</entry>
+            <entry>
+             The name of the fork the full page image came from, as of
+             <literal>_main</literal>, <literal>_fsm</literal>,
+             <literal>_vm</literal>, or <literal>_init</literal>.
+            </entry>
+           </row>
+          </tbody>
+         </tgroup>
+        </informaltable>
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-x <replaceable>xid</replaceable></option></term>
       <term><option>--xid=<replaceable>xid</replaceable></option></term>
       <listitem>
