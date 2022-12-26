@@ -1,7 +1,7 @@
 
 # Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
-# Test streaming of large transaction containing large subtransactions
+# Test streaming of transaction containing subtransactions
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
@@ -12,7 +12,7 @@ use Test::More;
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf('postgresql.conf',
-	'logical_decoding_work_mem = 64kB');
+	'logical_decoding_mode = immediate');
 $node_publisher->start;
 
 # Create subscriber node
@@ -49,27 +49,27 @@ my $result =
 	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
 is($result, qq(2|2|2), 'check initial data was copied to subscriber');
 
-# Insert, update and delete enough rows to exceed 64kB limit.
+# Insert, update and delete some rows.
 $node_publisher->safe_psql(
 	'postgres', q{
 BEGIN;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(    3,  500) s(i);
+INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
 UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 DELETE FROM test_tab WHERE mod(a,3) = 0;
 SAVEPOINT s1;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(501,  1000) s(i);
+INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(6, 8) s(i);
 UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 DELETE FROM test_tab WHERE mod(a,3) = 0;
 SAVEPOINT s2;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(1001,  1500) s(i);
+INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(9, 11) s(i);
 UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 DELETE FROM test_tab WHERE mod(a,3) = 0;
 SAVEPOINT s3;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(1501,  2000) s(i);
+INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(12, 14) s(i);
 UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 DELETE FROM test_tab WHERE mod(a,3) = 0;
 SAVEPOINT s4;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(2001, 2500) s(i);
+INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(15, 17) s(i);
 UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 DELETE FROM test_tab WHERE mod(a,3) = 0;
 COMMIT;
@@ -80,7 +80,7 @@ $node_publisher->wait_for_catchup($appname);
 $result =
   $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
-is($result, qq(1667|1667|1667),
+is($result, qq(12|12|12),
 	'check data was copied to subscriber in streaming mode and extra columns contain local defaults'
 );
 

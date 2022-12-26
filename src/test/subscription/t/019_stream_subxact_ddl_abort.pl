@@ -1,7 +1,7 @@
 
 # Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
-# Test streaming of large transaction with subtransactions, DDLs, DMLs, and
+# Test streaming of transaction with subtransactions, DDLs, DMLs, and
 # rollbacks
 use strict;
 use warnings;
@@ -13,7 +13,7 @@ use Test::More;
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf('postgresql.conf',
-	'logical_decoding_work_mem = 64kB');
+	'logical_decoding_mode = immediate');
 $node_publisher->start;
 
 # Create subscriber node
@@ -49,23 +49,23 @@ my $result =
 	"SELECT count(*), count(c) FROM test_tab");
 is($result, qq(2|0), 'check initial data was copied to subscriber');
 
-# large (streamed) transaction with DDL, DML and ROLLBACKs
+# streamed transaction with DDL, DML and ROLLBACKs
 $node_publisher->safe_psql(
 	'postgres', q{
 BEGIN;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3,500) s(i);
+INSERT INTO test_tab VALUES (3, md5(3::text));
 ALTER TABLE test_tab ADD COLUMN c INT;
 SAVEPOINT s1;
-INSERT INTO test_tab SELECT i, md5(i::text), -i FROM generate_series(501,1000) s(i);
+INSERT INTO test_tab VALUES (4, md5(4::text), -4);
 ALTER TABLE test_tab ADD COLUMN d INT;
 SAVEPOINT s2;
-INSERT INTO test_tab SELECT i, md5(i::text), -i, 2*i FROM generate_series(1001,1500) s(i);
+INSERT INTO test_tab VALUES (5, md5(5::text), -5, 5*2);
 ALTER TABLE test_tab ADD COLUMN e INT;
 SAVEPOINT s3;
-INSERT INTO test_tab SELECT i, md5(i::text), -i, 2*i, -3*i FROM generate_series(1501,2000) s(i);
+INSERT INTO test_tab VALUES (6, md5(6::text), -6, 6*2, -6*3);
 ALTER TABLE test_tab DROP COLUMN c;
 ROLLBACK TO s1;
-INSERT INTO test_tab SELECT i, md5(i::text), i FROM generate_series(501,1000) s(i);
+INSERT INTO test_tab VALUES (4, md5(4::text), 4);
 COMMIT;
 });
 
@@ -74,7 +74,7 @@ $node_publisher->wait_for_catchup($appname);
 $result =
   $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c) FROM test_tab");
-is($result, qq(1000|500),
+is($result, qq(4|1),
 	'check rollback to savepoint was reflected on subscriber and extra columns contain local defaults'
 );
 

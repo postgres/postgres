@@ -395,6 +395,12 @@ static const struct config_enum_entry ssl_protocol_versions_info[] = {
 	{NULL, 0, false}
 };
 
+static const struct config_enum_entry logical_decoding_mode_options[] = {
+	{"buffered", LOGICAL_DECODING_MODE_BUFFERED, false},
+	{"immediate", LOGICAL_DECODING_MODE_IMMEDIATE, false},
+	{NULL, 0, false}
+};
+
 StaticAssertDecl(lengthof(ssl_protocol_versions_info) == (PG_TLS1_3_VERSION + 2),
 				 "array length mismatch");
 
@@ -4874,6 +4880,17 @@ struct config_enum ConfigureNamesEnum[] =
 		},
 		&recovery_init_sync_method,
 		RECOVERY_INIT_SYNC_METHOD_FSYNC, recovery_init_sync_method_options,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"logical_decoding_mode", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Allows streaming or serializing each change in logical decoding."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&logical_decoding_mode,
+		LOGICAL_DECODING_MODE_BUFFERED, logical_decoding_mode_options,
 		NULL, NULL, NULL
 	},
 

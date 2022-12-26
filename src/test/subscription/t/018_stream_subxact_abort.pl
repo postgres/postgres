@@ -1,7 +1,7 @@
 
 # Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
-# Test streaming of large transaction containing multiple subtransactions and rollbacks
+# Test streaming of transaction containing multiple subtransactions and rollbacks
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
@@ -12,7 +12,7 @@ use Test::More;
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf('postgresql.conf',
-	'logical_decoding_work_mem = 64kB');
+	'logical_decoding_mode = immediate');
 $node_publisher->start;
 
 # Create subscriber node
@@ -48,25 +48,25 @@ my $result =
 	"SELECT count(*), count(c) FROM test_tab");
 is($result, qq(2|0), 'check initial data was copied to subscriber');
 
-# large (streamed) transaction with DDL, DML and ROLLBACKs
+# streamed transaction with DDL, DML and ROLLBACKs
 $node_publisher->safe_psql(
 	'postgres', q{
 BEGIN;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3,500) s(i);
+INSERT INTO test_tab VALUES (3, md5(3::text));
 SAVEPOINT s1;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(501,1000) s(i);
+INSERT INTO test_tab VALUES (4, md5(4::text));
 SAVEPOINT s2;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(1001,1500) s(i);
+INSERT INTO test_tab VALUES (5, md5(5::text));
 SAVEPOINT s3;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(1501,2000) s(i);
+INSERT INTO test_tab VALUES (6, md5(6::text));
 ROLLBACK TO s2;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(2001,2500) s(i);
+INSERT INTO test_tab VALUES (7, md5(7::text));
 ROLLBACK TO s1;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(2501,3000) s(i);
+INSERT INTO test_tab VALUES (8, md5(8::text));
 SAVEPOINT s4;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3001,3500) s(i);
+INSERT INTO test_tab VALUES (9, md5(9::text));
 SAVEPOINT s5;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3501,4000) s(i);
+INSERT INTO test_tab VALUES (10, md5(10::text));
 COMMIT;
 });
 
@@ -75,24 +75,24 @@ $node_publisher->wait_for_catchup($appname);
 $result =
   $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c) FROM test_tab");
-is($result, qq(2000|0),
+is($result, qq(6|0),
 	'check rollback to savepoint was reflected on subscriber and extra columns contain local defaults'
 );
 
-# large (streamed) transaction with subscriber receiving out of order
-# subtransaction ROLLBACKs
+# streamed transaction with subscriber receiving out of order subtransaction
+# ROLLBACKs
 $node_publisher->safe_psql(
 	'postgres', q{
 BEGIN;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(4001,4500) s(i);
+INSERT INTO test_tab VALUES (11, md5(11::text));
 SAVEPOINT s1;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(5001,5500) s(i);
+INSERT INTO test_tab VALUES (12, md5(12::text));
 SAVEPOINT s2;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(6001,6500) s(i);
+INSERT INTO test_tab VALUES (13, md5(13::text));
 SAVEPOINT s3;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(7001,7500) s(i);
+INSERT INTO test_tab VALUES (14, md5(14::text));
 RELEASE s2;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(8001,8500) s(i);
+INSERT INTO test_tab VALUES (15, md5(15::text));
 ROLLBACK TO s1;
 COMMIT;
 });
@@ -102,18 +102,18 @@ $node_publisher->wait_for_catchup($appname);
 $result =
   $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c) FROM test_tab");
-is($result, qq(2500|0),
+is($result, qq(7|0),
 	'check rollback to savepoint was reflected on subscriber');
 
-# large (streamed) transaction with subscriber receiving rollback
+# streamed transaction with subscriber receiving rollback
 $node_publisher->safe_psql(
 	'postgres', q{
 BEGIN;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(8501,9000) s(i);
+INSERT INTO test_tab VALUES (16, md5(16::text));
 SAVEPOINT s1;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(9001,9500) s(i);
+INSERT INTO test_tab VALUES (17, md5(17::text));
 SAVEPOINT s2;
-INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(9501,10000) s(i);
+INSERT INTO test_tab VALUES (18, md5(18::text));
 ROLLBACK;
 });
 
@@ -122,7 +122,7 @@ $node_publisher->wait_for_catchup($appname);
 $result =
   $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c) FROM test_tab");
-is($result, qq(2500|0), 'check rollback was reflected on subscriber');
+is($result, qq(7|0), 'check rollback was reflected on subscriber');
 
 $node_subscriber->stop;
 $node_publisher->stop;

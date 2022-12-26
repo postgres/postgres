@@ -11597,6 +11597,34 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-logical-decoding-mode" xreflabel="logical_decoding_mode">
+      <term><varname>logical_decoding_mode</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>logical_decoding_mode</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Allows streaming or serializing changes immediately in logical decoding.
+        The allowed values of <varname>logical_decoding_mode</varname> are
+        <literal>buffered</literal> and <literal>immediate</literal>. When set
+        to <literal>immediate</literal>, stream each change if
+        <literal>streaming</literal> option (see optional parameters set by
+        <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>)
+        is enabled, otherwise, serialize each change.  When set to
+        <literal>buffered</literal>, which is the default, decoding will stream
+        or serialize changes when <varname>logical_decoding_work_mem</varname>
+        is reached.
+       </para>
+       <para>
+        This parameter is intended to be used to test logical decoding and
+        replication of large transactions for which otherwise we need to
+        generate the changes till <varname>logical_decoding_work_mem</varname>
+        is reached.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
   </sect1>
   <sect1 id="runtime-config-short">

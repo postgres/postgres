@@ -18,7 +18,7 @@ $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf(
 	'postgresql.conf', qq(
 max_prepared_transactions = 10
-logical_decoding_work_mem = 64kB
+logical_decoding_mode = immediate
 ));
 $node_publisher->start;
 
@@ -80,11 +80,11 @@ is($result, qq(2|2|2), 'check initial data was copied to subscriber');
 ###############################
 
 # check that 2PC gets replicated to subscriber
-# Insert, update and delete enough rows to exceed the 64kB limit.
+# Insert, update and delete some rows.
 $node_publisher->safe_psql(
 	'postgres', q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
+	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	PREPARE TRANSACTION 'test_prepared_tab';});
@@ -105,7 +105,7 @@ $node_publisher->wait_for_catchup($appname);
 # check that transaction is committed on subscriber
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
-is($result, qq(3334|3334|3334),
+is($result, qq(4|4|4),
 	'Rows inserted by 2PC have committed on subscriber, and extra columns contain local defaults'
 );
 $result = $node_subscriber->safe_psql('postgres',
@@ -124,11 +124,11 @@ is($result, qq(0), 'transaction is committed on subscriber');
 # First, delete the data except for 2 rows (will be replicated)
 $node_publisher->safe_psql('postgres', "DELETE FROM test_tab WHERE a > 2;");
 
-# Then insert, update and delete enough rows to exceed the 64kB limit.
+# Then insert, update and delete some rows.
 $node_publisher->safe_psql(
 	'postgres', q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
+	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	PREPARE TRANSACTION 'test_prepared_tab';});
@@ -158,7 +158,7 @@ is($result, qq(0), 'transaction is aborted on subscriber');
 
 ###############################
 # Check that 2PC COMMIT PREPARED is decoded properly on crash restart.
-# 1. insert, update and delete enough rows to exceed the 64kB limit.
+# 1. insert, update and delete some rows.
 # 2. Then server crashes before the 2PC transaction is committed.
 # 3. After servers are restarted the pending transaction is committed.
 #
@@ -169,7 +169,7 @@ is($result, qq(0), 'transaction is aborted on subscriber');
 $node_publisher->safe_psql(
 	'postgres', q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
+	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	PREPARE TRANSACTION 'test_prepared_tab';});
@@ -188,7 +188,7 @@ $node_publisher->wait_for_catchup($appname);
 # check inserts are visible
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
-is($result, qq(3334|3334|3334),
+is($result, qq(4|4|4),
 	'Rows inserted by 2PC have committed on subscriber, and extra columns contain local defaults'
 );
 
@@ -206,11 +206,11 @@ is($result, qq(3334|3334|3334),
 # First, delete the data except for 2 rows (will be replicated)
 $node_publisher->safe_psql('postgres', "DELETE FROM test_tab WHERE a > 2;");
 
-# Then insert, update and delete enough rows to exceed the 64kB limit.
+# Then insert, update and delete some rows.
 $node_publisher->safe_psql(
 	'postgres', q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
+	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	PREPARE TRANSACTION 'test_prepared_tab';});
@@ -257,11 +257,11 @@ is($result, qq(0), 'transaction is aborted on subscriber');
 # First, delete the data except for 2 rows (will be replicated)
 $node_publisher->safe_psql('postgres', "DELETE FROM test_tab WHERE a > 2;");
 
-# Then insert, update and delete enough rows to exceed the 64kB limit.
+# Then insert, update and delete some rows.
 $node_publisher->safe_psql(
 	'postgres', q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
+	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	PREPARE TRANSACTION 'test_prepared_tab';});
@@ -287,7 +287,7 @@ $node_publisher->wait_for_catchup($appname);
 # check that transaction is committed on subscriber
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
-is($result, qq(3335|3335|3335),
+is($result, qq(5|5|5),
 	'Rows inserted by 2PC (as well as outside insert) have committed on subscriber, and extra columns contain local defaults'
 );
 
