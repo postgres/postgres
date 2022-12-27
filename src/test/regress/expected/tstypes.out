@@ -89,6 +89,25 @@ SELECT $$'' '1' '2'$$::tsvector;  -- error, empty lexeme is not allowed
 ERROR:  syntax error in tsvector: "'' '1' '2'"
 LINE 1: SELECT $$'' '1' '2'$$::tsvector;
                ^
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('foo', 'tsvector');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid($$''$$, 'tsvector');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message($$''$$, 'tsvector');
+     pg_input_error_message     
+--------------------------------
+ syntax error in tsvector: "''"
+(1 row)
+
 --Base tsquery test
 SELECT '1'::tsquery;
  tsquery 
@@ -370,6 +389,31 @@ SELECT '!!a & !!b'::tsquery;
     tsquery    
 ---------------
  !!'a' & !!'b'
+(1 row)
+
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('foo', 'tsquery');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('foo!', 'tsquery');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('foo!', 'tsquery');
+     pg_input_error_message      
+---------------------------------
+ syntax error in tsquery: "foo!"
+(1 row)
+
+SELECT pg_input_error_message('a <100000> b', 'tsquery');
+                                pg_input_error_message                                 
+---------------------------------------------------------------------------------------
+ distance in phrase operator must be an integer value between zero and 16384 inclusive
 (1 row)
 
 --comparisons

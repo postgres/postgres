@@ -25,11 +25,13 @@
 struct TSVectorParseStateData;	/* opaque struct in tsvector_parser.c */
 typedef struct TSVectorParseStateData *TSVectorParseState;
 
+/* flag bits that can be passed to init_tsvector_parser: */
 #define P_TSV_OPR_IS_DELIM	(1 << 0)
 #define P_TSV_IS_TSQUERY	(1 << 1)
 #define P_TSV_IS_WEB		(1 << 2)
 
-extern TSVectorParseState init_tsvector_parser(char *input, int flags);
+extern TSVectorParseState init_tsvector_parser(char *input, int flags,
+											   Node *escontext);
 extern void reset_tsvector_parser(TSVectorParseState state, char *input);
 extern bool gettoken_tsvector(TSVectorParseState state,
 							  char **strval, int *lenval,
@@ -58,13 +60,15 @@ typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,
 													 * QueryOperand struct */
 							  bool prefix);
 
+/* flag bits that can be passed to parse_tsquery: */
 #define P_TSQ_PLAIN		(1 << 0)
 #define P_TSQ_WEB		(1 << 1)
 
 extern TSQuery parse_tsquery(char *buf,
 							 PushFunction pushval,
 							 Datum opaque,
-							 int flags);
+							 int flags,
+							 Node *escontext);
 
 /* Functions for use by PushFunction implementations */
 extern void pushValue(TSQueryParserState state,
@@ -222,7 +226,7 @@ extern int32 tsCompareString(char *a, int lena, char *b, int lenb, bool prefix);
  * TSQuery Utilities
  */
 extern QueryItem *clean_NOT(QueryItem *ptr, int32 *len);
-extern TSQuery cleanup_tsquery_stopwords(TSQuery in);
+extern TSQuery cleanup_tsquery_stopwords(TSQuery in, bool noisy);
 
 typedef struct QTNode
 {
