@@ -45,6 +45,31 @@ sub filter_dump
 	# Remove empty lines.
 	$dump_contents =~ s/^\n//mgx;
 
+	# Apply custom filtering rules, if any.
+	if (defined($ENV{filter_rules}))
+	{
+		my $filter_file = $ENV{filter_rules};
+		die "no file with custom filter rules found!" unless -e $filter_file;
+
+		open my $filter_handle, '<', $filter_file
+		  or die "could not open $filter_file";
+		while (<$filter_handle>)
+		{
+			my $filter_line = $_;
+
+			# Skip comments and empty lines
+			next if ($filter_line =~ /^#/);
+			next if ($filter_line =~ /^\s*$/);
+
+			# Apply lines with filters.
+			note "Applying custom rule $filter_line to $dump_file";
+			my $filter = "\$dump_contents =~ $filter_line";
+			## no critic (ProhibitStringyEval)
+			eval $filter;
+		}
+		close $filter_handle;
+	}
+
 	my $dump_file_filtered = "${dump_file}_filtered";
 	open(my $dh, '>', $dump_file_filtered)
 	  || die "opening $dump_file_filtered";
