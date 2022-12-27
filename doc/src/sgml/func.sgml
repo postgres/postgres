@@ -24100,8 +24100,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regclass</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found.
        </para></entry>
       </row>
 
@@ -24118,8 +24117,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regcollation</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found.
        </para></entry>
       </row>
 
@@ -24136,8 +24134,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regnamespace</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found.
        </para></entry>
       </row>
 
@@ -24154,8 +24151,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regoper</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found or is ambiguous.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found or is ambiguous.
        </para></entry>
       </row>
 
@@ -24172,8 +24168,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regoperator</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found.
        </para></entry>
       </row>
 
@@ -24190,8 +24185,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regproc</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found or is ambiguous.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found or is ambiguous.
        </para></entry>
       </row>
 
@@ -24208,8 +24202,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regprocedure</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found.
        </para></entry>
       </row>
 
@@ -24226,8 +24219,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regrole</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found.
        </para></entry>
       </row>
 
@@ -24244,8 +24236,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         obtained by casting the string to type <type>regtype</type> (see
         <xref linkend="datatype-oid"/>); however, this function will return
         <literal>NULL</literal> rather than throwing an error if the name is
-        not found.  Also unlike the cast, this does not accept
-        a numeric OID as input.
+        not found.
        </para></entry>
       </row>
      </tbody>

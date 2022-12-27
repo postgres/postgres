@@ -118,24 +118,15 @@ Datum
 to_regproc(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	List	   *names;
-	FuncCandidateList clist;
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/*
-	 * Parse the name into components and see if it matches any pg_proc
-	 * entries in the current search path.
-	 */
-	names = stringToQualifiedNameList(pro_name, (Node *) &escontext);
-	if (names == NIL)
+	if (!DirectInputFunctionCallSafe(regprocin, pro_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
-
-	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);
-
-	if (clist == NULL || clist->next != NULL)
-		PG_RETURN_NULL();
-
-	PG_RETURN_OID(clist->oid);
+	PG_RETURN_DATUM(result);
 }
 
 /*
@@ -287,31 +278,15 @@ Datum
 to_regprocedure(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	List	   *names;
-	int			nargs;
-	Oid			argtypes[FUNC_MAX_ARGS];
-	FuncCandidateList clist;
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/*
-	 * Parse the name and arguments, look up potential matches in the current
-	 * namespace search list, and scan to see which one exactly matches the
-	 * given argument types.    (There will not be more than one match.)
-	 */
-	if (!parseNameAndArgTypes(pro_name, false,
-							  &names, &nargs, argtypes,
-							  (Node *) &escontext))
+	if (!DirectInputFunctionCallSafe(regprocedurein, pro_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
-
-	clist = FuncnameGetCandidates(names, nargs, NIL, false, false, false, true);
-
-	for (; clist; clist = clist->next)
-	{
-		if (memcmp(clist->args, argtypes, nargs * sizeof(Oid)) == 0)
-			PG_RETURN_OID(clist->oid);
-	}
-
-	PG_RETURN_NULL();
+	PG_RETURN_DATUM(result);
 }
 
 /*
@@ -552,24 +527,15 @@ Datum
 to_regoper(PG_FUNCTION_ARGS)
 {
 	char	   *opr_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	List	   *names;
-	FuncCandidateList clist;
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/*
-	 * Parse the name into components and see if it matches any pg_operator
-	 * entries in the current search path.
-	 */
-	names = stringToQualifiedNameList(opr_name, (Node *) &escontext);
-	if (names == NIL)
+	if (!DirectInputFunctionCallSafe(regoperin, opr_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
-
-	clist = OpernameGetCandidates(names, '\0', true);
-
-	if (clist == NULL || clist->next != NULL)
-		PG_RETURN_NULL();
-
-	PG_RETURN_OID(clist->oid);
+	PG_RETURN_DATUM(result);
 }
 
 /*
@@ -728,31 +694,15 @@ Datum
 to_regoperator(PG_FUNCTION_ARGS)
 {
 	char	   *opr_name_or_oid = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
-	int			nargs;
-	Oid			argtypes[FUNC_MAX_ARGS];
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/*
-	 * Parse the name and arguments, look up potential matches in the current
-	 * namespace search list, and scan to see which one exactly matches the
-	 * given argument types.    (There will not be more than one match.)
-	 */
-	if (!parseNameAndArgTypes(opr_name_or_oid, true,
-							  &names, &nargs, argtypes,
-							  (Node *) &escontext))
+	if (!DirectInputFunctionCallSafe(regoperatorin, opr_name_or_oid,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
-
-	if (nargs != 2)
-		PG_RETURN_NULL();
-
-	result = OpernameGetOprid(names, argtypes[0], argtypes[1]);
-
-	if (!OidIsValid(result))
-		PG_RETURN_NULL();
-
-	PG_RETURN_OID(result);
+	PG_RETURN_DATUM(result);
 }
 
 /*
@@ -975,25 +925,15 @@ Datum
 to_regclass(PG_FUNCTION_ARGS)
 {
 	char	   *class_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/*
-	 * Parse the name into components and see if it matches any pg_class
-	 * entries in the current search path.
-	 */
-	names = stringToQualifiedNameList(class_name, (Node *) &escontext);
-	if (names == NIL)
+	if (!DirectInputFunctionCallSafe(regclassin, class_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
-
-	/* We might not even have permissions on this relation; don't lock it. */
-	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, true);
-
-	if (OidIsValid(result))
-		PG_RETURN_OID(result);
-	else
-		PG_RETURN_NULL();
+	PG_RETURN_DATUM(result);
 }
 
 /*
@@ -1128,24 +1068,15 @@ Datum
 to_regcollation(PG_FUNCTION_ARGS)
 {
 	char	   *collation_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/*
-	 * Parse the name into components and see if it matches any pg_collation
-	 * entries in the current search path.
-	 */
-	names = stringToQualifiedNameList(collation_name, (Node *) &escontext);
-	if (names == NIL)
+	if (!DirectInputFunctionCallSafe(regcollationin, collation_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
-
-	result = get_collation_oid(names, true);
-
-	if (OidIsValid(result))
-		PG_RETURN_OID(result);
-	else
-		PG_RETURN_NULL();
+	PG_RETURN_DATUM(result);
 }
 
 /*
@@ -1278,17 +1209,15 @@ Datum
 to_regtype(PG_FUNCTION_ARGS)
 {
 	char	   *typ_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	int32		typmod;
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	/*
-	 * Invoke the full parser to deal with special cases such as array syntax.
-	 */
-	if (parseTypeString(typ_name, &result, &typmod, (Node *) &escontext))
-		PG_RETURN_OID(result);
-	else
+	if (!DirectInputFunctionCallSafe(regtypein, typ_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
+	PG_RETURN_DATUM(result);
 }
 
 /*
@@ -1634,23 +1563,15 @@ Datum
 to_regrole(PG_FUNCTION_ARGS)
 {
 	char	   *role_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	names = stringToQualifiedNameList(role_name, (Node *) &escontext);
-	if (names == NIL)
+	if (!DirectInputFunctionCallSafe(regrolein, role_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
-
-	if (list_length(names) != 1)
-		PG_RETURN_NULL();
-
-	result = get_role_oid(strVal(linitial(names)), true);
-
-	if (OidIsValid(result))
-		PG_RETURN_OID(result);
-	else
-		PG_RETURN_NULL();
+	PG_RETURN_DATUM(result);
 }
 
 /*
@@ -1759,23 +1680,15 @@ Datum
 to_regnamespace(PG_FUNCTION_ARGS)
 {
 	char	   *nsp_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
+	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	names = stringToQualifiedNameList(nsp_name, (Node *) &escontext);
-	if (names == NIL)
+	if (!DirectInputFunctionCallSafe(regnamespacein, nsp_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
 		PG_RETURN_NULL();
-
-	if (list_length(names) != 1)
-		PG_RETURN_NULL();
-
-	result = get_namespace_oid(strVal(linitial(names)), true);
-
-	if (OidIsValid(result))
-		PG_RETURN_OID(result);
-	else
-		PG_RETURN_NULL();
+	PG_RETURN_DATUM(result);
 }
 
 /*
