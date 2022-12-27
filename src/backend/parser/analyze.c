@@ -615,6 +615,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	else
 	{
 		sub_rtable = NIL;		/* not used, but keep compiler quiet */
+		sub_rteperminfos = NIL;
 		sub_namespace = NIL;
 	}
 
