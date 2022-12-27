@@ -529,7 +529,7 @@ XLogRecordSaveFPWs(XLogReaderState *record, const char *savepath)
 			pg_fatal("could not write file \"%s\": %m", filename);
 
 		if (fclose(file) != 0)
-			pg_fatal("could not write file \"%s\": %m", filename);
+			pg_fatal("could not close file \"%s\": %m", filename);
 	}
 }
 
