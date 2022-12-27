@@ -74,7 +74,9 @@ SELECT regproc('ng_catalog.now');
 SELECT regprocedure('ng_catalog.abs(numeric)');
 SELECT regclass('ng_catalog.pg_class');
 SELECT regtype('ng_catalog.int4');
+\set VERBOSITY sqlstate \\ -- error message is encoding-dependent
 SELECT regcollation('ng_catalog."POSIX"');
+\set VERBOSITY default
 
 -- schemaname not applicable
 
@@ -124,7 +126,7 @@ SELECT to_regnamespace('foo.bar');
 -- Test soft-error API
 
 SELECT pg_input_error_message('ng_catalog.pg_class', 'regclass');
-SELECT pg_input_error_message('ng_catalog."POSIX"', 'regcollation');
+SELECT pg_input_is_valid('ng_catalog."POSIX"', 'regcollation');
 SELECT pg_input_error_message('no_such_config', 'regconfig');
 SELECT pg_input_error_message('no_such_dictionary', 'regdictionary');
 SELECT pg_input_error_message('Nonexistent', 'regnamespace');

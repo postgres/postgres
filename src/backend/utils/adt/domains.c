@@ -127,7 +127,7 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
  * execExpr*.c, but we execute each constraint separately, rather than
  * compiling them in-line within a larger expression.
  *
- * If escontext points to an ErrorStateContext, any failures are reported
+ * If escontext points to an ErrorSaveContext, any failures are reported
  * there, otherwise they are ereport'ed.  Note that we do not attempt to do
  * soft reporting of errors raised during execution of CHECK constraints.
  */

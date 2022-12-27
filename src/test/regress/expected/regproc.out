@@ -268,10 +268,10 @@ SELECT regtype('ng_catalog.int4');
 ERROR:  schema "ng_catalog" does not exist
 LINE 1: SELECT regtype('ng_catalog.int4');
                        ^
+\set VERBOSITY sqlstate \\ -- error message is encoding-dependent
 SELECT regcollation('ng_catalog."POSIX"');
-ERROR:  collation "ng_catalog.POSIX" for encoding "SQL_ASCII" does not exist
-LINE 1: SELECT regcollation('ng_catalog."POSIX"');
-                            ^
+ERROR:  42704
+\set VERBOSITY default
 -- schemaname not applicable
 SELECT regrole('regress_regrole_test');
 ERROR:  role "regress_regrole_test" does not exist
@@ -454,10 +454,10 @@ SELECT pg_input_error_message('ng_catalog.pg_class', 'regclass');
  relation "ng_catalog.pg_class" does not exist
 (1 row)
 
-SELECT pg_input_error_message('ng_catalog."POSIX"', 'regcollation');
-                        pg_input_error_message                        
-----------------------------------------------------------------------
- collation "ng_catalog.POSIX" for encoding "SQL_ASCII" does not exist
+SELECT pg_input_is_valid('ng_catalog."POSIX"', 'regcollation');
+ pg_input_is_valid 
+-------------------
+ f
 (1 row)
 
 SELECT pg_input_error_message('no_such_config', 'regconfig');
