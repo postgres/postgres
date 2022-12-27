@@ -53,6 +53,17 @@ select e'\\"a=>q"w'::hstore;
 select ''::hstore;
 select '	'::hstore;
 
+-- invalid input
+select '  =>null'::hstore;
+select 'aa=>"'::hstore;
+
+-- also try it with non-error-throwing API
+select pg_input_is_valid('a=>b', 'hstore');
+select pg_input_is_valid('a=b', 'hstore');
+select pg_input_error_message('a=b', 'hstore');
+select pg_input_error_message(' =>b', 'hstore');
+
+
 -- -> operator
 
 select 'aa=>b, c=>d , b=>16'::hstore->'c';

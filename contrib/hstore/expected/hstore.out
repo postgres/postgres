@@ -243,6 +243,40 @@ select '	'::hstore;
  
 (1 row)
 
+-- invalid input
+select '  =>null'::hstore;
+ERROR:  syntax error in hstore, near "=" at position 2
+LINE 1: select '  =>null'::hstore;
+               ^
+select 'aa=>"'::hstore;
+ERROR:  syntax error in hstore: unexpected end of string
+LINE 1: select 'aa=>"'::hstore;
+               ^
+-- also try it with non-error-throwing API
+select pg_input_is_valid('a=>b', 'hstore');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+select pg_input_is_valid('a=b', 'hstore');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_error_message('a=b', 'hstore');
+             pg_input_error_message             
+------------------------------------------------
+ syntax error in hstore, near "b" at position 2
+(1 row)
+
+select pg_input_error_message(' =>b', 'hstore');
+             pg_input_error_message             
+------------------------------------------------
+ syntax error in hstore, near "=" at position 1
+(1 row)
+
 -- -> operator
 select 'aa=>b, c=>d , b=>16'::hstore->'c';
  ?column? 
