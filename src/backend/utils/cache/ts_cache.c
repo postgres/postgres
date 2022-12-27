@@ -38,6 +38,7 @@
 #include "catalog/pg_ts_template.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "tsearch/ts_cache.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -556,6 +557,8 @@ lookup_ts_config_cache(Oid cfgId)
 Oid
 getTSCurrentConfig(bool emitError)
 {
+	List	   *namelist;
+
 	/* if we have a cached value, return it */
 	if (OidIsValid(TSCurrentConfigCache))
 		return TSCurrentConfigCache;
@@ -576,9 +579,22 @@ getTSCurrentConfig(bool emitError)
 	}
 
 	/* Look up the config */
-	TSCurrentConfigCache =
-		get_ts_config_oid(stringToQualifiedNameList(TSCurrentConfig),
-						  !emitError);
+	if (emitError)
+	{
+		namelist = stringToQualifiedNameList(TSCurrentConfig, NULL);
+		TSCurrentConfigCache = get_ts_config_oid(namelist, false);
+	}
+	else
+	{
+		ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+		namelist = stringToQualifiedNameList(TSCurrentConfig,
+											 (Node *) &escontext);
+		if (namelist != NIL)
+			TSCurrentConfigCache = get_ts_config_oid(namelist, true);
+		else
+			TSCurrentConfigCache = InvalidOid;	/* bad name list syntax */
+	}
 
 	return TSCurrentConfigCache;
 }
@@ -594,12 +610,19 @@ check_default_text_search_config(char **newval, void **extra, GucSource source)
 	 */
 	if (IsTransactionState() && MyDatabaseId != InvalidOid)
 	{
+		ErrorSaveContext escontext = {T_ErrorSaveContext};
+		List	   *namelist;
 		Oid			cfgId;
 		HeapTuple	tuple;
 		Form_pg_ts_config cfg;
 		char	   *buf;
 
-		cfgId = get_ts_config_oid(stringToQualifiedNameList(*newval), true);
+		namelist = stringToQualifiedNameList(*newval,
+											 (Node *) &escontext);
+		if (namelist != NIL)
+			cfgId = get_ts_config_oid(namelist, true);
+		else
+			cfgId = InvalidOid; /* bad name list syntax */
 
 		/*
 		 * When source == PGC_S_TEST, don't throw a hard error for a

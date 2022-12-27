@@ -31,7 +31,9 @@
 #include "catalog/pg_ts_dict.h"
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "parser/parse_type.h"
 #include "parser/scansup.h"
 #include "utils/acl.h"
@@ -43,8 +45,9 @@
 
 static bool parseNumericOid(char *string, Oid *result, Node *escontext);
 static bool parseDashOrOid(char *string, Oid *result, Node *escontext);
-static void parseNameAndArgTypes(const char *string, bool allowNone,
-								 List **names, int *nargs, Oid *argtypes);
+static bool parseNameAndArgTypes(const char *string, bool allowNone,
+								 List **names, int *nargs, Oid *argtypes,
+								 Node *escontext);
 
 
 /*****************************************************************************
@@ -63,12 +66,13 @@ Datum
 regprocin(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	RegProcedure result;
 	List	   *names;
 	FuncCandidateList clist;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(pro_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(pro_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* Else it's a name, possibly schema-qualified */
@@ -84,15 +88,18 @@ regprocin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_proc entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(pro_name_or_oid);
-	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, false);
+	names = stringToQualifiedNameList(pro_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
+
+	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);
 
 	if (clist == NULL)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 	else if (clist->next != NULL)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 				 errmsg("more than one function named \"%s\"",
 						pro_name_or_oid)));
@@ -113,12 +120,16 @@ to_regproc(PG_FUNCTION_ARGS)
 	char	   *pro_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	List	   *names;
 	FuncCandidateList clist;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 	/*
 	 * Parse the name into components and see if it matches any pg_proc
 	 * entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(pro_name);
+	names = stringToQualifiedNameList(pro_name, (Node *) &escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
+
 	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);
 
 	if (clist == NULL || clist->next != NULL)
@@ -222,6 +233,7 @@ Datum
 regprocedurein(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	RegProcedure result;
 	List	   *names;
 	int			nargs;
@@ -229,7 +241,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	FuncCandidateList clist;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(pro_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(pro_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* The rest of this wouldn't work in bootstrap mode */
@@ -242,10 +254,13 @@ regprocedurein(PG_FUNCTION_ARGS)
 	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
 	 */
-	parseNameAndArgTypes(pro_name_or_oid, false, &names, &nargs, argtypes);
+	if (!parseNameAndArgTypes(pro_name_or_oid, false,
+							  &names, &nargs, argtypes,
+							  escontext))
+		PG_RETURN_NULL();
 
 	clist = FuncnameGetCandidates(names, nargs, NIL, false, false,
-								  false, false);
+								  false, true);
 
 	for (; clist; clist = clist->next)
 	{
@@ -254,7 +269,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	}
 
 	if (clist == NULL)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 
@@ -276,13 +291,17 @@ to_regprocedure(PG_FUNCTION_ARGS)
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	FuncCandidateList clist;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 	/*
 	 * Parse the name and arguments, look up potential matches in the current
 	 * namespace search list, and scan to see which one exactly matches the
 	 * given argument types.    (There will not be more than one match.)
 	 */
-	parseNameAndArgTypes(pro_name, false, &names, &nargs, argtypes);
+	if (!parseNameAndArgTypes(pro_name, false,
+							  &names, &nargs, argtypes,
+							  (Node *) &escontext))
+		PG_RETURN_NULL();
 
 	clist = FuncnameGetCandidates(names, nargs, NIL, false, false, false, true);
 
@@ -484,12 +503,13 @@ Datum
 regoperin(PG_FUNCTION_ARGS)
 {
 	char	   *opr_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	List	   *names;
 	FuncCandidateList clist;
 
 	/* Handle "0" or numeric OID */
-	if (parseNumericOid(opr_name_or_oid, &result, fcinfo->context))
+	if (parseNumericOid(opr_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* Else it's a name, possibly schema-qualified */
@@ -502,15 +522,18 @@ regoperin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_operator entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(opr_name_or_oid);
-	clist = OpernameGetCandidates(names, '\0', false);
+	names = stringToQualifiedNameList(opr_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
+
+	clist = OpernameGetCandidates(names, '\0', true);
 
 	if (clist == NULL)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s", opr_name_or_oid)));
 	else if (clist->next != NULL)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 				 errmsg("more than one operator named %s",
 						opr_name_or_oid)));
@@ -531,12 +554,16 @@ to_regoper(PG_FUNCTION_ARGS)
 	char	   *opr_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	List	   *names;
 	FuncCandidateList clist;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 	/*
 	 * Parse the name into components and see if it matches any pg_operator
 	 * entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(opr_name);
+	names = stringToQualifiedNameList(opr_name, (Node *) &escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
+
 	clist = OpernameGetCandidates(names, '\0', true);
 
 	if (clist == NULL || clist->next != NULL)
@@ -646,13 +673,14 @@ Datum
 regoperatorin(PG_FUNCTION_ARGS)
 {
 	char	   *opr_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	List	   *names;
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
 
 	/* Handle "0" or numeric OID */
-	if (parseNumericOid(opr_name_or_oid, &result, fcinfo->context))
+	if (parseNumericOid(opr_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* The rest of this wouldn't work in bootstrap mode */
@@ -665,14 +693,18 @@ regoperatorin(PG_FUNCTION_ARGS)
 	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
 	 */
-	parseNameAndArgTypes(opr_name_or_oid, true, &names, &nargs, argtypes);
+	if (!parseNameAndArgTypes(opr_name_or_oid, true,
+							  &names, &nargs, argtypes,
+							  escontext))
+		PG_RETURN_NULL();
+
 	if (nargs == 1)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
 				 errmsg("missing argument"),
 				 errhint("Use NONE to denote the missing argument of a unary operator.")));
 	if (nargs != 2)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("too many arguments"),
 				 errhint("Provide two argument types for operator.")));
@@ -680,7 +712,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 	result = OpernameGetOprid(names, argtypes[0], argtypes[1]);
 
 	if (!OidIsValid(result))
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s", opr_name_or_oid)));
 
@@ -700,23 +732,20 @@ to_regoperator(PG_FUNCTION_ARGS)
 	List	   *names;
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 	/*
 	 * Parse the name and arguments, look up potential matches in the current
 	 * namespace search list, and scan to see which one exactly matches the
 	 * given argument types.    (There will not be more than one match.)
 	 */
-	parseNameAndArgTypes(opr_name_or_oid, true, &names, &nargs, argtypes);
-	if (nargs == 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_PARAMETER),
-				 errmsg("missing argument"),
-				 errhint("Use NONE to denote the missing argument of a unary operator.")));
+	if (!parseNameAndArgTypes(opr_name_or_oid, true,
+							  &names, &nargs, argtypes,
+							  (Node *) &escontext))
+		PG_RETURN_NULL();
+
 	if (nargs != 2)
-		ereport(ERROR,
-				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("too many arguments"),
-				 errhint("Provide two argument types for operator.")));
+		PG_RETURN_NULL();
 
 	result = OpernameGetOprid(names, argtypes[0], argtypes[1]);
 
@@ -903,11 +932,12 @@ Datum
 regclassin(PG_FUNCTION_ARGS)
 {
 	char	   *class_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	List	   *names;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(class_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(class_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* Else it's a name, possibly schema-qualified */
@@ -920,10 +950,18 @@ regclassin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_class entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(class_name_or_oid);
+	names = stringToQualifiedNameList(class_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
 	/* We might not even have permissions on this relation; don't lock it. */
-	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, false);
+	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, true);
+
+	if (!OidIsValid(result))
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s\" does not exist",
+						NameListToString(names))));
 
 	PG_RETURN_OID(result);
 }
@@ -939,12 +977,15 @@ to_regclass(PG_FUNCTION_ARGS)
 	char	   *class_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	List	   *names;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 	/*
 	 * Parse the name into components and see if it matches any pg_class
 	 * entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(class_name);
+	names = stringToQualifiedNameList(class_name, (Node *) &escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
 	/* We might not even have permissions on this relation; don't lock it. */
 	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, true);
@@ -1045,11 +1086,12 @@ Datum
 regcollationin(PG_FUNCTION_ARGS)
 {
 	char	   *collation_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	List	   *names;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(collation_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(collation_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* Else it's a name, possibly schema-qualified */
@@ -1062,9 +1104,17 @@ regcollationin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_collation entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(collation_name_or_oid);
+	names = stringToQualifiedNameList(collation_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
-	result = get_collation_oid(names, false);
+	result = get_collation_oid(names, true);
+
+	if (!OidIsValid(result))
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("collation \"%s\" for encoding \"%s\" does not exist",
+						NameListToString(names), GetDatabaseEncodingName())));
 
 	PG_RETURN_OID(result);
 }
@@ -1080,12 +1130,15 @@ to_regcollation(PG_FUNCTION_ARGS)
 	char	   *collation_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	List	   *names;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 	/*
 	 * Parse the name into components and see if it matches any pg_collation
 	 * entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(collation_name);
+	names = stringToQualifiedNameList(collation_name, (Node *) &escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
 	result = get_collation_oid(names, true);
 
@@ -1192,11 +1245,12 @@ Datum
 regtypein(PG_FUNCTION_ARGS)
 {
 	char	   *typ_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	int32		typmod;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(typ_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(typ_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* Else it's a type name, possibly schema-qualified or decorated */
@@ -1207,9 +1261,10 @@ regtypein(PG_FUNCTION_ARGS)
 
 	/*
 	 * Normal case: invoke the full parser to deal with special cases such as
-	 * array syntax.
+	 * array syntax.  We don't need to check for parseTypeString failure,
+	 * since we'll just return anyway.
 	 */
-	parseTypeString(typ_name_or_oid, &result, &typmod, false);
+	(void) parseTypeString(typ_name_or_oid, &result, &typmod, escontext);
 
 	PG_RETURN_OID(result);
 }
@@ -1225,13 +1280,12 @@ to_regtype(PG_FUNCTION_ARGS)
 	char	   *typ_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	int32		typmod;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 	/*
 	 * Invoke the full parser to deal with special cases such as array syntax.
 	 */
-	parseTypeString(typ_name, &result, &typmod, true);
-
-	if (OidIsValid(result))
+	if (parseTypeString(typ_name, &result, &typmod, (Node *) &escontext))
 		PG_RETURN_OID(result);
 	else
 		PG_RETURN_NULL();
@@ -1318,11 +1372,12 @@ Datum
 regconfigin(PG_FUNCTION_ARGS)
 {
 	char	   *cfg_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	List	   *names;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(cfg_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(cfg_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* The rest of this wouldn't work in bootstrap mode */
@@ -1333,9 +1388,17 @@ regconfigin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_ts_config entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(cfg_name_or_oid);
+	names = stringToQualifiedNameList(cfg_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
-	result = get_ts_config_oid(names, false);
+	result = get_ts_config_oid(names, true);
+
+	if (!OidIsValid(result))
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("text search configuration \"%s\" does not exist",
+						NameListToString(names))));
 
 	PG_RETURN_OID(result);
 }
@@ -1419,11 +1482,12 @@ Datum
 regdictionaryin(PG_FUNCTION_ARGS)
 {
 	char	   *dict_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	List	   *names;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(dict_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(dict_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* The rest of this wouldn't work in bootstrap mode */
@@ -1434,9 +1498,17 @@ regdictionaryin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_ts_dict entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(dict_name_or_oid);
+	names = stringToQualifiedNameList(dict_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
-	result = get_ts_dict_oid(names, false);
+	result = get_ts_dict_oid(names, true);
+
+	if (!OidIsValid(result))
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("text search dictionary \"%s\" does not exist",
+						NameListToString(names))));
 
 	PG_RETURN_OID(result);
 }
@@ -1520,11 +1592,12 @@ Datum
 regrolein(PG_FUNCTION_ARGS)
 {
 	char	   *role_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	List	   *names;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(role_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(role_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* The rest of this wouldn't work in bootstrap mode */
@@ -1532,14 +1605,22 @@ regrolein(PG_FUNCTION_ARGS)
 		elog(ERROR, "regrole values must be OIDs in bootstrap mode");
 
 	/* Normal case: see if the name matches any pg_authid entry. */
-	names = stringToQualifiedNameList(role_name_or_oid);
+	names = stringToQualifiedNameList(role_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
 	if (list_length(names) != 1)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
-	result = get_role_oid(strVal(linitial(names)), false);
+	result = get_role_oid(strVal(linitial(names)), true);
+
+	if (!OidIsValid(result))
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("role \"%s\" does not exist",
+						strVal(linitial(names)))));
 
 	PG_RETURN_OID(result);
 }
@@ -1555,13 +1636,14 @@ to_regrole(PG_FUNCTION_ARGS)
 	char	   *role_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	List	   *names;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	names = stringToQualifiedNameList(role_name);
+	names = stringToQualifiedNameList(role_name, (Node *) &escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
 	if (list_length(names) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("invalid name syntax")));
+		PG_RETURN_NULL();
 
 	result = get_role_oid(strVal(linitial(names)), true);
 
@@ -1635,11 +1717,12 @@ Datum
 regnamespacein(PG_FUNCTION_ARGS)
 {
 	char	   *nsp_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	Oid			result;
 	List	   *names;
 
 	/* Handle "-" or numeric OID */
-	if (parseDashOrOid(nsp_name_or_oid, &result, fcinfo->context))
+	if (parseDashOrOid(nsp_name_or_oid, &result, escontext))
 		PG_RETURN_OID(result);
 
 	/* The rest of this wouldn't work in bootstrap mode */
@@ -1647,14 +1730,22 @@ regnamespacein(PG_FUNCTION_ARGS)
 		elog(ERROR, "regnamespace values must be OIDs in bootstrap mode");
 
 	/* Normal case: see if the name matches any pg_namespace entry. */
-	names = stringToQualifiedNameList(nsp_name_or_oid);
+	names = stringToQualifiedNameList(nsp_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
 	if (list_length(names) != 1)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
-	result = get_namespace_oid(strVal(linitial(names)), false);
+	result = get_namespace_oid(strVal(linitial(names)), true);
+
+	if (!OidIsValid(result))
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist",
+						strVal(linitial(names)))));
 
 	PG_RETURN_OID(result);
 }
@@ -1670,13 +1761,14 @@ to_regnamespace(PG_FUNCTION_ARGS)
 	char	   *nsp_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	List	   *names;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	names = stringToQualifiedNameList(nsp_name);
+	names = stringToQualifiedNameList(nsp_name, (Node *) &escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
 
 	if (list_length(names) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("invalid name syntax")));
+		PG_RETURN_NULL();
 
 	result = get_namespace_oid(strVal(linitial(names)), true);
 
@@ -1763,9 +1855,13 @@ text_regclass(PG_FUNCTION_ARGS)
 
 /*
  * Given a C string, parse it into a qualified-name list.
+ *
+ * If escontext is an ErrorSaveContext node, invalid input will be
+ * reported there instead of being thrown, and we return NIL.
+ * (NIL is not possible as a success return, since empty-input is an error.)
  */
 List *
-stringToQualifiedNameList(const char *string)
+stringToQualifiedNameList(const char *string, Node *escontext)
 {
 	char	   *rawname;
 	List	   *result = NIL;
@@ -1776,12 +1872,12 @@ stringToQualifiedNameList(const char *string)
 	rawname = pstrdup(string);
 
 	if (!SplitIdentifierString(rawname, '.', &namelist))
-		ereport(ERROR,
+		ereturn(escontext, NIL,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
 	if (namelist == NIL)
-		ereport(ERROR,
+		ereturn(escontext, NIL,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
@@ -1858,10 +1954,14 @@ parseDashOrOid(char *string, Oid *result, Node *escontext)
  *
  * If allowNone is true, accept "NONE" and return it as InvalidOid (this is
  * for unary operators).
+ *
+ * Returns true on success, false on failure (the latter only possible
+ * if escontext is an ErrorSaveContext node).
  */
-static void
+static bool
 parseNameAndArgTypes(const char *string, bool allowNone, List **names,
-					 int *nargs, Oid *argtypes)
+					 int *nargs, Oid *argtypes,
+					 Node *escontext)
 {
 	char	   *rawname;
 	char	   *ptr;
@@ -1886,13 +1986,15 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 			break;
 	}
 	if (*ptr == '\0')
-		ereport(ERROR,
+		ereturn(escontext, false,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("expected a left parenthesis")));
 
 	/* Separate the name and parse it into a list */
 	*ptr++ = '\0';
-	*names = stringToQualifiedNameList(rawname);
+	*names = stringToQualifiedNameList(rawname, escontext);
+	if (*names == NIL)
+		return false;
 
 	/* Check for the trailing right parenthesis and remove it */
 	ptr2 = ptr + strlen(ptr);
@@ -1902,7 +2004,7 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 			break;
 	}
 	if (*ptr2 != ')')
-		ereport(ERROR,
+		ereturn(escontext, false,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("expected a right parenthesis")));
 
@@ -1921,7 +2023,7 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 		{
 			/* End of string.  Okay unless we had a comma before. */
 			if (had_comma)
-				ereport(ERROR,
+				ereturn(escontext, false,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("expected a type name")));
 			break;
@@ -1953,7 +2055,7 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 			}
 		}
 		if (in_quote || paren_count != 0)
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("improper type name")));
 
@@ -1985,10 +2087,11 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 		else
 		{
 			/* Use full parser to resolve the type name */
-			parseTypeString(typename, &typeid, &typmod, false);
+			if (!parseTypeString(typename, &typeid, &typmod, escontext))
+				return false;
 		}
 		if (*nargs >= FUNC_MAX_ARGS)
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 					 errmsg("too many arguments")));
 
@@ -1997,4 +2100,6 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 	}
 
 	pfree(rawname);
+
+	return true;
 }

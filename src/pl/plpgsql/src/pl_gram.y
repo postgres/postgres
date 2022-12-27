@@ -3725,7 +3725,7 @@ parse_datatype(const char *string, int location)
 	error_context_stack = &syntax_errcontext;
 
 	/* Let the main parser try to parse it under standard SQL rules */
-	typeName = typeStringToTypeName(string);
+	typeName = typeStringToTypeName(string, NULL);
 	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
 
 	/* Restore former ereport callback */

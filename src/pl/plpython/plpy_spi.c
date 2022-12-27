@@ -105,7 +105,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			 *information for input conversion.
 			 ********************************************************/
 
-			parseTypeString(sptr, &typeId, &typmod, false);
+			(void) parseTypeString(sptr, &typeId, &typmod, NULL);
 
 			Py_DECREF(optr);
 

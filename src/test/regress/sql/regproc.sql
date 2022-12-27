@@ -120,3 +120,26 @@ SELECT to_regrole('foo.bar');
 SELECT to_regnamespace('Nonexistent');
 SELECT to_regnamespace('"Nonexistent"');
 SELECT to_regnamespace('foo.bar');
+
+-- Test soft-error API
+
+SELECT pg_input_error_message('ng_catalog.pg_class', 'regclass');
+SELECT pg_input_error_message('ng_catalog."POSIX"', 'regcollation');
+SELECT pg_input_error_message('no_such_config', 'regconfig');
+SELECT pg_input_error_message('no_such_dictionary', 'regdictionary');
+SELECT pg_input_error_message('Nonexistent', 'regnamespace');
+SELECT pg_input_error_message('ng_catalog.||/', 'regoper');
+SELECT pg_input_error_message('-', 'regoper');
+SELECT pg_input_error_message('ng_catalog.+(int4,int4)', 'regoperator');
+SELECT pg_input_error_message('-', 'regoperator');
+SELECT pg_input_error_message('ng_catalog.now', 'regproc');
+SELECT pg_input_error_message('ng_catalog.abs(numeric)', 'regprocedure');
+SELECT pg_input_error_message('ng_catalog.abs(numeric', 'regprocedure');
+SELECT pg_input_error_message('regress_regrole_test', 'regrole');
+SELECT pg_input_error_message('no_such_type', 'regtype');
+
+-- Some cases that should be soft errors, but are not yet
+SELECT pg_input_error_message('incorrect type name syntax', 'regtype');
+SELECT pg_input_error_message('numeric(1,2,3)', 'regtype');  -- bogus typmod
+SELECT pg_input_error_message('way.too.many.names', 'regtype');
+SELECT pg_input_error_message('no_such_catalog.schema.name', 'regtype');

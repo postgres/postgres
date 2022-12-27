@@ -3613,7 +3613,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 			char	   *typstr;
 
 			typstr = sv2cstr(argv[i]);
-			parseTypeString(typstr, &typId, &typmod, false);
+			(void) parseTypeString(typstr, &typId, &typmod, NULL);
 			pfree(typstr);
 
 			getTypeInputInfo(typId, &typInput, &typIOParam);
