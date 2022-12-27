@@ -478,6 +478,156 @@ invalid_syntax:
 }
 
 /*
+ * Convert input string to an unsigned 32 bit integer.
+ *
+ * Allows any number of leading or trailing whitespace characters.
+ *
+ * If endloc isn't NULL, store a pointer to the rest of the string there,
+ * so that caller can parse the rest.  Otherwise, it's an error if anything
+ * but whitespace follows.
+ *
+ * typname is what is reported in error messges.
+ *
+ * If escontext points to an ErrorSaveContext node, that is filled instead
+ * of throwing an error; the caller must check SOFT_ERROR_OCCURRED()
+ * to detect errors.
+ */
+uint32
+uint32in_subr(const char *s, char **endloc,
+			  const char *typname, Node *escontext)
+{
+	uint32		result;
+	unsigned long cvt;
+	char	   *endptr;
+
+	errno = 0;
+	cvt = strtoul(s, &endptr, 0);
+
+	/*
+	 * strtoul() normally only sets ERANGE.  On some systems it may also set
+	 * EINVAL, which simply means it couldn't parse the input string.  Be sure
+	 * to report that the same way as the standard error indication (that
+	 * endptr == s).
+	 */
+	if ((errno && errno != ERANGE) || endptr == s)
+		ereturn(escontext, 0,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						typname, s)));
+
+	if (errno == ERANGE)
+		ereturn(escontext, 0,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value \"%s\" is out of range for type %s",
+						s, typname)));
+
+	if (endloc)
+	{
+		/* caller wants to deal with rest of string */
+		*endloc = endptr;
+	}
+	else
+	{
+		/* allow only whitespace after number */
+		while (*endptr && isspace((unsigned char) *endptr))
+			endptr++;
+		if (*endptr)
+			ereturn(escontext, 0,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for type %s: \"%s\"",
+							typname, s)));
+	}
+
+	result = (uint32) cvt;
+
+	/*
+	 * Cope with possibility that unsigned long is wider than uint32, in which
+	 * case strtoul will not raise an error for some values that are out of
+	 * the range of uint32.
+	 *
+	 * For backwards compatibility, we want to accept inputs that are given
+	 * with a minus sign, so allow the input value if it matches after either
+	 * signed or unsigned extension to long.
+	 *
+	 * To ensure consistent results on 32-bit and 64-bit platforms, make sure
+	 * the error message is the same as if strtoul() had returned ERANGE.
+	 */
+#if PG_UINT32_MAX != ULONG_MAX
+	if (cvt != (unsigned long) result &&
+		cvt != (unsigned long) ((int) result))
+		ereturn(escontext, 0,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value \"%s\" is out of range for type %s",
+						s, typname)));
+#endif
+
+	return result;
+}
+
+/*
+ * Convert input string to an unsigned 64 bit integer.
+ *
+ * Allows any number of leading or trailing whitespace characters.
+ *
+ * If endloc isn't NULL, store a pointer to the rest of the string there,
+ * so that caller can parse the rest.  Otherwise, it's an error if anything
+ * but whitespace follows.
+ *
+ * typname is what is reported in error messges.
+ *
+ * If escontext points to an ErrorSaveContext node, that is filled instead
+ * of throwing an error; the caller must check SOFT_ERROR_OCCURRED()
+ * to detect errors.
+ */
+uint64
+uint64in_subr(const char *s, char **endloc,
+			  const char *typname, Node *escontext)
+{
+	uint64		result;
+	char	   *endptr;
+
+	errno = 0;
+	result = strtou64(s, &endptr, 0);
+
+	/*
+	 * strtoul[l] normally only sets ERANGE.  On some systems it may also set
+	 * EINVAL, which simply means it couldn't parse the input string.  Be sure
+	 * to report that the same way as the standard error indication (that
+	 * endptr == s).
+	 */
+	if ((errno && errno != ERANGE) || endptr == s)
+		ereturn(escontext, 0,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						typname, s)));
+
+	if (errno == ERANGE)
+		ereturn(escontext, 0,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value \"%s\" is out of range for type %s",
+						s, typname)));
+
+	if (endloc)
+	{
+		/* caller wants to deal with rest of string */
+		*endloc = endptr;
+	}
+	else
+	{
+		/* allow only whitespace after number */
+		while (*endptr && isspace((unsigned char) *endptr))
+			endptr++;
+		if (*endptr)
+			ereturn(escontext, 0,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for type %s: \"%s\"",
+							typname, s)));
+	}
+
+	return result;
+}
+
+/*
  * pg_itoa: converts a signed 16-bit integer to its string representation
  * and returns strlen(a).
  *

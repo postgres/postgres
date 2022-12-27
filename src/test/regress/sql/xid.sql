@@ -10,11 +10,19 @@ select '010'::xid,
 	   '0xffffffffffffffff'::xid8,
 	   '-1'::xid8;
 
--- garbage values are not yet rejected (perhaps they should be)
+-- garbage values
 select ''::xid;
 select 'asdf'::xid;
 select ''::xid8;
 select 'asdf'::xid8;
+
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('42', 'xid');
+SELECT pg_input_is_valid('asdf', 'xid');
+SELECT pg_input_error_message('0xffffffffff', 'xid');
+SELECT pg_input_is_valid('42', 'xid8');
+SELECT pg_input_is_valid('asdf', 'xid8');
+SELECT pg_input_error_message('0xffffffffffffffffffff', 'xid8');
 
 -- equality
 select '1'::xid = '1'::xid;

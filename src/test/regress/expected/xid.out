@@ -13,29 +13,58 @@ select '010'::xid,
    8 |  42 | 4294967295 | 4294967295 |    8 |   42 | 18446744073709551615 | 18446744073709551615
 (1 row)
 
--- garbage values are not yet rejected (perhaps they should be)
+-- garbage values
 select ''::xid;
- xid 
------
-   0
-(1 row)
-
+ERROR:  invalid input syntax for type xid: ""
+LINE 1: select ''::xid;
+               ^
 select 'asdf'::xid;
- xid 
------
-   0
-(1 row)
-
+ERROR:  invalid input syntax for type xid: "asdf"
+LINE 1: select 'asdf'::xid;
+               ^
 select ''::xid8;
- xid8 
-------
-    0
+ERROR:  invalid input syntax for type xid8: ""
+LINE 1: select ''::xid8;
+               ^
+select 'asdf'::xid8;
+ERROR:  invalid input syntax for type xid8: "asdf"
+LINE 1: select 'asdf'::xid8;
+               ^
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('42', 'xid');
+ pg_input_is_valid 
+-------------------
+ t
 (1 row)
 
-select 'asdf'::xid8;
- xid8 
-------
-    0
+SELECT pg_input_is_valid('asdf', 'xid');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('0xffffffffff', 'xid');
+              pg_input_error_message               
+---------------------------------------------------
+ value "0xffffffffff" is out of range for type xid
+(1 row)
+
+SELECT pg_input_is_valid('42', 'xid8');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('asdf', 'xid8');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_error_message('0xffffffffffffffffffff', 'xid8');
+                    pg_input_error_message                    
+--------------------------------------------------------------
+ value "0xffffffffffffffffffff" is out of range for type xid8
 (1 row)
 
 -- equality
