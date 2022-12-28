@@ -11,6 +11,7 @@
 #include "libpq/pqformat.h"
 #include "ltree.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 
 
 /* parser's states */
@@ -37,6 +38,7 @@ typedef struct
 	char	   *buf;
 	int32		state;
 	int32		count;
+	struct Node *escontext;
 	/* reverse polish notation in list (for temporary usage) */
 	NODE	   *str;
 	/* number in str */
@@ -51,6 +53,8 @@ typedef struct
 
 /*
  * get token from query string
+ *
+ * caller needs to check if a soft-error was set if the result is ERR.
  */
 static int32
 gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint16 *flag)
@@ -84,7 +88,7 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 					*flag = 0;
 				}
 				else if (!t_isspace(state->buf))
-					ereport(ERROR,
+					ereturn(state->escontext, ERR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("operand syntax error")));
 				break;
@@ -92,7 +96,7 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 				if (ISALNUM(state->buf))
 				{
 					if (*flag)
-						ereport(ERROR,
+						ereturn(state->escontext, ERR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("modifiers syntax error")));
 					*lenval += charlen;
@@ -124,9 +128,13 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 					return (state->count < 0) ? ERR : CLOSE;
 				}
 				else if (*(state->buf) == '\0')
+				{
 					return (state->count) ? ERR : END;
+				}
 				else if (!t_iseq(state->buf, ' '))
+				{
 					return ERR;
+				}
 				break;
 			default:
 				return ERR;
@@ -135,12 +143,14 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 
 		state->buf += charlen;
 	}
+
+	/* should not get here */
 }
 
 /*
  * push new one in polish notation reverse view
  */
-static void
+static bool
 pushquery(QPRS_STATE *state, int32 type, int32 val, int32 distance, int32 lenval, uint16 flag)
 {
 	NODE	   *tmp = (NODE *) palloc(sizeof(NODE));
@@ -149,11 +159,11 @@ pushquery(QPRS_STATE *state, int32 type, int32 val, int32 distance, int32 lenval
 	tmp->val = val;
 	tmp->flag = flag;
 	if (distance > 0xffff)
-		ereport(ERROR,
+		ereturn(state->escontext, false,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("value is too big")));
 	if (lenval > 0xff)
-		ereport(ERROR,
+		ereturn(state->escontext, false,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("operand is too long")));
 	tmp->distance = distance;
@@ -161,21 +171,23 @@ pushquery(QPRS_STATE *state, int32 type, int32 val, int32 distance, int32 lenval
 	tmp->next = state->str;
 	state->str = tmp;
 	state->num++;
+	return true;
 }
 
 /*
  * This function is used for query text parsing
  */
-static void
+static bool
 pushval_asis(QPRS_STATE *state, int type, char *strval, int lenval, uint16 flag)
 {
 	if (lenval > 0xffff)
-		ereport(ERROR,
+		ereturn(state->escontext, false,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("word is too long")));
 
-	pushquery(state, type, ltree_crc32_sz(strval, lenval),
-			  state->curop - state->op, lenval, flag);
+	if (! pushquery(state, type, ltree_crc32_sz(strval, lenval),
+					state->curop - state->op, lenval, flag))
+		return false;
 
 	while (state->curop - state->op + lenval + 1 >= state->lenop)
 	{
@@ -190,6 +202,7 @@ pushval_asis(QPRS_STATE *state, int type, char *strval, int lenval, uint16 flag)
 	*(state->curop) = '\0';
 	state->curop++;
 	state->sumlen += lenval + 1;
+	return true;
 }
 
 #define STACKDEPTH		32
@@ -215,17 +228,22 @@ makepol(QPRS_STATE *state)
 		switch (type)
 		{
 			case VAL:
-				pushval_asis(state, VAL, strval, lenval, flag);
+				if (!pushval_asis(state, VAL, strval, lenval, flag))
+					return ERR;
 				while (lenstack && (stack[lenstack - 1] == (int32) '&' ||
 									stack[lenstack - 1] == (int32) '!'))
 				{
 					lenstack--;
-					pushquery(state, OPR, stack[lenstack], 0, 0, 0);
+					if (!pushquery(state, OPR, stack[lenstack], 0, 0, 0))
+						return ERR;
 				}
 				break;
 			case OPR:
 				if (lenstack && val == (int32) '|')
-					pushquery(state, OPR, val, 0, 0, 0);
+				{
+					if (!pushquery(state, OPR, val, 0, 0, 0))
+						return ERR;
+				}
 				else
 				{
 					if (lenstack == STACKDEPTH)
@@ -242,30 +260,35 @@ makepol(QPRS_STATE *state)
 									stack[lenstack - 1] == (int32) '!'))
 				{
 					lenstack--;
-					pushquery(state, OPR, stack[lenstack], 0, 0, 0);
+					if (!pushquery(state, OPR, stack[lenstack], 0, 0, 0))
+						return ERR;
 				}
 				break;
 			case CLOSE:
 				while (lenstack)
 				{
 					lenstack--;
-					pushquery(state, OPR, stack[lenstack], 0, 0, 0);
+					if (!pushquery(state, OPR, stack[lenstack], 0, 0, 0))
+						return ERR;
 				};
 				return END;
 				break;
 			case ERR:
+				if (SOFT_ERROR_OCCURRED(state->escontext))
+					return ERR;
+				/* fall through */
 			default:
-				ereport(ERROR,
+				ereturn(state->escontext, ERR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
 
-				return ERR;
 		}
 	}
 	while (lenstack)
 	{
 		lenstack--;
-		pushquery(state, OPR, stack[lenstack], 0, 0, 0);
+		if (!pushquery(state, OPR, stack[lenstack], 0, 0, 0))
+			return ERR;
 	};
 	return END;
 }
@@ -304,7 +327,7 @@ findoprnd(ITEM *ptr, int32 *pos)
  * input
  */
 static ltxtquery *
-queryin(char *buf)
+queryin(char *buf, struct Node *escontext)
 {
 	QPRS_STATE	state;
 	int32		i;
@@ -325,6 +348,7 @@ queryin(char *buf)
 	state.count = 0;
 	state.num = 0;
 	state.str = NULL;
+	state.escontext = escontext;
 
 	/* init list of operand */
 	state.sumlen = 0;
@@ -333,15 +357,16 @@ queryin(char *buf)
 	*(state.curop) = '\0';
 
 	/* parse query & make polish notation (postfix, but in reverse order) */
-	makepol(&state);
+	if (makepol(&state) == ERR)
+		return NULL;
 	if (!state.num)
-		ereport(ERROR,
+		ereturn(escontext, NULL,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("syntax error"),
 				 errdetail("Empty query.")));
 
 	if (LTXTQUERY_TOO_BIG(state.num, state.sumlen))
-		ereport(ERROR,
+		ereturn(escontext, NULL,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("ltxtquery is too large")));
 	commonlen = COMPUTESIZE(state.num, state.sumlen);
@@ -382,7 +407,11 @@ PG_FUNCTION_INFO_V1(ltxtq_in);
 Datum
 ltxtq_in(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER(queryin((char *) PG_GETARG_POINTER(0)));
+	ltxtquery *res;
+
+	if ((res = queryin((char *) PG_GETARG_POINTER(0), fcinfo->context)) == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_POINTER(res);
 }
 
 /*
@@ -407,7 +436,7 @@ ltxtq_recv(PG_FUNCTION_ARGS)
 		elog(ERROR, "unsupported ltxtquery version number %d", version);
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
-	res = queryin(str);
+	res = queryin(str, NULL);
 	pfree(str);
 
 	PG_RETURN_POINTER(res);

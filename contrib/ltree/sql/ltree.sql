@@ -382,3 +382,18 @@ SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.2' ;
 SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
+
+-- test non-error-throwing input
+
+SELECT str as "value", typ as "type",
+       pg_input_is_valid(str,typ) as ok,
+       pg_input_error_message(str,typ) as errmsg
+FROM (VALUES ('.2.3', 'ltree'),
+             ('1.2.', 'ltree'),
+             ('1.2.3','ltree'),
+             ('@.2.3','lquery'),
+             (' 2.3', 'lquery'),
+             ('1.2.3','lquery'),
+             ('$tree & aWdf@*','ltxtquery'),
+             ('!tree & aWdf@*','ltxtquery'))
+      AS a(str,typ);
