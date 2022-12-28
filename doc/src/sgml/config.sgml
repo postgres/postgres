@@ -9194,9 +9194,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Specifies the cutoff age (in transactions) that <command>VACUUM</command>
-        should use to decide whether to freeze row versions
-        while scanning a table.
+        Specifies the cutoff age (in transactions) that
+        <command>VACUUM</command> should use to decide whether to
+        trigger freezing of pages that have an older XID.
         The default is 50 million transactions.  Although
         users can set this value anywhere from zero to one billion,
         <command>VACUUM</command> will silently limit the effective value to half
@@ -9274,9 +9274,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Specifies the cutoff age (in multixacts) that <command>VACUUM</command>
-        should use to decide whether to replace multixact IDs with a newer
-        transaction ID or multixact ID while scanning a table.  The default
-        is 5 million multixacts.
+        should use to decide whether to trigger freezing of pages with
+        an older multixact ID.  The default is 5 million multixacts.
         Although users can set this value anywhere from zero to one billion,
         <command>VACUUM</command> will silently limit the effective value to half
         the value of <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>,
