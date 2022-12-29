@@ -70,6 +70,15 @@
 #define HAS_BOOL 1
 #endif
 
+/*
+ * Newer versions of the perl headers trigger a lot of warnings with our
+ * compiler flags (at least -Wdeclaration-after-statement,
+ * -Wshadow=compatible-local are known to be problematic). The system_header
+ * pragma hides warnings from within the rest of this file, if supported.
+ */
+#ifdef HAVE_PRAGMA_GCC_SYSTEM_HEADER
+#pragma GCC system_header
+#endif
 
 /*
  * Get the basic Perl API.  We use PERL_NO_GET_CONTEXT mode so that our code
