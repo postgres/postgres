@@ -496,7 +496,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 	if (state == LQPRS_WAITDELIM)
 	{
 		if (!finish_nodeitem(lptr, ptr, true, pos, escontext))
-			return false;
+			return NULL;
 	}
 	else if (state == LQPRS_WAITOPEN)
 		curqlevel->high = LTREE_MAX_LEVELS;
