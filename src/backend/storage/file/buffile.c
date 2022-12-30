@@ -607,7 +607,7 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
 		memcpy(ptr, file->buffer.data + file->pos, nthistime);
 
 		file->pos += nthistime;
-		ptr = (void *) ((char *) ptr + nthistime);
+		ptr = (char *) ptr + nthistime;
 		size -= nthistime;
 		nread += nthistime;
 	}
@@ -655,7 +655,7 @@ BufFileWrite(BufFile *file, void *ptr, size_t size)
 		file->pos += nthistime;
 		if (file->nbytes < file->pos)
 			file->nbytes = file->pos;
-		ptr = (void *) ((char *) ptr + nthistime);
+		ptr = (char *) ptr + nthistime;
 		size -= nthistime;
 	}
 }

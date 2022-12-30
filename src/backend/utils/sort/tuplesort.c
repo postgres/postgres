@@ -2908,7 +2908,7 @@ markrunend(LogicalTape *tape)
 {
 	unsigned int len = 0;
 
-	LogicalTapeWrite(tape, (void *) &len, sizeof(len));
+	LogicalTapeWrite(tape, &len, sizeof(len));
 }
 
 /*

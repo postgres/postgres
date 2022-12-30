@@ -1002,10 +1002,10 @@ writetup_heap(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
 	/* total on-disk footprint: */
 	unsigned int tuplen = tupbodylen + sizeof(int);
 
-	LogicalTapeWrite(tape, (void *) &tuplen, sizeof(tuplen));
-	LogicalTapeWrite(tape, (void *) tupbody, tupbodylen);
+	LogicalTapeWrite(tape, &tuplen, sizeof(tuplen));
+	LogicalTapeWrite(tape, tupbody, tupbodylen);
 	if (base->sortopt & TUPLESORT_RANDOMACCESS) /* need trailing length word? */
-		LogicalTapeWrite(tape, (void *) &tuplen, sizeof(tuplen));
+		LogicalTapeWrite(tape, &tuplen, sizeof(tuplen));
 }
 
 static void
@@ -1475,10 +1475,10 @@ writetup_index(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
 	unsigned int tuplen;
 
 	tuplen = IndexTupleSize(tuple) + sizeof(tuplen);
-	LogicalTapeWrite(tape, (void *) &tuplen, sizeof(tuplen));
-	LogicalTapeWrite(tape, (void *) tuple, IndexTupleSize(tuple));
+	LogicalTapeWrite(tape, &tuplen, sizeof(tuplen));
+	LogicalTapeWrite(tape, tuple, IndexTupleSize(tuple));
 	if (base->sortopt & TUPLESORT_RANDOMACCESS) /* need trailing length word? */
-		LogicalTapeWrite(tape, (void *) &tuplen, sizeof(tuplen));
+		LogicalTapeWrite(tape, &tuplen, sizeof(tuplen));
 }
 
 static void
@@ -1564,10 +1564,10 @@ writetup_datum(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
 
 	writtenlen = tuplen + sizeof(unsigned int);
 
-	LogicalTapeWrite(tape, (void *) &writtenlen, sizeof(writtenlen));
+	LogicalTapeWrite(tape, &writtenlen, sizeof(writtenlen));
 	LogicalTapeWrite(tape, waddr, tuplen);
 	if (base->sortopt & TUPLESORT_RANDOMACCESS) /* need trailing length word? */
-		LogicalTapeWrite(tape, (void *) &writtenlen, sizeof(writtenlen));
+		LogicalTapeWrite(tape, &writtenlen, sizeof(writtenlen));
 }
 
 static void

@@ -2961,10 +2961,10 @@ hashagg_spill_tuple(AggState *aggstate, HashAggSpill *spill,
 
 	tape = spill->partitions[partition];
 
-	LogicalTapeWrite(tape, (void *) &hash, sizeof(uint32));
+	LogicalTapeWrite(tape, &hash, sizeof(uint32));
 	total_written += sizeof(uint32);
 
-	LogicalTapeWrite(tape, (void *) tuple, tuple->t_len);
+	LogicalTapeWrite(tape, tuple, tuple->t_len);
 	total_written += tuple->t_len;
 
 	if (shouldFree)
@@ -3029,7 +3029,7 @@ hashagg_batch_read(HashAggBatch *batch, uint32 *hashp)
 	tuple->t_len = t_len;
 
 	nread = LogicalTapeRead(tape,
-							(void *) ((char *) tuple + sizeof(uint32)),
+							(char *) tuple + sizeof(uint32),
 							t_len - sizeof(uint32));
 	if (nread != t_len - sizeof(uint32))
 		ereport(ERROR,
