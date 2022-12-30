@@ -131,12 +131,15 @@ typedef struct ReorderBufferTupleCidEnt
 	CommandId	combocid;		/* just for debugging */
 } ReorderBufferTupleCidEnt;
 
-/* Virtual file descriptor with file offset tracking */
+/* File handle for spilling transactions to files during reorder */
 typedef struct TXNEntryFile
 {
-	File		vfd;			/* -1 when the file is closed */
+	int	     	vfd;			/* -1 when the file is closed */
 	off_t		curOffset;		/* offset for next write or read. Reset to 0
 								 * when vfd is opened. */
+    TransactionId xid;          /* current transaction - specified when file opened */
+    XLogSegNo   segno;          /* current segment number if open */
+    bool readonly;              /* true if opened for reading */
 } TXNEntryFile;
 
 /* k-way in-order change iteration support structures */
@@ -249,7 +252,7 @@ static void ReorderBufferExecuteInvalidations(uint32 nmsgs, SharedInvalidationMe
 static void ReorderBufferCheckMemoryLimit(ReorderBuffer *rb);
 static void ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn);
 static void ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
-										 int fd, ReorderBufferChange *change);
+										 TXNEntryFile *fd, ReorderBufferChange *change);
 static Size ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 										TXNEntryFile *file, XLogSegNo *segno);
 static void ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
@@ -295,6 +298,19 @@ static Size ReorderBufferChangeSize(ReorderBufferChange *change);
 static void ReorderBufferChangeMemoryUpdate(ReorderBuffer *rb,
 											ReorderBufferChange *change,
 											bool addition, Size sz);
+
+/*
+ * --------------------------------------------
+ * spilling transactions to files
+ * --------------------------------------------
+ */
+TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool readonly);
+void TXNFileClose(TXNEntryFile *txnFile);
+void TXNFileWrite(TXNEntryFile *txnFile, char *buf, size_t size);
+int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size);
+TXNEntryFile TXNFileInit(bool readonly);
+void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno);
+
 
 /*
  * Allocate a new ReorderBuffer and clean out any old serialized state from
@@ -1290,7 +1306,7 @@ ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 	for (off = 0; off < state->nr_txns; off++)
 	{
-		state->entries[off].file.vfd = -1;
+		state->entries[off].file = TXNFileInit(true);
 		state->entries[off].segno = 0;
 	}
 
@@ -3630,7 +3646,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 {
 	dlist_iter	subtxn_i;
 	dlist_mutable_iter change_i;
-	int			fd = -1;
+	TXNEntryFile	txnFile = TXNFileInit(false);
 	XLogSegNo	curOpenSegNo = 0;
 	Size		spilled = 0;
 	Size		size = txn->size;
@@ -3658,34 +3674,10 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		 * store in segment in which it belongs by start lsn, don't split over
 		 * multiple segments tho
 		 */
-		if (fd == -1 ||
-			!XLByteInSeg(change->lsn, curOpenSegNo, wal_segment_size))
-		{
-			char		path[MAXPGPATH];
+        XLByteToSeg(change->lsn, curOpenSegNo, wal_segment_size);
+        TXNFileSetSegment(&txnFile, txn->xid, curOpenSegNo);
 
-			if (fd != -1)
-				CloseTransientFile(fd);
-
-			XLByteToSeg(change->lsn, curOpenSegNo, wal_segment_size);
-
-			/*
-			 * No need to care about TLIs here, only used during a single run,
-			 * so each LSN only maps to a specific WAL record.
-			 */
-			ReorderBufferSerializedPath(path, MyReplicationSlot, txn->xid,
-										curOpenSegNo);
-
-			/* open segment, create it if necessary */
-			fd = OpenTransientFile(path,
-								   O_CREAT | O_WRONLY | O_APPEND | PG_BINARY);
-
-			if (fd < 0)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\": %m", path)));
-		}
-
-		ReorderBufferSerializeChange(rb, txn, fd, change);
+		ReorderBufferSerializeChange(rb, txn, &txnFile, change);
 		dlist_delete(&change->node);
 		ReorderBufferReturnChange(rb, change, true);
 
@@ -3710,8 +3702,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	txn->nentries_mem = 0;
 	txn->txn_flags |= RBTXN_IS_SERIALIZED;
 
-	if (fd != -1)
-		CloseTransientFile(fd);
+	TXNFileClose(&txnFile);
 }
 
 /*
@@ -3719,7 +3710,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
  */
 static void
 ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
-							 int fd, ReorderBufferChange *change)
+							 TXNEntryFile *fd, ReorderBufferChange *change)
 {
 	ReorderBufferDiskChange *ondisk;
 	Size		sz = sizeof(ReorderBufferDiskChange);
@@ -3900,22 +3891,8 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 	ondisk->size = sz;
 
-	errno = 0;
-	pgstat_report_wait_start(WAIT_EVENT_REORDER_BUFFER_WRITE);
-	if (write(fd, rb->outbuf, ondisk->size) != ondisk->size)
-	{
-		int			save_errno = errno;
-
-		CloseTransientFile(fd);
-
-		/* if write didn't set errno, assume problem is no disk space */
-		errno = save_errno ? save_errno : ENOSPC;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to data file for XID %u: %m",
-						txn->xid)));
-	}
-	pgstat_report_wait_end();
+    /* Write the transaction data */
+    TXNFileWrite(fd, rb->outbuf, ondisk->size);
 
 	/*
 	 * Keep the transaction's final_lsn up to date with each change we send to
@@ -4176,7 +4153,6 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	Size		restored = 0;
 	XLogSegNo	last_segno;
 	dlist_mutable_iter cleanup_iter;
-	File	   *fd = &file->vfd;
 
 	Assert(txn->first_lsn != InvalidXLogRecPtr);
 	Assert(txn->final_lsn != InvalidXLogRecPtr);
@@ -4195,47 +4171,19 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 	XLByteToSeg(txn->final_lsn, last_segno, wal_segment_size);
 
-	while (restored < max_changes_in_memory && *segno <= last_segno)
+    /* first time in */
+    if (*segno == 0)
+        XLByteToSeg(txn->first_lsn, *segno, wal_segment_size);
+
+    while (restored < max_changes_in_memory && *segno <= last_segno)
 	{
 		int			readBytes;
 		ReorderBufferDiskChange *ondisk;
-
+        Assert(*segno != 0 || dlist_is_empty(&txn->changes));
 		CHECK_FOR_INTERRUPTS();
 
-		if (*fd == -1)
-		{
-			char		path[MAXPGPATH];
-
-			/* first time in */
-			if (*segno == 0)
-				XLByteToSeg(txn->first_lsn, *segno, wal_segment_size);
-
-			Assert(*segno != 0 || dlist_is_empty(&txn->changes));
-
-			/*
-			 * No need to care about TLIs here, only used during a single run,
-			 * so each LSN only maps to a specific WAL record.
-			 */
-			ReorderBufferSerializedPath(path, MyReplicationSlot, txn->xid,
-										*segno);
-
-			*fd = PathNameOpenFile(path, O_RDONLY | PG_BINARY);
-
-			/* No harm in resetting the offset even in case of failure */
-			file->curOffset = 0;
-
-			if (*fd < 0 && errno == ENOENT)
-			{
-				*fd = -1;
-				(*segno)++;
-				continue;
-			}
-			else if (*fd < 0)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\": %m",
-								path)));
-		}
+        /* Switch to the appropriate segment file for this transaction */
+        TXNFileSetSegment(file, txn->xid, *segno);
 
 		/*
 		 * Read the statically sized part of a change which has information
@@ -4243,56 +4191,33 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		 * end of this file.
 		 */
 		ReorderBufferSerializeReserve(rb, sizeof(ReorderBufferDiskChange));
-		readBytes = FileRead(file->vfd, rb->outbuf,
-							 sizeof(ReorderBufferDiskChange),
-							 file->curOffset, WAIT_EVENT_REORDER_BUFFER_READ);
+		readBytes = TXNFileRead(file, rb->outbuf, sizeof(ReorderBufferDiskChange));
 
-		/* eof */
+		/* If eof, advance to the next segment */
 		if (readBytes == 0)
 		{
-			FileClose(*fd);
-			*fd = -1;
 			(*segno)++;
 			continue;
 		}
-		else if (readBytes < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read from reorderbuffer spill file: %m")));
-		else if (readBytes != sizeof(ReorderBufferDiskChange))
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read from reorderbuffer spill file: read %d instead of %u bytes",
-							readBytes,
-							(uint32) sizeof(ReorderBufferDiskChange))));
 
-		file->curOffset += readBytes;
-
+        /* Make sure there is room to read the full record */
 		ondisk = (ReorderBufferDiskChange *) rb->outbuf;
-
 		ReorderBufferSerializeReserve(rb,
 									  sizeof(ReorderBufferDiskChange) + ondisk->size);
 		ondisk = (ReorderBufferDiskChange *) rb->outbuf;
 
-		readBytes = FileRead(file->vfd,
+        /* Read the dyamically sized part of the change record */
+		readBytes = TXNFileRead(file,
 							 rb->outbuf + sizeof(ReorderBufferDiskChange),
-							 ondisk->size - sizeof(ReorderBufferDiskChange),
-							 file->curOffset,
-							 WAIT_EVENT_REORDER_BUFFER_READ);
+                             ondisk->size - sizeof(ReorderBufferDiskChange));
 
-		if (readBytes < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read from reorderbuffer spill file: %m")));
-		else if (readBytes != ondisk->size - sizeof(ReorderBufferDiskChange))
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read from reorderbuffer spill file: read %d instead of %u bytes",
-							readBytes,
-							(uint32) (ondisk->size - sizeof(ReorderBufferDiskChange)))));
-
-		file->curOffset += readBytes;
-
+        /* We whould NOT get an eof here */
+        if (readBytes == 0)
+            ereport(ERROR,
+                    (errcode_for_file_access(),
+                     errmsg("could not read from reorderbuffer spill file: read %d instead of %u bytes",
+                            readBytes, (uint32) (ondisk->size - sizeof(ReorderBufferDiskChange)))));
+;
 		/*
 		 * ok, read a full change from disk, now restore it into proper
 		 * in-memory format
@@ -5268,4 +5193,108 @@ restart:
 	if (cmax)
 		*cmax = ent->cmax;
 	return true;
+}
+
+
+TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool readonly)
+{
+    /* Build the file path to the desired segment */
+    char path[MAXPGPATH];
+    ReorderBufferSerializedPath(path, MyReplicationSlot, xid, segno);
+
+    /* Set flags according to reading or writing */
+    int oflags = readonly ? O_RDONLY | PG_BINARY
+                          : O_CREAT | O_APPEND | O_WRONLY | PG_BINARY;
+
+    /* open segment, create it if necessary.  Allow missing segments when reading. */
+    File vfd = PathNameOpenFile(path, oflags);
+    if (vfd < 0 && errno != ENOENT)
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                 errmsg("could not open file \"%s\": %m", path)));
+
+    return (TXNEntryFile) {.vfd = vfd, .segno = segno, .curOffset = 0,
+                           .readonly = readonly, .xid = xid};
+}
+
+
+void TXNFileClose(TXNEntryFile *txnFile)
+{
+    if (txnFile->vfd != -1)
+        FileClose(txnFile->vfd);
+    txnFile->vfd = -1;
+}
+
+
+void TXNFileWrite(TXNEntryFile *txnFile, char *buf, size_t size)
+{
+    /* Write the buffer and check for errors */
+    int actual = FileWrite(txnFile->vfd, buf, (int)size, txnFile->curOffset, WAIT_EVENT_REORDER_BUFFER_WRITE);
+    if (actual != size)
+    {
+        int       save_errno = errno;
+        FileClose(txnFile->vfd);
+        errno = save_errno;
+
+        /* If write was partial, assume problem is no disk space */
+        if (actual >= 0)
+            errno = ENOSPC;
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                 errmsg("could not write to data file for XID %u: %m",
+                        txnFile->xid)));
+    }
+
+    txnFile->curOffset += actual;
+}
+
+
+int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size)
+{
+    /* Simplifies higher logic. Treat a missing file as an EOF */
+    if (txnFile->vfd == -1)
+        return 0;
+
+    /* Read from the transaction file. We do not expect partial reads other than EOF */
+    int readBytes = FileRead(txnFile->vfd, buf, (int)size,
+                             txnFile->curOffset, WAIT_EVENT_REORDER_BUFFER_READ);
+    if (readBytes < 0)
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                errmsg("could not read from reorderbuffer spill file: %m")));
+    else if (readBytes > 0 && readBytes != size)
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                 errmsg("could not read from reorderbuffer spill file: read %d instead of %u bytes",
+                        readBytes, (uint32)sizeof(ReorderBufferDiskChange))));
+
+    txnFile->curOffset += readBytes;
+    return readBytes;
+}
+
+
+/*
+ * Open a new transaction segment file if changed
+ */
+void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno)
+{
+    /* If the transaction id or WAL segment number have changed, ... */
+    if (segno != txnFile->segno ||  txnFile->vfd == -1)
+    {
+        /* Close the current segment */
+        if (txnFile->vfd != -1)
+            TXNFileClose(txnFile);
+
+        /* Open a new segment */
+        *txnFile = TXNFileOpen(txnFile->xid, segno, txnFile->readonly);
+    }
+}
+
+
+/*
+ * Initialize a transaction segment file handle, so NewSegment will open correctly
+ */
+TXNEntryFile TXNFileInit(bool readonly)
+{
+    return (TXNEntryFile) {.vfd=-1, .readonly=readonly};
 }
