@@ -1335,7 +1335,11 @@ build_distances(FmgrInfo *distanceFn, Oid colloid,
 	int			ndistances;
 	DistanceValue *distances;
 
-	Assert(neranges >= 2);
+	Assert(neranges > 0);
+
+	/* If there's only a single range, there's no distance to calculate. */
+	if (neranges == 1)
+		return NULL;
 
 	ndistances = (neranges - 1);
 	distances = (DistanceValue *) palloc0(sizeof(DistanceValue) * ndistances);
