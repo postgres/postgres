@@ -260,7 +260,7 @@ buf_init(FullTransactionId xmin, FullTransactionId xmax)
 	snap.nxip = 0;
 
 	buf = makeStringInfo();
-	appendBinaryStringInfo(buf, (char *) &snap, PG_SNAPSHOT_SIZE(0));
+	appendBinaryStringInfo(buf, &snap, PG_SNAPSHOT_SIZE(0));
 	return buf;
 }
 
@@ -272,7 +272,7 @@ buf_add_txid(StringInfo buf, FullTransactionId fxid)
 	/* do this before possible realloc */
 	snap->nxip++;
 
-	appendBinaryStringInfo(buf, (char *) &fxid, sizeof(fxid));
+	appendBinaryStringInfo(buf, &fxid, sizeof(fxid));
 }
 
 static pg_snapshot *

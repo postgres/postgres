@@ -142,7 +142,7 @@ extern void appendStringInfoSpaces(StringInfo str, int count);
  * if necessary.
  */
 extern void appendBinaryStringInfo(StringInfo str,
-								   const char *data, int datalen);
+								   const void *data, int datalen);
 
 /*------------------------
  * appendBinaryStringInfoNT
@@ -150,7 +150,7 @@ extern void appendBinaryStringInfo(StringInfo str,
  * if necessary. Does not ensure a trailing null-byte exists.
  */
 extern void appendBinaryStringInfoNT(StringInfo str,
-									 const char *data, int datalen);
+									 const void *data, int datalen);
 
 /*------------------------
  * enlargeStringInfo

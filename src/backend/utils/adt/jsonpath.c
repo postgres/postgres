@@ -267,18 +267,18 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 		case jpiString:
 		case jpiVariable:
 		case jpiKey:
-			appendBinaryStringInfo(buf, (char *) &item->value.string.len,
+			appendBinaryStringInfo(buf, &item->value.string.len,
 								   sizeof(item->value.string.len));
 			appendBinaryStringInfo(buf, item->value.string.val,
 								   item->value.string.len);
 			appendStringInfoChar(buf, '\0');
 			break;
 		case jpiNumeric:
-			appendBinaryStringInfo(buf, (char *) item->value.numeric,
+			appendBinaryStringInfo(buf, item->value.numeric,
 								   VARSIZE(item->value.numeric));
 			break;
 		case jpiBool:
-			appendBinaryStringInfo(buf, (char *) &item->value.boolean,
+			appendBinaryStringInfo(buf, &item->value.boolean,
 								   sizeof(item->value.boolean));
 			break;
 		case jpiAnd:
@@ -328,11 +328,11 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 				int32		offs;
 
 				appendBinaryStringInfo(buf,
-									   (char *) &item->value.like_regex.flags,
+									   &item->value.like_regex.flags,
 									   sizeof(item->value.like_regex.flags));
 				offs = reserveSpaceForItemPointer(buf);
 				appendBinaryStringInfo(buf,
-									   (char *) &item->value.like_regex.patternlen,
+									   &item->value.like_regex.patternlen,
 									   sizeof(item->value.like_regex.patternlen));
 				appendBinaryStringInfo(buf, item->value.like_regex.pattern,
 									   item->value.like_regex.patternlen);
@@ -393,7 +393,7 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 				int			offset;
 				int			i;
 
-				appendBinaryStringInfo(buf, (char *) &nelems, sizeof(nelems));
+				appendBinaryStringInfo(buf, &nelems, sizeof(nelems));
 
 				offset = buf->len;
 
@@ -431,10 +431,10 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 			break;
 		case jpiAny:
 			appendBinaryStringInfo(buf,
-								   (char *) &item->value.anybounds.first,
+								   &item->value.anybounds.first,
 								   sizeof(item->value.anybounds.first));
 			appendBinaryStringInfo(buf,
-								   (char *) &item->value.anybounds.last,
+								   &item->value.anybounds.last,
 								   sizeof(item->value.anybounds.last));
 			break;
 		case jpiType:
@@ -496,7 +496,7 @@ reserveSpaceForItemPointer(StringInfo buf)
 	int32		pos = buf->len;
 	int32		ptr = 0;
 
-	appendBinaryStringInfo(buf, (char *) &ptr, sizeof(ptr));
+	appendBinaryStringInfo(buf, &ptr, sizeof(ptr));
 
 	return pos;
 }
