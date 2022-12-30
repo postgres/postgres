@@ -38,7 +38,7 @@ static long gistBuffersGetFreeBlock(GISTBuildBuffers *gfbb);
 static void gistBuffersReleaseBlock(GISTBuildBuffers *gfbb, long blocknum);
 
 static void ReadTempFileBlock(BufFile *file, long blknum, void *ptr);
-static void WriteTempFileBlock(BufFile *file, long blknum, void *ptr);
+static void WriteTempFileBlock(BufFile *file, long blknum, const void *ptr);
 
 
 /*
@@ -764,7 +764,7 @@ ReadTempFileBlock(BufFile *file, long blknum, void *ptr)
 }
 
 static void
-WriteTempFileBlock(BufFile *file, long blknum, void *ptr)
+WriteTempFileBlock(BufFile *file, long blknum, const void *ptr)
 {
 	if (BufFileSeekBlock(file, blknum) != 0)
 		elog(ERROR, "could not seek to block %ld in temporary file", blknum);

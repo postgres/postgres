@@ -622,7 +622,7 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
  * ereport().
  */
 void
-BufFileWrite(BufFile *file, void *ptr, size_t size)
+BufFileWrite(BufFile *file, const void *ptr, size_t size)
 {
 	size_t		nthistime;
 
@@ -655,7 +655,7 @@ BufFileWrite(BufFile *file, void *ptr, size_t size)
 		file->pos += nthistime;
 		if (file->nbytes < file->pos)
 			file->nbytes = file->pos;
-		ptr = (char *) ptr + nthistime;
+		ptr = (const char *) ptr + nthistime;
 		size -= nthistime;
 	}
 }

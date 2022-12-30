@@ -220,7 +220,7 @@ struct LogicalTapeSet
 };
 
 static LogicalTape *ltsCreateTape(LogicalTapeSet *lts);
-static void ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
+static void ltsWriteBlock(LogicalTapeSet *lts, long blocknum, const void *buffer);
 static void ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
 static long ltsGetBlock(LogicalTapeSet *lts, LogicalTape *lt);
 static long ltsGetFreeBlock(LogicalTapeSet *lts);
@@ -235,7 +235,7 @@ static void ltsInitReadBuffer(LogicalTape *lt);
  * No need for an error return convention; we ereport() on any error.
  */
 static void
-ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
+ltsWriteBlock(LogicalTapeSet *lts, long blocknum, const void *buffer)
 {
 	/*
 	 * BufFile does not support "holes", so if we're about to write a block
@@ -759,7 +759,7 @@ LogicalTapeSetForgetFreeSpace(LogicalTapeSet *lts)
  * There are no error returns; we ereport() on failure.
  */
 void
-LogicalTapeWrite(LogicalTape *lt, void *ptr, size_t size)
+LogicalTapeWrite(LogicalTape *lt, const void *ptr, size_t size)
 {
 	LogicalTapeSet *lts = lt->tapeSet;
 	size_t		nthistime;
@@ -826,7 +826,7 @@ LogicalTapeWrite(LogicalTape *lt, void *ptr, size_t size)
 		lt->pos += nthistime;
 		if (lt->nbytes < lt->pos)
 			lt->nbytes = lt->pos;
-		ptr = (char *) ptr + nthistime;
+		ptr = (const char *) ptr + nthistime;
 		size -= nthistime;
 	}
 }

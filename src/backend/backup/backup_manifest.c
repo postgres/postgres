@@ -21,7 +21,7 @@
 #include "utils/builtins.h"
 #include "utils/json.h"
 
-static void AppendStringToManifest(backup_manifest_info *manifest, char *s);
+static void AppendStringToManifest(backup_manifest_info *manifest, const char *s);
 
 /*
  * Does the user want a backup manifest?
@@ -385,7 +385,7 @@ SendBackupManifest(backup_manifest_info *manifest, bbsink *sink)
  * Append a cstring to the manifest.
  */
 static void
-AppendStringToManifest(backup_manifest_info *manifest, char *s)
+AppendStringToManifest(backup_manifest_info *manifest, const char *s)
 {
 	int			len = strlen(s);
 

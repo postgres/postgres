@@ -66,7 +66,7 @@ extern LogicalTape *LogicalTapeCreate(LogicalTapeSet *lts);
 extern LogicalTape *LogicalTapeImport(LogicalTapeSet *lts, int worker, TapeShare *shared);
 extern void LogicalTapeSetForgetFreeSpace(LogicalTapeSet *lts);
 extern size_t LogicalTapeRead(LogicalTape *lt, void *ptr, size_t size);
-extern void LogicalTapeWrite(LogicalTape *lt, void *ptr, size_t size);
+extern void LogicalTapeWrite(LogicalTape *lt, const void *ptr, size_t size);
 extern void LogicalTapeRewindForRead(LogicalTape *lt, size_t buffer_size);
 extern void LogicalTapeFreeze(LogicalTape *lt, TapeShare *share);
 extern size_t LogicalTapeBackspace(LogicalTape *lt, size_t size);
