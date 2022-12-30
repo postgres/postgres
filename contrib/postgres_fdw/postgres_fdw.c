@@ -4974,9 +4974,58 @@ postgresAnalyzeForeignTable(Relation relation,
 }
 
 /*
+ * postgresCountTuplesForForeignTable
+ *		Count tuples in foreign table (just get pg_class.reltuples).
+ */
+static double
+postgresCountTuplesForForeignTable(Relation relation)
+{
+	ForeignTable *table;
+	UserMapping *user;
+	PGconn	   *conn;
+	StringInfoData sql;
+	PGresult   *volatile res = NULL;
+	volatile double reltuples = -1;
+
+	/*
+	 * Get the connection to use.  We do the remote access as the table's
+	 * owner, even if the ANALYZE was started by some other user.
+	 */
+	table = GetForeignTable(RelationGetRelid(relation));
+	user = GetUserMapping(relation->rd_rel->relowner, table->serverid);
+	conn = GetConnection(user, false, NULL);
+
+	/*
+	 * Construct command to get page count for relation.
+	 */
+	initStringInfo(&sql);
+	deparseAnalyzeTuplesSql(&sql, relation);
+
+	/* In what follows, do not risk leaking any PGresults. */
+	PG_TRY();
+	{
+		res = pgfdw_exec_query(conn, sql.data, NULL);
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+			pgfdw_report_error(ERROR, res, conn, false, sql.data);
+
+		if (PQntuples(res) != 1 || PQnfields(res) != 1)
+			elog(ERROR, "unexpected result from deparseAnalyzeTuplesSql query");
+		reltuples = strtod(PQgetvalue(res, 0, 0), NULL);
+	}
+	PG_FINALLY();
+	{
+		if (res)
+			PQclear(res);
+	}
+	PG_END_TRY();
+
+	ReleaseConnection(conn);
+
+	return reltuples;
+}
+
+/*
  * Acquire a random sample of rows from foreign table managed by postgres_fdw.
- *
- * We fetch the whole table from the remote side and pick out some sample rows.
  *
  * Selected rows are returned in the caller-allocated array rows[],
  * which must have at least targrows entries.
@@ -5000,9 +5049,14 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	ForeignServer *server;
 	UserMapping *user;
 	PGconn	   *conn;
+	int			server_version_num;
+	PgFdwSamplingMethod method = ANALYZE_SAMPLE_AUTO;	/* auto is default */
+	double		sample_frac = -1.0;
+	double		reltuples;
 	unsigned int cursor_number;
 	StringInfoData sql;
 	PGresult   *volatile res = NULL;
+	ListCell   *lc;
 
 	/* Initialize workspace state */
 	astate.rel = relation;
@@ -5030,20 +5084,147 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	user = GetUserMapping(relation->rd_rel->relowner, table->serverid);
 	conn = GetConnection(user, false, NULL);
 
+	/* We'll need server version, so fetch it now. */
+	server_version_num = PQserverVersion(conn);
+
+	/*
+	 * What sampling method should we use?
+	 */
+	foreach(lc, server->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "analyze_sampling") == 0)
+		{
+			char	   *value = defGetString(def);
+
+			if (strcmp(value, "off") == 0)
+				method = ANALYZE_SAMPLE_OFF;
+			else if (strcmp(value, "auto") == 0)
+				method = ANALYZE_SAMPLE_AUTO;
+			else if (strcmp(value, "random") == 0)
+				method = ANALYZE_SAMPLE_RANDOM;
+			else if (strcmp(value, "system") == 0)
+				method = ANALYZE_SAMPLE_SYSTEM;
+			else if (strcmp(value, "bernoulli") == 0)
+				method = ANALYZE_SAMPLE_BERNOULLI;
+
+			break;
+		}
+	}
+
+	foreach(lc, table->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "analyze_sampling") == 0)
+		{
+			char	   *value = defGetString(def);
+
+			if (strcmp(value, "off") == 0)
+				method = ANALYZE_SAMPLE_OFF;
+			else if (strcmp(value, "auto") == 0)
+				method = ANALYZE_SAMPLE_AUTO;
+			else if (strcmp(value, "random") == 0)
+				method = ANALYZE_SAMPLE_RANDOM;
+			else if (strcmp(value, "system") == 0)
+				method = ANALYZE_SAMPLE_SYSTEM;
+			else if (strcmp(value, "bernoulli") == 0)
+				method = ANALYZE_SAMPLE_BERNOULLI;
+
+			break;
+		}
+	}
+
+	/*
+	 * Error-out if explicitly required one of the TABLESAMPLE methods, but
+	 * the server does not support it.
+	 */
+	if ((server_version_num < 95000) &&
+		(method == ANALYZE_SAMPLE_SYSTEM ||
+		 method == ANALYZE_SAMPLE_BERNOULLI))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("remote server does not support TABLESAMPLE feature")));
+
+	/*
+	 * For "auto" method, pick the one we believe is best. For servers with
+	 * TABLESAMPLE support we pick BERNOULLI, for old servers we fall-back to
+	 * random() to at least reduce network transfer.
+	 */
+	if (method == ANALYZE_SAMPLE_AUTO)
+	{
+		if (server_version_num < 95000)
+			method = ANALYZE_SAMPLE_RANDOM;
+		else
+			method = ANALYZE_SAMPLE_BERNOULLI;
+	}
+
+	/*
+	 * If we've decided to do remote sampling, calculate the sampling rate. We
+	 * need to get the number of tuples from the remote server, but skip that
+	 * network round-trip if not needed.
+	 */
+	if (method != ANALYZE_SAMPLE_OFF)
+	{
+		reltuples = postgresCountTuplesForForeignTable(relation);
+
+		/*
+		 * Remote's reltuples could be 0 or -1 if the table has never been
+		 * vacuumed/analyzed.  In that case, disable sampling after all.
+		 */
+		if ((reltuples <= 0) || (targrows >= reltuples))
+			method = ANALYZE_SAMPLE_OFF;
+		else
+		{
+			/*
+			 * All supported sampling methods require sampling rate,
+			 * not target rows directly, so we calculate that using
+			 * the remote reltuples value. That's imperfect, because
+			 * it might be off a good deal, but that's not something
+			 * we can (or should) address here.
+			 *
+			 * If reltuples is too low (i.e. when table grew), we'll
+			 * end up sampling more rows - but then we'll apply the
+			 * local sampling, so we get the expected sample size.
+			 * This is the same outcome as without remote sampling.
+			 *
+			 * If reltuples is too high (e.g. after bulk DELETE), we
+			 * will end up sampling too few rows.
+			 *
+			 * We can't really do much better here - we could try
+			 * sampling a bit more rows, but we don't know how off
+			 * the reltuples value is so how much is "a bit more"?
+			 *
+			 * Furthermore, the targrows value for partitions is
+			 * determined based on table size (relpages), which can
+			 * be off in different ways too. Adjusting the sampling
+			 * rate here might make the issue worse.
+			 */
+			sample_frac = targrows / reltuples;
+
+			/*
+			 * Ensure the sampling rate is between 0.0 and 1.0, even after the
+			 * 10% adjustment above.  (Clamping to 0.0 is just paranoia.)
+			 */
+			sample_frac = Min(1.0, Max(0.0, sample_frac));
+		}
+	}
+
 	/*
 	 * Construct cursor that retrieves whole rows from remote.
 	 */
 	cursor_number = GetCursorNumber(conn);
 	initStringInfo(&sql);
 	appendStringInfo(&sql, "DECLARE c%u CURSOR FOR ", cursor_number);
-	deparseAnalyzeSql(&sql, relation, &astate.retrieved_attrs);
+
+	deparseAnalyzeSql(&sql, relation, method, sample_frac, &astate.retrieved_attrs);
 
 	/* In what follows, do not risk leaking any PGresults. */
 	PG_TRY();
 	{
 		char		fetch_sql[64];
 		int			fetch_size;
-		ListCell   *lc;
 
 		res = pgfdw_exec_query(conn, sql.data, NULL);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -5130,8 +5311,15 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	/* We assume that we have no dead tuple. */
 	*totaldeadrows = 0.0;
 
-	/* We've retrieved all living tuples from foreign server. */
-	*totalrows = astate.samplerows;
+	/*
+	 * Without sampling, we've retrieved all living tuples from foreign
+	 * server, so report that as totalrows.  Otherwise use the reltuples
+	 * estimate we got from the remote side.
+	 */
+	if (method == ANALYZE_SAMPLE_OFF)
+		*totalrows = astate.samplerows;
+	else
+		*totalrows = reltuples;
 
 	/*
 	 * Emit some interesting relation info
@@ -5139,7 +5327,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	ereport(elevel,
 			(errmsg("\"%s\": table contains %.0f rows, %d rows in sample",
 					RelationGetRelationName(relation),
-					astate.samplerows, astate.numrows)));
+					*totalrows, astate.numrows)));
 
 	return astate.numrows;
 }

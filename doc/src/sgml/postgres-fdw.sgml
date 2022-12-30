@@ -326,6 +326,41 @@ OPTIONS (ADD password_required 'false');
     frequently updated, the local statistics will soon be obsolete.
    </para>
 
+   <para>
+    The following option controls how such an <command>ANALYZE</command>
+    operation behaves:
+   </para>
+
+   <variablelist>
+
+    <varlistentry>
+     <term><literal>analyze_sampling</literal> (<type>text</type>)</term>
+     <listitem>
+      <para>
+       This option, which can be specified for a foreign table or a foreign
+       server, determines if <command>ANALYZE</command> on a foreign table
+       samples the data on the remote side, or reads and transfers all data
+       and performs the sampling locally. The supported values
+       are <literal>off</literal>, <literal>random</literal>,
+       <literal>system</literal>, <literal>bernoulli</literal>
+       and <literal>auto</literal>. <literal>off</literal> disables remote
+       sampling, so all data are transferred and sampled locally.
+       <literal>random</literal> performs remote sampling using the
+       <literal>random()</literal> function to choose returned rows,
+       while <literal>system</literal> and <literal>bernoulli</literal> rely
+       on the built-in <literal>TABLESAMPLE</literal> methods of those
+       names. <literal>random</literal> works on all remote server versions,
+       while <literal>TABLESAMPLE</literal> is supported only since 9.5.
+       <literal>auto</literal> (the default) picks the recommended sampling
+       method automatically; currently it means
+       either <literal>bernoulli</literal> or <literal>random</literal>
+       depending on the remote server version.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+
   </sect3>
 
   <sect3>
