@@ -1606,10 +1606,7 @@ current_timestamp(PG_FUNCTION_ARGS)
 	int32		typmod = -1;
 
 	if (!PG_ARGISNULL(0))
-	{
-		typmod = PG_GETARG_INT32(0);
-		anytimestamp_typmod_check(true, typmod);
-	}
+		typmod = anytimestamp_typmod_check(true, PG_GETARG_INT32(0));
 
 	ts = GetCurrentTransactionStartTimestamp();
 	if (typmod >= 0)
@@ -1627,10 +1624,7 @@ sql_localtimestamp(PG_FUNCTION_ARGS)
 	int32		typmod = -1;
 
 	if (!PG_ARGISNULL(0))
-	{
-		typmod = PG_GETARG_INT32(0);
-		anytimestamp_typmod_check(false, typmod);
-	}
+		typmod = anytimestamp_typmod_check(false, PG_GETARG_INT32(0));
 
 	ts = timestamptz2timestamp(GetCurrentTransactionStartTimestamp());
 	if (typmod >= 0)

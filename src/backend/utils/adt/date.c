@@ -347,10 +347,7 @@ current_time(PG_FUNCTION_ARGS)
 	int32		typmod = -1;
 
 	if (!PG_ARGISNULL(0))
-	{
-		typmod = PG_GETARG_INT32(0);
-		anytime_typmod_check(true, typmod);
-	}
+		typmod = anytime_typmod_check(true, PG_GETARG_INT32(0));
 
 	GetCurrentTimeUsec(tm, &fsec, &tz);
 
@@ -375,10 +372,7 @@ sql_localtime(PG_FUNCTION_ARGS)
 	int32		typmod = -1;
 
 	if (!PG_ARGISNULL(0))
-	{
-		typmod = PG_GETARG_INT32(0);
-		anytime_typmod_check(false, typmod);
-	}
+		typmod = anytime_typmod_check(false, PG_GETARG_INT32(0));
 
 	GetCurrentTimeUsec(tm, &fsec, &tz);
 
