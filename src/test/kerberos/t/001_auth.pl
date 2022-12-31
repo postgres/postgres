@@ -32,8 +32,15 @@ elsif ($ENV{PG_TEST_EXTRA} !~ /\bkerberos\b/)
 
 my ($krb5_bin_dir, $krb5_sbin_dir);
 
-if ($^O eq 'darwin')
+if ($^O eq 'darwin' && -d "/opt/homebrew" )
 {
+	# typical paths for Homebrew on ARM
+	$krb5_bin_dir  = '/opt/homebrew/opt/krb5/bin';
+	$krb5_sbin_dir = '/opt/homebrew/opt/krb5/sbin';
+}
+elsif ($^O eq 'darwin')
+{
+	# typical paths for Homebrew on Intel
 	$krb5_bin_dir  = '/usr/local/opt/krb5/bin';
 	$krb5_sbin_dir = '/usr/local/opt/krb5/sbin';
 }
