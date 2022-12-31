@@ -224,7 +224,7 @@ task:
   name: macOS - Monterey
 
   env:
-    CPUS: 12 # always get that much for cirrusci macOS instances
+    CPUS: 4 # always get that much for cirrusci macOS instances
     BUILD_JOBS: $CPUS
     # Test performance regresses noticably when using all cores. 8 seems to
     # work OK. See
@@ -238,8 +238,8 @@ task:
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(macos|darwin|osx).*'
 
-  osx_instance:
-    image: monterey-base
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-base:latest
 
   sysinfo_script: |
     id
@@ -284,7 +284,7 @@ task:
   ccache_cache:
     folder: $CCACHE_DIR
   configure_script: |
-    brewpath="/usr/local"
+    brewpath="/opt/homebrew"
     INCLUDES="${brewpath}/include:${INCLUDES}"
     LIBS="${brewpath}/lib:${LIBS}"
 

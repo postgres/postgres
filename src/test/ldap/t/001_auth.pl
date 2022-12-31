@@ -16,9 +16,15 @@ if ($ENV{with_ldap} ne 'yes')
 {
 	plan skip_all => 'LDAP not supported by this build';
 }
+elsif ($^O eq 'darwin' && -d '/opt/homebrew/opt/openldap')
+{
+	# typical paths for Homebrew on ARM
+	$slapd           = '/opt/homebrew/opt/openldap/libexec/slapd';
+	$ldap_schema_dir = '/opt/homebrew/etc/openldap/schema';
+}
 elsif ($^O eq 'darwin' && -d '/usr/local/opt/openldap')
 {
-	# typical paths for Homebrew
+	# typical paths for Homebrew on Intel
 	$slapd           = '/usr/local/opt/openldap/libexec/slapd';
 	$ldap_schema_dir = '/usr/local/etc/openldap/schema';
 }
