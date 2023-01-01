@@ -534,10 +534,6 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 				  decl_cursor_args decl_is_for decl_cursor_query
 					{
 						PLpgSQL_var *new;
-						PLpgSQL_expr *curname_def;
-						char		buf[NAMEDATALEN * 2 + 64];
-						char	   *cp1;
-						char	   *cp2;
 
 						/* pop local namespace for cursor args */
 						plpgsql_ns_pop();
@@ -549,29 +545,6 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 																		  InvalidOid,
 																		  NULL),
 												   true);
-
-						curname_def = palloc0(sizeof(PLpgSQL_expr));
-
-						/* Note: refname has been truncated to NAMEDATALEN */
-						cp1 = new->refname;
-						cp2 = buf;
-						/*
-						 * Don't trust standard_conforming_strings here;
-						 * it might change before we use the string.
-						 */
-						if (strchr(cp1, '\\') != NULL)
-							*cp2++ = ESCAPE_STRING_SYNTAX;
-						*cp2++ = '\'';
-						while (*cp1)
-						{
-							if (SQL_STR_DOUBLE(*cp1, true))
-								*cp2++ = *cp1;
-							*cp2++ = *cp1++;
-						}
-						strcpy(cp2, "'::pg_catalog.refcursor");
-						curname_def->query = pstrdup(buf);
-						curname_def->parseMode = RAW_PARSE_PLPGSQL_EXPR;
-						new->default_val = curname_def;
 
 						new->cursor_explicit_expr = $7;
 						if ($5 == NULL)
