@@ -430,6 +430,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     </thead>
 
     <tbody>
+
+     <!-- everything related to global objects, alphabetically -->
+
      <row>
       <entry><structname>pg_stat_archiver</structname><indexterm><primary>pg_stat_archiver</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
@@ -449,14 +452,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_wal</structname><indexterm><primary>pg_stat_wal</primary></indexterm></entry>
-      <entry>One row only, showing statistics about WAL activity. See
-       <link linkend="monitoring-pg-stat-wal-view">
-       <structname>pg_stat_wal</structname></link> for details.
-      </entry>
-     </row>
-
-     <row>
       <entry><structname>pg_stat_database</structname><indexterm><primary>pg_stat_database</primary></indexterm></entry>
       <entry>One row per database, showing database-wide statistics. See
        <link linkend="monitoring-pg-stat-database-view">
@@ -473,6 +468,41 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        <structname>pg_stat_database_conflicts</structname></link> for details.
       </entry>
      </row>
+
+     <row>
+      <entry><structname>pg_stat_replication_slots</structname><indexterm><primary>pg_stat_replication_slots</primary></indexterm></entry>
+      <entry>One row per replication slot, showing statistics about the
+       replication slot's usage. See
+       <link linkend="monitoring-pg-stat-replication-slots-view">
+       <structname>pg_stat_replication_slots</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_slru</structname><indexterm><primary>pg_stat_slru</primary></indexterm></entry>
+      <entry>One row per SLRU, showing statistics of operations. See
+       <link linkend="monitoring-pg-stat-slru-view">
+       <structname>pg_stat_slru</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_subscription_stats</structname><indexterm><primary>pg_stat_subscription_stats</primary></indexterm></entry>
+      <entry>One row per subscription, showing statistics about errors.
+      See <link linkend="monitoring-pg-stat-subscription-stats">
+      <structname>pg_stat_subscription_stats</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_wal</structname><indexterm><primary>pg_stat_wal</primary></indexterm></entry>
+      <entry>One row only, showing statistics about WAL activity. See
+       <link linkend="monitoring-pg-stat-wal-view">
+       <structname>pg_stat_wal</structname></link> for details.
+      </entry>
+     </row>
+
+     <!-- all "stat" for schema objects, by "importance" -->
 
      <row>
       <entry><structname>pg_stat_all_tables</structname><indexterm><primary>pg_stat_all_tables</primary></indexterm></entry>
@@ -540,6 +570,25 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_user_functions</structname><indexterm><primary>pg_stat_user_functions</primary></indexterm></entry>
+      <entry>
+       One row for each tracked function, showing statistics
+       about executions of that function. See
+       <link linkend="monitoring-pg-stat-user-functions-view">
+       <structname>pg_stat_user_functions</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_xact_user_functions</structname><indexterm><primary>pg_stat_xact_user_functions</primary></indexterm></entry>
+      <entry>Similar to <structname>pg_stat_user_functions</structname>, but counts only
+      calls during the current transaction (which are <emphasis>not</emphasis>
+      yet included in <structname>pg_stat_user_functions</structname>).</entry>
+     </row>
+
+     <!-- all "statio" for schema objects, by "importance" -->
+
+     <row>
       <entry><structname>pg_statio_all_tables</structname><indexterm><primary>pg_statio_all_tables</primary></indexterm></entry>
       <entry>
        One row for each table in the current database, showing statistics
@@ -604,48 +653,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_statio_user_sequences</structname><indexterm><primary>pg_statio_user_sequences</primary></indexterm></entry>
       <entry>Same as <structname>pg_statio_all_sequences</structname>, except that only
       user sequences are shown.</entry>
-     </row>
-
-     <row>
-      <entry><structname>pg_stat_user_functions</structname><indexterm><primary>pg_stat_user_functions</primary></indexterm></entry>
-      <entry>
-       One row for each tracked function, showing statistics
-       about executions of that function. See
-       <link linkend="monitoring-pg-stat-user-functions-view">
-       <structname>pg_stat_user_functions</structname></link> for details.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structname>pg_stat_xact_user_functions</structname><indexterm><primary>pg_stat_xact_user_functions</primary></indexterm></entry>
-      <entry>Similar to <structname>pg_stat_user_functions</structname>, but counts only
-      calls during the current transaction (which are <emphasis>not</emphasis>
-      yet included in <structname>pg_stat_user_functions</structname>).</entry>
-     </row>
-
-     <row>
-      <entry><structname>pg_stat_slru</structname><indexterm><primary>pg_stat_slru</primary></indexterm></entry>
-      <entry>One row per SLRU, showing statistics of operations. See
-       <link linkend="monitoring-pg-stat-slru-view">
-       <structname>pg_stat_slru</structname></link> for details.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structname>pg_stat_replication_slots</structname><indexterm><primary>pg_stat_replication_slots</primary></indexterm></entry>
-      <entry>One row per replication slot, showing statistics about the
-       replication slot's usage. See
-       <link linkend="monitoring-pg-stat-replication-slots-view">
-       <structname>pg_stat_replication_slots</structname></link> for details.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structname>pg_stat_subscription_stats</structname><indexterm><primary>pg_stat_subscription_stats</primary></indexterm></entry>
-      <entry>One row per subscription, showing statistics about errors.
-      See <link linkend="monitoring-pg-stat-subscription-stats">
-      <structname>pg_stat_subscription_stats</structname></link> for details.
-      </entry>
      </row>
 
     </tbody>
