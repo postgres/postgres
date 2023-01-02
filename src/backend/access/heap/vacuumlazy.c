@@ -1595,7 +1595,8 @@ retry:
 		/* Redirect items mustn't be touched */
 		if (ItemIdIsRedirected(itemid))
 		{
-			prunestate->hastup = true;	/* page won't be truncatable */
+			/* page makes rel truncation unsafe */
+			prunestate->hastup = true;
 			continue;
 		}
 
