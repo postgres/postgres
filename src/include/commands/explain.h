@@ -44,6 +44,8 @@ typedef struct ExplainState
 	bool		buffers;		/* print buffer usage */
 	bool		wal;			/* print WAL usage */
 	bool		timing;			/* print detailed node timing */
+	bool		sampling;		/* print per-node timing based on sampling */
+	uint32		sample_freq_hz; /* frequency of sampling for per-node timing */
 	bool		summary;		/* print total planning and execution timing */
 	bool		settings;		/* print modified settings */
 	ExplainFormat format;		/* output format */
@@ -57,6 +59,8 @@ typedef struct ExplainState
 	List	   *deparse_cxt;	/* context list for deparsing expressions */
 	Bitmapset  *printed_subplans;	/* ids of SubPlans we've printed */
 	bool		hide_workers;	/* set if we find an invisible Gather */
+	/* state for the whole query execution */
+	struct Instrumentation *totaltime;	/* totaltime from query descriptor */
 	/* state related to the current plan node */
 	ExplainWorkersState *workers_state; /* needed if parallel plan */
 } ExplainState;

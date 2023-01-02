@@ -138,6 +138,9 @@ typedef struct timespec instr_time;
 #define INSTR_TIME_GET_MICROSEC(t) \
 	(((uint64) (t).tv_sec * (uint64) 1000000) + (uint64) ((t).tv_nsec / 1000))
 
+#define INSTR_TIME_GET_NANOSEC(t) \
+	(((uint64) (t).tv_sec * (uint64) 1000000000) + (uint64) ((t).tv_nsec))
+
 #else							/* WIN32 */
 
 /* Use QueryPerformanceCounter() */
@@ -167,6 +170,9 @@ typedef LARGE_INTEGER instr_time;
 
 #define INSTR_TIME_GET_MICROSEC(t) \
 	((uint64) (((double) (t).QuadPart * 1000000.0) / GetTimerFrequency()))
+
+#define INSTR_TIME_GET_NANOSEC(t) \
+	((uint64) (((double) (t).QuadPart * 1000000000.0) / GetTimerFrequency()))
 
 static inline double
 GetTimerFrequency(void)

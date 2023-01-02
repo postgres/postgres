@@ -60,6 +60,7 @@ typedef enum InstrumentOption
 	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage */
 	INSTRUMENT_ROWS = 1 << 2,	/* needs row count */
 	INSTRUMENT_WAL = 1 << 3,	/* needs WAL usage */
+	INSTRUMENT_TIMER_SAMPLING = 1 << 4,	/* needs timer based on sampling */
 	INSTRUMENT_ALL = PG_INT32_MAX
 } InstrumentOption;
 
@@ -78,6 +79,7 @@ typedef struct Instrumentation
 	double		tuplecount;		/* # of tuples emitted so far this cycle */
 	BufferUsage bufusage_start; /* buffer usage at start */
 	WalUsage	walusage_start; /* WAL usage at start */
+	uint64		sampled_starttime; /* sampled start time of node */
 	/* Accumulated statistics across all completed cycles: */
 	double		startup;		/* total startup time (in seconds) */
 	double		total;			/* total time (in seconds) */
@@ -88,6 +90,7 @@ typedef struct Instrumentation
 	double		nfiltered2;		/* # of tuples removed by "other" quals */
 	BufferUsage bufusage;		/* total buffer usage */
 	WalUsage	walusage;		/* total WAL usage */
+	uint64		sampled_total;  /* sampled total time */
 } Instrumentation;
 
 typedef struct WorkerInstrumentation
@@ -98,6 +101,10 @@ typedef struct WorkerInstrumentation
 
 extern PGDLLIMPORT BufferUsage pgBufferUsage;
 extern PGDLLIMPORT WalUsage pgWalUsage;
+
+extern void InstrStartSampling(int sample_rate_hz);
+extern void InstrStopSampling();
+extern void InstrumentSamplingTimeoutHandler(void);
 
 extern Instrumentation *InstrAlloc(int n, int instrument_options,
 								   bool async_mode);

@@ -12,6 +12,7 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include <sys/time.h>
 
 #include "access/xact.h"
 #include "catalog/pg_type.h"
@@ -30,12 +31,14 @@
 #include "storage/bufmgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/float.h"
 #include "utils/guc_tables.h"
 #include "utils/json.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
+#include "utils/timeout.h"
 #include "utils/tuplesort.h"
 #include "utils/typcache.h"
 #include "utils/xml.h"
@@ -192,8 +195,41 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 			es->settings = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "timing") == 0)
 		{
+			char	   *p = opt->arg != NULL ? defGetString(opt) : NULL;
 			timing_set = true;
-			es->timing = defGetBoolean(opt);
+			if (p == NULL || pg_strcasecmp(p, "1") == 0 || pg_strcasecmp(p, "true") == 0 || pg_strcasecmp(p, "on") == 0)
+			{
+				es->timing = true;
+				es->sampling = false;
+			}
+			else if (pg_strcasecmp(p, "0") == 0 || pg_strcasecmp(p, "false") == 0 || pg_strcasecmp(p, "off") == 0)
+			{
+				es->timing = false;
+				es->sampling = false;
+			}
+			else if (pg_strcasecmp(p, "sampling") == 0)
+			{
+				es->timing = false;
+				es->sampling = true;
+			}
+			else
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
+								opt->defname, p),
+						 parser_errposition(pstate, opt->location)));
+			}
+		}
+		else if (strcmp(opt->defname, "samplefreq") == 0)
+		{
+			int32 p = defGetInt32(opt);
+			if (p < 1 || p > 1000)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("EXPLAIN option samplefreq requires value between %d and %d", 1, 1000),
+						 parser_errposition(pstate, opt->location)));
+			es->sample_freq_hz = (uint32) p;
 		}
 		else if (strcmp(opt->defname, "summary") == 0)
 		{
@@ -236,10 +272,19 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 	es->timing = (timing_set) ? es->timing : es->analyze;
 
 	/* check that timing is used with EXPLAIN ANALYZE */
-	if (es->timing && !es->analyze)
+	if ((es->timing || es->sampling) && !es->analyze)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option TIMING requires ANALYZE")));
+
+	/* check that sampling is enabled when sample frequency is passed */
+	if (es->sample_freq_hz != 0 && !es->sampling)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("EXPLAIN option SAMPLEFREQ requires TIMING SAMPLING")));
+
+	/* if sampling frequency was not set explicitly, set default value */
+	es->sample_freq_hz = es->sample_freq_hz != 0 ? es->sample_freq_hz : 1000;
 
 	/* if the summary was not set explicitly, set default value */
 	es->summary = (summary_set) ? es->summary : es->analyze;
@@ -531,6 +576,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	if (es->analyze && es->timing)
 		instrument_option |= INSTRUMENT_TIMER;
+	else if (es->analyze && es->sampling)
+		instrument_option |= INSTRUMENT_TIMER_SAMPLING | INSTRUMENT_ROWS;
 	else if (es->analyze)
 		instrument_option |= INSTRUMENT_ROWS;
 
@@ -578,6 +625,21 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	/* call ExecutorStart to prepare the plan for execution */
 	ExecutorStart(queryDesc, eflags);
 
+	/*
+	 * If sampling, we initialize executor time tracking for the query,
+	 * in order to scale individual sampled times to the total accurate
+	 * clock time spent for running all plan nodes in ExecutorRun + time
+	 * spent in ExecutorFinish. This also keeps the total sampled time.
+	 *
+	 * Note this is separate from "Execution Time" shown by EXPLAIN, which
+	 * includes ExecutorStart, ExecutorEnd and the EXPLAIN print functions.
+	 */
+	if (es->sampling)
+	{
+		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
+		queryDesc->sample_freq_hz = es->sample_freq_hz;
+	}
+
 	/* Execute the plan for statistics if asked for */
 	if (es->analyze)
 	{
@@ -594,6 +656,10 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 		/* run cleanup too */
 		ExecutorFinish(queryDesc);
+
+		/* ensure total time gets set, if needed */
+		if (es->sampling)
+			InstrEndLoop(queryDesc->totaltime);
 
 		/* We can't run ExecutorEnd 'till we're done printing the stats... */
 		totaltime += elapsed_time(&starttime);
@@ -768,6 +834,7 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	es->deparse_cxt = deparse_context_for_plan_tree(queryDesc->plannedstmt,
 													es->rtable_names);
 	es->printed_subplans = NULL;
+	es->totaltime = queryDesc->totaltime;
 
 	/*
 	 * Sometimes we mark a Gather node as "invisible", which means that it's
@@ -1642,6 +1709,18 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		double		startup_ms = 1000.0 * planstate->instrument->startup / nloops;
 		double		total_ms = 1000.0 * planstate->instrument->total / nloops;
 		double		rows = planstate->instrument->ntuples / nloops;
+		double		sampled_time_ms;
+
+		if (es->totaltime != NULL && es->totaltime->sampled_total != 0)
+		{
+			/* Sampling undercounts time, scale per-node sampled time based on actual full execution time */
+			double sampled_pct = (double) planstate->instrument->sampled_total / es->totaltime->sampled_total;
+			sampled_time_ms = 1000.0 * es->totaltime->total * sampled_pct / nloops;
+		}
+		else
+		{
+			sampled_time_ms = get_float8_nan();
+		}
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
@@ -1649,6 +1728,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				appendStringInfo(es->str,
 								 " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
 								 startup_ms, total_ms, rows, nloops);
+			else if (es->sampling)
+				appendStringInfo(es->str,
+								 " (actual sampled time=%.3f rows=%.0f loops=%.0f)",
+								 sampled_time_ms, rows, nloops);
 			else
 				appendStringInfo(es->str,
 								 " (actual rows=%.0f loops=%.0f)",
@@ -1661,6 +1744,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				ExplainPropertyFloat("Actual Startup Time", "ms", startup_ms,
 									 3, es);
 				ExplainPropertyFloat("Actual Total Time", "ms", total_ms,
+									 3, es);
+			}
+			else if (es->sampling)
+			{
+				ExplainPropertyFloat("Actual Sampled Time", "ms", sampled_time_ms,
 									 3, es);
 			}
 			ExplainPropertyFloat("Actual Rows", NULL, rows, 0, es);
@@ -1677,6 +1765,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			{
 				ExplainPropertyFloat("Actual Startup Time", "ms", 0.0, 3, es);
 				ExplainPropertyFloat("Actual Total Time", "ms", 0.0, 3, es);
+			}
+			else if (es->sampling)
+			{
+				ExplainPropertyFloat("Actual Sampled Time", "ms", 0.0, 3, es);
 			}
 			ExplainPropertyFloat("Actual Rows", NULL, 0.0, 0, es);
 			ExplainPropertyFloat("Actual Loops", NULL, 0.0, 0, es);
@@ -1699,12 +1791,20 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			double		startup_ms;
 			double		total_ms;
 			double		rows;
+			double		sampled_time_ms;
 
 			if (nloops <= 0)
 				continue;
 			startup_ms = 1000.0 * instrument->startup / nloops;
 			total_ms = 1000.0 * instrument->total / nloops;
 			rows = instrument->ntuples / nloops;
+
+			/*
+			 * For parallel query, normalization of sampled times with the total
+			 * time is done in each worker, see ExecParallelNormalizeSampledTiming
+			 * */
+			if (es->sampling)
+				sampled_time_ms = (instrument->sampled_total / 1000000.0) / nloops;
 
 			ExplainOpenWorker(n, es);
 
@@ -1715,6 +1815,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					appendStringInfo(es->str,
 									 "actual time=%.3f..%.3f rows=%.0f loops=%.0f\n",
 									 startup_ms, total_ms, rows, nloops);
+				else if (es->sampling)
+					appendStringInfo(es->str,
+								 	 "actual sampled time=%.3f rows=%.0f loops=%.0f\n",
+								 	 sampled_time_ms, rows, nloops);
 				else
 					appendStringInfo(es->str,
 									 "actual rows=%.0f loops=%.0f\n",
@@ -1728,6 +1832,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 										 startup_ms, 3, es);
 					ExplainPropertyFloat("Actual Total Time", "ms",
 										 total_ms, 3, es);
+				}
+				else if (es->sampling)
+				{
+					ExplainPropertyFloat("Actual Sampled Time", "ms",
+										 sampled_time_ms, 3, es);
 				}
 				ExplainPropertyFloat("Actual Rows", NULL, rows, 0, es);
 				ExplainPropertyFloat("Actual Loops", NULL, nloops, 0, es);

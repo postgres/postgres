@@ -24,6 +24,13 @@
 
 PG_MODULE_MAGIC;
 
+typedef enum
+{
+	LOG_TIMING_OFF,
+	LOG_TIMING_ON,
+	LOG_TIMING_SAMPLING
+} LogTimingType;
+
 /* GUC variables */
 static int	auto_explain_log_min_duration = -1; /* msec or -1 */
 static int	auto_explain_log_parameter_max_length = -1; /* bytes or -1 */
@@ -32,7 +39,8 @@ static bool auto_explain_log_verbose = false;
 static bool auto_explain_log_buffers = false;
 static bool auto_explain_log_wal = false;
 static bool auto_explain_log_triggers = false;
-static bool auto_explain_log_timing = true;
+static int	auto_explain_log_timing = LOG_TIMING_ON;
+static int	auto_explain_log_timing_samplefreq = 1000;
 static bool auto_explain_log_settings = false;
 static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static int	auto_explain_log_level = LOG;
@@ -58,6 +66,19 @@ static const struct config_enum_entry loglevel_options[] = {
 	{"notice", NOTICE, false},
 	{"warning", WARNING, false},
 	{"log", LOG, false},
+	{NULL, 0, false}
+};
+
+static const struct config_enum_entry log_timing_options[] = {
+	{"sampling", LOG_TIMING_SAMPLING, false},
+	{"on", LOG_TIMING_ON, false},
+	{"off", LOG_TIMING_OFF, false},
+	{"true", LOG_TIMING_ON, true},
+	{"false", LOG_TIMING_OFF, true},
+	{"yes", LOG_TIMING_ON, true},
+	{"no", LOG_TIMING_OFF, true},
+	{"1", LOG_TIMING_ON, true},
+	{"0", LOG_TIMING_OFF, true},
 	{NULL, 0, false}
 };
 
@@ -218,16 +239,29 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	DefineCustomBoolVariable("auto_explain.log_timing",
+	DefineCustomEnumVariable("auto_explain.log_timing",
 							 "Collect timing data, not just row counts.",
 							 NULL,
 							 &auto_explain_log_timing,
-							 true,
+							 LOG_TIMING_ON,
+							 log_timing_options,
 							 PGC_SUSET,
 							 0,
 							 NULL,
 							 NULL,
 							 NULL);
+
+	DefineCustomIntVariable("auto_explain.log_timing_samplefreq",
+							"Frequency for sampling-based timing, if used.",
+							"Number of sampling ticks per second (Hz).",
+							&auto_explain_log_timing_samplefreq,
+							1000,
+							1, 1000,
+							PGC_SUSET,
+							0,
+							NULL,
+							NULL,
+							NULL);
 
 	DefineCustomRealVariable("auto_explain.sample_rate",
 							 "Fraction of queries to process.",
@@ -284,14 +318,17 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		/* Enable per-node instrumentation iff log_analyze is required. */
 		if (auto_explain_log_analyze && (eflags & EXEC_FLAG_EXPLAIN_ONLY) == 0)
 		{
-			if (auto_explain_log_timing)
+			if (auto_explain_log_timing == LOG_TIMING_ON)
 				queryDesc->instrument_options |= INSTRUMENT_TIMER;
+			else if (auto_explain_log_timing == LOG_TIMING_SAMPLING)
+				queryDesc->instrument_options |= INSTRUMENT_TIMER_SAMPLING | INSTRUMENT_ROWS;
 			else
 				queryDesc->instrument_options |= INSTRUMENT_ROWS;
 			if (auto_explain_log_buffers)
 				queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
 			if (auto_explain_log_wal)
 				queryDesc->instrument_options |= INSTRUMENT_WAL;
+			queryDesc->sample_freq_hz = auto_explain_log_timing_samplefreq;
 		}
 	}
 
@@ -394,7 +431,8 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			es->verbose = auto_explain_log_verbose;
 			es->buffers = (es->analyze && auto_explain_log_buffers);
 			es->wal = (es->analyze && auto_explain_log_wal);
-			es->timing = (es->analyze && auto_explain_log_timing);
+			es->timing = (es->analyze && auto_explain_log_timing == LOG_TIMING_ON);
+			es->sampling = (es->analyze && auto_explain_log_timing == LOG_TIMING_SAMPLING);
 			es->summary = es->analyze;
 			es->format = auto_explain_log_format;
 			es->settings = auto_explain_log_settings;

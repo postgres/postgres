@@ -1297,6 +1297,29 @@ ExecParallelReportInstrumentation(PlanState *planstate,
 }
 
 /*
+ * Normalize sampled timing information collected for EXPLAIN ANALYZE,
+ * based on the parallel worker's executor total time and total sampled time.
+ *
+ * For non-parallel cases this is done when printing each plan node, but for
+ * parallel query we need to do this normalization ahead of time, to avoid
+ * passing a bunch of extra information back to the leader process.
+ */
+static bool
+ExecParallelNormalizeSampledTiming(PlanState *planstate,
+								   Instrumentation *worker_totaltime)
+{
+	if (worker_totaltime->sampled_total != 0)
+	{
+		/* Sampling undercounts time, scale per-node sampled time based on actual full execution time */
+		double sampled_pct = (double) planstate->instrument->sampled_total / worker_totaltime->sampled_total;
+		planstate->instrument->sampled_total = (uint64) (worker_totaltime->total * sampled_pct * 1000000000.0);
+	}
+
+	return planstate_tree_walker(planstate, ExecParallelNormalizeSampledTiming,
+								 worker_totaltime);
+}
+
+/*
  * Initialize the PlanState and its descendants with the information
  * retrieved from shared memory.  This has to be done once the PlanState
  * is allocated and initialized by executor; that is, after ExecutorStart().
@@ -1419,6 +1442,13 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 										 true);
 	queryDesc = ExecParallelGetQueryDesc(toc, receiver, instrument_options);
 
+	/* Set up instrumentation for sampling based EXPLAIN ANALYZE, if requested */
+	if (instrument_options & INSTRUMENT_TIMER_SAMPLING)
+	{
+		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
+		queryDesc->sample_freq_hz = 1000; // TODO: Pass the correct value here
+	}
+
 	/* Setting debug_query_string for individual workers */
 	debug_query_string = queryDesc->sourceText;
 
@@ -1469,6 +1499,14 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 
 	/* Shut down the executor */
 	ExecutorFinish(queryDesc);
+
+	/* Normalize sampled time values whilst we have the query descriptor */
+	if (instrument_options & INSTRUMENT_TIMER_SAMPLING)
+	{
+		InstrEndLoop(queryDesc->totaltime);
+		ExecParallelNormalizeSampledTiming(queryDesc->planstate,
+										   queryDesc->totaltime);
+	}
 
 	/* Report buffer/WAL usage during parallel execution. */
 	buffer_usage = shm_toc_lookup(toc, PARALLEL_KEY_BUFFER_USAGE, false);

@@ -51,8 +51,9 @@ typedef struct QueryDesc
 	/* This field is set by ExecutorRun */
 	bool		already_executed;	/* true if previously executed */
 
-	/* This is always set NULL by the core system, but plugins can change it */
-	struct Instrumentation *totaltime;	/* total time spent in ExecutorRun */
+	/* This is used by sampling mode for EXPLAIN ANALYZE timings, and plugins */
+	struct Instrumentation *totaltime;	/* total time spent in ExecutorRun and ExecutorFinish */
+	int sample_freq_hz;	/* frequency of sampling (if enabled) */
 } QueryDesc;
 
 /* in pquery.c */

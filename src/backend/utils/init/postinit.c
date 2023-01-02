@@ -760,6 +760,8 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		RegisterTimeout(CLIENT_CONNECTION_CHECK_TIMEOUT, ClientCheckTimeoutHandler);
 		RegisterTimeout(IDLE_STATS_UPDATE_TIMEOUT,
 						IdleStatsUpdateTimeoutHandler);
+		RegisterTimeout(INSTRUMENT_SAMPLING_TIMEOUT,
+						InstrumentSamplingTimeoutHandler);
 	}
 
 	/*
