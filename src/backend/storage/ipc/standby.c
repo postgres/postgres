@@ -493,6 +493,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId snapshotConflictHorizon,
 	if (!TransactionIdIsValid(snapshotConflictHorizon))
 		return;
 
+	Assert(TransactionIdIsNormal(snapshotConflictHorizon));
 	backends = GetConflictingVirtualXIDs(snapshotConflictHorizon,
 										 locator.dbOid);
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
