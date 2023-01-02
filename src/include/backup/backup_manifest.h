@@ -3,7 +3,7 @@
  * backup_manifest.h
  *	  Routines for generating a backup manifest.
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * src/include/backup/backup_manifest.h
  *

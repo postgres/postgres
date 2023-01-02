@@ -3,7 +3,7 @@
  * test_pg_db_role_setting.c
  *		Code for testing mandatory access control (MAC) using object access hooks.
  *
- * Copyright (c) 2022, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_pg_db_role_setting/test_pg_db_role_setting.c

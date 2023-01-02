@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 #
-# Copyright (c) 2001-2022, PostgreSQL Global Development Group
+# Copyright (c) 2001-2023, PostgreSQL Global Development Group
 #
 # src/backend/utils/mb/Unicode/UCS_to_SJIS.pl
 #

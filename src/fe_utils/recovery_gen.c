@@ -3,7 +3,7 @@
  * recovery_gen.c
  *		Generator for recovery configuration
  *
- * Portions Copyright (c) 2011-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2011-2023, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

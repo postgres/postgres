@@ -52,7 +52,7 @@
  *   dynahash has better performance for large entries.
  * - Guarantees stable pointers to entries.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

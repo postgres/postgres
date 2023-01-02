@@ -3,7 +3,7 @@
  *
  *	Definitions for the PostgreSQL cumulative statistics system.
  *
- *	Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ *	Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  *	src/include/pgstat.h
  * ----------

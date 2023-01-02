@@ -3,7 +3,7 @@
  * pg_crc32c_sse42.c
  *	  Compute CRC-32C checksum using Intel SSE 4.2 instructions.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

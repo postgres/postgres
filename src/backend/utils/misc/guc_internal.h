@@ -4,7 +4,7 @@
  * Declarations shared between backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * src/include/utils/guc_internals.h
  *--------------------------------------------------------------------

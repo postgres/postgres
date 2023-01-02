@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/pg_resetwal
 #
-# Copyright (c) 1998-2022, PostgreSQL Global Development Group
+# Copyright (c) 1998-2023, PostgreSQL Global Development Group
 #
 # src/bin/pg_resetwal/Makefile
 #

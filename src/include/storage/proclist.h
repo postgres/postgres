@@ -10,7 +10,7 @@
  * See proclist_types.h for the structs that these functions operate on.  They
  * are separated to break a header dependency cycle with proc.h.
  *
- * Portions Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/include/storage/proclist.h
