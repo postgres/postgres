@@ -1302,7 +1302,7 @@ spgproperty(Oid index_oid, int attno,
 	/*
 	 * Currently, SP-GiST distance-ordered scans require that there be a
 	 * distance operator in the opclass with the default types. So we assume
-	 * that if such a operator exists, then there's a reason for it.
+	 * that if such an operator exists, then there's a reason for it.
 	 */
 
 	/* First we need to know the column's opclass. */

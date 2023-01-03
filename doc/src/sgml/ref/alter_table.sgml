@@ -975,7 +975,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       constraint. This does not work, however, if any of the partition keys
       is an expression and the partition does not accept
       <literal>NULL</literal> values. If attaching a list partition that will
-      not accept <literal>NULL</literal> values, also add
+      not accept <literal>NULL</literal> values, also add a
       <literal>NOT NULL</literal> constraint to the partition key column,
       unless it's an expression.
      </para>
