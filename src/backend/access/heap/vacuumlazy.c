@@ -172,6 +172,7 @@ typedef struct LVRelState
 	bool		skippedallvis;
 
 	/* Error reporting state */
+	char	   *dbname;
 	char	   *relnamespace;
 	char	   *relname;
 	char	   *indname;		/* Current index name */
@@ -354,6 +355,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * these temp copies.
 	 */
 	vacrel = (LVRelState *) palloc0(sizeof(LVRelState));
+	vacrel->dbname = get_database_name(MyDatabaseId);
 	vacrel->relnamespace = get_namespace_name(RelationGetNamespace(rel));
 	vacrel->relname = pstrdup(RelationGetRelationName(rel));
 	vacrel->indname = NULL;
@@ -475,13 +477,13 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 		if (vacrel->aggressive)
 			ereport(INFO,
 					(errmsg("aggressively vacuuming \"%s.%s.%s\"",
-							get_database_name(MyDatabaseId),
-							vacrel->relnamespace, vacrel->relname)));
+							vacrel->dbname, vacrel->relnamespace,
+							vacrel->relname)));
 		else
 			ereport(INFO,
 					(errmsg("vacuuming \"%s.%s.%s\"",
-							get_database_name(MyDatabaseId),
-							vacrel->relnamespace, vacrel->relname)));
+							vacrel->dbname, vacrel->relnamespace,
+							vacrel->relname)));
 	}
 
 	/*
@@ -650,7 +652,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 					msgfmt = _("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n");
 			}
 			appendStringInfo(&buf, msgfmt,
-							 get_database_name(MyDatabaseId),
+							 vacrel->dbname,
 							 vacrel->relnamespace,
 							 vacrel->relname,
 							 vacrel->num_index_scans);
@@ -2614,9 +2616,7 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 
 		ereport(WARNING,
 				(errmsg("bypassing nonessential maintenance of table \"%s.%s.%s\" as a failsafe after %d index scans",
-						get_database_name(MyDatabaseId),
-						vacrel->relnamespace,
-						vacrel->relname,
+						vacrel->dbname, vacrel->relnamespace, vacrel->relname,
 						vacrel->num_index_scans),
 				 errdetail("The table's relfrozenxid or relminmxid is too far in the past."),
 				 errhint("Consider increasing configuration parameter \"maintenance_work_mem\" or \"autovacuum_work_mem\".\n"
