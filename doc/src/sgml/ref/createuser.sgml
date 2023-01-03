@@ -41,10 +41,14 @@ PostgreSQL documentation
   </para>
 
   <para>
-   If you wish to create a new superuser, you must connect as a
-   superuser, not merely with <literal>CREATEROLE</literal> privilege.
+   If you wish to create a role with the <literal>SUPERUSER</literal>,
+   <literal>REPLICATION</literal>, or <literal>BYPASSRLS</literal> privilege,
+   you must connect as a superuser, not merely with
+   <literal>CREATEROLE</literal> privilege.
    Being a superuser implies the ability to bypass all access permission
-   checks within the database, so superuser access should not be granted lightly.
+   checks within the database, so superuser access should not be granted
+   lightly. <literal>CREATEROLE</literal> also conveys
+   <link linkend='role-creation'>very extensive privileges</link>.
   </para>
 
   <para>
@@ -221,8 +225,12 @@ PostgreSQL documentation
       <term><option>--createrole</option></term>
       <listitem>
        <para>
-        The new user will be allowed to create new roles (that is,
-        this user will have <literal>CREATEROLE</literal> privilege).
+        The new user will be allowed to create, alter, drop, comment on,
+        change the security label for, and grant or revoke membership in
+        other roles; that is,
+        this user will have <literal>CREATEROLE</literal> privilege.
+        See <xref linkend='role-creation' /> for more details about what
+        capabilities are conferred by this privilege.
        </para>
       </listitem>
      </varlistentry>
