@@ -6470,6 +6470,8 @@ getTables(Archive *fout, int *numTables)
 		ExecuteSqlStatement(fout, query->data);
 	}
 
+	resetPQExpBuffer(query);
+
 	for (i = 0; i < ntups; i++)
 	{
 		tblinfo[i].dobj.objType = DO_TABLE;
@@ -6587,12 +6589,36 @@ getTables(Archive *fout, int *numTables)
 			(tblinfo[i].relkind == RELKIND_RELATION ||
 			 tblinfo[i].relkind == RELKIND_PARTITIONED_TABLE))
 		{
-			resetPQExpBuffer(query);
-			appendPQExpBuffer(query,
-							  "LOCK TABLE %s IN ACCESS SHARE MODE",
-							  fmtQualifiedDumpable(&tblinfo[i]));
-			ExecuteSqlStatement(fout, query->data);
+			/*
+			 * Tables are locked in batches.  When dumping from a remote
+			 * server this can save a significant amount of time by reducing
+			 * the number of round trips.
+			 */
+			if (query->len == 0)
+				appendPQExpBuffer(query, "LOCK TABLE %s",
+								  fmtQualifiedDumpable(&tblinfo[i]));
+			else
+			{
+				appendPQExpBuffer(query, ", %s",
+								  fmtQualifiedDumpable(&tblinfo[i]));
+
+				/* Arbitrarily end a batch when query length reaches 100K. */
+				if (query->len >= 100000)
+				{
+					/* Lock another batch of tables. */
+					appendPQExpBufferStr(query, " IN ACCESS SHARE MODE");
+					ExecuteSqlStatement(fout, query->data);
+					resetPQExpBuffer(query);
+				}
+			}
 		}
+	}
+
+	if (query->len != 0)
+	{
+		/* Lock the tables in the last batch. */
+		appendPQExpBufferStr(query, " IN ACCESS SHARE MODE");
+		ExecuteSqlStatement(fout, query->data);
 	}
 
 	if (dopt->lockWaitTimeout)
