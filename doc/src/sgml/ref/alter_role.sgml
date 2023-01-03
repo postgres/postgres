@@ -305,7 +305,7 @@ ALTER ROLE fred VALID UNTIL 'infinity';
   </para>
 
   <para>
-   Give a role the ability to create other roles and new databases:
+   Give a role the ability to manage other roles and create new databases:
 
 <programlisting>
 ALTER ROLE miriam CREATEROLE CREATEDB;
