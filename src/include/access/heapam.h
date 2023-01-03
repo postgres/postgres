@@ -100,6 +100,13 @@ typedef enum
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
+/*
+ * heap_prepare_freeze_tuple may request that heap_freeze_execute_prepared
+ * check any tuple's to-be-frozen xmin and/or xmax status using pg_xact
+ */
+#define		HEAP_FREEZE_CHECK_XMIN_COMMITTED	0x01
+#define		HEAP_FREEZE_CHECK_XMAX_ABORTED		0x02
+
 /* heap_prepare_freeze_tuple state describing how to freeze a tuple */
 typedef struct HeapTupleFreeze
 {
@@ -109,6 +116,8 @@ typedef struct HeapTupleFreeze
 	uint16		t_infomask;
 	uint8		frzflags;
 
+	/* xmin/xmax check flags */
+	uint8		checkflags;
 	/* Page offset number for tuple */
 	OffsetNumber offset;
 } HeapTupleFreeze;
