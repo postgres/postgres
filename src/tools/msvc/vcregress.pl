@@ -185,6 +185,7 @@ sub installcheck
 sub check
 {
 	my $schedule = shift || 'parallel';
+	my $encoding = $ENV{ENCODING} || "SQL_ASCII";
 	# for backwards compatibility, "serial" runs the tests in
 	# parallel_schedule one by one.
 	my $maxconn = $maxconn;
@@ -199,7 +200,7 @@ sub check
 		"--bindir=",
 		"--schedule=${schedule}_schedule",
 		"--max-concurrent-tests=20",
-		"--encoding=SQL_ASCII",
+		"--encoding=${encoding}",
 		"--no-locale",
 		"--temp-instance=./tmp_check");
 	push(@args, $maxconn)     if $maxconn;
