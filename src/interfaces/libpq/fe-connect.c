@@ -341,6 +341,23 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Target-Session-Attrs", "", 15, /* sizeof("prefer-standby") = 15 */
 	offsetof(struct pg_conn, target_session_attrs)},
 
+	/* OAuth v2 */
+	{"oauth_issuer", NULL, NULL, NULL,
+		"OAuth-Issuer", "", 40,
+	offsetof(struct pg_conn, oauth_issuer)},
+
+	{"oauth_client_id", NULL, NULL, NULL,
+		"OAuth-Client-ID", "", 40,
+	offsetof(struct pg_conn, oauth_client_id)},
+
+	{"oauth_client_secret", NULL, NULL, NULL,
+		"OAuth-Client-Secret", "", 40,
+	offsetof(struct pg_conn, oauth_client_secret)},
+
+	{"oauth_scope", NULL, NULL, NULL,
+		"OAuth-Scope", "", 15,
+	offsetof(struct pg_conn, oauth_scope)},
+
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
 	NULL, NULL, 0}
@@ -601,6 +618,7 @@ pqDropServerData(PGconn *conn)
 	conn->write_err_msg = NULL;
 	conn->be_pid = 0;
 	conn->be_key = 0;
+	/* conn->oauth_want_retry = false; TODO */
 }
 
 
@@ -3303,6 +3321,16 @@ keep_going:						/* We will come back to here until there is
 					/* Check to see if we should mention pgpassfile */
 					pgpassfileWarning(conn);
 
+#ifdef USE_OAUTH
+					if (conn->sasl == &pg_oauth_mech
+						&& conn->oauth_want_retry)
+					{
+						/* TODO: only allow retry once */
+						need_new_connection = true;
+						goto keep_going;
+					}
+#endif
+
 #ifdef ENABLE_GSS
 
 					/*
@@ -4034,6 +4062,11 @@ freePGconn(PGconn *conn)
 	free(conn->inBuffer);
 	free(conn->outBuffer);
 	free(conn->rowBuf);
+	free(conn->oauth_issuer);
+	free(conn->oauth_discovery_uri);
+	free(conn->oauth_client_id);
+	free(conn->oauth_client_secret);
+	free(conn->oauth_scope);
 	free(conn->target_session_attrs);
 	termPQExpBuffer(&conn->errorMessage);
 	termPQExpBuffer(&conn->workBuffer);

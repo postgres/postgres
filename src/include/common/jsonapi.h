@@ -14,8 +14,6 @@
 #ifndef JSONAPI_H
 #define JSONAPI_H
 
-#include "lib/stringinfo.h"
-
 typedef enum JsonTokenType
 {
 	JSON_TOKEN_INVALID,
@@ -48,6 +46,7 @@ typedef enum JsonParseErrorType
 	JSON_EXPECTED_OBJECT_NEXT,
 	JSON_EXPECTED_STRING,
 	JSON_INVALID_TOKEN,
+	JSON_OUT_OF_MEMORY,
 	JSON_UNICODE_CODE_POINT_ZERO,
 	JSON_UNICODE_ESCAPE_FORMAT,
 	JSON_UNICODE_HIGH_ESCAPE,
@@ -57,6 +56,17 @@ typedef enum JsonParseErrorType
 	JSON_SEM_ACTION_FAILED		/* error should already be reported */
 } JsonParseErrorType;
 
+/*
+ * Don't depend on the internal type header for strval; if callers need access
+ * then they can include the appropriate header themselves.
+ */
+#ifdef FRONTEND
+#define StrValType PQExpBufferData
+#else
+#define StrValType StringInfoData
+#endif
+
+typedef struct StrValType StrValType;
 
 /*
  * All the fields in this structure should be treated as read-only.
@@ -83,7 +93,9 @@ typedef struct JsonLexContext
 	int			lex_level;
 	int			line_number;	/* line number, starting from 1 */
 	char	   *line_start;		/* where that line starts within input */
-	StringInfo	strval;
+	bool		parse_strval;
+	StrValType *strval;			/* only used if parse_strval == true */
+	StrValType *errormsg;
 } JsonLexContext;
 
 typedef JsonParseErrorType (*json_struct_action) (void *state);
@@ -149,9 +161,10 @@ extern PGDLLIMPORT JsonSemAction nullSemAction;
  */
 extern JsonParseErrorType json_count_array_elements(JsonLexContext *lex,
 													int *elements);
+#ifndef FRONTEND
 
 /*
- * constructor for JsonLexContext, with or without strval element.
+ * allocating constructor for JsonLexContext, with or without strval element.
  * If supplied, the strval element will contain a de-escaped version of
  * the lexeme. However, doing this imposes a performance penalty, so
  * it should be avoided if the de-escaped lexeme is not required.
@@ -160,6 +173,32 @@ extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
 													int len,
 													int encoding,
 													bool need_escapes);
+
+/*
+ * Counterpart to makeJsonLexContextCstringLen(): clears and deallocates lex.
+ * The context pointer should not be used after this call.
+ */
+extern void destroyJsonLexContext(JsonLexContext *lex);
+
+#endif /* !FRONTEND */
+
+/*
+ * stack constructor for JsonLexContext, with or without strval element.
+ * If supplied, the strval element will contain a de-escaped version of
+ * the lexeme. However, doing this imposes a performance penalty, so
+ * it should be avoided if the de-escaped lexeme is not required.
+ */
+extern void initJsonLexContextCstringLen(JsonLexContext *lex,
+										 char *json,
+										 int len,
+										 int encoding,
+										 bool need_escapes);
+
+/*
+ * Counterpart to initJsonLexContextCstringLen(): clears the contents of lex,
+ * but does not deallocate lex itself.
+ */
+extern void termJsonLexContext(JsonLexContext *lex);
 
 /* lex one token */
 extern JsonParseErrorType json_lex(JsonLexContext *lex);

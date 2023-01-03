@@ -1,0 +1,7 @@
+black
+cryptography~=3.4.6
+construct~=2.10.61
+isort~=5.6
+psycopg2~=2.8.6
+pytest~=6.1
+pytest-asyncio~=0.14.0

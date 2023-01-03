@@ -119,7 +119,7 @@ void
 json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 					size_t size)
 {
-	JsonLexContext *lex;
+	JsonLexContext lex = {0};
 	JsonParseErrorType json_error;
 	JsonSemAction sem;
 	JsonManifestParseState parse;
@@ -129,8 +129,8 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 	parse.state = JM_EXPECT_TOPLEVEL_START;
 	parse.saw_version_field = false;
 
-	/* Create a JSON lexing context. */
-	lex = makeJsonLexContextCstringLen(buffer, size, PG_UTF8, true);
+	/* Initialize a JSON lexing context. */
+	initJsonLexContextCstringLen(&lex, buffer, size, PG_UTF8, true);
 
 	/* Set up semantic actions. */
 	sem.semstate = &parse;
@@ -145,14 +145,17 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 	sem.scalar = json_manifest_scalar;
 
 	/* Run the actual JSON parser. */
-	json_error = pg_parse_json(lex, &sem);
+	json_error = pg_parse_json(&lex, &sem);
 	if (json_error != JSON_SUCCESS)
-		json_manifest_parse_failure(context, "parsing failed");
+		json_manifest_parse_failure(context, json_errdetail(json_error, &lex));
 	if (parse.state != JM_EXPECT_EOF)
 		json_manifest_parse_failure(context, "manifest ended unexpectedly");
 
 	/* Verify the manifest checksum. */
 	verify_manifest_checksum(&parse, buffer, size);
+
+	/* Clean up. */
+	termJsonLexContext(&lex);
 }
 
 /*

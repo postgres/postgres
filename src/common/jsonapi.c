@@ -21,8 +21,37 @@
 #include "mb/pg_wchar.h"
 #include "port/pg_lfind.h"
 
-#ifndef FRONTEND
+#ifdef FRONTEND
+#include "pqexpbuffer.h"
+#else
+#include "lib/stringinfo.h"
 #include "miscadmin.h"
+#endif
+
+/*
+ * In backend, we will use palloc/pfree along with StringInfo.  In frontend, use
+ * malloc and PQExpBuffer, and return JSON_OUT_OF_MEMORY on out-of-memory.
+ */
+#ifdef FRONTEND
+
+#define STRDUP(s) strdup(s)
+#define ALLOC(size) malloc(size)
+
+#define appendStrVal		appendPQExpBuffer
+#define appendStrValChar	appendPQExpBufferChar
+#define createStrVal		createPQExpBuffer
+#define resetStrVal			resetPQExpBuffer
+
+#else /* !FRONTEND */
+
+#define STRDUP(s) pstrdup(s)
+#define ALLOC(size) palloc(size)
+
+#define appendStrVal		appendStringInfo
+#define appendStrValChar	appendStringInfoChar
+#define createStrVal		makeStringInfo
+#define resetStrVal			resetStringInfo
+
 #endif
 
 /*
@@ -133,10 +162,12 @@ IsValidJsonNumber(const char *str, int len)
 	return (!numeric_error) && (total_len == dummy_lex.input_length);
 }
 
+#ifndef FRONTEND
+
 /*
  * makeJsonLexContextCstringLen
  *
- * lex constructor, with or without StringInfo object for de-escaped lexemes.
+ * lex constructor, with or without a string object for de-escaped lexemes.
  *
  * Without is better as it makes the processing faster, so only make one
  * if really required.
@@ -146,13 +177,66 @@ makeJsonLexContextCstringLen(char *json, int len, int encoding, bool need_escape
 {
 	JsonLexContext *lex = palloc0(sizeof(JsonLexContext));
 
+	initJsonLexContextCstringLen(lex, json, len, encoding, need_escapes);
+
+	return lex;
+}
+
+void
+destroyJsonLexContext(JsonLexContext *lex)
+{
+	termJsonLexContext(lex);
+	pfree(lex);
+}
+
+#endif /* !FRONTEND */
+
+void
+initJsonLexContextCstringLen(JsonLexContext *lex, char *json, int len, int encoding, bool need_escapes)
+{
 	lex->input = lex->token_terminator = lex->line_start = json;
 	lex->line_number = 1;
 	lex->input_length = len;
 	lex->input_encoding = encoding;
-	if (need_escapes)
-		lex->strval = makeStringInfo();
-	return lex;
+	lex->parse_strval = need_escapes;
+	if (lex->parse_strval)
+	{
+		/*
+		 * This call can fail in FRONTEND code. We defer error handling to time
+		 * of use (json_lex_string()) since there's no way to signal failure
+		 * here, and we might not need to parse any strings anyway.
+		 */
+		lex->strval = createStrVal();
+	}
+	lex->errormsg = NULL;
+}
+
+void
+termJsonLexContext(JsonLexContext *lex)
+{
+	static const JsonLexContext empty = {0};
+
+	if (lex->strval)
+	{
+#ifdef FRONTEND
+		destroyPQExpBuffer(lex->strval);
+#else
+		pfree(lex->strval->data);
+		pfree(lex->strval);
+#endif
+	}
+
+	if (lex->errormsg)
+	{
+#ifdef FRONTEND
+		destroyPQExpBuffer(lex->errormsg);
+#else
+		pfree(lex->errormsg->data);
+		pfree(lex->errormsg);
+#endif
+	}
+
+	*lex = empty;
 }
 
 /*
@@ -218,7 +302,7 @@ json_count_array_elements(JsonLexContext *lex, int *elements)
 	 * etc, so doing this with a copy makes that safe.
 	 */
 	memcpy(&copylex, lex, sizeof(JsonLexContext));
-	copylex.strval = NULL;		/* not interested in values here */
+	copylex.parse_strval = false;		/* not interested in values here */
 	copylex.lex_level++;
 
 	count = 0;
@@ -280,14 +364,21 @@ parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 	/* extract the de-escaped string value, or the raw lexeme */
 	if (lex_peek(lex) == JSON_TOKEN_STRING)
 	{
-		if (lex->strval != NULL)
-			val = pstrdup(lex->strval->data);
+		if (lex->parse_strval)
+		{
+			val = STRDUP(lex->strval->data);
+			if (val == NULL)
+				return JSON_OUT_OF_MEMORY;
+		}
 	}
 	else
 	{
 		int			len = (lex->token_terminator - lex->token_start);
 
-		val = palloc(len + 1);
+		val = ALLOC(len + 1);
+		if (val == NULL)
+			return JSON_OUT_OF_MEMORY;
+
 		memcpy(val, lex->token_start, len);
 		val[len] = '\0';
 	}
@@ -298,9 +389,9 @@ parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 		return result;
 
 	/* invoke the callback */
-	result = (*sfunc) (sem->semstate, val, tok);
+	(*sfunc) (sem->semstate, val, tok);
 
-	return result;
+	return JSON_SUCCESS;
 }
 
 static JsonParseErrorType
@@ -321,8 +412,12 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 
 	if (lex_peek(lex) != JSON_TOKEN_STRING)
 		return report_parse_error(JSON_PARSE_STRING, lex);
-	if ((ostart != NULL || oend != NULL) && lex->strval != NULL)
-		fname = pstrdup(lex->strval->data);
+	if ((ostart != NULL || oend != NULL) && lex->parse_strval)
+	{
+		fname = STRDUP(lex->strval->data);
+		if (fname == NULL)
+			return JSON_OUT_OF_MEMORY;
+	}
 	result = json_lex(lex);
 	if (result != JSON_SUCCESS)
 		return result;
@@ -335,11 +430,7 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 	isnull = tok == JSON_TOKEN_NULL;
 
 	if (ostart != NULL)
-	{
-		result = (*ostart) (sem->semstate, fname, isnull);
-		if (result != JSON_SUCCESS)
-			return result;
-	}
+		(*ostart) (sem->semstate, fname, isnull);
 
 	switch (tok)
 	{
@@ -356,12 +447,7 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 		return result;
 
 	if (oend != NULL)
-	{
-		result = (*oend) (sem->semstate, fname, isnull);
-		if (result != JSON_SUCCESS)
-			return result;
-	}
-
+		(*oend) (sem->semstate, fname, isnull);
 	return JSON_SUCCESS;
 }
 
@@ -378,15 +464,15 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 	JsonParseErrorType result;
 
 #ifndef FRONTEND
+	/*
+	 * TODO: clients need some way to put a bound on stack growth. Parse level
+	 * limits maybe?
+	 */
 	check_stack_depth();
 #endif
 
 	if (ostart != NULL)
-	{
-		result = (*ostart) (sem->semstate);
-		if (result != JSON_SUCCESS)
-			return result;
-	}
+		(*ostart) (sem->semstate);
 
 	/*
 	 * Data inside an object is at a higher nesting level than the object
@@ -430,11 +516,7 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 	lex->lex_level--;
 
 	if (oend != NULL)
-	{
-		result = (*oend) (sem->semstate);
-		if (result != JSON_SUCCESS)
-			return result;
-	}
+		(*oend) (sem->semstate);
 
 	return JSON_SUCCESS;
 }
@@ -446,16 +528,13 @@ parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
 	json_aelem_action aend = sem->array_element_end;
 	JsonTokenType tok = lex_peek(lex);
 	JsonParseErrorType result;
+
 	bool		isnull;
 
 	isnull = tok == JSON_TOKEN_NULL;
 
 	if (astart != NULL)
-	{
-		result = (*astart) (sem->semstate, isnull);
-		if (result != JSON_SUCCESS)
-			return result;
-	}
+		(*astart) (sem->semstate, isnull);
 
 	/* an array element is any object, array or scalar */
 	switch (tok)
@@ -474,11 +553,7 @@ parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
 		return result;
 
 	if (aend != NULL)
-	{
-		result = (*aend) (sem->semstate, isnull);
-		if (result != JSON_SUCCESS)
-			return result;
-	}
+		(*aend) (sem->semstate, isnull);
 
 	return JSON_SUCCESS;
 }
@@ -499,11 +574,7 @@ parse_array(JsonLexContext *lex, JsonSemAction *sem)
 #endif
 
 	if (astart != NULL)
-	{
-		result = (*astart) (sem->semstate);
-		if (result != JSON_SUCCESS)
-			return result;
-	}
+		(*astart) (sem->semstate);
 
 	/*
 	 * Data inside an array is at a higher nesting level than the array
@@ -536,11 +607,7 @@ parse_array(JsonLexContext *lex, JsonSemAction *sem)
 	lex->lex_level--;
 
 	if (aend != NULL)
-	{
-		result = (*aend) (sem->semstate);
-		if (result != JSON_SUCCESS)
-			return result;
-	}
+		(*aend) (sem->semstate);
 
 	return JSON_SUCCESS;
 }
@@ -552,23 +619,26 @@ JsonParseErrorType
 json_lex(JsonLexContext *lex)
 {
 	char	   *s;
-	char	   *const end = lex->input + lex->input_length;
+	int			len;
 	JsonParseErrorType result;
 
 	/* Skip leading whitespace. */
 	s = lex->token_terminator;
-	while (s < end && (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r'))
+	len = s - lex->input;
+	while (len < lex->input_length &&
+		   (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r'))
 	{
 		if (*s++ == '\n')
 		{
 			++lex->line_number;
 			lex->line_start = s;
 		}
+		len++;
 	}
 	lex->token_start = s;
 
 	/* Determine token type. */
-	if (s >= end)
+	if (len >= lex->input_length)
 	{
 		lex->token_start = NULL;
 		lex->prev_token_terminator = lex->token_terminator;
@@ -653,7 +723,7 @@ json_lex(JsonLexContext *lex)
 					 * the whole word as an unexpected token, rather than just
 					 * some unintuitive prefix thereof.
 					 */
-					for (p = s; p < end && JSON_ALPHANUMERIC_CHAR(*p); p++)
+					for (p = s; p - s < lex->input_length - len && JSON_ALPHANUMERIC_CHAR(*p); p++)
 						 /* skip */ ;
 
 					/*
@@ -688,6 +758,7 @@ json_lex(JsonLexContext *lex)
 						lex->token_type = JSON_TOKEN_FALSE;
 					else
 						return JSON_INVALID_TOKEN;
+
 				}
 		}						/* end of switch */
 	}
@@ -702,30 +773,47 @@ static inline JsonParseErrorType
 json_lex_string(JsonLexContext *lex)
 {
 	char	   *s;
-	char	   *const end = lex->input + lex->input_length;
+	int			len;
 	int			hi_surrogate = -1;
 
-	if (lex->strval != NULL)
-		resetStringInfo(lex->strval);
+	if (lex->parse_strval)
+	{
+#ifdef FRONTEND
+		/* make sure initialization succeeded */
+		if (lex->strval == NULL)
+			return JSON_OUT_OF_MEMORY;
+#endif
+		resetStrVal(lex->strval);
+	}
 
 	Assert(lex->input_length > 0);
 	s = lex->token_start;
+	len = lex->token_start - lex->input;
 	for (;;)
 	{
 		s++;
+		len++;
 		/* Premature end of the string. */
-		if (s >= end)
+		if (len >= lex->input_length)
 		{
 			lex->token_terminator = s;
 			return JSON_INVALID_TOKEN;
 		}
 		else if (*s == '"')
 			break;
+		else if ((unsigned char) *s < 32)
+		{
+			/* Per RFC4627, these characters MUST be escaped. */
+			/* Since *s isn't printable, exclude it from the context string */
+			lex->token_terminator = s;
+			return JSON_ESCAPING_REQUIRED;
+		}
 		else if (*s == '\\')
 		{
 			/* OK, we have an escape character. */
 			s++;
-			if (s >= end)
+			len++;
+			if (len >= lex->input_length)
 			{
 				lex->token_terminator = s;
 				return JSON_INVALID_TOKEN;
@@ -738,7 +826,8 @@ json_lex_string(JsonLexContext *lex)
 				for (i = 1; i <= 4; i++)
 				{
 					s++;
-					if (s >= end)
+					len++;
+					if (len >= lex->input_length)
 					{
 						lex->token_terminator = s;
 						return JSON_INVALID_TOKEN;
@@ -755,7 +844,7 @@ json_lex_string(JsonLexContext *lex)
 						return JSON_UNICODE_ESCAPE_FORMAT;
 					}
 				}
-				if (lex->strval != NULL)
+				if (lex->parse_strval)
 				{
 					/*
 					 * Combine surrogate pairs.
@@ -791,16 +880,19 @@ json_lex_string(JsonLexContext *lex)
 
 					/*
 					 * Add the represented character to lex->strval.  In the
-					 * backend, we can let pg_unicode_to_server_noerror()
-					 * handle any required character set conversion; in
-					 * frontend, we can only deal with trivial conversions.
+					 * backend, we can let pg_unicode_to_server() handle any
+					 * required character set conversion; in frontend, we can
+					 * only deal with trivial conversions.
+					 *
+					 * Note: pg_unicode_to_server() will throw an error for a
+					 * conversion failure, rather than returning a failure
+					 * indication.  That seems OK.
 					 */
 #ifndef FRONTEND
 					{
 						char		cbuf[MAX_UNICODE_EQUIVALENT_STRING + 1];
 
-						if (!pg_unicode_to_server_noerror(ch, (unsigned char *) cbuf))
-							return JSON_UNICODE_UNTRANSLATABLE;
+						pg_unicode_to_server(ch, (unsigned char *) cbuf);
 						appendStringInfoString(lex->strval, cbuf);
 					}
 #else
@@ -812,19 +904,19 @@ json_lex_string(JsonLexContext *lex)
 
 						unicode_to_utf8(ch, (unsigned char *) utf8str);
 						utf8len = pg_utf_mblen((unsigned char *) utf8str);
-						appendBinaryStringInfo(lex->strval, utf8str, utf8len);
+						appendBinaryPQExpBuffer(lex->strval, utf8str, utf8len);
 					}
 					else if (ch <= 0x007f)
 					{
 						/* The ASCII range is the same in all encodings */
-						appendStringInfoChar(lex->strval, (char) ch);
+						appendPQExpBufferChar(lex->strval, (char) ch);
 					}
 					else
 						return JSON_UNICODE_HIGH_ESCAPE;
 #endif							/* FRONTEND */
 				}
 			}
-			else if (lex->strval != NULL)
+			else if (lex->parse_strval)
 			{
 				if (hi_surrogate != -1)
 					return JSON_UNICODE_LOW_SURROGATE;
@@ -834,22 +926,22 @@ json_lex_string(JsonLexContext *lex)
 					case '"':
 					case '\\':
 					case '/':
-						appendStringInfoChar(lex->strval, *s);
+						appendStrValChar(lex->strval, *s);
 						break;
 					case 'b':
-						appendStringInfoChar(lex->strval, '\b');
+						appendStrValChar(lex->strval, '\b');
 						break;
 					case 'f':
-						appendStringInfoChar(lex->strval, '\f');
+						appendStrValChar(lex->strval, '\f');
 						break;
 					case 'n':
-						appendStringInfoChar(lex->strval, '\n');
+						appendStrValChar(lex->strval, '\n');
 						break;
 					case 'r':
-						appendStringInfoChar(lex->strval, '\r');
+						appendStrValChar(lex->strval, '\r');
 						break;
 					case 't':
-						appendStringInfoChar(lex->strval, '\t');
+						appendStrValChar(lex->strval, '\t');
 						break;
 					default:
 						/* Not a valid string escape, so signal error. */
@@ -871,53 +963,25 @@ json_lex_string(JsonLexContext *lex)
 				lex->token_terminator = s + pg_encoding_mblen_bounded(lex->input_encoding, s);
 				return JSON_ESCAPING_INVALID;
 			}
-		}
-		else
-		{
-			char	   *p = s;
 
+		}
+		else if (lex->parse_strval)
+		{
 			if (hi_surrogate != -1)
 				return JSON_UNICODE_LOW_SURROGATE;
 
-			/*
-			 * Skip to the first byte that requires special handling, so we
-			 * can batch calls to appendBinaryStringInfo.
-			 */
-			while (p < end - sizeof(Vector8) &&
-				   !pg_lfind8('\\', (uint8 *) p, sizeof(Vector8)) &&
-				   !pg_lfind8('"', (uint8 *) p, sizeof(Vector8)) &&
-				   !pg_lfind8_le(31, (uint8 *) p, sizeof(Vector8)))
-				p += sizeof(Vector8);
-
-			for (; p < end; p++)
-			{
-				if (*p == '\\' || *p == '"')
-					break;
-				else if ((unsigned char) *p <= 31)
-				{
-					/* Per RFC4627, these characters MUST be escaped. */
-					/*
-					 * Since *p isn't printable, exclude it from the context
-					 * string
-					 */
-					lex->token_terminator = p;
-					return JSON_ESCAPING_REQUIRED;
-				}
-			}
-
-			if (lex->strval != NULL)
-				appendBinaryStringInfo(lex->strval, s, p - s);
-
-			/*
-			 * s will be incremented at the top of the loop, so set it to just
-			 * behind our lookahead position
-			 */
-			s = p - 1;
+			appendStrValChar(lex->strval, *s);
 		}
+
 	}
 
 	if (hi_surrogate != -1)
 		return JSON_UNICODE_LOW_SURROGATE;
+
+#ifdef FRONTEND
+	if (lex->parse_strval && PQExpBufferBroken(lex->strval))
+		return JSON_OUT_OF_MEMORY;
+#endif
 
 	/* Hooray, we found the end of the string! */
 	lex->prev_token_terminator = lex->token_terminator;
@@ -1091,72 +1155,93 @@ report_parse_error(JsonParseContext ctx, JsonLexContext *lex)
 	return JSON_SUCCESS;		/* silence stupider compilers */
 }
 
-
-#ifndef FRONTEND
 /*
- * Extract the current token from a lexing context, for error reporting.
- */
-static char *
-extract_token(JsonLexContext *lex)
-{
-	int			toklen = lex->token_terminator - lex->token_start;
-	char	   *token = palloc(toklen + 1);
-
-	memcpy(token, lex->token_start, toklen);
-	token[toklen] = '\0';
-	return token;
-}
-
-/*
- * Construct an (already translated) detail message for a JSON error.
+ * Construct a detail message for a JSON error.
  *
- * Note that the error message generated by this routine may not be
- * palloc'd, making it unsafe for frontend code as there is no way to
- * know if this can be safely pfree'd or not.
+ * The returned allocation is either static or owned by the JsonLexContext and
+ * should not be freed.
  */
 char *
 json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 {
+	int		toklen = lex->token_terminator - lex->token_start;
+
+	if (error == JSON_OUT_OF_MEMORY)
+	{
+		/* Short circuit. Allocating anything for this case is unhelpful. */
+		return _("out of memory");
+	}
+
+	if (lex->errormsg)
+		resetStrVal(lex->errormsg);
+	else
+		lex->errormsg = createStrVal();
+
 	switch (error)
 	{
 		case JSON_SUCCESS:
 			/* fall through to the error code after switch */
 			break;
 		case JSON_ESCAPING_INVALID:
-			return psprintf(_("Escape sequence \"\\%s\" is invalid."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Escape sequence \"\\%.*s\" is invalid."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_ESCAPING_REQUIRED:
-			return psprintf(_("Character with value 0x%02x must be escaped."),
-							(unsigned char) *(lex->token_terminator));
+			appendStrVal(lex->errormsg,
+						 _("Character with value 0x%02x must be escaped."),
+						 (unsigned char) *(lex->token_terminator));
+			break;
 		case JSON_EXPECTED_END:
-			return psprintf(_("Expected end of input, but found \"%s\"."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Expected end of input, but found \"%.*s\"."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_EXPECTED_ARRAY_FIRST:
-			return psprintf(_("Expected array element or \"]\", but found \"%s\"."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Expected array element or \"]\", but found \"%.*s\"."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_EXPECTED_ARRAY_NEXT:
-			return psprintf(_("Expected \",\" or \"]\", but found \"%s\"."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Expected \",\" or \"]\", but found \"%.*s\"."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_EXPECTED_COLON:
-			return psprintf(_("Expected \":\", but found \"%s\"."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Expected \":\", but found \"%.*s\"."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_EXPECTED_JSON:
-			return psprintf(_("Expected JSON value, but found \"%s\"."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Expected JSON value, but found \"%.*s\"."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_EXPECTED_MORE:
 			return _("The input string ended unexpectedly.");
 		case JSON_EXPECTED_OBJECT_FIRST:
-			return psprintf(_("Expected string or \"}\", but found \"%s\"."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Expected string or \"}\", but found \"%.*s\"."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_EXPECTED_OBJECT_NEXT:
-			return psprintf(_("Expected \",\" or \"}\", but found \"%s\"."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Expected \",\" or \"}\", but found \"%.*s\"."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_EXPECTED_STRING:
-			return psprintf(_("Expected string, but found \"%s\"."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Expected string, but found \"%.*s\"."),
+						 toklen, lex->token_start);
+			break;
 		case JSON_INVALID_TOKEN:
-			return psprintf(_("Token \"%s\" is invalid."),
-							extract_token(lex));
+			appendStrVal(lex->errormsg,
+						 _("Token \"%.*s\" is invalid."),
+						 toklen, lex->token_start);
+			break;
+		case JSON_OUT_OF_MEMORY:
+			/* should have been handled above; use the error path */
+			break;
 		case JSON_UNICODE_CODE_POINT_ZERO:
 			return _("\\u0000 cannot be converted to text.");
 		case JSON_UNICODE_ESCAPE_FORMAT:
@@ -1166,8 +1251,7 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 			return _("Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8.");
 		case JSON_UNICODE_UNTRANSLATABLE:
 			/* note: this case is only reachable in backend not frontend */
-			return psprintf(_("Unicode escape value could not be translated to the server's encoding %s."),
-							GetDatabaseEncodingName());
+			return _("Unicode escape value could not be translated to the server's encoding %s.");							
 		case JSON_UNICODE_HIGH_SURROGATE:
 			return _("Unicode high surrogate must not follow a high surrogate.");
 		case JSON_UNICODE_LOW_SURROGATE:
@@ -1177,12 +1261,22 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 			break;
 	}
 
-	/*
-	 * We don't use a default: case, so that the compiler will warn about
-	 * unhandled enum values.  But this needs to be here anyway to cover the
-	 * possibility of an incorrect input.
-	 */
-	elog(ERROR, "unexpected json parse error type: %d", (int) error);
-	return NULL;
-}
+	/* Note that lex->errormsg can be NULL in FRONTEND code. */
+	if (lex->errormsg && !lex->errormsg->data[0])
+	{
+		/*
+		 * We don't use a default: case, so that the compiler will warn about
+		 * unhandled enum values.  But this needs to be here anyway to cover the
+		 * possibility of an incorrect input.
+		 */
+		appendStrVal(lex->errormsg,
+					 "unexpected json parse error type: %d", (int) error);
+	}
+
+#ifdef FRONTEND
+	if (PQExpBufferBroken(lex->errormsg))
+		return _("out of memory while constructing error description");
 #endif
+
+	return lex->errormsg->data;
+}

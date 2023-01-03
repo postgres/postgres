@@ -1,0 +1,5 @@
+# authn_id extension
+comment = 'current user identity'
+default_version = '1.0'
+module_pathname = '$libdir/authn_id'
+relocatable = true

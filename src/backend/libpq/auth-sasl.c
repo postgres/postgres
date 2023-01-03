@@ -21,14 +21,6 @@
 #include "libpq/sasl.h"
 
 /*
- * Maximum accepted size of SASL messages.
- *
- * The messages that the server or libpq generate are much smaller than this,
- * but have some headroom.
- */
-#define PG_MAX_SASL_MESSAGE_LENGTH	1024
-
-/*
  * Perform a SASL exchange with a libpq client, using a specific mechanism
  * implementation.
  *
@@ -103,7 +95,7 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 
 		/* Get the actual SASL message */
 		initStringInfo(&buf);
-		if (pq_getmessage(&buf, PG_MAX_SASL_MESSAGE_LENGTH))
+		if (pq_getmessage(&buf, mech->max_message_length))
 		{
 			/* EOF - pq_getmessage already logged error */
 			pfree(buf.data);

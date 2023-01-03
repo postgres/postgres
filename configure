@@ -712,6 +712,7 @@ with_uuid
 with_readline
 with_systemd
 with_selinux
+with_oauth
 with_ldap
 with_krb_srvnam
 krb_srvtab
@@ -859,6 +860,7 @@ with_krb_srvnam
 with_pam
 with_bsd_auth
 with_ldap
+with_oauth
 with_bonjour
 with_selinux
 with_systemd
@@ -1569,6 +1571,7 @@ Optional Packages:
   --with-pam              build with PAM support
   --with-bsd-auth         build with BSD Authentication support
   --with-ldap             build with LDAP support
+  --with-oauth            build with OAuth 2.0 support
   --with-bonjour          build with Bonjour support
   --with-selinux          build with SELinux support
   --with-systemd          build with systemd support
@@ -8767,6 +8770,42 @@ $as_echo "$with_ldap" >&6; }
 
 
 #
+# OAuth 2.0
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with OAuth support" >&5
+$as_echo_n "checking whether to build with OAuth support... " >&6; }
+
+
+
+# Check whether --with-oauth was given.
+if test "${with_oauth+set}" = set; then :
+  withval=$with_oauth;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_OAUTH 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-oauth option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_oauth=no
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_oauth" >&5
+$as_echo "$with_oauth" >&6; }
+
+
+
+#
 # Bonjour
 #
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with Bonjour support" >&5
@@ -13411,6 +13450,56 @@ fi
 
 
 
+if test "$with_oauth" = yes ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for i_init_session in -liddawc" >&5
+$as_echo_n "checking for i_init_session in -liddawc... " >&6; }
+if ${ac_cv_lib_iddawc_i_init_session+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-liddawc  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char i_init_session ();
+int
+main ()
+{
+return i_init_session ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_iddawc_i_init_session=yes
+else
+  ac_cv_lib_iddawc_i_init_session=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_iddawc_i_init_session" >&5
+$as_echo "$ac_cv_lib_iddawc_i_init_session" >&6; }
+if test "x$ac_cv_lib_iddawc_i_init_session" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBIDDAWC 1
+_ACEOF
+
+  LIBS="-liddawc $LIBS"
+
+else
+  as_fn_error $? "library 'iddawc' is required for OAuth support" "$LINENO" 5
+fi
+
+fi
+
 # for contrib/sepgsql
 if test "$with_selinux" = yes; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for security_compute_create_name in -lselinux" >&5
@@ -14405,6 +14494,17 @@ done
 fi
 
 done
+
+fi
+
+if test "$with_oauth" != no; then
+  ac_fn_c_check_header_mongrel "$LINENO" "iddawc.h" "ac_cv_header_iddawc_h" "$ac_includes_default"
+if test "x$ac_cv_header_iddawc_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <iddawc.h> is required for OAuth" "$LINENO" 5
+fi
+
 
 fi
 

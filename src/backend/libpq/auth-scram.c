@@ -118,7 +118,9 @@ static int	scram_exchange(void *opaq, const char *input, int inputlen,
 const pg_be_sasl_mech pg_be_scram_mech = {
 	scram_get_mechanisms,
 	scram_init,
-	scram_exchange
+	scram_exchange,
+
+	PG_MAX_SASL_MESSAGE_LENGTH
 };
 
 /*

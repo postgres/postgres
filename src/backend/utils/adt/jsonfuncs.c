@@ -742,9 +742,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 		pg_parse_json_or_ereport(lex, sem);
 		/* keys are now in state->result */
 
-		pfree(lex->strval->data);
-		pfree(lex->strval);
-		pfree(lex);
+		destroyJsonLexContext(lex);
 		pfree(sem);
 
 		MemoryContextSwitchTo(oldcontext);

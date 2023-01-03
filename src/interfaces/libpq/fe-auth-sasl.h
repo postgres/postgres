@@ -65,6 +65,8 @@ typedef struct pg_fe_sasl_mech
 	 *
 	 *	state:	   The opaque mechanism state returned by init()
 	 *
+	 *	final:	   true if the server has sent a final exchange outcome
+	 *
 	 *	input:	   The challenge data sent by the server, or NULL when
 	 *			   generating a client-first initial response (that is, when
 	 *			   the server expects the client to send a message to start
@@ -92,7 +94,8 @@ typedef struct pg_fe_sasl_mech
 	 *			   Ignored if *done is false.
 	 *--------
 	 */
-	void		(*exchange) (void *state, char *input, int inputlen,
+	void		(*exchange) (void *state, bool final,
+							 char *input, int inputlen,
 							 char **output, int *outputlen,
 							 bool *done, bool *success);
 

@@ -29,6 +29,7 @@
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
 #include "libpq/libpq.h"
+#include "libpq/oauth.h"
 #include "libpq/pqformat.h"
 #include "libpq/sasl.h"
 #include "libpq/scram.h"
@@ -47,7 +48,6 @@
  */
 static void auth_failed(Port *port, int status, const char *logdetail);
 static char *recv_password_packet(Port *port);
-static void set_authn_id(Port *port, const char *id);
 
 
 /*----------------------------------------------------------------
@@ -198,22 +198,6 @@ static int	CheckRADIUSAuth(Port *port);
 static int	PerformRadiusTransaction(const char *server, const char *secret, const char *portstr, const char *identifier, const char *user_name, const char *passwd);
 
 
-/*
- * Maximum accepted size of GSS and SSPI authentication tokens.
- * We also use this as a limit on ordinary password packet lengths.
- *
- * Kerberos tickets are usually quite small, but the TGTs issued by Windows
- * domain controllers include an authorization field known as the Privilege
- * Attribute Certificate (PAC), which contains the user's Windows permissions
- * (group memberships etc.). The PAC is copied into all tickets obtained on
- * the basis of this TGT (even those issued by Unix realms which the Windows
- * realm trusts), and can be several kB in size. The maximum token size
- * accepted by Windows systems is determined by the MaxAuthToken Windows
- * registry setting. Microsoft recommends that it is not set higher than
- * 65535 bytes, so that seems like a reasonable limit for us as well.
- */
-#define PG_MAX_AUTH_TOKEN_LENGTH	65535
-
 /*----------------------------------------------------------------
  * Global authentication functions
  *----------------------------------------------------------------
@@ -302,6 +286,9 @@ auth_failed(Port *port, int status, const char *logdetail)
 		case uaRADIUS:
 			errstr = gettext_noop("RADIUS authentication failed for user \"%s\"");
 			break;
+		case uaOAuth:
+			errstr = gettext_noop("OAuth bearer authentication failed for user \"%s\"");
+			break;
 		default:
 			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 			break;
@@ -337,7 +324,7 @@ auth_failed(Port *port, int status, const char *logdetail)
  * lifetime of MyClientConnectionInfo, so it is safe to pass a string that is
  * managed by an external library.
  */
-static void
+void
 set_authn_id(Port *port, const char *id)
 {
 	Assert(id);
@@ -623,6 +610,9 @@ ClientAuthentication(Port *port)
 			/* uaCert will be treated as if clientcert=verify-full (uaTrust) */
 		case uaTrust:
 			status = STATUS_OK;
+			break;
+		case uaOAuth:
+			status = CheckSASLAuth(&pg_be_oauth_mech, port, NULL, NULL);
 			break;
 	}
 

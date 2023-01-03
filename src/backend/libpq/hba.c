@@ -124,7 +124,8 @@ static const char *const UserAuthName[] =
 	"ldap",
 	"cert",
 	"radius",
-	"peer"
+	"peer",
+	"oauth",
 };
 
 
@@ -1797,6 +1798,8 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 #endif
 	else if (strcmp(token->string, "radius") == 0)
 		parsedline->auth_method = uaRADIUS;
+	else if (strcmp(token->string, "oauth") == 0)
+		parsedline->auth_method = uaOAuth;
 	else
 	{
 		ereport(elevel,
@@ -2116,8 +2119,9 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			hbaline->auth_method != uaPeer &&
 			hbaline->auth_method != uaGSS &&
 			hbaline->auth_method != uaSSPI &&
+			hbaline->auth_method != uaOAuth &&
 			hbaline->auth_method != uaCert)
-			INVALID_AUTH_OPTION("map", gettext_noop("ident, peer, gssapi, sspi, and cert"));
+			INVALID_AUTH_OPTION("map", gettext_noop("ident, peer, gssapi, sspi, oauth, and cert"));
 		hbaline->usermap = pstrdup(val);
 	}
 	else if (strcmp(name, "clientcert") == 0)
@@ -2499,6 +2503,27 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 
 		hbaline->radiusidentifiers = parsed_identifiers;
 		hbaline->radiusidentifiers_s = pstrdup(val);
+	}
+	else if (strcmp(name, "issuer") == 0)
+	{
+		if (hbaline->auth_method != uaOAuth)
+			INVALID_AUTH_OPTION("issuer", gettext_noop("oauth"));
+		hbaline->oauth_issuer = pstrdup(val);
+	}
+	else if (strcmp(name, "scope") == 0)
+	{
+		if (hbaline->auth_method != uaOAuth)
+			INVALID_AUTH_OPTION("scope", gettext_noop("oauth"));
+		hbaline->oauth_scope = pstrdup(val);
+	}
+	else if (strcmp(name, "trust_validator_authz") == 0)
+	{
+		if (hbaline->auth_method != uaOAuth)
+			INVALID_AUTH_OPTION("trust_validator_authz", gettext_noop("oauth"));
+		if (strcmp(val, "1") == 0)
+			hbaline->oauth_skip_usermap = true;
+		else
+			hbaline->oauth_skip_usermap = false;
 	}
 	else
 	{

@@ -397,6 +397,14 @@ struct pg_conn
 	char	   *ssl_max_protocol_version;	/* maximum TLS protocol version */
 	char	   *target_session_attrs;	/* desired session properties */
 
+	/* OAuth v2 */
+	char	   *oauth_issuer;			/* token issuer URL */
+	char	   *oauth_discovery_uri;	/* URI of the issuer's discovery document */
+	char	   *oauth_client_id;		/* client identifier */
+	char	   *oauth_client_secret;	/* client secret */
+	char	   *oauth_scope;			/* access token scope */
+	bool		oauth_want_retry;		/* should we retry on failure? */
+
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
 	int			traceFlags;

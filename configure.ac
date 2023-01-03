@@ -945,6 +945,17 @@ AC_SUBST(with_ldap)
 
 
 #
+# OAuth 2.0
+#
+AC_MSG_CHECKING([whether to build with OAuth support])
+PGAC_ARG_BOOL(with, oauth, no,
+              [build with OAuth 2.0 support],
+              [AC_DEFINE([USE_OAUTH], 1, [Define to 1 to build with OAuth 2.0 support. (--with-oauth)])])
+AC_MSG_RESULT([$with_oauth])
+AC_SUBST(with_oauth)
+
+
+#
 # Bonjour
 #
 AC_MSG_CHECKING([whether to build with Bonjour support])
@@ -1444,6 +1455,10 @@ fi
 AC_SUBST(LDAP_LIBS_FE)
 AC_SUBST(LDAP_LIBS_BE)
 
+if test "$with_oauth" = yes ; then
+  AC_CHECK_LIB(iddawc, i_init_session, [], [AC_MSG_ERROR([library 'iddawc' is required for OAuth support])])
+fi
+
 # for contrib/sepgsql
 if test "$with_selinux" = yes; then
   AC_CHECK_LIB(selinux, security_compute_create_name, [],
@@ -1629,6 +1644,10 @@ elif test "$with_uuid" = ossp ; then
       [AC_EGREP_HEADER([uuid_export], uuid.h, [],
         [AC_MSG_ERROR([header file <uuid.h> does not match OSSP UUID library])])],
       [AC_MSG_ERROR([header file <ossp/uuid.h> or <uuid.h> is required for OSSP UUID])])])
+fi
+
+if test "$with_oauth" != no; then
+  AC_CHECK_HEADER(iddawc.h, [], [AC_MSG_ERROR([header file <iddawc.h> is required for OAuth])])
 fi
 
 if test "$PORTNAME" = "win32" ; then

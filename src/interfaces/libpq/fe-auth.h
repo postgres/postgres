@@ -28,4 +28,7 @@ extern const pg_fe_sasl_mech pg_scram_mech;
 extern char *pg_fe_scram_build_secret(const char *password,
 									  const char **errstr);
 
+/* Mechanisms in fe-auth-oauth.c */
+extern const pg_fe_sasl_mech pg_oauth_mech;
+
 #endif							/* FE_AUTH_H */
