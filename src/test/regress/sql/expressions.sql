@@ -24,7 +24,7 @@ SELECT length(current_timestamp::text) >= length(current_timestamp(0)::text);
 -- localtimestamp
 SELECT now()::timestamp::text = localtimestamp::text;
 
--- current_role/user/user is tested in rolnames.sql
+-- current_role/user/user is tested in rolenames.sql
 
 -- current database / catalog
 SELECT current_catalog = current_database();
