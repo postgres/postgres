@@ -11,7 +11,7 @@ env:
   CONTAINER_REPO: us-docker.pkg.dev/${GCP_PROJECT}/ci
 
   # The lower depth accelerates git clone. Use a bit of depth so that
-  # concurrent tasks and retrying older jobs has a chance of working.
+  # concurrent tasks and retrying older jobs have a chance of working.
   CIRRUS_CLONE_DEPTH: 500
   # Useful to be able to analyse what in a script takes long
   CIRRUS_LOG_TIMESTAMP: true
@@ -66,7 +66,7 @@ task:
 
   ccache_cache:
     folder: $CCACHE_DIR
-  # Workaround around performance issues due to 32KB block size
+  # Work around performance issues due to 32KB block size
   repartition_script: src/tools/ci/gcp_freebsd_repartition.sh
   create_user_script: |
     pw useradd postgres

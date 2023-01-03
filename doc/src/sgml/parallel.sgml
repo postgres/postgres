@@ -128,7 +128,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
   <para>
     In addition, the system must not be running in single-user mode.  Since
-    the entire database system is running in single process in this situation,
+    the entire database system is running as a single process in this situation,
     no background workers will be available.
   </para>
 

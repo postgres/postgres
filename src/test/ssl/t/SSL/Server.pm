@@ -257,7 +257,7 @@ The certificate file to use. Implementation is SSL backend specific.
 
 =item keyfile => B<value>
 
-The private key to to use. Implementation is SSL backend specific.
+The private key to use. Implementation is SSL backend specific.
 
 =item crlfile => B<value>
 
