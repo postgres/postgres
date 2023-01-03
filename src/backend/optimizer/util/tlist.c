@@ -871,7 +871,7 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
  *
  * The outputs of this function are two parallel lists, one a list of
  * PathTargets and the other an integer list of bool flags indicating
- * whether the corresponding PathTarget contains any evaluatable SRFs.
+ * whether the corresponding PathTarget contains any evaluable SRFs.
  * The lists are given in the order they'd need to be evaluated in, with
  * the "lowest" PathTarget first.  So the last list entry is always the
  * originally given PathTarget, and any entries before it indicate evaluation

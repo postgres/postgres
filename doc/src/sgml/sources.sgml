@@ -921,8 +921,8 @@ BETTER: unrecognized node type: 42
    <simplesect>
     <title>Function-Like Macros and Inline Functions</title>
     <para>
-     Both, macros with arguments and <literal>static inline</literal>
-     functions, may be used. The latter are preferable if there are
+     Both macros with arguments and <literal>static inline</literal>
+     functions may be used. The latter are preferable if there are
      multiple-evaluation hazards when written as a macro, as e.g., the
      case with
 <programlisting>
