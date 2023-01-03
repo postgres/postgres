@@ -5,9 +5,9 @@
  *	  MemoryContexts may use as a header for chunks of memory they allocate.
  *
  * MemoryChunk provides a lightweight header that a MemoryContext can use to
- * store a reference back to the block the which the given chunk is allocated
- * on and also an additional 30-bits to store another value such as the size
- * of the allocated chunk.
+ * store a reference back to the block which the given chunk is allocated on
+ * and also an additional 30-bits to store another value such as the size of
+ * the allocated chunk.
  *
  * Although MemoryChunks are used by each of our MemoryContexts, future
  * implementations may choose to implement their own method for storing chunk
