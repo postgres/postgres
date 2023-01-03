@@ -191,7 +191,7 @@ CREATE USER <replaceable>name</replaceable>;
      </varlistentry>
 
      <varlistentry>
-      <term>role creation<indexterm><primary>role</primary><secondary>privilege to create</secondary></indexterm></term>
+      <term id='role-creation'>role creation<indexterm><primary>role</primary><secondary>privilege to create</secondary></indexterm></term>
       <listitem>
        <para>
         A role must be explicitly given permission to create more roles
@@ -200,9 +200,38 @@ CREATE USER <replaceable>name</replaceable>;
         <replaceable>name</replaceable> CREATEROLE</literal>.
         A role with <literal>CREATEROLE</literal> privilege can alter and drop
         other roles, too, as well as grant or revoke membership in them.
-        However, to create, alter, drop, or change membership of a
-        superuser role, superuser status is required;
-        <literal>CREATEROLE</literal> is insufficient for that.
+        Altering a role includes most changes that can be made using
+        <literal>ALTER ROLE</literal>, including, for example, changing
+        passwords.  It also includes modifications to a role that can
+        be made using the <literal>COMMENT</literal> and
+        <literal>SECURITY LABEL</literal> commands.
+       </para>
+       <para>
+        However, <literal>CREATEROLE</literal> does not convey the ability to
+        create <literal>SUPERUSER</literal> roles, nor does it convey any
+        power over <literal>SUPERUSER</literal> roles that already exist.
+        Furthermore, <literal>CREATEROLE</literal> does not convey the power
+        to create <literal>REPLICATION</literal> users, nor the ability to
+        grant or revoke the <literal>REPLICATION</literal> privilege, nor the
+        ability to modify the role properties of such users.  However, it does
+        allow <literal>ALTER ROLE ... SET</literal> and
+        <literal>ALTER ROLE ... RENAME</literal> to be used on
+        <literal>REPLICATION</literal> roles, as well as the use of
+        <literal>COMMENT ON ROLE</literal>,
+        <literal>SECURITY LABEL ON ROLE</literal>,
+        and <literal>DROP ROLE</literal>.
+        Finally, <literal>CREATEROLE</literal> does not
+        confer the ability to grant or revoke the <literal>BYPASSRLS</literal>
+        privilege.
+       </para>
+       <para>
+        Because the <literal>CREATEROLE</literal> privilege allows a user
+        to grant or revoke membership even in roles to which it does not (yet)
+        have any access, a <literal>CREATEROLE</literal> user can obtain access
+        to the capabilities of every predefined role in the system, including
+        highly privileged roles such as
+        <literal>pg_execute_server_program</literal> and
+        <literal>pg_write_server_files</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -276,16 +305,6 @@ CREATE USER <replaceable>name</replaceable>;
     See the reference pages for the <xref linkend="sql-createrole"/>
     and <xref linkend="sql-alterrole"/> commands for details.
    </para>
-
-  <tip>
-   <para>
-    It is good practice to create a role that has the <literal>CREATEDB</literal>
-    and <literal>CREATEROLE</literal> privileges, but is not a superuser, and then
-    use this role for all routine management of databases and roles.  This
-    approach avoids the dangers of operating as a superuser for tasks that
-    do not really require it.
-   </para>
-  </tip>
 
   <para>
    A role can also have role-specific defaults for many of the run-time

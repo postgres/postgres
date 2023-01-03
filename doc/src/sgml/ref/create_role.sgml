@@ -119,11 +119,11 @@ in sync when changing the above synopsis!
       <listitem>
        <para>
         These clauses determine whether a role will be permitted to
-        create new roles (that is, execute <command>CREATE ROLE</command>).
-        A role with <literal>CREATEROLE</literal> privilege can also alter
-        and drop other roles.
-        If not specified,
-        <literal>NOCREATEROLE</literal> is the default.
+        create, alter, drop, comment on, change the security label for,
+        and grant or revoke membership in other roles.
+        See <xref linkend='role-creation' /> for more details about what
+        capabilities are conferred by this privilege.
+        If not specified, <literal>NOCREATEROLE</literal> is the default.
        </para>
       </listitem>
      </varlistentry>
