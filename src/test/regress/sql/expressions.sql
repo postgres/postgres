@@ -29,7 +29,7 @@ SELECT current_timestamp = current_timestamp(7);
 SELECT localtime = localtime(7);
 SELECT localtimestamp = localtimestamp(7);
 
--- current_role/user/user is tested in rolnames.sql
+-- current_role/user/user is tested in rolenames.sql
 
 -- current database / catalog
 SELECT current_catalog = current_database();

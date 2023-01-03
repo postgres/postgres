@@ -722,7 +722,7 @@ $function$
 
     <note>
      <para>
-      Nondecimal integer constants are currently only supported in the range
+      Non-decimal integer constants are currently only supported in the range
       of the <type>bigint</type> type (see <xref
       linkend="datatype-numeric-table"/>).
      </para>

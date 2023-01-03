@@ -182,7 +182,7 @@ create table header_copytest (
 	b int,
 	c text
 );
--- Make sure it works with with dropped columns
+-- Make sure it works with dropped columns
 alter table header_copytest drop column c;
 alter table header_copytest add column c text;
 copy header_copytest to stdout with (header match);

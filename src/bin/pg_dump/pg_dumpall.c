@@ -1034,7 +1034,7 @@ dumpRoleMembership(PGconn *conn)
 		ht = rolename_create(remaining, NULL);
 
 		/*
-		 * Make repeated passses over the grants for this role until all have
+		 * Make repeated passes over the grants for this role until all have
 		 * been dumped.
 		 */
 		while (remaining > 0)

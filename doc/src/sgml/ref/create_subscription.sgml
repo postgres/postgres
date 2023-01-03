@@ -383,7 +383,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    <literal>FOR TABLES IN SCHEMA</literal>, rows are always published
    regardless of the definition of the other expressions.
    If the subscriber is a <productname>PostgreSQL</productname> version before
-   15 then any row filtering is ignored during the initial data synchronization
+   15, then any row filtering is ignored during the initial data synchronization
    phase. For this case, the user might want to consider deleting any initially
    copied data that would be incompatible with subsequent filtering.
    Because initial data synchronization does not take into account the publication
