@@ -78,7 +78,7 @@ mask_unused_space(Page page)
 	if (pd_lower > pd_upper || pd_special < pd_upper ||
 		pd_lower < SizeOfPageHeaderData || pd_special > BLCKSZ)
 	{
-		elog(ERROR, "invalid page pd_lower %u pd_upper %u pd_special %u\n",
+		elog(ERROR, "invalid page pd_lower %u pd_upper %u pd_special %u",
 			 pd_lower, pd_upper, pd_special);
 	}
 

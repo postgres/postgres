@@ -433,11 +433,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	query[0] = '\0';			/* initialize query string to empty */
 
 	/*
-	 * Create a CTE that collects OIDs of regular user tables, including
-	 * matviews and sequences, but excluding toast tables and indexes.  We
-	 * assume that relations with OIDs >= FirstNormalObjectId belong to the
-	 * user.  (That's probably redundant with the namespace-name exclusions,
-	 * but let's be safe.)
+	 * Create a CTE that collects OIDs of regular user tables and matviews,
+	 * but excluding toast tables and indexes.  We assume that relations with
+	 * OIDs >= FirstNormalObjectId belong to the user.  (That's probably
+	 * redundant with the namespace-name exclusions, but let's be safe.)
 	 *
 	 * pg_largeobject contains user data that does not appear in pg_dump
 	 * output, so we have to copy that system table.  It's easiest to do that
