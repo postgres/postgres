@@ -86,7 +86,7 @@ WARNING:  TIMESTAMP(7) precision reduced to maximum allowed, 6
  t
 (1 row)
 
--- current_role/user/user is tested in rolnames.sql
+-- current_role/user/user is tested in rolenames.sql
 -- current database / catalog
 SELECT current_catalog = current_database();
  ?column? 

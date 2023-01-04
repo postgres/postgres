@@ -4,7 +4,7 @@
  *	  POSTGRES heap access method definitions.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/heapam.h
@@ -100,6 +100,13 @@ typedef enum
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
+/*
+ * heap_prepare_freeze_tuple may request that heap_freeze_execute_prepared
+ * check any tuple's to-be-frozen xmin and/or xmax status using pg_xact
+ */
+#define		HEAP_FREEZE_CHECK_XMIN_COMMITTED	0x01
+#define		HEAP_FREEZE_CHECK_XMAX_ABORTED		0x02
+
 /* heap_prepare_freeze_tuple state describing how to freeze a tuple */
 typedef struct HeapTupleFreeze
 {
@@ -109,6 +116,8 @@ typedef struct HeapTupleFreeze
 	uint16		t_infomask;
 	uint8		frzflags;
 
+	/* xmin/xmax check flags */
+	uint8		checkflags;
 	/* Page offset number for tuple */
 	OffsetNumber offset;
 } HeapTupleFreeze;
@@ -145,16 +154,14 @@ typedef struct HeapPageFreeze
 	/*
 	 * "Freeze" NewRelfrozenXid/NewRelminMxid trackers.
 	 *
-	 * Trackers used when heap_freeze_execute_prepared freezes the page, and
-	 * when page is "nominally frozen", which happens with pages where every
-	 * call to heap_prepare_freeze_tuple produced no usable freeze plan.
-	 *
-	 * "Nominal freezing" enables vacuumlazy.c's approach of setting a page
-	 * all-frozen in the visibility map when every tuple's 'totally_frozen'
-	 * result is true.  That always works in the same way, independent of the
-	 * need to freeze tuples, and without complicating the general rule around
-	 * 'totally_frozen' results (which is that 'totally_frozen' results are
-	 * only to be trusted with a page that goes on to be frozen by caller).
+	 * Trackers used when heap_freeze_execute_prepared freezes, or when there
+	 * are zero freeze plans for a page.  It is always valid for vacuumlazy.c
+	 * to freeze any page, by definition.  This even includes pages that have
+	 * no tuples with storage to consider in the first place.  That way the
+	 * 'totally_frozen' results from heap_prepare_freeze_tuple can always be
+	 * used in the same way, even when no freeze plans need to be executed to
+	 * "freeze the page".  Only the "freeze" path needs to consider the need
+	 * to set pages all-frozen in the visibility map under this scheme.
 	 *
 	 * When we freeze a page, we generally freeze all XIDs < OldestXmin, only
 	 * leaving behind XIDs that are ineligible for freezing, if any.  And so
@@ -178,11 +185,6 @@ typedef struct HeapPageFreeze
 	 * VACUUM scans a page that isn't cleanup locked.  Both code paths are
 	 * based on the same general idea (do less work for this page during the
 	 * ongoing VACUUM, at the cost of having to accept older final values).
-	 *
-	 * When vacuumlazy.c caller decides to do "no freeze" processing, it must
-	 * not go on to set the page all-frozen (setting the page all-visible
-	 * could still be okay).  heap_prepare_freeze_tuple's 'totally_frozen'
-	 * results can only be used on a page that also gets frozen as instructed.
 	 */
 	TransactionId NoFreezePageRelfrozenXid;
 	MultiXactId NoFreezePageRelminMxid;

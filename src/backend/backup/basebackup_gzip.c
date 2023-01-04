@@ -3,7 +3,7 @@
  * basebackup_gzip.c
  *	  Basebackup sink implementing gzip compression.
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/backup/basebackup_gzip.c

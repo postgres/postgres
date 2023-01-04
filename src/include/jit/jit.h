@@ -2,7 +2,7 @@
  * jit.h
  *	  Provider independent JIT infrastructure.
  *
- * Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * src/include/jit/jit.h
  *

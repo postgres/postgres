@@ -7,7 +7,7 @@
  *
  * src/backend/utils/misc/ps_status.c
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  * various details abducted from various places
  *--------------------------------------------------------------------
  */

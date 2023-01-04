@@ -3,7 +3,7 @@
  * basebackup_target.h
  *	  Extensibility framework for adding base backup targets.
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * src/include/backup/basebackup_target.h
  *

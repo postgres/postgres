@@ -29,7 +29,7 @@
  *	 quote character on the command line, preserving any text after the last
  *	 quote character.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * src/port/system.c
  *

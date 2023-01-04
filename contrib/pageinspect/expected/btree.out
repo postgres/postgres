@@ -15,7 +15,7 @@ last_cleanup_num_tuples   | -1
 allequalimage             | t
 
 SELECT * FROM bt_page_stats('test1_a_idx', -1);
-ERROR:  invalid block number
+ERROR:  invalid block number -1
 SELECT * FROM bt_page_stats('test1_a_idx', 0);
 ERROR:  block 0 is a meta page
 SELECT * FROM bt_page_stats('test1_a_idx', 1);
@@ -33,9 +33,122 @@ btpo_level    | 0
 btpo_flags    | 3
 
 SELECT * FROM bt_page_stats('test1_a_idx', 2);
-ERROR:  block number out of range
+ERROR:  block number 2 is out of range
+-- bt_multi_page_stats() function returns a set of records of page statistics.
+CREATE TABLE test2 AS (SELECT generate_series(1, 1000)::int8 AS col1);
+CREATE INDEX test2_col1_idx ON test2(col1);
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 0, 1);
+ERROR:  block 0 is a meta page
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 1, -1);
+-[ RECORD 1 ]-+-----
+blkno         | 1
+type          | l
+live_items    | 367
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 808
+btpo_prev     | 0
+btpo_next     | 2
+btpo_level    | 0
+btpo_flags    | 1
+-[ RECORD 2 ]-+-----
+blkno         | 2
+type          | l
+live_items    | 367
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 808
+btpo_prev     | 1
+btpo_next     | 4
+btpo_level    | 0
+btpo_flags    | 1
+-[ RECORD 3 ]-+-----
+blkno         | 3
+type          | r
+live_items    | 3
+dead_items    | 0
+avg_item_size | 13
+page_size     | 8192
+free_size     | 8096
+btpo_prev     | 0
+btpo_next     | 0
+btpo_level    | 1
+btpo_flags    | 2
+-[ RECORD 4 ]-+-----
+blkno         | 4
+type          | l
+live_items    | 268
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 2788
+btpo_prev     | 2
+btpo_next     | 0
+btpo_level    | 0
+btpo_flags    | 1
+
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 1, 0);
+(0 rows)
+
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 1, 2);
+-[ RECORD 1 ]-+-----
+blkno         | 1
+type          | l
+live_items    | 367
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 808
+btpo_prev     | 0
+btpo_next     | 2
+btpo_level    | 0
+btpo_flags    | 1
+-[ RECORD 2 ]-+-----
+blkno         | 2
+type          | l
+live_items    | 367
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 808
+btpo_prev     | 1
+btpo_next     | 4
+btpo_level    | 0
+btpo_flags    | 1
+
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 3, 2);
+-[ RECORD 1 ]-+-----
+blkno         | 3
+type          | r
+live_items    | 3
+dead_items    | 0
+avg_item_size | 13
+page_size     | 8192
+free_size     | 8096
+btpo_prev     | 0
+btpo_next     | 0
+btpo_level    | 1
+btpo_flags    | 2
+-[ RECORD 2 ]-+-----
+blkno         | 4
+type          | l
+live_items    | 268
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 2788
+btpo_prev     | 2
+btpo_next     | 0
+btpo_level    | 0
+btpo_flags    | 1
+
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 7, 2);
+ERROR:  block number 7 is out of range
+DROP TABLE test2;
 SELECT * FROM bt_page_items('test1_a_idx', -1);
-ERROR:  invalid block number
+ERROR:  invalid block number -1
 SELECT * FROM bt_page_items('test1_a_idx', 0);
 ERROR:  block 0 is a meta page
 SELECT * FROM bt_page_items('test1_a_idx', 1);
@@ -51,7 +164,7 @@ htid       | (0,1)
 tids       | 
 
 SELECT * FROM bt_page_items('test1_a_idx', 2);
-ERROR:  block number out of range
+ERROR:  block number 2 is out of range
 SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', -1));
 ERROR:  invalid block number
 SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 0));

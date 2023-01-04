@@ -14,7 +14,7 @@
  *
  * Currently, the only supported keywords are "level" and "workers".
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/common/compression.c

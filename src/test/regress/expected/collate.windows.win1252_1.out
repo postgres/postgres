@@ -1,0 +1,13 @@
+/*
+ * This test is meant to run on Windows systems that has successfully
+ * run pg_import_system_collations().  Also, the database must have
+ * WIN1252 encoding, because of the locales' own encodings.  Because
+ * of this, some test are lost from UTF-8 version, such as Turkish
+ * dotted and undotted 'i'.
+ */
+SELECT getdatabaseencoding() <> 'WIN1252' OR
+       (SELECT count(*) FROM pg_collation WHERE collname IN ('de_DE', 'en_US', 'sv_SE') AND collencoding = pg_char_to_encoding('WIN1252')) <> 3 OR
+       (version() !~ 'Visual C\+\+' AND version() !~ 'mingw32' AND version() !~ 'windows')
+       AS skip_test \gset
+\if :skip_test
+\quit

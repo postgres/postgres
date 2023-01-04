@@ -1373,6 +1373,12 @@ select isfinite('infinity'::date), isfinite('-infinity'::date), isfinite('today'
  f        | f        | t
 (1 row)
 
+select 'infinity'::date = '+infinity'::date as t;
+ t 
+---
+ t
+(1 row)
+
 --
 -- oscillating fields from non-finite date:
 --

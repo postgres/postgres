@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Generate the pltclerrcodes.h header from errcodes.txt
-# Copyright (c) 2000-2022, PostgreSQL Global Development Group
+# Copyright (c) 2000-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;

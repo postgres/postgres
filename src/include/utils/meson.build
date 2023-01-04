@@ -1,4 +1,4 @@
-# Copyright (c) 2022, PostgreSQL Global Development Group
+# Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 errcodes = custom_target('errcodes',
   input: files('../../backend/utils/errcodes.txt'),

@@ -3,7 +3,7 @@
  * basebackup.h
  *	  Exports from replication/basebackup.c.
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * src/include/backup/basebackup.h
  *

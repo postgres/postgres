@@ -3,7 +3,7 @@
  * fe-secure-gssapi.c
  *   The front-end (client) encryption support for GSSAPI
  *
- * Portions Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *  src/interfaces/libpq/fe-secure-gssapi.c

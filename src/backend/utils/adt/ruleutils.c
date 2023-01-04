@@ -4,7 +4,7 @@
  *	  Functions to convert stored expressions/querytrees back to
  *	  source text
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -11391,7 +11391,7 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 
 /*
  * generate_opclass_name
- *		Compute the name to display for a opclass specified by OID
+ *		Compute the name to display for an opclass specified by OID
  *
  * The result includes all necessary quoting and schema-prefixing.
  */

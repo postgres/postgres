@@ -11,7 +11,7 @@ env:
   CONTAINER_REPO: us-docker.pkg.dev/${GCP_PROJECT}/ci
 
   # The lower depth accelerates git clone. Use a bit of depth so that
-  # concurrent tasks and retrying older jobs has a chance of working.
+  # concurrent tasks and retrying older jobs have a chance of working.
   CIRRUS_CLONE_DEPTH: 500
   # Useful to be able to analyse what in a script takes long
   CIRRUS_LOG_TIMESTAMP: true
@@ -47,7 +47,7 @@ on_failure_meson: &on_failure_meson
 
   # In theory it'd be nice to upload the junit files meson generates, so that
   # cirrus will nicely annotate the commit. Unfortunately the files don't
-  # contain identifieable file + line numbers right now, so the annotations
+  # contain identifiable file + line numbers right now, so the annotations
   # don't end up useful. We could probably improve on that with a some custom
   # conversion script, but ...
   meson_log_artifacts:
@@ -160,7 +160,7 @@ task:
 
   ccache_cache:
     folder: $CCACHE_DIR
-  # Workaround around performance issues due to 32KB block size
+  # Work around performance issues due to 32KB block size
   repartition_script: src/tools/ci/gcp_freebsd_repartition.sh
   create_user_script: |
     pw useradd postgres
@@ -251,7 +251,7 @@ task:
     DEBUGINFOD_URLS: "https://debuginfod.debian.net"
 
     # Enable a reasonable set of sanitizers. Use the linux task for that, as
-    # it one of the fastest tasks (without sanitizers). Also several of the
+    # it's one of the fastest tasks (without sanitizers). Also several of the
     # sanitizers work best on linux.
     #
     # The overhead of alignment sanitizer is low, undefined behaviour has
@@ -407,7 +407,7 @@ task:
   name: macOS - Monterey - Meson
 
   env:
-    CPUS: 12 # always get that much for cirrusci macOS instances
+    CPUS: 4 # always get that much for cirrusci macOS instances
     BUILD_JOBS: $CPUS
     # Test performance regresses noticably when using all cores. 8 seems to
     # work OK. See
@@ -428,8 +428,8 @@ task:
   depends_on: SanityCheck
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(macos|darwin|osx).*'
 
-  osx_instance:
-    image: monterey-base
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-base:latest
 
   sysinfo_script: |
     id
@@ -475,7 +475,7 @@ task:
   ccache_cache:
     folder: $CCACHE_DIR
   configure_script: |
-    brewpath="/usr/local"
+    brewpath="/opt/homebrew"
     PKG_CONFIG_PATH="${brewpath}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
     for pkg in icu4c krb5 openldap openssl zstd ; do
@@ -600,7 +600,7 @@ task:
     CCACHE_MAXSIZE: "500M"
     CCACHE_SLOPPINESS: pch_defines,time_macros
     CCACHE_DEPEND: 1
-    # for some reason mingw plpython cannot find it's installation without this
+    # for some reason mingw plpython cannot find its installation without this
     PYTHONHOME: C:/msys64/ucrt64
     # prevents MSYS bash from resetting error mode
     MSYS: winjitdebug

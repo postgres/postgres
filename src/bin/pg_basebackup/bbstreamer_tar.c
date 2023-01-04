@@ -12,7 +12,7 @@
  * just adds two blocks of NUL bytes to the end of the file, since older
  * server versions produce files with this terminator omitted.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/bbstreamer_tar.c

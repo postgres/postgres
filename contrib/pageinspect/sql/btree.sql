@@ -11,6 +11,17 @@ SELECT * FROM bt_page_stats('test1_a_idx', 0);
 SELECT * FROM bt_page_stats('test1_a_idx', 1);
 SELECT * FROM bt_page_stats('test1_a_idx', 2);
 
+-- bt_multi_page_stats() function returns a set of records of page statistics.
+CREATE TABLE test2 AS (SELECT generate_series(1, 1000)::int8 AS col1);
+CREATE INDEX test2_col1_idx ON test2(col1);
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 0, 1);
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 1, -1);
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 1, 0);
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 1, 2);
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 3, 2);
+SELECT * FROM bt_multi_page_stats('test2_col1_idx', 7, 2);
+DROP TABLE test2;
+
 SELECT * FROM bt_page_items('test1_a_idx', -1);
 SELECT * FROM bt_page_items('test1_a_idx', 0);
 SELECT * FROM bt_page_items('test1_a_idx', 1);

@@ -3,7 +3,7 @@
  * generic-gcc.h
  *	  Atomic operations, implemented using gcc (or compatible) intrinsics.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES:

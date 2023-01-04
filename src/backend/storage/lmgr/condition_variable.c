@@ -8,7 +8,7 @@
  *	  interrupted, unlike LWLock waits.  Condition variables are safe
  *	  to use within dynamic shared memory segments.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/storage/lmgr/condition_variable.c

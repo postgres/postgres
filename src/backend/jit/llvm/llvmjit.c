@@ -3,7 +3,7 @@
  * llvmjit.c
  *	  Core part of the LLVM JIT provider.
  *
- * Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/jit/llvm/llvmjit.c
@@ -816,7 +816,7 @@ llvm_session_initialize(void)
 
 	if (LLVMGetTargetFromTriple(llvm_triple, &llvm_targetref, &error) != 0)
 	{
-		elog(FATAL, "failed to query triple %s\n", error);
+		elog(FATAL, "failed to query triple %s", error);
 	}
 
 	/*

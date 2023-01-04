@@ -3,7 +3,7 @@
  * adminpack.c
  *
  *
- * Copyright (c) 2002-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2023, PostgreSQL Global Development Group
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *

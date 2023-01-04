@@ -5,7 +5,7 @@
  *	  A template for a sort algorithm that supports varying degrees of
  *	  specialization.
  *
- * Copyright (c) 2021-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1992-1994, Regents of the University of California
  *
  * Usage notes:

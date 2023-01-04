@@ -2,7 +2,7 @@
  *
  * pg_dumpall.c
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * pg_dumpall forces all pg_dump output to be text, since it also outputs
@@ -1034,7 +1034,7 @@ dumpRoleMembership(PGconn *conn)
 		ht = rolename_create(remaining, NULL);
 
 		/*
-		 * Make repeated passses over the grants for this role until all have
+		 * Make repeated passes over the grants for this role until all have
 		 * been dumped.
 		 */
 		while (remaining > 0)

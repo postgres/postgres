@@ -87,7 +87,7 @@
  *	  looking or is done - buckets following a deleted element are shifted
  *	  backwards, unless they're empty or already at their optimal position.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/lib/simplehash.h

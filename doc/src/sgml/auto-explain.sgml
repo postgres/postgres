@@ -73,7 +73,7 @@ LOAD 'auto_explain';
     <listitem>
      <para>
       <varname>auto_explain.log_parameter_max_length</varname> controls the
-      logging of query parameter values. A value of<literal>-1</literal> (the
+      logging of query parameter values. A value of <literal>-1</literal> (the
       default) logs the parameter values in full. <literal>0</literal> disables
       logging of parameter values. A value greater than zero truncates each
       parameter value to that many bytes. Only superusers can change this

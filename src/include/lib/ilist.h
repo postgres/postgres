@@ -112,7 +112,7 @@
  * }
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -162,7 +162,7 @@ typedef struct dlist_head
 
 
 /*
- * Doubly linked list iterator type for dlist_head and and dclist_head types.
+ * Doubly linked list iterator type for dlist_head and dclist_head types.
  *
  * Used as state in dlist_foreach() and dlist_reverse_foreach() (and the
  * dclist variant thereof).

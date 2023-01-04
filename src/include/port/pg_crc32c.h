@@ -23,7 +23,7 @@
  * EQ_CRC32C(c1, c2)
  *		Check for equality of two CRCs.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/port/pg_crc32c.h

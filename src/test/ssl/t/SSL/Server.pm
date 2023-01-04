@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 =pod
 
@@ -257,7 +257,7 @@ The certificate file to use. Implementation is SSL backend specific.
 
 =item keyfile => B<value>
 
-The private key to use. Implementation is SSL backend specific.
+The private key file to use. Implementation is SSL backend specific.
 
 =item crlfile => B<value>
 

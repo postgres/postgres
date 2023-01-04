@@ -1,4 +1,4 @@
-# Copyright (c) 2022, PostgreSQL Global Development Group
+# Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 pageinspect_sources = files(
   'brinfuncs.c',
@@ -36,6 +36,7 @@ install_data(
   'pageinspect--1.8--1.9.sql',
   'pageinspect--1.9--1.10.sql',
   'pageinspect--1.10--1.11.sql',
+  'pageinspect--1.11--1.12.sql',
   'pageinspect.control',
   kwargs: contrib_data_args,
 )

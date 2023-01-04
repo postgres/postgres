@@ -21,7 +21,7 @@
  * that there only needs to be one call to lazy_vacuum, after the initial pass
  * completes.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -172,6 +172,7 @@ typedef struct LVRelState
 	bool		skippedallvis;
 
 	/* Error reporting state */
+	char	   *dbname;
 	char	   *relnamespace;
 	char	   *relname;
 	char	   *indname;		/* Current index name */
@@ -354,6 +355,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * these temp copies.
 	 */
 	vacrel = (LVRelState *) palloc0(sizeof(LVRelState));
+	vacrel->dbname = get_database_name(MyDatabaseId);
 	vacrel->relnamespace = get_namespace_name(RelationGetNamespace(rel));
 	vacrel->relname = pstrdup(RelationGetRelationName(rel));
 	vacrel->indname = NULL;
@@ -475,13 +477,13 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 		if (vacrel->aggressive)
 			ereport(INFO,
 					(errmsg("aggressively vacuuming \"%s.%s.%s\"",
-							get_database_name(MyDatabaseId),
-							vacrel->relnamespace, vacrel->relname)));
+							vacrel->dbname, vacrel->relnamespace,
+							vacrel->relname)));
 		else
 			ereport(INFO,
 					(errmsg("vacuuming \"%s.%s.%s\"",
-							get_database_name(MyDatabaseId),
-							vacrel->relnamespace, vacrel->relname)));
+							vacrel->dbname, vacrel->relnamespace,
+							vacrel->relname)));
 	}
 
 	/*
@@ -650,7 +652,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 					msgfmt = _("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n");
 			}
 			appendStringInfo(&buf, msgfmt,
-							 get_database_name(MyDatabaseId),
+							 vacrel->dbname,
 							 vacrel->relnamespace,
 							 vacrel->relname,
 							 vacrel->num_index_scans);
@@ -1595,7 +1597,8 @@ retry:
 		/* Redirect items mustn't be touched */
 		if (ItemIdIsRedirected(itemid))
 		{
-			prunestate->hastup = true;	/* page won't be truncatable */
+			/* page makes rel truncation unsafe */
+			prunestate->hastup = true;
 			continue;
 		}
 
@@ -1698,7 +1701,8 @@ retry:
 					}
 
 					/* Track newest xmin on page. */
-					if (TransactionIdFollows(xmin, prunestate->visibility_cutoff_xid))
+					if (TransactionIdFollows(xmin, prunestate->visibility_cutoff_xid) &&
+						TransactionIdIsNormal(xmin))
 						prunestate->visibility_cutoff_xid = xmin;
 				}
 				break;
@@ -1786,13 +1790,13 @@ retry:
 		if (tuples_frozen == 0)
 		{
 			/*
-			 * We're freezing all eligible tuples on the page, but have no
-			 * freeze plans to execute.  This is structured as a case where
-			 * the page is nominally frozen so that we set pages all-frozen
-			 * whenever no freeze plans need to be executed to make it safe.
-			 * If this was handled via "no freeze" processing instead then
-			 * VACUUM would senselessly waste certain opportunities to set
-			 * pages all-frozen (not just all-visible) at no added cost.
+			 * We have no freeze plans to execute, so there's no added cost
+			 * from following the freeze path.  That's why it was chosen.
+			 * This is important in the case where the page only contains
+			 * totally frozen tuples at this point (perhaps only following
+			 * pruning).  Such pages can be marked all-frozen in the VM by our
+			 * caller, even though none of its tuples were newly frozen here
+			 * (note that the "no freeze" path never sets pages all-frozen).
 			 *
 			 * We never increment the frozen_pages instrumentation counter
 			 * here, since it only counts pages with newly frozen tuples
@@ -1857,13 +1861,7 @@ retry:
 		if (!heap_page_is_all_visible(vacrel, buf, &cutoff, &all_frozen))
 			Assert(false);
 
-		/*
-		 * It's possible that we froze tuples and made the page's XID cutoff
-		 * (for recovery conflict purposes) FrozenTransactionId.  This is okay
-		 * because visibility_cutoff_xid will be logged by our caller in a
-		 * moment.
-		 */
-		Assert(cutoff == FrozenTransactionId ||
+		Assert(!TransactionIdIsValid(cutoff) ||
 			   cutoff == prunestate->visibility_cutoff_xid);
 	}
 #endif
@@ -2618,9 +2616,7 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 
 		ereport(WARNING,
 				(errmsg("bypassing nonessential maintenance of table \"%s.%s.%s\" as a failsafe after %d index scans",
-						get_database_name(MyDatabaseId),
-						vacrel->relnamespace,
-						vacrel->relname,
+						vacrel->dbname, vacrel->relnamespace, vacrel->relname,
 						vacrel->num_index_scans),
 				 errdetail("The table's relfrozenxid or relminmxid is too far in the past."),
 				 errhint("Consider increasing configuration parameter \"maintenance_work_mem\" or \"autovacuum_work_mem\".\n"
@@ -3293,7 +3289,8 @@ heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
 					}
 
 					/* Track newest xmin on page. */
-					if (TransactionIdFollows(xmin, *visibility_cutoff_xid))
+					if (TransactionIdFollows(xmin, *visibility_cutoff_xid) &&
+						TransactionIdIsNormal(xmin))
 						*visibility_cutoff_xid = xmin;
 
 					/* Check whether this tuple is already frozen or not */

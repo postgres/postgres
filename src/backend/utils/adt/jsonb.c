@@ -3,7 +3,7 @@
  * jsonb.c
  *		I/O routines for jsonb type
  *
- * Copyright (c) 2014-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/adt/jsonb.c

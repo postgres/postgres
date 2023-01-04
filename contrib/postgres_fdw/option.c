@@ -3,7 +3,7 @@
  * option.c
  *		  FDW and GUC option handling for postgres_fdw
  *
- * Portions Copyright (c) 2012-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/postgres_fdw/option.c
@@ -210,6 +210,23 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 						 errmsg("sslcert and sslkey are superuser-only"),
 						 errhint("User mappings with the sslcert or sslkey options set may only be created or modified by the superuser.")));
 		}
+		else if (strcmp(def->defname, "analyze_sampling") == 0)
+		{
+			char	   *value;
+
+			value = defGetString(def);
+
+			/* we recognize off/auto/random/system/bernoulli */
+			if (strcmp(value, "off") != 0 &&
+				strcmp(value, "auto") != 0 &&
+				strcmp(value, "random") != 0 &&
+				strcmp(value, "system") != 0 &&
+				strcmp(value, "bernoulli") != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid value for string option \"%s\": %s",
+								def->defname, value)));
+		}
 	}
 
 	PG_RETURN_VOID();
@@ -256,6 +273,10 @@ InitPgFdwOptions(void)
 		{"parallel_commit", ForeignServerRelationId, false},
 		{"keep_connections", ForeignServerRelationId, false},
 		{"password_required", UserMappingRelationId, false},
+
+		/* sampling is available on both server and table */
+		{"analyze_sampling", ForeignServerRelationId, false},
+		{"analyze_sampling", ForeignTableRelationId, false},
 
 		/*
 		 * sslcert and sslkey are in fact libpq options, but we repeat them

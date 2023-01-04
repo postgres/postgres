@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/pg_rewind
 #
-# Portions Copyright (c) 2013-2022, PostgreSQL Global Development Group
+# Portions Copyright (c) 2013-2023, PostgreSQL Global Development Group
 #
 # src/bin/pg_rewind/Makefile
 #

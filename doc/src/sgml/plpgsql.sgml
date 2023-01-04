@@ -3177,7 +3177,9 @@ DECLARE
     <para>
      Before a cursor can be used to retrieve rows, it must be
      <firstterm>opened</firstterm>. (This is the equivalent action to the SQL
-     command <command>DECLARE CURSOR</command>.) <application>PL/pgSQL</application> has
+     command <link linkend="sql-declare"><command>DECLARE
+     CURSOR</command></link>.)
+     <application>PL/pgSQL</application> has
      three forms of the <command>OPEN</command> statement, two of which use unbound
      cursor variables while the third uses a bound cursor variable.
     </para>
@@ -3187,8 +3189,27 @@ DECLARE
       Bound cursor variables can also be used without explicitly opening the cursor,
       via the <command>FOR</command> statement described in
       <xref linkend="plpgsql-cursor-for-loop"/>.
+      A <command>FOR</command> loop will open the cursor and then
+      close it again when the loop completes.
      </para>
     </note>
+
+    <indexterm>
+     <primary>portal</primary>
+     <secondary>in PL/pgSQL</secondary>
+    </indexterm>
+
+    <para>
+     Opening a cursor involves creating a server-internal data structure
+     called a <firstterm>portal</firstterm>, which holds the execution
+     state for the cursor's query.  A portal has a name, which must be
+     unique within the session for the duration of the portal's existence.
+     By default, <application>PL/pgSQL</application> will assign a unique
+     name to each portal it creates.  However, if you assign a non-null
+     string value to a cursor variable, that string will be used as its
+     portal name.  This feature can be used as described in
+     <xref linkend="plpgsql-cursor-returning"/>.
+    </para>
 
     <sect3>
      <title><command>OPEN FOR</command> <replaceable>query</replaceable></title>
@@ -3338,7 +3359,7 @@ BEGIN
      opened the cursor to begin with.  You can return a <type>refcursor</type>
      value out of a function and let the caller operate on the cursor.
      (Internally, a <type>refcursor</type> value is simply the string name
-     of a so-called portal containing the active query for the cursor.  This name
+     of the portal containing the active query for the cursor.  This name
      can be passed around, assigned to other <type>refcursor</type> variables,
      and so on, without disturbing the portal.)
     </para>
@@ -3480,7 +3501,7 @@ CLOSE curs1;
        </para>
      </sect3>
 
-    <sect3>
+    <sect3 id="plpgsql-cursor-returning">
      <title>Returning Cursors</title>
 
        <para>
@@ -3500,7 +3521,8 @@ CLOSE curs1;
         simply assign a string to the <type>refcursor</type> variable before
         opening it.  The string value of the <type>refcursor</type> variable
         will be used by <command>OPEN</command> as the name of the underlying portal.
-        However, if the <type>refcursor</type> variable is null,
+        However, if the <type>refcursor</type> variable's value is null
+        (as it will be by default), then
         <command>OPEN</command> automatically generates a name that does not
         conflict with any existing portal, and assigns it to the
         <type>refcursor</type> variable.
@@ -3508,12 +3530,12 @@ CLOSE curs1;
 
        <note>
         <para>
-         A bound cursor variable is initialized to the string value
-         representing its name, so that the portal name is the same as
-         the cursor variable name, unless the programmer overrides it
-         by assignment before opening the cursor.  But an unbound cursor
-         variable defaults to the null value initially, so it will receive
-         an automatically-generated unique name, unless overridden.
+         Prior to <productname>PostgreSQL</productname> 16, bound cursor
+         variables were initialized to contain their own names, rather
+         than being left as null, so that the underlying portal name would
+         be the same as the cursor variable's name by default.  This was
+         changed because it created too much risk of conflicts between
+         similarly-named cursors in different functions.
         </para>
        </note>
 

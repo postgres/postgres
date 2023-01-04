@@ -2,7 +2,7 @@
  * output_plugin.h
  *	   PostgreSQL Logical Decode Plugin Interface
  *
- * Copyright (c) 2012-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2023, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

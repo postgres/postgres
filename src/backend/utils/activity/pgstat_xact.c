@@ -3,7 +3,7 @@
  * pgstat_xact.c
  *	  Transactional integration for the cumulative statistics system.
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat_xact.c

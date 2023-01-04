@@ -13,6 +13,11 @@ PostgreSQL documentation
   <secondary>DECLARE</secondary>
  </indexterm>
 
+ <indexterm>
+  <primary>portal</primary>
+  <secondary>DECLARE</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DECLARE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -61,6 +66,8 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ ASENSITIV
     <listitem>
      <para>
       The name of the cursor to be created.
+      This must be different from any other active cursor name in the
+      session.
      </para>
     </listitem>
    </varlistentry>
@@ -303,6 +310,15 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ ASENSITIV
     preprocessor for <productname>PostgreSQL</productname>, supports
     the standard SQL cursor conventions, including those involving
     <command>DECLARE</command> and <command>OPEN</command> statements.
+   </para>
+
+   <para>
+    The server data structure underlying an open cursor is called a
+    <firstterm>portal</firstterm>.  Portal names are exposed in the
+    client protocol: a client can fetch rows directly from an open
+    portal, if it knows the portal name.  When creating a cursor with
+    <command>DECLARE</command>, the portal name is the same as the
+    cursor name.
    </para>
 
    <para>

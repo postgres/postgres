@@ -7,7 +7,7 @@
  *	AccessExclusiveLocks and starting snapshots for Hot Standby mode.
  *	Plus conflict recovery processing.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -493,6 +493,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId snapshotConflictHorizon,
 	if (!TransactionIdIsValid(snapshotConflictHorizon))
 		return;
 
+	Assert(TransactionIdIsNormal(snapshotConflictHorizon));
 	backends = GetConflictingVirtualXIDs(snapshotConflictHorizon,
 										 locator.dbOid);
 	ResolveRecoveryConflictWithVirtualXIDs(backends,

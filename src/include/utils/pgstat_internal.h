@@ -5,7 +5,7 @@
  * only be needed by files implementing statistics support (rather than ones
  * reporting / querying stats).
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  * src/include/utils/pgstat_internal.h
  * ----------
