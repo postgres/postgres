@@ -265,18 +265,20 @@ typedef struct MultiXactStateData
 	 *
 	 * The oldest valid value among all of the OldestMemberMXactId[] and
 	 * OldestVisibleMXactId[] entries is considered by vacuum as the earliest
-	 * possible value still having any live member transaction.  Subtracting
-	 * vacuum_multixact_freeze_min_age from that value we obtain the freezing
-	 * point for multixacts for that table.  Any value older than that is
-	 * removed from tuple headers (or "frozen"; see FreezeMultiXactId.  Note
-	 * that multis that have member xids that are older than the cutoff point
-	 * for xids must also be frozen, even if the multis themselves are newer
-	 * than the multixid cutoff point).  Whenever a full table vacuum happens,
-	 * the freezing point so computed is used as the new pg_class.relminmxid
-	 * value.  The minimum of all those values in a database is stored as
-	 * pg_database.datminmxid.  In turn, the minimum of all of those values is
-	 * stored in pg_control and used as truncation point for pg_multixact.  At
-	 * checkpoint or restartpoint, unneeded segments are removed.
+	 * possible value still having any live member transaction -- OldestMxact.
+	 * Any value older than that is typically removed from tuple headers, or
+	 * "frozen" via being replaced with a new xmax.  VACUUM can sometimes even
+	 * remove an individual MultiXact xmax whose value is >= its OldestMxact
+	 * cutoff, though typically only when no individual member XID is still
+	 * running.  See FreezeMultiXactId for full details.
+	 *
+	 * Whenever VACUUM advances relminmxid, then either its OldestMxact cutoff
+	 * or the oldest extant Multi remaining in the table is used as the new
+	 * pg_class.relminmxid value (whichever is earlier).  The minimum of all
+	 * relminmxid values in each database is stored in pg_database.datminmxid.
+	 * In turn, the minimum of all of those values is stored in pg_control.
+	 * This is used as the truncation point for pg_multixact when unneeded
+	 * segments get removed by vac_truncate_clog() during vacuuming.
 	 */
 	MultiXactId perBackendXactIds[FLEXIBLE_ARRAY_MEMBER];
 } MultiXactStateData;
@@ -2497,8 +2499,9 @@ ExtendMultiXactMember(MultiXactOffset offset, int nmembers)
  * longer have any running member transaction.
  *
  * It's not safe to truncate MultiXact SLRU segments on the value returned by
- * this function; however, it can be used by a full-table vacuum to set the
- * point at which it will be possible to truncate SLRU for that table.
+ * this function; however, it can be set as the new relminmxid for any table
+ * that VACUUM knows has no remaining MXIDs < the same value.  It is only safe
+ * to truncate SLRUs when no table can possibly still have a referencing MXID.
  */
 MultiXactId
 GetOldestMultiXactId(void)
@@ -2799,9 +2802,8 @@ ReadMultiXactCounts(uint32 *multixacts, MultiXactOffset *members)
  * this will also be sufficient to keep us from using too many offsets.
  * However, if the average multixact has many members, we might exhaust the
  * members space while still using few enough members that these limits fail
- * to trigger full table scans for relminmxid advancement.  At that point,
- * we'd have no choice but to start failing multixact-creating operations
- * with an error.
+ * to trigger relminmxid advancement by VACUUM.  At that point, we'd have no
+ * choice but to start failing multixact-creating operations with an error.
  *
  * To prevent that, if more than a threshold portion of the members space is
  * used, we effectively reduce autovacuum_multixact_freeze_max_age and
