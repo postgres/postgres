@@ -6208,10 +6208,10 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			 * been pruned away instead, since updater XID is < OldestXmin).
 			 * Just remove xmax.
 			 */
-			if (!TransactionIdDidAbort(update_xact))
+			if (TransactionIdDidCommit(update_xact))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-						 errmsg_internal("multixact %u contains non-aborted update XID %u from before removable cutoff %u",
+						 errmsg_internal("multixact %u contains committed update XID %u from before removable cutoff %u",
 										 multi, update_xact,
 										 cutoffs->OldestXmin)));
 			*flags |= FRM_INVALIDATE_XMAX;
@@ -6825,15 +6825,21 @@ heap_freeze_execute_prepared(Relation rel, Buffer buffer,
 						 errmsg_internal("uncommitted xmin %u needs to be frozen",
 										 xmin)));
 		}
+
+		/*
+		 * TransactionIdDidAbort won't work reliably in the presence of XIDs
+		 * left behind by transactions that were in progress during a crash,
+		 * so we can only check that xmax didn't commit
+		 */
 		if (frz->checkflags & HEAP_FREEZE_CHECK_XMAX_ABORTED)
 		{
 			TransactionId xmax = HeapTupleHeaderGetRawXmax(htup);
 
 			Assert(TransactionIdIsNormal(xmax));
-			if (unlikely(!TransactionIdDidAbort(xmax)))
+			if (unlikely(TransactionIdDidCommit(xmax)))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-						 errmsg_internal("cannot freeze non-aborted xmax %u",
+						 errmsg_internal("cannot freeze committed xmax %u",
 										 xmax)));
 		}
 	}
