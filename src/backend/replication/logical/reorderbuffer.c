@@ -5196,6 +5196,15 @@ restart:
 }
 
 
+/*
+ * Open an overflow file for spilling transaction data to disk.
+ *
+ * The files are created when change information from a transaction consumes
+ * too much memory and needs to be spilled to disk. Later, the files
+ * are read back, in transaction order, segment by segment.
+ *
+ * TODO: Why create separate segment files? Wouldn't a single file per transaction suffice?
+ */
 TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool readonly)
 {
     /* Build the file path to the desired segment */
@@ -5206,8 +5215,15 @@ TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool readonly)
     int oflags = readonly ? O_RDONLY | PG_BINARY
                           : O_CREAT | O_APPEND | O_WRONLY | PG_BINARY;
 
-    /* open segment, create it if necessary.  Allow missing segments when reading. */
+    /* open segment, create it if necessary. */
     File vfd = PathNameOpenFile(path, oflags);
+
+    /*
+     * If we are reading, then we might encounter a missing segment file.
+     * If that happens, don't raise an error. Instead, return an
+     * EOF the first time we try to read from the missing segment.
+     * Treat a missing segment as empty file rather than missing.
+     */
     if (vfd < 0 && errno != ENOENT)
         ereport(ERROR,
                 (errcode_for_file_access(),
@@ -5218,6 +5234,9 @@ TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool readonly)
 }
 
 
+/*
+ * Close the current transaction spill file.
+ */
 void TXNFileClose(TXNEntryFile *txnFile)
 {
     if (txnFile->vfd != -1)
@@ -5226,6 +5245,12 @@ void TXNFileClose(TXNEntryFile *txnFile)
 }
 
 
+/*
+ * Write to the currently selected transaction spill file.
+ * The original used a transient file for writing and a temp file for
+ * reading. This version uses temp files for both.
+ * TODO: will this cause issues with temp file space accounting?
+ */
 void TXNFileWrite(TXNEntryFile *txnFile, char *buf, size_t size)
 {
     /* Write the buffer and check for errors */
@@ -5249,6 +5274,12 @@ void TXNFileWrite(TXNEntryFile *txnFile, char *buf, size_t size)
 }
 
 
+/*
+ * Read from a transaction spill file.
+ * Generally there will be two reads.
+ *   1) the fixed size header, and
+ *   2) a variable size extension.
+ */
 int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size)
 {
     /* Simplifies higher logic. Treat a missing file as an EOF */
@@ -5274,12 +5305,12 @@ int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size)
 
 
 /*
- * Open a new transaction segment file if changed
+ * Open a new transaction segment file if changed.
  */
 void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno)
 {
     /* If the transaction id or WAL segment number have changed, ... */
-    if (segno != txnFile->segno ||  txnFile->vfd == -1)
+    if (segno != txnFile->segno || xid != txnFile->xid || txnFile->vfd == -1)
     {
         /* Close the current segment */
         if (txnFile->vfd != -1)
