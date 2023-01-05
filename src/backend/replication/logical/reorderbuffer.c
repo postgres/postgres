@@ -5332,7 +5332,7 @@ void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno
 /*
  * Initialize a transaction segment file handle, so NewSegment will open correctly
  */
-TXNEntryFile TXNFileInit(bool readonly)
+TXNEntryFile TXNFileInit(bool reading)
 {
-    return (TXNEntryFile) {.vfd=-1, .reading=readonly};
+    return (TXNEntryFile) {.vfd=-1, .reading=reading};
 }
