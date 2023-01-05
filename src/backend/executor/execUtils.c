@@ -135,6 +135,8 @@ CreateExecutorState(void)
 
 	estate->es_trig_target_relations = NIL;
 
+	estate->es_resultrelinfo_extra = NIL;
+
 	estate->es_param_list_info = NULL;
 	estate->es_param_exec_vals = NULL;
 
@@ -1276,27 +1278,25 @@ ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 Bitmapset *
 ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 {
-	/* see ExecGetInsertedCols() */
-	if (relinfo->ri_RangeTableIndex != 0)
-	{
-		RangeTblEntry *rte = exec_rt_fetch(relinfo->ri_RangeTableIndex, estate);
+	Relation	rel = relinfo->ri_RelationDesc;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 
-		return rte->extraUpdatedCols;
-	}
-	else if (relinfo->ri_RootResultRelInfo)
+	if (tupdesc->constr && tupdesc->constr->has_generated_stored)
 	{
-		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
-		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
-		PartitionRoutingInfo *partrouteinfo = relinfo->ri_PartitionInfo;
+		ListCell   *lc;
 
-		if (partrouteinfo->pi_RootToPartitionMap != NULL)
-			return execute_attr_map_cols(partrouteinfo->pi_RootToPartitionMap->attrMap,
-										 rte->extraUpdatedCols);
-		else
-			return rte->extraUpdatedCols;
+		/* Assert that ExecInitStoredGenerated has been called. */
+		Assert(relinfo->ri_GeneratedExprs != NULL);
+		foreach(lc, estate->es_resultrelinfo_extra)
+		{
+			ResultRelInfoExtra *rextra = (ResultRelInfoExtra *) lfirst(lc);
+
+			if (rextra->rinfo == relinfo)
+				return rextra->ri_extraUpdatedCols;
+		}
+		Assert(false);			/* shouldn't get here */
 	}
-	else
-		return NULL;
+	return NULL;
 }
 
 /* Return columns being updated, including generated columns */
