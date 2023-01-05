@@ -337,6 +337,25 @@ CREATE TABLE gtest1_2 () INHERITS (gtest0, gtesty);  -- error
 NOTICE:  merging multiple inherited definitions of column "b"
 ERROR:  inherited column "b" has a generation conflict
 DROP TABLE gtesty;
+-- test correct handling of GENERATED column that's only in child
+CREATE TABLE gtestp (f1 int);
+CREATE TABLE gtestc (f2 int GENERATED ALWAYS AS (f1+1) STORED) INHERITS(gtestp);
+INSERT INTO gtestc values(42);
+TABLE gtestc;
+ f1 | f2 
+----+----
+ 42 | 43
+(1 row)
+
+UPDATE gtestp SET f1 = f1 * 10;
+TABLE gtestc;
+ f1  | f2  
+-----+-----
+ 420 | 421
+(1 row)
+
+DROP TABLE gtestp CASCADE;
+NOTICE:  drop cascades to table gtestc
 -- test stored update
 CREATE TABLE gtest3 (a int, b int GENERATED ALWAYS AS (a * 3) STORED);
 INSERT INTO gtest3 (a) VALUES (1), (2), (3), (NULL);
