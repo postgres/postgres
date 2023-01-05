@@ -5195,7 +5195,6 @@ restart:
 	return true;
 }
 
-#define debug(fmt, ...) elog(DEBUG2, fmt, __VA_ARGS__)
 
 /*
  * Open an overflow file for spilling transaction data to disk.
@@ -5208,11 +5207,9 @@ restart:
  */
 TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool reading)
 {
-    debug("IS THIS WORKING? xid=%u\n", xid);
     /* Build the file path to the desired segment */
     char path[MAXPGPATH];
     ReorderBufferSerializedPath(path, MyReplicationSlot, xid, segno);
-    debug("TXNFileOpen: xid=%u segno=%lu reading=%d  path=%s\n", xid, segno, reading, path);
 
     /* Set flags according to reading or writing */
     int oflags = reading ? O_RDONLY | PG_BINARY
@@ -5223,7 +5220,8 @@ TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool reading)
 
     /*
      * If we are writing, then we are appending to the file.
-     * Set the offset to the end of file.
+     * O_APPEND is ignored when using FileWrite(), so we need to
+     * explicitly set the offset to point to the end of file.
      */
     off_t curOffset = reading ? 0 : FileSize(vfd);
 
@@ -5248,7 +5246,6 @@ TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool reading)
  */
 void TXNFileClose(TXNEntryFile *txnFile)
 {
-    debug("TXNFileClose: xid=%d  seg=%lu  vfd=%d\n", txnFile->xid, txnFile->segno, txnFile->vfd);
     if (txnFile->vfd != -1)
         FileClose(txnFile->vfd);
     txnFile->vfd = -1;
@@ -5257,15 +5254,14 @@ void TXNFileClose(TXNEntryFile *txnFile)
 
 /*
  * Write to the currently selected transaction spill file.
- * The original used a transient file for writing and a temp file for
- * reading. This version uses temp files for both.
- * TODO: will this cause issues with temp file space accounting?
+ * The original code opened as a transient file for writing and a temp file for
+ * reading. This version uses temp files for both, which could raise issues
+ * with temp file space accounting.
  */
 void TXNFileWrite(TXNEntryFile *txnFile, char *buf, size_t size)
 {
     /* Write the buffer and check for errors */
     int actual = FileWrite(txnFile->vfd, buf, (int)size, txnFile->curOffset, WAIT_EVENT_REORDER_BUFFER_WRITE);
-    debug("TXNFileWrite size=%zu offset=%lld actual=%d\n", size, txnFile->curOffset, actual);
     if (actual != size)
     {
         int       save_errno = errno;
@@ -5300,7 +5296,6 @@ int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size)
     /* Read from the transaction file. We do not expect partial reads other than EOF */
     int readBytes = FileRead(txnFile->vfd, buf, (int)size,
                              txnFile->curOffset, WAIT_EVENT_REORDER_BUFFER_READ);
-    debug("TXNFileRead: size=%zu  offset=%lld actual=%d\n", size, txnFile->curOffset, readBytes);
     if (readBytes < 0)
         ereport(ERROR,
                 (errcode_for_file_access(),
@@ -5321,7 +5316,6 @@ int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size)
  */
 void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno)
 {
-    debug("TXNFileSetSegment xid=%u  segno=%lu\n", xid, segno);
     /* If the transaction id or WAL segment number have changed, ... */
     if (segno != txnFile->segno || xid != txnFile->xid || txnFile->vfd == -1)
     {
@@ -5340,6 +5334,5 @@ void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno
  */
 TXNEntryFile TXNFileInit(bool readonly)
 {
-    debug("TXNFileInit: readonly=%d\n", readonly);
     return (TXNEntryFile) {.vfd=-1, .reading=readonly};
 }
