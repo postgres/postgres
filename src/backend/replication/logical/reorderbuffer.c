@@ -4206,13 +4206,13 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 									  sizeof(ReorderBufferDiskChange) + ondisk->size);
 		ondisk = (ReorderBufferDiskChange *) rb->outbuf;
 
-        /* Read the dyamically sized part of the change record */
+        /* Read the dyamically sized part of the change record. (Could be zero length) */
 		readBytes = TXNFileRead(file,
 							 rb->outbuf + sizeof(ReorderBufferDiskChange),
                              ondisk->size - sizeof(ReorderBufferDiskChange));
 
-        /* We whould NOT get an eof here */
-        if (readBytes == 0)
+        /* We should NOT get an eof here. */
+        if (readBytes != ondisk->size - sizeof(ReorderBufferDiskChange))
             ereport(ERROR,
                     (errcode_for_file_access(),
                      errmsg("could not read from reorderbuffer spill file: read %d instead of %u bytes",
@@ -5208,10 +5208,11 @@ restart:
  */
 TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool reading)
 {
+    debug("IS THIS WORKING? xid=%u\n", xid);
     /* Build the file path to the desired segment */
     char path[MAXPGPATH];
     ReorderBufferSerializedPath(path, MyReplicationSlot, xid, segno);
-    debug("TXNFileOpen: xid=%d segno=%d reading=%d  path=%s\n", xid, segno, reading, path);
+    debug("TXNFileOpen: xid=%u segno=%lu reading=%d  path=%s\n", xid, segno, reading, path);
 
     /* Set flags according to reading or writing */
     int oflags = reading ? O_RDONLY | PG_BINARY
@@ -5329,7 +5330,7 @@ void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno
             TXNFileClose(txnFile);
 
         /* Open a new segment */
-        *txnFile = TXNFileOpen(txnFile->xid, segno, txnFile->reading);
+        *txnFile = TXNFileOpen(xid, segno, txnFile->reading);
     }
 }
 
