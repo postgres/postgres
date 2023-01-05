@@ -1024,10 +1024,8 @@ AllocSetFree(void *pointer)
 
 #ifdef MEMORY_CONTEXT_CHECKING
 		{
-			Size		chunk_size = block->endptr - (char *) pointer;
-
 			/* Test for someone scribbling on unused space in chunk */
-			Assert(chunk->requested_size < chunk_size);
+			Assert(chunk->requested_size < (block->endptr - (char *) pointer));
 			if (!sentinel_ok(pointer, chunk->requested_size))
 				elog(WARNING, "detected write past chunk end in %s %p",
 					 set->header.name, chunk);

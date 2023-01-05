@@ -629,7 +629,8 @@ GenerationFree(void *pointer)
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
 	GenerationBlock *block;
 	GenerationContext *set;
-#if defined(MEMORY_CONTEXT_CHECKING) || defined(CLOBBER_FREED_MEMORY)
+#if (defined(MEMORY_CONTEXT_CHECKING) && defined(USE_ASSERT_CHECKING)) \
+	|| defined(CLOBBER_FREED_MEMORY)
 	Size		chunksize;
 #endif
 
@@ -644,7 +645,8 @@ GenerationFree(void *pointer)
 		if (!GenerationBlockIsValid(block))
 			elog(ERROR, "could not find block containing chunk %p", chunk);
 
-#if defined(MEMORY_CONTEXT_CHECKING) || defined(CLOBBER_FREED_MEMORY)
+#if (defined(MEMORY_CONTEXT_CHECKING) && defined(USE_ASSERT_CHECKING)) \
+	|| defined(CLOBBER_FREED_MEMORY)
 		chunksize = block->endptr - (char *) pointer;
 #endif
 	}
@@ -659,7 +661,8 @@ GenerationFree(void *pointer)
 		 */
 		Assert(GenerationBlockIsValid(block));
 
-#if defined(MEMORY_CONTEXT_CHECKING) || defined(CLOBBER_FREED_MEMORY)
+#if (defined(MEMORY_CONTEXT_CHECKING) && defined(USE_ASSERT_CHECKING)) \
+	|| defined(CLOBBER_FREED_MEMORY)
 		chunksize = MemoryChunkGetValue(chunk);
 #endif
 	}
