@@ -1,0 +1,5 @@
+# oauth_provider extension
+comment = 'provider specific token validator'
+default_version = '1.0'
+module_pathname = '$libdir/oauth_provider'
+relocatable = true

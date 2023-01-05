@@ -287,8 +287,14 @@ auth_failed(Port *port, int status, const char *logdetail)
 			errstr = gettext_noop("RADIUS authentication failed for user \"%s\"");
 			break;
 		case uaOAuth:
-			errstr = gettext_noop("OAuth bearer authentication failed for user \"%s\"");
-			break;
+			{
+				OAuthProvider *provider = get_provider_by_name(port->hba->oauth_provider);
+				if(provider->oauth_error_hook)
+					errstr = provider->oauth_error_hook(port);
+				else
+					errstr = gettext_noop("OAuth bearer authentication failed for user \"%s\"");
+				break;
+			}
 		default:
 			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 			break;

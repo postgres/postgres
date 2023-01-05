@@ -197,6 +197,9 @@ typedef struct pgNotify
 typedef void (*PQnoticeReceiver) (void *arg, const PGresult *res);
 typedef void (*PQnoticeProcessor) (void *arg, const char *message);
 
+/* Function types for oauth-notice-handling callbacks */
+typedef void (*PQOAuthNoticeReceiver) (void *arg, const PGresult *res);
+
 /* Print options for PQprint() */
 typedef char pqbool;
 

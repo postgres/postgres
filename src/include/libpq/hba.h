@@ -138,6 +138,7 @@ typedef struct HbaLine
 	char	   *radiusports_s;
 	char	   *oauth_issuer;
 	char	   *oauth_scope;
+	char	   *oauth_provider;
 	bool		oauth_skip_usermap;
 } HbaLine;
 

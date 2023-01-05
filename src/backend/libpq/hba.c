@@ -2092,6 +2092,15 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 		parsedline->clientcert = clientCertFull;
 	}
 
+	/*
+	 * Ensure that the provider name is specified as provider for oauth method.
+	 */
+	if (parsedline->auth_method == uaOAuth)
+	{
+		MANDATORY_AUTH_ARG(parsedline->oauth_provider, "provider", "oauth");
+	}
+
+
 	return parsedline;
 }
 
@@ -2524,6 +2533,33 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			hbaline->oauth_skip_usermap = true;
 		else
 			hbaline->oauth_skip_usermap = false;
+	}
+	else if (strcmp(name, "provider") == 0)
+	{
+		REQUIRE_AUTH_OPTION(uaOAuth, "provider", "oauth");
+		
+		if (hbaline->auth_method != uaOAuth)
+			INVALID_AUTH_OPTION("provider", gettext_noop("oauth"));
+		/*
+		 * Verify that the provider mentioned is loaded via shared_preload_libraries.
+		 */
+		if (get_provider_by_name(val) == NULL)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("cannot use oauth provider %s",val),
+					 errhint("Load provider via shared_preload_libraries."),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			*err_msg = psprintf("cannot use oauth provider %s", val);
+
+			return false;
+		}
+		else
+		{
+			hbaline->oauth_provider = pstrdup(val);
+		}
+		
 	}
 	else
 	{

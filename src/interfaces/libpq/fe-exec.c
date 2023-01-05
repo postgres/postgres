@@ -977,6 +977,58 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 }
 
 /*
+ * pqInternalOAuthNotice - it is similar to pqInternalNotice
+ * except that OAuthNoticeHooks are invoked.
+ */
+void
+pqInternalOAuthNotice(const PGOAuthNoticeHooks *hooks, const char *fmt,...)
+{
+	char		msgBuf[1024];
+	va_list		args;
+	PGresult   *res;
+
+	if (hooks->noticeRec == NULL)
+		return;					/* nobody home to receive notice? */
+
+	/* Format the message */
+	va_start(args, fmt);
+	vsnprintf(msgBuf, sizeof(msgBuf), libpq_gettext(fmt), args);
+	va_end(args);
+	msgBuf[sizeof(msgBuf) - 1] = '\0';	/* make real sure it's terminated */
+
+	/* Make a PGresult to pass to the notice receiver */
+	res = PQmakeEmptyPGresult(NULL, PGRES_NONFATAL_ERROR);
+	if (!res)
+		return;
+	res->oauthNoticeHooks = *hooks;
+	res->oauthNoticeHooks.noticeRecArg = hooks->noticeRecArg;
+
+	/*
+	 * Set up fields of notice.
+	 */
+	pqSaveMessageField(res, PG_DIAG_MESSAGE_PRIMARY, msgBuf);
+	pqSaveMessageField(res, PG_DIAG_SEVERITY, libpq_gettext("NOTICE"));
+	pqSaveMessageField(res, PG_DIAG_SEVERITY_NONLOCALIZED, "NOTICE");
+	/* XXX should provide a SQLSTATE too? */
+
+	/*
+	 * Result text is always just the primary message + newline.  If we can't
+	 * allocate it, substitute "out of memory", as in pqSetResultError.
+	 */
+	res->errMsg = (char *) pqResultAlloc(res, strlen(msgBuf) + 2, false);
+	if (res->errMsg)
+		sprintf(res->errMsg, "%s\n", msgBuf);
+	else
+		res->errMsg = libpq_gettext("out of memory\n");
+
+	/*
+	 * Pass to receiver, then free it.
+	 */
+	res->oauthNoticeHooks.noticeRec(res->oauthNoticeHooks.noticeRecArg, res);
+	PQclear(res);
+}
+
+/*
  * pqAddTuple
  *	  add a row pointer to the PGresult structure, growing it if necessary
  *	  Returns true if OK, false if an error prevented adding the row

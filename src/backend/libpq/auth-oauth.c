@@ -25,14 +25,23 @@
 #include "libpq/oauth.h"
 #include "libpq/sasl.h"
 #include "storage/fd.h"
+#include "miscadmin.h"
+#include "utils/memutils.h"
 
-/* GUC */
-char *oauth_validator_command;
+static OAuthProvider* oauth_provider = NULL;
+
+/*----------------------------------------------------------------
+ * OAuth Authentication
+ *----------------------------------------------------------------
+ */
+static List *oauth_providers = NIL;
 
 static void  oauth_get_mechanisms(Port *port, StringInfo buf);
 static void *oauth_init(Port *port, const char *selected_mech, const char *shadow_pass);
 static int   oauth_exchange(void *opaq, const char *input, int inputlen,
-							char **output, int *outputlen, char **logdetail);
+							char **output, int *outputlen, const char **logdetail);
+static bool
+validate(Port *port, const char *auth, const char **logdetail);
 
 /* Mechanism declaration */
 const pg_be_sasl_mech pg_be_oauth_mech = {
@@ -55,22 +64,96 @@ struct oauth_ctx
 {
 	oauth_state	state;
 	Port	   *port;
-	const char *issuer;
+	const char *discovery_uri;
 	const char *scope;
 };
 
 static char *sanitize_char(char c);
 static char *parse_kvpairs_for_auth(char **input);
 static void generate_error_response(struct oauth_ctx *ctx, char **output, int *outputlen);
-static bool validate(Port *port, const char *auth, char **logdetail);
-static bool run_validator_command(Port *port, const char *token);
-static bool check_exit(FILE **fh, const char *command);
-static bool unset_cloexec(int fd);
-static bool username_ok_for_shell(const char *username);
+static bool run_oauth_provider(Port *port, const char *token);
 
 #define KVSEP 0x01
 #define AUTH_KEY "auth"
 #define BEARER_SCHEME "Bearer "
+
+/*----------------------------------------------------------------
+ * OAuth Token Validator
+ *----------------------------------------------------------------
+ */
+
+/*
+ * RegisterOAuthProvider registers a OAuth Token Validator to be
+ * used for oauth token validation. It validates the token and adds the validator
+ * name and it's hooks to a list of loaded token validator. The right validator's
+ * hooks can then be called based on the validator name specified in
+ * pg_hba.conf.
+ *
+ * This function should be called in _PG_init() by any extension looking to
+ * add a custom authentication method.
+ */
+void
+RegisterOAuthProvider(
+	const char *provider_name,
+	OAuthProviderCheck_hook_type OAuthProviderCheck_hook,
+	OAuthProviderError_hook_type OAuthProviderError_hook,
+	OAuthProviderOptions_hook_type OAuthProviderOptions_hook
+)
+{	
+	if (!process_shared_preload_libraries_in_progress)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+			errmsg("RegisterOAuthProvider can only be called by a shared_preload_library")));
+		return;
+	}
+
+	MemoryContext oldcxt;
+	if (oauth_provider == NULL)
+	{
+		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+		oauth_provider = palloc(sizeof(OAuthProvider));
+		oauth_provider->name = pstrdup(provider_name);
+		oauth_provider->oauth_provider_hook = OAuthProviderCheck_hook;
+		oauth_provider->oauth_error_hook = OAuthProviderError_hook;
+		oauth_provider->oauth_options_hook = OAuthProviderOptions_hook;
+		oauth_providers = lappend(oauth_providers, oauth_provider);
+		MemoryContextSwitchTo(oldcxt);	
+	}
+	else
+	{
+		if (oauth_provider && oauth_provider->name)
+		{
+			ereport(ERROR,
+				(errmsg("OAuth provider \"%s\" is already loaded.",
+					oauth_provider->name)));
+		}
+		else
+		{
+			ereport(ERROR,
+				(errmsg("OAuth provider is already loaded.")));
+		}
+	}
+}
+
+/*
+ * Returns the oauth provider (which includes it's
+ * callback functions) based on name specified.
+ */
+OAuthProvider *get_provider_by_name(const char *name)
+{
+	ListCell *lc;
+	foreach(lc, oauth_providers)
+	{
+		OAuthProvider *provider = (OAuthProvider *) lfirst(lc);		
+		if (strcmp(provider->name, name) == 0)
+		{
+			return provider;
+		}
+	}
+
+	return NULL;
+}
 
 static void
 oauth_get_mechanisms(Port *port, StringInfo buf)
@@ -84,7 +167,8 @@ static void *
 oauth_init(Port *port, const char *selected_mech, const char *shadow_pass)
 {
 	struct oauth_ctx *ctx;
-
+	
+	OAuthProviderOptions *oauth_options = oauth_provider->oauth_options_hook(port);
 	if (strcmp(selected_mech, OAUTHBEARER_NAME))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -94,17 +178,15 @@ oauth_init(Port *port, const char *selected_mech, const char *shadow_pass)
 
 	ctx->state = OAUTH_STATE_INIT;
 	ctx->port = port;
-
-	Assert(port->hba);
-	ctx->issuer = port->hba->oauth_issuer;
-	ctx->scope = port->hba->oauth_scope;
+	ctx->scope = oauth_options->scope;
+	ctx->discovery_uri = oauth_options->oauth_discovery_uri;
 
 	return ctx;
 }
 
 static int
 oauth_exchange(void *opaq, const char *input, int inputlen,
-			   char **output, int *outputlen, char **logdetail)
+			   char **output, int *outputlen, const char **logdetail)
 {
 	char   *p;
 	char	cbind_flag;
@@ -382,21 +464,6 @@ static void
 generate_error_response(struct oauth_ctx *ctx, char **output, int *outputlen)
 {
 	StringInfoData	buf;
-
-	/*
-	 * The admin needs to set an issuer and scope for OAuth to work. There's not
-	 * really a way to hide this from the user, either, because we can't choose
-	 * a "default" issuer, so be honest in the failure message.
-	 *
-	 * TODO: see if there's a better place to fail, earlier than this.
-	 */
-	if (!ctx->issuer || !ctx->scope)
-		ereport(FATAL,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("OAuth is not properly configured for this user"),
-				 errdetail_log("The issuer and scope parameters must be set in pg_hba.conf.")));
-
-
 	initStringInfo(&buf);
 
 	/*
@@ -405,17 +472,29 @@ generate_error_response(struct oauth_ctx *ctx, char **output, int *outputlen)
 	appendStringInfo(&buf,
 		"{ "
 			"\"status\": \"invalid_token\", "
-			"\"openid-configuration\": \"%s/.well-known/openid-configuration\","
+			"\"openid-configuration\": \"%s\","
 			"\"scope\": \"%s\" "
 		"}",
-		ctx->issuer, ctx->scope);
+		ctx->discovery_uri, ctx->scope);
 
 	*output = buf.data;
 	*outputlen = buf.len;
 }
 
 static bool
-validate(Port *port, const char *auth, char **logdetail)
+run_oauth_provider(Port *port, const char *token)
+{
+	int result = oauth_provider->oauth_provider_hook(port, token);
+	if(result == STATUS_OK)
+	{
+		set_authn_id(port, port->user_name);
+		return true;
+	}
+	return false;
+}
+
+static bool
+validate(Port *port, const char *auth, const char **logdetail)
 {
 	static const char * const b64_set = "abcdefghijklmnopqrstuvwxyz"
 										"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -471,30 +550,8 @@ validate(Port *port, const char *auth, char **logdetail)
 		return false;
 	}
 
-	/*
-	 * Make sure the token contains only allowed characters. Tokens may end with
-	 * any number of '=' characters.
-	 */
-	span = strspn(token, b64_set);
-	while (token[span] == '=')
-		span++;
-
-	if (token[span] != '\0')
-	{
-		/*
-		 * This error message could be more helpful by printing the problematic
-		 * character(s), but that'd be a bit like printing a piece of someone's
-		 * password into the logs.
-		 */
-		ereport(COMMERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("malformed OAUTHBEARER message"),
-				 errdetail("Bearer token is not in the correct format.")));
-		return false;
-	}
-
 	/* Have the validator check the token. */
-	if (!run_validator_command(port, token))
+	if (!run_oauth_provider(port, token))
 		return false;
 
 	if (port->hba->oauth_skip_usermap)
@@ -519,279 +576,7 @@ validate(Port *port, const char *auth, char **logdetail)
 	}
 
 	/* Finally, check the user map. */
-	ret = check_usermap(port->hba->usermap, port->user_name, MyClientConnectionInfo.authn_id,
-						false);
+	ret = check_usermap(port->hba->usermap, port->user_name,
+						MyClientConnectionInfo.authn_id, false);
 	return (ret == STATUS_OK);
-}
-
-static bool
-run_validator_command(Port *port, const char *token)
-{
-	bool		success = false;
-	int			rc;
-	int			pipefd[2];
-	int			rfd = -1;
-	int			wfd = -1;
-
-	StringInfoData command = { 0 };
-	char	   *p;
-	FILE	   *fh = NULL;
-
-	ssize_t		written;
-	char	   *line = NULL;
-	size_t		size = 0;
-	ssize_t		len;
-
-	Assert(oauth_validator_command);
-
-	if (!oauth_validator_command[0])
-	{
-		ereport(COMMERROR,
-				(errmsg("oauth_validator_command is not set"),
-				 errhint("To allow OAuth authenticated connections, set "
-						 "oauth_validator_command in postgresql.conf.")));
-		return false;
-	}
-
-	/*
-	 * Since popen() is unidirectional, open up a pipe for the other direction.
-	 * Use CLOEXEC to ensure that our write end doesn't accidentally get copied
-	 * into child processes, which would prevent us from closing it cleanly.
-	 *
-	 * XXX this is ugly. We should just read from the child process's stdout,
-	 * but that's a lot more code.
-	 * XXX by bypassing the popen API, we open the potential of process
-	 * deadlock. Clearly document child process requirements (i.e. the child
-	 * MUST read all data off of the pipe before writing anything).
-	 * TODO: port to Windows using _pipe().
-	 */
-	rc = pipe2(pipefd, O_CLOEXEC);
-	if (rc < 0)
-	{
-		ereport(COMMERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not create child pipe: %m")));
-		return false;
-	}
-
-	rfd = pipefd[0];
-	wfd = pipefd[1];
-
-	/* Allow the read pipe be passed to the child. */
-	if (!unset_cloexec(rfd))
-	{
-		/* error message was already logged */
-		goto cleanup;
-	}
-
-	/*
-	 * Construct the command, substituting any recognized %-specifiers:
-	 *
-	 *   %f: the file descriptor of the input pipe
-	 *   %r: the role that the client wants to assume (port->user_name)
-	 *   %%: a literal '%'
-	 */
-	initStringInfo(&command);
-
-	for (p = oauth_validator_command; *p; p++)
-	{
-		if (p[0] == '%')
-		{
-			switch (p[1])
-			{
-				case 'f':
-					appendStringInfo(&command, "%d", rfd);
-					p++;
-					break;
-				case 'r':
-					/*
-					 * TODO: decide how this string should be escaped. The role
-					 * is controlled by the client, so if we don't escape it,
-					 * command injections are inevitable.
-					 *
-					 * This is probably an indication that the role name needs
-					 * to be communicated to the validator process in some other
-					 * way. For this proof of concept, just be incredibly strict
-					 * about the characters that are allowed in user names.
-					 */
-					if (!username_ok_for_shell(port->user_name))
-						goto cleanup;
-
-					appendStringInfoString(&command, port->user_name);
-					p++;
-					break;
-				case '%':
-					appendStringInfoChar(&command, '%');
-					p++;
-					break;
-				default:
-					appendStringInfoChar(&command, p[0]);
-			}
-		}
-		else
-			appendStringInfoChar(&command, p[0]);
-	}
-
-	/* Execute the command. */
-	fh = OpenPipeStream(command.data, "re");
-	/* TODO: handle failures */
-
-	/* We don't need the read end of the pipe anymore. */
-	close(rfd);
-	rfd = -1;
-
-	/* Give the command the token to validate. */
-	written = write(wfd, token, strlen(token));
-	if (written != strlen(token))
-	{
-		/* TODO must loop for short writes, EINTR et al */
-		ereport(COMMERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write token to child pipe: %m")));
-		goto cleanup;
-	}
-
-	close(wfd);
-	wfd = -1;
-
-	/*
-	 * Read the command's response.
-	 *
-	 * TODO: getline() is probably too new to use, unfortunately.
-	 * TODO: loop over all lines
-	 */
-	if ((len = getline(&line, &size, fh)) >= 0)
-	{
-		/* TODO: fail if the authn_id doesn't end with a newline */
-		if (len > 0)
-			line[len - 1] = '\0';
-
-		set_authn_id(port, line);
-	}
-	else if (ferror(fh))
-	{
-		ereport(COMMERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read from command \"%s\": %m",
-						command.data)));
-		goto cleanup;
-	}
-
-	/* Make sure the command exits cleanly. */
-	if (!check_exit(&fh, command.data))
-	{
-		/* error message already logged */
-		goto cleanup;
-	}
-
-	/* Done. */
-	success = true;
-
-cleanup:
-	if (line)
-		free(line);
-
-	/*
-	 * In the successful case, the pipe fds are already closed. For the error
-	 * case, always close out the pipe before waiting for the command, to
-	 * prevent deadlock.
-	 */
-	if (rfd >= 0)
-		close(rfd);
-	if (wfd >= 0)
-		close(wfd);
-
-	if (fh)
-	{
-		Assert(!success);
-		check_exit(&fh, command.data);
-	}
-
-	if (command.data)
-		pfree(command.data);
-
-	return success;
-}
-
-static bool
-check_exit(FILE **fh, const char *command)
-{
-	int rc;
-
-	rc = ClosePipeStream(*fh);
-	*fh = NULL;
-
-	if (rc == -1)
-	{
-		/* pclose() itself failed. */
-		ereport(COMMERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not close pipe to command \"%s\": %m",
-						command)));
-	}
-	else if (rc != 0)
-	{
-		char *reason = wait_result_to_str(rc);
-
-		ereport(COMMERROR,
-				(errmsg("failed to execute command \"%s\": %s",
-						command, reason)));
-
-		pfree(reason);
-	}
-
-	return (rc == 0);
-}
-
-static bool
-unset_cloexec(int fd)
-{
-	int			flags;
-	int			rc;
-
-	flags = fcntl(fd, F_GETFD);
-	if (flags == -1)
-	{
-		ereport(COMMERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not get fd flags for child pipe: %m")));
-		return false;
-	}
-
-	rc = fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC);
-	if (rc < 0)
-	{
-		ereport(COMMERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not unset FD_CLOEXEC for child pipe: %m")));
-		return false;
-	}
-
-	return true;
-}
-
-/*
- * XXX This should go away eventually and be replaced with either a proper
- * escape or a different strategy for communication with the validator command.
- */
-static bool
-username_ok_for_shell(const char *username)
-{
-	/* This set is borrowed from fe_utils' appendShellStringNoError(). */
-	static const char * const allowed = "abcdefghijklmnopqrstuvwxyz"
-										"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-										"0123456789-_./:";
-	size_t	span;
-
-	Assert(username && username[0]); /* should have already been checked */
-
-	span = strspn(username, allowed);
-	if (username[span] != '\0')
-	{
-		ereport(COMMERROR,
-				(errmsg("PostgreSQL user name contains unsafe characters and cannot be passed to the OAuth validator")));
-		return false;
-	}
-
-	return true;
 }
