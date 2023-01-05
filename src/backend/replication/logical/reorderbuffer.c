@@ -134,12 +134,12 @@ typedef struct ReorderBufferTupleCidEnt
 /* File handle for spilling transactions to files during reorder */
 typedef struct TXNEntryFile
 {
-	int	     	vfd;			/* -1 when the file is closed */
-	off_t		curOffset;		/* offset for next write or read. Reset to 0
-								 * when vfd is opened. */
+	File vfd;			        /* -1 when the file is closed */
+	off_t  curOffset;	        /* offset for next write or read. Reset to 0
+                                 * when vfd is opened. */
     TransactionId xid;          /* current transaction - specified when file opened */
     XLogSegNo   segno;          /* current segment number if open */
-    bool readonly;              /* true if opened for reading */
+    bool reading;               /* true if opened for reading */
 } TXNEntryFile;
 
 /* k-way in-order change iteration support structures */
@@ -304,7 +304,7 @@ static void ReorderBufferChangeMemoryUpdate(ReorderBuffer *rb,
  * spilling transactions to files
  * --------------------------------------------
  */
-TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool readonly);
+TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool reading);
 void TXNFileClose(TXNEntryFile *txnFile);
 void TXNFileWrite(TXNEntryFile *txnFile, char *buf, size_t size);
 int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size);
@@ -5195,6 +5195,7 @@ restart:
 	return true;
 }
 
+#define debug(fmt, ...) elog(DEBUG2, fmt, __VA_ARGS__)
 
 /*
  * Open an overflow file for spilling transaction data to disk.
@@ -5205,32 +5206,39 @@ restart:
  *
  * TODO: Why create separate segment files? Wouldn't a single file per transaction suffice?
  */
-TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool readonly)
+TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool reading)
 {
     /* Build the file path to the desired segment */
     char path[MAXPGPATH];
     ReorderBufferSerializedPath(path, MyReplicationSlot, xid, segno);
+    debug("TXNFileOpen: xid=%d segno=%d reading=%d  path=%s\n", xid, segno, reading, path);
 
     /* Set flags according to reading or writing */
-    int oflags = readonly ? O_RDONLY | PG_BINARY
-                          : O_CREAT | O_APPEND | O_WRONLY | PG_BINARY;
+    int oflags = reading ? O_RDONLY | PG_BINARY
+                         : O_CREAT | O_APPEND | O_WRONLY | PG_BINARY;
 
     /* open segment, create it if necessary. */
     File vfd = PathNameOpenFile(path, oflags);
 
     /*
-     * If we are reading, then we might encounter a missing segment file.
-     * If that happens, don't raise an error. Instead, return an
+     * If we are writing, then we are appending to the file.
+     * Set the offset to the end of file.
+     */
+    off_t curOffset = reading ? 0 : FileSize(vfd);
+
+    /*
+     * When reading, we might encounter a missing segment file.
+     * We treat a missing segment as an empty segment.
+     * Don't report an error, but be sure to return an
      * EOF the first time we try to read from the missing segment.
-     * Treat a missing segment as empty file rather than missing.
      */
     if (vfd < 0 && errno != ENOENT)
         ereport(ERROR,
                 (errcode_for_file_access(),
                  errmsg("could not open file \"%s\": %m", path)));
 
-    return (TXNEntryFile) {.vfd = vfd, .segno = segno, .curOffset = 0,
-                           .readonly = readonly, .xid = xid};
+    return (TXNEntryFile) {.vfd = vfd, .segno = segno, .curOffset = curOffset,
+                           .reading = reading, .xid = xid};
 }
 
 
@@ -5239,6 +5247,7 @@ TXNEntryFile TXNFileOpen(TransactionId xid, XLogSegNo segno, bool readonly)
  */
 void TXNFileClose(TXNEntryFile *txnFile)
 {
+    debug("TXNFileClose: xid=%d  seg=%lu  vfd=%d\n", txnFile->xid, txnFile->segno, txnFile->vfd);
     if (txnFile->vfd != -1)
         FileClose(txnFile->vfd);
     txnFile->vfd = -1;
@@ -5255,6 +5264,7 @@ void TXNFileWrite(TXNEntryFile *txnFile, char *buf, size_t size)
 {
     /* Write the buffer and check for errors */
     int actual = FileWrite(txnFile->vfd, buf, (int)size, txnFile->curOffset, WAIT_EVENT_REORDER_BUFFER_WRITE);
+    debug("TXNFileWrite size=%zu offset=%lld actual=%d\n", size, txnFile->curOffset, actual);
     if (actual != size)
     {
         int       save_errno = errno;
@@ -5289,6 +5299,7 @@ int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size)
     /* Read from the transaction file. We do not expect partial reads other than EOF */
     int readBytes = FileRead(txnFile->vfd, buf, (int)size,
                              txnFile->curOffset, WAIT_EVENT_REORDER_BUFFER_READ);
+    debug("TXNFileRead: size=%zu  offset=%lld actual=%d\n", size, txnFile->curOffset, readBytes);
     if (readBytes < 0)
         ereport(ERROR,
                 (errcode_for_file_access(),
@@ -5309,6 +5320,7 @@ int TXNFileRead(TXNEntryFile *txnFile, char *buf, size_t size)
  */
 void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno)
 {
+    debug("TXNFileSetSegment xid=%u  segno=%lu\n", xid, segno);
     /* If the transaction id or WAL segment number have changed, ... */
     if (segno != txnFile->segno || xid != txnFile->xid || txnFile->vfd == -1)
     {
@@ -5317,7 +5329,7 @@ void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno
             TXNFileClose(txnFile);
 
         /* Open a new segment */
-        *txnFile = TXNFileOpen(txnFile->xid, segno, txnFile->readonly);
+        *txnFile = TXNFileOpen(txnFile->xid, segno, txnFile->reading);
     }
 }
 
@@ -5327,5 +5339,6 @@ void TXNFileSetSegment(TXNEntryFile *txnFile, TransactionId xid, XLogSegNo segno
  */
 TXNEntryFile TXNFileInit(bool readonly)
 {
-    return (TXNEntryFile) {.vfd=-1, .readonly=readonly};
+    debug("TXNFileInit: readonly=%d\n", readonly);
+    return (TXNEntryFile) {.vfd=-1, .reading=readonly};
 }
