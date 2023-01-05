@@ -94,6 +94,8 @@ static void DelRoleMems(const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
 						Oid grantorId, GrantRoleOptions *popt,
 						DropBehavior behavior);
+static void check_role_membership_authorization(Oid currentUserId, Oid roleid,
+												bool is_grant);
 static Oid	check_role_grantor(Oid currentUserId, Oid roleid, Oid grantorId,
 							   bool is_grant);
 static RevokeRoleGrantAction *initialize_revoke_actions(CatCList *memlist);
@@ -505,6 +507,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 			Oid			oldroleid = oldroleform->oid;
 			char	   *oldrolename = NameStr(oldroleform->rolname);
 
+			/* can only add this role to roles for which you have rights */
+			check_role_membership_authorization(GetUserId(), oldroleid, true);
 			AddRoleMems(oldrolename, oldroleid,
 						thisrole_list,
 						thisrole_oidlist,
@@ -517,6 +521,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	/*
 	 * Add the specified members to this new role. adminmembers get the admin
 	 * option, rolemembers don't.
+	 *
+	 * NB: No permissions check is required here. If you have enough rights
+	 * to create a role, you can add any members you like.
 	 */
 	AddRoleMems(stmt->role, roleid,
 				rolemembers, roleSpecsToIds(rolemembers),
@@ -1442,6 +1449,8 @@ GrantRole(ParseState *pstate, GrantRoleStmt *stmt)
 					 errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
 
 		roleid = get_role_oid(rolename, false);
+		check_role_membership_authorization(GetUserId(), roleid,
+											stmt->is_grant);
 		if (stmt->is_grant)
 			AddRoleMems(rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
@@ -1565,43 +1574,6 @@ AddRoleMems(const char *rolename, Oid roleid,
 	Oid			currentUserId = GetUserId();
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
-
-	/* Skip permission check if nothing to do */
-	if (!memberIds)
-		return;
-
-	/*
-	 * Check permissions: must have createrole or admin option on the role to
-	 * be changed.  To mess with a superuser role, you gotta be superuser.
-	 */
-	if (superuser_arg(roleid))
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter superusers")));
-	}
-	else
-	{
-		if (!have_createrole_privilege() &&
-			!is_admin_of_role(currentUserId, roleid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must have admin option on role \"%s\"",
-							rolename)));
-	}
-
-	/*
-	 * The charter of pg_database_owner is to have exactly one, implicit,
-	 * situation-dependent member.  There's no technical need for this
-	 * restriction.  (One could lift it and take the further step of making
-	 * object_ownercheck(DatabaseRelationId, ...) equivalent to has_privs_of_role(roleid,
-	 * ROLE_PG_DATABASE_OWNER), in which case explicit, situation-independent
-	 * members could act as the owner of any database.)
-	 */
-	if (roleid == ROLE_PG_DATABASE_OWNER)
-		ereport(ERROR,
-				errmsg("role \"%s\" cannot have explicit members", rolename));
 
 	/* Validate grantor (and resolve implicit grantor if not specified). */
 	grantorId = check_role_grantor(currentUserId, roleid, grantorId, true);
@@ -1902,31 +1874,6 @@ DelRoleMems(const char *rolename, Oid roleid,
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
 
-	/* Skip permission check if nothing to do */
-	if (!memberIds)
-		return;
-
-	/*
-	 * Check permissions: must have createrole or admin option on the role to
-	 * be changed.  To mess with a superuser role, you gotta be superuser.
-	 */
-	if (superuser_arg(roleid))
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter superusers")));
-	}
-	else
-	{
-		if (!have_createrole_privilege() &&
-			!is_admin_of_role(currentUserId, roleid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must have admin option on role \"%s\"",
-							rolename)));
-	}
-
 	/* Validate grantor (and resolve implicit grantor if not specified). */
 	grantorId = check_role_grantor(currentUserId, roleid, grantorId, false);
 
@@ -2038,6 +1985,51 @@ DelRoleMems(const char *rolename, Oid roleid,
 	 * Close pg_authmem, but keep lock till commit.
 	 */
 	table_close(pg_authmem_rel, NoLock);
+}
+
+/*
+ * Check that currentUserId has permission to modify the membership list for
+ * roleid. Throw an error if not.
+ */
+static void
+check_role_membership_authorization(Oid currentUserId, Oid roleid,
+									bool is_grant)
+{
+	/*
+	 * The charter of pg_database_owner is to have exactly one, implicit,
+	 * situation-dependent member.  There's no technical need for this
+	 * restriction.  (One could lift it and take the further step of making
+	 * object_ownercheck(DatabaseRelationId, ...) equivalent to
+	 * has_privs_of_role(roleid, ROLE_PG_DATABASE_OWNER), in which case
+	 * explicit, situation-independent members could act as the owner of any
+	 * database.)
+	 */
+	if (is_grant && roleid == ROLE_PG_DATABASE_OWNER)
+		ereport(ERROR,
+				errmsg("role \"%s\" cannot have explicit members",
+					   GetUserNameFromId(roleid, false)));
+
+	/* To mess with a superuser role, you gotta be superuser. */
+	if (superuser_arg(roleid))
+	{
+		if (!superuser_arg(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to alter superusers")));
+	}
+	else
+	{
+		/*
+		 * Otherwise, must have createrole or admin option on the role to be
+		 * changed.
+		 */
+		if (!has_createrole_privilege(currentUserId) &&
+			!is_admin_of_role(currentUserId, roleid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have admin option on role \"%s\"",
+							GetUserNameFromId(roleid, false))));
+	}
 }
 
 /*
