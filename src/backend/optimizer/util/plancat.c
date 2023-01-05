@@ -2171,6 +2171,11 @@ has_row_triggers(PlannerInfo *root, Index rti, CmdType event)
 	return result;
 }
 
+/*
+ * has_stored_generated_columns
+ *
+ * Does table identified by RTI have any STORED GENERATED columns?
+ */
 bool
 has_stored_generated_columns(PlannerInfo *root, Index rti)
 {
@@ -2188,6 +2193,57 @@ has_stored_generated_columns(PlannerInfo *root, Index rti)
 	table_close(relation, NoLock);
 
 	return result;
+}
+
+/*
+ * get_dependent_generated_columns
+ *
+ * Get the column numbers of any STORED GENERATED columns of the relation
+ * that depend on any column listed in target_cols.  Both the input and
+ * result bitmapsets contain column numbers offset by
+ * FirstLowInvalidHeapAttributeNumber.
+ */
+Bitmapset *
+get_dependent_generated_columns(PlannerInfo *root, Index rti,
+								Bitmapset *target_cols)
+{
+	Bitmapset  *dependentCols = NULL;
+	RangeTblEntry *rte = planner_rt_fetch(rti, root);
+	Relation	relation;
+	TupleDesc	tupdesc;
+	TupleConstr *constr;
+
+	/* Assume we already have adequate lock */
+	relation = table_open(rte->relid, NoLock);
+
+	tupdesc = RelationGetDescr(relation);
+	constr = tupdesc->constr;
+
+	if (constr && constr->has_generated_stored)
+	{
+		for (int i = 0; i < constr->num_defval; i++)
+		{
+			AttrDefault *defval = &constr->defval[i];
+			Node	   *expr;
+			Bitmapset  *attrs_used = NULL;
+
+			/* skip if not generated column */
+			if (!TupleDescAttr(tupdesc, defval->adnum - 1)->attgenerated)
+				continue;
+
+			/* identify columns this generated column depends on */
+			expr = stringToNode(defval->adbin);
+			pull_varattnos(expr, 1, &attrs_used);
+
+			if (bms_overlap(target_cols, attrs_used))
+				dependentCols = bms_add_member(dependentCols,
+											   defval->adnum - FirstLowInvalidHeapAttributeNumber);
+		}
+	}
+
+	table_close(relation, NoLock);
+
+	return dependentCols;
 }
 
 /*

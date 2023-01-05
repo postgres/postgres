@@ -526,6 +526,19 @@ typedef struct ResultRelInfo
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
 } ResultRelInfo;
 
+/*
+ * To avoid an ABI-breaking change in the size of ResultRelInfo in back
+ * branches, we create one of these for each result relation for which we've
+ * computed extraUpdatedCols, and store it in EState.es_resultrelinfo_extra.
+ */
+typedef struct ResultRelInfoExtra
+{
+	ResultRelInfo *rinfo;		/* owning ResultRelInfo */
+
+	/* For INSERT/UPDATE, attnums of generated columns to be computed */
+	Bitmapset  *ri_extraUpdatedCols;
+} ResultRelInfoExtra;
+
 /* ----------------
  *	  AsyncRequest
  *
@@ -652,6 +665,9 @@ typedef struct EState
 	 */
 	List	   *es_insert_pending_result_relations;
 	List	   *es_insert_pending_modifytables;
+
+	/* List of ResultRelInfoExtra structs (see above) */
+	List	   *es_resultrelinfo_extra;
 } EState;
 
 

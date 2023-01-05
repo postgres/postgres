@@ -956,14 +956,7 @@ typedef struct PartitionCmd
  *	  which triggers to fire and in FDWs to know which changed columns they
  *	  need to ship off.
  *
- *	  Generated columns that are caused to be updated by an update to a base
- *	  column are listed in extraUpdatedCols.  This is not considered for
- *	  permission checking, but it is useful in those places that want to know
- *	  the full set of columns being updated as opposed to only the ones the
- *	  user explicitly mentioned in the query.  (There is currently no need for
- *	  an extraInsertedCols, but it could exist.)  Note that extraUpdatedCols
- *	  is populated during query rewrite, NOT in the parser, since generated
- *	  columns could be added after a rule has been parsed and stored.
+ *	  extraUpdatedCols is no longer used or maintained; it's always empty.
  *
  *	  securityQuals is a list of security barrier quals (boolean expressions),
  *	  to be tested in the listed order before returning a row from the

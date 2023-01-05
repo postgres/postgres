@@ -1428,9 +1428,6 @@ apply_handle_update(StringInfo s)
 		}
 	}
 
-	/* Also populate extraUpdatedCols, in case we have generated columns */
-	fill_extraUpdatedCols(target_rte, rel->localrel);
-
 	/* Build the search tuple. */
 	oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 	slot_store_data(remoteslot, rel,

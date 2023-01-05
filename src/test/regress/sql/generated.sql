@@ -149,6 +149,15 @@ CREATE TABLE gtesty (x int, b int DEFAULT 55);
 CREATE TABLE gtest1_2 () INHERITS (gtest0, gtesty);  -- error
 DROP TABLE gtesty;
 
+-- test correct handling of GENERATED column that's only in child
+CREATE TABLE gtestp (f1 int);
+CREATE TABLE gtestc (f2 int GENERATED ALWAYS AS (f1+1) STORED) INHERITS(gtestp);
+INSERT INTO gtestc values(42);
+TABLE gtestc;
+UPDATE gtestp SET f1 = f1 * 10;
+TABLE gtestc;
+DROP TABLE gtestp CASCADE;
+
 -- test stored update
 CREATE TABLE gtest3 (a int, b int GENERATED ALWAYS AS (a * 3) STORED);
 INSERT INTO gtest3 (a) VALUES (1), (2), (3), (NULL);
