@@ -32,7 +32,6 @@ tests += {
     'sql': [
       'test_pg_db_role_setting',
     ],
-    'regress_args': ['--no-locale', '--encoding=UTF8'],
     'runningcheck': false,
   },
 }
