@@ -642,7 +642,7 @@ pg_truncate(const char *path, off_t length)
 	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
 	if (fd >= 0)
 	{
-		ret = ftruncate(fd, 0);
+		ret = ftruncate(fd, length);
 		save_errno = errno;
 		CloseTransientFile(fd);
 		errno = save_errno;
