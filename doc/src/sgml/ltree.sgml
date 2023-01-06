@@ -23,10 +23,11 @@
   <title>Definitions</title>
 
   <para>
-   A <firstterm>label</firstterm> is a sequence of alphanumeric characters
-   and underscores (for example, in C locale the characters
-   <literal>A-Za-z0-9_</literal> are allowed).
-   Labels must be less than 256 characters long.
+   A <firstterm>label</firstterm> is a sequence of alphanumeric characters,
+   underscores, and hyphens. Valid alphanumeric character ranges are
+   dependent on the database locale. For example, in C locale, the characters
+   <literal>A-Za-z0-9_-</literal> are allowed.
+   Labels must be no more than 1000 characters long.
   </para>
 
   <para>

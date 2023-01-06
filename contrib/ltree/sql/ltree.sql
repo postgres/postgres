@@ -1,5 +1,8 @@
 CREATE EXTENSION ltree;
 
+-- max length for a label
+\set maxlbl 1000
+
 -- Check whether any of our opclasses fail amvalidate
 SELECT amname, opcname
 FROM pg_opclass opc LEFT JOIN pg_am am ON am.oid = opcmethod
@@ -8,6 +11,7 @@ WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
 SELECT ''::ltree;
 SELECT '1'::ltree;
 SELECT '1.2'::ltree;
+SELECT '1.2.-3'::ltree;
 SELECT '1.2._3'::ltree;
 
 -- empty labels not allowed
@@ -15,8 +19,8 @@ SELECT '.2.3'::ltree;
 SELECT '1..3'::ltree;
 SELECT '1.2.'::ltree;
 
-SELECT repeat('x', 255)::ltree;
-SELECT repeat('x', 256)::ltree;
+SELECT repeat('x', :maxlbl)::ltree;
+SELECT repeat('x', :maxlbl + 1)::ltree;
 
 SELECT ltree2text('1.2.3.34.sdf');
 SELECT text2ltree('1.2.3.34.sdf');
@@ -111,10 +115,10 @@ SELECT '1.!.3'::lquery;
 SELECT '1.2.!'::lquery;
 SELECT '1.2.3|@.4'::lquery;
 
-SELECT (repeat('x', 255) || '*@@*')::lquery;
-SELECT (repeat('x', 256) || '*@@*')::lquery;
-SELECT ('!' || repeat('x', 255))::lquery;
-SELECT ('!' || repeat('x', 256))::lquery;
+SELECT (repeat('x', :maxlbl) || '*@@*')::lquery;
+SELECT (repeat('x', :maxlbl + 1) || '*@@*')::lquery;
+SELECT ('!' || repeat('x', :maxlbl))::lquery;
+SELECT ('!' || repeat('x', :maxlbl + 1))::lquery;
 
 SELECT nlevel('1.2.3.4');
 SELECT nlevel(('1' || repeat('.1', 65534))::ltree);
@@ -233,6 +237,8 @@ SELECT 'QWER_GY'::ltree ~ 'q_t%@*';
 --ltxtquery
 SELECT '!tree & aWdf@*'::ltxtquery;
 SELECT 'tree & aw_qw%*'::ltxtquery;
+SELECT 'tree & aw-qw%*'::ltxtquery;
+
 SELECT 'ltree.awdfg'::ltree @ '!tree & aWdf@*'::ltxtquery;
 SELECT 'tree.awdfg'::ltree @ '!tree & aWdf@*'::ltxtquery;
 SELECT 'tree.awdfg'::ltree @ '!tree | aWdf@*'::ltxtquery;
