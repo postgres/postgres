@@ -114,6 +114,8 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	bool		full = false;
 	bool		disable_page_skipping = false;
 	bool		process_toast = true;
+	bool		skip_database_stats = false;
+	bool		only_database_stats = false;
 	ListCell   *lc;
 
 	/* index_cleanup and truncate values unspecified for now */
@@ -200,6 +202,10 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 					params.nworkers = nworkers;
 			}
 		}
+		else if (strcmp(opt->defname, "skip_database_stats") == 0)
+			skip_database_stats = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "only_database_stats") == 0)
+			only_database_stats = defGetBoolean(opt);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -216,7 +222,9 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		(freeze ? VACOPT_FREEZE : 0) |
 		(full ? VACOPT_FULL : 0) |
 		(disable_page_skipping ? VACOPT_DISABLE_PAGE_SKIPPING : 0) |
-		(process_toast ? VACOPT_PROCESS_TOAST : 0);
+		(process_toast ? VACOPT_PROCESS_TOAST : 0) |
+		(skip_database_stats ? VACOPT_SKIP_DATABASE_STATS : 0) |
+		(only_database_stats ? VACOPT_ONLY_DATABASE_STATS : 0);
 
 	/* sanity checks on options */
 	Assert(params.options & (VACOPT_VACUUM | VACOPT_ANALYZE));
@@ -349,6 +357,24 @@ vacuum(List *relations, VacuumParams *params,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("PROCESS_TOAST required with VACUUM FULL")));
 
+	/* sanity check for ONLY_DATABASE_STATS */
+	if (params->options & VACOPT_ONLY_DATABASE_STATS)
+	{
+		Assert(params->options & VACOPT_VACUUM);
+		if (relations != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("ONLY_DATABASE_STATS cannot be specified with a list of tables")));
+		/* don't require people to turn off PROCESS_TOAST explicitly */
+		if (params->options & ~(VACOPT_VACUUM |
+								VACOPT_VERBOSE |
+								VACOPT_PROCESS_TOAST |
+								VACOPT_ONLY_DATABASE_STATS))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("ONLY_DATABASE_STATS cannot be specified with other VACUUM options")));
+	}
+
 	/*
 	 * Create special memory context for cross-transaction storage.
 	 *
@@ -376,7 +402,12 @@ vacuum(List *relations, VacuumParams *params,
 	 * Build list of relation(s) to process, putting any new data in
 	 * vac_context for safekeeping.
 	 */
-	if (relations != NIL)
+	if (params->options & VACOPT_ONLY_DATABASE_STATS)
+	{
+		/* We don't process any tables in this case */
+		Assert(relations == NIL);
+	}
+	else if (relations != NIL)
 	{
 		List	   *newrels = NIL;
 		ListCell   *lc;
@@ -528,11 +559,11 @@ vacuum(List *relations, VacuumParams *params,
 		StartTransactionCommand();
 	}
 
-	if ((params->options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
+	if ((params->options & VACOPT_VACUUM) &&
+		!(params->options & VACOPT_SKIP_DATABASE_STATS))
 	{
 		/*
 		 * Update pg_database.datfrozenxid, and truncate pg_xact if possible.
-		 * (autovacuum.c does this for itself.)
 		 */
 		vac_update_datfrozenxid();
 	}
@@ -560,13 +591,14 @@ vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
 
 	Assert((options & (VACOPT_VACUUM | VACOPT_ANALYZE)) != 0);
 
-	/*
+	/*----------
 	 * A role has privileges to vacuum or analyze the relation if any of the
 	 * following are true:
 	 *   - the role is a superuser
 	 *   - the role owns the relation
 	 *   - the role owns the current database and the relation is not shared
 	 *   - the role has been granted the MAINTAIN privilege on the relation
+	 *----------
 	 */
 	if (object_ownercheck(RelationRelationId, relid, GetUserId()) ||
 		(object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared) ||

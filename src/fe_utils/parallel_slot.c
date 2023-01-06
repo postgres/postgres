@@ -475,6 +475,9 @@ ParallelSlotsWaitCompletion(ParallelSlotArray *sa)
 			continue;
 		if (!consumeQueryResult(&sa->slots[i]))
 			return false;
+		/* Mark connection as idle */
+		sa->slots[i].inUse = false;
+		ParallelSlotClearHandler(&sa->slots[i]);
 	}
 
 	return true;

@@ -36,6 +36,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     PROCESS_TOAST [ <replaceable class="parameter">boolean</replaceable> ]
     TRUNCATE [ <replaceable class="parameter">boolean</replaceable> ]
     PARALLEL <replaceable class="parameter">integer</replaceable>
+    SKIP_DATABASE_STATS [ <replaceable class="parameter">boolean</replaceable> ]
+    ONLY_DATABASE_STATS [ <replaceable class="parameter">boolean</replaceable> ]
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -291,6 +293,41 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       vacuum are launched before the start of each phase and exit at the end of
       the phase.  These behaviors might change in a future release.  This
       option can't be used with the <literal>FULL</literal> option.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SKIP_DATABASE_STATS</literal></term>
+    <listitem>
+     <para>
+      Specifies that <command>VACUUM</command> should skip updating the
+      database-wide statistics about oldest unfrozen XIDs.  Normally
+      <command>VACUUM</command> will update these statistics once at the
+      end of the command.  However, this can take awhile in a database
+      with a very large number of tables, and it will accomplish nothing
+      unless the table that had contained the oldest unfrozen XID was
+      among those vacuumed.  Moreover, if multiple <command>VACUUM</command>
+      commands are issued in parallel, only one of them can update the
+      database-wide statistics at a time.  Therefore, if an application
+      intends to issue a series of many <command>VACUUM</command>
+      commands, it can be helpful to set this option in all but the last
+      such command; or set it in all the commands and separately
+      issue <literal>VACUUM (ONLY_DATABASE_STATS)</literal> afterwards.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ONLY_DATABASE_STATS</literal></term>
+    <listitem>
+     <para>
+      Specifies that <command>VACUUM</command> should do nothing except
+      update the database-wide statistics about oldest unfrozen XIDs.
+      When this option is specified,
+      the <replaceable class="parameter">table_and_columns</replaceable>
+      list must be empty, and no other option may be enabled
+      except <literal>VERBOSE</literal>.
      </para>
     </listitem>
    </varlistentry>

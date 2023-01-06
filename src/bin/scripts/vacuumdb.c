@@ -44,6 +44,7 @@ typedef struct vacuumingOptions
 	bool		force_index_cleanup;
 	bool		do_truncate;
 	bool		process_toast;
+	bool		skip_database_stats;
 } vacuumingOptions;
 
 /* object filter options */
@@ -533,6 +534,9 @@ vacuum_one_database(ConnParams *cparams,
 		pg_fatal("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
 				 "--parallel", "13");
 
+	/* skip_database_stats is used automatically if server supports it */
+	vacopts->skip_database_stats = (PQserverVersion(conn) >= 160000);
+
 	if (!quiet)
 	{
 		if (stage != ANALYZE_NO_STAGE)
@@ -790,7 +794,29 @@ vacuum_one_database(ConnParams *cparams,
 	} while (cell != NULL);
 
 	if (!ParallelSlotsWaitCompletion(sa))
+	{
 		failed = true;
+		goto finish;
+	}
+
+	/* If we used SKIP_DATABASE_STATS, mop up with ONLY_DATABASE_STATS */
+	if (vacopts->skip_database_stats && stage == ANALYZE_NO_STAGE)
+	{
+		const char *cmd = "VACUUM (ONLY_DATABASE_STATS);";
+		ParallelSlot *free_slot = ParallelSlotsGetIdle(sa, NULL);
+
+		if (!free_slot)
+		{
+			failed = true;
+			goto finish;
+		}
+
+		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
+		run_vacuum_command(free_slot->connection, cmd, echo, NULL);
+
+		if (!ParallelSlotsWaitCompletion(sa))
+			failed = true;
+	}
 
 finish:
 	ParallelSlotsTerminate(sa);
@@ -955,6 +981,13 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 				/* PROCESS_TOAST is supported since v14 */
 				Assert(serverVersion >= 140000);
 				appendPQExpBuffer(sql, "%sPROCESS_TOAST FALSE", sep);
+				sep = comma;
+			}
+			if (vacopts->skip_database_stats)
+			{
+				/* SKIP_DATABASE_STATS is supported since v16 */
+				Assert(serverVersion >= 160000);
+				appendPQExpBuffer(sql, "%sSKIP_DATABASE_STATS", sep);
 				sep = comma;
 			}
 			if (vacopts->skip_locked)
