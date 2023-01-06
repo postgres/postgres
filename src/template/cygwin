@@ -1,5 +1,10 @@
 # src/template/cygwin
 
+# Prefer unnamed POSIX semaphores if available, unless user overrides choice
+if test x"$PREFERRED_SEMAPHORES" = x"" ; then
+  PREFERRED_SEMAPHORES=UNNAMED_POSIX
+fi
+
 SRCH_LIB="/usr/local/lib"
 
 # This is required for ppoll(2), and perhaps other things

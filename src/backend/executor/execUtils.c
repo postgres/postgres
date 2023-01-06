@@ -1342,25 +1342,16 @@ ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 Bitmapset *
 ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 {
-	if (relinfo->ri_RangeTableIndex != 0)
-	{
-		RangeTblEntry *rte = exec_rt_fetch(relinfo->ri_RangeTableIndex, estate);
+#ifdef USE_ASSERT_CHECKING
+	/* Verify that ExecInitStoredGenerated has been called if needed. */
+	Relation	rel = relinfo->ri_RelationDesc;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 
-		return rte->extraUpdatedCols;
-	}
-	else if (relinfo->ri_RootResultRelInfo)
-	{
-		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
-		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
-		TupleConversionMap *map = ExecGetRootToChildMap(relinfo, estate);
+	if (tupdesc->constr && tupdesc->constr->has_generated_stored)
+		Assert(relinfo->ri_GeneratedExprs != NULL);
+#endif
 
-		if (map != NULL)
-			return execute_attr_map_cols(map->attrMap, rte->extraUpdatedCols);
-		else
-			return rte->extraUpdatedCols;
-	}
-	else
-		return NULL;
+	return relinfo->ri_extraUpdatedCols;
 }
 
 /* Return columns being updated, including generated columns */

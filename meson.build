@@ -211,6 +211,7 @@ if host_system == 'aix'
   memset_loop_limit = 0
 
 elif host_system == 'cygwin'
+  sema_kind = 'unnamed_posix'
   cppflags += '-D_GNU_SOURCE'
   dlsuffix = '.dll'
   mod_link_args_fmt = ['@0@']

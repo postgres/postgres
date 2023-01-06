@@ -1153,7 +1153,6 @@ typedef struct RangeTblEntry
 	bool		lateral;		/* subquery, function, or values is LATERAL? */
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause? */
-	Bitmapset  *extraUpdatedCols;	/* generated columns being updated */
 	List	   *securityQuals;	/* security barrier quals to apply, if any */
 } RangeTblEntry;
 
@@ -1189,15 +1188,6 @@ typedef struct RangeTblEntry
  * updatedCols is also used in some other places, for example, to determine
  * which triggers to fire and in FDWs to know which changed columns they need
  * to ship off.
- *
- * Generated columns that are caused to be updated by an update to a base
- * column are listed in extraUpdatedCols.  This is not considered for
- * permission checking, but it is useful in those places that want to know the
- * full set of columns being updated as opposed to only the ones the user
- * explicitly mentioned in the query.  (There is currently no need for an
- * extraInsertedCols, but it could exist.)  Note that extraUpdatedCols is
- * populated during query rewrite, NOT in the parser, since generated columns
- * could be added after a rule has been parsed and stored.
  */
 typedef struct RTEPermissionInfo
 {

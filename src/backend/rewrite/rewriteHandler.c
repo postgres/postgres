@@ -1634,46 +1634,6 @@ rewriteValuesRTEToNulls(Query *parsetree, RangeTblEntry *rte)
 
 
 /*
- * Record in target_rte->extraUpdatedCols the indexes of any generated columns
- * columns that depend on any columns mentioned in
- * target_perminfo->updatedCols.
- */
-void
-fill_extraUpdatedCols(RangeTblEntry *target_rte,
-					  RTEPermissionInfo *target_perminfo,
-					  Relation target_relation)
-{
-	TupleDesc	tupdesc = RelationGetDescr(target_relation);
-	TupleConstr *constr = tupdesc->constr;
-
-	target_rte->extraUpdatedCols = NULL;
-
-	if (constr && constr->has_generated_stored)
-	{
-		for (int i = 0; i < constr->num_defval; i++)
-		{
-			AttrDefault *defval = &constr->defval[i];
-			Node	   *expr;
-			Bitmapset  *attrs_used = NULL;
-
-			/* skip if not generated column */
-			if (!TupleDescAttr(tupdesc, defval->adnum - 1)->attgenerated)
-				continue;
-
-			/* identify columns this generated column depends on */
-			expr = stringToNode(defval->adbin);
-			pull_varattnos(expr, 1, &attrs_used);
-
-			if (bms_overlap(target_perminfo->updatedCols, attrs_used))
-				target_rte->extraUpdatedCols =
-					bms_add_member(target_rte->extraUpdatedCols,
-								   defval->adnum - FirstLowInvalidHeapAttributeNumber);
-		}
-	}
-}
-
-
-/*
  * matchLocks -
  *	  match the list of locks and returns the matching rules
  */
@@ -3738,7 +3698,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 	{
 		int			result_relation;
 		RangeTblEntry *rt_entry;
-		RTEPermissionInfo *rt_perminfo;
 		Relation	rt_entry_relation;
 		List	   *locks;
 		int			product_orig_rt_length;
@@ -3751,7 +3710,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 		Assert(result_relation != 0);
 		rt_entry = rt_fetch(result_relation, parsetree->rtable);
 		Assert(rt_entry->rtekind == RTE_RELATION);
-		rt_perminfo = getRTEPermissionInfo(parsetree->rteperminfos, rt_entry);
 
 		/*
 		 * We can use NoLock here since either the parser or
@@ -3843,9 +3801,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 									parsetree->override,
 									rt_entry_relation,
 									NULL, 0, NULL);
-
-			/* Also populate extraUpdatedCols (for generated columns) */
-			fill_extraUpdatedCols(rt_entry, rt_perminfo, rt_entry_relation);
 		}
 		else if (event == CMD_MERGE)
 		{

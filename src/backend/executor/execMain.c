@@ -1225,6 +1225,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 
 	/* The following fields are set later if needed */
 	resultRelInfo->ri_RowIdAttNo = 0;
+	resultRelInfo->ri_extraUpdatedCols = NULL;
 	resultRelInfo->ri_projectNew = NULL;
 	resultRelInfo->ri_newTupleSlot = NULL;
 	resultRelInfo->ri_oldTupleSlot = NULL;

@@ -87,13 +87,15 @@ int			Password_encryption = PASSWORD_TYPE_SCRAM_SHA_256;
 /* Hook to check passwords in CreateRole() and AlterRole() */
 check_password_hook_type check_password_hook = NULL;
 
-static void AddRoleMems(const char *rolename, Oid roleid,
+static void AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
 						Oid grantorId, GrantRoleOptions *popt);
-static void DelRoleMems(const char *rolename, Oid roleid,
+static void DelRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
 						Oid grantorId, GrantRoleOptions *popt,
 						DropBehavior behavior);
+static void check_role_membership_authorization(Oid currentUserId, Oid roleid,
+												bool is_grant);
 static Oid	check_role_grantor(Oid currentUserId, Oid roleid, Oid grantorId,
 							   bool is_grant);
 static RevokeRoleGrantAction *initialize_revoke_actions(CatCList *memlist);
@@ -131,6 +133,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	HeapTuple	tuple;
 	Datum		new_record[Natts_pg_authid] = {0};
 	bool		new_record_nulls[Natts_pg_authid] = {0};
+	Oid			currentUserId = GetUserId();
 	Oid			roleid;
 	ListCell   *item;
 	ListCell   *option;
@@ -505,7 +508,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 			Oid			oldroleid = oldroleform->oid;
 			char	   *oldrolename = NameStr(oldroleform->rolname);
 
-			AddRoleMems(oldrolename, oldroleid,
+			/* can only add this role to roles for which you have rights */
+			check_role_membership_authorization(currentUserId, oldroleid, true);
+			AddRoleMems(currentUserId, oldrolename, oldroleid,
 						thisrole_list,
 						thisrole_oidlist,
 						InvalidOid, &popt);
@@ -517,13 +522,16 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	/*
 	 * Add the specified members to this new role. adminmembers get the admin
 	 * option, rolemembers don't.
+	 *
+	 * NB: No permissions check is required here. If you have enough rights
+	 * to create a role, you can add any members you like.
 	 */
-	AddRoleMems(stmt->role, roleid,
+	AddRoleMems(currentUserId, stmt->role, roleid,
 				rolemembers, roleSpecsToIds(rolemembers),
 				InvalidOid, &popt);
 	popt.specified |= GRANT_ROLE_SPECIFIED_ADMIN;
 	popt.admin = true;
-	AddRoleMems(stmt->role, roleid,
+	AddRoleMems(currentUserId, stmt->role, roleid,
 				adminmembers, roleSpecsToIds(adminmembers),
 				InvalidOid, &popt);
 
@@ -576,6 +584,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
 	Oid			roleid;
+	Oid			currentUserId = GetUserId();
 	GrantRoleOptions	popt;
 
 	check_rolespec_name(stmt->role,
@@ -720,13 +729,13 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 					 errmsg("permission denied")));
 
 		/* without CREATEROLE, can only change your own password */
-		if (dpassword && roleid != GetUserId())
+		if (dpassword && roleid != currentUserId)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must have CREATEROLE privilege to change another user's password")));
 
 		/* without CREATEROLE, can only add members to roles you admin */
-		if (drolemembers && !is_admin_of_role(GetUserId(), roleid))
+		if (drolemembers && !is_admin_of_role(currentUserId, roleid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must have admin option on role \"%s\" to add members",
@@ -881,11 +890,11 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 		CommandCounterIncrement();
 
 		if (stmt->action == +1) /* add members to role */
-			AddRoleMems(rolename, roleid,
+			AddRoleMems(currentUserId, rolename, roleid,
 						rolemembers, roleSpecsToIds(rolemembers),
 						InvalidOid, &popt);
 		else if (stmt->action == -1)	/* drop members from role */
-			DelRoleMems(rolename, roleid,
+			DelRoleMems(currentUserId, rolename, roleid,
 						rolemembers, roleSpecsToIds(rolemembers),
 						InvalidOid, &popt, DROP_RESTRICT);
 	}
@@ -1371,6 +1380,7 @@ GrantRole(ParseState *pstate, GrantRoleStmt *stmt)
 	List	   *grantee_ids;
 	ListCell   *item;
 	GrantRoleOptions	popt;
+	Oid			currentUserId = GetUserId();
 
 	/* Parse options list. */
 	InitGrantRoleOptions(&popt);
@@ -1442,12 +1452,14 @@ GrantRole(ParseState *pstate, GrantRoleStmt *stmt)
 					 errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
 
 		roleid = get_role_oid(rolename, false);
+		check_role_membership_authorization(currentUserId,
+											roleid, stmt->is_grant);
 		if (stmt->is_grant)
-			AddRoleMems(rolename, roleid,
+			AddRoleMems(currentUserId, rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
 						grantor, &popt);
 		else
-			DelRoleMems(rolename, roleid,
+			DelRoleMems(currentUserId, rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
 						grantor, &popt, stmt->behavior);
 	}
@@ -1546,15 +1558,17 @@ roleSpecsToIds(List *memberNames)
 /*
  * AddRoleMems -- Add given members to the specified role
  *
+ * currentUserId: OID of role performing the operation
  * rolename: name of role to add to (used only for error messages)
  * roleid: OID of role to add to
  * memberSpecs: list of RoleSpec of roles to add (used only for error messages)
  * memberIds: OIDs of roles to add
- * grantorId: who is granting the membership (InvalidOid if not set explicitly)
+ * grantorId: OID that should be recorded as having granted the membership
+ * (InvalidOid if not set explicitly)
  * popt: information about grant options
  */
 static void
-AddRoleMems(const char *rolename, Oid roleid,
+AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
 			Oid grantorId, GrantRoleOptions *popt)
 {
@@ -1562,46 +1576,8 @@ AddRoleMems(const char *rolename, Oid roleid,
 	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
-	Oid			currentUserId = GetUserId();
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
-
-	/* Skip permission check if nothing to do */
-	if (!memberIds)
-		return;
-
-	/*
-	 * Check permissions: must have createrole or admin option on the role to
-	 * be changed.  To mess with a superuser role, you gotta be superuser.
-	 */
-	if (superuser_arg(roleid))
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter superusers")));
-	}
-	else
-	{
-		if (!have_createrole_privilege() &&
-			!is_admin_of_role(currentUserId, roleid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must have admin option on role \"%s\"",
-							rolename)));
-	}
-
-	/*
-	 * The charter of pg_database_owner is to have exactly one, implicit,
-	 * situation-dependent member.  There's no technical need for this
-	 * restriction.  (One could lift it and take the further step of making
-	 * object_ownercheck(DatabaseRelationId, ...) equivalent to has_privs_of_role(roleid,
-	 * ROLE_PG_DATABASE_OWNER), in which case explicit, situation-independent
-	 * members could act as the owner of any database.)
-	 */
-	if (roleid == ROLE_PG_DATABASE_OWNER)
-		ereport(ERROR,
-				errmsg("role \"%s\" cannot have explicit members", rolename));
 
 	/* Validate grantor (and resolve implicit grantor if not specified). */
 	grantorId = check_role_grantor(currentUserId, roleid, grantorId, true);
@@ -1887,7 +1863,7 @@ AddRoleMems(const char *rolename, Oid roleid,
  * behavior: RESTRICT or CASCADE behavior for recursive removal
  */
 static void
-DelRoleMems(const char *rolename, Oid roleid,
+DelRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
 			Oid grantorId, GrantRoleOptions *popt, DropBehavior behavior)
 {
@@ -1895,37 +1871,11 @@ DelRoleMems(const char *rolename, Oid roleid,
 	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
-	Oid			currentUserId = GetUserId();
 	CatCList   *memlist;
 	RevokeRoleGrantAction *actions;
 	int			i;
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
-
-	/* Skip permission check if nothing to do */
-	if (!memberIds)
-		return;
-
-	/*
-	 * Check permissions: must have createrole or admin option on the role to
-	 * be changed.  To mess with a superuser role, you gotta be superuser.
-	 */
-	if (superuser_arg(roleid))
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter superusers")));
-	}
-	else
-	{
-		if (!have_createrole_privilege() &&
-			!is_admin_of_role(currentUserId, roleid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must have admin option on role \"%s\"",
-							rolename)));
-	}
 
 	/* Validate grantor (and resolve implicit grantor if not specified). */
 	grantorId = check_role_grantor(currentUserId, roleid, grantorId, false);
@@ -2038,6 +1988,51 @@ DelRoleMems(const char *rolename, Oid roleid,
 	 * Close pg_authmem, but keep lock till commit.
 	 */
 	table_close(pg_authmem_rel, NoLock);
+}
+
+/*
+ * Check that currentUserId has permission to modify the membership list for
+ * roleid. Throw an error if not.
+ */
+static void
+check_role_membership_authorization(Oid currentUserId, Oid roleid,
+									bool is_grant)
+{
+	/*
+	 * The charter of pg_database_owner is to have exactly one, implicit,
+	 * situation-dependent member.  There's no technical need for this
+	 * restriction.  (One could lift it and take the further step of making
+	 * object_ownercheck(DatabaseRelationId, ...) equivalent to
+	 * has_privs_of_role(roleid, ROLE_PG_DATABASE_OWNER), in which case
+	 * explicit, situation-independent members could act as the owner of any
+	 * database.)
+	 */
+	if (is_grant && roleid == ROLE_PG_DATABASE_OWNER)
+		ereport(ERROR,
+				errmsg("role \"%s\" cannot have explicit members",
+					   GetUserNameFromId(roleid, false)));
+
+	/* To mess with a superuser role, you gotta be superuser. */
+	if (superuser_arg(roleid))
+	{
+		if (!superuser_arg(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to alter superusers")));
+	}
+	else
+	{
+		/*
+		 * Otherwise, must have createrole or admin option on the role to be
+		 * changed.
+		 */
+		if (!has_createrole_privilege(currentUserId) &&
+			!is_admin_of_role(currentUserId, roleid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have admin option on role \"%s\"",
+							GetUserNameFromId(roleid, false))));
+	}
 }
 
 /*
