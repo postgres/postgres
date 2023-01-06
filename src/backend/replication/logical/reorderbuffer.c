@@ -4211,7 +4211,7 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 							 rb->outbuf + sizeof(ReorderBufferDiskChange),
                              ondisk->size - sizeof(ReorderBufferDiskChange));
 
-        /* We should NOT get an eof here. */
+        /* We should NOT get a partial read or EOF here. */
         if (readBytes != ondisk->size - sizeof(ReorderBufferDiskChange))
             ereport(ERROR,
                     (errcode_for_file_access(),
