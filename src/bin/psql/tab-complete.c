@@ -3361,11 +3361,12 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("TO");
 
 	/*
-	 * Complete ALTER DATABASE|FUNCTION||PROCEDURE|ROLE|ROUTINE|USER ... SET
+	 * Complete ALTER DATABASE|FUNCTION|PROCEDURE|ROLE|ROUTINE|USER ... SET
 	 * <name>
 	 */
 	else if (HeadMatches("ALTER", "DATABASE|FUNCTION|PROCEDURE|ROLE|ROUTINE|USER") &&
-			 TailMatches("SET", MatchAny))
+			 TailMatches("SET", MatchAny) &&
+			 !TailMatches("SCHEMA"))
 		COMPLETE_WITH("FROM CURRENT", "TO");
 
 	/*
