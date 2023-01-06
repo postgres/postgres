@@ -1149,6 +1149,21 @@ static const SchemaQuery Query_for_trigger_of_table = {
 "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE", "SET", "ALTER SYSTEM", \
 "MAINTAIN", "ALL"
 
+/* ALTER PROCEDURE options */
+#define Alter_procedure_options \
+"DEPENDS ON EXTENSION", "EXTERNAL SECURITY", "NO DEPENDS ON EXTENSION", \
+"OWNER TO", "RENAME TO", "RESET", "SECURITY", "SET"
+
+/* ALTER ROUTINE options */
+#define Alter_routine_options \
+Alter_procedure_options, "COST", "IMMUTABLE", "LEAKPROOF", "NOT LEAKPROOF", \
+"PARALLEL", "ROWS", "STABLE", "VOLATILE"
+
+/* ALTER FUNCTION options */
+#define Alter_function_options \
+Alter_routine_options, "CALLED ON NULL INPUT", "RETURNS NULL ON NULL INPUT", \
+"STRICT", "SUPPORT"
+
 /*
  * These object types were introduced later than our support cutoff of
  * server version 9.2.  We use the VersionedQuery infrastructure so that
@@ -1812,15 +1827,45 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	}
-	/* ALTER FUNCTION,PROCEDURE,ROUTINE <name> (...) */
-	else if (Matches("ALTER", "FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny))
+	/* ALTER FUNCTION <name> (...) */
+	else if (Matches("ALTER", "FUNCTION", MatchAny, MatchAny))
 	{
 		if (ends_with(prev_wd, ')'))
-			COMPLETE_WITH("OWNER TO", "RENAME TO", "SET SCHEMA",
-						  "DEPENDS ON EXTENSION", "NO DEPENDS ON EXTENSION");
+			COMPLETE_WITH(Alter_function_options);
 		else
 			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	}
+	/* ALTER PROCEDURE <name> (...) */
+	else if (Matches("ALTER", "PROCEDURE", MatchAny, MatchAny))
+	{
+		if (ends_with(prev_wd, ')'))
+			COMPLETE_WITH(Alter_procedure_options);
+		else
+			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
+	}
+	/* ALTER ROUTINE <name> (...) */
+	else if (Matches("ALTER", "ROUTINE", MatchAny, MatchAny))
+	{
+		if (ends_with(prev_wd, ')'))
+			COMPLETE_WITH(Alter_routine_options);
+		else
+			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
+	}
+	/* ALTER FUNCTION|ROUTINE <name> (...) PARALLEL */
+	else if (Matches("ALTER", "FUNCTION|ROUTINE", MatchAny, MatchAny, "PARALLEL"))
+		COMPLETE_WITH("RESTRICTED", "SAFE", "UNSAFE");
+	/* ALTER FUNCTION|PROCEDURE|ROUTINE <name> (...) [EXTERNAL] SECURITY */
+	else if (Matches("ALTER", "FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny, "SECURITY") ||
+			 Matches("ALTER", "FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny, "EXTERNAL", "SECURITY"))
+		COMPLETE_WITH("DEFINER", "INVOKER");
+	/* ALTER FUNCTION|PROCEDURE|ROUTINE <name> (...) RESET */
+	else if (Matches("ALTER", "FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny, "RESET"))
+		COMPLETE_WITH_QUERY_VERBATIM_PLUS(Query_for_list_of_set_vars,
+										  "ALL");
+	/* ALTER FUNCTION|PROCEDURE|ROUTINE <name> (...) SET */
+	else if (Matches("ALTER", "FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny, "SET"))
+		COMPLETE_WITH_QUERY_VERBATIM_PLUS(Query_for_list_of_set_vars,
+										  "SCHEMA");
 
 	/* ALTER PUBLICATION <name> */
 	else if (Matches("ALTER", "PUBLICATION", MatchAny))
