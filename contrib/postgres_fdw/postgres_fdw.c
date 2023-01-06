@@ -5204,10 +5204,11 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 			sample_frac = targrows / reltuples;
 
 			/*
-			 * Ensure the sampling rate is between 0.0 and 1.0, even after the
-			 * 10% adjustment above.  (Clamping to 0.0 is just paranoia.)
+			 * We should never get sampling rate outside the valid range
+			 * (between 0.0 and 1.0), because those cases should be covered
+			 * by the previous branch that sets ANALYZE_SAMPLE_OFF.
 			 */
-			sample_frac = Min(1.0, Max(0.0, sample_frac));
+			Assert(sample_frac >= 0.0 && sample_frac <= 1.0);
 		}
 	}
 
