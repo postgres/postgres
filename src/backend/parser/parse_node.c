@@ -412,7 +412,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 						base = 8;
 						startptr += 2;
 					}
-					if (startptr[1] == 'x' || startptr[1] == 'X')
+					else if (startptr[1] == 'x' || startptr[1] == 'X')
 					{
 						base = 16;
 						startptr += 2;
