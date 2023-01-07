@@ -4974,11 +4974,14 @@ postgresAnalyzeForeignTable(Relation relation,
 }
 
 /*
- * postgresCountTuplesForForeignTable
+ * postgresGetAnalyzeInfoForForeignTable
  *		Count tuples in foreign table (just get pg_class.reltuples).
+ *
+ * can_tablesample determines if the remote relation supports acquiring the
+ * sample using TABLESAMPLE.
  */
 static double
-postgresCountTuplesForForeignTable(Relation relation)
+postgresGetAnalyzeInfoForForeignTable(Relation relation, bool *can_tablesample)
 {
 	ForeignTable *table;
 	UserMapping *user;
@@ -4986,6 +4989,10 @@ postgresCountTuplesForForeignTable(Relation relation)
 	StringInfoData sql;
 	PGresult   *volatile res = NULL;
 	volatile double reltuples = -1;
+	volatile char relkind = 0;
+
+	/* assume the remote relation does not support TABLESAMPLE */
+	*can_tablesample = false;
 
 	/*
 	 * Get the connection to use.  We do the remote access as the table's
@@ -4999,7 +5006,7 @@ postgresCountTuplesForForeignTable(Relation relation)
 	 * Construct command to get page count for relation.
 	 */
 	initStringInfo(&sql);
-	deparseAnalyzeTuplesSql(&sql, relation);
+	deparseAnalyzeInfoSql(&sql, relation);
 
 	/* In what follows, do not risk leaking any PGresults. */
 	PG_TRY();
@@ -5008,9 +5015,10 @@ postgresCountTuplesForForeignTable(Relation relation)
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 			pgfdw_report_error(ERROR, res, conn, false, sql.data);
 
-		if (PQntuples(res) != 1 || PQnfields(res) != 1)
+		if (PQntuples(res) != 1 || PQnfields(res) != 2)
 			elog(ERROR, "unexpected result from deparseAnalyzeTuplesSql query");
 		reltuples = strtod(PQgetvalue(res, 0, 0), NULL);
+		relkind = *(PQgetvalue(res, 0, 1));
 	}
 	PG_FINALLY();
 	{
@@ -5020,6 +5028,11 @@ postgresCountTuplesForForeignTable(Relation relation)
 	PG_END_TRY();
 
 	ReleaseConnection(conn);
+
+	/* TABLESAMPLE is supported only for regular tables and matviews */
+	*can_tablesample = (relkind == RELKIND_RELATION ||
+						relkind == RELKIND_MATVIEW ||
+						relkind == RELKIND_PARTITIONED_TABLE);
 
 	return reltuples;
 }
@@ -5148,26 +5161,24 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 				 errmsg("remote server does not support TABLESAMPLE feature")));
 
 	/*
-	 * For "auto" method, pick the one we believe is best. For servers with
-	 * TABLESAMPLE support we pick BERNOULLI, for old servers we fall-back to
-	 * random() to at least reduce network transfer.
-	 */
-	if (method == ANALYZE_SAMPLE_AUTO)
-	{
-		if (server_version_num < 95000)
-			method = ANALYZE_SAMPLE_RANDOM;
-		else
-			method = ANALYZE_SAMPLE_BERNOULLI;
-	}
-
-	/*
 	 * If we've decided to do remote sampling, calculate the sampling rate. We
 	 * need to get the number of tuples from the remote server, but skip that
 	 * network round-trip if not needed.
 	 */
 	if (method != ANALYZE_SAMPLE_OFF)
 	{
-		reltuples = postgresCountTuplesForForeignTable(relation);
+		bool	can_tablesample;
+
+		reltuples = postgresGetAnalyzeInfoForForeignTable(relation,
+														  &can_tablesample);
+
+		/*
+		 * Make sure we're not choosing TABLESAMPLE when the remote relation does
+		 * not support that. But only do this for "auto" - if the user explicitly
+		 * requested BERNOULLI/SYSTEM, it's better to fail.
+		 */
+		if (!can_tablesample && (method == ANALYZE_SAMPLE_AUTO))
+			method = ANALYZE_SAMPLE_RANDOM;
 
 		/*
 		 * Remote's reltuples could be 0 or -1 if the table has never been
@@ -5210,6 +5221,19 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 			 */
 			Assert(sample_frac >= 0.0 && sample_frac <= 1.0);
 		}
+	}
+
+	/*
+	 * For "auto" method, pick the one we believe is best. For servers with
+	 * TABLESAMPLE support we pick BERNOULLI, for old servers we fall-back to
+	 * random() to at least reduce network transfer.
+	 */
+	if (method == ANALYZE_SAMPLE_AUTO)
+	{
+		if (server_version_num < 95000)
+			method = ANALYZE_SAMPLE_RANDOM;
+		else
+			method = ANALYZE_SAMPLE_BERNOULLI;
 	}
 
 	/*

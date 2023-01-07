@@ -2368,14 +2368,15 @@ deparseAnalyzeSizeSql(StringInfo buf, Relation rel)
 }
 
 /*
- * Construct SELECT statement to acquire the number of rows of a relation.
+ * Construct SELECT statement to acquire the number of rows and the relkind of
+ * a relation.
  *
  * Note: we just return the remote server's reltuples value, which might
  * be off a good deal, but it doesn't seem worth working harder.  See
  * comments in postgresAcquireSampleRowsFunc.
  */
 void
-deparseAnalyzeTuplesSql(StringInfo buf, Relation rel)
+deparseAnalyzeInfoSql(StringInfo buf, Relation rel)
 {
 	StringInfoData relname;
 
@@ -2383,7 +2384,7 @@ deparseAnalyzeTuplesSql(StringInfo buf, Relation rel)
 	initStringInfo(&relname);
 	deparseRelation(&relname, rel);
 
-	appendStringInfoString(buf, "SELECT reltuples FROM pg_catalog.pg_class WHERE oid = ");
+	appendStringInfoString(buf, "SELECT reltuples, relkind FROM pg_catalog.pg_class WHERE oid = ");
 	deparseStringLiteral(buf, relname.data);
 	appendStringInfoString(buf, "::pg_catalog.regclass");
 }

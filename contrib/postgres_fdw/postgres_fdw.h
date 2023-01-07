@@ -223,7 +223,7 @@ extern void deparseDirectDeleteSql(StringInfo buf, PlannerInfo *root,
 								   List *returningList,
 								   List **retrieved_attrs);
 extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
-extern void deparseAnalyzeTuplesSql(StringInfo buf, Relation rel);
+extern void deparseAnalyzeInfoSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 							  PgFdwSamplingMethod sample_method,
 							  double sample_frac,
