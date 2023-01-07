@@ -2898,6 +2898,10 @@ ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid)
 		{
 			elog(DEBUG2, "aborting old transaction %u", txn->xid);
 
+			/* Notify the remote node about the crash/immediate restart. */
+			if (rbtxn_is_streamed(txn))
+				rb->stream_abort(rb, txn, InvalidXLogRecPtr);
+
 			/* remove potential on-disk data, and deallocate this tx */
 			ReorderBufferCleanupTXN(rb, txn);
 		}
