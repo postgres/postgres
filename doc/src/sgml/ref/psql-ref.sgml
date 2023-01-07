@@ -1825,14 +1825,16 @@ INSERT INTO tbl1 VALUES ($1, $2) \bind 'first value' 'second value' \g
 
 
       <varlistentry>
-        <term><literal>\dp [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dp[S] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists tables, views and sequences with their
         associated access privileges.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only tables, views and sequences whose names match the
-        pattern are listed.
+        pattern are listed.  By default only user-created objects are shown;
+        supply a pattern or the <literal>S</literal> modifier to include
+        system objects.
         </para>
 
         <para>
@@ -3575,14 +3577,16 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
 
 
       <varlistentry>
-        <term><literal>\z [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\z[S] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists tables, views and sequences with their
         associated access privileges.
         If a <replaceable class="parameter">pattern</replaceable> is
         specified, only tables, views and sequences whose names match the
-        pattern are listed.
+        pattern are listed.  By default only user-created objects are shown;
+        supply a pattern or the <literal>S</literal> modifier to include
+        system objects.
         </para>
 
         <para>

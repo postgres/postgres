@@ -140,7 +140,8 @@ static backslashResult exec_command_write(PsqlScanState scan_state, bool active_
 static backslashResult exec_command_watch(PsqlScanState scan_state, bool active_branch,
 										  PQExpBuffer query_buf, PQExpBuffer previous_buf);
 static backslashResult exec_command_x(PsqlScanState scan_state, bool active_branch);
-static backslashResult exec_command_z(PsqlScanState scan_state, bool active_branch);
+static backslashResult exec_command_z(PsqlScanState scan_state, bool active_branch,
+									  const char *cmd);
 static backslashResult exec_command_shell_escape(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_slash_command_help(PsqlScanState scan_state, bool active_branch);
 static char *read_connect_arg(PsqlScanState scan_state);
@@ -413,8 +414,8 @@ exec_command(const char *cmd,
 									query_buf, previous_buf);
 	else if (strcmp(cmd, "x") == 0)
 		status = exec_command_x(scan_state, active_branch);
-	else if (strcmp(cmd, "z") == 0)
-		status = exec_command_z(scan_state, active_branch);
+	else if (strcmp(cmd, "z") == 0 || strcmp(cmd, "zS") == 0)
+		status = exec_command_z(scan_state, active_branch, cmd);
 	else if (strcmp(cmd, "!") == 0)
 		status = exec_command_shell_escape(scan_state, active_branch);
 	else if (strcmp(cmd, "?") == 0)
@@ -875,7 +876,7 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 				success = listCollations(pattern, show_verbose, show_system);
 				break;
 			case 'p':
-				success = permissionsList(pattern);
+				success = permissionsList(pattern, show_system);
 				break;
 			case 'P':
 				{
@@ -2822,16 +2823,22 @@ exec_command_x(PsqlScanState scan_state, bool active_branch)
  * \z -- list table privileges (equivalent to \dp)
  */
 static backslashResult
-exec_command_z(PsqlScanState scan_state, bool active_branch)
+exec_command_z(PsqlScanState scan_state, bool active_branch, const char *cmd)
 {
 	bool		success = true;
 
 	if (active_branch)
 	{
-		char	   *pattern = psql_scan_slash_option(scan_state,
-													 OT_NORMAL, NULL, true);
+		char	   *pattern;
+		bool		show_system;
 
-		success = permissionsList(pattern);
+		pattern = psql_scan_slash_option(scan_state,
+										 OT_NORMAL, NULL, true);
+
+		show_system = strchr(cmd, 'S') ? true : false;
+
+		success = permissionsList(pattern, show_system);
+
 		free(pattern);
 	}
 	else
