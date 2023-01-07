@@ -5672,6 +5672,14 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
  * Sort the windows by the required sorting clauses. First, compare the sort
  * clauses themselves. Second, if one window's clauses are a prefix of another
  * one's clauses, put the window with more sort clauses first.
+ *
+ * We purposefully sort by the highest tleSortGroupRef first.  Since
+ * tleSortGroupRefs are assigned for the query's DISTINCT and ORDER BY first
+ * and because here we sort the lowest tleSortGroupRefs last, if a
+ * WindowClause is sharing a tleSortGroupRef with the query's DISTINCT or
+ * ORDER BY clause, this makes it more likely that the final WindowAgg will
+ * provide presorted input for the query's DISTINCT or ORDER BY clause, thus
+ * reducing the total number of sorts required for the query.
  */
 static int
 common_prefix_cmp(const void *a, const void *b)
