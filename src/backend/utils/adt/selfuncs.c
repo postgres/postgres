@@ -7453,6 +7453,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				qual_arg_cost,
 				spc_random_page_cost,
 				outer_scans;
+	Cost		descentCost;
 	Relation	indexRel;
 	GinStatsData ginStats;
 	ListCell   *lc;
@@ -7677,6 +7678,47 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 */
 	dataPagesFetched = ceil(numDataPages * partialScale);
 
+	*indexStartupCost = 0;
+	*indexTotalCost = 0;
+
+	/*
+	 * Add a CPU-cost component to represent the costs of initial entry btree
+	 * descent.  We don't charge any I/O cost for touching upper btree levels,
+	 * since they tend to stay in cache, but we still have to do about log2(N)
+	 * comparisons to descend a btree of N leaf tuples.  We charge one
+	 * cpu_operator_cost per comparison.
+	 *
+	 * If there are ScalarArrayOpExprs, charge this once per SA scan.  The
+	 * ones after the first one are not startup cost so far as the overall
+	 * plan is concerned, so add them only to "total" cost.
+	 */
+	if (numEntries > 1)			/* avoid computing log(0) */
+	{
+		descentCost = ceil(log(numEntries) / log(2.0)) * cpu_operator_cost;
+		*indexStartupCost += descentCost * counts.searchEntries;
+		*indexTotalCost += counts.arrayScans * descentCost * counts.searchEntries;
+	}
+
+	/*
+	 * Add a cpu cost per entry-page fetched. This is not amortized over a
+	 * loop.
+	 */
+	*indexStartupCost += entryPagesFetched * DEFAULT_PAGE_CPU_MULTIPLIER * cpu_operator_cost;
+	*indexTotalCost += entryPagesFetched * counts.arrayScans * DEFAULT_PAGE_CPU_MULTIPLIER * cpu_operator_cost;
+
+	/*
+	 * Add a cpu cost per data-page fetched. This is also not amortized over a
+	 * loop. Since those are the data pages from the partial match algorithm,
+	 * charge them as startup cost.
+	 */
+	*indexStartupCost += DEFAULT_PAGE_CPU_MULTIPLIER * cpu_operator_cost * dataPagesFetched;
+
+	/*
+	 * Since we add the startup cost to the total cost later on, remove the
+	 * initial arrayscan from the total.
+	 */
+	*indexTotalCost += dataPagesFetched * (counts.arrayScans - 1) * DEFAULT_PAGE_CPU_MULTIPLIER * cpu_operator_cost;
+
 	/*
 	 * Calculate cache effects if more than one scan due to nestloops or array
 	 * quals.  The result is pro-rated per nestloop scan, but the array qual
@@ -7700,7 +7742,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * Here we use random page cost because logically-close pages could be far
 	 * apart on disk.
 	 */
-	*indexStartupCost = (entryPagesFetched + dataPagesFetched) * spc_random_page_cost;
+	*indexStartupCost += (entryPagesFetched + dataPagesFetched) * spc_random_page_cost;
 
 	/*
 	 * Now compute the number of data pages fetched during the scan.
@@ -7728,6 +7770,15 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	if (dataPagesFetchedBySel > dataPagesFetched)
 		dataPagesFetched = dataPagesFetchedBySel;
 
+	/* Add one page cpu-cost to the startup cost */
+	*indexStartupCost += DEFAULT_PAGE_CPU_MULTIPLIER * cpu_operator_cost * counts.searchEntries;
+
+	/*
+	 * Add once again a CPU-cost for those data pages, before amortizing for
+	 * cache.
+	 */
+	*indexTotalCost += dataPagesFetched * counts.arrayScans * DEFAULT_PAGE_CPU_MULTIPLIER * cpu_operator_cost;
+
 	/* Account for cache effects, the same as above */
 	if (outer_scans > 1 || counts.arrayScans > 1)
 	{
@@ -7739,19 +7790,27 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	}
 
 	/* And apply random_page_cost as the cost per page */
-	*indexTotalCost = *indexStartupCost +
+	*indexTotalCost += *indexStartupCost +
 		dataPagesFetched * spc_random_page_cost;
 
 	/*
-	 * Add on index qual eval costs, much as in genericcostestimate.  But we
-	 * can disregard indexorderbys, since GIN doesn't support those.
+	 * Add on index qual eval costs, much as in genericcostestimate. We charge
+	 * cpu but we can disregard indexorderbys, since GIN doesn't support
+	 * those.
 	 */
 	qual_arg_cost = index_other_operands_eval_cost(root, indexQuals);
 	qual_op_cost = cpu_operator_cost * list_length(indexQuals);
 
 	*indexStartupCost += qual_arg_cost;
 	*indexTotalCost += qual_arg_cost;
-	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost + qual_op_cost);
+
+	/*
+	 * Add a cpu cost per search entry, corresponding to the actual visited
+	 * entries.
+	 */
+	*indexTotalCost += (counts.searchEntries * counts.arrayScans) * (qual_op_cost);
+	/* Now add a cpu cost per tuple in the posting lists / trees */
+	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost);
 	*indexPages = dataPagesFetched;
 }
 
