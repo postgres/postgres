@@ -32,12 +32,17 @@
  *
  * LOGICALREP_PROTO_TWOPHASE_VERSION_NUM is the minimum protocol version with
  * support for two-phase commit decoding (at prepare time). Introduced in PG15.
+ *
+ * LOGICALREP_PROTO_STREAM_PARALLEL_VERSION_NUM is the minimum protocol version
+ * where we support applying large streaming transactions in parallel.
+ * Introduced in PG16.
  */
 #define LOGICALREP_PROTO_MIN_VERSION_NUM 1
 #define LOGICALREP_PROTO_VERSION_NUM 1
 #define LOGICALREP_PROTO_STREAM_VERSION_NUM 2
 #define LOGICALREP_PROTO_TWOPHASE_VERSION_NUM 3
-#define LOGICALREP_PROTO_MAX_VERSION_NUM LOGICALREP_PROTO_TWOPHASE_VERSION_NUM
+#define LOGICALREP_PROTO_STREAM_PARALLEL_VERSION_NUM 4
+#define LOGICALREP_PROTO_MAX_VERSION_NUM LOGICALREP_PROTO_STREAM_PARALLEL_VERSION_NUM
 
 /*
  * Logical message types
@@ -175,6 +180,17 @@ typedef struct LogicalRepRollbackPreparedTxnData
 	char		gid[GIDSIZE];
 } LogicalRepRollbackPreparedTxnData;
 
+/*
+ * Transaction protocol information for stream abort.
+ */
+typedef struct LogicalRepStreamAbortData
+{
+	TransactionId xid;
+	TransactionId subxid;
+	XLogRecPtr	abort_lsn;
+	TimestampTz abort_time;
+} LogicalRepStreamAbortData;
+
 extern void logicalrep_write_begin(StringInfo out, ReorderBufferTXN *txn);
 extern void logicalrep_read_begin(StringInfo in,
 								  LogicalRepBeginData *begin_data);
@@ -246,9 +262,13 @@ extern void logicalrep_write_stream_commit(StringInfo out, ReorderBufferTXN *txn
 extern TransactionId logicalrep_read_stream_commit(StringInfo in,
 												   LogicalRepCommitData *commit_data);
 extern void logicalrep_write_stream_abort(StringInfo out, TransactionId xid,
-										  TransactionId subxid);
-extern void logicalrep_read_stream_abort(StringInfo in, TransactionId *xid,
-										 TransactionId *subxid);
+										  TransactionId subxid,
+										  XLogRecPtr abort_lsn,
+										  TimestampTz abort_time,
+										  bool write_abort_info);
+extern void logicalrep_read_stream_abort(StringInfo in,
+										 LogicalRepStreamAbortData *abort_data,
+										 bool read_abort_info);
 extern char *logicalrep_message_type(LogicalRepMsgType action);
 
 #endif							/* LOGICAL_PROTO_H */

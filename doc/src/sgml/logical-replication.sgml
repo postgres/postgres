@@ -1501,6 +1501,16 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    might not violate any constraint.  This can easily make the subscriber
    inconsistent.
   </para>
+
+  <para>
+   When the streaming mode is <literal>parallel</literal>, the finish LSN of
+   failed transactions may not be logged. In that case, it may be necessary to
+   change the streaming mode to <literal>on</literal> or <literal>off</literal> and
+   cause the same conflicts again so the finish LSN of the failed transaction will
+   be written to the server log. For the usage of finish LSN, please refer to <link
+   linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ...
+   SKIP</command></link>.
+  </para>
  </sect1>
 
  <sect1 id="logical-replication-restrictions">
@@ -1809,8 +1819,9 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
    <para>
     <link linkend="guc-max-logical-replication-workers"><varname>max_logical_replication_workers</varname></link>
-    must be set to at least the number of subscriptions (for apply workers), plus
-    some reserve for the table synchronization workers.
+    must be set to at least the number of subscriptions (for leader apply
+    workers), plus some reserve for the table synchronization workers and
+    parallel apply workers.
    </para>
 
    <para>
@@ -1825,6 +1836,13 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     <link linkend="guc-max-sync-workers-per-subscription"><varname>max_sync_workers_per_subscription</varname></link>
      controls the amount of parallelism of the initial data copy during the
      subscription initialization or when new tables are added.
+   </para>
+
+   <para>
+    <link linkend="guc-max-parallel-apply-workers-per-subscription"><varname>max_parallel_apply_workers_per_subscription</varname></link>
+     controls the amount of parallelism for streaming of in-progress
+     transactions with subscription parameter
+     <literal>streaming = parallel</literal>.
    </para>
 
    <para>

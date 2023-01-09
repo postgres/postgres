@@ -26,4 +26,6 @@ extern void DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel);
 extern ObjectAddress AlterSubscriptionOwner(const char *name, Oid newOwnerId);
 extern void AlterSubscriptionOwner_oid(Oid subid, Oid newOwnerId);
 
+extern char defGetStreamingMode(DefElem *def);
+
 #endif							/* SUBSCRIPTIONCMDS_H */

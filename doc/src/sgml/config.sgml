@@ -4968,7 +4968,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Specifies maximum number of logical replication workers. This includes
-        both apply workers and table synchronization workers.
+        leader apply workers, parallel apply workers, and table synchronization
+        workers.
        </para>
        <para>
         Logical replication workers are taken from the pool defined by
@@ -4998,6 +4999,31 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        </para>
        <para>
         The synchronization workers are taken from the pool defined by
+        <varname>max_logical_replication_workers</varname>.
+       </para>
+       <para>
+        The default value is 2. This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command
+        line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-max-parallel-apply-workers-per-subscription" xreflabel="max_parallel_apply_workers_per_subscription">
+      <term><varname>max_parallel_apply_workers_per_subscription</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>max_parallel_apply_workers_per_subscription</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Maximum number of parallel apply workers per subscription. This
+        parameter controls the amount of parallelism for streaming of
+        in-progress transactions with subscription parameter
+        <literal>streaming = parallel</literal>.
+       </para>
+       <para>
+        The parallel apply workers are taken from the pool defined by
         <varname>max_logical_replication_workers</varname>.
        </para>
        <para>

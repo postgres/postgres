@@ -1379,8 +1379,9 @@
        <literal>virtualxid</literal>,
        <literal>spectoken</literal>,
        <literal>object</literal>,
-       <literal>userlock</literal>, or
-       <literal>advisory</literal>.
+       <literal>userlock</literal>,
+       <literal>advisory</literal>, or
+       <literal>applytransaction</literal>.
        (See also <xref linkend="wait-event-lock-table"/>.)
       </para></entry>
      </row>
@@ -1592,6 +1593,15 @@
    column, and <structfield>objsubid</structfield> equal to 2.  The actual meaning of
    the keys is up to the user.  Advisory locks are local to each database,
    so the <structfield>database</structfield> column is meaningful for an advisory lock.
+  </para>
+
+  <para>
+   Apply transaction locks are used in parallel mode to apply the transaction
+   in logical replication. The remote transaction id is displayed in the
+   <structfield>transactionid</structfield> column. The <structfield>objsubid</structfield>
+   displays the lock subtype which is 0 for the lock used to synchronize the
+   set of changes, and 1 for the lock used to wait for the transaction to
+   finish to ensure commit order.
   </para>
 
   <para>

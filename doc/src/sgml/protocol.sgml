@@ -3103,7 +3103,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
      <listitem>
       <para>
        Protocol version. Currently versions <literal>1</literal>, <literal>2</literal>,
-       and <literal>3</literal> are supported.
+       <literal>3</literal>, and <literal>4</literal> are supported.
       </para>
       <para>
        Version <literal>2</literal> is supported only for server version 14
@@ -3112,6 +3112,11 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
       <para>
        Version <literal>3</literal> is supported only for server version 15
        and above, and it allows streaming of two-phase commits.
+      </para>
+      <para>
+       Version <literal>4</literal> is supported only for server version 16
+       and above, and it allows streams of large in-progress transactions to
+       be applied in parallel.
       </para>
      </listitem>
     </varlistentry>
@@ -6883,6 +6888,28 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry>
+       <term>Int64 (XLogRecPtr)</term>
+       <listitem>
+        <para>
+         The LSN of the abort. This field is available since protocol version
+         4.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>Int64 (TimestampTz)</term>
+       <listitem>
+        <para>
+         Abort timestamp of the transaction. The value is in number
+         of microseconds since PostgreSQL epoch (2000-01-01). This field is
+         available since protocol version 4.
+        </para>
+       </listitem>
+      </varlistentry>
+
      </variablelist>
     </listitem>
    </varlistentry>

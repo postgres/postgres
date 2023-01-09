@@ -1075,12 +1075,20 @@ ReplicationOriginExitCleanup(int code, Datum arg)
  * array doesn't have to be searched when calling
  * replorigin_session_advance().
  *
- * Obviously only one such cached origin can exist per process and the current
- * cached value can only be set again after the previous value is torn down
- * with replorigin_session_reset().
+ * Normally only one such cached origin can exist per process so the cached
+ * value can only be set again after the previous value is torn down with
+ * replorigin_session_reset(). For this normal case pass acquired_by = 0
+ * (meaning the slot is not allowed to be already acquired by another process).
+ *
+ * However, sometimes multiple processes can safely re-use the same origin slot
+ * (for example, multiple parallel apply processes can safely use the same
+ * origin, provided they maintain commit order by allowing only one process to
+ * commit at a time). For this case the first process must pass acquired_by =
+ * 0, and then the other processes sharing that same origin can pass
+ * acquired_by = PID of the first process.
  */
 void
-replorigin_session_setup(RepOriginId node)
+replorigin_session_setup(RepOriginId node, int acquired_by)
 {
 	static bool registered_cleanup;
 	int			i;
@@ -1122,7 +1130,7 @@ replorigin_session_setup(RepOriginId node)
 		if (curstate->roident != node)
 			continue;
 
-		else if (curstate->acquired_by != 0)
+		else if (curstate->acquired_by != 0 && acquired_by == 0)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
@@ -1153,7 +1161,11 @@ replorigin_session_setup(RepOriginId node)
 
 	Assert(session_replication_state->roident != InvalidRepOriginId);
 
-	session_replication_state->acquired_by = MyProcPid;
+	if (acquired_by == 0)
+		session_replication_state->acquired_by = MyProcPid;
+	else if (session_replication_state->acquired_by != acquired_by)
+		elog(ERROR, "could not find replication state slot for replication origin with OID %u which was acquired by %d",
+			 node, acquired_by);
 
 	LWLockRelease(ReplicationOriginLock);
 
@@ -1337,7 +1349,7 @@ pg_replication_origin_session_setup(PG_FUNCTION_ARGS)
 
 	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 	origin = replorigin_by_name(name, false);
-	replorigin_session_setup(origin);
+	replorigin_session_setup(origin, 0);
 
 	replorigin_session_origin = origin;
 

@@ -822,10 +822,11 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 		for (i = 0; i < parsed->nsubxacts; i++)
 		{
 			ReorderBufferAbort(ctx->reorder, parsed->subxacts[i],
-							   buf->record->EndRecPtr);
+							   buf->record->EndRecPtr, abort_time);
 		}
 
-		ReorderBufferAbort(ctx->reorder, xid, buf->record->EndRecPtr);
+		ReorderBufferAbort(ctx->reorder, xid, buf->record->EndRecPtr,
+						   abort_time);
 	}
 
 	/* update the decoding stats */

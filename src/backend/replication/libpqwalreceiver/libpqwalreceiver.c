@@ -443,9 +443,9 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 		appendStringInfo(&cmd, "proto_version '%u'",
 						 options->proto.logical.proto_version);
 
-		if (options->proto.logical.streaming &&
-			PQserverVersion(conn->streamConn) >= 140000)
-			appendStringInfoString(&cmd, ", streaming 'on'");
+		if (options->proto.logical.streaming_str)
+			appendStringInfo(&cmd, ", streaming '%s'",
+							 options->proto.logical.streaming_str);
 
 		if (options->proto.logical.twophase &&
 			PQserverVersion(conn->streamConn) >= 150000)

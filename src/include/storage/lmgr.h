@@ -107,6 +107,11 @@ extern void LockSharedObjectForSession(Oid classid, Oid objid, uint16 objsubid,
 extern void UnlockSharedObjectForSession(Oid classid, Oid objid, uint16 objsubid,
 										 LOCKMODE lockmode);
 
+extern void LockApplyTransactionForSession(Oid suboid, TransactionId xid, uint16 objid,
+										   LOCKMODE lockmode);
+extern void UnlockApplyTransactionForSession(Oid suboid, TransactionId xid, uint16 objid,
+											 LOCKMODE lockmode);
+
 /* Describe a locktag for error messages */
 extern void DescribeLockTag(StringInfo buf, const LOCKTAG *tag);
 

@@ -5,6 +5,8 @@
 #
 # Includes tests for options 2PC (not-streaming) and also for 2PC (streaming).
 #
+# Two-phase and parallel apply will be tested in 023_twophase_stream, so we
+# didn't add a parallel apply version for the tests in this file.
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;

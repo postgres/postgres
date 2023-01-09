@@ -6500,11 +6500,24 @@ describeSubscriptions(const char *pattern, bool verbose)
 	{
 		/* Binary mode and streaming are only supported in v14 and higher */
 		if (pset.sversion >= 140000)
+		{
 			appendPQExpBuffer(&buf,
-							  ", subbinary AS \"%s\"\n"
-							  ", substream AS \"%s\"\n",
-							  gettext_noop("Binary"),
-							  gettext_noop("Streaming"));
+							  ", subbinary AS \"%s\"\n",
+							  gettext_noop("Binary"));
+
+			if (pset.sversion >= 160000)
+				appendPQExpBuffer(&buf,
+								  ", (CASE substream\n"
+								  "    WHEN 'f' THEN 'off'\n"
+								  "    WHEN 't' THEN 'on'\n"
+								  "    WHEN 'p' THEN 'parallel'\n"
+								  "   END) AS \"%s\"\n",
+								  gettext_noop("Streaming"));
+			else
+				appendPQExpBuffer(&buf,
+								  ", substream AS \"%s\"\n",
+								  gettext_noop("Streaming"));
+		}
 
 		/* Two_phase and disable_on_error are only supported in v15 and higher */
 		if (pset.sversion >= 150000)

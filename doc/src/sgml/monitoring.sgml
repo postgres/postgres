@@ -1859,6 +1859,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to acquire an advisory user lock.</entry>
      </row>
      <row>
+      <entry><literal>applytransaction</literal></entry>
+      <entry>Waiting to acquire a lock on a remote transaction being applied
+      by a logical replication subscriber.</entry>
+     </row>
+     <row>
       <entry><literal>extend</literal></entry>
       <entry>Waiting to extend a relation.</entry>
      </row>

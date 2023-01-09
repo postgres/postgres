@@ -80,7 +80,8 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 	bool		subbinary;		/* True if the subscription wants the
 								 * publisher to send data in binary */
 
-	bool		substream;		/* Stream in-progress transactions. */
+	char		substream;		/* Stream in-progress transactions. See
+								 * LOGICALREP_STREAM_xxx constants. */
 
 	char		subtwophasestate;	/* Stream two-phase transactions */
 
@@ -124,7 +125,8 @@ typedef struct Subscription
 	bool		enabled;		/* Indicates if the subscription is enabled */
 	bool		binary;			/* Indicates if the subscription wants data in
 								 * binary format */
-	bool		stream;			/* Allow streaming in-progress transactions. */
+	char		stream;			/* Allow streaming in-progress transactions.
+								 * See LOGICALREP_STREAM_xxx constants. */
 	char		twophasestate;	/* Allow streaming two-phase transactions */
 	bool		disableonerr;	/* Indicates if the subscription should be
 								 * automatically disabled if a worker error
@@ -136,6 +138,21 @@ typedef struct Subscription
 	char	   *origin;			/* Only publish data originating from the
 								 * specified origin */
 } Subscription;
+
+/* Disallow streaming in-progress transactions. */
+#define LOGICALREP_STREAM_OFF 'f'
+
+/*
+ * Streaming in-progress transactions are written to a temporary file and
+ * applied only after the transaction is committed on upstream.
+ */
+#define LOGICALREP_STREAM_ON 't'
+
+/*
+ * Streaming in-progress transactions are applied immediately via a parallel
+ * apply worker.
+ */
+#define LOGICALREP_STREAM_PARALLEL 'p'
 
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);
 extern void FreeSubscription(Subscription *sub);

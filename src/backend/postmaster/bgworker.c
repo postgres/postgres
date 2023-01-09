@@ -128,6 +128,9 @@ static const struct
 	},
 	{
 		"ApplyWorkerMain", ApplyWorkerMain
+	},
+	{
+		"ParallelApplyWorkerMain", ParallelApplyWorkerMain
 	}
 };
 

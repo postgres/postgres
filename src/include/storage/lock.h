@@ -149,10 +149,12 @@ typedef enum LockTagType
 	LOCKTAG_SPECULATIVE_TOKEN,	/* speculative insertion Xid and token */
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
-	LOCKTAG_ADVISORY			/* advisory user locks */
+	LOCKTAG_ADVISORY,			/* advisory user locks */
+	LOCKTAG_APPLY_TRANSACTION	/* transaction being applied on a logical
+								 * replication subscriber */
 } LockTagType;
 
-#define LOCKTAG_LAST_TYPE	LOCKTAG_ADVISORY
+#define LOCKTAG_LAST_TYPE	LOCKTAG_APPLY_TRANSACTION
 
 extern PGDLLIMPORT const char *const LockTagTypeNames[];
 
@@ -278,6 +280,17 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_ADVISORY, \
 	 (locktag).locktag_lockmethodid = USER_LOCKMETHOD)
 
+/*
+ * ID info for a remote transaction on a logical replication subscriber is: DB
+ * OID + SUBSCRIPTION OID + TRANSACTION ID + OBJID
+ */
+#define SET_LOCKTAG_APPLY_TRANSACTION(locktag,dboid,suboid,xid,objid) \
+	((locktag).locktag_field1 = (dboid), \
+	 (locktag).locktag_field2 = (suboid), \
+	 (locktag).locktag_field3 = (xid), \
+	 (locktag).locktag_field4 = (objid), \
+	 (locktag).locktag_type = LOCKTAG_APPLY_TRANSACTION, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 /*
  * Per-locked-object lock information:
