@@ -1818,13 +1818,36 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>random_normal</primary>
+        </indexterm>
+
+         <function>random_normal</function> (
+         <optional> <parameter>mean</parameter> <type>double precision</type>
+         <optional>, <parameter>stddev</parameter> <type>double precision</type> </optional></optional> )
+         <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Returns a random value from the normal distribution with the given
+        parameters; <parameter>mean</parameter> defaults to 0.0
+        and <parameter>stddev</parameter> defaults to 1.0
+       </para>
+       <para>
+        <literal>random_normal(0.0, 1.0)</literal>
+        <returnvalue>0.051285419</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>setseed</primary>
         </indexterm>
         <function>setseed</function> ( <type>double precision</type> )
         <returnvalue>void</returnvalue>
        </para>
        <para>
-        Sets the seed for subsequent <literal>random()</literal> calls;
+        Sets the seed for subsequent <literal>random()</literal> and
+        <literal>random_normal()</literal> calls;
         argument must be between -1.0 and 1.0, inclusive
        </para>
        <para>
@@ -1848,6 +1871,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
    Without any prior <function>setseed()</function> call in the same
    session, the first <function>random()</function> call obtains a seed
    from a platform-dependent source of random bits.
+   These remarks hold equally for <function>random_normal()</function>.
   </para>
 
   <para>

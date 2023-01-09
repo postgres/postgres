@@ -55,6 +55,7 @@ extern uint32 pg_prng_uint32(pg_prng_state *state);
 extern int32 pg_prng_int32(pg_prng_state *state);
 extern int32 pg_prng_int32p(pg_prng_state *state);
 extern double pg_prng_double(pg_prng_state *state);
+extern double pg_prng_double_normal(pg_prng_state *state);
 extern bool pg_prng_bool(pg_prng_state *state);
 
 #endif							/* PG_PRNG_H */

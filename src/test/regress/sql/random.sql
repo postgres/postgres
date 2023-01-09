@@ -42,3 +42,27 @@ SELECT random, count(random) FROM RANDOM_TBL
 
 SELECT AVG(random) FROM RANDOM_TBL
   HAVING AVG(random) NOT BETWEEN 80 AND 120;
+
+-- now test random_normal()
+
+TRUNCATE random_tbl;
+INSERT INTO random_tbl (random)
+  SELECT count(*)
+  FROM onek WHERE random_normal(0, 1) < 0;
+INSERT INTO random_tbl (random)
+  SELECT count(*)
+  FROM onek WHERE random_normal(0) < 0;
+INSERT INTO random_tbl (random)
+  SELECT count(*)
+  FROM onek WHERE random_normal() < 0;
+INSERT INTO random_tbl (random)
+  SELECT count(*)
+  FROM onek WHERE random_normal(stddev => 1, mean => 0) < 0;
+
+-- expect similar, but not identical values
+SELECT random, count(random) FROM random_tbl
+  GROUP BY random HAVING count(random) > 3;
+
+-- approximately check expected distribution
+SELECT AVG(random) FROM random_tbl
+  HAVING AVG(random) NOT BETWEEN 400 AND 600;

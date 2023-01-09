@@ -2743,13 +2743,11 @@ datanh(PG_FUNCTION_ARGS)
 
 
 /*
- *		drandom		- returns a random number
+ * initialize_drandom_seed - initialize drandom_seed if not yet done
  */
-Datum
-drandom(PG_FUNCTION_ARGS)
+static void
+initialize_drandom_seed(void)
 {
-	float8		result;
-
 	/* Initialize random seed, if not done yet in this process */
 	if (unlikely(!drandom_seed_set))
 	{
@@ -2769,6 +2767,17 @@ drandom(PG_FUNCTION_ARGS)
 		}
 		drandom_seed_set = true;
 	}
+}
+
+/*
+ *		drandom		- returns a random number
+ */
+Datum
+drandom(PG_FUNCTION_ARGS)
+{
+	float8		result;
+
+	initialize_drandom_seed();
 
 	/* pg_prng_double produces desired result range [0.0 - 1.0) */
 	result = pg_prng_double(&drandom_seed);
@@ -2776,6 +2785,27 @@ drandom(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
+/*
+ *		drandom_normal	- returns a random number from a normal distribution
+ */
+Datum
+drandom_normal(PG_FUNCTION_ARGS)
+{
+	float8		mean = PG_GETARG_FLOAT8(0);
+	float8		stddev = PG_GETARG_FLOAT8(1);
+	float8		result,
+				z;
+
+	initialize_drandom_seed();
+
+	/* Get random value from standard normal(mean = 0.0, stddev = 1.0) */
+	z = pg_prng_double_normal(&drandom_seed);
+	/* Transform the normal standard variable (z) */
+	/* using the target normal distribution parameters */
+	result = (stddev * z) + mean;
+
+	PG_RETURN_FLOAT8(result);
+}
 
 /*
  *		setseed		- set seed for the random number generator
