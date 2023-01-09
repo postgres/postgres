@@ -1439,13 +1439,13 @@ tuplesort_performsort(Tuplesortstate *state)
 			 * We were able to accumulate all the tuples required for output
 			 * in memory, using a heap to eliminate excess tuples.  Now we
 			 * have to transform the heap to a properly-sorted array.
+			 * Note that sort_bounded_heap sets the correct state->status.
 			 */
 			sort_bounded_heap(state);
 			state->current = 0;
 			state->eof_reached = false;
 			state->markpos_offset = 0;
 			state->markpos_eof = false;
-			state->status = TSS_SORTEDINMEM;
 			break;
 
 		case TSS_BUILDRUNS:
