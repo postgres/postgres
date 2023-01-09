@@ -1157,10 +1157,10 @@ SET max_parallel_workers_per_gather = 0;
 SET enable_partitionwise_join = on;
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY id ASC LIMIT 10;
+SELECT x.id, y.id FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY x.id ASC LIMIT 10;
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY id DESC LIMIT 10;
+SELECT x.id, y.id FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY x.id DESC LIMIT 10;
 
 -- cleanup
 DROP TABLE fract_t;

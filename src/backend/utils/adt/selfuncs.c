@@ -5994,6 +5994,10 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 	rte = root->simple_rte_array[rel->relid];
 	Assert(rte->rtekind == RTE_RELATION);
 
+	/* ignore partitioned tables.  Any indexes here are not real indexes */
+	if (rte->relkind == RELKIND_PARTITIONED_TABLE)
+		return false;
+
 	/* Search through the indexes to see if any match our problem */
 	foreach(lc, rel->indexlist)
 	{
