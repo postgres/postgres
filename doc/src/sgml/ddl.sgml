@@ -602,7 +602,7 @@ CREATE TABLE products (
    </note>
   </sect2>
 
-  <sect2>
+  <sect2 id="ddl-constraints-not-null">
    <title>Not-Null Constraints</title>
 
    <indexterm>
@@ -1230,7 +1230,7 @@ CREATE TABLE circles (
   </indexterm>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="ddl-system-columns-tableoid">
     <term><structfield>tableoid</structfield></term>
     <listitem>
      <indexterm>
@@ -1250,7 +1250,7 @@ CREATE TABLE circles (
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="ddl-system-columns-xmin">
     <term><structfield>xmin</structfield></term>
     <listitem>
      <indexterm>
@@ -1266,7 +1266,7 @@ CREATE TABLE circles (
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="ddl-system-columns-cmin">
     <term><structfield>cmin</structfield></term>
     <listitem>
      <indexterm>
@@ -1280,7 +1280,7 @@ CREATE TABLE circles (
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="ddl-system-columns-xmax">
     <term><structfield>xmax</structfield></term>
     <listitem>
      <indexterm>
@@ -1297,7 +1297,7 @@ CREATE TABLE circles (
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="ddl-system-columns-cmax">
     <term><structfield>cmax</structfield></term>
     <listitem>
      <indexterm>
@@ -1310,7 +1310,7 @@ CREATE TABLE circles (
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="ddl-system-columns-ctid">
     <term><structfield>ctid</structfield></term>
     <listitem>
      <indexterm>
@@ -1558,7 +1558,7 @@ ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="ddl-alter-column-default">
    <title>Changing a Column's Default Value</title>
 
    <indexterm>
@@ -1587,7 +1587,7 @@ ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="ddl-alter-column-type">
    <title>Changing a Column's Data Type</title>
 
    <indexterm>
@@ -1616,7 +1616,7 @@ ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="ddl-alter-renaming-column">
    <title>Renaming a Column</title>
 
    <indexterm>
@@ -1632,7 +1632,7 @@ ALTER TABLE products RENAME COLUMN product_no TO product_number;
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="ddl-alter-renaming-table">
    <title>Renaming a Table</title>
 
    <indexterm>
@@ -1768,7 +1768,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    The available privileges are:
 
    <variablelist>
-    <varlistentry>
+    <varlistentry id="ddl-priv-select">
      <term><literal>SELECT</literal></term>
      <listitem>
       <para>
@@ -1785,7 +1785,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-insert">
      <term><literal>INSERT</literal></term>
      <listitem>
       <para>
@@ -1798,7 +1798,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-update">
      <term><literal>UPDATE</literal></term>
      <listitem>
       <para>
@@ -1820,7 +1820,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-delete">
      <term><literal>DELETE</literal></term>
      <listitem>
       <para>
@@ -1832,7 +1832,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-truncate">
      <term><literal>TRUNCATE</literal></term>
      <listitem>
       <para>
@@ -1841,7 +1841,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-references">
      <term><literal>REFERENCES</literal></term>
      <listitem>
       <para>
@@ -1851,7 +1851,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-trigger">
      <term><literal>TRIGGER</literal></term>
      <listitem>
       <para>
@@ -1860,7 +1860,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-create">
      <term><literal>CREATE</literal></term>
      <listitem>
       <para>
@@ -1886,7 +1886,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-connect">
      <term><literal>CONNECT</literal></term>
      <listitem>
       <para>
@@ -1897,7 +1897,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-temporary">
      <term><literal>TEMPORARY</literal></term>
      <listitem>
       <para>
@@ -1906,7 +1906,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-execute">
      <term><literal>EXECUTE</literal></term>
      <listitem>
       <para>
@@ -1917,7 +1917,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-usage">
      <term><literal>USAGE</literal></term>
      <listitem>
       <para>
@@ -1961,7 +1961,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-set">
      <term><literal>SET</literal></term>
      <listitem>
       <para>
@@ -1973,7 +1973,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="ddl-priv-alter-system">
      <term><literal>ALTER SYSTEM</literal></term>
      <listitem>
       <para>
@@ -1983,7 +1983,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      </listitem>
     </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="ddl-priv-maintain">
     <term><literal>MAINTAIN</literal></term>
     <listitem>
      <para>
@@ -3748,7 +3748,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
      following forms of partitioning:
 
      <variablelist>
-      <varlistentry>
+      <varlistentry id="ddl-partitioning-overview-range">
        <term>Range Partitioning</term>
 
        <listitem>
@@ -3769,7 +3769,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="ddl-partitioning-overview-list">
        <term>List Partitioning</term>
 
        <listitem>
@@ -3780,7 +3780,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="ddl-partitioning-overview-hash">
        <term>Hash Partitioning</term>
 
        <listitem>

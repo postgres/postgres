@@ -30,7 +30,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="citext-rationale">
   <title>Rationale</title>
 
   <para>
@@ -84,7 +84,7 @@ SELECT * FROM tab WHERE lower(col) = LOWER(?);
 
  </sect2>
 
- <sect2>
+ <sect2 id="citext-how-to-use-it">
   <title>How to Use It</title>
 
   <para>
@@ -111,7 +111,7 @@ SELECT * FROM users WHERE nick = 'Larry';
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="citext-string-comparison-behavior">
   <title>String Comparison Behavior</title>
 
   <para>
@@ -196,7 +196,7 @@ SELECT * FROM users WHERE nick = 'Larry';
 
  </sect2>
 
- <sect2>
+ <sect2 id="citext-limitations">
   <title>Limitations</title>
 
    <itemizedlist>
@@ -277,7 +277,7 @@ SELECT * FROM users WHERE nick = 'Larry';
    </itemizedlist>
  </sect2>
 
- <sect2>
+ <sect2 id="citext-author">
   <title>Author</title>
 
   <para>

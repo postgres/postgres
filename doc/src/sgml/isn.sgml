@@ -27,7 +27,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="isn-data-types">
   <title>Data Types</title>
 
   <para>
@@ -156,7 +156,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="isn-casts">
   <title>Casts</title>
 
   <para>
@@ -224,7 +224,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="isn-funcs-ops">
   <title>Functions and Operators</title>
 
   <para>
@@ -337,7 +337,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="isn-examples">
   <title>Examples</title>
 
 <programlisting>
@@ -381,7 +381,7 @@ SELECT isbn13(id) FROM test;
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="isn-bibliography">
   <title>Bibliography</title>
 
   <para>
@@ -409,7 +409,7 @@ SELECT isbn13(id) FROM test;
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="isn-author">
   <title>Author</title>
   <para>
    Germ&aacute;n M&eacute;ndez Bravo (Kronuz), 2004&ndash;2006

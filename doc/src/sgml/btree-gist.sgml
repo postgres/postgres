@@ -58,7 +58,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="btree-gist-example-usage">
   <title>Example Usage</title>
 
   <para>
@@ -101,7 +101,7 @@ INSERT 0 1
 
  </sect2>
 
- <sect2>
+ <sect2 id="btree-gist-authors">
   <title>Authors</title>
 
   <para>

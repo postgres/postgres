@@ -878,7 +878,7 @@ PQsslKeyPassHook_OpenSSL_type PQgetSSLKeyPassHook_OpenSSL(void);
     as further described below.
    </para>
 
-   <sect3>
+   <sect3 id="libpq-connstring-keyword-value">
     <title>Keyword/Value Connection Strings</title>
 
    <para>
@@ -906,7 +906,7 @@ host=localhost port=5432 dbname=mydb connect_timeout=10
    </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="libpq-connstring-uris">
     <title>Connection URIs</title>
 
    <para>

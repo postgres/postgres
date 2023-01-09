@@ -26,7 +26,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="fuzzystrmatch-soundex">
   <title>Soundex</title>
 
   <para>
@@ -88,7 +88,7 @@ SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="fuzzystrmatch-levenshtein">
   <title>Levenshtein</title>
 
   <para>
@@ -159,7 +159,7 @@ test=# SELECT levenshtein_less_equal('extensive', 'exhaustive', 4);
 </screen>
  </sect2>
 
- <sect2>
+ <sect2 id="fuzzystrmatch-metaphone">
   <title>Metaphone</title>
 
   <para>
@@ -200,7 +200,7 @@ test=# SELECT metaphone('GUMBO', 4);
 </screen>
  </sect2>
 
- <sect2>
+ <sect2 id="fuzzystrmatch-double-metaphone">
   <title>Double Metaphone</title>
 
   <para>

@@ -2492,7 +2492,7 @@ SELECT n FROM t <emphasis>LIMIT 100</emphasis>;
   </sect3>
  </sect2>
 
- <sect2>
+ <sect2 id="queries-with-cte-materialization">
   <title>Common Table Expression Materialization</title>
 
   <para>

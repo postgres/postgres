@@ -215,7 +215,7 @@ shared_buffers = 128MB
     </para>
    </sect2>
 
-   <sect2 id="config-setting-sql-command-interaction">
+   <sect2 id="config-setting-sql">
     <title>Parameter Interaction via SQL</title>
 
      <para>
@@ -1355,7 +1355,7 @@ include_dir 'conf.d'
        <para>
         Explanation of the default value:
         <variablelist>
-         <varlistentry>
+         <varlistentry id="guc-ssl-ciphers-high">
           <term><literal>HIGH</literal></term>
           <listitem>
            <para>
@@ -1365,7 +1365,7 @@ include_dir 'conf.d'
           </listitem>
          </varlistentry>
 
-         <varlistentry>
+         <varlistentry id="guc-ssl-ciphers-medium">
           <term><literal>MEDIUM</literal></term>
           <listitem>
            <para>
@@ -1375,7 +1375,7 @@ include_dir 'conf.d'
           </listitem>
          </varlistentry>
 
-         <varlistentry>
+         <varlistentry id="guc-ssl-ciphers-plus-3des">
           <term><literal>+3DES</literal></term>
           <listitem>
            <para>
@@ -1389,7 +1389,7 @@ include_dir 'conf.d'
           </listitem>
          </varlistentry>
 
-         <varlistentry>
+         <varlistentry id="guc-ssl-ciphers-not-anull">
           <term><literal>!aNULL</literal></term>
           <listitem>
            <para>
@@ -6954,7 +6954,7 @@ local0.*    /var/log/postgresql
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-debug-print-parse">
       <term><varname>debug_print_parse</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_print_parse</varname> configuration parameter</primary>
@@ -6985,7 +6985,7 @@ local0.*    /var/log/postgresql
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-debug-pretty-print">
       <term><varname>debug_pretty_print</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_pretty_print</varname> configuration parameter</primary>
@@ -7915,7 +7915,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </table>
     </sect2>
 
-   <sect2>
+   <sect2 id="runtime-config-logging-proc-title">
     <title>Process Title</title>
 
     <para>
@@ -8203,7 +8203,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-statement-stats">
       <term><varname>log_statement_stats</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_statement_stats</varname> configuration parameter</primary>

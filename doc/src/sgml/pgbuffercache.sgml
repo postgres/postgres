@@ -44,7 +44,7 @@
   using <command>GRANT</command>.
  </para>
 
- <sect2>
+ <sect2 id="pgbuffercache-pg-buffercache">
   <title>The <structname>pg_buffercache</structname> View</title>
 
   <para>
@@ -179,7 +179,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgbuffercache-summary">
   <title>The <function>pg_buffercache_summary()</function> Function</title>
 
   <para>
@@ -265,7 +265,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgbuffercache-sample-output">
   <title>Sample Output</title>
 
 <screen>
@@ -302,7 +302,7 @@ regression=# SELECT * FROM pg_buffercache_summary();
 </screen>
  </sect2>
 
- <sect2>
+ <sect2 id="pgbuffercache-authors">
   <title>Authors</title>
 
   <para>

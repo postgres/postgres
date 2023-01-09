@@ -24,7 +24,7 @@
   separately-installable extension.
  </para>
 
- <sect2>
+ <sect2 id="contrib-spi-refint">
   <title>refint &mdash; Functions for Implementing Referential Integrity</title>
 
   <para>
@@ -65,7 +65,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="contrib-spi-autoinc">
   <title>autoinc &mdash; Functions for Autoincrementing Fields</title>
 
   <para>
@@ -92,7 +92,7 @@
 
  </sect2>
 
- <sect2>
+ <sect2 id="contrib-spi-insert-username">
   <title>insert_username &mdash; Functions for Tracking Who Changed a Table</title>
 
   <para>
@@ -113,7 +113,7 @@
 
  </sect2>
 
- <sect2>
+ <sect2 id="contrib-spi-moddatetime">
   <title>moddatetime &mdash; Functions for Tracking Last Modification Time</title>
 
   <para>

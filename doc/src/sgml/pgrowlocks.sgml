@@ -19,7 +19,7 @@
  </para>
 
 
- <sect2>
+ <sect2 id="pgrowlocks-overview">
   <title>Overview</title>
 
   <indexterm>
@@ -125,7 +125,7 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgrowlocks-sample-output">
   <title>Sample Output</title>
 
   <screen>
@@ -140,7 +140,7 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
 </screen>
  </sect2>
 
- <sect2>
+ <sect2 id="pgrowlocks-author">
   <title>Author</title>
 
   <para>

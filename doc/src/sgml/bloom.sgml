@@ -38,7 +38,7 @@
   indexes can also perform inequality and range searches.
  </para>
 
- <sect2>
+ <sect2 id="bloom-parameters">
   <title>Parameters</title>
 
   <para>
@@ -73,7 +73,7 @@
    </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="bloom-examples">
   <title>Examples</title>
 
   <para>
@@ -215,7 +215,7 @@ CREATE INDEX
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="bloom-operator-class-interface">
   <title>Operator Class Interface</title>
 
   <para>
@@ -232,7 +232,7 @@ DEFAULT FOR TYPE text USING bloom AS
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="bloom-limitations">
   <title>Limitations</title>
   <para>
    <itemizedlist>
@@ -268,7 +268,7 @@ DEFAULT FOR TYPE text USING bloom AS
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="bloom-authors">
   <title>Authors</title>
 
   <para>

@@ -21,7 +21,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="dict-int-config">
   <title>Configuration</title>
 
   <para>
@@ -58,7 +58,7 @@
   </itemizedlist>
  </sect2>
 
- <sect2>
+ <sect2 id="dict-int-usage">
   <title>Usage</title>
 
   <para>

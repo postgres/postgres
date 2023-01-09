@@ -28,7 +28,7 @@
   If you need help immediately, consider obtaining a commercial support contract.
  </para>
 
- <sect2>
+ <sect2 id="bug-reporting-identifying-bugs">
   <title>Identifying Bugs</title>
 
   <para>
@@ -96,7 +96,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="bug-reporting-what-to-report">
   <title>What to Report</title>
 
   <para>
@@ -291,7 +291,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="bug-reporting-where-to-report-bugs">
   <title>Where to Report Bugs</title>
 
   <para>

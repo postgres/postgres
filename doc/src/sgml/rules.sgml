@@ -643,7 +643,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
    </para>
 </sect2>
 
-<sect2>
+<sect2 id="rules-views-non-select">
 <title>View Rules in Non-<command>SELECT</command> Statements</title>
 
 <para>
@@ -763,7 +763,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </para>
 </sect2>
 
-<sect2>
+<sect2 id="rules-views-power">
 <title>The Power of Views in <productname>PostgreSQL</productname></title>
 
 <para>
@@ -1178,7 +1178,7 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
  </para>
 </caution>
 
-<sect2>
+<sect2 id="rules-update-how">
 <title>How Update Rules Work</title>
 
 <para>
@@ -1302,7 +1302,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
     there is no need to apply update rules to the output of view rewriting.
 </para>
 
-<sect3>
+<sect3 id="rules-update-how-first">
 <title>A First Rule Step by Step</title>
 
 <para>

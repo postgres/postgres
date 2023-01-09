@@ -237,7 +237,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
 
   <sect1 id="logicaldecoding-explanation">
    <title>Logical Decoding Concepts</title>
-   <sect2>
+   <sect2 id="logicaldecoding-explanation-log-dec">
     <title>Logical Decoding</title>
 
     <indexterm>
@@ -330,7 +330,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
     </caution>
    </sect2>
 
-   <sect2>
+   <sect2 id="logicaldecoding-explanation-output-plugins">
     <title>Output Plugins</title>
     <para>
      Output plugins transform the data from the write-ahead log's internal
@@ -338,7 +338,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="logicaldecoding-explanation-exported-snapshots">
     <title>Exported Snapshots</title>
     <para>
      When a new replication slot is created using the streaming replication
@@ -1085,7 +1085,7 @@ OutputPluginWrite(ctx, true);
 
   <sect1 id="logicaldecoding-synchronous">
    <title>Synchronous Replication Support for Logical Decoding</title>
-   <sect2>
+   <sect2 id="logicaldecoding-synchronous-overview">
     <title>Overview</title>
 
     <para>

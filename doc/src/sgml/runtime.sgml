@@ -1220,7 +1220,7 @@ RemoveIPC=no
    </caution>
   </sect2>
 
-  <sect2>
+  <sect2 id="kernel-resources-limits">
    <title>Resource Limits</title>
 
    <para>

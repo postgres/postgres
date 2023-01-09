@@ -21,7 +21,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="hstore-external-rep">
   <title><type>hstore</type> External Representation</title>
 
   <para>
@@ -88,7 +88,7 @@ key =&gt; NULL
 
  </sect2>
 
- <sect2>
+ <sect2 id="hstore-ops-funcs">
   <title><type>hstore</type> Operators and Functions</title>
 
   <para>
@@ -738,7 +738,7 @@ SELECT h FROM mytable;
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="hstore-indexes">
   <title>Indexes</title>
 
   <para>
@@ -784,7 +784,7 @@ CREATE INDEX hidx ON testhstore USING HASH (h);
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="hstore-examples">
   <title>Examples</title>
 
   <para>
@@ -853,7 +853,7 @@ SELECT (r).* FROM (SELECT t #= '"col3"=&gt;"baz"' AS r FROM test t) s;
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="hstore-statistics">
   <title>Statistics</title>
 
   <para>
@@ -900,7 +900,7 @@ SELECT key, count(*) FROM
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="hstore-compatibility">
   <title>Compatibility</title>
 
   <para>
@@ -933,7 +933,7 @@ ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
 
  </sect2>
 
- <sect2>
+ <sect2 id="hstore-transforms">
   <title>Transforms</title>
 
   <para>
@@ -957,7 +957,7 @@ ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
   </caution>
  </sect2>
 
- <sect2>
+ <sect2 id="hstore-authors">
   <title>Authors</title>
 
   <para>

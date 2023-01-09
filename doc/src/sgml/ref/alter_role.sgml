@@ -52,7 +52,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
 </synopsis>
  </refsynopsisdiv>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-desc">
   <title>Description</title>
 
   <para>
@@ -123,11 +123,11 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   </para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-params">
   <title>Parameters</title>
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-name">
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
@@ -136,7 +136,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-current-role">
       <term><literal>CURRENT_ROLE</literal></term>
       <term><literal>CURRENT_USER</literal></term>
       <listitem>
@@ -146,7 +146,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-session-user">
       <term><literal>SESSION_USER</literal></term>
       <listitem>
        <para>
@@ -156,7 +156,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-superuser">
       <term><literal>SUPERUSER</literal></term>
       <term><literal>NOSUPERUSER</literal></term>
       <term><literal>CREATEDB</literal></term>
@@ -184,7 +184,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-new-name">
       <term><replaceable>new_name</replaceable></term>
       <listitem>
        <para>
@@ -193,7 +193,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-database-name">
        <term><replaceable>database_name</replaceable></term>
        <listitem>
          <para>
@@ -202,7 +202,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
        </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-configuration-parameter">
       <term><replaceable>configuration_parameter</replaceable></term>
       <term><replaceable>value</replaceable></term>
       <listitem>
@@ -250,7 +250,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
     </variablelist>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-notes">
   <title>Notes</title>
 
   <para>
@@ -284,7 +284,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   </para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-examples">
   <title>Examples</title>
 
   <para>
@@ -352,7 +352,7 @@ ALTER ROLE fred SET my.param = 'value' USER SET;
 </programlisting></para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-compat">
   <title>Compatibility</title>
 
   <para>
@@ -361,7 +361,7 @@ ALTER ROLE fred SET my.param = 'value' USER SET;
   </para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-see">
   <title>See Also</title>
 
   <simplelist type="inline">

@@ -1464,7 +1464,7 @@ SELECT concat_values('|', 1, 4, 2);
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-sql-collations">
     <title><acronym>SQL</acronym> Functions with Collations</title>
 
     <indexterm>
@@ -2343,7 +2343,7 @@ memcpy(destination->data, buffer, 40);
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-v1-call-conv">
     <title>Version 1 Calling Conventions</title>
 
     <para>
@@ -2593,7 +2593,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-code">
     <title>Writing Code</title>
 
     <para>
@@ -2700,7 +2700,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
 
 &dfunc;
 
-   <sect2>
+   <sect2 id="xfunc-c-composite-type-args">
     <title>Composite-Type Arguments</title>
 
     <para>
@@ -2788,7 +2788,7 @@ CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-returning-rows">
     <title>Returning Rows (Composite Types)</title>
 
     <para>
@@ -3283,7 +3283,7 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-polymorphic">
     <title>Polymorphic Arguments and Return Types</title>
 
     <para>

@@ -74,7 +74,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
   <title>Parameters</title>
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="create-database-name">
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
@@ -82,7 +82,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-user-name">
       <term><replaceable class="parameter">user_name</replaceable></term>
       <listitem>
        <para>
@@ -94,7 +94,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-template">
       <term><replaceable class="parameter">template</replaceable></term>
       <listitem>
        <para>
@@ -104,7 +104,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-encoding">
       <term><replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
@@ -140,7 +140,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-locale">
       <term><replaceable class="parameter">locale</replaceable></term>
       <listitem>
        <para>
@@ -159,7 +159,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </tip>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-lc-collate">
       <term><replaceable class="parameter">lc_collate</replaceable></term>
       <listitem>
        <para>
@@ -171,7 +171,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-lc-ctype">
       <term><replaceable class="parameter">lc_ctype</replaceable></term>
       <listitem>
        <para>
@@ -183,7 +183,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="create-database-icu-locale">
       <term><replaceable class="parameter">icu_locale</replaceable></term>
       <listitem>
        <para>
@@ -192,7 +192,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="create-database-locale-provider">
       <term><replaceable>locale_provider</replaceable></term>
 
       <listitem>
@@ -206,7 +206,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="create-database-collation-version">
       <term><replaceable>collation_version</replaceable></term>
 
       <listitem>
@@ -225,7 +225,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
      </listitem>
     </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-tablespace-name">
       <term><replaceable class="parameter">tablespace_name</replaceable></term>
       <listitem>
        <para>
@@ -240,7 +240,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="create-database-allowconn">
        <term><replaceable class="parameter">allowconn</replaceable></term>
        <listitem>
         <para>
@@ -251,7 +251,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="create-database-connlimit">
       <term><replaceable class="parameter">connlimit</replaceable></term>
       <listitem>
        <para>
@@ -261,7 +261,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="create-database-istemplate">
        <term><replaceable class="parameter">istemplate</replaceable></term>
        <listitem>
         <para>
@@ -272,7 +272,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="create-database-oid">
        <term><replaceable class="parameter">oid</replaceable></term>
        <listitem>
         <para>

@@ -19,7 +19,7 @@
   will, using 2 background workers, reload those same blocks after a restart.
  </para>
 
- <sect2>
+ <sect2 id="pgprewarm-funcs">
   <title>Functions</title>
 
 <synopsis>
@@ -84,7 +84,7 @@ autoprewarm_dump_now() RETURNS int8
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgprewarm-config-params">
   <title>Configuration Parameters</title>
 
  <variablelist>
@@ -137,7 +137,7 @@ pg_prewarm.autoprewarm_interval = 300s
 
  </sect2>
 
- <sect2>
+ <sect2 id="pgprewarm-author">
   <title>Author</title>
 
   <para>

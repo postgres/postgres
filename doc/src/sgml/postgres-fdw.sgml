@@ -106,10 +106,10 @@
   of columns to the remote table is by name, not position.
  </para>
 
- <sect2>
+ <sect2 id="postgres-fdw-options">
   <title>FDW Options of postgres_fdw</title>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-connection">
    <title>Connection Options</title>
 
    <para>
@@ -197,7 +197,7 @@ OPTIONS (ADD password_required 'false');
    </para>
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-object-name">
    <title>Object Name Options</title>
 
    <para>
@@ -246,7 +246,7 @@ OPTIONS (ADD password_required 'false');
 
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-cost-estimation">
    <title>Cost Estimation Options</title>
 
    <para>
@@ -363,7 +363,7 @@ OPTIONS (ADD password_required 'false');
 
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-remote-execution">
    <title>Remote Execution Options</title>
 
    <para>
@@ -444,7 +444,7 @@ OPTIONS (ADD password_required 'false');
 
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-asynchronous-execution">
    <title>Asynchronous Execution Options</title>
 
    <para>
@@ -495,7 +495,7 @@ OPTIONS (ADD password_required 'false');
    </variablelist>
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-transaction-management">
    <title>Transaction Management Options</title>
 
    <para>
@@ -545,7 +545,7 @@ OPTIONS (ADD password_required 'false');
 
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-updatability">
    <title>Updatability Options</title>
 
    <para>
@@ -582,7 +582,7 @@ OPTIONS (ADD password_required 'false');
    </variablelist>
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-truncatability">
    <title>Truncatability Options</title>
 
    <para>
@@ -613,7 +613,7 @@ OPTIONS (ADD password_required 'false');
    </variablelist>
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-importing">
    <title>Importing Options</title>
 
    <para>
@@ -721,7 +721,7 @@ OPTIONS (ADD password_required 'false');
 
   </sect3>
 
-  <sect3>
+  <sect3 id="postgres-fdw-options-connection-management">
     <title>Connection Management Options</title>
 
     <para>
@@ -750,7 +750,7 @@ OPTIONS (ADD password_required 'false');
    </sect3>
  </sect2>
 
-<sect2>
+<sect2 id="postgres-fdw-functions">
   <title>Functions</title>
 
   <variablelist>
@@ -829,7 +829,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
 
 </sect2>
 
- <sect2>
+ <sect2 id="postgres-fdw-connection-management">
   <title>Connection Management</title>
 
   <para>
@@ -866,7 +866,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="postgres-fdw-transaction-management">
   <title>Transaction Management</title>
 
   <para>
@@ -901,7 +901,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="postgres-fdw-remote-query-optimization">
   <title>Remote Query Optimization</title>
 
   <para>
@@ -944,7 +944,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="postgres-fdw-remote-query-execution-environment">
   <title>Remote Query Execution Environment</title>
 
   <para>
@@ -1000,7 +1000,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="postgres-fdw-cross-version-compatibility">
   <title>Cross-Version Compatibility</title>
 
   <para>
@@ -1020,7 +1020,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="postgres-fdw-configuration-parameters">
   <title>Configuration Parameters</title>
 
   <variablelist>
@@ -1120,7 +1120,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="postgres-fdw-examples">
   <title>Examples</title>
 
   <para>
@@ -1184,7 +1184,7 @@ CREATE FOREIGN TABLE foreign_table (
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="postgres-fdw-author">
   <title>Author</title>
   <para>
    Shigeru Hanada <email>shigeru.hanada@gmail.com</email>

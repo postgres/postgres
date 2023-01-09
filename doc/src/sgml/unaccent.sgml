@@ -27,7 +27,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="unaccent-configuration">
   <title>Configuration</title>
 
   <para>
@@ -107,7 +107,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="unaccent-usage">
   <title>Usage</title>
 
   <para>
@@ -165,7 +165,7 @@ mydb=# select ts_headline('fr','H&ocirc;tel de la Mer',to_tsquery('fr','Hotels')
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="unaccent-functions">
  <title>Functions</title>
 
  <para>

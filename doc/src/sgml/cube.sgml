@@ -18,7 +18,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="cube-syntax">
   <title>Syntax</title>
 
   <para>
@@ -99,7 +99,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="cube-precision">
   <title>Precision</title>
 
   <para>
@@ -108,7 +108,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="cube-usage">
   <title>Usage</title>
 
   <para>
@@ -533,7 +533,7 @@ SELECT c FROM test ORDER BY c ~&gt; 3 DESC LIMIT 5;
   </table>
  </sect2>
 
- <sect2>
+ <sect2 id="cube-defaults">
   <title>Defaults</title>
 
   <para>
@@ -587,7 +587,7 @@ t
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="cube-notes">
   <title>Notes</title>
 
   <para>
@@ -601,7 +601,7 @@ t
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="cube-credits">
   <title>Credits</title>
 
   <para>

@@ -14,7 +14,7 @@
   search for a word using any of its synonyms.
  </para>
 
- <sect2>
+ <sect2 id="dict-xsyn-config">
   <title>Configuration</title>
 
   <para>
@@ -83,7 +83,7 @@ word syn1 syn2 syn3
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="dict-xsyn-usage">
   <title>Usage</title>
 
   <para>

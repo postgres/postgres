@@ -32,7 +32,7 @@ LOAD 'auto_explain';
   that.
  </para>
 
- <sect2>
+ <sect2 id="auto-explain-configuration-parameters">
   <title>Configuration Parameters</title>
 
  <para>
@@ -43,7 +43,7 @@ LOAD 'auto_explain';
  </para>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-min-duration">
     <term>
      <varname>auto_explain.log_min_duration</varname> (<type>integer</type>)
      <indexterm>
@@ -63,7 +63,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-parameter-max-length">
     <term>
      <varname>auto_explain.log_parameter_max_length</varname> (<type>integer</type>)
      <indexterm>
@@ -82,7 +82,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-analyze">
     <term>
      <varname>auto_explain.log_analyze</varname> (<type>boolean</type>)
      <indexterm>
@@ -108,7 +108,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-buffers">
     <term>
      <varname>auto_explain.log_buffers</varname> (<type>boolean</type>)
      <indexterm>
@@ -128,7 +128,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-wal">
     <term>
      <varname>auto_explain.log_wal</varname> (<type>boolean</type>)
      <indexterm>
@@ -148,7 +148,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-timing">
     <term>
      <varname>auto_explain.log_timing</varname> (<type>boolean</type>)
      <indexterm>
@@ -172,7 +172,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-triggers">
     <term>
      <varname>auto_explain.log_triggers</varname> (<type>boolean</type>)
      <indexterm>
@@ -191,7 +191,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-verbose">
     <term>
      <varname>auto_explain.log_verbose</varname> (<type>boolean</type>)
      <indexterm>
@@ -209,7 +209,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-settings">
     <term>
      <varname>auto_explain.log_settings</varname> (<type>boolean</type>)
      <indexterm>
@@ -227,7 +227,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-format">
     <term>
      <varname>auto_explain.log_format</varname> (<type>enum</type>)
      <indexterm>
@@ -245,7 +245,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-level">
     <term>
      <varname>auto_explain.log_level</varname> (<type>enum</type>)
      <indexterm>
@@ -266,7 +266,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-log-nested-statements">
     <term>
      <varname>auto_explain.log_nested_statements</varname> (<type>boolean</type>)
      <indexterm>
@@ -283,7 +283,7 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="auto-explain-configuration-parameters-sample-rate">
     <term>
      <varname>auto_explain.sample_rate</varname> (<type>real</type>)
      <indexterm>
@@ -316,7 +316,7 @@ auto_explain.log_min_duration = '3s'
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="auto-explain-example">
   <title>Example</title>
 
 <programlisting>
@@ -348,7 +348,7 @@ LOG:  duration: 3.651 ms  plan:
 ]]></screen>
  </sect2>
 
- <sect2>
+ <sect2 id="auto-explain-author">
   <title>Author</title>
 
   <para>

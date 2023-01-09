@@ -79,7 +79,7 @@
    might be optional, as noted.
 
    <variablelist>
-    <varlistentry>
+    <varlistentry id="docguide-toolsets-docbook-dtd">
      <term><ulink url="https://www.oasis-open.org/docbook/">DocBook DTD</ulink></term>
      <listitem>
       <para>
@@ -91,7 +91,7 @@
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="docguide-toolsets-docbook-xsl">
      <term><ulink url="https://github.com/docbook/wiki/wiki/DocBookXslStylesheets">DocBook XSL Stylesheets</ulink></term>
      <listitem>
       <para>
@@ -107,7 +107,7 @@
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="docguide-toolsets-libxml2">
      <term><ulink url="http://xmlsoft.org/">Libxml2</ulink> for <command>xmllint</command></term>
      <listitem>
       <para>
@@ -121,7 +121,7 @@
      </listitem>
      </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="docguide-toolsets-libxslt">
      <term><ulink url="http://xmlsoft.org/XSLT/">Libxslt</ulink> for <command>xsltproc</command></term>
      <listitem>
       <para>
@@ -131,7 +131,7 @@
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="docguide-toolsets-fop">
      <term><ulink url="https://xmlgraphics.apache.org/fop/">FOP</ulink></term>
      <listitem>
       <para>
@@ -163,7 +163,7 @@
    for an example.
   </para>
 
-  <sect2>
+  <sect2 id="docguide-toolsets-inst-fedora-et-al">
    <title>Installation on Fedora, RHEL, and Derivatives</title>
 
    <para>
@@ -174,7 +174,7 @@ yum install docbook-dtds docbook-style-xsl fop libxslt
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="docguide-toolsets-inst-freebsd">
    <title>Installation on FreeBSD</title>
 
    <para>
@@ -191,7 +191,7 @@ pkg install docbook-xml docbook-xsl fop libxslt
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="docguide-toolsets-inst-debian">
    <title>Debian Packages</title>
 
    <para>
@@ -204,7 +204,7 @@ apt-get install docbook-xml docbook-xsl fop libxml2-utils xsltproc
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="docguide-toolsets-inst-macos">
    <title>macOS</title>
 
    <para>
@@ -274,7 +274,7 @@ checking for dbtoepub... dbtoepub
    documentation. (Remember to use GNU make.)
   </para>
 
-  <sect2>
+  <sect2 id="docguide-build-html">
    <title>HTML</title>
 
    <para>
@@ -303,7 +303,7 @@ checking for dbtoepub... dbtoepub
    </para>
  </sect2>
 
- <sect2>
+ <sect2 id="docguide-build-manpages">
   <title>Manpages</title>
 
   <para>
@@ -317,7 +317,7 @@ checking for dbtoepub... dbtoepub
   </para>
  </sect2>
 
-  <sect2>
+  <sect2 id="docguide-build-pdf">
    <title>PDF</title>
 
    <para>
@@ -373,7 +373,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="docguide-build-plain-text">
    <title>Plain Text Files</title>
 
    <para>
@@ -395,7 +395,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="docguide-build-syntax-check">
    <title>Syntax Check</title>
 
    <para>
@@ -427,7 +427,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
     correct mode.
    </para>
 
-   <sect2>
+   <sect2 id="docguide-authoring-emacs">
     <title>Emacs</title>
 
     <para>
@@ -453,7 +453,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
  <sect1 id="docguide-style">
   <title>Style Guide</title>
 
-  <sect2>
+  <sect2 id="docguide-style-ref-pages">
    <title>Reference Pages</title>
 
    <para>
@@ -476,7 +476,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
     <quote>Usage</quote> section.
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-name">
       <term>Name</term>
       <listitem>
        <para>
@@ -486,7 +486,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-synopsis">
       <term>Synopsis</term>
       <listitem>
        <para>
@@ -498,7 +498,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-description">
       <term>Description</term>
       <listitem>
        <para>
@@ -507,7 +507,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-options">
       <term>Options</term>
       <listitem>
        <para>
@@ -517,7 +517,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-exit-status">
       <term>Exit Status</term>
       <listitem>
        <para>
@@ -528,7 +528,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-usage">
       <term>Usage</term>
       <listitem>
        <para>
@@ -540,7 +540,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-environment">
       <term>Environment</term>
       <listitem>
        <para>
@@ -551,7 +551,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-files">
       <term>Files</term>
       <listitem>
        <para>
@@ -562,7 +562,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-diagnostics">
       <term>Diagnostics</term>
       <listitem>
        <para>
@@ -575,7 +575,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-notes">
       <term>Notes</term>
       <listitem>
        <para>
@@ -586,7 +586,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-examples">
       <term>Examples</term>
       <listitem>
        <para>
@@ -595,7 +595,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-history">
       <term>History</term>
       <listitem>
        <para>
@@ -606,7 +606,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-author">
       <term>Author</term>
       <listitem>
        <para>
@@ -615,7 +615,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="docguide-style-ref-pages-see-also">
       <term>See Also</term>
       <listitem>
        <para>

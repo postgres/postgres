@@ -18,7 +18,7 @@
   They should be used with great caution and only as a last resort.
  </para>
 
- <sect2>
+ <sect2 id="pgsurgery-funcs">
   <title>Functions</title>
 
   <variablelist>
@@ -96,7 +96,7 @@ test=# select ctid from t1 where xmin = 2;
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pgsurgery-authors">
   <title>Authors</title>
 
   <para>

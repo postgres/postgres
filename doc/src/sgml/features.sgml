@@ -238,7 +238,7 @@
      <productname>PostgreSQL</productname>-specific functions.
     </para>
 
-    <sect3>
+    <sect3 id="functions-xml-limits-xpath1-xquery-restriction">
      <title>Restriction of XQuery to XPath</title>
 
      <para>
@@ -427,7 +427,7 @@
      implementation in <productname>PostgreSQL</productname>.
     </para>
 
-    <sect3>
+    <sect3 id="functions-xml-limits-postgresql-by-value-only">
      <title>Only <literal>BY VALUE</literal> Passing Mechanism Is Supported</title>
 
      <para>
@@ -463,7 +463,7 @@ SELECT XMLQUERY('$a is $b' PASSING BY VALUE <replaceable>x</replaceable> AS a, <
      </para>
     </sect3>
 
-    <sect3>
+    <sect3 id="functions-xml-limits-postgresql-named-parameters">
      <title>Cannot Pass Named Parameters to Queries</title>
 
      <para>
@@ -473,7 +473,7 @@ SELECT XMLQUERY('$a is $b' PASSING BY VALUE <replaceable>x</replaceable> AS a, <
      </para>
     </sect3>
 
-    <sect3>
+    <sect3 id="functions-xml-limits-postgresql-no-xml-sequence">
      <title>No <type>XML(SEQUENCE)</type> Type</title>
 
      <para>

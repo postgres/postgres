@@ -52,7 +52,7 @@
   able to infer something of the data itself from such messages.
  </para>
 
- <sect2>
+ <sect2 id="amcheck-functions">
   <title>Functions</title>
 
   <variablelist>
@@ -346,7 +346,7 @@ SET client_min_messages = DEBUG1;
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="amcheck-optional-heapallindexed-verification">
   <title>Optional <parameter>heapallindexed</parameter> Verification</title>
  <para>
   When the <parameter>heapallindexed</parameter> argument to B-Tree
@@ -387,7 +387,7 @@ SET client_min_messages = DEBUG1;
 
  </sect2>
 
- <sect2>
+ <sect2 id="amcheck-using-amcheck-effectively">
   <title>Using <filename>amcheck</filename> Effectively</title>
 
  <para>
@@ -535,7 +535,7 @@ SET client_min_messages = DEBUG1;
  </para>
 
  </sect2>
- <sect2>
+ <sect2 id="amcheck-repairing-corruption">
   <title>Repairing Corruption</title>
  <para>
   No error concerning corruption raised by <filename>amcheck</filename> should

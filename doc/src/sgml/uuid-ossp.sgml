@@ -22,7 +22,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="uuid-ossp-functions-sect">
   <title><literal>uuid-ossp</literal> Functions</title>
 
   <para>
@@ -205,7 +205,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
   </table>
  </sect2>
 
- <sect2>
+ <sect2 id="uuid-ossp-building">
   <title>Building <filename>uuid-ossp</filename></title>
 
   <para>
@@ -230,7 +230,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="uuid-ossp-author">
   <title>Author</title>
 
   <para>

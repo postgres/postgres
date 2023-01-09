@@ -17,7 +17,7 @@
    to do this.  This section explains how to help.
   </para>
 
-  <sect2>
+  <sect2 id="nls-translator-requirements">
    <title>Requirements</title>
 
    <para>
@@ -50,7 +50,7 @@
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="nls-translator-concepts">
    <title>Concepts</title>
 
    <para>
@@ -130,7 +130,7 @@ msgstr "another translated"
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="nls-translator-message-catalogs">
    <title>Creating and Maintaining Message Catalogs</title>
 
    <para>
@@ -199,7 +199,7 @@ make update-po
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="nls-translator-editing-po">
    <title>Editing the PO Files</title>
 
    <para>

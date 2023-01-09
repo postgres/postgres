@@ -36,7 +36,7 @@
    <command>CREATE EXTENSION pg_stat_statements</command>.
  </para>
 
- <sect2>
+ <sect2 id="pgstatstatements-pg-stat-statements">
   <title>The <structname>pg_stat_statements</structname> View</title>
 
   <para>
@@ -602,7 +602,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-pg-stat-statements-info">
   <title>The <structname>pg_stat_statements_info</structname> View</title>
 
   <indexterm>
@@ -658,7 +658,7 @@
   </table>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-funcs">
   <title>Functions</title>
 
   <variablelist>
@@ -721,7 +721,7 @@
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-config-params">
   <title>Configuration Parameters</title>
 
   <variablelist>
@@ -856,7 +856,7 @@ pg_stat_statements.track = all
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-sample-output">
   <title>Sample Output</title>
 
 <screen>
@@ -961,7 +961,7 @@ hit_percent     |
 </screen>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-authors">
   <title>Authors</title>
 
   <para>

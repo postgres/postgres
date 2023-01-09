@@ -1788,7 +1788,7 @@ END;
      NEXT</command>.
     </para>
 
-    <sect3>
+    <sect3 id="plpgsql-statements-returning-return">
      <title><command>RETURN</command></title>
 
 <synopsis>
@@ -1849,7 +1849,7 @@ RETURN (1, 2, 'three'::text);  -- must cast columns to correct types
      </para>
     </sect3>
 
-    <sect3>
+    <sect3 id="plpgsql-statements-returning-return-next">
      <title><command>RETURN NEXT</command> and <command>RETURN QUERY</command></title>
     <indexterm>
      <primary>RETURN NEXT</primary>
@@ -2081,7 +2081,7 @@ $$;
     </itemizedlist>
     </para>
 
-    <sect3>
+    <sect3 id="plpgsql-conditionals-if-then">
      <title><literal>IF-THEN</literal></title>
 
 <synopsis>
@@ -2108,7 +2108,7 @@ END IF;
        </para>
      </sect3>
 
-     <sect3>
+     <sect3 id="plpgsql-conditionals-if-then-else">
       <title><literal>IF-THEN-ELSE</literal></title>
 
 <synopsis>
@@ -2149,7 +2149,7 @@ END IF;
      </para>
     </sect3>
 
-     <sect3>
+     <sect3 id="plpgsql-conditionals-if-then-elsif">
       <title><literal>IF-THEN-ELSIF</literal></title>
 
 <synopsis>
@@ -2225,7 +2225,7 @@ END IF;
        </para>
      </sect3>
 
-     <sect3>
+     <sect3 id="plpgsql-conditionals-simple-case">
       <title>Simple <literal>CASE</literal></title>
 
 <synopsis>
@@ -2268,7 +2268,7 @@ END CASE;
       </para>
      </sect3>
 
-     <sect3>
+     <sect3 id="plpgsql-conditionals-searched-case">
       <title>Searched <literal>CASE</literal></title>
 
 <synopsis>
@@ -2335,7 +2335,7 @@ END CASE;
      <application>PL/pgSQL</application> function to repeat a series of commands.
     </para>
 
-    <sect3>
+    <sect3 id="plpgsql-control-structures-loops-loop">
      <title><literal>LOOP</literal></title>
 
 <synopsis>
@@ -2355,7 +2355,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      </para>
     </sect3>
 
-     <sect3>
+     <sect3 id="plpgsql-control-structures-loops-exit">
       <title><literal>EXIT</literal></title>
 
      <indexterm>
@@ -2427,7 +2427,7 @@ END;
        </para>
      </sect3>
 
-     <sect3>
+     <sect3 id="plpgsql-control-structures-loops-continue">
       <title><literal>CONTINUE</literal></title>
 
      <indexterm>
@@ -2476,7 +2476,7 @@ END LOOP;
      </sect3>
 
 
-     <sect3>
+     <sect3 id="plpgsql-control-structures-loops-while">
       <title><literal>WHILE</literal></title>
 
      <indexterm>
@@ -3211,7 +3211,7 @@ DECLARE
      <xref linkend="plpgsql-cursor-returning"/>.
     </para>
 
-    <sect3>
+    <sect3 id="plpgsql-cursor-opening-open-for-query">
      <title><command>OPEN FOR</command> <replaceable>query</replaceable></title>
 
 <synopsis>
@@ -3245,7 +3245,7 @@ OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
        </para>
      </sect3>
 
-    <sect3>
+    <sect3 id="plpgsql-cursor-opening-open-for-execute">
      <title><command>OPEN FOR EXECUTE</command></title>
 
 <synopsis>
@@ -3370,7 +3370,7 @@ BEGIN
      only until the end of the transaction.
     </para>
 
-    <sect3>
+    <sect3 id="plpgsql-cursor-using-fetch">
      <title><literal>FETCH</literal></title>
 
 <synopsis>
@@ -3427,7 +3427,7 @@ FETCH RELATIVE -2 FROM curs4 INTO x;
        </para>
      </sect3>
 
-    <sect3>
+    <sect3 id="plpgsql-cursor-using-move">
      <title><literal>MOVE</literal></title>
 
 <synopsis>
@@ -3454,7 +3454,7 @@ MOVE FORWARD 2 FROM curs4;
        </para>
      </sect3>
 
-    <sect3>
+    <sect3 id="plpgsql-cursor-using-update-delete">
      <title><literal>UPDATE/DELETE WHERE CURRENT OF</literal></title>
 
 <synopsis>
@@ -3480,7 +3480,7 @@ UPDATE foo SET dataval = myval WHERE CURRENT OF curs1;
        </para>
      </sect3>
 
-    <sect3>
+    <sect3 id="plpgsql-cursor-using-close">
      <title><literal>CLOSE</literal></title>
 
 <synopsis>
@@ -3831,7 +3831,7 @@ RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
     class="parameter">option</replaceable> key words are:
 
     <variablelist id="raise-using-options">
-     <varlistentry>
+     <varlistentry id="raise-using-option-message">
       <term><literal>MESSAGE</literal></term>
       <listitem>
        <para>Sets the error message text.  This option can't be used in the
@@ -3840,21 +3840,21 @@ RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="raise-using-option-detail">
       <term><literal>DETAIL</literal></term>
       <listitem>
        <para>Supplies an error detail message.</para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="raise-using-option-hint">
       <term><literal>HINT</literal></term>
       <listitem>
        <para>Supplies a hint message.</para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="raise-using-option-errcode">
       <term><literal>ERRCODE</literal></term>
       <listitem>
        <para>Specifies the error code (SQLSTATE) to report, either by condition
@@ -3863,7 +3863,7 @@ RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="raise-using-option-column">
       <term><literal>COLUMN</literal></term>
       <term><literal>CONSTRAINT</literal></term>
       <term><literal>DATATYPE</literal></term>
@@ -4053,7 +4053,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
    top-level block. They are:
 
    <variablelist>
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-new">
      <term><varname>NEW</varname> <type>record</type></term>
      <listitem>
       <para>
@@ -4064,7 +4064,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-old">
      <term><varname>OLD</varname> <type>record</type></term>
      <listitem>
       <para>
@@ -4075,7 +4075,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-name">
      <term><varname>TG_NAME</varname> <type>name</type></term>
      <listitem>
       <para>
@@ -4084,7 +4084,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-when">
      <term><varname>TG_WHEN</varname> <type>text</type></term>
      <listitem>
       <para>
@@ -4094,7 +4094,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-level">
      <term><varname>TG_LEVEL</varname> <type>text</type></term>
      <listitem>
       <para>
@@ -4104,7 +4104,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-op">
      <term><varname>TG_OP</varname> <type>text</type></term>
      <listitem>
       <para>
@@ -4115,7 +4115,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-relid">
      <term><varname>TG_RELID</varname> <type>oid</type> (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)</term>
      <listitem>
       <para>
@@ -4124,7 +4124,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-relname">
      <term><varname>TG_RELNAME</varname> <type>name</type></term>
      <listitem>
       <para>
@@ -4135,7 +4135,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-table-name">
      <term><varname>TG_TABLE_NAME</varname> <type>name</type></term>
      <listitem>
       <para>
@@ -4144,7 +4144,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-table-schema">
      <term><varname>TG_TABLE_SCHEMA</varname> <type>name</type></term>
      <listitem>
       <para>
@@ -4153,7 +4153,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-nargs">
      <term><varname>TG_NARGS</varname> <type>integer</type></term>
      <listitem>
       <para>
@@ -4163,7 +4163,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-dml-trigger-tg-argv">
      <term><varname>TG_ARGV</varname> <type>text[]</type></term>
      <listitem>
       <para>
@@ -4668,7 +4668,7 @@ CREATE TRIGGER emp_audit_del
     in the top-level block. They are:
 
    <variablelist>
-    <varlistentry>
+    <varlistentry id="plpgsql-event-trigger-tg-event">
      <term><varname>TG_EVENT</varname> <type>text</type></term>
      <listitem>
       <para>
@@ -4677,7 +4677,7 @@ CREATE TRIGGER emp_audit_del
      </listitem>
     </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="plpgsql-event-trigger-tg-tag">
      <term><varname>TG_TAG</varname> <type>text</type></term>
      <listitem>
       <para>
@@ -5131,7 +5131,7 @@ $PROC$ LANGUAGE plpgsql;
   </para>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="plpgsql-quote-tips-1-quot">
     <term>1 quotation mark</term>
     <listitem>
      <para>
@@ -5147,7 +5147,7 @@ CREATE FUNCTION foo() RETURNS integer AS '
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="plpgsql-quote-tips-2-quot">
     <term>2 quotation marks</term>
     <listitem>
      <para>
@@ -5167,7 +5167,7 @@ SELECT * FROM users WHERE f_name='foobar';
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="plpgsql-quote-tips-4-quot">
     <term>4 quotation marks</term>
     <listitem>
      <para>
@@ -5190,7 +5190,7 @@ a_output := a_output || $$ AND name LIKE 'foobar' AND xyz$$
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="plpgsql-quote-tips-6-quot">
     <term>6 quotation marks</term>
     <listitem>
      <para>
@@ -5211,7 +5211,7 @@ a_output := a_output || $$ AND name LIKE 'foobar'$$
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="plpgsql-quote-tips-10-quot">
     <term>10 quotation marks</term>
     <listitem>
      <para>
@@ -5276,7 +5276,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
     <literal>"all"</literal>. The default is <literal>"none"</literal>. Currently
     the list of available checks includes:
     <variablelist>
-     <varlistentry>
+     <varlistentry id="plpgsql-extra-checks-shadowed-variables">
       <term><varname>shadowed_variables</varname></term>
       <listitem>
        <para>
@@ -5285,7 +5285,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="plpgsql-extra-checks-strict-multi-assignment">
       <term><varname>strict_multi_assignment</varname></term>
       <listitem>
        <para>
@@ -5303,7 +5303,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="plpgsql-extra-checks-too-many-rows">
       <term><varname>too_many_rows</varname></term>
       <listitem>
        <para>
@@ -5488,7 +5488,7 @@ HINT:  Make sure the query returns the exact list of columns.
     </itemizedlist>
    </para>
 
-  <sect2>
+  <sect2 id="plpgsql-porting-examples">
    <title>Porting Examples</title>
 
    <para>
@@ -5924,7 +5924,7 @@ END;
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="plpgsql-porting-other-execute">
     <title><command>EXECUTE</command></title>
 
     <para>

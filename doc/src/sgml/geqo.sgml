@@ -173,7 +173,7 @@
     non-exhaustive search.
    </para>
 
-  <sect2>
+  <sect2 id="geqo-pg-intro-gen-possible-plans">
    <title>Generating Possible Plans with <acronym>GEQO</acronym></title>
 
    <para>

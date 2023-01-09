@@ -711,7 +711,7 @@ UPDATE table_name SET jsonb_field[1]['a'] = '1';
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="datatype-json-transforms">
   <title>Transforms</title>
 
   <para>

@@ -153,7 +153,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    lock acquired will be the strictest one required by any subcommand.
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-add-column">
     <term><literal>ADD COLUMN [ IF NOT EXISTS ]</literal></term>
     <listitem>
      <para>
@@ -165,7 +165,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-drop-column">
     <term><literal>DROP COLUMN [ IF EXISTS ]</literal></term>
     <listitem>
      <para>
@@ -184,7 +184,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-data-type">
     <term><literal>SET DATA TYPE</literal></term>
     <listitem>
      <para>
@@ -211,7 +211,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-drop-default">
     <term><literal>SET</literal>/<literal>DROP DEFAULT</literal></term>
     <listitem>
      <para>
@@ -224,7 +224,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-drop-not-null">
     <term><literal>SET</literal>/<literal>DROP NOT NULL</literal></term>
     <listitem>
      <para>
@@ -255,7 +255,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-drop-expression">
     <term><literal>DROP EXPRESSION [ IF EXISTS ]</literal></term>
     <listitem>
      <para>
@@ -272,7 +272,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-generated-identity">
     <term><literal>ADD GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY</literal></term>
     <term><literal>SET GENERATED { ALWAYS | BY DEFAULT }</literal></term>
     <term><literal>DROP IDENTITY [ IF EXISTS ]</literal></term>
@@ -295,7 +295,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-sequence-option">
     <term><literal>SET <replaceable>sequence_option</replaceable></literal></term>
     <term><literal>RESTART</literal></term>
     <listitem>
@@ -308,7 +308,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-statistics">
     <term><literal>SET STATISTICS</literal></term>
     <listitem>
      <para>
@@ -329,7 +329,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-attribute-option">
     <term><literal>SET ( <replaceable class="parameter">attribute_option</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )</literal></term>
     <term><literal>RESET ( <replaceable class="parameter">attribute_option</replaceable> [, ... ] )</literal></term>
     <listitem>
@@ -365,7 +365,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-storage">
     <term>
      <literal>SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN | DEFAULT }</literal>
      <indexterm>
@@ -399,7 +399,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-compression">
     <term>
      <literal>SET COMPRESSION <replaceable class="parameter">compression_method</replaceable></literal>
     </term>
@@ -429,7 +429,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-add-table-constraint">
     <term><literal>ADD <replaceable class="parameter">table_constraint</replaceable> [ NOT VALID ]</literal></term>
     <listitem>
      <para>
@@ -476,7 +476,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-add-table-constraint-using-index">
     <term><literal>ADD <replaceable class="parameter">table_constraint_using_index</replaceable></literal></term>
     <listitem>
      <para>
@@ -531,7 +531,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-alter-constraint">
     <term><literal>ALTER CONSTRAINT</literal></term>
     <listitem>
      <para>
@@ -541,7 +541,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-validate-constraint">
     <term><literal>VALIDATE CONSTRAINT</literal></term>
     <listitem>
      <para>
@@ -558,7 +558,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-drop-constraint">
     <term><literal>DROP CONSTRAINT [ IF EXISTS ]</literal></term>
     <listitem>
      <para>
@@ -570,7 +570,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-disable-enable-trigger">
     <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ] TRIGGER</literal></term>
     <listitem>
      <para>
@@ -617,7 +617,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-disable-enable-rule">
     <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ] RULE</literal></term>
     <listitem>
      <para>
@@ -637,7 +637,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-disable-enable-row-level-security">
     <term><literal>DISABLE</literal>/<literal>ENABLE ROW LEVEL SECURITY</literal></term>
     <listitem>
      <para>
@@ -652,7 +652,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-force-row-level-security">
     <term><literal>NO FORCE</literal>/<literal>FORCE ROW LEVEL SECURITY</literal></term>
     <listitem>
      <para>
@@ -667,7 +667,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-cluster-on">
     <term><literal>CLUSTER ON</literal></term>
     <listitem>
      <para>
@@ -681,7 +681,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-without-cluster">
     <term><literal>SET WITHOUT CLUSTER</literal></term>
     <listitem>
      <para>
@@ -696,7 +696,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-without-oids">
     <term><literal>SET WITHOUT OIDS</literal></term>
     <listitem>
      <para>
@@ -707,7 +707,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-access-method">
     <term><literal>SET ACCESS METHOD</literal></term>
     <listitem>
      <para>
@@ -717,7 +717,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-tablespace">
     <term><literal>SET TABLESPACE</literal></term>
     <listitem>
      <para>
@@ -749,7 +749,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-logged-unlogged">
     <term><literal>SET { LOGGED | UNLOGGED }</literal></term>
     <listitem>
      <para>
@@ -766,7 +766,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-storage-parameter">
     <term><literal>SET ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
@@ -792,7 +792,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-reset-storage-parameter">
     <term><literal>RESET ( <replaceable class="parameter">storage_parameter</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
@@ -803,7 +803,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-inherit">
     <term><literal>INHERIT <replaceable class="parameter">parent_table</replaceable></literal></term>
     <listitem>
      <para>
@@ -831,7 +831,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-no-inherit">
     <term><literal>NO INHERIT <replaceable class="parameter">parent_table</replaceable></literal></term>
     <listitem>
      <para>
@@ -843,7 +843,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-of">
     <term><literal>OF <replaceable class="parameter">type_name</replaceable></literal></term>
     <listitem>
      <para>
@@ -857,7 +857,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-not-of">
     <term><literal>NOT OF</literal></term>
     <listitem>
      <para>
@@ -866,7 +866,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-owner-to">
     <term><literal>OWNER TO</literal></term>
     <listitem>
      <para>
@@ -887,7 +887,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       always logged regardless of whether it changed.
       This option has no effect except when logical replication is in use.
      <variablelist>
-      <varlistentry>
+      <varlistentry id="sql-altertable-replica-identity-default">
        <term><literal>DEFAULT</literal></term>
        <listitem>
         <para>
@@ -897,7 +897,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="sql-altertable-replica-identity-using-index">
        <term><literal>USING INDEX <replaceable class="parameter">index_name</replaceable></literal></term>
        <listitem>
         <para>
@@ -909,7 +909,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="sql-altertable-replica-identity-full">
        <term><literal>FULL</literal></term>
        <listitem>
         <para>
@@ -918,7 +918,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="sql-altertable-replica-identity-nothing">
        <term><literal>NOTHING</literal></term>
        <listitem>
         <para>
@@ -931,7 +931,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-rename">
     <term><literal>RENAME</literal></term>
     <listitem>
      <para>
@@ -945,7 +945,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-desc-set-schema">
     <term><literal>SET SCHEMA</literal></term>
     <listitem>
      <para>
@@ -1122,7 +1122,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
     <variablelist>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-if-exists">
       <term><literal>IF EXISTS</literal></term>
       <listitem>
        <para>
@@ -1132,7 +1132,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-name">
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
@@ -1146,7 +1146,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-column-name">
       <term><replaceable class="parameter">column_name</replaceable></term>
       <listitem>
        <para>
@@ -1155,7 +1155,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-new-column-name">
       <term><replaceable class="parameter">new_column_name</replaceable></term>
       <listitem>
        <para>
@@ -1164,7 +1164,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-new-name">
       <term><replaceable class="parameter">new_name</replaceable></term>
       <listitem>
        <para>
@@ -1173,7 +1173,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-data-type">
       <term><replaceable class="parameter">data_type</replaceable></term>
       <listitem>
        <para>
@@ -1183,7 +1183,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-table-constraint">
       <term><replaceable class="parameter">table_constraint</replaceable></term>
       <listitem>
        <para>
@@ -1192,7 +1192,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-constraint-name">
       <term><replaceable class="parameter">constraint_name</replaceable></term>
       <listitem>
        <para>
@@ -1201,7 +1201,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-cascade">
       <term><literal>CASCADE</literal></term>
       <listitem>
        <para>
@@ -1213,7 +1213,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-restrict">
       <term><literal>RESTRICT</literal></term>
       <listitem>
        <para>
@@ -1223,7 +1223,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-trigger-name">
       <term><replaceable class="parameter">trigger_name</replaceable></term>
       <listitem>
        <para>
@@ -1232,7 +1232,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-all">
       <term><literal>ALL</literal></term>
       <listitem>
        <para>
@@ -1245,7 +1245,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-user">
       <term><literal>USER</literal></term>
       <listitem>
        <para>
@@ -1257,7 +1257,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-index-name">
       <term><replaceable class="parameter">index_name</replaceable></term>
       <listitem>
        <para>
@@ -1266,7 +1266,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-storage-parameter">
       <term><replaceable class="parameter">storage_parameter</replaceable></term>
       <listitem>
        <para>
@@ -1275,7 +1275,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-value">
       <term><replaceable class="parameter">value</replaceable></term>
       <listitem>
        <para>
@@ -1285,7 +1285,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-parent-table">
       <term><replaceable class="parameter">parent_table</replaceable></term>
       <listitem>
        <para>
@@ -1294,7 +1294,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-new-owner">
       <term><replaceable class="parameter">new_owner</replaceable></term>
       <listitem>
        <para>
@@ -1303,7 +1303,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-new-access-method">
       <term><replaceable class="parameter">new_access_method</replaceable></term>
       <listitem>
        <para>
@@ -1312,7 +1312,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-new-tablespace">
       <term><replaceable class="parameter">new_tablespace</replaceable></term>
       <listitem>
        <para>
@@ -1321,7 +1321,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-new-schema">
       <term><replaceable class="parameter">new_schema</replaceable></term>
       <listitem>
        <para>
@@ -1330,7 +1330,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-partition-name">
       <term><replaceable class="parameter">partition_name</replaceable></term>
       <listitem>
        <para>
@@ -1339,7 +1339,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-altertable-parms-partition-bound-spec">
       <term><replaceable class="parameter">partition_bound_spec</replaceable></term>
       <listitem>
        <para>

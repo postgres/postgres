@@ -13,7 +13,7 @@
   debugging purposes.  All of these functions may be used only by superusers.
  </para>
 
- <sect2>
+ <sect2 id="pageinspect-general-funcs">
   <title>General Functions</title>
 
   <variablelist>
@@ -156,7 +156,7 @@ test=# SELECT fsm_page_contents(get_raw_page('pg_class', 'fsm', 0));
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-heap-funcs">
   <title>Heap Functions</title>
 
   <variablelist>
@@ -282,7 +282,7 @@ test=# SELECT t_ctid, raw_flags, combined_flags
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-b-tree-funcs">
   <title>B-Tree Functions</title>
 
   <variablelist>
@@ -521,7 +521,7 @@ test=# SELECT itemoffset, ctid, itemlen, nulls, vars, data, dead, htid, tids[0:2
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-brin-funcs">
   <title>BRIN Functions</title>
 
   <variablelist>
@@ -631,7 +631,7 @@ test=# SELECT * FROM brin_page_items(get_raw_page('brinidx', 5),
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-gin-funcs">
   <title>GIN Functions</title>
 
   <variablelist>
@@ -721,7 +721,7 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-gist-funcs">
   <title>GiST Functions</title>
 
   <variablelist>
@@ -812,7 +812,7 @@ test=# SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-hash-funcs">
   <title>Hash Functions</title>
 
   <variablelist>

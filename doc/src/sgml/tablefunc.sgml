@@ -20,7 +20,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="tablefunc-functions-sect">
   <title>Functions Provided</title>
 
   <para>
@@ -119,7 +119,7 @@
     </tgroup>
   </table>
 
-  <sect3>
+  <sect3 id="tablefunc-functions-normal-rand">
    <title><function>normal_rand</function></title>
 
    <indexterm>
@@ -166,7 +166,7 @@ test=# SELECT * FROM normal_rand(1000, 5, 3);
 </screen>
   </sect3>
 
-  <sect3>
+  <sect3 id="tablefunc-functions-crosstab-text">
    <title><function>crosstab(text)</function></title>
 
    <indexterm>
@@ -325,7 +325,7 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
 
   </sect3>
 
-  <sect3>
+  <sect3 id="tablefunc-functions-crosstab-n-text">
    <title><function>crosstab<replaceable>N</replaceable>(text)</function></title>
 
    <indexterm>
@@ -436,7 +436,7 @@ CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(
 
   </sect3>
 
-  <sect3>
+  <sect3 id="tablefunc-functions-crosstab-text-2">
    <title><function>crosstab(text, text)</function></title>
 
    <indexterm>
@@ -646,7 +646,7 @@ AS
 
   </sect3>
 
-  <sect3>
+  <sect3 id="tablefunc-functions-connectby">
    <title><function>connectby</function></title>
 
    <indexterm>
@@ -853,7 +853,7 @@ SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2'
 
  </sect2>
 
- <sect2>
+ <sect2 id="tablefunc-author">
   <title>Author</title>
 
   <para>

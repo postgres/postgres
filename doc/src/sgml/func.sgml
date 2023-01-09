@@ -13912,7 +13912,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     documents for processing in client applications.
    </para>
 
-   <sect3>
+   <sect3 id="functions-producing-xml-xmlcomment">
     <title><literal>xmlcomment</literal></title>
 
     <indexterm>
@@ -13944,7 +13944,7 @@ SELECT xmlcomment('hello');
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="functions-producing-xml-xmlconcat">
     <title><literal>xmlconcat</literal></title>
 
     <indexterm>
@@ -14001,7 +14001,7 @@ SELECT xmlconcat('<?xml version="1.1"?><foo/>', '<?xml version="1.1" standalone=
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="functions-producing-xml-xmlelement">
     <title><literal>xmlelement</literal></title>
 
    <indexterm>
@@ -14107,7 +14107,7 @@ SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="functions-producing-xml-xmlforest">
     <title><literal>xmlforest</literal></title>
 
    <indexterm>
@@ -14168,7 +14168,7 @@ WHERE table_schema = 'pg_catalog';
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="functions-producing-xml-xmlpi">
     <title><literal>xmlpi</literal></title>
 
    <indexterm>
@@ -14201,7 +14201,7 @@ SELECT xmlpi(name php, 'echo "hello world";');
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="functions-producing-xml-xmlroot">
     <title><literal>xmlroot</literal></title>
 
    <indexterm>
@@ -14303,7 +14303,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
      of <type>xml</type> values.
     </para>
 
-   <sect3>
+   <sect3 id="functions-producing-xml-is-document">
     <title><literal>IS DOCUMENT</literal></title>
 
     <indexterm>
@@ -14323,7 +14323,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="functions-producing-xml-is-not-document">
     <title><literal>IS NOT DOCUMENT</literal></title>
 
     <indexterm>
@@ -21523,7 +21523,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-subquery-single-row-comp">
    <title>Single-Row Comparison</title>
 
    <indexterm zone="functions-subquery">
@@ -21646,7 +21646,7 @@ OR
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-comparisons-not-in">
    <title><literal>NOT IN</literal></title>
 
 <synopsis>
@@ -21687,7 +21687,7 @@ AND
   </tip>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-comparisons-any-some">
    <title><literal>ANY</literal>/<literal>SOME</literal> (array)</title>
 
 <synopsis>
@@ -21724,7 +21724,7 @@ AND
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-comparisons-all">
    <title><literal>ALL</literal> (array)</title>
 
 <synopsis>

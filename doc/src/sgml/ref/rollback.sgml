@@ -42,7 +42,7 @@ ROLLBACK [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
   </indexterm>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="sql-rollback-transaction">
     <term><literal>WORK</literal></term>
     <term><literal>TRANSACTION</literal></term>
     <listitem>

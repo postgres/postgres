@@ -21,7 +21,7 @@
   <xref linkend="guc-shared-preload-libraries"/> in <filename>postgresql.conf</filename>.
  </para>
 
- <sect2>
+ <sect2 id="auth-delay-configuration-parameters">
   <title>Configuration Parameters</title>
 
   <variablelist>
@@ -54,7 +54,7 @@ auth_delay.milliseconds = '500'
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="auth-delay-author">
   <title>Author</title>
 
   <para>

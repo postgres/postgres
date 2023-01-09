@@ -19,7 +19,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="ltree-definitions">
   <title>Definitions</title>
 
   <para>
@@ -188,7 +188,7 @@ Europe &amp; Russia*@ &amp; !Transportation
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="ltree-ops-funcs">
   <title>Operators and Functions</title>
 
   <para>
@@ -608,7 +608,7 @@ Europe &amp; Russia*@ &amp; !Transportation
   </table>
  </sect2>
 
- <sect2>
+ <sect2 id="ltree-indexes">
   <title>Indexes</title>
   <para>
    <filename>ltree</filename> supports several types of indexes that can speed
@@ -686,7 +686,7 @@ CREATE INDEX path_gist_idx ON test USING GIST (array_path gist__ltree_ops(siglen
   </itemizedlist>
  </sect2>
 
- <sect2>
+ <sect2 id="ltree-example">
   <title>Example</title>
 
   <para>
@@ -823,7 +823,7 @@ ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="ltree-transforms">
   <title>Transforms</title>
 
   <para>
@@ -843,7 +843,7 @@ ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.
   </caution>
  </sect2>
 
- <sect2>
+ <sect2 id="ltree-authors">
   <title>Authors</title>
 
   <para>

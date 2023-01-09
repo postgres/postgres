@@ -27,7 +27,7 @@
   <xref linkend="guc-local-preload-libraries"/>.
  </para>
 
- <sect2>
+ <sect2 id="basebackup-to-shell-configuration-parameters">
   <title>Configuration Parameters</title>
 
   <variablelist>
@@ -74,7 +74,7 @@
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="basebackup-to-shell-author">
   <title>Author</title>
 
   <para>

@@ -46,7 +46,7 @@
    system.
   </para>
 
-  <sect2>
+  <sect2 id="locale-overview">
    <title>Overview</title>
 
    <para>
@@ -206,7 +206,7 @@ initdb --locale=sv_SE
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="locale-behavior">
    <title>Behavior</title>
 
    <para>
@@ -276,7 +276,7 @@ initdb --locale=sv_SE
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="locale-selecting-locales">
    <title>Selecting Locales</title>
 
    <para>
@@ -338,7 +338,7 @@ initdb --locale=sv_SE
    </orderedlist>
   </sect2>
 
-  <sect2>
+  <sect2 id="locale-providers">
    <title>Locale Providers</title>
 
    <para>
@@ -378,7 +378,7 @@ initdb --locale-provider=icu --icu-locale=en
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="locale-problems">
    <title>Problems</title>
 
    <para>
@@ -440,7 +440,7 @@ initdb --locale-provider=icu --icu-locale=en
    of a database cannot be changed after its creation.
   </para>
 
-  <sect2>
+  <sect2 id="collation-concepts">
    <title>Concepts</title>
 
    <para>
@@ -642,7 +642,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     a database.
    </para>
 
-   <sect3>
+   <sect3 id="collation-managing-standard">
     <title>Standard Collations</title>
 
    <para>
@@ -665,7 +665,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    </para>
   </sect3>
 
-  <sect3>
+  <sect3 id="collation-managing-predefined">
    <title>Predefined Collations</title>
 
    <para>
@@ -684,7 +684,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     in <application>psql</application>.
    </para>
 
-  <sect4>
+  <sect4 id="collation-managing-predefined-libc">
    <title>libc Collations</title>
 
    <para>
@@ -741,7 +741,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
    </para>
   </sect4>
 
-  <sect4>
+  <sect4 id="collation-managing-predefined-icu">
    <title>ICU Collations</title>
 
    <para>
@@ -760,14 +760,14 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     Here are some example collations that might be created:
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="collation-managing-predefined-icu-de-x-icu">
       <term><literal>de-x-icu</literal></term>
       <listitem>
        <para>German collation, default variant</para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="collation-managing-predefined-icu-de-at-x-icu">
       <term><literal>de-AT-x-icu</literal></term>
       <listitem>
        <para>German collation for Austria, default variant</para>
@@ -779,7 +779,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="collation-managing-predefined-icu-und-x-icu">
       <term><literal>und-x-icu</literal> (for <quote>undefined</quote>)</term>
       <listitem>
        <para>
@@ -817,7 +817,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     ensures that they are saved by <command>pg_dump</command>.
    </para>
 
-   <sect4>
+   <sect4 id="collation-managing-create-libc">
     <title>libc Collations</title>
 
     <para>
@@ -841,7 +841,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
     </para>
    </sect4>
 
-   <sect4>
+   <sect4 id="collation-managing-create-icu">
     <title>ICU Collations</title>
 
    <para>
@@ -859,7 +859,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
     Here are some examples:
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="collation-managing-create-icu-de-u-co-phonebk-x-icu">
       <term><literal>CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de-u-co-phonebk');</literal></term>
       <term><literal>CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de@collation=phonebook');</literal></term>
       <listitem>
@@ -879,7 +879,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="collation-managing-create-icu-und-u-co-emoji-x-icu">
       <term><literal>CREATE COLLATION "und-u-co-emoji-x-icu" (provider = icu, locale = 'und-u-co-emoji');</literal></term>
       <term><literal>CREATE COLLATION "und-u-co-emoji-x-icu" (provider = icu, locale = '@collation=emoji');</literal></term>
       <listitem>
@@ -893,7 +893,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="collation-managing-create-icu-en-u-kr-grek-latn">
       <term><literal>CREATE COLLATION latinlast (provider = icu, locale = 'en-u-kr-grek-latn');</literal></term>
       <term><literal>CREATE COLLATION latinlast (provider = icu, locale = 'en@colReorder=grek-latn');</literal></term>
       <listitem>
@@ -903,7 +903,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="collation-managing-create-icu-en-u-kf-upper">
       <term><literal>CREATE COLLATION upperfirst (provider = icu, locale = 'en-u-kf-upper');</literal></term>
       <term><literal>CREATE COLLATION upperfirst (provider = icu, locale = 'en@colCaseFirst=upper');</literal></term>
       <listitem>
@@ -914,7 +914,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
       </listitem>
      </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="collation-managing-create-icu-en-u-kf-upper-kr-grek-latn">
       <term><literal>CREATE COLLATION special (provider = icu, locale = 'en-u-kf-upper-kr-grek-latn');</literal></term>
       <term><literal>CREATE COLLATION special (provider = icu, locale = 'en@colCaseFirst=upper;colReorder=grek-latn');</literal></term>
       <listitem>
@@ -924,7 +924,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="collation-managing-create-icu-en-u-kn-true">
       <term><literal>CREATE COLLATION numeric (provider = icu, locale = 'en-u-kn-true');</literal></term>
       <term><literal>CREATE COLLATION numeric (provider = icu, locale = 'en@colNumeric=yes');</literal></term>
       <listitem>
@@ -1522,7 +1522,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
      </para>
     </sect2>
 
-   <sect2>
+   <sect2 id="multibyte-setting">
     <title>Setting the Character Set</title>
 
     <para>
@@ -1610,7 +1610,7 @@ $ <userinput>psql -l</userinput>
     </important>
    </sect2>
 
-   <sect2>
+   <sect2 id="multibyte-automatic-conversion">
     <title>Automatic Character Set Conversion Between Server and Client</title>
 
     <para>
@@ -2692,7 +2692,7 @@ RESET client_encoding;
     </table>
    </sect2>
 
-   <sect2>
+   <sect2 id="multibyte-further-reading">
     <title>Further Reading</title>
 
     <para>

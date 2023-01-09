@@ -183,7 +183,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="history-postgresql">
   <title><productname>PostgreSQL</productname></title>
 
   <para>

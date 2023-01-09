@@ -216,7 +216,7 @@
    after the start-up phase.
   </para>
 
-  <sect2>
+  <sect2 id="protocol-flow-start-up">
    <title>Start-up</title>
 
    <para>
@@ -529,7 +529,7 @@
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-simple-query">
    <title>Simple Query</title>
 
    <para>
@@ -1109,7 +1109,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-function-call">
    <title>Function Call</title>
 
    <para>
@@ -1386,7 +1386,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </note>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-canceling-requests">
    <title>Canceling Requests in Progress</title>
 
    <para>
@@ -1450,7 +1450,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-termination">
    <title>Termination</title>
 
    <para>
@@ -1490,7 +1490,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-ssl">
    <title><acronym>SSL</acronym> Session Encryption</title>
 
    <para>
@@ -1563,7 +1563,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-gssapi">
    <title><acronym>GSSAPI</acronym> Session Encryption</title>
 
    <para>

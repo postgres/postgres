@@ -20,7 +20,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="seg-rationale">
   <title>Rationale</title>
 
   <para>
@@ -81,7 +81,7 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="seg-syntax">
   <title>Syntax</title>
 
   <para>
@@ -220,7 +220,7 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
 
  </sect2>
 
- <sect2>
+ <sect2 id="seg-precision">
   <title>Precision</title>
 
   <para>
@@ -239,7 +239,7 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="seg-usage">
   <title>Usage</title>
 
   <para>
@@ -363,7 +363,7 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="seg-notes">
   <title>Notes</title>
 
   <para>
@@ -392,7 +392,7 @@ postgres=&gt; select '10(+-)1'::seg as seg;
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="seg-credits">
   <title>Credits</title>
 
   <para>

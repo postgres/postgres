@@ -32,7 +32,7 @@
    interprocess communication and locking are working correctly.
   </para>
 
-  <sect2>
+  <sect2 id="regress-run-temp-inst">
    <title>Running the Tests Against a Temporary Installation</title>
 
   <para>
@@ -93,7 +93,7 @@ make MAX_CONNECTIONS=10 check
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="regress-run-existing-inst">
    <title>Running the Tests Against an Existing Installation</title>
 
   <para>
@@ -319,7 +319,7 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl'
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="regress-run-locale">
    <title>Locale and Encoding</title>
 
    <para>
@@ -362,7 +362,7 @@ make check LANG=C ENCODING=EUC_JP
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="regress-run-custom-settings">
    <title>Custom Server Settings</title>
 
    <para>
@@ -388,7 +388,7 @@ make check EXTRA_REGRESS_OPTS="--temp-config=test_postgresql.conf"
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="regress-run-extra-tests">
    <title>Extra Tests</title>
 
    <para>
@@ -452,7 +452,7 @@ make check EXTRA_TESTS=numeric_big
     <xref linkend="regress-variant"/> for details.
    </para>
 
-   <sect2>
+   <sect2 id="regress-evaluation-message-differences">
     <title>Error Message Differences</title>
 
     <para>
@@ -467,7 +467,7 @@ make check EXTRA_TESTS=numeric_big
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="regress-evaluation-locale-differences">
     <title>Locale Differences</title>
 
     <para>
@@ -514,7 +514,7 @@ make check NO_LOCALE=1
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="regress-evaluation-date-time-differences">
     <title>Date and Time Differences</title>
 
     <para>
@@ -528,7 +528,7 @@ make check NO_LOCALE=1
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="regress-evaluation-float-differences">
     <title>Floating-Point Differences</title>
 
     <para>
@@ -556,7 +556,7 @@ make check NO_LOCALE=1
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="regress-evaluation-ordering-differences">
     <title>Row Ordering Differences</title>
 
     <para>
@@ -592,7 +592,7 @@ exclusion of those that don't.
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="regress-evaluation-stack-depth">
     <title>Insufficient Stack Depth</title>
 
     <para>
@@ -614,7 +614,7 @@ exclusion of those that don't.
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="regress-evaluation-random-test">
     <title>The <quote>random</quote> Test</title>
 
     <para>
@@ -629,7 +629,7 @@ diff results/random.out expected/random.out
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="regress-evaluation-config-params">
     <title>Configuration Parameters</title>
 
     <para>

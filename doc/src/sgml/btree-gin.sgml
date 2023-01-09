@@ -38,7 +38,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="btree-gin-example-usage">
   <title>Example Usage</title>
 
 <programlisting>
@@ -51,7 +51,7 @@ SELECT * FROM test WHERE a &lt; 10;
 
  </sect2>
 
- <sect2>
+ <sect2 id="btree-gin-authors">
   <title>Authors</title>
 
   <para>

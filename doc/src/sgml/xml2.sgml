@@ -12,7 +12,7 @@
   XSLT functionality.
  </para>
 
- <sect2>
+ <sect2 id="xml2-deprecation">
   <title>Deprecation Notice</title>
 
   <para>
@@ -30,7 +30,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="xml2-functions">
   <title>Description of Functions</title>
 
   <para>
@@ -168,7 +168,7 @@
   </table>
  </sect2>
 
- <sect2>
+ <sect2 id="xml2-xpath-table">
   <title><literal>xpath_table</literal></title>
 
   <indexterm>
@@ -318,7 +318,7 @@ WHERE t.author_id = p.person_id;
    of this in a view for convenience.
   </para>
 
-  <sect3>
+  <sect3 id="xml2-xpath-table-multivalued-results">
    <title>Multivalued Results</title>
 
    <para>
@@ -393,14 +393,14 @@ ORDER BY doc_num, line_num;
   </sect3>
  </sect2>
 
- <sect2>
+ <sect2 id="xml2-xslt">
   <title>XSLT Functions</title>
 
   <para>
    The following functions are available if libxslt is installed:
   </para>
 
-  <sect3>
+  <sect3 id="xml2-xslt-xslt-process">
    <title><literal>xslt_process</literal></title>
 
   <indexterm>
@@ -427,7 +427,7 @@ xslt_process(text document, text stylesheet, text paramlist) returns text
   </sect3>
  </sect2>
 
- <sect2>
+ <sect2 id="xml2-author">
   <title>Author</title>
 
   <para>

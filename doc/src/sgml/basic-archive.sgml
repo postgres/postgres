@@ -21,7 +21,7 @@
   must be enabled.
  </para>
 
- <sect2>
+ <sect2 id="basic-archive-configuration-parameters">
   <title>Configuration Parameters</title>
 
   <variablelist>
@@ -57,7 +57,7 @@ basic_archive.archive_directory = '/path/to/archive/directory'
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="basic-archive-notes">
   <title>Notes</title>
 
   <para>
@@ -70,7 +70,7 @@ basic_archive.archive_directory = '/path/to/archive/directory'
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="basic-archive-author">
   <title>Author</title>
 
   <para>

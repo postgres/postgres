@@ -44,7 +44,7 @@
   </para>
  </caution>
 
- <sect2>
+ <sect2 id="earthdistance-cube-based">
   <title>Cube-Based Earth Distances</title>
 
   <para>
@@ -202,7 +202,7 @@
 
  </sect2>
 
- <sect2>
+ <sect2 id="earthdistance-point-based">
   <title>Point-Based Earth Distances</title>
 
   <para>

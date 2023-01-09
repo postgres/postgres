@@ -154,7 +154,7 @@ $ENV{MSBFLAGS}="/m";
 </programlisting>
  </para>
 
- <sect2>
+ <sect2 id="install-windows-full-requirements">
   <title>Requirements</title>
   <para>
    The following additional products are required to build
@@ -348,7 +348,7 @@ $ENV{MSBFLAGS}="/m";
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="install-windows-full-64-bit">
   <title>Special Considerations for 64-Bit Windows</title>
 
   <para>
@@ -372,7 +372,7 @@ $ENV{MSBFLAGS}="/m";
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="install-windows-full-build">
   <title>Building</title>
 
   <para>
@@ -409,7 +409,7 @@ $ENV{CONFIG}="Debug";
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="install-windows-full-clean-inst">
   <title>Cleaning and Installing</title>
 
   <para>
@@ -442,7 +442,7 @@ $ENV{CONFIG}="Debug";
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="install-windows-full-reg-tests">
   <title>Running the Regression Tests</title>
 
   <para>

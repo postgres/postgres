@@ -23,7 +23,7 @@
   the <literal>pg_stat_scan_tables</literal> role instead.
  </para>
 
- <sect2>
+ <sect2 id="pgstattuple-funcs">
   <title>Functions</title>
 
   <variablelist>
@@ -618,7 +618,7 @@ approx_free_percent  | 2.09
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstattuple-authors">
   <title>Authors</title>
 
   <para>

@@ -41,7 +41,7 @@
   data blocks are similarly expensive.
  </para>
 
- <sect2>
+ <sect2 id="pgvisibility-funcs">
   <title>Functions</title>
 
   <variablelist>
@@ -147,7 +147,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgvisibility-author">
   <title>Author</title>
 
   <para>

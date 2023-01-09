@@ -178,7 +178,7 @@
     </itemizedlist>
    </para>
 
-   <sect2>
+   <sect2 id="parser-stage-parser">
     <title>Parser</title>
 
     <para>
@@ -241,7 +241,7 @@
 
    </sect2>
 
-   <sect2>
+   <sect2 id="parser-stage-transformation-process">
      <title>Transformation Process</title>
 
     <para>
@@ -365,7 +365,7 @@
     and plans.
    </para>
 
-   <sect2>
+   <sect2 id="planner-optimizer-generating-possible-plans">
     <title>Generating Possible Plans</title>
 
     <para>

@@ -960,7 +960,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000
    <secondary>of the planner</secondary>
   </indexterm>
 
-  <sect2>
+  <sect2 id="planner-stats-single-column">
    <title>Single-Column Statistics</title>
   <para>
    As we saw in the previous section, the query planner needs to estimate
@@ -1169,7 +1169,7 @@ WHERE tablename = 'road';
     that are currently supported.
    </para>
 
-   <sect3>
+   <sect3 id="planner-stats-extended-functional-deps">
     <title>Functional Dependencies</title>
 
     <para>
@@ -1239,7 +1239,7 @@ SELECT stxname, stxkeys, stxddependencies
      an underestimate.
     </para>
 
-    <sect4>
+    <sect4 id="planner-stats-extended-functional-deps-limits">
      <title>Limitations of Functional Dependencies</title>
 
      <para>
@@ -1280,7 +1280,7 @@ SELECT * FROM zipcodes WHERE city = 'San Francisco' AND zip = '90210';
     </sect4>
    </sect3>
 
-   <sect3>
+   <sect3 id="planner-stats-extended-n-distinct-counts">
     <title>Multivariate N-Distinct Counts</title>
 
     <para>
@@ -1333,7 +1333,7 @@ nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="planner-stats-extended-mcv-lists">
     <title>Multivariate MCV Lists</title>
 
     <para>

@@ -47,11 +47,11 @@
   superusers to others using <command>GRANT</command>.
  </para>
 
- <sect2>
+ <sect2 id="pgwalinspect-funcs">
   <title>General Functions</title>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="pgwalinspect-funcs-pg-get-wal-record-info">
     <term>
      <function>
       pg_get_wal_record_info(in_lsn pg_lsn,
@@ -78,7 +78,7 @@
     </listitem>
    </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="pgwalinspect-funcs-pg-get-wal-records-info">
     <term>
      <function>
       pg_get_wal_records_info(start_lsn pg_lsn,
@@ -128,7 +128,7 @@ postgres=# select start_lsn, end_lsn, prev_lsn, xid, resource_manager, record_ty
     </listitem>
    </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="pgwalinspect-funcs-pg-get-wal-records-info-till-end-of-wal">
     <term>
      <function>
       pg_get_wal_records_info_till_end_of_wal(start_lsn pg_lsn,
@@ -156,7 +156,7 @@ postgres=# select start_lsn, end_lsn, prev_lsn, xid, resource_manager, record_ty
     </listitem>
    </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="pgwalinspect-funcs-pg-get-wal-stats">
     <term>
      <function>
       pg_get_wal_stats(start_lsn pg_lsn,
@@ -234,7 +234,7 @@ postgres=# select * from pg_get_wal_stats('0/14AFC30', '0/15011D7', true) where 
     </listitem>
    </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="pgwalinspect-funcs-pg-get-wal-stats-till-end-of-wal">
     <term>
      <function>
       pg_get_wal_stats_till_end_of_wal(start_lsn pg_lsn,
@@ -264,7 +264,7 @@ postgres=# select * from pg_get_wal_stats('0/14AFC30', '0/15011D7', true) where 
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pgwalinspect-author">
   <title>Author</title>
 
   <para>

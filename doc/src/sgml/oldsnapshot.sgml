@@ -13,7 +13,7 @@
   <xref linkend="guc-old-snapshot-threshold" />.
  </para>
 
- <sect2>
+ <sect2 id="oldsnapshot-functions">
   <title>Functions</title>
 
   <variablelist>

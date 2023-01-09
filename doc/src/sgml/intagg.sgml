@@ -15,7 +15,7 @@
   the built-in functions.
  </para>
 
- <sect2>
+ <sect2 id="intagg-functions">
   <title>Functions</title>
 
  <indexterm>
@@ -50,7 +50,7 @@
 
  </sect2>
 
- <sect2>
+ <sect2 id="intagg-samples">
   <title>Sample Uses</title>
 
   <para>

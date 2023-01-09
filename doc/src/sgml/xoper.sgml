@@ -109,7 +109,7 @@ SELECT (a + b) AS c FROM test_complex;
     See <xref linkend="xfunc-optimization"/> for more information.
    </para>
 
-   <sect2>
+   <sect2 id="xoper-commutator">
     <title><literal>COMMUTATOR</literal></title>
 
     <para>
@@ -186,7 +186,7 @@ SELECT (a + b) AS c FROM test_complex;
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xoper-negator">
     <title><literal>NEGATOR</literal></title>
 
     <para>
@@ -225,7 +225,7 @@ SELECT (a + b) AS c FROM test_complex;
 
   </sect2>
 
-  <sect2>
+  <sect2 id="xoper-restrict">
    <title><literal>RESTRICT</literal></title>
 
    <para>
@@ -302,7 +302,7 @@ column OP constant
    </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xoper-join">
     <title><literal>JOIN</literal></title>
 
     <para>
@@ -339,7 +339,7 @@ table1.column1 OP table2.column2
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xoper-hashes">
     <title><literal>HASHES</literal></title>
 
     <para>
@@ -427,7 +427,7 @@ table1.column1 OP table2.column2
 
    </sect2>
 
-   <sect2>
+   <sect2 id="xoper-merges">
     <title><literal>MERGES</literal></title>
 
     <para>
