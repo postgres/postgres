@@ -111,7 +111,6 @@ static bool postmaster_running = false;
 
 static int	success_count = 0;
 static int	fail_count = 0;
-static int	fail_ignore_count = 0;
 
 static bool directory_exists(const char *dir);
 static void make_directory(const char *dir);
@@ -1529,7 +1528,6 @@ run_schedule(const char *schedule, test_start_function startfunc,
 	instr_time	starttimes[MAX_PARALLEL_TESTS];
 	instr_time	stoptimes[MAX_PARALLEL_TESTS];
 	int			statuses[MAX_PARALLEL_TESTS];
-	_stringlist *ignorelist = NULL;
 	char		scbuf[1024];
 	FILE	   *scf;
 	int			line_num = 0;
@@ -1566,20 +1564,6 @@ run_schedule(const char *schedule, test_start_function startfunc,
 			continue;
 		if (strncmp(scbuf, "test: ", 6) == 0)
 			test = scbuf + 6;
-		else if (strncmp(scbuf, "ignore: ", 8) == 0)
-		{
-			c = scbuf + 8;
-			while (*c && isspace((unsigned char) *c))
-				c++;
-			add_stringlist_item(&ignorelist, c);
-
-			/*
-			 * Note: ignore: lines do not run the test, they just say that
-			 * failure of this test when run later on is to be ignored. A bit
-			 * odd but that's how the shell-script version did it.
-			 */
-			continue;
-		}
 		else
 		{
 			fprintf(stderr, _("syntax error in schedule file \"%s\" line %d: %s\n"),
@@ -1715,27 +1699,8 @@ run_schedule(const char *schedule, test_start_function startfunc,
 
 			if (differ)
 			{
-				bool		ignore = false;
-				_stringlist *sl;
-
-				for (sl = ignorelist; sl != NULL; sl = sl->next)
-				{
-					if (strcmp(tests[i], sl->str) == 0)
-					{
-						ignore = true;
-						break;
-					}
-				}
-				if (ignore)
-				{
-					status(_("failed (ignored)"));
-					fail_ignore_count++;
-				}
-				else
-				{
-					status(_("FAILED"));
-					fail_count++;
-				}
+				status(_("FAILED"));
+				fail_count++;
 			}
 			else
 			{
@@ -1761,8 +1726,6 @@ run_schedule(const char *schedule, test_start_function startfunc,
 			free_stringlist(&tags[i]);
 		}
 	}
-
-	free_stringlist(&ignorelist);
 
 	fclose(scf);
 }
@@ -2516,7 +2479,7 @@ regression_main(int argc, char *argv[],
 	 * conserve disk space.  (If there were errors, we leave the instance in
 	 * place for possible manual investigation.)
 	 */
-	if (temp_instance && fail_count == 0 && fail_ignore_count == 0)
+	if (temp_instance && fail_count == 0)
 	{
 		header(_("removing temporary instance"));
 		if (!rmtree(temp_instance, true))
@@ -2529,28 +2492,15 @@ regression_main(int argc, char *argv[],
 	/*
 	 * Emit nice-looking summary message
 	 */
-	if (fail_count == 0 && fail_ignore_count == 0)
+	if (fail_count == 0)
 		snprintf(buf, sizeof(buf),
 				 _(" All %d tests passed. "),
 				 success_count);
-	else if (fail_count == 0)	/* fail_count=0, fail_ignore_count>0 */
-		snprintf(buf, sizeof(buf),
-				 _(" %d of %d tests passed, %d failed test(s) ignored. "),
-				 success_count,
-				 success_count + fail_ignore_count,
-				 fail_ignore_count);
-	else if (fail_ignore_count == 0)	/* fail_count>0 && fail_ignore_count=0 */
+	else
 		snprintf(buf, sizeof(buf),
 				 _(" %d of %d tests failed. "),
 				 fail_count,
 				 success_count + fail_count);
-	else
-		/* fail_count>0 && fail_ignore_count>0 */
-		snprintf(buf, sizeof(buf),
-				 _(" %d of %d tests failed, %d of these failures ignored. "),
-				 fail_count + fail_ignore_count,
-				 success_count + fail_count + fail_ignore_count,
-				 fail_ignore_count);
 
 	putchar('\n');
 	for (i = strlen(buf); i > 0; i--)
