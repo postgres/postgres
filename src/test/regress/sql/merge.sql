@@ -438,7 +438,7 @@ USING source AS s
 ON t.tid = s.sid
 WHEN MATCHED THEN /* Terminal WHEN clause for MATCHED */
 	DELETE
-WHEN MATCHED AND s.delta > 0 THEN
+WHEN MATCHED THEN
 	UPDATE SET balance = t.balance - s.delta;
 ROLLBACK;
 
