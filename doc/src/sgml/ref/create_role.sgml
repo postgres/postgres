@@ -506,6 +506,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ WITH ADMIN <repl
    <member><xref linkend="sql-grant"/></member>
    <member><xref linkend="sql-revoke"/></member>
    <member><xref linkend="app-createuser"/></member>
+   <member><xref linkend="guc-createrole-self-grant"/></member>
   </simplelist>
  </refsect1>
 </refentry>

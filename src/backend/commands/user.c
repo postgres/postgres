@@ -39,6 +39,7 @@
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
+#include "utils/varlena.h"
 
 /*
  * Removing a role grant - or the admin option on it - might recurse to
@@ -81,8 +82,11 @@ typedef struct
 #define GRANT_ROLE_SPECIFIED_INHERIT		0x0002
 #define GRANT_ROLE_SPECIFIED_SET			0x0004
 
-/* GUC parameter */
+/* GUC parameters */
 int			Password_encryption = PASSWORD_TYPE_SCRAM_SHA_256;
+char	   *createrole_self_grant = "";
+bool		createrole_self_grant_enabled = false;
+GrantRoleOptions	createrole_self_grant_options;
 
 /* Hook to check passwords in CreateRole() and AlterRole() */
 check_password_hook_type check_password_hook = NULL;
@@ -532,10 +536,13 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	if (!superuser())
 	{
 		RoleSpec   *current_role = makeNode(RoleSpec);
-		GrantRoleOptions	poptself;
+		GrantRoleOptions poptself;
+		List	   *memberSpecs;
+		List	   *memberIds = list_make1_oid(currentUserId);
 
 		current_role->roletype = ROLESPEC_CURRENT_ROLE;
 		current_role->location = -1;
+		memberSpecs = list_make1(current_role);
 
 		poptself.specified = GRANT_ROLE_SPECIFIED_ADMIN
 			| GRANT_ROLE_SPECIFIED_INHERIT
@@ -545,7 +552,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 		poptself.set = false;
 
 		AddRoleMems(BOOTSTRAP_SUPERUSERID, stmt->role, roleid,
-					list_make1(current_role), list_make1_oid(GetUserId()),
+					memberSpecs, memberIds,
 					BOOTSTRAP_SUPERUSERID, &poptself);
 
 		/*
@@ -553,6 +560,20 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 		 * the additional grants will fail.
 		 */
 		CommandCounterIncrement();
+
+		/*
+		 * Because of the implicit grant above, a CREATEROLE user who creates
+		 * a role has the ability to grant that role back to themselves with
+		 * the INHERIT or SET options, if they wish to inherit the role's
+		 * privileges or be able to SET ROLE to it. The createrole_self_grant
+		 * GUC can be used to make this happen automatically. This has no
+		 * security implications since the same user is able to make the same
+		 * grant using an explicit GRANT statement; it's just convenient.
+		 */
+		if (createrole_self_grant_enabled)
+			AddRoleMems(currentUserId, stmt->role, roleid,
+						memberSpecs, memberIds,
+						currentUserId, &createrole_self_grant_options);
 	}
 
 	/*
@@ -2413,4 +2434,74 @@ InitGrantRoleOptions(GrantRoleOptions *popt)
 	popt->admin = false;
 	popt->inherit = false;
 	popt->set = true;
+}
+
+/*
+ * GUC check_hook for createrole_self_grant
+ */
+bool
+check_createrole_self_grant(char **newval, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	List	   *elemlist;
+	ListCell   *l;
+	unsigned	options = 0;
+	unsigned   *result;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(*newval);
+
+	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	{
+		/* syntax error in list */
+		GUC_check_errdetail("List syntax is invalid.");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
+	}
+
+	foreach(l, elemlist)
+	{
+		char	   *tok = (char *) lfirst(l);
+
+		if (pg_strcasecmp(tok, "SET") == 0)
+			options |= GRANT_ROLE_SPECIFIED_SET;
+		else if (pg_strcasecmp(tok, "INHERIT") == 0)
+			options |= GRANT_ROLE_SPECIFIED_INHERIT;
+		else
+		{
+			GUC_check_errdetail("Unrecognized key word: \"%s\".", tok);
+			pfree(rawstring);
+			list_free(elemlist);
+			return false;
+		}
+	}
+
+	pfree(rawstring);
+	list_free(elemlist);
+
+	result = (unsigned *) guc_malloc(LOG, sizeof(unsigned));
+	*result = options;
+	*extra = result;
+
+	return true;
+}
+
+/*
+ * GUC assign_hook for createrole_self_grant
+ */
+void
+assign_createrole_self_grant(const char *newval, void *extra)
+{
+	unsigned	options = * (unsigned *) extra;
+
+	createrole_self_grant_enabled = (options != 0);
+	createrole_self_grant_options.specified = GRANT_ROLE_SPECIFIED_ADMIN
+		| GRANT_ROLE_SPECIFIED_INHERIT
+		| GRANT_ROLE_SPECIFIED_SET;
+	createrole_self_grant_options.admin = false;
+	createrole_self_grant_options.inherit =
+		(options & GRANT_ROLE_SPECIFIED_INHERIT) != 0;
+	createrole_self_grant_options.set =
+		(options & GRANT_ROLE_SPECIFIED_SET) != 0;
 }

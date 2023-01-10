@@ -3950,6 +3950,18 @@ struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"createrole_self_grant", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets whether a CREATEROLE user automatically grants "
+						 "the role to themselves, and with which options."),
+			NULL,
+			GUC_LIST_INPUT
+		},
+		&createrole_self_grant,
+		"",
+		check_createrole_self_grant, assign_createrole_self_grant, NULL
+	},
+
+	{
 		{"dynamic_library_path", PGC_SUSET, CLIENT_CONN_OTHER,
 			gettext_noop("Sets the path for dynamically loadable modules."),
 			gettext_noop("If a dynamically loadable module needs to be opened and "

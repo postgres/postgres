@@ -9447,6 +9447,39 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-createrole-self-grant" xreflabel="createrole_self_grant">
+      <term><varname>createrole_self_grant</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>createrole_self_grant</varname></primary>
+       <secondary>configuration parameter</secondary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        If a user who has <literal>CREATEROLE</literal> but not
+        <literal>SUPERUSER</literal> creates a role, and if this
+        is set to a non-empty value, the newly-created role will be granted
+        to the creating user with the options specified. The value must be
+        <literal>set</literal>, <literal>inherit</literal>, or a
+        comma-separated list of these.
+       </para>
+       <para>
+        The purpose of this option is to allow a <literal>CREATEROLE</literal>
+        user who is not a superuser to automatically inherit, or automatically
+        gain the ability to <literal>SET ROLE</literal> to, any created users.
+        Since a <literal>CREATEROLE</literal> user is always implicitly granted
+        <literal>ADMIN OPTION</literal> on created roles, that user could
+        always execute a <literal>GRANT</literal> statement that would achieve
+        the same effect as this setting. However, it can be convenient for
+        usability reasons if the grant happens automatically. A superuser
+        automatically inherits the privileges of every role and can always
+        <literal>SET ROLE</literal> to any role, and this setting can be used
+        to produce a similar behavior for <literal>CREATEROLE</literal> users
+        for users which they create.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
      <sect2 id="runtime-config-client-format">

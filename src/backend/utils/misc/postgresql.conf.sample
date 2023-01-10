@@ -703,6 +703,7 @@
 #xmlbinary = 'base64'
 #xmloption = 'content'
 #gin_pending_list_limit = 4MB
+#createrole_self_grant = ''		# set and/or inherit
 
 # - Locale and Formatting -
 

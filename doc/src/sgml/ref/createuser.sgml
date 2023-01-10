@@ -555,6 +555,7 @@ PostgreSQL documentation
   <simplelist type="inline">
    <member><xref linkend="app-dropuser"/></member>
    <member><xref linkend="sql-createrole"/></member>
+   <member><xref linkend="guc-createrole-self-grant"/></member>
   </simplelist>
  </refsect1>
 
