@@ -1132,6 +1132,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting in main loop of logical replication launcher process.</entry>
      </row>
      <row>
+      <entry><literal>LogicalParallelApplyMain</literal></entry>
+      <entry>Waiting in main loop of logical replication parallel apply
+       process.</entry>
+     </row>
+     <row>
       <entry><literal>RecoveryWalStream</literal></entry>
       <entry>Waiting in main loop of startup process for WAL to arrive, during
        streaming recovery.</entry>
@@ -1726,6 +1731,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><literal>HashGrowBucketsReinsert</literal></entry>
       <entry>Waiting for other Parallel Hash participants to finish inserting
        tuples into new buckets.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalParallelApplyStateChange</literal></entry>
+      <entry>Waiting for a logical replication parallel apply process to change
+       state.</entry>
      </row>
      <row>
       <entry><literal>LogicalSyncData</literal></entry>
