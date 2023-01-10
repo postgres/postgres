@@ -69,6 +69,14 @@ SET jit_above_cost TO DEFAULT;
 CREATE TABLE distinct_group_2 AS
 SELECT DISTINCT (g%1000)::text FROM generate_series(0,9999) g;
 
+SET enable_seqscan = 0;
+
+-- Check to see we get an incremental sort plan
+EXPLAIN (costs off)
+SELECT DISTINCT hundred, two FROM tenk1;
+
+RESET enable_seqscan;
+
 SET enable_hashagg=TRUE;
 
 -- Produce results with hash aggregation.

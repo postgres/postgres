@@ -4654,22 +4654,63 @@ create_partial_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 										  cheapest_partial_path->rows,
 										  NULL, NULL);
 
-	/* first try adding unique paths atop of sorted paths */
+	/*
+	 * Try sorting the cheapest path and incrementally sorting any paths with
+	 * presorted keys and put a unique paths atop of those.
+	 */
 	if (grouping_is_sortable(parse->distinctClause))
 	{
 		foreach(lc, input_rel->partial_pathlist)
 		{
-			Path	   *path = (Path *) lfirst(lc);
+			Path	   *input_path = (Path *) lfirst(lc);
+			Path	   *sorted_path;
+			bool		is_sorted;
+			int			presorted_keys;
 
-			if (pathkeys_contained_in(root->distinct_pathkeys, path->pathkeys))
+			is_sorted = pathkeys_count_contained_in(root->distinct_pathkeys,
+													input_path->pathkeys,
+													&presorted_keys);
+
+			if (is_sorted)
+				sorted_path = input_path;
+			else
 			{
-				add_partial_path(partial_distinct_rel, (Path *)
-								 create_upper_unique_path(root,
-														  partial_distinct_rel,
-														  path,
-														  list_length(root->distinct_pathkeys),
-														  numDistinctRows));
+				/*
+				 * Try at least sorting the cheapest path and also try
+				 * incrementally sorting any path which is partially sorted
+				 * already (no need to deal with paths which have presorted
+				 * keys when incremental sort is disabled unless it's the
+				 * cheapest partial path).
+				 */
+				if (input_path != cheapest_partial_path &&
+					(presorted_keys == 0 || !enable_incremental_sort))
+					continue;
+
+				/*
+				 * We've no need to consider both a sort and incremental sort.
+				 * We'll just do a sort if there are no presorted keys and an
+				 * incremental sort when there are presorted keys.
+				 */
+				if (presorted_keys == 0 || !enable_incremental_sort)
+					sorted_path = (Path *) create_sort_path(root,
+															partial_distinct_rel,
+															input_path,
+															root->distinct_pathkeys,
+															-1.0);
+				else
+					sorted_path = (Path *) create_incremental_sort_path(root,
+																		partial_distinct_rel,
+																		input_path,
+																		root->distinct_pathkeys,
+																		presorted_keys,
+																		-1.0);
 			}
+
+			add_partial_path(partial_distinct_rel, (Path *)
+							 create_upper_unique_path(root, partial_distinct_rel,
+													  sorted_path,
+													  list_length(root->distinct_pathkeys),
+													  numDistinctRows));
 		}
 	}
 
@@ -4773,9 +4814,11 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	if (grouping_is_sortable(parse->distinctClause))
 	{
 		/*
-		 * First, if we have any adequately-presorted paths, just stick a
-		 * Unique node on those.  Then consider doing an explicit sort of the
-		 * cheapest input path and Unique'ing that.
+		 * Firstly, if we have any adequately-presorted paths, just stick a
+		 * Unique node on those.  We also, consider doing an explicit sort of
+		 * the cheapest input path and Unique'ing that.  If any paths have
+		 * presorted keys then we'll create an incremental sort atop of those
+		 * before adding a unique node on the top.
 		 *
 		 * When we have DISTINCT ON, we must sort by the more rigorous of
 		 * DISTINCT and ORDER BY, else it won't have the desired behavior.
@@ -4785,8 +4828,8 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		 * the other.)
 		 */
 		List	   *needed_pathkeys;
-		Path	   *path;
 		ListCell   *lc;
+		double		limittuples = root->distinct_pathkeys == NIL ? 1.0 : -1.0;
 
 		if (parse->hasDistinctOn &&
 			list_length(root->distinct_pathkeys) <
@@ -4797,96 +4840,89 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 		foreach(lc, input_rel->pathlist)
 		{
-			path = (Path *) lfirst(lc);
+			Path	   *input_path = (Path *) lfirst(lc);
+			Path	   *sorted_path;
+			bool		is_sorted;
+			int			presorted_keys;
 
-			if (pathkeys_contained_in(needed_pathkeys, path->pathkeys))
+			is_sorted = pathkeys_count_contained_in(needed_pathkeys,
+													input_path->pathkeys,
+													&presorted_keys);
+
+			if (is_sorted)
+				sorted_path = input_path;
+			else
 			{
 				/*
-				 * distinct_pathkeys may have become empty if all of the
-				 * pathkeys were determined to be redundant.  If all of the
-				 * pathkeys are redundant then each DISTINCT target must only
-				 * allow a single value, therefore all resulting tuples must
-				 * be identical (or at least indistinguishable by an equality
-				 * check).  We can uniquify these tuples simply by just taking
-				 * the first tuple.  All we do here is add a path to do "LIMIT
-				 * 1" atop of 'path'.  When doing a DISTINCT ON we may still
-				 * have a non-NIL sort_pathkeys list, so we must still only do
-				 * this with paths which are correctly sorted by
-				 * sort_pathkeys.
+				 * Try at least sorting the cheapest path and also try
+				 * incrementally sorting any path which is partially sorted
+				 * already (no need to deal with paths which have presorted
+				 * keys when incremental sort is disabled unless it's the
+				 * cheapest input path).
 				 */
-				if (root->distinct_pathkeys == NIL)
-				{
-					Node	   *limitCount;
+				if (input_path != cheapest_input_path &&
+					(presorted_keys == 0 || !enable_incremental_sort))
+					continue;
 
-					limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
-													sizeof(int64),
-													Int64GetDatum(1), false,
-													FLOAT8PASSBYVAL);
-
-					/*
-					 * If the query already has a LIMIT clause, then we could
-					 * end up with a duplicate LimitPath in the final plan.
-					 * That does not seem worth troubling over too much.
-					 */
-					add_path(distinct_rel, (Path *)
-							 create_limit_path(root, distinct_rel, path, NULL,
-											   limitCount, LIMIT_OPTION_COUNT,
-											   0, 1));
-				}
+				/*
+				 * We've no need to consider both a sort and incremental sort.
+				 * We'll just do a sort if there are no presorted keys and an
+				 * incremental sort when there are presorted keys.
+				 */
+				if (presorted_keys == 0 || !enable_incremental_sort)
+					sorted_path = (Path *) create_sort_path(root,
+															distinct_rel,
+															input_path,
+															needed_pathkeys,
+															limittuples);
 				else
-				{
-					add_path(distinct_rel, (Path *)
-							 create_upper_unique_path(root, distinct_rel,
-													  path,
-													  list_length(root->distinct_pathkeys),
-													  numDistinctRows));
-				}
+					sorted_path = (Path *) create_incremental_sort_path(root,
+																		distinct_rel,
+																		input_path,
+																		needed_pathkeys,
+																		presorted_keys,
+																		limittuples);
 			}
-		}
 
-		/* For explicit-sort case, always use the more rigorous clause */
-		if (list_length(root->distinct_pathkeys) <
-			list_length(root->sort_pathkeys))
-		{
-			needed_pathkeys = root->sort_pathkeys;
-			/* Assert checks that parser didn't mess up... */
-			Assert(pathkeys_contained_in(root->distinct_pathkeys,
-										 needed_pathkeys));
-		}
-		else
-			needed_pathkeys = root->distinct_pathkeys;
+			/*
+			 * distinct_pathkeys may have become empty if all of the pathkeys
+			 * were determined to be redundant.  If all of the pathkeys are
+			 * redundant then each DISTINCT target must only allow a single
+			 * value, therefore all resulting tuples must be identical (or at
+			 * least indistinguishable by an equality check).  We can uniquify
+			 * these tuples simply by just taking the first tuple.  All we do
+			 * here is add a path to do "LIMIT 1" atop of 'sorted_path'.  When
+			 * doing a DISTINCT ON we may still have a non-NIL sort_pathkeys
+			 * list, so we must still only do this with paths which are
+			 * correctly sorted by sort_pathkeys.
+			 */
+			if (root->distinct_pathkeys == NIL)
+			{
+				Node	   *limitCount;
 
-		path = cheapest_input_path;
-		if (!pathkeys_contained_in(needed_pathkeys, path->pathkeys))
-			path = (Path *) create_sort_path(root, distinct_rel,
-											 path,
-											 needed_pathkeys,
-											 root->distinct_pathkeys == NIL ?
-											 1.0 : -1.0);
+				limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+												sizeof(int64),
+												Int64GetDatum(1), false,
+												FLOAT8PASSBYVAL);
 
-		/*
-		 * As above, use a LimitPath instead of a UniquePath when all of the
-		 * distinct_pathkeys are redundant and we're only going to get a
-		 * series of tuples all with the same values anyway.
-		 */
-		if (root->distinct_pathkeys == NIL)
-		{
-			Node	   *limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
-														sizeof(int64),
-														Int64GetDatum(1), false,
-														FLOAT8PASSBYVAL);
-
-			add_path(distinct_rel, (Path *)
-					 create_limit_path(root, distinct_rel, path, NULL,
-									   limitCount, LIMIT_OPTION_COUNT, 0, 1));
-		}
-		else
-		{
-			add_path(distinct_rel, (Path *)
-					 create_upper_unique_path(root, distinct_rel,
-											  path,
-											  list_length(root->distinct_pathkeys),
-											  numDistinctRows));
+				/*
+				 * If the query already has a LIMIT clause, then we could end
+				 * up with a duplicate LimitPath in the final plan. That does
+				 * not seem worth troubling over too much.
+				 */
+				add_path(distinct_rel, (Path *)
+						 create_limit_path(root, distinct_rel, sorted_path,
+										   NULL, limitCount,
+										   LIMIT_OPTION_COUNT, 0, 1));
+			}
+			else
+			{
+				add_path(distinct_rel, (Path *)
+						 create_upper_unique_path(root, distinct_rel,
+												  sorted_path,
+												  list_length(root->distinct_pathkeys),
+												  numDistinctRows));
+			}
 		}
 	}
 

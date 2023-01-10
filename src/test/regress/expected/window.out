@@ -3944,8 +3944,9 @@ ORDER BY depname, enroll_date;
                                           QUERY PLAN                                           
 -----------------------------------------------------------------------------------------------
  Unique
-   ->  Sort
+   ->  Incremental Sort
          Sort Key: depname, enroll_date, empno, (sum(salary) OVER (?)), (min(salary) OVER (?))
+         Presorted Key: depname, enroll_date
          ->  WindowAgg
                ->  Incremental Sort
                      Sort Key: depname, enroll_date
@@ -3954,7 +3955,7 @@ ORDER BY depname, enroll_date;
                            ->  Sort
                                  Sort Key: depname, empno
                                  ->  Seq Scan on empsalary
-(11 rows)
+(12 rows)
 
 -- As above but adjust the ORDER BY clause to help ensure the plan with the
 -- minimum amount of sorting wasn't a fluke.
@@ -3970,8 +3971,9 @@ ORDER BY depname, empno;
                                           QUERY PLAN                                           
 -----------------------------------------------------------------------------------------------
  Unique
-   ->  Sort
+   ->  Incremental Sort
          Sort Key: depname, empno, enroll_date, (sum(salary) OVER (?)), (min(salary) OVER (?))
+         Presorted Key: depname, empno
          ->  WindowAgg
                ->  Incremental Sort
                      Sort Key: depname, empno
@@ -3980,7 +3982,7 @@ ORDER BY depname, empno;
                            ->  Sort
                                  Sort Key: depname, enroll_date
                                  ->  Seq Scan on empsalary
-(11 rows)
+(12 rows)
 
 RESET enable_hashagg;
 -- Test Sort node reordering

@@ -171,6 +171,20 @@ SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
 SET jit_above_cost TO DEFAULT;
 CREATE TABLE distinct_group_2 AS
 SELECT DISTINCT (g%1000)::text FROM generate_series(0,9999) g;
+SET enable_seqscan = 0;
+-- Check to see we get an incremental sort plan
+EXPLAIN (costs off)
+SELECT DISTINCT hundred, two FROM tenk1;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Unique
+   ->  Incremental Sort
+         Sort Key: hundred, two
+         Presorted Key: hundred
+         ->  Index Scan using tenk1_hundred on tenk1
+(5 rows)
+
+RESET enable_seqscan;
 SET enable_hashagg=TRUE;
 -- Produce results with hash aggregation.
 SET enable_sort=FALSE;
@@ -265,15 +279,16 @@ $$ LANGUAGE plpgsql PARALLEL SAFE;
 -- Ensure we do parallel distinct now that the function is parallel safe
 EXPLAIN (COSTS OFF)
 SELECT DISTINCT distinct_func(1) FROM tenk1;
-                  QUERY PLAN                  
-----------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Unique
-   ->  Sort
-         Sort Key: (distinct_func(1))
-         ->  Gather
-               Workers Planned: 2
-               ->  Parallel Seq Scan on tenk1
-(6 rows)
+   ->  Gather Merge
+         Workers Planned: 2
+         ->  Unique
+               ->  Sort
+                     Sort Key: (distinct_func(1))
+                     ->  Parallel Seq Scan on tenk1
+(7 rows)
 
 RESET max_parallel_workers_per_gather;
 RESET min_parallel_table_scan_size;
