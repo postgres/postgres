@@ -32,6 +32,7 @@
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/pg_locale.h"
+#include "varatt.h"
 
 /*
  * Datatype-specific hash functions.

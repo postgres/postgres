@@ -88,6 +88,7 @@
 #include "utils/memutils.h"
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
+#include "varatt.h"
 
 
 /* ----------

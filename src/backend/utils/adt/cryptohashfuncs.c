@@ -17,6 +17,7 @@
 #include "common/md5.h"
 #include "common/sha2.h"
 #include "utils/builtins.h"
+#include "varatt.h"
 
 
 /*

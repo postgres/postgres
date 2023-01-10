@@ -9,6 +9,7 @@
 #include "cubedata.h"
 #include "nodes/miscnodes.h"
 #include "utils/float.h"
+#include "varatt.h"
 
 /* All grammar constructs return strings */
 #define YYSTYPE char *

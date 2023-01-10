@@ -39,6 +39,7 @@
 #include "px.h"
 #include "utils/builtins.h"
 #include "utils/uuid.h"
+#include "varatt.h"
 
 PG_MODULE_MAGIC;
 

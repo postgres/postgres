@@ -53,6 +53,7 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
+#include "varatt.h"
 
 /* define this to enable debug logging */
 /* #define FSDB 1 */

@@ -19,6 +19,7 @@
 #include "port/pg_bswap.h"
 #include "utils/builtins.h"
 #include "utils/uuid.h"
+#include "varatt.h"
 
 /*
  * It's possible that there's more than one uuid.h header file present.

@@ -29,6 +29,7 @@
 #include "utils/inval.h"
 #include "utils/spccache.h"
 #include "utils/syscache.h"
+#include "varatt.h"
 
 
 /* Hash table for information about each tablespace */

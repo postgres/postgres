@@ -12,6 +12,7 @@
 #include "ltree.h"
 #include "miscadmin.h"
 #include "nodes/miscnodes.h"
+#include "varatt.h"
 
 
 /* parser's states */

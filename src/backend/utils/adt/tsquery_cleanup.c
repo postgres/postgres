@@ -17,6 +17,7 @@
 
 #include "miscadmin.h"
 #include "tsearch/ts_utils.h"
+#include "varatt.h"
 
 typedef struct NODE
 {

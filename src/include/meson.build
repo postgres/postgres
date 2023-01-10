@@ -113,6 +113,7 @@ install_headers(
   'postgres.h',
   'postgres_ext.h',
   'postgres_fe.h',
+  'varatt.h',
   'windowapi.h',
   pg_config_ext,
   pg_config_os,

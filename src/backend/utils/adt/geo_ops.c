@@ -35,6 +35,7 @@
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
 #include "utils/geo_decls.h"
+#include "varatt.h"
 
 /*
  * * Type constructors have this form:

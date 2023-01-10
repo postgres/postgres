@@ -46,6 +46,7 @@
 #include "utils/datum.h"
 #include "utils/pg_locale.h"
 #include "utils/varlena.h"
+#include "varatt.h"
 
 
 /*

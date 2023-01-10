@@ -16,6 +16,7 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "varatt.h"
 
 #include "test_shm_mq.h"
 

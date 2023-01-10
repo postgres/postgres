@@ -51,6 +51,7 @@
 #include "access/stratnum.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
+#include "varatt.h"
 
 /*
  * Operator strategy numbers used in the GiST inet_ops opclass

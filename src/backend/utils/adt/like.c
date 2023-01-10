@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
+#include "varatt.h"
 
 
 #define LIKE_TRUE						1

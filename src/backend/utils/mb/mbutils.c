@@ -40,6 +40,7 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "varatt.h"
 
 /*
  * We maintain a simple linked list caching the fmgr lookup info for the

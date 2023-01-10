@@ -22,6 +22,7 @@
 #include "common/pg_lzcompress.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
+#include "varatt.h"
 
 /* GUC */
 int			default_toast_compression = TOAST_PGLZ_COMPRESSION;

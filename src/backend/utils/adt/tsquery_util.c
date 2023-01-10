@@ -16,6 +16,7 @@
 
 #include "miscadmin.h"
 #include "tsearch/ts_utils.h"
+#include "varatt.h"
 
 /*
  * Build QTNode tree for a tsquery given in QueryItem array format.

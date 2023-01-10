@@ -24,6 +24,7 @@
 #include "access/spgist.h"
 #include "catalog/pg_type.h"
 #include "utils/datum.h"
+#include "varatt.h"
 
 PG_MODULE_MAGIC;
 

@@ -18,6 +18,7 @@
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "varatt.h"
 
 
 /*

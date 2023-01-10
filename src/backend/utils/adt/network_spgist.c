@@ -37,6 +37,7 @@
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
+#include "varatt.h"
 
 
 static int	inet_spg_node_number(const inet *val, int commonbits);

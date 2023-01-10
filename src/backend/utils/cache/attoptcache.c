@@ -22,6 +22,7 @@
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
+#include "varatt.h"
 
 
 /* Hash table for information about each attribute's options */

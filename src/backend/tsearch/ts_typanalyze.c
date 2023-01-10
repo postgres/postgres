@@ -19,6 +19,7 @@
 #include "common/hashfn.h"
 #include "tsearch/ts_type.h"
 #include "utils/builtins.h"
+#include "varatt.h"
 
 
 /* A hash key for lexemes */

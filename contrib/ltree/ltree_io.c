@@ -11,6 +11,7 @@
 #include "libpq/pqformat.h"
 #include "ltree.h"
 #include "utils/memutils.h"
+#include "varatt.h"
 
 
 typedef struct

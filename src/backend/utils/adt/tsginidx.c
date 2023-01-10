@@ -19,6 +19,7 @@
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
+#include "varatt.h"
 
 
 Datum

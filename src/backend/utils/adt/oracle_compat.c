@@ -21,6 +21,7 @@
 #include "utils/builtins.h"
 #include "utils/formatting.h"
 #include "utils/memutils.h"
+#include "varatt.h"
 
 
 static text *dotrim(const char *string, int stringlen,

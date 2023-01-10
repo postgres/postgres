@@ -42,6 +42,7 @@
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
 #include "utils/timestamp.h"
+#include "varatt.h"
 
 
 /* fn_extra cache entry for one of the range I/O functions */

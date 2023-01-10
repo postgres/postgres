@@ -22,6 +22,7 @@
 #include "access/xloginsert.h"
 #include "fmgr.h"
 #include "utils/pg_lsn.h"
+#include "varatt.h"
 
 PG_MODULE_MAGIC;
 

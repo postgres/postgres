@@ -14,6 +14,7 @@
 #include "mb/pg_wchar.h"
 #include "utils/ascii.h"
 #include "utils/builtins.h"
+#include "varatt.h"
 
 static void pg_to_ascii(unsigned char *src, unsigned char *src_end,
 						unsigned char *dest, int enc);

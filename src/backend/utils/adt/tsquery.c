@@ -23,6 +23,7 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"
+#include "varatt.h"
 
 /* FTS operator priorities, see ts_type.h */
 const int	tsearch_op_priority[OP_COUNT] =

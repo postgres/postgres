@@ -8,6 +8,7 @@
 #include "fmgr.h"
 #include "port/pg_bitutils.h"
 #include "trgm.h"
+#include "varatt.h"
 
 /* gist_trgm_ops opclass options */
 typedef struct

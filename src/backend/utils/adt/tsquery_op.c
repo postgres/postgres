@@ -17,6 +17,7 @@
 #include "lib/qunique.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
+#include "varatt.h"
 
 Datum
 tsquery_numnode(PG_FUNCTION_ARGS)

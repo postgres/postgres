@@ -20,6 +20,7 @@
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "varatt.h"
 
 typedef struct
 {

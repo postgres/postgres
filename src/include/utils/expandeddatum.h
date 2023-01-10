@@ -44,6 +44,8 @@
 #ifndef EXPANDEDDATUM_H
 #define EXPANDEDDATUM_H
 
+#include "varatt.h"
+
 /* Size of an EXTERNAL datum that contains a pointer to an expanded object */
 #define EXPANDED_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(varatt_expanded))
 
