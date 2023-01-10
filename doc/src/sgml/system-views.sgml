@@ -1580,6 +1580,12 @@
   </para>
 
   <para>
+   A specualtive insertion lock consists of a transaction ID and a speculative
+   insertion token. The speculative insertion token is displayed in the
+   <structfield>objid</structfield> column.
+  </para>
+
+  <para>
    Advisory locks can be acquired on keys consisting of either a single
    <type>bigint</type> value or two integer values.
    A <type>bigint</type> key is displayed with its
