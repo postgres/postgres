@@ -61,9 +61,6 @@ test: create_aggregate create_function_sql create_cast constraints triggers sele
 # ----------
 test: sanity_check
 
-# Note: the ignore: line does not skip random, just mark it as ignorable
-ignore: random
-
 # ----------
 # Another group of parallel tests
 # aggregates depends on create_aggregate
