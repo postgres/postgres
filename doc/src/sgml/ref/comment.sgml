@@ -99,7 +99,8 @@ COMMENT ON
    For most kinds of object, only the object's owner can set the comment.
    Roles don't have owners, so the rule for <literal>COMMENT ON ROLE</literal> is
    that you must be superuser to comment on a superuser role, or have the
-   <literal>CREATEROLE</literal> privilege to comment on non-superuser roles.
+   <literal>CREATEROLE</literal> privilege and have been granted
+   <literal>ADMIN OPTION</literal> on the target role.
    Likewise, access methods don't have owners either; you must be superuser
    to comment on an access method.
    Of course, a superuser can comment on anything.

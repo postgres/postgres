@@ -73,7 +73,8 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    Roles having <literal>CREATEROLE</literal> privilege can change any of these
    settings except <literal>SUPERUSER</literal>, <literal>REPLICATION</literal>,
    and <literal>BYPASSRLS</literal>; but only for non-superuser and
-   non-replication roles.
+   non-replication roles for which they have been
+   granted <literal>ADMIN OPTION</literal>.
    Ordinary roles can only change their own password.
   </para>
 
@@ -81,7 +82,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    The second variant changes the name of the role.
    Database superusers can rename any role.
    Roles having <literal>CREATEROLE</literal> privilege can rename non-superuser
-   roles.
+   roles for which they have been granted <literal>ADMIN OPTION</literal>.
    The current session user cannot be renamed.
    (Connect as a different user if you need to do that.)
    Because <literal>MD5</literal>-encrypted passwords use the role name as
@@ -116,7 +117,8 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   <para>
    Superusers can change anyone's session defaults. Roles having
    <literal>CREATEROLE</literal> privilege can change defaults for non-superuser
-   roles. Ordinary roles can only set defaults for themselves.
+   roles for which they have been granted <literal>ADMIN OPTION</literal>.
+   Ordinary roles can only set defaults for themselves.
    Certain configuration variables cannot be set this way, or can only be
    set if a superuser issues the command.  Only superusers can change a setting
    for all roles in all databases.

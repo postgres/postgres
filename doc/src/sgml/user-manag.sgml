@@ -199,7 +199,12 @@ CREATE USER <replaceable>name</replaceable>;
         checks). To create such a role, use <literal>CREATE ROLE
         <replaceable>name</replaceable> CREATEROLE</literal>.
         A role with <literal>CREATEROLE</literal> privilege can alter and drop
-        other roles, too, as well as grant or revoke membership in them.
+        roles which have been granted to the <literal>CREATEROLE</literal>
+        user with the <literal>ADMIN</literal> option. Such a grant occurs
+        automatically when a <literal>CREATEROLE</literal> user that is not
+        a superuser creates a new role, so that by default, a
+        <literal>CREATEROLE</literal> user can alter and drop the roles
+        which they have created.
         Altering a role includes most changes that can be made using
         <literal>ALTER ROLE</literal>, including, for example, changing
         passwords.  It also includes modifications to a role that can
@@ -223,15 +228,6 @@ CREATE USER <replaceable>name</replaceable>;
         Finally, <literal>CREATEROLE</literal> does not
         confer the ability to grant or revoke the <literal>BYPASSRLS</literal>
         privilege.
-       </para>
-       <para>
-        Because the <literal>CREATEROLE</literal> privilege allows a user
-        to grant or revoke membership even in roles to which it does not (yet)
-        have any access, a <literal>CREATEROLE</literal> user can obtain access
-        to the capabilities of every predefined role in the system, including
-        highly privileged roles such as
-        <literal>pg_execute_server_program</literal> and
-        <literal>pg_write_server_files</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -328,6 +324,34 @@ ALTER ROLE myname SET enable_indexscan TO off;
    Note that role-specific defaults attached to roles without
    <literal>LOGIN</literal> privilege are fairly useless, since they will never
    be invoked.
+  </para>
+
+  <para>
+   When a non-superuser creates a role using the <literal>CREATEROLE</literal>
+   privilege, the created role is automatically granted back to the creating
+   user, just as if the bootstrap superuser had executed the command
+   <literal>GRANT created_user TO creating_user WITH ADMIN TRUE, SET FALSE,
+   INHERIT FALSE</literal>. Since a <literal>CREATEROLE</literal> user can
+   only exercise special privileges with regard to an existing role if they
+   have <literal>ADMIN OPTION</literal> on it, this grant is just sufficient
+   to allow a <literal>CREATEROLE</literal> user to administer the roles they
+   created. However, because it is created with <literal>INHERIT FALSE, SET
+   FALSE</literal>, the <literal>CREATEROLE</literal> user doesn't inherit the
+   privileges of the created role, nor can it access the privileges of that
+   role using <literal>SET ROLE</literal>. However, since any user who has
+   <literal>ADMIN OPTION</literal> on a role can grant membership in that
+   role to any other user, the <literal>CREATEROLE</literal> user can gain
+   access to the created role by simplying granting that role back to
+   themselves with the <literal>INHERIT</literal> and/or <literal>SET</literal>
+   options. Thus, the fact that privileges are not inherited by default nor
+   is <literal>SET ROLE</literal> granted by default is a safeguard against
+   accidents, not a security feature. Also note that, because this automatic
+   grant is granted by the bootstrap user, it cannot be removed or changed by
+   the <literal>CREATEROLE</literal> user; however, any superuser could
+   revoke it, modify it, and/or issue additional such grants to other
+   <literal>CREATEROLE</literal> users. Whichever <literal>CREATEROLE</literal>
+   users have <literal>ADMIN OPTION</literal> on a role at any given time
+   can administer it.
   </para>
  </sect1>
 

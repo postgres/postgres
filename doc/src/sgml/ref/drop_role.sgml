@@ -32,7 +32,7 @@ DROP ROLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...
    <command>DROP ROLE</command> removes the specified role(s).
    To drop a superuser role, you must be a superuser yourself;
    to drop non-superuser roles, you must have <literal>CREATEROLE</literal>
-   privilege.
+   privilege and have been granted <literal>ADMIN OPTION</literal> on the role.
   </para>
 
   <para>

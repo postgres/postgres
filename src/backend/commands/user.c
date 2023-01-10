@@ -520,6 +520,42 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	}
 
 	/*
+	 * If the current user isn't a superuser, make them an admin of the new
+	 * role so that they can administer the new object they just created.
+	 * Superusers will be able to do that anyway.
+	 *
+	 * The grantor of record for this implicit grant is the bootstrap
+	 * superuser, which means that the CREATEROLE user cannot revoke the
+	 * grant. They can however grant the created role back to themselves
+	 * with different options, since they enjoy ADMIN OPTION on it.
+	 */
+	if (!superuser())
+	{
+		RoleSpec   *current_role = makeNode(RoleSpec);
+		GrantRoleOptions	poptself;
+
+		current_role->roletype = ROLESPEC_CURRENT_ROLE;
+		current_role->location = -1;
+
+		poptself.specified = GRANT_ROLE_SPECIFIED_ADMIN
+			| GRANT_ROLE_SPECIFIED_INHERIT
+			| GRANT_ROLE_SPECIFIED_SET;
+		poptself.admin = true;
+		poptself.inherit = false;
+		poptself.set = false;
+
+		AddRoleMems(BOOTSTRAP_SUPERUSERID, stmt->role, roleid,
+					list_make1(current_role), list_make1_oid(GetUserId()),
+					BOOTSTRAP_SUPERUSERID, &poptself);
+
+		/*
+		 * We must make the implicit grant visible to the code below, else
+		 * the additional grants will fail.
+		 */
+		CommandCounterIncrement();
+	}
+
+	/*
 	 * Add the specified members to this new role. adminmembers get the admin
 	 * option, rolemembers don't.
 	 *
@@ -694,9 +730,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	/*
 	 * To mess with a superuser or replication role in any way you gotta be
 	 * superuser.  We also insist on superuser to change the BYPASSRLS
-	 * property.  Otherwise, if you don't have createrole, you're only allowed
-	 * to (1) change your own password or (2) add members to a role for which
-	 * you have ADMIN OPTION.
+	 * property.
 	 */
 	if (authform->rolsuper || dissuper)
 	{
@@ -719,28 +753,34 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change bypassrls attribute")));
 	}
-	else if (!have_createrole_privilege())
+
+	/*
+	 * Most changes to a role require that you both have CREATEROLE privileges
+	 * and also ADMIN OPTION on the role.
+	 */
+	if (!have_createrole_privilege() ||
+		!is_admin_of_role(GetUserId(), roleid))
 	{
-		/* things you certainly can't do without CREATEROLE */
+		/* things an unprivileged user certainly can't do */
 		if (dinherit || dcreaterole || dcreatedb || dcanlogin || dconnlimit ||
 			dvalidUntil)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied")));
 
-		/* without CREATEROLE, can only change your own password */
+		/* an unprivileged user can change their own password */
 		if (dpassword && roleid != currentUserId)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must have CREATEROLE privilege to change another user's password")));
-
-		/* without CREATEROLE, can only add members to roles you admin */
-		if (drolemembers && !is_admin_of_role(currentUserId, roleid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must have admin option on role \"%s\" to add members",
-							rolename)));
 	}
+
+	/* To add members to a role, you need ADMIN OPTION. */
+	if (drolemembers && !is_admin_of_role(currentUserId, roleid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must have admin option on role \"%s\" to add members",
+						rolename)));
 
 	/* Convert validuntil to internal form */
 	if (dvalidUntil)
@@ -935,8 +975,9 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		shdepLockAndCheckObject(AuthIdRelationId, roleid);
 
 		/*
-		 * To mess with a superuser you gotta be superuser; else you need
-		 * createrole, or just want to change your own settings
+		 * To mess with a superuser you gotta be superuser; otherwise you
+		 * need CREATEROLE plus admin option on the target role; unless you're
+		 * just trying to change your own settings
 		 */
 		if (roleform->rolsuper)
 		{
@@ -947,7 +988,9 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		}
 		else
 		{
-			if (!have_createrole_privilege() && roleid != GetUserId())
+			if ((!have_createrole_privilege() ||
+				!is_admin_of_role(GetUserId(), roleid))
+				&& roleid != GetUserId())
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("permission denied")));
@@ -1067,13 +1110,18 @@ DropRole(DropRoleStmt *stmt)
 
 		/*
 		 * For safety's sake, we allow createrole holders to drop ordinary
-		 * roles but not superuser roles.  This is mainly to avoid the
-		 * scenario where you accidentally drop the last superuser.
+		 * roles but not superuser roles, and only if they also have ADMIN
+		 * OPTION.
 		 */
 		if (roleform->rolsuper && !superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to drop superusers")));
+		if (!is_admin_of_role(GetUserId(), roleid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have admin option on role \"%s\"",
+							role)));
 
 		/* DROP hook for the role being removed */
 		InvokeObjectDropHook(AuthIdRelationId, roleid, 0);
@@ -1312,7 +1360,8 @@ RenameRole(const char *oldname, const char *newname)
 				 errmsg("role \"%s\" already exists", newname)));
 
 	/*
-	 * createrole is enough privilege unless you want to mess with a superuser
+	 * Only superusers can mess with superusers. Otherwise, a user with
+	 * CREATEROLE can rename a role for which they have ADMIN OPTION.
 	 */
 	if (((Form_pg_authid) GETSTRUCT(oldtuple))->rolsuper)
 	{
@@ -1323,7 +1372,8 @@ RenameRole(const char *oldname, const char *newname)
 	}
 	else
 	{
-		if (!have_createrole_privilege())
+		if (!have_createrole_privilege() ||
+			!is_admin_of_role(GetUserId(), roleid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to rename role")));
@@ -2023,11 +2073,9 @@ check_role_membership_authorization(Oid currentUserId, Oid roleid,
 	else
 	{
 		/*
-		 * Otherwise, must have createrole or admin option on the role to be
-		 * changed.
+		 * Otherwise, must have admin option on the role to be changed.
 		 */
-		if (!has_createrole_privilege(currentUserId) &&
-			!is_admin_of_role(currentUserId, roleid))
+		if (!is_admin_of_role(currentUserId, roleid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must have admin option on role \"%s\"",
@@ -2049,7 +2097,7 @@ check_role_membership_authorization(Oid currentUserId, Oid roleid,
  * be passed as InvalidOid, and this function will infer the user to be
  * recorded as the grantor. In many cases, this will be the current user, but
  * things get more complicated when the current user doesn't possess ADMIN
- * OPTION on the role but rather relies on having CREATEROLE privileges, or
+ * OPTION on the role but rather relies on having SUPERUSER privileges, or
  * on inheriting the privileges of a role which does have ADMIN OPTION. See
  * below for details.
  *
@@ -2075,7 +2123,7 @@ check_role_grantor(Oid currentUserId, Oid roleid, Oid grantorId, bool is_grant)
 		 * not depend on any other existing grants, so always default to this
 		 * interpretation when possible.
 		 */
-		if (has_createrole_privilege(currentUserId))
+		if (superuser_arg(currentUserId))
 			return BOOTSTRAP_SUPERUSERID;
 
 		/*

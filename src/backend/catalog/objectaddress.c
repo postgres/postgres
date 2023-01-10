@@ -2538,7 +2538,9 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 
 			/*
 			 * We treat roles as being "owned" by those with CREATEROLE priv,
-			 * except that superusers are only owned by superusers.
+			 * provided that they also have admin option on the role.
+			 *
+			 * However, superusers are only owned by superusers.
 			 */
 			if (superuser_arg(address.objectId))
 			{
@@ -2553,6 +2555,12 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 							 errmsg("must have CREATEROLE privilege")));
+				if (!is_admin_of_role(roleid, address.objectId))
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("must have admin option on role \"%s\"",
+									GetUserNameFromId(address.objectId,
+													  true))));
 			}
 			break;
 		case OBJECT_TSPARSER:

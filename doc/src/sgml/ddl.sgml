@@ -3216,13 +3216,11 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
        name. Therefore, if each user has a separate schema, they access
        their own schemas by default.)  This pattern is a secure schema
        usage pattern unless an untrusted user is the database owner or
-       holds the <literal>CREATEROLE</literal> privilege, in which case no
-       secure schema usage pattern exists.
+       has been granted <literal>ADMIN OPTION</literal> on a relevant role,
+       in which case no secure schema usage pattern exists.
       </para>
       <!-- A database owner can attack the database's users via "CREATE SCHEMA
-           trojan; ALTER DATABASE $mydb SET search_path = trojan, public;".  A
-           CREATEROLE user can issue "GRANT $dbowner TO $me" and then use the
-           database owner attack. -->
+           trojan; ALTER DATABASE $mydb SET search_path = trojan, public;". -->
 
       <para>
        In <productname>PostgreSQL</productname> 15 and later, the default
@@ -3250,7 +3248,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
        unreliable</link>.  If you create functions or extensions in the public
        schema, use the first pattern instead.  Otherwise, like the first
        pattern, this is secure unless an untrusted user is the database owner
-       or holds the <literal>CREATEROLE</literal> privilege.
+       or has been granted <literal>ADMIN OPTION</literal> on a relevant role.
       </para>
      </listitem>
 

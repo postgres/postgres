@@ -271,9 +271,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    in the role as well.  Without the admin option, ordinary users cannot
    do that.  A role is not considered to hold <literal>WITH ADMIN
    OPTION</literal> on itself.  Database superusers can grant or revoke
-   membership in any role to anyone.  Roles having
-   <literal>CREATEROLE</literal> privilege can grant or revoke membership
-   in any role that is not a superuser. This option defaults to
+   membership in any role to anyone. This option defaults to
    <literal>FALSE</literal>.
   </para>
 
