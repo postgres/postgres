@@ -325,27 +325,54 @@ CREATE TABLE people (
      </para>
     </listitem>
     <listitem>
-     <para>For inheritance:</para>
+     <para>For inheritance and partitioning:</para>
      <itemizedlist>
       <listitem>
        <para>
-        If a parent column is a generated column, a child column must also be
-        a generated column using the same expression.  In the definition of
-        the child column, leave off the <literal>GENERATED</literal> clause,
-        as it will be copied from the parent.
+        If a parent column is a generated column, its child column must also
+        be a generated column; however, the child column can have a
+        different generation expression.  The generation expression that is
+        actually applied during insert or update of a row is the one
+        associated with the table that the row is physically in.
+        (This is unlike the behavior for column defaults: for those, the
+        default value associated with the table named in the query applies.)
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        If a parent column is not a generated column, its child column must
+        not be generated either.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        For inherited tables, if you write a child column definition without
+        any <literal>GENERATED</literal> clause in <command>CREATE TABLE
+        ... INHERITS</command>, then its <literal>GENERATED</literal> clause
+        will automatically be copied from the parent.  <command>ALTER TABLE
+        ... INHERIT</command> will insist that parent and child columns
+        already match as to generation status, but it will not require their
+        generation expressions to match.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Similarly for partitioned tables, if you write a child column
+        definition without any <literal>GENERATED</literal> clause
+        in <command>CREATE TABLE ... PARTITION OF</command>, then
+        its <literal>GENERATED</literal> clause will automatically be copied
+        from the parent.  <command>ALTER TABLE ... ADD PARTITION</command>
+        will insist that parent and child columns already match as to
+        generation status, but it will not require their generation
+        expressions to match.
        </para>
       </listitem>
       <listitem>
        <para>
         In case of multiple inheritance, if one parent column is a generated
-        column, then all parent columns must be generated columns and with the
-        same expression.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        If a parent column is not a generated column, a child column may be
-        defined to be a generated column or not.
+        column, then all parent columns must be generated columns.  If they
+        do not all have the same generation expression, then the desired
+        expression for the child must be specified explicitly.
        </para>
       </listitem>
      </itemizedlist>

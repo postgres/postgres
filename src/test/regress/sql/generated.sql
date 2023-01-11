@@ -110,44 +110,39 @@ INSERT INTO gtest1_1 VALUES (4);
 SELECT * FROM gtest1_1;
 SELECT * FROM gtest1;
 
+-- can't have generated column that is a child of normal column
 CREATE TABLE gtest_normal (a int, b int);
-CREATE TABLE gtest_normal_child (a int, b int GENERATED ALWAYS AS (a * 2) STORED) INHERITS (gtest_normal);
-\d gtest_normal_child
-INSERT INTO gtest_normal (a) VALUES (1);
-INSERT INTO gtest_normal_child (a) VALUES (2);
-SELECT * FROM gtest_normal;
-
-CREATE TABLE gtest_normal_child2 (a int, b int GENERATED ALWAYS AS (a * 3) STORED);
-ALTER TABLE gtest_normal_child2 INHERIT gtest_normal;
-INSERT INTO gtest_normal_child2 (a) VALUES (3);
-SELECT * FROM gtest_normal;
+CREATE TABLE gtest_normal_child (a int, b int GENERATED ALWAYS AS (a * 2) STORED) INHERITS (gtest_normal);  -- error
+CREATE TABLE gtest_normal_child (a int, b int GENERATED ALWAYS AS (a * 2) STORED);
+ALTER TABLE gtest_normal_child INHERIT gtest_normal;  -- error
+DROP TABLE gtest_normal, gtest_normal_child;
 
 -- test inheritance mismatches between parent and child
-CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS (a * 22) STORED) INHERITS (gtest1);  -- error
 CREATE TABLE gtestx (x int, b int DEFAULT 10) INHERITS (gtest1);  -- error
 CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS IDENTITY) INHERITS (gtest1);  -- error
+CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS (a * 22) STORED) INHERITS (gtest1);  -- ok, overrides parent
+\d+ gtestx
 
 CREATE TABLE gtestxx_1 (a int NOT NULL, b int);
 ALTER TABLE gtestxx_1 INHERIT gtest1;  -- error
-CREATE TABLE gtestxx_2 (a int NOT NULL, b int GENERATED ALWAYS AS (a * 22) STORED);
-ALTER TABLE gtestxx_2 INHERIT gtest1;  -- error
 CREATE TABLE gtestxx_3 (a int NOT NULL, b int GENERATED ALWAYS AS (a * 2) STORED);
 ALTER TABLE gtestxx_3 INHERIT gtest1;  -- ok
 CREATE TABLE gtestxx_4 (b int GENERATED ALWAYS AS (a * 2) STORED, a int NOT NULL);
 ALTER TABLE gtestxx_4 INHERIT gtest1;  -- ok
 
 -- test multiple inheritance mismatches
+CREATE TABLE gtesty (x int, b int DEFAULT 55);
+CREATE TABLE gtest1_y () INHERITS (gtest0, gtesty);  -- error
+DROP TABLE gtesty;
+
 CREATE TABLE gtesty (x int, b int);
-CREATE TABLE gtest1_2 () INHERITS (gtest1, gtesty);  -- error
+CREATE TABLE gtest1_y () INHERITS (gtest1, gtesty);  -- error
 DROP TABLE gtesty;
 
 CREATE TABLE gtesty (x int, b int GENERATED ALWAYS AS (x * 22) STORED);
-CREATE TABLE gtest1_2 () INHERITS (gtest1, gtesty);  -- error
-DROP TABLE gtesty;
-
-CREATE TABLE gtesty (x int, b int DEFAULT 55);
-CREATE TABLE gtest1_2 () INHERITS (gtest0, gtesty);  -- error
-DROP TABLE gtesty;
+CREATE TABLE gtest1_y () INHERITS (gtest1, gtesty);  -- error
+CREATE TABLE gtest1_y (b int GENERATED ALWAYS AS (x + 1) STORED) INHERITS (gtest1, gtesty);  -- ok
+\d gtest1_y
 
 -- test correct handling of GENERATED column that's only in child
 CREATE TABLE gtestp (f1 int);
@@ -365,24 +360,37 @@ CREATE TYPE gtest_type AS (f1 integer, f2 text, f3 bigint);
 CREATE TABLE gtest28 OF gtest_type (f1 WITH OPTIONS GENERATED ALWAYS AS (f2 *2) STORED);
 DROP TYPE gtest_type CASCADE;
 
--- table partitions (currently not supported)
-CREATE TABLE gtest_parent (f1 date NOT NULL, f2 text, f3 bigint) PARTITION BY RANGE (f1);
+-- partitioning cases
+CREATE TABLE gtest_parent (f1 date NOT NULL, f2 bigint, f3 bigint) PARTITION BY RANGE (f1);
 CREATE TABLE gtest_child PARTITION OF gtest_parent (
     f3 WITH OPTIONS GENERATED ALWAYS AS (f2 * 2) STORED
 ) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01'); -- error
-DROP TABLE gtest_parent;
+CREATE TABLE gtest_child (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED);
+ALTER TABLE gtest_parent ATTACH PARTITION gtest_child FOR VALUES FROM ('2016-07-01') TO ('2016-08-01'); -- error
+DROP TABLE gtest_parent, gtest_child;
 
--- partitioned table
 CREATE TABLE gtest_parent (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f1);
-CREATE TABLE gtest_child PARTITION OF gtest_parent FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
+CREATE TABLE gtest_child PARTITION OF gtest_parent
+  FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');  -- inherits gen expr
+CREATE TABLE gtest_child2 PARTITION OF gtest_parent (
+    f3 WITH OPTIONS GENERATED ALWAYS AS (f2 * 22) STORED  -- overrides gen expr
+) FOR VALUES FROM ('2016-08-01') TO ('2016-09-01');
+CREATE TABLE gtest_child3 (f1 date NOT NULL, f2 bigint, f3 bigint);
+ALTER TABLE gtest_parent ATTACH PARTITION gtest_child3 FOR VALUES FROM ('2016-09-01') TO ('2016-10-01'); -- error
+DROP TABLE gtest_child3;
+CREATE TABLE gtest_child3 (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 33) STORED);
+ALTER TABLE gtest_parent ATTACH PARTITION gtest_child3 FOR VALUES FROM ('2016-09-01') TO ('2016-10-01');
+\d gtest_child
+\d gtest_child2
+\d gtest_child3
 INSERT INTO gtest_parent (f1, f2) VALUES ('2016-07-15', 1);
 SELECT * FROM gtest_parent;
 SELECT * FROM gtest_child;
-DROP TABLE gtest_parent;
+-- we leave these tables around for purposes of testing dump/reload/upgrade
 
 -- generated columns in partition key (not allowed)
-CREATE TABLE gtest_parent (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f3);
-CREATE TABLE gtest_parent (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE ((f3 * 3));
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f3);
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE ((f3 * 3));
 
 -- ALTER TABLE ... ADD COLUMN
 CREATE TABLE gtest25 (a int PRIMARY KEY);
