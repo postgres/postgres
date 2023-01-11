@@ -48,8 +48,6 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 
 	xlogRestoreCmd = BuildRestoreCommand(restoreCommand, xlogpath,
 										 xlogfname, NULL);
-	if (xlogRestoreCmd == NULL)
-		pg_fatal("cannot use restore_command with %%r placeholder");
 
 	/*
 	 * Execute restore_command, which should copy the missing file from

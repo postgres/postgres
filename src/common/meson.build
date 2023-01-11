@@ -17,6 +17,7 @@ common_sources = files(
   'kwlookup.c',
   'link-canary.c',
   'md5_common.c',
+  'percentrepl.c',
   'pg_get_line.c',
   'pg_lzcompress.c',
   'pg_prng.c',

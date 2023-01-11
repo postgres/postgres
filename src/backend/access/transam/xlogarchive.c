@@ -23,6 +23,7 @@
 #include "access/xlog_internal.h"
 #include "access/xlogarchive.h"
 #include "common/archive.h"
+#include "common/percentrepl.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/startup.h"
@@ -291,11 +292,8 @@ void
 ExecuteRecoveryCommand(const char *command, const char *commandName,
 					   bool failOnSignal, uint32 wait_event_info)
 {
-	char		xlogRecoveryCmd[MAXPGPATH];
+	char	   *xlogRecoveryCmd;
 	char		lastRestartPointFname[MAXPGPATH];
-	char	   *dp;
-	char	   *endp;
-	const char *sp;
 	int			rc;
 	XLogSegNo	restartSegNo;
 	XLogRecPtr	restartRedoPtr;
@@ -316,42 +314,7 @@ ExecuteRecoveryCommand(const char *command, const char *commandName,
 	/*
 	 * construct the command to be executed
 	 */
-	dp = xlogRecoveryCmd;
-	endp = xlogRecoveryCmd + MAXPGPATH - 1;
-	*endp = '\0';
-
-	for (sp = command; *sp; sp++)
-	{
-		if (*sp == '%')
-		{
-			switch (sp[1])
-			{
-				case 'r':
-					/* %r: filename of last restartpoint */
-					sp++;
-					strlcpy(dp, lastRestartPointFname, endp - dp);
-					dp += strlen(dp);
-					break;
-				case '%':
-					/* convert %% to a single % */
-					sp++;
-					if (dp < endp)
-						*dp++ = *sp;
-					break;
-				default:
-					/* otherwise treat the % as not special */
-					if (dp < endp)
-						*dp++ = *sp;
-					break;
-			}
-		}
-		else
-		{
-			if (dp < endp)
-				*dp++ = *sp;
-		}
-	}
-	*dp = '\0';
+	xlogRecoveryCmd = replace_percent_placeholders(command, commandName, "r", lastRestartPointFname);
 
 	ereport(DEBUG3,
 			(errmsg_internal("executing %s \"%s\"", commandName, command)));
@@ -363,6 +326,8 @@ ExecuteRecoveryCommand(const char *command, const char *commandName,
 	pgstat_report_wait_start(wait_event_info);
 	rc = system(xlogRecoveryCmd);
 	pgstat_report_wait_end();
+
+	pfree(xlogRecoveryCmd);
 
 	if (rc != 0)
 	{

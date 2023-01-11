@@ -20,7 +20,7 @@
 #endif
 
 #include "common/archive.h"
-#include "lib/stringinfo.h"
+#include "common/percentrepl.h"
 
 /*
  * BuildRestoreCommand
@@ -41,81 +41,20 @@ BuildRestoreCommand(const char *restoreCommand,
 					const char *xlogfname,
 					const char *lastRestartPointFname)
 {
-	StringInfoData result;
-	const char *sp;
+	char	   *nativePath = NULL;
+	char	   *result;
 
-	/*
-	 * Build the command to be executed.
-	 */
-	initStringInfo(&result);
-
-	for (sp = restoreCommand; *sp; sp++)
+	if (xlogpath)
 	{
-		if (*sp == '%')
-		{
-			switch (sp[1])
-			{
-				case 'p':
-					{
-						char	   *nativePath;
-
-						/* %p: relative path of target file */
-						if (xlogpath == NULL)
-						{
-							pfree(result.data);
-							return NULL;
-						}
-						sp++;
-
-						/*
-						 * This needs to use a placeholder to not modify the
-						 * input with the conversion done via
-						 * make_native_path().
-						 */
-						nativePath = pstrdup(xlogpath);
-						make_native_path(nativePath);
-						appendStringInfoString(&result,
-											   nativePath);
-						pfree(nativePath);
-						break;
-					}
-				case 'f':
-					/* %f: filename of desired file */
-					if (xlogfname == NULL)
-					{
-						pfree(result.data);
-						return NULL;
-					}
-					sp++;
-					appendStringInfoString(&result, xlogfname);
-					break;
-				case 'r':
-					/* %r: filename of last restartpoint */
-					if (lastRestartPointFname == NULL)
-					{
-						pfree(result.data);
-						return NULL;
-					}
-					sp++;
-					appendStringInfoString(&result,
-										   lastRestartPointFname);
-					break;
-				case '%':
-					/* convert %% to a single % */
-					sp++;
-					appendStringInfoChar(&result, *sp);
-					break;
-				default:
-					/* otherwise treat the % as not special */
-					appendStringInfoChar(&result, *sp);
-					break;
-			}
-		}
-		else
-		{
-			appendStringInfoChar(&result, *sp);
-		}
+		nativePath = pstrdup(xlogpath);
+		make_native_path(nativePath);
 	}
 
-	return result.data;
+	result = replace_percent_placeholders(restoreCommand, "restore_command", "frp",
+										  xlogfname, lastRestartPointFname, nativePath);
+
+	if (nativePath)
+		pfree(nativePath);
+
+	return result;
 }

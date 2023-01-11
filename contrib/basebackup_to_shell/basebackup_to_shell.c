@@ -12,6 +12,7 @@
 
 #include "access/xact.h"
 #include "backup/basebackup_target.h"
+#include "common/percentrepl.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
@@ -208,59 +209,8 @@ static char *
 shell_construct_command(const char *base_command, const char *filename,
 						const char *target_detail)
 {
-	StringInfoData buf;
-	const char *c;
-
-	initStringInfo(&buf);
-	for (c = base_command; *c != '\0'; ++c)
-	{
-		/* Anything other than '%' is copied verbatim. */
-		if (*c != '%')
-		{
-			appendStringInfoChar(&buf, *c);
-			continue;
-		}
-
-		/* Any time we see '%' we eat the following character as well. */
-		++c;
-
-		/*
-		 * The following character determines what we insert here, or may
-		 * cause us to throw an error.
-		 */
-		if (*c == '%')
-		{
-			/* '%%' is replaced by a single '%' */
-			appendStringInfoChar(&buf, '%');
-		}
-		else if (*c == 'f')
-		{
-			/* '%f' is replaced by the filename */
-			appendStringInfoString(&buf, filename);
-		}
-		else if (*c == 'd')
-		{
-			/* '%d' is replaced by the target detail */
-			appendStringInfoString(&buf, target_detail);
-		}
-		else if (*c == '\0')
-		{
-			/* Incomplete escape sequence, expected a character afterward */
-			ereport(ERROR,
-					errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("shell command ends unexpectedly after escape character \"%%\""));
-		}
-		else
-		{
-			/* Unknown escape sequence */
-			ereport(ERROR,
-					errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("shell command contains unexpected escape sequence \"%c\"",
-						   *c));
-		}
-	}
-
-	return buf.data;
+	return replace_percent_placeholders(base_command, "basebackup_to_shell.command",
+										"df", target_detail, filename);
 }
 
 /*
