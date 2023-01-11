@@ -12,24 +12,28 @@
 #include "postgres.h"
 
 #include <fcntl.h>
+#include <signal.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "libpq/pqsignal.h"
 #include "postmaster/fork_process.h"
 
 #ifndef WIN32
 /*
  * Wrapper for fork(). Return values are the same as those for fork():
  * -1 if the fork failed, 0 in the child process, and the PID of the
- * child in the parent process.
+ * child in the parent process.  Signals are blocked while forking, so
+ * the child must unblock.
  */
 pid_t
 fork_process(void)
 {
 	pid_t		result;
 	const char *oomfilename;
+	sigset_t	save_mask;
 
 #ifdef LINUX_PROFILE
 	struct itimerval prof_itimer;
@@ -51,6 +55,13 @@ fork_process(void)
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
 
+	/*
+	 * We start postmaster children with signals blocked.  This allows them to
+	 * install their own handlers before unblocking, to avoid races where they
+	 * might run the postmaster's handler and miss an important control signal.
+	 * With more analysis this could potentially be relaxed.
+	 */
+	sigprocmask(SIG_SETMASK, &BlockSig, &save_mask);
 	result = fork();
 	if (result == 0)
 	{
@@ -102,6 +113,11 @@ fork_process(void)
 
 		/* do post-fork initialization for random number generation */
 		pg_strong_random_init();
+	}
+	else
+	{
+		/* in parent, restore signal mask */
+		sigprocmask(SIG_SETMASK, &save_mask, NULL);
 	}
 
 	return result;

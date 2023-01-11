@@ -53,7 +53,4 @@ extern PGDLLIMPORT sigset_t StartupBlockSig;
 
 extern void pqinitmask(void);
 
-/* pqsigfunc is declared in src/include/port.h */
-extern pqsigfunc pqsignal_pm(int signo, pqsigfunc func);
-
 #endif							/* PQSIGNAL_H */
