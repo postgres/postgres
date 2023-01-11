@@ -5837,6 +5837,10 @@ heap_abort_speculative(Relation relation, ItemPointer tid)
  *
  * tuple is an in-memory tuple structure containing the data to be written
  * over the target tuple.  Also, tuple->t_self identifies the target tuple.
+ *
+ * Note that the tuple updated here had better not come directly from the
+ * syscache if the relation has a toast relation as this tuple could
+ * include toast values that have been expanded, causing a failure here.
  */
 void
 heap_inplace_update(Relation relation, HeapTuple tuple)
