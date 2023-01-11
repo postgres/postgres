@@ -1447,7 +1447,7 @@ ExecQueryAndProcessResults(const char *query,
 		if (!AcceptResult(result, false))
 		{
 			/*
-			 * Some error occured, either a server-side failure or a failure
+			 * Some error occurred, either a server-side failure or a failure
 			 * to submit the command string.  Record that.
 			 */
 			const char *error = PQresultErrorMessage(result);

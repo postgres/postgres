@@ -56,7 +56,7 @@ ALTER ROLE regress_regular_user SET test_pg_db_role_setting.superuser_param = 'c
 SHOW test_pg_db_role_setting.superuser_param;
 SHOW test_pg_db_role_setting.user_param;
 
--- module is loaded, and placeholder values are succesfully set
+-- module is loaded, and placeholder values are successfully set
 SELECT load_test_pg_db_role_setting();
 
 SHOW test_pg_db_role_setting.superuser_param;

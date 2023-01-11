@@ -2114,7 +2114,7 @@ CheckRecoveryConsistency(void)
 
 		/*
 		 * Check that pg_tblspc doesn't contain any real directories. Replay
-		 * of Database/CREATE_* records may have created ficticious tablespace
+		 * of Database/CREATE_* records may have created fictitious tablespace
 		 * directories that should have been removed by the time consistency
 		 * was reached.
 		 */

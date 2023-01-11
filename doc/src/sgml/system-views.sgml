@@ -1580,7 +1580,7 @@
   </para>
 
   <para>
-   A specualtive insertion lock consists of a transaction ID and a speculative
+   A speculative insertion lock consists of a transaction ID and a speculative
    insertion token. The speculative insertion token is displayed in the
    <structfield>objid</structfield> column.
   </para>

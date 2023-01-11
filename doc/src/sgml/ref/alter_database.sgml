@@ -211,9 +211,9 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
       <term><literal>USER SET</literal></term>
       <listitem>
        <para>
-        Specifies that variable should be set on behalf of ordinary role.
-        That lets non-superuser and non-replication role to set placeholder
-        variables, with permission requirements is not known yet;
+        Specifies that the variable should be set on behalf of an ordinary role.
+        That allows non-superuser and non-replication roles to set placeholder
+        variables, whose permission requirements are not known yet;
         see <xref linkend="runtime-config-custom"/>. The variable won't
         be set if it appears to require superuser privileges.
        </para>

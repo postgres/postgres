@@ -122,7 +122,7 @@ SHOW test_pg_db_role_setting.user_param;
  bbb
 (1 row)
 
--- module is loaded, and placeholder values are succesfully set
+-- module is loaded, and placeholder values are successfully set
 SELECT load_test_pg_db_role_setting();
  load_test_pg_db_role_setting 
 ------------------------------

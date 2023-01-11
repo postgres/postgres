@@ -1901,8 +1901,8 @@ INSERT INTO tbl1 VALUES ($1, $2) \bind 'first value' 'second value' \g
         </para>
 
         <para>
-        Since <productname>PostgreSQL</productname> 16 the output includes
-        column with the values of
+        Since <productname>PostgreSQL</productname> 16, the output includes a
+        column with the values of the
         <link linkend="sql-alterrole-user-set"><literal>USER SET</literal></link>
         flag for each setting.
         </para>
