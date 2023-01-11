@@ -161,9 +161,10 @@ DROP ROLE regress_noiseword;
 DROP ROLE regress_inroles;
 DROP ROLE regress_adminroles;
 
--- fail, cannot drop ourself nor superusers
+-- fail, cannot drop ourself, nor superusers or roles we lack ADMIN for
 DROP ROLE regress_role_super;
 DROP ROLE regress_role_admin;
+DROP ROLE regress_rolecreator;
 
 -- ok
 RESET SESSION AUTHORIZATION;
@@ -171,7 +172,10 @@ REVOKE CREATE ON DATABASE regression FROM regress_role_admin CASCADE;
 DROP INDEX tenant_idx;
 DROP TABLE tenant_table;
 DROP VIEW tenant_view;
+DROP SCHEMA regress_tenant2_schema;
 DROP ROLE regress_tenant;
+DROP ROLE regress_tenant2;
+DROP ROLE regress_rolecreator;
 DROP ROLE regress_role_admin;
 DROP ROLE regress_role_super;
 DROP ROLE regress_role_normal;
