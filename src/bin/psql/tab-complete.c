@@ -1982,6 +1982,27 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("ALTER", "EXTENSION", MatchAny))
 		COMPLETE_WITH("ADD", "DROP", "UPDATE", "SET SCHEMA");
 
+	/* ALTER EXTENSION <name> ADD|DROP */
+	else if (Matches("ALTER", "EXTENSION", MatchAny, "ADD|DROP"))
+		COMPLETE_WITH("ACCESS METHOD", "AGGREGATE", "CAST", "COLLATION",
+					  "CONVERSION", "DOMAIN", "EVENT TRIGGER", "FOREIGN",
+					  "FUNCTION", "MATERIALIZED VIEW", "OPERATOR",
+					  "LANGUAGE", "PROCEDURE", "ROUTINE", "SCHEMA",
+					  "SEQUENCE", "SERVER", "TABLE", "TEXT SEARCH",
+					  "TRANSFORM FOR", "TYPE", "VIEW");
+
+	/* ALTER EXTENSION <name> ADD|DROP FOREIGN */
+	else if (Matches("ALTER", "EXTENSION", MatchAny, "ADD|DROP", "FOREIGN"))
+		COMPLETE_WITH("DATA WRAPPER", "TABLE");
+
+	/* ALTER EXTENSION <name> ADD|DROP OPERATOR */
+	else if (Matches("ALTER", "EXTENSION", MatchAny, "ADD|DROP", "OPERATOR"))
+		COMPLETE_WITH("CLASS", "FAMILY");
+
+	/* ALTER EXTENSION <name> ADD|DROP TEXT SEARCH */
+	else if (Matches("ALTER", "EXTENSION", MatchAny, "ADD|DROP", "TEXT", "SEARCH"))
+		COMPLETE_WITH("CONFIGURATION", "DICTIONARY", "PARSER", "TEMPLATE");
+
 	/* ALTER EXTENSION <name> UPDATE */
 	else if (Matches("ALTER", "EXTENSION", MatchAny, "UPDATE"))
 		COMPLETE_WITH("TO");
