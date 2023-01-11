@@ -54,8 +54,6 @@ typedef struct cfp cfp;
 
 extern cfp *cfopen(const char *path, const char *mode,
 				   const pg_compress_specification compression_spec);
-extern cfp *cfdopen(int fd, const char *mode,
-					pg_compress_specification compression_spec);
 extern cfp *cfopen_read(const char *path, const char *mode);
 extern cfp *cfopen_write(const char *path, const char *mode,
 						 const pg_compress_specification compression_spec);
