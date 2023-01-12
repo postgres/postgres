@@ -82,7 +82,7 @@ typedef enum ClientCertName
  * (pg_ident.conf or pg_hba.conf), together with whether the token has
  * been quoted.  If "string" begins with a slash, it may optionally
  * contain a regular expression (currently used for pg_ident.conf when
- * building IdentLines).
+ * building IdentLines and for pg_hba.conf when building HbaLines).
  */
 typedef struct AuthToken
 {
