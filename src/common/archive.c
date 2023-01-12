@@ -33,7 +33,7 @@
  * The result is a palloc'd string for the restore command built.  The
  * caller is responsible for freeing it.  If any of the required arguments
  * is NULL and that the corresponding alias is found in the command given
- * by the caller, then NULL is returned.
+ * by the caller, then an error is thrown.
  */
 char *
 BuildRestoreCommand(const char *restoreCommand,

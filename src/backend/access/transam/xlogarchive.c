@@ -154,9 +154,6 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	xlogRestoreCmd = BuildRestoreCommand(recoveryRestoreCommand,
 										 xlogpath, xlogfname,
 										 lastRestartPointFname);
-	if (xlogRestoreCmd == NULL)
-		elog(ERROR, "could not build restore command \"%s\"",
-			 recoveryRestoreCommand);
 
 	ereport(DEBUG3,
 			(errmsg_internal("executing restore command \"%s\"",
