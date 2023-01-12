@@ -2388,8 +2388,8 @@ lazy_vacuum_all_indexes(LVRelState *vacrel)
 static void
 lazy_vacuum_heap_rel(LVRelState *vacrel)
 {
-	int			index;
-	BlockNumber vacuumed_pages;
+	int			index = 0;
+	BlockNumber vacuumed_pages = 0;
 	Buffer		vmbuffer = InvalidBuffer;
 	LVSavedErrInfo saved_err_info;
 
@@ -2406,42 +2406,34 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 							 VACUUM_ERRCB_PHASE_VACUUM_HEAP,
 							 InvalidBlockNumber, InvalidOffsetNumber);
 
-	vacuumed_pages = 0;
-
-	index = 0;
 	while (index < vacrel->dead_items->num_items)
 	{
-		BlockNumber tblk;
+		BlockNumber blkno;
 		Buffer		buf;
 		Page		page;
 		Size		freespace;
 
 		vacuum_delay_point();
 
-		tblk = ItemPointerGetBlockNumber(&vacrel->dead_items->items[index]);
-		vacrel->blkno = tblk;
-		buf = ReadBufferExtended(vacrel->rel, MAIN_FORKNUM, tblk, RBM_NORMAL,
+		blkno = ItemPointerGetBlockNumber(&vacrel->dead_items->items[index]);
+		vacrel->blkno = blkno;
+		buf = ReadBufferExtended(vacrel->rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 								 vacrel->bstrategy);
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-		index = lazy_vacuum_heap_page(vacrel, tblk, buf, index, &vmbuffer);
+		index = lazy_vacuum_heap_page(vacrel, blkno, buf, index, &vmbuffer);
 
 		/* Now that we've vacuumed the page, record its available space */
 		page = BufferGetPage(buf);
 		freespace = PageGetHeapFreeSpace(page);
 
 		UnlockReleaseBuffer(buf);
-		RecordPageWithFreeSpace(vacrel->rel, tblk, freespace);
+		RecordPageWithFreeSpace(vacrel->rel, blkno, freespace);
 		vacuumed_pages++;
 	}
 
-	/* Clear the block number information */
 	vacrel->blkno = InvalidBlockNumber;
-
 	if (BufferIsValid(vmbuffer))
-	{
 		ReleaseBuffer(vmbuffer);
-		vmbuffer = InvalidBuffer;
-	}
 
 	/*
 	 * We set all LP_DEAD items from the first heap pass to LP_UNUSED during
