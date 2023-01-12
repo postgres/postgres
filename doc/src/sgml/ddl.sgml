@@ -361,7 +361,7 @@ CREATE TABLE people (
         definition without any <literal>GENERATED</literal> clause
         in <command>CREATE TABLE ... PARTITION OF</command>, then
         its <literal>GENERATED</literal> clause will automatically be copied
-        from the parent.  <command>ALTER TABLE ... ADD PARTITION</command>
+        from the parent.  <command>ALTER TABLE ... ATTACH PARTITION</command>
         will insist that parent and child columns already match as to
         generation status, but it will not require their generation
         expressions to match.
