@@ -95,6 +95,9 @@ static void compute_new_xmax_infomask(TransactionId xmax, uint16 old_infomask,
 static TM_Result heap_lock_updated_tuple(Relation rel, HeapTuple tuple,
 										 ItemPointer ctid, TransactionId xid,
 										 LockTupleMode mode);
+static int	heap_log_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
+								 xl_heap_freeze_plan *plans_out,
+								 OffsetNumber *offsets_out);
 static void GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
 								   uint16 *new_infomask2);
 static TransactionId MultiXactIdGetUpdateXid(TransactionId xmax,
@@ -111,9 +114,6 @@ static int	bottomup_sort_and_shrink(TM_IndexDeleteOp *delstate);
 static XLogRecPtr log_heap_new_cid(Relation relation, HeapTuple tup);
 static HeapTuple ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_required,
 										bool *copy);
-static int	heap_xlog_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
-								  xl_heap_freeze_plan *plans_out,
-								  OffsetNumber *offsets_out);
 
 
 /*
@@ -6868,7 +6868,7 @@ heap_freeze_execute_prepared(Relation rel, Buffer buffer,
 		XLogRecPtr	recptr;
 
 		/* Prepare deduplicated representation for use in WAL record */
-		nplans = heap_xlog_freeze_plan(tuples, ntuples, plans, offsets);
+		nplans = heap_log_freeze_plan(tuples, ntuples, plans, offsets);
 
 		xlrec.snapshotConflictHorizon = snapshotConflictHorizon;
 		xlrec.nplans = nplans;
@@ -6893,6 +6893,144 @@ heap_freeze_execute_prepared(Relation rel, Buffer buffer,
 	}
 
 	END_CRIT_SECTION();
+}
+
+/*
+ * Comparator used to deduplicate XLOG_HEAP2_FREEZE_PAGE freeze plans
+ */
+static int
+heap_log_freeze_cmp(const void *arg1, const void *arg2)
+{
+	HeapTupleFreeze *frz1 = (HeapTupleFreeze *) arg1;
+	HeapTupleFreeze *frz2 = (HeapTupleFreeze *) arg2;
+
+	if (frz1->xmax < frz2->xmax)
+		return -1;
+	else if (frz1->xmax > frz2->xmax)
+		return 1;
+
+	if (frz1->t_infomask2 < frz2->t_infomask2)
+		return -1;
+	else if (frz1->t_infomask2 > frz2->t_infomask2)
+		return 1;
+
+	if (frz1->t_infomask < frz2->t_infomask)
+		return -1;
+	else if (frz1->t_infomask > frz2->t_infomask)
+		return 1;
+
+	if (frz1->frzflags < frz2->frzflags)
+		return -1;
+	else if (frz1->frzflags > frz2->frzflags)
+		return 1;
+
+	/*
+	 * heap_log_freeze_eq would consider these tuple-wise plans to be equal.
+	 * (So the tuples will share a single canonical freeze plan.)
+	 *
+	 * We tiebreak on page offset number to keep each freeze plan's page
+	 * offset number array individually sorted. (Unnecessary, but be tidy.)
+	 */
+	if (frz1->offset < frz2->offset)
+		return -1;
+	else if (frz1->offset > frz2->offset)
+		return 1;
+
+	Assert(false);
+	return 0;
+}
+
+/*
+ * Compare fields that describe actions required to freeze tuple with caller's
+ * open plan.  If everything matches then the frz tuple plan is equivalent to
+ * caller's plan.
+ */
+static inline bool
+heap_log_freeze_eq(xl_heap_freeze_plan *plan, HeapTupleFreeze *frz)
+{
+	if (plan->xmax == frz->xmax &&
+		plan->t_infomask2 == frz->t_infomask2 &&
+		plan->t_infomask == frz->t_infomask &&
+		plan->frzflags == frz->frzflags)
+		return true;
+
+	/* Caller must call heap_log_freeze_new_plan again for frz */
+	return false;
+}
+
+/*
+ * Start new plan initialized using tuple-level actions.  At least one tuple
+ * will have steps required to freeze described by caller's plan during REDO.
+ */
+static inline void
+heap_log_freeze_new_plan(xl_heap_freeze_plan *plan, HeapTupleFreeze *frz)
+{
+	plan->xmax = frz->xmax;
+	plan->t_infomask2 = frz->t_infomask2;
+	plan->t_infomask = frz->t_infomask;
+	plan->frzflags = frz->frzflags;
+	plan->ntuples = 1;			/* for now */
+}
+
+/*
+ * Deduplicate tuple-based freeze plans so that each distinct set of
+ * processing steps is only stored once in XLOG_HEAP2_FREEZE_PAGE records.
+ * Called during original execution of freezing (for logged relations).
+ *
+ * Return value is number of plans set in *plans_out for caller.  Also writes
+ * an array of offset numbers into *offsets_out output argument for caller
+ * (actually there is one array per freeze plan, but that's not of immediate
+ * concern to our caller).
+ */
+static int
+heap_log_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
+					 xl_heap_freeze_plan *plans_out,
+					 OffsetNumber *offsets_out)
+{
+	int			nplans = 0;
+
+	/* Sort tuple-based freeze plans in the order required to deduplicate */
+	qsort(tuples, ntuples, sizeof(HeapTupleFreeze), heap_log_freeze_cmp);
+
+	for (int i = 0; i < ntuples; i++)
+	{
+		HeapTupleFreeze *frz = tuples + i;
+
+		if (i == 0)
+		{
+			/* New canonical freeze plan starting with first tup */
+			heap_log_freeze_new_plan(plans_out, frz);
+			nplans++;
+		}
+		else if (heap_log_freeze_eq(plans_out, frz))
+		{
+			/* tup matches open canonical plan -- include tup in it */
+			Assert(offsets_out[i - 1] < frz->offset);
+			plans_out->ntuples++;
+		}
+		else
+		{
+			/* Tup doesn't match current plan -- done with it now */
+			plans_out++;
+
+			/* New canonical freeze plan starting with this tup */
+			heap_log_freeze_new_plan(plans_out, frz);
+			nplans++;
+		}
+
+		/*
+		 * Save page offset number in dedicated buffer in passing.
+		 *
+		 * REDO routine relies on the record's offset numbers array grouping
+		 * offset numbers by freeze plan.  The sort order within each grouping
+		 * is ascending offset number order, just to keep things tidy.
+		 */
+		offsets_out[i] = frz->offset;
+	}
+
+	Assert(nplans > 0 && nplans <= ntuples);
+
+	return nplans;
 }
 
 /*
@@ -9016,144 +9154,6 @@ heap_xlog_visible(XLogReaderState *record)
 }
 
 /*
- * Comparator used to deduplicate XLOG_HEAP2_FREEZE_PAGE freeze plans
- */
-static int
-heap_xlog_freeze_cmp(const void *arg1, const void *arg2)
-{
-	HeapTupleFreeze *frz1 = (HeapTupleFreeze *) arg1;
-	HeapTupleFreeze *frz2 = (HeapTupleFreeze *) arg2;
-
-	if (frz1->xmax < frz2->xmax)
-		return -1;
-	else if (frz1->xmax > frz2->xmax)
-		return 1;
-
-	if (frz1->t_infomask2 < frz2->t_infomask2)
-		return -1;
-	else if (frz1->t_infomask2 > frz2->t_infomask2)
-		return 1;
-
-	if (frz1->t_infomask < frz2->t_infomask)
-		return -1;
-	else if (frz1->t_infomask > frz2->t_infomask)
-		return 1;
-
-	if (frz1->frzflags < frz2->frzflags)
-		return -1;
-	else if (frz1->frzflags > frz2->frzflags)
-		return 1;
-
-	/*
-	 * heap_xlog_freeze_eq would consider these tuple-wise plans to be equal.
-	 * (So the tuples will share a single canonical freeze plan.)
-	 *
-	 * We tiebreak on page offset number to keep each freeze plan's page
-	 * offset number array individually sorted. (Unnecessary, but be tidy.)
-	 */
-	if (frz1->offset < frz2->offset)
-		return -1;
-	else if (frz1->offset > frz2->offset)
-		return 1;
-
-	Assert(false);
-	return 0;
-}
-
-/*
- * Compare fields that describe actions required to freeze tuple with caller's
- * open plan.  If everything matches then the frz tuple plan is equivalent to
- * caller's plan.
- */
-static inline bool
-heap_xlog_freeze_eq(xl_heap_freeze_plan *plan, HeapTupleFreeze *frz)
-{
-	if (plan->xmax == frz->xmax &&
-		plan->t_infomask2 == frz->t_infomask2 &&
-		plan->t_infomask == frz->t_infomask &&
-		plan->frzflags == frz->frzflags)
-		return true;
-
-	/* Caller must call heap_xlog_new_freeze_plan again for frz */
-	return false;
-}
-
-/*
- * Start new plan initialized using tuple-level actions.  At least one tuple
- * will have steps required to freeze described by caller's plan during REDO.
- */
-static inline void
-heap_xlog_new_freeze_plan(xl_heap_freeze_plan *plan, HeapTupleFreeze *frz)
-{
-	plan->xmax = frz->xmax;
-	plan->t_infomask2 = frz->t_infomask2;
-	plan->t_infomask = frz->t_infomask;
-	plan->frzflags = frz->frzflags;
-	plan->ntuples = 1;			/* for now */
-}
-
-/*
- * Deduplicate tuple-based freeze plans so that each distinct set of
- * processing steps is only stored once in XLOG_HEAP2_FREEZE_PAGE records.
- * Called during original execution of freezing (for logged relations).
- *
- * Return value is number of plans set in *plans_out for caller.  Also writes
- * an array of offset numbers into *offsets_out output argument for caller
- * (actually there is one array per freeze plan, but that's not of immediate
- * concern to our caller).
- */
-static int
-heap_xlog_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
-					  xl_heap_freeze_plan *plans_out,
-					  OffsetNumber *offsets_out)
-{
-	int			nplans = 0;
-
-	/* Sort tuple-based freeze plans in the order required to deduplicate */
-	qsort(tuples, ntuples, sizeof(HeapTupleFreeze), heap_xlog_freeze_cmp);
-
-	for (int i = 0; i < ntuples; i++)
-	{
-		HeapTupleFreeze *frz = tuples + i;
-
-		if (i == 0)
-		{
-			/* New canonical freeze plan starting with first tup */
-			heap_xlog_new_freeze_plan(plans_out, frz);
-			nplans++;
-		}
-		else if (heap_xlog_freeze_eq(plans_out, frz))
-		{
-			/* tup matches open canonical plan -- include tup in it */
-			Assert(offsets_out[i - 1] < frz->offset);
-			plans_out->ntuples++;
-		}
-		else
-		{
-			/* Tup doesn't match current plan -- done with it now */
-			plans_out++;
-
-			/* New canonical freeze plan starting with this tup */
-			heap_xlog_new_freeze_plan(plans_out, frz);
-			nplans++;
-		}
-
-		/*
-		 * Save page offset number in dedicated buffer in passing.
-		 *
-		 * REDO routine relies on the record's offset numbers array grouping
-		 * offset numbers by freeze plan.  The sort order within each grouping
-		 * is ascending offset number order, just to keep things tidy.
-		 */
-		offsets_out[i] = frz->offset;
-	}
-
-	Assert(nplans > 0 && nplans <= ntuples);
-
-	return nplans;
-}
-
-/*
  * Replay XLOG_HEAP2_FREEZE_PAGE records
  */
 static void
@@ -9189,21 +9189,19 @@ heap_xlog_freeze_page(XLogReaderState *record)
 									 sizeof(xl_heap_freeze_plan)));
 		for (int p = 0; p < xlrec->nplans; p++)
 		{
-			xl_heap_freeze_plan plan;
 			HeapTupleFreeze frz;
 
 			/*
 			 * Convert freeze plan representation from WAL record into
 			 * per-tuple format used by heap_execute_freeze_tuple
 			 */
-			memcpy(&plan, &plans[p], sizeof(xl_heap_freeze_plan));
-			frz.xmax = plan.xmax;
-			frz.t_infomask2 = plan.t_infomask2;
-			frz.t_infomask = plan.t_infomask;
-			frz.frzflags = plan.frzflags;
+			frz.xmax = plans[p].xmax;
+			frz.t_infomask2 = plans[p].t_infomask2;
+			frz.t_infomask = plans[p].t_infomask;
+			frz.frzflags = plans[p].frzflags;
 			frz.offset = InvalidOffsetNumber;	/* unused, but be tidy */
 
-			for (int i = 0; i < plan.ntuples; i++)
+			for (int i = 0; i < plans[p].ntuples; i++)
 			{
 				OffsetNumber offset = offsets[curoff++];
 				ItemId		lp;
