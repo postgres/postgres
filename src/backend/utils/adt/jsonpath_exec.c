@@ -958,9 +958,13 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				JsonbValue *v;
 				bool		hasNext = jspGetNext(jsp, &elem);
 
-				if (!hasNext && !found)
+				if (!hasNext && !found && jsp->type != jpiVariable)
 				{
-					res = jperOk;	/* skip evaluation */
+					/*
+					 * Skip evaluation, but not for variables.  We must
+					 * trigger an error for the missing variable.
+					 */
+					res = jperOk;
 					break;
 				}
 
