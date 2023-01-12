@@ -142,8 +142,8 @@ typedef struct IdentLine
 	int			linenumber;
 
 	char	   *usermap;
-	char	   *pg_role;
-	AuthToken  *token;
+	AuthToken  *system_user;
+	char	   *pg_user;
 } IdentLine;
 
 /*
@@ -172,7 +172,7 @@ extern bool load_ident(void);
 extern const char *hba_authname(UserAuth auth_method);
 extern void hba_getauthmethod(hbaPort *port);
 extern int	check_usermap(const char *usermap_name,
-						  const char *pg_role, const char *auth_user,
+						  const char *pg_user, const char *system_user,
 						  bool case_insensitive);
 extern HbaLine *parse_hba_line(TokenizedAuthLine *tok_line, int elevel);
 extern IdentLine *parse_ident_line(TokenizedAuthLine *tok_line, int elevel);

@@ -2792,7 +2792,7 @@ parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 	token = linitial(tokens);
 
 	/* Copy the ident user token */
-	parsedline->token = copy_auth_token(token);
+	parsedline->system_user = copy_auth_token(token);
 
 	/* Get the PG rolename token */
 	field = lnext(tok_line->fields, field);
@@ -2800,13 +2800,13 @@ parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 	tokens = lfirst(field);
 	IDENT_MULTI_VALUE(tokens);
 	token = linitial(tokens);
-	parsedline->pg_role = pstrdup(token->string);
+	parsedline->pg_user = pstrdup(token->string);
 
 	/*
 	 * Now that the field validation is done, compile a regex from the user
 	 * token, if necessary.
 	 */
-	if (regcomp_auth_token(parsedline->token, file_name, line_num,
+	if (regcomp_auth_token(parsedline->system_user, file_name, line_num,
 						   err_msg, elevel))
 	{
 		/* err_msg includes the error to report */
@@ -2819,12 +2819,12 @@ parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 /*
  *	Process one line from the parsed ident config lines.
  *
- *	Compare input parsed ident line to the needed map, pg_role and ident_user.
+ *	Compare input parsed ident line to the needed map, pg_user and system_user.
  *	*found_p and *error_p are set according to our results.
  */
 static void
 check_ident_usermap(IdentLine *identLine, const char *usermap_name,
-					const char *pg_role, const char *ident_user,
+					const char *pg_user, const char *system_user,
 					bool case_insensitive, bool *found_p, bool *error_p)
 {
 	*found_p = false;
@@ -2835,7 +2835,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 		return;
 
 	/* Match? */
-	if (token_has_regexp(identLine->token))
+	if (token_has_regexp(identLine->system_user))
 	{
 		/*
 		 * Process the system username as a regular expression that returns
@@ -2845,9 +2845,9 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 		int			r;
 		regmatch_t	matches[2];
 		char	   *ofs;
-		char	   *regexp_pgrole;
+		char	   *expanded_pg_user;
 
-		r = regexec_auth_token(ident_user, identLine->token, 2, matches);
+		r = regexec_auth_token(system_user, identLine->system_user, 2, matches);
 		if (r)
 		{
 			char		errstr[100];
@@ -2855,17 +2855,17 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 			if (r != REG_NOMATCH)
 			{
 				/* REG_NOMATCH is not an error, everything else is */
-				pg_regerror(r, identLine->token->regex, errstr, sizeof(errstr));
+				pg_regerror(r, identLine->system_user->regex, errstr, sizeof(errstr));
 				ereport(LOG,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 						 errmsg("regular expression match for \"%s\" failed: %s",
-								identLine->token->string + 1, errstr)));
+								identLine->system_user->string + 1, errstr)));
 				*error_p = true;
 			}
 			return;
 		}
 
-		if ((ofs = strstr(identLine->pg_role, "\\1")) != NULL)
+		if ((ofs = strstr(identLine->pg_user, "\\1")) != NULL)
 		{
 			int			offset;
 
@@ -2875,7 +2875,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 				ereport(LOG,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 						 errmsg("regular expression \"%s\" has no subexpressions as requested by backreference in \"%s\"",
-								identLine->token->string + 1, identLine->pg_role)));
+								identLine->system_user->string + 1, identLine->pg_user)));
 				*error_p = true;
 				return;
 			}
@@ -2884,18 +2884,18 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 			 * length: original length minus length of \1 plus length of match
 			 * plus null terminator
 			 */
-			regexp_pgrole = palloc0(strlen(identLine->pg_role) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
-			offset = ofs - identLine->pg_role;
-			memcpy(regexp_pgrole, identLine->pg_role, offset);
-			memcpy(regexp_pgrole + offset,
-				   ident_user + matches[1].rm_so,
+			expanded_pg_user = palloc0(strlen(identLine->pg_user) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
+			offset = ofs - identLine->pg_user;
+			memcpy(expanded_pg_user, identLine->pg_user, offset);
+			memcpy(expanded_pg_user + offset,
+				   system_user + matches[1].rm_so,
 				   matches[1].rm_eo - matches[1].rm_so);
-			strcat(regexp_pgrole, ofs + 2);
+			strcat(expanded_pg_user, ofs + 2);
 		}
 		else
 		{
 			/* no substitution, so copy the match */
-			regexp_pgrole = pstrdup(identLine->pg_role);
+			expanded_pg_user = pstrdup(identLine->pg_user);
 		}
 
 		/*
@@ -2904,15 +2904,15 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 		 */
 		if (case_insensitive)
 		{
-			if (pg_strcasecmp(regexp_pgrole, pg_role) == 0)
+			if (pg_strcasecmp(expanded_pg_user, pg_user) == 0)
 				*found_p = true;
 		}
 		else
 		{
-			if (strcmp(regexp_pgrole, pg_role) == 0)
+			if (strcmp(expanded_pg_user, pg_user) == 0)
 				*found_p = true;
 		}
-		pfree(regexp_pgrole);
+		pfree(expanded_pg_user);
 
 		return;
 	}
@@ -2921,14 +2921,14 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 		/* Not regular expression, so make complete match */
 		if (case_insensitive)
 		{
-			if (pg_strcasecmp(identLine->pg_role, pg_role) == 0 &&
-				pg_strcasecmp(identLine->token->string, ident_user) == 0)
+			if (pg_strcasecmp(identLine->pg_user, pg_user) == 0 &&
+				pg_strcasecmp(identLine->system_user->string, system_user) == 0)
 				*found_p = true;
 		}
 		else
 		{
-			if (strcmp(identLine->pg_role, pg_role) == 0 &&
-				strcmp(identLine->token->string, ident_user) == 0)
+			if (strcmp(identLine->pg_user, pg_user) == 0 &&
+				strcmp(identLine->system_user->string, system_user) == 0)
 				*found_p = true;
 		}
 	}
@@ -2938,20 +2938,20 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 /*
  *	Scan the (pre-parsed) ident usermap file line by line, looking for a match
  *
- *	See if the user with ident username "auth_user" is allowed to act
- *	as Postgres user "pg_role" according to usermap "usermap_name".
+ *	See if the system user with ident username "system_user" is allowed to act as
+ *	Postgres user "pg_user" according to usermap "usermap_name".
  *
  *	Special case: Usermap NULL, equivalent to what was previously called
  *	"sameuser" or "samerole", means don't look in the usermap file.
- *	That's an implied map wherein "pg_role" must be identical to
- *	"auth_user" in order to be authorized.
+ *	That's an implied map wherein "pg_user" must be identical to
+ *	"system_user" in order to be authorized.
  *
  *	Iff authorized, return STATUS_OK, otherwise return STATUS_ERROR.
  */
 int
 check_usermap(const char *usermap_name,
-			  const char *pg_role,
-			  const char *auth_user,
+			  const char *pg_user,
+			  const char *system_user,
 			  bool case_insensitive)
 {
 	bool		found_entry = false,
@@ -2961,17 +2961,17 @@ check_usermap(const char *usermap_name,
 	{
 		if (case_insensitive)
 		{
-			if (pg_strcasecmp(pg_role, auth_user) == 0)
+			if (pg_strcasecmp(pg_user, system_user) == 0)
 				return STATUS_OK;
 		}
 		else
 		{
-			if (strcmp(pg_role, auth_user) == 0)
+			if (strcmp(pg_user, system_user) == 0)
 				return STATUS_OK;
 		}
 		ereport(LOG,
 				(errmsg("provided user name (%s) and authenticated user name (%s) do not match",
-						pg_role, auth_user)));
+						pg_user, system_user)));
 		return STATUS_ERROR;
 	}
 	else
@@ -2981,7 +2981,7 @@ check_usermap(const char *usermap_name,
 		foreach(line_cell, parsed_ident_lines)
 		{
 			check_ident_usermap(lfirst(line_cell), usermap_name,
-								pg_role, auth_user, case_insensitive,
+								pg_user, system_user, case_insensitive,
 								&found_entry, &error);
 			if (found_entry || error)
 				break;
@@ -2991,7 +2991,7 @@ check_usermap(const char *usermap_name,
 	{
 		ereport(LOG,
 				(errmsg("no match in usermap \"%s\" for user \"%s\" authenticated as \"%s\"",
-						usermap_name, pg_role, auth_user)));
+						usermap_name, pg_user, system_user)));
 	}
 	return found_entry ? STATUS_OK : STATUS_ERROR;
 }
@@ -3073,7 +3073,7 @@ load_ident(void)
 		foreach(parsed_line_cell, new_parsed_lines)
 		{
 			newline = (IdentLine *) lfirst(parsed_line_cell);
-			free_auth_token(newline->token);
+			free_auth_token(newline->system_user);
 		}
 		MemoryContextDelete(ident_context);
 		return false;
@@ -3085,7 +3085,7 @@ load_ident(void)
 		foreach(parsed_line_cell, parsed_ident_lines)
 		{
 			newline = (IdentLine *) lfirst(parsed_line_cell);
-			free_auth_token(newline->token);
+			free_auth_token(newline->system_user);
 		}
 	}
 	if (parsed_ident_context != NULL)
