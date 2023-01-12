@@ -1586,7 +1586,7 @@ checkControlFile(void)
 }
 
 /*
- * Determine how long should we let ServerLoop sleep.
+ * Determine how long should we let ServerLoop sleep, in milliseconds.
  *
  * In normal conditions we wait at most one minute, to ensure that the other
  * background tasks handled by ServerLoop get done even when no requests are
@@ -1594,8 +1594,8 @@ checkControlFile(void)
  * we don't actually sleep so that they are quickly serviced.  Other exception
  * cases are as shown in the code.
  */
-static void
-DetermineSleepTime(struct timeval *timeout)
+static int
+DetermineSleepTime(void)
 {
 	TimestampTz next_wakeup = 0;
 
@@ -1608,26 +1608,20 @@ DetermineSleepTime(struct timeval *timeout)
 	{
 		if (AbortStartTime != 0)
 		{
+			int			seconds;
+
 			/* time left to abort; clamp to 0 in case it already expired */
-			timeout->tv_sec = SIGKILL_CHILDREN_AFTER_SECS -
+			seconds = SIGKILL_CHILDREN_AFTER_SECS -
 				(time(NULL) - AbortStartTime);
-			timeout->tv_sec = Max(timeout->tv_sec, 0);
-			timeout->tv_usec = 0;
+
+			return Max(seconds * 1000, 0);
 		}
 		else
-		{
-			timeout->tv_sec = 60;
-			timeout->tv_usec = 0;
-		}
-		return;
+			return 60 * 1000;
 	}
 
 	if (StartWorkerNeeded)
-	{
-		timeout->tv_sec = 0;
-		timeout->tv_usec = 0;
-		return;
-	}
+		return 0;
 
 	if (HaveCrashedWorker)
 	{
@@ -1665,26 +1659,14 @@ DetermineSleepTime(struct timeval *timeout)
 
 	if (next_wakeup != 0)
 	{
-		long		secs;
-		int			microsecs;
-
-		TimestampDifference(GetCurrentTimestamp(), next_wakeup,
-							&secs, &microsecs);
-		timeout->tv_sec = secs;
-		timeout->tv_usec = microsecs;
-
-		/* Ensure we don't exceed one minute */
-		if (timeout->tv_sec > 60)
-		{
-			timeout->tv_sec = 60;
-			timeout->tv_usec = 0;
-		}
+		/* Ensure we don't exceed one minute, or go under 0. */
+		return Max(0,
+				   Min(60 * 1000,
+					   TimestampDifferenceMilliseconds(GetCurrentTimestamp(),
+													   next_wakeup)));
 	}
-	else
-	{
-		timeout->tv_sec = 60;
-		timeout->tv_usec = 0;
-	}
+
+	return 60 * 1000;
 }
 
 /*
@@ -1743,12 +1725,9 @@ ServerLoop(void)
 	for (;;)
 	{
 		time_t		now;
-		struct timeval timeout;
-
-		DetermineSleepTime(&timeout);
 
 		nevents = WaitEventSetWait(pm_wait_set,
-								   timeout.tv_sec * 1000 + timeout.tv_usec / 1000,
+								   DetermineSleepTime(),
 								   events,
 								   lengthof(events),
 								   0 /* postmaster posts no wait_events */ );
