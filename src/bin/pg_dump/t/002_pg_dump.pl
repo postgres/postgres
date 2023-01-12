@@ -2280,7 +2280,7 @@ my %tests = (
 					   SELECT col1 FROM dump_test.test_table;',
 		regexp => qr/^
 			\QCREATE MATERIALIZED VIEW dump_test.matview AS\E
-			\n\s+\QSELECT test_table.col1\E
+			\n\s+\QSELECT col1\E
 			\n\s+\QFROM dump_test.test_table\E
 			\n\s+\QWITH NO DATA;\E
 			/xm,
@@ -2296,7 +2296,7 @@ my %tests = (
 						   SELECT * FROM dump_test.matview;',
 		regexp => qr/^
 			\QCREATE MATERIALIZED VIEW dump_test.matview_second AS\E
-			\n\s+\QSELECT matview.col1\E
+			\n\s+\QSELECT col1\E
 			\n\s+\QFROM dump_test.matview\E
 			\n\s+\QWITH NO DATA;\E
 			/xm,
@@ -2312,7 +2312,7 @@ my %tests = (
 						   SELECT * FROM dump_test.matview_second WITH NO DATA;',
 		regexp => qr/^
 			\QCREATE MATERIALIZED VIEW dump_test.matview_third AS\E
-			\n\s+\QSELECT matview_second.col1\E
+			\n\s+\QSELECT col1\E
 			\n\s+\QFROM dump_test.matview_second\E
 			\n\s+\QWITH NO DATA;\E
 			/xm,
@@ -2328,7 +2328,7 @@ my %tests = (
 						   SELECT * FROM dump_test.matview_third WITH NO DATA;',
 		regexp => qr/^
 			\QCREATE MATERIALIZED VIEW dump_test.matview_fourth AS\E
-			\n\s+\QSELECT matview_third.col1\E
+			\n\s+\QSELECT col1\E
 			\n\s+\QFROM dump_test.matview_third\E
 			\n\s+\QWITH NO DATA;\E
 			/xm,
@@ -2346,7 +2346,7 @@ my %tests = (
 						   ALTER COLUMN col2 SET COMPRESSION lz4;',
 		regexp => qr/^
 			\QCREATE MATERIALIZED VIEW dump_test.matview_compression AS\E
-			\n\s+\QSELECT test_table.col2\E
+			\n\s+\QSELECT col2\E
 			\n\s+\QFROM dump_test.test_table\E
 			\n\s+\QWITH NO DATA;\E
 			.*
@@ -3342,7 +3342,7 @@ my %tests = (
 		                   SELECT col1 FROM dump_test.test_table;',
 		regexp => qr/^
 			\QCREATE VIEW dump_test.test_view WITH (security_barrier='true') AS\E
-			\n\s+\QSELECT test_table.col1\E
+			\n\s+\QSELECT col1\E
 			\n\s+\QFROM dump_test.test_table\E
 			\n\s+\QWITH LOCAL CHECK OPTION;\E/xm,
 		like =>

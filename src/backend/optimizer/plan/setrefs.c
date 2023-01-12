@@ -405,13 +405,15 @@ add_rtes_to_flat_rtable(PlannerInfo *root, bool recursing)
 	 *
 	 * At top level, we must add all RTEs so that their indexes in the
 	 * flattened rangetable match up with their original indexes.  When
-	 * recursing, we only care about extracting relation RTEs.
+	 * recursing, we only care about extracting relation RTEs (and subquery
+	 * RTEs that were once relation RTEs).
 	 */
 	foreach(lc, root->parse->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 
-		if (!recursing || rte->rtekind == RTE_RELATION)
+		if (!recursing || rte->rtekind == RTE_RELATION ||
+			(rte->rtekind == RTE_SUBQUERY && OidIsValid(rte->relid)))
 			add_rte_to_flat_rtable(glob, root->parse->rteperminfos, rte);
 	}
 
@@ -501,8 +503,9 @@ flatten_rtes_walker(Node *node, flatten_rtes_walker_context *cxt)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) node;
 
-		/* As above, we need only save relation RTEs */
-		if (rte->rtekind == RTE_RELATION)
+		/* As above, we need only save relation RTEs and former relations */
+		if (rte->rtekind == RTE_RELATION ||
+			(rte->rtekind == RTE_SUBQUERY && OidIsValid(rte->relid)))
 			add_rte_to_flat_rtable(cxt->glob, cxt->query->rteperminfos, rte);
 		return false;
 	}
@@ -560,7 +563,8 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, List *rteperminfos,
 	glob->finalrtable = lappend(glob->finalrtable, newrte);
 
 	/*
-	 * If it's a plain relation RTE, add the table to relationOids.
+	 * If it's a plain relation RTE (or a subquery that was once a view
+	 * reference), add the relation OID to relationOids.
 	 *
 	 * We do this even though the RTE might be unreferenced in the plan tree;
 	 * this would correspond to cases such as views that were expanded, child
@@ -570,7 +574,8 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, List *rteperminfos,
 	 * Note we don't bother to avoid making duplicate list entries.  We could,
 	 * but it would probably cost more cycles than it would save.
 	 */
-	if (newrte->rtekind == RTE_RELATION)
+	if (newrte->rtekind == RTE_RELATION ||
+		(newrte->rtekind == RTE_SUBQUERY && OidIsValid(newrte->relid)))
 		glob->relationOids = lappend_oid(glob->relationOids, newrte->relid);
 
 	/*
@@ -3403,14 +3408,11 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 
-			if (rte->rtekind == RTE_RELATION)
+			if (rte->rtekind == RTE_RELATION ||
+				(rte->rtekind == RTE_SUBQUERY && OidIsValid(rte->relid)) ||
+				(rte->rtekind == RTE_NAMEDTUPLESTORE && OidIsValid(rte->relid)))
 				context->glob->relationOids =
 					lappend_oid(context->glob->relationOids, rte->relid);
-			else if (rte->rtekind == RTE_NAMEDTUPLESTORE &&
-					 OidIsValid(rte->relid))
-				context->glob->relationOids =
-					lappend_oid(context->glob->relationOids,
-								rte->relid);
 		}
 
 		/* And recurse into the query's subexpressions */

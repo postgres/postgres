@@ -2606,7 +2606,7 @@ SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN v5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1
  Foreign Scan
    Output: ft4.c1, ft5.c2, ft5.c1
    Relations: (public.ft4) LEFT JOIN (public.ft5)
-   Remote SQL: SELECT r6.c1, r9.c2, r9.c1 FROM ("S 1"."T 3" r6 LEFT JOIN "S 1"."T 4" r9 ON (((r6.c1 = r9.c1)))) ORDER BY r6.c1 ASC NULLS LAST, r9.c1 ASC NULLS LAST LIMIT 10::bigint OFFSET 10::bigint
+   Remote SQL: SELECT r4.c1, r5.c2, r5.c1 FROM ("S 1"."T 3" r4 LEFT JOIN "S 1"."T 4" r5 ON (((r4.c1 = r5.c1)))) ORDER BY r4.c1 ASC NULLS LAST, r5.c1 ASC NULLS LAST LIMIT 10::bigint OFFSET 10::bigint
 (4 rows)
 
 SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN v5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
@@ -2669,7 +2669,7 @@ SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c
  Foreign Scan
    Output: ft4.c1, t2.c2, t2.c1
    Relations: (public.ft4) LEFT JOIN (public.ft5 t2)
-   Remote SQL: SELECT r6.c1, r2.c2, r2.c1 FROM ("S 1"."T 3" r6 LEFT JOIN "S 1"."T 4" r2 ON (((r6.c1 = r2.c1)))) ORDER BY r6.c1 ASC NULLS LAST, r2.c1 ASC NULLS LAST LIMIT 10::bigint OFFSET 10::bigint
+   Remote SQL: SELECT r4.c1, r2.c2, r2.c1 FROM ("S 1"."T 3" r4 LEFT JOIN "S 1"."T 4" r2 ON (((r4.c1 = r2.c1)))) ORDER BY r4.c1 ASC NULLS LAST, r2.c1 ASC NULLS LAST LIMIT 10::bigint OFFSET 10::bigint
 (4 rows)
 
 SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
@@ -6557,10 +6557,10 @@ CREATE VIEW rw_view AS SELECT * FROM foreign_tbl
  a      | integer |           |          |         | plain   | 
  b      | integer |           |          |         | plain   | 
 View definition:
- SELECT foreign_tbl.a,
-    foreign_tbl.b
+ SELECT a,
+    b
    FROM foreign_tbl
-  WHERE foreign_tbl.a < foreign_tbl.b;
+  WHERE a < b;
 Options: check_option=cascaded
 
 EXPLAIN (VERBOSE, COSTS OFF)
@@ -6674,10 +6674,10 @@ CREATE VIEW rw_view AS SELECT * FROM parent_tbl
  a      | integer |           |          |         | plain   | 
  b      | integer |           |          |         | plain   | 
 View definition:
- SELECT parent_tbl.a,
-    parent_tbl.b
+ SELECT a,
+    b
    FROM parent_tbl
-  WHERE parent_tbl.a < parent_tbl.b;
+  WHERE a < b;
 Options: check_option=cascaded
 
 EXPLAIN (VERBOSE, COSTS OFF)

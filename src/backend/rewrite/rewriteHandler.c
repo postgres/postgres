@@ -1715,10 +1715,7 @@ ApplyRetrieveRule(Query *parsetree,
 				  List *activeRIRs)
 {
 	Query	   *rule_action;
-	RangeTblEntry *rte,
-			   *subrte;
-	RTEPermissionInfo *perminfo,
-			   *sub_perminfo;
+	RangeTblEntry *rte;
 	RowMarkClause *rc;
 
 	if (list_length(rule->actions) != 1)
@@ -1830,32 +1827,20 @@ ApplyRetrieveRule(Query *parsetree,
 	 * original RTE to a subquery RTE.
 	 */
 	rte = rt_fetch(rt_index, parsetree->rtable);
-	perminfo = getRTEPermissionInfo(parsetree->rteperminfos, rte);
 
 	rte->rtekind = RTE_SUBQUERY;
 	rte->subquery = rule_action;
 	rte->security_barrier = RelationIsSecurityView(relation);
-	/* Clear fields that should not be set in a subquery RTE */
-	rte->relid = InvalidOid;
-	rte->relkind = 0;
-	rte->rellockmode = 0;
-	rte->tablesample = NULL;
-	rte->perminfoindex = 0;		/* no permission checking for this RTE */
-	rte->inh = false;			/* must not be set for a subquery */
 
 	/*
-	 * We move the view's permission check data down to its RTEPermissionInfo
-	 * contained in the view query, which the OLD entry in its range table
-	 * points to.
+	 * Clear fields that should not be set in a subquery RTE.  Note that we
+	 * leave the relid, rellockmode, and perminfoindex fields set, so that the
+	 * view relation can be appropriately locked before execution and its
+	 * permissions checked.
 	 */
-	subrte = rt_fetch(PRS2_OLD_VARNO, rule_action->rtable);
-	Assert(subrte->relid == relation->rd_id);
-	sub_perminfo = getRTEPermissionInfo(rule_action->rteperminfos, subrte);
-	sub_perminfo->requiredPerms = perminfo->requiredPerms;
-	sub_perminfo->checkAsUser = perminfo->checkAsUser;
-	sub_perminfo->selectedCols = perminfo->selectedCols;
-	sub_perminfo->insertedCols = perminfo->insertedCols;
-	sub_perminfo->updatedCols = perminfo->updatedCols;
+	rte->relkind = 0;
+	rte->tablesample = NULL;
+	rte->inh = false;			/* must not be set for a subquery */
 
 	return parsetree;
 }
@@ -1867,9 +1852,10 @@ ApplyRetrieveRule(Query *parsetree,
  * aggregate.  We leave it to the planner to detect that.
  *
  * NB: this must agree with the parser's transformLockingClause() routine.
- * However, unlike the parser we have to be careful not to mark a view's
- * OLD and NEW rels for updating.  The best way to handle that seems to be
- * to scan the jointree to determine which rels are used.
+ * However, we used to have to avoid marking a view's OLD and NEW rels for
+ * updating, which motivated scanning the jointree to determine which rels
+ * are used.  Possibly that could now be simplified into just scanning the
+ * rangetable as the parser does.
  */
 static void
 markQueryForLocking(Query *qry, Node *jtnode,

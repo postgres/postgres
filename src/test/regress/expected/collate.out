@@ -194,18 +194,18 @@ CREATE VIEW collview2 AS SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";
 CREATE VIEW collview3 AS SELECT a, lower((x || x) COLLATE "POSIX") FROM collate_test10;
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'collview%' ORDER BY 1;
- table_name |                               view_definition                                
-------------+------------------------------------------------------------------------------
- collview1  |  SELECT collate_test1.a,                                                    +
-            |     collate_test1.b                                                         +
-            |    FROM collate_test1                                                       +
-            |   WHERE ((collate_test1.b COLLATE "C") >= 'bbc'::text);
- collview2  |  SELECT collate_test1.a,                                                    +
-            |     collate_test1.b                                                         +
-            |    FROM collate_test1                                                       +
-            |   ORDER BY (collate_test1.b COLLATE "C");
- collview3  |  SELECT collate_test10.a,                                                   +
-            |     lower(((collate_test10.x || collate_test10.x) COLLATE "POSIX")) AS lower+
+ table_name |                view_definition                 
+------------+------------------------------------------------
+ collview1  |  SELECT a,                                    +
+            |     b                                         +
+            |    FROM collate_test1                         +
+            |   WHERE ((b COLLATE "C") >= 'bbc'::text);
+ collview2  |  SELECT a,                                    +
+            |     b                                         +
+            |    FROM collate_test1                         +
+            |   ORDER BY (b COLLATE "C");
+ collview3  |  SELECT a,                                    +
+            |     lower(((x || x) COLLATE "POSIX")) AS lower+
             |    FROM collate_test10;
 (3 rows)
 
@@ -698,7 +698,7 @@ SELECT c1+1 AS c1p FROM
 --------+---------+-----------+----------+---------+---------+-------------
  c1p    | integer |           |          |         | plain   | 
 View definition:
- SELECT ss.c1 + 1 AS c1p
+ SELECT c1 + 1 AS c1p
    FROM ( SELECT 4 AS c1) ss;
 
 -- Check conflicting or redundant options in CREATE COLLATION

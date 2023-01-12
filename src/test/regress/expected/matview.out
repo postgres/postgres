@@ -100,10 +100,10 @@ CREATE INDEX mvtest_aa ON mvtest_bb (grandtot);
  type   | text    |           |          |         | extended |              | 
  totamt | numeric |           |          |         | main     |              | 
 View definition:
- SELECT mvtest_tv.type,
-    mvtest_tv.totamt
+ SELECT type,
+    totamt
    FROM mvtest_tv
-  ORDER BY mvtest_tv.type;
+  ORDER BY type;
 
 \d+ mvtest_tvm
                            Materialized view "public.mvtest_tvm"
@@ -112,10 +112,10 @@ View definition:
  type   | text    |           |          |         | extended |              | 
  totamt | numeric |           |          |         | main     |              | 
 View definition:
- SELECT mvtest_tv.type,
-    mvtest_tv.totamt
+ SELECT type,
+    totamt
    FROM mvtest_tv
-  ORDER BY mvtest_tv.type;
+  ORDER BY type;
 
 \d+ mvtest_tvvm
                            Materialized view "public.mvtest_tvvm"
@@ -123,7 +123,7 @@ View definition:
 ----------+---------+-----------+----------+---------+---------+--------------+-------------
  grandtot | numeric |           |          |         | main    |              | 
 View definition:
- SELECT mvtest_tvv.grandtot
+ SELECT grandtot
    FROM mvtest_tvv;
 
 \d+ mvtest_bb
@@ -134,7 +134,7 @@ View definition:
 Indexes:
     "mvtest_aa" btree (grandtot)
 View definition:
- SELECT mvtest_tvvmv.grandtot
+ SELECT grandtot
    FROM mvtest_tvvmv;
 
 -- test schema behavior
@@ -150,7 +150,7 @@ Indexes:
     "mvtest_tvmm_expr" UNIQUE, btree ((grandtot > 0::numeric))
     "mvtest_tvmm_pred" UNIQUE, btree (grandtot) WHERE grandtot < 0::numeric
 View definition:
- SELECT sum(mvtest_tvm.totamt) AS grandtot
+ SELECT sum(totamt) AS grandtot
    FROM mvtest_mvschema.mvtest_tvm;
 
 SET search_path = mvtest_mvschema, public;
@@ -161,10 +161,10 @@ SET search_path = mvtest_mvschema, public;
  type   | text    |           |          |         | extended |              | 
  totamt | numeric |           |          |         | main     |              | 
 View definition:
- SELECT mvtest_tv.type,
-    mvtest_tv.totamt
+ SELECT type,
+    totamt
    FROM mvtest_tv
-  ORDER BY mvtest_tv.type;
+  ORDER BY type;
 
 -- modify the underlying table data
 INSERT INTO mvtest_t VALUES (6, 'z', 13);

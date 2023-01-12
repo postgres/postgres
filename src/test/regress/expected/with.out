@@ -396,9 +396,9 @@ SELECT pg_get_viewdef('vsubdepartment'::regclass);
              subdepartment sd                 +
            WHERE (d.parent_department = sd.id)+
          )                                    +
-  SELECT subdepartment.id,                    +
-     subdepartment.parent_department,         +
-     subdepartment.name                       +
+  SELECT id,                                  +
+     parent_department,                       +
+     name                                     +
     FROM subdepartment;
 (1 row)
 
@@ -419,9 +419,9 @@ SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
              subdepartment sd               +
            WHERE d.parent_department = sd.id+
          )                                  +
-  SELECT subdepartment.id,                  +
-     subdepartment.parent_department,       +
-     subdepartment.name                     +
+  SELECT id,                                +
+     parent_department,                     +
+     name                                   +
     FROM subdepartment;
 (1 row)
 
@@ -446,7 +446,7 @@ View definition:
            FROM t t_1
           WHERE t_1.n < 100
         )
- SELECT sum(t.n) AS sum
+ SELECT sum(n) AS sum
    FROM t;
 
 -- corner case in which sub-WITH gets initialized first
@@ -959,9 +959,9 @@ select pg_get_viewdef('v_search');
              search_graph sg                   +
            WHERE (g.f = sg.t)                  +
          ) SEARCH DEPTH FIRST BY f, t SET seq  +
-  SELECT search_graph.f,                       +
-     search_graph.t,                           +
-     search_graph.label                        +
+  SELECT f,                                    +
+     t,                                        +
+     label                                     +
     FROM search_graph;
 (1 row)
 
@@ -1547,9 +1547,9 @@ select pg_get_viewdef('v_cycle1');
              search_graph sg                   +
            WHERE (g.f = sg.t)                  +
          ) CYCLE f, t SET is_cycle USING path  +
-  SELECT search_graph.f,                       +
-     search_graph.t,                           +
-     search_graph.label                        +
+  SELECT f,                                    +
+     t,                                        +
+     label                                     +
     FROM search_graph;
 (1 row)
 
@@ -1569,9 +1569,9 @@ select pg_get_viewdef('v_cycle2');
              search_graph sg                                                +
            WHERE (g.f = sg.t)                                               +
          ) CYCLE f, t SET is_cycle TO 'Y'::text DEFAULT 'N'::text USING path+
-  SELECT search_graph.f,                                                    +
-     search_graph.t,                                                        +
-     search_graph.label                                                     +
+  SELECT f,                                                                 +
+     t,                                                                     +
+     label                                                                  +
     FROM search_graph;
 (1 row)
 
