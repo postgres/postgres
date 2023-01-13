@@ -141,6 +141,30 @@ test_role(
 	  [qr/connection authenticated: identity="$system_user" method=peer/]);
 
 
+# Success as the regular expression matches and \1 is replaced in the given
+# subexpression.
+reset_pg_ident($node, 'mypeermap', qq{/^$system_user(.*)\$}, 'test\1mapuser');
+test_role(
+	$node,
+	qq{testmapuser},
+	'peer',
+	0,
+	'with regular expression in user name map with \1 replaced',
+	log_like =>
+	  [qr/connection authenticated: identity="$system_user" method=peer/]);
+
+# Failure as the regular expression does not include a subexpression, but
+# the database user contains \1, requesting a replacement.
+reset_pg_ident($node, 'mypeermap', qq{/^$system_user\$}, '\1testmapuser');
+test_role(
+	$node,
+	qq{testmapuser},
+	'peer', 2,
+	'with regular expression in user name map with \1 not replaced',
+	log_like => [
+		qr/regular expression "\^$system_user\$" has no subexpressions as requested by backreference in "\\1testmapuser"/
+	]);
+
 # Concatenate system_user to system_user.
 $regex_test_string = $system_user . $system_user;
 
