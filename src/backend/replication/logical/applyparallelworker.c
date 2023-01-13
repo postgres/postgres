@@ -475,6 +475,10 @@ pa_allocate_worker(TransactionId xid)
 	if (!pa_can_start())
 		return;
 
+	winfo = pa_launch_parallel_worker();
+	if (!winfo)
+		return;
+
 	/* First time through, initialize parallel apply worker state hashtable. */
 	if (!ParallelApplyTxnHash)
 	{
@@ -489,10 +493,6 @@ pa_allocate_worker(TransactionId xid)
 										   16, &ctl,
 										   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
-
-	winfo = pa_launch_parallel_worker();
-	if (!winfo)
-		return;
 
 	/* Create an entry for the requested transaction. */
 	entry = hash_search(ParallelApplyTxnHash, &xid, HASH_ENTER, &found);
