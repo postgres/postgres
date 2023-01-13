@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+250c8ee07ede8a104ae1471f6ebca204d94267dd # 2023-01-13 15:23:17 -0800
+# Manual cleanup and pgindent of pgstat and bufmgr related code
+
 b2e6e768230be334b12dae536ba4c147fba4e9c9 # 2022-09-08 14:01:13 +0700
 # Run perltidy over Catalog.pm
 
