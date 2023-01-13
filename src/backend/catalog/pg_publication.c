@@ -1153,6 +1153,36 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			nulls[2] = true;
 		}
 
+		/* Show all columns when the column list is not specified. */
+		if (nulls[1] == true)
+		{
+			Relation	rel = table_open(relid, AccessShareLock);
+			int			nattnums = 0;
+			int16	   *attnums;
+			TupleDesc	desc = RelationGetDescr(rel);
+			int			i;
+
+			attnums = (int16 *) palloc(desc->natts * sizeof(int16));
+
+			for (i = 0; i < desc->natts; i++)
+			{
+				Form_pg_attribute att = TupleDescAttr(desc, i);
+
+				if (att->attisdropped || att->attgenerated)
+					continue;
+
+				attnums[nattnums++] = att->attnum;
+			}
+
+			if (nattnums > 0)
+			{
+				values[1] = PointerGetDatum(buildint2vector(attnums, nattnums));
+				nulls[1] = false;
+			}
+
+			table_close(rel, AccessShareLock);
+		}
+
 		rettuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(rettuple));
