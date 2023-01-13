@@ -783,6 +783,7 @@ pgstat_relation_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	if (lstats->t_counts.t_numscans)
 	{
 		TimestampTz t = GetCurrentTransactionStopTimestamp();
+
 		if (t > tabentry->lastscan)
 			tabentry->lastscan = t;
 	}

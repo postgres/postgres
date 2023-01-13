@@ -516,7 +516,7 @@ PrefetchSharedBuffer(SMgrRelation smgr_reln,
 
 	/* create a tag so we can lookup the buffer */
 	InitBufferTag(&newTag, &smgr_reln->smgr_rlocator.locator,
-				   forkNum, blockNum);
+				  forkNum, blockNum);
 
 	/* determine its hash code and partition lock ID */
 	newHash = BufTableHashCode(&newTag);
@@ -3297,8 +3297,8 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelationBuffers, an unlocked precheck should be
-		 * safe and saves some cycles.
+		 * As in DropRelationBuffers, an unlocked precheck should be safe and
+		 * saves some cycles.
 		 */
 
 		if (!use_bsearch)
@@ -3425,8 +3425,8 @@ DropDatabaseBuffers(Oid dbid)
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelationBuffers, an unlocked precheck should be
-		 * safe and saves some cycles.
+		 * As in DropRelationBuffers, an unlocked precheck should be safe and
+		 * saves some cycles.
 		 */
 		if (bufHdr->tag.dbOid != dbid)
 			continue;
@@ -3572,8 +3572,8 @@ FlushRelationBuffers(Relation rel)
 		bufHdr = GetBufferDescriptor(i);
 
 		/*
-		 * As in DropRelationBuffers, an unlocked precheck should be
-		 * safe and saves some cycles.
+		 * As in DropRelationBuffers, an unlocked precheck should be safe and
+		 * saves some cycles.
 		 */
 		if (!BufTagMatchesRelFileLocator(&bufHdr->tag, &rel->rd_locator))
 			continue;
@@ -3645,8 +3645,8 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelationBuffers, an unlocked precheck should be
-		 * safe and saves some cycles.
+		 * As in DropRelationBuffers, an unlocked precheck should be safe and
+		 * saves some cycles.
 		 */
 
 		if (!use_bsearch)
@@ -3880,8 +3880,8 @@ FlushDatabaseBuffers(Oid dbid)
 		bufHdr = GetBufferDescriptor(i);
 
 		/*
-		 * As in DropRelationBuffers, an unlocked precheck should be
-		 * safe and saves some cycles.
+		 * As in DropRelationBuffers, an unlocked precheck should be safe and
+		 * saves some cycles.
 		 */
 		if (bufHdr->tag.dbOid != dbid)
 			continue;

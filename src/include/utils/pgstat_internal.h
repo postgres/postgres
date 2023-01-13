@@ -626,6 +626,7 @@ extern void pgstat_wal_snapshot_cb(void);
 extern bool pgstat_subscription_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
 extern void pgstat_subscription_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
 
+
 /*
  * Functions in pgstat_xact.c
  */

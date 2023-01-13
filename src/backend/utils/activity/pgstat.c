@@ -426,7 +426,7 @@ pgstat_discard_stats(void)
 		ereport(DEBUG2,
 				(errcode_for_file_access(),
 				 errmsg_internal("unlinked permanent statistics file \"%s\"",
-						PGSTAT_STAT_PERMANENT_FILENAME)));
+								 PGSTAT_STAT_PERMANENT_FILENAME)));
 	}
 
 	/*
@@ -986,6 +986,7 @@ pgstat_build_snapshot(void)
 
 		entry->data = MemoryContextAlloc(pgStatLocal.snapshot.context,
 										 kind_info->shared_size);
+
 		/*
 		 * Acquire the LWLock directly instead of using
 		 * pg_stat_lock_entry_shared() which requires a reference.

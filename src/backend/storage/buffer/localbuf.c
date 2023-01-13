@@ -610,8 +610,8 @@ AtProcExit_LocalBuffers(void)
 {
 	/*
 	 * We shouldn't be holding any remaining pins; if we are, and assertions
-	 * aren't enabled, we'll fail later in DropRelationBuffers while
-	 * trying to drop the temp rels.
+	 * aren't enabled, we'll fail later in DropRelationBuffers while trying to
+	 * drop the temp rels.
 	 */
 	CheckForLocalBufferLeaks();
 }
