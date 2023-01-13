@@ -906,10 +906,6 @@ get_all_vacuum_rels(int options)
 		MemoryContext oldcontext;
 		Oid			relid = classForm->oid;
 
-		/* check permissions of relation */
-		if (!vacuum_is_permitted_for_relation(relid, classForm, options))
-			continue;
-
 		/*
 		 * We include partitioned tables here; depending on which operation is
 		 * to be performed, caller will decide whether to process or ignore
@@ -918,6 +914,10 @@ get_all_vacuum_rels(int options)
 		if (classForm->relkind != RELKIND_RELATION &&
 			classForm->relkind != RELKIND_MATVIEW &&
 			classForm->relkind != RELKIND_PARTITIONED_TABLE)
+			continue;
+
+		/* check permissions of relation */
+		if (!vacuum_is_permitted_for_relation(relid, classForm, options))
 			continue;
 
 		/*
