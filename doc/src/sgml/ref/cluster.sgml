@@ -69,10 +69,7 @@ CLUSTER [VERBOSE]
   <para>
    <command>CLUSTER</command> without any parameter reclusters all the
    previously-clustered tables in the current database that the calling user
-   owns or has the <literal>MAINTAIN</literal> privilege for, or all such tables
-   if called by a superuser or a role with privileges of the
-   <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
-   role.  This form of <command>CLUSTER</command> cannot be
+   has privileges for.  This form of <command>CLUSTER</command> cannot be
    executed inside a transaction block.
   </para>
 
@@ -133,6 +130,18 @@ CLUSTER [VERBOSE]
 
  <refsect1>
   <title>Notes</title>
+
+   <para>
+    To cluster a table, one must have the <literal>MAINTAIN</literal> privilege
+    on the table or be the table's owner, a superuser, or a role with
+    privileges of the
+    <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+    role.  If a role has permission to <command>CLUSTER</command> a partitioned
+    table, it is also permitted to <command>CLUSTER</command> each of its
+    partitions, regardless of whether the role has the aforementioned
+    privileges on the partition.  <command>CLUSTER</command> will skip over any
+    tables that the calling user does not have permission to cluster.
+   </para>
 
    <para>
     In cases where you are accessing single rows randomly

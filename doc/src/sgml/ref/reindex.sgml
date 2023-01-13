@@ -306,7 +306,11 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { DA
    indexes on shared catalogs will be skipped unless the user owns the
    catalog (which typically won't be the case), has privileges of the
    <literal>pg_maintain</literal> role, or has the <literal>MAINTAIN</literal>
-   privilege on the catalog.  Of course, superusers can always reindex anything.
+   privilege on the catalog.  If a role has permission to
+   <command>REINDEX</command> a partitioned table, it is also permitted to
+   <command>REINDEX</command> each of its partitions, regardless of whether the
+   role has the aforementioned privileges on the partition.  Of course,
+   superusers can always reindex anything.
   </para>
 
   <para>

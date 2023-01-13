@@ -401,7 +401,10 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     vacuum all tables in their databases, except shared catalogs.
     (The restriction for shared catalogs means that a true database-wide
     <command>VACUUM</command> can only be performed by superusers and roles
-    with privileges of <literal>pg_maintain</literal>.)
+    with privileges of <literal>pg_maintain</literal>.)  If a role has
+    permission to <command>VACUUM</command> a partitioned table, it is also
+    permitted to <command>VACUUM</command> each of its partitions, regardless
+    of whether the role has the aforementioned privileges on the partition.
     <command>VACUUM</command> will skip over any tables that the calling user
     does not have permission to vacuum.
    </para>

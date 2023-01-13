@@ -16886,10 +16886,36 @@ RangeVarCallbackMaintainsTable(const RangeVar *relation,
 				 errmsg("\"%s\" is not a table or materialized view", relation->relname)));
 
 	/* Check permissions */
-	if (!object_ownercheck(RelationRelationId, relId, GetUserId()) &&
-		pg_class_aclcheck(relId, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK)
+	if (pg_class_aclcheck(relId, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK &&
+		!has_partition_ancestor_privs(relId, GetUserId(), ACL_MAINTAIN))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_TABLE,
 					   relation->relname);
+}
+
+/*
+ * If relid is a partition, returns whether userid has any of the privileges
+ * specified in acl on any of its ancestors.  Otherwise, returns false.
+ */
+bool
+has_partition_ancestor_privs(Oid relid, Oid userid, AclMode acl)
+{
+	List	   *ancestors;
+	ListCell   *lc;
+
+	if (!get_rel_relispartition(relid))
+		return false;
+
+	ancestors = get_partition_ancestors(relid);
+	foreach(lc, ancestors)
+	{
+		Oid			ancestor = lfirst_oid(lc);
+
+		if (OidIsValid(ancestor) &&
+			pg_class_aclcheck(ancestor, userid, acl) == ACLCHECK_OK)
+			return true;
+	}
+
+	return false;
 }
 
 /*

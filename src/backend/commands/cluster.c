@@ -80,6 +80,7 @@ static void copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 static List *get_tables_to_cluster_partitioned(MemoryContext cluster_context,
 											   Oid indexOid);
+static bool cluster_is_permitted_for_relation(Oid relid, Oid userid);
 
 
 /*---------------------------------------------------------------------------
@@ -366,8 +367,7 @@ cluster_rel(Oid tableOid, Oid indexOid, ClusterParams *params)
 	if (recheck)
 	{
 		/* Check that the user still has privileges for the relation */
-		if (!object_ownercheck(RelationRelationId, tableOid, save_userid) &&
-			pg_class_aclcheck(tableOid, save_userid, ACL_MAINTAIN) != ACLCHECK_OK)
+		if (!cluster_is_permitted_for_relation(tableOid, save_userid))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
 			goto out;
@@ -1645,8 +1645,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 
-		if (!object_ownercheck(RelationRelationId, index->indrelid, GetUserId()) &&
-			pg_class_aclcheck(index->indrelid, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK)
+		if (!cluster_is_permitted_for_relation(index->indrelid, GetUserId()))
 			continue;
 
 		/* Use a permanent memory context for the result list */
@@ -1694,12 +1693,11 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 		if (get_rel_relkind(indexrelid) != RELKIND_INDEX)
 			continue;
 
-		/* Silently skip partitions which the user has no access to. */
-		if (!object_ownercheck(RelationRelationId, relid, GetUserId()) &&
-			pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK &&
-			(!object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) ||
-			 IsSharedRelation(relid)))
-			continue;
+		/*
+		 * We already checked that the user has privileges to CLUSTER the
+		 * partitioned table when we locked it earlier, so there's no need to
+		 * check the privileges again here.
+		 */
 
 		/* Use a permanent memory context for the result list */
 		old_context = MemoryContextSwitchTo(cluster_context);
@@ -1713,4 +1711,21 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 	}
 
 	return rtcs;
+}
+
+/*
+ * Return whether userid has privileges to CLUSTER relid.  If not, this
+ * function emits a WARNING.
+ */
+static bool
+cluster_is_permitted_for_relation(Oid relid, Oid userid)
+{
+	if (pg_class_aclcheck(relid, userid, ACL_MAINTAIN) == ACLCHECK_OK ||
+		has_partition_ancestor_privs(relid, userid, ACL_MAINTAIN))
+		return true;
+
+	ereport(WARNING,
+			(errmsg("permission denied to cluster \"%s\", skipping it",
+					get_rel_name(relid))));
+	return false;
 }

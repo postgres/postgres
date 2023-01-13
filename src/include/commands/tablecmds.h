@@ -98,6 +98,7 @@ extern void AtEOSubXact_on_commit_actions(bool isCommit,
 extern void RangeVarCallbackMaintainsTable(const RangeVar *relation,
 										   Oid relId, Oid oldRelId,
 										   void *arg);
+extern bool has_partition_ancestor_privs(Oid relid, Oid userid, AclMode acl);
 
 extern void RangeVarCallbackOwnsRelation(const RangeVar *relation,
 										 Oid relId, Oid oldRelId, void *arg);

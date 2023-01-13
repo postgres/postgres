@@ -177,7 +177,10 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
     MODE</literal> (or a less-conflicting mode as described in <xref
     linkend="explicit-locking"/>) is permitted. If a user has
     <literal>SELECT</literal> privileges on the table, <literal>ACCESS SHARE
-    MODE</literal> is permitted.
+    MODE</literal> is permitted.  If a role has permission to lock a
+    partitioned table, it is also permitted to lock each of its partitions,
+    regardless of whether the role has the aforementioned privileges on the
+    partition.
    </para>
 
    <para>
