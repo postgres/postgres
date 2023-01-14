@@ -956,8 +956,7 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
      On a standby, <varname>archive_mode</varname> must be <literal>always</literal> in order
      for <function>pg_backup_stop</function> to wait.
      Archiving of these files happens automatically since you have
-     already configured <varname>archive_command</varname> or <varname>archive_library</varname> or
-     <varname>archive_command</varname>.
+     already configured <varname>archive_command</varname> or <varname>archive_library</varname>.
      In most cases this happens quickly, but you are advised to monitor your
      archive system to ensure there are no delays.
      If the archive process has fallen behind because of failures of the
