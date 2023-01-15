@@ -142,11 +142,13 @@ int2vectorin(PG_FUNCTION_ARGS)
 {
 	char	   *intString = PG_GETARG_CSTRING(0);
 	int2vector *result;
+	int			nalloc;
 	int			n;
 
-	result = (int2vector *) palloc0(Int2VectorSize(FUNC_MAX_ARGS));
+	nalloc = 32;				/* arbitrary initial size guess */
+	result = (int2vector *) palloc0(Int2VectorSize(nalloc));
 
-	for (n = 0; n < FUNC_MAX_ARGS; n++)
+	for (n = 0;; n++)
 	{
 		long		l;
 		char	   *endp;
@@ -155,6 +157,12 @@ int2vectorin(PG_FUNCTION_ARGS)
 			intString++;
 		if (*intString == '\0')
 			break;
+
+		if (n >= nalloc)
+		{
+			nalloc *= 2;
+			result = (int2vector *) repalloc(result, Int2VectorSize(nalloc));
+		}
 
 		errno = 0;
 		l = strtol(intString, &endp, 10);
@@ -175,17 +183,11 @@ int2vectorin(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
-							"integer", intString)));
+							"smallint", intString)));
 
 		result->values[n] = l;
 		intString = endp;
 	}
-	while (*intString && isspace((unsigned char) *intString))
-		intString++;
-	if (*intString)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("int2vector has too many elements")));
 
 	SET_VARSIZE(result, Int2VectorSize(n));
 	result->ndim = 1;
@@ -259,12 +261,6 @@ int2vectorrecv(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid int2vector data")));
-
-	/* check length for consistency with int2vectorin() */
-	if (ARR_DIMS(result)[0] > FUNC_MAX_ARGS)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("oidvector has too many elements")));
 
 	PG_RETURN_POINTER(result);
 }
