@@ -52,6 +52,7 @@
 #include "access/transam.h"
 #include "executor/executor.h"
 #include "executor/execPartition.h"
+#include "executor/nodeModifyTable.h"
 #include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -1342,15 +1343,9 @@ ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 Bitmapset *
 ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 {
-#ifdef USE_ASSERT_CHECKING
-	/* Verify that ExecInitStoredGenerated has been called if needed. */
-	Relation	rel = relinfo->ri_RelationDesc;
-	TupleDesc	tupdesc = RelationGetDescr(rel);
-
-	if (tupdesc->constr && tupdesc->constr->has_generated_stored)
-		Assert(relinfo->ri_GeneratedExprs != NULL);
-#endif
-
+	/* In some code paths we can reach here before initializing the info */
+	if (relinfo->ri_GeneratedExprs == NULL)
+		ExecInitStoredGenerated(relinfo, estate, CMD_UPDATE);
 	return relinfo->ri_extraUpdatedCols;
 }
 

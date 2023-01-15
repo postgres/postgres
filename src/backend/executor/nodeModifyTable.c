@@ -360,7 +360,7 @@ ExecCheckTIDVisible(EState *estate,
  * fields.  (Currently, ri_extraUpdatedCols is consulted only in UPDATE,
  * but we might as well fill it for INSERT too.)
  */
-static void
+void
 ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 						EState *estate,
 						CmdType cmdtype)
