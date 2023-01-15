@@ -15,6 +15,10 @@
 
 #include "nodes/execnodes.h"
 
+extern void ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
+									EState *estate,
+									CmdType cmdtype);
+
 extern void ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot, CmdType cmdtype);
 
 extern ModifyTableState *ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags);
