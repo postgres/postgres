@@ -1468,15 +1468,11 @@ getlen(Tuplestorestate *state, bool eofOK)
 	unsigned int len;
 	size_t		nbytes;
 
-	nbytes = BufFileRead(state->myfile, &len, sizeof(len));
-	if (nbytes == sizeof(len))
+	nbytes = BufFileReadMaybeEOF(state->myfile, &len, sizeof(len), eofOK);
+	if (nbytes == 0)
+		return 0;
+	else
 		return len;
-	if (nbytes != 0 || !eofOK)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read from tuplestore temporary file: read only %zu of %zu bytes",
-						nbytes, sizeof(len))));
-	return 0;
 }
 
 
@@ -1528,25 +1524,12 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
 	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
 	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
-	size_t		nread;
 
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* read in the tuple proper */
 	tuple->t_len = tuplen;
-	nread = BufFileRead(state->myfile, tupbody, tupbodylen);
-	if (nread != (size_t) tupbodylen)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read from tuplestore temporary file: read only %zu of %zu bytes",
-						nread, (size_t) tupbodylen)));
+	BufFileReadExact(state->myfile, tupbody, tupbodylen);
 	if (state->backward)		/* need trailing length word? */
-	{
-		nread = BufFileRead(state->myfile, &tuplen, sizeof(tuplen));
-		if (nread != sizeof(tuplen))
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read from tuplestore temporary file: read only %zu of %zu bytes",
-							nread, sizeof(tuplen))));
-	}
+		BufFileReadExact(state->myfile, &tuplen, sizeof(tuplen));
 	return (void *) tuple;
 }

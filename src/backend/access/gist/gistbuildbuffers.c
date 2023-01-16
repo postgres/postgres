@@ -753,14 +753,9 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 static void
 ReadTempFileBlock(BufFile *file, long blknum, void *ptr)
 {
-	size_t		nread;
-
 	if (BufFileSeekBlock(file, blknum) != 0)
 		elog(ERROR, "could not seek to block %ld in temporary file", blknum);
-	nread = BufFileRead(file, ptr, BLCKSZ);
-	if (nread != BLCKSZ)
-		elog(ERROR, "could not read temporary file: read only %zu of %zu bytes",
-			 nread, (size_t) BLCKSZ);
+	BufFileReadExact(file, ptr, BLCKSZ);
 }
 
 static void

@@ -573,14 +573,19 @@ BufFileDumpBuffer(BufFile *file)
 }
 
 /*
- * BufFileRead
+ * BufFileRead variants
  *
  * Like fread() except we assume 1-byte element size and report I/O errors via
  * ereport().
+ *
+ * If 'exact' is true, then an error is also raised if the number of bytes
+ * read is not exactly 'size' (no short reads).  If 'exact' and 'eofOK' are
+ * true, then reading zero bytes is ok.
  */
-size_t
-BufFileRead(BufFile *file, void *ptr, size_t size)
+static size_t
+BufFileReadCommon(BufFile *file, void *ptr, size_t size, bool exact, bool eofOK)
 {
+	size_t		start_size = size;
 	size_t		nread = 0;
 	size_t		nthistime;
 
@@ -612,7 +617,46 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
 		nread += nthistime;
 	}
 
+	if (exact &&
+		(nread != start_size && !(nread == 0 && eofOK)))
+		ereport(ERROR,
+				errcode_for_file_access(),
+				file->name ?
+				errmsg("could not read from file set \"%s\": read only %zu of %zu bytes",
+					   file->name, nread, start_size) :
+				errmsg("could not read from temporary file: read only %zu of %zu bytes",
+					   nread, start_size));
+
 	return nread;
+}
+
+/*
+ * Legacy interface where the caller needs to check for end of file or short
+ * reads.
+ */
+size_t
+BufFileRead(BufFile *file, void *ptr, size_t size)
+{
+	return BufFileReadCommon(file, ptr, size, false, false);
+}
+
+/*
+ * Require read of exactly the specified size.
+ */
+void
+BufFileReadExact(BufFile *file, void *ptr, size_t size)
+{
+	BufFileReadCommon(file, ptr, size, true, false);
+}
+
+/*
+ * Require read of exactly the specified size, but optionally allow end of
+ * file (in which case 0 is returned).
+ */
+size_t
+BufFileReadMaybeEOF(BufFile *file, void *ptr, size_t size, bool eofOK)
+{
+	return BufFileReadCommon(file, ptr, size, true, eofOK);
 }
 
 /*

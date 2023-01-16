@@ -281,19 +281,12 @@ ltsWriteBlock(LogicalTapeSet *lts, long blocknum, const void *buffer)
 static void
 ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 {
-	size_t		nread;
-
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not seek to block %ld of temporary file",
 						blocknum)));
-	nread = BufFileRead(lts->pfile, buffer, BLCKSZ);
-	if (nread != BLCKSZ)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read block %ld of temporary file: read only %zu of %zu bytes",
-						blocknum, nread, (size_t) BLCKSZ)));
+	BufFileReadExact(lts->pfile, buffer, BLCKSZ);
 }
 
 /*

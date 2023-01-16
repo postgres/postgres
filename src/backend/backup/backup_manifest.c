@@ -362,17 +362,10 @@ SendBackupManifest(backup_manifest_info *manifest, bbsink *sink)
 	while (manifest_bytes_done < manifest->manifest_size)
 	{
 		size_t		bytes_to_read;
-		size_t		rc;
 
 		bytes_to_read = Min(sink->bbs_buffer_length,
 							manifest->manifest_size - manifest_bytes_done);
-		rc = BufFileRead(manifest->buffile, sink->bbs_buffer,
-						 bytes_to_read);
-		if (rc != bytes_to_read)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read from temporary file: read only %zu of %zu bytes",
-							rc, bytes_to_read)));
+		BufFileReadExact(manifest->buffile, sink->bbs_buffer, bytes_to_read);
 		bbsink_manifest_contents(sink, bytes_to_read);
 		manifest_bytes_done += bytes_to_read;
 	}
