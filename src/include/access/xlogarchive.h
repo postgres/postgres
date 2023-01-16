@@ -20,8 +20,6 @@
 extern bool RestoreArchivedFile(char *path, const char *xlogfname,
 								const char *recovername, off_t expectedSize,
 								bool cleanupEnabled);
-extern void ExecuteRecoveryCommand(const char *command, const char *commandName,
-								   bool failOnSignal, uint32 wait_event_info);
 extern void KeepFileRestoredFromArchive(const char *path, const char *xlogfname);
 extern void XLogArchiveNotify(const char *xlog);
 extern void XLogArchiveNotifySeg(XLogSegNo segno, TimeLineID tli);
@@ -31,5 +29,10 @@ extern bool XLogArchiveIsBusy(const char *xlog);
 extern bool XLogArchiveIsReady(const char *xlog);
 extern bool XLogArchiveIsReadyOrDone(const char *xlog);
 extern void XLogArchiveCleanup(const char *xlog);
+
+extern bool shell_restore(const char *file, const char *path,
+						  const char *lastRestartPointFileName);
+extern void shell_archive_cleanup(const char *lastRestartPointFileName);
+extern void shell_recovery_end(const char *lastRestartPointFileName);
 
 #endif							/* XLOG_ARCHIVE_H */
