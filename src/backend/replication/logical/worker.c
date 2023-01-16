@@ -1071,7 +1071,7 @@ apply_handle_stream_commit(StringInfo s)
 	nchanges = 0;
 	while (true)
 	{
-		int			nbytes;
+		size_t		nbytes;
 		int			len;
 
 		CHECK_FOR_INTERRUPTS();
@@ -1087,8 +1087,8 @@ apply_handle_stream_commit(StringInfo s)
 		if (nbytes != sizeof(len))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read from streaming transaction's changes file \"%s\": %m",
-							path)));
+					 errmsg("could not read from streaming transaction's changes file \"%s\": read only %zu of %zu bytes",
+							path, nbytes, sizeof(len))));
 
 		if (len <= 0)
 			elog(ERROR, "incorrect length %d in streaming transaction's changes file \"%s\"",
@@ -1098,11 +1098,12 @@ apply_handle_stream_commit(StringInfo s)
 		buffer = repalloc(buffer, len);
 
 		/* and finally read the data into the buffer */
-		if (BufFileRead(fd, buffer, len) != len)
+		nbytes = BufFileRead(fd, buffer, len);
+		if (nbytes != len)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read from streaming transaction's changes file \"%s\": %m",
-							path)));
+					 errmsg("could not read from streaming transaction's changes file \"%s\": read only %zu of %zu bytes",
+							path, nbytes, (size_t) len)));
 
 		/* copy the buffer to the stringinfo and call apply_dispatch */
 		resetStringInfo(&s2);
@@ -2710,6 +2711,7 @@ static void
 subxact_info_read(Oid subid, TransactionId xid)
 {
 	char		path[MAXPGPATH];
+	size_t		nread;
 	Size		len;
 	BufFile    *fd;
 	StreamXidHash *ent;
@@ -2742,13 +2744,12 @@ subxact_info_read(Oid subid, TransactionId xid)
 	fd = BufFileOpenShared(ent->subxact_fileset, path, O_RDONLY);
 
 	/* read number of subxact items */
-	if (BufFileRead(fd, &subxact_data.nsubxacts,
-					sizeof(subxact_data.nsubxacts)) !=
-		sizeof(subxact_data.nsubxacts))
+	nread = BufFileRead(fd, &subxact_data.nsubxacts, sizeof(subxact_data.nsubxacts));
+	if (nread != sizeof(subxact_data.nsubxacts))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read from streaming transaction's subxact file \"%s\": %m",
-						path)));
+				 errmsg("could not read from streaming transaction's subxact file \"%s\": read only %zu of %zu bytes",
+						path, nread, sizeof(subxact_data.nsubxacts))));
 
 	len = sizeof(SubXactInfo) * subxact_data.nsubxacts;
 
@@ -2766,11 +2767,15 @@ subxact_info_read(Oid subid, TransactionId xid)
 								   sizeof(SubXactInfo));
 	MemoryContextSwitchTo(oldctx);
 
-	if ((len > 0) && ((BufFileRead(fd, subxact_data.subxacts, len)) != len))
+	if (len > 0)
+	{
+		nread = BufFileRead(fd, subxact_data.subxacts, len);
+		if (nread != len)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read from streaming transaction's subxact file \"%s\": %m",
-						path)));
+				 errmsg("could not read from streaming transaction's subxact file \"%s\": read only %zu of %zu bytes",
+						path, nread, len)));
+	}
 
 	BufFileClose(fd);
 }

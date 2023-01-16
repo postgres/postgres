@@ -377,7 +377,8 @@ SendBackupManifest(backup_manifest_info *manifest)
 		if (rc != bytes_to_read)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read from temporary file: %m")));
+					 errmsg("could not read from temporary file: read only %zu of %zu bytes",
+							rc, bytes_to_read)));
 		pq_putmessage('d', manifestbuf, bytes_to_read);
 		manifest_bytes_done += bytes_to_read;
 	}
