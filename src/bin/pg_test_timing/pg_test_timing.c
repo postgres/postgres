@@ -19,8 +19,8 @@ static void handle_args(int argc, char *argv[]);
 static uint64 test_timing(unsigned int duration);
 static void output(uint64 loop_count);
 
-/* record duration in powers of 2 microseconds */
-static long long int histogram[32];
+/* record duration in powers of 2 nanoseconds */
+static uint64 histogram[64];
 
 int
 main(int argc, char *argv[])
@@ -121,35 +121,48 @@ handle_args(int argc, char *argv[])
 static uint64
 test_timing(unsigned int duration)
 {
-	uint64		total_time;
-	int64		time_elapsed = 0;
 	uint64		loop_count = 0;
-	uint64		prev,
-				cur;
+	instr_time	until_time,
+				total_time;
 	instr_time	start_time,
-				end_time,
-				temp;
-
-	total_time = duration > 0 ? duration * INT64CONST(1000000) : 0;
+				end_time;
+	instr_time	cur;
 
 	INSTR_TIME_SET_CURRENT(start_time);
-	cur = INSTR_TIME_GET_MICROSEC(start_time);
 
-	while (time_elapsed < total_time)
+	/*
+	 * To reduce loop overhead, check loop condition in instr_time domain.
+	 */
+	INSTR_TIME_SET_SECONDS(total_time, duration);
+	until_time = start_time;
+	INSTR_TIME_ADD(until_time, total_time);
+
+	cur = start_time;
+
+	while (INSTR_TIME_IS_LT(cur, until_time))
 	{
-		int32		diff,
-					bits = 0;
+		instr_time	temp;
+		instr_time	prev;
+		int64		diff;
+		int32		bits = 0;
 
 		prev = cur;
-		INSTR_TIME_SET_CURRENT(temp);
-		cur = INSTR_TIME_GET_MICROSEC(temp);
-		diff = cur - prev;
+		INSTR_TIME_SET_CURRENT(cur);
+		temp = cur;
+		INSTR_TIME_SUBTRACT(temp, prev);
+		diff = INSTR_TIME_GET_NANOSEC(temp);
 
 		/* Did time go backwards? */
-		if (diff < 0)
+		if (unlikely(diff <= 0))
 		{
+			/* can't do anything with that measurement */
+			if (diff == 0)
+			{
+				loop_count++;
+				continue;
+			}
 			fprintf(stderr, _("Detected clock going backwards in time.\n"));
-			fprintf(stderr, _("Time warp: %d ms\n"), diff);
+			fprintf(stderr, _("Time warp: %lld ns\n"), (long long) diff);
 			exit(1);
 		}
 
@@ -164,8 +177,6 @@ test_timing(unsigned int duration)
 		histogram[bits]++;
 
 		loop_count++;
-		INSTR_TIME_SUBTRACT(temp, start_time);
-		time_elapsed = INSTR_TIME_GET_MICROSEC(temp);
 	}
 
 	INSTR_TIME_SET_CURRENT(end_time);
@@ -173,7 +184,7 @@ test_timing(unsigned int duration)
 	INSTR_TIME_SUBTRACT(end_time, start_time);
 
 	printf(_("Per loop time including overhead: %0.2f ns\n"),
-		   INSTR_TIME_GET_DOUBLE(end_time) * 1e9 / loop_count);
+		   (INSTR_TIME_GET_DOUBLE(end_time) * NS_PER_S) / loop_count);
 
 	return loop_count;
 }
@@ -181,9 +192,10 @@ test_timing(unsigned int duration)
 static void
 output(uint64 loop_count)
 {
-	int64		max_bit = 31,
+	int64		low_bit = 0,
+				max_bit = 63,
 				i;
-	char	   *header1 = _("< us");
+	char	   *header1 = _("< ns");
 	char	   *header2 = /* xgettext:no-c-format */ _("% of total");
 	char	   *header3 = _("count");
 	int			len1 = strlen(header1);
@@ -194,15 +206,19 @@ output(uint64 loop_count)
 	while (max_bit > 0 && histogram[max_bit] == 0)
 		max_bit--;
 
+	/* find lowest bit value */
+	while (low_bit < max_bit && histogram[low_bit] == 0)
+		low_bit++;
+
 	printf(_("Histogram of timing durations:\n"));
 	printf("%*s   %*s %*s\n",
-		   Max(6, len1), header1,
+		   Max(9, len1), header1,
 		   Max(10, len2), header2,
 		   Max(10, len3), header3);
 
-	for (i = 0; i <= max_bit; i++)
-		printf("%*ld    %*.5f %*lld\n",
-			   Max(6, len1), 1l << i,
+	for (i = low_bit; i <= max_bit; i++)
+		printf("%*ld    %*.5f %*llu\n",
+			   Max(9, len1), 1l << i,
 			   Max(10, len2) - 1, (double) histogram[i] * 100 / loop_count,
-			   Max(10, len3), histogram[i]);
+			   Max(10, len3), (long long unsigned) histogram[i]);
 }

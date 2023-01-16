@@ -93,28 +93,34 @@ PostgreSQL documentation
 
   <para>
    Good results will show most (>90%) individual timing calls take less than
-   one microsecond. Average per loop overhead will be even lower, below 100
-   nanoseconds. This example from an Intel i7-860 system using a TSC clock
-   source shows excellent performance:
+   one microsecond (1000 nanoseconds). Average per loop overhead will be even
+   lower, below 100 nanoseconds. This example from an Intel i9-9880H system
+   using a TSC clock source shows excellent performance:
 
 <screen><![CDATA[
 Testing timing overhead for 3 seconds.
-Per loop time including overhead: 35.96 ns
+Per loop time including overhead: 13.74 ns
 Histogram of timing durations:
-  < us   % of total      count
-     1     96.40465   80435604
-     2      3.59518    2999652
-     4      0.00015        126
-     8      0.00002         13
-    16      0.00000          2
+     < ns   % of total      count
+       16     97.00221  211857215
+       32      2.99555    6542412
+       64      0.00115       2505
+      128      0.00035        759
+      256      0.00004         78
+      512      0.00000          3
+     1024      0.00000          4
+     2048      0.00034        732
+     4096      0.00000          6
+     8192      0.00000          8
+    16384      0.00019        409
+    32768      0.00018        403
+    65536      0.00000          1
 ]]></screen>
   </para>
 
   <para>
-   Note that different units are used for the per loop time than the
-   histogram. The loop can have resolution within a few nanoseconds (ns),
-   while the individual timing calls can only resolve down to one microsecond
-   (us).
+   Note that the accuracy of the histogram entries may be lower than the
+   per loop time.
   </para>
 
  </refsect2>
@@ -125,24 +131,25 @@ Histogram of timing durations:
    When the query executor is running a statement using
    <command>EXPLAIN ANALYZE</command>, individual operations are timed as well
    as showing a summary.  The overhead of your system can be checked by
-   counting rows with the <application>psql</application> program:
+   disabling the per-row timing, using the <literal>TIMING OFF</literal>
+   option:
 
 <screen>
-CREATE TABLE t AS SELECT * FROM generate_series(1,100000);
-\timing
-SELECT COUNT(*) FROM t;
-EXPLAIN ANALYZE SELECT COUNT(*) FROM t;
+CREATE TABLE t AS SELECT * FROM generate_series(1, 100000);
+EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t;
+EXPLAIN (ANALYZE, TIMING ON) SELECT COUNT(*) FROM t;
 </screen>
   </para>
 
   <para>
-   The i7-860 system measured runs the count query in 9.8 ms while
-   the <command>EXPLAIN ANALYZE</command> version takes 16.6 ms, each
-   processing just over 100,000 rows.  That 6.8 ms difference means the timing
-   overhead per row is 68 ns, about twice what pg_test_timing estimated it
-   would be.  Even that relatively small amount of overhead is making the fully
-   timed count statement take almost 70% longer.  On more substantial queries,
-   the timing overhead would be less problematic.
+   The i9-9880H system measured shows an execution time of 4.116 ms for the
+   <literal>TIMING OFF</literal> query, and 6.965 ms for the
+   <literal>TIMING ON</literal>, each processing 100,000 rows.
+
+   That 2.849 ms difference means the timing overhead per row is 28 ns.  As
+   <literal>TIMING ON</literal> measures timestamps twice per row returned by
+   an executor node, the overhead is very close to what pg_test_timing
+   estimated it would be.
   </para>
 
  </refsect2>
@@ -157,28 +164,31 @@ EXPLAIN ANALYZE SELECT COUNT(*) FROM t;
 
 <screen><![CDATA[
 # cat /sys/devices/system/clocksource/clocksource0/available_clocksource
-tsc hpet acpi_pm
+tsc acpi_pm
 # echo acpi_pm > /sys/devices/system/clocksource/clocksource0/current_clocksource
 # pg_test_timing
-Per loop time including overhead: 722.92 ns
+Testing timing overhead for 3 seconds.
+Per loop time including overhead: 708.58 ns
 Histogram of timing durations:
-  < us   % of total      count
-     1     27.84870    1155682
-     2     72.05956    2990371
-     4      0.07810       3241
-     8      0.01357        563
-    16      0.00007          3
+     < ns   % of total      count
+     1024     99.79796    4225270
+     2048      0.15560       6588
+     4096      0.00035         15
+     8192      0.01738        736
+    16384      0.01679        711
+    32768      0.01190        504
 ]]></screen>
   </para>
 
   <para>
    In this configuration, the sample <command>EXPLAIN ANALYZE</command> above
-   takes 115.9 ms.  That's 1061 ns of timing overhead, again a small multiple
-   of what's measured directly by this utility.  That much timing overhead
-   means the actual query itself is only taking a tiny fraction of the
-   accounted for time, most of it is being consumed in overhead instead.  In
-   this configuration, any <command>EXPLAIN ANALYZE</command> totals involving
-   many timed operations would be inflated significantly by timing overhead.
+   shows an execution time of 148.7 ms.  That's 1392 ns of per-row timing
+   overhead.  Taking the two timestamps per row into account, that's again
+   close to what pg_test_timing estimated.  That much timing overhead means
+   the actual query itself is only taking a tiny fraction of the accounted for
+   time, most of it is being consumed in overhead instead.  In this
+   configuration, any <command>EXPLAIN ANALYZE</command> totals involving many
+   timed operations would be inflated significantly by timing overhead.
   </para>
 
   <para>
@@ -195,33 +205,6 @@ Timecounter "TSC" frequency 2531787134 Hz quality 800
 kern.timecounter.hardware: ACPI-fast -> TSC
 </screen>
   </para>
-
-  <para>
-   Other systems may only allow setting the time source on boot.  On older
-   Linux systems the "clock" kernel setting is the only way to make this sort
-   of change.  And even on some more recent ones, the only option you'll see
-   for a clock source is "jiffies".  Jiffies are the older Linux software clock
-   implementation, which can have good resolution when it's backed by fast
-   enough timing hardware, as in this example:
-
-<screen><![CDATA[
-$ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
-jiffies
-$ dmesg | grep time.c
-time.c: Using 3.579545 MHz WALL PM GTOD PIT/TSC timer.
-time.c: Detected 2400.153 MHz processor.
-$ pg_test_timing
-Testing timing overhead for 3 seconds.
-Per timing duration including loop overhead: 97.75 ns
-Histogram of timing durations:
-  < us   % of total      count
-     1     90.23734   27694571
-     2      9.75277    2993204
-     4      0.00981       3010
-     8      0.00007         22
-    16      0.00000          1
-    32      0.00000          1
-]]></screen></para>
 
  </refsect2>
 
