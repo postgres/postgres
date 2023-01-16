@@ -146,7 +146,9 @@ visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer vmbuf, uint8 flags
 	char	   *map;
 	bool		cleared = false;
 
+	/* Must never clear all_visible bit while leaving all_frozen bit set */
 	Assert(flags & VISIBILITYMAP_VALID_BITS);
+	Assert(flags != VISIBILITYMAP_ALL_VISIBLE);
 
 #ifdef TRACE_VISIBILITYMAP
 	elog(DEBUG1, "vm_clear %s %d", RelationGetRelationName(rel), heapBlk);
@@ -256,8 +258,11 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 #endif
 
 	Assert(InRecovery || XLogRecPtrIsInvalid(recptr));
-	Assert(InRecovery || BufferIsValid(heapBuf));
+	Assert(InRecovery || PageIsAllVisible((Page) BufferGetPage(heapBuf)));
+
+	/* Must never set all_frozen bit without also setting all_visible bit */
 	Assert(flags & VISIBILITYMAP_VALID_BITS);
+	Assert(flags != VISIBILITYMAP_ALL_FROZEN);
 
 	/* Check that we have the right heap page pinned, if present */
 	if (BufferIsValid(heapBuf) && BufferGetBlockNumber(heapBuf) != heapBlk)
@@ -299,8 +304,6 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 				{
 					Page		heapPage = BufferGetPage(heapBuf);
 
-					/* caller is expected to set PD_ALL_VISIBLE first */
-					Assert(PageIsAllVisible(heapPage));
 					PageSetLSN(heapPage, recptr);
 				}
 			}
