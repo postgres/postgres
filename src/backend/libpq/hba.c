@@ -2800,7 +2800,7 @@ parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 	tokens = lfirst(field);
 	IDENT_MULTI_VALUE(tokens);
 	token = linitial(tokens);
-	parsedline->pg_user = pstrdup(token->string);
+	parsedline->pg_user = copy_auth_token(token);
 
 	/*
 	 * Now that the field validation is done, compile a regex from the user
@@ -2865,7 +2865,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 			return;
 		}
 
-		if ((ofs = strstr(identLine->pg_user, "\\1")) != NULL)
+		if ((ofs = strstr(identLine->pg_user->string, "\\1")) != NULL)
 		{
 			int			offset;
 
@@ -2875,7 +2875,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 				ereport(LOG,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 						 errmsg("regular expression \"%s\" has no subexpressions as requested by backreference in \"%s\"",
-								identLine->system_user->string + 1, identLine->pg_user)));
+								identLine->system_user->string + 1, identLine->pg_user->string)));
 				*error_p = true;
 				return;
 			}
@@ -2884,9 +2884,9 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 			 * length: original length minus length of \1 plus length of match
 			 * plus null terminator
 			 */
-			expanded_pg_user = palloc0(strlen(identLine->pg_user) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
-			offset = ofs - identLine->pg_user;
-			memcpy(expanded_pg_user, identLine->pg_user, offset);
+			expanded_pg_user = palloc0(strlen(identLine->pg_user->string) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
+			offset = ofs - identLine->pg_user->string;
+			memcpy(expanded_pg_user, identLine->pg_user->string, offset);
 			memcpy(expanded_pg_user + offset,
 				   system_user + matches[1].rm_so,
 				   matches[1].rm_eo - matches[1].rm_so);
@@ -2895,7 +2895,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 		else
 		{
 			/* no substitution, so copy the match */
-			expanded_pg_user = pstrdup(identLine->pg_user);
+			expanded_pg_user = pstrdup(identLine->pg_user->string);
 		}
 
 		/*
@@ -2921,13 +2921,13 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 		/* Not regular expression, so make complete match */
 		if (case_insensitive)
 		{
-			if (pg_strcasecmp(identLine->pg_user, pg_user) == 0 &&
+			if (pg_strcasecmp(identLine->pg_user->string, pg_user) == 0 &&
 				pg_strcasecmp(identLine->system_user->string, system_user) == 0)
 				*found_p = true;
 		}
 		else
 		{
-			if (strcmp(identLine->pg_user, pg_user) == 0 &&
+			if (strcmp(identLine->pg_user->string, pg_user) == 0 &&
 				strcmp(identLine->system_user->string, system_user) == 0)
 				*found_p = true;
 		}
@@ -3074,6 +3074,7 @@ load_ident(void)
 		{
 			newline = (IdentLine *) lfirst(parsed_line_cell);
 			free_auth_token(newline->system_user);
+			free_auth_token(newline->pg_user);
 		}
 		MemoryContextDelete(ident_context);
 		return false;
@@ -3086,6 +3087,7 @@ load_ident(void)
 		{
 			newline = (IdentLine *) lfirst(parsed_line_cell);
 			free_auth_token(newline->system_user);
+			free_auth_token(newline->pg_user);
 		}
 	}
 	if (parsed_ident_context != NULL)

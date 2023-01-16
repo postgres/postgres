@@ -143,7 +143,7 @@ typedef struct IdentLine
 
 	char	   *usermap;
 	AuthToken  *system_user;
-	char	   *pg_user;
+	AuthToken  *pg_user;
 } IdentLine;
 
 /*
