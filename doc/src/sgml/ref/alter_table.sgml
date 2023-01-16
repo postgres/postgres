@@ -1106,9 +1106,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    To add the table as a new child of a parent table, you must own the parent
    table as well.  Also, to attach a table as a new partition of the table,
    you must own the table being attached.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the table's schema.  (These restrictions enforce that altering the owner
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the table's schema.
+   (These restrictions enforce that altering the owner
    doesn't do anything you couldn't do by dropping and recreating the table.
    However, a superuser can alter ownership of any table anyway.)
    To add a column or alter a column type or use the <literal>OF</literal>

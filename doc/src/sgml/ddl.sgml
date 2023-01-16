@@ -1741,8 +1741,8 @@ ALTER TABLE products RENAME TO items;
 ALTER TABLE <replaceable>table_name</replaceable> OWNER TO <replaceable>new_owner</replaceable>;
 </programlisting>
    Superusers can always do this; ordinary roles can only do it if they are
-   both the current owner of the object (or a member of the owning role) and
-   a member of the new owning role.
+   both the current owner of the object (or inherit the privileges of the
+   owning role) and able to <literal>SET ROLE</literal> to the new owning role.
   </para>
 
   <para>

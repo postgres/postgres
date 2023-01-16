@@ -299,6 +299,20 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   </para>
 
   <para>
+   To create an object owned by another role or give ownership of an existing
+   object to another role, you must have the ability to <literal>SET
+   ROLE</literal> to that role; otherwise, commands such as <literal>ALTER
+   ... OWNER TO</literal> or <literal>CREATE DATABASE ... OWNER</literal>
+   will fail.  However, a user who inherits the privileges of a role but does
+   not have the ability to <literal>SET ROLE</literal> to that role may be
+   able to obtain full access to the role by manipulating existing objects
+   owned by that role (e.g. they could redefine an existing function to act
+   as a Trojan horse).  Therefore, if a role's privileges are to be inherited
+   but should not be accessible via <literal>SET ROLE</literal>, it should not
+   own any SQL objects.
+  </para>
+
+  <para>
    If <literal>GRANTED BY</literal> is specified, the grant is recorded as
    having been done by the specified role. A user can only attribute a grant
    to another role if they possess the privileges of that role. The role

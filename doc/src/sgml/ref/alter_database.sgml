@@ -68,8 +68,8 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
 
   <para>
    The third form changes the owner of the database.
-   To alter the owner, you must own the database and also be a direct or
-   indirect member of the new owning role, and you must have the
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and you must have the
    <literal>CREATEDB</literal> privilege.
    (Note that superusers have all these privileges automatically.)
   </para>

@@ -89,8 +89,8 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
        <para>
         The role name of the user who will own the new schema.  If omitted,
         defaults to the user executing the command.  To create a schema
-        owned by another role, you must be a direct or indirect member of
-        that role, or be a superuser.
+        owned by another role, you must must be able to
+        <literal>SET ROLE</literal> to that role.
        </para>
       </listitem>
      </varlistentry>

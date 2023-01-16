@@ -37,8 +37,8 @@ ALTER SCHEMA <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</
    You must own the schema to use <command>ALTER SCHEMA</command>.
    To rename a schema you must also have the
    <literal>CREATE</literal> privilege for the database.
-   To alter the owner, you must also be a direct or
-   indirect member of the new owning role, and you must have the
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have the
    <literal>CREATE</literal> privilege for the database.
    (Note that superusers have all these privileges automatically.)
   </para>

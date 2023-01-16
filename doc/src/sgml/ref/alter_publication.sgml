@@ -75,10 +75,12 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    Adding a table to a publication additionally requires owning that table.
    The <literal>ADD TABLES IN SCHEMA</literal> and
    <literal>SET TABLES IN SCHEMA</literal> to a publication requires the
-   invoking user to be a superuser.  To alter the owner, you must also be a
-   direct or indirect member of the new owning role. The new owner must have
-   <literal>CREATE</literal> privilege on the database.  Also, the new owner
-   of a <literal>FOR ALL TABLES</literal> or <literal>FOR TABLES IN SCHEMA</literal>
+   invoking user to be a superuser.
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the database.
+   Also, the new owner of a <literal>FOR ALL TABLES</literal> or
+   <literal>FOR TABLES IN SCHEMA</literal>
    publication must be a superuser. However, a superuser can
    change the ownership of a publication regardless of these restrictions.
   </para>

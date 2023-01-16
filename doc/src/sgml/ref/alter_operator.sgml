@@ -44,9 +44,10 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
 
   <para>
    You must own the operator to use <command>ALTER OPERATOR</command>.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the operator's schema.  (These restrictions enforce that altering the owner
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the operator's schema.
+   (These restrictions enforce that altering the owner
    doesn't do anything you couldn't do by dropping and recreating the operator.
    However, a superuser can alter ownership of any operator anyway.)
   </para>

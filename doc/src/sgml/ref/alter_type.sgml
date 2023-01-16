@@ -246,9 +246,10 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> SET ( <replaceable 
    You must own the type to use <command>ALTER TYPE</command>.
    To change the schema of a type, you must also have
    <literal>CREATE</literal> privilege on the new schema.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the type's schema.  (These restrictions enforce that altering the owner
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the type's schema.
+   (These restrictions enforce that altering the owner
    doesn't do anything you couldn't do by dropping and recreating the type.
    However, a superuser can alter ownership of any type anyway.)
    To add an attribute or alter an attribute type, you must also

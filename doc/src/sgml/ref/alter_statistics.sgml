@@ -43,9 +43,10 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET STATISTIC
    You must own the statistics object to use <command>ALTER STATISTICS</command>.
    To change a statistics object's schema, you must also
    have <literal>CREATE</literal> privilege on the new schema.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the statistics object's schema.  (These restrictions enforce that altering
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the statistics object's schema.
+   (These restrictions enforce that altering
    the owner doesn't do anything you couldn't do by dropping and recreating
    the statistics object.  However, a superuser can alter ownership of any
    statistics object anyway.)

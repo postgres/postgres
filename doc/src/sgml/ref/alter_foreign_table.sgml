@@ -320,9 +320,9 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
    You must own the table to use <command>ALTER FOREIGN TABLE</command>.
    To change the schema of a foreign table, you must also have
    <literal>CREATE</literal> privilege on the new schema.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the table's schema.  (These restrictions enforce that altering the owner
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal> privilege
+   on the table's schema.  (These restrictions enforce that altering the owner
    doesn't do anything you couldn't do by dropping and recreating the table.
    However, a superuser can alter ownership of any table anyway.)
    To add a column or alter a column type, you must also

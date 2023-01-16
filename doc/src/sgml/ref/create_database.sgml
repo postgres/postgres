@@ -89,8 +89,8 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         The role name of the user who will own the new database,
         or <literal>DEFAULT</literal> to use the default (namely, the
         user executing the command).  To create a database owned by another
-        role, you must be a direct or indirect member of that role,
-        or be a superuser.
+        role, you must must be able to <literal>SET ROLE</literal> to that
+        role.
        </para>
       </listitem>
      </varlistentry>

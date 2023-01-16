@@ -63,9 +63,10 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
    You must own the materialized view to use <command>ALTER MATERIALIZED
    VIEW</command>.  To change a materialized view's schema, you must also have
    <literal>CREATE</literal> privilege on the new schema.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the materialized view's schema.  (These restrictions enforce that altering
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the materialized view's schema.
+   (These restrictions enforce that altering
    the owner doesn't do anything you couldn't do by dropping and recreating the
    materialized view.  However, a superuser can alter ownership of any view
    anyway.)

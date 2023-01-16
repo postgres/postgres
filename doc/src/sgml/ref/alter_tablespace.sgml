@@ -38,8 +38,8 @@ ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="par
 
   <para>
    You must own the tablespace to change the definition of a tablespace.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role.
+   To alter the owner, you must also be able to <literal>SET ROLE</literal>
+   to the new owning role.
    (Note that superusers have these privileges automatically.)
   </para>
 
