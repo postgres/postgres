@@ -411,7 +411,9 @@ CREATE [ OR REPLACE ] FUNCTION
       is to be executed with the privileges of the user that calls it.
       That is the default.  <literal>SECURITY DEFINER</literal>
       specifies that the function is to be executed with the
-      privileges of the user that owns it.
+      privileges of the user that owns it. For information on how to
+      write <literal>SECURITY DEFINER</literal> functions safely,
+      <link linkend="sql-createfunction-security">see below</link>.
      </para>
 
      <para>
@@ -776,6 +778,11 @@ SELECT * FROM dup(42);
    <secondary>use in securing functions</secondary>
   </indexterm>
 
+  <indexterm>
+   <primary><varname>createrole_self_grant</varname> configuration parameter</primary>
+   <secondary>use in securing functions</secondary>
+  </indexterm>
+
    <para>
     Because a <literal>SECURITY DEFINER</literal> function is executed
     with the privileges of the user that owns it, care is needed to
@@ -815,11 +822,10 @@ $$  LANGUAGE plpgsql
    </para>
 
    <para>
-    Before <productname>PostgreSQL</productname> version 8.3, the
-    <literal>SET</literal> clause was not available, and so older functions may
-    contain rather complicated logic to save, set, and restore
-    <varname>search_path</varname>.  The <literal>SET</literal> clause is far easier
-    to use for this purpose.
+    If the security definer function intends to create roles, and if it
+    is running as a non-superuser, <varname>createrole_self_grant</varname>
+    should also be set to a known value using the <literal>SET</literal>
+    clause.
    </para>
 
    <para>
