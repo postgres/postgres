@@ -198,7 +198,7 @@ ALTER SUBSCRIPTION regress_testsub ADD PUBLICATION testpub1, testpub2 WITH (refr
 
 \dRs+
 
--- fail - publication used more then once
+-- fail - publication used more than once
 ALTER SUBSCRIPTION regress_testsub DROP PUBLICATION testpub1, testpub1 WITH (refresh = false);
 
 -- fail - all publications are deleted

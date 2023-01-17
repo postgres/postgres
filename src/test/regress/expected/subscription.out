@@ -304,7 +304,7 @@ ERROR:  publication "testpub1" is already in subscription "regress_testsub"
  regress_testsub | regress_subscription_user | f       | {testpub,testpub1,testpub2} | f      | off       | d                | f                | any    | off                | dbname=regress_doesnotexist | 0/0
 (1 row)
 
--- fail - publication used more then once
+-- fail - publication used more than once
 ALTER SUBSCRIPTION regress_testsub DROP PUBLICATION testpub1, testpub1 WITH (refresh = false);
 ERROR:  publication name "testpub1" used more than once
 -- fail - all publications are deleted
