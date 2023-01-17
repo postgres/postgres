@@ -275,7 +275,7 @@ basic_archive_file_internal(const char *file, const char *path)
 	 * Copy the file to its temporary destination.  Note that this will fail
 	 * if temp already exists.
 	 */
-	copy_file(unconstify(char *, path), temp);
+	copy_file(path, temp);
 
 	/*
 	 * Sync the temporary file to disk and move it to its final destination.
