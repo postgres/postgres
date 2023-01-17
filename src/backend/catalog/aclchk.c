@@ -4510,7 +4510,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 		ReleaseSysCache(tuple);
 	}
 	else if (classoid == AccessMethodRelationId ||
-			 classoid == AggregateRelationId ||
 			 classoid == CastRelationId ||
 			 classoid == CollationRelationId ||
 			 classoid == ConversionRelationId ||
