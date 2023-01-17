@@ -153,6 +153,19 @@ test_role(
 	log_like =>
 	  [qr/connection authenticated: identity="$system_user" method=peer/]);
 
+# Success as the regular expression matches and \1 is replaced in the given
+# subexpression, even if quoted.
+reset_pg_ident($node, 'mypeermap', qq{/^$system_user(.*)\$},
+	'"test\1mapuser"');
+test_role(
+	$node,
+	qq{testmapuser},
+	'peer',
+	0,
+	'with regular expression in user name map with quoted \1 replaced',
+	log_like =>
+	  [qr/connection authenticated: identity="$system_user" method=peer/]);
+
 # Failure as the regular expression does not include a subexpression, but
 # the database user contains \1, requesting a replacement.
 reset_pg_ident($node, 'mypeermap', qq{/^$system_user\$}, '\1testmapuser');

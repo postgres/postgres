@@ -960,6 +960,9 @@ mymap   /^(.*)@otherdomain\.com$   guest
    will remove the domain part for users with system user names that end with
    <literal>@mydomain.com</literal>, and allow any user whose system name ends with
    <literal>@otherdomain.com</literal> to log in as <literal>guest</literal>.
+   Quoting a <replaceable>database-username</replaceable> containing
+   <literal>\1</literal> <emphasis>does not</emphasis> make
+   <literal>\1</literal> lose its special meaning.
   </para>
 
   <tip>
