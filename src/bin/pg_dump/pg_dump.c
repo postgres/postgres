@@ -15546,8 +15546,7 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 		if (tbinfo->relkind == RELKIND_MATVIEW)
 			append_depends_on_extension(fout, q, &tbinfo->dobj,
 										"pg_catalog.pg_class",
-										tbinfo->relkind == RELKIND_MATVIEW ?
-										"MATERIALIZED VIEW" : "INDEX",
+										"MATERIALIZED VIEW",
 										qualrelname);
 
 		/*
