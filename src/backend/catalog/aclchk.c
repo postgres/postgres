@@ -4241,9 +4241,6 @@ recordDependencyOnNewAcl(Oid classId, Oid objectId, int32 objsubId,
  *
  * For the object passed in, this will record its ACL (if any) and the ACLs of
  * any sub-objects (eg: columns) into pg_init_privs.
- *
- * Any new kinds of objects which have ACLs associated with them and can be
- * added to an extension should be added to the if-else tree below.
  */
 void
 recordExtObjInitPriv(Oid objoid, Oid classoid)
@@ -4336,74 +4333,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		ReleaseSysCache(tuple);
 	}
-	/* pg_foreign_data_wrapper */
-	else if (classoid == ForeignDataWrapperRelationId)
-	{
-		Datum		aclDatum;
-		bool		isNull;
-		HeapTuple	tuple;
-
-		tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID,
-								ObjectIdGetDatum(objoid));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for foreign data wrapper %u",
-				 objoid);
-
-		aclDatum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID, tuple,
-								   Anum_pg_foreign_data_wrapper_fdwacl,
-								   &isNull);
-
-		/* Add the record, if any, for the top-level object */
-		if (!isNull)
-			recordExtensionInitPrivWorker(objoid, classoid, 0,
-										  DatumGetAclP(aclDatum));
-
-		ReleaseSysCache(tuple);
-	}
-	/* pg_foreign_server */
-	else if (classoid == ForeignServerRelationId)
-	{
-		Datum		aclDatum;
-		bool		isNull;
-		HeapTuple	tuple;
-
-		tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(objoid));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for foreign server %u",
-				 objoid);
-
-		aclDatum = SysCacheGetAttr(FOREIGNSERVEROID, tuple,
-								   Anum_pg_foreign_server_srvacl,
-								   &isNull);
-
-		/* Add the record, if any, for the top-level object */
-		if (!isNull)
-			recordExtensionInitPrivWorker(objoid, classoid, 0,
-										  DatumGetAclP(aclDatum));
-
-		ReleaseSysCache(tuple);
-	}
-	/* pg_language */
-	else if (classoid == LanguageRelationId)
-	{
-		Datum		aclDatum;
-		bool		isNull;
-		HeapTuple	tuple;
-
-		tuple = SearchSysCache1(LANGOID, ObjectIdGetDatum(objoid));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for language %u", objoid);
-
-		aclDatum = SysCacheGetAttr(LANGOID, tuple, Anum_pg_language_lanacl,
-								   &isNull);
-
-		/* Add the record, if any, for the top-level object */
-		if (!isNull)
-			recordExtensionInitPrivWorker(objoid, classoid, 0,
-										  DatumGetAclP(aclDatum));
-
-		ReleaseSysCache(tuple);
-	}
 	/* pg_largeobject_metadata */
 	else if (classoid == LargeObjectMetadataRelationId)
 	{
@@ -4446,39 +4375,21 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		systable_endscan(scan);
 	}
-	/* pg_namespace */
-	else if (classoid == NamespaceRelationId)
+	/* This will error on unsupported classoid. */
+	else if (get_object_attnum_acl(classoid) != InvalidAttrNumber)
 	{
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	tuple;
 
-		tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(objoid));
+		tuple = SearchSysCache1(get_object_catcache_oid(classoid),
+								ObjectIdGetDatum(objoid));
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for schema %u", objoid);
+			elog(ERROR, "cache lookup failed for %s %u",
+				 get_object_class_descr(classoid), objoid);
 
-		aclDatum = SysCacheGetAttr(NAMESPACEOID, tuple,
-								   Anum_pg_namespace_nspacl, &isNull);
-
-		/* Add the record, if any, for the top-level object */
-		if (!isNull)
-			recordExtensionInitPrivWorker(objoid, classoid, 0,
-										  DatumGetAclP(aclDatum));
-
-		ReleaseSysCache(tuple);
-	}
-	/* pg_proc */
-	else if (classoid == ProcedureRelationId)
-	{
-		Datum		aclDatum;
-		bool		isNull;
-		HeapTuple	tuple;
-
-		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(objoid));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for function %u", objoid);
-
-		aclDatum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proacl,
+		aclDatum = SysCacheGetAttr(get_object_catcache_oid(classoid), tuple,
+								   get_object_attnum_acl(classoid),
 								   &isNull);
 
 		/* Add the record, if any, for the top-level object */
@@ -4487,53 +4398,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 										  DatumGetAclP(aclDatum));
 
 		ReleaseSysCache(tuple);
-	}
-	/* pg_type */
-	else if (classoid == TypeRelationId)
-	{
-		Datum		aclDatum;
-		bool		isNull;
-		HeapTuple	tuple;
-
-		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(objoid));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for type %u", objoid);
-
-		aclDatum = SysCacheGetAttr(TYPEOID, tuple, Anum_pg_type_typacl,
-								   &isNull);
-
-		/* Add the record, if any, for the top-level object */
-		if (!isNull)
-			recordExtensionInitPrivWorker(objoid, classoid, 0,
-										  DatumGetAclP(aclDatum));
-
-		ReleaseSysCache(tuple);
-	}
-	else if (classoid == AccessMethodRelationId ||
-			 classoid == CastRelationId ||
-			 classoid == CollationRelationId ||
-			 classoid == ConversionRelationId ||
-			 classoid == EventTriggerRelationId ||
-			 classoid == OperatorRelationId ||
-			 classoid == OperatorClassRelationId ||
-			 classoid == OperatorFamilyRelationId ||
-			 classoid == TSConfigRelationId ||
-			 classoid == TSDictionaryRelationId ||
-			 classoid == TSParserRelationId ||
-			 classoid == TSTemplateRelationId ||
-			 classoid == TransformRelationId
-		)
-	{
-		/* no ACL for these object types, so do nothing. */
-	}
-
-	/*
-	 * complain if we are given a class OID for a class that extensions don't
-	 * support or that we don't recognize.
-	 */
-	else
-	{
-		elog(ERROR, "unrecognized or unsupported class OID: %u", classoid);
 	}
 }
 
