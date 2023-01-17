@@ -10,31 +10,14 @@ This will run the TAP tests to run pg_upgrade, performing an upgrade
 from the version in this source tree to a new instance of the same
 version.
 
-Testing an upgrade from a different version requires a dump to set up
-the contents of this instance, with its set of binaries.  The following
-variables are available to control the test (see DETAILS below about
-the creation of the dump):
+Testing an upgrade from a different PG version is also possible, and
+provides a more thorough test that pg_upgrade does what it's meant for.
+This requires both a source tree and an installed tree for the old
+version, as well as a dump file to set up the instance to be upgraded.
+The following environment variables must be set to enable this testing:
 export olddump=...somewhere/dump.sql	(old version's dump)
 export oldinstall=...otherversion/	(old version's install base path)
-
-"filter_rules" is a variable that can be used to specify a file with custom
-filtering rules applied before comparing the dumps of the PostgreSQL
-instances near the end of the tests, in the shape of regular expressions
-valid for perl.  This is useful to enforce certain validation cases where
-pg_dump could create inconsistent outputs across major versions.
-For example:
-
-	# Remove all CREATE POLICY statements
-	s/^CREATE\sPOLICY.*//mgx
-	# Replace REFRESH with DROP for materialized views
-	s/^REFRESH\s(MATERIALIZED\sVIEW)/DROP $1/mgx
-
-Lines beginning with '#' and empty lines are ignored.  One rule can be
-defined per line.
-
-Finally, the tests can be done by running
-
-	make check
+See DETAILS below for more information about creation of the dump.
 
 You can also test the different transfer modes (--copy, --link,
 --clone) by setting the environment variable PG_TEST_PG_UPGRADE_MODE
@@ -52,22 +35,32 @@ The most effective way to test pg_upgrade, aside from testing on user
 data, is by upgrading the PostgreSQL regression database.
 
 This testing process first requires the creation of a valid regression
-database dump that can be then used for $olddump.  Such files contain
+database dump that can then be used for $olddump.  Such files contain
 most database features and are specific to each major version of Postgres.
 
 Here are the steps needed to create a dump file:
 
 1)  Create and populate the regression database in the old cluster.
     This database can be created by running 'make installcheck' from
-    src/test/regress using its source code tree.
+    src/test/regress in the old version's source code tree.
+
+    If you like, you can also populate regression databases for one or
+    more contrib modules by running 'make installcheck USE_MODULE_DB=1'
+    in their directories.  (USE_MODULE_DB is essential so that the
+    pg_upgrade test script will understand which database is which.)
 
 2)  Use pg_dumpall to dump out the contents of the instance, including the
-    regression database, in the shape of a SQL file.  This requires the *old*
-    cluster's pg_dumpall so as the dump created is compatible with the
-    version of the cluster it is dumped into.
+    regression database(s), into a SQL file.  Use the *old* version's
+    pg_dumpall so that the dump created is compatible with that version.
 
-Once the dump is created, it can be repeatedly used with $olddump and
-`make check`, that automates the dump of the old database, its upgrade,
-the dump out of the new database and the comparison of the dumps between
-the old and new databases.  The contents of the dumps can also be manually
-compared.
+Once the dump file is created, it can be used repeatedly.  Set $olddump
+to point to the dump file and run 'make check' or 'make installcheck'
+in the new version's src/bin/pg_upgrade directory.  (If you included any
+contrib databases in the old dump, you must use 'make installcheck' and
+ensure that the corresponding contrib modules have been installed in
+the new version's installation tree.)  This will build a temporary cluster
+using the old installation's executables, populate it from the dump file,
+and then try to pg_upgrade it to the new version.  Success is reported
+if pg_dumpall output matches between the pre-upgrade and post-upgrade
+databases.  In case of trouble, manually comparing those dump files may
+help to isolate the problem.

@@ -10,6 +10,7 @@ use File::Path qw(rmtree);
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
+use PostgreSQL::Test::AdjustUpgrade;
 use Test::More;
 
 # Can be changed to test the other modes.
@@ -37,37 +38,16 @@ sub generate_db
 # This returns the path to the filtered dump.
 sub filter_dump
 {
-	my ($node, $dump_file) = @_;
+	my ($is_old, $old_version, $dump_file) = @_;
 	my $dump_contents = slurp_file($dump_file);
 
-	# Remove the comments.
-	$dump_contents =~ s/^\-\-.*//mgx;
-	# Remove empty lines.
-	$dump_contents =~ s/^\n//mgx;
-
-	# Apply custom filtering rules, if any.
-	if (defined($ENV{filter_rules}))
+	if ($is_old)
 	{
-		my $filter_file = $ENV{filter_rules};
-		die "no file with custom filter rules found!" unless -e $filter_file;
-
-		open my $filter_handle, '<', $filter_file
-		  or die "could not open $filter_file";
-		while (<$filter_handle>)
-		{
-			my $filter_line = $_;
-
-			# Skip comments and empty lines
-			next if ($filter_line =~ /^#/);
-			next if ($filter_line =~ /^\s*$/);
-
-			# Apply lines with filters.
-			note "Applying custom rule $filter_line to $dump_file";
-			my $filter = "\$dump_contents =~ $filter_line";
-			## no critic (ProhibitStringyEval)
-			eval $filter;
-		}
-		close $filter_handle;
+		$dump_contents = adjust_old_dumpfile($old_version, $dump_contents);
+	}
+	else
+	{
+		$dump_contents = adjust_new_dumpfile($old_version, $dump_contents);
 	}
 
 	my $dump_file_filtered = "${dump_file}_filtered";
@@ -83,7 +63,7 @@ sub filter_dump
 # that gets upgraded.  Before running the upgrade, a logical dump of the
 # old cluster is taken, and a second logical dump of the new one is taken
 # after the upgrade.  The upgrade test passes if there are no differences
-# in these two dumps.
+# (after filtering) in these two dumps.
 
 # Testing upgrades with an older version of PostgreSQL requires setting up
 # two environment variables, as of:
@@ -198,15 +178,29 @@ my $oldbindir = $oldnode->config_data('--bindir');
 # only if different major versions are used for the dump.
 if (defined($ENV{oldinstall}))
 {
-	# Note that upgrade_adapt.sql and psql from the new version are used,
-	# to cope with an upgrade to this version.
-	$newnode->command_ok(
-		[
-			'psql', '-X',
-			'-f',   "$srcdir/src/bin/pg_upgrade/upgrade_adapt.sql",
-			'-d',   $oldnode->connstr('regression'),
-		],
-		'ran adapt script');
+	# Consult AdjustUpgrade to find out what we need to do.
+	my $dbnames =
+	  $oldnode->safe_psql('postgres', qq(SELECT datname FROM pg_database));
+	my %dbnames;
+	do { $dbnames{$_} = 1; }
+	  foreach split /\s+/s, $dbnames;
+	my $adjust_cmds =
+	  adjust_database_contents($oldnode->pg_version, %dbnames);
+
+	foreach my $updb (keys %$adjust_cmds)
+	{
+		my $upcmds = join(";\n", @{ $adjust_cmds->{$updb} });
+
+		# For simplicity, use the newer version's psql to issue the commands.
+		$newnode->command_ok(
+			[
+				'psql', '-X',
+				'-v',   'ON_ERROR_STOP=1',
+				'-c',   $upcmds,
+				'-d',   $oldnode->connstr($updb),
+			],
+			"ran version adaptation commands for database $updb");
+	}
 }
 
 # Take a dump before performing the upgrade as a base comparison. Note
@@ -359,8 +353,8 @@ my $dump1_filtered = $dump1_file;
 my $dump2_filtered = $dump2_file;
 if ($oldnode->pg_version != $newnode->pg_version)
 {
-	$dump1_filtered = filter_dump($oldnode, $dump1_file);
-	$dump2_filtered = filter_dump($newnode, $dump2_file);
+	$dump1_filtered = filter_dump(1, $oldnode->pg_version, $dump1_file);
+	$dump2_filtered = filter_dump(0, $oldnode->pg_version, $dump2_file);
 }
 
 # Compare the two dumps, there should be no differences.
@@ -371,7 +365,7 @@ is($compare_res, 0, 'old and new dumps match after pg_upgrade');
 if ($compare_res != 0)
 {
 	my ($stdout, $stderr) =
-	  run_command([ 'diff', $dump1_filtered, $dump2_filtered ]);
+	  run_command([ 'diff', '-u', $dump1_filtered, $dump2_filtered ]);
 	print "=== diff of $dump1_filtered and $dump2_filtered\n";
 	print "=== stdout ===\n";
 	print $stdout;
