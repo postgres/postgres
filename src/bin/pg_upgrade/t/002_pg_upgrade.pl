@@ -10,6 +10,7 @@ use File::Path qw(rmtree);
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
+use PostgreSQL::Test::AdjustUpgrade;
 use Test::More;
 
 # Generate a database with a name made of a range of ASCII characters.
@@ -30,11 +31,36 @@ sub generate_db
 		"created database with ASCII characters from $from_char to $to_char");
 }
 
+# Filter the contents of a dump before its use in a content comparison.
+# This returns the path to the filtered dump.
+sub filter_dump
+{
+	my ($is_old, $old_version, $dump_file) = @_;
+	my $dump_contents = slurp_file($dump_file);
+
+	if ($is_old)
+	{
+		$dump_contents = adjust_old_dumpfile($old_version, $dump_contents);
+	}
+	else
+	{
+		$dump_contents = adjust_new_dumpfile($old_version, $dump_contents);
+	}
+
+	my $dump_file_filtered = "${dump_file}_filtered";
+	open(my $dh, '>', $dump_file_filtered)
+	  || die "opening $dump_file_filtered";
+	print $dh $dump_contents;
+	close($dh);
+
+	return $dump_file_filtered;
+}
+
 # The test of pg_upgrade requires two clusters, an old one and a new one
 # that gets upgraded.  Before running the upgrade, a logical dump of the
 # old cluster is taken, and a second logical dump of the new one is taken
 # after the upgrade.  The upgrade test passes if there are no differences
-# in these two dumps.
+# (after filtering) in these two dumps.
 
 # Testing upgrades with an older version of PostgreSQL requires setting up
 # two environment variables, as of:
@@ -49,8 +75,10 @@ if (   (defined($ENV{olddump}) && !defined($ENV{oldinstall}))
 	die "olddump or oldinstall is undefined";
 }
 
-# Temporary location for the dumps taken
-my $tempdir = PostgreSQL::Test::Utils::tempdir;
+# Paths to the dumps taken during the tests.
+my $tempdir    = PostgreSQL::Test::Utils::tempdir;
+my $dump1_file = "$tempdir/dump1.sql";
+my $dump2_file = "$tempdir/dump2.sql";
 
 # Initialize node to upgrade
 my $oldnode =
@@ -60,7 +88,10 @@ my $oldnode =
 # To increase coverage of non-standard segment size and group access without
 # increasing test runtime, run these tests with a custom setting.
 # --allow-group-access and --wal-segsize have been added in v11.
-$oldnode->init(extra => [ '--wal-segsize', '1', '--allow-group-access' ]);
+my %node_params = ();
+$node_params{extra} = [ '--wal-segsize', '1', '--allow-group-access' ]
+  if $oldnode->pg_version >= 11;
+$oldnode->init(%node_params);
 $oldnode->start;
 
 # The default location of the source code is the root of this directory.
@@ -129,37 +160,52 @@ else
 	is($rc, 0, 'regression tests pass');
 }
 
+# Initialize a new node for the upgrade.
+my $newnode = PostgreSQL::Test::Cluster->new('new_node');
+$newnode->init(%node_params);
+
+my $newbindir = $newnode->config_data('--bindir');
+my $oldbindir = $oldnode->config_data('--bindir');
+
 # Before dumping, get rid of objects not existing or not supported in later
 # versions. This depends on the version of the old server used, and matters
 # only if different major versions are used for the dump.
 if (defined($ENV{oldinstall}))
 {
-	# Note that upgrade_adapt.sql from the new version is used, to
-	# cope with an upgrade to this version.
-	$oldnode->command_ok(
-		[
-			'psql', '-X',
-			'-f', "$srcdir/src/bin/pg_upgrade/upgrade_adapt.sql",
-			'regression'
-		],
-		'ran adapt script');
-}
+	# Consult AdjustUpgrade to find out what we need to do.
+	my $dbnames =
+	  $oldnode->safe_psql('postgres', qq(SELECT datname FROM pg_database));
+	my %dbnames;
+	do { $dbnames{$_} = 1; }
+	  foreach split /\s+/s, $dbnames;
+	my $adjust_cmds =
+	  adjust_database_contents($oldnode->pg_version, %dbnames);
 
-# Initialize a new node for the upgrade.
-my $newnode = PostgreSQL::Test::Cluster->new('new_node');
-$newnode->init(extra => [ '--wal-segsize', '1', '--allow-group-access' ]);
-my $newbindir = $newnode->config_data('--bindir');
-my $oldbindir = $oldnode->config_data('--bindir');
+	foreach my $updb (keys %$adjust_cmds)
+	{
+		my $upcmds = join(";\n", @{ $adjust_cmds->{$updb} });
+
+		# For simplicity, use the newer version's psql to issue the commands.
+		$newnode->command_ok(
+			[
+				'psql', '-X',
+				'-v',   'ON_ERROR_STOP=1',
+				'-c',   $upcmds,
+				'-d',   $oldnode->connstr($updb),
+			],
+			"ran version adaptation commands for database $updb");
+	}
+}
 
 # Take a dump before performing the upgrade as a base comparison. Note
 # that we need to use pg_dumpall from the new node here.
-$newnode->command_ok(
-	[
-		'pg_dumpall', '--no-sync',
-		'-d',         $oldnode->connstr('postgres'),
-		'-f',         "$tempdir/dump1.sql"
-	],
-	'dump before running pg_upgrade');
+my @dump_command = (
+	'pg_dumpall', '--no-sync', '-d', $oldnode->connstr('postgres'),
+	'-f', $dump1_file);
+# --extra-float-digits is needed when upgrading from a version older than 11.
+push(@dump_command, '--extra-float-digits', '0')
+  if ($oldnode->pg_version < 12);
+$newnode->command_ok(\@dump_command, 'dump before running pg_upgrade');
 
 # After dumping, update references to the old source tree's regress.so
 # to point to the new tree.
@@ -173,7 +219,7 @@ if (defined($ENV{oldinstall}))
 	chomp($output);
 	my @libpaths = split("\n", $output);
 
-	my $dump_data = slurp_file("$tempdir/dump1.sql");
+	my $dump_data = slurp_file($dump1_file);
 
 	my $newregresssrc = "$srcdir/src/test/regress";
 	foreach (@libpaths)
@@ -183,7 +229,7 @@ if (defined($ENV{oldinstall}))
 		$dump_data =~ s/$libpath/$newregresssrc/g;
 	}
 
-	open my $fh, ">", "$tempdir/dump1.sql" or die "could not open dump file";
+	open my $fh, ">", $dump1_file or die "could not open dump file";
 	print $fh $dump_data;
 	close $fh;
 
@@ -284,24 +330,34 @@ if (-d $log_path)
 }
 
 # Second dump from the upgraded instance.
-$newnode->command_ok(
-	[
-		'pg_dumpall', '--no-sync',
-		'-d',         $newnode->connstr('postgres'),
-		'-f',         "$tempdir/dump2.sql"
-	],
-	'dump after running pg_upgrade');
+@dump_command = (
+	'pg_dumpall', '--no-sync', '-d', $newnode->connstr('postgres'),
+	'-f', $dump2_file);
+# --extra-float-digits is needed when upgrading from a version older than 11.
+push(@dump_command, '--extra-float-digits', '0')
+  if ($oldnode->pg_version < 12);
+$newnode->command_ok(\@dump_command, 'dump after running pg_upgrade');
+
+# No need to apply filters on the dumps if working on the same version
+# for the old and new nodes.
+my $dump1_filtered = $dump1_file;
+my $dump2_filtered = $dump2_file;
+if ($oldnode->pg_version != $newnode->pg_version)
+{
+	$dump1_filtered = filter_dump(1, $oldnode->pg_version, $dump1_file);
+	$dump2_filtered = filter_dump(0, $oldnode->pg_version, $dump2_file);
+}
 
 # Compare the two dumps, there should be no differences.
-my $compare_res = compare("$tempdir/dump1.sql", "$tempdir/dump2.sql");
+my $compare_res = compare($dump1_filtered, $dump2_filtered);
 is($compare_res, 0, 'old and new dumps match after pg_upgrade');
 
 # Provide more context if the dumps do not match.
 if ($compare_res != 0)
 {
 	my ($stdout, $stderr) =
-	  run_command([ 'diff', "$tempdir/dump1.sql", "$tempdir/dump2.sql" ]);
-	print "=== diff of $tempdir/dump1.sql and $tempdir/dump2.sql\n";
+	  run_command([ 'diff', '-u', $dump1_filtered, $dump2_filtered ]);
+	print "=== diff of $dump1_filtered and $dump2_filtered\n";
 	print "=== stdout ===\n";
 	print $stdout;
 	print "=== stderr ===\n";
