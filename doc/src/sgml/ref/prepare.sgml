@@ -139,7 +139,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
   </para>
 
   <para>
-   By default (that is, when <xref linkend="guc-plan-cache_mode"/> is set
+   By default (that is, when <xref linkend="guc-plan-cache-mode"/> is set
    to <literal>auto</literal>), the server will automatically choose
    whether to use a generic or custom plan for a prepared statement that
    has parameters.  The current rule for this is that the first five

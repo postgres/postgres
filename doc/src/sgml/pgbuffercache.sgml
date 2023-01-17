@@ -183,10 +183,10 @@
   <title>The <function>pg_buffercache_summary()</function> Function</title>
 
   <para>
-   The definitions of the columns exposed by the function are shown in <xref linkend="pgbuffercache_summary-columns"/>.
+   The definitions of the columns exposed by the function are shown in <xref linkend="pgbuffercache-summary-columns"/>.
   </para>
 
-  <table id="pgbuffercache_summary-columns">
+  <table id="pgbuffercache-summary-columns">
    <title><function>pg_buffercache_summary()</function> Output Columns</title>
    <tgroup cols="1">
     <thead>

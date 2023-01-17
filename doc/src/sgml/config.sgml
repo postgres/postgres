@@ -6062,7 +6062,7 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-plan-cache_mode" xreflabel="plan_cache_mode">
+     <varlistentry id="guc-plan-cache-mode" xreflabel="plan_cache_mode">
       <term><varname>plan_cache_mode</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>plan_cache_mode</varname> configuration parameter</primary>
