@@ -103,7 +103,7 @@ extern PGDLLIMPORT BufferUsage pgBufferUsage;
 extern PGDLLIMPORT WalUsage pgWalUsage;
 
 extern void InstrStartSampling(int sample_rate_hz);
-extern void InstrStopSampling();
+extern void InstrStopSampling(void);
 extern void InstrumentSamplingTimeoutHandler(void);
 
 extern Instrumentation *InstrAlloc(int n, int instrument_options,

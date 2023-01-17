@@ -1791,7 +1791,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			double		startup_ms;
 			double		total_ms;
 			double		rows;
-			double		sampled_time_ms;
+			double		sampled_time_ms = 0.0;
 
 			if (nloops <= 0)
 				continue;
