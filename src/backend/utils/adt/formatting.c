@@ -5664,13 +5664,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 		{
 			if (Np->sign != '-')
 			{
-				if (IS_BRACKET(Np->Num) && IS_FILLMODE(Np->Num))
+				if (IS_FILLMODE(Np->Num))
 					Np->Num->flag &= ~NUM_F_BRACKET;
-				if (IS_MINUS(Np->Num))
-					Np->Num->flag &= ~NUM_F_MINUS;
 			}
-			else if (Np->sign != '+' && IS_PLUS(Np->Num))
-				Np->Num->flag &= ~NUM_F_PLUS;
 
 			if (Np->sign == '+' && IS_FILLMODE(Np->Num) && IS_LSIGN(Np->Num) == false)
 				Np->sign_wrote = true;	/* needn't sign */
