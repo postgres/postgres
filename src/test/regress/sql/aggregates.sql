@@ -546,6 +546,17 @@ select
 from tenk1
 group by ten;
 
+-- Ensure that we never choose to provide presorted input to an Aggref with
+-- a volatile function in the ORDER BY / DISTINCT clause.  We want to ensure
+-- these sorts are performed individually rather than at the query level.
+explain (costs off)
+select
+  sum(unique1 order by two), sum(unique1 order by four),
+  sum(unique1 order by four, two), sum(unique1 order by two, random()),
+  sum(unique1 order by two, random(), random() + 1)
+from tenk1
+group by ten;
+
 -- Ensure no ordering is requested when enable_presorted_aggregate is off
 set enable_presorted_aggregate to off;
 explain (costs off)
