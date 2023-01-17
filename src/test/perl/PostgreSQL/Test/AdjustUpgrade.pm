@@ -88,12 +88,13 @@ sub adjust_database_contents
 		}
 	}
 
-	# avoid version number issues with test_ext7
+	# avoid no-path-to-downgrade-extension-version issues
 	if ($dbnames{contrib_regression_test_extensions})
 	{
 		_add_st(
 			$result,
 			'contrib_regression_test_extensions',
+			'drop extension if exists test_ext_cine',
 			'drop extension if exists test_ext7');
 	}
 
