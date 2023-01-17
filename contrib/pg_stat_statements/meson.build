@@ -41,6 +41,7 @@ tests += {
   'regress': {
     'sql': [
       'pg_stat_statements',
+      'oldextversions',
     ],
     'regress_args': ['--temp-config', files('pg_stat_statements.conf')],
     # Disabled because these tests require

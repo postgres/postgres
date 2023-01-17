@@ -8,6 +8,7 @@ tests += {
     'sql': [
       'rolenames',
       'alter_system_table',
+      'guc_privs',
     ],
   },
 }
