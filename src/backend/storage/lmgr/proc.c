@@ -410,7 +410,7 @@ InitProcess(void)
 	/* Initialize fields for sync rep */
 	MyProc->waitLSN = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
-	SHMQueueElemInit(&(MyProc->syncRepLinks));
+	dlist_node_init(&MyProc->syncRepLinks);
 
 	/* Initialize fields for group XID clearing. */
 	MyProc->procArrayGroupMember = false;
