@@ -484,7 +484,9 @@ my @_unused_view_qualifiers = (
 	{ obj => 'VIEW public.limit_thousand_v_1', qual => 'onek' },
 	{ obj => 'VIEW public.limit_thousand_v_2', qual => 'onek' },
 	{ obj => 'VIEW public.limit_thousand_v_3', qual => 'onek' },
-	{ obj => 'VIEW public.limit_thousand_v_4', qual => 'onek' });
+	{ obj => 'VIEW public.limit_thousand_v_4', qual => 'onek' },
+	# Since 14
+	{ obj => 'MATERIALIZED VIEW public.compressmv', qual => 'cmdata1' });
 
 # Internal subroutine to remove no-longer-used table qualifiers from
 # CREATE [MATERIALIZED] VIEW commands.  See list of targeted views above.
