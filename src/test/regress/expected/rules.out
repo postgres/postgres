@@ -1303,60 +1303,60 @@ pg_available_extensions| SELECT e.name,
     e.comment
    FROM (pg_available_extensions() e(name, default_version, comment)
      LEFT JOIN pg_extension x ON ((e.name = x.extname)));
-pg_backend_memory_contexts| SELECT pg_get_backend_memory_contexts.name,
-    pg_get_backend_memory_contexts.ident,
-    pg_get_backend_memory_contexts.parent,
-    pg_get_backend_memory_contexts.level,
-    pg_get_backend_memory_contexts.total_bytes,
-    pg_get_backend_memory_contexts.total_nblocks,
-    pg_get_backend_memory_contexts.free_bytes,
-    pg_get_backend_memory_contexts.free_chunks,
-    pg_get_backend_memory_contexts.used_bytes
+pg_backend_memory_contexts| SELECT name,
+    ident,
+    parent,
+    level,
+    total_bytes,
+    total_nblocks,
+    free_bytes,
+    free_chunks,
+    used_bytes
    FROM pg_get_backend_memory_contexts() pg_get_backend_memory_contexts(name, ident, parent, level, total_bytes, total_nblocks, free_bytes, free_chunks, used_bytes);
-pg_config| SELECT pg_config.name,
-    pg_config.setting
+pg_config| SELECT name,
+    setting
    FROM pg_config() pg_config(name, setting);
-pg_cursors| SELECT c.name,
-    c.statement,
-    c.is_holdable,
-    c.is_binary,
-    c.is_scrollable,
-    c.creation_time
+pg_cursors| SELECT name,
+    statement,
+    is_holdable,
+    is_binary,
+    is_scrollable,
+    creation_time
    FROM pg_cursor() c(name, statement, is_holdable, is_binary, is_scrollable, creation_time);
-pg_file_settings| SELECT a.sourcefile,
-    a.sourceline,
-    a.seqno,
-    a.name,
-    a.setting,
-    a.applied,
-    a.error
+pg_file_settings| SELECT sourcefile,
+    sourceline,
+    seqno,
+    name,
+    setting,
+    applied,
+    error
    FROM pg_show_all_file_settings() a(sourcefile, sourceline, seqno, name, setting, applied, error);
-pg_group| SELECT pg_authid.rolname AS groname,
-    pg_authid.oid AS grosysid,
+pg_group| SELECT rolname AS groname,
+    oid AS grosysid,
     ARRAY( SELECT pg_auth_members.member
            FROM pg_auth_members
           WHERE (pg_auth_members.roleid = pg_authid.oid)) AS grolist
    FROM pg_authid
-  WHERE (NOT pg_authid.rolcanlogin);
-pg_hba_file_rules| SELECT a.rule_number,
-    a.file_name,
-    a.line_number,
-    a.type,
-    a.database,
-    a.user_name,
-    a.address,
-    a.netmask,
-    a.auth_method,
-    a.options,
-    a.error
+  WHERE (NOT rolcanlogin);
+pg_hba_file_rules| SELECT rule_number,
+    file_name,
+    line_number,
+    type,
+    database,
+    user_name,
+    address,
+    netmask,
+    auth_method,
+    options,
+    error
    FROM pg_hba_file_rules() a(rule_number, file_name, line_number, type, database, user_name, address, netmask, auth_method, options, error);
-pg_ident_file_mappings| SELECT a.map_number,
-    a.file_name,
-    a.line_number,
-    a.map_name,
-    a.sys_name,
-    a.pg_username,
-    a.error
+pg_ident_file_mappings| SELECT map_number,
+    file_name,
+    line_number,
+    map_name,
+    sys_name,
+    pg_username,
+    error
    FROM pg_ident_file_mappings() a(map_number, file_name, line_number, map_name, sys_name, pg_username, error);
 pg_indexes| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
@@ -1369,22 +1369,22 @@ pg_indexes| SELECT n.nspname AS schemaname,
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
      LEFT JOIN pg_tablespace t ON ((t.oid = i.reltablespace)))
   WHERE ((c.relkind = ANY (ARRAY['r'::"char", 'm'::"char", 'p'::"char"])) AND (i.relkind = ANY (ARRAY['i'::"char", 'I'::"char"])));
-pg_locks| SELECT l.locktype,
-    l.database,
-    l.relation,
-    l.page,
-    l.tuple,
-    l.virtualxid,
-    l.transactionid,
-    l.classid,
-    l.objid,
-    l.objsubid,
-    l.virtualtransaction,
-    l.pid,
-    l.mode,
-    l.granted,
-    l.fastpath,
-    l.waitstart
+pg_locks| SELECT locktype,
+    database,
+    relation,
+    page,
+    tuple,
+    virtualxid,
+    transactionid,
+    classid,
+    objid,
+    objsubid,
+    virtualtransaction,
+    pid,
+    mode,
+    granted,
+    fastpath,
+    waitstart
    FROM pg_lock_status() l(locktype, database, relation, page, tuple, virtualxid, transactionid, classid, objid, objsubid, virtualtransaction, pid, mode, granted, fastpath, waitstart);
 pg_matviews| SELECT n.nspname AS schemaname,
     c.relname AS matviewname,
@@ -1424,14 +1424,14 @@ pg_policies| SELECT n.nspname AS schemaname,
    FROM ((pg_policy pol
      JOIN pg_class c ON ((c.oid = pol.polrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)));
-pg_prepared_statements| SELECT p.name,
-    p.statement,
-    p.prepare_time,
-    p.parameter_types,
-    p.result_types,
-    p.from_sql,
-    p.generic_plans,
-    p.custom_plans
+pg_prepared_statements| SELECT name,
+    statement,
+    prepare_time,
+    parameter_types,
+    result_types,
+    from_sql,
+    generic_plans,
+    custom_plans
    FROM pg_prepared_statement() p(name, statement, prepare_time, parameter_types, result_types, from_sql, generic_plans, custom_plans);
 pg_prepared_xacts| SELECT p.transaction,
     p.gid,
@@ -1453,10 +1453,10 @@ pg_publication_tables| SELECT p.pubname,
     (pg_class c
      JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.oid = gpt.relid);
-pg_replication_origin_status| SELECT pg_show_replication_origin_status.local_id,
-    pg_show_replication_origin_status.external_id,
-    pg_show_replication_origin_status.remote_lsn,
-    pg_show_replication_origin_status.local_lsn
+pg_replication_origin_status| SELECT local_id,
+    external_id,
+    remote_lsn,
+    local_lsn
    FROM pg_show_replication_origin_status() pg_show_replication_origin_status(local_id, external_id, remote_lsn, local_lsn);
 pg_replication_slots| SELECT l.slot_name,
     l.plugin,
@@ -1702,23 +1702,23 @@ pg_sequences| SELECT n.nspname AS schemaname,
      JOIN pg_class c ON ((c.oid = s.seqrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE ((NOT pg_is_other_temp_schema(n.oid)) AND (c.relkind = 'S'::"char"));
-pg_settings| SELECT a.name,
-    a.setting,
-    a.unit,
-    a.category,
-    a.short_desc,
-    a.extra_desc,
-    a.context,
-    a.vartype,
-    a.source,
-    a.min_val,
-    a.max_val,
-    a.enumvals,
-    a.boot_val,
-    a.reset_val,
-    a.sourcefile,
-    a.sourceline,
-    a.pending_restart
+pg_settings| SELECT name,
+    setting,
+    unit,
+    category,
+    short_desc,
+    extra_desc,
+    context,
+    vartype,
+    source,
+    min_val,
+    max_val,
+    enumvals,
+    boot_val,
+    reset_val,
+    sourcefile,
+    sourceline,
+    pending_restart
    FROM pg_show_all_settings() a(name, setting, unit, category, short_desc, extra_desc, context, vartype, source, min_val, max_val, enumvals, boot_val, reset_val, sourcefile, sourceline, pending_restart);
 pg_shadow| SELECT pg_authid.rolname AS usename,
     pg_authid.oid AS usesysid,
@@ -1732,10 +1732,10 @@ pg_shadow| SELECT pg_authid.rolname AS usename,
    FROM (pg_authid
      LEFT JOIN pg_db_role_setting s ON (((pg_authid.oid = s.setrole) AND (s.setdatabase = (0)::oid))))
   WHERE pg_authid.rolcanlogin;
-pg_shmem_allocations| SELECT pg_get_shmem_allocations.name,
-    pg_get_shmem_allocations.off,
-    pg_get_shmem_allocations.size,
-    pg_get_shmem_allocations.allocated_size
+pg_shmem_allocations| SELECT name,
+    off,
+    size,
+    allocated_size
    FROM pg_get_shmem_allocations() pg_get_shmem_allocations(name, off, size, allocated_size);
 pg_stat_activity| SELECT s.datid,
     d.datname,
@@ -1806,13 +1806,13 @@ pg_stat_all_tables| SELECT c.oid AS relid,
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char", 'p'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
-pg_stat_archiver| SELECT s.archived_count,
-    s.last_archived_wal,
-    s.last_archived_time,
-    s.failed_count,
-    s.last_failed_wal,
-    s.last_failed_time,
-    s.stats_reset
+pg_stat_archiver| SELECT archived_count,
+    last_archived_wal,
+    last_archived_time,
+    failed_count,
+    last_failed_wal,
+    last_failed_time,
+    stats_reset
    FROM pg_stat_get_archiver() s(archived_count, last_archived_wal, last_archived_time, failed_count, last_failed_wal, last_failed_time, stats_reset);
 pg_stat_bgwriter| SELECT pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,
     pg_stat_get_bgwriter_requested_checkpoints() AS checkpoints_req,
@@ -1825,57 +1825,57 @@ pg_stat_bgwriter| SELECT pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints
     pg_stat_get_buf_fsync_backend() AS buffers_backend_fsync,
     pg_stat_get_buf_alloc() AS buffers_alloc,
     pg_stat_get_bgwriter_stat_reset_time() AS stats_reset;
-pg_stat_database| SELECT d.oid AS datid,
-    d.datname,
+pg_stat_database| SELECT oid AS datid,
+    datname,
         CASE
-            WHEN (d.oid = (0)::oid) THEN 0
-            ELSE pg_stat_get_db_numbackends(d.oid)
+            WHEN (oid = (0)::oid) THEN 0
+            ELSE pg_stat_get_db_numbackends(oid)
         END AS numbackends,
-    pg_stat_get_db_xact_commit(d.oid) AS xact_commit,
-    pg_stat_get_db_xact_rollback(d.oid) AS xact_rollback,
-    (pg_stat_get_db_blocks_fetched(d.oid) - pg_stat_get_db_blocks_hit(d.oid)) AS blks_read,
-    pg_stat_get_db_blocks_hit(d.oid) AS blks_hit,
-    pg_stat_get_db_tuples_returned(d.oid) AS tup_returned,
-    pg_stat_get_db_tuples_fetched(d.oid) AS tup_fetched,
-    pg_stat_get_db_tuples_inserted(d.oid) AS tup_inserted,
-    pg_stat_get_db_tuples_updated(d.oid) AS tup_updated,
-    pg_stat_get_db_tuples_deleted(d.oid) AS tup_deleted,
-    pg_stat_get_db_conflict_all(d.oid) AS conflicts,
-    pg_stat_get_db_temp_files(d.oid) AS temp_files,
-    pg_stat_get_db_temp_bytes(d.oid) AS temp_bytes,
-    pg_stat_get_db_deadlocks(d.oid) AS deadlocks,
-    pg_stat_get_db_checksum_failures(d.oid) AS checksum_failures,
-    pg_stat_get_db_checksum_last_failure(d.oid) AS checksum_last_failure,
-    pg_stat_get_db_blk_read_time(d.oid) AS blk_read_time,
-    pg_stat_get_db_blk_write_time(d.oid) AS blk_write_time,
-    pg_stat_get_db_session_time(d.oid) AS session_time,
-    pg_stat_get_db_active_time(d.oid) AS active_time,
-    pg_stat_get_db_idle_in_transaction_time(d.oid) AS idle_in_transaction_time,
-    pg_stat_get_db_sessions(d.oid) AS sessions,
-    pg_stat_get_db_sessions_abandoned(d.oid) AS sessions_abandoned,
-    pg_stat_get_db_sessions_fatal(d.oid) AS sessions_fatal,
-    pg_stat_get_db_sessions_killed(d.oid) AS sessions_killed,
-    pg_stat_get_db_stat_reset_time(d.oid) AS stats_reset
+    pg_stat_get_db_xact_commit(oid) AS xact_commit,
+    pg_stat_get_db_xact_rollback(oid) AS xact_rollback,
+    (pg_stat_get_db_blocks_fetched(oid) - pg_stat_get_db_blocks_hit(oid)) AS blks_read,
+    pg_stat_get_db_blocks_hit(oid) AS blks_hit,
+    pg_stat_get_db_tuples_returned(oid) AS tup_returned,
+    pg_stat_get_db_tuples_fetched(oid) AS tup_fetched,
+    pg_stat_get_db_tuples_inserted(oid) AS tup_inserted,
+    pg_stat_get_db_tuples_updated(oid) AS tup_updated,
+    pg_stat_get_db_tuples_deleted(oid) AS tup_deleted,
+    pg_stat_get_db_conflict_all(oid) AS conflicts,
+    pg_stat_get_db_temp_files(oid) AS temp_files,
+    pg_stat_get_db_temp_bytes(oid) AS temp_bytes,
+    pg_stat_get_db_deadlocks(oid) AS deadlocks,
+    pg_stat_get_db_checksum_failures(oid) AS checksum_failures,
+    pg_stat_get_db_checksum_last_failure(oid) AS checksum_last_failure,
+    pg_stat_get_db_blk_read_time(oid) AS blk_read_time,
+    pg_stat_get_db_blk_write_time(oid) AS blk_write_time,
+    pg_stat_get_db_session_time(oid) AS session_time,
+    pg_stat_get_db_active_time(oid) AS active_time,
+    pg_stat_get_db_idle_in_transaction_time(oid) AS idle_in_transaction_time,
+    pg_stat_get_db_sessions(oid) AS sessions,
+    pg_stat_get_db_sessions_abandoned(oid) AS sessions_abandoned,
+    pg_stat_get_db_sessions_fatal(oid) AS sessions_fatal,
+    pg_stat_get_db_sessions_killed(oid) AS sessions_killed,
+    pg_stat_get_db_stat_reset_time(oid) AS stats_reset
    FROM ( SELECT 0 AS oid,
             NULL::name AS datname
         UNION ALL
          SELECT pg_database.oid,
             pg_database.datname
            FROM pg_database) d;
-pg_stat_database_conflicts| SELECT d.oid AS datid,
-    d.datname,
-    pg_stat_get_db_conflict_tablespace(d.oid) AS confl_tablespace,
-    pg_stat_get_db_conflict_lock(d.oid) AS confl_lock,
-    pg_stat_get_db_conflict_snapshot(d.oid) AS confl_snapshot,
-    pg_stat_get_db_conflict_bufferpin(d.oid) AS confl_bufferpin,
-    pg_stat_get_db_conflict_startup_deadlock(d.oid) AS confl_deadlock
+pg_stat_database_conflicts| SELECT oid AS datid,
+    datname,
+    pg_stat_get_db_conflict_tablespace(oid) AS confl_tablespace,
+    pg_stat_get_db_conflict_lock(oid) AS confl_lock,
+    pg_stat_get_db_conflict_snapshot(oid) AS confl_snapshot,
+    pg_stat_get_db_conflict_bufferpin(oid) AS confl_bufferpin,
+    pg_stat_get_db_conflict_startup_deadlock(oid) AS confl_deadlock
    FROM pg_database d;
-pg_stat_gssapi| SELECT s.pid,
-    s.gss_auth AS gss_authenticated,
-    s.gss_princ AS principal,
-    s.gss_enc AS encrypted
+pg_stat_gssapi| SELECT pid,
+    gss_auth AS gss_authenticated,
+    gss_princ AS principal,
+    gss_enc AS encrypted
    FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, backend_type, ssl, sslversion, sslcipher, sslbits, ssl_client_dn, ssl_client_serial, ssl_issuer_dn, gss_auth, gss_princ, gss_enc, leader_pid, query_id)
-  WHERE (s.client_port IS NOT NULL);
+  WHERE (client_port IS NOT NULL);
 pg_stat_progress_analyze| SELECT s.pid,
     s.datid,
     d.datname,
@@ -1898,8 +1898,8 @@ pg_stat_progress_analyze| SELECT s.pid,
     (s.param8)::oid AS current_child_table_relid
    FROM (pg_stat_get_progress_info('ANALYZE'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
-pg_stat_progress_basebackup| SELECT s.pid,
-        CASE s.param1
+pg_stat_progress_basebackup| SELECT pid,
+        CASE param1
             WHEN 0 THEN 'initializing'::text
             WHEN 1 THEN 'waiting for checkpoint to finish'::text
             WHEN 2 THEN 'estimating backup size'::text
@@ -1908,13 +1908,13 @@ pg_stat_progress_basebackup| SELECT s.pid,
             WHEN 5 THEN 'transferring wal files'::text
             ELSE NULL::text
         END AS phase,
-        CASE s.param2
+        CASE param2
             WHEN '-1'::integer THEN NULL::bigint
-            ELSE s.param2
+            ELSE param2
         END AS backup_total,
-    s.param3 AS backup_streamed,
-    s.param4 AS tablespaces_total,
-    s.param5 AS tablespaces_streamed
+    param3 AS backup_streamed,
+    param4 AS tablespaces_total,
+    param5 AS tablespaces_streamed
    FROM pg_stat_get_progress_info('BASEBACKUP'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20);
 pg_stat_progress_cluster| SELECT s.pid,
     s.datid,
@@ -2024,16 +2024,16 @@ pg_stat_progress_vacuum| SELECT s.pid,
     s.param7 AS num_dead_tuples
    FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
-pg_stat_recovery_prefetch| SELECT s.stats_reset,
-    s.prefetch,
-    s.hit,
-    s.skip_init,
-    s.skip_new,
-    s.skip_fpw,
-    s.skip_rep,
-    s.wal_distance,
-    s.block_distance,
-    s.io_depth
+pg_stat_recovery_prefetch| SELECT stats_reset,
+    prefetch,
+    hit,
+    skip_init,
+    skip_new,
+    skip_fpw,
+    skip_rep,
+    wal_distance,
+    block_distance,
+    io_depth
    FROM pg_stat_get_recovery_prefetch() s(stats_reset, prefetch, hit, skip_init, skip_new, skip_fpw, skip_rep, wal_distance, block_distance, io_depth);
 pg_stat_replication| SELECT s.pid,
     s.usesysid,
@@ -2071,26 +2071,26 @@ pg_stat_replication_slots| SELECT s.slot_name,
    FROM pg_replication_slots r,
     LATERAL pg_stat_get_replication_slot((r.slot_name)::text) s(slot_name, spill_txns, spill_count, spill_bytes, stream_txns, stream_count, stream_bytes, total_txns, total_bytes, stats_reset)
   WHERE (r.datoid IS NOT NULL);
-pg_stat_slru| SELECT s.name,
-    s.blks_zeroed,
-    s.blks_hit,
-    s.blks_read,
-    s.blks_written,
-    s.blks_exists,
-    s.flushes,
-    s.truncates,
-    s.stats_reset
+pg_stat_slru| SELECT name,
+    blks_zeroed,
+    blks_hit,
+    blks_read,
+    blks_written,
+    blks_exists,
+    flushes,
+    truncates,
+    stats_reset
    FROM pg_stat_get_slru() s(name, blks_zeroed, blks_hit, blks_read, blks_written, blks_exists, flushes, truncates, stats_reset);
-pg_stat_ssl| SELECT s.pid,
-    s.ssl,
-    s.sslversion AS version,
-    s.sslcipher AS cipher,
-    s.sslbits AS bits,
-    s.ssl_client_dn AS client_dn,
-    s.ssl_client_serial AS client_serial,
-    s.ssl_issuer_dn AS issuer_dn
+pg_stat_ssl| SELECT pid,
+    ssl,
+    sslversion AS version,
+    sslcipher AS cipher,
+    sslbits AS bits,
+    ssl_client_dn AS client_dn,
+    ssl_client_serial AS client_serial,
+    ssl_issuer_dn AS issuer_dn
    FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, backend_type, ssl, sslversion, sslcipher, sslbits, ssl_client_dn, ssl_client_serial, ssl_issuer_dn, gss_auth, gss_princ, gss_enc, leader_pid, query_id)
-  WHERE (s.client_port IS NOT NULL);
+  WHERE (client_port IS NOT NULL);
 pg_stat_subscription| SELECT su.oid AS subid,
     su.subname,
     st.pid,
@@ -2110,44 +2110,44 @@ pg_stat_subscription_stats| SELECT ss.subid,
     ss.stats_reset
    FROM pg_subscription s,
     LATERAL pg_stat_get_subscription_stats(s.oid) ss(subid, apply_error_count, sync_error_count, stats_reset);
-pg_stat_sys_indexes| SELECT pg_stat_all_indexes.relid,
-    pg_stat_all_indexes.indexrelid,
-    pg_stat_all_indexes.schemaname,
-    pg_stat_all_indexes.relname,
-    pg_stat_all_indexes.indexrelname,
-    pg_stat_all_indexes.idx_scan,
-    pg_stat_all_indexes.last_idx_scan,
-    pg_stat_all_indexes.idx_tup_read,
-    pg_stat_all_indexes.idx_tup_fetch
+pg_stat_sys_indexes| SELECT relid,
+    indexrelid,
+    schemaname,
+    relname,
+    indexrelname,
+    idx_scan,
+    last_idx_scan,
+    idx_tup_read,
+    idx_tup_fetch
    FROM pg_stat_all_indexes
-  WHERE ((pg_stat_all_indexes.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_stat_all_indexes.schemaname ~ '^pg_toast'::text));
-pg_stat_sys_tables| SELECT pg_stat_all_tables.relid,
-    pg_stat_all_tables.schemaname,
-    pg_stat_all_tables.relname,
-    pg_stat_all_tables.seq_scan,
-    pg_stat_all_tables.last_seq_scan,
-    pg_stat_all_tables.seq_tup_read,
-    pg_stat_all_tables.idx_scan,
-    pg_stat_all_tables.last_idx_scan,
-    pg_stat_all_tables.idx_tup_fetch,
-    pg_stat_all_tables.n_tup_ins,
-    pg_stat_all_tables.n_tup_upd,
-    pg_stat_all_tables.n_tup_del,
-    pg_stat_all_tables.n_tup_hot_upd,
-    pg_stat_all_tables.n_live_tup,
-    pg_stat_all_tables.n_dead_tup,
-    pg_stat_all_tables.n_mod_since_analyze,
-    pg_stat_all_tables.n_ins_since_vacuum,
-    pg_stat_all_tables.last_vacuum,
-    pg_stat_all_tables.last_autovacuum,
-    pg_stat_all_tables.last_analyze,
-    pg_stat_all_tables.last_autoanalyze,
-    pg_stat_all_tables.vacuum_count,
-    pg_stat_all_tables.autovacuum_count,
-    pg_stat_all_tables.analyze_count,
-    pg_stat_all_tables.autoanalyze_count
+  WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
+pg_stat_sys_tables| SELECT relid,
+    schemaname,
+    relname,
+    seq_scan,
+    last_seq_scan,
+    seq_tup_read,
+    idx_scan,
+    last_idx_scan,
+    idx_tup_fetch,
+    n_tup_ins,
+    n_tup_upd,
+    n_tup_del,
+    n_tup_hot_upd,
+    n_live_tup,
+    n_dead_tup,
+    n_mod_since_analyze,
+    n_ins_since_vacuum,
+    last_vacuum,
+    last_autovacuum,
+    last_analyze,
+    last_autoanalyze,
+    vacuum_count,
+    autovacuum_count,
+    analyze_count,
+    autoanalyze_count
    FROM pg_stat_all_tables
-  WHERE ((pg_stat_all_tables.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_stat_all_tables.schemaname ~ '^pg_toast'::text));
+  WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_stat_user_functions| SELECT p.oid AS funcid,
     n.nspname AS schemaname,
     p.proname AS funcname,
@@ -2157,71 +2157,71 @@ pg_stat_user_functions| SELECT p.oid AS funcid,
    FROM (pg_proc p
      LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
   WHERE ((p.prolang <> (12)::oid) AND (pg_stat_get_function_calls(p.oid) IS NOT NULL));
-pg_stat_user_indexes| SELECT pg_stat_all_indexes.relid,
-    pg_stat_all_indexes.indexrelid,
-    pg_stat_all_indexes.schemaname,
-    pg_stat_all_indexes.relname,
-    pg_stat_all_indexes.indexrelname,
-    pg_stat_all_indexes.idx_scan,
-    pg_stat_all_indexes.last_idx_scan,
-    pg_stat_all_indexes.idx_tup_read,
-    pg_stat_all_indexes.idx_tup_fetch
+pg_stat_user_indexes| SELECT relid,
+    indexrelid,
+    schemaname,
+    relname,
+    indexrelname,
+    idx_scan,
+    last_idx_scan,
+    idx_tup_read,
+    idx_tup_fetch
    FROM pg_stat_all_indexes
-  WHERE ((pg_stat_all_indexes.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_all_indexes.schemaname !~ '^pg_toast'::text));
-pg_stat_user_tables| SELECT pg_stat_all_tables.relid,
-    pg_stat_all_tables.schemaname,
-    pg_stat_all_tables.relname,
-    pg_stat_all_tables.seq_scan,
-    pg_stat_all_tables.last_seq_scan,
-    pg_stat_all_tables.seq_tup_read,
-    pg_stat_all_tables.idx_scan,
-    pg_stat_all_tables.last_idx_scan,
-    pg_stat_all_tables.idx_tup_fetch,
-    pg_stat_all_tables.n_tup_ins,
-    pg_stat_all_tables.n_tup_upd,
-    pg_stat_all_tables.n_tup_del,
-    pg_stat_all_tables.n_tup_hot_upd,
-    pg_stat_all_tables.n_live_tup,
-    pg_stat_all_tables.n_dead_tup,
-    pg_stat_all_tables.n_mod_since_analyze,
-    pg_stat_all_tables.n_ins_since_vacuum,
-    pg_stat_all_tables.last_vacuum,
-    pg_stat_all_tables.last_autovacuum,
-    pg_stat_all_tables.last_analyze,
-    pg_stat_all_tables.last_autoanalyze,
-    pg_stat_all_tables.vacuum_count,
-    pg_stat_all_tables.autovacuum_count,
-    pg_stat_all_tables.analyze_count,
-    pg_stat_all_tables.autoanalyze_count
+  WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
+pg_stat_user_tables| SELECT relid,
+    schemaname,
+    relname,
+    seq_scan,
+    last_seq_scan,
+    seq_tup_read,
+    idx_scan,
+    last_idx_scan,
+    idx_tup_fetch,
+    n_tup_ins,
+    n_tup_upd,
+    n_tup_del,
+    n_tup_hot_upd,
+    n_live_tup,
+    n_dead_tup,
+    n_mod_since_analyze,
+    n_ins_since_vacuum,
+    last_vacuum,
+    last_autovacuum,
+    last_analyze,
+    last_autoanalyze,
+    vacuum_count,
+    autovacuum_count,
+    analyze_count,
+    autoanalyze_count
    FROM pg_stat_all_tables
-  WHERE ((pg_stat_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_all_tables.schemaname !~ '^pg_toast'::text));
-pg_stat_wal| SELECT w.wal_records,
-    w.wal_fpi,
-    w.wal_bytes,
-    w.wal_buffers_full,
-    w.wal_write,
-    w.wal_sync,
-    w.wal_write_time,
-    w.wal_sync_time,
-    w.stats_reset
+  WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
+pg_stat_wal| SELECT wal_records,
+    wal_fpi,
+    wal_bytes,
+    wal_buffers_full,
+    wal_write,
+    wal_sync,
+    wal_write_time,
+    wal_sync_time,
+    stats_reset
    FROM pg_stat_get_wal() w(wal_records, wal_fpi, wal_bytes, wal_buffers_full, wal_write, wal_sync, wal_write_time, wal_sync_time, stats_reset);
-pg_stat_wal_receiver| SELECT s.pid,
-    s.status,
-    s.receive_start_lsn,
-    s.receive_start_tli,
-    s.written_lsn,
-    s.flushed_lsn,
-    s.received_tli,
-    s.last_msg_send_time,
-    s.last_msg_receipt_time,
-    s.latest_end_lsn,
-    s.latest_end_time,
-    s.slot_name,
-    s.sender_host,
-    s.sender_port,
-    s.conninfo
+pg_stat_wal_receiver| SELECT pid,
+    status,
+    receive_start_lsn,
+    receive_start_tli,
+    written_lsn,
+    flushed_lsn,
+    received_tli,
+    last_msg_send_time,
+    last_msg_receipt_time,
+    latest_end_lsn,
+    latest_end_time,
+    slot_name,
+    sender_host,
+    sender_port,
+    conninfo
    FROM pg_stat_get_wal_receiver() s(pid, status, receive_start_lsn, receive_start_tli, written_lsn, flushed_lsn, received_tli, last_msg_send_time, last_msg_receipt_time, latest_end_lsn, latest_end_time, slot_name, sender_host, sender_port, conninfo)
-  WHERE (s.pid IS NOT NULL);
+  WHERE (pid IS NOT NULL);
 pg_stat_xact_all_tables| SELECT c.oid AS relid,
     n.nspname AS schemaname,
     c.relname,
@@ -2238,19 +2238,19 @@ pg_stat_xact_all_tables| SELECT c.oid AS relid,
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char", 'p'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
-pg_stat_xact_sys_tables| SELECT pg_stat_xact_all_tables.relid,
-    pg_stat_xact_all_tables.schemaname,
-    pg_stat_xact_all_tables.relname,
-    pg_stat_xact_all_tables.seq_scan,
-    pg_stat_xact_all_tables.seq_tup_read,
-    pg_stat_xact_all_tables.idx_scan,
-    pg_stat_xact_all_tables.idx_tup_fetch,
-    pg_stat_xact_all_tables.n_tup_ins,
-    pg_stat_xact_all_tables.n_tup_upd,
-    pg_stat_xact_all_tables.n_tup_del,
-    pg_stat_xact_all_tables.n_tup_hot_upd
+pg_stat_xact_sys_tables| SELECT relid,
+    schemaname,
+    relname,
+    seq_scan,
+    seq_tup_read,
+    idx_scan,
+    idx_tup_fetch,
+    n_tup_ins,
+    n_tup_upd,
+    n_tup_del,
+    n_tup_hot_upd
    FROM pg_stat_xact_all_tables
-  WHERE ((pg_stat_xact_all_tables.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_stat_xact_all_tables.schemaname ~ '^pg_toast'::text));
+  WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_stat_xact_user_functions| SELECT p.oid AS funcid,
     n.nspname AS schemaname,
     p.proname AS funcname,
@@ -2260,19 +2260,19 @@ pg_stat_xact_user_functions| SELECT p.oid AS funcid,
    FROM (pg_proc p
      LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
   WHERE ((p.prolang <> (12)::oid) AND (pg_stat_get_xact_function_calls(p.oid) IS NOT NULL));
-pg_stat_xact_user_tables| SELECT pg_stat_xact_all_tables.relid,
-    pg_stat_xact_all_tables.schemaname,
-    pg_stat_xact_all_tables.relname,
-    pg_stat_xact_all_tables.seq_scan,
-    pg_stat_xact_all_tables.seq_tup_read,
-    pg_stat_xact_all_tables.idx_scan,
-    pg_stat_xact_all_tables.idx_tup_fetch,
-    pg_stat_xact_all_tables.n_tup_ins,
-    pg_stat_xact_all_tables.n_tup_upd,
-    pg_stat_xact_all_tables.n_tup_del,
-    pg_stat_xact_all_tables.n_tup_hot_upd
+pg_stat_xact_user_tables| SELECT relid,
+    schemaname,
+    relname,
+    seq_scan,
+    seq_tup_read,
+    idx_scan,
+    idx_tup_fetch,
+    n_tup_ins,
+    n_tup_upd,
+    n_tup_del,
+    n_tup_hot_upd
    FROM pg_stat_xact_all_tables
-  WHERE ((pg_stat_xact_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_xact_all_tables.schemaname !~ '^pg_toast'::text));
+  WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_statio_all_indexes| SELECT c.oid AS relid,
     i.oid AS indexrelid,
     n.nspname AS schemaname,
@@ -2316,64 +2316,64 @@ pg_statio_all_tables| SELECT c.oid AS relid,
            FROM pg_index
           WHERE (pg_index.indrelid = t.oid)) x ON (true))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]));
-pg_statio_sys_indexes| SELECT pg_statio_all_indexes.relid,
-    pg_statio_all_indexes.indexrelid,
-    pg_statio_all_indexes.schemaname,
-    pg_statio_all_indexes.relname,
-    pg_statio_all_indexes.indexrelname,
-    pg_statio_all_indexes.idx_blks_read,
-    pg_statio_all_indexes.idx_blks_hit
+pg_statio_sys_indexes| SELECT relid,
+    indexrelid,
+    schemaname,
+    relname,
+    indexrelname,
+    idx_blks_read,
+    idx_blks_hit
    FROM pg_statio_all_indexes
-  WHERE ((pg_statio_all_indexes.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_statio_all_indexes.schemaname ~ '^pg_toast'::text));
-pg_statio_sys_sequences| SELECT pg_statio_all_sequences.relid,
-    pg_statio_all_sequences.schemaname,
-    pg_statio_all_sequences.relname,
-    pg_statio_all_sequences.blks_read,
-    pg_statio_all_sequences.blks_hit
+  WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
+pg_statio_sys_sequences| SELECT relid,
+    schemaname,
+    relname,
+    blks_read,
+    blks_hit
    FROM pg_statio_all_sequences
-  WHERE ((pg_statio_all_sequences.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_statio_all_sequences.schemaname ~ '^pg_toast'::text));
-pg_statio_sys_tables| SELECT pg_statio_all_tables.relid,
-    pg_statio_all_tables.schemaname,
-    pg_statio_all_tables.relname,
-    pg_statio_all_tables.heap_blks_read,
-    pg_statio_all_tables.heap_blks_hit,
-    pg_statio_all_tables.idx_blks_read,
-    pg_statio_all_tables.idx_blks_hit,
-    pg_statio_all_tables.toast_blks_read,
-    pg_statio_all_tables.toast_blks_hit,
-    pg_statio_all_tables.tidx_blks_read,
-    pg_statio_all_tables.tidx_blks_hit
+  WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
+pg_statio_sys_tables| SELECT relid,
+    schemaname,
+    relname,
+    heap_blks_read,
+    heap_blks_hit,
+    idx_blks_read,
+    idx_blks_hit,
+    toast_blks_read,
+    toast_blks_hit,
+    tidx_blks_read,
+    tidx_blks_hit
    FROM pg_statio_all_tables
-  WHERE ((pg_statio_all_tables.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_statio_all_tables.schemaname ~ '^pg_toast'::text));
-pg_statio_user_indexes| SELECT pg_statio_all_indexes.relid,
-    pg_statio_all_indexes.indexrelid,
-    pg_statio_all_indexes.schemaname,
-    pg_statio_all_indexes.relname,
-    pg_statio_all_indexes.indexrelname,
-    pg_statio_all_indexes.idx_blks_read,
-    pg_statio_all_indexes.idx_blks_hit
+  WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
+pg_statio_user_indexes| SELECT relid,
+    indexrelid,
+    schemaname,
+    relname,
+    indexrelname,
+    idx_blks_read,
+    idx_blks_hit
    FROM pg_statio_all_indexes
-  WHERE ((pg_statio_all_indexes.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_statio_all_indexes.schemaname !~ '^pg_toast'::text));
-pg_statio_user_sequences| SELECT pg_statio_all_sequences.relid,
-    pg_statio_all_sequences.schemaname,
-    pg_statio_all_sequences.relname,
-    pg_statio_all_sequences.blks_read,
-    pg_statio_all_sequences.blks_hit
+  WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
+pg_statio_user_sequences| SELECT relid,
+    schemaname,
+    relname,
+    blks_read,
+    blks_hit
    FROM pg_statio_all_sequences
-  WHERE ((pg_statio_all_sequences.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_statio_all_sequences.schemaname !~ '^pg_toast'::text));
-pg_statio_user_tables| SELECT pg_statio_all_tables.relid,
-    pg_statio_all_tables.schemaname,
-    pg_statio_all_tables.relname,
-    pg_statio_all_tables.heap_blks_read,
-    pg_statio_all_tables.heap_blks_hit,
-    pg_statio_all_tables.idx_blks_read,
-    pg_statio_all_tables.idx_blks_hit,
-    pg_statio_all_tables.toast_blks_read,
-    pg_statio_all_tables.toast_blks_hit,
-    pg_statio_all_tables.tidx_blks_read,
-    pg_statio_all_tables.tidx_blks_hit
+  WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
+pg_statio_user_tables| SELECT relid,
+    schemaname,
+    relname,
+    heap_blks_read,
+    heap_blks_hit,
+    idx_blks_read,
+    idx_blks_hit,
+    toast_blks_read,
+    toast_blks_hit,
+    tidx_blks_read,
+    tidx_blks_hit
    FROM pg_statio_all_tables
-  WHERE ((pg_statio_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_statio_all_tables.schemaname !~ '^pg_toast'::text));
+  WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_stats| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     a.attname,
@@ -2558,24 +2558,24 @@ pg_tables| SELECT n.nspname AS schemaname,
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
      LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 'p'::"char"]));
-pg_timezone_abbrevs| SELECT pg_timezone_abbrevs.abbrev,
-    pg_timezone_abbrevs.utc_offset,
-    pg_timezone_abbrevs.is_dst
+pg_timezone_abbrevs| SELECT abbrev,
+    utc_offset,
+    is_dst
    FROM pg_timezone_abbrevs() pg_timezone_abbrevs(abbrev, utc_offset, is_dst);
-pg_timezone_names| SELECT pg_timezone_names.name,
-    pg_timezone_names.abbrev,
-    pg_timezone_names.utc_offset,
-    pg_timezone_names.is_dst
+pg_timezone_names| SELECT name,
+    abbrev,
+    utc_offset,
+    is_dst
    FROM pg_timezone_names() pg_timezone_names(name, abbrev, utc_offset, is_dst);
-pg_user| SELECT pg_shadow.usename,
-    pg_shadow.usesysid,
-    pg_shadow.usecreatedb,
-    pg_shadow.usesuper,
-    pg_shadow.userepl,
-    pg_shadow.usebypassrls,
+pg_user| SELECT usename,
+    usesysid,
+    usecreatedb,
+    usesuper,
+    userepl,
+    usebypassrls,
     '********'::text AS passwd,
-    pg_shadow.valuntil,
-    pg_shadow.useconfig
+    valuntil,
+    useconfig
    FROM pg_shadow;
 pg_user_mappings| SELECT u.oid AS umid,
     s.oid AS srvid,
@@ -3080,7 +3080,7 @@ SELECT * FROM rule_v1;
 --------+---------+-----------+----------+---------+---------+-------------
  a      | integer |           |          |         | plain   | 
 View definition:
- SELECT rule_t1.a
+ SELECT a
    FROM rule_t1;
 Rules:
  newinsertrule AS
@@ -3119,8 +3119,8 @@ alter table rule_v1 rename column column2 to q2;
  column1 | integer |           |          |         | plain   | 
  q2      | integer |           |          |         | plain   | 
 View definition:
- SELECT "*VALUES*".column1,
-    "*VALUES*".column2 AS q2
+ SELECT column1,
+    column2 AS q2
    FROM (VALUES (1,2)) "*VALUES*";
 
 drop view rule_v1;
@@ -3132,8 +3132,8 @@ create view rule_v1(x) as values(1,2);
  x       | integer |           |          |         | plain   | 
  column2 | integer |           |          |         | plain   | 
 View definition:
- SELECT "*VALUES*".column1 AS x,
-    "*VALUES*".column2
+ SELECT column1 AS x,
+    column2
    FROM (VALUES (1,2)) "*VALUES*";
 
 drop view rule_v1;
@@ -3145,8 +3145,8 @@ create view rule_v1(x) as select * from (values(1,2)) v;
  x       | integer |           |          |         | plain   | 
  column2 | integer |           |          |         | plain   | 
 View definition:
- SELECT v.column1 AS x,
-    v.column2
+ SELECT column1 AS x,
+    column2
    FROM ( VALUES (1,2)) v;
 
 drop view rule_v1;
@@ -3158,8 +3158,8 @@ create view rule_v1(x) as select * from (values(1,2)) v(q,w);
  x      | integer |           |          |         | plain   | 
  w      | integer |           |          |         | plain   | 
 View definition:
- SELECT v.q AS x,
-    v.w
+ SELECT q AS x,
+    w
    FROM ( VALUES (1,2)) v(q, w);
 
 drop view rule_v1;

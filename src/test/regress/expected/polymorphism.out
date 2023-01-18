@@ -1801,10 +1801,10 @@ select * from dfview;
  c3     | bigint |           |          |         | plain   | 
  c4     | bigint |           |          |         | plain   | 
 View definition:
- SELECT int8_tbl.q1,
-    int8_tbl.q2,
-    dfunc(int8_tbl.q1, int8_tbl.q2, flag => int8_tbl.q1 > int8_tbl.q2) AS c3,
-    dfunc(int8_tbl.q1, flag => int8_tbl.q1 < int8_tbl.q2, b => int8_tbl.q2) AS c4
+ SELECT q1,
+    q2,
+    dfunc(q1, q2, flag => q1 > q2) AS c3,
+    dfunc(q1, flag => q1 < q2, b => q2) AS c4
    FROM int8_tbl;
 
 drop view dfview;

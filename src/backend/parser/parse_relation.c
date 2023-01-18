@@ -3834,7 +3834,7 @@ addRTEPermissionInfo(List **rteperminfos, RangeTblEntry *rte)
 {
 	RTEPermissionInfo *perminfo;
 
-	Assert(rte->rtekind == RTE_RELATION);
+	Assert(OidIsValid(rte->relid));
 	Assert(rte->perminfoindex == 0);
 
 	/* Nope, so make one and add to the list. */

@@ -633,13 +633,6 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect,
  * setRuleCheckAsUser
  *		Recursively scan a query or expression tree and set the checkAsUser
  *		field to the given userid in all RTEPermissionInfos of the query.
- *
- * Note: for a view (ON SELECT rule), the checkAsUser field of the OLD
- * RTE entry's RTEPermissionInfo will be overridden when the view rule is
- * expanded, and the checkAsUser for the NEW RTE entry's RTEPermissionInfo is
- * irrelevant because its requiredPerms bits will always be zero.  However, for
- * other types of rules it's important to set these fields to match the rule
- * owner.  So we just set them always.
  */
 void
 setRuleCheckAsUser(Node *node, Oid userid)

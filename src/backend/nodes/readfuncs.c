@@ -478,6 +478,10 @@ _readRangeTblEntry(void)
 		case RTE_SUBQUERY:
 			READ_NODE_FIELD(subquery);
 			READ_BOOL_FIELD(security_barrier);
+			/* we re-use these RELATION fields, too: */
+			READ_OID_FIELD(relid);
+			READ_INT_FIELD(rellockmode);
+			READ_UINT_FIELD(perminfoindex);
 			break;
 		case RTE_JOIN:
 			READ_ENUM_FIELD(jointype, JoinType);
@@ -520,10 +524,11 @@ _readRangeTblEntry(void)
 		case RTE_NAMEDTUPLESTORE:
 			READ_STRING_FIELD(enrname);
 			READ_FLOAT_FIELD(enrtuples);
-			READ_OID_FIELD(relid);
 			READ_NODE_FIELD(coltypes);
 			READ_NODE_FIELD(coltypmods);
 			READ_NODE_FIELD(colcollations);
+			/* we re-use these RELATION fields, too: */
+			READ_OID_FIELD(relid);
 			break;
 		case RTE_RESULT:
 			/* no extra fields */

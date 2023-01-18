@@ -74,7 +74,7 @@ CREATE VIEW test_tablesample_v2 AS
 --------+---------+-----------+----------+---------+---------+-------------
  id     | integer |           |          |         | plain   | 
 View definition:
- SELECT test_tablesample.id
+ SELECT id
    FROM test_tablesample TABLESAMPLE system ((10 * 2)) REPEATABLE (2);
 
 \d+ test_tablesample_v2
@@ -83,7 +83,7 @@ View definition:
 --------+---------+-----------+----------+---------+---------+-------------
  id     | integer |           |          |         | plain   | 
 View definition:
- SELECT test_tablesample.id
+ SELECT id
    FROM test_tablesample TABLESAMPLE system (99);
 
 -- check a sampled query doesn't affect cursor in progress

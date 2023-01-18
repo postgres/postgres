@@ -1212,10 +1212,10 @@ SELECT * FROM v_window;
 (10 rows)
 
 SELECT pg_get_viewdef('v_window');
-                                    pg_get_viewdef                                     
----------------------------------------------------------------------------------------
-  SELECT i.i,                                                                         +
-     sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows+
+                                  pg_get_viewdef                                   
+-----------------------------------------------------------------------------------
+  SELECT i,                                                                       +
+     sum(i) OVER (ORDER BY i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows+
     FROM generate_series(1, 10) i(i);
 (1 row)
 
@@ -1238,10 +1238,10 @@ SELECT * FROM v_window;
 (10 rows)
 
 SELECT pg_get_viewdef('v_window');
-                                              pg_get_viewdef                                               
------------------------------------------------------------------------------------------------------------
-  SELECT i.i,                                                                                             +
-     sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE CURRENT ROW) AS sum_rows+
+                                            pg_get_viewdef                                             
+-------------------------------------------------------------------------------------------------------
+  SELECT i,                                                                                           +
+     sum(i) OVER (ORDER BY i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE CURRENT ROW) AS sum_rows+
     FROM generate_series(1, 10) i(i);
 (1 row)
 
@@ -1264,10 +1264,10 @@ SELECT * FROM v_window;
 (10 rows)
 
 SELECT pg_get_viewdef('v_window');
-                                           pg_get_viewdef                                            
------------------------------------------------------------------------------------------------------
-  SELECT i.i,                                                                                       +
-     sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE GROUP) AS sum_rows+
+                                         pg_get_viewdef                                          
+-------------------------------------------------------------------------------------------------
+  SELECT i,                                                                                     +
+     sum(i) OVER (ORDER BY i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE GROUP) AS sum_rows+
     FROM generate_series(1, 10) i(i);
 (1 row)
 
@@ -1290,10 +1290,10 @@ SELECT * FROM v_window;
 (10 rows)
 
 SELECT pg_get_viewdef('v_window');
-                                           pg_get_viewdef                                           
-----------------------------------------------------------------------------------------------------
-  SELECT i.i,                                                                                      +
-     sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE TIES) AS sum_rows+
+                                         pg_get_viewdef                                         
+------------------------------------------------------------------------------------------------
+  SELECT i,                                                                                    +
+     sum(i) OVER (ORDER BY i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE TIES) AS sum_rows+
     FROM generate_series(1, 10) i(i);
 (1 row)
 
@@ -1316,10 +1316,10 @@ SELECT * FROM v_window;
 (10 rows)
 
 SELECT pg_get_viewdef('v_window');
-                                    pg_get_viewdef                                     
----------------------------------------------------------------------------------------
-  SELECT i.i,                                                                         +
-     sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows+
+                                  pg_get_viewdef                                   
+-----------------------------------------------------------------------------------
+  SELECT i,                                                                       +
+     sum(i) OVER (ORDER BY i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows+
     FROM generate_series(1, 10) i(i);
 (1 row)
 
@@ -1341,10 +1341,10 @@ SELECT * FROM v_window;
 (10 rows)
 
 SELECT pg_get_viewdef('v_window');
-                                     pg_get_viewdef                                      
------------------------------------------------------------------------------------------
-  SELECT i.i,                                                                           +
-     sum(i.i) OVER (ORDER BY i.i GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows+
+                                   pg_get_viewdef                                    
+-------------------------------------------------------------------------------------
+  SELECT i,                                                                         +
+     sum(i) OVER (ORDER BY i GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows+
     FROM generate_series(1, 10) i(i);
 (1 row)
 
@@ -1353,10 +1353,10 @@ CREATE TEMP VIEW v_window AS
 	SELECT i, min(i) over (order by i range between '1 day' preceding and '10 days' following) as min_i
   FROM generate_series(now(), now()+'100 days'::interval, '1 hour') i;
 SELECT pg_get_viewdef('v_window');
-                                                      pg_get_viewdef                                                       
----------------------------------------------------------------------------------------------------------------------------
-  SELECT i.i,                                                                                                             +
-     min(i.i) OVER (ORDER BY i.i RANGE BETWEEN '@ 1 day'::interval PRECEDING AND '@ 10 days'::interval FOLLOWING) AS min_i+
+                                                    pg_get_viewdef                                                     
+-----------------------------------------------------------------------------------------------------------------------
+  SELECT i,                                                                                                           +
+     min(i) OVER (ORDER BY i RANGE BETWEEN '@ 1 day'::interval PRECEDING AND '@ 10 days'::interval FOLLOWING) AS min_i+
     FROM generate_series(now(), (now() + '@ 100 days'::interval), '@ 1 hour'::interval) i(i);
 (1 row)
 

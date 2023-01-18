@@ -1277,8 +1277,8 @@ DROP TRIGGER instead_of_delete_trig ON main_view;
  a      | integer |           |          |         | plain   | 
  b      | integer |           |          |         | plain   | 
 View definition:
- SELECT main_table.a,
-    main_table.b
+ SELECT a,
+    b
    FROM main_table;
 Triggers:
     after_del_stmt_trig AFTER DELETE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('after_view_del_stmt')

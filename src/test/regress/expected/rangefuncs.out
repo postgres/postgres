@@ -149,9 +149,9 @@ select * from vw_ord;
 select definition from pg_views where viewname='vw_ord';
                                        definition                                       
 ----------------------------------------------------------------------------------------
-  SELECT z.a,                                                                          +
-     z.b,                                                                              +
-     z.c                                                                               +
+  SELECT a,                                                                            +
+     b,                                                                                +
+     c                                                                                 +
     FROM UNNEST(ARRAY[10, 20], ARRAY['foo'::text, 'bar'::text], ARRAY[1.0]) z(a, b, c);
 (1 row)
 
@@ -167,9 +167,9 @@ select * from vw_ord;
 select definition from pg_views where viewname='vw_ord';
                                        definition                                       
 ----------------------------------------------------------------------------------------
-  SELECT z.a,                                                                          +
-     z.b,                                                                              +
-     z.c                                                                               +
+  SELECT a,                                                                            +
+     b,                                                                                +
+     c                                                                                 +
     FROM UNNEST(ARRAY[10, 20], ARRAY['foo'::text, 'bar'::text], ARRAY[1.0]) z(a, b, c);
 (1 row)
 
@@ -185,9 +185,9 @@ select * from vw_ord;
 select definition from pg_views where viewname='vw_ord';
                                                       definition                                                      
 ----------------------------------------------------------------------------------------------------------------------
-  SELECT z.a,                                                                                                        +
-     z.b,                                                                                                            +
-     z.c                                                                                                             +
+  SELECT a,                                                                                                          +
+     b,                                                                                                              +
+     c                                                                                                               +
     FROM ROWS FROM(unnest(ARRAY[10, 20]), unnest(ARRAY['foo'::text, 'bar'::text]), generate_series(1, 2)) z(a, b, c);
 (1 row)
 
@@ -669,14 +669,14 @@ select * from vw_rngfunc;
 select pg_get_viewdef('vw_rngfunc');
                                                                                 pg_get_viewdef                                                                                
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  SELECT t1.a,                                                                                                                                                               +
-     t1.b,                                                                                                                                                                   +
-     t1.c,                                                                                                                                                                   +
-     t1.d,                                                                                                                                                                   +
-     t1.e,                                                                                                                                                                   +
-     t1.f,                                                                                                                                                                   +
-     t1.g,                                                                                                                                                                   +
-     t1.n                                                                                                                                                                    +
+  SELECT a,                                                                                                                                                                  +
+     b,                                                                                                                                                                      +
+     c,                                                                                                                                                                      +
+     d,                                                                                                                                                                      +
+     e,                                                                                                                                                                      +
+     f,                                                                                                                                                                      +
+     g,                                                                                                                                                                      +
+     n                                                                                                                                                                       +
     FROM ROWS FROM(getrngfunc9(1), getrngfunc7(1) AS (rngfuncid integer, rngfuncsubid integer, rngfuncname text), getrngfunc1(1)) WITH ORDINALITY t1(a, b, c, d, e, f, g, n);
 (1 row)
 
