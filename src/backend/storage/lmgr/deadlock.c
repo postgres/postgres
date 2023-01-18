@@ -216,9 +216,6 @@ InitDeadLockChecking(void)
 DeadLockState
 DeadLockCheck(PGPROC *proc)
 {
-	int			i,
-				j;
-
 	/* Initialize to "no constraints" */
 	nCurConstraints = 0;
 	nPossibleConstraints = 0;
@@ -246,26 +243,23 @@ DeadLockCheck(PGPROC *proc)
 	}
 
 	/* Apply any needed rearrangements of wait queues */
-	for (i = 0; i < nWaitOrders; i++)
+	for (int i = 0; i < nWaitOrders; i++)
 	{
 		LOCK	   *lock = waitOrders[i].lock;
 		PGPROC	  **procs = waitOrders[i].procs;
 		int			nProcs = waitOrders[i].nProcs;
-		PROC_QUEUE *waitQueue = &(lock->waitProcs);
+		dclist_head *waitQueue = &lock->waitProcs;
 
-		Assert(nProcs == waitQueue->size);
+		Assert(nProcs == dclist_count(waitQueue));
 
 #ifdef DEBUG_DEADLOCK
 		PrintLockQueue(lock, "DeadLockCheck:");
 #endif
 
 		/* Reset the queue and re-add procs in the desired order */
-		ProcQueueInit(waitQueue);
-		for (j = 0; j < nProcs; j++)
-		{
-			SHMQueueInsertBefore(&(waitQueue->links), &(procs[j]->links));
-			waitQueue->size++;
-		}
+		dclist_init(waitQueue);
+		for (int j = 0; j < nProcs; j++)
+			dclist_push_tail(waitQueue, &procs[j]->links);
 
 #ifdef DEBUG_DEADLOCK
 		PrintLockQueue(lock, "rearranged to:");
@@ -544,11 +538,8 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 {
 	PGPROC	   *proc;
 	LOCK	   *lock = checkProc->waitLock;
-	PROCLOCK   *proclock;
-	SHM_QUEUE  *procLocks;
+	dlist_iter	proclock_iter;
 	LockMethod	lockMethodTable;
-	PROC_QUEUE *waitQueue;
-	int			queue_size;
 	int			conflictMask;
 	int			i;
 	int			numLockModes,
@@ -571,13 +562,9 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 	 * Scan for procs that already hold conflicting locks.  These are "hard"
 	 * edges in the waits-for graph.
 	 */
-	procLocks = &(lock->procLocks);
-
-	proclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,
-										 offsetof(PROCLOCK, lockLink));
-
-	while (proclock)
+	dlist_foreach(proclock_iter, &lock->procLocks)
 	{
+		PROCLOCK   *proclock = dlist_container(PROCLOCK, lockLink, proclock_iter.cur);
 		PGPROC	   *leader;
 
 		proc = proclock->tag.myProc;
@@ -636,9 +623,6 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 				}
 			}
 		}
-
-		proclock = (PROCLOCK *) SHMQueueNext(procLocks, &proclock->lockLink,
-											 offsetof(PROCLOCK, lockLink));
 	}
 
 	/*
@@ -660,8 +644,7 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 	{
 		/* Use the given hypothetical wait queue order */
 		PGPROC	  **procs = waitOrders[i].procs;
-
-		queue_size = waitOrders[i].nProcs;
+		int			queue_size = waitOrders[i].nProcs;
 
 		for (i = 0; i < queue_size; i++)
 		{
@@ -711,9 +694,11 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 	else
 	{
 		PGPROC	   *lastGroupMember = NULL;
+		dlist_iter	proc_iter;
+		dclist_head *waitQueue;
 
 		/* Use the true lock wait queue order */
-		waitQueue = &(lock->waitProcs);
+		waitQueue = &lock->waitProcs;
 
 		/*
 		 * Find the last member of the lock group that is present in the wait
@@ -726,13 +711,12 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 			lastGroupMember = checkProc;
 		else
 		{
-			proc = (PGPROC *) waitQueue->links.next;
-			queue_size = waitQueue->size;
-			while (queue_size-- > 0)
+			dclist_foreach(proc_iter, waitQueue)
 			{
+				proc = dlist_container(PGPROC, links, proc_iter.cur);
+
 				if (proc->lockGroupLeader == checkProcLeader)
 					lastGroupMember = proc;
-				proc = (PGPROC *) proc->links.next;
 			}
 			Assert(lastGroupMember != NULL);
 		}
@@ -740,11 +724,11 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 		/*
 		 * OK, now rescan (or scan) the queue to identify the soft conflicts.
 		 */
-		queue_size = waitQueue->size;
-		proc = (PGPROC *) waitQueue->links.next;
-		while (queue_size-- > 0)
+		dclist_foreach(proc_iter, waitQueue)
 		{
 			PGPROC	   *leader;
+
+			proc = dlist_container(PGPROC, links, proc_iter.cur);
 
 			leader = proc->lockGroupLeader == NULL ? proc :
 				proc->lockGroupLeader;
@@ -779,8 +763,6 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 					return true;
 				}
 			}
-
-			proc = (PGPROC *) proc->links.next;
 		}
 	}
 
@@ -832,8 +814,8 @@ ExpandConstraints(EDGE *constraints,
 		/* No, so allocate a new list */
 		waitOrders[nWaitOrders].lock = lock;
 		waitOrders[nWaitOrders].procs = waitOrderProcs + nWaitOrderProcs;
-		waitOrders[nWaitOrders].nProcs = lock->waitProcs.size;
-		nWaitOrderProcs += lock->waitProcs.size;
+		waitOrders[nWaitOrders].nProcs = dclist_count(&lock->waitProcs);
+		nWaitOrderProcs += dclist_count(&lock->waitProcs);
 		Assert(nWaitOrderProcs <= MaxBackends);
 
 		/*
@@ -880,8 +862,8 @@ TopoSort(LOCK *lock,
 		 int nConstraints,
 		 PGPROC **ordering)		/* output argument */
 {
-	PROC_QUEUE *waitQueue = &(lock->waitProcs);
-	int			queue_size = waitQueue->size;
+	dclist_head *waitQueue = &lock->waitProcs;
+	int			queue_size = dclist_count(waitQueue);
 	PGPROC	   *proc;
 	int			i,
 				j,
@@ -889,14 +871,16 @@ TopoSort(LOCK *lock,
 				k,
 				kk,
 				last;
+	dlist_iter	proc_iter;
 
 	/* First, fill topoProcs[] array with the procs in their current order */
-	proc = (PGPROC *) waitQueue->links.next;
-	for (i = 0; i < queue_size; i++)
+	i = 0;
+	dclist_foreach(proc_iter, waitQueue)
 	{
-		topoProcs[i] = proc;
-		proc = (PGPROC *) proc->links.next;
+		proc = dlist_container(PGPROC, links, proc_iter.cur);
+		topoProcs[i++] = proc;
 	}
+	Assert(i == queue_size);
 
 	/*
 	 * Scan the constraints, and for each proc in the array, generate a count
@@ -1066,17 +1050,16 @@ TopoSort(LOCK *lock,
 static void
 PrintLockQueue(LOCK *lock, const char *info)
 {
-	PROC_QUEUE *waitQueue = &(lock->waitProcs);
-	int			queue_size = waitQueue->size;
-	PGPROC	   *proc;
-	int			i;
+	dclist_head *waitQueue = &lock->waitProcs;
+	dlist_iter	proc_iter;
 
 	printf("%s lock %p queue ", info, lock);
-	proc = (PGPROC *) waitQueue->links.next;
-	for (i = 0; i < queue_size; i++)
+
+	dclist_foreach(proc_iter, waitQueue)
 	{
+		PGPROC	   *proc = dlist_container(PGPROC, links, proc_iter.cur);
+
 		printf(" %d", proc->pid);
-		proc = (PGPROC *) proc->links.next;
 	}
 	printf("\n");
 	fflush(stdout);

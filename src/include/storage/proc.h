@@ -167,8 +167,8 @@ typedef enum
 struct PGPROC
 {
 	/* proc->links MUST BE FIRST IN STRUCT (see ProcSleep,ProcWakeup,etc) */
-	SHM_QUEUE	links;			/* list link if process is in a list */
-	PGPROC	  **procgloballist; /* procglobal list that owns this PGPROC */
+	dlist_node	links;			/* list link if process is in a list */
+	dlist_head *procgloballist; /* procglobal list that owns this PGPROC */
 
 	PGSemaphore sem;			/* ONE semaphore to sleep on */
 	ProcWaitStatus waitStatus;
@@ -255,7 +255,7 @@ struct PGPROC
 	 * linked into one of these lists, according to the partition number of
 	 * their lock.
 	 */
-	SHM_QUEUE	myProcLocks[NUM_LOCK_PARTITIONS];
+	dlist_head	myProcLocks[NUM_LOCK_PARTITIONS];
 
 	XidCacheStatus subxidStatus;	/* mirrored with
 									 * ProcGlobal->subxidStates[i] */
@@ -385,13 +385,13 @@ typedef struct PROC_HDR
 	/* Length of allProcs array */
 	uint32		allProcCount;
 	/* Head of list of free PGPROC structures */
-	PGPROC	   *freeProcs;
+	dlist_head	freeProcs;
 	/* Head of list of autovacuum's free PGPROC structures */
-	PGPROC	   *autovacFreeProcs;
+	dlist_head autovacFreeProcs;
 	/* Head of list of bgworker free PGPROC structures */
-	PGPROC	   *bgworkerFreeProcs;
+	dlist_head bgworkerFreeProcs;
 	/* Head of list of walsender free PGPROC structures */
-	PGPROC	   *walsenderFreeProcs;
+	dlist_head walsenderFreeProcs;
 	/* First pgproc waiting for group XID clear */
 	pg_atomic_uint32 procArrayGroupFirst;
 	/* First pgproc waiting for group transaction status update */
@@ -448,9 +448,8 @@ extern int	GetStartupBufferPinWaitBufId(void);
 extern bool HaveNFreeProcs(int n);
 extern void ProcReleaseLocks(bool isCommit);
 
-extern void ProcQueueInit(PROC_QUEUE *queue);
 extern ProcWaitStatus ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable);
-extern PGPROC *ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus);
+extern void ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus);
 extern void ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock);
 extern void CheckDeadLockAlert(void);
 extern bool IsWaitingForLock(void);
