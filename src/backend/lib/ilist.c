@@ -59,11 +59,12 @@ slist_delete(slist_head *head, const slist_node *node)
 void
 dlist_member_check(const dlist_head *head, const dlist_node *node)
 {
-	dlist_iter	iter;
+	const dlist_node *cur;
 
-	dlist_foreach(iter, head)
+	/* iteration open-coded to due to the use of const */
+	for (cur = head->head.next; cur != &head->head; cur = cur->next)
 	{
-		if (iter.cur == node)
+		if (cur == node)
 			return;
 	}
 	elog(ERROR, "double linked list member check failure");
