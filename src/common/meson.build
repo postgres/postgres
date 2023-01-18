@@ -1,7 +1,6 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 common_sources = files(
-  'archive.c',
   'base64.c',
   'checksum_helper.c',
   'compression.c',

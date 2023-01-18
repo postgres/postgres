@@ -20,16 +20,16 @@
 
 #include "access/xlogarchive.h"
 #include "access/xlogrecovery.h"
-#include "common/archive.h"
 #include "common/percentrepl.h"
 #include "storage/ipc.h"
 #include "utils/wait_event.h"
 
-static void ExecuteRecoveryCommand(const char *command,
+static bool ExecuteRecoveryCommand(const char *command,
 								   const char *commandName,
 								   bool failOnSignal,
+								   bool exitOnSigterm,
 								   uint32 wait_event_info,
-								   const char *lastRestartPointFileName);
+								   int fail_elevel);
 
 /*
  * Attempt to execute a shell-based restore command.
@@ -40,25 +40,17 @@ bool
 shell_restore(const char *file, const char *path,
 			  const char *lastRestartPointFileName)
 {
+	char	   *nativePath = pstrdup(path);
 	char	   *cmd;
-	int			rc;
+	bool		ret;
 
 	/* Build the restore command to execute */
-	cmd = BuildRestoreCommand(recoveryRestoreCommand, path, file,
-							  lastRestartPointFileName);
-
-	ereport(DEBUG3,
-			(errmsg_internal("executing restore command \"%s\"", cmd)));
-
-	/*
-	 * Copy xlog from archival storage to XLOGDIR
-	 */
-	fflush(NULL);
-	pgstat_report_wait_start(WAIT_EVENT_RESTORE_COMMAND);
-	rc = system(cmd);
-	pgstat_report_wait_end();
-
-	pfree(cmd);
+	make_native_path(nativePath);
+	cmd = replace_percent_placeholders(recoveryRestoreCommand,
+									   "restore_command", "frp", file,
+									   lastRestartPointFileName,
+									   nativePath);
+	pfree(nativePath);
 
 	/*
 	 * Remember, we rollforward UNTIL the restore fails so failure here is
@@ -84,17 +76,13 @@ shell_restore(const char *file, const char *path,
 	 *
 	 * We treat hard shell errors such as "command not found" as fatal, too.
 	 */
-	if (rc != 0)
-	{
-		if (wait_result_is_signal(rc, SIGTERM))
-			proc_exit(1);
+	ret = ExecuteRecoveryCommand(cmd, "restore_command",
+								 true,	/* failOnSignal */
+								 true,	/* exitOnSigterm */
+								 WAIT_EVENT_RESTORE_COMMAND, DEBUG2);
+	pfree(cmd);
 
-		ereport(wait_result_is_any_signal(rc, true) ? FATAL : DEBUG2,
-				(errmsg("could not restore file \"%s\" from archive: %s",
-						file, wait_result_to_str(rc))));
-	}
-
-	return (rc == 0);
+	return ret;
 }
 
 /*
@@ -103,9 +91,14 @@ shell_restore(const char *file, const char *path,
 void
 shell_archive_cleanup(const char *lastRestartPointFileName)
 {
-	ExecuteRecoveryCommand(archiveCleanupCommand, "archive_cleanup_command",
-						   false, WAIT_EVENT_ARCHIVE_CLEANUP_COMMAND,
-						   lastRestartPointFileName);
+	char	   *cmd;
+
+	cmd = replace_percent_placeholders(archiveCleanupCommand,
+									   "archive_cleanup_command",
+									   "r", lastRestartPointFileName);
+	(void) ExecuteRecoveryCommand(cmd, "archive_cleanup_command", false, false,
+								  WAIT_EVENT_ARCHIVE_CLEANUP_COMMAND, WARNING);
+	pfree(cmd);
 }
 
 /*
@@ -114,9 +107,14 @@ shell_archive_cleanup(const char *lastRestartPointFileName)
 void
 shell_recovery_end(const char *lastRestartPointFileName)
 {
-	ExecuteRecoveryCommand(recoveryEndCommand, "recovery_end_command", true,
-						   WAIT_EVENT_RECOVERY_END_COMMAND,
-						   lastRestartPointFileName);
+	char	   *cmd;
+
+	cmd = replace_percent_placeholders(recoveryEndCommand,
+									   "recovery_end_command",
+									   "r", lastRestartPointFileName);
+	(void) ExecuteRecoveryCommand(cmd, "recovery_end_command", true, false,
+								  WAIT_EVENT_RECOVERY_END_COMMAND, WARNING);
+	pfree(cmd);
 }
 
 /*
@@ -125,25 +123,20 @@ shell_recovery_end(const char *lastRestartPointFileName)
  * 'command' is the shell command to be executed, 'commandName' is a
  * human-readable name describing the command emitted in the logs. If
  * 'failOnSignal' is true and the command is killed by a signal, a FATAL
- * error is thrown. Otherwise a WARNING is emitted.
+ * error is thrown. Otherwise, 'fail_elevel' is used for the log message.
+ * If 'exitOnSigterm' is true and the command is killed by SIGTERM, we exit
+ * immediately.
  *
- * This is currently used for recovery_end_command and archive_cleanup_command.
+ * Returns whether the command succeeded.
  */
-static void
+static bool
 ExecuteRecoveryCommand(const char *command, const char *commandName,
-					   bool failOnSignal, uint32 wait_event_info,
-					   const char *lastRestartPointFileName)
+					   bool failOnSignal, bool exitOnSigterm,
+					   uint32 wait_event_info, int fail_elevel)
 {
-	char	   *xlogRecoveryCmd;
 	int			rc;
 
 	Assert(command && commandName);
-
-	/*
-	 * construct the command to be executed
-	 */
-	xlogRecoveryCmd = replace_percent_placeholders(command, commandName, "r",
-												   lastRestartPointFileName);
 
 	ereport(DEBUG3,
 			(errmsg_internal("executing %s \"%s\"", commandName, command)));
@@ -153,18 +146,19 @@ ExecuteRecoveryCommand(const char *command, const char *commandName,
 	 */
 	fflush(NULL);
 	pgstat_report_wait_start(wait_event_info);
-	rc = system(xlogRecoveryCmd);
+	rc = system(command);
 	pgstat_report_wait_end();
-
-	pfree(xlogRecoveryCmd);
 
 	if (rc != 0)
 	{
+		if (exitOnSigterm && wait_result_is_signal(rc, SIGTERM))
+			proc_exit(1);
+
 		/*
 		 * If the failure was due to any sort of signal, it's best to punt and
 		 * abort recovery.  See comments in shell_restore().
 		 */
-		ereport((failOnSignal && wait_result_is_any_signal(rc, true)) ? FATAL : WARNING,
+		ereport((failOnSignal && wait_result_is_any_signal(rc, true)) ? FATAL : fail_elevel,
 		/*------
 		   translator: First %s represents a postgresql.conf parameter name like
 		  "recovery_end_command", the 2nd is the value of that parameter, the
@@ -172,4 +166,6 @@ ExecuteRecoveryCommand(const char *command, const char *commandName,
 				(errmsg("%s \"%s\": %s", commandName,
 						command, wait_result_to_str(rc))));
 	}
+
+	return (rc == 0);
 }
