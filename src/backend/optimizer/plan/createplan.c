@@ -2404,7 +2404,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	 * sizing.
 	 */
 	maxref = 0;
-	foreach(lc, root->parse->groupClause)
+	foreach(lc, root->processed_groupClause)
 	{
 		SortGroupClause *gc = (SortGroupClause *) lfirst(lc);
 
@@ -2415,7 +2415,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	grouping_map = (AttrNumber *) palloc0((maxref + 1) * sizeof(AttrNumber));
 
 	/* Now look up the column numbers in the child's tlist */
-	foreach(lc, root->parse->groupClause)
+	foreach(lc, root->processed_groupClause)
 	{
 		SortGroupClause *gc = (SortGroupClause *) lfirst(lc);
 		TargetEntry *tle = get_sortgroupclause_tle(gc, subplan->targetlist);

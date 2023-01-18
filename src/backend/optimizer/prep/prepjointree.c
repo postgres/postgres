@@ -1008,6 +1008,8 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->rowMarks = NIL;
 	memset(subroot->upper_rels, 0, sizeof(subroot->upper_rels));
 	memset(subroot->upper_targets, 0, sizeof(subroot->upper_targets));
+	subroot->processed_groupClause = NIL;
+	subroot->processed_distinctClause = NIL;
 	subroot->processed_tlist = NIL;
 	subroot->update_colnos = NIL;
 	subroot->grouping_map = NULL;

@@ -5366,10 +5366,10 @@ SELECT similarity('Szczecin', 'Warsaw');
 EXPLAIN (COSTS OFF)
 SELECT DISTINCT city, similarity(city, 'Warsaw'), show_limit()
   FROM restaurants WHERE city % 'Warsaw';
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  HashAggregate
-   Group Key: city, similarity(city, 'Warsaw'::text), show_limit()
+   Group Key: city, similarity(city, 'Warsaw'::text)
    ->  Bitmap Heap Scan on restaurants
          Recheck Cond: (city % 'Warsaw'::text)
          ->  Bitmap Index Scan on restaurants_city_idx

@@ -2476,7 +2476,7 @@ agg_retrieve_direct(AggState *aggstate)
 					 * If we are grouping, check whether we've crossed a group
 					 * boundary.
 					 */
-					if (node->aggstrategy != AGG_PLAIN)
+					if (node->aggstrategy != AGG_PLAIN && node->numCols > 0)
 					{
 						tmpcontext->ecxt_innertuple = firstSlot;
 						if (!ExecQual(aggstate->phase->eqfunctions[node->numCols - 1],
@@ -3480,8 +3480,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			 */
 			if (aggnode->aggstrategy == AGG_SORTED)
 			{
-				Assert(aggnode->numCols > 0);
-
 				/*
 				 * Build a separate function for each subset of columns that
 				 * need to be compared.
@@ -3512,7 +3510,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				}
 
 				/* and for all grouped columns, unless already computed */
-				if (phasedata->eqfunctions[aggnode->numCols - 1] == NULL)
+				if (aggnode->numCols > 0 &&
+					phasedata->eqfunctions[aggnode->numCols - 1] == NULL)
 				{
 					phasedata->eqfunctions[aggnode->numCols - 1] =
 						execTuplesMatchPrepare(scanDesc,

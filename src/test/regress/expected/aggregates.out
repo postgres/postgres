@@ -1289,7 +1289,7 @@ group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.y,t2.z;
                       QUERY PLAN                      
 ------------------------------------------------------
  HashAggregate
-   Group Key: t1.a, t1.b, t2.x, t2.y
+   Group Key: t1.a, t1.b
    ->  Hash Join
          Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
          ->  Seq Scan on t2
@@ -1304,7 +1304,7 @@ group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.z;
                       QUERY PLAN                      
 ------------------------------------------------------
  HashAggregate
-   Group Key: t1.a, t1.b, t2.x, t2.z
+   Group Key: t1.a, t1.b, t2.z
    ->  Hash Join
          Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
          ->  Seq Scan on t2

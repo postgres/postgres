@@ -136,7 +136,7 @@ SELECT count(*) FROM
    Output: count(*)
    ->  HashAggregate
          Output: tenk1.two, tenk1.four, tenk1.two
-         Group Key: tenk1.two, tenk1.four, tenk1.two
+         Group Key: tenk1.two, tenk1.four
          ->  Seq Scan on public.tenk1
                Output: tenk1.two, tenk1.four, tenk1.two
 (7 rows)

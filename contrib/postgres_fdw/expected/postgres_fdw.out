@@ -2293,7 +2293,7 @@ SELECT t1."C 1" FROM "S 1"."T 1" t1, LATERAL (SELECT DISTINCT t2.c1, t3.c1 FROM 
                ->  Subquery Scan on q
                      ->  HashAggregate
                            Output: t2.c1, t3.c1
-                           Group Key: t2.c1, t3.c1
+                           Group Key: t2.c1
                            ->  Foreign Scan
                                  Output: t2.c1, t3.c1
                                  Relations: (public.ft1 t2) INNER JOIN (public.ft2 t3)
@@ -2864,16 +2864,13 @@ select c2 * (random() <= 1)::int as c2 from ft2 group by c2 * (random() <= 1)::i
 -- GROUP BY clause in various forms, cardinal, alias and constant expression
 explain (verbose, costs off)
 select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2;
-                                      QUERY PLAN                                       
----------------------------------------------------------------------------------------
- Sort
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
+ Foreign Scan
    Output: (count(c2)), c2, 5, 7.0, 9
-   Sort Key: ft1.c2
-   ->  Foreign Scan
-         Output: (count(c2)), c2, 5, 7.0, 9
-         Relations: Aggregate on (public.ft1)
-         Remote SQL: SELECT count(c2), c2, 5, 7.0, 9 FROM "S 1"."T 1" GROUP BY 2, 3, 5
-(7 rows)
+   Relations: Aggregate on (public.ft1)
+   Remote SQL: SELECT count(c2), c2, 5, 7.0, 9 FROM "S 1"."T 1" GROUP BY 2, 3, 5 ORDER BY c2 ASC NULLS LAST
+(4 rows)
 
 select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2;
   w  | x | y |  z  
@@ -2990,14 +2987,13 @@ select exists(select 1 from pg_enum), sum(c1) from ft1 group by 1;
                     QUERY PLAN                     
 ---------------------------------------------------
  GroupAggregate
-   Output: ($0), sum(ft1.c1)
-   Group Key: $0
+   Output: $0, sum(ft1.c1)
    InitPlan 1 (returns $0)
      ->  Seq Scan on pg_catalog.pg_enum
    ->  Foreign Scan on public.ft1
-         Output: $0, ft1.c1
+         Output: ft1.c1
          Remote SQL: SELECT "C 1" FROM "S 1"."T 1"
-(8 rows)
+(7 rows)
 
 select exists(select 1 from pg_enum), sum(c1) from ft1 group by 1;
  exists |  sum   
@@ -3382,14 +3378,13 @@ select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6
 --------------------------------------------------------------------------------------------------
  GroupAggregate
    Output: array_agg(c1 ORDER BY c1 USING <^ NULLS LAST), c2
-   Group Key: ft2.c2
    ->  Sort
-         Output: c2, c1
+         Output: c1, c2
          Sort Key: ft2.c1 USING <^
          ->  Foreign Scan on public.ft2
-               Output: c2, c1
+               Output: c1, c2
                Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6))
-(9 rows)
+(8 rows)
 
 -- This should not be pushed either.
 explain (verbose, costs off)
@@ -3458,14 +3453,13 @@ select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6
 --------------------------------------------------------------------------------------------------
  GroupAggregate
    Output: array_agg(c1 ORDER BY c1 USING <^ NULLS LAST), c2
-   Group Key: ft2.c2
    ->  Sort
-         Output: c2, c1
+         Output: c1, c2
          Sort Key: ft2.c1 USING <^
          ->  Foreign Scan on public.ft2
-               Output: c2, c1
+               Output: c1, c2
                Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6))
-(9 rows)
+(8 rows)
 
 -- Cleanup
 drop operator class my_op_class using btree;

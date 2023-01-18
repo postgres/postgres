@@ -1153,17 +1153,61 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 							  List *sortclauses,
 							  List *tlist)
 {
+	List	   *result;
+	bool		sortable;
+
+	result = make_pathkeys_for_sortclauses_extended(root,
+													&sortclauses,
+													tlist,
+													false,
+													&sortable);
+	/* It's caller error if not all clauses were sortable */
+	Assert(sortable);
+	return result;
+}
+
+/*
+ * make_pathkeys_for_sortclauses_extended
+ *		Generate a pathkeys list that represents the sort order specified
+ *		by a list of SortGroupClauses
+ *
+ * The comments for make_pathkeys_for_sortclauses apply here too. In addition:
+ *
+ * If remove_redundant is true, then any sort clauses that are found to
+ * give rise to redundant pathkeys are removed from the sortclauses list
+ * (which therefore must be pass-by-reference in this version).
+ *
+ * *sortable is set to true if all the sort clauses are in fact sortable.
+ * If any are not, they are ignored except for setting *sortable false.
+ * (In that case, the output pathkey list isn't really useful.  However,
+ * we process the whole sortclauses list anyway, because it's still valid
+ * to remove any clauses that can be proven redundant via the eclass logic.
+ * Even though we'll have to hash in that case, we might as well not hash
+ * redundant columns.)
+ */
+List *
+make_pathkeys_for_sortclauses_extended(PlannerInfo *root,
+									   List **sortclauses,
+									   List *tlist,
+									   bool remove_redundant,
+									   bool *sortable)
+{
 	List	   *pathkeys = NIL;
 	ListCell   *l;
 
-	foreach(l, sortclauses)
+	*sortable = true;
+	foreach(l, *sortclauses)
 	{
 		SortGroupClause *sortcl = (SortGroupClause *) lfirst(l);
 		Expr	   *sortkey;
 		PathKey    *pathkey;
 
 		sortkey = (Expr *) get_sortgroupclause_expr(sortcl, tlist);
-		Assert(OidIsValid(sortcl->sortop));
+		if (!OidIsValid(sortcl->sortop))
+		{
+			*sortable = false;
+			continue;
+		}
 		pathkey = make_pathkey_from_sortop(root,
 										   sortkey,
 										   root->nullable_baserels,
@@ -1175,6 +1219,8 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 		/* Canonical form eliminates redundant ordering keys */
 		if (!pathkey_is_redundant(pathkey, pathkeys))
 			pathkeys = lappend(pathkeys, pathkey);
+		else if (remove_redundant)
+			*sortclauses = foreach_delete_current(*sortclauses, l);
 	}
 	return pathkeys;
 }

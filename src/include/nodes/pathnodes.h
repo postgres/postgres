@@ -407,6 +407,34 @@ struct PlannerInfo
 	struct PathTarget *upper_targets[UPPERREL_FINAL + 1] pg_node_attr(read_write_ignore);
 
 	/*
+	 * The fully-processed groupClause is kept here.  It differs from
+	 * parse->groupClause in that we remove any items that we can prove
+	 * redundant, so that only the columns named here actually need to be
+	 * compared to determine grouping.  Note that it's possible for *all* the
+	 * items to be proven redundant, implying that there is only one group
+	 * containing all the query's rows.  Hence, if you want to check whether
+	 * GROUP BY was specified, test for nonempty parse->groupClause, not for
+	 * nonempty processed_groupClause.
+	 *
+	 * Currently, when grouping sets are specified we do not attempt to
+	 * optimize the groupClause, so that processed_groupClause will be
+	 * identical to parse->groupClause.
+	 */
+	List	   *processed_groupClause;
+
+	/*
+	 * The fully-processed distinctClause is kept here.  It differs from
+	 * parse->distinctClause in that we remove any items that we can prove
+	 * redundant, so that only the columns named here actually need to be
+	 * compared to determine uniqueness.  Note that it's possible for *all*
+	 * the items to be proven redundant, implying that there should be only
+	 * one output row.  Hence, if you want to check whether DISTINCT was
+	 * specified, test for nonempty parse->distinctClause, not for nonempty
+	 * processed_distinctClause.
+	 */
+	List	   *processed_distinctClause;
+
+	/*
 	 * The fully-processed targetlist is kept here.  It differs from
 	 * parse->targetList in that (for INSERT) it's been reordered to match the
 	 * target table, and defaults have been filled in.  Also, additional

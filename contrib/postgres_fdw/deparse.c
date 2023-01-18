@@ -3736,6 +3736,13 @@ appendGroupByClause(List *tlist, deparse_expr_cxt *context)
 	 */
 	Assert(!query->groupingSets);
 
+	/*
+	 * We intentionally print query->groupClause not processed_groupClause,
+	 * leaving it to the remote planner to get rid of any redundant GROUP BY
+	 * items again.  This is necessary in case processed_groupClause reduced
+	 * to empty, and in any case the redundancy situation on the remote might
+	 * be different than what we think here.
+	 */
 	foreach(lc, query->groupClause)
 	{
 		SortGroupClause *grp = (SortGroupClause *) lfirst(lc);

@@ -164,10 +164,9 @@ SELECT c, sum(a) FROM pagg_tab WHERE c = 'x' GROUP BY c;
            QUERY PLAN           
 --------------------------------
  GroupAggregate
-   Group Key: c
    ->  Result
          One-Time Filter: false
-(4 rows)
+(3 rows)
 
 SELECT c, sum(a) FROM pagg_tab WHERE c = 'x' GROUP BY c;
  c | sum 
@@ -805,10 +804,10 @@ SELECT a.x, b.y, count(*) FROM (SELECT * FROM pagg_tab1 WHERE x < 20) a FULL JOI
 -- Empty join relation because of empty outer side, no partitionwise agg plan
 EXPLAIN (COSTS OFF)
 SELECT a.x, a.y, count(*) FROM (SELECT * FROM pagg_tab1 WHERE x = 1 AND x = 2) a LEFT JOIN pagg_tab2 b ON a.x = b.y GROUP BY a.x, a.y ORDER BY 1, 2;
-              QUERY PLAN               
----------------------------------------
+              QUERY PLAN              
+--------------------------------------
  GroupAggregate
-   Group Key: pagg_tab1.x, pagg_tab1.y
+   Group Key: pagg_tab1.y
    ->  Sort
          Sort Key: pagg_tab1.y
          ->  Result
