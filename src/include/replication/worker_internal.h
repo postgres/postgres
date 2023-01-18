@@ -71,7 +71,7 @@ typedef struct LogicalRepWorker
 	 * PID of leader apply worker if this slot is used for a parallel apply
 	 * worker, InvalidPid otherwise.
 	 */
-	pid_t		apply_leader_pid;
+	pid_t		leader_pid;
 
 	/* Indicates whether apply can be performed in parallel. */
 	bool		parallel_apply;
@@ -303,7 +303,7 @@ extern void pa_decr_and_wait_stream_block(void);
 extern void pa_xact_finish(ParallelApplyWorkerInfo *winfo,
 						   XLogRecPtr remote_lsn);
 
-#define isParallelApplyWorker(worker) ((worker)->apply_leader_pid != InvalidPid)
+#define isParallelApplyWorker(worker) ((worker)->leader_pid != InvalidPid)
 
 static inline bool
 am_tablesync_worker(void)

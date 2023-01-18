@@ -849,7 +849,7 @@ LogicalParallelApplyLoop(shm_mq_handle *mqh)
 static void
 pa_shutdown(int code, Datum arg)
 {
-	SendProcSignal(MyLogicalRepWorker->apply_leader_pid,
+	SendProcSignal(MyLogicalRepWorker->leader_pid,
 				   PROCSIG_PARALLEL_APPLY_MESSAGE,
 				   InvalidBackendId);
 
@@ -932,7 +932,7 @@ ParallelApplyWorkerMain(Datum main_arg)
 	error_mqh = shm_mq_attach(mq, seg, NULL);
 
 	pq_redirect_to_shm_mq(seg, error_mqh);
-	pq_set_parallel_leader(MyLogicalRepWorker->apply_leader_pid,
+	pq_set_parallel_leader(MyLogicalRepWorker->leader_pid,
 						   InvalidBackendId);
 
 	MyLogicalRepWorker->last_send_time = MyLogicalRepWorker->last_recv_time =
@@ -950,7 +950,7 @@ ParallelApplyWorkerMain(Datum main_arg)
 	 * The parallel apply worker doesn't need to monopolize this replication
 	 * origin which was already acquired by its leader process.
 	 */
-	replorigin_session_setup(originid, MyLogicalRepWorker->apply_leader_pid);
+	replorigin_session_setup(originid, MyLogicalRepWorker->leader_pid);
 	replorigin_session_origin = originid;
 	CommitTransactionCommand();
 

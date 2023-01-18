@@ -25,6 +25,7 @@
 #include "pgstat.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/postmaster.h"
+#include "replication/logicallauncher.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
@@ -409,9 +410,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 			/*
 			 * If a PGPROC entry was retrieved, display wait events and lock
-			 * group leader information if any.  To avoid extra overhead, no
-			 * extra lock is being held, so there is no guarantee of
-			 * consistency across multiple rows.
+			 * group leader or apply leader information if any.  To avoid
+			 * extra overhead, no extra lock is being held, so there is no
+			 * guarantee of consistency across multiple rows.
 			 */
 			if (proc != NULL)
 			{
@@ -426,13 +427,23 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 				/*
 				 * Show the leader only for active parallel workers.  This
-				 * leaves the field as NULL for the leader of a parallel
-				 * group.
+				 * leaves the field as NULL for the leader of a parallel group
+				 * or the leader of parallel apply workers.
 				 */
 				if (leader && leader->pid != beentry->st_procpid)
 				{
 					values[28] = Int32GetDatum(leader->pid);
 					nulls[28] = false;
+				}
+				else if (beentry->st_backendType == B_BG_WORKER)
+				{
+					int			leader_pid = GetLeaderApplyWorkerPid(beentry->st_procpid);
+
+					if (leader_pid != InvalidPid)
+					{
+						values[28] = Int32GetDatum(leader_pid);
+						nulls[28] = false;
+					}
 				}
 			}
 

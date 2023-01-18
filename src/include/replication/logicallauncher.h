@@ -27,4 +27,6 @@ extern void AtEOXact_ApplyLauncher(bool isCommit);
 
 extern bool IsLogicalLauncher(void);
 
+extern pid_t GetLeaderApplyWorkerPid(pid_t pid);
+
 #endif							/* LOGICALLAUNCHER_H */
