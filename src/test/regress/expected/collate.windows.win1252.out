@@ -390,16 +390,16 @@ CREATE VIEW collview1 AS SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc
 CREATE VIEW collview2 AS SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'collview%' ORDER BY 1;
- table_name |                     view_definition
-------------+---------------------------------------------------------
- collview1  |  SELECT collate_test1.a,                               +
-            |     collate_test1.b                                    +
-            |    FROM collate_test1                                  +
-            |   WHERE ((collate_test1.b COLLATE "C") >= 'bbc'::text);
- collview2  |  SELECT collate_test1.a,                               +
-            |     collate_test1.b                                    +
-            |    FROM collate_test1                                  +
-            |   ORDER BY (collate_test1.b COLLATE "C");
+ table_name |              view_definition
+------------+-------------------------------------------
+ collview1  |  SELECT a,                               +
+            |     b                                    +
+            |    FROM collate_test1                    +
+            |   WHERE ((b COLLATE "C") >= 'bbc'::text);
+ collview2  |  SELECT a,                               +
+            |     b                                    +
+            |    FROM collate_test1                    +
+            |   ORDER BY (b COLLATE "C");
 (2 rows)
 
 -- collation propagation in various expression types
