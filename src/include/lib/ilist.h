@@ -317,6 +317,17 @@ dlist_init(dlist_head *head)
 }
 
 /*
+ * Initialize a doubly linked list element.
+ *
+ * This is only needed when dlist_node_is_detached() may be needed.
+ */
+static inline void
+dlist_node_init(dlist_node *node)
+{
+	node->next = node->prev = NULL;
+}
+
+/*
  * Is the list empty?
  *
  * An empty list has either its first 'next' pointer set to NULL, or to itself.
@@ -398,6 +409,19 @@ dlist_delete(dlist_node *node)
 }
 
 /*
+ * Like dlist_delete(), but also sets next/prev to NULL to signal not being in
+ * a list.
+ */
+static inline void
+dlist_delete_thoroughly(dlist_node *node)
+{
+	node->prev->next = node->next;
+	node->next->prev = node->prev;
+	node->next = NULL;
+	node->prev = NULL;
+}
+
+/*
  * Same as dlist_delete, but performs checks in ILIST_DEBUG builds to ensure
  * that 'node' belongs to 'head'.
  */
@@ -406,6 +430,17 @@ dlist_delete_from(dlist_head *head, dlist_node *node)
 {
 	dlist_member_check(head, node);
 	dlist_delete(node);
+}
+
+/*
+ * Like dlist_delete_from, but also sets next/prev to NULL to signal not
+ * being in a list.
+ */
+static inline void
+dlist_delete_from_thoroughly(dlist_head *head, dlist_node *node)
+{
+	dlist_member_check(head, node);
+	dlist_delete_thoroughly(node);
 }
 
 /*
@@ -478,6 +513,21 @@ static inline bool
 dlist_has_prev(const dlist_head *head, const dlist_node *node)
 {
 	return node->prev != &head->head;
+}
+
+/*
+ * Check if node is detached. A node is only detached if it either has been
+ * initialized with dlist_init_node(), or deleted with
+ * dlist_delete_thoroughly() / dlist_delete_from_thoroughly() /
+ * dclist_delete_from_thoroughly().
+ */
+static inline bool
+dlist_node_is_detached(const dlist_node *node)
+{
+	Assert((node->next == NULL && node->prev == NULL) ||
+		   (node->next != NULL && node->prev != NULL));
+
+	return node->next == NULL;
 }
 
 /*
@@ -715,6 +765,19 @@ dclist_delete_from(dclist_head *head, dlist_node *node)
 	Assert(head->count > 0);
 
 	dlist_delete_from(&head->dlist, node);
+	head->count--;
+}
+
+/*
+ * Like dclist_delete_from(), but also sets next/prev to NULL to signal not
+ * being in a list.
+ */
+static inline void
+dclist_delete_from_thoroughly(dclist_head *head, dlist_node *node)
+{
+	Assert(head->count > 0);
+
+	dlist_delete_from_thoroughly(&head->dlist, node);
 	head->count--;
 }
 
