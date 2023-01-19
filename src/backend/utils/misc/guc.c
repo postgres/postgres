@@ -3429,7 +3429,7 @@ static struct config_real ConfigureNamesReal[] =
 		},
 		&CheckPointCompletionTarget,
 		0.5, 0.0, 1.0,
-		NULL, NULL, NULL
+		NULL, assign_checkpoint_completion_target, NULL
 	},
 
 	{
