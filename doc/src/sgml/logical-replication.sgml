@@ -1807,6 +1807,11 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     replicas that are connected at the same time.
    </para>
 
+   <para>
+    Logical replication walsender is also affected by
+    <link linkend="guc-wal-sender-timeout"><varname>wal_sender_timeout</varname></link>.
+   </para>
+
   </sect2>
 
   <sect2 id="logical-replication-config-subscriber">
@@ -1850,7 +1855,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     Logical replication workers are also affected by
     <link linkend="guc-wal-receiver-timeout"><varname>wal_receiver_timeout</varname></link>,
     <link linkend="guc-wal-receiver-status-interval"><varname>wal_receiver_status_interval</varname></link> and
-    <link linkend="guc-wal-retrieve-retry-interval"><varname>wal_receiver_retry_interval</varname></link>.
+    <link linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</varname></link>.
    </para>
 
   </sect2>
