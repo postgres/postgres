@@ -1814,13 +1814,131 @@ Water, water, every where
 Water, water, every where,
   Nor any drop to drink.
 S. T. Coleridge (1772-1834)
-', phraseto_tsquery('english', 'painted Ocean'));
-              ts_headline              
----------------------------------------
- <b>painted</b> Ship                  +
-   Upon a <b>painted</b> <b>Ocean</b>.+
- Water, water, every where            +
+', to_tsquery('english', 'day & drink'));
+            ts_headline             
+------------------------------------
+ <b>day</b>,                       +
+   We stuck, nor breath nor motion,+
+ As idle as a painted Ship         +
+   Upon a painted Ocean.           +
+ Water, water, every where         +
+   And all the boards did shrink;  +
+ Water, water, every where,        +
+   Nor any drop
+(1 row)
+
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+S. T. Coleridge (1772-1834)
+', to_tsquery('english', 'day | drink'));
+                        ts_headline                        
+-----------------------------------------------------------
+ <b>Day</b> after <b>day</b>, <b>day</b> after <b>day</b>,+
+   We stuck, nor breath nor motion,                       +
+ As idle as a painted
+(1 row)
+
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+S. T. Coleridge (1772-1834)
+', to_tsquery('english', 'day | !drink'));
+                        ts_headline                        
+-----------------------------------------------------------
+ <b>Day</b> after <b>day</b>, <b>day</b> after <b>day</b>,+
+   We stuck, nor breath nor motion,                       +
+ As idle as a painted
+(1 row)
+
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+S. T. Coleridge (1772-1834)
+', to_tsquery('english', 'painted <-> Ship & drink'));
+           ts_headline            
+----------------------------------
+ <b>painted</b> <b>Ship</b>      +
+   Upon a <b>painted</b> Ocean.  +
+ Water, water, every where       +
+   And all the boards did shrink;+
+ Water, water, every where,      +
+   Nor any drop to <b>drink</b>
+(1 row)
+
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+S. T. Coleridge (1772-1834)
+', to_tsquery('english', 'painted <-> Ship | drink'));
+           ts_headline           
+---------------------------------
+ <b>painted</b> <b>Ship</b>     +
+   Upon a <b>painted</b> Ocean. +
+ Water, water, every where      +
    And all the boards did shrink
+(1 row)
+
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+S. T. Coleridge (1772-1834)
+', to_tsquery('english', 'painted <-> Ship | !drink'));
+           ts_headline           
+---------------------------------
+ <b>painted</b> <b>Ship</b>     +
+   Upon a <b>painted</b> Ocean. +
+ Water, water, every where      +
+   And all the boards did shrink
+(1 row)
+
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+S. T. Coleridge (1772-1834)
+', phraseto_tsquery('english', 'painted Ocean'));
+           ts_headline            
+----------------------------------
+ <b>painted</b> <b>Ocean</b>.    +
+ Water, water, every where       +
+   And all the boards did shrink;+
+ Water, water, every
 (1 row)
 
 SELECT ts_headline('english', '
@@ -1849,6 +1967,15 @@ to_tsquery('english','Lorem') && phraseto_tsquery('english','ullamcorper urna'),
                                   ts_headline                                  
 -------------------------------------------------------------------------------
  <b>Lorem</b> ipsum <b>urna</b>.  Nullam nullam <b>ullamcorper</b> <b>urna</b>
+(1 row)
+
+SELECT ts_headline('english',
+'Lorem ipsum urna.  Nullam nullam ullamcorper urna.',
+phraseto_tsquery('english','ullamcorper urna'),
+'MaxWords=100, MinWords=5');
+                         ts_headline                         
+-------------------------------------------------------------
+ <b>urna</b>.  Nullam nullam <b>ullamcorper</b> <b>urna</b>.
 (1 row)
 
 SELECT ts_headline('english', '
@@ -1893,9 +2020,9 @@ SELECT ts_headline('simple', '1 2 3 1 3'::text, '1 & 3', 'MaxWords=4, MinWords=1
 (1 row)
 
 SELECT ts_headline('simple', '1 2 3 1 3'::text, '1 <-> 3', 'MaxWords=4, MinWords=1');
-        ts_headline         
-----------------------------
- <b>3</b> <b>1</b> <b>3</b>
+    ts_headline    
+-------------------
+ <b>1</b> <b>3</b>
 (1 row)
 
 --Check if headline fragments work

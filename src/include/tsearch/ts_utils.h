@@ -206,6 +206,9 @@ extern bool TS_execute(QueryItem *curitem, void *arg, uint32 flags,
 extern TSTernaryValue TS_execute_ternary(QueryItem *curitem, void *arg,
 										 uint32 flags,
 										 TSExecuteCallback chkcond);
+extern List *TS_execute_locations(QueryItem *curitem, void *arg,
+								  uint32 flags,
+								  TSExecuteCallback chkcond);
 extern bool tsquery_requires_match(QueryItem *curitem);
 
 /*

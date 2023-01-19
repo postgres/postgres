@@ -71,6 +71,10 @@ typedef struct
 static TSTernaryValue TS_execute_recurse(QueryItem *curitem, void *arg,
 										 uint32 flags,
 										 TSExecuteCallback chkcond);
+static bool TS_execute_locations_recurse(QueryItem *curitem,
+										 void *arg,
+										 TSExecuteCallback chkcond,
+										 List **locations);
 static int	tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len);
 static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
 
@@ -1571,10 +1575,10 @@ TS_phrase_output(ExecPhraseData *data,
  * In addition to the same arguments used for TS_execute, the caller may pass
  * a preinitialized-to-zeroes ExecPhraseData struct, to be filled with lexeme
  * match position info on success.  data == NULL if no position data need be
- * returned.  (In practice, outside callers pass NULL, and only the internal
- * recursion cases pass a data pointer.)
+ * returned.
  * Note: the function assumes data != NULL for operators other than OP_PHRASE.
- * This is OK because an outside call always starts from an OP_PHRASE node.
+ * This is OK because an outside call always starts from an OP_PHRASE node,
+ * and all internal recursion cases pass data != NULL.
  *
  * The detailed semantics of the match data, given that the function returned
  * TS_YES (successful match), are:
@@ -1969,6 +1973,177 @@ TS_execute_recurse(QueryItem *curitem, void *arg, uint32 flags,
 
 	/* not reachable, but keep compiler quiet */
 	return TS_NO;
+}
+
+/*
+ * Evaluate tsquery and report locations of matching terms.
+ *
+ * This is like TS_execute except that it returns match locations not just
+ * success/failure status.  The callback function is required to provide
+ * position data (we report failure if it doesn't).
+ *
+ * On successful match, the result is a List of ExecPhraseData structs, one
+ * for each AND'ed term or phrase operator in the query.  Each struct includes
+ * a sorted array of lexeme positions matching that term.  (Recall that for
+ * phrase operators, the match includes width+1 lexemes, and the recorded
+ * position is that of the rightmost lexeme.)
+ *
+ * OR subexpressions are handled by union'ing their match locations into a
+ * single List element, which is valid since any of those locations contains
+ * a match.  However, when some of the OR'ed terms are phrase operators, we
+ * report the maximum width of any of the OR'ed terms, making such cases
+ * slightly imprecise in the conservative direction.  (For example, if the
+ * tsquery is "(A <-> B) | C", an occurrence of C in the data would be
+ * reported as though it includes the lexeme to the left of C.)
+ *
+ * Locations of NOT subexpressions are not reported.  (Obviously, there can
+ * be no successful NOT matches at top level, or the match would have failed.
+ * So this amounts to ignoring NOTs underneath ORs.)
+ *
+ * The result is NIL if no match, or if position data was not returned.
+ *
+ * Arguments are the same as for TS_execute, although flags is currently
+ * vestigial since none of the defined bits are sensible here.
+ */
+List *
+TS_execute_locations(QueryItem *curitem, void *arg,
+					 uint32 flags,
+					 TSExecuteCallback chkcond)
+{
+	List	   *result;
+
+	/* No flags supported, as yet */
+	Assert(flags == TS_EXEC_EMPTY);
+	if (TS_execute_locations_recurse(curitem, arg, chkcond, &result))
+		return result;
+	return NIL;
+}
+
+/*
+ * TS_execute_locations recursion for operators above any phrase operator.
+ * OP_PHRASE subexpressions can be passed off to TS_phrase_execute.
+ */
+static bool
+TS_execute_locations_recurse(QueryItem *curitem, void *arg,
+							 TSExecuteCallback chkcond,
+							 List **locations)
+{
+	bool		lmatch,
+				rmatch;
+	List	   *llocations,
+			   *rlocations;
+	ExecPhraseData *data;
+
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
+	/* ... and let's check for query cancel while we're at it */
+	CHECK_FOR_INTERRUPTS();
+
+	/* Default locations result is empty */
+	*locations = NIL;
+
+	if (curitem->type == QI_VAL)
+	{
+		data = palloc0_object(ExecPhraseData);
+		if (chkcond(arg, (QueryOperand *) curitem, data) == TS_YES)
+		{
+			*locations = list_make1(data);
+			return true;
+		}
+		pfree(data);
+		return false;
+	}
+
+	switch (curitem->qoperator.oper)
+	{
+		case OP_NOT:
+			if (!TS_execute_locations_recurse(curitem + 1, arg, chkcond,
+											  &llocations))
+				return true;	/* we don't pass back any locations */
+			return false;
+
+		case OP_AND:
+			if (!TS_execute_locations_recurse(curitem + curitem->qoperator.left,
+											  arg, chkcond,
+											  &llocations))
+				return false;
+			if (!TS_execute_locations_recurse(curitem + 1,
+											  arg, chkcond,
+											  &rlocations))
+				return false;
+			*locations = list_concat(llocations, rlocations);
+			return true;
+
+		case OP_OR:
+			lmatch = TS_execute_locations_recurse(curitem + curitem->qoperator.left,
+												  arg, chkcond,
+												  &llocations);
+			rmatch = TS_execute_locations_recurse(curitem + 1,
+												  arg, chkcond,
+												  &rlocations);
+			if (lmatch || rmatch)
+			{
+				/*
+				 * We generate an AND'able location struct from each
+				 * combination of sub-matches, following the disjunctive law
+				 * (A & B) | (C & D) = (A | C) & (A | D) & (B | C) & (B | D).
+				 *
+				 * However, if either input didn't produce locations (i.e., it
+				 * failed or was a NOT), we must just return the other list.
+				 */
+				if (llocations == NIL)
+					*locations = rlocations;
+				else if (rlocations == NIL)
+					*locations = llocations;
+				else
+				{
+					ListCell   *ll;
+
+					foreach(ll, llocations)
+					{
+						ExecPhraseData *ldata = (ExecPhraseData *) lfirst(ll);
+						ListCell   *lr;
+
+						foreach(lr, rlocations)
+						{
+							ExecPhraseData *rdata = (ExecPhraseData *) lfirst(lr);
+
+							data = palloc0_object(ExecPhraseData);
+							(void) TS_phrase_output(data, ldata, rdata,
+													TSPO_BOTH | TSPO_L_ONLY | TSPO_R_ONLY,
+													0, 0,
+													ldata->npos + rdata->npos);
+							/* Report the larger width, as explained above. */
+							data->width = Max(ldata->width, rdata->width);
+							*locations = lappend(*locations, data);
+						}
+					}
+				}
+
+				return true;
+			}
+			return false;
+
+		case OP_PHRASE:
+			/* We can hand this off to TS_phrase_execute */
+			data = palloc0_object(ExecPhraseData);
+			if (TS_phrase_execute(curitem, arg, TS_EXEC_EMPTY, chkcond,
+								  data) == TS_YES)
+			{
+				if (!data->negate)
+					*locations = list_make1(data);
+				return true;
+			}
+			pfree(data);
+			return false;
+
+		default:
+			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
+	}
+
+	/* not reachable, but keep compiler quiet */
+	return false;
 }
 
 /*
