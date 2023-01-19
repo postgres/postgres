@@ -5080,6 +5080,18 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		 */
 		ListCell   *ilist;
 		ListCell   *slist;
+		Oid			userid;
+
+		/*
+		 * Determine the user ID to use for privilege checks: either
+		 * onerel->userid if it's set (e.g., in case we're accessing the table
+		 * via a view), or the current user otherwise.
+		 *
+		 * If we drill down to child relations, we keep using the same userid:
+		 * it's going to be the same anyway, due to how we set up the relation
+		 * tree (q.v. build_simple_rel).
+		 */
+		userid = OidIsValid(onerel->userid) ? onerel->userid : GetUserId();
 
 		foreach(ilist, onerel->indexlist)
 		{
@@ -5150,17 +5162,9 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 							{
 								/* Get index's table for permission check */
 								RangeTblEntry *rte;
-								Oid			userid;
 
 								rte = planner_rt_fetch(index->rel->relid, root);
 								Assert(rte->rtekind == RTE_RELATION);
-
-								/*
-								 * Use onerel->userid if it's set, in case
-								 * we're accessing the table via a view.
-								 */
-								userid = OidIsValid(onerel->userid) ?
-									onerel->userid : GetUserId();
 
 								/*
 								 * For simplicity, we insist on the whole
@@ -5211,9 +5215,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 										/* Repeat access check on this rel */
 										rte = planner_rt_fetch(varno, root);
 										Assert(rte->rtekind == RTE_RELATION);
-
-										userid = OidIsValid(onerel->userid) ?
-											onerel->userid : GetUserId();
 
 										vardata->acl_ok =
 											rte->securityQuals == NIL &&
@@ -5281,8 +5282,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				/* found a match, see if we can extract pg_statistic row */
 				if (equal(node, expr))
 				{
-					Oid			userid;
-
 					/*
 					 * XXX Not sure if we should cache the tuple somewhere.
 					 * Now we just create a new copy every time.
@@ -5291,13 +5290,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						statext_expressions_load(info->statOid, rte->inh, pos);
 
 					vardata->freefunc = ReleaseDummy;
-
-					/*
-					 * Use onerel->userid if it's set, in case we're accessing
-					 * the table via a view.
-					 */
-					userid = OidIsValid(onerel->userid) ?
-						onerel->userid : GetUserId();
 
 					/*
 					 * For simplicity, we insist on the whole table being
@@ -5344,9 +5336,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 							/* Repeat access check on this rel */
 							rte = planner_rt_fetch(varno, root);
 							Assert(rte->rtekind == RTE_RELATION);
-
-							userid = OidIsValid(onerel->userid) ?
-								onerel->userid : GetUserId();
 
 							vardata->acl_ok =
 								rte->securityQuals == NIL &&
@@ -5486,9 +5475,10 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 				rte = planner_rt_fetch(varno, root);
 				Assert(rte->rtekind == RTE_RELATION);
 
-				userid = OidIsValid(onerel->userid) ?
-					onerel->userid : GetUserId();
-
+				/*
+				 * Fine to use the same userid as it's the same in all
+				 * relations of a given inheritance tree.
+				 */
 				vardata->acl_ok =
 					rte->securityQuals == NIL &&
 					((pg_class_aclcheck(rte->relid, userid,

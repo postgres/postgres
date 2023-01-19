@@ -500,7 +500,6 @@ find_join_rel(PlannerInfo *root, Relids relids)
  *
  * Otherwise these fields are left invalid, so GetForeignJoinPaths will not be
  * called for the join relation.
- *
  */
 static void
 set_foreign_rel_properties(RelOptInfo *joinrel, RelOptInfo *outer_rel,
