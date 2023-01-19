@@ -40,7 +40,7 @@ my $define = $hfilebasename;
 $define =~ tr/a-z/A-Z/;
 $define =~ s/\W/_/g;
 
-opendir(DIR, $docdir)
+opendir(my $dh, $docdir)
   or die "$0: could not open documentation source dir '$docdir': $!\n";
 open(my $hfile_handle, '>', $hfile)
   or die "$0: could not open output file '$hfile': $!\n";
@@ -91,7 +91,7 @@ my $maxlen = 0;
 
 my %entries;
 
-foreach my $file (sort readdir DIR)
+foreach my $file (sort readdir $dh)
 {
 	my ($cmdid, @cmdnames, $cmddesc, $cmdsynopsis);
 	$file =~ /\.sgml$/ or next;
@@ -214,4 +214,4 @@ print $hfile_handle "
 
 close $cfile_handle;
 close $hfile_handle;
-closedir DIR;
+closedir $dh;
