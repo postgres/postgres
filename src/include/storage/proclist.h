@@ -35,7 +35,7 @@ proclist_init(proclist_head *list)
  * Is the list empty?
  */
 static inline bool
-proclist_is_empty(proclist_head *list)
+proclist_is_empty(const proclist_head *list)
 {
 	return list->head == INVALID_PGPROCNO;
 }
@@ -143,10 +143,10 @@ proclist_delete_offset(proclist_head *list, int procno, size_t node_offset)
  * so that the only possibilities are that it is in this list or none.
  */
 static inline bool
-proclist_contains_offset(proclist_head *list, int procno,
+proclist_contains_offset(const proclist_head *list, int procno,
 						 size_t node_offset)
 {
-	proclist_node *node = proclist_node_get(procno, node_offset);
+	const proclist_node *node = proclist_node_get(procno, node_offset);
 
 	/* If it's not in any list, it's definitely not in this one. */
 	if (node->prev == 0 && node->next == 0)
