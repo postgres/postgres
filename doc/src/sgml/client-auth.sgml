@@ -941,7 +941,22 @@ local   db1,db2,@demodbs  all                                   md5
    implying that they are equivalent.  The connection will be allowed if
    there is any map entry that pairs the user name obtained from the
    external authentication system with the database user name that the
-   user has requested to connect as.
+   user has requested to connect as. The value <literal>all</literal>
+   can be used as the <replaceable>database-username</replaceable> to specify
+   that if the <replaceable>system-user</replaceable> matches, then this user
+   is allowed to log in as any of the existing database users. Quoting
+   <literal>all</literal> makes the keyword lose its special meaning.
+  </para>
+  <para>
+   If the <replaceable>database-username</replaceable> begins with a
+   <literal>+</literal> character, then the operating system user can login as
+   any user belonging to that role, similarly to how user names beginning with
+   <literal>+</literal> are treated in <literal>pg_hba.conf</literal>.
+   Thus, a <literal>+</literal> mark means <quote>match any of the roles that
+   are directly or indirectly members of this role</quote>, while a name
+   without a <literal>+</literal> mark matches only that specific role. Quoting
+   a username starting with a <literal>+</literal> makes the
+   <literal>+</literal> lose its special meaning.
   </para>
   <para>
    If the <replaceable>system-username</replaceable> field starts with a slash (<literal>/</literal>),
@@ -963,6 +978,16 @@ mymap   /^(.*)@otherdomain\.com$   guest
    Quoting a <replaceable>database-username</replaceable> containing
    <literal>\1</literal> <emphasis>does not</emphasis> make
    <literal>\1</literal> lose its special meaning.
+  </para>
+  <para>
+   If the <replaceable>database-username</replaceable> field starts with
+   a slash (<literal>/</literal>), the remainder of the field is treated
+   as a regular expression (see <xref linkend="posix-syntax-details"/>
+   for details of <productname>PostgreSQL</productname>'s regular
+   expression syntax. It is not possible to use <literal>\1</literal>
+   to use a capture from regular expression on
+   <replaceable>system-username</replaceable> for a regular expression
+   on <replaceable>database-username</replaceable>.
   </para>
 
   <tip>
