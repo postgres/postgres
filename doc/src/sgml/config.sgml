@@ -725,8 +725,7 @@ include_dir 'conf.d'
         number of active concurrent connections is at least
         <varname>max_connections</varname> minus
         <varname>superuser_reserved_connections</varname>, new
-        connections will be accepted only for superusers, and no
-        new replication connections will be accepted.
+        connections will be accepted only for superusers.
        </para>
 
        <para>
