@@ -645,27 +645,33 @@ GetStartupBufferPinWaitBufId(void)
 }
 
 /*
- * Check whether there are at least N free PGPROC objects.
+ * Check whether there are at least N free PGPROC objects.  If false is
+ * returned, *nfree will be set to the number of free PGPROC objects.
+ * Otherwise, *nfree will be set to n.
  *
  * Note: this is designed on the assumption that N will generally be small.
  */
 bool
-HaveNFreeProcs(int n)
+HaveNFreeProcs(int n, int *nfree)
 {
 	dlist_iter	iter;
 
+	Assert(n > 0);
+	Assert(nfree);
+
 	SpinLockAcquire(ProcStructLock);
 
+	*nfree = 0;
 	dlist_foreach(iter, &ProcGlobal->freeProcs)
 	{
-		n--;
-		if (n == 0)
+		(*nfree)++;
+		if (*nfree == n)
 			break;
 	}
 
 	SpinLockRelease(ProcStructLock);
 
-	return (n <= 0);
+	return (*nfree == n);
 }
 
 /*

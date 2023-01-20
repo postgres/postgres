@@ -708,6 +708,37 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-reserved-connections" xreflabel="reserved_connections">
+      <term><varname>reserved_connections</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>reserved_connections</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Determines the number of connection <quote>slots</quote> that are
+        reserved for connections by roles with privileges of the
+        <link linkend="predefined-roles-table"><literal>pg_used_reserved_connections</literal></link>
+        role.  Whenever the number of free connection slots is greater than
+        <xref linkend="guc-superuser-reserved-connections"/> but less than or
+        equal to the sum of <varname>superuser_reserved_connections</varname>
+        and <varname>reserved_connections</varname>, new connections will be
+        accepted only for superusers and roles with privileges of
+        <literal>pg_use_reserved_connections</literal>.  If
+        <varname>superuser_reserved_connections</varname> or fewer connection
+        slots are available, new connections will be accepted only for
+        superusers.
+       </para>
+
+       <para>
+        The default value is zero connections.  The value must be less than
+        <varname>max_connections</varname> minus
+        <varname>superuser_reserved_connections</varname>.  This parameter can
+        only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-superuser-reserved-connections"
      xreflabel="superuser_reserved_connections">
       <term><varname>superuser_reserved_connections</varname>
@@ -725,12 +756,16 @@ include_dir 'conf.d'
         number of active concurrent connections is at least
         <varname>max_connections</varname> minus
         <varname>superuser_reserved_connections</varname>, new
-        connections will be accepted only for superusers.
+        connections will be accepted only for superusers.  The connection slots
+        reserved by this parameter are intended as final reserve for emergency
+        use after the slots reserved by
+        <xref linkend="guc-reserved-connections"/> have been exhausted.
        </para>
 
        <para>
         The default value is three connections. The value must be less
-        than <varname>max_connections</varname>.
+        than <varname>max_connections</varname> minus
+        <varname>reserved_connections</varname>.
         This parameter can only be set at server start.
        </para>
       </listitem>

@@ -689,6 +689,11 @@ DROP ROLE doomed_role;
        and <link linkend="sql-lock"><command>LOCK TABLE</command></link> on all
        relations.</entry>
       </row>
+      <row>
+       <entry>pg_use_reserved_connections</entry>
+       <entry>Allow use of connection slots reserved via
+       <xref linkend="guc-reserved-connections"/>.</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

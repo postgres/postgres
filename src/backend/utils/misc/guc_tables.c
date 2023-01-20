@@ -2169,6 +2169,17 @@ struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"reserved_connections", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Sets the number of connection slots reserved for roles "
+						 "with privileges of pg_use_reserved_connections."),
+			NULL
+		},
+		&ReservedConnections,
+		0, 0, MAX_BACKENDS,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"min_dynamic_shared_memory", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Amount of dynamic shared memory reserved at startup."),
 			NULL,
