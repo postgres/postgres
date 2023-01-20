@@ -127,7 +127,7 @@
 
 #shared_buffers = 128MB			# min 128kB
 					# (change requires restart)
-#huge_pages = try			# on, off, or try
+huge_pages = off			# on, off, or try
 					# (change requires restart)
 #huge_page_size = 0			# zero for system default
 					# (change requires restart)
