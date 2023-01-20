@@ -538,9 +538,14 @@ RestoreArchive(Archive *AHX)
 				 */
 				if (*te->dropStmt != '\0')
 				{
-					if (!ropt->if_exists)
+					if (!ropt->if_exists ||
+						strncmp(te->dropStmt, "--", 2) == 0)
 					{
-						/* No --if-exists?	Then just use the original */
+						/*
+						 * Without --if-exists, or if it's just a comment (as
+						 * happens for the public schema), print the dropStmt
+						 * as-is.
+						 */
 						ahprintf(AH, "%s", te->dropStmt);
 					}
 					else
