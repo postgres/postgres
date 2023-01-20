@@ -24,13 +24,6 @@
 #include "utils/hsearch.h"
 
 
-/* shmqueue.c */
-typedef struct SHM_QUEUE
-{
-	struct SHM_QUEUE *prev;
-	struct SHM_QUEUE *next;
-} SHM_QUEUE;
-
 /* shmem.c */
 extern void InitShmemAccess(void *seghdr);
 extern void InitShmemAllocation(void);
@@ -62,20 +55,5 @@ typedef struct
 	Size		size;			/* # bytes requested for the structure */
 	Size		allocated_size; /* # bytes actually allocated */
 } ShmemIndexEnt;
-
-/*
- * prototypes for functions in shmqueue.c
- */
-extern void SHMQueueInit(SHM_QUEUE *queue);
-extern void SHMQueueElemInit(SHM_QUEUE *queue);
-extern void SHMQueueDelete(SHM_QUEUE *queue);
-extern void SHMQueueInsertBefore(SHM_QUEUE *queue, SHM_QUEUE *elem);
-extern void SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem);
-extern Pointer SHMQueueNext(const SHM_QUEUE *queue, const SHM_QUEUE *curElem,
-							Size linkOffset);
-extern Pointer SHMQueuePrev(const SHM_QUEUE *queue, const SHM_QUEUE *curElem,
-							Size linkOffset);
-extern bool SHMQueueEmpty(const SHM_QUEUE *queue);
-extern bool SHMQueueIsDetached(const SHM_QUEUE *queue);
 
 #endif							/* SHMEM_H */
