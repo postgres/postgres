@@ -927,8 +927,8 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	 * limited by max_connections or superuser_reserved_connections.
 	 */
 	if (!am_superuser && !am_walsender &&
-		ReservedBackends > 0 &&
-		!HaveNFreeProcs(ReservedBackends))
+		SuperuserReservedConnections > 0 &&
+		!HaveNFreeProcs(SuperuserReservedConnections))
 		ereport(FATAL,
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 				 errmsg("remaining connection slots are reserved for superusers")));

@@ -2163,7 +2163,7 @@ struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the number of connection slots reserved for superusers."),
 			NULL
 		},
-		&ReservedBackends,
+		&SuperuserReservedConnections,
 		3, 0, MAX_BACKENDS,
 		NULL, NULL, NULL
 	},

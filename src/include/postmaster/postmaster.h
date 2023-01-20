@@ -15,7 +15,7 @@
 
 /* GUC options */
 extern PGDLLIMPORT bool EnableSSL;
-extern PGDLLIMPORT int ReservedBackends;
+extern PGDLLIMPORT int SuperuserReservedConnections;
 extern PGDLLIMPORT int PostPortNumber;
 extern PGDLLIMPORT int Unix_socket_permissions;
 extern PGDLLIMPORT char *Unix_socket_group;
