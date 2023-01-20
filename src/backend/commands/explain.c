@@ -3324,7 +3324,7 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 			if (!gotone)
 				ExplainIndentText(es);
 			else
-				appendStringInfoString(es->str, "  ");
+				appendStringInfoSpaces(es->str, 2);
 
 			appendStringInfo(es->str, "Batches: %d  Memory Usage: " INT64_FORMAT "kB",
 							 aggstate->hash_batches_used, memPeakKb);

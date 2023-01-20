@@ -211,8 +211,8 @@ appendStringInfoSpaces(StringInfo str, int count)
 		enlargeStringInfo(str, count);
 
 		/* OK, append the spaces */
-		while (--count >= 0)
-			str->data[str->len++] = ' ';
+		memset(&str->data[str->len], ' ', count);
+		str->len += count;
 		str->data[str->len] = '\0';
 	}
 }
