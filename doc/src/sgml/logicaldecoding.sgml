@@ -479,8 +479,8 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
 </programlisting>
      The <function>begin_cb</function>, <function>change_cb</function>
      and <function>commit_cb</function> callbacks are required,
-     while <function>startup_cb</function>,
-     <function>filter_by_origin_cb</function>, <function>truncate_cb</function>,
+     while <function>startup_cb</function>, <function>truncate_cb</function>,
+     <function>message_cb</function>, <function>filter_by_origin_cb</function>,
      and <function>shutdown_cb</function> are optional.
      If <function>truncate_cb</function> is not set but a
      <command>TRUNCATE</command> is to be decoded, the action will be ignored.
@@ -490,19 +490,21 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
      An output plugin may also define functions to support streaming of large,
      in-progress transactions. The <function>stream_start_cb</function>,
      <function>stream_stop_cb</function>, <function>stream_abort_cb</function>,
-     <function>stream_commit_cb</function>, <function>stream_change_cb</function>,
-     and <function>stream_prepare_cb</function>
+     <function>stream_commit_cb</function>, and <function>stream_change_cb</function>
      are required, while <function>stream_message_cb</function> and
-     <function>stream_truncate_cb</function> are optional.
+     <function>stream_truncate_cb</function> are optional. The
+     <function>stream_prepare_cb</function> is also required if the output
+     plugin also support two-phase commits.
     </para>
 
     <para>
     An output plugin may also define functions to support two-phase commits,
     which allows actions to be decoded on the <command>PREPARE TRANSACTION</command>.
     The <function>begin_prepare_cb</function>, <function>prepare_cb</function>,
-    <function>stream_prepare_cb</function>,
     <function>commit_prepared_cb</function> and <function>rollback_prepared_cb</function>
     callbacks are required, while <function>filter_prepare_cb</function> is optional.
+    The <function>stream_prepare_cb</function> is also required if the output plugin
+    also supports the streaming of large in-progress transactions.
     </para>
    </sect2>
 
@@ -721,7 +723,7 @@ typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
      <title>Truncate Callback</title>
 
      <para>
-      The <function>truncate_cb</function> callback is called for a
+      The optional <function>truncate_cb</function> callback is called for a
       <command>TRUNCATE</command> command.
 <programlisting>
 typedef void (*LogicalDecodeTruncateCB) (struct LogicalDecodingContext *ctx,
@@ -919,8 +921,8 @@ typedef void (*LogicalDecodeRollbackPreparedCB) (struct LogicalDecodingContext *
     <sect3 id="logicaldecoding-output-plugin-stream-start">
      <title>Stream Start Callback</title>
      <para>
-      The <function>stream_start_cb</function> callback is called when opening
-      a block of streamed changes from an in-progress transaction.
+      The required <function>stream_start_cb</function> callback is called when
+      opening a block of streamed changes from an in-progress transaction.
 <programlisting>
 typedef void (*LogicalDecodeStreamStartCB) (struct LogicalDecodingContext *ctx,
                                             ReorderBufferTXN *txn);
@@ -931,8 +933,8 @@ typedef void (*LogicalDecodeStreamStartCB) (struct LogicalDecodingContext *ctx,
     <sect3 id="logicaldecoding-output-plugin-stream-stop">
      <title>Stream Stop Callback</title>
      <para>
-      The <function>stream_stop_cb</function> callback is called when closing
-      a block of streamed changes from an in-progress transaction.
+      The required <function>stream_stop_cb</function> callback is called when
+      closing a block of streamed changes from an in-progress transaction.
 <programlisting>
 typedef void (*LogicalDecodeStreamStopCB) (struct LogicalDecodingContext *ctx,
                                            ReorderBufferTXN *txn);
@@ -943,8 +945,8 @@ typedef void (*LogicalDecodeStreamStopCB) (struct LogicalDecodingContext *ctx,
     <sect3 id="logicaldecoding-output-plugin-stream-abort">
      <title>Stream Abort Callback</title>
      <para>
-      The <function>stream_abort_cb</function> callback is called to abort
-      a previously streamed transaction.
+      The required <function>stream_abort_cb</function> callback is called to
+      abort a previously streamed transaction.
 <programlisting>
 typedef void (*LogicalDecodeStreamAbortCB) (struct LogicalDecodingContext *ctx,
                                             ReorderBufferTXN *txn,
@@ -957,8 +959,10 @@ typedef void (*LogicalDecodeStreamAbortCB) (struct LogicalDecodingContext *ctx,
      <title>Stream Prepare Callback</title>
      <para>
       The <function>stream_prepare_cb</function> callback is called to prepare
-      a previously streamed transaction as part of a two-phase commit.
-<programlisting>
+      a previously streamed transaction as part of a two-phase commit. This
+      callback is required when the output plugin supports both the streaming
+      of large in-progress transactions and two-phase commits.
+      <programlisting>
 typedef void (*LogicalDecodeStreamPrepareCB) (struct LogicalDecodingContext *ctx,
                                               ReorderBufferTXN *txn,
                                               XLogRecPtr prepare_lsn);
@@ -969,8 +973,8 @@ typedef void (*LogicalDecodeStreamPrepareCB) (struct LogicalDecodingContext *ctx
     <sect3 id="logicaldecoding-output-plugin-stream-commit">
      <title>Stream Commit Callback</title>
      <para>
-      The <function>stream_commit_cb</function> callback is called to commit
-      a previously streamed transaction.
+      The required <function>stream_commit_cb</function> callback is called to
+      commit a previously streamed transaction.
 <programlisting>
 typedef void (*LogicalDecodeStreamCommitCB) (struct LogicalDecodingContext *ctx,
                                              ReorderBufferTXN *txn,
@@ -982,8 +986,8 @@ typedef void (*LogicalDecodeStreamCommitCB) (struct LogicalDecodingContext *ctx,
     <sect3 id="logicaldecoding-output-plugin-stream-change">
      <title>Stream Change Callback</title>
      <para>
-      The <function>stream_change_cb</function> callback is called when sending
-      a change in a block of streamed changes (demarcated by
+      The required <function>stream_change_cb</function> callback is called
+      when sending a change in a block of streamed changes (demarcated by
       <function>stream_start_cb</function> and <function>stream_stop_cb</function> calls).
       The actual changes are not displayed as the transaction can abort at a later
       point in time and we don't decode changes for aborted transactions.
@@ -999,8 +1003,8 @@ typedef void (*LogicalDecodeStreamChangeCB) (struct LogicalDecodingContext *ctx,
     <sect3 id="logicaldecoding-output-plugin-stream-message">
      <title>Stream Message Callback</title>
      <para>
-      The <function>stream_message_cb</function> callback is called when sending
-      a generic message in a block of streamed changes (demarcated by
+      The optional <function>stream_message_cb</function> callback is called when
+      sending a generic message in a block of streamed changes (demarcated by
       <function>stream_start_cb</function> and <function>stream_stop_cb</function> calls).
       The message contents for transactional messages are not displayed as the transaction
       can abort at a later point in time and we don't decode changes for aborted
@@ -1020,8 +1024,8 @@ typedef void (*LogicalDecodeStreamMessageCB) (struct LogicalDecodingContext *ctx
     <sect3 id="logicaldecoding-output-plugin-stream-truncate">
      <title>Stream Truncate Callback</title>
      <para>
-      The <function>stream_truncate_cb</function> callback is called for a
-      <command>TRUNCATE</command> command in a block of streamed changes
+      The optional <function>stream_truncate_cb</function> callback is called
+      for a <command>TRUNCATE</command> command in a block of streamed changes
       (demarcated by <function>stream_start_cb</function> and
       <function>stream_stop_cb</function> calls).
 <programlisting>
