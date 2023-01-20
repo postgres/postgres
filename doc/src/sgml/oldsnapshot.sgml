@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/oldsnapshot.sgml -->
 
 <sect1 id="oldsnapshot" xreflabel="old_snapshot">
- <title>old_snapshot</title>
+ <title>old_snapshot &mdash; inspect <literal>old_snapshot_threshold</literal> state</title>
 
  <indexterm zone="oldsnapshot">
   <primary>old_snapshot</primary>

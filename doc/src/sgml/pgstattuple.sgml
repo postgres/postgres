@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgstattuple.sgml -->
 
 <sect1 id="pgstattuple" xreflabel="pgstattuple">
- <title>pgstattuple</title>
+ <title>pgstattuple &mdash; obtain tuple-level statistics</title>
 
  <indexterm zone="pgstattuple">
   <primary>pgstattuple</primary>

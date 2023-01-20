@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/hstore.sgml -->
 
 <sect1 id="hstore" xreflabel="hstore">
- <title>hstore</title>
+ <title>hstore &mdash; hstore key/value datatype</title>
 
  <indexterm zone="hstore">
   <primary>hstore</primary>

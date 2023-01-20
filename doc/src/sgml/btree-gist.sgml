@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/btree-gist.sgml -->
 
 <sect1 id="btree-gist" xreflabel="btree_gist">
- <title>btree_gist</title>
+ <title>btree_gist &mdash; GiST operator classes with B-tree behavior</title>
 
  <indexterm zone="btree-gist">
   <primary>btree_gist</primary>

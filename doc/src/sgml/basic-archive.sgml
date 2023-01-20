@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/basic-archive.sgml -->
 
 <sect1 id="basic-archive" xreflabel="basic_archive">
- <title>basic_archive</title>
+ <title>basic_archive &mdash; an example WAL archive module</title>
 
  <indexterm zone="basic-archive">
   <primary>basic_archive</primary>

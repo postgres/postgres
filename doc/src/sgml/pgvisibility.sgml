@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgvisibility.sgml -->
 
 <sect1 id="pgvisibility" xreflabel="pg_visibility">
- <title>pg_visibility</title>
+ <title>pg_visibility &mdash; visibility map information and utilities</title>
 
  <indexterm zone="pgvisibility">
   <primary>pg_visibility</primary>

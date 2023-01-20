@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/seg.sgml -->
 
 <sect1 id="seg" xreflabel="seg">
- <title>seg</title>
+ <title>seg &mdash; a datatype for line segments or floating point intervals</title>
 
  <indexterm zone="seg">
   <primary>seg</primary>

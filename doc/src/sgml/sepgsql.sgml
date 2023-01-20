@@ -1,7 +1,8 @@
 <!-- doc/src/sgml/sepgsql.sgml -->
 
 <sect1 id="sepgsql" xreflabel="sepgsql">
- <title>sepgsql</title>
+ <title>sepgsql &mdash;
+   SELinux-, label-based mandatory access control (MAC) security module</title>
 
  <indexterm zone="sepgsql">
   <primary>sepgsql</primary>

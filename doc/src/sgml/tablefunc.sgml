@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/tablefunc.sgml -->
 
 <sect1 id="tablefunc" xreflabel="tablefunc">
- <title>tablefunc</title>
+ <title>tablefunc &mdash; functions that return tables (<function>crosstab</function> and others)</title>
 
  <indexterm zone="tablefunc">
   <primary>tablefunc</primary>

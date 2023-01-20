@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/adminpack.sgml -->
 
 <sect1 id="adminpack" xreflabel="adminpack">
- <title>adminpack</title>
+ <title>adminpack &mdash; pgAdmin support toolpack</title>
 
  <indexterm zone="adminpack">
   <primary>adminpack</primary>

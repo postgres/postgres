@@ -1,27 +1,31 @@
 <!-- doc/src/sgml/contrib.sgml -->
 
 <appendix id="contrib">
- <title>Additional Supplied Modules</title>
+ <title>Additional Supplied Modules and Extensions</title>
 
  <para>
-  This appendix and the next one contain information regarding the modules that
-  can be found in the <literal>contrib</literal> directory of the
+  This appendix and the next one contain information on the
+  optional components
+  found in the <literal>contrib</literal> directory of the
   <productname>PostgreSQL</productname> distribution.
   These include porting tools, analysis utilities,
-  and plug-in features that are not part of the core PostgreSQL system,
-  mainly because they address a limited audience or are too experimental
+  and plug-in features that are not part of the core PostgreSQL system.
+  They are separate mainly
+  because they address a limited audience or are too experimental
   to be part of the main source tree.  This does not preclude their
   usefulness.
  </para>
 
  <para>
-  This appendix covers extensions and other server plug-in modules found in
+  This appendix covers extensions and other server plug-in module
+  libraries found in
   <literal>contrib</literal>.  <xref linkend="contrib-prog"/> covers utility
   programs.
  </para>
 
  <para>
-  When building from the source distribution, these components are not built
+  When building from the source distribution, these optional
+  components are not built
   automatically, unless you build the "world" target
   (see <xref linkend="build"/>).
   You can build and install all of them by running:
@@ -46,41 +50,42 @@
 
  <para>
   If you are using a pre-packaged version of <productname>PostgreSQL</productname>,
-  these modules are typically made available as a separate subpackage,
+  these components are typically made available as a separate subpackage,
   such as <literal>postgresql-contrib</literal>.
  </para>
 
  <para>
-  Many modules supply new user-defined functions, operators, or types.
-  To make use of one of these modules, after you have installed the code
+  Many components supply new user-defined functions, operators, or types,
+  packaged as <firstterm>extensions</firstterm>.
+  To make use of one of these extensions, after you have installed the code
   you need to register the new SQL objects in the database system.
   This is done by executing
   a <xref linkend="sql-createextension"/> command.  In a fresh database,
   you can simply do
 
 <programlisting>
-CREATE EXTENSION <replaceable>module_name</replaceable>;
+CREATE EXTENSION <replaceable>extension_name</replaceable>;
 </programlisting>
 
   This command registers the new SQL objects in the current database only,
-  so you need to run it in each database that you want
-  the module's facilities to be available in.  Alternatively, run it in
+  so you need to run it in every database in which you want
+  the extension's facilities to be available.  Alternatively, run it in
   database <literal>template1</literal> so that the extension will be copied into
   subsequently-created databases by default.
  </para>
 
  <para>
-  For all these modules, <command>CREATE EXTENSION</command> must be run
-  by a database superuser, unless the module is
-  considered <quote>trusted</quote>, in which case it can be run by any
+  For all extensions, the <command>CREATE EXTENSION</command> command must be
+  run by a database superuser, unless the extension is
+  considered <quote>trusted</quote>.  Trusted extensions can be run by any
   user who has <literal>CREATE</literal> privilege on the current
-  database.  Modules that are trusted are identified as such in the
-  sections that follow.  Generally, trusted modules are ones that cannot
+  database.  Extensions that are trusted are identified as such in the
+  sections that follow.  Generally, trusted extensions are ones that cannot
   provide access to outside-the-database functionality.
  </para>
 
  <para>
-  Many modules allow you to install their objects in a schema of your
+  Many extensions allow you to install their objects in a schema of your
   choice.  To do that, add <literal>SCHEMA
   <replaceable>schema_name</replaceable></literal> to the <command>CREATE EXTENSION</command>
   command.  By default, the objects will be placed in your current creation
@@ -88,11 +93,11 @@ CREATE EXTENSION <replaceable>module_name</replaceable>;
  </para>
 
  <para>
-  Note, however, that some of these modules are not <quote>extensions</quote>
+  Note, however, that some of these components are not <quote>extensions</quote>
   in this sense, but are loaded into the server in some other way, for instance
   by way of
   <xref linkend="guc-shared-preload-libraries"/>.  See the documentation of each
-  module for details.
+  component for details.
  </para>
 
  &adminpack;

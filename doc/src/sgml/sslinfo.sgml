@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/sslinfo.sgml -->
 
 <sect1 id="sslinfo" xreflabel="sslinfo">
- <title>sslinfo</title>
+ <title>sslinfo &mdash; obtain client SSL information</title>
 
  <indexterm zone="sslinfo">
   <primary>sslinfo</primary>

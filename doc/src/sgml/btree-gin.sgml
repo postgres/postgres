@@ -1,14 +1,14 @@
 <!-- doc/src/sgml/btree-gin.sgml -->
 
 <sect1 id="btree-gin" xreflabel="btree_gin">
- <title>btree_gin</title>
+ <title>btree_gin &mdash; GIN operator classes with B-tree behavior</title>
 
  <indexterm zone="btree-gin">
   <primary>btree_gin</primary>
  </indexterm>
 
  <para>
-  <filename>btree_gin</filename> provides sample GIN operator classes that
+  <filename>btree_gin</filename> provides GIN operator classes that
   implement B-tree equivalent behavior for the data types
   <type>int2</type>, <type>int4</type>, <type>int8</type>, <type>float4</type>,
   <type>float8</type>, <type>timestamp with time zone</type>,

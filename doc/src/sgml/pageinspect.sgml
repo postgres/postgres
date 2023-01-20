@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pageinspect.sgml -->
 
 <sect1 id="pageinspect" xreflabel="pageinspect">
- <title>pageinspect</title>
+ <title>pageinspect &mdash; low-level inspection of database pages</title>
 
  <indexterm zone="pageinspect">
   <primary>pageinspect</primary>

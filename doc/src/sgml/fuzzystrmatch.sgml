@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/fuzzystrmatch.sgml -->
 
 <sect1 id="fuzzystrmatch" xreflabel="fuzzystrmatch">
- <title>fuzzystrmatch</title>
+ <title>fuzzystrmatch &mdash; determine string similarities and distance</title>
 
  <indexterm zone="fuzzystrmatch">
   <primary>fuzzystrmatch</primary>

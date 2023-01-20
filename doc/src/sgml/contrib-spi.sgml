@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/contrib-spi.sgml -->
 
 <sect1 id="contrib-spi" xreflabel="spi">
- <title>spi</title>
+ <title>spi &mdash; Server Programming Interface features/examples</title>
 
  <indexterm zone="contrib-spi">
   <primary>SPI</primary>

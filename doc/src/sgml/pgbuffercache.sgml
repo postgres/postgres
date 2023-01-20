@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgbuffercache.sgml -->
 
 <sect1 id="pgbuffercache" xreflabel="pg_buffercache">
- <title>pg_buffercache</title>
+ <title>pg_buffercache &mdash; inspect Postgres buffer cache state</title>
 
  <indexterm zone="pgbuffercache">
   <primary>pg_buffercache</primary>

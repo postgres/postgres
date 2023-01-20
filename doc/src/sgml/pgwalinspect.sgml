@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgwalinspect.sgml -->
 
 <sect1 id="pgwalinspect" xreflabel="pg_walinspect">
- <title>pg_walinspect</title>
+ <title>pg_walinspect &mdash; low-level WAL inspection</title>
 
  <indexterm zone="pgwalinspect">
   <primary>pg_walinspect</primary>

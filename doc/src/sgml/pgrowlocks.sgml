@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgrowlocks.sgml -->
 
 <sect1 id="pgrowlocks" xreflabel="pgrowlocks">
- <title>pgrowlocks</title>
+ <title>pgrowlocks &mdash; show a table's row locking information</title>
 
  <indexterm zone="pgrowlocks">
   <primary>pgrowlocks</primary>

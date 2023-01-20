@@ -1,7 +1,8 @@
 <!-- doc/src/sgml/tsm-system-time.sgml -->
 
 <sect1 id="tsm-system-time" xreflabel="tsm_system_time">
- <title>tsm_system_time</title>
+ <title>tsm_system_time &mdash;
+   the <literal>SYSTEM_TIME</literal> sampling method for <literal>TABLESAMPLE</literal></title>
 
  <indexterm zone="tsm-system-time">
   <primary>tsm_system_time</primary>

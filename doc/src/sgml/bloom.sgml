@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/bloom.sgml -->
 
 <sect1 id="bloom" xreflabel="bloom">
- <title>bloom</title>
+ <title>bloom &mdash; bloom filter index access method</title>
 
  <indexterm zone="bloom">
   <primary>bloom</primary>

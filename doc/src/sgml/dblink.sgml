@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/dblink.sgml -->
 
 <sect1 id="dblink" xreflabel="dblink">
- <title>dblink</title>
+ <title>dblink &mdash; connect to other PostgreSQL databases</title>
 
  <indexterm zone="dblink">
   <primary>dblink</primary>

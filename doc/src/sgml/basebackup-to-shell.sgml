@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/basebackup-to-shell.sgml -->
 
 <sect1 id="basebackup-to-shell" xreflabel="basebackup_to_shell">
- <title>basebackup_to_shell</title>
+ <title>basebackup_to_shell &mdash; example "shell" pg_basebackup module</title>
 
  <indexterm zone="basebackup-to-shell">
   <primary>basebackup_to_shell</primary>

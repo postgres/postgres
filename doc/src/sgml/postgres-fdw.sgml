@@ -1,7 +1,8 @@
 <!-- doc/src/sgml/postgres-fdw.sgml -->
 
 <sect1 id="postgres-fdw" xreflabel="postgres_fdw">
- <title>postgres_fdw</title>
+ <title>postgres_fdw &mdash;
+   access data stored in external Postgres servers</title>
 
  <indexterm zone="postgres-fdw">
   <primary>postgres_fdw</primary>

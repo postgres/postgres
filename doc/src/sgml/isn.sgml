@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/isn.sgml -->
 
 <sect1 id="isn" xreflabel="isn">
- <title>isn</title>
+ <title>isn &mdash; data types for international standard numbers (ISBN, EAN, UPC, etc.)</title>
 
  <indexterm zone="isn">
   <primary>isn</primary>

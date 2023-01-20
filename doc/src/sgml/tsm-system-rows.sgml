@@ -1,7 +1,8 @@
 <!-- doc/src/sgml/tsm-system-rows.sgml -->
 
 <sect1 id="tsm-system-rows" xreflabel="tsm_system_rows">
- <title>tsm_system_rows</title>
+ <title>tsm_system_rows &mdash;
+   the <literal>SYSTEM_ROWS</literal> sampling method for <literal>TABLESAMPLE</literal></title>
 
  <indexterm zone="tsm-system-rows">
   <primary>tsm_system_rows</primary>

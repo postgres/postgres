@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/auto-explain.sgml -->
 
 <sect1 id="auto-explain" xreflabel="auto_explain">
- <title>auto_explain</title>
+ <title>auto_explain &mdash; log execution plans of slow queries</title>
 
  <indexterm zone="auto-explain">
   <primary>auto_explain</primary>

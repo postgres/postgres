@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/xml2.sgml -->
 
 <sect1 id="xml2" xreflabel="xml2">
- <title>xml2</title>
+ <title>xml2 &mdash; XPath querying and XSLT functionality</title>
 
  <indexterm zone="xml2">
   <primary>xml2</primary>

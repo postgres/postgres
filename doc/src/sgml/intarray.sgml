@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/intarray.sgml -->
 
 <sect1 id="intarray" xreflabel="intarray">
- <title>intarray</title>
+ <title>intarray &mdash; manipulate arrays of integers</title>
 
  <indexterm zone="intarray">
   <primary>intarray</primary>

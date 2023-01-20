@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/earthdistance.sgml -->
 
 <sect1 id="earthdistance" xreflabel="earthdistance">
- <title>earthdistance</title>
+ <title>earthdistance &mdash; calculate great-circle distances</title>
 
  <indexterm zone="earthdistance">
   <primary>earthdistance</primary>

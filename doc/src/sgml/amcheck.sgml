@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/amcheck.sgml -->
 
 <sect1 id="amcheck" xreflabel="amcheck">
- <title>amcheck</title>
+ <title>amcheck &mdash; tools to verify table and index consistency</title>
 
  <indexterm zone="amcheck">
   <primary>amcheck</primary>

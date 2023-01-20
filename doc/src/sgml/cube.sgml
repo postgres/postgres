@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/cube.sgml -->
 
 <sect1 id="cube" xreflabel="cube">
- <title>cube</title>
+ <title>cube &mdash; a multi-dimensional cube data type</title>
 
  <indexterm zone="cube">
   <primary>cube (extension)</primary>

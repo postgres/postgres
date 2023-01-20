@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/citext.sgml -->
 
 <sect1 id="citext" xreflabel="citext">
- <title>citext</title>
+ <title>citext &mdash; a case-insensitive character string type</title>
 
  <indexterm zone="citext">
   <primary>citext</primary>

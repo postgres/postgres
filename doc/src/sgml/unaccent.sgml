@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/unaccent.sgml -->
 
 <sect1 id="unaccent" xreflabel="unaccent">
- <title>unaccent</title>
+ <title>unaccent &mdash; a text search dictionary which removes diacritics</title>
 
  <indexterm zone="unaccent">
   <primary>unaccent</primary>

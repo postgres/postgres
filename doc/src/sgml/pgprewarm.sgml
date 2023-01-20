@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgprewarm.sgml -->
 
 <sect1 id="pgprewarm" xreflabel="pg_prewarm">
- <title>pg_prewarm</title>
+ <title>pg_prewarm &mdash; preload relation data into buffer caches</title>
 
  <indexterm zone="pgprewarm">
   <primary>pg_prewarm</primary>

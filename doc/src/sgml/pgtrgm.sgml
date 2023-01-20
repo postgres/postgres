@@ -1,7 +1,8 @@
 <!-- doc/src/sgml/pgtrgm.sgml -->
 
 <sect1 id="pgtrgm" xreflabel="pg_trgm">
- <title>pg_trgm</title>
+ <title>pg_trgm &mdash;
+   support for similarity of text using trigram matching</title>
 
  <indexterm zone="pgtrgm">
   <primary>pg_trgm</primary>

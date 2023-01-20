@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/file-fdw.sgml -->
 
 <sect1 id="file-fdw" xreflabel="file_fdw">
- <title>file_fdw</title>
+ <title>file_fdw &mdash; access data files in the server's file system</title>
 
  <indexterm zone="file-fdw">
   <primary>file_fdw</primary>

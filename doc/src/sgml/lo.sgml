@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/lo.sgml -->
 
 <sect1 id="lo" xreflabel="lo">
- <title>lo</title>
+ <title>lo &mdash; manage large objects</title>
 
  <indexterm zone="lo">
   <primary>lo</primary>

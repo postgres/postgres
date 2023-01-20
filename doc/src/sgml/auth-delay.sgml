@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/auth-delay.sgml -->
 
 <sect1 id="auth-delay" xreflabel="auth_delay">
- <title>auth_delay</title>
+ <title>auth_delay &mdash; pause on authentication failure</title>
 
  <indexterm zone="auth-delay">
   <primary>auth_delay</primary>

@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/intagg.sgml -->
 
 <sect1 id="intagg" xreflabel="intagg">
- <title>intagg</title>
+ <title>intagg &mdash; integer aggregator and enumerator</title>
 
  <indexterm zone="intagg">
   <primary>intagg</primary>

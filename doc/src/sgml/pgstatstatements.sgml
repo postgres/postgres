@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgstatstatements.sgml -->
 
 <sect1 id="pgstatstatements" xreflabel="pg_stat_statements">
- <title>pg_stat_statements</title>
+ <title>pg_stat_statements &mdash; track statistics of SQL planning and execution</title>
 
  <indexterm zone="pgstatstatements">
   <primary>pg_stat_statements</primary>

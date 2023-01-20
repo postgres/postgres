@@ -1,7 +1,8 @@
 <!-- doc/src/sgml/dict-int.sgml -->
 
 <sect1 id="dict-int" xreflabel="dict_int">
- <title>dict_int</title>
+ <title>dict_int &mdash;
+   example full-text search dictionary for integers</title>
 
  <indexterm zone="dict-int">
   <primary>dict_int</primary>

@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgsurgery.sgml -->
 
 <sect1 id="pgsurgery" xreflabel="pg_surgery">
- <title>pg_surgery</title>
+ <title>pg_surgery &mdash; perform low-level surgery on relation data</title>
 
  <indexterm zone="pgsurgery">
   <primary>pg_surgery</primary>

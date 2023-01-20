@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/dict-xsyn.sgml -->
 
 <sect1 id="dict-xsyn" xreflabel="dict_xsyn">
- <title>dict_xsyn</title>
+ <title>dict_xsyn &mdash; example synonym full-text search dictionary</title>
 
  <indexterm zone="dict-xsyn">
   <primary>dict_xsyn</primary>

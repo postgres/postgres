@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/ltree.sgml -->
 
 <sect1 id="ltree" xreflabel="ltree">
- <title>ltree</title>
+ <title>ltree &mdash; hierarchical tree-like data type</title>
 
  <indexterm zone="ltree">
   <primary>ltree</primary>
