@@ -15,12 +15,16 @@
  *
  * INSTR_TIME_IS_ZERO(t)			is t equal to zero?
  *
+ * INSTR_TIME_IS_LT(x, y)			x < y
+ *
  * INSTR_TIME_SET_ZERO(t)			set t to zero (memset is acceptable too)
  *
  * INSTR_TIME_SET_CURRENT(t)		set t to current time
  *
  * INSTR_TIME_SET_CURRENT_LAZY(t)	set t to current time if t is zero,
  *									evaluates to whether t changed
+ *
+ * INSTR_TIME_SET_SECONDS(t, s)		set t to s seconds
  *
  * INSTR_TIME_ADD(x, y)				x += y
  *
@@ -122,6 +126,9 @@ pg_clock_gettime_ns(void)
 #define INSTR_TIME_SET_CURRENT(t) \
 	((t) = pg_clock_gettime_ns())
 
+#define INSTR_TIME_SET_SECONDS(t, s) \
+	((t).ticks = NS_PER_S * (s))
+
 #define INSTR_TIME_GET_NANOSEC(t) \
 	((int64) (t).ticks)
 
@@ -156,6 +163,9 @@ GetTimerFrequency(void)
 #define INSTR_TIME_SET_CURRENT(t) \
 	((t) = pg_query_performance_counter())
 
+#define INSTR_TIME_SET_SECONDS(t, s) \
+	((t).ticks = s * GetTimerFrequency())
+
 #define INSTR_TIME_GET_NANOSEC(t) \
 	((int64) ((t).ticks * ((double) NS_PER_S / GetTimerFrequency())))
 
@@ -167,6 +177,8 @@ GetTimerFrequency(void)
  */
 
 #define INSTR_TIME_IS_ZERO(t)	((t).ticks == 0)
+
+#define INSTR_TIME_IS_LT(x, y)	((x).ticks < (y).ticks)
 
 
 #define INSTR_TIME_SET_ZERO(t)	((t).ticks = 0)
