@@ -123,7 +123,8 @@ typedef struct Query
 
 	CmdType		commandType;	/* select|insert|update|delete|merge|utility */
 
-	QuerySource querySource;	/* where did I come from? */
+	/* where did I come from? */
+	QuerySource querySource;
 
 	/*
 	 * query identifier (can be set by plugins); ignored for equal, as it
@@ -131,39 +132,58 @@ typedef struct Query
 	 */
 	uint64		queryId pg_node_attr(equal_ignore, read_write_ignore, read_as(0));
 
-	bool		canSetTag;		/* do I set the command result tag? */
+	/* do I set the command result tag? */
+	bool		canSetTag;
 
 	Node	   *utilityStmt;	/* non-null if commandType == CMD_UTILITY */
 
-	int			resultRelation; /* rtable index of target relation for
-								 * INSERT/UPDATE/DELETE/MERGE; 0 for SELECT */
+	/*
+	 * rtable index of target relation for INSERT/UPDATE/DELETE/MERGE; 0 for
+	 * SELECT.
+	 */
+	int			resultRelation;
 
-	bool		hasAggs;		/* has aggregates in tlist or havingQual */
-	bool		hasWindowFuncs; /* has window functions in tlist */
-	bool		hasTargetSRFs;	/* has set-returning functions in tlist */
-	bool		hasSubLinks;	/* has subquery SubLink */
-	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
-	bool		hasRecursive;	/* WITH RECURSIVE was specified */
-	bool		hasModifyingCTE;	/* has INSERT/UPDATE/DELETE in WITH */
-	bool		hasForUpdate;	/* FOR [KEY] UPDATE/SHARE was specified */
-	bool		hasRowSecurity; /* rewriter has applied some RLS policy */
-
-	bool		isReturn;		/* is a RETURN statement */
+	/* has aggregates in tlist or havingQual */
+	bool		hasAggs;
+	/* has window functions in tlist */
+	bool		hasWindowFuncs;
+	/* has set-returning functions in tlist */
+	bool		hasTargetSRFs;
+	/* has subquery SubLink */
+	bool		hasSubLinks;
+	/* distinctClause is from DISTINCT ON */
+	bool		hasDistinctOn;
+	/* WITH RECURSIVE was specified */
+	bool		hasRecursive;
+	/* has INSERT/UPDATE/DELETE in WITH */
+	bool		hasModifyingCTE;
+	/* FOR [KEY] UPDATE/SHARE was specified */
+	bool		hasForUpdate;
+	/* rewriter has applied some RLS policy */
+	bool		hasRowSecurity;
+	/* is a RETURN statement */
+	bool		isReturn;
 
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
 	List	   *rtable;			/* list of range table entries */
-	List	   *rteperminfos;	/* list of RTEPermissionInfo nodes for the
-								 * rtable entries having perminfoindex > 0 */
+
+	/*
+	 * list of RTEPermissionInfo nodes for the rtable entries having
+	 * perminfoindex > 0
+	 */
+	List	   *rteperminfos;
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses);
 								 * also USING clause for MERGE */
 
 	List	   *mergeActionList;	/* list of actions for MERGE (only) */
-	bool		mergeUseOuterJoin;	/* whether to use outer join */
+	/* whether to use outer join */
+	bool		mergeUseOuterJoin;
 
 	List	   *targetList;		/* target list (of TargetEntry) */
 
-	OverridingKind override;	/* OVERRIDING clause */
+	/* OVERRIDING clause */
+	OverridingKind override;
 
 	OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
 
@@ -191,11 +211,14 @@ typedef struct Query
 	Node	   *setOperations;	/* set-operation tree if this is top level of
 								 * a UNION/INTERSECT/EXCEPT query */
 
-	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
-								 * depends on to be semantically valid */
+	/*
+	 * A list of pg_constraint OIDs that the query depends on to be
+	 * semantically valid
+	 */
+	List	   *constraintDeps;
 
-	List	   *withCheckOptions;	/* a list of WithCheckOption's (added
-									 * during rewrite) */
+	/* a list of WithCheckOption's (added during rewrite) */
+	List	   *withCheckOptions;
 
 	/*
 	 * The following two fields identify the portion of the source text string
@@ -203,8 +226,10 @@ typedef struct Query
 	 * Queries, not in sub-queries.  When not set, they might both be zero, or
 	 * both be -1 meaning "unknown".
 	 */
-	int			stmt_location;	/* start location, or -1 if unknown */
-	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
+	/* start location, or -1 if unknown */
+	int			stmt_location;
+	/* length in bytes; 0 means "rest of string" */
+	int			stmt_len;
 } Query;
 
 
@@ -1231,14 +1256,21 @@ typedef struct RangeTblFunction
 	NodeTag		type;
 
 	Node	   *funcexpr;		/* expression tree for func call */
-	int			funccolcount;	/* number of columns it contributes to RTE */
+	/* number of columns it contributes to RTE */
+	int			funccolcount;
 	/* These fields record the contents of a column definition list, if any: */
-	List	   *funccolnames;	/* column names (list of String) */
-	List	   *funccoltypes;	/* OID list of column type OIDs */
-	List	   *funccoltypmods; /* integer list of column typmods */
-	List	   *funccolcollations;	/* OID list of column collation OIDs */
+	/* column names (list of String) */
+	List	   *funccolnames;
+	/* OID list of column type OIDs */
+	List	   *funccoltypes;
+	/* integer list of column typmods */
+	List	   *funccoltypmods;
+	/* OID list of column collation OIDs */
+	List	   *funccolcollations;
+
 	/* This is set during planning for use by the executor: */
-	Bitmapset  *funcparams;		/* PARAM_EXEC Param IDs affecting this func */
+	/* PARAM_EXEC Param IDs affecting this func */
+	Bitmapset  *funcparams;
 } RangeTblFunction;
 
 /*
@@ -1345,7 +1377,8 @@ typedef struct SortGroupClause
 	Oid			eqop;			/* the equality operator ('=' op) */
 	Oid			sortop;			/* the ordering operator ('<' op), or 0 */
 	bool		nulls_first;	/* do NULLs come before normal values? */
-	bool		hashable;		/* can eqop be implemented by hashing? */
+	/* can eqop be implemented by hashing? */
+	bool		hashable;
 } SortGroupClause;
 
 /*
@@ -1435,21 +1468,31 @@ typedef struct GroupingSet
 typedef struct WindowClause
 {
 	NodeTag		type;
-	char	   *name;			/* window name (NULL in an OVER clause) */
-	char	   *refname;		/* referenced window name, if any */
+	/* window name (NULL in an OVER clause) */
+	char	   *name;
+	/* referenced window name, if any */
+	char	   *refname;
 	List	   *partitionClause;	/* PARTITION BY list */
-	List	   *orderClause;	/* ORDER BY list */
+	/* ORDER BY list */
+	List	   *orderClause;
 	int			frameOptions;	/* frame_clause options, see WindowDef */
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
-	List	   *runCondition;	/* qual to help short-circuit execution */
-	Oid			startInRangeFunc;	/* in_range function for startOffset */
-	Oid			endInRangeFunc; /* in_range function for endOffset */
-	Oid			inRangeColl;	/* collation for in_range tests */
-	bool		inRangeAsc;		/* use ASC sort order for in_range tests? */
-	bool		inRangeNullsFirst;	/* nulls sort first for in_range tests? */
+	/* qual to help short-circuit execution */
+	List	   *runCondition;
+	/* in_range function for startOffset */
+	Oid			startInRangeFunc;
+	/* in_range function for endOffset */
+	Oid			endInRangeFunc;
+	/* collation for in_range tests */
+	Oid			inRangeColl;
+	/* use ASC sort order for in_range tests? */
+	bool		inRangeAsc;
+	/* nulls sort first for in_range tests? */
+	bool		inRangeNullsFirst;
 	Index		winref;			/* ID referenced by window functions */
-	bool		copiedOrder;	/* did we copy orderClause from refname? */
+	/* did we copy orderClause from refname? */
+	bool		copiedOrder;
 } WindowClause;
 
 /*
@@ -1568,13 +1611,22 @@ typedef struct CommonTableExpr
 	CTECycleClause *cycle_clause;
 	int			location;		/* token location, or -1 if unknown */
 	/* These fields are set during parse analysis: */
-	bool		cterecursive;	/* is this CTE actually recursive? */
-	int			cterefcount;	/* number of RTEs referencing this CTE
-								 * (excluding internal self-references) */
-	List	   *ctecolnames;	/* list of output column names */
-	List	   *ctecoltypes;	/* OID list of output column type OIDs */
-	List	   *ctecoltypmods;	/* integer list of output column typmods */
-	List	   *ctecolcollations;	/* OID list of column collation OIDs */
+	/* is this CTE actually recursive? */
+	bool		cterecursive;
+
+	/*
+	 * Number of RTEs referencing this CTE (excluding internal
+	 * self-references)
+	 */
+	int			cterefcount;
+	/* list of output column names */
+	List	   *ctecolnames;
+	/* OID list of output column type OIDs */
+	List	   *ctecoltypes;
+	/* integer list of output column typmods */
+	List	   *ctecoltypmods;
+	/* OID list of column collation OIDs */
+	List	   *ctecolcollations;
 } CommonTableExpr;
 
 /* Convenience macro to get the output tlist of a CTE's query */
@@ -1611,10 +1663,12 @@ typedef struct MergeAction
 	NodeTag		type;
 	bool		matched;		/* true=MATCHED, false=NOT MATCHED */
 	CmdType		commandType;	/* INSERT/UPDATE/DELETE/DO NOTHING */
-	OverridingKind override;	/* OVERRIDING clause */
+	/* OVERRIDING clause */
+	OverridingKind override;
 	Node	   *qual;			/* transformed WHEN conditions */
 	List	   *targetList;		/* the target list (of TargetEntry) */
-	List	   *updateColnos;	/* target attribute numbers of an UPDATE */
+	/* target attribute numbers of an UPDATE */
+	List	   *updateColnos;
 } MergeAction;
 
 /*
@@ -1824,10 +1878,14 @@ typedef struct SetOperationStmt
 	/* Eventually add fields for CORRESPONDING spec here */
 
 	/* Fields derived during parse analysis: */
-	List	   *colTypes;		/* OID list of output column type OIDs */
-	List	   *colTypmods;		/* integer list of output column typmods */
-	List	   *colCollations;	/* OID list of output column collation OIDs */
-	List	   *groupClauses;	/* a list of SortGroupClause's */
+	/* OID list of output column type OIDs */
+	List	   *colTypes;
+	/* integer list of output column typmods */
+	List	   *colTypmods;
+	/* OID list of output column collation OIDs */
+	List	   *colCollations;
+	/* a list of SortGroupClause's */
+	List	   *groupClauses;
 	/* groupClauses is NIL if UNION ALL, but must be set otherwise */
 } SetOperationStmt;
 
