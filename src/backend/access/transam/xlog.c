@@ -2191,6 +2191,8 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 				/* Measure I/O timing to write WAL data */
 				if (track_wal_io_timing)
 					INSTR_TIME_SET_CURRENT(start);
+				else
+					INSTR_TIME_SET_ZERO(start);
 
 				pgstat_report_wait_start(WAIT_EVENT_WAL_WRITE);
 				written = pg_pwrite(openLogFile, from, nleft, startoffset);
@@ -8151,6 +8153,8 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 	/* Measure I/O timing to sync the WAL file */
 	if (track_wal_io_timing)
 		INSTR_TIME_SET_CURRENT(start);
+	else
+		INSTR_TIME_SET_ZERO(start);
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_SYNC);
 	switch (sync_method)

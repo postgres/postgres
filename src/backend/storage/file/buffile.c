@@ -446,6 +446,8 @@ BufFileLoadBuffer(BufFile *file)
 
 	if (track_io_timing)
 		INSTR_TIME_SET_CURRENT(io_start);
+	else
+		INSTR_TIME_SET_ZERO(io_start);
 
 	/*
 	 * Read whatever we can get, up to a full bufferload.
@@ -525,6 +527,8 @@ BufFileDumpBuffer(BufFile *file)
 
 		if (track_io_timing)
 			INSTR_TIME_SET_CURRENT(io_start);
+		else
+			INSTR_TIME_SET_ZERO(io_start);
 
 		bytestowrite = FileWrite(thisfile,
 								 file->buffer.data + wpos,

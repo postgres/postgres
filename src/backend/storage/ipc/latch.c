@@ -1401,6 +1401,8 @@ WaitEventSetWait(WaitEventSet *set, long timeout,
 		Assert(timeout >= 0 && timeout <= INT_MAX);
 		cur_timeout = timeout;
 	}
+	else
+		INSTR_TIME_SET_ZERO(start_time);
 
 	pgstat_report_wait_start(wait_event_info);
 
