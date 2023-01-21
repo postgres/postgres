@@ -98,7 +98,27 @@ ALTER TABLE test_replica_identity3 ALTER COLUMN id TYPE bigint;
 -- used as replica identity.
 ALTER TABLE test_replica_identity3 ALTER COLUMN id DROP NOT NULL;
 
+--
+-- Test that replica identity can be set on an index that's not yet valid.
+-- (This matches the way pg_dump will try to dump a partitioned table.)
+--
+CREATE TABLE test_replica_identity4(id integer NOT NULL) PARTITION BY LIST (id);
+CREATE TABLE test_replica_identity4_1(id integer NOT NULL);
+ALTER TABLE ONLY test_replica_identity4
+  ATTACH PARTITION test_replica_identity4_1 FOR VALUES IN (1);
+ALTER TABLE ONLY test_replica_identity4
+  ADD CONSTRAINT test_replica_identity4_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY test_replica_identity4
+  REPLICA IDENTITY USING INDEX test_replica_identity4_pkey;
+ALTER TABLE ONLY test_replica_identity4_1
+  ADD CONSTRAINT test_replica_identity4_1_pkey PRIMARY KEY (id);
+\d+ test_replica_identity4
+ALTER INDEX test_replica_identity4_pkey
+  ATTACH PARTITION test_replica_identity4_1_pkey;
+\d+ test_replica_identity4
+
 DROP TABLE test_replica_identity;
 DROP TABLE test_replica_identity2;
 DROP TABLE test_replica_identity3;
+DROP TABLE test_replica_identity4;
 DROP TABLE test_replica_identity_othertable;
