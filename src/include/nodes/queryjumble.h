@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/include/utils/queryjumble.h
+ *	  src/include/nodes/queryjumble.h
  *
  *-------------------------------------------------------------------------
  */

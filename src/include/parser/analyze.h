@@ -15,8 +15,8 @@
 #define ANALYZE_H
 
 #include "nodes/params.h"
+#include "nodes/queryjumble.h"
 #include "parser/parse_node.h"
-#include "utils/queryjumble.h"
 
 /* Hook for plugins to get control at end of parse analysis */
 typedef void (*post_parse_analyze_hook_type) (ParseState *pstate,

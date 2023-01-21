@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * queryjumble.c
+ * queryjumblefuncs.c
  *	 Query normalization and fingerprinting.
  *
  * Normalization is a process whereby similar queries, typically differing only
@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/utils/misc/queryjumble.c
+ *	  src/backend/nodes/queryjumblefuncs.c
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,8 @@
 
 #include "common/hashfn.h"
 #include "miscadmin.h"
+#include "nodes/queryjumble.h"
 #include "parser/scansup.h"
-#include "utils/queryjumble.h"
 
 #define JUMBLE_SIZE				1024	/* query serialization buffer size */
 

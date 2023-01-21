@@ -26,7 +26,6 @@ OBJS = \
 	pg_rusage.o \
 	ps_status.o \
 	queryenvironment.o \
-	queryjumble.o \
 	rls.o \
 	sampling.o \
 	superuser.o \
