@@ -628,7 +628,15 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	}
 
 	if (should_exit)
+	{
+		/*
+		 * Reset the last-start time for this worker so that the launcher will
+		 * restart it without waiting for wal_retrieve_retry_interval.
+		 */
+		ApplyLauncherForgetWorkerStartTime(MySubscription->oid);
+
 		proc_exit(0);
+	}
 }
 
 /*

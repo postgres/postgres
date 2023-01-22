@@ -4877,6 +4877,10 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         environments where the number of times an infrastructure is accessed
         is taken into account.
        </para>
+       <para>
+        In logical replication, this parameter also limits how often a failing
+        replication apply worker will be respawned.
+       </para>
       </listitem>
      </varlistentry>
 

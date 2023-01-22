@@ -2009,6 +2009,16 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        about <quote>heavyweight</quote> locks.</entry>
      </row>
      <row>
+      <entry><literal>LogicalRepLauncherDSA</literal></entry>
+      <entry>Waiting to access logical replication launcher's dynamic shared
+       memory allocator.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalRepLauncherHash</literal></entry>
+      <entry>Waiting to access logical replication launcher's shared
+       hash table.</entry>
+     </row>
+     <row>
       <entry><literal>LogicalRepWorker</literal></entry>
       <entry>Waiting to read or update the state of logical replication
        workers.</entry>

@@ -1505,6 +1505,16 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	list_free(subworkers);
 
 	/*
+	 * Remove the no-longer-useful entry in the launcher's table of apply
+	 * worker start times.
+	 *
+	 * If this transaction rolls back, the launcher might restart a failed
+	 * apply worker before wal_retrieve_retry_interval milliseconds have
+	 * elapsed, but that's pretty harmless.
+	 */
+	ApplyLauncherForgetWorkerStartTime(subid);
+
+	/*
 	 * Cleanup of tablesync replication origins.
 	 *
 	 * Any READY-state relations would already have dealt with clean-ups.
