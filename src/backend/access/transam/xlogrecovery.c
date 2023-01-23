@@ -3145,10 +3145,12 @@ ReadRecord(XLogPrefetcher *xlogprefetcher, int emode,
 }
 
 /*
- * Read the XLOG page containing RecPtr into readBuf (if not read already).
- * Returns number of bytes read, if the page is read successfully, or
- * XLREAD_FAIL in case of errors.  When errors occur, they are ereport'ed, but
- * only if they have not been previously reported.
+ * Read the XLOG page containing targetPagePtr into readBuf (if not read
+ * already).  Returns number of bytes read, if the page is read successfully,
+ * or XLREAD_FAIL in case of errors.  When errors occur, they are ereport'ed,
+ * but only if they have not been previously reported.
+ *
+ * See XLogReaderRoutine.page_read for more details.
  *
  * While prefetching, xlogreader->nonblocking may be set.  In that case,
  * returns XLREAD_WOULDBLOCK if we'd otherwise have to wait for more WAL.
@@ -3156,11 +3158,11 @@ ReadRecord(XLogPrefetcher *xlogprefetcher, int emode,
  * This is responsible for restoring files from archive as needed, as well
  * as for waiting for the requested WAL record to arrive in standby mode.
  *
- * 'emode' specifies the log level used for reporting "file not found" or
- * "end of WAL" situations in archive recovery, or in standby mode when
- * promotion is triggered. If set to WARNING or below, XLogPageRead() returns
- * XLREAD_FAIL in those situations, on higher log levels the ereport() won't
- * return.
+ * xlogreader->private_data->emode specifies the log level used for reporting
+ * "file not found" or "end of WAL" situations in archive recovery, or in
+ * standby mode when promotion is triggered. If set to WARNING or below,
+ * XLogPageRead() returns XLREAD_FAIL in those situations, on higher log
+ * levels the ereport() won't return.
  *
  * In standby mode, if after a successful return of XLogPageRead() the
  * caller finds the record it's interested in to be broken, it should
