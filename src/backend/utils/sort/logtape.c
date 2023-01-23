@@ -537,14 +537,20 @@ ltsInitReadBuffer(LogicalTape *lt)
  * The tape set is initially empty. Use LogicalTapeCreate() to create
  * tapes in it.
  *
- * Serial callers pass NULL argument for shared, and -1 for worker.  Parallel
- * worker callers pass a shared file handle and their own worker number.
+ * In a single-process sort, pass NULL argument for fileset, and -1 for
+ * worker.
  *
- * Leader callers pass a shared file handle and -1 for worker. After creating
- * the tape set, use LogicalTapeImport() to import the worker tapes into it.
+ * In a parallel sort, parallel workers pass the shared fileset handle and
+ * their own worker number.  After the workers have finished, create the
+ * tape set in the leader, passing the shared fileset handle and -1 for
+ * worker, and use LogicalTapeImport() to import the worker tapes into it.
  *
  * Currently, the leader will only import worker tapes into the set, it does
  * not create tapes of its own, although in principle that should work.
+ *
+ * If preallocate is true, blocks for each individual tape are allocated in
+ * batches.  This avoids fragmentation when writing multiple tapes at the
+ * same time.
  */
 LogicalTapeSet *
 LogicalTapeSetCreate(bool preallocate, SharedFileSet *fileset, int worker)
