@@ -500,6 +500,11 @@ static void zero_var(NumericVar *var);
 static bool set_var_from_str(const char *str, const char *cp,
 							 NumericVar *dest, const char **endptr,
 							 Node *escontext);
+static bool set_var_from_non_decimal_integer_str(const char *str,
+												 const char *cp, int sign,
+												 int base, NumericVar *dest,
+												 const char **endptr,
+												 Node *escontext);
 static void set_var_from_num(Numeric num, NumericVar *dest);
 static void init_var_from_num(Numeric num, NumericVar *dest);
 static void set_var_from_var(const NumericVar *value, NumericVar *dest);
@@ -629,6 +634,8 @@ numeric_in(PG_FUNCTION_ARGS)
 	Node	   *escontext = fcinfo->context;
 	Numeric		res;
 	const char *cp;
+	const char *numstart;
+	int			sign;
 
 	/* Skip leading spaces */
 	cp = str;
@@ -640,70 +647,130 @@ numeric_in(PG_FUNCTION_ARGS)
 	}
 
 	/*
+	 * Process the number's sign. This duplicates logic in set_var_from_str(),
+	 * but it's worth doing here, since it simplifies the handling of
+	 * infinities and non-decimal integers.
+	 */
+	numstart = cp;
+	sign = NUMERIC_POS;
+
+	if (*cp == '+')
+		cp++;
+	else if (*cp == '-')
+	{
+		sign = NUMERIC_NEG;
+		cp++;
+	}
+
+	/*
 	 * Check for NaN and infinities.  We recognize the same strings allowed by
 	 * float8in().
+	 *
+	 * Since all other legal inputs have a digit or a decimal point after the
+	 * sign, we need only check for NaN/infinity if that's not the case.
 	 */
-	if (pg_strncasecmp(cp, "NaN", 3) == 0)
-	{
-		res = make_result(&const_nan);
-		cp += 3;
-	}
-	else if (pg_strncasecmp(cp, "Infinity", 8) == 0)
-	{
-		res = make_result(&const_pinf);
-		cp += 8;
-	}
-	else if (pg_strncasecmp(cp, "+Infinity", 9) == 0)
-	{
-		res = make_result(&const_pinf);
-		cp += 9;
-	}
-	else if (pg_strncasecmp(cp, "-Infinity", 9) == 0)
-	{
-		res = make_result(&const_ninf);
-		cp += 9;
-	}
-	else if (pg_strncasecmp(cp, "inf", 3) == 0)
-	{
-		res = make_result(&const_pinf);
-		cp += 3;
-	}
-	else if (pg_strncasecmp(cp, "+inf", 4) == 0)
-	{
-		res = make_result(&const_pinf);
-		cp += 4;
-	}
-	else if (pg_strncasecmp(cp, "-inf", 4) == 0)
-	{
-		res = make_result(&const_ninf);
-		cp += 4;
-	}
-	else
+	if (!isdigit((unsigned char) *cp) && *cp != '.')
 	{
 		/*
-		 * Use set_var_from_str() to parse a normal numeric value
+		 * The number must be NaN or infinity; anything else can only be a
+		 * syntax error. Note that NaN mustn't have a sign.
 		 */
-		NumericVar	value;
-		bool		have_error;
-
-		init_var(&value);
-
-		if (!set_var_from_str(str, cp, &value, &cp, escontext))
-			PG_RETURN_NULL();
+		if (pg_strncasecmp(numstart, "NaN", 3) == 0)
+		{
+			res = make_result(&const_nan);
+			cp = numstart + 3;
+		}
+		else if (pg_strncasecmp(cp, "Infinity", 8) == 0)
+		{
+			res = make_result(sign == NUMERIC_POS ? &const_pinf : &const_ninf);
+			cp += 8;
+		}
+		else if (pg_strncasecmp(cp, "inf", 3) == 0)
+		{
+			res = make_result(sign == NUMERIC_POS ? &const_pinf : &const_ninf);
+			cp += 3;
+		}
+		else
+			goto invalid_syntax;
 
 		/*
-		 * We duplicate a few lines of code here because we would like to
-		 * throw any trailing-junk syntax error before any semantic error
-		 * resulting from apply_typmod.  We can't easily fold the two cases
-		 * together because we mustn't apply apply_typmod to a NaN/Inf.
+		 * Check for trailing junk; there should be nothing left but spaces.
+		 *
+		 * We intentionally do this check before applying the typmod because
+		 * we would like to throw any trailing-junk syntax error before any
+		 * semantic error resulting from apply_typmod_special().
 		 */
 		while (*cp)
 		{
 			if (!isspace((unsigned char) *cp))
-				ereturn(escontext, (Datum) 0,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("invalid input syntax for type %s: \"%s\"",
-								"numeric", str)));
+				goto invalid_syntax;
+			cp++;
+		}
+
+		if (!apply_typmod_special(res, typmod, escontext))
+			PG_RETURN_NULL();
+	}
+	else
+	{
+		/*
+		 * We have a normal numeric value, which may be a non-decimal integer
+		 * or a regular decimal number.
+		 */
+		NumericVar	value;
+		int			base;
+		bool		have_error;
+
+		init_var(&value);
+
+		/*
+		 * Determine the number's base by looking for a non-decimal prefix
+		 * indicator ("0x", "0o", or "0b").
+		 */
+		if (cp[0] == '0')
+		{
+			switch (cp[1])
+			{
+				case 'x':
+				case 'X':
+					base = 16;
+					break;
+				case 'o':
+				case 'O':
+					base = 8;
+					break;
+				case 'b':
+				case 'B':
+					base = 2;
+					break;
+				default:
+					base = 10;
+			}
+		}
+		else
+			base = 10;
+
+		/* Parse the rest of the number and apply the sign */
+		if (base == 10)
+		{
+			if (!set_var_from_str(str, cp, &value, &cp, escontext))
+				PG_RETURN_NULL();
+			value.sign = sign;
+		}
+		else
+		{
+			if (!set_var_from_non_decimal_integer_str(str, cp + 2, sign, base,
+													  &value, &cp, escontext))
+				PG_RETURN_NULL();
+		}
+
+		/*
+		 * Should be nothing left but spaces. As above, throw any typmod error
+		 * after finishing syntax check.
+		 */
+		while (*cp)
+		{
+			if (!isspace((unsigned char) *cp))
+				goto invalid_syntax;
 			cp++;
 		}
 
@@ -718,26 +785,15 @@ numeric_in(PG_FUNCTION_ARGS)
 					 errmsg("value overflows numeric format")));
 
 		free_var(&value);
-
-		PG_RETURN_NUMERIC(res);
 	}
-
-	/* Should be nothing left but spaces */
-	while (*cp)
-	{
-		if (!isspace((unsigned char) *cp))
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type %s: \"%s\"",
-							"numeric", str)));
-		cp++;
-	}
-
-	/* As above, throw any typmod error after finishing syntax check */
-	if (!apply_typmod_special(res, typmod, escontext))
-		PG_RETURN_NULL();
 
 	PG_RETURN_NUMERIC(res);
+
+invalid_syntax:
+	ereturn(escontext, (Datum) 0,
+			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 errmsg("invalid input syntax for type %s: \"%s\"",
+					"numeric", str)));
 }
 
 
@@ -6989,6 +7045,188 @@ set_var_from_str(const char *str, const char *cp,
 	*endptr = cp;
 
 	return true;
+}
+
+
+/*
+ * Return the numeric value of a single hex digit.
+ */
+static inline int
+xdigit_value(char dig)
+{
+	return dig >= '0' && dig <= '9' ? dig - '0' :
+		dig >= 'a' && dig <= 'f' ? dig - 'a' + 10 :
+		dig >= 'A' && dig <= 'F' ? dig - 'A' + 10 : -1;
+}
+
+/*
+ * set_var_from_non_decimal_integer_str()
+ *
+ *	Parse a string containing a non-decimal integer
+ *
+ * This function does not handle leading or trailing spaces.  It returns
+ * the end+1 position parsed into *endptr, so that caller can check for
+ * trailing spaces/garbage if deemed necessary.
+ *
+ * cp is the place to actually start parsing; str is what to use in error
+ * reports.  The number's sign and base prefix indicator (e.g., "0x") are
+ * assumed to have already been parsed, so cp should point to the number's
+ * first digit in the base specified.
+ *
+ * base is expected to be 2, 8 or 16.
+ *
+ * Returns true on success, false on failure (if escontext points to an
+ * ErrorSaveContext; otherwise errors are thrown).
+ */
+static bool
+set_var_from_non_decimal_integer_str(const char *str, const char *cp, int sign,
+									 int base, NumericVar *dest,
+									 const char **endptr, Node *escontext)
+{
+	const char *firstdigit = cp;
+	int64		tmp;
+	int64		mul;
+	NumericVar	tmp_var;
+
+	init_var(&tmp_var);
+
+	zero_var(dest);
+
+	/*
+	 * Process input digits in groups that fit in int64.  Here "tmp" is the
+	 * value of the digits in the group, and "mul" is base^n, where n is the
+	 * number of digits in the group.  Thus tmp < mul, and we must start a new
+	 * group when mul * base threatens to overflow PG_INT64_MAX.
+	 */
+	tmp = 0;
+	mul = 1;
+
+	if (base == 16)
+	{
+		while (*cp)
+		{
+			if (isxdigit((unsigned char) *cp))
+			{
+				if (mul > PG_INT64_MAX / 16)
+				{
+					/* Add the contribution from this group of digits */
+					int64_to_numericvar(mul, &tmp_var);
+					mul_var(dest, &tmp_var, dest, 0);
+					int64_to_numericvar(tmp, &tmp_var);
+					add_var(dest, &tmp_var, dest);
+
+					/* Result will overflow if weight overflows int16 */
+					if (dest->weight > SHRT_MAX)
+						goto out_of_range;
+
+					/* Begin a new group */
+					tmp = 0;
+					mul = 1;
+				}
+
+				tmp = tmp * 16 + xdigit_value(*cp++);
+				mul = mul * 16;
+			}
+			else
+				break;
+		}
+	}
+	else if (base == 8)
+	{
+		while (*cp)
+		{
+			if (*cp >= '0' && *cp <= '7')
+			{
+				if (mul > PG_INT64_MAX / 8)
+				{
+					/* Add the contribution from this group of digits */
+					int64_to_numericvar(mul, &tmp_var);
+					mul_var(dest, &tmp_var, dest, 0);
+					int64_to_numericvar(tmp, &tmp_var);
+					add_var(dest, &tmp_var, dest);
+
+					/* Result will overflow if weight overflows int16 */
+					if (dest->weight > SHRT_MAX)
+						goto out_of_range;
+
+					/* Begin a new group */
+					tmp = 0;
+					mul = 1;
+				}
+
+				tmp = tmp * 8 + (*cp++ - '0');
+				mul = mul * 8;
+			}
+			else
+				break;
+		}
+	}
+	else if (base == 2)
+	{
+		while (*cp)
+		{
+			if (*cp >= '0' && *cp <= '1')
+			{
+				if (mul > PG_INT64_MAX / 2)
+				{
+					/* Add the contribution from this group of digits */
+					int64_to_numericvar(mul, &tmp_var);
+					mul_var(dest, &tmp_var, dest, 0);
+					int64_to_numericvar(tmp, &tmp_var);
+					add_var(dest, &tmp_var, dest);
+
+					/* Result will overflow if weight overflows int16 */
+					if (dest->weight > SHRT_MAX)
+						goto out_of_range;
+
+					/* Begin a new group */
+					tmp = 0;
+					mul = 1;
+				}
+
+				tmp = tmp * 2 + (*cp++ - '0');
+				mul = mul * 2;
+			}
+			else
+				break;
+		}
+	}
+	else
+		/* Should never happen; treat as invalid input */
+		goto invalid_syntax;
+
+	/* Check that we got at least one digit */
+	if (unlikely(cp == firstdigit))
+		goto invalid_syntax;
+
+	/* Add the contribution from the final group of digits */
+	int64_to_numericvar(mul, &tmp_var);
+	mul_var(dest, &tmp_var, dest, 0);
+	int64_to_numericvar(tmp, &tmp_var);
+	add_var(dest, &tmp_var, dest);
+
+	if (dest->weight > SHRT_MAX)
+		goto out_of_range;
+
+	dest->sign = sign;
+
+	free_var(&tmp_var);
+
+	/* Return end+1 position for caller */
+	*endptr = cp;
+
+	return true;
+
+out_of_range:
+	ereturn(escontext, false,
+			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			 errmsg("value overflows numeric format")));
+
+invalid_syntax:
+	ereturn(escontext, false,
+			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 errmsg("invalid input syntax for type %s: \"%s\"",
+					"numeric", str)));
 }
 
 

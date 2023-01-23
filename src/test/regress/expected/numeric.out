@@ -2144,6 +2144,12 @@ INSERT INTO num_input_test(n1) VALUES (' -inf ');
 INSERT INTO num_input_test(n1) VALUES (' Infinity ');
 INSERT INTO num_input_test(n1) VALUES (' +inFinity ');
 INSERT INTO num_input_test(n1) VALUES (' -INFINITY ');
+INSERT INTO num_input_test(n1) VALUES ('0b10001110111100111100001001010');
+INSERT INTO num_input_test(n1) VALUES ('  -0B1010101101010100101010011000110011101011000111110000101011010010  ');
+INSERT INTO num_input_test(n1) VALUES ('  +0o112402761777 ');
+INSERT INTO num_input_test(n1) VALUES ('-0O001255245230633431670261');
+INSERT INTO num_input_test(n1) VALUES ('-0x0000000000000000000000000deadbeef');
+INSERT INTO num_input_test(n1) VALUES (' 0X30b1F33a6DF0bD4E64DF9BdA7D15 ');
 -- bad inputs
 INSERT INTO num_input_test(n1) VALUES ('     ');
 ERROR:  invalid input syntax for type numeric: "     "
@@ -2177,27 +2183,61 @@ INSERT INTO num_input_test(n1) VALUES (' N aN ');
 ERROR:  invalid input syntax for type numeric: " N aN "
 LINE 1: INSERT INTO num_input_test(n1) VALUES (' N aN ');
                                                ^
+INSERT INTO num_input_test(n1) VALUES ('+NaN');
+ERROR:  invalid input syntax for type numeric: "+NaN"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('+NaN');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('-NaN');
+ERROR:  invalid input syntax for type numeric: "-NaN"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('-NaN');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('+ infinity');
 ERROR:  invalid input syntax for type numeric: "+ infinity"
 LINE 1: INSERT INTO num_input_test(n1) VALUES ('+ infinity');
                                                ^
+INSERT INTO num_input_test(n1) VALUES ('0b1112');
+ERROR:  invalid input syntax for type numeric: "0b1112"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('0b1112');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('0c1112');
+ERROR:  invalid input syntax for type numeric: "0c1112"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('0c1112');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('0o12345678');
+ERROR:  invalid input syntax for type numeric: "0o12345678"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('0o12345678');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('0x1eg');
+ERROR:  invalid input syntax for type numeric: "0x1eg"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('0x1eg');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('0x12.34');
+ERROR:  invalid input syntax for type numeric: "0x12.34"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('0x12.34');
+                                               ^
 SELECT * FROM num_input_test;
-    n1     
------------
-       123
-   3245874
-    -93853
-    555.50
-   -555.50
-       NaN
-       NaN
-  Infinity
-  Infinity
- -Infinity
-  Infinity
-  Infinity
- -Infinity
-(13 rows)
+                n1                 
+-----------------------------------
+                               123
+                           3245874
+                            -93853
+                            555.50
+                           -555.50
+                               NaN
+                               NaN
+                          Infinity
+                          Infinity
+                         -Infinity
+                          Infinity
+                          Infinity
+                         -Infinity
+                         299792458
+             -12345678901234567890
+                        9999999999
+             -12345678900987654321
+                       -3735928559
+ 987654321234567898765432123456789
+(19 rows)
 
 -- Also try it with non-error-throwing API
 SELECT pg_input_is_valid('34.5', 'numeric');
@@ -2240,6 +2280,12 @@ SELECT pg_input_error_message('1234.567', 'numeric(7,4)');
  pg_input_error_message 
 ------------------------
  numeric field overflow
+(1 row)
+
+SELECT pg_input_error_message('0x1234.567', 'numeric');
+               pg_input_error_message                
+-----------------------------------------------------
+ invalid input syntax for type numeric: "0x1234.567"
 (1 row)
 
 --
