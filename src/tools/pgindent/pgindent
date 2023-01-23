@@ -299,12 +299,13 @@ sub show_diff
 	my $source_filename = shift;
 
 	my $post_fh = new File::Temp(TEMPLATE => "pgdiffXXXXX");
+	my $post_fh_filename = $post_fh->filename;
 
 	print $post_fh $indented;
 
 	$post_fh->close();
 
-	my $diff = `diff -upd $source_filename $post_fh->filename  2>&1`;
+	my $diff = `diff -upd "$source_filename" "$post_fh_filename"  2>&1`;
 	return $diff;
 }
 
