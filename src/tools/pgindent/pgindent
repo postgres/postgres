@@ -21,16 +21,28 @@ my $indent_opts =
 
 my $devnull = File::Spec->devnull;
 
-my ($typedefs_file, $typedef_str, $code_base, $excludes, $indent, $build);
+my ($typedefs_file, $typedef_str, $code_base,
+	$excludes,      $indent,      $build,
+	$show_diff,     $silent_diff, $help);
+
+$help = 0;
 
 my %options = (
+	"help"               => \$help,
 	"typedefs=s"         => \$typedefs_file,
 	"list-of-typedefs=s" => \$typedef_str,
 	"code-base=s"        => \$code_base,
 	"excludes=s"         => \$excludes,
 	"indent=s"           => \$indent,
-	"build"              => \$build,);
-GetOptions(%options) || die "bad command line argument\n";
+	"build"              => \$build,
+	"show-diff"          => \$show_diff,
+	"silent-diff"        => \$silent_diff,);
+GetOptions(%options) || usage("bad command line argument");
+
+usage() if $help;
+
+usage("Cannot have both --silent-diff and --show-diff")
+  if $silent_diff && $show_diff;
 
 run_build($code_base) if ($build);
 
@@ -229,8 +241,7 @@ sub pre_indent
 
 sub post_indent
 {
-	my $source          = shift;
-	my $source_filename = shift;
+	my $source = shift;
 
 	# Restore CATALOG lines
 	$source =~ s!^/\*(CATALOG\(.*)\*/$!$1!gm;
@@ -280,33 +291,21 @@ sub run_indent
 	close($src_out);
 
 	return $source;
-
 }
 
-
-# for development diagnostics
-sub diff
+sub show_diff
 {
-	my $pre   = shift;
-	my $post  = shift;
-	my $flags = shift || "";
+	my $indented        = shift;
+	my $source_filename = shift;
 
-	print STDERR "running diff\n";
+	my $post_fh = new File::Temp(TEMPLATE => "pgdiffXXXXX");
 
-	my $pre_fh  = new File::Temp(TEMPLATE => "pgdiffbXXXXX");
-	my $post_fh = new File::Temp(TEMPLATE => "pgdiffaXXXXX");
+	print $post_fh $indented;
 
-	print $pre_fh $pre;
-	print $post_fh $post;
-
-	$pre_fh->close();
 	$post_fh->close();
 
-	system( "diff $flags "
-		  . $pre_fh->filename . " "
-		  . $post_fh->filename
-		  . " >&2");
-	return;
+	my $diff = `diff -upd $source_filename $post_fh->filename  2>&1`;
+	return $diff;
 }
 
 
@@ -377,6 +376,34 @@ sub build_clean
 	return;
 }
 
+sub usage
+{
+	my $message  = shift;
+	my $helptext = <<'EOF';
+Usage:
+pgindent [OPTION]... [FILE]...
+Options:
+	--help                  show this message and quit
+	--typedefs=FILE         file containing a list of typedefs
+	--list-of-typedefs=STR  string containing typedefs, space separated
+	--code-base=DIR         path to the base of PostgreSQL source code
+	--excludes=PATH         file containing list of filename patterns to ignore
+	--indent=PATH           path to pg_bsd_indent program
+	--build                 build the pg_bsd_indent program
+	--show-diff             show the changes that would be made
+	--silent-diff           exit with status 2 if any changes would be made
+EOF
+	if ($help)
+	{
+		print $helptext;
+		exit 0;
+	}
+	else
+	{
+		print STDERR "$message\n", $helptext;
+		exit 1;
+	}
+}
 
 # main
 
@@ -404,6 +431,8 @@ push(@files, @ARGV);
 
 foreach my $source_filename (@files)
 {
+	# ignore anything that's not a .c or .h file
+	next unless $source_filename =~ /\.[ch]$/;
 
 	# Automatically ignore .c and .h files that correspond to a .y or .l
 	# file.  indent tends to get badly confused by Bison/flex output,
@@ -427,9 +456,26 @@ foreach my $source_filename (@files)
 		next;
 	}
 
-	$source = post_indent($source, $source_filename);
+	$source = post_indent($source);
 
-	write_source($source, $source_filename) if $source ne $orig_source;
+	if ($source ne $orig_source)
+	{
+		if ($silent_diff)
+		{
+			exit 2;
+		}
+		elsif ($show_diff)
+		{
+			print show_diff($source, $source_filename);
+		}
+		else
+		{
+			write_source($source, $source_filename);
+		}
+	}
+
 }
 
 build_clean($code_base) if $build;
+
+exit 0;

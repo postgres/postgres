@@ -33,6 +33,13 @@ file can be specified using the --excludes command line option. If indenting
 a PostgreSQL source tree, this option isn't necessary, as it will find the file
 src/tools/pgindent/exclude_file_patterns.
 
+There are also two non-destructive modes of pgindent. If given the --show-diff
+option pgindent will show the changes it would make, but doesn't actually make
+them. If given instead the --silent-diff option, pgindent will exit with a
+status of 2 if it finds any indent changes are required, but will not
+make the changes or give any other information. This mode is intended for
+possible use in a git pre-commit hook.
+
 Any non-option arguments are taken as the names of files to be indented. In this
 case only these files will be changed, and nothing else will be touched. If the
 first non-option argument is not a .c or .h file, it is treated as the name
