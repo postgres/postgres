@@ -7,6 +7,7 @@ tests += {
   'tap': {
     'tests': [
       't/001_auth.pl',
+      't/002_bindpasswd.pl',
     ],
     'env': {
       'with_ldap': ldap.found() ? 'yes' : 'no',
