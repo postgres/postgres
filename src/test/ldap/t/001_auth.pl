@@ -3,15 +3,16 @@
 
 use strict;
 use warnings;
+
+use FindBin;
+use lib "$FindBin::RealBin/..";
+
 use File::Copy;
+use File::Basename;
+use LdapServer;
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
 use Test::More;
-
-
-my ($slapd, $ldap_bin_dir, $ldap_schema_dir);
-
-$ldap_bin_dir = undef;    # usually in PATH
 
 if ($ENV{with_ldap} ne 'yes')
 {
@@ -19,154 +20,29 @@ if ($ENV{with_ldap} ne 'yes')
 }
 elsif ($ENV{PG_TEST_EXTRA} !~ /\bldap\b/)
 {
-	plan skip_all => 'Potentially unsafe test LDAP not enabled in PG_TEST_EXTRA';
+	plan skip_all =>
+	  'Potentially unsafe test LDAP not enabled in PG_TEST_EXTRA';
 }
-elsif ($^O eq 'darwin' && -d '/opt/homebrew/opt/openldap')
-{
-	# typical paths for Homebrew on ARM
-	$slapd           = '/opt/homebrew/opt/openldap/libexec/slapd';
-	$ldap_schema_dir = '/opt/homebrew/etc/openldap/schema';
-}
-elsif ($^O eq 'darwin' && -d '/usr/local/opt/openldap')
-{
-	# typical paths for Homebrew on Intel
-	$slapd           = '/usr/local/opt/openldap/libexec/slapd';
-	$ldap_schema_dir = '/usr/local/etc/openldap/schema';
-}
-elsif ($^O eq 'darwin' && -d '/opt/local/etc/openldap')
-{
-	# typical paths for MacPorts
-	$slapd           = '/opt/local/libexec/slapd';
-	$ldap_schema_dir = '/opt/local/etc/openldap/schema';
-}
-elsif ($^O eq 'linux')
-{
-	$slapd           = '/usr/sbin/slapd';
-	$ldap_schema_dir = '/etc/ldap/schema' if -d '/etc/ldap/schema';
-	$ldap_schema_dir = '/etc/openldap/schema' if -d '/etc/openldap/schema';
-}
-elsif ($^O eq 'freebsd')
-{
-	$slapd           = '/usr/local/libexec/slapd';
-	$ldap_schema_dir = '/usr/local/etc/openldap/schema';
-}
-elsif ($^O eq 'openbsd')
-{
-	$slapd           = '/usr/local/libexec/slapd';
-	$ldap_schema_dir = '/usr/local/share/examples/openldap/schema';
-}
-else
+elsif (!$LdapServer::setup)
 {
 	plan skip_all =>
 	  "ldap tests not supported on $^O or dependencies not installed";
 }
 
-# make your own edits here
-#$slapd = '';
-#$ldap_bin_dir = '';
-#$ldap_schema_dir = '';
+note "setting up LDAP server";
 
-$ENV{PATH} = "$ldap_bin_dir:$ENV{PATH}" if $ldap_bin_dir;
+my $ldap_rootpw = 'secret';
+my $ldap = LdapServer->new($ldap_rootpw, 'anonymous');    # use anonymous auth
+$ldap->ldapadd_file('authdata.ldif');
+$ldap->ldapsetpw('uid=test1,dc=example,dc=net', 'secret1');
+$ldap->ldapsetpw('uid=test2,dc=example,dc=net', 'secret2');
 
-my $ldap_datadir  = "${PostgreSQL::Test::Utils::tmp_check}/openldap-data";
-my $slapd_certs   = "${PostgreSQL::Test::Utils::tmp_check}/slapd-certs";
-my $slapd_conf    = "${PostgreSQL::Test::Utils::tmp_check}/slapd.conf";
-my $slapd_pidfile = "${PostgreSQL::Test::Utils::tmp_check}/slapd.pid";
-my $slapd_logfile = "${PostgreSQL::Test::Utils::log_path}/slapd.log";
-my $ldap_conf     = "${PostgreSQL::Test::Utils::tmp_check}/ldap.conf";
-my $ldap_server   = 'localhost';
-my $ldap_port     = PostgreSQL::Test::Cluster::get_free_port();
-my $ldaps_port    = PostgreSQL::Test::Cluster::get_free_port();
-my $ldap_url      = "ldap://$ldap_server:$ldap_port";
-my $ldaps_url     = "ldaps://$ldap_server:$ldaps_port";
-my $ldap_basedn   = 'dc=example,dc=net';
-my $ldap_rootdn   = 'cn=Manager,dc=example,dc=net';
-my $ldap_rootpw   = 'secret';
-my $ldap_pwfile   = "${PostgreSQL::Test::Utils::tmp_check}/ldappassword";
-
-note "setting up slapd";
-
-append_to_file(
-	$slapd_conf,
-	qq{include $ldap_schema_dir/core.schema
-include $ldap_schema_dir/cosine.schema
-include $ldap_schema_dir/nis.schema
-include $ldap_schema_dir/inetorgperson.schema
-
-pidfile $slapd_pidfile
-logfile $slapd_logfile
-
-access to *
-        by * read
-        by anonymous auth
-
-database ldif
-directory $ldap_datadir
-
-TLSCACertificateFile $slapd_certs/ca.crt
-TLSCertificateFile $slapd_certs/server.crt
-TLSCertificateKeyFile $slapd_certs/server.key
-
-suffix "dc=example,dc=net"
-rootdn "$ldap_rootdn"
-rootpw $ldap_rootpw});
+my ($ldap_server, $ldap_port,   $ldaps_port, $ldap_url,
+	$ldaps_url,   $ldap_basedn, $ldap_rootdn
+) = $ldap->prop(qw(server port s_port url s_url basedn rootdn));
 
 # don't bother to check the server's cert (though perhaps we should)
-append_to_file(
-	$ldap_conf,
-	qq{TLS_REQCERT never
-});
-
-mkdir $ldap_datadir or die;
-mkdir $slapd_certs  or die;
-
-# use existing certs from nearby SSL test suite
-copy "../ssl/ssl/server_ca.crt", "$slapd_certs/ca.crt"
-  || die "copying ca.crt: $!";
-copy "../ssl/ssl/server-cn-only.crt", "$slapd_certs/server.crt"
-  || die "copying server.crt: $!";;
-copy "../ssl/ssl/server-cn-only.key", "$slapd_certs/server.key"
-  || die "copying server.key: $!";;
-
-system_or_bail $slapd, '-f', $slapd_conf, '-h', "$ldap_url $ldaps_url";
-
-END
-{
-	kill 'INT', `cat $slapd_pidfile` if -f $slapd_pidfile;
-}
-
-append_to_file($ldap_pwfile, $ldap_rootpw);
-chmod 0600, $ldap_pwfile or die;
-
-# wait until slapd accepts requests
-my $retries = 0;
-while (1)
-{
-	last
-	  if (
-		system_log(
-			"ldapsearch", "-sbase",
-			"-H",         $ldap_url,
-			"-b",         $ldap_basedn,
-			"-D",         $ldap_rootdn,
-			"-y",         $ldap_pwfile,
-			"-n",         "'objectclass=*'") == 0);
-	die "cannot connect to slapd" if ++$retries >= 300;
-	note "waiting for slapd to accept requests...";
-	Time::HiRes::usleep(1000000);
-}
-
-$ENV{'LDAPURI'}    = $ldap_url;
-$ENV{'LDAPBINDDN'} = $ldap_rootdn;
-$ENV{'LDAPCONF'}   = $ldap_conf;
-
-note "loading LDAP data";
-
-system_or_bail 'ldapadd',    '-x', '-y', $ldap_pwfile, '-f', 'authdata.ldif';
-system_or_bail 'ldappasswd', '-x', '-y', $ldap_pwfile, '-s', 'secret1',
-  'uid=test1,dc=example,dc=net';
-system_or_bail 'ldappasswd', '-x', '-y', $ldap_pwfile, '-s', 'secret2',
-  'uid=test2,dc=example,dc=net';
+$ENV{'LDAPTLS_REQCERT'} = "never";
 
 note "setting up PostgreSQL instance";
 
