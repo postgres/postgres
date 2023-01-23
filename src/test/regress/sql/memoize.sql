@@ -47,12 +47,14 @@ WHERE t2.unique1 < 1000;
 -- Try with LATERAL joins
 SELECT explain_memoize('
 SELECT COUNT(*),AVG(t2.unique1) FROM tenk1 t1,
-LATERAL (SELECT t2.unique1 FROM tenk1 t2 WHERE t1.twenty = t2.unique1) t2
+LATERAL (SELECT t2.unique1 FROM tenk1 t2
+         WHERE t1.twenty = t2.unique1 ORDER BY 1) t2
 WHERE t1.unique1 < 1000;', false);
 
 -- And check we get the expected results.
 SELECT COUNT(*),AVG(t2.unique1) FROM tenk1 t1,
-LATERAL (SELECT t2.unique1 FROM tenk1 t2 WHERE t1.twenty = t2.unique1) t2
+LATERAL (SELECT t2.unique1 FROM tenk1 t2
+         WHERE t1.twenty = t2.unique1 ORDER BY 1) t2
 WHERE t1.unique1 < 1000;
 
 -- Reduce work_mem so that we see some cache evictions
