@@ -13,12 +13,33 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "libpq/pqformat.h"
 #include "common/int.h"
+#include "port/pg_bitutils.h"
 #include "utils/array.h"
+#include "utils/datum.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
+/*
+ * SerialIOData
+ *		Used for caching element-type data in array_agg_serialize
+ */
+typedef struct SerialIOData
+{
+	FmgrInfo	typsend;
+} SerialIOData;
+
+/*
+ * DeserialIOData
+ *		Used for caching element-type data in array_agg_deserialize
+ */
+typedef struct DeserialIOData
+{
+	FmgrInfo	typreceive;
+	Oid			typioparam;
+} DeserialIOData;
 
 static Datum array_position_common(FunctionCallInfo fcinfo);
 
@@ -500,6 +521,316 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 }
 
 Datum
+array_agg_combine(PG_FUNCTION_ARGS)
+{
+	ArrayBuildState *state1;
+	ArrayBuildState *state2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
+
+	if (!AggCheckCallContext(fcinfo, &agg_context))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	state1 = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
+	state2 = PG_ARGISNULL(1) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(1);
+
+	if (state2 == NULL)
+	{
+		/*
+		 * NULL state2 is easy, just return state1, which we know is already
+		 * in the agg_context
+		 */
+		if (state1 == NULL)
+			PG_RETURN_NULL();
+		PG_RETURN_POINTER(state1);
+	}
+
+	if (state1 == NULL)
+	{
+		/* We must copy state2's data into the agg_context */
+		state1 = initArrayResultWithSize(state2->element_type, agg_context,
+										 false, state2->alen);
+
+		old_context = MemoryContextSwitchTo(agg_context);
+
+		for (int i = 0; i < state2->nelems; i++)
+		{
+			if (!state2->dnulls[i])
+				state1->dvalues[i] = datumCopy(state2->dvalues[i],
+											   state1->typbyval,
+											   state1->typlen);
+			else
+				state1->dvalues[i] = (Datum) 0;
+		}
+
+		MemoryContextSwitchTo(old_context);
+
+		memcpy(state1->dnulls, state2->dnulls, sizeof(bool) * state2->nelems);
+
+		state1->nelems = state2->nelems;
+
+		PG_RETURN_POINTER(state1);
+	}
+	else if (state2->nelems > 0)
+	{
+		/* We only need to combine the two states if state2 has any elements */
+		int			reqsize = state1->nelems + state2->nelems;
+		MemoryContext oldContext = MemoryContextSwitchTo(state1->mcontext);
+
+		Assert(state1->element_type == state2->element_type);
+
+		/* Enlarge state1 arrays if needed */
+		if (state1->alen < reqsize)
+		{
+			/* Use a power of 2 size rather than allocating just reqsize */
+			state1->alen = pg_nextpower2_32(reqsize);
+			state1->dvalues = (Datum *) repalloc(state1->dvalues,
+												 state1->alen * sizeof(Datum));
+			state1->dnulls = (bool *) repalloc(state1->dnulls,
+											   state1->alen * sizeof(bool));
+		}
+
+		/* Copy in the state2 elements to the end of the state1 arrays */
+		for (int i = 0; i < state2->nelems; i++)
+		{
+			if (!state2->dnulls[i])
+				state1->dvalues[i + state1->nelems] =
+					datumCopy(state2->dvalues[i],
+							  state1->typbyval,
+							  state1->typlen);
+			else
+				state1->dvalues[i + state1->nelems] = (Datum) 0;
+		}
+
+		memcpy(&state1->dnulls[state1->nelems], state2->dnulls,
+			   sizeof(bool) * state2->nelems);
+
+		state1->nelems = reqsize;
+
+		MemoryContextSwitchTo(oldContext);
+	}
+
+	PG_RETURN_POINTER(state1);
+}
+
+/*
+ * array_agg_serialize
+ *		Serialize ArrayBuildState into bytea.
+ */
+Datum
+array_agg_serialize(PG_FUNCTION_ARGS)
+{
+	ArrayBuildState *state;
+	StringInfoData buf;
+	bytea	   *result;
+
+	/* cannot be called directly because of internal-type argument */
+	Assert(AggCheckCallContext(fcinfo, NULL));
+
+	state = (ArrayBuildState *) PG_GETARG_POINTER(0);
+
+	pq_begintypsend(&buf);
+
+	/*
+	 * element_type. Putting this first is more convenient in deserialization
+	 */
+	pq_sendint32(&buf, state->element_type);
+
+	/*
+	 * nelems -- send first so we know how large to make the dvalues and
+	 * dnulls array during deserialization.
+	 */
+	pq_sendint64(&buf, state->nelems);
+
+	/* alen can be decided during deserialization */
+
+	/* typlen */
+	pq_sendint16(&buf, state->typlen);
+
+	/* typbyval */
+	pq_sendbyte(&buf, state->typbyval);
+
+	/* typalign */
+	pq_sendbyte(&buf, state->typalign);
+
+	/* dnulls */
+	pq_sendbytes(&buf, (char *) state->dnulls, sizeof(bool) * state->nelems);
+
+	/*
+	 * dvalues.  By agreement with array_agg_deserialize, when the element
+	 * type is byval, we just transmit the Datum array as-is, including any
+	 * null elements.  For by-ref types, we must invoke the element type's
+	 * send function, and we skip null elements (which is why the nulls flags
+	 * must be sent first).
+	 */
+	if (state->typbyval)
+		pq_sendbytes(&buf, (char *) state->dvalues,
+					 sizeof(Datum) * state->nelems);
+	else
+	{
+		SerialIOData *iodata;
+		int			i;
+
+		/* Avoid repeat catalog lookups for typsend function */
+		iodata = (SerialIOData *) fcinfo->flinfo->fn_extra;
+		if (iodata == NULL)
+		{
+			Oid			typsend;
+			bool		typisvarlena;
+
+			iodata = (SerialIOData *)
+				MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+								   sizeof(SerialIOData));
+			getTypeBinaryOutputInfo(state->element_type, &typsend,
+									&typisvarlena);
+			fmgr_info_cxt(typsend, &iodata->typsend,
+						  fcinfo->flinfo->fn_mcxt);
+			fcinfo->flinfo->fn_extra = (void *) iodata;
+		}
+
+		for (i = 0; i < state->nelems; i++)
+		{
+			bytea	   *outputbytes;
+
+			if (state->dnulls[i])
+				continue;
+			outputbytes = SendFunctionCall(&iodata->typsend,
+										   state->dvalues[i]);
+			pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
+			pq_sendbytes(&buf, VARDATA(outputbytes),
+						 VARSIZE(outputbytes) - VARHDRSZ);
+		}
+	}
+
+	result = pq_endtypsend(&buf);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+array_agg_deserialize(PG_FUNCTION_ARGS)
+{
+	bytea	   *sstate;
+	ArrayBuildState *result;
+	StringInfoData buf;
+	Oid			element_type;
+	int64		nelems;
+	const char *temp;
+
+	if (!AggCheckCallContext(fcinfo, NULL))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	sstate = PG_GETARG_BYTEA_PP(0);
+
+	/*
+	 * Copy the bytea into a StringInfo so that we can "receive" it using the
+	 * standard recv-function infrastructure.
+	 */
+	initStringInfo(&buf);
+	appendBinaryStringInfo(&buf,
+						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
+
+	/* element_type */
+	element_type = pq_getmsgint(&buf, 4);
+
+	/* nelems */
+	nelems = pq_getmsgint64(&buf);
+
+	/* Create output ArrayBuildState with the needed number of elements */
+	result = initArrayResultWithSize(element_type, CurrentMemoryContext,
+									 false, nelems);
+	result->nelems = nelems;
+
+	/* typlen */
+	result->typlen = pq_getmsgint(&buf, 2);
+
+	/* typbyval */
+	result->typbyval = pq_getmsgbyte(&buf);
+
+	/* typalign */
+	result->typalign = pq_getmsgbyte(&buf);
+
+	/* dnulls */
+	temp = pq_getmsgbytes(&buf, sizeof(bool) * nelems);
+	memcpy(result->dnulls, temp, sizeof(bool) * nelems);
+
+	/* dvalues --- see comment in array_agg_serialize */
+	if (result->typbyval)
+	{
+		temp = pq_getmsgbytes(&buf, sizeof(Datum) * nelems);
+		memcpy(result->dvalues, temp, sizeof(Datum) * nelems);
+	}
+	else
+	{
+		DeserialIOData *iodata;
+
+		/* Avoid repeat catalog lookups for typreceive function */
+		iodata = (DeserialIOData *) fcinfo->flinfo->fn_extra;
+		if (iodata == NULL)
+		{
+			Oid			typreceive;
+
+			iodata = (DeserialIOData *)
+				MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+								   sizeof(DeserialIOData));
+			getTypeBinaryInputInfo(element_type, &typreceive,
+								   &iodata->typioparam);
+			fmgr_info_cxt(typreceive, &iodata->typreceive,
+						  fcinfo->flinfo->fn_mcxt);
+			fcinfo->flinfo->fn_extra = (void *) iodata;
+		}
+
+		for (int i = 0; i < nelems; i++)
+		{
+			int			itemlen;
+			StringInfoData elem_buf;
+			char		csave;
+
+			if (result->dnulls[i])
+			{
+				result->dvalues[i] = (Datum) 0;
+				continue;
+			}
+
+			itemlen = pq_getmsgint(&buf, 4);
+			if (itemlen < 0 || itemlen > (buf.len - buf.cursor))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+						 errmsg("insufficient data left in message")));
+
+			/*
+			 * Rather than copying data around, we just set up a phony
+			 * StringInfo pointing to the correct portion of the input buffer.
+			 * We assume we can scribble on the input buffer so as to maintain
+			 * the convention that StringInfos have a trailing null.
+			 */
+			elem_buf.data = &buf.data[buf.cursor];
+			elem_buf.maxlen = itemlen + 1;
+			elem_buf.len = itemlen;
+			elem_buf.cursor = 0;
+
+			buf.cursor += itemlen;
+
+			csave = buf.data[buf.cursor];
+			buf.data[buf.cursor] = '\0';
+
+			/* Now call the element's receiveproc */
+			result->dvalues[i] = ReceiveFunctionCall(&iodata->typreceive,
+													 &elem_buf,
+													 iodata->typioparam,
+													 -1);
+
+			buf.data[buf.cursor] = csave;
+		}
+	}
+
+	pq_getmsgend(&buf);
+	pfree(buf.data);
+
+	PG_RETURN_POINTER(result);
+}
+
+Datum
 array_agg_finalfn(PG_FUNCTION_ARGS)
 {
 	Datum		result;
@@ -576,6 +907,299 @@ array_agg_array_transfn(PG_FUNCTION_ARGS)
 	 * pass the ArrayBuildStateArr pointer through nodeAgg.c's machinations.
 	 */
 	PG_RETURN_POINTER(state);
+}
+
+Datum
+array_agg_array_combine(PG_FUNCTION_ARGS)
+{
+	ArrayBuildStateArr *state1;
+	ArrayBuildStateArr *state2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
+
+	if (!AggCheckCallContext(fcinfo, &agg_context))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	state1 = PG_ARGISNULL(0) ? NULL : (ArrayBuildStateArr *) PG_GETARG_POINTER(0);
+	state2 = PG_ARGISNULL(1) ? NULL : (ArrayBuildStateArr *) PG_GETARG_POINTER(1);
+
+	if (state2 == NULL)
+	{
+		/*
+		 * NULL state2 is easy, just return state1, which we know is already
+		 * in the agg_context
+		 */
+		if (state1 == NULL)
+			PG_RETURN_NULL();
+		PG_RETURN_POINTER(state1);
+	}
+
+	if (state1 == NULL)
+	{
+		/* We must copy state2's data into the agg_context */
+		old_context = MemoryContextSwitchTo(agg_context);
+
+		state1 = initArrayResultArr(state2->array_type, InvalidOid,
+									agg_context, false);
+
+		state1->abytes = state2->abytes;
+		state1->data = (char *) palloc(state1->abytes);
+
+		if (state2->nullbitmap)
+		{
+			int			size = (state2->aitems + 7) / 8;
+
+			state1->nullbitmap = (bits8 *) palloc(size);
+			memcpy(state1->nullbitmap, state2->nullbitmap, size);
+		}
+
+		memcpy(state1->data, state2->data, state2->nbytes);
+		state1->nbytes = state2->nbytes;
+		state1->aitems = state2->aitems;
+		state1->nitems = state2->nitems;
+		state1->ndims = state2->ndims;
+		memcpy(state1->dims, state2->dims, sizeof(state2->dims));
+		memcpy(state1->lbs, state2->lbs, sizeof(state2->lbs));
+		state1->array_type = state2->array_type;
+		state1->element_type = state2->element_type;
+
+		MemoryContextSwitchTo(old_context);
+
+		PG_RETURN_POINTER(state1);
+	}
+
+	/* We only need to combine the two states if state2 has any items */
+	else if (state2->nitems > 0)
+	{
+		MemoryContext oldContext;
+		int			reqsize = state1->nbytes + state2->nbytes;
+		int			i;
+
+		/*
+		 * Check the states are compatible with each other.  Ensure we use the
+		 * same error messages that are listed in accumArrayResultArr so that
+		 * the same error is shown as would have been if we'd not used the
+		 * combine function for the aggregation.
+		 */
+		if (state1->ndims != state2->ndims)
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("cannot accumulate arrays of different dimensionality")));
+
+		/* Check dimensions match ignoring the first dimension. */
+		for (i = 1; i < state1->ndims; i++)
+		{
+			if (state1->dims[i] != state2->dims[i] || state1->lbs[i] != state2->lbs[i])
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("cannot accumulate arrays of different dimensionality")));
+		}
+
+
+		oldContext = MemoryContextSwitchTo(state1->mcontext);
+
+		/*
+		 * If there's not enough space in state1 then we'll need to reallocate
+		 * more.
+		 */
+		if (state1->abytes < reqsize)
+		{
+			/* use a power of 2 size rather than allocating just reqsize */
+			state1->abytes = pg_nextpower2_32(reqsize);
+			state1->data = (char *) repalloc(state1->data, state1->abytes);
+		}
+
+		if (state2->nullbitmap)
+		{
+			int			newnitems = state1->nitems + state2->nitems;
+
+			if (state1->nullbitmap == NULL)
+			{
+				/*
+				 * First input with nulls; we must retrospectively handle any
+				 * previous inputs by marking all their items non-null.
+				 */
+				state1->aitems = pg_nextpower2_32(Max(256, newnitems + 1));
+				state1->nullbitmap = (bits8 *) palloc((state1->aitems + 7) / 8);
+				array_bitmap_copy(state1->nullbitmap, 0,
+								  NULL, 0,
+								  state1->nitems);
+			}
+			else if (newnitems > state1->aitems)
+			{
+				int			newaitems = state1->aitems + state2->aitems;
+
+				state1->aitems = pg_nextpower2_32(newaitems);
+				state1->nullbitmap = (bits8 *)
+					repalloc(state1->nullbitmap, (state1->aitems + 7) / 8);
+			}
+			array_bitmap_copy(state1->nullbitmap, state1->nitems,
+							  state2->nullbitmap, 0,
+							  state2->nitems);
+		}
+
+		memcpy(state1->data + state1->nbytes, state2->data, state2->nbytes);
+		state1->nbytes += state2->nbytes;
+		state1->nitems += state2->nitems;
+
+		state1->dims[0] += state2->dims[0];
+		/* remaing dims already match, per test above */
+
+		Assert(state1->array_type == state2->array_type);
+		Assert(state1->element_type == state2->element_type);
+
+		MemoryContextSwitchTo(oldContext);
+	}
+
+	PG_RETURN_POINTER(state1);
+}
+
+/*
+ * array_agg_array_serialize
+ *		Serialize ArrayBuildStateArr into bytea.
+ */
+Datum
+array_agg_array_serialize(PG_FUNCTION_ARGS)
+{
+	ArrayBuildStateArr *state;
+	StringInfoData buf;
+	bytea	   *result;
+
+	/* cannot be called directly because of internal-type argument */
+	Assert(AggCheckCallContext(fcinfo, NULL));
+
+	state = (ArrayBuildStateArr *) PG_GETARG_POINTER(0);
+
+	pq_begintypsend(&buf);
+
+	/*
+	 * element_type. Putting this first is more convenient in deserialization
+	 * so that we can init the new state sooner.
+	 */
+	pq_sendint32(&buf, state->element_type);
+
+	/* array_type */
+	pq_sendint32(&buf, state->array_type);
+
+	/* nbytes */
+	pq_sendint32(&buf, state->nbytes);
+
+	/* data */
+	pq_sendbytes(&buf, state->data, state->nbytes);
+
+	/* abytes */
+	pq_sendint32(&buf, state->abytes);
+
+	/* aitems */
+	pq_sendint32(&buf, state->aitems);
+
+	/* nullbitmap */
+	if (state->nullbitmap)
+	{
+		Assert(state->aitems > 0);
+		pq_sendbytes(&buf, (char *) state->nullbitmap, (state->aitems + 7) / 8);
+	}
+
+	/* nitems */
+	pq_sendint32(&buf, state->nitems);
+
+	/* ndims */
+	pq_sendint32(&buf, state->ndims);
+
+	/* dims: XXX should we just send ndims elements? */
+	pq_sendbytes(&buf, (char *) state->dims, sizeof(state->dims));
+
+	/* lbs */
+	pq_sendbytes(&buf, (char *) state->lbs, sizeof(state->lbs));
+
+	result = pq_endtypsend(&buf);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+array_agg_array_deserialize(PG_FUNCTION_ARGS)
+{
+	bytea	   *sstate;
+	ArrayBuildStateArr *result;
+	StringInfoData buf;
+	Oid			element_type;
+	Oid			array_type;
+	int			nbytes;
+	const char *temp;
+
+	/* cannot be called directly because of internal-type argument */
+	Assert(AggCheckCallContext(fcinfo, NULL));
+
+	sstate = PG_GETARG_BYTEA_PP(0);
+
+	/*
+	 * Copy the bytea into a StringInfo so that we can "receive" it using the
+	 * standard recv-function infrastructure.
+	 */
+	initStringInfo(&buf);
+	appendBinaryStringInfo(&buf,
+						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
+
+	/* element_type */
+	element_type = pq_getmsgint(&buf, 4);
+
+	/* array_type */
+	array_type = pq_getmsgint(&buf, 4);
+
+	/* nbytes */
+	nbytes = pq_getmsgint(&buf, 4);
+
+	result = initArrayResultArr(array_type, element_type,
+								CurrentMemoryContext, false);
+
+	result->abytes = 1024;
+	while (result->abytes < nbytes)
+		result->abytes *= 2;
+
+	result->data = (char *) palloc(result->abytes);
+
+	/* data */
+	temp = pq_getmsgbytes(&buf, nbytes);
+	memcpy(result->data, temp, nbytes);
+	result->nbytes = nbytes;
+
+	/* abytes */
+	result->abytes = pq_getmsgint(&buf, 4);
+
+	/* aitems: might be 0 */
+	result->aitems = pq_getmsgint(&buf, 4);
+
+	/* nullbitmap */
+	if (result->aitems > 0)
+	{
+		int			size = (result->aitems + 7) / 8;
+
+		result->nullbitmap = (bits8 *) palloc(size);
+		temp = pq_getmsgbytes(&buf, size);
+		memcpy(result->nullbitmap, temp, size);
+	}
+	else
+		result->nullbitmap = NULL;
+
+	/* nitems */
+	result->nitems = pq_getmsgint(&buf, 4);
+
+	/* ndims */
+	result->ndims = pq_getmsgint(&buf, 4);
+
+	/* dims */
+	temp = pq_getmsgbytes(&buf, sizeof(result->dims));
+	memcpy(result->dims, temp, sizeof(result->dims));
+
+	/* lbs */
+	temp = pq_getmsgbytes(&buf, sizeof(result->lbs));
+	memcpy(result->lbs, temp, sizeof(result->lbs));
+
+	pq_getmsgend(&buf);
+	pfree(buf.data);
+
+	PG_RETURN_POINTER(result);
 }
 
 Datum

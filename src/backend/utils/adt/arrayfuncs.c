@@ -5263,6 +5263,24 @@ array_insert_slice(ArrayType *destArray,
 ArrayBuildState *
 initArrayResult(Oid element_type, MemoryContext rcontext, bool subcontext)
 {
+	/*
+	 * When using a subcontext, we can afford to start with a somewhat larger
+	 * initial array size.  Without subcontexts, we'd better hope that most of
+	 * the states stay small ...
+	 */
+	return initArrayResultWithSize(element_type, rcontext, subcontext,
+								   subcontext ? 64 : 8);
+}
+
+/*
+ * initArrayResultWithSize
+ *		As initArrayResult, but allow the initial size of the allocated arrays
+ *		to be specified.
+ */
+ArrayBuildState *
+initArrayResultWithSize(Oid element_type, MemoryContext rcontext,
+						bool subcontext, int initsize)
+{
 	ArrayBuildState *astate;
 	MemoryContext arr_context = rcontext;
 
@@ -5276,7 +5294,7 @@ initArrayResult(Oid element_type, MemoryContext rcontext, bool subcontext)
 		MemoryContextAlloc(arr_context, sizeof(ArrayBuildState));
 	astate->mcontext = arr_context;
 	astate->private_cxt = subcontext;
-	astate->alen = (subcontext ? 64 : 8);	/* arbitrary starting array size */
+	astate->alen = initsize;
 	astate->dvalues = (Datum *)
 		MemoryContextAlloc(arr_context, astate->alen * sizeof(Datum));
 	astate->dnulls = (bool *)

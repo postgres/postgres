@@ -305,10 +305,30 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 				 * functions; if not, we can't serialize partial-aggregation
 				 * results.
 				 */
-				else if (transinfo->aggtranstype == INTERNALOID &&
-						 (!OidIsValid(transinfo->serialfn_oid) ||
-						  !OidIsValid(transinfo->deserialfn_oid)))
-					root->hasNonSerialAggs = true;
+				else if (transinfo->aggtranstype == INTERNALOID)
+				{
+
+					if (!OidIsValid(transinfo->serialfn_oid) ||
+						!OidIsValid(transinfo->deserialfn_oid))
+						root->hasNonSerialAggs = true;
+
+					/*
+					 * array_agg_serialize and array_agg_deserialize make use
+					 * of the aggregate non-byval input type's send and
+					 * receive functions.  There's a chance that the type
+					 * being aggregated has one or both of these functions
+					 * missing.  In this case we must not allow the
+					 * aggregate's serial and deserial functions to be used.
+					 * It would be nice not to have special case this and
+					 * instead provide some sort of supporting function within
+					 * the aggregate to do this, but for now, that seems like
+					 * overkill for this one case.
+					 */
+					if ((transinfo->serialfn_oid == F_ARRAY_AGG_SERIALIZE ||
+						 transinfo->deserialfn_oid == F_ARRAY_AGG_DESERIALIZE) &&
+						!agg_args_support_sendreceive(aggref))
+						root->hasNonSerialAggs = true;
+				}
 			}
 		}
 		agginfo->transno = transno;

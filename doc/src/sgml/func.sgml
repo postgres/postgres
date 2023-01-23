@@ -19746,7 +19746,7 @@ SELECT NULLIF(value, '(none)') ...
        <para>
         Collects all the input values, including nulls, into an array.
        </para></entry>
-       <entry>No</entry>
+       <entry>Yes</entry>
       </row>
 
       <row>
@@ -19759,7 +19759,7 @@ SELECT NULLIF(value, '(none)') ...
         dimension.  (The inputs must all have the same dimensionality, and
         cannot be empty or null.)
        </para></entry>
-       <entry>No</entry>
+       <entry>Yes</entry>
       </row>
 
       <row>
@@ -20099,7 +20099,7 @@ SELECT NULLIF(value, '(none)') ...
         after the first is preceded by the
         corresponding <parameter>delimiter</parameter> (if it's not null).
        </para></entry>
-       <entry>No</entry>
+       <entry>Yes</entry>
       </row>
 
       <row>

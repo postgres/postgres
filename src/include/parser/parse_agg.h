@@ -35,6 +35,8 @@ extern Oid	resolve_aggregate_transtype(Oid aggfuncid,
 										Oid *inputTypes,
 										int numArguments);
 
+extern bool agg_args_support_sendreceive(Aggref *aggref);
+
 extern void build_aggregate_transfn_expr(Oid *agg_input_types,
 										 int agg_num_inputs,
 										 int agg_num_direct_inputs,
