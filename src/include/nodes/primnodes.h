@@ -64,11 +64,8 @@ typedef struct RangeVar
 {
 	NodeTag		type;
 
-	/*
-	 * the catalog (database) name, or NULL; ignored for read/write, since it
-	 * is presently not semantically meaningful
-	 */
-	char	   *catalogname pg_node_attr(read_write_ignore, read_as(NULL));
+	/* the catalog (database) name, or NULL */
+	char	   *catalogname;
 
 	/* the schema name, or NULL */
 	char	   *schemaname;
