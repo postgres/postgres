@@ -1090,11 +1090,13 @@ HeadlineJsonState
 HeadlineParsedText
 HeadlineWordEntry
 HeapCheckContext
+HeapPageFreeze
 HeapScanDesc
 HeapTuple
 HeapTupleData
 HeapTupleFields
 HeapTupleForceOption
+HeapTupleFreeze
 HeapTupleHeader
 HeapTupleHeaderData
 HeapTupleTableSlot
@@ -3838,6 +3840,7 @@ xl_hash_vacuum_one_page
 xl_heap_confirm
 xl_heap_delete
 xl_heap_freeze_page
+xl_heap_freeze_plan
 xl_heap_freeze_tuple
 xl_heap_header
 xl_heap_inplace
