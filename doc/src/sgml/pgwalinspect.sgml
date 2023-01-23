@@ -188,6 +188,38 @@ combined_size_percentage     | 2.8634072910530795
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>
+     <function>pg_get_wal_fpi_info(start_lsn pg_lsn, end_lsn pg_lsn) returns setof record</function>
+    </term>
+
+    <listitem>
+     <para>
+      Gets a copy of full page images as <type>bytea</type> values (after
+      applying decompression when necessary) and their information associated
+      with all the valid WAL records between
+      <replaceable>start_lsn</replaceable> and
+      <replaceable>end_lsn</replaceable>. Returns one row per full page image.
+      If <replaceable>start_lsn</replaceable> or
+      <replaceable>end_lsn</replaceable> are not yet available, the function
+      will raise an error. For example:
+<screen>
+postgres=# SELECT lsn, reltablespace, reldatabase, relfilenode, relblocknumber,
+                  forkname, substring(fpi for 24) as fpi_trimmed
+             FROM pg_get_wal_fpi_info('0/1801690', '0/1825C60');
+-[ RECORD 1 ]--+---------------------------------------------------
+lsn            | 0/1807E20
+reltablespace  | 1663
+reldatabase    | 5
+relfilenode    | 16396
+relblocknumber | 43
+forkname       | main
+fpi_trimmed    | \x00000000b89e660100000000a003c0030020042000000000
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </sect2>
 
