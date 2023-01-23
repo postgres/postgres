@@ -728,6 +728,7 @@ set parallel_tuple_cost TO 0;
 set parallel_leader_participation TO 0;
 set min_parallel_table_scan_size = 0;
 set bytea_output = 'escape';
+set max_parallel_workers_per_gather = 2;
 
 -- create a view as we otherwise have to repeat this query a few times.
 create view v_pagg_test AS
