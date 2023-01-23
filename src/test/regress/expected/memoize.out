@@ -63,7 +63,8 @@ WHERE t2.unique1 < 1000;
 -- Try with LATERAL joins
 SELECT explain_memoize('
 SELECT COUNT(*),AVG(t2.unique1) FROM tenk1 t1,
-LATERAL (SELECT t2.unique1 FROM tenk1 t2 WHERE t1.twenty = t2.unique1) t2
+LATERAL (SELECT t2.unique1 FROM tenk1 t2
+         WHERE t1.twenty = t2.unique1 ORDER BY 1) t2
 WHERE t1.unique1 < 1000;', false);
                                       explain_memoize                                      
 -------------------------------------------------------------------------------------------
@@ -74,7 +75,7 @@ WHERE t1.unique1 < 1000;', false);
                Rows Removed by Filter: 9000
          ->  Memoize (actual rows=1 loops=N)
                Cache Key: t1.twenty
-               Cache Mode: logical
+               Cache Mode: binary
                Hits: 980  Misses: 20  Evictions: Zero  Overflows: 0  Memory Usage: NkB
                ->  Index Only Scan using tenk1_unique1 on tenk1 t2 (actual rows=1 loops=N)
                      Index Cond: (unique1 = t1.twenty)
@@ -83,7 +84,8 @@ WHERE t1.unique1 < 1000;', false);
 
 -- And check we get the expected results.
 SELECT COUNT(*),AVG(t2.unique1) FROM tenk1 t1,
-LATERAL (SELECT t2.unique1 FROM tenk1 t2 WHERE t1.twenty = t2.unique1) t2
+LATERAL (SELECT t2.unique1 FROM tenk1 t2
+         WHERE t1.twenty = t2.unique1 ORDER BY 1) t2
 WHERE t1.unique1 < 1000;
  count |        avg         
 -------+--------------------
