@@ -2,19 +2,51 @@
 CREATE ROLE regress_role_super SUPERUSER;
 CREATE ROLE regress_role_admin CREATEDB CREATEROLE REPLICATION BYPASSRLS;
 GRANT CREATE ON DATABASE regression TO regress_role_admin WITH GRANT OPTION;
+CREATE ROLE regress_role_limited_admin CREATEROLE;
 CREATE ROLE regress_role_normal;
--- fail, only superusers can create users with these privileges
-SET SESSION AUTHORIZATION regress_role_admin;
+-- fail, CREATEROLE user can't give away role attributes without having them
+SET SESSION AUTHORIZATION regress_role_limited_admin;
 CREATE ROLE regress_nosuch_superuser SUPERUSER;
 ERROR:  must be superuser to create superusers
 CREATE ROLE regress_nosuch_replication_bypassrls REPLICATION BYPASSRLS;
-ERROR:  must be superuser to create replication users
+ERROR:  must have replication permission to create replication users
 CREATE ROLE regress_nosuch_replication REPLICATION;
-ERROR:  must be superuser to create replication users
+ERROR:  must have replication permission to create replication users
 CREATE ROLE regress_nosuch_bypassrls BYPASSRLS;
-ERROR:  must be superuser to create bypassrls users
--- ok, having CREATEROLE is enough to create users with these privileges
+ERROR:  must have bypassrls to create bypassrls users
+CREATE ROLE regress_nosuch_createdb CREATEDB;
+ERROR:  must have createdb permission to create createdb users
+-- ok, can create a role without any special attributes
+CREATE ROLE regress_role_limited;
+-- fail, can't give it in any of the restricted attributes
+ALTER ROLE regress_role_limited SUPERUSER;
+ERROR:  must be superuser to alter superuser roles or change superuser attribute
+ALTER ROLE regress_role_limited REPLICATION;
+ERROR:  must have replication privilege to change replication attribute
+ALTER ROLE regress_role_limited CREATEDB;
+ERROR:  must have createdb privilege to change createdb attribute
+ALTER ROLE regress_role_limited BYPASSRLS;
+ERROR:  must have bypassrls privilege to change bypassrls attribute
+DROP ROLE regress_role_limited;
+-- ok, can give away these role attributes if you have them
+SET SESSION AUTHORIZATION regress_role_admin;
+CREATE ROLE regress_replication_bypassrls REPLICATION BYPASSRLS;
+CREATE ROLE regress_replication REPLICATION;
+CREATE ROLE regress_bypassrls BYPASSRLS;
 CREATE ROLE regress_createdb CREATEDB;
+-- ok, can toggle these role attributes off and on if you have them
+ALTER ROLE regress_replication NOREPLICATION;
+ALTER ROLE regress_replication REPLICATION;
+ALTER ROLE regress_bypassrls NOBYPASSRLS;
+ALTER ROLE regress_bypassrls BYPASSRLS;
+ALTER ROLE regress_createdb NOCREATEDB;
+ALTER ROLE regress_createdb CREATEDB;
+-- fail, can't toggle SUPERUSER
+ALTER ROLE regress_createdb SUPERUSER;
+ERROR:  must be superuser to alter superuser roles or change superuser attribute
+ALTER ROLE regress_createdb NOSUPERUSER;
+ERROR:  must be superuser to alter superuser roles or change superuser attribute
+-- ok, having CREATEROLE is enough to create users with these privileges
 CREATE ROLE regress_createrole CREATEROLE NOINHERIT;
 GRANT CREATE ON DATABASE regression TO regress_createrole WITH GRANT OPTION;
 CREATE ROLE regress_login LOGIN;
@@ -53,9 +85,9 @@ ERROR:  permission denied to create database
 CREATE ROLE regress_plainrole;
 -- ok, roles with CREATEROLE can create new roles with it
 CREATE ROLE regress_rolecreator CREATEROLE;
--- ok, roles with CREATEROLE can create new roles with privilege they lack
-CREATE ROLE regress_hasprivs CREATEDB CREATEROLE LOGIN INHERIT
-	CONNECTION LIMIT 5;
+-- ok, roles with CREATEROLE can create new roles with different role
+-- attributes, including CREATEROLE
+CREATE ROLE regress_hasprivs CREATEROLE LOGIN INHERIT CONNECTION LIMIT 5;
 -- ok, we should be able to modify a role we created
 COMMENT ON ROLE regress_hasprivs IS 'some comment';
 ALTER ROLE regress_hasprivs RENAME TO regress_tenant;
@@ -164,6 +196,9 @@ DROP ROLE regress_plainrole;
 -- must revoke privileges before dropping role
 REVOKE CREATE ON DATABASE regression FROM regress_createrole CASCADE;
 -- ok, should be able to drop non-superuser roles we created
+DROP ROLE regress_replication_bypassrls;
+DROP ROLE regress_replication;
+DROP ROLE regress_bypassrls;
 DROP ROLE regress_createdb;
 DROP ROLE regress_createrole;
 DROP ROLE regress_login;

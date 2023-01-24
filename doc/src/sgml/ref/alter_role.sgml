@@ -70,11 +70,14 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    <link linkend="sql-revoke"><command>REVOKE</command></link> for that.)
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
-   Roles having <literal>CREATEROLE</literal> privilege can change any of these
-   settings except <literal>SUPERUSER</literal>, <literal>REPLICATION</literal>,
-   and <literal>BYPASSRLS</literal>; but only for non-superuser and
-   non-replication roles for which they have been
-   granted <literal>ADMIN OPTION</literal>.
+   Non-superuser roles having <literal>CREATEROLE</literal> privilege can
+   change most of these properties, but only for non-superuser and
+   non-replication roles for which they have been granted
+   <literal>ADMIN OPTION</literal>. Non-superusers cannot change the
+   <literal>SUPERUSER</literal> property and can change the
+   <literal>CREATEDB</literal>, <literal>REPLICATION</literal>, and
+   <literal>BYPASSRLS</literal> properties only if they possess the
+   corresponding property themselves.
    Ordinary roles can only change their own password.
   </para>
 

@@ -2,17 +2,47 @@
 CREATE ROLE regress_role_super SUPERUSER;
 CREATE ROLE regress_role_admin CREATEDB CREATEROLE REPLICATION BYPASSRLS;
 GRANT CREATE ON DATABASE regression TO regress_role_admin WITH GRANT OPTION;
+CREATE ROLE regress_role_limited_admin CREATEROLE;
 CREATE ROLE regress_role_normal;
 
--- fail, only superusers can create users with these privileges
-SET SESSION AUTHORIZATION regress_role_admin;
+-- fail, CREATEROLE user can't give away role attributes without having them
+SET SESSION AUTHORIZATION regress_role_limited_admin;
 CREATE ROLE regress_nosuch_superuser SUPERUSER;
 CREATE ROLE regress_nosuch_replication_bypassrls REPLICATION BYPASSRLS;
 CREATE ROLE regress_nosuch_replication REPLICATION;
 CREATE ROLE regress_nosuch_bypassrls BYPASSRLS;
+CREATE ROLE regress_nosuch_createdb CREATEDB;
+
+-- ok, can create a role without any special attributes
+CREATE ROLE regress_role_limited;
+
+-- fail, can't give it in any of the restricted attributes
+ALTER ROLE regress_role_limited SUPERUSER;
+ALTER ROLE regress_role_limited REPLICATION;
+ALTER ROLE regress_role_limited CREATEDB;
+ALTER ROLE regress_role_limited BYPASSRLS;
+DROP ROLE regress_role_limited;
+
+-- ok, can give away these role attributes if you have them
+SET SESSION AUTHORIZATION regress_role_admin;
+CREATE ROLE regress_replication_bypassrls REPLICATION BYPASSRLS;
+CREATE ROLE regress_replication REPLICATION;
+CREATE ROLE regress_bypassrls BYPASSRLS;
+CREATE ROLE regress_createdb CREATEDB;
+
+-- ok, can toggle these role attributes off and on if you have them
+ALTER ROLE regress_replication NOREPLICATION;
+ALTER ROLE regress_replication REPLICATION;
+ALTER ROLE regress_bypassrls NOBYPASSRLS;
+ALTER ROLE regress_bypassrls BYPASSRLS;
+ALTER ROLE regress_createdb NOCREATEDB;
+ALTER ROLE regress_createdb CREATEDB;
+
+-- fail, can't toggle SUPERUSER
+ALTER ROLE regress_createdb SUPERUSER;
+ALTER ROLE regress_createdb NOSUPERUSER;
 
 -- ok, having CREATEROLE is enough to create users with these privileges
-CREATE ROLE regress_createdb CREATEDB;
 CREATE ROLE regress_createrole CREATEROLE NOINHERIT;
 GRANT CREATE ON DATABASE regression TO regress_createrole WITH GRANT OPTION;
 CREATE ROLE regress_login LOGIN;
@@ -56,9 +86,9 @@ CREATE ROLE regress_plainrole;
 -- ok, roles with CREATEROLE can create new roles with it
 CREATE ROLE regress_rolecreator CREATEROLE;
 
--- ok, roles with CREATEROLE can create new roles with privilege they lack
-CREATE ROLE regress_hasprivs CREATEDB CREATEROLE LOGIN INHERIT
-	CONNECTION LIMIT 5;
+-- ok, roles with CREATEROLE can create new roles with different role
+-- attributes, including CREATEROLE
+CREATE ROLE regress_hasprivs CREATEROLE LOGIN INHERIT CONNECTION LIMIT 5;
 
 -- ok, we should be able to modify a role we created
 COMMENT ON ROLE regress_hasprivs IS 'some comment';
@@ -150,6 +180,9 @@ DROP ROLE regress_plainrole;
 REVOKE CREATE ON DATABASE regression FROM regress_createrole CASCADE;
 
 -- ok, should be able to drop non-superuser roles we created
+DROP ROLE regress_replication_bypassrls;
+DROP ROLE regress_replication;
+DROP ROLE regress_bypassrls;
 DROP ROLE regress_createdb;
 DROP ROLE regress_createrole;
 DROP ROLE regress_login;

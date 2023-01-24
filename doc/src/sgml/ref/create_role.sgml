@@ -109,6 +109,8 @@ in sync when changing the above synopsis!
         <literal>NOCREATEDB</literal> will deny a role the ability to
         create databases. If not specified,
         <literal>NOCREATEDB</literal> is the default.
+        Only superuser roles or roles with <literal>CREATEDB</literal>
+        can specify <literal>CREATEDB</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -188,8 +190,8 @@ in sync when changing the above synopsis!
         highly privileged role, and should only be used on roles actually
         used for replication. If not specified,
         <literal>NOREPLICATION</literal> is the default.
-        You must be a superuser to create a new role having the
-        <literal>REPLICATION</literal> attribute.
+        Only superuser roles or roles with <literal>REPLICATION</literal>
+        can specify <literal>REPLICATION</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -201,8 +203,8 @@ in sync when changing the above synopsis!
        <para>
         These clauses determine whether a role bypasses every row-level
         security (RLS) policy.  <literal>NOBYPASSRLS</literal> is the default.
-        You must be a superuser to create a new role having
-        the <literal>BYPASSRLS</literal> attribute.
+        Only superuser roles or roles with <literal>BYPASSRLS</literal>
+        can specify <literal>BYPASSRLS</literal>.
        </para>
 
        <para>
@@ -388,19 +390,6 @@ in sync when changing the above synopsis!
    users always had access to all privileges of groups they were members of.
    However, <literal>NOINHERIT</literal> provides a closer match to the semantics
    specified in the SQL standard.
-  </para>
-
-  <para>
-   Be careful with the <literal>CREATEROLE</literal> privilege. There is no concept of
-   inheritance for the privileges of a <literal>CREATEROLE</literal>-role. That
-   means that even if a role does not have a certain privilege but is allowed
-   to create other roles, it can easily create another role with different
-   privileges than its own (except for creating roles with superuser
-   privileges). For example, if the role <quote>user</quote> has the
-   <literal>CREATEROLE</literal> privilege but not the <literal>CREATEDB</literal> privilege,
-   nonetheless it can create a new role with the <literal>CREATEDB</literal>
-   privilege. Therefore, regard roles that have the <literal>CREATEROLE</literal>
-   privilege as almost-superuser-roles.
   </para>
 
   <para>

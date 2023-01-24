@@ -311,33 +311,28 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 		bypassrls = boolVal(dbypassRLS->arg);
 
 	/* Check some permissions first */
-	if (issuper)
+	if (!superuser_arg(currentUserId))
 	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create superusers")));
-	}
-	else if (isreplication)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create replication users")));
-	}
-	else if (bypassrls)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create bypassrls users")));
-	}
-	else
-	{
-		if (!have_createrole_privilege())
+		if (!has_createrole_privilege(currentUserId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to create role")));
+		if (issuper)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to create superusers")));
+		if (createdb && !have_createdb_privilege())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have createdb permission to create createdb users")));
+		if (isreplication && !has_rolreplication(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have replication permission to create replication users")));
+		if (bypassrls && !has_bypassrls_privilege(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have bypassrls to create bypassrls users")));
 	}
 
 	/*
@@ -748,32 +743,11 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	rolename = pstrdup(NameStr(authform->rolname));
 	roleid = authform->oid;
 
-	/*
-	 * To mess with a superuser or replication role in any way you gotta be
-	 * superuser.  We also insist on superuser to change the BYPASSRLS
-	 * property.
-	 */
-	if (authform->rolsuper || dissuper)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter superuser roles or change superuser attribute")));
-	}
-	else if (authform->rolreplication || disreplication)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter replication roles or change replication attribute")));
-	}
-	else if (dbypassRLS)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change bypassrls attribute")));
-	}
+	/* To mess with a superuser in any way you gotta be superuser. */
+	if (!superuser() && (authform->rolsuper || dissuper))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to alter superuser roles or change superuser attribute")));
 
 	/*
 	 * Most changes to a role require that you both have CREATEROLE privileges
@@ -784,7 +758,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	{
 		/* things an unprivileged user certainly can't do */
 		if (dinherit || dcreaterole || dcreatedb || dcanlogin || dconnlimit ||
-			dvalidUntil)
+			dvalidUntil || disreplication || dbypassRLS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied")));
@@ -794,6 +768,26 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must have CREATEROLE privilege to change another user's password")));
+	}
+	else if (!superuser())
+	{
+		/*
+		 * Even if you have both CREATEROLE and ADMIN OPTION on a role, you
+		 * can only change the CREATEDB, REPLICATION, or BYPASSRLS attributes
+		 * if they are set for your own role (or you are the superuser).
+		 */
+		if (dcreatedb && !have_createdb_privilege())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have createdb privilege to change createdb attribute")));
+		if (disreplication && !has_rolreplication(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have replication privilege to change replication attribute")));
+		if (dbypassRLS && !has_bypassrls_privilege(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have bypassrls privilege to change bypassrls attribute")));
 	}
 
 	/* To add members to a role, you need ADMIN OPTION. */
