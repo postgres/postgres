@@ -17,6 +17,7 @@
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
 #include "funcapi.h"
+#include "libpq/libpq-be-fe-helpers.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -446,35 +447,10 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		/* verify the set of connection parameters */
 		check_conn_params(keywords, values, user);
 
-		/*
-		 * We must obey fd.c's limit on non-virtual file descriptors.  Assume
-		 * that a PGconn represents one long-lived FD.  (Doing this here also
-		 * ensures that VFDs are closed if needed to make room.)
-		 */
-		if (!AcquireExternalFD())
-		{
-#ifndef WIN32					/* can't write #if within ereport() macro */
-			ereport(ERROR,
-					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-					 errmsg("could not connect to server \"%s\"",
-							server->servername),
-					 errdetail("There are too many open files on the local server."),
-					 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")));
-#else
-			ereport(ERROR,
-					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-					 errmsg("could not connect to server \"%s\"",
-							server->servername),
-					 errdetail("There are too many open files on the local server."),
-					 errhint("Raise the server's max_files_per_process setting.")));
-#endif
-		}
-
 		/* OK to make connection */
-		conn = PQconnectdbParams(keywords, values, false);
-
-		if (!conn)
-			ReleaseExternalFD();	/* because the PG_CATCH block won't */
+		conn = libpqsrv_connect_params(keywords, values,
+									    /* expand_dbname = */ false,
+									   PG_WAIT_EXTENSION);
 
 		if (!conn || PQstatus(conn) != CONNECTION_OK)
 			ereport(ERROR,
@@ -507,12 +483,7 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 	}
 	PG_CATCH();
 	{
-		/* Release PGconn data structure if we managed to create one */
-		if (conn)
-		{
-			PQfinish(conn);
-			ReleaseExternalFD();
-		}
+		libpqsrv_disconnect(conn);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -528,9 +499,8 @@ disconnect_pg_server(ConnCacheEntry *entry)
 {
 	if (entry->conn != NULL)
 	{
-		PQfinish(entry->conn);
+		libpqsrv_disconnect(entry->conn);
 		entry->conn = NULL;
-		ReleaseExternalFD();
 	}
 }
 

@@ -48,6 +48,7 @@
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "libpq-fe.h"
+#include "libpq/libpq-be-fe-helpers.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
@@ -199,37 +200,14 @@ dblink_get_conn(char *conname_or_str,
 			connstr = conname_or_str;
 		dblink_connstr_check(connstr);
 
-		/*
-		 * We must obey fd.c's limit on non-virtual file descriptors.  Assume
-		 * that a PGconn represents one long-lived FD.  (Doing this here also
-		 * ensures that VFDs are closed if needed to make room.)
-		 */
-		if (!AcquireExternalFD())
-		{
-#ifndef WIN32					/* can't write #if within ereport() macro */
-			ereport(ERROR,
-					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-					 errmsg("could not establish connection"),
-					 errdetail("There are too many open files on the local server."),
-					 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")));
-#else
-			ereport(ERROR,
-					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-					 errmsg("could not establish connection"),
-					 errdetail("There are too many open files on the local server."),
-					 errhint("Raise the server's max_files_per_process setting.")));
-#endif
-		}
-
 		/* OK to make connection */
-		conn = PQconnectdb(connstr);
+		conn = libpqsrv_connect(connstr, PG_WAIT_EXTENSION);
 
 		if (PQstatus(conn) == CONNECTION_BAD)
 		{
 			char	   *msg = pchomp(PQerrorMessage(conn));
 
-			PQfinish(conn);
-			ReleaseExternalFD();
+			libpqsrv_disconnect(conn);
 			ereport(ERROR,
 					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
 					 errmsg("could not establish connection"),
@@ -312,36 +290,13 @@ dblink_connect(PG_FUNCTION_ARGS)
 	/* check password in connection string if not superuser */
 	dblink_connstr_check(connstr);
 
-	/*
-	 * We must obey fd.c's limit on non-virtual file descriptors.  Assume that
-	 * a PGconn represents one long-lived FD.  (Doing this here also ensures
-	 * that VFDs are closed if needed to make room.)
-	 */
-	if (!AcquireExternalFD())
-	{
-#ifndef WIN32					/* can't write #if within ereport() macro */
-		ereport(ERROR,
-				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-				 errmsg("could not establish connection"),
-				 errdetail("There are too many open files on the local server."),
-				 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")));
-#else
-		ereport(ERROR,
-				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-				 errmsg("could not establish connection"),
-				 errdetail("There are too many open files on the local server."),
-				 errhint("Raise the server's max_files_per_process setting.")));
-#endif
-	}
-
 	/* OK to make connection */
-	conn = PQconnectdb(connstr);
+	conn = libpqsrv_connect(connstr, PG_WAIT_EXTENSION);
 
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
 		msg = pchomp(PQerrorMessage(conn));
-		PQfinish(conn);
-		ReleaseExternalFD();
+		libpqsrv_disconnect(conn);
 		if (rconn)
 			pfree(rconn);
 
@@ -366,10 +321,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 	else
 	{
 		if (pconn->conn)
-		{
-			PQfinish(pconn->conn);
-			ReleaseExternalFD();
-		}
+			libpqsrv_disconnect(conn);
 		pconn->conn = conn;
 	}
 
@@ -402,8 +354,7 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 	if (!conn)
 		dblink_conn_not_avail(conname);
 
-	PQfinish(conn);
-	ReleaseExternalFD();
+	libpqsrv_disconnect(conn);
 	if (rconn)
 	{
 		deleteConnection(conname);
@@ -838,10 +789,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 	{
 		/* if needed, close the connection to the database */
 		if (freeconn)
-		{
-			PQfinish(conn);
-			ReleaseExternalFD();
-		}
+			libpqsrv_disconnect(conn);
 	}
 	PG_END_TRY();
 
@@ -1516,10 +1464,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 	{
 		/* if needed, close the connection to the database */
 		if (freeconn)
-		{
-			PQfinish(conn);
-			ReleaseExternalFD();
-		}
+			libpqsrv_disconnect(conn);
 	}
 	PG_END_TRY();
 
@@ -2606,8 +2551,7 @@ createNewConnection(const char *name, remoteConn *rconn)
 
 	if (found)
 	{
-		PQfinish(rconn->conn);
-		ReleaseExternalFD();
+		libpqsrv_disconnect(rconn->conn);
 		pfree(rconn);
 
 		ereport(ERROR,
@@ -2647,8 +2591,7 @@ dblink_security_check(PGconn *conn, remoteConn *rconn)
 	{
 		if (!PQconnectionUsedPassword(conn))
 		{
-			PQfinish(conn);
-			ReleaseExternalFD();
+			libpqsrv_disconnect(conn);
 			if (rconn)
 				pfree(rconn);
 
