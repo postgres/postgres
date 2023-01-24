@@ -1064,16 +1064,9 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	 * Create a new permanent logical decoding slot. This slot will be used
 	 * for the catchup phase after COPY is done, so tell it to use the
 	 * snapshot to make the final data consistent.
-	 *
-	 * Prevent cancel/die interrupts while creating slot here because it is
-	 * possible that before the server finishes this command, a concurrent
-	 * drop subscription happens which would complete without removing this
-	 * slot leading to a dangling slot on the server.
 	 */
-	HOLD_INTERRUPTS();
 	walrcv_create_slot(LogRepWorkerWalRcvConn, slotname, false /* permanent */ ,
 					   CRS_USE_SNAPSHOT, origin_startpos);
-	RESUME_INTERRUPTS();
 
 	/*
 	 * Setup replication origin tracking. The purpose of doing this before the
