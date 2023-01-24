@@ -261,7 +261,7 @@ typedef struct MultiXactStateData
 	 * we compute it (using nextMXact if none are valid).  Each backend is
 	 * required not to attempt to access any SLRU data for MultiXactIds older
 	 * than its own OldestVisibleMXactId[] setting; this is necessary because
-	 * the checkpointer could truncate away such data at any instant.
+	 * the relevant SLRU data can be concurrently truncated away.
 	 *
 	 * The oldest valid value among all of the OldestMemberMXactId[] and
 	 * OldestVisibleMXactId[] entries is considered by vacuum as the earliest
@@ -669,8 +669,8 @@ MultiXactIdSetOldestMember(void)
  *
  * We set the OldestVisibleMXactId for a given transaction the first time
  * it's going to inspect any MultiXactId.  Once we have set this, we are
- * guaranteed that the checkpointer won't truncate off SLRU data for
- * MultiXactIds at or after our OldestVisibleMXactId.
+ * guaranteed that SLRU data for MultiXactIds >= our own OldestVisibleMXactId
+ * won't be truncated away.
  *
  * The value to set is the oldest of nextMXact and all the valid per-backend
  * OldestMemberMXactId[] entries.  Because of the locking we do, we can be
