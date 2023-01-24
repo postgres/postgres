@@ -63,6 +63,10 @@ $code_base ||= '.' unless @ARGV;
 $excludes ||= "$code_base/src/tools/pgindent/exclude_file_patterns"
   if $code_base && -f "$code_base/src/tools/pgindent/exclude_file_patterns";
 
+# also look under the current directory for the exclude patterns file
+$excludes ||= "src/tools/pgindent/exclude_file_patterns"
+  if -f "src/tools/pgindent/exclude_file_patterns";
+
 # The typedef list that's mechanically extracted by the buildfarm may omit
 # some names we want to treat like typedefs, e.g. "bool" (which is a macro
 # according to <stdbool.h>), and may include some names we don't want
@@ -421,14 +425,15 @@ File::Find::find(
 	},
 	$code_base) if $code_base;
 
-process_exclude();
-
 $filtered_typedefs_fh = load_typedefs();
 
 check_indent();
 
 # any non-option arguments are files to be processed
 push(@files, @ARGV);
+
+# the exclude list applies to command line arguments as well as found files
+process_exclude();
 
 foreach my $source_filename (@files)
 {
