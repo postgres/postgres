@@ -56,7 +56,14 @@ ALTER SUBSCRIPTION regress_testsub3 REFRESH PUBLICATION;
 
 DROP SUBSCRIPTION regress_testsub3;
 
--- fail - invalid connection string
+-- fail, connection string does not parse
+CREATE SUBSCRIPTION regress_testsub5 CONNECTION 'i_dont_exist=param' PUBLICATION testpub;
+
+-- fail, connection string parses, but doesn't work (and does so without
+-- connecting, so this is reliable and safe)
+CREATE SUBSCRIPTION regress_testsub5 CONNECTION 'port=-1' PUBLICATION testpub;
+
+-- fail - invalid connection string during ALTER
 ALTER SUBSCRIPTION regress_testsub CONNECTION 'foobar';
 
 \dRs+
