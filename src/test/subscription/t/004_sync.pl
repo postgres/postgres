@@ -163,9 +163,13 @@ $result = $node_subscriber->poll_query_until('postgres', $started_query)
 # subscriber is stuck on data copy for constraint violation.
 $node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub");
 
-$result = $node_publisher->safe_psql('postgres',
-	"SELECT count(*) FROM pg_replication_slots");
-is($result, qq(0),
+# When DROP SUBSCRIPTION tries to drop the tablesync slot, the slot may not
+# have been created, which causes the slot to be created after the DROP
+# SUSCRIPTION finishes. Such slots eventually get dropped at walsender exit
+# time. So, to prevent being affected by such ephemeral tablesync slots, we
+# wait until all the slots have been cleaned.
+ok( $node_publisher->poll_query_until(
+		'postgres', 'SELECT count(*) = 0 FROM pg_replication_slots'),
 	'DROP SUBSCRIPTION during error can clean up the slots on the publisher');
 
 $node_subscriber->stop('fast');
