@@ -91,18 +91,7 @@
      <row><entry><literal>|&gt;&gt; (box,box)</literal></entry></row>
 
      <row>
-      <entry valign="middle" morerows="5"><literal>kd_point_ops</literal></entry>
-      <entry><literal>|&gt;&gt; (point,point)</literal></entry>
-      <entry valign="middle" morerows="5"><literal>&lt;-&gt; (point,point)</literal></entry>
-     </row>
-     <row><entry><literal>&lt;&lt; (point,point)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (point,point)</literal></entry></row>
-     <row><entry><literal>&lt;&lt;| (point,point)</literal></entry></row>
-     <row><entry><literal>~= (point,point)</literal></entry></row>
-     <row><entry><literal>&lt;@ (point,box)</literal></entry></row>
-
-     <row>
-      <entry valign="middle" morerows="10"><literal>network_ops</literal></entry>
+      <entry valign="middle" morerows="10"><literal>inet_ops</literal></entry>
       <entry><literal>&lt;&lt; (inet,inet)</literal></entry>
       <entry valign="middle" morerows="10"></entry>
      </row>
@@ -116,6 +105,17 @@
      <row><entry><literal>&gt; (inet,inet)</literal></entry></row>
      <row><entry><literal>&gt;= (inet,inet)</literal></entry></row>
      <row><entry><literal>&amp;&amp; (inet,inet)</literal></entry></row>
+
+     <row>
+      <entry valign="middle" morerows="5"><literal>kd_point_ops</literal></entry>
+      <entry><literal>|&gt;&gt; (point,point)</literal></entry>
+      <entry valign="middle" morerows="5"><literal>&lt;-&gt; (point,point)</literal></entry>
+     </row>
+     <row><entry><literal>&lt;&lt; (point,point)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (point,point)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;| (point,point)</literal></entry></row>
+     <row><entry><literal>~= (point,point)</literal></entry></row>
+     <row><entry><literal>&lt;@ (point,box)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="11"><literal>poly_ops</literal></entry>
