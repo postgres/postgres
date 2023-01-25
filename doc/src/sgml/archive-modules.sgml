@@ -32,7 +32,7 @@
  </para>
 
  <para>
-  The <filename>contrib/basic_archive</filename> module contains a working
+  The <filename>contrib/basic_wal_module</filename> module contains a working
   example, which demonstrates some useful techniques.
  </para>
 

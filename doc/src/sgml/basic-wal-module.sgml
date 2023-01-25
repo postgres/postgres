@@ -1,16 +1,16 @@
-<!-- doc/src/sgml/basic-archive.sgml -->
+<!-- doc/src/sgml/basic-wal-module.sgml -->
 
-<sect1 id="basic-archive" xreflabel="basic_archive">
- <title>basic_archive &mdash; an example WAL archive module</title>
+<sect1 id="basic-wal-module" xreflabel="basic_wal_module">
+ <title>basic_wal_module &mdash; an example write-ahead log module</title>
 
- <indexterm zone="basic-archive">
-  <primary>basic_archive</primary>
+ <indexterm zone="basic-wal-module">
+  <primary>basic_wal_module</primary>
  </indexterm>
 
  <para>
-  <filename>basic_archive</filename> is an example of an archive module.  This
-  module copies completed WAL segment files to the specified directory.  This
-  may not be especially useful, but it can serve as a starting point for
+  <filename>basic_wal_module</filename> is an example of an archive module.
+  This module copies completed WAL segment files to the specified directory.
+  This may not be especially useful, but it can serve as a starting point for
   developing your own archive module.  For more information about archive
   modules, see <xref linkend="archive-modules"/>.
  </para>
@@ -21,15 +21,15 @@
   must be enabled.
  </para>
 
- <sect2 id="basic-archive-configuration-parameters">
+ <sect2 id="basic-wal-module-configuration-parameters">
   <title>Configuration Parameters</title>
 
   <variablelist>
    <varlistentry>
     <term>
-     <varname>basic_archive.archive_directory</varname> (<type>string</type>)
+     <varname>basic_wal_module.archive_directory</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>basic_archive.archive_directory</varname> configuration parameter</primary>
+      <primary><varname>basic_wal_module.archive_directory</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -52,12 +52,12 @@
 <programlisting>
 # postgresql.conf
 archive_mode = 'on'
-archive_library = 'basic_archive'
-basic_archive.archive_directory = '/path/to/archive/directory'
+archive_library = 'basic_wal_module'
+basic_wal_module.archive_directory = '/path/to/archive/directory'
 </programlisting>
  </sect2>
 
- <sect2 id="basic-archive-notes">
+ <sect2 id="basic-wal-module-notes">
   <title>Notes</title>
 
   <para>
@@ -70,7 +70,7 @@ basic_archive.archive_directory = '/path/to/archive/directory'
   </para>
  </sect2>
 
- <sect2 id="basic-archive-author">
+ <sect2 id="basic-wal-module-author">
   <title>Author</title>
 
   <para>
