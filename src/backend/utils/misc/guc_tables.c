@@ -2536,6 +2536,20 @@ struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"vacuum_freeze_strategy_threshold", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Table size at which VACUUM freezes using eager strategy, in megabytes."),
+			gettext_noop("This is applied by comparing it to the size of a table's main fork at "
+						 "the beginning of each VACUUM. Eager freezing strategy is used when size "
+						 "exceeds the threshold, or when table is a temporary or unlogged table. "
+						 "Otherwise lazy freezing strategy is used."),
+			GUC_UNIT_MB
+		},
+		&vacuum_freeze_strategy_threshold,
+		4096, 0, MAX_KILOBYTES,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"vacuum_defer_cleanup_age", PGC_SIGHUP, REPLICATION_PRIMARY,
 			gettext_noop("Number of transactions by which VACUUM and HOT cleanup should be deferred, if any."),
 			NULL

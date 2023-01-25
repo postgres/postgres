@@ -314,6 +314,7 @@ typedef struct AutoVacOpts
 	int			multixact_freeze_min_age;
 	int			multixact_freeze_max_age;
 	int			multixact_freeze_table_age;
+	int			freeze_strategy_threshold;
 	int			log_min_duration;
 	float8		vacuum_cost_delay;
 	float8		vacuum_scale_factor;

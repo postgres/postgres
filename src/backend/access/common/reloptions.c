@@ -314,6 +314,14 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
+			"autovacuum_freeze_strategy_threshold",
+			"Table size at which VACUUM freezes using eager strategy, in megabytes.",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		}, -1, 0, MAX_KILOBYTES
+	},
+	{
+		{
 			"log_autovacuum_min_duration",
 			"Sets the minimum execution time above which autovacuum actions will be logged",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
@@ -1863,6 +1871,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, multixact_freeze_max_age)},
 		{"autovacuum_multixact_freeze_table_age", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, multixact_freeze_table_age)},
+		{"autovacuum_freeze_strategy_threshold", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_strategy_threshold)},
 		{"log_autovacuum_min_duration", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, log_min_duration)},
 		{"toast_tuple_target", RELOPT_TYPE_INT,

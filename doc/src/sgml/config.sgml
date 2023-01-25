@@ -9272,6 +9272,36 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-vacuum-freeze-strategy-threshold" xreflabel="vacuum_freeze_strategy_threshold">
+      <term><varname>vacuum_freeze_strategy_threshold</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>vacuum_freeze_strategy_threshold</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the cutoff storage size that
+        <command>VACUUM</command> should use to determine its freezing
+        strategy.  This is applied by comparing it to the size of the
+        target table's <glossterm linkend="glossary-fork">main
+         fork</glossterm> at the beginning of each <command>VACUUM</command>.
+        Eager freezing strategy is used by <command>VACUUM</command>
+        when the table's main fork size exceeds this value.
+        <command>VACUUM</command> <emphasis>always</emphasis> uses
+        eager freezing strategy when processing <glossterm
+         linkend="glossary-unlogged">unlogged</glossterm> tables,
+        regardless of this setting.  Otherwise <command>VACUUM</command>
+        uses lazy freezing strategy.  For more information see <xref
+         linkend="vacuum-for-wraparound"/>.
+       </para>
+       <para>
+        If this value is specified without units, it is taken as
+        megabytes.  The default is four gigabytes
+        (<literal>4GB</literal>).
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-vacuum-failsafe-age" xreflabel="vacuum_failsafe_age">
       <term><varname>vacuum_failsafe_age</varname> (<type>integer</type>)
       <indexterm>

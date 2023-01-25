@@ -68,6 +68,7 @@ int			vacuum_freeze_min_age;
 int			vacuum_freeze_table_age;
 int			vacuum_multixact_freeze_min_age;
 int			vacuum_multixact_freeze_table_age;
+int			vacuum_freeze_strategy_threshold;
 int			vacuum_failsafe_age;
 int			vacuum_multixact_failsafe_age;
 
@@ -264,6 +265,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		params.freeze_table_age = 0;
 		params.multixact_freeze_min_age = 0;
 		params.multixact_freeze_table_age = 0;
+		params.freeze_strategy_threshold = 0;
 	}
 	else
 	{
@@ -271,6 +273,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		params.freeze_table_age = -1;
 		params.multixact_freeze_min_age = -1;
 		params.multixact_freeze_table_age = -1;
+		params.freeze_strategy_threshold = -1;
 	}
 
 	/* user-invoked vacuum is never "for wraparound" */
@@ -962,7 +965,9 @@ vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 				multixact_freeze_min_age,
 				freeze_table_age,
 				multixact_freeze_table_age,
-				effective_multixact_freeze_max_age;
+				effective_multixact_freeze_max_age,
+				freeze_strategy_threshold;
+	uint64		threshold_strategy_pages;
 	TransactionId nextXID,
 				safeOldestXmin,
 				aggressiveXIDCutoff;
@@ -975,6 +980,7 @@ vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 	multixact_freeze_min_age = params->multixact_freeze_min_age;
 	freeze_table_age = params->freeze_table_age;
 	multixact_freeze_table_age = params->multixact_freeze_table_age;
+	freeze_strategy_threshold = params->freeze_strategy_threshold;
 
 	/* Set pg_class fields in cutoffs */
 	cutoffs->relfrozenxid = rel->rd_rel->relfrozenxid;
@@ -1088,6 +1094,23 @@ vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 	/* MultiXactCutoff must always be <= OldestMxact */
 	if (MultiXactIdPrecedes(cutoffs->OldestMxact, cutoffs->MultiXactCutoff))
 		cutoffs->MultiXactCutoff = cutoffs->OldestMxact;
+
+	/*
+	 * Determine the freeze_strategy_threshold to use: as specified by the
+	 * caller, or vacuum_freeze_strategy_threshold
+	 */
+	if (freeze_strategy_threshold < 0)
+		freeze_strategy_threshold = vacuum_freeze_strategy_threshold;
+	Assert(freeze_strategy_threshold >= 0);
+
+	/*
+	 * Convert MB-based freeze_strategy_threshold to page-based value used by
+	 * our vacuumlazy.c caller, while being careful to avoid overflow
+	 */
+	threshold_strategy_pages =
+		((uint64) freeze_strategy_threshold * 1024 * 1024) / BLCKSZ;
+	threshold_strategy_pages = Min(threshold_strategy_pages, MaxBlockNumber);
+	cutoffs->freeze_strategy_threshold_pages = threshold_strategy_pages;
 
 	/*
 	 * Finally, figure out if caller needs to do an aggressive VACUUM or not.
