@@ -1750,20 +1750,25 @@ ServerLoop(void)
 		for (int i = 0; i < nevents; i++)
 		{
 			if (events[i].events & WL_LATCH_SET)
-			{
 				ResetLatch(MyLatch);
 
-				/* Process work requested via signal handlers. */
-				if (pending_pm_shutdown_request)
-					process_pm_shutdown_request();
-				if (pending_pm_child_exit)
-					process_pm_child_exit();
-				if (pending_pm_reload_request)
-					process_pm_reload_request();
-				if (pending_pm_pmsignal)
-					process_pm_pmsignal();
-			}
-			else if (events[i].events & WL_SOCKET_ACCEPT)
+			/*
+			 * The following requests are handled unconditionally, even if we
+			 * didn't see WL_LATCH_SET.  This gives high priority to shutdown
+			 * and reload requests where the latch happens to appear later in
+			 * events[] or will be reported by a later call to
+			 * WaitEventSetWait().
+			 */
+			if (pending_pm_shutdown_request)
+				process_pm_shutdown_request();
+			if (pending_pm_reload_request)
+				process_pm_reload_request();
+			if (pending_pm_child_exit)
+				process_pm_child_exit();
+			if (pending_pm_pmsignal)
+				process_pm_pmsignal();
+
+			if (events[i].events & WL_SOCKET_ACCEPT)
 			{
 				Port	   *port;
 
