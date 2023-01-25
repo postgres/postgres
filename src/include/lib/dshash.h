@@ -23,6 +23,9 @@ typedef struct dshash_table dshash_table;
 /* A handle for a dshash_table which can be shared with other processes. */
 typedef dsa_pointer dshash_table_handle;
 
+/* Sentinel value to use for invalid dshash_table handles. */
+#define DSHASH_HANDLE_INVALID ((dshash_table_handle) InvalidDsaPointer)
+
 /* The type for hash values. */
 typedef uint32 dshash_hash;
 

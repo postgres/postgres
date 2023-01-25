@@ -922,8 +922,8 @@ ApplyLauncherShmemInit(void)
 
 		memset(LogicalRepCtx, 0, ApplyLauncherShmemSize());
 
-		LogicalRepCtx->last_start_dsa = DSM_HANDLE_INVALID;
-		LogicalRepCtx->last_start_dsh = DSM_HANDLE_INVALID;
+		LogicalRepCtx->last_start_dsa = DSA_HANDLE_INVALID;
+		LogicalRepCtx->last_start_dsh = DSHASH_HANDLE_INVALID;
 
 		/* Initialize memory and spin locks for each worker slot. */
 		for (slot = 0; slot < max_logical_replication_workers; slot++)
@@ -947,7 +947,7 @@ logicalrep_launcher_attach_dshmem(void)
 	MemoryContext oldcontext;
 
 	/* Quick exit if we already did this. */
-	if (LogicalRepCtx->last_start_dsh != DSM_HANDLE_INVALID &&
+	if (LogicalRepCtx->last_start_dsh != DSHASH_HANDLE_INVALID &&
 		last_start_times != NULL)
 		return;
 
@@ -957,7 +957,7 @@ logicalrep_launcher_attach_dshmem(void)
 	/* Be sure any local memory allocated by DSA routines is persistent. */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
-	if (LogicalRepCtx->last_start_dsh == DSM_HANDLE_INVALID)
+	if (LogicalRepCtx->last_start_dsh == DSHASH_HANDLE_INVALID)
 	{
 		/* Initialize dynamic shared hash table for last-start times. */
 		last_start_times_dsa = dsa_create(LWTRANCHE_LAUNCHER_DSA);

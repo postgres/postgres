@@ -173,9 +173,8 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 
 	/*
 	 * Loop until we find an unused identifier for the new control segment. We
-	 * sometimes use 0 as a sentinel value indicating that no control segment
-	 * is known to exist, so avoid using that value for a real control
-	 * segment.
+	 * sometimes use DSM_HANDLE_INVALID as a sentinel value indicating "no
+	 * control segment", so avoid generating that value for a real handle.
 	 */
 	for (;;)
 	{

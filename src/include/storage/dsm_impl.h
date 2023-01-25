@@ -54,6 +54,9 @@ extern PGDLLIMPORT int min_dynamic_shared_memory;
 /* A "name" for a dynamic shared memory segment. */
 typedef uint32 dsm_handle;
 
+/* Sentinel value to use for invalid DSM handles. */
+#define DSM_HANDLE_INVALID ((dsm_handle) 0)
+
 /* All the shared-memory operations we know about. */
 typedef enum
 {

@@ -505,7 +505,7 @@ dsa_create_in_place(void *place, size_t size,
 dsa_handle
 dsa_get_handle(dsa_area *area)
 {
-	Assert(area->control->handle != DSM_HANDLE_INVALID);
+	Assert(area->control->handle != DSA_HANDLE_INVALID);
 	return area->control->handle;
 }
 
@@ -554,7 +554,7 @@ dsa_attach_in_place(void *place, dsm_segment *segment)
 {
 	dsa_area   *area;
 
-	area = attach_internal(place, NULL, DSM_HANDLE_INVALID);
+	area = attach_internal(place, NULL, DSA_HANDLE_INVALID);
 
 	/*
 	 * Clean up when the control segment detaches, if a containing DSM segment

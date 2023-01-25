@@ -99,6 +99,10 @@ typedef pg_atomic_uint64 dsa_pointer_atomic;
  */
 typedef dsm_handle dsa_handle;
 
+/* Sentinel value to use for invalid dsa_handles. */
+#define DSA_HANDLE_INVALID ((dsa_handle) DSM_HANDLE_INVALID)
+
+
 extern dsa_area *dsa_create(int tranche_id);
 extern dsa_area *dsa_create_in_place(void *place, size_t size,
 									 int tranche_id, dsm_segment *segment);
