@@ -12,22 +12,12 @@
 #ifndef PLPYTHON_H
 #define PLPYTHON_H
 
-/*
- * Include order should be: postgres.h, other postgres headers, plpython.h,
- * other plpython headers.  (In practice, other plpython headers will also
- * include this file, so that they can compile standalone.)
- */
-#ifndef POSTGRES_H
+/* postgres.h needs to be included before Python.h, as usual */
+#if !defined(POSTGRES_H)
 #error postgres.h must be included before plpython.h
+#elif defined(Py_PYTHON_H)
+#error Python.h must be included via plpython.h
 #endif
-
-/*
- * Undefine some things that get (re)defined in the Python headers. They aren't
- * used by the PL/Python code, and all PostgreSQL headers should be included
- * earlier, so this should be pretty safe.
- */
-#undef _POSIX_C_SOURCE
-#undef _XOPEN_SOURCE
 
 /*
  * Python versions <= 3.8 otherwise define a replacement, causing macro
