@@ -643,8 +643,9 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
      parameter is specified, <command>VACUUM</command> prints various
      statistics about the table.  This includes information about how
      <structfield>relfrozenxid</structfield> and
-     <structfield>relminmxid</structfield> advanced.  The same details appear
-     in the server log when autovacuum logging (controlled by <xref
+     <structfield>relminmxid</structfield> advanced, and the number of
+     newly frozen pages.  The same details appear in the server log when
+     autovacuum logging (controlled by <xref
       linkend="guc-log-autovacuum-min-duration"/>) reports on a
      <command>VACUUM</command> operation executed by autovacuum.
     </para>
