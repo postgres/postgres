@@ -445,7 +445,7 @@ WalReceiverMain(void)
 				pgsocket	wait_fd = PGINVALID_SOCKET;
 				int			rc;
 				TimestampTz nextWakeup;
-				int			nap;
+				long		nap;
 
 				/*
 				 * Exit walreceiver if we're not in recovery. This should not
@@ -528,15 +528,9 @@ WalReceiverMain(void)
 				for (int i = 0; i < NUM_WALRCV_WAKEUPS; ++i)
 					nextWakeup = Min(wakeup[i], nextWakeup);
 
-				/*
-				 * Calculate the nap time.  WaitLatchOrSocket() doesn't accept
-				 * timeouts longer than INT_MAX milliseconds, so we limit the
-				 * result accordingly.  Also, we round up to the next
-				 * millisecond to avoid waking up too early and spinning until
-				 * one of the wakeup times.
-				 */
+				/* Calculate the nap time, clamping as necessary. */
 				now = GetCurrentTimestamp();
-				nap = (int) Min(INT_MAX, Max(0, (nextWakeup - now + 999) / 1000));
+				nap = TimestampDifferenceMilliseconds(now, nextWakeup);
 
 				/*
 				 * Ideally we would reuse a WaitEventSet object repeatedly

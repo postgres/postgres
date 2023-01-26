@@ -1670,11 +1670,12 @@ DetermineSleepTime(void)
 
 	if (next_wakeup != 0)
 	{
-		/* Ensure we don't exceed one minute, or go under 0. */
-		return Max(0,
-				   Min(60 * 1000,
-					   TimestampDifferenceMilliseconds(GetCurrentTimestamp(),
-													   next_wakeup)));
+		int			ms;
+
+		/* result of TimestampDifferenceMilliseconds is in [0, INT_MAX] */
+		ms = (int) TimestampDifferenceMilliseconds(GetCurrentTimestamp(),
+												   next_wakeup);
+		return Min(60 * 1000, ms);
 	}
 
 	return 60 * 1000;

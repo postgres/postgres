@@ -215,7 +215,8 @@ bbsink_copystream_archive_contents(bbsink *sink, size_t len)
 		 * the system clock was set backward, so that such occurrences don't
 		 * have the effect of suppressing further progress messages.
 		 */
-		if (ms < 0 || ms >= PROGRESS_REPORT_MILLISECOND_THRESHOLD)
+		if (ms >= PROGRESS_REPORT_MILLISECOND_THRESHOLD ||
+			now < mysink->last_progress_report_time)
 		{
 			mysink->last_progress_report_time = now;
 
