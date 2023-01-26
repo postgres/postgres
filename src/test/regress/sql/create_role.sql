@@ -210,5 +210,6 @@ DROP ROLE regress_tenant;
 DROP ROLE regress_tenant2;
 DROP ROLE regress_rolecreator;
 DROP ROLE regress_role_admin;
+DROP ROLE regress_role_limited_admin;
 DROP ROLE regress_role_super;
 DROP ROLE regress_role_normal;
