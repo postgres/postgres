@@ -651,7 +651,7 @@ dir_strcmp(const char *s1, const char *s2)
  * For example:
  *		target_path  = '/usr/local/share/postgresql'
  *		bin_path	 = '/usr/local/bin'
- *		my_exec_path = '/opt/pgsql/bin/postmaster'
+ *		my_exec_path = '/opt/pgsql/bin/postgres'
  * Given these inputs, the common prefix is '/usr/local/', the tail of
  * bin_path is 'bin' which does match the last directory component of
  * my_exec_path, so we would return '/opt/pgsql/share/postgresql'
