@@ -67,7 +67,8 @@ CLUSTER [VERBOSE]
   </para>
 
   <para>
-   <command>CLUSTER</command> without any parameter reclusters all the
+   <command>CLUSTER</command> without a
+   <replaceable class="parameter">table_name</replaceable> reclusters all the
    previously-clustered tables in the current database that the calling user
    has privileges for.  This form of <command>CLUSTER</command> cannot be
    executed inside a transaction block.
@@ -211,7 +212,8 @@ CLUSTER [VERBOSE]
    <para>
     Clustering a partitioned table clusters each of its partitions using the
     partition of the specified partitioned index.  When clustering a partitioned
-    table, the index may not be omitted.
+    table, the index may not be omitted.  <command>CLUSTER</command> on a
+    partitioned table cannot be executed inside a transaction block.
    </para>
 
  </refsect1>
