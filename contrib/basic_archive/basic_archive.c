@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * basic_wal_module.c
+ * basic_archive.c
  *
  * This file demonstrates a basic archive library implementation that is
  * roughly equivalent to the following shell command:
@@ -20,7 +20,7 @@
  * Copyright (c) 2022-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  contrib/basic_wal_module/basic_wal_module.c
+ *	  contrib/basic_archive/basic_archive.c
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 PG_MODULE_MAGIC;
 
 static char *archive_directory = NULL;
-static MemoryContext basic_wal_module_context;
+static MemoryContext basic_archive_context;
 
 static bool basic_archive_configured(void);
 static bool basic_archive_file(const char *file, const char *path);
@@ -57,7 +57,7 @@ static bool compare_files(const char *file1, const char *file2);
 void
 _PG_init(void)
 {
-	DefineCustomStringVariable("basic_wal_module.archive_directory",
+	DefineCustomStringVariable("basic_archive.archive_directory",
 							   gettext_noop("Archive file destination directory."),
 							   NULL,
 							   &archive_directory,
@@ -66,11 +66,11 @@ _PG_init(void)
 							   0,
 							   check_archive_directory, NULL, NULL);
 
-	MarkGUCPrefixReserved("basic_wal_module");
+	MarkGUCPrefixReserved("basic_archive");
 
-	basic_wal_module_context = AllocSetContextCreate(TopMemoryContext,
-													 "basic_wal_module",
-													 ALLOCSET_DEFAULT_SIZES);
+	basic_archive_context = AllocSetContextCreate(TopMemoryContext,
+												  "basic_archive",
+												  ALLOCSET_DEFAULT_SIZES);
 }
 
 /*
@@ -156,7 +156,7 @@ basic_archive_file(const char *file, const char *path)
 	 * we can easily reset it during error recovery (thus avoiding memory
 	 * leaks).
 	 */
-	oldcontext = MemoryContextSwitchTo(basic_wal_module_context);
+	oldcontext = MemoryContextSwitchTo(basic_archive_context);
 
 	/*
 	 * Since the archiver operates at the bottom of the exception stack,
@@ -183,7 +183,7 @@ basic_archive_file(const char *file, const char *path)
 
 		/* Reset our memory context and switch back to the original one */
 		MemoryContextSwitchTo(oldcontext);
-		MemoryContextReset(basic_wal_module_context);
+		MemoryContextReset(basic_archive_context);
 
 		/* Remove our exception handler */
 		PG_exception_stack = NULL;
@@ -206,7 +206,7 @@ basic_archive_file(const char *file, const char *path)
 
 	/* Reset our memory context and switch back to the original one */
 	MemoryContextSwitchTo(oldcontext);
-	MemoryContextReset(basic_wal_module_context);
+	MemoryContextReset(basic_archive_context);
 
 	return true;
 }
@@ -221,7 +221,7 @@ basic_archive_file_internal(const char *file, const char *path)
 	uint64		epoch;			/* milliseconds */
 
 	ereport(DEBUG3,
-			(errmsg("archiving \"%s\" via basic_wal_module", file)));
+			(errmsg("archiving \"%s\" via basic_archive", file)));
 
 	snprintf(destination, MAXPGPATH, "%s/%s", archive_directory, file);
 
@@ -285,7 +285,7 @@ basic_archive_file_internal(const char *file, const char *path)
 	(void) durable_rename(temp, destination, ERROR);
 
 	ereport(DEBUG1,
-			(errmsg("archived \"%s\" via basic_wal_module", file)));
+			(errmsg("archived \"%s\" via basic_archive", file)));
 }
 
 /*

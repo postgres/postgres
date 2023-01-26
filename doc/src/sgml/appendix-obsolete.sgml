@@ -38,6 +38,5 @@
  &obsolete-pgxlogdump;
  &obsolete-pgresetxlog;
  &obsolete-pgreceivexlog;
- &obsolete-basic-archive;
 
 </appendix>
