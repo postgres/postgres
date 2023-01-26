@@ -160,6 +160,7 @@ sts_initialize(SharedTuplestore *sts, int participants,
 		LWLockInitialize(&sts->participants[i].lock,
 						 LWTRANCHE_SHARED_TUPLESTORE);
 		sts->participants[i].read_page = 0;
+		sts->participants[i].npages = 0;
 		sts->participants[i].writing = false;
 	}
 
@@ -321,7 +322,7 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 
 	/* Do we have space? */
 	size = accessor->sts->meta_data_size + tuple->t_len;
-	if (accessor->write_pointer + size >= accessor->write_end)
+	if (accessor->write_pointer + size > accessor->write_end)
 	{
 		if (accessor->write_chunk == NULL)
 		{
@@ -341,7 +342,7 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 		}
 
 		/* It may still not be enough in the case of a gigantic tuple. */
-		if (accessor->write_pointer + size >= accessor->write_end)
+		if (accessor->write_pointer + size > accessor->write_end)
 		{
 			size_t		written;
 
