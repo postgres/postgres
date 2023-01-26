@@ -143,10 +143,17 @@ struct pg_itm_in
 #define TZDISP_LIMIT		((MAX_TZDISP_HOUR + 1) * SECS_PER_HOUR)
 
 /*
- * DT_NOBEGIN represents timestamp -infinity; DT_NOEND represents +infinity
+ * We reserve the minimum and maximum integer values to represent
+ * timestamp (or timestamptz) -infinity and +infinity.
  */
-#define DT_NOBEGIN		PG_INT64_MIN
-#define DT_NOEND		PG_INT64_MAX
+#define TIMESTAMP_MINUS_INFINITY	PG_INT64_MIN
+#define TIMESTAMP_INFINITY	PG_INT64_MAX
+
+/*
+ * Historically these alias for infinity have been used.
+ */
+#define DT_NOBEGIN		TIMESTAMP_MINUS_INFINITY
+#define DT_NOEND		TIMESTAMP_INFINITY
 
 #define TIMESTAMP_NOBEGIN(j)	\
 	do {(j) = DT_NOBEGIN;} while (0)

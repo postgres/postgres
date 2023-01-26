@@ -81,7 +81,9 @@ IntervalPGetDatum(const Interval *X)
 #define INTERVAL_PRECISION(t) ((t) & INTERVAL_PRECISION_MASK)
 #define INTERVAL_RANGE(t) (((t) >> 16) & INTERVAL_RANGE_MASK)
 
+/* Macros for doing timestamp arithmetic without assuming timestamp's units */
 #define TimestampTzPlusMilliseconds(tz,ms) ((tz) + ((ms) * (int64) 1000))
+#define TimestampTzPlusSeconds(tz,s) ((tz) + ((s) * (int64) 1000000))
 
 
 /* Set at postmaster start */
