@@ -478,30 +478,13 @@
    </note>
 
    <para>
-    <xref linkend="guc-vacuum-freeze-strategy-threshold"/> controls
-    <command>VACUUM</command>'s freezing strategy.  The
-    <firstterm>eager freezing strategy</firstterm> makes
-    <command>VACUUM</command> freeze all rows on a page whenever each
-    and every row on the page is considered visible to all current
-    transactions (immediately after dead row versions are removed).
-    Freezing pages early and in batch often spreads out the overhead
-    of freezing over time.  <command>VACUUM</command> consistently
-    avoids allowing unfrozen all-visible pages to build up, improving
-    system level performance stability.  The <firstterm>lazy freezing
-     strategy</firstterm> makes <command>VACUUM</command> determine
-    whether pages should be frozen on the basis of the age of the
-    oldest XID on the page.  Freezing pages lazily sometimes avoids
-    the overhead of freezing that turns out to have been unnecessary
-    because the rows were modified soon after freezing took place.
-   </para>
-
-   <para>
-    <xref linkend="guc-vacuum-freeze-min-age"/> controls how old an
-    XID value has to be before pages with rows bearing that XID are
-    frozen.  This setting is an additional trigger criteria for
-    freezing a page's tuples.  It is used by both freezing strategies,
-    though it typically has little impact when <command>VACUUM</command>
-    uses the eager freezing strategy.
+    <xref linkend="guc-vacuum-freeze-min-age"/>
+    controls how old an XID value has to be before rows bearing that XID will be
+    frozen.  Increasing this setting may avoid unnecessary work if the
+    rows that would otherwise be frozen will soon be modified again,
+    but decreasing this setting increases
+    the number of transactions that can elapse before the table must be
+    vacuumed again.
    </para>
 
    <para>
@@ -524,20 +507,11 @@
    </para>
 
    <para>
-    Controlling the overhead of freezing existing all-visible pages
-    during aggressive vacuuming is the goal of the eager freezing
-    strategy.  Increasing <varname>vacuum_freeze_strategy_threshold</varname>
-    may avoid unnecessary work, but it increases the risk of an
-    eventual aggressive vacuum that performs an excessive amount of
-    <quote>catch up</quote> freezing all at once.
-   </para>
-
-   <para>
     The maximum time that a table can go unvacuumed is two billion
     transactions minus the <varname>vacuum_freeze_min_age</varname> value at
     the time of the last aggressive vacuum. If it were to go
-    unvacuumed for longer than that, the system could temporarily refuse to
-    allocate new transaction IDs.  To ensure that this never happens,
+    unvacuumed for longer than
+    that, data loss could result.  To ensure that this does not happen,
     autovacuum is invoked on any table that might contain unfrozen rows with
     XIDs older than the age specified by the configuration parameter <xref
     linkend="guc-autovacuum-freeze-max-age"/>.  (This will happen even if
@@ -577,7 +551,7 @@
    </para>
 
    <para>
-    One disadvantage of increasing <varname>autovacuum_freeze_max_age</varname>
+    The sole disadvantage of increasing <varname>autovacuum_freeze_max_age</varname>
     (and <varname>vacuum_freeze_table_age</varname> along with it) is that
     the <filename>pg_xact</filename> and <filename>pg_commit_ts</filename>
     subdirectories of the database cluster will take more space, because it
@@ -864,8 +838,8 @@ vacuum insert threshold = vacuum base insert threshold + vacuum insert scale fac
     For tables which receive <command>INSERT</command> operations but no or
     almost no <command>UPDATE</command>/<command>DELETE</command> operations,
     it may be beneficial to lower the table's
-    <xref linkend="reloption-autovacuum-freeze-strategy-threshold"/>
-    to allow freezing to take place proactively.  The number of obsolete tuples and
+    <xref linkend="reloption-autovacuum-freeze-min-age"/> as this may allow
+    tuples to be frozen by earlier vacuums.  The number of obsolete tuples and
     the number of inserted tuples are obtained from the cumulative statistics system;
     it is a semi-accurate count updated by each <command>UPDATE</command>,
     <command>DELETE</command> and <command>INSERT</command> operation.  (It is

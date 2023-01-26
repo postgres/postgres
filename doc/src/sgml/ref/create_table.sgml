@@ -1781,20 +1781,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry id="reloption-autovacuum-freeze-strategy-threshold" xreflabel="autovacuum_freeze_strategy_threshold">
-    <term><literal>autovacuum_freeze_strategy_threshold</literal>, <literal>toast.autovacuum_freeze_strategy_threshold</literal> (<type>integer</type>)
-    <indexterm>
-     <primary><varname>autovacuum_freeze_strategy_threshold</varname> storage parameter</primary>
-    </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Per-table value for <xref linkend="guc-vacuum-freeze-strategy-threshold"/>
-      parameter.
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry id="reloption-log-autovacuum-min-duration" xreflabel="log_autovacuum_min_duration">
     <term><literal>log_autovacuum_min_duration</literal>, <literal>toast.log_autovacuum_min_duration</literal> (<type>integer</type>)
     <indexterm>

@@ -153,8 +153,6 @@ typedef struct LVRelState
 	bool		aggressive;
 	/* Use visibility map to skip? (disabled by DISABLE_PAGE_SKIPPING) */
 	bool		skipwithvm;
-	/* Eagerly freeze pages that are eligible to become all-frozen? */
-	bool		eager_freeze_strategy;
 	/* Wraparound failsafe has been triggered? */
 	bool		failsafe_active;
 	/* Consider index vacuuming bypass optimization? */
@@ -245,7 +243,6 @@ typedef struct LVSavedErrInfo
 
 /* non-export function prototypes */
 static void lazy_scan_heap(LVRelState *vacrel);
-static void lazy_scan_strategy(LVRelState *vacrel);
 static BlockNumber lazy_scan_skip(LVRelState *vacrel, Buffer *vmbuffer,
 								  BlockNumber next_block,
 								  bool *next_unskippable_allvis,
@@ -475,10 +472,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 
 	vacrel->skipwithvm = skipwithvm;
 
-	/*
-	 * Now determine VACUUM's freezing strategy
-	 */
-	lazy_scan_strategy(vacrel);
 	if (verbose)
 	{
 		if (vacrel->aggressive)
@@ -1275,38 +1268,6 @@ lazy_scan_heap(LVRelState *vacrel)
 }
 
 /*
- *	lazy_scan_strategy() -- Determine freezing strategy.
- *
- * Our lazy freezing strategy is useful when putting off the work of freezing
- * totally avoids freezing that turns out to have been wasted effort later on.
- * Our eager freezing strategy is useful with larger tables that experience
- * continual growth, where freezing pages proactively is needed just to avoid
- * falling behind on freezing (eagerness is also likely to be cheaper in the
- * short/medium term for such tables, but the long term picture matters most).
- */
-static void
-lazy_scan_strategy(LVRelState *vacrel)
-{
-	BlockNumber rel_pages = vacrel->rel_pages;
-
-	/*
-	 * Decide freezing strategy.
-	 *
-	 * The eager freezing strategy is used whenever rel_pages exceeds a
-	 * threshold controlled by the freeze_strategy_threshold GUC/reloption.
-	 *
-	 * Also freeze eagerly with an unlogged or temp table, where the total
-	 * cost of freezing pages is mostly just the cycles needed to prepare a
-	 * set of freeze plans.  Executing the freeze plans adds very little cost.
-	 * Dirtying extra pages isn't a concern, either; VACUUM will definitely
-	 * set PD_ALL_VISIBLE on affected pages, regardless of freezing strategy.
-	 */
-	vacrel->eager_freeze_strategy =
-		(rel_pages > vacrel->cutoffs.freeze_strategy_threshold_pages ||
-		 !RelationIsPermanent(vacrel->rel));
-}
-
-/*
  *	lazy_scan_skip() -- set up range of skippable blocks using visibility map.
  *
  * lazy_scan_heap() calls here every time it needs to set up a new range of
@@ -1834,12 +1795,10 @@ retry:
 	 * one XID/MXID from before FreezeLimit/MultiXactCutoff is present.  Also
 	 * freeze when pruning generated an FPI, if doing so means that we set the
 	 * page all-frozen afterwards (might not happen until final heap pass).
-	 * When ongoing VACUUM opted to use the eager freezing strategy we freeze
-	 * any page that will thereby become all-frozen in the visibility map.
 	 */
 	if (pagefrz.freeze_required || tuples_frozen == 0 ||
 		(prunestate->all_visible && prunestate->all_frozen &&
-		 (fpi_before != pgWalUsage.wal_fpi || vacrel->eager_freeze_strategy)))
+		 fpi_before != pgWalUsage.wal_fpi))
 	{
 		/*
 		 * We're freezing the page.  Our final NewRelfrozenXid doesn't need to
