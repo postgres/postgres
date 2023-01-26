@@ -5,4 +5,5 @@ backend_sources += files(
   'extended_stats.c',
   'mcv.c',
   'mvdistinct.c',
+  'statistics_scanner.c',
 )
