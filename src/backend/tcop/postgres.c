@@ -73,6 +73,9 @@
 #include "utils/snapmgr.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
+#ifdef USE_VALGRIND
+#include <valgrind/memcheck.h>
+#endif
 
 /* ----------------
  *		global variables
@@ -1343,6 +1346,15 @@ exec_simple_query(const char *query_string)
 	TRACE_POSTGRESQL_QUERY_DONE(query_string);
 
 	debug_query_string = NULL;
+
+#ifdef USE_VALGRIND
+	if (VALGRIND_COUNT_ERRORS > 0)
+	{
+		VALGRIND_PRINTF("Query for which the valgrind reported the "
+						"memory error was: %s\n",
+						query_string);
+	}
+#endif
 }
 
 /*
