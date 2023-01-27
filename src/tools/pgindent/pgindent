@@ -22,7 +22,7 @@ my $indent_opts =
 my $devnull = File::Spec->devnull;
 
 my ($typedefs_file, $typedef_str, $code_base,
-	$excludes,      $indent,      $build,
+	@excludes,      $indent,      $build,
 	$show_diff,     $silent_diff, $help);
 
 $help = 0;
@@ -32,7 +32,7 @@ my %options = (
 	"typedefs=s"         => \$typedefs_file,
 	"list-of-typedefs=s" => \$typedef_str,
 	"code-base=s"        => \$code_base,
-	"excludes=s"         => \$excludes,
+	"excludes=s"         => \@excludes,
 	"indent=s"           => \$indent,
 	"build"              => \$build,
 	"show-diff"          => \$show_diff,
@@ -46,10 +46,8 @@ usage("Cannot have both --silent-diff and --show-diff")
 
 run_build($code_base) if ($build);
 
-# command line option wins, then first non-option arg,
-# then environment (which is how --build sets it) ,
+# command line option wins, then environment (which is how --build sets it) ,
 # then locations. based on current dir, then default location
-$typedefs_file ||= shift if @ARGV && $ARGV[0] !~ /\.[ch]$/;
 $typedefs_file ||= $ENV{PGTYPEDEFS};
 
 # build mode sets PGINDENT
@@ -58,14 +56,15 @@ $indent ||= $ENV{PGINDENT} || $ENV{INDENT} || "pg_bsd_indent";
 # no non-option arguments given. so do everything in the current directory
 $code_base ||= '.' unless @ARGV;
 
+my $sourcedir = locate_sourcedir();
+
 # if it's the base of a postgres tree, we will exclude the files
 # postgres wants excluded
-$excludes ||= "$code_base/src/tools/pgindent/exclude_file_patterns"
-  if $code_base && -f "$code_base/src/tools/pgindent/exclude_file_patterns";
-
-# also look under the current directory for the exclude patterns file
-$excludes ||= "src/tools/pgindent/exclude_file_patterns"
-  if -f "src/tools/pgindent/exclude_file_patterns";
+if ($sourcedir)
+{
+	my $exclude_candidate = "$sourcedir/exclude_file_patterns";
+	push (@excludes, $exclude_candidate) if -f $exclude_candidate;
+}
 
 # The typedef list that's mechanically extracted by the buildfarm may omit
 # some names we want to treat like typedefs, e.g. "bool" (which is a macro
@@ -84,7 +83,6 @@ my %excluded = map { +"$_\n" => 1 } qw(
 # globals
 my @files;
 my $filtered_typedefs_fh;
-
 
 sub check_indent
 {
@@ -114,26 +112,34 @@ sub check_indent
 	return;
 }
 
+sub locate_sourcedir
+{
+	# try fairly hard to locate the sourcedir
+	my $where = $code_base || '.';
+	my $sub = "$where/src/tools/pgindent";
+	return $sub if -d $sub;
+	# try to find it from an ancestor directory
+	$sub = "../src/tools/pgindent";
+	foreach (1..4)
+	{
+		return $sub if -d $sub;
+		$sub = "../$sub";
+	}
+	return; # undef if nothing found
+}
 
 sub load_typedefs
 {
-
 	# try fairly hard to find the typedefs file if it's not set
 
-	foreach my $try ('.', 'src/tools/pgindent', '/usr/local/etc')
+	foreach my $try ('.', $sourcedir, '/usr/local/etc')
 	{
-		$typedefs_file ||= "$try/typedefs.list"
+		last if $typedefs_file;
+		next unless defined $try;
+		$typedefs_file = "$try/typedefs.list"
 		  if (-f "$try/typedefs.list");
 	}
 
-	# try to find typedefs by moving up directory levels
-	my $tdtry = "..";
-	foreach (1 .. 5)
-	{
-		$typedefs_file ||= "$tdtry/src/tools/pgindent/typedefs.list"
-		  if (-f "$tdtry/src/tools/pgindent/typedefs.list");
-		$tdtry = "$tdtry/..";
-	}
 	die "cannot locate typedefs file \"$typedefs_file\"\n"
 	  unless $typedefs_file && -f $typedefs_file;
 
@@ -166,13 +172,13 @@ sub load_typedefs
 	return $filter_typedefs_fh;
 }
 
-
 sub process_exclude
 {
-	if ($excludes && @files)
+	foreach my $excl (@excludes)
 	{
-		open(my $eh, '<', $excludes)
-		  || die "cannot open exclude file \"$excludes\"\n";
+		last unless @files;
+		open(my $eh, '<', $excl)
+		  || die "cannot open exclude file \"$excl\"\n";
 		while (my $line = <$eh>)
 		{
 			chomp $line;
@@ -184,7 +190,6 @@ sub process_exclude
 	}
 	return;
 }
-
 
 sub read_source
 {
@@ -200,7 +205,6 @@ sub read_source
 	return $source;
 }
 
-
 sub write_source
 {
 	my $source          = shift;
@@ -212,7 +216,6 @@ sub write_source
 	close($src_fh);
 	return;
 }
-
 
 sub pre_indent
 {
@@ -242,7 +245,6 @@ sub pre_indent
 	return $source;
 }
 
-
 sub post_indent
 {
 	my $source = shift;
@@ -269,7 +271,6 @@ sub post_indent
 
 	return $source;
 }
-
 
 sub run_indent
 {
@@ -312,7 +313,6 @@ sub show_diff
 	my $diff = `diff -upd "$source_filename" "$post_fh_filename"  2>&1`;
 	return $diff;
 }
-
 
 sub run_build
 {
@@ -359,7 +359,6 @@ sub run_build
 	return;
 }
 
-
 sub build_clean
 {
 	my $code_base = shift || '.';
@@ -397,6 +396,7 @@ Options:
 	--build                 build the pg_bsd_indent program
 	--show-diff             show the changes that would be made
 	--silent-diff           exit with status 2 if any changes would be made
+The --excludes option can be given more than once.
 EOF
 	if ($help)
 	{
@@ -479,7 +479,6 @@ foreach my $source_filename (@files)
 			write_source($source, $source_filename);
 		}
 	}
-
 }
 
 build_clean($code_base) if $build;
