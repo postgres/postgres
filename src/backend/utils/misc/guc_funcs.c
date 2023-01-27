@@ -492,9 +492,12 @@ ShowAllGUCConfig(DestReceiver *dest)
 		struct config_generic *conf = guc_vars[i];
 		char	   *setting;
 
-		if ((conf->flags & GUC_NO_SHOW_ALL) ||
-			((conf->flags & GUC_SUPERUSER_ONLY) &&
-			 !has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_SETTINGS)))
+		/* skip if marked NO_SHOW_ALL */
+		if (conf->flags & GUC_NO_SHOW_ALL)
+			continue;
+
+		/* return only options visible to the current user */
+		if (!ConfigOptionIsVisible(conf))
 			continue;
 
 		/* assign to the values array */
@@ -582,23 +585,25 @@ pg_settings_get_flags(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Return whether or not the GUC variable is visible to the current user.
+ */
+bool
+ConfigOptionIsVisible(struct config_generic *conf)
+{
+	if ((conf->flags & GUC_SUPERUSER_ONLY) &&
+		!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_SETTINGS))
+		return false;
+	else
+		return true;
+}
+
+/*
  * Extract fields to show in pg_settings for given variable.
  */
 static void
-GetConfigOptionValues(struct config_generic *conf, const char **values,
-					  bool *noshow)
+GetConfigOptionValues(struct config_generic *conf, const char **values)
 {
 	char		buffer[256];
-
-	if (noshow)
-	{
-		if ((conf->flags & GUC_NO_SHOW_ALL) ||
-			((conf->flags & GUC_SUPERUSER_ONLY) &&
-			 !has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_SETTINGS)))
-			*noshow = true;
-		else
-			*noshow = false;
-	}
 
 	/* first get the generic attributes */
 
@@ -940,30 +945,23 @@ show_all_settings(PG_FUNCTION_ARGS)
 	max_calls = funcctx->max_calls;
 	attinmeta = funcctx->attinmeta;
 
-	if (call_cntr < max_calls)	/* do when there is more left to send */
+	while (call_cntr < max_calls)	/* do when there is more left to send */
 	{
+		struct config_generic *conf = guc_vars[call_cntr];
 		char	   *values[NUM_PG_SETTINGS_ATTS];
-		bool		noshow;
 		HeapTuple	tuple;
 		Datum		result;
 
-		/*
-		 * Get the next visible GUC variable name and value
-		 */
-		do
+		/* skip if marked NO_SHOW_ALL or if not visible to current user */
+		if ((conf->flags & GUC_NO_SHOW_ALL) ||
+			!ConfigOptionIsVisible(conf))
 		{
-			GetConfigOptionValues(guc_vars[call_cntr], (const char **) values,
-								  &noshow);
-			if (noshow)
-			{
-				/* bump the counter and get the next config setting */
-				call_cntr = ++funcctx->call_cntr;
+			call_cntr = ++funcctx->call_cntr;
+			continue;
+		}
 
-				/* make sure we haven't gone too far now */
-				if (call_cntr >= max_calls)
-					SRF_RETURN_DONE(funcctx);
-			}
-		} while (noshow);
+		/* extract values for the current variable */
+		GetConfigOptionValues(conf, (const char **) values);
 
 		/* build a tuple */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
@@ -973,11 +971,9 @@ show_all_settings(PG_FUNCTION_ARGS)
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}
-	else
-	{
-		/* do when there is no more left */
-		SRF_RETURN_DONE(funcctx);
-	}
+
+	/* do when there is no more left */
+	SRF_RETURN_DONE(funcctx);
 }
 
 /*
