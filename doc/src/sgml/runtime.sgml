@@ -1306,12 +1306,12 @@ default:\
     Another kernel limit that may be of concern when supporting large
     numbers of client connections is the maximum socket connection queue
     length.  If more than that many connection requests arrive within a very
-    short period, some may get rejected before the postmaster can service
+    short period, some may get rejected before the <productname>PostgreSQL</productname> server can service
     the requests, with those clients receiving unhelpful connection failure
     errors such as <quote>Resource temporarily unavailable</quote> or
     <quote>Connection refused</quote>.  The default queue length limit is 128
     on many platforms.  To raise it, adjust the appropriate kernel parameter
-    via <application>sysctl</application>, then restart the postmaster.
+    via <application>sysctl</application>, then restart the <productname>PostgreSQL</productname> server.
     The parameter is variously named <varname>net.core.somaxconn</varname>
     on Linux, <varname>kern.ipc.soacceptqueue</varname> on newer FreeBSD,
     and <varname>kern.ipc.somaxconn</varname> on macOS and other BSD
@@ -1409,11 +1409,12 @@ sysctl -w vm.overcommit_memory=2
 <programlisting>
 echo -1000 > /proc/self/oom_score_adj
 </programlisting>
-    in the postmaster's startup script just before invoking the postmaster.
+    in the <productname>PostgreSQL</productname> startup script just before
+    invoking <filename>postgres</filename>.
     Note that this action must be done as root, or it will have no effect;
     so a root-owned startup script is the easiest place to do it.  If you
     do this, you should also set these environment variables in the startup
-    script before invoking the postmaster:
+    script before invoking <filename>postgres</filename>:
 <programlisting>
 export PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
 export PG_OOM_ADJUST_VALUE=0
