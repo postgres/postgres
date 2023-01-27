@@ -3784,7 +3784,7 @@ ReadHead(ArchiveHandle *AH)
 
 #ifndef HAVE_LIBZ
 	if (AH->compression_spec.algorithm == PG_COMPRESSION_GZIP)
-		pg_fatal("archive is compressed, but this installation does not support compression");
+		pg_log_warning("archive is compressed, but this installation does not support compression -- no data will be available");
 #endif
 
 	if (AH->version >= K_VERS_1_4)
