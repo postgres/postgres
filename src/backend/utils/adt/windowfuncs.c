@@ -288,6 +288,15 @@ window_percent_rank_support(PG_FUNCTION_ARGS)
 {
 	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
 
+	if (IsA(rawreq, SupportRequestWFuncMonotonic))
+	{
+		SupportRequestWFuncMonotonic *req = (SupportRequestWFuncMonotonic *) rawreq;
+
+		/* percent_rank() is monotonically increasing */
+		req->monotonic = MONOTONICFUNC_INCREASING;
+		PG_RETURN_POINTER(req);
+	}
+
 	if (IsA(rawreq, SupportRequestOptimizeWindowClause))
 	{
 		SupportRequestOptimizeWindowClause *req = (SupportRequestOptimizeWindowClause *) rawreq;
@@ -361,6 +370,15 @@ Datum
 window_cume_dist_support(PG_FUNCTION_ARGS)
 {
 	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+
+	if (IsA(rawreq, SupportRequestWFuncMonotonic))
+	{
+		SupportRequestWFuncMonotonic *req = (SupportRequestWFuncMonotonic *) rawreq;
+
+		/* cume_dist() is monotonically increasing */
+		req->monotonic = MONOTONICFUNC_INCREASING;
+		PG_RETURN_POINTER(req);
+	}
 
 	if (IsA(rawreq, SupportRequestOptimizeWindowClause))
 	{
@@ -464,6 +482,18 @@ Datum
 window_ntile_support(PG_FUNCTION_ARGS)
 {
 	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+
+	if (IsA(rawreq, SupportRequestWFuncMonotonic))
+	{
+		SupportRequestWFuncMonotonic *req = (SupportRequestWFuncMonotonic *) rawreq;
+
+		/*
+		 * ntile() is monotonically increasing as the number of buckets cannot
+		 * change after the first call
+		 */
+		req->monotonic = MONOTONICFUNC_INCREASING;
+		PG_RETURN_POINTER(req);
+	}
 
 	if (IsA(rawreq, SupportRequestOptimizeWindowClause))
 	{

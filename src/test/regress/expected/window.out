@@ -3766,19 +3766,20 @@ SELECT * FROM
           count(salary) OVER (PARTITION BY depname || '') c1, -- w1
           row_number() OVER (PARTITION BY depname) rn, -- w2
           count(*) OVER (PARTITION BY depname) c2, -- w2
-          count(*) OVER (PARTITION BY '' || depname) c3 -- w3
+          count(*) OVER (PARTITION BY '' || depname) c3, -- w3
+          ntile(2) OVER (PARTITION BY depname) nt -- w2
    FROM empsalary
-) e WHERE rn <= 1 AND c1 <= 3;
-                                        QUERY PLAN                                         
--------------------------------------------------------------------------------------------
+) e WHERE rn <= 1 AND c1 <= 3 AND nt < 2;
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
  Subquery Scan on e
    ->  WindowAgg
-         Filter: ((row_number() OVER (?)) <= 1)
+         Filter: (((row_number() OVER (?)) <= 1) AND ((ntile(2) OVER (?)) < 2))
          Run Condition: (count(empsalary.salary) OVER (?) <= 3)
          ->  Sort
                Sort Key: (((empsalary.depname)::text || ''::text))
                ->  WindowAgg
-                     Run Condition: (row_number() OVER (?) <= 1)
+                     Run Condition: ((row_number() OVER (?) <= 1) AND (ntile(2) OVER (?) < 2))
                      ->  Sort
                            Sort Key: empsalary.depname
                            ->  WindowAgg
@@ -3793,13 +3794,14 @@ SELECT * FROM
           count(salary) OVER (PARTITION BY depname || '') c1, -- w1
           row_number() OVER (PARTITION BY depname) rn, -- w2
           count(*) OVER (PARTITION BY depname) c2, -- w2
-          count(*) OVER (PARTITION BY '' || depname) c3 -- w3
+          count(*) OVER (PARTITION BY '' || depname) c3, -- w3
+          ntile(2) OVER (PARTITION BY depname) nt -- w2
    FROM empsalary
-) e WHERE rn <= 1 AND c1 <= 3;
-  depname  | empno | salary | enroll_date | c1 | rn | c2 | c3 
------------+-------+--------+-------------+----+----+----+----
- personnel |     5 |   3500 | 12-10-2007  |  2 |  1 |  2 |  2
- sales     |     3 |   4800 | 08-01-2007  |  3 |  1 |  3 |  3
+) e WHERE rn <= 1 AND c1 <= 3 AND nt < 2;
+  depname  | empno | salary | enroll_date | c1 | rn | c2 | c3 | nt 
+-----------+-------+--------+-------------+----+----+----+----+----
+ personnel |     5 |   3500 | 12-10-2007  |  2 |  1 |  2 |  2 |  1
+ sales     |     3 |   4800 | 08-01-2007  |  3 |  1 |  3 |  3 |  1
 (2 rows)
 
 -- Tests to ensure we don't push down the run condition when it's not valid to
