@@ -134,7 +134,6 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
 		phinfo->ph_eval_at = bms_copy(phv->phrels);
 		Assert(!bms_is_empty(phinfo->ph_eval_at));
 	}
-	/* ph_eval_at may change later, see update_placeholder_eval_levels */
 	phinfo->ph_needed = NULL;	/* initially it's unused */
 	/* for the moment, estimate width using just the datatype info */
 	phinfo->ph_width = get_typavgwidth(exprType((Node *) phv->phexpr),
@@ -282,102 +281,6 @@ find_placeholders_in_expr(PlannerInfo *root, Node *expr)
 		(void) find_placeholder_info(root, phv);
 	}
 	list_free(vars);
-}
-
-/*
- * update_placeholder_eval_levels
- *		Adjust the target evaluation levels for placeholders
- *
- * The initial eval_at level set by find_placeholder_info was the set of
- * rels used in the placeholder's expression (or the whole subselect below
- * the placeholder's syntactic location, if the expr is variable-free).
- * If the query contains any outer joins that can null any of those rels,
- * we must delay evaluation to above those joins.
- *
- * We repeat this operation each time we add another outer join to
- * root->join_info_list.  It's somewhat annoying to have to do that, but
- * since we don't have very much information on the placeholders' locations,
- * it's hard to avoid.  Each placeholder's eval_at level must be correct
- * by the time it starts to figure in outer-join delay decisions for higher
- * outer joins.
- *
- * In future we might want to put additional policy/heuristics here to
- * try to determine an optimal evaluation level.  The current rules will
- * result in evaluation at the lowest possible level.  However, pushing a
- * placeholder eval up the tree is likely to further constrain evaluation
- * order for outer joins, so it could easily be counterproductive; and we
- * don't have enough information at this point to make an intelligent choice.
- */
-void
-update_placeholder_eval_levels(PlannerInfo *root, SpecialJoinInfo *new_sjinfo)
-{
-	ListCell   *lc1;
-
-	foreach(lc1, root->placeholder_list)
-	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc1);
-		Relids		syn_level = phinfo->ph_var->phrels;
-		Relids		eval_at;
-		bool		found_some;
-		ListCell   *lc2;
-
-		/*
-		 * We don't need to do any work on this placeholder unless the
-		 * newly-added outer join is syntactically beneath its location.
-		 */
-		if (!bms_is_subset(new_sjinfo->syn_lefthand, syn_level) ||
-			!bms_is_subset(new_sjinfo->syn_righthand, syn_level))
-			continue;
-
-		/*
-		 * Check for delays due to lower outer joins.  This is the same logic
-		 * as in check_outerjoin_delay in initsplan.c, except that we don't
-		 * have anything to do with the delay_upper_joins flags; delay of
-		 * upper outer joins will be handled later, based on the eval_at
-		 * values we compute now.
-		 */
-		eval_at = phinfo->ph_eval_at;
-
-		do
-		{
-			found_some = false;
-			foreach(lc2, root->join_info_list)
-			{
-				SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc2);
-
-				/* disregard joins not within the PHV's sub-select */
-				if (!bms_is_subset(sjinfo->syn_lefthand, syn_level) ||
-					!bms_is_subset(sjinfo->syn_righthand, syn_level))
-					continue;
-
-				/* do we reference any nullable rels of this OJ? */
-				if (bms_overlap(eval_at, sjinfo->min_righthand) ||
-					(sjinfo->jointype == JOIN_FULL &&
-					 bms_overlap(eval_at, sjinfo->min_lefthand)))
-				{
-					/* yes; have we included all its rels in eval_at? */
-					if (!bms_is_subset(sjinfo->min_lefthand, eval_at) ||
-						!bms_is_subset(sjinfo->min_righthand, eval_at))
-					{
-						/* no, so add them in */
-						eval_at = bms_add_members(eval_at,
-												  sjinfo->min_lefthand);
-						eval_at = bms_add_members(eval_at,
-												  sjinfo->min_righthand);
-						if (sjinfo->ojrelid)
-							eval_at = bms_add_member(eval_at, sjinfo->ojrelid);
-						/* we'll need another iteration */
-						found_some = true;
-					}
-				}
-			}
-		} while (found_some);
-
-		/* Can't move the PHV's eval_at level to above its syntactic level */
-		Assert(bms_is_subset(eval_at, syn_level));
-
-		phinfo->ph_eval_at = eval_at;
-	}
 }
 
 /*

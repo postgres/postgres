@@ -170,11 +170,10 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	int			attroff;
 
 	/*
-	 * Must be a non-delaying left join to a single baserel, else we aren't
-	 * going to be able to do anything with it.
+	 * Must be a left join to a single baserel, else we aren't going to be
+	 * able to do anything with it.
 	 */
-	if (sjinfo->jointype != JOIN_LEFT ||
-		sjinfo->delay_upper_joins)
+	if (sjinfo->jointype != JOIN_LEFT)
 		return false;
 
 	if (!bms_get_singleton_member(sjinfo->min_righthand, &innerrelid))
@@ -570,13 +569,10 @@ reduce_unique_semijoins(PlannerInfo *root)
 		List	   *restrictlist;
 
 		/*
-		 * Must be a non-delaying semijoin to a single baserel, else we aren't
-		 * going to be able to do anything with it.  (It's probably not
-		 * possible for delay_upper_joins to be set on a semijoin, but we
-		 * might as well check.)
+		 * Must be a semijoin to a single baserel, else we aren't going to be
+		 * able to do anything with it.
 		 */
-		if (sjinfo->jointype != JOIN_SEMI ||
-			sjinfo->delay_upper_joins)
+		if (sjinfo->jointype != JOIN_SEMI)
 			continue;
 
 		if (!bms_get_singleton_member(sjinfo->min_righthand, &innerrelid))

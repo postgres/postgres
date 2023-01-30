@@ -269,14 +269,6 @@ struct PlannerInfo
 	Relids		all_query_rels;
 
 	/*
-	 * nullable_baserels is a Relids set of base relids that are nullable by
-	 * some outer join in the jointree; these are rels that are potentially
-	 * nullable below the WHERE clause, SELECT targetlist, etc.  This is
-	 * computed in deconstruct_jointree.
-	 */
-	Relids		nullable_baserels;
-
-	/*
 	 * join_rel_list is a list of all join-relation RelOptInfos we have
 	 * considered in this planning run.  For small problems we just scan the
 	 * list to do lookups, but when there are many join relations we build a
@@ -694,6 +686,7 @@ typedef struct PartitionSchemeData *PartitionScheme;
  *				the attribute is needed as part of final targetlist
  *		attr_widths - cache space for per-attribute width estimates;
  *					  zero means not computed yet
+ *		nulling_relids - relids of outer joins that can null this rel
  *		lateral_vars - lateral cross-references of rel, if any (list of
  *					   Vars and PlaceHolderVars)
  *		lateral_referencers - relids of rels that reference this one laterally
@@ -927,6 +920,8 @@ typedef struct RelOptInfo
 	Relids	   *attr_needed pg_node_attr(read_write_ignore);
 	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths pg_node_attr(read_write_ignore);
+	/* relids of outer joins that can null this baserel */
+	Relids		nulling_relids;
 	/* LATERAL Vars and PHVs referenced by rel */
 	List	   *lateral_vars;
 	/* rels that reference this baserel laterally */
@@ -1389,7 +1384,6 @@ typedef struct EquivalenceMember
 
 	Expr	   *em_expr;		/* the expression represented */
 	Relids		em_relids;		/* all relids appearing in em_expr */
-	Relids		em_nullable_relids; /* nullable by lower outer joins */
 	bool		em_is_const;	/* expression is pseudoconstant? */
 	bool		em_is_child;	/* derived version for a child relation? */
 	Oid			em_datatype;	/* the "nominal type" used by the opfamily */
@@ -2404,25 +2398,11 @@ typedef struct LimitPath
  * conditions.  Possibly we should rename it to reflect that meaning?  But
  * see also the comments for RINFO_IS_PUSHED_DOWN, below.)
  *
- * RestrictInfo nodes also contain an outerjoin_delayed flag, which is true
- * if the clause's applicability must be delayed due to any outer joins
- * appearing below it (ie, it has to be postponed to some join level higher
- * than the set of relations it actually references).
- *
  * There is also an outer_relids field, which is NULL except for outer join
  * clauses; for those, it is the set of relids on the outer side of the
  * clause's outer join.  (These are rels that the clause cannot be applied to
  * in parameterized scans, since pushing it into the join's outer side would
  * lead to wrong answers.)
- *
- * There is also a nullable_relids field, which is the set of rels the clause
- * references that can be forced null by some outer join below the clause.
- *
- * outerjoin_delayed = true is subtly different from nullable_relids != NULL:
- * a clause might reference some nullable rels and yet not be
- * outerjoin_delayed because it also references all the other rels of the
- * outer join(s). A clause that is not outerjoin_delayed can be enforced
- * anywhere it is computable.
  *
  * To handle security-barrier conditions efficiently, we mark RestrictInfo
  * nodes with a security_level field, in which higher values identify clauses
@@ -2497,9 +2477,6 @@ typedef struct RestrictInfo
 	/* true if clause was pushed down in level */
 	bool		is_pushed_down;
 
-	/* true if delayed by lower outer join */
-	bool		outerjoin_delayed;
-
 	/* see comment above */
 	bool		can_join pg_node_attr(equal_ignore);
 
@@ -2530,9 +2507,6 @@ typedef struct RestrictInfo
 
 	/* If an outer-join clause, the outer-side relations, else NULL: */
 	Relids		outer_relids;
-
-	/* The relids used in the clause that are nullable by lower outer joins: */
-	Relids		nullable_relids;
 
 	/*
 	 * Relids in the left/right side of the clause.  These fields are set for
@@ -2579,10 +2553,7 @@ typedef struct RestrictInfo
 	/* eval cost of clause; -1 if not yet set */
 	QualCost	eval_cost pg_node_attr(equal_ignore);
 
-	/*
-	 * selectivity for "normal" (JOIN_INNER) semantics; -1 if not yet set; >1
-	 * means a redundant clause
-	 */
+	/* selectivity for "normal" (JOIN_INNER) semantics; -1 if not yet set */
 	Selectivity norm_selec pg_node_attr(equal_ignore);
 	/* selectivity for outer join semantics; -1 if not yet set */
 	Selectivity outer_selec pg_node_attr(equal_ignore);
@@ -2788,12 +2759,6 @@ typedef struct PlaceHolderVar
  * upper-level outer joins even if it appears in their RHS).  We don't bother
  * to set lhs_strict for FULL JOINs, however.
  *
- * delay_upper_joins is set true if we detect a pushed-down clause that has
- * to be evaluated after this join is formed (because it references the RHS).
- * Any outer joins that have such a clause and this join in their RHS cannot
- * commute with this join, because that would leave noplace to check the
- * pushed-down clause.  (We don't track this for FULL JOINs, either.)
- *
  * For a semijoin, we also extract the join operators and their RHS arguments
  * and set semi_operators, semi_rhs_exprs, semi_can_btree, and semi_can_hash.
  * This is done in support of possibly unique-ifying the RHS, so we don't
@@ -2808,8 +2773,8 @@ typedef struct PlaceHolderVar
  * not allowed within join_info_list.  We also create transient
  * SpecialJoinInfos with jointype == JOIN_INNER for outer joins, since for
  * cost estimation purposes it is sometimes useful to know the join size under
- * plain innerjoin semantics.  Note that lhs_strict, delay_upper_joins, and
- * of course the semi_xxx fields are not set meaningfully within such structs.
+ * plain innerjoin semantics.  Note that lhs_strict and the semi_xxx fields
+ * are not set meaningfully within such structs.
  */
 #ifndef HAVE_SPECIALJOININFO_TYPEDEF
 typedef struct SpecialJoinInfo SpecialJoinInfo;
@@ -2831,7 +2796,6 @@ struct SpecialJoinInfo
 	Relids		commute_above_r;	/* commuting OJs above this one, if RHS */
 	Relids		commute_below;	/* commuting OJs below this one */
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
-	bool		delay_upper_joins;	/* can't commute with upper RHS */
 	/* Remaining fields are set only for JOIN_SEMI jointype: */
 	bool		semi_can_btree; /* true if semi_operators are all btree */
 	bool		semi_can_hash;	/* true if semi_operators are all hash */

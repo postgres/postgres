@@ -894,10 +894,9 @@ apply_child_basequals(PlannerInfo *root, RelOptInfo *parentrel,
 								 make_restrictinfo(root,
 												   (Expr *) onecq,
 												   rinfo->is_pushed_down,
-												   rinfo->outerjoin_delayed,
 												   pseudoconstant,
 												   rinfo->security_level,
-												   NULL, NULL, NULL));
+												   NULL, NULL));
 			/* track minimum security level among child quals */
 			cq_min_security = Min(cq_min_security, rinfo->security_level);
 		}
@@ -930,9 +929,9 @@ apply_child_basequals(PlannerInfo *root, RelOptInfo *parentrel,
 				/* not likely that we'd see constants here, so no check */
 				childquals = lappend(childquals,
 									 make_restrictinfo(root, qual,
-													   true, false, false,
+													   true, false,
 													   security_level,
-													   NULL, NULL, NULL));
+													   NULL, NULL));
 				cq_min_security = Min(cq_min_security, security_level);
 			}
 			security_level++;

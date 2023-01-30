@@ -25,21 +25,17 @@ static RestrictInfo *make_restrictinfo_internal(PlannerInfo *root,
 												Expr *clause,
 												Expr *orclause,
 												bool is_pushed_down,
-												bool outerjoin_delayed,
 												bool pseudoconstant,
 												Index security_level,
 												Relids required_relids,
-												Relids outer_relids,
-												Relids nullable_relids);
+												Relids outer_relids);
 static Expr *make_sub_restrictinfos(PlannerInfo *root,
 									Expr *clause,
 									bool is_pushed_down,
-									bool outerjoin_delayed,
 									bool pseudoconstant,
 									Index security_level,
 									Relids required_relids,
-									Relids outer_relids,
-									Relids nullable_relids);
+									Relids outer_relids);
 
 
 /*
@@ -47,9 +43,9 @@ static Expr *make_sub_restrictinfos(PlannerInfo *root,
  *
  * Build a RestrictInfo node containing the given subexpression.
  *
- * The is_pushed_down, outerjoin_delayed, and pseudoconstant flags for the
+ * The is_pushed_down and pseudoconstant flags for the
  * RestrictInfo must be supplied by the caller, as well as the correct values
- * for security_level, outer_relids, and nullable_relids.
+ * for security_level and outer_relids.
  * required_relids can be NULL, in which case it defaults to the actual clause
  * contents (i.e., clause_relids).
  *
@@ -65,12 +61,10 @@ RestrictInfo *
 make_restrictinfo(PlannerInfo *root,
 				  Expr *clause,
 				  bool is_pushed_down,
-				  bool outerjoin_delayed,
 				  bool pseudoconstant,
 				  Index security_level,
 				  Relids required_relids,
-				  Relids outer_relids,
-				  Relids nullable_relids)
+				  Relids outer_relids)
 {
 	/*
 	 * If it's an OR clause, build a modified copy with RestrictInfos inserted
@@ -80,12 +74,10 @@ make_restrictinfo(PlannerInfo *root,
 		return (RestrictInfo *) make_sub_restrictinfos(root,
 													   clause,
 													   is_pushed_down,
-													   outerjoin_delayed,
 													   pseudoconstant,
 													   security_level,
 													   required_relids,
-													   outer_relids,
-													   nullable_relids);
+													   outer_relids);
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!is_andclause(clause));
@@ -94,12 +86,10 @@ make_restrictinfo(PlannerInfo *root,
 									  clause,
 									  NULL,
 									  is_pushed_down,
-									  outerjoin_delayed,
 									  pseudoconstant,
 									  security_level,
 									  required_relids,
-									  outer_relids,
-									  nullable_relids);
+									  outer_relids);
 }
 
 /*
@@ -112,12 +102,10 @@ make_restrictinfo_internal(PlannerInfo *root,
 						   Expr *clause,
 						   Expr *orclause,
 						   bool is_pushed_down,
-						   bool outerjoin_delayed,
 						   bool pseudoconstant,
 						   Index security_level,
 						   Relids required_relids,
-						   Relids outer_relids,
-						   Relids nullable_relids)
+						   Relids outer_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 	Relids		baserels;
@@ -125,14 +113,12 @@ make_restrictinfo_internal(PlannerInfo *root,
 	restrictinfo->clause = clause;
 	restrictinfo->orclause = orclause;
 	restrictinfo->is_pushed_down = is_pushed_down;
-	restrictinfo->outerjoin_delayed = outerjoin_delayed;
 	restrictinfo->pseudoconstant = pseudoconstant;
 	restrictinfo->has_clone = false;	/* may get set by caller */
 	restrictinfo->is_clone = false; /* may get set by caller */
 	restrictinfo->can_join = false; /* may get set below */
 	restrictinfo->security_level = security_level;
 	restrictinfo->outer_relids = outer_relids;
-	restrictinfo->nullable_relids = nullable_relids;
 
 	/*
 	 * If it's potentially delayable by lower-level security quals, figure out
@@ -258,9 +244,9 @@ make_restrictinfo_internal(PlannerInfo *root,
  * implicit-AND lists at top level of RestrictInfo lists.  Only ORs and
  * simple clauses are valid RestrictInfos.
  *
- * The same is_pushed_down, outerjoin_delayed, and pseudoconstant flag
+ * The same is_pushed_down and pseudoconstant flag
  * values can be applied to all RestrictInfo nodes in the result.  Likewise
- * for security_level, outer_relids, and nullable_relids.
+ * for security_level and outer_relids.
  *
  * The given required_relids are attached to our top-level output,
  * but any OR-clause constituents are allowed to default to just the
@@ -270,12 +256,10 @@ static Expr *
 make_sub_restrictinfos(PlannerInfo *root,
 					   Expr *clause,
 					   bool is_pushed_down,
-					   bool outerjoin_delayed,
 					   bool pseudoconstant,
 					   Index security_level,
 					   Relids required_relids,
-					   Relids outer_relids,
-					   Relids nullable_relids)
+					   Relids outer_relids)
 {
 	if (is_orclause(clause))
 	{
@@ -287,22 +271,18 @@ make_sub_restrictinfos(PlannerInfo *root,
 							 make_sub_restrictinfos(root,
 													lfirst(temp),
 													is_pushed_down,
-													outerjoin_delayed,
 													pseudoconstant,
 													security_level,
 													NULL,
-													outer_relids,
-													nullable_relids));
+													outer_relids));
 		return (Expr *) make_restrictinfo_internal(root,
 												   clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
-												   outerjoin_delayed,
 												   pseudoconstant,
 												   security_level,
 												   required_relids,
-												   outer_relids,
-												   nullable_relids);
+												   outer_relids);
 	}
 	else if (is_andclause(clause))
 	{
@@ -314,12 +294,10 @@ make_sub_restrictinfos(PlannerInfo *root,
 							  make_sub_restrictinfos(root,
 													 lfirst(temp),
 													 is_pushed_down,
-													 outerjoin_delayed,
 													 pseudoconstant,
 													 security_level,
 													 required_relids,
-													 outer_relids,
-													 nullable_relids));
+													 outer_relids));
 		return make_andclause(andlist);
 	}
 	else
@@ -327,12 +305,10 @@ make_sub_restrictinfos(PlannerInfo *root,
 												   clause,
 												   NULL,
 												   is_pushed_down,
-												   outerjoin_delayed,
 												   pseudoconstant,
 												   security_level,
 												   required_relids,
-												   outer_relids,
-												   nullable_relids);
+												   outer_relids);
 }
 
 /*
@@ -437,6 +413,21 @@ restriction_is_securely_promotable(RestrictInfo *restrictinfo,
 }
 
 /*
+ * Detect whether a RestrictInfo's clause is constant TRUE (note that it's
+ * surely of type boolean).  No such WHERE clause could survive qual
+ * canonicalization, but equivclass.c may generate such RestrictInfos for
+ * reasons discussed therein.  We should drop them again when creating
+ * the finished plan, which is handled by the next few functions.
+ */
+static inline bool
+rinfo_is_constant_true(RestrictInfo *rinfo)
+{
+	return IsA(rinfo->clause, Const) &&
+		!((Const *) rinfo->clause)->constisnull &&
+		DatumGetBool(((Const *) rinfo->clause)->constvalue);
+}
+
+/*
  * get_actual_clauses
  *
  * Returns a list containing the bare clauses from 'restrictinfo_list'.
@@ -455,6 +446,7 @@ get_actual_clauses(List *restrictinfo_list)
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
 		Assert(!rinfo->pseudoconstant);
+		Assert(!rinfo_is_constant_true(rinfo));
 
 		result = lappend(result, rinfo->clause);
 	}
@@ -466,6 +458,7 @@ get_actual_clauses(List *restrictinfo_list)
  *
  * Extract bare clauses from 'restrictinfo_list', returning either the
  * regular ones or the pseudoconstant ones per 'pseudoconstant'.
+ * Constant-TRUE clauses are dropped in any case.
  */
 List *
 extract_actual_clauses(List *restrictinfo_list,
@@ -478,7 +471,8 @@ extract_actual_clauses(List *restrictinfo_list,
 	{
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
-		if (rinfo->pseudoconstant == pseudoconstant)
+		if (rinfo->pseudoconstant == pseudoconstant &&
+			!rinfo_is_constant_true(rinfo))
 			result = lappend(result, rinfo->clause);
 	}
 	return result;
@@ -489,7 +483,7 @@ extract_actual_clauses(List *restrictinfo_list,
  *
  * Extract bare clauses from 'restrictinfo_list', separating those that
  * semantically match the join level from those that were pushed down.
- * Pseudoconstant clauses are excluded from the results.
+ * Pseudoconstant and constant-TRUE clauses are excluded from the results.
  *
  * This is only used at outer joins, since for plain joins we don't care
  * about pushed-down-ness.
@@ -511,13 +505,15 @@ extract_actual_join_clauses(List *restrictinfo_list,
 
 		if (RINFO_IS_PUSHED_DOWN(rinfo, joinrelids))
 		{
-			if (!rinfo->pseudoconstant)
+			if (!rinfo->pseudoconstant &&
+				!rinfo_is_constant_true(rinfo))
 				*otherquals = lappend(*otherquals, rinfo->clause);
 		}
 		else
 		{
 			/* joinquals shouldn't have been marked pseudoconstant */
 			Assert(!rinfo->pseudoconstant);
+			Assert(!rinfo_is_constant_true(rinfo));
 			*joinquals = lappend(*joinquals, rinfo->clause);
 		}
 	}
@@ -618,8 +614,17 @@ join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel)
 	if (bms_is_member(baserel->relid, rinfo->outer_relids))
 		return false;
 
-	/* Target rel must not be nullable below the clause */
-	if (bms_is_member(baserel->relid, rinfo->nullable_relids))
+	/*
+	 * Target rel's Vars must not be nulled by any outer join.  We can check
+	 * this without groveling through the individual Vars by seeing whether
+	 * clause_relids (which includes all such Vars' varnullingrels) includes
+	 * any outer join that can null the target rel.  You might object that
+	 * this could reject the clause on the basis of an OJ relid that came from
+	 * some other rel's Var.  However, that would still mean that the clause
+	 * came from above that outer join and shouldn't be pushed down; so there
+	 * should be no false positives.
+	 */
+	if (bms_overlap(rinfo->clause_relids, baserel->nulling_relids))
 		return false;
 
 	/* Clause must not use any rels with LATERAL references to this rel */
@@ -651,18 +656,15 @@ join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel)
  * relation plus the outer rels.  We also check that it does reference at
  * least one current Var, ensuring that the clause will be pushed down to
  * a unique place in a parameterized join tree.  And we check that we're
- * not pushing the clause into its outer-join outer side, nor down into
- * a lower outer join's inner side.
+ * not pushing the clause into its outer-join outer side.
  *
- * The check about pushing a clause down into a lower outer join's inner side
- * is only approximate; it sometimes returns "false" when actually it would
- * be safe to use the clause here because we're still above the outer join
- * in question.  This is okay as long as the answers at different join levels
- * are consistent: it just means we might sometimes fail to push a clause as
- * far down as it could safely be pushed.  It's unclear whether it would be
- * worthwhile to do this more precisely.  (But if it's ever fixed to be
- * exactly accurate, there's an Assert in get_joinrel_parampathinfo() that
- * should be re-enabled.)
+ * We used to need to check that we're not pushing the clause into a lower
+ * outer join's inner side.  However, now that clause_relids includes
+ * references to potentially-nulling outer joins, the other tests handle that
+ * concern.  If the clause references any Var coming from the inside of a
+ * lower outer join, its clause_relids will mention that outer join, causing
+ * the evaluability check to fail; while if it references no such Vars, the
+ * references-a-target-rel check will fail.
  *
  * There's no check here equivalent to join_clause_is_movable_to's test on
  * lateral_referencers.  We assume the caller wouldn't be inquiring unless
@@ -702,15 +704,6 @@ join_clause_is_movable_into(RestrictInfo *rinfo,
 
 	/* Cannot move an outer-join clause into the join's outer side */
 	if (bms_overlap(currentrelids, rinfo->outer_relids))
-		return false;
-
-	/*
-	 * Target rel(s) must not be nullable below the clause.  This is
-	 * approximate, in the safe direction, because the current join might be
-	 * above the join where the nulling would happen, in which case the clause
-	 * would work correctly here.  But we don't have enough info to be sure.
-	 */
-	if (bms_overlap(currentrelids, rinfo->nullable_relids))
 		return false;
 
 	return true;

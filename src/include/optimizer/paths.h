@@ -128,7 +128,6 @@ extern Expr *canonicalize_ec_expression(Expr *expr,
 extern void reconsider_outer_join_clauses(PlannerInfo *root);
 extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 												  Expr *expr,
-												  Relids nullable_relids,
 												  List *opfamilies,
 												  Oid opcintype,
 												  Oid collation,
@@ -216,7 +215,7 @@ extern List *build_index_pathkeys(PlannerInfo *root, IndexOptInfo *index,
 extern List *build_partition_pathkeys(PlannerInfo *root, RelOptInfo *partrel,
 									  ScanDirection scandir, bool *partialkeys);
 extern List *build_expression_pathkey(PlannerInfo *root, Expr *expr,
-									  Relids nullable_relids, Oid opno,
+									  Oid opno,
 									  Relids rel, bool create_it);
 extern List *convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 									   List *subquery_pathkeys,

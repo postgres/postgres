@@ -1044,10 +1044,11 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 	/*
 	 * If we have any RTE_RESULT relations, see if they can be deleted from
-	 * the jointree.  This step is most effectively done after we've done
-	 * expression preprocessing and outer join reduction.
+	 * the jointree.  We also rely on this processing to flatten single-child
+	 * FromExprs underneath outer joins.  This step is most effectively done
+	 * after we've done expression preprocessing and outer join reduction.
 	 */
-	if (hasResultRTEs)
+	if (hasResultRTEs || hasOuterJoins)
 		remove_useless_result_rtes(root);
 
 	/*

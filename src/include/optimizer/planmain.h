@@ -83,7 +83,6 @@ extern RestrictInfo *process_implied_equality(PlannerInfo *root,
 											  Expr *item1,
 											  Expr *item2,
 											  Relids qualscope,
-											  Relids nullable_relids,
 											  Index security_level,
 											  bool below_outer_join,
 											  bool both_const);
@@ -93,7 +92,6 @@ extern RestrictInfo *build_implied_join_equality(PlannerInfo *root,
 												 Expr *item1,
 												 Expr *item2,
 												 Relids qualscope,
-												 Relids nullable_relids,
 												 Index security_level);
 extern void match_foreign_keys_to_quals(PlannerInfo *root);
 

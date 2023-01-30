@@ -467,9 +467,6 @@ adjust_appendrel_attrs_mutator(Node *node,
 		newinfo->outer_relids = adjust_child_relids(oldinfo->outer_relids,
 													context->nappinfos,
 													context->appinfos);
-		newinfo->nullable_relids = adjust_child_relids(oldinfo->nullable_relids,
-													   context->nappinfos,
-													   context->appinfos);
 		newinfo->left_relids = adjust_child_relids(oldinfo->left_relids,
 												   context->nappinfos,
 												   context->appinfos);

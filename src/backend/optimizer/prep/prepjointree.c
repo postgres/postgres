@@ -130,6 +130,7 @@ static void reduce_outer_joins_pass2(Node *jtnode,
 static void report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 									 int rtindex, Relids relids);
 static Node *remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
+											Node **parent_quals,
 											Relids *dropped_outer_joins);
 static int	get_result_relid(PlannerInfo *root, Node *jtnode);
 static void remove_result_refs(PlannerInfo *root, int varno, Node *newjtloc);
@@ -3085,11 +3086,30 @@ report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 /*
  * remove_useless_result_rtes
  *		Attempt to remove RTE_RESULT RTEs from the join tree.
+ *		Also, elide single-child FromExprs where possible.
  *
  * We can remove RTE_RESULT entries from the join tree using the knowledge
  * that RTE_RESULT returns exactly one row and has no output columns.  Hence,
  * if one is inner-joined to anything else, we can delete it.  Optimizations
  * are also possible for some outer-join cases, as detailed below.
+ *
+ * This pass also replaces single-child FromExprs with their child node
+ * where possible.  It's appropriate to do that here and not earlier because
+ * RTE_RESULT removal might reduce a multiple-child FromExpr to have only one
+ * child.  We can remove such a FromExpr if its quals are empty, or if it's
+ * semantically valid to merge the quals into those of the parent node.
+ * While removing unnecessary join tree nodes has some micro-efficiency value,
+ * the real reason to do this is to eliminate cases where the nullable side of
+ * an outer join node is a FromExpr whose single child is another outer join.
+ * To correctly determine whether the two outer joins can commute,
+ * deconstruct_jointree() must treat any quals of such a FromExpr as being
+ * degenerate quals of the upper outer join.  The best way to do that is to
+ * make them actually *be* quals of the upper join, by dropping the FromExpr
+ * and hoisting the quals up into the upper join's quals.  (Note that there is
+ * no hazard when the intermediate FromExpr has multiple children, since then
+ * it represents an inner join that cannot commute with the upper outer join.)
+ * As long as we have to do that, we might as well elide such FromExprs
+ * everywhere.
  *
  * Some of these optimizations depend on recognizing empty (constant-true)
  * quals for FromExprs and JoinExprs.  That makes it useful to apply this
@@ -3131,6 +3151,7 @@ remove_useless_result_rtes(PlannerInfo *root)
 	root->parse->jointree = (FromExpr *)
 		remove_useless_results_recurse(root,
 									   (Node *) root->parse->jointree,
+									   NULL,
 									   &dropped_outer_joins);
 	/* We should still have a FromExpr */
 	Assert(IsA(root->parse->jointree, FromExpr));
@@ -3184,9 +3205,14 @@ remove_useless_result_rtes(PlannerInfo *root)
  * This recursively processes the jointree and returns a modified jointree.
  * In addition, the RT indexes of any removed outer-join nodes are added to
  * *dropped_outer_joins.
+ *
+ * jtnode is the current jointree node.  If it could be valid to merge
+ * its quals into those of the parent node, parent_quals should point to
+ * the parent's quals list; otherwise, pass NULL for parent_quals.
  */
 static Node *
 remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
+							   Node **parent_quals,
 							   Relids *dropped_outer_joins)
 {
 	Assert(jtnode != NULL);
@@ -3214,8 +3240,9 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 			Node	   *child = (Node *) lfirst(cell);
 			int			varno;
 
-			/* Recursively transform child ... */
+			/* Recursively transform child, allowing it to push up quals ... */
 			child = remove_useless_results_recurse(root, child,
+												   &f->quals,
 												   dropped_outer_joins);
 			/* ... and stick it back into the tree */
 			lfirst(cell) = child;
@@ -3249,25 +3276,54 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 		}
 
 		/*
-		 * If we're not at the top of the jointree, it's valid to simplify a
-		 * degenerate FromExpr into its single child.  (At the top, we must
-		 * keep the FromExpr since Query.jointree is required to point to a
-		 * FromExpr.)
+		 * If the FromExpr now has only one child, see if we can elide it.
+		 * This is always valid if there are no quals, except at the top of
+		 * the jointree (since Query.jointree is required to point to a
+		 * FromExpr).  Otherwise, we can do it if we can push the quals up to
+		 * the parent node.
+		 *
+		 * Note: while it would not be terribly hard to generalize this
+		 * transformation to merge multi-child FromExprs into their parent
+		 * FromExpr, that risks making the parent join too expensive to plan.
+		 * We leave it to later processing to decide heuristically whether
+		 * that's a good idea.  Pulling up a single child is always OK,
+		 * however.
 		 */
-		if (f != root->parse->jointree &&
-			f->quals == NULL &&
-			list_length(f->fromlist) == 1)
+		if (list_length(f->fromlist) == 1 &&
+			f != root->parse->jointree &&
+			(f->quals == NULL || parent_quals != NULL))
+		{
+			/*
+			 * Merge any quals up to parent.  They should be in implicit-AND
+			 * format by now, so we just need to concatenate lists.  Put the
+			 * child quals at the front, on the grounds that they should
+			 * nominally be evaluated earlier.
+			 */
+			if (f->quals != NULL)
+				*parent_quals = (Node *)
+					list_concat(castNode(List, f->quals),
+								castNode(List, *parent_quals));
 			return (Node *) linitial(f->fromlist);
+		}
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		int			varno;
 
-		/* First, recurse */
+		/*
+		 * First, recurse.  We can accept pushed-up FromExpr quals from either
+		 * child if the jointype is INNER, and we can accept them from the RHS
+		 * child if the jointype is LEFT.
+		 */
 		j->larg = remove_useless_results_recurse(root, j->larg,
+												 (j->jointype == JOIN_INNER) ?
+												 &j->quals : NULL,
 												 dropped_outer_joins);
 		j->rarg = remove_useless_results_recurse(root, j->rarg,
+												 (j->jointype == JOIN_INNER ||
+												  j->jointype == JOIN_LEFT) ?
+												 &j->quals : NULL,
 												 dropped_outer_joins);
 
 		/* Apply join-type-specific optimization rules */
@@ -3278,9 +3334,9 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 				/*
 				 * An inner join is equivalent to a FromExpr, so if either
 				 * side was simplified to an RTE_RESULT rel, we can replace
-				 * the join with a FromExpr with just the other side; and if
-				 * the qual is empty (JOIN ON TRUE) then we can omit the
-				 * FromExpr as well.
+				 * the join with a FromExpr with just the other side.
+				 * Furthermore, we can elide that FromExpr according to the
+				 * same rules as above.
 				 *
 				 * Just as in the FromExpr case, we can't simplify if the
 				 * other input rel references any PHVs that are marked as to
@@ -3295,20 +3351,34 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 					!find_dependent_phvs_in_jointree(root, j->rarg, varno))
 				{
 					remove_result_refs(root, varno, j->rarg);
-					if (j->quals)
+					if (j->quals != NULL && parent_quals == NULL)
 						jtnode = (Node *)
 							makeFromExpr(list_make1(j->rarg), j->quals);
 					else
+					{
+						/* Merge any quals up to parent */
+						if (j->quals != NULL)
+							*parent_quals = (Node *)
+								list_concat(castNode(List, j->quals),
+											castNode(List, *parent_quals));
 						jtnode = j->rarg;
+					}
 				}
 				else if ((varno = get_result_relid(root, j->rarg)) != 0)
 				{
 					remove_result_refs(root, varno, j->larg);
-					if (j->quals)
+					if (j->quals != NULL && parent_quals == NULL)
 						jtnode = (Node *)
 							makeFromExpr(list_make1(j->larg), j->quals);
 					else
+					{
+						/* Merge any quals up to parent */
+						if (j->quals != NULL)
+							*parent_quals = (Node *)
+								list_concat(castNode(List, j->quals),
+											castNode(List, *parent_quals));
 						jtnode = j->larg;
+					}
 				}
 				break;
 			case JOIN_LEFT:
@@ -3346,8 +3416,9 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 				/*
 				 * We may simplify this case if the RHS is an RTE_RESULT; the
 				 * join qual becomes effectively just a filter qual for the
-				 * LHS, since we should either return the LHS row or not.  For
-				 * simplicity we inject the filter qual into a new FromExpr.
+				 * LHS, since we should either return the LHS row or not.  The
+				 * filter clause must go into a new FromExpr if we can't push
+				 * it up to the parent.
 				 *
 				 * There is a fine point about PHVs that are supposed to be
 				 * evaluated at the RHS.  Such PHVs could only appear in the
@@ -3365,11 +3436,18 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 				{
 					Assert(j->rtindex == 0);
 					remove_result_refs(root, varno, j->larg);
-					if (j->quals)
+					if (j->quals != NULL && parent_quals == NULL)
 						jtnode = (Node *)
 							makeFromExpr(list_make1(j->larg), j->quals);
 					else
+					{
+						/* Merge any quals up to parent */
+						if (j->quals != NULL)
+							*parent_quals = (Node *)
+								list_concat(castNode(List, j->quals),
+											castNode(List, *parent_quals));
 						jtnode = j->larg;
+					}
 				}
 				break;
 			case JOIN_FULL:

@@ -2745,7 +2745,6 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		if (var)
 			pathkeys = build_expression_pathkey(root,
 												(Expr *) var,
-												NULL,	/* below outer joins */
 												Int8LessOperator,
 												rel->relids,
 												false);

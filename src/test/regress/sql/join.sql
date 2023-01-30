@@ -411,8 +411,8 @@ select * from int8_tbl i1 left join (int8_tbl i2 join
 order by 1, 2;
 
 --
--- regression test: check a case where join_clause_is_movable_into() gives
--- an imprecise result, causing an assertion failure
+-- regression test: check a case where join_clause_is_movable_into()
+-- used to give an imprecise result, causing an assertion failure
 --
 select count(*)
 from

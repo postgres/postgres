@@ -98,18 +98,13 @@ extract_restriction_or_clauses(PlannerInfo *root)
 		 * joinclause that is considered safe to move to this rel by the
 		 * parameterized-path machinery, even though what we are going to do
 		 * with it is not exactly a parameterized path.
-		 *
-		 * However, it seems best to ignore clauses that have been marked
-		 * redundant (by setting norm_selec > 1).  That likely can't happen
-		 * for OR clauses, but let's be safe.
 		 */
 		foreach(lc, rel->joininfo)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 			if (restriction_is_or_clause(rinfo) &&
-				join_clause_is_movable_to(rinfo, rel) &&
-				rinfo->norm_selec <= 1)
+				join_clause_is_movable_to(rinfo, rel))
 			{
 				/* Try to extract a qual for this rel only */
 				Expr	   *orclause = extract_or_clause(rinfo, rel);
@@ -272,9 +267,7 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 								 orclause,
 								 true,
 								 false,
-								 false,
 								 join_or_rinfo->security_level,
-								 NULL,
 								 NULL,
 								 NULL);
 
@@ -344,7 +337,6 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 		sjinfo.commute_below = NULL;
 		/* we don't bother trying to make the remaining fields valid */
 		sjinfo.lhs_strict = false;
-		sjinfo.delay_upper_joins = false;
 		sjinfo.semi_can_btree = false;
 		sjinfo.semi_can_hash = false;
 		sjinfo.semi_operators = NIL;
@@ -356,7 +348,7 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 
 		/* And hack cached selectivity so join size remains the same */
 		join_or_rinfo->norm_selec = orig_selec / or_selec;
-		/* ensure result stays in sane range, in particular not "redundant" */
+		/* ensure result stays in sane range */
 		if (join_or_rinfo->norm_selec > 1)
 			join_or_rinfo->norm_selec = 1;
 		/* as explained above, we don't touch outer_selec */

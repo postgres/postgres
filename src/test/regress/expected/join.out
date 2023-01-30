@@ -2308,8 +2308,8 @@ order by 1, 2;
 (5 rows)
 
 --
--- regression test: check a case where join_clause_is_movable_into() gives
--- an imprecise result, causing an assertion failure
+-- regression test: check a case where join_clause_is_movable_into()
+-- used to give an imprecise result, causing an assertion failure
 --
 select count(*)
 from
@@ -4020,10 +4020,10 @@ explain (costs off)
 select q1, unique2, thousand, hundred
   from int8_tbl a left join tenk1 b on q1 = unique2
   where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
-                                      QUERY PLAN                                      
---------------------------------------------------------------------------------------
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
  Nested Loop Left Join
-   Filter: ((COALESCE(b.thousand, 123) = a.q1) AND (a.q1 = COALESCE(b.hundred, 123)))
+   Filter: ((COALESCE(b.thousand, 123) = COALESCE(b.hundred, 123)) AND (a.q1 = COALESCE(b.hundred, 123)))
    ->  Seq Scan on int8_tbl a
    ->  Index Scan using tenk1_unique2 on tenk1 b
          Index Cond: (unique2 = a.q1)
@@ -4064,8 +4064,8 @@ explain (costs off)
 select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
   from tenk1 a left join tenk1 b on b.thousand = a.unique1                        left join tenk1 c on c.unique2 = coalesce(b.twothousand, a.twothousand)
   where a.unique2 < 10 and coalesce(b.twothousand, a.twothousand) = 44;
-                                         QUERY PLAN                                          
----------------------------------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Nested Loop Left Join
    ->  Nested Loop Left Join
          Filter: (COALESCE(b.twothousand, a.twothousand) = 44)
@@ -4076,7 +4076,7 @@ select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
                ->  Bitmap Index Scan on tenk1_thous_tenthous
                      Index Cond: (thousand = a.unique1)
    ->  Index Scan using tenk1_unique2 on tenk1 c
-         Index Cond: ((unique2 = COALESCE(b.twothousand, a.twothousand)) AND (unique2 = 44))
+         Index Cond: (unique2 = 44)
 (11 rows)
 
 select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
@@ -4561,7 +4561,6 @@ where tt1.f1 = ss1.c0;
                Output: tt4.f1
                ->  Nested Loop Left Join
                      Output: tt4.f1
-                     Join Filter: (tt3.f1 = tt4.f1)
                      ->  Seq Scan on public.text_tbl tt3
                            Output: tt3.f1
                            Filter: (tt3.f1 = 'foo'::text)
@@ -4579,7 +4578,7 @@ where tt1.f1 = ss1.c0;
                      Output: (tt4.f1)
                      ->  Seq Scan on public.text_tbl tt5
                            Output: tt4.f1
-(33 rows)
+(32 rows)
 
 select 1 from
   text_tbl as tt1
@@ -4686,24 +4685,22 @@ explain (costs off)
                    QUERY PLAN                    
 -------------------------------------------------
  Nested Loop Left Join
-   Join Filter: (a.f1 = b.unique2)
    ->  Seq Scan on int4_tbl a
          Filter: (f1 = 0)
    ->  Index Scan using tenk1_unique2 on tenk1 b
          Index Cond: (unique2 = 0)
-(6 rows)
+(5 rows)
 
 explain (costs off)
   select * from tenk1 a full join tenk1 b using(unique2) where unique2 = 42;
                    QUERY PLAN                    
 -------------------------------------------------
  Merge Full Join
-   Merge Cond: (a.unique2 = b.unique2)
    ->  Index Scan using tenk1_unique2 on tenk1 a
          Index Cond: (unique2 = 42)
    ->  Index Scan using tenk1_unique2 on tenk1 b
          Index Cond: (unique2 = 42)
-(6 rows)
+(5 rows)
 
 --
 -- test that quals attached to an outer join have correct semantics,
@@ -4791,12 +4788,11 @@ select a.unique1, b.unique2
                      QUERY PLAN                     
 ----------------------------------------------------
  Nested Loop Left Join
-   Join Filter: (a.unique1 = b.unique2)
    ->  Index Only Scan using onek_unique1 on onek a
          Index Cond: (unique1 = 42)
    ->  Index Only Scan using onek_unique2 on onek b
          Index Cond: (unique2 = 42)
-(6 rows)
+(5 rows)
 
 select a.unique1, b.unique2
   from onek a full join onek b on a.unique1 = b.unique2
@@ -4813,12 +4809,11 @@ select a.unique1, b.unique2
                      QUERY PLAN                     
 ----------------------------------------------------
  Nested Loop Left Join
-   Join Filter: (a.unique1 = b.unique2)
    ->  Index Only Scan using onek_unique2 on onek b
          Index Cond: (unique2 = 43)
    ->  Index Only Scan using onek_unique1 on onek a
          Index Cond: (unique1 = 43)
-(6 rows)
+(5 rows)
 
 select a.unique1, b.unique2
   from onek a full join onek b on a.unique1 = b.unique2
@@ -6202,12 +6197,13 @@ select * from int8_tbl i8 left join lateral
 --------------------------------------
  Nested Loop Left Join
    Output: i8.q1, i8.q2, f1, (i8.q2)
+   Join Filter: false
    ->  Seq Scan on public.int8_tbl i8
          Output: i8.q1, i8.q2
    ->  Result
          Output: f1, i8.q2
          One-Time Filter: false
-(7 rows)
+(8 rows)
 
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral

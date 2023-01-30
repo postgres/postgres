@@ -6522,10 +6522,8 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 									  expr,
 									  true,
 									  false,
-									  false,
 									  root->qual_security_level,
 									  grouped_rel->relids,
-									  NULL,
 									  NULL);
 			if (is_foreign_expr(root, grouped_rel, expr))
 				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);

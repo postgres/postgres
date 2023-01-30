@@ -743,7 +743,6 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		sjinfo->commute_below = NULL;
 		/* we don't bother trying to make the remaining fields valid */
 		sjinfo->lhs_strict = false;
-		sjinfo->delay_upper_joins = false;
 		sjinfo->semi_can_btree = false;
 		sjinfo->semi_can_hash = false;
 		sjinfo->semi_operators = NIL;

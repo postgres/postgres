@@ -284,6 +284,12 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 		rel->top_parent_relids = rel->top_parent->relids;
 
 		/*
+		 * A child rel is below the same outer joins as its parent.  (We
+		 * presume this info was already calculated for the parent.)
+		 */
+		rel->nulling_relids = parent->nulling_relids;
+
+		/*
 		 * Also propagate lateral-reference information from appendrel parent
 		 * rels to their child rels.  We intentionally give each child rel the
 		 * same minimum parameterization, even though it's quite possible that
@@ -306,6 +312,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 		rel->parent = NULL;
 		rel->top_parent = NULL;
 		rel->top_parent_relids = NULL;
+		rel->nulling_relids = NULL;
 		rel->direct_lateral_relids = NULL;
 		rel->lateral_relids = NULL;
 		rel->lateral_referencers = NULL;
@@ -685,6 +692,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->max_attr = 0;
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
+	joinrel->nulling_relids = NULL;
 	joinrel->lateral_vars = NIL;
 	joinrel->lateral_referencers = NULL;
 	joinrel->indexlist = NIL;
@@ -874,6 +882,7 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 	joinrel->max_attr = 0;
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
+	joinrel->nulling_relids = NULL;
 	joinrel->lateral_vars = NIL;
 	joinrel->lateral_referencers = NULL;
 	joinrel->indexlist = NIL;
@@ -1646,18 +1655,9 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
-		/*
-		 * In principle, join_clause_is_movable_into() should accept anything
-		 * returned by generate_join_implied_equalities(); but because its
-		 * analysis is only approximate, sometimes it doesn't.  So we
-		 * currently cannot use this Assert; instead just assume it's okay to
-		 * apply the joinclause at this level.
-		 */
-#ifdef NOT_USED
 		Assert(join_clause_is_movable_into(rinfo,
 										   joinrel->relids,
 										   join_and_req));
-#endif
 		if (join_clause_is_movable_into(rinfo,
 										outer_path->parent->relids,
 										outer_and_req))
@@ -1720,12 +1720,9 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
-			/* As above, can't quite assert this here */
-#ifdef NOT_USED
 			Assert(join_clause_is_movable_into(rinfo,
 											   outer_path->parent->relids,
 											   real_outer_and_req));
-#endif
 			if (!join_clause_is_movable_into(rinfo,
 											 outer_path->parent->relids,
 											 outer_and_req))

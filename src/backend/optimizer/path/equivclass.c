@@ -34,7 +34,7 @@
 
 
 static EquivalenceMember *add_eq_member(EquivalenceClass *ec,
-										Expr *expr, Relids relids, Relids nullable_relids,
+										Expr *expr, Relids relids,
 										EquivalenceMember *parent,
 										Oid datatype);
 static bool is_exprlist_member(Expr *node, List *exprs);
@@ -131,9 +131,7 @@ process_equivalence(PlannerInfo *root,
 	Expr	   *item1;
 	Expr	   *item2;
 	Relids		item1_relids,
-				item2_relids,
-				item1_nullable_relids,
-				item2_nullable_relids;
+				item2_relids;
 	List	   *opfamilies;
 	EquivalenceClass *ec1,
 			   *ec2;
@@ -202,12 +200,10 @@ process_equivalence(PlannerInfo *root,
 				make_restrictinfo(root,
 								  (Expr *) ntest,
 								  restrictinfo->is_pushed_down,
-								  restrictinfo->outerjoin_delayed,
 								  restrictinfo->pseudoconstant,
 								  restrictinfo->security_level,
 								  NULL,
-								  restrictinfo->outer_relids,
-								  restrictinfo->nullable_relids);
+								  restrictinfo->outer_relids);
 		}
 		return false;
 	}
@@ -224,12 +220,6 @@ process_equivalence(PlannerInfo *root,
 			contain_nonstrict_functions((Node *) item2))
 			return false;		/* RHS is non-strict but not constant */
 	}
-
-	/* Calculate nullable-relid sets for each side of the clause */
-	item1_nullable_relids = bms_intersect(item1_relids,
-										  restrictinfo->nullable_relids);
-	item2_nullable_relids = bms_intersect(item2_relids,
-										  restrictinfo->nullable_relids);
 
 	/*
 	 * We use the declared input types of the operator, not exprType() of the
@@ -400,7 +390,7 @@ process_equivalence(PlannerInfo *root,
 	else if (ec1)
 	{
 		/* Case 3: add item2 to ec1 */
-		em2 = add_eq_member(ec1, item2, item2_relids, item2_nullable_relids,
+		em2 = add_eq_member(ec1, item2, item2_relids,
 							NULL, item2_type);
 		ec1->ec_sources = lappend(ec1->ec_sources, restrictinfo);
 		ec1->ec_below_outer_join |= below_outer_join;
@@ -418,7 +408,7 @@ process_equivalence(PlannerInfo *root,
 	else if (ec2)
 	{
 		/* Case 3: add item1 to ec2 */
-		em1 = add_eq_member(ec2, item1, item1_relids, item1_nullable_relids,
+		em1 = add_eq_member(ec2, item1, item1_relids,
 							NULL, item1_type);
 		ec2->ec_sources = lappend(ec2->ec_sources, restrictinfo);
 		ec2->ec_below_outer_join |= below_outer_join;
@@ -452,9 +442,9 @@ process_equivalence(PlannerInfo *root,
 		ec->ec_min_security = restrictinfo->security_level;
 		ec->ec_max_security = restrictinfo->security_level;
 		ec->ec_merged = NULL;
-		em1 = add_eq_member(ec, item1, item1_relids, item1_nullable_relids,
+		em1 = add_eq_member(ec, item1, item1_relids,
 							NULL, item1_type);
-		em2 = add_eq_member(ec, item2, item2_relids, item2_nullable_relids,
+		em2 = add_eq_member(ec, item2, item2_relids,
 							NULL, item2_type);
 
 		root->eq_classes = lappend(root->eq_classes, ec);
@@ -545,13 +535,12 @@ canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
  */
 static EquivalenceMember *
 add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
-			  Relids nullable_relids, EquivalenceMember *parent, Oid datatype)
+			  EquivalenceMember *parent, Oid datatype)
 {
 	EquivalenceMember *em = makeNode(EquivalenceMember);
 
 	em->em_expr = expr;
 	em->em_relids = relids;
-	em->em_nullable_relids = nullable_relids;
 	em->em_is_const = false;
 	em->em_is_child = (parent != NULL);
 	em->em_datatype = datatype;
@@ -588,13 +577,6 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  *	  equivalence class it is a member of; if none, optionally build a new
  *	  single-member EquivalenceClass for it.
  *
- * expr is the expression, and nullable_relids is the set of base relids
- * that are potentially nullable below it.  We actually only care about
- * the set of such relids that are used in the expression; but for caller
- * convenience, we perform that intersection step here.  The caller need
- * only be sure that nullable_relids doesn't omit any nullable rels that
- * might appear in the expr.
- *
  * sortref is the SortGroupRef of the originating SortGroupClause, if any,
  * or zero if not.  (It should never be zero if the expression is volatile!)
  *
@@ -623,7 +605,6 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 EquivalenceClass *
 get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
-						 Relids nullable_relids,
 						 List *opfamilies,
 						 Oid opcintype,
 						 Oid collation,
@@ -719,13 +700,12 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		elog(ERROR, "volatile EquivalenceClass has no sortref");
 
 	/*
-	 * Get the precise set of nullable relids appearing in the expression.
+	 * Get the precise set of relids appearing in the expression.
 	 */
 	expr_relids = pull_varnos(root, (Node *) expr);
-	nullable_relids = bms_intersect(nullable_relids, expr_relids);
 
 	newem = add_eq_member(newec, copyObject(expr), expr_relids,
-						  nullable_relids, NULL, opcintype);
+						  NULL, opcintype);
 
 	/*
 	 * add_eq_member doesn't check for volatile functions, set-returning
@@ -1163,11 +1143,8 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) linitial(ec->ec_sources);
 
-		if (bms_membership(restrictinfo->required_relids) != BMS_MULTIPLE)
-		{
-			distribute_restrictinfo_to_rels(root, restrictinfo);
-			return;
-		}
+		distribute_restrictinfo_to_rels(root, restrictinfo);
+		return;
 	}
 
 	/*
@@ -1211,8 +1188,6 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 		rinfo = process_implied_equality(root, eq_op, ec->ec_collation,
 										 cur_em->em_expr, const_em->em_expr,
 										 bms_copy(ec->ec_relids),
-										 bms_union(cur_em->em_nullable_relids,
-												   const_em->em_nullable_relids),
 										 ec->ec_min_security,
 										 ec->ec_below_outer_join,
 										 cur_em->em_is_const);
@@ -1285,8 +1260,6 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 			rinfo = process_implied_equality(root, eq_op, ec->ec_collation,
 											 prev_em->em_expr, cur_em->em_expr,
 											 bms_copy(ec->ec_relids),
-											 bms_union(prev_em->em_nullable_relids,
-													   cur_em->em_nullable_relids),
 											 ec->ec_min_security,
 											 ec->ec_below_outer_join,
 											 false);
@@ -1889,8 +1862,6 @@ create_join_clause(PlannerInfo *root,
 										rightem->em_expr,
 										bms_union(leftem->em_relids,
 												  rightem->em_relids),
-										bms_union(leftem->em_nullable_relids,
-												  rightem->em_nullable_relids),
 										ec->ec_min_security);
 
 	/* If it's a child clause, copy the parent's rinfo_serial */
@@ -1979,23 +1950,11 @@ create_join_clause(PlannerInfo *root,
  * If we don't find any match for a set-aside outer join clause, we must
  * throw it back into the regular joinclause processing by passing it to
  * distribute_restrictinfo_to_rels().  If we do generate a derived clause,
- * however, the outer-join clause is redundant.  We still throw it back,
- * because otherwise the join will be seen as a clauseless join and avoided
- * during join order searching; but we mark it as redundant to keep from
- * messing up the joinrel's size estimate.  (This behavior means that the
- * API for this routine is uselessly complex: we could have just put all
- * the clauses into the regular processing initially.  We keep it because
- * someday we might want to do something else, such as inserting "dummy"
- * joinclauses instead of real ones.)
- *
- * Outer join clauses that are marked outerjoin_delayed are special: this
- * condition means that one or both VARs might go to null due to a lower
- * outer join.  We can still push a constant through the clause, but only
- * if its operator is strict; and we *have to* throw the clause back into
- * regular joinclause processing.  By keeping the strict join clause,
- * we ensure that any null-extended rows that are mistakenly generated due
- * to suppressing rows not matching the constant will be rejected at the
- * upper outer join.  (This doesn't work for full-join clauses.)
+ * however, the outer-join clause is redundant.  We must still put some
+ * clause into the regular processing, because otherwise the join will be
+ * seen as a clauseless join and avoided during join order searching.
+ * We handle this by generating a constant-TRUE clause that is marked with
+ * required_relids that make it a join between the correct relations.
  */
 void
 reconsider_outer_join_clauses(PlannerInfo *root)
@@ -2021,10 +1980,14 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 				/* remove it from the list */
 				root->left_join_clauses =
 					foreach_delete_current(root->left_join_clauses, cell);
-				/* we throw it back anyway (see notes above) */
-				/* but the thrown-back clause has no extra selectivity */
-				rinfo->norm_selec = 2.0;
-				rinfo->outer_selec = 1.0;
+				/* throw back a dummy replacement clause (see notes above) */
+				rinfo = make_restrictinfo(root,
+										  (Expr *) makeBoolConst(true, false),
+										  true, /* is_pushed_down */
+										  false,	/* pseudoconstant */
+										  0,	/* security_level */
+										  rinfo->required_relids,
+										  rinfo->outer_relids);
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}
 		}
@@ -2042,10 +2005,14 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 				/* remove it from the list */
 				root->right_join_clauses =
 					foreach_delete_current(root->right_join_clauses, cell);
-				/* we throw it back anyway (see notes above) */
-				/* but the thrown-back clause has no extra selectivity */
-				rinfo->norm_selec = 2.0;
-				rinfo->outer_selec = 1.0;
+				/* throw back a dummy replacement clause (see notes above) */
+				rinfo = make_restrictinfo(root,
+										  (Expr *) makeBoolConst(true, false),
+										  true, /* is_pushed_down */
+										  false,	/* pseudoconstant */
+										  0,	/* security_level */
+										  rinfo->required_relids,
+										  rinfo->outer_relids);
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}
 		}
@@ -2063,10 +2030,14 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 				/* remove it from the list */
 				root->full_join_clauses =
 					foreach_delete_current(root->full_join_clauses, cell);
-				/* we throw it back anyway (see notes above) */
-				/* but the thrown-back clause has no extra selectivity */
-				rinfo->norm_selec = 2.0;
-				rinfo->outer_selec = 1.0;
+				/* throw back a dummy replacement clause (see notes above) */
+				rinfo = make_restrictinfo(root,
+										  (Expr *) makeBoolConst(true, false),
+										  true, /* is_pushed_down */
+										  false,	/* pseudoconstant */
+										  0,	/* security_level */
+										  rinfo->required_relids,
+										  rinfo->outer_relids);
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}
 		}
@@ -2110,17 +2081,12 @@ reconsider_outer_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo,
 				left_type,
 				right_type,
 				inner_datatype;
-	Relids		inner_relids,
-				inner_nullable_relids;
+	Relids		inner_relids;
 	ListCell   *lc1;
 
 	Assert(is_opclause(rinfo->clause));
 	opno = ((OpExpr *) rinfo->clause)->opno;
 	collation = ((OpExpr *) rinfo->clause)->inputcollid;
-
-	/* If clause is outerjoin_delayed, operator must be strict */
-	if (rinfo->outerjoin_delayed && !op_strict(opno))
-		return false;
 
 	/* Extract needed info from the clause */
 	op_input_types(opno, &left_type, &right_type);
@@ -2138,8 +2104,6 @@ reconsider_outer_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo,
 		inner_datatype = left_type;
 		inner_relids = rinfo->left_relids;
 	}
-	inner_nullable_relids = bms_intersect(inner_relids,
-										  rinfo->nullable_relids);
 
 	/* Scan EquivalenceClasses for a match to outervar */
 	foreach(lc1, root->eq_classes)
@@ -2200,7 +2164,6 @@ reconsider_outer_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo,
 												   innervar,
 												   cur_em->em_expr,
 												   bms_copy(inner_relids),
-												   bms_copy(inner_nullable_relids),
 												   cur_ec->ec_min_security);
 			if (process_equivalence(root, &newrinfo, true))
 				match = true;
@@ -2238,14 +2201,8 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 				left_type,
 				right_type;
 	Relids		left_relids,
-				right_relids,
-				left_nullable_relids,
-				right_nullable_relids;
+				right_relids;
 	ListCell   *lc1;
-
-	/* Can't use an outerjoin_delayed clause here */
-	if (rinfo->outerjoin_delayed)
-		return false;
 
 	/* Extract needed info from the clause */
 	Assert(is_opclause(rinfo->clause));
@@ -2256,10 +2213,6 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 	rightvar = (Expr *) get_rightop(rinfo->clause);
 	left_relids = rinfo->left_relids;
 	right_relids = rinfo->right_relids;
-	left_nullable_relids = bms_intersect(left_relids,
-										 rinfo->nullable_relids);
-	right_nullable_relids = bms_intersect(right_relids,
-										  rinfo->nullable_relids);
 
 	foreach(lc1, root->eq_classes)
 	{
@@ -2361,7 +2314,6 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 													   leftvar,
 													   cur_em->em_expr,
 													   bms_copy(left_relids),
-													   bms_copy(left_nullable_relids),
 													   cur_ec->ec_min_security);
 				if (process_equivalence(root, &newrinfo, true))
 					matchleft = true;
@@ -2377,7 +2329,6 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 													   rightvar,
 													   cur_em->em_expr,
 													   bms_copy(right_relids),
-													   bms_copy(right_nullable_relids),
 													   cur_ec->ec_min_security);
 				if (process_equivalence(root, &newrinfo, true))
 					matchright = true;
@@ -2675,7 +2626,6 @@ add_child_rel_equivalences(PlannerInfo *root,
 				/* OK, generate transformed child version */
 				Expr	   *child_expr;
 				Relids		new_relids;
-				Relids		new_nullable_relids;
 
 				if (parent_rel->reloptkind == RELOPT_BASEREL)
 				{
@@ -2705,21 +2655,7 @@ add_child_rel_equivalences(PlannerInfo *root,
 											top_parent_relids);
 				new_relids = bms_add_members(new_relids, child_relids);
 
-				/*
-				 * And likewise for nullable_relids.  Note this code assumes
-				 * parent and child relids are singletons.
-				 */
-				new_nullable_relids = cur_em->em_nullable_relids;
-				if (bms_overlap(new_nullable_relids, top_parent_relids))
-				{
-					new_nullable_relids = bms_difference(new_nullable_relids,
-														 top_parent_relids);
-					new_nullable_relids = bms_add_members(new_nullable_relids,
-														  child_relids);
-				}
-
-				(void) add_eq_member(cur_ec, child_expr,
-									 new_relids, new_nullable_relids,
+				(void) add_eq_member(cur_ec, child_expr, new_relids,
 									 cur_em, cur_em->em_datatype);
 
 				/* Record this EC index for the child rel */
@@ -2816,7 +2752,6 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 				/* Yes, generate transformed child version */
 				Expr	   *child_expr;
 				Relids		new_relids;
-				Relids		new_nullable_relids;
 
 				if (parent_joinrel->reloptkind == RELOPT_JOINREL)
 				{
@@ -2847,20 +2782,7 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 											top_parent_relids);
 				new_relids = bms_add_members(new_relids, child_relids);
 
-				/*
-				 * For nullable_relids, we must selectively replace parent
-				 * nullable relids with child ones.
-				 */
-				new_nullable_relids = cur_em->em_nullable_relids;
-				if (bms_overlap(new_nullable_relids, top_parent_relids))
-					new_nullable_relids =
-						adjust_child_relids_multilevel(root,
-													   new_nullable_relids,
-													   child_joinrel,
-													   child_joinrel->top_parent);
-
-				(void) add_eq_member(cur_ec, child_expr,
-									 new_relids, new_nullable_relids,
+				(void) add_eq_member(cur_ec, child_expr, new_relids,
 									 cur_em, cur_em->em_datatype);
 			}
 		}
