@@ -11693,16 +11693,16 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-logical-decoding-mode" xreflabel="logical_decoding_mode">
-      <term><varname>logical_decoding_mode</varname> (<type>enum</type>)
+     <varlistentry id="guc-logical-replication-mode" xreflabel="logical_replication_mode">
+      <term><varname>logical_replication_mode</varname> (<type>enum</type>)
       <indexterm>
-       <primary><varname>logical_decoding_mode</varname> configuration parameter</primary>
+       <primary><varname>logical_replication_mode</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         Allows streaming or serializing changes immediately in logical decoding.
-        The allowed values of <varname>logical_decoding_mode</varname> are
+        The allowed values of <varname>logical_replication_mode</varname> are
         <literal>buffered</literal> and <literal>immediate</literal>. When set
         to <literal>immediate</literal>, stream each change if
         <literal>streaming</literal> option (see optional parameters set by

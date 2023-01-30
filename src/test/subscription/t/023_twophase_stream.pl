@@ -301,7 +301,7 @@ $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf(
 	'postgresql.conf', qq(
 max_prepared_transactions = 10
-logical_decoding_mode = immediate
+logical_replication_mode = immediate
 ));
 $node_publisher->start;
 

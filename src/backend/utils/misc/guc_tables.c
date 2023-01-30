@@ -395,9 +395,9 @@ static const struct config_enum_entry ssl_protocol_versions_info[] = {
 	{NULL, 0, false}
 };
 
-static const struct config_enum_entry logical_decoding_mode_options[] = {
-	{"buffered", LOGICAL_DECODING_MODE_BUFFERED, false},
-	{"immediate", LOGICAL_DECODING_MODE_IMMEDIATE, false},
+static const struct config_enum_entry logical_replication_mode_options[] = {
+	{"buffered", LOGICAL_REP_MODE_BUFFERED, false},
+	{"immediate", LOGICAL_REP_MODE_IMMEDIATE, false},
 	{NULL, 0, false}
 };
 
@@ -4919,13 +4919,13 @@ struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"logical_decoding_mode", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Allows streaming or serializing each change in logical decoding."),
-			NULL,
+		{"logical_replication_mode", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Controls when to replicate each change."),
+			gettext_noop("On the publisher, it allows streaming or serializing each change in logical decoding."),
 			GUC_NOT_IN_SAMPLE
 		},
-		&logical_decoding_mode,
-		LOGICAL_DECODING_MODE_BUFFERED, logical_decoding_mode_options,
+		&logical_replication_mode,
+		LOGICAL_REP_MODE_BUFFERED, logical_replication_mode_options,
 		NULL, NULL, NULL
 	},
 

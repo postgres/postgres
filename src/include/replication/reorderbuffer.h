@@ -17,15 +17,16 @@
 #include "utils/snapshot.h"
 #include "utils/timestamp.h"
 
+/* GUC variables */
 extern PGDLLIMPORT int logical_decoding_work_mem;
-extern PGDLLIMPORT int logical_decoding_mode;
+extern PGDLLIMPORT int logical_replication_mode;
 
-/* possible values for logical_decoding_mode */
+/* possible values for logical_replication_mode */
 typedef enum
 {
-	LOGICAL_DECODING_MODE_BUFFERED,
-	LOGICAL_DECODING_MODE_IMMEDIATE
-} LogicalDecodingMode;
+	LOGICAL_REP_MODE_BUFFERED,
+	LOGICAL_REP_MODE_IMMEDIATE
+} LogicalRepMode;
 
 /* an individual tuple, stored in one chunk of memory */
 typedef struct ReorderBufferTupleBuf
