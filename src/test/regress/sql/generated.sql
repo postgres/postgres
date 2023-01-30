@@ -81,6 +81,21 @@ SELECT * FROM gtest1 ORDER BY a;
 DELETE FROM gtest1 WHERE b = 2;
 SELECT * FROM gtest1 ORDER BY a;
 
+-- test MERGE
+CREATE TABLE gtestm (
+  id int PRIMARY KEY,
+  f1 int,
+  f2 int,
+  f3 int GENERATED ALWAYS AS (f1 * 2) STORED,
+  f4 int GENERATED ALWAYS AS (f2 * 2) STORED
+);
+INSERT INTO gtestm VALUES (1, 5, 100);
+MERGE INTO gtestm t USING (VALUES (1, 10), (2, 20)) v(id, f1) ON t.id = v.id
+  WHEN MATCHED THEN UPDATE SET f1 = v.f1
+  WHEN NOT MATCHED THEN INSERT VALUES (v.id, v.f1, 200);
+SELECT * FROM gtestm ORDER BY id;
+DROP TABLE gtestm;
+
 -- views
 CREATE VIEW gtest1v AS SELECT * FROM gtest1;
 SELECT * FROM gtest1v;
