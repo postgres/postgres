@@ -61,7 +61,7 @@ typedef struct JoinTreeItem
 {
 	/* Fields filled during deconstruct_recurse: */
 	Node	   *jtnode;			/* jointree node to examine */
-	bool		below_outer_join;	/* is it below an outer join? */
+	JoinDomain *jdomain;		/* join domain for its ON/WHERE clauses */
 	Relids		qualscope;		/* base+OJ Relids syntactically included in
 								 * this jointree node */
 	Relids		inner_join_rels;	/* base+OJ Relids syntactically included
@@ -87,13 +87,13 @@ typedef struct PostponedQual
 static void extract_lateral_references(PlannerInfo *root, RelOptInfo *brel,
 									   Index rtindex);
 static List *deconstruct_recurse(PlannerInfo *root, Node *jtnode,
-								 bool below_outer_join,
+								 JoinDomain *parent_domain,
 								 List **item_list);
 static void deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem,
 								   List **postponed_qual_list);
 static void process_security_barrier_quals(PlannerInfo *root,
 										   int rti, Relids qualscope,
-										   bool below_outer_join);
+										   JoinDomain *jdomain);
 static void mark_rels_nulled_by_join(PlannerInfo *root, Index ojrelid,
 									 Relids lower_rels);
 static SpecialJoinInfo *make_outerjoininfo(PlannerInfo *root,
@@ -107,7 +107,7 @@ static void deconstruct_distribute_oj_quals(PlannerInfo *root,
 											List *jtitems,
 											JoinTreeItem *jtitem);
 static void distribute_quals_to_rels(PlannerInfo *root, List *clauses,
-									 bool below_outer_join,
+									 JoinDomain *jdomain,
 									 SpecialJoinInfo *sjinfo,
 									 Index security_level,
 									 Relids qualscope,
@@ -119,7 +119,7 @@ static void distribute_quals_to_rels(PlannerInfo *root, List *clauses,
 									 List **postponed_qual_list,
 									 List **postponed_oj_qual_list);
 static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-									bool below_outer_join,
+									JoinDomain *jdomain,
 									SpecialJoinInfo *sjinfo,
 									Index security_level,
 									Relids qualscope,
@@ -740,6 +740,7 @@ List *
 deconstruct_jointree(PlannerInfo *root)
 {
 	List	   *result;
+	JoinDomain *top_jdomain;
 	List	   *item_list = NIL;
 	List	   *postponed_qual_list = NIL;
 	ListCell   *lc;
@@ -751,6 +752,10 @@ deconstruct_jointree(PlannerInfo *root)
 	 */
 	root->placeholdersFrozen = true;
 
+	/* Fetch the already-created top-level join domain for the query */
+	top_jdomain = linitial_node(JoinDomain, root->join_domains);
+	top_jdomain->jd_relids = NULL;	/* filled during deconstruct_recurse */
+
 	/* Start recursion at top of jointree */
 	Assert(root->parse->jointree != NULL &&
 		   IsA(root->parse->jointree, FromExpr));
@@ -761,11 +766,14 @@ deconstruct_jointree(PlannerInfo *root)
 
 	/* Perform the initial scan of the jointree */
 	result = deconstruct_recurse(root, (Node *) root->parse->jointree,
-								 false,
+								 top_jdomain,
 								 &item_list);
 
 	/* Now we can form the value of all_query_rels, too */
 	root->all_query_rels = bms_union(root->all_baserels, root->outer_join_rels);
+
+	/* ... which should match what we computed for the top join domain */
+	Assert(bms_equal(root->all_query_rels, top_jdomain->jd_relids));
 
 	/* Now scan all the jointree nodes again, and distribute quals */
 	foreach(lc, item_list)
@@ -804,10 +812,9 @@ deconstruct_jointree(PlannerInfo *root)
  * deconstruct_recurse
  *	  One recursion level of deconstruct_jointree's initial jointree scan.
  *
- * Inputs:
- *	jtnode is the jointree node to examine
- *	below_outer_join is true if this node is within the nullable side of a
- *		higher-level outer join
+ * jtnode is the jointree node to examine, and parent_domain is the
+ * enclosing join domain.  (We must add all base+OJ relids appearing
+ * here or below to parent_domain.)
  *
  * item_list is an in/out parameter: we add a JoinTreeItem struct to
  * that list for each jointree node, in depth-first traversal order.
@@ -817,7 +824,7 @@ deconstruct_jointree(PlannerInfo *root)
  */
 static List *
 deconstruct_recurse(PlannerInfo *root, Node *jtnode,
-					bool below_outer_join,
+					JoinDomain *parent_domain,
 					List **item_list)
 {
 	List	   *joinlist;
@@ -828,7 +835,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 	/* Make the new JoinTreeItem, but don't add it to item_list yet */
 	jtitem = palloc0_object(JoinTreeItem);
 	jtitem->jtnode = jtnode;
-	jtitem->below_outer_join = below_outer_join;
 
 	if (IsA(jtnode, RangeTblRef))
 	{
@@ -836,6 +842,10 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 
 		/* Fill all_baserels as we encounter baserel jointree nodes */
 		root->all_baserels = bms_add_member(root->all_baserels, varno);
+		/* This node belongs to parent_domain */
+		jtitem->jdomain = parent_domain;
+		parent_domain->jd_relids = bms_add_member(parent_domain->jd_relids,
+												  varno);
 		/* qualscope is just the one RTE */
 		jtitem->qualscope = bms_make_singleton(varno);
 		/* A single baserel does not create an inner join */
@@ -847,6 +857,9 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 		FromExpr   *f = (FromExpr *) jtnode;
 		int			remaining;
 		ListCell   *l;
+
+		/* This node belongs to parent_domain, as do its children */
+		jtitem->jdomain = parent_domain;
 
 		/*
 		 * Recurse to handle child nodes, and compute output joinlist.  We
@@ -866,7 +879,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 			int			sub_members;
 
 			sub_joinlist = deconstruct_recurse(root, lfirst(l),
-											   below_outer_join,
+											   parent_domain,
 											   item_list);
 			sub_item = (JoinTreeItem *) llast(*item_list);
 			jtitem->qualscope = bms_add_members(jtitem->qualscope,
@@ -894,6 +907,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
+		JoinDomain *child_domain,
+				   *fj_domain;
 		JoinTreeItem *left_item,
 				   *right_item;
 		List	   *leftjoinlist,
@@ -902,13 +917,15 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 		switch (j->jointype)
 		{
 			case JOIN_INNER:
+				/* This node belongs to parent_domain, as do its children */
+				jtitem->jdomain = parent_domain;
 				/* Recurse */
 				leftjoinlist = deconstruct_recurse(root, j->larg,
-												   below_outer_join,
+												   parent_domain,
 												   item_list);
 				left_item = (JoinTreeItem *) llast(*item_list);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
-													below_outer_join,
+													parent_domain,
 													item_list);
 				right_item = (JoinTreeItem *) llast(*item_list);
 				/* Compute qualscope etc */
@@ -922,21 +939,32 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 				break;
 			case JOIN_LEFT:
 			case JOIN_ANTI:
+				/* Make new join domain for my quals and the RHS */
+				child_domain = makeNode(JoinDomain);
+				child_domain->jd_relids = NULL; /* filled by recursion */
+				root->join_domains = lappend(root->join_domains, child_domain);
+				jtitem->jdomain = child_domain;
 				/* Recurse */
 				leftjoinlist = deconstruct_recurse(root, j->larg,
-												   below_outer_join,
+												   parent_domain,
 												   item_list);
 				left_item = (JoinTreeItem *) llast(*item_list);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
-													true,
+													child_domain,
 													item_list);
 				right_item = (JoinTreeItem *) llast(*item_list);
-				/* Compute qualscope etc */
+				/* Compute join domain contents, qualscope etc */
+				parent_domain->jd_relids =
+					bms_add_members(parent_domain->jd_relids,
+									child_domain->jd_relids);
 				jtitem->qualscope = bms_union(left_item->qualscope,
 											  right_item->qualscope);
 				/* caution: ANTI join derived from SEMI will lack rtindex */
 				if (j->rtindex != 0)
 				{
+					parent_domain->jd_relids =
+						bms_add_member(parent_domain->jd_relids,
+									   j->rtindex);
 					jtitem->qualscope = bms_add_member(jtitem->qualscope,
 													   j->rtindex);
 					root->outer_join_rels = bms_add_member(root->outer_join_rels,
@@ -951,13 +979,15 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 				jtitem->nonnullable_rels = left_item->qualscope;
 				break;
 			case JOIN_SEMI:
+				/* This node belongs to parent_domain, as do its children */
+				jtitem->jdomain = parent_domain;
 				/* Recurse */
 				leftjoinlist = deconstruct_recurse(root, j->larg,
-												   below_outer_join,
+												   parent_domain,
 												   item_list);
 				left_item = (JoinTreeItem *) llast(*item_list);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
-													below_outer_join,
+													parent_domain,
 													item_list);
 				right_item = (JoinTreeItem *) llast(*item_list);
 				/* Compute qualscope etc */
@@ -973,19 +1003,36 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 				jtitem->nonnullable_rels = NULL;
 				break;
 			case JOIN_FULL:
-				/* Recurse */
+				/* The FULL JOIN's quals need their very own domain */
+				fj_domain = makeNode(JoinDomain);
+				root->join_domains = lappend(root->join_domains, fj_domain);
+				jtitem->jdomain = fj_domain;
+				/* Recurse, giving each side its own join domain */
+				child_domain = makeNode(JoinDomain);
+				child_domain->jd_relids = NULL; /* filled by recursion */
+				root->join_domains = lappend(root->join_domains, child_domain);
 				leftjoinlist = deconstruct_recurse(root, j->larg,
-												   true,
+												   child_domain,
 												   item_list);
 				left_item = (JoinTreeItem *) llast(*item_list);
+				fj_domain->jd_relids = bms_copy(child_domain->jd_relids);
+				child_domain = makeNode(JoinDomain);
+				child_domain->jd_relids = NULL; /* filled by recursion */
+				root->join_domains = lappend(root->join_domains, child_domain);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
-													true,
+													child_domain,
 													item_list);
 				right_item = (JoinTreeItem *) llast(*item_list);
 				/* Compute qualscope etc */
+				fj_domain->jd_relids = bms_add_members(fj_domain->jd_relids,
+													   child_domain->jd_relids);
+				parent_domain->jd_relids = bms_add_members(parent_domain->jd_relids,
+														   fj_domain->jd_relids);
 				jtitem->qualscope = bms_union(left_item->qualscope,
 											  right_item->qualscope);
 				Assert(j->rtindex != 0);
+				parent_domain->jd_relids = bms_add_member(parent_domain->jd_relids,
+														  j->rtindex);
 				jtitem->qualscope = bms_add_member(jtitem->qualscope,
 												   j->rtindex);
 				root->outer_join_rels = bms_add_member(root->outer_join_rels,
@@ -1087,7 +1134,7 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem,
 			process_security_barrier_quals(root,
 										   varno,
 										   jtitem->qualscope,
-										   jtitem->below_outer_join);
+										   jtitem->jdomain);
 	}
 	else if (IsA(jtnode, FromExpr))
 	{
@@ -1105,7 +1152,7 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem,
 
 			if (bms_is_subset(pq->relids, jtitem->qualscope))
 				distribute_qual_to_rels(root, pq->qual,
-										jtitem->below_outer_join,
+										jtitem->jdomain,
 										NULL,
 										root->qual_security_level,
 										jtitem->qualscope, NULL, NULL,
@@ -1120,7 +1167,7 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem,
 		 * Now process the top-level quals.
 		 */
 		distribute_quals_to_rels(root, (List *) f->quals,
-								 jtitem->below_outer_join,
+								 jtitem->jdomain,
 								 NULL,
 								 root->qual_security_level,
 								 jtitem->qualscope, NULL, NULL,
@@ -1221,7 +1268,7 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem,
 
 		/* Process the JOIN's qual clauses */
 		distribute_quals_to_rels(root, my_quals,
-								 jtitem->below_outer_join,
+								 jtitem->jdomain,
 								 sjinfo,
 								 root->qual_security_level,
 								 jtitem->qualscope,
@@ -1258,7 +1305,7 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem,
 static void
 process_security_barrier_quals(PlannerInfo *root,
 							   int rti, Relids qualscope,
-							   bool below_outer_join)
+							   JoinDomain *jdomain)
 {
 	RangeTblEntry *rte = root->simple_rte_array[rti];
 	Index		security_level = 0;
@@ -1281,7 +1328,7 @@ process_security_barrier_quals(PlannerInfo *root,
 		 * pushed up to top of tree, which we don't want.
 		 */
 		distribute_quals_to_rels(root, qualset,
-								 below_outer_join,
+								 jdomain,
 								 NULL,
 								 security_level,
 								 qualscope,
@@ -1991,7 +2038,7 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 			is_clone = !has_clone;
 
 			distribute_quals_to_rels(root, quals,
-									 true,
+									 otherjtitem->jdomain,
 									 sjinfo,
 									 root->qual_security_level,
 									 this_qualscope,
@@ -2020,7 +2067,7 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 	{
 		/* No commutation possible, just process the postponed clauses */
 		distribute_quals_to_rels(root, jtitem->oj_joinclauses,
-								 true,
+								 jtitem->jdomain,
 								 sjinfo,
 								 root->qual_security_level,
 								 qualscope,
@@ -2045,7 +2092,7 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
  */
 static void
 distribute_quals_to_rels(PlannerInfo *root, List *clauses,
-						 bool below_outer_join,
+						 JoinDomain *jdomain,
 						 SpecialJoinInfo *sjinfo,
 						 Index security_level,
 						 Relids qualscope,
@@ -2064,7 +2111,7 @@ distribute_quals_to_rels(PlannerInfo *root, List *clauses,
 		Node	   *clause = (Node *) lfirst(lc);
 
 		distribute_qual_to_rels(root, clause,
-								below_outer_join,
+								jdomain,
 								sjinfo,
 								security_level,
 								qualscope,
@@ -2092,8 +2139,7 @@ distribute_quals_to_rels(PlannerInfo *root, List *clauses,
  * These will be dealt with in later steps of deconstruct_jointree.
  *
  * 'clause': the qual clause to be distributed
- * 'below_outer_join': true if the qual is from a JOIN/ON that is below the
- *		nullable side of a higher-level outer join
+ * 'jdomain': the join domain containing the clause
  * 'sjinfo': join's SpecialJoinInfo (NULL for an inner join or WHERE clause)
  * 'security_level': security_level to assign to the qual
  * 'qualscope': set of base+OJ rels the qual's syntactic scope covers
@@ -2124,7 +2170,7 @@ distribute_quals_to_rels(PlannerInfo *root, List *clauses,
  */
 static void
 distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-						bool below_outer_join,
+						JoinDomain *jdomain,
 						SpecialJoinInfo *sjinfo,
 						Index security_level,
 						Relids qualscope,
@@ -2196,12 +2242,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * RestrictInfo lists for the moment, but eventually createplan.c will
 	 * pull it out and make a gating Result node immediately above whatever
 	 * plan node the pseudoconstant clause is assigned to.  It's usually best
-	 * to put a gating node as high in the plan tree as possible. If we are
-	 * not below an outer join, we can actually push the pseudoconstant qual
-	 * all the way to the top of the tree.  If we are below an outer join, we
-	 * leave the qual at its original syntactic level (we could push it up to
-	 * just below the outer join, but that seems more complex than it's
-	 * worth).
+	 * to put a gating node as high in the plan tree as possible, which we can
+	 * do by assigning it the full relid set of the current JoinDomain.
 	 */
 	if (bms_is_empty(relids))
 	{
@@ -2211,25 +2253,20 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 			relids = bms_copy(ojscope);
 			/* mustn't use as gating qual, so don't mark pseudoconstant */
 		}
-		else
+		else if (contain_volatile_functions(clause))
 		{
 			/* eval at original syntactic level */
 			relids = bms_copy(qualscope);
-			if (!contain_volatile_functions(clause))
-			{
-				/* mark as gating qual */
-				pseudoconstant = true;
-				/* tell createplan.c to check for gating quals */
-				root->hasPseudoConstantQuals = true;
-				/* if not below outer join, push it to top of tree */
-				if (!below_outer_join)
-				{
-					relids =
-						get_relids_in_jointree((Node *) root->parse->jointree,
-											   true, false);
-					qualscope = bms_copy(relids);
-				}
-			}
+			/* again, can't mark pseudoconstant */
+		}
+		else
+		{
+			/* eval at join domain level */
+			relids = bms_copy(jdomain->jd_relids);
+			/* mark as gating qual */
+			pseudoconstant = true;
+			/* tell createplan.c to check for gating quals */
+			root->hasPseudoConstantQuals = true;
 		}
 	}
 
@@ -2319,23 +2356,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		if (check_redundant_nullability_qual(root, clause))
 			return;
 
-		if (!allow_equivalence)
-		{
-			/* Caller says it mustn't become an equivalence class */
-			maybe_equivalence = false;
-		}
-		else
-		{
-			/*
-			 * Consider feeding qual to the equivalence machinery.  However,
-			 * if it's itself within an outer-join clause, treat it as though
-			 * it appeared below that outer join (note that we can only get
-			 * here when the clause references only nullable-side rels).
-			 */
-			maybe_equivalence = true;
-			if (outerjoin_nonnullable != NULL)
-				below_outer_join = true;
-		}
+		/* Feed qual to the equivalence machinery, if allowed by caller */
+		maybe_equivalence = allow_equivalence;
 
 		/*
 		 * Since it doesn't mention the LHS, it's certainly not useful as a
@@ -2401,16 +2423,14 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	check_mergejoinable(restrictinfo);
 
 	/*
-	 * XXX rewrite:
-	 *
 	 * If it is a true equivalence clause, send it to the EquivalenceClass
 	 * machinery.  We do *not* attach it directly to any restriction or join
 	 * lists.  The EC code will propagate it to the appropriate places later.
 	 *
-	 * If the clause has a mergejoinable operator and is not
-	 * outerjoin-delayed, yet isn't an equivalence because it is an outer-join
-	 * clause, the EC code may yet be able to do something with it.  We add it
-	 * to appropriate lists for further consideration later.  Specifically:
+	 * If the clause has a mergejoinable operator, yet isn't an equivalence
+	 * because it is an outer-join clause, the EC code may still be able to do
+	 * something with it.  We add it to appropriate lists for further
+	 * consideration later.  Specifically:
 	 *
 	 * If it is a left or right outer-join qualification that relates the two
 	 * sides of the outer join (no funny business like leftvar1 = leftvar2 +
@@ -2438,7 +2458,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	{
 		if (maybe_equivalence)
 		{
-			if (process_equivalence(root, &restrictinfo, below_outer_join))
+			if (process_equivalence(root, &restrictinfo, jdomain))
 				return;
 			/* EC rejected it, so set left_ec/right_ec the hard way ... */
 			if (restrictinfo->mergeopfamilies)	/* EC might have changed this */
@@ -2628,8 +2648,9 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
  * "qualscope" is the nominal syntactic level to impute to the restrictinfo.
  * This must contain at least all the rels used in the expressions, but it
  * is used only to set the qual application level when both exprs are
- * variable-free.  Otherwise the qual is applied at the lowest join level
- * that provides all its variables.
+ * variable-free.  (Hence, it should usually match the join domain in which
+ * the clause applies.)  Otherwise the qual is applied at the lowest join
+ * level that provides all its variables.
  *
  * "security_level" is the security level to assign to the new restrictinfo.
  *
@@ -2657,7 +2678,6 @@ process_implied_equality(PlannerInfo *root,
 						 Expr *item2,
 						 Relids qualscope,
 						 Index security_level,
-						 bool below_outer_join,
 						 bool both_const)
 {
 	RestrictInfo *restrictinfo;
@@ -2706,27 +2726,16 @@ process_implied_equality(PlannerInfo *root,
 	/*
 	 * If the clause is variable-free, our normal heuristic for pushing it
 	 * down to just the mentioned rels doesn't work, because there are none.
-	 * Apply at the given qualscope, or at the top of tree if it's nonvolatile
-	 * (which it very likely is, but we'll check, just to be sure).
+	 * Apply it as a gating qual at the given qualscope.
 	 */
 	if (bms_is_empty(relids))
 	{
-		/* eval at original syntactic level */
+		/* eval at join domain level */
 		relids = bms_copy(qualscope);
-		if (!contain_volatile_functions(clause))
-		{
-			/* mark as gating qual */
-			pseudoconstant = true;
-			/* tell createplan.c to check for gating quals */
-			root->hasPseudoConstantQuals = true;
-			/* if not below outer join, push it to top of tree */
-			if (!below_outer_join)
-			{
-				relids =
-					get_relids_in_jointree((Node *) root->parse->jointree,
-										   true, false);
-			}
-		}
+		/* mark as gating qual */
+		pseudoconstant = true;
+		/* tell createplan.c to check for gating quals */
+		root->hasPseudoConstantQuals = true;
 	}
 
 	/*

@@ -84,7 +84,6 @@ extern RestrictInfo *process_implied_equality(PlannerInfo *root,
 											  Expr *item2,
 											  Relids qualscope,
 											  Index security_level,
-											  bool below_outer_join,
 											  bool both_const);
 extern RestrictInfo *build_implied_join_equality(PlannerInfo *root,
 												 Oid opno,

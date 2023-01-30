@@ -991,6 +991,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->init_plans = NIL;
 	subroot->cte_plan_ids = NIL;
 	subroot->multiexpr_params = NIL;
+	subroot->join_domains = NIL;
 	subroot->eq_classes = NIL;
 	subroot->ec_merging_done = false;
 	subroot->last_rinfo_serial = 0;
@@ -1012,6 +1013,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->hasRecursion = false;
 	subroot->wt_param_id = -1;
 	subroot->non_recursive_path = NULL;
+	/* We don't currently need a top JoinDomain for the subroot */
 
 	/* No CTEs to worry about */
 	Assert(subquery->cteList == NIL);

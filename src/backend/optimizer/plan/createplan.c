@@ -6210,10 +6210,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 			 * the pathkey's EquivalenceClass.  For now, we take the first
 			 * tlist item found in the EC. If there's no match, we'll generate
 			 * a resjunk entry using the first EC member that is an expression
-			 * in the input's vars.  (The non-const restriction only matters
-			 * if the EC is below_outer_join; but if it isn't, it won't
-			 * contain consts anyway, else we'd have discarded the pathkey as
-			 * redundant.)
+			 * in the input's vars.
 			 *
 			 * XXX if we have a choice, is there any way of figuring out which
 			 * might be cheapest to execute?  (For example, int4lt is likely

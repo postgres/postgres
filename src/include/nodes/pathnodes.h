@@ -307,6 +307,9 @@ struct PlannerInfo
 	/* List of Lists of Params for MULTIEXPR subquery outputs */
 	List	   *multiexpr_params;
 
+	/* list of JoinDomains used in the query (higher ones first) */
+	List	   *join_domains;
+
 	/* list of active EquivalenceClasses */
 	List	   *eq_classes;
 
@@ -1279,10 +1282,45 @@ typedef struct StatisticExtInfo
 } StatisticExtInfo;
 
 /*
+ * JoinDomains
+ *
+ * A "join domain" defines the scope of applicability of deductions made via
+ * the EquivalenceClass mechanism.  Roughly speaking, a join domain is a set
+ * of base+OJ relations that are inner-joined together.  More precisely, it is
+ * the set of relations at which equalities deduced from an EquivalenceClass
+ * can be enforced or should be expected to hold.  The topmost JoinDomain
+ * covers the whole query (so its jd_relids should equal all_query_rels).
+ * An outer join creates a new JoinDomain that includes all base+OJ relids
+ * within its nullable side, but (by convention) not the OJ's own relid.
+ * A FULL join creates two new JoinDomains, one for each side.
+ *
+ * Notice that a rel that is below outer join(s) will thus appear to belong
+ * to multiple join domains.  However, any of its Vars that appear in
+ * EquivalenceClasses belonging to higher join domains will have nullingrel
+ * bits preventing them from being evaluated at the rel's scan level, so that
+ * we will not be able to derive enforceable-at-the-rel-scan-level clauses
+ * from such ECs.  We define the join domain relid sets this way so that
+ * domains can be said to be "higher" or "lower" when one domain relid set
+ * includes another.
+ *
+ * The JoinDomains for a query are computed in deconstruct_jointree.
+ * We do not copy JoinDomain structs once made, so they can be compared
+ * for equality by simple pointer equality.
+ */
+typedef struct JoinDomain
+{
+	pg_node_attr(no_copy_equal, no_read)
+
+	NodeTag		type;
+
+	Relids		jd_relids;		/* all relids contained within the domain */
+} JoinDomain;
+
+/*
  * EquivalenceClasses
  *
- * Whenever we can determine that a mergejoinable equality clause A = B is
- * not delayed by any outer join, we create an EquivalenceClass containing
+ * Whenever we identify a mergejoinable equality clause A = B that is
+ * not an outer-join clause, we create an EquivalenceClass containing
  * the expressions A and B to record this knowledge.  If we later find another
  * equivalence B = C, we add C to the existing EquivalenceClass; this may
  * require merging two existing EquivalenceClasses.  At the end of the qual
@@ -1295,6 +1333,18 @@ typedef struct StatisticExtInfo
  * operators belong to only one btree opclass anyway.  Similarly, we suppose
  * that all or none of the input datatypes are collatable, so that a single
  * collation value is sufficient.)
+ *
+ * Strictly speaking, deductions from an EquivalenceClass hold only within
+ * a "join domain", that is a set of relations that are innerjoined together
+ * (see JoinDomain above).  For the most part we don't need to account for
+ * this explicitly, because equality clauses from different join domains
+ * will contain Vars that are not equal() because they have different
+ * nullingrel sets, and thus we will never falsely merge ECs from different
+ * join domains.  But Var-free (pseudoconstant) expressions lack that safety
+ * feature.  We handle that by marking "const" EC members with the JoinDomain
+ * of the clause they came from; two nominally-equal const members will be
+ * considered different if they came from different JoinDomains.  This ensures
+ * no false EquivalenceClass merges will occur.
  *
  * We also use EquivalenceClasses as the base structure for PathKeys, letting
  * us represent knowledge about different sort orderings being equivalent.
@@ -1309,11 +1359,6 @@ typedef struct StatisticExtInfo
  * to be careful to match the EquivalenceClass to the correct targetlist
  * entry: consider SELECT random() AS a, random() AS b ... ORDER BY b,a.
  * So we record the SortGroupRef of the originating sort clause.
- *
- * We allow equality clauses appearing below the nullable side of an outer join
- * to form EquivalenceClasses, but these have a slightly different meaning:
- * the included values might be all NULL rather than all the same non-null
- * values.  See src/backend/optimizer/README for more on that point.
  *
  * NB: if ec_merged isn't NULL, this class has been merged into another, and
  * should be ignored in favor of using the pointed-to class.
@@ -1339,7 +1384,6 @@ typedef struct EquivalenceClass
 								 * for child members (see below) */
 	bool		ec_has_const;	/* any pseudoconstants in ec_members? */
 	bool		ec_has_volatile;	/* the (sole) member is a volatile expr */
-	bool		ec_below_outer_join;	/* equivalence applies below an OJ */
 	bool		ec_broken;		/* failed to generate needed clauses? */
 	Index		ec_sortref;		/* originating sortclause label, or 0 */
 	Index		ec_min_security;	/* minimum security_level in ec_sources */
@@ -1348,11 +1392,11 @@ typedef struct EquivalenceClass
 } EquivalenceClass;
 
 /*
- * If an EC contains a const and isn't below-outer-join, any PathKey depending
- * on it must be redundant, since there's only one possible value of the key.
+ * If an EC contains a constant, any PathKey depending on it must be
+ * redundant, since there's only one possible value of the key.
  */
 #define EC_MUST_BE_REDUNDANT(eclass)  \
-	((eclass)->ec_has_const && !(eclass)->ec_below_outer_join)
+	((eclass)->ec_has_const)
 
 /*
  * EquivalenceMember - one member expression of an EquivalenceClass
@@ -1387,6 +1431,7 @@ typedef struct EquivalenceMember
 	bool		em_is_const;	/* expression is pseudoconstant? */
 	bool		em_is_child;	/* derived version for a child relation? */
 	Oid			em_datatype;	/* the "nominal type" used by the opfamily */
+	JoinDomain *em_jdomain;		/* join domain containing the source clause */
 	/* if em_is_child is true, this links to corresponding EM for top parent */
 	struct EquivalenceMember *em_parent pg_node_attr(read_write_ignore);
 } EquivalenceMember;
