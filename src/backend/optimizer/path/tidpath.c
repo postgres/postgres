@@ -59,6 +59,7 @@ IsCTIDVar(Var *var, RelOptInfo *rel)
 	if (var->varattno == SelfItemPointerAttributeNumber &&
 		var->vartype == TIDOID &&
 		var->varno == rel->relid &&
+		var->varnullingrels == NULL &&
 		var->varlevelsup == 0)
 		return true;
 	return false;

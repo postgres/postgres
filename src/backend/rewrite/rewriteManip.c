@@ -40,6 +40,20 @@ typedef struct
 	int			win_location;
 } locate_windowfunc_context;
 
+typedef struct
+{
+	const Bitmapset *target_relids;
+	const Bitmapset *added_relids;
+	int			sublevels_up;
+} add_nulling_relids_context;
+
+typedef struct
+{
+	const Bitmapset *removable_relids;
+	const Bitmapset *except_relids;
+	int			sublevels_up;
+} remove_nulling_relids_context;
+
 static bool contain_aggs_of_level_walker(Node *node,
 										 contain_aggs_of_level_context *context);
 static bool locate_agg_of_level_walker(Node *node,
@@ -50,6 +64,10 @@ static bool locate_windowfunc_walker(Node *node,
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
+static Node *add_nulling_relids_mutator(Node *node,
+										add_nulling_relids_context *context);
+static Node *remove_nulling_relids_mutator(Node *node,
+										   remove_nulling_relids_context *context);
 
 
 /*
@@ -381,6 +399,8 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 		if (var->varlevelsup == context->sublevels_up)
 		{
 			var->varno += context->offset;
+			var->varnullingrels = offset_relid_set(var->varnullingrels,
+												   context->offset);
 			if (var->varnosyn > 0)
 				var->varnosyn += context->offset;
 		}
@@ -419,6 +439,8 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 		{
 			phv->phrels = offset_relid_set(phv->phrels,
 										   context->offset);
+			phv->phnullingrels = offset_relid_set(phv->phnullingrels,
+												  context->offset);
 		}
 		/* fall through to examine children */
 	}
@@ -543,11 +565,13 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	{
 		Var		   *var = (Var *) node;
 
-		if (var->varlevelsup == context->sublevels_up &&
-			var->varno == context->rt_index)
+		if (var->varlevelsup == context->sublevels_up)
 		{
-			var->varno = context->new_index;
-			/* If the syntactic referent is same RTE, fix it too */
+			if (var->varno == context->rt_index)
+				var->varno = context->new_index;
+			var->varnullingrels = adjust_relid_set(var->varnullingrels,
+												   context->rt_index,
+												   context->new_index);
 			if (var->varnosyn == context->rt_index)
 				var->varnosyn = context->new_index;
 		}
@@ -590,6 +614,9 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			phv->phrels = adjust_relid_set(phv->phrels,
 										   context->rt_index,
 										   context->new_index);
+			phv->phnullingrels = adjust_relid_set(phv->phnullingrels,
+												  context->rt_index,
+												  context->new_index);
 		}
 		/* fall through to examine children */
 	}
@@ -866,7 +893,8 @@ rangeTableEntry_used_walker(Node *node,
 		Var		   *var = (Var *) node;
 
 		if (var->varlevelsup == context->sublevels_up &&
-			var->varno == context->rt_index)
+			(var->varno == context->rt_index ||
+			 bms_is_member(context->rt_index, var->varnullingrels)))
 			return true;
 		return false;
 	}
@@ -1091,6 +1119,195 @@ AddInvertedQual(Query *parsetree, Node *qual)
 	invqual->location = -1;
 
 	AddQual(parsetree, (Node *) invqual);
+}
+
+
+/*
+ * add_nulling_relids() finds Vars and PlaceHolderVars that belong to any
+ * of the target_relids, and adds added_relids to their varnullingrels
+ * and phnullingrels fields.
+ */
+Node *
+add_nulling_relids(Node *node,
+				   const Bitmapset *target_relids,
+				   const Bitmapset *added_relids)
+{
+	add_nulling_relids_context context;
+
+	context.target_relids = target_relids;
+	context.added_relids = added_relids;
+	context.sublevels_up = 0;
+	return query_or_expression_tree_mutator(node,
+											add_nulling_relids_mutator,
+											&context,
+											0);
+}
+
+static Node *
+add_nulling_relids_mutator(Node *node,
+						   add_nulling_relids_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up &&
+			bms_is_member(var->varno, context->target_relids))
+		{
+			Relids		newnullingrels = bms_union(var->varnullingrels,
+												   context->added_relids);
+
+			/* Copy the Var ... */
+			var = copyObject(var);
+			/* ... and replace the copy's varnullingrels field */
+			var->varnullingrels = newnullingrels;
+			return (Node *) var;
+		}
+		/* Otherwise fall through to copy the Var normally */
+	}
+	else if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		if (phv->phlevelsup == context->sublevels_up &&
+			bms_overlap(phv->phrels, context->target_relids))
+		{
+			Relids		newnullingrels = bms_union(phv->phnullingrels,
+												   context->added_relids);
+
+			/*
+			 * We don't modify the contents of the PHV's expression, only add
+			 * to phnullingrels.  This corresponds to assuming that the PHV
+			 * will be evaluated at the same level as before, then perhaps be
+			 * nulled as it bubbles up.  Hence, just flat-copy the node ...
+			 */
+			phv = makeNode(PlaceHolderVar);
+			memcpy(phv, node, sizeof(PlaceHolderVar));
+			/* ... and replace the copy's phnullingrels field */
+			phv->phnullingrels = newnullingrels;
+			return (Node *) phv;
+		}
+		/* Otherwise fall through to copy the PlaceHolderVar normally */
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into RTE or sublink subquery */
+		Query	   *newnode;
+
+		context->sublevels_up++;
+		newnode = query_tree_mutator((Query *) node,
+									 add_nulling_relids_mutator,
+									 (void *) context,
+									 0);
+		context->sublevels_up--;
+		return (Node *) newnode;
+	}
+	return expression_tree_mutator(node, add_nulling_relids_mutator,
+								   (void *) context);
+}
+
+/*
+ * remove_nulling_relids() removes mentions of the specified RT index(es)
+ * in Var.varnullingrels and PlaceHolderVar.phnullingrels fields within
+ * the given expression, except in nodes belonging to rels listed in
+ * except_relids.
+ */
+Node *
+remove_nulling_relids(Node *node,
+					  const Bitmapset *removable_relids,
+					  const Bitmapset *except_relids)
+{
+	remove_nulling_relids_context context;
+
+	context.removable_relids = removable_relids;
+	context.except_relids = except_relids;
+	context.sublevels_up = 0;
+	return query_or_expression_tree_mutator(node,
+											remove_nulling_relids_mutator,
+											&context,
+											0);
+}
+
+static Node *
+remove_nulling_relids_mutator(Node *node,
+							  remove_nulling_relids_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up &&
+			!bms_is_member(var->varno, context->except_relids) &&
+			bms_overlap(var->varnullingrels, context->removable_relids))
+		{
+			Relids		newnullingrels = bms_difference(var->varnullingrels,
+														context->removable_relids);
+
+			/* Micro-optimization: ensure nullingrels is NULL if empty */
+			if (bms_is_empty(newnullingrels))
+				newnullingrels = NULL;
+			/* Copy the Var ... */
+			var = copyObject(var);
+			/* ... and replace the copy's varnullingrels field */
+			var->varnullingrels = newnullingrels;
+			return (Node *) var;
+		}
+		/* Otherwise fall through to copy the Var normally */
+	}
+	else if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		if (phv->phlevelsup == context->sublevels_up &&
+			!bms_overlap(phv->phrels, context->except_relids))
+		{
+			Relids		newnullingrels = bms_difference(phv->phnullingrels,
+														context->removable_relids);
+
+			/*
+			 * Micro-optimization: ensure nullingrels is NULL if empty.
+			 *
+			 * Note: it might seem desirable to remove the PHV altogether if
+			 * phnullingrels goes to empty.  Currently we dare not do that
+			 * because we use PHVs in some cases to enforce separate identity
+			 * of subexpressions; see wrap_non_vars usages in prepjointree.c.
+			 */
+			if (bms_is_empty(newnullingrels))
+				newnullingrels = NULL;
+			/* Copy the PlaceHolderVar and mutate what's below ... */
+			phv = (PlaceHolderVar *)
+				expression_tree_mutator(node,
+										remove_nulling_relids_mutator,
+										(void *) context);
+			/* ... and replace the copy's phnullingrels field */
+			phv->phnullingrels = newnullingrels;
+			/* We must also update phrels, if it contains a removable RTI */
+			phv->phrels = bms_difference(phv->phrels,
+										 context->removable_relids);
+			Assert(!bms_is_empty(phv->phrels));
+			return (Node *) phv;
+		}
+		/* Otherwise fall through to copy the PlaceHolderVar normally */
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into RTE or sublink subquery */
+		Query	   *newnode;
+
+		context->sublevels_up++;
+		newnode = query_tree_mutator((Query *) node,
+									 remove_nulling_relids_mutator,
+									 (void *) context,
+									 0);
+		context->sublevels_up--;
+		return (Node *) newnode;
+	}
+	return expression_tree_mutator(node, remove_nulling_relids_mutator,
+								   (void *) context);
 }
 
 

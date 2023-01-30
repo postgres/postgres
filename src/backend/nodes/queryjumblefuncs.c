@@ -383,6 +383,11 @@ JumbleExpr(JumbleState *jstate, Node *node)
 				APP_JUMB(var->varno);
 				APP_JUMB(var->varattno);
 				APP_JUMB(var->varlevelsup);
+
+				/*
+				 * We can omit varnullingrels, because it's fully determined
+				 * by varno/varlevelsup plus the Var's query location.
+				 */
 			}
 			break;
 		case T_Const:

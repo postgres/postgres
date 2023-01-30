@@ -4781,6 +4781,10 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	norm_sjinfo.syn_lefthand = outerrel->relids;
 	norm_sjinfo.syn_righthand = innerrel->relids;
 	norm_sjinfo.jointype = JOIN_INNER;
+	norm_sjinfo.ojrelid = 0;
+	norm_sjinfo.commute_above_l = NULL;
+	norm_sjinfo.commute_above_r = NULL;
+	norm_sjinfo.commute_below = NULL;
 	/* we don't bother trying to make the remaining fields valid */
 	norm_sjinfo.lhs_strict = false;
 	norm_sjinfo.delay_upper_joins = false;
@@ -4946,6 +4950,10 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 	sjinfo.syn_lefthand = path->outerjoinpath->parent->relids;
 	sjinfo.syn_righthand = path->innerjoinpath->parent->relids;
 	sjinfo.jointype = JOIN_INNER;
+	sjinfo.ojrelid = 0;
+	sjinfo.commute_above_l = NULL;
+	sjinfo.commute_above_r = NULL;
+	sjinfo.commute_below = NULL;
 	/* we don't bother trying to make the remaining fields valid */
 	sjinfo.lhs_strict = false;
 	sjinfo.delay_upper_joins = false;

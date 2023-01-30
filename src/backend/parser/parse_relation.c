@@ -763,6 +763,9 @@ scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
 	}
 	var->location = location;
 
+	/* Mark Var if it's nulled by any outer joins */
+	markNullableIfNeeded(pstate, var);
+
 	/* Require read access to the column */
 	markVarForSelectPriv(pstate, var);
 
@@ -1021,6 +1024,35 @@ searchRangeTableForCol(ParseState *pstate, const char *alias, const char *colnam
 	}
 
 	return fuzzystate;
+}
+
+/*
+ * markNullableIfNeeded
+ *		If the RTE referenced by the Var is nullable by outer join(s)
+ *		at this point in the query, set var->varnullingrels to show that.
+ */
+void
+markNullableIfNeeded(ParseState *pstate, Var *var)
+{
+	int			rtindex = var->varno;
+	Bitmapset  *relids;
+
+	/* Find the appropriate pstate */
+	for (int lv = 0; lv < var->varlevelsup; lv++)
+		pstate = pstate->parentParseState;
+
+	/* Find currently-relevant join relids for the Var's rel */
+	if (rtindex > 0 && rtindex <= list_length(pstate->p_nullingrels))
+		relids = (Bitmapset *) list_nth(pstate->p_nullingrels, rtindex - 1);
+	else
+		relids = NULL;
+
+	/*
+	 * Merge with any already-declared nulling rels.  (Typically there won't
+	 * be any, but let's get it right if there are.)
+	 */
+	if (relids != NULL)
+		var->varnullingrels = bms_union(var->varnullingrels, relids);
 }
 
 /*
@@ -3087,7 +3119,7 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref, int count, int offset,
  * the list elements mustn't be modified.
  */
 List *
-expandNSItemVars(ParseNamespaceItem *nsitem,
+expandNSItemVars(ParseState *pstate, ParseNamespaceItem *nsitem,
 				 int sublevels_up, int location,
 				 List **colnames)
 {
@@ -3123,6 +3155,10 @@ expandNSItemVars(ParseNamespaceItem *nsitem,
 			var->varnosyn = nscol->p_varnosyn;
 			var->varattnosyn = nscol->p_varattnosyn;
 			var->location = location;
+
+			/* ... and update varnullingrels */
+			markNullableIfNeeded(pstate, var);
+
 			result = lappend(result, var);
 			if (colnames)
 				*colnames = lappend(*colnames, colnameval);
@@ -3158,7 +3194,7 @@ expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
 			   *var;
 	List	   *te_list = NIL;
 
-	vars = expandNSItemVars(nsitem, sublevels_up, location, &names);
+	vars = expandNSItemVars(pstate, nsitem, sublevels_up, location, &names);
 
 	/*
 	 * Require read access to the table.  This is normally redundant with the

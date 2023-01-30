@@ -4158,13 +4158,21 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 
 	/*
 	 * Likewise, copy the relids that are represented by this foreign scan. An
-	 * upper rel doesn't have relids set, but it covers all the base relations
-	 * participating in the underlying scan, so use root's all_baserels.
+	 * upper rel doesn't have relids set, but it covers all the relations
+	 * participating in the underlying scan/join, so use root->all_query_rels.
 	 */
 	if (rel->reloptkind == RELOPT_UPPER_REL)
-		scan_plan->fs_relids = root->all_baserels;
+		scan_plan->fs_relids = root->all_query_rels;
 	else
 		scan_plan->fs_relids = best_path->path.parent->relids;
+
+	/*
+	 * Join relid sets include relevant outer joins, but FDWs may need to know
+	 * which are the included base rels.  That's a bit tedious to get without
+	 * access to the plan-time data structures, so compute it here.
+	 */
+	scan_plan->fs_base_relids = bms_difference(scan_plan->fs_relids,
+											   root->outer_join_rels);
 
 	/*
 	 * If this is a foreign join, and to make it valid to push down we had to
@@ -5806,8 +5814,9 @@ make_foreignscan(List *qptlist,
 	node->fdw_private = fdw_private;
 	node->fdw_scan_tlist = fdw_scan_tlist;
 	node->fdw_recheck_quals = fdw_recheck_quals;
-	/* fs_relids will be filled in by create_foreignscan_plan */
+	/* fs_relids, fs_base_relids will be filled by create_foreignscan_plan */
 	node->fs_relids = NULL;
+	node->fs_base_relids = NULL;
 	/* fsSystemCol will be filled in by create_foreignscan_plan */
 	node->fsSystemCol = false;
 

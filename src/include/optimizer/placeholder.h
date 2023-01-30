@@ -27,6 +27,9 @@ extern void update_placeholder_eval_levels(PlannerInfo *root,
 extern void fix_placeholder_input_needed_levels(PlannerInfo *root);
 extern void add_placeholders_to_base_rels(PlannerInfo *root);
 extern void add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
-										RelOptInfo *outer_rel, RelOptInfo *inner_rel);
+										RelOptInfo *outer_rel, RelOptInfo *inner_rel,
+										SpecialJoinInfo *sjinfo);
+extern bool contain_placeholder_references_to(PlannerInfo *root, Node *clause,
+											  int relid);
 
 #endif							/* PLACEHOLDER_H */

@@ -2641,6 +2641,7 @@ expression_tree_mutator_impl(Node *node,
 				Var		   *newnode;
 
 				FLATCOPY(newnode, var, Var);
+				/* Assume we need not copy the varnullingrels bitmapset */
 				return (Node *) newnode;
 			}
 			break;
@@ -3234,7 +3235,7 @@ expression_tree_mutator_impl(Node *node,
 
 				FLATCOPY(newnode, phv, PlaceHolderVar);
 				MUTATE(newnode->phexpr, phv->phexpr, Expr *);
-				/* Assume we need not copy the relids bitmapset */
+				/* Assume we need not copy the relids bitmapsets */
 				return (Node *) newnode;
 			}
 			break;

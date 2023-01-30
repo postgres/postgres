@@ -2478,6 +2478,9 @@ transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 		/* location is not filled in by makeWholeRowVar */
 		result->location = location;
 
+		/* mark Var if it's nulled by any outer joins */
+		markNullableIfNeeded(pstate, result);
+
 		/* mark relation as requiring whole-row SELECT access */
 		markVarForSelectPriv(pstate, result);
 
@@ -2504,6 +2507,8 @@ transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 		rowexpr->row_format = COERCE_IMPLICIT_CAST;
 		rowexpr->colnames = copyObject(nsitem->p_names->colnames);
 		rowexpr->location = location;
+
+		/* XXX we ought to mark the row as possibly nullable */
 
 		return (Node *) rowexpr;
 	}

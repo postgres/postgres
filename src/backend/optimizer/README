@@ -295,6 +295,239 @@ Therefore, we don't merge FROM-lists if the result would have too many
 FROM-items in one list.
 
 
+Vars and PlaceHolderVars
+------------------------
+
+A Var node is simply the parse-tree representation of a table column
+reference.  However, in the presence of outer joins, that concept is
+more subtle than it might seem.  We need to distinguish the values of
+a Var "above" and "below" any outer join that could force the Var to
+null.  As an example, consider
+
+	SELECT * FROM t1 LEFT JOIN t2 ON (t1.x = t2.y) WHERE foo(t2.z)
+
+(Assume foo() is not strict, so that we can't reduce the left join to
+a plain join.)  A naive implementation might try to push the foo(t2.z)
+call down to the scan of t2, but that is not correct because
+(a) what foo() should actually see for a null-extended join row is NULL,
+and (b) if foo() returns false, we should suppress the t1 row from the
+join altogether, not emit it with a null-extended t2 row.  On the other
+hand, it *would* be correct (and desirable) to push that call down to
+the scan level if the query were
+
+	SELECT * FROM t1 LEFT JOIN t2 ON (t1.x = t2.y AND foo(t2.z))
+
+This motivates considering "t2.z" within the left join's ON clause
+to be a different value from "t2.z" outside the JOIN clause.  The
+former can be identified with t2.z as seen at the relation scan level,
+but the latter can't.
+
+Another example occurs in connection with EquivalenceClasses (discussed
+below).  Given
+
+	SELECT * FROM t1 LEFT JOIN t2 ON (t1.x = t2.y) WHERE t1.x = 42
+
+we would like to use the EquivalenceClass mechanisms to derive "t2.y = 42"
+to use as a restriction clause for the scan of t2.  (That works, because t2
+rows having y different from 42 cannot affect the query result.)  However,
+it'd be wrong to conclude that t2.y will be equal to t1.x in every joined
+row.  Part of the solution to this problem is to deem that "t2.y" in the
+ON clause refers to the relation-scan-level value of t2.y, but not to the
+value that y will have in joined rows, where it might be NULL rather than
+equal to t1.x.
+
+Therefore, Var nodes are decorated with "varnullingrels", which are sets
+of the rangetable indexes of outer joins that potentially null the Var
+at the point where it appears in the query.  (Using a set, not an ordered
+list, is fine since it doesn't matter which join forced the value to null;
+and that avoids having to change the representation when we consider
+different outer-join orders.)  In the examples above, all occurrences of
+t1.x would have empty varnullingrels, since the left join doesn't null t1.
+The t2 references within the JOIN ON clauses would also have empty
+varnullingrels.  But outside the JOIN clauses, any Vars referencing t2
+would have varnullingrels containing the index of the JOIN's rangetable
+entry (RTE), so that they'd be understood as potentially different from
+the t2 values seen at scan level.  Labeling t2.z in the WHERE clause with
+the JOIN's RT index lets us recognize that that occurrence of foo(t2.z)
+cannot be pushed down to the t2 scan level: we cannot evaluate that value
+at the scan level, but only after the join has been done.
+
+For LEFT and RIGHT outer joins, only Vars coming from the nullable side
+of the join are marked with that join's RT index.  For FULL joins, Vars
+from both inputs are marked.  (Such marking doesn't let us tell which
+side of the full join a Var came from; but that information can be found
+elsewhere at need.)
+
+Notionally, a Var having nonempty varnullingrels can be thought of as
+	CASE WHEN any-of-these-outer-joins-produced-a-null-extended-row
+	  THEN NULL
+	  ELSE the-scan-level-value-of-the-column
+	  END
+It's only notional, because no such calculation is ever done explicitly.
+In a finished plan, Vars occurring in scan-level plan nodes represent
+the actual table column values, but upper-level Vars are always
+references to outputs of lower-level plan nodes.  When a join node emits
+a null-extended row, it just returns nulls for the relevant output
+columns rather than copying up values from its input.  Because we don't
+ever have to do this calculation explicitly, it's not necessary to
+distinguish which side of an outer join got null-extended, which'd
+otherwise be essential information for FULL JOIN cases.
+
+Outer join identity 3 (discussed above) complicates this picture
+a bit.  In the form
+	A leftjoin (B leftjoin C on (Pbc)) on (Pab)
+all of the Vars in clauses Pbc and Pab will have empty varnullingrels,
+but if we start with
+	(A leftjoin B on (Pab)) leftjoin C on (Pbc)
+then the parser will have marked Pbc's B Vars with the A/B join's
+RT index, making this form artificially different from the first.
+For discussion's sake, let's denote this marking with a star:
+	(A leftjoin B on (Pab)) leftjoin C on (Pb*c)
+To cope with this, once we have detected that commuting these joins
+is legal, we generate both the Pbc and Pb*c forms of that ON clause,
+by either removing or adding the first join's RT index in the B Vars
+that the parser created.  While generating paths for a plan step that
+joins B and C, we include as a relevant join qual only the form that
+is appropriate depending on whether A has already been joined to B.
+
+It's also worth noting that identity 3 makes "the left join's RT index"
+itself a bit of a fuzzy concept, since the syntactic scope of each join
+RTE will depend on which form was produced by the parser.  We resolve
+this by considering that a left join's identity is determined by its
+minimum set of right-hand-side input relations.  In both forms allowed
+by identity 3, we can identify the first join as having minimum RHS B
+and the second join as having minimum RHS C.
+
+Another thing to notice is that C Vars appearing outside the nested
+JOIN clauses will be marked as nulled by both left joins if the
+original parser input was in the first form of identity 3, but if the
+parser input was in the second form, such Vars will only be marked as
+nulled by the second join.  This is not really a semantic problem:
+such Vars will be marked the same way throughout the upper part of the
+query, so they will all look equal() which is correct; and they will not
+look equal() to any C Var appearing in the JOIN ON clause or below these
+joins.  However, when building Vars representing the outputs of join
+relations, we need to ensure that their varnullingrels are set to
+values consistent with the syntactic join order, so that they will
+appear equal() to pre-existing Vars in the upper part of the query.
+
+Outer joins also complicate handling of subquery pull-up.  Consider
+
+	SELECT ..., ss.x FROM tab1
+	  LEFT JOIN (SELECT *, 42 AS x FROM tab2) ss ON ...
+
+We want to be able to pull up the subquery as discussed previously,
+but we can't just replace the "ss.x" Var in the top-level SELECT list
+with the constant 42.  That'd result in always emitting 42, rather
+than emitting NULL in null-extended join rows.
+
+To solve this, we introduce the concept of PlaceHolderVars.
+A PlaceHolderVar is somewhat like a Var, in that its value originates
+at a relation scan level and can then be forced to null by higher-level
+outer joins; hence PlaceHolderVars carry a set of nulling rel IDs just
+like Vars.  Unlike a Var, whose original value comes from a table,
+a PlaceHolderVar's original value is defined by a query-determined
+expression ("42" in this example); so we represent the PlaceHolderVar
+as a node with that expression as child.  We insert a PlaceHolderVar
+whenever subquery pullup needs to replace a subquery-referencing Var
+that has nonempty varnullingrels with an expression that is not simply a
+Var.  (When the replacement expression is a pulled-up Var, we can just
+add the replaced Var's varnullingrels to its set.  Also, if the replaced
+Var has empty varnullingrels, we don't need a PlaceHolderVar: there is
+nothing that'd force the value to null, so the pulled-up expression is
+fine to use as-is.)  In a finished plan, a PlaceHolderVar becomes just
+the contained expression at whatever plan level it's supposed to be
+evaluated at, and then upper-level occurrences are replaced by Var
+references to that output column of the lower plan level.  That causes
+the value to go to null when appropriate at an outer join, in the same
+way as for normal Vars.  Thus, PlaceHolderVars are never seen outside
+the planner.
+
+PlaceHolderVars (PHVs) are more complicated than Vars in another way:
+their original value might need to be calculated at a join, not a
+base-level relation scan.  This can happen when a pulled-up subquery
+contains a join.  Because of this, a PHV can create a join order
+constraint that wouldn't otherwise exist, to ensure that it can
+be calculated before it is used.  A PHV's expression can also contain
+LATERAL references, adding complications that are discussed below.
+
+
+Relation Identification and Qual Clause Placement
+-------------------------------------------------
+
+A qual clause obtained from WHERE or JOIN/ON can be enforced at the lowest
+scan or join level that includes all relations used in the clause.  For
+this purpose we consider that outer joins listed in varnullingrels or
+phnullingrels are used in the clause, since we can't compute the qual's
+result correctly until we know whether such Vars have gone to null.
+
+The one exception to this general rule is that a non-degenerate outer
+JOIN/ON qual (one that references the non-nullable side of the join)
+cannot be enforced below that join, even if it doesn't reference the
+nullable side.  Pushing it down into the non-nullable side would result
+in rows disappearing from the join's result, rather than appearing as
+null-extended rows.  To handle that, when we identify such a qual we
+artificially add the join's minimum input relid set to the set of
+relations it is considered to use, forcing it to be evaluated exactly at
+that join level.  The same happens for outer-join quals that mention no
+relations at all.
+
+When attaching a qual clause to a join plan node that is performing an
+outer join, the qual clause is considered a "join clause" (that is, it is
+applied before the join performs null-extension) if it does not reference
+that outer join in any varnullingrels or phnullingrels set, or a "filter
+clause" (applied after null-extension) if it does reference that outer
+join.  A qual clause that originally appeared in that outer join's JOIN/ON
+will fall into the first category, since the parser would not have marked
+any of its Vars as referencing the outer join.  A qual clause that
+originally came from some upper ON clause or WHERE clause will be seen as
+referencing the outer join if it references any of the nullable side's
+Vars, since those Vars will be so marked by the parser.  But, if such a
+qual does not reference any nullable-side Vars, it's okay to push it down
+into the non-nullable side, so it won't get attached to the join node in
+the first place.
+
+These things lead us to identify join relations within the planner
+by the sets of base relation RT indexes plus outer join RT indexes
+that they include.  In that way, the sets of relations used by qual
+clauses can be directly compared to join relations' relid sets to
+see where to place the clauses.  These identifying sets are unique
+because, for any given collection of base relations, there is only
+one valid set of outer joins to have performed along the way to
+joining that set of base relations (although the order of applying
+them could vary, as discussed above).
+
+SEMI joins do not have RT indexes, because they are artifacts made by
+the planner rather than the parser.  (We could create rangetable
+entries for them, but there seems no need at present.)  This does not
+cause a problem for qual placement, because the nullable side of a
+semijoin is not referenceable from above the join, so there is never a
+need to cite it in varnullingrels or phnullingrels.  It does not cause a
+problem for join relation identification either, since whether a semijoin
+has been completed is again implicit in the set of base relations
+included in the join.
+
+There is one additional complication for qual clause placement, which
+occurs when we have made multiple versions of an outer-join clause as
+described previously (that is, we have both "Pbc" and "Pb*c" forms of
+the same clause seen in outer join identity 3).  When forming an outer
+join we only want to apply one of the redundant versions of the clause.
+If we are forming the B/C join without having yet computed the A/B
+join, it's easy to reject the "Pb*c" form since its required relid
+set includes the A/B join relid which is not in the input.  However,
+if we form B/C after A/B, then both forms of the clause are applicable
+so far as that test can tell.  We have to look more closely to notice
+that the "Pbc" clause form refers to relation B which is no longer
+directly accessible.  While this check is straightforward, it's not
+especially cheap (see clause_is_computable_at()).  To avoid doing it
+unnecessarily, we mark the variant versions of a redundant clause as
+either "has_clone" or "is_clone".  When considering a clone clause,
+we must check clause_is_computable_at() to disentangle which version
+to apply at the current join level.  (In debug builds, we also Assert
+that non-clone clauses are validly computable at the current level;
+but that seems too expensive for production usage.)
+
+
 Optimizer Functions
 -------------------
 
@@ -437,11 +670,10 @@ inputs.
 EquivalenceClasses
 ------------------
 
-During the deconstruct_jointree() scan of the query's qual clauses, we look
-for mergejoinable equality clauses A = B whose applicability is not delayed
-by an outer join; these are called "equivalence clauses".  When we find
-one, we create an EquivalenceClass containing the expressions A and B to
-record this knowledge.  If we later find another equivalence clause B = C,
+During the deconstruct_jointree() scan of the query's qual clauses, we
+look for mergejoinable equality clauses A = B.  When we find one, we
+create an EquivalenceClass containing the expressions A and B to record
+that they are equal.  If we later find another equivalence clause B = C,
 we add C to the existing EquivalenceClass for {A B}; this may require
 merging two existing EquivalenceClasses.  At the end of the scan, we have
 sets of values that are known all transitively equal to each other.  We can
@@ -473,15 +705,89 @@ asserts that at any plan node where more than one of its member values
 can be computed, output rows in which the values are not all equal may
 be discarded without affecting the query result.  (We require all levels
 of the plan to enforce EquivalenceClasses, hence a join need not recheck
-equality of values that were computable by one of its children.)  For an
-ordinary EquivalenceClass that is "valid everywhere", we can further infer
-that the values are all non-null, because all mergejoinable operators are
-strict.  However, we also allow equivalence clauses that appear below the
-nullable side of an outer join to form EquivalenceClasses; for these
-classes, the interpretation is that either all the values are equal, or
-all (except pseudo-constants) have gone to null.  (This requires a
-limitation that non-constant members be strict, else they might not go
-to null when the other members do.)  Consider for example
+equality of values that were computable by one of its children.)
+
+Outer joins complicate this picture quite a bit, however.  While we could
+theoretically use mergejoinable equality clauses that appear in outer-join
+conditions as sources of EquivalenceClasses, there's a serious difficulty:
+the resulting deductions are not valid everywhere.  For example, given
+
+	SELECT * FROM a LEFT JOIN b ON (a.x = b.y AND a.x = 42);
+
+we can safely derive b.y = 42 and use that in the scan of B, because B
+rows not having b.y = 42 will not contribute to the join result.  However,
+we cannot apply a.x = 42 at the scan of A, or we will remove rows that
+should appear in the join result.  We could apply a.x = 42 as an outer join
+condition (and then it would be unnecessary to also check a.x = b.y).
+This is not yet implemented, however.
+
+A related issue is that constants appearing below an outer join are
+less constant than they appear.  Ordinarily, if we find "A = 1" and
+"B = 1", it's okay to put A and B into the same EquivalenceClass.
+But consider
+
+	SELECT * FROM a
+	  LEFT JOIN (SELECT * FROM b WHERE b.z = 1) b ON (a.x = b.y)
+	WHERE a.x = 1;
+
+It would be a serious error to conclude that a.x = b.z, so we cannot
+form a single EquivalenceClass {a.x b.z 1}.
+
+This leads to considering EquivalenceClasses as applying within "join
+domains", which are sets of relations that are inner-joined to each other.
+(We can treat semijoins as if they were inner joins for this purpose.)
+There is a top-level join domain, and then each outer join in the query
+creates a new join domain comprising its nullable side.  Full joins create
+two join domains, one for each side.  EquivalenceClasses generated from
+WHERE are associated with the top-level join domain.  EquivalenceClasses
+generated from the ON clause of an outer join are associated with the
+domain created by that outer join.  EquivalenceClasses generated from the
+ON clause of an inner or semi join are associated with the syntactically
+most closely nested join domain.
+
+Having defined these domains, we can fix the not-so-constant-constants
+problem by considering that constants only match EquivalenceClass members
+when they come from clauses within the same join domain.  In the above
+example, this means we keep {a.x 1} and {b.z 1} as separate
+EquivalenceClasses and don't erroneously merge them.  We don't have to
+worry about this for Vars (or expressions containing Vars), because
+references to the "same" column from different join domains will have
+different varnullingrels and thus won't be equal() anyway.
+
+In the future, the join-domain concept may allow us to treat mergejoinable
+outer-join conditions as sources of EquivalenceClasses.  The idea would be
+that conditions derived from such classes could only be enforced at scans
+or joins that are within the appropriate join domain.  This is not
+implemented yet, however, as the details are trickier than they appear.
+
+Another instructive example is:
+
+	SELECT *
+	  FROM a LEFT JOIN
+	       (SELECT * FROM b JOIN c ON b.y = c.z WHERE b.y = 10) ss
+	       ON a.x = ss.y
+	  ORDER BY ss.y;
+
+We can form the EquivalenceClass {b.y c.z 10} and thereby apply c.z = 10
+while scanning C, as well as b.y = 10 while scanning B, so that no clause
+needs to be checked at the inner join.  The left-join clause "a.x = ss.y"
+(really "a.x = b.y") is not considered an equivalence clause, so we do
+not insert a.x into that same EquivalenceClass; if we did, we'd falsely
+conclude a.x = 10.  In the future though we might be able to do that,
+if we can keep from applying a.x = 10 at the scan of A, which in principle
+we could do by noting that the EquivalenceClass only applies within the
+{B,C} join domain.
+
+Also notice that ss.y in the ORDER BY is really b.y* (that is, the
+possibly-nulled form of b.y), so we will not confuse it with the b.y member
+of the lower EquivalenceClass.  Thus, we won't mistakenly conclude that
+that ss.y is equal to a constant, which if true would lead us to think that
+sorting for the ORDER BY is unnecessary (see discussion of PathKeys below).
+Instead, there will be a separate EquivalenceClass containing only b.y*,
+which will form the basis for the PathKey describing the required sort
+order.
+
+Also consider this variant:
 
 	SELECT *
 	  FROM a LEFT JOIN
@@ -489,27 +795,42 @@ to null when the other members do.)  Consider for example
 	       ON a.x = ss.y
 	  WHERE a.x = 42;
 
-We can form the below-outer-join EquivalenceClass {b.y c.z 10} and thereby
-apply c.z = 10 while scanning c.  (The reason we disallow outerjoin-delayed
-clauses from forming EquivalenceClasses is exactly that we want to be able
-to push any derived clauses as far down as possible.)  But once above the
-outer join it's no longer necessarily the case that b.y = 10, and thus we
-cannot use such EquivalenceClasses to conclude that sorting is unnecessary
-(see discussion of PathKeys below).
+We still form the EquivalenceClass {b.y c.z 10}, and additionally
+we have an EquivalenceClass {a.x 42} belonging to a different join domain.
+We cannot use "a.x = b.y" to merge these classes.  However, we can compare
+that outer join clause to the existing EquivalenceClasses and form the
+derived clause "b.y = 42", which we can treat as a valid equivalence
+within the lower join domain (since no row of that domain not having
+b.y = 42 can contribute to the outer-join result).  That makes the lower
+EquivalenceClass {42 b.y c.z 10}, resulting in the contradiction 10 = 42,
+which lets the planner deduce that the B/C join need not be computed at
+all: the result of that whole join domain can be forced to empty.
+(This gets implemented as a gating Result filter, since more usually the
+potential contradiction involves Param values rather than just Consts, and
+thus it has to be checked at runtime.  We can use the join domain to
+determine the join level at which to place the gating condition.)
 
-In this example, notice also that a.x = ss.y (really a.x = b.y) is not an
-equivalence clause because its applicability to b is delayed by the outer
-join; thus we do not try to insert b.y into the equivalence class {a.x 42}.
-But since we see that a.x has been equated to 42 above the outer join, we
-are able to form a below-outer-join class {b.y 42}; this restriction can be
-added because no b/c row not having b.y = 42 can contribute to the result
-of the outer join, and so we need not compute such rows.  Now this class
-will get merged with {b.y c.z 10}, leading to the contradiction 10 = 42,
-which lets the planner deduce that the b/c join need not be computed at all
-because none of its rows can contribute to the outer join.  (This gets
-implemented as a gating Result filter, since more usually the potential
-contradiction involves Param values rather than just Consts, and thus has
-to be checked at runtime.)
+There is an additional complication when re-ordering outer joins according
+to identity 3.  Recall that the two choices we consider for such joins are
+
+	A leftjoin (B leftjoin C on (Pbc)) on (Pab)
+	(A leftjoin B on (Pab)) leftjoin C on (Pb*c)
+
+where the star denotes varnullingrels markers on B's Vars.  When Pbc
+is (or includes) a mergejoinable clause, we have something like
+
+	A leftjoin (B leftjoin C on (b.b = c.c)) on (Pab)
+	(A leftjoin B on (Pab)) leftjoin C on (b.b* = c.c)
+
+We could generate an EquivalenceClause linking b.b and c.c, but if we
+then also try to link b.b* and c.c, we end with a nonsensical conclusion
+that b.b and b.b* are equal (at least in some parts of the plan tree).
+In any case, the conclusions we could derive from such a thing would be
+largely duplicative.  Conditions involving b.b* can't be computed below
+this join nest, while any conditions that can be computed would be
+duplicative of what we'd get from the b.b/c.c combination.  Therefore,
+we choose to generate an EquivalenceClause linking b.b and c.c, but
+"b.b* = c.c" is handled as just an ordinary clause.
 
 To aid in determining the sort ordering(s) that can work with a mergejoin,
 we mark each mergejoinable clause with the EquivalenceClasses of its left
@@ -522,7 +843,11 @@ if other equivalence clauses are later found to bear on the same
 expressions.
 
 Another way that we may form a single-item EquivalenceClass is in creation
-of a PathKey to represent a desired sort order (see below).  This is a bit
+of a PathKey to represent a desired sort order (see below).  This happens
+if an ORDER BY or GROUP BY key is not mentioned in any equivalence
+clause.  We need to reason about sort orders in such queries, and our
+representation of sort ordering is a PathKey which depends on an
+EquivalenceClass, so we have to make an EquivalenceClass.  This is a bit
 different from the above cases because such an EquivalenceClass might
 contain an aggregate function or volatile expression.  (A clause containing
 a volatile function will never be considered mergejoinable, even if its top
@@ -543,6 +868,9 @@ of the time, a particular equality operator belongs to only one family, but
 it's possible that it belongs to more than one.  We keep track of all the
 families to ensure that we can make use of an index belonging to any one of
 the families for mergejoin purposes.)
+
+For the same sort of reason, an EquivalenceClass is also associated
+with a particular collation, if its datatype(s) care about collation.
 
 An EquivalenceClass can contain "em_is_child" members, which are copies
 of members that contain appendrel parent relation Vars, transposed to
@@ -579,7 +907,7 @@ Index scans have Path.pathkeys that represent the chosen index's ordering,
 if any.  A single-key index would create a single-PathKey list, while a
 multi-column index generates a list with one element per key index column.
 Non-key columns specified in the INCLUDE clause of covering indexes don't
-have corresponding PathKeys in the list, because the have no influence on
+have corresponding PathKeys in the list, because they have no influence on
 index ordering.  (Actually, since an index can be scanned either forward or
 backward, there are two possible sort orders and two possible PathKey lists
 it can generate.)
@@ -608,9 +936,14 @@ must now be ordered too.  This is true even though we used neither an
 explicit sort nor a mergejoin on Y.  (Note: hash joins cannot be counted
 on to preserve the order of their outer relation, because the executor
 might decide to "batch" the join, so we always set pathkeys to NIL for
-a hashjoin path.)  Exception: a RIGHT or FULL join doesn't preserve the
-ordering of its outer relation, because it might insert nulls at random
-points in the ordering.
+a hashjoin path.)
+
+An outer join doesn't preserve the ordering of its nullable input
+relation(s), because it might insert nulls at random points in the
+ordering.  We don't need to think about this explicitly in the PathKey
+representation, because a PathKey representing a post-join variable
+will contain varnullingrel bits, making it not equal to a PathKey
+representing the pre-join value.
 
 In general, we can justify using EquivalenceClasses as the basis for
 pathkeys because, whenever we scan a relation containing multiple
@@ -655,29 +988,15 @@ redundancy, we save time and improve planning, since the planner will more
 easily recognize equivalent orderings as being equivalent.
 
 Another interesting property is that if the underlying EquivalenceClass
-contains a constant and is not below an outer join, then the pathkey is
-completely redundant and need not be sorted by at all!  Every row must
-contain the same constant value, so there's no need to sort.  (If the EC is
-below an outer join, we still have to sort, since some of the rows might
-have gone to null and others not.  In this case we must be careful to pick
-a non-const member to sort by.  The assumption that all the non-const
-members go to null at the same plan level is critical here, else they might
-not produce the same sort order.)  This might seem pointless because users
+contains a constant, then the pathkey is completely redundant and need not
+be sorted by at all!  Every interesting row must contain the same value,
+so there's no need to sort.  This might seem pointless because users
 are unlikely to write "... WHERE x = 42 ORDER BY x", but it allows us to
 recognize when particular index columns are irrelevant to the sort order:
 if we have "... WHERE x = 42 ORDER BY y", scanning an index on (x,y)
 produces correctly ordered data without a sort step.  We used to have very
 ugly ad-hoc code to recognize that in limited contexts, but discarding
 constant ECs from pathkeys makes it happen cleanly and automatically.
-
-You might object that a below-outer-join EquivalenceClass doesn't always
-represent the same values at every level of the join tree, and so using
-it to uniquely identify a sort order is dubious.  This is true, but we
-can avoid dealing with the fact explicitly because we always consider that
-an outer join destroys any ordering of its nullable inputs.  Thus, even
-if a path was sorted by {a.x} below an outer join, we'll re-sort if that
-sort ordering was important; and so using the same PathKey for both sort
-orderings doesn't create any real problem.
 
 
 Order of processing for EquivalenceClasses and PathKeys

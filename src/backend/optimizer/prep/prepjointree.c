@@ -51,17 +51,28 @@ typedef struct pullup_replace_vars_context
 								 * pullup (set only if target_rte->lateral) */
 	bool	   *outer_hasSubLinks;	/* -> outer query's hasSubLinks */
 	int			varno;			/* varno of subquery */
-	bool		need_phvs;		/* do we need PlaceHolderVars? */
-	bool		wrap_non_vars;	/* do we need 'em on *all* non-Vars? */
+	bool		wrap_non_vars;	/* do we need all non-Var outputs to be PHVs? */
 	Node	  **rv_cache;		/* cache for results with PHVs */
 } pullup_replace_vars_context;
 
-typedef struct reduce_outer_joins_state
+typedef struct reduce_outer_joins_pass1_state
 {
 	Relids		relids;			/* base relids within this subtree */
 	bool		contains_outer; /* does subtree contain outer join(s)? */
 	List	   *sub_states;		/* List of states for subtree components */
-} reduce_outer_joins_state;
+} reduce_outer_joins_pass1_state;
+
+typedef struct reduce_outer_joins_pass2_state
+{
+	Relids		inner_reduced;	/* OJ relids reduced to plain inner joins */
+	List	   *partial_reduced;	/* List of partially reduced FULL joins */
+} reduce_outer_joins_pass2_state;
+
+typedef struct reduce_outer_joins_partial_state
+{
+	int			full_join_rti;	/* RT index of a formerly-FULL join */
+	Relids		unreduced_side; /* relids in its still-nullable side */
+} reduce_outer_joins_partial_state;
 
 static Node *pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 											   Relids *relids);
@@ -70,12 +81,10 @@ static Node *pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 										   Node **jtlink2, Relids available_rels2);
 static Node *pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 										JoinExpr *lowest_outer_join,
-										JoinExpr *lowest_nulling_outer_join,
 										AppendRelInfo *containing_appendrel);
 static Node *pull_up_simple_subquery(PlannerInfo *root, Node *jtnode,
 									 RangeTblEntry *rte,
 									 JoinExpr *lowest_outer_join,
-									 JoinExpr *lowest_nulling_outer_join,
 									 AppendRelInfo *containing_appendrel);
 static Node *pull_up_simple_union_all(PlannerInfo *root, Node *jtnode,
 									  RangeTblEntry *rte);
@@ -92,7 +101,6 @@ static Node *pull_up_simple_values(PlannerInfo *root, Node *jtnode,
 static bool is_simple_values(PlannerInfo *root, RangeTblEntry *rte);
 static Node *pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 									   RangeTblEntry *rte,
-									   JoinExpr *lowest_nulling_outer_join,
 									   AppendRelInfo *containing_appendrel);
 static bool is_simple_union_all(Query *subquery);
 static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery,
@@ -103,24 +111,26 @@ static bool jointree_contains_lateral_outer_refs(PlannerInfo *root,
 												 Relids safe_upper_varnos);
 static void perform_pullup_replace_vars(PlannerInfo *root,
 										pullup_replace_vars_context *rvcontext,
-										JoinExpr *lowest_nulling_outer_join,
 										AppendRelInfo *containing_appendrel);
 static void replace_vars_in_jointree(Node *jtnode,
-									 pullup_replace_vars_context *context,
-									 JoinExpr *lowest_nulling_outer_join);
+									 pullup_replace_vars_context *context);
 static Node *pullup_replace_vars(Node *expr,
 								 pullup_replace_vars_context *context);
 static Node *pullup_replace_vars_callback(Var *var,
 										  replace_rte_variables_context *context);
 static Query *pullup_replace_vars_subquery(Query *query,
 										   pullup_replace_vars_context *context);
-static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
+static reduce_outer_joins_pass1_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
-									 reduce_outer_joins_state *state,
+									 reduce_outer_joins_pass1_state *state1,
+									 reduce_outer_joins_pass2_state *state2,
 									 PlannerInfo *root,
 									 Relids nonnullable_rels,
 									 List *forced_null_vars);
-static Node *remove_useless_results_recurse(PlannerInfo *root, Node *jtnode);
+static void report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
+									 int rtindex, Relids relids);
+static Node *remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
+											Relids *dropped_outer_joins);
 static int	get_result_relid(PlannerInfo *root, Node *jtnode);
 static void remove_result_refs(PlannerInfo *root, int varno, Node *newjtloc);
 static bool find_dependent_phvs(PlannerInfo *root, int varno);
@@ -761,7 +771,7 @@ pull_up_subqueries(PlannerInfo *root)
 	/* Recursion starts with no containing join nor appendrel */
 	root->parse->jointree = (FromExpr *)
 		pull_up_subqueries_recurse(root, (Node *) root->parse->jointree,
-								   NULL, NULL, NULL);
+								   NULL, NULL);
 	/* We should still have a FromExpr */
 	Assert(IsA(root->parse->jointree, FromExpr));
 }
@@ -775,12 +785,6 @@ pull_up_subqueries(PlannerInfo *root)
  * If this jointree node is within either side of an outer join, then
  * lowest_outer_join references the lowest such JoinExpr node; otherwise
  * it is NULL.  We use this to constrain the effects of LATERAL subqueries.
- *
- * If this jointree node is within the nullable side of an outer join, then
- * lowest_nulling_outer_join references the lowest such JoinExpr node;
- * otherwise it is NULL.  This forces use of the PlaceHolderVar mechanism for
- * references to non-nullable targetlist items, but only for references above
- * that join.
  *
  * If we are looking at a member subquery of an append relation,
  * containing_appendrel describes that relation; else it is NULL.
@@ -798,15 +802,14 @@ pull_up_subqueries(PlannerInfo *root)
  * Notice also that we can't turn pullup_replace_vars loose on the whole
  * jointree, because it'd return a mutated copy of the tree; we have to
  * invoke it just on the quals, instead.  This behavior is what makes it
- * reasonable to pass lowest_outer_join and lowest_nulling_outer_join as
- * pointers rather than some more-indirect way of identifying the lowest
- * OJs.  Likewise, we don't replace append_rel_list members but only their
- * substructure, so the containing_appendrel reference is safe to use.
+ * reasonable to pass lowest_outer_join as a pointer rather than some
+ * more-indirect way of identifying the lowest OJ.  Likewise, we don't
+ * replace append_rel_list members but only their substructure, so the
+ * containing_appendrel reference is safe to use.
  */
 static Node *
 pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 						   JoinExpr *lowest_outer_join,
-						   JoinExpr *lowest_nulling_outer_join,
 						   AppendRelInfo *containing_appendrel)
 {
 	/* Since this function recurses, it could be driven to stack overflow. */
@@ -833,7 +836,6 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 			 is_safe_append_member(rte->subquery)))
 			return pull_up_simple_subquery(root, jtnode, rte,
 										   lowest_outer_join,
-										   lowest_nulling_outer_join,
 										   containing_appendrel);
 
 		/*
@@ -866,7 +868,6 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		 */
 		if (rte->rtekind == RTE_FUNCTION)
 			return pull_up_constant_function(root, jtnode, rte,
-											 lowest_nulling_outer_join,
 											 containing_appendrel);
 
 		/* Otherwise, do nothing at this node. */
@@ -882,7 +883,6 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		{
 			lfirst(l) = pull_up_subqueries_recurse(root, lfirst(l),
 												   lowest_outer_join,
-												   lowest_nulling_outer_join,
 												   NULL);
 		}
 	}
@@ -897,11 +897,9 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 			case JOIN_INNER:
 				j->larg = pull_up_subqueries_recurse(root, j->larg,
 													 lowest_outer_join,
-													 lowest_nulling_outer_join,
 													 NULL);
 				j->rarg = pull_up_subqueries_recurse(root, j->rarg,
 													 lowest_outer_join,
-													 lowest_nulling_outer_join,
 													 NULL);
 				break;
 			case JOIN_LEFT:
@@ -909,31 +907,25 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 			case JOIN_ANTI:
 				j->larg = pull_up_subqueries_recurse(root, j->larg,
 													 j,
-													 lowest_nulling_outer_join,
 													 NULL);
 				j->rarg = pull_up_subqueries_recurse(root, j->rarg,
-													 j,
 													 j,
 													 NULL);
 				break;
 			case JOIN_FULL:
 				j->larg = pull_up_subqueries_recurse(root, j->larg,
 													 j,
-													 j,
 													 NULL);
 				j->rarg = pull_up_subqueries_recurse(root, j->rarg,
-													 j,
 													 j,
 													 NULL);
 				break;
 			case JOIN_RIGHT:
 				j->larg = pull_up_subqueries_recurse(root, j->larg,
 													 j,
-													 j,
 													 NULL);
 				j->rarg = pull_up_subqueries_recurse(root, j->rarg,
 													 j,
-													 lowest_nulling_outer_join,
 													 NULL);
 				break;
 			default:
@@ -963,7 +955,6 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 static Node *
 pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 						JoinExpr *lowest_outer_join,
-						JoinExpr *lowest_nulling_outer_join,
 						AppendRelInfo *containing_appendrel)
 {
 	Query	   *parse = root->parse;
@@ -1001,6 +992,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->multiexpr_params = NIL;
 	subroot->eq_classes = NIL;
 	subroot->ec_merging_done = false;
+	subroot->last_rinfo_serial = 0;
 	subroot->all_result_relids = NULL;
 	subroot->leaf_result_relids = NULL;
 	subroot->append_rel_list = NIL;
@@ -1090,7 +1082,8 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * maybe even in the rewriter; but for now let's just fix this case here.)
 	 */
 	subquery->targetList = (List *)
-		flatten_join_alias_vars(subroot->parse, (Node *) subquery->targetList);
+		flatten_join_alias_vars(subroot, subroot->parse,
+								(Node *) subquery->targetList);
 
 	/*
 	 * Adjust level-0 varnos in subquery so that we can append its rangetable
@@ -1112,30 +1105,24 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * The subquery's targetlist items are now in the appropriate form to
 	 * insert into the top query, except that we may need to wrap them in
 	 * PlaceHolderVars.  Set up required context data for pullup_replace_vars.
+	 * (Note that we should include the subquery's inner joins in relids,
+	 * since it may include join alias vars referencing them.)
 	 */
 	rvcontext.root = root;
 	rvcontext.targetlist = subquery->targetList;
 	rvcontext.target_rte = rte;
 	if (rte->lateral)
 		rvcontext.relids = get_relids_in_jointree((Node *) subquery->jointree,
-												  true);
+												  true, true);
 	else						/* won't need relids */
 		rvcontext.relids = NULL;
 	rvcontext.outer_hasSubLinks = &parse->hasSubLinks;
 	rvcontext.varno = varno;
-	/* these flags will be set below, if needed */
-	rvcontext.need_phvs = false;
+	/* this flag will be set below, if needed */
 	rvcontext.wrap_non_vars = false;
 	/* initialize cache array with indexes 0 .. length(tlist) */
 	rvcontext.rv_cache = palloc0((list_length(subquery->targetList) + 1) *
 								 sizeof(Node *));
-
-	/*
-	 * If we are under an outer join then non-nullable items and lateral
-	 * references may have to be turned into PlaceHolderVars.
-	 */
-	if (lowest_nulling_outer_join != NULL)
-		rvcontext.need_phvs = true;
 
 	/*
 	 * If we are dealing with an appendrel member then anything that's not a
@@ -1145,10 +1132,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * expression actually available from the appendrel.
 	 */
 	if (containing_appendrel != NULL)
-	{
-		rvcontext.need_phvs = true;
 		rvcontext.wrap_non_vars = true;
-	}
 
 	/*
 	 * If the parent query uses grouping sets, we need a PlaceHolderVar for
@@ -1160,10 +1144,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * that pullup_replace_vars hasn't currently got.)
 	 */
 	if (parse->groupingSets)
-	{
-		rvcontext.need_phvs = true;
 		rvcontext.wrap_non_vars = true;
-	}
 
 	/*
 	 * Replace all of the top query's references to the subquery's outputs
@@ -1171,7 +1152,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * replace any of the jointree structure.
 	 */
 	perform_pullup_replace_vars(root, &rvcontext,
-								lowest_nulling_outer_join,
 								containing_appendrel);
 
 	/*
@@ -1238,7 +1218,8 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	{
 		Relids		subrelids;
 
-		subrelids = get_relids_in_jointree((Node *) subquery->jointree, false);
+		subrelids = get_relids_in_jointree((Node *) subquery->jointree,
+										   true, false);
 		if (root->glob->lastPHId != 0)
 			substitute_phv_relids((Node *) parse, varno, subrelids);
 		fix_append_rel_relids(root, varno, subrelids);
@@ -1434,7 +1415,7 @@ pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = childRTindex;
 		(void) pull_up_subqueries_recurse(root, (Node *) rtr,
-										  NULL, NULL, appinfo);
+										  NULL, appinfo);
 	}
 	else if (IsA(setOp, SetOperationStmt))
 	{
@@ -1571,7 +1552,7 @@ is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
 		{
 			restricted = true;
 			safe_upper_varnos = get_relids_in_jointree((Node *) lowest_outer_join,
-													   true);
+													   true, true);
 		}
 		else
 		{
@@ -1683,7 +1664,6 @@ pull_up_simple_values(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	rvcontext.relids = NULL;
 	rvcontext.outer_hasSubLinks = &parse->hasSubLinks;
 	rvcontext.varno = varno;
-	rvcontext.need_phvs = false;
 	rvcontext.wrap_non_vars = false;
 	/* initialize cache array with indexes 0 .. length(tlist) */
 	rvcontext.rv_cache = palloc0((list_length(tlist) + 1) *
@@ -1695,7 +1675,7 @@ pull_up_simple_values(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	 * any of the jointree structure.  We can assume there's no outer joins or
 	 * appendrels in the dummy Query that surrounds a VALUES RTE.
 	 */
-	perform_pullup_replace_vars(root, &rvcontext, NULL, NULL);
+	perform_pullup_replace_vars(root, &rvcontext, NULL);
 
 	/*
 	 * There should be no appendrels to fix, nor any outer joins and hence no
@@ -1794,7 +1774,6 @@ is_simple_values(PlannerInfo *root, RangeTblEntry *rte)
 static Node *
 pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 						  RangeTblEntry *rte,
-						  JoinExpr *lowest_nulling_outer_join,
 						  AppendRelInfo *containing_appendrel)
 {
 	Query	   *parse = root->parse;
@@ -1846,19 +1825,11 @@ pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 
 	rvcontext.outer_hasSubLinks = &parse->hasSubLinks;
 	rvcontext.varno = ((RangeTblRef *) jtnode)->rtindex;
-	/* these flags will be set below, if needed */
-	rvcontext.need_phvs = false;
+	/* this flag will be set below, if needed */
 	rvcontext.wrap_non_vars = false;
 	/* initialize cache array with indexes 0 .. length(tlist) */
 	rvcontext.rv_cache = palloc0((list_length(rvcontext.targetlist) + 1) *
 								 sizeof(Node *));
-
-	/*
-	 * If we are under an outer join then non-nullable items and lateral
-	 * references may have to be turned into PlaceHolderVars.
-	 */
-	if (lowest_nulling_outer_join != NULL)
-		rvcontext.need_phvs = true;
 
 	/*
 	 * If we are dealing with an appendrel member then anything that's not a
@@ -1866,20 +1837,14 @@ pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 	 * pull_up_simple_subquery().)
 	 */
 	if (containing_appendrel != NULL)
-	{
-		rvcontext.need_phvs = true;
 		rvcontext.wrap_non_vars = true;
-	}
 
 	/*
 	 * If the parent query uses grouping sets, we need a PlaceHolderVar for
 	 * anything that's not a simple Var.
 	 */
 	if (parse->groupingSets)
-	{
-		rvcontext.need_phvs = true;
 		rvcontext.wrap_non_vars = true;
-	}
 
 	/*
 	 * Replace all of the top query's references to the RTE's output with
@@ -1887,7 +1852,6 @@ pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 	 * jointree structure.
 	 */
 	perform_pullup_replace_vars(root, &rvcontext,
-								lowest_nulling_outer_join,
 								containing_appendrel);
 
 	/*
@@ -2112,13 +2076,11 @@ jointree_contains_lateral_outer_refs(PlannerInfo *root, Node *jtnode,
  *
  * Caller has already filled *rvcontext with data describing what to
  * substitute for Vars referencing the target subquery.  In addition
- * we need the identity of the lowest outer join that can null the
- * target subquery, and its containing appendrel if any.
+ * we need the identity of the containing appendrel if any.
  */
 static void
 perform_pullup_replace_vars(PlannerInfo *root,
 							pullup_replace_vars_context *rvcontext,
-							JoinExpr *lowest_nulling_outer_join,
 							AppendRelInfo *containing_appendrel)
 {
 	Query	   *parse = root->parse;
@@ -2128,18 +2090,18 @@ perform_pullup_replace_vars(PlannerInfo *root,
 	 * If we are considering an appendrel child subquery (that is, a UNION ALL
 	 * member query that we're pulling up), then the only part of the upper
 	 * query that could reference the child yet is the translated_vars list of
-	 * the associated AppendRelInfo.  Furthermore, we do not need to insert
-	 * PHVs in the AppendRelInfo --- there isn't any outer join between.
+	 * the associated AppendRelInfo.  Furthermore, we do not want to force use
+	 * of PHVs in the AppendRelInfo --- there isn't any outer join between.
 	 */
 	if (containing_appendrel)
 	{
-		bool		save_need_phvs = rvcontext->need_phvs;
+		bool		save_wrap_non_vars = rvcontext->wrap_non_vars;
 
-		rvcontext->need_phvs = false;
+		rvcontext->wrap_non_vars = false;
 		containing_appendrel->translated_vars = (List *)
 			pullup_replace_vars((Node *) containing_appendrel->translated_vars,
 								rvcontext);
-		rvcontext->need_phvs = save_need_phvs;
+		rvcontext->wrap_non_vars = save_wrap_non_vars;
 		return;
 	}
 
@@ -2190,8 +2152,7 @@ perform_pullup_replace_vars(PlannerInfo *root,
 				pullup_replace_vars((Node *) action->targetList, rvcontext);
 		}
 	}
-	replace_vars_in_jointree((Node *) parse->jointree, rvcontext,
-							 lowest_nulling_outer_join);
+	replace_vars_in_jointree((Node *) parse->jointree, rvcontext);
 	Assert(parse->setOperations == NULL);
 	parse->havingQual = pullup_replace_vars(parse->havingQual, rvcontext);
 
@@ -2208,12 +2169,6 @@ perform_pullup_replace_vars(PlannerInfo *root,
 
 	/*
 	 * Replace references in the joinaliasvars lists of join RTEs.
-	 *
-	 * You might think that we could avoid using PHVs for alias vars of joins
-	 * below lowest_nulling_outer_join, but that doesn't work because the
-	 * alias vars could be referenced above that join; we need the PHVs to be
-	 * present in such references after the alias vars get flattened.  (It
-	 * might be worth trying to be smarter here, someday.)
 	 */
 	foreach(lc, parse->rtable)
 	{
@@ -2230,14 +2185,10 @@ perform_pullup_replace_vars(PlannerInfo *root,
  * Helper routine for perform_pullup_replace_vars: do pullup_replace_vars on
  * every expression in the jointree, without changing the jointree structure
  * itself.  Ugly, but there's no other way...
- *
- * If we are at or below lowest_nulling_outer_join, we can suppress use of
- * PlaceHolderVars wrapped around the replacement expressions.
  */
 static void
 replace_vars_in_jointree(Node *jtnode,
-						 pullup_replace_vars_context *context,
-						 JoinExpr *lowest_nulling_outer_join)
+						 pullup_replace_vars_context *context)
 {
 	if (jtnode == NULL)
 		return;
@@ -2247,10 +2198,8 @@ replace_vars_in_jointree(Node *jtnode,
 		 * If the RangeTblRef refers to a LATERAL subquery (that isn't the
 		 * same subquery we're pulling up), it might contain references to the
 		 * target subquery, which we must replace.  We drive this from the
-		 * jointree scan, rather than a scan of the rtable, for a couple of
-		 * reasons: we can avoid processing no-longer-referenced RTEs, and we
-		 * can use the appropriate setting of need_phvs depending on whether
-		 * the RTE is above possibly-nulling outer joins or not.
+		 * jointree scan, rather than a scan of the rtable, so that we can
+		 * avoid processing no-longer-referenced RTEs.
 		 */
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
@@ -2307,42 +2256,30 @@ replace_vars_in_jointree(Node *jtnode,
 		ListCell   *l;
 
 		foreach(l, f->fromlist)
-			replace_vars_in_jointree(lfirst(l), context,
-									 lowest_nulling_outer_join);
+			replace_vars_in_jointree(lfirst(l), context);
 		f->quals = pullup_replace_vars(f->quals, context);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
-		bool		save_need_phvs = context->need_phvs;
+		bool		save_wrap_non_vars = context->wrap_non_vars;
 
-		if (j == lowest_nulling_outer_join)
-		{
-			/* no more PHVs in or below this join */
-			context->need_phvs = false;
-			lowest_nulling_outer_join = NULL;
-		}
-		replace_vars_in_jointree(j->larg, context, lowest_nulling_outer_join);
-		replace_vars_in_jointree(j->rarg, context, lowest_nulling_outer_join);
+		replace_vars_in_jointree(j->larg, context);
+		replace_vars_in_jointree(j->rarg, context);
 
 		/*
-		 * Use PHVs within the join quals of a full join, even when it's the
-		 * lowest nulling outer join.  Otherwise, we cannot identify which
-		 * side of the join a pulled-up var-free expression came from, which
-		 * can lead to failure to make a plan at all because none of the quals
-		 * appear to be mergeable or hashable conditions.  For this purpose we
-		 * don't care about the state of wrap_non_vars, so leave it alone.
+		 * Use PHVs within the join quals of a full join.  Otherwise, we
+		 * cannot identify which side of the join a pulled-up var-free
+		 * expression came from, which can lead to failure to make a plan at
+		 * all because none of the quals appear to be mergeable or hashable
+		 * conditions.
 		 */
 		if (j->jointype == JOIN_FULL)
-			context->need_phvs = true;
+			context->wrap_non_vars = true;
 
 		j->quals = pullup_replace_vars(j->quals, context);
 
-		/*
-		 * We don't bother to update the colvars list, since it won't be used
-		 * again ...
-		 */
-		context->need_phvs = save_need_phvs;
+		context->wrap_non_vars = save_wrap_non_vars;
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",
@@ -2371,7 +2308,17 @@ pullup_replace_vars_callback(Var *var,
 {
 	pullup_replace_vars_context *rcon = (pullup_replace_vars_context *) context->callback_arg;
 	int			varattno = var->varattno;
+	bool		need_phv;
 	Node	   *newnode;
+
+	/*
+	 * We need a PlaceHolderVar if the Var-to-be-replaced has nonempty
+	 * varnullingrels (unless we find below that the replacement expression is
+	 * a Var or PlaceHolderVar that we can just add the nullingrels to).  We
+	 * also need one if the caller has instructed us that all non-Var/PHV
+	 * replacements need to be wrapped for identification purposes.
+	 */
+	need_phv = (var->varnullingrels != NULL) || rcon->wrap_non_vars;
 
 	/*
 	 * If PlaceHolderVars are needed, we cache the modified expressions in
@@ -2381,13 +2328,16 @@ pullup_replace_vars_callback(Var *var,
 	 * and possibly prevent optimizations that rely on recognizing different
 	 * references to the same subquery output as being equal().  So it's worth
 	 * a bit of extra effort to avoid it.
+	 *
+	 * The cached items have phlevelsup = 0 and phnullingrels = NULL; we'll
+	 * copy them and adjust those values for this reference site below.
 	 */
-	if (rcon->need_phvs &&
+	if (need_phv &&
 		varattno >= InvalidAttrNumber &&
 		varattno <= list_length(rcon->targetlist) &&
 		rcon->rv_cache[varattno] != NULL)
 	{
-		/* Just copy the entry and fall through to adjust its varlevelsup */
+		/* Just copy the entry and fall through to adjust phlevelsup etc */
 		newnode = copyObject(rcon->rv_cache[varattno]);
 	}
 	else if (varattno == InvalidAttrNumber)
@@ -2396,7 +2346,7 @@ pullup_replace_vars_callback(Var *var,
 		RowExpr    *rowexpr;
 		List	   *colnames;
 		List	   *fields;
-		bool		save_need_phvs = rcon->need_phvs;
+		bool		save_wrap_non_vars = rcon->wrap_non_vars;
 		int			save_sublevelsup = context->sublevels_up;
 
 		/*
@@ -2407,18 +2357,18 @@ pullup_replace_vars_callback(Var *var,
 		 * the RowExpr for use of the executor and ruleutils.c.
 		 *
 		 * In order to be able to cache the results, we always generate the
-		 * expansion with varlevelsup = 0, and then adjust if needed.
+		 * expansion with varlevelsup = 0, and then adjust below if needed.
 		 */
 		expandRTE(rcon->target_rte,
 				  var->varno, 0 /* not varlevelsup */ , var->location,
 				  (var->vartype != RECORDOID),
 				  &colnames, &fields);
-		/* Adjust the generated per-field Vars, but don't insert PHVs */
-		rcon->need_phvs = false;
+		/* Expand the generated per-field Vars, but don't insert PHVs there */
+		rcon->wrap_non_vars = false;
 		context->sublevels_up = 0;	/* to match the expandRTE output */
 		fields = (List *) replace_rte_variables_mutator((Node *) fields,
 														context);
-		rcon->need_phvs = save_need_phvs;
+		rcon->wrap_non_vars = save_wrap_non_vars;
 		context->sublevels_up = save_sublevelsup;
 
 		rowexpr = makeNode(RowExpr);
@@ -2436,14 +2386,13 @@ pullup_replace_vars_callback(Var *var,
 		 * expression to yield NULL, not ROW(NULL,NULL,...) when it is forced
 		 * to null by an outer join.
 		 */
-		if (rcon->need_phvs)
+		if (need_phv)
 		{
-			/* RowExpr is certainly not strict, so always need PHV */
 			newnode = (Node *)
 				make_placeholder_expr(rcon->root,
 									  (Expr *) newnode,
 									  bms_make_singleton(rcon->varno));
-			/* cache it with the PHV, and with varlevelsup still zero */
+			/* cache it with the PHV, and with phlevelsup etc not set yet */
 			rcon->rv_cache[InvalidAttrNumber] = copyObject(newnode);
 		}
 	}
@@ -2460,7 +2409,7 @@ pullup_replace_vars_callback(Var *var,
 		newnode = (Node *) copyObject(tle->expr);
 
 		/* Insert PlaceHolderVar if needed */
-		if (rcon->need_phvs)
+		if (need_phv)
 		{
 			bool		wrap;
 
@@ -2486,68 +2435,60 @@ pullup_replace_vars_callback(Var *var,
 				/* No need to wrap a PlaceHolderVar with another one, either */
 				wrap = false;
 			}
-			else if (rcon->wrap_non_vars)
-			{
-				/* Wrap all non-Vars in a PlaceHolderVar */
-				wrap = true;
-			}
 			else
 			{
 				/*
-				 * If it contains a Var of the subquery being pulled up, and
-				 * does not contain any non-strict constructs, then it's
-				 * certainly nullable so we don't need to insert a
-				 * PlaceHolderVar.
-				 *
-				 * This analysis could be tighter: in particular, a non-strict
-				 * construct hidden within a lower-level PlaceHolderVar is not
-				 * reason to add another PHV.  But for now it doesn't seem
-				 * worth the code to be more exact.
-				 *
-				 * Note: in future maybe we should insert a PlaceHolderVar
-				 * anyway, if the tlist item is expensive to evaluate?
-				 *
-				 * For a LATERAL subquery, we have to check the actual var
-				 * membership of the node, but if it's non-lateral then any
-				 * level-zero var must belong to the subquery.
+				 * Must wrap, either because we need a place to insert
+				 * varnullingrels or because caller told us to wrap
+				 * everything.
 				 */
-				if ((rcon->target_rte->lateral ?
-					 bms_overlap(pull_varnos(rcon->root, (Node *) newnode),
-								 rcon->relids) :
-					 contain_vars_of_level((Node *) newnode, 0)) &&
-					!contain_nonstrict_functions((Node *) newnode))
-				{
-					/* No wrap needed */
-					wrap = false;
-				}
-				else
-				{
-					/* Else wrap it in a PlaceHolderVar */
-					wrap = true;
-				}
+				wrap = true;
 			}
 
 			if (wrap)
+			{
 				newnode = (Node *)
 					make_placeholder_expr(rcon->root,
 										  (Expr *) newnode,
 										  bms_make_singleton(rcon->varno));
 
-			/*
-			 * Cache it if possible (ie, if the attno is in range, which it
-			 * probably always should be).  We can cache the value even if we
-			 * decided we didn't need a PHV, since this result will be
-			 * suitable for any request that has need_phvs.
-			 */
-			if (varattno > InvalidAttrNumber &&
-				varattno <= list_length(rcon->targetlist))
-				rcon->rv_cache[varattno] = copyObject(newnode);
+				/*
+				 * Cache it if possible (ie, if the attno is in range, which
+				 * it probably always should be).
+				 */
+				if (varattno > InvalidAttrNumber &&
+					varattno <= list_length(rcon->targetlist))
+					rcon->rv_cache[varattno] = copyObject(newnode);
+			}
 		}
 	}
 
-	/* Must adjust varlevelsup if tlist item is from higher query */
+	/* Must adjust varlevelsup if replaced Var is within a subquery */
 	if (var->varlevelsup > 0)
 		IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
+
+	/* Propagate any varnullingrels into the replacement Var or PHV */
+	if (var->varnullingrels != NULL)
+	{
+		if (IsA(newnode, Var))
+		{
+			Var		   *newvar = (Var *) newnode;
+
+			Assert(newvar->varlevelsup == var->varlevelsup);
+			newvar->varnullingrels = bms_add_members(newvar->varnullingrels,
+													 var->varnullingrels);
+		}
+		else if (IsA(newnode, PlaceHolderVar))
+		{
+			PlaceHolderVar *newphv = (PlaceHolderVar *) newnode;
+
+			Assert(newphv->phlevelsup == var->varlevelsup);
+			newphv->phnullingrels = bms_add_members(newphv->phnullingrels,
+													var->varnullingrels);
+		}
+		else
+			elog(ERROR, "failed to wrap a non-Var");
+	}
 
 	return newnode;
 }
@@ -2707,7 +2648,9 @@ flatten_simple_union_all(PlannerInfo *root)
 void
 reduce_outer_joins(PlannerInfo *root)
 {
-	reduce_outer_joins_state *state;
+	reduce_outer_joins_pass1_state *state1;
+	reduce_outer_joins_pass2_state state2;
+	ListCell   *lc;
 
 	/*
 	 * To avoid doing strictness checks on more quals than necessary, we want
@@ -2718,14 +2661,56 @@ reduce_outer_joins(PlannerInfo *root)
 	 * join(s) below each side of each join clause. The second pass examines
 	 * qual clauses and changes join types as it descends the tree.
 	 */
-	state = reduce_outer_joins_pass1((Node *) root->parse->jointree);
+	state1 = reduce_outer_joins_pass1((Node *) root->parse->jointree);
 
 	/* planner.c shouldn't have called me if no outer joins */
-	if (state == NULL || !state->contains_outer)
+	if (state1 == NULL || !state1->contains_outer)
 		elog(ERROR, "so where are the outer joins?");
 
+	state2.inner_reduced = NULL;
+	state2.partial_reduced = NIL;
+
 	reduce_outer_joins_pass2((Node *) root->parse->jointree,
-							 state, root, NULL, NIL);
+							 state1, &state2,
+							 root, NULL, NIL);
+
+	/*
+	 * If we successfully reduced the strength of any outer joins, we must
+	 * remove references to those joins as nulling rels.  This is handled as
+	 * an additional pass, for simplicity and because we can handle all
+	 * fully-reduced joins in a single pass over the parse tree.
+	 */
+	if (!bms_is_empty(state2.inner_reduced))
+	{
+		root->parse = (Query *)
+			remove_nulling_relids((Node *) root->parse,
+								  state2.inner_reduced,
+								  NULL);
+		/* There could be references in the append_rel_list, too */
+		root->append_rel_list = (List *)
+			remove_nulling_relids((Node *) root->append_rel_list,
+								  state2.inner_reduced,
+								  NULL);
+	}
+
+	/*
+	 * Partially-reduced full joins have to be done one at a time, since
+	 * they'll each need a different setting of except_relids.
+	 */
+	foreach(lc, state2.partial_reduced)
+	{
+		reduce_outer_joins_partial_state *statep = lfirst(lc);
+		Relids		full_join_relids = bms_make_singleton(statep->full_join_rti);
+
+		root->parse = (Query *)
+			remove_nulling_relids((Node *) root->parse,
+								  full_join_relids,
+								  statep->unreduced_side);
+		root->append_rel_list = (List *)
+			remove_nulling_relids((Node *) root->append_rel_list,
+								  full_join_relids,
+								  statep->unreduced_side);
+	}
 }
 
 /*
@@ -2733,13 +2718,13 @@ reduce_outer_joins(PlannerInfo *root)
  *
  * Returns a state node describing the given jointree node.
  */
-static reduce_outer_joins_state *
+static reduce_outer_joins_pass1_state *
 reduce_outer_joins_pass1(Node *jtnode)
 {
-	reduce_outer_joins_state *result;
+	reduce_outer_joins_pass1_state *result;
 
-	result = (reduce_outer_joins_state *)
-		palloc(sizeof(reduce_outer_joins_state));
+	result = (reduce_outer_joins_pass1_state *)
+		palloc(sizeof(reduce_outer_joins_pass1_state));
 	result->relids = NULL;
 	result->contains_outer = false;
 	result->sub_states = NIL;
@@ -2759,7 +2744,7 @@ reduce_outer_joins_pass1(Node *jtnode)
 
 		foreach(l, f->fromlist)
 		{
-			reduce_outer_joins_state *sub_state;
+			reduce_outer_joins_pass1_state *sub_state;
 
 			sub_state = reduce_outer_joins_pass1(lfirst(l));
 			result->relids = bms_add_members(result->relids,
@@ -2771,7 +2756,7 @@ reduce_outer_joins_pass1(Node *jtnode)
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
-		reduce_outer_joins_state *sub_state;
+		reduce_outer_joins_pass1_state *sub_state;
 
 		/* join's own RT index is not wanted in result->relids */
 		if (IS_OUTER_JOIN(j->jointype))
@@ -2799,14 +2784,22 @@ reduce_outer_joins_pass1(Node *jtnode)
  * reduce_outer_joins_pass2 - phase 2 processing
  *
  *	jtnode: current jointree node
- *	state: state data collected by phase 1 for this node
+ *	state1: state data collected by phase 1 for this node
+ *	state2: where to accumulate info about successfully-reduced joins
  *	root: toplevel planner state
  *	nonnullable_rels: set of base relids forced non-null by upper quals
  *	forced_null_vars: multibitmapset of Vars forced null by upper quals
+ *
+ * Returns info in state2 about outer joins that were successfully simplified.
+ * Joins that were fully reduced to inner joins are all added to
+ * state2->inner_reduced.  If a full join is reduced to a left join,
+ * it needs its own entry in state2->partial_reduced, since that will
+ * require custom processing to remove only the correct nullingrel markers.
  */
 static void
 reduce_outer_joins_pass2(Node *jtnode,
-						 reduce_outer_joins_state *state,
+						 reduce_outer_joins_pass1_state *state1,
+						 reduce_outer_joins_pass2_state *state2,
 						 PlannerInfo *root,
 						 Relids nonnullable_rels,
 						 List *forced_null_vars)
@@ -2835,13 +2828,14 @@ reduce_outer_joins_pass2(Node *jtnode,
 		pass_forced_null_vars = mbms_add_members(pass_forced_null_vars,
 												 forced_null_vars);
 		/* And recurse --- but only into interesting subtrees */
-		Assert(list_length(f->fromlist) == list_length(state->sub_states));
-		forboth(l, f->fromlist, s, state->sub_states)
+		Assert(list_length(f->fromlist) == list_length(state1->sub_states));
+		forboth(l, f->fromlist, s, state1->sub_states)
 		{
-			reduce_outer_joins_state *sub_state = lfirst(s);
+			reduce_outer_joins_pass1_state *sub_state = lfirst(s);
 
 			if (sub_state->contains_outer)
-				reduce_outer_joins_pass2(lfirst(l), sub_state, root,
+				reduce_outer_joins_pass2(lfirst(l), sub_state,
+										 state2, root,
 										 pass_nonnullable_rels,
 										 pass_forced_null_vars);
 		}
@@ -2853,8 +2847,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		int			rtindex = j->rtindex;
 		JoinType	jointype = j->jointype;
-		reduce_outer_joins_state *left_state = linitial(state->sub_states);
-		reduce_outer_joins_state *right_state = lsecond(state->sub_states);
+		reduce_outer_joins_pass1_state *left_state = linitial(state1->sub_states);
+		reduce_outer_joins_pass1_state *right_state = lsecond(state1->sub_states);
 
 		/* Can we simplify this join? */
 		switch (jointype)
@@ -2875,12 +2869,22 @@ reduce_outer_joins_pass2(Node *jtnode,
 					if (bms_overlap(nonnullable_rels, right_state->relids))
 						jointype = JOIN_INNER;
 					else
+					{
 						jointype = JOIN_LEFT;
+						/* Also report partial reduction in state2 */
+						report_reduced_full_join(state2, rtindex,
+												 right_state->relids);
+					}
 				}
 				else
 				{
 					if (bms_overlap(nonnullable_rels, right_state->relids))
+					{
 						jointype = JOIN_RIGHT;
+						/* Also report partial reduction in state2 */
+						report_reduced_full_join(state2, rtindex,
+												 left_state->relids);
+					}
 				}
 				break;
 			case JOIN_SEMI:
@@ -2913,8 +2917,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 			j->larg = j->rarg;
 			j->rarg = tmparg;
 			jointype = JOIN_LEFT;
-			right_state = linitial(state->sub_states);
-			left_state = lsecond(state->sub_states);
+			right_state = linitial(state1->sub_states);
+			left_state = lsecond(state1->sub_states);
 		}
 
 		/*
@@ -2945,7 +2949,10 @@ reduce_outer_joins_pass2(Node *jtnode,
 				jointype = JOIN_ANTI;
 		}
 
-		/* Apply the jointype change, if any, to both jointree node and RTE */
+		/*
+		 * Apply the jointype change, if any, to both jointree node and RTE.
+		 * Also, if we changed an RTE to INNER, add its RTI to inner_reduced.
+		 */
 		if (rtindex && jointype != j->jointype)
 		{
 			RangeTblEntry *rte = rt_fetch(rtindex, root->parse->rtable);
@@ -2953,6 +2960,9 @@ reduce_outer_joins_pass2(Node *jtnode,
 			Assert(rte->rtekind == RTE_JOIN);
 			Assert(rte->jointype == j->jointype);
 			rte->jointype = jointype;
+			if (jointype == JOIN_INNER)
+				state2->inner_reduced = bms_add_member(state2->inner_reduced,
+													   rtindex);
 		}
 		j->jointype = jointype;
 
@@ -3025,7 +3035,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 					pass_nonnullable_rels = NULL;
 					pass_forced_null_vars = NIL;
 				}
-				reduce_outer_joins_pass2(j->larg, left_state, root,
+				reduce_outer_joins_pass2(j->larg, left_state,
+										 state2, root,
 										 pass_nonnullable_rels,
 										 pass_forced_null_vars);
 			}
@@ -3044,7 +3055,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 					pass_nonnullable_rels = NULL;
 					pass_forced_null_vars = NIL;
 				}
-				reduce_outer_joins_pass2(j->rarg, right_state, root,
+				reduce_outer_joins_pass2(j->rarg, right_state,
+										 state2, root,
 										 pass_nonnullable_rels,
 										 pass_forced_null_vars);
 			}
@@ -3054,6 +3066,19 @@ reduce_outer_joins_pass2(Node *jtnode,
 	else
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(jtnode));
+}
+
+/* Helper for reduce_outer_joins_pass2 */
+static void
+report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
+						 int rtindex, Relids relids)
+{
+	reduce_outer_joins_partial_state *statep;
+
+	statep = palloc(sizeof(reduce_outer_joins_partial_state));
+	statep->full_join_rti = rtindex;
+	statep->unreduced_side = relids;
+	state2->partial_reduced = lappend(state2->partial_reduced, statep);
 }
 
 
@@ -3097,15 +3122,40 @@ reduce_outer_joins_pass2(Node *jtnode,
 void
 remove_useless_result_rtes(PlannerInfo *root)
 {
+	Relids		dropped_outer_joins = NULL;
 	ListCell   *cell;
 
 	/* Top level of jointree must always be a FromExpr */
 	Assert(IsA(root->parse->jointree, FromExpr));
 	/* Recurse ... */
 	root->parse->jointree = (FromExpr *)
-		remove_useless_results_recurse(root, (Node *) root->parse->jointree);
+		remove_useless_results_recurse(root,
+									   (Node *) root->parse->jointree,
+									   &dropped_outer_joins);
 	/* We should still have a FromExpr */
 	Assert(IsA(root->parse->jointree, FromExpr));
+
+	/*
+	 * If we removed any outer-join nodes from the jointree, run around and
+	 * remove references to those joins as nulling rels.  (There could be such
+	 * references in PHVs that we pulled up out of the original subquery that
+	 * the RESULT rel replaced.  This is kosher on the grounds that we now
+	 * know that such an outer join wouldn't really have nulled anything.)  We
+	 * don't do this during the main recursion, for simplicity and because we
+	 * can handle all such joins in a single pass over the parse tree.
+	 */
+	if (!bms_is_empty(dropped_outer_joins))
+	{
+		root->parse = (Query *)
+			remove_nulling_relids((Node *) root->parse,
+								  dropped_outer_joins,
+								  NULL);
+		/* There could be references in the append_rel_list, too */
+		root->append_rel_list = (List *)
+			remove_nulling_relids((Node *) root->append_rel_list,
+								  dropped_outer_joins,
+								  NULL);
+	}
 
 	/*
 	 * Remove any PlanRowMark referencing an RTE_RESULT RTE.  We obviously
@@ -3132,9 +3182,12 @@ remove_useless_result_rtes(PlannerInfo *root)
  *		Recursive guts of remove_useless_result_rtes.
  *
  * This recursively processes the jointree and returns a modified jointree.
+ * In addition, the RT indexes of any removed outer-join nodes are added to
+ * *dropped_outer_joins.
  */
 static Node *
-remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
+remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
+							   Relids *dropped_outer_joins)
 {
 	Assert(jtnode != NULL);
 	if (IsA(jtnode, RangeTblRef))
@@ -3162,7 +3215,8 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 			int			varno;
 
 			/* Recursively transform child ... */
-			child = remove_useless_results_recurse(root, child);
+			child = remove_useless_results_recurse(root, child,
+												   dropped_outer_joins);
 			/* ... and stick it back into the tree */
 			lfirst(cell) = child;
 
@@ -3211,8 +3265,10 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 		int			varno;
 
 		/* First, recurse */
-		j->larg = remove_useless_results_recurse(root, j->larg);
-		j->rarg = remove_useless_results_recurse(root, j->rarg);
+		j->larg = remove_useless_results_recurse(root, j->larg,
+												 dropped_outer_joins);
+		j->rarg = remove_useless_results_recurse(root, j->rarg,
+												 dropped_outer_joins);
 
 		/* Apply join-type-specific optimization rules */
 		switch (j->jointype)
@@ -3280,6 +3336,8 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 					 !find_dependent_phvs(root, varno)))
 				{
 					remove_result_refs(root, varno, j->larg);
+					*dropped_outer_joins = bms_add_member(*dropped_outer_joins,
+														  j->rtindex);
 					jtnode = j->larg;
 				}
 				break;
@@ -3299,9 +3357,13 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 				 * it'd be OK to just remove the PHV wrapping.  We don't have
 				 * infrastructure for that, but remove_result_refs() will
 				 * relabel them as to be evaluated at the LHS, which is fine.
+				 *
+				 * Also, we don't need to worry about removing traces of the
+				 * join's rtindex, since it hasn't got one.
 				 */
 				if ((varno = get_result_relid(root, j->rarg)) != 0)
 				{
+					Assert(j->rtindex == 0);
 					remove_result_refs(root, varno, j->larg);
 					if (j->quals)
 						jtnode = (Node *)
@@ -3371,7 +3433,7 @@ remove_result_refs(PlannerInfo *root, int varno, Node *newjtloc)
 	{
 		Relids		subrelids;
 
-		subrelids = get_relids_in_jointree(newjtloc, false);
+		subrelids = get_relids_in_jointree(newjtloc, true, false);
 		Assert(!bms_is_empty(subrelids));
 		substitute_phv_relids((Node *) root->parse, varno, subrelids);
 		fix_append_rel_relids(root, varno, subrelids);
@@ -3428,9 +3490,8 @@ find_dependent_phvs_walker(Node *node,
 		context->sublevels_up--;
 		return result;
 	}
-	/* Shouldn't need to handle planner auxiliary nodes here */
+	/* Shouldn't need to handle most planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
-	Assert(!IsA(node, AppendRelInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 
@@ -3450,10 +3511,17 @@ find_dependent_phvs(PlannerInfo *root, int varno)
 	context.relids = bms_make_singleton(varno);
 	context.sublevels_up = 0;
 
-	return query_tree_walker(root->parse,
-							 find_dependent_phvs_walker,
-							 (void *) &context,
-							 0);
+	if (query_tree_walker(root->parse,
+						  find_dependent_phvs_walker,
+						  (void *) &context,
+						  0))
+		return true;
+	/* The append_rel_list could be populated already, so check it too */
+	if (expression_tree_walker((Node *) root->append_rel_list,
+							   find_dependent_phvs_walker,
+							   (void *) &context))
+		return true;
+	return false;
 }
 
 static bool
@@ -3483,7 +3551,7 @@ find_dependent_phvs_in_jointree(PlannerInfo *root, Node *node, int varno)
 	 * are not marked LATERAL, though, since they couldn't possibly contain
 	 * any cross-references to other RTEs.
 	 */
-	subrelids = get_relids_in_jointree(node, false);
+	subrelids = get_relids_in_jointree(node, false, false);
 	relid = -1;
 	while ((relid = bms_next_member(subrelids, relid)) >= 0)
 	{
@@ -3628,11 +3696,17 @@ fix_append_rel_relids(PlannerInfo *root, int varno, Relids subrelids)
 /*
  * get_relids_in_jointree: get set of RT indexes present in a jointree
  *
- * If include_joins is true, join RT indexes are included; if false,
- * only base rels are included.
+ * Base-relation relids are always included in the result.
+ * If include_outer_joins is true, outer-join RT indexes are included.
+ * If include_inner_joins is true, inner-join RT indexes are included.
+ *
+ * Note that for most purposes in the planner, outer joins are included
+ * in standard relid sets.  Setting include_inner_joins true is only
+ * appropriate for special purposes during subquery flattening.
  */
 Relids
-get_relids_in_jointree(Node *jtnode, bool include_joins)
+get_relids_in_jointree(Node *jtnode, bool include_outer_joins,
+					   bool include_inner_joins)
 {
 	Relids		result = NULL;
 
@@ -3653,18 +3727,34 @@ get_relids_in_jointree(Node *jtnode, bool include_joins)
 		{
 			result = bms_join(result,
 							  get_relids_in_jointree(lfirst(l),
-													 include_joins));
+													 include_outer_joins,
+													 include_inner_joins));
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
-		result = get_relids_in_jointree(j->larg, include_joins);
+		result = get_relids_in_jointree(j->larg,
+										include_outer_joins,
+										include_inner_joins);
 		result = bms_join(result,
-						  get_relids_in_jointree(j->rarg, include_joins));
-		if (include_joins && j->rtindex)
-			result = bms_add_member(result, j->rtindex);
+						  get_relids_in_jointree(j->rarg,
+												 include_outer_joins,
+												 include_inner_joins));
+		if (j->rtindex)
+		{
+			if (j->jointype == JOIN_INNER)
+			{
+				if (include_inner_joins)
+					result = bms_add_member(result, j->rtindex);
+			}
+			else
+			{
+				if (include_outer_joins)
+					result = bms_add_member(result, j->rtindex);
+			}
+		}
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",
@@ -3673,7 +3763,7 @@ get_relids_in_jointree(Node *jtnode, bool include_joins)
 }
 
 /*
- * get_relids_for_join: get set of base RT indexes making up a join
+ * get_relids_for_join: get set of base+OJ RT indexes making up a join
  */
 Relids
 get_relids_for_join(Query *query, int joinrelid)
@@ -3684,7 +3774,7 @@ get_relids_for_join(Query *query, int joinrelid)
 										joinrelid);
 	if (!jtnode)
 		elog(ERROR, "could not find join node %d", joinrelid);
-	return get_relids_in_jointree(jtnode, false);
+	return get_relids_in_jointree(jtnode, true, false);
 }
 
 /*

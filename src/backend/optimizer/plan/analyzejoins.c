@@ -34,7 +34,7 @@
 
 /* local functions */
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
-static void remove_rel_from_query(PlannerInfo *root, int relid,
+static void remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 								  Relids joinrelids);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 static bool rel_supports_distinctness(PlannerInfo *root, RelOptInfo *rel);
@@ -70,6 +70,7 @@ restart:
 	foreach(lc, root->join_info_list)
 	{
 		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
+		Relids		joinrelids;
 		int			innerrelid;
 		int			nremoved;
 
@@ -84,9 +85,12 @@ restart:
 		 */
 		innerrelid = bms_singleton_member(sjinfo->min_righthand);
 
-		remove_rel_from_query(root, innerrelid,
-							  bms_union(sjinfo->min_lefthand,
-										sjinfo->min_righthand));
+		/* Compute the relid set for the join we are considering */
+		joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+		if (sjinfo->ojrelid != 0)
+			joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
+
+		remove_rel_from_query(root, innerrelid, sjinfo->ojrelid, joinrelids);
 
 		/* We verify that exactly one reference gets removed from joinlist */
 		nremoved = 0;
@@ -188,6 +192,8 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/* Compute the relid set for the join we are considering */
 	joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+	if (sjinfo->ojrelid != 0)
+		joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
 
 	/*
 	 * We can't remove the join if any inner-rel attributes are used above the
@@ -248,6 +254,17 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
 
 		/*
+		 * If the current join commutes with some other outer join(s) via
+		 * outer join identity 3, there will be multiple clones of its join
+		 * clauses in the joininfo list.  We want to consider only the
+		 * has_clone form of such clauses.  Processing more than one form
+		 * would be wasteful, and also some of the others would confuse the
+		 * RINFO_IS_PUSHED_DOWN test below.
+		 */
+		if (restrictinfo->is_clone)
+			continue;			/* ignore it */
+
+		/*
 		 * If it's not a join clause for this outer join, we can't use it.
 		 * Note that if the clause is pushed-down, then it is logically from
 		 * above the outer join, even if it references no other rels (it might
@@ -306,10 +323,12 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
  * no longer treated as a baserel, and that attributes of other baserels
  * are no longer marked as being needed at joins involving this rel.
  * Also, join quals involving the rel have to be removed from the joininfo
- * lists, but only if they belong to the outer join identified by joinrelids.
+ * lists, but only if they belong to the outer join identified by ojrelid
+ * and joinrelids.
  */
 static void
-remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
+remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
+					  Relids joinrelids)
 {
 	RelOptInfo *rel = find_base_rel(root, relid);
 	List	   *joininfos;
@@ -346,8 +365,18 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		{
 			otherrel->attr_needed[attroff] =
 				bms_del_member(otherrel->attr_needed[attroff], relid);
+			otherrel->attr_needed[attroff] =
+				bms_del_member(otherrel->attr_needed[attroff], ojrelid);
 		}
 	}
+
+	/*
+	 * Update all_baserels and related relid sets.
+	 */
+	root->all_baserels = bms_del_member(root->all_baserels, relid);
+	root->outer_join_rels = bms_del_member(root->outer_join_rels, ojrelid);
+	root->all_query_rels = bms_del_member(root->all_query_rels, relid);
+	root->all_query_rels = bms_del_member(root->all_query_rels, ojrelid);
 
 	/*
 	 * Likewise remove references from SpecialJoinInfo data structures.
@@ -365,6 +394,14 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		sjinfo->min_righthand = bms_del_member(sjinfo->min_righthand, relid);
 		sjinfo->syn_lefthand = bms_del_member(sjinfo->syn_lefthand, relid);
 		sjinfo->syn_righthand = bms_del_member(sjinfo->syn_righthand, relid);
+		sjinfo->min_lefthand = bms_del_member(sjinfo->min_lefthand, ojrelid);
+		sjinfo->min_righthand = bms_del_member(sjinfo->min_righthand, ojrelid);
+		sjinfo->syn_lefthand = bms_del_member(sjinfo->syn_lefthand, ojrelid);
+		sjinfo->syn_righthand = bms_del_member(sjinfo->syn_righthand, ojrelid);
+		/* relid cannot appear in these fields, but ojrelid can: */
+		sjinfo->commute_above_l = bms_del_member(sjinfo->commute_above_l, ojrelid);
+		sjinfo->commute_above_r = bms_del_member(sjinfo->commute_above_r, ojrelid);
+		sjinfo->commute_below = bms_del_member(sjinfo->commute_below, ojrelid);
 	}
 
 	/*
@@ -396,8 +433,10 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		else
 		{
 			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, relid);
+			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, ojrelid);
 			Assert(!bms_is_empty(phinfo->ph_eval_at));
 			phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
+			phinfo->ph_needed = bms_del_member(phinfo->ph_needed, ojrelid);
 		}
 	}
 
@@ -422,7 +461,12 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 
 		remove_join_clause_from_rels(root, rinfo, rinfo->required_relids);
 
-		if (RINFO_IS_PUSHED_DOWN(rinfo, joinrelids))
+		/*
+		 * If the qual lists ojrelid in its required_relids, it must have come
+		 * from above the outer join we're removing (so we need to keep it);
+		 * if it does not, then it didn't and we can discard it.
+		 */
+		if (bms_is_member(ojrelid, rinfo->required_relids))
 		{
 			/* Recheck that qual doesn't actually reference the target rel */
 			Assert(!bms_is_member(relid, rinfo->clause_relids));
@@ -434,6 +478,8 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 			rinfo->required_relids = bms_copy(rinfo->required_relids);
 			rinfo->required_relids = bms_del_member(rinfo->required_relids,
 													relid);
+			rinfo->required_relids = bms_del_member(rinfo->required_relids,
+													ojrelid);
 			distribute_restrictinfo_to_rels(root, rinfo);
 		}
 	}
@@ -548,6 +594,7 @@ reduce_unique_semijoins(PlannerInfo *root)
 
 		/* Compute the relid set for the join we are considering */
 		joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+		Assert(sjinfo->ojrelid == 0);	/* SEMI joins don't have RT indexes */
 
 		/*
 		 * Since we're only considering a single-rel RHS, any join clauses it

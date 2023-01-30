@@ -41,6 +41,7 @@ extern Node *scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
 								 int location);
 extern Node *colNameToVar(ParseState *pstate, const char *colname, bool localonly,
 						  int location);
+extern void markNullableIfNeeded(ParseState *pstate, Var *var);
 extern void markVarForSelectPriv(ParseState *pstate, Var *var);
 extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
 								int lockmode);
@@ -113,7 +114,7 @@ extern void errorMissingColumn(ParseState *pstate,
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					  int location, bool include_dropped,
 					  List **colnames, List **colvars);
-extern List *expandNSItemVars(ParseNamespaceItem *nsitem,
+extern List *expandNSItemVars(ParseState *pstate, ParseNamespaceItem *nsitem,
 							  int sublevels_up, int location,
 							  List **colnames);
 extern List *expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,

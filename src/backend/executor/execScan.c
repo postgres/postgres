@@ -325,7 +325,7 @@ ExecScanReScan(ScanState *node)
 			 * all of them.
 			 */
 			if (IsA(node->ps.plan, ForeignScan))
-				relids = ((ForeignScan *) node->ps.plan)->fs_relids;
+				relids = ((ForeignScan *) node->ps.plan)->fs_base_relids;
 			else if (IsA(node->ps.plan, CustomScan))
 				relids = ((CustomScan *) node->ps.plan)->custom_relids;
 			else

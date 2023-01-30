@@ -88,8 +88,8 @@ have_relevant_joinclause(PlannerInfo *root,
  * not depend on context).
  *
  * 'restrictinfo' describes the join clause
- * 'join_relids' is the list of relations participating in the join clause
- *				 (there must be more than one)
+ * 'join_relids' is the set of relations participating in the join clause
+ *				 (some of these could be outer joins)
  */
 void
 add_join_clause_to_rels(PlannerInfo *root,
@@ -101,8 +101,11 @@ add_join_clause_to_rels(PlannerInfo *root,
 	cur_relid = -1;
 	while ((cur_relid = bms_next_member(join_relids, cur_relid)) >= 0)
 	{
-		RelOptInfo *rel = find_base_rel(root, cur_relid);
+		RelOptInfo *rel = find_base_rel_ignore_join(root, cur_relid);
 
+		/* We only need to add the clause to baserels */
+		if (rel == NULL)
+			continue;
 		rel->joininfo = lappend(rel->joininfo, restrictinfo);
 	}
 }
@@ -115,8 +118,8 @@ add_join_clause_to_rels(PlannerInfo *root,
  * discover that a relation need not be joined at all.
  *
  * 'restrictinfo' describes the join clause
- * 'join_relids' is the list of relations participating in the join clause
- *				 (there must be more than one)
+ * 'join_relids' is the set of relations participating in the join clause
+ *				 (some of these could be outer joins)
  */
 void
 remove_join_clause_from_rels(PlannerInfo *root,
@@ -128,7 +131,11 @@ remove_join_clause_from_rels(PlannerInfo *root,
 	cur_relid = -1;
 	while ((cur_relid = bms_next_member(join_relids, cur_relid)) >= 0)
 	{
-		RelOptInfo *rel = find_base_rel(root, cur_relid);
+		RelOptInfo *rel = find_base_rel_ignore_join(root, cur_relid);
+
+		/* We would only have added the clause to baserels */
+		if (rel == NULL)
+			continue;
 
 		/*
 		 * Remove the restrictinfo from the list.  Pointer comparison is

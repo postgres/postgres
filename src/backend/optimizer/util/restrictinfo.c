@@ -53,6 +53,10 @@ static Expr *make_sub_restrictinfos(PlannerInfo *root,
  * required_relids can be NULL, in which case it defaults to the actual clause
  * contents (i.e., clause_relids).
  *
+ * Note that there aren't options to set the has_clone and is_clone flags:
+ * we always initialize those to false.  There's just one place that wants
+ * something different, so making all callers pass them seems inconvenient.
+ *
  * We initialize fields that depend only on the given subexpression, leaving
  * others that depend on context (or may never be needed at all) to be filled
  * later.
@@ -116,12 +120,15 @@ make_restrictinfo_internal(PlannerInfo *root,
 						   Relids nullable_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
+	Relids		baserels;
 
 	restrictinfo->clause = clause;
 	restrictinfo->orclause = orclause;
 	restrictinfo->is_pushed_down = is_pushed_down;
 	restrictinfo->outerjoin_delayed = outerjoin_delayed;
 	restrictinfo->pseudoconstant = pseudoconstant;
+	restrictinfo->has_clone = false;	/* may get set by caller */
+	restrictinfo->is_clone = false; /* may get set by caller */
 	restrictinfo->can_join = false; /* may get set below */
 	restrictinfo->security_level = security_level;
 	restrictinfo->outer_relids = outer_relids;
@@ -186,6 +193,25 @@ make_restrictinfo_internal(PlannerInfo *root,
 		restrictinfo->required_relids = required_relids;
 	else
 		restrictinfo->required_relids = restrictinfo->clause_relids;
+
+	/*
+	 * Count the number of base rels appearing in clause_relids.  To do this,
+	 * we just delete rels mentioned in root->outer_join_rels and count the
+	 * survivors.  Because we are called during deconstruct_jointree which is
+	 * the same tree walk that populates outer_join_rels, this is a little bit
+	 * unsafe-looking; but it should be fine because the recursion in
+	 * deconstruct_jointree should already have visited any outer join that
+	 * could be mentioned in this clause.
+	 */
+	baserels = bms_difference(restrictinfo->clause_relids,
+							  root->outer_join_rels);
+	restrictinfo->num_base_rels = bms_num_members(baserels);
+	bms_free(baserels);
+
+	/*
+	 * Label this RestrictInfo with a fresh serial number.
+	 */
+	restrictinfo->rinfo_serial = ++(root->last_rinfo_serial);
 
 	/*
 	 * Fill in all the cacheable fields with "not yet set" markers. None of
@@ -350,7 +376,7 @@ commute_restrictinfo(RestrictInfo *rinfo, Oid comm_op)
 	 * ... and adjust those we need to change.  Note in particular that we can
 	 * preserve any cached selectivity or cost estimates, since those ought to
 	 * be the same for the new clause.  Likewise we can keep the source's
-	 * parent_ec.
+	 * parent_ec.  It's also important that we keep the same rinfo_serial.
 	 */
 	result->clause = (Expr *) newclause;
 	result->left_relids = rinfo->right_relids;
@@ -497,6 +523,58 @@ extract_actual_join_clauses(List *restrictinfo_list,
 	}
 }
 
+/*
+ * clause_is_computable_at
+ *		Test whether a clause is computable at a given evaluation level.
+ *
+ * There are two conditions for whether an expression can actually be
+ * evaluated at a given join level: the evaluation context must include
+ * all the relids (both base and OJ) used by the expression, and we must
+ * not have already evaluated any outer joins that null Vars/PHVs of the
+ * expression and are not listed in their nullingrels.
+ *
+ * This function checks the second condition; we assume the caller already
+ * saw to the first one.
+ *
+ * For speed reasons, we don't individually examine each Var/PHV of the
+ * expression, but just look at the overall clause_relids (the union of the
+ * varnos and varnullingrels).  This could give a misleading answer if the
+ * Vars of a given varno don't all have the same varnullingrels; but that
+ * really shouldn't happen within a single scalar expression or RestrictInfo
+ * clause.  Despite that, this is still annoyingly expensive :-(
+ */
+bool
+clause_is_computable_at(PlannerInfo *root,
+						Relids clause_relids,
+						Relids eval_relids)
+{
+	ListCell   *lc;
+
+	/* Nothing to do if no outer joins have been performed yet. */
+	if (!bms_overlap(eval_relids, root->outer_join_rels))
+		return true;
+
+	foreach(lc, root->join_info_list)
+	{
+		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
+
+		/* Ignore outer joins that are not yet performed. */
+		if (!bms_is_member(sjinfo->ojrelid, eval_relids))
+			continue;
+
+		/* OK if clause lists it (we assume all Vars in it agree). */
+		if (bms_is_member(sjinfo->ojrelid, clause_relids))
+			continue;
+
+		/* Else, trouble if clause mentions any nullable Vars. */
+		if (bms_overlap(clause_relids, sjinfo->min_righthand) ||
+			(sjinfo->jointype == JOIN_FULL &&
+			 bms_overlap(clause_relids, sjinfo->min_lefthand)))
+			return false;		/* doesn't work */
+	}
+
+	return true;				/* OK */
+}
 
 /*
  * join_clause_is_movable_to
@@ -522,6 +600,12 @@ extract_actual_join_clauses(List *restrictinfo_list,
  * Also, the join clause must not use any relations that have LATERAL
  * references to the target relation, since we could not put such rels on
  * the outer side of a nestloop with the target relation.
+ *
+ * Also, we reject is_clone versions of outer-join clauses.  This has the
+ * effect of preventing us from generating variant parameterized paths
+ * that differ only in which outer joins null the parameterization rel(s).
+ * Generating one path from the minimally-parameterized has_clone version
+ * is sufficient.
  */
 bool
 join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel)
@@ -540,6 +624,10 @@ join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel)
 
 	/* Clause must not use any rels with LATERAL references to this rel */
 	if (bms_overlap(baserel->lateral_referencers, rinfo->clause_relids))
+		return false;
+
+	/* Ignore clones, too */
+	if (rinfo->is_clone)
 		return false;
 
 	return true;
@@ -586,6 +674,9 @@ join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel)
  * in join_clause_is_movable_to we are asking whether the clause could be
  * moved for some valid set of outer rels, so we don't have the benefit of
  * relying on prior checks for lateral-reference validity.
+ *
+ * Likewise, we don't check is_clone here: rejecting the inappropriate
+ * variants of a cloned clause must be handled upstream.
  *
  * Note: if this returns true, it means that the clause could be moved to
  * this join relation, but that doesn't mean that this is the lowest join

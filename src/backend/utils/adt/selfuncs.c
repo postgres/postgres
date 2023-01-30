@@ -2206,7 +2206,7 @@ rowcomparesel(PlannerInfo *root,
 	else
 	{
 		/*
-		 * Otherwise, it's a join if there's more than one relation used.
+		 * Otherwise, it's a join if there's more than one base relation used.
 		 */
 		is_join_clause = (NumRelids(root, (Node *) opargs) > 1);
 	}

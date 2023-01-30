@@ -159,27 +159,6 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 	Index		rti;
 	double		total_pages;
 
-	/*
-	 * Construct the all_baserels Relids set.
-	 */
-	root->all_baserels = NULL;
-	for (rti = 1; rti < root->simple_rel_array_size; rti++)
-	{
-		RelOptInfo *brel = root->simple_rel_array[rti];
-
-		/* there may be empty slots corresponding to non-baserel RTEs */
-		if (brel == NULL)
-			continue;
-
-		Assert(brel->relid == rti); /* sanity check on array */
-
-		/* ignore RTEs that are "other rels" */
-		if (brel->reloptkind != RELOPT_BASEREL)
-			continue;
-
-		root->all_baserels = bms_add_member(root->all_baserels, brel->relid);
-	}
-
 	/* Mark base rels as to whether we care about fast-start plans */
 	set_base_rel_consider_startup(root);
 
@@ -207,6 +186,7 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 	{
 		RelOptInfo *brel = root->simple_rel_array[rti];
 
+		/* there may be empty slots corresponding to non-baserel RTEs */
 		if (brel == NULL)
 			continue;
 
@@ -231,9 +211,9 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 	rel = make_rel_from_joinlist(root, joinlist);
 
 	/*
-	 * The result should join all and only the query's base rels.
+	 * The result should join all and only the query's base + outer-join rels.
 	 */
-	Assert(bms_equal(rel->relids, root->all_baserels));
+	Assert(bms_equal(rel->relids, root->all_query_rels));
 
 	return rel;
 }
@@ -558,7 +538,7 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * the final scan/join targetlist is available (see grouping_planner).
 	 */
 	if (rel->reloptkind == RELOPT_BASEREL &&
-		!bms_equal(rel->relids, root->all_baserels))
+		!bms_equal(rel->relids, root->all_query_rels))
 		generate_useful_gather_paths(root, rel, false);
 
 	/* Now find the cheapest of the paths for this rel */
@@ -879,7 +859,7 @@ set_tablesample_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *
 	 * to support an uncommon usage of second-rate sampling methods.  Instead,
 	 * if there is a risk that the query might perform an unsafe join, just
 	 * wrap the SampleScan in a Materialize node.  We can check for joins by
-	 * counting the membership of all_baserels (note that this correctly
+	 * counting the membership of all_query_rels (note that this correctly
 	 * counts inheritance trees as single rels).  If we're inside a subquery,
 	 * we can't easily check whether a join might occur in the outer query, so
 	 * just assume one is possible.
@@ -888,7 +868,7 @@ set_tablesample_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *
 	 * so check repeatable_across_scans last, even though that's a bit odd.
 	 */
 	if ((root->query_level > 1 ||
-		 bms_membership(root->all_baserels) != BMS_SINGLETON) &&
+		 bms_membership(root->all_query_rels) != BMS_SINGLETON) &&
 		!(GetTsmRoutine(rte->tablesample->tsmhandler)->repeatable_across_scans))
 	{
 		path = (Path *) create_material_path(rel, path);
@@ -970,7 +950,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	if (enable_partitionwise_join &&
 		rel->reloptkind == RELOPT_BASEREL &&
 		rte->relkind == RELKIND_PARTITIONED_TABLE &&
-		rel->attr_needed[InvalidAttrNumber - rel->min_attr] == NULL)
+		bms_is_empty(rel->attr_needed[InvalidAttrNumber - rel->min_attr]))
 		rel->consider_partitionwise_join = true;
 
 	/*
@@ -3429,7 +3409,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 			 * partial paths.  We'll do the same for the topmost scan/join rel
 			 * once we know the final targetlist (see grouping_planner).
 			 */
-			if (!bms_equal(rel->relids, root->all_baserels))
+			if (!bms_equal(rel->relids, root->all_query_rels))
 				generate_useful_gather_paths(root, rel, false);
 
 			/* Find and save the cheapest paths for this rel */

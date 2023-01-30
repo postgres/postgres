@@ -23,17 +23,32 @@
 #include "optimizer/planmain.h"
 #include "utils/lsyscache.h"
 
+
+typedef struct contain_placeholder_references_context
+{
+	int			relid;
+	int			sublevels_up;
+} contain_placeholder_references_context;
+
 /* Local functions */
 static void find_placeholders_recurse(PlannerInfo *root, Node *jtnode);
 static void find_placeholders_in_expr(PlannerInfo *root, Node *expr);
+static bool contain_placeholder_references_walker(Node *node,
+												  contain_placeholder_references_context *context);
 
 
 /*
  * make_placeholder_expr
  *		Make a PlaceHolderVar for the given expression.
  *
- * phrels is the syntactic location (as a set of baserels) to attribute
+ * phrels is the syntactic location (as a set of relids) to attribute
  * to the expression.
+ *
+ * The caller is responsible for adjusting phlevelsup and phnullingrels
+ * as needed.  Because we do not know here which query level the PHV
+ * will be associated with, it's important that this function touches
+ * only root->glob; messing with other parts of PlannerInfo would be
+ * likely to do the wrong thing.
  */
 PlaceHolderVar *
 make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
@@ -42,8 +57,9 @@ make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
 
 	phv->phexpr = expr;
 	phv->phrels = phrels;
+	phv->phnullingrels = NULL;	/* caller may change this later */
 	phv->phid = ++(root->glob->lastPHId);
-	phv->phlevelsup = 0;
+	phv->phlevelsup = 0;		/* caller may change this later */
 
 	return phv;
 }
@@ -91,6 +107,15 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
 
 	phinfo->phid = phv->phid;
 	phinfo->ph_var = copyObject(phv);
+
+	/*
+	 * By convention, phinfo->ph_var->phnullingrels is always empty, since the
+	 * PlaceHolderInfo represents the initially-calculated state of the
+	 * PlaceHolderVar.  PlaceHolderVars appearing in the query tree might have
+	 * varying values of phnullingrels, reflecting outer joins applied above
+	 * the calculation level.
+	 */
+	phinfo->ph_var->phnullingrels = NULL;
 
 	/*
 	 * Any referenced rels that are outside the PHV's syntactic scope are
@@ -339,6 +364,8 @@ update_placeholder_eval_levels(PlannerInfo *root, SpecialJoinInfo *new_sjinfo)
 												  sjinfo->min_lefthand);
 						eval_at = bms_add_members(eval_at,
 												  sjinfo->min_righthand);
+						if (sjinfo->ojrelid)
+							eval_at = bms_add_member(eval_at, sjinfo->ojrelid);
 						/* we'll need another iteration */
 						found_some = true;
 					}
@@ -413,6 +440,14 @@ add_placeholders_to_base_rels(PlannerInfo *root)
 		{
 			RelOptInfo *rel = find_base_rel(root, varno);
 
+			/*
+			 * As in add_vars_to_targetlist(), a value computed at scan level
+			 * has not yet been nulled by any outer join, so its phnullingrels
+			 * should be empty.
+			 */
+			Assert(phinfo->ph_var->phnullingrels == NULL);
+
+			/* Copying the PHV might be unnecessary here, but be safe */
 			rel->reltarget->exprs = lappend(rel->reltarget->exprs,
 											copyObject(phinfo->ph_var));
 			/* reltarget's cost and width fields will be updated later */
@@ -435,7 +470,8 @@ add_placeholders_to_base_rels(PlannerInfo *root)
  */
 void
 add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
-							RelOptInfo *outer_rel, RelOptInfo *inner_rel)
+							RelOptInfo *outer_rel, RelOptInfo *inner_rel,
+							SpecialJoinInfo *sjinfo)
 {
 	Relids		relids = joinrel->relids;
 	ListCell   *lc;
@@ -466,8 +502,16 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 				if (!bms_is_subset(phinfo->ph_eval_at, outer_rel->relids) &&
 					!bms_is_subset(phinfo->ph_eval_at, inner_rel->relids))
 				{
-					PlaceHolderVar *phv = phinfo->ph_var;
+					/* Copying might be unnecessary here, but be safe */
+					PlaceHolderVar *phv = copyObject(phinfo->ph_var);
 					QualCost	cost;
+
+					/*
+					 * It'll start out not nulled by anything.  Joins above
+					 * this one might add to its phnullingrels later, in much
+					 * the same way as for Vars.
+					 */
+					Assert(phv->phnullingrels == NULL);
 
 					joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
 														phv);
@@ -498,4 +542,75 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 								phinfo->ph_lateral);
 		}
 	}
+}
+
+/*
+ * contain_placeholder_references_to
+ *		Detect whether any PlaceHolderVars in the given clause contain
+ *		references to the given relid (typically an OJ relid).
+ *
+ * "Contain" means that there's a use of the relid inside the PHV's
+ * contained expression, so that changing the nullability status of
+ * the rel might change what the PHV computes.
+ *
+ * The code here to cope with upper-level PHVs is likely dead, but keep it
+ * anyway just in case.
+ */
+bool
+contain_placeholder_references_to(PlannerInfo *root, Node *clause,
+								  int relid)
+{
+	contain_placeholder_references_context context;
+
+	/* We can answer quickly in the common case that there's no PHVs at all */
+	if (root->glob->lastPHId == 0)
+		return false;
+	/* Else run the recursive search */
+	context.relid = relid;
+	context.sublevels_up = 0;
+	return contain_placeholder_references_walker(clause, &context);
+}
+
+static bool
+contain_placeholder_references_walker(Node *node,
+									  contain_placeholder_references_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		/* We should just look through PHVs of other query levels */
+		if (phv->phlevelsup == context->sublevels_up)
+		{
+			/* If phrels matches, we found what we came for */
+			if (bms_is_member(context->relid, phv->phrels))
+				return true;
+
+			/*
+			 * We should not examine phnullingrels: what we are looking for is
+			 * references in the contained expression, not OJs that might null
+			 * the result afterwards.  Also, we don't need to recurse into the
+			 * contained expression, because phrels should adequately
+			 * summarize what's in there.  So we're done here.
+			 */
+			return false;
+		}
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		bool		result;
+
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   contain_placeholder_references_walker,
+								   context,
+								   0);
+		context->sublevels_up--;
+		return result;
+	}
+	return expression_tree_walker(node, contain_placeholder_references_walker,
+								  context);
 }

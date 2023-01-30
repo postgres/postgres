@@ -190,6 +190,14 @@ typedef struct Expr
  * row identity information during UPDATE/DELETE/MERGE.  This value should
  * never be seen outside the planner.
  *
+ * varnullingrels is the set of RT indexes of outer joins that can force
+ * the Var's value to null (at the point where it appears in the query).
+ * See optimizer/README for discussion of that.
+ *
+ * varlevelsup is greater than zero in Vars that represent outer references.
+ * Note that it affects the meaning of all of varno, varnullingrels, and
+ * varnosyn, all of which refer to the range table of that query level.
+ *
  * In the parser, varnosyn and varattnosyn are either identical to
  * varno/varattno, or they specify the column's position in an aliased JOIN
  * RTE that hides the semantic referent RTE's refname.  This is a syntactic
@@ -232,6 +240,8 @@ typedef struct Var
 	int32		vartypmod;
 	/* OID of collation, or InvalidOid if none */
 	Oid			varcollid;
+	/* RT indexes of outer joins that can replace the Var's value with null */
+	Bitmapset  *varnullingrels;
 
 	/*
 	 * for subquery variables referencing outer relations; 0 in a normal var,

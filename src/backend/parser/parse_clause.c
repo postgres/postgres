@@ -52,7 +52,8 @@
 #include "utils/syscache.h"
 
 
-static int	extractRemainingColumns(ParseNamespaceColumn *src_nscolumns,
+static int	extractRemainingColumns(ParseState *pstate,
+									ParseNamespaceColumn *src_nscolumns,
 									List *src_colnames,
 									List **src_colnos,
 									List **res_colnames, List **res_colvars,
@@ -75,9 +76,11 @@ static ParseNamespaceItem *getNSItemForSpecialRelationTypes(ParseState *pstate,
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 									 ParseNamespaceItem **top_nsitem,
 									 List **namespace);
-static Var *buildVarFromNSColumn(ParseNamespaceColumn *nscol);
+static Var *buildVarFromNSColumn(ParseState *pstate,
+								 ParseNamespaceColumn *nscol);
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 								Var *l_colvar, Var *r_colvar);
+static void markRelsAsNulledBy(ParseState *pstate, Node *n, int jindex);
 static void setNamespaceColumnVisibility(List *namespace, bool cols_visible);
 static void setNamespaceLateralState(List *namespace,
 									 bool lateral_only, bool lateral_ok);
@@ -251,7 +254,8 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
  * Returns the number of columns added.
  */
 static int
-extractRemainingColumns(ParseNamespaceColumn *src_nscolumns,
+extractRemainingColumns(ParseState *pstate,
+						ParseNamespaceColumn *src_nscolumns,
 						List *src_colnames,
 						List **src_colnos,
 						List **res_colnames, List **res_colvars,
@@ -287,7 +291,8 @@ extractRemainingColumns(ParseNamespaceColumn *src_nscolumns,
 			*src_colnos = lappend_int(*src_colnos, attnum);
 			*res_colnames = lappend(*res_colnames, lfirst(lc));
 			*res_colvars = lappend(*res_colvars,
-								   buildVarFromNSColumn(src_nscolumns + attnum - 1));
+								   buildVarFromNSColumn(pstate,
+														src_nscolumns + attnum - 1));
 			/* Copy the input relation's nscolumn data for this column */
 			res_nscolumns[colcount] = src_nscolumns[attnum - 1];
 			colcount++;
@@ -1288,8 +1293,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		{
 			/*
 			 * JOIN/USING (or NATURAL JOIN, as transformed above). Transform
-			 * the list into an explicit ON-condition, and generate a list of
-			 * merged result columns.
+			 * the list into an explicit ON-condition.
 			 */
 			List	   *ucols = j->usingClause;
 			List	   *l_usingvars = NIL;
@@ -1307,8 +1311,6 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 				int			r_index = -1;
 				Var		   *l_colvar,
 						   *r_colvar;
-				Node	   *u_colvar;
-				ParseNamespaceColumn *res_nscolumn;
 
 				Assert(u_colname[0] != '\0');
 
@@ -1372,17 +1374,109 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 									u_colname)));
 				r_colnos = lappend_int(r_colnos, r_index + 1);
 
-				l_colvar = buildVarFromNSColumn(l_nscolumns + l_index);
+				/* Build Vars to use in the generated JOIN ON clause */
+				l_colvar = buildVarFromNSColumn(pstate, l_nscolumns + l_index);
 				l_usingvars = lappend(l_usingvars, l_colvar);
-				r_colvar = buildVarFromNSColumn(r_nscolumns + r_index);
+				r_colvar = buildVarFromNSColumn(pstate, r_nscolumns + r_index);
 				r_usingvars = lappend(r_usingvars, r_colvar);
 
+				/*
+				 * While we're here, add column names to the res_colnames
+				 * list.  It's a bit ugly to do this here while the
+				 * corresponding res_colvars entries are not made till later,
+				 * but doing this later would require an additional traversal
+				 * of the usingClause list.
+				 */
 				res_colnames = lappend(res_colnames, lfirst(ucol));
+			}
+
+			/* Construct the generated JOIN ON clause */
+			j->quals = transformJoinUsingClause(pstate,
+												l_usingvars,
+												r_usingvars);
+		}
+		else if (j->quals)
+		{
+			/* User-written ON-condition; transform it */
+			j->quals = transformJoinOnClause(pstate, j, my_namespace);
+		}
+		else
+		{
+			/* CROSS JOIN: no quals */
+		}
+
+		/*
+		 * If this is an outer join, now mark the appropriate child RTEs as
+		 * being nulled by this join.  We have finished processing the child
+		 * join expressions as well as the current join's quals, which deal in
+		 * non-nulled input columns.  All future references to those RTEs will
+		 * see possibly-nulled values, and we should mark generated Vars to
+		 * account for that.  In particular, the join alias Vars that we're
+		 * about to build should reflect the nulling effects of this join.
+		 *
+		 * A difficulty with doing this is that we need the join's RT index,
+		 * which we don't officially have yet.  However, no other RTE can get
+		 * made between here and the addRangeTableEntryForJoin call, so we can
+		 * predict what the assignment will be.  (Alternatively, we could call
+		 * addRangeTableEntryForJoin before we have all the data computed, but
+		 * this seems less ugly.)
+		 */
+		j->rtindex = list_length(pstate->p_rtable) + 1;
+
+		switch (j->jointype)
+		{
+			case JOIN_INNER:
+				break;
+			case JOIN_LEFT:
+				markRelsAsNulledBy(pstate, j->rarg, j->rtindex);
+				break;
+			case JOIN_FULL:
+				markRelsAsNulledBy(pstate, j->larg, j->rtindex);
+				markRelsAsNulledBy(pstate, j->rarg, j->rtindex);
+				break;
+			case JOIN_RIGHT:
+				markRelsAsNulledBy(pstate, j->larg, j->rtindex);
+				break;
+			default:
+				/* shouldn't see any other types here */
+				elog(ERROR, "unrecognized join type: %d",
+					 (int) j->jointype);
+				break;
+		}
+
+		/*
+		 * Now we can construct join alias expressions for the USING columns.
+		 */
+		if (j->usingClause)
+		{
+			ListCell   *lc1,
+					   *lc2;
+
+			/* Scan the colnos lists to recover info from the previous loop */
+			forboth(lc1, l_colnos, lc2, r_colnos)
+			{
+				int			l_index = lfirst_int(lc1) - 1;
+				int			r_index = lfirst_int(lc2) - 1;
+				Var		   *l_colvar,
+						   *r_colvar;
+				Node	   *u_colvar;
+				ParseNamespaceColumn *res_nscolumn;
+
+				/*
+				 * Note we re-build these Vars: they might have different
+				 * varnullingrels than the ones made in the previous loop.
+				 */
+				l_colvar = buildVarFromNSColumn(pstate, l_nscolumns + l_index);
+				r_colvar = buildVarFromNSColumn(pstate, r_nscolumns + r_index);
+
+				/* Construct the join alias Var for this column */
 				u_colvar = buildMergedJoinVar(pstate,
 											  j->jointype,
 											  l_colvar,
 											  r_colvar);
 				res_colvars = lappend(res_colvars, u_colvar);
+
+				/* Construct column's res_nscolumns[] entry */
 				res_nscolumn = res_nscolumns + res_colindex;
 				res_colindex++;
 				if (u_colvar == (Node *) l_colvar)
@@ -1400,47 +1494,45 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 					/*
 					 * Merged column is not semantically equivalent to either
 					 * input, so it needs to be referenced as the join output
-					 * column.  We don't know the join's varno yet, so we'll
-					 * replace these zeroes below.
+					 * column.
 					 */
-					res_nscolumn->p_varno = 0;
+					res_nscolumn->p_varno = j->rtindex;
 					res_nscolumn->p_varattno = res_colindex;
 					res_nscolumn->p_vartype = exprType(u_colvar);
 					res_nscolumn->p_vartypmod = exprTypmod(u_colvar);
 					res_nscolumn->p_varcollid = exprCollation(u_colvar);
-					res_nscolumn->p_varnosyn = 0;
+					res_nscolumn->p_varnosyn = j->rtindex;
 					res_nscolumn->p_varattnosyn = res_colindex;
 				}
 			}
-
-			j->quals = transformJoinUsingClause(pstate,
-												l_usingvars,
-												r_usingvars);
-		}
-		else if (j->quals)
-		{
-			/* User-written ON-condition; transform it */
-			j->quals = transformJoinOnClause(pstate, j, my_namespace);
-		}
-		else
-		{
-			/* CROSS JOIN: no quals */
 		}
 
 		/* Add remaining columns from each side to the output columns */
 		res_colindex +=
-			extractRemainingColumns(l_nscolumns, l_colnames, &l_colnos,
+			extractRemainingColumns(pstate,
+									l_nscolumns, l_colnames, &l_colnos,
 									&res_colnames, &res_colvars,
 									res_nscolumns + res_colindex);
 		res_colindex +=
-			extractRemainingColumns(r_nscolumns, r_colnames, &r_colnos,
+			extractRemainingColumns(pstate,
+									r_nscolumns, r_colnames, &r_colnos,
 									&res_colnames, &res_colvars,
 									res_nscolumns + res_colindex);
 
+		/* If join has an alias, it syntactically hides all inputs */
+		if (j->alias)
+		{
+			for (k = 0; k < res_colindex; k++)
+			{
+				ParseNamespaceColumn *nscol = res_nscolumns + k;
+
+				nscol->p_varnosyn = j->rtindex;
+				nscol->p_varattnosyn = k + 1;
+			}
+		}
+
 		/*
 		 * Now build an RTE and nsitem for the result of the join.
-		 * res_nscolumns isn't totally done yet, but that's OK because
-		 * addRangeTableEntryForJoin doesn't examine it, only store a pointer.
 		 */
 		nsitem = addRangeTableEntryForJoin(pstate,
 										   res_colnames,
@@ -1454,31 +1546,16 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 										   j->alias,
 										   true);
 
-		j->rtindex = nsitem->p_rtindex;
+		/* Verify that we correctly predicted the join's RT index */
+		Assert(j->rtindex == nsitem->p_rtindex);
+		/* Cross-check number of columns, too */
+		Assert(res_colindex == list_length(nsitem->p_names->colnames));
 
 		/*
-		 * Now that we know the join RTE's rangetable index, we can fix up the
-		 * res_nscolumns data in places where it should contain that.
+		 * Save a link to the JoinExpr in the proper element of p_joinexprs.
+		 * Since we maintain that list lazily, it may be necessary to fill in
+		 * empty entries before we can add the JoinExpr in the right place.
 		 */
-		Assert(res_colindex == list_length(nsitem->p_names->colnames));
-		for (k = 0; k < res_colindex; k++)
-		{
-			ParseNamespaceColumn *nscol = res_nscolumns + k;
-
-			/* fill in join RTI for merged columns */
-			if (nscol->p_varno == 0)
-				nscol->p_varno = j->rtindex;
-			if (nscol->p_varnosyn == 0)
-				nscol->p_varnosyn = j->rtindex;
-			/* if join has an alias, it syntactically hides all inputs */
-			if (j->alias)
-			{
-				nscol->p_varnosyn = j->rtindex;
-				nscol->p_varattnosyn = k + 1;
-			}
-		}
-
-		/* make a matching link to the JoinExpr for later use */
 		for (k = list_length(pstate->p_joinexprs) + 1; k < j->rtindex; k++)
 			pstate->p_joinexprs = lappend(pstate->p_joinexprs, NULL);
 		pstate->p_joinexprs = lappend(pstate->p_joinexprs, j);
@@ -1547,10 +1624,13 @@ transformFromClauseItem(ParseState *pstate, Node *n,
  * buildVarFromNSColumn -
  *	  build a Var node using ParseNamespaceColumn data
  *
- * We assume varlevelsup should be 0, and no location is specified
+ * This is used to construct joinaliasvars entries.
+ * We can assume varlevelsup should be 0, and no location is specified.
+ * Note also that no column SELECT privilege is requested here; that would
+ * happen only if the column is actually referenced in the query.
  */
 static Var *
-buildVarFromNSColumn(ParseNamespaceColumn *nscol)
+buildVarFromNSColumn(ParseState *pstate, ParseNamespaceColumn *nscol)
 {
 	Var		   *var;
 
@@ -1564,6 +1644,10 @@ buildVarFromNSColumn(ParseNamespaceColumn *nscol)
 	/* makeVar doesn't offer parameters for these, so set by hand: */
 	var->varnosyn = nscol->p_varnosyn;
 	var->varattnosyn = nscol->p_varattnosyn;
+
+	/* ... and update varnullingrels */
+	markNullableIfNeeded(pstate, var);
+
 	return var;
 }
 
@@ -1673,6 +1757,47 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	assign_expr_collations(pstate, res_node);
 
 	return res_node;
+}
+
+/*
+ * markRelsAsNulledBy -
+ *	  Mark the given jointree node and its children as nulled by join jindex
+ */
+static void
+markRelsAsNulledBy(ParseState *pstate, Node *n, int jindex)
+{
+	int			varno;
+	ListCell   *lc;
+
+	/* Note: we can't see FromExpr here */
+	if (IsA(n, RangeTblRef))
+	{
+		varno = ((RangeTblRef *) n)->rtindex;
+	}
+	else if (IsA(n, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) n;
+
+		/* recurse to children */
+		markRelsAsNulledBy(pstate, j->larg, jindex);
+		markRelsAsNulledBy(pstate, j->rarg, jindex);
+		varno = j->rtindex;
+	}
+	else
+	{
+		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));
+		varno = 0;				/* keep compiler quiet */
+	}
+
+	/*
+	 * Now add jindex to the p_nullingrels set for relation varno.  Since we
+	 * maintain the p_nullingrels list lazily, we might need to extend it to
+	 * make the varno'th entry exist.
+	 */
+	while (list_length(pstate->p_nullingrels) < varno)
+		pstate->p_nullingrels = lappend(pstate->p_nullingrels, NULL);
+	lc = list_nth_cell(pstate->p_nullingrels, varno - 1);
+	lfirst(lc) = bms_add_member((Bitmapset *) lfirst(lc), jindex);
 }
 
 /*

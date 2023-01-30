@@ -353,7 +353,10 @@ make_rels_by_clauseless_joins(PlannerInfo *root,
  *
  * Caller must supply not only the two rels, but the union of their relids.
  * (We could simplify the API by computing joinrelids locally, but this
- * would be redundant work in the normal path through make_join_rel.)
+ * would be redundant work in the normal path through make_join_rel.
+ * Note that this value does NOT include the RT index of any outer join that
+ * might need to be performed here, so it's not the canonical identifier
+ * of the join relation.)
  *
  * On success, *sjinfo_p is set to NULL if this is to be a plain inner join,
  * else it's set to point to the associated SpecialJoinInfo node.  Also,
@@ -695,7 +698,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	/* We should never try to join two overlapping sets of rels. */
 	Assert(!bms_overlap(rel1->relids, rel2->relids));
 
-	/* Construct Relids set that identifies the joinrel. */
+	/* Construct Relids set that identifies the joinrel (without OJ as yet). */
 	joinrelids = bms_union(rel1->relids, rel2->relids);
 
 	/* Check validity and determine join type. */
@@ -706,6 +709,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		bms_free(joinrelids);
 		return NULL;
 	}
+
+	/* If we have an outer join, add its RTI to form the canonical relids. */
+	if (sjinfo && sjinfo->ojrelid != 0)
+		joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
 
 	/* Swap rels if needed to match the join info. */
 	if (reversed)
@@ -730,6 +737,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		sjinfo->syn_lefthand = rel1->relids;
 		sjinfo->syn_righthand = rel2->relids;
 		sjinfo->jointype = JOIN_INNER;
+		sjinfo->ojrelid = 0;
+		sjinfo->commute_above_l = NULL;
+		sjinfo->commute_above_r = NULL;
+		sjinfo->commute_below = NULL;
 		/* we don't bother trying to make the remaining fields valid */
 		sjinfo->lhs_strict = false;
 		sjinfo->delay_upper_joins = false;
@@ -1510,8 +1521,6 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 		/* We should never try to join two overlapping sets of rels. */
 		Assert(!bms_overlap(child_rel1->relids, child_rel2->relids));
-		child_joinrelids = bms_union(child_rel1->relids, child_rel2->relids);
-		appinfos = find_appinfos_by_relids(root, child_joinrelids, &nappinfos);
 
 		/*
 		 * Construct SpecialJoinInfo from parent join relations's
@@ -1520,6 +1529,15 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		child_sjinfo = build_child_join_sjinfo(root, parent_sjinfo,
 											   child_rel1->relids,
 											   child_rel2->relids);
+
+		/* Build correct join relids for child join */
+		child_joinrelids = bms_union(child_rel1->relids, child_rel2->relids);
+		if (child_sjinfo->ojrelid != 0)
+			child_joinrelids = bms_add_member(child_joinrelids,
+											  child_sjinfo->ojrelid);
+
+		/* Find the AppendRelInfo structures */
+		appinfos = find_appinfos_by_relids(root, child_joinrelids, &nappinfos);
 
 		/*
 		 * Construct restrictions applicable to the child join from those
@@ -1536,8 +1554,7 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		{
 			child_joinrel = build_child_join_rel(root, child_rel1, child_rel2,
 												 joinrel, child_restrictlist,
-												 child_sjinfo,
-												 child_sjinfo->jointype);
+												 child_sjinfo);
 			joinrel->part_rels[cnt_parts] = child_joinrel;
 			joinrel->live_parts = bms_add_member(joinrel->live_parts, cnt_parts);
 			joinrel->all_partrels = bms_add_members(joinrel->all_partrels,
@@ -1583,6 +1600,7 @@ build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
 	sjinfo->syn_righthand = adjust_child_relids(sjinfo->syn_righthand,
 												right_nappinfos,
 												right_appinfos);
+	/* outer-join relids need no adjustment */
 	sjinfo->semi_rhs_exprs = (List *) adjust_appendrel_attrs(root,
 															 (Node *) sjinfo->semi_rhs_exprs,
 															 right_nappinfos,

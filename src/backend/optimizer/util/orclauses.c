@@ -338,6 +338,10 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 		sjinfo.syn_lefthand = sjinfo.min_lefthand;
 		sjinfo.syn_righthand = sjinfo.min_righthand;
 		sjinfo.jointype = JOIN_INNER;
+		sjinfo.ojrelid = 0;
+		sjinfo.commute_above_l = NULL;
+		sjinfo.commute_above_r = NULL;
+		sjinfo.commute_below = NULL;
 		/* we don't bother trying to make the remaining fields valid */
 		sjinfo.lhs_strict = false;
 		sjinfo.delay_upper_joins = false;

@@ -2335,17 +2335,17 @@ select a.f1, b.f1, t.thousand, t.tenthous from
   (select sum(f1)+1 as f1 from int4_tbl i4a) a,
   (select sum(f1) as f1 from int4_tbl i4b) b
 where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
-                                                      QUERY PLAN                                                       
------------------------------------------------------------------------------------------------------------------------
+                                                   QUERY PLAN                                                    
+-----------------------------------------------------------------------------------------------------------------
  Nested Loop
-   ->  Aggregate
-         ->  Seq Scan on int4_tbl i4b
    ->  Nested Loop
          Join Filter: ((sum(i4b.f1)) = ((sum(i4a.f1) + 1)))
          ->  Aggregate
                ->  Seq Scan on int4_tbl i4a
-         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t
-               Index Cond: ((thousand = (sum(i4b.f1))) AND (tenthous = ((((sum(i4a.f1) + 1)) + (sum(i4b.f1))) + 999)))
+         ->  Aggregate
+               ->  Seq Scan on int4_tbl i4b
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t
+         Index Cond: ((thousand = (sum(i4b.f1))) AND (tenthous = ((((sum(i4a.f1) + 1)) + (sum(i4b.f1))) + 999)))
 (9 rows)
 
 select a.f1, b.f1, t.thousand, t.tenthous from
@@ -4139,6 +4139,60 @@ using (join_key);
 (2 rows)
 
 --
+-- check handling of a variable-free join alias
+--
+explain (verbose, costs off)
+select * from
+int4_tbl i0 left join
+( (select *, 123 as x from int4_tbl i1) ss1
+  left join
+  (select *, q2 as x from int8_tbl i2) ss2
+  using (x)
+) ss0
+on (i0.f1 = ss0.f1)
+order by i0.f1, x;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Sort
+   Output: i0.f1, ('123'::bigint), i1.f1, i2.q1, i2.q2
+   Sort Key: i0.f1, ('123'::bigint)
+   ->  Hash Right Join
+         Output: i0.f1, ('123'::bigint), i1.f1, i2.q1, i2.q2
+         Hash Cond: (i1.f1 = i0.f1)
+         ->  Nested Loop Left Join
+               Output: i1.f1, i2.q1, i2.q2, '123'::bigint
+               ->  Seq Scan on public.int4_tbl i1
+                     Output: i1.f1
+               ->  Materialize
+                     Output: i2.q1, i2.q2
+                     ->  Seq Scan on public.int8_tbl i2
+                           Output: i2.q1, i2.q2
+                           Filter: (123 = i2.q2)
+         ->  Hash
+               Output: i0.f1
+               ->  Seq Scan on public.int4_tbl i0
+                     Output: i0.f1
+(19 rows)
+
+select * from
+int4_tbl i0 left join
+( (select *, 123 as x from int4_tbl i1) ss1
+  left join
+  (select *, q2 as x from int8_tbl i2) ss2
+  using (x)
+) ss0
+on (i0.f1 = ss0.f1)
+order by i0.f1, x;
+     f1      |  x  |     f1      |        q1        | q2  
+-------------+-----+-------------+------------------+-----
+ -2147483647 | 123 | -2147483647 | 4567890123456789 | 123
+     -123456 | 123 |     -123456 | 4567890123456789 | 123
+           0 | 123 |           0 | 4567890123456789 | 123
+      123456 | 123 |      123456 | 4567890123456789 | 123
+  2147483647 | 123 |  2147483647 | 4567890123456789 | 123
+(5 rows)
+
+--
 -- test successful handling of nested outer joins with degenerate join quals
 --
 explain (verbose, costs off)
@@ -4725,6 +4779,103 @@ select a.unique1, b.unique2
  unique1 | unique2 
 ---------+---------
      123 |     123
+(1 row)
+
+--
+-- test full-join strength reduction
+--
+explain (costs off)
+select a.unique1, b.unique2
+  from onek a full join onek b on a.unique1 = b.unique2
+  where a.unique1 = 42;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (a.unique1 = b.unique2)
+   ->  Index Only Scan using onek_unique1 on onek a
+         Index Cond: (unique1 = 42)
+   ->  Index Only Scan using onek_unique2 on onek b
+         Index Cond: (unique2 = 42)
+(6 rows)
+
+select a.unique1, b.unique2
+  from onek a full join onek b on a.unique1 = b.unique2
+  where a.unique1 = 42;
+ unique1 | unique2 
+---------+---------
+      42 |      42
+(1 row)
+
+explain (costs off)
+select a.unique1, b.unique2
+  from onek a full join onek b on a.unique1 = b.unique2
+  where b.unique2 = 43;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (a.unique1 = b.unique2)
+   ->  Index Only Scan using onek_unique2 on onek b
+         Index Cond: (unique2 = 43)
+   ->  Index Only Scan using onek_unique1 on onek a
+         Index Cond: (unique1 = 43)
+(6 rows)
+
+select a.unique1, b.unique2
+  from onek a full join onek b on a.unique1 = b.unique2
+  where b.unique2 = 43;
+ unique1 | unique2 
+---------+---------
+      43 |      43
+(1 row)
+
+explain (costs off)
+select a.unique1, b.unique2
+  from onek a full join onek b on a.unique1 = b.unique2
+  where a.unique1 = 42 and b.unique2 = 42;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop
+   ->  Index Only Scan using onek_unique1 on onek a
+         Index Cond: (unique1 = 42)
+   ->  Index Only Scan using onek_unique2 on onek b
+         Index Cond: (unique2 = 42)
+(5 rows)
+
+select a.unique1, b.unique2
+  from onek a full join onek b on a.unique1 = b.unique2
+  where a.unique1 = 42 and b.unique2 = 42;
+ unique1 | unique2 
+---------+---------
+      42 |      42
+(1 row)
+
+--
+-- test result-RTE removal underneath a full join
+--
+explain (costs off)
+select * from
+  (select * from int8_tbl i81 join (values(123,2)) v(v1,v2) on q2=v1) ss1
+full join
+  (select * from (values(456,2)) w(v1,v2) join int8_tbl i82 on q2=v1) ss2
+on true;
+              QUERY PLAN              
+--------------------------------------
+ Merge Full Join
+   ->  Seq Scan on int8_tbl i81
+         Filter: (q2 = 123)
+   ->  Materialize
+         ->  Seq Scan on int8_tbl i82
+               Filter: (q2 = 456)
+(6 rows)
+
+select * from
+  (select * from int8_tbl i81 join (values(123,2)) v(v1,v2) on q2=v1) ss1
+full join
+  (select * from (values(456,2)) w(v1,v2) join int8_tbl i82 on q2=v1) ss2
+on true;
+        q1        | q2  | v1  | v2 | v1  | v2 | q1  | q2  
+------------------+-----+-----+----+-----+----+-----+-----
+ 4567890123456789 | 123 | 123 |  2 | 456 |  2 | 123 | 456
 (1 row)
 
 --

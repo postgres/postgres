@@ -1042,7 +1042,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 		ParseNamespaceItem *nsitem;
 
 		nsitem = GetNSItemByRangeTablePosn(pstate, rtindex, sublevels_up);
-		args = expandNSItemVars(nsitem, sublevels_up, vlocation, NULL);
+		args = expandNSItemVars(pstate, nsitem, sublevels_up, vlocation, NULL);
 	}
 	else
 		ereport(ERROR,

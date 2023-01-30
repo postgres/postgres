@@ -1090,6 +1090,14 @@ typedef struct RangeTblEntry
 	 * alias Vars are generated only for merged columns).  We keep these
 	 * entries only because they're needed in expandRTE() and similar code.
 	 *
+	 * Vars appearing within joinaliasvars are marked with varnullingrels sets
+	 * that describe the nulling effects of this join and lower ones.  This is
+	 * essential for FULL JOIN cases, because the COALESCE expression only
+	 * describes the semantics correctly if its inputs have been nulled by the
+	 * join.  For other cases, it allows expandRTE() to generate a valid
+	 * representation of the join's output without consulting additional
+	 * parser state.
+	 *
 	 * Within a Query loaded from a stored rule, it is possible for non-merged
 	 * joinaliasvars items to be null pointers, which are placeholders for
 	 * (necessarily unreferenced) columns dropped since the rule was made.

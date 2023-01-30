@@ -218,7 +218,7 @@ clauselist_selectivity_ext(PlannerInfo *root,
 
 			if (rinfo)
 			{
-				ok = (bms_membership(rinfo->clause_relids) == BMS_SINGLETON) &&
+				ok = (rinfo->num_base_rels == 1) &&
 					(is_pseudo_constant_clause_relids(lsecond(expr->args),
 													  rinfo->right_relids) ||
 					 (varonleft = false,
@@ -580,30 +580,6 @@ find_single_rel_for_clauses(PlannerInfo *root, List *clauses)
 }
 
 /*
- * bms_is_subset_singleton
- *
- * Same result as bms_is_subset(s, bms_make_singleton(x)),
- * but a little faster and doesn't leak memory.
- *
- * Is this of use anywhere else?  If so move to bitmapset.c ...
- */
-static bool
-bms_is_subset_singleton(const Bitmapset *s, int x)
-{
-	switch (bms_membership(s))
-	{
-		case BMS_EMPTY_SET:
-			return true;
-		case BMS_SINGLETON:
-			return bms_is_member(x, s);
-		case BMS_MULTIPLE:
-			return false;
-	}
-	/* can't get here... */
-	return false;
-}
-
-/*
  * treat_as_join_clause -
  *	  Decide whether an operator clause is to be handled by the
  *	  restriction or join estimator.  Subroutine for clause_selectivity().
@@ -631,17 +607,20 @@ treat_as_join_clause(PlannerInfo *root, Node *clause, RestrictInfo *rinfo,
 	else
 	{
 		/*
-		 * Otherwise, it's a join if there's more than one relation used. We
-		 * can optimize this calculation if an rinfo was passed.
+		 * Otherwise, it's a join if there's more than one base relation used.
+		 * We can optimize this calculation if an rinfo was passed.
 		 *
 		 * XXX	Since we know the clause is being evaluated at a join, the
 		 * only way it could be single-relation is if it was delayed by outer
-		 * joins.  Although we can make use of the restriction qual estimators
-		 * anyway, it seems likely that we ought to account for the
-		 * probability of injected nulls somehow.
+		 * joins.  We intentionally count only baserels here, not OJs that
+		 * might be present in rinfo->clause_relids, so that we direct such
+		 * cases to the restriction qual estimators not join estimators.
+		 * Eventually some notice should be taken of the possibility of
+		 * injected nulls, but we'll likely want to do that in the restriction
+		 * estimators rather than starting to treat such cases as join quals.
 		 */
 		if (rinfo)
-			return (bms_membership(rinfo->clause_relids) == BMS_MULTIPLE);
+			return (rinfo->num_base_rels > 1);
 		else
 			return (NumRelids(root, clause) > 1);
 	}
@@ -754,7 +733,9 @@ clause_selectivity_ext(PlannerInfo *root,
 		 * for all non-JOIN_INNER cases.
 		 */
 		if (varRelid == 0 ||
-			bms_is_subset_singleton(rinfo->clause_relids, varRelid))
+			rinfo->num_base_rels == 0 ||
+			(rinfo->num_base_rels == 1 &&
+			 bms_is_member(varRelid, rinfo->clause_relids)))
 		{
 			/* Cacheable --- do we already have the result? */
 			if (jointype == JOIN_INNER)

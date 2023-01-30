@@ -492,14 +492,24 @@ drop table p_t1;
 -- Test GROUP BY matching of join columns that are type-coerced due to USING
 --
 
-create temp table t1(f1 int, f2 bigint);
-create temp table t2(f1 bigint, f22 bigint);
+create temp table t1(f1 int, f2 int);
+create temp table t2(f1 bigint, f2 oid);
 
 select f1 from t1 left join t2 using (f1) group by f1;
 select f1 from t1 left join t2 using (f1) group by t1.f1;
 select t1.f1 from t1 left join t2 using (f1) group by t1.f1;
 -- only this one should fail:
 select t1.f1 from t1 left join t2 using (f1) group by f1;
+
+-- check case where we have to inject nullingrels into coerced join alias
+select f1, count(*) from
+t1 x(x0,x1) left join (t1 left join t2 using(f1)) on (x0 = 0)
+group by f1;
+
+-- same, for a RelabelType coercion
+select f2, count(*) from
+t1 x(x0,x1) left join (t1 left join t2 using(f2)) on (x0 = 0)
+group by f2;
 
 drop table t1, t2;
 

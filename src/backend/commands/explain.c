@@ -1114,7 +1114,7 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 			break;
 		case T_ForeignScan:
 			*rels_used = bms_add_members(*rels_used,
-										 ((ForeignScan *) plan)->fs_relids);
+										 ((ForeignScan *) plan)->fs_base_relids);
 			break;
 		case T_CustomScan:
 			*rels_used = bms_add_members(*rels_used,

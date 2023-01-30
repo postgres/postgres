@@ -351,6 +351,17 @@ GetForeignJoinPaths(PlannerInfo *root,
      it will supply at run time in the tuples it returns.
     </para>
 
+    <note>
+     <para>
+      Beginning with <productname>PostgreSQL</productname> 16,
+      <structfield>fs_relids</structfield> includes the rangetable indexes
+      of outer joins, if any were involved in this join.  The new field
+      <structfield>fs_base_relids</structfield> includes only base
+      relation indexes, and thus
+      mimics <structfield>fs_relids</structfield>'s old semantics.
+     </para>
+    </note>
+
     <para>
      See <xref linkend="fdw-planning"/> for additional information.
     </para>

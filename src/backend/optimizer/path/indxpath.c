@@ -3352,13 +3352,13 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 	 * Add on any equivalence-derivable join clauses.  Computing the correct
 	 * relid sets for generate_join_implied_equalities is slightly tricky
 	 * because the rel could be a child rel rather than a true baserel, and in
-	 * that case we must remove its parents' relid(s) from all_baserels.
+	 * that case we must subtract its parents' relid(s) from all_query_rels.
 	 */
 	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
-		otherrels = bms_difference(root->all_baserels,
+		otherrels = bms_difference(root->all_query_rels,
 								   find_childrel_parents(root, rel));
 	else
-		otherrels = bms_difference(root->all_baserels, rel->relids);
+		otherrels = bms_difference(root->all_query_rels, rel->relids);
 
 	if (!bms_is_empty(otherrels))
 		clauselist =
@@ -3736,7 +3736,8 @@ match_index_to_operand(Node *operand,
 		 */
 		if (operand && IsA(operand, Var) &&
 			index->rel->relid == ((Var *) operand)->varno &&
-			indkey == ((Var *) operand)->varattno)
+			indkey == ((Var *) operand)->varattno &&
+			((Var *) operand)->varnullingrels == NULL)
 			return true;
 	}
 	else
