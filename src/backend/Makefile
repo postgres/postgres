@@ -180,6 +180,7 @@ distprep:
 	$(MAKE) -C bootstrap	bootparse.c bootparse.h bootscanner.c
 	$(MAKE) -C catalog	distprep
 	$(MAKE) -C nodes	distprep
+	$(MAKE) -C statistics statistics_gram.c statistics_scanner.c
 	$(MAKE) -C replication	repl_gram.c repl_gram.h repl_scanner.c syncrep_gram.c syncrep_gram.h syncrep_scanner.c
 	$(MAKE) -C storage/lmgr	lwlocknames.h lwlocknames.c
 	$(MAKE) -C utils	distprep
@@ -300,6 +301,9 @@ maintainer-clean: distclean
 	      parser/gram.c \
 	      parser/gram.h \
 	      parser/scan.c \
+	      statistics/statistics_gram.c \
+	      statistics/statistics_scanner.c \
+	      statistics/statistics_gram.h \
 	      replication/repl_gram.c \
 	      replication/repl_gram.h \
 	      replication/repl_scanner.c \
