@@ -204,6 +204,9 @@ sub mkvcbuild
 		'src/backend/replication', 'repl_scanner.l',
 		'repl_gram.y',             'syncrep_scanner.l',
 		'syncrep_gram.y');
+	$postgres->AddFiles(
+		'src/backend/statistics', 'statistics_scanner.l',
+		'statistics_gram.y');
 	$postgres->AddFiles('src/backend/utils/adt', 'jsonpath_scan.l',
 		'jsonpath_gram.y');
 	$postgres->AddDefine('BUILDING_DLL');
