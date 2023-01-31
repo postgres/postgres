@@ -3017,6 +3017,9 @@ create_indexscan_plan(PlannerInfo *root,
 	/* it should be a base rel... */
 	Assert(baserelid > 0);
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
+	/* check the scan direction is valid */
+	Assert(best_path->indexscandir == ForwardScanDirection ||
+		   best_path->indexscandir == BackwardScanDirection);
 
 	/*
 	 * Extract the index qual expressions (stripped of RestrictInfos) from the

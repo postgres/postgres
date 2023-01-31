@@ -1015,9 +1015,7 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 								  orderbyclauses,
 								  orderbyclausecols,
 								  useful_pathkeys,
-								  index_is_ordered ?
-								  ForwardScanDirection :
-								  NoMovementScanDirection,
+								  ForwardScanDirection,
 								  index_only_scan,
 								  outer_relids,
 								  loop_count,
@@ -1037,9 +1035,7 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 									  orderbyclauses,
 									  orderbyclausecols,
 									  useful_pathkeys,
-									  index_is_ordered ?
-									  ForwardScanDirection :
-									  NoMovementScanDirection,
+									  ForwardScanDirection,
 									  index_only_scan,
 									  outer_relids,
 									  loop_count,

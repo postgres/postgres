@@ -1035,6 +1035,10 @@ table_scan_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableS
 {
 	slot->tts_tableOid = RelationGetRelid(sscan->rs_rd);
 
+	/* We don't expect actual scans using NoMovementScanDirection */
+	Assert(direction == ForwardScanDirection ||
+		   direction == BackwardScanDirection);
+
 	/*
 	 * We don't expect direct calls to table_scan_getnextslot with valid
 	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
@@ -1098,6 +1102,10 @@ table_scan_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 {
 	/* Ensure table_beginscan_tidrange() was used. */
 	Assert((sscan->rs_flags & SO_TYPE_TIDRANGESCAN) != 0);
+
+	/* We don't expect actual scans using NoMovementScanDirection */
+	Assert(direction == ForwardScanDirection ||
+		   direction == BackwardScanDirection);
 
 	return sscan->rs_rd->rd_tableam->scan_getnextslot_tidrange(sscan,
 															   direction,

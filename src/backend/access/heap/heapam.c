@@ -490,9 +490,6 @@ heapgetpage(TableScanDesc sscan, BlockNumber block)
  *		tuple as indicated by "dir"; return the next tuple in scan->rs_ctup,
  *		or set scan->rs_ctup.t_data = NULL if no more tuples.
  *
- * dir == NoMovementScanDirection means "re-fetch the tuple indicated
- * by scan->rs_ctup".
- *
  * Note: the reason nkeys/key are passed separately, even though they are
  * kept in the scan descriptor, is that the caller may not want us to check
  * the scankeys.
@@ -583,7 +580,7 @@ heapgettup(HeapScanDesc scan,
 
 		linesleft = lines - lineoff + 1;
 	}
-	else if (backward)
+	else
 	{
 		/* backward parallel scan not supported */
 		Assert(scan->rs_base.rs_parallel == NULL);
@@ -652,34 +649,6 @@ heapgettup(HeapScanDesc scan,
 		/* block and lineoff now reference the physically previous tid */
 
 		linesleft = lineoff;
-	}
-	else
-	{
-		/*
-		 * ``no movement'' scan direction: refetch prior tuple
-		 */
-		if (!scan->rs_inited)
-		{
-			Assert(!BufferIsValid(scan->rs_cbuf));
-			tuple->t_data = NULL;
-			return;
-		}
-
-		block = ItemPointerGetBlockNumber(&(tuple->t_self));
-		if (block != scan->rs_cblock)
-			heapgetpage((TableScanDesc) scan, block);
-
-		/* Since the tuple was previously fetched, needn't lock page here */
-		page = BufferGetPage(scan->rs_cbuf);
-		TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-		lineoff = ItemPointerGetOffsetNumber(&(tuple->t_self));
-		lpp = PageGetItemId(page, lineoff);
-		Assert(ItemIdIsNormal(lpp));
-
-		tuple->t_data = (HeapTupleHeader) PageGetItem(page, lpp);
-		tuple->t_len = ItemIdGetLength(lpp);
-
-		return;
 	}
 
 	/*
@@ -918,7 +887,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 
 		linesleft = lines - lineindex;
 	}
-	else if (backward)
+	else
 	{
 		/* backward parallel scan not supported */
 		Assert(scan->rs_base.rs_parallel == NULL);
@@ -977,38 +946,6 @@ heapgettup_pagemode(HeapScanDesc scan,
 		/* block and lineindex now reference the previous visible tid */
 
 		linesleft = lineindex + 1;
-	}
-	else
-	{
-		/*
-		 * ``no movement'' scan direction: refetch prior tuple
-		 */
-		if (!scan->rs_inited)
-		{
-			Assert(!BufferIsValid(scan->rs_cbuf));
-			tuple->t_data = NULL;
-			return;
-		}
-
-		block = ItemPointerGetBlockNumber(&(tuple->t_self));
-		if (block != scan->rs_cblock)
-			heapgetpage((TableScanDesc) scan, block);
-
-		/* Since the tuple was previously fetched, needn't lock page here */
-		page = BufferGetPage(scan->rs_cbuf);
-		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-		lineoff = ItemPointerGetOffsetNumber(&(tuple->t_self));
-		lpp = PageGetItemId(page, lineoff);
-		Assert(ItemIdIsNormal(lpp));
-
-		tuple->t_data = (HeapTupleHeader) PageGetItem(page, lpp);
-		tuple->t_len = ItemIdGetLength(lpp);
-
-		/* check that rs_cindex is in sync */
-		Assert(scan->rs_cindex < scan->rs_ntuples);
-		Assert(lineoff == scan->rs_vistuples[scan->rs_cindex]);
-
-		return;
 	}
 
 	/*

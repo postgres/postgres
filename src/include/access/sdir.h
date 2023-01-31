@@ -16,8 +16,10 @@
 
 
 /*
- * ScanDirection was an int8 for no apparent reason. I kept the original
- * values because I'm not sure if I'll break anything otherwise.  -ay 2/95
+ * Defines the direction for scanning a table or an index.  Scans are never
+ * invoked using NoMovementScanDirectionScans.  For convenience, we use the
+ * values -1 and 1 for backward and forward scans.  This allows us to perform
+ * a few mathematical tricks such as what is done in ScanDirectionCombine.
  */
 typedef enum ScanDirection
 {
@@ -25,6 +27,13 @@ typedef enum ScanDirection
 	NoMovementScanDirection = 0,
 	ForwardScanDirection = 1
 } ScanDirection;
+
+/*
+ * Determine the net effect of two direction specifications.
+ * This relies on having ForwardScanDirection = +1, BackwardScanDirection = -1,
+ * and will probably not do what you want if applied to any other values.
+ */
+#define ScanDirectionCombine(a, b)  ((a) * (b))
 
 /*
  * ScanDirectionIsValid

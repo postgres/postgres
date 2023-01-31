@@ -3746,9 +3746,6 @@ ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
 			case BackwardScanDirection:
 				scandir = "Backward";
 				break;
-			case NoMovementScanDirection:
-				scandir = "NoMovement";
-				break;
 			case ForwardScanDirection:
 				scandir = "Forward";
 				break;

@@ -1672,12 +1672,9 @@ typedef struct Path
  * on which index column each ORDER BY can be used with.)
  *
  * 'indexscandir' is one of:
- *		ForwardScanDirection: forward scan of an ordered index
+ *		ForwardScanDirection: forward scan of an index
  *		BackwardScanDirection: backward scan of an ordered index
- *		NoMovementScanDirection: scan of an unordered index, or don't care
- * (The executor doesn't care whether it gets ForwardScanDirection or
- * NoMovementScanDirection for an indexscan, but the planner wants to
- * distinguish ordered from unordered indexes for building pathkeys.)
+ * Unordered indexes will always have an indexscandir of ForwardScanDirection.
  *
  * 'indextotalcost' and 'indexselectivity' are saved in the IndexPath so that
  * we need not recompute them when considering using the same index in a
