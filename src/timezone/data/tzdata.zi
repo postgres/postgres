@@ -1,4 +1,4 @@
-# version 2022f
+# version 2022g
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -1040,7 +1040,7 @@ Z Asia/Singapore 6:55:25 - LMT 1901
 7:20 - +0720 1941 S
 7:30 - +0730 1942 F 16
 9 - +09 1945 S 12
-7:30 - +0730 1982
+7:30 - +0730 1981 D 31 16u
 8 - +08
 Z Asia/Colombo 5:19:24 - LMT 1880
 5:19:32 - MMT 1906
@@ -1754,7 +1754,8 @@ Z America/Scoresbysund -1:27:52 - LMT 1916 Jul 28
 -1 E -01/+00
 Z America/Nuuk -3:26:56 - LMT 1916 Jul 28
 -3 - -03 1980 Ap 6 2
--3 E -03/-02
+-3 E -03/-02 2023 Mar 25 22
+-2 - -02
 Z America/Thule -4:35:8 - LMT 1916 Jul 28
 -4 Th A%sT
 Z Europe/Tallinn 1:39 - LMT 1880
@@ -3044,16 +3045,11 @@ R Y 1919 o - N 1 0 0 S
 R Y 1942 o - F 9 2 1 W
 R Y 1945 o - Au 14 23u 1 P
 R Y 1945 o - S 30 2 0 S
-R Y 1965 o - Ap lastSu 0 2 DD
-R Y 1965 o - O lastSu 2 0 S
-R Y 1980 1986 - Ap lastSu 2 1 D
-R Y 1980 2006 - O lastSu 2 0 S
+R Y 1972 1986 - Ap lastSu 2 1 D
+R Y 1972 2006 - O lastSu 2 0 S
 R Y 1987 2006 - Ap Su>=1 2 1 D
-Z America/Pangnirtung 0 - -00 1921
--4 Y A%sT 1995 Ap Su>=1 2
--5 C E%sT 1999 O 31 2
--6 C C%sT 2000 O 29 2
--5 C E%sT
+R Yu 1965 o - Ap lastSu 0 2 DD
+R Yu 1965 o - O lastSu 2 0 S
 Z America/Iqaluit 0 - -00 1942 Au
 -5 Y E%sT 1999 O 31 2
 -6 C C%sT 2000 O 29 2
@@ -3082,13 +3078,15 @@ Z America/Inuvik 0 - -00 1953
 -7 Y M%sT 1980
 -7 C M%sT
 Z America/Whitehorse -9:0:12 - LMT 1900 Au 20
--9 Y Y%sT 1967 May 28
--8 Y P%sT 1980
+-9 Y Y%sT 1965
+-9 Yu Y%sT 1966 F 27
+-8 - PST 1980
 -8 C P%sT 2020 N
 -7 - MST
 Z America/Dawson -9:17:40 - LMT 1900 Au 20
--9 Y Y%sT 1973 O 28
--8 Y P%sT 1980
+-9 Y Y%sT 1965
+-9 Yu Y%sT 1973 O 28
+-8 - PST 1980
 -8 C P%sT 2020 N
 -7 - MST
 R m 1931 o - May 1 23 1 D
@@ -3132,6 +3130,17 @@ Z America/Mexico_City -6:36:36 - LMT 1922 Ja 1 7u
 -6 m C%sT 2001 S 30 2
 -6 - CST 2002 F 20
 -6 m C%sT
+Z America/Ciudad_Juarez -7:5:56 - LMT 1922 Ja 1 7u
+-7 - MST 1927 Jun 10 23
+-6 - CST 1930 N 15
+-7 m M%sT 1932 Ap
+-6 - CST 1996
+-6 m C%sT 1998
+-6 - CST 1998 Ap Su>=1 3
+-7 m M%sT 2010
+-7 u M%sT 2022 O 30 2
+-6 - CST 2022 N 30
+-7 u M%sT
 Z America/Ojinaga -6:57:40 - LMT 1922 Ja 1 7u
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
@@ -3141,7 +3150,8 @@ Z America/Ojinaga -6:57:40 - LMT 1922 Ja 1 7u
 -6 - CST 1998 Ap Su>=1 3
 -7 m M%sT 2010
 -7 u M%sT 2022 O 30 2
--6 - CST
+-6 - CST 2022 N 30
+-6 u C%sT
 Z America/Chihuahua -7:4:20 - LMT 1922 Ja 1 7u
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
@@ -3771,7 +3781,7 @@ Z Antarctica/Palmer 0 - -00 1965
 -4 x -04/-03 2016 D 4
 -3 - -03
 R CO 1992 o - May 3 0 1 -
-R CO 1993 o - Ap 4 0 0 -
+R CO 1993 o - F 6 24 0 -
 Z America/Bogota -4:56:16 - LMT 1884 Mar 13
 -4:56:16 - BMT 1914 N 23
 -5 CO -05/-04
@@ -4154,6 +4164,7 @@ L America/Tijuana America/Ensenada
 L America/Indiana/Indianapolis America/Fort_Wayne
 L America/Toronto America/Montreal
 L America/Toronto America/Nipigon
+L America/Iqaluit America/Pangnirtung
 L America/Rio_Branco America/Porto_Acre
 L America/Winnipeg America/Rainy_River
 L America/Argentina/Cordoba America/Rosario
