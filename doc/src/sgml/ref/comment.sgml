@@ -66,7 +66,7 @@ COMMENT ON
   TRIGGER <replaceable class="parameter">trigger_name</replaceable> ON <replaceable class="parameter">table_name</replaceable> |
   TYPE <replaceable class="parameter">object_name</replaceable> |
   VIEW <replaceable class="parameter">object_name</replaceable>
-} IS '<replaceable class="parameter">text</replaceable>'
+} IS { <replaceable class="parameter">string_literal</replaceable> | NULL }
 
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
 
@@ -262,11 +262,19 @@ COMMENT ON
     </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">text</replaceable></term>
+    <term><replaceable class="parameter">string_literal</replaceable></term>
     <listitem>
      <para>
-      The new comment, written as a string literal; or <literal>NULL</literal>
-      to drop the comment.
+      The new comment contents, written as a string literal.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NULL</literal></term>
+    <listitem>
+     <para>
+      Write <literal>NULL</literal> to drop the comment.
      </para>
     </listitem>
    </varlistentry>
