@@ -127,4 +127,17 @@ extern Selectivity mcv_clause_selectivity_or(PlannerInfo *root,
 											 Selectivity *overlap_basesel,
 											 Selectivity *totalsel);
 
+/*
+ * Internal functions for parsing the statistics grammar, in statiatics_gram.y and
+ * statistics_scanner.l
+ */
+extern int	statistic_yyparse(void);
+extern int	statistic_yylex(void);
+extern void statistic_yyerror(const char *str);
+extern void statistic_scanner_init(const char *query_string);
+extern void statistic_scanner_finish(void);
+
+extern MVNDistinct *mvndistinct_parse_result;
+extern MVDependencies *mvdependencies_parse_result;
+
 #endif							/* EXTENDED_STATS_INTERNAL_H */
