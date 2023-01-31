@@ -53,16 +53,20 @@ typedef enum NodeTag
  * - custom_read_write: Has custom implementations in outfuncs.c and
  *   readfuncs.c.
  *
+ * - custom_query_jumble: Has custom implementation in queryjumblefuncs.c.
+ *
  * - no_copy: Does not support copyObject() at all.
  *
  * - no_equal: Does not support equal() at all.
  *
  * - no_copy_equal: Shorthand for both no_copy and no_equal.
  *
+ * - no_query_jumble: Does not support JumbleQuery() at all.
+ *
  * - no_read: Does not support nodeRead() at all.
  *
- * - nodetag_only: Does not support copyObject(), equal(), outNode(),
- *   or nodeRead().
+ * - nodetag_only: Does not support copyObject(), equal(), jumbleQuery()
+ *   outNode() or nodeRead().
  *
  * - special_read_write: Has special treatment in outNode() and nodeRead().
  *
@@ -96,6 +100,13 @@ typedef enum NodeTag
  *
  * - equal_ignore_if_zero: Ignore the field for equality if it is zero.
  *   (Otherwise, compare normally.)
+ *
+ * - query_jumble_ignore: Ignore the field for the query jumbling.  Note
+ *   that typmod and collation information are usually irrelevant for the
+ *   query jumbling.
+ *
+ * - query_jumble_location: Mark the field as a location to track.  This is
+ *   only allowed for integer fields that include "location" in their name.
  *
  * - read_as(VALUE): In nodeRead(), replace the field's value with VALUE.
  *

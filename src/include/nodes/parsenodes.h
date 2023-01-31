@@ -116,6 +116,11 @@ typedef uint64 AclMode;			/* a bitmask of privilege bits */
  *
  *	  Planning converts a Query tree into a Plan tree headed by a PlannedStmt
  *	  node --- the Query structure is not used by the executor.
+ *
+ *	  All the fields ignored for the query jumbling are not semantically
+ *	  significant (such as alias names), as is ignored anything that can
+ *	  be deduced from child nodes (else we'd just be double-hashing that
+ *	  piece of information).
  */
 typedef struct Query
 {
@@ -124,45 +129,47 @@ typedef struct Query
 	CmdType		commandType;	/* select|insert|update|delete|merge|utility */
 
 	/* where did I come from? */
-	QuerySource querySource;
+	QuerySource querySource pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * query identifier (can be set by plugins); ignored for equal, as it
-	 * might not be set; also not stored
+	 * might not be set; also not stored.  This is the result of the query
+	 * jumble, hence ignored.
 	 */
-	uint64		queryId pg_node_attr(equal_ignore, read_write_ignore, read_as(0));
+	uint64		queryId pg_node_attr(equal_ignore, query_jumble_ignore, read_write_ignore, read_as(0));
 
 	/* do I set the command result tag? */
-	bool		canSetTag;
+	bool		canSetTag pg_node_attr(query_jumble_ignore);
 
 	Node	   *utilityStmt;	/* non-null if commandType == CMD_UTILITY */
 
 	/*
 	 * rtable index of target relation for INSERT/UPDATE/DELETE/MERGE; 0 for
-	 * SELECT.
+	 * SELECT.  This is ignored in the query jumble as unrelated to the
+	 * compilation of the query ID.
 	 */
-	int			resultRelation;
+	int			resultRelation pg_node_attr(query_jumble_ignore);
 
 	/* has aggregates in tlist or havingQual */
-	bool		hasAggs;
+	bool		hasAggs pg_node_attr(query_jumble_ignore);
 	/* has window functions in tlist */
-	bool		hasWindowFuncs;
+	bool		hasWindowFuncs pg_node_attr(query_jumble_ignore);
 	/* has set-returning functions in tlist */
-	bool		hasTargetSRFs;
+	bool		hasTargetSRFs pg_node_attr(query_jumble_ignore);
 	/* has subquery SubLink */
-	bool		hasSubLinks;
+	bool		hasSubLinks pg_node_attr(query_jumble_ignore);
 	/* distinctClause is from DISTINCT ON */
-	bool		hasDistinctOn;
+	bool		hasDistinctOn pg_node_attr(query_jumble_ignore);
 	/* WITH RECURSIVE was specified */
-	bool		hasRecursive;
+	bool		hasRecursive pg_node_attr(query_jumble_ignore);
 	/* has INSERT/UPDATE/DELETE in WITH */
-	bool		hasModifyingCTE;
+	bool		hasModifyingCTE pg_node_attr(query_jumble_ignore);
 	/* FOR [KEY] UPDATE/SHARE was specified */
-	bool		hasForUpdate;
+	bool		hasForUpdate pg_node_attr(query_jumble_ignore);
 	/* rewriter has applied some RLS policy */
-	bool		hasRowSecurity;
+	bool		hasRowSecurity pg_node_attr(query_jumble_ignore);
 	/* is a RETURN statement */
-	bool		isReturn;
+	bool		isReturn pg_node_attr(query_jumble_ignore);
 
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
@@ -172,18 +179,18 @@ typedef struct Query
 	 * list of RTEPermissionInfo nodes for the rtable entries having
 	 * perminfoindex > 0
 	 */
-	List	   *rteperminfos;
+	List	   *rteperminfos pg_node_attr(query_jumble_ignore);
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses);
 								 * also USING clause for MERGE */
 
 	List	   *mergeActionList;	/* list of actions for MERGE (only) */
 	/* whether to use outer join */
-	bool		mergeUseOuterJoin;
+	bool		mergeUseOuterJoin pg_node_attr(query_jumble_ignore);
 
 	List	   *targetList;		/* target list (of TargetEntry) */
 
 	/* OVERRIDING clause */
-	OverridingKind override;
+	OverridingKind override pg_node_attr(query_jumble_ignore);
 
 	OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
 
@@ -215,10 +222,10 @@ typedef struct Query
 	 * A list of pg_constraint OIDs that the query depends on to be
 	 * semantically valid
 	 */
-	List	   *constraintDeps;
+	List	   *constraintDeps pg_node_attr(query_jumble_ignore);
 
 	/* a list of WithCheckOption's (added during rewrite) */
-	List	   *withCheckOptions;
+	List	   *withCheckOptions pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * The following two fields identify the portion of the source text string
@@ -229,7 +236,7 @@ typedef struct Query
 	/* start location, or -1 if unknown */
 	int			stmt_location;
 	/* length in bytes; 0 means "rest of string" */
-	int			stmt_len;
+	int			stmt_len pg_node_attr(query_jumble_ignore);
 } Query;
 
 
@@ -1019,7 +1026,7 @@ typedef enum RTEKind
 
 typedef struct RangeTblEntry
 {
-	pg_node_attr(custom_read_write)
+	pg_node_attr(custom_read_write, custom_query_jumble)
 
 	NodeTag		type;
 
@@ -1258,6 +1265,8 @@ typedef struct RTEPermissionInfo
  * time.  We do however remember how many columns we thought the type had
  * (including dropped columns!), so that we can successfully ignore any
  * columns added after the query was parsed.
+ *
+ * The query jumbling only needs to track the function expression.
  */
 typedef struct RangeTblFunction
 {
@@ -1265,20 +1274,20 @@ typedef struct RangeTblFunction
 
 	Node	   *funcexpr;		/* expression tree for func call */
 	/* number of columns it contributes to RTE */
-	int			funccolcount;
+	int			funccolcount pg_node_attr(query_jumble_ignore);
 	/* These fields record the contents of a column definition list, if any: */
 	/* column names (list of String) */
-	List	   *funccolnames;
+	List	   *funccolnames pg_node_attr(query_jumble_ignore);
 	/* OID list of column type OIDs */
-	List	   *funccoltypes;
+	List	   *funccoltypes pg_node_attr(query_jumble_ignore);
 	/* integer list of column typmods */
-	List	   *funccoltypmods;
+	List	   *funccoltypmods pg_node_attr(query_jumble_ignore);
 	/* OID list of column collation OIDs */
-	List	   *funccolcollations;
+	List	   *funccolcollations pg_node_attr(query_jumble_ignore);
 
 	/* This is set during planning for use by the executor: */
 	/* PARAM_EXEC Param IDs affecting this func */
-	Bitmapset  *funcparams;
+	Bitmapset  *funcparams pg_node_attr(query_jumble_ignore);
 } RangeTblFunction;
 
 /*
@@ -1386,7 +1395,7 @@ typedef struct SortGroupClause
 	Oid			sortop;			/* the ordering operator ('<' op), or 0 */
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	/* can eqop be implemented by hashing? */
-	bool		hashable;
+	bool		hashable pg_node_attr(query_jumble_ignore);
 } SortGroupClause;
 
 /*
@@ -1451,7 +1460,7 @@ typedef enum GroupingSetKind
 typedef struct GroupingSet
 {
 	NodeTag		type;
-	GroupingSetKind kind;
+	GroupingSetKind kind pg_node_attr(query_jumble_ignore);
 	List	   *content;
 	int			location;
 } GroupingSet;
@@ -1472,14 +1481,17 @@ typedef struct GroupingSet
  * When refname isn't null, the partitionClause is always copied from there;
  * the orderClause might or might not be copied (see copiedOrder); the framing
  * options are never copied, per spec.
+ *
+ * The information relevant for the query jumbling is the partition clause
+ * type and its bounds.
  */
 typedef struct WindowClause
 {
 	NodeTag		type;
 	/* window name (NULL in an OVER clause) */
-	char	   *name;
+	char	   *name pg_node_attr(query_jumble_ignore);
 	/* referenced window name, if any */
-	char	   *refname;
+	char	   *refname pg_node_attr(query_jumble_ignore);
 	List	   *partitionClause;	/* PARTITION BY list */
 	/* ORDER BY list */
 	List	   *orderClause;
@@ -1487,20 +1499,20 @@ typedef struct WindowClause
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
 	/* qual to help short-circuit execution */
-	List	   *runCondition;
+	List	   *runCondition pg_node_attr(query_jumble_ignore);
 	/* in_range function for startOffset */
-	Oid			startInRangeFunc;
+	Oid			startInRangeFunc pg_node_attr(query_jumble_ignore);
 	/* in_range function for endOffset */
-	Oid			endInRangeFunc;
+	Oid			endInRangeFunc pg_node_attr(query_jumble_ignore);
 	/* collation for in_range tests */
-	Oid			inRangeColl;
+	Oid			inRangeColl pg_node_attr(query_jumble_ignore);
 	/* use ASC sort order for in_range tests? */
-	bool		inRangeAsc;
+	bool		inRangeAsc pg_node_attr(query_jumble_ignore);
 	/* nulls sort first for in_range tests? */
-	bool		inRangeNullsFirst;
+	bool		inRangeNullsFirst pg_node_attr(query_jumble_ignore);
 	Index		winref;			/* ID referenced by window functions */
 	/* did we copy orderClause from refname? */
-	bool		copiedOrder;
+	bool		copiedOrder pg_node_attr(query_jumble_ignore);
 } WindowClause;
 
 /*
@@ -1610,31 +1622,37 @@ typedef struct CTECycleClause
 typedef struct CommonTableExpr
 {
 	NodeTag		type;
-	char	   *ctename;		/* query name (never qualified) */
-	List	   *aliascolnames;	/* optional list of column names */
+
+	/*
+	 * Query name (never qualified).  The string name is included in the query
+	 * jumbling because RTE_CTE RTEs need it.
+	 */
+	char	   *ctename;
+	/* optional list of column names */
+	List	   *aliascolnames pg_node_attr(query_jumble_ignore);
 	CTEMaterialize ctematerialized; /* is this an optimization fence? */
 	/* SelectStmt/InsertStmt/etc before parse analysis, Query afterwards: */
 	Node	   *ctequery;		/* the CTE's subquery */
-	CTESearchClause *search_clause;
-	CTECycleClause *cycle_clause;
+	CTESearchClause *search_clause pg_node_attr(query_jumble_ignore);
+	CTECycleClause *cycle_clause pg_node_attr(query_jumble_ignore);
 	int			location;		/* token location, or -1 if unknown */
 	/* These fields are set during parse analysis: */
 	/* is this CTE actually recursive? */
-	bool		cterecursive;
+	bool		cterecursive pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * Number of RTEs referencing this CTE (excluding internal
-	 * self-references)
+	 * self-references), irrelevant for query jumbling.
 	 */
-	int			cterefcount;
+	int			cterefcount pg_node_attr(query_jumble_ignore);
 	/* list of output column names */
-	List	   *ctecolnames;
+	List	   *ctecolnames pg_node_attr(query_jumble_ignore);
 	/* OID list of output column type OIDs */
-	List	   *ctecoltypes;
+	List	   *ctecoltypes pg_node_attr(query_jumble_ignore);
 	/* integer list of output column typmods */
-	List	   *ctecoltypmods;
+	List	   *ctecoltypmods pg_node_attr(query_jumble_ignore);
 	/* OID list of column collation OIDs */
-	List	   *ctecolcollations;
+	List	   *ctecolcollations pg_node_attr(query_jumble_ignore);
 } CommonTableExpr;
 
 /* Convenience macro to get the output tlist of a CTE's query */
@@ -1672,11 +1690,11 @@ typedef struct MergeAction
 	bool		matched;		/* true=MATCHED, false=NOT MATCHED */
 	CmdType		commandType;	/* INSERT/UPDATE/DELETE/DO NOTHING */
 	/* OVERRIDING clause */
-	OverridingKind override;
+	OverridingKind override pg_node_attr(query_jumble_ignore);
 	Node	   *qual;			/* transformed WHEN conditions */
 	List	   *targetList;		/* the target list (of TargetEntry) */
 	/* target attribute numbers of an UPDATE */
-	List	   *updateColnos;
+	List	   *updateColnos pg_node_attr(query_jumble_ignore);
 } MergeAction;
 
 /*
@@ -1885,15 +1903,15 @@ typedef struct SetOperationStmt
 	Node	   *rarg;			/* right child */
 	/* Eventually add fields for CORRESPONDING spec here */
 
-	/* Fields derived during parse analysis: */
+	/* Fields derived during parse analysis (irrelevant for query jumbling): */
 	/* OID list of output column type OIDs */
-	List	   *colTypes;
+	List	   *colTypes pg_node_attr(query_jumble_ignore);
 	/* integer list of output column typmods */
-	List	   *colTypmods;
+	List	   *colTypmods pg_node_attr(query_jumble_ignore);
 	/* OID list of output column collation OIDs */
-	List	   *colCollations;
+	List	   *colCollations pg_node_attr(query_jumble_ignore);
 	/* a list of SortGroupClause's */
-	List	   *groupClauses;
+	List	   *groupClauses pg_node_attr(query_jumble_ignore);
 	/* groupClauses is NIL if UNION ALL, but must be set otherwise */
 } SetOperationStmt;
 

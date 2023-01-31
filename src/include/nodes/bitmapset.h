@@ -50,7 +50,7 @@ typedef int32 signedbitmapword; /* must be the matching signed type */
 
 typedef struct Bitmapset
 {
-	pg_node_attr(custom_copy_equal, special_read_write)
+	pg_node_attr(custom_copy_equal, special_read_write, no_query_jumble)
 
 	NodeTag		type;
 	int			nwords;			/* number of words in array */

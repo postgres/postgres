@@ -10,7 +10,6 @@ backend_sources += files(
   'nodes.c',
   'params.c',
   'print.c',
-  'queryjumblefuncs.c',
   'read.c',
   'tidbitmap.c',
   'value.c',
@@ -21,6 +20,7 @@ backend_sources += files(
 nodefunc_sources = files(
   'copyfuncs.c',
   'equalfuncs.c',
+  'queryjumblefuncs.c',
   'outfuncs.c',
   'readfuncs.c',
 )

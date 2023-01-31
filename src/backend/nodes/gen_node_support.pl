@@ -121,6 +121,8 @@ my %node_type_info;
 my @no_copy;
 # node types we don't want equal support for
 my @no_equal;
+# node types we don't want jumble support for
+my @no_query_jumble;
 # node types we don't want read support for
 my @no_read;
 # node types we don't want read/write support for
@@ -155,12 +157,13 @@ my @extra_tags = qw(
 # This is a regular node, but we skip parsing it from its header file
 # since we won't use its internal structure here anyway.
 push @node_types, qw(List);
-# Lists are specially treated in all four support files, too.
+# Lists are specially treated in all five support files, too.
 # (Ideally we'd mark List as "special copy/equal" not "no copy/equal".
 # But until there's other use-cases for that, just hot-wire the tests
 # that would need to distinguish.)
 push @no_copy,            qw(List);
 push @no_equal,           qw(List);
+push @no_query_jumble,    qw(List);
 push @special_read_write, qw(List);
 
 # Nodes with custom copy/equal implementations are skipped from
@@ -169,6 +172,9 @@ my @custom_copy_equal;
 
 # Similarly for custom read/write implementations.
 my @custom_read_write;
+
+# Similarly for custom query jumble implementation.
+my @custom_query_jumble;
 
 # Track node types with manually assigned NodeTag numbers.
 my %manual_nodetag_number;
@@ -319,6 +325,10 @@ foreach my $infile (@ARGV)
 						{
 							push @custom_read_write, $in_struct;
 						}
+						elsif ($attr eq 'custom_query_jumble')
+						{
+							push @custom_query_jumble, $in_struct;
+						}
 						elsif ($attr eq 'no_copy')
 						{
 							push @no_copy, $in_struct;
@@ -331,6 +341,10 @@ foreach my $infile (@ARGV)
 						{
 							push @no_copy,  $in_struct;
 							push @no_equal, $in_struct;
+						}
+						elsif ($attr eq 'no_query_jumble')
+						{
+							push @no_query_jumble, $in_struct;
 						}
 						elsif ($attr eq 'no_read')
 						{
@@ -457,6 +471,8 @@ foreach my $infile (@ARGV)
 								equal_as_scalar
 								equal_ignore
 								equal_ignore_if_zero
+								query_jumble_ignore
+								query_jumble_location
 								read_write_ignore
 								write_only_relids
 								write_only_nondefault_pathtarget
@@ -1224,6 +1240,102 @@ close $rff;
 close $ofs;
 close $rfs;
 
+
+# queryjumblefuncs.c
+
+push @output_files, 'queryjumblefuncs.funcs.c';
+open my $jff, '>', "$output_path/queryjumblefuncs.funcs.c$tmpext" or die $!;
+push @output_files, 'queryjumblefuncs.switch.c';
+open my $jfs, '>', "$output_path/queryjumblefuncs.switch.c$tmpext" or die $!;
+
+printf $jff $header_comment, 'queryjumblefuncs.funcs.c';
+printf $jfs $header_comment, 'queryjumblefuncs.switch.c';
+
+print $jff $node_includes;
+
+foreach my $n (@node_types)
+{
+	next if elem $n, @abstract_types;
+	next if elem $n, @nodetag_only;
+	my $struct_no_query_jumble = (elem $n, @no_query_jumble);
+
+	print $jfs "\t\t\tcase T_${n}:\n"
+	  . "\t\t\t\t_jumble${n}(jstate, expr);\n"
+	  . "\t\t\t\tbreak;\n"
+	  unless $struct_no_query_jumble;
+
+	next if elem $n, @custom_query_jumble;
+
+	print $jff "
+static void
+_jumble${n}(JumbleState *jstate, Node *node)
+{
+\t${n} *expr = (${n} *) node;\n
+" unless $struct_no_query_jumble;
+
+	# print instructions for each field
+	foreach my $f (@{ $node_type_info{$n}->{fields} })
+	{
+		my $t                   = $node_type_info{$n}->{field_types}{$f};
+		my @a                   = @{ $node_type_info{$n}->{field_attrs}{$f} };
+		my $query_jumble_ignore = $struct_no_query_jumble;
+		my $query_jumble_location = 0;
+
+		# extract per-field attributes
+		foreach my $a (@a)
+		{
+			if ($a eq 'query_jumble_ignore')
+			{
+				$query_jumble_ignore = 1;
+			}
+			elsif ($a eq 'query_jumble_location')
+			{
+				$query_jumble_location = 1;
+			}
+		}
+
+		# node type
+		if (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
+			and elem $1, @node_types)
+		{
+			print $jff "\tJUMBLE_NODE($f);\n"
+			  unless $query_jumble_ignore;
+		}
+		elsif ($t eq 'int' && $f =~ 'location$')
+		{
+			# Track the node's location only if directly requested.
+			if ($query_jumble_location)
+			{
+				print $jff "\tJUMBLE_LOCATION($f);\n"
+				  unless $query_jumble_ignore;
+			}
+		}
+		elsif ($t eq 'char*')
+		{
+			print $jff "\tJUMBLE_STRING($f);\n"
+			  unless $query_jumble_ignore;
+		}
+		else
+		{
+			print $jff "\tJUMBLE_FIELD($f);\n"
+			  unless $query_jumble_ignore;
+		}
+	}
+
+	# Some nodes have no attributes like CheckPointStmt,
+	# so tweak things for empty contents.
+	if (scalar(@{ $node_type_info{$n}->{fields} }) == 0)
+	{
+		print $jff "\t(void) expr;\n"
+		  unless $struct_no_query_jumble;
+	}
+
+	print $jff "}
+" unless $struct_no_query_jumble;
+}
+
+close $jff;
+close $jfs;
 
 # now rename the temporary files to their final names
 foreach my $file (@output_files)
