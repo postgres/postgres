@@ -90,7 +90,8 @@ if %DIST%==1 if exist src\backend\replication\repl_scanner.c del /q src\backend\
 if %DIST%==1 if exist src\backend\replication\repl_gram.c del /q src\backend\replication\repl_gram.c
 if %DIST%==1 if exist src\backend\replication\syncrep_scanner.c del /q src\backend\replication\syncrep_scanner.c
 if %DIST%==1 if exist src\backend\replication\syncrep_gram.c del /q src\backend\replication\syncrep_gram.c
-
+if %DIST%==1 if exist src\backend\statistics\statistics_scanner.c del /q src\backend\statistics\statistics_scanner.c
+if %DIST%==1 if exist src\backend\statistics\statistics_gram.c del /q src\backend\statistics\statistics_gram.c
 
 if exist src\interfaces\libpq\libpqdll.def del /q src\interfaces\libpq\libpqdll.def
 if exist src\interfaces\ecpg\compatlib\compatlib.def del /q src\interfaces\ecpg\compatlib\compatlib.def
