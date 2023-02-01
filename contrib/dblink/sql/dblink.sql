@@ -489,6 +489,11 @@ DROP SERVER fdtest;
 -- should fail
 ALTER FOREIGN DATA WRAPPER dblink_fdw OPTIONS (nonexistent 'fdw');
 
+-- test repeated calls to dblink_connect
+SELECT dblink_connect(connection_parameters());
+SELECT dblink_connect(connection_parameters());
+SELECT dblink_disconnect();
+
 -- test asynchronous notifications
 SELECT dblink_connect(connection_parameters());
 

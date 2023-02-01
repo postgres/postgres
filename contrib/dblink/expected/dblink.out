@@ -938,6 +938,25 @@ DROP SERVER fdtest;
 ALTER FOREIGN DATA WRAPPER dblink_fdw OPTIONS (nonexistent 'fdw');
 ERROR:  invalid option "nonexistent"
 HINT:  There are no valid options in this context.
+-- test repeated calls to dblink_connect
+SELECT dblink_connect(connection_parameters());
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT dblink_connect(connection_parameters());
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT dblink_disconnect();
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
 -- test asynchronous notifications
 SELECT dblink_connect(connection_parameters());
  dblink_connect 

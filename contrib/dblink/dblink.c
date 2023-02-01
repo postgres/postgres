@@ -321,7 +321,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 	else
 	{
 		if (pconn->conn)
-			libpqsrv_disconnect(conn);
+			libpqsrv_disconnect(pconn->conn);
 		pconn->conn = conn;
 	}
 
