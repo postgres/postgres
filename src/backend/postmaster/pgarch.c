@@ -297,13 +297,12 @@ pgarch_waken_stop(SIGNAL_ARGS)
 static void
 pgarch_MainLoop(void)
 {
-	pg_time_t	last_copy_time = 0;
 	bool		time_to_stop;
 
 	/*
 	 * There shouldn't be anything for the archiver to do except to wait for a
-	 * signal ... however, the archiver exists to protect our data, so she
-	 * wakes up occasionally to allow herself to be proactive.
+	 * signal ... however, the archiver exists to protect our data, so it
+	 * wakes up occasionally to allow itself to be proactive.
 	 */
 	do
 	{
@@ -335,30 +334,21 @@ pgarch_MainLoop(void)
 
 		/* Do what we're here for */
 		pgarch_ArchiverCopyLoop();
-		last_copy_time = time(NULL);
 
 		/*
 		 * Sleep until a signal is received, or until a poll is forced by
-		 * PGARCH_AUTOWAKE_INTERVAL having passed since last_copy_time, or
-		 * until postmaster dies.
+		 * PGARCH_AUTOWAKE_INTERVAL, or until postmaster dies.
 		 */
 		if (!time_to_stop)		/* Don't wait during last iteration */
 		{
-			pg_time_t	curtime = (pg_time_t) time(NULL);
-			int			timeout;
+			int			rc;
 
-			timeout = PGARCH_AUTOWAKE_INTERVAL - (curtime - last_copy_time);
-			if (timeout > 0)
-			{
-				int			rc;
-
-				rc = WaitLatch(MyLatch,
-							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							   timeout * 1000L,
-							   WAIT_EVENT_ARCHIVER_MAIN);
-				if (rc & WL_POSTMASTER_DEATH)
-					time_to_stop = true;
-			}
+			rc = WaitLatch(MyLatch,
+						   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+						   PGARCH_AUTOWAKE_INTERVAL * 1000L,
+						   WAIT_EVENT_ARCHIVER_MAIN);
+			if (rc & WL_POSTMASTER_DEATH)
+				time_to_stop = true;
 		}
 
 		/*
