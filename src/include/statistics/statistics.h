@@ -22,6 +22,9 @@
 #define STATS_NDISTINCT_MAGIC		0xA352BFA4	/* struct identifier */
 #define STATS_NDISTINCT_TYPE_BASIC	1	/* struct version */
 
+#define PG_RETURN_MVNDistinct_P(X) return PointerGetDatum(X)
+#define PG_RETURN_MVDependencies_P(X) return PointerGetDatum(X)
+
 /* MVNDistinctItem represents a single combination of columns */
 typedef struct MVNDistinctItem
 {

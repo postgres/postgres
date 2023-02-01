@@ -1469,21 +1469,13 @@ pg_stats_ext_mcvlist_items(PG_FUNCTION_ARGS)
 /*
  * pg_mcv_list_in		- input routine for type pg_mcv_list.
  *
- * pg_mcv_list is real enough to be a table column, but it has no operations
- * of its own, and disallows input too
+ * converts serialized text MCV lists into a byte values by simply
+ * calling byeain().
  */
 Datum
 pg_mcv_list_in(PG_FUNCTION_ARGS)
 {
-	/*
-	 * pg_mcv_list stores the data in binary form and parsing text input is
-	 * not needed, so disallow this.
-	 */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type %s", "pg_mcv_list")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
+	PG_RETURN_DATUM(byteain(fcinfo));
 }
 
 
