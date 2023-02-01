@@ -68,7 +68,12 @@ cleanup_output_dirs(void)
 	if (log_opts.retain)
 		return;
 
-	(void) rmtree(log_opts.basedir, true);
+	/*
+	 * Try twice.  The second time might wait for files to finish being
+	 * unlinked, on Windows.
+	 */
+	if (!rmtree(log_opts.basedir, true))
+		rmtree(log_opts.basedir, true);
 
 	/* Remove pg_upgrade_output.d only if empty */
 	switch (pg_check_dir(log_opts.rootdir))
@@ -80,7 +85,13 @@ cleanup_output_dirs(void)
 
 		case 1:					/* exists and empty */
 		case 2:					/* exists and contains only dot files */
-			(void) rmtree(log_opts.rootdir, true);
+
+			/*
+			 * Try twice.  The second time might wait for files to finish
+			 * being unlinked, on Windows.
+			 */
+			if (!rmtree(log_opts.rootdir, true))
+				rmtree(log_opts.rootdir, true);
 			break;
 
 		case 4:					/* exists */
