@@ -293,7 +293,7 @@ WalReceiverMain(void)
 		elog(ERROR, "libpqwalreceiver didn't initialize correctly");
 
 	/* Unblock signals (they were blocked when the postmaster forked us) */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/* Establish the connection to the primary for XLOG streaming */
 	wrconn = walrcv_connect(conninfo, false,

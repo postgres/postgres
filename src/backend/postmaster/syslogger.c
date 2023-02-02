@@ -263,7 +263,7 @@ SysLoggerMain(int argc, char *argv[])
 	 */
 	pqsignal(SIGCHLD, SIG_DFL);
 
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 #ifdef WIN32
 	/* Fire up separate data transfer thread */

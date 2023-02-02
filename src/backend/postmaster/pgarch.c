@@ -227,7 +227,7 @@ PgArchiverMain(void)
 	pqsignal(SIGCHLD, SIG_DFL);
 
 	/* Unblock signals (they were blocked when the postmaster forked us) */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/* We shouldn't be launched unnecessarily. */
 	Assert(XLogArchivingActive());

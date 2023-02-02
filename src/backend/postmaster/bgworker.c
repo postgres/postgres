@@ -726,7 +726,7 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 static void
 bgworker_die(SIGNAL_ARGS)
 {
-	PG_SETMASK(&BlockSig);
+	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 
 	ereport(FATAL,
 			(errcode(ERRCODE_ADMIN_SHUTDOWN),

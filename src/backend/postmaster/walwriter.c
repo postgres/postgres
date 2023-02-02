@@ -205,7 +205,7 @@ WalWriterMain(void)
 	/*
 	 * Unblock signals (they were blocked when the postmaster forked us)
 	 */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Reset hibernation state after any error.

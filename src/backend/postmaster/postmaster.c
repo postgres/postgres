@@ -639,7 +639,7 @@ PostmasterMain(int argc, char *argv[])
 	 * postmaster/bgworker.c and postmaster/checkpointer.c.
 	 */
 	pqinitmask();
-	PG_SETMASK(&BlockSig);
+	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 
 	pqsignal(SIGHUP, handle_pm_reload_request_signal);
 	pqsignal(SIGINT, handle_pm_shutdown_request_signal);
@@ -675,7 +675,7 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 	/* Begin accepting signals. */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Options setup
@@ -4321,7 +4321,7 @@ BackendInitialize(Port *port)
 	pqsignal(SIGTERM, process_startup_packet_die);
 	/* SIGQUIT handler was already set up by InitPostmasterChild */
 	InitializeTimeouts();		/* establishes SIGALRM handler */
-	PG_SETMASK(&StartupBlockSig);
+	sigprocmask(SIG_SETMASK, &StartupBlockSig, NULL);
 
 	/*
 	 * Get the remote host name and port for logging and status display.
@@ -4402,7 +4402,7 @@ BackendInitialize(Port *port)
 	 * Disable the timeout, and prevent SIGTERM again.
 	 */
 	disable_timeout(STARTUP_PACKET_TIMEOUT, false);
-	PG_SETMASK(&BlockSig);
+	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 
 	/*
 	 * As a safety check that nothing in startup has yet performed
@@ -5661,13 +5661,13 @@ BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid, uint32 flags)
 void
 BackgroundWorkerBlockSignals(void)
 {
-	PG_SETMASK(&BlockSig);
+	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 }
 
 void
 BackgroundWorkerUnblockSignals(void)
 {
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 }
 
 #ifdef EXEC_BACKEND

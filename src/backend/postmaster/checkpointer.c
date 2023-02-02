@@ -326,7 +326,7 @@ CheckpointerMain(void)
 	/*
 	 * Unblock signals (they were blocked when the postmaster forked us)
 	 */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Ensure all shared memory values are set correctly for the config. Doing

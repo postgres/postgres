@@ -159,7 +159,7 @@ InitPostmasterChild(void)
 	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
 
 	sigdelset(&BlockSig, SIGQUIT);
-	PG_SETMASK(&BlockSig);
+	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 
 	/* Request a signal if the postmaster dies, if possible. */
 	PostmasterDeathSignalInit();
@@ -196,7 +196,7 @@ InitStandaloneProcess(const char *argv0)
 	 * But we don't unblock SIGQUIT or provide a default handler for it.
 	 */
 	pqinitmask();
-	PG_SETMASK(&BlockSig);
+	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 
 	/* Compute paths, no postmaster to inherit from */
 	if (my_exec_path[0] == '\0')

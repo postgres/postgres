@@ -568,7 +568,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	PG_exception_stack = &local_sigjmp_buf;
 
 	/* must unblock signals before calling rebuild_database_list */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Set always-secure search path.  Launcher doesn't connect to a database,
@@ -1589,7 +1589,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
 
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Set always-secure search path, so malicious users can't redirect user
