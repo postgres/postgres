@@ -756,7 +756,7 @@ include_dir 'conf.d'
        <para>
         A value that starts with <literal>@</literal> specifies that a
         Unix-domain socket in the abstract namespace should be created
-        (currently supported on Linux and Windows).  In that case, this value
+        (currently supported on Linux only).  In that case, this value
         does not specify a <quote>directory</quote> but a prefix from which
         the actual socket name is computed in the same manner as for the
         file-system namespace.  While the abstract socket name prefix can be
