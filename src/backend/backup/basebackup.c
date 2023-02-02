@@ -1569,14 +1569,6 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 								   len, readfilename, true);
 
 		/*
-		 * If we hit end-of-file, a concurrent truncation must have occurred.
-		 * That's not an error condition, because WAL replay will fix things
-		 * up.
-		 */
-		if (cnt == 0)
-			break;
-
-		/*
 		 * The checksums are verified at block level, so we iterate over the
 		 * buffer in chunks of BLCKSZ, after making sure that
 		 * TAR_SEND_SIZE/buf is divisible by BLCKSZ and we read a multiple of
@@ -1678,6 +1670,15 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 			}
 		}
 
+		/*
+		 * If we hit end-of-file, a concurrent truncation must have occurred.
+		 * That's not an error condition, because WAL replay will fix things
+		 * up.
+		 */
+		if (cnt == 0)
+			break;
+
+		/* Archive the data we just read. */
 		bbsink_archive_contents(sink, cnt);
 
 		/* Also feed it to the checksum machinery. */
