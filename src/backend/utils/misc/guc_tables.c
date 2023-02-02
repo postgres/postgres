@@ -4920,8 +4920,10 @@ struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"logical_replication_mode", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Controls when to replicate each change."),
-			gettext_noop("On the publisher, it allows streaming or serializing each change in logical decoding."),
+			gettext_noop("Controls when to replicate or apply each change."),
+			gettext_noop("On the publisher, it allows streaming or serializing each change in logical decoding. "
+						 "On the subscriber, it allows serialization of all changes to files and notifies the "
+						 "parallel apply workers to read and apply them at the end of the transaction."),
 			GUC_NOT_IN_SAMPLE
 		},
 		&logical_replication_mode,

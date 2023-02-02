@@ -11701,22 +11701,35 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </term>
       <listitem>
        <para>
-        Allows streaming or serializing changes immediately in logical decoding.
-        The allowed values of <varname>logical_replication_mode</varname> are
-        <literal>buffered</literal> and <literal>immediate</literal>. When set
-        to <literal>immediate</literal>, stream each change if
+        The allowed values are <literal>buffered</literal> and
+        <literal>immediate</literal>. The default is <literal>buffered</literal>.
+        This parameter is intended to be used to test logical decoding and
+        replication of large transactions.  The effect of
+        <varname>logical_replication_mode</varname> is different for the
+        publisher and subscriber:
+       </para>
+
+       <para>
+        On the publisher side, <varname>logical_replication_mode</varname>
+        allows streaming or serializing changes immediately in logical decoding.
+        When set to <literal>immediate</literal>, stream each change if the
         <literal>streaming</literal> option (see optional parameters set by
         <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>)
         is enabled, otherwise, serialize each change.  When set to
-        <literal>buffered</literal>, which is the default, decoding will stream
-        or serialize changes when <varname>logical_decoding_work_mem</varname>
-        is reached.
+        <literal>buffered</literal>, the decoding will stream or serialize
+        changes when <varname>logical_decoding_work_mem</varname> is reached.
        </para>
+
        <para>
-        This parameter is intended to be used to test logical decoding and
-        replication of large transactions for which otherwise we need to
-        generate the changes till <varname>logical_decoding_work_mem</varname>
-        is reached.
+        On the subscriber side, if the <literal>streaming</literal> option is set to
+        <literal>parallel</literal>, <varname>logical_replication_mode</varname>
+        can be used to direct the leader apply worker to send changes to the
+        shared memory queue or to serialize all changes to the file.  When set to
+        <literal>buffered</literal>, the leader sends changes to parallel apply
+        workers via a shared memory queue.  When set to
+        <literal>immediate</literal>, the leader serializes all changes to files
+        and notifies the parallel apply workers to read and apply them at the
+        end of the transaction.
        </para>
       </listitem>
      </varlistentry>

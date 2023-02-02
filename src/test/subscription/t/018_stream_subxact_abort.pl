@@ -143,15 +143,17 @@ $node_publisher->safe_psql('postgres',
 	"CREATE TABLE test_tab (a int primary key, b varchar)");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO test_tab VALUES (1, 'foo'), (2, 'bar')");
+$node_publisher->safe_psql('postgres', "CREATE TABLE test_tab_2 (a int)");
 
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE test_tab (a int primary key, b text, c INT, d INT, e INT)");
+$node_subscriber->safe_psql('postgres', "CREATE TABLE test_tab_2 (a int)");
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub FOR TABLE test_tab");
+	"CREATE PUBLICATION tap_pub FOR TABLE test_tab, test_tab_2");
 
 my $appname = 'tap_sub';
 
@@ -197,6 +199,63 @@ $node_subscriber->reload;
 $node_subscriber->safe_psql('postgres', q{SELECT 1});
 
 test_streaming($node_publisher, $node_subscriber, $appname, 1);
+
+# Test serializing changes to files and notify the parallel apply worker to
+# apply them at the end of the transaction.
+$node_subscriber->append_conf('postgresql.conf',
+	'logical_replication_mode = immediate');
+# Reset the log_min_messages to default.
+$node_subscriber->append_conf('postgresql.conf', "log_min_messages = warning");
+$node_subscriber->reload;
+
+# Run a query to make sure that the reload has taken effect.
+$node_subscriber->safe_psql('postgres', q{SELECT 1});
+
+my $offset = -s $node_subscriber->logfile;
+
+$node_publisher->safe_psql(
+	'postgres', q{
+	BEGIN;
+	INSERT INTO test_tab_2 values(1);
+	ROLLBACK;
+	});
+
+# Ensure that the changes are serialized.
+$node_subscriber->wait_for_log(
+	qr/LOG: ( [A-Z0-9]+:)? logical replication apply worker will serialize the remaining changes of remote transaction \d+ to a file/,
+	$offset);
+
+$node_publisher->wait_for_catchup($appname);
+
+# Check that transaction is aborted on subscriber
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM test_tab_2");
+is($result, qq(0), 'check rollback was reflected on subscriber');
+
+# Serialize the ABORT sub-transaction.
+$offset = -s $node_subscriber->logfile;
+
+$node_publisher->safe_psql(
+	'postgres', q{
+	BEGIN;
+	INSERT INTO test_tab_2 values(1);
+	SAVEPOINT sp;
+	INSERT INTO test_tab_2 values(1);
+	ROLLBACK TO sp;
+	COMMIT;
+	});
+
+# Ensure that the changes are serialized.
+$node_subscriber->wait_for_log(
+	qr/LOG: ( [A-Z0-9]+:)? logical replication apply worker will serialize the remaining changes of remote transaction \d+ to a file/,
+	$offset);
+
+$node_publisher->wait_for_catchup($appname);
+
+# Check that only sub-transaction is aborted on subscriber.
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM test_tab_2");
+is($result, qq(1), 'check rollback to savepoint was reflected on subscriber');
 
 $node_subscriber->stop;
 $node_publisher->stop;
