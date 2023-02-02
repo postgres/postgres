@@ -1467,13 +1467,6 @@ is_checksummed_file(const char *fullpath, const char *filename)
 		return false;
 }
 
-/*****
- * Functions for handling tar file format
- *
- * Copied from pg_dump, but modified to work with libpq for sending
- */
-
-
 /*
  * Given the member, write the TAR header & send the file.
  *
