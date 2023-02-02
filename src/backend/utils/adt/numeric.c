@@ -4245,7 +4245,15 @@ int64_div_fast_to_numeric(int64 val1, int log10val2)
 	 */
 	if (m > 0)
 	{
+#if DEC_DIGITS == 4
 		static int	pow10[] = {1, 10, 100, 1000};
+#elif DEC_DIGITS == 2
+		static int	pow10[] = {1, 10};
+#elif DEC_DIGITS == 1
+		static int	pow10[] = {1};
+#else
+#error unsupported NBASE
+#endif
 
 		StaticAssertDecl(lengthof(pow10) == DEC_DIGITS, "mismatch with DEC_DIGITS");
 
