@@ -483,6 +483,67 @@ heapgetpage(TableScanDesc sscan, BlockNumber block)
 	scan->rs_ntuples = ntup;
 }
 
+/*
+ * heapgettup_initial_block - return the first BlockNumber to scan
+ *
+ * Returns InvalidBlockNumber when there are no blocks to scan.  This can
+ * occur with empty tables and in parallel scans when parallel workers get all
+ * of the pages before we can get a chance to get our first page.
+ */
+static BlockNumber
+heapgettup_initial_block(HeapScanDesc scan, ScanDirection dir)
+{
+	Assert(!scan->rs_inited);
+
+	/* When there are no pages to scan, return InvalidBlockNumber */
+	if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
+		return InvalidBlockNumber;
+
+	if (ScanDirectionIsForward(dir))
+	{
+		/* serial scan */
+		if (scan->rs_base.rs_parallel == NULL)
+			return scan->rs_startblock;
+		else
+		{
+			/* parallel scan */
+			table_block_parallelscan_startblock_init(scan->rs_base.rs_rd,
+													 scan->rs_parallelworkerdata,
+													 (ParallelBlockTableScanDesc) scan->rs_base.rs_parallel);
+
+			/* may return InvalidBlockNumber if there are no more blocks */
+			return table_block_parallelscan_nextpage(scan->rs_base.rs_rd,
+													 scan->rs_parallelworkerdata,
+													 (ParallelBlockTableScanDesc) scan->rs_base.rs_parallel);
+		}
+	}
+	else
+	{
+		/* backward parallel scan not supported */
+		Assert(scan->rs_base.rs_parallel == NULL);
+
+		/*
+		 * Disable reporting to syncscan logic in a backwards scan; it's not
+		 * very likely anyone else is doing the same thing at the same time,
+		 * and much more likely that we'll just bollix things for forward
+		 * scanners.
+		 */
+		scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
+
+		/*
+		 * Start from last page of the scan.  Ensure we take into account
+		 * rs_numblocks if it's been adjusted by heap_setscanlimits().
+		 */
+		if (scan->rs_numblocks != InvalidBlockNumber)
+			return (scan->rs_startblock + scan->rs_numblocks - 1) % scan->rs_nblocks;
+
+		if (scan->rs_startblock > 0)
+			return scan->rs_startblock - 1;
+
+		return scan->rs_nblocks - 1;
+	}
+}
+
 /* ----------------
  *		heapgettup - fetch next heap tuple
  *
@@ -527,38 +588,19 @@ heapgettup(HeapScanDesc scan,
 	{
 		if (!scan->rs_inited)
 		{
+			block = heapgettup_initial_block(scan, dir);
+
 			/*
-			 * return null immediately if relation is empty
+			 * Check if we have reached the end of the scan already. This
+			 * could happen if the table is empty or if the parallel workers
+			 * have already finished the scan before we did anything ourselves
 			 */
-			if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
+			if (block == InvalidBlockNumber)
 			{
 				Assert(!BufferIsValid(scan->rs_cbuf));
 				tuple->t_data = NULL;
 				return;
 			}
-			if (scan->rs_base.rs_parallel != NULL)
-			{
-				ParallelBlockTableScanDesc pbscan =
-				(ParallelBlockTableScanDesc) scan->rs_base.rs_parallel;
-				ParallelBlockTableScanWorker pbscanwork =
-				scan->rs_parallelworkerdata;
-
-				table_block_parallelscan_startblock_init(scan->rs_base.rs_rd,
-														 pbscanwork, pbscan);
-
-				block = table_block_parallelscan_nextpage(scan->rs_base.rs_rd,
-														  pbscanwork, pbscan);
-
-				/* Other processes might have already finished the scan. */
-				if (block == InvalidBlockNumber)
-				{
-					Assert(!BufferIsValid(scan->rs_cbuf));
-					tuple->t_data = NULL;
-					return;
-				}
-			}
-			else
-				block = scan->rs_startblock;	/* first page */
 			heapgetpage((TableScanDesc) scan, block);
 			lineoff = FirstOffsetNumber;	/* first offnum */
 			scan->rs_inited = true;
@@ -582,60 +624,40 @@ heapgettup(HeapScanDesc scan,
 	}
 	else
 	{
-		/* backward parallel scan not supported */
-		Assert(scan->rs_base.rs_parallel == NULL);
-
 		if (!scan->rs_inited)
 		{
+			block = heapgettup_initial_block(scan, dir);
+
 			/*
-			 * return null immediately if relation is empty
+			 * Check if we have reached the end of the scan already. This
+			 * could happen if the table is empty.
 			 */
-			if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
+			if (block == InvalidBlockNumber)
 			{
 				Assert(!BufferIsValid(scan->rs_cbuf));
 				tuple->t_data = NULL;
 				return;
 			}
 
-			/*
-			 * Disable reporting to syncscan logic in a backwards scan; it's
-			 * not very likely anyone else is doing the same thing at the same
-			 * time, and much more likely that we'll just bollix things for
-			 * forward scanners.
-			 */
-			scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
-
-			/*
-			 * Start from last page of the scan.  Ensure we take into account
-			 * rs_numblocks if it's been adjusted by heap_setscanlimits().
-			 */
-			if (scan->rs_numblocks != InvalidBlockNumber)
-				block = (scan->rs_startblock + scan->rs_numblocks - 1) % scan->rs_nblocks;
-			else if (scan->rs_startblock > 0)
-				block = scan->rs_startblock - 1;
-			else
-				block = scan->rs_nblocks - 1;
 			heapgetpage((TableScanDesc) scan, block);
-		}
-		else
-		{
-			/* continue from previously returned page/tuple */
-			block = scan->rs_cblock;	/* current page */
-		}
+			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-
-		page = BufferGetPage(scan->rs_cbuf);
-		TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-		lines = PageGetMaxOffsetNumber(page);
-
-		if (!scan->rs_inited)
-		{
+			page = BufferGetPage(scan->rs_cbuf);
+			TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
+			lines = PageGetMaxOffsetNumber(page);
 			lineoff = lines;	/* final offnum */
 			scan->rs_inited = true;
 		}
 		else
 		{
+			/* continue from previously returned page/tuple */
+			block = scan->rs_cblock;	/* current page */
+			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+
+			page = BufferGetPage(scan->rs_cbuf);
+			TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
+			lines = PageGetMaxOffsetNumber(page);
+
 			/*
 			 * The previous returned tuple may have been vacuumed since the
 			 * previous scan when we use a non-MVCC snapshot, so we must
@@ -837,38 +859,19 @@ heapgettup_pagemode(HeapScanDesc scan,
 	{
 		if (!scan->rs_inited)
 		{
+			block = heapgettup_initial_block(scan, dir);
+
 			/*
-			 * return null immediately if relation is empty
+			 * Check if we have reached the end of the scan already. This
+			 * could happen if the table is empty or if the parallel workers
+			 * have already finished the scan before we did anything ourselves
 			 */
-			if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
+			if (block == InvalidBlockNumber)
 			{
 				Assert(!BufferIsValid(scan->rs_cbuf));
 				tuple->t_data = NULL;
 				return;
 			}
-			if (scan->rs_base.rs_parallel != NULL)
-			{
-				ParallelBlockTableScanDesc pbscan =
-				(ParallelBlockTableScanDesc) scan->rs_base.rs_parallel;
-				ParallelBlockTableScanWorker pbscanwork =
-				scan->rs_parallelworkerdata;
-
-				table_block_parallelscan_startblock_init(scan->rs_base.rs_rd,
-														 pbscanwork, pbscan);
-
-				block = table_block_parallelscan_nextpage(scan->rs_base.rs_rd,
-														  pbscanwork, pbscan);
-
-				/* Other processes might have already finished the scan. */
-				if (block == InvalidBlockNumber)
-				{
-					Assert(!BufferIsValid(scan->rs_cbuf));
-					tuple->t_data = NULL;
-					return;
-				}
-			}
-			else
-				block = scan->rs_startblock;	/* first page */
 			heapgetpage((TableScanDesc) scan, block);
 			lineindex = 0;
 			scan->rs_inited = true;
@@ -889,58 +892,36 @@ heapgettup_pagemode(HeapScanDesc scan,
 	}
 	else
 	{
-		/* backward parallel scan not supported */
-		Assert(scan->rs_base.rs_parallel == NULL);
-
 		if (!scan->rs_inited)
 		{
+			block = heapgettup_initial_block(scan, dir);
+
 			/*
-			 * return null immediately if relation is empty
+			 * Check if we have reached the end of the scan already. This
+			 * could happen if the table is empty.
 			 */
-			if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
+			if (block == InvalidBlockNumber)
 			{
 				Assert(!BufferIsValid(scan->rs_cbuf));
 				tuple->t_data = NULL;
 				return;
 			}
 
-			/*
-			 * Disable reporting to syncscan logic in a backwards scan; it's
-			 * not very likely anyone else is doing the same thing at the same
-			 * time, and much more likely that we'll just bollix things for
-			 * forward scanners.
-			 */
-			scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
-
-			/*
-			 * Start from last page of the scan.  Ensure we take into account
-			 * rs_numblocks if it's been adjusted by heap_setscanlimits().
-			 */
-			if (scan->rs_numblocks != InvalidBlockNumber)
-				block = (scan->rs_startblock + scan->rs_numblocks - 1) % scan->rs_nblocks;
-			else if (scan->rs_startblock > 0)
-				block = scan->rs_startblock - 1;
-			else
-				block = scan->rs_nblocks - 1;
 			heapgetpage((TableScanDesc) scan, block);
-		}
-		else
-		{
-			/* continue from previously returned page/tuple */
-			block = scan->rs_cblock;	/* current page */
-		}
-
-		page = BufferGetPage(scan->rs_cbuf);
-		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-		lines = scan->rs_ntuples;
-
-		if (!scan->rs_inited)
-		{
+			page = BufferGetPage(scan->rs_cbuf);
+			TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
+			lines = scan->rs_ntuples;
 			lineindex = lines - 1;
 			scan->rs_inited = true;
 		}
 		else
 		{
+			/* continue from previously returned page/tuple */
+			block = scan->rs_cblock;	/* current page */
+
+			page = BufferGetPage(scan->rs_cbuf);
+			TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
+			lines = scan->rs_ntuples;
 			lineindex = scan->rs_cindex - 1;
 		}
 		/* block and lineindex now reference the previous visible tid */
