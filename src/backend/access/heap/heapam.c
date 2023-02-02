@@ -576,101 +576,67 @@ heapgettup(HeapScanDesc scan,
 	BlockNumber block;
 	bool		finished;
 	Page		page;
-	int			lines;
 	OffsetNumber lineoff;
 	int			linesleft;
 	ItemId		lpp;
 
-	/*
-	 * calculate next starting lineoff, given scan direction
-	 */
-	if (ScanDirectionIsForward(dir))
+	if (unlikely(!scan->rs_inited))
 	{
-		if (!scan->rs_inited)
-		{
-			block = heapgettup_initial_block(scan, dir);
+		block = heapgettup_initial_block(scan, dir);
 
-			/*
-			 * Check if we have reached the end of the scan already. This
-			 * could happen if the table is empty or if the parallel workers
-			 * have already finished the scan before we did anything ourselves
-			 */
-			if (block == InvalidBlockNumber)
-			{
-				Assert(!BufferIsValid(scan->rs_cbuf));
-				tuple->t_data = NULL;
-				return;
-			}
-			heapgetpage((TableScanDesc) scan, block);
-			lineoff = FirstOffsetNumber;	/* first offnum */
-			scan->rs_inited = true;
-		}
-		else
+		/*
+		 * Check if we have reached the end of the scan already. This could
+		 * happen if the table is empty or if the parallel workers have
+		 * already finished the scan before we did anything ourselves
+		 */
+		if (block == InvalidBlockNumber)
 		{
-			/* continue from previously returned page/tuple */
-			block = scan->rs_cblock;	/* current page */
-			lineoff =			/* next offnum */
-				OffsetNumberNext(ItemPointerGetOffsetNumber(&(tuple->t_self)));
+			Assert(!BufferIsValid(scan->rs_cbuf));
+			tuple->t_data = NULL;
+			return;
 		}
+
+		heapgetpage((TableScanDesc) scan, block);
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-
 		page = BufferGetPage(scan->rs_cbuf);
 		TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-		lines = PageGetMaxOffsetNumber(page);
-		/* block and lineoff now reference the physically next tid */
 
-		linesleft = lines - lineoff + 1;
+		linesleft = PageGetMaxOffsetNumber(page) - FirstOffsetNumber + 1;
+
+		if (ScanDirectionIsForward(dir))
+			lineoff = FirstOffsetNumber;	/* first offnum */
+		else
+			lineoff = (OffsetNumber) linesleft;
+
+		scan->rs_inited = true;
 	}
 	else
 	{
-		if (!scan->rs_inited)
+		/* continue from previously returned page/tuple */
+		block = scan->rs_cblock;
+
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+		page = BufferGetPage(scan->rs_cbuf);
+		TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
+
+		if (ScanDirectionIsForward(dir))
 		{
-			block = heapgettup_initial_block(scan, dir);
-
-			/*
-			 * Check if we have reached the end of the scan already. This
-			 * could happen if the table is empty.
-			 */
-			if (block == InvalidBlockNumber)
-			{
-				Assert(!BufferIsValid(scan->rs_cbuf));
-				tuple->t_data = NULL;
-				return;
-			}
-
-			heapgetpage((TableScanDesc) scan, block);
-			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-
-			page = BufferGetPage(scan->rs_cbuf);
-			TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-			lines = PageGetMaxOffsetNumber(page);
-			lineoff = lines;	/* final offnum */
-			scan->rs_inited = true;
+			lineoff = OffsetNumberNext(scan->rs_coffset);
+			linesleft = PageGetMaxOffsetNumber(page) - lineoff + 1;
 		}
 		else
 		{
-			/* continue from previously returned page/tuple */
-			block = scan->rs_cblock;	/* current page */
-			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-
-			page = BufferGetPage(scan->rs_cbuf);
-			TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-			lines = PageGetMaxOffsetNumber(page);
-
 			/*
 			 * The previous returned tuple may have been vacuumed since the
 			 * previous scan when we use a non-MVCC snapshot, so we must
 			 * re-establish the lineoff <= PageGetMaxOffsetNumber(page)
 			 * invariant
 			 */
-			lineoff =			/* previous offnum */
-				Min(lines,
-					OffsetNumberPrev(ItemPointerGetOffsetNumber(&(tuple->t_self))));
+			lineoff = Min(PageGetMaxOffsetNumber(page),
+						  OffsetNumberPrev(scan->rs_coffset));
+			linesleft = lineoff;
 		}
-		/* block and lineoff now reference the physically previous tid */
-
-		linesleft = lineoff;
 	}
 
 	/*
@@ -715,6 +681,7 @@ heapgettup(HeapScanDesc scan,
 				if (valid)
 				{
 					LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+					scan->rs_coffset = lineoff;
 					return;
 				}
 			}
@@ -807,12 +774,11 @@ heapgettup(HeapScanDesc scan,
 
 		page = BufferGetPage(scan->rs_cbuf);
 		TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-		lines = PageGetMaxOffsetNumber(page);
-		linesleft = lines;
+		linesleft = PageGetMaxOffsetNumber(page);
 		if (backward)
 		{
-			lineoff = lines;
-			lpp = PageGetItemId(page, lines);
+			lineoff = linesleft;
+			lpp = PageGetItemId(page, linesleft);
 		}
 		else
 		{
@@ -846,87 +812,46 @@ heapgettup_pagemode(HeapScanDesc scan,
 	BlockNumber block;
 	bool		finished;
 	Page		page;
-	int			lines;
 	int			lineindex;
 	OffsetNumber lineoff;
 	int			linesleft;
 	ItemId		lpp;
 
-	/*
-	 * calculate next starting lineindex, given scan direction
-	 */
-	if (ScanDirectionIsForward(dir))
+	if (unlikely(!scan->rs_inited))
 	{
-		if (!scan->rs_inited)
-		{
-			block = heapgettup_initial_block(scan, dir);
+		block = heapgettup_initial_block(scan, dir);
 
-			/*
-			 * Check if we have reached the end of the scan already. This
-			 * could happen if the table is empty or if the parallel workers
-			 * have already finished the scan before we did anything ourselves
-			 */
-			if (block == InvalidBlockNumber)
-			{
-				Assert(!BufferIsValid(scan->rs_cbuf));
-				tuple->t_data = NULL;
-				return;
-			}
-			heapgetpage((TableScanDesc) scan, block);
-			lineindex = 0;
-			scan->rs_inited = true;
-		}
-		else
+		/*
+		 * Check if we have reached the end of the scan already. This could
+		 * happen if the table is empty or if the other workers in a parallel
+		 * scan have already finished the scan.
+		 */
+		if (block == InvalidBlockNumber)
 		{
-			/* continue from previously returned page/tuple */
-			block = scan->rs_cblock;	/* current page */
-			lineindex = scan->rs_cindex + 1;
+			Assert(!BufferIsValid(scan->rs_cbuf));
+			tuple->t_data = NULL;
+			return;
 		}
 
+		heapgetpage((TableScanDesc) scan, block);
 		page = BufferGetPage(scan->rs_cbuf);
 		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-		lines = scan->rs_ntuples;
-		/* block and lineindex now reference the next visible tid */
-
-		linesleft = lines - lineindex;
+		linesleft = scan->rs_ntuples;
+		lineindex = ScanDirectionIsForward(dir) ? 0 : linesleft - 1;
+		scan->rs_inited = true;
 	}
 	else
 	{
-		if (!scan->rs_inited)
-		{
-			block = heapgettup_initial_block(scan, dir);
+		/* continue from previously returned page/tuple */
+		block = scan->rs_cblock;	/* current page */
+		page = BufferGetPage(scan->rs_cbuf);
+		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
 
-			/*
-			 * Check if we have reached the end of the scan already. This
-			 * could happen if the table is empty.
-			 */
-			if (block == InvalidBlockNumber)
-			{
-				Assert(!BufferIsValid(scan->rs_cbuf));
-				tuple->t_data = NULL;
-				return;
-			}
-
-			heapgetpage((TableScanDesc) scan, block);
-			page = BufferGetPage(scan->rs_cbuf);
-			TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-			lines = scan->rs_ntuples;
-			lineindex = lines - 1;
-			scan->rs_inited = true;
-		}
+		lineindex = scan->rs_cindex + dir;
+		if (ScanDirectionIsForward(dir))
+			linesleft = scan->rs_ntuples - lineindex;
 		else
-		{
-			/* continue from previously returned page/tuple */
-			block = scan->rs_cblock;	/* current page */
-
-			page = BufferGetPage(scan->rs_cbuf);
-			TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-			lines = scan->rs_ntuples;
-			lineindex = scan->rs_cindex - 1;
-		}
-		/* block and lineindex now reference the previous visible tid */
-
-		linesleft = lineindex + 1;
+			linesleft = scan->rs_cindex;
 	}
 
 	/*
@@ -1041,10 +966,9 @@ heapgettup_pagemode(HeapScanDesc scan,
 
 		page = BufferGetPage(scan->rs_cbuf);
 		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-		lines = scan->rs_ntuples;
-		linesleft = lines;
+		linesleft = scan->rs_ntuples;
 		if (backward)
-			lineindex = lines - 1;
+			lineindex = linesleft - 1;
 		else
 			lineindex = 0;
 	}
