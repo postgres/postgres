@@ -3693,8 +3693,21 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 
 	init_var(&result);
 
-	/* Assume the input was normalized, so arg.weight is accurate */
-	sweight = (arg.weight + 1) * DEC_DIGITS / 2 - 1;
+	/*
+	 * Assume the input was normalized, so arg.weight is accurate.  The result
+	 * then has at least sweight = floor(arg.weight * DEC_DIGITS / 2 + 1)
+	 * digits before the decimal point.  When DEC_DIGITS is even, we can save
+	 * a few cycles, since the division is exact and there is no need to round
+	 * towards negative infinity.
+	 */
+#if DEC_DIGITS == ((DEC_DIGITS / 2) * 2)
+	sweight = arg.weight * DEC_DIGITS / 2 + 1;
+#else
+	if (arg.weight >= 0)
+		sweight = arg.weight * DEC_DIGITS / 2 + 1;
+	else
+		sweight = 1 - (1 - arg.weight * DEC_DIGITS) / 2;
+#endif
 
 	rscale = NUMERIC_MIN_SIG_DIGITS - sweight;
 	rscale = Max(rscale, arg.dscale);
