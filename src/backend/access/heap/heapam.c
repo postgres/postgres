@@ -544,6 +544,82 @@ heapgettup_initial_block(HeapScanDesc scan, ScanDirection dir)
 	}
 }
 
+
+/*
+ * heapgettup_start_page - helper function for heapgettup()
+ *
+ * Return the next page to scan based on the scan->rs_cbuf and set *linesleft
+ * to the number of tuples on this page.  Also set *lineoff to the first
+ * offset to scan with forward scans getting the first offset and backward
+ * getting the final offset on the page.
+ */
+static Page
+heapgettup_start_page(HeapScanDesc scan, ScanDirection dir, int *linesleft,
+					  OffsetNumber *lineoff)
+{
+	Page		page;
+
+	Assert(scan->rs_inited);
+	Assert(BufferIsValid(scan->rs_cbuf));
+
+	/* Caller is responsible for ensuring buffer is locked if needed */
+	page = BufferGetPage(scan->rs_cbuf);
+
+	TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
+
+	*linesleft = PageGetMaxOffsetNumber((Page) page) - FirstOffsetNumber + 1;
+
+	if (ScanDirectionIsForward(dir))
+		*lineoff = FirstOffsetNumber;
+	else
+		*lineoff = (OffsetNumber) (*linesleft);
+
+	/* lineoff now references the physically previous or next tid */
+	return page;
+}
+
+
+/*
+ * heapgettup_continue_page - helper function for heapgettup()
+ *
+ * Return the next page to scan based on the scan->rs_cbuf and set *linesleft
+ * to the number of tuples left to scan on this page.  Also set *lineoff to
+ * the next offset to scan according to the ScanDirection in 'dir'.
+ */
+static inline Page
+heapgettup_continue_page(HeapScanDesc scan, ScanDirection dir, int *linesleft,
+						 OffsetNumber *lineoff)
+{
+	Page		page;
+
+	Assert(scan->rs_inited);
+	Assert(BufferIsValid(scan->rs_cbuf));
+
+	/* Caller is responsible for ensuring buffer is locked if needed */
+	page = BufferGetPage(scan->rs_cbuf);
+
+	TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
+
+	if (ScanDirectionIsForward(dir))
+	{
+		*lineoff = OffsetNumberNext(scan->rs_coffset);
+		*linesleft = PageGetMaxOffsetNumber(page) - (*lineoff) + 1;
+	}
+	else
+	{
+		/*
+		 * The previous returned tuple may have been vacuumed since the
+		 * previous scan when we use a non-MVCC snapshot, so we must
+		 * re-establish the lineoff <= PageGetMaxOffsetNumber(page) invariant
+		 */
+		*lineoff = Min(PageGetMaxOffsetNumber(page), OffsetNumberPrev(scan->rs_coffset));
+		*linesleft = *lineoff;
+	}
+
+	/* lineoff now references the physically previous or next tid */
+	return page;
+}
+
 /* ----------------
  *		heapgettup - fetch next heap tuple
  *
@@ -571,7 +647,6 @@ heapgettup(HeapScanDesc scan,
 		   ScanKey key)
 {
 	HeapTuple	tuple = &(scan->rs_ctup);
-	Snapshot	snapshot = scan->rs_base.rs_snapshot;
 	bool		backward = ScanDirectionIsBackward(dir);
 	BlockNumber block;
 	bool		finished;
@@ -595,21 +670,12 @@ heapgettup(HeapScanDesc scan,
 			tuple->t_data = NULL;
 			return;
 		}
+		scan->rs_inited = true;
 
 		heapgetpage((TableScanDesc) scan, block);
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-		page = BufferGetPage(scan->rs_cbuf);
-		TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-
-		linesleft = PageGetMaxOffsetNumber(page) - FirstOffsetNumber + 1;
-
-		if (ScanDirectionIsForward(dir))
-			lineoff = FirstOffsetNumber;	/* first offnum */
-		else
-			lineoff = (OffsetNumber) linesleft;
-
-		scan->rs_inited = true;
+		page = heapgettup_start_page(scan, dir, &linesleft, &lineoff);
 	}
 	else
 	{
@@ -617,26 +683,7 @@ heapgettup(HeapScanDesc scan,
 		block = scan->rs_cblock;
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-		page = BufferGetPage(scan->rs_cbuf);
-		TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-
-		if (ScanDirectionIsForward(dir))
-		{
-			lineoff = OffsetNumberNext(scan->rs_coffset);
-			linesleft = PageGetMaxOffsetNumber(page) - lineoff + 1;
-		}
-		else
-		{
-			/*
-			 * The previous returned tuple may have been vacuumed since the
-			 * previous scan when we use a non-MVCC snapshot, so we must
-			 * re-establish the lineoff <= PageGetMaxOffsetNumber(page)
-			 * invariant
-			 */
-			lineoff = Min(PageGetMaxOffsetNumber(page),
-						  OffsetNumberPrev(scan->rs_coffset));
-			linesleft = lineoff;
-		}
+		page = heapgettup_continue_page(scan, dir, &linesleft, &lineoff);
 	}
 
 	/*
@@ -667,12 +714,12 @@ heapgettup(HeapScanDesc scan,
 				 * if current tuple qualifies, return it.
 				 */
 				valid = HeapTupleSatisfiesVisibility(tuple,
-													 snapshot,
+													 scan->rs_base.rs_snapshot,
 													 scan->rs_cbuf);
 
 				HeapCheckForSerializableConflictOut(valid, scan->rs_base.rs_rd,
 													tuple, scan->rs_cbuf,
-													snapshot);
+													scan->rs_base.rs_snapshot);
 
 				if (valid && key != NULL)
 					valid = HeapKeyTest(tuple, RelationGetDescr(scan->rs_base.rs_rd),
@@ -773,7 +820,8 @@ heapgettup(HeapScanDesc scan,
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
 		page = BufferGetPage(scan->rs_cbuf);
-		TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
+		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd,
+						   page);
 		linesleft = PageGetMaxOffsetNumber(page);
 		if (backward)
 		{
