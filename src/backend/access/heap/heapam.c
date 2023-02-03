@@ -620,6 +620,91 @@ heapgettup_continue_page(HeapScanDesc scan, ScanDirection dir, int *linesleft,
 	return page;
 }
 
+/*
+ * heapgettup_advance_block - helper for heapgettup() and heapgettup_pagemode()
+ *
+ * Given the current block number, the scan direction, and various information
+ * contained in the scan descriptor, calculate the BlockNumber to scan next
+ * and return it.  If there are no further blocks to scan, return
+ * InvalidBlockNumber to indicate this fact to the caller.
+ *
+ * This should not be called to determine the initial block number -- only for
+ * subsequent blocks.
+ *
+ * This also adjusts rs_numblocks when a limit has been imposed by
+ * heap_setscanlimits().
+ */
+static inline BlockNumber
+heapgettup_advance_block(HeapScanDesc scan, BlockNumber block, ScanDirection dir)
+{
+	if (ScanDirectionIsForward(dir))
+	{
+		if (scan->rs_base.rs_parallel == NULL)
+		{
+			block++;
+
+			/* wrap back to the start of the heap */
+			if (block >= scan->rs_nblocks)
+				block = 0;
+
+			/* we're done if we're back at where we started */
+			if (block == scan->rs_startblock)
+				return InvalidBlockNumber;
+
+			/* check if the limit imposed by heap_setscanlimits() is met */
+			if (scan->rs_numblocks != InvalidBlockNumber)
+			{
+				if (--scan->rs_numblocks == 0)
+					return InvalidBlockNumber;
+			}
+
+			/*
+			 * Report our new scan position for synchronization purposes. We
+			 * don't do that when moving backwards, however. That would just
+			 * mess up any other forward-moving scanners.
+			 *
+			 * Note: we do this before checking for end of scan so that the
+			 * final state of the position hint is back at the start of the
+			 * rel.  That's not strictly necessary, but otherwise when you run
+			 * the same query multiple times the starting position would shift
+			 * a little bit backwards on every invocation, which is confusing.
+			 * We don't guarantee any specific ordering in general, though.
+			 */
+			if (scan->rs_base.rs_flags & SO_ALLOW_SYNC)
+				ss_report_location(scan->rs_base.rs_rd, block);
+
+			return block;
+		}
+		else
+		{
+			return table_block_parallelscan_nextpage(scan->rs_base.rs_rd,
+													 scan->rs_parallelworkerdata, (ParallelBlockTableScanDesc)
+													 scan->rs_base.rs_parallel);
+		}
+	}
+	else
+	{
+		/* we're done if the last block is the start position */
+		if (block == scan->rs_startblock)
+			return InvalidBlockNumber;
+
+		/* check if the limit imposed by heap_setscanlimits() is met */
+		if (scan->rs_numblocks != InvalidBlockNumber)
+		{
+			if (--scan->rs_numblocks == 0)
+				return InvalidBlockNumber;
+		}
+
+		/* wrap to the end of the heap when the last page was page 0 */
+		if (block == 0)
+			block = scan->rs_nblocks;
+
+		block--;
+
+		return block;
+	}
+}
+
 /* ----------------
  *		heapgettup - fetch next heap tuple
  *
@@ -649,7 +734,6 @@ heapgettup(HeapScanDesc scan,
 	HeapTuple	tuple = &(scan->rs_ctup);
 	bool		backward = ScanDirectionIsBackward(dir);
 	BlockNumber block;
-	bool		finished;
 	Page		page;
 	OffsetNumber lineoff;
 	int			linesleft;
@@ -755,56 +839,13 @@ heapgettup(HeapScanDesc scan,
 		 */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
-		/*
-		 * advance to next/prior page and detect end of scan
-		 */
-		if (backward)
-		{
-			finished = (block == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
-			if (block == 0)
-				block = scan->rs_nblocks;
-			block--;
-		}
-		else if (scan->rs_base.rs_parallel != NULL)
-		{
-			ParallelBlockTableScanDesc pbscan =
-			(ParallelBlockTableScanDesc) scan->rs_base.rs_parallel;
-			ParallelBlockTableScanWorker pbscanwork =
-			scan->rs_parallelworkerdata;
-
-			block = table_block_parallelscan_nextpage(scan->rs_base.rs_rd,
-													  pbscanwork, pbscan);
-			finished = (block == InvalidBlockNumber);
-		}
-		else
-		{
-			block++;
-			if (block >= scan->rs_nblocks)
-				block = 0;
-			finished = (block == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
-
-			/*
-			 * Report our new scan position for synchronization purposes. We
-			 * don't do that when moving backwards, however. That would just
-			 * mess up any other forward-moving scanners.
-			 *
-			 * Note: we do this before checking for end of scan so that the
-			 * final state of the position hint is back at the start of the
-			 * rel.  That's not strictly necessary, but otherwise when you run
-			 * the same query multiple times the starting position would shift
-			 * a little bit backwards on every invocation, which is confusing.
-			 * We don't guarantee any specific ordering in general, though.
-			 */
-			if (scan->rs_base.rs_flags & SO_ALLOW_SYNC)
-				ss_report_location(scan->rs_base.rs_rd, block);
-		}
+		/* get the BlockNumber to scan next */
+		block = heapgettup_advance_block(scan, block, dir);
 
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if (finished)
+		if (block == InvalidBlockNumber)
 		{
 			if (BufferIsValid(scan->rs_cbuf))
 				ReleaseBuffer(scan->rs_cbuf);
@@ -858,7 +899,6 @@ heapgettup_pagemode(HeapScanDesc scan,
 	HeapTuple	tuple = &(scan->rs_ctup);
 	bool		backward = ScanDirectionIsBackward(dir);
 	BlockNumber block;
-	bool		finished;
 	Page		page;
 	int			lineindex;
 	OffsetNumber lineoff;
@@ -949,57 +989,13 @@ heapgettup_pagemode(HeapScanDesc scan,
 				++lineindex;
 		}
 
-		/*
-		 * if we get here, it means we've exhausted the items on this page and
-		 * it's time to move to the next.
-		 */
-		if (backward)
-		{
-			finished = (block == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
-			if (block == 0)
-				block = scan->rs_nblocks;
-			block--;
-		}
-		else if (scan->rs_base.rs_parallel != NULL)
-		{
-			ParallelBlockTableScanDesc pbscan =
-			(ParallelBlockTableScanDesc) scan->rs_base.rs_parallel;
-			ParallelBlockTableScanWorker pbscanwork =
-			scan->rs_parallelworkerdata;
-
-			block = table_block_parallelscan_nextpage(scan->rs_base.rs_rd,
-													  pbscanwork, pbscan);
-			finished = (block == InvalidBlockNumber);
-		}
-		else
-		{
-			block++;
-			if (block >= scan->rs_nblocks)
-				block = 0;
-			finished = (block == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
-
-			/*
-			 * Report our new scan position for synchronization purposes. We
-			 * don't do that when moving backwards, however. That would just
-			 * mess up any other forward-moving scanners.
-			 *
-			 * Note: we do this before checking for end of scan so that the
-			 * final state of the position hint is back at the start of the
-			 * rel.  That's not strictly necessary, but otherwise when you run
-			 * the same query multiple times the starting position would shift
-			 * a little bit backwards on every invocation, which is confusing.
-			 * We don't guarantee any specific ordering in general, though.
-			 */
-			if (scan->rs_base.rs_flags & SO_ALLOW_SYNC)
-				ss_report_location(scan->rs_base.rs_rd, block);
-		}
+		/* get the BlockNumber to scan next */
+		block = heapgettup_advance_block(scan, block, dir);
 
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if (finished)
+		if (block == InvalidBlockNumber)
 		{
 			if (BufferIsValid(scan->rs_cbuf))
 				ReleaseBuffer(scan->rs_cbuf);
