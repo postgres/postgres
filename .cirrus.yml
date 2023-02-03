@@ -400,8 +400,10 @@ task:
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
 
-  windows_container:
-    image: $CONTAINER_REPO/windows_ci_vs_2019:latest
+  compute_engine_instance:
+    image_project: $IMAGE_PROJECT
+    image: family/pg-ci-windows-ci-vs-2019
+    platform: windows
     cpu: $CPUS
     memory: 4G
 
