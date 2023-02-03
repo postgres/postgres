@@ -404,7 +404,7 @@ task:
 
 
 task:
-  name: macOS - Monterey - Meson
+  name: macOS - Ventura - Meson
 
   env:
     CPUS: 4 # always get that much for cirrusci macOS instances
@@ -429,7 +429,7 @@ task:
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(macos|darwin|osx).*'
 
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-monterey-base:latest
+    image: ghcr.io/cirruslabs/macos-ventura-base:latest
 
   sysinfo_script: |
     id
