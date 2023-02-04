@@ -141,48 +141,99 @@ pg_strtoint16_safe(const char *s, Node *escontext)
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && isxdigit((unsigned char) *ptr))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT16_MIN / 16)))
-				goto out_of_range;
+			if (isxdigit((unsigned char) *ptr))
+			{
+				if (unlikely(tmp > -(PG_INT16_MIN / 16)))
+					goto out_of_range;
 
-			tmp = tmp * 16 + hexlookup[(unsigned char) *ptr++];
+				tmp = tmp * 16 + hexlookup[(unsigned char) *ptr++];
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || !isxdigit((unsigned char) *ptr))
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else if (ptr[0] == '0' && (ptr[1] == 'o' || ptr[1] == 'O'))
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && (*ptr >= '0' && *ptr <= '7'))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT16_MIN / 8)))
-				goto out_of_range;
+			if (*ptr >= '0' && *ptr <= '7')
+			{
+				if (unlikely(tmp > -(PG_INT16_MIN / 8)))
+					goto out_of_range;
 
-			tmp = tmp * 8 + (*ptr++ - '0');
+				tmp = tmp * 8 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || *ptr < '0' || *ptr > '7')
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else if (ptr[0] == '0' && (ptr[1] == 'b' || ptr[1] == 'B'))
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && (*ptr >= '0' && *ptr <= '1'))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT16_MIN / 2)))
-				goto out_of_range;
+			if (*ptr >= '0' && *ptr <= '1')
+			{
+				if (unlikely(tmp > -(PG_INT16_MIN / 2)))
+					goto out_of_range;
 
-			tmp = tmp * 2 + (*ptr++ - '0');
+				tmp = tmp * 2 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || *ptr < '0' || *ptr > '1')
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else
 	{
 		firstdigit = ptr;
 
-		while (*ptr && isdigit((unsigned char) *ptr))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT16_MIN / 10)))
-				goto out_of_range;
+			if (isdigit((unsigned char) *ptr))
+			{
+				if (unlikely(tmp > -(PG_INT16_MIN / 10)))
+					goto out_of_range;
 
-			tmp = tmp * 10 + (*ptr++ - '0');
+				tmp = tmp * 10 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore may not be first */
+				if (unlikely(ptr == firstdigit))
+					goto invalid_syntax;
+				/* and it must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || !isdigit((unsigned char) *ptr))
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 
@@ -268,48 +319,99 @@ pg_strtoint32_safe(const char *s, Node *escontext)
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && isxdigit((unsigned char) *ptr))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT32_MIN / 16)))
-				goto out_of_range;
+			if (isxdigit((unsigned char) *ptr))
+			{
+				if (unlikely(tmp > -(PG_INT32_MIN / 16)))
+					goto out_of_range;
 
-			tmp = tmp * 16 + hexlookup[(unsigned char) *ptr++];
+				tmp = tmp * 16 + hexlookup[(unsigned char) *ptr++];
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || !isxdigit((unsigned char) *ptr))
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else if (ptr[0] == '0' && (ptr[1] == 'o' || ptr[1] == 'O'))
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && (*ptr >= '0' && *ptr <= '7'))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT32_MIN / 8)))
-				goto out_of_range;
+			if (*ptr >= '0' && *ptr <= '7')
+			{
+				if (unlikely(tmp > -(PG_INT32_MIN / 8)))
+					goto out_of_range;
 
-			tmp = tmp * 8 + (*ptr++ - '0');
+				tmp = tmp * 8 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || *ptr < '0' || *ptr > '7')
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else if (ptr[0] == '0' && (ptr[1] == 'b' || ptr[1] == 'B'))
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && (*ptr >= '0' && *ptr <= '1'))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT32_MIN / 2)))
-				goto out_of_range;
+			if (*ptr >= '0' && *ptr <= '1')
+			{
+				if (unlikely(tmp > -(PG_INT32_MIN / 2)))
+					goto out_of_range;
 
-			tmp = tmp * 2 + (*ptr++ - '0');
+				tmp = tmp * 2 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || *ptr < '0' || *ptr > '1')
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else
 	{
 		firstdigit = ptr;
 
-		while (*ptr && isdigit((unsigned char) *ptr))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT32_MIN / 10)))
-				goto out_of_range;
+			if (isdigit((unsigned char) *ptr))
+			{
+				if (unlikely(tmp > -(PG_INT32_MIN / 10)))
+					goto out_of_range;
 
-			tmp = tmp * 10 + (*ptr++ - '0');
+				tmp = tmp * 10 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore may not be first */
+				if (unlikely(ptr == firstdigit))
+					goto invalid_syntax;
+				/* and it must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || !isdigit((unsigned char) *ptr))
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 
@@ -395,48 +497,99 @@ pg_strtoint64_safe(const char *s, Node *escontext)
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && isxdigit((unsigned char) *ptr))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT64_MIN / 16)))
-				goto out_of_range;
+			if (isxdigit((unsigned char) *ptr))
+			{
+				if (unlikely(tmp > -(PG_INT64_MIN / 16)))
+					goto out_of_range;
 
-			tmp = tmp * 16 + hexlookup[(unsigned char) *ptr++];
+				tmp = tmp * 16 + hexlookup[(unsigned char) *ptr++];
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || !isxdigit((unsigned char) *ptr))
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else if (ptr[0] == '0' && (ptr[1] == 'o' || ptr[1] == 'O'))
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && (*ptr >= '0' && *ptr <= '7'))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT64_MIN / 8)))
-				goto out_of_range;
+			if (*ptr >= '0' && *ptr <= '7')
+			{
+				if (unlikely(tmp > -(PG_INT64_MIN / 8)))
+					goto out_of_range;
 
-			tmp = tmp * 8 + (*ptr++ - '0');
+				tmp = tmp * 8 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || *ptr < '0' || *ptr > '7')
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else if (ptr[0] == '0' && (ptr[1] == 'b' || ptr[1] == 'B'))
 	{
 		firstdigit = ptr += 2;
 
-		while (*ptr && (*ptr >= '0' && *ptr <= '1'))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT64_MIN / 2)))
-				goto out_of_range;
+			if (*ptr >= '0' && *ptr <= '1')
+			{
+				if (unlikely(tmp > -(PG_INT64_MIN / 2)))
+					goto out_of_range;
 
-			tmp = tmp * 2 + (*ptr++ - '0');
+				tmp = tmp * 2 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || *ptr < '0' || *ptr > '1')
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 	else
 	{
 		firstdigit = ptr;
 
-		while (*ptr && isdigit((unsigned char) *ptr))
+		while (*ptr)
 		{
-			if (unlikely(tmp > -(PG_INT64_MIN / 10)))
-				goto out_of_range;
+			if (isdigit((unsigned char) *ptr))
+			{
+				if (unlikely(tmp > -(PG_INT64_MIN / 10)))
+					goto out_of_range;
 
-			tmp = tmp * 10 + (*ptr++ - '0');
+				tmp = tmp * 10 + (*ptr++ - '0');
+			}
+			else if (*ptr == '_')
+			{
+				/* underscore may not be first */
+				if (unlikely(ptr == firstdigit))
+					goto invalid_syntax;
+				/* and it must be followed by more digits */
+				ptr++;
+				if (*ptr == '\0' || !isdigit((unsigned char) *ptr))
+					goto invalid_syntax;
+			}
+			else
+				break;
 		}
 	}
 

@@ -677,7 +677,8 @@ $function$
      decimal point, if one is used.  At least one digit must follow the
      exponent marker (<literal>e</literal>), if one is present.
      There cannot be any spaces or other characters embedded in the
-     constant.  Note that any leading plus or minus sign is not actually
+     constant, except for underscores, which can be used for visual grouping as
+     described below.  Note that any leading plus or minus sign is not actually
      considered part of the constant; it is an operator applied to the
      constant.
     </para>
@@ -695,23 +696,24 @@ $function$
     </para>
 
     <para>
-     Additionally, non-decimal integer constants can be used in these forms:
+     Additionally, non-decimal integer constants are accepted in these forms:
 <synopsis>
 0x<replaceable>hexdigits</replaceable>
 0o<replaceable>octdigits</replaceable>
 0b<replaceable>bindigits</replaceable>
 </synopsis>
-     <replaceable>hexdigits</replaceable> is one or more hexadecimal digits
+     where <replaceable>hexdigits</replaceable> is one or more hexadecimal digits
      (0-9, A-F), <replaceable>octdigits</replaceable> is one or more octal
-     digits (0-7), <replaceable>bindigits</replaceable> is one or more binary
+     digits (0-7), and <replaceable>bindigits</replaceable> is one or more binary
      digits (0 or 1).  Hexadecimal digits and the radix prefixes can be in
      upper or lower case.  Note that only integers can have non-decimal forms,
      not numbers with fractional parts.
     </para>
 
     <para>
-     These are some examples of this:
-<literallayout>0b100101
+     These are some examples of valid non-decimal integer constants:
+<literallayout>
+0b100101
 0B10011001
 0o273
 0O755
@@ -720,13 +722,21 @@ $function$
 </literallayout>
     </para>
 
-    <note>
-     <para>
-      Non-decimal integer constants are currently only supported in the range
-      of the <type>bigint</type> type (see <xref
-      linkend="datatype-numeric-table"/>).
-     </para>
-    </note>
+    <para>
+     For visual grouping, underscores can be inserted between digits.  These
+     have no further effect on the value of the constant.  For example:
+<literallayout>
+1_500_000_000
+0b10001000_00000000
+0o_1_755
+0xFFFF_FFFF
+1.618_034
+</literallayout>
+     Underscores are not allowed at the start or end of a numeric constant or
+     a group of digits (that is, immediately before or after the decimal point
+     or the exponent marker), and more than one underscore in a row is not
+     allowed.
+    </para>
 
     <para>
      <indexterm><primary>integer</primary></indexterm>

@@ -6968,10 +6968,7 @@ set_var_from_str(const char *str, const char *cp,
 	}
 
 	if (!isdigit((unsigned char) *cp))
-		ereturn(escontext, false,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type %s: \"%s\"",
-						"numeric", str)));
+		goto invalid_syntax;
 
 	decdigits = (unsigned char *) palloc(strlen(cp) + DEC_DIGITS * 2);
 
@@ -6992,12 +6989,19 @@ set_var_from_str(const char *str, const char *cp,
 		else if (*cp == '.')
 		{
 			if (have_dp)
-				ereturn(escontext, false,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("invalid input syntax for type %s: \"%s\"",
-								"numeric", str)));
+				goto invalid_syntax;
 			have_dp = true;
 			cp++;
+			/* decimal point must not be followed by underscore */
+			if (*cp == '_')
+				goto invalid_syntax;
+		}
+		else if (*cp == '_')
+		{
+			/* underscore must be followed by more digits */
+			cp++;
+			if (!isdigit((unsigned char) *cp))
+				goto invalid_syntax;
 		}
 		else
 			break;
@@ -7010,17 +7014,8 @@ set_var_from_str(const char *str, const char *cp,
 	/* Handle exponent, if any */
 	if (*cp == 'e' || *cp == 'E')
 	{
-		long		exponent;
-		char	   *endptr;
-
-		cp++;
-		exponent = strtol(cp, &endptr, 10);
-		if (endptr == cp)
-			ereturn(escontext, false,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type %s: \"%s\"",
-							"numeric", str)));
-		cp = endptr;
+		int64		exponent = 0;
+		bool		neg = false;
 
 		/*
 		 * At this point, dweight and dscale can't be more than about
@@ -7030,10 +7025,43 @@ set_var_from_str(const char *str, const char *cp,
 		 * fit in storage format, make_result() will complain about it later;
 		 * for consistency use the same ereport errcode/text as make_result().
 		 */
-		if (exponent >= INT_MAX / 2 || exponent <= -(INT_MAX / 2))
-			ereturn(escontext, false,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("value overflows numeric format")));
+
+		/* exponent sign */
+		cp++;
+		if (*cp == '+')
+			cp++;
+		else if (*cp == '-')
+		{
+			neg = true;
+			cp++;
+		}
+
+		/* exponent digits */
+		if (!isdigit((unsigned char) *cp))
+			goto invalid_syntax;
+
+		while (*cp)
+		{
+			if (isdigit((unsigned char) *cp))
+			{
+				exponent = exponent * 10 + (*cp++ - '0');
+				if (exponent > PG_INT32_MAX / 2)
+					goto out_of_range;
+			}
+			else if (*cp == '_')
+			{
+				/* underscore must be followed by more digits */
+				cp++;
+				if (!isdigit((unsigned char) *cp))
+					goto invalid_syntax;
+			}
+			else
+				break;
+		}
+
+		if (neg)
+			exponent = -exponent;
+
 		dweight += (int) exponent;
 		dscale -= (int) exponent;
 		if (dscale < 0)
@@ -7085,6 +7113,17 @@ set_var_from_str(const char *str, const char *cp,
 	*endptr = cp;
 
 	return true;
+
+out_of_range:
+	ereturn(escontext, false,
+			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			 errmsg("value overflows numeric format")));
+
+invalid_syntax:
+	ereturn(escontext, false,
+			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 errmsg("invalid input syntax for type %s: \"%s\"",
+					"numeric", str)));
 }
 
 
@@ -7167,6 +7206,13 @@ set_var_from_non_decimal_integer_str(const char *str, const char *cp, int sign,
 				tmp = tmp * 16 + xdigit_value(*cp++);
 				mul = mul * 16;
 			}
+			else if (*cp == '_')
+			{
+				/* Underscore must be followed by more digits */
+				cp++;
+				if (!isxdigit((unsigned char) *cp))
+					goto invalid_syntax;
+			}
 			else
 				break;
 		}
@@ -7197,6 +7243,13 @@ set_var_from_non_decimal_integer_str(const char *str, const char *cp, int sign,
 				tmp = tmp * 8 + (*cp++ - '0');
 				mul = mul * 8;
 			}
+			else if (*cp == '_')
+			{
+				/* Underscore must be followed by more digits */
+				cp++;
+				if (*cp < '0' || *cp > '7')
+					goto invalid_syntax;
+			}
 			else
 				break;
 		}
@@ -7226,6 +7279,13 @@ set_var_from_non_decimal_integer_str(const char *str, const char *cp, int sign,
 
 				tmp = tmp * 2 + (*cp++ - '0');
 				mul = mul * 2;
+			}
+			else if (*cp == '_')
+			{
+				/* Underscore must be followed by more digits */
+				cp++;
+				if (*cp < '0' || *cp > '1')
+					goto invalid_syntax;
 			}
 			else
 				break;

@@ -333,19 +333,19 @@ hexdigit		[0-9A-Fa-f]
 octdigit		[0-7]
 bindigit		[0-1]
 
-decinteger		{decdigit}+
-hexinteger		0[xX]{hexdigit}+
-octinteger		0[oO]{octdigit}+
-bininteger		0[bB]{bindigit}+
+decinteger		{decdigit}(_?{decdigit})*
+hexinteger		0[xX](_?{hexdigit})+
+octinteger		0[oO](_?{octdigit})+
+bininteger		0[bB](_?{bindigit})+
 
-hexfail			0[xX]
-octfail			0[oO]
-binfail			0[bB]
+hexfail			0[xX]_?
+octfail			0[oO]_?
+binfail			0[bB]_?
 
 numeric			(({decinteger}\.{decinteger}?)|(\.{decinteger}))
 numericfail		{decdigit}+\.\.
 
-real			({decinteger}|{numeric})[Ee][-+]?{decdigit}+
+real			({decinteger}|{numeric})[Ee][-+]?{decinteger}
 realfail		({decinteger}|{numeric})[Ee][-+]
 
 decinteger_junk	{decinteger}{ident_start}

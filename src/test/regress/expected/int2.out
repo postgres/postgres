@@ -440,3 +440,47 @@ SELECT int2 '-0x8001';
 ERROR:  value "-0x8001" is out of range for type smallint
 LINE 1: SELECT int2 '-0x8001';
                     ^
+-- underscores
+SELECT int2 '1_000';
+ int2 
+------
+ 1000
+(1 row)
+
+SELECT int2 '1_2_3';
+ int2 
+------
+  123
+(1 row)
+
+SELECT int2 '0xE_FF';
+ int2 
+------
+ 3839
+(1 row)
+
+SELECT int2 '0o2_73';
+ int2 
+------
+  187
+(1 row)
+
+SELECT int2 '0b_10_0101';
+ int2 
+------
+   37
+(1 row)
+
+-- error cases
+SELECT int2 '_100';
+ERROR:  invalid input syntax for type smallint: "_100"
+LINE 1: SELECT int2 '_100';
+                    ^
+SELECT int2 '100_';
+ERROR:  invalid input syntax for type smallint: "100_"
+LINE 1: SELECT int2 '100_';
+                    ^
+SELECT int2 '10__000';
+ERROR:  invalid input syntax for type smallint: "10__000"
+LINE 1: SELECT int2 '10__000';
+                    ^

@@ -178,10 +178,6 @@ SELECT 0x0o;
 ERROR:  trailing junk after numeric literal at or near "0x0o"
 LINE 1: SELECT 0x0o;
                ^
-SELECT 1_2_3;
-ERROR:  trailing junk after numeric literal at or near "1_"
-LINE 1: SELECT 1_2_3;
-               ^
 SELECT 0.a;
 ERROR:  trailing junk after numeric literal at or near "0.a"
 LINE 1: SELECT 0.a;
@@ -245,6 +241,94 @@ LINE 1: SELECT 1x;
 SELECT 0x0y;
 ERROR:  trailing junk after numeric literal at or near "0x0y"
 LINE 1: SELECT 0x0y;
+               ^
+-- underscores
+SELECT 1_000_000;
+ ?column? 
+----------
+  1000000
+(1 row)
+
+SELECT 1_2_3;
+ ?column? 
+----------
+      123
+(1 row)
+
+SELECT 0x1EEE_FFFF;
+ ?column?  
+-----------
+ 518979583
+(1 row)
+
+SELECT 0o2_73;
+ ?column? 
+----------
+      187
+(1 row)
+
+SELECT 0b_10_0101;
+ ?column? 
+----------
+       37
+(1 row)
+
+SELECT 1_000.000_005;
+  ?column?   
+-------------
+ 1000.000005
+(1 row)
+
+SELECT 1_000.;
+ ?column? 
+----------
+     1000
+(1 row)
+
+SELECT .000_005;
+ ?column? 
+----------
+ 0.000005
+(1 row)
+
+SELECT 1_000.5e0_1;
+ ?column? 
+----------
+    10005
+(1 row)
+
+-- error cases
+SELECT _100;
+ERROR:  column "_100" does not exist
+LINE 1: SELECT _100;
+               ^
+SELECT 100_;
+ERROR:  trailing junk after numeric literal at or near "100_"
+LINE 1: SELECT 100_;
+               ^
+SELECT 100__000;
+ERROR:  trailing junk after numeric literal at or near "100_"
+LINE 1: SELECT 100__000;
+               ^
+SELECT _1_000.5;
+ERROR:  syntax error at or near ".5"
+LINE 1: SELECT _1_000.5;
+                     ^
+SELECT 1_000_.5;
+ERROR:  trailing junk after numeric literal at or near "1_000_"
+LINE 1: SELECT 1_000_.5;
+               ^
+SELECT 1_000._5;
+ERROR:  trailing junk after numeric literal at or near "1_000._"
+LINE 1: SELECT 1_000._5;
+               ^
+SELECT 1_000.5_;
+ERROR:  trailing junk after numeric literal at or near "1_000.5_"
+LINE 1: SELECT 1_000.5_;
+               ^
+SELECT 1_000.5e_1;
+ERROR:  trailing junk after numeric literal at or near "1_000.5e"
+LINE 1: SELECT 1_000.5e_1;
                ^
 --
 -- Test implicit type conversions

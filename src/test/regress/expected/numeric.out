@@ -2144,12 +2144,17 @@ INSERT INTO num_input_test(n1) VALUES (' -inf ');
 INSERT INTO num_input_test(n1) VALUES (' Infinity ');
 INSERT INTO num_input_test(n1) VALUES (' +inFinity ');
 INSERT INTO num_input_test(n1) VALUES (' -INFINITY ');
+INSERT INTO num_input_test(n1) VALUES ('12_000_000_000');
+INSERT INTO num_input_test(n1) VALUES ('12_000.123_456');
+INSERT INTO num_input_test(n1) VALUES ('23_000_000_000e-1_0');
+INSERT INTO num_input_test(n1) VALUES ('.000_000_000_123e1_0');
+INSERT INTO num_input_test(n1) VALUES ('.000_000_000_123e+1_1');
 INSERT INTO num_input_test(n1) VALUES ('0b10001110111100111100001001010');
-INSERT INTO num_input_test(n1) VALUES ('  -0B1010101101010100101010011000110011101011000111110000101011010010  ');
+INSERT INTO num_input_test(n1) VALUES ('  -0B_1010_1011_0101_0100_1010_1001_1000_1100_1110_1011_0001_1111_0000_1010_1101_0010  ');
 INSERT INTO num_input_test(n1) VALUES ('  +0o112402761777 ');
-INSERT INTO num_input_test(n1) VALUES ('-0O001255245230633431670261');
+INSERT INTO num_input_test(n1) VALUES ('-0O0012_5524_5230_6334_3167_0261');
 INSERT INTO num_input_test(n1) VALUES ('-0x0000000000000000000000000deadbeef');
-INSERT INTO num_input_test(n1) VALUES (' 0X30b1F33a6DF0bD4E64DF9BdA7D15 ');
+INSERT INTO num_input_test(n1) VALUES (' 0X_30b1_F33a_6DF0_bD4E_64DF_9BdA_7D15 ');
 -- bad inputs
 INSERT INTO num_input_test(n1) VALUES ('     ');
 ERROR:  invalid input syntax for type numeric: "     "
@@ -2195,6 +2200,38 @@ INSERT INTO num_input_test(n1) VALUES ('+ infinity');
 ERROR:  invalid input syntax for type numeric: "+ infinity"
 LINE 1: INSERT INTO num_input_test(n1) VALUES ('+ infinity');
                                                ^
+INSERT INTO num_input_test(n1) VALUES ('_123');
+ERROR:  invalid input syntax for type numeric: "_123"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('_123');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('123_');
+ERROR:  invalid input syntax for type numeric: "123_"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('123_');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('12__34');
+ERROR:  invalid input syntax for type numeric: "12__34"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('12__34');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('123_.456');
+ERROR:  invalid input syntax for type numeric: "123_.456"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('123_.456');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('123._456');
+ERROR:  invalid input syntax for type numeric: "123._456"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('123._456');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('1.2e_34');
+ERROR:  invalid input syntax for type numeric: "1.2e_34"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('1.2e_34');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('1.2e34_');
+ERROR:  invalid input syntax for type numeric: "1.2e34_"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('1.2e34_');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('1.2e3__4');
+ERROR:  invalid input syntax for type numeric: "1.2e3__4"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('1.2e3__4');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('0b1112');
 ERROR:  invalid input syntax for type numeric: "0b1112"
 LINE 1: INSERT INTO num_input_test(n1) VALUES ('0b1112');
@@ -2215,6 +2252,18 @@ INSERT INTO num_input_test(n1) VALUES ('0x12.34');
 ERROR:  invalid input syntax for type numeric: "0x12.34"
 LINE 1: INSERT INTO num_input_test(n1) VALUES ('0x12.34');
                                                ^
+INSERT INTO num_input_test(n1) VALUES ('0x__1234');
+ERROR:  invalid input syntax for type numeric: "0x__1234"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('0x__1234');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('0x1234_');
+ERROR:  invalid input syntax for type numeric: "0x1234_"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('0x1234_');
+                                               ^
+INSERT INTO num_input_test(n1) VALUES ('0x12__34');
+ERROR:  invalid input syntax for type numeric: "0x12__34"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('0x12__34');
+                                               ^
 SELECT * FROM num_input_test;
                 n1                 
 -----------------------------------
@@ -2231,13 +2280,18 @@ SELECT * FROM num_input_test;
                           Infinity
                           Infinity
                          -Infinity
+                       12000000000
+                      12000.123456
+                      2.3000000000
+                              1.23
+                              12.3
                          299792458
              -12345678901234567890
                         9999999999
              -12345678900987654321
                        -3735928559
  987654321234567898765432123456789
-(19 rows)
+(24 rows)
 
 -- Also try it with non-error-throwing API
 SELECT pg_input_is_valid('34.5', 'numeric');

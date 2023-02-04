@@ -1044,3 +1044,47 @@ SELECT int8 '-0x8000000000000001';
 ERROR:  value "-0x8000000000000001" is out of range for type bigint
 LINE 1: SELECT int8 '-0x8000000000000001';
                     ^
+-- underscores
+SELECT int8 '1_000_000';
+  int8   
+---------
+ 1000000
+(1 row)
+
+SELECT int8 '1_2_3';
+ int8 
+------
+  123
+(1 row)
+
+SELECT int8 '0x1EEE_FFFF';
+   int8    
+-----------
+ 518979583
+(1 row)
+
+SELECT int8 '0o2_73';
+ int8 
+------
+  187
+(1 row)
+
+SELECT int8 '0b_10_0101';
+ int8 
+------
+   37
+(1 row)
+
+-- error cases
+SELECT int8 '_100';
+ERROR:  invalid input syntax for type bigint: "_100"
+LINE 1: SELECT int8 '_100';
+                    ^
+SELECT int8 '100_';
+ERROR:  invalid input syntax for type bigint: "100_"
+LINE 1: SELECT int8 '100_';
+                    ^
+SELECT int8 '100__000';
+ERROR:  invalid input syntax for type bigint: "100__000"
+LINE 1: SELECT int8 '100__000';
+                    ^

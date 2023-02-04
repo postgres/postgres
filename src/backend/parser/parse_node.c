@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
+#include "nodes/miscnodes.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/subscripting.h"
 #include "parser/parse_coerce.h"
@@ -385,47 +386,11 @@ make_const(ParseState *pstate, A_Const *aconst)
 			{
 				/* could be an oversize integer as well as a float ... */
 
-				int			base = 10;
-				char	   *startptr;
-				int			sign;
-				char	   *testvalue;
+				ErrorSaveContext escontext = {T_ErrorSaveContext};
 				int64		val64;
-				char	   *endptr;
 
-				startptr = aconst->val.fval.fval;
-				if (startptr[0] == '-')
-				{
-					sign = -1;
-					startptr++;
-				}
-				else
-					sign = +1;
-				if (startptr[0] == '0')
-				{
-					if (startptr[1] == 'b' || startptr[1] == 'B')
-					{
-						base = 2;
-						startptr += 2;
-					}
-					else if (startptr[1] == 'o' || startptr[1] == 'O')
-					{
-						base = 8;
-						startptr += 2;
-					}
-					else if (startptr[1] == 'x' || startptr[1] == 'X')
-					{
-						base = 16;
-						startptr += 2;
-					}
-				}
-
-				if (sign == +1)
-					testvalue = startptr;
-				else
-					testvalue = psprintf("-%s", startptr);
-				errno = 0;
-				val64 = strtoi64(testvalue, &endptr, base);
-				if (errno == 0 && *endptr == '\0')
+				val64 = pg_strtoint64_safe(aconst->val.fval.fval, (Node *) &escontext);
+				if (!escontext.error_occurred)
 				{
 					/*
 					 * It might actually fit in int32. Probably only INT_MIN

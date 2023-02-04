@@ -37,10 +37,12 @@
 
 #include "common/string.h"
 #include "gramparse.h"
+#include "nodes/miscnodes.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/scansup.h"
 #include "port/pg_bitutils.h"
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 }
 
 %{
@@ -395,19 +397,19 @@ hexdigit		[0-9A-Fa-f]
 octdigit		[0-7]
 bindigit		[0-1]
 
-decinteger		{decdigit}+
-hexinteger		0[xX]{hexdigit}+
-octinteger		0[oO]{octdigit}+
-bininteger		0[bB]{bindigit}+
+decinteger		{decdigit}(_?{decdigit})*
+hexinteger		0[xX](_?{hexdigit})+
+octinteger		0[oO](_?{octdigit})+
+bininteger		0[bB](_?{bindigit})+
 
-hexfail			0[xX]
-octfail			0[oO]
-binfail			0[bB]
+hexfail			0[xX]_?
+octfail			0[oO]_?
+binfail			0[bB]_?
 
 numeric			(({decinteger}\.{decinteger}?)|(\.{decinteger}))
 numericfail		{decdigit}+\.\.
 
-real			({decinteger}|{numeric})[Ee][-+]?{decdigit}+
+real			({decinteger}|{numeric})[Ee][-+]?{decinteger}
 realfail		({decinteger}|{numeric})[Ee][-+]
 
 decinteger_junk	{decinteger}{ident_start}
@@ -1364,12 +1366,11 @@ litbufdup(core_yyscan_t yyscanner)
 static int
 process_integer_literal(const char *token, YYSTYPE *lval, int base)
 {
-	int			val;
-	char	   *endptr;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+	int32		val;
 
-	errno = 0;
-	val = strtoint(base == 10 ? token : token + 2, &endptr, base);
-	if (*endptr != '\0' || errno == ERANGE)
+	val = pg_strtoint32_safe(token, (Node *) &escontext);
+	if (escontext.error_occurred)
 	{
 		/* integer too large (or contains decimal pt), treat it as a float */
 		lval->str = pstrdup(token);

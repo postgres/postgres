@@ -141,3 +141,17 @@ SELECT int2 '-0o100000';
 SELECT int2 '-0o100001';
 SELECT int2 '-0x8000';
 SELECT int2 '-0x8001';
+
+
+-- underscores
+
+SELECT int2 '1_000';
+SELECT int2 '1_2_3';
+SELECT int2 '0xE_FF';
+SELECT int2 '0o2_73';
+SELECT int2 '0b_10_0101';
+
+-- error cases
+SELECT int2 '_100';
+SELECT int2 '100_';
+SELECT int2 '10__000';

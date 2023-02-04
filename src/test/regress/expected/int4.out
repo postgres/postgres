@@ -548,3 +548,47 @@ SELECT int4 '-0x80000001';
 ERROR:  value "-0x80000001" is out of range for type integer
 LINE 1: SELECT int4 '-0x80000001';
                     ^
+-- underscores
+SELECT int4 '1_000_000';
+  int4   
+---------
+ 1000000
+(1 row)
+
+SELECT int4 '1_2_3';
+ int4 
+------
+  123
+(1 row)
+
+SELECT int4 '0x1EEE_FFFF';
+   int4    
+-----------
+ 518979583
+(1 row)
+
+SELECT int4 '0o2_73';
+ int4 
+------
+  187
+(1 row)
+
+SELECT int4 '0b_10_0101';
+ int4 
+------
+   37
+(1 row)
+
+-- error cases
+SELECT int4 '_100';
+ERROR:  invalid input syntax for type integer: "_100"
+LINE 1: SELECT int4 '_100';
+                    ^
+SELECT int4 '100_';
+ERROR:  invalid input syntax for type integer: "100_"
+LINE 1: SELECT int4 '100_';
+                    ^
+SELECT int4 '100__000';
+ERROR:  invalid input syntax for type integer: "100__000"
+LINE 1: SELECT int4 '100__000';
+                    ^
