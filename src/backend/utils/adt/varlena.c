@@ -45,7 +45,6 @@
 /* GUC variable */
 int			bytea_output = BYTEA_OUTPUT_HEX;
 
-typedef struct varlena unknown;
 typedef struct varlena VarString;
 
 /*
@@ -111,12 +110,6 @@ typedef struct
  * that we feel comfortable putting it on the stack
  */
 #define TEXTBUFLEN		1024
-
-#define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
-#define DatumGetUnknownPCopy(X)		((unknown *) PG_DETOAST_DATUM_COPY(X))
-#define PG_GETARG_UNKNOWN_P(n)		DatumGetUnknownP(PG_GETARG_DATUM(n))
-#define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
-#define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
 #define DatumGetVarStringP(X)		((VarString *) PG_DETOAST_DATUM(X))
 #define DatumGetVarStringPP(X)		((VarString *) PG_DETOAST_DATUM_PACKED(X))
