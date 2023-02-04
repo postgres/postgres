@@ -6203,6 +6203,28 @@ select * from
          Output: 3
 (11 rows)
 
+-- a new postponed-quals issue (bug #17768)
+explain (costs off)
+select * from int4_tbl t1,
+  lateral (select * from int4_tbl t2 inner join int4_tbl t3 on t1.f1 = 1
+           inner join (int4_tbl t4 left join int4_tbl t5 on true) on true) ss;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop Left Join
+   ->  Nested Loop
+         ->  Nested Loop
+               ->  Nested Loop
+                     ->  Seq Scan on int4_tbl t1
+                           Filter: (f1 = 1)
+                     ->  Seq Scan on int4_tbl t2
+               ->  Materialize
+                     ->  Seq Scan on int4_tbl t3
+         ->  Materialize
+               ->  Seq Scan on int4_tbl t4
+   ->  Materialize
+         ->  Seq Scan on int4_tbl t5
+(13 rows)
+
 -- check dummy rels with lateral references (bug #15694)
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
