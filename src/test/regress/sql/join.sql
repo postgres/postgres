@@ -1860,6 +1860,13 @@ SELECT * FROM
      FROM int8_tbl LEFT JOIN innertab ON q2 = id) ss2
   ON true;
 
+-- join removal bug #17769: can't remove if there's a pushed-down reference
+EXPLAIN (COSTS OFF)
+SELECT q2 FROM
+  (SELECT *
+   FROM int8_tbl LEFT JOIN innertab ON q2 = id) ss
+ WHERE COALESCE(dat1, 0) = q1;
+
 rollback;
 
 -- another join removal bug: we must clean up correctly when removing a PHV

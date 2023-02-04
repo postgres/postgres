@@ -5150,6 +5150,21 @@ SELECT * FROM
  1 | 4567890123456789 | -4567890123456789 | 4567890123456789
 (5 rows)
 
+-- join removal bug #17769: can't remove if there's a pushed-down reference
+EXPLAIN (COSTS OFF)
+SELECT q2 FROM
+  (SELECT *
+   FROM int8_tbl LEFT JOIN innertab ON q2 = id) ss
+ WHERE COALESCE(dat1, 0) = q1;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Nested Loop Left Join
+   Filter: (COALESCE(innertab.dat1, '0'::bigint) = int8_tbl.q1)
+   ->  Seq Scan on int8_tbl
+   ->  Index Scan using innertab_pkey on innertab
+         Index Cond: (id = int8_tbl.q2)
+(5 rows)
+
 rollback;
 -- another join removal bug: we must clean up correctly when removing a PHV
 begin;

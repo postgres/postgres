@@ -198,16 +198,6 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 			 * fall back to the conservative assumption that the PHV will be
 			 * evaluated at its syntactic level (phv->phrels).
 			 *
-			 * There is a second hazard: this code is also used to examine
-			 * qual clauses during deconstruct_jointree, when we may have a
-			 * PlaceHolderInfo but its ph_eval_at value is not yet final, so
-			 * that theoretically we could obtain a relid set that's smaller
-			 * than we'd see later on.  That should never happen though,
-			 * because we deconstruct the jointree working upwards.  Any outer
-			 * join that forces delay of evaluation of a given qual clause
-			 * will be processed before we examine that clause here, so the
-			 * ph_eval_at value should have been updated to include it.
-			 *
 			 * Another problem is that a PlaceHolderVar can appear in quals or
 			 * tlists that have been translated for use in a child appendrel.
 			 * Typically such a PHV is a parameter expression sourced by some

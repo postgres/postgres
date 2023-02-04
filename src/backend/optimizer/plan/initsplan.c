@@ -494,9 +494,6 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
  * create_lateral_join_info
  *	  Fill in the per-base-relation direct_lateral_relids, lateral_relids
  *	  and lateral_referencers sets.
- *
- * This has to run after deconstruct_jointree, because we need to know the
- * final ph_eval_at values for PlaceHolderVars.
  */
 void
 create_lateral_join_info(PlannerInfo *root)
@@ -508,6 +505,9 @@ create_lateral_join_info(PlannerInfo *root)
 	/* We need do nothing if the query contains no LATERAL RTEs */
 	if (!root->hasLateralRTEs)
 		return;
+
+	/* We'll need to have the ph_eval_at values for PlaceHolderVars */
+	Assert(root->placeholdersFrozen);
 
 	/*
 	 * Examine all baserels (the rel array has been set up by now).

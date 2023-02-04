@@ -164,6 +164,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 {
 	int			innerrelid;
 	RelOptInfo *innerrel;
+	Relids		inputrelids;
 	Relids		joinrelids;
 	List	   *clause_list = NIL;
 	ListCell   *l;
@@ -190,17 +191,16 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		return false;
 
 	/* Compute the relid set for the join we are considering */
-	joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
-	if (sjinfo->ojrelid != 0)
-		joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
+	inputrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+	Assert(sjinfo->ojrelid != 0);
+	joinrelids = bms_copy(inputrelids);
+	joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
 
 	/*
 	 * We can't remove the join if any inner-rel attributes are used above the
-	 * join.
-	 *
-	 * Note that this test only detects use of inner-rel attributes in higher
-	 * join conditions and the target list.  There might be such attributes in
-	 * pushed-down conditions at this join, too.  We check that case below.
+	 * join.  Here, "above" the join includes pushed-down conditions, so we
+	 * should reject if attr_needed includes the OJ's own relid; therefore,
+	 * compare to inputrelids not joinrelids.
 	 *
 	 * As a micro-optimization, it seems better to start with max_attr and
 	 * count down rather than starting with min_attr and counting up, on the
@@ -211,7 +211,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		 attroff >= 0;
 		 attroff--)
 	{
-		if (!bms_is_subset(innerrel->attr_needed[attroff], joinrelids))
+		if (!bms_is_subset(innerrel->attr_needed[attroff], inputrelids))
 			return false;
 	}
 
@@ -230,7 +230,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 		if (bms_overlap(phinfo->ph_lateral, innerrel->relids))
 			return false;		/* it references innerrel laterally */
-		if (bms_is_subset(phinfo->ph_needed, joinrelids))
+		if (bms_is_subset(phinfo->ph_needed, inputrelids))
 			continue;			/* PHV is not used above the join */
 		if (!bms_overlap(phinfo->ph_eval_at, innerrel->relids))
 			continue;			/* it definitely doesn't reference innerrel */
@@ -273,13 +273,11 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		{
 			/*
 			 * If such a clause actually references the inner rel then join
-			 * removal has to be disallowed.  We have to check this despite
-			 * the previous attr_needed checks because of the possibility of
-			 * pushed-down clauses referencing the rel.
+			 * removal has to be disallowed.  The previous attr_needed checks
+			 * should have caught this, though.
 			 */
-			if (bms_is_member(innerrelid, restrictinfo->clause_relids))
-				return false;
-			continue;			/* else, ignore; not useful here */
+			Assert(!bms_is_member(innerrelid, restrictinfo->clause_relids));
+			continue;			/* ignore; not useful here */
 		}
 
 		/* Ignore if it's not a mergejoinable clause */
