@@ -7,7 +7,6 @@ backend_sources += files(
   'multixact.c',
   'parallel.c',
   'rmgr.c',
-  'shell_restore.c',
   'slru.c',
   'subtrans.c',
   'timeline.c',

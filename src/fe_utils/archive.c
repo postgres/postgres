@@ -19,8 +19,8 @@
 #include <sys/stat.h>
 
 #include "access/xlog_internal.h"
+#include "common/archive.h"
 #include "common/logging.h"
-#include "common/percentrepl.h"
 #include "fe_utils/archive.h"
 
 
@@ -41,18 +41,13 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 {
 	char		xlogpath[MAXPGPATH];
 	char	   *xlogRestoreCmd;
-	char	   *nativePath;
 	int			rc;
 	struct stat stat_buf;
 
 	snprintf(xlogpath, MAXPGPATH, "%s/" XLOGDIR "/%s", path, xlogfname);
 
-	nativePath = pstrdup(xlogpath);
-	make_native_path(nativePath);
-	xlogRestoreCmd = replace_percent_placeholders(restoreCommand,
-												  "restore_command", "fp",
-												  xlogfname, nativePath);
-	pfree(nativePath);
+	xlogRestoreCmd = BuildRestoreCommand(restoreCommand, xlogpath,
+										 xlogfname, NULL);
 
 	/*
 	 * Execute restore_command, which should copy the missing file from

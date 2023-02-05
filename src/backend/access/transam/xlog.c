@@ -692,7 +692,6 @@ static char *GetXLogBuffer(XLogRecPtr ptr, TimeLineID tli);
 static XLogRecPtr XLogBytePosToRecPtr(uint64 bytepos);
 static XLogRecPtr XLogBytePosToEndRecPtr(uint64 bytepos);
 static uint64 XLogRecPtrToBytePos(XLogRecPtr ptr);
-static void GetOldestRestartPointFileName(char *fname);
 
 static void WALInsertLockAcquire(void);
 static void WALInsertLockAcquireExclusive(void);
@@ -4890,12 +4889,10 @@ CleanupAfterArchiveRecovery(TimeLineID EndOfLogTLI, XLogRecPtr EndOfLog,
 	 * Execute the recovery_end_command, if any.
 	 */
 	if (recoveryEndCommand && strcmp(recoveryEndCommand, "") != 0)
-	{
-		char		lastRestartPointFname[MAXFNAMELEN];
-
-		GetOldestRestartPointFileName(lastRestartPointFname);
-		shell_recovery_end(lastRestartPointFname);
-	}
+		ExecuteRecoveryCommand(recoveryEndCommand,
+							   "recovery_end_command",
+							   true,
+							   WAIT_EVENT_RECOVERY_END_COMMAND);
 
 	/*
 	 * We switched to a new timeline. Clean up segments on the old timeline.
@@ -7312,12 +7309,10 @@ CreateRestartPoint(int flags)
 	 * Finally, execute archive_cleanup_command, if any.
 	 */
 	if (archiveCleanupCommand && strcmp(archiveCleanupCommand, "") != 0)
-	{
-		char		lastRestartPointFname[MAXFNAMELEN];
-
-		GetOldestRestartPointFileName(lastRestartPointFname);
-		shell_archive_cleanup(lastRestartPointFname);
-	}
+		ExecuteRecoveryCommand(archiveCleanupCommand,
+							   "archive_cleanup_command",
+							   false,
+							   WAIT_EVENT_ARCHIVE_CLEANUP_COMMAND);
 
 	return true;
 }
@@ -8892,22 +8887,6 @@ GetOldestRestartPoint(XLogRecPtr *oldrecptr, TimeLineID *oldtli)
 	*oldrecptr = ControlFile->checkPointCopy.redo;
 	*oldtli = ControlFile->checkPointCopy.ThisTimeLineID;
 	LWLockRelease(ControlFileLock);
-}
-
-/*
- * Returns the WAL file name for the last checkpoint or restartpoint.  This is
- * the oldest WAL file that we still need if we have to restart recovery.
- */
-static void
-GetOldestRestartPointFileName(char *fname)
-{
-	XLogRecPtr	restartRedoPtr;
-	TimeLineID	restartTli;
-	XLogSegNo	restartSegNo;
-
-	GetOldestRestartPoint(&restartRedoPtr, &restartTli);
-	XLByteToSeg(restartRedoPtr, restartSegNo, wal_segment_size);
-	XLogFileName(fname, restartTli, restartSegNo, wal_segment_size);
 }
 
 /* Thin wrapper around ShutdownWalRcv(). */

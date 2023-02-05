@@ -19,7 +19,6 @@ OBJS = \
 	multixact.o \
 	parallel.o \
 	rmgr.o \
-	shell_restore.o \
 	slru.o \
 	subtrans.o \
 	timeline.o \
