@@ -4469,6 +4469,36 @@ left join
          One-Time Filter: false
 (5 rows)
 
+-- check handling of apparently-commutable outer joins with non-commutable
+-- joins between them
+explain (costs off)
+select 1 from
+  int4_tbl i4
+  left join int8_tbl i8 on i4.f1 is not null
+  left join (select 1 as a) ss1 on null
+  join int4_tbl i42 on ss1.a is null or i8.q1 <> i8.q2
+  right join (select 2 as b) ss2
+  on ss2.b < i4.f1;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Nested Loop Left Join
+   ->  Result
+   ->  Nested Loop
+         ->  Nested Loop Left Join
+               Join Filter: NULL::boolean
+               Filter: (((1) IS NULL) OR (i8.q1 <> i8.q2))
+               ->  Nested Loop Left Join
+                     Join Filter: (i4.f1 IS NOT NULL)
+                     ->  Seq Scan on int4_tbl i4
+                           Filter: (2 < f1)
+                     ->  Materialize
+                           ->  Seq Scan on int8_tbl i8
+               ->  Result
+                     One-Time Filter: false
+         ->  Materialize
+               ->  Seq Scan on int4_tbl i42
+(16 rows)
+
 --
 -- test for appropriate join order in the presence of lateral references
 --

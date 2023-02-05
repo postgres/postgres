@@ -1545,6 +1545,17 @@ left join
   where c.relkind = 'r'
 ) ss2 on false;
 
+-- check handling of apparently-commutable outer joins with non-commutable
+-- joins between them
+explain (costs off)
+select 1 from
+  int4_tbl i4
+  left join int8_tbl i8 on i4.f1 is not null
+  left join (select 1 as a) ss1 on null
+  join int4_tbl i42 on ss1.a is null or i8.q1 <> i8.q2
+  right join (select 2 as b) ss2
+  on ss2.b < i4.f1;
+
 --
 -- test for appropriate join order in the presence of lateral references
 --

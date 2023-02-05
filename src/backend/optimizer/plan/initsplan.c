@@ -1358,6 +1358,8 @@ make_outerjoininfo(PlannerInfo *root,
 	Relids		strict_relids;
 	Relids		min_lefthand;
 	Relids		min_righthand;
+	Relids		commute_below_l;
+	Relids		commute_below_r;
 	ListCell   *l;
 
 	/*
@@ -1445,7 +1447,14 @@ make_outerjoininfo(PlannerInfo *root,
 
 	/*
 	 * Now check previous outer joins for ordering restrictions.
+	 *
+	 * commute_below_l and commute_below_r accumulate the relids of lower
+	 * outer joins that we think this one can commute with.  These decisions
+	 * are just tentative within this loop, since we might find an
+	 * intermediate outer join that prevents commutation.  Surviving relids
+	 * will get merged into the SpecialJoinInfo structs afterwards.
 	 */
+	commute_below_l = commute_below_r = NULL;
 	foreach(l, root->join_info_list)
 	{
 		SpecialJoinInfo *otherinfo = (SpecialJoinInfo *) lfirst(l);
@@ -1458,6 +1467,7 @@ make_outerjoininfo(PlannerInfo *root,
 		 */
 		if (otherinfo->jointype == JOIN_FULL)
 		{
+			Assert(otherinfo->ojrelid != 0);
 			if (bms_overlap(left_rels, otherinfo->syn_lefthand) ||
 				bms_overlap(left_rels, otherinfo->syn_righthand))
 			{
@@ -1465,9 +1475,8 @@ make_outerjoininfo(PlannerInfo *root,
 											   otherinfo->syn_lefthand);
 				min_lefthand = bms_add_members(min_lefthand,
 											   otherinfo->syn_righthand);
-				if (otherinfo->ojrelid != 0)
-					min_lefthand = bms_add_member(min_lefthand,
-												  otherinfo->ojrelid);
+				min_lefthand = bms_add_member(min_lefthand,
+											  otherinfo->ojrelid);
 			}
 			if (bms_overlap(right_rels, otherinfo->syn_lefthand) ||
 				bms_overlap(right_rels, otherinfo->syn_righthand))
@@ -1476,9 +1485,8 @@ make_outerjoininfo(PlannerInfo *root,
 												otherinfo->syn_lefthand);
 				min_righthand = bms_add_members(min_righthand,
 												otherinfo->syn_righthand);
-				if (otherinfo->ojrelid != 0)
-					min_righthand = bms_add_member(min_righthand,
-												   otherinfo->ojrelid);
+				min_righthand = bms_add_member(min_righthand,
+											   otherinfo->ojrelid);
 			}
 			/* Needn't do anything else with the full join */
 			continue;
@@ -1536,11 +1544,9 @@ make_outerjoininfo(PlannerInfo *root,
 			{
 				/* Identity 3 applies, so remove the ordering restriction */
 				min_lefthand = bms_del_member(min_lefthand, otherinfo->ojrelid);
-				/* Add commutability markers to both SpecialJoinInfos */
-				otherinfo->commute_above_l =
-					bms_add_member(otherinfo->commute_above_l, ojrelid);
-				sjinfo->commute_below =
-					bms_add_member(sjinfo->commute_below, otherinfo->ojrelid);
+				/* Record the (still tentative) commutability relationship */
+				commute_below_l =
+					bms_add_member(commute_below_l, otherinfo->ojrelid);
 			}
 		}
 
@@ -1589,11 +1595,9 @@ make_outerjoininfo(PlannerInfo *root,
 				/* Identity 3 applies, so remove the ordering restriction */
 				min_righthand = bms_del_member(min_righthand,
 											   otherinfo->ojrelid);
-				/* Add commutability markers to both SpecialJoinInfos */
-				otherinfo->commute_above_r =
-					bms_add_member(otherinfo->commute_above_r, ojrelid);
-				sjinfo->commute_below =
-					bms_add_member(sjinfo->commute_below, otherinfo->ojrelid);
+				/* Record the (still tentative) commutability relationship */
+				commute_below_r =
+					bms_add_member(commute_below_r, otherinfo->ojrelid);
 			}
 		}
 	}
@@ -1638,6 +1642,44 @@ make_outerjoininfo(PlannerInfo *root,
 
 	sjinfo->min_lefthand = min_lefthand;
 	sjinfo->min_righthand = min_righthand;
+
+	/*
+	 * Now that we've identified the correct min_lefthand and min_righthand,
+	 * any commute_below_l or commute_below_r relids that have not gotten
+	 * added back into those sets (due to intervening outer joins) are indeed
+	 * commutable with this one.  Update the derived data in the
+	 * SpecialJoinInfos.
+	 */
+	if (commute_below_l || commute_below_r)
+	{
+		Relids		commute_below;
+
+		/*
+		 * Delete any subsequently-added-back relids (this is easier than
+		 * maintaining commute_below_l/r precisely through all the above).
+		 */
+		commute_below_l = bms_del_members(commute_below_l, min_lefthand);
+		commute_below_r = bms_del_members(commute_below_r, min_righthand);
+
+		/* Anything left? */
+		commute_below = bms_union(commute_below_l, commute_below_r);
+		if (!bms_is_empty(commute_below))
+		{
+			/* Yup, so we must update the data structures */
+			sjinfo->commute_below = commute_below;
+			foreach(l, root->join_info_list)
+			{
+				SpecialJoinInfo *otherinfo = (SpecialJoinInfo *) lfirst(l);
+
+				if (bms_is_member(otherinfo->ojrelid, commute_below_l))
+					otherinfo->commute_above_l =
+						bms_add_member(otherinfo->commute_above_l, ojrelid);
+				else if (bms_is_member(otherinfo->ojrelid, commute_below_r))
+					otherinfo->commute_above_r =
+						bms_add_member(otherinfo->commute_above_r, ojrelid);
+			}
+		}
+	}
 
 	return sjinfo;
 }
