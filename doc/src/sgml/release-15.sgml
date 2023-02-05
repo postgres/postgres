@@ -274,15 +274,14 @@ Branch: REL_12_STABLE [b55303792] 2023-01-26 14:55:03 +1300
 Branch: REL_11_STABLE [d95dcc9ab] 2023-01-26 14:55:37 +1300
 -->
      <para>
-      Fix edge-case data corruption in shared tuplestores (Dmitry Astapov)
+      Fix edge-case data corruption in parallel hash joins (Dmitry Astapov)
      </para>
 
      <para>
-      If the final chunk of a large tuple being written out to disk was
-      exactly 32760 bytes, it would be corrupted due to a fencepost bug.
-      This is a hazard for parallelized plans that require a tuplestore,
-      such as parallel hash join.  The query would typically fail later
-      with corrupted-data symptoms.
+      If the final chunk of a large tuple being written out to a temporary
+      file was exactly 32760 bytes, it would be corrupted due to a
+      fencepost bug.  The query would typically fail later with
+      corrupted-data symptoms.
      </para>
     </listitem>
 
@@ -372,26 +371,6 @@ Branch: REL_15_STABLE [db9127c58] 2023-01-15 17:32:09 -0500
       column list feature, it's necessary to
       accept <type>int2vector</type>s having up to 1600 columns,
       otherwise long column lists cause logical-replication failures.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: REL_13_STABLE [72b6098be] 2023-01-11 09:56:14 +0900
-Branch: REL_12_STABLE [c0ee6943c] 2023-01-11 09:56:18 +0900
--->
-     <para>
-      Prevent <quote>wrong tuple length</quote> failure
-      at the end of <command>VACUUM</command> (Ashwin Agrawal, Junfeng Yang)
-     </para>
-
-     <para>
-      This occurred if <command>VACUUM</command> needed to update the
-      current database's <structfield>datfrozenxid</structfield> value and
-      the database has so many granted privileges that
-      its <structfield>datacl</structfield> value has been pushed
-      out-of-line.
      </para>
     </listitem>
 
@@ -621,8 +600,9 @@ Branch: REL_14_STABLE [7715a3c24] 2022-11-29 11:46:33 -0500
      </para>
 
      <para>
-      Bad things could happen if a SQL-language function executes the same
-      utility command more than once during a calling query.
+      If a SQL-language function executes the same utility command more
+      than once within a single calling query, it could crash or report
+      strange errors such as <quote>unrecognized node type</quote>.
      </para>
     </listitem>
 
@@ -870,28 +850,6 @@ Branch: REL_11_STABLE [5eaf3e375] 2022-11-11 12:46:52 -0800
 
     <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_14_STABLE [32d5a4974] 2022-11-17 16:54:30 -0500
-Branch: REL_13_STABLE [9a299cf7c] 2022-11-17 16:54:30 -0500
-Branch: REL_12_STABLE [e21856fd6] 2022-11-17 16:54:31 -0500
-Branch: REL_11_STABLE [d4acf2eb9] 2022-11-17 16:54:31 -0500
--->
-     <para>
-      Prevent unsafe usage of a relation cache
-      entry's <structfield>rd_smgr</structfield> pointer (Amul Sul)
-     </para>
-
-     <para>
-      Remove various assumptions that <structfield>rd_smgr</structfield>
-      would stay valid over a series of operations, by wrapping all uses
-      of it in a function that will recompute it if needed.  This prevents
-      bugs occurring when an unexpected cache flush occurs partway through
-      such a series.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 Branch: master [b2d479289] 2023-02-03 11:13:34 +0000
 Branch: REL_15_STABLE [4f74741a5] 2023-02-03 11:11:59 +0000
@@ -1026,34 +984,6 @@ Branch: REL_15_STABLE [8b5ba2f3f] 2022-12-12 10:33:02 -0500
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_14_STABLE [55f30e6c7] 2022-11-19 11:40:30 -0500
-Branch: REL_13_STABLE [e46e986ba] 2022-11-19 11:40:30 -0500
-Branch: REL_12_STABLE [344b78492] 2022-11-19 11:40:30 -0500
-Branch: REL_11_STABLE [b1f106420] 2022-11-19 11:40:30 -0500
-Branch: REL_14_STABLE [03ac48549] 2022-11-19 12:00:27 -0500
-Branch: REL_13_STABLE [a5b26aaaf] 2022-11-19 12:00:27 -0500
-Branch: REL_12_STABLE [1ed6f1b91] 2022-11-19 12:00:27 -0500
-Branch: REL_11_STABLE [b7333e826] 2022-11-19 12:00:27 -0500
--->
-     <para>
-      In <application>pg_dump</application>,
-      avoid calling unsafe server functions before we have locks on the
-      tables to be examined (Tom Lane, Gilles Darold)
-     </para>
-
-     <para>
-      <application>pg_dump</application> uses certain server functions
-      that can fail if examining a table that gets dropped concurrently.
-      Avoid this type of failure by ensuring that we obtain access share
-      lock before inquiring too deeply into a table's properties, and that
-      we don't apply such functions to tables we don't intend to dump at
-      all.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [74739d1d3] 2023-01-19 19:32:50 -0500
 Branch: REL_15_STABLE [488e89bf7] 2023-01-19 19:32:47 -0500
 -->
@@ -1128,17 +1058,6 @@ Branch: REL_15_STABLE [b8988cf1d] 2022-11-21 15:37:10 -0500
 
     <listitem>
 <!--
-Author: Etsuro Fujita <efujita@postgresql.org>
-Branch: REL_12_STABLE [69f75bf82] 2022-12-15 21:15:00 +0900
--->
-     <para>
-      Fix faulty assertion in <filename>contrib/postgres_fdw</filename>
-      (Etsuro Fujita)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [701c881f7] 2022-12-21 17:51:50 -0500
 Branch: REL_15_STABLE [b87037b37] 2022-12-21 17:51:50 -0500
@@ -1150,25 +1069,6 @@ Branch: REL_11_STABLE [0ff4056b8] 2022-12-21 17:51:50 -0500
      <para>
       Fix <filename>contrib/seg</filename> to not crash or print garbage
       if an input number has more than 127 digits (Tom Lane)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: REL_13_STABLE [c304c069d] 2022-11-09 09:39:53 +0900
-Branch: REL_12_STABLE [edb4ef48d] 2022-11-09 09:39:55 +0900
-Branch: REL_11_STABLE [91723759e] 2022-11-09 09:39:57 +0900
-Branch: REL_10_STABLE [8f5d4ee6c] 2022-11-09 09:39:58 +0900
-Branch: REL9_6_STABLE [b2b988110] 2022-11-09 09:40:01 +0900
-Branch: REL9_5_STABLE [40064e103] 2022-11-09 09:40:02 +0900
-Branch: REL9_4_STABLE [0f5812df6] 2022-11-09 09:40:05 +0900
-Branch: REL9_3_STABLE [a5171b880] 2022-11-09 09:40:06 +0900
-Branch: REL9_2_STABLE [c58c0770a] 2022-11-09 09:40:09 +0900
--->
-     <para>
-      In <filename>contrib/sepgsql</filename>, avoid deprecation warnings
-      with recent <application>libselinux</application> (Michael Paquier)
      </para>
     </listitem>
 
