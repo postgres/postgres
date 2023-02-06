@@ -35,6 +35,35 @@
 
     <listitem>
 <!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [71c37797d] 2023-02-06 11:20:07 +0900
+Branch: REL_15_STABLE [715c345dd] 2023-02-06 11:20:20 +0900
+Branch: REL_14_STABLE [626f2c1d6] 2023-02-06 11:20:23 +0900
+Branch: REL_13_STABLE [45a945ee9] 2023-02-06 11:20:27 +0900
+Branch: REL_12_STABLE [3f7342671] 2023-02-06 11:20:31 +0900
+-->
+     <para>
+      <application>libpq</application> can leak memory contents after
+      GSSAPI transport encryption initiation fails (Jacob Champion)
+     </para>
+
+     <para>
+      A modified server, or an unauthenticated man-in-the-middle, can
+      send a not-zero-terminated error message during setup of GSSAPI
+      (Kerberos) transport encryption.  <application>libpq</application>
+      will then copy that string, as well as following bytes in
+      application memory up to the next zero byte, to its error report.
+      Depending on what the calling application does with the error
+      report, this could result in disclosure of application memory
+      contents.  There is also a small probability of a crash due to
+      reading beyond the end of memory.  Fix by properly zero-terminating
+      the server message.
+      (CVE-2022-41862)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [3f7836ff6] 2023-01-05 14:12:17 -0500
 Branch: REL_15_STABLE [3706cc97a] 2023-01-05 14:12:17 -0500
