@@ -19,8 +19,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ../../common/exec.c:141 ../../common/exec.c:258 ../../common/exec.c:304
 #, c-format
@@ -959,8 +959,8 @@ msgstr ""
 #~ msgstr "%s: не удалось дождаться сервера вследствие ошибки конфигурации\n"
 
 #~ msgid ""
-#~ "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
-#~ "\"]\n"
+#~ "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o "
+#~ "\"OPTIONS\"]\n"
 #~ msgstr ""
 #~ "  %s start   [-w] [-t СЕК] [-D КАТАЛОГ-ДАННЫХ] [-s] [-l ИМЯ-ФАЙЛА]\n"
 #~ "                 [-o \"ПАРАМЕТРЫ\"]\n"

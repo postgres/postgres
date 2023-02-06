@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 14)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-07-06 10:32+0900\n"
-"PO-Revision-Date: 2022-07-06 10:52+0900\n"
+"PO-Revision-Date: 2022-11-16 16:58+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -578,12 +578,12 @@ msgstr "URI \"%s\"内のIPv6ホストアドレスにおいて対応する\"]\"�
 #: fe-connect.c:6127
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
-msgstr "URI \"%s\"内のIPv6ホストアドレスが空である可能性があります\n"
+msgstr "URI内ではIPv6ホストアドレスは空であってはなりません: \"%s\"\n"
 
 #: fe-connect.c:6142
 #, c-format
 msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\"\n"
-msgstr "URI（\":\"と\"/\"を除く）内の位置%2$dに想定外の\"%1$c\"文字があります: \"%3$s\"\n"
+msgstr "URI内の位置%2$dに想定外の文字\"%1$c\"があります(\":\"または\"/\"を期待していました): \"%3$s\"\n"
 
 #: fe-connect.c:6272
 #, c-format
