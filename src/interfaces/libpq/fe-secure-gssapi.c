@@ -578,6 +578,8 @@ pqsecure_open_gss(PGconn *conn)
 
 			PqGSSRecvLength += ret;
 
+			Assert(PqGSSRecvLength < PQ_GSS_RECV_BUFFER_SIZE);
+			PqGSSRecvBuffer[PqGSSRecvLength] = '\0';
 			appendPQExpBuffer(&conn->errorMessage, "%s\n", PqGSSRecvBuffer + 1);
 
 			return PGRES_POLLING_FAILED;
