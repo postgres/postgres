@@ -32,6 +32,8 @@ extern void PostRestoreCommand(void);
 extern bool IsPromoteSignaled(void);
 extern void ResetPromoteSignaled(void);
 
+extern void enable_startup_progress_timeout(void);
+extern void disable_startup_progress_timeout(void);
 extern void begin_startup_progress_phase(void);
 extern void startup_progress_timeout_handler(void);
 extern bool has_startup_progress_timeout_expired(long *secs, int *usecs);

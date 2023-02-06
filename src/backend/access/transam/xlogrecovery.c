@@ -385,6 +385,7 @@ static bool recoveryStopAfter;
 /* prototypes for local functions */
 static void ApplyWalRecord(XLogReaderState *xlogreader, XLogRecord *record, TimeLineID *replayTLI);
 
+static void EnableStandbyMode(void);
 static void readRecoverySignalFile(void);
 static void validateRecoveryParameters(void);
 static bool read_backup_label(XLogRecPtr *checkPointLoc,
@@ -467,6 +468,24 @@ XLogRecoveryShmemInit(void)
 	SpinLockInit(&XLogRecoveryCtl->info_lck);
 	InitSharedLatch(&XLogRecoveryCtl->recoveryWakeupLatch);
 	ConditionVariableInit(&XLogRecoveryCtl->recoveryNotPausedCV);
+}
+
+/*
+ * A thin wrapper to enable StandbyMode and do other preparatory work as
+ * needed.
+ */
+static void
+EnableStandbyMode(void)
+{
+	StandbyMode = true;
+
+	/*
+	 * To avoid server log bloat, we don't report recovery progress in a
+	 * standby as it will always be in recovery unless promoted. We disable
+	 * startup progress timeout in standby mode to avoid calling
+	 * startup_progress_timeout_handler() unnecessarily.
+	 */
+	disable_startup_progress_timeout();
 }
 
 /*
@@ -602,7 +621,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 		 */
 		InArchiveRecovery = true;
 		if (StandbyModeRequested)
-			StandbyMode = true;
+			EnableStandbyMode();
 
 		/*
 		 * When a backup_label file is present, we want to roll forward from
@@ -739,7 +758,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 		{
 			InArchiveRecovery = true;
 			if (StandbyModeRequested)
-				StandbyMode = true;
+				EnableStandbyMode();
 		}
 
 		/* Get the last valid checkpoint record. */
@@ -3117,7 +3136,7 @@ ReadRecord(XLogPrefetcher *xlogprefetcher, int emode,
 						(errmsg_internal("reached end of WAL in pg_wal, entering archive recovery")));
 				InArchiveRecovery = true;
 				if (StandbyModeRequested)
-					StandbyMode = true;
+					EnableStandbyMode();
 
 				SwitchIntoArchiveRecovery(xlogreader->EndRecPtr, replayTLI);
 				minRecoveryPoint = xlogreader->EndRecPtr;
