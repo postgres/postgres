@@ -1888,6 +1888,14 @@ SELECT q2 FROM
    FROM int8_tbl LEFT JOIN innertab ON q2 = id) ss
  WHERE COALESCE(dat1, 0) = q1;
 
+-- join removal bug #17773: otherwise-removable PHV appears in a qual condition
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT q2 FROM
+  (SELECT q2, 'constant'::text AS x
+   FROM int8_tbl LEFT JOIN innertab ON q2 = id) ss
+  RIGHT JOIN int4_tbl ON NULL
+ WHERE x >= x;
+
 rollback;
 
 -- another join removal bug: we must clean up correctly when removing a PHV

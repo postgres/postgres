@@ -217,12 +217,12 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/*
 	 * Similarly check that the inner rel isn't needed by any PlaceHolderVars
-	 * that will be used above the join.  We only need to fail if such a PHV
-	 * actually references some inner-rel attributes; but the correct check
-	 * for that is relatively expensive, so we first check against ph_eval_at,
-	 * which must mention the inner rel if the PHV uses any inner-rel attrs as
-	 * non-lateral references.  Note that if the PHV's syntactic scope is just
-	 * the inner rel, we can't drop the rel even if the PHV is variable-free.
+	 * that will be used above the join.  The PHV case is a little bit more
+	 * complicated, because PHVs may have been assigned a ph_eval_at location
+	 * that includes the innerrel, yet their contained expression might not
+	 * actually reference the innerrel (it could be just a constant, for
+	 * instance).  If such a PHV is due to be evaluated above the join then it
+	 * needn't prevent join removal.
 	 */
 	foreach(l, root->placeholder_list)
 	{
@@ -230,15 +230,23 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 		if (bms_overlap(phinfo->ph_lateral, innerrel->relids))
 			return false;		/* it references innerrel laterally */
-		if (bms_is_subset(phinfo->ph_needed, inputrelids))
-			continue;			/* PHV is not used above the join */
 		if (!bms_overlap(phinfo->ph_eval_at, innerrel->relids))
 			continue;			/* it definitely doesn't reference innerrel */
-		if (bms_is_subset(phinfo->ph_eval_at, innerrel->relids))
+		if (bms_is_subset(phinfo->ph_needed, inputrelids))
+			continue;			/* PHV is not used above the join */
+		if (!bms_is_member(sjinfo->ojrelid, phinfo->ph_eval_at))
+			return false;		/* it has to be evaluated below the join */
+
+		/*
+		 * We need to be sure there will still be a place to evaluate the PHV
+		 * if we remove the join, ie that ph_eval_at wouldn't become empty.
+		 */
+		if (!bms_overlap(sjinfo->min_lefthand, phinfo->ph_eval_at))
 			return false;		/* there isn't any other place to eval PHV */
+		/* Check contained expression last, since this is a bit expensive */
 		if (bms_overlap(pull_varnos(root, (Node *) phinfo->ph_var->phexpr),
 						innerrel->relids))
-			return false;		/* it does reference innerrel */
+			return false;		/* contained expression references innerrel */
 	}
 
 	/*
@@ -270,15 +278,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		 * be from WHERE, for example).
 		 */
 		if (RINFO_IS_PUSHED_DOWN(restrictinfo, joinrelids))
-		{
-			/*
-			 * If such a clause actually references the inner rel then join
-			 * removal has to be disallowed.  The previous attr_needed checks
-			 * should have caught this, though.
-			 */
-			Assert(!bms_is_member(innerrelid, restrictinfo->clause_relids));
 			continue;			/* ignore; not useful here */
-		}
 
 		/* Ignore if it's not a mergejoinable clause */
 		if (!restrictinfo->can_join ||
@@ -465,13 +465,21 @@ remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 		 */
 		if (bms_is_member(ojrelid, rinfo->required_relids))
 		{
-			/* Recheck that qual doesn't actually reference the target rel */
-			Assert(!bms_is_member(relid, rinfo->clause_relids));
-
 			/*
-			 * The required_relids probably aren't shared with anything else,
+			 * There might be references to relid or ojrelid in the
+			 * clause_relids as a consequence of PHVs having ph_eval_at sets
+			 * that include those.  We already checked above that any such PHV
+			 * is safe, so we can just drop those references.
+			 *
+			 * The clause_relids probably aren't shared with anything else,
 			 * but let's copy them just to be sure.
 			 */
+			rinfo->clause_relids = bms_copy(rinfo->clause_relids);
+			rinfo->clause_relids = bms_del_member(rinfo->clause_relids,
+												  relid);
+			rinfo->clause_relids = bms_del_member(rinfo->clause_relids,
+												  ojrelid);
+			/* Likewise for required_relids */
 			rinfo->required_relids = bms_copy(rinfo->required_relids);
 			rinfo->required_relids = bms_del_member(rinfo->required_relids,
 													relid);
