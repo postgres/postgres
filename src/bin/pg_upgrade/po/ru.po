@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-17 12:24+0300\n"
+"POT-Creation-Date: 2023-02-02 08:43+0300\n"
 "PO-Revision-Date: 2022-01-19 16:26+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: check.c:69
 #, c-format
@@ -156,8 +156,8 @@ msgstr ""
 #, c-format
 msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr ""
-"кодировки в базе данных \"%s\" различаются:  старая - \"%s\", новая - \"%s"
-"\"\n"
+"кодировки в базе данных \"%s\" различаются:  старая - \"%s\", новая - "
+"\"%s\"\n"
 
 #: check.c:333
 #, c-format
@@ -320,8 +320,8 @@ msgstr ""
 "biging.\n"
 "Однако в новом кластере значения bigint передаётся не так, как в старом,\n"
 "так что обновление кластера в текущем состоянии невозможно. Вы можете\n"
-"вручную обновить базы данных, где используется функциональность \"contrib/isn"
-"\" или\n"
+"вручную обновить базы данных, где используется функциональность \"contrib/"
+"isn\" или\n"
 "удалить \"contrib/isn\" из старого кластера и перезапустить обновление. "
 "Список\n"
 "проблемных функций приведён в файле:\n"
@@ -926,16 +926,16 @@ msgstr ""
 msgid ""
 "error while copying relation \"%s.%s\": could not read file \"%s\": %s\n"
 msgstr ""
-"ошибка при копировании отношения \"%s.%s\": не удалось прочитать файл \"%s"
-"\": %s\n"
+"ошибка при копировании отношения \"%s.%s\": не удалось прочитать файл "
+"\"%s\": %s\n"
 
 #: file.c:125 file.c:308
 #, c-format
 msgid ""
 "error while copying relation \"%s.%s\": could not write file \"%s\": %s\n"
 msgstr ""
-"ошибка при копировании отношения \"%s.%s\": не удалось записать в файл \"%s"
-"\": %s\n"
+"ошибка при копировании отношения \"%s.%s\": не удалось записать в файл "
+"\"%s\": %s\n"
 
 #: file.c:139
 #, c-format
@@ -1054,7 +1054,7 @@ msgstr "Проверка наличия требуемых библиотек"
 msgid "could not load library \"%s\": %s"
 msgstr "загрузить библиотеку \"%s\" не удалось: %s"
 
-#: function.c:259 info.c:633
+#: function.c:259 info.c:632
 #, c-format
 msgid "Database: %s\n"
 msgstr "База данных: %s\n"
@@ -1079,8 +1079,8 @@ msgstr ""
 #: info.c:133
 #, c-format
 msgid ""
-"Relation names for OID %u in database \"%s\" do not match: old name \"%s.%s"
-"\", new name \"%s.%s\"\n"
+"Relation names for OID %u in database \"%s\" do not match: old name \"%s."
+"%s\", new name \"%s.%s\"\n"
 msgstr ""
 "Имена отношения с OID %u в базе данных \"%s\" различаются: старое имя - \"%s."
 "%s\", новое - \"%s.%s\"\n"
@@ -1113,8 +1113,8 @@ msgstr " это TOAST-таблица для отношения с OID %u"
 #: info.c:276
 #, c-format
 msgid ""
-"No match found in old cluster for new relation with OID %u in database \"%s"
-"\": %s\n"
+"No match found in old cluster for new relation with OID %u in database "
+"\"%s\": %s\n"
 msgstr ""
 "В старом кластере не нашлось соответствия для нового отношения с OID %u в "
 "базе данных \"%s\": %s\n"
@@ -1122,8 +1122,8 @@ msgstr ""
 #: info.c:279
 #, c-format
 msgid ""
-"No match found in new cluster for old relation with OID %u in database \"%s"
-"\": %s\n"
+"No match found in new cluster for old relation with OID %u in database "
+"\"%s\": %s\n"
 msgstr ""
 "В новом кластере не нашлось соответствия для старого отношения с OID %u в "
 "базе данных \"%s\": %s\n"
@@ -1138,7 +1138,7 @@ msgstr "отображения для базы данных \"%s\":\n"
 msgid "%s.%s: %u to %u\n"
 msgstr "%s.%s: %u в %u\n"
 
-#: info.c:299 info.c:635
+#: info.c:299 info.c:634
 #, c-format
 msgid ""
 "\n"
@@ -1165,7 +1165,7 @@ msgstr ""
 "\n"
 "целевые базы данных:\n"
 
-#: info.c:646
+#: info.c:645
 #, c-format
 msgid "relname: %s.%s: reloid: %u reltblspace: %s\n"
 msgstr "имя_отношения: %s.%s: oid_отношения: %u табл_пространство: %s\n"
@@ -1356,8 +1356,8 @@ msgstr ""
 #, c-format
 msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
 msgstr ""
-"  -U, --username=ИМЯ            суперпользователь кластера (по умолчанию \"%s"
-"\")\n"
+"  -U, --username=ИМЯ            суперпользователь кластера (по умолчанию "
+"\"%s\")\n"
 
 #: option.c:309
 #, c-format
@@ -1908,8 +1908,8 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"В вашей инсталляции пользовательские таблицы используют тип данных \"line"
-"\".\n"
+"В вашей инсталляции пользовательские таблицы используют тип данных "
+"\"line\".\n"
 "В старом кластере внутренний формат и формат ввода/вывода этого типа "
 "отличается\n"
 "от нового, поэтому в настоящем состоянии обновить кластер невозможно. Вы "
@@ -1934,8 +1934,8 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"В вашей инсталляции пользовательские таблицы используют тип данных \"unknown"
-"\".\n"
+"В вашей инсталляции пользовательские таблицы используют тип данных "
+"\"unknown\".\n"
 "Теперь использование этого типа данных не допускается, поэтому в настоящем\n"
 "состоянии обновить кластер невозможно. Вы можете удалить проблемные таблицы\n"
 "и перезапустить обновление. Список проблемных столбцов приведён в файле:\n"

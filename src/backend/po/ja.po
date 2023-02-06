@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 12)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-29 10:02+0900\n"
-"PO-Revision-Date: 2022-09-29 10:15+0900\n"
+"POT-Creation-Date: 2022-12-14 11:42+0900\n"
+"PO-Revision-Date: 2022-12-14 16:09+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -28,21 +28,21 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "ファイル\"%s\"を読み取り用にオープンできませんでした: %m"
 
 #: ../common/controldata_utils.c:86 ../common/controldata_utils.c:89 access/transam/timeline.c:142 access/transam/timeline.c:361 access/transam/twophase.c:1351 access/transam/xlog.c:3484 access/transam/xlog.c:4685 access/transam/xlog.c:11157 access/transam/xlog.c:11170 access/transam/xlog.c:11623 access/transam/xlog.c:11703 access/transam/xlog.c:11742
-#: access/transam/xlog.c:11785 access/transam/xlogfuncs.c:650 access/transam/xlogfuncs.c:669 commands/extension.c:3372 libpq/hba.c:499 replication/logical/origin.c:724 replication/logical/origin.c:760 replication/logical/reorderbuffer.c:3358 replication/logical/snapbuild.c:1857 replication/logical/snapbuild.c:1899 replication/logical/snapbuild.c:1927
-#: replication/logical/snapbuild.c:1954 replication/slot.c:1447 replication/slot.c:1488 replication/walsender.c:518 storage/file/buffile.c:441 storage/file/copydir.c:195 utils/adt/genfile.c:199 utils/adt/misc.c:793 utils/cache/relmapper.c:744
+#: access/transam/xlog.c:11785 access/transam/xlogfuncs.c:650 access/transam/xlogfuncs.c:669 commands/extension.c:3372 libpq/hba.c:499 replication/logical/origin.c:724 replication/logical/origin.c:760 replication/logical/reorderbuffer.c:3374 replication/logical/snapbuild.c:1867 replication/logical/snapbuild.c:1909 replication/logical/snapbuild.c:1937
+#: replication/logical/snapbuild.c:1964 replication/slot.c:1447 replication/slot.c:1488 replication/walsender.c:518 storage/file/buffile.c:441 storage/file/copydir.c:195 utils/adt/genfile.c:199 utils/adt/misc.c:793 utils/cache/relmapper.c:744
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
-#: ../common/controldata_utils.c:97 ../common/controldata_utils.c:101 access/transam/twophase.c:1354 access/transam/xlog.c:3489 access/transam/xlog.c:4690 replication/logical/origin.c:729 replication/logical/origin.c:768 replication/logical/snapbuild.c:1862 replication/logical/snapbuild.c:1904 replication/logical/snapbuild.c:1932
-#: replication/logical/snapbuild.c:1959 replication/slot.c:1451 replication/slot.c:1492 replication/walsender.c:523 utils/cache/relmapper.c:748
+#: ../common/controldata_utils.c:97 ../common/controldata_utils.c:101 access/transam/twophase.c:1354 access/transam/xlog.c:3489 access/transam/xlog.c:4690 replication/logical/origin.c:729 replication/logical/origin.c:768 replication/logical/snapbuild.c:1872 replication/logical/snapbuild.c:1914 replication/logical/snapbuild.c:1942
+#: replication/logical/snapbuild.c:1969 replication/slot.c:1451 replication/slot.c:1492 replication/walsender.c:523 utils/cache/relmapper.c:748
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトのうち%2$dバイトを読み込みました"
 
-#: ../common/controldata_utils.c:112 ../common/controldata_utils.c:117 ../common/controldata_utils.c:256 ../common/controldata_utils.c:259 access/heap/rewriteheap.c:1208 access/heap/rewriteheap.c:1311 access/transam/timeline.c:391 access/transam/timeline.c:437 access/transam/timeline.c:515 access/transam/twophase.c:1363 access/transam/twophase.c:1808
+#: ../common/controldata_utils.c:112 ../common/controldata_utils.c:117 ../common/controldata_utils.c:256 ../common/controldata_utils.c:259 access/heap/rewriteheap.c:1205 access/heap/rewriteheap.c:1308 access/transam/timeline.c:391 access/transam/timeline.c:437 access/transam/timeline.c:515 access/transam/twophase.c:1363 access/transam/twophase.c:1808
 #: access/transam/xlog.c:3353 access/transam/xlog.c:3524 access/transam/xlog.c:3529 access/transam/xlog.c:3851 access/transam/xlog.c:4655 access/transam/xlog.c:5615 access/transam/xlogfuncs.c:675 commands/copy.c:1814 libpq/be-fsstubs.c:455 libpq/be-fsstubs.c:527 replication/logical/origin.c:662 replication/logical/origin.c:801
-#: replication/logical/reorderbuffer.c:3416 replication/logical/snapbuild.c:1766 replication/logical/snapbuild.c:1967 replication/slot.c:1338 replication/slot.c:1499 replication/walsender.c:533 storage/file/copydir.c:218 storage/file/copydir.c:223 storage/file/fd.c:656 storage/file/fd.c:3322 storage/file/fd.c:3425 utils/cache/relmapper.c:759
+#: replication/logical/reorderbuffer.c:3432 replication/logical/snapbuild.c:1776 replication/logical/snapbuild.c:1977 replication/slot.c:1338 replication/slot.c:1499 replication/walsender.c:533 storage/file/copydir.c:218 storage/file/copydir.c:223 storage/file/fd.c:656 storage/file/fd.c:3322 storage/file/fd.c:3425 utils/cache/relmapper.c:759
 #: utils/cache/relmapper.c:898
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -65,9 +65,9 @@ msgstr ""
 "されるものと一致しないようです。この場合以下の結果は不正確になります。また、\n"
 "PostgreSQLインストレーションはこのデータディレクトリと互換性がなくなります。"
 
-#: ../common/controldata_utils.c:197 ../common/controldata_utils.c:203 ../common/file_utils.c:226 ../common/file_utils.c:285 ../common/file_utils.c:359 access/heap/rewriteheap.c:1294 access/transam/timeline.c:110 access/transam/timeline.c:250 access/transam/timeline.c:347 access/transam/twophase.c:1307 access/transam/xlog.c:3255 access/transam/xlog.c:3395
-#: access/transam/xlog.c:3439 access/transam/xlog.c:3637 access/transam/xlog.c:3722 access/transam/xlog.c:3825 access/transam/xlog.c:4675 access/transam/xlogutils.c:708 postmaster/syslogger.c:1489 replication/basebackup.c:531 replication/basebackup.c:1427 replication/logical/origin.c:714 replication/logical/reorderbuffer.c:2332
-#: replication/logical/reorderbuffer.c:2615 replication/logical/reorderbuffer.c:3338 replication/logical/snapbuild.c:1721 replication/logical/snapbuild.c:1828 replication/slot.c:1419 replication/walsender.c:491 replication/walsender.c:2486 storage/file/copydir.c:161 storage/file/fd.c:631 storage/file/fd.c:3309 storage/file/fd.c:3396 storage/smgr/md.c:501
+#: ../common/controldata_utils.c:197 ../common/controldata_utils.c:203 ../common/file_utils.c:226 ../common/file_utils.c:285 ../common/file_utils.c:359 access/heap/rewriteheap.c:1291 access/transam/timeline.c:110 access/transam/timeline.c:250 access/transam/timeline.c:347 access/transam/twophase.c:1307 access/transam/xlog.c:3255 access/transam/xlog.c:3395
+#: access/transam/xlog.c:3439 access/transam/xlog.c:3637 access/transam/xlog.c:3722 access/transam/xlog.c:3825 access/transam/xlog.c:4675 access/transam/xlogutils.c:708 postmaster/syslogger.c:1489 replication/basebackup.c:531 replication/basebackup.c:1427 replication/logical/origin.c:714 replication/logical/reorderbuffer.c:2346
+#: replication/logical/reorderbuffer.c:2631 replication/logical/reorderbuffer.c:3354 replication/logical/snapbuild.c:1731 replication/logical/snapbuild.c:1838 replication/slot.c:1419 replication/walsender.c:491 replication/walsender.c:2486 storage/file/copydir.c:161 storage/file/fd.c:631 storage/file/fd.c:3309 storage/file/fd.c:3396 storage/smgr/md.c:501
 #: utils/cache/relmapper.c:724 utils/cache/relmapper.c:842 utils/error/elog.c:1851 utils/init/miscinit.c:1283 utils/init/miscinit.c:1418 utils/init/miscinit.c:1495 utils/misc/guc.c:8061 utils/misc/guc.c:8093
 #, c-format
 msgid "could not open file \"%s\": %m"
@@ -78,8 +78,8 @@ msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: ../common/controldata_utils.c:239 ../common/controldata_utils.c:245 ../common/file_utils.c:297 ../common/file_utils.c:367 access/heap/rewriteheap.c:981 access/heap/rewriteheap.c:1202 access/heap/rewriteheap.c:1305 access/transam/timeline.c:431 access/transam/timeline.c:509 access/transam/twophase.c:1802 access/transam/xlog.c:3346 access/transam/xlog.c:3518
-#: access/transam/xlog.c:4648 access/transam/xlog.c:10412 access/transam/xlog.c:10438 replication/logical/snapbuild.c:1759 replication/slot.c:1324 replication/slot.c:1429 storage/file/fd.c:648 storage/file/fd.c:3417 storage/smgr/md.c:916 storage/smgr/md.c:949 storage/sync/sync.c:409 utils/cache/relmapper.c:891 utils/misc/guc.c:7844
+#: ../common/controldata_utils.c:239 ../common/controldata_utils.c:245 ../common/file_utils.c:297 ../common/file_utils.c:367 access/heap/rewriteheap.c:978 access/heap/rewriteheap.c:1199 access/heap/rewriteheap.c:1302 access/transam/timeline.c:431 access/transam/timeline.c:509 access/transam/twophase.c:1802 access/transam/xlog.c:3346 access/transam/xlog.c:3518
+#: access/transam/xlog.c:4648 access/transam/xlog.c:10412 access/transam/xlog.c:10438 replication/logical/snapbuild.c:1769 replication/slot.c:1324 replication/slot.c:1429 storage/file/fd.c:648 storage/file/fd.c:3417 storage/smgr/md.c:916 storage/smgr/md.c:949 storage/sync/sync.c:409 utils/cache/relmapper.c:891 utils/misc/guc.c:7844
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
@@ -121,7 +121,7 @@ msgstr "pcloseが失敗しました: %m"
 
 #: ../common/exec.c:675 ../common/exec.c:720 ../common/exec.c:812 ../common/psprintf.c:143 ../port/path.c:630 ../port/path.c:668 ../port/path.c:685 access/transam/twophase.c:1456 access/transam/xlog.c:6453 lib/dshash.c:245 lib/stringinfo.c:283 libpq/auth.c:1470 libpq/auth.c:1538 libpq/auth.c:2056 libpq/be-secure-gssapi.c:520 postmaster/bgworker.c:350
 #: postmaster/bgworker.c:984 postmaster/postmaster.c:2524 postmaster/postmaster.c:4139 postmaster/postmaster.c:4836 postmaster/postmaster.c:5621 postmaster/postmaster.c:5981 replication/libpqwalreceiver/libpqwalreceiver.c:280 replication/logical/logical.c:179 storage/buffer/localbuf.c:436 storage/file/fd.c:803 storage/file/fd.c:1199 storage/file/fd.c:1360
-#: storage/file/fd.c:2169 storage/ipc/procarray.c:1070 storage/ipc/procarray.c:1570 storage/ipc/procarray.c:1577 storage/ipc/procarray.c:2001 storage/ipc/procarray.c:2681 utils/adt/cryptohashes.c:45 utils/adt/cryptohashes.c:65 utils/adt/formatting.c:1595 utils/adt/formatting.c:1719 utils/adt/formatting.c:1844 utils/adt/pg_locale.c:474
+#: storage/file/fd.c:2169 storage/ipc/procarray.c:1081 storage/ipc/procarray.c:1581 storage/ipc/procarray.c:1588 storage/ipc/procarray.c:2012 storage/ipc/procarray.c:2692 utils/adt/cryptohashes.c:45 utils/adt/cryptohashes.c:65 utils/adt/formatting.c:1595 utils/adt/formatting.c:1719 utils/adt/formatting.c:1844 utils/adt/pg_locale.c:474
 #: utils/adt/pg_locale.c:638 utils/adt/regexp.c:223 utils/fmgr/dfmgr.c:229 utils/hash/dynahash.c:448 utils/hash/dynahash.c:557 utils/hash/dynahash.c:1069 utils/mb/mbutils.c:371 utils/mb/mbutils.c:398 utils/mb/mbutils.c:727 utils/mb/mbutils.c:753 utils/misc/guc.c:4627 utils/misc/guc.c:4643 utils/misc/guc.c:4656 utils/misc/guc.c:7822 utils/misc/tzparser.c:477
 #: utils/mmgr/aset.c:484 utils/mmgr/dsa.c:701 utils/mmgr/dsa.c:723 utils/mmgr/dsa.c:804 utils/mmgr/generation.c:249 utils/mmgr/mcxt.c:796 utils/mmgr/mcxt.c:832 utils/mmgr/mcxt.c:870 utils/mmgr/mcxt.c:908 utils/mmgr/mcxt.c:944 utils/mmgr/mcxt.c:975 utils/mmgr/mcxt.c:1011 utils/mmgr/mcxt.c:1063 utils/mmgr/mcxt.c:1098 utils/mmgr/mcxt.c:1133 utils/mmgr/slab.c:253
 #, c-format
@@ -139,7 +139,7 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "nullポインタは複製できません(内部エラー)\n"
 
 #: ../common/file_utils.c:81 ../common/file_utils.c:183 access/transam/twophase.c:1319 access/transam/xlog.c:7994 access/transam/xlog.c:10774 access/transam/xlog.c:10890 access/transam/xlog.c:10928 access/transam/xlog.c:11145 access/transam/xlogarchive.c:111 access/transam/xlogarchive.c:271 commands/copy.c:1944 commands/copy.c:3560 commands/extension.c:3351
-#: commands/tablespace.c:807 commands/tablespace.c:898 guc-file.l:1064 replication/basebackup.c:357 replication/basebackup.c:537 replication/basebackup.c:609 replication/logical/snapbuild.c:1635 storage/file/copydir.c:68 storage/file/copydir.c:107 storage/file/fd.c:1711 storage/file/fd.c:2994 storage/file/fd.c:3176 storage/file/fd.c:3261 utils/adt/dbsize.c:70
+#: commands/tablespace.c:807 commands/tablespace.c:898 guc-file.l:1064 replication/basebackup.c:357 replication/basebackup.c:537 replication/basebackup.c:609 replication/logical/snapbuild.c:1645 storage/file/copydir.c:68 storage/file/copydir.c:107 storage/file/fd.c:1711 storage/file/fd.c:2994 storage/file/fd.c:3176 storage/file/fd.c:3261 utils/adt/dbsize.c:70
 #: utils/adt/dbsize.c:222 utils/adt/dbsize.c:302 utils/adt/genfile.c:415 utils/adt/genfile.c:641 utils/adt/misc.c:352
 #, c-format
 msgid "could not stat file \"%s\": %m"
@@ -155,7 +155,7 @@ msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: ../common/file_utils.c:377 access/transam/xlogarchive.c:456 postmaster/syslogger.c:1524 replication/logical/snapbuild.c:1778 replication/slot.c:598 replication/slot.c:1210 replication/slot.c:1352 storage/file/fd.c:666 storage/file/fd.c:764 utils/time/snapmgr.c:1367
+#: ../common/file_utils.c:377 access/transam/xlogarchive.c:456 postmaster/syslogger.c:1524 replication/logical/snapbuild.c:1788 replication/slot.c:598 replication/slot.c:1210 replication/slot.c:1352 storage/file/fd.c:666 storage/file/fd.c:764 utils/time/snapmgr.c:1367
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
@@ -367,7 +367,7 @@ msgstr "アクセストークンのメンバーシップを確認できません
 msgid "request for BRIN range summarization for index \"%s\" page %u was not recorded"
 msgstr "インデックス\"%s\" ページ%uのBRIN範囲要約のリクエストは登録されていません"
 
-#: access/brin/brin.c:884 access/brin/brin.c:988 access/gin/ginfast.c:1041 access/transam/xlog.c:10547 access/transam/xlog.c:11096 access/transam/xlogfuncs.c:276 access/transam/xlogfuncs.c:303 access/transam/xlogfuncs.c:342 access/transam/xlogfuncs.c:363 access/transam/xlogfuncs.c:384 access/transam/xlogfuncs.c:454 access/transam/xlogfuncs.c:511
+#: access/brin/brin.c:884 access/brin/brin.c:988 access/gin/ginfast.c:1044 access/transam/xlog.c:10547 access/transam/xlog.c:11096 access/transam/xlogfuncs.c:276 access/transam/xlogfuncs.c:303 access/transam/xlogfuncs.c:342 access/transam/xlogfuncs.c:363 access/transam/xlogfuncs.c:384 access/transam/xlogfuncs.c:454 access/transam/xlogfuncs.c:511
 #, c-format
 msgid "recovery is in progress"
 msgstr "リカバリは現在進行中です"
@@ -567,17 +567,17 @@ msgstr "記録リストが長すぎます"
 msgid "Reduce maintenance_work_mem."
 msgstr "maintenance_work_mem を小さくしてください。"
 
-#: access/gin/ginfast.c:1042
+#: access/gin/ginfast.c:1045
 #, c-format
 msgid "GIN pending list cannot be cleaned up during recovery."
 msgstr "GIN保留リストはリカバリ中には処理できません。"
 
-#: access/gin/ginfast.c:1049
+#: access/gin/ginfast.c:1052
 #, c-format
 msgid "\"%s\" is not a GIN index"
 msgstr "\"%s\"はGINインデックスではありません"
 
-#: access/gin/ginfast.c:1060
+#: access/gin/ginfast.c:1063
 #, c-format
 msgid "cannot access temporary indexes of other sessions"
 msgstr "他のセッションの一時インデックスにはアクセスできません"
@@ -667,13 +667,13 @@ msgstr "アクセスメソッド\"%2$s\"の演算子族\"%1$s\"は演算子%3$s�
 msgid "operator family \"%s\" of access method %s contains incorrect ORDER BY opfamily specification for operator %s"
 msgstr "アクセスメソッド\"%2$s\"の演算子族\"%1$s\"は演算子%3$sに対する正しくないORDER BY演算子族を含んでいます"
 
-#: access/hash/hashfunc.c:278 access/hash/hashfunc.c:334 utils/adt/varchar.c:994 utils/adt/varchar.c:1054
+#: access/hash/hashfunc.c:278 access/hash/hashfunc.c:335 utils/adt/varchar.c:994 utils/adt/varchar.c:1055
 #, c-format
 msgid "could not determine which collation to use for string hashing"
 msgstr "文字列のハッシュ値計算で使用する照合順序を特定できませんでした"
 
-#: access/hash/hashfunc.c:279 access/hash/hashfunc.c:335 catalog/heap.c:713 catalog/heap.c:719 commands/createas.c:207 commands/createas.c:503 commands/indexcmds.c:1870 commands/tablecmds.c:15919 commands/view.c:105 parser/parse_utilcmd.c:4206 regex/regc_pg_locale.c:263 utils/adt/formatting.c:1562 utils/adt/formatting.c:1686 utils/adt/formatting.c:1811
-#: utils/adt/like.c:194 utils/adt/like_support.c:973 utils/adt/varchar.c:734 utils/adt/varchar.c:995 utils/adt/varchar.c:1055 utils/adt/varlena.c:1474
+#: access/hash/hashfunc.c:279 access/hash/hashfunc.c:336 catalog/heap.c:711 catalog/heap.c:717 commands/createas.c:207 commands/createas.c:503 commands/indexcmds.c:1870 commands/tablecmds.c:15948 commands/view.c:105 parser/parse_utilcmd.c:4206 regex/regc_pg_locale.c:263 utils/adt/formatting.c:1562 utils/adt/formatting.c:1686 utils/adt/formatting.c:1811
+#: utils/adt/like.c:194 utils/adt/like_support.c:973 utils/adt/varchar.c:734 utils/adt/varchar.c:995 utils/adt/varchar.c:1056 utils/adt/varlena.c:1474
 #, c-format
 msgid "Use the COLLATE clause to set the collation explicitly."
 msgstr "照合順序を明示するには COLLATE 句を使います。"
@@ -758,39 +758,39 @@ msgstr "リレーション\"%s\"の行ロックを取得できませんでした
 msgid "tuple to be locked was already moved to another partition due to concurrent update"
 msgstr "ロック対象のタプルは同時に行われた更新によってすでに他の子テーブルに移動されています"
 
-#: access/heap/hio.c:349 access/heap/rewriteheap.c:681
+#: access/heap/hio.c:349 access/heap/rewriteheap.c:680
 #, c-format
 msgid "row is too big: size %zu, maximum size %zu"
 msgstr "行が大きすぎます: サイズは%zu、上限は%zu"
 
-#: access/heap/rewriteheap.c:941
+#: access/heap/rewriteheap.c:938
 #, c-format
 msgid "could not write to file \"%s\", wrote %d of %d: %m"
 msgstr "ファイル\"%1$s\"に書き込めませんでした、%3$dバイト中%2$dバイト書き込みました: %m"
 
-#: access/heap/rewriteheap.c:1035 access/heap/rewriteheap.c:1154 access/transam/timeline.c:328 access/transam/timeline.c:484 access/transam/xlog.c:3278 access/transam/xlog.c:3453 access/transam/xlog.c:4627 access/transam/xlog.c:10905 access/transam/xlog.c:10943 access/transam/xlog.c:11348 access/transam/xlogfuncs.c:723 postmaster/postmaster.c:4603
+#: access/heap/rewriteheap.c:1032 access/heap/rewriteheap.c:1151 access/transam/timeline.c:328 access/transam/timeline.c:484 access/transam/xlog.c:3278 access/transam/xlog.c:3453 access/transam/xlog.c:4627 access/transam/xlog.c:10905 access/transam/xlog.c:10943 access/transam/xlog.c:11348 access/transam/xlogfuncs.c:723 postmaster/postmaster.c:4603
 #: replication/logical/origin.c:582 replication/slot.c:1271 storage/file/copydir.c:167 storage/smgr/md.c:204 utils/time/snapmgr.c:1346
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "ファイル\"%s\"を作成できませんでした: %m"
 
-#: access/heap/rewriteheap.c:1164
+#: access/heap/rewriteheap.c:1161
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %m"
 msgstr "ファイル\"%s\"を%uバイトに切り詰められませんでした: %m"
 
-#: access/heap/rewriteheap.c:1172 replication/walsender.c:498 storage/smgr/md.c:1276
+#: access/heap/rewriteheap.c:1169 replication/walsender.c:498 storage/smgr/md.c:1276
 #, c-format
 msgid "could not seek to end of file \"%s\": %m"
 msgstr "ファイル\"%s\"の終端へシークできませんでした: %m"
 
-#: access/heap/rewriteheap.c:1189 access/transam/timeline.c:383 access/transam/timeline.c:423 access/transam/timeline.c:501 access/transam/xlog.c:3334 access/transam/xlog.c:3509 access/transam/xlog.c:4639 postmaster/postmaster.c:4613 postmaster/postmaster.c:4623 replication/logical/origin.c:594 replication/logical/origin.c:636 replication/logical/origin.c:655
-#: replication/logical/snapbuild.c:1735 replication/slot.c:1306 storage/file/buffile.c:502 storage/file/copydir.c:207 utils/init/miscinit.c:1359 utils/init/miscinit.c:1370 utils/init/miscinit.c:1378 utils/misc/guc.c:7805 utils/misc/guc.c:7836 utils/misc/guc.c:9767 utils/misc/guc.c:9781 utils/time/snapmgr.c:1351 utils/time/snapmgr.c:1358
+#: access/heap/rewriteheap.c:1186 access/transam/timeline.c:383 access/transam/timeline.c:423 access/transam/timeline.c:501 access/transam/xlog.c:3334 access/transam/xlog.c:3509 access/transam/xlog.c:4639 postmaster/postmaster.c:4613 postmaster/postmaster.c:4623 replication/logical/origin.c:594 replication/logical/origin.c:636 replication/logical/origin.c:655
+#: replication/logical/snapbuild.c:1745 replication/slot.c:1306 storage/file/buffile.c:502 storage/file/copydir.c:207 utils/init/miscinit.c:1359 utils/init/miscinit.c:1370 utils/init/miscinit.c:1378 utils/misc/guc.c:7805 utils/misc/guc.c:7836 utils/misc/guc.c:9767 utils/misc/guc.c:9781 utils/time/snapmgr.c:1351 utils/time/snapmgr.c:1358
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: access/heap/rewriteheap.c:1279 access/transam/twophase.c:1741 access/transam/xlogarchive.c:119 access/transam/xlogarchive.c:466 postmaster/postmaster.c:1298 postmaster/syslogger.c:1466 replication/logical/origin.c:570 replication/logical/reorderbuffer.c:2860 replication/logical/snapbuild.c:1677 replication/logical/snapbuild.c:2122 replication/slot.c:1403
+#: access/heap/rewriteheap.c:1276 access/transam/twophase.c:1741 access/transam/xlogarchive.c:119 access/transam/xlogarchive.c:466 postmaster/postmaster.c:1298 postmaster/syslogger.c:1466 replication/logical/origin.c:570 replication/logical/reorderbuffer.c:2876 replication/logical/snapbuild.c:1687 replication/logical/snapbuild.c:2132 replication/slot.c:1403
 #: storage/file/fd.c:706 storage/file/fd.c:3014 storage/file/fd.c:3076 storage/file/reinit.c:255 storage/ipc/dsm.c:302 storage/smgr/md.c:342 storage/smgr/md.c:392 storage/sync/sync.c:223 utils/time/snapmgr.c:1691
 #, c-format
 msgid "could not remove file \"%s\": %m"
@@ -948,7 +948,7 @@ msgstr "アクセスメソッド\"%s\"のタイプが%sではありません"
 msgid "index access method \"%s\" does not have a handler"
 msgstr "インデックスアクセスメソッド\"%s\"はハンドラを持っていません"
 
-#: access/index/indexam.c:136 catalog/objectaddress.c:1259 commands/indexcmds.c:2613 commands/tablecmds.c:252 commands/tablecmds.c:276 commands/tablecmds.c:15614 commands/tablecmds.c:17175
+#: access/index/indexam.c:136 catalog/objectaddress.c:1259 commands/indexcmds.c:2613 commands/tablecmds.c:252 commands/tablecmds.c:276 commands/tablecmds.c:15643 commands/tablecmds.c:17214
 #, c-format
 msgid "\"%s\" is not an index"
 msgstr "\"%s\"はインデックスではありません"
@@ -1032,7 +1032,7 @@ msgstr "アクセスメソッド\"%2$s\"の演算子族\"%1$s\"は%4$s型に対�
 msgid "\"%s\" is an index"
 msgstr "\"%s\"はインデックスです"
 
-#: access/table/table.c:54 access/table/table.c:83 access/table/table.c:116 catalog/aclchk.c:1842 commands/tablecmds.c:12353 commands/tablecmds.c:15623
+#: access/table/table.c:54 access/table/table.c:83 access/table/table.c:116 catalog/aclchk.c:1842 commands/tablecmds.c:12383 commands/tablecmds.c:15652
 #, c-format
 msgid "\"%s\" is a composite type"
 msgstr "\"%s\"は複合型です"
@@ -1087,12 +1087,12 @@ msgstr "マスタサーバで設定パラメータ\"%s\"がonに設定されて�
 msgid "Make sure the configuration parameter \"%s\" is set."
 msgstr "設定パラメータ\"%s\"が設定されていることを確認してください。"
 
-#: access/transam/multixact.c:1000
+#: access/transam/multixact.c:1001
 #, c-format
 msgid "database is not accepting commands that generate new MultiXactIds to avoid wraparound data loss in database \"%s\""
 msgstr "データベース\"%s\"におけるMultiXactIds周回によるデータ損失を防ぐために、データベースは新しくMultiXactIdsを生成するコマンドを受け付けません"
 
-#: access/transam/multixact.c:1002 access/transam/multixact.c:1009 access/transam/multixact.c:1033 access/transam/multixact.c:1042
+#: access/transam/multixact.c:1003 access/transam/multixact.c:1010 access/transam/multixact.c:1034 access/transam/multixact.c:1043
 #, c-format
 msgid ""
 "Execute a database-wide VACUUM in that database.\n"
@@ -1101,70 +1101,70 @@ msgstr ""
 "そのデータベース全体の VACUUM を実行してください。\n"
 "古い準備済みトランザクションのコミットまたはロールバック、もしくは古いレプリケーションスロットの削除も必要かもしれません。"
 
-#: access/transam/multixact.c:1007
+#: access/transam/multixact.c:1008
 #, c-format
 msgid "database is not accepting commands that generate new MultiXactIds to avoid wraparound data loss in database with OID %u"
 msgstr "OID %u を持つデータベースは周回によるデータ損失を防ぐために、新しいMultiXactIdsを生成するコマンドを受け付けない状態になっています"
 
-#: access/transam/multixact.c:1028 access/transam/multixact.c:2323
+#: access/transam/multixact.c:1029 access/transam/multixact.c:2324
 #, c-format
 msgid "database \"%s\" must be vacuumed before %u more MultiXactId is used"
 msgid_plural "database \"%s\" must be vacuumed before %u more MultiXactIds are used"
 msgstr[0] "データベース\"%s\"はあと%u個のMultiXactIdが使われる前にVACUUMする必要があります"
 msgstr[1] "データベース\"%s\"はあと%u個のMultiXactIdが使われる前にVACUUMする必要があります"
 
-#: access/transam/multixact.c:1037 access/transam/multixact.c:2332
+#: access/transam/multixact.c:1038 access/transam/multixact.c:2333
 #, c-format
 msgid "database with OID %u must be vacuumed before %u more MultiXactId is used"
 msgid_plural "database with OID %u must be vacuumed before %u more MultiXactIds are used"
 msgstr[0] "OID %u のデータベースはあと%u個のMultiXactIdが使われる前にVACUUMする必要があります"
 msgstr[1] "OID %u のデータベースはあと%u個のMultiXactIdが使われる前にVACUUMする必要があります"
 
-#: access/transam/multixact.c:1098
+#: access/transam/multixact.c:1099
 #, c-format
 msgid "multixact \"members\" limit exceeded"
 msgstr "マルチトランザクションの\"メンバ\"が制限を超えました"
 
-#: access/transam/multixact.c:1099
+#: access/transam/multixact.c:1100
 #, c-format
 msgid "This command would create a multixact with %u members, but the remaining space is only enough for %u member."
 msgid_plural "This command would create a multixact with %u members, but the remaining space is only enough for %u members."
 msgstr[0] "このコマンドで%u個のメンバを持つマルチトランザクションが生成されますが、残りのスペースは %u 個のメンバ分しかありません。"
 msgstr[1] "このコマンドで%u個のメンバを持つマルチトランザクションが生成されますが、残りのスペースは %u 個のメンバ分しかありません。"
 
-#: access/transam/multixact.c:1104
+#: access/transam/multixact.c:1105
 #, c-format
 msgid "Execute a database-wide VACUUM in database with OID %u with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings."
 msgstr "vacuum_multixact_freeze_min_age と vacuum_multixact_freeze_table_age をより小さな値に設定してOID %u のデータベースでデータベース全体にVACUUMを実行してください。"
 
-#: access/transam/multixact.c:1135
+#: access/transam/multixact.c:1136
 #, c-format
 msgid "database with OID %u must be vacuumed before %d more multixact member is used"
 msgid_plural "database with OID %u must be vacuumed before %d more multixact members are used"
 msgstr[0] "OID %u のデータベースは更に%d個のマルチトランザクションメンバが使用される前にVACUUMを実行する必要があります"
 msgstr[1] "OID %u のデータベースは更に%d個のマルチトランザクションメンバが使用される前にVACUUMを実行する必要があります"
 
-#: access/transam/multixact.c:1140
+#: access/transam/multixact.c:1141
 #, c-format
 msgid "Execute a database-wide VACUUM in that database with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings."
 msgstr "vacuum_multixact_freeze_min_age と vacuum_multixact_freeze_table_age をより小さな値に設定した上で、そのデータベースでVACUUMを実行してください。"
 
-#: access/transam/multixact.c:1279
+#: access/transam/multixact.c:1280
 #, c-format
 msgid "MultiXactId %u does no longer exist -- apparent wraparound"
 msgstr "MultiXactId %uはもう存在しません: 周回しているようです"
 
-#: access/transam/multixact.c:1285
+#: access/transam/multixact.c:1286
 #, c-format
 msgid "MultiXactId %u has not been created yet -- apparent wraparound"
 msgstr "MultiXactId %uを作成できませんでした: 周回している様子"
 
-#: access/transam/multixact.c:2273
+#: access/transam/multixact.c:2274
 #, c-format
 msgid "MultiXactId wrap limit is %u, limited by database with OID %u"
 msgstr "MultiXactIdの周回制限は %u で、OID %u を持つデータベースにより制限されています"
 
-#: access/transam/multixact.c:2328 access/transam/multixact.c:2337 access/transam/varsup.c:149 access/transam/varsup.c:156 access/transam/varsup.c:447 access/transam/varsup.c:454
+#: access/transam/multixact.c:2329 access/transam/multixact.c:2338 access/transam/varsup.c:149 access/transam/varsup.c:156 access/transam/varsup.c:447 access/transam/varsup.c:454
 #, c-format
 msgid ""
 "To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
@@ -1173,37 +1173,37 @@ msgstr ""
 "データベースの停止を防ぐために、データベース全体の VACUUM を実行してください。\n"
 "古い準備済みトランザクションのコミットまたはロールバック、もしくは古いレプリケーションスロットの削除も必要かもしれません。"
 
-#: access/transam/multixact.c:2607
+#: access/transam/multixact.c:2608
 #, c-format
 msgid "oldest MultiXactId member is at offset %u"
 msgstr "最古のMultiXactIdメンバはオフセット%uにあります"
 
-#: access/transam/multixact.c:2611
+#: access/transam/multixact.c:2612
 #, c-format
 msgid "MultiXact member wraparound protections are disabled because oldest checkpointed MultiXact %u does not exist on disk"
 msgstr "最古のチェックポイント済みのマルチトランザクション%uがディスク上に存在しないため、マルチトランザクションメンバーの周回防止機能を無効にしました"
 
-#: access/transam/multixact.c:2633
+#: access/transam/multixact.c:2634
 #, c-format
 msgid "MultiXact member wraparound protections are now enabled"
 msgstr "マルチトランザクションメンバーの周回防止機能が有効になりました"
 
-#: access/transam/multixact.c:2636
+#: access/transam/multixact.c:2637
 #, c-format
 msgid "MultiXact member stop limit is now %u based on MultiXact %u"
 msgstr "マルチトランザクションの停止上限がマルチトランザクション%2$uを基点にして%1$uになりました"
 
-#: access/transam/multixact.c:3024
+#: access/transam/multixact.c:3025
 #, c-format
 msgid "oldest MultiXact %u not found, earliest MultiXact %u, skipping truncation"
 msgstr "最古のマルチトランザクション%uが見つかりません、アクセス可能な最古のものは%u、切り詰めをスキップします"
 
-#: access/transam/multixact.c:3042
+#: access/transam/multixact.c:3043
 #, c-format
 msgid "cannot truncate up to MultiXact %u because it does not exist on disk, skipping truncation"
 msgstr "マルチトランザクション%uがディスク上に存在しないため、そこまでの切り詰めができません、切り詰めをスキップします"
 
-#: access/transam/multixact.c:3356
+#: access/transam/multixact.c:3357
 #, c-format
 msgid "invalid MultiXactId: %u"
 msgstr "不正なMultiXactId: %u"
@@ -1561,85 +1561,91 @@ msgid "cannot PREPARE a transaction that has manipulated logical replication wor
 msgstr "論理レプリケーションワーカから操作されたトランザクションをPREPAREすることはできません"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3364
+#: access/transam/xact.c:3368
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%sはトランザクションブロックの内側では実行できません"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3374
+#: access/transam/xact.c:3378
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%sはサブトランザクションブロックの内側では実行できません"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3384
+#: access/transam/xact.c:3388
+#, c-format
+msgid "%s cannot be executed within a pipeline"
+msgstr "%s はパイプライン内での実行はできません"
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:3398
 #, c-format
 msgid "%s cannot be executed from a function"
 msgstr "%s は関数内での実行はできません"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3455 access/transam/xact.c:3769 access/transam/xact.c:3848 access/transam/xact.c:3971 access/transam/xact.c:4122 access/transam/xact.c:4191 access/transam/xact.c:4302
+#: access/transam/xact.c:3469 access/transam/xact.c:3785 access/transam/xact.c:3864 access/transam/xact.c:3987 access/transam/xact.c:4138 access/transam/xact.c:4207 access/transam/xact.c:4318
 #, c-format
 msgid "%s can only be used in transaction blocks"
 msgstr "%sはトランザクションブロック内でのみ使用できます"
 
-#: access/transam/xact.c:3655
+#: access/transam/xact.c:3671
 #, c-format
 msgid "there is already a transaction in progress"
 msgstr "すでにトランザクションが実行中です"
 
-#: access/transam/xact.c:3774 access/transam/xact.c:3853 access/transam/xact.c:3976
+#: access/transam/xact.c:3790 access/transam/xact.c:3869 access/transam/xact.c:3992
 #, c-format
 msgid "there is no transaction in progress"
 msgstr "実行中のトランザクションがありません"
 
-#: access/transam/xact.c:3864
+#: access/transam/xact.c:3880
 #, c-format
 msgid "cannot commit during a parallel operation"
 msgstr "並列処理中にはコミットはできません"
 
-#: access/transam/xact.c:3987
+#: access/transam/xact.c:4003
 #, c-format
 msgid "cannot abort during a parallel operation"
 msgstr "パラレル処理中にロールバックはできません"
 
-#: access/transam/xact.c:4086
+#: access/transam/xact.c:4102
 #, c-format
 msgid "cannot define savepoints during a parallel operation"
 msgstr "パラレル処理中にセーブポイントは定義できません"
 
-#: access/transam/xact.c:4173
+#: access/transam/xact.c:4189
 #, c-format
 msgid "cannot release savepoints during a parallel operation"
 msgstr "並列処理中はセーブポイントの解放はできません"
 
-#: access/transam/xact.c:4183 access/transam/xact.c:4234 access/transam/xact.c:4294 access/transam/xact.c:4343
+#: access/transam/xact.c:4199 access/transam/xact.c:4250 access/transam/xact.c:4310 access/transam/xact.c:4359
 #, c-format
 msgid "savepoint \"%s\" does not exist"
 msgstr "セーブポイント\"%s\"は存在しません"
 
-#: access/transam/xact.c:4240 access/transam/xact.c:4349
+#: access/transam/xact.c:4256 access/transam/xact.c:4365
 #, c-format
 msgid "savepoint \"%s\" does not exist within current savepoint level"
 msgstr "セーブポイント\"%s\"は現在のセーブポイントレベルには存在しません"
 
-#: access/transam/xact.c:4282
+#: access/transam/xact.c:4298
 #, c-format
 msgid "cannot rollback to savepoints during a parallel operation"
 msgstr "パラレル処理中にセーブポイントのロールバックはできません"
 
-#: access/transam/xact.c:4410
+#: access/transam/xact.c:4426
 #, c-format
 msgid "cannot start subtransactions during a parallel operation"
 msgstr "並列処理中はサブトランザクションを開始できません"
 
-#: access/transam/xact.c:4478
+#: access/transam/xact.c:4494
 #, c-format
 msgid "cannot commit subtransactions during a parallel operation"
 msgstr "並列処理中はサブトランザクションをコミットできません"
 
-#: access/transam/xact.c:5125
+#: access/transam/xact.c:5141
 #, c-format
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "1トランザクション内には 2^32-1 個より多くのサブトランザクションを作成できません"
@@ -2529,17 +2535,17 @@ msgstr "ログセグメント%s、オフセット%uを読み取れませんで�
 msgid "could not read from log segment %s, offset %u: read %d of %zu"
 msgstr "ログセグメント%1$s、オフセット%2$uを読み取れませんでした: %4$zu 中 %3$d の読み取り"
 
-#: access/transam/xlog.c:12595
+#: access/transam/xlog.c:12601
 #, c-format
 msgid "received promote request"
 msgstr "昇格要求を受信しました"
 
-#: access/transam/xlog.c:12608
+#: access/transam/xlog.c:12614
 #, c-format
 msgid "promote trigger file found: %s"
 msgstr "昇格トリガファイルがあります: %s"
 
-#: access/transam/xlog.c:12617
+#: access/transam/xlog.c:12623
 #, c-format
 msgid "could not stat promote trigger file \"%s\": %m"
 msgstr "昇格トリガファイル\"%s\"のstatに失敗しました: %m"
@@ -2805,12 +2811,12 @@ msgstr "ログセグメント %sのオフセット %uから長さ %lu で読み�
 msgid "-X requires a power of two value between 1 MB and 1 GB"
 msgstr "-X オプションの値は1MBから1GBの間の2の累乗を指定します"
 
-#: bootstrap/bootstrap.c:288 postmaster/postmaster.c:842 tcop/postgres.c:3668
+#: bootstrap/bootstrap.c:288 postmaster/postmaster.c:842 tcop/postgres.c:3680
 #, c-format
 msgid "--%s requires a value"
 msgstr "--%sには値が必要です"
 
-#: bootstrap/bootstrap.c:293 postmaster/postmaster.c:847 tcop/postgres.c:3673
+#: bootstrap/bootstrap.c:293 postmaster/postmaster.c:847 tcop/postgres.c:3685
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %sは値が必要です"
@@ -2972,13 +2978,13 @@ msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr "GRANT/REVOKE ON SCHEMAS を使っている時には IN SCHEMA 句は指定できません"
 
 #: catalog/aclchk.c:1587 catalog/catalog.c:519 catalog/objectaddress.c:1426 commands/analyze.c:383 commands/copy.c:5142 commands/sequence.c:1710 commands/tablecmds.c:6395 commands/tablecmds.c:6551 commands/tablecmds.c:6601 commands/tablecmds.c:6675 commands/tablecmds.c:6745 commands/tablecmds.c:6855 commands/tablecmds.c:6949 commands/tablecmds.c:7008
-#: commands/tablecmds.c:7147 commands/tablecmds.c:7229 commands/tablecmds.c:7322 commands/tablecmds.c:7476 commands/tablecmds.c:10782 commands/tablecmds.c:10963 commands/tablecmds.c:11124 commands/tablecmds.c:12196 commands/trigger.c:936 parser/analyze.c:2322 parser/parse_relation.c:2832 parser/parse_relation.c:2895 parser/parse_target.c:1030
+#: commands/tablecmds.c:7147 commands/tablecmds.c:7229 commands/tablecmds.c:7322 commands/tablecmds.c:7476 commands/tablecmds.c:10812 commands/tablecmds.c:10993 commands/tablecmds.c:11154 commands/tablecmds.c:12226 commands/trigger.c:936 parser/analyze.c:2322 parser/parse_relation.c:2832 parser/parse_relation.c:2895 parser/parse_target.c:1030
 #: parser/parse_type.c:145 utils/adt/acl.c:2884 utils/adt/ruleutils.c:2517
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
 msgstr "リレーション\"%2$s\"の列\"%1$s\"は存在しません"
 
-#: catalog/aclchk.c:1850 catalog/objectaddress.c:1266 commands/sequence.c:1148 commands/tablecmds.c:234 commands/tablecmds.c:15587 utils/adt/acl.c:2074 utils/adt/acl.c:2104 utils/adt/acl.c:2136 utils/adt/acl.c:2168 utils/adt/acl.c:2196 utils/adt/acl.c:2226
+#: catalog/aclchk.c:1850 catalog/objectaddress.c:1266 commands/sequence.c:1148 commands/tablecmds.c:234 commands/tablecmds.c:15616 utils/adt/acl.c:2074 utils/adt/acl.c:2104 utils/adt/acl.c:2136 utils/adt/acl.c:2168 utils/adt/acl.c:2196 utils/adt/acl.c:2226
 #, c-format
 msgid "\"%s\" is not a sequence"
 msgstr "\"%s\"はシーケンスではありません"
@@ -3548,7 +3554,7 @@ msgstr[1] ""
 msgid "cannot drop %s because other objects depend on it"
 msgstr "他のオブジェクトが依存しているため%sを削除できません"
 
-#: catalog/dependency.c:1202 catalog/dependency.c:1209 catalog/dependency.c:1221 commands/tablecmds.c:1233 commands/tablecmds.c:12813 commands/tablespace.c:465 commands/user.c:1095 commands/view.c:519 libpq/auth.c:333 replication/syncrep.c:1308 storage/lmgr/deadlock.c:1145 storage/lmgr/proc.c:1347 utils/misc/guc.c:6552 utils/misc/guc.c:6588
+#: catalog/dependency.c:1202 catalog/dependency.c:1209 catalog/dependency.c:1221 commands/tablecmds.c:1233 commands/tablecmds.c:12843 commands/tablespace.c:465 commands/user.c:1095 commands/view.c:519 libpq/auth.c:333 replication/syncrep.c:1308 storage/lmgr/deadlock.c:1145 storage/lmgr/proc.c:1351 utils/misc/guc.c:6552 utils/misc/guc.c:6588
 #: utils/misc/guc.c:6658 utils/misc/guc.c:10774 utils/misc/guc.c:10808 utils/misc/guc.c:10842 utils/misc/guc.c:10885 utils/misc/guc.c:10927
 #, c-format
 msgid "%s"
@@ -3587,164 +3593,164 @@ msgstr "\"%s.%s\"を作成する権限がありません"
 msgid "System catalog modifications are currently disallowed."
 msgstr "システムカタログの更新は現在禁止されています"
 
-#: catalog/heap.c:511 commands/tablecmds.c:2130 commands/tablecmds.c:2732 commands/tablecmds.c:5999
+#: catalog/heap.c:509 commands/tablecmds.c:2130 commands/tablecmds.c:2732 commands/tablecmds.c:5999
 #, c-format
 msgid "tables can have at most %d columns"
 msgstr "テーブルは最大で%d列までしか持てません"
 
-#: catalog/heap.c:529 commands/tablecmds.c:6285
+#: catalog/heap.c:527 commands/tablecmds.c:6285
 #, c-format
 msgid "column name \"%s\" conflicts with a system column name"
 msgstr "列名\"%s\"はシステム用の列名に使われています"
 
-#: catalog/heap.c:545
+#: catalog/heap.c:543
 #, c-format
 msgid "column name \"%s\" specified more than once"
 msgstr "列名\"%s\"が複数指定されました"
 
 #. translator: first %s is an integer not a name
-#: catalog/heap.c:620
+#: catalog/heap.c:618
 #, c-format
 msgid "partition key column %s has pseudo-type %s"
 msgstr "パーティションキー列%sは疑似型%sです"
 
-#: catalog/heap.c:625
+#: catalog/heap.c:623
 #, c-format
 msgid "column \"%s\" has pseudo-type %s"
 msgstr "列\"%s\"は疑似型%sです"
 
-#: catalog/heap.c:656
+#: catalog/heap.c:654
 #, c-format
 msgid "composite type %s cannot be made a member of itself"
 msgstr "複合型 %s がそれ自身のメンバーになることはできません"
 
 #. translator: first %s is an integer not a name
-#: catalog/heap.c:711
+#: catalog/heap.c:709
 #, c-format
 msgid "no collation was derived for partition key column %s with collatable type %s"
 msgstr "照合可能な型 %2$s のパーティションキー列%1$sのための照合順序が見つかりませんでした"
 
-#: catalog/heap.c:717 commands/createas.c:204 commands/createas.c:500
+#: catalog/heap.c:715 commands/createas.c:204 commands/createas.c:500
 #, c-format
 msgid "no collation was derived for column \"%s\" with collatable type %s"
 msgstr "照合可能な型 %2$s を持つ列\"%1$s\"のための照合順序を決定できませんでした"
 
-#: catalog/heap.c:1164 catalog/index.c:862 commands/tablecmds.c:3531
+#: catalog/heap.c:1162 catalog/index.c:862 commands/tablecmds.c:3531
 #, c-format
 msgid "relation \"%s\" already exists"
 msgstr "リレーション\"%s\"はすでに存在します"
 
-#: catalog/heap.c:1180 catalog/pg_type.c:427 catalog/pg_type.c:748 commands/typecmds.c:240 commands/typecmds.c:791 commands/typecmds.c:1193 commands/typecmds.c:1405 commands/typecmds.c:2187
+#: catalog/heap.c:1178 catalog/pg_type.c:427 catalog/pg_type.c:748 commands/typecmds.c:240 commands/typecmds.c:791 commands/typecmds.c:1193 commands/typecmds.c:1405 commands/typecmds.c:2187
 #, c-format
 msgid "type \"%s\" already exists"
 msgstr "型\"%s\"はすでに存在します"
 
-#: catalog/heap.c:1181
+#: catalog/heap.c:1179
 #, c-format
 msgid "A relation has an associated type of the same name, so you must use a name that doesn't conflict with any existing type."
 msgstr "リレーションは同じ名前の関連する型を持ちます。このため既存の型と競合しない名前である必要があります。"
 
-#: catalog/heap.c:1210
+#: catalog/heap.c:1208
 #, c-format
 msgid "pg_class heap OID value not set when in binary upgrade mode"
 msgstr "バイナリアップグレードモード中にpg_classのヒープOIDが設定されていません"
 
-#: catalog/heap.c:2418
+#: catalog/heap.c:2416
 #, c-format
 msgid "cannot add NO INHERIT constraint to partitioned table \"%s\""
 msgstr "パーティション親テーブル\"%s\"に NO INHERIT 制約は追加できません"
 
-#: catalog/heap.c:2688
+#: catalog/heap.c:2686
 #, c-format
 msgid "check constraint \"%s\" already exists"
 msgstr "検査制約\"%s\"はすでに存在します"
 
-#: catalog/heap.c:2858 catalog/index.c:876 catalog/pg_constraint.c:669 commands/tablecmds.c:7821
+#: catalog/heap.c:2856 catalog/index.c:876 catalog/pg_constraint.c:669 commands/tablecmds.c:7821
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "すでに制約\"%s\"はリレーション\"%s\"に存在します"
 
-#: catalog/heap.c:2865
+#: catalog/heap.c:2863
 #, c-format
 msgid "constraint \"%s\" conflicts with non-inherited constraint on relation \"%s\""
 msgstr "制約\"%s\"は、リレーション\"%s\"上の継承されていない制約と競合します"
 
-#: catalog/heap.c:2876
+#: catalog/heap.c:2874
 #, c-format
 msgid "constraint \"%s\" conflicts with inherited constraint on relation \"%s\""
 msgstr "制約\"%s\"は、リレーション\"%s\"上の継承された制約と競合します"
 
-#: catalog/heap.c:2886
+#: catalog/heap.c:2884
 #, c-format
 msgid "constraint \"%s\" conflicts with NOT VALID constraint on relation \"%s\""
 msgstr "制約\"%s\"は、リレーション\"%s\"上の NOT VALID 制約と競合します"
 
-#: catalog/heap.c:2891
+#: catalog/heap.c:2889
 #, c-format
 msgid "merging constraint \"%s\" with inherited definition"
 msgstr "継承された定義により制約\"%s\"をマージしています"
 
-#: catalog/heap.c:2996
+#: catalog/heap.c:2994
 #, c-format
 msgid "cannot use generated column \"%s\" in column generation expression"
 msgstr "生成カラム\"%s\"はカラム生成式中では使用できません"
 
-#: catalog/heap.c:2998
+#: catalog/heap.c:2996
 #, c-format
 msgid "A generated column cannot reference another generated column."
 msgstr "生成カラムは他の生成カラムを参照できません。"
 
-#: catalog/heap.c:3004
+#: catalog/heap.c:3002
 #, c-format
 msgid "cannot use whole-row variable in column generation expression"
 msgstr "行全体変数は列生成式では使用できません"
 
-#: catalog/heap.c:3005
+#: catalog/heap.c:3003
 #, c-format
 msgid "This would cause the generated column to depend on its own value."
 msgstr "これは生成列を自身の値に依存させることにつながります。"
 
-#: catalog/heap.c:3058
+#: catalog/heap.c:3056
 #, c-format
 msgid "generation expression is not immutable"
 msgstr "生成式は不変ではありません"
 
-#: catalog/heap.c:3086 rewrite/rewriteHandler.c:1214
+#: catalog/heap.c:3084 rewrite/rewriteHandler.c:1219
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
 msgstr "列\"%s\"の型は%sですが、デフォルト式の型は%sです"
 
-#: catalog/heap.c:3091 commands/prepare.c:388 parser/parse_node.c:434 parser/parse_target.c:590 parser/parse_target.c:865 parser/parse_target.c:875 rewrite/rewriteHandler.c:1219
+#: catalog/heap.c:3089 commands/prepare.c:388 parser/parse_node.c:434 parser/parse_target.c:590 parser/parse_target.c:865 parser/parse_target.c:875 rewrite/rewriteHandler.c:1224
 #, c-format
 msgid "You will need to rewrite or cast the expression."
 msgstr "式を書き換えるかキャストする必要があります。"
 
-#: catalog/heap.c:3138
+#: catalog/heap.c:3136
 #, c-format
 msgid "only table \"%s\" can be referenced in check constraint"
 msgstr "検査制約ではテーブル\"%s\"のみを参照することができます"
 
-#: catalog/heap.c:3436
+#: catalog/heap.c:3434
 #, c-format
 msgid "unsupported ON COMMIT and foreign key combination"
 msgstr "ON COMMITと外部キーの組み合わせはサポートされていません"
 
-#: catalog/heap.c:3437
+#: catalog/heap.c:3435
 #, c-format
 msgid "Table \"%s\" references \"%s\", but they do not have the same ON COMMIT setting."
 msgstr "テーブル\"%s\"は\"%s\"を参照します。しかし、これらのON COMMIT設定は同一ではありません。"
 
-#: catalog/heap.c:3442
+#: catalog/heap.c:3440
 #, c-format
 msgid "cannot truncate a table referenced in a foreign key constraint"
 msgstr "外部キー制約で参照されているテーブルを削除できません"
 
-#: catalog/heap.c:3443
+#: catalog/heap.c:3441
 #, c-format
 msgid "Table \"%s\" references \"%s\"."
 msgstr "テーブル\"%s\"は\"%s\"を参照します。"
 
-#: catalog/heap.c:3445
+#: catalog/heap.c:3443
 #, c-format
 msgid "Truncate table \"%s\" at the same time, or use TRUNCATE ... CASCADE."
 msgstr "同時にテーブル\"%s\"がtruncateされました。TRUNCATE ... CASCADEを使用してください。"
@@ -3816,27 +3822,27 @@ msgid_plural "building index \"%s\" on table \"%s\" with request for %d parallel
 msgstr[0] "テーブル\"%2$s\"のインデックス\"%1$s\"を%3$d個のパラレルワーカを要求して構築しています"
 msgstr[1] "テーブル\"%2$s\"のインデックス\"%1$s\"を%3$d個のパラレルワーカを要求して構築しています"
 
-#: catalog/index.c:3591
+#: catalog/index.c:3590
 #, c-format
 msgid "cannot reindex temporary tables of other sessions"
 msgstr "他のセッションの一時テーブルはインデクス再構築できません"
 
-#: catalog/index.c:3602
+#: catalog/index.c:3601
 #, c-format
 msgid "cannot reindex invalid index on TOAST table"
 msgstr "TOASTテーブルの無効なインデックスの再作成はできません"
 
-#: catalog/index.c:3724
+#: catalog/index.c:3723
 #, c-format
 msgid "index \"%s\" was reindexed"
 msgstr "インデックス\"%s\"のインデックス再構築が完了しました"
 
-#: catalog/index.c:3806 commands/indexcmds.c:3120
+#: catalog/index.c:3805 commands/indexcmds.c:3120
 #, c-format
 msgid "REINDEX of partitioned tables is not yet implemented, skipping \"%s\""
 msgstr "パーティションテーブルの REINDEX は実装されていません、\"%s\"はスキップします"
 
-#: catalog/index.c:3861
+#: catalog/index.c:3860
 #, c-format
 msgid "cannot reindex invalid index \"%s.%s\" on TOAST table, skipping"
 msgstr "TOASTテーブルの無効なインデックス \"%s.%s\"の再作成はできません、スキップします "
@@ -3976,22 +3982,22 @@ msgstr "並行処理中は一時テーブルを作成できません"
 msgid "List syntax is invalid."
 msgstr "リスト文法が無効です"
 
-#: catalog/objectaddress.c:1274 catalog/pg_publication.c:66 commands/policy.c:96 commands/policy.c:376 commands/tablecmds.c:228 commands/tablecmds.c:270 commands/tablecmds.c:1986 commands/tablecmds.c:5470 commands/tablecmds.c:10899
+#: catalog/objectaddress.c:1274 catalog/pg_publication.c:66 commands/policy.c:96 commands/policy.c:376 commands/tablecmds.c:228 commands/tablecmds.c:270 commands/tablecmds.c:1986 commands/tablecmds.c:5470 commands/tablecmds.c:10929
 #, c-format
 msgid "\"%s\" is not a table"
 msgstr "\"%s\"はテーブルではありません"
 
-#: catalog/objectaddress.c:1281 commands/tablecmds.c:240 commands/tablecmds.c:5506 commands/tablecmds.c:15592 commands/view.c:138
+#: catalog/objectaddress.c:1281 commands/tablecmds.c:240 commands/tablecmds.c:5506 commands/tablecmds.c:15621 commands/view.c:138
 #, c-format
 msgid "\"%s\" is not a view"
 msgstr "\"%s\"はビューではありません"
 
-#: catalog/objectaddress.c:1288 commands/matview.c:186 commands/tablecmds.c:246 commands/tablecmds.c:15597
+#: catalog/objectaddress.c:1288 commands/matview.c:186 commands/tablecmds.c:246 commands/tablecmds.c:15626
 #, c-format
 msgid "\"%s\" is not a materialized view"
 msgstr "\"%s\"は実体化ビューではありません"
 
-#: catalog/objectaddress.c:1295 commands/tablecmds.c:264 commands/tablecmds.c:5509 commands/tablecmds.c:15602
+#: catalog/objectaddress.c:1295 commands/tablecmds.c:264 commands/tablecmds.c:5509 commands/tablecmds.c:15631
 #, c-format
 msgid "\"%s\" is not a foreign table"
 msgstr "\"%s\"は外部テーブルではありません"
@@ -4421,7 +4427,7 @@ msgstr "リレーション%s"
 msgid "operator family %s for access method %s"
 msgstr "アクセスメソッド%2$sの演算子族%1$s"
 
-#: catalog/partition.c:215 commands/analyze.c:1375 commands/indexcmds.c:1221 commands/tablecmds.c:1109 commands/tablecmds.c:8618 commands/tablecmds.c:8761 commands/tablecmds.c:8948 commands/tablecmds.c:9095 commands/tablecmds.c:10989 commands/tablecmds.c:16563 commands/tablecmds.c:17284 executor/execExprInterp.c:3344 executor/execMain.c:1841
+#: catalog/partition.c:215 commands/analyze.c:1375 commands/indexcmds.c:1221 commands/tablecmds.c:1109 commands/tablecmds.c:8618 commands/tablecmds.c:8761 commands/tablecmds.c:8950 commands/tablecmds.c:9115 commands/tablecmds.c:11019 commands/tablecmds.c:16592 commands/tablecmds.c:17323 executor/execExprInterp.c:3344 executor/execMain.c:1841
 #: executor/execMain.c:1926 executor/execMain.c:1978 executor/execMain.c:2086 executor/execPartition.c:648 executor/execPartition.c:707 executor/execPartition.c:850 executor/execPartition.c:964 executor/execPartition.c:997 executor/execPartition.c:1103 executor/nodeModifyTable.c:705 executor/nodeModifyTable.c:2042 parser/parse_utilcmd.c:1221
 msgid "could not convert row type"
 msgstr "行型に変換できませんでした"
@@ -4604,7 +4610,7 @@ msgstr "ドメイン\"%2$s\"の制約\"%1$s\"はすでに存在します"
 msgid "constraint \"%s\" for table \"%s\" does not exist"
 msgstr "テーブル\"%2$s\"の制約\"%1$s\"は存在しません"
 
-#: catalog/pg_constraint.c:1057
+#: catalog/pg_constraint.c:1068
 #, c-format
 msgid "constraint \"%s\" for domain %s does not exist"
 msgstr "ドメイン\"%2$s\"に対する制約\"%1$s\"は存在しません"
@@ -5003,12 +5009,12 @@ msgstr "固定長型の場合はPLAIN格納方式でなければなりません"
 msgid "could not form array type name for type \"%s\""
 msgstr "\"%s\"型向けの配列型の名前を形成できませんでした"
 
-#: catalog/storage.c:369 storage/buffer/bufmgr.c:933
+#: catalog/storage.c:387 storage/buffer/bufmgr.c:927
 #, c-format
 msgid "invalid page in block %u of relation %s"
 msgstr "リレーション%2$sのブロック%1$uに不正なページ"
 
-#: catalog/toasting.c:112 commands/indexcmds.c:615 commands/tablecmds.c:5482 commands/tablecmds.c:15458
+#: catalog/toasting.c:112 commands/indexcmds.c:615 commands/tablecmds.c:5482 commands/tablecmds.c:15487
 #, c-format
 msgid "\"%s\" is not a table or materialized view"
 msgstr "\"%s\"はテーブルや実体化ビューではありません"
@@ -5308,7 +5314,7 @@ msgstr "パーティションテーブルに対して CLUSTER は実行できま
 msgid "there is no previously clustered index for table \"%s\""
 msgstr "テーブル\"%s\"には事前にクラスタ化されたインデックスはありません"
 
-#: commands/cluster.c:178 commands/tablecmds.c:12652 commands/tablecmds.c:14526
+#: commands/cluster.c:178 commands/tablecmds.c:12682 commands/tablecmds.c:14555
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "テーブル\"%2$s\"にはインデックス\"%1$s\"は存在しません"
@@ -5323,7 +5329,7 @@ msgstr "共有カタログをクラスタ化できません"
 msgid "cannot vacuum temporary tables of other sessions"
 msgstr "他のセッションの一時テーブルに対してはVACUUMを実行できません"
 
-#: commands/cluster.c:472 commands/tablecmds.c:14536
+#: commands/cluster.c:472 commands/tablecmds.c:14565
 #, c-format
 msgid "\"%s\" is not an index for table \"%s\""
 msgstr "\"%s\"はテーブル\"%s\"のインデックスではありません"
@@ -5992,7 +5998,7 @@ msgstr "列\"%s\"は生成カラムです"
 msgid "Generated columns cannot be used in COPY."
 msgstr "生成カラムはCOPYでは使えません。"
 
-#: commands/copy.c:5147 commands/indexcmds.c:1741 commands/statscmds.c:225 commands/tablecmds.c:2156 commands/tablecmds.c:2782 commands/tablecmds.c:3169 parser/parse_relation.c:3397 parser/parse_relation.c:3417 utils/adt/tsvector_op.c:2659
+#: commands/copy.c:5147 commands/indexcmds.c:1741 commands/statscmds.c:225 commands/tablecmds.c:2156 commands/tablecmds.c:2782 commands/tablecmds.c:3169 parser/parse_relation.c:3397 parser/parse_relation.c:3417 utils/adt/tsvector_op.c:2662
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "列\"%s\"は存在しません"
@@ -6295,7 +6301,7 @@ msgstr "\"%s\"は集約関数です"
 msgid "Use DROP AGGREGATE to drop aggregate functions."
 msgstr "集約関数を削除するにはDROP AGGREGATEを使用してください"
 
-#: commands/dropcmds.c:157 commands/sequence.c:455 commands/tablecmds.c:3253 commands/tablecmds.c:3411 commands/tablecmds.c:3464 commands/tablecmds.c:14905 tcop/utility.c:1205
+#: commands/dropcmds.c:157 commands/sequence.c:455 commands/tablecmds.c:3253 commands/tablecmds.c:3411 commands/tablecmds.c:3464 commands/tablecmds.c:14934 tcop/utility.c:1205
 #, c-format
 msgid "relation \"%s\" does not exist, skipping"
 msgstr "リレーション\"%s\"は存在しません、スキップします"
@@ -7243,7 +7249,7 @@ msgstr "他のセッションの一時テーブルに対するインデックス
 msgid "cannot specify default tablespace for partitioned relations"
 msgstr "パーティション親リレーションにはデフォルトテーブル空間は指定できません"
 
-#: commands/indexcmds.c:725 commands/tablecmds.c:729 commands/tablecmds.c:12959 commands/tablecmds.c:13071
+#: commands/indexcmds.c:725 commands/tablecmds.c:729 commands/tablecmds.c:12989 commands/tablecmds.c:13101
 #, c-format
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr "共有リレーションのみをpg_globalテーブル空間に格納することができます"
@@ -7363,7 +7369,7 @@ msgstr "包含列は NULLS FIRST/LAST オプションをサポートしません
 msgid "could not determine which collation to use for index expression"
 msgstr "インデックス式で使用する照合順序を特定できませんでした"
 
-#: commands/indexcmds.c:1877 commands/tablecmds.c:15926 commands/typecmds.c:837 parser/parse_expr.c:2862 parser/parse_type.c:567 parser/parse_utilcmd.c:3667 parser/parse_utilcmd.c:4213 utils/adt/misc.c:533
+#: commands/indexcmds.c:1877 commands/tablecmds.c:15955 commands/typecmds.c:837 parser/parse_expr.c:2862 parser/parse_type.c:567 parser/parse_utilcmd.c:3667 parser/parse_utilcmd.c:4213 utils/adt/misc.c:533
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "%s 型では照合順序はサポートされません"
@@ -7398,7 +7404,7 @@ msgstr "アクセスメソッド\"%s\"はASC/DESCオプションをサポート�
 msgid "access method \"%s\" does not support NULLS FIRST/LAST options"
 msgstr "アクセスメソッド\"%s\"はNULLS FIRST/LASTオプションをサポートしません"
 
-#: commands/indexcmds.c:2073 commands/tablecmds.c:15951 commands/tablecmds.c:15957 commands/typecmds.c:2008
+#: commands/indexcmds.c:2073 commands/tablecmds.c:15980 commands/tablecmds.c:15986 commands/typecmds.c:2008
 #, c-format
 msgid "data type %s has no default operator class for access method \"%s\""
 msgstr "アクセスメソッド\"%2$s\"にはデータ型%1$s用のデフォルトの演算子クラスがありません"
@@ -7483,7 +7489,7 @@ msgstr " インデックス\"%s.%s\"の再構築が完了しました "
 msgid "REINDEX is not yet implemented for partitioned indexes"
 msgstr "パーティションインデックスに対する REINDEX は実装されていません"
 
-#: commands/lockcmds.c:103 commands/tablecmds.c:5473 commands/trigger.c:321 rewrite/rewriteDefine.c:272 rewrite/rewriteDefine.c:939
+#: commands/lockcmds.c:103 commands/tablecmds.c:5473 commands/trigger.c:321 rewrite/rewriteDefine.c:272 rewrite/rewriteDefine.c:951
 #, c-format
 msgid "\"%s\" is not a table or view"
 msgstr "\"%s\"はテーブルやビューではありません"
@@ -7743,8 +7749,8 @@ msgstr "JOIN推定関数 %s は %s型を返す必要があります"
 msgid "operator attribute \"%s\" cannot be changed"
 msgstr "演算子の属性\"%s\"は変更できません"
 
-#: commands/policy.c:89 commands/policy.c:382 commands/statscmds.c:140 commands/tablecmds.c:1514 commands/tablecmds.c:1997 commands/tablecmds.c:3063 commands/tablecmds.c:5452 commands/tablecmds.c:8099 commands/tablecmds.c:15513 commands/tablecmds.c:15548 commands/trigger.c:327 commands/trigger.c:1552 commands/trigger.c:1661 rewrite/rewriteDefine.c:278
-#: rewrite/rewriteDefine.c:944
+#: commands/policy.c:89 commands/policy.c:382 commands/statscmds.c:140 commands/tablecmds.c:1514 commands/tablecmds.c:1997 commands/tablecmds.c:3063 commands/tablecmds.c:5452 commands/tablecmds.c:8099 commands/tablecmds.c:15542 commands/tablecmds.c:15577 commands/trigger.c:327 commands/trigger.c:1552 commands/trigger.c:1661 rewrite/rewriteDefine.c:278
+#: rewrite/rewriteDefine.c:956
 #, c-format
 msgid "permission denied: \"%s\" is a system catalog"
 msgstr "権限がありません: \"%s\"はシステムカタログです"
@@ -8070,7 +8076,7 @@ msgstr "シーケンスは関連するテーブルと同じスキーマでなけ
 msgid "cannot change ownership of identity sequence"
 msgstr "識別シーケンスの所有者は変更できません"
 
-#: commands/sequence.c:1726 commands/tablecmds.c:12343 commands/tablecmds.c:14925
+#: commands/sequence.c:1726 commands/tablecmds.c:12373 commands/tablecmds.c:14954
 #, c-format
 msgid "Sequence \"%s\" is linked to table \"%s\"."
 msgstr "シーケンス\"%s\"はテーブル\"%s\"にリンクされています"
@@ -8310,7 +8316,7 @@ msgstr "実体化ビュー\"%s\"は存在しません、スキップします"
 msgid "Use DROP MATERIALIZED VIEW to remove a materialized view."
 msgstr "実体化ビューを削除するにはDROP MATERIALIZED VIEWを使用してください。"
 
-#: commands/tablecmds.c:250 commands/tablecmds.c:274 commands/tablecmds.c:17218 parser/parse_utilcmd.c:2198
+#: commands/tablecmds.c:250 commands/tablecmds.c:274 commands/tablecmds.c:17257 parser/parse_utilcmd.c:2198
 #, c-format
 msgid "index \"%s\" does not exist"
 msgstr "インデックス\"%s\"は存在しません"
@@ -8333,7 +8339,7 @@ msgstr "\"%s\"は型ではありません"
 msgid "Use DROP TYPE to remove a type."
 msgstr "型を削除するにはDROP TYPEを使用してください"
 
-#: commands/tablecmds.c:262 commands/tablecmds.c:12182 commands/tablecmds.c:14705
+#: commands/tablecmds.c:262 commands/tablecmds.c:12212 commands/tablecmds.c:14734
 #, c-format
 msgid "foreign table \"%s\" does not exist"
 msgstr "外部テーブル\"%s\"は存在しません"
@@ -8357,7 +8363,7 @@ msgstr "ON COMMITは一時テーブルでのみ使用できます"
 msgid "cannot create temporary table within security-restricted operation"
 msgstr "セキュリティー制限操作中は、一時テーブルを作成できません"
 
-#: commands/tablecmds.c:677 commands/tablecmds.c:13543
+#: commands/tablecmds.c:677 commands/tablecmds.c:13572
 #, c-format
 msgid "relation \"%s\" would be inherited from more than once"
 msgstr "リレーション\"%s\"が複数回継承されました"
@@ -8422,7 +8428,7 @@ msgstr "テーブル\"%s\"へのカスケードを削除します"
 msgid "cannot truncate temporary tables of other sessions"
 msgstr "他のセッションの一時テーブルを削除できません"
 
-#: commands/tablecmds.c:2246 commands/tablecmds.c:13440
+#: commands/tablecmds.c:2246 commands/tablecmds.c:13469
 #, c-format
 msgid "cannot inherit from partitioned table \"%s\""
 msgstr "パーティションテーブル\"%s\"からの継承はできません"
@@ -8442,12 +8448,12 @@ msgstr "継承しようとしたリレーション\"%s\"はテーブルまたは
 msgid "cannot create a temporary relation as partition of permanent relation \"%s\""
 msgstr "一時リレーションを永続リレーション\"%s\"の子テーブルとして作ることはできません"
 
-#: commands/tablecmds.c:2280 commands/tablecmds.c:13419
+#: commands/tablecmds.c:2280 commands/tablecmds.c:13448
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
 msgstr "一時リレーション\"%s\"から継承することはできません"
 
-#: commands/tablecmds.c:2290 commands/tablecmds.c:13427
+#: commands/tablecmds.c:2290 commands/tablecmds.c:13456
 #, c-format
 msgid "cannot inherit from temporary relation of another session"
 msgstr "他のセッションの一時リレーションから継承することはできません"
@@ -8487,7 +8493,7 @@ msgstr "継承される列 \"%s\"の格納パラメーターが競合してい�
 msgid "inherited column \"%s\" has a generation conflict"
 msgstr "継承された列 \"%s\"の生成が競合しています"
 
-#: commands/tablecmds.c:2478 commands/tablecmds.c:2533 commands/tablecmds.c:10998 parser/parse_utilcmd.c:1286 parser/parse_utilcmd.c:1328 parser/parse_utilcmd.c:1733 parser/parse_utilcmd.c:1840
+#: commands/tablecmds.c:2478 commands/tablecmds.c:2533 commands/tablecmds.c:11028 parser/parse_utilcmd.c:1286 parser/parse_utilcmd.c:1328 parser/parse_utilcmd.c:1733 parser/parse_utilcmd.c:1840
 #, c-format
 msgid "cannot convert whole-row table reference"
 msgstr "行全体テーブル参照を変換できません"
@@ -8754,12 +8760,12 @@ msgstr "型付けされたテーブルに列を追加できません"
 msgid "cannot add column to a partition"
 msgstr "パーティションに列は追加できません"
 
-#: commands/tablecmds.c:5939 commands/tablecmds.c:13670
+#: commands/tablecmds.c:5939 commands/tablecmds.c:13699
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr "子テーブル\"%s\"に異なる型の列\"%s\"があります"
 
-#: commands/tablecmds.c:5945 commands/tablecmds.c:13677
+#: commands/tablecmds.c:5945 commands/tablecmds.c:13706
 #, c-format
 msgid "child table \"%s\" has different collation for column \"%s\""
 msgstr "子テーブル\"%s\"に異なる照合順序の列\"%s\"があります"
@@ -8789,17 +8795,17 @@ msgstr "リレーション\"%2$s\"の列\"%1$s\"はすでに存在します、�
 msgid "column \"%s\" of relation \"%s\" already exists"
 msgstr "リレーション\"%2$s\"の列\"%1$s\"はすでに存在します"
 
-#: commands/tablecmds.c:6366 commands/tablecmds.c:10651
+#: commands/tablecmds.c:6366 commands/tablecmds.c:10681
 #, c-format
 msgid "cannot remove constraint from only the partitioned table when partitions exist"
 msgstr "パーティションが存在する場合にはパーティションテーブルのみから制約を削除することはできません"
 
-#: commands/tablecmds.c:6367 commands/tablecmds.c:6684 commands/tablecmds.c:7543 commands/tablecmds.c:10652
+#: commands/tablecmds.c:6367 commands/tablecmds.c:6684 commands/tablecmds.c:7543 commands/tablecmds.c:10682
 #, c-format
 msgid "Do not specify the ONLY keyword."
 msgstr "ONLYキーワードを指定しないでください。"
 
-#: commands/tablecmds.c:6404 commands/tablecmds.c:6610 commands/tablecmds.c:6752 commands/tablecmds.c:6864 commands/tablecmds.c:6958 commands/tablecmds.c:7017 commands/tablecmds.c:7167 commands/tablecmds.c:7237 commands/tablecmds.c:7330 commands/tablecmds.c:10791 commands/tablecmds.c:12205
+#: commands/tablecmds.c:6404 commands/tablecmds.c:6610 commands/tablecmds.c:6752 commands/tablecmds.c:6864 commands/tablecmds.c:6958 commands/tablecmds.c:7017 commands/tablecmds.c:7167 commands/tablecmds.c:7237 commands/tablecmds.c:7330 commands/tablecmds.c:10821 commands/tablecmds.c:12235
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "システム列\"%s\"を変更できません"
@@ -9019,638 +9025,638 @@ msgstr "外部キー制約\"%sは実装されていません"
 msgid "Key columns \"%s\" and \"%s\" are of incompatible types: %s and %s."
 msgstr "キーとなる列\"%s\"と\"%s\"との間で型に互換性がありません:%sと%s"
 
-#: commands/tablecmds.c:8693 commands/tablecmds.c:9087 parser/parse_utilcmd.c:790 parser/parse_utilcmd.c:919
+#: commands/tablecmds.c:8693 commands/tablecmds.c:9107 parser/parse_utilcmd.c:790 parser/parse_utilcmd.c:919
 #, c-format
 msgid "foreign key constraints are not supported on foreign tables"
 msgstr "外部テーブルでは外部キー制約はサポートされていません"
 
-#: commands/tablecmds.c:9455 commands/tablecmds.c:9733 commands/tablecmds.c:10608 commands/tablecmds.c:10683
+#: commands/tablecmds.c:9485 commands/tablecmds.c:9763 commands/tablecmds.c:10638 commands/tablecmds.c:10713
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist"
 msgstr "リレーション\"%2$s\"の制約\"%1$s\"は存在しません"
 
-#: commands/tablecmds.c:9462
+#: commands/tablecmds.c:9492
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key constraint"
 msgstr "リレーション\"%2$s\"の制約\"%1$s\"は外部キー制約ではありません"
 
-#: commands/tablecmds.c:9500
+#: commands/tablecmds.c:9530
 #, c-format
 msgid "cannot alter constraint \"%s\" on relation \"%s\""
 msgstr "リレーション\"%2$s\"の制約\"%1$s\"を変更できません"
 
-#: commands/tablecmds.c:9503
+#: commands/tablecmds.c:9533
 #, c-format
 msgid "Constraint \"%s\" is derived from constraint \"%s\" of relation \"%s\"."
 msgstr "制約\"%1$s\"は、リレーション\"%3$s\"上の制約\"%2$s\"から派生しています。"
 
-#: commands/tablecmds.c:9505
+#: commands/tablecmds.c:9535
 #, c-format
 msgid "You may alter the constraint it derives from, instead."
 msgstr "代わりに派生元の制約を変更することができます。"
 
-#: commands/tablecmds.c:9741
+#: commands/tablecmds.c:9771
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key or check constraint"
 msgstr "リレーション\"%2$s\"の制約\"%1$s\"は外部キー制約でも検査制約でもありません"
 
-#: commands/tablecmds.c:9820
+#: commands/tablecmds.c:9850
 #, c-format
 msgid "constraint must be validated on child tables too"
 msgstr "制約は子テーブルでも検証される必要があります"
 
-#: commands/tablecmds.c:9904
+#: commands/tablecmds.c:9934
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr "外部キー制約で参照される列\"%s\"が存在しません"
 
-#: commands/tablecmds.c:9909
+#: commands/tablecmds.c:9939
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr "外部キーでは%dを超えるキーを持つことができません"
 
-#: commands/tablecmds.c:9974
+#: commands/tablecmds.c:10004
 #, c-format
 msgid "cannot use a deferrable primary key for referenced table \"%s\""
 msgstr "被参照テーブル\"%s\"には遅延可能プライマリキーは使用できません"
 
-#: commands/tablecmds.c:9991
+#: commands/tablecmds.c:10021
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr "被参照テーブル\"%s\"にはプライマリキーがありません"
 
-#: commands/tablecmds.c:10056
+#: commands/tablecmds.c:10086
 #, c-format
 msgid "foreign key referenced-columns list must not contain duplicates"
 msgstr "外部キーの被参照列リストには重複があってはなりません"
 
-#: commands/tablecmds.c:10150
+#: commands/tablecmds.c:10180
 #, c-format
 msgid "cannot use a deferrable unique constraint for referenced table \"%s\""
 msgstr "被参照テーブル\"%s\"に対しては、遅延可能な一意性制約は使用できません"
 
-#: commands/tablecmds.c:10155
+#: commands/tablecmds.c:10185
 #, c-format
 msgid "there is no unique constraint matching given keys for referenced table \"%s\""
 msgstr "被参照テーブル\"%s\"に、指定したキーに一致する一意性制約がありません"
 
-#: commands/tablecmds.c:10243
+#: commands/tablecmds.c:10273
 #, c-format
 msgid "validating foreign key constraint \"%s\""
 msgstr "外部キー制約\"%s\"を検証しています"
 
-#: commands/tablecmds.c:10564
+#: commands/tablecmds.c:10594
 #, c-format
 msgid "cannot drop inherited constraint \"%s\" of relation \"%s\""
 msgstr "リレーション\"%2$s\"の継承された制約\"%1$s\"を削除できません"
 
-#: commands/tablecmds.c:10614
+#: commands/tablecmds.c:10644
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist, skipping"
 msgstr "リレーション\"%2$s\"の制約\"%1$s\"は存在しません、スキップします"
 
-#: commands/tablecmds.c:10775
+#: commands/tablecmds.c:10805
 #, c-format
 msgid "cannot alter column type of typed table"
 msgstr "型付けされたテーブルの列の型を変更できません"
 
-#: commands/tablecmds.c:10802
+#: commands/tablecmds.c:10832
 #, c-format
 msgid "cannot alter inherited column \"%s\""
 msgstr "継承される列\"%s\"を変更できません"
 
-#: commands/tablecmds.c:10811
+#: commands/tablecmds.c:10841
 #, c-format
 msgid "cannot alter column \"%s\" because it is part of the partition key of relation \"%s\""
 msgstr "列\"%s\"はリレーション\"%s\"のパーティションキーの一部であるため、変更できません"
 
-#: commands/tablecmds.c:10861
+#: commands/tablecmds.c:10891
 #, c-format
 msgid "result of USING clause for column \"%s\" cannot be cast automatically to type %s"
 msgstr "列\"%s\"に対するUSING句の結果は自動的に%s型に型変換できません"
 
-#: commands/tablecmds.c:10864
+#: commands/tablecmds.c:10894
 #, c-format
 msgid "You might need to add an explicit cast."
 msgstr "必要に応じて明示的な型変換を追加してください。"
 
-#: commands/tablecmds.c:10868
+#: commands/tablecmds.c:10898
 #, c-format
 msgid "column \"%s\" cannot be cast automatically to type %s"
 msgstr "列\"%s\"は型%sには自動的に型変換できません"
 
 #. translator: USING is SQL, don't translate it
-#: commands/tablecmds.c:10871
+#: commands/tablecmds.c:10901
 #, c-format
 msgid "You might need to specify \"USING %s::%s\"."
 msgstr "必要に応じて\"USING %s::%s\"を追加してください。"
 
-#: commands/tablecmds.c:10970
+#: commands/tablecmds.c:11000
 #, c-format
 msgid "cannot alter inherited column \"%s\" of relation \"%s\""
 msgstr "リレーション\"%2$s\"の継承列\"%1$s\"は変更できません"
 
-#: commands/tablecmds.c:10999
+#: commands/tablecmds.c:11029
 #, c-format
 msgid "USING expression contains a whole-row table reference."
 msgstr "USING式が行全体テーブル参照を含んでいます。"
 
-#: commands/tablecmds.c:11010
+#: commands/tablecmds.c:11040
 #, c-format
 msgid "type of inherited column \"%s\" must be changed in child tables too"
 msgstr "継承される列\"%s\"の型を子テーブルで変更しなければなりません"
 
-#: commands/tablecmds.c:11135
+#: commands/tablecmds.c:11165
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
 msgstr "列\"%s\"の型を2回変更することはできません"
 
-#: commands/tablecmds.c:11173
+#: commands/tablecmds.c:11203
 #, c-format
 msgid "generation expression for column \"%s\" cannot be cast automatically to type %s"
 msgstr "カラム\"%s\"に対する生成式は自動的に%s型にキャストできません"
 
-#: commands/tablecmds.c:11178
+#: commands/tablecmds.c:11208
 #, c-format
 msgid "default for column \"%s\" cannot be cast automatically to type %s"
 msgstr "列\"%s\"のデフォルト値を自動的に%s型にキャストできません"
 
-#: commands/tablecmds.c:11256
+#: commands/tablecmds.c:11286
 #, c-format
 msgid "cannot alter type of a column used by a generated column"
 msgstr "生成カラムで使用される列の型は変更できません"
 
-#: commands/tablecmds.c:11257
+#: commands/tablecmds.c:11287
 #, c-format
 msgid "Column \"%s\" is used by generated column \"%s\"."
 msgstr "カラム\"%s\"は生成カラム\"%s\"で使われています。"
 
-#: commands/tablecmds.c:11278
+#: commands/tablecmds.c:11308
 #, c-format
 msgid "cannot alter type of a column used by a view or rule"
 msgstr "ビューまたはルールで使用される列の型は変更できません"
 
-#: commands/tablecmds.c:11279 commands/tablecmds.c:11298 commands/tablecmds.c:11316
+#: commands/tablecmds.c:11309 commands/tablecmds.c:11328 commands/tablecmds.c:11346
 #, c-format
 msgid "%s depends on column \"%s\""
 msgstr "%sは列\"%s\"に依存しています"
 
-#: commands/tablecmds.c:11297
+#: commands/tablecmds.c:11327
 #, c-format
 msgid "cannot alter type of a column used in a trigger definition"
 msgstr "トリガー定義で使用される列の型は変更できません"
 
-#: commands/tablecmds.c:11315
+#: commands/tablecmds.c:11345
 #, c-format
 msgid "cannot alter type of a column used in a policy definition"
 msgstr "ポリシ定義で使用されている列の型は変更できません"
 
-#: commands/tablecmds.c:12313 commands/tablecmds.c:12325
+#: commands/tablecmds.c:12343 commands/tablecmds.c:12355
 #, c-format
 msgid "cannot change owner of index \"%s\""
 msgstr "インデックス\"%s\"の所有者を変更できません"
 
-#: commands/tablecmds.c:12315 commands/tablecmds.c:12327
+#: commands/tablecmds.c:12345 commands/tablecmds.c:12357
 #, c-format
 msgid "Change the ownership of the index's table, instead."
 msgstr "代わりにインデックスのテーブルの所有者を変更してください"
 
-#: commands/tablecmds.c:12341
+#: commands/tablecmds.c:12371
 #, c-format
 msgid "cannot change owner of sequence \"%s\""
 msgstr "シーケンス\"%s\"の所有者を変更できません"
 
-#: commands/tablecmds.c:12355 commands/tablecmds.c:15624
+#: commands/tablecmds.c:12385 commands/tablecmds.c:15653
 #, c-format
 msgid "Use ALTER TYPE instead."
 msgstr "代わりにALTER TYPEを使用してください。"
 
-#: commands/tablecmds.c:12364
+#: commands/tablecmds.c:12394
 #, c-format
 msgid "\"%s\" is not a table, view, sequence, or foreign table"
 msgstr "\"%s\"はテーブル、ビュー、シーケンス、外部テーブルではありません"
 
-#: commands/tablecmds.c:12704
+#: commands/tablecmds.c:12734
 #, c-format
 msgid "cannot have multiple SET TABLESPACE subcommands"
 msgstr "SET TABLESPACEサブコマンドを複数指定できません"
 
-#: commands/tablecmds.c:12779
+#: commands/tablecmds.c:12809
 #, c-format
 msgid "\"%s\" is not a table, view, materialized view, index, or TOAST table"
 msgstr "\"%s\"はテーブル、ビュー、実体化ビュー、インデックス、TOASTテーブルではありません"
 
-#: commands/tablecmds.c:12812 commands/view.c:518
+#: commands/tablecmds.c:12842 commands/view.c:518
 #, c-format
 msgid "WITH CHECK OPTION is supported only on automatically updatable views"
 msgstr "WITH CHECK OPTIONは自動更新可能ビューでのみサポートされます"
 
-#: commands/tablecmds.c:12952
+#: commands/tablecmds.c:12982
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "システムリレーション\"%s\"を移動できません"
 
-#: commands/tablecmds.c:12968
+#: commands/tablecmds.c:12998
 #, c-format
 msgid "cannot move temporary tables of other sessions"
 msgstr "他のセッションの一時テーブルを移動できません"
 
-#: commands/tablecmds.c:13140
+#: commands/tablecmds.c:13170
 #, c-format
 msgid "only tables, indexes, and materialized views exist in tablespaces"
 msgstr "テーブルスペースにはテーブル、インデックスおよび実体化ビューしかありません"
 
-#: commands/tablecmds.c:13152
+#: commands/tablecmds.c:13182
 #, c-format
 msgid "cannot move relations in to or out of pg_global tablespace"
 msgstr "pg_globalテーブルスペースとの間のリレーションの移動はできません"
 
-#: commands/tablecmds.c:13244
+#: commands/tablecmds.c:13274
 #, c-format
 msgid "aborting because lock on relation \"%s.%s\" is not available"
 msgstr "リレーション\"%s.%s\"のロックが獲得できなかったため中断します"
 
-#: commands/tablecmds.c:13260
+#: commands/tablecmds.c:13290
 #, c-format
 msgid "no matching relations in tablespace \"%s\" found"
 msgstr "テーブルスペース\"%s\"には合致するリレーションはありませんでした"
 
-#: commands/tablecmds.c:13378
+#: commands/tablecmds.c:13407
 #, c-format
 msgid "cannot change inheritance of typed table"
 msgstr "型付けされたテーブルの継承を変更できません"
 
-#: commands/tablecmds.c:13383 commands/tablecmds.c:13939
+#: commands/tablecmds.c:13412 commands/tablecmds.c:13968
 #, c-format
 msgid "cannot change inheritance of a partition"
 msgstr "パーティションの継承は変更できません"
 
-#: commands/tablecmds.c:13388
+#: commands/tablecmds.c:13417
 #, c-format
 msgid "cannot change inheritance of partitioned table"
 msgstr "パーティションテーブルの継承は変更できません"
 
-#: commands/tablecmds.c:13434
+#: commands/tablecmds.c:13463
 #, c-format
 msgid "cannot inherit to temporary relation of another session"
 msgstr "他のセッションの一時テーブルを継承できません"
 
-#: commands/tablecmds.c:13447
+#: commands/tablecmds.c:13476
 #, c-format
 msgid "cannot inherit from a partition"
 msgstr "パーティションからの継承はできません"
 
-#: commands/tablecmds.c:13469 commands/tablecmds.c:16272
+#: commands/tablecmds.c:13498 commands/tablecmds.c:16301
 #, c-format
 msgid "circular inheritance not allowed"
 msgstr "循環継承を行うことはできません"
 
-#: commands/tablecmds.c:13470 commands/tablecmds.c:16273
+#: commands/tablecmds.c:13499 commands/tablecmds.c:16302
 #, c-format
 msgid "\"%s\" is already a child of \"%s\"."
 msgstr "\"%s\"はすでに\"%s\"の子です"
 
-#: commands/tablecmds.c:13483
+#: commands/tablecmds.c:13512
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming an inheritance child"
 msgstr "トリガ\"%s\"によってテーブル\"%s\"が継承子テーブルになることができません"
 
-#: commands/tablecmds.c:13485
+#: commands/tablecmds.c:13514
 #, c-format
 msgid "ROW triggers with transition tables are not supported in inheritance hierarchies."
 msgstr "遷移テーブルを使用したROWトリガは継承関係ではサポートされていません。"
 
-#: commands/tablecmds.c:13688
+#: commands/tablecmds.c:13717
 #, c-format
 msgid "column \"%s\" in child table must be marked NOT NULL"
 msgstr "子テーブルの列\"%s\"はNOT NULLである必要があります"
 
-#: commands/tablecmds.c:13697
+#: commands/tablecmds.c:13726
 #, c-format
 msgid "column \"%s\" in child table must be a generated column"
 msgstr "子テーブルの列\"%s\"は生成列である必要があります"
 
-#: commands/tablecmds.c:13747
+#: commands/tablecmds.c:13776
 #, c-format
 msgid "column \"%s\" in child table has a conflicting generation expression"
 msgstr "子テーブルの列\"%s\"には競合する生成式があります"
 
-#: commands/tablecmds.c:13775
+#: commands/tablecmds.c:13804
 #, c-format
 msgid "child table is missing column \"%s\""
 msgstr "子テーブルには列\"%s\"がありません"
 
-#: commands/tablecmds.c:13863
+#: commands/tablecmds.c:13892
 #, c-format
 msgid "child table \"%s\" has different definition for check constraint \"%s\""
 msgstr "子テーブル\"%s\"では検査制約\"%s\"に異なった定義がされています"
 
-#: commands/tablecmds.c:13871
+#: commands/tablecmds.c:13900
 #, c-format
 msgid "constraint \"%s\" conflicts with non-inherited constraint on child table \"%s\""
 msgstr "制約\"%s\"は子テーブル\"%s\"上の継承されない制約と競合します"
 
-#: commands/tablecmds.c:13882
+#: commands/tablecmds.c:13911
 #, c-format
 msgid "constraint \"%s\" conflicts with NOT VALID constraint on child table \"%s\""
 msgstr "制約\"%s\"は子テーブル\"%s\"のNOT VALID制約と衝突しています"
 
-#: commands/tablecmds.c:13917
+#: commands/tablecmds.c:13946
 #, c-format
 msgid "child table is missing constraint \"%s\""
 msgstr "子テーブルには制約\"%s\"がありません"
 
-#: commands/tablecmds.c:14006
+#: commands/tablecmds.c:14035
 #, c-format
 msgid "relation \"%s\" is not a partition of relation \"%s\""
 msgstr "リレーション\"%s\"はリレーション\"%s\"のパーティション子テーブルではありません"
 
-#: commands/tablecmds.c:14012
+#: commands/tablecmds.c:14041
 #, c-format
 msgid "relation \"%s\" is not a parent of relation \"%s\""
 msgstr "リレーション\"%s\"はリレーション\"%s\"の親ではありません"
 
-#: commands/tablecmds.c:14240
+#: commands/tablecmds.c:14269
 #, c-format
 msgid "typed tables cannot inherit"
 msgstr "型付けされたテーブルは継承できません"
 
-#: commands/tablecmds.c:14270
+#: commands/tablecmds.c:14299
 #, c-format
 msgid "table is missing column \"%s\""
 msgstr "テーブルには列\"%s\"がありません"
 
-#: commands/tablecmds.c:14281
+#: commands/tablecmds.c:14310
 #, c-format
 msgid "table has column \"%s\" where type requires \"%s\""
 msgstr "テーブルには列\"%s\"がありますが型は\"%s\"を必要としています"
 
-#: commands/tablecmds.c:14290
+#: commands/tablecmds.c:14319
 #, c-format
 msgid "table \"%s\" has different type for column \"%s\""
 msgstr "テーブル\"%s\"では列\"%s\"の型が異なっています"
 
-#: commands/tablecmds.c:14304
+#: commands/tablecmds.c:14333
 #, c-format
 msgid "table has extra column \"%s\""
 msgstr "テーブルに余分な列\"%s\"があります"
 
-#: commands/tablecmds.c:14356
+#: commands/tablecmds.c:14385
 #, c-format
 msgid "\"%s\" is not a typed table"
 msgstr "\"%s\"は型付けされたテーブルではありません"
 
-#: commands/tablecmds.c:14544
+#: commands/tablecmds.c:14573
 #, c-format
 msgid "cannot use non-unique index \"%s\" as replica identity"
 msgstr "非ユニークインデックス\"%s\"は複製識別としては使用できません"
 
-#: commands/tablecmds.c:14550
+#: commands/tablecmds.c:14579
 #, c-format
 msgid "cannot use non-immediate index \"%s\" as replica identity"
 msgstr "一意性を即時検査しないインデックス\"%s\"は複製識別には使用できません"
 
-#: commands/tablecmds.c:14556
+#: commands/tablecmds.c:14585
 #, c-format
 msgid "cannot use expression index \"%s\" as replica identity"
 msgstr "式インデックス\"%s\"は複製識別としては使用できません"
 
-#: commands/tablecmds.c:14562
+#: commands/tablecmds.c:14591
 #, c-format
 msgid "cannot use partial index \"%s\" as replica identity"
 msgstr "部分インデックス\"%s\"を複製識別としては使用できません"
 
-#: commands/tablecmds.c:14568
+#: commands/tablecmds.c:14597
 #, c-format
 msgid "cannot use invalid index \"%s\" as replica identity"
 msgstr "無効なインデックス\"%s\"は複製識別としては使用できません"
 
-#: commands/tablecmds.c:14585
+#: commands/tablecmds.c:14614
 #, c-format
 msgid "index \"%s\" cannot be used as replica identity because column %d is a system column"
 msgstr "列%2$dはシステム列であるためインデックス\"%1$s\"は複製識別には使えません"
 
-#: commands/tablecmds.c:14592
+#: commands/tablecmds.c:14621
 #, c-format
 msgid "index \"%s\" cannot be used as replica identity because column \"%s\" is nullable"
 msgstr "列\"%2$s\"はnull可であるためインデックス\"%1$s\"は複製識別には使えません"
 
-#: commands/tablecmds.c:14785
+#: commands/tablecmds.c:14814
 #, c-format
 msgid "cannot change logged status of table \"%s\" because it is temporary"
 msgstr "テーブル\"%s\"は一時テーブルであるため、ログ出力設定を変更できません"
 
-#: commands/tablecmds.c:14809
+#: commands/tablecmds.c:14838
 #, c-format
 msgid "cannot change table \"%s\" to unlogged because it is part of a publication"
 msgstr "テーブル\"%s\"はパブリケーションの一部であるため、UNLOGGEDに変更できません"
 
-#: commands/tablecmds.c:14811
+#: commands/tablecmds.c:14840
 #, c-format
 msgid "Unlogged relations cannot be replicated."
 msgstr "UNLOGGEDリレーションはレプリケーションできません。"
 
-#: commands/tablecmds.c:14856
+#: commands/tablecmds.c:14885
 #, c-format
 msgid "could not change table \"%s\" to logged because it references unlogged table \"%s\""
 msgstr "テーブル\"%s\"はUNLOGGEDテーブル\"%s\"を参照しているためLOGGEDには設定できません"
 
-#: commands/tablecmds.c:14866
+#: commands/tablecmds.c:14895
 #, c-format
 msgid "could not change table \"%s\" to unlogged because it references logged table \"%s\""
 msgstr "テーブル\"%s\"はLOGGEDテーブル\"%s\"を参照しているためUNLOGGEDには設定できません"
 
-#: commands/tablecmds.c:14924
+#: commands/tablecmds.c:14953
 #, c-format
 msgid "cannot move an owned sequence into another schema"
 msgstr "所有するシーケンスを他のスキーマに移動することができません"
 
-#: commands/tablecmds.c:15030
+#: commands/tablecmds.c:15059
 #, c-format
 msgid "relation \"%s\" already exists in schema \"%s\""
 msgstr "リレーション\"%s\"はスキーマ\"%s\"内にすでに存在します"
 
-#: commands/tablecmds.c:15607
+#: commands/tablecmds.c:15636
 #, c-format
 msgid "\"%s\" is not a composite type"
 msgstr "\"%s\"は複合型ではありません"
 
-#: commands/tablecmds.c:15639
+#: commands/tablecmds.c:15668
 #, c-format
 msgid "\"%s\" is not a table, view, materialized view, sequence, or foreign table"
 msgstr "\"%s\"はテーブル、ビュー、実体化ビュー、シーケンス、外部テーブルではありません"
 
-#: commands/tablecmds.c:15674
+#: commands/tablecmds.c:15703
 #, c-format
 msgid "unrecognized partitioning strategy \"%s\""
 msgstr "識別できないパーティションストラテジ \"%s\""
 
-#: commands/tablecmds.c:15682
+#: commands/tablecmds.c:15711
 #, c-format
 msgid "cannot use \"list\" partition strategy with more than one column"
 msgstr "\"list\"パーティションストラテジは2つ以上の列に対しては使えません"
 
-#: commands/tablecmds.c:15748
+#: commands/tablecmds.c:15777
 #, c-format
 msgid "column \"%s\" named in partition key does not exist"
 msgstr "パーティションキーに指定されている列\"%s\"は存在しません"
 
-#: commands/tablecmds.c:15756
+#: commands/tablecmds.c:15785
 #, c-format
 msgid "cannot use system column \"%s\" in partition key"
 msgstr "パーティションキーでシステム列\"%s\"は使用できません"
 
-#: commands/tablecmds.c:15767 commands/tablecmds.c:15884
+#: commands/tablecmds.c:15796 commands/tablecmds.c:15913
 #, c-format
 msgid "cannot use generated column in partition key"
 msgstr "パーティションキーで生成カラムは使用できません"
 
-#: commands/tablecmds.c:15768 commands/tablecmds.c:15885 commands/trigger.c:667 rewrite/rewriteHandler.c:851 rewrite/rewriteHandler.c:868
+#: commands/tablecmds.c:15797 commands/tablecmds.c:15914 commands/trigger.c:667 rewrite/rewriteHandler.c:856 rewrite/rewriteHandler.c:873
 #, c-format
 msgid "Column \"%s\" is a generated column."
 msgstr "列\"%s\"は生成カラムです。"
 
-#: commands/tablecmds.c:15844
+#: commands/tablecmds.c:15873
 #, c-format
 msgid "functions in partition key expression must be marked IMMUTABLE"
 msgstr "パーティションキー式で使われる関数はIMMUTABLE指定されている必要があります"
 
-#: commands/tablecmds.c:15861
+#: commands/tablecmds.c:15890
 #, c-format
 msgid "partition key expressions cannot contain whole-row references"
 msgstr "パーティションキー式は行全体参照を含むことはできません"
 
-#: commands/tablecmds.c:15868
+#: commands/tablecmds.c:15897
 #, c-format
 msgid "partition key expressions cannot contain system column references"
 msgstr "パーティションキー式はシステム列への参照を含むことができません"
 
-#: commands/tablecmds.c:15897
+#: commands/tablecmds.c:15926
 #, c-format
 msgid "cannot use constant expression as partition key"
 msgstr "定数式をパーティションキーとして使うことはできません"
 
-#: commands/tablecmds.c:15918
+#: commands/tablecmds.c:15947
 #, c-format
 msgid "could not determine which collation to use for partition expression"
 msgstr "パーティション式で使用する照合順序を特定できませんでした"
 
-#: commands/tablecmds.c:15953
+#: commands/tablecmds.c:15982
 #, c-format
 msgid "You must specify a hash operator class or define a default hash operator class for the data type."
 msgstr "ハッシュ演算子クラスを指定するか、もしくはこのデータ型にデフォルトのハッシュ演算子クラスを定義する必要があります。"
 
-#: commands/tablecmds.c:15959
+#: commands/tablecmds.c:15988
 #, c-format
 msgid "You must specify a btree operator class or define a default btree operator class for the data type."
 msgstr "btree演算子クラスを指定するか、もしくはこのデータ型にデフォルトのbtree演算子クラスを定義するかする必要があります。"
 
-#: commands/tablecmds.c:16104
+#: commands/tablecmds.c:16133
 #, c-format
 msgid "partition constraint for table \"%s\" is implied by existing constraints"
 msgstr "テーブル\"%s\"のパーティション制約は既存の制約によって暗黙的に満たされています"
 
-#: commands/tablecmds.c:16108 partitioning/partbounds.c:1245 partitioning/partbounds.c:1296
+#: commands/tablecmds.c:16137 partitioning/partbounds.c:1245 partitioning/partbounds.c:1296
 #, c-format
 msgid "updated partition constraint for default partition \"%s\" is implied by existing constraints"
 msgstr "デフォルトパーティション \"%s\" に対する更新されたパーティション制約は既存の制約によって暗黙的に満たされています"
 
-#: commands/tablecmds.c:16212
+#: commands/tablecmds.c:16241
 #, c-format
 msgid "\"%s\" is already a partition"
 msgstr "\"%s\"はすでパーティションです"
 
-#: commands/tablecmds.c:16218
+#: commands/tablecmds.c:16247
 #, c-format
 msgid "cannot attach a typed table as partition"
 msgstr "型付けされたテーブルをパーティションにアタッチすることはできません"
 
-#: commands/tablecmds.c:16234
+#: commands/tablecmds.c:16263
 #, c-format
 msgid "cannot attach inheritance child as partition"
 msgstr "継承子テーブルをパーティションにアタッチすることはできません"
 
-#: commands/tablecmds.c:16248
+#: commands/tablecmds.c:16277
 #, c-format
 msgid "cannot attach inheritance parent as partition"
 msgstr "継承親テーブルをパーティションにアタッチすることはできません"
 
-#: commands/tablecmds.c:16282
+#: commands/tablecmds.c:16311
 #, c-format
 msgid "cannot attach a temporary relation as partition of permanent relation \"%s\""
 msgstr "一時リレーションを永続リレーション \"%s\" の子テーブルとしてアタッチすることはできません"
 
-#: commands/tablecmds.c:16290
+#: commands/tablecmds.c:16319
 #, c-format
 msgid "cannot attach a permanent relation as partition of temporary relation \"%s\""
 msgstr "永続リレーションを一時リレーション\"%s\"のパーティション子テーブルとしてアタッチすることはできません"
 
-#: commands/tablecmds.c:16298
+#: commands/tablecmds.c:16327
 #, c-format
 msgid "cannot attach as partition of temporary relation of another session"
 msgstr "他セッションの一時リレーションのパーティション子テーブルとしてアタッチすることはできません"
 
-#: commands/tablecmds.c:16305
+#: commands/tablecmds.c:16334
 #, c-format
 msgid "cannot attach temporary relation of another session as partition"
 msgstr "他セッションの一時リレーションにパーティション子テーブルとしてアタッチすることはできません"
 
-#: commands/tablecmds.c:16325
+#: commands/tablecmds.c:16354
 #, c-format
 msgid "table \"%s\" contains column \"%s\" not found in parent \"%s\""
 msgstr "テーブル\"%1$s\"は親テーブル\"%3$s\"にない列\"%2$s\"を含んでいます"
 
-#: commands/tablecmds.c:16328
+#: commands/tablecmds.c:16357
 #, c-format
 msgid "The new partition may contain only the columns present in parent."
 msgstr "新しいパーティションは親に存在する列のみを含むことができます。"
 
-#: commands/tablecmds.c:16340
+#: commands/tablecmds.c:16369
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming a partition"
 msgstr "トリガ\"%s\"のため、テーブル\"%s\"はパーティション子テーブルにはなれません"
 
-#: commands/tablecmds.c:16342 commands/trigger.c:473
+#: commands/tablecmds.c:16371 commands/trigger.c:473
 #, c-format
 msgid "ROW triggers with transition tables are not supported on partitions"
 msgstr "遷移テーブルを使用するROWトリガはパーティションではサポートされません"
 
-#: commands/tablecmds.c:16525
+#: commands/tablecmds.c:16554
 #, c-format
 msgid "cannot attach foreign table \"%s\" as partition of partitioned table \"%s\""
 msgstr "外部テーブル\"%s\"はパーティションテーブル\"%s\"の子テーブルとしてアタッチすることはできません"
 
-#: commands/tablecmds.c:16528
+#: commands/tablecmds.c:16557
 #, c-format
 msgid "Table \"%s\" contains unique indexes."
 msgstr "テーブル\"%s\"はユニークインデックスを持っています。"
 
-#: commands/tablecmds.c:17252 commands/tablecmds.c:17272 commands/tablecmds.c:17294 commands/tablecmds.c:17313 commands/tablecmds.c:17355
+#: commands/tablecmds.c:17291 commands/tablecmds.c:17311 commands/tablecmds.c:17333 commands/tablecmds.c:17352 commands/tablecmds.c:17394
 #, c-format
 msgid "cannot attach index \"%s\" as a partition of index \"%s\""
 msgstr "インデックス\"%s\"をインデックス\"%s\"の子インデックスとしてアタッチすることはできません"
 
-#: commands/tablecmds.c:17255
+#: commands/tablecmds.c:17294
 #, c-format
 msgid "Index \"%s\" is already attached to another index."
 msgstr "インデックス\"%s\"はすでに別のインデックスにアタッチされています。"
 
-#: commands/tablecmds.c:17275
+#: commands/tablecmds.c:17314
 #, c-format
 msgid "Index \"%s\" is not an index on any partition of table \"%s\"."
 msgstr "インデックス\"%s\"はテーブル\"%s\"のどの子テーブルのインデックスでもありません。"
 
-#: commands/tablecmds.c:17297
+#: commands/tablecmds.c:17336
 #, c-format
 msgid "The index definitions do not match."
 msgstr "インデックス定義が合致しません。"
 
-#: commands/tablecmds.c:17316
+#: commands/tablecmds.c:17355
 #, c-format
 msgid "The index \"%s\" belongs to a constraint in table \"%s\" but no constraint exists for index \"%s\"."
 msgstr "インデックス\"%s\"はテーブル\"%s\"の制約に属していますが、インデックス\"%s\"には制約がありません。"
 
-#: commands/tablecmds.c:17358
+#: commands/tablecmds.c:17397
 #, c-format
 msgid "Another index is already attached for partition \"%s\"."
 msgstr "子テーブル\"%s\"にはすでに他のインデックスがアタッチされています。"
@@ -9797,8 +9803,8 @@ msgstr "パーティションテーブルは BEFORE / FOR EACH ROW トリガを�
 
 #: commands/trigger.c:266
 #, c-format
-msgid "Triggers on partitioned tables cannot have transition tables."
-msgstr "パーティションテーブルに対するトリガは遷移テーブルを持てません。"
+msgid "ROW triggers with transition tables are not supported on partitioned tables."
+msgstr "遷移テーブルを使用するROWトリガはパーティション親テーブルではサポートされません。"
 
 #: commands/trigger.c:278 commands/trigger.c:285 commands/trigger.c:455
 #, c-format
@@ -11069,32 +11075,32 @@ msgstr "シーケンス\"%s\"を変更できません"
 msgid "cannot change TOAST relation \"%s\""
 msgstr "TOASTリレーション\"%s\"を変更できません"
 
-#: executor/execMain.c:1101 rewrite/rewriteHandler.c:2993 rewrite/rewriteHandler.c:3782
+#: executor/execMain.c:1101 rewrite/rewriteHandler.c:3031 rewrite/rewriteHandler.c:3831
 #, c-format
 msgid "cannot insert into view \"%s\""
 msgstr "ビュー\"%s\"へは挿入(INSERT)できません"
 
-#: executor/execMain.c:1103 rewrite/rewriteHandler.c:2996 rewrite/rewriteHandler.c:3785
+#: executor/execMain.c:1103 rewrite/rewriteHandler.c:3034 rewrite/rewriteHandler.c:3834
 #, c-format
 msgid "To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule."
 msgstr "ビューへの挿入を可能にするために、INSTEAD OF INSERTトリガまたは無条件のON INSERT DO INSTEADルールを作成してください。"
 
-#: executor/execMain.c:1109 rewrite/rewriteHandler.c:3001 rewrite/rewriteHandler.c:3790
+#: executor/execMain.c:1109 rewrite/rewriteHandler.c:3039 rewrite/rewriteHandler.c:3839
 #, c-format
 msgid "cannot update view \"%s\""
 msgstr "ビュー\"%s\"は更新できません"
 
-#: executor/execMain.c:1111 rewrite/rewriteHandler.c:3004 rewrite/rewriteHandler.c:3793
+#: executor/execMain.c:1111 rewrite/rewriteHandler.c:3042 rewrite/rewriteHandler.c:3842
 #, c-format
 msgid "To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule."
 msgstr "ビューへの更新を可能にするために、INSTEAD OF UPDATEトリガまたは無条件のON UPDATE DO INSTEADルールを作成してください。"
 
-#: executor/execMain.c:1117 rewrite/rewriteHandler.c:3009 rewrite/rewriteHandler.c:3798
+#: executor/execMain.c:1117 rewrite/rewriteHandler.c:3047 rewrite/rewriteHandler.c:3847
 #, c-format
 msgid "cannot delete from view \"%s\""
 msgstr "ビュー\"%s\"からは削除できません"
 
-#: executor/execMain.c:1119 rewrite/rewriteHandler.c:3012 rewrite/rewriteHandler.c:3801
+#: executor/execMain.c:1119 rewrite/rewriteHandler.c:3050 rewrite/rewriteHandler.c:3850
 #, c-format
 msgid "To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule."
 msgstr "ビューからの削除を可能にするために、INSTEAD OF DELETEトリガまたは無条件のON DELETE DO INSTEADルールを作成してください。"
@@ -13661,7 +13667,7 @@ msgstr "クライアント接続がありません"
 msgid "could not receive data from client: %m"
 msgstr "クライアントからデータを受信できませんでした: %m"
 
-#: libpq/pqcomm.c:1229 tcop/postgres.c:4106
+#: libpq/pqcomm.c:1229 tcop/postgres.c:4118
 #, c-format
 msgid "terminating connection because protocol synchronization was lost"
 msgstr "プロトコルの同期が失われたためコネクションを終了します"
@@ -14090,27 +14096,32 @@ msgstr "%sを実行できませんでした"
 msgid "SQL function \"%s\" during inlining"
 msgstr "SQL関数\"%s\"のインライン化処理中"
 
-#: optimizer/util/plancat.c:130
+#: optimizer/util/plancat.c:138
+#, c-format
+msgid "cannot open relation \"%s\""
+msgstr "リレーション\"%s\"はオープンできません"
+
+#: optimizer/util/plancat.c:146
 #, c-format
 msgid "cannot access temporary or unlogged relations during recovery"
 msgstr "リカバリ中は一時テーブルやUNLOGGEDテーブルにはアクセスできません"
 
-#: optimizer/util/plancat.c:652
+#: optimizer/util/plancat.c:668
 #, c-format
 msgid "whole row unique index inference specifications are not supported"
 msgstr "行全体に渡るユニークインデックスの推定指定はサポートされていません"
 
-#: optimizer/util/plancat.c:669
+#: optimizer/util/plancat.c:685
 #, c-format
 msgid "constraint in ON CONFLICT clause has no associated index"
 msgstr "ON CONFLICT句中の制約には関連付けられるインデックスがありません"
 
-#: optimizer/util/plancat.c:719
+#: optimizer/util/plancat.c:735
 #, c-format
 msgid "ON CONFLICT DO UPDATE not supported with exclusion constraints"
 msgstr "ON CONFLICT DO UPDATEでの排除制約の使用はサポートされていません"
 
-#: optimizer/util/plancat.c:824
+#: optimizer/util/plancat.c:840
 #, c-format
 msgid "there is no unique or exclusion constraint matching the ON CONFLICT specification"
 msgstr "ON CONFLICT 指定に合致するユニーク制約または排除制約がありません"
@@ -16123,7 +16134,7 @@ msgstr "ルールのWHERE条件に他のリレーションへの参照を持た�
 msgid "rules with WHERE conditions can only have SELECT, INSERT, UPDATE, or DELETE actions"
 msgstr "ルールのWHERE条件はSELECT、INSERT、UPDATE、DELETE動作のみを持つことができます"
 
-#: parser/parse_utilcmd.c:3030 parser/parse_utilcmd.c:3129 rewrite/rewriteHandler.c:503 rewrite/rewriteManip.c:1015
+#: parser/parse_utilcmd.c:3030 parser/parse_utilcmd.c:3129 rewrite/rewriteHandler.c:508 rewrite/rewriteManip.c:1015
 #, c-format
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
 msgstr "条件付きのUNION/INTERSECT/EXCEPT文は実装されていません"
@@ -17093,7 +17104,7 @@ msgstr "データベースシステムはシャットダウンしています"
 msgid "the database system is in recovery mode"
 msgstr "データベースシステムはリカバリモードです"
 
-#: postmaster/postmaster.c:2339 storage/ipc/procarray.c:303 storage/ipc/sinvaladt.c:298 storage/lmgr/proc.c:363
+#: postmaster/postmaster.c:2339 storage/ipc/procarray.c:314 storage/ipc/sinvaladt.c:298 storage/lmgr/proc.c:363
 #, c-format
 msgid "sorry, too many clients already"
 msgstr "現在クライアント数が多すぎます"
@@ -17920,94 +17931,94 @@ msgstr "論理レプリケーションの対象リレーション\"%s.%s\"はレ
 msgid "logical replication target relation \"%s.%s\" uses system columns in REPLICA IDENTITY index"
 msgstr "論理レプリケーションのターゲットリレーション\"%s.%s\"がREPLICA IDENTITYインデックスでシステム列を使用しています"
 
-#: replication/logical/reorderbuffer.c:2531
+#: replication/logical/reorderbuffer.c:2545
 #, c-format
 msgid "could not write to data file for XID %u: %m"
 msgstr "XID%uのためのデータファイルの書き出しに失敗しました: %m"
 
-#: replication/logical/reorderbuffer.c:2640 replication/logical/reorderbuffer.c:2665
+#: replication/logical/reorderbuffer.c:2656 replication/logical/reorderbuffer.c:2681
 #, c-format
 msgid "could not read from reorderbuffer spill file: %m"
 msgstr "並べ替えバッファのあふれファイルの読み込みに失敗しました: %m"
 
-#: replication/logical/reorderbuffer.c:2644 replication/logical/reorderbuffer.c:2669
+#: replication/logical/reorderbuffer.c:2660 replication/logical/reorderbuffer.c:2685
 #, c-format
 msgid "could not read from reorderbuffer spill file: read %d instead of %u bytes"
 msgstr "並べ替えバッファのあふれファイルの読み込みに失敗しました: %2$uバイトのはずが%1$dバイトでした"
 
-#: replication/logical/reorderbuffer.c:2895
+#: replication/logical/reorderbuffer.c:2911
 #, c-format
 msgid "could not remove file \"%s\" during removal of pg_replslot/%s/xid*: %m"
 msgstr "pg_replslot/%2$s/xid* の削除中にファイル\"%1$s\"が削除できませんでした: %3$m"
 
-#: replication/logical/reorderbuffer.c:3365
+#: replication/logical/reorderbuffer.c:3381
 #, c-format
 msgid "could not read from file \"%s\": read %d instead of %d bytes"
 msgstr "ファイル\"%1$s\"の読み込みに失敗しました: %3$dバイトのはずが%2$dバイトでした"
 
-#: replication/logical/snapbuild.c:641
+#: replication/logical/snapbuild.c:648
 #, c-format
 msgid "initial slot snapshot too large"
 msgstr "初期スロットスナップショットが大きすぎます"
 
-#: replication/logical/snapbuild.c:695
+#: replication/logical/snapbuild.c:702
 #, c-format
 msgid "exported logical decoding snapshot: \"%s\" with %u transaction ID"
 msgid_plural "exported logical decoding snapshot: \"%s\" with %u transaction IDs"
 msgstr[0] "エクスポートされた論理デコードスナップショット: \"%s\" (%u個のトランザクションID を含む)"
 msgstr[1] "エクスポートされた論理デコードスナップショット: \"%s\" (%u個のトランザクションID を含む)"
 
-#: replication/logical/snapbuild.c:1364 replication/logical/snapbuild.c:1471 replication/logical/snapbuild.c:2028
+#: replication/logical/snapbuild.c:1374 replication/logical/snapbuild.c:1481 replication/logical/snapbuild.c:2038
 #, c-format
 msgid "logical decoding found consistent point at %X/%X"
 msgstr "論理デコードは一貫性ポイントを%X/%Xで発見しました"
 
-#: replication/logical/snapbuild.c:1366
+#: replication/logical/snapbuild.c:1376
 #, c-format
 msgid "There are no running transactions."
 msgstr "実行中のトランザクションはありません。"
 
-#: replication/logical/snapbuild.c:1422
+#: replication/logical/snapbuild.c:1432
 #, c-format
 msgid "logical decoding found initial starting point at %X/%X"
 msgstr "論理デコードは初期開始点を%X/%Xで発見しました"
 
-#: replication/logical/snapbuild.c:1424 replication/logical/snapbuild.c:1448
+#: replication/logical/snapbuild.c:1434 replication/logical/snapbuild.c:1458
 #, c-format
 msgid "Waiting for transactions (approximately %d) older than %u to end."
 msgstr "%2$uより古いトランザクション(おおよそ%1$d個)の完了を待っています"
 
-#: replication/logical/snapbuild.c:1446
+#: replication/logical/snapbuild.c:1456
 #, c-format
 msgid "logical decoding found initial consistent point at %X/%X"
 msgstr "論理デコードは初期の一貫性ポイントを%X/%Xで発見しました"
 
-#: replication/logical/snapbuild.c:1473
+#: replication/logical/snapbuild.c:1483
 #, c-format
 msgid "There are no old transactions anymore."
 msgstr "古いトランザクションはこれ以上はありません"
 
-#: replication/logical/snapbuild.c:1870
+#: replication/logical/snapbuild.c:1880
 #, c-format
 msgid "snapbuild state file \"%s\" has wrong magic number: %u instead of %u"
 msgstr "スナップショット構築状態ファイル\"%1$s\"のマジックナンバーが不正です: %3$uのはずが%2$uでした"
 
-#: replication/logical/snapbuild.c:1876
+#: replication/logical/snapbuild.c:1886
 #, c-format
 msgid "snapbuild state file \"%s\" has unsupported version: %u instead of %u"
 msgstr "スナップショット状態ファイル\"%1$s\"のバージョン%2$uはサポート外です: %3$uのはずが%2$uでした"
 
-#: replication/logical/snapbuild.c:1975
+#: replication/logical/snapbuild.c:1985
 #, c-format
 msgid "checksum mismatch for snapbuild state file \"%s\": is %u, should be %u"
 msgstr "スナップショット生成状態ファイル\"%s\"のチェックサムが一致しません: %uですが、%uであるべきです"
 
-#: replication/logical/snapbuild.c:2030
+#: replication/logical/snapbuild.c:2040
 #, c-format
 msgid "Logical decoding will begin using saved snapshot."
 msgstr "論理デコードは保存されたスナップショットを使って開始します。"
 
-#: replication/logical/snapbuild.c:2102
+#: replication/logical/snapbuild.c:2112
 #, c-format
 msgid "could not parse file name \"%s\""
 msgstr "ファイル名\"%s\"をパースできませんでした"
@@ -18523,7 +18534,7 @@ msgstr "物理レプリケーション用のWAL送信プロセスでSQLコマン
 msgid "received replication command: %s"
 msgstr "レプリケーションコマンドを受信しました: %s"
 
-#: replication/walsender.c:1561 tcop/fastpath.c:285 tcop/postgres.c:1102 tcop/postgres.c:1432 tcop/postgres.c:1690 tcop/postgres.c:2067 tcop/postgres.c:2451 tcop/postgres.c:2530
+#: replication/walsender.c:1561 tcop/fastpath.c:285 tcop/postgres.c:1102 tcop/postgres.c:1432 tcop/postgres.c:1690 tcop/postgres.c:2067 tcop/postgres.c:2463 tcop/postgres.c:2542
 #, c-format
 msgid "current transaction is aborted, commands ignored until end of transaction block"
 msgstr "現在のトランザクションがアボートしました。トランザクションブロックが終わるまでコマンドは無視されます"
@@ -18558,7 +18569,7 @@ msgstr "\"%s\"は上流サーバに追いつきました"
 msgid "could not read from log segment %s, offset %u, length %zu: %m"
 msgstr "ログセグメント %s、オフセット %uから長さ %zu が読み込めませんでした: %m"
 
-#: rewrite/rewriteDefine.c:113 rewrite/rewriteDefine.c:1000
+#: rewrite/rewriteDefine.c:113 rewrite/rewriteDefine.c:1012
 #, c-format
 msgid "rule \"%s\" for relation \"%s\" already exists"
 msgstr "リレーション\"%2$s\"のルール\"%1$s\"はすでに存在します"
@@ -18621,7 +18632,7 @@ msgstr "\"%s\"はすでにビューです"
 #: rewrite/rewriteDefine.c:407
 #, c-format
 msgid "view rule for \"%s\" must be named \"%s\""
-msgstr "\"%s\"用のビューのルールの名前は\"%s\"でなければなりません"
+msgstr "\"%s\"に対するビューのルールの名前は\"%s\"でなければなりません"
 
 #: rewrite/rewriteDefine.c:436
 #, c-format
@@ -18688,276 +18699,281 @@ msgstr "条件付のルールではRETURNINGリストはサポートされませ
 msgid "RETURNING lists are not supported in non-INSTEAD rules"
 msgstr "INSTEAD以外のルールではRETURNINGリストはサポートされません"
 
-#: rewrite/rewriteDefine.c:694
+#: rewrite/rewriteDefine.c:544
+#, c-format
+msgid "non-view rule for \"%s\" must not be named \"%s\""
+msgstr "\"%s\"に対するビュー以外のルールの名前は\"%s\"にはできません"
+
+#: rewrite/rewriteDefine.c:706
 #, c-format
 msgid "SELECT rule's target list has too many entries"
 msgstr "SELECTルールのターゲットリストの要素が多すぎます"
 
-#: rewrite/rewriteDefine.c:695
+#: rewrite/rewriteDefine.c:707
 #, c-format
 msgid "RETURNING list has too many entries"
 msgstr "RETURNINGリストの要素が多すぎます"
 
-#: rewrite/rewriteDefine.c:722
+#: rewrite/rewriteDefine.c:734
 #, c-format
 msgid "cannot convert relation containing dropped columns to view"
 msgstr "削除された列を持つリレーションをビューに変換できませんでした"
 
-#: rewrite/rewriteDefine.c:723
+#: rewrite/rewriteDefine.c:735
 #, c-format
 msgid "cannot create a RETURNING list for a relation containing dropped columns"
 msgstr "削除された列を持つリレーションにRETURNINGリストを生成することはできませんでした"
 
-#: rewrite/rewriteDefine.c:729
+#: rewrite/rewriteDefine.c:741
 #, c-format
 msgid "SELECT rule's target entry %d has different column name from column \"%s\""
 msgstr "SELECTルールのターゲットエントリ%dは列\"%s\"とは異なる列名を持っています"
 
-#: rewrite/rewriteDefine.c:731
+#: rewrite/rewriteDefine.c:743
 #, c-format
 msgid "SELECT target entry is named \"%s\"."
 msgstr "SELECTのターゲットエントリは\"%s\"と名付けられています。"
 
-#: rewrite/rewriteDefine.c:740
+#: rewrite/rewriteDefine.c:752
 #, c-format
 msgid "SELECT rule's target entry %d has different type from column \"%s\""
 msgstr "SELECTルールの対象項目%dは\"%s\"と異なる列型を持っています"
 
-#: rewrite/rewriteDefine.c:742
+#: rewrite/rewriteDefine.c:754
 #, c-format
 msgid "RETURNING list's entry %d has different type from column \"%s\""
 msgstr "RETURNINGリスト項目%dは\"%s\"と異なる列型を持っています"
 
-#: rewrite/rewriteDefine.c:745 rewrite/rewriteDefine.c:769
+#: rewrite/rewriteDefine.c:757 rewrite/rewriteDefine.c:781
 #, c-format
 msgid "SELECT target entry has type %s, but column has type %s."
 msgstr "SELECTのターゲットエントリの型は%sですが、列の型は%sです。"
 
-#: rewrite/rewriteDefine.c:748 rewrite/rewriteDefine.c:773
+#: rewrite/rewriteDefine.c:760 rewrite/rewriteDefine.c:785
 #, c-format
 msgid "RETURNING list entry has type %s, but column has type %s."
 msgstr "RETURNINGリストの要素の型は%sですが、列の型は%sです。"
 
-#: rewrite/rewriteDefine.c:764
+#: rewrite/rewriteDefine.c:776
 #, c-format
 msgid "SELECT rule's target entry %d has different size from column \"%s\""
 msgstr "SELECTルールの対象項目%dは\"%s\"と異なる列のサイズを持っています"
 
-#: rewrite/rewriteDefine.c:766
+#: rewrite/rewriteDefine.c:778
 #, c-format
 msgid "RETURNING list's entry %d has different size from column \"%s\""
 msgstr "RETURNINGリスト項目%dは\"%s\"と異なる列のサイズを持っています"
 
-#: rewrite/rewriteDefine.c:783
+#: rewrite/rewriteDefine.c:795
 #, c-format
 msgid "SELECT rule's target list has too few entries"
 msgstr "SELECTルールのターゲットリストの項目が少なすぎます"
 
-#: rewrite/rewriteDefine.c:784
+#: rewrite/rewriteDefine.c:796
 #, c-format
 msgid "RETURNING list has too few entries"
 msgstr "RETURNINGリストの項目が少なすぎます"
 
-#: rewrite/rewriteDefine.c:877 rewrite/rewriteDefine.c:991 rewrite/rewriteSupport.c:109
+#: rewrite/rewriteDefine.c:889 rewrite/rewriteDefine.c:1003 rewrite/rewriteSupport.c:109
 #, c-format
 msgid "rule \"%s\" for relation \"%s\" does not exist"
 msgstr "リレーション\"%2$s\"のルール\"%1$s\"は存在しません"
 
-#: rewrite/rewriteDefine.c:1010
+#: rewrite/rewriteDefine.c:1022
 #, c-format
 msgid "renaming an ON SELECT rule is not allowed"
 msgstr "ON SELECTルールの名前を変更することはできません"
 
-#: rewrite/rewriteHandler.c:549
+#: rewrite/rewriteHandler.c:554
 #, c-format
 msgid "WITH query name \"%s\" appears in both a rule action and the query being rewritten"
 msgstr "WITH の問い合わせ名\"%s\"が、ルールのアクションと書き換えられようとしている問い合わせの両方に現れています"
 
-#: rewrite/rewriteHandler.c:576
+#: rewrite/rewriteHandler.c:581
 #, c-format
 msgid "INSERT...SELECT rule actions are not supported for queries having data-modifying statements in WITH"
 msgstr "INSERT...SELECTルールのアクションはWITHにデータ更新文を持つ問い合わせに対してはサポートされません"
 
-#: rewrite/rewriteHandler.c:629
+#: rewrite/rewriteHandler.c:634
 #, c-format
 msgid "cannot have RETURNING lists in multiple rules"
 msgstr "複数ルールではRETURNINGリストを持つことはできません"
 
-#: rewrite/rewriteHandler.c:838 rewrite/rewriteHandler.c:850
+#: rewrite/rewriteHandler.c:843 rewrite/rewriteHandler.c:855
 #, c-format
 msgid "cannot insert into column \"%s\""
 msgstr "列\"%s\"への挿入はできません"
 
-#: rewrite/rewriteHandler.c:839 rewrite/rewriteHandler.c:861
+#: rewrite/rewriteHandler.c:844 rewrite/rewriteHandler.c:866
 #, c-format
 msgid "Column \"%s\" is an identity column defined as GENERATED ALWAYS."
 msgstr "列\"%s\"は GENERATED ALWAYS として定義されています。"
 
-#: rewrite/rewriteHandler.c:841
+#: rewrite/rewriteHandler.c:846
 #, c-format
 msgid "Use OVERRIDING SYSTEM VALUE to override."
 msgstr "OVERRIDING SYSTEM VALUE を指定することで挿入を強制できます。"
 
-#: rewrite/rewriteHandler.c:860 rewrite/rewriteHandler.c:867
+#: rewrite/rewriteHandler.c:865 rewrite/rewriteHandler.c:872
 #, c-format
 msgid "column \"%s\" can only be updated to DEFAULT"
 msgstr "列\"%s\"はDEFAULTにのみ更新可能です"
 
-#: rewrite/rewriteHandler.c:1036 rewrite/rewriteHandler.c:1054
+#: rewrite/rewriteHandler.c:1041 rewrite/rewriteHandler.c:1059
 #, c-format
 msgid "multiple assignments to same column \"%s\""
 msgstr "同じ列\"%s\"に複数の代入があります"
 
-#: rewrite/rewriteHandler.c:2036 rewrite/rewriteHandler.c:3856
+#: rewrite/rewriteHandler.c:2074 rewrite/rewriteHandler.c:3905
 #, c-format
 msgid "infinite recursion detected in rules for relation \"%s\""
 msgstr "リレーション\"%s\"のルールで無限再帰を検出しました"
 
-#: rewrite/rewriteHandler.c:2121
+#: rewrite/rewriteHandler.c:2159
 #, c-format
 msgid "infinite recursion detected in policy for relation \"%s\""
 msgstr "リレーション\"%s\"のポリシで無限再帰を検出しました"
 
-#: rewrite/rewriteHandler.c:2441
+#: rewrite/rewriteHandler.c:2479
 msgid "Junk view columns are not updatable."
 msgstr "ジャンクビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2446
+#: rewrite/rewriteHandler.c:2484
 msgid "View columns that are not columns of their base relation are not updatable."
 msgstr "基底リレーションの列ではないビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2449
+#: rewrite/rewriteHandler.c:2487
 msgid "View columns that refer to system columns are not updatable."
 msgstr "システム列を参照するビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2452
+#: rewrite/rewriteHandler.c:2490
 msgid "View columns that return whole-row references are not updatable."
 msgstr "行全体参照を返すビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2513
+#: rewrite/rewriteHandler.c:2551
 msgid "Views containing DISTINCT are not automatically updatable."
 msgstr "DISTINCTを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2516
+#: rewrite/rewriteHandler.c:2554
 msgid "Views containing GROUP BY are not automatically updatable."
 msgstr "GROUP BYを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2519
+#: rewrite/rewriteHandler.c:2557
 msgid "Views containing HAVING are not automatically updatable."
 msgstr "HAVINGを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2522
+#: rewrite/rewriteHandler.c:2560
 msgid "Views containing UNION, INTERSECT, or EXCEPT are not automatically updatable."
 msgstr "UNION、INTERSECT、EXCEPTを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2525
+#: rewrite/rewriteHandler.c:2563
 msgid "Views containing WITH are not automatically updatable."
 msgstr "WITHを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2528
+#: rewrite/rewriteHandler.c:2566
 msgid "Views containing LIMIT or OFFSET are not automatically updatable."
 msgstr "LIMIT、OFFSETを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2540
+#: rewrite/rewriteHandler.c:2578
 msgid "Views that return aggregate functions are not automatically updatable."
 msgstr "集約関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2543
+#: rewrite/rewriteHandler.c:2581
 msgid "Views that return window functions are not automatically updatable."
 msgstr "ウィンドウ関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2546
+#: rewrite/rewriteHandler.c:2584
 msgid "Views that return set-returning functions are not automatically updatable."
 msgstr "集合返却関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2553 rewrite/rewriteHandler.c:2557 rewrite/rewriteHandler.c:2565
+#: rewrite/rewriteHandler.c:2591 rewrite/rewriteHandler.c:2595 rewrite/rewriteHandler.c:2603
 msgid "Views that do not select from a single table or view are not automatically updatable."
 msgstr "単一のテーブルまたはビューからselectしていないビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2568
+#: rewrite/rewriteHandler.c:2606
 msgid "Views containing TABLESAMPLE are not automatically updatable."
 msgstr "TABLESAMPLEを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2592
+#: rewrite/rewriteHandler.c:2630
 msgid "Views that have no updatable columns are not automatically updatable."
 msgstr "更新可能な列を持たないビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:3069
+#: rewrite/rewriteHandler.c:3107
 #, c-format
 msgid "cannot insert into column \"%s\" of view \"%s\""
 msgstr "ビュー\"%2$s\"の列\"%1$s\"への挿入はできません"
 
-#: rewrite/rewriteHandler.c:3077
+#: rewrite/rewriteHandler.c:3115
 #, c-format
 msgid "cannot update column \"%s\" of view \"%s\""
 msgstr "ビュー\"%2$s\"の列\"%1$s\"は更新できません"
 
-#: rewrite/rewriteHandler.c:3556
+#: rewrite/rewriteHandler.c:3598
 #, c-format
 msgid "DO INSTEAD NOTIFY rules are not supported for data-modifying statements in WITH"
 msgstr "DO INSTEAD NOTIFYルールはWITH内のデータ更新文に対してはサポートされません"
 
-#: rewrite/rewriteHandler.c:3567
+#: rewrite/rewriteHandler.c:3609
 #, c-format
 msgid "DO INSTEAD NOTHING rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は DO INSTEAD NOTHING ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3581
+#: rewrite/rewriteHandler.c:3623
 #, c-format
 msgid "conditional DO INSTEAD rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は、条件付き DO INSTEAD ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3585
+#: rewrite/rewriteHandler.c:3627
 #, c-format
 msgid "DO ALSO rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は DO ALSO ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3590
+#: rewrite/rewriteHandler.c:3632
 #, c-format
 msgid "multi-statement DO INSTEAD rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合はマルチステートメントの DO INSTEAD ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3784 rewrite/rewriteHandler.c:3792 rewrite/rewriteHandler.c:3800
+#: rewrite/rewriteHandler.c:3833 rewrite/rewriteHandler.c:3841 rewrite/rewriteHandler.c:3849
 #, c-format
 msgid "Views with conditional DO INSTEAD rules are not automatically updatable."
 msgstr "条件付きDO INSTEADルールを持つビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:3893
+#: rewrite/rewriteHandler.c:3954
 #, c-format
 msgid "cannot perform INSERT RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのINSERT RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:3895
+#: rewrite/rewriteHandler.c:3956
 #, c-format
 msgid "You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON INSERT DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:3900
+#: rewrite/rewriteHandler.c:3961
 #, c-format
 msgid "cannot perform UPDATE RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのUPDATE RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:3902
+#: rewrite/rewriteHandler.c:3963
 #, c-format
 msgid "You need an unconditional ON UPDATE DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON UPDATE DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:3907
+#: rewrite/rewriteHandler.c:3968
 #, c-format
 msgid "cannot perform DELETE RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのDELETE RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:3909
+#: rewrite/rewriteHandler.c:3970
 #, c-format
 msgid "You need an unconditional ON DELETE DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON DELETE DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:3927
+#: rewrite/rewriteHandler.c:3988
 #, c-format
 msgid "INSERT with ON CONFLICT clause cannot be used with table that has INSERT or UPDATE rules"
 msgstr "ON CONFLICT句を伴うINSERTは、INSERTまたはUPDATEルールを持つテーブルでは使えません"
 
-#: rewrite/rewriteHandler.c:3984
+#: rewrite/rewriteHandler.c:4045
 #, c-format
 msgid "WITH cannot be used in a query that is rewritten by rules into multiple queries"
 msgstr "複数問い合わせに対するルールにより書き換えられた問い合わせでは WITH を使用できません"
@@ -19134,47 +19150,47 @@ msgstr "統計オブジェクト\"%s.%s\"がリレーション\"%s.%s\"に対し
 msgid "function returning record called in context that cannot accept type record"
 msgstr "レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されました"
 
-#: storage/buffer/bufmgr.c:545 storage/buffer/bufmgr.c:659
+#: storage/buffer/bufmgr.c:542 storage/buffer/bufmgr.c:653
 #, c-format
 msgid "cannot access temporary tables of other sessions"
 msgstr "他のセッションの一時テーブルにはアクセスできません"
 
-#: storage/buffer/bufmgr.c:737
+#: storage/buffer/bufmgr.c:731
 #, c-format
 msgid "cannot extend relation %s beyond %u blocks"
 msgstr "リレーション\"%s\"を%uブロックを超えて拡張できません"
 
-#: storage/buffer/bufmgr.c:824
+#: storage/buffer/bufmgr.c:818
 #, c-format
 msgid "unexpected data beyond EOF in block %u of relation %s"
 msgstr "リレーション %2$s の %1$u ブロック目で、EOF の先に想定外のデータを検出しました"
 
-#: storage/buffer/bufmgr.c:826
+#: storage/buffer/bufmgr.c:820
 #, c-format
 msgid "This has been seen to occur with buggy kernels; consider updating your system."
 msgstr "これはカーネルの不具合で発生した模様です。システムの更新を検討してください。"
 
-#: storage/buffer/bufmgr.c:925
+#: storage/buffer/bufmgr.c:919
 #, c-format
 msgid "invalid page in block %u of relation %s; zeroing out page"
 msgstr "リレーション %2$s の %1$u ブロック目のページが不正です: ページをゼロで埋めました"
 
-#: storage/buffer/bufmgr.c:4069
+#: storage/buffer/bufmgr.c:4057
 #, c-format
 msgid "could not write block %u of %s"
 msgstr "%u ブロックを %s に書き出せませんでした"
 
-#: storage/buffer/bufmgr.c:4071
+#: storage/buffer/bufmgr.c:4059
 #, c-format
 msgid "Multiple failures --- write error might be permanent."
 msgstr "複数回失敗しました ---ずっと書き込みエラーが続くかもしれません。"
 
-#: storage/buffer/bufmgr.c:4092 storage/buffer/bufmgr.c:4111
+#: storage/buffer/bufmgr.c:4080 storage/buffer/bufmgr.c:4099
 #, c-format
 msgid "writing block %u of relation %s"
 msgstr "ブロック %u を リレーション %s に書き込んでいます"
 
-#: storage/buffer/bufmgr.c:4414
+#: storage/buffer/bufmgr.c:4402
 #, c-format
 msgid "snapshot too old"
 msgstr "スナップショットが古すぎます"
@@ -19415,7 +19431,7 @@ msgstr "要求された共有メモリのサイズはsize_tを超えています
 msgid "PID %d is not a PostgreSQL server process"
 msgstr "PID %dはPostgreSQLサーバプロセスではありません"
 
-#: storage/ipc/signalfuncs.c:98 storage/lmgr/proc.c:1363
+#: storage/ipc/signalfuncs.c:98 storage/lmgr/proc.c:1367
 #, c-format
 msgid "could not send signal to process %d: %m"
 msgstr "プロセス%dにシグナルを送信できませんでした: %m"
@@ -19456,12 +19472,12 @@ msgstr "代わりにコアの一部である %s の使用を検討してくだ�
 msgid "rotation not possible because log collection not active"
 msgstr "ログ収集が活動していませんのでローテーションを行うことができません"
 
-#: storage/ipc/standby.c:682 tcop/postgres.c:3133
+#: storage/ipc/standby.c:682 tcop/postgres.c:3145
 #, c-format
 msgid "canceling statement due to conflict with recovery"
 msgstr "リカバリで競合が発生したためステートメントをキャンセルしています"
 
-#: storage/ipc/standby.c:683 tcop/postgres.c:2385
+#: storage/ipc/standby.c:683 tcop/postgres.c:2397
 #, c-format
 msgid "User transaction caused buffer deadlock with recovery."
 msgstr "リカバリ時にユーザのトランザクションがバッファのデッドロックを引き起こしました。"
@@ -19691,37 +19707,37 @@ msgstr "リトライが行われた場合、このトランザクションは成
 msgid "number of requested standby connections exceeds max_wal_senders (currently %d)"
 msgstr "要求されたスタンバイ接続が max_wal_senders を超えています（現在は %d）"
 
-#: storage/lmgr/proc.c:1334
+#: storage/lmgr/proc.c:1338
 #, c-format
 msgid "Process %d waits for %s on %s."
 msgstr "プロセス%dは%sを%sで待機しています。"
 
-#: storage/lmgr/proc.c:1345
+#: storage/lmgr/proc.c:1349
 #, c-format
 msgid "sending cancel to blocking autovacuum PID %d"
 msgstr "ブロックしている自動VACUUMプロセスのPID %dへキャンセルを送付しています"
 
-#: storage/lmgr/proc.c:1465
+#: storage/lmgr/proc.c:1469
 #, c-format
 msgid "process %d avoided deadlock for %s on %s by rearranging queue order after %ld.%03d ms"
 msgstr "プロセス%1$dは、%4$ld.%5$03d ms後にキューの順番を再調整することで、%3$s上の%2$sに対するデッドロックを防ぎました。"
 
-#: storage/lmgr/proc.c:1480
+#: storage/lmgr/proc.c:1484
 #, c-format
 msgid "process %d detected deadlock while waiting for %s on %s after %ld.%03d ms"
 msgstr "プロセス%1$dは、%3$s上の%2$sに対し%4$ld.%5$03d ms待機するデッドロックを検知しました"
 
-#: storage/lmgr/proc.c:1489
+#: storage/lmgr/proc.c:1493
 #, c-format
 msgid "process %d still waiting for %s on %s after %ld.%03d ms"
 msgstr "プロセス%dは%sを%sで待機しています。%ld.%03dミリ秒後"
 
-#: storage/lmgr/proc.c:1496
+#: storage/lmgr/proc.c:1500
 #, c-format
 msgid "process %d acquired %s on %s after %ld.%03d ms"
 msgstr "プロセス%1$dは%4$ld.%5$03d ms後に%3$s上の%2$sを獲得しました"
 
-#: storage/lmgr/proc.c:1512
+#: storage/lmgr/proc.c:1516
 #, c-format
 msgid "process %d failed to acquire %s on %s after %ld.%03d ms"
 msgstr "プロセス%1$dは%4$ld.%5$03d ms後に%3$s上で%2$sを獲得することに失敗しました"
@@ -19841,7 +19857,7 @@ msgstr "関数%sをfastpathインターフェース経由で呼び出すこと�
 msgid "fastpath function call: \"%s\" (OID %u)"
 msgstr "近道関数呼び出し: \"%s\"(OID %u）)"
 
-#: tcop/fastpath.c:395 tcop/postgres.c:1294 tcop/postgres.c:1557 tcop/postgres.c:1924 tcop/postgres.c:2140
+#: tcop/fastpath.c:395 tcop/postgres.c:1294 tcop/postgres.c:1557 tcop/postgres.c:1924 tcop/postgres.c:2152
 #, c-format
 msgid "duration: %s ms"
 msgstr "期間: %s ミリ秒"
@@ -19871,7 +19887,7 @@ msgstr "関数引数%dのバイナリデータ書式が不正です"
 msgid "unexpected EOF on client connection"
 msgstr "クライアント接続に想定外のEOFがありました"
 
-#: tcop/postgres.c:444 tcop/postgres.c:456 tcop/postgres.c:467 tcop/postgres.c:479 tcop/postgres.c:4505
+#: tcop/postgres.c:444 tcop/postgres.c:456 tcop/postgres.c:467 tcop/postgres.c:479 tcop/postgres.c:4517
 #, c-format
 msgid "invalid frontend message type %d"
 msgstr "フロントエンドメッセージタイプ%dが不正です"
@@ -19906,7 +19922,7 @@ msgstr "期間: %s ミリ秒  パース%s : %s"
 msgid "bind %s to %s"
 msgstr "バインド%s: %s"
 
-#: tcop/postgres.c:1626 tcop/postgres.c:2432
+#: tcop/postgres.c:1626 tcop/postgres.c:2444
 #, c-format
 msgid "unnamed prepared statement does not exist"
 msgstr "無名の準備された文が存在しません"
@@ -19931,7 +19947,7 @@ msgstr "バインドパラメータ%dにおいてバイナリデータ書式が�
 msgid "duration: %s ms  bind %s%s%s: %s"
 msgstr "期間: %s ミリ秒  バインド %s%s%s: %s"
 
-#: tcop/postgres.c:1977 tcop/postgres.c:2516
+#: tcop/postgres.c:1977 tcop/postgres.c:2528
 #, c-format
 msgid "portal \"%s\" does not exist"
 msgstr "ポータル\"%s\"は存在しません"
@@ -19941,65 +19957,65 @@ msgstr "ポータル\"%s\"は存在しません"
 msgid "%s %s%s%s: %s"
 msgstr "%s %s%s%s: %s"
 
-#: tcop/postgres.c:2048 tcop/postgres.c:2148
+#: tcop/postgres.c:2048 tcop/postgres.c:2160
 msgid "execute fetch from"
 msgstr "取り出し実行"
 
-#: tcop/postgres.c:2049 tcop/postgres.c:2149
+#: tcop/postgres.c:2049 tcop/postgres.c:2161
 msgid "execute"
 msgstr "実行"
 
-#: tcop/postgres.c:2145
+#: tcop/postgres.c:2157
 #, c-format
 msgid "duration: %s ms  %s %s%s%s: %s"
 msgstr "期間: %s ミリ秒  %s %s%s%s: %s"
 
-#: tcop/postgres.c:2273
+#: tcop/postgres.c:2285
 #, c-format
 msgid "prepare: %s"
 msgstr "準備: %s"
 
-#: tcop/postgres.c:2338
+#: tcop/postgres.c:2350
 #, c-format
 msgid "parameters: %s"
 msgstr "パラメータ: %s"
 
-#: tcop/postgres.c:2357
+#: tcop/postgres.c:2369
 #, c-format
 msgid "abort reason: recovery conflict"
 msgstr "異常終了の理由: リカバリが衝突したため"
 
-#: tcop/postgres.c:2373
+#: tcop/postgres.c:2385
 #, c-format
 msgid "User was holding shared buffer pin for too long."
 msgstr "ユーザが共有バッファ・ピンを長く保持し過ぎていました"
 
-#: tcop/postgres.c:2376
+#: tcop/postgres.c:2388
 #, c-format
 msgid "User was holding a relation lock for too long."
 msgstr "ユーザリレーションのロックを長く保持し過ぎていました"
 
-#: tcop/postgres.c:2379
+#: tcop/postgres.c:2391
 #, c-format
 msgid "User was or might have been using tablespace that must be dropped."
 msgstr "削除されるべきテーブルスペースをユーザが使っていました（もしくはその可能性がありました）。"
 
-#: tcop/postgres.c:2382
+#: tcop/postgres.c:2394
 #, c-format
 msgid "User query might have needed to see row versions that must be removed."
 msgstr "削除されるべきバージョンの行をユーザ問い合わせが参照しなければならなかった可能性がありました。"
 
-#: tcop/postgres.c:2388
+#: tcop/postgres.c:2400
 #, c-format
 msgid "User was connected to a database that must be dropped."
 msgstr "削除されるべきデータベースにユーザが接続していました。"
 
-#: tcop/postgres.c:2712
+#: tcop/postgres.c:2724
 #, c-format
 msgid "terminating connection because of crash of another server process"
 msgstr "他のサーバプロセスがクラッシュしたため接続を終了します"
 
-#: tcop/postgres.c:2713
+#: tcop/postgres.c:2725
 #, c-format
 msgid "The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory."
 msgstr ""
@@ -20007,142 +20023,142 @@ msgstr ""
 "postmasterはこのサーバプロセスに対し、現在のトランザクションをロールバック\n"
 "し終了するよう指示しました。"
 
-#: tcop/postgres.c:2717 tcop/postgres.c:3059
+#: tcop/postgres.c:2729 tcop/postgres.c:3071
 #, c-format
 msgid "In a moment you should be able to reconnect to the database and repeat your command."
 msgstr "この後、データベースに再接続し、コマンドを繰り返さなければなりません。"
 
-#: tcop/postgres.c:2799
+#: tcop/postgres.c:2811
 #, c-format
 msgid "floating-point exception"
 msgstr "浮動小数点例外"
 
-#: tcop/postgres.c:2800
+#: tcop/postgres.c:2812
 #, c-format
 msgid "An invalid floating-point operation was signaled. This probably means an out-of-range result or an invalid operation, such as division by zero."
 msgstr "不正な浮動小数点演算がシグナルされました。おそらくこれは、範囲外の結果もしくは0除算のような不正な演算によるものです。"
 
-#: tcop/postgres.c:2989
+#: tcop/postgres.c:3001
 #, c-format
 msgid "canceling authentication due to timeout"
 msgstr "タイムアウトにより認証処理をキャンセルしています"
 
-#: tcop/postgres.c:2993
+#: tcop/postgres.c:3005
 #, c-format
 msgid "terminating autovacuum process due to administrator command"
 msgstr "管理者コマンドにより自動VACUUM処理を終了しています"
 
-#: tcop/postgres.c:2997
+#: tcop/postgres.c:3009
 #, c-format
 msgid "terminating logical replication worker due to administrator command"
 msgstr "管理者コマンドにより、論理レプリケーションワーカを終了します"
 
-#: tcop/postgres.c:3001
+#: tcop/postgres.c:3013
 #, c-format
 msgid "logical replication launcher shutting down"
 msgstr "論理レプリケーションランチャを停止します"
 
-#: tcop/postgres.c:3014 tcop/postgres.c:3024 tcop/postgres.c:3057
+#: tcop/postgres.c:3026 tcop/postgres.c:3036 tcop/postgres.c:3069
 #, c-format
 msgid "terminating connection due to conflict with recovery"
 msgstr "リカバリで競合が発生したため、接続を終了しています"
 
-#: tcop/postgres.c:3030
+#: tcop/postgres.c:3042
 #, c-format
 msgid "terminating connection due to administrator command"
 msgstr "管理者コマンドにより接続を終了しています"
 
-#: tcop/postgres.c:3040
+#: tcop/postgres.c:3052
 #, c-format
 msgid "connection to client lost"
 msgstr "クライアントへの接続が切れました。"
 
-#: tcop/postgres.c:3110
+#: tcop/postgres.c:3122
 #, c-format
 msgid "canceling statement due to lock timeout"
 msgstr "ロックのタイムアウトのためステートメントをキャンセルしています"
 
-#: tcop/postgres.c:3117
+#: tcop/postgres.c:3129
 #, c-format
 msgid "canceling statement due to statement timeout"
 msgstr "ステートメントのタイムアウトのためステートメントをキャンセルしています"
 
-#: tcop/postgres.c:3124
+#: tcop/postgres.c:3136
 #, c-format
 msgid "canceling autovacuum task"
 msgstr "自動VACUUM処理をキャンセルしています"
 
-#: tcop/postgres.c:3147
+#: tcop/postgres.c:3159
 #, c-format
 msgid "canceling statement due to user request"
 msgstr "ユーザからの要求により文をキャンセルしています"
 
-#: tcop/postgres.c:3157
+#: tcop/postgres.c:3169
 #, c-format
 msgid "terminating connection due to idle-in-transaction timeout"
 msgstr "トランザクション中アイドルタイムアウトのため接続を終了します"
 
-#: tcop/postgres.c:3281
+#: tcop/postgres.c:3293
 #, c-format
 msgid "stack depth limit exceeded"
 msgstr "スタック長制限を越えました"
 
-#: tcop/postgres.c:3282
+#: tcop/postgres.c:3294
 #, c-format
 msgid "Increase the configuration parameter \"max_stack_depth\" (currently %dkB), after ensuring the platform's stack depth limit is adequate."
 msgstr "お使いのプラットフォームにおけるスタック長の制限に適合することを確認後、設定パラメータ \"max_stack_depth\"（現在 %dkB）を増やしてください。"
 
-#: tcop/postgres.c:3345
+#: tcop/postgres.c:3357
 #, c-format
 msgid "\"max_stack_depth\" must not exceed %ldkB."
 msgstr "\"max_stack_depth\"は%ldkBを越えてはなりません。"
 
-#: tcop/postgres.c:3347
+#: tcop/postgres.c:3359
 #, c-format
 msgid "Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent."
 msgstr "プラットフォームのスタック長制限を\"ulimit -s\"または同等の機能を使用して増加してください"
 
-#: tcop/postgres.c:3707
+#: tcop/postgres.c:3719
 #, c-format
 msgid "invalid command-line argument for server process: %s"
 msgstr "サーバプロセスに対する不正なコマンドライン引数: %s"
 
-#: tcop/postgres.c:3708 tcop/postgres.c:3714
+#: tcop/postgres.c:3720 tcop/postgres.c:3726
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: tcop/postgres.c:3712
+#: tcop/postgres.c:3724
 #, c-format
 msgid "%s: invalid command-line argument: %s"
 msgstr "%s: 不正なコマンドライン引数: %s"
 
-#: tcop/postgres.c:3774
+#: tcop/postgres.c:3786
 #, c-format
 msgid "%s: no database nor user name specified"
 msgstr "%s: データベース名もユーザ名も指定されていません"
 
-#: tcop/postgres.c:4413
+#: tcop/postgres.c:4425
 #, c-format
 msgid "invalid CLOSE message subtype %d"
 msgstr "不正なCLOSEメッセージのサブタイプ%d"
 
-#: tcop/postgres.c:4448
+#: tcop/postgres.c:4460
 #, c-format
 msgid "invalid DESCRIBE message subtype %d"
 msgstr "不正なDESCRIBEメッセージのサブタイプ%d"
 
-#: tcop/postgres.c:4526
+#: tcop/postgres.c:4538
 #, c-format
 msgid "fastpath function calls not supported in a replication connection"
 msgstr "レプリケーション接続では高速関数呼び出しはサポートされていません"
 
-#: tcop/postgres.c:4530
+#: tcop/postgres.c:4542
 #, c-format
 msgid "extended query protocol not supported in a replication connection"
 msgstr "レプリケーション接続では拡張問い合わせプロトコルはサポートされていません"
 
-#: tcop/postgres.c:4707
+#: tcop/postgres.c:4719
 #, c-format
 msgid "disconnection: session time: %d:%02d:%02d.%03d user=%s database=%s host=%s%s%s"
 msgstr "接続を切断: セッション時間: %d:%02d:%02d.%03d ユーザ=%s データベース=%s ホスト=%s%s%s"
@@ -20386,12 +20402,12 @@ msgstr "設定ファイル\"%2$s\"の%1$d行目: \"%3$s\""
 msgid "conversion from wchar_t to server encoding failed: %m"
 msgstr "wchar_tからサーバ符号化方式への変換が失敗しました: %m"
 
-#: tsearch/ts_parse.c:390 tsearch/ts_parse.c:397 tsearch/ts_parse.c:566 tsearch/ts_parse.c:573
+#: tsearch/ts_parse.c:390 tsearch/ts_parse.c:397 tsearch/ts_parse.c:576 tsearch/ts_parse.c:583
 #, c-format
 msgid "word is too long to be indexed"
 msgstr "インデックス付けするには単語が長すぎます"
 
-#: tsearch/ts_parse.c:391 tsearch/ts_parse.c:398 tsearch/ts_parse.c:567 tsearch/ts_parse.c:574
+#: tsearch/ts_parse.c:391 tsearch/ts_parse.c:398 tsearch/ts_parse.c:577 tsearch/ts_parse.c:584
 #, c-format
 msgid "Words longer than %d characters are ignored."
 msgstr "%dより長い単語は無視されます。"
@@ -20411,27 +20427,27 @@ msgstr "ストップワードファイル\"%s\"をオープンできませんで
 msgid "text search parser does not support headline creation"
 msgstr "テキスト検索パーサは見出し作成をサポートしません"
 
-#: tsearch/wparser_def.c:2585
+#: tsearch/wparser_def.c:2581
 #, c-format
 msgid "unrecognized headline parameter: \"%s\""
 msgstr "認識できない見出しパラメータ: \"%s\""
 
-#: tsearch/wparser_def.c:2604
+#: tsearch/wparser_def.c:2600
 #, c-format
 msgid "MinWords should be less than MaxWords"
 msgstr "MinWordsはMaxWordsより小さくなければなりません"
 
-#: tsearch/wparser_def.c:2608
+#: tsearch/wparser_def.c:2604
 #, c-format
 msgid "MinWords should be positive"
 msgstr "MinWordsは正でなければなりません"
 
-#: tsearch/wparser_def.c:2612
+#: tsearch/wparser_def.c:2608
 #, c-format
 msgid "ShortWord should be >= 0"
 msgstr "ShortWordは>= 0でなければなりません"
 
-#: tsearch/wparser_def.c:2616
+#: tsearch/wparser_def.c:2612
 #, c-format
 msgid "MaxFragments should be >= 0"
 msgstr "MaxFragments は 0 以上でなければなりません"
@@ -22903,42 +22919,42 @@ msgstr "重み付け配列にはnullを含めてはいけません"
 msgid "unrecognized weight: \"%c\""
 msgstr "識別不能な重み付け: \"%c\""
 
-#: utils/adt/tsvector_op.c:2412
+#: utils/adt/tsvector_op.c:2415
 #, c-format
 msgid "ts_stat query must return one tsvector column"
 msgstr "ts_statは1つのtsvector列のみを返さなければなりません"
 
-#: utils/adt/tsvector_op.c:2594
+#: utils/adt/tsvector_op.c:2597
 #, c-format
 msgid "tsvector column \"%s\" does not exist"
 msgstr "tsvector列\"%s\"は存在しません"
 
-#: utils/adt/tsvector_op.c:2601
+#: utils/adt/tsvector_op.c:2604
 #, c-format
 msgid "column \"%s\" is not of tsvector type"
 msgstr "値\"%s\"は型tsvectorではありません"
 
-#: utils/adt/tsvector_op.c:2613
+#: utils/adt/tsvector_op.c:2616
 #, c-format
 msgid "configuration column \"%s\" does not exist"
 msgstr "設定列\"%s\"は存在しません"
 
-#: utils/adt/tsvector_op.c:2619
+#: utils/adt/tsvector_op.c:2622
 #, c-format
 msgid "column \"%s\" is not of regconfig type"
 msgstr "%s列はregconfig型ではありません"
 
-#: utils/adt/tsvector_op.c:2626
+#: utils/adt/tsvector_op.c:2629
 #, c-format
 msgid "configuration column \"%s\" must not be null"
 msgstr "設定列\"%s\"をNULLにすることはできません"
 
-#: utils/adt/tsvector_op.c:2639
+#: utils/adt/tsvector_op.c:2642
 #, c-format
 msgid "text search configuration name \"%s\" must be schema-qualified"
 msgstr "テキスト検索設定名称\"%s\"はスキーマ修飾ししなければなりません"
 
-#: utils/adt/tsvector_op.c:2664
+#: utils/adt/tsvector_op.c:2667
 #, c-format
 msgid "column \"%s\" is not of a character type"
 msgstr "列\"%s\"は文字型ではありません"
