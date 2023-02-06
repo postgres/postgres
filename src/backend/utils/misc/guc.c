@@ -1383,11 +1383,14 @@ check_GUC_name_for_parameter_acl(const char *name)
 }
 
 /*
- * Routine in charge of checking that the initial value of a GUC is the
- * same when declared and when loaded to prevent anybody looking at the
- * C declarations of these GUCS from being fooled by mismatched values.
+ * Routine in charge of checking various states of a GUC.
  *
- * The following validation rules apply:
+ * This performs two sanity checks.  First, it checks that the initial
+ * value of a GUC is the same when declared and when loaded to prevent
+ * anybody looking at the C declarations of these GUCS from being fooled by
+ * mismatched values.  Second, it checks for incorrect flag combinations.
+ *
+ * The following validation rules apply for the values:
  * bool - can be false, otherwise must be same as the boot_val
  * int  - can be 0, otherwise must be same as the boot_val
  * real - can be 0.0, otherwise must be same as the boot_val
@@ -1398,6 +1401,7 @@ check_GUC_name_for_parameter_acl(const char *name)
 static bool
 check_GUC_init(struct config_generic *gconf)
 {
+	/* Checks on values */
 	switch (gconf->vartype)
 	{
 		case PGC_BOOL:
@@ -1460,6 +1464,20 @@ check_GUC_init(struct config_generic *gconf)
 				}
 				break;
 			}
+	}
+
+	/* Flag combinations */
+
+	/*
+	 * GUC_NO_SHOW_ALL requires GUC_NOT_IN_SAMPLE, as a parameter not part
+	 * of SHOW ALL should not be hidden in postgresql.conf.sample.
+	 */
+	if ((gconf->flags & GUC_NO_SHOW_ALL) &&
+		!(gconf->flags & GUC_NOT_IN_SAMPLE))
+	{
+		elog(LOG, "GUC %s flags: NO_SHOW_ALL and !NOT_IN_SAMPLE",
+			 gconf->name);
+		return false;
 	}
 
 	return true;
