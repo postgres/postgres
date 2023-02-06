@@ -28,6 +28,12 @@ ok($result, "-q succeeds: exit code 0");
 is($stdout, '', "-q succeeds: no stdout");
 is($stderr, '', "-q succeeds: no stderr");
 
+# Test invalid options
+command_fails_like(
+	[ 'pg_verifybackup', '--progress', '--quiet', $backup_path ],
+	qr{cannot specify both -P/--progress and -q/--quiet},
+	'cannot use --progress and --quiet at the same time');
+
 # Corrupt the PG_VERSION file.
 my $version_pathname = "$backup_path/PG_VERSION";
 my $version_contents = slurp_file($version_pathname);
@@ -48,10 +54,13 @@ command_like(
 	qr/backup successfully verified/,
 	'-s skips checksumming');
 
-# Validation should succeed if we ignore the problem file.
-command_like(
-	[ 'pg_verifybackup', '-i', 'PG_VERSION', $backup_path ],
-	qr/backup successfully verified/,
+# Validation should succeed if we ignore the problem file. Also, check
+# the progress information.
+command_checks_all(
+	[ 'pg_verifybackup', '--progress', '-i', 'PG_VERSION', $backup_path ],
+	0,
+	[qr/backup successfully verified/],
+	[qr{(\d+/\d+ kB \(\d+%\) verified)+}],
 	'-i ignores problem file');
 
 # PG_VERSION is already corrupt; let's try also removing all of pg_xact.

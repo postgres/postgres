@@ -16,12 +16,14 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include "common/hashfn.h"
 #include "common/logging.h"
 #include "fe_utils/simple_list.h"
 #include "getopt_long.h"
 #include "parse_manifest.h"
+#include "pgtime.h"
 
 /*
  * For efficiency, we'd like our hash table containing information about the
@@ -57,6 +59,9 @@ typedef struct manifest_file
 	bool		matched;
 	bool		bad;
 } manifest_file;
+
+#define should_verify_checksum(m) \
+	(((m)->matched) && !((m)->bad) && (((m)->checksum_type) != CHECKSUM_TYPE_NONE))
 
 /*
  * Define a hash table which we can use to store information about the files
@@ -147,9 +152,18 @@ static void report_fatal_error(const char *pg_restrict fmt,...)
 			pg_attribute_printf(1, 2) pg_attribute_noreturn();
 static bool should_ignore_relpath(verifier_context *context, char *relpath);
 
+static void progress_report(bool finished);
 static void usage(void);
 
 static const char *progname;
+
+/* options */
+static bool show_progress = false;
+static bool skip_checksums = false;
+
+/* Progress indicators */
+static uint64 total_size = 0;
+static uint64 done_size = 0;
 
 /*
  * Main entry point.
@@ -162,6 +176,7 @@ main(int argc, char **argv)
 		{"ignore", required_argument, NULL, 'i'},
 		{"manifest-path", required_argument, NULL, 'm'},
 		{"no-parse-wal", no_argument, NULL, 'n'},
+		{"progress", no_argument, NULL, 'P'},
 		{"quiet", no_argument, NULL, 'q'},
 		{"skip-checksums", no_argument, NULL, 's'},
 		{"wal-directory", required_argument, NULL, 'w'},
@@ -174,7 +189,6 @@ main(int argc, char **argv)
 	char	   *manifest_path = NULL;
 	bool		no_parse_wal = false;
 	bool		quiet = false;
-	bool		skip_checksums = false;
 	char	   *wal_directory = NULL;
 	char	   *pg_waldump_path = NULL;
 
@@ -219,7 +233,7 @@ main(int argc, char **argv)
 	simple_string_list_append(&context.ignore_list, "recovery.signal");
 	simple_string_list_append(&context.ignore_list, "standby.signal");
 
-	while ((c = getopt_long(argc, argv, "ei:m:nqsw:", long_options, NULL)) != -1)
+	while ((c = getopt_long(argc, argv, "ei:m:nPqsw:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
@@ -240,6 +254,9 @@ main(int argc, char **argv)
 				break;
 			case 'n':
 				no_parse_wal = true;
+				break;
+			case 'P':
+				show_progress = true;
 				break;
 			case 'q':
 				quiet = true;
@@ -276,6 +293,11 @@ main(int argc, char **argv)
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
+
+	/* Complain if the specified arguments conflict */
+	if (show_progress && quiet)
+		pg_fatal("cannot specify both %s and %s",
+				 "-P/--progress", "-q/--quiet");
 
 	/* Unless --no-parse-wal was specified, we will need pg_waldump. */
 	if (!no_parse_wal)
@@ -638,6 +660,10 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 		m->bad = true;
 	}
 
+	/* Update statistics for progress report, if necessary */
+	if (show_progress && !skip_checksums && should_verify_checksum(m))
+		total_size += m->size;
+
 	/*
 	 * We don't verify checksums at this stage. We first finish verifying that
 	 * we have the expected set of files with the expected sizes, and only
@@ -675,10 +701,12 @@ verify_backup_checksums(verifier_context *context)
 	manifest_files_iterator it;
 	manifest_file *m;
 
+	progress_report(false);
+
 	manifest_files_start_iterate(context->ht, &it);
 	while ((m = manifest_files_iterate(context->ht, &it)) != NULL)
 	{
-		if (m->matched && !m->bad && m->checksum_type != CHECKSUM_TYPE_NONE &&
+		if (should_verify_checksum(m) &&
 			!should_ignore_relpath(context, m->pathname))
 		{
 			char	   *fullpath;
@@ -694,6 +722,8 @@ verify_backup_checksums(verifier_context *context)
 			pfree(fullpath);
 		}
 	}
+
+	progress_report(true);
 }
 
 /*
@@ -740,6 +770,10 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 			close(fd);
 			return;
 		}
+
+		/* Report progress */
+		done_size += rc;
+		progress_report(false);
 	}
 	if (rc < 0)
 		report_backup_error(context, "could not read file \"%s\": %m",
@@ -895,6 +929,51 @@ hash_string_pointer(char *s)
 }
 
 /*
+ * Print a progress report based on the global variables.
+ *
+ * Progress report is written at maximum once per second, unless the finished
+ * parameter is set to true.
+ *
+ * If finished is set to true, this is the last progress report. The cursor
+ * is moved to the next line.
+ */
+static void
+progress_report(bool finished)
+{
+	static pg_time_t last_progress_report = 0;
+	pg_time_t	now;
+	int			percent_size = 0;
+	char		totalsize_str[32];
+	char		donesize_str[32];
+
+	if (!show_progress)
+		return;
+
+	now = time(NULL);
+	if (now == last_progress_report && !finished)
+		return;					/* Max once per second */
+
+	last_progress_report = now;
+	percent_size = total_size ? (int) ((done_size * 100 / total_size)) : 0;
+
+	snprintf(totalsize_str, sizeof(totalsize_str), UINT64_FORMAT,
+			 total_size / 1024);
+	snprintf(donesize_str, sizeof(donesize_str), UINT64_FORMAT,
+			 done_size / 1024);
+
+	fprintf(stderr,
+			_("%*s/%s kB (%d%%) verified"),
+			(int) strlen(totalsize_str),
+			donesize_str, totalsize_str, percent_size);
+
+	/*
+	 * Stay on the same line if reporting to a terminal and we're not done
+	 * yet.
+	 */
+	fputc((!finished && isatty(fileno(stderr))) ? '\r' : '\n', stderr);
+}
+
+/*
  * Print out usage information and exit.
  */
 static void
@@ -907,6 +986,7 @@ usage(void)
 	printf(_("  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"));
 	printf(_("  -m, --manifest-path=PATH    use specified path for manifest\n"));
 	printf(_("  -n, --no-parse-wal          do not try to parse WAL files\n"));
+	printf(_("  -P, --progress              show progress information\n"));
 	printf(_("  -q, --quiet                 do not print any output, except for errors\n"));
 	printf(_("  -s, --skip-checksums        skip checksum verification\n"));
 	printf(_("  -w, --wal-directory=PATH    use specified path for WAL files\n"));
