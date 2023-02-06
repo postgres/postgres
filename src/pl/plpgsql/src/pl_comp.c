@@ -2627,7 +2627,7 @@ plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key)
 	plpgsql_HashEnt *hentry;
 
 	hentry = (plpgsql_HashEnt *) hash_search(plpgsql_HashTable,
-											 (void *) func_key,
+											 func_key,
 											 HASH_FIND,
 											 NULL);
 	if (hentry)
@@ -2644,7 +2644,7 @@ plpgsql_HashTableInsert(PLpgSQL_function *function,
 	bool		found;
 
 	hentry = (plpgsql_HashEnt *) hash_search(plpgsql_HashTable,
-											 (void *) func_key,
+											 func_key,
 											 HASH_ENTER,
 											 &found);
 	if (found)
@@ -2665,7 +2665,7 @@ plpgsql_HashTableDelete(PLpgSQL_function *function)
 		return;
 
 	hentry = (plpgsql_HashEnt *) hash_search(plpgsql_HashTable,
-											 (void *) function->fn_hashkey,
+											 function->fn_hashkey,
 											 HASH_REMOVE,
 											 NULL);
 	if (hentry == NULL)

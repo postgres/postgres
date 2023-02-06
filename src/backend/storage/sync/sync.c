@@ -501,7 +501,7 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 
 		/* Cancel previously entered request */
 		entry = (PendingFsyncEntry *) hash_search(pendingOps,
-												  (void *) ftag,
+												  ftag,
 												  HASH_FIND,
 												  NULL);
 		if (entry != NULL)
@@ -557,7 +557,7 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 		Assert(type == SYNC_REQUEST);
 
 		entry = (PendingFsyncEntry *) hash_search(pendingOps,
-												  (void *) ftag,
+												  ftag,
 												  HASH_ENTER,
 												  &found);
 		/* if new entry, or was previously canceled, initialize it */

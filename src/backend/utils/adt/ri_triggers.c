@@ -2129,7 +2129,7 @@ ri_LoadConstraintInfo(Oid constraintOid)
 	 * Find or create a hash entry.  If we find a valid one, just return it.
 	 */
 	riinfo = (RI_ConstraintInfo *) hash_search(ri_constraint_cache,
-											   (void *) &constraintOid,
+											   &constraintOid,
 											   HASH_ENTER, &found);
 	if (!found)
 		riinfo->valid = false;
@@ -2724,7 +2724,7 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
 	 * Lookup for the key
 	 */
 	entry = (RI_QueryHashEntry *) hash_search(ri_query_cache,
-											  (void *) key,
+											  key,
 											  HASH_FIND, NULL);
 	if (entry == NULL)
 		return NULL;
@@ -2777,7 +2777,7 @@ ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
 	 * invalid by ri_FetchPreparedPlan.
 	 */
 	entry = (RI_QueryHashEntry *) hash_search(ri_query_cache,
-											  (void *) key,
+											  key,
 											  HASH_ENTER, &found);
 	Assert(!found || entry->plan == NULL);
 	entry->plan = plan;
@@ -2927,7 +2927,7 @@ ri_HashCompareOp(Oid eq_opr, Oid typeid)
 	key.eq_opr = eq_opr;
 	key.typeid = typeid;
 	entry = (RI_CompareHashEntry *) hash_search(ri_compare_cache,
-												(void *) &key,
+												&key,
 												HASH_ENTER, &found);
 	if (!found)
 		entry->valid = false;

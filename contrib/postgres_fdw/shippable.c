@@ -77,7 +77,7 @@ InvalidateShippableCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 	while ((entry = (ShippableCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
 		if (hash_search(ShippableCacheHash,
-						(void *) &entry->key,
+						&entry->key,
 						HASH_REMOVE,
 						NULL) == NULL)
 			elog(ERROR, "hash table corrupted");
@@ -183,10 +183,7 @@ is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo)
 
 	/* See if we already cached the result. */
 	entry = (ShippableCacheEntry *)
-		hash_search(ShippableCacheHash,
-					(void *) &key,
-					HASH_FIND,
-					NULL);
+		hash_search(ShippableCacheHash,	&key, HASH_FIND, NULL);
 
 	if (!entry)
 	{
@@ -199,10 +196,7 @@ is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo)
 		 * cache invalidation.
 		 */
 		entry = (ShippableCacheEntry *)
-			hash_search(ShippableCacheHash,
-						(void *) &key,
-						HASH_ENTER,
-						NULL);
+			hash_search(ShippableCacheHash,	&key, HASH_ENTER, NULL);
 
 		entry->shippable = shippable;
 	}

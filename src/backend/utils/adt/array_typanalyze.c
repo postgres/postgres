@@ -362,7 +362,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			/* Lookup current element in hashtable, adding it if new */
 			elem_value = elem_values[j];
 			item = (TrackItem *) hash_search(elements_tab,
-											 (const void *) &elem_value,
+											 &elem_value,
 											 HASH_ENTER, &found);
 
 			if (found)
@@ -690,7 +690,7 @@ prune_element_hashtable(HTAB *elements_tab, int b_current)
 		{
 			Datum		value = item->key;
 
-			if (hash_search(elements_tab, (const void *) &item->key,
+			if (hash_search(elements_tab, &item->key,
 							HASH_REMOVE, NULL) == NULL)
 				elog(ERROR, "hash table corrupted");
 			/* We should free memory if element is not passed by value */

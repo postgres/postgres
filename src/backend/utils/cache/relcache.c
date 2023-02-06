@@ -210,7 +210,7 @@ static int	EOXactTupleDescArrayLen = 0;
 do { \
 	RelIdCacheEnt *hentry; bool found; \
 	hentry = (RelIdCacheEnt *) hash_search(RelationIdCache, \
-										   (void *) &((RELATION)->rd_id), \
+										   &((RELATION)->rd_id), \
 										   HASH_ENTER, &found); \
 	if (found) \
 	{ \
@@ -232,7 +232,7 @@ do { \
 do { \
 	RelIdCacheEnt *hentry; \
 	hentry = (RelIdCacheEnt *) hash_search(RelationIdCache, \
-										   (void *) &(ID), \
+										   &(ID), \
 										   HASH_FIND, NULL); \
 	if (hentry) \
 		RELATION = hentry->reldesc; \
@@ -244,7 +244,7 @@ do { \
 do { \
 	RelIdCacheEnt *hentry; \
 	hentry = (RelIdCacheEnt *) hash_search(RelationIdCache, \
-										   (void *) &((RELATION)->rd_id), \
+										   &((RELATION)->rd_id), \
 										   HASH_REMOVE, NULL); \
 	if (hentry == NULL) \
 		elog(WARNING, "failed to delete relcache entry for OID %u", \
@@ -1663,7 +1663,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 	}
 
 	opcentry = (OpClassCacheEnt *) hash_search(OpClassCache,
-											   (void *) &operatorClassOid,
+											   &operatorClassOid,
 											   HASH_ENTER, &found);
 
 	if (!found)
@@ -3210,7 +3210,7 @@ AtEOXact_RelationCache(bool isCommit)
 		for (i = 0; i < eoxact_list_len; i++)
 		{
 			idhentry = (RelIdCacheEnt *) hash_search(RelationIdCache,
-													 (void *) &eoxact_list[i],
+													 &eoxact_list[i],
 													 HASH_FIND,
 													 NULL);
 			if (idhentry != NULL)
@@ -3359,7 +3359,7 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 		for (i = 0; i < eoxact_list_len; i++)
 		{
 			idhentry = (RelIdCacheEnt *) hash_search(RelationIdCache,
-													 (void *) &eoxact_list[i],
+													 &eoxact_list[i],
 													 HASH_FIND,
 													 NULL);
 			if (idhentry != NULL)

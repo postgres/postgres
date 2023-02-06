@@ -657,7 +657,7 @@ ReorderBufferTXNByXid(ReorderBuffer *rb, TransactionId xid, bool create,
 	/* search the lookup table */
 	ent = (ReorderBufferTXNByIdEnt *)
 		hash_search(rb->by_txn,
-					(void *) &xid,
+					&xid,
 					create ? HASH_ENTER : HASH_FIND,
 					&found);
 	if (found)
@@ -1581,10 +1581,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		dclist_delete_from(&rb->catchange_txns, &txn->catchange_node);
 
 	/* now remove reference from buffer */
-	hash_search(rb->by_txn,
-				(void *) &txn->xid,
-				HASH_REMOVE,
-				&found);
+	hash_search(rb->by_txn,	&txn->xid, HASH_REMOVE,	&found);
 	Assert(found);
 
 	/* remove entries spilled to disk */
@@ -1762,10 +1759,7 @@ ReorderBufferBuildTupleCidHash(ReorderBuffer *rb, ReorderBufferTXN *txn)
 						&key.tid);
 
 		ent = (ReorderBufferTupleCidEnt *)
-			hash_search(txn->tuplecid_hash,
-						(void *) &key,
-						HASH_ENTER,
-						&found);
+			hash_search(txn->tuplecid_hash, &key, HASH_ENTER, &found);
 		if (!found)
 		{
 			ent->cmin = change->data.tuplecid.cmin;
@@ -4653,10 +4647,7 @@ ReorderBufferToastAppendChunk(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	Assert(!isnull);
 
 	ent = (ReorderBufferToastEnt *)
-		hash_search(txn->toast_hash,
-					(void *) &chunk_id,
-					HASH_ENTER,
-					&found);
+		hash_search(txn->toast_hash, &chunk_id, HASH_ENTER, &found);
 
 	if (!found)
 	{
@@ -4811,7 +4802,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		 */
 		ent = (ReorderBufferToastEnt *)
 			hash_search(txn->toast_hash,
-						(void *) &toast_pointer.va_valueid,
+						&toast_pointer.va_valueid,
 						HASH_FIND,
 						NULL);
 		if (ent == NULL)
@@ -5053,10 +5044,7 @@ ApplyLogicalMappingFile(HTAB *tuplecid_data, Oid relid, const char *fname)
 
 
 		ent = (ReorderBufferTupleCidEnt *)
-			hash_search(tuplecid_data,
-						(void *) &key,
-						HASH_FIND,
-						NULL);
+			hash_search(tuplecid_data, &key, HASH_FIND, NULL);
 
 		/* no existing mapping, no need to update */
 		if (!ent)
@@ -5067,10 +5055,7 @@ ApplyLogicalMappingFile(HTAB *tuplecid_data, Oid relid, const char *fname)
 						&key.tid);
 
 		new_ent = (ReorderBufferTupleCidEnt *)
-			hash_search(tuplecid_data,
-						(void *) &key,
-						HASH_ENTER,
-						&found);
+			hash_search(tuplecid_data, &key, HASH_ENTER, &found);
 
 		if (found)
 		{
@@ -5249,10 +5234,7 @@ ResolveCminCmaxDuringDecoding(HTAB *tuplecid_data,
 
 restart:
 	ent = (ReorderBufferTupleCidEnt *)
-		hash_search(tuplecid_data,
-					(void *) &key,
-					HASH_FIND,
-					NULL);
+		hash_search(tuplecid_data, &key, HASH_FIND, NULL);
 
 	/*
 	 * failed to find a mapping, check whether the table was rewritten and

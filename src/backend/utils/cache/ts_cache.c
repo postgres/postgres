@@ -139,7 +139,7 @@ lookup_ts_parser_cache(Oid prsId)
 
 	/* Try to look up an existing entry */
 	entry = (TSParserCacheEntry *) hash_search(TSParserCacheHash,
-											   (void *) &prsId,
+											   &prsId,
 											   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
 	{
@@ -172,9 +172,7 @@ lookup_ts_parser_cache(Oid prsId)
 
 			/* Now make the cache entry */
 			entry = (TSParserCacheEntry *)
-				hash_search(TSParserCacheHash,
-							(void *) &prsId,
-							HASH_ENTER, &found);
+				hash_search(TSParserCacheHash, &prsId, HASH_ENTER, &found);
 			Assert(!found);		/* it wasn't there a moment ago */
 		}
 
@@ -238,7 +236,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 
 	/* Try to look up an existing entry */
 	entry = (TSDictionaryCacheEntry *) hash_search(TSDictionaryCacheHash,
-												   (void *) &dictId,
+												   &dictId,
 												   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
 	{
@@ -288,7 +286,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 			/* Now make the cache entry */
 			entry = (TSDictionaryCacheEntry *)
 				hash_search(TSDictionaryCacheHash,
-							(void *) &dictId,
+							&dictId,
 							HASH_ENTER, &found);
 			Assert(!found);		/* it wasn't there a moment ago */
 
@@ -401,7 +399,7 @@ lookup_ts_config_cache(Oid cfgId)
 
 	/* Try to look up an existing entry */
 	entry = (TSConfigCacheEntry *) hash_search(TSConfigCacheHash,
-											   (void *) &cfgId,
+											   &cfgId,
 											   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
 	{
@@ -441,7 +439,7 @@ lookup_ts_config_cache(Oid cfgId)
 			/* Now make the cache entry */
 			entry = (TSConfigCacheEntry *)
 				hash_search(TSConfigCacheHash,
-							(void *) &cfgId,
+							&cfgId,
 							HASH_ENTER, &found);
 			Assert(!found);		/* it wasn't there a moment ago */
 		}

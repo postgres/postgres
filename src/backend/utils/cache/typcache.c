@@ -364,7 +364,7 @@ lookup_type_cache(Oid type_id, int flags)
 
 	/* Try to look up an existing entry */
 	typentry = (TypeCacheEntry *) hash_search(TypeCacheHash,
-											  (void *) &type_id,
+											  &type_id,
 											  HASH_FIND, NULL);
 	if (typentry == NULL)
 	{
@@ -392,7 +392,7 @@ lookup_type_cache(Oid type_id, int flags)
 
 		/* Now make the typcache entry */
 		typentry = (TypeCacheEntry *) hash_search(TypeCacheHash,
-												  (void *) &type_id,
+												  &type_id,
 												  HASH_ENTER, &found);
 		Assert(!found);			/* it wasn't there a moment ago */
 
@@ -1974,7 +1974,7 @@ assign_record_type_typmod(TupleDesc tupDesc)
 	 * the allocations succeed before we create the new entry.
 	 */
 	recentry = (RecordCacheEntry *) hash_search(RecordCacheHash,
-												(void *) &tupDesc,
+												&tupDesc,
 												HASH_FIND, &found);
 	if (found && recentry->tupdesc != NULL)
 	{
@@ -2012,7 +2012,7 @@ assign_record_type_typmod(TupleDesc tupDesc)
 
 	/* Fully initialized; create the hash table entry */
 	recentry = (RecordCacheEntry *) hash_search(RecordCacheHash,
-												(void *) &tupDesc,
+												&tupDesc,
 												HASH_ENTER, NULL);
 	recentry->tupdesc = entDesc;
 

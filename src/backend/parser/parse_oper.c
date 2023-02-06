@@ -1017,7 +1017,7 @@ find_oper_cache_entry(OprCacheKey *key)
 
 	/* Look for an existing entry */
 	oprentry = (OprCacheEntry *) hash_search(OprCacheHash,
-											 (void *) key,
+											 key,
 											 HASH_FIND, NULL);
 	if (oprentry == NULL)
 		return InvalidOid;
@@ -1038,7 +1038,7 @@ make_oper_cache_entry(OprCacheKey *key, Oid opr_oid)
 	Assert(OprCacheHash != NULL);
 
 	oprentry = (OprCacheEntry *) hash_search(OprCacheHash,
-											 (void *) key,
+											 key,
 											 HASH_ENTER, NULL);
 	oprentry->opr_oid = opr_oid;
 }
@@ -1060,7 +1060,7 @@ InvalidateOprCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
 	while ((hentry = (OprCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
 		if (hash_search(OprCacheHash,
-						(void *) &hentry->key,
+						&hentry->key,
 						HASH_REMOVE, NULL) == NULL)
 			elog(ERROR, "hash table corrupted");
 	}

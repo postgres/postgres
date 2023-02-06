@@ -76,7 +76,7 @@ PrefetchLocalBuffer(SMgrRelation smgr, ForkNumber forkNum,
 
 	/* See if the desired buffer already exists */
 	hresult = (LocalBufferLookupEnt *)
-		hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
+		hash_search(LocalBufHash, &newTag, HASH_FIND, NULL);
 
 	if (hresult)
 	{
@@ -125,7 +125,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 
 	/* See if the desired buffer already exists */
 	hresult = (LocalBufferLookupEnt *)
-		hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
+		hash_search(LocalBufHash, &newTag, HASH_FIND, NULL);
 
 	if (hresult)
 	{
@@ -248,8 +248,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	if (buf_state & BM_TAG_VALID)
 	{
 		hresult = (LocalBufferLookupEnt *)
-			hash_search(LocalBufHash, (void *) &bufHdr->tag,
-						HASH_REMOVE, NULL);
+			hash_search(LocalBufHash, &bufHdr->tag, HASH_REMOVE, NULL);
 		if (!hresult)			/* shouldn't happen */
 			elog(ERROR, "local buffer hash table corrupted");
 		/* mark buffer invalid just in case hash insert fails */
@@ -259,7 +258,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	}
 
 	hresult = (LocalBufferLookupEnt *)
-		hash_search(LocalBufHash, (void *) &newTag, HASH_ENTER, &found);
+		hash_search(LocalBufHash, &newTag, HASH_ENTER, &found);
 	if (found)					/* shouldn't happen */
 		elog(ERROR, "local buffer hash table corrupted");
 	hresult->id = b;
@@ -351,8 +350,7 @@ DropRelationLocalBuffers(RelFileLocator rlocator, ForkNumber forkNum,
 
 			/* Remove entry from hashtable */
 			hresult = (LocalBufferLookupEnt *)
-				hash_search(LocalBufHash, (void *) &bufHdr->tag,
-							HASH_REMOVE, NULL);
+				hash_search(LocalBufHash, &bufHdr->tag, HASH_REMOVE, NULL);
 			if (!hresult)		/* shouldn't happen */
 				elog(ERROR, "local buffer hash table corrupted");
 			/* Mark buffer invalid */
@@ -396,8 +394,7 @@ DropRelationAllLocalBuffers(RelFileLocator rlocator)
 					 LocalRefCount[i]);
 			/* Remove entry from hashtable */
 			hresult = (LocalBufferLookupEnt *)
-				hash_search(LocalBufHash, (void *) &bufHdr->tag,
-							HASH_REMOVE, NULL);
+				hash_search(LocalBufHash, &bufHdr->tag, HASH_REMOVE, NULL);
 			if (!hresult)		/* shouldn't happen */
 				elog(ERROR, "local buffer hash table corrupted");
 			/* Mark buffer invalid */

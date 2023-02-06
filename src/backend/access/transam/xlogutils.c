@@ -151,7 +151,7 @@ log_invalid_page(RelFileLocator locator, ForkNumber forkno, BlockNumber blkno,
 	key.forkno = forkno;
 	key.blkno = blkno;
 	hentry = (xl_invalid_page *)
-		hash_search(invalid_page_tab, (void *) &key, HASH_ENTER, &found);
+		hash_search(invalid_page_tab, &key, HASH_ENTER, &found);
 
 	if (!found)
 	{
@@ -193,7 +193,7 @@ forget_invalid_pages(RelFileLocator locator, ForkNumber forkno,
 			}
 
 			if (hash_search(invalid_page_tab,
-							(void *) &hentry->key,
+							&hentry->key,
 							HASH_REMOVE, NULL) == NULL)
 				elog(ERROR, "hash table corrupted");
 		}
@@ -226,7 +226,7 @@ forget_invalid_pages_db(Oid dbid)
 			}
 
 			if (hash_search(invalid_page_tab,
-							(void *) &hentry->key,
+							&hentry->key,
 							HASH_REMOVE, NULL) == NULL)
 				elog(ERROR, "hash table corrupted");
 		}

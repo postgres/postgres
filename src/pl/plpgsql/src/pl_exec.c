@@ -7775,7 +7775,7 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 	cast_key.srctypmod = srctypmod;
 	cast_key.dsttypmod = dsttypmod;
 	cast_entry = (plpgsql_CastHashEntry *) hash_search(estate->cast_hash,
-													   (void *) &cast_key,
+													   &cast_key,
 													   HASH_ENTER, &found);
 	if (!found)					/* initialize if new entry */
 		cast_entry->cast_cexpr = NULL;

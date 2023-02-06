@@ -1587,7 +1587,7 @@ gistMemorizeParent(GISTBuildState *buildstate, BlockNumber child, BlockNumber pa
 	bool		found;
 
 	entry = (ParentMapEntry *) hash_search(buildstate->parentMap,
-										   (const void *) &child,
+										   &child,
 										   HASH_ENTER,
 										   &found);
 	entry->parentblkno = parent;
@@ -1625,7 +1625,7 @@ gistGetParent(GISTBuildState *buildstate, BlockNumber child)
 
 	/* Find node buffer in hash table */
 	entry = (ParentMapEntry *) hash_search(buildstate->parentMap,
-										   (const void *) &child,
+										   &child,
 										   HASH_FIND,
 										   &found);
 	if (!found)

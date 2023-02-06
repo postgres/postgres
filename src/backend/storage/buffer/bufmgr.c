@@ -262,7 +262,7 @@ ReservePrivateRefCountEntry(void)
 
 		/* enter victim array entry into hashtable */
 		hashent = hash_search(PrivateRefCountHash,
-							  (void *) &(ReservedRefCountEntry->buffer),
+							  &(ReservedRefCountEntry->buffer),
 							  HASH_ENTER,
 							  &found);
 		Assert(!found);
@@ -336,10 +336,7 @@ GetPrivateRefCountEntry(Buffer buffer, bool do_move)
 	if (PrivateRefCountOverflowed == 0)
 		return NULL;
 
-	res = hash_search(PrivateRefCountHash,
-					  (void *) &buffer,
-					  HASH_FIND,
-					  NULL);
+	res = hash_search(PrivateRefCountHash, &buffer, HASH_FIND, NULL);
 
 	if (res == NULL)
 		return NULL;
@@ -368,10 +365,7 @@ GetPrivateRefCountEntry(Buffer buffer, bool do_move)
 		free->refcount = res->refcount;
 
 		/* delete from hashtable */
-		hash_search(PrivateRefCountHash,
-					(void *) &buffer,
-					HASH_REMOVE,
-					&found);
+		hash_search(PrivateRefCountHash, &buffer, HASH_REMOVE, &found);
 		Assert(found);
 		Assert(PrivateRefCountOverflowed > 0);
 		PrivateRefCountOverflowed--;
@@ -430,10 +424,7 @@ ForgetPrivateRefCountEntry(PrivateRefCountEntry *ref)
 		bool		found;
 		Buffer		buffer = ref->buffer;
 
-		hash_search(PrivateRefCountHash,
-					(void *) &buffer,
-					HASH_REMOVE,
-					&found);
+		hash_search(PrivateRefCountHash, &buffer, HASH_REMOVE, &found);
 		Assert(found);
 		Assert(PrivateRefCountOverflowed > 0);
 		PrivateRefCountOverflowed--;

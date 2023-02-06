@@ -63,7 +63,7 @@ InvalidateTableSpaceCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 		if (spc->opts)
 			pfree(spc->opts);
 		if (hash_search(TableSpaceCacheHash,
-						(void *) &spc->oid,
+						&spc->oid,
 						HASH_REMOVE,
 						NULL) == NULL)
 			elog(ERROR, "hash table corrupted");
@@ -121,7 +121,7 @@ get_tablespace(Oid spcid)
 	if (!TableSpaceCacheHash)
 		InitializeTableSpaceCache();
 	spc = (TableSpaceCacheEntry *) hash_search(TableSpaceCacheHash,
-											   (void *) &spcid,
+											   &spcid,
 											   HASH_FIND,
 											   NULL);
 	if (spc)
@@ -163,7 +163,7 @@ get_tablespace(Oid spcid)
 	 * flush.
 	 */
 	spc = (TableSpaceCacheEntry *) hash_search(TableSpaceCacheHash,
-											   (void *) &spcid,
+											   &spcid,
 											   HASH_ENTER,
 											   NULL);
 	spc->opts = opts;

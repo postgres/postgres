@@ -122,7 +122,7 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 
 	/* Find node buffer in hash table */
 	nodeBuffer = (GISTNodeBuffer *) hash_search(gfbb->nodeBuffersTab,
-												(const void *) &nodeBlocknum,
+												&nodeBlocknum,
 												HASH_ENTER,
 												&found);
 	if (!found)

@@ -2040,7 +2040,7 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 	key.pred_op = pred_op;
 	key.clause_op = clause_op;
 	cache_entry = (OprProofCacheEntry *) hash_search(OprProofCacheHash,
-													 (void *) &key,
+													 &key,
 													 HASH_ENTER, &cfound);
 	if (!cfound)
 	{

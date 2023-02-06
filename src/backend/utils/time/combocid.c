@@ -253,7 +253,7 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 	key.cmin = cmin;
 	key.cmax = cmax;
 	entry = (ComboCidEntry) hash_search(comboHash,
-										(void *) &key,
+										&key,
 										HASH_ENTER,
 										&found);
 

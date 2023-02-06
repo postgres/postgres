@@ -63,7 +63,7 @@ InvalidateAttoptCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 		if (attopt->opts)
 			pfree(attopt->opts);
 		if (hash_search(AttoptCacheHash,
-						(void *) &attopt->key,
+						&attopt->key,
 						HASH_REMOVE,
 						NULL) == NULL)
 			elog(ERROR, "hash table corrupted");
@@ -116,7 +116,7 @@ get_attribute_options(Oid attrelid, int attnum)
 	key.attnum = attnum;
 	attopt =
 		(AttoptCacheEntry *) hash_search(AttoptCacheHash,
-										 (void *) &key,
+										 &key,
 										 HASH_FIND,
 										 NULL);
 
@@ -163,7 +163,7 @@ get_attribute_options(Oid attrelid, int attnum)
 		 * pg_attribute, since the read could cause a cache flush.
 		 */
 		attopt = (AttoptCacheEntry *) hash_search(AttoptCacheHash,
-												  (void *) &key,
+												  &key,
 												  HASH_ENTER,
 												  NULL);
 		attopt->opts = opts;

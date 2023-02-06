@@ -165,7 +165,7 @@ smgropen(RelFileLocator rlocator, BackendId backend)
 	brlocator.locator = rlocator;
 	brlocator.backend = backend;
 	reln = (SMgrRelation) hash_search(SMgrRelationHash,
-									  (void *) &brlocator,
+									  &brlocator,
 									  HASH_ENTER, &found);
 
 	/* Initialize it if not present before */
@@ -267,7 +267,7 @@ smgrclose(SMgrRelation reln)
 		dlist_delete(&reln->node);
 
 	if (hash_search(SMgrRelationHash,
-					(void *) &(reln->smgr_rlocator),
+					&(reln->smgr_rlocator),
 					HASH_REMOVE, NULL) == NULL)
 		elog(ERROR, "SMgrRelation hashtable corrupted");
 
@@ -352,7 +352,7 @@ smgrcloserellocator(RelFileLocatorBackend rlocator)
 		return;
 
 	reln = (SMgrRelation) hash_search(SMgrRelationHash,
-									  (void *) &rlocator,
+									  &rlocator,
 									  HASH_FIND, NULL);
 	if (reln != NULL)
 		smgrclose(reln);

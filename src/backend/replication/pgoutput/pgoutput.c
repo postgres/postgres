@@ -2026,7 +2026,7 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 
 	/* Find cached relation info, creating if not found */
 	entry = (RelationSyncEntry *) hash_search(RelationSyncCache,
-											  (void *) &relid,
+											  &relid,
 											  HASH_ENTER, &found);
 	Assert(entry != NULL);
 

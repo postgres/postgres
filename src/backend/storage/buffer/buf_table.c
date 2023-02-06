@@ -94,7 +94,7 @@ BufTableLookup(BufferTag *tagPtr, uint32 hashcode)
 
 	result = (BufferLookupEnt *)
 		hash_search_with_hash_value(SharedBufHash,
-									(void *) tagPtr,
+									tagPtr,
 									hashcode,
 									HASH_FIND,
 									NULL);
@@ -126,7 +126,7 @@ BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id)
 
 	result = (BufferLookupEnt *)
 		hash_search_with_hash_value(SharedBufHash,
-									(void *) tagPtr,
+									tagPtr,
 									hashcode,
 									HASH_ENTER,
 									&found);
@@ -152,7 +152,7 @@ BufTableDelete(BufferTag *tagPtr, uint32 hashcode)
 
 	result = (BufferLookupEnt *)
 		hash_search_with_hash_value(SharedBufHash,
-									(void *) tagPtr,
+									tagPtr,
 									hashcode,
 									HASH_REMOVE,
 									NULL);
