@@ -211,6 +211,12 @@ task:
     EOF
 
   on_failure:
+    # if the server continues running, it often causes cirrus-ci to fail
+    # during upload, as it doesn't expect artifacts to change size
+    stop_running_script: |
+      su postgres <<-EOF
+        build/tmp_install/usr/local/pgsql/bin/pg_ctl -D build/runningcheck stop || true
+      EOF
     <<: *on_failure_meson
     cores_script: src/tools/ci/cores_backtrace.sh freebsd /tmp/cores
 
