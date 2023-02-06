@@ -48,10 +48,8 @@
  </para>
 
  <para>
-  The standard versions beginning with <acronym>SQL:2003</acronym>
-  are also split into a number
-  of parts.  Each is known by a shorthand name.  Note that these parts
-  are not consecutively numbered.
+  The standard is split into a number of parts, each also known by a shorthand
+  name:
 
   <itemizedlist>
    <listitem><para>ISO/IEC 9075-1 Framework (SQL/Framework)</para><indexterm><primary>SQL/Framework</primary></indexterm></listitem>
@@ -65,6 +63,8 @@
    <listitem><para>ISO/IEC 9075-14 XML-related specifications (SQL/XML)</para><indexterm><primary>SQL/XML</primary></indexterm></listitem>
    <listitem><para>ISO/IEC 9075-15 Multi-dimensional arrays (SQL/MDA)</para><indexterm><primary>SQL/MDA</primary></indexterm></listitem>
   </itemizedlist>
+
+  Note that some part numbers are not (or no longer) used.
  </para>
 
  <para>
