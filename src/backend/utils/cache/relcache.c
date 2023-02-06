@@ -6530,34 +6530,34 @@ write_relcache_init_file(bool shared)
 					   HEAPTUPLESIZE + rel->rd_indextuple->t_len,
 					   fp);
 
-			/* next, write the vector of opfamily OIDs */
+			/* write the vector of opfamily OIDs */
 			write_item(rel->rd_opfamily,
 					   relform->relnatts * sizeof(Oid),
 					   fp);
 
-			/* next, write the vector of opcintype OIDs */
+			/* write the vector of opcintype OIDs */
 			write_item(rel->rd_opcintype,
 					   relform->relnatts * sizeof(Oid),
 					   fp);
 
-			/* next, write the vector of support procedure OIDs */
+			/* write the vector of support procedure OIDs */
 			write_item(rel->rd_support,
 					   relform->relnatts * (rel->rd_indam->amsupport * sizeof(RegProcedure)),
 					   fp);
 
-			/* next, write the vector of collation OIDs */
+			/* write the vector of collation OIDs */
 			write_item(rel->rd_indcollation,
 					   relform->relnatts * sizeof(Oid),
 					   fp);
 
-			/* finally, write the vector of indoption values */
+			/* write the vector of indoption values */
 			write_item(rel->rd_indoption,
 					   relform->relnatts * sizeof(int16),
 					   fp);
 
 			Assert(rel->rd_opcoptions);
 
-			/* finally, write the vector of opcoptions values */
+			/* write the vector of opcoptions values */
 			for (i = 0; i < relform->relnatts; i++)
 			{
 				bytea	   *opt = rel->rd_opcoptions[i];
