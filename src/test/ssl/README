@@ -20,9 +20,9 @@ Also, to use "make installcheck", you must have built and installed
 contrib/sslinfo in addition to the core code.
 
 Run
-    make check
+    make check PG_TEST_EXTRA=ssl
 or
-    make installcheck
+    make installcheck PG_TEST_EXTRA=ssl
 You can use "make installcheck" if you previously did "make install".
 In that case, the code in the installation tree is tested.  With
 "make check", a temporary installation tree is built from the current
