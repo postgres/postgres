@@ -1181,8 +1181,7 @@ pa_send_data(ParallelApplyWorkerInfo *winfo, Size nbytes, const void *data)
 		/* Wait before retrying. */
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-					   SHM_SEND_RETRY_INTERVAL_MS,
-					   WAIT_EVENT_LOGICAL_PARALLEL_APPLY_STATE_CHANGE);
+					   SHM_SEND_RETRY_INTERVAL_MS, WAIT_EVENT_MQ_SEND);
 
 		if (rc & WL_LATCH_SET)
 		{
