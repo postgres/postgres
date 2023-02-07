@@ -1903,13 +1903,6 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 		int			save_last_rinfo_serial;
 		ListCell   *lc;
 
-		/*
-		 * Put any OJ relids that were removed from min_righthand back into
-		 * ojscope, else distribute_qual_to_rels will complain.
-		 */
-		ojscope = bms_join(ojscope, bms_intersect(sjinfo->commute_below,
-												  sjinfo->syn_righthand));
-
 		/* Identify the outer joins this one commutes with */
 		joins_above = sjinfo->commute_above_r;
 		joins_below = bms_intersect(sjinfo->commute_below,

@@ -4982,6 +4982,32 @@ select id from a where id in (
          ->  Seq Scan on b
 (5 rows)
 
+-- check optimization with oddly-nested outer joins
+explain (costs off)
+select a1.id from
+  (a a1 left join a a2 on true)
+  left join
+  (a a3 left join a a4 on a3.id = a4.id)
+  on a2.id = a3.id;
+          QUERY PLAN          
+------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on a a1
+   ->  Materialize
+         ->  Seq Scan on a a2
+(4 rows)
+
+explain (costs off)
+select a1.id from
+  (a a1 left join a a2 on a1.id = a2.id)
+  left join
+  (a a3 left join a a4 on a3.id = a4.id)
+  on a2.id = a3.id;
+    QUERY PLAN    
+------------------
+ Seq Scan on a a1
+(1 row)
+
 -- check that join removal works for a left join when joining a subquery
 -- that is guaranteed to be unique by its GROUP BY clause
 explain (costs off)
