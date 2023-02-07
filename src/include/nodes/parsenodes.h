@@ -355,7 +355,7 @@ union ValUnion
 
 typedef struct A_Const
 {
-	pg_node_attr(custom_copy_equal, custom_read_write)
+	pg_node_attr(custom_copy_equal, custom_read_write, custom_query_jumble)
 
 	NodeTag		type;
 	union ValUnion val;

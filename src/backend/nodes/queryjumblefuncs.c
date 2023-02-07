@@ -49,6 +49,7 @@ static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *item, Size size);
 static void RecordConstLocation(JumbleState *jstate, int location);
 static void _jumbleNode(JumbleState *jstate, Node *node);
+static void _jumbleA_Const(JumbleState *jstate, Node *node);
 static void _jumbleList(JumbleState *jstate, Node *node);
 static void _jumbleRangeTblEntry(JumbleState *jstate, Node *node);
 
@@ -310,6 +311,40 @@ _jumbleList(JumbleState *jstate, Node *node)
 			elog(ERROR, "unrecognized list node type: %d",
 				 (int) expr->type);
 			return;
+	}
+}
+
+static void
+_jumbleA_Const(JumbleState *jstate, Node *node)
+{
+	A_Const    *expr = (A_Const *) node;
+
+	JUMBLE_FIELD(isnull);
+	if (!expr->isnull)
+	{
+		JUMBLE_FIELD(val.node.type);
+		switch (nodeTag(&expr->val))
+		{
+			case T_Integer:
+				JUMBLE_FIELD(val.ival.ival);
+				break;
+			case T_Float:
+				JUMBLE_STRING(val.fval.fval);
+				break;
+			case T_Boolean:
+				JUMBLE_FIELD(val.boolval.boolval);
+				break;
+			case T_String:
+				JUMBLE_STRING(val.sval.sval);
+				break;
+			case T_BitString:
+				JUMBLE_STRING(val.bsval.bsval);
+				break;
+			default:
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(&expr->val));
+				break;
+		}
 	}
 }
 

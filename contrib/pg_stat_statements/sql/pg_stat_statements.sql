@@ -270,6 +270,14 @@ DROP TABLE IF EXISTS test \;
 Drop Table If Exists test \;
 DROP FUNCTION IF EXISTS PLUS_ONE(INTEGER);
 DROP FUNCTION PLUS_TWO(INTEGER);
+-- This SET query uses two different strings, still they count as one entry.
+SET work_mem = '1MB';
+Set work_mem = '1MB';
+SET work_mem = '2MB';
+RESET work_mem;
+SET enable_seqscan = off;
+SET enable_seqscan = on;
+RESET enable_seqscan;
 
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 
