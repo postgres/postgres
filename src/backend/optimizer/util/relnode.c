@@ -1043,23 +1043,23 @@ min_join_parameterization(PlannerInfo *root,
  * two joins had been done in syntactic order; else they won't match Vars
  * appearing higher in the query tree.  We need to do two things:
  *
- * First, sjinfo->commute_above_r is added to the nulling bitmaps of RHS Vars.
- * This takes care of the case where we implement
+ * First, we add the outer join's relid to the nulling bitmap only if the Var
+ * or PHV actually comes from within the syntactically nullable side(s) of the
+ * outer join.  This takes care of the possibility that we have transformed
+ *		(A leftjoin B on (Pab)) leftjoin C on (Pbc)
+ * to
+ *		A leftjoin (B leftjoin C on (Pbc)) on (Pab)
+ * Here the now-upper A/B join must not mark C columns as nulled by itself.
+ *
+ * Second, if sjinfo->commute_above_r is already part of the joinrel then
+ * it is added to the nulling bitmaps of nullable Vars.  This takes care of
+ * the reverse case where we implement
  *		A leftjoin (B leftjoin C on (Pbc)) on (Pab)
  * as
  *		(A leftjoin B on (Pab)) leftjoin C on (Pbc)
  * The C columns emitted by the B/C join need to be shown as nulled by both
- * the B/C and A/B joins, even though they've not traversed the A/B join.
- * (If the joins haven't been commuted, we are adding the nullingrel bits
- * prematurely; but that's okay because the C columns can't be referenced
- * between here and the upper join.)
- *
- * Second, if a RHS Var has any of the relids in sjinfo->commute_above_l
- * already set in its nulling bitmap, then we *don't* add sjinfo->ojrelid
- * to its nulling bitmap (but we do still add commute_above_r).  This takes
- * care of the reverse transformation: if the original syntax was
- *		(A leftjoin B on (Pab)) leftjoin C on (Pbc)
- * then the now-upper A/B join must not mark C columns as nulled by itself.
+ * the B/C and A/B joins, even though they've not physically traversed the
+ * A/B join.
  */
 static void
 build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
@@ -1095,10 +1095,12 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 					phv = copyObject(phv);
 					/* See comments above to understand this logic */
 					if (sjinfo->ojrelid != 0 &&
-						!bms_overlap(phv->phnullingrels, sjinfo->commute_above_l))
+						(bms_is_subset(phv->phrels, sjinfo->syn_righthand) ||
+						 (sjinfo->jointype == JOIN_FULL &&
+						  bms_is_subset(phv->phrels, sjinfo->syn_lefthand))))
 						phv->phnullingrels = bms_add_member(phv->phnullingrels,
 															sjinfo->ojrelid);
-					if (sjinfo->commute_above_r)
+					if (bms_overlap(sjinfo->commute_above_r, joinrel->relids))
 						phv->phnullingrels = bms_add_members(phv->phnullingrels,
 															 sjinfo->commute_above_r);
 				}
@@ -1149,17 +1151,20 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 		/*
 		 * Add the Var to the output.  If this join potentially nulls this
 		 * input, we have to update the Var's varnullingrels, which means
-		 * making a copy.
+		 * making a copy.  But note that we don't ever add nullingrel bits to
+		 * row identity Vars (cf. comments in setrefs.c).
 		 */
-		if (can_null)
+		if (can_null && var->varno != ROWID_VAR)
 		{
 			var = copyObject(var);
 			/* See comments above to understand this logic */
 			if (sjinfo->ojrelid != 0 &&
-				!bms_overlap(var->varnullingrels, sjinfo->commute_above_l))
+				(bms_is_member(var->varno, sjinfo->syn_righthand) ||
+				 (sjinfo->jointype == JOIN_FULL &&
+				  bms_is_member(var->varno, sjinfo->syn_lefthand))))
 				var->varnullingrels = bms_add_member(var->varnullingrels,
 													 sjinfo->ojrelid);
-			if (sjinfo->commute_above_r)
+			if (bms_overlap(sjinfo->commute_above_r, joinrel->relids))
 				var->varnullingrels = bms_add_members(var->varnullingrels,
 													  sjinfo->commute_above_r);
 		}
