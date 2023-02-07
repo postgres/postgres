@@ -195,10 +195,10 @@ pushval_asis(QPRS_STATE *state, int type, char *strval, int lenval, uint16 flag)
 		int32		tmp = state->curop - state->op;
 
 		state->lenop *= 2;
-		state->op = (char *) repalloc((void *) state->op, state->lenop);
+		state->op = (char *) repalloc(state->op, state->lenop);
 		state->curop = state->op + tmp;
 	}
-	memcpy((void *) state->curop, (void *) strval, lenval);
+	memcpy(state->curop, strval, lenval);
 	state->curop += lenval;
 	*(state->curop) = '\0';
 	state->curop++;
@@ -391,7 +391,7 @@ queryin(char *buf, struct Node *escontext)
 	}
 
 	/* set user-friendly operand view */
-	memcpy((void *) GETOPERAND(query), (void *) state.op, state.sumlen);
+	memcpy(GETOPERAND(query), state.op, state.sumlen);
 	pfree(state.op);
 
 	/* set left operand's position for every operator */

@@ -543,7 +543,7 @@ range_deduplicate_values(Ranges *range)
 	 */
 	qsort_arg(&range->values[start],
 			  range->nvalues, sizeof(Datum),
-			  compare_values, (void *) &cxt);
+			  compare_values, &cxt);
 
 	n = 1;
 	for (i = 1; i < range->nvalues; i++)
@@ -1197,7 +1197,7 @@ sort_expanded_ranges(FmgrInfo *cmp, Oid colloid,
 	 * some of the points) and do merge sort.
 	 */
 	qsort_arg(eranges, neranges, sizeof(ExpandedRange),
-			  compare_expanded_ranges, (void *) &cxt);
+			  compare_expanded_ranges, &cxt);
 
 	/*
 	 * Deduplicate the ranges - simply compare each range to the preceding
@@ -1535,7 +1535,7 @@ reduce_expanded_ranges(ExpandedRange *eranges, int neranges,
 	 * sorted result.
 	 */
 	qsort_arg(values, nvalues, sizeof(Datum),
-			  compare_values, (void *) &cxt);
+			  compare_values, &cxt);
 
 	/* We have nvalues boundary values, which means nvalues/2 ranges. */
 	for (i = 0; i < (nvalues / 2); i++)

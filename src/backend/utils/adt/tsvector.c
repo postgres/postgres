@@ -58,7 +58,7 @@ uniquePos(WordEntryPos *a, int l)
 	if (l <= 1)
 		return l;
 
-	qsort((void *) a, l, sizeof(WordEntryPos), compareWordEntryPos);
+	qsort(a, l, sizeof(WordEntryPos), compareWordEntryPos);
 
 	res = a;
 	ptr = a + 1;
@@ -107,8 +107,7 @@ uniqueentry(WordEntryIN *a, int l, char *buf, int *outbuflen)
 	Assert(l >= 1);
 
 	if (l > 1)
-		qsort_arg((void *) a, l, sizeof(WordEntryIN), compareentry,
-				  (void *) buf);
+		qsort_arg(a, l, sizeof(WordEntryIN), compareentry, buf);
 
 	buflen = 0;
 	res = a;
@@ -232,19 +231,19 @@ tsvectorin(PG_FUNCTION_ARGS)
 		{
 			arrlen *= 2;
 			arr = (WordEntryIN *)
-				repalloc((void *) arr, sizeof(WordEntryIN) * arrlen);
+				repalloc(arr, sizeof(WordEntryIN) * arrlen);
 		}
 		while ((cur - tmpbuf) + toklen >= buflen)
 		{
 			int			dist = cur - tmpbuf;
 
 			buflen *= 2;
-			tmpbuf = (char *) repalloc((void *) tmpbuf, buflen);
+			tmpbuf = (char *) repalloc(tmpbuf, buflen);
 			cur = tmpbuf + dist;
 		}
 		arr[len].entry.len = toklen;
 		arr[len].entry.pos = cur - tmpbuf;
-		memcpy((void *) cur, (void *) token, toklen);
+		memcpy(cur, token, toklen);
 		cur += toklen;
 
 		if (poslen != 0)
@@ -552,8 +551,8 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 	SET_VARSIZE(vec, hdrlen + datalen);
 
 	if (needSort)
-		qsort_arg((void *) ARRPTR(vec), vec->size, sizeof(WordEntry),
-				  compareentry, (void *) STRPTR(vec));
+		qsort_arg(ARRPTR(vec), vec->size, sizeof(WordEntry),
+				  compareentry, STRPTR(vec));
 
 	PG_RETURN_TSVECTOR(vec);
 }

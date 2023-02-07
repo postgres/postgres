@@ -173,7 +173,7 @@ gist_box_union(PG_FUNCTION_ARGS)
 	numranges = entryvec->n;
 	pageunion = (BOX *) palloc(sizeof(BOX));
 	cur = DatumGetBoxP(entryvec->vector[0].key);
-	memcpy((void *) pageunion, (void *) cur, sizeof(BOX));
+	memcpy(pageunion, cur, sizeof(BOX));
 
 	for (i = 1; i < numranges; i++)
 	{
@@ -1043,7 +1043,7 @@ gist_poly_compress(PG_FUNCTION_ARGS)
 		BOX		   *r;
 
 		r = (BOX *) palloc(sizeof(BOX));
-		memcpy((void *) r, (void *) &(in->boundbox), sizeof(BOX));
+		memcpy(r, &(in->boundbox), sizeof(BOX));
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),

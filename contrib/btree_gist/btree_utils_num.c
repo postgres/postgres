@@ -87,8 +87,8 @@ gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 
 		Assert(tinfo->indexsize >= 2 * tinfo->size);
 
-		memcpy((void *) &r[0], leaf, tinfo->size);
-		memcpy((void *) &r[tinfo->size], leaf, tinfo->size);
+		memcpy(&r[0], leaf, tinfo->size);
+		memcpy(&r[tinfo->size], leaf, tinfo->size);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page,
 					  entry->offset, false);
@@ -184,7 +184,7 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 	o.lower = &((GBT_NUMKEY *) out)[0];
 	o.upper = &((GBT_NUMKEY *) out)[tinfo->size];
 
-	memcpy((void *) out, (void *) cur, 2 * tinfo->size);
+	memcpy(out, cur, 2 * tinfo->size);
 
 	for (i = 1; i < numranges; i++)
 	{
@@ -360,7 +360,7 @@ gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 		arr[i].t = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[i].key));
 		arr[i].i = i;
 	}
-	qsort_arg((void *) &arr[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1, sizeof(Nsrt), (qsort_arg_comparator) tinfo->f_cmp, (void *) flinfo);
+	qsort_arg(&arr[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1, sizeof(Nsrt), (qsort_arg_comparator) tinfo->f_cmp, flinfo);
 
 	/* We do simply create two parts */
 

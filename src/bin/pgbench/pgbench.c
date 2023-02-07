@@ -1604,15 +1604,15 @@ lookupVariable(Variables *variables, char *name)
 	/* Sort if we have to */
 	if (!variables->vars_sorted)
 	{
-		qsort((void *) variables->vars, variables->nvars, sizeof(Variable),
+		qsort(variables->vars, variables->nvars, sizeof(Variable),
 			  compareVariableNames);
 		variables->vars_sorted = true;
 	}
 
 	/* Now we can search */
 	key.name = name;
-	return (Variable *) bsearch((void *) &key,
-								(void *) variables->vars,
+	return (Variable *) bsearch(&key,
+								variables->vars,
 								variables->nvars,
 								sizeof(Variable),
 								compareVariableNames);

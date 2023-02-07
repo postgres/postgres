@@ -173,7 +173,7 @@ QTNSort(QTNode *in)
 	for (i = 0; i < in->nchild; i++)
 		QTNSort(in->child[i]);
 	if (in->nchild > 1 && in->valnode->qoperator.oper != OP_PHRASE)
-		qsort((void *) in->child, in->nchild, sizeof(QTNode *), cmpQTN);
+		qsort(in->child, in->nchild, sizeof(QTNode *), cmpQTN);
 }
 
 /*

@@ -80,7 +80,7 @@ internal_citext_pattern_cmp(text *left, text *right, Oid collid)
 	llen = strlen(lcstr);
 	rlen = strlen(rcstr);
 
-	result = memcmp((void *) lcstr, (void *) rcstr, Min(llen, rlen));
+	result = memcmp(lcstr, rcstr, Min(llen, rlen));
 	if (result == 0)
 	{
 		if (llen < rlen)

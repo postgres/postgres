@@ -2384,8 +2384,8 @@ vac_tid_reaped(ItemPointer itemptr, void *state)
 	if (item < litem || item > ritem)
 		return false;
 
-	res = (ItemPointer) bsearch((void *) itemptr,
-								(void *) dead_items->items,
+	res = (ItemPointer) bsearch(itemptr,
+								dead_items->items,
 								dead_items->num_items,
 								sizeof(ItemPointerData),
 								vac_cmp_itemptr);

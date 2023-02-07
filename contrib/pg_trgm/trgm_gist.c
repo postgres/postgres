@@ -102,7 +102,7 @@ makesign(BITVECP sign, TRGM *a, int siglen)
 	trgm	   *ptr = GETARR(a);
 	int32		tmp = 0;
 
-	MemSet((void *) sign, 0, siglen);
+	MemSet(sign, 0, siglen);
 	SETBIT(sign, SIGLENBIT(siglen));	/* set last unused bit */
 	for (k = 0; k < len; k++)
 	{
@@ -755,7 +755,7 @@ fillcache(CACHESIGN *item, TRGM *key, BITVECP sign, int siglen)
 	else if (ISALLTRUE(key))
 		item->allistrue = true;
 	else
-		memcpy((void *) item->sign, (void *) GETSIGN(key), siglen);
+		memcpy(item->sign, GETSIGN(key), siglen);
 }
 
 #define WISH_F(a,b,c) (double)( -(double)(((a)-(b))*((a)-(b))*((a)-(b)))*(c) )
@@ -872,7 +872,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 		size_beta = hemdistcache(&(cache[seed_2]), &(cache[j]), siglen);
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
-	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
+	qsort(costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
 	for (k = 0; k < maxoff; k++)
 	{
@@ -921,7 +921,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_l) || cache[j].allistrue)
 			{
 				if (!ISALLTRUE(datum_l))
-					memset((void *) GETSIGN(datum_l), 0xff, siglen);
+					memset(GETSIGN(datum_l), 0xff, siglen);
 			}
 			else
 			{
@@ -937,7 +937,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_r) || cache[j].allistrue)
 			{
 				if (!ISALLTRUE(datum_r))
-					memset((void *) GETSIGN(datum_r), 0xff, siglen);
+					memset(GETSIGN(datum_r), 0xff, siglen);
 			}
 			else
 			{

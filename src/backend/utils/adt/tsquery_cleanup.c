@@ -67,9 +67,9 @@ plainnode(PLAINTREE *state, NODE *node)
 	if (state->cur == state->len)
 	{
 		state->len *= 2;
-		state->ptr = (QueryItem *) repalloc((void *) state->ptr, state->len * sizeof(QueryItem));
+		state->ptr = (QueryItem *) repalloc(state->ptr, state->len * sizeof(QueryItem));
 	}
-	memcpy((void *) &(state->ptr[state->cur]), (void *) node->valnode, sizeof(QueryItem));
+	memcpy(&(state->ptr[state->cur]), node->valnode, sizeof(QueryItem));
 	if (node->valnode->type == QI_VAL)
 		state->cur++;
 	else if (node->valnode->qoperator.oper == OP_NOT)

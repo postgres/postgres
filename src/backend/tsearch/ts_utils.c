@@ -109,8 +109,7 @@ readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))
 				else
 				{
 					reallen *= 2;
-					stop = (char **) repalloc((void *) stop,
-											  sizeof(char *) * reallen);
+					stop = (char **) repalloc(stop, sizeof(char *) * reallen);
 				}
 			}
 

@@ -967,7 +967,7 @@ findDependentObjects(const ObjectAddress *object,
 	 * first within ObjectAddressAndFlags.
 	 */
 	if (numDependentObjects > 1)
-		qsort((void *) dependentObjects, numDependentObjects,
+		qsort(dependentObjects, numDependentObjects,
 			  sizeof(ObjectAddressAndFlags),
 			  object_address_comparator);
 
@@ -2442,7 +2442,7 @@ eliminate_duplicate_dependencies(ObjectAddresses *addrs)
 		return;					/* nothing to do */
 
 	/* Sort the refs so that duplicates are adjacent */
-	qsort((void *) addrs->refs, addrs->numrefs, sizeof(ObjectAddress),
+	qsort(addrs->refs, addrs->numrefs, sizeof(ObjectAddress),
 		  object_address_comparator);
 
 	/* Remove dups */
@@ -2809,7 +2809,7 @@ void
 sort_object_addresses(ObjectAddresses *addrs)
 {
 	if (addrs->numrefs > 1)
-		qsort((void *) addrs->refs, addrs->numrefs,
+		qsort(addrs->refs, addrs->numrefs,
 			  sizeof(ObjectAddress),
 			  object_address_comparator);
 }

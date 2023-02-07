@@ -143,7 +143,7 @@ makesign(BITVECP sign, SignTSVector *a, int siglen)
 				len = ARRNELEM(a);
 	int32	   *ptr = GETARR(a);
 
-	MemSet((void *) sign, 0, siglen);
+	MemSet(sign, 0, siglen);
 	for (k = 0; k < len; k++)
 		HASH(sign, ptr[k], siglen);
 }
@@ -204,7 +204,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			 * val->size
 			 */
 			len = CALCGTSIZE(ARRKEY, len);
-			res = (SignTSVector *) repalloc((void *) res, len);
+			res = (SignTSVector *) repalloc(res, len);
 			SET_VARSIZE(res, len);
 		}
 
@@ -577,7 +577,7 @@ fillcache(CACHESIGN *item, SignTSVector *key, int siglen)
 	else if (ISALLTRUE(key))
 		item->allistrue = true;
 	else
-		memcpy((void *) item->sign, (void *) GETSIGN(key), siglen);
+		memcpy(item->sign, GETSIGN(key), siglen);
 }
 
 #define WISH_F(a,b,c) (double)( -(double)(((a)-(b))*((a)-(b))*((a)-(b)))*(c) )
@@ -704,7 +704,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 		size_beta = hemdistcache(&(cache[seed_2]), &(cache[j]), siglen);
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
-	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
+	qsort(costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
 	for (k = 0; k < maxoff; k++)
 	{
@@ -755,7 +755,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_l) || cache[j].allistrue)
 			{
 				if (!ISALLTRUE(datum_l))
-					memset((void *) GETSIGN(datum_l), 0xff, siglen);
+					memset(GETSIGN(datum_l), 0xff, siglen);
 			}
 			else
 			{
@@ -771,7 +771,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_r) || cache[j].allistrue)
 			{
 				if (!ISALLTRUE(datum_r))
-					memset((void *) GETSIGN(datum_r), 0xff, siglen);
+					memset(GETSIGN(datum_r), 0xff, siglen);
 			}
 			else
 			{

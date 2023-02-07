@@ -502,11 +502,11 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	varg.tinfo = tinfo;
 	varg.collation = collation;
 	varg.flinfo = flinfo;
-	qsort_arg((void *) &arr[FirstOffsetNumber],
+	qsort_arg(&arr[FirstOffsetNumber],
 			  maxoff - FirstOffsetNumber + 1,
 			  sizeof(Vsrt),
 			  gbt_vsrt_cmp,
-			  (void *) &varg);
+			  &varg);
 
 	/* We do simply create two parts */
 

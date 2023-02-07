@@ -1736,7 +1736,7 @@ pgpipe(int handles[2])
 		return -1;
 	}
 
-	memset((void *) &serv_addr, 0, sizeof(serv_addr));
+	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = pg_hton16(0);
 	serv_addr.sin_addr.s_addr = pg_hton32(INADDR_LOOPBACK);

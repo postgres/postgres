@@ -602,10 +602,10 @@ pushValue(TSQueryParserState state, char *strval, int lenval, int16 weight, bool
 		int			used = state->curop - state->op;
 
 		state->lenop *= 2;
-		state->op = (char *) repalloc((void *) state->op, state->lenop);
+		state->op = (char *) repalloc(state->op, state->lenop);
 		state->curop = state->op + used;
 	}
-	memcpy((void *) state->curop, (void *) strval, lenval);
+	memcpy(state->curop, strval, lenval);
 	state->curop += lenval;
 	*(state->curop) = '\0';
 	state->curop++;
@@ -924,7 +924,7 @@ parse_tsquery(char *buf,
 	}
 
 	/* Copy all the operand strings to TSQuery */
-	memcpy((void *) GETOPERAND(query), (void *) state.op, state.sumlen);
+	memcpy(GETOPERAND(query), state.op, state.sumlen);
 	pfree(state.op);
 
 	/*

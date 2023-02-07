@@ -488,8 +488,8 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 	fmgr_info(cmp_proc, &cxt.flinfo);
 	cxt.collation = skey->sk_collation;
 	cxt.reverse = reverse;
-	qsort_arg((void *) elems, nelems, sizeof(Datum),
-			  _bt_compare_array_elements, (void *) &cxt);
+	qsort_arg(elems, nelems, sizeof(Datum),
+			  _bt_compare_array_elements, &cxt);
 
 	/* Now scan the sorted elements and remove duplicates */
 	return qunique_arg(elems, nelems, sizeof(Datum),

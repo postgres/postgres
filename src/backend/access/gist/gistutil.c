@@ -113,7 +113,7 @@ gistextractpage(Page page, int *len /* out */ )
 IndexTuple *
 gistjoinvector(IndexTuple *itvec, int *len, IndexTuple *additvec, int addlen)
 {
-	itvec = (IndexTuple *) repalloc((void *) itvec, sizeof(IndexTuple) * ((*len) + addlen));
+	itvec = (IndexTuple *) repalloc(itvec, sizeof(IndexTuple) * ((*len) + addlen));
 	memmove(&itvec[*len], additvec, sizeof(IndexTuple) * addlen);
 	*len += addlen;
 	return itvec;

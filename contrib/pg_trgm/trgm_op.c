@@ -376,7 +376,7 @@ generate_trgm(char *str, int slen)
 	 */
 	if (len > 1)
 	{
-		qsort((void *) GETARR(trg), len, sizeof(trgm), comp_trgm);
+		qsort(GETARR(trg), len, sizeof(trgm), comp_trgm);
 		len = qunique(GETARR(trg), len, sizeof(trgm), comp_trgm);
 	}
 
@@ -929,7 +929,7 @@ generate_wildcard_trgm(const char *str, int slen)
 	 */
 	if (len > 1)
 	{
-		qsort((void *) GETARR(trg), len, sizeof(trgm), comp_trgm);
+		qsort(GETARR(trg), len, sizeof(trgm), comp_trgm);
 		len = qunique(GETARR(trg), len, sizeof(trgm), comp_trgm);
 	}
 

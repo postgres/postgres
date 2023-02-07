@@ -1304,7 +1304,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 	 * tuples are already sorted.
 	 */
 	if (numrows == targrows)
-		qsort_interruptible((void *) rows, numrows, sizeof(HeapTuple),
+		qsort_interruptible(rows, numrows, sizeof(HeapTuple),
 							compare_rows, NULL);
 
 	/*
@@ -2479,8 +2479,8 @@ compute_scalar_stats(VacAttrStatsP stats,
 		/* Sort the collected values */
 		cxt.ssup = &ssup;
 		cxt.tupnoLink = tupnoLink;
-		qsort_interruptible((void *) values, values_cnt, sizeof(ScalarItem),
-							compare_scalars, (void *) &cxt);
+		qsort_interruptible(values, values_cnt, sizeof(ScalarItem),
+							compare_scalars, &cxt);
 
 		/*
 		 * Now scan the values in order, find the most common ones, and also
@@ -2724,7 +2724,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 						deltafrac;
 
 			/* Sort the MCV items into position order to speed next loop */
-			qsort_interruptible((void *) track, num_mcv, sizeof(ScalarMCVItem),
+			qsort_interruptible(track, num_mcv, sizeof(ScalarMCVItem),
 								compare_mcvs, NULL);
 
 			/*

@@ -136,7 +136,7 @@ check_loadable_libraries(void)
 	 * consistent order, which is important for reproducible behavior if one
 	 * library depends on another.
 	 */
-	qsort((void *) os_info.libraries, os_info.num_libraries,
+	qsort(os_info.libraries, os_info.num_libraries,
 		  sizeof(LibraryInfo), library_name_compare);
 
 	for (libnum = 0; libnum < os_info.num_libraries; libnum++)

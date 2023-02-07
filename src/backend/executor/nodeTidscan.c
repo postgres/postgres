@@ -266,7 +266,7 @@ TidListEval(TidScanState *tidstate)
 		/* CurrentOfExpr could never appear OR'd with something else */
 		Assert(!tidstate->tss_isCurrentOf);
 
-		qsort((void *) tidList, numTids, sizeof(ItemPointerData),
+		qsort(tidList, numTids, sizeof(ItemPointerData),
 			  itemptr_comparator);
 		numTids = qunique(tidList, numTids, sizeof(ItemPointerData),
 						  itemptr_comparator);

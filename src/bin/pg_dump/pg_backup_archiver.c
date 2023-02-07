@@ -2363,8 +2363,7 @@ WriteDataChunks(ArchiveHandle *AH, ParallelState *pstate)
 		}
 
 		if (ntes > 1)
-			qsort((void *) tes, ntes, sizeof(TocEntry *),
-				  TocEntrySizeCompare);
+			qsort(tes, ntes, sizeof(TocEntry *), TocEntrySizeCompare);
 
 		for (int i = 0; i < ntes; i++)
 			DispatchJobForTocEntry(AH, pstate, tes[i], ACT_DUMP,

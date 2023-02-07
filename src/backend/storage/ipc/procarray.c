@@ -2394,7 +2394,7 @@ GetSnapshotData(Snapshot snapshot)
 						pg_read_barrier();	/* pairs with GetNewTransactionId */
 
 						memcpy(snapshot->subxip + subcount,
-							   (void *) proc->subxids.xids,
+							   proc->subxids.xids,
 							   nsubxids * sizeof(TransactionId));
 						subcount += nsubxids;
 					}
@@ -2846,7 +2846,7 @@ GetRunningTransactionData(void)
 				/* barrier not really required, as XidGenLock is held, but ... */
 				pg_read_barrier();	/* pairs with GetNewTransactionId */
 
-				memcpy(&xids[count], (void *) proc->subxids.xids,
+				memcpy(&xids[count], proc->subxids.xids,
 					   nsubxids * sizeof(TransactionId));
 				count += nsubxids;
 				subcount += nsubxids;

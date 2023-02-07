@@ -762,7 +762,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 	 * Sort and report local and shared objects.
 	 */
 	if (numobjects > 1)
-		qsort((void *) objects, numobjects,
+		qsort(objects, numobjects,
 			  sizeof(ShDependObjectInfo), shared_dependency_comparator);
 
 	for (int i = 0; i < numobjects; i++)

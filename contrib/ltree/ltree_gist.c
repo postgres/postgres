@@ -328,7 +328,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 		array[j].r = LTG_GETLNODE(lu, siglen);
 	}
 
-	qsort((void *) &array[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1,
+	qsort(&array[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1,
 		  sizeof(RIX), treekey_cmp);
 
 	lu_l = lu_r = ru_l = ru_r = NULL;

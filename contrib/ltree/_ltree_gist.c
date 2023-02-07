@@ -319,7 +319,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 		size_beta = hemdist(datum_r, _j, siglen);
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
-	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
+	qsort(costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
 	union_l = LTG_SIGN(datum_l);
 	union_r = LTG_SIGN(datum_r);
@@ -348,7 +348,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			if (LTG_ISALLTRUE(datum_l) || LTG_ISALLTRUE(_j))
 			{
 				if (!LTG_ISALLTRUE(datum_l))
-					memset((void *) union_l, 0xff, siglen);
+					memset(union_l, 0xff, siglen);
 			}
 			else
 			{
@@ -364,7 +364,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			if (LTG_ISALLTRUE(datum_r) || LTG_ISALLTRUE(_j))
 			{
 				if (!LTG_ISALLTRUE(datum_r))
-					memset((void *) union_r, 0xff, siglen);
+					memset(union_r, 0xff, siglen);
 			}
 			else
 			{

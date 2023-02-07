@@ -212,7 +212,7 @@ isort(int32 *a, int len)
 {
 	bool		r = false;
 
-	qsort_arg(a, len, sizeof(int32), isort_cmp, (void *) &r);
+	qsort_arg(a, len, sizeof(int32), isort_cmp, &r);
 	return r;
 }
 

@@ -157,8 +157,8 @@ gbt_intv_compress(PG_FUNCTION_ARGS)
 		{
 			Interval   *key = DatumGetIntervalP(entry->key);
 
-			memcpy((void *) r, (void *) key, INTERVALSIZE);
-			memcpy((void *) (r + INTERVALSIZE), (void *) key, INTERVALSIZE);
+			memcpy(r, key, INTERVALSIZE);
+			memcpy(r + INTERVALSIZE, key, INTERVALSIZE);
 		}
 		else
 		{

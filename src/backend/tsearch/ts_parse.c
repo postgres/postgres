@@ -410,7 +410,7 @@ parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 				if (prs->curwords == prs->lenwords)
 				{
 					prs->lenwords *= 2;
-					prs->words = (ParsedWord *) repalloc((void *) prs->words, prs->lenwords * sizeof(ParsedWord));
+					prs->words = (ParsedWord *) repalloc(prs->words, prs->lenwords * sizeof(ParsedWord));
 				}
 
 				if (ptr->flags & TSL_ADDPOS)
@@ -442,7 +442,7 @@ hladdword(HeadlineParsedText *prs, char *buf, int buflen, int type)
 	if (prs->curwords >= prs->lenwords)
 	{
 		prs->lenwords *= 2;
-		prs->words = (HeadlineWordEntry *) repalloc((void *) prs->words, prs->lenwords * sizeof(HeadlineWordEntry));
+		prs->words = (HeadlineWordEntry *) repalloc(prs->words, prs->lenwords * sizeof(HeadlineWordEntry));
 	}
 	memset(&(prs->words[prs->curwords]), 0, sizeof(HeadlineWordEntry));
 	prs->words[prs->curwords].type = (uint8) type;
@@ -470,7 +470,7 @@ hlfinditem(HeadlineParsedText *prs, TSQuery query, int32 pos, char *buf, int buf
 	while (prs->curwords + query->size >= prs->lenwords)
 	{
 		prs->lenwords *= 2;
-		prs->words = (HeadlineWordEntry *) repalloc((void *) prs->words, prs->lenwords * sizeof(HeadlineWordEntry));
+		prs->words = (HeadlineWordEntry *) repalloc(prs->words, prs->lenwords * sizeof(HeadlineWordEntry));
 	}
 
 	word = &(prs->words[prs->curwords - 1]);

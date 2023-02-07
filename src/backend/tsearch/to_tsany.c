@@ -97,7 +97,7 @@ uniqueWORD(ParsedWord *a, int32 l)
 	/*
 	 * Sort words with its positions
 	 */
-	qsort((void *) a, l, sizeof(ParsedWord), compareWORD);
+	qsort(a, l, sizeof(ParsedWord), compareWORD);
 
 	/*
 	 * Initialize first word and its first position

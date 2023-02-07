@@ -365,7 +365,7 @@ hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
 		return l;
 	}
 
-	qsort((void *) a, l, sizeof(Pairs), comparePairs);
+	qsort(a, l, sizeof(Pairs), comparePairs);
 
 	/*
 	 * We can't use qunique here because we have some clean-up code to run on

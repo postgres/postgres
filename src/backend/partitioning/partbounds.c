@@ -531,7 +531,7 @@ create_list_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	Assert(j == ndatums);
 
 	qsort_arg(all_values, ndatums, sizeof(PartitionListValue),
-			  qsort_partition_list_value_cmp, (void *) key);
+			  qsort_partition_list_value_cmp, key);
 
 	boundinfo->ndatums = ndatums;
 	boundinfo->datums = (Datum **) palloc0(ndatums * sizeof(Datum *));
@@ -737,7 +737,7 @@ create_range_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	qsort_arg(all_bounds, ndatums,
 			  sizeof(PartitionRangeBound *),
 			  qsort_partition_rbound_cmp,
-			  (void *) key);
+			  key);
 
 	/* Save distinct bounds from all_bounds into rbounds. */
 	rbounds = (PartitionRangeBound **)

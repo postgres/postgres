@@ -186,7 +186,7 @@ void
 sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs)
 {
 	if (numObjs > 1)
-		qsort((void *) objs, numObjs, sizeof(DumpableObject *),
+		qsort(objs, numObjs, sizeof(DumpableObject *),
 			  DOTypeNameCompare);
 }
 

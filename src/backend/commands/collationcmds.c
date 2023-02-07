@@ -878,7 +878,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		 * created such a pg_collation entry above, and that one will win.)
 		 */
 		if (naliases > 1)
-			qsort((void *) aliases, naliases, sizeof(CollAliasData), cmpaliases);
+			qsort(aliases, naliases, sizeof(CollAliasData), cmpaliases);
 
 		/* Now add aliases, ignoring any that match pre-existing entries */
 		for (i = 0; i < naliases; i++)

@@ -560,7 +560,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 		arg.collation = ginstate->supportCollation[attnum - 1];
 		arg.haveDups = false;
 		qsort_arg(keydata, *nentries, sizeof(keyEntryData),
-				  cmpEntries, (void *) &arg);
+				  cmpEntries, &arg);
 
 		if (arg.haveDups)
 		{
