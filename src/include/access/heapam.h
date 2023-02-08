@@ -62,7 +62,6 @@ typedef struct HeapScanDescData
 	Buffer		rs_cbuf;		/* current buffer in scan, if any */
 	/* NB: if rs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
 
-	/* rs_numblocks is usually InvalidBlockNumber, meaning "scan whole rel" */
 	BufferAccessStrategy rs_strategy;	/* access strategy for reads */
 
 	HeapTupleData rs_ctup;		/* current tuple in scan, if any */
