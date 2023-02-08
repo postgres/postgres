@@ -325,7 +325,6 @@ SELECT pg_settings_get_flags('does_not_exist');
 CREATE TABLE tab_settings_flags AS SELECT name, category,
     'EXPLAIN'          = ANY(flags) AS explain,
     'NO_RESET_ALL'     = ANY(flags) AS no_reset_all,
-    'NO_SHOW_ALL'      = ANY(flags) AS no_show_all,
     'NOT_IN_SAMPLE'    = ANY(flags) AS not_in_sample,
     'RUNTIME_COMPUTED' = ANY(flags) AS runtime_computed
   FROM pg_show_all_settings() AS psas,
@@ -347,17 +346,5 @@ SELECT name FROM tab_settings_flags
 -- Preset GUCs are flagged as NOT_IN_SAMPLE.
 SELECT name FROM tab_settings_flags
   WHERE category = 'Preset Options' AND NOT not_in_sample
-  ORDER BY 1;
--- NO_SHOW_ALL implies NO_RESET_ALL, and vice-versa.
-SELECT name FROM tab_settings_flags
-  WHERE no_show_all AND NOT no_reset_all
-  ORDER BY 1;
--- Exceptions are transaction_*.
-SELECT name FROM tab_settings_flags
-  WHERE NOT no_show_all AND no_reset_all
-  ORDER BY 1;
--- NO_SHOW_ALL implies NOT_IN_SAMPLE.
-SELECT name FROM tab_settings_flags
-  WHERE no_show_all AND NOT not_in_sample
   ORDER BY 1;
 DROP TABLE tab_settings_flags;
