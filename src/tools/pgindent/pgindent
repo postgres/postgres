@@ -23,12 +23,14 @@ my $devnull = File::Spec->devnull;
 
 my ($typedefs_file, $typedef_str, $code_base,
 	@excludes,      $indent,      $build,
-	$show_diff,     $silent_diff, $help);
+	$show_diff,     $silent_diff, $help,
+	@commits,);
 
 $help = 0;
 
 my %options = (
 	"help"               => \$help,
+	"commit=s"           => \@commits,
 	"typedefs=s"         => \$typedefs_file,
 	"list-of-typedefs=s" => \$typedef_str,
 	"code-base=s"        => \$code_base,
@@ -44,6 +46,9 @@ usage() if $help;
 usage("Cannot have both --silent-diff and --show-diff")
   if $silent_diff && $show_diff;
 
+usage("Cannot use --commit with --code-base or command line file list")
+  if (@commits && ($code_base || @ARGV));
+
 run_build($code_base) if ($build);
 
 # command line option wins, then environment (which is how --build sets it) ,
@@ -53,8 +58,9 @@ $typedefs_file ||= $ENV{PGTYPEDEFS};
 # build mode sets PGINDENT
 $indent ||= $ENV{PGINDENT} || $ENV{INDENT} || "pg_bsd_indent";
 
-# no non-option arguments given. so do everything in the current directory
-$code_base ||= '.' unless @ARGV;
+# if no non-option arguments or commits are given, default to looking in the
+# current directory
+$code_base ||= '.' unless (@ARGV || @commits);
 
 my $sourcedir = locate_sourcedir();
 
@@ -388,6 +394,7 @@ Usage:
 pgindent [OPTION]... [FILE]...
 Options:
 	--help                  show this message and quit
+    --commit=gitref         use files modified by the named commit
 	--typedefs=FILE         file containing a list of typedefs
 	--list-of-typedefs=STR  string containing typedefs, space separated
 	--code-base=DIR         path to the base of PostgreSQL source code
@@ -396,7 +403,7 @@ Options:
 	--build                 build the pg_bsd_indent program
 	--show-diff             show the changes that would be made
 	--silent-diff           exit with status 2 if any changes would be made
-The --excludes option can be given more than once.
+The --excludes and --commit options can be given more than once.
 EOF
 	if ($help)
 	{
@@ -412,27 +419,38 @@ EOF
 
 # main
 
-# get the list of files under code base, if it's set
-File::Find::find(
-	{
-		wanted => sub {
-			my ($dev, $ino, $mode, $nlink, $uid, $gid);
-			(($dev, $ino, $mode, $nlink, $uid, $gid) = lstat($_))
-			  && -f _
-			  && /^.*\.[ch]\z/s
-			  && push(@files, $File::Find::name);
-		}
-	},
-	$code_base) if $code_base;
-
 $filtered_typedefs_fh = load_typedefs();
 
 check_indent();
 
-# any non-option arguments are files to be processed
-push(@files, @ARGV);
+build_clean($code_base) if $build;
 
-# the exclude list applies to command line arguments as well as found files
+my $wanted = sub
+{
+	my ($dev, $ino, $mode, $nlink, $uid, $gid);
+	(($dev, $ino, $mode, $nlink, $uid, $gid) = lstat($_))
+	  && -f _
+	  && /^.*\.[ch]\z/s
+	  && push(@files, $File::Find::name);
+};
+
+# get the list of files under code base, if it's set
+File::Find::find({wanted => $wanted }, $code_base) if $code_base;
+
+# any non-option arguments are files or directories to be processed
+File::Find::find({wanted => $wanted}, @ARGV) if @ARGV;
+
+# process named commits by comparing each with their immediate ancestor
+foreach my $commit (@commits)
+{
+	my $prev="$commit~";
+	my @affected=`git diff-tree --no-commit-id --name-only -r $commit $prev`;
+	die "git error" if $?;
+	chomp(@affected);
+	push(@files,@affected);
+}
+
+# remove excluded files from the file list
 process_exclude();
 
 foreach my $source_filename (@files)
@@ -480,7 +498,5 @@ foreach my $source_filename (@files)
 		}
 	}
 }
-
-build_clean($code_base) if $build;
 
 exit 0;
