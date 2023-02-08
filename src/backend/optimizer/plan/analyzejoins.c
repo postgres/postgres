@@ -316,12 +316,8 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
  * Remove the target relid from the planner's data structures, having
  * determined that there is no need to include it in the query.
  *
- * We are not terribly thorough here.  We must make sure that the rel is
- * no longer treated as a baserel, and that attributes of other baserels
- * are no longer marked as being needed at joins involving this rel.
- * Also, join quals involving the rel have to be removed from the joininfo
- * lists, but only if they belong to the outer join identified by ojrelid
- * and joinrelids.
+ * We are not terribly thorough here.  We only bother to update parts of
+ * the planner's data structures that will actually be consulted later.
  */
 static void
 remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
@@ -429,11 +425,18 @@ remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 		}
 		else
 		{
+			PlaceHolderVar *phv = phinfo->ph_var;
+
 			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, relid);
 			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, ojrelid);
-			Assert(!bms_is_empty(phinfo->ph_eval_at));
+			Assert(!bms_is_empty(phinfo->ph_eval_at));	/* checked previously */
 			phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
 			phinfo->ph_needed = bms_del_member(phinfo->ph_needed, ojrelid);
+			/* ph_needed might or might not become empty */
+			phv->phrels = bms_del_member(phv->phrels, relid);
+			phv->phrels = bms_del_member(phv->phrels, ojrelid);
+			Assert(!bms_is_empty(phv->phrels));
+			Assert(phv->phnullingrels == NULL); /* no need to adjust */
 		}
 	}
 

@@ -1813,6 +1813,13 @@ from int4_tbl as t1
                on t5.q1 = t7.q2)
     on false;
 
+-- per further discussion of bug #17781
+explain (costs off)
+select ss1.x
+from (select f1/2 as x from int4_tbl i4 left join a on a.id = i4.f1) ss1
+     right join int8_tbl i8 on true
+where current_user is not null;  -- this is to add a Result node
+
 -- check that join removal works for a left join when joining a subquery
 -- that is guaranteed to be unique by its GROUP BY clause
 explain (costs off)

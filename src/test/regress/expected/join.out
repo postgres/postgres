@@ -5052,6 +5052,22 @@ from int4_tbl as t1
          One-Time Filter: false
 (5 rows)
 
+-- per further discussion of bug #17781
+explain (costs off)
+select ss1.x
+from (select f1/2 as x from int4_tbl i4 left join a on a.id = i4.f1) ss1
+     right join int8_tbl i8 on true
+where current_user is not null;  -- this is to add a Result node
+                  QUERY PLAN                   
+-----------------------------------------------
+ Result
+   One-Time Filter: (CURRENT_USER IS NOT NULL)
+   ->  Nested Loop Left Join
+         ->  Seq Scan on int8_tbl i8
+         ->  Materialize
+               ->  Seq Scan on int4_tbl i4
+(6 rows)
+
 -- check that join removal works for a left join when joining a subquery
 -- that is guaranteed to be unique by its GROUP BY clause
 explain (costs off)
