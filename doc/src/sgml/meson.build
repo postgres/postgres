@@ -87,7 +87,8 @@ postgres_full_xml = custom_target('postgres-full.xml',
   input: 'postgres.sgml',
   output: 'postgres-full.xml',
   depfile: 'postgres-full.xml.d',
-  command: [xmllint, '--noent', '--valid', '--path', '@OUTDIR@', '-o', '@OUTPUT@', '@INPUT@'],
+  command: [xmllint, '--nonet', '--noent', '--valid',
+            '--path', '@OUTDIR@', '-o', '@OUTPUT@', '@INPUT@'],
   depends: doc_generated,
   build_by_default: false,
 )
@@ -100,6 +101,7 @@ alldocs += postgres_full_xml
 #
 if xsltproc_bin.found()
   xsltproc_flags = [
+    '--nonet',
     '--stringparam', 'pg.version', pg_version,
     '--param', 'website.stylesheet', '1'
   ]
@@ -205,9 +207,7 @@ if xsltproc_bin.found()
     command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTDIR@/', xsltproc_flags, '@INPUT@'],
     build_by_default: false,
   )
-
-  # build by default as part of docs target
-  docs += man
+  alldocs += man
 endif
 
 
