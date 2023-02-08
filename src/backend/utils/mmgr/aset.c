@@ -289,7 +289,7 @@ AllocSetFreeIndex(Size size)
 		 * or equivalently
 		 *		pg_leftmost_one_pos32(size - 1) - ALLOC_MINBITS + 1
 		 *
-		 * However, rather than just calling that function, we duplicate the
+		 * However, for platforms without intrinsic support, we duplicate the
 		 * logic here, allowing an additional optimization.  It's reasonable
 		 * to assume that ALLOC_CHUNK_LIMIT fits in 16 bits, so we can unroll
 		 * the byte-at-a-time loop in pg_leftmost_one_pos32 and just handle
@@ -299,8 +299,8 @@ AllocSetFreeIndex(Size size)
 		 * much trouble.
 		 *----------
 		 */
-#ifdef HAVE__BUILTIN_CLZ
-		idx = 31 - __builtin_clz((uint32) size - 1) - ALLOC_MINBITS + 1;
+#ifdef HAVE_BITSCAN_REVERSE
+		idx = pg_leftmost_one_pos32((uint32) size - 1) - ALLOC_MINBITS + 1;
 #else
 		uint32		t,
 					tsize;
