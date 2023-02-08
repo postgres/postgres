@@ -136,6 +136,7 @@
      <listitem>
       <para>
        This is a program for converting, among other things, XML to PDF.
+       It is needed only if you want to build the documentation in PDF format.
       </para>
      </listitem>
     </varlistentry>
@@ -151,25 +152,13 @@
    here.
   </para>
 
-  <para>
-   You can get away with not installing DocBook XML and the DocBook XSLT
-   stylesheets locally, because the required files will be downloaded from the
-   Internet and cached locally.  This may in fact be the preferred solution if
-   your operating system packages provide only an old version of these files,
-   or if no packages are available at all.
-   If you want to prevent any attempt to access the Internet while building
-   the documentation, you need to pass the <option>--nonet</option> option
-   to <command>xmllint</command> and <command>xsltproc</command>; see below
-   for an example.
-  </para>
-
   <sect2>
    <title>Installation on Fedora, RHEL, and Derivatives</title>
 
    <para>
     To install the required packages, use:
 <programlisting>
-yum install docbook-dtds docbook-style-xsl fop libxslt
+yum install docbook-dtds docbook-style-xsl libxslt fop
 </programlisting>
    </para>
   </sect2>
@@ -180,7 +169,7 @@ yum install docbook-dtds docbook-style-xsl fop libxslt
    <para>
     To install the required packages with <command>pkg</command>, use:
 <programlisting>
-pkg install docbook-xml docbook-xsl fop libxslt
+pkg install docbook-xml docbook-xsl libxslt fop
 </programlisting>
    </para>
 
@@ -199,7 +188,7 @@ pkg install docbook-xml docbook-xsl fop libxslt
     available for <productname>Debian GNU/Linux</productname>.
     To install, simply use:
 <programlisting>
-apt-get install docbook-xml docbook-xsl fop libxml2-utils xsltproc
+apt-get install docbook-xml docbook-xsl libxml2-utils xsltproc fop
 </programlisting>
    </para>
   </sect2>
@@ -208,20 +197,36 @@ apt-get install docbook-xml docbook-xsl fop libxml2-utils xsltproc
    <title>macOS</title>
 
    <para>
-    On macOS, you can build the HTML and man documentation without installing
-    anything extra.  If you want to build PDFs or want to install a local copy
-    of DocBook, you can get those from your preferred package manager.
-   </para>
-
-   <para>
     If you use MacPorts, the following will get you set up:
 <programlisting>
-sudo port install docbook-xml-4.5 docbook-xsl fop
+sudo port install docbook-xml docbook-xsl-nons libxslt fop
 </programlisting>
     If you use Homebrew, use this:
 <programlisting>
-brew install docbook docbook-xsl fop
+brew install docbook docbook-xsl libxslt fop
 </programlisting>
+   </para>
+
+   <para>
+    The Homebrew-supplied programs require the following environment variable
+    to be set:
+<programlisting>
+export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
+</programlisting>
+    Without it, <command>xsltproc</command> will throw errors like this:
+<programlisting>
+I/O error : Attempt to load network entity http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd
+postgres.sgml:21: warning: failed to load external entity "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+...
+</programlisting>
+   </para>
+
+   <para>
+    While it is possible to use the Apple-provided versions
+    of <command>xmllint</command> and <command>xsltproc</command>
+    instead of those from MacPorts or Homebrew, you'll still need
+    to install the DocBook DTD and stylesheets, and set up a catalog
+    file that points to them.
    </para>
   </sect2>
 
@@ -253,12 +258,6 @@ checking for dbtoepub... dbtoepub
    these programs, for example
 <screen>
 ./configure ... XMLLINT=/opt/local/bin/xmllint ...
-</screen>
-   Also, if you want to ensure that <filename>xmllint</filename>
-   and <filename>xsltproc</filename> will not perform any network access,
-   you can do something like
-<screen>
-./configure ... XMLLINT="xmllint --nonet" XSLTPROC="xsltproc --nonet" ...
 </screen>
   </para>
   </sect2>
