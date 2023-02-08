@@ -1407,6 +1407,7 @@ AC_CHECK_HEADERS(m4_normalize([
 	poll.h
 	sys/epoll.h
 	sys/ipc.h
+	sys/personality.h
 	sys/prctl.h
 	sys/procctl.h
 	sys/pstat.h
