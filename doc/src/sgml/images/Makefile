@@ -8,7 +8,7 @@ ALL_IMAGES = \
 
 DITAA = ditaa
 DOT = dot
-XSLTPROC = xsltproc
+XSLTPROC = xsltproc --nonet
 
 all: $(ALL_IMAGES)
 
