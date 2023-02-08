@@ -138,6 +138,11 @@ extern char *pipe_read_line(char *cmd, char *line, int maxsize);
 /* Doesn't belong here, but this is used with find_other_exec(), so... */
 #define PG_BACKEND_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
 
+#ifdef EXEC_BACKEND
+/* Disable ASLR before exec, for developer builds only (in exec.c) */
+extern int pg_disable_aslr(void);
+#endif
+
 
 #if defined(WIN32) || defined(__CYGWIN__)
 #define EXE ".exe"

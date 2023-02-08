@@ -453,6 +453,10 @@ start_postmaster(void)
 	fflush(stdout);
 	fflush(stderr);
 
+#ifdef EXEC_BACKEND
+	pg_disable_aslr();
+#endif
+
 	pm_pid = fork();
 	if (pm_pid < 0)
 	{
