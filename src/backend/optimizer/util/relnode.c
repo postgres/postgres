@@ -1051,9 +1051,9 @@ min_join_parameterization(PlannerInfo *root,
  *		A leftjoin (B leftjoin C on (Pbc)) on (Pab)
  * Here the now-upper A/B join must not mark C columns as nulled by itself.
  *
- * Second, if sjinfo->commute_above_r is already part of the joinrel then
- * it is added to the nulling bitmaps of nullable Vars.  This takes care of
- * the reverse case where we implement
+ * Second, any relid in sjinfo->commute_above_r that is already part of
+ * the joinrel is added to the nulling bitmaps of nullable Vars and PHVs.
+ * This takes care of the reverse case where we implement
  *		A leftjoin (B leftjoin C on (Pbc)) on (Pab)
  * as
  *		(A leftjoin B on (Pab)) leftjoin C on (Pbc)
@@ -1100,9 +1100,10 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 						  bms_is_subset(phv->phrels, sjinfo->syn_lefthand))))
 						phv->phnullingrels = bms_add_member(phv->phnullingrels,
 															sjinfo->ojrelid);
-					if (bms_overlap(sjinfo->commute_above_r, joinrel->relids))
-						phv->phnullingrels = bms_add_members(phv->phnullingrels,
-															 sjinfo->commute_above_r);
+					phv->phnullingrels =
+						bms_join(phv->phnullingrels,
+								 bms_intersect(sjinfo->commute_above_r,
+											   relids));
 				}
 
 				joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
@@ -1164,9 +1165,10 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 				  bms_is_member(var->varno, sjinfo->syn_lefthand))))
 				var->varnullingrels = bms_add_member(var->varnullingrels,
 													 sjinfo->ojrelid);
-			if (bms_overlap(sjinfo->commute_above_r, joinrel->relids))
-				var->varnullingrels = bms_add_members(var->varnullingrels,
-													  sjinfo->commute_above_r);
+			var->varnullingrels =
+				bms_join(var->varnullingrels,
+						 bms_intersect(sjinfo->commute_above_r,
+									   relids));
 		}
 
 		joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
