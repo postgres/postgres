@@ -394,7 +394,7 @@ Usage:
 pgindent [OPTION]... [FILE]...
 Options:
 	--help                  show this message and quit
-    --commit=gitref         use files modified by the named commit
+	--commit=gitref         use files modified by the named commit
 	--typedefs=FILE         file containing a list of typedefs
 	--list-of-typedefs=STR  string containing typedefs, space separated
 	--code-base=DIR         path to the base of PostgreSQL source code
