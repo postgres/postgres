@@ -1563,29 +1563,36 @@ GetSafeSnapshotBlockingPids(int blocked_pid, int *output, int output_size)
 {
 	int			num_written = 0;
 	dlist_iter	iter;
-	SERIALIZABLEXACT *sxact = NULL;
+	SERIALIZABLEXACT *blocking_sxact = NULL;
 
 	LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 
 	/* Find blocked_pid's SERIALIZABLEXACT by linear search. */
 	dlist_foreach(iter, &PredXact->activeList)
 	{
-		sxact = dlist_container(SERIALIZABLEXACT, xactLink, iter.cur);
+		SERIALIZABLEXACT *sxact =
+			dlist_container(SERIALIZABLEXACT, xactLink, iter.cur);
 
 		if (sxact->pid == blocked_pid)
+		{
+			blocking_sxact = sxact;
 			break;
+		}
 	}
 
 	/* Did we find it, and is it currently waiting in GetSafeSnapshot? */
-	if (sxact != NULL && SxactIsDeferrableWaiting(sxact))
+	if (blocking_sxact != NULL && SxactIsDeferrableWaiting(blocking_sxact))
 	{
 		/* Traverse the list of possible unsafe conflicts collecting PIDs. */
-		dlist_foreach(iter, &sxact->possibleUnsafeConflicts)
+		dlist_foreach(iter, &blocking_sxact->possibleUnsafeConflicts)
 		{
 			RWConflict	possibleUnsafeConflict =
 			dlist_container(RWConflictData, inLink, iter.cur);
 
 			output[num_written++] = possibleUnsafeConflict->sxactOut->pid;
+
+			if (num_written >= output_size)
+				break;
 		}
 	}
 
