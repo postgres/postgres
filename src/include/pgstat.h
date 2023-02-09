@@ -48,6 +48,7 @@ typedef enum PgStat_Kind
 	PGSTAT_KIND_ARCHIVER,
 	PGSTAT_KIND_BGWRITER,
 	PGSTAT_KIND_CHECKPOINTER,
+	PGSTAT_KIND_IO,
 	PGSTAT_KIND_SLRU,
 	PGSTAT_KIND_WAL,
 } PgStat_Kind;
@@ -242,7 +243,7 @@ typedef struct PgStat_TableXactStatus
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BCA9
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCAA
 
 typedef struct PgStat_ArchiverStats
 {
@@ -275,6 +276,55 @@ typedef struct PgStat_CheckpointerStats
 	PgStat_Counter buf_written_backend;
 	PgStat_Counter buf_fsync_backend;
 } PgStat_CheckpointerStats;
+
+
+/*
+ * Types related to counting IO operations
+ */
+typedef enum IOObject
+{
+	IOOBJECT_RELATION,
+	IOOBJECT_TEMP_RELATION,
+} IOObject;
+
+#define IOOBJECT_FIRST IOOBJECT_RELATION
+#define IOOBJECT_NUM_TYPES (IOOBJECT_TEMP_RELATION + 1)
+
+typedef enum IOContext
+{
+	IOCONTEXT_BULKREAD,
+	IOCONTEXT_BULKWRITE,
+	IOCONTEXT_NORMAL,
+	IOCONTEXT_VACUUM,
+} IOContext;
+
+#define IOCONTEXT_FIRST IOCONTEXT_BULKREAD
+#define IOCONTEXT_NUM_TYPES (IOCONTEXT_VACUUM + 1)
+
+typedef enum IOOp
+{
+	IOOP_EVICT,
+	IOOP_EXTEND,
+	IOOP_FSYNC,
+	IOOP_READ,
+	IOOP_REUSE,
+	IOOP_WRITE,
+} IOOp;
+
+#define IOOP_FIRST IOOP_EVICT
+#define IOOP_NUM_TYPES (IOOP_WRITE + 1)
+
+typedef struct PgStat_BktypeIO
+{
+	PgStat_Counter data[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
+} PgStat_BktypeIO;
+
+typedef struct PgStat_IO
+{
+	TimestampTz stat_reset_timestamp;
+	PgStat_BktypeIO stats[BACKEND_NUM_TYPES];
+} PgStat_IO;
+
 
 typedef struct PgStat_StatDBEntry
 {
@@ -451,6 +501,24 @@ extern PgStat_BgWriterStats *pgstat_fetch_stat_bgwriter(void);
 
 extern void pgstat_report_checkpointer(void);
 extern PgStat_CheckpointerStats *pgstat_fetch_stat_checkpointer(void);
+
+
+/*
+ * Functions in pgstat_io.c
+ */
+
+extern bool pgstat_bktype_io_stats_valid(PgStat_BktypeIO *context_ops,
+										 BackendType bktype);
+extern void pgstat_count_io_op(IOObject io_object, IOContext io_context, IOOp io_op);
+extern PgStat_IO *pgstat_fetch_stat_io(void);
+extern const char *pgstat_get_io_context_name(IOContext io_context);
+extern const char *pgstat_get_io_object_name(IOObject io_object);
+
+extern bool pgstat_tracks_io_bktype(BackendType bktype);
+extern bool pgstat_tracks_io_object(BackendType bktype,
+									IOObject io_object, IOContext io_context);
+extern bool pgstat_tracks_io_op(BackendType bktype, IOObject io_object,
+								IOContext io_context, IOOp io_op);
 
 
 /*

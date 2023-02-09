@@ -206,7 +206,7 @@ pgstat_drop_relation(Relation rel)
 }
 
 /*
- * Report that the table was just vacuumed.
+ * Report that the table was just vacuumed and flush IO statistics.
  */
 void
 pgstat_report_vacuum(Oid tableoid, bool shared,
@@ -258,10 +258,18 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	}
 
 	pgstat_unlock_entry(entry_ref);
+
+	/*
+	 * Flush IO statistics now. pgstat_report_stat() will flush IO stats,
+	 * however this will not be called until after an entire autovacuum cycle
+	 * is done -- which will likely vacuum many relations -- or until the
+	 * VACUUM command has processed all tables and committed.
+	 */
+	pgstat_flush_io(false);
 }
 
 /*
- * Report that the table was just analyzed.
+ * Report that the table was just analyzed and flush IO statistics.
  *
  * Caller must provide new live- and dead-tuples estimates, as well as a
  * flag indicating whether to reset the mod_since_analyze counter.
@@ -341,6 +349,9 @@ pgstat_report_analyze(Relation rel,
 	}
 
 	pgstat_unlock_entry(entry_ref);
+
+	/* see pgstat_report_vacuum() */
+	pgstat_flush_io(false);
 }
 
 /*

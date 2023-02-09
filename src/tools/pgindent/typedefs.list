@@ -1108,7 +1108,10 @@ ID
 INFIX
 INT128
 INTERFACE_INFO
+IOContext
 IOFuncSelector
+IOObject
+IOOp
 IPCompareMethod
 ITEM
 IV
@@ -2017,6 +2020,7 @@ PgStatShared_Common
 PgStatShared_Database
 PgStatShared_Function
 PgStatShared_HashEntry
+PgStatShared_IO
 PgStatShared_Relation
 PgStatShared_ReplSlot
 PgStatShared_SLRU
@@ -2026,6 +2030,7 @@ PgStat_ArchiverStats
 PgStat_BackendFunctionEntry
 PgStat_BackendSubEntry
 PgStat_BgWriterStats
+PgStat_BktypeIO
 PgStat_CheckpointerStats
 PgStat_Counter
 PgStat_EntryRef
@@ -2034,6 +2039,7 @@ PgStat_FetchConsistency
 PgStat_FunctionCallUsage
 PgStat_FunctionCounts
 PgStat_HashKey
+PgStat_IO
 PgStat_Kind
 PgStat_KindInfo
 PgStat_LocalState

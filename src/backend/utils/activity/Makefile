@@ -22,6 +22,7 @@ OBJS = \
 	pgstat_checkpointer.o \
 	pgstat_database.o \
 	pgstat_function.o \
+	pgstat_io.o \
 	pgstat_relation.o \
 	pgstat_replslot.o \
 	pgstat_shmem.o \

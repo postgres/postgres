@@ -24,7 +24,7 @@ PgStat_BgWriterStats PendingBgWriterStats = {0};
 
 
 /*
- * Report bgwriter statistics
+ * Report bgwriter and IO statistics
  */
 void
 pgstat_report_bgwriter(void)
@@ -56,6 +56,11 @@ pgstat_report_bgwriter(void)
 	 * Clear out the statistics buffer, so it can be re-used.
 	 */
 	MemSet(&PendingBgWriterStats, 0, sizeof(PendingBgWriterStats));
+
+	/*
+	 * Report IO statistics
+	 */
+	pgstat_flush_io(false);
 }
 
 /*
