@@ -81,8 +81,6 @@ _PG_init(void)
 void
 _PG_archive_module_init(ArchiveModuleCallbacks *cb)
 {
-	AssertVariableIsOfType(&_PG_archive_module_init, ArchiveModuleInit);
-
 	cb->check_configured_cb = basic_archive_configured;
 	cb->archive_file_cb = basic_archive_file;
 }

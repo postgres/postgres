@@ -29,8 +29,6 @@ static void shell_archive_shutdown(void);
 void
 shell_archive_init(ArchiveModuleCallbacks *cb)
 {
-	AssertVariableIsOfType(&shell_archive_init, ArchiveModuleInit);
-
 	cb->check_configured_cb = shell_archive_configured;
 	cb->archive_file_cb = shell_archive_file;
 	cb->shutdown_cb = shell_archive_shutdown;
