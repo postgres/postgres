@@ -1816,7 +1816,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	fsync_fname("pg_logical/snapshots", true);
 
 	/*
-	 * Now there's no way we can loose the dumped state anymore, remember this
+	 * Now there's no way we can lose the dumped state anymore, remember this
 	 * as a serialization point.
 	 */
 	builder->last_serialized_snapshot = lsn;

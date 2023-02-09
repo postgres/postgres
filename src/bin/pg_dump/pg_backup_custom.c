@@ -99,7 +99,7 @@ static size_t _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen);
  *	It's task is to create any extra archive context (using AH->formatData),
  *	and to initialize the supported function pointers.
  *
- *	It should also prepare whatever it's input source is for reading/writing,
+ *	It should also prepare whatever its input source is for reading/writing,
  *	and in the case of a read mode connection, it should load the Header & TOC.
  */
 void

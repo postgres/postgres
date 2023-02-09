@@ -1635,7 +1635,7 @@ drop view at_view_2;
 drop view at_view_1;
 drop table at_base_table;
 
--- check adding a column not iself requiring a rewrite, together with
+-- check adding a column not itself requiring a rewrite, together with
 -- a column requiring a default (bug #16038)
 
 -- ensure that rewrites aren't silently optimized away, removing the

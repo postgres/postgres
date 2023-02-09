@@ -39,7 +39,7 @@
  * operations that can be done without branches (and thus faster) on lists
  * that use circular representation.  However, it is often convenient to
  * initialize list headers to zeroes rather than setting them up with an
- * explicit initialization function, so we also allow the NULL initalization.
+ * explicit initialization function, so we also allow the NULL initialization.
  *
  * EXAMPLES
  *

@@ -995,7 +995,7 @@ dumpRoleMembership(PGconn *conn)
 		fprintf(OPF, "--\n-- Role memberships\n--\n\n");
 
 	/*
-	 * We can't dump these GRANT commands in arbitary order, because a role
+	 * We can't dump these GRANT commands in arbitrary order, because a role
 	 * that is named as a grantor must already have ADMIN OPTION on the
 	 * role for which it is granting permissions, except for the boostrap
 	 * superuser, who can always be named as the grantor.

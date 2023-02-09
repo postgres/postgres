@@ -1034,7 +1034,7 @@ is( $node_subscriber->safe_psql('postgres', "SELECT * FROM s1.t ORDER BY a"),
 4|5|6),
 	'two publications, publishing the same relation');
 
-# Now resync the subcription, but with publications in the opposite order.
+# Now resync the subscription, but with publications in the opposite order.
 # The result should be the same.
 
 $node_subscriber->safe_psql(

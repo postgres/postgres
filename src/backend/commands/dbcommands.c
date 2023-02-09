@@ -3090,7 +3090,7 @@ dbase_redo(XLogReaderState *record)
 
 		/*
 		 * There's a case where the copy source directory is missing for the
-		 * same reason above.  Create the emtpy source directory so that
+		 * same reason above.  Create the empty source directory so that
 		 * copydir below doesn't fail.  The directory will be dropped soon by
 		 * recovery.
 		 */

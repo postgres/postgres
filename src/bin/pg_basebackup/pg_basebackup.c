@@ -2015,8 +2015,9 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 			 * If we write the data out to a tar file, it will be named
 			 * base.tar if it's the main data directory or <tablespaceoid>.tar
 			 * if it's for another tablespace. CreateBackupStreamer() will
-			 * arrange to add .gz to the archive name if pg_basebackup is
-			 * performing compression.
+			 * arrange to add an extension to the archive name if
+			 * pg_basebackup is performing compression, depending on the
+			 * compression type.
 			 */
 			if (PQgetisnull(res, i, 0))
 			{

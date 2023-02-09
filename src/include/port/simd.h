@@ -345,7 +345,7 @@ vector8_ssub(const Vector8 v1, const Vector8 v2)
 #endif							/* ! USE_NO_SIMD */
 
 /*
- * Return a vector with all bits set in each lane where the the corresponding
+ * Return a vector with all bits set in each lane where the corresponding
  * lanes in the inputs are equal.
  */
 #ifndef USE_NO_SIMD

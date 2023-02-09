@@ -2412,7 +2412,7 @@ deparseAnalyzeInfoSql(StringInfo buf, Relation rel)
  *
  * We could also do "ORDER BY random() LIMIT x", which would always pick
  * the expected number of rows, but it requires sorting so it may be much
- * more expensive (particularly on large tables, which is what what the
+ * more expensive (particularly on large tables, which is what the
  * remote sampling is meant to improve).
  */
 void

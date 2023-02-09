@@ -753,7 +753,7 @@ function_inlinable(llvm::Function &F,
 		/* import referenced function itself */
 		importVars.insert(referencedFunction->getName());
 
-		/* import referenced function and its dependants */
+		/* import referenced function and its dependents */
 		for (auto& recImportVar : recImportVars)
 			importVars.insert(recImportVar.first());
 	}

@@ -100,7 +100,7 @@ SELECT * FROM cp_test ORDER BY b COLLATE "C";
  1 | xyzzy
 (4 rows)
 
--- utitlity functions currently not supported here
+-- utility functions currently not supported here
 CREATE PROCEDURE ptestx()
 LANGUAGE SQL
 BEGIN ATOMIC
