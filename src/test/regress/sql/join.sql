@@ -1955,6 +1955,14 @@ SELECT q2 FROM
   RIGHT JOIN int4_tbl ON NULL
  WHERE x >= x;
 
+-- join removal bug #17786: check that OR conditions are cleaned up
+EXPLAIN (COSTS OFF)
+SELECT f1, x
+FROM int4_tbl
+     JOIN ((SELECT 42 AS x FROM int8_tbl LEFT JOIN innertab ON q1 = id) AS ss1
+           RIGHT JOIN tenk1 ON NULL)
+        ON tenk1.unique1 = ss1.x OR tenk1.unique2 = ss1.x;
+
 rollback;
 
 -- another join removal bug: we must clean up correctly when removing a PHV

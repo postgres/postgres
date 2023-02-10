@@ -5344,6 +5344,26 @@ SELECT q2 FROM
          One-Time Filter: false
 (9 rows)
 
+-- join removal bug #17786: check that OR conditions are cleaned up
+EXPLAIN (COSTS OFF)
+SELECT f1, x
+FROM int4_tbl
+     JOIN ((SELECT 42 AS x FROM int8_tbl LEFT JOIN innertab ON q1 = id) AS ss1
+           RIGHT JOIN tenk1 ON NULL)
+        ON tenk1.unique1 = ss1.x OR tenk1.unique2 = ss1.x;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Nested Loop
+   ->  Seq Scan on int4_tbl
+   ->  Materialize
+         ->  Nested Loop Left Join
+               Join Filter: NULL::boolean
+               Filter: ((tenk1.unique1 = (42)) OR (tenk1.unique2 = (42)))
+               ->  Seq Scan on tenk1
+               ->  Result
+                     One-Time Filter: false
+(9 rows)
+
 rollback;
 -- another join removal bug: we must clean up correctly when removing a PHV
 begin;

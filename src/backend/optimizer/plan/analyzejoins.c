@@ -29,6 +29,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "utils/lsyscache.h"
 
@@ -36,6 +37,8 @@
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
 static void remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 								  Relids joinrelids);
+static void remove_rel_from_restrictinfo(RestrictInfo *rinfo,
+										 int relid, int ojrelid);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 static bool rel_supports_distinctness(PlannerInfo *root, RelOptInfo *rel);
 static bool rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel,
@@ -470,24 +473,12 @@ remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 		{
 			/*
 			 * There might be references to relid or ojrelid in the
-			 * clause_relids as a consequence of PHVs having ph_eval_at sets
+			 * RestrictInfo, as a consequence of PHVs having ph_eval_at sets
 			 * that include those.  We already checked above that any such PHV
 			 * is safe, so we can just drop those references.
-			 *
-			 * The clause_relids probably aren't shared with anything else,
-			 * but let's copy them just to be sure.
 			 */
-			rinfo->clause_relids = bms_copy(rinfo->clause_relids);
-			rinfo->clause_relids = bms_del_member(rinfo->clause_relids,
-												  relid);
-			rinfo->clause_relids = bms_del_member(rinfo->clause_relids,
-												  ojrelid);
-			/* Likewise for required_relids */
-			rinfo->required_relids = bms_copy(rinfo->required_relids);
-			rinfo->required_relids = bms_del_member(rinfo->required_relids,
-													relid);
-			rinfo->required_relids = bms_del_member(rinfo->required_relids,
-													ojrelid);
+			remove_rel_from_restrictinfo(rinfo, relid, ojrelid);
+			/* Now throw it back into the joininfo lists */
 			distribute_restrictinfo_to_rels(root, rinfo);
 		}
 	}
@@ -496,6 +487,62 @@ remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 	 * There may be references to the rel in root->fkey_list, but if so,
 	 * match_foreign_keys_to_quals() will get rid of them.
 	 */
+}
+
+/*
+ * Remove any references to relid or ojrelid from the RestrictInfo.
+ *
+ * We only bother to clean out bits in clause_relids and required_relids,
+ * not nullingrel bits in contained Vars and PHVs.  (This might have to be
+ * improved sometime.)  However, if the RestrictInfo contains an OR clause
+ * we have to also clean up the sub-clauses.
+ */
+static void
+remove_rel_from_restrictinfo(RestrictInfo *rinfo, int relid, int ojrelid)
+{
+	/*
+	 * The clause_relids probably aren't shared with anything else, but let's
+	 * copy them just to be sure.
+	 */
+	rinfo->clause_relids = bms_copy(rinfo->clause_relids);
+	rinfo->clause_relids = bms_del_member(rinfo->clause_relids, relid);
+	rinfo->clause_relids = bms_del_member(rinfo->clause_relids, ojrelid);
+	/* Likewise for required_relids */
+	rinfo->required_relids = bms_copy(rinfo->required_relids);
+	rinfo->required_relids = bms_del_member(rinfo->required_relids, relid);
+	rinfo->required_relids = bms_del_member(rinfo->required_relids, ojrelid);
+
+	/* If it's an OR, recurse to clean up sub-clauses */
+	if (restriction_is_or_clause(rinfo))
+	{
+		ListCell   *lc;
+
+		Assert(is_orclause(rinfo->orclause));
+		foreach(lc, ((BoolExpr *) rinfo->orclause)->args)
+		{
+			Node	   *orarg = (Node *) lfirst(lc);
+
+			/* OR arguments should be ANDs or sub-RestrictInfos */
+			if (is_andclause(orarg))
+			{
+				List	   *andargs = ((BoolExpr *) orarg)->args;
+				ListCell   *lc2;
+
+				foreach(lc2, andargs)
+				{
+					RestrictInfo *rinfo2 = lfirst_node(RestrictInfo, lc2);
+
+					remove_rel_from_restrictinfo(rinfo2, relid, ojrelid);
+				}
+			}
+			else
+			{
+				RestrictInfo *rinfo2 = castNode(RestrictInfo, orarg);
+
+				remove_rel_from_restrictinfo(rinfo2, relid, ojrelid);
+			}
+		}
+	}
 }
 
 /*
