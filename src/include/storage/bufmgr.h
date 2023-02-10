@@ -23,7 +23,12 @@
 
 typedef void *Block;
 
-/* Possible arguments for GetAccessStrategy() */
+/*
+ * Possible arguments for GetAccessStrategy().
+ *
+ * If adding a new BufferAccessStrategyType, also add a new IOContext so
+ * IO statistics using this strategy are tracked.
+ */
 typedef enum BufferAccessStrategyType
 {
 	BAS_NORMAL,					/* Normal random access */

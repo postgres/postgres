@@ -18,6 +18,7 @@
 #include "access/parallel.h"
 #include "catalog/catalog.h"
 #include "executor/instrument.h"
+#include "pgstat.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "utils/guc_hooks.h"
@@ -107,7 +108,7 @@ PrefetchLocalBuffer(SMgrRelation smgr, ForkNumber forkNum,
  */
 BufferDesc *
 LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
-				 bool *foundPtr)
+				 bool *foundPtr, IOContext *io_context)
 {
 	BufferTag	newTag;			/* identity of requested block */
 	LocalBufferLookupEnt *hresult;
@@ -126,6 +127,14 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	/* See if the desired buffer already exists */
 	hresult = (LocalBufferLookupEnt *)
 		hash_search(LocalBufHash, &newTag, HASH_FIND, NULL);
+
+	/*
+	 * IO Operations on local buffers are only done in IOCONTEXT_NORMAL. Set
+	 * io_context here (instead of after a buffer hit would have returned) for
+	 * convenience since we don't have to worry about the overhead of calling
+	 * IOContextForStrategy().
+	 */
+	*io_context = IOCONTEXT_NORMAL;
 
 	if (hresult)
 	{
@@ -230,6 +239,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		buf_state &= ~BM_DIRTY;
 		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
+		pgstat_count_io_op(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_WRITE);
 		pgBufferUsage.local_blks_written++;
 	}
 
@@ -255,6 +265,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		ClearBufferTag(&bufHdr->tag);
 		buf_state &= ~(BM_VALID | BM_TAG_VALID);
 		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
+		pgstat_count_io_op(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_EVICT);
 	}
 
 	hresult = (LocalBufferLookupEnt *)
