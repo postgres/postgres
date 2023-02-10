@@ -1820,6 +1820,15 @@ from (select f1/2 as x from int4_tbl i4 left join a on a.id = i4.f1) ss1
      right join int8_tbl i8 on true
 where current_user is not null;  -- this is to add a Result node
 
+-- and further discussion of bug #17781
+explain (costs off)
+select *
+from int8_tbl t1
+  left join (int8_tbl t2 left join onek t3 on t2.q1 > t3.unique1)
+    on t1.q2 = t2.q2
+  left join onek t4
+    on t2.q2 < t3.unique2;
+
 -- check that join removal works for a left join when joining a subquery
 -- that is guaranteed to be unique by its GROUP BY clause
 explain (costs off)

@@ -5068,6 +5068,31 @@ where current_user is not null;  -- this is to add a Result node
                ->  Seq Scan on int4_tbl i4
 (6 rows)
 
+-- and further discussion of bug #17781
+explain (costs off)
+select *
+from int8_tbl t1
+  left join (int8_tbl t2 left join onek t3 on t2.q1 > t3.unique1)
+    on t1.q2 = t2.q2
+  left join onek t4
+    on t2.q2 < t3.unique2;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (t2.q2 < t3.unique2)
+   ->  Nested Loop Left Join
+         Join Filter: (t2.q1 > t3.unique1)
+         ->  Hash Left Join
+               Hash Cond: (t1.q2 = t2.q2)
+               ->  Seq Scan on int8_tbl t1
+               ->  Hash
+                     ->  Seq Scan on int8_tbl t2
+         ->  Materialize
+               ->  Seq Scan on onek t3
+   ->  Materialize
+         ->  Seq Scan on onek t4
+(13 rows)
+
 -- check that join removal works for a left join when joining a subquery
 -- that is guaranteed to be unique by its GROUP BY clause
 explain (costs off)

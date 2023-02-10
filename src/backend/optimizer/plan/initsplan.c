@@ -1540,7 +1540,8 @@ make_outerjoininfo(PlannerInfo *root,
 			}
 			else if (jointype == JOIN_LEFT &&
 					 otherinfo->jointype == JOIN_LEFT &&
-					 bms_overlap(strict_relids, otherinfo->min_righthand))
+					 bms_overlap(strict_relids, otherinfo->min_righthand) &&
+					 !bms_overlap(clause_relids, otherinfo->syn_lefthand))
 			{
 				/* Identity 3 applies, so remove the ordering restriction */
 				min_lefthand = bms_del_member(min_lefthand, otherinfo->ojrelid);
@@ -1985,12 +1986,18 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 			/*
 			 * When we are looking at joins above sjinfo, we are envisioning
 			 * pushing sjinfo to above othersj, so add othersj's nulling bit
-			 * before distributing the quals.
+			 * before distributing the quals.  We should add it to Vars coming
+			 * from the current join's LHS: we want to transform the second
+			 * form of OJ identity 3 to the first form, in which Vars of
+			 * relation B will appear nulled by the syntactically-upper OJ
+			 * within the Pbc clause, but those of relation C will not.  (In
+			 * the notation used by optimizer/README, we're converting a qual
+			 * of the form Pbc to Pb*c.)
 			 */
 			if (above_sjinfo)
 				quals = (List *)
 					add_nulling_relids((Node *) quals,
-									   othersj->min_righthand,
+									   sjinfo->syn_lefthand,
 									   bms_make_singleton(othersj->ojrelid));
 
 			/* Compute qualscope and ojscope for this join level */
@@ -2041,12 +2048,16 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 			/*
 			 * Adjust qual nulling bits for next level up, if needed.  We
 			 * don't want to put sjinfo's own bit in at all, and if we're
-			 * above sjinfo then we did it already.
+			 * above sjinfo then we did it already.  Here, we should mark all
+			 * Vars coming from the lower join's RHS.  (Again, we are
+			 * converting a qual of the form Pbc to Pb*c, but now we are
+			 * putting back bits that were there in the parser output and were
+			 * temporarily stripped above.)
 			 */
 			if (below_sjinfo)
 				quals = (List *)
 					add_nulling_relids((Node *) quals,
-									   othersj->min_righthand,
+									   othersj->syn_righthand,
 									   bms_make_singleton(othersj->ojrelid));
 
 			/* ... and track joins processed so far */
