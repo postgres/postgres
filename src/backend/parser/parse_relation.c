@@ -3901,7 +3901,7 @@ getRTEPermissionInfo(List *rteperminfos, RangeTblEntry *rte)
 
 	if (rte->perminfoindex == 0 ||
 		rte->perminfoindex > list_length(rteperminfos))
-		elog(ERROR, "invalid perminfoindex %d in RTE with relid %u",
+		elog(ERROR, "invalid perminfoindex %u in RTE with relid %u",
 			 rte->perminfoindex, rte->relid);
 	perminfo = list_nth_node(RTEPermissionInfo, rteperminfos,
 							 rte->perminfoindex - 1);
