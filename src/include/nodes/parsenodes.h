@@ -1212,7 +1212,7 @@ typedef struct RangeTblEntry
  * 		needed after rule expansion.
  *
  * Only the relations directly mentioned in the query are checked for
- * accesss permissions by the core executor, so only their RTEPermissionInfos
+ * access permissions by the core executor, so only their RTEPermissionInfos
  * are present in the Query.  However, extensions may want to check inheritance
  * children too, depending on the value of rte->inh, so it's copied in 'inh'
  * for their perusal.
