@@ -1246,6 +1246,147 @@ pg_stat_get_buf_alloc(PG_FUNCTION_ARGS)
 }
 
 /*
+* When adding a new column to the pg_stat_io view, add a new enum value
+* here above IO_NUM_COLUMNS.
+*/
+typedef enum io_stat_col
+{
+	IO_COL_BACKEND_TYPE,
+	IO_COL_IO_OBJECT,
+	IO_COL_IO_CONTEXT,
+	IO_COL_READS,
+	IO_COL_WRITES,
+	IO_COL_EXTENDS,
+	IO_COL_CONVERSION,
+	IO_COL_EVICTIONS,
+	IO_COL_REUSES,
+	IO_COL_FSYNCS,
+	IO_COL_RESET_TIME,
+	IO_NUM_COLUMNS,
+} io_stat_col;
+
+/*
+ * When adding a new IOOp, add a new io_stat_col and add a case to this
+ * function returning the corresponding io_stat_col.
+ */
+static io_stat_col
+pgstat_get_io_op_index(IOOp io_op)
+{
+	switch (io_op)
+	{
+		case IOOP_EVICT:
+			return IO_COL_EVICTIONS;
+		case IOOP_READ:
+			return IO_COL_READS;
+		case IOOP_REUSE:
+			return IO_COL_REUSES;
+		case IOOP_WRITE:
+			return IO_COL_WRITES;
+		case IOOP_EXTEND:
+			return IO_COL_EXTENDS;
+		case IOOP_FSYNC:
+			return IO_COL_FSYNCS;
+	}
+
+	elog(ERROR, "unrecognized IOOp value: %d", io_op);
+	pg_unreachable();
+}
+
+Datum
+pg_stat_get_io(PG_FUNCTION_ARGS)
+{
+	ReturnSetInfo *rsinfo;
+	PgStat_IO  *backends_io_stats;
+	Datum		reset_time;
+
+	InitMaterializedSRF(fcinfo, 0);
+	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
+	backends_io_stats = pgstat_fetch_stat_io();
+
+	reset_time = TimestampTzGetDatum(backends_io_stats->stat_reset_timestamp);
+
+	for (BackendType bktype = B_INVALID; bktype < BACKEND_NUM_TYPES; bktype++)
+	{
+		Datum		bktype_desc = CStringGetTextDatum(GetBackendTypeDesc(bktype));
+		PgStat_BktypeIO *bktype_stats = &backends_io_stats->stats[bktype];
+
+		/*
+		 * In Assert builds, we can afford an extra loop through all of the
+		 * counters checking that only expected stats are non-zero, since it
+		 * keeps the non-Assert code cleaner.
+		 */
+		Assert(pgstat_bktype_io_stats_valid(bktype_stats, bktype));
+
+		/*
+		 * For those BackendTypes without IO Operation stats, skip
+		 * representing them in the view altogether.
+		 */
+		if (!pgstat_tracks_io_bktype(bktype))
+			continue;
+
+		for (IOObject io_obj = IOOBJECT_FIRST;
+			 io_obj < IOOBJECT_NUM_TYPES; io_obj++)
+		{
+			const char *obj_name = pgstat_get_io_object_name(io_obj);
+
+			for (IOContext io_context = IOCONTEXT_FIRST;
+				 io_context < IOCONTEXT_NUM_TYPES; io_context++)
+			{
+				const char *context_name = pgstat_get_io_context_name(io_context);
+
+				Datum		values[IO_NUM_COLUMNS] = {0};
+				bool		nulls[IO_NUM_COLUMNS] = {0};
+
+				/*
+				 * Some combinations of BackendType, IOObject, and IOContext
+				 * are not valid for any type of IOOp. In such cases, omit the
+				 * entire row from the view.
+				 */
+				if (!pgstat_tracks_io_object(bktype, io_obj, io_context))
+					continue;
+
+				values[IO_COL_BACKEND_TYPE] = bktype_desc;
+				values[IO_COL_IO_CONTEXT] = CStringGetTextDatum(context_name);
+				values[IO_COL_IO_OBJECT] = CStringGetTextDatum(obj_name);
+				values[IO_COL_RESET_TIME] = TimestampTzGetDatum(reset_time);
+
+				/*
+				 * Hard-code this to the value of BLCKSZ for now. Future
+				 * values could include XLOG_BLCKSZ, once WAL IO is tracked,
+				 * and constant multipliers, once non-block-oriented IO (e.g.
+				 * temporary file IO) is tracked.
+				 */
+				values[IO_COL_CONVERSION] = Int64GetDatum(BLCKSZ);
+
+				for (IOOp io_op = IOOP_FIRST; io_op < IOOP_NUM_TYPES; io_op++)
+				{
+					int			col_idx = pgstat_get_io_op_index(io_op);
+
+					/*
+					 * Some combinations of BackendType and IOOp, of IOContext
+					 * and IOOp, and of IOObject and IOOp are not tracked. Set
+					 * these cells in the view NULL.
+					 */
+					nulls[col_idx] = !pgstat_tracks_io_op(bktype, io_obj, io_context, io_op);
+
+					if (nulls[col_idx])
+						continue;
+
+					values[col_idx] =
+						Int64GetDatum(bktype_stats->data[io_obj][io_context][io_op]);
+				}
+
+				tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+									 values, nulls);
+			}
+		}
+	}
+
+	return (Datum) 0;
+}
+
+/*
  * Returns statistics of WAL activity
  */
 Datum

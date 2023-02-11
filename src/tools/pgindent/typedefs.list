@@ -3378,6 +3378,7 @@ intset_internal_node
 intset_leaf_node
 intset_node
 intvKEY
+io_stat_col
 itemIdCompact
 itemIdCompactData
 iterator
