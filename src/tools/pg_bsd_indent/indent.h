@@ -30,6 +30,8 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 303746 2016-08-04 15:27:09Z pfg
 
 #define	nitems(x)	(sizeof((x)) / sizeof((x)[0]))
 
+struct parser_state;			/* allow forward reference */
+
 void	add_typename(const char *);
 void	alloc_typenames(void);
 int	compute_code_target(void);
