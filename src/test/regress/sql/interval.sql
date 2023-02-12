@@ -284,6 +284,9 @@ SELECT  interval '-23 hours 45 min 12.34 sec',
         interval '-1 year 2 months 1 day 23 hours 45 min 12.34 sec',
         interval '-1 year 2 months 1 day 23 hours 45 min +12.34 sec';
 
+-- edge case for sign-matching rules
+SELECT  interval '';  -- error
+
 -- test outputting iso8601 intervals
 SET IntervalStyle to iso_8601;
 select  interval '0'                                AS "zero",

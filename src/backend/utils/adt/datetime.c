@@ -3376,7 +3376,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 	 * to dump in postgres style, not SQL style.)
 	 *----------
 	 */
-	if (IntervalStyle == INTSTYLE_SQL_STANDARD && *field[0] == '-')
+	if (IntervalStyle == INTSTYLE_SQL_STANDARD && nf > 0 && *field[0] == '-')
 	{
 		force_negative = true;
 		/* Check for additional explicit signs */

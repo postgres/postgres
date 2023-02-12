@@ -888,6 +888,11 @@ SELECT  interval '-23 hours 45 min 12.34 sec',
  -23:45:12.34 | -1 23:45:12.34 | -1-2 -1 -23:45:12.34 | -0-10 +1 +23:45:12.34
 (1 row)
 
+-- edge case for sign-matching rules
+SELECT  interval '';  -- error
+ERROR:  invalid input syntax for type interval: ""
+LINE 1: SELECT  interval '';
+                         ^
 -- test outputting iso8601 intervals
 SET IntervalStyle to iso_8601;
 select  interval '0'                                AS "zero",
