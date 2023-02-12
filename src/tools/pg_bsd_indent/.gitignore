@@ -1,0 +1,10 @@
+# Global excludes across all subdirectories
+*.o
+*.obj
+*.exe
+
+# Local excludes in root directory
+/pg_bsd_indent
+/*.out
+/*.list
+/tests.diff
