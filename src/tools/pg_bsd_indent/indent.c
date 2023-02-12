@@ -60,7 +60,7 @@ const char *in_name = "Standard Input";	/* will always point to name of input
 					 * file */
 const char *out_name = "Standard Output";	/* will always point to name
 						 * of output file */
-char        bakfile[MAXPATHLEN] = "";
+char        bakfile[MAXPGPATH] = "";
 
 int
 main(int argc, char **argv)
@@ -207,7 +207,7 @@ main(int argc, char **argv)
 							 * the file */
 		    errx(1, "input and output files must be different");
 		}
-		output = fopen(out_name, "w");
+		output = fopen(out_name, "wb");
 		if (output == NULL)	/* check for create error */
 			err(1, "%s", out_name);
 		continue;
@@ -1232,7 +1232,7 @@ bakcopy(void)
     if (input == NULL)
 	err(1, "%s", bakfile);
     /* now the original input file will be the output */
-    output = fopen(in_name, "w");
+    output = fopen(in_name, "wb");
     if (output == NULL) {
 	unlink(bakfile);
 	err(1, "%s", in_name);

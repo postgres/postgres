@@ -47,6 +47,10 @@ src/pl/plperl/ppport\.h$
 src/pl/plperl/SPI\.c$
 src/pl/plperl/Util\.c$
 #
+# pg_bsd_indent has its own, idiosyncratic indentation style.
+# We'll stick to that to permit comparison with the FreeBSD upstream.
+src/tools/pg_bsd_indent/.*
+#
 # Exclude any temporary installations that may be in the tree.
 /tmp_check/
 /tmp_install/

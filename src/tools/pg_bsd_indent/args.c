@@ -176,7 +176,7 @@ void
 set_profile(const char *profile_name)
 {
     FILE *f;
-    char fname[PATH_MAX];
+    char fname[MAXPGPATH];
     static char prof[] = ".indent.pro";
 
     if (profile_name == NULL)

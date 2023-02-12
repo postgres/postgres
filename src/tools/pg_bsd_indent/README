@@ -1,3 +1,40 @@
+src/tools/pg_bsd_indent/README
+
+This is a lightly modified version of the "indent" program maintained
+by the FreeBSD project.  The modifications are mostly to make it portable
+to non-BSD-ish platforms, though we do have one formatting switch we
+couldn't convince upstream to take.
+
+To build it, configure the surrounding Postgres source tree,
+then run "make" in this directory.
+Optionally, run "make test" for some simple tests.
+
+You'll need to install pg_bsd_indent somewhere in your PATH before
+using it.  Most likely, if you're a developer, you don't want to
+put it in the same place as where the surrounding Postgres build
+gets installed.  Therefore, do this part with something like
+
+	make install prefix=/usr/local
+
+If you are using Meson to build, the standard build targets will
+build pg_bsd_indent and also test it, but there is not currently
+provision for installing it anywhere.  Manually copy the built
+executable from build/src/tools/pg_bsd_indent/pg_bsd_indent to
+wherever you want to put it.
+
+
+If you happen to be hacking upon the indent source code, the closest
+approximation to the existing indentation style seems to be
+
+	./pg_bsd_indent -i4 -l79 -di12 -nfc1 -nlp -sac somefile.c
+
+although this has by no means been rigorously adhered to.
+(What was that saw about the shoemaker's children?)
+We're not planning to re-indent to Postgres style, because that
+would make it difficult to compare to the FreeBSD sources.
+
+----------
+
 The FreeBSD originals of the files in this directory bear the
 "4-clause" version of the BSD license.  We have removed the
 "advertising" clauses, as per UC Berkeley's directive here:
