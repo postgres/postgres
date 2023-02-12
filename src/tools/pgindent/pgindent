@@ -444,7 +444,7 @@ File::Find::find({wanted => $wanted}, @ARGV) if @ARGV;
 foreach my $commit (@commits)
 {
 	my $prev="$commit~";
-	my @affected=`git diff-tree --no-commit-id --name-only -r $commit $prev`;
+	my @affected=`git diff --diff-filter=ACMR --name-only $prev $commit`;
 	die "git error" if $?;
 	chomp(@affected);
 	push(@files,@affected);
@@ -453,11 +453,23 @@ foreach my $commit (@commits)
 # remove excluded files from the file list
 process_exclude();
 
+my %processed;
+
 foreach my $source_filename (@files)
 {
+	# skip duplicates
+	next if $processed{$source_filename};
+	$processed{$source_filename} = 1;
+
 	# ignore anything that's not a .c or .h file
 	next unless $source_filename =~ /\.[ch]$/;
 
+	# don't try to indent a file that doesn't exist
+	unless (-f $source_filename)
+	{
+		warn "Could not find $source_filename";
+		next;
+	}
 	# Automatically ignore .c and .h files that correspond to a .y or .l
 	# file.  indent tends to get badly confused by Bison/flex output,
 	# and there's no value in indenting derived files anyway.
