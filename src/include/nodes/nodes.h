@@ -77,10 +77,10 @@ typedef enum NodeTag
  *
  * Node types can be supertypes of other types whether or not they are marked
  * abstract: if a node struct appears as the first field of another struct
- * type, then it is the supertype of that type.  The no_copy, no_equal, and
- * no_read node attributes are automatically inherited from the supertype.
- * (Notice that nodetag_only does not inherit, so it's not quite equivalent
- * to a combination of other attributes.)
+ * type, then it is the supertype of that type.  The no_copy, no_equal,
+ * no_query_jumble and no_read node attributes are automatically inherited
+ * from the supertype.  (Notice that nodetag_only does not inherit, so it's
+ * not quite equivalent to a combination of other attributes.)
  *
  * Valid node field attributes:
  *

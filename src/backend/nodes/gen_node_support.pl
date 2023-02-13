@@ -121,7 +121,7 @@ my %node_type_info;
 my @no_copy;
 # node types we don't want equal support for
 my @no_equal;
-# node types we don't want jumble support for
+# node types we don't want query jumble support for
 my @no_query_jumble;
 # node types we don't want read support for
 my @no_read;
@@ -422,6 +422,8 @@ foreach my $infile (@ARGV)
 						  if elem $supertype, @no_equal;
 						push @no_read, $in_struct
 						  if elem $supertype, @no_read;
+						push @no_query_jumble, $in_struct
+						  if elem $supertype, @no_query_jumble;
 					}
 				}
 

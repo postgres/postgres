@@ -982,6 +982,8 @@ typedef struct SubLink
  */
 typedef struct SubPlan
 {
+	pg_node_attr(no_query_jumble)
+
 	Expr		xpr;
 	/* Fields copied from original SubLink: */
 	SubLinkType subLinkType;	/* see above */
@@ -1029,6 +1031,8 @@ typedef struct SubPlan
  */
 typedef struct AlternativeSubPlan
 {
+	pg_node_attr(no_query_jumble)
+
 	Expr		xpr;
 	List	   *subplans;		/* SubPlan(s) with equivalent results */
 } AlternativeSubPlan;

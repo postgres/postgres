@@ -1728,9 +1728,14 @@ typedef struct TriggerTransition
  *
  * stmt_location/stmt_len identify the portion of the source text string
  * containing this raw statement (useful for multi-statement strings).
+ *
+ * This is irrelevant for query jumbling, as this is not used in parsed
+ * queries.
  */
 typedef struct RawStmt
 {
+	pg_node_attr(no_query_jumble)
+
 	NodeTag		type;
 	Node	   *stmt;			/* raw parse tree */
 	int			stmt_location;	/* start location, or -1 if unknown */

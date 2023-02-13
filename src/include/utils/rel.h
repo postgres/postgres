@@ -268,7 +268,7 @@ typedef struct RelationData
  */
 typedef struct ForeignKeyCacheInfo
 {
-	pg_node_attr(no_equal, no_read)
+	pg_node_attr(no_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 	/* oid of the constraint itself */

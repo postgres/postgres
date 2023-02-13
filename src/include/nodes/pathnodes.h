@@ -94,7 +94,7 @@ typedef enum UpperRelationKind
  */
 typedef struct PlannerGlobal
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -194,7 +194,7 @@ typedef struct PlannerInfo PlannerInfo;
 
 struct PlannerInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -853,7 +853,7 @@ typedef enum RelOptKind
 
 typedef struct RelOptInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1098,7 +1098,7 @@ typedef struct IndexOptInfo IndexOptInfo;
 
 struct IndexOptInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1208,7 +1208,7 @@ struct IndexOptInfo
  */
 typedef struct ForeignKeyOptInfo
 {
-	pg_node_attr(custom_read_write, no_copy_equal, no_read)
+	pg_node_attr(custom_read_write, no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1258,7 +1258,7 @@ typedef struct ForeignKeyOptInfo
  */
 typedef struct StatisticExtInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1309,7 +1309,7 @@ typedef struct StatisticExtInfo
  */
 typedef struct JoinDomain
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1371,7 +1371,7 @@ typedef struct JoinDomain
  */
 typedef struct EquivalenceClass
 {
-	pg_node_attr(custom_read_write, no_copy_equal, no_read)
+	pg_node_attr(custom_read_write, no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1422,7 +1422,7 @@ typedef struct EquivalenceClass
  */
 typedef struct EquivalenceMember
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1455,7 +1455,7 @@ typedef struct EquivalenceMember
  */
 typedef struct PathKey
 {
-	pg_node_attr(no_read)
+	pg_node_attr(no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1503,7 +1503,7 @@ typedef enum VolatileFunctionStatus
  */
 typedef struct PathTarget
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1550,7 +1550,7 @@ typedef struct PathTarget
  */
 typedef struct ParamPathInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1596,7 +1596,7 @@ typedef struct ParamPathInfo
  */
 typedef struct Path
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1730,7 +1730,7 @@ typedef struct IndexPath
  */
 typedef struct IndexClause
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 	struct RestrictInfo *rinfo; /* original restriction or join clause */
@@ -2231,7 +2231,7 @@ typedef struct AggPath
 
 typedef struct GroupingSetData
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 	List	   *set;			/* grouping set as list of sortgrouprefs */
@@ -2240,7 +2240,7 @@ typedef struct GroupingSetData
 
 typedef struct RollupData
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 	List	   *groupClause;	/* applicable subset of parse->groupClause */
@@ -2509,7 +2509,7 @@ typedef struct LimitPath
 
 typedef struct RestrictInfo
 {
-	pg_node_attr(no_read)
+	pg_node_attr(no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -2724,6 +2724,8 @@ typedef struct MergeScanSelCache
 
 typedef struct PlaceHolderVar
 {
+	pg_node_attr(no_query_jumble)
+
 	Expr		xpr;
 
 	/* the represented expression */
@@ -2825,7 +2827,7 @@ typedef struct SpecialJoinInfo SpecialJoinInfo;
 
 struct SpecialJoinInfo
 {
-	pg_node_attr(no_read)
+	pg_node_attr(no_read, no_query_jumble)
 
 	NodeTag		type;
 	Relids		min_lefthand;	/* base+OJ relids in minimum LHS for join */
@@ -2853,7 +2855,7 @@ struct SpecialJoinInfo
  */
 typedef struct OuterJoinClauseInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 	RestrictInfo *rinfo;		/* a mergejoinable outer-join clause */
@@ -2892,6 +2894,8 @@ typedef struct OuterJoinClauseInfo
 
 typedef struct AppendRelInfo
 {
+	pg_node_attr(no_query_jumble)
+
 	NodeTag		type;
 
 	/*
@@ -2967,7 +2971,7 @@ typedef struct AppendRelInfo
  */
 typedef struct RowIdentityVarInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -3005,7 +3009,7 @@ typedef struct RowIdentityVarInfo
 
 typedef struct PlaceHolderInfo
 {
-	pg_node_attr(no_read)
+	pg_node_attr(no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -3038,7 +3042,7 @@ typedef struct PlaceHolderInfo
  */
 typedef struct MinMaxAggInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -3116,7 +3120,7 @@ typedef struct MinMaxAggInfo
  */
 typedef struct PlannerParamItem
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -3296,7 +3300,7 @@ typedef struct JoinCostWorkspace
  */
 typedef struct AggInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 
@@ -3330,7 +3334,7 @@ typedef struct AggInfo
  */
 typedef struct AggTransInfo
 {
-	pg_node_attr(no_copy_equal, no_read)
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
 	NodeTag		type;
 

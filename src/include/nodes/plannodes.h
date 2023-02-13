@@ -46,7 +46,7 @@
  */
 typedef struct PlannedStmt
 {
-	pg_node_attr(no_equal)
+	pg_node_attr(no_equal, no_query_jumble)
 
 	NodeTag		type;
 
@@ -122,7 +122,7 @@ typedef struct PlannedStmt
  */
 typedef struct Plan
 {
-	pg_node_attr(abstract, no_equal)
+	pg_node_attr(abstract, no_equal, no_query_jumble)
 
 	NodeTag		type;
 
@@ -813,7 +813,7 @@ typedef struct NestLoop
 
 typedef struct NestLoopParam
 {
-	pg_node_attr(no_equal)
+	pg_node_attr(no_equal, no_query_jumble)
 
 	NodeTag		type;
 	int			paramno;		/* number of the PARAM_EXEC Param to set */
@@ -1377,7 +1377,7 @@ typedef enum RowMarkType
  */
 typedef struct PlanRowMark
 {
-	pg_node_attr(no_equal)
+	pg_node_attr(no_equal, no_query_jumble)
 
 	NodeTag		type;
 	Index		rti;			/* range table index of markable relation */
@@ -1425,7 +1425,7 @@ typedef struct PlanRowMark
  */
 typedef struct PartitionPruneInfo
 {
-	pg_node_attr(no_equal)
+	pg_node_attr(no_equal, no_query_jumble)
 
 	NodeTag		type;
 	Bitmapset  *root_parent_relids;
@@ -1452,7 +1452,7 @@ typedef struct PartitionPruneInfo
  */
 typedef struct PartitionedRelPruneInfo
 {
-	pg_node_attr(no_equal)
+	pg_node_attr(no_equal, no_query_jumble)
 
 	NodeTag		type;
 
@@ -1495,7 +1495,7 @@ typedef struct PartitionedRelPruneInfo
  */
 typedef struct PartitionPruneStep
 {
-	pg_node_attr(abstract, no_equal)
+	pg_node_attr(abstract, no_equal, no_query_jumble)
 
 	NodeTag		type;
 	int			step_id;
@@ -1570,7 +1570,7 @@ typedef struct PartitionPruneStepCombine
  */
 typedef struct PlanInvalItem
 {
-	pg_node_attr(no_equal)
+	pg_node_attr(no_equal, no_query_jumble)
 
 	NodeTag		type;
 	int			cacheId;		/* a syscache ID, see utils/syscache.h */
