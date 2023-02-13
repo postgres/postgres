@@ -5922,7 +5922,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				transformType = format_type_be_qualified(transform->trftype);
 				transformLang = get_language_name(transform->trflang, false);
 
-				appendStringInfo(&buffer, "for %s on language %s",
+				appendStringInfo(&buffer, "for %s language %s",
 								 transformType,
 								 transformLang);
 				if (objname)
