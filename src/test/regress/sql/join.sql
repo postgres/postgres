@@ -2086,6 +2086,12 @@ select atts.relid::regclass, s.* from pg_stats s join
     indexrelid from pg_index i) atts on atts.attnum = a.attnum where
     schemaname != 'pg_catalog';
 
+-- Test bug in rangetable flattening
+explain (verbose, costs off)
+select 1 from
+  (select * from int8_tbl where q1 <> (select 42) offset 0) ss
+where false;
+
 --
 -- Test LATERAL
 --

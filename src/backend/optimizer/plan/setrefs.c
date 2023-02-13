@@ -536,11 +536,16 @@ flatten_rtes_walker(Node *node, flatten_rtes_walker_context *cxt)
 		 * Recurse into subselects.  Must update cxt->query to this query so
 		 * that the rtable and rteperminfos correspond with each other.
 		 */
+		Query	   *save_query = cxt->query;
+		bool		result;
+
 		cxt->query = (Query *) node;
-		return query_tree_walker((Query *) node,
-								 flatten_rtes_walker,
-								 (void *) cxt,
-								 QTW_EXAMINE_RTES_BEFORE);
+		result = query_tree_walker((Query *) node,
+								   flatten_rtes_walker,
+								   (void *) cxt,
+								   QTW_EXAMINE_RTES_BEFORE);
+		cxt->query = save_query;
+		return result;
 	}
 	return expression_tree_walker(node, flatten_rtes_walker,
 								  (void *) cxt);

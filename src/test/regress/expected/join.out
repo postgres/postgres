@@ -5569,6 +5569,18 @@ select atts.relid::regclass, s.* from pg_stats s join
 ERROR:  column atts.relid does not exist
 LINE 1: select atts.relid::regclass, s.* from pg_stats s join
                ^
+-- Test bug in rangetable flattening
+explain (verbose, costs off)
+select 1 from
+  (select * from int8_tbl where q1 <> (select 42) offset 0) ss
+where false;
+        QUERY PLAN        
+--------------------------
+ Result
+   Output: 1
+   One-Time Filter: false
+(3 rows)
+
 --
 -- Test LATERAL
 --
