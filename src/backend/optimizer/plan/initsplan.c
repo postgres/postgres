@@ -2886,8 +2886,9 @@ match_foreign_keys_to_quals(PlannerInfo *root)
 
 		/*
 		 * Either relid might identify a rel that is in the query's rtable but
-		 * isn't referenced by the jointree so won't have a RelOptInfo.  Hence
-		 * don't use find_base_rel() here.  We can ignore such FKs.
+		 * isn't referenced by the jointree, or has been removed by join
+		 * removal, so that it won't have a RelOptInfo.  Hence don't use
+		 * find_base_rel() here.  We can ignore such FKs.
 		 */
 		if (fkinfo->con_relid >= root->simple_rel_array_size ||
 			fkinfo->ref_relid >= root->simple_rel_array_size)
@@ -2901,8 +2902,7 @@ match_foreign_keys_to_quals(PlannerInfo *root)
 
 		/*
 		 * Ignore FK unless both rels are baserels.  This gets rid of FKs that
-		 * link to inheritance child rels (otherrels) and those that link to
-		 * rels removed by join removal (dead rels).
+		 * link to inheritance child rels (otherrels).
 		 */
 		if (con_rel->reloptkind != RELOPT_BASEREL ||
 			ref_rel->reloptkind != RELOPT_BASEREL)

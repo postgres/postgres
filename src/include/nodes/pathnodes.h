@@ -638,9 +638,6 @@ typedef struct PartitionSchemeData *PartitionScheme;
  * Many of the fields in these RelOptInfos are meaningless, but their Path
  * fields always hold Paths showing ways to do that processing step.
  *
- * Lastly, there is a RelOptKind for "dead" relations, which are base rels
- * that we have proven we don't need to join after all.
- *
  * Parts of this data structure are specific to various scan and join
  * mechanisms.  It didn't seem worth creating new node types for them.
  *
@@ -823,8 +820,7 @@ typedef enum RelOptKind
 	RELOPT_OTHER_MEMBER_REL,
 	RELOPT_OTHER_JOINREL,
 	RELOPT_UPPER_REL,
-	RELOPT_OTHER_UPPER_REL,
-	RELOPT_DEADREL
+	RELOPT_OTHER_UPPER_REL
 } RelOptKind;
 
 /*

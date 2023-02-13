@@ -729,8 +729,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 				continue;
 			}
 
-			Assert(rel->reloptkind == RELOPT_BASEREL ||
-				   rel->reloptkind == RELOPT_DEADREL);
+			Assert(rel->reloptkind == RELOPT_BASEREL);
 
 			rel->eclass_indexes = bms_add_member(rel->eclass_indexes,
 												 ec_index);

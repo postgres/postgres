@@ -332,12 +332,6 @@ remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 	ListCell   *l;
 
 	/*
-	 * Mark the rel as "dead" to show it is no longer part of the join tree.
-	 * (Removing it from the baserel array altogether seems too risky.)
-	 */
-	rel->reloptkind = RELOPT_DEADREL;
-
-	/*
 	 * Remove references to the rel from other baserels' attr_needed arrays.
 	 */
 	for (rti = 1; rti < root->simple_rel_array_size; rti++)
@@ -487,6 +481,16 @@ remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 	 * There may be references to the rel in root->fkey_list, but if so,
 	 * match_foreign_keys_to_quals() will get rid of them.
 	 */
+
+	/*
+	 * Finally, remove the rel from the baserel array to prevent it from being
+	 * referenced again.  (We can't do this earlier because
+	 * remove_join_clause_from_rels will touch it.)
+	 */
+	root->simple_rel_array[relid] = NULL;
+
+	/* And nuke the RelOptInfo, just in case there's another access path */
+	pfree(rel);
 }
 
 /*
