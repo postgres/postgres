@@ -21,9 +21,6 @@
 #include "utils/builtins.h"
 #include "utils/rel.h"
 
-#define DatumGetItemPointer(X)	 ((ItemPointer) DatumGetPointer(X))
-#define ItemPointerGetDatum(X)	 PointerGetDatum(X)
-
 
 PG_FUNCTION_INFO_V1(gin_metapage_info);
 PG_FUNCTION_INFO_V1(gin_page_opaque_info);
