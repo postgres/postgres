@@ -4254,7 +4254,8 @@ ExecEvalPreOrderedDistinctSingle(AggState *aggstate, AggStatePerTrans pertrans)
 													pertrans->aggCollation,
 													pertrans->lastdatum, value))))
 	{
-		if (pertrans->haslast && !pertrans->inputtypeByVal)
+		if (pertrans->haslast && !pertrans->inputtypeByVal &&
+			!pertrans->lastisnull)
 			pfree(DatumGetPointer(pertrans->lastdatum));
 
 		pertrans->haslast = true;
