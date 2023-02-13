@@ -1506,6 +1506,14 @@ group by ten;
          ->  Seq Scan on tenk1
 (5 rows)
 
+-- Ensure consecutive NULLs are properly treated as distinct from each other
+select array_agg(distinct val)
+from (select null as val from generate_series(1, 2));
+ array_agg 
+-----------
+ {NULL}
+(1 row)
+
 -- Ensure no ordering is requested when enable_presorted_aggregate is off
 set enable_presorted_aggregate to off;
 explain (costs off)

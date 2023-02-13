@@ -567,6 +567,10 @@ select
 from tenk1
 group by ten;
 
+-- Ensure consecutive NULLs are properly treated as distinct from each other
+select array_agg(distinct val)
+from (select null as val from generate_series(1, 2));
+
 -- Ensure no ordering is requested when enable_presorted_aggregate is off
 set enable_presorted_aggregate to off;
 explain (costs off)
