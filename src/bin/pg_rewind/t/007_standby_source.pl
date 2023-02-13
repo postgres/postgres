@@ -160,7 +160,7 @@ in A, after C was promoted
 $node_a->safe_psql('postgres',
 	"INSERT INTO tbl1 values ('in A, after rewind')");
 
-$node_b->wait_for_catchup('node_c', 'replay', $node_a->lsn('write'));
+$node_b->wait_for_replay_catchup('node_c', $node_a);
 
 check_query(
 	'SELECT * FROM tbl1',

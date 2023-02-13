@@ -63,8 +63,7 @@ CREATE TABLE ${table1}(a int, b int);
 INSERT INTO $table1 SELECT i % 3, 0 FROM generate_series(1,20) i;
 CREATE TABLE ${table2}(a int, b int);
 ]);
-my $primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 
 # a longrunning psql that we can use to trigger conflicts
@@ -97,8 +96,7 @@ $node_primary->safe_psql(
 	BEGIN; LOCK $table1; COMMIT;
 	]);
 
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 my $cursor1 = "test_recovery_conflict_cursor";
 
@@ -124,8 +122,7 @@ $node_primary->safe_psql($test_db, qq[VACUUM $table1;]);
 # finished, so waiting for catchup ensures that there is no race between
 # encountering the recovery conflict which causes the disconnect and checking
 # the logfile for the terminated connection.
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 check_conflict_log("User was holding shared buffer pin for too long");
 reconnect_and_clear();
@@ -138,8 +135,7 @@ $expected_conflicts++;
 
 $node_primary->safe_psql($test_db,
 	qq[INSERT INTO $table1 SELECT i, 0 FROM generate_series(1,20) i]);
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 # DECLARE and FETCH from cursor on the standby
 $psql_standby{stdin} .= qq[
@@ -160,8 +156,7 @@ $node_primary->safe_psql($test_db,
 $node_primary->safe_psql($test_db, qq[VACUUM $table1;]);
 
 # Wait for attempted replay of PRUNE records
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 check_conflict_log(
 	"User query might have needed to see row versions that must be removed");
@@ -184,8 +179,7 @@ ok(pump_until_standby(qr/^1$/m), "$sect: conflicting lock acquired");
 # DROP TABLE containing block which standby has in a pinned buffer
 $node_primary->safe_psql($test_db, qq[DROP TABLE $table1;]);
 
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 check_conflict_log("User was holding a relation lock for too long");
 reconnect_and_clear();
@@ -213,8 +207,7 @@ ok(pump_until_standby(qr/^6000$/m),
 # standby
 $node_primary->safe_psql($test_db, qq[DROP TABLESPACE $tablespace1;]);
 
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 check_conflict_log(
 	"User was or might have been using tablespace that must be dropped");
@@ -255,8 +248,7 @@ INSERT INTO $table1(a) VALUES (170);
 SELECT txid_current();
 ]);
 
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 $psql_standby{stdin} .= qq[
     BEGIN;
@@ -282,8 +274,7 @@ SELECT 'waiting' FROM pg_locks WHERE locktype = 'relation' AND NOT granted;
 # VACUUM will prune away rows, causing a buffer pin conflict, while standby
 # psql is waiting on lock
 $node_primary->safe_psql($test_db, qq[VACUUM $table1;]);
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 check_conflict_log("User transaction caused buffer deadlock with recovery.");
 reconnect_and_clear();
@@ -311,8 +302,7 @@ $sect = "database conflict";
 
 $node_primary->safe_psql('postgres', qq[DROP DATABASE $test_db;]);
 
-$primary_lsn = $node_primary->lsn('flush');
-$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 check_conflict_log("User was connected to a database that must be dropped");
 

@@ -2711,6 +2711,29 @@ sub wait_for_catchup
 
 =pod
 
+=item $node->wait_for_replay_catchup($standby_name [, $base_node ])
+
+Wait for the replication connection with application_name I<$standby_name>
+until its B<replay> replication column in pg_stat_replication in I<$node>
+equals or passes the I<$base_node>'s B<replay_lsn>. If I<$base_node> is
+omitted, the LSN to wait for is obtained from I<$node>.
+
+The replication connection must be in a streaming state.
+
+Requires that the 'postgres' db exists and is accessible.
+
+This is not a test. It die()s on failure.
+
+=cut
+
+sub wait_for_replay_catchup
+{
+	my ($self, $standby_name, $node) = @_;
+	$node = defined($node) ? $node : $self;
+
+	$self->wait_for_catchup($standby_name, 'replay', $node->lsn('flush'));
+}
+
 =item $node->wait_for_slot_catchup(slot_name, mode, target_lsn)
 
 Wait for the named replication slot to equal or pass the supplied target_lsn.

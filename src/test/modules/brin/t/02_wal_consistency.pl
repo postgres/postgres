@@ -70,6 +70,6 @@ my ($ret, $out, $err) = $whiskey->psql(
 	});
 cmp_ok($out, '>=', 1);
 
-$whiskey->wait_for_catchup($charlie, 'replay', $whiskey->lsn('insert'));
+$whiskey->wait_for_replay_catchup($charlie);
 
 done_testing();
