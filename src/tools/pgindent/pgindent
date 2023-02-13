@@ -21,7 +21,7 @@ my $indent_opts =
 
 my $devnull = File::Spec->devnull;
 
-my ($typedefs_file, $typedef_str, $code_base,
+my ($typedefs_file, $typedef_str,
 	@excludes,      $indent,      $build,
 	$show_diff,     $silent_diff, $help,
 	@commits,);
@@ -33,10 +33,8 @@ my %options = (
 	"commit=s"           => \@commits,
 	"typedefs=s"         => \$typedefs_file,
 	"list-of-typedefs=s" => \$typedef_str,
-	"code-base=s"        => \$code_base,
 	"excludes=s"         => \@excludes,
 	"indent=s"           => \$indent,
-	"build"              => \$build,
 	"show-diff"          => \$show_diff,
 	"silent-diff"        => \$silent_diff,);
 GetOptions(%options) || usage("bad command line argument");
@@ -46,21 +44,15 @@ usage() if $help;
 usage("Cannot have both --silent-diff and --show-diff")
   if $silent_diff && $show_diff;
 
-usage("Cannot use --commit with --code-base or command line file list")
-  if (@commits && ($code_base || @ARGV));
+usage("Cannot use --commit with command line file list")
+  if (@commits && @ARGV);
 
-run_build($code_base) if ($build);
-
-# command line option wins, then environment (which is how --build sets it) ,
-# then locations. based on current dir, then default location
+# command line option wins, then environment, then locations based on current
+# dir, then default location
 $typedefs_file ||= $ENV{PGTYPEDEFS};
 
-# build mode sets PGINDENT
+# get indent location for environment or default
 $indent ||= $ENV{PGINDENT} || $ENV{INDENT} || "pg_bsd_indent";
-
-# if no non-option arguments or commits are given, default to looking in the
-# current directory
-$code_base ||= '.' unless (@ARGV || @commits);
 
 my $sourcedir = locate_sourcedir();
 
@@ -121,8 +113,7 @@ sub check_indent
 sub locate_sourcedir
 {
 	# try fairly hard to locate the sourcedir
-	my $where = $code_base || '.';
-	my $sub = "$where/src/tools/pgindent";
+	my $sub = "./src/tools/pgindent";
 	return $sub if -d $sub;
 	# try to find it from an ancestor directory
 	$sub = "../src/tools/pgindent";
@@ -320,72 +311,6 @@ sub show_diff
 	return $diff;
 }
 
-sub run_build
-{
-	eval "use LWP::Simple;";    ## no critic (ProhibitStringyEval);
-
-	my $code_base = shift || '.';
-	my $save_dir = getcwd();
-
-	# look for the code root
-	foreach (1 .. 5)
-	{
-		last if -d "$code_base/src/tools/pgindent";
-		$code_base = "$code_base/..";
-	}
-
-	die "cannot locate src/tools/pgindent directory in \"$code_base\"\n"
-	  unless -d "$code_base/src/tools/pgindent";
-
-	chdir "$code_base/src/tools/pgindent";
-
-	my $typedefs_list_url =
-	  "https://buildfarm.postgresql.org/cgi-bin/typedefs.pl";
-
-	my $rv = getstore($typedefs_list_url, "tmp_typedefs.list");
-
-	die "cannot fetch typedefs list from $typedefs_list_url\n"
-	  unless is_success($rv);
-
-	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
-
-	my $indentrepo = "https://git.postgresql.org/git/pg_bsd_indent.git";
-	system("git clone $indentrepo >$devnull 2>&1");
-	die "could not fetch pg_bsd_indent sources from $indentrepo\n"
-	  unless $? == 0;
-
-	chdir "pg_bsd_indent" || die;
-	system("make all check >$devnull");
-	die "could not build pg_bsd_indent from source\n"
-	  unless $? == 0;
-
-	$ENV{PGINDENT} = abs_path('pg_bsd_indent');
-
-	chdir $save_dir;
-	return;
-}
-
-sub build_clean
-{
-	my $code_base = shift || '.';
-
-	# look for the code root
-	foreach (1 .. 5)
-	{
-		last if -d "$code_base/src/tools/pgindent";
-		$code_base = "$code_base/..";
-	}
-
-	die "cannot locate src/tools/pgindent directory in \"$code_base\"\n"
-	  unless -d "$code_base/src/tools/pgindent";
-
-	chdir "$code_base";
-
-	system("rm -rf src/tools/pgindent/pg_bsd_indent");
-	system("rm -f src/tools/pgindent/tmp_typedefs.list");
-	return;
-}
-
 sub usage
 {
 	my $message  = shift;
@@ -397,10 +322,8 @@ Options:
 	--commit=gitref         use files modified by the named commit
 	--typedefs=FILE         file containing a list of typedefs
 	--list-of-typedefs=STR  string containing typedefs, space separated
-	--code-base=DIR         path to the base of PostgreSQL source code
 	--excludes=PATH         file containing list of filename patterns to ignore
 	--indent=PATH           path to pg_bsd_indent program
-	--build                 build the pg_bsd_indent program
 	--show-diff             show the changes that would be made
 	--silent-diff           exit with status 2 if any changes would be made
 The --excludes and --commit options can be given more than once.
@@ -423,8 +346,6 @@ $filtered_typedefs_fh = load_typedefs();
 
 check_indent();
 
-build_clean($code_base) if $build;
-
 my $wanted = sub
 {
 	my ($dev, $ino, $mode, $nlink, $uid, $gid);
@@ -434,11 +355,11 @@ my $wanted = sub
 	  && push(@files, $File::Find::name);
 };
 
-# get the list of files under code base, if it's set
-File::Find::find({wanted => $wanted }, $code_base) if $code_base;
-
 # any non-option arguments are files or directories to be processed
 File::Find::find({wanted => $wanted}, @ARGV) if @ARGV;
+
+# commit file locations are relative to the source root
+chdir "$sourcedir/../../.." if @commits && $sourcedir;
 
 # process named commits by comparing each with their immediate ancestor
 foreach my $commit (@commits)
@@ -449,6 +370,8 @@ foreach my $commit (@commits)
 	chomp(@affected);
 	push(@files,@affected);
 }
+
+warn "No files to process" unless @files;
 
 # remove excluded files from the file list
 process_exclude();
