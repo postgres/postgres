@@ -41,6 +41,7 @@
 #include "executor/nodeWindowAgg.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
@@ -2662,16 +2663,24 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	 * aggregate's arguments (and FILTER clause if any) contain any calls to
 	 * volatile functions.  Otherwise, the difference between restarting and
 	 * not restarting the aggregation would be user-visible.
+	 *
+	 * We also don't risk using moving aggregates when there are subplans in
+	 * the arguments or FILTER clause.  This is partly because
+	 * contain_volatile_functions() doesn't look inside subplans; but there
+	 * are other reasons why a subplan's output might be volatile.  For
+	 * example, syncscan mode can render the results nonrepeatable.
 	 */
 	if (!OidIsValid(aggform->aggminvtransfn))
 		use_ma_code = false;	/* sine qua non */
 	else if (aggform->aggmfinalmodify == AGGMODIFY_READ_ONLY &&
-			 aggform->aggfinalmodify != AGGMODIFY_READ_ONLY)
+		aggform->aggfinalmodify != AGGMODIFY_READ_ONLY)
 		use_ma_code = true;		/* decision forced by safety */
 	else if (winstate->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
 		use_ma_code = false;	/* non-moving frame head */
 	else if (contain_volatile_functions((Node *) wfunc))
 		use_ma_code = false;	/* avoid possible behavioral change */
+	else if (contain_subplans((Node *) wfunc))
+		use_ma_code = false;	/* subplans might contain volatile functions */
 	else
 		use_ma_code = true;		/* yes, let's use it */
 	if (use_ma_code)
