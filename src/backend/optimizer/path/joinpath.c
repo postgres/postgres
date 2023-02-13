@@ -378,9 +378,9 @@ allow_star_schema_join(PlannerInfo *root,
  * restrictions prevent us from attempting a join that would cause a problem.
  * (That's unsurprising, because the code worked before we ever added
  * outer-join relids to expression relids.)  It still seems worth checking
- * as a backstop, but we don't go to a lot of trouble: just reject if the
- * unsatisfied part includes any outer-join relids at all.
+ * as a backstop, but we only do so in assert-enabled builds.
  */
+#ifdef USE_ASSERT_CHECKING
 static inline bool
 have_unsafe_outer_join_ref(PlannerInfo *root,
 						   Relids outerrelids,
@@ -388,11 +388,10 @@ have_unsafe_outer_join_ref(PlannerInfo *root,
 {
 	bool		result = false;
 	Relids		unsatisfied = bms_difference(inner_paramrels, outerrelids);
+	Relids		satisfied = bms_intersect(inner_paramrels, outerrelids);
 
-	if (unlikely(bms_overlap(unsatisfied, root->outer_join_rels)))
+	if (bms_overlap(unsatisfied, root->outer_join_rels))
 	{
-#ifdef NOT_USED
-		/* If we ever weaken the join order restrictions, we might need this */
 		ListCell   *lc;
 
 		foreach(lc, root->join_info_list)
@@ -401,25 +400,23 @@ have_unsafe_outer_join_ref(PlannerInfo *root,
 
 			if (!bms_is_member(sjinfo->ojrelid, unsatisfied))
 				continue;		/* not relevant */
-			if (bms_overlap(inner_paramrels, sjinfo->min_righthand) ||
+			if (bms_overlap(satisfied, sjinfo->min_righthand) ||
 				(sjinfo->jointype == JOIN_FULL &&
-				 bms_overlap(inner_paramrels, sjinfo->min_lefthand)))
+				 bms_overlap(satisfied, sjinfo->min_lefthand)))
 			{
 				result = true;	/* doesn't work */
 				break;
 			}
 		}
-#else
-		/* For now, if we do see an overlap, just assume it's trouble */
-		result = true;
-#endif
 	}
 
 	/* Waste no memory when we reject a path here */
 	bms_free(unsatisfied);
+	bms_free(satisfied);
 
 	return result;
 }
+#endif							/* USE_ASSERT_CHECKING */
 
 /*
  * paraminfo_get_equal_hashops
@@ -713,22 +710,24 @@ try_nestloop_path(PlannerInfo *root,
 	/*
 	 * Check to see if proposed path is still parameterized, and reject if the
 	 * parameterization wouldn't be sensible --- unless allow_star_schema_join
-	 * says to allow it anyway.  Also, we must reject if either
-	 * have_unsafe_outer_join_ref or have_dangerous_phv don't like the look of
-	 * it, which could only happen if the nestloop is still parameterized.
+	 * says to allow it anyway.  Also, we must reject if have_dangerous_phv
+	 * doesn't like the look of it, which could only happen if the nestloop is
+	 * still parameterized.
 	 */
 	required_outer = calc_nestloop_required_outer(outerrelids, outer_paramrels,
 												  innerrelids, inner_paramrels);
 	if (required_outer &&
 		((!bms_overlap(required_outer, extra->param_source_rels) &&
 		  !allow_star_schema_join(root, outerrelids, inner_paramrels)) ||
-		 have_unsafe_outer_join_ref(root, outerrelids, inner_paramrels) ||
 		 have_dangerous_phv(root, outerrelids, inner_paramrels)))
 	{
 		/* Waste no memory when we reject a path here */
 		bms_free(required_outer);
 		return;
 	}
+
+	/* If we got past that, we shouldn't have any unsafe outer-join refs */
+	Assert(!have_unsafe_outer_join_ref(root, outerrelids, inner_paramrels));
 
 	/*
 	 * Do a precheck to quickly eliminate obviously-inferior paths.  We
