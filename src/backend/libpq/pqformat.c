@@ -123,7 +123,7 @@ pq_beginmessage_reuse(StringInfo buf, char msgtype)
  * --------------------------------
  */
 void
-pq_sendbytes(StringInfo buf, const char *data, int datalen)
+pq_sendbytes(StringInfo buf, const void *data, int datalen)
 {
 	/* use variant that maintains a trailing null-byte, out of caution */
 	appendBinaryStringInfo(buf, data, datalen);

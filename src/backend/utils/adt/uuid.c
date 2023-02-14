@@ -154,7 +154,7 @@ uuid_send(PG_FUNCTION_ARGS)
 	StringInfoData buffer;
 
 	pq_begintypsend(&buffer);
-	pq_sendbytes(&buffer, (char *) uuid->data, UUID_LEN);
+	pq_sendbytes(&buffer, uuid->data, UUID_LEN);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buffer));
 }
 

@@ -654,7 +654,7 @@ array_agg_serialize(PG_FUNCTION_ARGS)
 	pq_sendbyte(&buf, state->typalign);
 
 	/* dnulls */
-	pq_sendbytes(&buf, (char *) state->dnulls, sizeof(bool) * state->nelems);
+	pq_sendbytes(&buf, state->dnulls, sizeof(bool) * state->nelems);
 
 	/*
 	 * dvalues.  By agreement with array_agg_deserialize, when the element
@@ -664,8 +664,7 @@ array_agg_serialize(PG_FUNCTION_ARGS)
 	 * must be sent first).
 	 */
 	if (state->typbyval)
-		pq_sendbytes(&buf, (char *) state->dvalues,
-					 sizeof(Datum) * state->nelems);
+		pq_sendbytes(&buf, state->dvalues, sizeof(Datum) * state->nelems);
 	else
 	{
 		SerialIOData *iodata;
@@ -1097,7 +1096,7 @@ array_agg_array_serialize(PG_FUNCTION_ARGS)
 	if (state->nullbitmap)
 	{
 		Assert(state->aitems > 0);
-		pq_sendbytes(&buf, (char *) state->nullbitmap, (state->aitems + 7) / 8);
+		pq_sendbytes(&buf, state->nullbitmap, (state->aitems + 7) / 8);
 	}
 
 	/* nitems */
@@ -1107,10 +1106,10 @@ array_agg_array_serialize(PG_FUNCTION_ARGS)
 	pq_sendint32(&buf, state->ndims);
 
 	/* dims: XXX should we just send ndims elements? */
-	pq_sendbytes(&buf, (char *) state->dims, sizeof(state->dims));
+	pq_sendbytes(&buf, state->dims, sizeof(state->dims));
 
 	/* lbs */
-	pq_sendbytes(&buf, (char *) state->lbs, sizeof(state->lbs));
+	pq_sendbytes(&buf, state->lbs, sizeof(state->lbs));
 
 	result = pq_endtypsend(&buf);
 
