@@ -92,6 +92,7 @@ ssl/ subdirectory. The Makefile also contains a rule, "make sslfiles", to
 recreate them if you need to make changes. "make sslfiles-clean" is required
 in order to recreate the full set of keypairs and certificates. To rebuild
 separate files, touch (or remove) the files in question and run "make sslfiles".
+This step requires at least OpenSSL 1.1.1.
 
 TODO
 ====

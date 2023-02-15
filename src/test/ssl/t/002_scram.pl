@@ -42,6 +42,10 @@ my $SERVERHOSTCIDR = '127.0.0.1/32';
 # Determine whether build supports tls-server-end-point.
 my $supports_tls_server_end_point =
   check_pg_config("#define HAVE_X509_GET_SIGNATURE_NID 1");
+# Determine whether build supports detection of hash algorithms for
+# RSA-PSS certificates.
+my $supports_rsapss_certs =
+  check_pg_config("#define HAVE_X509_GET_SIGNATURE_INFO 1");
 
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
@@ -132,4 +136,17 @@ $node->connect_ok(
 		qr/connection authenticated: identity="ssltestuser" method=scram-sha-256/
 	]);
 
+# Now test with a server certificate that uses the RSA-PSS algorithm.
+# This checks that the certificate can be loaded and that channel binding
+# works. (see bug #17760)
+if ($supports_rsapss_certs)
+{
+	switch_server_cert($node, certfile => 'server-rsapss');
+	$node->connect_ok(
+		"$common_connstr user=ssltestuser channel_binding=require",
+		"SCRAM with SSL and channel_binding=require, server certificate uses 'rsassaPss'",
+		log_like => [
+			qr/connection authenticated: identity="ssltestuser" method=scram-sha-256/
+		]);
+}
 done_testing();
