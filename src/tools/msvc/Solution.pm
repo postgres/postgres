@@ -253,7 +253,14 @@ sub GenerateFiles
 
 			my ($digit1, $digit2, $digit3) = $self->GetOpenSSLVersion();
 
-			# More symbols are needed with OpenSSL 1.1.0 and above.
+			# Symbols needed with OpenSSL 1.1.1 and above.
+			if (   ($digit1 >= '3' && $digit2 >= '0' && $digit3 >= '0')
+				|| ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '1'))
+			{
+				print $o "#define HAVE_X509_GET_SIGNATURE_INFO 1\n";
+			}
+
+			# Symbols needed with OpenSSL 1.1.0 and above.
 			if (   ($digit1 >= '3' && $digit2 >= '0' && $digit3 >= '0')
 				|| ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0'))
 			{
