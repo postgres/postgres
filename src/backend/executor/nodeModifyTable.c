@@ -2975,21 +2975,20 @@ lmerge_matched:;
 					 */
 
 					/*
-					 * If cpUpdateRetrySlot is set, ExecCrossPartitionUpdate()
-					 * must have detected that the tuple was concurrently
-					 * updated, so we restart the search for an appropriate
-					 * WHEN MATCHED clause to process the updated tuple.
+					 * During an UPDATE, if cpUpdateRetrySlot is set, then
+					 * ExecCrossPartitionUpdate() must have detected that the
+					 * tuple was concurrently updated, so we restart the search
+					 * for an appropriate WHEN MATCHED clause to process the
+					 * updated tuple.
 					 *
 					 * In this case, ExecDelete() would already have performed
 					 * EvalPlanQual() on the latest version of the tuple,
 					 * which in turn would already have been loaded into
 					 * ri_oldTupleSlot, so no need to do either of those
 					 * things.
-					 *
-					 * XXX why do we not check the WHEN NOT MATCHED list in
-					 * this case?
 					 */
-					if (!TupIsNull(context->cpUpdateRetrySlot))
+					if (commandType == CMD_UPDATE &&
+						!TupIsNull(context->cpUpdateRetrySlot))
 						goto lmerge_matched;
 
 					/*
