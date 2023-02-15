@@ -1,5 +1,11 @@
 #!/bin/sh
-# src/tools/make_etags
+
+# src/tools/make_etags [-n]
+
+if [ $# -gt 1 ] || ( [ $# -eq 1 ] && [ $1 != "-n" ] )
+then	echo "Usage: $0 [-n]"
+	exit 1
+fi
 
 cdir=`dirname $0`
 dir=`(cd $cdir && pwd)`
