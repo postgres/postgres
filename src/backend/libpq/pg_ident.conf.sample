@@ -29,6 +29,10 @@
 # will be substituted for \1 (backslash-one) if present in
 # PG-USERNAME.
 #
+# PG-USERNAME can be "all", a user name, a group name prefixed with "+", or
+# a regular expression (if it starts with a slash (/)).  If it is a regular
+# expression, the substring matching with \1 has no effect.
+#
 # Multiple maps may be specified in this file and used by pg_hba.conf.
 #
 # No map names are defined in the default configuration.  If all

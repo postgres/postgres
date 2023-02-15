@@ -31,14 +31,15 @@
 # - "hostnogssenc" is a TCP/IP socket that is not GSSAPI-encrypted
 #
 # DATABASE can be "all", "sameuser", "samerole", "replication", a
-# database name, or a comma-separated list thereof. The "all"
-# keyword does not match "replication". Access to replication
-# must be enabled in a separate record (see example below).
+# database name, a regular expression (if it starts with a slash (/))
+# or a comma-separated list thereof.  The "all" keyword does not match
+# "replication".  Access to replication must be enabled in a separate
+# record (see example below).
 #
-# USER can be "all", a user name, a group name prefixed with "+", or a
-# comma-separated list thereof.  In both the DATABASE and USER fields
-# you can also write a file name prefixed with "@" to include names
-# from a separate file.
+# USER can be "all", a user name, a group name prefixed with "+", a
+# regular expression (if it starts with a slash (/)) or a comma-separated
+# list thereof.  In both the DATABASE and USER fields you can also write
+# a file name prefixed with "@" to include names from a separate file.
 #
 # ADDRESS specifies the set of hosts the record matches.  It can be a
 # host name, or it is made up of an IP address and a CIDR mask that is
