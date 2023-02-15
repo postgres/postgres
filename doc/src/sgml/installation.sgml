@@ -3052,7 +3052,7 @@ ninja install
      </varlistentry>
 
      <varlistentry id="configure-tap-tests-meson">
-      <term><option>-Dtap-tests={ auto | enabled | disabled }</option></term>
+      <term><option>-Dtap_tests={ auto | enabled | disabled }</option></term>
       <listitem>
        <para>
         Enable tests using the Perl TAP tools.  Defaults to auto and requires
