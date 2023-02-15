@@ -8066,7 +8066,7 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 
 	/*
 	 * Ordinarily, the plan node should be a simple Result.  However, if
-	 * force_parallel_mode is on, the planner might've stuck a Gather node
+	 * debug_parallel_query is on, the planner might've stuck a Gather node
 	 * atop that.  The simplest way to deal with this is to look through the
 	 * Gather node.  The Gather node's tlist would normally contain a Var
 	 * referencing the child node's output, but it could also be a Param, or

@@ -1760,9 +1760,9 @@ main(int argc, char **argv)
 	res = PQexec(conn, "SET lc_messages TO \"C\"");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("failed to set lc_messages: %s", PQerrorMessage(conn));
-	res = PQexec(conn, "SET force_parallel_mode = off");
+	res = PQexec(conn, "SET debug_parallel_query = off");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pg_fatal("failed to set force_parallel_mode: %s", PQerrorMessage(conn));
+		pg_fatal("failed to set debug_parallel_query: %s", PQerrorMessage(conn));
 
 	/* Set the trace file, if requested */
 	if (tracefile != NULL)

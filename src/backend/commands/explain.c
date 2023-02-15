@@ -756,8 +756,8 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	/*
 	 * Sometimes we mark a Gather node as "invisible", which means that it's
 	 * not to be displayed in EXPLAIN output.  The purpose of this is to allow
-	 * running regression tests with force_parallel_mode=regress to get the
-	 * same results as running the same tests with force_parallel_mode=off.
+	 * running regression tests with debug_parallel_query=regress to get the
+	 * same results as running the same tests with debug_parallel_query=off.
 	 * Such marking is currently only supported on a Gather at the top of the
 	 * plan.  We skip that node, and we must also hide per-worker detail data
 	 * further down in the plan tree.

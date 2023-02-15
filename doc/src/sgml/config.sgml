@@ -11091,17 +11091,17 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-force-parallel-mode" xreflabel="force_parallel_mode">
-      <term><varname>force_parallel_mode</varname> (<type>enum</type>)
+     <varlistentry id="guc-debug-parallel-query" xreflabel="debug_parallel_query">
+      <term><varname>debug_parallel_query</varname> (<type>enum</type>)
       <indexterm>
-       <primary><varname>force_parallel_mode</varname> configuration parameter</primary>
+       <primary><varname>debug_parallel_query</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         Allows the use of parallel queries for testing purposes even in cases
         where no performance benefit is expected.
-        The allowed values of <varname>force_parallel_mode</varname> are
+        The allowed values of <varname>debug_parallel_query</varname> are
         <literal>off</literal> (use parallel mode only when it is expected to improve
         performance), <literal>on</literal> (force parallel query for all queries
         for which it is thought to be safe), and <literal>regress</literal> (like

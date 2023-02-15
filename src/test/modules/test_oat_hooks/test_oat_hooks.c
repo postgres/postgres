@@ -233,7 +233,7 @@ emit_audit_message(const char *type, const char *hook, char *action, char *objNa
 	/*
 	 * Ensure that audit messages are not duplicated by only emitting them
 	 * from a leader process, not a worker process. This makes the test
-	 * results deterministic even if run with force_parallel_mode = regress.
+	 * results deterministic even if run with debug_parallel_query = regress.
 	 */
 	if (REGRESS_audit && !IsParallelWorker())
 	{

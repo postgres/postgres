@@ -1152,11 +1152,11 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 				 * If desired, add a context line to show that this is a
 				 * message propagated from a parallel worker.  Otherwise, it
 				 * can sometimes be confusing to understand what actually
-				 * happened.  (We don't do this in FORCE_PARALLEL_REGRESS mode
+				 * happened.  (We don't do this in DEBUG_PARALLEL_REGRESS mode
 				 * because it causes test-result instability depending on
 				 * whether a parallel worker is actually used or not.)
 				 */
-				if (force_parallel_mode != FORCE_PARALLEL_REGRESS)
+				if (debug_parallel_query != DEBUG_PARALLEL_REGRESS)
 				{
 					if (edata.context)
 						edata.context = psprintf("%s\n%s", edata.context,

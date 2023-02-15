@@ -186,6 +186,7 @@ static const unit_conversion time_unit_conversion_table[] =
 static const char *const map_old_guc_names[] = {
 	"sort_mem", "work_mem",
 	"vacuum_mem", "maintenance_work_mem",
+	"force_parallel_mode", "debug_parallel_query",
 	NULL
 };
 

@@ -114,12 +114,12 @@ query_planner(PlannerInfo *root,
 				 * Anything parallel-restricted in the query tlist will be
 				 * dealt with later.)  This is normally pretty silly, because
 				 * a Result-only plan would never be interesting to
-				 * parallelize.  However, if force_parallel_mode is on, then
+				 * parallelize.  However, if debug_parallel_query is on, then
 				 * we want to execute the Result in a parallel worker if
 				 * possible, so we must do this.
 				 */
 				if (root->glob->parallelModeOK &&
-					force_parallel_mode != FORCE_PARALLEL_OFF)
+					debug_parallel_query != DEBUG_PARALLEL_OFF)
 					final_rel->consider_parallel =
 						is_parallel_safe(root, parse->jointree->quals);
 

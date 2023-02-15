@@ -360,16 +360,16 @@ static const struct config_enum_entry recovery_prefetch_options[] = {
 	{NULL, 0, false}
 };
 
-static const struct config_enum_entry force_parallel_mode_options[] = {
-	{"off", FORCE_PARALLEL_OFF, false},
-	{"on", FORCE_PARALLEL_ON, false},
-	{"regress", FORCE_PARALLEL_REGRESS, false},
-	{"true", FORCE_PARALLEL_ON, true},
-	{"false", FORCE_PARALLEL_OFF, true},
-	{"yes", FORCE_PARALLEL_ON, true},
-	{"no", FORCE_PARALLEL_OFF, true},
-	{"1", FORCE_PARALLEL_ON, true},
-	{"0", FORCE_PARALLEL_OFF, true},
+static const struct config_enum_entry debug_parallel_query_options[] = {
+	{"off", DEBUG_PARALLEL_OFF, false},
+	{"on", DEBUG_PARALLEL_ON, false},
+	{"regress", DEBUG_PARALLEL_REGRESS, false},
+	{"true", DEBUG_PARALLEL_ON, true},
+	{"false", DEBUG_PARALLEL_OFF, true},
+	{"yes", DEBUG_PARALLEL_ON, true},
+	{"no", DEBUG_PARALLEL_OFF, true},
+	{"1", DEBUG_PARALLEL_ON, true},
+	{"0", DEBUG_PARALLEL_OFF, true},
 	{NULL, 0, false}
 };
 
@@ -4852,13 +4852,15 @@ struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"force_parallel_mode", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Forces use of parallel query facilities."),
-			gettext_noop("If possible, run query using a parallel worker and with parallel restrictions."),
+		{"debug_parallel_query", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Forces the planner's use parallel query nodes."),
+			gettext_noop("This can be useful for testing the parallel query infrastructure "
+						 "by forcing the planner to generate plans which contains nodes "
+						 "which perform tuple communication between workers and the main process."),
 			GUC_NOT_IN_SAMPLE | GUC_EXPLAIN
 		},
-		&force_parallel_mode,
-		FORCE_PARALLEL_OFF, force_parallel_mode_options,
+		&debug_parallel_query,
+		DEBUG_PARALLEL_OFF, debug_parallel_query_options,
 		NULL, NULL, NULL
 	},
 

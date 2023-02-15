@@ -70,7 +70,7 @@
 
 /* GUC parameters */
 double		cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
-int			force_parallel_mode = FORCE_PARALLEL_OFF;
+int			debug_parallel_query = DEBUG_PARALLEL_OFF;
 bool		parallel_leader_participation = true;
 
 /* Hook for plugins to get control in planner() */
@@ -364,12 +364,12 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	 * true during plan creation if a Gather or Gather Merge plan is actually
 	 * created (cf. create_gather_plan, create_gather_merge_plan).
 	 *
-	 * However, if force_parallel_mode = on or force_parallel_mode = regress,
-	 * then we impose parallel mode whenever it's safe to do so, even if the
-	 * final plan doesn't use parallelism.  It's not safe to do so if the
-	 * query contains anything parallel-unsafe; parallelModeOK will be false
-	 * in that case.  Note that parallelModeOK can't change after this point.
-	 * Otherwise, everything in the query is either parallel-safe or
+	 * However, if debug_parallel_query = on or debug_parallel_query =
+	 * regress, then we impose parallel mode whenever it's safe to do so, even
+	 * if the final plan doesn't use parallelism.  It's not safe to do so if
+	 * the query contains anything parallel-unsafe; parallelModeOK will be
+	 * false in that case.  Note that parallelModeOK can't change after this
+	 * point. Otherwise, everything in the query is either parallel-safe or
 	 * parallel-restricted, and in either case it should be OK to impose
 	 * parallel-mode restrictions.  If that ends up breaking something, then
 	 * either some function the user included in the query is incorrectly
@@ -377,7 +377,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	 * parallel-unsafe, or else the query planner itself has a bug.
 	 */
 	glob->parallelModeNeeded = glob->parallelModeOK &&
-		(force_parallel_mode != FORCE_PARALLEL_OFF);
+		(debug_parallel_query != DEBUG_PARALLEL_OFF);
 
 	/* Determine what fraction of the plan is likely to be scanned */
 	if (cursorOptions & CURSOR_OPT_FAST_PLAN)
@@ -431,7 +431,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	 * Optionally add a Gather node for testing purposes, provided this is
 	 * actually a safe thing to do.
 	 */
-	if (force_parallel_mode != FORCE_PARALLEL_OFF && top_plan->parallel_safe)
+	if (debug_parallel_query != DEBUG_PARALLEL_OFF && top_plan->parallel_safe)
 	{
 		Gather	   *gather = makeNode(Gather);
 
@@ -449,7 +449,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 		gather->plan.righttree = NULL;
 		gather->num_workers = 1;
 		gather->single_copy = true;
-		gather->invisible = (force_parallel_mode == FORCE_PARALLEL_REGRESS);
+		gather->invisible = (debug_parallel_query == DEBUG_PARALLEL_REGRESS);
 
 		/*
 		 * Since this Gather has no parallel-aware descendants to signal to,

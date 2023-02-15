@@ -99,16 +99,16 @@ extern bool is_pseudo_constant_for_index(PlannerInfo *root, Node *expr,
 
 /* in plan/planner.c: */
 
-/* possible values for force_parallel_mode */
+/* possible values for debug_parallel_query */
 typedef enum
 {
-	FORCE_PARALLEL_OFF,
-	FORCE_PARALLEL_ON,
-	FORCE_PARALLEL_REGRESS
-}			ForceParallelMode;
+	DEBUG_PARALLEL_OFF,
+	DEBUG_PARALLEL_ON,
+	DEBUG_PARALLEL_REGRESS
+}			DebugParallelMode;
 
 /* GUC parameters */
-extern PGDLLIMPORT int force_parallel_mode;
+extern PGDLLIMPORT int debug_parallel_query;
 extern PGDLLIMPORT bool parallel_leader_participation;
 
 extern struct PlannedStmt *planner(Query *parse, const char *query_string,
