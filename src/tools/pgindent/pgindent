@@ -316,7 +316,7 @@ sub usage
 	my $message  = shift;
 	my $helptext = <<'EOF';
 Usage:
-pgindent [OPTION]... [FILE]...
+pgindent [OPTION]... [FILE|DIR]...
 Options:
 	--help                  show this message and quit
 	--commit=gitref         use files modified by the named commit
