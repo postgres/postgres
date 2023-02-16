@@ -3015,17 +3015,34 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					coldef->is_not_null |= restdef->is_not_null;
 
 					/*
-					 * As above, reject generated columns in partitions that
-					 * are not generated in the parent.
+					 * Check for conflicts related to generated columns.
+					 *
+					 * Same rules as above: generated-ness has to match the
+					 * parent, but the contents of the generation expression
+					 * can be different.
 					 */
-					if (restdef->generated && !coldef->generated)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-								 errmsg("child column \"%s\" specifies generation expression",
-										restdef->colname),
-								 errhint("A child table column cannot be generated unless its parent column is.")));
-					/* Other way around should have been dealt with above */
-					Assert(!(coldef->generated && !restdef->generated));
+					if (coldef->generated)
+					{
+						if (restdef->raw_default && !restdef->generated)
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+									 errmsg("column \"%s\" inherits from generated column but specifies default",
+											restdef->colname)));
+						if (restdef->identity)
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+									 errmsg("column \"%s\" inherits from generated column but specifies identity",
+											restdef->colname)));
+					}
+					else
+					{
+						if (restdef->generated)
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+									 errmsg("child column \"%s\" specifies generation expression",
+											restdef->colname),
+									 errhint("A child table column cannot be generated unless its parent column is.")));
+					}
 
 					/*
 					 * Override the parent's default value for this column
