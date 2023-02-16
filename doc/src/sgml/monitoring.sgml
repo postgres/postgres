@@ -1741,6 +1741,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        tuples into new buckets.</entry>
      </row>
      <row>
+      <entry><literal>LogicalApplySendData</literal></entry>
+      <entry>Waiting for a logical replication leader apply process to send
+       data to a parallel apply process.</entry>
+     </row>
+     <row>
       <entry><literal>LogicalParallelApplyStateChange</literal></entry>
       <entry>Waiting for a logical replication parallel apply process to change
        state.</entry>
