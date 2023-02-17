@@ -3175,28 +3175,21 @@ select * from rules_log;
 (16 rows)
 
 create rule r4 as on delete to rules_src do notify rules_src_deletion;
-\d+ rules_src
-                                 Table "public.rules_src"
- Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
---------+---------+-----------+----------+---------+---------+--------------+-------------
- f1     | integer |           |          |         | plain   |              | 
- f2     | integer |           |          | 0       | plain   |              | 
-Rules:
-    r1 AS
-    ON UPDATE TO rules_src DO  INSERT INTO rules_log (f1, f2, tag, id) VALUES (old.f1,old.f2,'old'::text,DEFAULT), (new.f1,new.f2,'new'::text,DEFAULT)
-    r2 AS
-    ON UPDATE TO rules_src DO  VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
-    r3 AS
-    ON INSERT TO rules_src DO  INSERT INTO rules_log (f1, f2, tag, id) VALUES (NULL::integer,NULL::integer,'-'::text,DEFAULT), (new.f1,new.f2,'new'::text,DEFAULT)
-    r4 AS
-    ON DELETE TO rules_src DO
- NOTIFY rules_src_deletion
-
 --
 -- Ensure an aliased target relation for insert is correctly deparsed.
 --
 create rule r5 as on insert to rules_src do instead insert into rules_log AS trgt SELECT NEW.* RETURNING trgt.f1, trgt.f2;
 create rule r6 as on update to rules_src do instead UPDATE rules_log AS trgt SET tag = 'updated' WHERE trgt.f1 = new.f1;
+--
+-- Check deparse disambiguation of INSERT/UPDATE/DELETE targets.
+--
+create rule r7 as on delete to rules_src do instead
+  with wins as (insert into int4_tbl as trgt values (0) returning *),
+       wupd as (update int4_tbl trgt set f1 = f1+1 returning *),
+       wdel as (delete from int4_tbl trgt where f1 = 0 returning *)
+  insert into rules_log AS trgt select old.* from wins, wupd, wdel
+  returning trgt.f1, trgt.f2;
+-- check display of all rules added above
 \d+ rules_src
                                  Table "public.rules_src"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -3221,6 +3214,26 @@ Rules:
     r6 AS
     ON UPDATE TO rules_src DO INSTEAD  UPDATE rules_log trgt SET tag = 'updated'::text
   WHERE trgt.f1 = new.f1
+    r7 AS
+    ON DELETE TO rules_src DO INSTEAD  WITH wins AS (
+         INSERT INTO int4_tbl AS trgt_1 (f1)
+          VALUES (0)
+          RETURNING trgt_1.f1
+        ), wupd AS (
+         UPDATE int4_tbl trgt_1 SET f1 = trgt_1.f1 + 1
+          RETURNING trgt_1.f1
+        ), wdel AS (
+         DELETE FROM int4_tbl trgt_1
+          WHERE trgt_1.f1 = 0
+          RETURNING trgt_1.f1
+        )
+ INSERT INTO rules_log AS trgt (f1, f2)  SELECT old.f1,
+            old.f2
+           FROM wins,
+            wupd,
+            wdel
+  RETURNING trgt.f1,
+    trgt.f2
 
 --
 -- Also check multiassignment deparsing.
