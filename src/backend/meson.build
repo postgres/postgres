@@ -7,6 +7,7 @@ backend_link_with = [pgport_srv, common_srv]
 generated_backend_sources = []
 
 subdir('access')
+subdir('archive')
 subdir('backup')
 subdir('bootstrap')
 subdir('catalog')

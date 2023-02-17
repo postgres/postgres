@@ -9,7 +9,7 @@
  * Copyright (c) 2022-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/postmaster/shell_archive.c
+ *	  src/backend/archive/shell_archive.c
  *
  *-------------------------------------------------------------------------
  */
@@ -18,30 +18,39 @@
 #include <sys/wait.h>
 
 #include "access/xlog.h"
+#include "archive/archive_module.h"
+#include "archive/shell_archive.h"
 #include "common/percentrepl.h"
 #include "pgstat.h"
-#include "postmaster/pgarch.h"
 
-static bool shell_archive_configured(void);
-static bool shell_archive_file(const char *file, const char *path);
-static void shell_archive_shutdown(void);
+static bool shell_archive_configured(ArchiveModuleState *state);
+static bool shell_archive_file(ArchiveModuleState *state,
+							   const char *file,
+							   const char *path);
+static void shell_archive_shutdown(ArchiveModuleState *state);
 
-void
-shell_archive_init(ArchiveModuleCallbacks *cb)
+static const ArchiveModuleCallbacks shell_archive_callbacks = {
+	.startup_cb = NULL,
+	.check_configured_cb = shell_archive_configured,
+	.archive_file_cb = shell_archive_file,
+	.shutdown_cb = shell_archive_shutdown
+};
+
+const ArchiveModuleCallbacks *
+shell_archive_init(void)
 {
-	cb->check_configured_cb = shell_archive_configured;
-	cb->archive_file_cb = shell_archive_file;
-	cb->shutdown_cb = shell_archive_shutdown;
+	return &shell_archive_callbacks;
 }
 
 static bool
-shell_archive_configured(void)
+shell_archive_configured(ArchiveModuleState *state)
 {
 	return XLogArchiveCommand[0] != '\0';
 }
 
 static bool
-shell_archive_file(const char *file, const char *path)
+shell_archive_file(ArchiveModuleState *state, const char *file,
+				   const char *path)
 {
 	char	   *xlogarchcmd;
 	char	   *nativePath = NULL;
@@ -53,7 +62,9 @@ shell_archive_file(const char *file, const char *path)
 		make_native_path(nativePath);
 	}
 
-	xlogarchcmd = replace_percent_placeholders(XLogArchiveCommand, "archive_command", "fp", file, nativePath);
+	xlogarchcmd = replace_percent_placeholders(XLogArchiveCommand,
+											   "archive_command", "fp",
+											   file, nativePath);
 
 	if (nativePath)
 		pfree(nativePath);
@@ -123,7 +134,7 @@ shell_archive_file(const char *file, const char *path)
 }
 
 static void
-shell_archive_shutdown(void)
+shell_archive_shutdown(ArchiveModuleState *state)
 {
 	elog(DEBUG1, "archiver process shutting down");
 }

@@ -17,7 +17,7 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS = access backup bootstrap catalog parser commands executor \
+SUBDIRS = access archive backup bootstrap catalog parser commands executor \
 	foreign lib libpq \
 	main nodes optimizer partitioning port postmaster \
 	regex replication rewrite \

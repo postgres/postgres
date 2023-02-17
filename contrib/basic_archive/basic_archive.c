@@ -30,9 +30,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "archive/archive_module.h"
 #include "common/int.h"
 #include "miscadmin.h"
-#include "postmaster/pgarch.h"
 #include "storage/copydir.h"
 #include "storage/fd.h"
 #include "utils/guc.h"
@@ -40,14 +40,27 @@
 
 PG_MODULE_MAGIC;
 
-static char *archive_directory = NULL;
-static MemoryContext basic_archive_context;
+typedef struct BasicArchiveData
+{
+	MemoryContext context;
+} BasicArchiveData;
 
-static bool basic_archive_configured(void);
-static bool basic_archive_file(const char *file, const char *path);
+static char *archive_directory = NULL;
+
+static void basic_archive_startup(ArchiveModuleState *state);
+static bool basic_archive_configured(ArchiveModuleState *state);
+static bool basic_archive_file(ArchiveModuleState *state, const char *file, const char *path);
 static void basic_archive_file_internal(const char *file, const char *path);
 static bool check_archive_directory(char **newval, void **extra, GucSource source);
 static bool compare_files(const char *file1, const char *file2);
+static void basic_archive_shutdown(ArchiveModuleState *state);
+
+static const ArchiveModuleCallbacks basic_archive_callbacks = {
+	.startup_cb = basic_archive_startup,
+	.check_configured_cb = basic_archive_configured,
+	.archive_file_cb = basic_archive_file,
+	.shutdown_cb = basic_archive_shutdown
+};
 
 /*
  * _PG_init
@@ -67,10 +80,6 @@ _PG_init(void)
 							   check_archive_directory, NULL, NULL);
 
 	MarkGUCPrefixReserved("basic_archive");
-
-	basic_archive_context = AllocSetContextCreate(TopMemoryContext,
-												  "basic_archive",
-												  ALLOCSET_DEFAULT_SIZES);
 }
 
 /*
@@ -78,11 +87,28 @@ _PG_init(void)
  *
  * Returns the module's archiving callbacks.
  */
-void
-_PG_archive_module_init(ArchiveModuleCallbacks *cb)
+const ArchiveModuleCallbacks *
+_PG_archive_module_init(void)
 {
-	cb->check_configured_cb = basic_archive_configured;
-	cb->archive_file_cb = basic_archive_file;
+	return &basic_archive_callbacks;
+}
+
+/*
+ * basic_archive_startup
+ *
+ * Creates the module's memory context.
+ */
+void
+basic_archive_startup(ArchiveModuleState *state)
+{
+	BasicArchiveData *data;
+
+	data = (BasicArchiveData *) MemoryContextAllocZero(TopMemoryContext,
+													   sizeof(BasicArchiveData));
+	data->context = AllocSetContextCreate(TopMemoryContext,
+										  "basic_archive",
+										  ALLOCSET_DEFAULT_SIZES);
+	state->private_data = (void *) data;
 }
 
 /*
@@ -133,7 +159,7 @@ check_archive_directory(char **newval, void **extra, GucSource source)
  * Checks that archive_directory is not blank.
  */
 static bool
-basic_archive_configured(void)
+basic_archive_configured(ArchiveModuleState *state)
 {
 	return archive_directory != NULL && archive_directory[0] != '\0';
 }
@@ -144,10 +170,12 @@ basic_archive_configured(void)
  * Archives one file.
  */
 static bool
-basic_archive_file(const char *file, const char *path)
+basic_archive_file(ArchiveModuleState *state, const char *file, const char *path)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext oldcontext;
+	BasicArchiveData *data = (BasicArchiveData *) state->private_data;
+	MemoryContext basic_archive_context = data->context;
 
 	/*
 	 * We run basic_archive_file_internal() in our own memory context so that
@@ -365,4 +393,36 @@ compare_files(const char *file1, const char *file2)
 				 errmsg("could not close file \"%s\": %m", file2)));
 
 	return ret;
+}
+
+/*
+ * basic_archive_shutdown
+ *
+ * Frees our allocated state.
+ */
+static void
+basic_archive_shutdown(ArchiveModuleState *state)
+{
+	BasicArchiveData *data = (BasicArchiveData *) state->private_data;
+	MemoryContext basic_archive_context;
+
+	/*
+	 * If we didn't get to storing the pointer to our allocated state, we don't
+	 * have anything to clean up.
+	 */
+	if (data == NULL)
+		return;
+
+	basic_archive_context = data->context;
+	Assert(CurrentMemoryContext != basic_archive_context);
+
+	if (MemoryContextIsValid(basic_archive_context))
+		MemoryContextDelete(basic_archive_context);
+	data->context = NULL;
+
+	/*
+	 * Finally, free the state.
+	 */
+	pfree(data);
+	state->private_data = NULL;
 }

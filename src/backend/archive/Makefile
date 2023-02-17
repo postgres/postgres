@@ -1,29 +1,18 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for src/backend/postmaster
+#    Makefile for src/backend/archive
 #
 # IDENTIFICATION
-#    src/backend/postmaster/Makefile
+#    src/backend/archive/Makefile
 #
 #-------------------------------------------------------------------------
 
-subdir = src/backend/postmaster
+subdir = src/backend/archive
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = \
-	autovacuum.o \
-	auxprocess.o \
-	bgworker.o \
-	bgwriter.o \
-	checkpointer.o \
-	fork_process.o \
-	interrupt.o \
-	pgarch.o \
-	postmaster.o \
-	startup.o \
-	syslogger.o \
-	walwriter.o
+	shell_archive.o
 
 include $(top_srcdir)/src/backend/common.mk
