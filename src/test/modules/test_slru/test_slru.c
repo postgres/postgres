@@ -155,7 +155,7 @@ test_slru_page_sync(PG_FUNCTION_ARGS)
 	ftag.segno = pageno / SLRU_PAGES_PER_SEGMENT;
 	SlruSyncFileTag(TestSlruCtl, &ftag, path);
 
-	elog(NOTICE, "Called SlruSyncFileTag() for segment %d on path %s",
+	elog(NOTICE, "Called SlruSyncFileTag() for segment %u on path %s",
 		 ftag.segno, path);
 
 	PG_RETURN_VOID();
@@ -170,7 +170,7 @@ test_slru_page_delete(PG_FUNCTION_ARGS)
 	ftag.segno = pageno / SLRU_PAGES_PER_SEGMENT;
 	SlruDeleteSegment(TestSlruCtl, ftag.segno);
 
-	elog(NOTICE, "Called SlruDeleteSegment() for segment %d", ftag.segno);
+	elog(NOTICE, "Called SlruDeleteSegment() for segment %u", ftag.segno);
 
 	PG_RETURN_VOID();
 }
