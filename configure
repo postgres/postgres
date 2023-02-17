@@ -16278,41 +16278,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PS_STRINGS" >&5
-$as_echo_n "checking for PS_STRINGS... " >&6; }
-if ${pgac_cv_var_PS_STRINGS+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <machine/vmparam.h>
-#include <sys/exec.h>
-
-int
-main ()
-{
-PS_STRINGS->ps_nargvstr = 1;
-PS_STRINGS->ps_argvstr = "foo";
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  pgac_cv_var_PS_STRINGS=yes
-else
-  pgac_cv_var_PS_STRINGS=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_var_PS_STRINGS" >&5
-$as_echo "$pgac_cv_var_PS_STRINGS" >&6; }
-if test "$pgac_cv_var_PS_STRINGS" = yes ; then
-
-$as_echo "#define HAVE_PS_STRINGS 1" >>confdefs.h
-
-fi
-
 ac_fn_c_check_func "$LINENO" "explicit_bzero" "ac_cv_func_explicit_bzero"
 if test "x$ac_cv_func_explicit_bzero" = xyes; then :
   $as_echo "#define HAVE_EXPLICIT_BZERO 1" >>confdefs.h

@@ -2293,23 +2293,6 @@ endif
 cdata.set('pg_restrict', '__restrict')
 
 
-if cc.links('''
-#include <machine/vmparam.h>
-#include <sys/exec.h>
-
-int main(void)
-{
-    PS_STRINGS->ps_nargvstr = 1;
-    PS_STRINGS->ps_argvstr = "foo";
-}
-''',
-  name: 'PS_STRINGS', args: test_c_args)
-  cdata.set('HAVE_PS_STRINGS', 1)
-else
-  cdata.set('HAVE_PS_STRINGS', false)
-endif
-
-
 # Most libraries are included only if they demonstrably provide a function we
 # need, but libm is an exception: always include it, because there are too
 # many compilers that play cute optimization games that will break probes for

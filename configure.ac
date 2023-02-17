@@ -1849,19 +1849,6 @@ AC_CHECK_DECLS([pwritev], [], [AC_LIBOBJ(pwritev)], [#include <sys/uio.h>])
 # This is probably only present on macOS, but may as well check always
 AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
 
-AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
-[AC_LINK_IFELSE([AC_LANG_PROGRAM(
-[#include <machine/vmparam.h>
-#include <sys/exec.h>
-],
-[PS_STRINGS->ps_nargvstr = 1;
-PS_STRINGS->ps_argvstr = "foo";])],
-[pgac_cv_var_PS_STRINGS=yes],
-[pgac_cv_var_PS_STRINGS=no])])
-if test "$pgac_cv_var_PS_STRINGS" = yes ; then
-  AC_DEFINE([HAVE_PS_STRINGS], 1, [Define to 1 if the PS_STRINGS thing exists.])
-fi
-
 AC_REPLACE_FUNCS(m4_normalize([
 	explicit_bzero
 	getopt

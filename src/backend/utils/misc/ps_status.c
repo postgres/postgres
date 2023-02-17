@@ -15,10 +15,6 @@
 #include "postgres.h"
 
 #include <unistd.h>
-#ifdef HAVE_PS_STRINGS
-#include <machine/vmparam.h>	/* for old BSD */
-#include <sys/exec.h>
-#endif
 #if defined(__darwin__)
 #include <crt_externs.h>
 #endif
@@ -39,16 +35,10 @@ bool		update_process_title = DEFAULT_UPDATE_PROCESS_TITLE;
  *
  * PS_USE_SETPROCTITLE_FAST
  *	   use the function setproctitle_fast(const char *, ...)
- *	   (newer FreeBSD systems)
+ *	   (FreeBSD)
  * PS_USE_SETPROCTITLE
  *	   use the function setproctitle(const char *, ...)
- *	   (newer BSD systems)
- * PS_USE_PS_STRINGS
- *	   assign PS_STRINGS->ps_argvstr = "string"
- *	   (some BSD systems)
- * PS_USE_CHANGE_ARGV
- *	   assign argv[0] = "string"
- *	   (some other BSD systems)
+ *	   (other BSDs)
  * PS_USE_CLOBBER_ARGV
  *	   write over the argv and environment area
  *	   (Linux and most SysV-like systems)
@@ -62,11 +52,7 @@ bool		update_process_title = DEFAULT_UPDATE_PROCESS_TITLE;
 #define PS_USE_SETPROCTITLE_FAST
 #elif defined(HAVE_SETPROCTITLE)
 #define PS_USE_SETPROCTITLE
-#elif defined(HAVE_PS_STRINGS)
-#define PS_USE_PS_STRINGS
-#elif (defined(BSD) || defined(__hurd__)) && !defined(__darwin__)
-#define PS_USE_CHANGE_ARGV
-#elif defined(__linux__) || defined(_AIX) || defined(__sgi) || (defined(sun) && !defined(BSD)) || defined(__svr5__) || defined(__darwin__)
+#elif defined(__linux__) || defined(_AIX) || defined(__sun) || defined(__darwin__)
 #define PS_USE_CLOBBER_ARGV
 #elif defined(WIN32)
 #define PS_USE_WIN32
@@ -186,9 +172,6 @@ save_ps_display_args(int argc, char **argv)
 		new_environ[i] = NULL;
 		environ = new_environ;
 	}
-#endif							/* PS_USE_CLOBBER_ARGV */
-
-#if defined(PS_USE_CHANGE_ARGV) || defined(PS_USE_CLOBBER_ARGV)
 
 	/*
 	 * If we're going to change the original argv[] then make a copy for
@@ -226,15 +209,15 @@ save_ps_display_args(int argc, char **argv)
 #if defined(__darwin__)
 
 		/*
-		 * macOS (and perhaps other NeXT-derived platforms?) has a static copy
-		 * of the argv pointer, which we may fix like so:
+		 * macOS has a static copy of the argv pointer, which we may fix like
+		 * so:
 		 */
 		*_NSGetArgv() = new_argv;
 #endif
 
 		argv = new_argv;
 	}
-#endif							/* PS_USE_CHANGE_ARGV or PS_USE_CLOBBER_ARGV */
+#endif							/* PS_USE_CLOBBER_ARGV */
 
 	return argv;
 }
@@ -271,25 +254,10 @@ init_ps_display(const char *fixed_part)
 	/* If ps_buffer is a pointer, it might still be null */
 	if (!ps_buffer)
 		return;
-#endif
 
-	/*
-	 * Overwrite argv[] to point at appropriate space, if needed
-	 */
-
-#ifdef PS_USE_CHANGE_ARGV
-	save_argv[0] = ps_buffer;
-	save_argv[1] = NULL;
-#endif							/* PS_USE_CHANGE_ARGV */
-
-#ifdef PS_USE_CLOBBER_ARGV
-	{
-		int			i;
-
-		/* make extra argv slots point at end_of_area (a NUL) */
-		for (i = 1; i < save_argc; i++)
-			save_argv[i] = ps_buffer + ps_buffer_size;
-	}
+	/* make extra argv slots point at end_of_area (a NUL) */
+	for (int i = 1; i < save_argc; i++)
+		save_argv[i] = ps_buffer + ps_buffer_size;
 #endif							/* PS_USE_CLOBBER_ARGV */
 
 	/*
@@ -368,11 +336,6 @@ set_ps_display(const char *activity)
 #elif defined(PS_USE_SETPROCTITLE_FAST)
 	setproctitle_fast("%s", ps_buffer);
 #endif
-
-#ifdef PS_USE_PS_STRINGS
-	PS_STRINGS->ps_nargvstr = 1;
-	PS_STRINGS->ps_argvstr = ps_buffer;
-#endif							/* PS_USE_PS_STRINGS */
 
 #ifdef PS_USE_CLOBBER_ARGV
 	/* pad unused memory; need only clobber remainder of old status string */

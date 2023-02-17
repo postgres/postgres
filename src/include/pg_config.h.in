@@ -334,9 +334,6 @@
 /* Define to 1 if you have the `ppoll' function. */
 #undef HAVE_PPOLL
 
-/* Define to 1 if the PS_STRINGS thing exists. */
-#undef HAVE_PS_STRINGS
-
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
