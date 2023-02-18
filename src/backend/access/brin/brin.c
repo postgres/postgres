@@ -686,6 +686,13 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 								break;
 						}
 					}
+
+					/*
+					 * If we found a scan key eliminating the range, no need to
+					 * check additional ones.
+					 */
+					if (!addrange)
+						break;
 				}
 			}
 		}
