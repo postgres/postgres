@@ -80,8 +80,11 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 		tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(owner_uid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for role %u", owner_uid);
-		schemaName =
+
+		stmt->schemaname =
 			pstrdup(NameStr(((Form_pg_authid) GETSTRUCT(tuple))->rolname));
+		schemaName = stmt->schemaname;
+
 		ReleaseSysCache(tuple);
 	}
 
