@@ -233,12 +233,22 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->serverid = InvalidOid;
 	if (rte->rtekind == RTE_RELATION)
 	{
+		Assert(parent == NULL ||
+			   parent->rtekind == RTE_RELATION ||
+			   parent->rtekind == RTE_SUBQUERY);
+
 		/*
-		 * Get the userid from the relation's RTEPermissionInfo, though only
-		 * the tables mentioned in query are assigned RTEPermissionInfos.
-		 * Child relations (otherrels) simply use the parent's value.
+		 * For any RELATION rte, we need a userid with which to check
+		 * permission access. Baserels simply use their own
+		 * RTEPermissionInfo's checkAsUser.
+		 *
+		 * For otherrels normally there's no RTEPermissionInfo, so we use the
+		 * parent's, which normally has one. The exceptional case is that the
+		 * parent is a subquery, in which case the otherrel will have its own.
 		 */
-		if (parent == NULL)
+		if (rel->reloptkind == RELOPT_BASEREL ||
+			(rel->reloptkind == RELOPT_OTHER_MEMBER_REL &&
+			 parent->rtekind == RTE_SUBQUERY))
 		{
 			RTEPermissionInfo *perminfo;
 
