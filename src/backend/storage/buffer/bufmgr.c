@@ -4302,8 +4302,8 @@ void
 LockBufferForCleanup(Buffer buffer)
 {
 	BufferDesc *bufHdr;
-	char	   *new_status = NULL;
 	TimestampTz waitStart = 0;
+	bool		waiting = false;
 	bool		logged_recovery_conflict = false;
 
 	Assert(BufferIsPinned(buffer));
@@ -4350,11 +4350,11 @@ LockBufferForCleanup(Buffer buffer)
 									waitStart, GetCurrentTimestamp(),
 									NULL, false);
 
-			/* Report change to non-waiting status */
-			if (new_status)
+			if (waiting)
 			{
-				set_ps_display(new_status);
-				pfree(new_status);
+				/* reset ps display to remove the suffix if we added one */
+				set_ps_display_remove_suffix();
+				waiting = false;
 			}
 			return;
 		}
@@ -4374,18 +4374,11 @@ LockBufferForCleanup(Buffer buffer)
 		/* Wait to be signaled by UnpinBuffer() */
 		if (InHotStandby)
 		{
-			/* Report change to waiting status */
-			if (update_process_title && new_status == NULL)
+			if (!waiting)
 			{
-				const char *old_status;
-				int			len;
-
-				old_status = get_ps_display(&len);
-				new_status = (char *) palloc(len + 8 + 1);
-				memcpy(new_status, old_status, len);
-				strcpy(new_status + len, " waiting");
-				set_ps_display(new_status);
-				new_status[len] = '\0'; /* truncate off " waiting" */
+				/* adjust the process title to indicate that it's waiting */
+				set_ps_display_suffix("waiting");
+				waiting = true;
 			}
 
 			/*

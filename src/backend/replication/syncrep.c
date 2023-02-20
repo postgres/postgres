@@ -148,8 +148,6 @@ static bool SyncRepQueueIsOrderedByLSN(int mode);
 void
 SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 {
-	char	   *new_status = NULL;
-	const char *old_status;
 	int			mode;
 
 	/*
@@ -216,15 +214,10 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	/* Alter ps display to show waiting for sync rep. */
 	if (update_process_title)
 	{
-		int			len;
+		char		buffer[32];
 
-		old_status = get_ps_display(&len);
-		new_status = (char *) palloc(len + 32 + 1);
-		memcpy(new_status, old_status, len);
-		sprintf(new_status + len, " waiting for %X/%X",
-				LSN_FORMAT_ARGS(lsn));
-		set_ps_display(new_status);
-		new_status[len] = '\0'; /* truncate off " waiting ..." */
+		sprintf(buffer, "waiting for %X/%X", LSN_FORMAT_ARGS(lsn));
+		set_ps_display_suffix(buffer);
 	}
 
 	/*
@@ -322,12 +315,9 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	MyProc->waitLSN = 0;
 
-	if (new_status)
-	{
-		/* Reset ps display */
-		set_ps_display(new_status);
-		pfree(new_status);
-	}
+	/* reset ps display to remove the suffix */
+	if (update_process_title)
+		set_ps_display_remove_suffix();
 }
 
 /*

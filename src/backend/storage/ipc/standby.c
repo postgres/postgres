@@ -362,7 +362,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 									   bool report_waiting)
 {
 	TimestampTz waitStart = 0;
-	char	   *new_status = NULL;
+	bool		waiting = false;
 	bool		logged_recovery_conflict = false;
 
 	/* Fast exit, to avoid a kernel call if there's no work to be done. */
@@ -400,14 +400,14 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 					pg_usleep(5000L);
 			}
 
-			if (waitStart != 0 && (!logged_recovery_conflict || new_status == NULL))
+			if (waitStart != 0 && (!logged_recovery_conflict || !waiting))
 			{
 				TimestampTz now = 0;
 				bool		maybe_log_conflict;
 				bool		maybe_update_title;
 
 				maybe_log_conflict = (log_recovery_conflict_waits && !logged_recovery_conflict);
-				maybe_update_title = (update_process_title && new_status == NULL);
+				maybe_update_title = (update_process_title && !waiting);
 
 				/* Get the current timestamp if not report yet */
 				if (maybe_log_conflict || maybe_update_title)
@@ -420,15 +420,8 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				if (maybe_update_title &&
 					TimestampDifferenceExceeds(waitStart, now, 500))
 				{
-					const char *old_status;
-					int			len;
-
-					old_status = get_ps_display(&len);
-					new_status = (char *) palloc(len + 8 + 1);
-					memcpy(new_status, old_status, len);
-					strcpy(new_status + len, " waiting");
-					set_ps_display(new_status);
-					new_status[len] = '\0'; /* truncate off " waiting" */
+					set_ps_display_suffix("waiting");
+					waiting = true;
 				}
 
 				/*
@@ -456,12 +449,10 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 		LogRecoveryConflict(reason, waitStart, GetCurrentTimestamp(),
 							NULL, false);
 
-	/* Reset ps display if we changed it */
-	if (new_status)
-	{
-		set_ps_display(new_status);
-		pfree(new_status);
-	}
+	/* reset ps display to remove the suffix if we added one */
+	if (waiting)
+		set_ps_display_remove_suffix();
+
 }
 
 /*

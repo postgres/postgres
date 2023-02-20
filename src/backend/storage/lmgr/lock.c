@@ -1810,24 +1810,12 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 {
 	LOCKMETHODID lockmethodid = LOCALLOCK_LOCKMETHOD(*locallock);
 	LockMethod	lockMethodTable = LockMethods[lockmethodid];
-	char	   *volatile new_status = NULL;
 
 	LOCK_PRINT("WaitOnLock: sleeping on lock",
 			   locallock->lock, locallock->tag.mode);
 
-	/* Report change to waiting status */
-	if (update_process_title)
-	{
-		const char *old_status;
-		int			len;
-
-		old_status = get_ps_display(&len);
-		new_status = (char *) palloc(len + 8 + 1);
-		memcpy(new_status, old_status, len);
-		strcpy(new_status + len, " waiting");
-		set_ps_display(new_status);
-		new_status[len] = '\0'; /* truncate off " waiting" */
-	}
+	/* adjust the process title to indicate that it's waiting */
+	set_ps_display_suffix("waiting");
 
 	awaitedLock = locallock;
 	awaitedOwner = owner;
@@ -1874,12 +1862,8 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	{
 		/* In this path, awaitedLock remains set until LockErrorCleanup */
 
-		/* Report change to non-waiting status */
-		if (update_process_title)
-		{
-			set_ps_display(new_status);
-			pfree(new_status);
-		}
+		/* reset ps display to remove the suffix */
+		set_ps_display_remove_suffix();
 
 		/* and propagate the error */
 		PG_RE_THROW();
@@ -1888,12 +1872,8 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 
 	awaitedLock = NULL;
 
-	/* Report change to non-waiting status */
-	if (update_process_title)
-	{
-		set_ps_display(new_status);
-		pfree(new_status);
-	}
+	/* reset ps display to remove the suffix */
+	set_ps_display_remove_suffix();
 
 	LOCK_PRINT("WaitOnLock: wakeup on lock",
 			   locallock->lock, locallock->tag.mode);

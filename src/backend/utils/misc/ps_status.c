@@ -86,6 +86,14 @@ static size_t ps_buffer_cur_len;	/* nominal strlen(ps_buffer) */
 
 static size_t ps_buffer_fixed_size; /* size of the constant prefix */
 
+/*
+ * Length of ps_buffer before the suffix was appeneded to the end, or 0 if we
+ * didn't set a suffix.
+ */
+static size_t ps_buffer_nosuffix_len;
+
+static void flush_ps_display(void);
+
 #endif							/* not PS_USE_NONE */
 
 /* save the original argv[] location here */
@@ -300,37 +308,158 @@ init_ps_display(const char *fixed_part)
 #endif							/* not PS_USE_NONE */
 }
 
-
-
-/*
- * Call this to update the ps status display to a fixed prefix plus an
- * indication of what you're currently doing passed in the argument.
- */
-void
-set_ps_display(const char *activity)
-{
 #ifndef PS_USE_NONE
+/*
+ * update_ps_display_precheck
+ *		Helper function to determine if updating the process title is
+ *		something that we need to do.
+ */
+static bool
+update_ps_display_precheck(void)
+{
 	/* update_process_title=off disables updates */
 	if (!update_process_title)
-		return;
+		return false;
 
 	/* no ps display for stand-alone backend */
 	if (!IsUnderPostmaster)
-		return;
+		return false;
 
 #ifdef PS_USE_CLOBBER_ARGV
 	/* If ps_buffer is a pointer, it might still be null */
 	if (!ps_buffer)
-		return;
+		return false;
 #endif
 
+	return true;
+}
+#endif							/* not PS_USE_NONE */
+
+/*
+ * set_ps_display_suffix
+ *		Adjust the process title to append 'suffix' onto the end with a space
+ *		between it and the current process title.
+ */
+void
+set_ps_display_suffix(const char *suffix)
+{
+#ifndef PS_USE_NONE
+	size_t		len;
+
+	/* first, check if we need to update the process title */
+	if (!update_ps_display_precheck())
+		return;
+
+	/* if there's already a suffix, overwrite it */
+	if (ps_buffer_nosuffix_len > 0)
+		ps_buffer_cur_len = ps_buffer_nosuffix_len;
+	else
+		ps_buffer_nosuffix_len = ps_buffer_cur_len;
+
+	len = strlen(suffix);
+
+	/* check if we have enough space to append the suffix */
+	if (ps_buffer_cur_len + len + 1 >= ps_buffer_size)
+	{
+		/* not enough space.  Check the buffer isn't full already */
+		if (ps_buffer_cur_len < ps_buffer_size - 1)
+		{
+			/* append a space before the suffix */
+			ps_buffer[ps_buffer_cur_len++] = ' ';
+
+			/* just add what we can and fill the ps_buffer */
+			memcpy(ps_buffer + ps_buffer_cur_len, suffix,
+				   ps_buffer_size - ps_buffer_cur_len - 1);
+			ps_buffer[ps_buffer_size - 1] = '\0';
+			ps_buffer_cur_len = ps_buffer_size - 1;
+		}
+	}
+	else
+	{
+		ps_buffer[ps_buffer_cur_len++] = ' ';
+		memcpy(ps_buffer + ps_buffer_cur_len, suffix, len + 1);
+		ps_buffer_cur_len = ps_buffer_cur_len + len;
+	}
+
+	Assert(strlen(ps_buffer) == ps_buffer_cur_len);
+
+	/* and set the new title */
+	flush_ps_display();
+#endif							/* not PS_USE_NONE */
+}
+
+/*
+ * set_ps_display_remove_suffix
+ *		Remove the process display suffix added by set_ps_display_suffix
+ */
+void
+set_ps_display_remove_suffix(void)
+{
+#ifndef PS_USE_NONE
+	/* first, check if we need to update the process title */
+	if (!update_ps_display_precheck())
+		return;
+
+	/* check we added a suffix */
+	if (ps_buffer_nosuffix_len == 0)
+		return;					/* no suffix */
+
+	/* remove the suffix from ps_buffer */
+	ps_buffer[ps_buffer_nosuffix_len] = '\0';
+	ps_buffer_cur_len = ps_buffer_nosuffix_len;
+	ps_buffer_nosuffix_len = 0;
+
+	Assert(ps_buffer_cur_len == strlen(ps_buffer));
+
+	/* and set the new title */
+	flush_ps_display();
+#endif							/* not PS_USE_NONE */
+}
+
+/*
+ * Call this to update the ps status display to a fixed prefix plus an
+ * indication of what you're currently doing passed in the argument.
+ *
+ * 'len' must be the same as strlen(activity)
+ */
+void
+set_ps_display_with_len(const char *activity, size_t len)
+{
+	Assert(strlen(activity) == len);
+
+#ifndef PS_USE_NONE
+	/* first, check if we need to update the process title */
+	if (!update_ps_display_precheck())
+		return;
+
+	/* wipe out any suffix when the title is completely changed */
+	ps_buffer_nosuffix_len = 0;
+
 	/* Update ps_buffer to contain both fixed part and activity */
-	strlcpy(ps_buffer + ps_buffer_fixed_size, activity,
-			ps_buffer_size - ps_buffer_fixed_size);
-	ps_buffer_cur_len = strlen(ps_buffer);
+	if (ps_buffer_fixed_size + len >= ps_buffer_size)
+	{
+		/* handle the case where ps_buffer doesn't have enough space */
+		memcpy(ps_buffer + ps_buffer_fixed_size, activity,
+			   ps_buffer_size - ps_buffer_fixed_size - 1);
+		ps_buffer[ps_buffer_size - 1] = '\0';
+		ps_buffer_cur_len = ps_buffer_size - 1;
+	}
+	else
+	{
+		memcpy(ps_buffer + ps_buffer_fixed_size, activity, len + 1);
+		ps_buffer_cur_len = ps_buffer_fixed_size + len;
+	}
+	Assert(strlen(ps_buffer) == ps_buffer_cur_len);
 
 	/* Transmit new setting to kernel, if necessary */
+	flush_ps_display();
+#endif							/* not PS_USE_NONE */
+}
 
+#ifndef PS_USE_NONE
+static void
+flush_ps_display(void)
+{
 #ifdef PS_USE_SETPROCTITLE
 	setproctitle("%s", ps_buffer);
 #elif defined(PS_USE_SETPROCTITLE_FAST)
@@ -363,9 +492,8 @@ set_ps_display(const char *activity)
 		ident_handle = CreateEvent(NULL, TRUE, FALSE, name);
 	}
 #endif							/* PS_USE_WIN32 */
-#endif							/* not PS_USE_NONE */
 }
-
+#endif							/* not PS_USE_NONE */
 
 /*
  * Returns what's currently in the ps display, in case someone needs
