@@ -326,6 +326,10 @@ SELECT extract(epoch from '294270-01-01 00:00:00'::timestamp);
 -- another internal overflow test case
 SELECT extract(epoch from '5000-01-01 00:00:00'::timestamp);
 
+-- test edge-case overflow in timestamp subtraction
+SELECT timestamp '294276-12-31 23:59:59' - timestamp '1999-12-23 19:59:04.224193' AS ok;
+SELECT timestamp '294276-12-31 23:59:59' - timestamp '1999-12-23 19:59:04.224192' AS overflows;
+
 -- TO_CHAR()
 SELECT to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')
    FROM TIMESTAMP_TBL;

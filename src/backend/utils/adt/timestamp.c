@@ -2713,7 +2713,10 @@ timestamp_mi(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("cannot subtract infinite timestamps")));
 
-	result->time = dt1 - dt2;
+	if (unlikely(pg_sub_s64_overflow(dt1, dt2, &result->time)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
 
 	result->month = 0;
 	result->day = 0;
