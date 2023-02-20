@@ -136,9 +136,7 @@ INSERT INTO pgss_test VALUES(generate_series(1, 10), 'aaa');
 UPDATE pgss_test SET b = 'bbb' WHERE a > 7;
 DELETE FROM pgss_test WHERE a > 9;
 -- DROP test table
-SET pg_stat_statements.track_utility = TRUE;
 DROP TABLE pgss_test;
-SET pg_stat_statements.track_utility = FALSE;
 
 -- Check WAL is generated for the above statements
 SELECT query, calls, rows,
@@ -146,82 +144,6 @@ wal_bytes > 0 as wal_bytes_generated,
 wal_records > 0 as wal_records_generated,
 wal_records >= rows as wal_records_ge_rows
 FROM pg_stat_statements ORDER BY query COLLATE "C";
-
---
--- pg_stat_statements.track = none
---
-SET pg_stat_statements.track = 'none';
-SELECT pg_stat_statements_reset();
-
-SELECT 1 AS "one";
-SELECT 1 + 1 AS "two";
-
-SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-
---
--- pg_stat_statements.track = top
---
-SET pg_stat_statements.track = 'top';
-SELECT pg_stat_statements_reset();
-
-DO LANGUAGE plpgsql $$
-BEGIN
-  -- this is a SELECT
-  PERFORM 'hello world'::TEXT;
-END;
-$$;
-
--- PL/pgSQL function
-CREATE FUNCTION PLUS_TWO(i INTEGER) RETURNS INTEGER AS $$
-DECLARE
-  r INTEGER;
-BEGIN
-  SELECT (i + 1 + 1.0)::INTEGER INTO r;
-  RETURN r;
-END; $$ LANGUAGE plpgsql;
-
-SELECT PLUS_TWO(3);
-SELECT PLUS_TWO(7);
-
--- SQL function --- use LIMIT to keep it from being inlined
-CREATE FUNCTION PLUS_ONE(i INTEGER) RETURNS INTEGER AS
-$$ SELECT (i + 1.0)::INTEGER LIMIT 1 $$ LANGUAGE SQL;
-
-SELECT PLUS_ONE(8);
-SELECT PLUS_ONE(10);
-
-SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-
---
--- pg_stat_statements.track = all
---
-SET pg_stat_statements.track = 'all';
-SELECT pg_stat_statements_reset();
-
--- we drop and recreate the functions to avoid any caching funnies
-DROP FUNCTION PLUS_ONE(INTEGER);
-DROP FUNCTION PLUS_TWO(INTEGER);
-
--- PL/pgSQL function
-CREATE FUNCTION PLUS_TWO(i INTEGER) RETURNS INTEGER AS $$
-DECLARE
-  r INTEGER;
-BEGIN
-  SELECT (i + 1 + 1.0)::INTEGER INTO r;
-  RETURN r;
-END; $$ LANGUAGE plpgsql;
-
-SELECT PLUS_TWO(-1);
-SELECT PLUS_TWO(2);
-
--- SQL function --- use LIMIT to keep it from being inlined
-CREATE FUNCTION PLUS_ONE(i INTEGER) RETURNS INTEGER AS
-$$ SELECT (i + 1.0)::INTEGER LIMIT 1 $$ LANGUAGE SQL;
-
-SELECT PLUS_ONE(3);
-SELECT PLUS_ONE(1);
-
-SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 --
 -- queries with locking clauses
@@ -255,60 +177,9 @@ SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 DROP TABLE pgss_a, pgss_b CASCADE;
 
 --
--- utility commands
---
-SET pg_stat_statements.track_utility = TRUE;
-SELECT pg_stat_statements_reset();
-
-SELECT 1;
-CREATE INDEX test_b ON test(b);
-DROP TABLE test \;
-DROP TABLE IF EXISTS test \;
-DROP FUNCTION PLUS_ONE(INTEGER);
--- This DROP query uses two different strings, still they count as one entry.
-DROP TABLE IF EXISTS test \;
-Drop Table If Exists test \;
-DROP FUNCTION IF EXISTS PLUS_ONE(INTEGER);
-DROP FUNCTION PLUS_TWO(INTEGER);
--- This SET query uses two different strings, still they count as one entry.
-SET work_mem = '1MB';
-Set work_mem = '1MB';
-SET work_mem = '2MB';
-RESET work_mem;
-SET enable_seqscan = off;
-SET enable_seqscan = on;
-RESET enable_seqscan;
-
-SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-
---
--- Track the total number of rows retrieved or affected by the utility
--- commands of COPY, FETCH, CREATE TABLE AS, CREATE MATERIALIZED VIEW,
--- REFRESH MATERIALIZED VIEW and SELECT INTO
---
-SELECT pg_stat_statements_reset();
-
-CREATE TABLE pgss_ctas AS SELECT a, 'ctas' b FROM generate_series(1, 10) a;
-SELECT generate_series(1, 10) c INTO pgss_select_into;
-COPY pgss_ctas (a, b) FROM STDIN;
-11	copy
-12	copy
-13	copy
-\.
-CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas;
-REFRESH MATERIALIZED VIEW pgss_matv;
-BEGIN;
-DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv;
-FETCH NEXT pgss_cursor;
-FETCH FORWARD 5 pgss_cursor;
-FETCH FORWARD ALL pgss_cursor;
-COMMIT;
-
-SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-
---
 -- Track user activity and reset them
 --
+SET pg_stat_statements.track_utility = TRUE;
 SELECT pg_stat_statements_reset();
 CREATE ROLE regress_stats_user1;
 CREATE ROLE regress_stats_user2;
@@ -369,57 +240,12 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 --
 DROP ROLE regress_stats_user1;
 DROP ROLE regress_stats_user2;
-DROP MATERIALIZED VIEW pgss_matv;
-DROP TABLE pgss_ctas;
-DROP TABLE pgss_select_into;
-
---
--- [re]plan counting
---
-SELECT pg_stat_statements_reset();
-CREATE TABLE test ();
-PREPARE prep1 AS SELECT COUNT(*) FROM test;
-EXECUTE prep1;
-EXECUTE prep1;
-EXECUTE prep1;
-ALTER TABLE test ADD COLUMN x int;
-EXECUTE prep1;
-SELECT 42;
-SELECT 42;
-SELECT 42;
-SELECT query, plans, calls, rows FROM pg_stat_statements
-  WHERE query NOT LIKE 'PREPARE%' ORDER BY query COLLATE "C";
--- for the prepared statement we expect at least one replan, but cache
--- invalidations could force more
-SELECT query, plans >= 2 AND plans <= calls AS plans_ok, calls, rows FROM pg_stat_statements
-  WHERE query LIKE 'PREPARE%' ORDER BY query COLLATE "C";
 
 --
 -- access to pg_stat_statements_info view
 --
 SELECT pg_stat_statements_reset();
 SELECT dealloc FROM pg_stat_statements_info;
-
---
--- top level handling
---
-SET pg_stat_statements.track = 'top';
-DELETE FROM test;
-DO $$
-BEGIN
-    DELETE FROM test;
-END;
-$$ LANGUAGE plpgsql;
-SELECT query, toplevel, plans, calls FROM pg_stat_statements WHERE query LIKE '%DELETE%' ORDER BY query COLLATE "C", toplevel;
-
-SET pg_stat_statements.track = 'all';
-DELETE FROM test;
-DO $$
-BEGIN
-    DELETE FROM test;
-END;
-$$ LANGUAGE plpgsql;
-SELECT query, toplevel, plans, calls FROM pg_stat_statements WHERE query LIKE '%DELETE%' ORDER BY query COLLATE "C", toplevel;
 
 -- FROM [ONLY]
 CREATE TABLE tbl_inh(id integer);
@@ -472,5 +298,3 @@ SELECT (
 ) FROM (VALUES(6,7)) v3(e,f) GROUP BY ROLLUP(e,f);
 
 SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%SELECT GROUPING%';
-
-DROP EXTENSION pg_stat_statements;

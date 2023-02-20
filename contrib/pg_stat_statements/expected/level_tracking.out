@@ -1,0 +1,204 @@
+--
+-- Statement level tracking
+--
+SET pg_stat_statements.track_utility = TRUE;
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- DO block - top-level tracking.
+CREATE TABLE stats_track_tab (x int);
+SET pg_stat_statements.track = 'top';
+DELETE FROM stats_track_tab;
+DO $$
+BEGIN
+  DELETE FROM stats_track_tab;
+END;
+$$ LANGUAGE plpgsql;
+SELECT toplevel, calls, query FROM pg_stat_statements
+  WHERE query LIKE '%DELETE%' ORDER BY query COLLATE "C", toplevel;
+ toplevel | calls |             query              
+----------+-------+--------------------------------
+ t        |     1 | DELETE FROM stats_track_tab
+ t        |     1 | DO $$                         +
+          |       | BEGIN                         +
+          |       |   DELETE FROM stats_track_tab;+
+          |       | END;                          +
+          |       | $$ LANGUAGE plpgsql
+(2 rows)
+
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- DO block - all-level tracking.
+SET pg_stat_statements.track = 'all';
+DELETE FROM stats_track_tab;
+DO $$
+BEGIN
+  DELETE FROM stats_track_tab;
+END; $$;
+DO LANGUAGE plpgsql $$
+BEGIN
+  -- this is a SELECT
+  PERFORM 'hello world'::TEXT;
+END; $$;
+SELECT toplevel, calls, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C", toplevel;
+ toplevel | calls |                query                 
+----------+-------+--------------------------------------
+ f        |     1 | DELETE FROM stats_track_tab
+ t        |     1 | DELETE FROM stats_track_tab
+ t        |     1 | DO $$                               +
+          |       | BEGIN                               +
+          |       |   DELETE FROM stats_track_tab;      +
+          |       | END; $$
+ t        |     1 | DO LANGUAGE plpgsql $$              +
+          |       | BEGIN                               +
+          |       |   -- this is a SELECT               +
+          |       |   PERFORM 'hello world'::TEXT;      +
+          |       | END; $$
+ f        |     1 | SELECT $1::TEXT
+ t        |     1 | SELECT pg_stat_statements_reset()
+ t        |     1 | SET pg_stat_statements.track = 'all'
+(7 rows)
+
+-- PL/pgSQL function - top-level tracking.
+SET pg_stat_statements.track = 'top';
+SET pg_stat_statements.track_utility = FALSE;
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+CREATE FUNCTION PLUS_TWO(i INTEGER) RETURNS INTEGER AS $$
+DECLARE
+  r INTEGER;
+BEGIN
+  SELECT (i + 1 + 1.0)::INTEGER INTO r;
+  RETURN r;
+END; $$ LANGUAGE plpgsql;
+SELECT PLUS_TWO(3);
+ plus_two 
+----------
+        5
+(1 row)
+
+SELECT PLUS_TWO(7);
+ plus_two 
+----------
+        9
+(1 row)
+
+-- SQL function --- use LIMIT to keep it from being inlined
+CREATE FUNCTION PLUS_ONE(i INTEGER) RETURNS INTEGER AS
+$$ SELECT (i + 1.0)::INTEGER LIMIT 1 $$ LANGUAGE SQL;
+SELECT PLUS_ONE(8);
+ plus_one 
+----------
+        9
+(1 row)
+
+SELECT PLUS_ONE(10);
+ plus_one 
+----------
+       11
+(1 row)
+
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |               query               
+-------+------+-----------------------------------
+     2 |    2 | SELECT PLUS_ONE($1)
+     2 |    2 | SELECT PLUS_TWO($1)
+     1 |    1 | SELECT pg_stat_statements_reset()
+(3 rows)
+
+-- PL/pgSQL function - all-level tracking.
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- we drop and recreate the functions to avoid any caching funnies
+DROP FUNCTION PLUS_ONE(INTEGER);
+DROP FUNCTION PLUS_TWO(INTEGER);
+-- PL/pgSQL function
+CREATE FUNCTION PLUS_TWO(i INTEGER) RETURNS INTEGER AS $$
+DECLARE
+  r INTEGER;
+BEGIN
+  SELECT (i + 1 + 1.0)::INTEGER INTO r;
+  RETURN r;
+END; $$ LANGUAGE plpgsql;
+SELECT PLUS_TWO(-1);
+ plus_two 
+----------
+        1
+(1 row)
+
+SELECT PLUS_TWO(2);
+ plus_two 
+----------
+        4
+(1 row)
+
+-- SQL function --- use LIMIT to keep it from being inlined
+CREATE FUNCTION PLUS_ONE(i INTEGER) RETURNS INTEGER AS
+$$ SELECT (i + 1.0)::INTEGER LIMIT 1 $$ LANGUAGE SQL;
+SELECT PLUS_ONE(3);
+ plus_one 
+----------
+        4
+(1 row)
+
+SELECT PLUS_ONE(1);
+ plus_one 
+----------
+        2
+(1 row)
+
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |               query               
+-------+------+-----------------------------------
+     2 |    2 | SELECT (i + $2 + $3)::INTEGER
+     2 |    2 | SELECT (i + $2)::INTEGER LIMIT $3
+     2 |    2 | SELECT PLUS_ONE($1)
+     2 |    2 | SELECT PLUS_TWO($1)
+     1 |    1 | SELECT pg_stat_statements_reset()
+(5 rows)
+
+DROP FUNCTION PLUS_ONE(INTEGER);
+--
+-- pg_stat_statements.track = none
+--
+SET pg_stat_statements.track = 'none';
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT 1 AS "one";
+ one 
+-----
+   1
+(1 row)
+
+SELECT 1 + 1 AS "two";
+ two 
+-----
+   2
+(1 row)
+
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows | query 
+-------+------+-------
+(0 rows)
+

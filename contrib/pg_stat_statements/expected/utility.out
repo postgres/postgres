@@ -1,0 +1,132 @@
+--
+-- Utility commands
+--
+-- These tests require track_utility to be enabled.
+SET pg_stat_statements.track_utility = TRUE;
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+CREATE TEMP TABLE stats_util_tab (a int, b char(20));
+CREATE INDEX test_b ON stats_util_tab(b);
+DROP TABLE stats_util_tab \;
+DROP TABLE IF EXISTS stats_util_tab;
+NOTICE:  table "stats_util_tab" does not exist, skipping
+-- This DROP query uses two different strings, still they count as one entry.
+DROP TABLE IF EXISTS stats_util_tab \;
+Drop Table If Exists stats_util_tab;
+NOTICE:  table "stats_util_tab" does not exist, skipping
+NOTICE:  table "stats_util_tab" does not exist, skipping
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |                        query                         
+-------+------+------------------------------------------------------
+     1 |    0 | CREATE INDEX test_b ON stats_util_tab(b)
+     1 |    0 | CREATE TEMP TABLE stats_util_tab (a int, b char(20))
+     3 |    0 | DROP TABLE IF EXISTS stats_util_tab
+     1 |    0 | DROP TABLE stats_util_tab
+     1 |    1 | SELECT $1
+     1 |    1 | SELECT pg_stat_statements_reset()
+(6 rows)
+
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+--
+-- Track the total number of rows retrieved or affected by the utility
+-- commands of COPY, FETCH, CREATE TABLE AS, CREATE MATERIALIZED VIEW,
+-- REFRESH MATERIALIZED VIEW and SELECT INTO
+--
+CREATE TABLE pgss_ctas AS SELECT a, 'ctas' b FROM generate_series(1, 10) a;
+SELECT generate_series(1, 10) c INTO pgss_select_into;
+COPY pgss_ctas (a, b) FROM STDIN;
+CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas;
+REFRESH MATERIALIZED VIEW pgss_matv;
+BEGIN;
+DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv;
+FETCH NEXT pgss_cursor;
+ a |  b   
+---+------
+ 1 | ctas
+(1 row)
+
+FETCH FORWARD 5 pgss_cursor;
+ a |  b   
+---+------
+ 2 | ctas
+ 3 | ctas
+ 4 | ctas
+ 5 | ctas
+ 6 | ctas
+(5 rows)
+
+FETCH FORWARD ALL pgss_cursor;
+ a  |  b   
+----+------
+  7 | ctas
+  8 | ctas
+  9 | ctas
+ 10 | ctas
+ 11 | copy
+ 12 | copy
+ 13 | copy
+(7 rows)
+
+COMMIT;
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |                                   query                                    
+-------+------+----------------------------------------------------------------------------
+     1 |    0 | BEGIN
+     1 |    0 | COMMIT
+     1 |    3 | COPY pgss_ctas (a, b) FROM STDIN
+     1 |   13 | CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas
+     1 |   10 | CREATE TABLE pgss_ctas AS SELECT a, 'ctas' b FROM generate_series(1, 10) a
+     1 |    0 | DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv
+     1 |    5 | FETCH FORWARD 5 pgss_cursor
+     1 |    7 | FETCH FORWARD ALL pgss_cursor
+     1 |    1 | FETCH NEXT pgss_cursor
+     1 |   13 | REFRESH MATERIALIZED VIEW pgss_matv
+     1 |   10 | SELECT generate_series(1, 10) c INTO pgss_select_into
+     1 |    1 | SELECT pg_stat_statements_reset()
+(12 rows)
+
+DROP MATERIALIZED VIEW pgss_matv;
+DROP TABLE pgss_ctas;
+DROP TABLE pgss_select_into;
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- SET statements.
+-- These use two different strings, still they count as one entry.
+SET work_mem = '1MB';
+Set work_mem = '1MB';
+SET work_mem = '2MB';
+RESET work_mem;
+SET enable_seqscan = off;
+SET enable_seqscan = on;
+RESET enable_seqscan;
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |               query               
+-------+------+-----------------------------------
+     1 |    0 | RESET enable_seqscan
+     1 |    0 | RESET work_mem
+     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    0 | SET enable_seqscan = off
+     1 |    0 | SET enable_seqscan = on
+     2 |    0 | SET work_mem = '1MB'
+     1 |    0 | SET work_mem = '2MB'
+(7 rows)
+
