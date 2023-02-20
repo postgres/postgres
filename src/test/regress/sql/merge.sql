@@ -1116,6 +1116,26 @@ ROLLBACK;
 DROP TABLE pa_source;
 DROP TABLE pa_target CASCADE;
 
+-- Partitioned table with primary key
+
+CREATE TABLE pa_target (tid integer PRIMARY KEY) PARTITION BY LIST (tid);
+CREATE TABLE pa_targetp PARTITION OF pa_target DEFAULT;
+CREATE TABLE pa_source (sid integer);
+
+INSERT INTO pa_source VALUES (1), (2);
+
+EXPLAIN (VERBOSE, COSTS OFF)
+MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
+  WHEN NOT MATCHED THEN INSERT VALUES (s.sid);
+
+MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
+  WHEN NOT MATCHED THEN INSERT VALUES (s.sid);
+
+TABLE pa_target;
+
+DROP TABLE pa_source;
+DROP TABLE pa_target CASCADE;
+
 -- some complex joins on the source side
 
 CREATE TABLE cj_target (tid integer, balance float, val text)

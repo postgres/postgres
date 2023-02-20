@@ -183,6 +183,14 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	if (!bms_get_singleton_member(sjinfo->min_righthand, &innerrelid))
 		return false;
 
+	/*
+	 * Never try to eliminate a left join to the query result rel.  Although
+	 * the case is syntactically impossible in standard SQL, MERGE will build
+	 * a join tree that looks exactly like that.
+	 */
+	if (innerrelid == root->parse->resultRelation)
+		return false;
+
 	innerrel = find_base_rel(root, innerrelid);
 
 	/*
