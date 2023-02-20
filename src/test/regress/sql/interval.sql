@@ -328,6 +328,7 @@ select interval 'P1.0Y0M3DT4H5M6S';
 select interval 'P1.1Y0M3DT4H5M6S';
 select interval 'P1.Y0M3DT4H5M6S';
 select interval 'P.1Y0M3DT4H5M6S';
+select interval 'P10.5e4Y';  -- not per spec, but we've historically taken it
 select interval 'P.Y0M3DT4H5M6S';  -- error
 
 -- test a couple rounding cases that changed since 8.3 w/ HAVE_INT64_TIMESTAMP.

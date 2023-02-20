@@ -975,6 +975,12 @@ select interval 'P.1Y0M3DT4H5M6S';
  1 mon 3 days 04:05:06
 (1 row)
 
+select interval 'P10.5e4Y';  -- not per spec, but we've historically taken it
+   interval   
+--------------
+ 105000 years
+(1 row)
+
 select interval 'P.Y0M3DT4H5M6S';  -- error
 ERROR:  invalid input syntax for type interval: "P.Y0M3DT4H5M6S"
 LINE 1: select interval 'P.Y0M3DT4H5M6S';
@@ -1081,13 +1087,13 @@ select interval 'PT2562047788:00:54.775807';
 select interval 'PT2562047788.0152155019444';
              interval              
 -----------------------------------
- @ 2562047788 hours 54.775807 secs
+ @ 2562047788 hours 54.775429 secs
 (1 row)
 
 select interval 'PT-2562047788.0152155022222';
                interval                
 ---------------------------------------
- @ 2562047788 hours 54.775808 secs ago
+ @ 2562047788 hours 54.775429 secs ago
 (1 row)
 
 -- overflow each date/time field

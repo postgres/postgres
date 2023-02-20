@@ -3702,46 +3702,38 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 static int
 ParseISO8601Number(char *str, char **endptr, int64 *ipart, double *fpart)
 {
-	int			sign = 1;
+	double		val;
 
-	*ipart = 0;
-	*fpart = 0.0;
-
-	/* Parse sign if there is any */
-	if (*str == '-')
-	{
-		sign = -1;
-		str++;
-	}
-
-	*endptr = str;
+	/*
+	 * Historically this has accepted anything that strtod() would take,
+	 * notably including "e" notation, so continue doing that.  This is
+	 * slightly annoying because the precision of double is less than that of
+	 * int64, so we would lose accuracy for inputs larger than 2^53 or so.
+	 * However, historically we rejected inputs outside the int32 range,
+	 * making that concern moot.  What we do now is reject abs(val) above
+	 * 1.0e15 (a round number a bit less than 2^50), so that any accepted
+	 * value will have an exact integer part, and thereby a fraction part with
+	 * abs(*fpart) less than 1.  In the absence of field complaints it doesn't
+	 * seem worth working harder.
+	 */
+	if (!(isdigit((unsigned char) *str) || *str == '-' || *str == '.'))
+		return DTERR_BAD_FORMAT;
 	errno = 0;
-
-	/* Parse int64 part if there is any */
-	if (isdigit((unsigned char) **endptr))
-		*ipart = strtoi64(*endptr, endptr, 10) * sign;
-
-	/* Parse fractional part if there is any */
-	if (**endptr == '.')
-	{
-		/*
-		 * As in ParseFraction, some versions of strtod insist on seeing some
-		 * digits after '.', but some don't.  We want to allow zero digits
-		 * after '.' as long as there were some before it.
-		 */
-		if (isdigit((unsigned char) *(*endptr + 1)))
-			*fpart = strtod(*endptr, endptr) * sign;
-		else
-		{
-			(*endptr)++;		/* advance over '.' */
-			str++;				/* so next test will fail if no digits */
-		}
-	}
-
-	/* did we not see anything that looks like a number? */
+	val = strtod(str, endptr);
+	/* did we not see anything that looks like a double? */
 	if (*endptr == str || errno != 0)
 		return DTERR_BAD_FORMAT;
-
+	/* watch out for overflow, including infinities; reject NaN too */
+	if (isnan(val) || val < -1.0e15 || val > 1.0e15)
+		return DTERR_FIELD_OVERFLOW;
+	/* be very sure we truncate towards zero (cf dtrunc()) */
+	if (val >= 0)
+		*ipart = (int64) floor(val);
+	else
+		*ipart = (int64) -floor(-val);
+	*fpart = val - *ipart;
+	/* Callers expect this to hold */
+	Assert(*fpart > -1.0 && *fpart < 1.0);
 	return 0;
 }
 
