@@ -41,6 +41,7 @@ tests += {
   'regress': {
     'sql': [
       'pg_stat_statements',
+      'cursors',
       'utility',
       'level_tracking',
       'planning',

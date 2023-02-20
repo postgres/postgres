@@ -1,0 +1,70 @@
+--
+-- Cursors
+--
+-- These tests require track_utility to be enabled.
+SET pg_stat_statements.track_utility = TRUE;
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- DECLARE
+-- SELECT is normalized.
+DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT 1;
+CLOSE cursor_stats_1;
+DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT 2;
+CLOSE cursor_stats_1;
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |                        query                         
+-------+------+------------------------------------------------------
+     2 |    0 | CLOSE cursor_stats_1
+     2 |    0 | DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT 1
+     1 |    1 | SELECT pg_stat_statements_reset()
+(3 rows)
+
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- FETCH
+BEGIN;
+DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT 2;
+DECLARE cursor_stats_2 CURSOR WITH HOLD FOR SELECT 3;
+FETCH 1 IN cursor_stats_1;
+ ?column? 
+----------
+        2
+(1 row)
+
+FETCH 1 IN cursor_stats_2;
+ ?column? 
+----------
+        3
+(1 row)
+
+CLOSE cursor_stats_1;
+CLOSE cursor_stats_2;
+COMMIT;
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |                        query                         
+-------+------+------------------------------------------------------
+     1 |    0 | BEGIN
+     1 |    0 | CLOSE cursor_stats_1
+     1 |    0 | CLOSE cursor_stats_2
+     1 |    0 | COMMIT
+     1 |    0 | DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT 2
+     1 |    0 | DECLARE cursor_stats_2 CURSOR WITH HOLD FOR SELECT 3
+     1 |    1 | FETCH 1 IN cursor_stats_1
+     1 |    1 | FETCH 1 IN cursor_stats_2
+     1 |    1 | SELECT pg_stat_statements_reset()
+(9 rows)
+
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
