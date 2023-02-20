@@ -304,6 +304,8 @@ pg_get_wal_fpi_info(PG_FUNCTION_ARGS)
 	XLogRecPtr	start_lsn;
 	XLogRecPtr	end_lsn;
 	XLogReaderState *xlogreader;
+	MemoryContext old_cxt;
+	MemoryContext tmp_cxt;
 
 	start_lsn = PG_GETARG_LSN(0);
 	end_lsn = PG_GETARG_LSN(1);
@@ -314,14 +316,26 @@ pg_get_wal_fpi_info(PG_FUNCTION_ARGS)
 
 	xlogreader = InitXLogReaderState(start_lsn);
 
+	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
+									"pg_get_wal_fpi_info temporary cxt",
+									ALLOCSET_DEFAULT_SIZES);
+
 	while (ReadNextXLogRecord(xlogreader) &&
 		   xlogreader->EndRecPtr <= end_lsn)
 	{
+		/* Use the tmp context so we can clean up after each tuple is done */
+		old_cxt = MemoryContextSwitchTo(tmp_cxt);
+
 		GetWALFPIInfo(fcinfo, xlogreader);
+
+		/* clean up and switch back */
+		MemoryContextSwitchTo(old_cxt);
+		MemoryContextReset(tmp_cxt);
 
 		CHECK_FOR_INTERRUPTS();
 	}
 
+	MemoryContextDelete(tmp_cxt);
 	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
 
@@ -440,23 +454,37 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	Datum		values[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
 	bool		nulls[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
+	MemoryContext old_cxt;
+	MemoryContext tmp_cxt;
 
 	InitMaterializedSRF(fcinfo, 0);
 
 	xlogreader = InitXLogReaderState(start_lsn);
 
+	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
+									"GetWALRecordsInfo temporary cxt",
+									ALLOCSET_DEFAULT_SIZES);
+
 	while (ReadNextXLogRecord(xlogreader) &&
 		   xlogreader->EndRecPtr <= end_lsn)
 	{
+		/* Use the tmp context so we can clean up after each tuple is done */
+		old_cxt = MemoryContextSwitchTo(tmp_cxt);
+
 		GetWALRecordInfo(xlogreader, values, nulls,
 						 PG_GET_WAL_RECORDS_INFO_COLS);
 
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
 							 values, nulls);
 
+		/* clean up and switch back */
+		MemoryContextSwitchTo(old_cxt);
+		MemoryContextReset(tmp_cxt);
+
 		CHECK_FOR_INTERRUPTS();
 	}
 
+	MemoryContextDelete(tmp_cxt);
 	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
 
@@ -560,11 +588,13 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 					Datum *values, bool *nulls, uint32 ncols,
 					bool stats_per_record)
 {
-	uint64		total_count = 0;
-	uint64		total_rec_len = 0;
-	uint64		total_fpi_len = 0;
-	uint64		total_len = 0;
-	int			ri;
+	MemoryContext	old_cxt;
+	MemoryContext	tmp_cxt;
+	uint64			total_count	  = 0;
+	uint64			total_rec_len = 0;
+	uint64			total_fpi_len = 0;
+	uint64			total_len	  = 0;
+	int				ri;
 
 	/*
 	 * Each row shows its percentages of the total, so make a first pass to
@@ -580,6 +610,10 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 		total_fpi_len += stats->rmgr_stats[ri].fpi_len;
 	}
 	total_len = total_rec_len + total_fpi_len;
+
+	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
+									"GetXLogSummaryStats temporary cxt",
+									ALLOCSET_DEFAULT_SIZES);
 
 	for (ri = 0; ri <= RM_MAX_ID; ri++)
 	{
@@ -614,6 +648,8 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 				if (count == 0)
 					continue;
 
+				old_cxt = MemoryContextSwitchTo(tmp_cxt);
+
 				/* the upper four bits in xl_info are the rmgr's */
 				id = desc.rm_identify(rj << 4);
 				if (id == NULL)
@@ -626,6 +662,10 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 
 				tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
 									 values, nulls);
+
+				/* clean up and switch back */
+				MemoryContextSwitchTo(old_cxt);
+				MemoryContextReset(tmp_cxt);
 			}
 		}
 		else
@@ -635,14 +675,22 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 			fpi_len = stats->rmgr_stats[ri].fpi_len;
 			tot_len = rec_len + fpi_len;
 
+			old_cxt = MemoryContextSwitchTo(tmp_cxt);
+
 			FillXLogStatsRow(desc.rm_name, count, total_count, rec_len,
 							 total_rec_len, fpi_len, total_fpi_len, tot_len,
 							 total_len, values, nulls, ncols);
 
 			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
 								 values, nulls);
+
+			/* clean up and switch back */
+			MemoryContextSwitchTo(old_cxt);
+			MemoryContextReset(tmp_cxt);
 		}
 	}
+
+	MemoryContextDelete(tmp_cxt);
 }
 
 /*
