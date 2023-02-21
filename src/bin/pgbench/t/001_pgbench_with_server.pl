@@ -828,6 +828,26 @@ select 1 \gset f
 }
 	});
 
+# Working \startpipeline in prepared query mode with serializable
+$node->pgbench(
+	'-c4 -j2 -t 10 -n -M prepared',
+	0,
+	[
+		qr{type: .*/001_pgbench_pipeline_serializable},
+		qr{actually processed: (\d+)/\1}
+	],
+	[],
+	'working \startpipeline with serializable',
+	{
+		'001_pgbench_pipeline_serializable' => q{
+-- test startpipeline with serializable
+\startpipeline
+BEGIN ISOLATION LEVEL SERIALIZABLE;
+} . "select 1;\n" x 10 . q{
+END;
+\endpipeline
+}
+	});
 
 # trigger many expression errors
 my @errors = (
