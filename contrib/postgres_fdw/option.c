@@ -485,8 +485,6 @@ process_pgfdw_appname(const char *appname)
 	const char *p;
 	StringInfoData buf;
 
-	Assert(MyProcPort != NULL);
-
 	initStringInfo(&buf);
 
 	for (p = appname; *p != '\0'; p++)
@@ -522,13 +520,29 @@ process_pgfdw_appname(const char *appname)
 				appendStringInfoString(&buf, cluster_name);
 				break;
 			case 'd':
-				appendStringInfoString(&buf, MyProcPort->database_name);
+				if (MyProcPort)
+				{
+					const char *dbname = MyProcPort->database_name;
+
+					if (dbname)
+						appendStringInfoString(&buf, dbname);
+					else
+						appendStringInfoString(&buf, "[unknown]");
+				}
 				break;
 			case 'p':
 				appendStringInfo(&buf, "%d", MyProcPid);
 				break;
 			case 'u':
-				appendStringInfoString(&buf, MyProcPort->user_name);
+				if (MyProcPort)
+				{
+					const char *username = MyProcPort->user_name;
+
+					if (username)
+						appendStringInfoString(&buf, username);
+					else
+						appendStringInfoString(&buf, "[unknown]");
+				}
 				break;
 			default:
 				/* format error - ignore it */
