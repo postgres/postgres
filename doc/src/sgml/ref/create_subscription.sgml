@@ -331,6 +331,18 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
        </varlistentry>
 
        <varlistentry>
+        <term><literal>enable_index_scan</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the subscription should automatically use
+          any indexes during data replication from the publisher when
+          replica identity is full. The default is
+          <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
         <term><literal>origin</literal> (<type>string</type>)</term>
         <listitem>
          <para>

@@ -66,6 +66,7 @@
 #define SUBOPT_DISABLE_ON_ERR		0x00000400
 #define SUBOPT_LSN					0x00000800
 #define SUBOPT_ORIGIN				0x00001000
+#define SUBOPT_ENABLE_INDEX_SCAN	0x00002000
 
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
@@ -88,6 +89,7 @@ typedef struct SubOpts
 	char		streaming;
 	bool		twophase;
 	bool		disableonerr;
+	bool		enableidxscan;
 	char	   *origin;
 	XLogRecPtr	lsn;
 } SubOpts;
@@ -144,6 +146,8 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 		opts->twophase = false;
 	if (IsSet(supported_opts, SUBOPT_DISABLE_ON_ERR))
 		opts->disableonerr = false;
+	if (IsSet(supported_opts, SUBOPT_ENABLE_INDEX_SCAN))
+		opts->enableidxscan = true;
 	if (IsSet(supported_opts, SUBOPT_ORIGIN))
 		opts->origin = pstrdup(LOGICALREP_ORIGIN_ANY);
 
@@ -273,6 +277,15 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 
 			opts->specified_opts |= SUBOPT_DISABLE_ON_ERR;
 			opts->disableonerr = defGetBoolean(defel);
+		}
+		else if (IsSet(supported_opts, SUBOPT_ENABLE_INDEX_SCAN) &&
+				 strcmp(defel->defname, "enable_index_scan") == 0)
+		{
+			if (IsSet(opts->specified_opts, SUBOPT_ENABLE_INDEX_SCAN))
+				errorConflictingDefElem(defel, pstate);
+
+			opts->specified_opts |= SUBOPT_ENABLE_INDEX_SCAN;
+			opts->enableidxscan = defGetBoolean(defel);
 		}
 		else if (IsSet(supported_opts, SUBOPT_ORIGIN) &&
 				 strcmp(defel->defname, "origin") == 0)
@@ -560,7 +573,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					  SUBOPT_SLOT_NAME | SUBOPT_COPY_DATA |
 					  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
 					  SUBOPT_STREAMING | SUBOPT_TWOPHASE_COMMIT |
-					  SUBOPT_DISABLE_ON_ERR | SUBOPT_ORIGIN);
+					  SUBOPT_DISABLE_ON_ERR | SUBOPT_ENABLE_INDEX_SCAN |
+					  SUBOPT_ORIGIN);
 	parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
 	/*
@@ -649,6 +663,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		publicationListToArray(publications);
 	values[Anum_pg_subscription_suborigin - 1] =
 		CStringGetTextDatum(opts.origin);
+	values[Anum_pg_subscription_subenableidxscan - 1] = BoolGetDatum(opts.enableidxscan);
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
@@ -1054,7 +1069,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				supported_opts = (SUBOPT_SLOT_NAME |
 								  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
 								  SUBOPT_STREAMING | SUBOPT_DISABLE_ON_ERR |
-								  SUBOPT_ORIGIN);
+								  SUBOPT_ENABLE_INDEX_SCAN | SUBOPT_ORIGIN);
 
 				parse_subscription_options(pstate, stmt->options,
 										   supported_opts, &opts);
@@ -1108,6 +1123,14 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					values[Anum_pg_subscription_subdisableonerr - 1]
 						= BoolGetDatum(opts.disableonerr);
 					replaces[Anum_pg_subscription_subdisableonerr - 1]
+						= true;
+				}
+
+				if (IsSet(opts.specified_opts, SUBOPT_ENABLE_INDEX_SCAN))
+				{
+					values[Anum_pg_subscription_subenableidxscan - 1]
+						= BoolGetDatum(opts.enableidxscan);
+					replaces[Anum_pg_subscription_subenableidxscan - 1]
 						= true;
 				}
 

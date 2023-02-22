@@ -2870,6 +2870,11 @@ FindReplTupleInLocalRel(EState *estate, Relation localrel,
 	Assert(OidIsValid(localidxoid) ||
 		   (remoterel->replident == REPLICA_IDENTITY_FULL));
 
+	/* Override the selected index if user disabled the index scan */
+	if (!MySubscription->enableidxscan &&
+		remoterel->replident == REPLICA_IDENTITY_FULL)
+		localidxoid = InvalidOid;
+
 	if (OidIsValid(localidxoid))
 		found = RelationFindReplTupleByIndex(localrel, localidxoid,
 											 LockTupleExclusive,
