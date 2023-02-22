@@ -296,7 +296,7 @@ ScanSourceDatabasePgClass(Oid tbid, Oid dbid, char *srcpath)
 		CHECK_FOR_INTERRUPTS();
 
 		buf = ReadBufferWithoutRelcache(rlocator, MAIN_FORKNUM, blkno,
-										RBM_NORMAL, bstrategy, false);
+										RBM_NORMAL, bstrategy, true);
 
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
 		page = BufferGetPage(buf);

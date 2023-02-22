@@ -39,6 +39,7 @@ tests += {
       't/031_recovery_conflict.pl',
       't/032_relfilenode_reuse.pl',
       't/033_replay_tsp_drops.pl',
+      't/034_create_database.pl',
     ],
   },
 }
