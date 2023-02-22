@@ -1082,6 +1082,18 @@ MERGE INTO pa_target t
 SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 
+-- test RLS enforcement
+BEGIN;
+ALTER TABLE pa_target ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pa_target FORCE ROW LEVEL SECURITY;
+CREATE POLICY pa_target_pol ON pa_target USING (tid != 0);
+MERGE INTO pa_target t
+  USING pa_source s
+  ON t.tid = s.sid AND t.tid IN (1,2,3,4)
+  WHEN MATCHED THEN
+    UPDATE SET tid = tid - 1;
+ROLLBACK;
+
 DROP TABLE pa_source;
 DROP TABLE pa_target CASCADE;
 
