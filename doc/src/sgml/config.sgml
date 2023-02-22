@@ -9499,7 +9499,8 @@ SET XML OPTION { DOCUMENT | CONTENT };
         is set to a non-empty value, the newly-created role will be granted
         to the creating user with the options specified. The value must be
         <literal>set</literal>, <literal>inherit</literal>, or a
-        comma-separated list of these.
+        comma-separated list of these. The default value is an empty string,
+        which disables the feature.
        </para>
        <para>
         The purpose of this option is to allow a <literal>CREATEROLE</literal>
