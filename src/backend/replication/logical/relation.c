@@ -17,11 +17,14 @@
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/table.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_subscription_rel.h"
 #include "executor/executor.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/cost.h"
 #include "replication/logicalrelation.h"
 #include "replication/worker_internal.h"
 #include "utils/inval.h"
@@ -49,6 +52,9 @@ typedef struct LogicalRepPartMapEntry
 	Oid			partoid;		/* LogicalRepPartMap's key */
 	LogicalRepRelMapEntry relmapentry;
 } LogicalRepPartMapEntry;
+
+static Oid	FindLogicalRepUsableIndex(Relation localrel,
+									  LogicalRepRelation *remoterel);
 
 /*
  * Relcache invalidation callback for our relation map cache.
@@ -438,6 +444,14 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		 */
 		logicalrep_rel_mark_updatable(entry);
 
+		/*
+		 * Finding a usable index is an infrequent task. It occurs when an
+		 * operation is first performed on the relation, or after invalidation
+		 * of the relation cache entry (such as ANALYZE or CREATE/DROP index
+		 * on the relation).
+		 */
+		entry->usableIndexOid = FindLogicalRepUsableIndex(entry->localrel, remoterel);
+
 		entry->localrelvalid = true;
 	}
 
@@ -696,10 +710,168 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	/* Set if the table's replica identity is enough to apply update/delete. */
 	logicalrep_rel_mark_updatable(entry);
 
+	/*
+	 * Finding a usable index is an infrequent task. It occurs when an
+	 * operation is first performed on the relation, or after invalidation
+	 * of the relation cache entry (such as ANALYZE or CREATE/DROP index on
+	 * the relation).
+	 */
+	entry->usableIndexOid = FindLogicalRepUsableIndex(partrel, remoterel);
+
 	entry->localrelvalid = true;
 
 	/* state and statelsn are left set to 0. */
 	MemoryContextSwitchTo(oldctx);
 
 	return entry;
+}
+
+/*
+ * Returns true if the given index consists only of expressions such as:
+ * 	CREATE INDEX idx ON table(foo(col));
+ *
+ * Returns false even if there is one column reference:
+ * 	 CREATE INDEX idx ON table(foo(col), col_2);
+ */
+bool
+IsIndexOnlyOnExpression(IndexInfo *indexInfo)
+{
+	for (int i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
+	{
+		AttrNumber	attnum = indexInfo->ii_IndexAttrNumbers[i];
+
+		if (AttributeNumberIsValid(attnum))
+			return false;
+	}
+
+	return true;
+}
+
+
+/*
+ * Returns an index oid if there is an index that can be used
+ * via the apply worker.
+ *
+ * Otherwise, returns InvalidOid.
+ *
+ * Note that this is not a generic function, it expects REPLICA
+ * IDENTITY FULL for the remote relation.
+ */
+static Oid
+FindUsableIndexForReplicaIdentityFull(Relation localrel)
+{
+	MemoryContext usableIndexContext;
+	MemoryContext oldctx;
+	Oid			usableIndex =  InvalidOid;
+	List	*indexlist;
+	ListCell   *lc;
+
+	usableIndexContext = AllocSetContextCreate(CurrentMemoryContext,
+											   "usableIndexContext",
+											   ALLOCSET_DEFAULT_SIZES);
+	oldctx = MemoryContextSwitchTo(usableIndexContext);
+
+	/* Get index list of the local relation */
+	indexlist = RelationGetIndexList(localrel);
+	Assert(indexlist != NIL);
+
+	foreach(lc, indexlist)
+	{
+		Oid			idxoid = lfirst_oid(lc);
+		Relation	indexRelation = index_open(idxoid, AccessShareLock);
+		IndexInfo	*indexInfo = BuildIndexInfo(indexRelation);
+
+		bool	is_btree = (indexInfo->ii_Am == BTREE_AM_OID);
+		bool	is_partial = (indexInfo->ii_Predicate != NIL);
+		bool	is_only_on_expression = IsIndexOnlyOnExpression(indexInfo);
+		index_close(indexRelation, AccessShareLock);
+
+		if (is_btree && !is_partial && !is_only_on_expression)
+		{
+			/* we found one eligible index, don't need to continue */
+			usableIndex = idxoid;
+			break;
+		}
+	}
+
+	MemoryContextSwitchTo(oldctx);
+
+	MemoryContextDelete(usableIndexContext);
+
+	return usableIndex;
+}
+
+/*
+ * Get replica identity index or if it is not defined a primary key.
+ *
+ * If neither is defined, returns InvalidOid
+ */
+static Oid
+GetRelationIdentityOrPK(Relation rel)
+{
+	Oid			idxoid;
+
+	idxoid = RelationGetReplicaIndex(rel);
+
+	if (!OidIsValid(idxoid))
+		idxoid = RelationGetPrimaryKeyIndex(rel);
+
+	return idxoid;
+}
+
+/*
+ * Returns an index oid if we can use an index for subscriber. If not,
+ * returns InvalidOid.
+ */
+static Oid
+FindLogicalRepUsableIndex(Relation localrel, LogicalRepRelation *remoterel)
+{
+	Oid			idxoid;
+
+	/*
+	 * We never need index oid for partitioned tables, always rely on leaf
+	 * partition's index.
+	 */
+	if (localrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		return InvalidOid;
+
+	/*
+	 * Simple case, we already have a primary key or a replica identity index.
+	 */
+	idxoid = GetRelationIdentityOrPK(localrel);
+	if (OidIsValid(idxoid))
+		return idxoid;
+
+	/*
+	 * If index scans are disabled, use a sequential scan.
+	 *
+	 * Note that we do not use index scans below when enable_indexscan is
+	 * false. Allowing primary key or replica identity even when index scan is
+	 * disabled is the legacy behaviour. So we hesitate to move the below
+	 * enable_indexscan check to be done earlier in this function.
+	 */
+	if (!enable_indexscan)
+		return InvalidOid;
+
+	if (remoterel->replident == REPLICA_IDENTITY_FULL &&
+		RelationGetIndexList(localrel) != NIL)
+	{
+		/*
+		 * If we had a primary key or relation identity with a unique index,
+		 * we would have already found and returned that oid. At this point,
+		 * the remote relation has replica identity full and we have at least
+		 * one local index defined.
+		 *
+		 * We are looking for one more opportunity for using an index. If
+		 * there are any indexes defined on the local relation, try to pick
+		 * a suitable index.
+		 *
+		 * The index selection safely assumes that all the columns are going
+		 * to be available for the index scan given that remote relation has
+		 * replica identity full.
+		 */
+		return FindUsableIndexForReplicaIdentityFull(localrel);
+	}
+
+	return InvalidOid;
 }
