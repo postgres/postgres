@@ -1737,6 +1737,18 @@ SELECT * FROM pa_target ORDER BY tid;
 (14 rows)
 
 ROLLBACK;
+-- test RLS enforcement
+BEGIN;
+ALTER TABLE pa_target ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pa_target FORCE ROW LEVEL SECURITY;
+CREATE POLICY pa_target_pol ON pa_target USING (tid != 0);
+MERGE INTO pa_target t
+  USING pa_source s
+  ON t.tid = s.sid AND t.tid IN (1,2,3,4)
+  WHEN MATCHED THEN
+    UPDATE SET tid = tid - 1;
+ERROR:  new row violates row-level security policy for table "pa_target"
+ROLLBACK;
 DROP TABLE pa_source;
 DROP TABLE pa_target CASCADE;
 -- Sub-partitioning

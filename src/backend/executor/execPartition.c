@@ -545,8 +545,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * Build WITH CHECK OPTION constraints for the partition.  Note that we
 	 * didn't build the withCheckOptionList for partitions within the planner,
 	 * but simple translation of varattnos will suffice.  This only occurs for
-	 * the INSERT case or in the case of UPDATE tuple routing where we didn't
-	 * find a result rel to reuse.
+	 * the INSERT case or in the case of UPDATE/MERGE tuple routing where we
+	 * didn't find a result rel to reuse.
 	 */
 	if (node && node->withCheckOptionLists != NIL)
 	{
@@ -557,12 +557,15 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		/*
 		 * In the case of INSERT on a partitioned table, there is only one
 		 * plan.  Likewise, there is only one WCO list, not one per partition.
-		 * For UPDATE, there are as many WCO lists as there are plans.
+		 * For UPDATE/MERGE, there are as many WCO lists as there are plans.
 		 */
 		Assert((node->operation == CMD_INSERT &&
 				list_length(node->withCheckOptionLists) == 1 &&
 				list_length(node->resultRelations) == 1) ||
 			   (node->operation == CMD_UPDATE &&
+				list_length(node->withCheckOptionLists) ==
+				list_length(node->resultRelations)) ||
+			   (node->operation == CMD_MERGE &&
 				list_length(node->withCheckOptionLists) ==
 				list_length(node->resultRelations)));
 
@@ -619,6 +622,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		List	   *returningList;
 
 		/* See the comment above for WCO lists. */
+		/* (except no RETURNING support for MERGE yet) */
 		Assert((node->operation == CMD_INSERT &&
 				list_length(node->returningLists) == 1 &&
 				list_length(node->resultRelations) == 1) ||
