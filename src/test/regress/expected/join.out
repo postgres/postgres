@@ -5119,6 +5119,67 @@ from int8_tbl t1
          ->  Seq Scan on onek t4
 (13 rows)
 
+-- More tests of correct placement of pseudoconstant quals
+-- simple constant-false condition
+explain (costs off)
+select * from int8_tbl t1 left join
+  (int8_tbl t2 inner join int8_tbl t3 on false
+   left join int8_tbl t4 on t2.q2 = t4.q2)
+on t1.q1 = t2.q1;
+              QUERY PLAN              
+--------------------------------------
+ Hash Left Join
+   Hash Cond: (t1.q1 = q1)
+   ->  Seq Scan on int8_tbl t1
+   ->  Hash
+         ->  Result
+               One-Time Filter: false
+(6 rows)
+
+-- deduce constant-false from an EquivalenceClass
+explain (costs off)
+select * from int8_tbl t1 left join
+  (int8_tbl t2 inner join int8_tbl t3 on (t2.q1-t3.q2) = 0 and (t2.q1-t3.q2) = 1
+   left join int8_tbl t4 on t2.q2 = t4.q2)
+on t1.q1 = t2.q1;
+              QUERY PLAN              
+--------------------------------------
+ Hash Left Join
+   Hash Cond: (t1.q1 = q1)
+   ->  Seq Scan on int8_tbl t1
+   ->  Hash
+         ->  Result
+               One-Time Filter: false
+(6 rows)
+
+-- pseudoconstant based on an outer-level Param
+explain (costs off)
+select exists(
+  select * from int8_tbl t1 left join
+    (int8_tbl t2 inner join int8_tbl t3 on x0.f1 = 1
+     left join int8_tbl t4 on t2.q2 = t4.q2)
+  on t1.q1 = t2.q1
+) from int4_tbl x0;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Seq Scan on int4_tbl x0
+   SubPlan 1
+     ->  Nested Loop Left Join
+           Join Filter: (t2.q2 = t4.q2)
+           ->  Nested Loop Left Join
+                 Join Filter: (t1.q1 = t2.q1)
+                 ->  Seq Scan on int8_tbl t1
+                 ->  Materialize
+                       ->  Result
+                             One-Time Filter: (x0.f1 = 1)
+                             ->  Nested Loop
+                                   ->  Seq Scan on int8_tbl t2
+                                   ->  Materialize
+                                         ->  Seq Scan on int8_tbl t3
+           ->  Materialize
+                 ->  Seq Scan on int8_tbl t4
+(16 rows)
+
 -- check that join removal works for a left join when joining a subquery
 -- that is guaranteed to be unique by its GROUP BY clause
 explain (costs off)

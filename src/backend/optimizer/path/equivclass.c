@@ -1248,11 +1248,11 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 			/*
 			 * The expressions aren't constants, so the passed qualscope will
 			 * never be used to place the generated clause.  We just need to
-			 * be sure it covers both expressions, so ec_relids will serve.
+			 * be sure it covers both expressions, which em_relids should do.
 			 */
 			rinfo = process_implied_equality(root, eq_op, ec->ec_collation,
 											 prev_em->em_expr, cur_em->em_expr,
-											 ec->ec_relids,
+											 cur_em->em_relids,
 											 ec->ec_min_security,
 											 false);
 

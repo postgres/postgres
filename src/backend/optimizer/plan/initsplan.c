@@ -125,6 +125,7 @@ static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									bool is_clone,
 									List **postponed_oj_qual_list);
 static bool check_redundant_nullability_qual(PlannerInfo *root, Node *clause);
+static Relids get_join_domain_min_rels(PlannerInfo *root, Relids domain_relids);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
 static void check_memoizable(RestrictInfo *restrictinfo);
@@ -2250,8 +2251,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * RestrictInfo lists for the moment, but eventually createplan.c will
 	 * pull it out and make a gating Result node immediately above whatever
 	 * plan node the pseudoconstant clause is assigned to.  It's usually best
-	 * to put a gating node as high in the plan tree as possible, which we can
-	 * do by assigning it the full relid set of the current JoinDomain.
+	 * to put a gating node as high in the plan tree as possible.
 	 */
 	if (bms_is_empty(relids))
 	{
@@ -2269,8 +2269,19 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		}
 		else
 		{
-			/* eval at join domain level */
-			relids = bms_copy(jtitem->jdomain->jd_relids);
+			/*
+			 * If we are in the top-level join domain, we can push the qual to
+			 * the top of the plan tree.  Otherwise, be conservative and eval
+			 * it at original syntactic level.  (Ideally we'd push it to the
+			 * top of the current join domain in all cases, but that causes
+			 * problems if we later rearrange outer-join evaluation order.
+			 * Pseudoconstant quals below the top level are a pretty odd case,
+			 * so it's not clear that it's worth working hard on.)
+			 */
+			if (jtitem->jdomain == (JoinDomain *) linitial(root->join_domains))
+				relids = bms_copy(jtitem->jdomain->jd_relids);
+			else
+				relids = bms_copy(qualscope);
 			/* mark as gating qual */
 			pseudoconstant = true;
 			/* tell createplan.c to check for gating quals */
@@ -2734,12 +2745,13 @@ process_implied_equality(PlannerInfo *root,
 	/*
 	 * If the clause is variable-free, our normal heuristic for pushing it
 	 * down to just the mentioned rels doesn't work, because there are none.
-	 * Apply it as a gating qual at the given qualscope.
+	 * Apply it as a gating qual at the appropriate level (see comments for
+	 * get_join_domain_min_rels).
 	 */
 	if (bms_is_empty(relids))
 	{
-		/* eval at join domain level */
-		relids = bms_copy(qualscope);
+		/* eval at join domain's safe level */
+		relids = get_join_domain_min_rels(root, qualscope);
 		/* mark as gating qual */
 		pseudoconstant = true;
 		/* tell createplan.c to check for gating quals */
@@ -2854,6 +2866,54 @@ build_implied_join_equality(PlannerInfo *root,
 	check_memoizable(restrictinfo);
 
 	return restrictinfo;
+}
+
+/*
+ * get_join_domain_min_rels
+ *	  Identify the appropriate join level for derived quals belonging
+ *	  to the join domain with the given relids.
+ *
+ * When we derive a pseudoconstant (Var-free) clause from an EquivalenceClass,
+ * we'd ideally apply the clause at the top level of the EC's join domain.
+ * However, if there are any outer joins inside that domain that get commuted
+ * with joins outside it, that leads to not finding a correct place to apply
+ * the clause.  Instead, remove any lower outer joins from the relid set,
+ * and apply the clause to just the remaining rels.  This still results in a
+ * correct answer, since if the clause produces FALSE then the LHS of these
+ * joins will be empty leading to an empty join result.
+ *
+ * However, there's no need to remove outer joins if this is the top-level
+ * join domain of the query, since then there's nothing else to commute with.
+ *
+ * Note: it's tempting to use this in distribute_qual_to_rels where it's
+ * dealing with pseudoconstant quals; but we can't because the necessary
+ * SpecialJoinInfos aren't all formed at that point.
+ *
+ * The result is always freshly palloc'd; we do not modify domain_relids.
+ */
+static Relids
+get_join_domain_min_rels(PlannerInfo *root, Relids domain_relids)
+{
+	Relids		result = bms_copy(domain_relids);
+	ListCell   *lc;
+
+	/* Top-level join domain? */
+	if (bms_equal(result, root->all_query_rels))
+		return result;
+
+	/* Nope, look for lower outer joins that could potentially commute out */
+	foreach(lc, root->join_info_list)
+	{
+		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
+
+		if (sjinfo->jointype == JOIN_LEFT &&
+			bms_is_member(sjinfo->ojrelid, result))
+		{
+			result = bms_del_member(result, sjinfo->ojrelid);
+			result = bms_del_members(result, sjinfo->syn_righthand);
+		}
+	}
+	return result;
 }
 
 
