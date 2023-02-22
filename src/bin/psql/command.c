@@ -480,7 +480,7 @@ exec_command_bind(PsqlScanState scan_state, bool active_branch)
 				nalloc = nalloc ? nalloc * 2 : 1;
 				pset.bind_params = pg_realloc_array(pset.bind_params, char *, nalloc);
 			}
-			pset.bind_params[nparams - 1] = pg_strdup(opt);
+			pset.bind_params[nparams - 1] = opt;
 		}
 
 		pset.bind_nparams = nparams;
