@@ -3034,7 +3034,7 @@ ninja install
      </varlistentry>
 
      <varlistentry id="configure-cassert-meson">
-      <term><option>-Dcassert</option></term>
+      <term><option>-Dcassert={ true | false }</option></term>
       <listitem>
        <para>
         Enables <firstterm>assertion</firstterm> checks in the server, which
@@ -3075,7 +3075,7 @@ ninja install
      </varlistentry>
 
      <varlistentry id="configure-b-coverage-meson">
-      <term><option>-Db_coverage</option></term>
+      <term><option>-Db_coverage={ true | false }</option></term>
       <listitem>
        <para>
         If using GCC, all programs and libraries are compiled with
