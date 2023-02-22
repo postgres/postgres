@@ -2878,7 +2878,7 @@ lmerge_matched:
 				}
 				ExecUpdatePrepareSlot(resultRelInfo, newslot, context->estate);
 				result = ExecUpdateAct(context, resultRelInfo, tupleid, NULL,
-									   newslot, mtstate->canSetTag, &updateCxt);
+									   newslot, false, &updateCxt);
 				if (result == TM_Ok && updateCxt.updated)
 				{
 					ExecUpdateEpilogue(context, &updateCxt, resultRelInfo,
