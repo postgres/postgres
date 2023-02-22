@@ -25,6 +25,30 @@ SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;
  32.6666666666666667
 (1 row)
 
+SELECT any_value(v) FROM (VALUES (1), (2), (3)) AS v (v);
+ any_value 
+-----------
+         1
+(1 row)
+
+SELECT any_value(v) FROM (VALUES (NULL)) AS v (v);
+ any_value 
+-----------
+ 
+(1 row)
+
+SELECT any_value(v) FROM (VALUES (NULL), (1), (2)) AS v (v);
+ any_value 
+-----------
+         1
+(1 row)
+
+SELECT any_value(v) FROM (VALUES (array['hello', 'world'])) AS v (v);
+   any_value   
+---------------
+ {hello,world}
+(1 row)
+
 -- In 7.1, avg(float4) is computed using float8 arithmetic.
 -- Round the result to 3 digits to avoid platform-specific results.
 SELECT avg(b)::numeric(10,3) AS avg_107_943 FROM aggtest;
@@ -2031,6 +2055,12 @@ from (values ('a', 'b')) AS v(foo,bar);
  max 
 -----
  a
+(1 row)
+
+select any_value(v) filter (where v > 2) from (values (1), (2), (3)) as v (v);
+ any_value 
+-----------
+         3
 (1 row)
 
 -- outer reference in FILTER (PostgreSQL extension)

@@ -24,6 +24,11 @@ SELECT avg(four) AS avg_1 FROM onek;
 
 SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;
 
+SELECT any_value(v) FROM (VALUES (1), (2), (3)) AS v (v);
+SELECT any_value(v) FROM (VALUES (NULL)) AS v (v);
+SELECT any_value(v) FROM (VALUES (NULL), (1), (2)) AS v (v);
+SELECT any_value(v) FROM (VALUES (array['hello', 'world'])) AS v (v);
+
 -- In 7.1, avg(float4) is computed using float8 arithmetic.
 -- Round the result to 3 digits to avoid platform-specific results.
 
@@ -809,6 +814,8 @@ having exists (select 1 from onek b where sum(distinct a.four) = b.four);
 
 select max(foo COLLATE "C") filter (where (bar collate "POSIX") > '0')
 from (values ('a', 'b')) AS v(foo,bar);
+
+select any_value(v) filter (where v > 2) from (values (1), (2), (3)) as v (v);
 
 -- outer reference in FILTER (PostgreSQL extension)
 select (select count(*)

@@ -520,6 +520,7 @@ T622	Trigonometric functions			YES
 T623	General logarithm functions			YES	
 T624	Common logarithm functions			YES	
 T625	LISTAGG			NO	
+T626	ANY_VALUE			YES	SQL:202x draft
 T631	IN predicate with one list element			YES	
 T641	Multiple column assignment			NO	only some syntax variants supported
 T651	SQL-schema statements in SQL routines			YES	

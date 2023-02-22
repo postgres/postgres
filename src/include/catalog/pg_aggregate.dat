@@ -634,4 +634,8 @@
   aggfinalfn => 'dense_rank_final', aggfinalextra => 't', aggfinalmodify => 'w',
   aggmfinalmodify => 'w', aggtranstype => 'internal' },
 
+# any_value
+{ aggfnoid => 'any_value(anyelement)', aggtransfn => 'any_value_transfn',
+  aggcombinefn => 'any_value_transfn', aggtranstype => 'anyelement' },
+
 ]

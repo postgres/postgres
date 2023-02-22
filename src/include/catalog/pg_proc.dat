@@ -11927,4 +11927,12 @@
   prorettype => 'bytea', proargtypes => 'pg_brin_minmax_multi_summary',
   prosrc => 'brin_minmax_multi_summary_send' },
 
+{ oid => '8981', descr => 'arbitrary value from among input values',
+  proname => 'any_value', prokind => 'a', proisstrict => 'f',
+  prorettype => 'anyelement', proargtypes => 'anyelement',
+  prosrc => 'aggregate_dummy' },
+{ oid => '8982', descr => 'aggregate transition function',
+  proname => 'any_value_transfn', prorettype => 'anyelement',
+  proargtypes => 'anyelement anyelement', prosrc => 'any_value_transfn' },
+
 ]

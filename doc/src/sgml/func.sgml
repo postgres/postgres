@@ -19738,6 +19738,20 @@ SELECT NULLIF(value, '(none)') ...
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>any_value</primary>
+        </indexterm>
+        <function>any_value</function> ( <type>anyelement</type> )
+        <returnvalue><replaceable>same as input type</replaceable></returnvalue>
+       </para>
+       <para>
+        Returns an arbitrary value from the non-null input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>array_agg</primary>
         </indexterm>
         <function>array_agg</function> ( <type>anynonarray</type> )

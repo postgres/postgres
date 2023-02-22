@@ -1041,3 +1041,12 @@ pg_get_replica_identity_index(PG_FUNCTION_ARGS)
 	else
 		PG_RETURN_NULL();
 }
+
+/*
+ * Transition function for the ANY_VALUE aggregate
+ */
+Datum
+any_value_transfn(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+}
