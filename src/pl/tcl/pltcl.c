@@ -2441,6 +2441,7 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 		case SPI_OK_INSERT:
 		case SPI_OK_DELETE:
 		case SPI_OK_UPDATE:
+		case SPI_OK_MERGE:
 			Tcl_SetObjResult(interp, Tcl_NewWideIntObj(ntuples));
 			break;
 
