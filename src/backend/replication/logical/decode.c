@@ -628,7 +628,7 @@ DecodeLogicalMsgOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	TransactionId xid = XLogRecGetXid(r);
 	uint8		info = XLogRecGetInfo(r) & ~XLR_INFO_MASK;
 	RepOriginId origin_id = XLogRecGetOrigin(r);
-	Snapshot	snapshot;
+	Snapshot	snapshot = NULL;
 	xl_logical_message *message;
 
 	if (info != XLOG_LOGICAL_MESSAGE)
@@ -658,7 +658,17 @@ DecodeLogicalMsgOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			  SnapBuildXactNeedsSkip(builder, buf->origptr)))
 		return;
 
-	snapshot = SnapBuildGetOrBuildSnapshot(builder, xid);
+	/*
+	 * If this is a non-transactional change, get the snapshot we're expected
+	 * to use. We only get here when the snapshot is consistent, and the
+	 * change is not meant to be skipped.
+	 *
+	 * For transactional changes we don't need a snapshot, we'll use the
+	 * regular snapshot maintained by ReorderBuffer. We just leave it NULL.
+	 */
+	if (!message->transactional)
+		snapshot = SnapBuildGetOrBuildSnapshot(builder, xid);
+
 	ReorderBufferQueueMessage(ctx->reorder, xid, snapshot, buf->endptr,
 							  message->transactional,
 							  message->message, /* first part of message is
