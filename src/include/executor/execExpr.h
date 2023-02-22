@@ -669,6 +669,10 @@ typedef struct ExprEvalStep
 	}			d;
 } ExprEvalStep;
 
+/* Enforce the size rule given in the comment above */
+StaticAssertDecl(sizeof(ExprEvalStep) <= 64,
+				 "size of ExprEvalStep exceeds 64 bytes");
+
 
 /* Non-inline data for container operations */
 typedef struct SubscriptingRefState
