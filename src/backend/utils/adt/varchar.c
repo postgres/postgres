@@ -1021,32 +1021,24 @@ hashbpchar(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-#ifdef USE_ICU
-		if (mylocale->provider == COLLPROVIDER_ICU)
-		{
-			Size		bsize, rsize;
-			char	   *buf;
+		Size		bsize, rsize;
+		char	   *buf;
 
-			bsize = pg_strnxfrm(NULL, 0, keydata, keylen, mylocale);
-			buf = palloc(bsize + 1);
+		bsize = pg_strnxfrm(NULL, 0, keydata, keylen, mylocale);
+		buf = palloc(bsize + 1);
 
-			rsize = pg_strnxfrm(buf, bsize + 1, keydata, keylen, mylocale);
-			if (rsize != bsize)
-				elog(ERROR, "pg_strnxfrm() returned unexpected result");
+		rsize = pg_strnxfrm(buf, bsize + 1, keydata, keylen, mylocale);
+		if (rsize != bsize)
+			elog(ERROR, "pg_strnxfrm() returned unexpected result");
 
-			/*
-			 * In principle, there's no reason to include the terminating NUL
-			 * character in the hash, but it was done before and the behavior
-			 * must be preserved.
-			 */
-			result = hash_any((uint8_t *) buf, bsize + 1);
+		/*
+		 * In principle, there's no reason to include the terminating NUL
+		 * character in the hash, but it was done before and the behavior
+		 * must be preserved.
+		 */
+		result = hash_any((uint8_t *) buf, bsize + 1);
 
-			pfree(buf);
-		}
-		else
-#endif
-			/* shouldn't happen */
-			elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
+		pfree(buf);
 	}
 
 	/* Avoid leaking memory for toasted inputs */
@@ -1084,33 +1076,25 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-#ifdef USE_ICU
-		if (mylocale->provider == COLLPROVIDER_ICU)
-		{
-			Size		bsize, rsize;
-			char	   *buf;
+		Size		bsize, rsize;
+		char	   *buf;
 
-			bsize = pg_strnxfrm(NULL, 0, keydata, keylen, mylocale);
-			buf = palloc(bsize + 1);
+		bsize = pg_strnxfrm(NULL, 0, keydata, keylen, mylocale);
+		buf = palloc(bsize + 1);
 
-			rsize = pg_strnxfrm(buf, bsize + 1, keydata, keylen, mylocale);
-			if (rsize != bsize)
-				elog(ERROR, "pg_strnxfrm() returned unexpected result");
+		rsize = pg_strnxfrm(buf, bsize + 1, keydata, keylen, mylocale);
+		if (rsize != bsize)
+			elog(ERROR, "pg_strnxfrm() returned unexpected result");
 
-			/*
-			 * In principle, there's no reason to include the terminating NUL
-			 * character in the hash, but it was done before and the behavior
-			 * must be preserved.
-			 */
-			result = hash_any_extended((uint8_t *) buf, bsize + 1,
-									   PG_GETARG_INT64(1));
+		/*
+		 * In principle, there's no reason to include the terminating NUL
+		 * character in the hash, but it was done before and the behavior
+		 * must be preserved.
+		 */
+		result = hash_any_extended((uint8_t *) buf, bsize + 1,
+								   PG_GETARG_INT64(1));
 
-			pfree(buf);
-		}
-		else
-#endif
-			/* shouldn't happen */
-			elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
+		pfree(buf);
 	}
 
 	PG_FREE_IF_COPY(key, 0);
