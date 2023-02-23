@@ -56,6 +56,41 @@
 #include "compress_io.h"
 #include "pg_backup_utils.h"
 
+#ifdef HAVE_LIBZ
+#include <zlib.h>
+#endif
+
+/*----------------------
+ * Generic functions
+ *----------------------
+ */
+
+/*
+ * Checks whether a compression algorithm is supported.
+ *
+ * On success returns NULL, otherwise returns a malloc'ed string which can be
+ * used by the caller in an error message.
+ */
+char *
+supports_compression(const pg_compress_specification compression_spec)
+{
+	const pg_compress_algorithm	algorithm = compression_spec.algorithm;
+	bool						supported = false;
+
+	if (algorithm == PG_COMPRESSION_NONE)
+		supported = true;
+#ifdef HAVE_LIBZ
+	if (algorithm == PG_COMPRESSION_GZIP)
+		supported = true;
+#endif
+
+	if (!supported)
+		return psprintf("this build does not support compression with %s",
+						get_compress_algorithm_name(algorithm));
+
+	return NULL;
+}
+
 /*----------------------
  * Compressor API
  *----------------------
@@ -490,16 +525,19 @@ cfopen_write(const char *path, const char *mode,
 }
 
 /*
- * Opens file 'path' in 'mode'. If compression is GZIP, the file
- * is opened with libz gzopen(), otherwise with plain fopen().
+ * This is the workhorse for cfopen() or cfdopen(). It opens file 'path' or
+ * associates a stream 'fd', if 'fd' is a valid descriptor, in 'mode'. The
+ * descriptor is not dup'ed and it is the caller's responsibility to do so.
+ * The caller must verify that the 'compress_algorithm' is supported by the
+ * current build.
  *
  * On failure, return NULL with an error code in errno.
  */
-cfp *
-cfopen(const char *path, const char *mode,
-	   const pg_compress_specification compression_spec)
+static cfp *
+cfopen_internal(const char *path, int fd, const char *mode,
+				pg_compress_specification compression_spec)
 {
-	cfp		   *fp = pg_malloc(sizeof(cfp));
+	cfp		   *fp = pg_malloc0(sizeof(cfp));
 
 	if (compression_spec.algorithm == PG_COMPRESSION_GZIP)
 	{
@@ -511,15 +549,20 @@ cfopen(const char *path, const char *mode,
 
 			snprintf(mode_compression, sizeof(mode_compression), "%s%d",
 					 mode, compression_spec.level);
-			fp->compressedfp = gzopen(path, mode_compression);
+			if (fd >= 0)
+				fp->compressedfp = gzdopen(fd, mode_compression);
+			else
+				fp->compressedfp = gzopen(path, mode_compression);
 		}
 		else
 		{
 			/* don't specify a level, just use the zlib default */
-			fp->compressedfp = gzopen(path, mode);
+			if (fd >= 0)
+				fp->compressedfp = gzdopen(fd, mode);
+			else
+				fp->compressedfp = gzopen(path, mode);
 		}
 
-		fp->uncompressedfp = NULL;
 		if (fp->compressedfp == NULL)
 		{
 			free_keep_errno(fp);
@@ -531,10 +574,11 @@ cfopen(const char *path, const char *mode,
 	}
 	else
 	{
-#ifdef HAVE_LIBZ
-		fp->compressedfp = NULL;
-#endif
-		fp->uncompressedfp = fopen(path, mode);
+		if (fd >= 0)
+			fp->uncompressedfp = fdopen(fd, mode);
+		else
+			fp->uncompressedfp = fopen(path, mode);
+
 		if (fp->uncompressedfp == NULL)
 		{
 			free_keep_errno(fp);
@@ -545,6 +589,33 @@ cfopen(const char *path, const char *mode,
 	return fp;
 }
 
+/*
+ * Opens file 'path' in 'mode' and compression as defined in
+ * compression_spec. The caller must verify that the compression
+ * is supported by the current build.
+ *
+ * On failure, return NULL with an error code in errno.
+ */
+cfp *
+cfopen(const char *path, const char *mode,
+	   const pg_compress_specification compression_spec)
+{
+	return cfopen_internal(path, -1, mode, compression_spec);
+}
+
+/*
+ * Associates a stream 'fd', if 'fd' is a valid descriptor, in 'mode'
+ * and compression as defined in compression_spec. The caller must
+ * verify that the compression is supported by the current build.
+ *
+ * On failure, return NULL with an error code in errno.
+ */
+cfp *
+cfdopen(int fd, const char *mode,
+		const pg_compress_specification compression_spec)
+{
+	return cfopen_internal(NULL, fd, mode, compression_spec);
+}
 
 int
 cfread(void *ptr, int size, cfp *fp)

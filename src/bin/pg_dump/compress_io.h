@@ -21,6 +21,8 @@
 #define ZLIB_OUT_SIZE	4096
 #define ZLIB_IN_SIZE	4096
 
+extern char *supports_compression(const pg_compress_specification compression_spec);
+
 /* Prototype for callback function to WriteDataToArchive() */
 typedef void (*WriteFunc) (ArchiveHandle *AH, const char *buf, size_t len);
 
@@ -54,6 +56,8 @@ typedef struct cfp cfp;
 
 extern cfp *cfopen(const char *path, const char *mode,
 				   const pg_compress_specification compression_spec);
+extern cfp *cfdopen(int fd, const char *mode,
+					const pg_compress_specification compression_spec);
 extern cfp *cfopen_read(const char *path, const char *mode);
 extern cfp *cfopen_write(const char *path, const char *mode,
 						 const pg_compress_specification compression_spec);
