@@ -53,7 +53,7 @@
  *	InitDiscoverCompressFileHandle tries to infer the compression by the
  *	filename suffix. If the suffix is not yet known then it tries to simply
  *	open the file and if it fails, it tries to open the same file with the .gz
- *	suffix.
+ *	suffix, and then again with the .lz4 suffix.
  *
  * IDENTIFICATION
  *	   src/bin/pg_dump/compress_io.c
@@ -67,6 +67,7 @@
 
 #include "compress_gzip.h"
 #include "compress_io.h"
+#include "compress_lz4.h"
 #include "compress_none.h"
 #include "pg_backup_utils.h"
 
@@ -91,6 +92,10 @@ supports_compression(const pg_compress_specification compression_spec)
 		supported = true;
 #ifdef HAVE_LIBZ
 	if (algorithm == PG_COMPRESSION_GZIP)
+		supported = true;
+#endif
+#ifdef USE_LZ4
+	if (algorithm == PG_COMPRESSION_LZ4)
 		supported = true;
 #endif
 
@@ -123,6 +128,8 @@ AllocateCompressor(const pg_compress_specification compression_spec,
 		InitCompressorNone(cs, compression_spec);
 	else if (compression_spec.algorithm == PG_COMPRESSION_GZIP)
 		InitCompressorGzip(cs, compression_spec);
+	else if (compression_spec.algorithm == PG_COMPRESSION_LZ4)
+		InitCompressorLZ4(cs, compression_spec);
 
 	return cs;
 }
@@ -187,6 +194,8 @@ InitCompressFileHandle(const pg_compress_specification compression_spec)
 		InitCompressFileHandleNone(CFH, compression_spec);
 	else if (compression_spec.algorithm == PG_COMPRESSION_GZIP)
 		InitCompressFileHandleGzip(CFH, compression_spec);
+	else if (compression_spec.algorithm == PG_COMPRESSION_LZ4)
+		InitCompressFileHandleLZ4(CFH, compression_spec);
 
 	return CFH;
 }
@@ -196,11 +205,11 @@ InitCompressFileHandle(const pg_compress_specification compression_spec)
  * be either "r" or "rb".
  *
  * If the file at 'path' contains the suffix of a supported compression method,
- * currently this includes only ".gz", then this compression will be used
+ * currently this includes ".gz" and ".lz4", then this compression will be used
  * throughout. Otherwise the compression will be inferred by iteratively trying
  * to open the file at 'path', first as is, then by appending known compression
  * suffixes. So if you pass "foo" as 'path', this will open either "foo" or
- * "foo.gz", trying in that order.
+ * "foo.gz" or "foo.lz4", trying in that order.
  *
  * On failure, return NULL with an error code in errno.
  */
@@ -237,6 +246,17 @@ InitDiscoverCompressFileHandle(const char *path, const char *mode)
 
 			if (exists)
 				compression_spec.algorithm = PG_COMPRESSION_GZIP;
+		}
+#endif
+#ifdef USE_LZ4
+		if (!exists)
+		{
+			free_keep_errno(fname);
+			fname = psprintf("%s.lz4", path);
+			exists = (stat(fname, &st) == 0);
+
+			if (exists)
+				compression_spec.algorithm = PG_COMPRESSION_LZ4;
 		}
 #endif
 	}

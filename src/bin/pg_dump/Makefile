@@ -17,6 +17,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 export GZIP_PROGRAM=$(GZIP)
+export LZ4
 export with_icu
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
@@ -26,6 +27,7 @@ OBJS = \
 	$(WIN32RES) \
 	compress_gzip.o \
 	compress_io.o \
+	compress_lz4.o \
 	compress_none.o \
 	dumputils.o \
 	parallel.o \

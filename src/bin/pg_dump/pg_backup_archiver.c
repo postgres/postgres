@@ -2075,7 +2075,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 
 		/*
 		 * Check if the specified archive is a directory. If so, check if
-		 * there's a "toc.dat" (or "toc.dat.gz") file in it.
+		 * there's a "toc.dat" (or "toc.dat.{gz,lz4}") file in it.
 		 */
 		if (stat(AH->fSpec, &st) == 0 && S_ISDIR(st.st_mode))
 		{
@@ -2084,6 +2084,10 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 				return AH->format;
 #ifdef HAVE_LIBZ
 			if (_fileExistsInDirectory(AH->fSpec, "toc.dat.gz"))
+				return AH->format;
+#endif
+#ifdef USE_LZ4
+			if (_fileExistsInDirectory(AH->fSpec, "toc.dat.lz4"))
 				return AH->format;
 #endif
 			pg_fatal("directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)",

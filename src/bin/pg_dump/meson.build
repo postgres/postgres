@@ -3,6 +3,7 @@
 pg_dump_common_sources = files(
   'compress_gzip.c',
   'compress_io.c',
+  'compress_lz4.c',
   'compress_none.c',
   'dumputils.c',
   'parallel.c',
@@ -18,7 +19,7 @@ pg_dump_common_sources = files(
 pg_dump_common = static_library('libpgdump_common',
   pg_dump_common_sources,
   c_pch: pch_postgres_fe_h,
-  dependencies: [frontend_code, libpq, zlib],
+  dependencies: [frontend_code, libpq, lz4, zlib],
   kwargs: internal_lib_args,
 )
 
@@ -86,7 +87,10 @@ tests += {
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'tap': {
-    'env': {'GZIP_PROGRAM': gzip.path()},
+    'env': {
+      'GZIP_PROGRAM': gzip.path(),
+      'LZ4': program_lz4.found() ? program_lz4.path() : '',
+    },
     'tests': [
       't/001_basic.pl',
       't/002_pg_dump.pl',

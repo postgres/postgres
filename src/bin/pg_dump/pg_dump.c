@@ -715,12 +715,11 @@ main(int argc, char **argv)
 		case PG_COMPRESSION_NONE:
 			/* fallthrough */
 		case PG_COMPRESSION_GZIP:
+			/* fallthrough */
+		case PG_COMPRESSION_LZ4:
 			break;
 		case PG_COMPRESSION_ZSTD:
 			pg_fatal("compression with %s is not yet supported", "ZSTD");
-			break;
-		case PG_COMPRESSION_LZ4:
-			pg_fatal("compression with %s is not yet supported", "LZ4");
 			break;
 	}
 

@@ -1387,11 +1387,13 @@ LWLock
 LWLockHandle
 LWLockMode
 LWLockPadded
+LZ4CompressorState
 LZ4F_compressionContext_t
 LZ4F_decompressOptions_t
 LZ4F_decompressionContext_t
 LZ4F_errorCode_t
 LZ4F_preferences_t
+LZ4File
 LabelProvider
 LagTracker
 LargeObjectDesc
