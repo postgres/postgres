@@ -1481,6 +1481,15 @@ report_newlocale_failure(const char *localename)
 }
 #endif							/* HAVE_LOCALE_T */
 
+bool
+pg_locale_deterministic(pg_locale_t locale)
+{
+	/* default locale must always be deterministic */
+	if (locale == NULL)
+		return true;
+	else
+		return locale->deterministic;
+}
 
 /*
  * Create a locale_t from a collation OID.  Results are cached for the

@@ -259,7 +259,7 @@ pg_set_regex_collation(Oid collation)
 		 */
 		pg_regex_locale = pg_newlocale_from_collation(collation);
 
-		if (pg_regex_locale && !pg_regex_locale->deterministic)
+		if (!pg_locale_deterministic(pg_regex_locale))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("nondeterministic collations are not supported for regular expressions")));
