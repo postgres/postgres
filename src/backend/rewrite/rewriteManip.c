@@ -948,12 +948,15 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	if (list_length(parsetree->jointree->fromlist) != 1)
 		elog(ERROR, "expected to find SELECT subquery");
 	rtr = (RangeTblRef *) linitial(parsetree->jointree->fromlist);
-	Assert(IsA(rtr, RangeTblRef));
-	selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
-	selectquery = selectrte->subquery;
-	if (!(selectquery && IsA(selectquery, Query) &&
-		  selectquery->commandType == CMD_SELECT))
+	if (!IsA(rtr, RangeTblRef))
 		elog(ERROR, "expected to find SELECT subquery");
+	selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
+	if (!(selectrte->rtekind == RTE_SUBQUERY &&
+		  selectrte->subquery &&
+		  IsA(selectrte->subquery, Query) &&
+		  selectrte->subquery->commandType == CMD_SELECT))
+		elog(ERROR, "expected to find SELECT subquery");
+	selectquery = selectrte->subquery;
 	if (list_length(selectquery->rtable) >= 2 &&
 		strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
 			   "old") == 0 &&
