@@ -429,6 +429,7 @@ CompiledExprState
 CompositeIOData
 CompositeTypeStmt
 CompoundAffixFlag
+CompressFileHandle
 CompressionLocation
 CompressorState
 ComputeXidHorizonsResult
@@ -1035,6 +1036,7 @@ GucStack
 GucStackState
 GucStringAssignHook
 GucStringCheckHook
+GzipCompressorState
 HANDLE
 HASHACTION
 HASHBUCKET

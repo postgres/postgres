@@ -1,7 +1,9 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 pg_dump_common_sources = files(
+  'compress_gzip.c',
   'compress_io.c',
+  'compress_none.c',
   'dumputils.c',
   'parallel.c',
   'pg_backup_archiver.c',

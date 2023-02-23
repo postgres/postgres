@@ -94,7 +94,7 @@ my %pgdump_runs = (
 			command => [
 				'pg_restore', '-l', "$tempdir/compression_gzip_custom.dump",
 			],
-			expected => qr/Compression: 1/,
+			expected => qr/Compression: gzip/,
 			name     => 'data content is gzip-compressed'
 		},
 	},
@@ -239,8 +239,8 @@ my %pgdump_runs = (
 			command =>
 			  [ 'pg_restore', '-l', "$tempdir/defaults_custom_format.dump", ],
 			expected => $supports_gzip ?
-			qr/Compression: -1/ :
-			qr/Compression: 0/,
+			qr/Compression: gzip/ :
+			qr/Compression: none/,
 			name => 'data content is gzip-compressed by default if available',
 		},
 	},
@@ -264,8 +264,8 @@ my %pgdump_runs = (
 			command =>
 			  [ 'pg_restore', '-l', "$tempdir/defaults_dir_format", ],
 			expected => $supports_gzip ?
-			qr/Compression: -1/ :
-			qr/Compression: 0/,
+			qr/Compression: gzip/ :
+			qr/Compression: none/,
 			name => 'data content is gzip-compressed by default',
 		},
 		glob_patterns => [

@@ -150,7 +150,9 @@ do
 
 	# pg_dump is not C++-clean because it uses "public" and "namespace"
 	# as field names, which is unfortunate but we won't change it now.
+	test "$f" = src/bin/pg_dump/compress_gzip.h && continue
 	test "$f" = src/bin/pg_dump/compress_io.h && continue
+	test "$f" = src/bin/pg_dump/compress_none.h && continue
 	test "$f" = src/bin/pg_dump/parallel.h && continue
 	test "$f" = src/bin/pg_dump/pg_backup_archiver.h && continue
 	test "$f" = src/bin/pg_dump/pg_dump.h && continue
