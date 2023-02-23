@@ -1597,7 +1597,6 @@ rewriteValuesRTEToNulls(Query *parsetree, RangeTblEntry *rte)
 	List	   *newValues;
 	ListCell   *lc;
 
-	Assert(rte->rtekind == RTE_VALUES);
 	newValues = NIL;
 	foreach(lc, rte->values_lists)
 	{
@@ -3868,12 +3867,39 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 			/*
 			 * Each product query has its own copy of the VALUES RTE at the
 			 * same index in the rangetable, so we must finalize each one.
+			 *
+			 * Note that if the product query is an INSERT ... SELECT, then
+			 * the VALUES RTE will be at the same index in the SELECT part of
+			 * the product query rather than the top-level product query
+			 * itself.
 			 */
 			foreach(n, product_queries)
 			{
 				Query	   *pt = (Query *) lfirst(n);
-				RangeTblEntry *values_rte = rt_fetch(values_rte_index,
-													 pt->rtable);
+				RangeTblEntry *values_rte;
+
+				if (pt->commandType == CMD_INSERT &&
+					pt->jointree && IsA(pt->jointree, FromExpr) &&
+					list_length(pt->jointree->fromlist) == 1)
+				{
+					Node	   *jtnode = (Node *) linitial(pt->jointree->fromlist);
+
+					if (IsA(jtnode, RangeTblRef))
+					{
+						int			rtindex = ((RangeTblRef *) jtnode)->rtindex;
+						RangeTblEntry *src_rte = rt_fetch(rtindex, pt->rtable);
+
+						if (src_rte->rtekind == RTE_SUBQUERY &&
+							src_rte->subquery &&
+							IsA(src_rte->subquery, Query) &&
+							src_rte->subquery->commandType == CMD_SELECT)
+							pt = src_rte->subquery;
+					}
+				}
+
+				values_rte = rt_fetch(values_rte_index, pt->rtable);
+				if (values_rte->rtekind != RTE_VALUES)
+					elog(ERROR, "failed to find VALUES RTE in product query");
 
 				rewriteValuesRTEToNulls(pt, values_rte);
 			}
