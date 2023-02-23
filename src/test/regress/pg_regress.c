@@ -1697,19 +1697,26 @@ run_schedule(const char *schedule, test_start_function startfunc,
 				differ |= newdiff;
 			}
 
-			if (differ)
+			if (statuses[i] != 0)
 			{
 				status(_("FAILED"));
+				log_child_failure(statuses[i]);
 				fail_count++;
 			}
 			else
 			{
-				status(_("ok    "));	/* align with FAILED */
-				success_count++;
-			}
 
-			if (statuses[i] != 0)
-				log_child_failure(statuses[i]);
+				if (differ)
+				{
+					status(_("FAILED"));
+					fail_count++;
+				}
+				else
+				{
+					status(_("ok    "));	/* align with FAILED */
+					success_count++;
+				}
+			}
 
 			INSTR_TIME_SUBTRACT(stoptimes[i], starttimes[i]);
 			status(_(" %8.0f ms"), INSTR_TIME_GET_MILLISEC(stoptimes[i]));
@@ -1778,19 +1785,25 @@ run_single_test(const char *test, test_start_function startfunc,
 		differ |= newdiff;
 	}
 
-	if (differ)
+	if (exit_status != 0)
 	{
 		status(_("FAILED"));
 		fail_count++;
+		log_child_failure(exit_status);
 	}
 	else
 	{
-		status(_("ok    "));	/* align with FAILED */
-		success_count++;
+		if (differ)
+		{
+			status(_("FAILED"));
+			fail_count++;
+		}
+		else
+		{
+			status(_("ok    "));	/* align with FAILED */
+			success_count++;
+		}
 	}
-
-	if (exit_status != 0)
-		log_child_failure(exit_status);
 
 	INSTR_TIME_SUBTRACT(stoptime, starttime);
 	status(_(" %8.0f ms"), INSTR_TIME_GET_MILLISEC(stoptime));
