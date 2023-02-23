@@ -149,7 +149,8 @@ extern void generate_base_implied_equalities(PlannerInfo *root);
 extern List *generate_join_implied_equalities(PlannerInfo *root,
 											  Relids join_relids,
 											  Relids outer_relids,
-											  RelOptInfo *inner_rel);
+											  RelOptInfo *inner_rel,
+											  Index ojrelid);
 extern List *generate_join_implied_equalities_for_ecs(PlannerInfo *root,
 													  List *eclasses,
 													  Relids join_relids,

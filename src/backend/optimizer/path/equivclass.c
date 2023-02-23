@@ -1366,15 +1366,19 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  * commutative duplicates, i.e. if the algorithm selects "a.x = b.y" but
  * we already have "b.y = a.x", we return the existing clause.
  *
- * join_relids should always equal bms_union(outer_relids, inner_rel->relids).
- * We could simplify this function's API by computing it internally, but in
- * most current uses, the caller has the value at hand anyway.
+ * If we are considering an outer join, ojrelid is the associated OJ relid,
+ * otherwise it's zero.
+ *
+ * join_relids should always equal bms_union(outer_relids, inner_rel->relids)
+ * plus ojrelid if that's not zero.  We could simplify this function's API by
+ * computing it internally, but most callers have the value at hand anyway.
  */
 List *
 generate_join_implied_equalities(PlannerInfo *root,
 								 Relids join_relids,
 								 Relids outer_relids,
-								 RelOptInfo *inner_rel)
+								 RelOptInfo *inner_rel,
+								 Index ojrelid)
 {
 	List	   *result = NIL;
 	Relids		inner_relids = inner_rel->relids;
@@ -1392,6 +1396,8 @@ generate_join_implied_equalities(PlannerInfo *root,
 		nominal_inner_relids = inner_rel->top_parent_relids;
 		/* ECs will be marked with the parent's relid, not the child's */
 		nominal_join_relids = bms_union(outer_relids, nominal_inner_relids);
+		if (ojrelid != 0)
+			nominal_join_relids = bms_add_member(nominal_join_relids, ojrelid);
 	}
 	else
 	{
@@ -1400,10 +1406,23 @@ generate_join_implied_equalities(PlannerInfo *root,
 	}
 
 	/*
-	 * Get all eclasses that mention both inner and outer sides of the join
+	 * Examine all potentially-relevant eclasses.
+	 *
+	 * If we are considering an outer join, we must include "join" clauses
+	 * that mention either input rel plus the outer join's relid; these
+	 * represent post-join filter clauses that have to be applied at this
+	 * join.  We don't have infrastructure that would let us identify such
+	 * eclasses cheaply, so just fall back to considering all eclasses
+	 * mentioning anything in nominal_join_relids.
+	 *
+	 * At inner joins, we can be smarter: only consider eclasses mentioning
+	 * both input rels.
 	 */
-	matching_ecs = get_common_eclass_indexes(root, nominal_inner_relids,
-											 outer_relids);
+	if (ojrelid != 0)
+		matching_ecs = get_eclass_indexes_for_relids(root, nominal_join_relids);
+	else
+		matching_ecs = get_common_eclass_indexes(root, nominal_inner_relids,
+												 outer_relids);
 
 	i = -1;
 	while ((i = bms_next_member(matching_ecs, i)) >= 0)
@@ -1447,6 +1466,10 @@ generate_join_implied_equalities(PlannerInfo *root,
 /*
  * generate_join_implied_equalities_for_ecs
  *	  As above, but consider only the listed ECs.
+ *
+ * For the sole current caller, we can assume ojrelid == 0, that is we are
+ * not interested in outer-join filter clauses.  This might need to change
+ * in future.
  */
 List *
 generate_join_implied_equalities_for_ecs(PlannerInfo *root,
@@ -2970,6 +2993,8 @@ generate_implied_equalities_for_column(PlannerInfo *root,
  * generate_join_implied_equalities().  Note it's OK to occasionally say "yes"
  * incorrectly.  Hence we don't bother with details like whether the lack of a
  * cross-type operator might prevent the clause from actually being generated.
+ * False negatives are not always fatal either: they will discourage, but not
+ * completely prevent, investigation of particular join pathways.
  */
 bool
 have_relevant_eclass_joinclause(PlannerInfo *root,
@@ -2978,7 +3003,16 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 	Bitmapset  *matching_ecs;
 	int			i;
 
-	/* Examine only eclasses mentioning both rel1 and rel2 */
+	/*
+	 * Examine only eclasses mentioning both rel1 and rel2.
+	 *
+	 * Note that we do not consider the possibility of an eclass generating
+	 * "join" clauses that mention just one of the rels plus an outer join
+	 * that could be formed from them.  Although such clauses must be
+	 * correctly enforced when we form the outer join, they don't seem like
+	 * sufficient reason to prioritize this join over other ones.  The join
+	 * ordering rules will force the join to be made when necessary.
+	 */
 	matching_ecs = get_common_eclass_indexes(root, rel1->relids,
 											 rel2->relids);
 

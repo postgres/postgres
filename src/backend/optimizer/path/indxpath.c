@@ -3349,12 +3349,15 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 	 * relid sets for generate_join_implied_equalities is slightly tricky
 	 * because the rel could be a child rel rather than a true baserel, and in
 	 * that case we must subtract its parents' relid(s) from all_query_rels.
+	 * Additionally, we mustn't consider clauses that are only computable
+	 * after outer joins that can null the rel.
 	 */
 	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
 		otherrels = bms_difference(root->all_query_rels,
 								   find_childrel_parents(root, rel));
 	else
 		otherrels = bms_difference(root->all_query_rels, rel->relids);
+	otherrels = bms_del_members(otherrels, rel->nulling_relids);
 
 	if (!bms_is_empty(otherrels))
 		clauselist =
@@ -3363,7 +3366,8 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 														 bms_union(rel->relids,
 																   otherrels),
 														 otherrels,
-														 rel));
+														 rel,
+														 0));
 
 	/*
 	 * Normally we remove quals that are implied by a partial index's

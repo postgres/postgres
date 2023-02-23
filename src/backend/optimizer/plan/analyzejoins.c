@@ -669,7 +669,8 @@ reduce_unique_semijoins(PlannerInfo *root)
 			list_concat(generate_join_implied_equalities(root,
 														 joinrelids,
 														 sjinfo->min_lefthand,
-														 innerrel),
+														 innerrel,
+														 0),
 						innerrel->joininfo);
 
 		/* Test whether the innerrel is unique for those clauses. */
