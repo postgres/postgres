@@ -2880,10 +2880,10 @@ if build_system != 'windows'
   test_install_location = '@0@@1@'.format(test_install_destdir, dir_prefix)
 else
   # drives, drive-relative paths, etc make this complicated on windows, call
-  # meson's logic for it
+  # into a copy of meson's logic for it
   command = [
-    meson_bin, meson_args, 'runpython', '-c',
-    'import sys; from mesonbuild.scripts import destdir_join; print(destdir_join(sys.argv[4], sys.argv[5]))',
+    python, '-c',
+    'import sys; from pathlib import PurePath; d1=sys.argv[1]; d2=sys.argv[2]; print(str(PurePath(d1, *PurePath(d2).parts[1:])))',
     test_install_destdir, dir_prefix]
   test_install_location = run_command(command, check: true).stdout().strip()
 endif
