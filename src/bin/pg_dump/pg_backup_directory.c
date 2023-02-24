@@ -691,13 +691,13 @@ _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 
 	/* Close the BLOB data file itself */
 	if (EndCompressFileHandle(ctx->dataFH) != 0)
-		pg_fatal("could not close blob data file: %m");
+		pg_fatal("could not close LO data file: %m");
 	ctx->dataFH = NULL;
 
 	/* register the LO in blobs.toc */
 	len = snprintf(buf, sizeof(buf), "%u blob_%u.dat\n", oid, oid);
 	if (CFH->write_func(buf, len, CFH) != len)
-		pg_fatal("could not write to blobs TOC file");
+		pg_fatal("could not write to LOs TOC file");
 }
 
 /*
@@ -711,7 +711,7 @@ _EndLOs(ArchiveHandle *AH, TocEntry *te)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	if (EndCompressFileHandle(ctx->LOsTocFH) != 0)
-		pg_fatal("could not close blobs TOC file: %m");
+		pg_fatal("could not close LOs TOC file: %m");
 	ctx->LOsTocFH = NULL;
 }
 
