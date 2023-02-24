@@ -617,6 +617,12 @@ create unique index on cwi_test (a);
 alter table cwi_test add primary key using index cwi_test_a_idx ;
 DROP TABLE cwi_test;
 
+-- PRIMARY KEY constraint cannot be backed by a NULLS NOT DISTINCT index
+CREATE TABLE cwi_test(a int, b int);
+CREATE UNIQUE INDEX cwi_a_nnd ON cwi_test (a) NULLS NOT DISTINCT;
+ALTER TABLE cwi_test ADD PRIMARY KEY USING INDEX cwi_a_nnd;
+DROP TABLE cwi_test;
+
 --
 -- Check handling of indexes on system columns
 --

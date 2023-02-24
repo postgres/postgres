@@ -1595,6 +1595,12 @@ create unique index on cwi_test (a);
 alter table cwi_test add primary key using index cwi_test_a_idx ;
 ERROR:  ALTER TABLE / ADD CONSTRAINT USING INDEX is not supported on partitioned tables
 DROP TABLE cwi_test;
+-- PRIMARY KEY constraint cannot be backed by a NULLS NOT DISTINCT index
+CREATE TABLE cwi_test(a int, b int);
+CREATE UNIQUE INDEX cwi_a_nnd ON cwi_test (a) NULLS NOT DISTINCT;
+ALTER TABLE cwi_test ADD PRIMARY KEY USING INDEX cwi_a_nnd;
+ERROR:  primary keys cannot use NULLS NOT DISTINCT indexes
+DROP TABLE cwi_test;
 --
 -- Check handling of indexes on system columns
 --

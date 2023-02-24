@@ -226,6 +226,19 @@ index_check_primary_key(Relation heapRel,
 	}
 
 	/*
+	 * Indexes created with NULLS NOT DISTINCT cannot be used for primary key
+	 * constraints. While there is no direct syntax to reach here, it can be
+	 * done by creating a separate index and attaching it via ALTER TABLE ..
+	 * USING INDEX.
+	 */
+	if (indexInfo->ii_NullsNotDistinct)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("primary keys cannot use NULLS NOT DISTINCT indexes")));
+	}
+
+	/*
 	 * Check that all of the attributes in a primary key are marked as not
 	 * null.  (We don't really expect to see that; it'd mean the parser messed
 	 * up.  But it seems wise to check anyway.)
