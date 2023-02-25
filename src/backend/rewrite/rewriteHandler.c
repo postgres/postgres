@@ -353,6 +353,7 @@ rewriteRuleAction(Query *parsetree,
 	Query	   *sub_action;
 	Query	  **sub_action_ptr;
 	acquireLocksOnSubLinks_context context;
+	ListCell   *lc;
 
 	context.for_execute = true;
 
@@ -390,6 +391,23 @@ rewriteRuleAction(Query *parsetree,
 				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 	ChangeVarNodes(rule_qual,
 				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
+
+	/*
+	 * Mark any subquery RTEs in the rule action as LATERAL if they contain
+	 * Vars referring to the current query level (references to NEW/OLD).
+	 * Those really are lateral references, but we've historically not
+	 * required users to mark such subqueries with LATERAL explicitly.  But
+	 * the planner will complain if such Vars exist in a non-LATERAL subquery,
+	 * so we have to fix things up here.
+	 */
+	foreach(lc, sub_action->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		if (rte->rtekind == RTE_SUBQUERY && !rte->lateral &&
+			contain_vars_of_level((Node *) rte->subquery, 1))
+			rte->lateral = true;
+	}
 
 	/*
 	 * Generate expanded rtable consisting of main parsetree's rtable plus
@@ -432,8 +450,6 @@ rewriteRuleAction(Query *parsetree,
 	 */
 	if (parsetree->hasSubLinks && !sub_action->hasSubLinks)
 	{
-		ListCell   *lc;
-
 		foreach(lc, parsetree->rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
@@ -531,8 +547,6 @@ rewriteRuleAction(Query *parsetree,
 	 */
 	if (parsetree->cteList != NIL && sub_action->commandType != CMD_UTILITY)
 	{
-		ListCell   *lc;
-
 		/*
 		 * Annoying implementation restriction: because CTEs are identified by
 		 * name within a cteList, we can't merge a CTE from the original query
