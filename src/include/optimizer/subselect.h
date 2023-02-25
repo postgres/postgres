@@ -16,7 +16,6 @@
 #include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
 
-extern void SS_make_multiexprs_unique(PlannerInfo *root, PlannerInfo *subroot);
 extern void SS_process_ctes(PlannerInfo *root);
 extern JoinExpr *convert_ANY_sublink_to_join(PlannerInfo *root,
 											 SubLink *sublink,
