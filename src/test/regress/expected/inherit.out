@@ -1717,73 +1717,109 @@ reset enable_bitmapscan;
 --
 -- Check handling of MULTIEXPR SubPlans in inherited updates
 --
-create table inhpar(f1 int, f2 text[], f3 int);
-insert into inhpar select generate_series(1,10);
-create table inhcld() inherits(inhpar);
-insert into inhcld select generate_series(11,10000);
-vacuum analyze inhcld;
-vacuum analyze inhpar;
+create table inhpar(f1 int, f2 name);
+create table inhcld(f2 name, f1 int);
+alter table inhcld inherit inhpar;
+insert into inhpar select x, x::text from generate_series(1,5) x;
+insert into inhcld select x::text, x from generate_series(6,10) x;
 explain (verbose, costs off)
-update inhpar set
-  (f1, f2[1])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
-  (f2[2], f2[3]) = (select 'x', 'y' from int4_tbl limit 1),
-  (f3, f2[4])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
-  (f2[5], f2[6]) = (select 'x', 'y' from int4_tbl limit 1)
-from onek p2 where inhpar.f1 = p2.unique1;
-                                                                                                     QUERY PLAN                                                                                                      
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Update on public.inhpar
-   Update on public.inhpar
-   Update on public.inhcld
-   InitPlan 2 (returns $4,$5)
-     ->  Limit
-           Output: 'x'::text, 'y'::text
-           ->  Seq Scan on public.int4_tbl int4_tbl_1
-                 Output: 'x'::text, 'y'::text
-   InitPlan 4 (returns $10,$11)
-     ->  Limit
-           Output: 'x'::text, 'y'::text
-           ->  Seq Scan on public.int4_tbl int4_tbl_3
-                 Output: 'x'::text, 'y'::text
-   ->  Merge Join
-         Output: $12, (((((inhpar.f2[1] := $13)[2] := $4)[3] := $5)[4] := $15)[5] := $10)[6] := $11, $14, (SubPlan 1 (returns $2,$3)), NULL::record, (SubPlan 3 (returns $8,$9)), NULL::record, inhpar.ctid, p2.ctid
-         Merge Cond: (p2.unique1 = inhpar.f1)
-         ->  Index Scan using onek_unique1 on public.onek p2
-               Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
-         ->  Sort
-               Output: inhpar.f2, inhpar.ctid, inhpar.f1
-               Sort Key: inhpar.f1
-               ->  Seq Scan on public.inhpar
-                     Output: inhpar.f2, inhpar.ctid, inhpar.f1
+update inhpar i set (f1, f2) = (select i.f1, i.f2 || '-' from int4_tbl limit 1);
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Update on public.inhpar i
+   Update on public.inhpar i
+   Update on public.inhcld i_1
+   ->  Seq Scan on public.inhpar i
+         Output: $2, $3, (SubPlan 1 (returns $2,$3)), i.ctid
          SubPlan 1 (returns $2,$3)
            ->  Limit
-                 Output: (p2.unique2), (p2.stringu1)
+                 Output: (i.f1), (((i.f2)::text || '-'::text))
                  ->  Seq Scan on public.int4_tbl
-                       Output: p2.unique2, p2.stringu1
-         SubPlan 3 (returns $8,$9)
-           ->  Limit
-                 Output: (p2.unique2), (p2.stringu1)
-                 ->  Seq Scan on public.int4_tbl int4_tbl_2
-                       Output: p2.unique2, p2.stringu1
-   ->  Hash Join
-         Output: $16, (((((inhcld.f2[1] := $17)[2] := $4)[3] := $5)[4] := $19)[5] := $10)[6] := $11, $18, (SubPlan 1 (returns $2,$3)), NULL::record, (SubPlan 3 (returns $8,$9)), NULL::record, inhcld.ctid, p2.ctid
-         Hash Cond: (inhcld.f1 = p2.unique1)
-         ->  Seq Scan on public.inhcld
-               Output: inhcld.f2, inhcld.ctid, inhcld.f1
-         ->  Hash
-               Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
-               ->  Seq Scan on public.onek p2
-                     Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
-(42 rows)
+                       Output: i.f1, ((i.f2)::text || '-'::text)
+   ->  Seq Scan on public.inhcld i_1
+         Output: $3, $2, (SubPlan 1 (returns $2,$3)), i_1.ctid
+(12 rows)
 
-update inhpar set
-  (f1, f2[1])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
-  (f2[2], f2[3]) = (select 'x', 'y' from int4_tbl limit 1),
-  (f3, f2[4])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
-  (f2[5], f2[6]) = (select 'x', 'y' from int4_tbl limit 1)
-from onek p2 where inhpar.f1 = p2.unique1;
+update inhpar i set (f1, f2) = (select i.f1, i.f2 || '-' from int4_tbl limit 1);
+select * from inhpar;
+ f1 | f2  
+----+-----
+  1 | 1-
+  2 | 2-
+  3 | 3-
+  4 | 4-
+  5 | 5-
+  6 | 6-
+  7 | 7-
+  8 | 8-
+  9 | 9-
+ 10 | 10-
+(10 rows)
+
 drop table inhpar cascade;
 NOTICE:  drop cascades to table inhcld
+--
+-- And the same for partitioned cases
+--
+create table inhpar(f1 int primary key, f2 name) partition by range (f1);
+create table inhcld1(f2 name, f1 int primary key);
+create table inhcld2(f1 int primary key, f2 name);
+alter table inhpar attach partition inhcld1 for values from (1) to (5);
+alter table inhpar attach partition inhcld2 for values from (5) to (100);
+insert into inhpar select x, x::text from generate_series(1,10) x;
+explain (verbose, costs off)
+update inhpar i set (f1, f2) = (select i.f1, i.f2 || '-' from int4_tbl limit 1);
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Update on public.inhpar i
+   Update on public.inhcld1 i_1
+   Update on public.inhcld2 i_2
+   ->  Seq Scan on public.inhcld1 i_1
+         Output: $3, $2, (SubPlan 1 (returns $2,$3)), i_1.ctid
+         SubPlan 1 (returns $2,$3)
+           ->  Limit
+                 Output: (i_1.f1), (((i_1.f2)::text || '-'::text))
+                 ->  Seq Scan on public.int4_tbl
+                       Output: i_1.f1, ((i_1.f2)::text || '-'::text)
+   ->  Seq Scan on public.inhcld2 i_2
+         Output: $2, $3, (SubPlan 1 (returns $2,$3)), i_2.ctid
+(12 rows)
+
+update inhpar i set (f1, f2) = (select i.f1, i.f2 || '-' from int4_tbl limit 1);
+select * from inhpar;
+ f1 | f2  
+----+-----
+  1 | 1-
+  2 | 2-
+  3 | 3-
+  4 | 4-
+  5 | 5-
+  6 | 6-
+  7 | 7-
+  8 | 8-
+  9 | 9-
+ 10 | 10-
+(10 rows)
+
+-- Also check ON CONFLICT
+insert into inhpar as i values (3), (7) on conflict (f1)
+  do update set (f1, f2) = (select i.f1, i.f2 || '+');
+select * from inhpar order by f1;  -- tuple order might be unstable here
+ f1 | f2  
+----+-----
+  1 | 1-
+  2 | 2-
+  3 | 3-+
+  4 | 4-
+  5 | 5-
+  6 | 6-
+  7 | 7-+
+  8 | 8-
+  9 | 9-
+ 10 | 10-
+(10 rows)
+
+drop table inhpar cascade;
 --
 -- Check handling of a constant-null CHECK constraint
 --
