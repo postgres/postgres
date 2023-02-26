@@ -163,9 +163,7 @@ sub installcheck_internal
 		"--bindir=../../../$Config/psql",
 		"--schedule=${schedule}_schedule",
 		"--max-concurrent-tests=20",
-		"--make-testtablespace-dir",
-		"--encoding=SQL_ASCII",
-		"--no-locale");
+		"--make-testtablespace-dir");
 	push(@args, $maxconn) if $maxconn;
 	push(@args, @EXTRA_REGRESS_OPTS);
 	system(@args);
