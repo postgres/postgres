@@ -4116,6 +4116,13 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        </para>
 
        <para>
+        For a <command>MERGE</command> command, the tag is
+        <literal>MERGE <replaceable>rows</replaceable></literal> where
+        <replaceable>rows</replaceable> is the number of rows inserted,
+        updated, or deleted.
+       </para>
+
+       <para>
         For a <command>SELECT</command> or <command>CREATE TABLE AS</command>
         command, the tag is <literal>SELECT <replaceable>rows</replaceable></literal>
         where <replaceable>rows</replaceable> is the number of rows retrieved.

@@ -1611,7 +1611,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
      <listitem>
       <para>
        Data Manipulation Language (DML): <command>INSERT</command>,
-       <command>UPDATE</command>, <command>DELETE</command>, <command>COPY FROM</command>,
+       <command>UPDATE</command>, <command>DELETE</command>,
+       <command>MERGE</command>, <command>COPY FROM</command>,
        <command>TRUNCATE</command>.
        Note that there are no allowed actions that result in a trigger
        being executed during recovery.  This restriction applies even to

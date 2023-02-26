@@ -788,9 +788,10 @@ ROLLBACK;
 
    <para>
     As seen in this example, when the query is an <command>INSERT</command>,
-    <command>UPDATE</command>, or <command>DELETE</command> command, the actual work of
+    <command>UPDATE</command>, <command>DELETE</command>, or
+    <command>MERGE</command> command, the actual work of
     applying the table changes is done by a top-level Insert, Update,
-    or Delete plan node.  The plan nodes underneath this node perform
+    Delete, or Merge plan node.  The plan nodes underneath this node perform
     the work of locating the old rows and/or computing the new data.
     So above, we see the same sort of bitmap table scan we've seen already,
     and its output is fed to an Update node that stores the updated rows.
@@ -803,7 +804,8 @@ ROLLBACK;
    </para>
 
    <para>
-    When an <command>UPDATE</command> or <command>DELETE</command> command affects an
+    When an <command>UPDATE</command>, <command>DELETE</command>, or
+    <command>MERGE</command> command affects an
     inheritance hierarchy, the output might look like this:
 
 <screen>

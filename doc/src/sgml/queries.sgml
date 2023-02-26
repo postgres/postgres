@@ -2064,8 +2064,8 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
    in a <literal>WITH</literal> clause can be a <command>SELECT</command>,
    <command>INSERT</command>, <command>UPDATE</command>, or <command>DELETE</command>; and the
    <literal>WITH</literal> clause itself is attached to a primary statement that can
-   also be a <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>, or
-   <command>DELETE</command>.
+   be a <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
+   <command>DELETE</command>, or <command>MERGE</command>.
   </para>
 
  <sect2 id="queries-with-select">
@@ -2587,7 +2587,8 @@ SELECT * FROM w AS w1 JOIN w AS w2 ON w1.f = w2.f;
   <para>
    The examples above only show <literal>WITH</literal> being used with
    <command>SELECT</command>, but it can be attached in the same way to
-   <command>INSERT</command>, <command>UPDATE</command>, or <command>DELETE</command>.
+   <command>INSERT</command>, <command>UPDATE</command>,
+   <command>DELETE</command>, or <command>MERGE</command>.
    In each case it effectively provides temporary table(s) that can
    be referred to in the main command.
   </para>
@@ -2597,8 +2598,9 @@ SELECT * FROM w AS w1 JOIN w AS w2 ON w1.f = w2.f;
    <title>Data-Modifying Statements in <literal>WITH</literal></title>
 
    <para>
-    You can use data-modifying statements (<command>INSERT</command>,
-    <command>UPDATE</command>, or <command>DELETE</command>) in <literal>WITH</literal>.  This
+    You can use most data-modifying statements (<command>INSERT</command>,
+    <command>UPDATE</command>, or <command>DELETE</command>, but not
+    <command>MERGE</command>) in <literal>WITH</literal>.  This
     allows you to perform several different operations in the same query.
     An example is:
 

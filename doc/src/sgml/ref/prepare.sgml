@@ -116,7 +116,8 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
     <listitem>
      <para>
       Any <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
-      <command>DELETE</command>, or <command>VALUES</command> statement.
+      <command>DELETE</command>, <command>MERGE</command>, or <command>VALUES</command>
+      statement.
      </para>
     </listitem>
    </varlistentry>
