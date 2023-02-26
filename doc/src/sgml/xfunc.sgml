@@ -186,7 +186,8 @@
      language can be packaged together and defined as a function.
      Besides <command>SELECT</command> queries, the commands can include data
      modification queries (<command>INSERT</command>,
-     <command>UPDATE</command>, and <command>DELETE</command>), as well as
+     <command>UPDATE</command>, <command>DELETE</command>, and
+     <command>MERGE</command>), as well as
      other SQL commands. (You cannot use transaction control commands, e.g.,
      <command>COMMIT</command>, <command>SAVEPOINT</command>, and some utility
      commands, e.g.,  <literal>VACUUM</literal>, in <acronym>SQL</acronym> functions.)

@@ -94,7 +94,8 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
     statement will happen as usual.  If you wish to use
     <command>EXPLAIN ANALYZE</command> on an
     <command>INSERT</command>, <command>UPDATE</command>,
-    <command>DELETE</command>, <command>CREATE TABLE AS</command>,
+    <command>DELETE</command>, <command>MERGE</command>,
+    <command>CREATE TABLE AS</command>,
     or <command>EXECUTE</command> statement
     without letting the command affect your data, use this approach:
 <programlisting>
@@ -272,7 +273,8 @@ ROLLBACK;
     <listitem>
      <para>
       Any <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
-      <command>DELETE</command>, <command>VALUES</command>, <command>EXECUTE</command>,
+      <command>DELETE</command>, <command>MERGE</command>,
+      <command>VALUES</command>, <command>EXECUTE</command>,
       <command>DECLARE</command>, <command>CREATE TABLE AS</command>, or
       <command>CREATE MATERIALIZED VIEW AS</command> statement, whose execution
       plan you wish to see.

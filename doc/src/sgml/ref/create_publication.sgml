@@ -300,6 +300,12 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   For a <command>MERGE</command> command, the publication will publish an
+   <command>INSERT</command>, <command>UPDATE</command>, or <command>DELETE</command>
+   for each row inserted, updated, or deleted.
+  </para>
+
+  <para>
    <command>ATTACH</command>ing a table into a partition tree whose root is
    published using a publication with <literal>publish_via_partition_root</literal>
    set to <literal>true</literal> does not result in the table's existing contents

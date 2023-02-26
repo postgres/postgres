@@ -1044,7 +1044,8 @@ INSERT INTO mytable VALUES (1,'one'), (2,'two');
      <application>PL/pgSQL</application> variable values can be
      automatically inserted into optimizable SQL commands, which
      are <command>SELECT</command>, <command>INSERT</command>,
-     <command>UPDATE</command>, <command>DELETE</command>, and certain
+     <command>UPDATE</command>, <command>DELETE</command>,
+     <command>MERGE</command>, and certain
      utility commands that incorporate one of these, such
      as <command>EXPLAIN</command> and <command>CREATE TABLE ... AS
      SELECT</command>.  In these commands,

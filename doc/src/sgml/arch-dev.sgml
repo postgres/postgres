@@ -530,13 +530,15 @@
    </para>
 
    <para>
-    The executor mechanism is used to evaluate all four basic SQL query
+    The executor mechanism is used to evaluate all five basic SQL query
     types: <command>SELECT</command>, <command>INSERT</command>,
-    <command>UPDATE</command>, and <command>DELETE</command>.
+    <command>UPDATE</command>, <command>DELETE</command>, and
+    <command>MERGE</command>.
     For <command>SELECT</command>, the top-level executor code
     only needs to send each row returned by the query plan tree
     off to the client.  <command>INSERT ... SELECT</command>,
-    <command>UPDATE</command>, and <command>DELETE</command>
+    <command>UPDATE</command>, <command>DELETE</command>, and
+    <command>MERGE</command>
     are effectively <command>SELECT</command>s under a special
     top-level plan node called <literal>ModifyTable</literal>.
    </para>
@@ -552,7 +554,13 @@
     mark the old row deleted.  For <command>DELETE</command>, the only
     column that is actually returned by the plan is the TID, and the
     <literal>ModifyTable</literal> node simply uses the TID to visit each
-    target row and mark it deleted.
+    target row and mark it deleted.  For <command>MERGE</command>, the
+    planner joins the source and target relations, and includes all
+    column values required by any of the <literal>WHEN</literal> clauses,
+    plus the TID of the target row; this data is fed up to the
+    <literal>ModifyTable</literal> node, which uses the information to
+    work out which <literal>WHEN</literal> clause to execute, and then
+    inserts, updates or deletes the target row, as required.
    </para>
 
    <para>
