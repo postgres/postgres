@@ -150,9 +150,7 @@ sub installcheck_internal
 		"--dlpath=.",
 		"--bindir=../../../$Config/psql",
 		"--schedule=${schedule}_schedule",
-		"--max-concurrent-tests=20",
-		"--encoding=SQL_ASCII",
-		"--no-locale");
+		"--max-concurrent-tests=20");
 	push(@args, $maxconn) if $maxconn;
 	push(@args, @EXTRA_REGRESS_OPTS);
 	system(@args);
