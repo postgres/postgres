@@ -30,8 +30,8 @@ SELECT pg_input_is_valid('<value>one</', 'xml');
 (1 row)
 
 SELECT message FROM pg_input_error_info('<value>one</', 'xml');
-       message          
-------------------------
+       message       
+---------------------
  invalid XML content
 (1 row)
 
