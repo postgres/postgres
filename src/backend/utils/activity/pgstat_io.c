@@ -36,18 +36,16 @@ pgstat_bktype_io_stats_valid(PgStat_BktypeIO *backend_io,
 {
 	bool		bktype_tracked = pgstat_tracks_io_bktype(bktype);
 
-	for (IOObject io_object = IOOBJECT_FIRST;
-		 io_object < IOOBJECT_NUM_TYPES; io_object++)
+	for (int io_object = 0; io_object < IOOBJECT_NUM_TYPES; io_object++)
 	{
-		for (IOContext io_context = IOCONTEXT_FIRST;
-			 io_context < IOCONTEXT_NUM_TYPES; io_context++)
+		for (int io_context = 0; io_context < IOCONTEXT_NUM_TYPES; io_context++)
 		{
 			/*
 			 * Don't bother trying to skip to the next loop iteration if
 			 * pgstat_tracks_io_object() would return false here. We still
 			 * need to validate that each counter is zero anyway.
 			 */
-			for (IOOp io_op = IOOP_FIRST; io_op < IOOP_NUM_TYPES; io_op++)
+			for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
 			{
 				/* No stats, so nothing to validate */
 				if (backend_io->data[io_object][io_context][io_op] == 0)
@@ -111,14 +109,11 @@ pgstat_flush_io(bool nowait)
 	else if (!LWLockConditionalAcquire(bktype_lock, LW_EXCLUSIVE))
 		return true;
 
-	for (IOObject io_object = IOOBJECT_FIRST;
-		 io_object < IOOBJECT_NUM_TYPES; io_object++)
+	for (int io_object = 0; io_object < IOOBJECT_NUM_TYPES; io_object++)
 	{
-		for (IOContext io_context = IOCONTEXT_FIRST;
-			 io_context < IOCONTEXT_NUM_TYPES; io_context++)
+		for (int io_context = 0; io_context < IOCONTEXT_NUM_TYPES; io_context++)
 		{
-			for (IOOp io_op = IOOP_FIRST;
-				 io_op < IOOP_NUM_TYPES; io_op++)
+			for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
 				bktype_shstats->data[io_object][io_context][io_op] +=
 					PendingIOStats.data[io_object][io_context][io_op];
 		}

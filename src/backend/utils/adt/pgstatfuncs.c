@@ -1306,7 +1306,7 @@ pg_stat_get_io(PG_FUNCTION_ARGS)
 
 	reset_time = TimestampTzGetDatum(backends_io_stats->stat_reset_timestamp);
 
-	for (BackendType bktype = B_INVALID; bktype < BACKEND_NUM_TYPES; bktype++)
+	for (int bktype = 0; bktype < BACKEND_NUM_TYPES; bktype++)
 	{
 		Datum		bktype_desc = CStringGetTextDatum(GetBackendTypeDesc(bktype));
 		PgStat_BktypeIO *bktype_stats = &backends_io_stats->stats[bktype];
@@ -1325,13 +1325,11 @@ pg_stat_get_io(PG_FUNCTION_ARGS)
 		if (!pgstat_tracks_io_bktype(bktype))
 			continue;
 
-		for (IOObject io_obj = IOOBJECT_FIRST;
-			 io_obj < IOOBJECT_NUM_TYPES; io_obj++)
+		for (int io_obj = 0; io_obj < IOOBJECT_NUM_TYPES; io_obj++)
 		{
 			const char *obj_name = pgstat_get_io_object_name(io_obj);
 
-			for (IOContext io_context = IOCONTEXT_FIRST;
-				 io_context < IOCONTEXT_NUM_TYPES; io_context++)
+			for (int io_context = 0; io_context < IOCONTEXT_NUM_TYPES; io_context++)
 			{
 				const char *context_name = pgstat_get_io_context_name(io_context);
 
@@ -1359,7 +1357,7 @@ pg_stat_get_io(PG_FUNCTION_ARGS)
 				 */
 				values[IO_COL_CONVERSION] = Int64GetDatum(BLCKSZ);
 
-				for (IOOp io_op = IOOP_FIRST; io_op < IOOP_NUM_TYPES; io_op++)
+				for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
 				{
 					int			col_idx = pgstat_get_io_op_index(io_op);
 
