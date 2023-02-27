@@ -61,10 +61,10 @@ SELECT pg_input_is_valid('10000000000000000000', 'int8');
  f
 (1 row)
 
-SELECT pg_input_error_message('10000000000000000000', 'int8');
-                    pg_input_error_message                    
---------------------------------------------------------------
- value "10000000000000000000" is out of range for type bigint
+SELECT * FROM pg_input_error_info('10000000000000000000', 'int8');
+                           message                            | detail | hint | sql_error_code 
+--------------------------------------------------------------+--------+------+----------------
+ value "10000000000000000000" is out of range for type bigint |        |      | 22003
 (1 row)
 
 -- int8/int8 cmp

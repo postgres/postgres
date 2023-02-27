@@ -660,32 +660,60 @@ pg_input_is_valid(PG_FUNCTION_ARGS)
 }
 
 /*
- * pg_input_error_message - test whether string is valid input for datatype.
+ * pg_input_error_info - test whether string is valid input for datatype.
  *
- * Returns NULL if OK, else the primary message string from the error.
+ * Returns NULL if OK, else the primary message, detail message, hint message
+ * and sql error code from the error.
  *
  * This will only work usefully if the datatype's input function has been
  * updated to return "soft" errors via errsave/ereturn.
  */
 Datum
-pg_input_error_message(PG_FUNCTION_ARGS)
+pg_input_error_info(PG_FUNCTION_ARGS)
 {
 	text	   *txt = PG_GETARG_TEXT_PP(0);
 	text	   *typname = PG_GETARG_TEXT_PP(1);
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
+	TupleDesc	tupdesc;
+	Datum		values[4];
+	bool		isnull[4];
+
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	/* Enable details_wanted */
 	escontext.details_wanted = true;
 
 	if (pg_input_is_valid_common(fcinfo, txt, typname,
 								 &escontext))
-		PG_RETURN_NULL();
+		memset(isnull, true, sizeof(isnull));
+	else
+	{
+		char	   *sqlstate;
 
-	Assert(escontext.error_occurred);
-	Assert(escontext.error_data != NULL);
-	Assert(escontext.error_data->message != NULL);
+		Assert(escontext.error_occurred);
+		Assert(escontext.error_data != NULL);
+		Assert(escontext.error_data->message != NULL);
 
-	PG_RETURN_TEXT_P(cstring_to_text(escontext.error_data->message));
+		memset(isnull, false, sizeof(isnull));
+
+		values[0] = CStringGetTextDatum(escontext.error_data->message);
+
+		if (escontext.error_data->detail != NULL)
+			values[1] = CStringGetTextDatum(escontext.error_data->detail);
+		else
+			isnull[1] = true;
+
+		if (escontext.error_data->hint != NULL)
+			values[2] = CStringGetTextDatum(escontext.error_data->hint);
+		else
+			isnull[2] = true;
+
+		sqlstate = unpack_sql_state(escontext.error_data->sqlerrcode);
+		values[3] = CStringGetTextDatum(sqlstate);
+	}
+
+	return HeapTupleGetDatum(heap_form_tuple(tupdesc, values, isnull));
 }
 
 /* Common subroutine for the above */

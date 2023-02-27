@@ -44,8 +44,8 @@ SELECT '25:00:00'::time;  -- not allowed
 SELECT pg_input_is_valid('12:00:00', 'time');
 SELECT pg_input_is_valid('25:00:00', 'time');
 SELECT pg_input_is_valid('15:36:39 America/New_York', 'time');
-SELECT pg_input_error_message('25:00:00', 'time');
-SELECT pg_input_error_message('15:36:39 America/New_York', 'time');
+SELECT * FROM pg_input_error_info('25:00:00', 'time');
+SELECT * FROM pg_input_error_info('15:36:39 America/New_York', 'time');
 
 --
 -- TIME simple math

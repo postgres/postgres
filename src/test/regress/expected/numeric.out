@@ -2312,10 +2312,10 @@ SELECT pg_input_is_valid('1e400000', 'numeric');
  f
 (1 row)
 
-SELECT pg_input_error_message('1e400000', 'numeric');
-     pg_input_error_message     
---------------------------------
- value overflows numeric format
+SELECT * FROM pg_input_error_info('1e400000', 'numeric');
+            message             | detail | hint | sql_error_code 
+--------------------------------+--------+------+----------------
+ value overflows numeric format |        |      | 22003
 (1 row)
 
 SELECT pg_input_is_valid('1234.567', 'numeric(8,4)');
@@ -2330,16 +2330,16 @@ SELECT pg_input_is_valid('1234.567', 'numeric(7,4)');
  f
 (1 row)
 
-SELECT pg_input_error_message('1234.567', 'numeric(7,4)');
- pg_input_error_message 
-------------------------
- numeric field overflow
+SELECT * FROM pg_input_error_info('1234.567', 'numeric(7,4)');
+        message         |                                      detail                                       | hint | sql_error_code 
+------------------------+-----------------------------------------------------------------------------------+------+----------------
+ numeric field overflow | A field with precision 7, scale 4 must round to an absolute value less than 10^3. |      | 22003
 (1 row)
 
-SELECT pg_input_error_message('0x1234.567', 'numeric');
-               pg_input_error_message                
------------------------------------------------------
- invalid input syntax for type numeric: "0x1234.567"
+SELECT * FROM pg_input_error_info('0x1234.567', 'numeric');
+                       message                       | detail | hint | sql_error_code 
+-----------------------------------------------------+--------+------+----------------
+ invalid input syntax for type numeric: "0x1234.567" |        |      | 22P02
 (1 row)
 
 --

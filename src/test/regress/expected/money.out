@@ -338,10 +338,10 @@ SELECT pg_input_is_valid('\x0001', 'money');
  f
 (1 row)
 
-SELECT pg_input_error_message('\x0001', 'money');
-            pg_input_error_message             
------------------------------------------------
- invalid input syntax for type money: "\x0001"
+SELECT * FROM pg_input_error_info('\x0001', 'money');
+                    message                    | detail | hint | sql_error_code 
+-----------------------------------------------+--------+------+----------------
+ invalid input syntax for type money: "\x0001" |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('192233720368547758.07', 'money');
@@ -350,10 +350,10 @@ SELECT pg_input_is_valid('192233720368547758.07', 'money');
  f
 (1 row)
 
-SELECT pg_input_error_message('192233720368547758.07', 'money');
-                    pg_input_error_message                    
---------------------------------------------------------------
- value "192233720368547758.07" is out of range for type money
+SELECT * FROM pg_input_error_info('192233720368547758.07', 'money');
+                           message                            | detail | hint | sql_error_code 
+--------------------------------------------------------------+--------+------+----------------
+ value "192233720368547758.07" is out of range for type money |        |      | 22003
 (1 row)
 
 -- documented minimums and maximums

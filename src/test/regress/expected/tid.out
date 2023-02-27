@@ -24,10 +24,10 @@ SELECT pg_input_is_valid('(0)', 'tid');
  f
 (1 row)
 
-SELECT pg_input_error_message('(0)', 'tid');
-          pg_input_error_message          
-------------------------------------------
- invalid input syntax for type tid: "(0)"
+SELECT * FROM pg_input_error_info('(0)', 'tid');
+                 message                  | detail | hint | sql_error_code 
+------------------------------------------+--------+------+----------------
+ invalid input syntax for type tid: "(0)" |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('(0,-1)', 'tid');
@@ -36,10 +36,10 @@ SELECT pg_input_is_valid('(0,-1)', 'tid');
  f
 (1 row)
 
-SELECT pg_input_error_message('(0,-1)', 'tid');
-           pg_input_error_message            
----------------------------------------------
- invalid input syntax for type tid: "(0,-1)"
+SELECT * FROM pg_input_error_info('(0,-1)', 'tid');
+                   message                   | detail | hint | sql_error_code 
+---------------------------------------------+--------+------+----------------
+ invalid input syntax for type tid: "(0,-1)" |        |      | 22P02
 (1 row)
 
 -- tests for functions related to TID handling

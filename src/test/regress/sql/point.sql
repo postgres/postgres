@@ -99,4 +99,4 @@ RESET enable_bitmapscan;
 
 -- test non-error-throwing API for some core types
 SELECT pg_input_is_valid('1,y', 'point');
-SELECT pg_input_error_message('1,y', 'point');
+SELECT * FROM pg_input_error_info('1,y', 'point');

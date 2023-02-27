@@ -35,8 +35,8 @@ select '(Joe,Blow) /'::fullname;  -- bad
 SELECT pg_input_is_valid('(1,2)', 'complex');
 SELECT pg_input_is_valid('(1,2', 'complex');
 SELECT pg_input_is_valid('(1,zed)', 'complex');
-SELECT pg_input_error_message('(1,zed)', 'complex');
-SELECT pg_input_error_message('(1,1e400)', 'complex');
+SELECT * FROM pg_input_error_info('(1,zed)', 'complex');
+SELECT * FROM pg_input_error_info('(1,1e400)', 'complex');
 
 create temp table quadtable(f1 int, q quad);
 

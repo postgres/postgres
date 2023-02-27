@@ -257,9 +257,9 @@ SELECT jsonb '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
 (1 row)
 
 -- soft error for input-time failure
-select pg_input_error_message('{ "a":  "\ud83d\ude04\ud83d\udc36" }', 'jsonb');
-       pg_input_error_message        
--------------------------------------
- unsupported Unicode escape sequence
+select * from pg_input_error_info('{ "a":  "\ud83d\ude04\ud83d\udc36" }', 'jsonb');
+               message               |                                      detail                                      | hint | sql_error_code 
+-------------------------------------+----------------------------------------------------------------------------------+------+----------------
+ unsupported Unicode escape sequence | Unicode escape value could not be translated to the server's encoding SQL_ASCII. |      | 22P05
 (1 row)
 

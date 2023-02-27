@@ -124,9 +124,9 @@ SELECT pg_input_is_valid('abcde', 'varchar(4)');
  f
 (1 row)
 
-SELECT pg_input_error_message('abcde', 'varchar(4)');
-            pg_input_error_message            
-----------------------------------------------
- value too long for type character varying(4)
+SELECT * FROM pg_input_error_info('abcde', 'varchar(4)');
+                   message                    | detail | hint | sql_error_code 
+----------------------------------------------+--------+------+----------------
+ value too long for type character varying(4) |        |      | 22001
 (1 row)
 

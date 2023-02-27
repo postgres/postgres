@@ -323,16 +323,16 @@ select pg_input_is_valid('{"a":true', 'jsonb');
  f
 (1 row)
 
-select pg_input_error_message('{"a":true', 'jsonb');
-       pg_input_error_message       
-------------------------------------
- invalid input syntax for type json
+select * from pg_input_error_info('{"a":true', 'jsonb');
+              message               |                detail                | hint | sql_error_code 
+------------------------------------+--------------------------------------+------+----------------
+ invalid input syntax for type json | The input string ended unexpectedly. |      | 22P02
 (1 row)
 
-select pg_input_error_message('{"a":1e1000000}', 'jsonb');
-     pg_input_error_message     
---------------------------------
- value overflows numeric format
+select * from pg_input_error_info('{"a":1e1000000}', 'jsonb');
+            message             | detail | hint | sql_error_code 
+--------------------------------+--------+------+----------------
+ value overflows numeric format |        |      | 22003
 (1 row)
 
 -- make sure jsonb is passed through json generators without being escaped

@@ -92,10 +92,10 @@ SELECT pg_input_is_valid('{1, 1}', 'line');
  f
 (1 row)
 
-SELECT pg_input_error_message('{1, 1}', 'line');
-            pg_input_error_message            
-----------------------------------------------
- invalid input syntax for type line: "{1, 1}"
+SELECT * FROM pg_input_error_info('{1, 1}', 'line');
+                   message                    | detail | hint | sql_error_code 
+----------------------------------------------+--------+------+----------------
+ invalid input syntax for type line: "{1, 1}" |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('{0, 0, 0}', 'line');
@@ -104,10 +104,10 @@ SELECT pg_input_is_valid('{0, 0, 0}', 'line');
  f
 (1 row)
 
-SELECT pg_input_error_message('{0, 0, 0}', 'line');
-                 pg_input_error_message                  
----------------------------------------------------------
- invalid line specification: A and B cannot both be zero
+SELECT * FROM pg_input_error_info('{0, 0, 0}', 'line');
+                         message                         | detail | hint | sql_error_code 
+---------------------------------------------------------+--------+------+----------------
+ invalid line specification: A and B cannot both be zero |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('{1, 1, a}', 'line');
@@ -116,10 +116,10 @@ SELECT pg_input_is_valid('{1, 1, a}', 'line');
  f
 (1 row)
 
-SELECT pg_input_error_message('{1, 1, a}', 'line');
-             pg_input_error_message              
--------------------------------------------------
- invalid input syntax for type line: "{1, 1, a}"
+SELECT * FROM pg_input_error_info('{1, 1, a}', 'line');
+                     message                     | detail | hint | sql_error_code 
+-------------------------------------------------+--------+------+----------------
+ invalid input syntax for type line: "{1, 1, a}" |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('{1, 1, 1e400}', 'line');
@@ -128,10 +128,10 @@ SELECT pg_input_is_valid('{1, 1, 1e400}', 'line');
  f
 (1 row)
 
-SELECT pg_input_error_message('{1, 1, 1e400}', 'line');
-              pg_input_error_message               
----------------------------------------------------
- "1e400" is out of range for type double precision
+SELECT * FROM pg_input_error_info('{1, 1, 1e400}', 'line');
+                      message                      | detail | hint | sql_error_code 
+---------------------------------------------------+--------+------+----------------
+ "1e400" is out of range for type double precision |        |      | 22003
 (1 row)
 
 SELECT pg_input_is_valid('(1, 1), (1, 1e400)', 'line');
@@ -140,9 +140,9 @@ SELECT pg_input_is_valid('(1, 1), (1, 1e400)', 'line');
  f
 (1 row)
 
-SELECT pg_input_error_message('(1, 1), (1, 1e400)', 'line');
-              pg_input_error_message               
----------------------------------------------------
- "1e400" is out of range for type double precision
+SELECT * FROM pg_input_error_info('(1, 1), (1, 1e400)', 'line');
+                      message                      | detail | hint | sql_error_code 
+---------------------------------------------------+--------+------+----------------
+ "1e400" is out of range for type double precision |        |      | 22003
 (1 row)
 

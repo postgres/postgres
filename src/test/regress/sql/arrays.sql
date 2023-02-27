@@ -117,7 +117,7 @@ SELECT a,b,c FROM arrtest;
 SELECT pg_input_is_valid('{1,2,3}', 'integer[]');
 SELECT pg_input_is_valid('{1,2', 'integer[]');
 SELECT pg_input_is_valid('{1,zed}', 'integer[]');
-SELECT pg_input_error_message('{1,zed}', 'integer[]');
+SELECT * FROM pg_input_error_info('{1,zed}', 'integer[]');
 
 -- test mixed slice/scalar subscripting
 select '{{1,2,3},{4,5,6},{7,8,9}}'::int[];

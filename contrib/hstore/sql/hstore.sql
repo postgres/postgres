@@ -60,8 +60,8 @@ select 'aa=>"'::hstore;
 -- also try it with non-error-throwing API
 select pg_input_is_valid('a=>b', 'hstore');
 select pg_input_is_valid('a=b', 'hstore');
-select pg_input_error_message('a=b', 'hstore');
-select pg_input_error_message(' =>b', 'hstore');
+select * from pg_input_error_info('a=b', 'hstore');
+select * from pg_input_error_info(' =>b', 'hstore');
 
 
 -- -> operator

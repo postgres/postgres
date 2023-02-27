@@ -37,18 +37,21 @@ SELECT pg_input_is_valid('mauve', 'rainbow');
  f
 (1 row)
 
-SELECT pg_input_error_message('mauve', 'rainbow');
-            pg_input_error_message             
------------------------------------------------
- invalid input value for enum rainbow: "mauve"
+SELECT * FROM pg_input_error_info('mauve', 'rainbow');
+                    message                    | detail | hint | sql_error_code 
+-----------------------------------------------+--------+------+----------------
+ invalid input value for enum rainbow: "mauve" |        |      | 22P02
 (1 row)
 
-SELECT pg_input_error_message(repeat('too_long', 32), 'rainbow');
-                                                                                                                                          pg_input_error_message                                                                                                                                          
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- invalid input value for enum rainbow: "too_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_long"
-(1 row)
+\x
+SELECT * FROM pg_input_error_info(repeat('too_long', 32), 'rainbow');
+-[ RECORD 1 ]--+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+message        | invalid input value for enum rainbow: "too_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_longtoo_long"
+detail         | 
+hint           | 
+sql_error_code | 22P02
 
+\x
 --
 -- adding new values
 --

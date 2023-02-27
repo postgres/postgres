@@ -36,8 +36,8 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 SELECT pg_input_is_valid('1.5 weeks', 'interval');
 SELECT pg_input_is_valid('garbage', 'interval');
 SELECT pg_input_is_valid('@ 30 eons ago', 'interval');
-SELECT pg_input_error_message('garbage', 'interval');
-SELECT pg_input_error_message('@ 30 eons ago', 'interval');
+SELECT * FROM pg_input_error_info('garbage', 'interval');
+SELECT * FROM pg_input_error_info('@ 30 eons ago', 'interval');
 
 -- test interval operators
 

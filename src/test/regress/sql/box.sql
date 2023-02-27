@@ -284,6 +284,6 @@ RESET enable_bitmapscan;
 
 -- test non-error-throwing API for some core types
 SELECT pg_input_is_valid('200', 'box');
-SELECT pg_input_error_message('200', 'box');
+SELECT * FROM pg_input_error_info('200', 'box');
 SELECT pg_input_is_valid('((200,300),(500, xyz))', 'box');
-SELECT pg_input_error_message('((200,300),(500, xyz))', 'box');
+SELECT * FROM pg_input_error_info('((200,300),(500, xyz))', 'box');

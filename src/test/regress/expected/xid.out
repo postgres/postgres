@@ -43,10 +43,10 @@ SELECT pg_input_is_valid('asdf', 'xid');
  f
 (1 row)
 
-SELECT pg_input_error_message('0xffffffffff', 'xid');
-              pg_input_error_message               
----------------------------------------------------
- value "0xffffffffff" is out of range for type xid
+SELECT * FROM pg_input_error_info('0xffffffffff', 'xid');
+                      message                      | detail | hint | sql_error_code 
+---------------------------------------------------+--------+------+----------------
+ value "0xffffffffff" is out of range for type xid |        |      | 22003
 (1 row)
 
 SELECT pg_input_is_valid('42', 'xid8');
@@ -61,10 +61,10 @@ SELECT pg_input_is_valid('asdf', 'xid8');
  f
 (1 row)
 
-SELECT pg_input_error_message('0xffffffffffffffffffff', 'xid8');
-                    pg_input_error_message                    
---------------------------------------------------------------
- value "0xffffffffffffffffffff" is out of range for type xid8
+SELECT * FROM pg_input_error_info('0xffffffffffffffffffff', 'xid8');
+                           message                            | detail | hint | sql_error_code 
+--------------------------------------------------------------+--------+------+----------------
+ value "0xffffffffffffffffffff" is out of range for type xid8 |        |      | 22003
 (1 row)
 
 -- equality
@@ -223,10 +223,10 @@ select pg_input_is_valid('31:12:', 'pg_snapshot');
  f
 (1 row)
 
-select pg_input_error_message('31:12:', 'pg_snapshot');
-               pg_input_error_message                
------------------------------------------------------
- invalid input syntax for type pg_snapshot: "31:12:"
+select * from pg_input_error_info('31:12:', 'pg_snapshot');
+                       message                       | detail | hint | sql_error_code 
+-----------------------------------------------------+--------+------+----------------
+ invalid input syntax for type pg_snapshot: "31:12:" |        |      | 22P02
 (1 row)
 
 select pg_input_is_valid('12:16:14,13', 'pg_snapshot');
@@ -235,10 +235,10 @@ select pg_input_is_valid('12:16:14,13', 'pg_snapshot');
  f
 (1 row)
 
-select pg_input_error_message('12:16:14,13', 'pg_snapshot');
-                  pg_input_error_message                  
-----------------------------------------------------------
- invalid input syntax for type pg_snapshot: "12:16:14,13"
+select * from pg_input_error_info('12:16:14,13', 'pg_snapshot');
+                         message                          | detail | hint | sql_error_code 
+----------------------------------------------------------+--------+------+----------------
+ invalid input syntax for type pg_snapshot: "12:16:14,13" |        |      | 22P02
 (1 row)
 
 create temp table snapshot_test (

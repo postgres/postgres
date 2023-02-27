@@ -255,9 +255,9 @@ SELECT a FROM (VALUES
 
 -- test non-error-throwing API for some core types
 SELECT pg_input_is_valid('1234', 'cidr');
-SELECT pg_input_error_message('1234', 'cidr');
+SELECT * FROM pg_input_error_info('1234', 'cidr');
 SELECT pg_input_is_valid('192.168.198.200/24', 'cidr');
-SELECT pg_input_error_message('192.168.198.200/24', 'cidr');
+SELECT * FROM pg_input_error_info('192.168.198.200/24', 'cidr');
 
 SELECT pg_input_is_valid('1234', 'inet');
-SELECT pg_input_error_message('1234', 'inet');
+SELECT * FROM pg_input_error_info('1234', 'inet');

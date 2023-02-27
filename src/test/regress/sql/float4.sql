@@ -40,7 +40,7 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('123            5');
 SELECT pg_input_is_valid('34.5', 'float4');
 SELECT pg_input_is_valid('xyz', 'float4');
 SELECT pg_input_is_valid('1e400', 'float4');
-SELECT pg_input_error_message('1e400', 'float4');
+SELECT * FROM pg_input_error_info('1e400', 'float4');
 
 -- special inputs
 SELECT 'NaN'::float4;

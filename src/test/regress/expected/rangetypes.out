@@ -188,10 +188,10 @@ select pg_input_is_valid('(1,4', 'int4range');
  f
 (1 row)
 
-select pg_input_error_message('(1,4', 'int4range');
-     pg_input_error_message      
----------------------------------
- malformed range literal: "(1,4"
+select * from pg_input_error_info('(1,4', 'int4range');
+             message             |          detail          | hint | sql_error_code 
+---------------------------------+--------------------------+------+----------------
+ malformed range literal: "(1,4" | Unexpected end of input. |      | 22P02
 (1 row)
 
 select pg_input_is_valid('(4,1)', 'int4range');
@@ -200,10 +200,10 @@ select pg_input_is_valid('(4,1)', 'int4range');
  f
 (1 row)
 
-select pg_input_error_message('(4,1)', 'int4range');
-                      pg_input_error_message                       
--------------------------------------------------------------------
- range lower bound must be less than or equal to range upper bound
+select * from pg_input_error_info('(4,1)', 'int4range');
+                              message                              | detail | hint | sql_error_code 
+-------------------------------------------------------------------+--------+------+----------------
+ range lower bound must be less than or equal to range upper bound |        |      | 22000
 (1 row)
 
 select pg_input_is_valid('(4,zed)', 'int4range');
@@ -212,10 +212,10 @@ select pg_input_is_valid('(4,zed)', 'int4range');
  f
 (1 row)
 
-select pg_input_error_message('(4,zed)', 'int4range');
-            pg_input_error_message            
-----------------------------------------------
- invalid input syntax for type integer: "zed"
+select * from pg_input_error_info('(4,zed)', 'int4range');
+                   message                    | detail | hint | sql_error_code 
+----------------------------------------------+--------+------+----------------
+ invalid input syntax for type integer: "zed" |        |      | 22P02
 (1 row)
 
 select pg_input_is_valid('[1,2147483647]', 'int4range');
@@ -224,10 +224,10 @@ select pg_input_is_valid('[1,2147483647]', 'int4range');
  f
 (1 row)
 
-select pg_input_error_message('[1,2147483647]', 'int4range');
- pg_input_error_message 
-------------------------
- integer out of range
+select * from pg_input_error_info('[1,2147483647]', 'int4range');
+       message        | detail | hint | sql_error_code 
+----------------------+--------+------+----------------
+ integer out of range |        |      | 22003
 (1 row)
 
 select pg_input_is_valid('[2000-01-01,5874897-12-31]', 'daterange');
@@ -236,10 +236,10 @@ select pg_input_is_valid('[2000-01-01,5874897-12-31]', 'daterange');
  f
 (1 row)
 
-select pg_input_error_message('[2000-01-01,5874897-12-31]', 'daterange');
- pg_input_error_message 
-------------------------
- date out of range
+select * from pg_input_error_info('[2000-01-01,5874897-12-31]', 'daterange');
+      message      | detail | hint | sql_error_code 
+-------------------+--------+------+----------------
+ date out of range |        |      | 22008
 (1 row)
 
 --

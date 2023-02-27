@@ -29,13 +29,13 @@ DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT pg_input_is_valid('<value>one</', 'xml');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-SELECT pg_input_error_message('<value>one</', 'xml');
+SELECT message FROM pg_input_error_info('<value>one</', 'xml');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT pg_input_is_valid('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-SELECT pg_input_error_message('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+SELECT message FROM pg_input_error_info('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT xmlcomment('test');

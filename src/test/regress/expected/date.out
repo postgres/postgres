@@ -859,16 +859,16 @@ SELECT pg_input_is_valid('6874898-01-01', 'date');
  f
 (1 row)
 
-SELECT pg_input_error_message('garbage', 'date');
-            pg_input_error_message             
------------------------------------------------
- invalid input syntax for type date: "garbage"
+SELECT * FROM pg_input_error_info('garbage', 'date');
+                    message                    | detail | hint | sql_error_code 
+-----------------------------------------------+--------+------+----------------
+ invalid input syntax for type date: "garbage" |        |      | 22007
 (1 row)
 
-SELECT pg_input_error_message('6874898-01-01', 'date');
-       pg_input_error_message       
-------------------------------------
- date out of range: "6874898-01-01"
+SELECT * FROM pg_input_error_info('6874898-01-01', 'date');
+              message               | detail | hint | sql_error_code 
+------------------------------------+--------+------+----------------
+ date out of range: "6874898-01-01" |        |      | 22008
 (1 row)
 
 RESET datestyle;

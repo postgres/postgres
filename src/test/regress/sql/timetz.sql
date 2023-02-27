@@ -49,8 +49,8 @@ SELECT '25:00:00 PDT'::timetz;  -- not allowed
 SELECT pg_input_is_valid('12:00:00 PDT', 'timetz');
 SELECT pg_input_is_valid('25:00:00 PDT', 'timetz');
 SELECT pg_input_is_valid('15:36:39 America/New_York', 'timetz');
-SELECT pg_input_error_message('25:00:00 PDT', 'timetz');
-SELECT pg_input_error_message('15:36:39 America/New_York', 'timetz');
+SELECT * FROM pg_input_error_info('25:00:00 PDT', 'timetz');
+SELECT * FROM pg_input_error_info('15:36:39 America/New_York', 'timetz');
 
 --
 -- TIME simple math

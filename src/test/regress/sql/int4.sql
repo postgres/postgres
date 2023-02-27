@@ -21,7 +21,7 @@ SELECT * FROM INT4_TBL;
 SELECT pg_input_is_valid('34', 'int4');
 SELECT pg_input_is_valid('asdf', 'int4');
 SELECT pg_input_is_valid('1000000000000', 'int4');
-SELECT pg_input_error_message('1000000000000', 'int4');
+SELECT * FROM pg_input_error_info('1000000000000', 'int4');
 
 SELECT i.* FROM INT4_TBL i WHERE i.f1 <> int2 '0';
 

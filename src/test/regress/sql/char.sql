@@ -75,7 +75,7 @@ SELECT * FROM CHAR_TBL;
 -- Also try it with non-error-throwing API
 SELECT pg_input_is_valid('abcd  ', 'char(4)');
 SELECT pg_input_is_valid('abcde', 'char(4)');
-SELECT pg_input_error_message('abcde', 'char(4)');
+SELECT * FROM pg_input_error_info('abcde', 'char(4)');
 
 --
 -- Also test "char", which is an ad-hoc one-byte type.  It can only

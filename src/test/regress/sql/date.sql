@@ -197,8 +197,8 @@ SELECT date '5874898-01-01';  -- out of range
 SELECT pg_input_is_valid('now', 'date');
 SELECT pg_input_is_valid('garbage', 'date');
 SELECT pg_input_is_valid('6874898-01-01', 'date');
-SELECT pg_input_error_message('garbage', 'date');
-SELECT pg_input_error_message('6874898-01-01', 'date');
+SELECT * FROM pg_input_error_info('garbage', 'date');
+SELECT * FROM pg_input_error_info('6874898-01-01', 'date');
 
 RESET datestyle;
 

@@ -1086,11 +1086,11 @@ SELECT * FROM num_input_test;
 SELECT pg_input_is_valid('34.5', 'numeric');
 SELECT pg_input_is_valid('34xyz', 'numeric');
 SELECT pg_input_is_valid('1e400000', 'numeric');
-SELECT pg_input_error_message('1e400000', 'numeric');
+SELECT * FROM pg_input_error_info('1e400000', 'numeric');
 SELECT pg_input_is_valid('1234.567', 'numeric(8,4)');
 SELECT pg_input_is_valid('1234.567', 'numeric(7,4)');
-SELECT pg_input_error_message('1234.567', 'numeric(7,4)');
-SELECT pg_input_error_message('0x1234.567', 'numeric');
+SELECT * FROM pg_input_error_info('1234.567', 'numeric(7,4)');
+SELECT * FROM pg_input_error_info('0x1234.567', 'numeric');
 
 --
 -- Test precision and scale typemods

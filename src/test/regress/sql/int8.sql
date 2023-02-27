@@ -20,7 +20,7 @@ SELECT * FROM INT8_TBL;
 SELECT pg_input_is_valid('34', 'int8');
 SELECT pg_input_is_valid('asdf', 'int8');
 SELECT pg_input_is_valid('10000000000000000000', 'int8');
-SELECT pg_input_error_message('10000000000000000000', 'int8');
+SELECT * FROM pg_input_error_info('10000000000000000000', 'int8');
 
 -- int8/int8 cmp
 SELECT * FROM INT8_TBL WHERE q2 = 4567890123456789;

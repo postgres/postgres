@@ -31,9 +31,9 @@ SELECT pg_input_is_valid('<value>one</', 'xml');
  f
 (1 row)
 
-SELECT pg_input_error_message('<value>one</', 'xml');
- pg_input_error_message 
-------------------------
+SELECT message FROM pg_input_error_info('<value>one</', 'xml');
+       message       
+---------------------
  invalid XML content
 (1 row)
 
@@ -43,8 +43,8 @@ SELECT pg_input_is_valid('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
  f
 (1 row)
 
-SELECT pg_input_error_message('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
-            pg_input_error_message            
+SELECT message FROM pg_input_error_info('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+                   message                    
 ----------------------------------------------
  invalid XML content: invalid XML declaration
 (1 row)

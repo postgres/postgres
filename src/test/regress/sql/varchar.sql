@@ -70,4 +70,4 @@ SELECT * FROM VARCHAR_TBL;
 -- Also try it with non-error-throwing API
 SELECT pg_input_is_valid('abcd  ', 'varchar(4)');
 SELECT pg_input_is_valid('abcde', 'varchar(4)');
-SELECT pg_input_error_message('abcde', 'varchar(4)');
+SELECT * FROM pg_input_error_info('abcde', 'varchar(4)');

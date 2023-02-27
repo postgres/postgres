@@ -393,7 +393,10 @@ SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
 
 SELECT str as "value", typ as "type",
        pg_input_is_valid(str,typ) as ok,
-       pg_input_error_message(str,typ) as errmsg
+       errinfo.sql_error_code,
+       errinfo.message,
+       errinfo.detail,
+       errinfo.hint
 FROM (VALUES ('.2.3', 'ltree'),
              ('1.2.', 'ltree'),
              ('1.2.3','ltree'),
@@ -402,4 +405,5 @@ FROM (VALUES ('.2.3', 'ltree'),
              ('1.2.3','lquery'),
              ('$tree & aWdf@*','ltxtquery'),
              ('!tree & aWdf@*','ltxtquery'))
-      AS a(str,typ);
+      AS a(str,typ),
+     LATERAL pg_input_error_info(a.str, a.typ) as errinfo;

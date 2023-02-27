@@ -87,10 +87,10 @@ SELECT pg_input_is_valid('[(1,2),(3)]', 'path');
  f
 (1 row)
 
-SELECT pg_input_error_message('[(1,2),(3)]', 'path');
-              pg_input_error_message               
----------------------------------------------------
- invalid input syntax for type path: "[(1,2),(3)]"
+SELECT * FROM pg_input_error_info('[(1,2),(3)]', 'path');
+                      message                      | detail | hint | sql_error_code 
+---------------------------------------------------+--------+------+----------------
+ invalid input syntax for type path: "[(1,2),(3)]" |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('[(1,2,6),(3,4,6)]', 'path');
@@ -99,9 +99,9 @@ SELECT pg_input_is_valid('[(1,2,6),(3,4,6)]', 'path');
  f
 (1 row)
 
-SELECT pg_input_error_message('[(1,2,6),(3,4,6)]', 'path');
-                 pg_input_error_message                  
----------------------------------------------------------
- invalid input syntax for type path: "[(1,2,6),(3,4,6)]"
+SELECT * FROM pg_input_error_info('[(1,2,6),(3,4,6)]', 'path');
+                         message                         | detail | hint | sql_error_code 
+---------------------------------------------------------+--------+------+----------------
+ invalid input syntax for type path: "[(1,2,6),(3,4,6)]" |        |      | 22P02
 (1 row)
 

@@ -8101,7 +8101,10 @@ SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
 -- test non-error-throwing input
 SELECT str as "value", typ as "type",
        pg_input_is_valid(str,typ) as ok,
-       pg_input_error_message(str,typ) as errmsg
+       errinfo.sql_error_code,
+       errinfo.message,
+       errinfo.detail,
+       errinfo.hint
 FROM (VALUES ('.2.3', 'ltree'),
              ('1.2.', 'ltree'),
              ('1.2.3','ltree'),
@@ -8110,16 +8113,17 @@ FROM (VALUES ('.2.3', 'ltree'),
              ('1.2.3','lquery'),
              ('$tree & aWdf@*','ltxtquery'),
              ('!tree & aWdf@*','ltxtquery'))
-      AS a(str,typ);
-     value      |   type    | ok |               errmsg               
-----------------+-----------+----+------------------------------------
- .2.3           | ltree     | f  | ltree syntax error at character 1
- 1.2.           | ltree     | f  | ltree syntax error
- 1.2.3          | ltree     | t  | 
- @.2.3          | lquery    | f  | lquery syntax error at character 1
-  2.3           | lquery    | f  | lquery syntax error at character 1
- 1.2.3          | lquery    | t  | 
- $tree & aWdf@* | ltxtquery | f  | operand syntax error
- !tree & aWdf@* | ltxtquery | t  | 
+      AS a(str,typ),
+     LATERAL pg_input_error_info(a.str, a.typ) as errinfo;
+     value      |   type    | ok | sql_error_code |              message               |          detail          | hint 
+----------------+-----------+----+----------------+------------------------------------+--------------------------+------
+ .2.3           | ltree     | f  | 42601          | ltree syntax error at character 1  |                          | 
+ 1.2.           | ltree     | f  | 42601          | ltree syntax error                 | Unexpected end of input. | 
+ 1.2.3          | ltree     | t  |                |                                    |                          | 
+ @.2.3          | lquery    | f  | 42601          | lquery syntax error at character 1 |                          | 
+  2.3           | lquery    | f  | 42601          | lquery syntax error at character 1 |                          | 
+ 1.2.3          | lquery    | t  |                |                                    |                          | 
+ $tree & aWdf@* | ltxtquery | f  | 42601          | operand syntax error               |                          | 
+ !tree & aWdf@* | ltxtquery | t  |                |                                    |                          | 
 (8 rows)
 

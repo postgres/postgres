@@ -87,9 +87,9 @@ SELECT E'De\\123dBeEf'::bytea;
 
 -- Test non-error-throwing API too
 SELECT pg_input_is_valid(E'\\xDeAdBeE', 'bytea');
-SELECT pg_input_error_message(E'\\xDeAdBeE', 'bytea');
-SELECT pg_input_error_message(E'\\xDeAdBeEx', 'bytea');
-SELECT pg_input_error_message(E'foo\\99bar', 'bytea');
+SELECT * FROM pg_input_error_info(E'\\xDeAdBeE', 'bytea');
+SELECT * FROM pg_input_error_info(E'\\xDeAdBeEx', 'bytea');
+SELECT * FROM pg_input_error_info(E'foo\\99bar', 'bytea');
 
 --
 -- test conversions between various string types

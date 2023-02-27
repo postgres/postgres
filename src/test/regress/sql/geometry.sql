@@ -526,6 +526,6 @@ SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
 
 -- test non-error-throwing API for some core types
 SELECT pg_input_is_valid('(1', 'circle');
-SELECT pg_input_error_message('1,', 'circle');
+SELECT * FROM pg_input_error_info('1,', 'circle');
 SELECT pg_input_is_valid('(1,2),-1', 'circle');
-SELECT pg_input_error_message('(1,2),-1', 'circle');
+SELECT * FROM pg_input_error_info('(1,2),-1', 'circle');

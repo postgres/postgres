@@ -133,16 +133,16 @@ SELECT pg_input_is_valid('15:36:39 America/New_York', 'time');
  f
 (1 row)
 
-SELECT pg_input_error_message('25:00:00', 'time');
-             pg_input_error_message             
-------------------------------------------------
- date/time field value out of range: "25:00:00"
+SELECT * FROM pg_input_error_info('25:00:00', 'time');
+                    message                     | detail | hint | sql_error_code 
+------------------------------------------------+--------+------+----------------
+ date/time field value out of range: "25:00:00" |        |      | 22008
 (1 row)
 
-SELECT pg_input_error_message('15:36:39 America/New_York', 'time');
-                     pg_input_error_message                      
------------------------------------------------------------------
- invalid input syntax for type time: "15:36:39 America/New_York"
+SELECT * FROM pg_input_error_info('15:36:39 America/New_York', 'time');
+                             message                             | detail | hint | sql_error_code 
+-----------------------------------------------------------------+--------+------+----------------
+ invalid input syntax for type time: "15:36:39 America/New_York" |        |      | 22007
 (1 row)
 
 --

@@ -195,16 +195,16 @@ SELECT pg_input_is_valid('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamptz');
  f
 (1 row)
 
-SELECT pg_input_error_message('garbage', 'timestamptz');
-                      pg_input_error_message                       
--------------------------------------------------------------------
- invalid input syntax for type timestamp with time zone: "garbage"
+SELECT * FROM pg_input_error_info('garbage', 'timestamptz');
+                              message                              | detail | hint | sql_error_code 
+-------------------------------------------------------------------+--------+------+----------------
+ invalid input syntax for type timestamp with time zone: "garbage" |        |      | 22007
 (1 row)
 
-SELECT pg_input_error_message('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamptz');
-           pg_input_error_message           
---------------------------------------------
- time zone "nehwon/lankhmar" not recognized
+SELECT * FROM pg_input_error_info('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamptz');
+                  message                   | detail | hint | sql_error_code 
+--------------------------------------------+--------+------+----------------
+ time zone "nehwon/lankhmar" not recognized |        |      | 22023
 (1 row)
 
 -- Check date conversion and date arithmetic

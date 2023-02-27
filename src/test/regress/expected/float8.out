@@ -87,10 +87,10 @@ SELECT pg_input_is_valid('1e4000', 'float8');
  f
 (1 row)
 
-SELECT pg_input_error_message('1e4000', 'float8');
-               pg_input_error_message               
-----------------------------------------------------
- "1e4000" is out of range for type double precision
+SELECT * FROM pg_input_error_info('1e4000', 'float8');
+                      message                       | detail | hint | sql_error_code 
+----------------------------------------------------+--------+------+----------------
+ "1e4000" is out of range for type double precision |        |      | 22003
 (1 row)
 
 -- special inputs

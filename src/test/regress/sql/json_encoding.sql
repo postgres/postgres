@@ -79,4 +79,4 @@ SELECT jsonb '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
 
 -- soft error for input-time failure
 
-select pg_input_error_message('{ "a":  "\ud83d\ude04\ud83d\udc36" }', 'jsonb');
+select * from pg_input_error_info('{ "a":  "\ud83d\ude04\ud83d\udc36" }', 'jsonb');

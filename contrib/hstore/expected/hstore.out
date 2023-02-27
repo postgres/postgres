@@ -265,16 +265,16 @@ select pg_input_is_valid('a=b', 'hstore');
  f
 (1 row)
 
-select pg_input_error_message('a=b', 'hstore');
-             pg_input_error_message             
-------------------------------------------------
- syntax error in hstore, near "b" at position 2
+select * from pg_input_error_info('a=b', 'hstore');
+                    message                     | detail | hint | sql_error_code 
+------------------------------------------------+--------+------+----------------
+ syntax error in hstore, near "b" at position 2 |        |      | 42601
 (1 row)
 
-select pg_input_error_message(' =>b', 'hstore');
-             pg_input_error_message             
-------------------------------------------------
- syntax error in hstore, near "=" at position 1
+select * from pg_input_error_info(' =>b', 'hstore');
+                    message                     | detail | hint | sql_error_code 
+------------------------------------------------+--------+------+----------------
+ syntax error in hstore, near "=" at position 1 |        |      | 42601
 (1 row)
 
 -- -> operator

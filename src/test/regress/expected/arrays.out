@@ -201,10 +201,10 @@ SELECT pg_input_is_valid('{1,zed}', 'integer[]');
  f
 (1 row)
 
-SELECT pg_input_error_message('{1,zed}', 'integer[]');
-            pg_input_error_message            
-----------------------------------------------
- invalid input syntax for type integer: "zed"
+SELECT * FROM pg_input_error_info('{1,zed}', 'integer[]');
+                   message                    | detail | hint | sql_error_code 
+----------------------------------------------+--------+------+----------------
+ invalid input syntax for type integer: "zed" |        |      | 22P02
 (1 row)
 
 -- test mixed slice/scalar subscripting

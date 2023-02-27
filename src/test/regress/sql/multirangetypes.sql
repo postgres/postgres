@@ -61,9 +61,9 @@ select '{(a,a)}'::textmultirange;
 -- Also try it with non-error-throwing API
 select pg_input_is_valid('{[1,2], [4,5]}', 'int4multirange');
 select pg_input_is_valid('{[1,2], [4,5]', 'int4multirange');
-select pg_input_error_message('{[1,2], [4,5]', 'int4multirange');
+select * from pg_input_error_info('{[1,2], [4,5]', 'int4multirange');
 select pg_input_is_valid('{[1,2], [4,zed]}', 'int4multirange');
-select pg_input_error_message('{[1,2], [4,zed]}', 'int4multirange');
+select * from pg_input_error_info('{[1,2], [4,zed]}', 'int4multirange');
 
 --
 -- test the constructor

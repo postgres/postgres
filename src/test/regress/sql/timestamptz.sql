@@ -113,8 +113,8 @@ SELECT '205000-01-10 17:32:01 Europe/Helsinki'::timestamptz; -- non-DST
 SELECT pg_input_is_valid('now', 'timestamptz');
 SELECT pg_input_is_valid('garbage', 'timestamptz');
 SELECT pg_input_is_valid('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamptz');
-SELECT pg_input_error_message('garbage', 'timestamptz');
-SELECT pg_input_error_message('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamptz');
+SELECT * FROM pg_input_error_info('garbage', 'timestamptz');
+SELECT * FROM pg_input_error_info('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamptz');
 
 -- Check date conversion and date arithmetic
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('1997-06-10 18:32:01 PDT');

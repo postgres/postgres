@@ -46,10 +46,10 @@ SELECT pg_input_is_valid('11', 'uuid');
  f
 (1 row)
 
-SELECT pg_input_error_message('11', 'uuid');
-          pg_input_error_message          
-------------------------------------------
- invalid input syntax for type uuid: "11"
+SELECT * FROM pg_input_error_info('11', 'uuid');
+                 message                  | detail | hint | sql_error_code 
+------------------------------------------+--------+------+----------------
+ invalid input syntax for type uuid: "11" |        |      | 22P02
 (1 row)
 
 --inserting three input formats

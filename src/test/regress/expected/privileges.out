@@ -2246,10 +2246,10 @@ SELECT pg_input_is_valid('regress_priv_user1=r/', 'aclitem');
  f
 (1 row)
 
-SELECT pg_input_error_message('regress_priv_user1=r/', 'aclitem');
-     pg_input_error_message      
----------------------------------
- a name must follow the "/" sign
+SELECT * FROM pg_input_error_info('regress_priv_user1=r/', 'aclitem');
+             message             | detail | hint | sql_error_code 
+---------------------------------+--------+------+----------------
+ a name must follow the "/" sign |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('regress_priv_user1=r/regress_no_such_user', 'aclitem');
@@ -2258,10 +2258,10 @@ SELECT pg_input_is_valid('regress_priv_user1=r/regress_no_such_user', 'aclitem')
  f
 (1 row)
 
-SELECT pg_input_error_message('regress_priv_user1=r/regress_no_such_user', 'aclitem');
-           pg_input_error_message           
---------------------------------------------
- role "regress_no_such_user" does not exist
+SELECT * FROM pg_input_error_info('regress_priv_user1=r/regress_no_such_user', 'aclitem');
+                  message                   | detail | hint | sql_error_code 
+--------------------------------------------+--------+------+----------------
+ role "regress_no_such_user" does not exist |        |      | 42704
 (1 row)
 
 SELECT pg_input_is_valid('regress_priv_user1=rY', 'aclitem');
@@ -2270,10 +2270,10 @@ SELECT pg_input_is_valid('regress_priv_user1=rY', 'aclitem');
  f
 (1 row)
 
-SELECT pg_input_error_message('regress_priv_user1=rY', 'aclitem');
-                  pg_input_error_message                  
-----------------------------------------------------------
- invalid mode character: must be one of "arwdDxtXUCTcsAm"
+SELECT * FROM pg_input_error_info('regress_priv_user1=rY', 'aclitem');
+                         message                          | detail | hint | sql_error_code 
+----------------------------------------------------------+--------+------+----------------
+ invalid mode character: must be one of "arwdDxtXUCTcsAm" |        |      | 22P02
 (1 row)
 
 --

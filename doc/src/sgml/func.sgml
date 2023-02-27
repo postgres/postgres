@@ -24775,19 +24775,23 @@ SELECT collation for ('foo' COLLATE "de_DE");
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>pg_input_error_message</primary>
+         <primary>pg_input_error_info</primary>
         </indexterm>
-        <function>pg_input_error_message</function> (
+        <function>pg_input_error_info</function> (
           <parameter>string</parameter> <type>text</type>,
           <parameter>type</parameter> <type>text</type>
         )
-        <returnvalue>text</returnvalue>
+        <returnvalue>record</returnvalue>
+        ( <parameter>message</parameter> <type>text</type>,
+        <parameter>detail</parameter> <type>text</type>,
+        <parameter>hint</parameter> <type>text</type>,
+        <parameter>sql_error_code</parameter> <type>text</type> )
        </para>
        <para>
         Tests whether the given <parameter>string</parameter> is valid
-        input for the specified data type; if not, return the error
-        message that would have been thrown.  If the input is valid, the
-        result is NULL.  The inputs are the same as
+        input for the specified data type; if not, return the details of
+        the error would have been thrown.  If the input is valid, the
+        results are NULL.  The inputs are the same as
         for <function>pg_input_is_valid</function>.
        </para>
        <para>
@@ -24798,12 +24802,17 @@ SELECT collation for ('foo' COLLATE "de_DE");
         directly.
         </para>
         <para>
-         <literal>pg_input_error_message('42000000000', 'integer')</literal>
-         <returnvalue>value "42000000000" is out of range for type integer</returnvalue>
-        </para>
-        <para>
-         <literal>pg_input_error_message('1234.567', 'numeric(7,4)')</literal>
-         <returnvalue>numeric field overflow</returnvalue>
+<programlisting>
+SELECT * FROM pg_input_error_info('42000000000', 'integer');
+                       message                        | detail | hint | sql_error_code
+------------------------------------------------------+--------+------+----------------
+ value "42000000000" is out of range for type integer |        |      | 22003
+
+SELECT * FROM pg_input_error_info('1234.567', 'numeric(7,4)');
+        message         |                                      detail                                       | hint | sql_error_code
+------------------------+-----------------------------------------------------------------------------------+------+----------------
+ numeric field overflow | A field with precision 7, scale 4 must round to an absolute value less than 10^3. |      | 22003
+</programlisting>
        </para></entry>
       </row>
      </tbody>

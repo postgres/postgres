@@ -1063,10 +1063,10 @@ SELECT pg_input_is_valid('1234', 'cidr');
  f
 (1 row)
 
-SELECT pg_input_error_message('1234', 'cidr');
-           pg_input_error_message           
---------------------------------------------
- invalid input syntax for type cidr: "1234"
+SELECT * FROM pg_input_error_info('1234', 'cidr');
+                  message                   | detail | hint | sql_error_code 
+--------------------------------------------+--------+------+----------------
+ invalid input syntax for type cidr: "1234" |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('192.168.198.200/24', 'cidr');
@@ -1075,10 +1075,10 @@ SELECT pg_input_is_valid('192.168.198.200/24', 'cidr');
  f
 (1 row)
 
-SELECT pg_input_error_message('192.168.198.200/24', 'cidr');
-          pg_input_error_message          
-------------------------------------------
- invalid cidr value: "192.168.198.200/24"
+SELECT * FROM pg_input_error_info('192.168.198.200/24', 'cidr');
+                 message                  |                detail                | hint | sql_error_code 
+------------------------------------------+--------------------------------------+------+----------------
+ invalid cidr value: "192.168.198.200/24" | Value has bits set to right of mask. |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('1234', 'inet');
@@ -1087,9 +1087,9 @@ SELECT pg_input_is_valid('1234', 'inet');
  f
 (1 row)
 
-SELECT pg_input_error_message('1234', 'inet');
-           pg_input_error_message           
---------------------------------------------
- invalid input syntax for type inet: "1234"
+SELECT * FROM pg_input_error_info('1234', 'inet');
+                  message                   | detail | hint | sql_error_code 
+--------------------------------------------+--------+------+----------------
+ invalid input syntax for type inet: "1234" |        |      | 22P02
 (1 row)
 

@@ -84,7 +84,7 @@ SELECT '{
 -- test non-error-throwing input
 select pg_input_is_valid('{"a":true}', 'json');
 select pg_input_is_valid('{"a":true', 'json');
-select pg_input_error_message('{"a":true', 'json');
+select * from pg_input_error_info('{"a":true', 'json');
 
 --constructors
 -- array_to_json

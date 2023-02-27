@@ -64,10 +64,10 @@ SELECT pg_input_is_valid('50000', 'int2');
  f
 (1 row)
 
-SELECT pg_input_error_message('50000', 'int2');
-             pg_input_error_message              
--------------------------------------------------
- value "50000" is out of range for type smallint
+SELECT * FROM pg_input_error_info('50000', 'int2');
+                     message                     | detail | hint | sql_error_code 
+-------------------------------------------------+--------+------+----------------
+ value "50000" is out of range for type smallint |        |      | 22003
 (1 row)
 
 -- While we're here, check int2vector as well
@@ -77,16 +77,16 @@ SELECT pg_input_is_valid(' 1 3  5 ', 'int2vector');
  t
 (1 row)
 
-SELECT pg_input_error_message('1 asdf', 'int2vector');
-             pg_input_error_message             
-------------------------------------------------
- invalid input syntax for type smallint: "asdf"
+SELECT * FROM pg_input_error_info('1 asdf', 'int2vector');
+                    message                     | detail | hint | sql_error_code 
+------------------------------------------------+--------+------+----------------
+ invalid input syntax for type smallint: "asdf" |        |      | 22P02
 (1 row)
 
-SELECT pg_input_error_message('50000', 'int2vector');
-             pg_input_error_message              
--------------------------------------------------
- value "50000" is out of range for type smallint
+SELECT * FROM pg_input_error_info('50000', 'int2vector');
+                     message                     | detail | hint | sql_error_code 
+-------------------------------------------------+--------+------+----------------
+ value "50000" is out of range for type smallint |        |      | 22003
 (1 row)
 
 SELECT * FROM INT2_TBL AS f(a, b);

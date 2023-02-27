@@ -143,6 +143,6 @@ RESET enable_bitmapscan;
 
 -- test non-error-throwing API for some core types
 SELECT pg_input_is_valid('(2.0,0.8,0.1)', 'polygon');
-SELECT pg_input_error_message('(2.0,0.8,0.1)', 'polygon');
+SELECT * FROM pg_input_error_info('(2.0,0.8,0.1)', 'polygon');
 SELECT pg_input_is_valid('(2.0,xyz)', 'polygon');
-SELECT pg_input_error_message('(2.0,xyz)', 'polygon');
+SELECT * FROM pg_input_error_info('(2.0,xyz)', 'polygon');

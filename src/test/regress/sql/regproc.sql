@@ -125,23 +125,23 @@ SELECT to_regnamespace('foo.bar');
 
 -- Test soft-error API
 
-SELECT pg_input_error_message('ng_catalog.pg_class', 'regclass');
+SELECT * FROM pg_input_error_info('ng_catalog.pg_class', 'regclass');
 SELECT pg_input_is_valid('ng_catalog."POSIX"', 'regcollation');
-SELECT pg_input_error_message('no_such_config', 'regconfig');
-SELECT pg_input_error_message('no_such_dictionary', 'regdictionary');
-SELECT pg_input_error_message('Nonexistent', 'regnamespace');
-SELECT pg_input_error_message('ng_catalog.||/', 'regoper');
-SELECT pg_input_error_message('-', 'regoper');
-SELECT pg_input_error_message('ng_catalog.+(int4,int4)', 'regoperator');
-SELECT pg_input_error_message('-', 'regoperator');
-SELECT pg_input_error_message('ng_catalog.now', 'regproc');
-SELECT pg_input_error_message('ng_catalog.abs(numeric)', 'regprocedure');
-SELECT pg_input_error_message('ng_catalog.abs(numeric', 'regprocedure');
-SELECT pg_input_error_message('regress_regrole_test', 'regrole');
-SELECT pg_input_error_message('no_such_type', 'regtype');
+SELECT * FROM pg_input_error_info('no_such_config', 'regconfig');
+SELECT * FROM pg_input_error_info('no_such_dictionary', 'regdictionary');
+SELECT * FROM pg_input_error_info('Nonexistent', 'regnamespace');
+SELECT * FROM pg_input_error_info('ng_catalog.||/', 'regoper');
+SELECT * FROM pg_input_error_info('-', 'regoper');
+SELECT * FROM pg_input_error_info('ng_catalog.+(int4,int4)', 'regoperator');
+SELECT * FROM pg_input_error_info('-', 'regoperator');
+SELECT * FROM pg_input_error_info('ng_catalog.now', 'regproc');
+SELECT * FROM pg_input_error_info('ng_catalog.abs(numeric)', 'regprocedure');
+SELECT * FROM pg_input_error_info('ng_catalog.abs(numeric', 'regprocedure');
+SELECT * FROM pg_input_error_info('regress_regrole_test', 'regrole');
+SELECT * FROM pg_input_error_info('no_such_type', 'regtype');
 
 -- Some cases that should be soft errors, but are not yet
-SELECT pg_input_error_message('incorrect type name syntax', 'regtype');
-SELECT pg_input_error_message('numeric(1,2,3)', 'regtype');  -- bogus typmod
-SELECT pg_input_error_message('way.too.many.names', 'regtype');
-SELECT pg_input_error_message('no_such_catalog.schema.name', 'regtype');
+SELECT * FROM pg_input_error_info('incorrect type name syntax', 'regtype');
+SELECT * FROM pg_input_error_info('numeric(1,2,3)', 'regtype');  -- bogus typmod
+SELECT * FROM pg_input_error_info('way.too.many.names', 'regtype');
+SELECT * FROM pg_input_error_info('no_such_catalog.schema.name', 'regtype');

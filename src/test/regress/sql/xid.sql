@@ -19,10 +19,10 @@ select 'asdf'::xid8;
 -- Also try it with non-error-throwing API
 SELECT pg_input_is_valid('42', 'xid');
 SELECT pg_input_is_valid('asdf', 'xid');
-SELECT pg_input_error_message('0xffffffffff', 'xid');
+SELECT * FROM pg_input_error_info('0xffffffffff', 'xid');
 SELECT pg_input_is_valid('42', 'xid8');
 SELECT pg_input_is_valid('asdf', 'xid8');
-SELECT pg_input_error_message('0xffffffffffffffffffff', 'xid8');
+SELECT * FROM pg_input_error_info('0xffffffffffffffffffff', 'xid8');
 
 -- equality
 select '1'::xid = '1'::xid;
@@ -79,9 +79,9 @@ select '12:16:14,13'::pg_snapshot;
 -- also try it with non-error-throwing API
 select pg_input_is_valid('12:13:', 'pg_snapshot');
 select pg_input_is_valid('31:12:', 'pg_snapshot');
-select pg_input_error_message('31:12:', 'pg_snapshot');
+select * from pg_input_error_info('31:12:', 'pg_snapshot');
 select pg_input_is_valid('12:16:14,13', 'pg_snapshot');
-select pg_input_error_message('12:16:14,13', 'pg_snapshot');
+select * from pg_input_error_info('12:16:14,13', 'pg_snapshot');
 
 create temp table snapshot_test (
 	nr	integer,

@@ -344,10 +344,10 @@ SELECT pg_input_is_valid('-1e-700', 'cube');
  f
 (1 row)
 
-SELECT pg_input_error_message('-1e-700', 'cube');
-               pg_input_error_message                
------------------------------------------------------
- "-1e-700" is out of range for type double precision
+SELECT * FROM pg_input_error_info('-1e-700', 'cube');
+                       message                       | detail | hint | sql_error_code 
+-----------------------------------------------------+--------+------+----------------
+ "-1e-700" is out of range for type double precision |        |      | 22003
 (1 row)
 
 --

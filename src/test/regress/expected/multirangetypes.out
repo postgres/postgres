@@ -287,10 +287,10 @@ select pg_input_is_valid('{[1,2], [4,5]', 'int4multirange');
  f
 (1 row)
 
-select pg_input_error_message('{[1,2], [4,5]', 'int4multirange');
-            pg_input_error_message             
------------------------------------------------
- malformed multirange literal: "{[1,2], [4,5]"
+select * from pg_input_error_info('{[1,2], [4,5]', 'int4multirange');
+                    message                    |          detail          | hint | sql_error_code 
+-----------------------------------------------+--------------------------+------+----------------
+ malformed multirange literal: "{[1,2], [4,5]" | Unexpected end of input. |      | 22P02
 (1 row)
 
 select pg_input_is_valid('{[1,2], [4,zed]}', 'int4multirange');
@@ -299,10 +299,10 @@ select pg_input_is_valid('{[1,2], [4,zed]}', 'int4multirange');
  f
 (1 row)
 
-select pg_input_error_message('{[1,2], [4,zed]}', 'int4multirange');
-            pg_input_error_message            
-----------------------------------------------
- invalid input syntax for type integer: "zed"
+select * from pg_input_error_info('{[1,2], [4,zed]}', 'int4multirange');
+                   message                    | detail | hint | sql_error_code 
+----------------------------------------------+--------+------+----------------
+ invalid input syntax for type integer: "zed" |        |      | 22P02
 (1 row)
 
 --

@@ -155,10 +155,10 @@ SELECT pg_input_is_valid('asdf', 'bool');
  f
 (1 row)
 
-SELECT pg_input_error_message('junk', 'bool');
-            pg_input_error_message             
------------------------------------------------
- invalid input syntax for type boolean: "junk"
+SELECT * FROM pg_input_error_info('junk', 'bool');
+                    message                    | detail | hint | sql_error_code 
+-----------------------------------------------+--------+------+----------------
+ invalid input syntax for type boolean: "junk" |        |      | 22P02
 (1 row)
 
 -- and, or, not in qualifications

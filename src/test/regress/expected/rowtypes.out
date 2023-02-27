@@ -88,16 +88,16 @@ SELECT pg_input_is_valid('(1,zed)', 'complex');
  f
 (1 row)
 
-SELECT pg_input_error_message('(1,zed)', 'complex');
-                pg_input_error_message                 
--------------------------------------------------------
- invalid input syntax for type double precision: "zed"
+SELECT * FROM pg_input_error_info('(1,zed)', 'complex');
+                        message                        | detail | hint | sql_error_code 
+-------------------------------------------------------+--------+------+----------------
+ invalid input syntax for type double precision: "zed" |        |      | 22P02
 (1 row)
 
-SELECT pg_input_error_message('(1,1e400)', 'complex');
-              pg_input_error_message               
----------------------------------------------------
- "1e400" is out of range for type double precision
+SELECT * FROM pg_input_error_info('(1,1e400)', 'complex');
+                      message                      | detail | hint | sql_error_code 
+---------------------------------------------------+--------+------+----------------
+ "1e400" is out of range for type double precision |        |      | 22003
 (1 row)
 
 create temp table quadtable(f1 int, q quad);

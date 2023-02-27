@@ -64,10 +64,10 @@ SELECT pg_input_is_valid('1000000000000', 'int4');
  f
 (1 row)
 
-SELECT pg_input_error_message('1000000000000', 'int4');
-                 pg_input_error_message                 
---------------------------------------------------------
- value "1000000000000" is out of range for type integer
+SELECT * FROM pg_input_error_info('1000000000000', 'int4');
+                        message                         | detail | hint | sql_error_code 
+--------------------------------------------------------+--------+------+----------------
+ value "1000000000000" is out of range for type integer |        |      | 22003
 (1 row)
 
 SELECT i.* FROM INT4_TBL i WHERE i.f1 <> int2 '0';

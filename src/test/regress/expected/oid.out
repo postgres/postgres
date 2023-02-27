@@ -78,10 +78,10 @@ SELECT pg_input_is_valid('01XYZ', 'oid');
  f
 (1 row)
 
-SELECT pg_input_error_message('01XYZ', 'oid');
-           pg_input_error_message           
---------------------------------------------
- invalid input syntax for type oid: "01XYZ"
+SELECT * FROM pg_input_error_info('01XYZ', 'oid');
+                  message                   | detail | hint | sql_error_code 
+--------------------------------------------+--------+------+----------------
+ invalid input syntax for type oid: "01XYZ" |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('9999999999', 'oid');
@@ -90,10 +90,10 @@ SELECT pg_input_is_valid('9999999999', 'oid');
  f
 (1 row)
 
-SELECT pg_input_error_message('9999999999', 'oid');
-             pg_input_error_message              
--------------------------------------------------
- value "9999999999" is out of range for type oid
+SELECT * FROM pg_input_error_info('9999999999', 'oid');
+                     message                     | detail | hint | sql_error_code 
+-------------------------------------------------+--------+------+----------------
+ value "9999999999" is out of range for type oid |        |      | 22003
 (1 row)
 
 -- While we're here, check oidvector as well
@@ -109,10 +109,10 @@ SELECT pg_input_is_valid('01 01XYZ', 'oidvector');
  f
 (1 row)
 
-SELECT pg_input_error_message('01 01XYZ', 'oidvector');
-          pg_input_error_message          
-------------------------------------------
- invalid input syntax for type oid: "XYZ"
+SELECT * FROM pg_input_error_info('01 01XYZ', 'oidvector');
+                 message                  | detail | hint | sql_error_code 
+------------------------------------------+--------+------+----------------
+ invalid input syntax for type oid: "XYZ" |        |      | 22P02
 (1 row)
 
 SELECT pg_input_is_valid('01 9999999999', 'oidvector');
@@ -121,10 +121,10 @@ SELECT pg_input_is_valid('01 9999999999', 'oidvector');
  f
 (1 row)
 
-SELECT pg_input_error_message('01 9999999999', 'oidvector');
-             pg_input_error_message              
--------------------------------------------------
- value "9999999999" is out of range for type oid
+SELECT * FROM pg_input_error_info('01 9999999999', 'oidvector');
+                     message                     | detail | hint | sql_error_code 
+-------------------------------------------------+--------+------+----------------
+ value "9999999999" is out of range for type oid |        |      | 22003
 (1 row)
 
 SELECT o.* FROM OID_TBL o WHERE o.f1 = 1234;

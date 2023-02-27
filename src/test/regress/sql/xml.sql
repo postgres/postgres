@@ -12,9 +12,9 @@ SELECT * FROM xmltest;
 -- test non-throwing API, too
 SELECT pg_input_is_valid('<value>one</value>', 'xml');
 SELECT pg_input_is_valid('<value>one</', 'xml');
-SELECT pg_input_error_message('<value>one</', 'xml');
+SELECT message FROM pg_input_error_info('<value>one</', 'xml');
 SELECT pg_input_is_valid('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
-SELECT pg_input_error_message('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+SELECT message FROM pg_input_error_info('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
 
 
 SELECT xmlcomment('test');
