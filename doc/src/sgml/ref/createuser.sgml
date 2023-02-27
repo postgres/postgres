@@ -48,7 +48,7 @@ PostgreSQL documentation
    Being a superuser implies the ability to bypass all access permission
    checks within the database, so superuser access should not be granted
    lightly. <literal>CREATEROLE</literal> also conveys
-   <link linkend='role-creation'>very extensive privileges</link>.
+   <link linkend="role-creation">very extensive privileges</link>.
   </para>
 
   <para>
@@ -254,7 +254,7 @@ PostgreSQL documentation
         The new user will be allowed to create, alter, drop, comment on,
         change the security label for other roles; that is,
         this user will have <literal>CREATEROLE</literal> privilege.
-        See <xref linkend='role-creation' /> for more details about what
+        See <xref linkend="role-creation"/> for more details about what
         capabilities are conferred by this privilege.
        </para>
       </listitem>

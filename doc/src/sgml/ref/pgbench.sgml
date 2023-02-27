@@ -1167,7 +1167,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
   </para>
 
   <variablelist>
-   <varlistentry id='pgbench-metacommand-gset'>
+   <varlistentry id="pgbench-metacommand-gset">
     <term>
      <literal>\gset [<replaceable>prefix</replaceable>]</literal>
      <literal>\aset [<replaceable>prefix</replaceable>]</literal>
@@ -1237,7 +1237,7 @@ SELECT 4 AS four \; SELECT 5 AS five \aset
     </listitem>
    </varlistentry>
 
-   <varlistentry id='pgbench-metacommand-set'>
+   <varlistentry id="pgbench-metacommand-set">
     <term>
      <literal>\set <replaceable>varname</replaceable> <replaceable>expression</replaceable></literal>
     </term>
@@ -1362,7 +1362,7 @@ SELECT 4 AS four \; SELECT 5 AS five \aset
     </listitem>
    </varlistentry>
 
-   <varlistentry id='pgbench-metacommand-pipeline'>
+   <varlistentry id="pgbench-metacommand-pipeline">
     <term><literal>\startpipeline</literal></term>
     <term><literal>\endpipeline</literal></term>
 

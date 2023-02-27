@@ -372,7 +372,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_progress_analyze</structname><indexterm><primary>pg_stat_progress_analyze</primary></indexterm></entry>
       <entry>One row for each backend (including autovacuum worker processes) running
        <command>ANALYZE</command>, showing current progress.
-       See <xref linkend='analyze-progress-reporting'/>.
+       See <xref linkend="analyze-progress-reporting"/>.
       </entry>
      </row>
 
@@ -380,7 +380,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_progress_create_index</structname><indexterm><primary>pg_stat_progress_create_index</primary></indexterm></entry>
       <entry>One row for each backend running <command>CREATE INDEX</command> or <command>REINDEX</command>, showing
       current progress.
-      See <xref linkend='create-index-progress-reporting'/>.
+      See <xref linkend="create-index-progress-reporting"/>.
      </entry>
      </row>
 
@@ -388,7 +388,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_progress_vacuum</structname><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
       <entry>One row for each backend (including autovacuum worker processes) running
        <command>VACUUM</command>, showing current progress.
-       See <xref linkend='vacuum-progress-reporting'/>.
+       See <xref linkend="vacuum-progress-reporting"/>.
       </entry>
      </row>
 
@@ -396,7 +396,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_progress_cluster</structname><indexterm><primary>pg_stat_progress_cluster</primary></indexterm></entry>
       <entry>One row for each backend running
        <command>CLUSTER</command> or <command>VACUUM FULL</command>, showing current progress.
-       See <xref linkend='cluster-progress-reporting'/>.
+       See <xref linkend="cluster-progress-reporting"/>.
       </entry>
      </row>
 
@@ -404,14 +404,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_progress_basebackup</structname><indexterm><primary>pg_stat_progress_basebackup</primary></indexterm></entry>
       <entry>One row for each WAL sender process streaming a base backup,
        showing current progress.
-       See <xref linkend='basebackup-progress-reporting'/>.
+       See <xref linkend="basebackup-progress-reporting"/>.
       </entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_progress_copy</structname><indexterm><primary>pg_stat_progress_copy</primary></indexterm></entry>
       <entry>One row for each backend running <command>COPY</command>, showing current progress.
-       See <xref linkend='copy-progress-reporting'/>.
+       See <xref linkend="copy-progress-reporting"/>.
       </entry>
      </row>
     </tbody>
@@ -7055,7 +7055,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
    <structname>pg_stat_progress_cluster</structname>
    because both <command>VACUUM FULL</command> and <command>CLUSTER</command>
    rewrite the table, while regular <command>VACUUM</command> only modifies it
-   in place. See <xref linkend='cluster-progress-reporting'/>.
+   in place. See <xref linkend="cluster-progress-reporting"/>.
   </para>
 
   <table id="pg-stat-progress-vacuum-view" xreflabel="pg_stat_progress_vacuum">

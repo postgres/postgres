@@ -1736,8 +1736,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         revocation list (CRL).  Certificates listed in this file, if it
         exists, will be rejected while attempting to authenticate the
         server's certificate.  If neither
-        <xref linkend='libpq-connect-sslcrl'/> nor
-        <xref linkend='libpq-connect-sslcrldir'/> is set, this setting is
+        <xref linkend="libpq-connect-sslcrl"/> nor
+        <xref linkend="libpq-connect-sslcrldir"/> is set, this setting is
         taken as
         <filename>~/.postgresql/root.crl</filename>.
        </para>
