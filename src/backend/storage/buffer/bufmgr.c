@@ -1003,7 +1003,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		/* new buffers are zero-filled */
 		MemSet((char *) bufBlock, 0, BLCKSZ);
 		/* don't set checksum for all-zero page */
-		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, false);
+		smgrextend(smgr, forkNum, blockNum, bufBlock, false);
 
 		pgstat_count_io_op(io_object, io_context, IOOP_EXTEND);
 
@@ -1032,7 +1032,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			else
 				INSTR_TIME_SET_ZERO(io_start);
 
-			smgrread(smgr, forkNum, blockNum, (char *) bufBlock);
+			smgrread(smgr, forkNum, blockNum, bufBlock);
 
 			pgstat_count_io_op(io_object, io_context, IOOP_READ);
 

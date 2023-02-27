@@ -447,7 +447,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
  */
 void
 mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
-		 char *buffer, bool skipFsync)
+		 const void *buffer, bool skipFsync)
 {
 	off_t		seekpos;
 	int			nbytes;
@@ -669,7 +669,7 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
  */
 void
 mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
-	   char *buffer)
+	   void *buffer)
 {
 	off_t		seekpos;
 	int			nbytes;
@@ -734,7 +734,7 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  */
 void
 mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
-		char *buffer, bool skipFsync)
+		const void *buffer, bool skipFsync)
 {
 	off_t		seekpos;
 	int			nbytes;

@@ -49,13 +49,13 @@ typedef struct f_smgr
 	void		(*smgr_unlink) (RelFileLocatorBackend rlocator, ForkNumber forknum,
 								bool isRedo);
 	void		(*smgr_extend) (SMgrRelation reln, ForkNumber forknum,
-								BlockNumber blocknum, char *buffer, bool skipFsync);
+								BlockNumber blocknum, const void *buffer, bool skipFsync);
 	bool		(*smgr_prefetch) (SMgrRelation reln, ForkNumber forknum,
 								  BlockNumber blocknum);
 	void		(*smgr_read) (SMgrRelation reln, ForkNumber forknum,
-							  BlockNumber blocknum, char *buffer);
+							  BlockNumber blocknum, void *buffer);
 	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum,
-							   BlockNumber blocknum, char *buffer, bool skipFsync);
+							   BlockNumber blocknum, const void *buffer, bool skipFsync);
 	void		(*smgr_writeback) (SMgrRelation reln, ForkNumber forknum,
 								   BlockNumber blocknum, BlockNumber nblocks);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
@@ -491,7 +491,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
  */
 void
 smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
-		   char *buffer, bool skipFsync)
+		   const void *buffer, bool skipFsync)
 {
 	smgrsw[reln->smgr_which].smgr_extend(reln, forknum, blocknum,
 										 buffer, skipFsync);
@@ -530,7 +530,7 @@ smgrprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
  */
 void
 smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
-		 char *buffer)
+		 void *buffer)
 {
 	smgrsw[reln->smgr_which].smgr_read(reln, forknum, blocknum, buffer);
 }
@@ -552,7 +552,7 @@ smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  */
 void
 smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
-		  char *buffer, bool skipFsync)
+		  const void *buffer, bool skipFsync)
 {
 	smgrsw[reln->smgr_which].smgr_write(reln, forknum, blocknum,
 										buffer, skipFsync);

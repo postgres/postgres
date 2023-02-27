@@ -165,7 +165,7 @@ btbuildempty(Relation index)
 	 */
 	PageSetChecksumInplace(metapage, BTREE_METAPAGE);
 	smgrwrite(RelationGetSmgr(index), INIT_FORKNUM, BTREE_METAPAGE,
-			  (char *) metapage, true);
+			  metapage, true);
 	log_newpage(&RelationGetSmgr(index)->smgr_rlocator.locator, INIT_FORKNUM,
 				BTREE_METAPAGE, metapage, true);
 

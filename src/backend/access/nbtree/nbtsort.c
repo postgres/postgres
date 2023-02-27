@@ -664,7 +664,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 		/* don't set checksum for all-zero page */
 		smgrextend(RelationGetSmgr(wstate->index), MAIN_FORKNUM,
 				   wstate->btws_pages_written++,
-				   (char *) wstate->btws_zeropage,
+				   wstate->btws_zeropage,
 				   true);
 	}
 
@@ -678,14 +678,14 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	{
 		/* extending the file... */
 		smgrextend(RelationGetSmgr(wstate->index), MAIN_FORKNUM, blkno,
-				   (char *) page, true);
+				   page, true);
 		wstate->btws_pages_written++;
 	}
 	else
 	{
 		/* overwriting a block we zero-filled before */
 		smgrwrite(RelationGetSmgr(wstate->index), MAIN_FORKNUM, blkno,
-				  (char *) page, true);
+				  page, true);
 	}
 
 	pfree(page);
