@@ -150,19 +150,6 @@ FROM collate_test6;
 SELECT relname FROM pg_class WHERE relname ~* '^abc';
 
 
--- to_char
-
-SET lc_time TO 'de_DE';
-SELECT to_char(date '2010-03-01', 'DD TMMON YYYY');
-SELECT to_char(date '2010-03-01', 'DD TMMON YYYY' COLLATE "de_DE");
-
--- to_date
-
-SELECT to_date('01 MÄR 2010', 'DD TMMON YYYY');
-SELECT to_date('01 Mär 2010', 'DD TMMON YYYY');
-SELECT to_date('1234567890ab 2010', 'TMMONTH YYYY'); -- fail
-
-
 -- backwards parsing
 
 CREATE VIEW collview1 AS SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc';

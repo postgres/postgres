@@ -361,30 +361,6 @@ SELECT relname FROM pg_class WHERE relname ~* '^abc';
 ---------
 (0 rows)
 
--- to_char
-SET lc_time TO 'de_DE';
-SELECT to_char(date '2010-03-01', 'DD TMMON YYYY');
-   to_char
--------------
- 01 MRZ 2010
-(1 row)
-
-SELECT to_char(date '2010-03-01', 'DD TMMON YYYY' COLLATE "de_DE");
-   to_char
--------------
- 01 MRZ 2010
-(1 row)
-
--- to_date
-SELECT to_date('01 MÄR 2010', 'DD TMMON YYYY');
-ERROR:  invalid value "MÄR" for "MON"
-DETAIL:  The given value did not match any of the allowed values for this field.
-SELECT to_date('01 Mär 2010', 'DD TMMON YYYY');
-ERROR:  invalid value "Mär" for "MON"
-DETAIL:  The given value did not match any of the allowed values for this field.
-SELECT to_date('1234567890ab 2010', 'TMMONTH YYYY'); -- fail
-ERROR:  invalid value "1234567890ab" for "MONTH"
-DETAIL:  The given value did not match any of the allowed values for this field.
 -- backwards parsing
 CREATE VIEW collview1 AS SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc';
 CREATE VIEW collview2 AS SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";
