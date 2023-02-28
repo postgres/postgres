@@ -8525,9 +8525,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				 * Column generation expressions cannot be dumped separately,
 				 * because there is no syntax for it.  By setting separate to
 				 * false here we prevent the "default" from being processed as
-				 * its own dumpable object, and flagInhAttrs() will remove it
-				 * from the table if possible (that is, if it can be inherited
-				 * from a parent).
+				 * its own dumpable object.  Later, flagInhAttrs() will mark
+				 * it as not to be dumped at all, if possible (that is, if it
+				 * can be inherited from a parent).
 				 */
 				attrdefs[j].separate = false;
 			}
@@ -15345,9 +15345,11 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 					bool		print_notnull;
 
 					/*
-					 * Default value --- suppress if to be printed separately.
+					 * Default value --- suppress if to be printed separately
+					 * or not at all.
 					 */
 					print_default = (tbinfo->attrdefs[j] != NULL &&
+									 tbinfo->attrdefs[j]->dobj.dump &&
 									 !tbinfo->attrdefs[j]->separate);
 
 					/*

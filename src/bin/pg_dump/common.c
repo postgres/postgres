@@ -471,6 +471,13 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 				j,
 				k;
 
+	/*
+	 * We scan the tables in OID order, since that's how tblinfo[] is sorted.
+	 * Hence we will typically visit parents before their children --- but
+	 * that is *not* guaranteed.  Thus this loop must be careful that it does
+	 * not alter table properties in a way that could change decisions made at
+	 * child tables during other iterations.
+	 */
 	for (i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &(tblinfo[i]);
@@ -519,15 +526,18 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 										parent->numatts);
 				if (inhAttrInd >= 0)
 				{
+					AttrDefInfo *parentDef = parent->attrdefs[inhAttrInd];
+
 					foundNotNull |= parent->notnull[inhAttrInd];
-					foundDefault |= (parent->attrdefs[inhAttrInd] != NULL &&
+					foundDefault |= (parentDef != NULL &&
+									 strcmp(parentDef->adef_expr, "NULL") != 0 &&
 									 !parent->attgenerated[inhAttrInd]);
 					if (parent->attgenerated[inhAttrInd])
 					{
 						/* these pointer nullness checks are just paranoia */
-						if (parent->attrdefs[inhAttrInd] != NULL &&
+						if (parentDef != NULL &&
 							tbinfo->attrdefs[j] != NULL &&
-							strcmp(parent->attrdefs[inhAttrInd]->adef_expr,
+							strcmp(parentDef->adef_expr,
 								   tbinfo->attrdefs[j]->adef_expr) == 0)
 							foundSameGenerated = true;
 						else
@@ -539,7 +549,14 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 			/* Remember if we found inherited NOT NULL */
 			tbinfo->inhNotNull[j] = foundNotNull;
 
-			/* Manufacture a DEFAULT NULL clause if necessary */
+			/*
+			 * Manufacture a DEFAULT NULL clause if necessary.  This breaks
+			 * the advice given above to avoid changing state that might get
+			 * inspected in other loop iterations.  We prevent trouble by
+			 * having the foundDefault test above check whether adef_expr is
+			 * "NULL", so that it will reach the same conclusion before or
+			 * after this is done.
+			 */
 			if (foundDefault && tbinfo->attrdefs[j] == NULL)
 			{
 				AttrDefInfo *attrDef;
@@ -575,10 +592,10 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 				tbinfo->attrdefs[j] = attrDef;
 			}
 
-			/* Remove generation expression from child if possible */
+			/* No need to dump generation expression if it's inheritable */
 			if (foundSameGenerated && !foundDiffGenerated &&
 				!tbinfo->ispartition && !dopt->binary_upgrade)
-				tbinfo->attrdefs[j] = NULL;
+				tbinfo->attrdefs[j]->dobj.dump = DUMP_COMPONENT_NONE;
 		}
 	}
 }
