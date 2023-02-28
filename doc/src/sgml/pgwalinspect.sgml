@@ -174,7 +174,7 @@ combined_size_percentage     | 2.8634072910530795
     <varlistentry id="pgwalinspect-funcs-pg-get-wal-stats-till-end-of-wal">
     <term>
      <function>
-      pg_get_wal_stats_till_end_of_wal(start_lsn pg_lsn, end_lsn pg_lsn, per_record boolean DEFAULT false)
+      pg_get_wal_stats_till_end_of_wal(start_lsn pg_lsn, per_record boolean DEFAULT false)
       returns setof record
      </function>
     </term>
