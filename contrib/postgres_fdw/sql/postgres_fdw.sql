@@ -3894,6 +3894,10 @@ SELECT count(*) FROM remote_application_name
       to_hex(pg_backend_pid())
       for current_setting('max_identifier_length')::int);
 
+-- Clean up.
+DROP FOREIGN TABLE remote_application_name;
+DROP VIEW my_application_name;
+
 -- ===================================================================
 -- test parallel commit
 -- ===================================================================

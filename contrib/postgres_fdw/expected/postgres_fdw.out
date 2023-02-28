@@ -11679,6 +11679,9 @@ SELECT count(*) FROM remote_application_name
      1
 (1 row)
 
+-- Clean up.
+DROP FOREIGN TABLE remote_application_name;
+DROP VIEW my_application_name;
 -- ===================================================================
 -- test parallel commit
 -- ===================================================================
