@@ -161,8 +161,8 @@ typedef struct LZ4File
 } LZ4File;
 
 /*
- * LZ4 equivalent to feof() or gzeof(). The end of file is reached if there
- * is no decompressed output in the overflow buffer and the end of the file
+ * LZ4 equivalent to feof() or gzeof().  Return true iff there is no
+ * decompressed output in the overflow buffer and the end of the backing file
  * is reached.
  */
 static int

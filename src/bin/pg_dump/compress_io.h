@@ -172,7 +172,7 @@ struct CompressFileHandle
 extern CompressFileHandle *InitCompressFileHandle(const pg_compress_specification compression_spec);
 
 /*
- * Initialize a compress file stream. Deffer the compression algorithm
+ * Initialize a compress file stream. Infer the compression algorithm
  * from 'path', either by examining its suffix or by appending the supported
  * suffixes in 'path'.
  */

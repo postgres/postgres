@@ -331,7 +331,7 @@ PostgreSQL documentation
            can read. A directory format archive can be manipulated with
            standard Unix tools; for example, files in an uncompressed archive
            can be compressed with the <application>gzip</application> or
-           <application>lz4</application>tool.
+           <application>lz4</application> tools.
            This format is compressed by default using <literal>gzip</literal>
            and also supports parallel dumps.
           </para>
@@ -654,8 +654,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specify the compression method and/or the compression level to use.
-        The compression method can be set to <literal>gzip</literal> or
-        <literal>lz4</literal> or <literal>none</literal> for no compression.
+        The compression method can be set to <literal>gzip</literal>,
+        <literal>lz4</literal>, or <literal>none</literal> for no compression.
         A compression detail string can optionally be specified.  If the
         detail string is an integer, it specifies the compression level.
         Otherwise, it should be a comma-separated list of items, each of the
