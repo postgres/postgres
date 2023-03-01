@@ -723,7 +723,8 @@ translate(PG_FUNCTION_ARGS)
 	text	   *to = PG_GETARG_TEXT_PP(2);
 	text	   *result;
 	char	   *from_ptr,
-			   *to_ptr;
+			   *to_ptr,
+			   *to_end;
 	char	   *source,
 			   *target;
 	int			m,
@@ -745,6 +746,7 @@ translate(PG_FUNCTION_ARGS)
 	from_ptr = VARDATA_ANY(from);
 	tolen = VARSIZE_ANY_EXHDR(to);
 	to_ptr = VARDATA_ANY(to);
+	to_end = to_ptr + tolen;
 
 	/*
 	 * The worst-case expansion is to substitute a max-length character for a
@@ -778,16 +780,16 @@ translate(PG_FUNCTION_ARGS)
 		}
 		if (i < fromlen)
 		{
-			/* substitute */
+			/* substitute, or delete if no corresponding "to" character */
 			char	   *p = to_ptr;
 
 			for (i = 0; i < from_index; i++)
 			{
-				p += pg_mblen(p);
-				if (p >= (to_ptr + tolen))
+				if (p >= to_end)
 					break;
+				p += pg_mblen(p);
 			}
-			if (p < (to_ptr + tolen))
+			if (p < to_end)
 			{
 				len = pg_mblen(p);
 				memcpy(target, p, len);
