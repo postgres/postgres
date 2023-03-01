@@ -4248,10 +4248,10 @@ foreach my $run (sort keys %pgdump_runs)
 	my $test_key = $run;
 	my $run_db   = 'postgres';
 
-	# Skip command-level tests for gzip if there is no support for it.
+	# Skip command-level tests for gzip/lz4 if there is no support for it.
 	if ($pgdump_runs{$run}->{compile_option} &&
-		($pgdump_runs{$run}->{compile_option} eq 'gzip' && !$supports_gzip) ||
-		($pgdump_runs{$run}->{compile_option} eq 'lz4' && !$supports_lz4))
+		(($pgdump_runs{$run}->{compile_option} eq 'gzip' && !$supports_gzip) ||
+		($pgdump_runs{$run}->{compile_option} eq 'lz4' && !$supports_lz4)))
 	{
 		note "$run: skipped due to no $pgdump_runs{$run}->{compile_option} support";
 		next;
