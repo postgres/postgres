@@ -517,6 +517,16 @@
   </para>
 
   <para>
+   Queries on which normalization can be applied may be observed with constant
+   values in <structname>pg_stat_statements</structname>, especially when there
+   is a high rate of entry deallocations. To reduce the likelihood of this
+   happening, consider increasing <varname>pg_stat_statements.max</varname>.
+   The <structname>pg_stat_statements_info</structname> view, discussed below
+   in <xref linkend="pgstatstatements-pg-stat-statements-info"/>,
+   provides statistics about entry deallocations.
+  </para>
+
+  <para>
    In some cases, queries with visibly different texts might get merged into a
    single <structname>pg_stat_statements</structname> entry.  Normally this will happen
    only for semantically equivalent queries, but there is a small chance of
