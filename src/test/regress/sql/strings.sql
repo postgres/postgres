@@ -645,6 +645,7 @@ SELECT ltrim('zzzytrim', 'xyz');
 
 SELECT translate('', '14', 'ax');
 SELECT translate('12345', '14', 'ax');
+SELECT translate('12345', '134', 'a');
 
 SELECT ascii('x');
 SELECT ascii('');
