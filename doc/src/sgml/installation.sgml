@@ -2216,7 +2216,9 @@ ninja install
       different subdirectories may render the installation non-relocatable,
       meaning you won't be able to move it after installation.
       (The <literal>man</literal> and <literal>doc</literal> locations are
-      not affected by this restriction.)
+      not affected by this restriction.)  For relocatable installs, you
+      might want to use the <literal>-Drpath=false</literal> option
+      described later.
      </para>
 
      <variablelist>
@@ -2852,6 +2854,25 @@ ninja install
         custom patches with an extra version string, such as a <command>git
         describe</command> identifier or a distribution package release
         number.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="configure-rpath-meson">
+      <term><option>-Drpath={ true | false }</option></term>
+      <listitem>
+       <para>
+        This option is set to true by default.  If set to false,
+        do not mark <productname>PostgreSQL</productname>'s executables
+        to indicate that they should search for shared libraries in the
+        installation's library directory (see <option>--libdir</option>).
+        On most platforms, this marking uses an absolute path to the
+        library directory, so that it will be unhelpful if you relocate
+        the installation later.  However, you will then need to provide
+        some other way for the executables to find the shared libraries.
+        Typically this requires configuring the operating system's
+        dynamic linker to search the library directory; see
+        <xref linkend="install-post-shlibs"/> for more detail.
        </para>
       </listitem>
      </varlistentry>

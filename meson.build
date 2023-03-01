@@ -2572,7 +2572,6 @@ default_target_args = {
 
 default_lib_args = default_target_args + {
   'name_prefix': '',
-  'install_rpath': ':'.join(lib_install_rpaths),
 }
 
 internal_lib_args = default_lib_args + {
@@ -2583,14 +2582,25 @@ internal_lib_args = default_lib_args + {
 default_mod_args = default_lib_args + {
   'name_prefix': '',
   'install_dir': dir_lib_pkg,
-  'install_rpath': ':'.join(mod_install_rpaths),
 }
 
 default_bin_args = default_target_args + {
   'install_dir': dir_bin,
-  'install_rpath': ':'.join(bin_install_rpaths),
 }
 
+if get_option('rpath')
+  default_lib_args += {
+    'install_rpath': ':'.join(lib_install_rpaths),
+  }
+
+  default_mod_args += {
+    'install_rpath': ':'.join(mod_install_rpaths),
+  }
+
+  default_bin_args += {
+    'install_rpath': ':'.join(bin_install_rpaths),
+  }
+endif
 
 
 # Helper for exporting a limited number of symbols

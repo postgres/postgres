@@ -67,6 +67,9 @@ option('extra_version', type : 'string', value: '',
 option('darwin_sysroot', type : 'string', value: '',
   description: 'select a non-default sysroot path')
 
+option('rpath', type : 'boolean', value: true,
+  description: 'whether to embed shared library search path in executables')
+
 
 # External dependencies
 
