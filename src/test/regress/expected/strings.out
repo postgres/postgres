@@ -2116,6 +2116,12 @@ SELECT translate('12345', '14', 'ax');
  a23x5
 (1 row)
 
+SELECT translate('12345', '134', 'a');
+ translate 
+-----------
+ a25
+(1 row)
+
 SELECT ascii('x');
  ascii 
 -------
