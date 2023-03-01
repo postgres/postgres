@@ -487,13 +487,13 @@
 
   <para>
    Plannable queries (that is, <command>SELECT</command>, <command>INSERT</command>,
-   <command>UPDATE</command>, <command>DELETE</command>, and <command>MERGE</command>) are combined into a single
+   <command>UPDATE</command>, <command>DELETE</command>, and <command>MERGE</command>)
+   and utility commands are combined into a single
    <structname>pg_stat_statements</structname> entry whenever they have identical query
    structures according to an internal hash calculation.  Typically, two
    queries will be considered the same for this purpose if they are
    semantically equivalent except for the values of literal constants
-   appearing in the query.  Utility commands (that is, all other commands)
-   are compared strictly on the basis of their textual query strings, however.
+   appearing in the query.
   </para>
 
   <note>
