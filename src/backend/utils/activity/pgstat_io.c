@@ -65,9 +65,9 @@ pgstat_bktype_io_stats_valid(PgStat_BktypeIO *backend_io,
 void
 pgstat_count_io_op(IOObject io_object, IOContext io_context, IOOp io_op)
 {
-	Assert(io_object < IOOBJECT_NUM_TYPES);
-	Assert(io_context < IOCONTEXT_NUM_TYPES);
-	Assert(io_op < IOOP_NUM_TYPES);
+	Assert((unsigned int) io_object < IOOBJECT_NUM_TYPES);
+	Assert((unsigned int) io_context < IOCONTEXT_NUM_TYPES);
+	Assert((unsigned int) io_op < IOOP_NUM_TYPES);
 	Assert(pgstat_tracks_io_op(MyBackendType, io_object, io_context, io_op));
 
 	PendingIOStats.data[io_object][io_context][io_op]++;
