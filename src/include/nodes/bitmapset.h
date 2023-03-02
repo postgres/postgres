@@ -115,7 +115,6 @@ extern Bitmapset *bms_del_members(Bitmapset *a, const Bitmapset *b);
 extern Bitmapset *bms_join(Bitmapset *a, Bitmapset *b);
 
 /* support for iterating through the integer elements of a set: */
-extern int	bms_first_member(Bitmapset *a);
 extern int	bms_next_member(const Bitmapset *a, int prevbit);
 extern int	bms_prev_member(const Bitmapset *a, int prevbit);
 

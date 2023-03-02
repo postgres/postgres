@@ -983,48 +983,6 @@ bms_join(Bitmapset *a, Bitmapset *b)
 }
 
 /*
- * bms_first_member - find and remove first member of a set
- *
- * Returns -1 if set is empty.  NB: set is destructively modified!
- *
- * This is intended as support for iterating through the members of a set.
- * The typical pattern is
- *
- *			while ((x = bms_first_member(inputset)) >= 0)
- *				process member x;
- *
- * CAUTION: this destroys the content of "inputset".  If the set must
- * not be modified, use bms_next_member instead.
- */
-int
-bms_first_member(Bitmapset *a)
-{
-	int			nwords;
-	int			wordnum;
-
-	if (a == NULL)
-		return -1;
-	nwords = a->nwords;
-	for (wordnum = 0; wordnum < nwords; wordnum++)
-	{
-		bitmapword	w = a->words[wordnum];
-
-		if (w != 0)
-		{
-			int			result;
-
-			w = RIGHTMOST_ONE(w);
-			a->words[wordnum] &= ~w;
-
-			result = wordnum * BITS_PER_BITMAPWORD;
-			result += bmw_rightmost_one_pos(w);
-			return result;
-		}
-	}
-	return -1;
-}
-
-/*
  * bms_next_member - find next member of a set
  *
  * Returns smallest member greater than "prevbit", or -2 if there is none.

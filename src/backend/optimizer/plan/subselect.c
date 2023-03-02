@@ -1481,7 +1481,8 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	clause_varnos = pull_varnos(root, whereClause);
 	upper_varnos = NULL;
-	while ((varno = bms_first_member(clause_varnos)) >= 0)
+	varno = -1;
+	while ((varno = bms_next_member(clause_varnos, varno)) >= 0)
 	{
 		if (varno <= rtoffset)
 			upper_varnos = bms_add_member(upper_varnos, varno);

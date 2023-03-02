@@ -2759,7 +2759,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * them ... this coding arbitrarily picks the lowest btree strategy
 	 * number.
 	 */
-	i = bms_first_member(strats);
+	i = bms_next_member(strats, -1);
 	if (i < 0)
 	{
 		/* No common interpretation, so fail */

@@ -858,7 +858,7 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 	ListCell   *lc;
 	Relation	rel;
 	TupleDesc	tupleDesc;
-	AttrNumber	attnum;
+	int			attidx;
 	Bitmapset  *attrs_used = NULL;
 	bool		has_wholerow = false;
 	int			numattrs;
@@ -901,10 +901,11 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 	rel = table_open(foreigntableid, AccessShareLock);
 	tupleDesc = RelationGetDescr(rel);
 
-	while ((attnum = bms_first_member(attrs_used)) >= 0)
+	attidx = -1;
+	while ((attidx = bms_next_member(attrs_used, attidx)) >= 0)
 	{
-		/* Adjust for system attributes. */
-		attnum += FirstLowInvalidHeapAttributeNumber;
+		/* attidx is zero-based, attnum is the normal attribute number */
+		AttrNumber	attnum = attidx + FirstLowInvalidHeapAttributeNumber;
 
 		if (attnum == 0)
 		{

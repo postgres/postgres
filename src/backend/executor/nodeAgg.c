@@ -1646,7 +1646,8 @@ find_hash_columns(AggState *aggstate)
 		}
 
 		/* and add the remaining columns */
-		while ((i = bms_first_member(colnos)) >= 0)
+		i = -1;
+		while ((i = bms_next_member(colnos, i)) >= 0)
 		{
 			perhash->hashGrpColIdxInput[perhash->numhashGrpCols] = i;
 			perhash->numhashGrpCols++;

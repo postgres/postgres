@@ -227,7 +227,8 @@ logicalrep_report_missing_attrs(LogicalRepRelation *remoterel,
 
 		initStringInfo(&missingattsbuf);
 
-		while ((i = bms_first_member(missingatts)) >= 0)
+		i = -1;
+		while ((i = bms_next_member(missingatts, i)) >= 0)
 		{
 			missingattcnt++;
 			if (missingattcnt == 1)
