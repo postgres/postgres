@@ -5247,6 +5247,34 @@ reset work_mem;
  pg_catalog | &&   | anyarray      | anyarray       | boolean     | overlaps
 (1 row)
 
+-- check \df+
+begin;
+-- we have to use functions with a predictable owner name, so make a role
+create role regress_psql_user superuser;
+set session authorization regress_psql_user;
+create function psql_df_internal (float8)
+  returns float8
+  language internal immutable parallel safe strict
+  as 'dsin';
+create function psql_df_sql (x integer)
+  returns integer
+  security definer
+  begin atomic select x + 1; end;
+create function psql_df_plpgsql ()
+  returns void
+  language plpgsql
+  as $$ begin return; end; $$;
+comment on function psql_df_plpgsql () is 'some comment';
+\df+ psql_df_*
+                                                                                       List of functions
+ Schema |       Name       | Result data type | Argument data types | Type | Volatility | Parallel |       Owner       | Security | Access privileges | Language | Internal name | Description  
+--------+------------------+------------------+---------------------+------+------------+----------+-------------------+----------+-------------------+----------+---------------+--------------
+ public | psql_df_internal | double precision | double precision    | func | immutable  | safe     | regress_psql_user | invoker  |                   | internal | dsin          | 
+ public | psql_df_plpgsql  | void             |                     | func | volatile   | unsafe   | regress_psql_user | invoker  |                   | plpgsql  |               | some comment
+ public | psql_df_sql      | integer          | x integer           | func | volatile   | unsafe   | regress_psql_user | definer  |                   | sql      |               | 
+(3 rows)
+
+rollback;
 -- check \sf
 \sf information_schema._pg_expandarray
 CREATE OR REPLACE FUNCTION information_schema._pg_expandarray(anyarray, OUT x anyelement, OUT n integer)

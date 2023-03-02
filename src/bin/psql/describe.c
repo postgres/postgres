@@ -410,14 +410,9 @@ describeFunctions(const char *functypes, const char *func_pattern,
 		appendPQExpBuffer(&buf,
 						  ",\n l.lanname as \"%s\"",
 						  gettext_noop("Language"));
-		if (pset.sversion >= 140000)
-			appendPQExpBuffer(&buf,
-							  ",\n COALESCE(pg_catalog.pg_get_function_sqlbody(p.oid), p.prosrc) as \"%s\"",
-							  gettext_noop("Source code"));
-		else
-			appendPQExpBuffer(&buf,
-							  ",\n p.prosrc as \"%s\"",
-							  gettext_noop("Source code"));
+		appendPQExpBuffer(&buf,
+						  ",\n CASE WHEN l.lanname IN ('internal', 'c') THEN p.prosrc END as \"%s\"",
+						  gettext_noop("Internal name"));
 		appendPQExpBuffer(&buf,
 						  ",\n pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"",
 						  gettext_noop("Description"));

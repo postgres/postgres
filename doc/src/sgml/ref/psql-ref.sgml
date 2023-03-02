@@ -1650,7 +1650,10 @@ INSERT INTO tbl1 VALUES ($1, $2) \bind 'first value' 'second value' \g
         If the form <literal>\df+</literal> is used, additional information
         about each function is shown, including volatility,
         parallel safety, owner, security classification, access privileges,
-        language, source code and description.
+        language, internal name (for C and internal functions only),
+        and description.
+        Source code for a specific function can be seen
+        using <literal>\sf</literal>.
         </para>
 
         </listitem>
