@@ -5248,9 +5248,9 @@ reset work_mem;
 (1 row)
 
 -- check \df+
-begin;
 -- we have to use functions with a predictable owner name, so make a role
 create role regress_psql_user superuser;
+begin;
 set session authorization regress_psql_user;
 create function psql_df_internal (float8)
   returns float8
@@ -5275,6 +5275,7 @@ comment on function psql_df_plpgsql () is 'some comment';
 (3 rows)
 
 rollback;
+drop role regress_psql_user;
 -- check \sf
 \sf information_schema._pg_expandarray
 CREATE OR REPLACE FUNCTION information_schema._pg_expandarray(anyarray, OUT x anyelement, OUT n integer)

@@ -1276,9 +1276,9 @@ reset work_mem;
 \do && anyarray *
 
 -- check \df+
-begin;
 -- we have to use functions with a predictable owner name, so make a role
 create role regress_psql_user superuser;
+begin;
 set session authorization regress_psql_user;
 
 create function psql_df_internal (float8)
@@ -1297,6 +1297,7 @@ comment on function psql_df_plpgsql () is 'some comment';
 
 \df+ psql_df_*
 rollback;
+drop role regress_psql_user;
 
 -- check \sf
 \sf information_schema._pg_expandarray
