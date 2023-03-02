@@ -13,7 +13,7 @@ $node->start;
 
 # Grab the names of all the parameters that can be listed in the
 # configuration sample file.  config_file is an exception, it is not
-# in postgresql.conf.sample but is part of the lists from guc.c.
+# in postgresql.conf.sample but is part of the lists from guc_tables.c.
 my $all_params = $node->safe_psql(
 	'postgres',
 	"SELECT name
@@ -82,7 +82,7 @@ is(scalar(@missing_from_file),
 	0, "no parameters missing from postgresql.conf.sample");
 
 my @missing_from_list = grep(!$all_params_hash{$_}, @gucs_in_file);
-is(scalar(@missing_from_list), 0, "no parameters missing from guc.c");
+is(scalar(@missing_from_list), 0, "no parameters missing from guc_tables.c");
 
 my @sample_intersect = grep($not_in_sample_hash{$_}, @gucs_in_file);
 is(scalar(@sample_intersect),
@@ -91,12 +91,12 @@ is(scalar(@sample_intersect),
 # These would log some information only on errors.
 foreach my $param (@missing_from_file)
 {
-	print("found GUC $param in guc.c, missing from postgresql.conf.sample\n");
+	print("found GUC $param in guc_tables.c, missing from postgresql.conf.sample\n");
 }
 foreach my $param (@missing_from_list)
 {
 	print(
-		"found GUC $param in postgresql.conf.sample, with incorrect info in guc.c\n"
+		"found GUC $param in postgresql.conf.sample, with incorrect info in guc_tables.c\n"
 	);
 }
 foreach my $param (@sample_intersect)

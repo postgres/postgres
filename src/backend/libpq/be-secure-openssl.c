@@ -1557,7 +1557,8 @@ X509_NAME_to_cstring(X509_NAME *name)
  * Convert TLS protocol version GUC enum to OpenSSL values
  *
  * This is a straightforward one-to-one mapping, but doing it this way makes
- * guc.c independent of OpenSSL availability and version.
+ * the definitions of ssl_min_protocol_version and ssl_max_protocol_version
+ * independent of OpenSSL availability and version.
  *
  * If a version is passed that is not supported by the current OpenSSL
  * version, then we return -1.  If a nonnegative value is returned,

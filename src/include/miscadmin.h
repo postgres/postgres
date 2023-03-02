@@ -291,7 +291,7 @@ extern void PreventCommandIfReadOnly(const char *cmdname);
 extern void PreventCommandIfParallelMode(const char *cmdname);
 extern void PreventCommandDuringRecovery(const char *cmdname);
 
-/* in utils/misc/guc.c */
+/* in utils/misc/guc_tables.c */
 extern PGDLLIMPORT int trace_recovery_messages;
 extern int	trace_recovery(int trace_level);
 
