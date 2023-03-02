@@ -339,7 +339,7 @@ help(const char *progname)
 	printf(_("  -e                 use European date input format (DMY)\n"));
 	printf(_("  -F                 turn fsync off\n"));
 	printf(_("  -h HOSTNAME        host name or IP address to listen on\n"));
-	printf(_("  -i                 enable TCP/IP connections\n"));
+	printf(_("  -i                 enable TCP/IP connections (deprecated)\n"));
 	printf(_("  -k DIRECTORY       Unix-domain socket location\n"));
 #ifdef USE_SSL
 	printf(_("  -l                 enable SSL connections\n"));

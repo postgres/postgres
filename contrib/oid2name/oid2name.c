@@ -217,7 +217,7 @@ help(const char *progname)
 		   "\nConnection options:\n"
 		   "  -d, --dbname=DBNAME        database to connect to\n"
 		   "  -h, --host=HOSTNAME        database server host or socket directory\n"
-		   "  -H                         same as -h, deprecated option\n"
+		   "  -H                         (same as -h, deprecated)\n"
 		   "  -p, --port=PORT            database server port number\n"
 		   "  -U, --username=USERNAME    connect as specified database user\n"
 		   "\nThe default action is to show all database OIDs.\n\n"

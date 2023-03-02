@@ -1037,10 +1037,10 @@ help(const char *progname)
 
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only              dump only the data, not the schema\n"));
-	printf(_("  -b, --large-objects, --blobs\n"
-			 "                               include large objects in dump\n"));
-	printf(_("  -B, --no-large-objects, --no-blobs\n"
-			 "                               exclude large objects in dump\n"));
+	printf(_("  -b, --large-objects          include large objects in dump\n"
+			 "  --blobs                      (same as --large-objects, deprecated)\n"));
+	printf(_("  -B, --no-large-objects       exclude large objects in dump\n"
+			 "  --no-blobs                   (same as --no-large-objects, deprecated)\n"));
 	printf(_("  -c, --clean                  clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create                 include commands to create database in dump\n"));
 	printf(_("  -e, --extension=PATTERN      dump the specified extension(s) only\n"));
