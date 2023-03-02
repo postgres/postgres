@@ -949,9 +949,6 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 
 	/* We do not want the index's rel itself listed in outer_relids */
 	outer_relids = bms_del_member(outer_relids, rel->relid);
-	/* Enforce convention that outer_relids is exactly NULL if empty */
-	if (bms_is_empty(outer_relids))
-		outer_relids = NULL;
 
 	/* Compute loop_count for cost estimation purposes */
 	loop_count = get_loop_count(root, rel->relid, outer_relids);

@@ -679,16 +679,10 @@ create_lateral_join_info(PlannerInfo *root)
 
 		/* Nothing to do at rels with no lateral refs */
 		lateral_relids = brel->lateral_relids;
-		if (lateral_relids == NULL)
+		if (bms_is_empty(lateral_relids))
 			continue;
 
-		/*
-		 * We should not have broken the invariant that lateral_relids is
-		 * exactly NULL if empty.
-		 */
-		Assert(!bms_is_empty(lateral_relids));
-
-		/* Also, no rel should have a lateral dependency on itself */
+		/* No rel should have a lateral dependency on itself */
 		Assert(!bms_is_member(rti, lateral_relids));
 
 		/* Mark this rel's referencees */
