@@ -1,0 +1,147 @@
+--
+-- DMLs on test table
+--
+SET pg_stat_statements.track_utility = FALSE;
+CREATE TEMP TABLE pgss_dml_tab (a int, b char(20));
+INSERT INTO pgss_dml_tab VALUES(generate_series(1, 10), 'aaa');
+UPDATE pgss_dml_tab SET b = 'bbb' WHERE a > 7;
+DELETE FROM pgss_dml_tab WHERE a > 9;
+-- explicit transaction
+BEGIN;
+UPDATE pgss_dml_tab SET b = '111' WHERE a = 1 ;
+COMMIT;
+BEGIN \;
+UPDATE pgss_dml_tab SET b = '222' WHERE a = 2 \;
+COMMIT ;
+UPDATE pgss_dml_tab SET b = '333' WHERE a = 3 \;
+UPDATE pgss_dml_tab SET b = '444' WHERE a = 4 ;
+BEGIN \;
+UPDATE pgss_dml_tab SET b = '555' WHERE a = 5 \;
+UPDATE pgss_dml_tab SET b = '666' WHERE a = 6 \;
+COMMIT ;
+-- many INSERT values
+INSERT INTO pgss_dml_tab (a, b) VALUES (1, 'a'), (2, 'b'), (3, 'c');
+-- SELECT with constants
+SELECT * FROM pgss_dml_tab WHERE a > 5 ORDER BY a ;
+ a |          b           
+---+----------------------
+ 6 | 666                 
+ 7 | aaa                 
+ 8 | bbb                 
+ 9 | bbb                 
+(4 rows)
+
+SELECT *
+  FROM pgss_dml_tab
+  WHERE a > 9
+  ORDER BY a ;
+ a | b 
+---+---
+(0 rows)
+
+-- these two need to be done on a different table
+-- SELECT without constants
+SELECT * FROM pgss_dml_tab ORDER BY a;
+ a |          b           
+---+----------------------
+ 1 | a                   
+ 1 | 111                 
+ 2 | b                   
+ 2 | 222                 
+ 3 | c                   
+ 3 | 333                 
+ 4 | 444                 
+ 5 | 555                 
+ 6 | 666                 
+ 7 | aaa                 
+ 8 | bbb                 
+ 9 | bbb                 
+(12 rows)
+
+-- SELECT with IN clause
+SELECT * FROM pgss_dml_tab WHERE a IN (1, 2, 3, 4, 5);
+ a |          b           
+---+----------------------
+ 1 | 111                 
+ 2 | 222                 
+ 3 | 333                 
+ 4 | 444                 
+ 5 | 555                 
+ 1 | a                   
+ 2 | b                   
+ 3 | c                   
+(8 rows)
+
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |                                query                                
+-------+------+---------------------------------------------------------------------
+     1 |    1 | DELETE FROM pgss_dml_tab WHERE a > $1
+     1 |    3 | INSERT INTO pgss_dml_tab (a, b) VALUES ($1, $2), ($3, $4), ($5, $6)
+     1 |   10 | INSERT INTO pgss_dml_tab VALUES(generate_series($1, $2), $3)
+     1 |   12 | SELECT * FROM pgss_dml_tab ORDER BY a
+     2 |    4 | SELECT * FROM pgss_dml_tab WHERE a > $1 ORDER BY a
+     1 |    8 | SELECT * FROM pgss_dml_tab WHERE a IN ($1, $2, $3, $4, $5)
+     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    0 | SET pg_stat_statements.track_utility = FALSE
+     6 |    6 | UPDATE pgss_dml_tab SET b = $1 WHERE a = $2
+     1 |    3 | UPDATE pgss_dml_tab SET b = $1 WHERE a > $2
+(10 rows)
+
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- MERGE
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= 4)
+ WHEN MATCHED THEN UPDATE SET b = st.b || st.a::text;
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= 4)
+ WHEN MATCHED THEN UPDATE SET b = pgss_dml_tab.b || st.a::text;
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= 4)
+ WHEN MATCHED AND length(st.b) > 1 THEN UPDATE SET b = pgss_dml_tab.b || st.a::text;
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a)
+ WHEN NOT MATCHED THEN INSERT (a, b) VALUES (0, NULL);
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a)
+ WHEN NOT MATCHED THEN INSERT VALUES (0, NULL);	-- same as above
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a)
+ WHEN NOT MATCHED THEN INSERT (b, a) VALUES (NULL, 0);
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a)
+ WHEN NOT MATCHED THEN INSERT (a) VALUES (0);
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= 4)
+ WHEN MATCHED THEN DELETE;
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= 4)
+ WHEN MATCHED THEN DO NOTHING;
+MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= 4)
+ WHEN NOT MATCHED THEN DO NOTHING;
+DROP TABLE pgss_dml_tab;
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |                                          query                                          
+-------+------+-----------------------------------------------------------------------------------------
+     1 |    6 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= $1)+
+       |      |  WHEN MATCHED AND length(st.b) > $2 THEN UPDATE SET b = pgss_dml_tab.b || st.a::text
+     1 |    6 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= $1)+
+       |      |  WHEN MATCHED THEN DELETE
+     1 |    0 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= $1)+
+       |      |  WHEN MATCHED THEN DO NOTHING
+     1 |    6 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= $1)+
+       |      |  WHEN MATCHED THEN UPDATE SET b = pgss_dml_tab.b || st.a::text
+     1 |    6 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= $1)+
+       |      |  WHEN MATCHED THEN UPDATE SET b = st.b || st.a::text
+     1 |    0 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a >= $1)+
+       |      |  WHEN NOT MATCHED THEN DO NOTHING
+     1 |    0 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a)               +
+       |      |  WHEN NOT MATCHED THEN INSERT (a) VALUES ($1)
+     2 |    0 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a)               +
+       |      |  WHEN NOT MATCHED THEN INSERT (a, b) VALUES ($1, $2)
+     1 |    0 | MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a)               +
+       |      |  WHEN NOT MATCHED THEN INSERT (b, a) VALUES ($1, $2)
+     1 |    1 | SELECT pg_stat_statements_reset()
+(10 rows)
+
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
