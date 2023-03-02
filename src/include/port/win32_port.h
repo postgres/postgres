@@ -354,6 +354,13 @@ extern int	_pglstat64(const char *name, struct stat *buf);
 #define O_DSYNC 0x0080
 
 /*
+ * Our open() replacement does not create inheritable handles, so it is safe to
+ * ignore O_CLOEXEC.  (If we were using Windows' own open(), it might be
+ * necessary to convert this to _O_NOINHERIT.)
+ */
+#define O_CLOEXEC 0
+
+/*
  * Supplement to <errno.h>.
  *
  * We redefine network-related Berkeley error symbols as the corresponding WSA
