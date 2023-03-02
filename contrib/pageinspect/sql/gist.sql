@@ -26,14 +26,16 @@ SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 1), 'test_gist_idx')
 -- platform-dependent (endianess), so omit the actual key data from the output.
 SELECT itemoffset, ctid, itemlen FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
 
--- Failure with non-GiST index.
-CREATE INDEX test_gist_btree on test_gist(t);
-SELECT gist_page_items(get_raw_page('test_gist_btree', 0), 'test_gist_btree');
-
--- Failure with various modes.
 -- Suppress the DETAIL message, to allow the tests to work across various
 -- page sizes and architectures.
 \set VERBOSITY terse
+
+-- Failures with non-GiST index.
+CREATE INDEX test_gist_btree on test_gist(t);
+SELECT gist_page_items(get_raw_page('test_gist_btree', 0), 'test_gist_btree');
+SELECT gist_page_items(get_raw_page('test_gist_btree', 0), 'test_gist_idx');
+
+-- Failure with various modes.
 -- invalid page size
 SELECT gist_page_items_bytea('aaa'::bytea);
 SELECT gist_page_items('aaa'::bytea, 'test_gist_idx'::regclass);

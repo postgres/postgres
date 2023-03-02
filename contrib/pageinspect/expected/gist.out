@@ -66,14 +66,16 @@ SELECT itemoffset, ctid, itemlen FROM gist_page_items_bytea(get_raw_page('test_g
           7 | (7,65535) |      40
 (7 rows)
 
--- Failure with non-GiST index.
-CREATE INDEX test_gist_btree on test_gist(t);
-SELECT gist_page_items(get_raw_page('test_gist_btree', 0), 'test_gist_btree');
-ERROR:  "test_gist_btree" is not a GiST index
--- Failure with various modes.
 -- Suppress the DETAIL message, to allow the tests to work across various
 -- page sizes and architectures.
 \set VERBOSITY terse
+-- Failures with non-GiST index.
+CREATE INDEX test_gist_btree on test_gist(t);
+SELECT gist_page_items(get_raw_page('test_gist_btree', 0), 'test_gist_btree');
+ERROR:  "test_gist_btree" is not a GiST index
+SELECT gist_page_items(get_raw_page('test_gist_btree', 0), 'test_gist_idx');
+ERROR:  input page is not a valid GiST page
+-- Failure with various modes.
 -- invalid page size
 SELECT gist_page_items_bytea('aaa'::bytea);
 ERROR:  invalid page size

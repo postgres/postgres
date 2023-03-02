@@ -48,12 +48,14 @@ SELECT * FROM brin_page_items(get_raw_page('test1_a_idx', 2), 'test1_a_idx')
           1 |      0 |      1 | f        | f        | f           | {1 .. 1}
 (1 row)
 
--- Failure for non-BRIN index.
+-- Mask DETAIL messages as these are not portable across architectures.
+\set VERBOSITY terse
+-- Failures for non-BRIN index.
 CREATE INDEX test1_a_btree ON test1 (a);
 SELECT brin_page_items(get_raw_page('test1_a_btree', 0), 'test1_a_btree');
 ERROR:  "test1_a_btree" is not a BRIN index
--- Mask DETAIL messages as these are not portable across architectures.
-\set VERBOSITY terse
+SELECT brin_page_items(get_raw_page('test1_a_btree', 0), 'test1_a_idx');
+ERROR:  input page is not a valid BRIN page
 -- Invalid special area size
 SELECT brin_page_type(get_raw_page('test1', 0));
 ERROR:  input page is not a valid BRIN page
