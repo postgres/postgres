@@ -5,10 +5,8 @@
  *
  * A bitmap set can represent any set of nonnegative integers, although
  * it is mainly intended for sets where the maximum value is not large,
- * say at most a few hundred.  By convention, a NULL pointer is always
- * accepted by all operations to represent the empty set.  (But beware
- * that this is not the only representation of the empty set.  Use
- * bms_is_empty() in preference to testing for NULL.)
+ * say at most a few hundred.  By convention, we always represent the
+ * empty set by a NULL pointer.
  *
  *
  * Copyright (c) 2003-2023, PostgreSQL Global Development Group
@@ -102,7 +100,9 @@ extern int	bms_num_members(const Bitmapset *a);
 
 /* optimized tests when we don't need to know exact membership count: */
 extern BMS_Membership bms_membership(const Bitmapset *a);
-extern bool bms_is_empty(const Bitmapset *a);
+
+/* NULL is now the only allowed representation of an empty bitmapset */
+#define bms_is_empty(a)  ((a) == NULL)
 
 /* these routines recycle (modify or free) their non-const inputs: */
 
