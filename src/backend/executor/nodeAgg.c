@@ -1642,7 +1642,7 @@ find_hash_columns(AggState *aggstate)
 			perhash->hashGrpColIdxHash[i] = i + 1;
 			perhash->numhashGrpCols++;
 			/* delete already mapped columns */
-			bms_del_member(colnos, grpColIdx[i]);
+			colnos = bms_del_member(colnos, grpColIdx[i]);
 		}
 
 		/* and add the remaining columns */
