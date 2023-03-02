@@ -32,29 +32,20 @@ PG_FUNCTION_INFO_V1(gist_page_items_bytea);
 #define IS_GIST(r) ((r)->rd_rel->relam == GIST_AM_OID)
 
 
-Datum
-gist_page_opaque_info(PG_FUNCTION_ARGS)
+static Page verify_gist_page(bytea *raw_page);
+
+/*
+ * Verify that the given bytea contains a GIST page or die in the attempt.
+ * A pointer to the page is returned.
+ */
+static Page
+verify_gist_page(bytea *raw_page)
 {
-	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
-	TupleDesc	tupdesc;
-	Page		page;
+	Page		page = get_page_from_raw(raw_page);
 	GISTPageOpaque opaq;
-	HeapTuple	resultTuple;
-	Datum		values[4];
-	bool		nulls[4];
-	Datum		flags[16];
-	int			nflags = 0;
-	uint16		flagbits;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to use raw page functions")));
-
-	page = get_page_from_raw(raw_page);
 
 	if (PageIsNew(page))
-		PG_RETURN_NULL();
+		return page;
 
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
@@ -74,12 +65,38 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 						   GIST_PAGE_ID,
 						   opaq->gist_page_id)));
 
+	return page;
+}
+
+Datum
+gist_page_opaque_info(PG_FUNCTION_ARGS)
+{
+	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
+	TupleDesc	tupdesc;
+	Page		page;
+	HeapTuple	resultTuple;
+	Datum		values[4];
+	bool		nulls[4];
+	Datum		flags[16];
+	int			nflags = 0;
+	uint16		flagbits;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to use raw page functions")));
+
+	page = verify_gist_page(raw_page);
+
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
 	/* Convert the flags bitmask to an array of human-readable names */
-	flagbits = opaq->flags;
+	flagbits = GistPageGetOpaque(page)->flags;
 	if (flagbits & F_LEAF)
 		flags[nflags++] = CStringGetTextDatum("leaf");
 	if (flagbits & F_DELETED)
@@ -101,7 +118,7 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 
 	values[0] = LSNGetDatum(PageGetLSN(page));
 	values[1] = LSNGetDatum(GistPageGetNSN(page));
-	values[2] = Int64GetDatum(opaq->rightlink);
+	values[2] = Int64GetDatum(GistPageGetOpaque(page)->rightlink);
 	values[3] = PointerGetDatum(construct_array_builtin(flags, nflags, TEXTOID));
 
 	/* Build and return the result tuple. */
@@ -116,7 +133,6 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	Page		page;
-	GISTPageOpaque opaq;
 	OffsetNumber offset;
 	OffsetNumber maxoff = InvalidOffsetNumber;
 
@@ -127,28 +143,10 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 
 	InitMaterializedSRF(fcinfo, 0);
 
-	page = get_page_from_raw(raw_page);
+	page = verify_gist_page(raw_page);
 
 	if (PageIsNew(page))
 		PG_RETURN_NULL();
-
-	/* verify the special space has the expected size */
-	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input page is not a valid %s page", "GiST"),
-				 errdetail("Expected special size %d, got %d.",
-						   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
-						   (int) PageGetSpecialSize(page))));
-
-	opaq = GistPageGetOpaque(page);
-	if (opaq->gist_page_id != GIST_PAGE_ID)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input page is not a valid %s page", "GiST"),
-				 errdetail("Expected %08x, got %08x.",
-						   GIST_PAGE_ID,
-						   opaq->gist_page_id)));
 
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
@@ -220,7 +218,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 				 errmsg("\"%s\" is not a %s index",
 						RelationGetRelationName(indexRel), "GiST")));
 
-	page = get_page_from_raw(raw_page);
+	page = verify_gist_page(raw_page);
 
 	if (PageIsNew(page))
 	{
