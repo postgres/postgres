@@ -39,11 +39,9 @@ bin_targets += pg_regress
 
 regress_module = shared_module('regress',
   ['regress.c'],
-  kwargs: pg_mod_args + {
-    'install': false,
-  },
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += regress_module
+test_install_libs += regress_module
 
 # Get some extra C modules from contrib/spi but mark them as not to be
 # installed.
@@ -51,20 +49,16 @@ testprep_targets += regress_module
 
 autoinc_regress = shared_module('autoinc',
   ['../../../contrib/spi/autoinc.c'],
-  kwargs: pg_mod_args + {
-    'install': false,
-  },
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += autoinc_regress
+test_install_libs += autoinc_regress
 
 refint_regress = shared_module('refint',
   ['../../../contrib/spi/refint.c'],
   c_args: refint_cflags,
-  kwargs: pg_mod_args + {
-    'install': false,
-  },
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += refint_regress
+test_install_libs += refint_regress
 
 
 tests += {

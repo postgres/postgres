@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 spgist_name_ops_sources = files(
   'spgist_name_ops.c',
 )
@@ -14,16 +12,14 @@ endif
 
 spgist_name_ops = shared_module('spgist_name_ops',
   spgist_name_ops_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += spgist_name_ops
+test_install_libs += spgist_name_ops
 
-install_data(
+test_install_data += files(
   'spgist_name_ops.control',
   'spgist_name_ops--1.0.sql',
-  kwargs: contrib_data_args,
 )
-
 tests += {
   'name': 'spgist_name_ops',
   'sd': meson.current_source_dir(),

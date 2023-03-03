@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_rbtree_sources = files(
   'test_rbtree.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_rbtree = shared_module('test_rbtree',
   test_rbtree_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_rbtree
+test_install_libs += test_rbtree
 
-install_data(
+test_install_data += files(
   'test_rbtree.control',
   'test_rbtree--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

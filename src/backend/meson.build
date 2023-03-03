@@ -180,10 +180,17 @@ backend_mod_code = declare_dependency(
   dependencies: backend_mod_deps,
 )
 
+# normal extension modules
 pg_mod_args = default_mod_args + {
   'dependencies': [backend_mod_code],
   'cpp_args': pg_mod_cpp_args,
   'link_depends': pg_mod_link_depend,
+}
+
+# extension modules that shouldn't be installed by default, as they're only
+# for testing
+pg_test_mod_args = pg_mod_args + {
+  'install': false
 }
 
 

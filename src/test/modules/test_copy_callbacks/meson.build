@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_copy_callbacks_sources = files(
   'test_copy_callbacks.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_copy_callbacks = shared_module('test_copy_callbacks',
   test_copy_callbacks_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_copy_callbacks
+test_install_libs += test_copy_callbacks
 
-install_data(
+test_install_data += files(
   'test_copy_callbacks.control',
   'test_copy_callbacks--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

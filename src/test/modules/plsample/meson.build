@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 plsample_sources = files(
   'plsample.c',
 )
@@ -14,16 +12,14 @@ endif
 
 plsample = shared_module('plsample',
   plsample_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += plsample
+test_install_libs += plsample
 
-install_data(
+test_install_data += files(
   'plsample.control',
   'plsample--1.0.sql',
-  kwargs: contrib_data_args,
 )
-
 tests += {
   'name': 'plsample',
   'sd': meson.current_source_dir(),

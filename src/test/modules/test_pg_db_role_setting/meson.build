@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_pg_db_role_setting_sources = files(
   'test_pg_db_role_setting.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_pg_db_role_setting = shared_module('test_pg_db_role_setting',
   test_pg_db_role_setting_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_pg_db_role_setting
+test_install_libs += test_pg_db_role_setting
 
-install_data(
+test_install_data += files(
   'test_pg_db_role_setting.control',
   'test_pg_db_role_setting--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

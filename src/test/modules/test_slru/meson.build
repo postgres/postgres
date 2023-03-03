@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_slru_sources = files(
   'test_slru.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_slru = shared_module('test_slru',
   test_slru_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_slru
+test_install_libs += test_slru
 
-install_data(
+test_install_data += files(
   'test_slru.control',
   'test_slru--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

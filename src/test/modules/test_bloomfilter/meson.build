@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_bloomfilter_sources = files(
   'test_bloomfilter.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_bloomfilter = shared_module('test_bloomfilter',
   test_bloomfilter_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_bloomfilter
+test_install_libs += test_bloomfilter
 
-install_data(
+test_install_data += files(
   'test_bloomfilter.control',
   'test_bloomfilter--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_integerset_sources = files(
   'test_integerset.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_integerset = shared_module('test_integerset',
   test_integerset_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_integerset
+test_install_libs += test_integerset
 
-install_data(
+test_install_data += files(
   'test_integerset.control',
   'test_integerset--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

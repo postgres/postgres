@@ -1,7 +1,6 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-install_data(
+test_install_data += files(
   'test_ext1--1.0.sql',
   'test_ext1.control',
   'test_ext2--1.0.sql',
@@ -31,7 +30,6 @@ install_data(
   'test_ext_evttrig--1.0--2.0.sql',
   'test_ext_evttrig--1.0.sql',
   'test_ext_evttrig.control',
-  kwargs: contrib_data_args,
 )
 
 tests += {

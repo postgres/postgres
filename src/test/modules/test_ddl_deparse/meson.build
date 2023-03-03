@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_ddl_deparse_sources = files(
   'test_ddl_deparse.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_ddl_deparse = shared_module('test_ddl_deparse',
   test_ddl_deparse_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_ddl_deparse
+test_install_libs += test_ddl_deparse
 
-install_data(
+test_install_data += files(
   'test_ddl_deparse.control',
   'test_ddl_deparse--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

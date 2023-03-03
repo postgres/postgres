@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 dummy_seclabel_sources = files(
   'dummy_seclabel.c',
 )
@@ -14,14 +12,13 @@ endif
 
 dummy_seclabel = shared_module('dummy_seclabel',
   dummy_seclabel_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += dummy_seclabel
+test_install_libs += dummy_seclabel
 
-install_data(
+test_install_data += files(
   'dummy_seclabel.control',
   'dummy_seclabel--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

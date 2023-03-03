@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 dummy_index_am_sources = files(
   'dummy_index_am.c',
 )
@@ -14,14 +12,13 @@ endif
 
 dummy_index_am = shared_module('dummy_index_am',
   dummy_index_am_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += dummy_index_am
+test_install_libs += dummy_index_am
 
-install_data(
+test_install_data += files(
   'dummy_index_am.control',
   'dummy_index_am--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

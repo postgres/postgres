@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 delay_execution_sources = files(
   'delay_execution.c',
 )
@@ -14,9 +12,9 @@ endif
 
 delay_execution = shared_module('delay_execution',
   delay_execution_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += delay_execution
+test_install_libs += delay_execution
 
 tests += {
   'name': 'delay_execution',

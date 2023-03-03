@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_custom_rmgrs_sources = files(
   'test_custom_rmgrs.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_custom_rmgrs = shared_module('test_custom_rmgrs',
   test_custom_rmgrs_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_custom_rmgrs
+test_install_libs += test_custom_rmgrs
 
-install_data(
+test_install_data += files(
   'test_custom_rmgrs.control',
   'test_custom_rmgrs--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

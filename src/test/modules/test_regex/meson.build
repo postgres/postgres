@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_regex_sources = files(
   'test_regex.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_regex = shared_module('test_regex',
   test_regex_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_regex
+test_install_libs += test_regex
 
-install_data(
+test_install_data += files(
   'test_regex.control',
   'test_regex--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {

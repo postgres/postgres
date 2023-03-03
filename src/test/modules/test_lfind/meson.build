@@ -1,7 +1,5 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
-# FIXME: prevent install during main install, but not during test :/
-
 test_lfind_sources = files(
   'test_lfind.c',
 )
@@ -14,14 +12,13 @@ endif
 
 test_lfind = shared_module('test_lfind',
   test_lfind_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += test_lfind
+test_install_libs += test_lfind
 
-install_data(
+test_install_data += files(
   'test_lfind.control',
   'test_lfind--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {
