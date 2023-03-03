@@ -345,8 +345,9 @@ typedef struct xl_heap_freeze_page
 	TransactionId snapshotConflictHorizon;
 	uint16		nplans;
 
-	/* FREEZE PLANS FOLLOW */
-	/* OFFSET NUMBER ARRAY FOLLOWS */
+	/*
+	 * In payload of blk 0 : FREEZE PLANS and OFFSET NUMBER ARRAY
+	 */
 } xl_heap_freeze_page;
 
 #define SizeOfHeapFreezePage (offsetof(xl_heap_freeze_page, nplans) + sizeof(uint16))

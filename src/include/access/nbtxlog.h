@@ -236,9 +236,13 @@ typedef struct xl_btree_delete
 	uint16		ndeleted;
 	uint16		nupdated;
 
-	/* DELETED TARGET OFFSET NUMBERS FOLLOW */
-	/* UPDATED TARGET OFFSET NUMBERS FOLLOW */
-	/* UPDATED TUPLES METADATA (xl_btree_update) ARRAY FOLLOWS */
+	/*----
+	 * In payload of blk 0 :
+	 * - DELETED TARGET OFFSET NUMBERS
+	 * - UPDATED TARGET OFFSET NUMBERS
+	 * - UPDATED TUPLES METADATA (xl_btree_update) ARRAY
+	 *----
+	 */
 } xl_btree_delete;
 
 #define SizeOfBtreeDelete	(offsetof(xl_btree_delete, nupdated) + sizeof(uint16))

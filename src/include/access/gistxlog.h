@@ -52,9 +52,7 @@ typedef struct gistxlogDelete
 	TransactionId snapshotConflictHorizon;
 	uint16		ntodelete;		/* number of deleted offsets */
 
-	/*
-	 * In payload of blk 0 : todelete OffsetNumbers
-	 */
+	/* TODELETE OFFSET NUMBER ARRAY FOLLOWS */
 } gistxlogDelete;
 
 #define SizeOfGistxlogDelete	(offsetof(gistxlogDelete, ntodelete) + sizeof(uint16))
