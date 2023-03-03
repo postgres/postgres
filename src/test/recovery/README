@@ -10,7 +10,8 @@ Running the tests
 
 NOTE: You must have given the --enable-tap-tests argument to configure.
 Also, to use "make installcheck", you must have built and installed
-contrib/pg_prewarm and contrib/test_decoding in addition to the core code.
+contrib/pg_prewarm, contrib/pg_stat_statements and contrib/test_decoding
+in addition to the core code.
 
 Run
     make check
