@@ -1754,7 +1754,8 @@ renametrig_partition(Relation tgrel, Oid partitionId, Oid parentTriggerOid,
  *	to change 'tgenabled' field for the specified trigger(s)
  *
  * rel: relation to process (caller must hold suitable lock on it)
- * tgname: trigger to process, or NULL to scan all triggers
+ * tgname: name of trigger to process, or NULL to scan all triggers
+ * tgparent: if not zero, process only triggers with this tgparentid
  * fires_when: new value for tgenabled field. In addition to generic
  *			   enablement/disablement, this also defines when the trigger
  *			   should be fired in session replication roles.
@@ -1766,9 +1767,9 @@ renametrig_partition(Relation tgrel, Oid partitionId, Oid parentTriggerOid,
  * system triggers
  */
 void
-EnableDisableTriggerNew(Relation rel, const char *tgname,
-						char fires_when, bool skip_system, bool recurse,
-						LOCKMODE lockmode)
+EnableDisableTriggerNew2(Relation rel, const char *tgname, Oid tgparent,
+						 char fires_when, bool skip_system, bool recurse,
+						 LOCKMODE lockmode)
 {
 	Relation	tgrel;
 	int			nkeys;
@@ -1804,6 +1805,9 @@ EnableDisableTriggerNew(Relation rel, const char *tgname,
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger oldtrig = (Form_pg_trigger) GETSTRUCT(tuple);
+
+		if (OidIsValid(tgparent) && tgparent != oldtrig->tgparentid)
+			continue;
 
 		if (oldtrig->tgisinternal)
 		{
@@ -1855,9 +1859,10 @@ EnableDisableTriggerNew(Relation rel, const char *tgname,
 				Relation	part;
 
 				part = relation_open(partdesc->oids[i], lockmode);
-				EnableDisableTriggerNew(part, NameStr(oldtrig->tgname),
-										fires_when, skip_system, recurse,
-										lockmode);
+				/* Match on child triggers' tgparentid, not their name */
+				EnableDisableTriggerNew2(part, NULL, oldtrig->oid,
+										 fires_when, skip_system, recurse,
+										 lockmode);
 				table_close(part, NoLock);	/* keep lock till commit */
 			}
 		}
@@ -1886,16 +1891,27 @@ EnableDisableTriggerNew(Relation rel, const char *tgname,
 }
 
 /*
- * ABI-compatible wrapper for the above.  To keep as close possible to the old
- * behavior, this never recurses.  Do not call this function in new code.
+ * ABI-compatible wrappers to emulate old versions of the above function.
+ * Do not call these versions in new code.
  */
+void
+EnableDisableTriggerNew(Relation rel, const char *tgname,
+						char fires_when, bool skip_system, bool recurse,
+						LOCKMODE lockmode)
+{
+	EnableDisableTriggerNew2(rel, tgname, InvalidOid,
+							 fires_when, skip_system,
+							 recurse, lockmode);
+}
+
 void
 EnableDisableTrigger(Relation rel, const char *tgname,
 					 char fires_when, bool skip_system,
 					 LOCKMODE lockmode)
 {
-	EnableDisableTriggerNew(rel, tgname, fires_when, skip_system,
-							true, lockmode);
+	EnableDisableTriggerNew2(rel, tgname, InvalidOid,
+							 fires_when, skip_system,
+							 true, lockmode);
 }
 
 

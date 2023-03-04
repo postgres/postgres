@@ -14768,8 +14768,9 @@ ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 						   char fires_when, bool skip_system, bool recurse,
 						   LOCKMODE lockmode)
 {
-	EnableDisableTriggerNew(rel, trigname, fires_when, skip_system, recurse,
-							lockmode);
+	EnableDisableTriggerNew2(rel, trigname, InvalidOid,
+							 fires_when, skip_system, recurse,
+							 lockmode);
 }
 
 /*

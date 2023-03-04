@@ -572,12 +572,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       These forms configure the firing of trigger(s) belonging to the table.
       A disabled trigger is still known to the system, but is not executed
-      when its triggering event occurs.  For a deferred trigger, the enable
+      when its triggering event occurs.  (For a deferred trigger, the enable
       status is checked when the event occurs, not when the trigger function
-      is actually executed.  One can disable or enable a single
+      is actually executed.)  One can disable or enable a single
       trigger specified by name, or all triggers on the table, or only
       user triggers (this option excludes internally generated constraint
-      triggers such as those that are used to implement foreign key
+      triggers, such as those that are used to implement foreign key
       constraints or deferrable uniqueness and exclusion constraints).
       Disabling or enabling internally generated constraint triggers
       requires superuser privileges; it should be done with caution since
@@ -599,12 +599,18 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The effect of this mechanism is that in the default configuration,
       triggers do not fire on replicas.  This is useful because if a trigger
       is used on the origin to propagate data between tables, then the
-      replication system will also replicate the propagated data, and the
+      replication system will also replicate the propagated data; so the
       trigger should not fire a second time on the replica, because that would
       lead to duplication.  However, if a trigger is used for another purpose
       such as creating external alerts, then it might be appropriate to set it
       to <literal>ENABLE ALWAYS</literal> so that it is also fired on
       replicas.
+     </para>
+
+     <para>
+      When this command is applied to a partitioned table, the states of
+      corresponding clone triggers in the partitions are updated too,
+      unless <literal>ONLY</literal> is specified.
      </para>
 
      <para>
@@ -1234,7 +1240,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        <para>
         Disable or enable all triggers belonging to the table.
         (This requires superuser privilege if any of the triggers are
-        internally generated constraint triggers such as those that are used
+        internally generated constraint triggers, such as those that are used
         to implement foreign key constraints or deferrable uniqueness and
         exclusion constraints.)
        </para>
@@ -1246,7 +1252,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <listitem>
        <para>
         Disable or enable all triggers belonging to the table except for
-        internally generated constraint triggers such as those that are used
+        internally generated constraint triggers, such as those that are used
         to implement foreign key constraints or deferrable uniqueness and
         exclusion constraints.
        </para>
@@ -1499,9 +1505,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     The actions for identity columns (<literal>ADD
     GENERATED</literal>, <literal>SET</literal> etc., <literal>DROP
     IDENTITY</literal>), as well as the actions
-    <literal>TRIGGER</literal>, <literal>CLUSTER</literal>, <literal>OWNER</literal>,
+    <literal>CLUSTER</literal>, <literal>OWNER</literal>,
     and <literal>TABLESPACE</literal> never recurse to descendant tables;
     that is, they always act as though <literal>ONLY</literal> were specified.
+    Actions affecting trigger states recurse to partitions of partitioned
+    tables (unless <literal>ONLY</literal> is specified), but never to
+    traditional-inheritance descendants.
     Adding a constraint recurses only for <literal>CHECK</literal> constraints
     that are not marked <literal>NO INHERIT</literal>.
    </para>
