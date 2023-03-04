@@ -1715,7 +1715,8 @@ renametrig_partition(Relation tgrel, Oid partitionId, Oid parentTriggerOid,
  *	to change 'tgenabled' field for the specified trigger(s)
  *
  * rel: relation to process (caller must hold suitable lock on it)
- * tgname: trigger to process, or NULL to scan all triggers
+ * tgname: name of trigger to process, or NULL to scan all triggers
+ * tgparent: if not zero, process only triggers with this tgparentid
  * fires_when: new value for tgenabled field. In addition to generic
  *			   enablement/disablement, this also defines when the trigger
  *			   should be fired in session replication roles.
@@ -1727,7 +1728,7 @@ renametrig_partition(Relation tgrel, Oid partitionId, Oid parentTriggerOid,
  * system triggers
  */
 void
-EnableDisableTrigger(Relation rel, const char *tgname,
+EnableDisableTrigger(Relation rel, const char *tgname, Oid tgparent,
 					 char fires_when, bool skip_system, bool recurse,
 					 LOCKMODE lockmode)
 {
@@ -1765,6 +1766,9 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger oldtrig = (Form_pg_trigger) GETSTRUCT(tuple);
+
+		if (OidIsValid(tgparent) && tgparent != oldtrig->tgparentid)
+			continue;
 
 		if (oldtrig->tgisinternal)
 		{
@@ -1816,7 +1820,8 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 				Relation	part;
 
 				part = relation_open(partdesc->oids[i], lockmode);
-				EnableDisableTrigger(part, NameStr(oldtrig->tgname),
+				/* Match on child triggers' tgparentid, not their name */
+				EnableDisableTrigger(part, NULL, oldtrig->oid,
 									 fires_when, skip_system, recurse,
 									 lockmode);
 				table_close(part, NoLock);	/* keep lock till commit */

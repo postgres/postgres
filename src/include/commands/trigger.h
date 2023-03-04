@@ -170,7 +170,7 @@ extern Oid	get_trigger_oid(Oid relid, const char *trigname, bool missing_ok);
 
 extern ObjectAddress renametrig(RenameStmt *stmt);
 
-extern void EnableDisableTrigger(Relation rel, const char *tgname,
+extern void EnableDisableTrigger(Relation rel, const char *tgname, Oid tgparent,
 								 char fires_when, bool skip_system, bool recurse,
 								 LOCKMODE lockmode);
 
