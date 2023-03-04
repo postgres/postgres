@@ -161,7 +161,33 @@ do
 	# OK, create .c file to include this .h file.
 	{
 	    echo 'extern "C" {'
-	    test "$f" != src/include/postgres_fe.h && echo '#include "postgres.h"'
+	    # Ideally we'd pre-include only the appropriate one of
+	    # postgres.h, postgres_fe.h, or c.h.  We don't always have enough
+	    # info to guess which, but in some subdirectories there's a
+	    # reasonable choice to make, and otherwise we use postgres.h.
+	    # Also, those three files should compile with no pre-include, as
+	    # should src/interfaces headers meant to be exposed to clients.
+	    case "$f" in
+		src/include/postgres.h) ;;
+		src/include/postgres_fe.h) ;;
+		src/include/c.h) ;;
+		src/interfaces/libpq/libpq-fe.h) ;;
+		src/interfaces/libpq/libpq-events.h) ;;
+		src/interfaces/ecpg/ecpglib/ecpglib_extern.h)
+		    echo '#include "postgres_fe.h"' ;;
+		src/interfaces/ecpg/ecpglib/*) ;;
+		src/interfaces/*)
+		    echo '#include "postgres_fe.h"' ;;
+		src/bin/*)
+		    echo '#include "postgres_fe.h"' ;;
+		src/fe_utils/*)
+		    echo '#include "postgres_fe.h"' ;;
+		src/port/*) ;;
+		src/common/*)
+		    echo '#include "c.h"' ;;
+		*)
+		    echo '#include "postgres.h"' ;;
+	    esac
 	    echo "#include \"$f\""
 	    echo '};'
 	} >$tmp/test.cpp
@@ -174,9 +200,9 @@ do
 		EXTRAINCLUDES="$python_includespec" ;;
 	    src/interfaces/ecpg/*)
 		EXTRAINCLUDES="-I $builddir/src/interfaces/ecpg/include -I $srcdir/src/interfaces/ecpg/include" ;;
-		src/backend/parser/*)
+	    src/backend/parser/*)
 		EXTRAINCLUDES="-I $builddir/src/backend/parser/" ;;
-		src/backend/utils/adt/*)
+	    src/backend/utils/adt/*)
 		EXTRAINCLUDES="-I $builddir/src/backend/utils/adt/" ;;
 	    *)
 		EXTRAINCLUDES="" ;;
