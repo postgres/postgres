@@ -553,6 +553,7 @@ T836	SQL/JSON path language: starts with predicate			YES
 T837	SQL/JSON path language: regex_like predicate			YES	
 T838	JSON_TABLE: PLAN DEFAULT clause			NO	
 T839	Formatted cast of datetimes to/from character strings			NO	
+T840	Hex integer literals in SQL/JSON path language			YES	SQL:202x draft
 M001	Datalinks			NO	
 M002	Datalinks via SQL/CLI			NO	
 M003	Datalinks via Embedded SQL			NO	

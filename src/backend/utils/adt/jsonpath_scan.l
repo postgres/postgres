@@ -90,21 +90,32 @@ blank		[ \t\n\r\f]
 /* "other" means anything that's not special, blank, or '\' or '"' */
 other		[^\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/\\\" \t\n\r\f]
 
-digit		[0-9]
-integer		(0|[1-9]{digit}*)
-decimal		({integer}\.{digit}*|\.{digit}+)
-real		({integer}|{decimal})[Ee][-+]?{digit}+
-realfail	({integer}|{decimal})[Ee][-+]
+decdigit	[0-9]
+hexdigit	[0-9A-Fa-f]
+octdigit	[0-7]
+bindigit	[0-1]
 
-integer_junk	{integer}{other}
+/* DecimalInteger in ECMAScript; must not start with 0 unless it's exactly 0 */
+decinteger	(0|[1-9](_?{decdigit})*)
+/* DecimalDigits in ECMAScript; only used as part of other rules */
+decdigits	{decdigit}(_?{decdigit})*
+/* Non-decimal integers; in ECMAScript, these must not have underscore after prefix */
+hexinteger	0[xX]{hexdigit}(_?{hexdigit})*
+octinteger	0[oO]{octdigit}(_?{octdigit})*
+bininteger	0[bB]{bindigit}(_?{bindigit})*
+
+decimal		({decinteger}\.{decdigits}?|\.{decdigits})
+real		({decinteger}|{decimal})[Ee][-+]?{decdigits}
+realfail	({decinteger}|{decimal})[Ee][-+]
+
+decinteger_junk	{decinteger}{other}
 decimal_junk	{decimal}{other}
 real_junk		{real}{other}
 
-hex_dig		[0-9A-Fa-f]
-unicode		\\u({hex_dig}{4}|\{{hex_dig}{1,6}\})
-unicodefail	\\u({hex_dig}{0,3}|\{{hex_dig}{0,6})
-hex_char	\\x{hex_dig}{2}
-hex_fail	\\x{hex_dig}{0,1}
+unicode		\\u({hexdigit}{4}|\{{hexdigit}{1,6}\})
+unicodefail	\\u({hexdigit}{0,3}|\{{hexdigit}{0,6})
+hex_char	\\x{hexdigit}{2}
+hex_fail	\\x{hexdigit}{0,1}
 
 %%
 
@@ -274,7 +285,28 @@ hex_fail	\\x{hex_dig}{0,1}
 									return NUMERIC_P;
 								}
 
-{integer}						{
+{decinteger}					{
+									addstring(true, yytext, yyleng);
+									addchar(false, '\0');
+									yylval->str = scanstring;
+									return INT_P;
+								}
+
+{hexinteger}					{
+									addstring(true, yytext, yyleng);
+									addchar(false, '\0');
+									yylval->str = scanstring;
+									return INT_P;
+								}
+
+{octinteger}					{
+									addstring(true, yytext, yyleng);
+									addchar(false, '\0');
+									yylval->str = scanstring;
+									return INT_P;
+								}
+
+{bininteger}					{
 									addstring(true, yytext, yyleng);
 									addchar(false, '\0');
 									yylval->str = scanstring;
@@ -287,7 +319,7 @@ hex_fail	\\x{hex_dig}{0,1}
 										"invalid numeric literal");
 									yyterminate();
 								}
-{integer_junk}					{
+{decinteger_junk}				{
 									jsonpath_yyerror(
 										NULL, escontext,
 										"trailing junk after numeric literal");

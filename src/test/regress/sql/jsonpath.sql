@@ -152,8 +152,11 @@ select '$ ? (@.a < 10.1e+1)'::jsonpath;
 select '$ ? (@.a < -10.1e+1)'::jsonpath;
 select '$ ? (@.a < +10.1e+1)'::jsonpath;
 
+-- numeric literals
+
 select '0'::jsonpath;
 select '00'::jsonpath;
+select '0755'::jsonpath;
 select '0.0'::jsonpath;
 select '0.000'::jsonpath;
 select '0.000e1'::jsonpath;
@@ -187,6 +190,53 @@ select '1..e3'::jsonpath;
 select '(1.).e'::jsonpath;
 select '(1.).e3'::jsonpath;
 select '1?(2>3)'::jsonpath;
+
+-- nondecimal
+select '0b100101'::jsonpath;
+select '0o273'::jsonpath;
+select '0x42F'::jsonpath;
+
+-- error cases
+select '0b'::jsonpath;
+select '1b'::jsonpath;
+select '0b0x'::jsonpath;
+
+select '0o'::jsonpath;
+select '1o'::jsonpath;
+select '0o0x'::jsonpath;
+
+select '0x'::jsonpath;
+select '1x'::jsonpath;
+select '0x0y'::jsonpath;
+
+-- underscores
+select '1_000_000'::jsonpath;
+select '1_2_3'::jsonpath;
+select '0x1EEE_FFFF'::jsonpath;
+select '0o2_73'::jsonpath;
+select '0b10_0101'::jsonpath;
+
+select '1_000.000_005'::jsonpath;
+select '1_000.'::jsonpath;
+select '.000_005'::jsonpath;
+select '1_000.5e0_1'::jsonpath;
+
+-- error cases
+select '_100'::jsonpath;
+select '100_'::jsonpath;
+select '100__000'::jsonpath;
+
+select '_1_000.5'::jsonpath;
+select '1_000_.5'::jsonpath;
+select '1_000._5'::jsonpath;
+select '1_000.5_'::jsonpath;
+select '1_000.5e_1'::jsonpath;
+
+-- underscore after prefix not allowed in JavaScript (but allowed in SQL)
+select '0b_10_0101'::jsonpath;
+select '0o_273'::jsonpath;
+select '0x_42F'::jsonpath;
+
 
 -- test non-error-throwing API
 
