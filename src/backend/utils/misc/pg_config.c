@@ -3,7 +3,7 @@
  * pg_config.c
  *		Expose same output as pg_config except as an SRF
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -30,7 +30,7 @@ pg_config(PG_FUNCTION_ARGS)
 	int			i = 0;
 
 	/* initialize our tuplestore */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	configdata = get_configdata(my_exec_path, &configdata_len);
 	for (i = 0; i < configdata_len; i++)

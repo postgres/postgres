@@ -22,7 +22,7 @@
  * Postgres 9.2, this check is made automatically by the Makefile.)
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -36,11 +36,13 @@
 #include <unistd.h>
 
 #include "common/string.h"
-#include "parser/gramparse.h"
+#include "gramparse.h"
+#include "nodes/miscnodes.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/scansup.h"
 #include "port/pg_bitutils.h"
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 }
 
 %{
@@ -124,7 +126,7 @@ static void addlit(char *ytext, int yleng, core_yyscan_t yyscanner);
 static void addlitchar(unsigned char ychar, core_yyscan_t yyscanner);
 static char *litbufdup(core_yyscan_t yyscanner);
 static unsigned char unescape_single_char(unsigned char c, core_yyscan_t yyscanner);
-static int	process_integer_literal(const char *token, YYSTYPE *lval);
+static int	process_integer_literal(const char *token, YYSTYPE *lval, int base);
 static void addunicode(pg_wchar c, yyscan_t yyscanner);
 
 #define yyerror(msg)  scanner_yyerror(msg, yyscanner)
@@ -385,25 +387,40 @@ operator		{op_chars}+
  * Unary minus is not part of a number here.  Instead we pass it separately to
  * the parser, and there it gets coerced via doNegate().
  *
- * {decimalfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
+ * {numericfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
  *
  * {realfail} is added to prevent the need for scanner
  * backup when the {real} rule fails to match completely.
  */
-digit			[0-9]
+decdigit		[0-9]
+hexdigit		[0-9A-Fa-f]
+octdigit		[0-7]
+bindigit		[0-1]
 
-integer			{digit}+
-decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-decimalfail		{digit}+\.\.
-real			({integer}|{decimal})[Ee][-+]?{digit}+
-realfail		({integer}|{decimal})[Ee][-+]
+decinteger		{decdigit}(_?{decdigit})*
+hexinteger		0[xX](_?{hexdigit})+
+octinteger		0[oO](_?{octdigit})+
+bininteger		0[bB](_?{bindigit})+
 
-integer_junk	{integer}{ident_start}
-decimal_junk	{decimal}{ident_start}
+hexfail			0[xX]_?
+octfail			0[oO]_?
+binfail			0[bB]_?
+
+numeric			(({decinteger}\.{decinteger}?)|(\.{decinteger}))
+numericfail		{decdigit}+\.\.
+
+real			({decinteger}|{numeric})[Ee][-+]?{decinteger}
+realfail		({decinteger}|{numeric})[Ee][-+]
+
+decinteger_junk	{decinteger}{ident_start}
+hexinteger_junk	{hexinteger}{ident_start}
+octinteger_junk	{octinteger}{ident_start}
+bininteger_junk	{bininteger}{ident_start}
+numeric_junk	{numeric}{ident_start}
 real_junk		{real}{ident_start}
 
-param			\${integer}
-param_junk		\${integer}{ident_start}
+param			\${decinteger}
+param_junk		\${decinteger}{ident_start}
 
 other			.
 
@@ -983,20 +1000,44 @@ other			.
 					yyerror("trailing junk after parameter");
 				}
 
-{integer}		{
+{decinteger}	{
 					SET_YYLLOC();
-					return process_integer_literal(yytext, yylval);
+					return process_integer_literal(yytext, yylval, 10);
 				}
-{decimal}		{
+{hexinteger}	{
+					SET_YYLLOC();
+					return process_integer_literal(yytext, yylval, 16);
+				}
+{octinteger}	{
+					SET_YYLLOC();
+					return process_integer_literal(yytext, yylval, 8);
+				}
+{bininteger}	{
+					SET_YYLLOC();
+					return process_integer_literal(yytext, yylval, 2);
+				}
+{hexfail}		{
+					SET_YYLLOC();
+					yyerror("invalid hexadecimal integer");
+				}
+{octfail}		{
+					SET_YYLLOC();
+					yyerror("invalid octal integer");
+				}
+{binfail}		{
+					SET_YYLLOC();
+					yyerror("invalid binary integer");
+				}
+{numeric}		{
 					SET_YYLLOC();
 					yylval->str = pstrdup(yytext);
 					return FCONST;
 				}
-{decimalfail}	{
+{numericfail}	{
 					/* throw back the .., and treat as integer */
 					yyless(yyleng - 2);
 					SET_YYLLOC();
-					return process_integer_literal(yytext, yylval);
+					return process_integer_literal(yytext, yylval, 10);
 				}
 {real}			{
 					SET_YYLLOC();
@@ -1007,11 +1048,23 @@ other			.
 					SET_YYLLOC();
 					yyerror("trailing junk after numeric literal");
 				}
-{integer_junk}	{
+{decinteger_junk}	{
 					SET_YYLLOC();
 					yyerror("trailing junk after numeric literal");
 				}
-{decimal_junk}	{
+{hexinteger_junk}	{
+					SET_YYLLOC();
+					yyerror("trailing junk after numeric literal");
+				}
+{octinteger_junk}	{
+					SET_YYLLOC();
+					yyerror("trailing junk after numeric literal");
+				}
+{bininteger_junk}	{
+					SET_YYLLOC();
+					yyerror("trailing junk after numeric literal");
+				}
+{numeric_junk}	{
 					SET_YYLLOC();
 					yyerror("trailing junk after numeric literal");
 				}
@@ -1307,18 +1360,17 @@ litbufdup(core_yyscan_t yyscanner)
 }
 
 /*
- * Process {integer}.  Note this will also do the right thing with {decimal},
- * ie digits and a decimal point.
+ * Process {decinteger}, {hexinteger}, etc.  Note this will also do the right
+ * thing with {numeric}, ie digits and a decimal point.
  */
 static int
-process_integer_literal(const char *token, YYSTYPE *lval)
+process_integer_literal(const char *token, YYSTYPE *lval, int base)
 {
-	int			val;
-	char	   *endptr;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+	int32		val;
 
-	errno = 0;
-	val = strtoint(token, &endptr, 10);
-	if (*endptr != '\0' || errno == ERANGE)
+	val = pg_strtoint32_safe(token, (Node *) &escontext);
+	if (escontext.error_occurred)
 	{
 		/* integer too large (or contains decimal pt), treat it as a float */
 		lval->str = pstrdup(token);

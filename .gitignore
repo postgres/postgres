@@ -1,3 +1,7 @@
+# This file contains ignores for build artifacts from standard builds.
+# Auxiliary files from local workflows, your preferred editor, etc. should
+# be ignored locally using $GIT_DIR/info/exclude or ~/.gitexclude.
+
 # Global excludes across all subdirectories
 *.o
 *.obj
@@ -6,10 +10,6 @@
 *.so.[0-9]
 *.so.[0-9].[0-9]
 *.so.[0-9].[0-9][0-9]
-*.sl
-*.sl.[0-9]
-*.sl.[0-9].[0-9]
-*.sl.[0-9].[0-9][0-9]
 *.dylib
 *.dll
 *.exp
@@ -42,3 +42,4 @@ lib*.pc
 /Debug/
 /Release/
 /tmp_install/
+/portlock/

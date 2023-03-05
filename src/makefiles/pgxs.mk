@@ -101,8 +101,11 @@ endif # PGXS
 
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
+# See equivalent block in Makefile.shlib
 ifdef MODULES
-override CFLAGS += $(CFLAGS_SL)
+override LDFLAGS_SL += $(CFLAGS_SL_MODULE)
+override CFLAGS += $(CFLAGS_SL) $(CFLAGS_SL_MODULE)
+override CXXFLAGS += $(CFLAGS_SL) $(CXXFLAGS_SL_MODULE)
 endif
 
 ifdef MODULEDIR

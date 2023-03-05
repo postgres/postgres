@@ -9,8 +9,6 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-
 /* for PLyObject_AsString in plpy_typeio.c */
 typedef char *(*PLyObject_AsString_t) (PyObject *plrv);
 static PLyObject_AsString_t PLyObject_AsString_p;

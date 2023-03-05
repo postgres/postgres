@@ -299,9 +299,7 @@
     <term><acronym>HOT</acronym></term>
     <listitem>
      <para>
-      <ulink
-      url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/backend/access/heap/README.HOT;hb=HEAD">Heap-Only
-      Tuples</ulink>
+      <link linkend="storage-hot">Heap-Only Tuples</link>
      </para>
     </listitem>
    </varlistentry>

@@ -6,7 +6,7 @@
  * Estimates are based on histograms of lower and upper bounds, and the
  * fraction of empty ranges.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -190,7 +190,7 @@ rangesel(PG_FUNCTION_ARGS)
 			upper.val = ((Const *) other)->constvalue;
 			upper.infinite = false;
 			upper.lower = false;
-			constrange = range_serialize(typcache, &lower, &upper, false);
+			constrange = range_serialize(typcache, &lower, &upper, false, NULL);
 		}
 	}
 	else if (operator == OID_RANGE_ELEM_CONTAINED_OP)

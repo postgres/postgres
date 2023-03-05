@@ -2,6 +2,8 @@
 -- ADVISORY LOCKS
 --
 
+SELECT oid AS datoid FROM pg_database WHERE datname = current_database() \gset
+
 BEGIN;
 
 SELECT
@@ -9,14 +11,14 @@ SELECT
 	pg_advisory_xact_lock(1, 1), pg_advisory_xact_lock_shared(2, 2);
 
 SELECT locktype, classid, objid, objsubid, mode, granted
-	FROM pg_locks WHERE locktype = 'advisory'
+	FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid
 	ORDER BY classid, objid, objsubid;
 
 
 -- pg_advisory_unlock_all() shouldn't release xact locks
 SELECT pg_advisory_unlock_all();
 
-SELECT count(*) FROM pg_locks WHERE locktype = 'advisory';
+SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid;
 
 
 -- can't unlock xact locks
@@ -28,7 +30,7 @@ SELECT
 -- automatically release xact locks at commit
 COMMIT;
 
-SELECT count(*) FROM pg_locks WHERE locktype = 'advisory';
+SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid;
 
 
 BEGIN;
@@ -39,7 +41,7 @@ SELECT
 	pg_advisory_xact_lock(1, 1), pg_advisory_xact_lock_shared(2, 2);
 
 SELECT locktype, classid, objid, objsubid, mode, granted
-	FROM pg_locks WHERE locktype = 'advisory'
+	FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid
 	ORDER BY classid, objid, objsubid;
 
 SELECT
@@ -49,7 +51,7 @@ SELECT
 ROLLBACK;
 
 SELECT locktype, classid, objid, objsubid, mode, granted
-	FROM pg_locks WHERE locktype = 'advisory'
+	FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid
 	ORDER BY classid, objid, objsubid;
 
 
@@ -60,7 +62,7 @@ SELECT
 	pg_advisory_unlock(1, 1), pg_advisory_unlock(1, 1),
 	pg_advisory_unlock_shared(2, 2), pg_advisory_unlock_shared(2, 2);
 
-SELECT count(*) FROM pg_locks WHERE locktype = 'advisory';
+SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid;
 
 
 BEGIN;
@@ -71,7 +73,7 @@ SELECT
 	pg_advisory_lock(1, 1), pg_advisory_lock_shared(2, 2);
 
 SELECT locktype, classid, objid, objsubid, mode, granted
-	FROM pg_locks WHERE locktype = 'advisory'
+	FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid
 	ORDER BY classid, objid, objsubid;
 
 SELECT
@@ -81,14 +83,14 @@ SELECT
 ROLLBACK;
 
 SELECT locktype, classid, objid, objsubid, mode, granted
-	FROM pg_locks WHERE locktype = 'advisory'
+	FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid
 	ORDER BY classid, objid, objsubid;
 
 
 -- releasing all session locks
 SELECT pg_advisory_unlock_all();
 
-SELECT count(*) FROM pg_locks WHERE locktype = 'advisory';
+SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid;
 
 
 BEGIN;
@@ -102,12 +104,12 @@ SELECT
 	pg_advisory_xact_lock_shared(2, 2), pg_advisory_xact_lock_shared(2, 2);
 
 SELECT locktype, classid, objid, objsubid, mode, granted
-	FROM pg_locks WHERE locktype = 'advisory'
+	FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid
 	ORDER BY classid, objid, objsubid;
 
 COMMIT;
 
-SELECT count(*) FROM pg_locks WHERE locktype = 'advisory';
+SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid;
 
 -- grabbing session locks multiple times
 
@@ -118,7 +120,7 @@ SELECT
 	pg_advisory_lock_shared(2, 2), pg_advisory_lock_shared(2, 2);
 
 SELECT locktype, classid, objid, objsubid, mode, granted
-	FROM pg_locks WHERE locktype = 'advisory'
+	FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid
 	ORDER BY classid, objid, objsubid;
 
 SELECT
@@ -127,7 +129,7 @@ SELECT
 	pg_advisory_unlock(1, 1), pg_advisory_unlock(1, 1),
 	pg_advisory_unlock_shared(2, 2), pg_advisory_unlock_shared(2, 2);
 
-SELECT count(*) FROM pg_locks WHERE locktype = 'advisory';
+SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid;
 
 -- .. and releasing them all at once
 
@@ -138,9 +140,9 @@ SELECT
 	pg_advisory_lock_shared(2, 2), pg_advisory_lock_shared(2, 2);
 
 SELECT locktype, classid, objid, objsubid, mode, granted
-	FROM pg_locks WHERE locktype = 'advisory'
+	FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid
 	ORDER BY classid, objid, objsubid;
 
 SELECT pg_advisory_unlock_all();
 
-SELECT count(*) FROM pg_locks WHERE locktype = 'advisory';
+SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND database = :datoid;

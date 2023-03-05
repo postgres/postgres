@@ -2,7 +2,7 @@
  * jit.h
  *	  Provider independent JIT infrastructure.
  *
- * Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * src/include/jit/jit.h
  *
@@ -63,7 +63,7 @@ typedef struct JitContext
 
 typedef struct JitProviderCallbacks JitProviderCallbacks;
 
-extern void _PG_jit_provider_init(JitProviderCallbacks *cb);
+extern PGDLLEXPORT void _PG_jit_provider_init(JitProviderCallbacks *cb);
 typedef void (*JitProviderInit) (JitProviderCallbacks *cb);
 typedef void (*JitProviderResetAfterErrorCB) (void);
 typedef void (*JitProviderReleaseContextCB) (JitContext *context);

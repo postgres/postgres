@@ -6,7 +6,7 @@
  * for developers.  If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/pg_config_manual.h
@@ -115,17 +115,6 @@
 #define MAXPGPATH		1024
 
 /*
- * PG_SOMAXCONN: maximum accept-queue length limit passed to
- * listen(2).  You'd think we should use SOMAXCONN from
- * <sys/socket.h>, but on many systems that symbol is much smaller
- * than the kernel's actual limit.  In any case, this symbol need be
- * twiddled only if you have a kernel that refuses large limit values,
- * rather than silently reducing the value to what it can handle
- * (which is what most if not all Unixen do).
- */
-#define PG_SOMAXCONN	10000
-
-/*
  * You can try changing this if you have a machine with bytes of
  * another size, but no guarantee...
  */
@@ -150,13 +139,6 @@
  */
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define EXEC_BACKEND
-#endif
-
-/*
- * Define this if your operating system supports link()
- */
-#if !defined(WIN32) && !defined(__CYGWIN__)
-#define HAVE_WORKING_LINK 1
 #endif
 
 /*
@@ -233,32 +215,6 @@
  * This is the default event source for Windows event log.
  */
 #define DEFAULT_EVENT_SOURCE  "PostgreSQL"
-
-/*
- * On PPC machines, decide whether to use the mutex hint bit in LWARX
- * instructions.  Setting the hint bit will slightly improve spinlock
- * performance on POWER6 and later machines, but does nothing before that,
- * and will result in illegal-instruction failures on some pre-POWER4
- * machines.  By default we use the hint bit when building for 64-bit PPC,
- * which should be safe in nearly all cases.  You might want to override
- * this if you are building 32-bit code for a known-recent PPC machine.
- */
-#ifdef HAVE_PPC_LWARX_MUTEX_HINT	/* must have assembler support in any case */
-#if defined(__ppc64__) || defined(__powerpc64__)
-#define USE_PPC_LWARX_MUTEX_HINT
-#endif
-#endif
-
-/*
- * On PPC machines, decide whether to use LWSYNC instructions in place of
- * ISYNC and SYNC.  This provides slightly better performance, but will
- * result in illegal-instruction failures on some pre-POWER4 machines.
- * By default we use LWSYNC when building for 64-bit PPC, which should be
- * safe in nearly all cases.
- */
-#if defined(__ppc64__) || defined(__powerpc64__)
-#define USE_PPC_LWSYNC
-#endif
 
 /*
  * Assumed cache line size. This doesn't affect correctness, but can be used

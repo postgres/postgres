@@ -3,7 +3,7 @@
 --
 
 --
--- Tests for SQLValueFunction
+-- Tests for various FuncCalls with COERCE_SQL_SYNTAX.
 --
 
 
@@ -17,14 +17,19 @@ SELECT now()::timetz(4)::text = current_time(4)::text;
 SELECT now()::time::text = localtime::text;
 SELECT now()::time(3)::text = localtime(3)::text;
 
--- current_timestamp / localtimestamp (always matches because of transactional behaviour)
+-- current_time[stamp]/ localtime[stamp] (always matches because of transactional behaviour)
 SELECT current_timestamp = NOW();
 -- precision
 SELECT length(current_timestamp::text) >= length(current_timestamp(0)::text);
 -- localtimestamp
 SELECT now()::timestamp::text = localtimestamp::text;
+-- precision overflow
+SELECT current_time = current_time(7);
+SELECT current_timestamp = current_timestamp(7);
+SELECT localtime = localtime(7);
+SELECT localtimestamp = localtimestamp(7);
 
--- current_role/user/user is tested in rolnames.sql
+-- current_role/user/user is tested in rolenames.sql
 
 -- current database / catalog
 SELECT current_catalog = current_database();

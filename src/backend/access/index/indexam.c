@@ -3,7 +3,7 @@
  * indexam.c
  *	  general index access method routines
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -209,6 +209,8 @@ index_beginscan(Relation heapRelation,
 {
 	IndexScanDesc scan;
 
+	Assert(snapshot != InvalidSnapshot);
+
 	scan = index_beginscan_internal(indexRelation, nkeys, norderbys, snapshot, NULL, false);
 
 	/*
@@ -236,6 +238,8 @@ index_beginscan_bitmap(Relation indexRelation,
 					   int nkeys)
 {
 	IndexScanDesc scan;
+
+	Assert(snapshot != InvalidSnapshot);
 
 	scan = index_beginscan_internal(indexRelation, nkeys, 0, snapshot, NULL, false);
 
@@ -403,6 +407,8 @@ index_parallelscan_estimate(Relation indexRelation, Snapshot snapshot)
 {
 	Size		nbytes;
 
+	Assert(snapshot != InvalidSnapshot);
+
 	RELATION_CHECKS;
 
 	nbytes = offsetof(ParallelIndexScanDescData, ps_snapshot_data);
@@ -436,6 +442,8 @@ index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
 							  Snapshot snapshot, ParallelIndexScanDesc target)
 {
 	Size		offset;
+
+	Assert(snapshot != InvalidSnapshot);
 
 	RELATION_CHECKS;
 

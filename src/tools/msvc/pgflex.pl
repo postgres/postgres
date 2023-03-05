@@ -1,6 +1,6 @@
 # -*-perl-*- hey - emacs - this is a perl file
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # src/tools/msvc/pgflex.pl
 
@@ -21,7 +21,7 @@ $flexver = (split(/\s+/, $flexver))[1];
 $flexver =~ s/[^0-9.]//g;
 my @verparts = split(/\./, $flexver);
 unless ($verparts[0] == 2
-	&& ($verparts[1] > 5 || ($verparts[1] == 5 && $verparts[2] >= 31)))
+	&& ($verparts[1] > 5 || ($verparts[1] == 5 && $verparts[2] >= 35)))
 {
 	print "WARNING! Flex install not found, or unsupported Flex version.\n";
 	print "echo Attempting to build without.\n";

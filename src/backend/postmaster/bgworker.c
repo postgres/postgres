@@ -2,7 +2,7 @@
  * bgworker.c
  *		POSTGRES pluggable background workers implementation
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/postmaster/bgworker.c
@@ -128,6 +128,9 @@ static const struct
 	},
 	{
 		"ApplyWorkerMain", ApplyWorkerMain
+	},
+	{
+		"ParallelApplyWorkerMain", ParallelApplyWorkerMain
 	}
 };
 
@@ -389,8 +392,8 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 		rw->rw_worker.bgw_notify_pid = slot->worker.bgw_notify_pid;
 		if (!PostmasterMarkPIDForWorkerNotify(rw->rw_worker.bgw_notify_pid))
 		{
-			elog(DEBUG1, "worker notification PID %ld is not valid",
-				 (long) rw->rw_worker.bgw_notify_pid);
+			elog(DEBUG1, "worker notification PID %d is not valid",
+				 (int) rw->rw_worker.bgw_notify_pid);
 			rw->rw_worker.bgw_notify_pid = 0;
 		}
 
@@ -663,7 +666,7 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 	{
 		ereport(elevel,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("background worker \"%s\": background worker without shared memory access are not supported",
+				 errmsg("background worker \"%s\": background workers without shared memory access are not supported",
 						worker->bgw_name)));
 		return false;
 	}
@@ -723,7 +726,7 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 static void
 bgworker_die(SIGNAL_ARGS)
 {
-	PG_SETMASK(&BlockSig);
+	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 
 	ereport(FATAL,
 			(errcode(ERRCODE_ADMIN_SHUTDOWN),

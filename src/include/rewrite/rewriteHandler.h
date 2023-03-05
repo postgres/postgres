@@ -4,7 +4,7 @@
  *		External interface to query rewriter.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/rewrite/rewriteHandler.h
@@ -23,9 +23,6 @@ extern void AcquireRewriteLocks(Query *parsetree,
 								bool forUpdatePushedDown);
 
 extern Node *build_column_default(Relation rel, int attrno);
-
-extern void fill_extraUpdatedCols(RangeTblEntry *target_rte,
-								  Relation target_relation);
 
 extern Query *get_view_query(Relation view);
 extern const char *view_query_is_auto_updatable(Query *viewquery,

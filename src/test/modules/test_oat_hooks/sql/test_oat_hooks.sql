@@ -1,3 +1,8 @@
+-- This test script fails if debug_discard_caches is enabled, because cache
+-- flushes cause extra calls of the OAT hook in recomputeNamespacePath,
+-- resulting in more NOTICE messages than are in the expected output.
+SET debug_discard_caches = 0;
+
 -- Creating privileges on a placeholder GUC should create entries in the
 -- pg_parameter_acl catalog which conservatively grant no privileges to public.
 CREATE ROLE regress_role_joe;
@@ -25,8 +30,9 @@ GRANT SET, ALTER SYSTEM ON PARAMETER another.bogus TO regress_role_joe WITH GRAN
 DROP ROLE regress_role_joe;
 
 -- Check the behavior of the hooks relative to do-nothing grants and revokes
-GRANT SET ON PARAMETER work_mem TO PUBLIC;
-REVOKE ALTER SYSTEM ON PARAMETER work_mem FROM PUBLIC;
+GRANT SET ON PARAMETER maintenance_work_mem TO PUBLIC;
+REVOKE SET ON PARAMETER maintenance_work_mem FROM PUBLIC;
+REVOKE ALTER SYSTEM ON PARAMETER maintenance_work_mem FROM PUBLIC;
 
 -- Check the behavior of the hooks relative to unrecognized parameters
 GRANT ALL ON PARAMETER "none.such" TO PUBLIC;
@@ -37,6 +43,7 @@ REVOKE ALL ON PARAMETER "none.such" FROM PUBLIC;
 -- Create objects for use in the test
 CREATE USER regress_test_user;
 CREATE TABLE regress_test_table (t text);
+CREATE INDEX regress_test_table_t_idx ON regress_test_table (t);
 GRANT SELECT ON Table regress_test_table TO public;
 CREATE FUNCTION regress_test_func (t text) RETURNS text AS $$
 	SELECT $1;
@@ -87,9 +94,11 @@ RESET work_mem;
 ALTER SYSTEM SET work_mem = 8192;
 ALTER SYSTEM RESET work_mem;
 
--- Clean up
+-- try labelled drops
 RESET SESSION AUTHORIZATION;
+DROP INDEX CONCURRENTLY regress_test_table_t_idx;
 
+-- Clean up
 SET test_oat_hooks.audit = false;
 DROP ROLE regress_role_joe;  -- fails
 REVOKE ALL PRIVILEGES ON PARAMETER
@@ -98,3 +107,4 @@ REVOKE ALL PRIVILEGES ON PARAMETER
 	test_oat_hooks.user_var2, test_oat_hooks.super_var2
 	FROM regress_role_joe;
 DROP ROLE regress_role_joe;
+DROP ROLE regress_test_user;

@@ -4,7 +4,7 @@
  *	  prototypes for files in optimizer/prep/
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/prep.h
@@ -29,7 +29,8 @@ extern void pull_up_subqueries(PlannerInfo *root);
 extern void flatten_simple_union_all(PlannerInfo *root);
 extern void reduce_outer_joins(PlannerInfo *root);
 extern void remove_useless_result_rtes(PlannerInfo *root);
-extern Relids get_relids_in_jointree(Node *jtnode, bool include_joins);
+extern Relids get_relids_in_jointree(Node *jtnode, bool include_outer_joins,
+									 bool include_inner_joins);
 extern Relids get_relids_for_join(Query *query, int joinrelid);
 
 /*
@@ -45,7 +46,7 @@ extern PlanRowMark *get_plan_rowmark(List *rowmarks, Index rtindex);
  * prototypes for prepagg.c
  */
 extern void get_agg_clause_costs(PlannerInfo *root, AggSplit aggsplit,
-								 AggClauseCosts *agg_costs);
+								 AggClauseCosts *costs);
 extern void preprocess_aggrefs(PlannerInfo *root, Node *clause);
 
 /*

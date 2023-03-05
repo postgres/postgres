@@ -4,7 +4,7 @@
  *	  Checks, enables or disables page level checksums for an offline
  *	  cluster
  *
- * Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/bin/pg_checksums/pg_checksums.c
@@ -228,7 +228,7 @@ scan_file(const char *fn, int segmentno)
 		current_size += r;
 
 		/* New pages have no checksum yet */
-		if (PageIsNew(header))
+		if (PageIsNew(buf.data))
 			continue;
 
 		csum = pg_checksum_page(buf.data, blockno + segmentno * RELSEG_SIZE);
@@ -384,11 +384,7 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 			if (!sizeonly)
 				scan_file(fn, segmentno);
 		}
-#ifndef WIN32
 		else if (S_ISDIR(st.st_mode) || S_ISLNK(st.st_mode))
-#else
-		else if (S_ISDIR(st.st_mode) || pgwin32_is_junction(fn))
-#endif
 		{
 			/*
 			 * If going through the entries of pg_tblspc, we assume to operate
@@ -475,7 +471,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "cD:deNPf:v", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "cdD:ef:NPv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -484,6 +480,9 @@ main(int argc, char *argv[])
 				break;
 			case 'd':
 				mode = PG_MODE_DISABLE;
+				break;
+			case 'D':
+				DataDir = optarg;
 				break;
 			case 'e':
 				mode = PG_MODE_ENABLE;
@@ -498,14 +497,11 @@ main(int argc, char *argv[])
 			case 'N':
 				do_sync = false;
 				break;
-			case 'v':
-				verbose = true;
-				break;
-			case 'D':
-				DataDir = optarg;
-				break;
 			case 'P':
 				showprogress = true;
+				break;
+			case 'v':
+				verbose = true;
 				break;
 			default:
 				/* getopt_long already emitted a complaint */

@@ -13,6 +13,8 @@ SELECT 1 AS zero WHERE 1 IN (SELECT 2);
 SELECT * FROM (SELECT 1 AS x) ss;
 SELECT * FROM ((SELECT 1 AS x)) ss;
 
+SELECT * FROM ((SELECT 1 AS x)), ((SELECT * FROM ((SELECT 2 AS y))));
+
 (SELECT 2) UNION SELECT 2;
 ((SELECT 2)) UNION SELECT 2;
 
@@ -79,6 +81,35 @@ SELECT f1 AS "Correlated Field"
   FROM SUBSELECT_TBL
   WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
                      WHERE f3 IS NOT NULL);
+
+-- Subselects without aliases
+
+SELECT count FROM (SELECT COUNT(DISTINCT name) FROM road);
+SELECT COUNT(*) FROM (SELECT DISTINCT name FROM road);
+
+SELECT * FROM (SELECT * FROM int4_tbl), (VALUES (123456)) WHERE f1 = column1;
+
+CREATE VIEW view_unnamed_ss AS
+SELECT * FROM (SELECT * FROM (SELECT abs(f1) AS a1 FROM int4_tbl)),
+              (SELECT * FROM int8_tbl)
+  WHERE a1 < 10 AND q1 > a1 ORDER BY q1, q2;
+
+SELECT * FROM view_unnamed_ss;
+
+\sv view_unnamed_ss
+
+DROP VIEW view_unnamed_ss;
+
+-- Test matching of locking clause to correct alias
+
+CREATE VIEW view_unnamed_ss_locking AS
+SELECT * FROM (SELECT * FROM int4_tbl), int8_tbl AS unnamed_subquery
+  WHERE f1 = q1
+  FOR UPDATE OF unnamed_subquery;
+
+\sv view_unnamed_ss_locking
+
+DROP VIEW view_unnamed_ss_locking;
 
 --
 -- Use some existing tables in the regression test

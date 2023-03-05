@@ -25,7 +25,7 @@
  * This implementation only uses the comparison function of the range element
  * datatype, therefore it works for any range type.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -265,7 +265,7 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 
 	/* Construct "centroid" range from medians of lower and upper bounds */
 	centroid = range_serialize(typcache, &lowerBounds[nonEmptyCount / 2],
-							   &upperBounds[nonEmptyCount / 2], false);
+							   &upperBounds[nonEmptyCount / 2], false, NULL);
 	out->hasPrefix = true;
 	out->prefixDatum = RangeTypePGetDatum(centroid);
 
@@ -416,7 +416,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 		/* This node has a centroid. Fetch it. */
 		centroid = DatumGetRangeTypeP(in->prefixDatum);
 		typcache = range_get_typcache(fcinfo,
-									  RangeTypeGetOid(DatumGetRangeTypeP(centroid)));
+									  RangeTypeGetOid(centroid));
 		range_deserialize(typcache, centroid, &centroidLower, &centroidUpper,
 						  &centroidEmpty);
 
@@ -557,7 +557,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					 */
 					if (in->traversalValue)
 					{
-						prevCentroid = DatumGetRangeTypeP(in->traversalValue);
+						prevCentroid = in->traversalValue;
 						range_deserialize(typcache, prevCentroid,
 										  &prevLower, &prevUpper, &prevEmpty);
 					}
@@ -693,7 +693,6 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * quadrants if we're looking for a value strictly greater
 				 * than the maximum.
 				 */
-				int			cmp;
 
 				cmp = range_cmp_bounds(typcache, &centroidLower, maxLower);
 				if (cmp > 0 || (!inclusive && cmp == 0))
@@ -721,7 +720,6 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * quadrants if we're looking for a value strictly greater
 				 * than the maximum.
 				 */
-				int			cmp;
 
 				cmp = range_cmp_bounds(typcache, &centroidUpper, maxUpper);
 				if (cmp > 0 || (!inclusive && cmp == 0))

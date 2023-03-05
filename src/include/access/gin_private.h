@@ -2,7 +2,7 @@
  * gin_private.h
  *	  header file for postgres inverted index access method implementation.
  *
- *	Copyright (c) 2006-2022, PostgreSQL Global Development Group
+ *	Copyright (c) 2006-2023, PostgreSQL Global Development Group
  *
  *	src/include/access/gin_private.h
  *--------------------------------------------------------------------------
@@ -240,7 +240,8 @@ extern void ginDataFillRoot(GinBtree btree, Page root, BlockNumber lblkno, Page 
  */
 typedef struct GinVacuumState GinVacuumState;
 
-extern void ginVacuumPostingTreeLeaf(Relation rel, Buffer buf, GinVacuumState *gvs);
+extern void ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer,
+									 GinVacuumState *gvs);
 
 /* ginscan.c */
 
@@ -385,7 +386,7 @@ typedef GinScanOpaqueData *GinScanOpaque;
 
 extern IndexScanDesc ginbeginscan(Relation rel, int nkeys, int norderbys);
 extern void ginendscan(IndexScanDesc scan);
-extern void ginrescan(IndexScanDesc scan, ScanKey key, int nscankeys,
+extern void ginrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 					  ScanKey orderbys, int norderbys);
 extern void ginNewScanKey(IndexScanDesc scan);
 extern void ginFreeScanKeys(GinScanOpaque so);
@@ -469,10 +470,11 @@ extern void ginInsertCleanup(GinState *ginstate, bool full_clean,
 
 extern GinPostingList *ginCompressPostingList(const ItemPointer ipd, int nipd,
 											  int maxsize, int *nwritten);
-extern int	ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int totalsize, TIDBitmap *tbm);
+extern int	ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int len, TIDBitmap *tbm);
 
-extern ItemPointer ginPostingListDecodeAllSegments(GinPostingList *ptr, int len, int *ndecoded);
-extern ItemPointer ginPostingListDecode(GinPostingList *ptr, int *ndecoded);
+extern ItemPointer ginPostingListDecodeAllSegments(GinPostingList *segment, int len,
+												   int *ndecoded_out);
+extern ItemPointer ginPostingListDecode(GinPostingList *plist, int *ndecoded_out);
 extern ItemPointer ginMergeItemPointers(ItemPointerData *a, uint32 na,
 										ItemPointerData *b, uint32 nb,
 										int *nmerged);

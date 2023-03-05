@@ -4,7 +4,7 @@
  * exprparse.y
  *	  bison grammar for a simple expression syntax
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pgbench/exprparse.y
@@ -23,7 +23,7 @@
 
 PgBenchExpr *expr_parse_result;
 
-static PgBenchExprList *make_elist(PgBenchExpr *exp, PgBenchExprList *list);
+static PgBenchExprList *make_elist(PgBenchExpr *expr, PgBenchExprList *list);
 static PgBenchExpr *make_null_constant(void);
 static PgBenchExpr *make_boolean_constant(bool bval);
 static PgBenchExpr *make_integer_constant(int64 ival);
@@ -80,7 +80,10 @@ static PgBenchExpr *make_case(yyscan_t yyscanner, PgBenchExprList *when_then_lis
 
 %%
 
-result: expr				{ expr_parse_result = $1; }
+result: expr				{
+								expr_parse_result = $1;
+								(void) yynerrs; /* suppress compiler warning */
+							}
 
 elist:						{ $$ = NULL; }
 	| expr					{ $$ = make_elist($1, NULL); }
@@ -526,18 +529,3 @@ make_case(yyscan_t yyscanner, PgBenchExprList *when_then_list, PgBenchExpr *else
 					 find_func(yyscanner, "!case_end"),
 					 make_elist(else_part, when_then_list));
 }
-
-/*
- * exprscan.l is compiled as part of exprparse.y.  Currently, this is
- * unavoidable because exprparse does not create a .h file to export
- * its token symbols.  If these files ever grow large enough to be
- * worth compiling separately, that could be fixed; but for now it
- * seems like useless complication.
- */
-
-/* First, get rid of "#define yyscan_t" from pgbench.h */
-#undef yyscan_t
-/* ... and the yylval macro, which flex will have its own definition for */
-#undef yylval
-
-#include "exprscan.c"

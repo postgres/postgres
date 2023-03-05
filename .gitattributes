@@ -29,3 +29,5 @@ src/backend/snowball/libstemmer/*.c	-whitespace
 src/backend/utils/mb/Unicode/*-std.txt	-whitespace
 src/include/snowball/libstemmer/*	-whitespace
 src/timezone/data/*			-whitespace
+src/tools/pg_bsd_indent/*		-whitespace
+src/tools/pg_bsd_indent/tests/*		-whitespace

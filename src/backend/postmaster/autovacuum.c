@@ -51,7 +51,7 @@
  * holding the relation lock) during which a worker may choose a table that was
  * already vacuumed; this is a bug in the current design.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -99,6 +99,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
+#include "utils/guc_hooks.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -475,7 +476,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	/* Early initialization */
 	BaseInit();
 
-	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL, false);
+	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, false, false, NULL);
 
 	SetProcessingMode(NormalProcessing);
 
@@ -567,7 +568,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	PG_exception_stack = &local_sigjmp_buf;
 
 	/* must unblock signals before calling rebuild_database_list */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Set always-secure search path.  Launcher doesn't connect to a database,
@@ -1102,7 +1103,7 @@ rebuild_database_list(Oid newdb)
 		 */
 		for (i = 0; i < nelems; i++)
 		{
-			avl_dbase  *db = &(dbary[i]);
+			db = &(dbary[i]);
 
 			current_time = TimestampTzPlusMilliseconds(current_time,
 													   millis_increment);
@@ -1588,7 +1589,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
 
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Set always-secure search path, so malicious users can't redirect user
@@ -1694,12 +1695,13 @@ AutoVacWorkerMain(int argc, char *argv[])
 		pgstat_report_autovac(dbid);
 
 		/*
-		 * Connect to the selected database
+		 * Connect to the selected database, specifying no particular user
 		 *
 		 * Note: if we have selected a just-deleted database (due to using
 		 * stale stats info), we'll fail and exit here.
 		 */
-		InitPostgres(NULL, dbid, NULL, InvalidOid, dbname, false);
+		InitPostgres(NULL, dbid, NULL, InvalidOid, false, false,
+					 dbname);
 		SetProcessingMode(NormalProcessing);
 		set_ps_display(dbname);
 		ereport(DEBUG1,
@@ -1939,6 +1941,9 @@ get_database_list(void)
 	table_close(rel, AccessShareLock);
 
 	CommitTransactionCommand();
+
+	/* Be sure to restore caller's memory context */
+	MemoryContextSwitchTo(resultcxt);
 
 	return dblist;
 }
@@ -2849,8 +2854,13 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_relid = relid;
 		tab->at_sharedrel = classForm->relisshared;
 
-		/* Note that this skips toast relations */
-		tab->at_params.options = (dovacuum ? VACOPT_VACUUM : 0) |
+		/*
+		 * Select VACUUM options.  Note we don't say VACOPT_PROCESS_TOAST, so
+		 * that vacuum() skips toast relations.  Also note we tell vacuum() to
+		 * skip vac_update_datfrozenxid(); we'll do that separately.
+		 */
+		tab->at_params.options =
+			(dovacuum ? (VACOPT_VACUUM | VACOPT_SKIP_DATABASE_STATS) : 0) |
 			(doanalyze ? VACOPT_ANALYZE : 0) |
 			(!wraparound ? VACOPT_SKIP_LOCKED : 0);
 
@@ -2996,8 +3006,8 @@ relation_needs_vacanalyze(Oid relid,
 	TransactionId xidForceLimit;
 	MultiXactId multiForceLimit;
 
-	AssertArg(classForm != NULL);
-	AssertArg(OidIsValid(relid));
+	Assert(classForm != NULL);
+	Assert(OidIsValid(relid));
 
 	/*
 	 * Determine vacuum/analyze equation parameters.  We have two possible
@@ -3076,9 +3086,9 @@ relation_needs_vacanalyze(Oid relid,
 	if (PointerIsValid(tabentry) && AutoVacuumingActive())
 	{
 		reltuples = classForm->reltuples;
-		vactuples = tabentry->n_dead_tuples;
-		instuples = tabentry->inserts_since_vacuum;
-		anltuples = tabentry->changes_since_analyze;
+		vactuples = tabentry->dead_tuples;
+		instuples = tabentry->ins_since_vacuum;
+		anltuples = tabentry->mod_since_analyze;
 
 		/* If the table hasn't yet been vacuumed, take reltuples as zero */
 		if (reltuples < 0)
@@ -3369,4 +3379,30 @@ AutoVacuumShmemInit(void)
 	}
 	else
 		Assert(found);
+}
+
+/*
+ * GUC check_hook for autovacuum_work_mem
+ */
+bool
+check_autovacuum_work_mem(int *newval, void **extra, GucSource source)
+{
+	/*
+	 * -1 indicates fallback.
+	 *
+	 * If we haven't yet changed the boot_val default of -1, just let it be.
+	 * Autovacuum will look to maintenance_work_mem instead.
+	 */
+	if (*newval == -1)
+		return true;
+
+	/*
+	 * We clamp manually-set values to at least 1MB.  Since
+	 * maintenance_work_mem is always set to at least this value, do the same
+	 * here.
+	 */
+	if (*newval < 1024)
+		*newval = 1024;
+
+	return true;
 }

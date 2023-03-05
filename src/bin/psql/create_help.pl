@@ -3,7 +3,7 @@
 #################################################################
 # create_help.pl -- converts SGML docs to internal psql help
 #
-# Copyright (c) 2000-2022, PostgreSQL Global Development Group
+# Copyright (c) 2000-2023, PostgreSQL Global Development Group
 #
 # src/bin/psql/create_help.pl
 #################################################################
@@ -21,32 +21,42 @@
 
 use strict;
 use warnings;
+use Getopt::Long;
 
-my $docdir = $ARGV[0] or die "$0: missing required argument: docdir\n";
-my $hfile = $ARGV[1] . '.h'
-  or die "$0: missing required argument: output file\n";
-my $cfile = $ARGV[1] . '.c';
+my $docdir        = '';
+my $outdir        = '.';
+my $depfile       = '';
+my $hfilebasename = '';
 
-my $hfilebasename;
-if ($hfile =~ m!.*/([^/]+)$!)
-{
-	$hfilebasename = $1;
-}
-else
-{
-	$hfilebasename = $hfile;
-}
+GetOptions(
+	'docdir=s'   => \$docdir,
+	'outdir=s'   => \$outdir,
+	'basename=s' => \$hfilebasename,
+	'depfile=s'  => \$depfile,) or die "$0: wrong arguments";
+
+$docdir        or die "$0: missing required argument: docdir\n";
+$hfilebasename or die "$0: missing required argument: basename\n";
+
+my $hfile = $hfilebasename . '.h';
+my $cfile = $hfilebasename . '.c';
 
 my $define = $hfilebasename;
 $define =~ tr/a-z/A-Z/;
 $define =~ s/\W/_/g;
 
-opendir(DIR, $docdir)
+opendir(my $dh, $docdir)
   or die "$0: could not open documentation source dir '$docdir': $!\n";
-open(my $hfile_handle, '>', $hfile)
+open(my $hfile_handle, '>', "$outdir/$hfile")
   or die "$0: could not open output file '$hfile': $!\n";
-open(my $cfile_handle, '>', $cfile)
+open(my $cfile_handle, '>', "$outdir/$cfile")
   or die "$0: could not open output file '$cfile': $!\n";
+
+my $depfile_handle;
+if ($depfile)
+{
+	open($depfile_handle, '>', $depfile)
+	  or die "$0: could not open output file '$depfile': $!\n";
+}
 
 print $hfile_handle "/*
  * *** Do not change this file by hand. It is automatically
@@ -93,10 +103,13 @@ my $maxlen = 0;
 
 my %entries;
 
-foreach my $file (sort readdir DIR)
+foreach my $file (sort readdir $dh)
 {
 	my ($cmdid, @cmdnames, $cmddesc, $cmdsynopsis);
 	$file =~ /\.sgml$/ or next;
+
+	print $depfile_handle "$outdir/$cfile $outdir/$hfile: $docdir/$file\n"
+	  if ($depfile);
 
 	open(my $fh, '<', "$docdir/$file") or next;
 	my $filecontent = join('', <$fh>);
@@ -216,4 +229,5 @@ print $hfile_handle "
 
 close $cfile_handle;
 close $hfile_handle;
-closedir DIR;
+close $depfile_handle if ($depfile);
+closedir $dh;

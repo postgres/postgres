@@ -87,6 +87,56 @@ drop domain domainvarchar restrict;
 drop domain domainnumeric restrict;
 drop domain domainint4 restrict;
 drop domain domaintext;
+-- Test non-error-throwing input
+create domain positiveint int4 check(value > 0);
+create domain weirdfloat float8 check((1 / value) < 10);
+select pg_input_is_valid('1', 'positiveint');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+select pg_input_is_valid('junk', 'positiveint');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select pg_input_is_valid('-1', 'positiveint');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select * from pg_input_error_info('junk', 'positiveint');
+                    message                    | detail | hint | sql_error_code 
+-----------------------------------------------+--------+------+----------------
+ invalid input syntax for type integer: "junk" |        |      | 22P02
+(1 row)
+
+select * from pg_input_error_info('-1', 'positiveint');
+                                  message                                   | detail | hint | sql_error_code 
+----------------------------------------------------------------------------+--------+------+----------------
+ value for domain positiveint violates check constraint "positiveint_check" |        |      | 23514
+(1 row)
+
+select * from pg_input_error_info('junk', 'weirdfloat');
+                        message                         | detail | hint | sql_error_code 
+--------------------------------------------------------+--------+------+----------------
+ invalid input syntax for type double precision: "junk" |        |      | 22P02
+(1 row)
+
+select * from pg_input_error_info('0.01', 'weirdfloat');
+                                 message                                  | detail | hint | sql_error_code 
+--------------------------------------------------------------------------+--------+------+----------------
+ value for domain weirdfloat violates check constraint "weirdfloat_check" |        |      | 23514
+(1 row)
+
+-- We currently can't trap errors raised in the CHECK expression itself
+select * from pg_input_error_info('0', 'weirdfloat');
+ERROR:  division by zero
+drop domain positiveint;
+drop domain weirdfloat;
 -- Test domains over array types
 create domain domainint4arr int4[1];
 create domain domainchar4arr varchar(4)[2][3];

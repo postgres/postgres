@@ -98,6 +98,37 @@ two | 2
    1 |   2
 (1 row)
 
+-- \bind (extended query protocol)
+SELECT 1 \bind \g
+ ?column? 
+----------
+        1
+(1 row)
+
+SELECT $1 \bind 'foo' \g
+ ?column? 
+----------
+ foo
+(1 row)
+
+SELECT $1, $2 \bind 'foo' 'bar' \g
+ ?column? | ?column? 
+----------+----------
+ foo      | bar
+(1 row)
+
+-- errors
+-- parse error
+SELECT foo \bind \g
+ERROR:  column "foo" does not exist
+LINE 1: SELECT foo 
+               ^
+-- tcop error
+SELECT 1 \; SELECT 2 \bind \g
+ERROR:  cannot insert multiple commands into a prepared statement
+-- bind error
+SELECT $1, $2 \bind 'foo' \g
+ERROR:  bind message supplies 1 parameters, but prepared statement "" requires 2
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03
@@ -317,6 +348,7 @@ tuples_only              off
 unicode_border_linestyle single
 unicode_column_linestyle single
 unicode_header_linestyle single
+xheader_width            full
 -- test multi-line headers, wrapping, and newline indicators
 -- in aligned, unaligned, and wrapped formats
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab
@@ -5194,6 +5226,13 @@ reset work_mem;
  pg_catalog | bit_xor | smallint         | smallint            | agg
 (3 rows)
 
+\df *._pg_expandarray
+                                             List of functions
+       Schema       |      Name       | Result data type |            Argument data types            | Type 
+--------------------+-----------------+------------------+-------------------------------------------+------
+ information_schema | _pg_expandarray | SETOF record     | anyarray, OUT x anyelement, OUT n integer | func
+(1 row)
+
 \do - pg_catalog.int4
                                List of operators
    Schema   | Name | Left arg type | Right arg type | Result type | Description 
@@ -5208,6 +5247,90 @@ reset work_mem;
  pg_catalog | &&   | anyarray      | anyarray       | boolean     | overlaps
 (1 row)
 
+-- check \df+
+-- we have to use functions with a predictable owner name, so make a role
+create role regress_psql_user superuser;
+begin;
+set session authorization regress_psql_user;
+create function psql_df_internal (float8)
+  returns float8
+  language internal immutable parallel safe strict
+  as 'dsin';
+create function psql_df_sql (x integer)
+  returns integer
+  security definer
+  begin atomic select x + 1; end;
+create function psql_df_plpgsql ()
+  returns void
+  language plpgsql
+  as $$ begin return; end; $$;
+comment on function psql_df_plpgsql () is 'some comment';
+\df+ psql_df_*
+                                                                                       List of functions
+ Schema |       Name       | Result data type | Argument data types | Type | Volatility | Parallel |       Owner       | Security | Access privileges | Language | Internal name | Description  
+--------+------------------+------------------+---------------------+------+------------+----------+-------------------+----------+-------------------+----------+---------------+--------------
+ public | psql_df_internal | double precision | double precision    | func | immutable  | safe     | regress_psql_user | invoker  |                   | internal | dsin          | 
+ public | psql_df_plpgsql  | void             |                     | func | volatile   | unsafe   | regress_psql_user | invoker  |                   | plpgsql  |               | some comment
+ public | psql_df_sql      | integer          | x integer           | func | volatile   | unsafe   | regress_psql_user | definer  |                   | sql      |               | 
+(3 rows)
+
+rollback;
+drop role regress_psql_user;
+-- check \sf
+\sf information_schema._pg_expandarray
+CREATE OR REPLACE FUNCTION information_schema._pg_expandarray(anyarray, OUT x anyelement, OUT n integer)
+ RETURNS SETOF record
+ LANGUAGE sql
+ IMMUTABLE PARALLEL SAFE STRICT
+AS $function$select $1[s],
+        s operator(pg_catalog.-) pg_catalog.array_lower($1,1) operator(pg_catalog.+) 1
+        from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
+                                        pg_catalog.array_upper($1,1),
+                                        1) as g(s)$function$
+\sf+ information_schema._pg_expandarray
+        CREATE OR REPLACE FUNCTION information_schema._pg_expandarray(anyarray, OUT x anyelement, OUT n integer)
+         RETURNS SETOF record
+         LANGUAGE sql
+         IMMUTABLE PARALLEL SAFE STRICT
+1       AS $function$select $1[s],
+2               s operator(pg_catalog.-) pg_catalog.array_lower($1,1) operator(pg_catalog.+) 1
+3               from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
+4                                               pg_catalog.array_upper($1,1),
+5                                               1) as g(s)$function$
+\sf+ interval_pl_time
+        CREATE OR REPLACE FUNCTION pg_catalog.interval_pl_time(interval, time without time zone)
+         RETURNS time without time zone
+         LANGUAGE sql
+         IMMUTABLE PARALLEL SAFE STRICT COST 1
+1       RETURN ($2 + $1)
+\sf ts_debug(text)
+CREATE OR REPLACE FUNCTION pg_catalog.ts_debug(document text, OUT alias text, OUT description text, OUT token text, OUT dictionaries regdictionary[], OUT dictionary regdictionary, OUT lexemes text[])
+ RETURNS SETOF record
+ LANGUAGE sql
+ STABLE PARALLEL SAFE STRICT
+BEGIN ATOMIC
+ SELECT ts_debug.alias,
+     ts_debug.description,
+     ts_debug.token,
+     ts_debug.dictionaries,
+     ts_debug.dictionary,
+     ts_debug.lexemes
+    FROM ts_debug(get_current_ts_config(), ts_debug.document) ts_debug(alias, description, token, dictionaries, dictionary, lexemes);
+END
+\sf+ ts_debug(text)
+        CREATE OR REPLACE FUNCTION pg_catalog.ts_debug(document text, OUT alias text, OUT description text, OUT token text, OUT dictionaries regdictionary[], OUT dictionary regdictionary, OUT lexemes text[])
+         RETURNS SETOF record
+         LANGUAGE sql
+         STABLE PARALLEL SAFE STRICT
+1       BEGIN ATOMIC
+2        SELECT ts_debug.alias,
+3            ts_debug.description,
+4            ts_debug.token,
+5            ts_debug.dictionaries,
+6            ts_debug.dictionary,
+7            ts_debug.lexemes
+8           FROM ts_debug(get_current_ts_config(), ts_debug.document) ts_debug(alias, description, token, dictionaries, dictionary, lexemes);
+9       END
 -- AUTOCOMMIT
 CREATE TABLE ac_test (a int);
 \set AUTOCOMMIT off
@@ -5400,6 +5523,137 @@ CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
 
 \set SHOW_ALL_RESULTS on
 DROP FUNCTION warn(TEXT);
+--
+-- \g with file
+--
+\getenv abs_builddir PG_ABS_BUILDDIR
+\set g_out_file :abs_builddir '/results/psql-output1'
+CREATE TEMPORARY TABLE reload_output(
+  lineno int NOT NULL GENERATED ALWAYS AS IDENTITY,
+  line text
+);
+SELECT 1 AS a \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+SELECT 2 AS b\; SELECT 3 AS c\; SELECT 4 AS d \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+COPY (SELECT 'foo') TO STDOUT \; COPY (SELECT 'bar') TO STDOUT \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+  line   
+---------
+  a 
+ ---
+  1
+ (1 row)
+ 
+  b 
+ ---
+  2
+ (1 row)
+ 
+  c 
+ ---
+  3
+ (1 row)
+ 
+  d 
+ ---
+  4
+ (1 row)
+ 
+ foo
+ bar
+(22 rows)
+
+TRUNCATE TABLE reload_output;
+--
+-- \o with file
+--
+\set o_out_file :abs_builddir '/results/psql-output2'
+\o :o_out_file
+SELECT max(unique1) FROM onek;
+SELECT 1 AS a\; SELECT 2 AS b\; SELECT 3 AS c;
+-- COPY TO file
+-- The data goes to :g_out_file and the status to :o_out_file
+\set QUIET false
+COPY (SELECT unique1 FROM onek ORDER BY unique1 LIMIT 10) TO :'g_out_file';
+-- DML command status
+UPDATE onek SET unique1 = unique1 WHERE false;
+\set QUIET true
+\o
+-- Check the contents of the files generated.
+COPY reload_output(line) FROM :'g_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+ line 
+------
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+(10 rows)
+
+TRUNCATE TABLE reload_output;
+COPY reload_output(line) FROM :'o_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+   line   
+----------
+  max 
+ -----
+  999
+ (1 row)
+ 
+  a 
+ ---
+  1
+ (1 row)
+ 
+  b 
+ ---
+  2
+ (1 row)
+ 
+  c 
+ ---
+  3
+ (1 row)
+ 
+ COPY 10
+ UPDATE 0
+(22 rows)
+
+TRUNCATE TABLE reload_output;
+-- Multiple COPY TO STDOUT with output file
+\o :o_out_file
+-- The data goes to :o_out_file with no status generated.
+COPY (SELECT 'foo1') TO STDOUT \; COPY (SELECT 'bar1') TO STDOUT;
+-- Combination of \o and \g file with multiple COPY queries.
+COPY (SELECT 'foo2') TO STDOUT \; COPY (SELECT 'bar2') TO STDOUT \g :g_out_file
+\o
+-- Check the contents of the files generated.
+COPY reload_output(line) FROM :'g_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+ line 
+------
+ foo2
+ bar2
+(2 rows)
+
+TRUNCATE TABLE reload_output;
+COPY reload_output(line) FROM :'o_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+ line 
+------
+ foo1
+ bar1
+(2 rows)
+
+DROP TABLE reload_output;
 --
 -- AUTOCOMMIT and combined queries
 --
@@ -5963,9 +6217,9 @@ List of schemas
 (0 rows)
 
 \drds "no.such.setting"
-      List of settings
- Role | Database | Settings 
-------+----------+----------
+           List of settings
+ Role | Database | Settings | User set 
+------+----------+----------+----------
 (0 rows)
 
 \dRp "no.such.publication"

@@ -3,7 +3,7 @@
  * cluster.h
  *	  header file for postgres cluster command stuff
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * src/include/commands/cluster.h
@@ -45,7 +45,7 @@ extern void finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 							 bool check_constraints,
 							 bool is_internal,
 							 TransactionId frozenXid,
-							 MultiXactId minMulti,
+							 MultiXactId cutoffMulti,
 							 char newrelpersistence);
 
 #endif							/* CLUSTER_H */

@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+
+# A small wrapper around xmllint and xsltproc that collects dependency
+# information (in gcc's format) using --load-trace.
+
+import argparse
+import re
+import subprocess
+import sys
+
+parser = argparse.ArgumentParser(
+    description='generate dependency file for docs')
+
+parser.add_argument('--targetname', type=str, required=False, nargs='+')
+parser.add_argument('--depfile', type=str, required=False)
+parser.add_argument('--tool', type=str, required=True)
+parser.add_argument('flags', nargs='*')
+
+args = parser.parse_args()
+
+if args.depfile:
+    command = [args.tool, '--load-trace'] + args.flags
+
+    # list of targets that depend on the loaded files we see via --load-trace
+    line_start = ' '.join(args.targetname) + ': '
+
+    # --load-trace flag displays all the documents loaded during the processing
+    # to stderr
+    res = subprocess.run(command, stderr=subprocess.PIPE,
+                         universal_newlines=True)
+
+    line_re = re.compile('^Loaded URL="([^"]+)"')
+    with open(args.depfile, 'w') as f:
+        for line in res.stderr.splitlines():
+            m = re.match(line_re, line)
+
+            # continue to show errors
+            if m is None:
+                print(line, file=sys.stderr)
+                continue
+            # Absolute paths are printed as file://, relative paths as-is. We
+            # don't care about http://, as a) those will be printed even if
+            # resolved locally b) we couldn't have a dependency anyway.
+            fname = m.group(1)
+            if fname.startswith('http://'):
+                continue
+            if fname.startswith('file://'):
+                fname = fname.split('file://')[1]
+            f.write(line_start + fname + '\n')
+else:
+    command = [args.tool] + args.flags
+    res = subprocess.run(command)
+
+exit(res.returncode)

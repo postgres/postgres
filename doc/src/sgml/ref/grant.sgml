@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
+GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | MAINTAIN }
     [, ...] | ALL [ PRIVILEGES ] }
     ON { [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
          | ALL TABLES IN SCHEMA <replaceable class="parameter">schema_name</replaceable> [, ...] }
@@ -98,7 +98,7 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replaceable class="parameter">role_specification</replaceable> [, ...]
-    [ WITH ADMIN OPTION ]
+    [ WITH { ADMIN | INHERIT | SET } { OPTION | TRUE | FALSE } ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 <phrase>where <replaceable class="parameter">role_specification</replaceable> can be:</phrase>
@@ -193,6 +193,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>USAGE</literal></term>
      <term><literal>SET</literal></term>
      <term><literal>ALTER SYSTEM</literal></term>
+     <term><literal>MAINTAIN</literal></term>
      <listitem>
       <para>
        Specific types of privileges, as defined in <xref linkend="ddl-priv"/>.
@@ -250,25 +251,77 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   <para>
    This variant of the <command>GRANT</command> command grants membership
    in a role to one or more other roles.  Membership in a role is significant
-   because it conveys the privileges granted to a role to each of its
-   members.
+   because it potentially allows access to the privileges granted to a role
+   to each of its members, and potentially also the ability to make changes
+   to the role itself. However, the actual permissions conferred depend on
+   the options associated with the grant.
   </para>
 
   <para>
-   If <literal>WITH ADMIN OPTION</literal> is specified, the member can
+   Each of the options described below can be set to either
+   <literal>TRUE</literal> or <literal>FALSE</literal>. The keyword
+   <literal>OPTION</literal> is accepted as a synonym for
+   <literal>TRUE</literal>, so that <literal>WITH ADMIN OPTION</literal>
+   is a synonym for <literal>WITH ADMIN TRUE</literal>.
+  </para>
+
+  <para>
+   The <literal>ADMIN</literal> option allows the member to
    in turn grant membership in the role to others, and revoke membership
    in the role as well.  Without the admin option, ordinary users cannot
    do that.  A role is not considered to hold <literal>WITH ADMIN
    OPTION</literal> on itself.  Database superusers can grant or revoke
-   membership in any role to anyone.  Roles having
-   <literal>CREATEROLE</literal> privilege can grant or revoke membership
-   in any role that is not a superuser.
+   membership in any role to anyone. This option defaults to
+   <literal>FALSE</literal>.
+  </para>
+
+  <para>
+   The <literal>INHERIT</literal> option, if it is set to
+   <literal>TRUE</literal>, causes the member to inherit the privileges of
+   the granted role. That is, it can automatically use whatever database
+   privileges have been granted to that role. If set to
+   <literal>FALSE</literal>, the member does not inherit the privileges
+   of the granted role. If this clause is not specified, it defaults to
+   true if the member role is set to <literal>INHERIT</literal> and to false
+   if the member role is set to <literal>NOINHERIT</literal>.
+   See <link linkend="sql-createrole"><command>CREATE ROLE</command></link>.
+  </para>
+
+  <para>
+   The <literal>SET</literal> option, if it is set to
+   <literal>TRUE</literal>, allows the member to change to the granted
+   role using the
+   <link linkend="sql-set-role"><command>SET ROLE</command></link>
+   command. If a role is an indirect member of another role, it can use
+   <literal>SET ROLE</literal> to change to that role only if there is a
+   chain of grants each of which has <literal>SET TRUE</literal>.
+   This option defaults to <literal>TRUE</literal>.
+  </para>
+
+  <para>
+   To create an object owned by another role or give ownership of an existing
+   object to another role, you must have the ability to <literal>SET
+   ROLE</literal> to that role; otherwise, commands such as <literal>ALTER
+   ... OWNER TO</literal> or <literal>CREATE DATABASE ... OWNER</literal>
+   will fail.  However, a user who inherits the privileges of a role but does
+   not have the ability to <literal>SET ROLE</literal> to that role may be
+   able to obtain full access to the role by manipulating existing objects
+   owned by that role (e.g. they could redefine an existing function to act
+   as a Trojan horse).  Therefore, if a role's privileges are to be inherited
+   but should not be accessible via <literal>SET ROLE</literal>, it should not
+   own any SQL objects.
   </para>
 
   <para>
    If <literal>GRANTED BY</literal> is specified, the grant is recorded as
-   having been done by the specified role.  Only database superusers may
-   use this option, except when it names the same role executing the command.
+   having been done by the specified role. A user can only attribute a grant
+   to another role if they possess the privileges of that role. The role
+   recorded as the grantor must have <literal>ADMIN OPTION</literal> on the
+   target role, unless it is the bootstrap superuser. When a grant is recorded
+   as having a grantor other than the bootstrap superuser, it depends on the
+   grantor continuing to possess <literal>ADMIN OPTION</literal> on the role;
+   so, if <literal>ADMIN OPTION</literal> is revoked, dependent grants must
+   be revoked as well.
   </para>
 
   <para>
@@ -333,7 +386,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
     owner of the affected object.  In particular, privileges granted via
     such a command will appear to have been granted by the object owner.
     (For role membership, the membership appears to have been granted
-    by the containing role itself.)
+    by the bootstrap superuser.)
    </para>
 
    <para>

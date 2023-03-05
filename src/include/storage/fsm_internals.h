@@ -4,7 +4,7 @@
  *	  internal functions for free space map
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/fsm_internals.h
@@ -61,7 +61,7 @@ typedef FSMPageData *FSMPage;
 #define SlotsPerFSMPage LeafNodesPerPage
 
 /* Prototypes for functions in fsmpage.c */
-extern int	fsm_search_avail(Buffer buf, uint8 min_cat, bool advancenext,
+extern int	fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 							 bool exclusive_lock_held);
 extern uint8 fsm_get_avail(Page page, int slot);
 extern uint8 fsm_get_max_avail(Page page);

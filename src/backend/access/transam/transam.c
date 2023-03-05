@@ -3,7 +3,7 @@
  * transam.c
  *	  postgres transaction (commit) log interface routines
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -110,7 +110,8 @@ TransactionLogFetch(TransactionId transactionId)
  *		   transaction tree.
  *
  * See also TransactionIdIsInProgress, which once was in this module
- * but now lives in procarray.c.
+ * but now lives in procarray.c, as well as comments at the top of
+ * heapam_visibility.c that explain how everything fits together.
  * ----------------------------------------------------------------
  */
 
@@ -176,6 +177,12 @@ TransactionIdDidCommit(TransactionId transactionId)
  *
  * Note:
  *		Assumes transaction identifier is valid and exists in clog.
+ *
+ *		Returns true only for explicitly aborted transactions, as transactions
+ *		implicitly aborted due to a crash will commonly still appear to be
+ *		in-progress in the clog.  Most of the time TransactionIdDidCommit(),
+ *		with a preceding TransactionIdIsInProgress() check, should be used
+ *		instead of TransactionIdDidAbort().
  */
 bool							/* true if given transaction aborted */
 TransactionIdDidAbort(TransactionId transactionId)

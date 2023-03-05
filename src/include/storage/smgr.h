@@ -4,7 +4,7 @@
  *	  storage manager switch public interface declarations.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/smgr.h
@@ -16,7 +16,7 @@
 
 #include "lib/ilist.h"
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 /*
  * smgr.c maintains a table of SMgrRelation objects, which are essentially
@@ -38,8 +38,8 @@
  */
 typedef struct SMgrRelationData
 {
-	/* rnode is the hashtable lookup key, so it must be first! */
-	RelFileNodeBackend smgr_rnode;	/* relation physical identifier */
+	/* rlocator is the hashtable lookup key, so it must be first! */
+	RelFileLocatorBackend smgr_rlocator;	/* relation physical identifier */
 
 	/* pointer to owning pointer, or NULL if none */
 	struct SMgrRelationData **smgr_owner;
@@ -75,29 +75,29 @@ typedef struct SMgrRelationData
 typedef SMgrRelationData *SMgrRelation;
 
 #define SmgrIsTemp(smgr) \
-	RelFileNodeBackendIsTemp((smgr)->smgr_rnode)
+	RelFileLocatorBackendIsTemp((smgr)->smgr_rlocator)
 
 extern void smgrinit(void);
-extern SMgrRelation smgropen(RelFileNode rnode, BackendId backend);
+extern SMgrRelation smgropen(RelFileLocator rlocator, BackendId backend);
 extern bool smgrexists(SMgrRelation reln, ForkNumber forknum);
 extern void smgrsetowner(SMgrRelation *owner, SMgrRelation reln);
 extern void smgrclearowner(SMgrRelation *owner, SMgrRelation reln);
 extern void smgrclose(SMgrRelation reln);
 extern void smgrcloseall(void);
-extern void smgrclosenode(RelFileNodeBackend rnode);
+extern void smgrcloserellocator(RelFileLocatorBackend rlocator);
 extern void smgrrelease(SMgrRelation reln);
 extern void smgrreleaseall(void);
 extern void smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
 extern void smgrdosyncall(SMgrRelation *rels, int nrels);
 extern void smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo);
 extern void smgrextend(SMgrRelation reln, ForkNumber forknum,
-					   BlockNumber blocknum, char *buffer, bool skipFsync);
+					   BlockNumber blocknum, const void *buffer, bool skipFsync);
 extern bool smgrprefetch(SMgrRelation reln, ForkNumber forknum,
 						 BlockNumber blocknum);
 extern void smgrread(SMgrRelation reln, ForkNumber forknum,
-					 BlockNumber blocknum, char *buffer);
+					 BlockNumber blocknum, void *buffer);
 extern void smgrwrite(SMgrRelation reln, ForkNumber forknum,
-					  BlockNumber blocknum, char *buffer, bool skipFsync);
+					  BlockNumber blocknum, const void *buffer, bool skipFsync);
 extern void smgrwriteback(SMgrRelation reln, ForkNumber forknum,
 						  BlockNumber blocknum, BlockNumber nblocks);
 extern BlockNumber smgrnblocks(SMgrRelation reln, ForkNumber forknum);

@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * src/bin/psql/prompt.c
  */
@@ -266,8 +266,10 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					{
 						int			cmdend = strcspn(p + 1, "`");
 						char	   *file = pnstrdup(p + 1, cmdend);
-						FILE	   *fd = popen(file, "r");
+						FILE	   *fd;
 
+						fflush(NULL);
+						fd = popen(file, "r");
 						if (fd)
 						{
 							if (fgets(buf, sizeof(buf), fd) == NULL)

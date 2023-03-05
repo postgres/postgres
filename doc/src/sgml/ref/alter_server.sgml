@@ -40,8 +40,8 @@ ALTER SERVER <replaceable class="parameter">name</replaceable> RENAME TO <replac
 
   <para>
    To alter the server you must be the owner of the server.
-   Additionally to alter the owner, you must own the server and also
-   be a direct or indirect member of the new owning role, and you must
+   Additionally to alter the owner, you must be able to
+   <literal>SET ROLE</literal> to the new owning role, and you must
    have <literal>USAGE</literal> privilege on the server's foreign-data
    wrapper.  (Note that superusers satisfy all these criteria
    automatically.)

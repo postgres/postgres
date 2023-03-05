@@ -2,24 +2,22 @@
 # symbol names to tell them what to export/import.
 MAKE_EXPORTS= true
 
-RANLIB= touch
-AROPT = crs
-
 # -blibpath must contain ALL directories where we should look for libraries
 libpath := $(shell echo $(subst -L,:,$(filter -L/%,$(LDFLAGS))) | sed -e's/ //g'):/usr/lib:/lib
 
-ifeq ($(host_os), aix3.2.5)
-	rpath = -L'$(rpathdir)'
-else
-	rpath = -Wl,-blibpath:'$(rpathdir)$(libpath)'
+# when building with gcc, need to make sure that libgcc can be found
+ifeq ($(GCC), yes)
+libpath := $(libpath):$(dir $(shell gcc -print-libgcc-file-name))
 endif
 
-ifeq ($(host_os), aix3.2.5)
-ifneq ($(GCC), yes)
-	LDFLAGS_SL += -e _nostart -H512 -bM:SRE
-endif
-else
-	LDFLAGS_SL += -Wl,-bnoentry -Wl,-H512 -Wl,-bM:SRE
+rpath = -Wl,-blibpath:'$(rpathdir)$(libpath)'
+
+LDFLAGS_SL += -Wl,-bnoentry -Wl,-H512 -Wl,-bM:SRE
+
+# gcc needs to know it's building a shared lib, otherwise it'll not emit
+# correct code / link to the right support libraries
+ifeq ($(GCC), yes)
+LDFLAGS_SL += -shared
 endif
 
 # env var name to use in place of LD_LIBRARY_PATH
@@ -37,9 +35,5 @@ endif
 MKLDEXPORT_DIR=src/backend/port/aix
 MKLDEXPORT=$(top_srcdir)/$(MKLDEXPORT_DIR)/mkldexport.sh
 
-%.exp: %.o
-	$(MKLDEXPORT) $^ >$@
-
-# Rule for building a shared library from a single .o file
-%$(DLSUFFIX): %.o %.exp
-	$(CC) $(CFLAGS) $*.o $(LDFLAGS) $(LDFLAGS_SL) -o $@ -Wl,-bE:$*.exp $(BE_DLLLIBS)
+%$(DLSUFFIX): %.o
+	$(CC) $(CFLAGS) $*.o $(LDFLAGS) $(LDFLAGS_SL) -o $@ $(BE_DLLLIBS)

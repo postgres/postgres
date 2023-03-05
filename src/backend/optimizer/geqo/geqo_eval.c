@@ -3,7 +3,7 @@
  * geqo_eval.c
  *	  Routines to evaluate query trees
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/optimizer/geqo/geqo_eval.c
@@ -273,7 +273,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 				 * rel once we know the final targetlist (see
 				 * grouping_planner).
 				 */
-				if (old_clump->size + new_clump->size < num_gene)
+				if (!bms_equal(joinrel->relids, root->all_query_rels))
 					generate_useful_gather_paths(root, joinrel, false);
 
 				/* Find and save the cheapest paths for this joinrel */

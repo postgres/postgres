@@ -320,7 +320,7 @@
   </sect2>
 
   <sect2 id="logical-replication-subscription-examples">
-    <title>Examples</title>
+    <title>Examples - Setup Logical Replication</title>
 
     <para>
      Create some test tables on the publisher.
@@ -512,6 +512,163 @@ test_sub=# SELECT * FROM t3;
 </programlisting></para>
   </sect2>
 
+  <sect2 id="logical-replication-subscription-examples-deferred-slot">
+   <title>Examples - Deferred Replication Slot Creation</title>
+
+   <para>
+    There are some cases (e.g.
+    <xref linkend="logical-replication-subscription-slot"/>) where, if the
+    remote replication slot was not created automatically, the user must create
+    it manually before the subscription can be activated. The steps to create
+    the slot and activate the subscription are shown in the following examples.
+    These examples specify the standard logical decoding plugin
+    (<literal>pgoutput</literal>), which is what the built-in logical
+    replication uses.
+   </para>
+   <para>
+    First, create a publication for the examples to use.
+<programlisting>
+test_pub=# CREATE PUBLICATION pub1 FOR ALL TABLES;
+CREATE PUBLICATION
+</programlisting></para>
+   <para>
+    Example 1: Where the subscription says <literal>connect = false</literal>
+   </para>
+   <para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Create the subscription.
+<programlisting>
+test_sub=# CREATE SUBSCRIPTION sub1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub'
+test_sub-# PUBLICATION pub1
+test_sub-# WITH (connect=false);
+WARNING:  subscription was created, but is not connected
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+CREATE SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the publisher, manually create a slot. Because the name was not
+       specified during <literal>CREATE SUBSCRIPTION</literal>, the name of the
+       slot to create is same as the subscription name, e.g. "sub1".
+<programlisting>
+test_pub=# SELECT * FROM pg_create_logical_replication_slot('sub1', 'pgoutput');
+ slot_name |    lsn
+-----------+-----------
+ sub1      | 0/19404D0
+(1 row)
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the subscriber, complete the activation of the subscription. After
+       this the tables of <literal>pub1</literal> will start replicating.
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION sub1 ENABLE;
+ALTER SUBSCRIPTION
+test_sub=# ALTER SUBSCRIPTION sub1 REFRESH PUBLICATION;
+ALTER SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    Example 2: Where the subscription says <literal>connect = false</literal>,
+    but also specifies the <literal>slot_name</literal>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Create the subscription.
+<programlisting>
+test_sub=# CREATE SUBSCRIPTION sub1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub'
+test_sub-# PUBLICATION pub1
+test_sub-# WITH (connect=false, slot_name='myslot');
+WARNING:  subscription was created, but is not connected
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+CREATE SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the publisher, manually create a slot using the same name that was
+       specified during <literal>CREATE SUBSCRIPTION</literal>, e.g. "myslot".
+<programlisting>
+test_pub=# SELECT * FROM pg_create_logical_replication_slot('myslot', 'pgoutput');
+ slot_name |    lsn
+-----------+-----------
+ myslot    | 0/19059A0
+(1 row)
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the subscriber, the remaining subscription activation steps are the
+       same as before.
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION sub1 ENABLE;
+ALTER SUBSCRIPTION
+test_sub=# ALTER SUBSCRIPTION sub1 REFRESH PUBLICATION;
+ALTER SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    Example 3: Where the subscription specifies <literal>slot_name = NONE</literal>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Create the subscription. When <literal>slot_name = NONE</literal> then
+       <literal>enabled = false</literal>, and
+       <literal>create_slot = false</literal> are also needed.
+<programlisting>
+test_sub=# CREATE SUBSCRIPTION sub1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub'
+test_sub-# PUBLICATION pub1
+test_sub-# WITH (slot_name=NONE, enabled=false, create_slot=false);
+CREATE SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the publisher, manually create a slot using any name, e.g. "myslot".
+<programlisting>
+test_pub=# SELECT * FROM pg_create_logical_replication_slot('myslot', 'pgoutput');
+ slot_name |    lsn
+-----------+-----------
+ myslot    | 0/1905930
+(1 row)
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the subscriber, associate the subscription with the slot name just
+       created.
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION sub1 SET (slot_name='myslot');
+ALTER SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       The remaining subscription activation steps are same as before.
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION sub1 ENABLE;
+ALTER SUBSCRIPTION
+test_sub=# ALTER SUBSCRIPTION sub1 REFRESH PUBLICATION;
+ALTER SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect2>
+
  </sect1>
 
  <sect1 id="logical-replication-row-filter">
@@ -688,19 +845,19 @@ test_sub=# SELECT * FROM t3;
     <itemizedlist>
      <listitem>
       <para>
-       one of the publications has no row filter.
+       One of the publications has no row filter.
       </para>
      </listitem>
      <listitem>
       <para>
-       one of the publications was created using <literal>FOR ALL TABLES</literal>.
+       One of the publications was created using <literal>FOR ALL TABLES</literal>.
        This clause does not allow row filters.
       </para>
      </listitem>
      <listitem>
       <para>
-       one of the publications was created using
-       <literal>FOR ALL TABLES IN SCHEMA</literal> and the table belongs to
+       One of the publications was created using
+       <literal>FOR TABLES IN SCHEMA</literal> and the table belongs to
        the referred schema. This clause does not allow row filters.
       </para>
      </listitem>
@@ -1089,6 +1246,197 @@ test_sub=# SELECT * FROM child ORDER BY a;
 
  </sect1>
 
+ <sect1 id="logical-replication-col-lists">
+  <title>Column Lists</title>
+
+  <para>
+   Each publication can optionally specify which columns of each table are
+   replicated to subscribers. The table on the subscriber side must have at
+   least all the columns that are published. If no column list is specified,
+   then all columns on the publisher are replicated.
+   See <xref linkend="sql-createpublication"/> for details on the syntax.
+  </para>
+
+  <para>
+   The choice of columns can be based on behavioral or performance reasons.
+   However, do not rely on this feature for security: a malicious subscriber
+   is able to obtain data from columns that are not specifically
+   published.  If security is a consideration, protections can be applied
+   at the publisher side.
+  </para>
+
+  <para>
+   If no column list is specified, any columns added later are automatically
+   replicated. This means that having a column list which names all columns
+   is not the same as having no column list at all.
+  </para>
+
+  <para>
+   A column list can contain only simple column references.  The order
+   of columns in the list is not preserved.
+  </para>
+
+  <para>
+   Specifying a column list when the publication also publishes
+   <literal>FOR TABLES IN SCHEMA</literal> is not supported.
+  </para>
+
+  <para>
+   For partitioned tables, the publication parameter
+   <literal>publish_via_partition_root</literal> determines which column list
+   is used. If <literal>publish_via_partition_root</literal> is
+   <literal>true</literal>, the root partitioned table's column list is used.
+   Otherwise, if <literal>publish_via_partition_root</literal> is
+   <literal>false</literal> (the default), each partition's column list is used.
+  </para>
+
+  <para>
+   If a publication publishes <command>UPDATE</command> or
+   <command>DELETE</command> operations, any column list must include the
+   table's replica identity columns (see
+   <xref linkend="sql-altertable-replica-identity"/>).
+   If a publication publishes only <command>INSERT</command> operations, then
+   the column list may omit replica identity columns.
+  </para>
+
+  <para>
+   Column lists have no effect for the <literal>TRUNCATE</literal> command.
+  </para>
+
+  <para>
+   During initial data synchronization, only the published columns are
+   copied.  However, if the subscriber is from a release prior to 15, then
+   all the columns in the table are copied during initial data synchronization,
+   ignoring any column lists.
+  </para>
+
+   <warning id="logical-replication-col-list-combining">
+    <title>Warning: Combining Column Lists from Multiple Publications</title>
+    <para>
+     There's currently no support for subscriptions comprising several
+     publications where the same table has been published with different
+     column lists.  <xref linkend="sql-createsubscription"/> disallows
+     creating such subscriptions, but it is still possible to get into
+     that situation by adding or altering column lists on the publication
+     side after a subscription has been created.
+    </para>
+    <para>
+     This means changing the column lists of tables on publications that are
+     already subscribed could lead to errors being thrown on the subscriber
+     side.
+    </para>
+    <para>
+     If a subscription is affected by this problem, the only way to resume
+     replication is to adjust one of the column lists on the publication
+     side so that they all match; and then either recreate the subscription,
+     or use <literal>ALTER SUBSCRIPTION ... DROP PUBLICATION</literal> to
+     remove one of the offending publications and add it again.
+    </para>
+   </warning>
+
+  <sect2 id="logical-replication-col-list-examples">
+   <title>Examples</title>
+
+   <para>
+    Create a table <literal>t1</literal> to be used in the following example.
+<programlisting>
+test_pub=# CREATE TABLE t1(id int, a text, b text, c text, d text, e text, PRIMARY KEY(id));
+CREATE TABLE
+</programlisting></para>
+
+   <para>
+    Create a publication <literal>p1</literal>. A column list is defined for
+    table <literal>t1</literal> to reduce the number of columns that will be
+    replicated. Notice that the order of column names in the column list does
+    not matter.
+<programlisting>
+test_pub=# CREATE PUBLICATION p1 FOR TABLE t1 (id, b, a, d);
+CREATE PUBLICATION
+</programlisting></para>
+
+    <para>
+     <literal>psql</literal> can be used to show the column lists (if defined)
+     for each publication.
+<programlisting>
+test_pub=# \dRp+
+                               Publication p1
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
+----------+------------+---------+---------+---------+-----------+----------
+ postgres | f          | t       | t       | t       | t         | f
+Tables:
+    "public.t1" (id, a, b, d)
+</programlisting></para>
+
+    <para>
+     <literal>psql</literal> can be used to show the column lists (if defined)
+     for each table.
+<programlisting>
+test_pub=# \d t1
+                 Table "public.t1"
+ Column |  Type   | Collation | Nullable | Default
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null |
+ a      | text    |           |          |
+ b      | text    |           |          |
+ c      | text    |           |          |
+ d      | text    |           |          |
+ e      | text    |           |          |
+Indexes:
+    "t1_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "p1" (id, a, b, d)
+</programlisting></para>
+
+    <para>
+     On the subscriber node, create a table <literal>t1</literal> which now
+     only needs a subset of the columns that were on the publisher table
+     <literal>t1</literal>, and also create the subscription
+     <literal>s1</literal> that subscribes to the publication
+     <literal>p1</literal>.
+<programlisting>
+test_sub=# CREATE TABLE t1(id int, b text, a text, d text, PRIMARY KEY(id));
+CREATE TABLE
+test_sub=# CREATE SUBSCRIPTION s1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub application_name=s1'
+test_sub-# PUBLICATION p1;
+CREATE SUBSCRIPTION
+</programlisting></para>
+
+    <para>
+     On the publisher node, insert some rows to table <literal>t1</literal>.
+<programlisting>
+test_pub=# INSERT INTO t1 VALUES(1, 'a-1', 'b-1', 'c-1', 'd-1', 'e-1');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES(2, 'a-2', 'b-2', 'c-2', 'd-2', 'e-2');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES(3, 'a-3', 'b-3', 'c-3', 'd-3', 'e-3');
+INSERT 0 1
+test_pub=# SELECT * FROM t1 ORDER BY id;
+ id |  a  |  b  |  c  |  d  |  e
+----+-----+-----+-----+-----+-----
+  1 | a-1 | b-1 | c-1 | d-1 | e-1
+  2 | a-2 | b-2 | c-2 | d-2 | e-2
+  3 | a-3 | b-3 | c-3 | d-3 | e-3
+(3 rows)
+</programlisting></para>
+
+    <para>
+     Only data from the column list of publication <literal>p1</literal> is
+     replicated.
+<programlisting>
+test_sub=# SELECT * FROM t1 ORDER BY id;
+ id |  b  |  a  |  d
+----+-----+-----+-----
+  1 | b-1 | a-1 | d-1
+  2 | b-2 | a-2 | d-2
+  3 | b-3 | a-3 | d-3
+(3 rows)
+</programlisting></para>
+
+  </sect2>
+
+ </sect1>
+
  <sect1 id="logical-replication-conflicts">
   <title>Conflicts</title>
 
@@ -1152,6 +1500,16 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    Please note that skipping the whole transaction includes skipping changes that
    might not violate any constraint.  This can easily make the subscriber
    inconsistent.
+  </para>
+
+  <para>
+   When the streaming mode is <literal>parallel</literal>, the finish LSN of
+   failed transactions may not be logged. In that case, it may be necessary to
+   change the streaming mode to <literal>on</literal> or <literal>off</literal> and
+   cause the same conflicts again so the finish LSN of the failed transaction will
+   be written to the server log. For the usage of finish LSN, please refer to <link
+   linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ...
+   SKIP</command></link>.
   </para>
  </sect1>
 
@@ -1334,7 +1692,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    subscription.  A disabled subscription or a crashed subscription will have
    zero rows in this view.  If the initial data synchronization of any
    table is in progress, there will be additional workers for the tables
-   being synchronized.
+   being synchronized. Moreover, if the streaming transaction is applied in
+   parallel, there may be additional parallel apply workers.
   </para>
  </sect1>
 
@@ -1348,7 +1707,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    Moreover, if untrusted users can create tables, use only
    publications that list tables explicitly.  That is to say, create a
    subscription <literal>FOR ALL TABLES</literal> or
-   <literal>FOR ALL TABLES IN SCHEMA</literal> only when superusers trust
+   <literal>FOR TABLES IN SCHEMA</literal> only when superusers trust
    every user permitted to create a non-temp table on the publisher or the
    subscriber.
   </para>
@@ -1384,6 +1743,17 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <para>
+   There are currently no privileges on publications.  Any subscription (that
+   is able to connect) can access any publication.  Thus, if you intend to
+   hide some information from particular subscribers, such as by using row
+   filters or column lists, or by not adding the whole table to the
+   publication, be aware that other publications in the same database could
+   expose the same information.  Publication privileges might be added to
+   <productname>PostgreSQL</productname> in the future to allow for
+   finer-grained access control.
+  </para>
+
+  <para>
    To create a subscription, the user must be a superuser.
   </para>
 
@@ -1410,31 +1780,86 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <title>Configuration Settings</title>
 
   <para>
-   Logical replication requires several configuration options to be set.
+   Logical replication requires several configuration options to be set. Most
+   options are relevant only on one side of the replication. However,
+   <varname>max_replication_slots</varname> is used on both the publisher and
+   the subscriber, but it has a different meaning for each.
   </para>
 
-  <para>
-   On the publisher side, <varname>wal_level</varname> must be set to
-   <literal>logical</literal>, and <varname>max_replication_slots</varname>
-   must be set to at least the number of subscriptions expected to connect,
-   plus some reserve for table synchronization.  And
-   <varname>max_wal_senders</varname> should be set to at least the same as
-   <varname>max_replication_slots</varname> plus the number of physical
-   replicas that are connected at the same time.
-  </para>
+  <sect2 id="logical-replication-config-publisher">
+   <title>Publishers</title>
 
-  <para>
-   <varname>max_replication_slots</varname> must also be set on the subscriber.
-   It should be set to at least the number of subscriptions that will be added
-   to the subscriber, plus some reserve for table synchronization.
-   <varname>max_logical_replication_workers</varname> must be set to at least
-   the number of subscriptions, again plus some reserve for the table
-   synchronization.  Additionally the <varname>max_worker_processes</varname>
-   may need to be adjusted to accommodate for replication workers, at least
-   (<varname>max_logical_replication_workers</varname>
-   + <literal>1</literal>).  Note that some extensions and parallel queries
-   also take worker slots from <varname>max_worker_processes</varname>.
-  </para>
+   <para>
+    <link linkend="guc-wal-level"><varname>wal_level</varname></link> must be
+    set to <literal>logical</literal>.
+   </para>
+
+   <para>
+    <link linkend="guc-max-replication-slots"><varname>max_replication_slots</varname></link>
+    must be set to at least the number of subscriptions expected to connect,
+    plus some reserve for table synchronization.
+   </para>
+
+   <para>
+    <link linkend="guc-max-wal-senders"><varname>max_wal_senders</varname></link>
+    should be set to at least the same as
+    <varname>max_replication_slots</varname>, plus the number of physical
+    replicas that are connected at the same time.
+   </para>
+
+   <para>
+    Logical replication walsender is also affected by
+    <link linkend="guc-wal-sender-timeout"><varname>wal_sender_timeout</varname></link>.
+   </para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-config-subscriber">
+   <title>Subscribers</title>
+
+   <para>
+    <link linkend="guc-max-replication-slots-subscriber"><varname>max_replication_slots</varname></link>
+    must be set to at least the number of subscriptions that will be added to
+    the subscriber, plus some reserve for table synchronization.
+   </para>
+
+   <para>
+    <link linkend="guc-max-logical-replication-workers"><varname>max_logical_replication_workers</varname></link>
+    must be set to at least the number of subscriptions (for leader apply
+    workers), plus some reserve for the table synchronization workers and
+    parallel apply workers.
+   </para>
+
+   <para>
+    <link linkend="guc-max-worker-processes"><varname>max_worker_processes</varname></link>
+    may need to be adjusted to accommodate for replication workers, at least
+    (<link linkend="guc-max-logical-replication-workers"><varname>max_logical_replication_workers</varname></link>
+    + <literal>1</literal>). Note, some extensions and parallel queries also
+    take worker slots from <varname>max_worker_processes</varname>.
+   </para>
+
+   <para>
+    <link linkend="guc-max-sync-workers-per-subscription"><varname>max_sync_workers_per_subscription</varname></link>
+     controls the amount of parallelism of the initial data copy during the
+     subscription initialization or when new tables are added.
+   </para>
+
+   <para>
+    <link linkend="guc-max-parallel-apply-workers-per-subscription"><varname>max_parallel_apply_workers_per_subscription</varname></link>
+     controls the amount of parallelism for streaming of in-progress
+     transactions with subscription parameter
+     <literal>streaming = parallel</literal>.
+   </para>
+
+   <para>
+    Logical replication workers are also affected by
+    <link linkend="guc-wal-receiver-timeout"><varname>wal_receiver_timeout</varname></link>,
+    <link linkend="guc-wal-receiver-status-interval"><varname>wal_receiver_status_interval</varname></link> and
+    <link linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</varname></link>.
+   </para>
+
+  </sect2>
+
  </sect1>
 
  <sect1 id="logical-replication-quick-setup">

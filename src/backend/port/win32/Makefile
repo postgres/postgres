@@ -13,11 +13,9 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = \
+	crashdump.o \
 	signal.o \
 	socket.o \
 	timer.o
-ifeq ($(have_win32_dbghelp), yes)
-OBJS += crashdump.o
-endif
 
 include $(top_srcdir)/src/backend/common.mk

@@ -3,7 +3,7 @@
  * foreigncmds.c
  *	  foreign-data wrapper/server creation/manipulation commands
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -358,15 +358,15 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 			srvId = form->oid;
 
 			/* Must be owner */
-			if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
+			if (!object_ownercheck(ForeignServerRelationId, srvId, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FOREIGN_SERVER,
 							   NameStr(form->srvname));
 
 			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), newOwnerId);
+			check_can_set_role(GetUserId(), newOwnerId);
 
 			/* New owner must have USAGE privilege on foreign-data wrapper */
-			aclresult = pg_foreign_data_wrapper_aclcheck(form->srvfdw, newOwnerId, ACL_USAGE);
+			aclresult = object_aclcheck(ForeignDataWrapperRelationId, form->srvfdw, newOwnerId, ACL_USAGE);
 			if (aclresult != ACLCHECK_OK)
 			{
 				ForeignDataWrapper *fdw = GetForeignDataWrapper(form->srvfdw);
@@ -855,13 +855,22 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	ownerId = GetUserId();
 
 	/*
-	 * Check that there is no other foreign server by this name. Do nothing if
-	 * IF NOT EXISTS was enforced.
+	 * Check that there is no other foreign server by this name.  If there is
+	 * one, do nothing if IF NOT EXISTS was specified.
 	 */
-	if (GetForeignServerByName(stmt->servername, true) != NULL)
+	srvId = get_foreign_server_oid(stmt->servername, true);
+	if (OidIsValid(srvId))
 	{
 		if (stmt->if_not_exists)
 		{
+			/*
+			 * If we are in an extension script, insist that the pre-existing
+			 * object be a member of the extension, to avoid security risks.
+			 */
+			ObjectAddressSet(myself, ForeignServerRelationId, srvId);
+			checkMembershipInCurrentExtension(&myself);
+
+			/* OK to skip */
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("server \"%s\" already exists, skipping",
@@ -882,7 +891,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	 */
 	fdw = GetForeignDataWrapperByName(stmt->fdwname, false);
 
-	aclresult = pg_foreign_data_wrapper_aclcheck(fdw->fdwid, ownerId, ACL_USAGE);
+	aclresult = object_aclcheck(ForeignDataWrapperRelationId, fdw->fdwid, ownerId, ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FDW, fdw->fdwname);
 
@@ -989,7 +998,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	/*
 	 * Only owner or a superuser can ALTER a SERVER.
 	 */
-	if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
+	if (!object_ownercheck(ForeignServerRelationId, srvId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FOREIGN_SERVER,
 					   stmt->servername);
 
@@ -1067,13 +1076,13 @@ user_mapping_ddl_aclcheck(Oid umuserid, Oid serverid, const char *servername)
 {
 	Oid			curuserid = GetUserId();
 
-	if (!pg_foreign_server_ownercheck(serverid, curuserid))
+	if (!object_ownercheck(ForeignServerRelationId, serverid, curuserid))
 	{
 		if (umuserid == curuserid)
 		{
 			AclResult	aclresult;
 
-			aclresult = pg_foreign_server_aclcheck(serverid, curuserid, ACL_USAGE);
+			aclresult = object_aclcheck(ForeignServerRelationId, serverid, curuserid, ACL_USAGE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, servername);
 		}
@@ -1126,6 +1135,10 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	{
 		if (stmt->if_not_exists)
 		{
+			/*
+			 * Since user mappings aren't members of extensions (see comments
+			 * below), no need for checkMembershipInCurrentExtension here.
+			 */
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("user mapping for \"%s\" already exists for server \"%s\", skipping",
@@ -1420,7 +1433,7 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
 	 * get the actual FDW for option validation etc.
 	 */
 	server = GetForeignServerByName(stmt->servername, false);
-	aclresult = pg_foreign_server_aclcheck(server->serverid, ownerId, ACL_USAGE);
+	aclresult = object_aclcheck(ForeignServerRelationId, server->serverid, ownerId, ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
 
@@ -1479,7 +1492,7 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 
 	/* Check that the foreign server exists and that we have USAGE on it */
 	server = GetForeignServerByName(stmt->server_name, false);
-	aclresult = pg_foreign_server_aclcheck(server->serverid, GetUserId(), ACL_USAGE);
+	aclresult = object_aclcheck(ForeignServerRelationId, server->serverid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
 

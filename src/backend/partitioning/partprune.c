@@ -25,7 +25,7 @@
  *
  * See gen_partprune_steps_internal() for more details on step generation.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -209,16 +209,20 @@ static void partkey_datum_from_expr(PartitionPruneContext *context,
 
 /*
  * make_partition_pruneinfo
- *		Builds a PartitionPruneInfo which can be used in the executor to allow
- *		additional partition pruning to take place.  Returns NULL when
- *		partition pruning would be useless.
+ *		Checks if the given set of quals can be used to build pruning steps
+ *		that the executor can use to prune away unneeded partitions.  If
+ *		suitable quals are found then a PartitionPruneInfo is built and tagged
+ *		onto the PlannerInfo's partPruneInfos list.
+ *
+ * The return value is the 0-based index of the item added to the
+ * partPruneInfos list or -1 if nothing was added.
  *
  * 'parentrel' is the RelOptInfo for an appendrel, and 'subpaths' is the list
  * of scan paths for its child rels.
  * 'prunequal' is a list of potential pruning quals (i.e., restriction
  * clauses that are applicable to the appendrel).
  */
-PartitionPruneInfo *
+int
 make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 						 List *subpaths,
 						 List *prunequal)
@@ -332,10 +336,11 @@ make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	 * quals, then we can just not bother with run-time pruning.
 	 */
 	if (prunerelinfos == NIL)
-		return NULL;
+		return -1;
 
 	/* Else build the result data structure */
 	pruneinfo = makeNode(PartitionPruneInfo);
+	pruneinfo->root_parent_relids = parentrel->relids;
 	pruneinfo->prune_infos = prunerelinfos;
 
 	/*
@@ -358,7 +363,9 @@ make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	else
 		pruneinfo->other_subplans = NULL;
 
-	return pruneinfo;
+	root->partPruneInfos = lappend(root->partPruneInfos, pruneinfo);
+
+	return list_length(root->partPruneInfos) - 1;
 }
 
 /*
@@ -529,8 +536,8 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 			partprunequal = (List *)
 				adjust_appendrel_attrs_multilevel(root,
 												  (Node *) prunequal,
-												  subpart->relids,
-												  targetpart->relids);
+												  subpart,
+												  targetpart);
 		}
 
 		/*
@@ -2289,11 +2296,10 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 		elem_clauses = NIL;
 		foreach(lc1, elem_exprs)
 		{
-			Expr	   *rightop = (Expr *) lfirst(lc1),
-					   *elem_clause;
+			Expr	   *elem_clause;
 
 			elem_clause = make_opclause(saop_op, BOOLOID, false,
-										leftop, rightop,
+										leftop, lfirst(lc1),
 										InvalidOid, saop_coll);
 			elem_clauses = lappend(elem_clauses, elem_clause);
 		}
@@ -2383,7 +2389,7 @@ get_steps_using_prefix(GeneratePruningStepsContext *context,
 		   context->rel->part_scheme->strategy == PARTITION_STRATEGY_HASH);
 
 	/* Quick exit if there are no values to prefix with. */
-	if (list_length(prefix) == 0)
+	if (prefix == NIL)
 	{
 		PartitionPruneStep *step;
 
@@ -3596,7 +3602,11 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
 
 	*outconst = NULL;
 
-	if (!IsBooleanOpfamily(partopfamily))
+	/*
+	 * Partitioning currently can only use built-in AMs, so checking for
+	 * built-in boolean opfamilies is good enough.
+	 */
+	if (!IsBuiltinBooleanOpfamily(partopfamily))
 		return PARTCLAUSE_UNSUPPORTED;
 
 	if (IsA(clause, BooleanTest))

@@ -4,7 +4,7 @@
  *	  private declarations for GiST -- declarations related to the
  *	  internal implementation of GiST, not the public API
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/gist_private.h
@@ -441,20 +441,20 @@ extern XLogRecPtr gistXLogPageDelete(Buffer buffer,
 									 OffsetNumber downlinkOffset);
 
 extern void gistXLogPageReuse(Relation rel, BlockNumber blkno,
-							  FullTransactionId latestRemovedXid);
+							  FullTransactionId deleteXid);
 
 extern XLogRecPtr gistXLogUpdate(Buffer buffer,
 								 OffsetNumber *todelete, int ntodelete,
-								 IndexTuple *itup, int ntup,
-								 Buffer leftchild);
+								 IndexTuple *itup, int ituplen,
+								 Buffer leftchildbuf);
 
 extern XLogRecPtr gistXLogDelete(Buffer buffer, OffsetNumber *todelete,
-								 int ntodelete, TransactionId latestRemovedXid);
+								 int ntodelete, TransactionId snapshotConflictHorizon);
 
 extern XLogRecPtr gistXLogSplit(bool page_is_leaf,
 								SplitedPageLayout *dist,
-								BlockNumber origrlink, GistNSN oldnsn,
-								Buffer leftchild, bool markfollowright);
+								BlockNumber origrlink, GistNSN orignsn,
+								Buffer leftchildbuf, bool markfollowright);
 
 extern XLogRecPtr gistXLogAssignLSN(void);
 
@@ -516,8 +516,8 @@ extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 						   bool l, bool isNull);
 
 extern float gistpenalty(GISTSTATE *giststate, int attno,
-						 GISTENTRY *key1, bool isNull1,
-						 GISTENTRY *key2, bool isNull2);
+						 GISTENTRY *orig, bool isNullOrig,
+						 GISTENTRY *add, bool isNullAdd);
 extern void gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 							   Datum *attr, bool *isnull);
 extern bool gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b);
@@ -549,18 +549,16 @@ extern void gistSplitByKey(Relation r, Page page, IndexTuple *itup,
 /* gistbuild.c */
 extern IndexBuildResult *gistbuild(Relation heap, Relation index,
 								   struct IndexInfo *indexInfo);
-extern void gistValidateBufferingOption(const char *value);
-
 /* gistbuildbuffers.c */
 extern GISTBuildBuffers *gistInitBuildBuffers(int pagesPerBuffer, int levelStep,
 											  int maxLevel);
 extern GISTNodeBuffer *gistGetNodeBuffer(GISTBuildBuffers *gfbb,
 										 GISTSTATE *giststate,
-										 BlockNumber blkno, int level);
+										 BlockNumber nodeBlocknum, int level);
 extern void gistPushItupToNodeBuffer(GISTBuildBuffers *gfbb,
-									 GISTNodeBuffer *nodeBuffer, IndexTuple item);
+									 GISTNodeBuffer *nodeBuffer, IndexTuple itup);
 extern bool gistPopItupFromNodeBuffer(GISTBuildBuffers *gfbb,
-									  GISTNodeBuffer *nodeBuffer, IndexTuple *item);
+									  GISTNodeBuffer *nodeBuffer, IndexTuple *itup);
 extern void gistFreeBuildBuffers(GISTBuildBuffers *gfbb);
 extern void gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb,
 											GISTSTATE *giststate, Relation r,

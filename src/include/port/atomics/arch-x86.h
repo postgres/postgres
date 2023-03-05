@@ -7,7 +7,7 @@
  * support for xadd and cmpxchg. Given that the 386 isn't supported anywhere
  * anymore that's not much of a restriction luckily.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES:
@@ -140,7 +140,7 @@ pg_spin_delay_impl(void)
 static inline bool
 pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	register char _res = 1;
+	char		_res = 1;
 
 	__asm__ __volatile__(
 		"	lock			\n"

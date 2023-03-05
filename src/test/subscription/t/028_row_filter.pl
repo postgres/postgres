@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # Test logical replication behavior with row filtering
 use strict;
@@ -16,9 +16,6 @@ $node_publisher->start;
 my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->start;
-
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 my $appname           = 'tap_sub';
@@ -48,10 +45,8 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_x, tap_pub_forall"
 );
 
-$node_publisher->wait_for_catchup($appname);
 # wait for initial table synchronization to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber->wait_for_subscription_sync($node_publisher, $appname);
 
 # The subscription of the FOR ALL TABLES publication means there should be no
 # filtering on the tablesync COPY, so all expect all 5 will be present.
@@ -82,9 +77,9 @@ $node_subscriber->safe_psql('postgres', "DROP TABLE tab_rf_x");
 # ====================================================================
 
 # ====================================================================
-# Testcase start: ALL TABLES IN SCHEMA
+# Testcase start: TABLES IN SCHEMA
 #
-# The ALL TABLES IN SCHEMA test is independent of all other test cases so it
+# The TABLES IN SCHEMA test is independent of all other test cases so it
 # cleans up after itself.
 
 # create tables pub and sub
@@ -124,7 +119,7 @@ $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_x FOR TABLE schema_rf_x.tab_rf_x WHERE (x > 10)"
 );
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_allinschema FOR ALL TABLES IN SCHEMA schema_rf_x"
+	"CREATE PUBLICATION tap_pub_allinschema FOR TABLES IN SCHEMA schema_rf_x, TABLE schema_rf_x.tab_rf_x WHERE (x > 10)"
 );
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_allinschema ADD TABLE public.tab_rf_partition WHERE (x > 10)"
@@ -133,12 +128,10 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_x, tap_pub_allinschema"
 );
 
-$node_publisher->wait_for_catchup($appname);
 # wait for initial table synchronization to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber->wait_for_subscription_sync($node_publisher, $appname);
 
-# The subscription of the ALL TABLES IN SCHEMA publication means there should be
+# The subscription of the TABLES IN SCHEMA publication means there should be
 # no filtering on the tablesync COPY, so expect all 5 will be present.
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(x) FROM schema_rf_x.tab_rf_x");
@@ -146,7 +139,7 @@ is($result, qq(5),
 	'check initial data copy from table tab_rf_x should not be filtered');
 
 # Similarly, the table filter for tab_rf_x (after the initial phase) has no
-# effect when combined with the ALL TABLES IN SCHEMA. Meanwhile, the filter for
+# effect when combined with the TABLES IN SCHEMA. Meanwhile, the filter for
 # the tab_rf_partition does work because that partition belongs to a different
 # schema (and publish_via_partition_root = false).
 # Expected:
@@ -182,7 +175,7 @@ $node_subscriber->safe_psql('postgres',
 $node_subscriber->safe_psql('postgres', "DROP TABLE schema_rf_x.tab_rf_x");
 $node_subscriber->safe_psql('postgres', "DROP SCHEMA schema_rf_x");
 
-# Testcase end: ALL TABLES IN SCHEMA
+# Testcase end: TABLES IN SCHEMA
 # ====================================================================
 
 # ======================================================
@@ -397,11 +390,8 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_1, tap_pub_2, tap_pub_3, tap_pub_4a, tap_pub_4b, tap_pub_5a, tap_pub_5b, tap_pub_toast, tap_pub_inherits, tap_pub_viaroot_2, tap_pub_viaroot_1"
 );
 
-$node_publisher->wait_for_catchup($appname);
-
 # wait for initial table synchronization to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber->wait_for_subscription_sync($node_publisher, $appname);
 
 # Check expected replicated rows for tab_rowfilter_1
 # tap_pub_1 filter is: (a > 1000 AND b <> 'filtered')
@@ -622,8 +612,7 @@ $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION WITH (copy_data = true)");
 
 # wait for table synchronization to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rowfilter_partitioned (a, b) VALUES(4000, 400),(4001, 401),(4002, 402)"

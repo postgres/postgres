@@ -3,7 +3,7 @@
  * checksum_helper.c
  *	  Compute a checksum of any of various types using common routines
  *
- * Portions Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/common/checksum_helper.c
@@ -177,15 +177,15 @@ pg_checksum_final(pg_checksum_context *context, uint8 *output)
 {
 	int			retval = 0;
 
-	StaticAssertStmt(sizeof(pg_crc32c) <= PG_CHECKSUM_MAX_LENGTH,
+	StaticAssertDecl(sizeof(pg_crc32c) <= PG_CHECKSUM_MAX_LENGTH,
 					 "CRC-32C digest too big for PG_CHECKSUM_MAX_LENGTH");
-	StaticAssertStmt(PG_SHA224_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
+	StaticAssertDecl(PG_SHA224_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
 					 "SHA224 digest too big for PG_CHECKSUM_MAX_LENGTH");
-	StaticAssertStmt(PG_SHA256_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
+	StaticAssertDecl(PG_SHA256_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
 					 "SHA256 digest too big for PG_CHECKSUM_MAX_LENGTH");
-	StaticAssertStmt(PG_SHA384_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
+	StaticAssertDecl(PG_SHA384_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
 					 "SHA384 digest too big for PG_CHECKSUM_MAX_LENGTH");
-	StaticAssertStmt(PG_SHA512_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
+	StaticAssertDecl(PG_SHA512_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
 					 "SHA512 digest too big for PG_CHECKSUM_MAX_LENGTH");
 
 	switch (context->type)

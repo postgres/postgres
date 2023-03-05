@@ -103,6 +103,7 @@ PostgreSQL documentation
   </para>
 
   <warning>
+   <title>Warning: Failures while Rewinding</title>
    <para>
     If <application>pg_rewind</application> fails while processing, then
     the data folder of the target is likely not in a state that can be
@@ -332,15 +333,6 @@ GRANT EXECUTE ON function pg_catalog.pg_stat_file(text, boolean) TO rewind_user;
 GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text) TO rewind_user;
 GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, boolean) TO rewind_user;
 </programlisting>
-  </para>
-
-  <para>
-   When executing <application>pg_rewind</application> using an online
-   cluster as source which has been recently promoted, it is necessary
-   to execute a <command>CHECKPOINT</command> after promotion such that its
-   control file reflects up-to-date timeline information, which is used by
-   <application>pg_rewind</application> to check if the target cluster
-   can be rewound using the designated source cluster.
   </para>
 
   <refsect2>

@@ -3,7 +3,7 @@
  * buf_init.c
  *	  buffer manager initialization routines
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -116,7 +116,7 @@ InitBufferPool(void)
 		{
 			BufferDesc *buf = GetBufferDescriptor(i);
 
-			CLEAR_BUFFERTAG(buf->tag);
+			ClearBufferTag(&buf->tag);
 
 			pg_atomic_init_u32(&buf->state, 0);
 			buf->wait_backend_pgprocno = INVALID_PGPROCNO;

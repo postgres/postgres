@@ -7,7 +7,7 @@
  * equivalent but might have columns in a different order or different sets of
  * dropped columns.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -102,18 +102,33 @@ TupleConversionMap *
 convert_tuples_by_name(TupleDesc indesc,
 					   TupleDesc outdesc)
 {
-	TupleConversionMap *map;
 	AttrMap    *attrMap;
-	int			n = outdesc->natts;
 
 	/* Verify compatibility and prepare attribute-number map */
-	attrMap = build_attrmap_by_name_if_req(indesc, outdesc);
+	attrMap = build_attrmap_by_name_if_req(indesc, outdesc, false);
 
 	if (attrMap == NULL)
 	{
 		/* runtime conversion is not needed */
 		return NULL;
 	}
+
+	return convert_tuples_by_name_attrmap(indesc, outdesc, attrMap);
+}
+
+/*
+ * Set up tuple conversion for input and output TupleDescs using the given
+ * AttrMap.
+ */
+TupleConversionMap *
+convert_tuples_by_name_attrmap(TupleDesc indesc,
+							   TupleDesc outdesc,
+							   AttrMap *attrMap)
+{
+	int			n = outdesc->natts;
+	TupleConversionMap *map;
+
+	Assert(attrMap != NULL);
 
 	/* Prepare the map structure */
 	map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));

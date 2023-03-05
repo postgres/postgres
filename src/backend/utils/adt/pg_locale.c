@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * Portions Copyright (c) 2002-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2002-2023, PostgreSQL Global Development Group
  *
  * src/backend/utils/adt/pg_locale.c
  *
@@ -60,6 +60,7 @@
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
+#include "utils/guc_hooks.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -77,6 +78,12 @@
 #ifdef WIN32
 #include <shlwapi.h>
 #endif
+
+/*
+ * This should be large enough that most strings will fit, but small enough
+ * that we feel comfortable putting it on the stack
+ */
+#define		TEXTBUFLEN			1024
 
 #define		MAX_L10N_DATA		80
 
@@ -118,10 +125,23 @@ static HTAB *collation_cache = NULL;
 
 
 #if defined(WIN32) && defined(LC_MESSAGES)
-static char *IsoLocaleName(const char *);	/* MSVC specific */
+static char *IsoLocaleName(const char *);
 #endif
 
 #ifdef USE_ICU
+/*
+ * Converter object for converting between ICU's UChar strings and C strings
+ * in database encoding.  Since the database encoding doesn't change, we only
+ * need one of these per session.
+ */
+static UConverter *icu_converter = NULL;
+
+static void init_icu_converter(void);
+static size_t uchar_length(UConverter *converter,
+						   const char *str, int32_t len);
+static int32_t uchar_convert(UConverter *converter,
+							 UChar *dest, int32_t destlen,
+							 const char *str, int32_t srclen);
 static void icu_set_collation_attributes(UCollator *collator, const char *loc);
 #endif
 
@@ -374,26 +394,16 @@ assign_locale_messages(const char *newval, void *extra)
 static void
 free_struct_lconv(struct lconv *s)
 {
-	if (s->decimal_point)
-		free(s->decimal_point);
-	if (s->thousands_sep)
-		free(s->thousands_sep);
-	if (s->grouping)
-		free(s->grouping);
-	if (s->int_curr_symbol)
-		free(s->int_curr_symbol);
-	if (s->currency_symbol)
-		free(s->currency_symbol);
-	if (s->mon_decimal_point)
-		free(s->mon_decimal_point);
-	if (s->mon_thousands_sep)
-		free(s->mon_thousands_sep);
-	if (s->mon_grouping)
-		free(s->mon_grouping);
-	if (s->positive_sign)
-		free(s->positive_sign);
-	if (s->negative_sign)
-		free(s->negative_sign);
+	free(s->decimal_point);
+	free(s->thousands_sep);
+	free(s->grouping);
+	free(s->int_curr_symbol);
+	free(s->currency_symbol);
+	free(s->mon_decimal_point);
+	free(s->mon_thousands_sep);
+	free(s->mon_grouping);
+	free(s->positive_sign);
+	free(s->negative_sign);
 }
 
 /*
@@ -960,7 +970,8 @@ cache_locale_time(void)
  * [2] https://docs.microsoft.com/en-us/windows/win32/intl/locale-names
  */
 
-#if _MSC_VER >= 1900
+#if defined(_MSC_VER)
+
 /*
  * Callback function for EnumSystemLocalesEx() in get_iso_localename().
  *
@@ -1099,8 +1110,11 @@ get_iso_localename(const char *winlocname)
 			return NULL;
 
 		/*
-		 * Simply replace the hyphen with an underscore.  See comments in
-		 * IsoLocaleName.
+		 * Since the message catalogs sit on a case-insensitive filesystem, we
+		 * need not standardize letter case here.  So long as we do not ship
+		 * message catalogs for which it would matter, we also need not
+		 * translate the script/variant portion, e.g.  uz-Cyrl-UZ to
+		 * uz_UZ@cyrillic.  Simply replace the hyphen with an underscore.
 		 */
 		hyphen = strchr(iso_lc_messages, '-');
 		if (hyphen)
@@ -1110,12 +1124,10 @@ get_iso_localename(const char *winlocname)
 
 	return NULL;
 }
-#endif							/* _MSC_VER >= 1900 */
 
 static char *
 IsoLocaleName(const char *winlocname)
 {
-#if defined(_MSC_VER)
 	static char iso_lc_messages[LOCALE_NAME_MAX_LENGTH];
 
 	if (pg_strcasecmp("c", winlocname) == 0 ||
@@ -1125,49 +1137,19 @@ IsoLocaleName(const char *winlocname)
 		return iso_lc_messages;
 	}
 	else
-	{
-#if (_MSC_VER >= 1900)			/* Visual Studio 2015 or later */
 		return get_iso_localename(winlocname);
-#else
-		_locale_t	loct;
-
-		loct = _create_locale(LC_CTYPE, winlocname);
-		if (loct != NULL)
-		{
-			size_t		rc;
-			char	   *hyphen;
-
-			/* Locale names use only ASCII, any conversion locale suffices. */
-			rc = wchar2char(iso_lc_messages, loct->locinfo->locale_name[LC_CTYPE],
-							sizeof(iso_lc_messages), NULL);
-			_free_locale(loct);
-			if (rc == -1 || rc == sizeof(iso_lc_messages))
-				return NULL;
-
-			/*
-			 * Since the message catalogs sit on a case-insensitive
-			 * filesystem, we need not standardize letter case here.  So long
-			 * as we do not ship message catalogs for which it would matter,
-			 * we also need not translate the script/variant portion, e.g.
-			 * uz-Cyrl-UZ to uz_UZ@cyrillic.  Simply replace the hyphen with
-			 * an underscore.
-			 *
-			 * Note that the locale name can be less-specific than the value
-			 * we would derive under earlier Visual Studio releases.  For
-			 * example, French_France.1252 yields just "fr".  This does not
-			 * affect any of the country-specific message catalogs available
-			 * as of this writing (pt_BR, zh_CN, zh_TW).
-			 */
-			hyphen = strchr(iso_lc_messages, '-');
-			if (hyphen)
-				*hyphen = '_';
-			return iso_lc_messages;
-		}
-#endif							/* Visual Studio 2015 or later */
-	}
-#endif							/* defined(_MSC_VER) */
-	return NULL;				/* Not supported on this version of msvc/mingw */
 }
+
+#else							/* !defined(_MSC_VER) */
+
+static char *
+IsoLocaleName(const char *winlocname)
+{
+	return NULL;				/* Not supported on MinGW */
+}
+
+#endif							/* defined(_MSC_VER) */
+
 #endif							/* WIN32 && LC_MESSAGES */
 
 
@@ -1499,6 +1481,15 @@ report_newlocale_failure(const char *localename)
 }
 #endif							/* HAVE_LOCALE_T */
 
+bool
+pg_locale_deterministic(pg_locale_t locale)
+{
+	/* default locale must always be deterministic */
+	if (locale == NULL)
+		return true;
+	else
+		return locale->deterministic;
+}
 
 /*
  * Create a locale_t from a collation OID.  Results are cached for the
@@ -1729,7 +1720,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 		else
 			ereport(ERROR,
 					(errmsg("could not load locale \"%s\"", collcollate)));
-#elif defined(WIN32) && _WIN32_WINNT >= 0x0600
+#elif defined(WIN32)
 		/*
 		 * If we are targeting Windows Vista and above, we can ask for a name
 		 * given a collation name (earlier versions required a location code
@@ -1757,7 +1748,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 							collcollate,
 							GetLastError())));
 		}
-		collversion = psprintf("%d.%d,%d.%d",
+		collversion = psprintf("%ld.%ld,%ld.%ld",
 							   (version.dwNLSVersion >> 8) & 0xFFFF,
 							   version.dwNLSVersion & 0xFF,
 							   (version.dwDefinedVersion >> 8) & 0xFFFF,
@@ -1768,15 +1759,710 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 	return collversion;
 }
 
+/*
+ * pg_strncoll_libc_win32_utf8
+ *
+ * Win32 does not have UTF-8. Convert UTF8 arguments to wide characters and
+ * invoke wcscoll() or wcscoll_l().
+ */
+#ifdef WIN32
+static int
+pg_strncoll_libc_win32_utf8(const char *arg1, size_t len1, const char *arg2,
+							size_t len2, pg_locale_t locale)
+{
+	char		sbuf[TEXTBUFLEN];
+	char	   *buf = sbuf;
+	char	   *a1p,
+			   *a2p;
+	int			a1len = len1 * 2 + 2;
+	int			a2len = len2 * 2 + 2;
+	int			r;
+	int			result;
+
+	Assert(!locale || locale->provider == COLLPROVIDER_LIBC);
+	Assert(GetDatabaseEncoding() == PG_UTF8);
+#ifndef WIN32
+	Assert(false);
+#endif
+
+	if (a1len + a2len > TEXTBUFLEN)
+		buf = palloc(a1len + a2len);
+
+	a1p = buf;
+	a2p = buf + a1len;
+
+	/* API does not work for zero-length input */
+	if (len1 == 0)
+		r = 0;
+	else
+	{
+		r = MultiByteToWideChar(CP_UTF8, 0, arg1, len1,
+								(LPWSTR) a1p, a1len / 2);
+		if (!r)
+			ereport(ERROR,
+					(errmsg("could not convert string to UTF-16: error code %lu",
+							GetLastError())));
+	}
+	((LPWSTR) a1p)[r] = 0;
+
+	if (len2 == 0)
+		r = 0;
+	else
+	{
+		r = MultiByteToWideChar(CP_UTF8, 0, arg2, len2,
+								(LPWSTR) a2p, a2len / 2);
+		if (!r)
+			ereport(ERROR,
+					(errmsg("could not convert string to UTF-16: error code %lu",
+							GetLastError())));
+	}
+	((LPWSTR) a2p)[r] = 0;
+
+	errno = 0;
+#ifdef HAVE_LOCALE_T
+	if (locale)
+		result = wcscoll_l((LPWSTR) a1p, (LPWSTR) a2p, locale->info.lt);
+	else
+#endif
+		result = wcscoll((LPWSTR) a1p, (LPWSTR) a2p);
+	if (result == 2147483647)	/* _NLSCMPERROR; missing from mingw
+								 * headers */
+		ereport(ERROR,
+				(errmsg("could not compare Unicode strings: %m")));
+
+	if (buf != sbuf)
+		pfree(buf);
+
+	return result;
+}
+#endif							/* WIN32 */
+
+/*
+ * pg_strcoll_libc
+ *
+ * Call strcoll(), strcoll_l(), wcscoll(), or wcscoll_l() as appropriate for
+ * the given locale, platform, and database encoding. If the locale is NULL,
+ * use the database collation.
+ *
+ * Arguments must be encoded in the database encoding and nul-terminated.
+ */
+static int
+pg_strcoll_libc(const char *arg1, const char *arg2, pg_locale_t locale)
+{
+	int result;
+
+	Assert(!locale || locale->provider == COLLPROVIDER_LIBC);
+#ifdef WIN32
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		size_t len1 = strlen(arg1);
+		size_t len2 = strlen(arg2);
+		result = pg_strncoll_libc_win32_utf8(arg1, len1, arg2, len2, locale);
+	}
+	else
+#endif							/* WIN32 */
+	if (locale)
+	{
+#ifdef HAVE_LOCALE_T
+		result = strcoll_l(arg1, arg2, locale->info.lt);
+#else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+#endif
+	}
+	else
+		result = strcoll(arg1, arg2);
+
+	return result;
+}
+
+/*
+ * pg_strncoll_libc
+ *
+ * Nul-terminate the arguments and call pg_strcoll_libc().
+ */
+static int
+pg_strncoll_libc(const char *arg1, size_t len1, const char *arg2, size_t len2,
+				 pg_locale_t locale)
+{
+	char	 sbuf[TEXTBUFLEN];
+	char	*buf	  = sbuf;
+	size_t	 bufsize1 = len1 + 1;
+	size_t	 bufsize2 = len2 + 1;
+	char	*arg1n;
+	char	*arg2n;
+	int		 result;
+
+	Assert(!locale || locale->provider == COLLPROVIDER_LIBC);
+
+#ifdef WIN32
+	/* check for this case before doing the work for nul-termination */
+	if (GetDatabaseEncoding() == PG_UTF8)
+		return pg_strncoll_libc_win32_utf8(arg1, len1, arg2, len2, locale);
+#endif							/* WIN32 */
+
+	if (bufsize1 + bufsize2 > TEXTBUFLEN)
+		buf = palloc(bufsize1 + bufsize2);
+
+	arg1n = buf;
+	arg2n = buf + bufsize1;
+
+	/* nul-terminate arguments */
+	memcpy(arg1n, arg1, len1);
+	arg1n[len1] = '\0';
+	memcpy(arg2n, arg2, len2);
+	arg2n[len2] = '\0';
+
+	result = pg_strcoll_libc(arg1n, arg2n, locale);
+
+	if (buf != sbuf)
+		pfree(buf);
+
+	return result;
+}
 
 #ifdef USE_ICU
-/*
- * Converter object for converting between ICU's UChar strings and C strings
- * in database encoding.  Since the database encoding doesn't change, we only
- * need one of these per session.
- */
-static UConverter *icu_converter = NULL;
 
+/*
+ * pg_strncoll_icu_no_utf8
+ *
+ * Convert the arguments from the database encoding to UChar strings, then
+ * call ucol_strcoll(). An argument length of -1 means that the string is
+ * NUL-terminated.
+ *
+ * When the database encoding is UTF-8, and ICU supports ucol_strcollUTF8(),
+ * caller should call that instead.
+ */
+static int
+pg_strncoll_icu_no_utf8(const char *arg1, int32_t len1,
+						const char *arg2, int32_t len2, pg_locale_t locale)
+{
+	char	 sbuf[TEXTBUFLEN];
+	char	*buf = sbuf;
+	int32_t	 ulen1;
+	int32_t	 ulen2;
+	size_t   bufsize1;
+	size_t   bufsize2;
+	UChar	*uchar1,
+			*uchar2;
+	int		 result;
+
+	Assert(locale->provider == COLLPROVIDER_ICU);
+#ifdef HAVE_UCOL_STRCOLLUTF8
+	Assert(GetDatabaseEncoding() != PG_UTF8);
+#endif
+
+	init_icu_converter();
+
+	ulen1 = uchar_length(icu_converter, arg1, len1);
+	ulen2 = uchar_length(icu_converter, arg2, len2);
+
+	bufsize1 = (ulen1 + 1) * sizeof(UChar);
+	bufsize2 = (ulen2 + 1) * sizeof(UChar);
+
+	if (bufsize1 + bufsize2 > TEXTBUFLEN)
+		buf = palloc(bufsize1 + bufsize2);
+
+	uchar1 = (UChar *) buf;
+	uchar2 = (UChar *) (buf + bufsize1);
+
+	ulen1 = uchar_convert(icu_converter, uchar1, ulen1 + 1, arg1, len1);
+	ulen2 = uchar_convert(icu_converter, uchar2, ulen2 + 1, arg2, len2);
+
+	result = ucol_strcoll(locale->info.icu.ucol,
+						  uchar1, ulen1,
+						  uchar2, ulen2);
+
+	if (buf != sbuf)
+		pfree(buf);
+
+	return result;
+}
+
+/*
+ * pg_strncoll_icu
+ *
+ * Call ucol_strcollUTF8() or ucol_strcoll() as appropriate for the given
+ * database encoding. An argument length of -1 means the string is
+ * NUL-terminated.
+ *
+ * Arguments must be encoded in the database encoding.
+ */
+static int
+pg_strncoll_icu(const char *arg1, int32_t len1, const char *arg2, int32_t len2,
+				pg_locale_t locale)
+{
+	int result;
+
+	Assert(locale->provider == COLLPROVIDER_ICU);
+
+#ifdef HAVE_UCOL_STRCOLLUTF8
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		UErrorCode	status;
+
+		status = U_ZERO_ERROR;
+		result = ucol_strcollUTF8(locale->info.icu.ucol,
+								  arg1, len1,
+								  arg2, len2,
+								  &status);
+		if (U_FAILURE(status))
+			ereport(ERROR,
+					(errmsg("collation failed: %s", u_errorName(status))));
+	}
+	else
+#endif
+	{
+		result = pg_strncoll_icu_no_utf8(arg1, len1, arg2, len2, locale);
+	}
+
+	return result;
+}
+
+#endif							/* USE_ICU */
+
+/*
+ * pg_strcoll
+ *
+ * Call ucol_strcollUTF8(), ucol_strcoll(), strcoll(), strcoll_l(), wcscoll(),
+ * or wcscoll_l() as appropriate for the given locale, platform, and database
+ * encoding. If the locale is not specified, use the database collation.
+ *
+ * Arguments must be encoded in the database encoding and nul-terminated.
+ *
+ * The caller is responsible for breaking ties if the collation is
+ * deterministic; this maintains consistency with pg_strxfrm(), which cannot
+ * easily account for deterministic collations.
+ */
+int
+pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale)
+{
+	int			result;
+
+	if (!locale || locale->provider == COLLPROVIDER_LIBC)
+		result = pg_strcoll_libc(arg1, arg2, locale);
+#ifdef USE_ICU
+	else if (locale->provider == COLLPROVIDER_ICU)
+		result = pg_strncoll_icu(arg1, -1, arg2, -1, locale);
+#endif
+	else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+
+	return result;
+}
+
+/*
+ * pg_strncoll
+ *
+ * Call ucol_strcollUTF8(), ucol_strcoll(), strcoll(), strcoll_l(), wcscoll(),
+ * or wcscoll_l() as appropriate for the given locale, platform, and database
+ * encoding. If the locale is not specified, use the database collation.
+ *
+ * Arguments must be encoded in the database encoding.
+ *
+ * This function may need to nul-terminate the arguments for libc functions;
+ * so if the caller already has nul-terminated strings, it should call
+ * pg_strcoll() instead.
+ *
+ * The caller is responsible for breaking ties if the collation is
+ * deterministic; this maintains consistency with pg_strnxfrm(), which cannot
+ * easily account for deterministic collations.
+ */
+int
+pg_strncoll(const char *arg1, size_t len1, const char *arg2, size_t len2,
+			pg_locale_t locale)
+{
+	int		 result;
+
+	if (!locale || locale->provider == COLLPROVIDER_LIBC)
+		result = pg_strncoll_libc(arg1, len1, arg2, len2, locale);
+#ifdef USE_ICU
+	else if (locale->provider == COLLPROVIDER_ICU)
+		result = pg_strncoll_icu(arg1, len1, arg2, len2, locale);
+#endif
+	else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+
+	return result;
+}
+
+
+static size_t
+pg_strxfrm_libc(char *dest, const char *src, size_t destsize,
+				pg_locale_t locale)
+{
+	Assert(!locale || locale->provider == COLLPROVIDER_LIBC);
+
+#ifdef TRUST_STRXFRM
+#ifdef HAVE_LOCALE_T
+	if (locale)
+		return strxfrm_l(dest, src, destsize, locale->info.lt);
+	else
+#endif
+		return strxfrm(dest, src, destsize);
+#else
+	/* shouldn't happen */
+	elog(ERROR, "unsupported collprovider: %c", locale->provider);
+	return 0; /* keep compiler quiet */
+#endif
+}
+
+static size_t
+pg_strnxfrm_libc(char *dest, const char *src, size_t srclen, size_t destsize,
+				 pg_locale_t locale)
+{
+	char	 sbuf[TEXTBUFLEN];
+	char	*buf	 = sbuf;
+	size_t	 bufsize = srclen + 1;
+	size_t	 result;
+
+	Assert(!locale || locale->provider == COLLPROVIDER_LIBC);
+
+	if (bufsize > TEXTBUFLEN)
+		buf = palloc(bufsize);
+
+	/* nul-terminate arguments */
+	memcpy(buf, src, srclen);
+	buf[srclen] = '\0';
+
+	result = pg_strxfrm_libc(dest, buf, destsize, locale);
+
+	if (buf != sbuf)
+		pfree(buf);
+
+	/* if dest is defined, it should be nul-terminated */
+	Assert(result >= destsize || dest[result] == '\0');
+
+	return result;
+}
+
+#ifdef USE_ICU
+
+/* 'srclen' of -1 means the strings are NUL-terminated */
+static size_t
+pg_strnxfrm_icu(char *dest, const char *src, int32_t srclen, int32_t destsize,
+				pg_locale_t locale)
+{
+	char	 sbuf[TEXTBUFLEN];
+	char	*buf	= sbuf;
+	UChar	*uchar;
+	int32_t	 ulen;
+	size_t   uchar_bsize;
+	Size	 result_bsize;
+
+	Assert(locale->provider == COLLPROVIDER_ICU);
+
+	init_icu_converter();
+
+	ulen = uchar_length(icu_converter, src, srclen);
+
+	uchar_bsize = (ulen + 1) * sizeof(UChar);
+
+	if (uchar_bsize > TEXTBUFLEN)
+		buf = palloc(uchar_bsize);
+
+	uchar = (UChar *) buf;
+
+	ulen = uchar_convert(icu_converter, uchar, ulen + 1, src, srclen);
+
+	result_bsize = ucol_getSortKey(locale->info.icu.ucol,
+								   uchar, ulen,
+								   (uint8_t *) dest, destsize);
+
+	/*
+	 * ucol_getSortKey() counts the nul-terminator in the result length, but
+	 * this function should not.
+	 */
+	Assert(result_bsize > 0);
+	result_bsize--;
+
+	if (buf != sbuf)
+		pfree(buf);
+
+	/* if dest is defined, it should be nul-terminated */
+	Assert(result_bsize >= destsize || dest[result_bsize] == '\0');
+
+	return result_bsize;
+}
+
+/* 'srclen' of -1 means the strings are NUL-terminated */
+static size_t
+pg_strnxfrm_prefix_icu_no_utf8(char *dest, const char *src, int32_t srclen,
+							   int32_t destsize, pg_locale_t locale)
+{
+	char			 sbuf[TEXTBUFLEN];
+	char			*buf   = sbuf;
+	UCharIterator	 iter;
+	uint32_t		 state[2];
+	UErrorCode		 status;
+	int32_t			 ulen  = -1;
+	UChar			*uchar = NULL;
+	size_t			 uchar_bsize;
+	Size			 result_bsize;
+
+	Assert(locale->provider == COLLPROVIDER_ICU);
+	Assert(GetDatabaseEncoding() != PG_UTF8);
+
+	init_icu_converter();
+
+	ulen = uchar_length(icu_converter, src, srclen);
+
+	uchar_bsize = (ulen + 1) * sizeof(UChar);
+
+	if (uchar_bsize > TEXTBUFLEN)
+		buf = palloc(uchar_bsize);
+
+	uchar = (UChar *) buf;
+
+	ulen = uchar_convert(icu_converter, uchar, ulen + 1, src, srclen);
+
+	uiter_setString(&iter, uchar, ulen);
+	state[0] = state[1] = 0;	/* won't need that again */
+	status = U_ZERO_ERROR;
+	result_bsize = ucol_nextSortKeyPart(locale->info.icu.ucol,
+										&iter,
+										state,
+										(uint8_t *) dest,
+										destsize,
+										&status);
+	if (U_FAILURE(status))
+		ereport(ERROR,
+				(errmsg("sort key generation failed: %s",
+						u_errorName(status))));
+
+	return result_bsize;
+}
+
+/* 'srclen' of -1 means the strings are NUL-terminated */
+static size_t
+pg_strnxfrm_prefix_icu(char *dest, const char *src, int32_t srclen,
+					   int32_t destsize, pg_locale_t locale)
+{
+	size_t result;
+
+	Assert(locale->provider == COLLPROVIDER_ICU);
+
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		UCharIterator iter;
+		uint32_t	state[2];
+		UErrorCode	status;
+
+		uiter_setUTF8(&iter, src, srclen);
+		state[0] = state[1] = 0;	/* won't need that again */
+		status = U_ZERO_ERROR;
+		result = ucol_nextSortKeyPart(locale->info.icu.ucol,
+									  &iter,
+									  state,
+									  (uint8_t *) dest,
+									  destsize,
+									  &status);
+		if (U_FAILURE(status))
+			ereport(ERROR,
+					(errmsg("sort key generation failed: %s",
+							u_errorName(status))));
+	}
+	else
+		result = pg_strnxfrm_prefix_icu_no_utf8(dest, src, srclen, destsize,
+												locale);
+
+	return result;
+}
+
+#endif
+
+/*
+ * Return true if the collation provider supports pg_strxfrm() and
+ * pg_strnxfrm(); otherwise false.
+ *
+ * Unfortunately, it seems that strxfrm() for non-C collations is broken on
+ * many common platforms; testing of multiple versions of glibc reveals that,
+ * for many locales, strcoll() and strxfrm() do not return consistent
+ * results. While no other libc other than Cygwin has so far been shown to
+ * have a problem, we take the conservative course of action for right now and
+ * disable this categorically.  (Users who are certain this isn't a problem on
+ * their system can define TRUST_STRXFRM.)
+ *
+ * No similar problem is known for the ICU provider.
+ */
+bool
+pg_strxfrm_enabled(pg_locale_t locale)
+{
+	if (!locale || locale->provider == COLLPROVIDER_LIBC)
+#ifdef TRUST_STRXFRM
+		return true;
+#else
+		return false;
+#endif
+	else if (locale->provider == COLLPROVIDER_ICU)
+		return true;
+	else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+
+	return false; /* keep compiler quiet */
+}
+
+/*
+ * pg_strxfrm
+ *
+ * Transforms 'src' to a nul-terminated string stored in 'dest' such that
+ * ordinary strcmp() on transformed strings is equivalent to pg_strcoll() on
+ * untransformed strings.
+ *
+ * The provided 'src' must be nul-terminated. If 'destsize' is zero, 'dest'
+ * may be NULL.
+ *
+ * Returns the number of bytes needed to store the transformed string,
+ * excluding the terminating nul byte. If the value returned is 'destsize' or
+ * greater, the resulting contents of 'dest' are undefined.
+ */
+size_t
+pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
+{
+	size_t result = 0; /* keep compiler quiet */
+
+	if (!locale || locale->provider == COLLPROVIDER_LIBC)
+		result = pg_strxfrm_libc(dest, src, destsize, locale);
+#ifdef USE_ICU
+	else if (locale->provider == COLLPROVIDER_ICU)
+		result = pg_strnxfrm_icu(dest, src, -1, destsize, locale);
+#endif
+	else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+
+	return result;
+}
+
+/*
+ * pg_strnxfrm
+ *
+ * Transforms 'src' to a nul-terminated string stored in 'dest' such that
+ * ordinary strcmp() on transformed strings is equivalent to pg_strcoll() on
+ * untransformed strings.
+ *
+ * 'src' does not need to be nul-terminated. If 'destsize' is zero, 'dest' may
+ * be NULL.
+ *
+ * Returns the number of bytes needed to store the transformed string,
+ * excluding the terminating nul byte. If the value returned is 'destsize' or
+ * greater, the resulting contents of 'dest' are undefined.
+ *
+ * This function may need to nul-terminate the argument for libc functions;
+ * so if the caller already has a nul-terminated string, it should call
+ * pg_strxfrm() instead.
+ */
+size_t
+pg_strnxfrm(char *dest, size_t destsize, const char *src, size_t srclen,
+			pg_locale_t locale)
+{
+	size_t result = 0; /* keep compiler quiet */
+
+	if (!locale || locale->provider == COLLPROVIDER_LIBC)
+		result = pg_strnxfrm_libc(dest, src, srclen, destsize, locale);
+#ifdef USE_ICU
+	else if (locale->provider == COLLPROVIDER_ICU)
+		result = pg_strnxfrm_icu(dest, src, srclen, destsize, locale);
+#endif
+	else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+
+	return result;
+}
+
+/*
+ * Return true if the collation provider supports pg_strxfrm_prefix() and
+ * pg_strnxfrm_prefix(); otherwise false.
+ */
+bool
+pg_strxfrm_prefix_enabled(pg_locale_t locale)
+{
+	if (!locale || locale->provider == COLLPROVIDER_LIBC)
+		return false;
+	else if (locale->provider == COLLPROVIDER_ICU)
+		return true;
+	else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+
+	return false; /* keep compiler quiet */
+}
+
+/*
+ * pg_strxfrm_prefix
+ *
+ * Transforms 'src' to a byte sequence stored in 'dest' such that ordinary
+ * memcmp() on the byte sequence is equivalent to pg_strcoll() on
+ * untransformed strings. The result is not nul-terminated.
+ *
+ * The provided 'src' must be nul-terminated.
+ *
+ * If destsize is not large enough to hold the resulting byte sequence, stores
+ * only the first destsize bytes in 'dest'. Returns the number of bytes
+ * actually copied to 'dest'.
+ */
+size_t
+pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
+				  pg_locale_t locale)
+{
+	size_t result = 0; /* keep compiler quiet */
+
+	if (!locale || locale->provider == COLLPROVIDER_LIBC)
+		elog(ERROR, "collprovider '%c' does not support pg_strxfrm_prefix()",
+			 locale->provider);
+#ifdef USE_ICU
+	else if (locale->provider == COLLPROVIDER_ICU)
+		result = pg_strnxfrm_prefix_icu(dest, src, -1, destsize, locale);
+#endif
+	else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+
+	return result;
+}
+
+/*
+ * pg_strnxfrm_prefix
+ *
+ * Transforms 'src' to a byte sequence stored in 'dest' such that ordinary
+ * memcmp() on the byte sequence is equivalent to pg_strcoll() on
+ * untransformed strings. The result is not nul-terminated.
+ *
+ * The provided 'src' must be nul-terminated.
+ *
+ * If destsize is not large enough to hold the resulting byte sequence, stores
+ * only the first destsize bytes in 'dest'. Returns the number of bytes
+ * actually copied to 'dest'.
+ *
+ * This function may need to nul-terminate the argument for libc functions;
+ * so if the caller already has a nul-terminated string, it should call
+ * pg_strxfrm_prefix() instead.
+ */
+size_t
+pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
+				   size_t srclen, pg_locale_t locale)
+{
+	size_t result = 0; /* keep compiler quiet */
+
+	if (!locale || locale->provider == COLLPROVIDER_LIBC)
+		elog(ERROR, "collprovider '%c' does not support pg_strnxfrm_prefix()",
+			 locale->provider);
+#ifdef USE_ICU
+	else if (locale->provider == COLLPROVIDER_ICU)
+		result = pg_strnxfrm_prefix_icu(dest, src, -1, destsize, locale);
+#endif
+	else
+		/* shouldn't happen */
+		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+
+	return result;
+}
+
+#ifdef USE_ICU
 static void
 init_icu_converter(void)
 {
@@ -1805,6 +2491,39 @@ init_icu_converter(void)
 }
 
 /*
+ * Find length, in UChars, of given string if converted to UChar string.
+ */
+static size_t
+uchar_length(UConverter *converter, const char *str, int32_t len)
+{
+	UErrorCode	status = U_ZERO_ERROR;
+	int32_t		ulen;
+	ulen = ucnv_toUChars(converter, NULL, 0, str, len, &status);
+	if (U_FAILURE(status) && status != U_BUFFER_OVERFLOW_ERROR)
+		ereport(ERROR,
+				(errmsg("%s failed: %s", "ucnv_toUChars", u_errorName(status))));
+	return ulen;
+}
+
+/*
+ * Convert the given source string into a UChar string, stored in dest, and
+ * return the length (in UChars).
+ */
+static int32_t
+uchar_convert(UConverter *converter, UChar *dest, int32_t destlen,
+			  const char *src, int32_t srclen)
+{
+	UErrorCode	status = U_ZERO_ERROR;
+	int32_t		ulen;
+	status = U_ZERO_ERROR;
+	ulen = ucnv_toUChars(converter, dest, destlen, src, srclen, &status);
+	if (U_FAILURE(status))
+		ereport(ERROR,
+				(errmsg("%s failed: %s", "ucnv_toUChars", u_errorName(status))));
+	return ulen;
+}
+
+/*
  * Convert a string in the database encoding into a string of UChars.
  *
  * The source string at buff is of length nbytes
@@ -1819,26 +2538,15 @@ init_icu_converter(void)
 int32_t
 icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 {
-	UErrorCode	status;
-	int32_t		len_uchar;
+	int32_t len_uchar;
 
 	init_icu_converter();
 
-	status = U_ZERO_ERROR;
-	len_uchar = ucnv_toUChars(icu_converter, NULL, 0,
-							  buff, nbytes, &status);
-	if (U_FAILURE(status) && status != U_BUFFER_OVERFLOW_ERROR)
-		ereport(ERROR,
-				(errmsg("%s failed: %s", "ucnv_toUChars", u_errorName(status))));
+	len_uchar = uchar_length(icu_converter, buff, nbytes);
 
 	*buff_uchar = palloc((len_uchar + 1) * sizeof(**buff_uchar));
-
-	status = U_ZERO_ERROR;
-	len_uchar = ucnv_toUChars(icu_converter, *buff_uchar, len_uchar + 1,
-							  buff, nbytes, &status);
-	if (U_FAILURE(status))
-		ereport(ERROR,
-				(errmsg("%s failed: %s", "ucnv_toUChars", u_errorName(status))));
+	len_uchar = uchar_convert(icu_converter,
+							  *buff_uchar, len_uchar + 1, buff, nbytes);
 
 	return len_uchar;
 }

@@ -44,7 +44,7 @@
  * if the old one gets invalidated.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -116,7 +116,7 @@ static void PlanCacheObjectCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue);
 
 /* GUC parameter */
-int			plan_cache_mode;
+int			plan_cache_mode = PLAN_CACHE_MODE_AUTO;
 
 /*
  * InitPlanCache: initialize module during InitPostgres.
@@ -1769,7 +1769,8 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc2);
 
-			if (rte->rtekind != RTE_RELATION)
+			if (!(rte->rtekind == RTE_RELATION ||
+				  (rte->rtekind == RTE_SUBQUERY && OidIsValid(rte->relid))))
 				continue;
 
 			/*

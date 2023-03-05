@@ -8,7 +8,7 @@
  * storage implementation and the details about individual types of
  * statistics.
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat_database.c
@@ -98,19 +98,19 @@ pgstat_report_recovery_conflict(int reason)
 			 */
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
-			dbentry->n_conflict_tablespace++;
+			dbentry->conflict_tablespace++;
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_LOCK:
-			dbentry->n_conflict_lock++;
+			dbentry->conflict_lock++;
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
-			dbentry->n_conflict_snapshot++;
+			dbentry->conflict_snapshot++;
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
-			dbentry->n_conflict_bufferpin++;
+			dbentry->conflict_bufferpin++;
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
-			dbentry->n_conflict_startup_deadlock++;
+			dbentry->conflict_startup_deadlock++;
 			break;
 	}
 }
@@ -127,7 +127,7 @@ pgstat_report_deadlock(void)
 		return;
 
 	dbent = pgstat_prep_database_pending(MyDatabaseId);
-	dbent->n_deadlocks++;
+	dbent->deadlocks++;
 }
 
 /*
@@ -150,7 +150,7 @@ pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount)
 		pgstat_get_entry_ref_locked(PGSTAT_KIND_DATABASE, dboid, InvalidOid, false);
 
 	sharedent = (PgStatShared_Database *) entry_ref->shared_stats;
-	sharedent->stats.n_checksum_failures += failurecount;
+	sharedent->stats.checksum_failures += failurecount;
 	sharedent->stats.last_checksum_failure = GetCurrentTimestamp();
 
 	pgstat_unlock_entry(entry_ref);
@@ -177,8 +177,8 @@ pgstat_report_tempfile(size_t filesize)
 		return;
 
 	dbent = pgstat_prep_database_pending(MyDatabaseId);
-	dbent->n_temp_bytes += filesize;
-	dbent->n_temp_files++;
+	dbent->temp_bytes += filesize;
+	dbent->temp_files++;
 }
 
 /*
@@ -195,7 +195,7 @@ pgstat_report_connect(Oid dboid)
 	pgLastSessionReportTime = MyStartTimestamp;
 
 	dbentry = pgstat_prep_database_pending(MyDatabaseId);
-	dbentry->n_sessions++;
+	dbentry->sessions++;
 }
 
 /*
@@ -218,13 +218,13 @@ pgstat_report_disconnect(Oid dboid)
 			/* we don't collect these */
 			break;
 		case DISCONNECT_CLIENT_EOF:
-			dbentry->n_sessions_abandoned++;
+			dbentry->sessions_abandoned++;
 			break;
 		case DISCONNECT_FATAL:
-			dbentry->n_sessions_fatal++;
+			dbentry->sessions_fatal++;
 			break;
 		case DISCONNECT_KILLED:
-			dbentry->n_sessions_killed++;
+			dbentry->sessions_killed++;
 			break;
 	}
 }
@@ -274,10 +274,10 @@ pgstat_update_dbstats(TimestampTz ts)
 	 * Accumulate xact commit/rollback and I/O timings to stats entry of the
 	 * current database.
 	 */
-	dbentry->n_xact_commit += pgStatXactCommit;
-	dbentry->n_xact_rollback += pgStatXactRollback;
-	dbentry->n_block_read_time += pgStatBlockReadTime;
-	dbentry->n_block_write_time += pgStatBlockWriteTime;
+	dbentry->xact_commit += pgStatXactCommit;
+	dbentry->xact_rollback += pgStatXactRollback;
+	dbentry->blk_read_time += pgStatBlockReadTime;
+	dbentry->blk_write_time += pgStatBlockWriteTime;
 
 	if (pgstat_should_report_connstat())
 	{
@@ -290,9 +290,9 @@ pgstat_update_dbstats(TimestampTz ts)
 		 */
 		TimestampDifference(pgLastSessionReportTime, ts, &secs, &usecs);
 		pgLastSessionReportTime = ts;
-		dbentry->total_session_time += (PgStat_Counter) secs * 1000000 + usecs;
-		dbentry->total_active_time += pgStatActiveTime;
-		dbentry->total_idle_in_xact_time += pgStatTransactionIdleTime;
+		dbentry->session_time += (PgStat_Counter) secs * 1000000 + usecs;
+		dbentry->active_time += pgStatActiveTime;
+		dbentry->idle_in_transaction_time += pgStatTransactionIdleTime;
 	}
 
 	pgStatXactCommit = 0;
@@ -370,44 +370,44 @@ pgstat_database_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 #define PGSTAT_ACCUM_DBCOUNT(item)		\
 	(sharedent)->stats.item += (pendingent)->item
 
-	PGSTAT_ACCUM_DBCOUNT(n_xact_commit);
-	PGSTAT_ACCUM_DBCOUNT(n_xact_rollback);
-	PGSTAT_ACCUM_DBCOUNT(n_blocks_fetched);
-	PGSTAT_ACCUM_DBCOUNT(n_blocks_hit);
+	PGSTAT_ACCUM_DBCOUNT(xact_commit);
+	PGSTAT_ACCUM_DBCOUNT(xact_rollback);
+	PGSTAT_ACCUM_DBCOUNT(blocks_fetched);
+	PGSTAT_ACCUM_DBCOUNT(blocks_hit);
 
-	PGSTAT_ACCUM_DBCOUNT(n_tuples_returned);
-	PGSTAT_ACCUM_DBCOUNT(n_tuples_fetched);
-	PGSTAT_ACCUM_DBCOUNT(n_tuples_inserted);
-	PGSTAT_ACCUM_DBCOUNT(n_tuples_updated);
-	PGSTAT_ACCUM_DBCOUNT(n_tuples_deleted);
+	PGSTAT_ACCUM_DBCOUNT(tuples_returned);
+	PGSTAT_ACCUM_DBCOUNT(tuples_fetched);
+	PGSTAT_ACCUM_DBCOUNT(tuples_inserted);
+	PGSTAT_ACCUM_DBCOUNT(tuples_updated);
+	PGSTAT_ACCUM_DBCOUNT(tuples_deleted);
 
 	/* last_autovac_time is reported immediately */
 	Assert(pendingent->last_autovac_time == 0);
 
-	PGSTAT_ACCUM_DBCOUNT(n_conflict_tablespace);
-	PGSTAT_ACCUM_DBCOUNT(n_conflict_lock);
-	PGSTAT_ACCUM_DBCOUNT(n_conflict_snapshot);
-	PGSTAT_ACCUM_DBCOUNT(n_conflict_bufferpin);
-	PGSTAT_ACCUM_DBCOUNT(n_conflict_startup_deadlock);
+	PGSTAT_ACCUM_DBCOUNT(conflict_tablespace);
+	PGSTAT_ACCUM_DBCOUNT(conflict_lock);
+	PGSTAT_ACCUM_DBCOUNT(conflict_snapshot);
+	PGSTAT_ACCUM_DBCOUNT(conflict_bufferpin);
+	PGSTAT_ACCUM_DBCOUNT(conflict_startup_deadlock);
 
-	PGSTAT_ACCUM_DBCOUNT(n_temp_bytes);
-	PGSTAT_ACCUM_DBCOUNT(n_temp_files);
-	PGSTAT_ACCUM_DBCOUNT(n_deadlocks);
+	PGSTAT_ACCUM_DBCOUNT(temp_bytes);
+	PGSTAT_ACCUM_DBCOUNT(temp_files);
+	PGSTAT_ACCUM_DBCOUNT(deadlocks);
 
 	/* checksum failures are reported immediately */
-	Assert(pendingent->n_checksum_failures == 0);
+	Assert(pendingent->checksum_failures == 0);
 	Assert(pendingent->last_checksum_failure == 0);
 
-	PGSTAT_ACCUM_DBCOUNT(n_block_read_time);
-	PGSTAT_ACCUM_DBCOUNT(n_block_write_time);
+	PGSTAT_ACCUM_DBCOUNT(blk_read_time);
+	PGSTAT_ACCUM_DBCOUNT(blk_write_time);
 
-	PGSTAT_ACCUM_DBCOUNT(n_sessions);
-	PGSTAT_ACCUM_DBCOUNT(total_session_time);
-	PGSTAT_ACCUM_DBCOUNT(total_active_time);
-	PGSTAT_ACCUM_DBCOUNT(total_idle_in_xact_time);
-	PGSTAT_ACCUM_DBCOUNT(n_sessions_abandoned);
-	PGSTAT_ACCUM_DBCOUNT(n_sessions_fatal);
-	PGSTAT_ACCUM_DBCOUNT(n_sessions_killed);
+	PGSTAT_ACCUM_DBCOUNT(sessions);
+	PGSTAT_ACCUM_DBCOUNT(session_time);
+	PGSTAT_ACCUM_DBCOUNT(active_time);
+	PGSTAT_ACCUM_DBCOUNT(idle_in_transaction_time);
+	PGSTAT_ACCUM_DBCOUNT(sessions_abandoned);
+	PGSTAT_ACCUM_DBCOUNT(sessions_fatal);
+	PGSTAT_ACCUM_DBCOUNT(sessions_killed);
 #undef PGSTAT_ACCUM_DBCOUNT
 
 	pgstat_unlock_entry(entry_ref);

@@ -4,7 +4,7 @@
  *	  WAL replay logic for inverted index.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -95,13 +95,13 @@ ginRedoInsertEntry(Buffer buffer, bool isLeaf, BlockNumber rightblkno, void *rda
 
 	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), offset, false, false) == InvalidOffsetNumber)
 	{
-		RelFileNode node;
+		RelFileLocator locator;
 		ForkNumber	forknum;
 		BlockNumber blknum;
 
-		BufferGetTag(buffer, &node, &forknum, &blknum);
+		BufferGetTag(buffer, &locator, &forknum, &blknum);
 		elog(ERROR, "failed to add item to index page in %u/%u/%u",
-			 node.spcNode, node.dbNode, node.relNode);
+			 locator.spcOid, locator.dbOid, locator.relNumber);
 	}
 }
 

@@ -53,7 +53,7 @@ PostgreSQL documentation
       <term><replaceable class="parameter">startseg</replaceable></term>
       <listitem>
        <para>
-        Start reading at the specified log segment file.  This implicitly determines
+        Start reading at the specified WAL segment file.  This implicitly determines
         the path in which files will be searched for, and the timeline to use.
        </para>
       </listitem>
@@ -63,7 +63,7 @@ PostgreSQL documentation
       <term><replaceable class="parameter">endseg</replaceable></term>
       <listitem>
        <para>
-        Stop after reading the specified log segment file.
+        Stop after reading the specified WAL segment file.
        </para>
       </listitem>
      </varlistentry>
@@ -141,7 +141,7 @@ PostgreSQL documentation
       <term><option>--path=<replaceable>path</replaceable></option></term>
       <listitem>
        <para>
-        Specifies a directory to search for log segment files or a
+        Specifies a directory to search for WAL segment files or a
         directory with a <literal>pg_wal</literal> subdirectory that
         contains such files.  The default is to search in the current
         directory, the <literal>pg_wal</literal> subdirectory of the
@@ -203,7 +203,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         WAL location at which to start reading. The default is to start reading
-        the first valid log record found in the earliest file found.
+        the first valid WAL record found in the earliest file found.
        </para>
       </listitem>
      </varlistentry>
@@ -213,7 +213,7 @@ PostgreSQL documentation
       <term><option>--timeline=<replaceable>timeline</replaceable></option></term>
       <listitem>
        <para>
-        Timeline from which to read log records. The default is to use the
+        Timeline from which to read WAL records. The default is to use the
         value in <replaceable>startseg</replaceable>, if that is specified; otherwise, the
         default is 1.
        </para>
@@ -241,6 +241,72 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+       <term><option>--save-fullpage=<replaceable>save_path</replaceable></option></term>
+       <listitem>
+       <para>
+        Save full page images found in the WAL records to the
+        <replaceable>save_path</replaceable> directory. The images saved
+        are subject to the same filtering and limiting criteria as the
+        records displayed.
+       </para>
+       <para>
+        The full page images are saved with the following file name format:
+        <literal><replaceable>LSN</replaceable>.<replaceable>RELTABLESPACE</replaceable>.<replaceable>DATOID</replaceable>.<replaceable>RELNODE</replaceable>.<replaceable>BLKNO</replaceable><replaceable>FORK</replaceable></literal>
+
+        The file names are composed of the following parts:
+        <informaltable>
+         <tgroup cols="2">
+          <thead>
+           <row>
+            <entry>Component</entry>
+            <entry>Description</entry>
+           </row>
+          </thead>
+
+          <tbody>
+           <row>
+            <entry>LSN</entry>
+            <entry>The <acronym>LSN</acronym> of the record with this image,
+             formatted as two 8-character hexadecimal numbers
+             <literal>%08X-%08X</literal></entry>
+           </row>
+
+           <row>
+            <entry>RELTABLESPACE</entry>
+            <entry>tablespace OID of the block</entry>
+           </row>
+
+           <row>
+            <entry>DATOID</entry>
+            <entry>database OID of the block</entry>
+           </row>
+
+           <row>
+            <entry>RELNODE</entry>
+            <entry>filenode of the block</entry>
+           </row>
+
+           <row>
+            <entry>BLKNO</entry>
+            <entry>block number of the block</entry>
+           </row>
+
+           <row>
+            <entry>FORK</entry>
+            <entry>
+             The name of the fork the full page image came from, as of
+             <literal>_main</literal>, <literal>_fsm</literal>,
+             <literal>_vm</literal>, or <literal>_init</literal>.
+            </entry>
+           </row>
+          </tbody>
+         </tgroup>
+        </informaltable>
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-x <replaceable>xid</replaceable></option></term>
       <term><option>--xid=<replaceable>xid</replaceable></option></term>
       <listitem>
@@ -263,7 +329,7 @@ PostgreSQL documentation
        <para>
         If <application>pg_waldump</application> is terminated by signal
         <systemitem>SIGINT</systemitem>
-        (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>,
+        (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>),
         the summary of the statistics computed is displayed up to the
         termination point. This operation is not supported on
         <productname>Windows</productname>.

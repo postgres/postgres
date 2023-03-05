@@ -2,7 +2,7 @@
  *
  * auth_delay.c
  *
- * Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		contrib/auth_delay/auth_delay.c
@@ -20,10 +20,8 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-
 /* GUC Variables */
-static int	auth_delay_milliseconds;
+static int	auth_delay_milliseconds = 0;
 
 /* Original Hook */
 static ClientAuthentication_hook_type original_client_auth_hook = NULL;

@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * src/bin/psql/input.c
  */
@@ -158,8 +158,7 @@ pg_send_history(PQExpBuffer history_buf)
 		else
 		{
 			/* Save each previous line for ignoredups processing */
-			if (prev_hist)
-				free(prev_hist);
+			free(prev_hist);
 			prev_hist = pg_strdup(s);
 			/* And send it to readline */
 			add_history(s);

@@ -3,7 +3,7 @@
  * nodeFuncs.h
  *		Various general-purpose manipulations of Node trees
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodeFuncs.h
@@ -14,6 +14,8 @@
 #define NODEFUNCS_H
 
 #include "nodes/parsenodes.h"
+
+struct PlanState;				/* avoid including execnodes.h too */
 
 
 /* flags bits for query_tree_walker and query_tree_mutator */
@@ -31,6 +33,14 @@
 
 /* callback function for check_functions_in_node */
 typedef bool (*check_function_callback) (Oid func_id, void *context);
+
+/* callback functions for tree walkers */
+typedef bool (*tree_walker_callback) (Node *node, void *context);
+typedef bool (*planstate_tree_walker_callback) (struct PlanState *planstate,
+												void *context);
+
+/* callback functions for tree mutators */
+typedef Node *(*tree_mutator_callback) (Node *node, void *context);
 
 
 extern Oid	exprType(const Node *expr);
@@ -129,34 +139,84 @@ get_notclausearg(const void *notclause)
 extern bool check_functions_in_node(Node *node, check_function_callback checker,
 									void *context);
 
-extern bool expression_tree_walker(Node *node, bool (*walker) (),
-								   void *context);
-extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
-									 void *context);
+/*
+ * The following functions are usually passed walker or mutator callbacks
+ * that are declared like "bool walker(Node *node, my_struct *context)"
+ * rather than "bool walker(Node *node, void *context)" as a strict reading
+ * of the C standard would require.  Changing the callbacks' declarations
+ * to "void *" would create serious hazards of passing them the wrong context
+ * struct type, so we respectfully decline to support the standard's position
+ * that a pointer to struct is incompatible with "void *".  Instead, silence
+ * related compiler warnings by inserting casts into these macro wrappers.
+ */
 
-extern bool query_tree_walker(Query *query, bool (*walker) (),
-							  void *context, int flags);
-extern Query *query_tree_mutator(Query *query, Node *(*mutator) (),
-								 void *context, int flags);
+#define expression_tree_walker(n, w, c) \
+	expression_tree_walker_impl(n, (tree_walker_callback) (w), c)
+#define expression_tree_mutator(n, m, c) \
+	expression_tree_mutator_impl(n, (tree_mutator_callback) (m), c)
 
-extern bool range_table_walker(List *rtable, bool (*walker) (),
-							   void *context, int flags);
-extern List *range_table_mutator(List *rtable, Node *(*mutator) (),
-								 void *context, int flags);
+#define query_tree_walker(q, w, c, f) \
+	query_tree_walker_impl(q, (tree_walker_callback) (w), c, f)
+#define query_tree_mutator(q, m, c, f) \
+	query_tree_mutator_impl(q, (tree_mutator_callback) (m), c, f)
 
-extern bool range_table_entry_walker(RangeTblEntry *rte, bool (*walker) (),
-									 void *context, int flags);
+#define range_table_walker(rt, w, c, f) \
+	range_table_walker_impl(rt, (tree_walker_callback) (w), c, f)
+#define range_table_mutator(rt, m, c, f) \
+	range_table_mutator_impl(rt, (tree_mutator_callback) (m), c, f)
 
-extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (),
-											void *context, int flags);
-extern Node *query_or_expression_tree_mutator(Node *node, Node *(*mutator) (),
-											  void *context, int flags);
+#define range_table_entry_walker(r, w, c, f) \
+	range_table_entry_walker_impl(r, (tree_walker_callback) (w), c, f)
 
-extern bool raw_expression_tree_walker(Node *node, bool (*walker) (),
+#define query_or_expression_tree_walker(n, w, c, f) \
+	query_or_expression_tree_walker_impl(n, (tree_walker_callback) (w), c, f)
+#define query_or_expression_tree_mutator(n, m, c, f) \
+	query_or_expression_tree_mutator_impl(n, (tree_mutator_callback) (m), c, f)
+
+#define raw_expression_tree_walker(n, w, c) \
+	raw_expression_tree_walker_impl(n, (tree_walker_callback) (w), c)
+
+#define planstate_tree_walker(ps, w, c) \
+	planstate_tree_walker_impl(ps, (planstate_tree_walker_callback) (w), c)
+
+extern bool expression_tree_walker_impl(Node *node,
+										tree_walker_callback walker,
+										void *context);
+extern Node *expression_tree_mutator_impl(Node *node,
+										  tree_mutator_callback mutator,
+										  void *context);
+
+extern bool query_tree_walker_impl(Query *query,
+								   tree_walker_callback walker,
+								   void *context, int flags);
+extern Query *query_tree_mutator_impl(Query *query,
+									  tree_mutator_callback mutator,
+									  void *context, int flags);
+
+extern bool range_table_walker_impl(List *rtable,
+									tree_walker_callback walker,
+									void *context, int flags);
+extern List *range_table_mutator_impl(List *rtable,
+									  tree_mutator_callback mutator,
+									  void *context, int flags);
+
+extern bool range_table_entry_walker_impl(RangeTblEntry *rte,
+										  tree_walker_callback walker,
+										  void *context, int flags);
+
+extern bool query_or_expression_tree_walker_impl(Node *node,
+												 tree_walker_callback walker,
+												 void *context, int flags);
+extern Node *query_or_expression_tree_mutator_impl(Node *node,
+												   tree_mutator_callback mutator,
+												   void *context, int flags);
+
+extern bool raw_expression_tree_walker_impl(Node *node,
+											tree_walker_callback walker,
+											void *context);
+
+extern bool planstate_tree_walker_impl(struct PlanState *planstate,
+									   planstate_tree_walker_callback walker,
 									   void *context);
-
-struct PlanState;
-extern bool planstate_tree_walker(struct PlanState *planstate, bool (*walker) (),
-								  void *context);
 
 #endif							/* NODEFUNCS_H */

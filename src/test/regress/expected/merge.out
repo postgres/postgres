@@ -1,18 +1,16 @@
 --
 -- MERGE
 --
---\set VERBOSITY verbose
---set debug_print_rewritten = true;
---set debug_print_parse = true;
---set debug_print_pretty = true;
 CREATE USER regress_merge_privs;
 CREATE USER regress_merge_no_privs;
 DROP TABLE IF EXISTS target;
 NOTICE:  table "target" does not exist, skipping
 DROP TABLE IF EXISTS source;
 NOTICE:  table "source" does not exist, skipping
-CREATE TABLE target (tid integer, balance integer);
-CREATE TABLE source (sid integer, delta integer); --no index
+CREATE TABLE target (tid integer, balance integer)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE source (sid integer, delta integer) -- no index
+  WITH (autovacuum_enabled=off);
 INSERT INTO target VALUES (1, 10);
 INSERT INTO target VALUES (2, 20);
 INSERT INTO target VALUES (3, 30);
@@ -26,8 +24,10 @@ SELECT t.ctid is not null as matched, t.*, s.* FROM source s FULL OUTER JOIN tar
 
 ALTER TABLE target OWNER TO regress_merge_privs;
 ALTER TABLE source OWNER TO regress_merge_privs;
-CREATE TABLE target2 (tid integer, balance integer);
-CREATE TABLE source2 (sid integer, delta integer);
+CREATE TABLE target2 (tid integer, balance integer)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE source2 (sid integer, delta integer)
+  WITH (autovacuum_enabled=off);
 ALTER TABLE target2 OWNER TO regress_merge_no_privs;
 ALTER TABLE source2 OWNER TO regress_merge_no_privs;
 GRANT INSERT ON target TO regress_merge_no_privs;
@@ -123,6 +123,20 @@ ON tid = tid
 WHEN MATCHED THEN DO NOTHING;
 ERROR:  name "target" specified more than once
 DETAIL:  The name is used both as MERGE target table and data source.
+-- used in a CTE
+WITH foo AS (
+  MERGE INTO target USING source ON (true)
+  WHEN MATCHED THEN DELETE
+) SELECT * FROM foo;
+ERROR:  MERGE not supported in WITH query
+LINE 1: WITH foo AS (
+             ^
+-- used in COPY
+COPY (
+  MERGE INTO target USING source ON (true)
+  WHEN MATCHED THEN DELETE
+) TO stdout;
+ERROR:  MERGE not supported in COPY
 -- unsupported relation types
 -- view
 CREATE VIEW tv AS SELECT * FROM target;
@@ -183,7 +197,7 @@ WHEN NOT MATCHED THEN
 ERROR:  invalid reference to FROM-clause entry for table "t"
 LINE 2: USING (SELECT * FROM source WHERE t.tid > sid) s
                                           ^
-HINT:  There is an entry for table "t", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "t", but it cannot be referenced from this part of the query.
 --
 -- initial tests
 --
@@ -604,7 +618,7 @@ WHEN NOT MATCHED THEN
 ERROR:  invalid reference to FROM-clause entry for table "t"
 LINE 5:  INSERT (tid, balance) VALUES (t.tid, s.delta);
                                        ^
-HINT:  There is an entry for table "t", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "t", but it cannot be referenced from this part of the query.
 -- and again with a constant ON clause
 BEGIN;
 MERGE INTO target t
@@ -615,7 +629,7 @@ WHEN NOT MATCHED THEN
 ERROR:  invalid reference to FROM-clause entry for table "t"
 LINE 5:  INSERT (tid, balance) VALUES (t.tid, s.delta);
                                        ^
-HINT:  There is an entry for table "t", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "t", but it cannot be referenced from this part of the query.
 SELECT * FROM target ORDER BY tid;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
@@ -645,13 +659,15 @@ USING source AS s
 ON t.tid = s.sid
 WHEN MATCHED THEN /* Terminal WHEN clause for MATCHED */
 	DELETE
-WHEN MATCHED AND s.delta > 0 THEN
+WHEN MATCHED THEN
 	UPDATE SET balance = t.balance - s.delta;
 ERROR:  unreachable WHEN clause specified after unconditional WHEN clause
 ROLLBACK;
 -- conditional WHEN clause
-CREATE TABLE wq_target (tid integer not null, balance integer DEFAULT -1);
-CREATE TABLE wq_source (balance integer, sid integer);
+CREATE TABLE wq_target (tid integer not null, balance integer DEFAULT -1)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE wq_source (balance integer, sid integer)
+  WITH (autovacuum_enabled=off);
 INSERT INTO wq_source (sid, balance) VALUES (1, 100);
 BEGIN;
 -- try a simple INSERT with default values first
@@ -708,7 +724,7 @@ WHEN NOT MATCHED AND t.balance = 100 THEN
 ERROR:  invalid reference to FROM-clause entry for table "t"
 LINE 3: WHEN NOT MATCHED AND t.balance = 100 THEN
                              ^
-HINT:  There is an entry for table "t", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "t", but it cannot be referenced from this part of the query.
 SELECT * FROM wq_target;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
@@ -827,22 +843,6 @@ SELECT * FROM wq_target;
    1 |     499
 (1 row)
 
--- test preventing WHEN conditions from writing to the database
-create or replace function merge_when_and_write() returns boolean
-language plpgsql as
-$$
-BEGIN
-	INSERT INTO target VALUES (100, 100);
-	RETURN TRUE;
-END;
-$$;
-BEGIN;
-MERGE INTO wq_target t
-USING wq_source s ON t.tid = s.sid
-WHEN MATCHED AND (merge_when_and_write()) THEN
-	UPDATE SET balance = t.balance + s.balance;
-ROLLBACK;
-drop function merge_when_and_write();
 DROP TABLE wq_target, wq_source;
 -- test triggers
 create or replace function merge_trigfunc () returns trigger
@@ -1198,8 +1198,10 @@ SELECT * FROM target ORDER BY tid;
 
 ROLLBACK;
 -- subqueries in source relation
-CREATE TABLE sq_target (tid integer NOT NULL, balance integer);
-CREATE TABLE sq_source (delta integer, sid integer, balance integer DEFAULT 0);
+CREATE TABLE sq_target (tid integer NOT NULL, balance integer)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE sq_source (delta integer, sid integer, balance integer DEFAULT 0)
+  WITH (autovacuum_enabled=off);
 INSERT INTO sq_target(tid, balance) VALUES (1,100), (2,200), (3,300);
 INSERT INTO sq_source(sid, delta) VALUES (1,10), (2,20), (4,40);
 BEGIN;
@@ -1303,8 +1305,10 @@ LINE 10: RETURNING *;
          ^
 ROLLBACK;
 -- EXPLAIN
-CREATE TABLE ex_mtarget (a int, b int);
-CREATE TABLE ex_msource (a int, b int);
+CREATE TABLE ex_mtarget (a int, b int)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE ex_msource (a int, b int)
+  WITH (autovacuum_enabled=off);
 INSERT INTO ex_mtarget SELECT i, i*10 FROM generate_series(1,100,2) i;
 INSERT INTO ex_msource SELECT i, i*10 FROM generate_series(1,100,1) i;
 CREATE FUNCTION explain_merge(query text) RETURNS SETOF text
@@ -1440,15 +1444,18 @@ WHEN MATCHED AND t.a < 10 THEN
                            explain_merge                            
 --------------------------------------------------------------------
  Merge on ex_mtarget t (actual rows=0 loops=1)
-   ->  Hash Join (actual rows=0 loops=1)
-         Hash Cond: (s.a = t.a)
-         ->  Seq Scan on ex_msource s (actual rows=1 loops=1)
-         ->  Hash (actual rows=0 loops=1)
-               Buckets: xxx  Batches: xxx  Memory Usage: xxx
+   ->  Merge Join (actual rows=0 loops=1)
+         Merge Cond: (t.a = s.a)
+         ->  Sort (actual rows=0 loops=1)
+               Sort Key: t.a
+               Sort Method: quicksort  Memory: xxx
                ->  Seq Scan on ex_mtarget t (actual rows=0 loops=1)
                      Filter: (a < '-1000'::integer)
                      Rows Removed by Filter: 54
-(9 rows)
+         ->  Sort (never executed)
+               Sort Key: s.a
+               ->  Seq Scan on ex_msource s (never executed)
+(12 rows)
 
 DROP TABLE ex_msource, ex_mtarget;
 DROP FUNCTION explain_merge(text);
@@ -1496,10 +1503,14 @@ DROP TABLE sq_target, sq_source CASCADE;
 NOTICE:  drop cascades to view v
 CREATE TABLE pa_target (tid integer, balance float, val text)
 	PARTITION BY LIST (tid);
-CREATE TABLE part1 PARTITION OF pa_target FOR VALUES IN (1,4);
-CREATE TABLE part2 PARTITION OF pa_target FOR VALUES IN (2,5,6);
-CREATE TABLE part3 PARTITION OF pa_target FOR VALUES IN (3,8,9);
-CREATE TABLE part4 PARTITION OF pa_target DEFAULT;
+CREATE TABLE part1 PARTITION OF pa_target FOR VALUES IN (1,4)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE part2 PARTITION OF pa_target FOR VALUES IN (2,5,6)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE part3 PARTITION OF pa_target FOR VALUES IN (3,8,9)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE part4 PARTITION OF pa_target DEFAULT
+  WITH (autovacuum_enabled=off);
 CREATE TABLE pa_source (sid integer, delta float);
 -- insert many rows to the source table
 INSERT INTO pa_source SELECT id, id * 10  FROM generate_series(1,14) AS id;
@@ -1571,6 +1582,10 @@ SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 -- try updating the partition key column
 BEGIN;
+CREATE FUNCTION merge_func() RETURNS integer LANGUAGE plpgsql AS $$
+DECLARE
+  result integer;
+BEGIN
 MERGE INTO pa_target t
   USING pa_source s
   ON t.tid = s.sid
@@ -1578,6 +1593,18 @@ MERGE INTO pa_target t
     UPDATE SET tid = tid + 1, balance = balance + delta, val = val || ' updated by merge'
   WHEN NOT MATCHED THEN
     INSERT VALUES (sid, delta, 'inserted by merge');
+IF FOUND THEN
+  GET DIAGNOSTICS result := ROW_COUNT;
+END IF;
+RETURN result;
+END;
+$$;
+SELECT merge_func();
+ merge_func 
+------------
+         14
+(1 row)
+
 SELECT * FROM pa_target ORDER BY tid;
  tid | balance |           val            
 -----+---------+--------------------------
@@ -1603,10 +1630,14 @@ DROP TABLE pa_target CASCADE;
 -- partitions which have columns in different order, dropped columns etc.
 CREATE TABLE pa_target (tid integer, balance float, val text)
 	PARTITION BY LIST (tid);
-CREATE TABLE part1 (tid integer, balance float, val text);
-CREATE TABLE part2 (balance float, tid integer, val text);
-CREATE TABLE part3 (tid integer, balance float, val text);
-CREATE TABLE part4 (extraid text, tid integer, balance float, val text);
+CREATE TABLE part1 (tid integer, balance float, val text)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE part2 (balance float, tid integer, val text)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE part3 (tid integer, balance float, val text)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE part4 (extraid text, tid integer, balance float, val text)
+  WITH (autovacuum_enabled=off);
 ALTER TABLE part4 DROP COLUMN extraid;
 ALTER TABLE pa_target ATTACH PARTITION part1 FOR VALUES IN (1,4);
 ALTER TABLE pa_target ATTACH PARTITION part2 FOR VALUES IN (2,5,6);
@@ -1706,6 +1737,18 @@ SELECT * FROM pa_target ORDER BY tid;
 (14 rows)
 
 ROLLBACK;
+-- test RLS enforcement
+BEGIN;
+ALTER TABLE pa_target ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pa_target FORCE ROW LEVEL SECURITY;
+CREATE POLICY pa_target_pol ON pa_target USING (tid != 0);
+MERGE INTO pa_target t
+  USING pa_source s
+  ON t.tid = s.sid AND t.tid IN (1,2,3,4)
+  WHEN MATCHED THEN
+    UPDATE SET tid = tid - 1;
+ERROR:  new row violates row-level security policy for table "pa_target"
+ROLLBACK;
 DROP TABLE pa_source;
 DROP TABLE pa_target CASCADE;
 -- Sub-partitioning
@@ -1715,17 +1758,18 @@ CREATE TABLE part_m01 PARTITION OF pa_target
 	FOR VALUES FROM ('2017-01-01') TO ('2017-02-01')
 	PARTITION BY LIST (tid);
 CREATE TABLE part_m01_odd PARTITION OF part_m01
-	FOR VALUES IN (1,3,5,7,9);
+	FOR VALUES IN (1,3,5,7,9) WITH (autovacuum_enabled=off);
 CREATE TABLE part_m01_even PARTITION OF part_m01
-	FOR VALUES IN (2,4,6,8);
+	FOR VALUES IN (2,4,6,8) WITH (autovacuum_enabled=off);
 CREATE TABLE part_m02 PARTITION OF pa_target
 	FOR VALUES FROM ('2017-02-01') TO ('2017-03-01')
 	PARTITION BY LIST (tid);
 CREATE TABLE part_m02_odd PARTITION OF part_m02
-	FOR VALUES IN (1,3,5,7,9);
+	FOR VALUES IN (1,3,5,7,9) WITH (autovacuum_enabled=off);
 CREATE TABLE part_m02_even PARTITION OF part_m02
-	FOR VALUES IN (2,4,6,8);
-CREATE TABLE pa_source (sid integer, delta float);
+	FOR VALUES IN (2,4,6,8) WITH (autovacuum_enabled=off);
+CREATE TABLE pa_source (sid integer, delta float)
+  WITH (autovacuum_enabled=off);
 -- insert many rows to the source table
 INSERT INTO pa_source SELECT id, id * 10  FROM generate_series(1,14) AS id;
 -- insert a few rows in the target table (odd numbered tid)
@@ -1757,10 +1801,48 @@ SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 DROP TABLE pa_source;
 DROP TABLE pa_target CASCADE;
+-- Partitioned table with primary key
+CREATE TABLE pa_target (tid integer PRIMARY KEY) PARTITION BY LIST (tid);
+CREATE TABLE pa_targetp PARTITION OF pa_target DEFAULT;
+CREATE TABLE pa_source (sid integer);
+INSERT INTO pa_source VALUES (1), (2);
+EXPLAIN (VERBOSE, COSTS OFF)
+MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
+  WHEN NOT MATCHED THEN INSERT VALUES (s.sid);
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Merge on public.pa_target t
+   Merge on public.pa_targetp t_1
+   ->  Hash Left Join
+         Output: s.sid, t_1.tableoid, t_1.ctid
+         Inner Unique: true
+         Hash Cond: (s.sid = t_1.tid)
+         ->  Seq Scan on public.pa_source s
+               Output: s.sid
+         ->  Hash
+               Output: t_1.tid, t_1.tableoid, t_1.ctid
+               ->  Seq Scan on public.pa_targetp t_1
+                     Output: t_1.tid, t_1.tableoid, t_1.ctid
+(12 rows)
+
+MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
+  WHEN NOT MATCHED THEN INSERT VALUES (s.sid);
+TABLE pa_target;
+ tid 
+-----
+   1
+   2
+(2 rows)
+
+DROP TABLE pa_source;
+DROP TABLE pa_target CASCADE;
 -- some complex joins on the source side
-CREATE TABLE cj_target (tid integer, balance float, val text);
-CREATE TABLE cj_source1 (sid1 integer, scat integer, delta integer);
-CREATE TABLE cj_source2 (sid2 integer, sval text);
+CREATE TABLE cj_target (tid integer, balance float, val text)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE cj_source1 (sid1 integer, scat integer, delta integer)
+  WITH (autovacuum_enabled=off);
+CREATE TABLE cj_source2 (sid2 integer, sval text)
+  WITH (autovacuum_enabled=off);
 INSERT INTO cj_source1 VALUES (1, 10, 100);
 INSERT INTO cj_source1 VALUES (1, 20, 200);
 INSERT INTO cj_source1 VALUES (2, 20, 300);
@@ -1819,7 +1901,8 @@ WHEN NOT MATCHED THEN
 	INSERT VALUES (s2.sid, delta, sval);
 DROP TABLE cj_source2, cj_source1, cj_target;
 -- Function scans
-CREATE TABLE fs_target (a int, b int, c text);
+CREATE TABLE fs_target (a int, b int, c text)
+  WITH (autovacuum_enabled=off);
 MERGE INTO fs_target t
 USING generate_series(1,100,1) AS id
 ON t.a = id
@@ -1849,13 +1932,13 @@ CREATE TABLE measurement (
     logdate         date not null,
     peaktemp        int,
     unitsales       int
-);
+) WITH (autovacuum_enabled=off);
 CREATE TABLE measurement_y2006m02 (
     CHECK ( logdate >= DATE '2006-02-01' AND logdate < DATE '2006-03-01' )
-) INHERITS (measurement);
+) INHERITS (measurement) WITH (autovacuum_enabled=off);
 CREATE TABLE measurement_y2006m03 (
     CHECK ( logdate >= DATE '2006-03-01' AND logdate < DATE '2006-04-01' )
-) INHERITS (measurement);
+) INHERITS (measurement) WITH (autovacuum_enabled=off);
 CREATE TABLE measurement_y2007m01 (
     filler          text,
     peaktemp        int,
@@ -1863,9 +1946,10 @@ CREATE TABLE measurement_y2007m01 (
     city_id         int not null,
     unitsales       int
     CHECK ( logdate >= DATE '2007-01-01' AND logdate < DATE '2007-02-01')
-);
+) WITH (autovacuum_enabled=off);
 ALTER TABLE measurement_y2007m01 DROP COLUMN filler;
 ALTER TABLE measurement_y2007m01 INHERIT measurement;
+INSERT INTO measurement VALUES (0, '2005-07-21', 5, 15);
 CREATE OR REPLACE FUNCTION measurement_insert_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -1897,15 +1981,17 @@ INSERT INTO measurement VALUES (1, '2007-01-17', 10, 10);
 SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate;
        tableoid       | city_id |  logdate   | peaktemp | unitsales 
 ----------------------+---------+------------+----------+-----------
+ measurement          |       0 | 07-21-2005 |        5 |        15
  measurement_y2006m02 |       1 | 02-10-2006 |       35 |        10
  measurement_y2006m02 |       1 | 02-16-2006 |       45 |        20
  measurement_y2006m03 |       1 | 03-17-2006 |       25 |        10
  measurement_y2006m03 |       1 | 03-27-2006 |       15 |        40
  measurement_y2007m01 |       1 | 01-15-2007 |       10 |        10
  measurement_y2007m01 |       1 | 01-17-2007 |       10 |        10
-(6 rows)
+(7 rows)
 
-CREATE TABLE new_measurement (LIKE measurement);
+CREATE TABLE new_measurement (LIKE measurement) WITH (autovacuum_enabled=off);
+INSERT INTO new_measurement VALUES (0, '2005-07-21', 25, 20);
 INSERT INTO new_measurement VALUES (1, '2006-03-01', 20, 10);
 INSERT INTO new_measurement VALUES (1, '2006-02-16', 50, 10);
 INSERT INTO new_measurement VALUES (2, '2006-02-10', 20, 20);
@@ -1913,6 +1999,37 @@ INSERT INTO new_measurement VALUES (1, '2006-03-27', NULL, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-17', NULL, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-15', 5, NULL);
 INSERT INTO new_measurement VALUES (1, '2007-01-16', 10, 10);
+BEGIN;
+MERGE INTO ONLY measurement m
+ USING new_measurement nm ON
+      (m.city_id = nm.city_id and m.logdate=nm.logdate)
+WHEN MATCHED AND nm.peaktemp IS NULL THEN DELETE
+WHEN MATCHED THEN UPDATE
+     SET peaktemp = greatest(m.peaktemp, nm.peaktemp),
+        unitsales = m.unitsales + coalesce(nm.unitsales, 0)
+WHEN NOT MATCHED THEN INSERT
+     (city_id, logdate, peaktemp, unitsales)
+   VALUES (city_id, logdate, peaktemp, unitsales);
+SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate, peaktemp;
+       tableoid       | city_id |  logdate   | peaktemp | unitsales 
+----------------------+---------+------------+----------+-----------
+ measurement          |       0 | 07-21-2005 |       25 |        35
+ measurement_y2006m02 |       1 | 02-10-2006 |       35 |        10
+ measurement_y2006m02 |       1 | 02-16-2006 |       45 |        20
+ measurement_y2006m02 |       1 | 02-16-2006 |       50 |        10
+ measurement_y2006m03 |       1 | 03-01-2006 |       20 |        10
+ measurement_y2006m03 |       1 | 03-17-2006 |       25 |        10
+ measurement_y2006m03 |       1 | 03-27-2006 |       15 |        40
+ measurement_y2006m03 |       1 | 03-27-2006 |          |          
+ measurement_y2007m01 |       1 | 01-15-2007 |        5 |          
+ measurement_y2007m01 |       1 | 01-15-2007 |       10 |        10
+ measurement_y2007m01 |       1 | 01-16-2007 |       10 |        10
+ measurement_y2007m01 |       1 | 01-17-2007 |       10 |        10
+ measurement_y2007m01 |       1 | 01-17-2007 |          |          
+ measurement_y2006m02 |       2 | 02-10-2006 |       20 |        20
+(14 rows)
+
+ROLLBACK;
 MERGE into measurement m
  USING new_measurement nm ON
       (m.city_id = nm.city_id and m.logdate=nm.logdate)
@@ -1926,6 +2043,7 @@ WHEN NOT MATCHED THEN INSERT
 SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate;
        tableoid       | city_id |  logdate   | peaktemp | unitsales 
 ----------------------+---------+------------+----------+-----------
+ measurement          |       0 | 07-21-2005 |       25 |        35
  measurement_y2006m02 |       1 | 02-10-2006 |       35 |        10
  measurement_y2006m02 |       1 | 02-16-2006 |       50 |        30
  measurement_y2006m03 |       1 | 03-01-2006 |       20 |        10
@@ -1933,7 +2051,36 @@ SELECT tableoid::regclass, * FROM measurement ORDER BY city_id, logdate;
  measurement_y2007m01 |       1 | 01-15-2007 |       10 |        10
  measurement_y2007m01 |       1 | 01-16-2007 |       10 |        10
  measurement_y2006m02 |       2 | 02-10-2006 |       20 |        20
+(8 rows)
+
+BEGIN;
+MERGE INTO new_measurement nm
+ USING ONLY measurement m ON
+      (nm.city_id = m.city_id and nm.logdate=m.logdate)
+WHEN MATCHED THEN DELETE;
+SELECT * FROM new_measurement ORDER BY city_id, logdate;
+ city_id |  logdate   | peaktemp | unitsales 
+---------+------------+----------+-----------
+       1 | 02-16-2006 |       50 |        10
+       1 | 03-01-2006 |       20 |        10
+       1 | 03-27-2006 |          |          
+       1 | 01-15-2007 |        5 |          
+       1 | 01-16-2007 |       10 |        10
+       1 | 01-17-2007 |          |          
+       2 | 02-10-2006 |       20 |        20
 (7 rows)
+
+ROLLBACK;
+MERGE INTO new_measurement nm
+ USING measurement m ON
+      (nm.city_id = m.city_id and nm.logdate=m.logdate)
+WHEN MATCHED THEN DELETE;
+SELECT * FROM new_measurement ORDER BY city_id, logdate;
+ city_id |  logdate   | peaktemp | unitsales 
+---------+------------+----------+-----------
+       1 | 03-27-2006 |          |          
+       1 | 01-17-2007 |          |          
+(2 rows)
 
 DROP TABLE measurement, new_measurement CASCADE;
 NOTICE:  drop cascades to 3 other objects

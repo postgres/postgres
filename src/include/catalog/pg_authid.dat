@@ -3,7 +3,7 @@
 # pg_authid.dat
 #    Initial contents of the pg_authid system catalog.
 #
-# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/include/catalog/pg_authid.dat
@@ -79,8 +79,18 @@
   rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
   rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
   rolpassword => '_null_', rolvaliduntil => '_null_' },
-{ oid => '4544', oid_symbol => 'ROLE_PG_CHECKPOINTER',
-  rolname => 'pg_checkpointer', rolsuper => 'f', rolinherit => 't',
+{ oid => '4544', oid_symbol => 'ROLE_PG_CHECKPOINT',
+  rolname => 'pg_checkpoint', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '4549', oid_symbol => 'ROLE_PG_MAINTAIN',
+  rolname => 'pg_maintain', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '4550', oid_symbol => 'ROLE_PG_USE_RESERVED_CONNECTIONS',
+  rolname => 'pg_use_reserved_connections', rolsuper => 'f', rolinherit => 't',
   rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
   rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
   rolpassword => '_null_', rolvaliduntil => '_null_' },

@@ -148,11 +148,18 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
   <title>Notes</title>
 
   <para>
-   To analyze a table, one must ordinarily be the table's owner or a
-   superuser.  However, database owners are allowed to
+   To analyze a table, one must ordinarily have the <literal>MAINTAIN</literal>
+   privilege on the table or be the table's owner, a superuser, or a role with
+   privileges of the
+   <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+   role.  However, database owners are allowed to
    analyze all tables in their databases, except shared catalogs.
    (The restriction for shared catalogs means that a true database-wide
-   <command>ANALYZE</command> can only be performed by a superuser.)
+   <command>ANALYZE</command> can only be performed by superusers and roles
+   with privileges of <literal>pg_maintain</literal>.)  If a role has
+   permission to <command>ANALYZE</command> a partitioned table, it is also
+   permitted to <command>ANALYZE</command> each of its partitions, regardless
+   of whether the role has the aforementioned privileges on the partition.
    <command>ANALYZE</command> will skip over any tables that the calling user
    does not have permission to analyze.
   </para>
@@ -250,12 +257,13 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
   </para>
 
   <para>
-    If the table being analyzed has one or more children,
-    <command>ANALYZE</command> will gather statistics twice: once on the
-    rows of the parent table only, and a second time on the rows of the
-    parent table with all of its children.  This second set of statistics
-    is needed when planning queries that traverse the entire inheritance
-    tree.  The autovacuum daemon, however, will only consider inserts or
+    If the table being analyzed has inheritance children,
+    <command>ANALYZE</command> gathers two sets of statistics: one on the rows
+    of the parent table only, and a second including rows of both the parent
+    table and all of its children.  This second set of statistics is needed when
+    planning queries that process the inheritance tree as a whole.  The child
+    tables themselves are not individually analyzed in this case.
+    The autovacuum daemon, however, will only consider inserts or
     updates on the parent table itself when deciding whether to trigger an
     automatic analyze for that table.  If that table is rarely inserted into
     or updated, the inheritance statistics will not be up to date unless you
@@ -269,15 +277,6 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
     once, even with multi-level partitioning.  No statistics are collected for
     only the parent table (without data from its partitions), because with
     partitioning it's guaranteed to be empty.
-  </para>
-
-  <para>
-    By contrast, if the table being analyzed has inheritance children,
-    <command>ANALYZE</command> gathers two sets of statistics: one on the rows
-    of the parent table only, and a second including rows of both the parent
-    table and all of its children.  This second set of statistics is needed when
-    planning queries that process the inheritance tree as a whole.  The child
-    tables themselves are not individually analyzed in this case.
   </para>
 
   <para>

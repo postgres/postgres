@@ -4,7 +4,7 @@
 # (see UAX #15).  Pass DerivedNormalizationProps.txt as argument.  The
 # output is on stdout.
 #
-# Copyright (c) 2020-2022, PostgreSQL Global Development Group
+# Copyright (c) 2020-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;

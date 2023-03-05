@@ -3,7 +3,7 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/pg_dump.h
@@ -72,8 +72,8 @@ typedef enum
 	DO_FOREIGN_SERVER,
 	DO_DEFAULT_ACL,
 	DO_TRANSFORM,
-	DO_BLOB,
-	DO_BLOB_DATA,
+	DO_LARGE_OBJECT,
+	DO_LARGE_OBJECT_DATA,
 	DO_PRE_DATA_BOUNDARY,
 	DO_POST_DATA_BOUNDARY,
 	DO_EVENT_TRIGGER,
@@ -326,7 +326,6 @@ typedef struct _tableInfo
 	int			numatts;		/* number of attributes */
 	char	  **attnames;		/* the attribute names */
 	char	  **atttypnames;	/* attribute type names */
-	int		   *atttypmod;		/* type-specific type modifiers */
 	int		   *attstattarget;	/* attribute statistics targets */
 	char	   *attstorage;		/* attribute storage scheme */
 	char	   *typstorage;		/* type storage scheme */
@@ -582,12 +581,12 @@ typedef struct _defaultACLInfo
 	char		defaclobjtype;
 } DefaultACLInfo;
 
-typedef struct _blobInfo
+typedef struct _loInfo
 {
 	DumpableObject dobj;
 	DumpableAcl dacl;
 	const char *rolname;
-} BlobInfo;
+} LoInfo;
 
 /*
  * The PolicyInfo struct is used to represent policies on a table and
@@ -659,6 +658,7 @@ typedef struct _SubscriptionInfo
 	char	   *substream;
 	char	   *subtwophasestate;
 	char	   *subdisableonerr;
+	char	   *suborigin;
 	char	   *subsynccommit;
 	char	   *subpublications;
 } SubscriptionInfo;
@@ -704,8 +704,8 @@ extern NamespaceInfo *getNamespaces(Archive *fout, int *numNamespaces);
 extern ExtensionInfo *getExtensions(Archive *fout, int *numExtensions);
 extern TypeInfo *getTypes(Archive *fout, int *numTypes);
 extern FuncInfo *getFuncs(Archive *fout, int *numFuncs);
-extern AggInfo *getAggregates(Archive *fout, int *numAggregates);
-extern OprInfo *getOperators(Archive *fout, int *numOperators);
+extern AggInfo *getAggregates(Archive *fout, int *numAggs);
+extern OprInfo *getOperators(Archive *fout, int *numOprs);
 extern AccessMethodInfo *getAccessMethods(Archive *fout, int *numAccessMethods);
 extern OpclassInfo *getOpclasses(Archive *fout, int *numOpclasses);
 extern OpfamilyInfo *getOpfamilies(Archive *fout, int *numOpfamilies);
@@ -722,7 +722,7 @@ extern void getTriggers(Archive *fout, TableInfo tblinfo[], int numTables);
 extern ProcLangInfo *getProcLangs(Archive *fout, int *numProcLangs);
 extern CastInfo *getCasts(Archive *fout, int *numCasts);
 extern TransformInfo *getTransforms(Archive *fout, int *numTransforms);
-extern void getTableAttrs(Archive *fout, TableInfo *tbinfo, int numTables);
+extern void getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables);
 extern bool shouldPrintColumn(const DumpOptions *dopt, const TableInfo *tbinfo, int colno);
 extern TSParserInfo *getTSParsers(Archive *fout, int *numTSParsers);
 extern TSDictInfo *getTSDictionaries(Archive *fout, int *numTSDicts);

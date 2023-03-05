@@ -37,7 +37,7 @@
  * record, wait for it to be replicated to the standby, and then exit.
  *
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/walsender.c
@@ -57,6 +57,7 @@
 #include "access/xlogreader.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
+#include "backup/basebackup.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
@@ -68,7 +69,6 @@
 #include "nodes/replnodes.h"
 #include "pgstat.h"
 #include "postmaster/interrupt.h"
-#include "replication/basebackup.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/slot.h"
@@ -118,8 +118,8 @@ bool		am_cascading_walsender = false; /* Am I cascading WAL to another
 											 * standby? */
 bool		am_db_walsender = false;	/* Connected to a database? */
 
-/* User-settable parameters for walsender */
-int			max_wal_senders = 0;	/* the maximum number of concurrent
+/* GUC variables */
+int			max_wal_senders = 10;	/* the maximum number of concurrent
 									 * walsenders */
 int			wal_sender_timeout = 60 * 1000; /* maximum time to send one WAL
 											 * data message */
@@ -402,7 +402,7 @@ IdentifySystem(void)
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
 	Datum		values[4];
-	bool		nulls[4];
+	bool		nulls[4] = {0};
 	TimeLineID	currTLI;
 
 	/*
@@ -437,14 +437,13 @@ IdentifySystem(void)
 	}
 
 	dest = CreateDestReceiver(DestRemoteSimple);
-	MemSet(nulls, false, sizeof(nulls));
 
 	/* need a tuple descriptor representing four columns */
 	tupdesc = CreateTemplateTupleDesc(4);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "systemid",
 							  TEXTOID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "timeline",
-							  INT4OID, -1, 0);
+							  INT8OID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 3, "xlogpos",
 							  TEXTOID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 4, "dbname",
@@ -457,7 +456,7 @@ IdentifySystem(void)
 	values[0] = CStringGetTextDatum(sysid);
 
 	/* column 2: timeline */
-	values[1] = Int32GetDatum(currTLI);
+	values[1] = Int64GetDatum(currTLI);
 
 	/* column 3: wal location */
 	values[2] = CStringGetTextDatum(xloc);
@@ -483,7 +482,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 	DestReceiver *dest;
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
-	Datum		values[READ_REPLICATION_SLOT_COLS];
+	Datum		values[READ_REPLICATION_SLOT_COLS] = {0};
 	bool		nulls[READ_REPLICATION_SLOT_COLS];
 
 	tupdesc = CreateTemplateTupleDesc(READ_REPLICATION_SLOT_COLS);
@@ -495,8 +494,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 3, "restart_tli",
 							  INT8OID, -1, 0);
 
-	MemSet(values, 0, READ_REPLICATION_SLOT_COLS * sizeof(Datum));
-	MemSet(nulls, true, READ_REPLICATION_SLOT_COLS * sizeof(bool));
+	memset(nulls, true, READ_REPLICATION_SLOT_COLS * sizeof(bool));
 
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	slot = SearchNamedReplicationSlot(cmd->slotname, false);
@@ -518,9 +516,8 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 		if (OidIsValid(slot_contents.data.database))
 			ereport(ERROR,
 					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("cannot use \"%s\" with logical replication slot \"%s\"",
-						   "READ_REPLICATION_SLOT",
-						   NameStr(slot_contents.data.name)));
+					errmsg("cannot use %s with a logical replication slot",
+						   "READ_REPLICATION_SLOT"));
 
 		/* slot type */
 		values[i] = CStringGetTextDatum("physical");
@@ -579,6 +576,8 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 static void
 SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 {
+	DestReceiver *dest;
+	TupleDesc	tupdesc;
 	StringInfoData buf;
 	char		histfname[MAXFNAMELEN];
 	char		path[MAXPGPATH];
@@ -587,36 +586,21 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	off_t		bytesleft;
 	Size		len;
 
+	dest = CreateDestReceiver(DestRemoteSimple);
+
 	/*
 	 * Reply with a result set with one row, and two columns. The first col is
 	 * the name of the history file, 2nd is the contents.
 	 */
+	tupdesc = CreateTemplateTupleDesc(2);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "filename", TEXTOID, -1, 0);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "content", TEXTOID, -1, 0);
 
 	TLHistoryFileName(histfname, cmd->timeline);
 	TLHistoryFilePath(path, cmd->timeline);
 
 	/* Send a RowDescription message */
-	pq_beginmessage(&buf, 'T');
-	pq_sendint16(&buf, 2);		/* 2 fields */
-
-	/* first field */
-	pq_sendstring(&buf, "filename");	/* col name */
-	pq_sendint32(&buf, 0);		/* table oid */
-	pq_sendint16(&buf, 0);		/* attnum */
-	pq_sendint32(&buf, TEXTOID);	/* type oid */
-	pq_sendint16(&buf, -1);		/* typlen */
-	pq_sendint32(&buf, 0);		/* typmod */
-	pq_sendint16(&buf, 0);		/* format code */
-
-	/* second field */
-	pq_sendstring(&buf, "content"); /* col name */
-	pq_sendint32(&buf, 0);		/* table oid */
-	pq_sendint16(&buf, 0);		/* attnum */
-	pq_sendint32(&buf, TEXTOID);	/* type oid */
-	pq_sendint16(&buf, -1);		/* typlen */
-	pq_sendint32(&buf, 0);		/* typmod */
-	pq_sendint16(&buf, 0);		/* format code */
-	pq_endmessage(&buf);
+	dest->rStartup(dest, CMD_SELECT, tupdesc);
 
 	/* Send a DataRow message */
 	pq_beginmessage(&buf, 'D');
@@ -872,13 +856,12 @@ StartReplication(StartReplicationCmd *cmd)
 		TupOutputState *tstate;
 		TupleDesc	tupdesc;
 		Datum		values[2];
-		bool		nulls[2];
+		bool		nulls[2] = {0};
 
 		snprintf(startpos_str, sizeof(startpos_str), "%X/%X",
 				 LSN_FORMAT_ARGS(sendTimeLineValidUpto));
 
 		dest = CreateDestReceiver(DestRemoteSimple);
-		MemSet(nulls, false, sizeof(nulls));
 
 		/*
 		 * Need a tuple descriptor representing two columns. int8 may seem
@@ -1056,7 +1039,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
 	Datum		values[4];
-	bool		nulls[4];
+	bool		nulls[4] = {0};
 
 	Assert(!MyReplicationSlot);
 
@@ -1115,6 +1098,11 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 				ereport(ERROR,
 				/*- translator: %s is a CREATE_REPLICATION_SLOT statement */
 						(errmsg("%s must be called in REPEATABLE READ isolation mode transaction",
+								"CREATE_REPLICATION_SLOT ... (SNAPSHOT 'use')")));
+			if (!XactReadOnly)
+				ereport(ERROR,
+				/*- translator: %s is a CREATE_REPLICATION_SLOT statement */
+						(errmsg("%s must be called in a read only transaction",
 								"CREATE_REPLICATION_SLOT ... (SNAPSHOT 'use')")));
 
 			if (FirstSnapshotSet)
@@ -1191,7 +1179,6 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 			 LSN_FORMAT_ARGS(MyReplicationSlot->data.confirmed_flush));
 
 	dest = CreateDestReceiver(DestRemoteSimple);
-	MemSet(nulls, false, sizeof(nulls));
 
 	/*----------
 	 * Need a tuple descriptor representing four columns:
@@ -2063,9 +2050,9 @@ PhysicalConfirmReceivedLocation(XLogRecPtr lsn)
 
 	/*
 	 * One could argue that the slot should be saved to disk now, but that'd
-	 * be energy wasted - the worst lost information can do here is give us
-	 * wrong information in a statistics view - we'll just potentially be more
-	 * conservative in removing files.
+	 * be energy wasted - the worst thing lost information could cause here is
+	 * to give wrong information in a statistics view - we'll just potentially
+	 * be more conservative in removing files.
 	 */
 }
 
@@ -3288,7 +3275,7 @@ WalSndShmemInit(void)
 		MemSet(WalSndCtl, 0, WalSndShmemSize());
 
 		for (i = 0; i < NUM_SYNC_REP_WAIT_MODE; i++)
-			SHMQueueInit(&(WalSndCtl->SyncRepQueue[i]));
+			dlist_init(&(WalSndCtl->SyncRepQueue[i]));
 
 		for (i = 0; i < max_wal_senders; i++)
 		{
@@ -3477,7 +3464,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	int			num_standbys;
 	int			i;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/*
 	 * Get the currently active synchronous standbys.  This could be out of
@@ -3501,7 +3488,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		TimestampTz replyTime;
 		bool		is_sync_standby;
 		Datum		values[PG_STAT_GET_WAL_SENDERS_COLS];
-		bool		nulls[PG_STAT_GET_WAL_SENDERS_COLS];
+		bool		nulls[PG_STAT_GET_WAL_SENDERS_COLS] = {0};
 		int			j;
 
 		/* Collect data from shared memory */
@@ -3540,7 +3527,6 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			}
 		}
 
-		memset(nulls, 0, sizeof(nulls));
 		values[0] = Int32GetDatum(pid);
 
 		if (!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))

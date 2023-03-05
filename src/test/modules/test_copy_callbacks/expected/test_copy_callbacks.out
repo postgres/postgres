@@ -1,0 +1,13 @@
+CREATE EXTENSION test_copy_callbacks;
+CREATE TABLE public.test (a INT, b INT, c INT);
+INSERT INTO public.test VALUES (1, 2, 3), (12, 34, 56), (123, 456, 789);
+SELECT test_copy_to_callback('public.test'::pg_catalog.regclass);
+NOTICE:  COPY TO callback called with data "1	2	3" and length 5
+NOTICE:  COPY TO callback called with data "12	34	56" and length 8
+NOTICE:  COPY TO callback called with data "123	456	789" and length 11
+NOTICE:  COPY TO callback has processed 3 rows
+ test_copy_to_callback 
+-----------------------
+ 
+(1 row)
+

@@ -3,7 +3,7 @@
  * startup.h
  *	  Exports from postmaster/startup.c.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * src/include/postmaster/startup.h
  *
@@ -32,6 +32,8 @@ extern void PostRestoreCommand(void);
 extern bool IsPromoteSignaled(void);
 extern void ResetPromoteSignaled(void);
 
+extern void enable_startup_progress_timeout(void);
+extern void disable_startup_progress_timeout(void);
 extern void begin_startup_progress_phase(void);
 extern void startup_progress_timeout_handler(void);
 extern bool has_startup_progress_timeout_expired(long *secs, int *usecs);

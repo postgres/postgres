@@ -17,6 +17,31 @@ SELECT '(1,65536)'::tid;  -- error
 ERROR:  invalid input syntax for type tid: "(1,65536)"
 LINE 1: SELECT '(1,65536)'::tid;
                ^
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('(0)', 'tid');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('(0)', 'tid');
+                 message                  | detail | hint | sql_error_code 
+------------------------------------------+--------+------+----------------
+ invalid input syntax for type tid: "(0)" |        |      | 22P02
+(1 row)
+
+SELECT pg_input_is_valid('(0,-1)', 'tid');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('(0,-1)', 'tid');
+                   message                   | detail | hint | sql_error_code 
+---------------------------------------------+--------+------+----------------
+ invalid input syntax for type tid: "(0,-1)" |        |      | 22P02
+(1 row)
+
 -- tests for functions related to TID handling
 CREATE TABLE tid_tab (a int);
 -- min() and max() for TIDs
@@ -61,7 +86,8 @@ DROP SEQUENCE tid_seq;
 -- Index, fails with incorrect relation type
 CREATE INDEX tid_ind ON tid_tab(a);
 SELECT currtid2('tid_ind'::text, '(0,1)'::tid); -- fails
-ERROR:  "tid_ind" is an index
+ERROR:  cannot open relation "tid_ind"
+DETAIL:  This operation is not supported for indexes.
 DROP INDEX tid_ind;
 -- Partitioned table, no storage
 CREATE TABLE tid_part (a int) PARTITION BY RANGE (a);

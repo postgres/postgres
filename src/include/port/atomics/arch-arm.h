@@ -3,7 +3,7 @@
  * arch-arm.h
  *	  Atomic operations considerations specific to ARM
  *
- * Portions Copyright (c) 2013-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2023, PostgreSQL Global Development Group
  *
  * NOTES:
  *
@@ -21,7 +21,7 @@
  * 64 bit atomics on ARM32 are implemented using kernel fallbacks and thus
  * might be slow, so disable entirely. On ARM64 that problem doesn't exist.
  */
-#if !defined(__aarch64__) && !defined(__aarch64)
+#if !defined(__aarch64__)
 #define PG_DISABLE_64_BIT_ATOMICS
 #else
 /*
@@ -29,4 +29,4 @@
  * general purpose register is atomic.
  */
 #define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY
-#endif  /* __aarch64__ || __aarch64 */
+#endif  /* __aarch64__ */

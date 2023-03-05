@@ -418,6 +418,8 @@ FROM pg_get_object_address('parameter ACL', '{work_mem}', '{}') goa;
  pg_parameter_acl | work_mem |        0
 (1 row)
 
+-- Make a per-role setting that regress_host_resource_admin can't change
+ALTER ROLE regress_host_resource_admin SET lc_messages = 'C';
 -- Perform some operations as user 'regress_host_resource_admin'
 SET SESSION AUTHORIZATION regress_host_resource_admin;
 ALTER SYSTEM SET autovacuum_work_mem = 32;  -- ok, privileges have been granted
@@ -457,6 +459,40 @@ SELECT set_config ('temp_buffers', '8192', false); -- ok
 ALTER SYSTEM RESET autovacuum_work_mem;  -- ok, privileges have been granted
 ALTER SYSTEM RESET ALL;  -- fail, insufficient privileges
 ERROR:  permission denied to perform ALTER SYSTEM RESET ALL
+ALTER ROLE regress_host_resource_admin SET lc_messages = 'POSIX';  -- fail
+ERROR:  permission denied to set parameter "lc_messages"
+ALTER ROLE regress_host_resource_admin SET max_stack_depth = '1MB';  -- ok
+SELECT setconfig FROM pg_db_role_setting
+  WHERE setrole = 'regress_host_resource_admin'::regrole;
+              setconfig              
+-------------------------------------
+ {lc_messages=C,max_stack_depth=1MB}
+(1 row)
+
+ALTER ROLE regress_host_resource_admin RESET max_stack_depth;  -- ok
+SELECT setconfig FROM pg_db_role_setting
+  WHERE setrole = 'regress_host_resource_admin'::regrole;
+    setconfig    
+-----------------
+ {lc_messages=C}
+(1 row)
+
+ALTER ROLE regress_host_resource_admin SET max_stack_depth = '1MB';  -- ok
+SELECT setconfig FROM pg_db_role_setting
+  WHERE setrole = 'regress_host_resource_admin'::regrole;
+              setconfig              
+-------------------------------------
+ {lc_messages=C,max_stack_depth=1MB}
+(1 row)
+
+ALTER ROLE regress_host_resource_admin RESET ALL;  -- doesn't reset lc_messages
+SELECT setconfig FROM pg_db_role_setting
+  WHERE setrole = 'regress_host_resource_admin'::regrole;
+    setconfig    
+-----------------
+ {lc_messages=C}
+(1 row)
+
 -- Check dropping/revoking behavior
 SET SESSION AUTHORIZATION regress_admin;
 DROP ROLE regress_host_resource_admin;  -- fail, privileges remain

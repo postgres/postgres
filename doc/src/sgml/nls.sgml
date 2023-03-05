@@ -17,7 +17,7 @@
    to do this.  This section explains how to help.
   </para>
 
-  <sect2>
+  <sect2 id="nls-translator-requirements">
    <title>Requirements</title>
 
    <para>
@@ -50,7 +50,7 @@
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="nls-translator-concepts">
    <title>Concepts</title>
 
    <para>
@@ -130,7 +130,7 @@ msgstr "another translated"
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="nls-translator-message-catalogs">
    <title>Creating and Maintaining Message Catalogs</title>
 
    <para>
@@ -175,10 +175,11 @@ make init-po
     Copy this file to
     <filename><replaceable>language</replaceable>.po</filename> and
     edit it.  To make it known that the new language is available,
-    also edit the file <filename>nls.mk</filename> and add the
-    language (or language and country) code to the line that looks like:
+    also edit the file <filename>po/LINGUAS</filename> and add the
+    language (or language and country) code next to languages already listed,
+    like:
 <programlisting>
-AVAIL_LANGUAGES := de fr
+de fr
 </programlisting>
     (Other languages can appear, of course.)
    </para>
@@ -198,15 +199,20 @@ make update-po
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="nls-translator-editing-po">
    <title>Editing the PO Files</title>
 
    <para>
-    The PO files can be edited with a regular text editor.  The
-    translator should only change the area between the quotes after
-    the msgstr directive, add comments, and alter the fuzzy flag.
-    There is (unsurprisingly) a PO mode for Emacs, which I find quite
+    The PO files can be edited with a regular text editor. There are also
+    several specialized editors for PO files which can help the process with
+    translation specific features.
+    There is (unsurprisingly) a PO mode for Emacs, which can be quite
     useful.
+   </para>
+
+   <para>
+    The translator should only change the area between the quotes after
+    the msgstr directive, add comments, and alter the fuzzy flag.
    </para>
 
    <para>
@@ -376,16 +382,6 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
       </varlistentry>
 
       <varlistentry>
-       <term><varname>AVAIL_LANGUAGES</varname></term>
-
-       <listitem>
-        <para>
-         List of provided translations &mdash; initially empty.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><varname>GETTEXT_FILES</varname></term>
 
        <listitem>
@@ -424,6 +420,12 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
     </para>
    </step>
 
+   <step>
+    <para>
+     Add a file <filename>po/LINGUAS</filename>, which will contain the list
+     of provided translations &mdash; initially empty.
+    </para>
+   </step>
   </procedure>
 
   <para>

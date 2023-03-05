@@ -4,7 +4,7 @@
  *	  header file for postgres btree access method implementation.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/nbtree.h
@@ -162,11 +162,10 @@ typedef struct BTMetaPageData
  * attribute, which we account for here.
  */
 #define BTMaxItemSize(page) \
-	MAXALIGN_DOWN((PageGetPageSize(page) - \
-				   MAXALIGN(SizeOfPageHeaderData + \
-							3*sizeof(ItemIdData)  + \
-							3*sizeof(ItemPointerData)) - \
-				   MAXALIGN(sizeof(BTPageOpaqueData))) / 3)
+	(MAXALIGN_DOWN((PageGetPageSize(page) - \
+					MAXALIGN(SizeOfPageHeaderData + 3*sizeof(ItemIdData)) - \
+					MAXALIGN(sizeof(BTPageOpaqueData))) / 3) - \
+					MAXALIGN(sizeof(ItemPointerData)))
 #define BTMaxItemSizeNoHeapTid(page) \
 	MAXALIGN_DOWN((PageGetPageSize(page) - \
 				   MAXALIGN(SizeOfPageHeaderData + 3*sizeof(ItemIdData)) - \
@@ -466,6 +465,13 @@ typedef struct BTVacState
 /* BT_STATUS_OFFSET_MASK status bits */
 #define BT_PIVOT_HEAP_TID_ATTR		0x1000
 #define BT_IS_POSTING				0x2000
+
+/*
+ * Mask allocated for number of keys in index tuple must be able to fit
+ * maximum possible number of index attributes
+ */
+StaticAssertDecl(BT_OFFSET_MASK >= INDEX_MAX_KEYS,
+				 "BT_OFFSET_MASK can't fit INDEX_MAX_KEYS");
 
 /*
  * Note: BTreeTupleIsPivot() can have false negatives (but not false

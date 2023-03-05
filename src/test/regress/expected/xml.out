@@ -18,6 +18,37 @@ SELECT * FROM xmltest;
   2 | <value>two</value>
 (2 rows)
 
+-- test non-throwing API, too
+SELECT pg_input_is_valid('<value>one</value>', 'xml');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('<value>one</', 'xml');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT message FROM pg_input_error_info('<value>one</', 'xml');
+       message       
+---------------------
+ invalid XML content
+(1 row)
+
+SELECT pg_input_is_valid('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT message FROM pg_input_error_info('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+                   message                    
+----------------------------------------------
+ invalid XML content: invalid XML declaration
+(1 row)
+
 SELECT xmlcomment('test');
  xmlcomment  
 -------------
@@ -603,12 +634,12 @@ CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
 CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'xmlview%' ORDER BY 1;
- table_name |                                                  view_definition                                                  
-------------+-------------------------------------------------------------------------------------------------------------------
+ table_name |                                              view_definition                                               
+------------+------------------------------------------------------------------------------------------------------------
  xmlview1   |  SELECT xmlcomment('test'::text) AS xmlcomment;
  xmlview2   |  SELECT XMLCONCAT('hello'::xml, 'you'::xml) AS "xmlconcat";
  xmlview3   |  SELECT XMLELEMENT(NAME element, XMLATTRIBUTES(1 AS ":one:", 'deuce' AS two), 'content&') AS "xmlelement";
- xmlview4   |  SELECT XMLELEMENT(NAME employee, XMLFOREST(emp.name AS name, emp.age AS age, emp.salary AS pay)) AS "xmlelement"+
+ xmlview4   |  SELECT XMLELEMENT(NAME employee, XMLFOREST(name AS name, age AS age, salary AS pay)) AS "xmlelement"     +
             |    FROM emp;
  xmlview5   |  SELECT XMLPARSE(CONTENT '<abc>x</abc>'::text STRIP WHITESPACE) AS "xmlparse";
  xmlview6   |  SELECT XMLPI(NAME foo, 'bar'::text) AS "xmlpi";
@@ -1555,9 +1586,9 @@ SELECT * FROM XMLTABLE('*' PASSING '<a>a</a>' COLUMNS a xml PATH '.', b text PAT
 (1 row)
 
 \x
-SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>' COLUMNS x xml PATH 'node()', y xml PATH '/');
+SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>' COLUMNS x xml PATH '/e/n2', y xml PATH '/');
 -[ RECORD 1 ]-----------------------------------------------------------
-x | pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post
+x | <n2>&amp;deep</n2>
 y | <e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>+
   | 
 

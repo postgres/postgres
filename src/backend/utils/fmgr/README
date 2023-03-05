@@ -78,11 +78,7 @@ to find out the OID of the specific function being called.
 context is NULL for an "ordinary" function call, but may point to additional
 info when the function is called in certain contexts.  (For example, the
 trigger manager will pass information about the current trigger event here.)
-If context is used, it should point to some subtype of Node; the particular
-kind of context is indicated by the node type field.  (A callee should
-always check the node type before assuming it knows what kind of context is
-being passed.)  fmgr itself puts no other restrictions on the use of this
-field.
+Further details appear in "Function Call Contexts" below.
 
 resultinfo is NULL when calling any function from which a simple Datum
 result is expected.  It may point to some subtype of Node if the function
@@ -236,6 +232,114 @@ context.  When and if the value is actually stored into a tuple, the
 tuple toaster will decide whether toasting is needed.
 
 
+Function Call Contexts
+----------------------
+
+If a caller passes a non-NULL pointer in fcinfo->context, it should point
+to some subtype of Node; the particular kind of context is indicated by the
+node type field.  (A callee should always check the node type, via IsA(),
+before assuming it knows what kind of context is being passed.)  fmgr
+itself puts no other restrictions on the use of this field.
+
+Current uses of this convention include:
+
+* Trigger functions are passed an instance of struct TriggerData,
+containing information about the trigger context.  (The trigger function
+does not receive any normal arguments.)  See commands/trigger.h for
+more information and macros that are commonly used by trigger functions.
+
+* Aggregate functions (or to be precise, their transition and final
+functions) are passed an instance of struct AggState, that is the executor
+state node for the calling Agg plan node; or if they are called as window
+functions, they receive an instance of struct WindowAggState.  It is
+recommended that these pointers be used only via AggCheckCallContext()
+and sibling functions, which are declared in fmgr.h but are documented
+only with their source code in src/backend/executor/nodeAgg.c.  Typically
+these context nodes are only of interest when the transition and final
+functions wish to optimize execution based on knowing that they are being
+used within an aggregate rather than as standalone SQL functions.
+
+* True window functions receive an instance of struct WindowObject.
+(Like trigger functions, they don't receive any normal arguments.)
+See windowapi.h for more information.
+
+* Procedures are passed an instance of struct CallContext, containing
+information about the context of the CALL statement, particularly
+whether it is within an "atomic" execution context.
+
+* Some callers of datatype input functions (and in future perhaps
+other classes of functions) pass an instance of ErrorSaveContext.
+This indicates that the caller wishes to handle "soft" errors without
+a transaction-terminating exception being thrown: instead, the callee
+should store information about the error cause in the ErrorSaveContext
+struct and return a dummy result value.  Further details appear in
+"Handling Soft Errors" below.
+
+
+Handling Soft Errors
+--------------------
+
+Postgres' standard mechanism for reporting errors (ereport() or elog())
+is used for all sorts of error conditions.  This means that throwing
+an exception via ereport(ERROR) requires an expensive transaction or
+subtransaction abort and cleanup, since the exception catcher dare not
+make many assumptions about what has gone wrong.  There are situations
+where we would rather have a lighter-weight mechanism for dealing
+with errors that are known to be safe to recover from without a full
+transaction cleanup.  SQL-callable functions can support this need
+using the ErrorSaveContext context mechanism.
+
+To report a "soft" error, a SQL-callable function should call
+	errsave(fcinfo->context, ...)
+where it would previously have done
+	ereport(ERROR, ...)
+If the passed "context" is NULL or is not an ErrorSaveContext node,
+then errsave behaves precisely as ereport(ERROR): the exception is
+thrown via longjmp, so that control does not return.  If "context"
+is an ErrorSaveContext node, then the error information included in
+errsave's subsidiary reporting calls is stored into the context node
+and control returns from errsave normally.  The function should then
+return a dummy value to its caller.  (SQL NULL is recommendable as
+the dummy value; but anything will do, since the caller is expected
+to ignore the function's return value once it sees that an error has
+been reported in the ErrorSaveContext node.)
+
+If there is nothing to do except return after calling errsave(),
+you can save a line or two by writing
+	ereturn(fcinfo->context, dummy_value, ...)
+to perform errsave() and then "return dummy_value".
+
+An error reported "softly" must be safe, in the sense that there is
+no question about our ability to continue normal processing of the
+transaction.  Error conditions that should NOT be handled this way
+include out-of-memory, unexpected internal errors, or anything that
+cannot easily be cleaned up after.  Such cases should still be thrown
+with ereport, as they have been in the past.
+
+Considering datatype input functions as examples, typical "soft" error
+conditions include input syntax errors and out-of-range values.  An
+input function typically detects such cases with simple if-tests and
+can easily change the ensuing ereport call to an errsave or ereturn.
+Because of this restriction, it's typically not necessary to pass
+the ErrorSaveContext pointer down very far, as errors reported by
+low-level functions are typically reasonable to consider internal.
+(Another way to frame the distinction is that input functions should
+report all invalid-input conditions softly, but internal problems are
+hard errors.)
+
+Because no transaction cleanup will occur, a function that is exiting
+after errsave() returns will bear responsibility for resource cleanup.
+It is not necessary to be concerned about small leakages of palloc'd
+memory, since the caller should be running the function in a short-lived
+memory context.  However, resources such as locks, open files, or buffer
+pins must be closed out cleanly, as they would be in the non-error code
+path.
+
+Conventions for callers that use the ErrorSaveContext mechanism
+to trap errors are discussed with the declaration of that struct,
+in nodes/miscnodes.h.
+
+
 Functions Accepting or Returning Sets
 -------------------------------------
 
@@ -305,7 +409,7 @@ If available, the expected tuple descriptor is passed in ReturnSetInfo;
 in other contexts the expectedDesc field will be NULL.  The function need
 not pay attention to expectedDesc, but it may be useful in special cases.
 
-SetSingleFuncCall() is a helper function able to setup the function's
+InitMaterializedSRF() is a helper function able to setup the function's
 ReturnSetInfo for a single call, filling in the Tuplestore and the
 TupleDesc with the proper configuration for Materialize mode.
 

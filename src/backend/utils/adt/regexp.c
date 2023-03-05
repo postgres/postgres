@@ -3,7 +3,7 @@
  * regexp.c
  *	  Postgres' interface to the regular expression package.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -112,7 +112,7 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 
 /* Local functions */
 static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
-												pg_re_flags *flags,
+												pg_re_flags *re_flags,
 												int start_search,
 												Oid collation,
 												bool use_subpatterns,
@@ -1757,7 +1757,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 		splitctx->next_match++;
 	}
 
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
+	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
 }
 
 /* This is separate to keep the opr_sanity regression test from complaining */

@@ -90,7 +90,7 @@
  * efficient than using WaitLatch or WaitLatchOrSocket.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/latch.h
@@ -135,9 +135,16 @@ typedef struct Latch
 #define WL_SOCKET_CONNECTED  WL_SOCKET_WRITEABLE
 #endif
 #define WL_SOCKET_CLOSED 	 (1 << 7)
+#ifdef WIN32
+#define WL_SOCKET_ACCEPT	 (1 << 8)
+#else
+/* avoid having to deal with case on platforms not requiring it */
+#define WL_SOCKET_ACCEPT	WL_SOCKET_READABLE
+#endif
 #define WL_SOCKET_MASK		(WL_SOCKET_READABLE | \
 							 WL_SOCKET_WRITEABLE | \
 							 WL_SOCKET_CONNECTED | \
+							 WL_SOCKET_ACCEPT | \
 							 WL_SOCKET_CLOSED)
 
 typedef struct WaitEvent
@@ -168,6 +175,7 @@ extern void ShutdownLatchSupport(void);
 
 extern WaitEventSet *CreateWaitEventSet(MemoryContext context, int nevents);
 extern void FreeWaitEventSet(WaitEventSet *set);
+extern void FreeWaitEventSetAfterFork(WaitEventSet *set);
 extern int	AddWaitEventToSet(WaitEventSet *set, uint32 events, pgsocket fd,
 							  Latch *latch, void *user_data);
 extern void ModifyWaitEvent(WaitEventSet *set, int pos, uint32 events, Latch *latch);

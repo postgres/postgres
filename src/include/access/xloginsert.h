@@ -3,7 +3,7 @@
  *
  * Functions for generating WAL records
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xloginsert.h
@@ -15,7 +15,7 @@
 #include "access/xlogdefs.h"
 #include "storage/block.h"
 #include "storage/buf.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "utils/relcache.h"
 
 /*
@@ -43,21 +43,21 @@ extern void XLogBeginInsert(void);
 extern void XLogSetRecordFlags(uint8 flags);
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info);
 extern void XLogEnsureRecordSpace(int max_block_id, int ndatas);
-extern void XLogRegisterData(char *data, int len);
+extern void XLogRegisterData(char *data, uint32 len);
 extern void XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags);
-extern void XLogRegisterBlock(uint8 block_id, RelFileNode *rnode,
+extern void XLogRegisterBlock(uint8 block_id, RelFileLocator *rlocator,
 							  ForkNumber forknum, BlockNumber blknum, char *page,
 							  uint8 flags);
-extern void XLogRegisterBufData(uint8 block_id, char *data, int len);
+extern void XLogRegisterBufData(uint8 block_id, char *data, uint32 len);
 extern void XLogResetInsertion(void);
 extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
 
-extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
-							  BlockNumber blk, char *page, bool page_std);
-extern void log_newpages(RelFileNode *rnode, ForkNumber forkNum, int num_pages,
+extern XLogRecPtr log_newpage(RelFileLocator *rlocator, ForkNumber forknum,
+							  BlockNumber blkno, char *page, bool page_std);
+extern void log_newpages(RelFileLocator *rlocator, ForkNumber forknum, int num_pages,
 						 BlockNumber *blknos, char **pages, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
-extern void log_newpage_range(Relation rel, ForkNumber forkNum,
+extern void log_newpage_range(Relation rel, ForkNumber forknum,
 							  BlockNumber startblk, BlockNumber endblk, bool page_std);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
 

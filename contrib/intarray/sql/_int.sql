@@ -75,6 +75,21 @@ SELECT '1&2&4&5&6'::query_int;
 SELECT '1&(2&(4&(5|6)))'::query_int;
 SELECT '1&(2&(4&(5|!6)))'::query_int;
 
+-- test non-error-throwing input
+
+SELECT str as "query_int",
+       pg_input_is_valid(str,'query_int') as ok,
+       errinfo.sql_error_code,
+       errinfo.message,
+       errinfo.detail,
+       errinfo.hint
+FROM (VALUES ('1&(2&(4&(5|6)))'),
+             ('1#(2&(4&(5&6)))'),
+             ('foo'))
+      AS a(str),
+     LATERAL pg_input_error_info(a.str, 'query_int') as errinfo;
+
+
 
 CREATE TABLE test__int( a int[] );
 \copy test__int from 'data/test__int.data'

@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/auth-delay.sgml -->
 
 <sect1 id="auth-delay" xreflabel="auth_delay">
- <title>auth_delay</title>
+ <title>auth_delay &mdash; pause on authentication failure</title>
 
  <indexterm zone="auth-delay">
   <primary>auth_delay</primary>
@@ -21,7 +21,7 @@
   <xref linkend="guc-shared-preload-libraries"/> in <filename>postgresql.conf</filename>.
  </para>
 
- <sect2>
+ <sect2 id="auth-delay-configuration-parameters">
   <title>Configuration Parameters</title>
 
   <variablelist>
@@ -54,7 +54,7 @@ auth_delay.milliseconds = '500'
 </programlisting>
  </sect2>
 
- <sect2>
+ <sect2 id="auth-delay-author">
   <title>Author</title>
 
   <para>

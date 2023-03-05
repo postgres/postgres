@@ -8,13 +8,15 @@
 #
 # CATALOG_NAME          -- name of the message catalog (xxx.po); probably
 #                          name of the program
-# AVAIL_LANGUAGES       -- list of languages that are provided/supported
 # GETTEXT_FILES         -- list of source files that contain message strings
 # GETTEXT_TRIGGERS      -- (optional) list of functions that contain
 #                          translatable strings
 # GETTEXT_FLAGS         -- (optional) list of gettext --flag arguments to mark
 #                          function arguments that contain C format strings
 #                          (functions must be listed in TRIGGERS and FLAGS)
+#
+# Also, provide a text file 'po/LINGUAS' with a space-separated list
+# of languages that are provided/supported.
 #
 # That's all, the rest is done here, if --enable-nls was specified.
 #
@@ -26,6 +28,8 @@
 
 # existence checked by Makefile.global; otherwise we won't get here
 include $(srcdir)/nls.mk
+
+AVAIL_LANGUAGES := $(shell cat $(srcdir)/po/LINGUAS)
 
 # If user specified the languages he wants in --enable-nls=LANGUAGES,
 # filter out the rest.  Else use all available ones.

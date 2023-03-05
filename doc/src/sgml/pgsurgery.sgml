@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgsurgery.sgml -->
 
 <sect1 id="pgsurgery" xreflabel="pg_surgery">
- <title>pg_surgery</title>
+ <title>pg_surgery &mdash; perform low-level surgery on relation data</title>
 
  <indexterm zone="pgsurgery">
   <primary>pg_surgery</primary>
@@ -18,7 +18,7 @@
   They should be used with great caution and only as a last resort.
  </para>
 
- <sect2>
+ <sect2 id="pgsurgery-funcs">
   <title>Functions</title>
 
   <variablelist>
@@ -96,7 +96,7 @@ test=# select ctid from t1 where xmin = 2;
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pgsurgery-authors">
   <title>Authors</title>
 
   <para>

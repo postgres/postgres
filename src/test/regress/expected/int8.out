@@ -42,6 +42,31 @@ SELECT * FROM INT8_TBL;
  4567890123456789 | -4567890123456789
 (5 rows)
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34', 'int8');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('asdf', 'int8');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('10000000000000000000', 'int8');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('10000000000000000000', 'int8');
+                           message                            | detail | hint | sql_error_code 
+--------------------------------------------------------------+--------+------+----------------
+ value "10000000000000000000" is out of range for type bigint |        |      | 22003
+(1 row)
+
 -- int8/int8 cmp
 SELECT * FROM INT8_TBL WHERE q2 = 4567890123456789;
         q1        |        q2        
@@ -927,3 +952,139 @@ SELECT lcm((-9223372036854775808)::int8, 1::int8); -- overflow
 ERROR:  bigint out of range
 SELECT lcm(9223372036854775807::int8, 9223372036854775806::int8); -- overflow
 ERROR:  bigint out of range
+-- non-decimal literals
+SELECT int8 '0b100101';
+ int8 
+------
+   37
+(1 row)
+
+SELECT int8 '0o273';
+ int8 
+------
+  187
+(1 row)
+
+SELECT int8 '0x42F';
+ int8 
+------
+ 1071
+(1 row)
+
+SELECT int8 '0b';
+ERROR:  invalid input syntax for type bigint: "0b"
+LINE 1: SELECT int8 '0b';
+                    ^
+SELECT int8 '0o';
+ERROR:  invalid input syntax for type bigint: "0o"
+LINE 1: SELECT int8 '0o';
+                    ^
+SELECT int8 '0x';
+ERROR:  invalid input syntax for type bigint: "0x"
+LINE 1: SELECT int8 '0x';
+                    ^
+-- cases near overflow
+SELECT int8 '0b111111111111111111111111111111111111111111111111111111111111111';
+        int8         
+---------------------
+ 9223372036854775807
+(1 row)
+
+SELECT int8 '0b1000000000000000000000000000000000000000000000000000000000000000';
+ERROR:  value "0b1000000000000000000000000000000000000000000000000000000000000000" is out of range for type bigint
+LINE 1: SELECT int8 '0b100000000000000000000000000000000000000000000...
+                    ^
+SELECT int8 '0o777777777777777777777';
+        int8         
+---------------------
+ 9223372036854775807
+(1 row)
+
+SELECT int8 '0o1000000000000000000000';
+ERROR:  value "0o1000000000000000000000" is out of range for type bigint
+LINE 1: SELECT int8 '0o1000000000000000000000';
+                    ^
+SELECT int8 '0x7FFFFFFFFFFFFFFF';
+        int8         
+---------------------
+ 9223372036854775807
+(1 row)
+
+SELECT int8 '0x8000000000000000';
+ERROR:  value "0x8000000000000000" is out of range for type bigint
+LINE 1: SELECT int8 '0x8000000000000000';
+                    ^
+SELECT int8 '-0b1000000000000000000000000000000000000000000000000000000000000000';
+         int8         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT int8 '-0b1000000000000000000000000000000000000000000000000000000000000001';
+ERROR:  value "-0b1000000000000000000000000000000000000000000000000000000000000001" is out of range for type bigint
+LINE 1: SELECT int8 '-0b10000000000000000000000000000000000000000000...
+                    ^
+SELECT int8 '-0o1000000000000000000000';
+         int8         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT int8 '-0o1000000000000000000001';
+ERROR:  value "-0o1000000000000000000001" is out of range for type bigint
+LINE 1: SELECT int8 '-0o1000000000000000000001';
+                    ^
+SELECT int8 '-0x8000000000000000';
+         int8         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT int8 '-0x8000000000000001';
+ERROR:  value "-0x8000000000000001" is out of range for type bigint
+LINE 1: SELECT int8 '-0x8000000000000001';
+                    ^
+-- underscores
+SELECT int8 '1_000_000';
+  int8   
+---------
+ 1000000
+(1 row)
+
+SELECT int8 '1_2_3';
+ int8 
+------
+  123
+(1 row)
+
+SELECT int8 '0x1EEE_FFFF';
+   int8    
+-----------
+ 518979583
+(1 row)
+
+SELECT int8 '0o2_73';
+ int8 
+------
+  187
+(1 row)
+
+SELECT int8 '0b_10_0101';
+ int8 
+------
+   37
+(1 row)
+
+-- error cases
+SELECT int8 '_100';
+ERROR:  invalid input syntax for type bigint: "_100"
+LINE 1: SELECT int8 '_100';
+                    ^
+SELECT int8 '100_';
+ERROR:  invalid input syntax for type bigint: "100_"
+LINE 1: SELECT int8 '100_';
+                    ^
+SELECT int8 '100__000';
+ERROR:  invalid input syntax for type bigint: "100__000"
+LINE 1: SELECT int8 '100__000';
+                    ^

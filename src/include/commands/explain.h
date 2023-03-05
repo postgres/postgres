@@ -3,7 +3,7 @@
  * explain.h
  *	  prototypes for explain.c
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * src/include/commands/explain.h
@@ -99,6 +99,7 @@ extern void ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainPrintJITSummary(ExplainState *es, QueryDesc *queryDesc);
 
 extern void ExplainQueryText(ExplainState *es, QueryDesc *queryDesc);
+extern void ExplainQueryParameters(ExplainState *es, ParamListInfo params, int maxlen);
 
 extern void ExplainBeginOutput(ExplainState *es);
 extern void ExplainEndOutput(ExplainState *es);

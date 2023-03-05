@@ -134,12 +134,12 @@ def get_plain_letter(codepoint, table):
             return table[codepoint.combining_ids[0]]
 
         # Should not come here
-        assert(False)
+        assert False, 'Codepoint U+%0.2X' % codepoint.id
     elif is_plain_letter(codepoint):
         return codepoint
 
     # Should not come here
-    assert(False)
+    assert False, 'Codepoint U+%0.2X' % codepoint.id
 
 
 def is_ligature(codepoint, table):
@@ -212,7 +212,6 @@ def special_cases():
     # Symbols of "Letterlike Symbols" Unicode Block (U+2100 to U+214F)
     charactersSet.add((0x2103, "\xb0C"))   # DEGREE CELSIUS
     charactersSet.add((0x2109, "\xb0F"))   # DEGREE FAHRENHEIT
-    charactersSet.add((0x2117, "(P)"))     # SOUND RECORDING COPYRIGHT
 
     return charactersSet
 

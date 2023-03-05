@@ -3,7 +3,7 @@
  * pl_funcs.c		- Misc functions for the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1647,13 +1647,12 @@ plpgsql_dumptree(PLpgSQL_function *func)
 			case PLPGSQL_DTYPE_ROW:
 				{
 					PLpgSQL_row *row = (PLpgSQL_row *) d;
-					int			i;
 
 					printf("ROW %-16s fields", row->refname);
-					for (i = 0; i < row->nfields; i++)
+					for (int j = 0; j < row->nfields; j++)
 					{
-						printf(" %s=var %d", row->fieldnames[i],
-							   row->varnos[i]);
+						printf(" %s=var %d", row->fieldnames[j],
+							   row->varnos[j]);
 					}
 					printf("\n");
 				}

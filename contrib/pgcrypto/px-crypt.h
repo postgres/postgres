@@ -48,8 +48,8 @@
 /*
  * main interface
  */
-char	   *px_crypt(const char *psw, const char *salt, char *buf, unsigned buflen);
-int			px_gen_salt(const char *salt_type, char *dst, int rounds);
+char	   *px_crypt(const char *psw, const char *salt, char *buf, unsigned len);
+int			px_gen_salt(const char *salt_type, char *buf, int rounds);
 
 /*
  * internal functions
@@ -77,6 +77,6 @@ char	   *px_crypt_des(const char *key, const char *setting);
 
 /* crypt-md5.c */
 char	   *px_crypt_md5(const char *pw, const char *salt,
-						 char *dst, unsigned dstlen);
+						 char *passwd, unsigned dstlen);
 
 #endif							/* _PX_CRYPT_H */

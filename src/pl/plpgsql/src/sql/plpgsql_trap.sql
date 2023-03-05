@@ -88,7 +88,7 @@ begin
   declare x int;
   begin
     -- we assume this will take longer than 1 second:
-    select count(*) into x from generate_series(1, 1000000000000);
+    select count(*) into x from generate_series(1, 1_000_000_000_000);
   exception
     when others then
       raise notice 'caught others?';

@@ -13,7 +13,7 @@
  * come from different tuples. In theory, the standard scalar selectivity
  * functions could be used with the combined histogram.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -31,8 +31,9 @@
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
 #include "utils/multirangetypes.h"
+#include "varatt.h"
 
-static int	float8_qsort_cmp(const void *a1, const void *a2);
+static int	float8_qsort_cmp(const void *a1, const void *a2, void *arg);
 static int	range_bound_qsort_cmp(const void *a1, const void *a2, void *arg);
 static void compute_range_stats(VacAttrStats *stats,
 								AnalyzeAttrFetchFunc fetchfunc, int samplerows,
@@ -93,7 +94,7 @@ multirange_typanalyze(PG_FUNCTION_ARGS)
  * Comparison function for sorting float8s, used for range lengths.
  */
 static int
-float8_qsort_cmp(const void *a1, const void *a2)
+float8_qsort_cmp(const void *a1, const void *a2, void *arg)
 {
 	const float8 *f1 = (const float8 *) a1;
 	const float8 *f2 = (const float8 *) a2;
@@ -280,10 +281,10 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		if (non_empty_cnt >= 2)
 		{
 			/* Sort bound values */
-			qsort_arg(lowers, non_empty_cnt, sizeof(RangeBound),
-					  range_bound_qsort_cmp, typcache);
-			qsort_arg(uppers, non_empty_cnt, sizeof(RangeBound),
-					  range_bound_qsort_cmp, typcache);
+			qsort_interruptible(lowers, non_empty_cnt, sizeof(RangeBound),
+								range_bound_qsort_cmp, typcache);
+			qsort_interruptible(uppers, non_empty_cnt, sizeof(RangeBound),
+								range_bound_qsort_cmp, typcache);
 
 			num_hist = non_empty_cnt;
 			if (num_hist > num_bins)
@@ -311,7 +312,8 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				bound_hist_values[i] = PointerGetDatum(range_serialize(typcache,
 																	   &lowers[pos],
 																	   &uppers[pos],
-																	   false));
+																	   false,
+																	   NULL));
 				pos += delta;
 				posfrac += deltafrac;
 				if (posfrac >= (num_hist - 1))
@@ -345,7 +347,8 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * Ascending sort of range lengths for further filling of
 			 * histogram
 			 */
-			qsort(lengths, non_empty_cnt, sizeof(float8), float8_qsort_cmp);
+			qsort_interruptible(lengths, non_empty_cnt, sizeof(float8),
+								float8_qsort_cmp, NULL);
 
 			num_hist = non_empty_cnt;
 			if (num_hist > num_bins)

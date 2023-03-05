@@ -3,7 +3,7 @@
  * verify_heapam.c
  *	  Functions to check postgresql heap relations for corruption
  *
- * Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  *	  contrib/amcheck/verify_heapam.c
  *-------------------------------------------------------------------------
@@ -278,7 +278,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 	ctx.attnum = -1;
 
 	/* Construct the tuplestore and tuple descriptor */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 	ctx.tupdesc = rsinfo->setDesc;
 	ctx.tupstore = rsinfo->setResult;
 
@@ -554,12 +554,10 @@ report_corruption_internal(Tuplestorestate *tupstore, TupleDesc tupdesc,
 						   BlockNumber blkno, OffsetNumber offnum,
 						   AttrNumber attnum, char *msg)
 {
-	Datum		values[HEAPCHECK_RELATION_COLS];
-	bool		nulls[HEAPCHECK_RELATION_COLS];
+	Datum		values[HEAPCHECK_RELATION_COLS] = {0};
+	bool		nulls[HEAPCHECK_RELATION_COLS] = {0};
 	HeapTuple	tuple;
 
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = Int64GetDatum(blkno);
 	values[1] = Int32GetDatum(offnum);
 	values[2] = Int32GetDatum(attnum);
@@ -1321,7 +1319,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	 */
 
 	/*
-	 * Check that VARTAG_SIZE won't hit a TrapMacro on a corrupt va_tag before
+	 * Check that VARTAG_SIZE won't hit an Assert on a corrupt va_tag before
 	 * risking a call into att_addlength_pointer
 	 */
 	if (VARATT_IS_EXTERNAL(tp + ctx->offset))

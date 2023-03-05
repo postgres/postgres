@@ -8,7 +8,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/pg_regress.c
@@ -19,15 +19,12 @@
 #include "postgres_fe.h"
 
 #include <ctype.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
-
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
 
 #include "common/logging.h"
 #include "common/restricted_token.h"
@@ -76,6 +73,7 @@ _stringlist *dblist = NULL;
 bool		debug = false;
 char	   *inputdir = ".";
 char	   *outputdir = ".";
+char       *expecteddir = ".";
 char	   *bindir = PGBINDIR;
 char	   *launcher = NULL;
 static _stringlist *loadextension = NULL;
@@ -102,11 +100,9 @@ static char *logfilename;
 static FILE *logfile;
 static char *difffilename;
 static const char *sockdir;
-#ifdef HAVE_UNIX_SOCKETS
 static const char *temp_sockdir;
 static char sockself[MAXPGPATH];
 static char socklock[MAXPGPATH];
-#endif
 
 static _resultmap *resultmap = NULL;
 
@@ -115,7 +111,6 @@ static bool postmaster_running = false;
 
 static int	success_count = 0;
 static int	fail_count = 0;
-static int	fail_ignore_count = 0;
 
 static bool directory_exists(const char *dir);
 static void make_directory(const char *dir);
@@ -129,7 +124,7 @@ static void psql_end_command(StringInfo buf, const char *database);
 /*
  * allow core files if possible.
  */
-#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+#if defined(HAVE_GETRLIMIT)
 static void
 unlimit_core_size(void)
 {
@@ -267,15 +262,12 @@ stop_postmaster(void)
 		char		buf[MAXPGPATH * 2];
 		int			r;
 
-		/* On Windows, system() seems not to force fflush, so... */
-		fflush(stdout);
-		fflush(stderr);
-
 		snprintf(buf, sizeof(buf),
 				 "\"%s%spg_ctl\" stop -D \"%s/data\" -s",
 				 bindir ? bindir : "",
 				 bindir ? "/" : "",
 				 temp_instance);
+		fflush(NULL);
 		r = system(buf);
 		if (r != 0)
 		{
@@ -288,7 +280,6 @@ stop_postmaster(void)
 	}
 }
 
-#ifdef HAVE_UNIX_SOCKETS
 /*
  * Remove the socket temporary directory.  pg_regress never waits for a
  * postmaster exit, so it is indeterminate whether the postmaster has yet to
@@ -311,12 +302,12 @@ remove_temp(void)
  * Signal handler that calls remove_temp() and reraises the signal.
  */
 static void
-signal_remove_temp(int signum)
+signal_remove_temp(SIGNAL_ARGS)
 {
 	remove_temp();
 
-	pqsignal(signum, SIG_DFL);
-	raise(signum);
+	pqsignal(postgres_signal_arg, SIG_DFL);
+	raise(postgres_signal_arg);
 }
 
 /*
@@ -363,7 +354,6 @@ make_temp_sockdir(void)
 
 	return temp_sockdir;
 }
-#endif							/* HAVE_UNIX_SOCKETS */
 
 /*
  * Check whether string matches pattern
@@ -686,7 +676,6 @@ initialize_environment(void)
 		/* PGPORT, see below */
 		/* PGHOST, see below */
 
-#ifdef HAVE_UNIX_SOCKETS
 		if (hostname != NULL)
 			setenv("PGHOST", hostname, 1);
 		else
@@ -696,10 +685,6 @@ initialize_environment(void)
 				sockdir = make_temp_sockdir();
 			setenv("PGHOST", sockdir, 1);
 		}
-#else
-		Assert(hostname != NULL);
-		setenv("PGHOST", hostname, 1);
-#endif
 		unsetenv("PGHOSTADDR");
 		if (port != -1)
 		{
@@ -749,11 +734,9 @@ initialize_environment(void)
 		if (!pghost)
 		{
 			/* Keep this bit in sync with libpq's default host location: */
-#ifdef HAVE_UNIX_SOCKETS
 			if (DEFAULT_PGSOCKET_DIR[0])
 				 /* do nothing, we'll print "Unix socket" below */ ;
 			else
-#endif
 				pghost = "localhost";	/* DefaultHost in fe-connect.c */
 		}
 
@@ -1042,6 +1025,7 @@ psql_end_command(StringInfo buf, const char *database)
 					 database);
 
 	/* And now we can execute the shell command */
+	fflush(NULL);
 	if (system(buf->data) != 0)
 	{
 		/* psql probably already reported the error */
@@ -1076,13 +1060,9 @@ spawn_process(const char *cmdline)
 	pid_t		pid;
 
 	/*
-	 * Must flush I/O buffers before fork.  Ideally we'd use fflush(NULL) here
-	 * ... does anyone still care about systems where that doesn't work?
+	 * Must flush I/O buffers before fork.
 	 */
-	fflush(stdout);
-	fflush(stderr);
-	if (logfile)
-		fflush(logfile);
+	fflush(NULL);
 
 #ifdef EXEC_BACKEND
 	pg_disable_aslr();
@@ -1260,6 +1240,7 @@ run_diff(const char *cmd, const char *filename)
 {
 	int			r;
 
+	fflush(NULL);
 	r = system(cmd);
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
 	{
@@ -1547,7 +1528,6 @@ run_schedule(const char *schedule, test_start_function startfunc,
 	instr_time	starttimes[MAX_PARALLEL_TESTS];
 	instr_time	stoptimes[MAX_PARALLEL_TESTS];
 	int			statuses[MAX_PARALLEL_TESTS];
-	_stringlist *ignorelist = NULL;
 	char		scbuf[1024];
 	FILE	   *scf;
 	int			line_num = 0;
@@ -1584,20 +1564,6 @@ run_schedule(const char *schedule, test_start_function startfunc,
 			continue;
 		if (strncmp(scbuf, "test: ", 6) == 0)
 			test = scbuf + 6;
-		else if (strncmp(scbuf, "ignore: ", 8) == 0)
-		{
-			c = scbuf + 8;
-			while (*c && isspace((unsigned char) *c))
-				c++;
-			add_stringlist_item(&ignorelist, c);
-
-			/*
-			 * Note: ignore: lines do not run the test, they just say that
-			 * failure of this test when run later on is to be ignored. A bit
-			 * odd but that's how the shell-script version did it.
-			 */
-			continue;
-		}
 		else
 		{
 			fprintf(stderr, _("syntax error in schedule file \"%s\" line %d: %s\n"),
@@ -1731,38 +1697,26 @@ run_schedule(const char *schedule, test_start_function startfunc,
 				differ |= newdiff;
 			}
 
-			if (differ)
+			if (statuses[i] != 0)
 			{
-				bool		ignore = false;
-				_stringlist *sl;
+				status(_("FAILED"));
+				log_child_failure(statuses[i]);
+				fail_count++;
+			}
+			else
+			{
 
-				for (sl = ignorelist; sl != NULL; sl = sl->next)
-				{
-					if (strcmp(tests[i], sl->str) == 0)
-					{
-						ignore = true;
-						break;
-					}
-				}
-				if (ignore)
-				{
-					status(_("failed (ignored)"));
-					fail_ignore_count++;
-				}
-				else
+				if (differ)
 				{
 					status(_("FAILED"));
 					fail_count++;
 				}
+				else
+				{
+					status(_("ok    "));	/* align with FAILED */
+					success_count++;
+				}
 			}
-			else
-			{
-				status(_("ok    "));	/* align with FAILED */
-				success_count++;
-			}
-
-			if (statuses[i] != 0)
-				log_child_failure(statuses[i]);
 
 			INSTR_TIME_SUBTRACT(stoptimes[i], starttimes[i]);
 			status(_(" %8.0f ms"), INSTR_TIME_GET_MILLISEC(stoptimes[i]));
@@ -1779,8 +1733,6 @@ run_schedule(const char *schedule, test_start_function startfunc,
 			free_stringlist(&tags[i]);
 		}
 	}
-
-	free_stringlist(&ignorelist);
 
 	fclose(scf);
 }
@@ -1833,19 +1785,25 @@ run_single_test(const char *test, test_start_function startfunc,
 		differ |= newdiff;
 	}
 
-	if (differ)
+	if (exit_status != 0)
 	{
 		status(_("FAILED"));
 		fail_count++;
+		log_child_failure(exit_status);
 	}
 	else
 	{
-		status(_("ok    "));	/* align with FAILED */
-		success_count++;
+		if (differ)
+		{
+			status(_("FAILED"));
+			fail_count++;
+		}
+		else
+		{
+			status(_("ok    "));	/* align with FAILED */
+			success_count++;
+		}
 	}
-
-	if (exit_status != 0)
-		log_child_failure(exit_status);
 
 	INSTR_TIME_SUBTRACT(stoptime, starttime);
 	status(_(" %8.0f ms"), INSTR_TIME_GET_MILLISEC(stoptime));
@@ -1989,6 +1947,7 @@ help(void)
 	printf(_("      --debug                   turn on debug mode in programs that are run\n"));
 	printf(_("      --dlpath=DIR              look for dynamic libraries in DIR\n"));
 	printf(_("      --encoding=ENCODING       use ENCODING as the encoding\n"));
+	printf(_("      --expecteddir=DIR         take expected files from DIR (default \".\")\n"));
 	printf(_("  -h, --help                    show this help, then exit\n"));
 	printf(_("      --inputdir=DIR            take input files from DIR (default \".\")\n"));
 	printf(_("      --launcher=CMD            use CMD as launcher of psql\n"));
@@ -2052,6 +2011,7 @@ regression_main(int argc, char *argv[],
 		{"load-extension", required_argument, NULL, 22},
 		{"config-auth", required_argument, NULL, 24},
 		{"max-concurrent-tests", required_argument, NULL, 25},
+		{"expecteddir", required_argument, NULL, 26},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2071,14 +2031,11 @@ regression_main(int argc, char *argv[],
 
 	atexit(stop_postmaster);
 
-#if !defined(HAVE_UNIX_SOCKETS)
-	use_unix_sockets = false;
-#elif defined(WIN32)
+#if defined(WIN32)
 
 	/*
-	 * We don't use Unix-domain sockets on Windows by default, even if the
-	 * build supports them.  (See comment at remove_temp() for a reason.)
-	 * Override at your own risk.
+	 * We don't use Unix-domain sockets on Windows by default (see comment at
+	 * remove_temp() for a reason).  Override at your own risk.
 	 */
 	use_unix_sockets = getenv("PG_TEST_USE_UNIX_SOCKETS") ? true : false;
 #else
@@ -2181,6 +2138,9 @@ regression_main(int argc, char *argv[],
 			case 25:
 				max_concurrent_tests = atoi(optarg);
 				break;
+			case 26:
+				expecteddir = pg_strdup(optarg);
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),
@@ -2198,6 +2158,17 @@ regression_main(int argc, char *argv[],
 		optind++;
 	}
 
+	/*
+	 * We must have a database to run the tests in; either a default name, or
+	 * one supplied by the --dbname switch.
+	 */
+	if (!(dblist && dblist->str && dblist->str[0]))
+	{
+		fprintf(stderr, _("%s: no database name was specified\n"),
+				progname);
+		exit(2);
+	}
+
 	if (config_auth_datadir)
 	{
 #ifdef ENABLE_SSPI
@@ -2212,7 +2183,7 @@ regression_main(int argc, char *argv[],
 		/*
 		 * To reduce chances of interference with parallel installations, use
 		 * a port number starting in the private range (49152-65535)
-		 * calculated from the version number.  This aids !HAVE_UNIX_SOCKETS
+		 * calculated from the version number.  This aids non-Unix socket mode
 		 * systems; elsewhere, the use of a private socket directory already
 		 * prevents interference.
 		 */
@@ -2220,6 +2191,7 @@ regression_main(int argc, char *argv[],
 
 	inputdir = make_absolute_path(inputdir);
 	outputdir = make_absolute_path(outputdir);
+	expecteddir = make_absolute_path(expecteddir);
 	dlpath = make_absolute_path(dlpath);
 
 	/*
@@ -2229,7 +2201,7 @@ regression_main(int argc, char *argv[],
 
 	initialize_environment();
 
-#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+#if defined(HAVE_GETRLIMIT)
 	unlimit_core_size();
 #endif
 
@@ -2274,6 +2246,7 @@ regression_main(int argc, char *argv[],
 				 debug ? " --debug" : "",
 				 nolocale ? " --no-locale" : "",
 				 outputdir);
+		fflush(NULL);
 		if (system(buf))
 		{
 			fprintf(stderr, _("\n%s: initdb failed\nExamine %s/log/initdb.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
@@ -2332,8 +2305,6 @@ regression_main(int argc, char *argv[],
 			snprintf(buf, sizeof(buf), "%s/data", temp_instance);
 			config_sspi_auth(buf, NULL);
 		}
-#elif !defined(HAVE_UNIX_SOCKETS)
-#error Platform has no means to secure the test installation.
 #endif
 
 		/*
@@ -2347,6 +2318,7 @@ regression_main(int argc, char *argv[],
 
 		for (i = 0; i < 16; i++)
 		{
+			fflush(NULL);
 			if (system(buf2) == 0)
 			{
 				char		s[16];
@@ -2410,6 +2382,7 @@ regression_main(int argc, char *argv[],
 		for (i = 0; i < wait_seconds; i++)
 		{
 			/* Done if psql succeeds */
+			fflush(NULL);
 			if (system(buf2) == 0)
 				break;
 
@@ -2519,7 +2492,7 @@ regression_main(int argc, char *argv[],
 	 * conserve disk space.  (If there were errors, we leave the instance in
 	 * place for possible manual investigation.)
 	 */
-	if (temp_instance && fail_count == 0 && fail_ignore_count == 0)
+	if (temp_instance && fail_count == 0)
 	{
 		header(_("removing temporary instance"));
 		if (!rmtree(temp_instance, true))
@@ -2532,28 +2505,15 @@ regression_main(int argc, char *argv[],
 	/*
 	 * Emit nice-looking summary message
 	 */
-	if (fail_count == 0 && fail_ignore_count == 0)
+	if (fail_count == 0)
 		snprintf(buf, sizeof(buf),
 				 _(" All %d tests passed. "),
 				 success_count);
-	else if (fail_count == 0)	/* fail_count=0, fail_ignore_count>0 */
-		snprintf(buf, sizeof(buf),
-				 _(" %d of %d tests passed, %d failed test(s) ignored. "),
-				 success_count,
-				 success_count + fail_ignore_count,
-				 fail_ignore_count);
-	else if (fail_ignore_count == 0)	/* fail_count>0 && fail_ignore_count=0 */
+	else
 		snprintf(buf, sizeof(buf),
 				 _(" %d of %d tests failed. "),
 				 fail_count,
 				 success_count + fail_count);
-	else
-		/* fail_count>0 && fail_ignore_count>0 */
-		snprintf(buf, sizeof(buf),
-				 _(" %d of %d tests failed, %d of these failures ignored. "),
-				 fail_count + fail_ignore_count,
-				 success_count + fail_count + fail_ignore_count,
-				 fail_ignore_count);
 
 	putchar('\n');
 	for (i = strlen(buf); i > 0; i--)

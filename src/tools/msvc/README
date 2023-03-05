@@ -4,7 +4,7 @@ MSVC build
 ==========
 
 This directory contains the tools required to build PostgreSQL using
-Microsoft Visual Studio 2013 - 2022. This builds the whole backend, not just
+Microsoft Visual Studio 2015 - 2022. This builds the whole backend, not just
 the libpq frontend library. For more information, see the documentation
 chapter "Installation on Windows" and the description below.
 
@@ -67,7 +67,7 @@ Install.pm             module containing the install logic
 Mkvcbuild.pm           module containing the code to generate the Visual
                        Studio build (project/solution) files
 MSBuildProject.pm      module containing the code to generate MSBuild based
-                       project files (Visual Studio 2013 or greater)
+                       project files (Visual Studio 2015 or greater)
 Project.pm             module containing the common code to generate the
                        Visual Studio project files. Also provides the
                        common interface of all project file generators
@@ -88,10 +88,10 @@ config_default.pl to create the configuration arguments.
 These configuration arguments are passed over to Mkvcbuild::mkvcbuild
 (Mkvcbuild.pm) which creates the Visual Studio project and solution files.
 It does this by using VSObjectFactory::CreateSolution to create an object
-implementing the Solution interface (this could be either VS2013Solution,
+implementing the Solution interface (this could be either
 VS2015Solution, VS2017Solution, VS2019Solution or VS2022Solution, all in
 Solution.pm, depending on the user's build environment) and adding objects
-implementing the corresponding Project interface (VC2013Project,
+implementing the corresponding Project interface (
 VC2015Project, VC2017Project, VC2019Project or VC2022Project from
 MSBuildProject.pm) to it. When Solution::Save is called, the implementations
 of Solution and Project save their content in the appropriate format.

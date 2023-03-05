@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgstatstatements.sgml -->
 
 <sect1 id="pgstatstatements" xreflabel="pg_stat_statements">
- <title>pg_stat_statements</title>
+ <title>pg_stat_statements &mdash; track statistics of SQL planning and execution</title>
 
  <indexterm zone="pgstatstatements">
   <primary>pg_stat_statements</primary>
@@ -36,7 +36,7 @@
    <command>CREATE EXTENSION pg_stat_statements</command>.
  </para>
 
- <sect2>
+ <sect2 id="pgstatstatements-pg-stat-statements">
   <title>The <structname>pg_stat_statements</structname> View</title>
 
   <para>
@@ -487,13 +487,13 @@
 
   <para>
    Plannable queries (that is, <command>SELECT</command>, <command>INSERT</command>,
-   <command>UPDATE</command>, and <command>DELETE</command>) are combined into a single
+   <command>UPDATE</command>, <command>DELETE</command>, and <command>MERGE</command>)
+   and utility commands are combined into a single
    <structname>pg_stat_statements</structname> entry whenever they have identical query
    structures according to an internal hash calculation.  Typically, two
    queries will be considered the same for this purpose if they are
    semantically equivalent except for the values of literal constants
-   appearing in the query.  Utility commands (that is, all other commands)
-   are compared strictly on the basis of their textual query strings, however.
+   appearing in the query.
   </para>
 
   <note>
@@ -514,6 +514,16 @@
    The rest of the query text is that of the first query that had the
    particular <structfield>queryid</structfield> hash value associated with the
    <structname>pg_stat_statements</structname> entry.
+  </para>
+
+  <para>
+   Queries on which normalization can be applied may be observed with constant
+   values in <structname>pg_stat_statements</structname>, especially when there
+   is a high rate of entry deallocations. To reduce the likelihood of this
+   happening, consider increasing <varname>pg_stat_statements.max</varname>.
+   The <structname>pg_stat_statements_info</structname> view, discussed below
+   in <xref linkend="pgstatstatements-pg-stat-statements-info"/>,
+   provides statistics about entry deallocations.
   </para>
 
   <para>
@@ -602,7 +612,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-pg-stat-statements-info">
   <title>The <structname>pg_stat_statements_info</structname> View</title>
 
   <indexterm>
@@ -658,7 +668,7 @@
   </table>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-funcs">
   <title>Functions</title>
 
   <variablelist>
@@ -721,7 +731,7 @@
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-config-params">
   <title>Configuration Parameters</title>
 
   <variablelist>
@@ -783,7 +793,7 @@
       <varname>pg_stat_statements.track_utility</varname> controls whether
       utility commands are tracked by the module.  Utility commands are
       all those other than <command>SELECT</command>, <command>INSERT</command>,
-      <command>UPDATE</command> and <command>DELETE</command>.
+      <command>UPDATE</command>, <command>DELETE</command>, and <command>MERGE</command>.
       The default value is <literal>on</literal>.
       Only superusers can change this setting.
      </para>
@@ -856,7 +866,7 @@ pg_stat_statements.track = all
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-sample-output">
   <title>Sample Output</title>
 
 <screen>
@@ -961,7 +971,7 @@ hit_percent     |
 </screen>
  </sect2>
 
- <sect2>
+ <sect2 id="pgstatstatements-authors">
   <title>Authors</title>
 
   <para>

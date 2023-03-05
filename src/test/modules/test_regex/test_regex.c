@@ -3,7 +3,7 @@
  * test_regex.c
  *		Test harness for the regular expression package.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -60,7 +60,7 @@ static void test_re_compile(text *text_re, int cflags, Oid collation,
 static void parse_test_flags(test_re_flags *flags, text *opts);
 static test_regex_ctx *setup_test_matches(text *orig_str,
 										  regex_t *cpattern,
-										  test_re_flags *flags,
+										  test_re_flags *re_flags,
 										  Oid collation,
 										  bool use_subpatterns);
 static ArrayType *build_test_info_result(regex_t *cpattern,

@@ -43,6 +43,40 @@ PostgreSQL documentation
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
+
+   <arg choice="plain" rep="repeat">
+    <arg choice="opt">
+     <group choice="plain">
+       <arg choice="plain">
+        <arg choice="opt">
+         <group choice="plain">
+          <arg choice="plain"><option>-n</option></arg>
+          <arg choice="plain"><option>--schema</option></arg>
+         </group>
+         <replaceable>schema</replaceable>
+        </arg>
+       </arg>
+
+       <arg choice="plain">
+        <arg choice="opt">
+         <group choice="plain">
+          <arg choice="plain"><option>-N</option></arg>
+          <arg choice="plain"><option>--exclude-schema</option></arg>
+         </group>
+         <replaceable>schema</replaceable>
+        </arg>
+       </arg>
+     </group>
+    </arg>
+   </arg>
+
+   <arg choice="opt"><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
+   <command>vacuumdb</command>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
    <group choice="plain">
     <arg choice="plain"><option>-a</option></arg>
     <arg choice="plain"><option>--all</option></arg>
@@ -241,6 +275,30 @@ PostgreSQL documentation
          <productname>PostgreSQL</productname> 9.6 and later.
         </para>
        </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-n <replaceable class="parameter">schema</replaceable></option></term>
+      <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <listitem>
+       <para>
+        Clean or analyze all tables in
+        <replaceable class="parameter">schema</replaceable> only.  Multiple
+        schemas can be vacuumed by writing multiple <option>-n</option> switches.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-N <replaceable class="parameter">schema</replaceable></option></term>
+      <term><option>--exclude-schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not clean or analyze any tables in
+        <replaceable class="parameter">schema</replaceable>.  Multiple schemas
+        can be excluded by writing multiple <option>-N</option> switches.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -618,6 +676,14 @@ PostgreSQL documentation
 <screen>
 <prompt>$ </prompt><userinput>vacuumdb --analyze --verbose --table='foo(bar)' xyzzy</userinput>
 </screen></para>
+
+   <para>
+    To clean all tables in the <literal>foo</literal> and <literal>bar</literal> schemas
+    in a database named <literal>xyzzy</literal>:
+<screen>
+<prompt>$ </prompt><userinput>vacuumdb --schema='foo' --schema='bar' xyzzy</userinput>
+</screen></para>
+
 
  </refsect1>
 

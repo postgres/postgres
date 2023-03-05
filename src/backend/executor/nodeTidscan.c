@@ -3,7 +3,7 @@
  * nodeTidscan.c
  *	  Routines to support direct tid scans of relations
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -35,11 +35,16 @@
 #include "utils/rel.h"
 
 
+/*
+ * It's sufficient to check varattno to identify the CTID variable, as any
+ * Var in the relation scan qual must be for our table.  (Even if it's a
+ * parameterized scan referencing some other table's CTID, the other table's
+ * Var would have become a Param by the time it gets here.)
+ */
 #define IsCTIDVar(node)  \
 	((node) != NULL && \
 	 IsA((node), Var) && \
-	 ((Var *) (node))->varattno == SelfItemPointerAttributeNumber && \
-	 ((Var *) (node))->varlevelsup == 0)
+	 ((Var *) (node))->varattno == SelfItemPointerAttributeNumber)
 
 /* one element in tss_tidexprs */
 typedef struct TidExpr
@@ -206,9 +211,7 @@ TidListEval(TidScanState *tidstate)
 			if (isNull)
 				continue;
 			itemarray = DatumGetArrayTypeP(arraydatum);
-			deconstruct_array(itemarray,
-							  TIDOID, sizeof(ItemPointerData), false, TYPALIGN_SHORT,
-							  &ipdatums, &ipnulls, &ndatums);
+			deconstruct_array_builtin(itemarray, TIDOID, &ipdatums, &ipnulls, &ndatums);
 			if (numTids + ndatums > numAllocTids)
 			{
 				numAllocTids = numTids + ndatums;
@@ -263,7 +266,7 @@ TidListEval(TidScanState *tidstate)
 		/* CurrentOfExpr could never appear OR'd with something else */
 		Assert(!tidstate->tss_isCurrentOf);
 
-		qsort((void *) tidList, numTids, sizeof(ItemPointerData),
+		qsort(tidList, numTids, sizeof(ItemPointerData),
 			  itemptr_comparator);
 		numTids = qunique(tidList, numTids, sizeof(ItemPointerData),
 						  itemptr_comparator);

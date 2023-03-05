@@ -6,7 +6,7 @@
  * The bgwriter process used to handle checkpointing duties too.  Now
  * there is a separate process, but we did not bother to split this header.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * src/include/postmaster/bgwriter.h
  *
@@ -16,7 +16,7 @@
 #define _BGWRITER_H
 
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "storage/smgr.h"
 #include "storage/sync.h"
 

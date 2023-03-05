@@ -3,7 +3,7 @@
  * wchar.c
  *	  Functions for working with multibyte characters in various encodings.
  *
- * Portions Copyright (c) 1998-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1998-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/wchar.c
@@ -620,7 +620,7 @@ mbbisearch(pg_wchar ucs, const struct mbinterval *table, int max)
  *		value of -1.
  *
  *	  - Non-spacing and enclosing combining characters (general
- *		category code Mn or Me in the Unicode database) have a
+ *		category code Mn, Me or Cf in the Unicode database) have a
  *		column width of 0.
  *
  *	  - Spacing characters in the East Asian Wide (W) or East Asian
@@ -638,7 +638,7 @@ mbbisearch(pg_wchar ucs, const struct mbinterval *table, int max)
 static int
 ucs_wcwidth(pg_wchar ucs)
 {
-#include "common/unicode_combining_table.h"
+#include "common/unicode_nonspacing_table.h"
 #include "common/unicode_east_asian_fw_table.h"
 
 	/* test for 8-bit control characters */
@@ -657,8 +657,8 @@ ucs_wcwidth(pg_wchar ucs)
 	 * factor for display width leads to the correct behavior, so do that
 	 * search first.
 	 */
-	if (mbbisearch(ucs, combining,
-				   sizeof(combining) / sizeof(struct mbinterval) - 1))
+	if (mbbisearch(ucs, nonspacing,
+				   sizeof(nonspacing) / sizeof(struct mbinterval) - 1))
 		return 0;
 
 	/* binary search in table of wide characters */
@@ -1919,10 +1919,11 @@ pg_utf8_verifystr(const unsigned char *s, int len)
 	uint32		state = BGN;
 
 /*
- * Sixteen seems to give the best balance of performance across different
- * byte distributions.
+ * With a stride of two vector widths, gcc will unroll the loop. Even if
+ * the compiler can unroll a longer loop, it's not worth it because we
+ * must fall back to the byte-wise algorithm if we find any non-ASCII.
  */
-#define STRIDE_LENGTH 16
+#define STRIDE_LENGTH (2 * sizeof(Vector8))
 
 	if (len >= STRIDE_LENGTH)
 	{

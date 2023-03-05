@@ -7,7 +7,7 @@
  *	  and join trees.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/primnodes.h
@@ -63,24 +63,31 @@ typedef enum OnCommitAction
 typedef struct RangeVar
 {
 	NodeTag		type;
-	char	   *catalogname;	/* the catalog (database) name, or NULL */
-	char	   *schemaname;		/* the schema name, or NULL */
-	char	   *relname;		/* the relation/sequence name */
-	bool		inh;			/* expand rel by inheritance? recursively act
-								 * on children? */
-	char		relpersistence; /* see RELPERSISTENCE_* in pg_class.h */
-	Alias	   *alias;			/* table alias & optional column aliases */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* the catalog (database) name, or NULL */
+	char	   *catalogname;
+
+	/* the schema name, or NULL */
+	char	   *schemaname;
+
+	/* the relation/sequence name */
+	char	   *relname;
+
+	/* expand rel by inheritance? recursively act on children? */
+	bool		inh;
+
+	/* see RELPERSISTENCE_* in pg_class.h */
+	char		relpersistence;
+
+	/* table alias & optional column aliases */
+	Alias	   *alias;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } RangeVar;
 
-typedef enum TableFuncType
-{
-	TFT_XMLTABLE,
-	TFT_JSON_TABLE
-} TableFuncType;
-
 /*
- * TableFunc - node for a table function, such as XMLTABLE or JSON_TABLE.
+ * TableFunc - node for a table function, such as XMLTABLE.
  *
  * Entries in the ns_names list are either String nodes containing
  * literal namespace names, or NULL pointers to represent DEFAULT.
@@ -88,22 +95,32 @@ typedef enum TableFuncType
 typedef struct TableFunc
 {
 	NodeTag		type;
-	TableFuncType functype;		/* XMLTABLE or JSON_TABLE */
-	List	   *ns_uris;		/* list of namespace URI expressions */
-	List	   *ns_names;		/* list of namespace names or NULL */
-	Node	   *docexpr;		/* input document expression */
-	Node	   *rowexpr;		/* row filter expression */
-	List	   *colnames;		/* column names (list of String) */
-	List	   *coltypes;		/* OID list of column type OIDs */
-	List	   *coltypmods;		/* integer list of column typmods */
-	List	   *colcollations;	/* OID list of column collation OIDs */
-	List	   *colexprs;		/* list of column filter expressions */
-	List	   *coldefexprs;	/* list of column default expressions */
-	List	   *colvalexprs;	/* list of column value expressions */
-	Bitmapset  *notnulls;		/* nullability flag for each output column */
-	Node	   *plan;			/* JSON_TABLE plan */
-	int			ordinalitycol;	/* counts from 0; -1 if none specified */
-	int			location;		/* token location, or -1 if unknown */
+	/* list of namespace URI expressions */
+	List	   *ns_uris pg_node_attr(query_jumble_ignore);
+	/* list of namespace names or NULL */
+	List	   *ns_names pg_node_attr(query_jumble_ignore);
+	/* input document expression */
+	Node	   *docexpr;
+	/* row filter expression */
+	Node	   *rowexpr;
+	/* column names (list of String) */
+	List	   *colnames pg_node_attr(query_jumble_ignore);
+	/* OID list of column type OIDs */
+	List	   *coltypes pg_node_attr(query_jumble_ignore);
+	/* integer list of column typmods */
+	List	   *coltypmods pg_node_attr(query_jumble_ignore);
+	/* OID list of column collation OIDs */
+	List	   *colcollations pg_node_attr(query_jumble_ignore);
+	/* list of column filter expressions */
+	List	   *colexprs;
+	/* list of column default expressions */
+	List	   *coldefexprs pg_node_attr(query_jumble_ignore);
+	/* nullability flag for each output column */
+	Bitmapset  *notnulls pg_node_attr(query_jumble_ignore);
+	/* counts from 0; -1 if none specified */
+	int			ordinalitycol pg_node_attr(query_jumble_ignore);
+	/* token location, or -1 if unknown */
+	int			location;
 } TableFunc;
 
 /*
@@ -144,6 +161,8 @@ typedef struct IntoClause
  */
 typedef struct Expr
 {
+	pg_node_attr(abstract)
+
 	NodeTag		type;
 } Expr;
 
@@ -168,8 +187,16 @@ typedef struct Expr
  * is abused to signify references to columns of a custom scan tuple type.)
  *
  * ROWID_VAR is used in the planner to identify nonce variables that carry
- * row identity information during UPDATE/DELETE.  This value should never
- * be seen outside the planner.
+ * row identity information during UPDATE/DELETE/MERGE.  This value should
+ * never be seen outside the planner.
+ *
+ * varnullingrels is the set of RT indexes of outer joins that can force
+ * the Var's value to null (at the point where it appears in the query).
+ * See optimizer/README for discussion of that.
+ *
+ * varlevelsup is greater than zero in Vars that represent outer references.
+ * Note that it affects the meaning of all of varno, varnullingrels, and
+ * varnosyn, all of which refer to the range table of that query level.
  *
  * In the parser, varnosyn and varattnosyn are either identical to
  * varno/varattno, or they specify the column's position in an aliased JOIN
@@ -195,19 +222,50 @@ typedef struct Expr
 typedef struct Var
 {
 	Expr		xpr;
-	int			varno;			/* index of this var's relation in the range
-								 * table, or INNER_VAR/OUTER_VAR/etc */
-	AttrNumber	varattno;		/* attribute number of this var, or zero for
-								 * all attrs ("whole-row Var") */
-	Oid			vartype;		/* pg_type OID for the type of this var */
-	int32		vartypmod;		/* pg_attribute typmod value */
-	Oid			varcollid;		/* OID of collation, or InvalidOid if none */
-	Index		varlevelsup;	/* for subquery variables referencing outer
-								 * relations; 0 in a normal var, >0 means N
-								 * levels up */
-	Index		varnosyn;		/* syntactic relation index (0 if unknown) */
-	AttrNumber	varattnosyn;	/* syntactic attribute number */
-	int			location;		/* token location, or -1 if unknown */
+
+	/*
+	 * index of this var's relation in the range table, or
+	 * INNER_VAR/OUTER_VAR/etc
+	 */
+	int			varno;
+
+	/*
+	 * attribute number of this var, or zero for all attrs ("whole-row Var")
+	 */
+	AttrNumber	varattno;
+
+	/* pg_type OID for the type of this var */
+	Oid			vartype pg_node_attr(query_jumble_ignore);
+	/* pg_attribute typmod value */
+	int32		vartypmod pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			varcollid pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * RT indexes of outer joins that can replace the Var's value with null.
+	 * We can omit varnullingrels in the query jumble, because it's fully
+	 * determined by varno/varlevelsup plus the Var's query location.
+	 */
+	Bitmapset  *varnullingrels pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * for subquery variables referencing outer relations; 0 in a normal var,
+	 * >0 means N levels up
+	 */
+	Index		varlevelsup;
+
+	/*
+	 * varnosyn/varattnosyn are ignored for equality, because Vars with
+	 * different syntactic identifiers are semantically the same as long as
+	 * their varno/varattno match.
+	 */
+	/* syntactic relation index (0 if unknown) */
+	Index		varnosyn pg_node_attr(equal_ignore, query_jumble_ignore);
+	/* syntactic attribute number */
+	AttrNumber	varattnosyn pg_node_attr(equal_ignore, query_jumble_ignore);
+
+	/* token location, or -1 if unknown */
+	int			location;
 } Var;
 
 /*
@@ -217,22 +275,39 @@ typedef struct Var
  * must be in non-extended form (4-byte header, no compression or external
  * references).  This ensures that the Const node is self-contained and makes
  * it more likely that equal() will see logically identical values as equal.
+ *
+ * Only the constant type OID is relevant for the query jumbling.
  */
 typedef struct Const
 {
+	pg_node_attr(custom_copy_equal, custom_read_write)
+
 	Expr		xpr;
-	Oid			consttype;		/* pg_type OID of the constant's datatype */
-	int32		consttypmod;	/* typmod value, if any */
-	Oid			constcollid;	/* OID of collation, or InvalidOid if none */
-	int			constlen;		/* typlen of the constant's datatype */
-	Datum		constvalue;		/* the constant's value */
-	bool		constisnull;	/* whether the constant is null (if true,
-								 * constvalue is undefined) */
-	bool		constbyval;		/* whether this datatype is passed by value.
-								 * If true, then all the information is stored
-								 * in the Datum. If false, then the Datum
-								 * contains a pointer to the information. */
-	int			location;		/* token location, or -1 if unknown */
+	/* pg_type OID of the constant's datatype */
+	Oid			consttype;
+	/* typmod value, if any */
+	int32		consttypmod pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			constcollid pg_node_attr(query_jumble_ignore);
+	/* typlen of the constant's datatype */
+	int			constlen pg_node_attr(query_jumble_ignore);
+	/* the constant's value */
+	Datum		constvalue pg_node_attr(query_jumble_ignore);
+	/* whether the constant is null (if true, constvalue is undefined) */
+	bool		constisnull pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * Whether this datatype is passed by value.  If true, then all the
+	 * information is stored in the Datum.  If false, then the Datum contains
+	 * a pointer to the information.
+	 */
+	bool		constbyval pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * token location, or -1 if unknown.  All constants are tracked as
+	 * locations in query jumbling, to be marked as parameters.
+	 */
+	int			location pg_node_attr(query_jumble_location);
 } Const;
 
 /*
@@ -276,9 +351,12 @@ typedef struct Param
 	ParamKind	paramkind;		/* kind of parameter. See above */
 	int			paramid;		/* numeric ID for parameter */
 	Oid			paramtype;		/* pg_type OID of parameter's datatype */
-	int32		paramtypmod;	/* typmod value, if known */
-	Oid			paramcollid;	/* OID of collation, or InvalidOid if none */
-	int			location;		/* token location, or -1 if unknown */
+	/* typmod value, if known */
+	int32		paramtypmod pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			paramcollid pg_node_attr(query_jumble_ignore);
+	/* token location, or -1 if unknown */
+	int			location;
 } Param;
 
 /*
@@ -313,6 +391,10 @@ typedef struct Param
  * replaced with a single argument representing the partial-aggregate
  * transition values.
  *
+ * aggpresorted is set by the query planner for ORDER BY and DISTINCT
+ * aggregates where the chosen plan provides presorted input for this
+ * aggregate during execution.
+ *
  * aggsplit indicates the expected partial-aggregation mode for the Aggref's
  * parent plan node.  It's always set to AGGSPLIT_SIMPLE in the parser, but
  * the planner might change it to something else.  We use this mainly as
@@ -325,30 +407,79 @@ typedef struct Param
  * and can share the result.  Aggregates with same 'transno' but different
  * 'aggno' can share the same transition state, only the final function needs
  * to be called separately.
+ *
+ * Information related to collations, transition types and internal states
+ * are irrelevant for the query jumbling.
  */
 typedef struct Aggref
 {
 	Expr		xpr;
-	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
-	Oid			aggtype;		/* type Oid of result of the aggregate */
-	Oid			aggcollid;		/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that function should use */
-	Oid			aggtranstype;	/* type Oid of aggregate's transition value */
-	List	   *aggargtypes;	/* type Oids of direct and aggregated args */
-	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
-	List	   *args;			/* aggregated arguments and sort expressions */
-	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
-	List	   *aggdistinct;	/* DISTINCT (list of SortGroupClause) */
-	Expr	   *aggfilter;		/* FILTER expression, if any */
-	bool		aggstar;		/* true if argument list was really '*' */
-	bool		aggvariadic;	/* true if variadic arguments have been
-								 * combined into an array last argument */
-	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
-	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
-	AggSplit	aggsplit;		/* expected agg-splitting mode of parent Agg */
-	int			aggno;			/* unique ID within the Agg node */
-	int			aggtransno;		/* unique ID of transition state in the Agg */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* pg_proc Oid of the aggregate */
+	Oid			aggfnoid;
+
+	/* type Oid of result of the aggregate */
+	Oid			aggtype pg_node_attr(query_jumble_ignore);
+
+	/* OID of collation of result */
+	Oid			aggcollid pg_node_attr(query_jumble_ignore);
+
+	/* OID of collation that function should use */
+	Oid			inputcollid pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * type Oid of aggregate's transition value; ignored for equal since it
+	 * might not be set yet
+	 */
+	Oid			aggtranstype pg_node_attr(equal_ignore, query_jumble_ignore);
+
+	/* type Oids of direct and aggregated args */
+	List	   *aggargtypes pg_node_attr(query_jumble_ignore);
+
+	/* direct arguments, if an ordered-set agg */
+	List	   *aggdirectargs;
+
+	/* aggregated arguments and sort expressions */
+	List	   *args;
+
+	/* ORDER BY (list of SortGroupClause) */
+	List	   *aggorder;
+
+	/* DISTINCT (list of SortGroupClause) */
+	List	   *aggdistinct;
+
+	/* FILTER expression, if any */
+	Expr	   *aggfilter;
+
+	/* true if argument list was really '*' */
+	bool		aggstar pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * true if variadic arguments have been combined into an array last
+	 * argument
+	 */
+	bool		aggvariadic pg_node_attr(query_jumble_ignore);
+
+	/* aggregate kind (see pg_aggregate.h) */
+	char		aggkind pg_node_attr(query_jumble_ignore);
+
+	/* aggregate input already sorted */
+	bool		aggpresorted pg_node_attr(equal_ignore, query_jumble_ignore);
+
+	/* > 0 if agg belongs to outer query */
+	Index		agglevelsup pg_node_attr(query_jumble_ignore);
+
+	/* expected agg-splitting mode of parent Agg */
+	AggSplit	aggsplit pg_node_attr(query_jumble_ignore);
+
+	/* unique ID within the Agg node */
+	int			aggno pg_node_attr(query_jumble_ignore);
+
+	/* unique ID of transition state in the Agg */
+	int			aggtransno pg_node_attr(query_jumble_ignore);
+
+	/* token location, or -1 if unknown */
+	int			location;
 } Aggref;
 
 /*
@@ -374,34 +505,59 @@ typedef struct Aggref
  *
  * In raw parse output we have only the args list; parse analysis fills in the
  * refs list, and the planner fills in the cols list.
+ *
+ * All the fields used as information for an internal state are irrelevant
+ * for the query jumbling.
  */
 typedef struct GroupingFunc
 {
 	Expr		xpr;
-	List	   *args;			/* arguments, not evaluated but kept for
-								 * benefit of EXPLAIN etc. */
-	List	   *refs;			/* ressortgrouprefs of arguments */
-	List	   *cols;			/* actual column positions set by planner */
-	Index		agglevelsup;	/* same as Aggref.agglevelsup */
-	int			location;		/* token location */
+
+	/* arguments, not evaluated but kept for benefit of EXPLAIN etc. */
+	List	   *args pg_node_attr(query_jumble_ignore);
+
+	/* ressortgrouprefs of arguments */
+	List	   *refs pg_node_attr(equal_ignore);
+
+	/* actual column positions set by planner */
+	List	   *cols pg_node_attr(equal_ignore, query_jumble_ignore);
+
+	/* same as Aggref.agglevelsup */
+	Index		agglevelsup;
+
+	/* token location */
+	int			location;
 } GroupingFunc;
 
 /*
  * WindowFunc
+ *
+ * Collation information is irrelevant for the query jumbling, as is the
+ * internal state information of the node like "winstar" and "winagg".
  */
 typedef struct WindowFunc
 {
 	Expr		xpr;
-	Oid			winfnoid;		/* pg_proc Oid of the function */
-	Oid			wintype;		/* type Oid of result of the window function */
-	Oid			wincollid;		/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that function should use */
-	List	   *args;			/* arguments to the window function */
-	Expr	   *aggfilter;		/* FILTER expression, if any */
-	Index		winref;			/* index of associated WindowClause */
-	bool		winstar;		/* true if argument list was really '*' */
-	bool		winagg;			/* is function a simple aggregate? */
-	int			location;		/* token location, or -1 if unknown */
+	/* pg_proc Oid of the function */
+	Oid			winfnoid;
+	/* type Oid of result of the window function */
+	Oid			wintype pg_node_attr(query_jumble_ignore);
+	/* OID of collation of result */
+	Oid			wincollid pg_node_attr(query_jumble_ignore);
+	/* OID of collation that function should use */
+	Oid			inputcollid pg_node_attr(query_jumble_ignore);
+	/* arguments to the window function */
+	List	   *args;
+	/* FILTER expression, if any */
+	Expr	   *aggfilter;
+	/* index of associated WindowClause */
+	Index		winref;
+	/* true if argument list was really '*' */
+	bool		winstar pg_node_attr(query_jumble_ignore);
+	/* is function a simple aggregate? */
+	bool		winagg pg_node_attr(query_jumble_ignore);
+	/* token location, or -1 if unknown */
+	int			location;
 } WindowFunc;
 
 /*
@@ -438,6 +594,8 @@ typedef struct WindowFunc
  * subscripting logic.  Likewise, reftypmod and refcollid will match the
  * container's properties in a store, but could be different in a fetch.
  *
+ * Any internal state data is ignored for the query jumbling.
+ *
  * Note: for the cases where a container is returned, if refexpr yields a R/W
  * expanded container, then the implementation is allowed to modify that
  * object in-place and return the same object.
@@ -445,20 +603,28 @@ typedef struct WindowFunc
 typedef struct SubscriptingRef
 {
 	Expr		xpr;
-	Oid			refcontainertype;	/* type of the container proper */
-	Oid			refelemtype;	/* the container type's pg_type.typelem */
-	Oid			refrestype;		/* type of the SubscriptingRef's result */
-	int32		reftypmod;		/* typmod of the result */
-	Oid			refcollid;		/* collation of result, or InvalidOid if none */
-	List	   *refupperindexpr;	/* expressions that evaluate to upper
-									 * container indexes */
-	List	   *reflowerindexpr;	/* expressions that evaluate to lower
-									 * container indexes, or NIL for single
-									 * container element */
-	Expr	   *refexpr;		/* the expression that evaluates to a
-								 * container value */
-	Expr	   *refassgnexpr;	/* expression for the source value, or NULL if
-								 * fetch */
+	/* type of the container proper */
+	Oid			refcontainertype pg_node_attr(query_jumble_ignore);
+	/* the container type's pg_type.typelem */
+	Oid			refelemtype pg_node_attr(query_jumble_ignore);
+	/* type of the SubscriptingRef's result */
+	Oid			refrestype pg_node_attr(query_jumble_ignore);
+	/* typmod of the result */
+	int32		reftypmod pg_node_attr(query_jumble_ignore);
+	/* collation of result, or InvalidOid if none */
+	Oid			refcollid pg_node_attr(query_jumble_ignore);
+	/* expressions that evaluate to upper container indexes */
+	List	   *refupperindexpr;
+
+	/*
+	 * expressions that evaluate to lower container indexes, or NIL for single
+	 * container element.
+	 */
+	List	   *reflowerindexpr;
+	/* the expression that evaluates to a container value */
+	Expr	   *refexpr;
+	/* expression for the source value, or NULL if fetch */
+	Expr	   *refassgnexpr;
 } SubscriptingRef;
 
 /*
@@ -497,20 +663,35 @@ typedef enum CoercionForm
 
 /*
  * FuncExpr - expression node for a function call
+ *
+ * Collation information is irrelevant for the query jumbling, only the
+ * arguments and the function OID matter.
  */
 typedef struct FuncExpr
 {
 	Expr		xpr;
-	Oid			funcid;			/* PG_PROC OID of the function */
-	Oid			funcresulttype; /* PG_TYPE OID of result value */
-	bool		funcretset;		/* true if function returns set */
-	bool		funcvariadic;	/* true if variadic arguments have been
-								 * combined into an array last argument */
-	CoercionForm funcformat;	/* how to display this function call */
-	Oid			funccollid;		/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that function should use */
-	List	   *args;			/* arguments to the function */
-	int			location;		/* token location, or -1 if unknown */
+	/* PG_PROC OID of the function */
+	Oid			funcid;
+	/* PG_TYPE OID of result value */
+	Oid			funcresulttype pg_node_attr(query_jumble_ignore);
+	/* true if function returns set */
+	bool		funcretset pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * true if variadic arguments have been combined into an array last
+	 * argument
+	 */
+	bool		funcvariadic pg_node_attr(query_jumble_ignore);
+	/* how to display this function call */
+	CoercionForm funcformat pg_node_attr(query_jumble_ignore);
+	/* OID of collation of result */
+	Oid			funccollid pg_node_attr(query_jumble_ignore);
+	/* OID of collation that function should use */
+	Oid			inputcollid pg_node_attr(query_jumble_ignore);
+	/* arguments to the function */
+	List	   *args;
+	/* token location, or -1 if unknown */
+	int			location;
 } FuncExpr;
 
 /*
@@ -530,10 +711,14 @@ typedef struct FuncExpr
 typedef struct NamedArgExpr
 {
 	Expr		xpr;
-	Expr	   *arg;			/* the argument expression */
-	char	   *name;			/* the name */
-	int			argnumber;		/* argument's number in positional notation */
-	int			location;		/* argument name location, or -1 if unknown */
+	/* the argument expression */
+	Expr	   *arg;
+	/* the name */
+	char	   *name pg_node_attr(query_jumble_ignore);
+	/* argument's number in positional notation */
+	int			argnumber;
+	/* argument name location, or -1 if unknown */
+	int			location;
 } NamedArgExpr;
 
 /*
@@ -544,18 +729,38 @@ typedef struct NamedArgExpr
  * Note that opfuncid is not necessarily filled in immediately on creation
  * of the node.  The planner makes sure it is valid before passing the node
  * tree to the executor, but during parsing/planning opfuncid can be 0.
+ * Therefore, equal() will accept a zero value as being equal to other values.
+ *
+ * Internal state information and collation data is irrelevant for the query
+ * jumbling.
  */
 typedef struct OpExpr
 {
 	Expr		xpr;
-	Oid			opno;			/* PG_OPERATOR OID of the operator */
-	Oid			opfuncid;		/* PG_PROC OID of underlying function */
-	Oid			opresulttype;	/* PG_TYPE OID of result value */
-	bool		opretset;		/* true if operator returns set */
-	Oid			opcollid;		/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that operator should use */
-	List	   *args;			/* arguments to the operator (1 or 2) */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* PG_OPERATOR OID of the operator */
+	Oid			opno;
+
+	/* PG_PROC OID of underlying function */
+	Oid			opfuncid pg_node_attr(equal_ignore_if_zero, query_jumble_ignore);
+
+	/* PG_TYPE OID of result value */
+	Oid			opresulttype pg_node_attr(query_jumble_ignore);
+
+	/* true if operator returns set */
+	bool		opretset pg_node_attr(query_jumble_ignore);
+
+	/* OID of collation of result */
+	Oid			opcollid pg_node_attr(query_jumble_ignore);
+
+	/* OID of collation that operator should use */
+	Oid			inputcollid pg_node_attr(query_jumble_ignore);
+
+	/* arguments to the operator (1 or 2) */
+	List	   *args;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } OpExpr;
 
 /*
@@ -601,19 +806,41 @@ typedef OpExpr NullIfExpr;
  * corresponding function and won't be used during execution.  For
  * non-hashtable based NOT INs, negfuncid will be set to InvalidOid.  See
  * convert_saop_to_hashed_saop().
+ *
+ * Similar to OpExpr, opfuncid, hashfuncid, and negfuncid are not necessarily
+ * filled in right away, so will be ignored for equality if they are not set
+ * yet.
+ *
+ * OID entries of the internal function types are irrelevant for the query
+ * jumbling, but the operator OID and the arguments are.
  */
 typedef struct ScalarArrayOpExpr
 {
 	Expr		xpr;
-	Oid			opno;			/* PG_OPERATOR OID of the operator */
-	Oid			opfuncid;		/* PG_PROC OID of comparison function */
-	Oid			hashfuncid;		/* PG_PROC OID of hash func or InvalidOid */
-	Oid			negfuncid;		/* PG_PROC OID of negator of opfuncid function
-								 * or InvalidOid.  See above */
-	bool		useOr;			/* true for ANY, false for ALL */
-	Oid			inputcollid;	/* OID of collation that operator should use */
-	List	   *args;			/* the scalar and array operands */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* PG_OPERATOR OID of the operator */
+	Oid			opno;
+
+	/* PG_PROC OID of comparison function */
+	Oid			opfuncid pg_node_attr(equal_ignore_if_zero, query_jumble_ignore);
+
+	/* PG_PROC OID of hash func or InvalidOid */
+	Oid			hashfuncid pg_node_attr(equal_ignore_if_zero, query_jumble_ignore);
+
+	/* PG_PROC OID of negator of opfuncid function or InvalidOid.  See above */
+	Oid			negfuncid pg_node_attr(equal_ignore_if_zero, query_jumble_ignore);
+
+	/* true for ANY, false for ALL */
+	bool		useOr;
+
+	/* OID of collation that operator should use */
+	Oid			inputcollid pg_node_attr(query_jumble_ignore);
+
+	/* the scalar and array operands */
+	List	   *args;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } ScalarArrayOpExpr;
 
 /*
@@ -630,6 +857,8 @@ typedef enum BoolExprType
 
 typedef struct BoolExpr
 {
+	pg_node_attr(custom_read_write)
+
 	Expr		xpr;
 	BoolExprType boolop;
 	List	   *args;			/* arguments to this expression */
@@ -706,8 +935,10 @@ typedef struct SubLink
 	SubLinkType subLinkType;	/* see above */
 	int			subLinkId;		/* ID (1..n); 0 if not MULTIEXPR */
 	Node	   *testexpr;		/* outer-query test for ALL/ANY/ROWCOMPARE */
-	List	   *operName;		/* originally specified operator name */
-	Node	   *subselect;		/* subselect as Query* or raw parsetree */
+	/* originally specified operator name */
+	List	   *operName pg_node_attr(query_jumble_ignore);
+	/* subselect as Query* or raw parsetree */
+	Node	   *subselect;
 	int			location;		/* token location, or -1 if unknown */
 } SubLink;
 
@@ -741,9 +972,9 @@ typedef struct SubLink
  * The values are assigned to the global PARAM_EXEC params indexed by parParam
  * (the parParam and args lists must have the same ordering).  setParam is a
  * list of the PARAM_EXEC params that are computed by the sub-select, if it
- * is an initplan; they are listed in order by sub-select output column
- * position.  (parParam and setParam are integer Lists, not Bitmapsets,
- * because their ordering is significant.)
+ * is an initplan or MULTIEXPR plan; they are listed in order by sub-select
+ * output column position.  (parParam and setParam are integer Lists, not
+ * Bitmapsets, because their ordering is significant.)
  *
  * Also, the planner computes startup and per-call costs for use of the
  * SubPlan.  Note that these include the cost of the subquery proper,
@@ -751,6 +982,8 @@ typedef struct SubLink
  */
 typedef struct SubPlan
 {
+	pg_node_attr(no_query_jumble)
+
 	Expr		xpr;
 	/* Fields copied from original SubLink: */
 	SubLinkType subLinkType;	/* see above */
@@ -776,8 +1009,8 @@ typedef struct SubPlan
 	/* Note: parallel_safe does not consider contents of testexpr or args */
 	/* Information for passing params into and out of the subselect: */
 	/* setParam and parParam are lists of integers (param IDs) */
-	List	   *setParam;		/* initplan subqueries have to set these
-								 * Params for parent plan */
+	List	   *setParam;		/* initplan and MULTIEXPR subqueries have to
+								 * set these Params for parent plan */
 	List	   *parParam;		/* indices of input Params from parent plan */
 	List	   *args;			/* exprs to pass as parParam values */
 	/* Estimated execution costs: */
@@ -798,6 +1031,8 @@ typedef struct SubPlan
  */
 typedef struct AlternativeSubPlan
 {
+	pg_node_attr(no_query_jumble)
+
 	Expr		xpr;
 	List	   *subplans;		/* SubPlan(s) with equivalent results */
 } AlternativeSubPlan;
@@ -816,10 +1051,12 @@ typedef struct FieldSelect
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	AttrNumber	fieldnum;		/* attribute number of field to extract */
-	Oid			resulttype;		/* type of the field (result type of this
-								 * node) */
-	int32		resulttypmod;	/* output typmod (usually -1) */
-	Oid			resultcollid;	/* OID of collation of the field */
+	/* type of the field (result type of this node) */
+	Oid			resulttype pg_node_attr(query_jumble_ignore);
+	/* output typmod (usually -1) */
+	int32		resulttypmod pg_node_attr(query_jumble_ignore);
+	/* OID of collation of the field */
+	Oid			resultcollid pg_node_attr(query_jumble_ignore);
 } FieldSelect;
 
 /* ----------------
@@ -845,8 +1082,10 @@ typedef struct FieldStore
 	Expr		xpr;
 	Expr	   *arg;			/* input tuple value */
 	List	   *newvals;		/* new value(s) for field(s) */
-	List	   *fieldnums;		/* integer list of field attnums */
-	Oid			resulttype;		/* type of result (same as type of arg) */
+	/* integer list of field attnums */
+	List	   *fieldnums pg_node_attr(query_jumble_ignore);
+	/* type of result (same as type of arg) */
+	Oid			resulttype pg_node_attr(query_jumble_ignore);
 	/* Like RowExpr, we deliberately omit a typmod and collation here */
 } FieldStore;
 
@@ -868,9 +1107,12 @@ typedef struct RelabelType
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	Oid			resulttype;		/* output type of coercion expression */
-	int32		resulttypmod;	/* output typmod (usually -1) */
-	Oid			resultcollid;	/* OID of collation, or InvalidOid if none */
-	CoercionForm relabelformat; /* how to display this node */
+	/* output typmod (usually -1) */
+	int32		resulttypmod pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			resultcollid pg_node_attr(query_jumble_ignore);
+	/* how to display this node */
+	CoercionForm relabelformat pg_node_attr(query_jumble_ignore);
 	int			location;		/* token location, or -1 if unknown */
 } RelabelType;
 
@@ -889,8 +1131,10 @@ typedef struct CoerceViaIO
 	Expr	   *arg;			/* input expression */
 	Oid			resulttype;		/* output type of coercion */
 	/* output typmod is not stored, but is presumed -1 */
-	Oid			resultcollid;	/* OID of collation, or InvalidOid if none */
-	CoercionForm coerceformat;	/* how to display this node */
+	/* OID of collation, or InvalidOid if none */
+	Oid			resultcollid pg_node_attr(query_jumble_ignore);
+	/* how to display this node */
+	CoercionForm coerceformat pg_node_attr(query_jumble_ignore);
 	int			location;		/* token location, or -1 if unknown */
 } CoerceViaIO;
 
@@ -913,9 +1157,12 @@ typedef struct ArrayCoerceExpr
 	Expr	   *arg;			/* input expression (yields an array) */
 	Expr	   *elemexpr;		/* expression representing per-element work */
 	Oid			resulttype;		/* output type of coercion (an array type) */
-	int32		resulttypmod;	/* output typmod (also element typmod) */
-	Oid			resultcollid;	/* OID of collation, or InvalidOid if none */
-	CoercionForm coerceformat;	/* how to display this node */
+	/* output typmod (also element typmod) */
+	int32		resulttypmod pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			resultcollid pg_node_attr(query_jumble_ignore);
+	/* how to display this node */
+	CoercionForm coerceformat pg_node_attr(query_jumble_ignore);
 	int			location;		/* token location, or -1 if unknown */
 } ArrayCoerceExpr;
 
@@ -938,7 +1185,8 @@ typedef struct ConvertRowtypeExpr
 	Expr	   *arg;			/* input expression */
 	Oid			resulttype;		/* output type (always a composite type) */
 	/* Like RowExpr, we deliberately omit a typmod and collation here */
-	CoercionForm convertformat; /* how to display this node */
+	/* how to display this node */
+	CoercionForm convertformat pg_node_attr(query_jumble_ignore);
 	int			location;		/* token location, or -1 if unknown */
 } ConvertRowtypeExpr;
 
@@ -982,8 +1230,10 @@ typedef struct CollateExpr
 typedef struct CaseExpr
 {
 	Expr		xpr;
-	Oid			casetype;		/* type of expression result */
-	Oid			casecollid;		/* OID of collation, or InvalidOid if none */
+	/* type of expression result */
+	Oid			casetype pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			casecollid pg_node_attr(query_jumble_ignore);
 	Expr	   *arg;			/* implicit equality comparison argument */
 	List	   *args;			/* the arguments (list of WHEN clauses) */
 	Expr	   *defresult;		/* the default result (ELSE clause) */
@@ -1025,8 +1275,10 @@ typedef struct CaseTestExpr
 {
 	Expr		xpr;
 	Oid			typeId;			/* type for substituted value */
-	int32		typeMod;		/* typemod for substituted value */
-	Oid			collation;		/* collation for the substituted value */
+	/* typemod for substituted value */
+	int32		typeMod pg_node_attr(query_jumble_ignore);
+	/* collation for the substituted value */
+	Oid			collation pg_node_attr(query_jumble_ignore);
 } CaseTestExpr;
 
 /*
@@ -1040,12 +1292,18 @@ typedef struct CaseTestExpr
 typedef struct ArrayExpr
 {
 	Expr		xpr;
-	Oid			array_typeid;	/* type of expression result */
-	Oid			array_collid;	/* OID of collation, or InvalidOid if none */
-	Oid			element_typeid; /* common type of array elements */
-	List	   *elements;		/* the array elements or sub-arrays */
-	bool		multidims;		/* true if elements are sub-arrays */
-	int			location;		/* token location, or -1 if unknown */
+	/* type of expression result */
+	Oid			array_typeid pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			array_collid pg_node_attr(query_jumble_ignore);
+	/* common type of array elements */
+	Oid			element_typeid pg_node_attr(query_jumble_ignore);
+	/* the array elements or sub-arrays */
+	List	   *elements;
+	/* true if elements are sub-arrays */
+	bool		multidims pg_node_attr(query_jumble_ignore);
+	/* token location, or -1 if unknown */
+	int			location;
 } ArrayExpr;
 
 /*
@@ -1073,7 +1331,9 @@ typedef struct RowExpr
 {
 	Expr		xpr;
 	List	   *args;			/* the fields */
-	Oid			row_typeid;		/* RECORDOID or a composite type's ID */
+
+	/* RECORDOID or a composite type's ID */
+	Oid			row_typeid pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * row_typeid cannot be a domain over composite, only plain composite.  To
@@ -1087,8 +1347,13 @@ typedef struct RowExpr
 	 * We don't need to store a collation either.  The result type is
 	 * necessarily composite, and composite types never have a collation.
 	 */
-	CoercionForm row_format;	/* how to display this node */
-	List	   *colnames;		/* list of String, or NIL */
+
+	/* how to display this node */
+	CoercionForm row_format pg_node_attr(query_jumble_ignore);
+
+	/* list of String, or NIL */
+	List	   *colnames pg_node_attr(query_jumble_ignore);
+
 	int			location;		/* token location, or -1 if unknown */
 } RowExpr;
 
@@ -1120,12 +1385,19 @@ typedef enum RowCompareType
 typedef struct RowCompareExpr
 {
 	Expr		xpr;
-	RowCompareType rctype;		/* LT LE GE or GT, never EQ or NE */
-	List	   *opnos;			/* OID list of pairwise comparison ops */
-	List	   *opfamilies;		/* OID list of containing operator families */
-	List	   *inputcollids;	/* OID list of collations for comparisons */
-	List	   *largs;			/* the left-hand input arguments */
-	List	   *rargs;			/* the right-hand input arguments */
+
+	/* LT LE GE or GT, never EQ or NE */
+	RowCompareType rctype;
+	/* OID list of pairwise comparison ops */
+	List	   *opnos pg_node_attr(query_jumble_ignore);
+	/* OID list of containing operator families */
+	List	   *opfamilies pg_node_attr(query_jumble_ignore);
+	/* OID list of collations for comparisons */
+	List	   *inputcollids pg_node_attr(query_jumble_ignore);
+	/* the left-hand input arguments */
+	List	   *largs;
+	/* the right-hand input arguments */
+	List	   *rargs;
 } RowCompareExpr;
 
 /*
@@ -1134,10 +1406,14 @@ typedef struct RowCompareExpr
 typedef struct CoalesceExpr
 {
 	Expr		xpr;
-	Oid			coalescetype;	/* type of expression result */
-	Oid			coalescecollid; /* OID of collation, or InvalidOid if none */
-	List	   *args;			/* the arguments */
-	int			location;		/* token location, or -1 if unknown */
+	/* type of expression result */
+	Oid			coalescetype pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			coalescecollid pg_node_attr(query_jumble_ignore);
+	/* the arguments */
+	List	   *args;
+	/* token location, or -1 if unknown */
+	int			location;
 } CoalesceExpr;
 
 /*
@@ -1152,52 +1428,19 @@ typedef enum MinMaxOp
 typedef struct MinMaxExpr
 {
 	Expr		xpr;
-	Oid			minmaxtype;		/* common type of arguments and result */
-	Oid			minmaxcollid;	/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that function should use */
-	MinMaxOp	op;				/* function to execute */
-	List	   *args;			/* the arguments */
-	int			location;		/* token location, or -1 if unknown */
+	/* common type of arguments and result */
+	Oid			minmaxtype pg_node_attr(query_jumble_ignore);
+	/* OID of collation of result */
+	Oid			minmaxcollid pg_node_attr(query_jumble_ignore);
+	/* OID of collation that function should use */
+	Oid			inputcollid pg_node_attr(query_jumble_ignore);
+	/* function to execute */
+	MinMaxOp	op;
+	/* the arguments */
+	List	   *args;
+	/* token location, or -1 if unknown */
+	int			location;
 } MinMaxExpr;
-
-/*
- * SQLValueFunction - parameterless functions with special grammar productions
- *
- * The SQL standard categorizes some of these as <datetime value function>
- * and others as <general value specification>.  We call 'em SQLValueFunctions
- * for lack of a better term.  We store type and typmod of the result so that
- * some code doesn't need to know each function individually, and because
- * we would need to store typmod anyway for some of the datetime functions.
- * Note that currently, all variants return non-collating datatypes, so we do
- * not need a collation field; also, all these functions are stable.
- */
-typedef enum SQLValueFunctionOp
-{
-	SVFOP_CURRENT_DATE,
-	SVFOP_CURRENT_TIME,
-	SVFOP_CURRENT_TIME_N,
-	SVFOP_CURRENT_TIMESTAMP,
-	SVFOP_CURRENT_TIMESTAMP_N,
-	SVFOP_LOCALTIME,
-	SVFOP_LOCALTIME_N,
-	SVFOP_LOCALTIMESTAMP,
-	SVFOP_LOCALTIMESTAMP_N,
-	SVFOP_CURRENT_ROLE,
-	SVFOP_CURRENT_USER,
-	SVFOP_USER,
-	SVFOP_SESSION_USER,
-	SVFOP_CURRENT_CATALOG,
-	SVFOP_CURRENT_SCHEMA
-} SQLValueFunctionOp;
-
-typedef struct SQLValueFunction
-{
-	Expr		xpr;
-	SQLValueFunctionOp op;		/* which function this is */
-	Oid			type;			/* result type/typmod */
-	int32		typmod;
-	int			location;		/* token location, or -1 if unknown */
-} SQLValueFunction;
 
 /*
  * XmlExpr - various SQL/XML functions requiring special grammar productions
@@ -1231,270 +1474,24 @@ typedef enum XmlOptionType
 typedef struct XmlExpr
 {
 	Expr		xpr;
-	XmlExprOp	op;				/* xml function ID */
-	char	   *name;			/* name in xml(NAME foo ...) syntaxes */
-	List	   *named_args;		/* non-XML expressions for xml_attributes */
-	List	   *arg_names;		/* parallel list of String values */
-	List	   *args;			/* list of expressions */
-	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
-	Oid			type;			/* target type/typmod for XMLSERIALIZE */
-	int32		typmod;
-	int			location;		/* token location, or -1 if unknown */
-} XmlExpr;
-
-/*
- * JsonExprOp -
- *		enumeration of JSON functions using JSON path
- */
-typedef enum JsonExprOp
-{
-	JSON_VALUE_OP,				/* JSON_VALUE() */
-	JSON_QUERY_OP,				/* JSON_QUERY() */
-	JSON_EXISTS_OP,				/* JSON_EXISTS() */
-	JSON_TABLE_OP				/* JSON_TABLE() */
-} JsonExprOp;
-
-/*
- * JsonEncoding -
- *		representation of JSON ENCODING clause
- */
-typedef enum JsonEncoding
-{
-	JS_ENC_DEFAULT,				/* unspecified */
-	JS_ENC_UTF8,
-	JS_ENC_UTF16,
-	JS_ENC_UTF32,
-} JsonEncoding;
-
-/*
- * JsonFormatType -
- *		enumeration of JSON formats used in JSON FORMAT clause
- */
-typedef enum JsonFormatType
-{
-	JS_FORMAT_DEFAULT,			/* unspecified */
-	JS_FORMAT_JSON,				/* FORMAT JSON [ENCODING ...] */
-	JS_FORMAT_JSONB				/* implicit internal format for RETURNING
-								 * jsonb */
-} JsonFormatType;
-
-/*
- * JsonBehaviorType -
- *		enumeration of behavior types used in JSON ON ... BEHAVIOR clause
- *
- * 		If enum members are reordered, get_json_behavior() from ruleutils.c
- * 		must be updated accordingly.
- */
-typedef enum JsonBehaviorType
-{
-	JSON_BEHAVIOR_NULL = 0,
-	JSON_BEHAVIOR_ERROR,
-	JSON_BEHAVIOR_EMPTY,
-	JSON_BEHAVIOR_TRUE,
-	JSON_BEHAVIOR_FALSE,
-	JSON_BEHAVIOR_UNKNOWN,
-	JSON_BEHAVIOR_EMPTY_ARRAY,
-	JSON_BEHAVIOR_EMPTY_OBJECT,
-	JSON_BEHAVIOR_DEFAULT
-} JsonBehaviorType;
-
-/*
- * JsonWrapper -
- *		representation of WRAPPER clause for JSON_QUERY()
- */
-typedef enum JsonWrapper
-{
-	JSW_NONE,
-	JSW_CONDITIONAL,
-	JSW_UNCONDITIONAL,
-} JsonWrapper;
-
-/*
- * JsonFormat -
- *		representation of JSON FORMAT clause
- */
-typedef struct JsonFormat
-{
-	NodeTag		type;
-	JsonFormatType format_type; /* format type */
-	JsonEncoding encoding;		/* JSON encoding */
-	int			location;		/* token location, or -1 if unknown */
-} JsonFormat;
-
-/*
- * JsonReturning -
- *		transformed representation of JSON RETURNING clause
- */
-typedef struct JsonReturning
-{
-	NodeTag		type;
-	JsonFormat *format;			/* output JSON format */
-	Oid			typid;			/* target type Oid */
-	int32		typmod;			/* target type modifier */
-} JsonReturning;
-
-/*
- * JsonValueExpr -
- *		representation of JSON value expression (expr [FORMAT json_format])
- */
-typedef struct JsonValueExpr
-{
-	NodeTag		type;
-	Expr	   *raw_expr;		/* raw expression */
-	Expr	   *formatted_expr; /* formatted expression or NULL */
-	JsonFormat *format;			/* FORMAT clause, if specified */
-} JsonValueExpr;
-
-typedef enum JsonConstructorType
-{
-	JSCTOR_JSON_OBJECT = 1,
-	JSCTOR_JSON_ARRAY = 2,
-	JSCTOR_JSON_OBJECTAGG = 3,
-	JSCTOR_JSON_ARRAYAGG = 4,
-	JSCTOR_JSON_SCALAR = 5,
-	JSCTOR_JSON_SERIALIZE = 6,
-	JSCTOR_JSON_PARSE = 7
-} JsonConstructorType;
-
-/*
- * JsonConstructorExpr -
- *		wrapper over FuncExpr/Aggref/WindowFunc for SQL/JSON constructors
- */
-typedef struct JsonConstructorExpr
-{
-	Expr		xpr;
-	JsonConstructorType type;	/* constructor type */
+	/* xml function ID */
+	XmlExprOp	op;
+	/* name in xml(NAME foo ...) syntaxes */
+	char	   *name pg_node_attr(query_jumble_ignore);
+	/* non-XML expressions for xml_attributes */
+	List	   *named_args;
+	/* parallel list of String values */
+	List	   *arg_names pg_node_attr(query_jumble_ignore);
+	/* list of expressions */
 	List	   *args;
-	Expr	   *func;			/* underlying json[b]_xxx() function call */
-	Expr	   *coercion;		/* coercion to RETURNING type */
-	JsonReturning *returning;	/* RETURNING clause */
-	bool		absent_on_null; /* ABSENT ON NULL? */
-	bool		unique;			/* WITH UNIQUE KEYS? (JSON_OBJECT[AGG] only) */
+	/* DOCUMENT or CONTENT */
+	XmlOptionType xmloption pg_node_attr(query_jumble_ignore);
+	/* target type/typmod for XMLSERIALIZE */
+	Oid			type pg_node_attr(query_jumble_ignore);
+	int32		typmod pg_node_attr(query_jumble_ignore);
+	/* token location, or -1 if unknown */
 	int			location;
-} JsonConstructorExpr;
-
-/*
- * JsonValueType -
- *		representation of JSON item type in IS JSON predicate
- */
-typedef enum JsonValueType
-{
-	JS_TYPE_ANY,				/* IS JSON [VALUE] */
-	JS_TYPE_OBJECT,				/* IS JSON OBJECT */
-	JS_TYPE_ARRAY,				/* IS JSON ARRAY */
-	JS_TYPE_SCALAR				/* IS JSON SCALAR */
-} JsonValueType;
-
-/*
- * JsonIsPredicate -
- *		representation of IS JSON predicate
- */
-typedef struct JsonIsPredicate
-{
-	NodeTag		type;
-	Node	   *expr;			/* subject expression */
-	JsonFormat *format;			/* FORMAT clause, if specified */
-	JsonValueType item_type;	/* JSON item type */
-	bool		unique_keys;	/* check key uniqueness? */
-	int			location;		/* token location, or -1 if unknown */
-} JsonIsPredicate;
-
-/*
- * JsonBehavior -
- *		representation of JSON ON ... BEHAVIOR clause
- */
-typedef struct JsonBehavior
-{
-	NodeTag		type;
-	JsonBehaviorType btype;		/* behavior type */
-	Node	   *default_expr;	/* default expression, if any */
-} JsonBehavior;
-
-/*
- * JsonCoercion -
- *		coercion from SQL/JSON item types to SQL types
- */
-typedef struct JsonCoercion
-{
-	NodeTag		type;
-	Node	   *expr;			/* resulting expression coerced to target type */
-	bool		via_populate;	/* coerce result using json_populate_type()? */
-	bool		via_io;			/* coerce result using type input function? */
-	Oid			collation;		/* collation for coercion via I/O or populate */
-} JsonCoercion;
-
-/*
- * JsonItemCoercions -
- *		expressions for coercion from SQL/JSON item types directly to the
- *		output SQL type
- */
-typedef struct JsonItemCoercions
-{
-	NodeTag		type;
-	JsonCoercion *null;
-	JsonCoercion *string;
-	JsonCoercion *numeric;
-	JsonCoercion *boolean;
-	JsonCoercion *date;
-	JsonCoercion *time;
-	JsonCoercion *timetz;
-	JsonCoercion *timestamp;
-	JsonCoercion *timestamptz;
-	JsonCoercion *composite;	/* arrays and objects */
-} JsonItemCoercions;
-
-/*
- * JsonExpr -
- *		transformed representation of JSON_VALUE(), JSON_QUERY(), JSON_EXISTS()
- */
-typedef struct JsonExpr
-{
-	Expr		xpr;
-	JsonExprOp	op;				/* json function ID */
-	Node	   *formatted_expr; /* formatted context item expression */
-	JsonCoercion *result_coercion;	/* resulting coercion to RETURNING type */
-	JsonFormat *format;			/* context item format (JSON/JSONB) */
-	Node	   *path_spec;		/* JSON path specification expression */
-	List	   *passing_names;	/* PASSING argument names */
-	List	   *passing_values; /* PASSING argument values */
-	JsonReturning *returning;	/* RETURNING clause type/format info */
-	JsonBehavior *on_empty;		/* ON EMPTY behavior */
-	JsonBehavior *on_error;		/* ON ERROR behavior */
-	JsonItemCoercions *coercions;	/* coercions for JSON_VALUE */
-	JsonWrapper wrapper;		/* WRAPPER for JSON_QUERY */
-	bool		omit_quotes;	/* KEEP/OMIT QUOTES for JSON_QUERY */
-	int			location;		/* token location, or -1 if unknown */
-} JsonExpr;
-
-/*
- * JsonTableParent -
- *		transformed representation of parent JSON_TABLE plan node
- */
-typedef struct JsonTableParent
-{
-	NodeTag		type;
-	Const	   *path;			/* jsonpath constant */
-	char	   *name;			/* path name */
-	Node	   *child;			/* nested columns, if any */
-	bool		outerJoin;		/* outer or inner join for nested columns? */
-	int			colMin;			/* min column index in the resulting column
-								 * list */
-	int			colMax;			/* max column index in the resulting column
-								 * list */
-	bool		errorOnError;	/* ERROR/EMPTY ON ERROR behavior */
-} JsonTableParent;
-
-/*
- * JsonTableSibling -
- *		transformed representation of joined sibling JSON_TABLE plan node
- */
-typedef struct JsonTableSibling
-{
-	NodeTag		type;
-	Node	   *larg;			/* left join node */
-	Node	   *rarg;			/* right join node */
-	bool		cross;			/* cross or union join? */
-} JsonTableSibling;
+} XmlExpr;
 
 /* ----------------
  * NullTest
@@ -1525,7 +1522,8 @@ typedef struct NullTest
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
-	bool		argisrow;		/* T to perform field-by-field null checks */
+	/* T to perform field-by-field null checks */
+	bool		argisrow pg_node_attr(query_jumble_ignore);
 	int			location;		/* token location, or -1 if unknown */
 } NullTest;
 
@@ -1565,9 +1563,12 @@ typedef struct CoerceToDomain
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	Oid			resulttype;		/* domain type ID (result type) */
-	int32		resulttypmod;	/* output typmod (currently always -1) */
-	Oid			resultcollid;	/* OID of collation, or InvalidOid if none */
-	CoercionForm coercionformat;	/* how to display this node */
+	/* output typmod (currently always -1) */
+	int32		resulttypmod pg_node_attr(query_jumble_ignore);
+	/* OID of collation, or InvalidOid if none */
+	Oid			resultcollid pg_node_attr(query_jumble_ignore);
+	/* how to display this node */
+	CoercionForm coercionformat pg_node_attr(query_jumble_ignore);
 	int			location;		/* token location, or -1 if unknown */
 } CoerceToDomain;
 
@@ -1583,10 +1584,14 @@ typedef struct CoerceToDomain
 typedef struct CoerceToDomainValue
 {
 	Expr		xpr;
-	Oid			typeId;			/* type for substituted value */
-	int32		typeMod;		/* typemod for substituted value */
-	Oid			collation;		/* collation for the substituted value */
-	int			location;		/* token location, or -1 if unknown */
+	/* type for substituted value */
+	Oid			typeId;
+	/* typemod for substituted value */
+	int32		typeMod pg_node_attr(query_jumble_ignore);
+	/* collation for the substituted value */
+	Oid			collation pg_node_attr(query_jumble_ignore);
+	/* token location, or -1 if unknown */
+	int			location;
 } CoerceToDomainValue;
 
 /*
@@ -1599,10 +1604,14 @@ typedef struct CoerceToDomainValue
 typedef struct SetToDefault
 {
 	Expr		xpr;
-	Oid			typeId;			/* type for substituted value */
-	int32		typeMod;		/* typemod for substituted value */
-	Oid			collation;		/* collation for the substituted value */
-	int			location;		/* token location, or -1 if unknown */
+	/* type for substituted value */
+	Oid			typeId;
+	/* typemod for substituted value */
+	int32		typeMod pg_node_attr(query_jumble_ignore);
+	/* collation for the substituted value */
+	Oid			collation pg_node_attr(query_jumble_ignore);
+	/* token location, or -1 if unknown */
+	int			location;
 } SetToDefault;
 
 /*
@@ -1713,15 +1722,20 @@ typedef struct InferenceElem
 typedef struct TargetEntry
 {
 	Expr		xpr;
-	Expr	   *expr;			/* expression to evaluate */
-	AttrNumber	resno;			/* attribute number (see notes above) */
-	char	   *resname;		/* name of the column (could be NULL) */
-	Index		ressortgroupref;	/* nonzero if referenced by a sort/group
-									 * clause */
-	Oid			resorigtbl;		/* OID of column's source table */
-	AttrNumber	resorigcol;		/* column's number in source table */
-	bool		resjunk;		/* set to true to eliminate the attribute from
-								 * final target list */
+	/* expression to evaluate */
+	Expr	   *expr;
+	/* attribute number (see notes above) */
+	AttrNumber	resno;
+	/* name of the column (could be NULL) */
+	char	   *resname pg_node_attr(query_jumble_ignore);
+	/* nonzero if referenced by a sort/group clause */
+	Index		ressortgroupref;
+	/* OID of column's source table */
+	Oid			resorigtbl pg_node_attr(query_jumble_ignore);
+	/* column's number in source table */
+	AttrNumber	resorigcol pg_node_attr(query_jumble_ignore);
+	/* set to true to eliminate the attribute from final target list */
+	bool		resjunk pg_node_attr(query_jumble_ignore);
 } TargetEntry;
 
 
@@ -1803,11 +1817,16 @@ typedef struct JoinExpr
 	bool		isNatural;		/* Natural join? Will need to shape table */
 	Node	   *larg;			/* left subtree */
 	Node	   *rarg;			/* right subtree */
-	List	   *usingClause;	/* USING clause, if any (list of String) */
-	Alias	   *join_using_alias;	/* alias attached to USING clause, if any */
-	Node	   *quals;			/* qualifiers on join, if any */
-	Alias	   *alias;			/* user-written alias clause, if any */
-	int			rtindex;		/* RT index assigned for join, or 0 */
+	/* USING clause, if any (list of String) */
+	List	   *usingClause pg_node_attr(query_jumble_ignore);
+	/* alias attached to USING clause, if any */
+	Alias	   *join_using_alias pg_node_attr(query_jumble_ignore);
+	/* qualifiers on join, if any */
+	Node	   *quals;
+	/* user-written alias clause, if any */
+	Alias	   *alias pg_node_attr(query_jumble_ignore);
+	/* RT index assigned for join, or 0 */
+	int			rtindex;
 } JoinExpr;
 
 /*----------

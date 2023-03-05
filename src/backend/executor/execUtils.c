@@ -3,7 +3,7 @@
  * execUtils.c
  *	  miscellaneous executor utility routines
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -52,11 +52,13 @@
 #include "access/transam.h"
 #include "executor/executor.h"
 #include "executor/execPartition.h"
+#include "executor/nodeModifyTable.h"
 #include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
+#include "parser/parse_relation.h"
 #include "partitioning/partdesc.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
@@ -67,6 +69,7 @@
 
 static bool tlist_matches_tupdesc(PlanState *ps, List *tlist, int varno, TupleDesc tupdesc);
 static void ShutdownExprContext(ExprContext *econtext, bool isCommit);
+static RTEPermissionInfo *GetResultRTEPermissionInfo(ResultRelInfo *relinfo, EState *estate);
 
 
 /* ----------------------------------------------------------------
@@ -119,6 +122,7 @@ CreateExecutorState(void)
 	estate->es_relations = NULL;
 	estate->es_rowmarks = NULL;
 	estate->es_plannedstmt = NULL;
+	estate->es_part_prune_infos = NIL;
 
 	estate->es_junkFilter = NULL;
 
@@ -128,6 +132,9 @@ CreateExecutorState(void)
 	estate->es_opened_result_relations = NIL;
 	estate->es_tuple_routing_result_relations = NIL;
 	estate->es_trig_target_relations = NIL;
+
+	estate->es_insert_pending_result_relations = NIL;
+	estate->es_insert_pending_modifytables = NIL;
 
 	estate->es_param_list_info = NULL;
 	estate->es_param_exec_vals = NULL;
@@ -870,15 +877,7 @@ UpdateChangedParamSet(PlanState *node, Bitmapset *newchg)
 	 * include anything else into its chgParam set.
 	 */
 	parmset = bms_intersect(node->plan->allParam, newchg);
-
-	/*
-	 * Keep node->chgParam == NULL if there's not actually any members; this
-	 * allows the simplest possible tests in executor node files.
-	 */
-	if (!bms_is_empty(parmset))
-		node->chgParam = bms_join(node->chgParam, parmset);
-	else
-		bms_free(parmset);
+	node->chgParam = bms_join(node->chgParam, parmset);
 }
 
 /*
@@ -1251,32 +1250,132 @@ ExecGetChildToRootMap(ResultRelInfo *resultRelInfo)
 	return resultRelInfo->ri_ChildToRootMap;
 }
 
+/*
+ * Returns the map needed to convert given root result relation's tuples to
+ * the rowtype of the given child relation.  Note that a NULL result is valid
+ * and means that no conversion is needed.
+ */
+TupleConversionMap *
+ExecGetRootToChildMap(ResultRelInfo *resultRelInfo, EState *estate)
+{
+	/* Mustn't get called for a non-child result relation. */
+	Assert(resultRelInfo->ri_RootResultRelInfo);
+
+	/* If we didn't already do so, compute the map for this child. */
+	if (!resultRelInfo->ri_RootToChildMapValid)
+	{
+		ResultRelInfo *rootRelInfo = resultRelInfo->ri_RootResultRelInfo;
+		TupleDesc	indesc = RelationGetDescr(rootRelInfo->ri_RelationDesc);
+		TupleDesc	outdesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
+		Relation	childrel = resultRelInfo->ri_RelationDesc;
+		AttrMap    *attrMap;
+		MemoryContext oldcontext;
+
+		/*
+		 * When this child table is not a partition (!relispartition), it may
+		 * have columns that are not present in the root table, which we ask
+		 * to ignore by passing true for missing_ok.
+		 */
+		oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+		attrMap = build_attrmap_by_name_if_req(indesc, outdesc,
+											   !childrel->rd_rel->relispartition);
+		if (attrMap)
+			resultRelInfo->ri_RootToChildMap =
+				convert_tuples_by_name_attrmap(indesc, outdesc, attrMap);
+		MemoryContextSwitchTo(oldcontext);
+		resultRelInfo->ri_RootToChildMapValid = true;
+	}
+
+	return resultRelInfo->ri_RootToChildMap;
+}
+
 /* Return a bitmap representing columns being inserted */
 Bitmapset *
 ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate)
 {
-	/*
-	 * The columns are stored in the range table entry.  If this ResultRelInfo
-	 * represents a partition routing target, and doesn't have an entry of its
-	 * own in the range table, fetch the parent's RTE and map the columns to
-	 * the order they are in the partition.
-	 */
-	if (relinfo->ri_RangeTableIndex != 0)
-	{
-		RangeTblEntry *rte = exec_rt_fetch(relinfo->ri_RangeTableIndex, estate);
+	RTEPermissionInfo *perminfo = GetResultRTEPermissionInfo(relinfo, estate);
 
-		return rte->insertedCols;
+	if (perminfo == NULL)
+		return NULL;
+
+	/* Map the columns to child's attribute numbers if needed. */
+	if (relinfo->ri_RootResultRelInfo)
+	{
+		TupleConversionMap *map = ExecGetRootToChildMap(relinfo, estate);
+
+		if (map)
+			return execute_attr_map_cols(map->attrMap, perminfo->insertedCols);
 	}
-	else if (relinfo->ri_RootResultRelInfo)
-	{
-		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
-		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
 
-		if (relinfo->ri_RootToPartitionMap != NULL)
-			return execute_attr_map_cols(relinfo->ri_RootToPartitionMap->attrMap,
-										 rte->insertedCols);
-		else
-			return rte->insertedCols;
+	return perminfo->insertedCols;
+}
+
+/* Return a bitmap representing columns being updated */
+Bitmapset *
+ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
+{
+	RTEPermissionInfo *perminfo = GetResultRTEPermissionInfo(relinfo, estate);
+
+	if (perminfo == NULL)
+		return NULL;
+
+	/* Map the columns to child's attribute numbers if needed. */
+	if (relinfo->ri_RootResultRelInfo)
+	{
+		TupleConversionMap *map = ExecGetRootToChildMap(relinfo, estate);
+
+		if (map)
+			return execute_attr_map_cols(map->attrMap, perminfo->updatedCols);
+	}
+
+	return perminfo->updatedCols;
+}
+
+/* Return a bitmap representing generated columns being updated */
+Bitmapset *
+ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
+{
+	/* In some code paths we can reach here before initializing the info */
+	if (relinfo->ri_GeneratedExprs == NULL)
+		ExecInitStoredGenerated(relinfo, estate, CMD_UPDATE);
+	return relinfo->ri_extraUpdatedCols;
+}
+
+/* Return columns being updated, including generated columns */
+Bitmapset *
+ExecGetAllUpdatedCols(ResultRelInfo *relinfo, EState *estate)
+{
+	return bms_union(ExecGetUpdatedCols(relinfo, estate),
+					 ExecGetExtraUpdatedCols(relinfo, estate));
+}
+
+/*
+ * GetResultRTEPermissionInfo
+ *		Looks up RTEPermissionInfo for ExecGet*Cols() routines
+ */
+static RTEPermissionInfo *
+GetResultRTEPermissionInfo(ResultRelInfo *relinfo, EState *estate)
+{
+	Index		rti;
+	RangeTblEntry *rte;
+	RTEPermissionInfo *perminfo = NULL;
+
+	if (relinfo->ri_RootResultRelInfo)
+	{
+		/*
+		 * For inheritance child result relations (a partition routing target
+		 * of an INSERT or a child UPDATE target), this returns the root
+		 * parent's RTE to fetch the RTEPermissionInfo because that's the only
+		 * one that has one assigned.
+		 */
+		rti = relinfo->ri_RootResultRelInfo->ri_RangeTableIndex;
+	}
+	else if (relinfo->ri_RangeTableIndex != 0)
+	{
+		/*
+		 * Non-child result relation should have their own RTEPermissionInfo.
+		 */
+		rti = relinfo->ri_RangeTableIndex;
 	}
 	else
 	{
@@ -1286,66 +1385,34 @@ ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate)
 		 * firing triggers and the relation is not being inserted into.  (See
 		 * ExecGetTriggerResultRel.)
 		 */
-		return NULL;
+		rti = 0;
 	}
+
+	if (rti > 0)
+	{
+		rte = exec_rt_fetch(rti, estate);
+		perminfo = getRTEPermissionInfo(estate->es_rteperminfos, rte);
+	}
+
+	return perminfo;
 }
 
-/* Return a bitmap representing columns being updated */
-Bitmapset *
-ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
+/*
+ * GetResultRelCheckAsUser
+ *		Returns the user to modify passed-in result relation as
+ *
+ * The user is chosen by looking up the relation's or, if a child table, its
+ * root parent's RTEPermissionInfo.
+ */
+Oid
+ExecGetResultRelCheckAsUser(ResultRelInfo *relInfo, EState *estate)
 {
-	/* see ExecGetInsertedCols() */
-	if (relinfo->ri_RangeTableIndex != 0)
-	{
-		RangeTblEntry *rte = exec_rt_fetch(relinfo->ri_RangeTableIndex, estate);
+	RTEPermissionInfo *perminfo = GetResultRTEPermissionInfo(relInfo, estate);
 
-		return rte->updatedCols;
-	}
-	else if (relinfo->ri_RootResultRelInfo)
-	{
-		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
-		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
+	/* XXX - maybe ok to return GetUserId() in this case? */
+	if (perminfo == NULL)
+		elog(ERROR, "no RTEPermissionInfo found for result relation with OID %u",
+			 RelationGetRelid(relInfo->ri_RelationDesc));
 
-		if (relinfo->ri_RootToPartitionMap != NULL)
-			return execute_attr_map_cols(relinfo->ri_RootToPartitionMap->attrMap,
-										 rte->updatedCols);
-		else
-			return rte->updatedCols;
-	}
-	else
-		return NULL;
-}
-
-/* Return a bitmap representing generated columns being updated */
-Bitmapset *
-ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
-{
-	/* see ExecGetInsertedCols() */
-	if (relinfo->ri_RangeTableIndex != 0)
-	{
-		RangeTblEntry *rte = exec_rt_fetch(relinfo->ri_RangeTableIndex, estate);
-
-		return rte->extraUpdatedCols;
-	}
-	else if (relinfo->ri_RootResultRelInfo)
-	{
-		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
-		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
-
-		if (relinfo->ri_RootToPartitionMap != NULL)
-			return execute_attr_map_cols(relinfo->ri_RootToPartitionMap->attrMap,
-										 rte->extraUpdatedCols);
-		else
-			return rte->extraUpdatedCols;
-	}
-	else
-		return NULL;
-}
-
-/* Return columns being updated, including generated columns */
-Bitmapset *
-ExecGetAllUpdatedCols(ResultRelInfo *relinfo, EState *estate)
-{
-	return bms_union(ExecGetUpdatedCols(relinfo, estate),
-					 ExecGetExtraUpdatedCols(relinfo, estate));
+	return perminfo->checkAsUser ? perminfo->checkAsUser : GetUserId();
 }

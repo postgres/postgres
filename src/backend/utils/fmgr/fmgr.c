@@ -3,7 +3,7 @@
  * fmgr.c
  *	  The Postgres function manager.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -23,6 +23,7 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "nodes/miscnodes.h"
 #include "nodes/nodeFuncs.h"
 #include "pgstat.h"
 #include "utils/acl.h"
@@ -706,6 +707,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	if (fcache->proconfig)
 	{
 		ProcessGUCArray(fcache->proconfig,
+						NULL,
 						(superuser() ? PGC_SUSET : PGC_USERSET),
 						PGC_S_SESSION,
 						GUC_ACTION_SAVE);
@@ -1549,6 +1551,115 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 }
 
 /*
+ * Call a previously-looked-up datatype input function, with non-exception
+ * handling of "soft" errors.
+ *
+ * This is basically like InputFunctionCall, but the converted Datum is
+ * returned into *result while the function result is true for success or
+ * false for failure.  Also, the caller may pass an ErrorSaveContext node.
+ * (We declare that as "fmNodePtr" to avoid including nodes.h in fmgr.h.)
+ *
+ * If escontext points to an ErrorSaveContext, any "soft" errors detected by
+ * the input function will be reported by filling the escontext struct and
+ * returning false.  (The caller can choose to test SOFT_ERROR_OCCURRED(),
+ * but checking the function result instead is usually cheaper.)
+ *
+ * If escontext does not point to an ErrorSaveContext, errors are reported
+ * via ereport(ERROR), so that there is no functional difference from
+ * InputFunctionCall; the result will always be true if control returns.
+ */
+bool
+InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
+					  Oid typioparam, int32 typmod,
+					  fmNodePtr escontext,
+					  Datum *result)
+{
+	LOCAL_FCINFO(fcinfo, 3);
+
+	if (str == NULL && flinfo->fn_strict)
+	{
+		*result = (Datum) 0;	/* just return null result */
+		return true;
+	}
+
+	InitFunctionCallInfoData(*fcinfo, flinfo, 3, InvalidOid, escontext, NULL);
+
+	fcinfo->args[0].value = CStringGetDatum(str);
+	fcinfo->args[0].isnull = false;
+	fcinfo->args[1].value = ObjectIdGetDatum(typioparam);
+	fcinfo->args[1].isnull = false;
+	fcinfo->args[2].value = Int32GetDatum(typmod);
+	fcinfo->args[2].isnull = false;
+
+	*result = FunctionCallInvoke(fcinfo);
+
+	/* Result value is garbage, and could be null, if an error was reported */
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return false;
+
+	/* Otherwise, should get null result if and only if str is NULL */
+	if (str == NULL)
+	{
+		if (!fcinfo->isnull)
+			elog(ERROR, "input function %u returned non-NULL",
+				 flinfo->fn_oid);
+	}
+	else
+	{
+		if (fcinfo->isnull)
+			elog(ERROR, "input function %u returned NULL",
+				 flinfo->fn_oid);
+	}
+
+	return true;
+}
+
+/*
+ * Call a directly-named datatype input function, with non-exception
+ * handling of "soft" errors.
+ *
+ * This is like InputFunctionCallSafe, except that it is given a direct
+ * pointer to the C function to call.  We assume that that function is
+ * strict.  Also, the function cannot be one that needs to
+ * look at FmgrInfo, since there won't be any.
+ */
+bool
+DirectInputFunctionCallSafe(PGFunction func, char *str,
+							Oid typioparam, int32 typmod,
+							fmNodePtr escontext,
+							Datum *result)
+{
+	LOCAL_FCINFO(fcinfo, 3);
+
+	if (str == NULL)
+	{
+		*result = (Datum) 0;	/* just return null result */
+		return true;
+	}
+
+	InitFunctionCallInfoData(*fcinfo, NULL, 3, InvalidOid, escontext, NULL);
+
+	fcinfo->args[0].value = CStringGetDatum(str);
+	fcinfo->args[0].isnull = false;
+	fcinfo->args[1].value = ObjectIdGetDatum(typioparam);
+	fcinfo->args[1].isnull = false;
+	fcinfo->args[2].value = Int32GetDatum(typmod);
+	fcinfo->args[2].isnull = false;
+
+	*result = (*func) (fcinfo);
+
+	/* Result value is garbage, and could be null, if an error was reported */
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return false;
+
+	/* Otherwise, shouldn't get null result */
+	if (fcinfo->isnull)
+		elog(ERROR, "input function %p returned NULL", (void *) func);
+
+	return true;
+}
+
+/*
  * Call a previously-looked-up datatype output function.
  *
  * Do not call this on NULL datums.
@@ -2054,7 +2165,7 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 						langStruct->lanvalidator)));
 
 	/* first validate that we have permissions to use the language */
-	aclresult = pg_language_aclcheck(procStruct->prolang, GetUserId(),
+	aclresult = object_aclcheck(LanguageRelationId, procStruct->prolang, GetUserId(),
 									 ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_LANGUAGE,
@@ -2065,7 +2176,7 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 	 * execute it, there should be no possible side-effect of
 	 * compiling/validation that execution can't have.
 	 */
-	aclresult = pg_proc_aclcheck(functionOid, GetUserId(), ACL_EXECUTE);
+	aclresult = object_aclcheck(ProcedureRelationId, functionOid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION, NameStr(procStruct->proname));
 

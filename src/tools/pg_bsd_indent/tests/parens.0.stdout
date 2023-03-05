@@ -1,0 +1,26 @@
+typedef void (*pgstat_page) (pgstattuple_type *, Relation, BlockNumber,
+							 BufferAccessStrategy);
+
+typedef char (*get_relation_stats_hook_type) (int *root,
+											  unsigned *rte,
+											  char attnum,
+											  float *vardata);
+
+void
+similarity_dist(int m)
+{
+	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, 3 /* sizeof gmt */ ),
+							  *here)];
+
+	float4		res = DatumGetFloat4(FunctionCall2(similarity,
+												   (here),
+												   here));
+
+	if (es->verbose) {
+		char	   *sql = strVal(list_nth(fdw_private,
+										  here));
+	}
+
+	rb->allocfunc(1);
+	rb2.allocfunc(7);
+}

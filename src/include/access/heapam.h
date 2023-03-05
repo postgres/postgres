@@ -4,7 +4,7 @@
  *	  POSTGRES heap access method definitions.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/heapam.h
@@ -38,6 +38,7 @@
 
 typedef struct BulkInsertStateData *BulkInsertState;
 struct TupleTableSlot;
+struct VacuumCutoffs;
 
 #define MaxLockTupleMode	LockTupleExclusive
 
@@ -56,11 +57,11 @@ typedef struct HeapScanDescData
 
 	/* scan current state */
 	bool		rs_inited;		/* false = scan not init'd yet */
+	OffsetNumber rs_coffset;	/* current offset # in non-page-at-a-time mode */
 	BlockNumber rs_cblock;		/* current block # in scan, if any */
 	Buffer		rs_cbuf;		/* current buffer in scan, if any */
 	/* NB: if rs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
 
-	/* rs_numblocks is usually InvalidBlockNumber, meaning "scan whole rel" */
 	BufferAccessStrategy rs_strategy;	/* access strategy for reads */
 
 	HeapTupleData rs_ctup;		/* current tuple in scan, if any */
@@ -99,6 +100,97 @@ typedef enum
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
+/*
+ * heap_prepare_freeze_tuple may request that heap_freeze_execute_prepared
+ * check any tuple's to-be-frozen xmin and/or xmax status using pg_xact
+ */
+#define		HEAP_FREEZE_CHECK_XMIN_COMMITTED	0x01
+#define		HEAP_FREEZE_CHECK_XMAX_ABORTED		0x02
+
+/* heap_prepare_freeze_tuple state describing how to freeze a tuple */
+typedef struct HeapTupleFreeze
+{
+	/* Fields describing how to process tuple */
+	TransactionId xmax;
+	uint16		t_infomask2;
+	uint16		t_infomask;
+	uint8		frzflags;
+
+	/* xmin/xmax check flags */
+	uint8		checkflags;
+	/* Page offset number for tuple */
+	OffsetNumber offset;
+} HeapTupleFreeze;
+
+/*
+ * State used by VACUUM to track the details of freezing all eligible tuples
+ * on a given heap page.
+ *
+ * VACUUM prepares freeze plans for each page via heap_prepare_freeze_tuple
+ * calls (every tuple with storage gets its own call).  This page-level freeze
+ * state is updated across each call, which ultimately determines whether or
+ * not freezing the page is required.
+ *
+ * Aside from the basic question of whether or not freezing will go ahead, the
+ * state also tracks the oldest extant XID/MXID in the table as a whole, for
+ * the purposes of advancing relfrozenxid/relminmxid values in pg_class later
+ * on.  Each heap_prepare_freeze_tuple call pushes NewRelfrozenXid and/or
+ * NewRelminMxid back as required to avoid unsafe final pg_class values.  Any
+ * and all unfrozen XIDs or MXIDs that remain after VACUUM finishes _must_
+ * have values >= the final relfrozenxid/relminmxid values in pg_class.  This
+ * includes XIDs that remain as MultiXact members from any tuple's xmax.
+ *
+ * When 'freeze_required' flag isn't set after all tuples are examined, the
+ * final choice on freezing is made by vacuumlazy.c.  It can decide to trigger
+ * freezing based on whatever criteria it deems appropriate.  However, it is
+ * recommended that vacuumlazy.c avoid early freezing when freezing does not
+ * enable setting the target page all-frozen in the visibility map afterwards.
+ */
+typedef struct HeapPageFreeze
+{
+	/* Is heap_prepare_freeze_tuple caller required to freeze page? */
+	bool		freeze_required;
+
+	/*
+	 * "Freeze" NewRelfrozenXid/NewRelminMxid trackers.
+	 *
+	 * Trackers used when heap_freeze_execute_prepared freezes, or when there
+	 * are zero freeze plans for a page.  It is always valid for vacuumlazy.c
+	 * to freeze any page, by definition.  This even includes pages that have
+	 * no tuples with storage to consider in the first place.  That way the
+	 * 'totally_frozen' results from heap_prepare_freeze_tuple can always be
+	 * used in the same way, even when no freeze plans need to be executed to
+	 * "freeze the page".  Only the "freeze" path needs to consider the need
+	 * to set pages all-frozen in the visibility map under this scheme.
+	 *
+	 * When we freeze a page, we generally freeze all XIDs < OldestXmin, only
+	 * leaving behind XIDs that are ineligible for freezing, if any.  And so
+	 * you might wonder why these trackers are necessary at all; why should
+	 * _any_ page that VACUUM freezes _ever_ be left with XIDs/MXIDs that
+	 * ratchet back the top-level NewRelfrozenXid/NewRelminMxid trackers?
+	 *
+	 * It is useful to use a definition of "freeze the page" that does not
+	 * overspecify how MultiXacts are affected.  heap_prepare_freeze_tuple
+	 * generally prefers to remove Multis eagerly, but lazy processing is used
+	 * in cases where laziness allows VACUUM to avoid allocating a new Multi.
+	 * The "freeze the page" trackers enable this flexibility.
+	 */
+	TransactionId FreezePageRelfrozenXid;
+	MultiXactId FreezePageRelminMxid;
+
+	/*
+	 * "No freeze" NewRelfrozenXid/NewRelminMxid trackers.
+	 *
+	 * These trackers are maintained in the same way as the trackers used when
+	 * VACUUM scans a page that isn't cleanup locked.  Both code paths are
+	 * based on the same general idea (do less work for this page during the
+	 * ongoing VACUUM, at the cost of having to accept older final values).
+	 */
+	TransactionId NoFreezePageRelfrozenXid;
+	MultiXactId NoFreezePageRelminMxid;
+
+} HeapPageFreeze;
+
 /* ----------------
  *		function prototypes for heap access method
  *
@@ -118,13 +210,13 @@ extern TableScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
 									int nkeys, ScanKey key,
 									ParallelTableScanDesc parallel_scan,
 									uint32 flags);
-extern void heap_setscanlimits(TableScanDesc scan, BlockNumber startBlk,
+extern void heap_setscanlimits(TableScanDesc sscan, BlockNumber startBlk,
 							   BlockNumber numBlks);
-extern void heapgetpage(TableScanDesc scan, BlockNumber page);
-extern void heap_rescan(TableScanDesc scan, ScanKey key, bool set_params,
+extern void heapgetpage(TableScanDesc sscan, BlockNumber block);
+extern void heap_rescan(TableScanDesc sscan, ScanKey key, bool set_params,
 						bool allow_strat, bool allow_sync, bool allow_pagemode);
-extern void heap_endscan(TableScanDesc scan);
-extern HeapTuple heap_getnext(TableScanDesc scan, ScanDirection direction);
+extern void heap_endscan(TableScanDesc sscan);
+extern HeapTuple heap_getnext(TableScanDesc sscan, ScanDirection direction);
 extern bool heap_getnextslot(TableScanDesc sscan,
 							 ScanDirection direction, struct TupleTableSlot *slot);
 extern void heap_set_tidrange(TableScanDesc sscan, ItemPointer mintid,
@@ -138,7 +230,7 @@ extern bool heap_hot_search_buffer(ItemPointer tid, Relation relation,
 								   Buffer buffer, Snapshot snapshot, HeapTuple heapTuple,
 								   bool *all_dead, bool first_call);
 
-extern void heap_get_latest_tid(TableScanDesc scan, ItemPointer tid);
+extern void heap_get_latest_tid(TableScanDesc sscan, ItemPointer tid);
 
 extern BulkInsertState GetBulkInsertState(void);
 extern void FreeBulkInsertState(BulkInsertState);
@@ -160,17 +252,24 @@ extern TM_Result heap_update(Relation relation, ItemPointer otid,
 							 struct TM_FailureData *tmfd, LockTupleMode *lockmode);
 extern TM_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 								 CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
-								 bool follow_update,
+								 bool follow_updates,
 								 Buffer *buffer, struct TM_FailureData *tmfd);
 
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);
+extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
+									  const struct VacuumCutoffs *cutoffs,
+									  HeapPageFreeze *pagefrz,
+									  HeapTupleFreeze *frz, bool *totally_frozen);
+extern void heap_freeze_execute_prepared(Relation rel, Buffer buffer,
+										 TransactionId snapshotConflictHorizon,
+										 HeapTupleFreeze *tuples, int ntuples);
 extern bool heap_freeze_tuple(HeapTupleHeader tuple,
 							  TransactionId relfrozenxid, TransactionId relminmxid,
-							  TransactionId cutoff_xid, TransactionId cutoff_multi);
-extern bool heap_tuple_would_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
-									MultiXactId cutoff_multi,
-									TransactionId *relfrozenxid_out,
-									MultiXactId *relminmxid_out);
+							  TransactionId FreezeLimit, TransactionId MultiXactCutoff);
+extern bool heap_tuple_should_freeze(HeapTupleHeader tuple,
+									 const struct VacuumCutoffs *cutoffs,
+									 TransactionId *NoFreezePageRelfrozenXid,
+									 MultiXactId *NoFreezePageRelminMxid);
 extern bool heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple);
 
 extern void simple_heap_insert(Relation relation, HeapTuple tup);
@@ -187,7 +286,7 @@ extern void heap_page_prune_opt(Relation relation, Buffer buffer);
 extern int	heap_page_prune(Relation relation, Buffer buffer,
 							struct GlobalVisState *vistest,
 							TransactionId old_snap_xmin,
-							TimestampTz old_snap_ts_ts,
+							TimestampTz old_snap_ts,
 							int *nnewlpdead,
 							OffsetNumber *off_loc);
 extern void heap_page_prune_execute(Buffer buffer,
@@ -202,18 +301,17 @@ extern void heap_vacuum_rel(Relation rel,
 							struct VacuumParams *params, BufferAccessStrategy bstrategy);
 
 /* in heap/heapam_visibility.c */
-extern bool HeapTupleSatisfiesVisibility(HeapTuple stup, Snapshot snapshot,
+extern bool HeapTupleSatisfiesVisibility(HeapTuple htup, Snapshot snapshot,
 										 Buffer buffer);
-extern TM_Result HeapTupleSatisfiesUpdate(HeapTuple stup, CommandId curcid,
+extern TM_Result HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 										  Buffer buffer);
-extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTuple stup, TransactionId OldestXmin,
+extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 											Buffer buffer);
-extern HTSV_Result HeapTupleSatisfiesVacuumHorizon(HeapTuple stup, Buffer buffer,
+extern HTSV_Result HeapTupleSatisfiesVacuumHorizon(HeapTuple htup, Buffer buffer,
 												   TransactionId *dead_after);
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
 								 uint16 infomask, TransactionId xid);
 extern bool HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple);
-extern bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
 extern bool HeapTupleIsSurelyDead(HeapTuple htup,
 								  struct GlobalVisState *vistest);
 
@@ -227,7 +325,7 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
 										  HeapTuple htup,
 										  Buffer buffer,
 										  CommandId *cmin, CommandId *cmax);
-extern void HeapCheckForSerializableConflictOut(bool valid, Relation relation, HeapTuple tuple,
+extern void HeapCheckForSerializableConflictOut(bool visible, Relation relation, HeapTuple tuple,
 												Buffer buffer, Snapshot snapshot);
 
 #endif							/* HEAPAM_H */

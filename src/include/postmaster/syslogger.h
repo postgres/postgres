@@ -3,7 +3,7 @@
  * syslogger.h
  *	  Exports from postmaster/syslogger.c.
  *
- * Copyright (c) 2004-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2023, PostgreSQL Global Development Group
  *
  * src/include/postmaster/syslogger.h
  *
@@ -84,7 +84,7 @@ extern PGDLLIMPORT HANDLE syslogPipe[2];
 
 extern int	SysLogger_Start(void);
 
-extern void write_syslogger_file(const char *buffer, int count, int dest);
+extern void write_syslogger_file(const char *buffer, int count, int destination);
 
 #ifdef EXEC_BACKEND
 extern void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();

@@ -74,7 +74,7 @@ select count(*) > 0 as ok from gin_test_tbl where i @> array[1];
 
 reset gin_fuzzy_search_limit;
 -- Test optimization of empty queries
-create unlogged table t_gin_test_tbl(i int4[], j int4[]);
+create temp table t_gin_test_tbl(i int4[], j int4[]);
 create index on t_gin_test_tbl using gin (i, j);
 insert into t_gin_test_tbl
 values
@@ -287,4 +287,13 @@ select count(*) from t_gin_test_tbl where j @> '{}'::int[];
 
 reset enable_seqscan;
 reset enable_bitmapscan;
+drop table t_gin_test_tbl;
+-- test an unlogged table, mostly to get coverage of ginbuildempty
+create unlogged table t_gin_test_tbl(i int4[], j int4[]);
+create index on t_gin_test_tbl using gin (i, j);
+insert into t_gin_test_tbl
+values
+  (null,    null),
+  ('{}',    null),
+  ('{1}',   '{2,3}');
 drop table t_gin_test_tbl;

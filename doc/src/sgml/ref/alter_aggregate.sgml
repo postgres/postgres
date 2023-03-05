@@ -46,9 +46,10 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
    You must own the aggregate function to use <command>ALTER AGGREGATE</command>.
    To change the schema of an aggregate function, you must also have
    <literal>CREATE</literal> privilege on the new schema.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the aggregate function's schema.  (These restrictions enforce that altering
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the aggregate function's schema.
+   (These restrictions enforce that altering
    the owner doesn't do anything you couldn't do by dropping and recreating
    the aggregate function.  However, a superuser can alter ownership of any
    aggregate function anyway.)

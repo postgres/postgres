@@ -1,6 +1,6 @@
 # -*-perl-*- hey - emacs - this is a perl file
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # src/tools/msvc/vcregress.pl
 
@@ -146,6 +146,7 @@ sub set_command_env
 {
 	set_single_env('GZIP_PROGRAM', 'gzip');
 	set_single_env('LZ4',          'lz4');
+	set_single_env('OPENSSL',      'openssl');
 	set_single_env('ZSTD',         'zstd');
 }
 
@@ -163,9 +164,7 @@ sub installcheck_internal
 		"--dlpath=.",
 		"--bindir=../../../$Config/psql",
 		"--schedule=${schedule}_schedule",
-		"--max-concurrent-tests=20",
-		"--encoding=SQL_ASCII",
-		"--no-locale");
+		"--max-concurrent-tests=20");
 	push(@args, $maxconn) if $maxconn;
 	push(@args, @EXTRA_REGRESS_OPTS);
 	system(@args);
@@ -184,6 +183,7 @@ sub installcheck
 sub check
 {
 	my $schedule = shift || 'parallel';
+	my $encoding = $ENV{ENCODING} || "SQL_ASCII";
 	# for backwards compatibility, "serial" runs the tests in
 	# parallel_schedule one by one.
 	my $maxconn = $maxconn;
@@ -198,7 +198,7 @@ sub check
 		"--bindir=",
 		"--schedule=${schedule}_schedule",
 		"--max-concurrent-tests=20",
-		"--encoding=SQL_ASCII",
+		"--encoding=${encoding}",
 		"--no-locale",
 		"--temp-instance=./tmp_check");
 	push(@args, $maxconn)     if $maxconn;
@@ -291,7 +291,9 @@ sub tap_check
 	$ENV{PG_REGRESS}    = "$topdir/$Config/pg_regress/pg_regress";
 	$ENV{REGRESS_SHLIB} = "$topdir/src/test/regress/regress.dll";
 
-	$ENV{TESTDIR} = "$dir";
+	$ENV{TESTDATADIR} = "$dir/tmp_check";
+	$ENV{TESTLOGDIR} = "$dir/tmp_check/log";
+
 	my $module = basename $dir;
 	# add the module build dir as the second element in the PATH
 	$ENV{PATH} =~ s!;!;$topdir/$Config/$module;!;

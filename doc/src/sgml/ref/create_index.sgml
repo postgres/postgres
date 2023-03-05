@@ -238,8 +238,9 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        <para>
         The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        <literal>gist</literal>, <literal>spgist</literal>, <literal>gin</literal>, and
-        <literal>brin</literal>.
+        <literal>gist</literal>, <literal>spgist</literal>, <literal>gin</literal>,
+        <literal>brin</literal>, or user-installed access methods like
+        <link linkend="bloom">bloom</link>.
         The default method is <literal>btree</literal>.
        </para>
       </listitem>
@@ -578,8 +579,10 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </term>
     <listitem>
     <para>
-     Defines whether a summarization run is invoked for the previous page
+     Defines whether a summarization run is queued for the previous page
      range whenever an insertion is detected on the next one.
+     See <xref linkend="brin-operation"/> for more details.
+     The default is <literal>off</literal>.
     </para>
     </listitem>
    </varlistentry>

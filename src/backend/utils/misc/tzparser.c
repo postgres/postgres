@@ -11,7 +11,7 @@
  * PG_TRY if necessary.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -439,7 +439,7 @@ ParseTzFile(const char *filename, int depth,
  * load_tzoffsets --- read and parse the specified timezone offset file
  *
  * On success, return a filled-in TimeZoneAbbrevTable, which must have been
- * malloc'd not palloc'd.  On failure, return NULL, using GUC_check_errmsg
+ * guc_malloc'd not palloc'd.  On failure, return NULL, using GUC_check_errmsg
  * and friends to give details of the problem.
  */
 TimeZoneAbbrevTable *

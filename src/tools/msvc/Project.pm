@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 package Project;
 
@@ -367,10 +367,6 @@ sub AddResourceFile
 {
 	my ($self, $dir, $desc, $ico) = @_;
 
-	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
-	  localtime(time);
-	my $d = sprintf("%02d%03d", ($year - 100), $yday);
-
 	if (Solution::IsNewer("$dir/win32ver.rc", 'src/port/win32ver.rc'))
 	{
 		print "Generating win32ver.rc for $dir\n";
@@ -383,7 +379,6 @@ sub AddResourceFile
 		{
 			s/FILEDESC/"$desc"/gm;
 			s/_ICO_/$icostr/gm;
-			s/(VERSION.*),0/$1,$d/;
 			if ($self->{type} eq "dll")
 			{
 				s/VFT_APP/VFT_DLL/gm;
@@ -418,13 +413,6 @@ sub DisableLinkerWarnings
 sub Save
 {
 	my ($self) = @_;
-
-	# If doing DLL and haven't specified a DEF file, do a full export of all symbols
-	# in the project.
-	if ($self->{type} eq "dll" && !$self->{def})
-	{
-		$self->FullExportDLL($self->{name} . ".lib");
-	}
 
 	# Warning 4197 is about double exporting, disable this per
 	# http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99193

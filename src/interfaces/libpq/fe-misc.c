@@ -19,7 +19,7 @@
  * routines.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -37,14 +37,12 @@
 #include "win32.h"
 #else
 #include <unistd.h>
+#include <sys/select.h>
 #include <sys/time.h>
 #endif
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
 #endif
 
 #include "libpq-fe.h"
@@ -572,8 +570,7 @@ pqReadData(PGconn *conn)
 
 	if (conn->sock == PGINVALID_SOCKET)
 	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("connection not open\n"));
+		libpq_append_conn_error(conn, "connection not open");
 		return -1;
 	}
 
@@ -751,10 +748,9 @@ retry4:
 	 * means the connection has been closed.  Cope.
 	 */
 definitelyEOF:
-	appendPQExpBufferStr(&conn->errorMessage,
-						 libpq_gettext("server closed the connection unexpectedly\n"
-									   "\tThis probably means the server terminated abnormally\n"
-									   "\tbefore or while processing the request.\n"));
+	libpq_append_conn_error(conn, "server closed the connection unexpectedly\n"
+					   "\tThis probably means the server terminated abnormally\n"
+					   "\tbefore or while processing the request.");
 
 	/* Come here if lower-level code already set a suitable errorMessage */
 definitelyFailed:
@@ -1004,8 +1000,7 @@ pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 
 	if (result == 0)
 	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("timeout expired\n"));
+		libpq_append_conn_error(conn, "timeout expired");
 		return 1;
 	}
 
@@ -1049,8 +1044,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 		return -1;
 	if (conn->sock == PGINVALID_SOCKET)
 	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("invalid socket\n"));
+		libpq_append_conn_error(conn, "invalid socket");
 		return -1;
 	}
 
@@ -1072,9 +1066,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 	{
 		char		sebuf[PG_STRERROR_R_BUFLEN];
 
-		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("%s() failed: %s\n"),
-						  "select",
+		libpq_append_conn_error(conn, "%s() failed: %s", "select",
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 	}
 
@@ -1280,3 +1272,62 @@ libpq_ngettext(const char *msgid, const char *msgid_plural, unsigned long n)
 }
 
 #endif							/* ENABLE_NLS */
+
+
+/*
+ * Append a formatted string to the given buffer, after translating it.  A
+ * newline is automatically appended; the format should not end with a
+ * newline.
+ */
+void
+libpq_append_error(PQExpBuffer errorMessage, const char *fmt, ...)
+{
+	int			save_errno = errno;
+	bool		done;
+	va_list		args;
+
+	Assert(fmt[strlen(fmt) - 1] != '\n');
+
+	if (PQExpBufferBroken(errorMessage))
+		return;					/* already failed */
+
+	/* Loop in case we have to retry after enlarging the buffer. */
+	do
+	{
+		errno = save_errno;
+		va_start(args, fmt);
+		done = appendPQExpBufferVA(errorMessage, libpq_gettext(fmt), args);
+		va_end(args);
+	} while (!done);
+
+	appendPQExpBufferChar(errorMessage, '\n');
+}
+
+/*
+ * Append a formatted string to the error message buffer of the given
+ * connection, after translating it.  A newline is automatically appended; the
+ * format should not end with a newline.
+ */
+void
+libpq_append_conn_error(PGconn *conn, const char *fmt, ...)
+{
+	int			save_errno = errno;
+	bool		done;
+	va_list		args;
+
+	Assert(fmt[strlen(fmt) - 1] != '\n');
+
+	if (PQExpBufferBroken(&conn->errorMessage))
+		return;					/* already failed */
+
+	/* Loop in case we have to retry after enlarging the buffer. */
+	do
+	{
+		errno = save_errno;
+		va_start(args, fmt);
+		done = appendPQExpBufferVA(&conn->errorMessage, libpq_gettext(fmt), args);
+		va_end(args);
+	} while (!done);
+
+	appendPQExpBufferChar(&conn->errorMessage, '\n');
+}

@@ -72,6 +72,37 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 ERROR:  invalid input syntax for type interval: "@ 30 eons ago"
 LINE 1: INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
                                               ^
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('1.5 weeks', 'interval');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('garbage', 'interval');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('@ 30 eons ago', 'interval');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('garbage', 'interval');
+                      message                      | detail | hint | sql_error_code 
+---------------------------------------------------+--------+------+----------------
+ invalid input syntax for type interval: "garbage" |        |      | 22007
+(1 row)
+
+SELECT * FROM pg_input_error_info('@ 30 eons ago', 'interval');
+                         message                         | detail | hint | sql_error_code 
+---------------------------------------------------------+--------+------+----------------
+ invalid input syntax for type interval: "@ 30 eons ago" |        |      | 22007
+(1 row)
+
 -- test interval operators
 SELECT * FROM INTERVAL_TBL;
        f1        
@@ -857,6 +888,11 @@ SELECT  interval '-23 hours 45 min 12.34 sec',
  -23:45:12.34 | -1 23:45:12.34 | -1-2 -1 -23:45:12.34 | -0-10 +1 +23:45:12.34
 (1 row)
 
+-- edge case for sign-matching rules
+SELECT  interval '';  -- error
+ERROR:  invalid input syntax for type interval: ""
+LINE 1: SELECT  interval '';
+                         ^
 -- test outputting iso8601 intervals
 SET IntervalStyle to iso_8601;
 select  interval '0'                                AS "zero",
@@ -937,6 +973,12 @@ select interval 'P.1Y0M3DT4H5M6S';
        interval        
 -----------------------
  1 mon 3 days 04:05:06
+(1 row)
+
+select interval 'P10.5e4Y';  -- not per spec, but we've historically taken it
+   interval   
+--------------
+ 105000 years
 (1 row)
 
 select interval 'P.Y0M3DT4H5M6S';  -- error
@@ -1045,13 +1087,13 @@ select interval 'PT2562047788:00:54.775807';
 select interval 'PT2562047788.0152155019444';
              interval              
 -----------------------------------
- @ 2562047788 hours 54.775807 secs
+ @ 2562047788 hours 54.775429 secs
 (1 row)
 
 select interval 'PT-2562047788.0152155022222';
                interval                
 ---------------------------------------
- @ 2562047788 hours 54.775808 secs ago
+ @ 2562047788 hours 54.775429 secs ago
 (1 row)
 
 -- overflow each date/time field

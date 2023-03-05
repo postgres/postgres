@@ -3,7 +3,7 @@
  * getpeereid.c
  *		get peer userid for UNIX-domain socket connection
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -16,10 +16,8 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <unistd.h>
-#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
-#endif
+#include <unistd.h>
 #ifdef HAVE_UCRED_H
 #include <ucred.h>
 #endif

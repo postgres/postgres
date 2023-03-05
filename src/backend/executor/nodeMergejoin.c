@@ -3,7 +3,7 @@
  * nodeMergejoin.c
  *	  routines supporting merge joins
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1658,6 +1658,9 @@ ExecEndMergeJoin(MergeJoinState *node)
 void
 ExecReScanMergeJoin(MergeJoinState *node)
 {
+	PlanState  *outerPlan = outerPlanState(node);
+	PlanState  *innerPlan = innerPlanState(node);
+
 	ExecClearTuple(node->mj_MarkedTupleSlot);
 
 	node->mj_JoinState = EXEC_MJ_INITIALIZE_OUTER;
@@ -1670,8 +1673,8 @@ ExecReScanMergeJoin(MergeJoinState *node)
 	 * if chgParam of subnodes is not null then plans will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (node->js.ps.lefttree->chgParam == NULL)
-		ExecReScan(node->js.ps.lefttree);
-	if (node->js.ps.righttree->chgParam == NULL)
-		ExecReScan(node->js.ps.righttree);
+	if (outerPlan->chgParam == NULL)
+		ExecReScan(outerPlan);
+	if (innerPlan->chgParam == NULL)
+		ExecReScan(innerPlan);
 }

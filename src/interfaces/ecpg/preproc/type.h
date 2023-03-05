@@ -33,15 +33,18 @@ struct ECPGtype
 };
 
 /* Everything is malloced. */
-void		ECPGmake_struct_member(const char *, struct ECPGtype *, struct ECPGstruct_member **);
-struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, char *, int);
-struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, char *);
-struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *, enum ECPGttype, char *, char *);
-struct ECPGstruct_member *ECPGstruct_member_dup(struct ECPGstruct_member *);
+void		ECPGmake_struct_member(const char *name, struct ECPGtype *type,
+								   struct ECPGstruct_member **start);
+struct ECPGtype *ECPGmake_simple_type(enum ECPGttype type, char *size, int counter);
+struct ECPGtype *ECPGmake_array_type(struct ECPGtype *type, char *size);
+struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *rm,
+									  enum ECPGttype type, char *type_name,
+									  char *struct_sizeof);
+struct ECPGstruct_member *ECPGstruct_member_dup(struct ECPGstruct_member *rm);
 
 /* Frees a type. */
-void		ECPGfree_struct_member(struct ECPGstruct_member *);
-void		ECPGfree_type(struct ECPGtype *);
+void		ECPGfree_struct_member(struct ECPGstruct_member *rm);
+void		ECPGfree_type(struct ECPGtype *type);
 
 /* Dump a type.
    The type is dumped as:
@@ -53,10 +56,12 @@ void		ECPGfree_type(struct ECPGtype *);
    size is the maxsize in case it is a varchar. Otherwise it is the size of
 	   the variable (required to do array fetches of structs).
  */
-void		ECPGdump_a_type(FILE *, const char *, struct ECPGtype *, const int,
-							const char *, struct ECPGtype *, const int,
-							const char *, const char *, char *,
-							const char *, const char *);
+void		ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type,
+							const int brace_level, const char *ind_name,
+							struct ECPGtype *ind_type, const int ind_brace_level,
+							const char *prefix, const char *ind_prefix,
+							char *arr_str_size, const char *struct_sizeof,
+							const char *ind_struct_sizeof);
 
 /* A simple struct to keep a variable and its type. */
 struct ECPGtemp_type
@@ -114,6 +119,7 @@ struct exec
 
 struct this_type
 {
+	char	   *type_storage;
 	enum ECPGttype type_enum;
 	char	   *type_str;
 	char	   *type_dimension;

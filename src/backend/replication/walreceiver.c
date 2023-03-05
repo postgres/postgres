@@ -39,7 +39,7 @@
  * specific parts are in the libpqwalreceiver module. It's loaded
  * dynamically to avoid linking the server with libpq.
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -95,8 +95,6 @@ bool		hot_standby_feedback;
 static WalReceiverConn *wrconn = NULL;
 WalReceiverFunctionsType *WalReceiverFunctions = NULL;
 
-#define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
-
 /*
  * These variables are used similarly to openLogFile/SegNo,
  * but for walreceiver to write the XLOG. recvFileTLI is the TimeLineID
@@ -116,6 +114,23 @@ static struct
 	XLogRecPtr	Flush;			/* last byte + 1 flushed in the standby */
 }			LogstreamResult;
 
+/*
+ * Reasons to wake up and perform periodic tasks.
+ */
+typedef enum WalRcvWakeupReason
+{
+	WALRCV_WAKEUP_TERMINATE,
+	WALRCV_WAKEUP_PING,
+	WALRCV_WAKEUP_REPLY,
+	WALRCV_WAKEUP_HSFEEDBACK
+#define NUM_WALRCV_WAKEUPS (WALRCV_WAKEUP_HSFEEDBACK + 1)
+} WalRcvWakeupReason;
+
+/*
+ * Wake up times for periodic tasks.
+ */
+static TimestampTz wakeup[NUM_WALRCV_WAKEUPS];
+
 static StringInfoData reply_message;
 static StringInfoData incoming_message;
 
@@ -132,6 +147,7 @@ static void XLogWalRcvClose(XLogRecPtr recptr, TimeLineID tli);
 static void XLogWalRcvSendReply(bool force, bool requestReply);
 static void XLogWalRcvSendHSFeedback(bool immed);
 static void ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime);
+static void WalRcvComputeNextWakeup(WalRcvWakeupReason reason, TimestampTz now);
 
 /*
  * Process any interrupts the walreceiver process may have received.
@@ -179,9 +195,7 @@ WalReceiverMain(void)
 	TimeLineID	primaryTLI;
 	bool		first_stream;
 	WalRcvData *walrcv = WalRcv;
-	TimestampTz last_recv_timestamp;
 	TimestampTz now;
-	bool		ping_sent;
 	char	   *err;
 	char	   *sender_host = NULL;
 	int			sender_port = 0;
@@ -191,8 +205,6 @@ WalReceiverMain(void)
 	 * by fork() or EXEC_BACKEND mechanism from the postmaster).
 	 */
 	Assert(walrcv != NULL);
-
-	now = GetCurrentTimestamp();
 
 	/*
 	 * Mark walreceiver as running in shared memory.
@@ -247,6 +259,7 @@ WalReceiverMain(void)
 	Assert(!is_temp_slot || (slotname[0] == '\0'));
 
 	/* Initialise to a sanish value */
+	now = GetCurrentTimestamp();
 	walrcv->lastMsgSendTime =
 		walrcv->lastMsgReceiptTime = walrcv->latestWalEndTime = now;
 
@@ -280,7 +293,7 @@ WalReceiverMain(void)
 		elog(ERROR, "libpqwalreceiver didn't initialize correctly");
 
 	/* Unblock signals (they were blocked when the postmaster forked us) */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/* Establish the connection to the primary for XLOG streaming */
 	wrconn = walrcv_connect(conninfo, false,
@@ -414,9 +427,14 @@ WalReceiverMain(void)
 			initStringInfo(&reply_message);
 			initStringInfo(&incoming_message);
 
-			/* Initialize the last recv timestamp */
-			last_recv_timestamp = GetCurrentTimestamp();
-			ping_sent = false;
+			/* Initialize nap wakeup times. */
+			now = GetCurrentTimestamp();
+			for (int i = 0; i < NUM_WALRCV_WAKEUPS; ++i)
+				WalRcvComputeNextWakeup(i, now);
+
+			/* Send initial reply/feedback messages. */
+			XLogWalRcvSendReply(true, false);
+			XLogWalRcvSendHSFeedback(true);
 
 			/* Loop until end-of-streaming or error */
 			for (;;)
@@ -426,6 +444,8 @@ WalReceiverMain(void)
 				bool		endofwal = false;
 				pgsocket	wait_fd = PGINVALID_SOCKET;
 				int			rc;
+				TimestampTz nextWakeup;
+				long		nap;
 
 				/*
 				 * Exit walreceiver if we're not in recovery. This should not
@@ -443,6 +463,10 @@ WalReceiverMain(void)
 				{
 					ConfigReloadPending = false;
 					ProcessConfigFile(PGC_SIGHUP);
+					/* recompute wakeup times */
+					now = GetCurrentTimestamp();
+					for (int i = 0; i < NUM_WALRCV_WAKEUPS; ++i)
+						WalRcvComputeNextWakeup(i, now);
 					XLogWalRcvSendHSFeedback(true);
 				}
 
@@ -459,11 +483,13 @@ WalReceiverMain(void)
 						if (len > 0)
 						{
 							/*
-							 * Something was received from primary, so reset
-							 * timeout
+							 * Something was received from primary, so adjust
+							 * the ping and terminate wakeup times.
 							 */
-							last_recv_timestamp = GetCurrentTimestamp();
-							ping_sent = false;
+							now = GetCurrentTimestamp();
+							WalRcvComputeNextWakeup(WALRCV_WAKEUP_TERMINATE,
+													now);
+							WalRcvComputeNextWakeup(WALRCV_WAKEUP_PING, now);
 							XLogWalRcvProcessMsg(buf[0], &buf[1], len - 1,
 												 startpointTLI);
 						}
@@ -497,6 +523,15 @@ WalReceiverMain(void)
 				if (endofwal)
 					break;
 
+				/* Find the soonest wakeup time, to limit our nap. */
+				nextWakeup = TIMESTAMP_INFINITY;
+				for (int i = 0; i < NUM_WALRCV_WAKEUPS; ++i)
+					nextWakeup = Min(wakeup[i], nextWakeup);
+
+				/* Calculate the nap time, clamping as necessary. */
+				now = GetCurrentTimestamp();
+				nap = TimestampDifferenceMilliseconds(now, nextWakeup);
+
 				/*
 				 * Ideally we would reuse a WaitEventSet object repeatedly
 				 * here to avoid the overheads of WaitLatchOrSocket on epoll
@@ -513,7 +548,7 @@ WalReceiverMain(void)
 									   WL_EXIT_ON_PM_DEATH | WL_SOCKET_READABLE |
 									   WL_TIMEOUT | WL_LATCH_SET,
 									   wait_fd,
-									   NAPTIME_PER_CYCLE,
+									   nap,
 									   WAIT_EVENT_WAL_RECEIVER_MAIN);
 				if (rc & WL_LATCH_SET)
 				{
@@ -550,34 +585,20 @@ WalReceiverMain(void)
 					 * Check if time since last receive from primary has
 					 * reached the configured limit.
 					 */
-					if (wal_receiver_timeout > 0)
+					now = GetCurrentTimestamp();
+					if (now >= wakeup[WALRCV_WAKEUP_TERMINATE])
+						ereport(ERROR,
+								(errcode(ERRCODE_CONNECTION_FAILURE),
+								 errmsg("terminating walreceiver due to timeout")));
+
+					/*
+					 * If we didn't receive anything new for half of receiver
+					 * replication timeout, then ping the server.
+					 */
+					if (now >= wakeup[WALRCV_WAKEUP_PING])
 					{
-						TimestampTz now = GetCurrentTimestamp();
-						TimestampTz timeout;
-
-						timeout =
-							TimestampTzPlusMilliseconds(last_recv_timestamp,
-														wal_receiver_timeout);
-
-						if (now >= timeout)
-							ereport(ERROR,
-									(errcode(ERRCODE_CONNECTION_FAILURE),
-									 errmsg("terminating walreceiver due to timeout")));
-
-						/*
-						 * We didn't receive anything new, for half of
-						 * receiver replication timeout. Ping the server.
-						 */
-						if (!ping_sent)
-						{
-							timeout = TimestampTzPlusMilliseconds(last_recv_timestamp,
-																  (wal_receiver_timeout / 2));
-							if (now >= timeout)
-							{
-								requestReply = true;
-								ping_sent = true;
-							}
-						}
+						requestReply = true;
+						wakeup[WALRCV_WAKEUP_PING] = TIMESTAMP_INFINITY;
 					}
 
 					XLogWalRcvSendReply(requestReply, requestReply);
@@ -616,7 +637,7 @@ WalReceiverMain(void)
 			if (close(recvFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("could not close log segment %s: %m",
+						 errmsg("could not close WAL segment %s: %m",
 								xlogfname)));
 
 			/*
@@ -930,7 +951,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 			errno = save_errno;
 			ereport(PANIC,
 					(errcode_for_file_access(),
-					 errmsg("could not write to log segment %s "
+					 errmsg("could not write to WAL segment %s "
 							"at offset %u, length %lu: %m",
 							xlogfname, startoff, (unsigned long) segbytes)));
 		}
@@ -1042,7 +1063,7 @@ XLogWalRcvClose(XLogRecPtr recptr, TimeLineID tli)
 	if (close(recvFile) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not close log segment %s: %m",
+				 errmsg("could not close WAL segment %s: %m",
 						xlogfname)));
 
 	/*
@@ -1076,7 +1097,6 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	static XLogRecPtr writePtr = 0;
 	static XLogRecPtr flushPtr = 0;
 	XLogRecPtr	applyPtr;
-	static TimestampTz sendTime = 0;
 	TimestampTz now;
 
 	/*
@@ -1101,10 +1121,11 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	if (!force
 		&& writePtr == LogstreamResult.Write
 		&& flushPtr == LogstreamResult.Flush
-		&& !TimestampDifferenceExceeds(sendTime, now,
-									   wal_receiver_status_interval * 1000))
+		&& now < wakeup[WALRCV_WAKEUP_REPLY])
 		return;
-	sendTime = now;
+
+	/* Make sure we wake up when it's time to send another reply. */
+	WalRcvComputeNextWakeup(WALRCV_WAKEUP_REPLY, now);
 
 	/* Construct a new message */
 	writePtr = LogstreamResult.Write;
@@ -1149,7 +1170,6 @@ XLogWalRcvSendHSFeedback(bool immed)
 				catalog_xmin_epoch;
 	TransactionId xmin,
 				catalog_xmin;
-	static TimestampTz sendTime = 0;
 
 	/* initially true so we always send at least one feedback message */
 	static bool primary_has_standby_xmin = true;
@@ -1165,16 +1185,12 @@ XLogWalRcvSendHSFeedback(bool immed)
 	/* Get current timestamp. */
 	now = GetCurrentTimestamp();
 
-	if (!immed)
-	{
-		/*
-		 * Send feedback at most once per wal_receiver_status_interval.
-		 */
-		if (!TimestampDifferenceExceeds(sendTime, now,
-										wal_receiver_status_interval * 1000))
-			return;
-		sendTime = now;
-	}
+	/* Send feedback at most once per wal_receiver_status_interval. */
+	if (!immed && now < wakeup[WALRCV_WAKEUP_HSFEEDBACK])
+		return;
+
+	/* Make sure we wake up when it's time to send feedback again. */
+	WalRcvComputeNextWakeup(WALRCV_WAKEUP_HSFEEDBACK, now);
 
 	/*
 	 * If Hot Standby is not yet accepting connections there is nothing to
@@ -1244,7 +1260,6 @@ static void
 ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 {
 	WalRcvData *walrcv = WalRcv;
-
 	TimestampTz lastMsgReceiptTime = GetCurrentTimestamp();
 
 	/* Update shared-memory status */
@@ -1282,6 +1297,47 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 
 		pfree(sendtime);
 		pfree(receipttime);
+	}
+}
+
+/*
+ * Compute the next wakeup time for a given wakeup reason.  Can be called to
+ * initialize a wakeup time, to adjust it for the next wakeup, or to
+ * reinitialize it when GUCs have changed.  We ask the caller to pass in the
+ * value of "now" because this frequently avoids multiple calls of
+ * GetCurrentTimestamp().  It had better be a reasonably up-to-date value
+ * though.
+ */
+static void
+WalRcvComputeNextWakeup(WalRcvWakeupReason reason, TimestampTz now)
+{
+	switch (reason)
+	{
+		case WALRCV_WAKEUP_TERMINATE:
+			if (wal_receiver_timeout <= 0)
+				wakeup[reason] = TIMESTAMP_INFINITY;
+			else
+				wakeup[reason] = TimestampTzPlusMilliseconds(now, wal_receiver_timeout);
+			break;
+		case WALRCV_WAKEUP_PING:
+			if (wal_receiver_timeout <= 0)
+				wakeup[reason] = TIMESTAMP_INFINITY;
+			else
+				wakeup[reason] = TimestampTzPlusMilliseconds(now, wal_receiver_timeout / 2);
+			break;
+		case WALRCV_WAKEUP_HSFEEDBACK:
+			if (!hot_standby_feedback || wal_receiver_status_interval <= 0)
+				wakeup[reason] = TIMESTAMP_INFINITY;
+			else
+				wakeup[reason] = TimestampTzPlusSeconds(now, wal_receiver_status_interval);
+			break;
+		case WALRCV_WAKEUP_REPLY:
+			if (wal_receiver_status_interval <= 0)
+				wakeup[reason] = TIMESTAMP_INFINITY;
+			else
+				wakeup[reason] = TimestampTzPlusSeconds(now, wal_receiver_status_interval);
+			break;
+			/* there's intentionally no default: here */
 	}
 }
 
@@ -1410,7 +1466,7 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 		 * see details. Other users only get the pid value to know whether it
 		 * is a WAL receiver, but no details.
 		 */
-		MemSet(&nulls[1], true, sizeof(bool) * (tupdesc->natts - 1));
+		memset(&nulls[1], true, sizeof(bool) * (tupdesc->natts - 1));
 	}
 	else
 	{

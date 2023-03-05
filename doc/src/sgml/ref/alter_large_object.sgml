@@ -35,8 +35,9 @@ ALTER LARGE OBJECT <replaceable class="parameter">large_object_oid</replaceable>
 
   <para>
    You must own the large object to use <command>ALTER LARGE OBJECT</command>.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role.  (However, a superuser can alter any large object anyway.)
+   To alter the owner, you must also be able to <literal>SET ROLE</literal> to
+   the new owning role.
+   (However, a superuser can alter any large object anyway.)
    Currently, the only functionality is to assign a new owner, so both
    restrictions always apply.
   </para>

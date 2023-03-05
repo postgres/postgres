@@ -3,7 +3,7 @@
  * bloom.h
  *	  Header for bloom index.
  *
- * Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/bloom/bloom.h
@@ -175,7 +175,6 @@ typedef struct BloomScanOpaqueData
 typedef BloomScanOpaqueData *BloomScanOpaque;
 
 /* blutils.c */
-extern void _PG_init(void);
 extern void initBloomState(BloomState *state, Relation index);
 extern void BloomFillMetapage(Relation index, Page metaPage);
 extern void BloomInitMetapage(Relation index);

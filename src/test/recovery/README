@@ -10,7 +10,8 @@ Running the tests
 
 NOTE: You must have given the --enable-tap-tests argument to configure.
 Also, to use "make installcheck", you must have built and installed
-contrib/test_decoding in addition to the core code.
+contrib/pg_prewarm, contrib/pg_stat_statements and contrib/test_decoding
+in addition to the core code.
 
 Run
     make check
@@ -23,5 +24,10 @@ sources and then tested.
 
 Either way, this test initializes, starts, and stops several test Postgres
 clusters.
+
+If you want to test WAL consistency checking, add
+PG_TEST_EXTRA=wal_consistency_checking
+to the "make" command.  This is resource-intensive, so it's not done
+by default.
 
 See src/test/perl/README for more info about running these tests.

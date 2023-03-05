@@ -3,7 +3,7 @@
  * snapbuild.h
  *	  Exports from replication/logical/snapbuild.c.
  *
- * Copyright (c) 2012-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2023, PostgreSQL Global Development Group
  *
  * src/include/replication/snapbuild.h
  *
@@ -59,34 +59,34 @@ struct xl_running_xacts;
 
 extern void CheckPointSnapBuild(void);
 
-extern SnapBuild *AllocateSnapshotBuilder(struct ReorderBuffer *cache,
+extern SnapBuild *AllocateSnapshotBuilder(struct ReorderBuffer *reorder,
 										  TransactionId xmin_horizon, XLogRecPtr start_lsn,
 										  bool need_full_snapshot,
 										  XLogRecPtr two_phase_at);
-extern void FreeSnapshotBuilder(SnapBuild *cache);
+extern void FreeSnapshotBuilder(SnapBuild *builder);
 
 extern void SnapBuildSnapDecRefcount(Snapshot snap);
 
 extern Snapshot SnapBuildInitialSnapshot(SnapBuild *builder);
-extern const char *SnapBuildExportSnapshot(SnapBuild *snapstate);
+extern const char *SnapBuildExportSnapshot(SnapBuild *builder);
 extern void SnapBuildClearExportedSnapshot(void);
 extern void SnapBuildResetExportedSnapshotState(void);
 
-extern SnapBuildState SnapBuildCurrentState(SnapBuild *snapstate);
-extern Snapshot SnapBuildGetOrBuildSnapshot(SnapBuild *builder,
-											TransactionId xid);
+extern SnapBuildState SnapBuildCurrentState(SnapBuild *builder);
+extern Snapshot SnapBuildGetOrBuildSnapshot(SnapBuild *builder);
 
-extern bool SnapBuildXactNeedsSkip(SnapBuild *snapstate, XLogRecPtr ptr);
+extern bool SnapBuildXactNeedsSkip(SnapBuild *builder, XLogRecPtr ptr);
 extern XLogRecPtr SnapBuildGetTwoPhaseAt(SnapBuild *builder);
 extern void SnapBuildSetTwoPhaseAt(SnapBuild *builder, XLogRecPtr ptr);
 
 extern void SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn,
 							   TransactionId xid, int nsubxacts,
-							   TransactionId *subxacts);
+							   TransactionId *subxacts, uint32 xinfo);
 extern bool SnapBuildProcessChange(SnapBuild *builder, TransactionId xid,
 								   XLogRecPtr lsn);
 extern void SnapBuildProcessNewCid(SnapBuild *builder, TransactionId xid,
-								   XLogRecPtr lsn, struct xl_heap_new_cid *cid);
+								   XLogRecPtr lsn,
+								   struct xl_heap_new_cid *xlrec);
 extern void SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn,
 										 struct xl_running_xacts *running);
 extern void SnapBuildSerializationPoint(SnapBuild *builder, XLogRecPtr lsn);

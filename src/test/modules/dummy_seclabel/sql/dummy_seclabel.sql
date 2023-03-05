@@ -8,11 +8,13 @@ SET client_min_messages TO 'warning';
 
 DROP ROLE IF EXISTS regress_dummy_seclabel_user1;
 DROP ROLE IF EXISTS regress_dummy_seclabel_user2;
+DROP ROLE IF EXISTS regress_dummy_seclabel_user3;
 
 RESET client_min_messages;
 
 CREATE USER regress_dummy_seclabel_user1 WITH CREATEROLE;
 CREATE USER regress_dummy_seclabel_user2;
+CREATE USER regress_dummy_seclabel_user3;
 
 CREATE TABLE dummy_seclabel_tbl1 (a int, b text);
 CREATE TABLE dummy_seclabel_tbl2 (x int, y text);
@@ -22,6 +24,8 @@ CREATE DOMAIN dummy_seclabel_domain AS text;
 
 ALTER TABLE dummy_seclabel_tbl1 OWNER TO regress_dummy_seclabel_user1;
 ALTER TABLE dummy_seclabel_tbl2 OWNER TO regress_dummy_seclabel_user2;
+GRANT regress_dummy_seclabel_user2, regress_dummy_seclabel_user3
+  TO regress_dummy_seclabel_user1 WITH ADMIN TRUE, INHERIT FALSE, SET FALSE;
 
 --
 -- Test of SECURITY LABEL statement with a plugin
@@ -47,12 +51,12 @@ SECURITY LABEL ON TABLE dummy_seclabel_tbl2 IS 'classified';			-- OK
 --
 SET SESSION AUTHORIZATION regress_dummy_seclabel_user1;
 
-SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS 'classified';			-- OK
-SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS '...invalid label...';	-- fail
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user3 IS 'classified';			-- OK
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user3 IS '...invalid label...';	-- fail
 SECURITY LABEL FOR 'dummy' ON ROLE regress_dummy_seclabel_user2 IS 'unclassified';	-- OK
 SECURITY LABEL FOR 'unknown_seclabel' ON ROLE regress_dummy_seclabel_user1 IS 'unclassified';	-- fail
-SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS 'secret';	-- fail (not superuser)
-SECURITY LABEL ON ROLE regress_dummy_seclabel_user3 IS 'unclassified';	-- fail (not found)
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user3 IS 'secret';	-- fail (not superuser)
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user4 IS 'unclassified';	-- fail (not found)
 
 SET SESSION AUTHORIZATION regress_dummy_seclabel_user2;
 SECURITY LABEL ON ROLE regress_dummy_seclabel_user2 IS 'unclassified';	-- fail (not privileged)
@@ -113,3 +117,4 @@ DROP PUBLICATION dummy_pub;
 
 DROP ROLE regress_dummy_seclabel_user1;
 DROP ROLE regress_dummy_seclabel_user2;
+DROP ROLE regress_dummy_seclabel_user3;

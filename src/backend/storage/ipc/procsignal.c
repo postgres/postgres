@@ -4,7 +4,7 @@
  *	  Routines for interprocess signaling
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -22,6 +22,7 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "replication/logicalworker.h"
 #include "replication/walsender.h"
 #include "storage/condition_variable.h"
 #include "storage/ipc.h"
@@ -416,8 +417,8 @@ WaitForProcSignalBarrier(uint64 generation)
 											5000,
 											WAIT_EVENT_PROC_SIGNAL_BARRIER))
 				ereport(LOG,
-						(errmsg("still waiting for backend with PID %lu to accept ProcSignalBarrier",
-								(unsigned long) slot->pss_pid)));
+						(errmsg("still waiting for backend with PID %d to accept ProcSignalBarrier",
+								(int) slot->pss_pid)));
 			oldval = pg_atomic_read_u64(&slot->pss_barrierGeneration);
 		}
 		ConditionVariableCancelSleep();
@@ -656,6 +657,9 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 
 	if (CheckProcSignal(PROCSIG_LOG_MEMORY_CONTEXT))
 		HandleLogMemoryContextInterrupt();
+
+	if (CheckProcSignal(PROCSIG_PARALLEL_APPLY_MESSAGE))
+		HandleParallelApplyMessageInterrupt();
 
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_DATABASE))
 		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_DATABASE);

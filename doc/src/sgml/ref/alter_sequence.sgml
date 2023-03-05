@@ -51,9 +51,10 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
    You must own the sequence to use <command>ALTER SEQUENCE</command>.
    To change a sequence's schema, you must also have <literal>CREATE</literal>
    privilege on the new schema.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the sequence's schema.  (These restrictions enforce that altering the owner
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the sequence's schema.
+   (These restrictions enforce that altering the owner
    doesn't do anything you couldn't do by dropping and recreating the sequence.
    However, a superuser can alter ownership of any sequence anyway.)
   </para>

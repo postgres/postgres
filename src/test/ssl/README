@@ -20,9 +20,9 @@ Also, to use "make installcheck", you must have built and installed
 contrib/sslinfo in addition to the core code.
 
 Run
-    make check
+    make check PG_TEST_EXTRA=ssl
 or
-    make installcheck
+    make installcheck PG_TEST_EXTRA=ssl
 You can use "make installcheck" if you previously did "make install".
 In that case, the code in the installation tree is tested.  With
 "make check", a temporary installation tree is built from the current
@@ -92,6 +92,12 @@ ssl/ subdirectory. The Makefile also contains a rule, "make sslfiles", to
 recreate them if you need to make changes. "make sslfiles-clean" is required
 in order to recreate the full set of keypairs and certificates. To rebuild
 separate files, touch (or remove) the files in question and run "make sslfiles".
+This step requires at least OpenSSL 1.1.1.
+
+Note
+====
+
+These certificates are also used in other tests, e.g. the LDAP tests.
 
 TODO
 ====

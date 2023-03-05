@@ -3,7 +3,7 @@
  * matview.c
  *	  materialized view support
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -118,7 +118,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
  * ExecRefreshMatView -- execute a REFRESH MATERIALIZED VIEW command
  *
  * This refreshes the materialized view by creating a new table and swapping
- * the relfilenodes of the new table and the old materialized view, so the OID
+ * the relfilenumbers of the new table and the old materialized view, so the OID
  * of the original materialized view is preserved. Thus we do not lose GRANT
  * nor references to this materialized view.
  *
@@ -165,7 +165,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 */
 	matviewOid = RangeVarGetRelidExtended(stmt->relation,
 										  lockmode, 0,
-										  RangeVarCallbackOwnsTable, NULL);
+										  RangeVarCallbackMaintainsTable,
+										  NULL);
 	matviewRel = table_open(matviewOid, NoLock);
 	relowner = matviewRel->rd_rel->relowner;
 

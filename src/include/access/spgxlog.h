@@ -3,7 +3,7 @@
  * spgxlog.h
  *	  xlog declarations for SP-GiST access method.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/spgxlog.h
@@ -239,7 +239,7 @@ typedef struct spgxlogVacuumRedirect
 {
 	uint16		nToPlaceholder; /* number of redirects to make placeholders */
 	OffsetNumber firstPlaceholder;	/* first placeholder tuple to remove */
-	TransactionId newestRedirectXid;	/* newest XID of removed redirects */
+	TransactionId snapshotConflictHorizon;	/* newest XID of removed redirects */
 
 	/* offsets of redirect tuples to make placeholders follow */
 	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];

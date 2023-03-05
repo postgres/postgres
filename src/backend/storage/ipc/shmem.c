@@ -3,7 +3,7 @@
  * shmem.c
  *	  create shared memory and initialize shared memory data structures.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -543,7 +543,7 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 	Datum		values[PG_GET_SHMEM_SIZES_COLS];
 	bool		nulls[PG_GET_SHMEM_SIZES_COLS];
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	LWLockAcquire(ShmemIndexLock, LW_SHARED);
 

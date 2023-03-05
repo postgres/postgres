@@ -58,7 +58,7 @@ int main(void)
 
 	
 #line 19 "rnull.pgc"
- float f = 3.71 ;
+ float f = ( float ) 3.71 ;
 
 #line 19 "rnull.pgc"
 

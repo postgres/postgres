@@ -4,7 +4,7 @@
  *
  * Definitions corresponding to SE-PostgreSQL
  *
- * Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -244,13 +244,6 @@ extern char *sepgsql_compute_create(const char *scontext,
 									uint16 tclass,
 									const char *objname);
 
-extern bool sepgsql_check_perms(const char *scontext,
-								const char *tcontext,
-								uint16 tclass,
-								uint32 required,
-								const char *audit_name,
-								bool abort_on_violation);
-
 /*
  * uavc.c
  */
@@ -281,7 +274,8 @@ extern void sepgsql_object_relabel(const ObjectAddress *object,
 /*
  * dml.c
  */
-extern bool sepgsql_dml_privileges(List *rangeTabls, bool abort_on_violation);
+extern bool sepgsql_dml_privileges(List *rangeTabls, List *rteperminfos,
+								   bool abort_on_violation);
 
 /*
  * database.c

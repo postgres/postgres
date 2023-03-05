@@ -1154,6 +1154,10 @@ SELECT '52093.89'::money::numeric::float8;
     <primary>varchar</primary>
    </indexterm>
 
+   <indexterm zone="datatype-character">
+    <primary>bpchar</primary>
+   </indexterm>
+
     <table id="datatype-character-table">
      <title>Character Types</title>
      <tgroup cols="2">
@@ -1169,7 +1173,7 @@ SELECT '52093.89'::money::numeric::float8;
         <entry>variable-length with limit</entry>
        </row>
        <row>
-        <entry><type>character(<replaceable>n</replaceable>)</type>, <type>char(<replaceable>n</replaceable>)</type></entry>
+        <entry><type>character(<replaceable>n</replaceable>)</type>, <type>char(<replaceable>n</replaceable>)</type>, <type>bpchar(<replaceable>n</replaceable>)</type></entry>
         <entry>fixed-length, blank padded</entry>
        </row>
        <row>
@@ -1196,7 +1200,14 @@ SELECT '52093.89'::money::numeric::float8;
     error, unless the excess characters are all spaces, in which case
     the string will be truncated to the maximum length. (This somewhat
     bizarre exception is required by the <acronym>SQL</acronym>
-    standard.) If the string to be stored is shorter than the declared
+    standard.)
+    However, if one explicitly casts a value to <type>character
+    varying(<replaceable>n</replaceable>)</type> or
+    <type>character(<replaceable>n</replaceable>)</type>, then an over-length
+    value will be truncated to <replaceable>n</replaceable> characters without
+    raising an error. (This too is required by the
+    <acronym>SQL</acronym> standard.)
+    If the string to be stored is shorter than the declared
     length, values of type <type>character</type> will be space-padded;
     values of type <type>character varying</type> will simply store the
     shorter
@@ -1204,31 +1215,35 @@ SELECT '52093.89'::money::numeric::float8;
    </para>
 
    <para>
-    If one explicitly casts a value to <type>character
-    varying(<replaceable>n</replaceable>)</type> or
-    <type>character(<replaceable>n</replaceable>)</type>, then an over-length
-    value will be truncated to <replaceable>n</replaceable> characters without
-    raising an error. (This too is required by the
-    <acronym>SQL</acronym> standard.)
+    In addition, <productname>PostgreSQL</productname> provides the
+    <type>text</type> type, which stores strings of any length.
+    Although the <type>text</type> type is not in the
+    <acronym>SQL</acronym> standard, several other SQL database
+    management systems have it as well.
+    <type>text</type> is <productname>PostgreSQL</productname>'s native
+    string data type, in that most built-in functions operating on strings
+    are declared to take or return <type>text</type> not <type>character
+    varying</type>.  For many purposes, <type>character varying</type>
+    acts as though it were a <link linkend="domains">domain</link>
+    over <type>text</type>.
    </para>
 
    <para>
-    The notations <type>varchar(<replaceable>n</replaceable>)</type> and
-    <type>char(<replaceable>n</replaceable>)</type> are aliases for <type>character
-    varying(<replaceable>n</replaceable>)</type> and
-    <type>character(<replaceable>n</replaceable>)</type>, respectively.
+    The type name <type>varchar</type> is an alias for <type>character
+    varying</type>, while <type>char</type> and <type>bpchar</type> are
+    aliases for <type>character</type>.
+    The <type>varchar</type> and <type>char</type> aliases are defined in
+    the <acronym>SQL</acronym> standard, but <type>bpchar</type> is
+    a <productname>PostgreSQL</productname> extension.
+   </para>
+
+   <para>
+    If specified, the length <replaceable>n</replaceable> must be greater
+    than zero and cannot exceed 10485760.
     <type>character</type> without length specifier is equivalent to
     <type>character(1)</type>. If <type>character varying</type> is used
     without length specifier, the type accepts strings of any size. The
-    latter is a <productname>PostgreSQL</productname> extension.
-   </para>
-
-   <para>
-    In addition, <productname>PostgreSQL</productname> provides the
-    <type>text</type> type, which stores strings of any length.
-    Although the type <type>text</type> is not in the
-    <acronym>SQL</acronym> standard, several other SQL database
-    management systems have it as well.
+    latter behavior is a <productname>PostgreSQL</productname> extension.
    </para>
 
    <para>
@@ -1338,9 +1353,10 @@ SELECT b, char_length(b) FROM test2;
    <para>
     There are two other fixed-length character types in
     <productname>PostgreSQL</productname>, shown in <xref
-    linkend="datatype-character-special-table"/>. The <type>name</type>
-    type exists <emphasis>only</emphasis> for the storage of identifiers
-    in the internal system catalogs and is not intended for use by the general user. Its
+    linkend="datatype-character-special-table"/>.
+    These are not intended for general-purpose use, only for use
+    in the internal system catalogs.
+    The <type>name</type> type is used to store identifiers. Its
     length is currently defined as 64 bytes (63 usable characters plus
     terminator) but should be referenced using the constant
     <symbol>NAMEDATALEN</symbol> in <literal>C</literal> source code.
@@ -1348,7 +1364,8 @@ SELECT b, char_length(b) FROM test2;
     is therefore adjustable for special uses); the default maximum
     length might change in a future release. The type <type>"char"</type>
     (note the quotes) is different from <type>char(1)</type> in that it
-    only uses one byte of storage. It is internally used in the system
+    only uses one byte of storage, and therefore can store only a single
+    ASCII character. It is used in the system
     catalogs as a simplistic enumeration type.
    </para>
 
@@ -1454,7 +1471,7 @@ SELECT b, char_length(b) FROM test2;
     mostly the same.
    </para>
 
-  <sect2>
+  <sect2 id="datatype-binary-bytea-hex-format">
    <title><type>bytea</type> Hex Format</title>
 
    <para>
@@ -1481,7 +1498,7 @@ SELECT '\xDEADBEEF';
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="datatype-binary-bytea-escape-format">
    <title><type>bytea</type> Escape Format</title>
 
    <para>
@@ -1887,7 +1904,7 @@ MINUTE TO SECOND
      more than 6 digits).
     </para>
 
-    <sect3>
+    <sect3 id="datatype-datetime-input-dates">
     <title>Dates</title>
 
     <indexterm>
@@ -1986,7 +2003,7 @@ MINUTE TO SECOND
      </table>
     </sect3>
 
-    <sect3>
+    <sect3 id="datatype-datetime-input-times">
      <title>Times</title>
 
      <indexterm>
@@ -2150,7 +2167,7 @@ MINUTE TO SECOND
     </para>
     </sect3>
 
-    <sect3>
+    <sect3 id="datatype-datetime-input-time-stamps">
     <title>Time Stamps</title>
 
     <indexterm>
@@ -3155,7 +3172,7 @@ SELECT * FROM test1 WHERE a;
     a piece of data.
    </para>
 
-   <sect2>
+   <sect2 id="datatype-enum-declaration">
     <title>Declaration of Enumerated Types</title>
 
     <para>
@@ -3185,7 +3202,7 @@ SELECT * FROM person WHERE current_mood = 'happy';
     </para>
     </sect2>
 
-    <sect2>
+    <sect2 id="datatype-enum-ordering">
      <title>Ordering</title>
 
      <para>
@@ -3222,7 +3239,7 @@ WHERE current_mood = (SELECT MIN(current_mood) FROM person);
      </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-enum-type-safety">
     <title>Type Safety</title>
 
     <para>
@@ -3262,7 +3279,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-enum-implementation-details">
     <title>Implementation Details</title>
 
     <para>
@@ -3379,7 +3396,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     intersections.  They are explained in <xref linkend="functions-geometry"/>.
    </para>
 
-   <sect2>
+   <sect2 id="datatype-geometric-points">
     <title>Points</title>
 
     <indexterm>
@@ -3473,7 +3490,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-geometric-boxes">
     <title>Boxes</title>
 
     <indexterm>
@@ -3514,7 +3531,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-geometric-paths">
     <title>Paths</title>
 
     <indexterm>
@@ -4405,7 +4422,7 @@ a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
     can be found in <xref linkend="xml-limits-conformance"/>.
    </para>
 
-   <sect2>
+   <sect2 id="datatype-xml-creating">
     <title>Creating XML Values</title>
    <para>
     To produce a value of type <type>xml</type> from character data,
@@ -4475,7 +4492,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
 
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-xml-encoding-handling">
     <title>Encoding Handling</title>
    <para>
     Care must be taken when dealing with multiple character encodings
@@ -4533,7 +4550,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
    </caution>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-xml-accessing-xml-values">
    <title>Accessing XML Values</title>
 
    <para>
@@ -4975,7 +4992,8 @@ WHERE ...
     <structfield>xmin</structfield> and <structfield>xmax</structfield>.  Transaction identifiers are 32-bit quantities.
     In some contexts, a 64-bit variant <type>xid8</type> is used.  Unlike
     <type>xid</type> values, <type>xid8</type> values increase strictly
-    monotonically and cannot be reused in the lifetime of a database cluster.
+    monotonically and cannot be reused in the lifetime of a database
+    cluster.  See <xref linkend="transaction-id"/> for more details.
    </para>
 
    <para>

@@ -2,7 +2,7 @@
  * relation.c
  *	   PostgreSQL logical replication relation mapping cache
  *
- * Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/relation.c
@@ -167,7 +167,7 @@ logicalrep_relmap_update(LogicalRepRelation *remoterel)
 	/*
 	 * HASH_ENTER returns the existing entry if present or creates a new one.
 	 */
-	entry = hash_search(LogicalRepRelMap, (void *) &remoterel->remoteid,
+	entry = hash_search(LogicalRepRelMap, &remoterel->remoteid,
 						HASH_ENTER, &found);
 
 	if (found)
@@ -227,7 +227,8 @@ logicalrep_report_missing_attrs(LogicalRepRelation *remoterel,
 
 		initStringInfo(&missingattsbuf);
 
-		while ((i = bms_first_member(missingatts)) >= 0)
+		i = -1;
+		while ((i = bms_next_member(missingatts, i)) >= 0)
 		{
 			missingattcnt++;
 			if (missingattcnt == 1)
@@ -326,7 +327,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		logicalrep_relmap_init();
 
 	/* Search for existing entry. */
-	entry = hash_search(LogicalRepRelMap, (void *) &remoteid,
+	entry = hash_search(LogicalRepRelMap, &remoteid,
 						HASH_FIND, &found);
 
 	if (!found)
@@ -598,7 +599,7 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 
 	/* Search for existing entry. */
 	part_entry = (LogicalRepPartMapEntry *) hash_search(LogicalRepPartMap,
-														(void *) &partOid,
+														&partOid,
 														HASH_ENTER, &found);
 
 	entry = &part_entry->relmapentry;

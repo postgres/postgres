@@ -3,7 +3,7 @@
  * copy.c
  *		Implements the COPY utility command
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -109,7 +109,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	{
 		LOCKMODE	lockmode = is_from ? RowExclusiveLock : AccessShareLock;
 		ParseNamespaceItem *nsitem;
-		RangeTblEntry *rte;
+		RTEPermissionInfo *perminfo;
 		TupleDesc	tupDesc;
 		List	   *attnums;
 		ListCell   *cur;
@@ -123,8 +123,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		nsitem = addRangeTableEntryForRelation(pstate, rel, lockmode,
 											   NULL, false, false);
-		rte = nsitem->p_rte;
-		rte->requiredPerms = (is_from ? ACL_INSERT : ACL_SELECT);
+
+		perminfo = nsitem->p_perminfo;
+		perminfo->requiredPerms = (is_from ? ACL_INSERT : ACL_SELECT);
 
 		if (stmt->whereClause)
 		{
@@ -150,15 +151,15 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		attnums = CopyGetAttnums(tupDesc, rel, stmt->attlist);
 		foreach(cur, attnums)
 		{
-			int			attno = lfirst_int(cur) -
-			FirstLowInvalidHeapAttributeNumber;
+			int			attno;
+			Bitmapset **bms;
 
-			if (is_from)
-				rte->insertedCols = bms_add_member(rte->insertedCols, attno);
-			else
-				rte->selectedCols = bms_add_member(rte->selectedCols, attno);
+			attno = lfirst_int(cur) - FirstLowInvalidHeapAttributeNumber;
+			bms = is_from ? &perminfo->insertedCols : &perminfo->selectedCols;
+
+			*bms = bms_add_member(*bms, attno);
 		}
-		ExecCheckRTPerms(pstate->p_rtable, true);
+		ExecCheckPermissions(pstate->p_rtable, list_make1(perminfo), true);
 
 		/*
 		 * Permission check for row security policies.
@@ -174,7 +175,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		 * If RLS is not enabled for this, then just fall through to the
 		 * normal non-filtering relation handling.
 		 */
-		if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED)
+		if (check_enable_rls(relid, InvalidOid, false) == RLS_ENABLED)
 		{
 			SelectStmt *select;
 			ColumnRef  *cr;
@@ -273,6 +274,12 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	{
 		Assert(stmt->query);
 
+		/* MERGE is allowed by parser, but unimplemented. Reject for now */
+		if (IsA(stmt->query, MergeStmt))
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("MERGE not supported in COPY"));
+
 		query = makeNode(RawStmt);
 		query->stmt = stmt->query;
 		query->stmt_location = stmt_location;
@@ -304,7 +311,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		cstate = BeginCopyTo(pstate, rel, query, relid,
 							 stmt->filename, stmt->is_program,
-							 stmt->attlist, stmt->options);
+							 NULL, stmt->attlist, stmt->options);
 		*processed = DoCopyTo(cstate);	/* copy from database to file */
 		EndCopyTo(cstate);
 	}
@@ -321,7 +328,7 @@ static CopyHeaderChoice
 defGetCopyHeaderChoice(DefElem *def, bool is_from)
 {
 	/*
-	 * If no parameter given, assume "true" is meant.
+	 * If no parameter value given, assume "true" is meant.
 	 */
 	if (def->arg == NULL)
 		return COPY_HEADER_TRUE;

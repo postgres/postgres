@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/uuid-ossp.sgml -->
 
 <sect1 id="uuid-ossp" xreflabel="uuid-ossp">
- <title>uuid-ossp</title>
+ <title>uuid-ossp &mdash; a UUID generator</title>
 
  <indexterm zone="uuid-ossp">
   <primary>uuid-ossp</primary>
@@ -22,7 +22,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="uuid-ossp-functions-sect">
   <title><literal>uuid-ossp</literal> Functions</title>
 
   <para>
@@ -205,7 +205,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
   </table>
  </sect2>
 
- <sect2>
+ <sect2 id="uuid-ossp-building">
   <title>Building <filename>uuid-ossp</filename></title>
 
   <para>
@@ -214,7 +214,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
    at <ulink url="http://www.ossp.org/pkg/lib/uuid/"></ulink>, it is not well
    maintained, and is becoming increasingly difficult to port to newer
    platforms.  <filename>uuid-ossp</filename> can now be built without the OSSP
-   library on some platforms.  On FreeBSD, NetBSD, and some other BSD-derived
+   library on some platforms.  On FreeBSD and some other BSD-derived
    platforms, suitable UUID creation functions are included in the
    core <filename>libc</filename> library.  On Linux, macOS, and some other
    platforms, suitable functions are provided in the <filename>libuuid</filename>
@@ -230,7 +230,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="uuid-ossp-author">
   <title>Author</title>
 
   <para>

@@ -53,7 +53,9 @@ SAVEPOINT <replaceable>savepoint_name</replaceable>
     <term><replaceable>savepoint_name</replaceable></term>
     <listitem>
      <para>
-      The name to give to the new savepoint.
+      The name to give to the new savepoint.  If savepoints with the
+      same name already exist, they will be inaccessible until newer
+      identically-named savepoints are released.
      </para>
     </listitem>
    </varlistentry>
@@ -106,6 +108,32 @@ COMMIT;
 </programlisting>
    The above transaction will insert both 3 and 4.
   </para>
+
+  <para>
+  To use a single savepoint name:
+<programlisting>
+BEGIN;
+    INSERT INTO table1 VALUES (1);
+    SAVEPOINT my_savepoint;
+    INSERT INTO table1 VALUES (2);
+    SAVEPOINT my_savepoint;
+    INSERT INTO table1 VALUES (3);
+
+    -- rollback to the second savepoint
+    ROLLBACK TO SAVEPOINT my_savepoint;
+    SELECT * FROM table1;               -- shows rows 1 and 2
+
+    -- release the second savepoint
+    RELEASE SAVEPOINT my_savepoint;
+
+    -- rollback to the first savepoint
+    ROLLBACK TO SAVEPOINT my_savepoint;
+    SELECT * FROM table1;               -- shows only row 1
+COMMIT;
+</programlisting>
+  The above transaction shows row 3 being rolled back first, then row 2.
+  </para>
+
  </refsect1>
 
  <refsect1>

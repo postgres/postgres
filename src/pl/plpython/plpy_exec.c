@@ -375,8 +375,6 @@ PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				rv = NULL;
 			else if (pg_strcasecmp(srv, "MODIFY") == 0)
 			{
-				TriggerData *tdata = (TriggerData *) fcinfo->context;
-
 				if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event) ||
 					TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
 					rv = PLy_modify_tuple(proc, plargs, tdata, rv);

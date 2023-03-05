@@ -3,7 +3,7 @@
  * spell.c
  *		Normalizing word with ISpell
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * Ispell dictionary
  * -----------------
@@ -63,6 +63,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_collation.h"
+#include "miscadmin.h"
 #include "tsearch/dicts/spell.h"
 #include "tsearch/ts_locale.h"
 #include "utils/memutils.h"
@@ -694,7 +695,7 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 		if (Conf->maffixes)
 		{
 			Conf->maffixes *= 2;
-			Conf->Affix = (AFFIX *) repalloc((void *) Conf->Affix, Conf->maffixes * sizeof(AFFIX));
+			Conf->Affix = (AFFIX *) repalloc(Conf->Affix, Conf->maffixes * sizeof(AFFIX));
 		}
 		else
 		{
@@ -1115,7 +1116,7 @@ addCompoundAffixFlagValue(IspellDict *Conf, char *s, uint32 val)
 		{
 			Conf->mCompoundAffixFlag *= 2;
 			Conf->CompoundAffixFlags = (CompoundAffixFlag *)
-				repalloc((void *) Conf->CompoundAffixFlags,
+				repalloc(Conf->CompoundAffixFlags,
 						 Conf->mCompoundAffixFlag * sizeof(CompoundAffixFlag));
 		}
 		else
@@ -1157,7 +1158,7 @@ getCompoundAffixFlagValue(IspellDict *Conf, char *s)
 		setCompoundAffixFlagValue(Conf, &key, sflag, 0);
 
 		found = (CompoundAffixFlag *)
-			bsearch(&key, (void *) Conf->CompoundAffixFlags,
+			bsearch(&key, Conf->CompoundAffixFlags,
 					Conf->nCompoundAffixFlag, sizeof(CompoundAffixFlag),
 					cmpcmdflag);
 		if (found != NULL)
@@ -1304,7 +1305,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 	tsearch_readline_end(&trst);
 
 	if (Conf->nCompoundAffixFlag > 1)
-		qsort((void *) Conf->CompoundAffixFlags, Conf->nCompoundAffixFlag,
+		qsort(Conf->CompoundAffixFlags, Conf->nCompoundAffixFlag,
 			  sizeof(CompoundAffixFlag), cmpcmdflag);
 
 	if (!tsearch_readline_begin(&trst, filename))
@@ -1788,7 +1789,7 @@ NISortDictionary(IspellDict *Conf)
 	else
 	{
 		/* Count the number of different flags used in the dictionary */
-		qsort((void *) Conf->Spell, Conf->nspell, sizeof(SPELL *),
+		qsort(Conf->Spell, Conf->nspell, sizeof(SPELL *),
 			  cmpspellaffix);
 
 		naffix = 0;
@@ -1826,7 +1827,7 @@ NISortDictionary(IspellDict *Conf)
 	}
 
 	/* Start build a prefix tree */
-	qsort((void *) Conf->Spell, Conf->nspell, sizeof(SPELL *), cmpspell);
+	qsort(Conf->Spell, Conf->nspell, sizeof(SPELL *), cmpspell);
 	Conf->Dictionary = mkSPNode(Conf, 0, Conf->nspell, 0);
 }
 
@@ -2000,7 +2001,7 @@ NISortAffixes(IspellDict *Conf)
 
 	/* Store compound affixes in the Conf->CompoundAffix array */
 	if (Conf->naffixes > 1)
-		qsort((void *) Conf->Affix, Conf->naffixes, sizeof(AFFIX), cmpaffix);
+		qsort(Conf->Affix, Conf->naffixes, sizeof(AFFIX), cmpaffix);
 	Conf->CompoundAffix = ptr = (CMPDAffix *) palloc(sizeof(CMPDAffix) * Conf->naffixes);
 	ptr->affix = NULL;
 
@@ -2399,6 +2400,9 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 	CMPDAffix  *caff;
 	char	   *notprobed;
 	int			compoundflag = 0;
+
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
 
 	notprobed = (char *) palloc(wordlen);
 	memset(notprobed, 1, wordlen);

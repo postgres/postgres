@@ -3,7 +3,7 @@
  * file_fdw.c
  *		  foreign-data wrapper for server-side flat files (or programs).
  *
- * Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/file_fdw/file_fdw.c
@@ -37,6 +37,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/sampling.h"
+#include "utils/varlena.h"
 
 PG_MODULE_MAGIC;
 
@@ -214,27 +215,32 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 		if (!is_valid_option(def->defname, catalog))
 		{
 			const struct FileFdwOption *opt;
-			StringInfoData buf;
+			const char *closest_match;
+			ClosestMatchState match_state;
+			bool		has_valid_options = false;
 
 			/*
 			 * Unknown option specified, complain about it. Provide a hint
-			 * with list of valid options for the object.
+			 * with a valid option that looks similar, if there is one.
 			 */
-			initStringInfo(&buf);
+			initClosestMatch(&match_state, def->defname, 4);
 			for (opt = valid_options; opt->optname; opt++)
 			{
 				if (catalog == opt->optcontext)
-					appendStringInfo(&buf, "%s%s", (buf.len > 0) ? ", " : "",
-									 opt->optname);
+				{
+					has_valid_options = true;
+					updateClosestMatch(&match_state, opt->optname);
+				}
 			}
 
+			closest_match = getClosestMatch(&match_state);
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_INVALID_OPTION_NAME),
 					 errmsg("invalid option \"%s\"", def->defname),
-					 buf.len > 0
-					 ? errhint("Valid options in this context are: %s",
-							   buf.data)
-					 : errhint("There are no valid options in this context.")));
+					 has_valid_options ? closest_match ?
+					 errhint("Perhaps you meant the option \"%s\".",
+							 closest_match) : 0 :
+					 errhint("There are no valid options in this context.")));
 		}
 
 		/*
@@ -444,15 +450,15 @@ get_file_fdw_attribute_options(Oid relid)
 	for (attnum = 1; attnum <= natts; attnum++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupleDesc, attnum - 1);
-		List	   *options;
+		List	   *column_options;
 		ListCell   *lc;
 
 		/* Skip dropped attributes. */
 		if (attr->attisdropped)
 			continue;
 
-		options = GetForeignColumnOptions(relid, attnum);
-		foreach(lc, options)
+		column_options = GetForeignColumnOptions(relid, attnum);
+		foreach(lc, column_options)
 		{
 			DefElem    *def = (DefElem *) lfirst(lc);
 
@@ -474,7 +480,7 @@ get_file_fdw_attribute_options(Oid relid)
 					fncolumns = lappend(fncolumns, makeString(attname));
 				}
 			}
-			/* maybe in future handle other options here */
+			/* maybe in future handle other column options here */
 		}
 	}
 
@@ -852,7 +858,7 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 	ListCell   *lc;
 	Relation	rel;
 	TupleDesc	tupleDesc;
-	AttrNumber	attnum;
+	int			attidx;
 	Bitmapset  *attrs_used = NULL;
 	bool		has_wholerow = false;
 	int			numattrs;
@@ -895,10 +901,11 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 	rel = table_open(foreigntableid, AccessShareLock);
 	tupleDesc = RelationGetDescr(rel);
 
-	while ((attnum = bms_first_member(attrs_used)) >= 0)
+	attidx = -1;
+	while ((attidx = bms_next_member(attrs_used, attidx)) >= 0)
 	{
-		/* Adjust for system attributes. */
-		attnum += FirstLowInvalidHeapAttributeNumber;
+		/* attidx is zero-based, attnum is the normal attribute number */
+		AttrNumber	attnum = attidx + FirstLowInvalidHeapAttributeNumber;
 
 		if (attnum == 0)
 		{

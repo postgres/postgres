@@ -3,7 +3,7 @@
  * hashovfl.c
  *	  Overflow page management code for the Postgres hash access method
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -760,7 +760,7 @@ _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
 
 	/* set all of the bits to 1 */
 	freep = HashPageGetBitmap(pg);
-	MemSet(freep, 0xFF, bmsize);
+	memset(freep, 0xFF, bmsize);
 
 	/*
 	 * Set pd_lower just past the end of the bitmap page data.  We could even

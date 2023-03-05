@@ -45,6 +45,31 @@ SELECT * FROM INT4_TBL;
  -2147483647
 (5 rows)
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34', 'int4');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('asdf', 'int4');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('1000000000000', 'int4');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('1000000000000', 'int4');
+                        message                         | detail | hint | sql_error_code 
+--------------------------------------------------------+--------+------+----------------
+ value "1000000000000" is out of range for type integer |        |      | 22003
+(1 row)
+
 SELECT i.* FROM INT4_TBL i WHERE i.f1 <> int2 '0';
      f1      
 -------------
@@ -431,3 +456,139 @@ SELECT lcm((-2147483648)::int4, 1::int4); -- overflow
 ERROR:  integer out of range
 SELECT lcm(2147483647::int4, 2147483646::int4); -- overflow
 ERROR:  integer out of range
+-- non-decimal literals
+SELECT int4 '0b100101';
+ int4 
+------
+   37
+(1 row)
+
+SELECT int4 '0o273';
+ int4 
+------
+  187
+(1 row)
+
+SELECT int4 '0x42F';
+ int4 
+------
+ 1071
+(1 row)
+
+SELECT int4 '0b';
+ERROR:  invalid input syntax for type integer: "0b"
+LINE 1: SELECT int4 '0b';
+                    ^
+SELECT int4 '0o';
+ERROR:  invalid input syntax for type integer: "0o"
+LINE 1: SELECT int4 '0o';
+                    ^
+SELECT int4 '0x';
+ERROR:  invalid input syntax for type integer: "0x"
+LINE 1: SELECT int4 '0x';
+                    ^
+-- cases near overflow
+SELECT int4 '0b1111111111111111111111111111111';
+    int4    
+------------
+ 2147483647
+(1 row)
+
+SELECT int4 '0b10000000000000000000000000000000';
+ERROR:  value "0b10000000000000000000000000000000" is out of range for type integer
+LINE 1: SELECT int4 '0b10000000000000000000000000000000';
+                    ^
+SELECT int4 '0o17777777777';
+    int4    
+------------
+ 2147483647
+(1 row)
+
+SELECT int4 '0o20000000000';
+ERROR:  value "0o20000000000" is out of range for type integer
+LINE 1: SELECT int4 '0o20000000000';
+                    ^
+SELECT int4 '0x7FFFFFFF';
+    int4    
+------------
+ 2147483647
+(1 row)
+
+SELECT int4 '0x80000000';
+ERROR:  value "0x80000000" is out of range for type integer
+LINE 1: SELECT int4 '0x80000000';
+                    ^
+SELECT int4 '-0b10000000000000000000000000000000';
+    int4     
+-------------
+ -2147483648
+(1 row)
+
+SELECT int4 '-0b10000000000000000000000000000001';
+ERROR:  value "-0b10000000000000000000000000000001" is out of range for type integer
+LINE 1: SELECT int4 '-0b10000000000000000000000000000001';
+                    ^
+SELECT int4 '-0o20000000000';
+    int4     
+-------------
+ -2147483648
+(1 row)
+
+SELECT int4 '-0o20000000001';
+ERROR:  value "-0o20000000001" is out of range for type integer
+LINE 1: SELECT int4 '-0o20000000001';
+                    ^
+SELECT int4 '-0x80000000';
+    int4     
+-------------
+ -2147483648
+(1 row)
+
+SELECT int4 '-0x80000001';
+ERROR:  value "-0x80000001" is out of range for type integer
+LINE 1: SELECT int4 '-0x80000001';
+                    ^
+-- underscores
+SELECT int4 '1_000_000';
+  int4   
+---------
+ 1000000
+(1 row)
+
+SELECT int4 '1_2_3';
+ int4 
+------
+  123
+(1 row)
+
+SELECT int4 '0x1EEE_FFFF';
+   int4    
+-----------
+ 518979583
+(1 row)
+
+SELECT int4 '0o2_73';
+ int4 
+------
+  187
+(1 row)
+
+SELECT int4 '0b_10_0101';
+ int4 
+------
+   37
+(1 row)
+
+-- error cases
+SELECT int4 '_100';
+ERROR:  invalid input syntax for type integer: "_100"
+LINE 1: SELECT int4 '_100';
+                    ^
+SELECT int4 '100_';
+ERROR:  invalid input syntax for type integer: "100_"
+LINE 1: SELECT int4 '100_';
+                    ^
+SELECT int4 '100__000';
+ERROR:  invalid input syntax for type integer: "100__000"
+LINE 1: SELECT int4 '100__000';
+                    ^

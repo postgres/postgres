@@ -114,7 +114,6 @@ select name, setting from pg_settings where name like 'enable%';
  enable_async_append            | on
  enable_bitmapscan              | on
  enable_gathermerge             | on
- enable_group_by_reordering     | on
  enable_hashagg                 | on
  enable_hashjoin                | on
  enable_incremental_sort        | on
@@ -129,6 +128,7 @@ select name, setting from pg_settings where name like 'enable%';
  enable_partition_pruning       | on
  enable_partitionwise_aggregate | off
  enable_partitionwise_join      | off
+ enable_presorted_aggregate     | on
  enable_seqscan                 | on
  enable_sort                    | on
  enable_tidscan                 | on

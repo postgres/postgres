@@ -3,7 +3,7 @@
  *	  functions related to auxiliary processes.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -81,7 +81,7 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 			MyBackendType = B_WAL_RECEIVER;
 			break;
 		default:
-			elog(ERROR, "something has gone wrong");
+			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
 			MyBackendType = B_INVALID;
 	}
 

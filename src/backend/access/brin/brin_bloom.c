@@ -2,7 +2,7 @@
  * brin_bloom.c
  *		Implementation of Bloom opclass for BRIN
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -767,7 +767,7 @@ brin_bloom_summary_out(PG_FUNCTION_ARGS)
 	StringInfoData str;
 
 	/* detoast the data to get value with a full 4B header */
-	filter = (BloomFilter *) PG_DETOAST_DATUM(PG_GETARG_BYTEA_PP(0));
+	filter = (BloomFilter *) PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
 
 	initStringInfo(&str);
 	appendStringInfoChar(&str, '{');

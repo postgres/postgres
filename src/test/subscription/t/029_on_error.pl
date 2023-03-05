@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # Tests for disable_on_error and SKIP transaction features.
 use strict;
@@ -29,7 +29,7 @@ sub test_skip_lsn
 	# Get the finish LSN of the error transaction.
 	my $contents = slurp_file($node_subscriber->logfile, $offset);
 	$contents =~
-	  qr/processing remote data for replication origin \"pg_\d+\" during "INSERT" for replication target relation "public.tbl" in transaction \d+ finished at ([[:xdigit:]]+\/[[:xdigit:]]+)/
+	  qr/processing remote data for replication origin \"pg_\d+\" during message type "INSERT" for replication target relation "public.tbl" in transaction \d+, finished at ([[:xdigit:]]+\/[[:xdigit:]]+)/
 	  or die "could not get error-LSN";
 	my $lsn = $1;
 
@@ -48,7 +48,7 @@ sub test_skip_lsn
 	# Check the log to ensure that the transaction is skipped, and advance the
 	# offset of the log file for the next test.
 	$offset = $node_subscriber->wait_for_log(
-		qr/LOG: ( [A-Z0-9]+:)? done skipping logical replication transaction finished at $lsn/,
+		qr/LOG: ( [A-Z0-9]+:)? logical replication completed skipping transaction at LSN $lsn/,
 		$offset);
 
 	# Insert non-conflict data
@@ -124,10 +124,7 @@ $node_subscriber->safe_psql('postgres', "TRUNCATE tbl");
 $node_subscriber->safe_psql('postgres', "ALTER SUBSCRIPTION sub ENABLE");
 
 # Wait for the data to replicate.
-$node_publisher->wait_for_catchup('sub');
-$node_subscriber->poll_query_until('postgres',
-	"SELECT COUNT(1) = 0 FROM pg_subscription_rel sr WHERE sr.srsubstate NOT IN ('s', 'r') AND sr.srrelid = 'tbl'::regclass"
-);
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'sub');
 
 # Confirm that we have finished the table sync.
 my $result =

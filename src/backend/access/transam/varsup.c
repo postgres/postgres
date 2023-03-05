@@ -3,7 +3,7 @@
  * varsup.c
  *	  postgres OID & XID variables support routines
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/access/transam/varsup.c
@@ -521,7 +521,7 @@ ForceTransactionIdLimitUpdate(void)
  * wide, counter wraparound will occur eventually, and therefore it is unwise
  * to assume they are unique unless precautions are taken to make them so.
  * Hence, this routine should generally not be used directly.  The only direct
- * callers should be GetNewOidWithIndex() and GetNewRelFileNode() in
+ * callers should be GetNewOidWithIndex() and GetNewRelFileNumber() in
  * catalog/catalog.c.
  */
 Oid

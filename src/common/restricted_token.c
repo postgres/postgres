@@ -4,7 +4,7 @@
  *		helper routine to ensure restricted token on Windows
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -28,8 +28,6 @@
 /* internal vars */
 char	   *restrict_env;
 
-typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-
 /* Windows API define missing from some versions of MingW headers */
 #ifndef  DISABLE_MAX_PRIVILEGE
 #define DISABLE_MAX_PRIVILEGE	0x1
@@ -52,36 +50,15 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	HANDLE		restrictedToken;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
 	SID_AND_ATTRIBUTES dropSids[2];
-	__CreateRestrictedToken _CreateRestrictedToken;
-	HANDLE		Advapi32Handle;
 
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
-
-	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
-	if (Advapi32Handle == NULL)
-	{
-		pg_log_error("could not load library \"%s\": error code %lu",
-					 "ADVAPI32.DLL", GetLastError());
-		return 0;
-	}
-
-	_CreateRestrictedToken = (__CreateRestrictedToken) (pg_funcptr_t) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
-
-	if (_CreateRestrictedToken == NULL)
-	{
-		pg_log_error("cannot create restricted tokens on this platform: error code %lu",
-					 GetLastError());
-		FreeLibrary(Advapi32Handle);
-		return 0;
-	}
 
 	/* Open the current token to use as a base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
 		pg_log_error("could not open process token: error code %lu",
 					 GetLastError());
-		FreeLibrary(Advapi32Handle);
 		return 0;
 	}
 
@@ -97,22 +74,20 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 		pg_log_error("could not allocate SIDs: error code %lu",
 					 GetLastError());
 		CloseHandle(origToken);
-		FreeLibrary(Advapi32Handle);
 		return 0;
 	}
 
-	b = _CreateRestrictedToken(origToken,
-							   DISABLE_MAX_PRIVILEGE,
-							   sizeof(dropSids) / sizeof(dropSids[0]),
-							   dropSids,
-							   0, NULL,
-							   0, NULL,
-							   &restrictedToken);
+	b = CreateRestrictedToken(origToken,
+							  DISABLE_MAX_PRIVILEGE,
+							  sizeof(dropSids) / sizeof(dropSids[0]),
+							  dropSids,
+							  0, NULL,
+							  0, NULL,
+							  &restrictedToken);
 
 	FreeSid(dropSids[1].Sid);
 	FreeSid(dropSids[0].Sid);
 	CloseHandle(origToken);
-	FreeLibrary(Advapi32Handle);
 
 	if (!b)
 	{

@@ -1974,7 +1974,7 @@ CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
     explicitly when creating <type>tsvector</type> values inside triggers,
     so that the column's contents will not be affected by changes to
     <varname>default_text_search_config</varname>.  Failure to do this is likely to
-    lead to problems such as search results changing after a dump and reload.
+    lead to problems such as search results changing after a dump and restore.
    </para>
 
   </sect2>
@@ -2902,7 +2902,7 @@ SELECT plainto_tsquery('supernova star');
     url="https://www.cs.hmc.edu/~geoff/ispell.html">Ispell</ulink>.
     Also, some more modern dictionary file formats are supported &mdash; <ulink
     url="https://en.wikipedia.org/wiki/MySpell">MySpell</ulink> (OO &lt; 2.0.1)
-    and <ulink url="https://sourceforge.net/projects/hunspell/">Hunspell</ulink>
+    and <ulink url="https://hunspell.github.io/">Hunspell</ulink>
     (OO &gt;= 2.0.2).  A large list of dictionaries is available on the <ulink
     url="https://wiki.openoffice.org/wiki/Dictionaries">OpenOffice
     Wiki</ulink>.

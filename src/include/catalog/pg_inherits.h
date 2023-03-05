@@ -4,7 +4,7 @@
  *	  definition of the "inherits" system catalog (pg_inherits)
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_inherits.h
@@ -53,13 +53,14 @@ extern List *find_inheritance_children_extended(Oid parentrelId, bool omit_detac
 												LOCKMODE lockmode, bool *detached_exist, TransactionId *detached_xmin);
 
 extern List *find_all_inheritors(Oid parentrelId, LOCKMODE lockmode,
-								 List **parents);
+								 List **numparents);
 extern bool has_subclass(Oid relationId);
 extern bool has_superclass(Oid relationId);
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 extern void StoreSingleInheritance(Oid relationId, Oid parentOid,
 								   int32 seqNumber);
-extern bool DeleteInheritsTuple(Oid inhrelid, Oid inhparent, bool allow_detached,
+extern bool DeleteInheritsTuple(Oid inhrelid, Oid inhparent,
+								bool expect_detach_pending,
 								const char *childname);
 extern bool PartitionHasPendingDetach(Oid partoid);
 

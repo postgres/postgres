@@ -438,6 +438,15 @@ typedef struct SPITupleTable
     </varlistentry>
 
     <varlistentry>
+     <term><symbol>SPI_OK_MERGE</symbol></term>
+     <listitem>
+      <para>
+       if a <command>MERGE</command> was executed
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><symbol>SPI_OK_INSERT_RETURNING</symbol></term>
      <listitem>
       <para>

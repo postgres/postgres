@@ -2,7 +2,7 @@
  *
  * Generator for recovery configuration
  *
- * Portions Copyright (c) 2011-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2011-2023, PostgreSQL Global Development Group
  *
  * src/include/fe_utils/recovery_gen.h
  *
@@ -21,7 +21,7 @@
 #define MINIMUM_VERSION_FOR_RECOVERY_GUC 120000
 
 extern PQExpBuffer GenerateRecoveryConfig(PGconn *pgconn,
-										  char *pg_replication_slot);
+										  char *replication_slot);
 extern void WriteRecoveryConfig(PGconn *pgconn, char *target_dir,
 								PQExpBuffer contents);
 

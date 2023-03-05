@@ -3,7 +3,7 @@
  *
  * repl_gram.y				- Parser for the replication commands
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -17,6 +17,7 @@
 
 #include "access/xlogdefs.h"
 #include "nodes/makefuncs.h"
+#include "nodes/parsenodes.h"
 #include "nodes/replnodes.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
@@ -29,10 +30,7 @@ Node *replication_parse_result;
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
- * memory leaks if we error out during parsing.  Note this only works with
- * bison >= 2.0.  However, in bison 1.875 the default is to use alloca()
- * if possible, so there's not really much problem anyhow, at least if
- * you're building with gcc.
+ * memory leaks if we error out during parsing.
  */
 #define YYMALLOC palloc
 #define YYFREE   pfree
@@ -174,7 +172,7 @@ base_backup:
 			;
 
 create_replication_slot:
-			/* CREATE_REPLICATION_SLOT slot TEMPORARY PHYSICAL [options] */
+			/* CREATE_REPLICATION_SLOT slot [TEMPORARY] PHYSICAL [options] */
 			K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_PHYSICAL create_slot_options
 				{
 					CreateReplicationSlotCmd *cmd;
@@ -185,7 +183,7 @@ create_replication_slot:
 					cmd->options = $5;
 					$$ = (Node *) cmd;
 				}
-			/* CREATE_REPLICATION_SLOT slot TEMPORARY LOGICAL plugin [options] */
+			/* CREATE_REPLICATION_SLOT slot [TEMPORARY] LOGICAL plugin [options] */
 			| K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_LOGICAL IDENT create_slot_options
 				{
 					CreateReplicationSlotCmd *cmd;
@@ -416,5 +414,3 @@ ident_or_keyword:
 		;
 
 %%
-
-#include "repl_scanner.c"

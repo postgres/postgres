@@ -4,7 +4,7 @@
  *	  routines to support running postgres in 'bootstrap' mode
  *	bootstrap mode is used to create the initial template database
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -228,6 +228,32 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
+			case 'c':
+			case '-':
+				{
+					char	   *name,
+							   *value;
+
+					ParseLongOption(optarg, &name, &value);
+					if (!value)
+					{
+						if (flag == '-')
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("--%s requires a value",
+											optarg)));
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("-c %s requires a value",
+											optarg)));
+					}
+
+					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
+					pfree(name);
+					pfree(value);
+					break;
+				}
 			case 'D':
 				userDoption = pstrdup(optarg);
 				break;
@@ -265,33 +291,6 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 									PGC_S_DYNAMIC_DEFAULT);
 				}
 				break;
-			case 'c':
-			case '-':
-				{
-					char	   *name,
-							   *value;
-
-					ParseLongOption(optarg, &name, &value);
-					if (!value)
-					{
-						if (flag == '-')
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("--%s requires a value",
-											optarg)));
-						else
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("-c %s requires a value",
-											optarg)));
-					}
-
-					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
-					free(name);
-					if (value)
-						free(value);
-					break;
-				}
 			default:
 				write_stderr("Try \"%s --help\" for more information.\n",
 							 progname);
@@ -355,7 +354,7 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	if (pg_link_canary_is_frontend())
 		elog(ERROR, "backend is incorrectly linked to frontend functions");
 
-	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL, false);
+	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, false, false, NULL);
 
 	/* Initialize stuff for bootstrap-file processing */
 	for (i = 0; i < MAXATTR; i++)
@@ -464,19 +463,19 @@ boot_openrel(char *relname)
  * ----------------
  */
 void
-closerel(char *name)
+closerel(char *relname)
 {
-	if (name)
+	if (relname)
 	{
 		if (boot_reldesc)
 		{
-			if (strcmp(RelationGetRelationName(boot_reldesc), name) != 0)
+			if (strcmp(RelationGetRelationName(boot_reldesc), relname) != 0)
 				elog(ERROR, "close of %s when %s was expected",
-					 name, RelationGetRelationName(boot_reldesc));
+					 relname, RelationGetRelationName(boot_reldesc));
 		}
 		else
 			elog(ERROR, "close of %s before any relation was opened",
-				 name);
+				 relname);
 	}
 
 	if (boot_reldesc == NULL)
@@ -649,7 +648,7 @@ InsertOneValue(char *value, int i)
 	Oid			typinput;
 	Oid			typoutput;
 
-	AssertArg(i >= 0 && i < MAXATTR);
+	Assert(i >= 0 && i < MAXATTR);
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 

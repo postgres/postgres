@@ -3,7 +3,7 @@
  * hashfunc.c
  *	  Support functions for hash access method.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -32,6 +32,7 @@
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/pg_locale.h"
+#include "varatt.h"
 
 /*
  * Datatype-specific hash functions.
@@ -281,37 +282,34 @@ hashtext(PG_FUNCTION_ARGS)
 	if (!lc_collate_is_c(collid))
 		mylocale = pg_newlocale_from_collation(collid);
 
-	if (!mylocale || mylocale->deterministic)
+	if (pg_locale_deterministic(mylocale))
 	{
 		result = hash_any((unsigned char *) VARDATA_ANY(key),
 						  VARSIZE_ANY_EXHDR(key));
 	}
 	else
 	{
-#ifdef USE_ICU
-		if (mylocale->provider == COLLPROVIDER_ICU)
-		{
-			int32_t		ulen = -1;
-			UChar	   *uchar = NULL;
-			Size		bsize;
-			uint8_t    *buf;
+		Size		bsize, rsize;
+		char	   *buf;
+		const char *keydata = VARDATA_ANY(key);
+		size_t		keylen = VARSIZE_ANY_EXHDR(key);
 
-			ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
-			bsize = ucol_getSortKey(mylocale->info.icu.ucol,
-									uchar, ulen, NULL, 0);
-			buf = palloc(bsize);
-			ucol_getSortKey(mylocale->info.icu.ucol,
-							uchar, ulen, buf, bsize);
+		bsize = pg_strnxfrm(NULL, 0, keydata, keylen, mylocale);
+		buf = palloc(bsize + 1);
 
-			result = hash_any(buf, bsize);
+		rsize = pg_strnxfrm(buf, bsize + 1, keydata, keylen, mylocale);
+		if (rsize != bsize)
+			elog(ERROR, "pg_strnxfrm() returned unexpected result");
 
-			pfree(buf);
-		}
-		else
-#endif
-			/* shouldn't happen */
-			elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
+		/*
+		 * In principle, there's no reason to include the terminating NUL
+		 * character in the hash, but it was done before and the behavior
+		 * must be preserved.
+		 */
+		result = hash_any((uint8_t *) buf, bsize + 1);
+
+		pfree(buf);
 	}
 
 	/* Avoid leaking memory for toasted inputs */
@@ -337,7 +335,7 @@ hashtextextended(PG_FUNCTION_ARGS)
 	if (!lc_collate_is_c(collid))
 		mylocale = pg_newlocale_from_collation(collid);
 
-	if (!mylocale || mylocale->deterministic)
+	if (pg_locale_deterministic(mylocale))
 	{
 		result = hash_any_extended((unsigned char *) VARDATA_ANY(key),
 								   VARSIZE_ANY_EXHDR(key),
@@ -345,30 +343,27 @@ hashtextextended(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-#ifdef USE_ICU
-		if (mylocale->provider == COLLPROVIDER_ICU)
-		{
-			int32_t		ulen = -1;
-			UChar	   *uchar = NULL;
-			Size		bsize;
-			uint8_t    *buf;
+		Size		bsize, rsize;
+		char	   *buf;
+		const char *keydata = VARDATA_ANY(key);
+		size_t		keylen = VARSIZE_ANY_EXHDR(key);
 
-			ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+		bsize = pg_strnxfrm(NULL, 0, keydata, keylen, mylocale);
+		buf = palloc(bsize + 1);
 
-			bsize = ucol_getSortKey(mylocale->info.icu.ucol,
-									uchar, ulen, NULL, 0);
-			buf = palloc(bsize);
-			ucol_getSortKey(mylocale->info.icu.ucol,
-							uchar, ulen, buf, bsize);
+		rsize = pg_strnxfrm(buf, bsize + 1, keydata, keylen, mylocale);
+		if (rsize != bsize)
+			elog(ERROR, "pg_strnxfrm() returned unexpected result");
 
-			result = hash_any_extended(buf, bsize, PG_GETARG_INT64(1));
+		/*
+		 * In principle, there's no reason to include the terminating NUL
+		 * character in the hash, but it was done before and the behavior
+		 * must be preserved.
+		 */
+		result = hash_any_extended((uint8_t *) buf, bsize + 1,
+								   PG_GETARG_INT64(1));
 
-			pfree(buf);
-		}
-		else
-#endif
-			/* shouldn't happen */
-			elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
+		pfree(buf);
 	}
 
 	PG_FREE_IF_COPY(key, 0);

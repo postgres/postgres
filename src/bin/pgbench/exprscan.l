@@ -1,4 +1,4 @@
-%{
+%top{
 /*-------------------------------------------------------------------------
  *
  * exprscan.l
@@ -15,16 +15,26 @@
  *
  * Note that this lexer operates within the framework created by psqlscan.l,
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pgbench/exprscan.l
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
+/*
+ * NB: include exprparse.h only AFTER including pgbench.h, because pgbench.h
+ * contains definitions needed for YYSTYPE. Likewise, pgbench.h must come after
+ * psqlscan_int.h for yyscan_t.
+ */
 #include "fe_utils/psqlscan_int.h"
+#include "pgbench.h"
+#include "exprparse.h"
+}
 
+%{
 /* context information for reporting errors in expressions */
 static const char *expr_source = NULL;
 static int	expr_lineno = 0;

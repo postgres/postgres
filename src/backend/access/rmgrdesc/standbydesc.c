@@ -3,7 +3,7 @@
  * standbydesc.c
  *	  rmgr descriptor routines for storage/ipc/standby.c
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -33,7 +33,14 @@ standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
 	}
 
 	if (xlrec->subxid_overflow)
-		appendStringInfoString(buf, "; subxid ovf");
+		appendStringInfoString(buf, "; subxid overflowed");
+
+	if (xlrec->subxcnt > 0)
+	{
+		appendStringInfo(buf, "; %d subxacts:", xlrec->subxcnt);
+		for (i = 0; i < xlrec->subxcnt; i++)
+			appendStringInfo(buf, " %u", xlrec->xids[xlrec->xcnt + i]);
+	}
 }
 
 void

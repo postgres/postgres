@@ -82,13 +82,15 @@ struct rule
  * Prototypes for static functions.
  */
 
-static struct pg_tm *gmtsub(pg_time_t const *, int32, struct pg_tm *);
-static bool increment_overflow(int *, int);
-static bool increment_overflow_time(pg_time_t *, int32);
-static int64 leapcorr(struct state const *, pg_time_t);
-static struct pg_tm *timesub(pg_time_t const *, int32, struct state const *,
-							 struct pg_tm *);
-static bool typesequiv(struct state const *, int, int);
+static struct pg_tm *gmtsub(pg_time_t const *timep, int32 offset,
+							struct pg_tm *tmp);
+static bool increment_overflow(int *ip, int j);
+static bool increment_overflow_time(pg_time_t *tp, int32 j);
+static int64 leapcorr(struct state const *sp, pg_time_t t);
+static struct pg_tm *timesub(pg_time_t const *timep,
+							 int32 offset, struct state const *sp,
+							 struct pg_tm *tmp);
+static bool typesequiv(struct state const *sp, int a, int b);
 
 
 /*

@@ -433,8 +433,30 @@ EXPLAIN (costs off) DELETE FROM rw_view1 WHERE a=5;
          Index Cond: ((a > 0) AND (a = 5))
 (3 rows)
 
+-- it's still updatable if we add a DO ALSO rule
+CREATE TABLE base_tbl_hist(ts timestamptz default now(), a int, b text);
+CREATE RULE base_tbl_log AS ON INSERT TO rw_view1 DO ALSO
+  INSERT INTO base_tbl_hist(a,b) VALUES(new.a, new.b);
+SELECT table_name, is_updatable, is_insertable_into
+  FROM information_schema.views
+ WHERE table_name = 'rw_view1';
+ table_name | is_updatable | is_insertable_into 
+------------+--------------+--------------------
+ rw_view1   | YES          | YES
+(1 row)
+
+-- Check behavior with DEFAULTs (bug #17633)
+INSERT INTO rw_view1 VALUES (9, DEFAULT), (10, DEFAULT);
+SELECT a, b FROM base_tbl_hist;
+ a  | b 
+----+---
+  9 | 
+ 10 | 
+(2 rows)
+
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to view rw_view1
+DROP TABLE base_tbl_hist;
 -- view on top of view
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
@@ -1903,19 +1925,19 @@ CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a < b
  a      | integer |           |          |         | plain   | 
  b      | integer |           |          |         | plain   | 
 View definition:
- SELECT base_tbl.a,
-    base_tbl.b
+ SELECT a,
+    b
    FROM base_tbl
-  WHERE base_tbl.a < base_tbl.b;
+  WHERE a < b;
 Options: check_option=local
 
 SELECT * FROM information_schema.views WHERE table_name = 'rw_view1';
- table_catalog | table_schema | table_name |          view_definition           | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
----------------+--------------+------------+------------------------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
- regression    | public       | rw_view1   |  SELECT base_tbl.a,               +| LOCAL        | YES          | YES                | NO                   | NO                   | NO
-               |              |            |     base_tbl.b                    +|              |              |                    |                      |                      | 
-               |              |            |    FROM base_tbl                  +|              |              |                    |                      |                      | 
-               |              |            |   WHERE (base_tbl.a < base_tbl.b); |              |              |                    |                      |                      | 
+ table_catalog | table_schema | table_name | view_definition  | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
+---------------+--------------+------------+------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
+ regression    | public       | rw_view1   |  SELECT a,      +| LOCAL        | YES          | YES                | NO                   | NO                   | NO
+               |              |            |     b           +|              |              |                    |                      |                      | 
+               |              |            |    FROM base_tbl+|              |              |                    |                      |                      | 
+               |              |            |   WHERE (a < b); |              |              |                    |                      |                      | 
 (1 row)
 
 INSERT INTO rw_view1 VALUES(3,4); -- ok
@@ -1956,17 +1978,17 @@ CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a < 10
 --------+---------+-----------+----------+---------+---------+-------------
  a      | integer |           |          |         | plain   | 
 View definition:
- SELECT rw_view1.a
+ SELECT a
    FROM rw_view1
-  WHERE rw_view1.a < 10;
+  WHERE a < 10;
 Options: check_option=cascaded
 
 SELECT * FROM information_schema.views WHERE table_name = 'rw_view2';
- table_catalog | table_schema | table_name |      view_definition       | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
----------------+--------------+------------+----------------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
- regression    | public       | rw_view2   |  SELECT rw_view1.a        +| CASCADED     | YES          | YES                | NO                   | NO                   | NO
-               |              |            |    FROM rw_view1          +|              |              |                    |                      |                      | 
-               |              |            |   WHERE (rw_view1.a < 10); |              |              |                    |                      |                      | 
+ table_catalog | table_schema | table_name |  view_definition  | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
+---------------+--------------+------------+-------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
+ regression    | public       | rw_view2   |  SELECT a        +| CASCADED     | YES          | YES                | NO                   | NO                   | NO
+               |              |            |    FROM rw_view1 +|              |              |                    |                      |                      | 
+               |              |            |   WHERE (a < 10); |              |              |                    |                      |                      | 
 (1 row)
 
 INSERT INTO rw_view2 VALUES (-5); -- should fail
@@ -1996,17 +2018,17 @@ CREATE OR REPLACE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a < 10
 --------+---------+-----------+----------+---------+---------+-------------
  a      | integer |           |          |         | plain   | 
 View definition:
- SELECT rw_view1.a
+ SELECT a
    FROM rw_view1
-  WHERE rw_view1.a < 10;
+  WHERE a < 10;
 Options: check_option=local
 
 SELECT * FROM information_schema.views WHERE table_name = 'rw_view2';
- table_catalog | table_schema | table_name |      view_definition       | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
----------------+--------------+------------+----------------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
- regression    | public       | rw_view2   |  SELECT rw_view1.a        +| LOCAL        | YES          | YES                | NO                   | NO                   | NO
-               |              |            |    FROM rw_view1          +|              |              |                    |                      |                      | 
-               |              |            |   WHERE (rw_view1.a < 10); |              |              |                    |                      |                      | 
+ table_catalog | table_schema | table_name |  view_definition  | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
+---------------+--------------+------------+-------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
+ regression    | public       | rw_view2   |  SELECT a        +| LOCAL        | YES          | YES                | NO                   | NO                   | NO
+               |              |            |    FROM rw_view1 +|              |              |                    |                      |                      | 
+               |              |            |   WHERE (a < 10); |              |              |                    |                      |                      | 
 (1 row)
 
 INSERT INTO rw_view2 VALUES (-10); -- ok, but not in view
@@ -2037,16 +2059,16 @@ ALTER VIEW rw_view2 RESET (check_option);
 --------+---------+-----------+----------+---------+---------+-------------
  a      | integer |           |          |         | plain   | 
 View definition:
- SELECT rw_view1.a
+ SELECT a
    FROM rw_view1
-  WHERE rw_view1.a < 10;
+  WHERE a < 10;
 
 SELECT * FROM information_schema.views WHERE table_name = 'rw_view2';
- table_catalog | table_schema | table_name |      view_definition       | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
----------------+--------------+------------+----------------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
- regression    | public       | rw_view2   |  SELECT rw_view1.a        +| NONE         | YES          | YES                | NO                   | NO                   | NO
-               |              |            |    FROM rw_view1          +|              |              |                    |                      |                      | 
-               |              |            |   WHERE (rw_view1.a < 10); |              |              |                    |                      |                      | 
+ table_catalog | table_schema | table_name |  view_definition  | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
+---------------+--------------+------------+-------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
+ regression    | public       | rw_view2   |  SELECT a        +| NONE         | YES          | YES                | NO                   | NO                   | NO
+               |              |            |    FROM rw_view1 +|              |              |                    |                      |                      | 
+               |              |            |   WHERE (a < 10); |              |              |                    |                      |                      | 
 (1 row)
 
 INSERT INTO rw_view2 VALUES (30); -- ok, but not in view
@@ -2068,15 +2090,15 @@ CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WITH CHECK OPTION;
 CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a > 0;
 CREATE VIEW rw_view3 AS SELECT * FROM rw_view2 WITH CHECK OPTION;
 SELECT * FROM information_schema.views WHERE table_name LIKE E'rw\\_view_' ORDER BY table_name;
- table_catalog | table_schema | table_name |      view_definition      | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
----------------+--------------+------------+---------------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
- regression    | public       | rw_view1   |  SELECT base_tbl.a       +| CASCADED     | YES          | YES                | NO                   | NO                   | NO
-               |              |            |    FROM base_tbl;         |              |              |                    |                      |                      | 
- regression    | public       | rw_view2   |  SELECT rw_view1.a       +| NONE         | YES          | YES                | NO                   | NO                   | NO
-               |              |            |    FROM rw_view1         +|              |              |                    |                      |                      | 
-               |              |            |   WHERE (rw_view1.a > 0); |              |              |                    |                      |                      | 
- regression    | public       | rw_view3   |  SELECT rw_view2.a       +| CASCADED     | YES          | YES                | NO                   | NO                   | NO
-               |              |            |    FROM rw_view2;         |              |              |                    |                      |                      | 
+ table_catalog | table_schema | table_name |  view_definition  | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
+---------------+--------------+------------+-------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
+ regression    | public       | rw_view1   |  SELECT a        +| CASCADED     | YES          | YES                | NO                   | NO                   | NO
+               |              |            |    FROM base_tbl; |              |              |                    |                      |                      | 
+ regression    | public       | rw_view2   |  SELECT a        +| NONE         | YES          | YES                | NO                   | NO                   | NO
+               |              |            |    FROM rw_view1 +|              |              |                    |                      |                      | 
+               |              |            |   WHERE (a > 0);  |              |              |                    |                      |                      | 
+ regression    | public       | rw_view3   |  SELECT a        +| CASCADED     | YES          | YES                | NO                   | NO                   | NO
+               |              |            |    FROM rw_view2; |              |              |                    |                      |                      | 
 (3 rows)
 
 INSERT INTO rw_view1 VALUES (-1); -- ok
@@ -3273,6 +3295,25 @@ select * from base_tab_def order by a, c NULLS LAST;
     | View default  | Table default | View default | 
     | View default  |               | View default | 
 (22 rows)
+
+-- Test a DO ALSO INSERT ... SELECT rule
+drop rule base_tab_def_view_ins_rule on base_tab_def_view;
+create rule base_tab_def_view_ins_rule as on insert to base_tab_def_view
+  do also insert into base_tab_def (a, b, e) select new.a, new.b, 'xxx';
+truncate base_tab_def;
+insert into base_tab_def_view values (1, default, default, default, default);
+insert into base_tab_def_view values (2, default, default, default, default),
+                                     (3, default, default, default, default);
+select * from base_tab_def order by a, e nulls first;
+ a |      b       |       c       |      d       |  e  
+---+--------------+---------------+--------------+-----
+ 1 | View default | Table default | View default | 
+ 1 | View default | Table default |              | xxx
+ 2 | View default | Table default | View default | 
+ 2 | View default | Table default |              | xxx
+ 3 | View default | Table default | View default | 
+ 3 | View default | Table default |              | xxx
+(6 rows)
 
 drop view base_tab_def_view;
 drop table base_tab_def;

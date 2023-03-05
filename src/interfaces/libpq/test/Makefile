@@ -1,5 +1,8 @@
 # src/interfaces/libpq/test/Makefile
 
+PGFILEDESC = "libpq test program"
+PGAPPICON = win32
+
 subdir = src/interfaces/libpq/test
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
@@ -14,6 +17,8 @@ LDFLAGS_INTERNAL += $(libpq_pgport)
 PROGS = libpq_testclient libpq_uri_regress
 
 all: $(PROGS)
+
+$(PROGS): $(WIN32RES)
 
 clean distclean maintainer-clean:
 	rm -f $(PROGS) *.o

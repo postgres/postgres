@@ -2,7 +2,7 @@
  * logical.h
  *	   PostgreSQL logical decoding coordination
  *
- * Copyright (c) 2012-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2023, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,8 @@ extern void DecodingContextFindStartpoint(LogicalDecodingContext *ctx);
 extern bool DecodingContextReady(LogicalDecodingContext *ctx);
 extern void FreeDecodingContext(LogicalDecodingContext *ctx);
 
-extern void LogicalIncreaseXminForSlot(XLogRecPtr lsn, TransactionId xmin);
+extern void LogicalIncreaseXminForSlot(XLogRecPtr current_lsn,
+									   TransactionId xmin);
 extern void LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn,
 												  XLogRecPtr restart_lsn);
 extern void LogicalConfirmReceivedLocation(XLogRecPtr lsn);

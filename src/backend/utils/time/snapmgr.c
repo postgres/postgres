@@ -35,7 +35,7 @@
  * stack is empty.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -56,6 +56,7 @@
 #include "datatype/timestamp.h"
 #include "lib/pairingheap.h"
 #include "miscadmin.h"
+#include "port/pg_lfind.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
@@ -679,9 +680,9 @@ FreeSnapshot(Snapshot snapshot)
  * with active refcount=1.  Otherwise, only increment the refcount.
  */
 void
-PushActiveSnapshot(Snapshot snap)
+PushActiveSnapshot(Snapshot snapshot)
 {
-	PushActiveSnapshotWithLevel(snap, GetCurrentTransactionNestLevel());
+	PushActiveSnapshotWithLevel(snapshot, GetCurrentTransactionNestLevel());
 }
 
 /*
@@ -693,11 +694,11 @@ PushActiveSnapshot(Snapshot snap)
  * must not be deeper than the current top of the snapshot stack.
  */
 void
-PushActiveSnapshotWithLevel(Snapshot snap, int snap_level)
+PushActiveSnapshotWithLevel(Snapshot snapshot, int snap_level)
 {
 	ActiveSnapshotElt *newactive;
 
-	Assert(snap != InvalidSnapshot);
+	Assert(snapshot != InvalidSnapshot);
 	Assert(ActiveSnapshot == NULL || snap_level >= ActiveSnapshot->as_level);
 
 	newactive = MemoryContextAlloc(TopTransactionContext, sizeof(ActiveSnapshotElt));
@@ -706,10 +707,11 @@ PushActiveSnapshotWithLevel(Snapshot snap, int snap_level)
 	 * Checking SecondarySnapshot is probably useless here, but it seems
 	 * better to be sure.
 	 */
-	if (snap == CurrentSnapshot || snap == SecondarySnapshot || !snap->copied)
-		newactive->as_snap = CopySnapshot(snap);
+	if (snapshot == CurrentSnapshot || snapshot == SecondarySnapshot ||
+		!snapshot->copied)
+		newactive->as_snap = CopySnapshot(snapshot);
 	else
-		newactive->as_snap = snap;
+		newactive->as_snap = snapshot;
 
 	newactive->as_next = ActiveSnapshot;
 	newactive->as_level = snap_level;
@@ -2118,20 +2120,20 @@ HistoricSnapshotGetTupleCids(void)
  * SerializedSnapshotData.
  */
 Size
-EstimateSnapshotSpace(Snapshot snap)
+EstimateSnapshotSpace(Snapshot snapshot)
 {
 	Size		size;
 
-	Assert(snap != InvalidSnapshot);
-	Assert(snap->snapshot_type == SNAPSHOT_MVCC);
+	Assert(snapshot != InvalidSnapshot);
+	Assert(snapshot->snapshot_type == SNAPSHOT_MVCC);
 
 	/* We allocate any XID arrays needed in the same palloc block. */
 	size = add_size(sizeof(SerializedSnapshotData),
-					mul_size(snap->xcnt, sizeof(TransactionId)));
-	if (snap->subxcnt > 0 &&
-		(!snap->suboverflowed || snap->takenDuringRecovery))
+					mul_size(snapshot->xcnt, sizeof(TransactionId)));
+	if (snapshot->subxcnt > 0 &&
+		(!snapshot->suboverflowed || snapshot->takenDuringRecovery))
 		size = add_size(size,
-						mul_size(snap->subxcnt, sizeof(TransactionId)));
+						mul_size(snapshot->subxcnt, sizeof(TransactionId)));
 
 	return size;
 }
@@ -2284,8 +2286,6 @@ RestoreTransactionSnapshot(Snapshot snapshot, void *source_pgproc)
 bool
 XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 {
-	uint32		i;
-
 	/*
 	 * Make a quick range check to eliminate most XIDs without looking at the
 	 * xip arrays.  Note that this is OK even if we convert a subxact XID to
@@ -2317,13 +2317,8 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 		if (!snapshot->suboverflowed)
 		{
 			/* we have full data, so search subxip */
-			int32		j;
-
-			for (j = 0; j < snapshot->subxcnt; j++)
-			{
-				if (TransactionIdEquals(xid, snapshot->subxip[j]))
-					return true;
-			}
+			if (pg_lfind32(xid, snapshot->subxip, snapshot->subxcnt))
+				return true;
 
 			/* not there, fall through to search xip[] */
 		}
@@ -2344,18 +2339,13 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 				return false;
 		}
 
-		for (i = 0; i < snapshot->xcnt; i++)
-		{
-			if (TransactionIdEquals(xid, snapshot->xip[i]))
-				return true;
-		}
+		if (pg_lfind32(xid, snapshot->xip, snapshot->xcnt))
+			return true;
 	}
 	else
 	{
-		int32		j;
-
 		/*
-		 * In recovery we store all xids in the subxact array because it is by
+		 * In recovery we store all xids in the subxip array because it is by
 		 * far the bigger array, and we mostly don't know which xids are
 		 * top-level and which are subxacts. The xip array is empty.
 		 *
@@ -2383,11 +2373,8 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 		 * indeterminate xid. We don't know whether it's top level or subxact
 		 * but it doesn't matter. If it's present, the xid is visible.
 		 */
-		for (j = 0; j < snapshot->subxcnt; j++)
-		{
-			if (TransactionIdEquals(xid, snapshot->subxip[j]))
-				return true;
-		}
+		if (pg_lfind32(xid, snapshot->subxip, snapshot->subxcnt))
+			return true;
 	}
 
 	return false;

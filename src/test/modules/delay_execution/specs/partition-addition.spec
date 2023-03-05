@@ -20,7 +20,7 @@ teardown
 # of which we expect foo1 to be pruned at planning and foo3 at execution.
 # Then we'll block, and by the time the query is actually executed,
 # partition foo2 will also exist.  We expect that not to be scanned.
-# This test is specifically designed to check ExecCreatePartitionPruneState's
+# This test is specifically designed to check CreatePartitionPruneState's
 # code for matching up the partition lists in such cases.
 
 session "s1"

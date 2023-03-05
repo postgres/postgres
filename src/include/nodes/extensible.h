@@ -4,7 +4,7 @@
  *	  Definitions for extensible nodes and custom scans
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/extensible.h
@@ -31,6 +31,8 @@
  */
 typedef struct ExtensibleNode
 {
+	pg_node_attr(custom_copy_equal, custom_read_write)
+
 	NodeTag		type;
 	const char *extnodename;	/* identifier of ExtensibleNodeMethods */
 } ExtensibleNode;
@@ -70,8 +72,8 @@ typedef struct ExtensibleNodeMethods
 	void		(*nodeRead) (struct ExtensibleNode *node);
 } ExtensibleNodeMethods;
 
-extern void RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *method);
-extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *name,
+extern void RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *methods);
+extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *extnodename,
 															 bool missing_ok);
 
 /*

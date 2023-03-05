@@ -136,7 +136,7 @@ SELECT count(*) FROM
    Output: count(*)
    ->  HashAggregate
          Output: tenk1.two, tenk1.four, tenk1.two
-         Group Key: tenk1.two, tenk1.four, tenk1.two
+         Group Key: tenk1.two, tenk1.four
          ->  Seq Scan on public.tenk1
                Output: tenk1.two, tenk1.four, tenk1.two
 (7 rows)
@@ -171,6 +171,20 @@ SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
 SET jit_above_cost TO DEFAULT;
 CREATE TABLE distinct_group_2 AS
 SELECT DISTINCT (g%1000)::text FROM generate_series(0,9999) g;
+SET enable_seqscan = 0;
+-- Check to see we get an incremental sort plan
+EXPLAIN (costs off)
+SELECT DISTINCT hundred, two FROM tenk1;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Unique
+   ->  Incremental Sort
+         Sort Key: hundred, two
+         Presorted Key: hundred
+         ->  Index Scan using tenk1_hundred on tenk1
+(5 rows)
+
+RESET enable_seqscan;
 SET enable_hashagg=TRUE;
 -- Produce results with hash aggregation.
 SET enable_sort=FALSE;
@@ -265,20 +279,75 @@ $$ LANGUAGE plpgsql PARALLEL SAFE;
 -- Ensure we do parallel distinct now that the function is parallel safe
 EXPLAIN (COSTS OFF)
 SELECT DISTINCT distinct_func(1) FROM tenk1;
-                  QUERY PLAN                  
-----------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Unique
-   ->  Sort
-         Sort Key: (distinct_func(1))
-         ->  Gather
-               Workers Planned: 2
-               ->  Parallel Seq Scan on tenk1
-(6 rows)
+   ->  Gather Merge
+         Workers Planned: 2
+         ->  Unique
+               ->  Sort
+                     Sort Key: (distinct_func(1))
+                     ->  Parallel Seq Scan on tenk1
+(7 rows)
 
 RESET max_parallel_workers_per_gather;
 RESET min_parallel_table_scan_size;
 RESET parallel_setup_cost;
 RESET parallel_tuple_cost;
+--
+-- Test the planner's ability to use a LIMIT 1 instead of a Unique node when
+-- all of the distinct_pathkeys have been marked as redundant
+--
+-- Ensure we get a plan with a Limit 1
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT four FROM tenk1 WHERE four = 0;
+         QUERY PLAN         
+----------------------------
+ Limit
+   ->  Seq Scan on tenk1
+         Filter: (four = 0)
+(3 rows)
+
+-- Ensure the above gives us the correct result
+SELECT DISTINCT four FROM tenk1 WHERE four = 0;
+ four 
+------
+    0
+(1 row)
+
+-- Ensure we get a plan with a Limit 1
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT four FROM tenk1 WHERE four = 0 AND two <> 0;
+                 QUERY PLAN                  
+---------------------------------------------
+ Limit
+   ->  Seq Scan on tenk1
+         Filter: ((two <> 0) AND (four = 0))
+(3 rows)
+
+-- Ensure no rows are returned
+SELECT DISTINCT four FROM tenk1 WHERE four = 0 AND two <> 0;
+ four 
+------
+(0 rows)
+
+-- Ensure we get a plan with a Limit 1 when the SELECT list contains constants
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT four,1,2,3 FROM tenk1 WHERE four = 0;
+         QUERY PLAN         
+----------------------------
+ Limit
+   ->  Seq Scan on tenk1
+         Filter: (four = 0)
+(3 rows)
+
+-- Ensure we only get 1 row
+SELECT DISTINCT four,1,2,3 FROM tenk1 WHERE four = 0;
+ four | ?column? | ?column? | ?column? 
+------+----------+----------+----------
+    0 |        1 |        2 |        3
+(1 row)
+
 --
 -- Also, some tests of IS DISTINCT FROM, which doesn't quite deserve its
 -- very own regression file.

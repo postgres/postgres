@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 #
 # Tests related to WAL archiving and recovery.
@@ -74,7 +74,7 @@ $primary->stop('immediate');
 
 # Recovery tests for the archiving with a standby partially check
 # the recovery behavior when restoring a backup taken using a
-# snapshot with no pg_start/stop_backup.  In this situation,
+# snapshot with no pg_backup_start/stop.  In this situation,
 # the recovered standby should enter first crash recovery then
 # switch to regular archive recovery.  Note that the base backup
 # is taken here so as archive_command will fail.  This is necessary
@@ -233,5 +233,33 @@ ok( -f "$standby2_data/$segment_path_1_done"
 	  && -f "$standby2_data/$segment_path_2_done",
 	".done files created after archive success with archive_mode=always on standby"
 );
+
+# Check that the archiver process calls the shell archive module's shutdown
+# callback.
+$standby2->append_conf('postgresql.conf', "log_min_messages = debug1");
+$standby2->reload;
+
+# Run a query to make sure that the reload has taken effect.
+$standby2->safe_psql('postgres', q{SELECT 1});
+my $log_location = -s $standby2->logfile;
+
+$standby2->stop;
+my $logfile = slurp_file($standby2->logfile, $log_location);
+ok( $logfile =~ qr/archiver process shutting down/,
+	'check shutdown callback of shell archive module');
+
+# Test that we can enter and leave backup mode without crashes
+my ($stderr, $cmdret);
+$cmdret = $primary->psql(
+	'postgres',
+	"SELECT pg_backup_start('onebackup'); "
+	  . "SELECT pg_backup_stop();"
+	  . "SELECT pg_backup_start(repeat('x', 1026))",
+	stderr => \$stderr);
+is($cmdret, 3, "psql fails correctly");
+like($stderr, qr/backup label too long/, "pg_backup_start fails gracefully");
+$primary->safe_psql('postgres',
+	"SELECT pg_backup_start('onebackup'); SELECT pg_backup_stop();");
+$primary->safe_psql('postgres', "SELECT pg_backup_start('twobackup')");
 
 done_testing();

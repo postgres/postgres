@@ -4,7 +4,7 @@
  *
  * Routines corresponding to schema objects
  *
- * Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ sepgsql_schema_post_create(Oid namespaceId)
 	 * check db_schema:{create}
 	 */
 	initStringInfo(&audit_name);
-	appendStringInfo(&audit_name, "%s", quote_identifier(nsp_name));
+	appendStringInfoString(&audit_name, quote_identifier(nsp_name));
 	sepgsql_avc_check_perms_label(ncontext,
 								  SEPG_CLASS_DB_SCHEMA,
 								  SEPG_DB_SCHEMA__CREATE,

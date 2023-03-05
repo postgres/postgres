@@ -6,7 +6,7 @@
  * This module deals with SubLinks and CTEs, but not subquery RTEs (i.e.,
  * not sub-SELECT-in-FROM cases).
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1481,7 +1481,8 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	clause_varnos = pull_varnos(root, whereClause);
 	upper_varnos = NULL;
-	while ((varno = bms_first_member(clause_varnos)) >= 0)
+	varno = -1;
+	while ((varno = bms_next_member(clause_varnos, varno)) >= 0)
 	{
 		if (varno <= rtoffset)
 			upper_varnos = bms_add_member(upper_varnos, varno);
@@ -1496,8 +1497,12 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	if (!bms_is_subset(upper_varnos, available_rels))
 		return NULL;
 
-	/* Now we can attach the modified subquery rtable to the parent */
-	parse->rtable = list_concat(parse->rtable, subselect->rtable);
+	/*
+	 * Now we can attach the modified subquery rtable to the parent. This also
+	 * adds subquery's RTEPermissionInfos into the upper query.
+	 */
+	CombineRangeTables(&parse->rtable, &parse->rteperminfos,
+					   subselect->rtable, subselect->rteperminfos);
 
 	/*
 	 * And finally, build the JoinExpr node.
@@ -2554,8 +2559,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 
 		case T_Append:
 			{
-				ListCell   *l;
-
 				foreach(l, ((Append *) plan)->appendplans)
 				{
 					context.paramids =
@@ -2571,8 +2574,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 
 		case T_MergeAppend:
 			{
-				ListCell   *l;
-
 				foreach(l, ((MergeAppend *) plan)->mergeplans)
 				{
 					context.paramids =
@@ -2588,8 +2589,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 
 		case T_BitmapAnd:
 			{
-				ListCell   *l;
-
 				foreach(l, ((BitmapAnd *) plan)->bitmapplans)
 				{
 					context.paramids =
@@ -2605,8 +2604,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 
 		case T_BitmapOr:
 			{
-				ListCell   *l;
-
 				foreach(l, ((BitmapOr *) plan)->bitmapplans)
 				{
 					context.paramids =
@@ -2622,8 +2619,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 
 		case T_NestLoop:
 			{
-				ListCell   *l;
-
 				finalize_primnode((Node *) ((Join *) plan)->joinqual,
 								  &context);
 				/* collect set of params that will be passed to right child */
@@ -2829,15 +2824,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 	plan->extParam = bms_union(context.paramids, initExtParam);
 	/* but not any initplan setParams */
 	plan->extParam = bms_del_members(plan->extParam, initSetParam);
-
-	/*
-	 * For speed at execution time, make sure extParam/allParam are actually
-	 * NULL if they are empty sets.
-	 */
-	if (bms_is_empty(plan->extParam))
-		plan->extParam = NULL;
-	if (bms_is_empty(plan->allParam))
-		plan->allParam = NULL;
 
 	return plan->allParam;
 }

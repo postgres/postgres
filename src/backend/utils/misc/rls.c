@@ -3,7 +3,7 @@
  * rls.c
  *		  RLS-related utility functions.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -51,7 +51,7 @@
 int
 check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 {
-	Oid			user_id = checkAsUser ? checkAsUser : GetUserId();
+	Oid			user_id = OidIsValid(checkAsUser) ? checkAsUser : GetUserId();
 	HeapTuple	tuple;
 	Form_pg_class classform;
 	bool		relrowsecurity;
@@ -95,7 +95,7 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	 * Return RLS_NONE_ENV to indicate that this decision depends on the
 	 * environment (in this case, the user_id).
 	 */
-	amowner = pg_class_ownercheck(relid, user_id);
+	amowner = object_ownercheck(RelationRelationId, relid, user_id);
 	if (amowner)
 	{
 		/*

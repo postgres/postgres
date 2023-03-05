@@ -4,7 +4,7 @@
  *	  Implement PGSemaphores using SysV semaphore facilities
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -17,13 +17,9 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/file.h>
-#include <sys/stat.h>
-#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
-#endif
-#ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
-#endif
+#include <sys/stat.h>
 
 #include "miscadmin.h"
 #include "storage/ipc.h"

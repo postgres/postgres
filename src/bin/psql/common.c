@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * src/bin/psql/common.c
  */
@@ -32,8 +32,12 @@
 
 static bool DescribeQuery(const char *query, double *elapsed_msec);
 static bool ExecQueryUsingCursor(const char *query, double *elapsed_msec);
-static int	ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_gone_p,
-									   bool is_watch, const printQueryOpt *opt, FILE *printQueryFout);
+static int	ExecQueryAndProcessResults(const char *query,
+									   double *elapsed_msec,
+									   bool *svpt_gone_p,
+									   bool is_watch,
+									   const printQueryOpt *opt,
+									   FILE *printQueryFout);
 static bool command_no_begin(const char *query);
 static bool is_select_command(const char *query);
 
@@ -59,6 +63,7 @@ openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe)
 	}
 	else if (*fname == '|')
 	{
+		fflush(NULL);
 		*fout = popen(fname + 1, "w");
 		*is_pipe = true;
 	}
@@ -245,7 +250,7 @@ NoticeProcessor(void *arg, const char *message)
  * On Windows, currently this does not work, so control-C is less useful
  * there.
  */
-volatile bool sigint_interrupt_enabled = false;
+volatile sig_atomic_t sigint_interrupt_enabled = false;
 
 sigjmp_buf	sigint_interrupt_jmp;
 
@@ -463,8 +468,7 @@ ClearOrSaveResult(PGresult *result)
 		{
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
-				if (pset.last_error_result)
-					PQclear(pset.last_error_result);
+				PQclear(pset.last_error_result);
 				pset.last_error_result = result;
 				break;
 
@@ -662,49 +666,27 @@ PrintNotifications(void)
 /*
  * PrintQueryTuples: assuming query result is OK, print its tuples
  *
+ * We use the options given by opt unless that's NULL, in which case
+ * we use pset.popt.
+ *
+ * Output is to printQueryFout unless that's NULL, in which case
+ * we use pset.queryFout.
+ *
  * Returns true if successful, false otherwise.
  */
 static bool
-PrintQueryTuples(const PGresult *result, const printQueryOpt *opt, FILE *printQueryFout)
+PrintQueryTuples(const PGresult *result, const printQueryOpt *opt,
+				 FILE *printQueryFout)
 {
 	bool		ok = true;
+	FILE	   *fout = printQueryFout ? printQueryFout : pset.queryFout;
 
-	/* write output to \g argument, if any */
-	if (pset.gfname)
+	printQuery(result, opt ? opt : &pset.popt, fout, false, pset.logfile);
+	fflush(fout);
+	if (ferror(fout))
 	{
-		FILE	   *fout;
-		bool		is_pipe;
-
-		if (!openQueryOutputFile(pset.gfname, &fout, &is_pipe))
-			return false;
-		if (is_pipe)
-			disable_sigpipe_trap();
-
-		printQuery(result, &pset.popt, fout, false, pset.logfile);
-		if (ferror(fout))
-		{
-			pg_log_error("could not print result table: %m");
-			ok = false;
-		}
-
-		if (is_pipe)
-		{
-			pclose(fout);
-			restore_sigpipe_trap();
-		}
-		else
-			fclose(fout);
-	}
-	else
-	{
-		FILE	   *fout = printQueryFout ? printQueryFout : pset.queryFout;
-
-		printQuery(result, opt ? opt : &pset.popt, fout, false, pset.logfile);
-		if (ferror(fout))
-		{
-			pg_log_error("could not print result table: %m");
-			ok = false;
-		}
+		pg_log_error("could not print result table: %m");
+		ok = false;
 	}
 
 	return ok;
@@ -845,26 +827,24 @@ loop_exit:
 
 
 /*
- * Marshal the COPY data.  Either subroutine will get the
+ * Marshal the COPY data.  Either path will get the
  * connection out of its COPY state, then call PQresultStatus()
  * once and report any error.  Return whether all was ok.
  *
- * For COPY OUT, direct the output to pset.copyStream if it's set,
- * otherwise to pset.gfname if it's set, otherwise to queryFout.
+ * For COPY OUT, direct the output to copystream, or discard if that's NULL.
  * For COPY IN, use pset.copyStream as data source if it's set,
  * otherwise cur_cmd_source.
  *
- * Update result if further processing is necessary, or NULL otherwise.
+ * Update *resultp if further processing is necessary; set to NULL otherwise.
  * Return a result when queryFout can safely output a result status: on COPY
  * IN, or on COPY OUT if written to something other than pset.queryFout.
  * Returning NULL prevents the command status from being printed, which we
  * want if the status line doesn't get taken as part of the COPY data.
  */
 static bool
-HandleCopyResult(PGresult **resultp)
+HandleCopyResult(PGresult **resultp, FILE *copystream)
 {
 	bool		success;
-	FILE	   *copystream;
 	PGresult   *copy_result;
 	ExecStatusType result_status = PQresultStatus(*resultp);
 
@@ -875,33 +855,6 @@ HandleCopyResult(PGresult **resultp)
 
 	if (result_status == PGRES_COPY_OUT)
 	{
-		bool		need_close = false;
-		bool		is_pipe = false;
-
-		if (pset.copyStream)
-		{
-			/* invoked by \copy */
-			copystream = pset.copyStream;
-		}
-		else if (pset.gfname)
-		{
-			/* invoked by \g */
-			if (openQueryOutputFile(pset.gfname,
-									&copystream, &is_pipe))
-			{
-				need_close = true;
-				if (is_pipe)
-					disable_sigpipe_trap();
-			}
-			else
-				copystream = NULL;	/* discard COPY data entirely */
-		}
-		else
-		{
-			/* fall back to the generic query output stream */
-			copystream = pset.queryFout;
-		}
-
 		success = handleCopyOut(pset.db,
 								copystream,
 								&copy_result)
@@ -917,24 +870,11 @@ HandleCopyResult(PGresult **resultp)
 			PQclear(copy_result);
 			copy_result = NULL;
 		}
-
-		if (need_close)
-		{
-			/* close \g argument file/pipe */
-			if (is_pipe)
-			{
-				pclose(copystream);
-				restore_sigpipe_trap();
-			}
-			else
-			{
-				fclose(copystream);
-			}
-		}
 	}
 	else
 	{
 		/* COPY IN */
+		/* Ignore the copystream argument passed to the function */
 		copystream = pset.copyStream ? pset.copyStream : pset.cur_cmd_source;
 		success = handleCopyIn(pset.db,
 							   copystream,
@@ -974,6 +914,7 @@ PrintQueryStatus(PGresult *result, FILE *printQueryFout)
 		}
 		else
 			fprintf(fout, "%s\n", PQcmdStatus(result));
+		fflush(fout);
 	}
 
 	if (pset.logfile)
@@ -989,10 +930,16 @@ PrintQueryStatus(PGresult *result, FILE *printQueryFout)
  *
  * Note: Utility function for use by SendQuery() only.
  *
+ * last is true if this is the last result of a command string.
+ * opt and printQueryFout are defined as for PrintQueryTuples.
+ * printStatusFout is where to send command status; NULL means pset.queryFout.
+ *
  * Returns true if the query executed successfully, false otherwise.
  */
 static bool
-PrintQueryResult(PGresult *result, bool last, bool is_watch, const printQueryOpt *opt, FILE *printQueryFout)
+PrintQueryResult(PGresult *result, bool last,
+				 const printQueryOpt *opt, FILE *printQueryFout,
+				 FILE *printStatusFout)
 {
 	bool		success;
 	const char *cmdstatus;
@@ -1022,14 +969,14 @@ PrintQueryResult(PGresult *result, bool last, bool is_watch, const printQueryOpt
 				if (strncmp(cmdstatus, "INSERT", 6) == 0 ||
 					strncmp(cmdstatus, "UPDATE", 6) == 0 ||
 					strncmp(cmdstatus, "DELETE", 6) == 0)
-					PrintQueryStatus(result, printQueryFout);
+					PrintQueryStatus(result, printStatusFout);
 			}
 
 			break;
 
 		case PGRES_COMMAND_OK:
 			if (last || pset.show_all_results)
-				PrintQueryStatus(result, printQueryFout);
+				PrintQueryStatus(result, printStatusFout);
 			success = true;
 			break;
 
@@ -1055,8 +1002,6 @@ PrintQueryResult(PGresult *result, bool last, bool is_watch, const printQueryOpt
 						 PQresultStatus(result));
 			break;
 	}
-
-	fflush(printQueryFout ? printQueryFout : pset.queryFout);
 
 	return success;
 }
@@ -1169,7 +1114,7 @@ SendQuery(const char *query)
 			 pset.crosstab_flag || !is_select_command(query))
 	{
 		/* Default fetch-it-all-and-print mode */
-		OK = (ExecQueryAndProcessResults(query, &elapsed_msec, &svpt_gone, false, NULL, NULL) >= 0);
+		OK = (ExecQueryAndProcessResults(query, &elapsed_msec, &svpt_gone, false, NULL, NULL) > 0);
 	}
 	else
 	{
@@ -1275,6 +1220,16 @@ sendquery_cleanup:
 		pset.gsavepopt = NULL;
 	}
 
+	/* clean up after \bind */
+	if (pset.bind_flag)
+	{
+		for (i = 0; i < pset.bind_nparams; i++)
+			free(pset.bind_params[i]);
+		free(pset.bind_params);
+		pset.bind_params = NULL;
+		pset.bind_flag = false;
+	}
+
 	/* reset \gset trigger */
 	if (pset.gset_prefix)
 	{
@@ -1321,6 +1276,8 @@ DescribeQuery(const char *query, double *elapsed_msec)
 
 	if (timing)
 		INSTR_TIME_SET_CURRENT(before);
+	else
+		INSTR_TIME_SET_ZERO(before);
 
 	/*
 	 * To parse the query but not execute it, we prepare it, using the unnamed
@@ -1399,7 +1356,7 @@ DescribeQuery(const char *query, double *elapsed_msec)
 			}
 
 			if (OK && result)
-				OK = PrintQueryResult(result, true, false, NULL, NULL);
+				OK = PrintQueryResult(result, true, NULL, NULL, NULL);
 
 			termPQExpBuffer(&buf);
 		}
@@ -1421,10 +1378,9 @@ DescribeQuery(const char *query, double *elapsed_msec)
  *
  * Sends query and cycles through PGresult objects.
  *
- * When not under \watch and if our command string contained a COPY FROM STDIN
- * or COPY TO STDOUT, the PGresult associated with these commands must be
- * processed by providing an input or output stream.  In that event, we'll
- * marshal data for the COPY.
+ * If our command string contained a COPY FROM STDIN or COPY TO STDOUT, the
+ * PGresult associated with these commands must be processed by providing an
+ * input or output stream.  In that event, we'll marshal data for the COPY.
  *
  * For other commands, the results are processed normally, depending on their
  * status.
@@ -1437,19 +1393,28 @@ DescribeQuery(const char *query, double *elapsed_msec)
  * committed.
  */
 static int
-ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_gone_p,
-						   bool is_watch, const printQueryOpt *opt, FILE *printQueryFout)
+ExecQueryAndProcessResults(const char *query,
+						   double *elapsed_msec, bool *svpt_gone_p,
+						   bool is_watch,
+						   const printQueryOpt *opt, FILE *printQueryFout)
 {
 	bool		timing = pset.timing;
 	bool		success;
 	instr_time	before,
 				after;
 	PGresult   *result;
+	FILE	   *gfile_fout = NULL;
+	bool		gfile_is_pipe = false;
 
 	if (timing)
 		INSTR_TIME_SET_CURRENT(before);
+	else
+		INSTR_TIME_SET_ZERO(before);
 
-	success = PQsendQuery(pset.db, query);
+	if (pset.bind_flag)
+		success = PQsendQueryParams(pset.db, query, pset.bind_nparams, NULL, (const char * const *) pset.bind_params, NULL, NULL, 0);
+	else
+		success = PQsendQuery(pset.db, query);
 
 	if (!success)
 	{
@@ -1486,7 +1451,7 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		if (!AcceptResult(result, false))
 		{
 			/*
-			 * Some error occured, either a server-side failure or a failure
+			 * Some error occurred, either a server-side failure or a failure
 			 * to submit the command string.  Record that.
 			 */
 			const char *error = PQresultErrorMessage(result);
@@ -1555,14 +1520,57 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		if (result_status == PGRES_COPY_IN ||
 			result_status == PGRES_COPY_OUT)
 		{
-			if (is_watch)
+			FILE	   *copy_stream = NULL;
+
+			/*
+			 * For COPY OUT, direct the output to the default place (probably
+			 * a pager pipe) for \watch, or to pset.copyStream for \copy,
+			 * otherwise to pset.gfname if that's set, otherwise to
+			 * pset.queryFout.
+			 */
+			if (result_status == PGRES_COPY_OUT)
 			{
-				ClearOrSaveAllResults();
-				pg_log_error("\\watch cannot be used with COPY");
-				return -1;
+				if (is_watch)
+				{
+					/* invoked by \watch */
+					copy_stream = printQueryFout ? printQueryFout : pset.queryFout;
+				}
+				else if (pset.copyStream)
+				{
+					/* invoked by \copy */
+					copy_stream = pset.copyStream;
+				}
+				else if (pset.gfname)
+				{
+					/* send to \g file, which we may have opened already */
+					if (gfile_fout == NULL)
+					{
+						if (openQueryOutputFile(pset.gfname,
+												&gfile_fout, &gfile_is_pipe))
+						{
+							if (gfile_is_pipe)
+								disable_sigpipe_trap();
+							copy_stream = gfile_fout;
+						}
+						else
+							success = false;
+					}
+					else
+						copy_stream = gfile_fout;
+				}
+				else
+				{
+					/* fall back to the generic query output stream */
+					copy_stream = pset.queryFout;
+				}
 			}
 
-			success &= HandleCopyResult(&result);
+			/*
+			 * Even if the output stream could not be opened, we call
+			 * HandleCopyResult() with a NULL output stream to collect and
+			 * discard the COPY data.
+			 */
+			success &= HandleCopyResult(&result, copy_stream);
 		}
 
 		/*
@@ -1594,7 +1602,36 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 
 		/* this may or may not print something depending on settings */
 		if (result != NULL)
-			success &= PrintQueryResult(result, last, false, opt, printQueryFout);
+		{
+			/*
+			 * If results need to be printed into the file specified by \g,
+			 * open it, unless we already did.  Note that when pset.gfname is
+			 * set, the passed-in value of printQueryFout is not used for
+			 * tuple output, but it's still used for status output.
+			 */
+			FILE	   *tuples_fout = printQueryFout;
+			bool		do_print = true;
+
+			if (PQresultStatus(result) == PGRES_TUPLES_OK &&
+				pset.gfname)
+			{
+				if (gfile_fout == NULL)
+				{
+					if (openQueryOutputFile(pset.gfname,
+											&gfile_fout, &gfile_is_pipe))
+					{
+						if (gfile_is_pipe)
+							disable_sigpipe_trap();
+					}
+					else
+						success = do_print = false;
+				}
+				tuples_fout = gfile_fout;
+			}
+			if (do_print)
+				success &= PrintQueryResult(result, last, opt,
+											tuples_fout, printQueryFout);
+		}
 
 		/* set variables on last result if all went well */
 		if (!is_watch && last && success)
@@ -1608,6 +1645,18 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 			ClearOrSaveAllResults();
 			break;
 		}
+	}
+
+	/* close \g file if we opened it */
+	if (gfile_fout)
+	{
+		if (gfile_is_pipe)
+		{
+			pclose(gfile_fout);
+			restore_sigpipe_trap();
+		}
+		else
+			fclose(gfile_fout);
 	}
 
 	/* may need this to recover from conn loss during COPY */
@@ -1657,6 +1706,8 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 	if (timing)
 		INSTR_TIME_SET_CURRENT(before);
+	else
+		INSTR_TIME_SET_ZERO(before);
 
 	/* if we're not in a transaction, start one */
 	if (PQtransactionStatus(pset.db) == PQTRANS_IDLE)

@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+
+# Helper for building resource files when building for windows. Always
+# generates a .rc from the input .rc file. When building with msvc we
+# additionally generate a .res file with 'rc', when building with gcc, we use
+# windres to directly generate a .o.  Additionally we generate basic
+# dependencies if depfile is specified.
+
+import argparse
+import os
+import subprocess
+import sys
+
+parser = argparse.ArgumentParser(description='generate PostgreSQL rc file')
+
+parser.add_argument('--srcdir', type=os.path.abspath,
+                    required=True)
+parser.add_argument('--builddir', type=os.path.abspath,
+                    required=True)
+
+binaries = parser.add_argument_group('binaries')
+binaries.add_argument('--windres', type=os.path.abspath)
+binaries.add_argument('--rc', type=os.path.abspath)
+
+inout = parser.add_argument_group('inout')
+inout.add_argument('--depfile', type=argparse.FileType('w'))
+inout.add_argument('--input', type=argparse.FileType('r'),
+                   required=True)
+inout.add_argument('--rcout', type=argparse.FileType('w'),
+                   required=True)
+inout.add_argument('--out', type=str,
+                   required=True)
+
+replacements = parser.add_argument_group('replacements')
+replacements.add_argument('--FILEDESC', type=str)
+replacements.add_argument('--NAME', type=str, required=True)
+replacements.add_argument('--VFT_TYPE', type=str, required=True)
+replacements.add_argument('--FILEENDING', type=str, required=True)
+replacements.add_argument('--ICO', type=str)
+
+args = parser.parse_args()
+
+# determine replacement strings
+
+internal_name = '"{0}"'.format(args.NAME)
+original_name = '"{0}.{1}"'.format(args.NAME, args.FILEENDING)
+
+# if no description is passed in, generate one based on the name
+if args.FILEDESC:
+    filedesc = args.FILEDESC
+elif args.NAME:
+    if args.VFT_TYPE == 'VFT_DLL':
+        filedesc = 'PostgreSQL {0} library'.format(args.NAME)
+    else:
+        filedesc = 'PostgreSQL {0} binary'.format(args.NAME)
+filedesc = '"{0}"'.format(filedesc)
+
+
+if args.ICO:
+    ico = 'IDI_ICON ICON "{0}"'.format(args.ICO)
+    if args.depfile:
+        args.depfile.write("{0} : {1}\n".format(args.rcout.name, args.ICO))
+else:
+    ico = ''
+
+
+data = args.input.read()
+
+data = data.replace('VFT_APP', args.VFT_TYPE)
+data = data.replace('_INTERNAL_NAME_', internal_name)
+data = data.replace('_ORIGINAL_NAME_', original_name)
+data = data.replace('FILEDESC', filedesc)
+data = data.replace("_ICO_", ico)
+
+args.rcout.write(data)
+args.rcout.close()
+
+if args.windres:
+    cmd = [
+        args.windres,
+        '-I{0}/src/include/'.format(args.builddir),
+        '-I{0}/src/include/'.format(args.srcdir),
+        '-o', args.out, '-i', args.rcout.name,
+    ]
+elif args.rc:
+    cmd = [
+        args.rc, '/nologo',
+        '-I{0}/src/include/'.format(args.builddir),
+        '-I{0}/src/include/'.format(args.srcdir),
+        '/fo', args.out, args.rcout.name,
+    ]
+else:
+    sys.exit('either --windres or --rc needs to be specified')
+
+sp = subprocess.run(cmd)
+if sp.returncode != 0:
+    sys.exit(sp.returncode)
+
+# It'd be nicer if we could generate correct dependencies here, but 'rc'
+# doesn't support doing so. It's unlikely we'll ever need more, so...
+if args.depfile:
+    args.depfile.write("{0} : {1}\n".format(
+        args.rcout.name, args.input.name))
+    args.depfile.write("{0} : {1}/{2}\n".format(
+        args.out, args.builddir, 'src/include/pg_config.h'))

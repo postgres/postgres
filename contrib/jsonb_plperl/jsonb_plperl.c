@@ -4,7 +4,6 @@
 
 #include "fmgr.h"
 #include "plperl.h"
-#include "plperl_helpers.h"
 #include "utils/fmgrprotos.h"
 #include "utils/jsonb.h"
 

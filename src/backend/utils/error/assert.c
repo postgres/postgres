@@ -3,7 +3,7 @@
  * assert.c
  *	  Assert support code.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -28,20 +28,17 @@
  */
 void
 ExceptionalCondition(const char *conditionName,
-					 const char *errorType,
 					 const char *fileName,
 					 int lineNumber)
 {
 	/* Report the failure on stderr (or local equivalent) */
 	if (!PointerIsValid(conditionName)
-		|| !PointerIsValid(fileName)
-		|| !PointerIsValid(errorType))
+		|| !PointerIsValid(fileName))
 		write_stderr("TRAP: ExceptionalCondition: bad arguments in PID %d\n",
 					 (int) getpid());
 	else
-		write_stderr("TRAP: %s(\"%s\", File: \"%s\", Line: %d, PID: %d)\n",
-					 errorType, conditionName,
-					 fileName, lineNumber, (int) getpid());
+		write_stderr("TRAP: failed Assert(\"%s\"), File: \"%s\", Line: %d, PID: %d\n",
+					 conditionName, fileName, lineNumber, (int) getpid());
 
 	/* Usually this shouldn't be needed, but make sure the msg went out */
 	fflush(stderr);

@@ -310,6 +310,31 @@ LINE 1: SELECT '{
 DETAIL:  Expected JSON value, but found "}".
 CONTEXT:  JSON data, line 4: ...yveryveryveryveryveryveryveryverylongfieldname":}
 -- ERROR missing value for last field
+-- test non-error-throwing input
+select pg_input_is_valid('{"a":true}', 'jsonb');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+select pg_input_is_valid('{"a":true', 'jsonb');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+select * from pg_input_error_info('{"a":true', 'jsonb');
+              message               |                detail                | hint | sql_error_code 
+------------------------------------+--------------------------------------+------+----------------
+ invalid input syntax for type json | The input string ended unexpectedly. |      | 22P02
+(1 row)
+
+select * from pg_input_error_info('{"a":1e1000000}', 'jsonb');
+            message             | detail | hint | sql_error_code 
+--------------------------------+--------+------+----------------
+ value overflows numeric format |        |      | 22003
+(1 row)
+
 -- make sure jsonb is passed through json generators without being escaped
 SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
       array_to_json       
@@ -5199,6 +5224,40 @@ DETAIL:  The path assumes key is a composite object, but it is a scalar value.
 update test_jsonb_subscript set test_json[0][0] = '1';
 ERROR:  cannot replace existing key
 DETAIL:  The path assumes key is a composite object, but it is a scalar value.
+-- try some things with short-header and toasted subscript values
+drop table test_jsonb_subscript;
+create temp table test_jsonb_subscript (
+       id text,
+       test_json jsonb
+);
+insert into test_jsonb_subscript values('foo', '{"foo": "bar"}');
+insert into test_jsonb_subscript
+  select s, ('{"' || s || '": "bar"}')::jsonb from repeat('xyzzy', 500) s;
+select length(id), test_json[id] from test_jsonb_subscript;
+ length | test_json 
+--------+-----------
+      3 | "bar"
+   2500 | "bar"
+(2 rows)
+
+update test_jsonb_subscript set test_json[id] = '"baz"';
+select length(id), test_json[id] from test_jsonb_subscript;
+ length | test_json 
+--------+-----------
+      3 | "baz"
+   2500 | "baz"
+(2 rows)
+
+\x
+table test_jsonb_subscript;
+-[ RECORD 1 ]--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+id        | foo
+test_json | {"foo": "baz"}
+-[ RECORD 2 ]--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+id        | xyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzy
+test_json | {"xyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzyxyzzy": "baz"}
+
+\x
 -- jsonb to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);
                                 to_tsvector                                

@@ -3,7 +3,7 @@
  * lockcmds.c
  *	  LOCK command support code
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,6 +19,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
 #include "commands/lockcmds.h"
+#include "commands/tablecmds.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_clause.h"
@@ -29,7 +30,7 @@
 #include "utils/syscache.h"
 
 static void LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait);
-static AclResult LockTableAclCheck(Oid relid, LOCKMODE lockmode, Oid userid);
+static AclResult LockTableAclCheck(Oid reloid, LOCKMODE lockmode, Oid userid);
 static void RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid,
 										 Oid oldrelid, void *arg);
 static void LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait,
@@ -194,15 +195,6 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 			char		relkind = rte->relkind;
 			char	   *relname = get_rel_name(relid);
 
-			/*
-			 * The OLD and NEW placeholder entries in the view's rtable are
-			 * skipped.
-			 */
-			if (relid == context->viewoid &&
-				(strcmp(rte->eref->aliasname, "old") == 0 ||
-				 strcmp(rte->eref->aliasname, "new") == 0))
-				continue;
-
 			/* Currently, we only allow plain tables or views to be locked. */
 			if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE &&
 				relkind != RELKIND_VIEW)
@@ -292,15 +284,25 @@ LockTableAclCheck(Oid reloid, LOCKMODE lockmode, Oid userid)
 	AclResult	aclresult;
 	AclMode		aclmask;
 
-	/* Verify adequate privilege */
-	if (lockmode == AccessShareLock)
-		aclmask = ACL_SELECT;
-	else if (lockmode == RowExclusiveLock)
-		aclmask = ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
-	else
-		aclmask = ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
+	/* any of these privileges permit any lock mode */
+	aclmask = ACL_MAINTAIN | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
+
+	/* SELECT privileges also permit ACCESS SHARE and below */
+	if (lockmode <= AccessShareLock)
+		aclmask |= ACL_SELECT;
+
+	/* INSERT privileges also permit ROW EXCLUSIVE and below */
+	if (lockmode <= RowExclusiveLock)
+		aclmask |= ACL_INSERT;
 
 	aclresult = pg_class_aclcheck(reloid, userid, aclmask);
+
+	/*
+	 * If this is a partition, check permissions of its ancestors if needed.
+	 */
+	if (aclresult != ACLCHECK_OK &&
+		has_partition_ancestor_privs(reloid, userid, ACL_MAINTAIN))
+		aclresult = ACLCHECK_OK;
 
 	return aclresult;
 }

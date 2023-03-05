@@ -3,7 +3,7 @@
  * tsrank.c
  *		rank tsvector by tsquery
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -176,7 +176,7 @@ SortAndUniqItems(TSQuery q, int *size)
 	if (*size < 2)
 		return res;
 
-	qsort_arg(res, *size, sizeof(QueryOperand *), compareQueryOperand, (void *) operand);
+	qsort_arg(res, *size, sizeof(QueryOperand *), compareQueryOperand, operand);
 
 	ptr = res + 1;
 	prevptr = res;
@@ -257,7 +257,7 @@ calc_rank_and(const float *w, TSVector t, TSQuery q)
 				{
 					for (p = 0; p < lenct; p++)
 					{
-						dist = Abs((int) WEP_GETPOS(post[l]) - (int) WEP_GETPOS(ct[p]));
+						dist = abs((int) WEP_GETPOS(post[l]) - (int) WEP_GETPOS(ct[p]));
 						if (dist || (dist == 0 && (pos[i] == POSNULL || pos[k] == POSNULL)))
 						{
 							float		curw;
@@ -804,7 +804,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 		/*
 		 * Sort representation in ascending order by pos and entry
 		 */
-		qsort((void *) doc, cur, sizeof(DocRepresentation), compareDocR);
+		qsort(doc, cur, sizeof(DocRepresentation), compareDocR);
 
 		/*
 		 * Join QueryItem per WordEntry and it's position

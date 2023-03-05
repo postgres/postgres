@@ -3,7 +3,7 @@
  * statistics.h
  *	  Extended statistics and selectivity estimation functions.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/statistics/statistics.h
@@ -102,8 +102,8 @@ extern void BuildRelationExtStatistics(Relation onerel, bool inh, double totalro
 									   int numrows, HeapTuple *rows,
 									   int natts, VacAttrStats **vacattrstats);
 extern int	ComputeExtStatisticsRows(Relation onerel,
-									 int natts, VacAttrStats **stats);
-extern bool statext_is_kind_built(HeapTuple htup, char kind);
+									 int natts, VacAttrStats **vacattrstats);
+extern bool statext_is_kind_built(HeapTuple htup, char type);
 extern Selectivity dependencies_clauselist_selectivity(PlannerInfo *root,
 													   List *clauses,
 													   int varRelid,

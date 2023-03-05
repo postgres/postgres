@@ -2,7 +2,7 @@
  *
  * clusterdb
  *
- * Portions Copyright (c) 2002-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2002-2023, PostgreSQL Global Development Group
  *
  * src/bin/scripts/clusterdb.c
  *
@@ -68,42 +68,42 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "clusterdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:at:v", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "ad:eh:p:qt:U:vwW", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
+			case 'a':
+				alldb = true;
+				break;
+			case 'd':
+				dbname = pg_strdup(optarg);
+				break;
+			case 'e':
+				echo = true;
+				break;
 			case 'h':
 				host = pg_strdup(optarg);
 				break;
 			case 'p':
 				port = pg_strdup(optarg);
 				break;
+			case 'q':
+				quiet = true;
+				break;
+			case 't':
+				simple_string_list_append(&tables, optarg);
+				break;
 			case 'U':
 				username = pg_strdup(optarg);
+				break;
+			case 'v':
+				verbose = true;
 				break;
 			case 'w':
 				prompt_password = TRI_NO;
 				break;
 			case 'W':
 				prompt_password = TRI_YES;
-				break;
-			case 'e':
-				echo = true;
-				break;
-			case 'q':
-				quiet = true;
-				break;
-			case 'd':
-				dbname = pg_strdup(optarg);
-				break;
-			case 'a':
-				alldb = true;
-				break;
-			case 't':
-				simple_string_list_append(&tables, optarg);
-				break;
-			case 'v':
-				verbose = true;
 				break;
 			case 2:
 				maintenance_db = pg_strdup(optarg);

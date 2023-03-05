@@ -2,7 +2,7 @@
  * execParallel.h
  *		POSTGRES parallel execution interface
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -38,13 +38,13 @@ typedef struct ParallelExecutorInfo
 } ParallelExecutorInfo;
 
 extern ParallelExecutorInfo *ExecInitParallelPlan(PlanState *planstate,
-												  EState *estate, Bitmapset *sendParam, int nworkers,
+												  EState *estate, Bitmapset *sendParams, int nworkers,
 												  int64 tuples_needed);
 extern void ExecParallelCreateReaders(ParallelExecutorInfo *pei);
 extern void ExecParallelFinish(ParallelExecutorInfo *pei);
 extern void ExecParallelCleanup(ParallelExecutorInfo *pei);
 extern void ExecParallelReinitialize(PlanState *planstate,
-									 ParallelExecutorInfo *pei, Bitmapset *sendParam);
+									 ParallelExecutorInfo *pei, Bitmapset *sendParams);
 
 extern void ParallelQueryMain(dsm_segment *seg, shm_toc *toc);
 

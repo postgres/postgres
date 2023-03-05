@@ -5,7 +5,7 @@
  *
  * Code originally contributed by Adriaan Joubert.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/varbit.h
@@ -41,9 +41,24 @@ typedef struct
  * BIT and BIT VARYING are toastable varlena types.  They are the same
  * as far as representation goes, so we just have one set of macros.
  */
-#define DatumGetVarBitP(X)		   ((VarBit *) PG_DETOAST_DATUM(X))
-#define DatumGetVarBitPCopy(X)	   ((VarBit *) PG_DETOAST_DATUM_COPY(X))
-#define VarBitPGetDatum(X)		   PointerGetDatum(X)
+static inline VarBit *
+DatumGetVarBitP(Datum X)
+{
+	return (VarBit *) PG_DETOAST_DATUM(X);
+}
+
+static inline VarBit *
+DatumGetVarBitPCopy(Datum X)
+{
+	return (VarBit *) PG_DETOAST_DATUM_COPY(X);
+}
+
+static inline Datum
+VarBitPGetDatum(const VarBit *X)
+{
+	return PointerGetDatum(X);
+}
+
 #define PG_GETARG_VARBIT_P(n)	   DatumGetVarBitP(PG_GETARG_DATUM(n))
 #define PG_GETARG_VARBIT_P_COPY(n) DatumGetVarBitPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_VARBIT_P(x)	   return VarBitPGetDatum(x)

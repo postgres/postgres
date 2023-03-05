@@ -531,13 +531,6 @@ SELECT spcname FROM pg_tablespace;
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> makes use of symbolic links
-   to simplify the implementation of tablespaces. This
-   means that tablespaces can be used <emphasis>only</emphasis> on systems
-   that support symbolic links.
-  </para>
-
-  <para>
    The directory <filename>$PGDATA/pg_tblspc</filename> contains symbolic links that
    point to each of the non-built-in tablespaces defined in the cluster.
    Although not recommended, it is possible to adjust the tablespace

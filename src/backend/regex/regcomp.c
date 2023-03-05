@@ -38,173 +38,215 @@
  * forward declarations, up here so forward datatypes etc. are defined early
  */
 /* === regcomp.c === */
-static void moresubs(struct vars *, int);
-static int	freev(struct vars *, int);
-static void makesearch(struct vars *, struct nfa *);
-static struct subre *parse(struct vars *, int, int, struct state *, struct state *);
-static struct subre *parsebranch(struct vars *, int, int, struct state *, struct state *, int);
-static struct subre *parseqatom(struct vars *, int, int, struct state *, struct state *, struct subre *);
-static void nonword(struct vars *, int, struct state *, struct state *);
-static void word(struct vars *, int, struct state *, struct state *);
-static void charclass(struct vars *, enum char_classes,
-					  struct state *, struct state *);
-static void charclasscomplement(struct vars *, enum char_classes,
-								struct state *, struct state *);
-static int	scannum(struct vars *);
-static void repeat(struct vars *, struct state *, struct state *, int, int);
-static void bracket(struct vars *, struct state *, struct state *);
-static void cbracket(struct vars *, struct state *, struct state *);
-static void brackpart(struct vars *, struct state *, struct state *, bool *);
-static const chr *scanplain(struct vars *);
-static void onechr(struct vars *, chr, struct state *, struct state *);
-static void optimizebracket(struct vars *, struct state *, struct state *);
-static void wordchrs(struct vars *);
-static void processlacon(struct vars *, struct state *, struct state *, int,
-						 struct state *, struct state *);
-static struct subre *subre(struct vars *, int, int, struct state *, struct state *);
-static void freesubre(struct vars *, struct subre *);
-static void freesubreandsiblings(struct vars *, struct subre *);
-static void freesrnode(struct vars *, struct subre *);
-static void removecaptures(struct vars *, struct subre *);
-static int	numst(struct subre *, int);
-static void markst(struct subre *);
-static void cleanst(struct vars *);
-static long nfatree(struct vars *, struct subre *, FILE *);
-static long nfanode(struct vars *, struct subre *, int, FILE *);
-static int	newlacon(struct vars *, struct state *, struct state *, int);
-static void freelacons(struct subre *, int);
-static void rfree(regex_t *);
+static void moresubs(struct vars *v, int wanted);
+static int	freev(struct vars *v, int err);
+static void makesearch(struct vars *v, struct nfa *nfa);
+static struct subre *parse(struct vars *v, int stopper, int type,
+						   struct state *init, struct state *final);
+static struct subre *parsebranch(struct vars *v, int stopper, int type,
+								 struct state *left, struct state *right,
+								 int partial);
+static struct subre *parseqatom(struct vars *v, int stopper, int type,
+								struct state *lp, struct state *rp,
+								struct subre *top);
+static void nonword(struct vars *v, int dir, struct state *lp,
+					struct state *rp);
+static void word(struct vars *v, int dir, struct state *lp, struct state *rp);
+static void charclass(struct vars *v, enum char_classes cls, struct state *lp,
+					  struct state *rp);
+static void charclasscomplement(struct vars *v, enum char_classes cls,
+								struct state *lp, struct state *rp);
+static int	scannum(struct vars *v);
+static void repeat(struct vars *v, struct state *lp, struct state *rp,
+				   int m, int n);
+static void bracket(struct vars *v, struct state *lp, struct state *rp);
+static void cbracket(struct vars *v, struct state *lp, struct state *rp);
+static void brackpart(struct vars *v, struct state *lp, struct state *rp,
+					  bool *have_cclassc);
+static const chr *scanplain(struct vars *v);
+static void onechr(struct vars *v, chr c, struct state *lp, struct state *rp);
+static void optimizebracket(struct vars *v, struct state *lp, struct state *rp);
+static void wordchrs(struct vars *v);
+static void processlacon(struct vars *v, struct state *begin,
+						 struct state *end, int latype,
+						 struct state *lp, struct state *rp);
+static struct subre *subre(struct vars *v, int op, int flags,
+						   struct state *begin, struct state *end);
+static void freesubre(struct vars *v, struct subre *sr);
+static void freesubreandsiblings(struct vars *v, struct subre *sr);
+static void freesrnode(struct vars *v, struct subre *sr);
+static void removecaptures(struct vars *v, struct subre *t);
+static int	numst(struct subre *t, int start);
+static void markst(struct subre *t);
+static void cleanst(struct vars *v);
+static long nfatree(struct vars *v, struct subre *t, FILE *f);
+static long nfanode(struct vars *v, struct subre *t,
+					int converttosearch, FILE *f);
+static int	newlacon(struct vars *v, struct state *begin, struct state *end,
+					 int latype);
+static void freelacons(struct subre *subs, int n);
+static void rfree(regex_t *re);
 static int	rcancelrequested(void);
 static int	rstacktoodeep(void);
 
 #ifdef REG_DEBUG
-static void dump(regex_t *, FILE *);
-static void dumpst(struct subre *, FILE *, int);
-static void stdump(struct subre *, FILE *, int);
-static const char *stid(struct subre *, char *, size_t);
+static void dump(regex_t *re, FILE *f);
+static void dumpst(struct subre *t, FILE *f, int nfapresent);
+static void stdump(struct subre *t, FILE *f, int nfapresent);
+static const char *stid(struct subre *t, char *buf, size_t bufsize);
 #endif
 /* === regc_lex.c === */
-static void lexstart(struct vars *);
-static void prefixes(struct vars *);
-static int	next(struct vars *);
-static int	lexescape(struct vars *);
-static chr	lexdigits(struct vars *, int, int, int);
-static int	brenext(struct vars *, chr);
-static void skip(struct vars *);
+static void lexstart(struct vars *v);
+static void prefixes(struct vars *v);
+static int	next(struct vars *v);
+static int	lexescape(struct vars *v);
+static chr	lexdigits(struct vars *v, int base, int minlen, int maxlen);
+static int	brenext(struct vars *v, chr c);
+static void skip(struct vars *v);
 static chr	newline(void);
-static chr	chrnamed(struct vars *, const chr *, const chr *, chr);
+static chr	chrnamed(struct vars *v, const chr *startp, const chr *endp,
+					 chr lastresort);
 
 /* === regc_color.c === */
-static void initcm(struct vars *, struct colormap *);
-static void freecm(struct colormap *);
-static color maxcolor(struct colormap *);
-static color newcolor(struct colormap *);
-static void freecolor(struct colormap *, color);
-static color pseudocolor(struct colormap *);
-static color subcolor(struct colormap *, chr);
-static color subcolorhi(struct colormap *, color *);
-static color newsub(struct colormap *, color);
-static int	newhicolorrow(struct colormap *, int);
-static void newhicolorcols(struct colormap *);
-static void subcolorcvec(struct vars *, struct cvec *, struct state *, struct state *);
-static void subcoloronechr(struct vars *, chr, struct state *, struct state *, color *);
-static void subcoloronerange(struct vars *, chr, chr, struct state *, struct state *, color *);
-static void subcoloronerow(struct vars *, int, struct state *, struct state *, color *);
-static void okcolors(struct nfa *, struct colormap *);
-static void colorchain(struct colormap *, struct arc *);
-static void uncolorchain(struct colormap *, struct arc *);
-static void rainbow(struct nfa *, struct colormap *, int, color, struct state *, struct state *);
-static void colorcomplement(struct nfa *, struct colormap *, int, struct state *, struct state *, struct state *);
+static void initcm(struct vars *v, struct colormap *cm);
+static void freecm(struct colormap *cm);
+static color maxcolor(struct colormap *cm);
+static color newcolor(struct colormap *cm);
+static void freecolor(struct colormap *cm, color co);
+static color pseudocolor(struct colormap *cm);
+static color subcolor(struct colormap *cm, chr c);
+static color subcolorhi(struct colormap *cm, color *pco);
+static color newsub(struct colormap *cm, color co);
+static int	newhicolorrow(struct colormap *cm, int oldrow);
+static void newhicolorcols(struct colormap *cm);
+static void subcolorcvec(struct vars *v, struct cvec *cv, struct state *lp,
+						 struct state *rp);
+static void subcoloronechr(struct vars *v, chr ch, struct state *lp,
+						   struct state *rp, color *lastsubcolor);
+static void subcoloronerange(struct vars *v, chr from, chr to,
+							 struct state *lp, struct state *rp,
+							 color *lastsubcolor);
+static void subcoloronerow(struct vars *v, int rownum, struct state *lp,
+						   struct state *rp, color *lastsubcolor);
+static void okcolors(struct nfa *nfa, struct colormap *cm);
+static void colorchain(struct colormap *cm, struct arc *a);
+static void uncolorchain(struct colormap *cm, struct arc *a);
+static void rainbow(struct nfa *nfa, struct colormap *cm, int type, color but,
+					struct state *from, struct state *to);
+static void colorcomplement(struct nfa *nfa, struct colormap *cm, int type,
+							struct state *of, struct state *from,
+							struct state *to);
 
 #ifdef REG_DEBUG
-static void dumpcolors(struct colormap *, FILE *);
-static void dumpchr(chr, FILE *);
+static void dumpcolors(struct colormap *cm, FILE *f);
+static void dumpchr(chr c, FILE *f);
 #endif
 /* === regc_nfa.c === */
-static struct nfa *newnfa(struct vars *, struct colormap *, struct nfa *);
-static void freenfa(struct nfa *);
-static struct state *newstate(struct nfa *);
-static struct state *newfstate(struct nfa *, int flag);
-static void dropstate(struct nfa *, struct state *);
-static void freestate(struct nfa *, struct state *);
-static void newarc(struct nfa *, int, color, struct state *, struct state *);
-static void createarc(struct nfa *, int, color, struct state *, struct state *);
-static struct arc *allocarc(struct nfa *);
-static void freearc(struct nfa *, struct arc *);
-static void changearcsource(struct arc *, struct state *);
-static void changearctarget(struct arc *, struct state *);
-static int	hasnonemptyout(struct state *);
-static struct arc *findarc(struct state *, int, color);
-static void cparc(struct nfa *, struct arc *, struct state *, struct state *);
-static void sortins(struct nfa *, struct state *);
-static int	sortins_cmp(const void *, const void *);
-static void sortouts(struct nfa *, struct state *);
-static int	sortouts_cmp(const void *, const void *);
-static void moveins(struct nfa *, struct state *, struct state *);
-static void copyins(struct nfa *, struct state *, struct state *);
-static void mergeins(struct nfa *, struct state *, struct arc **, int);
-static void moveouts(struct nfa *, struct state *, struct state *);
-static void copyouts(struct nfa *, struct state *, struct state *);
-static void cloneouts(struct nfa *, struct state *, struct state *, struct state *, int);
-static void delsub(struct nfa *, struct state *, struct state *);
-static void deltraverse(struct nfa *, struct state *, struct state *);
-static void dupnfa(struct nfa *, struct state *, struct state *, struct state *, struct state *);
-static void duptraverse(struct nfa *, struct state *, struct state *);
-static void removeconstraints(struct nfa *, struct state *, struct state *);
-static void removetraverse(struct nfa *, struct state *);
-static void cleartraverse(struct nfa *, struct state *);
-static struct state *single_color_transition(struct state *, struct state *);
-static void specialcolors(struct nfa *);
-static long optimize(struct nfa *, FILE *);
-static void pullback(struct nfa *, FILE *);
-static int	pull(struct nfa *, struct arc *, struct state **);
-static void pushfwd(struct nfa *, FILE *);
-static int	push(struct nfa *, struct arc *, struct state **);
+static struct nfa *newnfa(struct vars *v, struct colormap *cm,
+						  struct nfa *parent);
+static void freenfa(struct nfa *nfa);
+static struct state *newstate(struct nfa *nfa);
+static struct state *newfstate(struct nfa *nfa, int flag);
+static void dropstate(struct nfa *nfa, struct state *s);
+static void freestate(struct nfa *nfa, struct state *s);
+static void newarc(struct nfa *nfa, int t, color co,
+				   struct state *from, struct state *to);
+static void createarc(struct nfa *nfa, int t, color co,
+					  struct state *from, struct state *to);
+static struct arc *allocarc(struct nfa *nfa);
+static void freearc(struct nfa *nfa, struct arc *victim);
+static void changearcsource(struct arc *a, struct state *newfrom);
+static void changearctarget(struct arc *a, struct state *newto);
+static int	hasnonemptyout(struct state *s);
+static struct arc *findarc(struct state *s, int type, color co);
+static void cparc(struct nfa *nfa, struct arc *oa,
+				  struct state *from, struct state *to);
+static void sortins(struct nfa *nfa, struct state *s);
+static int	sortins_cmp(const void *a, const void *b);
+static void sortouts(struct nfa *nfa, struct state *s);
+static int	sortouts_cmp(const void *a, const void *b);
+static void moveins(struct nfa *nfa, struct state *oldState,
+					struct state *newState);
+static void copyins(struct nfa *nfa, struct state *oldState,
+					struct state *newState);
+static void mergeins(struct nfa *nfa, struct state *s,
+					 struct arc **arcarray, int arccount);
+static void moveouts(struct nfa *nfa, struct state *oldState,
+					 struct state *newState);
+static void copyouts(struct nfa *nfa, struct state *oldState,
+					 struct state *newState);
+static void cloneouts(struct nfa *nfa, struct state *old, struct state *from,
+					  struct state *to, int type);
+static void delsub(struct nfa *nfa, struct state *lp, struct state *rp);
+static void deltraverse(struct nfa *nfa, struct state *leftend,
+						struct state *s);
+static void dupnfa(struct nfa *nfa, struct state *start, struct state *stop,
+				   struct state *from, struct state *to);
+static void duptraverse(struct nfa *nfa, struct state *s, struct state *stmp);
+static void removeconstraints(struct nfa *nfa, struct state *start, struct state *stop);
+static void removetraverse(struct nfa *nfa, struct state *s);
+static void cleartraverse(struct nfa *nfa, struct state *s);
+static struct state *single_color_transition(struct state *s1,
+											 struct state *s2);
+static void specialcolors(struct nfa *nfa);
+static long optimize(struct nfa *nfa, FILE *f);
+static void pullback(struct nfa *nfa, FILE *f);
+static int	pull(struct nfa *nfa, struct arc *con,
+				 struct state **intermediates);
+static void pushfwd(struct nfa *nfa, FILE *f);
+static int	push(struct nfa *nfa, struct arc *con,
+				 struct state **intermediates);
 
 #define INCOMPATIBLE	1		/* destroys arc */
 #define SATISFIED	2			/* constraint satisfied */
 #define COMPATIBLE	3			/* compatible but not satisfied yet */
 #define REPLACEARC	4			/* replace arc's color with constraint color */
 static int	combine(struct nfa *nfa, struct arc *con, struct arc *a);
-static void fixempties(struct nfa *, FILE *);
-static struct state *emptyreachable(struct nfa *, struct state *,
-									struct state *, struct arc **);
-static int	isconstraintarc(struct arc *);
-static int	hasconstraintout(struct state *);
-static void fixconstraintloops(struct nfa *, FILE *);
-static int	findconstraintloop(struct nfa *, struct state *);
-static void breakconstraintloop(struct nfa *, struct state *);
-static void clonesuccessorstates(struct nfa *, struct state *, struct state *,
-								 struct state *, struct arc *,
-								 char *, char *, int);
-static void cleanup(struct nfa *);
-static void markreachable(struct nfa *, struct state *, struct state *, struct state *);
-static void markcanreach(struct nfa *, struct state *, struct state *, struct state *);
-static long analyze(struct nfa *);
-static void checkmatchall(struct nfa *);
-static bool checkmatchall_recurse(struct nfa *, struct state *, bool **);
-static bool check_out_colors_match(struct state *, color, color);
-static bool check_in_colors_match(struct state *, color, color);
-static void compact(struct nfa *, struct cnfa *);
-static void carcsort(struct carc *, size_t);
-static int	carc_cmp(const void *, const void *);
-static void freecnfa(struct cnfa *);
-static void dumpnfa(struct nfa *, FILE *);
+static void fixempties(struct nfa *nfa, FILE *f);
+static struct state *emptyreachable(struct nfa *nfa, struct state *s,
+									struct state *lastfound,
+									struct arc **inarcsorig);
+static int	isconstraintarc(struct arc *a);
+static int	hasconstraintout(struct state *s);
+static void fixconstraintloops(struct nfa *nfa, FILE *f);
+static int	findconstraintloop(struct nfa *nfa, struct state *s);
+static void breakconstraintloop(struct nfa *nfa, struct state *sinitial);
+static void clonesuccessorstates(struct nfa *nfa, struct state *ssource,
+								 struct state *sclone,
+								 struct state *spredecessor,
+								 struct arc *refarc, char *curdonemap,
+								 char *outerdonemap, int nstates);
+static void cleanup(struct nfa *nfa);
+static void markreachable(struct nfa *nfa, struct state *s,
+						  struct state *okay, struct state *mark);
+static void markcanreach(struct nfa *nfa, struct state *s, struct state *okay,
+						 struct state *mark);
+static long analyze(struct nfa *nfa);
+static void checkmatchall(struct nfa *nfa);
+static bool checkmatchall_recurse(struct nfa *nfa, struct state *s,
+								  bool **haspaths);
+static bool check_out_colors_match(struct state *s, color co1, color co2);
+static bool check_in_colors_match(struct state *s, color co1, color co2);
+static void compact(struct nfa *nfa, struct cnfa *cnfa);
+static void carcsort(struct carc *first, size_t n);
+static int	carc_cmp(const void *a, const void *b);
+static void freecnfa(struct cnfa *cnfa);
+static void dumpnfa(struct nfa *nfa, FILE *f);
 
 #ifdef REG_DEBUG
-static void dumpstate(struct state *, FILE *);
-static void dumparcs(struct state *, FILE *);
-static void dumparc(struct arc *, struct state *, FILE *);
-static void dumpcnfa(struct cnfa *, FILE *);
-static void dumpcstate(int, struct cnfa *, FILE *);
+static void dumpstate(struct state *s, FILE *f);
+static void dumparcs(struct state *s, FILE *f);
+static void dumparc(struct arc *a, struct state *s, FILE *f);
+static void dumpcnfa(struct cnfa *cnfa, FILE *f);
+static void dumpcstate(int st, struct cnfa *cnfa, FILE *f);
 #endif
 /* === regc_cvec.c === */
-static struct cvec *newcvec(int, int);
-static struct cvec *clearcvec(struct cvec *);
-static void addchr(struct cvec *, chr);
-static void addrange(struct cvec *, chr, chr);
-static struct cvec *getcvec(struct vars *, int, int);
-static void freecvec(struct cvec *);
+static struct cvec *newcvec(int nchrs, int nranges);
+static struct cvec *clearcvec(struct cvec *cv);
+static void addchr(struct cvec *cv, chr c);
+static void addrange(struct cvec *cv, chr from, chr to);
+static struct cvec *getcvec(struct vars *v, int nchrs, int nranges);
+static void freecvec(struct cvec *cv);
 
 /* === regc_pg_locale.c === */
 static int	pg_wc_isdigit(pg_wchar c);
@@ -221,16 +263,18 @@ static pg_wchar pg_wc_toupper(pg_wchar c);
 static pg_wchar pg_wc_tolower(pg_wchar c);
 
 /* === regc_locale.c === */
-static chr	element(struct vars *, const chr *, const chr *);
-static struct cvec *range(struct vars *, chr, chr, int);
-static int	before(chr, chr);
-static struct cvec *eclass(struct vars *, chr, int);
-static enum char_classes lookupcclass(struct vars *, const chr *, const chr *);
-static struct cvec *cclasscvec(struct vars *, enum char_classes, int);
-static int	cclass_column_index(struct colormap *, chr);
-static struct cvec *allcases(struct vars *, chr);
-static int	cmp(const chr *, const chr *, size_t);
-static int	casecmp(const chr *, const chr *, size_t);
+static chr	element(struct vars *v, const chr *startp, const chr *endp);
+static struct cvec *range(struct vars *v, chr a, chr b, int cases);
+static int	before(chr x, chr y);
+static struct cvec *eclass(struct vars *v, chr c, int cases);
+static enum char_classes lookupcclass(struct vars *v, const chr *startp,
+									  const chr *endp);
+static struct cvec *cclasscvec(struct vars *v, enum char_classes cclasscode,
+							   int cases);
+static int	cclass_column_index(struct colormap *cm, chr c);
+static struct cvec *allcases(struct vars *v, chr c);
+static int	cmp(const chr *x, const chr *y, size_t len);
+static int	casecmp(const chr *x, const chr *y, size_t len);
 
 
 /* internal variables, bundled for easy passing around */

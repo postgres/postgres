@@ -166,6 +166,7 @@ SELECT tableoid::regclass, b FROM agg_csv;
 INSERT INTO agg_csv VALUES(1,2.0);
 UPDATE agg_csv SET a = 1;
 DELETE FROM agg_csv WHERE a = 100;
+TRUNCATE agg_csv;
 -- but this should be allowed
 SELECT * FROM agg_csv FOR UPDATE;
 

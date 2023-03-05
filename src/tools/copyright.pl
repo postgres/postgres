@@ -2,7 +2,7 @@
 #################################################################
 # copyright.pl -- update copyright notices throughout the source tree, idempotently.
 #
-# Copyright (c) 2011-2022, PostgreSQL Global Development Group
+# Copyright (c) 2011-2023, PostgreSQL Global Development Group
 #
 # src/tools/copyright.pl
 #

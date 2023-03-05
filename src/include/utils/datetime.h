@@ -6,7 +6,7 @@
  *	   including date, and time.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/datetime.h
@@ -16,7 +16,6 @@
 #ifndef DATETIME_H
 #define DATETIME_H
 
-#include "nodes/nodes.h"
 #include "utils/timestamp.h"
 
 /* this struct is declared in utils/tzparser.h: */
@@ -276,13 +275,25 @@ extern PGDLLIMPORT const int day_tab[2][13];
  * Datetime input parsing routines (ParseDateTime, DecodeDateTime, etc)
  * return zero or a positive value on success.  On failure, they return
  * one of these negative code values.  DateTimeParseError may be used to
- * produce a correct ereport.
+ * produce a suitable error report.  For some of these codes,
+ * DateTimeParseError requires additional information, which is carried
+ * in struct DateTimeErrorExtra.
  */
 #define DTERR_BAD_FORMAT		(-1)
 #define DTERR_FIELD_OVERFLOW	(-2)
 #define DTERR_MD_FIELD_OVERFLOW (-3)	/* triggers hint about DateStyle */
 #define DTERR_INTERVAL_OVERFLOW (-4)
 #define DTERR_TZDISP_OVERFLOW	(-5)
+#define DTERR_BAD_TIMEZONE		(-6)
+#define DTERR_BAD_ZONE_ABBREV	(-7)
+
+typedef struct DateTimeErrorExtra
+{
+	/* Needed for DTERR_BAD_TIMEZONE and DTERR_BAD_ZONE_ABBREV: */
+	const char *dtee_timezone;	/* incorrect time zone name */
+	/* Needed for DTERR_BAD_ZONE_ABBREV: */
+	const char *dtee_abbrev;	/* relevant time zone abbreviation */
+} DateTimeErrorExtra;
 
 
 extern void GetCurrentDateTime(struct pg_tm *tm);
@@ -293,20 +304,21 @@ extern int	date2j(int year, int month, int day);
 extern int	ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 						  char **field, int *ftype,
 						  int maxfields, int *numfields);
-extern int	DecodeDateTime(char **field, int *ftype,
-						   int nf, int *dtype,
-						   struct pg_tm *tm, fsec_t *fsec, int *tzp);
-extern int	DecodeTimezone(char *str, int *tzp);
-extern int	DecodeTimeOnly(char **field, int *ftype,
-						   int nf, int *dtype,
-						   struct pg_tm *tm, fsec_t *fsec, int *tzp);
+extern int	DecodeDateTime(char **field, int *ftype, int nf,
+						   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp,
+						   DateTimeErrorExtra *extra);
+extern int	DecodeTimezone(const char *str, int *tzp);
+extern int	DecodeTimeOnly(char **field, int *ftype, int nf,
+						   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp,
+						   DateTimeErrorExtra *extra);
 extern int	DecodeInterval(char **field, int *ftype, int nf, int range,
 						   int *dtype, struct pg_itm_in *itm_in);
 extern int	DecodeISO8601Interval(char *str,
 								  int *dtype, struct pg_itm_in *itm_in);
 
-extern void DateTimeParseError(int dterr, const char *str,
-							   const char *datatype) pg_attribute_noreturn();
+extern void DateTimeParseError(int dterr, DateTimeErrorExtra *extra,
+							   const char *str, const char *datatype,
+							   struct Node *escontext);
 
 extern int	DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp);
 extern int	DetermineTimeZoneAbbrevOffset(struct pg_tm *tm, const char *abbr, pg_tz *tzp);
@@ -322,14 +334,15 @@ extern void EncodeSpecialTimestamp(Timestamp dt, char *str);
 extern int	ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
 						 struct pg_tm *tm);
 
-extern int	DecodeTimezoneAbbrev(int field, char *lowtoken,
-								 int *offset, pg_tz **tz);
-extern int	DecodeSpecial(int field, char *lowtoken, int *val);
-extern int	DecodeUnits(int field, char *lowtoken, int *val);
+extern int	DecodeTimezoneAbbrev(int field, const char *lowtoken,
+								 int *ftype, int *offset, pg_tz **tz,
+								 DateTimeErrorExtra *extra);
+extern int	DecodeSpecial(int field, const char *lowtoken, int *val);
+extern int	DecodeUnits(int field, const char *lowtoken, int *val);
 
-extern int	j2day(int jd);
+extern int	j2day(int date);
 
-extern Node *TemporalSimplify(int32 max_precis, Node *node);
+extern struct Node *TemporalSimplify(int32 max_precis, struct Node *node);
 
 extern bool CheckDateTokenTables(void);
 
@@ -337,8 +350,7 @@ extern TimeZoneAbbrevTable *ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs,
 												   int n);
 extern void InstallTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl);
 
-extern void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
-extern bool AdjustTimestampForTypmodError(Timestamp *time, int32 typmod,
-										  bool *error);
+extern bool AdjustTimestampForTypmod(Timestamp *time, int32 typmod,
+									 struct Node *escontext);
 
 #endif							/* DATETIME_H */

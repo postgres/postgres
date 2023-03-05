@@ -2,7 +2,7 @@
  * test_ddl_deparse.c
  *		Support functions for the test_ddl_deparse module
  *
- * Copyright (c) 2014-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/test/modules/test_ddl_deparse/test_ddl_deparse.c
@@ -11,6 +11,8 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "funcapi.h"
+#include "nodes/execnodes.h"
 #include "tcop/deparse_utility.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
@@ -19,7 +21,7 @@ PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(get_command_type);
 PG_FUNCTION_INFO_V1(get_command_tag);
-PG_FUNCTION_INFO_V1(get_altertable_subcmdtypes);
+PG_FUNCTION_INFO_V1(get_altertable_subcmdinfo);
 
 /*
  * Return the textual representation of the struct type used to represent a
@@ -82,28 +84,35 @@ get_command_tag(PG_FUNCTION_ARGS)
  * command.
  */
 Datum
-get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
+get_altertable_subcmdinfo(PG_FUNCTION_ARGS)
 {
 	CollectedCommand *cmd = (CollectedCommand *) PG_GETARG_POINTER(0);
-	ArrayBuildState *astate = NULL;
 	ListCell   *cell;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	if (cmd->type != SCT_AlterTable)
 		elog(ERROR, "command is not ALTER TABLE");
+
+	InitMaterializedSRF(fcinfo, 0);
+
+	if (cmd->d.alterTable.subcmds == NIL)
+		elog(ERROR, "empty alter table subcommand list");
 
 	foreach(cell, cmd->d.alterTable.subcmds)
 	{
 		CollectedATSubcmd *sub = lfirst(cell);
 		AlterTableCmd *subcmd = castNode(AlterTableCmd, sub->parsetree);
-		const char *strtype;
+		const char *strtype = "unrecognized";
+		Datum		values[2];
+		bool		nulls[2];
+
+		memset(values, 0, sizeof(values));
+		memset(nulls, 0, sizeof(nulls));
 
 		switch (subcmd->subtype)
 		{
 			case AT_AddColumn:
 				strtype = "ADD COLUMN";
-				break;
-			case AT_AddColumnRecurse:
-				strtype = "ADD COLUMN (and recurse)";
 				break;
 			case AT_AddColumnToView:
 				strtype = "ADD COLUMN TO VIEW";
@@ -120,6 +129,9 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_SetNotNull:
 				strtype = "SET NOT NULL";
 				break;
+			case AT_DropExpression:
+				strtype = "DROP EXPRESSION";
+				break;
 			case AT_CheckNotNull:
 				strtype = "CHECK NOT NULL";
 				break;
@@ -135,11 +147,11 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_SetStorage:
 				strtype = "SET STORAGE";
 				break;
+			case AT_SetCompression:
+				strtype = "SET COMPRESSION";
+				break;
 			case AT_DropColumn:
 				strtype = "DROP COLUMN";
-				break;
-			case AT_DropColumnRecurse:
-				strtype = "DROP COLUMN (and recurse)";
 				break;
 			case AT_AddIndex:
 				strtype = "ADD INDEX";
@@ -150,11 +162,11 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_AddConstraint:
 				strtype = "ADD CONSTRAINT";
 				break;
-			case AT_AddConstraintRecurse:
-				strtype = "ADD CONSTRAINT (and recurse)";
-				break;
 			case AT_ReAddConstraint:
 				strtype = "(re) ADD CONSTRAINT";
+				break;
+			case AT_ReAddDomainConstraint:
+				strtype = "(re) ADD DOMAIN CONSTRAINT";
 				break;
 			case AT_AlterConstraint:
 				strtype = "ALTER CONSTRAINT";
@@ -162,17 +174,11 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_ValidateConstraint:
 				strtype = "VALIDATE CONSTRAINT";
 				break;
-			case AT_ValidateConstraintRecurse:
-				strtype = "VALIDATE CONSTRAINT (and recurse)";
-				break;
 			case AT_AddIndexConstraint:
 				strtype = "ADD CONSTRAINT (using index)";
 				break;
 			case AT_DropConstraint:
 				strtype = "DROP CONSTRAINT";
-				break;
-			case AT_DropConstraintRecurse:
-				strtype = "DROP CONSTRAINT (and recurse)";
 				break;
 			case AT_ReAddComment:
 				strtype = "(re) ADD COMMENT";
@@ -200,6 +206,9 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 				break;
 			case AT_DropOids:
 				strtype = "DROP OIDS";
+				break;
+			case AT_SetAccessMethod:
+				strtype = "SET ACCESS METHOD";
 				break;
 			case AT_SetTableSpace:
 				strtype = "SET TABLESPACE";
@@ -279,18 +288,44 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_GenericOptions:
 				strtype = "SET OPTIONS";
 				break;
-			default:
-				strtype = "unrecognized";
+			case AT_DetachPartition:
+				strtype = "DETACH PARTITION";
+				break;
+			case AT_AttachPartition:
+				strtype = "ATTACH PARTITION";
+				break;
+			case AT_DetachPartitionFinalize:
+				strtype = "DETACH PARTITION ... FINALIZE";
+				break;
+			case AT_AddIdentity:
+				strtype = "ADD IDENTITY";
+				break;
+			case AT_SetIdentity:
+				strtype = "SET IDENTITY";
+				break;
+			case AT_DropIdentity:
+				strtype = "DROP IDENTITY";
+				break;
+			case AT_ReAddStatistics:
+				strtype = "(re) ADD STATS";
 				break;
 		}
 
-		astate =
-			accumArrayResult(astate, CStringGetTextDatum(strtype),
-							 false, TEXTOID, CurrentMemoryContext);
+		if (subcmd->recurse)
+			values[0] = CStringGetTextDatum(psprintf("%s (and recurse)", strtype));
+		else
+			values[0] = CStringGetTextDatum(strtype);
+		if (OidIsValid(sub->address.objectId))
+		{
+			char	   *objdesc;
+			objdesc = getObjectDescription((const ObjectAddress *) &sub->address, false);
+			values[1] = CStringGetTextDatum(objdesc);
+		}
+		else
+			nulls[1] = true;
+
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	if (astate == NULL)
-		elog(ERROR, "empty alter table subcommand list");
-
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
+	return (Datum) 0;
 }

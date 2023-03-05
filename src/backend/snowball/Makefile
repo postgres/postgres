@@ -72,40 +72,22 @@ OBJS += \
 	stem_UTF_8_turkish.o \
 	stem_UTF_8_yiddish.o
 
-# first column is language name and also name of dictionary for not-all-ASCII
-# words, second is name of dictionary for all-ASCII words
-# Note order dependency: use of some other language as ASCII dictionary
-# must come after creation of that language
-LANGUAGES=  \
-	arabic		arabic		\
-	armenian	armenian	\
-	basque		basque		\
-	catalan		catalan		\
-	danish		danish		\
-	dutch		dutch		\
-	english		english		\
-	finnish		finnish		\
-	french		french		\
-	german		german		\
-	greek		greek		\
-	hindi		english		\
-	hungarian	hungarian	\
-	indonesian	indonesian	\
-	irish		irish		\
-	italian		italian		\
-	lithuanian	lithuanian	\
-	nepali		nepali		\
-	norwegian	norwegian	\
-	portuguese	portuguese	\
-	romanian	romanian	\
-	russian		english		\
-	serbian		serbian		\
-	spanish		spanish		\
-	swedish		swedish		\
-	tamil		tamil		\
-	turkish		turkish		\
-	yiddish		yiddish
-
+stop_files = \
+	danish.stop \
+	dutch.stop \
+	english.stop \
+	finnish.stop \
+	french.stop \
+	german.stop \
+	hungarian.stop \
+	italian.stop \
+	nepali.stop \
+	norwegian.stop \
+	portuguese.stop \
+	russian.stop \
+	spanish.stop \
+	swedish.stop \
+	turkish.stop
 
 SQLSCRIPT= snowball_create.sql
 DICTDIR=tsearch_data
@@ -119,56 +101,24 @@ all: all-shared-lib $(SQLSCRIPT)
 
 include $(top_srcdir)/src/Makefile.shlib
 
-$(SQLSCRIPT): Makefile snowball_func.sql.in snowball.sql.in
-	echo '-- Language-specific snowball dictionaries' > $@
-	cat $(srcdir)/snowball_func.sql.in >> $@
-	@set -e; \
-	set $(LANGUAGES) ; \
-	while [ "$$#" -gt 0 ] ; \
-	do \
-		lang=$$1; shift; \
-		nonascdictname=$$lang; \
-		ascdictname=$$1; shift; \
-		if [ -s $(srcdir)/stopwords/$${lang}.stop ] ; then \
-			stop=", StopWords=$${lang}" ; \
-		else \
-			stop=""; \
-		fi; \
-		cat $(srcdir)/snowball.sql.in | \
-			sed -e "s#_LANGNAME_#$$lang#g" | \
-			sed -e "s#_DICTNAME_#$${lang}_stem#g" | \
-			sed -e "s#_CFGNAME_#$$lang#g" | \
-			sed -e "s#_ASCDICTNAME_#$${ascdictname}_stem#g" | \
-			sed -e "s#_NONASCDICTNAME_#$${nonascdictname}_stem#g" | \
-			sed -e "s#_STOPWORDS_#$$stop#g" ; \
-	done >> $@
+$(SQLSCRIPT): snowball_create.pl snowball_func.sql.in snowball.sql.in
+	$(PERL) $< --input ${srcdir} --outdir .
+
+distprep: $(SQLSCRIPT)
 
 install: all installdirs install-lib
 	$(INSTALL_DATA) $(SQLSCRIPT) '$(DESTDIR)$(datadir)'
-	@set -e; \
-	set $(LANGUAGES) ; \
-	while [ "$$#" -gt 0 ] ; \
-	do \
-		lang=$$1; shift; shift; \
-		if [ -s $(srcdir)/stopwords/$${lang}.stop ] ; then \
-			$(INSTALL_DATA) $(srcdir)/stopwords/$${lang}.stop '$(DESTDIR)$(datadir)/$(DICTDIR)' ; \
-		fi \
-	done
+	$(INSTALL_DATA) $(addprefix $(srcdir)/stopwords/,$(stop_files)) '$(DESTDIR)$(datadir)/$(DICTDIR)'
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(datadir)' '$(DESTDIR)$(datadir)/$(DICTDIR)'
 
 uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(datadir)/$(SQLSCRIPT)'
-	@set -e; \
-	set $(LANGUAGES) ; \
-	while [ "$$#" -gt 0 ] ; \
-	do \
-		lang=$$1; shift; shift;  \
-		if [ -s $(srcdir)/stopwords/$${lang}.stop ] ; then \
-		    rm -f '$(DESTDIR)$(datadir)/$(DICTDIR)/'$${lang}.stop ; \
-		fi \
-	done
+	rm -f $(addprefix '$(DESTDIR)$(datadir)/$(DICTDIR)/',$(stop_files))
 
-clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) $(SQLSCRIPT)
+clean distclean: clean-lib
+	rm -f $(OBJS)
+
+maintainer-clean: distclean
+	rm -f $(SQLSCRIPT)

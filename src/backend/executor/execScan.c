@@ -7,7 +7,7 @@
  *	  stuff - checking the qualification and projecting the tuple
  *	  appropriately.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -325,7 +325,7 @@ ExecScanReScan(ScanState *node)
 			 * all of them.
 			 */
 			if (IsA(node->ps.plan, ForeignScan))
-				relids = ((ForeignScan *) node->ps.plan)->fs_relids;
+				relids = ((ForeignScan *) node->ps.plan)->fs_base_relids;
 			else if (IsA(node->ps.plan, CustomScan))
 				relids = ((CustomScan *) node->ps.plan)->custom_relids;
 			else

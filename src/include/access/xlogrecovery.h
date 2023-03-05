@@ -3,7 +3,7 @@
  *
  * Functions for WAL recovery and standby mode
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xlogrecovery.h
@@ -65,7 +65,6 @@ extern PGDLLIMPORT TimestampTz recoveryTargetTime;
 extern PGDLLIMPORT const char *recoveryTargetName;
 extern PGDLLIMPORT XLogRecPtr recoveryTargetLSN;
 extern PGDLLIMPORT RecoveryTargetType recoveryTarget;
-extern PGDLLIMPORT char *PromoteTriggerFile;
 extern PGDLLIMPORT bool wal_receiver_create_temp_slot;
 extern PGDLLIMPORT RecoveryTargetTimeLineGoal recoveryTargetTimeLineGoal;
 extern PGDLLIMPORT TimeLineID recoveryTargetTLIRequested;
@@ -80,7 +79,9 @@ extern PGDLLIMPORT bool StandbyMode;
 extern Size XLogRecoveryShmemSize(void);
 extern void XLogRecoveryShmemInit(void);
 
-extern void InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdownPtr, bool *haveBackupLabel, bool *haveTblspcMap);
+extern void InitWalRecovery(ControlFileData *ControlFile,
+							bool *wasShutdown_ptr, bool *haveBackupLabel_ptr,
+							bool *haveTblspcMap_ptr);
 extern void PerformWalRecovery(void);
 
 /*

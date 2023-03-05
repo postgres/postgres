@@ -4,7 +4,7 @@
  *	  POSTGRES BRIN access XLOG definitions.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/brin_xlog.h
@@ -18,7 +18,7 @@
 #include "lib/stringinfo.h"
 #include "storage/bufpage.h"
 #include "storage/itemptr.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "utils/relcache.h"
 
 

@@ -72,6 +72,7 @@
  * - pgstat_checkpointer.c
  * - pgstat_database.c
  * - pgstat_function.c
+ * - pgstat_io.c
  * - pgstat_relation.c
  * - pgstat_replslot.c
  * - pgstat_slru.c
@@ -82,7 +83,7 @@
  * specific kinds of stats.
  *
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat.c
@@ -359,6 +360,15 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.snapshot_cb = pgstat_checkpointer_snapshot_cb,
 	},
 
+	[PGSTAT_KIND_IO] = {
+		.name = "io",
+
+		.fixed_amount = true,
+
+		.reset_all_cb = pgstat_io_reset_all_cb,
+		.snapshot_cb = pgstat_io_snapshot_cb,
+	},
+
 	[PGSTAT_KIND_SLRU] = {
 		.name = "slru",
 
@@ -425,8 +435,8 @@ pgstat_discard_stats(void)
 	{
 		ereport(DEBUG2,
 				(errcode_for_file_access(),
-				 errmsg("unlinked permanent statistics file \"%s\"",
-						PGSTAT_STAT_PERMANENT_FILENAME)));
+				 errmsg_internal("unlinked permanent statistics file \"%s\"",
+								 PGSTAT_STAT_PERMANENT_FILENAME)));
 	}
 
 	/*
@@ -556,7 +566,7 @@ pgstat_initialize(void)
  * suggested idle timeout is returned. Currently this is always
  * PGSTAT_IDLE_INTERVAL (10000ms). Callers can use the returned time to set up
  * a timeout after which to call pgstat_report_stat(true), but are not
- * required to to do so.
+ * required to do so.
  *
  * Note that this is called only when not within a transaction, so it is fair
  * to use transaction stop time as an approximation of current time.
@@ -571,7 +581,7 @@ pgstat_report_stat(bool force)
 	bool		nowait;
 
 	pgstat_assert_is_up();
-	Assert(!IsTransactionBlock());
+	Assert(!IsTransactionOrTransactionBlock());
 
 	/* "absorb" the forced flush even if there's nothing to flush */
 	if (pgStatForceNextFlush)
@@ -582,6 +592,7 @@ pgstat_report_stat(bool force)
 
 	/* Don't expend a clock check if nothing to do */
 	if (dlist_is_empty(&pgStatPending) &&
+		!have_iostats &&
 		!have_slrustats &&
 		!pgstat_have_pending_wal())
 	{
@@ -627,6 +638,9 @@ pgstat_report_stat(bool force)
 
 	/* flush database / relation / function / ... stats */
 	partial_flush |= pgstat_flush_pending_entries(nowait);
+
+	/* flush IO stats */
+	partial_flush |= pgstat_flush_io(nowait);
 
 	/* flush wal stats */
 	partial_flush |= pgstat_flush_wal(nowait);
@@ -785,7 +799,7 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
 
 	/* should be called from backends */
 	Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
-	AssertArg(!kind_info->fixed_amount);
+	Assert(!kind_info->fixed_amount);
 
 	pgstat_prep_snapshot();
 
@@ -844,9 +858,12 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
 	else
 		stats_data = MemoryContextAlloc(pgStatLocal.snapshot.context,
 										kind_info->shared_data_len);
+
+	pgstat_lock_entry_shared(entry_ref, false);
 	memcpy(stats_data,
 		   pgstat_get_entry_data(kind, entry_ref->shared_stats),
 		   kind_info->shared_data_len);
+	pgstat_unlock_entry(entry_ref);
 
 	if (pgstat_fetch_consistency > PGSTAT_FETCH_CONSISTENCY_NONE)
 	{
@@ -898,8 +915,8 @@ pgstat_have_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
 void
 pgstat_snapshot_fixed(PgStat_Kind kind)
 {
-	AssertArg(pgstat_is_kind_valid(kind));
-	AssertArg(pgstat_get_kind_info(kind)->fixed_amount);
+	Assert(pgstat_is_kind_valid(kind));
+	Assert(pgstat_get_kind_info(kind)->fixed_amount);
 
 	if (pgstat_fetch_consistency == PGSTAT_FETCH_CONSISTENCY_SNAPSHOT)
 		pgstat_build_snapshot();
@@ -983,9 +1000,16 @@ pgstat_build_snapshot(void)
 
 		entry->data = MemoryContextAlloc(pgStatLocal.snapshot.context,
 										 kind_info->shared_size);
+
+		/*
+		 * Acquire the LWLock directly instead of using
+		 * pg_stat_lock_entry_shared() which requires a reference.
+		 */
+		LWLockAcquire(&stats_data->lock, LW_SHARED);
 		memcpy(entry->data,
 			   pgstat_get_entry_data(kind, stats_data),
 			   kind_info->shared_size);
+		LWLockRelease(&stats_data->lock);
 	}
 	dshash_seq_term(&hstat);
 
@@ -1060,7 +1084,7 @@ pgstat_prep_pending_entry(PgStat_Kind kind, Oid dboid, Oid objoid, bool *created
 	if (unlikely(!pgStatPendingContext))
 	{
 		pgStatPendingContext =
-			AllocSetContextCreate(CacheMemoryContext,
+			AllocSetContextCreate(TopMemoryContext,
 								  "PgStat Pending",
 								  ALLOCSET_SMALL_SIZES);
 	}
@@ -1210,7 +1234,7 @@ pgstat_is_kind_valid(int ikind)
 const PgStat_KindInfo *
 pgstat_get_kind_info(PgStat_Kind kind)
 {
-	AssertArg(pgstat_is_kind_valid(kind));
+	Assert(pgstat_is_kind_valid(kind));
 
 	return &pgstat_kind_infos[kind];
 }
@@ -1313,6 +1337,12 @@ pgstat_write_statsfile(void)
 	write_chunk_s(fpout, &pgStatLocal.snapshot.checkpointer);
 
 	/*
+	 * Write IO stats struct
+	 */
+	pgstat_build_snapshot_fixed(PGSTAT_KIND_IO);
+	write_chunk_s(fpout, &pgStatLocal.snapshot.io);
+
+	/*
 	 * Write SLRU stats struct
 	 */
 	pgstat_build_snapshot_fixed(PGSTAT_KIND_SLRU);
@@ -1358,7 +1388,7 @@ pgstat_write_statsfile(void)
 			/* stats entry identified by name on disk (e.g. slots) */
 			NameData	name;
 
-			kind_info->to_serialized_name(shstats, &name);
+			kind_info->to_serialized_name(&ps->key, shstats, &name);
 
 			fputc('N', fpout);
 			write_chunk_s(fpout, &ps->key.kind);
@@ -1484,6 +1514,12 @@ pgstat_read_statsfile(void)
 	 * Read checkpointer stats struct
 	 */
 	if (!read_chunk_s(fpin, &shmem->checkpointer.stats))
+		goto error;
+
+	/*
+	 * Read IO stats struct
+	 */
+	if (!read_chunk_s(fpin, &shmem->io.stats))
 		goto error;
 
 	/*

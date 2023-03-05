@@ -15,12 +15,14 @@ SELECT * FROM brin_revmap_data(get_raw_page('test1_a_idx', 1)) LIMIT 5;
 SELECT * FROM brin_page_items(get_raw_page('test1_a_idx', 2), 'test1_a_idx')
     ORDER BY blknum, attnum LIMIT 5;
 
--- Failure for non-BRIN index.
-CREATE INDEX test1_a_btree ON test1 (a);
-SELECT brin_page_items(get_raw_page('test1_a_btree', 0), 'test1_a_btree');
-
 -- Mask DETAIL messages as these are not portable across architectures.
 \set VERBOSITY terse
+
+-- Failures for non-BRIN index.
+CREATE INDEX test1_a_btree ON test1 (a);
+SELECT brin_page_items(get_raw_page('test1_a_btree', 0), 'test1_a_btree');
+SELECT brin_page_items(get_raw_page('test1_a_btree', 0), 'test1_a_idx');
+
 -- Invalid special area size
 SELECT brin_page_type(get_raw_page('test1', 0));
 SELECT * FROM brin_metapage_info(get_raw_page('test1', 0));

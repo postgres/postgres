@@ -96,15 +96,21 @@ PG_FUNCTION_INFO_V1(ghstore_out);
 Datum
 ghstore_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Not implemented");
-	PG_RETURN_DATUM(0);
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type %s", "ghstore")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 Datum
 ghstore_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Not implemented");
-	PG_RETURN_DATUM(0);
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type %s", "ghstore")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 static GISTTYPE *
@@ -430,7 +436,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 		size_beta = hemdist(datum_r, _j, siglen);
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
-	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
+	qsort(costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
 	union_l = GETSIGN(datum_l);
 	union_r = GETSIGN(datum_r);
@@ -459,7 +465,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_l) || ISALLTRUE(_j))
 			{
 				if (!ISALLTRUE(datum_l))
-					MemSet((void *) union_l, 0xff, siglen);
+					memset(union_l, 0xff, siglen);
 			}
 			else
 			{
@@ -475,7 +481,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_r) || ISALLTRUE(_j))
 			{
 				if (!ISALLTRUE(datum_r))
-					MemSet((void *) union_r, 0xff, siglen);
+					memset(union_r, 0xff, siglen);
 			}
 			else
 			{
@@ -560,9 +566,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 		int			key_count;
 		int			i;
 
-		deconstruct_array(query,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &key_datums, &key_nulls, &key_count);
+		deconstruct_array_builtin(query, TEXTOID, &key_datums, &key_nulls, &key_count);
 
 		for (i = 0; res && i < key_count; ++i)
 		{
@@ -583,9 +587,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 		int			key_count;
 		int			i;
 
-		deconstruct_array(query,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &key_datums, &key_nulls, &key_count);
+		deconstruct_array_builtin(query, TEXTOID, &key_datums, &key_nulls, &key_count);
 
 		res = false;
 

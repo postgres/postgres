@@ -3,7 +3,7 @@
  * encnames.c
  *	  Encoding names and routines for working with them.
  *
- * Portions Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/encnames.c
@@ -451,6 +451,9 @@ static const char *const pg_enc2icu_tbl[] =
 	"KOI8-U",					/* PG_KOI8U */
 };
 
+StaticAssertDecl(lengthof(pg_enc2icu_tbl) == PG_ENCODING_BE_LAST + 1,
+				 "pg_enc2icu_tbl incomplete");
+
 
 /*
  * Is this encoding supported by ICU?
@@ -469,9 +472,6 @@ is_encoding_supported_by_icu(int encoding)
 const char *
 get_encoding_name_for_icu(int encoding)
 {
-	StaticAssertStmt(lengthof(pg_enc2icu_tbl) == PG_ENCODING_BE_LAST + 1,
-					 "pg_enc2icu_tbl incomplete");
-
 	if (!PG_VALID_BE_ENCODING(encoding))
 		return NULL;
 	return pg_enc2icu_tbl[encoding];

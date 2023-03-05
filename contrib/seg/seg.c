@@ -10,6 +10,7 @@
 #include "postgres.h"
 
 #include <float.h>
+#include <math.h>
 
 #include "access/gist.h"
 #include "access/stratnum.h"
@@ -92,7 +93,7 @@ PG_FUNCTION_INFO_V1(seg_different);
 /*
 ** Auxiliary functions
 */
-static int	restore(char *s, float val, int n);
+static int	restore(char *result, float val, int n);
 
 
 /*****************************************************************************
@@ -107,8 +108,8 @@ seg_in(PG_FUNCTION_ARGS)
 
 	seg_scanner_init(str);
 
-	if (seg_yyparse(result) != 0)
-		seg_yyerror(result, "bogus input");
+	if (seg_yyparse(result, fcinfo->context) != 0)
+		seg_yyerror(result, fcinfo->context, "bogus input");
 
 	seg_scanner_finish();
 
@@ -706,7 +707,7 @@ rt_seg_size(SEG *a, float *size)
 	if (a == (SEG *) NULL || a->upper <= a->lower)
 		*size = 0.0;
 	else
-		*size = (float) Abs(a->upper - a->lower);
+		*size = fabsf(a->upper - a->lower);
 }
 
 Datum
@@ -714,7 +715,7 @@ seg_size(PG_FUNCTION_ARGS)
 {
 	SEG		   *seg = PG_GETARG_SEG_P(0);
 
-	PG_RETURN_FLOAT4((float) Abs(seg->upper - seg->lower));
+	PG_RETURN_FLOAT4(fabsf(seg->upper - seg->lower));
 }
 
 
@@ -927,9 +928,13 @@ restore(char *result, float val, int n)
 
 	/*
 	 * Put a cap on the number of significant digits to avoid garbage in the
-	 * output and ensure we don't overrun the result buffer.
+	 * output and ensure we don't overrun the result buffer.  (n should not be
+	 * negative, but check to protect ourselves against corrupted data.)
 	 */
-	n = Min(n, FLT_DIG);
+	if (n <= 0)
+		n = FLT_DIG;
+	else
+		n = Min(n, FLT_DIG);
 
 	/* remember the sign */
 	sign = (val < 0 ? 1 : 0);
@@ -952,7 +957,7 @@ restore(char *result, float val, int n)
 	}
 	else
 	{
-		if (Abs(exp) <= 4)
+		if (abs(exp) <= 4)
 		{
 			/*
 			 * remove the decimal point from the mantissa and write the digits
@@ -1039,7 +1044,7 @@ restore(char *result, float val, int n)
 			}
 		}
 
-		/* do nothing for Abs(exp) > 4; %e must be OK */
+		/* do nothing for abs(exp) > 4; %e must be OK */
 		/* just get rid of zeroes after [eE]- and +zeroes after [Ee]. */
 
 		/* ... this is not done yet. */

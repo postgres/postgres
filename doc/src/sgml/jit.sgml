@@ -256,7 +256,7 @@ SET
     <xref linkend="guc-jit-provider"/>.
    </para>
 
-   <sect3>
+   <sect3 id="jit-pluggable-provider-interface">
     <title><acronym>JIT</acronym> Provider Interface</title>
     <para>
      A <acronym>JIT</acronym> provider is loaded by dynamically loading the

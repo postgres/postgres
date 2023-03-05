@@ -3,15 +3,14 @@ the PostgreSQL project. It needs several things to run, and tries to locate
 or build them if possible. They can also be specified via command line switches
 or the environment.
 
+You can see all the options by running:
+
+	pgindent --help
+
 In its simplest form, if all the required objects are installed, simply run
-it without any parameters at the top of the source tree you want to process.
+it at the top of the source tree you want to process like this:
 
-	pgindent
-
-If you don't have all the requirements installed, pgindent will fetch and build
-them for you, if you're in a PostgreSQL source tree:
-
-	pgindent --build
+	pgindent .
 
 If your pg_bsd_indent program is not installed in your path, you can specify
 it by setting the environment variable INDENT, or PGINDENT, or by giving the
@@ -24,17 +23,21 @@ specified using the PGTYPEDEFS environment variable, or via the command line
 --typedefs option. If neither is used, it will look for it within the
 current source tree, or in /usr/local/etc/typedefs.list.
 
-If you want to indent a source tree other than the current working directory,
-you can specify it via the --code-base command line option.
-
 We don't want to indent certain files in the PostgreSQL source. pgindent
 will honor a file containing a list of patterns of files to avoid. This
 file can be specified using the --excludes command line option. If indenting
-a PostgreSQL source tree, this option isn't necessary, as it will find the file
-src/tools/pgindent/exclude_file_patterns.
+a PostgreSQL source tree, this option is usually not necessary, as it will
+find the file src/tools/pgindent/exclude_file_patterns. The --excludes option
+can be used more than once to specify multiple files containing exclusion
+patterns.
+
+There are also two non-destructive modes of pgindent. If given the --show-diff
+option pgindent will show the changes it would make, but doesn't actually make
+them. If given instead the --silent-diff option, pgindent will exit with a
+status of 2 if it finds any indent changes are required, but will not
+make the changes or give any other information. This mode is intended for
+possible use in a git pre-commit hook. An example of its use in a git hook
+can be seen at https://wiki.postgresql.org/wiki/Working_with_Git#Using_git_hooks
 
 Any non-option arguments are taken as the names of files to be indented. In this
-case only these files will be changed, and nothing else will be touched. If the
-first non-option argument is not a .c or .h file, it is treated as the name
-of a typedefs file for legacy reasons, but this use is deprecated - use the
---typedefs option instead.
+case only these files will be changed, and nothing else will be touched.

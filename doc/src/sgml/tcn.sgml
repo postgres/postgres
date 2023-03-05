@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/tcn.sgml -->
 
 <sect1 id="tcn" xreflabel="tcn">
- <title>tcn</title>
+  <title>tcn &mdash; a trigger function to notify listeners of changes to table content</title>
 
  <indexterm zone="tcn">
   <primary>tcn</primary>

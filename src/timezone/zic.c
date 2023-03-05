@@ -123,30 +123,32 @@ static void error(const char *string,...) pg_attribute_printf(1, 2);
 static void warning(const char *string,...) pg_attribute_printf(1, 2);
 static void usage(FILE *stream, int status) pg_attribute_noreturn();
 static void addtt(zic_t starttime, int type);
-static int	addtype(zic_t, char const *, bool, bool, bool);
-static void leapadd(zic_t, int, int);
+static int	addtype(zic_t utoff, char const *abbr,
+					bool isdst, bool ttisstd, bool ttisut);
+static void leapadd(zic_t t, int correction, int rolling);
 static void adjleap(void);
 static void associate(void);
-static void dolink(const char *, const char *, bool);
-static char **getfields(char *buf);
+static void dolink(char const *target, char const *linkname,
+				   bool staysymlink);
+static char **getfields(char *cp);
 static zic_t gethms(const char *string, const char *errstring);
-static zic_t getsave(char *, bool *);
-static void inexpires(char **, int);
-static void infile(const char *filename);
+static zic_t getsave(char *field, bool *isdst);
+static void inexpires(char **fields, int nfields);
+static void infile(const char *name);
 static void inleap(char **fields, int nfields);
 static void inlink(char **fields, int nfields);
 static void inrule(char **fields, int nfields);
 static bool inzcont(char **fields, int nfields);
 static bool inzone(char **fields, int nfields);
-static bool inzsub(char **, int, bool);
-static bool itsdir(char const *);
-static bool itssymlink(char const *);
+static bool inzsub(char **fields, int nfields, bool iscont);
+static bool itsdir(char const *name);
+static bool itssymlink(char const *name);
 static bool is_alpha(char a);
-static char lowerit(char);
-static void mkdirs(char const *, bool);
-static void newabbr(const char *abbr);
+static char lowerit(char a);
+static void mkdirs(char const *argname, bool ancestors);
+static void newabbr(const char *string);
 static zic_t oadd(zic_t t1, zic_t t2);
-static void outzone(const struct zone *zp, ptrdiff_t ntzones);
+static void outzone(const struct zone *zpfirst, ptrdiff_t zonecount);
 static zic_t rpytime(const struct rule *rp, zic_t wantedy);
 static void rulesub(struct rule *rp,
 					const char *loyearp, const char *hiyearp,
@@ -304,8 +306,8 @@ struct lookup
 	const int	l_value;
 };
 
-static struct lookup const *byword(const char *string,
-								   const struct lookup *lp);
+static struct lookup const *byword(const char *word,
+								   const struct lookup *table);
 
 static struct lookup const zi_line_codes[] = {
 	{"Rule", LC_RULE},

@@ -101,9 +101,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       All WAL records required for the backup must contain sufficient full-page writes,
-      which requires you to enable <varname>full_page_writes</varname> on the primary and
-      not to use a tool in your <varname>archive_library</varname> to remove
-      full-page writes from WAL files.
+      which requires you to enable <varname>full_page_writes</varname> on the primary.
      </para>
     </listitem>
    </itemizedlist>
@@ -318,7 +316,7 @@ PostgreSQL documentation
         backup. This will include all write-ahead logs generated during
         the backup. Unless the method <literal>none</literal> is specified,
         it is possible to start a postmaster in the target
-        directory without the need to consult the log archive, thus
+        directory without the need to consult the WAL archive, thus
         making the output a completely standalone backup.
        </para>
        <para>
@@ -418,14 +416,18 @@ PostgreSQL documentation
        </para>
        <para>
         The compression method can be set to <literal>gzip</literal>,
-        <literal>lz4</literal>, <literal>zstd</literal>, or
-        <literal>none</literal> for no compression. A compression detail
-        string can optionally be specified.  If the detail string is an
-        integer, it specifies the compression level.  Otherwise, it should be
-        a comma-separated list of items, each of the form
-        <literal>keyword</literal> or <literal>keyword=value</literal>.
+        <literal>lz4</literal>, <literal>zstd</literal>,
+        <literal>none</literal> for no compression or an integer (no
+        compression if 0, <literal>gzip</literal> if greater than 0).
+        A compression detail string can optionally be specified.
+        If the detail string is an integer, it specifies the compression
+        level.  Otherwise, it should be a comma-separated list of items,
+        each of the form <literal>keyword</literal> or
+        <literal>keyword=value</literal>.
         Currently, the supported keywords are <literal>level</literal>
         and <literal>workers</literal>.
+        The detail string cannot be used when the compression method
+        is specified as a plain integer.
        </para>
        <para>
         If no compression level is specified, the default compression level

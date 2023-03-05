@@ -4,7 +4,7 @@
  *	  definitions for query plan nodes
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/plannodes.h
@@ -16,6 +16,7 @@
 
 #include "access/sdir.h"
 #include "access/stratnum.h"
+#include "common/relpath.h"
 #include "lib/stringinfo.h"
 #include "nodes/bitmapset.h"
 #include "nodes/lockoptions.h"
@@ -38,10 +39,15 @@
  * nodes; in such cases, commandType == CMD_UTILITY, the statement itself
  * is in the utilityStmt field, and the rest of the struct is mostly dummy.
  * (We do use canSetTag, stmt_location, stmt_len, and possibly queryId.)
+ *
+ * PlannedStmt, as well as all varieties of Plan, do not support equal(),
+ * not because it's not sensible but because we currently have no need.
  * ----------------
  */
 typedef struct PlannedStmt
 {
+	pg_node_attr(no_equal, no_query_jumble)
+
 	NodeTag		type;
 
 	CmdType		commandType;	/* select|insert|update|delete|merge|utility */
@@ -64,9 +70,15 @@ typedef struct PlannedStmt
 
 	struct Plan *planTree;		/* tree of Plan nodes */
 
+	List	   *partPruneInfos; /* List of PartitionPruneInfo contained in the
+								 * plan */
+
 	List	   *rtable;			/* list of RangeTblEntry nodes */
 
-	/* rtable indexes of target relations for INSERT/UPDATE/DELETE */
+	List	   *permInfos;		/* list of RTEPermissionInfo nodes for rtable
+								 * entries needing one */
+
+	/* rtable indexes of target relations for INSERT/UPDATE/DELETE/MERGE */
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
 	List	   *appendRelations;	/* list of AppendRelInfo nodes */
@@ -110,6 +122,8 @@ typedef struct PlannedStmt
  */
 typedef struct Plan
 {
+	pg_node_attr(abstract, no_equal, no_query_jumble)
+
 	NodeTag		type;
 
 	/*
@@ -209,7 +223,7 @@ typedef struct ProjectSet
  * nominalRelation and rootRelation contain the RT index of the partition
  * root, which is not otherwise mentioned in the plan.  Otherwise rootRelation
  * is zero.  However, nominalRelation will always be set, as it's the rel that
- * EXPLAIN should claim is the INSERT/UPDATE/DELETE target.
+ * EXPLAIN should claim is the INSERT/UPDATE/DELETE/MERGE target.
  *
  * Note that rowMarks and epqParam are presumed to be valid for all the
  * table(s); they can't contain any info that varies across tables.
@@ -262,8 +276,8 @@ typedef struct Append
 	 */
 	int			first_partial_plan;
 
-	/* Info for run-time subplan pruning; NULL if we're not doing that */
-	struct PartitionPruneInfo *part_prune_info;
+	/* Index to PlannerInfo.partPruneInfos or -1 if no run-time pruning */
+	int			part_prune_index;
 } Append;
 
 /* ----------------
@@ -274,16 +288,31 @@ typedef struct Append
 typedef struct MergeAppend
 {
 	Plan		plan;
-	Bitmapset  *apprelids;		/* RTIs of appendrel(s) formed by this node */
+
+	/* RTIs of appendrel(s) formed by this node */
+	Bitmapset  *apprelids;
+
 	List	   *mergeplans;
+
 	/* these fields are just like the sort-key info in struct Sort: */
-	int			numCols;		/* number of sort-key columns */
-	AttrNumber *sortColIdx;		/* their indexes in the target list */
-	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
-	Oid		   *collations;		/* OIDs of collations */
-	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
-	/* Info for run-time subplan pruning; NULL if we're not doing that */
-	struct PartitionPruneInfo *part_prune_info;
+
+	/* number of sort-key columns */
+	int			numCols;
+
+	/* their indexes in the target list */
+	AttrNumber *sortColIdx pg_node_attr(array_size(numCols));
+
+	/* OIDs of operators to sort them by */
+	Oid		   *sortOperators pg_node_attr(array_size(numCols));
+
+	/* OIDs of collations */
+	Oid		   *collations pg_node_attr(array_size(numCols));
+
+	/* NULLS FIRST/LAST directions */
+	bool	   *nullsFirst pg_node_attr(array_size(numCols));
+
+	/* Index to PlannerInfo.partPruneInfos or -1 if no run-time pruning */
+	int			part_prune_index;
 } MergeAppend;
 
 /* ----------------
@@ -297,14 +326,24 @@ typedef struct MergeAppend
 typedef struct RecursiveUnion
 {
 	Plan		plan;
-	int			wtParam;		/* ID of Param representing work table */
+
+	/* ID of Param representing work table */
+	int			wtParam;
+
 	/* Remaining fields are zero/null in UNION ALL case */
-	int			numCols;		/* number of columns to check for
-								 * duplicate-ness */
-	AttrNumber *dupColIdx;		/* their indexes in the target list */
-	Oid		   *dupOperators;	/* equality operators to compare with */
-	Oid		   *dupCollations;
-	long		numGroups;		/* estimated number of groups in input */
+
+	/* number of columns to check for duplicate-ness */
+	int			numCols;
+
+	/* their indexes in the target list */
+	AttrNumber *dupColIdx pg_node_attr(array_size(numCols));
+
+	/* equality operators to compare with */
+	Oid		   *dupOperators pg_node_attr(array_size(numCols));
+	Oid		   *dupCollations pg_node_attr(array_size(numCols));
+
+	/* estimated number of groups in input */
+	long		numGroups;
 } RecursiveUnion;
 
 /* ----------------
@@ -339,10 +378,14 @@ typedef struct BitmapOr
 /*
  * ==========
  * Scan nodes
+ *
+ * Scan is an abstract type that all relation scan plan types inherit from.
  * ==========
  */
 typedef struct Scan
 {
+	pg_node_attr(abstract)
+
 	Plan		plan;
 	Index		scanrelid;		/* relid is index into the range table */
 } Scan;
@@ -652,6 +695,7 @@ typedef struct WorkTableScan
  * When the plan node represents a foreign join, scan.scanrelid is zero and
  * fs_relids must be consulted to identify the join relation.  (fs_relids
  * is valid for simple scans as well, but will always match scan.scanrelid.)
+ * fs_relids includes outer joins; fs_base_relids does not.
  *
  * If the FDW's PlanDirectModify() callback decides to repurpose a ForeignScan
  * node to perform the UPDATE or DELETE operation directly in the remote
@@ -666,12 +710,15 @@ typedef struct ForeignScan
 	Scan		scan;
 	CmdType		operation;		/* SELECT/INSERT/UPDATE/DELETE */
 	Index		resultRelation; /* direct modification target's RT index */
+	Oid			checkAsUser;	/* user to perform the scan as; 0 means to
+								 * check as current user */
 	Oid			fs_server;		/* OID of foreign server */
 	List	   *fdw_exprs;		/* expressions that FDW may evaluate */
 	List	   *fdw_private;	/* private data for FDW */
 	List	   *fdw_scan_tlist; /* optional tlist describing scan tuple */
 	List	   *fdw_recheck_quals;	/* original quals not in scan.plan.qual */
-	Bitmapset  *fs_relids;		/* RTIs generated by this scan */
+	Bitmapset  *fs_relids;		/* base+OJ RTIs generated by this scan */
+	Bitmapset  *fs_base_relids; /* base RTIs generated by this scan */
 	bool		fsSystemCol;	/* true if any "system column" is needed */
 } ForeignScan;
 
@@ -700,6 +747,12 @@ typedef struct CustomScan
 	List	   *custom_private; /* private data for custom code */
 	List	   *custom_scan_tlist;	/* optional tlist describing scan tuple */
 	Bitmapset  *custom_relids;	/* RTIs generated by this scan */
+
+	/*
+	 * NOTE: The method field of CustomScan is required to be a pointer to a
+	 * static table of callback functions.  So we don't copy the table itself,
+	 * just reference the original one.
+	 */
 	const struct CustomScanMethods *methods;
 } CustomScan;
 
@@ -733,6 +786,8 @@ typedef struct CustomScan
  */
 typedef struct Join
 {
+	pg_node_attr(abstract)
+
 	Plan		plan;
 	JoinType	jointype;
 	bool		inner_unique;
@@ -758,6 +813,8 @@ typedef struct NestLoop
 
 typedef struct NestLoopParam
 {
+	pg_node_attr(no_equal, no_query_jumble)
+
 	NodeTag		type;
 	int			paramno;		/* number of the PARAM_EXEC Param to set */
 	Var		   *paramval;		/* outer-relation Var to assign to Param */
@@ -777,13 +834,26 @@ typedef struct NestLoopParam
 typedef struct MergeJoin
 {
 	Join		join;
-	bool		skip_mark_restore;	/* Can we skip mark/restore calls? */
-	List	   *mergeclauses;	/* mergeclauses as expression trees */
+
+	/* Can we skip mark/restore calls? */
+	bool		skip_mark_restore;
+
+	/* mergeclauses as expression trees */
+	List	   *mergeclauses;
+
 	/* these are arrays, but have the same length as the mergeclauses list: */
-	Oid		   *mergeFamilies;	/* per-clause OIDs of btree opfamilies */
-	Oid		   *mergeCollations;	/* per-clause OIDs of collations */
-	int		   *mergeStrategies;	/* per-clause ordering (ASC or DESC) */
-	bool	   *mergeNullsFirst;	/* per-clause nulls ordering */
+
+	/* per-clause OIDs of btree opfamilies */
+	Oid		   *mergeFamilies pg_node_attr(array_size(mergeclauses));
+
+	/* per-clause OIDs of collations */
+	Oid		   *mergeCollations pg_node_attr(array_size(mergeclauses));
+
+	/* per-clause ordering (ASC or DESC) */
+	int		   *mergeStrategies pg_node_attr(array_size(mergeclauses));
+
+	/* per-clause nulls ordering */
+	bool	   *mergeNullsFirst pg_node_attr(array_size(mergeclauses));
 } MergeJoin;
 
 /* ----------------
@@ -821,21 +891,38 @@ typedef struct Memoize
 {
 	Plan		plan;
 
-	int			numKeys;		/* size of the two arrays below */
+	/* size of the two arrays below */
+	int			numKeys;
 
-	Oid		   *hashOperators;	/* hash operators for each key */
-	Oid		   *collations;		/* collations for each key */
-	List	   *param_exprs;	/* cache keys in the form of exprs containing
-								 * parameters */
-	bool		singlerow;		/* true if the cache entry should be marked as
-								 * complete after we store the first tuple in
-								 * it. */
-	bool		binary_mode;	/* true when cache key should be compared bit
-								 * by bit, false when using hash equality ops */
-	uint32		est_entries;	/* The maximum number of entries that the
-								 * planner expects will fit in the cache, or 0
-								 * if unknown */
-	Bitmapset  *keyparamids;	/* paramids from param_exprs */
+	/* hash operators for each key */
+	Oid		   *hashOperators pg_node_attr(array_size(numKeys));
+
+	/* collations for each key */
+	Oid		   *collations pg_node_attr(array_size(numKeys));
+
+	/* cache keys in the form of exprs containing parameters */
+	List	   *param_exprs;
+
+	/*
+	 * true if the cache entry should be marked as complete after we store the
+	 * first tuple in it.
+	 */
+	bool		singlerow;
+
+	/*
+	 * true when cache key should be compared bit by bit, false when using
+	 * hash equality ops
+	 */
+	bool		binary_mode;
+
+	/*
+	 * The maximum number of entries that the planner expects will fit in the
+	 * cache, or 0 if unknown
+	 */
+	uint32		est_entries;
+
+	/* paramids from param_exprs */
+	Bitmapset  *keyparamids;
 } Memoize;
 
 /* ----------------
@@ -845,11 +932,21 @@ typedef struct Memoize
 typedef struct Sort
 {
 	Plan		plan;
-	int			numCols;		/* number of sort-key columns */
-	AttrNumber *sortColIdx;		/* their indexes in the target list */
-	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
-	Oid		   *collations;		/* OIDs of collations */
-	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
+
+	/* number of sort-key columns */
+	int			numCols;
+
+	/* their indexes in the target list */
+	AttrNumber *sortColIdx pg_node_attr(array_size(numCols));
+
+	/* OIDs of operators to sort them by */
+	Oid		   *sortOperators pg_node_attr(array_size(numCols));
+
+	/* OIDs of collations */
+	Oid		   *collations pg_node_attr(array_size(numCols));
+
+	/* NULLS FIRST/LAST directions */
+	bool	   *nullsFirst pg_node_attr(array_size(numCols));
 } Sort;
 
 /* ----------------
@@ -871,10 +968,16 @@ typedef struct IncrementalSort
 typedef struct Group
 {
 	Plan		plan;
-	int			numCols;		/* number of grouping columns */
-	AttrNumber *grpColIdx;		/* their indexes in the target list */
-	Oid		   *grpOperators;	/* equality operators to compare with */
-	Oid		   *grpCollations;
+
+	/* number of grouping columns */
+	int			numCols;
+
+	/* their indexes in the target list */
+	AttrNumber *grpColIdx pg_node_attr(array_size(numCols));
+
+	/* equality operators to compare with */
+	Oid		   *grpOperators pg_node_attr(array_size(numCols));
+	Oid		   *grpCollations pg_node_attr(array_size(numCols));
 } Group;
 
 /* ---------------
@@ -894,18 +997,39 @@ typedef struct Group
 typedef struct Agg
 {
 	Plan		plan;
-	AggStrategy aggstrategy;	/* basic strategy, see nodes.h */
-	AggSplit	aggsplit;		/* agg-splitting mode, see nodes.h */
-	int			numCols;		/* number of grouping columns */
-	AttrNumber *grpColIdx;		/* their indexes in the target list */
-	Oid		   *grpOperators;	/* equality operators to compare with */
-	Oid		   *grpCollations;
-	long		numGroups;		/* estimated number of groups in input */
-	uint64		transitionSpace;	/* for pass-by-ref transition data */
-	Bitmapset  *aggParams;		/* IDs of Params used in Aggref inputs */
+
+	/* basic strategy, see nodes.h */
+	AggStrategy aggstrategy;
+
+	/* agg-splitting mode, see nodes.h */
+	AggSplit	aggsplit;
+
+	/* number of grouping columns */
+	int			numCols;
+
+	/* their indexes in the target list */
+	AttrNumber *grpColIdx pg_node_attr(array_size(numCols));
+
+	/* equality operators to compare with */
+	Oid		   *grpOperators pg_node_attr(array_size(numCols));
+	Oid		   *grpCollations pg_node_attr(array_size(numCols));
+
+	/* estimated number of groups in input */
+	long		numGroups;
+
+	/* for pass-by-ref transition data */
+	uint64		transitionSpace;
+
+	/* IDs of Params used in Aggref inputs */
+	Bitmapset  *aggParams;
+
 	/* Note: planner provides numGroups & aggParams only in HASHED/MIXED case */
-	List	   *groupingSets;	/* grouping sets to use */
-	List	   *chain;			/* chained Agg/Sort nodes */
+
+	/* grouping sets to use */
+	List	   *groupingSets;
+
+	/* chained Agg/Sort nodes */
+	List	   *chain;
 } Agg;
 
 /* ----------------
@@ -915,28 +1039,71 @@ typedef struct Agg
 typedef struct WindowAgg
 {
 	Plan		plan;
-	Index		winref;			/* ID referenced by window functions */
-	int			partNumCols;	/* number of columns in partition clause */
-	AttrNumber *partColIdx;		/* their indexes in the target list */
-	Oid		   *partOperators;	/* equality operators for partition columns */
-	Oid		   *partCollations; /* collations for partition columns */
-	int			ordNumCols;		/* number of columns in ordering clause */
-	AttrNumber *ordColIdx;		/* their indexes in the target list */
-	Oid		   *ordOperators;	/* equality operators for ordering columns */
-	Oid		   *ordCollations;	/* collations for ordering columns */
-	int			frameOptions;	/* frame_clause options, see WindowDef */
-	Node	   *startOffset;	/* expression for starting bound, if any */
-	Node	   *endOffset;		/* expression for ending bound, if any */
-	List	   *runCondition;	/* qual to help short-circuit execution */
-	List	   *runConditionOrig;	/* runCondition for display in EXPLAIN */
+
+	/* ID referenced by window functions */
+	Index		winref;
+
+	/* number of columns in partition clause */
+	int			partNumCols;
+
+	/* their indexes in the target list */
+	AttrNumber *partColIdx pg_node_attr(array_size(partNumCols));
+
+	/* equality operators for partition columns */
+	Oid		   *partOperators pg_node_attr(array_size(partNumCols));
+
+	/* collations for partition columns */
+	Oid		   *partCollations pg_node_attr(array_size(partNumCols));
+
+	/* number of columns in ordering clause */
+	int			ordNumCols;
+
+	/* their indexes in the target list */
+	AttrNumber *ordColIdx pg_node_attr(array_size(ordNumCols));
+
+	/* equality operators for ordering columns */
+	Oid		   *ordOperators pg_node_attr(array_size(ordNumCols));
+
+	/* collations for ordering columns */
+	Oid		   *ordCollations pg_node_attr(array_size(ordNumCols));
+
+	/* frame_clause options, see WindowDef */
+	int			frameOptions;
+
+	/* expression for starting bound, if any */
+	Node	   *startOffset;
+
+	/* expression for ending bound, if any */
+	Node	   *endOffset;
+
+	/* qual to help short-circuit execution */
+	List	   *runCondition;
+
+	/* runCondition for display in EXPLAIN */
+	List	   *runConditionOrig;
+
 	/* these fields are used with RANGE offset PRECEDING/FOLLOWING: */
-	Oid			startInRangeFunc;	/* in_range function for startOffset */
-	Oid			endInRangeFunc; /* in_range function for endOffset */
-	Oid			inRangeColl;	/* collation for in_range tests */
-	bool		inRangeAsc;		/* use ASC sort order for in_range tests? */
-	bool		inRangeNullsFirst;	/* nulls sort first for in_range tests? */
-	bool		topWindow;		/* false for all apart from the WindowAgg
-								 * that's closest to the root of the plan */
+
+	/* in_range function for startOffset */
+	Oid			startInRangeFunc;
+
+	/* in_range function for endOffset */
+	Oid			endInRangeFunc;
+
+	/* collation for in_range tests */
+	Oid			inRangeColl;
+
+	/* use ASC sort order for in_range tests? */
+	bool		inRangeAsc;
+
+	/* nulls sort first for in_range tests? */
+	bool		inRangeNullsFirst;
+
+	/*
+	 * false for all apart from the WindowAgg that's closest to the root of
+	 * the plan
+	 */
+	bool		topWindow;
 } WindowAgg;
 
 /* ----------------
@@ -946,10 +1113,18 @@ typedef struct WindowAgg
 typedef struct Unique
 {
 	Plan		plan;
-	int			numCols;		/* number of columns to check for uniqueness */
-	AttrNumber *uniqColIdx;		/* their indexes in the target list */
-	Oid		   *uniqOperators;	/* equality operators to compare with */
-	Oid		   *uniqCollations; /* collations for equality comparisons */
+
+	/* number of columns to check for uniqueness */
+	int			numCols;
+
+	/* their indexes in the target list */
+	AttrNumber *uniqColIdx pg_node_attr(array_size(numCols));
+
+	/* equality operators to compare with */
+	Oid		   *uniqOperators pg_node_attr(array_size(numCols));
+
+	/* collations for equality comparisons */
+	Oid		   *uniqCollations pg_node_attr(array_size(numCols));
 } Unique;
 
 /* ------------
@@ -981,16 +1156,35 @@ typedef struct Gather
 typedef struct GatherMerge
 {
 	Plan		plan;
-	int			num_workers;	/* planned number of worker processes */
-	int			rescan_param;	/* ID of Param that signals a rescan, or -1 */
+
+	/* planned number of worker processes */
+	int			num_workers;
+
+	/* ID of Param that signals a rescan, or -1 */
+	int			rescan_param;
+
 	/* remaining fields are just like the sort-key info in struct Sort */
-	int			numCols;		/* number of sort-key columns */
-	AttrNumber *sortColIdx;		/* their indexes in the target list */
-	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
-	Oid		   *collations;		/* OIDs of collations */
-	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
-	Bitmapset  *initParam;		/* param id's of initplans which are referred
-								 * at gather merge or one of it's child node */
+
+	/* number of sort-key columns */
+	int			numCols;
+
+	/* their indexes in the target list */
+	AttrNumber *sortColIdx pg_node_attr(array_size(numCols));
+
+	/* OIDs of operators to sort them by */
+	Oid		   *sortOperators pg_node_attr(array_size(numCols));
+
+	/* OIDs of collations */
+	Oid		   *collations pg_node_attr(array_size(numCols));
+
+	/* NULLS FIRST/LAST directions */
+	bool	   *nullsFirst pg_node_attr(array_size(numCols));
+
+	/*
+	 * param id's of initplans which are referred at gather merge or one of
+	 * it's child node
+	 */
+	Bitmapset  *initParam;
 } GatherMerge;
 
 /* ----------------
@@ -1024,16 +1218,31 @@ typedef struct Hash
 typedef struct SetOp
 {
 	Plan		plan;
-	SetOpCmd	cmd;			/* what to do, see nodes.h */
-	SetOpStrategy strategy;		/* how to do it, see nodes.h */
-	int			numCols;		/* number of columns to check for
-								 * duplicate-ness */
-	AttrNumber *dupColIdx;		/* their indexes in the target list */
-	Oid		   *dupOperators;	/* equality operators to compare with */
-	Oid		   *dupCollations;
-	AttrNumber	flagColIdx;		/* where is the flag column, if any */
-	int			firstFlag;		/* flag value for first input relation */
-	long		numGroups;		/* estimated number of groups in input */
+
+	/* what to do, see nodes.h */
+	SetOpCmd	cmd;
+
+	/* how to do it, see nodes.h */
+	SetOpStrategy strategy;
+
+	/* number of columns to check for duplicate-ness */
+	int			numCols;
+
+	/* their indexes in the target list */
+	AttrNumber *dupColIdx pg_node_attr(array_size(numCols));
+
+	/* equality operators to compare with */
+	Oid		   *dupOperators pg_node_attr(array_size(numCols));
+	Oid		   *dupCollations pg_node_attr(array_size(numCols));
+
+	/* where is the flag column, if any */
+	AttrNumber	flagColIdx;
+
+	/* flag value for first input relation */
+	int			firstFlag;
+
+	/* estimated number of groups in input */
+	long		numGroups;
 } SetOp;
 
 /* ----------------
@@ -1062,13 +1271,27 @@ typedef struct LockRows
 typedef struct Limit
 {
 	Plan		plan;
-	Node	   *limitOffset;	/* OFFSET parameter, or NULL if none */
-	Node	   *limitCount;		/* COUNT parameter, or NULL if none */
-	LimitOption limitOption;	/* limit type */
-	int			uniqNumCols;	/* number of columns to check for similarity  */
-	AttrNumber *uniqColIdx;		/* their indexes in the target list */
-	Oid		   *uniqOperators;	/* equality operators to compare with */
-	Oid		   *uniqCollations; /* collations for equality comparisons */
+
+	/* OFFSET parameter, or NULL if none */
+	Node	   *limitOffset;
+
+	/* COUNT parameter, or NULL if none */
+	Node	   *limitCount;
+
+	/* limit type */
+	LimitOption limitOption;
+
+	/* number of columns to check for similarity  */
+	int			uniqNumCols;
+
+	/* their indexes in the target list */
+	AttrNumber *uniqColIdx pg_node_attr(array_size(uniqNumCols));
+
+	/* equality operators to compare with */
+	Oid		   *uniqOperators pg_node_attr(array_size(uniqNumCols));
+
+	/* collations for equality comparisons */
+	Oid		   *uniqCollations pg_node_attr(array_size(uniqNumCols));
 } Limit;
 
 
@@ -1154,6 +1377,8 @@ typedef enum RowMarkType
  */
 typedef struct PlanRowMark
 {
+	pg_node_attr(no_equal, no_query_jumble)
+
 	NodeTag		type;
 	Index		rti;			/* range table index of markable relation */
 	Index		prti;			/* range table index of parent relation */
@@ -1189,6 +1414,8 @@ typedef struct PlanRowMark
  * Then, since an Append-type node could have multiple partitioning
  * hierarchies among its children, we have an unordered List of those Lists.
  *
+ * root_parent_relids	RelOptInfo.relids of the relation to which the parent
+ *						plan node and this PartitionPruneInfo node belong
  * prune_infos			List of Lists containing PartitionedRelPruneInfo nodes,
  *						one sublist per run-time-prunable partition hierarchy
  *						appearing in the parent plan node's subplans.
@@ -1198,7 +1425,10 @@ typedef struct PlanRowMark
  */
 typedef struct PartitionPruneInfo
 {
+	pg_node_attr(no_equal, no_query_jumble)
+
 	NodeTag		type;
+	Bitmapset  *root_parent_relids;
 	List	   *prune_infos;
 	Bitmapset  *other_subplans;
 } PartitionPruneInfo;
@@ -1222,14 +1452,27 @@ typedef struct PartitionPruneInfo
  */
 typedef struct PartitionedRelPruneInfo
 {
+	pg_node_attr(no_equal, no_query_jumble)
+
 	NodeTag		type;
-	Index		rtindex;		/* RT index of partition rel for this level */
-	Bitmapset  *present_parts;	/* Indexes of all partitions which subplans or
-								 * subparts are present for */
-	int			nparts;			/* Length of the following arrays: */
-	int		   *subplan_map;	/* subplan index by partition index, or -1 */
-	int		   *subpart_map;	/* subpart index by partition index, or -1 */
-	Oid		   *relid_map;		/* relation OID by partition index, or 0 */
+
+	/* RT index of partition rel for this level */
+	Index		rtindex;
+
+	/* Indexes of all partitions which subplans or subparts are present for */
+	Bitmapset  *present_parts;
+
+	/* Length of the following arrays: */
+	int			nparts;
+
+	/* subplan index by partition index, or -1 */
+	int		   *subplan_map pg_node_attr(array_size(nparts));
+
+	/* subpart index by partition index, or -1 */
+	int		   *subpart_map pg_node_attr(array_size(nparts));
+
+	/* relation OID by partition index, or 0 */
+	Oid		   *relid_map pg_node_attr(array_size(nparts));
 
 	/*
 	 * initial_pruning_steps shows how to prune during executor startup (i.e.,
@@ -1239,8 +1482,9 @@ typedef struct PartitionedRelPruneInfo
 	 */
 	List	   *initial_pruning_steps;	/* List of PartitionPruneStep */
 	List	   *exec_pruning_steps; /* List of PartitionPruneStep */
-	Bitmapset  *execparamids;	/* All PARAM_EXEC Param IDs in
-								 * exec_pruning_steps */
+
+	/* All PARAM_EXEC Param IDs in exec_pruning_steps */
+	Bitmapset  *execparamids;
 } PartitionedRelPruneInfo;
 
 /*
@@ -1251,6 +1495,8 @@ typedef struct PartitionedRelPruneInfo
  */
 typedef struct PartitionPruneStep
 {
+	pg_node_attr(abstract, no_equal, no_query_jumble)
+
 	NodeTag		type;
 	int			step_id;
 } PartitionPruneStep;
@@ -1324,6 +1570,8 @@ typedef struct PartitionPruneStepCombine
  */
 typedef struct PlanInvalItem
 {
+	pg_node_attr(no_equal, no_query_jumble)
+
 	NodeTag		type;
 	int			cacheId;		/* a syscache ID, see utils/syscache.h */
 	uint32		hashValue;		/* hash value of object's cache lookup key */

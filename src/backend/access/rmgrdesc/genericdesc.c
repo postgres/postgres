@@ -4,7 +4,7 @@
  *	  rmgr descriptor routines for access/transam/generic_xlog.c
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/rmgrdesc/genericdesc.c
@@ -15,7 +15,7 @@
 
 #include "access/generic_xlog.h"
 #include "lib/stringinfo.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 /*
  * Description of generic xlog record: write page regions that this record

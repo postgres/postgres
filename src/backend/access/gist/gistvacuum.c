@@ -4,7 +4,7 @@
  *	  vacuuming routines for the postgres GiST index access method.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -49,7 +49,7 @@ static void gistvacuumpage(GistVacState *vstate, BlockNumber blkno,
 static void gistvacuum_delete_empty_pages(IndexVacuumInfo *info,
 										  GistVacState *vstate);
 static bool gistdeletepage(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
-						   Buffer buffer, OffsetNumber downlink,
+						   Buffer parentBuffer, OffsetNumber downlink,
 						   Buffer leafBuffer);
 
 /*

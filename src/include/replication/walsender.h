@@ -3,7 +3,7 @@
  * walsender.h
  *	  Exports from replication/walsender.c.
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  * src/include/replication/walsender.h
  *
@@ -36,7 +36,7 @@ extern PGDLLIMPORT int wal_sender_timeout;
 extern PGDLLIMPORT bool log_replication_commands;
 
 extern void InitWalSender(void);
-extern bool exec_replication_command(const char *query_string);
+extern bool exec_replication_command(const char *cmd_string);
 extern void WalSndErrorCleanup(void);
 extern void WalSndResourceCleanup(bool isCommit);
 extern void WalSndSignals(void);

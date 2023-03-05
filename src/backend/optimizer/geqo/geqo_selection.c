@@ -3,7 +3,7 @@
  * geqo_selection.c
  *	  linear selection scheme for the genetic query optimizer
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/optimizer/geqo/geqo_selection.c
@@ -42,7 +42,7 @@
 #include "optimizer/geqo_random.h"
 #include "optimizer/geqo_selection.h"
 
-static int	linear_rand(PlannerInfo *root, int max, double bias);
+static int	linear_rand(PlannerInfo *root, int pool_size, double bias);
 
 
 /*

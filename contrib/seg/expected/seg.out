@@ -256,6 +256,13 @@ SELECT '12.34567890123456'::seg AS seg;
  12.3457
 (1 row)
 
+-- Same, with a very long input
+SELECT '12.3456789012345600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'::seg AS seg;
+   seg   
+---------
+ 12.3457
+(1 row)
+
 -- Numbers with certainty indicators
 SELECT '~6.5'::seg AS seg;
  seg  
@@ -1265,4 +1272,28 @@ FROM test_seg WHERE s @> '11.2..11.3' OR s IS NULL ORDER BY s;
       10.7 |       11.5 |      12.3
            |            |          
 (144 rows)
+
+-- test non error throwing API
+SELECT str as seg,
+       pg_input_is_valid(str,'seg') as ok,
+       errinfo.sql_error_code,
+       errinfo.message,
+       errinfo.detail,
+       errinfo.hint
+FROM unnest(ARRAY['-1 .. 1'::text,
+                  '100(+-)1',
+                  '',
+                  'ABC',
+                  '1 e7',
+                  '1e700']) str,
+     LATERAL pg_input_error_info(str, 'seg') as errinfo;
+   seg    | ok | sql_error_code |                message                |            detail            | hint 
+----------+----+----------------+---------------------------------------+------------------------------+------
+ -1 .. 1  | t  |                |                                       |                              | 
+ 100(+-)1 | t  |                |                                       |                              | 
+          | f  | 42601          | bad seg representation                | syntax error at end of input | 
+ ABC      | f  | 42601          | bad seg representation                | syntax error at or near "A"  | 
+ 1 e7     | f  | 42601          | bad seg representation                | syntax error at or near "e"  | 
+ 1e700    | f  | 22003          | "1e700" is out of range for type real |                              | 
+(6 rows)
 

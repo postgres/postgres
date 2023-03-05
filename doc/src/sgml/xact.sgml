@@ -1,0 +1,205 @@
+<!-- doc/src/sgml/xact.sgml -->
+
+<chapter id="transactions">
+
+ <title>Transaction Processing</title>
+
+ <para>
+  This chapter provides an overview of the internals of
+  <productname>PostgreSQL</productname>'s transaction management system.
+  The word transaction is often abbreviated as <firstterm>xact</firstterm>.
+ </para>
+
+ <sect1 id="transaction-id">
+
+  <title>Transactions and Identifiers</title>
+
+  <para>
+   Transactions can be created explicitly using <command>BEGIN</command>
+   or <command>START TRANSACTION</command> and ended using
+   <command>COMMIT</command> or <command>ROLLBACK</command>.  SQL
+   statements outside of explicit transactions automatically use
+   single-statement transactions.
+  </para>
+
+  <para>
+   Every transaction is identified by a unique
+   <literal>VirtualTransactionId</literal> (also called
+   <literal>virtualXID</literal> or <literal>vxid</literal>), which
+   is comprised of a backend ID (or <literal>backendID</literal>)
+   and a sequentially-assigned number local to each backend, known as
+   <literal>localXID</literal>.  For example, the virtual transaction
+   ID <literal>4/12532</literal> has a <literal>backendID</literal>
+   of <literal>4</literal> and a <literal>localXID</literal> of
+   <literal>12532</literal>.
+  </para>
+
+  <para>
+   Non-virtual <literal>TransactionId</literal>s (or <type>xid</type>),
+   e.g., <literal>278394</literal>, are assigned sequentially to
+   transactions from a global counter used by all databases within
+   the <productname>PostgreSQL</productname> cluster.  This assignment
+   happens when a transaction first writes to the database. This means
+   lower-numbered xids started writing before higher-numbered xids.
+   Note that the order in which transactions perform their first database
+   write might be different from the order in which the transactions
+   started, particularly if the transaction started with statements that
+   only performed database reads.
+  </para>
+
+  <para>
+   The internal transaction ID type <type>xid</type> is 32 bits wide
+   and <link linkend="vacuum-for-wraparound">wraps around</link> every
+   4 billion transactions. A 32-bit epoch is incremented during each
+   wraparound. There is also a 64-bit type <type>xid8</type> which
+   includes this epoch and therefore does not wrap around during the
+   life of an installation;  it can be converted to xid by casting.
+   The functions in <xref linkend="functions-pg-snapshot"/>
+   return <type>xid8</type> values.  Xids are used as the
+   basis for <productname>PostgreSQL</productname>'s <link
+   linkend="mvcc">MVCC</link> concurrency mechanism and streaming
+   replication.
+  </para>
+
+  <para>
+   When a top-level transaction with a (non-virtual) xid commits,
+   it is marked as committed in the <filename>pg_xact</filename>
+   directory. Additional information is recorded in the
+   <filename>pg_commit_ts</filename> directory if <xref
+   linkend="guc-track-commit-timestamp"/> is enabled.
+  </para>
+
+  <para>
+   In addition to <literal>vxid</literal> and <type>xid</type>,
+   prepared transactions are also assigned Global Transaction
+   Identifiers (<acronym>GID</acronym>). GIDs are string literals up
+   to 200 bytes long, which must be unique amongst other currently
+   prepared transactions.  The mapping of GID to xid is shown in <link
+   linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link>.
+  </para>
+ </sect1>
+
+ <sect1 id="xact-locking">
+
+  <title>Transactions and Locking</title>
+
+  <para>
+   The transaction IDs of currently executing transactions are shown in
+   <link linkend="view-pg-locks"><structname>pg_locks</structname></link>
+   in columns <structfield>virtualxid</structfield> and
+   <structfield>transactionid</structfield>.  Read-only transactions
+   will have <structfield>virtualxid</structfield>s but NULL
+   <structfield>transactionid</structfield>s, while both columns will be
+   set in read-write transactions.
+  </para>
+
+  <para>
+   Some lock types wait on <structfield>virtualxid</structfield>,
+   while other types wait on <structfield>transactionid</structfield>.
+   Row-level read and write locks are recorded directly in the locked
+   rows and can be inspected using the <xref linkend="pgrowlocks"/>
+   extension.  Row-level read locks might also require the assignment
+   of multixact IDs (<literal>mxid</literal>;  see <xref
+   linkend="vacuum-for-multixact-wraparound"/>).
+  </para>
+ </sect1>
+
+ <sect1 id="subxacts">
+
+  <title>Subtransactions</title>
+
+  <para>
+   Subtransactions are started inside transactions, allowing large
+   transactions to be broken into smaller units.  Subtransactions can
+   commit or abort without affecting their parent transactions, allowing
+   parent transactions to continue. This allows errors to be handled
+   more easily, which is a common application development pattern.
+   The word subtransaction is often abbreviated as
+   <firstterm>subxact</firstterm>.
+  </para>
+
+  <para>
+   Subtransactions can be started explicitly using the
+   <command>SAVEPOINT</command> command, but can also be started in
+   other ways, such as PL/pgSQL's <command>EXCEPTION</command> clause.
+   PL/Python and PL/TCL also support explicit subtransactions.
+   Subtransactions can also be started from other subtransactions.
+   The top-level transaction and its child subtransactions form a
+   hierarchy or tree, which is why we refer to the main transaction as
+   the top-level transaction.
+  </para>
+
+  <para>
+   If a subtransaction is assigned a non-virtual transaction ID,
+   its transaction ID is referred to as a <quote>subxid</quote>.
+   Read-only subtransactions are not assigned subxids, but once they
+   attempt to write, they will be assigned one. This also causes all of
+   a subxid's parents, up to and including the top-level transaction,
+   to be assigned non-virtual transaction ids.  We ensure that a parent
+   xid is always lower than any of its child subxids.
+  </para>
+
+  <para>
+   The immediate parent xid of each subxid is recorded in the
+   <filename>pg_subtrans</filename> directory. No entry is made for
+   top-level xids since they do not have a parent, nor is an entry made
+   for read-only subtransactions.
+  </para>
+
+  <para>
+   When a subtransaction commits, all of its committed child
+   subtransactions with subxids will also be considered subcommitted
+   in that transaction.  When a subtransaction aborts, all of its child
+   subtransactions will also be considered aborted.
+  </para>
+
+  <para>
+   When a top-level transaction with an xid commits, all of its
+   subcommitted child subtransactions are also persistently recorded
+   as committed in the <filename>pg_xact</filename> directory.  If the
+   top-level transaction aborts, all its subtransactions are also aborted,
+   even if they were subcommitted.
+  </para>
+
+  <para>
+   The more subtransactions each transaction keeps open (not
+   rolled back or released), the greater the transaction management
+   overhead. Up to 64 open subxids are cached in shared memory for
+   each backend; after that point, the storage I/O overhead increases
+   significantly due to additional lookups of subxid entries in
+   <filename>pg_subtrans</filename>.
+  </para>
+ </sect1>
+
+ <sect1 id="two-phase">
+
+  <title>Two-Phase Transactions</title>
+
+  <para>
+   <productname>PostgreSQL</productname> supports a two-phase commit (2PC)
+   protocol that allows multiple distributed systems to work together
+   in a transactional manner.  The commands are <command>PREPARE
+   TRANSACTION</command>, <command>COMMIT PREPARED</command> and
+   <command>ROLLBACK PREPARED</command>.  Two-phase transactions
+   are intended for use by external transaction management systems.
+   <productname>PostgreSQL</productname> follows the features and model
+   proposed by the X/Open XA standard, but does not implement some less
+   often used aspects.
+  </para>
+
+  <para>
+   When the user executes <command>PREPARE TRANSACTION</command>, the
+   only possible next commands are <command>COMMIT PREPARED</command>
+   or <command>ROLLBACK PREPARED</command>. In general, this prepared
+   state is intended to be of very short duration, but external
+   availability issues might mean transactions stay in this state
+   for an extended interval. Short-lived prepared
+   transactions are stored only in shared memory and WAL.
+   Transactions that span checkpoints are recorded in the
+   <filename>pg_twophase</filename> directory.  Transactions
+   that are currently prepared can be inspected using <link
+   linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link>.
+  </para>
+ </sect1>
+
+</chapter>

@@ -4,7 +4,7 @@
  *	  prototypes for functions in backend/catalog/heap.c
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/heap.h
@@ -50,7 +50,7 @@ extern Relation heap_create(const char *relname,
 							Oid relnamespace,
 							Oid reltablespace,
 							Oid relid,
-							Oid relfilenode,
+							RelFileNumber relfilenumber,
 							Oid accessmtd,
 							TupleDesc tupDesc,
 							char relkind,

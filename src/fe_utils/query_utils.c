@@ -2,7 +2,7 @@
  *
  * Facilities for frontend code to query a databases.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/fe_utils/query_utils.c
@@ -85,8 +85,7 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
 
 	r = (res && PQresultStatus(res) == PGRES_COMMAND_OK);
 
-	if (res)
-		PQclear(res);
+	PQclear(res);
 
 	return r;
 }

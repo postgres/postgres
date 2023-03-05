@@ -3,7 +3,7 @@
  * tsquery_gist.c
  *	  GiST index support for tsquery
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -222,7 +222,7 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 		size_beta = hemdist(GETENTRY(entryvec, seed_2), GETENTRY(entryvec, j));
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
-	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
+	qsort(costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
 	for (k = 0; k < maxoff; k++)
 	{

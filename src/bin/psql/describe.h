@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * src/bin/psql/describe.h
  */
@@ -38,7 +38,7 @@ extern bool describeRoles(const char *pattern, bool verbose, bool showSystem);
 extern bool listDbRoleSettings(const char *pattern, const char *pattern2);
 
 /* \z (or \dp) */
-extern bool permissionsList(const char *pattern);
+extern bool permissionsList(const char *pattern, bool showSystem);
 
 /* \ddp */
 extern bool listDefaultACLs(const char *pattern);
@@ -127,16 +127,16 @@ bool		describeSubscriptions(const char *pattern, bool verbose);
 
 /* \dAc */
 extern bool listOperatorClasses(const char *access_method_pattern,
-								const char *opclass_pattern,
+								const char *type_pattern,
 								bool verbose);
 
 /* \dAf */
 extern bool listOperatorFamilies(const char *access_method_pattern,
-								 const char *opclass_pattern,
+								 const char *type_pattern,
 								 bool verbose);
 
 /* \dAo */
-extern bool listOpFamilyOperators(const char *accessMethod_pattern,
+extern bool listOpFamilyOperators(const char *access_method_pattern,
 								  const char *family_pattern, bool verbose);
 
 /* \dAp */

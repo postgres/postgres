@@ -17,6 +17,7 @@
 
 #define NUM_BUFFERCACHE_PAGES_MIN_ELEM	8
 #define NUM_BUFFERCACHE_PAGES_ELEM	9
+#define NUM_BUFFERCACHE_SUMMARY_ELEM 5
 
 PG_MODULE_MAGIC;
 
@@ -26,7 +27,7 @@ PG_MODULE_MAGIC;
 typedef struct
 {
 	uint32		bufferid;
-	Oid			relfilenode;
+	RelFileNumber relfilenumber;
 	Oid			reltablespace;
 	Oid			reldatabase;
 	ForkNumber	forknum;
@@ -59,6 +60,7 @@ typedef struct
  * relation node/tablespace/database/blocknum and dirty indicator.
  */
 PG_FUNCTION_INFO_V1(pg_buffercache_pages);
+PG_FUNCTION_INFO_V1(pg_buffercache_summary);
 
 Datum
 pg_buffercache_pages(PG_FUNCTION_ARGS)
@@ -153,10 +155,10 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			buf_state = LockBufHdr(bufHdr);
 
 			fctx->record[i].bufferid = BufferDescriptorGetBuffer(bufHdr);
-			fctx->record[i].relfilenode = bufHdr->tag.rnode.relNode;
-			fctx->record[i].reltablespace = bufHdr->tag.rnode.spcNode;
-			fctx->record[i].reldatabase = bufHdr->tag.rnode.dbNode;
-			fctx->record[i].forknum = bufHdr->tag.forkNum;
+			fctx->record[i].relfilenumber = BufTagGetRelNumber(&bufHdr->tag);
+			fctx->record[i].reltablespace = bufHdr->tag.spcOid;
+			fctx->record[i].reldatabase = bufHdr->tag.dbOid;
+			fctx->record[i].forknum = BufTagGetForkNum(&bufHdr->tag);
 			fctx->record[i].blocknum = bufHdr->tag.blockNum;
 			fctx->record[i].usagecount = BUF_STATE_GET_USAGECOUNT(buf_state);
 			fctx->record[i].pinning_backends = BUF_STATE_GET_REFCOUNT(buf_state);
@@ -209,7 +211,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			values[1] = ObjectIdGetDatum(fctx->record[i].relfilenode);
+			values[1] = ObjectIdGetDatum(fctx->record[i].relfilenumber);
 			nulls[1] = false;
 			values[2] = ObjectIdGetDatum(fctx->record[i].reltablespace);
 			nulls[2] = false;
@@ -236,4 +238,69 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 	}
 	else
 		SRF_RETURN_DONE(funcctx);
+}
+
+Datum
+pg_buffercache_summary(PG_FUNCTION_ARGS)
+{
+	Datum		result;
+	TupleDesc	tupledesc;
+	HeapTuple	tuple;
+	Datum		values[NUM_BUFFERCACHE_SUMMARY_ELEM];
+	bool		nulls[NUM_BUFFERCACHE_SUMMARY_ELEM];
+
+	int32		buffers_used = 0;
+	int32		buffers_unused = 0;
+	int32		buffers_dirty = 0;
+	int32		buffers_pinned = 0;
+	int64		usagecount_total = 0;
+
+	if (get_call_result_type(fcinfo, NULL, &tupledesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	for (int i = 0; i < NBuffers; i++)
+	{
+		BufferDesc *bufHdr;
+		uint32		buf_state;
+
+		/*
+		 * This function summarizes the state of all headers. Locking the
+		 * buffer headers wouldn't provide an improved result as the state of
+		 * the buffer can still change after we release the lock and it'd
+		 * noticeably increase the cost of the function.
+		 */
+		bufHdr = GetBufferDescriptor(i);
+		buf_state = pg_atomic_read_u32(&bufHdr->state);
+
+		if (buf_state & BM_VALID)
+		{
+			buffers_used++;
+			usagecount_total += BUF_STATE_GET_USAGECOUNT(buf_state);
+
+			if (buf_state & BM_DIRTY)
+				buffers_dirty++;
+		}
+		else
+			buffers_unused++;
+
+		if (BUF_STATE_GET_REFCOUNT(buf_state) > 0)
+			buffers_pinned++;
+	}
+
+	memset(nulls, 0, sizeof(nulls));
+	values[0] = Int32GetDatum(buffers_used);
+	values[1] = Int32GetDatum(buffers_unused);
+	values[2] = Int32GetDatum(buffers_dirty);
+	values[3] = Int32GetDatum(buffers_pinned);
+
+	if (buffers_used != 0)
+		values[4] = Float8GetDatum((double) usagecount_total / buffers_used);
+	else
+		nulls[4] = true;
+
+	/* Build and return the tuple. */
+	tuple = heap_form_tuple(tupledesc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
+
+	PG_RETURN_DATUM(result);
 }

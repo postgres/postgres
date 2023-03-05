@@ -2,7 +2,7 @@
  *
  * nodeIncrementalSort.h
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/nodeIncrementalSort.h
@@ -22,7 +22,7 @@ extern void ExecReScanIncrementalSort(IncrementalSortState *node);
 /* parallel instrumentation support */
 extern void ExecIncrementalSortEstimate(IncrementalSortState *node, ParallelContext *pcxt);
 extern void ExecIncrementalSortInitializeDSM(IncrementalSortState *node, ParallelContext *pcxt);
-extern void ExecIncrementalSortInitializeWorker(IncrementalSortState *node, ParallelWorkerContext *pcxt);
+extern void ExecIncrementalSortInitializeWorker(IncrementalSortState *node, ParallelWorkerContext *pwcxt);
 extern void ExecIncrementalSortRetrieveInstrumentation(IncrementalSortState *node);
 
 #endif							/* NODEINCREMENTALSORT_H */

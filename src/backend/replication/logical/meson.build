@@ -1,0 +1,17 @@
+# Copyright (c) 2022-2023, PostgreSQL Global Development Group
+
+backend_sources += files(
+  'applyparallelworker.c',
+  'decode.c',
+  'launcher.c',
+  'logical.c',
+  'logicalfuncs.c',
+  'message.c',
+  'origin.c',
+  'proto.c',
+  'relation.c',
+  'reorderbuffer.c',
+  'snapbuild.c',
+  'tablesync.c',
+  'worker.c',
+)

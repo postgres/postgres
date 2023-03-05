@@ -91,7 +91,7 @@ CREATE TABLE inventory_item (
  </para>
  </sect2>
 
- <sect2>
+ <sect2 id="rowtypes-constructing">
   <title>Constructing Composite Values</title>
 
   <indexterm>
@@ -209,7 +209,7 @@ SELECT (my_func(...)).field FROM ...
  </para>
  </sect2>
 
- <sect2>
+ <sect2 id="rowtypes-modifying">
   <title>Modifying Composite Types</title>
 
  <para>

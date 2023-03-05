@@ -1,7 +1,8 @@
 <!-- doc/src/sgml/dict-int.sgml -->
 
 <sect1 id="dict-int" xreflabel="dict_int">
- <title>dict_int</title>
+ <title>dict_int &mdash;
+   example full-text search dictionary for integers</title>
 
  <indexterm zone="dict-int">
   <primary>dict_int</primary>
@@ -21,7 +22,7 @@
   on the current database.
  </para>
 
- <sect2>
+ <sect2 id="dict-int-config">
   <title>Configuration</title>
 
   <para>
@@ -58,7 +59,7 @@
   </itemizedlist>
  </sect2>
 
- <sect2>
+ <sect2 id="dict-int-usage">
   <title>Usage</title>
 
   <para>

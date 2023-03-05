@@ -4,7 +4,7 @@
  *	  PlaceHolderVar and PlaceHolderInfo manipulation routines
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -23,17 +23,32 @@
 #include "optimizer/planmain.h"
 #include "utils/lsyscache.h"
 
+
+typedef struct contain_placeholder_references_context
+{
+	int			relid;
+	int			sublevels_up;
+} contain_placeholder_references_context;
+
 /* Local functions */
 static void find_placeholders_recurse(PlannerInfo *root, Node *jtnode);
 static void find_placeholders_in_expr(PlannerInfo *root, Node *expr);
+static bool contain_placeholder_references_walker(Node *node,
+												  contain_placeholder_references_context *context);
 
 
 /*
  * make_placeholder_expr
  *		Make a PlaceHolderVar for the given expression.
  *
- * phrels is the syntactic location (as a set of baserels) to attribute
+ * phrels is the syntactic location (as a set of relids) to attribute
  * to the expression.
+ *
+ * The caller is responsible for adjusting phlevelsup and phnullingrels
+ * as needed.  Because we do not know here which query level the PHV
+ * will be associated with, it's important that this function touches
+ * only root->glob; messing with other parts of PlannerInfo would be
+ * likely to do the wrong thing.
  */
 PlaceHolderVar *
 make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
@@ -42,8 +57,9 @@ make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
 
 	phv->phexpr = expr;
 	phv->phrels = phrels;
+	phv->phnullingrels = NULL;	/* caller may change this later */
 	phv->phid = ++(root->glob->lastPHId);
-	phv->phlevelsup = 0;
+	phv->phlevelsup = 0;		/* caller may change this later */
 
 	return phv;
 }
@@ -52,8 +68,8 @@ make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
  * find_placeholder_info
  *		Fetch the PlaceHolderInfo for the given PHV
  *
- * If the PlaceHolderInfo doesn't exist yet, create it if create_new_ph is
- * true, else throw an error.
+ * If the PlaceHolderInfo doesn't exist yet, create it if we haven't yet
+ * frozen the set of PlaceHolderInfos for the query; else throw an error.
  *
  * This is separate from make_placeholder_expr because subquery pullup has
  * to make PlaceHolderVars for expressions that might not be used at all in
@@ -61,36 +77,45 @@ make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
  * We build PlaceHolderInfos only for PHVs that are still present in the
  * simplified query passed to query_planner().
  *
- * Note: this should only be called after query_planner() has started.  Also,
- * create_new_ph must not be true after deconstruct_jointree begins, because
- * make_outerjoininfo assumes that we already know about all placeholders.
+ * Note: this should only be called after query_planner() has started.
  */
 PlaceHolderInfo *
-find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
-					  bool create_new_ph)
+find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
 {
 	PlaceHolderInfo *phinfo;
 	Relids		rels_used;
-	ListCell   *lc;
 
 	/* if this ever isn't true, we'd need to be able to look in parent lists */
 	Assert(phv->phlevelsup == 0);
 
-	foreach(lc, root->placeholder_list)
+	/* Use placeholder_array to look up existing PlaceHolderInfo quickly */
+	if (phv->phid < root->placeholder_array_size)
+		phinfo = root->placeholder_array[phv->phid];
+	else
+		phinfo = NULL;
+	if (phinfo != NULL)
 	{
-		phinfo = (PlaceHolderInfo *) lfirst(lc);
-		if (phinfo->phid == phv->phid)
-			return phinfo;
+		Assert(phinfo->phid == phv->phid);
+		return phinfo;
 	}
 
 	/* Not found, so create it */
-	if (!create_new_ph)
+	if (root->placeholdersFrozen)
 		elog(ERROR, "too late to create a new PlaceHolderInfo");
 
 	phinfo = makeNode(PlaceHolderInfo);
 
 	phinfo->phid = phv->phid;
 	phinfo->ph_var = copyObject(phv);
+
+	/*
+	 * By convention, phinfo->ph_var->phnullingrels is always empty, since the
+	 * PlaceHolderInfo represents the initially-calculated state of the
+	 * PlaceHolderVar.  PlaceHolderVars appearing in the query tree might have
+	 * varying values of phnullingrels, reflecting outer joins applied above
+	 * the calculation level.
+	 */
+	phinfo->ph_var->phnullingrels = NULL;
 
 	/*
 	 * Any referenced rels that are outside the PHV's syntactic scope are
@@ -100,8 +125,6 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 	 */
 	rels_used = pull_varnos(root, (Node *) phv->phexpr);
 	phinfo->ph_lateral = bms_difference(rels_used, phv->phrels);
-	if (bms_is_empty(phinfo->ph_lateral))
-		phinfo->ph_lateral = NULL;	/* make it exactly NULL if empty */
 	phinfo->ph_eval_at = bms_int_members(rels_used, phv->phrels);
 	/* If no contained vars, force evaluation at syntactic location */
 	if (bms_is_empty(phinfo->ph_eval_at))
@@ -109,13 +132,37 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 		phinfo->ph_eval_at = bms_copy(phv->phrels);
 		Assert(!bms_is_empty(phinfo->ph_eval_at));
 	}
-	/* ph_eval_at may change later, see update_placeholder_eval_levels */
 	phinfo->ph_needed = NULL;	/* initially it's unused */
 	/* for the moment, estimate width using just the datatype info */
 	phinfo->ph_width = get_typavgwidth(exprType((Node *) phv->phexpr),
 									   exprTypmod((Node *) phv->phexpr));
 
+	/*
+	 * Add to both placeholder_list and placeholder_array.  Note: because we
+	 * store pointers to the PlaceHolderInfos in two data structures, it'd be
+	 * unsafe to pass the whole placeholder_list structure through
+	 * expression_tree_mutator or the like --- or at least, you'd have to
+	 * rebuild the placeholder_array afterwards.
+	 */
 	root->placeholder_list = lappend(root->placeholder_list, phinfo);
+
+	if (phinfo->phid >= root->placeholder_array_size)
+	{
+		/* Must allocate or enlarge placeholder_array */
+		int			new_size;
+
+		new_size = root->placeholder_array_size ? root->placeholder_array_size * 2 : 8;
+		while (phinfo->phid >= new_size)
+			new_size *= 2;
+		if (root->placeholder_array)
+			root->placeholder_array =
+				repalloc0_array(root->placeholder_array, PlaceHolderInfo *, root->placeholder_array_size, new_size);
+		else
+			root->placeholder_array =
+				palloc0_array(PlaceHolderInfo *, new_size);
+		root->placeholder_array_size = new_size;
+	}
+	root->placeholder_array[phinfo->phid] = phinfo;
 
 	/*
 	 * The PHV's contained expression may contain other, lower-level PHVs.  We
@@ -133,16 +180,13 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
  *
  * We don't need to look at the targetlist because build_base_rel_tlists()
  * will already have made entries for any PHVs in the tlist.
- *
- * This is called before we begin deconstruct_jointree.  Once we begin
- * deconstruct_jointree, all active placeholders must be present in
- * root->placeholder_list, because make_outerjoininfo and
- * update_placeholder_eval_levels require this info to be available
- * while we crawl up the join tree.
  */
 void
 find_placeholders_in_jointree(PlannerInfo *root)
 {
+	/* This must be done before freezing the set of PHIs */
+	Assert(!root->placeholdersFrozen);
+
 	/* We need do nothing if the query contains no PlaceHolderVars */
 	if (root->glob->lastPHId != 0)
 	{
@@ -232,103 +276,9 @@ find_placeholders_in_expr(PlannerInfo *root, Node *expr)
 			continue;
 
 		/* Create a PlaceHolderInfo entry if there's not one already */
-		(void) find_placeholder_info(root, phv, true);
+		(void) find_placeholder_info(root, phv);
 	}
 	list_free(vars);
-}
-
-/*
- * update_placeholder_eval_levels
- *		Adjust the target evaluation levels for placeholders
- *
- * The initial eval_at level set by find_placeholder_info was the set of
- * rels used in the placeholder's expression (or the whole subselect below
- * the placeholder's syntactic location, if the expr is variable-free).
- * If the query contains any outer joins that can null any of those rels,
- * we must delay evaluation to above those joins.
- *
- * We repeat this operation each time we add another outer join to
- * root->join_info_list.  It's somewhat annoying to have to do that, but
- * since we don't have very much information on the placeholders' locations,
- * it's hard to avoid.  Each placeholder's eval_at level must be correct
- * by the time it starts to figure in outer-join delay decisions for higher
- * outer joins.
- *
- * In future we might want to put additional policy/heuristics here to
- * try to determine an optimal evaluation level.  The current rules will
- * result in evaluation at the lowest possible level.  However, pushing a
- * placeholder eval up the tree is likely to further constrain evaluation
- * order for outer joins, so it could easily be counterproductive; and we
- * don't have enough information at this point to make an intelligent choice.
- */
-void
-update_placeholder_eval_levels(PlannerInfo *root, SpecialJoinInfo *new_sjinfo)
-{
-	ListCell   *lc1;
-
-	foreach(lc1, root->placeholder_list)
-	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc1);
-		Relids		syn_level = phinfo->ph_var->phrels;
-		Relids		eval_at;
-		bool		found_some;
-		ListCell   *lc2;
-
-		/*
-		 * We don't need to do any work on this placeholder unless the
-		 * newly-added outer join is syntactically beneath its location.
-		 */
-		if (!bms_is_subset(new_sjinfo->syn_lefthand, syn_level) ||
-			!bms_is_subset(new_sjinfo->syn_righthand, syn_level))
-			continue;
-
-		/*
-		 * Check for delays due to lower outer joins.  This is the same logic
-		 * as in check_outerjoin_delay in initsplan.c, except that we don't
-		 * have anything to do with the delay_upper_joins flags; delay of
-		 * upper outer joins will be handled later, based on the eval_at
-		 * values we compute now.
-		 */
-		eval_at = phinfo->ph_eval_at;
-
-		do
-		{
-			found_some = false;
-			foreach(lc2, root->join_info_list)
-			{
-				SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc2);
-
-				/* disregard joins not within the PHV's sub-select */
-				if (!bms_is_subset(sjinfo->syn_lefthand, syn_level) ||
-					!bms_is_subset(sjinfo->syn_righthand, syn_level))
-					continue;
-
-				/* do we reference any nullable rels of this OJ? */
-				if (bms_overlap(eval_at, sjinfo->min_righthand) ||
-					(sjinfo->jointype == JOIN_FULL &&
-					 bms_overlap(eval_at, sjinfo->min_lefthand)))
-				{
-					/* yes; have we included all its rels in eval_at? */
-					if (!bms_is_subset(sjinfo->min_lefthand, eval_at) ||
-						!bms_is_subset(sjinfo->min_righthand, eval_at))
-					{
-						/* no, so add them in */
-						eval_at = bms_add_members(eval_at,
-												  sjinfo->min_lefthand);
-						eval_at = bms_add_members(eval_at,
-												  sjinfo->min_righthand);
-						/* we'll need another iteration */
-						found_some = true;
-					}
-				}
-			}
-		} while (found_some);
-
-		/* Can't move the PHV's eval_at level to above its syntactic level */
-		Assert(bms_is_subset(eval_at, syn_level));
-
-		phinfo->ph_eval_at = eval_at;
-	}
 }
 
 /*
@@ -359,7 +309,7 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
 										   PVC_RECURSE_WINDOWFUNCS |
 										   PVC_INCLUDE_PLACEHOLDERS);
 
-		add_vars_to_targetlist(root, vars, phinfo->ph_eval_at, false);
+		add_vars_to_targetlist(root, vars, phinfo->ph_eval_at);
 		list_free(vars);
 	}
 }
@@ -391,6 +341,14 @@ add_placeholders_to_base_rels(PlannerInfo *root)
 		{
 			RelOptInfo *rel = find_base_rel(root, varno);
 
+			/*
+			 * As in add_vars_to_targetlist(), a value computed at scan level
+			 * has not yet been nulled by any outer join, so its phnullingrels
+			 * should be empty.
+			 */
+			Assert(phinfo->ph_var->phnullingrels == NULL);
+
+			/* Copying the PHV might be unnecessary here, but be safe */
 			rel->reltarget->exprs = lappend(rel->reltarget->exprs,
 											copyObject(phinfo->ph_var));
 			/* reltarget's cost and width fields will be updated later */
@@ -400,18 +358,21 @@ add_placeholders_to_base_rels(PlannerInfo *root)
 
 /*
  * add_placeholders_to_joinrel
- *		Add any required PlaceHolderVars to a join rel's targetlist;
- *		and if they contain lateral references, add those references to the
- *		joinrel's direct_lateral_relids.
+ *		Add any newly-computable PlaceHolderVars to a join rel's targetlist;
+ *		and if computable PHVs contain lateral references, add those
+ *		references to the joinrel's direct_lateral_relids.
  *
  * A join rel should emit a PlaceHolderVar if (a) the PHV can be computed
  * at or below this join level and (b) the PHV is needed above this level.
- * However, condition (a) is sufficient to add to direct_lateral_relids,
- * as explained below.
+ * Our caller build_join_rel() has already added any PHVs that were computed
+ * in either join input rel, so we need add only newly-computable ones to
+ * the targetlist.  However, direct_lateral_relids must be updated for every
+ * PHV computable at or below this join, as explained below.
  */
 void
 add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
-							RelOptInfo *outer_rel, RelOptInfo *inner_rel)
+							RelOptInfo *outer_rel, RelOptInfo *inner_rel,
+							SpecialJoinInfo *sjinfo)
 {
 	Relids		relids = joinrel->relids;
 	ListCell   *lc;
@@ -426,13 +387,10 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 			/* Is it still needed above this joinrel? */
 			if (bms_nonempty_difference(phinfo->ph_needed, relids))
 			{
-				/* Yup, add it to the output */
-				joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
-													phinfo->ph_var);
-				joinrel->reltarget->width += phinfo->ph_width;
-
 				/*
-				 * Charge the cost of evaluating the contained expression if
+				 * Yes, but only add to tlist if it wasn't computed in either
+				 * input; otherwise it should be there already.  Also, we
+				 * charge the cost of evaluating the contained expression if
 				 * the PHV can be computed here but not in either input.  This
 				 * is a bit bogus because we make the decision based on the
 				 * first pair of possible input relations considered for the
@@ -445,12 +403,23 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 				if (!bms_is_subset(phinfo->ph_eval_at, outer_rel->relids) &&
 					!bms_is_subset(phinfo->ph_eval_at, inner_rel->relids))
 				{
+					/* Copying might be unnecessary here, but be safe */
+					PlaceHolderVar *phv = copyObject(phinfo->ph_var);
 					QualCost	cost;
 
-					cost_qual_eval_node(&cost, (Node *) phinfo->ph_var->phexpr,
-										root);
+					/*
+					 * It'll start out not nulled by anything.  Joins above
+					 * this one might add to its phnullingrels later, in much
+					 * the same way as for Vars.
+					 */
+					Assert(phv->phnullingrels == NULL);
+
+					joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
+														phv);
+					cost_qual_eval_node(&cost, (Node *) phv->phexpr, root);
 					joinrel->reltarget->cost.startup += cost.startup;
 					joinrel->reltarget->cost.per_tuple += cost.per_tuple;
+					joinrel->reltarget->width += phinfo->ph_width;
 				}
 			}
 
@@ -474,4 +443,75 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 								phinfo->ph_lateral);
 		}
 	}
+}
+
+/*
+ * contain_placeholder_references_to
+ *		Detect whether any PlaceHolderVars in the given clause contain
+ *		references to the given relid (typically an OJ relid).
+ *
+ * "Contain" means that there's a use of the relid inside the PHV's
+ * contained expression, so that changing the nullability status of
+ * the rel might change what the PHV computes.
+ *
+ * The code here to cope with upper-level PHVs is likely dead, but keep it
+ * anyway just in case.
+ */
+bool
+contain_placeholder_references_to(PlannerInfo *root, Node *clause,
+								  int relid)
+{
+	contain_placeholder_references_context context;
+
+	/* We can answer quickly in the common case that there's no PHVs at all */
+	if (root->glob->lastPHId == 0)
+		return false;
+	/* Else run the recursive search */
+	context.relid = relid;
+	context.sublevels_up = 0;
+	return contain_placeholder_references_walker(clause, &context);
+}
+
+static bool
+contain_placeholder_references_walker(Node *node,
+									  contain_placeholder_references_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		/* We should just look through PHVs of other query levels */
+		if (phv->phlevelsup == context->sublevels_up)
+		{
+			/* If phrels matches, we found what we came for */
+			if (bms_is_member(context->relid, phv->phrels))
+				return true;
+
+			/*
+			 * We should not examine phnullingrels: what we are looking for is
+			 * references in the contained expression, not OJs that might null
+			 * the result afterwards.  Also, we don't need to recurse into the
+			 * contained expression, because phrels should adequately
+			 * summarize what's in there.  So we're done here.
+			 */
+			return false;
+		}
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		bool		result;
+
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   contain_placeholder_references_walker,
+								   context,
+								   0);
+		context->sublevels_up--;
+		return result;
+	}
+	return expression_tree_walker(node, contain_placeholder_references_walker,
+								  context);
 }

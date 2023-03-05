@@ -4,7 +4,7 @@
  *	  prototypes for plancat.c.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/plancat.h
@@ -73,5 +73,8 @@ extern double get_function_rows(PlannerInfo *root, Oid funcid, Node *node);
 extern bool has_row_triggers(PlannerInfo *root, Index rti, CmdType event);
 
 extern bool has_stored_generated_columns(PlannerInfo *root, Index rti);
+
+extern Bitmapset *get_dependent_generated_columns(PlannerInfo *root, Index rti,
+												  Bitmapset *target_cols);
 
 #endif							/* PLANCAT_H */

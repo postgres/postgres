@@ -4,7 +4,7 @@
  *	  This file contains definitions for structures and
  *	  externs for functions used by frontend postgres applications.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/libpq-fe.h
@@ -483,7 +483,7 @@ extern int	PQputCopyEnd(PGconn *conn, const char *errormsg);
 extern int	PQgetCopyData(PGconn *conn, char **buffer, int async);
 
 /* Deprecated routines for copy in/out */
-extern int	PQgetline(PGconn *conn, char *string, int length);
+extern int	PQgetline(PGconn *conn, char *buffer, int length);
 extern int	PQputline(PGconn *conn, const char *string);
 extern int	PQgetlineAsync(PGconn *conn, char *buffer, int bufsize);
 extern int	PQputnbytes(PGconn *conn, const char *buffer, int nbytes);
@@ -591,7 +591,7 @@ extern unsigned char *PQescapeBytea(const unsigned char *from, size_t from_lengt
 
 extern void PQprint(FILE *fout, /* output stream */
 					const PGresult *res,
-					const PQprintOpt *ps);	/* option structure */
+					const PQprintOpt *po);	/* option structure */
 
 /*
  * really old printing routines

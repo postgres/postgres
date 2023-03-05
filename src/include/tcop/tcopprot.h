@@ -4,7 +4,7 @@
  *	  prototypes for postgres.c.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/tcop/tcopprot.h
@@ -65,9 +65,6 @@ extern PlannedStmt *pg_plan_query(Query *querytree, const char *query_string,
 extern List *pg_plan_queries(List *querytrees, const char *query_string,
 							 int cursorOptions,
 							 ParamListInfo boundParams);
-
-extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
-extern void assign_max_stack_depth(int newval, void *extra);
 
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS) pg_attribute_noreturn();

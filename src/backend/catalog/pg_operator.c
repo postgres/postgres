@@ -3,7 +3,7 @@
  * pg_operator.c
  *	  routines to support manipulation of the pg_operator relation
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -427,7 +427,7 @@ OperatorCreate(const char *operatorName,
 	 * such shell.
 	 */
 	if (OidIsValid(operatorObjectId) &&
-		!pg_oper_ownercheck(operatorObjectId, GetUserId()))
+		!object_ownercheck(OperatorRelationId, operatorObjectId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 					   operatorName);
 
@@ -447,7 +447,7 @@ OperatorCreate(const char *operatorName,
 
 		/* Permission check: must own other operator */
 		if (OidIsValid(commutatorId) &&
-			!pg_oper_ownercheck(commutatorId, GetUserId()))
+			!object_ownercheck(OperatorRelationId, commutatorId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 						   NameListToString(commutatorName));
 
@@ -472,7 +472,7 @@ OperatorCreate(const char *operatorName,
 
 		/* Permission check: must own other operator */
 		if (OidIsValid(negatorId) &&
-			!pg_oper_ownercheck(negatorId, GetUserId()))
+			!object_ownercheck(OperatorRelationId, negatorId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 						   NameListToString(negatorName));
 	}
@@ -624,7 +624,7 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 
 	/* not in catalogs, different from operator, so make shell */
 
-	aclresult = pg_namespace_aclcheck(otherNamespace, GetUserId(),
+	aclresult = object_aclcheck(NamespaceRelationId, otherNamespace, GetUserId(),
 									  ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
@@ -827,11 +827,10 @@ makeOperatorDependencies(HeapTuple tuple,
 
 	/*
 	 * NOTE: we do not consider the operator to depend on the associated
-	 * operators oprcom and oprnegate. We would not want to delete this
-	 * operator if those go away, but only reset the link fields; which is not
-	 * a function that the dependency code can presently handle.  (Something
-	 * could perhaps be done with objectSubId though.)	For now, it's okay to
-	 * let those links dangle if a referenced operator is removed.
+	 * operators oprcom and oprnegate.  We do not want to delete this operator
+	 * if those go away, but only reset the link fields; which is not a
+	 * function that the dependency logic can handle.  (It's taken care of
+	 * manually within RemoveOperatorById, instead.)
 	 */
 
 	/* Dependency on implementation function */
@@ -864,7 +863,7 @@ makeOperatorDependencies(HeapTuple tuple,
 
 	/* Dependency on extension */
 	if (makeExtensionDep)
-		recordDependencyOnCurrentExtension(&myself, true);
+		recordDependencyOnCurrentExtension(&myself, isUpdate);
 
 	return myself;
 }

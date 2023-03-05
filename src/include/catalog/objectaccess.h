@@ -3,7 +3,7 @@
  *
  *		Object access hooks.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  */
 
@@ -17,7 +17,9 @@
  *
  * OAT_POST_CREATE should be invoked just after the object is created.
  * Typically, this is done after inserting the primary catalog records and
- * associated dependencies.
+ * associated dependencies. The command counter may or may not be incremented
+ * at the time the hook is invoked; if not, the extension can use SnapshotSelf
+ * to get the new version of the tuple.
  *
  * OAT_DROP should be invoked just before deletion of objects; typically
  * deleteOneObject(). Its arguments are packed within ObjectAccessDrop.
@@ -151,15 +153,15 @@ extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation);
 extern void RunFunctionExecuteHook(Oid objectId);
 
 /* String versions */
-extern void RunObjectPostCreateHookStr(Oid classId, const char *objectStr, int subId,
+extern void RunObjectPostCreateHookStr(Oid classId, const char *objectName, int subId,
 									   bool is_internal);
-extern void RunObjectDropHookStr(Oid classId, const char *objectStr, int subId,
+extern void RunObjectDropHookStr(Oid classId, const char *objectName, int subId,
 								 int dropflags);
-extern void RunObjectTruncateHookStr(const char *objectStr);
-extern void RunObjectPostAlterHookStr(Oid classId, const char *objectStr, int subId,
+extern void RunObjectTruncateHookStr(const char *objectName);
+extern void RunObjectPostAlterHookStr(Oid classId, const char *objectName, int subId,
 									  Oid auxiliaryId, bool is_internal);
-extern bool RunNamespaceSearchHookStr(const char *objectStr, bool ereport_on_violation);
-extern void RunFunctionExecuteHookStr(const char *objectStr);
+extern bool RunNamespaceSearchHookStr(const char *objectName, bool ereport_on_violation);
+extern void RunFunctionExecuteHookStr(const char *objectName);
 
 
 /*

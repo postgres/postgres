@@ -75,6 +75,11 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
   </para>
 
   <para>
+   <command>INSERT</command> into tables that lack unique indexes will
+   not be blocked by concurrent activity.  Tables with unique indexes
+   might block if concurrent sessions perform actions that lock or modify
+   rows matching the unique index values being inserted;  the details
+   are covered in <xref linkend="index-unique-checks"/>.
    <literal>ON CONFLICT</literal> can be used to specify an alternative
    action to raising a unique constraint or exclusion constraint
    violation error. (See <xref linkend="sql-on-conflict"/> below.)
@@ -176,7 +181,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         provided, it completely hides the actual name of the table.
         This is particularly useful when <literal>ON CONFLICT DO UPDATE</literal>
         targets a table named <varname>excluded</varname>, since that will otherwise
-        be taken as the name of the special table representing rows proposed
+        be taken as the name of the special table representing the row proposed
         for insertion.
        </para>
       </listitem>
@@ -396,7 +401,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         conflict.  The <literal>SET</literal> and
         <literal>WHERE</literal> clauses in <literal>ON CONFLICT DO
         UPDATE</literal> have access to the existing row using the
-        table's name (or an alias), and to rows proposed for insertion
+        table's name (or an alias), and to the row proposed for insertion
         using the special <varname>excluded</varname> table.
         <literal>SELECT</literal> privilege is required on any column in the
         target table where corresponding <varname>excluded</varname>

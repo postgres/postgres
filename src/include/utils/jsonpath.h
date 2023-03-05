@@ -3,7 +3,7 @@
  * jsonpath.h
  *	Definitions for jsonpath datatype
  *
- * Copyright (c) 2019-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2019-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	src/include/utils/jsonpath.h
@@ -15,11 +15,8 @@
 #define JSONPATH_H
 
 #include "fmgr.h"
-#include "executor/tablefunc.h"
 #include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
 #include "utils/jsonb.h"
-#include "utils/jsonfuncs.h"
 
 typedef struct
 {
@@ -32,8 +29,18 @@ typedef struct
 #define JSONPATH_LAX		(0x80000000)
 #define JSONPATH_HDRSZ		(offsetof(JsonPath, data))
 
-#define DatumGetJsonPathP(d)			((JsonPath *) DatumGetPointer(PG_DETOAST_DATUM(d)))
-#define DatumGetJsonPathPCopy(d)		((JsonPath *) DatumGetPointer(PG_DETOAST_DATUM_COPY(d)))
+static inline JsonPath *
+DatumGetJsonPathP(Datum d)
+{
+	return (JsonPath *) PG_DETOAST_DATUM(d);
+}
+
+static inline JsonPath *
+DatumGetJsonPathPCopy(Datum d)
+{
+	return (JsonPath *) PG_DETOAST_DATUM_COPY(d);
+}
+
 #define PG_GETARG_JSONPATH_P(x)			DatumGetJsonPathP(PG_GETARG_DATUM(x))
 #define PG_GETARG_JSONPATH_P_COPY(x)	DatumGetJsonPathPCopy(PG_GETARG_DATUM(x))
 #define PG_RETURN_JSONPATH_P(p)			PG_RETURN_POINTER(p)
@@ -177,7 +184,6 @@ extern bool jspGetBool(JsonPathItem *v);
 extern char *jspGetString(JsonPathItem *v, int32 *len);
 extern bool jspGetArraySubscript(JsonPathItem *v, JsonPathItem *from,
 								 JsonPathItem *to, int i);
-extern bool jspIsMutable(JsonPath *path, List *varnames, List *varexprs);
 
 extern const char *jspOperationName(JsonPathItemType type);
 
@@ -248,41 +254,11 @@ typedef struct JsonPathParseResult
 	bool		lax;
 } JsonPathParseResult;
 
-extern JsonPathParseResult *parsejsonpath(const char *str, int len);
+extern JsonPathParseResult *parsejsonpath(const char *str, int len,
+										  struct Node *escontext);
 
-extern int	jspConvertRegexFlags(uint32 xflags);
+extern bool jspConvertRegexFlags(uint32 xflags, int *result,
+								 struct Node *escontext);
 
-/*
- * Evaluation of jsonpath
- */
-
-/* External variable passed into jsonpath. */
-typedef struct JsonPathVariableEvalContext
-{
-	char	   *name;
-	Oid			typid;
-	int32		typmod;
-	struct ExprContext *econtext;
-	struct ExprState *estate;
-	MemoryContext mcxt;			/* memory context for cached value */
-	Datum		value;
-	bool		isnull;
-	bool		evaluated;
-} JsonPathVariableEvalContext;
-
-/* SQL/JSON item */
-extern void JsonItemFromDatum(Datum val, Oid typid, int32 typmod,
-							  JsonbValue *res);
-
-extern bool JsonPathExists(Datum jb, JsonPath *path, List *vars, bool *error);
-extern Datum JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper,
-						   bool *empty, bool *error, List *vars);
-extern JsonbValue *JsonPathValue(Datum jb, JsonPath *jp, bool *empty,
-								 bool *error, List *vars);
-
-extern int	EvalJsonPathVar(void *vars, char *varName, int varNameLen,
-							JsonbValue *val, JsonbValue *baseObject);
-
-extern PGDLLIMPORT const TableFuncRoutine JsonbTableRoutine;
 
 #endif

@@ -38,7 +38,7 @@ ALTER ROLE <replaceable class="parameter">role_specification</replaceable> [ WIT
 
 ALTER ROLE <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
-ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | <replaceable>value</replaceable> USER SET | DEFAULT }
 ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
 ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
 ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] RESET ALL
@@ -52,7 +52,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
 </synopsis>
  </refsynopsisdiv>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-desc">
   <title>Description</title>
 
   <para>
@@ -70,10 +70,14 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    <link linkend="sql-revoke"><command>REVOKE</command></link> for that.)
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
-   Roles having <literal>CREATEROLE</literal> privilege can change any of these
-   settings except <literal>SUPERUSER</literal>, <literal>REPLICATION</literal>,
-   and <literal>BYPASSRLS</literal>; but only for non-superuser and
-   non-replication roles.
+   Non-superuser roles having <literal>CREATEROLE</literal> privilege can
+   change most of these properties, but only for non-superuser and
+   non-replication roles for which they have been granted
+   <literal>ADMIN OPTION</literal>. Non-superusers cannot change the
+   <literal>SUPERUSER</literal> property and can change the
+   <literal>CREATEDB</literal>, <literal>REPLICATION</literal>, and
+   <literal>BYPASSRLS</literal> properties only if they possess the
+   corresponding property themselves.
    Ordinary roles can only change their own password.
   </para>
 
@@ -81,7 +85,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    The second variant changes the name of the role.
    Database superusers can rename any role.
    Roles having <literal>CREATEROLE</literal> privilege can rename non-superuser
-   roles.
+   roles for which they have been granted <literal>ADMIN OPTION</literal>.
    The current session user cannot be renamed.
    (Connect as a different user if you need to do that.)
    Because <literal>MD5</literal>-encrypted passwords use the role name as
@@ -116,18 +120,19 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   <para>
    Superusers can change anyone's session defaults. Roles having
    <literal>CREATEROLE</literal> privilege can change defaults for non-superuser
-   roles. Ordinary roles can only set defaults for themselves.
+   roles for which they have been granted <literal>ADMIN OPTION</literal>.
+   Ordinary roles can only set defaults for themselves.
    Certain configuration variables cannot be set this way, or can only be
    set if a superuser issues the command.  Only superusers can change a setting
    for all roles in all databases.
   </para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-params">
   <title>Parameters</title>
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-name">
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
@@ -136,7 +141,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-current-role">
       <term><literal>CURRENT_ROLE</literal></term>
       <term><literal>CURRENT_USER</literal></term>
       <listitem>
@@ -146,7 +151,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-session-user">
       <term><literal>SESSION_USER</literal></term>
       <listitem>
        <para>
@@ -156,7 +161,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-superuser">
       <term><literal>SUPERUSER</literal></term>
       <term><literal>NOSUPERUSER</literal></term>
       <term><literal>CREATEDB</literal></term>
@@ -184,7 +189,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-new-name">
       <term><replaceable>new_name</replaceable></term>
       <listitem>
        <para>
@@ -193,7 +198,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-database-name">
        <term><replaceable>database_name</replaceable></term>
        <listitem>
          <para>
@@ -202,7 +207,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
        </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="sql-alterrole-params-configuration-parameter">
       <term><replaceable>configuration_parameter</replaceable></term>
       <term><replaceable>value</replaceable></term>
       <listitem>
@@ -234,10 +239,23 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="sql-alterrole-user-set">
+      <term><literal>USER SET</literal></term>
+      <listitem>
+       <para>
+        Specifies that the variable should be set on behalf of an ordinary role.
+        That allows non-superuser and non-replication roles to set placeholder
+        variables, whose permission requirements are not known yet;
+        see <xref linkend="runtime-config-custom"/>. The variable won't
+        be set if it appears to require superuser privileges.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-notes">
   <title>Notes</title>
 
   <para>
@@ -271,7 +289,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   </para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-examples">
   <title>Examples</title>
 
   <para>
@@ -307,7 +325,7 @@ ALTER ROLE fred VALID UNTIL 'infinity';
   </para>
 
   <para>
-   Give a role the ability to create other roles and new databases:
+   Give a role the ability to manage other roles and create new databases:
 
 <programlisting>
 ALTER ROLE miriam CREATEROLE CREATEDB;
@@ -330,9 +348,16 @@ ALTER ROLE worker_bee SET maintenance_work_mem = 100000;
 <programlisting>
 ALTER ROLE fred IN DATABASE devel SET client_min_messages = DEBUG;
 </programlisting></para>
+
+  <para>
+   Give a role a non-default placeholder setting on behalf of ordinary user:
+
+<programlisting>
+ALTER ROLE fred SET my.param = 'value' USER SET;
+</programlisting></para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-compat">
   <title>Compatibility</title>
 
   <para>
@@ -341,7 +366,7 @@ ALTER ROLE fred IN DATABASE devel SET client_min_messages = DEBUG;
   </para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-alterrole-see">
   <title>See Also</title>
 
   <simplelist type="inline">

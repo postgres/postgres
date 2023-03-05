@@ -7,7 +7,7 @@
  * implementation is a simple one, in that it needs every input byte
  * to be buffered before doing any calculations.
  *
- *	Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ *	Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

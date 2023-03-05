@@ -3,7 +3,7 @@
  * jsonapi.h
  *	  Declarations for JSON API support.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/jsonapi.h
@@ -16,7 +16,7 @@
 
 #include "lib/stringinfo.h"
 
-typedef enum
+typedef enum JsonTokenType
 {
 	JSON_TOKEN_INVALID,
 	JSON_TOKEN_STRING,
@@ -33,7 +33,7 @@ typedef enum
 	JSON_TOKEN_END
 } JsonTokenType;
 
-typedef enum
+typedef enum JsonParseErrorType
 {
 	JSON_SUCCESS,
 	JSON_ESCAPING_INVALID,
@@ -51,8 +51,10 @@ typedef enum
 	JSON_UNICODE_CODE_POINT_ZERO,
 	JSON_UNICODE_ESCAPE_FORMAT,
 	JSON_UNICODE_HIGH_ESCAPE,
+	JSON_UNICODE_UNTRANSLATABLE,
 	JSON_UNICODE_HIGH_SURROGATE,
-	JSON_UNICODE_LOW_SURROGATE
+	JSON_UNICODE_LOW_SURROGATE,
+	JSON_SEM_ACTION_FAILED		/* error should already be reported */
 } JsonParseErrorType;
 
 
@@ -84,14 +86,15 @@ typedef struct JsonLexContext
 	StringInfo	strval;
 } JsonLexContext;
 
-typedef void (*json_struct_action) (void *state);
-typedef void (*json_ofield_action) (void *state, char *fname, bool isnull);
-typedef void (*json_aelem_action) (void *state, bool isnull);
-typedef void (*json_scalar_action) (void *state, char *token, JsonTokenType tokentype);
+typedef JsonParseErrorType (*json_struct_action) (void *state);
+typedef JsonParseErrorType (*json_ofield_action) (void *state, char *fname, bool isnull);
+typedef JsonParseErrorType (*json_aelem_action) (void *state, bool isnull);
+typedef JsonParseErrorType (*json_scalar_action) (void *state, char *token, JsonTokenType tokentype);
 
 
 /*
  * Semantic Action structure for use in parsing json.
+ *
  * Any of these actions can be NULL, in which case nothing is done at that
  * point, Likewise, semstate can be NULL. Using an all-NULL structure amounts
  * to doing a pure parse with no side-effects, and is therefore exactly
@@ -100,6 +103,11 @@ typedef void (*json_scalar_action) (void *state, char *token, JsonTokenType toke
  * The 'fname' and 'token' strings passed to these actions are palloc'd.
  * They are not free'd or used further by the parser, so the action function
  * is free to do what it wishes with them.
+ *
+ * All action functions return JsonParseErrorType.  If the result isn't
+ * JSON_SUCCESS, the parse is abandoned and that error code is returned.
+ * If it is JSON_SEM_ACTION_FAILED, the action function is responsible
+ * for having reported the error in some appropriate way.
  */
 typedef struct JsonSemAction
 {

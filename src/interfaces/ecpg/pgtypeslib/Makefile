@@ -2,7 +2,7 @@
 #
 # Makefile for ecpg pgtypes library
 #
-# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/interfaces/ecpg/pgtypeslib/Makefile
@@ -19,7 +19,7 @@ SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= $(MAJORVERSION)
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-	-DFRONTEND $(CPPFLAGS)
+	$(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 SHLIB_LINK_INTERNAL = -lpgcommon_shlib -lpgport_shlib

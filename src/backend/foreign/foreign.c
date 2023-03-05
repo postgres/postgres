@@ -3,7 +3,7 @@
  * foreign.c
  *		  support for foreign-data wrappers, servers and user mappings.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/backend/foreign/foreign.c
@@ -27,6 +27,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
 
 
 /*
@@ -516,7 +517,7 @@ pg_options_to_table(PG_FUNCTION_ARGS)
 	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	/* prepare the result set */
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 
 	foreach(cell, options)
 	{
@@ -621,25 +622,32 @@ postgresql_fdw_validator(PG_FUNCTION_ARGS)
 		if (!is_conninfo_option(def->defname, catalog))
 		{
 			const struct ConnectionOption *opt;
-			StringInfoData buf;
+			const char *closest_match;
+			ClosestMatchState match_state;
+			bool		has_valid_options = false;
 
 			/*
 			 * Unknown option specified, complain about it. Provide a hint
-			 * with list of valid options for the object.
+			 * with a valid option that looks similar, if there is one.
 			 */
-			initStringInfo(&buf);
+			initClosestMatch(&match_state, def->defname, 4);
 			for (opt = libpq_conninfo_options; opt->optname; opt++)
+			{
 				if (catalog == opt->optcontext)
-					appendStringInfo(&buf, "%s%s", (buf.len > 0) ? ", " : "",
-									 opt->optname);
+				{
+					has_valid_options = true;
+					updateClosestMatch(&match_state, opt->optname);
+				}
+			}
 
+			closest_match = getClosestMatch(&match_state);
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid option \"%s\"", def->defname),
-					 buf.len > 0
-					 ? errhint("Valid options in this context are: %s",
-							   buf.data)
-					 : errhint("There are no valid options in this context.")));
+					 has_valid_options ? closest_match ?
+					 errhint("Perhaps you meant the option \"%s\".",
+							 closest_match) : 0 :
+					 errhint("There are no valid options in this context.")));
 
 			PG_RETURN_BOOL(false);
 		}

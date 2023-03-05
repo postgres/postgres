@@ -22,6 +22,8 @@ PREREQUISITES:
    ("man perlmodinstall" explains it).  Or, if you have cpan installed,
    this should work:
    cpan SHANCOCK/Perl-Tidy-20170521.tar.gz
+   Or if you have cpanm installed, you can just use:
+   cpanm https://cpan.metacpan.org/authors/id/S/SH/SHANCOCK/Perl-Tidy-20170521.tar.gz
 
 DOING THE INDENT RUN:
 

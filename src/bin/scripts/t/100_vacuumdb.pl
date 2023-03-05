@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -22,15 +22,15 @@ $node->issues_sql_like(
 	'SQL VACUUM run');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-f', 'postgres' ],
-	qr/statement: VACUUM \(FULL\).*;/,
+	qr/statement: VACUUM \(SKIP_DATABASE_STATS, FULL\).*;/,
 	'vacuumdb -f');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-F', 'postgres' ],
-	qr/statement: VACUUM \(FREEZE\).*;/,
+	qr/statement: VACUUM \(SKIP_DATABASE_STATS, FREEZE\).*;/,
 	'vacuumdb -F');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-zj2', 'postgres' ],
-	qr/statement: VACUUM \(ANALYZE\).*;/,
+	qr/statement: VACUUM \(SKIP_DATABASE_STATS, ANALYZE\).*;/,
 	'vacuumdb -zj2');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-Z', 'postgres' ],
@@ -38,11 +38,11 @@ $node->issues_sql_like(
 	'vacuumdb -Z');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--disable-page-skipping', 'postgres' ],
-	qr/statement: VACUUM \(DISABLE_PAGE_SKIPPING\).*;/,
+	qr/statement: VACUUM \(DISABLE_PAGE_SKIPPING, SKIP_DATABASE_STATS\).*;/,
 	'vacuumdb --disable-page-skipping');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--skip-locked', 'postgres' ],
-	qr/statement: VACUUM \(SKIP_LOCKED\).*;/,
+	qr/statement: VACUUM \(SKIP_DATABASE_STATS, SKIP_LOCKED\).*;/,
 	'vacuumdb --skip-locked');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--skip-locked', '--analyze-only', 'postgres' ],
@@ -53,32 +53,32 @@ $node->command_fails(
 	'--analyze-only and --disable-page-skipping specified together');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--no-index-cleanup', 'postgres' ],
-	qr/statement: VACUUM \(INDEX_CLEANUP FALSE\).*;/,
+	qr/statement: VACUUM \(INDEX_CLEANUP FALSE, SKIP_DATABASE_STATS\).*;/,
 	'vacuumdb --no-index-cleanup');
 $node->command_fails(
 	[ 'vacuumdb', '--analyze-only', '--no-index-cleanup', 'postgres' ],
 	'--analyze-only and --no-index-cleanup specified together');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--no-truncate', 'postgres' ],
-	qr/statement: VACUUM \(TRUNCATE FALSE\).*;/,
+	qr/statement: VACUUM \(TRUNCATE FALSE, SKIP_DATABASE_STATS\).*;/,
 	'vacuumdb --no-truncate');
 $node->command_fails(
 	[ 'vacuumdb', '--analyze-only', '--no-truncate', 'postgres' ],
 	'--analyze-only and --no-truncate specified together');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--no-process-toast', 'postgres' ],
-	qr/statement: VACUUM \(PROCESS_TOAST FALSE\).*;/,
+	qr/statement: VACUUM \(PROCESS_TOAST FALSE, SKIP_DATABASE_STATS\).*;/,
 	'vacuumdb --no-process-toast');
 $node->command_fails(
 	[ 'vacuumdb', '--analyze-only', '--no-process-toast', 'postgres' ],
 	'--analyze-only and --no-process-toast specified together');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-P', 2, 'postgres' ],
-	qr/statement: VACUUM \(PARALLEL 2\).*;/,
+	qr/statement: VACUUM \(SKIP_DATABASE_STATS, PARALLEL 2\).*;/,
 	'vacuumdb -P 2');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-P', 0, 'postgres' ],
-	qr/statement: VACUUM \(PARALLEL 0\).*;/,
+	qr/statement: VACUUM \(SKIP_DATABASE_STATS, PARALLEL 0\).*;/,
 	'vacuumdb -P 0');
 $node->command_ok([qw(vacuumdb -Z --table=pg_am dbname=template1)],
 	'vacuumdb with connection string');
@@ -103,6 +103,8 @@ $node->safe_psql(
   CREATE TABLE funcidx (x int);
   INSERT INTO funcidx VALUES (0),(1),(2),(3);
   CREATE INDEX i0 ON funcidx ((f1(x)));
+  CREATE SCHEMA "Foo";
+  CREATE TABLE "Foo".bar(id int);
 |);
 $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
@@ -117,7 +119,7 @@ $node->command_fails([ 'vacuumdb', '-P', -1, 'postgres' ],
 	'negative parallel degree');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--analyze', '--table', 'vactable(a, b)', 'postgres' ],
-	qr/statement: VACUUM \(ANALYZE\) public.vactable\(a, b\);/,
+	qr/statement: VACUUM \(SKIP_DATABASE_STATS, ANALYZE\) public.vactable\(a, b\);/,
 	'vacuumdb --analyze with complete column list');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--analyze-only', '--table', 'vactable(b)', 'postgres' ],
@@ -146,5 +148,45 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--min-xid-age', '2147483001', 'postgres' ],
 	qr/GREATEST.*relfrozenxid.*2147483001/,
 	'vacuumdb --table --min-xid-age');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--schema', '"Foo"', 'postgres' ],
+	qr/VACUUM \(SKIP_DATABASE_STATS\) "Foo".bar/,
+	'vacuumdb --schema');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--exclude-schema', '"Foo"', 'postgres' ],
+	qr/(?:(?!VACUUM "Foo".bar).)*/,
+	'vacuumdb --exclude-schema');
+$node->command_fails_like(
+	[ 'vacuumdb', '-N', 'pg_catalog', '-t', 'pg_class', 'postgres', ],
+	qr/cannot vacuum specific table\(s\) and exclude schema\(s\) at the same time/,
+	'cannot use options -N and -t at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-n', 'pg_catalog', '-t', 'pg_class', 'postgres' ],
+	qr/cannot vacuum all tables in schema\(s\) and specific table\(s\) at the same time/,
+	'cannot use options -n and -t at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-n', 'pg_catalog', '-N', '"Foo"', 'postgres' ],
+	qr/cannot vacuum all tables in schema\(s\) and exclude schema\(s\) at the same time/,
+	'cannot use options -n and -N at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', '-N', '"Foo"' ],
+	qr/cannot exclude specific schema\(s\) in all databases/,
+	'cannot use options -a and -N at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', '-n', '"Foo"' ],
+	qr/cannot vacuum specific schema\(s\) in all databases/,
+	'cannot use options -a and -n at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', '-t', '"Foo".bar' ],
+	qr/cannot vacuum specific table\(s\) in all databases/,
+	'cannot use options -a and -t at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', '-d', 'postgres' ],
+	qr/cannot vacuum all databases and a specific one at the same time/,
+	'cannot use options -a and -d at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', 'postgres' ],
+	qr/cannot vacuum all databases and a specific one at the same time/,
+	'cannot use option -a and a dbname as argument at the same time');
 
 done_testing();

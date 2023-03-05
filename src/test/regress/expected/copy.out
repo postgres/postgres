@@ -182,7 +182,7 @@ create table header_copytest (
 	b int,
 	c text
 );
--- Make sure it works with with dropped columns
+-- Make sure it works with dropped columns
 alter table header_copytest drop column c;
 alter table header_copytest add column c text;
 copy header_copytest to stdout with (header match);
@@ -201,10 +201,10 @@ copy header_copytest from stdin with (header match);
 ERROR:  column name mismatch in header line field 3: got null value ("\N"), expected "c"
 CONTEXT:  COPY header_copytest, line 1: "a	b	\N"
 copy header_copytest from stdin with (header match);
-ERROR:  wrong number of fields in header line: field count is 2, expected 3
+ERROR:  wrong number of fields in header line: got 2, expected 3
 CONTEXT:  COPY header_copytest, line 1: "a	b"
 copy header_copytest from stdin with (header match);
-ERROR:  wrong number of fields in header line: field count is 4, expected 3
+ERROR:  wrong number of fields in header line: got 4, expected 3
 CONTEXT:  COPY header_copytest, line 1: "a	b	c	d"
 copy header_copytest from stdin with (header match);
 ERROR:  column name mismatch in header line field 3: got "d", expected "c"
@@ -224,10 +224,10 @@ copy header_copytest (c, a) from stdin with (header match);
 copy header_copytest (a, c) from stdin with (header match);
 -- errors
 copy header_copytest from stdin with (header match);
-ERROR:  wrong number of fields in header line: field count is 3, expected 2
+ERROR:  wrong number of fields in header line: got 3, expected 2
 CONTEXT:  COPY header_copytest, line 1: "a	........pg.dropped.2........	c"
 copy header_copytest (a, c) from stdin with (header match);
-ERROR:  wrong number of fields in header line: field count is 3, expected 2
+ERROR:  wrong number of fields in header line: got 3, expected 2
 CONTEXT:  COPY header_copytest, line 1: "a	c	b"
 SELECT * FROM header_copytest ORDER BY a;
  a |  c  

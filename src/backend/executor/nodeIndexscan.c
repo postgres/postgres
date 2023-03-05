@@ -3,7 +3,7 @@
  * nodeIndexscan.c
  *	  Routines to support indexed scans of relations
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -90,15 +90,13 @@ IndexNext(IndexScanState *node)
 	 * extract necessary information from index scan node
 	 */
 	estate = node->ss.ps.state;
-	direction = estate->es_direction;
-	/* flip direction if this is an overall backward scan */
-	if (ScanDirectionIsBackward(((IndexScan *) node->ss.ps.plan)->indexorderdir))
-	{
-		if (ScanDirectionIsForward(direction))
-			direction = BackwardScanDirection;
-		else if (ScanDirectionIsBackward(direction))
-			direction = ForwardScanDirection;
-	}
+
+	/*
+	 * Determine which direction to scan the index in based on the plan's scan
+	 * direction and the current direction of execution.
+	 */
+	direction = ScanDirectionCombine(estate->es_direction,
+									 ((IndexScan *) node->ss.ps.plan)->indexorderdir);
 	scandesc = node->iss_ScanDesc;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;

@@ -35,7 +35,7 @@ step s2c	{ COMMIT; }
 session s3
 setup		{
 			  BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			  SET force_parallel_mode = on;
+			  SET debug_parallel_query = on;
 			}
 step s3r	{ SELECT id, balance FROM bank_account WHERE id IN ('X', 'Y') ORDER BY id; }
 step s3c	{ COMMIT; }

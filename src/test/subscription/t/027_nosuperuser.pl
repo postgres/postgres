@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # Test that logical replication respects permissions
 use strict;
@@ -153,13 +153,8 @@ SET SESSION AUTHORIZATION regress_admin;
 CREATE SUBSCRIPTION admin_sub CONNECTION '$publisher_connstr' PUBLICATION alice;
 ));
 
-$node_publisher->wait_for_catchup('admin_sub');
-
-# Wait for initial sync to finish as well
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('s', 'r');";
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+# Wait for initial sync to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'admin_sub');
 
 # Verify that "regress_admin" can replicate into the tables
 #
@@ -265,7 +260,7 @@ expect_failure(
 	2,
 	11,
 	13,
-	qr/ERROR: ( [A-Z0-9]+:)? "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
+	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
 	"non-superuser admin fails to replicate insert into rls enabled table");
 grant_superuser("regress_admin");
 expect_replication("alice.unpartitioned", 3, 11, 15,
@@ -279,7 +274,7 @@ expect_failure(
 	3,
 	11,
 	15,
-	qr/ERROR: ( [A-Z0-9]+:)? "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
+	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
 	"non-superuser admin fails to replicate update into rls enabled unpartitioned"
 );
 
@@ -294,7 +289,7 @@ expect_failure(
 	3,
 	13,
 	17,
-	qr/ERROR: ( [A-Z0-9]+:)? "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
+	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
 	"non-superuser admin without bypassrls fails to replicate delete into rls enabled unpartitioned"
 );
 grant_bypassrls("regress_admin");

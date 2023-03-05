@@ -61,7 +61,7 @@
  *   (https://doi.org/10.1002/spe.948)
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -264,9 +264,9 @@ static void intset_update_upper(IntegerSet *intset, int level,
 								intset_node *child, uint64 child_key);
 static void intset_flush_buffered_values(IntegerSet *intset);
 
-static int	intset_binsrch_uint64(uint64 value, uint64 *arr, int arr_elems,
+static int	intset_binsrch_uint64(uint64 item, uint64 *arr, int arr_elems,
 								  bool nextkey);
-static int	intset_binsrch_leaf(uint64 value, leaf_item *arr, int arr_elems,
+static int	intset_binsrch_leaf(uint64 item, leaf_item *arr, int arr_elems,
 								bool nextkey);
 
 static uint64 simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base);
@@ -565,8 +565,6 @@ intset_is_member(IntegerSet *intset, uint64 x)
 	 */
 	if (intset->num_buffered_values > 0 && x >= intset->buffered_values[0])
 	{
-		int			itemno;
-
 		itemno = intset_binsrch_uint64(x,
 									   intset->buffered_values,
 									   intset->num_buffered_values,

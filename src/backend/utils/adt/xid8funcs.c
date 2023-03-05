@@ -15,7 +15,7 @@
  * users.  The txid_XXX variants should eventually be dropped.
  *
  *
- *	Copyright (c) 2003-2022, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2023, PostgreSQL Global Development Group
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *
@@ -73,6 +73,14 @@ typedef struct
 	(offsetof(pg_snapshot, xip) + sizeof(FullTransactionId) * (nxip))
 #define PG_SNAPSHOT_MAX_NXIP \
 	((MaxAllocSize - offsetof(pg_snapshot, xip)) / sizeof(FullTransactionId))
+
+/*
+ * Compile-time limits on the procarray (MAX_BACKENDS processes plus
+ * MAX_BACKENDS prepared transactions) guarantee nxip won't be too large.
+ */
+StaticAssertDecl(MAX_BACKENDS * 2 <= PG_SNAPSHOT_MAX_NXIP,
+				 "possible overflow in pg_current_snapshot()");
+
 
 /*
  * Helper to get a TransactionId from a 64-bit xid with wraparound detection.
@@ -252,7 +260,7 @@ buf_init(FullTransactionId xmin, FullTransactionId xmax)
 	snap.nxip = 0;
 
 	buf = makeStringInfo();
-	appendBinaryStringInfo(buf, (char *) &snap, PG_SNAPSHOT_SIZE(0));
+	appendBinaryStringInfo(buf, &snap, PG_SNAPSHOT_SIZE(0));
 	return buf;
 }
 
@@ -264,7 +272,7 @@ buf_add_txid(StringInfo buf, FullTransactionId fxid)
 	/* do this before possible realloc */
 	snap->nxip++;
 
-	appendBinaryStringInfo(buf, (char *) &fxid, sizeof(fxid));
+	appendBinaryStringInfo(buf, &fxid, sizeof(fxid));
 }
 
 static pg_snapshot *
@@ -285,7 +293,7 @@ buf_finalize(StringInfo buf)
  * parse snapshot from cstring
  */
 static pg_snapshot *
-parse_snapshot(const char *str)
+parse_snapshot(const char *str, Node *escontext)
 {
 	FullTransactionId xmin;
 	FullTransactionId xmax;
@@ -341,11 +349,10 @@ parse_snapshot(const char *str)
 	return buf_finalize(buf);
 
 bad_format:
-	ereport(ERROR,
+	ereturn(escontext, NULL,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"pg_snapshot", str_start)));
-	return NULL;				/* keep compiler quiet */
 }
 
 /*
@@ -403,13 +410,6 @@ pg_current_snapshot(PG_FUNCTION_ARGS)
 	if (cur == NULL)
 		elog(ERROR, "no active snapshot set");
 
-	/*
-	 * Compile-time limits on the procarray (MAX_BACKENDS processes plus
-	 * MAX_BACKENDS prepared transactions) guarantee nxip won't be too large.
-	 */
-	StaticAssertStmt(MAX_BACKENDS * 2 <= PG_SNAPSHOT_MAX_NXIP,
-					 "possible overflow in pg_current_snapshot()");
-
 	/* allocate */
 	nxip = cur->xcnt;
 	snap = palloc(PG_SNAPSHOT_SIZE(nxip));
@@ -447,7 +447,7 @@ pg_snapshot_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	pg_snapshot *snap;
 
-	snap = parse_snapshot(str);
+	snap = parse_snapshot(str, fcinfo->context);
 
 	PG_RETURN_POINTER(snap);
 }

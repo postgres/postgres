@@ -1,0 +1,4817 @@
+<!-- doc/src/sgml/system-views.sgml -->
+<!--
+ Documentation of the system views, directed toward PostgreSQL developers
+ -->
+
+<chapter id="views">
+ <title>System Views</title>
+
+  <para>
+   In addition to the system catalogs, <productname>PostgreSQL</productname>
+   provides a number of built-in views.  Some system views provide convenient
+   access to some commonly used queries on the system catalogs.  Other views
+   provide access to internal server state.
+  </para>
+
+  <para>
+   The information schema (<xref linkend="information-schema"/>) provides
+   an alternative set of views which overlap the functionality of the system
+   views.  Since the information schema is SQL-standard whereas the views
+   described here are <productname>PostgreSQL</productname>-specific,
+   it's usually better to use the information schema if it provides all
+   the information you need.
+  </para>
+
+  <para>
+   <xref linkend="view-table"/> lists the system views described here.
+   More detailed documentation of each view follows below.
+   There are some additional views that provide access to accumulated
+   statistics; they are described in
+   <xref linkend="monitoring-stats-views-table"/>.
+  </para>
+
+ <sect1 id="views-overview">
+  <title>Overview</title>
+
+  <para>
+   <xref linkend="view-table"/> lists the system views.
+   More detailed documentation of each catalog follows below.
+   Except where noted, all the views described here are read-only.
+  </para>
+
+  <table id="view-table">
+   <title>System Views</title>
+
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>View Name</entry>
+      <entry>Purpose</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><link linkend="view-pg-available-extensions"><structname>pg_available_extensions</structname></link></entry>
+      <entry>available extensions</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-available-extension-versions"><structname>pg_available_extension_versions</structname></link></entry>
+      <entry>available versions of extensions</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-backend-memory-contexts"><structname>pg_backend_memory_contexts</structname></link></entry>
+      <entry>backend memory contexts</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-config"><structname>pg_config</structname></link></entry>
+      <entry>compile-time configuration parameters</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-cursors"><structname>pg_cursors</structname></link></entry>
+      <entry>open cursors</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link></entry>
+      <entry>summary of configuration file contents</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-group"><structname>pg_group</structname></link></entry>
+      <entry>groups of database users</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link></entry>
+      <entry>summary of client authentication configuration file contents</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link></entry>
+      <entry>summary of client user name mapping configuration file contents</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-indexes"><structname>pg_indexes</structname></link></entry>
+      <entry>indexes</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-locks"><structname>pg_locks</structname></link></entry>
+      <entry>locks currently held or awaited</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-matviews"><structname>pg_matviews</structname></link></entry>
+      <entry>materialized views</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-policies"><structname>pg_policies</structname></link></entry>
+      <entry>policies</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-prepared-statements"><structname>pg_prepared_statements</structname></link></entry>
+      <entry>prepared statements</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link></entry>
+      <entry>prepared transactions</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-publication-tables"><structname>pg_publication_tables</structname></link></entry>
+      <entry>publications and information of their associated tables</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-replication-origin-status"><structname>pg_replication_origin_status</structname></link></entry>
+      <entry>information about replication origins, including replication progress</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-replication-slots"><structname>pg_replication_slots</structname></link></entry>
+      <entry>replication slot information</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-roles"><structname>pg_roles</structname></link></entry>
+      <entry>database roles</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-rules"><structname>pg_rules</structname></link></entry>
+      <entry>rules</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-seclabels"><structname>pg_seclabels</structname></link></entry>
+      <entry>security labels</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-sequences"><structname>pg_sequences</structname></link></entry>
+      <entry>sequences</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-settings"><structname>pg_settings</structname></link></entry>
+      <entry>parameter settings</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-shadow"><structname>pg_shadow</structname></link></entry>
+      <entry>database users</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-shmem-allocations"><structname>pg_shmem_allocations</structname></link></entry>
+      <entry>shared memory allocations</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-stats"><structname>pg_stats</structname></link></entry>
+      <entry>planner statistics</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname></link></entry>
+      <entry>extended planner statistics</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-stats-ext-exprs"><structname>pg_stats_ext_exprs</structname></link></entry>
+      <entry>extended planner statistics for expressions</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-tables"><structname>pg_tables</structname></link></entry>
+      <entry>tables</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-timezone-abbrevs"><structname>pg_timezone_abbrevs</structname></link></entry>
+      <entry>time zone abbreviations</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-timezone-names"><structname>pg_timezone_names</structname></link></entry>
+      <entry>time zone names</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-user"><structname>pg_user</structname></link></entry>
+      <entry>database users</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-user-mappings"><structname>pg_user_mappings</structname></link></entry>
+      <entry>user mappings</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-views"><structname>pg_views</structname></link></entry>
+      <entry>views</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="view-pg-available-extensions">
+  <title><structname>pg_available_extensions</structname></title>
+
+  <indexterm zone="view-pg-available-extensions">
+   <primary>pg_available_extensions</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_available_extensions</structname> view lists the
+   extensions that are available for installation.
+   See also the
+   <link linkend="catalog-pg-extension"><structname>pg_extension</structname></link>
+   catalog, which shows the extensions currently installed.
+  </para>
+
+  <table>
+   <title><structname>pg_available_extensions</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>name</type>
+      </para>
+      <para>
+       Extension name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>default_version</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of default version, or <literal>NULL</literal> if none is
+       specified
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>installed_version</structfield> <type>text</type>
+      </para>
+      <para>
+       Currently installed version of the extension,
+       or <literal>NULL</literal> if not installed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>comment</structfield> <type>text</type>
+      </para>
+      <para>
+       Comment string from the extension's control file
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_available_extensions</structname> view is read-only.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-available-extension-versions">
+  <title><structname>pg_available_extension_versions</structname></title>
+
+  <indexterm zone="view-pg-available-extension-versions">
+   <primary>pg_available_extension_versions</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_available_extension_versions</structname> view lists the
+   specific extension versions that are available for installation.
+   See also the <link
+   linkend="catalog-pg-extension"><structname>pg_extension</structname></link>
+   catalog, which shows the extensions currently installed.
+  </para>
+
+  <table>
+   <title><structname>pg_available_extension_versions</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>name</type>
+      </para>
+      <para>
+       Extension name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>version</structfield> <type>text</type>
+      </para>
+      <para>
+       Version name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>installed</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if this version of this extension is currently
+       installed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>superuser</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if only superusers are allowed to install this extension
+       (but see <structfield>trusted</structfield>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>trusted</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if the extension can be installed by non-superusers
+       with appropriate privileges
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relocatable</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if extension can be relocated to another schema
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schema</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the schema that the extension must be installed into,
+       or <literal>NULL</literal> if partially or fully relocatable
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>requires</structfield> <type>name[]</type>
+      </para>
+      <para>
+       Names of prerequisite extensions,
+       or <literal>NULL</literal> if none
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>comment</structfield> <type>text</type>
+      </para>
+      <para>
+       Comment string from the extension's control file
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_available_extension_versions</structname> view is
+   read-only.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-backend-memory-contexts">
+  <title><structname>pg_backend_memory_contexts</structname></title>
+
+  <indexterm zone="view-pg-backend-memory-contexts">
+   <primary>pg_backend_memory_contexts</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_backend_memory_contexts</structname> displays all
+   the memory contexts of the server process attached to the current session.
+  </para>
+  <para>
+   <structname>pg_backend_memory_contexts</structname> contains one row
+   for each memory context.
+  </para>
+
+  <table>
+   <title><structname>pg_backend_memory_contexts</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the memory context
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>ident</structfield> <type>text</type>
+      </para>
+      <para>
+       Identification information of the memory context. This field is truncated at 1024 bytes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>parent</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the parent of this memory context
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>level</structfield> <type>int4</type>
+      </para>
+      <para>
+       Distance from TopMemoryContext in context tree
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>total_bytes</structfield> <type>int8</type>
+      </para>
+      <para>
+       Total bytes allocated for this memory context
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>total_nblocks</structfield> <type>int8</type>
+      </para>
+      <para>
+       Total number of blocks allocated for this memory context
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>free_bytes</structfield> <type>int8</type>
+      </para>
+      <para>
+       Free space in bytes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>free_chunks</structfield> <type>int8</type>
+      </para>
+      <para>
+       Total number of free chunks
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>used_bytes</structfield> <type>int8</type>
+      </para>
+      <para>
+       Used space in bytes
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   By default, the <structname>pg_backend_memory_contexts</structname> view can be
+   read only by superusers or roles with the privileges of the
+   <literal>pg_read_all_stats</literal> role.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-config">
+  <title><structname>pg_config</structname></title>
+
+  <indexterm zone="view-pg-config">
+   <primary>pg_config</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_config</structname> describes the
+   compile-time configuration parameters of the currently installed
+   version of <productname>PostgreSQL</productname>. It is intended, for example, to
+   be used by software packages that want to interface to
+   <productname>PostgreSQL</productname> to facilitate finding the required header
+   files and libraries. It provides the same basic information as the
+   <xref linkend="app-pgconfig"/> <productname>PostgreSQL</productname> client
+   application.
+  </para>
+
+  <para>
+   By default, the <structname>pg_config</structname> view can be read
+   only by superusers.
+  </para>
+
+  <table>
+   <title><structname>pg_config</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       The parameter name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>setting</structfield> <type>text</type>
+      </para>
+      <para>
+       The parameter value
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-cursors">
+  <title><structname>pg_cursors</structname></title>
+
+  <indexterm zone="view-pg-cursors">
+   <primary>pg_cursors</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_cursors</structname> view lists the cursors that
+   are currently available. Cursors can be defined in several ways:
+   <itemizedlist>
+    <listitem>
+     <para>
+      via the <link linkend="sql-declare"><command>DECLARE</command></link>
+      statement in SQL
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      via the Bind message in the frontend/backend protocol, as
+      described in <xref linkend="protocol-flow-ext-query"/>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      via the Server Programming Interface (SPI), as described in
+      <xref linkend="spi-interface"/>
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   The <structname>pg_cursors</structname> view displays cursors
+   created by any of these means. Cursors only exist for the duration
+   of the transaction that defines them, unless they have been
+   declared <literal>WITH HOLD</literal>. Therefore non-holdable
+   cursors are only present in the view until the end of their
+   creating transaction.
+
+   <note>
+    <para>
+     Cursors are used internally to implement some of the components
+     of <productname>PostgreSQL</productname>, such as procedural languages.
+     Therefore, the <structname>pg_cursors</structname> view might include cursors
+     that have not been explicitly created by the user.
+    </para>
+   </note>
+  </para>
+
+  <table>
+   <title><structname>pg_cursors</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       The name of the cursor
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>statement</structfield> <type>text</type>
+      </para>
+      <para>
+       The verbatim query string submitted to declare this cursor
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>is_holdable</structfield> <type>bool</type>
+      </para>
+      <para>
+       <literal>true</literal> if the cursor is holdable (that is, it
+       can be accessed after the transaction that declared the cursor
+       has committed); <literal>false</literal> otherwise
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>is_binary</structfield> <type>bool</type>
+      </para>
+      <para>
+       <literal>true</literal> if the cursor was declared
+       <literal>BINARY</literal>; <literal>false</literal>
+       otherwise
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>is_scrollable</structfield> <type>bool</type>
+      </para>
+      <para>
+       <literal>true</literal> if the cursor is scrollable (that is, it
+       allows rows to be retrieved in a nonsequential manner);
+       <literal>false</literal> otherwise
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>creation_time</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       The time at which the cursor was declared
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_cursors</structname> view is read-only.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-file-settings">
+  <title><structname>pg_file_settings</structname></title>
+
+  <indexterm zone="view-pg-file-settings">
+   <primary>pg_file_settings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_file_settings</structname> provides a summary of
+   the contents of the server's configuration file(s).  A row appears in
+   this view for each <quote>name = value</quote> entry appearing in the files,
+   with annotations indicating whether the value could be applied
+   successfully.  Additional row(s) may appear for problems not linked to
+   a <quote>name = value</quote> entry, such as syntax errors in the files.
+  </para>
+
+  <para>
+   This view is helpful for checking whether planned changes in the
+   configuration files will work, or for diagnosing a previous failure.
+   Note that this view reports on the <emphasis>current</emphasis> contents of the
+   files, not on what was last applied by the server.  (The
+   <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
+   view is usually sufficient to determine that.)
+  </para>
+
+  <para>
+   By default, the <structname>pg_file_settings</structname> view can be read
+   only by superusers.
+  </para>
+
+  <table>
+   <title><structname>pg_file_settings</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sourcefile</structfield> <type>text</type>
+      </para>
+      <para>
+       Full path name of the configuration file
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sourceline</structfield> <type>int4</type>
+      </para>
+      <para>
+       Line number within the configuration file where the entry appears
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>seqno</structfield> <type>int4</type>
+      </para>
+      <para>
+       Order in which the entries are processed (1..<replaceable>n</replaceable>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       Configuration parameter name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>setting</structfield> <type>text</type>
+      </para>
+      <para>
+       Value to be assigned to the parameter
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>applied</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if the value can be applied successfully
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>error</structfield> <type>text</type>
+      </para>
+      <para>
+       If not null, an error message indicating why this entry could
+       not be applied
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   If the configuration file contains syntax errors or invalid parameter
+   names, the server will not attempt to apply any settings from it, and
+   therefore all the <structfield>applied</structfield> fields will read as false.
+   In such a case there will be one or more rows with
+   non-null <structfield>error</structfield> fields indicating the
+   problem(s).  Otherwise, individual settings will be applied if possible.
+   If an individual setting cannot be applied (e.g., invalid value, or the
+   setting cannot be changed after server start) it will have an appropriate
+   message in the <structfield>error</structfield> field.  Another way that
+   an entry might have <structfield>applied</structfield> = false is that it is
+   overridden by a later entry for the same parameter name; this case is not
+   considered an error so nothing appears in
+   the <structfield>error</structfield> field.
+  </para>
+
+  <para>
+   See <xref linkend="config-setting"/> for more information about the various
+   ways to change run-time parameters.
+  </para>
+
+</sect1>
+
+ <sect1 id="view-pg-group">
+  <title><structname>pg_group</structname></title>
+
+  <indexterm zone="view-pg-group">
+   <primary>pg_group</primary>
+  </indexterm>
+
+  <!-- Unlike information_schema.applicable_roles, this shows no members for
+       pg_database_owner.  The v8.1 catalog would have shown no members if
+       that role had existed at the time. -->
+  <para>
+   The view <structname>pg_group</structname> exists for backwards
+   compatibility: it emulates a catalog that existed in
+   <productname>PostgreSQL</productname> before version 8.1.
+   It shows the names and members of all roles that are marked as not
+   <structfield>rolcanlogin</structfield>, which is an approximation to the set
+   of roles that are being used as groups.
+  </para>
+
+  <table>
+   <title><structname>pg_group</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>groname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       Name of the group
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>grosysid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       ID of this group
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>grolist</structfield> <type>oid[]</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       An array containing the IDs of the roles in this group
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-hba-file-rules">
+  <title><structname>pg_hba_file_rules</structname></title>
+
+  <indexterm zone="view-pg-hba-file-rules">
+   <primary>pg_hba_file_rules</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_hba_file_rules</structname> provides a summary of
+   the contents of the client authentication configuration file,
+   <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</filename></link>.
+   A row appears in this view for each
+   non-empty, non-comment line in the file, with annotations indicating
+   whether the rule could be applied successfully.
+  </para>
+
+  <para>
+   This view can be helpful for checking whether planned changes in the
+   authentication configuration file will work, or for diagnosing a previous
+   failure.  Note that this view reports on the <emphasis>current</emphasis> contents
+   of the file, not on what was last loaded by the server.
+  </para>
+
+  <para>
+   By default, the <structname>pg_hba_file_rules</structname> view can be read
+   only by superusers.
+  </para>
+
+  <table>
+   <title><structname>pg_hba_file_rules</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rule_number</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of this rule, if valid, otherwise <literal>NULL</literal>.
+       This indicates the order in which each rule is considered
+       until a match is found during authentication.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>file_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the file containing this rule
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>line_number</structfield> <type>int4</type>
+      </para>
+      <para>
+       Line number of this rule in <literal>file_name</literal>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>type</structfield> <type>text</type>
+      </para>
+      <para>
+       Type of connection
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>database</structfield> <type>text[]</type>
+      </para>
+      <para>
+       List of database name(s) to which this rule applies
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>user_name</structfield> <type>text[]</type>
+      </para>
+      <para>
+       List of user and group name(s) to which this rule applies
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>address</structfield> <type>text</type>
+      </para>
+      <para>
+       Host name or IP address, or one
+       of <literal>all</literal>, <literal>samehost</literal>,
+       or <literal>samenet</literal>, or null for local connections
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>netmask</structfield> <type>text</type>
+      </para>
+      <para>
+       IP address mask, or null if not applicable
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>auth_method</structfield> <type>text</type>
+      </para>
+      <para>
+       Authentication method
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>options</structfield> <type>text[]</type>
+      </para>
+      <para>
+       Options specified for authentication method, if any
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>error</structfield> <type>text</type>
+      </para>
+      <para>
+       If not null, an error message indicating why this
+       line could not be processed
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Usually, a row reflecting an incorrect entry will have values for only
+   the <structfield>line_number</structfield> and <structfield>error</structfield> fields.
+  </para>
+
+  <para>
+   See <xref linkend="client-authentication"/> for more information about
+   client authentication configuration.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-ident-file-mappings">
+  <title><structname>pg_ident_file_mappings</structname></title>
+
+  <indexterm zone="view-pg-ident-file-mappings">
+   <primary>pg_ident_file_mappings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_ident_file_mappings</structname> provides a summary
+   of the contents of the client user name mapping configuration file,
+   <link linkend="auth-username-maps"><filename>pg_ident.conf</filename></link>.
+   A row appears in this view for each non-empty, non-comment line in the file,
+   with annotations indicating whether the map could be applied successfully.
+  </para>
+
+  <para>
+   This view can be helpful for checking whether planned changes in the
+   authentication configuration file will work, or for diagnosing a previous
+   failure.  Note that this view reports on the <emphasis>current</emphasis>
+   contents of the file, not on what was last loaded by the server.
+  </para>
+
+  <para>
+   By default, the <structname>pg_ident_file_mappings</structname> view can be
+   read only by superusers.
+  </para>
+
+  <table>
+   <title><structname>pg_ident_file_mappings</structname> Columns</title> <tgroup
+   cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>map_number</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of this map, in priority order, if valid, otherwise
+       <literal>NULL</literal>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>file_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the file containing this map
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>line_number</structfield> <type>int4</type>
+      </para>
+      <para>
+       Line number of this map in <literal>file_name</literal>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>map_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the map
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sys_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Detected user name of the client
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pg_username</structfield> <type>text</type>
+      </para>
+      <para>
+       Requested PostgreSQL user name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>error</structfield> <type>text</type>
+      </para>
+      <para>
+       If not <literal>NULL</literal>, an error message indicating why this
+       line could not be processed
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Usually, a row reflecting an incorrect entry will have values for only
+   the <structfield>line_number</structfield> and <structfield>error</structfield> fields.
+  </para>
+
+  <para>
+   See <xref linkend="client-authentication"/> for more information about
+   client authentication configuration.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-indexes">
+  <title><structname>pg_indexes</structname></title>
+
+  <indexterm zone="view-pg-indexes">
+   <primary>pg_indexes</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_indexes</structname> provides access to
+   useful information about each index in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_indexes</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing table and index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of table the index is for
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>indexname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablespace</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.<structfield>spcname</structfield>)
+      </para>
+      <para>
+       Name of tablespace containing index (null if default for database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>indexdef</structfield> <type>text</type>
+      </para>
+      <para>
+       Index definition (a reconstructed <xref linkend="sql-createindex"/>
+       command)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-locks">
+  <title><structname>pg_locks</structname></title>
+
+  <indexterm zone="view-pg-locks">
+   <primary>pg_locks</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_locks</structname> provides access to
+   information about the locks held by active processes within the
+   database server.  See <xref linkend="mvcc"/> for more discussion
+   of locking.
+  </para>
+
+  <para>
+   <structname>pg_locks</structname> contains one row per active lockable
+   object, requested lock mode, and relevant process.  Thus, the same
+   lockable object might
+   appear many times, if multiple processes are holding or waiting
+   for locks on it.  However, an object that currently has no locks on it
+   will not appear at all.
+  </para>
+
+  <para>
+   There are several distinct types of lockable objects:
+   whole relations (e.g., tables), individual pages of relations,
+   individual tuples of relations,
+   transaction IDs (both virtual and permanent IDs),
+   and general database objects (identified by class OID and object OID,
+   in the same way as in <link linkend="catalog-pg-description"><structname>pg_description</structname></link> or
+   <link linkend="catalog-pg-depend"><structname>pg_depend</structname></link>).  Also, the right to extend a
+   relation is represented as a separate lockable object, as is the right to
+   update <structname>pg_database</structname>.<structfield>datfrozenxid</structfield>.
+   Also, <quote>advisory</quote> locks can be taken on numbers that have
+   user-defined meanings.
+  </para>
+
+  <table>
+   <title><structname>pg_locks</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>locktype</structfield> <type>text</type>
+      </para>
+      <para>
+       Type of the lockable object:
+       <literal>relation</literal>,
+       <literal>extend</literal>,
+       <literal>frozenid</literal>,
+       <literal>page</literal>,
+       <literal>tuple</literal>,
+       <literal>transactionid</literal>,
+       <literal>virtualxid</literal>,
+       <literal>spectoken</literal>,
+       <literal>object</literal>,
+       <literal>userlock</literal>,
+       <literal>advisory</literal>, or
+       <literal>applytransaction</literal>.
+       (See also <xref linkend="wait-event-lock-table"/>.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>database</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-database"><structname>pg_database</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       OID of the database in which the lock target exists, or
+       zero if the target is a shared object, or
+       null if the target is a transaction ID
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relation</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       OID of the relation targeted by the lock, or null if the target is not
+       a relation or part of a relation
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>page</structfield> <type>int4</type>
+      </para>
+      <para>
+       Page number targeted by the lock within the relation,
+       or null if the target is not a relation page or tuple
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tuple</structfield> <type>int2</type>
+      </para>
+      <para>
+       Tuple number targeted by the lock within the page,
+       or null if the target is not a tuple
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>virtualxid</structfield> <type>text</type>
+      </para>
+      <para>
+       Virtual ID of the transaction targeted by the lock,
+       or null if the target is not a virtual transaction ID;  see
+       <xref linkend="transactions"/>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>transactionid</structfield> <type>xid</type>
+      </para>
+      <para>
+       ID of the transaction targeted by the lock, or null if the target
+       is not a transaction ID;  <xref linkend="transactions"/>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>classid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       OID of the system catalog containing the lock target, or null if the
+       target is not a general database object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>objid</structfield> <type>oid</type>
+       (references any OID column)
+      </para>
+      <para>
+       OID of the lock target within its system catalog, or null if the
+       target is not a general database object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>objsubid</structfield> <type>int2</type>
+      </para>
+      <para>
+       Column number targeted by the lock (the
+       <structfield>classid</structfield> and <structfield>objid</structfield> refer to the
+       table itself),
+       or zero if the target is some other general database object,
+       or null if the target is not a general database object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>virtualtransaction</structfield> <type>text</type>
+      </para>
+      <para>
+       Virtual ID of the transaction that is holding or awaiting this lock
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>int4</type>
+      </para>
+      <para>
+       Process ID of the server process holding or awaiting this
+       lock, or null if the lock is held by a prepared transaction
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>mode</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the lock mode held or desired by this process (see <xref linkend="locking-tables"/> and <xref linkend="xact-serializable"/>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>granted</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if lock is held, false if lock is awaited
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>fastpath</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if lock was taken via fast path, false if taken via main
+       lock table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>waitstart</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       Time when the server process started waiting for this lock,
+       or null if the lock is held.
+       Note that this can be null for a very short period of time after
+       the wait started even though <structfield>granted</structfield>
+       is <literal>false</literal>.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   <structfield>granted</structfield> is true in a row representing a lock
+   held by the indicated process.  False indicates that this process is
+   currently waiting to acquire this lock, which implies that at least one
+   other process is holding or waiting for a conflicting lock mode on the same
+   lockable object.  The waiting process will sleep until the other lock is
+   released (or a deadlock situation is detected).  A single process can be
+   waiting to acquire at most one lock at a time.
+  </para>
+
+  <para>
+   Throughout running a transaction, a server process holds an exclusive lock
+   on the transaction's virtual transaction ID.  If a permanent ID is assigned
+   to the transaction (which normally happens only if the transaction changes
+   the state of the database), it also holds an exclusive lock on the
+   transaction's permanent transaction ID until it ends.  When a process finds
+   it necessary to wait specifically for another transaction to end, it does
+   so by attempting to acquire share lock on the other transaction's ID
+   (either virtual or permanent ID depending on the situation). That will
+   succeed only when the other transaction terminates and releases its locks.
+  </para>
+
+  <para>
+   Although tuples are a lockable type of object,
+   information about row-level locks is stored on disk, not in memory,
+   and therefore row-level locks normally do not appear in this view.
+   If a process is waiting for a
+   row-level lock, it will usually appear in the view as waiting for the
+   permanent transaction ID of the current holder of that row lock.
+  </para>
+
+  <para>
+   A speculative insertion lock consists of a transaction ID and a speculative
+   insertion token. The speculative insertion token is displayed in the
+   <structfield>objid</structfield> column.
+  </para>
+
+  <para>
+   Advisory locks can be acquired on keys consisting of either a single
+   <type>bigint</type> value or two integer values.
+   A <type>bigint</type> key is displayed with its
+   high-order half in the <structfield>classid</structfield> column, its low-order half
+   in the <structfield>objid</structfield> column, and <structfield>objsubid</structfield> equal
+   to 1. The original <type>bigint</type> value can be reassembled with the
+   expression <literal>(classid::bigint &lt;&lt; 32) |
+   objid::bigint</literal>. Integer keys are displayed with the
+   first key in the
+   <structfield>classid</structfield> column, the second key in the <structfield>objid</structfield>
+   column, and <structfield>objsubid</structfield> equal to 2.  The actual meaning of
+   the keys is up to the user.  Advisory locks are local to each database,
+   so the <structfield>database</structfield> column is meaningful for an advisory lock.
+  </para>
+
+  <para>
+   Apply transaction locks are used in parallel mode to apply the transaction
+   in logical replication. The remote transaction id is displayed in the
+   <structfield>transactionid</structfield> column. The <structfield>objsubid</structfield>
+   displays the lock subtype which is 0 for the lock used to synchronize the
+   set of changes, and 1 for the lock used to wait for the transaction to
+   finish to ensure commit order.
+  </para>
+
+  <para>
+   <structname>pg_locks</structname> provides a global view of all locks
+   in the database cluster, not only those relevant to the current database.
+   Although its <structfield>relation</structfield> column can be joined
+   against <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield> to identify locked
+   relations, this will only work correctly for relations in the current
+   database (those for which the <structfield>database</structfield> column
+   is either the current database's OID or zero).
+  </para>
+
+  <para>
+   The <structfield>pid</structfield> column can be joined to the
+   <structfield>pid</structfield> column of the
+   <link linkend="monitoring-pg-stat-activity-view">
+   <structname>pg_stat_activity</structname></link>
+   view to get more
+   information on the session holding or awaiting each lock,
+   for example
+<programlisting>
+SELECT * FROM pg_locks pl LEFT JOIN pg_stat_activity psa
+    ON pl.pid = psa.pid;
+</programlisting>
+   Also, if you are using prepared transactions, the
+   <structfield>virtualtransaction</structfield> column can be joined to the
+   <structfield>transaction</structfield> column of the <link
+   linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link>
+   view to get more information on prepared transactions that hold locks.
+   (A prepared transaction can never be waiting for a lock,
+   but it continues to hold the locks it acquired while running.)
+   For example:
+<programlisting>
+SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
+    ON pl.virtualtransaction = '-1/' || ppx.transaction;
+</programlisting>
+  </para>
+
+  <para>
+   While it is possible to obtain information about which processes block
+   which other processes by joining <structname>pg_locks</structname> against
+   itself, this is very difficult to get right in detail.  Such a query would
+   have to encode knowledge about which lock modes conflict with which
+   others.  Worse, the <structname>pg_locks</structname> view does not expose
+   information about which processes are ahead of which others in lock wait
+   queues, nor information about which processes are parallel workers running
+   on behalf of which other client sessions.  It is better to use
+   the <function>pg_blocking_pids()</function> function
+   (see <xref linkend="functions-info-session-table"/>) to identify which
+   process(es) a waiting process is blocked behind.
+  </para>
+
+  <para>
+   The <structname>pg_locks</structname> view displays data from both the
+   regular lock manager and the predicate lock manager, which are
+   separate systems; in addition, the regular lock manager subdivides its
+   locks into regular and <firstterm>fast-path</firstterm> locks.
+   This data is not guaranteed to be entirely consistent.
+   When the view is queried,
+   data on fast-path locks (with <structfield>fastpath</structfield> = <literal>true</literal>)
+   is gathered from each backend one at a time, without freezing the state of
+   the entire lock manager, so it is possible for locks to be taken or
+   released while information is gathered.  Note, however, that these locks are
+   known not to conflict with any other lock currently in place.  After
+   all backends have been queried for fast-path locks, the remainder of the
+   regular lock manager is locked as a unit, and a consistent snapshot of all
+   remaining locks is collected as an atomic action.  After unlocking the
+   regular lock manager, the predicate lock manager is similarly locked and all
+   predicate locks are collected as an atomic action.  Thus, with the exception
+   of fast-path locks, each lock manager will deliver a consistent set of
+   results, but as we do not lock both lock managers simultaneously, it is
+   possible for locks to be taken or released after we interrogate the regular
+   lock manager and before we interrogate the predicate lock manager.
+  </para>
+
+  <para>
+   Locking the regular and/or predicate lock manager could have some
+   impact on database performance if this view is very frequently accessed.
+   The locks are held only for the minimum amount of time necessary to
+   obtain data from the lock managers, but this does not completely eliminate
+   the possibility of a performance impact.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-matviews">
+  <title><structname>pg_matviews</structname></title>
+
+  <indexterm zone="view-pg-matviews">
+   <primary>pg_matviews</primary>
+  </indexterm>
+
+  <indexterm zone="view-pg-matviews">
+   <primary>materialized views</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_matviews</structname> provides access to
+   useful information about each materialized view in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_matviews</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing materialized view
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>matviewname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of materialized view
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>matviewowner</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       Name of materialized view's owner
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablespace</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.<structfield>spcname</structfield>)
+      </para>
+      <para>
+       Name of tablespace containing materialized view (null if default for database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>hasindexes</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if materialized view has (or recently had) any indexes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>ispopulated</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if materialized view is currently populated
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>definition</structfield> <type>text</type>
+      </para>
+      <para>
+       Materialized view definition (a reconstructed <xref linkend="sql-select"/> query)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-policies">
+  <title><structname>pg_policies</structname></title>
+
+  <indexterm zone="view-pg-policies">
+   <primary>pg_policies</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_policies</structname> provides access to
+   useful information about each row-level security policy in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_policies</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing table policy is on
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of table policy is on
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>policyname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link>.<structfield>polname</structfield>)
+      </para>
+      <para>
+       Name of policy
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>permissive</structfield> <type>text</type>
+      </para>
+      <para>
+       Is the policy permissive or restrictive?
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>roles</structfield> <type>name[]</type>
+      </para>
+      <para>
+       The roles to which this policy applies
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>cmd</structfield> <type>text</type>
+      </para>
+      <para>
+       The command type to which the policy is applied
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>qual</structfield> <type>text</type>
+      </para>
+      <para>
+       The expression added to the security barrier qualifications for
+       queries that this policy applies to
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>with_check</structfield> <type>text</type>
+      </para>
+      <para>
+       The expression added to the WITH CHECK qualifications for
+       queries that attempt to add rows to this table
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-prepared-statements">
+  <title><structname>pg_prepared_statements</structname></title>
+
+  <indexterm zone="view-pg-prepared-statements">
+   <primary>pg_prepared_statements</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_prepared_statements</structname> view displays
+   all the prepared statements that are available in the current
+   session. See <xref linkend="sql-prepare"/> for more information about prepared
+   statements.
+  </para>
+
+  <para>
+   <structname>pg_prepared_statements</structname> contains one row
+   for each prepared statement. Rows are added to the view when a new
+   prepared statement is created and removed when a prepared statement
+   is released (for example, via the <link linkend="sql-deallocate"><command>DEALLOCATE</command></link> command).
+  </para>
+
+  <table>
+   <title><structname>pg_prepared_statements</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       The identifier of the prepared statement
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>statement</structfield> <type>text</type>
+      </para>
+      <para>
+       The query string submitted by the client to create this
+       prepared statement. For prepared statements created via SQL,
+       this is the <command>PREPARE</command> statement submitted by
+       the client. For prepared statements created via the
+       frontend/backend protocol, this is the text of the prepared
+       statement itself.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>prepare_time</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       The time at which the prepared statement was created
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>parameter_types</structfield> <type>regtype[]</type>
+      </para>
+      <para>
+       The expected parameter types for the prepared statement in the
+       form of an array of <type>regtype</type>. The OID corresponding
+       to an element of this array can be obtained by casting the
+       <type>regtype</type> value to <type>oid</type>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>result_types</structfield> <type>regtype[]</type>
+      </para>
+      <para>
+       The types of the columns returned by the prepared statement in the
+       form of an array of <type>regtype</type>. The OID corresponding
+       to an element of this array can be obtained by casting the
+       <type>regtype</type> value to <type>oid</type>.
+       If the prepared statement does not provide a result (e.g., a DML
+       statement), then this field will be null.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>from_sql</structfield> <type>bool</type>
+      </para>
+      <para>
+       <literal>true</literal> if the prepared statement was created
+       via the <command>PREPARE</command> SQL command;
+       <literal>false</literal> if the statement was prepared via the
+       frontend/backend protocol
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>generic_plans</structfield> <type>int8</type>
+      </para>
+      <para>
+       Number of times generic plan was chosen
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>custom_plans</structfield> <type>int8</type>
+      </para>
+      <para>
+       Number of times custom plan was chosen
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_prepared_statements</structname> view is read-only.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-prepared-xacts">
+  <title><structname>pg_prepared_xacts</structname></title>
+
+  <indexterm zone="view-pg-prepared-xacts">
+   <primary>pg_prepared_xacts</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_prepared_xacts</structname> displays
+   information about transactions that are currently prepared for two-phase
+   commit (see <xref linkend="sql-prepare-transaction"/> for details).
+  </para>
+
+  <para>
+   <structname>pg_prepared_xacts</structname> contains one row per prepared
+   transaction.  An entry is removed when the transaction is committed or
+   rolled back.
+  </para>
+
+  <table>
+   <title><structname>pg_prepared_xacts</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>transaction</structfield> <type>xid</type>
+      </para>
+      <para>
+       Numeric transaction identifier of the prepared transaction
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>gid</structfield> <type>text</type>
+      </para>
+      <para>
+       Global transaction identifier that was assigned to the transaction
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>prepared</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       Time at which the transaction was prepared for commit
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>owner</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       Name of the user that executed the transaction
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>database</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-database"><structname>pg_database</structname></link>.<structfield>datname</structfield>)
+      </para>
+      <para>
+       Name of the database in which the transaction was executed
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   When the <structname>pg_prepared_xacts</structname> view is accessed, the
+   internal transaction manager data structures are momentarily locked, and
+   a copy is made for the view to display.  This ensures that the
+   view produces a consistent set of results, while not blocking
+   normal operations longer than necessary.  Nonetheless
+   there could be some impact on database performance if this view is
+   frequently accessed.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-publication-tables">
+  <title><structname>pg_publication_tables</structname></title>
+
+  <indexterm zone="view-pg-publication-tables">
+   <primary>pg_publication_tables</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_publication_tables</structname> provides
+   information about the mapping between publications and information of
+   tables they contain.  Unlike the underlying catalog
+   <link linkend="catalog-pg-publication-rel"><structname>pg_publication_rel</structname></link>,
+   this view expands publications defined as <literal>FOR ALL TABLES</literal>
+   and <literal>FOR TABLES IN SCHEMA</literal>, so for such publications
+   there will be a row for each eligible table.
+  </para>
+
+  <table>
+   <title><structname>pg_publication_tables</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pubname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-publication"><structname>pg_publication</structname></link>.<structfield>pubname</structfield>)
+      </para>
+      <para>
+       Name of publication
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>attnames</structfield> <type>name[]</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attname</structfield>)
+      </para>
+      <para>
+       Names of table columns included in the publication. This contains all
+       the columns of the table when the user didn't specify the column list
+       for the table.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rowfilter</structfield> <type>text</type>
+      </para>
+      <para>
+       Expression for the table's publication qualifying condition
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+  <sect1 id="view-pg-replication-origin-status">
+  <title><structname>pg_replication_origin_status</structname></title>
+
+  <indexterm zone="view-pg-replication-origin-status">
+   <primary>pg_replication_origin_status</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_replication_origin_status</structname> view
+   contains information about how far replay for a certain origin has
+   progressed.  For more on replication origins
+   see <xref linkend="replication-origins"/>.
+  </para>
+
+  <table>
+   <title><structname>pg_replication_origin_status</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>local_id</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-replication-origin"><structname>pg_replication_origin</structname></link>.<structfield>roident</structfield>)
+      </para>
+      <para>
+       internal node identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>external_id</structfield> <type>text</type>
+       (references <link linkend="catalog-pg-replication-origin"><structname>pg_replication_origin</structname></link>.<structfield>roname</structfield>)
+      </para>
+      <para>
+       external node identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>remote_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       The origin node's LSN up to which data has been replicated.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>local_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       This node's LSN at which <literal>remote_lsn</literal> has
+       been replicated. Used to flush commit records before persisting
+       data to disk when using asynchronous commits.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="view-pg-replication-slots">
+  <title><structname>pg_replication_slots</structname></title>
+
+  <indexterm zone="view-pg-replication-slots">
+   <primary>pg_replication_slots</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_replication_slots</structname> view provides a listing
+   of all replication slots that currently exist on the database cluster,
+   along with their current state.
+  </para>
+
+  <para>
+   For more on replication slots,
+   see <xref linkend="streaming-replication-slots"/> and <xref linkend="logicaldecoding"/>.
+  </para>
+
+  <table>
+   <title><structname>pg_replication_slots</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>slot_name</structfield> <type>name</type>
+      </para>
+      <para>
+       A unique, cluster-wide identifier for the replication slot
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>plugin</structfield> <type>name</type>
+      </para>
+      <para>
+       The base name of the shared object containing the output plugin this logical slot is using, or null for physical slots.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>slot_type</structfield> <type>text</type>
+      </para>
+      <para>
+       The slot type: <literal>physical</literal> or <literal>logical</literal>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datoid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-database"><structname>pg_database</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       The OID of the database this slot is associated with, or
+       null. Only logical slots have an associated database.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>database</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-database"><structname>pg_database</structname></link>.<structfield>datname</structfield>)
+      </para>
+      <para>
+       The name of the database this slot is associated with, or
+       null. Only logical slots have an associated database.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>temporary</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if this is a temporary replication slot. Temporary slots are
+       not saved to disk and are automatically dropped on error or when
+       the session has finished.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>active</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if this slot is currently actively being used
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>active_pid</structfield> <type>int4</type>
+      </para>
+      <para>
+       The process ID of the session using this slot if the slot
+       is currently actively being used. <literal>NULL</literal> if
+       inactive.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>xmin</structfield> <type>xid</type>
+      </para>
+      <para>
+       The oldest transaction that this slot needs the database to
+       retain.  <literal>VACUUM</literal> cannot remove tuples deleted
+       by any later transaction.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>catalog_xmin</structfield> <type>xid</type>
+      </para>
+      <para>
+       The oldest transaction affecting the system catalogs that this
+       slot needs the database to retain.  <literal>VACUUM</literal> cannot
+       remove catalog tuples deleted by any later transaction.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>restart_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       The address (<literal>LSN</literal>) of oldest WAL which still
+       might be required by the consumer of this slot and thus won't be
+       automatically removed during checkpoints unless this LSN
+       gets behind more than <xref linkend="guc-max-slot-wal-keep-size"/>
+       from the current LSN.  <literal>NULL</literal>
+       if the <literal>LSN</literal> of this slot has never been reserved.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confirmed_flush_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       The address (<literal>LSN</literal>) up to which the logical
+       slot's consumer has confirmed receiving data. Data corresponding to the
+       transactions committed before this <literal>LSN</literal> is not
+       available anymore. <literal>NULL</literal> for physical slots.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wal_status</structfield> <type>text</type>
+      </para>
+      <para>
+       Availability of WAL files claimed by this slot.
+       Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para><literal>reserved</literal> means that the claimed files
+          are within <varname>max_wal_size</varname>.</para>
+        </listitem>
+        <listitem>
+         <para><literal>extended</literal> means
+          that <varname>max_wal_size</varname> is exceeded but the files are
+          still retained, either by the replication slot or
+          by <varname>wal_keep_size</varname>.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>unreserved</literal> means that the slot no longer
+          retains the required WAL files and some of them are to be removed at
+          the next checkpoint.  This state can return
+          to <literal>reserved</literal> or <literal>extended</literal>.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>lost</literal> means that some required WAL files have
+          been removed and this slot is no longer usable.
+         </para>
+        </listitem>
+       </itemizedlist>
+       The last two states are seen only when
+       <xref linkend="guc-max-slot-wal-keep-size"/> is
+       non-negative. If <structfield>restart_lsn</structfield> is NULL, this
+       field is null.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>safe_wal_size</structfield> <type>int8</type>
+      </para>
+      <para>
+       The number of bytes that can be written to WAL such that this slot
+       is not in danger of getting in state "lost".  It is NULL for lost
+       slots, as well as if <varname>max_slot_wal_keep_size</varname>
+       is <literal>-1</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>two_phase</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if the slot is enabled for decoding prepared transactions.  Always
+       false for physical slots.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="view-pg-roles">
+  <title><structname>pg_roles</structname></title>
+
+  <indexterm zone="view-pg-roles">
+   <primary>pg_roles</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_roles</structname> provides access to
+   information about database roles.  This is simply a publicly
+   readable view of
+   <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>
+   that blanks out the password field.
+  </para>
+
+  <table>
+   <title><structname>pg_roles</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolname</structfield> <type>name</type>
+      </para>
+      <para>
+       Role name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolsuper</structfield> <type>bool</type>
+      </para>
+      <para>
+       Role has superuser privileges
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolinherit</structfield> <type>bool</type>
+      </para>
+      <para>
+       Role automatically inherits privileges of roles it is a
+       member of
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolcreaterole</structfield> <type>bool</type>
+      </para>
+      <para>
+       Role can create more roles
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolcreatedb</structfield> <type>bool</type>
+      </para>
+      <para>
+       Role can create databases
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolcanlogin</structfield> <type>bool</type>
+      </para>
+      <para>
+       Role can log in. That is, this role can be given as the initial
+       session authorization identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolreplication</structfield> <type>bool</type>
+      </para>
+      <para>
+       Role is a replication role. A replication role can initiate replication
+       connections and create and drop replication slots.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolconnlimit</structfield> <type>int4</type>
+      </para>
+      <para>
+       For roles that can log in, this sets maximum number of concurrent
+       connections this role can make.  -1 means no limit.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolpassword</structfield> <type>text</type>
+      </para>
+      <para>
+       Not the password (always reads as <literal>********</literal>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolvaliduntil</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       Password expiry time (only used for password authentication);
+       null if no expiration
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolbypassrls</structfield> <type>bool</type>
+      </para>
+      <para>
+       Role bypasses every row-level security policy, see
+       <xref linkend="ddl-rowsecurity"/> for more information.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rolconfig</structfield> <type>text[]</type>
+      </para>
+      <para>
+       Role-specific defaults for run-time configuration variables
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       ID of role
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-rules">
+  <title><structname>pg_rules</structname></title>
+
+  <indexterm zone="view-pg-rules">
+   <primary>pg_rules</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_rules</structname> provides access to
+   useful information about query rewrite rules.
+  </para>
+
+  <table>
+   <title><structname>pg_rules</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of table the rule is for
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rulename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-rewrite"><structname>pg_rewrite</structname></link>.<structfield>rulename</structfield>)
+      </para>
+      <para>
+       Name of rule
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>definition</structfield> <type>text</type>
+      </para>
+      <para>
+       Rule definition (a reconstructed creation command)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_rules</structname> view excludes the <literal>ON SELECT</literal> rules
+   of views and materialized views; those can be seen in
+   <link linkend="view-pg-views"><structname>pg_views</structname></link> and <link linkend="view-pg-matviews"><structname>pg_matviews</structname></link>.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-seclabels">
+  <title><structname>pg_seclabels</structname></title>
+
+  <indexterm zone="view-pg-seclabels">
+   <primary>pg_seclabels</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_seclabels</structname> provides information about
+   security labels.  It as an easier-to-query version of the
+   <link linkend="catalog-pg-seclabel"><structname>pg_seclabel</structname></link> catalog.
+  </para>
+
+  <table>
+   <title><structname>pg_seclabels</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>objoid</structfield> <type>oid</type>
+       (references any OID column)
+      </para>
+      <para>
+       The OID of the object this security label pertains to
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>classoid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       The OID of the system catalog this object appears in
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>objsubid</structfield> <type>int4</type>
+      </para>
+      <para>
+       For a security label on a table column, this is the column number (the
+       <structfield>objoid</structfield> and <structfield>classoid</structfield> refer to
+       the table itself).  For all other object types, this column is
+       zero.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>objtype</structfield> <type>text</type>
+      </para>
+      <para>
+       The type of object to which this label applies, as text.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>objnamespace</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       The OID of the namespace for this object, if applicable;
+       otherwise NULL.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>objname</structfield> <type>text</type>
+      </para>
+      <para>
+       The name of the object to which this label applies, as text.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>provider</structfield> <type>text</type>
+       (references <link linkend="catalog-pg-seclabel"><structname>pg_seclabel</structname></link>.<structfield>provider</structfield>)
+      </para>
+      <para>
+       The label provider associated with this label.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>label</structfield> <type>text</type>
+       (references <link linkend="catalog-pg-seclabel"><structname>pg_seclabel</structname></link>.<structfield>label</structfield>)
+      </para>
+      <para>
+       The security label applied to this object.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="view-pg-sequences">
+  <title><structname>pg_sequences</structname></title>
+
+  <indexterm zone="view-pg-sequences">
+   <primary>pg_sequences</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_sequences</structname> provides access to
+   useful information about each sequence in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_sequences</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sequencename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sequenceowner</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       Name of sequence's owner
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>data_type</structfield> <type>regtype</type>
+       (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Data type of the sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>start_value</structfield> <type>int8</type>
+      </para>
+      <para>
+       Start value of the sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>min_value</structfield> <type>int8</type>
+      </para>
+      <para>
+       Minimum value of the sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>max_value</structfield> <type>int8</type>
+      </para>
+      <para>
+       Maximum value of the sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>increment_by</structfield> <type>int8</type>
+      </para>
+      <para>
+       Increment value of the sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>cycle</structfield> <type>bool</type>
+      </para>
+      <para>
+       Whether the sequence cycles
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>cache_size</structfield> <type>int8</type>
+      </para>
+      <para>
+       Cache size of the sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_value</structfield> <type>int8</type>
+      </para>
+      <para>
+       The last sequence value written to disk.  If caching is used,
+       this value can be greater than the last value handed out from the
+       sequence.  Null if the sequence has not been read from yet.  Also, if
+       the current user does not have <literal>USAGE</literal>
+       or <literal>SELECT</literal> privilege on the sequence, the value is
+       null.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="view-pg-settings">
+  <title><structname>pg_settings</structname></title>
+
+  <indexterm zone="view-pg-settings">
+   <primary>pg_settings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_settings</structname> provides access to
+   run-time parameters of the server.  It is essentially an alternative
+   interface to the <link linkend="sql-show"><command>SHOW</command></link>
+   and <link linkend="sql-set"><command>SET</command></link> commands.
+   It also provides access to some facts about each parameter that are
+   not directly available from <link linkend="sql-show"><command>SHOW</command></link>, such as minimum and
+   maximum values.
+  </para>
+
+  <table>
+   <title><structname>pg_settings</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       Run-time configuration parameter name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>setting</structfield> <type>text</type>
+      </para>
+      <para>
+       Current value of the parameter
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>unit</structfield> <type>text</type>
+      </para>
+      <para>
+       Implicit unit of the parameter
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>category</structfield> <type>text</type>
+      </para>
+      <para>
+       Logical group of the parameter
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>short_desc</structfield> <type>text</type>
+      </para>
+      <para>
+       A brief description of the parameter
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>extra_desc</structfield> <type>text</type>
+      </para>
+      <para>
+       Additional, more detailed, description of the parameter
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>context</structfield> <type>text</type>
+      </para>
+      <para>
+       Context required to set the parameter's value (see below)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>vartype</structfield> <type>text</type>
+      </para>
+      <para>
+       Parameter type (<literal>bool</literal>, <literal>enum</literal>,
+       <literal>integer</literal>, <literal>real</literal>, or <literal>string</literal>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>source</structfield> <type>text</type>
+      </para>
+      <para>
+       Source of the current parameter value
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>min_val</structfield> <type>text</type>
+      </para>
+      <para>
+       Minimum allowed value of the parameter (null for non-numeric
+       values)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>max_val</structfield> <type>text</type>
+      </para>
+      <para>
+       Maximum allowed value of the parameter (null for non-numeric
+       values)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>enumvals</structfield> <type>text[]</type>
+      </para>
+      <para>
+       Allowed values of an enum parameter (null for non-enum
+       values)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>boot_val</structfield> <type>text</type>
+      </para>
+      <para>
+       Parameter value assumed at server startup if the parameter is
+       not otherwise set
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>reset_val</structfield> <type>text</type>
+      </para>
+      <para>
+       Value that <link linkend="sql-reset"><command>RESET</command></link> would reset the parameter to
+       in the current session
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sourcefile</structfield> <type>text</type>
+      </para>
+      <para>
+       Configuration file the current value was set in (null for
+       values set from sources other than configuration files, or when
+       examined by a user who neither is a superuser nor has privileges of
+       <literal>pg_read_all_settings</literal>); helpful when using
+       <literal>include</literal> directives in configuration files
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sourceline</structfield> <type>int4</type>
+      </para>
+      <para>
+       Line number within the configuration file the current value was
+       set at (null for values set from sources other than configuration files,
+       or when examined by a user who neither is a superuser nor has privileges of
+       <literal>pg_read_all_settings</literal>).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pending_restart</structfield> <type>bool</type>
+      </para>
+      <para>
+       <literal>true</literal> if the value has been changed in the
+       configuration file but needs a restart; or <literal>false</literal>
+       otherwise.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   There are several possible values of <structfield>context</structfield>.
+   In order of decreasing difficulty of changing the setting, they are:
+  </para>
+
+  <variablelist>
+   <varlistentry>
+    <!-- PGC_INTERNAL -->
+    <term><literal>internal</literal></term>
+    <listitem>
+     <para>
+      These settings cannot be changed directly; they reflect internally
+      determined values.  Some of them may be adjustable by rebuilding the
+      server with different configuration options, or by changing options
+      supplied to <application>initdb</application>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <!-- PGC_POSTMASTER -->
+    <term><literal>postmaster</literal></term>
+    <listitem>
+     <para>
+      These settings can only be applied when the server starts, so any change
+      requires restarting the server.  Values for these settings are typically
+      stored in the <filename>postgresql.conf</filename> file, or passed on
+      the command line when starting the server.  Of course, settings with any
+      of the lower <structfield>context</structfield> types can also be
+      set at server start time.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <!-- PGC_SIGHUP -->
+    <term><literal>sighup</literal></term>
+    <listitem>
+     <para>
+      Changes to these settings can be made in
+      <filename>postgresql.conf</filename> without restarting the server.
+      Send a <systemitem>SIGHUP</systemitem> signal to the postmaster to
+      cause it to re-read <filename>postgresql.conf</filename> and apply
+      the changes.  The postmaster will also forward the
+      <systemitem>SIGHUP</systemitem> signal to its child processes so that
+      they all pick up the new value.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <!-- PGC_SU_BACKEND -->
+    <term><literal>superuser-backend</literal></term>
+    <listitem>
+     <para>
+      Changes to these settings can be made in
+      <filename>postgresql.conf</filename> without restarting the server.
+      They can also be set for a particular session in the connection request
+      packet (for example, via <application>libpq</application>'s <literal>PGOPTIONS</literal>
+      environment variable), but only if the connecting user is a superuser
+      or has been granted the appropriate <literal>SET</literal> privilege.
+      However, these settings never change in a session after it is started.
+      If you change them in <filename>postgresql.conf</filename>, send a
+      <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
+      re-read <filename>postgresql.conf</filename>.  The new values will only
+      affect subsequently-launched sessions.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <!-- PGC_BACKEND -->
+    <term><literal>backend</literal></term>
+    <listitem>
+     <para>
+      Changes to these settings can be made in
+      <filename>postgresql.conf</filename> without restarting the server.
+      They can also be set for a particular session in the connection request
+      packet (for example, via <application>libpq</application>'s <literal>PGOPTIONS</literal>
+      environment variable); any user can make such a change for their session.
+      However, these settings never change in a session after it is started.
+      If you change them in <filename>postgresql.conf</filename>, send a
+      <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
+      re-read <filename>postgresql.conf</filename>.  The new values will only
+      affect subsequently-launched sessions.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <!-- PGC_SUSET -->
+    <term><literal>superuser</literal></term>
+    <listitem>
+     <para>
+      These settings can be set from <filename>postgresql.conf</filename>,
+      or within a session via the <command>SET</command> command; but only superusers
+      and users with the appropriate <literal>SET</literal> privilege
+      can change them via <command>SET</command>.  Changes in
+      <filename>postgresql.conf</filename> will affect existing sessions
+      only if no session-local value has been established with <command>SET</command>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <!-- PGC_USERSET -->
+    <term><literal>user</literal></term>
+    <listitem>
+     <para>
+      These settings can be set from <filename>postgresql.conf</filename>,
+      or within a session via the <command>SET</command> command.  Any user is
+      allowed to change their session-local value.  Changes in
+      <filename>postgresql.conf</filename> will affect existing sessions
+      only if no session-local value has been established with <command>SET</command>.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   See <xref linkend="config-setting"/> for more information about the various
+   ways to change these parameters.
+  </para>
+
+  <para>
+   This view cannot be inserted into or deleted from, but it can be updated.  An
+   <command>UPDATE</command> applied to a row of <structname>pg_settings</structname>
+   is equivalent to executing the <command>SET</command> command on that named
+   parameter. The change only affects the value used by the current
+   session. If an <command>UPDATE</command> is issued within a transaction
+   that is later aborted, the effects of the <command>UPDATE</command> command
+   disappear when the transaction is rolled back. Once the surrounding
+   transaction is committed, the effects will persist until the end of the
+   session, unless overridden by another <command>UPDATE</command> or
+   <command>SET</command>.
+  </para>
+
+  <para>
+   This view does not
+   display <link linkend="runtime-config-custom">customized options</link>
+   unless the extension module that defines them has been loaded by the
+   backend process executing the query (e.g., via a mention in
+   <xref linkend="guc-shared-preload-libraries"/>,
+   a call to a C function in the extension, or the
+   <link linkend="sql-load"><command>LOAD</command></link> command).
+   For example, since <link linkend="archive-modules">archive modules</link>
+   are normally loaded only by the archiver process not regular sessions,
+   this view will not display any customized options defined by such modules
+   unless special action is taken to load them into the backend process
+   executing the query.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-shadow">
+  <title><structname>pg_shadow</structname></title>
+
+  <indexterm zone="view-pg-shadow">
+   <primary>pg_shadow</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_shadow</structname> exists for backwards
+   compatibility: it emulates a catalog that existed in
+   <productname>PostgreSQL</productname> before version 8.1.
+   It shows properties of all roles that are marked as
+   <structfield>rolcanlogin</structfield> in
+   <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.
+  </para>
+
+  <para>
+   The name stems from the fact that this table
+   should not be readable by the public since it contains passwords.
+   <link linkend="view-pg-user"><structname>pg_user</structname></link>
+   is a publicly readable view on
+   <structname>pg_shadow</structname> that blanks out the password field.
+  </para>
+
+  <table>
+   <title><structname>pg_shadow</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       User name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usesysid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       ID of this user
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usecreatedb</structfield> <type>bool</type>
+      </para>
+      <para>
+       User can create databases
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usesuper</structfield> <type>bool</type>
+      </para>
+      <para>
+       User is a superuser
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>userepl</structfield> <type>bool</type>
+      </para>
+      <para>
+       User can initiate streaming replication and put the system in and
+       out of backup mode.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usebypassrls</structfield> <type>bool</type>
+      </para>
+      <para>
+       User bypasses every row-level security policy, see
+       <xref linkend="ddl-rowsecurity"/> for more information.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>passwd</structfield> <type>text</type>
+      </para>
+      <para>
+       Password (possibly encrypted); null if none.  See
+       <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>
+       for details of how encrypted passwords are stored.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>valuntil</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       Password expiry time (only used for password authentication)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>useconfig</structfield> <type>text[]</type>
+      </para>
+      <para>
+       Session defaults for run-time configuration variables
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-shmem-allocations">
+  <title><structname>pg_shmem_allocations</structname></title>
+
+  <indexterm zone="view-pg-shmem-allocations">
+   <primary>pg_shmem_allocations</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_shmem_allocations</structname> view shows allocations
+   made from the server's main shared memory segment.  This includes both
+   memory allocated by <productname>PostgreSQL</productname> itself and memory
+   allocated by extensions using the mechanisms detailed in
+   <xref linkend="xfunc-shared-addin" />.
+  </para>
+
+  <para>
+   Note that this view does not include memory allocated using the dynamic
+   shared memory infrastructure.
+  </para>
+
+  <table>
+   <title><structname>pg_shmem_allocations</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       The name of the shared memory allocation. NULL for unused memory
+       and <literal>&lt;anonymous&gt;</literal> for anonymous
+       allocations.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>off</structfield> <type>int8</type>
+      </para>
+      <para>
+       The offset at which the allocation starts. NULL for anonymous
+       allocations, since details related to them are not known.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>size</structfield> <type>int8</type>
+      </para>
+      <para>
+       Size of the allocation in bytes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>allocated_size</structfield> <type>int8</type>
+      </para>
+      <para>
+       Size of the allocation in bytes including padding. For anonymous
+       allocations, no information about padding is available, so the
+       <literal>size</literal> and <literal>allocated_size</literal> columns
+       will always be equal. Padding is not meaningful for free memory, so
+       the columns will be equal in that case also.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Anonymous allocations are allocations that have been made
+   with <literal>ShmemAlloc()</literal> directly, rather than via
+   <literal>ShmemInitStruct()</literal> or
+   <literal>ShmemInitHash()</literal>.
+  </para>
+
+  <para>
+   By default, the <structname>pg_shmem_allocations</structname> view can be
+   read only by superusers or roles with privileges of the
+   <literal>pg_read_all_stats</literal> role.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-stats">
+  <title><structname>pg_stats</structname></title>
+
+  <indexterm zone="view-pg-stats">
+   <primary>pg_stats</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_stats</structname> provides access to
+   the information stored in the <link
+   linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
+   catalog.  This view allows access only to rows of
+   <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link> that correspond to tables the
+   user has permission to read, and therefore it is safe to allow public
+   read access to this view.
+  </para>
+
+  <para>
+   <structname>pg_stats</structname> is also designed to present the
+   information in a more readable format than the underlying catalog
+   &mdash; at the cost that its schema must be extended whenever new slot types
+   are defined for <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>.
+  </para>
+
+  <table>
+   <title><structname>pg_stats</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>attname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attname</structfield>)
+      </para>
+      <para>
+       Name of column described by this row
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>inherited</structfield> <type>bool</type>
+      </para>
+      <para>
+       If true, this row includes values from child tables, not just the
+       values in the specified table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>null_frac</structfield> <type>float4</type>
+      </para>
+      <para>
+       Fraction of column entries that are null
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>avg_width</structfield> <type>int4</type>
+      </para>
+      <para>
+       Average width in bytes of column's entries
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_distinct</structfield> <type>float4</type>
+      </para>
+      <para>
+       If greater than zero, the estimated number of distinct values in the
+       column.  If less than zero, the negative of the number of distinct
+       values divided by the number of rows.  (The negated form is used when
+       <command>ANALYZE</command> believes that the number of distinct values is
+       likely to increase as the table grows; the positive form is used when
+       the column seems to have a fixed number of possible values.)  For
+       example, -1 indicates a unique column in which the number of distinct
+       values is the same as the number of rows.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_vals</structfield> <type>anyarray</type>
+      </para>
+      <para>
+       A list of the most common values in the column. (Null if
+       no values seem to be more common than any others.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_freqs</structfield> <type>float4[]</type>
+      </para>
+      <para>
+       A list of the frequencies of the most common values,
+       i.e., number of occurrences of each divided by total number of rows.
+       (Null when <structfield>most_common_vals</structfield> is.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>histogram_bounds</structfield> <type>anyarray</type>
+      </para>
+      <para>
+       A list of values that divide the column's values into groups of
+       approximately equal population.  The values in
+       <structfield>most_common_vals</structfield>, if present, are omitted from this
+       histogram calculation.  (This column is null if the column data type
+       does not have a <literal>&lt;</literal> operator or if the
+       <structfield>most_common_vals</structfield> list accounts for the entire
+       population.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>correlation</structfield> <type>float4</type>
+      </para>
+      <para>
+       Statistical correlation between physical row ordering and
+       logical ordering of the column values.  This ranges from -1 to +1.
+       When the value is near -1 or +1, an index scan on the column will
+       be estimated to be cheaper than when it is near zero, due to reduction
+       of random access to the disk.  (This column is null if the column data
+       type does not have a <literal>&lt;</literal> operator.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_elems</structfield> <type>anyarray</type>
+      </para>
+      <para>
+       A list of non-null element values most often appearing within values of
+       the column. (Null for scalar types.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_elem_freqs</structfield> <type>float4[]</type>
+      </para>
+      <para>
+       A list of the frequencies of the most common element values, i.e., the
+       fraction of rows containing at least one instance of the given value.
+       Two or three additional values follow the per-element frequencies;
+       these are the minimum and maximum of the preceding per-element
+       frequencies, and optionally the frequency of null elements.
+       (Null when <structfield>most_common_elems</structfield> is.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>elem_count_histogram</structfield> <type>float4[]</type>
+      </para>
+      <para>
+       A histogram of the counts of distinct non-null element values within the
+       values of the column, followed by the average number of distinct
+       non-null elements.  (Null for scalar types.)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The maximum number of entries in the array fields can be controlled on a
+   column-by-column basis using the <link linkend="sql-altertable"><command>ALTER
+   TABLE SET STATISTICS</command></link>
+   command, or globally by setting the
+   <xref linkend="guc-default-statistics-target"/> run-time parameter.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-stats-ext">
+  <title><structname>pg_stats_ext</structname></title>
+
+  <indexterm zone="view-pg-stats-ext">
+   <primary>pg_stats_ext</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_stats_ext</structname> provides access to
+   information about each extended statistics object in the database,
+   combining information stored in the <link
+   linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>
+   and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
+   catalogs.  This view allows access only to rows of
+   <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link> and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
+   that correspond to tables the user has permission to read, and therefore
+   it is safe to allow public read access to this view.
+  </para>
+
+  <para>
+   <structname>pg_stats_ext</structname> is also designed to present the
+   information in a more readable format than the underlying catalogs
+   &mdash; at the cost that its schema must be extended whenever new types
+   of extended statistics are added to <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.
+  </para>
+
+  <table>
+   <title><structname>pg_stats_ext</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>statistics_schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>statistics_name</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.<structfield>stxname</structfield>)
+      </para>
+      <para>
+       Name of extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>statistics_owner</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       Owner of the extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>attnames</structfield> <type>name[]</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attname</structfield>)
+      </para>
+      <para>
+       Names of the columns included in the extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>exprs</structfield> <type>text[]</type>
+      </para>
+      <para>
+       Expressions included in the extended statistics object
+      </para></entry>
+      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>kinds</structfield> <type>char[]</type>
+      </para>
+      <para>
+       Types of extended statistics object enabled for this record
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>inherited</structfield> <type>bool</type>
+       (references <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>.<structfield>stxdinherit</structfield>)
+      </para>
+      <para>
+       If true, the stats include values from child tables, not just the
+       values in the specified relation
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_distinct</structfield> <type>pg_ndistinct</type>
+      </para>
+      <para>
+       N-distinct counts for combinations of column values. If greater
+       than zero, the estimated number of distinct values in the combination.
+       If less than zero, the negative of the number of distinct values divided
+       by the number of rows.
+       (The negated form is used when <command>ANALYZE</command> believes that
+       the number of distinct values is likely to increase as the table grows;
+       the positive form is used when the column seems to have a fixed number
+       of possible values.)  For example, -1 indicates a unique combination of
+       columns in which the number of distinct combinations is the same as the
+       number of rows.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>dependencies</structfield> <type>pg_dependencies</type>
+      </para>
+      <para>
+       Functional dependency statistics
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_vals</structfield> <type>text[]</type>
+      </para>
+      <para>
+       A list of the most common combinations of values in the columns.
+       (Null if no combinations seem to be more common than any others.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_val_nulls</structfield> <type>bool[]</type>
+      </para>
+      <para>
+       A list of NULL flags for the most common combinations of values.
+       (Null when <structfield>most_common_vals</structfield> is.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_freqs</structfield> <type>float8[]</type>
+      </para>
+      <para>
+       A list of the frequencies of the most common combinations,
+       i.e., number of occurrences of each divided by total number of rows.
+       (Null when <structfield>most_common_vals</structfield> is.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_base_freqs</structfield> <type>float8[]</type>
+      </para>
+      <para>
+       A list of the base frequencies of the most common combinations,
+       i.e., product of per-value frequencies.
+       (Null when <structfield>most_common_vals</structfield> is.)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The maximum number of entries in the array fields can be controlled on a
+   column-by-column basis using the <link linkend="sql-altertable"><command>ALTER
+   TABLE SET STATISTICS</command></link> command, or globally by setting the
+   <xref linkend="guc-default-statistics-target"/> run-time parameter.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-stats-ext-exprs">
+  <title><structname>pg_stats_ext_exprs</structname></title>
+
+  <indexterm zone="view-pg-stats-ext-exprs">
+   <primary>pg_stats_ext_exprs</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_stats_ext_exprs</structname> provides access to
+   information about all expressions included in extended statistics objects,
+   combining information stored in the <link
+   linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>
+   and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
+   catalogs.  This view allows access only to rows of
+   <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link> and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
+   that correspond to tables the user has permission to read, and therefore
+   it is safe to allow public read access to this view.
+  </para>
+
+  <para>
+   <structname>pg_stats_ext_exprs</structname> is also designed to present
+   the information in a more readable format than the underlying catalogs
+   &mdash; at the cost that its schema must be extended whenever the structure
+   of statistics in <structname>pg_statistic_ext</structname> changes.
+  </para>
+
+  <table>
+   <title><structname>pg_stats_ext_exprs</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of table the statistics object is defined on
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>statistics_schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>statistics_name</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.<structfield>stxname</structfield>)
+      </para>
+      <para>
+       Name of extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>statistics_owner</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       Owner of the extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>expr</structfield> <type>text</type>
+      </para>
+      <para>
+       Expression included in the extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>inherited</structfield> <type>bool</type>
+       (references <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>.<structfield>stxdinherit</structfield>)
+      </para>
+      <para>
+       If true, the stats include values from child tables, not just the
+       values in the specified relation
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>null_frac</structfield> <type>float4</type>
+      </para>
+      <para>
+       Fraction of expression entries that are null
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>avg_width</structfield> <type>int4</type>
+      </para>
+      <para>
+       Average width in bytes of expression's entries
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_distinct</structfield> <type>float4</type>
+      </para>
+      <para>
+       If greater than zero, the estimated number of distinct values in the
+       expression.  If less than zero, the negative of the number of distinct
+       values divided by the number of rows.  (The negated form is used when
+       <command>ANALYZE</command> believes that the number of distinct values is
+       likely to increase as the table grows; the positive form is used when
+       the expression seems to have a fixed number of possible values.)  For
+       example, -1 indicates a unique expression in which the number of distinct
+       values is the same as the number of rows.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_vals</structfield> <type>anyarray</type>
+      </para>
+      <para>
+       A list of the most common values in the expression. (Null if
+       no values seem to be more common than any others.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_freqs</structfield> <type>float4[]</type>
+      </para>
+      <para>
+       A list of the frequencies of the most common values,
+       i.e., number of occurrences of each divided by total number of rows.
+       (Null when <structfield>most_common_vals</structfield> is.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>histogram_bounds</structfield> <type>anyarray</type>
+      </para>
+      <para>
+       A list of values that divide the expression's values into groups of
+       approximately equal population.  The values in
+       <structfield>most_common_vals</structfield>, if present, are omitted from this
+       histogram calculation.  (This expression is null if the expression data type
+       does not have a <literal>&lt;</literal> operator or if the
+       <structfield>most_common_vals</structfield> list accounts for the entire
+       population.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>correlation</structfield> <type>float4</type>
+      </para>
+      <para>
+       Statistical correlation between physical row ordering and
+       logical ordering of the expression values.  This ranges from -1 to +1.
+       When the value is near -1 or +1, an index scan on the expression will
+       be estimated to be cheaper than when it is near zero, due to reduction
+       of random access to the disk.  (This expression is null if the expression's
+       data type does not have a <literal>&lt;</literal> operator.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_elems</structfield> <type>anyarray</type>
+      </para>
+      <para>
+       A list of non-null element values most often appearing within values of
+       the expression. (Null for scalar types.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>most_common_elem_freqs</structfield> <type>float4[]</type>
+      </para>
+      <para>
+       A list of the frequencies of the most common element values, i.e., the
+       fraction of rows containing at least one instance of the given value.
+       Two or three additional values follow the per-element frequencies;
+       these are the minimum and maximum of the preceding per-element
+       frequencies, and optionally the frequency of null elements.
+       (Null when <structfield>most_common_elems</structfield> is.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>elem_count_histogram</structfield> <type>float4[]</type>
+      </para>
+      <para>
+       A histogram of the counts of distinct non-null element values within the
+       values of the expression, followed by the average number of distinct
+       non-null elements.  (Null for scalar types.)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The maximum number of entries in the array fields can be controlled on a
+   column-by-column basis using the <link linkend="sql-altertable"><command>ALTER
+   TABLE SET STATISTICS</command></link> command, or globally by setting the
+   <xref linkend="guc-default-statistics-target"/> run-time parameter.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-tables">
+  <title><structname>pg_tables</structname></title>
+
+  <indexterm zone="view-pg-tables">
+   <primary>pg_tables</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_tables</structname> provides access to
+   useful information about each table in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_tables</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tableowner</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       Name of table's owner
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablespace</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.<structfield>spcname</structfield>)
+      </para>
+      <para>
+       Name of tablespace containing table (null if default for database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>hasindexes</structfield> <type>bool</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relhasindex</structfield>)
+      </para>
+      <para>
+       True if table has (or recently had) any indexes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>hasrules</structfield> <type>bool</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relhasrules</structfield>)
+      </para>
+      <para>
+       True if table has (or once had) rules
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>hastriggers</structfield> <type>bool</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relhastriggers</structfield>)
+      </para>
+      <para>
+       True if table has (or once had) triggers
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rowsecurity</structfield> <type>bool</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relrowsecurity</structfield>)
+      </para>
+      <para>
+       True if row security is enabled on the table
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-timezone-abbrevs">
+  <title><structname>pg_timezone_abbrevs</structname></title>
+
+  <indexterm zone="view-pg-timezone-abbrevs">
+   <primary>pg_timezone_abbrevs</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_timezone_abbrevs</structname> provides a list
+   of time zone abbreviations that are currently recognized by the datetime
+   input routines.  The contents of this view change when the
+   <xref linkend="guc-timezone-abbreviations"/> run-time parameter is modified.
+  </para>
+
+  <table>
+   <title><structname>pg_timezone_abbrevs</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>abbrev</structfield> <type>text</type>
+      </para>
+      <para>
+       Time zone abbreviation
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>utc_offset</structfield> <type>interval</type>
+      </para>
+      <para>
+       Offset from UTC (positive means east of Greenwich)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>is_dst</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if this is a daylight-savings abbreviation
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   While most timezone abbreviations represent fixed offsets from UTC,
+   there are some that have historically varied in value
+   (see <xref linkend="datetime-config-files"/> for more information).
+   In such cases this view presents their current meaning.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-timezone-names">
+  <title><structname>pg_timezone_names</structname></title>
+
+  <indexterm zone="view-pg-timezone-names">
+   <primary>pg_timezone_names</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_timezone_names</structname> provides a list
+   of time zone names that are recognized by <command>SET TIMEZONE</command>,
+   along with their associated abbreviations, UTC offsets,
+   and daylight-savings status.  (Technically,
+   <productname>PostgreSQL</productname> does not use UTC because leap
+   seconds are not handled.)
+   Unlike the abbreviations shown in <link
+   linkend="view-pg-timezone-abbrevs"><structname>pg_timezone_abbrevs</structname></link>, many of these names imply a set of daylight-savings transition
+   date rules.  Therefore, the associated information changes across local DST
+   boundaries.  The displayed information is computed based on the current
+   value of <function>CURRENT_TIMESTAMP</function>.
+  </para>
+
+  <table>
+   <title><structname>pg_timezone_names</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       Time zone name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>abbrev</structfield> <type>text</type>
+      </para>
+      <para>
+       Time zone abbreviation
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>utc_offset</structfield> <type>interval</type>
+      </para>
+      <para>
+       Offset from UTC (positive means east of Greenwich)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>is_dst</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if currently observing daylight savings
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-user">
+  <title><structname>pg_user</structname></title>
+
+  <indexterm zone="view-pg-user">
+   <primary>pg_user</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_user</structname> provides access to
+   information about database users.  This is simply a publicly
+   readable view of
+   <link linkend="view-pg-shadow"><structname>pg_shadow</structname></link>
+   that blanks out the password field.
+  </para>
+
+  <table>
+   <title><structname>pg_user</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usename</structfield> <type>name</type>
+      </para>
+      <para>
+       User name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usesysid</structfield> <type>oid</type>
+      </para>
+      <para>
+       ID of this user
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usecreatedb</structfield> <type>bool</type>
+      </para>
+      <para>
+       User can create databases
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usesuper</structfield> <type>bool</type>
+      </para>
+      <para>
+       User is a superuser
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>userepl</structfield> <type>bool</type>
+      </para>
+      <para>
+       User can initiate streaming replication and put the system in and
+       out of backup mode.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usebypassrls</structfield> <type>bool</type>
+      </para>
+      <para>
+       User bypasses every row-level security policy, see
+       <xref linkend="ddl-rowsecurity"/> for more information.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>passwd</structfield> <type>text</type>
+      </para>
+      <para>
+       Not the password (always reads as <literal>********</literal>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>valuntil</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       Password expiry time (only used for password authentication)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>useconfig</structfield> <type>text[]</type>
+      </para>
+      <para>
+       Session defaults for run-time configuration variables
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-user-mappings">
+  <title><structname>pg_user_mappings</structname></title>
+
+  <indexterm zone="view-pg-user-mappings">
+   <primary>pg_user_mappings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_user_mappings</structname> provides access
+   to information about user mappings.  This is essentially a publicly
+   readable view of
+   <link linkend="catalog-pg-user-mapping"><structname>pg_user_mapping</structname></link>
+   that leaves out the options field if the user has no rights to use
+   it.
+  </para>
+
+  <table>
+   <title><structname>pg_user_mappings</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>umid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-user-mapping"><structname>pg_user_mapping</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       OID of the user mapping
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>srvid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       The OID of the foreign server that contains this mapping
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>srvname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.<structfield>srvname</structfield>)
+      </para>
+      <para>
+       Name of the foreign server
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>umuser</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       OID of the local role being mapped, or zero if the user mapping is public
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usename</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the local user to be mapped
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>umoptions</structfield> <type>text[]</type>
+      </para>
+      <para>
+       User mapping specific options, as <quote>keyword=value</quote> strings
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   To protect password information stored as a user mapping option,
+   the <structfield>umoptions</structfield> column will read as null
+   unless one of the following applies:
+   <itemizedlist>
+    <listitem>
+     <para>
+      current user is the user being mapped, and owns the server or
+      holds <literal>USAGE</literal> privilege on it
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      current user is the server owner and mapping is for <literal>PUBLIC</literal>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      current user is a superuser
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+ </sect1>
+
+
+ <sect1 id="view-pg-views">
+  <title><structname>pg_views</structname></title>
+
+  <indexterm zone="view-pg-views">
+   <primary>pg_views</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_views</structname> provides access to
+   useful information about each view in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_views</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing view
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>viewname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of view
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>viewowner</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>rolname</structfield>)
+      </para>
+      <para>
+       Name of view's owner
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>definition</structfield> <type>text</type>
+      </para>
+      <para>
+       View definition (a reconstructed <xref linkend="sql-select"/> query)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+</chapter>

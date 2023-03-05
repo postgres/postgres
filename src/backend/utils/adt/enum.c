@@ -3,7 +3,7 @@
  * enum.c
  *	  I/O functions, operators, aggregates etc for enum types
  *
- * Copyright (c) 2006-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -110,12 +110,13 @@ enum_in(PG_FUNCTION_ARGS)
 {
 	char	   *name = PG_GETARG_CSTRING(0);
 	Oid			enumtypoid = PG_GETARG_OID(1);
+	Node	   *escontext = fcinfo->context;
 	Oid			enumoid;
 	HeapTuple	tup;
 
 	/* must check length to prevent Assert failure within SearchSysCache */
 	if (strlen(name) >= NAMEDATALEN)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input value for enum %s: \"%s\"",
 						format_type_be(enumtypoid),
@@ -125,13 +126,18 @@ enum_in(PG_FUNCTION_ARGS)
 						  ObjectIdGetDatum(enumtypoid),
 						  CStringGetDatum(name));
 	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input value for enum %s: \"%s\"",
 						format_type_be(enumtypoid),
 						name)));
 
-	/* check it's safe to use in SQL */
+	/*
+	 * Check it's safe to use in SQL.  Perhaps we should take the trouble to
+	 * report "unsafe use" softly; but it's unclear that it's worth the
+	 * trouble, or indeed that that is a legitimate bad-input case at all
+	 * rather than an implementation shortcoming.
+	 */
 	check_safe_enum_use(tup);
 
 	/*

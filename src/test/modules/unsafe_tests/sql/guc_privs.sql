@@ -163,6 +163,9 @@ SELECT classid::regclass,
        objsubid
 FROM pg_get_object_address('parameter ACL', '{work_mem}', '{}') goa;
 
+-- Make a per-role setting that regress_host_resource_admin can't change
+ALTER ROLE regress_host_resource_admin SET lc_messages = 'C';
+
 -- Perform some operations as user 'regress_host_resource_admin'
 SET SESSION AUTHORIZATION regress_host_resource_admin;
 ALTER SYSTEM SET autovacuum_work_mem = 32;  -- ok, privileges have been granted
@@ -187,6 +190,19 @@ ALTER SYSTEM RESET lc_messages;  -- fail, insufficient privileges
 SELECT set_config ('temp_buffers', '8192', false); -- ok
 ALTER SYSTEM RESET autovacuum_work_mem;  -- ok, privileges have been granted
 ALTER SYSTEM RESET ALL;  -- fail, insufficient privileges
+ALTER ROLE regress_host_resource_admin SET lc_messages = 'POSIX';  -- fail
+ALTER ROLE regress_host_resource_admin SET max_stack_depth = '1MB';  -- ok
+SELECT setconfig FROM pg_db_role_setting
+  WHERE setrole = 'regress_host_resource_admin'::regrole;
+ALTER ROLE regress_host_resource_admin RESET max_stack_depth;  -- ok
+SELECT setconfig FROM pg_db_role_setting
+  WHERE setrole = 'regress_host_resource_admin'::regrole;
+ALTER ROLE regress_host_resource_admin SET max_stack_depth = '1MB';  -- ok
+SELECT setconfig FROM pg_db_role_setting
+  WHERE setrole = 'regress_host_resource_admin'::regrole;
+ALTER ROLE regress_host_resource_admin RESET ALL;  -- doesn't reset lc_messages
+SELECT setconfig FROM pg_db_role_setting
+  WHERE setrole = 'regress_host_resource_admin'::regrole;
 
 -- Check dropping/revoking behavior
 SET SESSION AUTHORIZATION regress_admin;

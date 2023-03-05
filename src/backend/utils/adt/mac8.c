@@ -11,7 +11,7 @@
  * The following code is written with the assumption that the OUI field
  * size is 24 bits.
  *
- * Portions Copyright (c) 1998-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1998-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/backend/utils/adt/mac8.c
@@ -35,7 +35,7 @@
 #define lobits(addr) \
   ((unsigned long)(((addr)->e<<24) | ((addr)->f<<16) | ((addr)->g<<8) | ((addr)->h)))
 
-static unsigned char hex2_to_uchar(const unsigned char *ptr, const unsigned char *str);
+static unsigned char hex2_to_uchar(const unsigned char *ptr, bool *badhex);
 
 static const signed char hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -51,16 +51,13 @@ static const signed char hexlookup[128] = {
 /*
  * hex2_to_uchar - convert 2 hex digits to a byte (unsigned char)
  *
- * This will ereport() if the end of the string is reached ('\0' found), or if
+ * Sets *badhex to true if the end of the string is reached ('\0' found), or if
  * either character is not a valid hex digit.
- *
- * ptr is the pointer to where the digits to convert are in the string, str is
- * the entire string, which is used only for error reporting.
  */
 static inline unsigned char
-hex2_to_uchar(const unsigned char *ptr, const unsigned char *str)
+hex2_to_uchar(const unsigned char *ptr, bool *badhex)
 {
-	unsigned char ret = 0;
+	unsigned char ret;
 	signed char lookup;
 
 	/* Handle the first character */
@@ -88,12 +85,7 @@ hex2_to_uchar(const unsigned char *ptr, const unsigned char *str)
 	return ret;
 
 invalid_input:
-	ereport(ERROR,
-			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
-					str)));
-
-	/* We do not actually reach here */
+	*badhex = true;
 	return 0;
 }
 
@@ -104,7 +96,9 @@ Datum
 macaddr8_in(PG_FUNCTION_ARGS)
 {
 	const unsigned char *str = (unsigned char *) PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 	const unsigned char *ptr = str;
+	bool		badhex = false;
 	macaddr8   *result;
 	unsigned char a = 0,
 				b = 0,
@@ -136,36 +130,36 @@ macaddr8_in(PG_FUNCTION_ARGS)
 		switch (count)
 		{
 			case 1:
-				a = hex2_to_uchar(ptr, str);
+				a = hex2_to_uchar(ptr, &badhex);
 				break;
 			case 2:
-				b = hex2_to_uchar(ptr, str);
+				b = hex2_to_uchar(ptr, &badhex);
 				break;
 			case 3:
-				c = hex2_to_uchar(ptr, str);
+				c = hex2_to_uchar(ptr, &badhex);
 				break;
 			case 4:
-				d = hex2_to_uchar(ptr, str);
+				d = hex2_to_uchar(ptr, &badhex);
 				break;
 			case 5:
-				e = hex2_to_uchar(ptr, str);
+				e = hex2_to_uchar(ptr, &badhex);
 				break;
 			case 6:
-				f = hex2_to_uchar(ptr, str);
+				f = hex2_to_uchar(ptr, &badhex);
 				break;
 			case 7:
-				g = hex2_to_uchar(ptr, str);
+				g = hex2_to_uchar(ptr, &badhex);
 				break;
 			case 8:
-				h = hex2_to_uchar(ptr, str);
+				h = hex2_to_uchar(ptr, &badhex);
 				break;
 			default:
 				/* must be trailing garbage... */
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
-								str)));
+				goto fail;
 		}
+
+		if (badhex)
+			goto fail;
 
 		/* Move forward to where the next byte should be */
 		ptr += 2;
@@ -179,10 +173,7 @@ macaddr8_in(PG_FUNCTION_ARGS)
 
 			/* Have to use the same spacer throughout */
 			else if (spacer != *ptr)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
-								str)));
+				goto fail;
 
 			/* move past the spacer */
 			ptr++;
@@ -197,10 +188,7 @@ macaddr8_in(PG_FUNCTION_ARGS)
 
 				/* If we found a space and then non-space, it's invalid */
 				if (*ptr)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
-									str)));
+					goto fail;
 			}
 		}
 	}
@@ -216,10 +204,7 @@ macaddr8_in(PG_FUNCTION_ARGS)
 		e = 0xFE;
 	}
 	else if (count != 8)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
-						str)));
+		goto fail;
 
 	result = (macaddr8 *) palloc0(sizeof(macaddr8));
 
@@ -233,6 +218,12 @@ macaddr8_in(PG_FUNCTION_ARGS)
 	result->h = h;
 
 	PG_RETURN_MACADDR8_P(result);
+
+fail:
+	ereturn(escontext, (Datum) 0,
+			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
+					str)));
 }
 
 /*

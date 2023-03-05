@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 #
 # Test using a standby server as the source.
@@ -83,7 +83,6 @@ $node_b->wait_for_catchup('node_c', 'write', $lsn);
 # A (primary) <--- B (standby)      C (primary)
 
 $node_c->promote;
-$node_c->safe_psql('postgres', "checkpoint");
 
 
 # Insert a row in A. This causes A/B and C to have "diverged", so that it's
@@ -160,7 +159,7 @@ in A, after C was promoted
 $node_a->safe_psql('postgres',
 	"INSERT INTO tbl1 values ('in A, after rewind')");
 
-$node_b->wait_for_catchup('node_c', 'replay', $node_a->lsn('write'));
+$node_b->wait_for_replay_catchup('node_c', $node_a);
 
 check_query(
 	'SELECT * FROM tbl1',

@@ -2,7 +2,7 @@
  * ginxlog.h
  *	  header file for postgres inverted index xlog implementation.
  *
- *	Copyright (c) 2006-2022, PostgreSQL Global Development Group
+ *	Copyright (c) 2006-2023, PostgreSQL Global Development Group
  *
  *	src/include/access/ginxlog.h
  *--------------------------------------------------------------------------
@@ -110,7 +110,7 @@ typedef struct
 
 typedef struct ginxlogSplit
 {
-	RelFileNode node;
+	RelFileLocator locator;
 	BlockNumber rrlink;			/* right link, or root's blocknumber if root
 								 * split */
 	BlockNumber leftChildBlkno; /* valid on a non-leaf split */
@@ -167,7 +167,7 @@ typedef struct ginxlogDeletePage
  */
 typedef struct ginxlogUpdateMeta
 {
-	RelFileNode node;
+	RelFileLocator locator;
 	GinMetaPageData metadata;
 	BlockNumber prevTail;
 	BlockNumber newRightlink;

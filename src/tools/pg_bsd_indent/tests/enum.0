@@ -1,0 +1,6 @@
+typedef enum
+{
+PREWARM_PREFETCH,				/* comment */
+PREWARM_READ,					/* more comment */
+PREWARM_BUFFER					/* more comment */
+} PrewarmType;

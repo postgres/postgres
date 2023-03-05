@@ -37,14 +37,13 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <command>initdb</command> creates a new
-   <productname>PostgreSQL</productname> database cluster.  A database
-   cluster is a collection of databases that are managed by a single
-   server instance.
+   <productname>PostgreSQL</productname> <glossterm linkend="glossary-db-cluster">database cluster</glossterm>.
   </para>
 
   <para>
-   Creating a database cluster consists of creating the directories in
-   which the database data will live, generating the shared catalog
+   Creating a database cluster consists of creating the
+   <glossterm linkend="glossary-data-directory">directories</glossterm> in
+   which the cluster data will live, generating the shared catalog
    tables (tables that belong to the whole cluster rather than to any
    particular database), and creating the <literal>postgres</literal>,
    <literal>template1</literal>, and <literal>template0</literal> databases.
@@ -139,7 +138,7 @@ PostgreSQL documentation
 
    <para>
     <variablelist>
-     <varlistentry>
+     <varlistentry id="app-initdb-option-auth">
       <term><option>-A <replaceable class="parameter">authmethod</replaceable></option></term>
       <term><option>--auth=<replaceable class="parameter">authmethod</replaceable></option></term>
       <listitem>
@@ -164,7 +163,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-auth-host">
       <term><option>--auth-host=<replaceable class="parameter">authmethod</replaceable></option></term>
       <listitem>
        <para>
@@ -175,7 +174,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-auth-local">
       <term><option>--auth-local=<replaceable class="parameter">authmethod</replaceable></option></term>
       <listitem>
        <para>
@@ -186,7 +185,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-pgdata">
       <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
       <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
@@ -196,21 +195,22 @@ PostgreSQL documentation
         <command>initdb</command>, but you can avoid writing it by
         setting the <envar>PGDATA</envar> environment variable, which
         can be convenient since the database server
-        (<command>postgres</command>) can find the database
+        (<command>postgres</command>) can find the data
         directory later by the same variable.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-encoding">
       <term><option>-E <replaceable class="parameter">encoding</replaceable></option></term>
       <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
       <listitem>
        <para>
         Selects the encoding of the template databases. This will also
         be the default encoding of any database you create later,
-        unless you override it then.  The default is derived from the locale, or
-        <literal>SQL_ASCII</literal> if that does not work. The character sets supported by
+        unless you override it then.  The default is derived from the locale,
+        if the libc locale provider is used, or <literal>UTF8</literal> if the
+        ICU locale provider is used.  The character sets supported by
         the <productname>PostgreSQL</productname> server are described
         in <xref linkend="multibyte-charset-supported"/>.
        </para>
@@ -230,7 +230,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-icu-locale">
       <term><option>--icu-locale=<replaceable>locale</replaceable></option></term>
       <listitem>
        <para>
@@ -256,7 +256,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-locale">
       <term><option>--locale=<replaceable>locale</replaceable></option></term>
       <listitem>
        <para>
@@ -268,7 +268,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-lc-collate">
       <term><option>--lc-collate=<replaceable>locale</replaceable></option></term>
       <term><option>--lc-ctype=<replaceable>locale</replaceable></option></term>
       <term><option>--lc-messages=<replaceable>locale</replaceable></option></term>
@@ -284,7 +284,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-no-locale">
       <term><option>--no-locale</option></term>
       <listitem>
        <para>
@@ -293,7 +293,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-locale-provider">
       <term><option>--locale-provider={<literal>libc</literal>|<literal>icu</literal>}</option></term>
       <listitem>
        <para>
@@ -305,7 +305,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-no-sync">
       <term><option>-N</option></term>
       <term><option>--no-sync</option></term>
       <listitem>
@@ -320,7 +320,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-no-instructions">
       <term><option>--no-instructions</option></term>
       <listitem>
        <para>
@@ -333,17 +333,17 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-pwfile">
       <term><option>--pwfile=<replaceable>filename</replaceable></option></term>
       <listitem>
        <para>
-        Makes <command>initdb</command> read the database superuser's password
+        Makes <command>initdb</command> read the bootstrap superuser's password
         from a file.  The first line of the file is taken as the password.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-sync-only">
       <term><option>-S</option></term>
       <term><option>--sync-only</option></term>
       <listitem>
@@ -357,7 +357,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-text-search-config">
       <term><option>-T <replaceable>config</replaceable></option></term>
       <term><option>--text-search-config=<replaceable>config</replaceable></option></term>
       <listitem>
@@ -368,28 +368,26 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-username">
       <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
-        Selects the user name of the database superuser. This defaults
-        to the name of the effective user running
-        <command>initdb</command>. It is really not important what the
-        superuser's name is, but one might choose to keep the
-        customary name <systemitem>postgres</systemitem>, even if the operating
-        system user's name is different.
+        Selects the user name of the
+        <glossterm linkend="glossary-bootstrap-superuser">bootstrap superuser</glossterm>.
+        This defaults to the name of the
+        <glossterm linkend="glossary-cluster-owner">cluster owner</glossterm>.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-pwprompt">
       <term><option>-W</option></term>
       <term><option>--pwprompt</option></term>
       <listitem>
        <para>
         Makes <command>initdb</command> prompt for a password
-        to give the database superuser. If you don't plan on using password
+        to give the bootstrap superuser. If you don't plan on using password
         authentication, this is not important.  Otherwise you won't be
         able to use password authentication until you have a password
         set up.
@@ -397,7 +395,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="app-initdb-option-waldir">
       <term><option>-X <replaceable class="parameter">directory</replaceable></option></term>
       <term><option>--waldir=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
@@ -408,7 +406,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-wal-segsize">
       <term><option>--wal-segsize=<replaceable>size</replaceable></option></term>
       <listitem>
        <para>
@@ -435,7 +433,7 @@ PostgreSQL documentation
     Other, less commonly used, options are also available:
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="app-initdb-option-debug">
       <term><option>-d</option></term>
       <term><option>--debug</option></term>
       <listitem>
@@ -449,7 +447,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-discard-caches">
       <term><option>--discard-caches</option></term>
       <listitem>
        <para>
@@ -460,7 +458,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-l">
       <term><option>-L <replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
@@ -472,7 +470,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-no-clean">
       <term><option>-n</option></term>
       <term><option>--no-clean</option></term>
       <listitem>
@@ -492,7 +490,7 @@ PostgreSQL documentation
     Other options:
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="app-initdb-option-version">
        <term><option>-V</option></term>
        <term><option>--version</option></term>
        <listitem>
@@ -502,7 +500,7 @@ PostgreSQL documentation
        </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="app-initdb-option-help">
        <term><option>-?</option></term>
        <term><option>--help</option></term>
        <listitem>
@@ -522,7 +520,7 @@ PostgreSQL documentation
   <title>Environment</title>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="app-initdb-environment-pgdata">
     <term><envar>PGDATA</envar></term>
 
     <listitem>
@@ -533,7 +531,7 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="app-initdb-environment-pg-color">
     <term><envar>PG_COLOR</envar></term>
     <listitem>
      <para>
@@ -544,7 +542,7 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="app-initdb-environment-tz">
     <term><envar>TZ</envar></term>
 
     <listitem>

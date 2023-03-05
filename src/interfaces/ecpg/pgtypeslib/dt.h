@@ -311,22 +311,22 @@ do { \
 #define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
-int			DecodeInterval(char **, int *, int, int *, struct tm *, fsec_t *);
-int			DecodeTime(char *, int *, struct tm *, fsec_t *);
+int			DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec_t *fsec);
+int			DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec);
 void		EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates);
 void		EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str);
-int			tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
+int			tm2timestamp(struct tm *tm, fsec_t fsec, int *tzp, timestamp *result);
 int			DecodeUnits(int field, char *lowtoken, int *val);
 bool		CheckDateTokenTables(void);
 void		EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates);
-int			GetEpochTime(struct tm *);
-int			ParseDateTime(char *, char *, char **, int *, int *, char **);
-int			DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, bool);
-void		j2date(int, int *, int *, int *);
-void		GetCurrentDateTime(struct tm *);
-int			date2j(int, int, int);
-void		TrimTrailingZeros(char *);
-void		dt2time(double, int *, int *, int *, fsec_t *);
+int			GetEpochTime(struct tm *tm);
+int			ParseDateTime(char *timestr, char *lowstr, char **field, int *ftype, int *numfields, char **endstr);
+int			DecodeDateTime(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec_t *fsec, bool EuroDates);
+void		j2date(int jd, int *year, int *month, int *day);
+void		GetCurrentDateTime(struct tm *tm);
+int			date2j(int y, int m, int d);
+void		TrimTrailingZeros(char *str);
+void		dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec);
 int			PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 										int *year, int *month, int *day,
 										int *hour, int *minute, int *second,

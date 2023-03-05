@@ -15,19 +15,21 @@
  * Non-empty lists have a header, which will not be relocated as long as the
  * list remains non-empty, and an expansible data array.
  *
- * We support three types of lists:
+ * We support four types of lists:
  *
  *	T_List: lists of pointers
  *		(in practice usually pointers to Nodes, but not always;
  *		declared as "void *" to minimize casting annoyances)
  *	T_IntList: lists of integers
  *	T_OidList: lists of Oids
+ *	T_XidList: lists of TransactionIds
+ *		(the XidList infrastructure is less complete than the other cases)
  *
- * (At the moment, ints and Oids are the same size, but they may not
- * always be so; try to be careful to maintain the distinction.)
+ * (At the moment, ints, Oids, and XIDs are the same size, but they may not
+ * always be so; be careful to use the appropriate list type for your data.)
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/pg_list.h
@@ -45,11 +47,12 @@ typedef union ListCell
 	void	   *ptr_value;
 	int			int_value;
 	Oid			oid_value;
+	TransactionId xid_value;
 } ListCell;
 
 typedef struct List
 {
-	NodeTag		type;			/* T_List, T_IntList, or T_OidList */
+	NodeTag		type;			/* T_List, T_IntList, T_OidList, or T_XidList */
 	int			length;			/* number of elements currently present */
 	int			max_length;		/* allocated length of elements[] */
 	ListCell   *elements;		/* re-allocatable array of cells */
@@ -169,6 +172,7 @@ list_length(const List *l)
 #define lfirst(lc)				((lc)->ptr_value)
 #define lfirst_int(lc)			((lc)->int_value)
 #define lfirst_oid(lc)			((lc)->oid_value)
+#define lfirst_xid(lc)			((lc)->xid_value)
 #define lfirst_node(type,lc)	castNode(type, lfirst(lc))
 
 #define linitial(l)				lfirst(list_nth_cell(l, 0))
@@ -194,6 +198,7 @@ list_length(const List *l)
 #define llast(l)				lfirst(list_last_cell(l))
 #define llast_int(l)			lfirst_int(list_last_cell(l))
 #define llast_oid(l)			lfirst_oid(list_last_cell(l))
+#define llast_xid(l)			lfirst_xid(list_last_cell(l))
 #define llast_node(type,l)		castNode(type, llast(l))
 
 /*
@@ -202,6 +207,7 @@ list_length(const List *l)
 #define list_make_ptr_cell(v)	((ListCell) {.ptr_value = (v)})
 #define list_make_int_cell(v)	((ListCell) {.int_value = (v)})
 #define list_make_oid_cell(v)	((ListCell) {.oid_value = (v)})
+#define list_make_xid_cell(v)	((ListCell) {.xid_value = (v)})
 
 #define list_make1(x1) \
 	list_make1_impl(T_List, list_make_ptr_cell(x1))
@@ -247,6 +253,21 @@ list_length(const List *l)
 	list_make5_impl(T_OidList, list_make_oid_cell(x1), list_make_oid_cell(x2), \
 					list_make_oid_cell(x3), list_make_oid_cell(x4), \
 					list_make_oid_cell(x5))
+
+#define list_make1_xid(x1) \
+	list_make1_impl(T_XidList, list_make_xid_cell(x1))
+#define list_make2_xid(x1,x2) \
+	list_make2_impl(T_XidList, list_make_xid_cell(x1), list_make_xid_cell(x2))
+#define list_make3_xid(x1,x2,x3) \
+	list_make3_impl(T_XidList, list_make_xid_cell(x1), list_make_xid_cell(x2), \
+					list_make_xid_cell(x3))
+#define list_make4_xid(x1,x2,x3,x4) \
+	list_make4_impl(T_XidList, list_make_xid_cell(x1), list_make_xid_cell(x2), \
+					list_make_xid_cell(x3), list_make_xid_cell(x4))
+#define list_make5_xid(x1,x2,x3,x4,x5) \
+	list_make5_impl(T_XidList, list_make_xid_cell(x1), list_make_xid_cell(x2), \
+					list_make_xid_cell(x3), list_make_xid_cell(x4), \
+					list_make_xid_cell(x5))
 
 /*
  * Locate the n'th cell (counting from 0) of the list.
@@ -539,6 +560,7 @@ extern List *list_make5_impl(NodeTag t, ListCell datum1, ListCell datum2,
 extern pg_nodiscard List *lappend(List *list, void *datum);
 extern pg_nodiscard List *lappend_int(List *list, int datum);
 extern pg_nodiscard List *lappend_oid(List *list, Oid datum);
+extern pg_nodiscard List *lappend_xid(List *list, TransactionId datum);
 
 extern pg_nodiscard List *list_insert_nth(List *list, int pos, void *datum);
 extern pg_nodiscard List *list_insert_nth_int(List *list, int pos, int datum);
@@ -557,6 +579,7 @@ extern bool list_member(const List *list, const void *datum);
 extern bool list_member_ptr(const List *list, const void *datum);
 extern bool list_member_int(const List *list, int datum);
 extern bool list_member_oid(const List *list, Oid datum);
+extern bool list_member_xid(const List *list, TransactionId datum);
 
 extern pg_nodiscard List *list_delete(List *list, void *datum);
 extern pg_nodiscard List *list_delete_ptr(List *list, void *datum);
@@ -598,8 +621,9 @@ extern void list_deduplicate_oid(List *list);
 extern void list_free(List *list);
 extern void list_free_deep(List *list);
 
-extern pg_nodiscard List *list_copy(const List *list);
-extern pg_nodiscard List *list_copy_tail(const List *list, int nskip);
+extern pg_nodiscard List *list_copy(const List *oldlist);
+extern pg_nodiscard List *list_copy_head(const List *oldlist, int len);
+extern pg_nodiscard List *list_copy_tail(const List *oldlist, int nskip);
 extern pg_nodiscard List *list_copy_deep(const List *oldlist);
 
 typedef int (*list_sort_comparator) (const ListCell *a, const ListCell *b);

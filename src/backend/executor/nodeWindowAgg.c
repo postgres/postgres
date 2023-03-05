@@ -23,7 +23,7 @@
  * aggregate function over all rows in the current row's window frame.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -41,6 +41,7 @@
 #include "executor/nodeWindowAgg.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
@@ -630,20 +631,13 @@ finalize_windowaggregate(WindowAggState *winstate,
 	}
 	else
 	{
-		/* Don't need MakeExpandedObjectReadOnly; datumCopy will copy it */
-		*result = peraggstate->transValue;
+		*result =
+			MakeExpandedObjectReadOnly(peraggstate->transValue,
+									   peraggstate->transValueIsNull,
+									   peraggstate->transtypeLen);
 		*isnull = peraggstate->transValueIsNull;
 	}
 
-	/*
-	 * If result is pass-by-ref, make sure it is in the right context.
-	 */
-	if (!peraggstate->resulttypeByVal && !*isnull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*result)))
-		*result = datumCopy(*result,
-							peraggstate->resulttypeByVal,
-							peraggstate->resulttypeLen);
 	MemoryContextSwitchTo(oldContext);
 }
 
@@ -1057,13 +1051,14 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	*isnull = fcinfo->isnull;
 
 	/*
-	 * Make sure pass-by-ref data is allocated in the appropriate context. (We
-	 * need this in case the function returns a pointer into some short-lived
-	 * tuple, as is entirely possible.)
+	 * The window function might have returned a pass-by-ref result that's
+	 * just a pointer into one of the WindowObject's temporary slots.  That's
+	 * not a problem if it's the only window function using the WindowObject;
+	 * but if there's more than one function, we'd better copy the result to
+	 * ensure it's not clobbered by later window functions.
 	 */
 	if (!perfuncstate->resulttypeByVal && !fcinfo->isnull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*result)))
+		winstate->numfuncs > 1)
 		*result = datumCopy(*result,
 							perfuncstate->resulttypeByVal,
 							perfuncstate->resulttypeLen);
@@ -2062,11 +2057,12 @@ ExecWindowAgg(PlanState *pstate)
 	if (winstate->all_first)
 	{
 		int			frameOptions = winstate->frameOptions;
-		ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
 		Datum		value;
 		bool		isnull;
 		int16		len;
 		bool		byval;
+
+		econtext = winstate->ss.ps.ps_ExprContext;
 
 		if (frameOptions & FRAMEOPTION_START_OFFSET)
 		{
@@ -2305,7 +2301,27 @@ ExecWindowAgg(PlanState *pstate)
 						continue;
 					}
 					else
+					{
 						winstate->status = WINDOWAGG_PASSTHROUGH;
+
+						/*
+						 * If we're not the top-window, we'd better NULLify
+						 * the aggregate results.  In pass-through mode we no
+						 * longer update these and this avoids the old stale
+						 * results lingering.  Some of these might be byref
+						 * types so we can't have them pointing to free'd
+						 * memory.  The planner insisted that quals used in
+						 * the runcondition are strict, so the top-level
+						 * WindowAgg will filter these NULLs out in the filter
+						 * clause.
+						 */
+						numfuncs = winstate->numfuncs;
+						for (i = 0; i < numfuncs; i++)
+						{
+							econtext->ecxt_aggvalues[i] = (Datum) 0;
+							econtext->ecxt_aggnulls[i] = true;
+						}
+					}
 				}
 				else
 				{
@@ -2558,7 +2574,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 		wfuncstate->wfuncno = wfuncno;
 
 		/* Check permission to call window function */
-		aclresult = pg_proc_aclcheck(wfunc->winfnoid, GetUserId(),
+		aclresult = object_aclcheck(ProcedureRelationId, wfunc->winfnoid, GetUserId(),
 									 ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION,
@@ -2788,16 +2804,24 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	 * aggregate's arguments (and FILTER clause if any) contain any calls to
 	 * volatile functions.  Otherwise, the difference between restarting and
 	 * not restarting the aggregation would be user-visible.
+	 *
+	 * We also don't risk using moving aggregates when there are subplans in
+	 * the arguments or FILTER clause.  This is partly because
+	 * contain_volatile_functions() doesn't look inside subplans; but there
+	 * are other reasons why a subplan's output might be volatile.  For
+	 * example, syncscan mode can render the results nonrepeatable.
 	 */
 	if (!OidIsValid(aggform->aggminvtransfn))
 		use_ma_code = false;	/* sine qua non */
 	else if (aggform->aggmfinalmodify == AGGMODIFY_READ_ONLY &&
-			 aggform->aggfinalmodify != AGGMODIFY_READ_ONLY)
+		aggform->aggfinalmodify != AGGMODIFY_READ_ONLY)
 		use_ma_code = true;		/* decision forced by safety */
 	else if (winstate->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
 		use_ma_code = false;	/* non-moving frame head */
 	else if (contain_volatile_functions((Node *) wfunc))
 		use_ma_code = false;	/* avoid possible behavioral change */
+	else if (contain_subplans((Node *) wfunc))
+		use_ma_code = false;	/* subplans might contain volatile functions */
 	else
 		use_ma_code = true;		/* yes, let's use it */
 	if (use_ma_code)
@@ -2839,7 +2863,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 		aggOwner = ((Form_pg_proc) GETSTRUCT(procTuple))->proowner;
 		ReleaseSysCache(procTuple);
 
-		aclresult = pg_proc_aclcheck(transfn_oid, aggOwner,
+		aclresult = object_aclcheck(ProcedureRelationId, transfn_oid, aggOwner,
 									 ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION,
@@ -2848,7 +2872,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 
 		if (OidIsValid(invtransfn_oid))
 		{
-			aclresult = pg_proc_aclcheck(invtransfn_oid, aggOwner,
+			aclresult = object_aclcheck(ProcedureRelationId, invtransfn_oid, aggOwner,
 										 ACL_EXECUTE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_FUNCTION,
@@ -2858,7 +2882,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 
 		if (OidIsValid(finalfn_oid))
 		{
-			aclresult = pg_proc_aclcheck(finalfn_oid, aggOwner,
+			aclresult = object_aclcheck(ProcedureRelationId, finalfn_oid, aggOwner,
 										 ACL_EXECUTE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_FUNCTION,
@@ -3110,6 +3134,10 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 	/*
 	 * Now we should be on the tuple immediately before or after the one we
 	 * want, so just fetch forwards or backwards as appropriate.
+	 *
+	 * Notice that we tell tuplestore_gettupleslot to make a physical copy of
+	 * the fetched tuple.  This ensures that the slot's contents remain valid
+	 * through manipulations of the tuplestore, which some callers depend on.
 	 */
 	if (winobj->seekpos > pos)
 	{

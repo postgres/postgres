@@ -10,6 +10,7 @@
 #include "access/stratnum.h"
 #include "crc32.h"
 #include "ltree.h"
+#include "utils/array.h"
 
 #define NEXTVAL(x) ( (lquery*)( (char*)(x) + INTALIGN( VARSIZE(x) ) ) )
 #define ISEQ(a,b)	( (a)->numlevel == (b)->numlevel && ltree_compare(a,b)==0 )
@@ -22,8 +23,9 @@ ltree_gist_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("ltree_gist_in() not implemented")));
-	PG_RETURN_DATUM(0);
+			 errmsg("cannot accept a value of type %s", "ltree_gist")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 Datum
@@ -31,8 +33,9 @@ ltree_gist_out(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("ltree_gist_out() not implemented")));
-	PG_RETURN_DATUM(0);
+			 errmsg("cannot display a value of type %s", "ltree_gist")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 ltree_gist *
@@ -325,7 +328,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 		array[j].r = LTG_GETLNODE(lu, siglen);
 	}
 
-	qsort((void *) &array[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1,
+	qsort(&array[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1,
 		  sizeof(RIX), treekey_cmp);
 
 	lu_l = lu_r = ru_l = ru_r = NULL;

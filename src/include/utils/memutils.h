@@ -7,7 +7,7 @@
  *	  of the API of the memory management subsystem.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/memutils.h
@@ -41,7 +41,10 @@
 
 #define AllocSizeIsValid(size)	((Size) (size) <= MaxAllocSize)
 
+/* Must be less than SIZE_MAX */
 #define MaxAllocHugeSize	(SIZE_MAX / 2)
+
+#define InvalidAllocSize	SIZE_MAX
 
 #define AllocHugeSizeIsValid(size)	((Size) (size) <= MaxAllocHugeSize)
 
@@ -79,6 +82,7 @@ extern void MemoryContextDeleteChildren(MemoryContext context);
 extern void MemoryContextSetIdentifier(MemoryContext context, const char *id);
 extern void MemoryContextSetParent(MemoryContext context,
 								   MemoryContext new_parent);
+extern MemoryContext GetMemoryChunkContext(void *pointer);
 extern Size GetMemoryChunkSpace(void *pointer);
 extern MemoryContext MemoryContextGetParent(MemoryContext context);
 extern bool MemoryContextIsEmpty(MemoryContext context);
@@ -92,58 +96,10 @@ extern void MemoryContextAllowInCriticalSection(MemoryContext context,
 #ifdef MEMORY_CONTEXT_CHECKING
 extern void MemoryContextCheck(MemoryContext context);
 #endif
-extern bool MemoryContextContains(MemoryContext context, void *pointer);
 
 /* Handy macro for copying and assigning context ID ... but note double eval */
 #define MemoryContextCopyAndSetIdentifier(cxt, id) \
 	MemoryContextSetIdentifier(cxt, MemoryContextStrdup(cxt, id))
-
-/*
- * GetMemoryChunkContext
- *		Given a currently-allocated chunk, determine the context
- *		it belongs to.
- *
- * All chunks allocated by any memory context manager are required to be
- * preceded by the corresponding MemoryContext stored, without padding, in the
- * preceding sizeof(void*) bytes.  A currently-allocated chunk must contain a
- * backpointer to its owning context.  The backpointer is used by pfree() and
- * repalloc() to find the context to call.
- */
-#ifndef FRONTEND
-static inline MemoryContext
-GetMemoryChunkContext(void *pointer)
-{
-	MemoryContext context;
-
-	/*
-	 * Try to detect bogus pointers handed to us, poorly though we can.
-	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
-	 * allocated chunk.
-	 */
-	Assert(pointer != NULL);
-	Assert(pointer == (void *) MAXALIGN(pointer));
-
-	/*
-	 * OK, it's probably safe to look at the context.
-	 */
-	context = *(MemoryContext *) (((char *) pointer) - sizeof(void *));
-
-	AssertArg(MemoryContextIsValid(context));
-
-	return context;
-}
-#endif
-
-/*
- * This routine handles the context-type-independent part of memory
- * context creation.  It's intended to be called from context-type-
- * specific creation routines, and noplace else.
- */
-extern void MemoryContextCreate(MemoryContext node,
-								NodeTag tag,
-								const MemoryContextMethods *methods,
-								MemoryContext parent,
-								const char *name);
 
 extern void HandleLogMemoryContextInterrupt(void);
 extern void ProcessLogMemoryContextInterrupt(void);

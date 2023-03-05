@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE DATABASE <replaceable class="parameter">name</replaceable>
-    [ [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
+    [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
            [ STRATEGY [=] <replaceable class="parameter">strategy</replaceable> ] ]
@@ -36,7 +36,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
            [ ALLOW_CONNECTIONS [=] <replaceable class="parameter">allowconn</replaceable> ]
            [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ]
            [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ]
-           [ OID [=] <replaceable class="parameter">oid</replaceable> ] ]
+           [ OID [=] <replaceable class="parameter">oid</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -74,7 +74,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
   <title>Parameters</title>
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="create-database-name">
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
@@ -82,19 +82,19 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-user-name">
       <term><replaceable class="parameter">user_name</replaceable></term>
       <listitem>
        <para>
         The role name of the user who will own the new database,
         or <literal>DEFAULT</literal> to use the default (namely, the
         user executing the command).  To create a database owned by another
-        role, you must be a direct or indirect member of that role,
-        or be a superuser.
+        role, you must be able to <literal>SET ROLE</literal> to that
+        role.
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-template">
       <term><replaceable class="parameter">template</replaceable></term>
       <listitem>
        <para>
@@ -104,7 +104,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-encoding">
       <term><replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
@@ -140,13 +140,12 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-locale">
       <term><replaceable class="parameter">locale</replaceable></term>
       <listitem>
        <para>
         This is a shortcut for setting <symbol>LC_COLLATE</symbol>
-        and <symbol>LC_CTYPE</symbol> at once.  If you specify this,
-        you cannot specify either of those parameters.
+        and <symbol>LC_CTYPE</symbol> at once.
        </para>
        <tip>
         <para>
@@ -160,7 +159,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </tip>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-lc-collate">
       <term><replaceable class="parameter">lc_collate</replaceable></term>
       <listitem>
        <para>
@@ -172,7 +171,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-lc-ctype">
       <term><replaceable class="parameter">lc_ctype</replaceable></term>
       <listitem>
        <para>
@@ -184,7 +183,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="create-database-icu-locale">
       <term><replaceable class="parameter">icu_locale</replaceable></term>
       <listitem>
        <para>
@@ -193,21 +192,23 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="create-database-locale-provider">
       <term><replaceable>locale_provider</replaceable></term>
 
       <listitem>
        <para>
         Specifies the provider to use for the default collation in this
-        database.  Possible values are:
-        <literal>icu</literal>,<indexterm><primary>ICU</primary></indexterm>
-        <literal>libc</literal>.  <literal>libc</literal> is the default.  The
-        available choices depend on the operating system and build options.
+        database.  Possible values are
+        <literal>icu</literal><indexterm><primary>ICU</primary></indexterm>
+        (if the server was built with ICU support) or <literal>libc</literal>.
+        By default, the provider is the same as that of the <xref
+        linkend="create-database-template"/>. See <xref
+        linkend="locale-providers"/> for details.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="create-database-collation-version">
       <term><replaceable>collation_version</replaceable></term>
 
       <listitem>
@@ -226,7 +227,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
      </listitem>
     </varlistentry>
-     <varlistentry>
+     <varlistentry id="create-database-tablespace-name">
       <term><replaceable class="parameter">tablespace_name</replaceable></term>
       <listitem>
        <para>
@@ -241,7 +242,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="create-database-allowconn">
        <term><replaceable class="parameter">allowconn</replaceable></term>
        <listitem>
         <para>
@@ -252,7 +253,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="create-database-connlimit">
       <term><replaceable class="parameter">connlimit</replaceable></term>
       <listitem>
        <para>
@@ -262,7 +263,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       </listitem>
      </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="create-database-istemplate">
        <term><replaceable class="parameter">istemplate</replaceable></term>
        <listitem>
         <para>
@@ -273,7 +274,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="create-database-oid">
        <term><replaceable class="parameter">oid</replaceable></term>
        <listitem>
         <para>

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 #
-# Copyright (c) 2007-2022, PostgreSQL Global Development Group
+# Copyright (c) 2007-2023, PostgreSQL Global Development Group
 #
 # src/backend/utils/mb/Unicode/UCS_to_EUC_JIS_2004.pl
 #

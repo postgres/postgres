@@ -4,7 +4,7 @@
  *	  Key word lookup for PostgreSQL
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/kwlookup.h
@@ -32,7 +32,7 @@ typedef struct ScanKeywordList
 } ScanKeywordList;
 
 
-extern int	ScanKeywordLookup(const char *text, const ScanKeywordList *keywords);
+extern int	ScanKeywordLookup(const char *str, const ScanKeywordList *keywords);
 
 /* Code that wants to retrieve the text of the N'th keyword should use this. */
 static inline const char *

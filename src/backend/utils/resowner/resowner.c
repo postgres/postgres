@@ -9,7 +9,7 @@
  * See utils/resowner/README for more info.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -501,6 +501,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 	ResourceOwner child;
 	ResourceOwner save;
 	ResourceReleaseCallbackItem *item;
+	ResourceReleaseCallbackItem *next;
 	Datum		foundres;
 
 	/* Recurse to handle descendants */
@@ -557,7 +558,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		/* Ditto for JIT contexts */
 		while (ResourceArrayGetAny(&(owner->jitarr), &foundres))
 		{
-			JitContext *context = (JitContext *) PointerGetDatum(foundres);
+			JitContext *context = (JitContext *) DatumGetPointer(foundres);
 
 			jit_release_context(context);
 		}
@@ -566,7 +567,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		while (ResourceArrayGetAny(&(owner->cryptohasharr), &foundres))
 		{
 			pg_cryptohash_ctx *context =
-			(pg_cryptohash_ctx *) PointerGetDatum(foundres);
+			(pg_cryptohash_ctx *) DatumGetPointer(foundres);
 
 			if (isCommit)
 				PrintCryptoHashLeakWarning(foundres);
@@ -576,7 +577,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		/* Ditto for HMAC contexts */
 		while (ResourceArrayGetAny(&(owner->hmacarr), &foundres))
 		{
-			pg_hmac_ctx *context = (pg_hmac_ctx *) PointerGetDatum(foundres);
+			pg_hmac_ctx *context = (pg_hmac_ctx *) DatumGetPointer(foundres);
 
 			if (isCommit)
 				PrintHMACLeakWarning(foundres);
@@ -701,8 +702,12 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 	}
 
 	/* Let add-on modules get a chance too */
-	for (item = ResourceRelease_callbacks; item; item = item->next)
+	for (item = ResourceRelease_callbacks; item; item = next)
+	{
+		/* allow callbacks to unregister themselves when called */
+		next = item->next;
 		item->callback(phase, isCommit, isTopLevel, item->arg);
+	}
 
 	CurrentResourceOwner = save;
 }

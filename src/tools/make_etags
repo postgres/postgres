@@ -1,16 +1,12 @@
 #!/bin/sh
 
-# src/tools/make_etags
+# src/tools/make_etags [-n]
 
-command -v etags >/dev/null || \
-	{ echo "'etags' program not found" 1>&2; exit 1; }
+if [ $# -gt 1 ] || ( [ $# -eq 1 ] && [ $1 != "-n" ] )
+then	echo "Usage: $0 [-n]"
+	exit 1
+fi
 
-rm -f ./TAGS
-
-find `pwd`/ -type f -name '*.[chyl]' -print |
-	xargs etags --append -o TAGS
-
-find . \( -name CVS -prune \) -o \( -name .git -prune \) -o -type d -print |
-while read DIR
-do	[ "$DIR" != "." ] && ln -f -s `pwd`/TAGS "$DIR"
-done
+cdir=`dirname $0`
+dir=`(cd $cdir && pwd)`
+exec $dir/make_ctags -e $*

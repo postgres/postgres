@@ -3,11 +3,11 @@
  * dirmod.c
  *	  directory handling functions
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	This includes replacement versions of functions that work on
- *	Win32 (NT4 and newer).
+ *	Windows.
  *
  * IDENTIFICATION
  *	  src/port/dirmod.c
@@ -37,6 +37,10 @@
 #include <windows.h>
 #include <w32api/winioctl.h>
 #endif
+#endif
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+#include "port/win32ntdll.h"
 #endif
 
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -91,6 +95,22 @@ pgrename(const char *from, const char *to)
 	return 0;
 }
 
+/*
+ * Check if _pglstat64()'s reason for failure was STATUS_DELETE_PENDING.
+ * This doesn't apply to Cygwin, which has its own lstat() that would report
+ * the case as EACCES.
+*/
+static bool
+lstat_error_was_status_delete_pending(void)
+{
+	if (errno != ENOENT)
+		return false;
+#if defined(WIN32) && !defined(__CYGWIN__)
+	if (pg_RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
+		return true;
+#endif
+	return false;
+}
 
 /*
  *	pgunlink
@@ -98,7 +118,47 @@ pgrename(const char *from, const char *to)
 int
 pgunlink(const char *path)
 {
+	bool		is_lnk;
 	int			loops = 0;
+	struct stat st;
+
+	/*
+	 * This function might be called for a regular file or for a junction
+	 * point (which we use to emulate symlinks).  The latter must be unlinked
+	 * with rmdir() on Windows.  Before we worry about any of that, let's see
+	 * if we can unlink directly, since that's expected to be the most common
+	 * case.
+	 */
+	if (unlink(path) == 0)
+		return 0;
+	if (errno != EACCES)
+		return -1;
+
+	/*
+	 * EACCES is reported for many reasons including unlink() of a junction
+	 * point.  Check if that's the case so we can redirect to rmdir().
+	 *
+	 * Note that by checking only once, we can't cope with a path that changes
+	 * from regular file to junction point underneath us while we're retrying
+	 * due to sharing violations, but that seems unlikely.  We could perhaps
+	 * prevent that by holding a file handle ourselves across the lstat() and
+	 * the retry loop, but that seems like over-engineering for now.
+	 *
+	 * In the special case of a STATUS_DELETE_PENDING error (file already
+	 * unlinked, but someone still has it open), we don't want to report ENOENT
+	 * to the caller immediately, because rmdir(parent) would probably fail.
+	 * We want to wait until the file truly goes away so that simple recursive
+	 * directory unlink algorithms work.
+	 */
+	if (lstat(path, &st) < 0)
+	{
+		if (lstat_error_was_status_delete_pending())
+			is_lnk = false;
+		else
+			return -1;
+	}
+	else
+		is_lnk = S_ISLNK(st.st_mode);
 
 	/*
 	 * We need to loop because even though PostgreSQL uses flags that allow
@@ -107,7 +167,7 @@ pgunlink(const char *path)
 	 * someone else to close the file, as the caller might be holding locks
 	 * and blocking other backends.
 	 */
-	while (unlink(path))
+	while ((is_lnk ? rmdir(path) : unlink(path)) < 0)
 	{
 		if (errno != EACCES)
 			return -1;
@@ -171,7 +231,10 @@ pgsymlink(const char *oldpath, const char *newpath)
 						   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
 
 	if (dirhandle == INVALID_HANDLE_VALUE)
+	{
+		_dosmaperr(GetLastError());
 		return -1;
+	}
 
 	/* make sure we have an unparsed native win32 path */
 	if (memcmp("\\??\\", oldpath, 4) != 0)
@@ -204,8 +267,11 @@ pgsymlink(const char *oldpath, const char *newpath)
 						 0, 0, &len, 0))
 	{
 		LPSTR		msg;
+		int			save_errno;
 
-		errno = 0;
+		_dosmaperr(GetLastError());
+		save_errno = errno;
+
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 					  FORMAT_MESSAGE_IGNORE_INSERTS |
 					  FORMAT_MESSAGE_FROM_SYSTEM,
@@ -225,6 +291,9 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 		CloseHandle(dirhandle);
 		RemoveDirectory(newpath);
+
+		errno = save_errno;
+
 		return -1;
 	}
 
@@ -324,11 +393,25 @@ pgreadlink(const char *path, char *buf, size_t size)
 		return -1;
 	}
 
+	/* r includes the null terminator */
+	r -= 1;
+
 	/*
-	 * If the path starts with "\??\", which it will do in most (all?) cases,
-	 * strip those out.
+	 * If the path starts with "\??\" followed by a "drive absolute" path
+	 * (known to Windows APIs as RtlPathTypeDriveAbsolute), then strip that
+	 * prefix.  This undoes some of the transformation performed by
+	 * pqsymlink(), to get back to a format that users are used to seeing.  We
+	 * don't know how to transform other path types that might be encountered
+	 * outside PGDATA, so we just return them directly.
 	 */
-	if (r > 4 && strncmp(buf, "\\??\\", 4) == 0)
+	if (r >= 7 &&
+		buf[0] == '\\' &&
+		buf[1] == '?' &&
+		buf[2] == '?' &&
+		buf[3] == '\\' &&
+		isalpha(buf[4]) &&
+		buf[5] == ':' &&
+		buf[6] == '\\')
 	{
 		memmove(buf, buf + 4, strlen(buf + 4) + 1);
 		r -= 4;
@@ -336,20 +419,4 @@ pgreadlink(const char *path, char *buf, size_t size)
 	return r;
 }
 
-/*
- * Assumes the file exists, so will return false if it doesn't
- * (since a nonexistent file is not a junction)
- */
-bool
-pgwin32_is_junction(const char *path)
-{
-	DWORD		attr = GetFileAttributes(path);
-
-	if (attr == INVALID_FILE_ATTRIBUTES)
-	{
-		_dosmaperr(GetLastError());
-		return false;
-	}
-	return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT);
-}
 #endif							/* defined(WIN32) && !defined(__CYGWIN__) */

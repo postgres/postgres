@@ -3,7 +3,7 @@
  * pgstatapprox.c
  *		  Bloat estimation functions
  *
- * Copyright (c) 2014-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/pgstattuple/pgstatapprox.c
@@ -38,7 +38,7 @@ Datum		pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo);
 typedef struct output_type
 {
 	uint64		table_len;
-	uint64		scanned_percent;
+	double		scanned_percent;
 	uint64		tuple_count;
 	uint64		tuple_len;
 	double		tuple_percent;
@@ -203,7 +203,7 @@ statapprox_heap(Relation rel, output_type *stat)
 	 */
 	if (nblocks != 0)
 	{
-		stat->scanned_percent = 100 * scanned / nblocks;
+		stat->scanned_percent = 100.0 * scanned / nblocks;
 		stat->tuple_percent = 100.0 * stat->tuple_len / stat->table_len;
 		stat->dead_tuple_percent = 100.0 * stat->dead_tuple_len / stat->table_len;
 		stat->free_percent = 100.0 * stat->free_space / stat->table_len;

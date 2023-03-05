@@ -4,7 +4,7 @@
  *	  definition of the system catalog containing the state for each
  *	  replicated table in each subscription (pg_subscription_rel)
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_subscription_rel.h
@@ -88,7 +88,6 @@ extern char GetSubscriptionRelState(Oid subid, Oid relid, XLogRecPtr *sublsn);
 extern void RemoveSubscriptionRel(Oid subid, Oid relid);
 
 extern bool HasSubscriptionRelations(Oid subid);
-extern List *GetSubscriptionRelations(Oid subid);
-extern List *GetSubscriptionNotReadyRelations(Oid subid);
+extern List *GetSubscriptionRelations(Oid subid, bool not_ready);
 
 #endif							/* PG_SUBSCRIPTION_REL_H */

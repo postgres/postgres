@@ -4,7 +4,7 @@
  *	  POSTGRES low-level lock mechanism
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/lock.h
@@ -18,6 +18,7 @@
 #error "lock.h may not be included from frontend code"
 #endif
 
+#include "lib/ilist.h"
 #include "storage/backendid.h"
 #include "storage/lockdefs.h"
 #include "storage/lwlock.h"
@@ -26,12 +27,6 @@
 
 /* struct PGPROC is declared in proc.h, but must forward-reference it */
 typedef struct PGPROC PGPROC;
-
-typedef struct PROC_QUEUE
-{
-	SHM_QUEUE	links;			/* head of list of PGPROC objects */
-	int			size;			/* number of entries in list */
-} PROC_QUEUE;
 
 /* GUC variables */
 extern PGDLLIMPORT int max_locks_per_xact;
@@ -149,10 +144,12 @@ typedef enum LockTagType
 	LOCKTAG_SPECULATIVE_TOKEN,	/* speculative insertion Xid and token */
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
-	LOCKTAG_ADVISORY			/* advisory user locks */
+	LOCKTAG_ADVISORY,			/* advisory user locks */
+	LOCKTAG_APPLY_TRANSACTION	/* transaction being applied on a logical
+								 * replication subscriber */
 } LockTagType;
 
-#define LOCKTAG_LAST_TYPE	LOCKTAG_ADVISORY
+#define LOCKTAG_LAST_TYPE	LOCKTAG_APPLY_TRANSACTION
 
 extern PGDLLIMPORT const char *const LockTagTypeNames[];
 
@@ -278,6 +275,17 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_ADVISORY, \
 	 (locktag).locktag_lockmethodid = USER_LOCKMETHOD)
 
+/*
+ * ID info for a remote transaction on a logical replication subscriber is: DB
+ * OID + SUBSCRIPTION OID + TRANSACTION ID + OBJID
+ */
+#define SET_LOCKTAG_APPLY_TRANSACTION(locktag,dboid,suboid,xid,objid) \
+	((locktag).locktag_field1 = (dboid), \
+	 (locktag).locktag_field2 = (suboid), \
+	 (locktag).locktag_field3 = (xid), \
+	 (locktag).locktag_field4 = (objid), \
+	 (locktag).locktag_type = LOCKTAG_APPLY_TRANSACTION, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 /*
  * Per-locked-object lock information:
@@ -305,8 +313,8 @@ typedef struct LOCK
 	/* data */
 	LOCKMASK	grantMask;		/* bitmask for lock types already granted */
 	LOCKMASK	waitMask;		/* bitmask for lock types awaited */
-	SHM_QUEUE	procLocks;		/* list of PROCLOCK objects assoc. with lock */
-	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on lock */
+	dlist_head	procLocks;		/* list of PROCLOCK objects assoc. with lock */
+	dclist_head	waitProcs;		/* list of PGPROC objects waiting on lock */
 	int			requested[MAX_LOCKMODES];	/* counts of requested locks */
 	int			nRequested;		/* total of requested[] array */
 	int			granted[MAX_LOCKMODES]; /* counts of granted locks */
@@ -367,8 +375,8 @@ typedef struct PROCLOCK
 	PGPROC	   *groupLeader;	/* proc's lock group leader, or proc itself */
 	LOCKMASK	holdMask;		/* bitmask for lock types currently held */
 	LOCKMASK	releaseMask;	/* bitmask for lock types to be released */
-	SHM_QUEUE	lockLink;		/* list link in LOCK's list of proclocks */
-	SHM_QUEUE	procLink;		/* list link in PGPROC's list of proclocks */
+	dlist_node	lockLink;		/* list link in LOCK's list of proclocks */
+	dlist_node	procLink;		/* list link in PGPROC's list of proclocks */
 } PROCLOCK;
 
 #define PROCLOCK_LOCKMETHOD(proclock) \

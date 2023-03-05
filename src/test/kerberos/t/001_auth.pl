@@ -1,11 +1,11 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # Sets up a KDC and then runs a variety of tests to make sure that the
 # GSSAPI/Kerberos authentication and encryption are working properly,
 # that the options in pg_hba.conf and pg_ident.conf are handled correctly,
-# and that the server-side pg_stat_gssapi view reports what we expect to
-# see for each test.
+# that the server-side pg_stat_gssapi view reports what we expect to
+# see for each test and that SYSTEM_USER returns what we expect to see.
 #
 # Since this requires setting up a full KDC, it doesn't make much sense
 # to have multiple test scripts (since they'd have to also create their
@@ -25,11 +25,22 @@ if ($ENV{with_gssapi} ne 'yes')
 {
 	plan skip_all => 'GSSAPI/Kerberos not supported by this build';
 }
+elsif ($ENV{PG_TEST_EXTRA} !~ /\bkerberos\b/)
+{
+	plan skip_all => 'Potentially unsafe test GSSAPI/Kerberos not enabled in PG_TEST_EXTRA';
+}
 
 my ($krb5_bin_dir, $krb5_sbin_dir);
 
-if ($^O eq 'darwin')
+if ($^O eq 'darwin' && -d "/opt/homebrew" )
 {
+	# typical paths for Homebrew on ARM
+	$krb5_bin_dir  = '/opt/homebrew/opt/krb5/bin';
+	$krb5_sbin_dir = '/opt/homebrew/opt/krb5/sbin';
+}
+elsif ($^O eq 'darwin')
+{
+	# typical paths for Homebrew on Intel
 	$krb5_bin_dir  = '/usr/local/opt/krb5/bin';
 	$krb5_sbin_dir = '/usr/local/opt/krb5/sbin';
 }
@@ -176,6 +187,13 @@ $node->start;
 
 $node->safe_psql('postgres', 'CREATE USER test1;');
 
+# Set up a table for SYSTEM_USER parallel worker testing.
+$node->safe_psql('postgres',
+	"CREATE TABLE ids (id) AS SELECT 'gss:test1\@$realm' FROM generate_series(1, 10);"
+);
+
+$node->safe_psql('postgres', 'GRANT SELECT ON ids TO public;');
+
 note "running tests";
 
 # Test connection success or failure, and if success, that query returns true.
@@ -306,6 +324,23 @@ test_query(
 	qr/^100000$/s,
 	'gssencmode=require',
 	'sending 100K lines works');
+
+# Test that SYSTEM_USER works.
+test_query($node, 'test1', 'SELECT SYSTEM_USER;',
+	qr/^gss:test1\@$realm$/s, 'gssencmode=require', 'testing system_user');
+
+# Test that SYSTEM_USER works with parallel workers.
+test_query(
+	$node,
+	'test1', qq(
+	SET min_parallel_table_scan_size TO 0;
+	SET parallel_setup_cost TO 0;
+	SET parallel_tuple_cost TO 0;
+	SET max_parallel_workers_per_gather TO 2;
+	SELECT bool_and(SYSTEM_USER = id) FROM ids;),
+	qr/^t$/s,
+	'gssencmode=require',
+	'testing system_user with parallel workers');
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',

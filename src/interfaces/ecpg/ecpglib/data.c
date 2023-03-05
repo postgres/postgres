@@ -438,7 +438,6 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 					break;
 
-#ifdef HAVE_STRTOLL
 				case ECPGt_long_long:
 					*((long long int *) (var + offset * act_tuple)) = strtoll(pval, &scan_length, 10);
 					if (garbage_left(isarray, &scan_length, compat))
@@ -449,8 +448,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					pval = scan_length;
 
 					break;
-#endif							/* HAVE_STRTOLL */
-#ifdef HAVE_STRTOULL
+
 				case ECPGt_unsigned_long_long:
 					*((unsigned long long int *) (var + offset * act_tuple)) = strtoull(pval, &scan_length, 10);
 					if (garbage_left(isarray, &scan_length, compat))
@@ -461,7 +459,6 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					pval = scan_length;
 
 					break;
-#endif							/* HAVE_STRTOULL */
 
 				case ECPGt_float:
 				case ECPGt_double:

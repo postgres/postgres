@@ -118,9 +118,7 @@ gin_extract_hstore_query(PG_FUNCTION_ARGS)
 					j;
 		text	   *item;
 
-		deconstruct_array(query,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &key_datums, &key_nulls, &key_count);
+		deconstruct_array_builtin(query, TEXTOID, &key_datums, &key_nulls, &key_count);
 
 		entries = (Datum *) palloc(sizeof(Datum) * key_count);
 

@@ -3,7 +3,7 @@
  * pl_exec.c		- Executor for the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -374,7 +374,7 @@ static ParamListInfo setup_param_list(PLpgSQL_execstate *estate,
 									  PLpgSQL_expr *expr);
 static ParamExternData *plpgsql_param_fetch(ParamListInfo params,
 											int paramid, bool speculative,
-											ParamExternData *workspace);
+											ParamExternData *prm);
 static void plpgsql_param_compile(ParamListInfo params, Param *param,
 								  ExprState *state,
 								  Datum *resv, bool *resnull);
@@ -6240,12 +6240,9 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	Assert(expr->plan != NULL);
 
 	/*
-	 * We only need a ParamListInfo if the expression has parameters.  In
-	 * principle we should test with bms_is_empty(), but we use a not-null
-	 * test because it's faster.  In current usage bits are never removed from
-	 * expr->paramnos, only added, so this test is correct anyway.
+	 * We only need a ParamListInfo if the expression has parameters.
 	 */
-	if (expr->paramnos)
+	if (!bms_is_empty(expr->paramnos))
 	{
 		/* Use the common ParamListInfo */
 		paramLI = estate->paramLI;
@@ -7775,7 +7772,7 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 	cast_key.srctypmod = srctypmod;
 	cast_key.dsttypmod = dsttypmod;
 	cast_entry = (plpgsql_CastHashEntry *) hash_search(estate->cast_hash,
-													   (void *) &cast_key,
+													   &cast_key,
 													   HASH_ENTER, &found);
 	if (!found)					/* initialize if new entry */
 		cast_entry->cast_cexpr = NULL;
@@ -8066,7 +8063,7 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 
 	/*
 	 * Ordinarily, the plan node should be a simple Result.  However, if
-	 * force_parallel_mode is on, the planner might've stuck a Gather node
+	 * debug_parallel_query is on, the planner might've stuck a Gather node
 	 * atop that.  The simplest way to deal with this is to look through the
 	 * Gather node.  The Gather node's tlist would normally contain a Var
 	 * referencing the child node's output, but it could also be a Param, or

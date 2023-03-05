@@ -4,7 +4,7 @@
  *	 Implementation of generic xlog records.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/generic_xlog.c
@@ -69,7 +69,7 @@ struct GenericXLogState
 };
 
 static void writeFragment(PageData *pageData, OffsetNumber offset,
-						  OffsetNumber len, const char *data);
+						  OffsetNumber length, const char *data);
 static void computeRegionDelta(PageData *pageData,
 							   const char *curpage, const char *targetpage,
 							   int targetStart, int targetEnd,

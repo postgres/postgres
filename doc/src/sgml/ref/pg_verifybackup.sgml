@@ -179,6 +179,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-P</option></term>
+      <term><option>--progress</option></term>
+      <listitem>
+       <para>
+        Enable progress reporting. Turning this on will deliver a progress
+        report while verifying checksums.
+       </para>
+       <para>
+        This option cannot be used together with the option
+        <option>--quiet</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-q</option></term>
       <term><option>--quiet</option></term>
       <listitem>

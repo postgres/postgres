@@ -3,7 +3,7 @@
  * policy.c
  *	  Commands for manipulating policies.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/commands/policy.c
@@ -79,7 +79,7 @@ RangeVarCallbackForPolicy(const RangeVar *rv, Oid relid, Oid oldrelid,
 	relkind = classform->relkind;
 
 	/* Must own relation. */
-	if (!pg_class_ownercheck(relid, GetUserId()))
+	if (!object_ownercheck(RelationRelationId, relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
 
 	/* No system table modifications unless explicitly allowed. */
@@ -500,8 +500,7 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 		memset(isnull, 0, sizeof(isnull));
 
 		/* This is the array for the new tuple */
-		role_ids = construct_array(role_oids, num_roles, OIDOID,
-								   sizeof(Oid), true, TYPALIGN_INT);
+		role_ids = construct_array_builtin(role_oids, num_roles, OIDOID);
 
 		replaces[Anum_pg_policy_polroles - 1] = true;
 		values[Anum_pg_policy_polroles - 1] = PointerGetDatum(role_ids);
@@ -617,8 +616,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 
 	/* Collect role ids */
 	role_oids = policy_role_list_to_array(stmt->roles, &nitems);
-	role_ids = construct_array(role_oids, nitems, OIDOID,
-							   sizeof(Oid), true, TYPALIGN_INT);
+	role_ids = construct_array_builtin(role_oids, nitems, OIDOID);
 
 	/* Parse the supplied clause */
 	qual_pstate = make_parsestate(NULL);
@@ -801,8 +799,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	if (stmt->roles != NULL)
 	{
 		role_oids = policy_role_list_to_array(stmt->roles, &nitems);
-		role_ids = construct_array(role_oids, nitems, OIDOID,
-								   sizeof(Oid), true, TYPALIGN_INT);
+		role_ids = construct_array_builtin(role_oids, nitems, OIDOID);
 	}
 
 	/* Get id of table.  Also handles permissions checks. */

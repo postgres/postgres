@@ -16,11 +16,7 @@
 #define init_var(v)				memset(v,0,sizeof(numeric))
 
 #define digitbuf_alloc(size) ((NumericDigit *) pgtypes_alloc(size))
-#define digitbuf_free(buf)		\
-	   do { \
-				 if ((buf) != NULL) \
-						  free(buf); \
-		  } while (0)
+#define digitbuf_free(buf) free(buf)
 
 
 /* ----------
@@ -1066,7 +1062,6 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	int			weight_tmp;
 	int			rscale_tmp;
 	int			ri;
-	int			i;
 	long		guess;
 	long		first_have;
 	long		first_div;
@@ -1113,7 +1108,7 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	 * Initialize local variables
 	 */
 	init_var(&dividend);
-	for (i = 1; i < 10; i++)
+	for (int i = 1; i < 10; i++)
 		init_var(&divisor[i]);
 
 	/*
@@ -1272,7 +1267,7 @@ done:
 	if (dividend.buf != NULL)
 		digitbuf_free(dividend.buf);
 
-	for (i = 1; i < 10; i++)
+	for (int i = 1; i < 10; i++)
 	{
 		if (divisor[i].buf != NULL)
 			digitbuf_free(divisor[i].buf);

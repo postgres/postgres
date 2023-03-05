@@ -63,6 +63,7 @@
 					# (change requires restart)
 #port = 5432				# (change requires restart)
 #max_connections = 100			# (change requires restart)
+#reserved_connections = 0		# (change requires restart)
 #superuser_reserved_connections = 3	# (change requires restart)
 #unix_socket_directories = '/tmp'	# comma-separated list of directories
 					# (change requires restart)
@@ -147,7 +148,7 @@
 					#   sysv
 					#   windows
 					# (change requires restart)
-#dynamic_shared_memory_type = posix	# the default is the first option
+#dynamic_shared_memory_type = posix	# the default is usually the first option
 					# supported by the operating system:
 					#   posix
 					#   sysv
@@ -251,21 +252,21 @@
 
 #archive_mode = off		# enables archiving; off, on, or always
 				# (change requires restart)
-#archive_library = ''		# library to use to archive a logfile segment
+#archive_library = ''		# library to use to archive a WAL file
 				# (empty string indicates archive_command should
 				# be used)
-#archive_command = ''		# command to use to archive a logfile segment
+#archive_command = ''		# command to use to archive a WAL file
 				# placeholders: %p = path of file to archive
 				#               %f = file name only
 				# e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'
-#archive_timeout = 0		# force a logfile segment switch after this
+#archive_timeout = 0		# force a WAL file switch after this
 				# number of seconds; 0 disables
 
 # - Archive Recovery -
 
 # These are only used in recovery mode.
 
-#restore_command = ''		# command to use to restore an archived logfile segment
+#restore_command = ''		# command to use to restore an archived WAL file
 				# placeholders: %p = path of file to restore
 				#               %f = file name only
 				# e.g. 'cp /mnt/server/archivedir/%f %p'
@@ -331,7 +332,6 @@
 
 #primary_conninfo = ''			# connection string to sending server
 #primary_slot_name = ''			# replication slot on sending server
-#promote_trigger_file = ''		# file name whose presence ends recovery
 #hot_standby = on			# "off" disallows queries during recovery
 					# (change requires restart)
 #max_standby_archive_delay = 30s	# max delay before canceling queries
@@ -360,6 +360,7 @@
 #max_logical_replication_workers = 4	# taken from max_worker_processes
 					# (change requires restart)
 #max_sync_workers_per_subscription = 2	# taken from max_logical_replication_workers
+#max_parallel_apply_workers_per_subscription = 2	# taken from max_logical_replication_workers
 
 
 #------------------------------------------------------------------------------
@@ -385,10 +386,10 @@
 #enable_partition_pruning = on
 #enable_partitionwise_join = off
 #enable_partitionwise_aggregate = off
+#enable_presorted_aggregate = on
 #enable_seqscan = on
 #enable_sort = on
 #enable_tidscan = on
-#enable_group_by_reordering = on
 
 # - Planner Cost Constants -
 
@@ -597,10 +598,7 @@
 					# -1 disables, 0 logs all temp files
 #log_timezone = 'GMT'
 
-
-#------------------------------------------------------------------------------
-# PROCESS TITLE
-#------------------------------------------------------------------------------
+# - Process Title -
 
 #cluster_name = ''			# added to process titles if nonempty
 					# (change requires restart)
@@ -706,6 +704,7 @@
 #xmlbinary = 'base64'
 #xmloption = 'content'
 #gin_pending_list_limit = 4MB
+#createrole_self_grant = ''		# set and/or inherit
 
 # - Locale and Formatting -
 

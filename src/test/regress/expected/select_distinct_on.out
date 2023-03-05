@@ -73,3 +73,53 @@ select distinct on (1) floor(random()) as r, f1 from int4_tbl order by 1,2;
  0 | -2147483647
 (1 row)
 
+--
+-- Test the planner's ability to use a LIMIT 1 instead of a Unique node when
+-- all of the distinct_pathkeys have been marked as redundant
+--
+-- Ensure we also get a LIMIT plan with DISTINCT ON
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT ON (four) four,two
+   FROM tenk1 WHERE four = 0 ORDER BY 1;
+            QUERY PLAN            
+----------------------------------
+ Result
+   ->  Limit
+         ->  Seq Scan on tenk1
+               Filter: (four = 0)
+(4 rows)
+
+-- and check the result of the above query is correct
+SELECT DISTINCT ON (four) four,two
+   FROM tenk1 WHERE four = 0 ORDER BY 1;
+ four | two 
+------+-----
+    0 |   0
+(1 row)
+
+-- Ensure a Sort -> Limit is used when the ORDER BY contains additional cols
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT ON (four) four,two
+   FROM tenk1 WHERE four = 0 ORDER BY 1,2;
+            QUERY PLAN            
+----------------------------------
+ Limit
+   ->  Sort
+         Sort Key: two
+         ->  Seq Scan on tenk1
+               Filter: (four = 0)
+(5 rows)
+
+-- Same again but use a column that is indexed so that we get an index scan
+-- then a limit
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT ON (four) four,hundred
+   FROM tenk1 WHERE four = 0 ORDER BY 1,2;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Result
+   ->  Limit
+         ->  Index Scan using tenk1_hundred on tenk1
+               Filter: (four = 0)
+(4 rows)
+

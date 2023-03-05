@@ -24,7 +24,7 @@ ALTER PUBLICATION testpub_default SET (publish = update);
 CREATE PUBLICATION testpub_xxx WITH (foo);
 ERROR:  unrecognized publication parameter: "foo"
 CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
-ERROR:  unrecognized "publish" value: "cluster"
+ERROR:  unrecognized value for publication option "publish": "cluster"
 CREATE PUBLICATION testpub_xxx WITH (publish_via_partition_root = 'true', publish_via_partition_root = '0');
 ERROR:  conflicting or redundant options
 LINE 1: ...ub_xxx WITH (publish_via_partition_root = 'true', publish_vi...
@@ -70,22 +70,22 @@ ALTER PUBLICATION testpub_foralltables SET TABLE pub_test.testpub_nopk;
 ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
 DETAIL:  Tables cannot be added to or dropped from FOR ALL TABLES publications.
 -- fail - can't add schema to 'FOR ALL TABLES' publication
-ALTER PUBLICATION testpub_foralltables ADD ALL TABLES IN SCHEMA pub_test;
+ALTER PUBLICATION testpub_foralltables ADD TABLES IN SCHEMA pub_test;
 ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
-DETAIL:  Tables from schema cannot be added to, dropped from, or set on FOR ALL TABLES publications.
+DETAIL:  Schemas cannot be added to or dropped from FOR ALL TABLES publications.
 -- fail - can't drop schema from 'FOR ALL TABLES' publication
-ALTER PUBLICATION testpub_foralltables DROP ALL TABLES IN SCHEMA pub_test;
+ALTER PUBLICATION testpub_foralltables DROP TABLES IN SCHEMA pub_test;
 ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
-DETAIL:  Tables from schema cannot be added to, dropped from, or set on FOR ALL TABLES publications.
+DETAIL:  Schemas cannot be added to or dropped from FOR ALL TABLES publications.
 -- fail - can't set schema to 'FOR ALL TABLES' publication
-ALTER PUBLICATION testpub_foralltables SET ALL TABLES IN SCHEMA pub_test;
+ALTER PUBLICATION testpub_foralltables SET TABLES IN SCHEMA pub_test;
 ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
-DETAIL:  Tables from schema cannot be added to, dropped from, or set on FOR ALL TABLES publications.
+DETAIL:  Schemas cannot be added to or dropped from FOR ALL TABLES publications.
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_fortable FOR TABLE testpub_tbl1;
 RESET client_min_messages;
 -- should be able to add schema to 'FOR TABLE' publication
-ALTER PUBLICATION testpub_fortable ADD ALL TABLES IN SCHEMA pub_test;
+ALTER PUBLICATION testpub_fortable ADD TABLES IN SCHEMA pub_test;
 \dRp+ testpub_fortable
                                 Publication testpub_fortable
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -97,7 +97,7 @@ Tables from schemas:
     "pub_test"
 
 -- should be able to drop schema from 'FOR TABLE' publication
-ALTER PUBLICATION testpub_fortable DROP ALL TABLES IN SCHEMA pub_test;
+ALTER PUBLICATION testpub_fortable DROP TABLES IN SCHEMA pub_test;
 \dRp+ testpub_fortable
                                 Publication testpub_fortable
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -107,7 +107,7 @@ Tables:
     "public.testpub_tbl1"
 
 -- should be able to set schema to 'FOR TABLE' publication
-ALTER PUBLICATION testpub_fortable SET ALL TABLES IN SCHEMA pub_test;
+ALTER PUBLICATION testpub_fortable SET TABLES IN SCHEMA pub_test;
 \dRp+ testpub_fortable
                                 Publication testpub_fortable
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -117,16 +117,43 @@ Tables from schemas:
     "pub_test"
 
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpub_forschema FOR ALL TABLES IN SCHEMA pub_test;
+CREATE PUBLICATION testpub_forschema FOR TABLES IN SCHEMA pub_test;
+-- should be able to create publication with schema and table of the same
+-- schema
+CREATE PUBLICATION testpub_for_tbl_schema FOR TABLES IN SCHEMA pub_test, TABLE pub_test.testpub_nopk;
 RESET client_min_messages;
--- fail - can't create publication with schema and table of the same schema
-CREATE PUBLICATION testpub_for_tbl_schema FOR ALL TABLES IN SCHEMA pub_test, TABLE pub_test.testpub_nopk;
-ERROR:  cannot add relation "pub_test.testpub_nopk" to publication
-DETAIL:  Table's schema "pub_test" is already part of the publication or part of the specified schema list.
--- fail - can't add a table of the same schema to the schema publication
+\dRp+ testpub_for_tbl_schema
+                             Publication testpub_for_tbl_schema
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+--------------------------+------------+---------+---------+---------+-----------+----------
+ regress_publication_user | f          | t       | t       | t       | t         | f
+Tables:
+    "pub_test.testpub_nopk"
+Tables from schemas:
+    "pub_test"
+
+-- should be able to add a table of the same schema to the schema publication
 ALTER PUBLICATION testpub_forschema ADD TABLE pub_test.testpub_nopk;
-ERROR:  cannot add relation "pub_test.testpub_nopk" to publication
-DETAIL:  Table's schema "pub_test" is already part of the publication or part of the specified schema list.
+\dRp+ testpub_forschema
+                               Publication testpub_forschema
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+--------------------------+------------+---------+---------+---------+-----------+----------
+ regress_publication_user | f          | t       | t       | t       | t         | f
+Tables:
+    "pub_test.testpub_nopk"
+Tables from schemas:
+    "pub_test"
+
+-- should be able to drop the table
+ALTER PUBLICATION testpub_forschema DROP TABLE pub_test.testpub_nopk;
+\dRp+ testpub_forschema
+                               Publication testpub_forschema
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+--------------------------+------------+---------+---------+---------+-----------+----------
+ regress_publication_user | f          | t       | t       | t       | t         | f
+Tables from schemas:
+    "pub_test"
+
 -- fail - can't drop a table from the schema publication which isn't in the
 -- publication
 ALTER PUBLICATION testpub_forschema DROP TABLE pub_test.testpub_nopk;
@@ -166,7 +193,7 @@ Publications:
 (1 row)
 
 DROP TABLE testpub_tbl2;
-DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema;
+DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema;
 CREATE TABLE testpub_tbl3 (a int);
 CREATE TABLE testpub_tbl3a (b text) INHERITS (testpub_tbl3);
 SET client_min_messages = 'ERROR';
@@ -214,6 +241,8 @@ ALTER PUBLICATION testpub_forparted ADD TABLE testpub_parted;
 Tables:
     "public.testpub_parted"
 
+-- works despite missing REPLICA IDENTITY, because no actual update happened
+UPDATE testpub_parted SET a = 1 WHERE false;
 -- should now fail, because parent's publication replicates updates
 UPDATE testpub_parted1 SET a = 1;
 ERROR:  cannot update table "testpub_parted1" because it does not have a replica identity and publishes updates
@@ -361,13 +390,13 @@ Tables:
 DROP PUBLICATION testpub_syntax2;
 -- fail - schemas don't allow WHERE clause
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpub_syntax3 FOR ALL TABLES IN SCHEMA testpub_rf_schema1 WHERE (a = 123);
+CREATE PUBLICATION testpub_syntax3 FOR TABLES IN SCHEMA testpub_rf_schema1 WHERE (a = 123);
 ERROR:  syntax error at or near "WHERE"
-LINE 1: ...ntax3 FOR ALL TABLES IN SCHEMA testpub_rf_schema1 WHERE (a =...
+LINE 1: ...b_syntax3 FOR TABLES IN SCHEMA testpub_rf_schema1 WHERE (a =...
                                                              ^
-CREATE PUBLICATION testpub_syntax3 FOR ALL TABLES IN SCHEMA testpub_rf_schema1, testpub_rf_schema1 WHERE (a = 123);
+CREATE PUBLICATION testpub_syntax3 FOR TABLES IN SCHEMA testpub_rf_schema1, testpub_rf_schema1 WHERE (a = 123);
 ERROR:  WHERE clause not allowed for schema
-LINE 1: ...tax3 FOR ALL TABLES IN SCHEMA testpub_rf_schema1, testpub_rf...
+LINE 1: ..._syntax3 FOR TABLES IN SCHEMA testpub_rf_schema1, testpub_rf...
                                                              ^
 RESET client_min_messages;
 -- fail - duplicate tables are not allowed if that table has any WHERE clause
@@ -441,7 +470,7 @@ CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE (a IN (SELECT genera
 ERROR:  invalid publication WHERE expression
 LINE 1: ...ICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE (a IN (SELE...
                                                              ^
-DETAIL:  Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations, and immutable built-in functions.
+DETAIL:  Only columns, constants, built-in operators, built-in data types, built-in collations, and immutable built-in functions are allowed.
 -- fail - system columns are not allowed
 CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE ('(0,1)'::tid = ctid);
 ERROR:  invalid publication WHERE expression
@@ -463,11 +492,20 @@ ALTER PUBLICATION testpub5 DROP TABLE testpub_rf_tbl1 WHERE (e < 27);
 ERROR:  cannot use a WHERE clause when removing a table from a publication
 -- fail - cannot ALTER SET table which is a member of a pre-existing schema
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpub6 FOR ALL TABLES IN SCHEMA testpub_rf_schema2;
-ALTER PUBLICATION testpub6 SET ALL TABLES IN SCHEMA testpub_rf_schema2, TABLE testpub_rf_schema2.testpub_rf_tbl6 WHERE (i < 99);
-ERROR:  cannot add relation "testpub_rf_schema2.testpub_rf_tbl6" to publication
-DETAIL:  Table's schema "testpub_rf_schema2" is already part of the publication or part of the specified schema list.
+CREATE PUBLICATION testpub6 FOR TABLES IN SCHEMA testpub_rf_schema2;
+-- should be able to set publication with schema and table of the same schema
+ALTER PUBLICATION testpub6 SET TABLES IN SCHEMA testpub_rf_schema2, TABLE testpub_rf_schema2.testpub_rf_tbl6 WHERE (i < 99);
 RESET client_min_messages;
+\dRp+ testpub6
+                                    Publication testpub6
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+--------------------------+------------+---------+---------+---------+-----------+----------
+ regress_publication_user | f          | t       | t       | t       | t         | f
+Tables:
+    "testpub_rf_schema2.testpub_rf_tbl6" WHERE (i < 99)
+Tables from schemas:
+    "testpub_rf_schema2"
+
 DROP TABLE testpub_rf_tbl1;
 DROP TABLE testpub_rf_tbl2;
 DROP TABLE testpub_rf_tbl3;
@@ -642,10 +680,10 @@ DETAIL:  Column list used by the publication does not cover the replica identity
 ALTER PUBLICATION testpub_fortable DROP TABLE testpub_tbl5;
 -- error: generated column "d" can't be in list
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, d);
-ERROR:  cannot reference generated column "d" in publication column list
+ERROR:  cannot use generated column "d" in publication column list
 -- error: system attributes "ctid" not allowed in column list
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, ctid);
-ERROR:  cannot reference system column "ctid" in publication column list
+ERROR:  cannot use system column "ctid" in publication column list
 -- ok
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, c);
 ALTER TABLE testpub_tbl5 DROP COLUMN c;		-- no dice
@@ -810,8 +848,40 @@ ALTER TABLE testpub_tbl8_0 REPLICA IDENTITY FULL;
 UPDATE testpub_tbl8 SET a = 1;
 ERROR:  cannot update table "testpub_tbl8_0"
 DETAIL:  Column list used by the publication does not cover the replica identity.
+-- test that using column list for table is disallowed if any schemas are
+-- part of the publication
+SET client_min_messages = 'ERROR';
+-- failure - cannot use column list and schema together
+CREATE PUBLICATION testpub_tbl9 FOR TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
+ERROR:  cannot use column list for relation "public.testpub_tbl7" in publication "testpub_tbl9"
+DETAIL:  Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements.
+-- ok - only publish schema
+CREATE PUBLICATION testpub_tbl9 FOR TABLES IN SCHEMA public;
+-- failure - add a table with column list when there is already a schema in the
+-- publication
+ALTER PUBLICATION testpub_tbl9 ADD TABLE public.testpub_tbl7(a);
+ERROR:  cannot use column list for relation "public.testpub_tbl7" in publication "testpub_tbl9"
+DETAIL:  Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements.
+-- ok - only publish table with column list
+ALTER PUBLICATION testpub_tbl9 SET TABLE public.testpub_tbl7(a);
+-- failure - specify a schema when there is already a column list in the
+-- publication
+ALTER PUBLICATION testpub_tbl9 ADD TABLES IN SCHEMA public;
+ERROR:  cannot add schema to publication "testpub_tbl9"
+DETAIL:  Schemas cannot be added if any tables that specify a column list are already part of the publication.
+-- failure - cannot SET column list and schema together
+ALTER PUBLICATION testpub_tbl9 SET TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
+ERROR:  cannot use column list for relation "public.testpub_tbl7" in publication "testpub_tbl9"
+DETAIL:  Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements.
+-- ok - drop table
+ALTER PUBLICATION testpub_tbl9 DROP TABLE public.testpub_tbl7;
+-- failure - cannot ADD column list and schema together
+ALTER PUBLICATION testpub_tbl9 ADD TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
+ERROR:  cannot use column list for relation "public.testpub_tbl7" in publication "testpub_tbl9"
+DETAIL:  Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements.
+RESET client_min_messages;
 DROP TABLE testpub_tbl5, testpub_tbl6, testpub_tbl7, testpub_tbl8, testpub_tbl8_1;
-DROP PUBLICATION testpub_table_ins, testpub_fortable, testpub_fortable_insert, testpub_col_list;
+DROP PUBLICATION testpub_table_ins, testpub_fortable, testpub_fortable_insert, testpub_col_list, testpub_tbl9;
 -- ======================================================
 -- Test combination of column list and row filter
 SET client_min_messages = 'ERROR';
@@ -939,8 +1009,8 @@ UPDATE rf_tbl_abcd_nopk SET a = 1;
 ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
 -- fail - cannot use column list for partitioned table
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk (a);
-ERROR:  cannot use publication column list for relation "rf_tbl_abcd_part_pk"
-DETAIL:  column list cannot be used for a partitioned table when publish_via_partition_root is false.
+ERROR:  cannot use column list for relation "public.rf_tbl_abcd_part_pk" in publication "testpub6"
+DETAIL:  Column lists cannot be specified for partitioned tables when publish_via_partition_root is false.
 -- ok - can use column list for partition
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk_1 (a);
 -- ok - "a" is a PK col
@@ -1117,13 +1187,13 @@ GRANT CREATE ON DATABASE regression TO regress_publication_user2;
 SET ROLE regress_publication_user2;
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub2;  -- ok
-CREATE PUBLICATION testpub3 FOR ALL TABLES IN SCHEMA pub_test;  -- fail
-ERROR:  must be superuser to create FOR ALL TABLES IN SCHEMA publication
+CREATE PUBLICATION testpub3 FOR TABLES IN SCHEMA pub_test;  -- fail
+ERROR:  must be superuser to create FOR TABLES IN SCHEMA publication
 CREATE PUBLICATION testpub3;  -- ok
 RESET client_min_messages;
 ALTER PUBLICATION testpub2 ADD TABLE testpub_tbl1;  -- fail
 ERROR:  must be owner of table testpub_tbl1
-ALTER PUBLICATION testpub3 ADD ALL TABLES IN SCHEMA pub_test;  -- fail
+ALTER PUBLICATION testpub3 ADD TABLES IN SCHEMA pub_test;  -- fail
 ERROR:  must be superuser to add or set schemas
 SET ROLE regress_publication_user;
 GRANT regress_publication_user TO regress_publication_user2;
@@ -1135,14 +1205,14 @@ SET ROLE regress_publication_user;
 CREATE ROLE regress_publication_user3;
 GRANT regress_publication_user2 TO regress_publication_user3;
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpub4 FOR ALL TABLES IN SCHEMA pub_test;
+CREATE PUBLICATION testpub4 FOR TABLES IN SCHEMA pub_test;
 RESET client_min_messages;
 ALTER PUBLICATION testpub4 OWNER TO regress_publication_user3;
 SET ROLE regress_publication_user3;
 -- fail - new owner must be superuser
 ALTER PUBLICATION testpub4 owner to regress_publication_user2; -- fail
 ERROR:  permission denied to change owner of publication "testpub4"
-HINT:  The owner of a FOR ALL TABLES IN SCHEMA publication must be a superuser.
+HINT:  The owner of a FOR TABLES IN SCHEMA publication must be a superuser.
 ALTER PUBLICATION testpub4 owner to regress_publication_user; -- ok
 SET ROLE regress_publication_user;
 DROP PUBLICATION testpub4;
@@ -1191,7 +1261,7 @@ CREATE TABLE pub_test2.tbl1 (id serial primary key, data text);
 CREATE TABLE "CURRENT_SCHEMA"."CURRENT_SCHEMA"(id int);
 -- suppress warning that depends on wal_level
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpub1_forschema FOR ALL TABLES IN SCHEMA pub_test1;
+CREATE PUBLICATION testpub1_forschema FOR TABLES IN SCHEMA pub_test1;
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -1200,7 +1270,7 @@ CREATE PUBLICATION testpub1_forschema FOR ALL TABLES IN SCHEMA pub_test1;
 Tables from schemas:
     "pub_test1"
 
-CREATE PUBLICATION testpub2_forschema FOR ALL TABLES IN SCHEMA pub_test1, pub_test2, pub_test3;
+CREATE PUBLICATION testpub2_forschema FOR TABLES IN SCHEMA pub_test1, pub_test2, pub_test3;
 \dRp+ testpub2_forschema
                                Publication testpub2_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -1212,10 +1282,10 @@ Tables from schemas:
     "pub_test3"
 
 -- check create publication on CURRENT_SCHEMA
-CREATE PUBLICATION testpub3_forschema FOR ALL TABLES IN SCHEMA CURRENT_SCHEMA;
-CREATE PUBLICATION testpub4_forschema FOR ALL TABLES IN SCHEMA "CURRENT_SCHEMA";
-CREATE PUBLICATION testpub5_forschema FOR ALL TABLES IN SCHEMA CURRENT_SCHEMA, "CURRENT_SCHEMA";
-CREATE PUBLICATION testpub6_forschema FOR ALL TABLES IN SCHEMA "CURRENT_SCHEMA", CURRENT_SCHEMA;
+CREATE PUBLICATION testpub3_forschema FOR TABLES IN SCHEMA CURRENT_SCHEMA;
+CREATE PUBLICATION testpub4_forschema FOR TABLES IN SCHEMA "CURRENT_SCHEMA";
+CREATE PUBLICATION testpub5_forschema FOR TABLES IN SCHEMA CURRENT_SCHEMA, "CURRENT_SCHEMA";
+CREATE PUBLICATION testpub6_forschema FOR TABLES IN SCHEMA "CURRENT_SCHEMA", CURRENT_SCHEMA;
 CREATE PUBLICATION testpub_fortable FOR TABLE "CURRENT_SCHEMA"."CURRENT_SCHEMA";
 RESET client_min_messages;
 \dRp+ testpub3_forschema
@@ -1262,30 +1332,30 @@ Tables:
 
 -- check create publication on CURRENT_SCHEMA where search_path is not set
 SET SEARCH_PATH='';
-CREATE PUBLICATION testpub_forschema FOR ALL TABLES IN SCHEMA CURRENT_SCHEMA;
+CREATE PUBLICATION testpub_forschema FOR TABLES IN SCHEMA CURRENT_SCHEMA;
 ERROR:  no schema has been selected for CURRENT_SCHEMA
 RESET SEARCH_PATH;
--- check create publication on CURRENT_SCHEMA where TABLE/ALL TABLES in SCHEMA
+-- check create publication on CURRENT_SCHEMA where TABLE/TABLES in SCHEMA
 -- is not specified
 CREATE PUBLICATION testpub_forschema1 FOR CURRENT_SCHEMA;
 ERROR:  invalid publication object list
 LINE 1: CREATE PUBLICATION testpub_forschema1 FOR CURRENT_SCHEMA;
                                                   ^
-DETAIL:  One of TABLE or ALL TABLES IN SCHEMA must be specified before a standalone table or schema name.
+DETAIL:  One of TABLE or TABLES IN SCHEMA must be specified before a standalone table or schema name.
 -- check create publication on CURRENT_SCHEMA along with FOR TABLE
 CREATE PUBLICATION testpub_forschema1 FOR TABLE CURRENT_SCHEMA;
 ERROR:  syntax error at or near "CURRENT_SCHEMA"
 LINE 1: CREATE PUBLICATION testpub_forschema1 FOR TABLE CURRENT_SCHE...
                                                         ^
 -- check create publication on a schema that does not exist
-CREATE PUBLICATION testpub_forschema FOR ALL TABLES IN SCHEMA non_existent_schema;
+CREATE PUBLICATION testpub_forschema FOR TABLES IN SCHEMA non_existent_schema;
 ERROR:  schema "non_existent_schema" does not exist
 -- check create publication on a system schema
-CREATE PUBLICATION testpub_forschema FOR ALL TABLES IN SCHEMA pg_catalog;
+CREATE PUBLICATION testpub_forschema FOR TABLES IN SCHEMA pg_catalog;
 ERROR:  cannot add schema "pg_catalog" to publication
 DETAIL:  This operation is not supported for system schemas.
 -- check create publication on an object which is not schema
-CREATE PUBLICATION testpub1_forschema1 FOR ALL TABLES IN SCHEMA testpub_view;
+CREATE PUBLICATION testpub1_forschema1 FOR TABLES IN SCHEMA testpub_view;
 ERROR:  schema "testpub_view" does not exist
 -- dropping the schema should reflect the change in publication
 DROP SCHEMA pub_test3;
@@ -1320,7 +1390,7 @@ Tables from schemas:
     "pub_test2"
 
 -- alter publication add schema
-ALTER PUBLICATION testpub1_forschema ADD ALL TABLES IN SCHEMA pub_test2;
+ALTER PUBLICATION testpub1_forschema ADD TABLES IN SCHEMA pub_test2;
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -1331,7 +1401,7 @@ Tables from schemas:
     "pub_test2"
 
 -- add non existent schema
-ALTER PUBLICATION testpub1_forschema ADD ALL TABLES IN SCHEMA non_existent_schema;
+ALTER PUBLICATION testpub1_forschema ADD TABLES IN SCHEMA non_existent_schema;
 ERROR:  schema "non_existent_schema" does not exist
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
@@ -1343,7 +1413,7 @@ Tables from schemas:
     "pub_test2"
 
 -- add a schema which is already added to the publication
-ALTER PUBLICATION testpub1_forschema ADD ALL TABLES IN SCHEMA pub_test1;
+ALTER PUBLICATION testpub1_forschema ADD TABLES IN SCHEMA pub_test1;
 ERROR:  schema "pub_test1" is already member of publication "testpub1_forschema"
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
@@ -1355,7 +1425,7 @@ Tables from schemas:
     "pub_test2"
 
 -- alter publication drop schema
-ALTER PUBLICATION testpub1_forschema DROP ALL TABLES IN SCHEMA pub_test2;
+ALTER PUBLICATION testpub1_forschema DROP TABLES IN SCHEMA pub_test2;
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -1365,7 +1435,7 @@ Tables from schemas:
     "pub_test1"
 
 -- drop schema that is not present in the publication
-ALTER PUBLICATION testpub1_forschema DROP ALL TABLES IN SCHEMA pub_test2;
+ALTER PUBLICATION testpub1_forschema DROP TABLES IN SCHEMA pub_test2;
 ERROR:  tables from schema "pub_test2" are not part of the publication
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
@@ -1376,7 +1446,7 @@ Tables from schemas:
     "pub_test1"
 
 -- drop a schema that does not exist in the system
-ALTER PUBLICATION testpub1_forschema DROP ALL TABLES IN SCHEMA non_existent_schema;
+ALTER PUBLICATION testpub1_forschema DROP TABLES IN SCHEMA non_existent_schema;
 ERROR:  schema "non_existent_schema" does not exist
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
@@ -1387,7 +1457,7 @@ Tables from schemas:
     "pub_test1"
 
 -- drop all schemas
-ALTER PUBLICATION testpub1_forschema DROP ALL TABLES IN SCHEMA pub_test1;
+ALTER PUBLICATION testpub1_forschema DROP TABLES IN SCHEMA pub_test1;
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -1396,7 +1466,7 @@ ALTER PUBLICATION testpub1_forschema DROP ALL TABLES IN SCHEMA pub_test1;
 (1 row)
 
 -- alter publication set multiple schema
-ALTER PUBLICATION testpub1_forschema SET ALL TABLES IN SCHEMA pub_test1, pub_test2;
+ALTER PUBLICATION testpub1_forschema SET TABLES IN SCHEMA pub_test1, pub_test2;
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -1407,7 +1477,7 @@ Tables from schemas:
     "pub_test2"
 
 -- alter publication set non-existent schema
-ALTER PUBLICATION testpub1_forschema SET ALL TABLES IN SCHEMA non_existent_schema;
+ALTER PUBLICATION testpub1_forschema SET TABLES IN SCHEMA non_existent_schema;
 ERROR:  schema "non_existent_schema" does not exist
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
@@ -1420,7 +1490,7 @@ Tables from schemas:
 
 -- alter publication set it duplicate schemas should set the schemas after
 -- removing the duplicate schemas
-ALTER PUBLICATION testpub1_forschema SET ALL TABLES IN SCHEMA pub_test1, pub_test1;
+ALTER PUBLICATION testpub1_forschema SET TABLES IN SCHEMA pub_test1, pub_test1;
 \dRp+ testpub1_forschema
                                Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -1430,16 +1500,16 @@ Tables from schemas:
     "pub_test1"
 
 -- Verify that it fails to add a schema with a column specification
-ALTER PUBLICATION testpub1_forschema ADD ALL TABLES IN SCHEMA foo (a, b);
+ALTER PUBLICATION testpub1_forschema ADD TABLES IN SCHEMA foo (a, b);
 ERROR:  syntax error at or near "("
-LINE 1: ...TION testpub1_forschema ADD ALL TABLES IN SCHEMA foo (a, b);
+LINE 1: ...LICATION testpub1_forschema ADD TABLES IN SCHEMA foo (a, b);
                                                                 ^
-ALTER PUBLICATION testpub1_forschema ADD ALL TABLES IN SCHEMA foo, bar (a, b);
+ALTER PUBLICATION testpub1_forschema ADD TABLES IN SCHEMA foo, bar (a, b);
 ERROR:  column specification not allowed for schema
-LINE 1: ... testpub1_forschema ADD ALL TABLES IN SCHEMA foo, bar (a, b)...
+LINE 1: ...TION testpub1_forschema ADD TABLES IN SCHEMA foo, bar (a, b)...
                                                              ^
 -- cleanup pub_test1 schema for invalidation tests
-ALTER PUBLICATION testpub2_forschema DROP ALL TABLES IN SCHEMA pub_test1;
+ALTER PUBLICATION testpub2_forschema DROP TABLES IN SCHEMA pub_test1;
 DROP PUBLICATION testpub3_forschema, testpub4_forschema, testpub5_forschema, testpub6_forschema, testpub_fortable;
 DROP SCHEMA "CURRENT_SCHEMA" CASCADE;
 NOTICE:  drop cascades to table "CURRENT_SCHEMA"."CURRENT_SCHEMA"
@@ -1453,10 +1523,10 @@ INSERT INTO pub_test1.tbl VALUES(1, 'test');
 UPDATE pub_test1.tbl SET id = 2;
 ERROR:  cannot update table "tbl" because it does not have a replica identity and publishes updates
 HINT:  To enable updating the table, set REPLICA IDENTITY using ALTER TABLE.
-ALTER PUBLICATION testpub1_forschema DROP ALL TABLES IN SCHEMA pub_test1;
+ALTER PUBLICATION testpub1_forschema DROP TABLES IN SCHEMA pub_test1;
 -- success
 UPDATE pub_test1.tbl SET id = 2;
-ALTER PUBLICATION testpub1_forschema SET ALL TABLES IN SCHEMA pub_test1;
+ALTER PUBLICATION testpub1_forschema SET TABLES IN SCHEMA pub_test1;
 -- fail
 UPDATE pub_test1.tbl SET id = 2;
 ERROR:  cannot update table "tbl" because it does not have a replica identity and publishes updates
@@ -1470,7 +1540,7 @@ CREATE TABLE pub_testpart2.child_parent1 partition of pub_testpart1.parent1 for 
 INSERT INTO pub_testpart2.child_parent1 values(1);
 UPDATE pub_testpart2.child_parent1 set a = 1;
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpubpart_forschema FOR ALL TABLES IN SCHEMA pub_testpart1;
+CREATE PUBLICATION testpubpart_forschema FOR TABLES IN SCHEMA pub_testpart1;
 RESET client_min_messages;
 -- fail
 UPDATE pub_testpart1.parent1 set a = 1;
@@ -1487,7 +1557,7 @@ CREATE TABLE pub_testpart1.child_parent2 partition of pub_testpart2.parent2 for 
 INSERT INTO pub_testpart1.child_parent2 values(1);
 UPDATE pub_testpart1.child_parent2 set a = 1;
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpubpart_forschema FOR ALL TABLES IN SCHEMA pub_testpart2;
+CREATE PUBLICATION testpubpart_forschema FOR TABLES IN SCHEMA pub_testpart2;
 RESET client_min_messages;
 -- fail
 UPDATE pub_testpart2.child_parent1 set a = 1;
@@ -1499,7 +1569,7 @@ HINT:  To enable updating the table, set REPLICA IDENTITY using ALTER TABLE.
 UPDATE pub_testpart1.child_parent2 set a = 1;
 ERROR:  cannot update table "child_parent2" because it does not have a replica identity and publishes updates
 HINT:  To enable updating the table, set REPLICA IDENTITY using ALTER TABLE.
--- alter publication set 'ALL TABLES IN SCHEMA' on an empty publication.
+-- alter publication set 'TABLES IN SCHEMA' on an empty publication.
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub3_forschema;
 RESET client_min_messages;
@@ -1510,7 +1580,7 @@ RESET client_min_messages;
  regress_publication_user | f          | t       | t       | t       | t         | f
 (1 row)
 
-ALTER PUBLICATION testpub3_forschema SET ALL TABLES IN SCHEMA pub_test1;
+ALTER PUBLICATION testpub3_forschema SET TABLES IN SCHEMA pub_test1;
 \dRp+ testpub3_forschema
                                Publication testpub3_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Via root 
@@ -1519,10 +1589,10 @@ ALTER PUBLICATION testpub3_forschema SET ALL TABLES IN SCHEMA pub_test1;
 Tables from schemas:
     "pub_test1"
 
--- create publication including both 'FOR TABLE' and 'FOR ALL TABLES IN SCHEMA'
+-- create publication including both 'FOR TABLE' and 'FOR TABLES IN SCHEMA'
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpub_forschema_fortable FOR ALL TABLES IN SCHEMA pub_test1, TABLE pub_test2.tbl1;
-CREATE PUBLICATION testpub_fortable_forschema FOR TABLE pub_test2.tbl1, ALL TABLES IN SCHEMA pub_test1;
+CREATE PUBLICATION testpub_forschema_fortable FOR TABLES IN SCHEMA pub_test1, TABLE pub_test2.tbl1;
+CREATE PUBLICATION testpub_fortable_forschema FOR TABLE pub_test2.tbl1, TABLES IN SCHEMA pub_test1;
 RESET client_min_messages;
 \dRp+ testpub_forschema_fortable
                            Publication testpub_forschema_fortable
@@ -1544,13 +1614,13 @@ Tables:
 Tables from schemas:
     "pub_test1"
 
--- fail specifying table without any of 'FOR ALL TABLES IN SCHEMA' or
+-- fail specifying table without any of 'FOR TABLES IN SCHEMA' or
 --'FOR TABLE' or 'FOR ALL TABLES'
 CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
 ERROR:  invalid publication object list
 LINE 1: CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
                                              ^
-DETAIL:  One of TABLE or ALL TABLES IN SCHEMA must be specified before a standalone table or schema name.
+DETAIL:  One of TABLE or TABLES IN SCHEMA must be specified before a standalone table or schema name.
 DROP VIEW testpub_view;
 DROP PUBLICATION testpub_default;
 DROP PUBLICATION testpib_ins_trunct;
@@ -1583,7 +1653,7 @@ CREATE SCHEMA sch2;
 CREATE TABLE sch1.tbl1 (a int) PARTITION BY RANGE(a);
 CREATE TABLE sch2.tbl1_part1 PARTITION OF sch1.tbl1 FOR VALUES FROM (1) to (10);
 -- Schema publication that does not include the schema that has the parent table
-CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
+CREATE PUBLICATION pub FOR TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
 SELECT * FROM pg_publication_tables;
  pubname | schemaname | tablename  | attnames | rowfilter 
 ---------+------------+------------+----------+-----------
@@ -1609,7 +1679,7 @@ SELECT * FROM pg_publication_tables;
 
 DROP PUBLICATION pub;
 -- Schema publication that does not include the schema that has the parent table
-CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=0);
+CREATE PUBLICATION pub FOR TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=0);
 SELECT * FROM pg_publication_tables;
  pubname | schemaname | tablename  | attnames | rowfilter 
 ---------+------------+------------+----------+-----------
@@ -1641,7 +1711,7 @@ CREATE TABLE sch1.tbl1_part1 PARTITION OF sch1.tbl1 FOR VALUES FROM (1) to (10);
 CREATE TABLE sch1.tbl1_part2 PARTITION OF sch1.tbl1 FOR VALUES FROM (10) to (20);
 CREATE TABLE sch1.tbl1_part3 (a int) PARTITION BY RANGE(a);
 ALTER TABLE sch1.tbl1 ATTACH PARTITION sch1.tbl1_part3 FOR VALUES FROM (20) to (30);
-CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch1 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
+CREATE PUBLICATION pub FOR TABLES IN SCHEMA sch1 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
 SELECT * FROM pg_publication_tables;
  pubname | schemaname | tablename | attnames | rowfilter 
 ---------+------------+-----------+----------+-----------

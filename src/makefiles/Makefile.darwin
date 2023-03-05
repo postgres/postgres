@@ -1,5 +1,3 @@
-AROPT = crs
-
 # env var name to use in place of LD_LIBRARY_PATH
 ld_library_path_var = DYLD_LIBRARY_PATH
 
@@ -10,5 +8,5 @@ else
 endif
 
 # Rule for building a shared library from a single .o file
-%.so: %.o
+%$(DLSUFFIX): %.o
 	$(CC) $(CFLAGS) $< $(LDFLAGS) $(LDFLAGS_SL) -bundle $(BE_DLLLIBS) -o $@

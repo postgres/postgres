@@ -10,7 +10,7 @@
  * columns in a different order, taking into account dropped columns.
  * They are also used by the tuple conversion routines in tupconvert.c.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -169,10 +169,15 @@ build_attrmap_by_position(TupleDesc indesc,
  * and output columns by name.  (Dropped columns are ignored in both input and
  * output.)  This is normally a subroutine for convert_tuples_by_name in
  * tupconvert.c, but can be used standalone.
+ *
+ * If 'missing_ok' is true, a column from 'outdesc' not being present in
+ * 'indesc' is not flagged as an error; AttrMap.attnums[] entry for such an
+ * outdesc column will be 0 in that case.
  */
 AttrMap *
 build_attrmap_by_name(TupleDesc indesc,
-					  TupleDesc outdesc)
+					  TupleDesc outdesc,
+					  bool missing_ok)
 {
 	AttrMap    *attrMap;
 	int			outnatts;
@@ -235,7 +240,7 @@ build_attrmap_by_name(TupleDesc indesc,
 				break;
 			}
 		}
-		if (attrMap->attnums[i] == 0)
+		if (attrMap->attnums[i] == 0 && !missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("could not convert row type"),
@@ -257,12 +262,13 @@ build_attrmap_by_name(TupleDesc indesc,
  */
 AttrMap *
 build_attrmap_by_name_if_req(TupleDesc indesc,
-							 TupleDesc outdesc)
+							 TupleDesc outdesc,
+							 bool missing_ok)
 {
 	AttrMap    *attrMap;
 
 	/* Verify compatibility and prepare attribute-number map */
-	attrMap = build_attrmap_by_name(indesc, outdesc);
+	attrMap = build_attrmap_by_name(indesc, outdesc, missing_ok);
 
 	/* Check if the map has a one-to-one match */
 	if (check_attrmap_match(indesc, outdesc, attrMap))

@@ -3,7 +3,7 @@
  * ts_utils.c
  *		various support functions
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -109,8 +109,7 @@ readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))
 				else
 				{
 					reallen *= 2;
-					stop = (char **) repalloc((void *) stop,
-											  sizeof(char *) * reallen);
+					stop = (char **) repalloc(stop, sizeof(char *) * reallen);
 				}
 			}
 

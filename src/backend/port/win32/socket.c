@@ -3,7 +3,7 @@
  * socket.c
  *	  Microsoft Windows Win32 Socket Functions
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/port/win32/socket.c
@@ -495,7 +495,7 @@ pgwin32_send(SOCKET s, const void *buf, int len, int flags)
 			return -1;
 		}
 
-		/* No error, zero bytes (win2000+) or error+WSAEWOULDBLOCK (<=nt4) */
+		/* No error, zero bytes */
 
 		if (pgwin32_waitforsinglesocket(s, FD_WRITE | FD_CLOSE, INFINITE) == 0)
 			return -1;

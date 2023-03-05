@@ -47,7 +47,7 @@
  * and 'attribute_buf' are expanded on demand, to hold the longest line
  * encountered so far.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -782,7 +782,7 @@ NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields)
 			if (fldct != list_length(cstate->attnumlist))
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("wrong number of fields in header line: field count is %d, expected %d",
+						 errmsg("wrong number of fields in header line: got %d, expected %d",
 								fldct, list_length(cstate->attnumlist))));
 
 			fldnum = 0;
@@ -842,7 +842,7 @@ NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields)
 /*
  * Read next tuple from file for COPY FROM. Return false if no more tuples.
  *
- * 'econtext' is used to evaluate default expression for each columns not
+ * 'econtext' is used to evaluate default expression for each column not
  * read from the file. It can be NULL when no default values are used, i.e.
  * when all columns are read from the file.
  *

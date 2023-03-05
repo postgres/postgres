@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # To test successful data directory creation with an additional feature, first
 # try to elaborate the "successful creation" test instead of adding a test.
@@ -118,6 +118,15 @@ if ($ENV{with_icu} eq 'yes')
 		],
 		qr/FATAL:  could not open collator for locale/,
 		'fails for invalid ICU locale');
+
+	command_fails_like(
+		[
+			'initdb',                '--no-sync',
+			'--locale-provider=icu', '--encoding=SQL_ASCII',
+			'--icu-locale=en', "$tempdir/dataX"
+		],
+		qr/error: encoding mismatch/,
+		'fails for encoding not supported by ICU');
 }
 else
 {

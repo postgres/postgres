@@ -2,7 +2,7 @@
 -- expression evaluation tests that don't fit into a more specific file
 --
 --
--- Tests for SQLValueFunction
+-- Tests for various FuncCalls with COERCE_SQL_SYNTAX.
 --
 -- current_date  (always matches because of transactional behaviour)
 SELECT date(now())::text = current_date::text;
@@ -36,7 +36,7 @@ SELECT now()::time(3)::text = localtime(3)::text;
  t
 (1 row)
 
--- current_timestamp / localtimestamp (always matches because of transactional behaviour)
+-- current_time[stamp]/ localtime[stamp] (always matches because of transactional behaviour)
 SELECT current_timestamp = NOW();
  ?column? 
 ----------
@@ -57,7 +57,36 @@ SELECT now()::timestamp::text = localtimestamp::text;
  t
 (1 row)
 
--- current_role/user/user is tested in rolnames.sql
+-- precision overflow
+SELECT current_time = current_time(7);
+WARNING:  TIME(7) WITH TIME ZONE precision reduced to maximum allowed, 6
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT current_timestamp = current_timestamp(7);
+WARNING:  TIMESTAMP(7) WITH TIME ZONE precision reduced to maximum allowed, 6
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT localtime = localtime(7);
+WARNING:  TIME(7) precision reduced to maximum allowed, 6
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT localtimestamp = localtimestamp(7);
+WARNING:  TIMESTAMP(7) precision reduced to maximum allowed, 6
+ ?column? 
+----------
+ t
+(1 row)
+
+-- current_role/user/user is tested in rolenames.sql
 -- current database / catalog
 SELECT current_catalog = current_database();
  ?column? 
@@ -108,12 +137,12 @@ create view numeric_view as
  f2164  | numeric(16,4) |           |          |         | main    | 
  f2n    | numeric       |           |          |         | main    | 
 View definition:
- SELECT numeric_tbl.f1,
-    numeric_tbl.f1::numeric(16,4) AS f1164,
-    numeric_tbl.f1::numeric AS f1n,
-    numeric_tbl.f2,
-    numeric_tbl.f2::numeric(16,4) AS f2164,
-    numeric_tbl.f2 AS f2n
+ SELECT f1,
+    f1::numeric(16,4) AS f1164,
+    f1::numeric AS f1n,
+    f2,
+    f2::numeric(16,4) AS f2164,
+    f2 AS f2n
    FROM numeric_tbl;
 
 explain (verbose, costs off) select * from numeric_view;
@@ -142,12 +171,12 @@ create view bpchar_view as
  f214   | character(14) |           |          |         | extended | 
  f2n    | bpchar        |           |          |         | extended | 
 View definition:
- SELECT bpchar_tbl.f1,
-    bpchar_tbl.f1::character(14) AS f114,
-    bpchar_tbl.f1::bpchar AS f1n,
-    bpchar_tbl.f2,
-    bpchar_tbl.f2::character(14) AS f214,
-    bpchar_tbl.f2 AS f2n
+ SELECT f1,
+    f1::character(14) AS f114,
+    f1::bpchar AS f1n,
+    f2,
+    f2::character(14) AS f214,
+    f2 AS f2n
    FROM bpchar_tbl;
 
 explain (verbose, costs off) select * from bpchar_view

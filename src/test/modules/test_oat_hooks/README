@@ -28,7 +28,7 @@ The following configuration parameters (GUCs) control this test module's Object
 Access Type (OAT), Process Utility and Executor Check Permissions hooks.  The
 general pattern is that each hook has a corresponding GUC which controls
 whether the hook will allow or deny operations for which the hook gets called.
-A real-world OAT hook should certainly provide more fine-grained conrol than
+A real-world OAT hook should certainly provide more fine-grained control than
 merely "allow-all" vs. "deny-all", but for testing this is sufficient.
 
 Note that even when these hooks allow an action, the core permissions system

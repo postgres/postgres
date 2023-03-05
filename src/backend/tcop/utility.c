@@ -5,7 +5,7 @@
  *	  commands.  At one time acted as an interface between the Lisp and C
  *	  systems.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -767,7 +767,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_GrantRoleStmt:
 			/* no event triggers for global objects */
-			GrantRole((GrantRoleStmt *) parsetree);
+			GrantRole(pstate, (GrantRoleStmt *) parsetree);
 			break;
 
 		case T_CreatedbStmt:
@@ -947,10 +947,10 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			break;
 
 		case T_CheckPointStmt:
-			if (!has_privs_of_role(GetUserId(), ROLE_PG_CHECKPOINTER))
+			if (!has_privs_of_role(GetUserId(), ROLE_PG_CHECKPOINT))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("must be superuser or have privileges of pg_checkpointer to do CHECKPOINT")));
+						 errmsg("must be superuser or have privileges of pg_checkpoint to do CHECKPOINT")));
 
 			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_WAIT |
 							  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
@@ -1678,16 +1678,16 @@ ProcessUtilitySlow(ParseState *pstate,
 				 * command itself is queued, which is enough.
 				 */
 				EventTriggerInhibitCommandCollection();
-				PG_TRY();
+				PG_TRY(2);
 				{
 					address = ExecRefreshMatView((RefreshMatViewStmt *) parsetree,
 												 queryString, params, qc);
 				}
-				PG_FINALLY();
+				PG_FINALLY(2);
 				{
 					EventTriggerUndoInhibitCommandCollection();
 				}
-				PG_END_TRY();
+				PG_END_TRY(2);
 				break;
 
 			case T_CreateTrigStmt:

@@ -3,7 +3,7 @@
  * cryptohashfuncs.c
  *	  Cryptographic hash functions
  *
- * Portions Copyright (c) 2018-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2018-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -17,6 +17,7 @@
 #include "common/md5.h"
 #include "common/sha2.h"
 #include "utils/builtins.h"
+#include "varatt.h"
 
 
 /*

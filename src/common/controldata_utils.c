@@ -4,7 +4,7 @@
  *		Common code for control data file output.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -57,9 +57,9 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 	pg_crc32c	crc;
 	int			r;
 
-	AssertArg(crc_ok_p);
+	Assert(crc_ok_p);
 
-	ControlFile = palloc(sizeof(ControlFileData));
+	ControlFile = palloc_object(ControlFileData);
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 
 #ifndef FRONTEND
@@ -148,14 +148,6 @@ update_controlfile(const char *DataDir,
 	int			fd;
 	char		buffer[PG_CONTROL_FILE_SIZE];
 	char		ControlFilePath[MAXPGPATH];
-
-	/*
-	 * Apply the same static assertions as in backend's WriteControlFile().
-	 */
-	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
-					 "pg_control is too large for atomic disk writes");
-	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
-					 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
 
 	/* Update timestamp  */
 	ControlFile->time = (pg_time_t) time(NULL);

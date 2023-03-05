@@ -3,7 +3,7 @@
  * pg_subscription.h
  *	  definition of the "subscription" system catalog (pg_subscription)
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_subscription.h
@@ -30,6 +30,18 @@
 #define LOGICALREP_TWOPHASE_STATE_DISABLED 'd'
 #define LOGICALREP_TWOPHASE_STATE_PENDING 'p'
 #define LOGICALREP_TWOPHASE_STATE_ENABLED 'e'
+
+/*
+ * The subscription will request the publisher to only send changes that do not
+ * have any origin.
+ */
+#define LOGICALREP_ORIGIN_NONE "none"
+
+/*
+ * The subscription will request the publisher to send changes regardless
+ * of their origin.
+ */
+#define LOGICALREP_ORIGIN_ANY "any"
 
 /* ----------------
  *		pg_subscription definition. cpp turns this into
@@ -68,7 +80,8 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 	bool		subbinary;		/* True if the subscription wants the
 								 * publisher to send data in binary */
 
-	bool		substream;		/* Stream in-progress transactions. */
+	char		substream;		/* Stream in-progress transactions. See
+								 * LOGICALREP_STREAM_xxx constants. */
 
 	char		subtwophasestate;	/* Stream two-phase transactions */
 
@@ -87,6 +100,9 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 
 	/* List of publications subscribed to */
 	text		subpublications[1] BKI_FORCE_NOT_NULL;
+
+	/* Only publish data originating from the specified origin */
+	text		suborigin BKI_DEFAULT(LOGICALREP_ORIGIN_ANY);
 #endif
 } FormData_pg_subscription;
 
@@ -109,7 +125,8 @@ typedef struct Subscription
 	bool		enabled;		/* Indicates if the subscription is enabled */
 	bool		binary;			/* Indicates if the subscription wants data in
 								 * binary format */
-	bool		stream;			/* Allow streaming in-progress transactions. */
+	char		stream;			/* Allow streaming in-progress transactions.
+								 * See LOGICALREP_STREAM_xxx constants. */
 	char		twophasestate;	/* Allow streaming two-phase transactions */
 	bool		disableonerr;	/* Indicates if the subscription should be
 								 * automatically disabled if a worker error
@@ -118,13 +135,28 @@ typedef struct Subscription
 	char	   *slotname;		/* Name of the replication slot */
 	char	   *synccommit;		/* Synchronous commit setting for worker */
 	List	   *publications;	/* List of publication names to subscribe to */
+	char	   *origin;			/* Only publish data originating from the
+								 * specified origin */
 } Subscription;
+
+/* Disallow streaming in-progress transactions. */
+#define LOGICALREP_STREAM_OFF 'f'
+
+/*
+ * Streaming in-progress transactions are written to a temporary file and
+ * applied only after the transaction is committed on upstream.
+ */
+#define LOGICALREP_STREAM_ON 't'
+
+/*
+ * Streaming in-progress transactions are applied immediately via a parallel
+ * apply worker.
+ */
+#define LOGICALREP_STREAM_PARALLEL 'p'
 
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);
 extern void FreeSubscription(Subscription *sub);
 extern void DisableSubscription(Oid subid);
-extern Oid	get_subscription_oid(const char *subname, bool missing_ok);
-extern char *get_subscription_name(Oid subid, bool missing_ok);
 
 extern int	CountDBSubscriptions(Oid dbid);
 

@@ -16,11 +16,11 @@
 #include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"       /* for byteain & byteaout */
+#include "varatt.h"
 
 /* perl stuff */
 #define PG_NEED_PERL_XSUB_H
 #include "plperl.h"
-#include "plperl_helpers.h"
 
 
 static text *

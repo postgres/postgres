@@ -4,7 +4,7 @@
  *	  node buffer management functions for GiST buffering build algorithm.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -31,14 +31,14 @@ static void gistLoadNodeBuffer(GISTBuildBuffers *gfbb,
 static void gistUnloadNodeBuffer(GISTBuildBuffers *gfbb,
 								 GISTNodeBuffer *nodeBuffer);
 static void gistPlaceItupToPage(GISTNodeBufferPage *pageBuffer,
-								IndexTuple item);
+								IndexTuple itup);
 static void gistGetItupFromPage(GISTNodeBufferPage *pageBuffer,
-								IndexTuple *item);
+								IndexTuple *itup);
 static long gistBuffersGetFreeBlock(GISTBuildBuffers *gfbb);
 static void gistBuffersReleaseBlock(GISTBuildBuffers *gfbb, long blocknum);
 
 static void ReadTempFileBlock(BufFile *file, long blknum, void *ptr);
-static void WriteTempFileBlock(BufFile *file, long blknum, void *ptr);
+static void WriteTempFileBlock(BufFile *file, long blknum, const void *ptr);
 
 
 /*
@@ -122,7 +122,7 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 
 	/* Find node buffer in hash table */
 	nodeBuffer = (GISTNodeBuffer *) hash_search(gfbb->nodeBuffersTab,
-												(const void *) &nodeBlocknum,
+												&nodeBlocknum,
 												HASH_ENTER,
 												&found);
 	if (!found)
@@ -543,8 +543,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	GISTNodeBuffer *nodeBuffer;
 	BlockNumber blocknum;
 	IndexTuple	itup;
-	int			splitPagesCount = 0,
-				i;
+	int			splitPagesCount = 0;
 	GISTENTRY	entry[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
 	GISTNodeBuffer oldBuf;
@@ -595,11 +594,11 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	 * Fill relocation buffers information for node buffers of pages produced
 	 * by split.
 	 */
-	i = 0;
 	foreach(lc, splitinfo)
 	{
 		GISTPageSplitInfo *si = (GISTPageSplitInfo *) lfirst(lc);
 		GISTNodeBuffer *newNodeBuffer;
+		int				i = foreach_current_index(lc);
 
 		/* Decompress parent index tuple of node buffer page. */
 		gistDeCompressAtt(giststate, r,
@@ -618,8 +617,6 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 
 		relocationBuffersInfos[i].nodeBuffer = newNodeBuffer;
 		relocationBuffersInfos[i].splitinfo = si;
-
-		i++;
 	}
 
 	/*
@@ -756,18 +753,13 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 static void
 ReadTempFileBlock(BufFile *file, long blknum, void *ptr)
 {
-	size_t		nread;
-
 	if (BufFileSeekBlock(file, blknum) != 0)
 		elog(ERROR, "could not seek to block %ld in temporary file", blknum);
-	nread = BufFileRead(file, ptr, BLCKSZ);
-	if (nread != BLCKSZ)
-		elog(ERROR, "could not read temporary file: read only %zu of %zu bytes",
-			 nread, (size_t) BLCKSZ);
+	BufFileReadExact(file, ptr, BLCKSZ);
 }
 
 static void
-WriteTempFileBlock(BufFile *file, long blknum, void *ptr)
+WriteTempFileBlock(BufFile *file, long blknum, const void *ptr)
 {
 	if (BufFileSeekBlock(file, blknum) != 0)
 		elog(ERROR, "could not seek to block %ld in temporary file", blknum);

@@ -1,6 +1,7 @@
 CREATE EXTENSION pageinspect;
 
-CREATE TABLE test1 (a int, b int);
+-- Use a temp table so that effects of VACUUM are predictable
+CREATE TEMP TABLE test1 (a int, b int);
 INSERT INTO test1 VALUES (16777217, 131584);
 
 VACUUM (DISABLE_PAGE_SKIPPING) test1;  -- set up FSM

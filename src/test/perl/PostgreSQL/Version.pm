@@ -4,7 +4,7 @@
 #
 # Module encapsulating Postgres Version numbers
 #
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 #
 ############################################################################
 
@@ -123,9 +123,12 @@ sub _version_cmp
 
 	for (my $idx = 0;; $idx++)
 	{
-		return 0 unless (defined $an->[$idx] && defined $bn->[$idx]);
-		return $an->[$idx] <=> $bn->[$idx]
-		  if ($an->[$idx] <=> $bn->[$idx]);
+		return 0
+		  if ($idx >= @$an && $idx >= @$bn);
+		# treat a missing number as 0
+		my ($anum, $bnum) = ($an->[$idx] || 0, $bn->[$idx] || 0);
+		return $anum <=> $bnum
+		  if ($anum <=> $bnum);
 	}
 }
 

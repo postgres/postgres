@@ -42,3 +42,16 @@ select * from LSEG_TBL;
  [(NaN,1),(NaN,90)]
 (8 rows)
 
+-- test non-error-throwing API for some core types
+SELECT pg_input_is_valid('[(1,2),(3)]', 'lseg');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('[(1,2),(3)]', 'lseg');
+                      message                      | detail | hint | sql_error_code 
+---------------------------------------------------+--------+------+----------------
+ invalid input syntax for type lseg: "[(1,2),(3)]" |        |      | 22P02
+(1 row)
+

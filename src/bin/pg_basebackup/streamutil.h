@@ -2,7 +2,7 @@
  *
  * streamutil.h
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/streamutil.h
@@ -44,7 +44,7 @@ extern bool RunIdentifySystem(PGconn *conn, char **sysid,
 
 extern void AppendPlainCommandOption(PQExpBuffer buf,
 									 bool use_new_option_syntax,
-									 char *option_value);
+									 char *option_name);
 extern void AppendStringCommandOption(PQExpBuffer buf,
 									  bool use_new_option_syntax,
 									  char *option_name, char *option_value);

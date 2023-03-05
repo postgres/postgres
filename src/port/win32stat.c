@@ -3,7 +3,7 @@
  * win32stat.c
  *	  Replacements for <sys/stat.h> functions using GetFileInformationByHandle
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -16,6 +16,8 @@
 #ifdef WIN32
 
 #include "c.h"
+#include "port/win32ntdll.h"
+
 #include <windows.h>
 
 /*
@@ -107,12 +109,10 @@ fileinfo_to_stat(HANDLE hFile, struct stat *buf)
 }
 
 /*
- * Windows implementation of stat().
- *
- * This currently also implements lstat(), though perhaps that should change.
+ * Windows implementation of lstat().
  */
 int
-_pgstat64(const char *name, struct stat *buf)
+_pglstat64(const char *name, struct stat *buf)
 {
 	/*
 	 * Our open wrapper will report STATUS_DELETE_PENDING as ENOENT.  We
@@ -125,11 +125,128 @@ _pgstat64(const char *name, struct stat *buf)
 
 	hFile = pgwin32_open_handle(name, O_RDONLY, true);
 	if (hFile == INVALID_HANDLE_VALUE)
-		return -1;
+	{
+		if (errno == ENOENT)
+		{
+			/*
+			 * If it's a junction point pointing to a non-existent path, we'll
+			 * have ENOENT here (because pgwin32_open_handle does not use
+			 * FILE_FLAG_OPEN_REPARSE_POINT).  In that case, we'll try again
+			 * with readlink() below, which will distinguish true ENOENT from
+			 * pseudo-symlink.
+			 */
+			memset(buf, 0, sizeof(*buf));
+			ret = 0;
+		}
+		else
+			return -1;
+	}
+	else
+		ret = fileinfo_to_stat(hFile, buf);
 
-	ret = fileinfo_to_stat(hFile, buf);
+	/*
+	 * Junction points appear as directories to fileinfo_to_stat(), so we'll
+	 * need to do a bit more work to distinguish them.
+	 */
+	if ((ret == 0 && S_ISDIR(buf->st_mode)) || hFile == INVALID_HANDLE_VALUE)
+	{
+		char		next[MAXPGPATH];
+		ssize_t		size;
 
-	CloseHandle(hFile);
+		/*
+		 * POSIX says we need to put the length of the target path into
+		 * st_size.  Use readlink() to get it, or learn that this is not a
+		 * junction point.
+		 */
+		size = readlink(name, next, sizeof(next));
+		if (size < 0)
+		{
+			if (errno == EACCES &&
+				pg_RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
+			{
+				/* Unlinked underneath us. */
+				errno = ENOENT;
+				ret = -1;
+			}
+			else if (errno == EINVAL)
+			{
+				/* It's not a junction point, nothing to do. */
+			}
+			else
+			{
+				/* Some other failure. */
+				ret = -1;
+			}
+		}
+		else
+		{
+			/* It's a junction point, so report it as a symlink. */
+			buf->st_mode &= ~S_IFDIR;
+			buf->st_mode |= S_IFLNK;
+			buf->st_size = size;
+			ret = 0;
+		}
+	}
+
+	if (hFile != INVALID_HANDLE_VALUE)
+		CloseHandle(hFile);
+	return ret;
+}
+
+/*
+ * Windows implementation of stat().
+ */
+int
+_pgstat64(const char *name, struct stat *buf)
+{
+	int			loops = 0;
+	int			ret;
+	char		curr[MAXPGPATH];
+
+	ret = _pglstat64(name, buf);
+
+	strlcpy(curr, name, MAXPGPATH);
+
+	/* Do we need to follow a symlink (junction point)? */
+	while (ret == 0 && S_ISLNK(buf->st_mode))
+	{
+		char		next[MAXPGPATH];
+		ssize_t		size;
+
+		if (++loops > 8)
+		{
+			errno = ELOOP;
+			return -1;
+		}
+
+		/*
+		 * _pglstat64() already called readlink() once to be able to fill in
+		 * st_size, and now we need to do it again to get the path to follow.
+		 * That could be optimized, but stat() on symlinks is probably rare
+		 * and this way is simple.
+		 */
+		size = readlink(curr, next, sizeof(next));
+		if (size < 0)
+		{
+			if (errno == EACCES &&
+				pg_RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
+			{
+				/* Unlinked underneath us. */
+				errno = ENOENT;
+			}
+			return -1;
+		}
+		if (size >= sizeof(next))
+		{
+			errno = ENAMETOOLONG;
+			return -1;
+		}
+		next[size] = 0;
+
+		ret = _pglstat64(next, buf);
+		strcpy(curr, next);
+	}
+
 	return ret;
 }
 

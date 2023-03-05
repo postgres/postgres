@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 REVOKE [ GRANT OPTION FOR ]
-    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
+    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | MAINTAIN }
     [, ...] | ALL [ PRIVILEGES ] }
     ON { [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
          | ALL TABLES IN SCHEMA <replaceable>schema_name</replaceable> [, ...] }
@@ -125,7 +125,7 @@ REVOKE [ GRANT OPTION FOR ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
-REVOKE [ ADMIN OPTION FOR ]
+REVOKE [ { ADMIN | INHERIT | SET } OPTION FOR ]
     <replaceable class="parameter">role_name</replaceable> [, ...] FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
@@ -198,12 +198,20 @@ REVOKE [ ADMIN OPTION FOR ]
   <para>
    When revoking membership in a role, <literal>GRANT OPTION</literal> is instead
    called <literal>ADMIN OPTION</literal>, but the behavior is similar.
-   This form of the command also allows a <literal>GRANTED BY</literal>
-   option, but that option is currently ignored (except for checking
-   the existence of the named role).
+   Note that, in releases prior to <productname>PostgreSQL</productname> 16,
+   dependent privileges were not tracked for grants of role membership,
+   and thus <literal>CASCADE</literal> had no effect for role membership.
+   This is no longer the case.
    Note also that this form of the command does not
    allow the noise word <literal>GROUP</literal>
    in <replaceable class="parameter">role_specification</replaceable>.
+  </para>
+
+  <para>
+   Just as <literal>ADMIN OPTION</literal> can be removed from an existing
+   role grant, it is also possible to revoke <literal>INHERIT OPTION</literal>
+   or <literal>SET OPTION</literal>.  This is equivalent to setting the value
+   of the corresponding option to <literal>FALSE</literal>.
   </para>
  </refsect1>
 
@@ -239,7 +247,10 @@ REVOKE [ ADMIN OPTION FOR ]
    <para>
     If a superuser chooses to issue a <command>GRANT</command> or <command>REVOKE</command>
     command, the command is performed as though it were issued by the
-    owner of the affected object.  Since all privileges ultimately come
+    owner of the affected object.  (Since roles do not have owners, in the
+    case of a <command>GRANT</command> of role membership, the command is
+    performed as though it were issued by the bootstrap superuser.)
+    Since all privileges ultimately come
     from the object owner (possibly indirectly via chains of grant options),
     it is possible for a superuser to revoke all privileges, but this might
     require use of <literal>CASCADE</literal> as stated above.

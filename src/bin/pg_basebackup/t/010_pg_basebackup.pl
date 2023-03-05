@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -44,7 +44,7 @@ $node->command_fails_like(
 	'failure if method "none" specified with compression level');
 $node->command_fails_like(
 	[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', 'none+' ],
-	qr/\Qunrecognized compression algorithm "none+"/,
+	qr/\Qunrecognized compression algorithm: "none+"/,
 	'failure on incorrect separator to define compression level');
 
 # Some Windows ANSI code pages may reject this filename, in which case we
@@ -86,71 +86,81 @@ $node->restart;
 # Now that we have a server that supports replication commands, test whether
 # certain invalid compression commands fail on the client side with client-side
 # compression and on the server side with server-side compression.
-my $client_fails = 'pg_basebackup: error: ';
-my $server_fails =
-  'pg_basebackup: error: could not initiate base backup: ERROR:  ';
-my @compression_failure_tests = (
-	[
-		'extrasquishy',
-		'unrecognized compression algorithm "extrasquishy"',
-		'failure on invalid compression algorithm'
-	],
-	[
-		'gzip:',
-		'invalid compression specification: found empty string where a compression option was expected',
-		'failure on empty compression options list'
-	],
-	[
-		'gzip:thunk',
-		'invalid compression specification: unknown compression option "thunk"',
-		'failure on unknown compression option'
-	],
-	[
-		'gzip:level',
-		'invalid compression specification: compression option "level" requires a value',
-		'failure on missing compression level'
-	],
-	[
-		'gzip:level=',
-		'invalid compression specification: value for compression option "level" must be an integer',
-		'failure on empty compression level'
-	],
-	[
-		'gzip:level=high',
-		'invalid compression specification: value for compression option "level" must be an integer',
-		'failure on non-numeric compression level'
-	],
-	[
-		'gzip:level=236',
-		'invalid compression specification: compression algorithm "gzip" expects a compression level between 1 and 9',
-		'failure on out-of-range compression level'
-	],
-	[
-		'gzip:level=9,',
-		'invalid compression specification: found empty string where a compression option was expected',
-		'failure on extra, empty compression option'
-	],
-	[
-		'gzip:workers=3',
-		'invalid compression specification: compression algorithm "gzip" does not accept a worker count',
-		'failure on worker count for gzip'
-	],);
-for my $cft (@compression_failure_tests)
+SKIP:
 {
-	my $cfail = quotemeta($client_fails . $cft->[1]);
-	my $sfail = quotemeta($server_fails . $cft->[1]);
-	$node->command_fails_like(
-		[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', $cft->[0] ],
-		qr/$cfail/,
-		'client ' . $cft->[2]);
-	$node->command_fails_like(
+	skip "postgres was not built with ZLIB support", 6
+	  if (!check_pg_config("#define HAVE_LIBZ 1"));
+
+	my $client_fails = 'pg_basebackup: error: ';
+	my $server_fails =
+	  'pg_basebackup: error: could not initiate base backup: ERROR:  ';
+	my @compression_failure_tests = (
 		[
-			'pg_basebackup',   '-D',
-			"$tempdir/backup", '--compress',
-			'server-' . $cft->[0]
+			'extrasquishy',
+			'unrecognized compression algorithm: "extrasquishy"',
+			'failure on invalid compression algorithm'
 		],
-		qr/$sfail/,
-		'server ' . $cft->[2]);
+		[
+			'gzip:',
+			'invalid compression specification: found empty string where a compression option was expected',
+			'failure on empty compression options list'
+		],
+		[
+			'gzip:thunk',
+			'invalid compression specification: unrecognized compression option: "thunk"',
+			'failure on unknown compression option'
+		],
+		[
+			'gzip:level',
+			'invalid compression specification: compression option "level" requires a value',
+			'failure on missing compression level'
+		],
+		[
+			'gzip:level=',
+			'invalid compression specification: value for compression option "level" must be an integer',
+			'failure on empty compression level'
+		],
+		[
+			'gzip:level=high',
+			'invalid compression specification: value for compression option "level" must be an integer',
+			'failure on non-numeric compression level'
+		],
+		[
+			'gzip:level=236',
+			'invalid compression specification: compression algorithm "gzip" expects a compression level between 1 and 9',
+			'failure on out-of-range compression level'
+		],
+		[
+			'gzip:level=9,',
+			'invalid compression specification: found empty string where a compression option was expected',
+			'failure on extra, empty compression option'
+		],
+		[
+			'gzip:workers=3',
+			'invalid compression specification: compression algorithm "gzip" does not accept a worker count',
+			'failure on worker count for gzip'
+		],);
+	for my $cft (@compression_failure_tests)
+	{
+		my $cfail = quotemeta($client_fails . $cft->[1]);
+		my $sfail = quotemeta($server_fails . $cft->[1]);
+		$node->command_fails_like(
+			[
+				'pg_basebackup',   '-D',
+				"$tempdir/backup", '--compress',
+				$cft->[0]
+			],
+			qr/$cfail/,
+			'client ' . $cft->[2]);
+		$node->command_fails_like(
+			[
+				'pg_basebackup',   '-D',
+				"$tempdir/backup", '--compress',
+				'server-' . $cft->[0]
+			],
+			qr/$sfail/,
+			'server ' . $cft->[2]);
+	}
 }
 
 # Write some files to test that they are not copied.
@@ -903,5 +913,22 @@ ok( pump_until(
 		\$sigchld_bb_stderr, qr/background process terminated unexpectedly/),
 	'background process exit message');
 $sigchld_bb->finish();
+
+# Test that we can back up an in-place tablespace
+$node->safe_psql('postgres',
+	"SET allow_in_place_tablespaces = on; CREATE TABLESPACE tblspc2 LOCATION '';");
+$node->safe_psql('postgres',
+	    "CREATE TABLE test2 (a int) TABLESPACE tblspc2;"
+	  . "INSERT INTO test2 VALUES (1234);");
+my $tblspc_oid = $node->safe_psql('postgres',
+	"SELECT oid FROM pg_tablespace WHERE spcname = 'tblspc2';");
+$node->backup('backup3');
+$node->safe_psql('postgres', "DROP TABLE test2;");
+$node->safe_psql('postgres', "DROP TABLESPACE tblspc2;");
+
+# check that the in-place tablespace exists in the backup
+$backupdir = $node->backup_dir . '/backup3';
+my @dst_tblspc = glob "$backupdir/pg_tblspc/$tblspc_oid/PG_*";
+is(@dst_tblspc, 1, 'tblspc directory copied');
 
 done_testing();

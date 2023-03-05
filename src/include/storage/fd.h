@@ -4,7 +4,7 @@
  *	  Virtual file descriptor definitions.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/fd.h
@@ -50,8 +50,6 @@ typedef enum RecoveryInitSyncMethod
 	RECOVERY_INIT_SYNC_METHOD_FSYNC,
 	RECOVERY_INIT_SYNC_METHOD_SYNCFS
 }			RecoveryInitSyncMethod;
-
-struct iovec;					/* avoid including port/pg_iovec.h here */
 
 typedef int File;
 
@@ -104,9 +102,9 @@ extern File PathNameOpenFile(const char *fileName, int fileFlags);
 extern File PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
-extern int	FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info);
-extern int	FileRead(File file, char *buffer, int amount, off_t offset, uint32 wait_event_info);
-extern int	FileWrite(File file, char *buffer, int amount, off_t offset, uint32 wait_event_info);
+extern int	FilePrefetch(File file, off_t offset, off_t amount, uint32 wait_event_info);
+extern int	FileRead(File file, void *buffer, size_t amount, off_t offset, uint32 wait_event_info);
+extern int	FileWrite(File file, const void *buffer, size_t amount, off_t offset, uint32 wait_event_info);
 extern int	FileSync(File file, uint32 wait_event_info);
 extern off_t FileSize(File file);
 extern int	FileTruncate(File file, off_t offset, uint32 wait_event_info);
@@ -117,11 +115,11 @@ extern int	FileGetRawFlags(File file);
 extern mode_t FileGetRawMode(File file);
 
 /* Operations used for sharing named temporary files */
-extern File PathNameCreateTemporaryFile(const char *name, bool error_on_failure);
+extern File PathNameCreateTemporaryFile(const char *path, bool error_on_failure);
 extern File PathNameOpenTemporaryFile(const char *path, int mode);
-extern bool PathNameDeleteTemporaryFile(const char *name, bool error_on_failure);
-extern void PathNameCreateTemporaryDir(const char *base, const char *name);
-extern void PathNameDeleteTemporaryDir(const char *name);
+extern bool PathNameDeleteTemporaryFile(const char *path, bool error_on_failure);
+extern void PathNameCreateTemporaryDir(const char *basedir, const char *directory);
+extern void PathNameDeleteTemporaryDir(const char *dirname);
 extern void TempTablespacePath(char *path, Oid tablespace);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
@@ -177,17 +175,12 @@ extern int	pg_fsync(int fd);
 extern int	pg_fsync_no_writethrough(int fd);
 extern int	pg_fsync_writethrough(int fd);
 extern int	pg_fdatasync(int fd);
-extern void pg_flush_data(int fd, off_t offset, off_t amount);
-extern ssize_t pg_pwritev_with_retry(int fd,
-									 const struct iovec *iov,
-									 int iovcnt,
-									 off_t offset);
+extern void pg_flush_data(int fd, off_t offset, off_t nbytes);
 extern int	pg_truncate(const char *path, off_t length);
 extern void fsync_fname(const char *fname, bool isdir);
 extern int	fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel);
-extern int	durable_rename(const char *oldfile, const char *newfile, int loglevel);
-extern int	durable_unlink(const char *fname, int loglevel);
-extern int	durable_rename_excl(const char *oldfile, const char *newfile, int loglevel);
+extern int	durable_rename(const char *oldfile, const char *newfile, int elevel);
+extern int	durable_unlink(const char *fname, int elevel);
 extern void SyncDataDirectory(void);
 extern int	data_sync_elevel(int elevel);
 

@@ -106,7 +106,7 @@ int8_dist(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
 
-	ra = Abs(r);
+	ra = i64abs(r);
 
 	PG_RETURN_INT64(ra);
 }

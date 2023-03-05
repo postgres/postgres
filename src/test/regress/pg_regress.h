@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * pg_regress.h --- regression test driver
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/pg_regress.h
@@ -53,6 +53,7 @@ extern _stringlist *dblist;
 extern bool debug;
 extern char *inputdir;
 extern char *outputdir;
+extern char *expecteddir;
 extern char *launcher;
 
 extern const char *basic_diff_opts;

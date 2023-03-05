@@ -1,0 +1,7 @@
+#if 1				/* if */
+
+#elif defined(test)		/* elif */
+
+#else /* else */
+
+#endif /* endif */

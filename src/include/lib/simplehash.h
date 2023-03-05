@@ -87,7 +87,7 @@
  *	  looking or is done - buckets following a deleted element are shifted
  *	  backwards, unless they're empty or already at their optimal position.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/lib/simplehash.h
@@ -436,9 +436,9 @@ SH_CREATE(MemoryContext ctx, uint32 nelements, void *private_data)
 	uint64		size;
 
 #ifdef SH_RAW_ALLOCATOR
-	tb = SH_RAW_ALLOCATOR(sizeof(SH_TYPE));
+	tb = (SH_TYPE *) SH_RAW_ALLOCATOR(sizeof(SH_TYPE));
 #else
-	tb = MemoryContextAllocZero(ctx, sizeof(SH_TYPE));
+	tb = (SH_TYPE *) MemoryContextAllocZero(ctx, sizeof(SH_TYPE));
 	tb->ctx = ctx;
 #endif
 	tb->private_data = private_data;
@@ -448,7 +448,7 @@ SH_CREATE(MemoryContext ctx, uint32 nelements, void *private_data)
 
 	SH_COMPUTE_PARAMETERS(tb, size);
 
-	tb->data = SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
+	tb->data = (SH_ELEMENT_TYPE *) SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
 
 	return tb;
 }
@@ -493,7 +493,7 @@ SH_GROW(SH_TYPE * tb, uint64 newsize)
 	/* compute parameters for new table */
 	SH_COMPUTE_PARAMETERS(tb, newsize);
 
-	tb->data = SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
+	tb->data = (SH_ELEMENT_TYPE *) SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
 
 	newdata = tb->data;
 
@@ -546,13 +546,13 @@ SH_GROW(SH_TYPE * tb, uint64 newsize)
 		if (oldentry->status == SH_STATUS_IN_USE)
 		{
 			uint32		hash;
-			uint32		startelem;
+			uint32		startelem2;
 			uint32		curelem;
 			SH_ELEMENT_TYPE *newentry;
 
 			hash = SH_ENTRY_HASH(tb, oldentry);
-			startelem = SH_INITIAL_BUCKET(tb, hash);
-			curelem = startelem;
+			startelem2 = SH_INITIAL_BUCKET(tb, hash);
+			curelem = startelem2;
 
 			/* find empty element to put data into */
 			while (true)
@@ -564,7 +564,7 @@ SH_GROW(SH_TYPE * tb, uint64 newsize)
 					break;
 				}
 
-				curelem = SH_NEXT(tb, curelem, startelem);
+				curelem = SH_NEXT(tb, curelem, startelem2);
 			}
 
 			/* copy entry to new slot */
@@ -810,7 +810,7 @@ SH_LOOKUP_HASH_INTERNAL(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash)
 }
 
 /*
- * Lookup up entry in hash table.  Returns NULL if key not present.
+ * Lookup entry in hash table.  Returns NULL if key not present.
  */
 SH_SCOPE	SH_ELEMENT_TYPE *
 SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key)
@@ -821,7 +821,7 @@ SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key)
 }
 
 /*
- * Lookup up entry in hash table using an already-calculated hash.
+ * Lookup entry in hash table using an already-calculated hash.
  *
  * Returns NULL if key not present.
  */
@@ -1059,7 +1059,7 @@ SH_STAT(SH_TYPE * tb)
 	double		fillfactor;
 	uint32		i;
 
-	uint32	   *collisions = palloc0(tb->size * sizeof(uint32));
+	uint32	   *collisions = (uint32 *) palloc0(tb->size * sizeof(uint32));
 	uint32		total_collisions = 0;
 	uint32		max_collisions = 0;
 	double		avg_collisions;

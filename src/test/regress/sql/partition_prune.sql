@@ -283,16 +283,16 @@ explain (costs off) select * from like_op_noprune where a like '%BC';
 create table lparted_by_int2 (a smallint) partition by list (a);
 create table lparted_by_int2_1 partition of lparted_by_int2 for values in (1);
 create table lparted_by_int2_16384 partition of lparted_by_int2 for values in (16384);
-explain (costs off) select * from lparted_by_int2 where a = 100000000000000;
+explain (costs off) select * from lparted_by_int2 where a = 100_000_000_000_000;
 
 create table rparted_by_int2 (a smallint) partition by range (a);
 create table rparted_by_int2_1 partition of rparted_by_int2 for values from (1) to (10);
 create table rparted_by_int2_16384 partition of rparted_by_int2 for values from (10) to (16384);
 -- all partitions pruned
-explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
+explain (costs off) select * from rparted_by_int2 where a > 100_000_000_000_000;
 create table rparted_by_int2_maxvalue partition of rparted_by_int2 for values from (16384) to (maxvalue);
 -- all partitions but rparted_by_int2_maxvalue pruned
-explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
+explain (costs off) select * from rparted_by_int2 where a > 100_000_000_000_000;
 
 drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, boolrangep, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
 

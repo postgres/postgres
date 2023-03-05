@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -31,13 +31,16 @@ if ($ENV{with_icu} eq 'yes')
 	# locale set.  It would succeed if template0 used the icu
 	# provider.  XXX Maybe split into multiple tests?
 	$node->command_fails(
-		[ 'createdb', '-T', 'template0', '--locale-provider=icu', 'foobar4' ],
+		[
+			'createdb', '-T', 'template0', '-E', 'UTF8',
+			'--locale-provider=icu', 'foobar4'
+		],
 		'create database with ICU fails without ICU locale specified');
 
 	$node->issues_sql_like(
 		[
 			'createdb',        '-T',
-			'template0',       '--locale-provider=icu',
+			'template0',       '-E', 'UTF8', '--locale-provider=icu',
 			'--icu-locale=en', 'foobar5'
 		],
 		qr/statement: CREATE DATABASE foobar5 .* LOCALE_PROVIDER icu ICU_LOCALE 'en'/,
@@ -45,10 +48,33 @@ if ($ENV{with_icu} eq 'yes')
 
 	$node->command_fails(
 		[
-			'createdb', '-T', 'template0', '--locale-provider=icu',
+			'createdb', '-T', 'template0', '-E', 'UTF8',
+			'--locale-provider=icu',
 			'--icu-locale=@colNumeric=lower', 'foobarX'
 		],
 		'fails for invalid ICU locale');
+
+	$node->command_fails_like(
+		[
+			'createdb',             '-T',
+			'template0',            '--locale-provider=icu',
+			'--encoding=SQL_ASCII', 'foobarX'
+		],
+		qr/ERROR:  encoding "SQL_ASCII" is not supported with ICU provider/,
+		'fails for encoding not supported by ICU');
+
+	# additional node, which uses the icu provider
+	my $node2 = PostgreSQL::Test::Cluster->new('icu');
+	$node2->init(extra => ['--locale-provider=icu', '--icu-locale=en']);
+	$node2->start;
+
+	$node2->command_ok(
+		[ 'createdb', '-T', 'template0', '--locale-provider=libc', 'foobar55' ],
+		'create database with libc provider from template database with icu provider');
+
+	$node2->command_ok(
+		[ 'createdb', '-T', 'template0', '--icu-locale', 'en-US', 'foobar56' ],
+		'create database with icu locale from template database with icu provider');
 }
 else
 {
@@ -117,7 +143,7 @@ $node->command_checks_all(
 	1,
 	[qr/^$/],
 	[
-		qr/^createdb: error: database creation failed: ERROR:  invalid create database strategy foo/s
+		qr/^createdb: error: database creation failed: ERROR:  invalid create database strategy "foo"/s
 	],
 	'createdb with incorrect --strategy');
 
@@ -131,5 +157,23 @@ $node->issues_sql_like(
 	[ 'createdb', '-T', 'foobar2', '-S', 'file_copy', 'foobar7' ],
 	qr/statement: CREATE DATABASE foobar7 STRATEGY file_copy TEMPLATE foobar2/,
 	'create database with FILE_COPY strategy');
+
+# Create database owned by role_foobar.
+$node->issues_sql_like(
+	[ 'createdb', '-T', 'foobar2', '-O', 'role_foobar', 'foobar8' ],
+	qr/statement: CREATE DATABASE foobar8 OWNER role_foobar TEMPLATE foobar2/,
+	'create database with owner role_foobar');
+($ret, $stdout, $stderr) = $node->psql(
+	'foobar2',
+	'DROP OWNED BY role_foobar;',
+	on_error_die => 1,
+);
+ok($ret == 0, "DROP OWNED BY role_foobar");
+($ret, $stdout, $stderr) = $node->psql(
+	'foobar2',
+	'DROP DATABASE foobar8;',
+	on_error_die => 1,
+);
+ok($ret == 0, "DROP DATABASE foobar8");
 
 done_testing();

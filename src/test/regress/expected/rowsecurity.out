@@ -93,23 +93,23 @@ CREATE POLICY p2r ON document AS RESTRICTIVE TO regress_rls_dave
 CREATE POLICY p1r ON document AS RESTRICTIVE TO regress_rls_dave
     USING (cid <> 44);
 \dp
-                                                                  Access privileges
-       Schema       |   Name   | Type  |              Access privileges              | Column privileges |                  Policies                  
---------------------+----------+-------+---------------------------------------------+-------------------+--------------------------------------------
- regress_rls_schema | category | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | 
-                    |          |       | =arwdDxt/regress_rls_alice                  |                   | 
- regress_rls_schema | document | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | p1:                                       +
-                    |          |       | =arwdDxt/regress_rls_alice                  |                   |   (u): (dlevel <= ( SELECT uaccount.seclv +
-                    |          |       |                                             |                   |    FROM uaccount                          +
-                    |          |       |                                             |                   |   WHERE (uaccount.pguser = CURRENT_USER)))+
-                    |          |       |                                             |                   | p2r (RESTRICTIVE):                        +
-                    |          |       |                                             |                   |   (u): ((cid <> 44) AND (cid < 50))       +
-                    |          |       |                                             |                   |   to: regress_rls_dave                    +
-                    |          |       |                                             |                   | p1r (RESTRICTIVE):                        +
-                    |          |       |                                             |                   |   (u): (cid <> 44)                        +
-                    |          |       |                                             |                   |   to: regress_rls_dave
- regress_rls_schema | uaccount | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | 
-                    |          |       | =r/regress_rls_alice                        |                   | 
+                                                                   Access privileges
+       Schema       |   Name   | Type  |              Access privileges               | Column privileges |                  Policies                  
+--------------------+----------+-------+----------------------------------------------+-------------------+--------------------------------------------
+ regress_rls_schema | category | table | regress_rls_alice=arwdDxtm/regress_rls_alice+|                   | 
+                    |          |       | =arwdDxtm/regress_rls_alice                  |                   | 
+ regress_rls_schema | document | table | regress_rls_alice=arwdDxtm/regress_rls_alice+|                   | p1:                                       +
+                    |          |       | =arwdDxtm/regress_rls_alice                  |                   |   (u): (dlevel <= ( SELECT uaccount.seclv +
+                    |          |       |                                              |                   |    FROM uaccount                          +
+                    |          |       |                                              |                   |   WHERE (uaccount.pguser = CURRENT_USER)))+
+                    |          |       |                                              |                   | p2r (RESTRICTIVE):                        +
+                    |          |       |                                              |                   |   (u): ((cid <> 44) AND (cid < 50))       +
+                    |          |       |                                              |                   |   to: regress_rls_dave                    +
+                    |          |       |                                              |                   | p1r (RESTRICTIVE):                        +
+                    |          |       |                                              |                   |   (u): (cid <> 44)                        +
+                    |          |       |                                              |                   |   to: regress_rls_dave
+ regress_rls_schema | uaccount | table | regress_rls_alice=arwdDxtm/regress_rls_alice+|                   | 
+                    |          |       | =r/regress_rls_alice                         |                   | 
 (3 rows)
 
 \d document
@@ -3941,28 +3941,6 @@ SAVEPOINT q;
 DROP ROLE regress_rls_frank; -- succeeds
 ROLLBACK TO q;
 ROLLBACK; -- cleanup
---
--- Converting table to view
---
-BEGIN;
-CREATE TABLE t (c int);
-CREATE POLICY p ON t USING (c % 2 = 1);
-ALTER TABLE t ENABLE ROW LEVEL SECURITY;
-SAVEPOINT q;
-CREATE RULE "_RETURN" AS ON SELECT TO t DO INSTEAD
-  SELECT * FROM generate_series(1,5) t0(c); -- fails due to row-level security enabled
-ERROR:  could not convert table "t" to a view because it has row security enabled
-ROLLBACK TO q;
-ALTER TABLE t DISABLE ROW LEVEL SECURITY;
-SAVEPOINT q;
-CREATE RULE "_RETURN" AS ON SELECT TO t DO INSTEAD
-  SELECT * FROM generate_series(1,5) t0(c); -- fails due to policy p on t
-ERROR:  could not convert table "t" to a view because it has row security policies
-ROLLBACK TO q;
-DROP POLICY p ON t;
-CREATE RULE "_RETURN" AS ON SELECT TO t DO INSTEAD
-  SELECT * FROM generate_series(1,5) t0(c); -- succeeds
-ROLLBACK;
 --
 -- Policy expression handling
 --

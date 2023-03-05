@@ -9,7 +9,7 @@
  * exist, though, because mmap'd shmem provides no way to find out how
  * many processes are attached, which we need for interlocking purposes.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -22,14 +22,10 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/file.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
-#endif
-#ifdef HAVE_SYS_SHM_H
+#include <sys/mman.h>
 #include <sys/shm.h>
-#endif
+#include <sys/stat.h>
 
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
@@ -38,7 +34,7 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/pidfile.h"
 
 
@@ -572,6 +568,23 @@ GetHugePageSize(Size *hugepagesize, int *mmap_flags)
 		*mmap_flags = 0;
 
 #endif							/* MAP_HUGETLB */
+}
+
+/*
+ * GUC check_hook for huge_page_size
+ */
+bool
+check_huge_page_size(int *newval, void **extra, GucSource source)
+{
+#if !(defined(MAP_HUGE_MASK) && defined(MAP_HUGE_SHIFT))
+	/* Recent enough Linux only, for now.  See GetHugePageSize(). */
+	if (*newval != 0)
+	{
+		GUC_check_errdetail("huge_page_size must be 0 on this platform.");
+		return false;
+	}
+#endif
+	return true;
 }
 
 /*

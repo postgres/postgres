@@ -5,7 +5,7 @@
  * Assorted utility functions to work on files.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/common/file_utils.c
@@ -28,6 +28,7 @@
 #ifdef FRONTEND
 #include "common/logging.h"
 #endif
+#include "port/pg_iovec.h"
 
 #ifdef FRONTEND
 
@@ -79,7 +80,6 @@ fsync_pgdata(const char *pg_data,
 	 */
 	xlog_is_symlink = false;
 
-#ifndef WIN32
 	{
 		struct stat st;
 
@@ -88,10 +88,6 @@ fsync_pgdata(const char *pg_data,
 		else if (S_ISLNK(st.st_mode))
 			xlog_is_symlink = true;
 	}
-#else
-	if (pgwin32_is_junction(pg_wal))
-		xlog_is_symlink = true;
-#endif
 
 	/*
 	 * If possible, hint to the kernel that we're soon going to fsync the data
@@ -459,11 +455,148 @@ get_dirent_type(const char *path,
 			result = PGFILETYPE_REG;
 		else if (S_ISDIR(fst.st_mode))
 			result = PGFILETYPE_DIR;
-#ifdef S_ISLNK
 		else if (S_ISLNK(fst.st_mode))
 			result = PGFILETYPE_LNK;
-#endif
 	}
 
 	return result;
+}
+
+/*
+ * pg_pwritev_with_retry
+ *
+ * Convenience wrapper for pg_pwritev() that retries on partial write.  If an
+ * error is returned, it is unspecified how much has been written.
+ */
+ssize_t
+pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+{
+	struct iovec iov_copy[PG_IOV_MAX];
+	ssize_t		sum = 0;
+	ssize_t		part;
+
+	/* We'd better have space to make a copy, in case we need to retry. */
+	if (iovcnt > PG_IOV_MAX)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	for (;;)
+	{
+		/* Write as much as we can. */
+		part = pg_pwritev(fd, iov, iovcnt, offset);
+		if (part < 0)
+			return -1;
+
+#ifdef SIMULATE_SHORT_WRITE
+		part = Min(part, 4096);
+#endif
+
+		/* Count our progress. */
+		sum += part;
+		offset += part;
+
+		/* Step over iovecs that are done. */
+		while (iovcnt > 0 && iov->iov_len <= part)
+		{
+			part -= iov->iov_len;
+			++iov;
+			--iovcnt;
+		}
+
+		/* Are they all done? */
+		if (iovcnt == 0)
+		{
+			/* We don't expect the kernel to write more than requested. */
+			Assert(part == 0);
+			break;
+		}
+
+		/*
+		 * Move whatever's left to the front of our mutable copy and adjust
+		 * the leading iovec.
+		 */
+		Assert(iovcnt > 0);
+		memmove(iov_copy, iov, sizeof(*iov) * iovcnt);
+		Assert(iov->iov_len > part);
+		iov_copy[0].iov_base = (char *) iov_copy[0].iov_base + part;
+		iov_copy[0].iov_len -= part;
+		iov = iov_copy;
+	}
+
+	return sum;
+}
+
+/*
+ * pg_pwrite_zeros
+ *
+ * Writes zeros to file worth "size" bytes, using vectored I/O.
+ *
+ * Returns the total amount of data written.  On failure, a negative value
+ * is returned with errno set.
+ */
+ssize_t
+pg_pwrite_zeros(int fd, size_t size)
+{
+	PGAlignedBlock zbuffer;		/* worth BLCKSZ */
+	size_t		zbuffer_sz;
+	struct iovec iov[PG_IOV_MAX];
+	int			blocks;
+	size_t		remaining_size = 0;
+	int			i;
+	ssize_t		written;
+	ssize_t		total_written = 0;
+
+	zbuffer_sz = sizeof(zbuffer.data);
+
+	/* Zero-fill the buffer. */
+	memset(zbuffer.data, 0, zbuffer_sz);
+
+	/* Prepare to write out a lot of copies of our zero buffer at once. */
+	for (i = 0; i < lengthof(iov); ++i)
+	{
+		iov[i].iov_base = zbuffer.data;
+		iov[i].iov_len = zbuffer_sz;
+	}
+
+	/* Loop, writing as many blocks as we can for each system call. */
+	blocks = size / zbuffer_sz;
+	remaining_size = size % zbuffer_sz;
+	for (i = 0; i < blocks;)
+	{
+		int			iovcnt = Min(blocks - i, lengthof(iov));
+		off_t		offset = i * zbuffer_sz;
+
+		written = pg_pwritev_with_retry(fd, iov, iovcnt, offset);
+
+		if (written < 0)
+			return written;
+
+		i += iovcnt;
+		total_written += written;
+	}
+
+	/* Now, write the remaining size, if any, of the file with zeros. */
+	if (remaining_size > 0)
+	{
+		/* We'll never write more than one block here */
+		int			iovcnt = 1;
+
+		/* Jump on to the end of previously written blocks */
+		off_t		offset = i * zbuffer_sz;
+
+		iov[0].iov_len = remaining_size;
+
+		written = pg_pwritev_with_retry(fd, iov, iovcnt, offset);
+
+		if (written < 0)
+			return written;
+
+		total_written += written;
+	}
+
+	Assert(total_written == size);
+
+	return total_written;
 }

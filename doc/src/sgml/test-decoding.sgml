@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/test-decoding.sgml -->
 
 <sect1 id="test-decoding" xreflabel="test_decoding">
- <title>test_decoding</title>
+ <title>test_decoding &mdash; SQL-based test/example module for WAL logical decoding</title>
 
  <indexterm zone="test-decoding">
   <primary>test_decoding</primary>

@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pageinspect.sgml -->
 
 <sect1 id="pageinspect" xreflabel="pageinspect">
- <title>pageinspect</title>
+ <title>pageinspect &mdash; low-level inspection of database pages</title>
 
  <indexterm zone="pageinspect">
   <primary>pageinspect</primary>
@@ -13,7 +13,7 @@
   debugging purposes.  All of these functions may be used only by superusers.
  </para>
 
- <sect2>
+ <sect2 id="pageinspect-general-funcs">
   <title>General Functions</title>
 
   <variablelist>
@@ -156,7 +156,7 @@ test=# SELECT fsm_page_contents(get_raw_page('pg_class', 'fsm', 0));
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-heap-funcs">
   <title>Heap Functions</title>
 
   <variablelist>
@@ -282,7 +282,7 @@ test=# SELECT t_ctid, raw_flags, combined_flags
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-b-tree-funcs">
   <title>B-Tree Functions</title>
 
   <variablelist>
@@ -326,7 +326,7 @@ allequalimage             | f
     <listitem>
      <para>
       <function>bt_page_stats</function> returns summary information about
-      single pages of B-tree indexes.  For example:
+      a data page of a B-tree index.  For example:
 <screen>
 test=# SELECT * FROM bt_page_stats('pg_cast_oid_index', 1);
 -[ RECORD 1 ]-+-----
@@ -341,6 +341,54 @@ btpo_prev     | 0
 btpo_next     | 0
 btpo_level    | 0
 btpo_flags    | 3
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>bt_multi_page_stats(relname text, blkno bigint, blk_count bigint) returns setof record</function>
+     <indexterm>
+      <primary>bt_multi_page_stats</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>bt_multi_page_stats</function> returns the same information
+      as <function>bt_page_stats</function>, but does so for each page of the
+      range of pages beginning at <parameter>blkno</parameter> and extending
+      for <parameter>blk_count</parameter> pages.
+      If <parameter>blk_count</parameter> is negative, all pages
+      from <parameter>blkno</parameter> to the end of the index are reported
+      on.  For example:
+<screen>
+test=# SELECT * FROM bt_multi_page_stats('pg_proc_oid_index', 5, 2);
+-[ RECORD 1 ]-+-----
+blkno         | 5
+type          | l
+live_items    | 367
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 808
+btpo_prev     | 4
+btpo_next     | 6
+btpo_level    | 0
+btpo_flags    | 1
+-[ RECORD 2 ]-+-----
+blkno         | 6
+type          | l
+live_items    | 367
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 808
+btpo_prev     | 5
+btpo_next     | 7
+btpo_level    | 0
+btpo_flags    | 1
 </screen>
      </para>
     </listitem>
@@ -473,7 +521,7 @@ test=# SELECT itemoffset, ctid, itemlen, nulls, vars, data, dead, htid, tids[0:2
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-brin-funcs">
   <title>BRIN Functions</title>
 
   <variablelist>
@@ -583,7 +631,7 @@ test=# SELECT * FROM brin_page_items(get_raw_page('brinidx', 5),
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-gin-funcs">
   <title>GIN Functions</title>
 
   <variablelist>
@@ -673,7 +721,7 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-gist-funcs">
   <title>GiST Functions</title>
 
   <variablelist>
@@ -764,7 +812,7 @@ test=# SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
   </variablelist>
  </sect2>
 
- <sect2>
+ <sect2 id="pageinspect-hash-funcs">
   <title>Hash Functions</title>
 
   <variablelist>

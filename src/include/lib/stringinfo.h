@@ -8,7 +8,7 @@
  * (null-terminated text) or arbitrary binary data.  All storage is allocated
  * with palloc() (falling back to malloc in frontend code).
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/lib/stringinfo.h
@@ -142,7 +142,7 @@ extern void appendStringInfoSpaces(StringInfo str, int count);
  * if necessary.
  */
 extern void appendBinaryStringInfo(StringInfo str,
-								   const char *data, int datalen);
+								   const void *data, int datalen);
 
 /*------------------------
  * appendBinaryStringInfoNT
@@ -150,7 +150,7 @@ extern void appendBinaryStringInfo(StringInfo str,
  * if necessary. Does not ensure a trailing null-byte exists.
  */
 extern void appendBinaryStringInfoNT(StringInfo str,
-									 const char *data, int datalen);
+									 const void *data, int datalen);
 
 /*------------------------
  * enlargeStringInfo

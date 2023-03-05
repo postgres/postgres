@@ -32,6 +32,13 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months 12 hours');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('badly formatted interval');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('1.5 weeks', 'interval');
+SELECT pg_input_is_valid('garbage', 'interval');
+SELECT pg_input_is_valid('@ 30 eons ago', 'interval');
+SELECT * FROM pg_input_error_info('garbage', 'interval');
+SELECT * FROM pg_input_error_info('@ 30 eons ago', 'interval');
+
 -- test interval operators
 
 SELECT * FROM INTERVAL_TBL;
@@ -277,6 +284,9 @@ SELECT  interval '-23 hours 45 min 12.34 sec',
         interval '-1 year 2 months 1 day 23 hours 45 min 12.34 sec',
         interval '-1 year 2 months 1 day 23 hours 45 min +12.34 sec';
 
+-- edge case for sign-matching rules
+SELECT  interval '';  -- error
+
 -- test outputting iso8601 intervals
 SET IntervalStyle to iso_8601;
 select  interval '0'                                AS "zero",
@@ -318,6 +328,7 @@ select interval 'P1.0Y0M3DT4H5M6S';
 select interval 'P1.1Y0M3DT4H5M6S';
 select interval 'P1.Y0M3DT4H5M6S';
 select interval 'P.1Y0M3DT4H5M6S';
+select interval 'P10.5e4Y';  -- not per spec, but we've historically taken it
 select interval 'P.Y0M3DT4H5M6S';  -- error
 
 -- test a couple rounding cases that changed since 8.3 w/ HAVE_INT64_TIMESTAMP.

@@ -3,7 +3,7 @@
  * nodeTidrangescan.c
  *	  Routines to support TID range scans of relations
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -25,11 +25,16 @@
 #include "utils/rel.h"
 
 
+/*
+ * It's sufficient to check varattno to identify the CTID variable, as any
+ * Var in the relation scan qual must be for our table.  (Even if it's a
+ * parameterized scan referencing some other table's CTID, the other table's
+ * Var would have become a Param by the time it gets here.)
+ */
 #define IsCTIDVar(node)  \
 	((node) != NULL && \
 	 IsA((node), Var) && \
-	 ((Var *) (node))->varattno == SelfItemPointerAttributeNumber && \
-	 ((Var *) (node))->varlevelsup == 0)
+	 ((Var *) (node))->varattno == SelfItemPointerAttributeNumber)
 
 typedef enum
 {

@@ -4,7 +4,7 @@
  *	  prototypes for publicationcmds.c.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/publicationcmds.h
@@ -29,7 +29,7 @@ extern void RemovePublicationRelById(Oid proid);
 extern void RemovePublicationSchemaById(Oid psoid);
 
 extern ObjectAddress AlterPublicationOwner(const char *name, Oid newOwnerId);
-extern void AlterPublicationOwner_oid(Oid pubid, Oid newOwnerId);
+extern void AlterPublicationOwner_oid(Oid subid, Oid newOwnerId);
 extern void InvalidatePublicationRels(List *relids);
 extern bool pub_rf_contains_invalid_column(Oid pubid, Relation relation,
 										   List *ancestors, bool pubviaroot);

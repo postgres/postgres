@@ -3,7 +3,7 @@
  * wparser.c
  *		Standard interface to word parser
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -46,7 +46,8 @@ typedef struct HeadlineJsonState
 static text *headline_json_value(void *_state, char *elem_value, int elem_len);
 
 static void
-tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
+tt_setup_firstcall(FuncCallContext *funcctx, FunctionCallInfo fcinfo,
+				   Oid prsid)
 {
 	TupleDesc	tupdesc;
 	MemoryContext oldcontext;
@@ -66,15 +67,11 @@ tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 															 (Datum) 0));
 	funcctx->user_fctx = (void *) st;
 
-	tupdesc = CreateTemplateTupleDesc(3);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "tokid",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "alias",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "description",
-					   TEXTOID, -1, 0);
-
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+	funcctx->tuple_desc = tupdesc;
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
+
 	MemoryContextSwitchTo(oldcontext);
 }
 
@@ -116,7 +113,7 @@ ts_token_type_byid(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		funcctx = SRF_FIRSTCALL_INIT();
-		tt_setup_firstcall(funcctx, PG_GETARG_OID(0));
+		tt_setup_firstcall(funcctx, fcinfo, PG_GETARG_OID(0));
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -139,7 +136,7 @@ ts_token_type_byname(PG_FUNCTION_ARGS)
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
-		tt_setup_firstcall(funcctx, prsId);
+		tt_setup_firstcall(funcctx, fcinfo, prsId);
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -164,7 +161,8 @@ typedef struct
 
 
 static void
-prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
+prs_setup_firstcall(FuncCallContext *funcctx, FunctionCallInfo fcinfo,
+					Oid prsid, text *txt)
 {
 	TupleDesc	tupdesc;
 	MemoryContext oldcontext;
@@ -209,12 +207,9 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 	st->cur = 0;
 
 	funcctx->user_fctx = (void *) st;
-	tupdesc = CreateTemplateTupleDesc(2);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "tokid",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "token",
-					   TEXTOID, -1, 0);
-
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+	funcctx->tuple_desc = tupdesc;
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -256,7 +251,7 @@ ts_parse_byid(PG_FUNCTION_ARGS)
 		text	   *txt = PG_GETARG_TEXT_PP(1);
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		prs_setup_firstcall(funcctx, PG_GETARG_OID(0), txt);
+		prs_setup_firstcall(funcctx, fcinfo, PG_GETARG_OID(0), txt);
 		PG_FREE_IF_COPY(txt, 1);
 	}
 
@@ -281,7 +276,7 @@ ts_parse_byname(PG_FUNCTION_ARGS)
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
-		prs_setup_firstcall(funcctx, prsId, txt);
+		prs_setup_firstcall(funcctx, fcinfo, prsId, txt);
 	}
 
 	funcctx = SRF_PERCALL_SETUP();

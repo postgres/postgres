@@ -1,4 +1,4 @@
-# Copyright (c) 2022, PostgreSQL Global Development Group
+# Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 # Test recovering to a point-in-time using WAL archive, such that the
 # target point is physically in a WAL segment with a higher TLI than
@@ -139,6 +139,13 @@ is($result, qq{1}, "check table contents after point-in-time recovery");
 # Insert a row so that we can check later that we successfully recover
 # back to this timeline.
 $node_pitr->safe_psql('postgres', "INSERT INTO foo VALUES(3);");
+
+# Wait for the archiver to be running.  The startup process might have yet to
+# exit, in which case the postmaster has not started the archiver.  If we
+# stop() without an archiver, the archive will be incomplete.
+$node_pitr->poll_query_until('postgres',
+	"SELECT true FROM pg_stat_activity WHERE backend_type = 'archiver';")
+  or die "Timed out while waiting for archiver to start";
 
 # Stop the node.  This archives the last segment.
 $node_pitr->stop();

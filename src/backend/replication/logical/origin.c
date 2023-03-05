@@ -3,7 +3,7 @@
  * origin.c
  *	  Logical replication progress tracking support.
  *
- * Copyright (c) 2013-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/origin.c
@@ -77,6 +77,7 @@
 #include "access/xloginsert.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_subscription.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
@@ -194,6 +195,17 @@ replorigin_check_prerequisites(bool check_slots, bool recoveryOK)
 				 errmsg("cannot manipulate replication origins during recovery")));
 }
 
+
+/*
+ * IsReservedOriginName
+ *		True iff name is either "none" or "any".
+ */
+static bool
+IsReservedOriginName(const char *name)
+{
+	return ((pg_strcasecmp(name, LOGICALREP_ORIGIN_NONE) == 0) ||
+			(pg_strcasecmp(name, LOGICALREP_ORIGIN_ANY) == 0));
+}
 
 /* ---------------------------------------------------------------------------
  * Functions for working with replication origins themselves.
@@ -316,7 +328,7 @@ replorigin_create(const char *roname)
 	if (tuple == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("could not find free replication origin OID")));
+				 errmsg("could not find free replication origin ID")));
 
 	heap_freetuple(tuple);
 	return roident;
@@ -326,16 +338,14 @@ replorigin_create(const char *roname)
  * Helper function to drop a replication origin.
  */
 static void
-replorigin_drop_guts(Relation rel, RepOriginId roident, bool nowait)
+replorigin_state_clear(RepOriginId roident, bool nowait)
 {
-	HeapTuple	tuple;
 	int			i;
 
 	/*
-	 * First, clean up the slot state info, if there is any matching slot.
+	 * Clean up the slot state info, if there is any matching slot.
 	 */
 restart:
-	tuple = NULL;
 	LWLockAcquire(ReplicationOriginLock, LW_EXCLUSIVE);
 
 	for (i = 0; i < max_replication_slots; i++)
@@ -352,7 +362,7 @@ restart:
 				if (nowait)
 					ereport(ERROR,
 							(errcode(ERRCODE_OBJECT_IN_USE),
-							 errmsg("could not drop replication origin with OID %d, in use by PID %d",
+							 errmsg("could not drop replication origin with ID %d, in use by PID %d",
 									state->roident,
 									state->acquired_by)));
 
@@ -390,19 +400,6 @@ restart:
 	}
 	LWLockRelease(ReplicationOriginLock);
 	ConditionVariableCancelSleep();
-
-	/*
-	 * Now, we can delete the catalog entry.
-	 */
-	tuple = SearchSysCache1(REPLORIGIDENT, ObjectIdGetDatum(roident));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for replication origin with oid %u",
-			 roident);
-
-	CatalogTupleDelete(rel, &tuple->t_self);
-	ReleaseSysCache(tuple);
-
-	CommandCounterIncrement();
 }
 
 /*
@@ -415,24 +412,43 @@ replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait)
 {
 	RepOriginId roident;
 	Relation	rel;
+	HeapTuple	tuple;
 
 	Assert(IsTransactionState());
 
-	/*
-	 * To interlock against concurrent drops, we hold ExclusiveLock on
-	 * pg_replication_origin till xact commit.
-	 *
-	 * XXX We can optimize this by acquiring the lock on a specific origin by
-	 * using LockSharedObject if required. However, for that, we first to
-	 * acquire a lock on ReplicationOriginRelationId, get the origin_id, lock
-	 * the specific origin and then re-check if the origin still exists.
-	 */
-	rel = table_open(ReplicationOriginRelationId, ExclusiveLock);
+	rel = table_open(ReplicationOriginRelationId, RowExclusiveLock);
 
 	roident = replorigin_by_name(name, missing_ok);
 
-	if (OidIsValid(roident))
-		replorigin_drop_guts(rel, roident, nowait);
+	/* Lock the origin to prevent concurrent drops. */
+	LockSharedObject(ReplicationOriginRelationId, roident, 0,
+					 AccessExclusiveLock);
+
+	tuple = SearchSysCache1(REPLORIGIDENT, ObjectIdGetDatum(roident));
+	if (!HeapTupleIsValid(tuple))
+	{
+		if (!missing_ok)
+			elog(ERROR, "cache lookup failed for replication origin with ID %d",
+				 roident);
+
+		/*
+		 * We don't need to retain the locks if the origin is already dropped.
+		 */
+		UnlockSharedObject(ReplicationOriginRelationId, roident, 0,
+						   AccessExclusiveLock);
+		table_close(rel, RowExclusiveLock);
+		return;
+	}
+
+	replorigin_state_clear(roident, nowait);
+
+	/*
+	 * Now, we can delete the catalog entry.
+	 */
+	CatalogTupleDelete(rel, &tuple->t_self);
+	ReleaseSysCache(tuple);
+
+	CommandCounterIncrement();
 
 	/* We keep the lock on pg_replication_origin until commit */
 	table_close(rel, NoLock);
@@ -473,7 +489,7 @@ replorigin_by_oid(RepOriginId roident, bool missing_ok, char **roname)
 		if (!missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("replication origin with OID %u does not exist",
+					 errmsg("replication origin with ID %d does not exist",
 							roident)));
 
 		return false;
@@ -787,7 +803,7 @@ StartupReplicationOrigin(void)
 		last_state++;
 
 		ereport(LOG,
-				(errmsg("recovered replication state of node %u to %X/%X",
+				(errmsg("recovered replication state of node %d to %X/%X",
 						disk_state.roident,
 						LSN_FORMAT_ARGS(disk_state.remote_lsn))));
 	}
@@ -925,7 +941,7 @@ replorigin_advance(RepOriginId node,
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("replication origin with OID %d is already active for PID %d",
+					 errmsg("replication origin with ID %d is already active for PID %d",
 							replication_state->roident,
 							replication_state->acquired_by)));
 		}
@@ -936,7 +952,7 @@ replorigin_advance(RepOriginId node,
 	if (replication_state == NULL && free_state == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("could not find free replication state slot for replication origin with OID %u",
+				 errmsg("could not find free replication state slot for replication origin with ID %d",
 						node),
 				 errhint("Increase max_replication_slots and try again.")));
 
@@ -1063,12 +1079,20 @@ ReplicationOriginExitCleanup(int code, Datum arg)
  * array doesn't have to be searched when calling
  * replorigin_session_advance().
  *
- * Obviously only one such cached origin can exist per process and the current
- * cached value can only be set again after the previous value is torn down
- * with replorigin_session_reset().
+ * Normally only one such cached origin can exist per process so the cached
+ * value can only be set again after the previous value is torn down with
+ * replorigin_session_reset(). For this normal case pass acquired_by = 0
+ * (meaning the slot is not allowed to be already acquired by another process).
+ *
+ * However, sometimes multiple processes can safely re-use the same origin slot
+ * (for example, multiple parallel apply processes can safely use the same
+ * origin, provided they maintain commit order by allowing only one process to
+ * commit at a time). For this case the first process must pass acquired_by =
+ * 0, and then the other processes sharing that same origin can pass
+ * acquired_by = PID of the first process.
  */
 void
-replorigin_session_setup(RepOriginId node)
+replorigin_session_setup(RepOriginId node, int acquired_by)
 {
 	static bool registered_cleanup;
 	int			i;
@@ -1110,11 +1134,11 @@ replorigin_session_setup(RepOriginId node)
 		if (curstate->roident != node)
 			continue;
 
-		else if (curstate->acquired_by != 0)
+		else if (curstate->acquired_by != 0 && acquired_by == 0)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("replication origin with OID %d is already active for PID %d",
+					 errmsg("replication origin with ID %d is already active for PID %d",
 							curstate->roident, curstate->acquired_by)));
 		}
 
@@ -1126,7 +1150,7 @@ replorigin_session_setup(RepOriginId node)
 	if (session_replication_state == NULL && free_slot == -1)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("could not find free replication state slot for replication origin with OID %u",
+				 errmsg("could not find free replication state slot for replication origin with ID %d",
 						node),
 				 errhint("Increase max_replication_slots and try again.")));
 	else if (session_replication_state == NULL)
@@ -1141,7 +1165,11 @@ replorigin_session_setup(RepOriginId node)
 
 	Assert(session_replication_state->roident != InvalidRepOriginId);
 
-	session_replication_state->acquired_by = MyProcPid;
+	if (acquired_by == 0)
+		session_replication_state->acquired_by = MyProcPid;
+	else if (session_replication_state->acquired_by != acquired_by)
+		elog(ERROR, "could not find replication state slot for replication origin with OID %u which was acquired by %d",
+			 node, acquired_by);
 
 	LWLockRelease(ReplicationOriginLock);
 
@@ -1244,13 +1272,17 @@ pg_replication_origin_create(PG_FUNCTION_ARGS)
 
 	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 
-	/* Replication origins "pg_xxx" are reserved for internal use */
-	if (IsReservedName(name))
+	/*
+	 * Replication origins "any and "none" are reserved for system options.
+	 * The origins "pg_xxx" are reserved for internal use.
+	 */
+	if (IsReservedName(name) || IsReservedOriginName(name))
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("replication origin name \"%s\" is reserved",
 						name),
-				 errdetail("Origin names starting with \"pg_\" are reserved.")));
+				 errdetail("Origin names \"%s\", \"%s\", and names starting with \"pg_\" are reserved.",
+						   LOGICALREP_ORIGIN_ANY, LOGICALREP_ORIGIN_NONE)));
 
 	/*
 	 * If built with appropriate switch, whine when regression-testing
@@ -1321,7 +1353,7 @@ pg_replication_origin_session_setup(PG_FUNCTION_ARGS)
 
 	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 	origin = replorigin_by_name(name, false);
-	replorigin_session_setup(origin);
+	replorigin_session_setup(origin, 0);
 
 	replorigin_session_origin = origin;
 
@@ -1487,7 +1519,7 @@ pg_show_replication_origin_status(PG_FUNCTION_ARGS)
 	/* we want to return 0 rows if slot is set to zero */
 	replorigin_check_prerequisites(false, true);
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* prevent slots from being concurrently dropped */
 	LWLockAcquire(ReplicationOriginLock, LW_SHARED);

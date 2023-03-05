@@ -2,7 +2,7 @@
  *
  * reindexdb
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * src/bin/scripts/reindexdb.c
  *
@@ -109,45 +109,21 @@ main(int argc, char *argv[])
 	handle_help_version_opts(argc, argv, "reindexdb", help);
 
 	/* process command-line options */
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqS:d:ast:i:j:v", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "ad:eh:i:j:qp:sS:t:U:vwW", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
-			case 'h':
-				host = pg_strdup(optarg);
-				break;
-			case 'p':
-				port = pg_strdup(optarg);
-				break;
-			case 'U':
-				username = pg_strdup(optarg);
-				break;
-			case 'w':
-				prompt_password = TRI_NO;
-				break;
-			case 'W':
-				prompt_password = TRI_YES;
-				break;
-			case 'e':
-				echo = true;
-				break;
-			case 'q':
-				quiet = true;
-				break;
-			case 'S':
-				simple_string_list_append(&schemas, optarg);
+			case 'a':
+				alldb = true;
 				break;
 			case 'd':
 				dbname = pg_strdup(optarg);
 				break;
-			case 'a':
-				alldb = true;
+			case 'e':
+				echo = true;
 				break;
-			case 's':
-				syscatalog = true;
-				break;
-			case 't':
-				simple_string_list_append(&tables, optarg);
+			case 'h':
+				host = pg_strdup(optarg);
 				break;
 			case 'i':
 				simple_string_list_append(&indexes, optarg);
@@ -157,8 +133,32 @@ main(int argc, char *argv[])
 									  &concurrentCons))
 					exit(1);
 				break;
+			case 'q':
+				quiet = true;
+				break;
+			case 'p':
+				port = pg_strdup(optarg);
+				break;
+			case 's':
+				syscatalog = true;
+				break;
+			case 'S':
+				simple_string_list_append(&schemas, optarg);
+				break;
+			case 't':
+				simple_string_list_append(&tables, optarg);
+				break;
+			case 'U':
+				username = pg_strdup(optarg);
+				break;
 			case 'v':
 				verbose = true;
+				break;
+			case 'w':
+				prompt_password = TRI_NO;
+				break;
+			case 'W':
+				prompt_password = TRI_YES;
 				break;
 			case 1:
 				concurrently = true;
@@ -359,18 +359,6 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 		switch (process_type)
 		{
 			case REINDEX_DATABASE:
-
-				/*
-				 * Database-wide parallel reindex requires special processing.
-				 * If multiple jobs were asked, we have to reindex system
-				 * catalogs first as they cannot be processed in parallel.
-				 */
-				if (concurrently)
-					pg_log_warning("cannot reindex system catalogs concurrently, skipping all");
-				else
-					run_reindex_command(conn, REINDEX_SYSTEM, PQdb(conn), echo,
-										verbose, concurrently, false,
-										tablespace);
 
 				/* Build a list of relations from the database */
 				process_list = get_parallel_object_list(conn, process_type,

@@ -4,7 +4,7 @@
  *	  POSTGRES heap tuple header definitions.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/htup_details.h
@@ -19,6 +19,7 @@
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
 #include "storage/bufpage.h"
+#include "varatt.h"
 
 /*
  * MaxTupleAttributeNumber limits the number of (user) columns in a tuple.
@@ -426,6 +427,9 @@ do { \
 	(tup)->t_choice.t_heap.t_field3.t_xvac = (xid); \
 } while (0)
 
+StaticAssertDecl(MaxOffsetNumber < SpecTokenOffsetNumber,
+				 "invalid speculative token constant");
+
 #define HeapTupleHeaderIsSpeculative(tup) \
 ( \
 	(ItemPointerGetOffsetNumberNoCheck(&(tup)->t_ctid) == SpecTokenOffsetNumber) \
@@ -699,7 +703,7 @@ extern void heap_fill_tuple(TupleDesc tupleDesc,
 							uint16 *infomask, bits8 *bit);
 extern bool heap_attisnull(HeapTuple tup, int attnum, TupleDesc tupleDesc);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
-							TupleDesc att);
+							TupleDesc tupleDesc);
 extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 							 bool *isnull);
 extern Datum getmissingattr(TupleDesc tupleDesc,

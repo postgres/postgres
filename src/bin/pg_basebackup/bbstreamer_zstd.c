@@ -2,7 +2,7 @@
  *
  * bbstreamer_zstd.c
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/bbstreamer_zstd.c
@@ -84,15 +84,12 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, pg_compress_specification *comp
 	if (!streamer->cctx)
 		pg_fatal("could not create zstd compression context");
 
-	/* Set compression level, if specified */
-	if ((compress->options & PG_COMPRESSION_OPTION_LEVEL) != 0)
-	{
-		ret = ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_compressionLevel,
-									 compress->level);
-		if (ZSTD_isError(ret))
-			pg_fatal("could not set zstd compression level to %d: %s",
-					 compress->level, ZSTD_getErrorName(ret));
-	}
+	/* Set compression level */
+	ret = ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_compressionLevel,
+								 compress->level);
+	if (ZSTD_isError(ret))
+		pg_fatal("could not set zstd compression level to %d: %s",
+				 compress->level, ZSTD_getErrorName(ret));
 
 	/* Set # of workers, if specified */
 	if ((compress->options & PG_COMPRESSION_OPTION_WORKERS) != 0)
@@ -116,7 +113,7 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, pg_compress_specification *comp
 
 	return &streamer->base;
 #else
-	pg_fatal("this build does not support zstd compression");
+	pg_fatal("this build does not support compression with %s", "ZSTD");
 	return NULL;				/* keep compiler quiet */
 #endif
 }
@@ -271,7 +268,7 @@ bbstreamer_zstd_decompressor_new(bbstreamer *next)
 
 	return &streamer->base;
 #else
-	pg_fatal("this build does not support zstd compression");
+	pg_fatal("this build does not support compression with %s", "ZSTD");
 	return NULL;				/* keep compiler quiet */
 #endif
 }

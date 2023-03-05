@@ -3,7 +3,7 @@
  * execReplication.c
  *	  miscellaneous executor routines for logical replication
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -568,6 +568,13 @@ void
 CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 {
 	PublicationDesc pubdesc;
+
+	/*
+	 * Skip checking the replica identity for partitioned tables, because the
+	 * operations are actually performed on the leaf partitions.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		return;
 
 	/* We only need to do checks for UPDATE and DELETE. */
 	if (cmd != CMD_UPDATE && cmd != CMD_DELETE)

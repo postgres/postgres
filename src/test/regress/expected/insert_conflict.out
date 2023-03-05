@@ -242,7 +242,7 @@ insert into insertconflicttest values (1, 'Apple') on conflict (key) do update s
 ERROR:  invalid reference to FROM-clause entry for table "excluded"
 LINE 1: ...y) do update set fruit = excluded.fruit RETURNING excluded.f...
                                                              ^
-HINT:  There is an entry for table "excluded", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "excluded", but it cannot be referenced from this part of the query.
 -- Only suggest <table>.* column when inference element misspelled:
 insert into insertconflicttest values (1, 'Apple') on conflict (keyy) do update set fruit = excluded.fruit;
 ERROR:  column "keyy" does not exist

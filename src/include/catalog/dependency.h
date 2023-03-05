@@ -4,7 +4,7 @@
  *	  Routines to support inter-object dependencies.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/dependency.h
@@ -112,6 +112,7 @@ typedef enum ObjectClass
 	OCLASS_TSTEMPLATE,			/* pg_ts_template */
 	OCLASS_TSCONFIG,			/* pg_ts_config */
 	OCLASS_ROLE,				/* pg_authid */
+	OCLASS_ROLE_MEMBERSHIP,		/* pg_auth_members */
 	OCLASS_DATABASE,			/* pg_database */
 	OCLASS_TBLSPACE,			/* pg_tablespace */
 	OCLASS_FDW,					/* pg_foreign_data_wrapper */
@@ -195,6 +196,8 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 extern void recordDependencyOnCurrentExtension(const ObjectAddress *object,
 											   bool isReplace);
 
+extern void checkMembershipInCurrentExtension(const ObjectAddress *object);
+
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
 									   bool skipExtensionDeps);
 
@@ -246,7 +249,7 @@ extern void recordDependencyOnTablespace(Oid classId, Oid objectId,
 extern void changeDependencyOnTablespace(Oid classId, Oid objectId,
 										 Oid newTablespaceId);
 
-extern void updateAclDependencies(Oid classId, Oid objectId, int32 objectSubId,
+extern void updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 								  Oid ownerId,
 								  int noldmembers, Oid *oldmembers,
 								  int nnewmembers, Oid *newmembers);
@@ -260,8 +263,8 @@ extern void copyTemplateDependencies(Oid templateDbId, Oid newDbId);
 
 extern void dropDatabaseDependencies(Oid databaseId);
 
-extern void shdepDropOwned(List *relids, DropBehavior behavior);
+extern void shdepDropOwned(List *roleids, DropBehavior behavior);
 
-extern void shdepReassignOwned(List *relids, Oid newrole);
+extern void shdepReassignOwned(List *roleids, Oid newrole);
 
 #endif							/* DEPENDENCY_H */

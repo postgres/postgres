@@ -13,7 +13,7 @@
 # No output if everything is OK, else compiler errors.
 #
 # src/tools/pginclude/headerscheck
-# Copyright (c) 2009-2022, PostgreSQL Global Development Group
+# Copyright (c) 2009-2023, PostgreSQL Global Development Group
 
 if [ -z "$1" ]; then
     srcdir="."
@@ -46,7 +46,9 @@ CPPFLAGS=`echo "$CPPFLAGS" | sed "s|\\\$(PG_SYSROOT)|$PG_SYSROOT|g"`
 # Create temp directory.
 tmp=`mktemp -d /tmp/$me.XXXXXX`
 
-trap 'rm -rf $tmp' 0 1 2 3 15
+trap "ret=$?; rm -rf $tmp; exit $ret" 0 1 2 3 15
+
+exit_status=0
 
 # Scan all of src/ and contrib/ for header files.
 for f in `cd "$srcdir" && find src contrib -name '*.h' -print`
@@ -59,7 +61,6 @@ do
 	test "$f" = src/include/port/cygwin.h && continue
 	test "$f" = src/include/port/darwin.h && continue
 	test "$f" = src/include/port/freebsd.h && continue
-	test "$f" = src/include/port/hpux.h && continue
 	test "$f" = src/include/port/linux.h && continue
 	test "$f" = src/include/port/netbsd.h && continue
 	test "$f" = src/include/port/openbsd.h && continue
@@ -68,6 +69,7 @@ do
 
 	# Additional Windows-specific headers.
 	test "$f" = src/include/port/win32_port.h && continue
+	test "$f" = src/include/port/win32/netdb.h && continue
 	test "$f" = src/include/port/win32/sys/socket.h && continue
 	test "$f" = src/include/port/win32_msvc/dirent.h && continue
 	test "$f" = src/include/port/win32_msvc/utime.h && continue
@@ -78,7 +80,6 @@ do
 	# relevant to our platform will be included by atomics.h.
 	test "$f" = src/include/port/atomics/arch-arm.h && continue
 	test "$f" = src/include/port/atomics/arch-hppa.h && continue
-	test "$f" = src/include/port/atomics/arch-ia64.h && continue
 	test "$f" = src/include/port/atomics/arch-ppc.h && continue
 	test "$f" = src/include/port/atomics/arch-x86.h && continue
 	test "$f" = src/include/port/atomics/fallback.h && continue
@@ -88,12 +89,12 @@ do
 	test "$f" = src/include/port/atomics/generic-msvc.h && continue
 	test "$f" = src/include/port/atomics/generic-sunpro.h && continue
 
-	# rusagestub.h is also platform-specific, and will be included
-	# by utils/pg_rusage.h if necessary.
-	test "$f" = src/include/rusagestub.h && continue
-
 	# sepgsql.h depends on headers that aren't there on most platforms.
 	test "$f" = contrib/sepgsql/sepgsql.h && continue
+
+	# nodetags.h cannot be included standalone: it's just a code fragment.
+	test "$f" = src/include/nodes/nodetags.h && continue
+	test "$f" = src/backend/nodes/nodetags.h && continue
 
 	# These files are not meant to be included standalone, because
 	# they contain lists that might have multiple use-cases.
@@ -110,16 +111,23 @@ do
 	test "$f" = src/pl/tcl/pltclerrcodes.h && continue
 
 	# Also not meant to be included standalone.
-	test "$f" = src/include/common/unicode_combining_table.h && continue
+	test "$f" = src/include/common/unicode_nonspacing_table.h && continue
 	test "$f" = src/include/common/unicode_east_asian_fw_table.h && continue
 
 	# We can't make these Bison output files compilable standalone
 	# without using "%code require", which old Bison versions lack.
 	# parser/gram.h will be included by parser/gramparse.h anyway.
-	test "$f" = src/include/parser/gram.h && continue
+	test "$f" = contrib/cube/cubeparse.h && continue
+	test "$f" = contrib/seg/segparse.h && continue
+	test "$f" = src/backend/bootstrap/bootparse.h && continue
 	test "$f" = src/backend/parser/gram.h && continue
+	test "$f" = src/backend/replication/repl_gram.h && continue
+	test "$f" = src/backend/replication/syncrep_gram.h && continue
+	test "$f" = src/backend/utils/adt/jsonpath_gram.h && continue
+	test "$f" = src/bin/pgbench/exprparse.h && continue
 	test "$f" = src/pl/plpgsql/src/pl_gram.h && continue
 	test "$f" = src/interfaces/ecpg/preproc/preproc.h && continue
+	test "$f" = src/test/isolation/specparse.h && continue
 
 	# This produces a "no previous prototype" warning.
 	test "$f" = src/include/storage/checksum_impl.h && continue
@@ -134,7 +142,33 @@ do
 
 	# OK, create .c file to include this .h file.
 	{
-	    test "$f" != src/include/postgres_fe.h && echo '#include "postgres.h"'
+	    # Ideally we'd pre-include only the appropriate one of
+	    # postgres.h, postgres_fe.h, or c.h.  We don't always have enough
+	    # info to guess which, but in some subdirectories there's a
+	    # reasonable choice to make, and otherwise we use postgres.h.
+	    # Also, those three files should compile with no pre-include, as
+	    # should src/interfaces headers meant to be exposed to clients.
+	    case "$f" in
+		src/include/postgres.h) ;;
+		src/include/postgres_fe.h) ;;
+		src/include/c.h) ;;
+		src/interfaces/libpq/libpq-fe.h) ;;
+		src/interfaces/libpq/libpq-events.h) ;;
+		src/interfaces/ecpg/ecpglib/ecpglib_extern.h)
+		    echo '#include "postgres_fe.h"' ;;
+		src/interfaces/ecpg/ecpglib/*) ;;
+		src/interfaces/*)
+		    echo '#include "postgres_fe.h"' ;;
+		src/bin/*)
+		    echo '#include "postgres_fe.h"' ;;
+		src/fe_utils/*)
+		    echo '#include "postgres_fe.h"' ;;
+		src/port/*) ;;
+		src/common/*)
+		    echo '#include "c.h"' ;;
+		*)
+		    echo '#include "postgres.h"' ;;
+	    esac
 	    echo "#include \"$f\""
 	} >$tmp/test.c
 
@@ -146,14 +180,22 @@ do
 		EXTRAINCLUDES="$python_includespec" ;;
 	    src/interfaces/ecpg/*)
 		EXTRAINCLUDES="-I $builddir/src/interfaces/ecpg/include -I $srcdir/src/interfaces/ecpg/include" ;;
+	    src/backend/parser/*)
+		EXTRAINCLUDES="-I $builddir/src/backend/parser/" ;;
+	    src/backend/utils/adt/*)
+		EXTRAINCLUDES="-I $builddir/src/backend/utils/adt/" ;;
 	    *)
 		EXTRAINCLUDES="" ;;
 	esac
 
 	# Run the test.
-	${CC:-gcc} $CPPFLAGS $CFLAGS -I $builddir -I $srcdir \
+	if ! ${CC:-gcc} $CPPFLAGS $CFLAGS -I $builddir -I $srcdir \
 		-I $builddir/src/include -I $srcdir/src/include \
 		-I $builddir/src/interfaces/libpq -I $srcdir/src/interfaces/libpq \
 		$EXTRAINCLUDES $EXTRAFLAGS -c $tmp/test.c -o $tmp/test.o
-
+	then
+		exit_status=1
+	fi
 done
+
+exit $exit_status

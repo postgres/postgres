@@ -3,7 +3,7 @@
  * vacuumlo.c
  *	  This removes orphaned large objects from a database.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -231,12 +231,9 @@ vacuumlo(const char *database, const struct _param *param)
 			pg_log_error("%s", PQerrorMessage(conn));
 			PQclear(res);
 			PQfinish(conn);
-			if (schema != NULL)
-				PQfreemem(schema);
-			if (table != NULL)
-				PQfreemem(table);
-			if (field != NULL)
-				PQfreemem(field);
+			PQfreemem(schema);
+			PQfreemem(table);
+			PQfreemem(field);
 			return -1;
 		}
 

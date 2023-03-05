@@ -3,7 +3,7 @@
  * passwordcheck.c
  *
  *
- * Copyright (c) 2009-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2009-2023, PostgreSQL Global Development Group
  *
  * Author: Laurenz Albe <laurenz.albe@wien.gv.at>
  *
@@ -31,8 +31,6 @@ static check_password_hook_type prev_check_password_hook = NULL;
 
 /* passwords shorter than this will be rejected */
 #define MIN_PWD_LENGTH 8
-
-extern void _PG_init(void);
 
 /*
  * check_password

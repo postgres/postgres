@@ -1,0 +1,135 @@
+CREATE EXTENSION test_slru;
+SELECT test_slru_page_exists(12345);
+ test_slru_page_exists 
+-----------------------
+ f
+(1 row)
+
+SELECT test_slru_page_write(12345, 'Test SLRU');
+ test_slru_page_write 
+----------------------
+ 
+(1 row)
+
+SELECT test_slru_page_read(12345);
+ test_slru_page_read 
+---------------------
+ Test SLRU
+(1 row)
+
+SELECT test_slru_page_exists(12345);
+ test_slru_page_exists 
+-----------------------
+ t
+(1 row)
+
+-- 48 extra pages
+SELECT count(test_slru_page_write(a, 'Test SLRU'))
+  FROM generate_series(12346, 12393, 1) as a;
+ count 
+-------
+    48
+(1 row)
+
+-- Reading page in buffer for read and write
+SELECT test_slru_page_read(12377, true);
+ test_slru_page_read 
+---------------------
+ Test SLRU
+(1 row)
+
+-- Reading page in buffer for read-only
+SELECT test_slru_page_readonly(12377);
+ test_slru_page_readonly 
+-------------------------
+ Test SLRU
+(1 row)
+
+-- Reading page not in buffer with read-only
+SELECT test_slru_page_readonly(12346);
+ test_slru_page_readonly 
+-------------------------
+ Test SLRU
+(1 row)
+
+-- Write all the pages in buffers
+SELECT test_slru_page_writeall();
+ test_slru_page_writeall 
+-------------------------
+ 
+(1 row)
+
+-- Flush the last page written out.
+SELECT test_slru_page_sync(12393);
+NOTICE:  Called SlruSyncFileTag() for segment 387 on path pg_test_slru/0183
+ test_slru_page_sync 
+---------------------
+ 
+(1 row)
+
+SELECT test_slru_page_exists(12393);
+ test_slru_page_exists 
+-----------------------
+ t
+(1 row)
+
+-- Segment deletion
+SELECT test_slru_page_delete(12393);
+NOTICE:  Called SlruDeleteSegment() for segment 387
+ test_slru_page_delete 
+-----------------------
+ 
+(1 row)
+
+SELECT test_slru_page_exists(12393);
+ test_slru_page_exists 
+-----------------------
+ f
+(1 row)
+
+-- Page truncation
+SELECT test_slru_page_exists(12377);
+ test_slru_page_exists 
+-----------------------
+ t
+(1 row)
+
+SELECT test_slru_page_truncate(12377);
+ test_slru_page_truncate 
+-------------------------
+ 
+(1 row)
+
+SELECT test_slru_page_exists(12377);
+ test_slru_page_exists 
+-----------------------
+ t
+(1 row)
+
+-- Full deletion
+SELECT test_slru_delete_all();
+NOTICE:  Calling test_slru_scan_cb()
+ test_slru_delete_all 
+----------------------
+ 
+(1 row)
+
+SELECT test_slru_page_exists(12345);
+ test_slru_page_exists 
+-----------------------
+ f
+(1 row)
+
+SELECT test_slru_page_exists(12377);
+ test_slru_page_exists 
+-----------------------
+ f
+(1 row)
+
+SELECT test_slru_page_exists(12393);
+ test_slru_page_exists 
+-----------------------
+ f
+(1 row)
+
+DROP EXTENSION test_slru;

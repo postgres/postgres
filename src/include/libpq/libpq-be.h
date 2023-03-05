@@ -8,7 +8,7 @@
  *	  Structs that need to be client-visible are in pqcomm.h.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/libpq/libpq-be.h
@@ -23,9 +23,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #endif
-#ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
-#endif
 
 #ifdef ENABLE_GSS
 #if defined(HAVE_GSSAPI_H)
@@ -33,14 +31,6 @@
 #else
 #include <gssapi/gssapi.h>
 #endif							/* HAVE_GSSAPI_H */
-/*
- * GSSAPI brings in headers that set a lot of things in the global namespace on win32,
- * that doesn't match the msvc build. It gives a bunch of compiler warnings that we ignore,
- * but also defines a symbol that simply does not exist. Undefine it again.
- */
-#ifdef _MSC_VER
-#undef HAVE_GETADDRINFO
-#endif
 #endif							/* ENABLE_GSS */
 
 #ifdef ENABLE_SSPI
@@ -97,6 +87,37 @@ typedef struct
 #endif
 } pg_gssinfo;
 #endif
+
+/*
+ * ClientConnectionInfo includes the fields describing the client connection
+ * that are copied over to parallel workers as nothing from Port does that.
+ * The same rules apply for allocations here as for Port (everything must be
+ * malloc'd or palloc'd in TopMemoryContext).
+ *
+ * If you add a struct member here, remember to also handle serialization in
+ * SerializeClientConnectionInfo() and co.
+ */
+typedef struct ClientConnectionInfo
+{
+	/*
+	 * Authenticated identity.  The meaning of this identifier is dependent on
+	 * auth_method; it is the identity (if any) that the user presented during
+	 * the authentication cycle, before they were assigned a database role.
+	 * (It is effectively the "SYSTEM-USERNAME" of a pg_ident usermap --
+	 * though the exact string in use may be different, depending on pg_hba
+	 * options.)
+	 *
+	 * authn_id is NULL if the user has not actually been authenticated, for
+	 * example if the "trust" auth method is in use.
+	 */
+	const char *authn_id;
+
+	/*
+	 * The HBA method that determined the above authn_id.  This only has
+	 * meaning if authn_id is not NULL; otherwise it's undefined.
+	 */
+	UserAuth	auth_method;
+} ClientConnectionInfo;
 
 /*
  * This is used by the postmaster in its communication with frontends.  It
@@ -157,19 +178,6 @@ typedef struct Port
 	 * Information that needs to be held during the authentication cycle.
 	 */
 	HbaLine    *hba;
-
-	/*
-	 * Authenticated identity.  The meaning of this identifier is dependent on
-	 * hba->auth_method; it is the identity (if any) that the user presented
-	 * during the authentication cycle, before they were assigned a database
-	 * role.  (It is effectively the "SYSTEM-USERNAME" of a pg_ident usermap
-	 * -- though the exact string in use may be different, depending on pg_hba
-	 * options.)
-	 *
-	 * authn_id is NULL if the user has not actually been authenticated, for
-	 * example if the "trust" auth method is in use.
-	 */
-	const char *authn_id;
 
 	/*
 	 * TCP keepalive and user timeout settings.
@@ -300,7 +308,7 @@ extern void be_tls_get_peer_serial(Port *port, char *ptr, size_t len);
  * This is not supported with old versions of OpenSSL that don't have
  * the X509_get_signature_nid() function.
  */
-#if defined(USE_OPENSSL) && defined(HAVE_X509_GET_SIGNATURE_NID)
+#if defined(USE_OPENSSL) && (defined(HAVE_X509_GET_SIGNATURE_NID) || defined(HAVE_X509_GET_SIGNATURE_INFO))
 #define HAVE_BE_TLS_GET_CERTIFICATE_HASH
 extern char *be_tls_get_certificate_hash(Port *port, size_t *len);
 #endif
@@ -327,6 +335,7 @@ extern ssize_t be_gssapi_write(Port *port, void *ptr, size_t len);
 #endif							/* ENABLE_GSS */
 
 extern PGDLLIMPORT ProtocolVersion FrontendProtocol;
+extern PGDLLIMPORT ClientConnectionInfo MyClientConnectionInfo;
 
 /* TCP keepalives configuration. These are no-ops on an AF_UNIX socket. */
 

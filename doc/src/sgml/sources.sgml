@@ -445,7 +445,7 @@ ereport(level, errmsg_internal("format string", ...));
     <productname>PostgreSQL</productname>.
    </para>
 
-  <simplesect>
+  <simplesect id="error-style-guide-what-goes-where">
    <title>What Goes Where</title>
 
    <para>
@@ -486,7 +486,7 @@ Hint:       the addendum
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-formatting">
    <title>Formatting</title>
 
    <para>
@@ -507,7 +507,7 @@ Hint:       the addendum
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-quotation-marks">
    <title>Quotation Marks</title>
 
    <para>
@@ -528,7 +528,7 @@ Hint:       the addendum
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-quotes">
    <title>Use of Quotes</title>
 
    <para>
@@ -552,7 +552,7 @@ Hint:       the addendum
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-grammar-punctuation">
    <title>Grammar and Punctuation</title>
 
    <para>
@@ -591,7 +591,7 @@ Hint:       the addendum
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-case">
    <title>Upper Case vs. Lower Case</title>
 
    <para>
@@ -607,7 +607,7 @@ Hint:       the addendum
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-passive-voice">
    <title>Avoid Passive Voice</title>
 
    <para>
@@ -623,7 +623,7 @@ Hint:       the addendum
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-tense">
    <title>Present vs. Past Tense</title>
 
    <para>
@@ -663,7 +663,7 @@ cannot open file "%s"
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-object-type">
    <title>Type of the Object</title>
 
    <para>
@@ -677,7 +677,7 @@ cannot open file "%s"
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-brackets">
    <title>Brackets</title>
 
    <para>
@@ -692,7 +692,7 @@ cannot open file "%s"
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-error-messages">
    <title>Assembling Error Messages</title>
 
    <para>
@@ -713,7 +713,7 @@ could not open file %s: %m
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-error-reasons">
    <title>Reasons for Errors</title>
 
    <para>
@@ -728,7 +728,7 @@ BETTER: could not open file %s (I/O failure)
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-function-names">
    <title>Function Names</title>
 
    <para>
@@ -760,7 +760,7 @@ BETTER: could not open file %s: %m
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-tricky-words">
    <title>Tricky Words to Avoid</title>
 
   <formalpara>
@@ -846,7 +846,7 @@ BETTER: unrecognized node type: 42
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-spelling">
    <title>Proper Spelling</title>
 
    <para>
@@ -886,7 +886,7 @@ BETTER: unrecognized node type: 42
 
   </simplesect>
 
-  <simplesect>
+  <simplesect id="error-style-guide-localization">
    <title>Localization</title>
 
    <para>
@@ -901,7 +901,7 @@ BETTER: unrecognized node type: 42
   <sect1 id="source-conventions">
    <title>Miscellaneous Coding Conventions</title>
 
-   <simplesect>
+   <simplesect id="source-conventions-c-standard">
     <title>C Standard</title>
     <para>
      Code in <productname>PostgreSQL</productname> should only rely on language
@@ -932,11 +932,11 @@ BETTER: unrecognized node type: 42
     </para>
    </simplesect>
 
-   <simplesect>
+   <simplesect id="source-conventions-macros-inline">
     <title>Function-Like Macros and Inline Functions</title>
     <para>
-     Both, macros with arguments and <literal>static inline</literal>
-     functions, may be used. The latter are preferable if there are
+     Both macros with arguments and <literal>static inline</literal>
+     functions may be used. The latter are preferable if there are
      multiple-evaluation hazards when written as a macro, as e.g., the
      case with
 <programlisting>
@@ -971,7 +971,7 @@ MemoryContextSwitchTo(MemoryContext context)
     </para>
    </simplesect>
 
-   <simplesect>
+   <simplesect id="source-conventions-signal-handlers">
     <title>Writing Signal Handlers</title>
     <para>
      To be suitable to run inside a signal handler code has to be
@@ -1013,7 +1013,7 @@ handle_sighup(SIGNAL_ARGS)
     </para>
    </simplesect>
 
-   <simplesect>
+   <simplesect id="source-conventions-function-pointers">
     <title>Calling Function Pointers</title>
 
     <para>

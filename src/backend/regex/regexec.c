@@ -137,36 +137,45 @@ struct vars
  * forward declarations
  */
 /* === regexec.c === */
-static struct dfa *getsubdfa(struct vars *, struct subre *);
-static struct dfa *getladfa(struct vars *, int);
-static int	find(struct vars *, struct cnfa *, struct colormap *);
-static int	cfind(struct vars *, struct cnfa *, struct colormap *);
-static int	cfindloop(struct vars *, struct cnfa *, struct colormap *, struct dfa *, struct dfa *, chr **);
-static void zapallsubs(regmatch_t *, size_t);
-static void zaptreesubs(struct vars *, struct subre *);
-static void subset(struct vars *, struct subre *, chr *, chr *);
-static int	cdissect(struct vars *, struct subre *, chr *, chr *);
-static int	ccondissect(struct vars *, struct subre *, chr *, chr *);
-static int	crevcondissect(struct vars *, struct subre *, chr *, chr *);
-static int	cbrdissect(struct vars *, struct subre *, chr *, chr *);
-static int	caltdissect(struct vars *, struct subre *, chr *, chr *);
-static int	citerdissect(struct vars *, struct subre *, chr *, chr *);
-static int	creviterdissect(struct vars *, struct subre *, chr *, chr *);
+static struct dfa *getsubdfa(struct vars *v, struct subre *t);
+static struct dfa *getladfa(struct vars *v, int n);
+static int	find(struct vars *v, struct cnfa *cnfa, struct colormap *cm);
+static int	cfind(struct vars *v, struct cnfa *cnfa, struct colormap *cm);
+static int	cfindloop(struct vars *v, struct cnfa *cnfa, struct colormap *cm,
+					  struct dfa *d, struct dfa *s, chr **coldp);
+static void zapallsubs(regmatch_t *p, size_t n);
+static void zaptreesubs(struct vars *v, struct subre *t);
+static void subset(struct vars *v, struct subre *sub, chr *begin, chr *end);
+static int	cdissect(struct vars *v, struct subre *t, chr *begin, chr *end);
+static int	ccondissect(struct vars *v, struct subre *t, chr *begin, chr *end);
+static int	crevcondissect(struct vars *v, struct subre *t, chr *begin, chr *end);
+static int	cbrdissect(struct vars *v, struct subre *t, chr *begin, chr *end);
+static int	caltdissect(struct vars *v, struct subre *t, chr *begin, chr *end);
+static int	citerdissect(struct vars *v, struct subre *t, chr *begin, chr *end);
+static int	creviterdissect(struct vars *v, struct subre *t, chr *begin, chr *end);
 
 /* === rege_dfa.c === */
-static chr *longest(struct vars *, struct dfa *, chr *, chr *, int *);
-static chr *shortest(struct vars *, struct dfa *, chr *, chr *, chr *, chr **, int *);
-static int	matchuntil(struct vars *, struct dfa *, chr *, struct sset **, chr **);
-static chr *dfa_backref(struct vars *, struct dfa *, chr *, chr *, chr *, bool);
-static chr *lastcold(struct vars *, struct dfa *);
-static struct dfa *newdfa(struct vars *, struct cnfa *, struct colormap *, struct smalldfa *);
-static void freedfa(struct dfa *);
-static unsigned hash(unsigned *, int);
-static struct sset *initialize(struct vars *, struct dfa *, chr *);
-static struct sset *miss(struct vars *, struct dfa *, struct sset *, color, chr *, chr *);
-static int	lacon(struct vars *, struct cnfa *, chr *, color);
-static struct sset *getvacant(struct vars *, struct dfa *, chr *, chr *);
-static struct sset *pickss(struct vars *, struct dfa *, chr *, chr *);
+static chr *longest(struct vars *v, struct dfa *d,
+					chr *start, chr *stop, int *hitstopp);
+static chr *shortest(struct vars *v, struct dfa *d, chr *start, chr *min,
+					 chr *max, chr **coldp, int *hitstopp);
+static int	matchuntil(struct vars *v, struct dfa *d, chr *probe,
+					   struct sset **lastcss, chr **lastcp);
+static chr *dfa_backref(struct vars *v, struct dfa *d, chr *start,
+						chr *min, chr *max, bool shortest);
+static chr *lastcold(struct vars *v, struct dfa *d);
+static struct dfa *newdfa(struct vars *v, struct cnfa *cnfa,
+						  struct colormap *cm, struct smalldfa *sml);
+static void freedfa(struct dfa *d);
+static unsigned hash(unsigned *uv, int n);
+static struct sset *initialize(struct vars *v, struct dfa *d, chr *start);
+static struct sset *miss(struct vars *v, struct dfa *d, struct sset *css,
+						 color co, chr *cp, chr *start);
+static int	lacon(struct vars *v, struct cnfa *pcnfa, chr *cp, color co);
+static struct sset *getvacant(struct vars *v, struct dfa *d, chr *cp,
+							  chr *start);
+static struct sset *pickss(struct vars *v, struct dfa *d, chr *cp,
+						   chr *start);
 
 
 /*
@@ -183,7 +192,7 @@ pg_regexec(regex_t *re,
 		   int flags)
 {
 	struct vars var;
-	register struct vars *v = &var;
+	struct vars *v = &var;
 	int			st;
 	size_t		n;
 	size_t		i;

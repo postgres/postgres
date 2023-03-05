@@ -11,7 +11,7 @@
  * so for all external functions, all the referenced functions (and
  * prerequisites) will be imported.
  *
- * Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/lib/llvmjit/llvmjit_inline.cpp
@@ -753,7 +753,7 @@ function_inlinable(llvm::Function &F,
 		/* import referenced function itself */
 		importVars.insert(referencedFunction->getName());
 
-		/* import referenced function and its dependants */
+		/* import referenced function and its dependents */
 		for (auto& recImportVar : recImportVars)
 			importVars.insert(recImportVar.first());
 	}

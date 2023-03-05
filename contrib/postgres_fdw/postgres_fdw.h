@@ -3,7 +3,7 @@
  * postgres_fdw.h
  *		  Foreign-data wrapper for remote PostgreSQL servers
  *
- * Portions Copyright (c) 2012-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/postgres_fdw/postgres_fdw.h
@@ -134,6 +134,18 @@ typedef struct PgFdwConnState
 	AsyncRequest *pendingAreq;	/* pending async request */
 } PgFdwConnState;
 
+/*
+ * Method used by ANALYZE to sample remote rows.
+ */
+typedef enum PgFdwSamplingMethod
+{
+	ANALYZE_SAMPLE_OFF,			/* no remote sampling */
+	ANALYZE_SAMPLE_AUTO,		/* choose by server version */
+	ANALYZE_SAMPLE_RANDOM,		/* remote random() */
+	ANALYZE_SAMPLE_SYSTEM,		/* TABLESAMPLE system */
+	ANALYZE_SAMPLE_BERNOULLI	/* TABLESAMPLE bernoulli */
+} PgFdwSamplingMethod;
+
 /* in postgres_fdw.c */
 extern int	set_transmission_modes(void);
 extern void reset_transmission_modes(int nestlevel);
@@ -211,7 +223,10 @@ extern void deparseDirectDeleteSql(StringInfo buf, PlannerInfo *root,
 								   List *returningList,
 								   List **retrieved_attrs);
 extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
+extern void deparseAnalyzeInfoSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
+							  PgFdwSamplingMethod sample_method,
+							  double sample_frac,
 							  List **retrieved_attrs);
 extern void deparseTruncateSql(StringInfo buf,
 							   List *rels,
@@ -226,7 +241,7 @@ extern EquivalenceMember *find_em_for_rel_target(PlannerInfo *root,
 												 RelOptInfo *rel);
 extern List *build_tlist_to_deparse(RelOptInfo *foreignrel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
-									RelOptInfo *foreignrel, List *tlist,
+									RelOptInfo *rel, List *tlist,
 									List *remote_conds, List *pathkeys,
 									bool has_final_sort, bool has_limit,
 									bool is_subquery,

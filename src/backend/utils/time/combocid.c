@@ -30,7 +30,7 @@
  * destroyed at the end of each transaction.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -253,7 +253,7 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 	key.cmin = cmin;
 	key.cmax = cmax;
 	entry = (ComboCidEntry) hash_search(comboHash,
-										(void *) &key,
+										&key,
 										HASH_ENTER,
 										&found);
 

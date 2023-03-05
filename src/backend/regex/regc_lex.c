@@ -201,6 +201,8 @@ next(struct vars *v)
 {
 	chr			c;
 
+next_restart:					/* loop here after eating a comment */
+
 	/* errors yield an infinite sequence of failures */
 	if (ISERR())
 		return 0;				/* the error has set nexttype to EOS */
@@ -493,8 +495,7 @@ next(struct vars *v)
 						if (!ATEOS())
 							v->now++;
 						assert(v->nexttype == v->lasttype);
-						return next(v);
-						break;
+						goto next_restart;
 					case CHR('='):	/* positive lookahead */
 						NOTE(REG_ULOOKAROUND);
 						RETV(LACON, LATYPE_AHEAD_POS);

@@ -840,6 +840,37 @@ SELECT date '5874898-01-01';  -- out of range
 ERROR:  date out of range: "5874898-01-01"
 LINE 1: SELECT date '5874898-01-01';
                     ^
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('now', 'date');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('garbage', 'date');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT pg_input_is_valid('6874898-01-01', 'date');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('garbage', 'date');
+                    message                    | detail | hint | sql_error_code 
+-----------------------------------------------+--------+------+----------------
+ invalid input syntax for type date: "garbage" |        |      | 22007
+(1 row)
+
+SELECT * FROM pg_input_error_info('6874898-01-01', 'date');
+              message               | detail | hint | sql_error_code 
+------------------------------------+--------+------+----------------
+ date out of range: "6874898-01-01" |        |      | 22008
+(1 row)
+
 RESET datestyle;
 --
 -- Simple math
@@ -1340,6 +1371,12 @@ select isfinite('infinity'::date), isfinite('-infinity'::date), isfinite('today'
  isfinite | isfinite | isfinite 
 ----------+----------+----------
  f        | f        | t
+(1 row)
+
+select 'infinity'::date = '+infinity'::date as t;
+ t 
+---
+ t
 (1 row)
 
 --

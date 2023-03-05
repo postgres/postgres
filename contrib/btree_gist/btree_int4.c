@@ -106,7 +106,7 @@ int4_dist(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	ra = Abs(r);
+	ra = abs(r);
 
 	PG_RETURN_INT32(ra);
 }

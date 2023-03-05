@@ -1,0 +1,15 @@
+# Copyright (c) 2022-2023, PostgreSQL Global Development Group
+
+subdir('brin')
+subdir('common')
+subdir('gin')
+subdir('gist')
+subdir('hash')
+subdir('heap')
+subdir('index')
+subdir('nbtree')
+subdir('rmgrdesc')
+subdir('spgist')
+subdir('table')
+subdir('tablesample')
+subdir('transam')

@@ -5,7 +5,7 @@
  *	  (pg_auth_members).
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_auth_members.h
@@ -29,10 +29,13 @@
  */
 CATALOG(pg_auth_members,1261,AuthMemRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2843,AuthMemRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
+	Oid			oid;			/* oid */
 	Oid			roleid BKI_LOOKUP(pg_authid);	/* ID of a role */
 	Oid			member BKI_LOOKUP(pg_authid);	/* ID of a member of that role */
 	Oid			grantor BKI_LOOKUP(pg_authid);	/* who granted the membership */
 	bool		admin_option;	/* granted with admin option? */
+	bool		inherit_option;	/* exercise privileges without SET ROLE? */
+	bool		set_option;		/* use SET ROLE to the target role? */
 } FormData_pg_auth_members;
 
 /* ----------------
@@ -42,7 +45,9 @@ CATALOG(pg_auth_members,1261,AuthMemRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_
  */
 typedef FormData_pg_auth_members *Form_pg_auth_members;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_auth_members_role_member_index, 2694, AuthMemRoleMemIndexId, on pg_auth_members using btree(roleid oid_ops, member oid_ops));
-DECLARE_UNIQUE_INDEX(pg_auth_members_member_role_index, 2695, AuthMemMemRoleIndexId, on pg_auth_members using btree(member oid_ops, roleid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_auth_members_oid_index, 9385, AuthMemOidIndexId, on pg_auth_members using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_auth_members_role_member_index, 2694, AuthMemRoleMemIndexId, on pg_auth_members using btree(roleid oid_ops, member oid_ops, grantor oid_ops));
+DECLARE_UNIQUE_INDEX(pg_auth_members_member_role_index, 2695, AuthMemMemRoleIndexId, on pg_auth_members using btree(member oid_ops, roleid oid_ops, grantor oid_ops));
+DECLARE_INDEX(pg_auth_members_grantor_index, 9384, AuthMemGrantorIndexId, on pg_auth_members using btree(grantor oid_ops));
 
 #endif							/* PG_AUTH_MEMBERS_H */

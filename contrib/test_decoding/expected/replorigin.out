@@ -56,6 +56,16 @@ SELECT pg_replication_origin_drop('regress_test_decoding: temp');
 
 SELECT pg_replication_origin_drop('regress_test_decoding: temp');
 ERROR:  replication origin "regress_test_decoding: temp" does not exist
+-- specifying reserved origin names is not supported
+SELECT pg_replication_origin_create('any');
+ERROR:  replication origin name "any" is reserved
+DETAIL:  Origin names "any", "none", and names starting with "pg_" are reserved.
+SELECT pg_replication_origin_create('none');
+ERROR:  replication origin name "none" is reserved
+DETAIL:  Origin names "any", "none", and names starting with "pg_" are reserved.
+SELECT pg_replication_origin_create('pg_replication_origin');
+ERROR:  replication origin name "pg_replication_origin" is reserved
+DETAIL:  Origin names "any", "none", and names starting with "pg_" are reserved.
 -- various failure checks for undefined slots
 select pg_replication_origin_advance('regress_test_decoding: temp', '0/1');
 ERROR:  replication origin "regress_test_decoding: temp" does not exist

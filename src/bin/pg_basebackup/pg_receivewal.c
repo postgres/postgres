@@ -5,7 +5,7 @@
  *
  * Author: Magnus Hagander <magnus@hagander.net>
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/pg_receivewal.c
@@ -43,9 +43,9 @@
 static char *basedir = NULL;
 static int	verbose = 0;
 static int	compresslevel = 0;
-static int	noloop = 0;
+static bool	noloop = false;
 static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
-static volatile bool time_to_stop = false;
+static volatile sig_atomic_t time_to_stop = false;
 static bool do_create_slot = false;
 static bool slot_exists_ok = false;
 static bool do_drop_slot = false;
@@ -57,13 +57,11 @@ static XLogRecPtr endpos = InvalidXLogRecPtr;
 
 
 static void usage(void);
-static void parse_compress_options(char *option, char **algorithm,
-								   char **detail);
 static DIR *get_destination_dir(char *dest_folder);
 static void close_destination_dir(DIR *dest_dir, char *dest_folder);
 static XLogRecPtr FindStreamingStart(uint32 *tli);
 static void StreamLog(void);
-static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline,
+static bool stop_streaming(XLogRecPtr xlogpos, uint32 timeline,
 						   bool segment_finished);
 
 static void
@@ -109,65 +107,6 @@ usage(void)
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
 }
 
-/*
- * Basic parsing of a value specified for -Z/--compress
- *
- * The parsing consists of a METHOD:DETAIL string fed later on to a more
- * advanced routine in charge of proper validation checks.  This only extracts
- * METHOD and DETAIL.  If only an integer is found, the method is implied by
- * the value specified.
- */
-static void
-parse_compress_options(char *option, char **algorithm, char **detail)
-{
-	char	   *sep;
-	char	   *endp;
-	long		result;
-
-	/*
-	 * Check whether the compression specification consists of a bare integer.
-	 *
-	 * For backward-compatibility, assume "none" if the integer found is zero
-	 * and "gzip" otherwise.
-	 */
-	result = strtol(option, &endp, 10);
-	if (*endp == '\0')
-	{
-		if (result == 0)
-		{
-			*algorithm = pstrdup("none");
-			*detail = NULL;
-		}
-		else
-		{
-			*algorithm = pstrdup("gzip");
-			*detail = pstrdup(option);
-		}
-		return;
-	}
-
-	/*
-	 * Check whether there is a compression detail following the algorithm
-	 * name.
-	 */
-	sep = strchr(option, ':');
-	if (sep == NULL)
-	{
-		*algorithm = pstrdup(option);
-		*detail = NULL;
-	}
-	else
-	{
-		char	   *alg;
-
-		alg = palloc((sep - option) + 1);
-		memcpy(alg, option, sep - option);
-		alg[sep - option] = '\0';
-
-		*algorithm = alg;
-		*detail = pstrdup(sep + 1);
-	}
-}
 
 /*
  * Check if the filename looks like a WAL file, letting caller know if this
@@ -511,10 +450,8 @@ FindStreamingStart(uint32 *tli)
 				continue;
 			}
 #else
-			pg_log_error("could not check file \"%s\"",
-						 dirent->d_name);
-			pg_log_error_detail("This build does not support compression with %s.",
-								"LZ4");
+			pg_log_error("cannot check file \"%s\": compression with %s not supported by this build",
+						 dirent->d_name, "LZ4");
 			exit(1);
 #endif
 		}
@@ -564,10 +501,8 @@ StreamLog(void)
 {
 	XLogRecPtr	serverpos;
 	TimeLineID	servertli;
-	StreamCtl	stream;
+	StreamCtl	stream = {0};
 	char	   *sysidentifier;
-
-	MemSet(&stream, 0, sizeof(stream));
 
 	/*
 	 * Connect in replication mode to the server
@@ -660,7 +595,7 @@ StreamLog(void)
 
 	ReceiveXlogStream(conn, &stream);
 
-	if (!stream.walmethod->finish())
+	if (!stream.walmethod->ops->finish(stream.walmethod))
 	{
 		pg_log_info("could not finish writing WAL files: %m");
 		return;
@@ -669,19 +604,17 @@ StreamLog(void)
 	PQfinish(conn);
 	conn = NULL;
 
-	FreeWalDirectoryMethod();
-	pg_free(stream.walmethod);
-	pg_free(stream.sysidentifier);
+	stream.walmethod->ops->free(stream.walmethod);
 }
 
 /*
- * When sigint is called, just tell the system to exit at the next possible
- * moment.
+ * When SIGINT/SIGTERM are caught, just tell the system to exit at the next
+ * possible moment.
  */
 #ifndef WIN32
 
 static void
-sigint_handler(int signum)
+sigexit_handler(SIGNAL_ARGS)
 {
 	time_to_stop = true;
 }
@@ -744,31 +677,30 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:d:E:h:p:U:s:S:nwWvZ:",
+	while ((c = getopt_long(argc, argv, "d:D:E:h:np:s:S:U:vwWZ:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
+			case 'd':
+				connection_string = pg_strdup(optarg);
+				break;
 			case 'D':
 				basedir = pg_strdup(optarg);
 				break;
-			case 'd':
-				connection_string = pg_strdup(optarg);
+			case 'E':
+				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
+					pg_fatal("could not parse end position \"%s\"", optarg);
+				endpos = ((uint64) hi) << 32 | lo;
 				break;
 			case 'h':
 				dbhost = pg_strdup(optarg);
 				break;
+			case 'n':
+				noloop = true;
+				break;
 			case 'p':
 				dbport = pg_strdup(optarg);
-				break;
-			case 'U':
-				dbuser = pg_strdup(optarg);
-				break;
-			case 'w':
-				dbgetpassword = -1;
-				break;
-			case 'W':
-				dbgetpassword = 1;
 				break;
 			case 's':
 				if (!option_parse_int(optarg, "-s/--status-interval", 0,
@@ -780,22 +712,22 @@ main(int argc, char **argv)
 			case 'S':
 				replication_slot = pg_strdup(optarg);
 				break;
-			case 'E':
-				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
-					pg_fatal("could not parse end position \"%s\"", optarg);
-				endpos = ((uint64) hi) << 32 | lo;
-				break;
-			case 'n':
-				noloop = 1;
+			case 'U':
+				dbuser = pg_strdup(optarg);
 				break;
 			case 'v':
 				verbose++;
+				break;
+			case 'w':
+				dbgetpassword = -1;
+				break;
+			case 'W':
+				dbgetpassword = 1;
 				break;
 			case 'Z':
 				parse_compress_options(optarg, &compression_algorithm_str,
 									   &compression_detail);
 				break;
-/* action */
 			case 1:
 				do_create_slot = true;
 				break;
@@ -867,7 +799,7 @@ main(int argc, char **argv)
 	 */
 	if (!parse_compress_algorithm(compression_algorithm_str,
 								  &compression_algorithm))
-		pg_fatal("unrecognized compression algorithm \"%s\"",
+		pg_fatal("unrecognized compression algorithm: \"%s\"",
 				 compression_algorithm_str);
 
 	parse_compress_specification(compression_algorithm, compression_detail,
@@ -877,38 +809,11 @@ main(int argc, char **argv)
 		pg_fatal("invalid compression specification: %s",
 				 error_detail);
 
-	/* Extract the compression level, if found in the specification */
-	if ((compression_spec.options & PG_COMPRESSION_OPTION_LEVEL) != 0)
-		compresslevel = compression_spec.level;
+	/* Extract the compression level */
+	compresslevel = compression_spec.level;
 
-	switch (compression_algorithm)
-	{
-		case PG_COMPRESSION_NONE:
-			/* nothing to do */
-			break;
-		case PG_COMPRESSION_GZIP:
-#ifdef HAVE_LIBZ
-			if ((compression_spec.options & PG_COMPRESSION_OPTION_LEVEL) == 0)
-			{
-				pg_log_info("no value specified for --compress, switching to default");
-				compresslevel = Z_DEFAULT_COMPRESSION;
-			}
-#else
-			pg_fatal("this build does not support compression with %s",
-					 "gzip");
-#endif
-			break;
-		case PG_COMPRESSION_LZ4:
-#ifndef USE_LZ4
-			pg_fatal("this build does not support compression with %s",
-					 "LZ4");
-#endif
-			break;
-		case PG_COMPRESSION_ZSTD:
-			pg_fatal("compression with %s is not yet supported", "ZSTD");
-			break;
-	}
-
+	if (compression_algorithm == PG_COMPRESSION_ZSTD)
+		pg_fatal("compression with %s is not yet supported", "ZSTD");
 
 	/*
 	 * Check existence of destination folder.
@@ -934,7 +839,8 @@ main(int argc, char **argv)
 	 * if one is needed, in GetConnection.)
 	 */
 #ifndef WIN32
-	pqsignal(SIGINT, sigint_handler);
+	pqsignal(SIGINT, sigexit_handler);
+	pqsignal(SIGTERM, sigexit_handler);
 #endif
 
 	/*

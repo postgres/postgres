@@ -3,7 +3,7 @@
  * sinvaladt.c
  *	  POSTGRES shared cache invalidation data manager.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -404,17 +404,20 @@ BackendIdGetProc(int backendID)
 
 /*
  * BackendIdGetTransactionIds
- *		Get the xid and xmin of the backend. The result may be out of date
- *		arbitrarily quickly, so the caller must be careful about how this
- *		information is used.
+ *		Get the xid, xmin, nsubxid and overflow status of the backend. The
+ *		result may be out of date arbitrarily quickly, so the caller must be
+ *		careful about how this information is used.
  */
 void
-BackendIdGetTransactionIds(int backendID, TransactionId *xid, TransactionId *xmin)
+BackendIdGetTransactionIds(int backendID, TransactionId *xid,
+						   TransactionId *xmin, int *nsubxid, bool *overflowed)
 {
 	SISeg	   *segP = shmInvalBuffer;
 
 	*xid = InvalidTransactionId;
 	*xmin = InvalidTransactionId;
+	*nsubxid = 0;
+	*overflowed = false;
 
 	/* Need to lock out additions/removals of backends */
 	LWLockAcquire(SInvalWriteLock, LW_SHARED);
@@ -428,6 +431,8 @@ BackendIdGetTransactionIds(int backendID, TransactionId *xid, TransactionId *xmi
 		{
 			*xid = proc->xid;
 			*xmin = proc->xmin;
+			*nsubxid = proc->subxidStatus.count;
+			*overflowed = proc->subxidStatus.overflowed;
 		}
 	}
 

@@ -4,6 +4,7 @@
 #include "postgres.h"
 
 #include <limits.h>
+#include <math.h>
 
 #include "_int.h"
 #include "access/gist.h"
@@ -51,7 +52,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	bool		retval;
+	bool		retval = false; /* silence compiler warning */
 
 	/* this is exact except for RTSameStrategyNumber */
 	*recheck = (strategy == RTSameStrategyNumber);
@@ -242,7 +243,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 			/*
 			 * shunt everything down to start at the right place
 			 */
-			memmove((void *) &dr[0], (void *) &dr[2 * j], 2 * (len - j) * sizeof(int32));
+			memmove(&dr[0], &dr[2 * j], 2 * (len - j) * sizeof(int32));
 		}
 
 		/*
@@ -259,7 +260,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 					min = ((int64) dr[i] - (int64) dr[i - 1]);
 					cand = i;
 				}
-			memmove((void *) &dr[cand - 1], (void *) &dr[cand + 1], (len - cand - 1) * sizeof(int32));
+			memmove(&dr[cand - 1], &dr[cand + 1], (len - cand - 1) * sizeof(int32));
 			len -= 2;
 		}
 
@@ -539,9 +540,9 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		union_d = inner_int_union(datum_r, datum_alpha);
 		rt__int_size(union_d, &size_beta);
 		pfree(union_d);
-		costvector[i - 1].cost = Abs((size_alpha - size_l) - (size_beta - size_r));
+		costvector[i - 1].cost = fabsf((size_alpha - size_l) - (size_beta - size_r));
 	}
-	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
+	qsort(costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
 	/*
 	 * Now split up the regions between the two seeds.  An important property

@@ -219,7 +219,6 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pgupgrade          SYSTEM "pgupgrade.sgml">
 <!ENTITY pgwaldump          SYSTEM "pg_waldump.sgml">
 <!ENTITY postgres           SYSTEM "postgres-ref.sgml">
-<!ENTITY postmaster         SYSTEM "postmaster.sgml">
 <!ENTITY psqlRef            SYSTEM "psql-ref.sgml">
 <!ENTITY reindexdb          SYSTEM "reindexdb.sgml">
 <!ENTITY vacuumdb           SYSTEM "vacuumdb.sgml">

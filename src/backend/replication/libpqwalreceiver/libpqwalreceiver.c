@@ -6,7 +6,7 @@
  * loaded as a dynamic module to avoid linking the main server binary with
  * libpq.
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -24,6 +24,7 @@
 #include "common/connect.h"
 #include "funcapi.h"
 #include "libpq-fe.h"
+#include "libpq/libpq-be-fe-helpers.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -35,8 +36,6 @@
 #include "utils/tuplestore.h"
 
 PG_MODULE_MAGIC;
-
-void		_PG_init(void);
 
 struct WalReceiverConn
 {
@@ -84,21 +83,21 @@ static WalRcvExecResult *libpqrcv_exec(WalReceiverConn *conn,
 static void libpqrcv_disconnect(WalReceiverConn *conn);
 
 static WalReceiverFunctionsType PQWalReceiverFunctions = {
-	libpqrcv_connect,
-	libpqrcv_check_conninfo,
-	libpqrcv_get_conninfo,
-	libpqrcv_get_senderinfo,
-	libpqrcv_identify_system,
-	libpqrcv_server_version,
-	libpqrcv_readtimelinehistoryfile,
-	libpqrcv_startstreaming,
-	libpqrcv_endstreaming,
-	libpqrcv_receive,
-	libpqrcv_send,
-	libpqrcv_create_slot,
-	libpqrcv_get_backend_pid,
-	libpqrcv_exec,
-	libpqrcv_disconnect
+	.walrcv_connect = libpqrcv_connect,
+	.walrcv_check_conninfo = libpqrcv_check_conninfo,
+	.walrcv_get_conninfo = libpqrcv_get_conninfo,
+	.walrcv_get_senderinfo = libpqrcv_get_senderinfo,
+	.walrcv_identify_system = libpqrcv_identify_system,
+	.walrcv_server_version = libpqrcv_server_version,
+	.walrcv_readtimelinehistoryfile = libpqrcv_readtimelinehistoryfile,
+	.walrcv_startstreaming = libpqrcv_startstreaming,
+	.walrcv_endstreaming = libpqrcv_endstreaming,
+	.walrcv_receive = libpqrcv_receive,
+	.walrcv_send = libpqrcv_send,
+	.walrcv_create_slot = libpqrcv_create_slot,
+	.walrcv_get_backend_pid = libpqrcv_get_backend_pid,
+	.walrcv_exec = libpqrcv_exec,
+	.walrcv_disconnect = libpqrcv_disconnect
 };
 
 /* Prototypes for private functions */
@@ -127,7 +126,6 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 				 char **err)
 {
 	WalReceiverConn *conn;
-	PostgresPollingStatusType status;
 	const char *keys[6];
 	const char *vals[6];
 	int			i = 0;
@@ -174,58 +172,13 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	Assert(i < sizeof(keys));
 
 	conn = palloc0(sizeof(WalReceiverConn));
-	conn->streamConn = PQconnectStartParams(keys, vals,
-											 /* expand_dbname = */ true);
-	if (PQstatus(conn->streamConn) == CONNECTION_BAD)
-	{
-		*err = pchomp(PQerrorMessage(conn->streamConn));
-		return NULL;
-	}
-
-	/*
-	 * Poll connection until we have OK or FAILED status.
-	 *
-	 * Per spec for PQconnectPoll, first wait till socket is write-ready.
-	 */
-	status = PGRES_POLLING_WRITING;
-	do
-	{
-		int			io_flag;
-		int			rc;
-
-		if (status == PGRES_POLLING_READING)
-			io_flag = WL_SOCKET_READABLE;
-#ifdef WIN32
-		/* Windows needs a different test while waiting for connection-made */
-		else if (PQstatus(conn->streamConn) == CONNECTION_STARTED)
-			io_flag = WL_SOCKET_CONNECTED;
-#endif
-		else
-			io_flag = WL_SOCKET_WRITEABLE;
-
-		rc = WaitLatchOrSocket(MyLatch,
-							   WL_EXIT_ON_PM_DEATH | WL_LATCH_SET | io_flag,
-							   PQsocket(conn->streamConn),
-							   0,
-							   WAIT_EVENT_LIBPQWALRECEIVER_CONNECT);
-
-		/* Interrupted? */
-		if (rc & WL_LATCH_SET)
-		{
-			ResetLatch(MyLatch);
-			ProcessWalRcvInterrupts();
-		}
-
-		/* If socket is ready, advance the libpq state machine */
-		if (rc & io_flag)
-			status = PQconnectPoll(conn->streamConn);
-	} while (status != PGRES_POLLING_OK && status != PGRES_POLLING_FAILED);
+	conn->streamConn =
+		libpqsrv_connect_params(keys, vals,
+								 /* expand_dbname = */ true,
+								WAIT_EVENT_LIBPQWALRECEIVER_CONNECT);
 
 	if (PQstatus(conn->streamConn) != CONNECTION_OK)
-	{
-		*err = pchomp(PQerrorMessage(conn->streamConn));
-		return NULL;
-	}
+		goto bad_connection_errmsg;
 
 	if (logical)
 	{
@@ -236,9 +189,9 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
 			PQclear(res);
-			ereport(ERROR,
-					(errmsg("could not clear search path: %s",
-							pchomp(PQerrorMessage(conn->streamConn)))));
+			*err = psprintf(_("could not clear search path: %s"),
+							pchomp(PQerrorMessage(conn->streamConn)));
+			goto bad_connection;
 		}
 		PQclear(res);
 	}
@@ -246,6 +199,16 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	conn->logical = logical;
 
 	return conn;
+
+	/* error path, using libpq's error message */
+bad_connection_errmsg:
+	*err = pchomp(PQerrorMessage(conn->streamConn));
+
+	/* error path, error already set */
+bad_connection:
+	libpqsrv_disconnect(conn->streamConn);
+	pfree(conn);
+	return NULL;
 }
 
 /*
@@ -445,13 +408,18 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 		appendStringInfo(&cmd, "proto_version '%u'",
 						 options->proto.logical.proto_version);
 
-		if (options->proto.logical.streaming &&
-			PQserverVersion(conn->streamConn) >= 140000)
-			appendStringInfoString(&cmd, ", streaming 'on'");
+		if (options->proto.logical.streaming_str)
+			appendStringInfo(&cmd, ", streaming '%s'",
+							 options->proto.logical.streaming_str);
 
 		if (options->proto.logical.twophase &&
 			PQserverVersion(conn->streamConn) >= 150000)
 			appendStringInfoString(&cmd, ", two_phase 'on'");
+
+		if (options->proto.logical.origin &&
+			PQserverVersion(conn->streamConn) >= 160000)
+			appendStringInfo(&cmd, ", origin '%s'",
+							 options->proto.logical.origin);
 
 		pubnames = options->proto.logical.publication_names;
 		pubnames_str = stringlist_to_identifierstr(conn->streamConn, pubnames);
@@ -737,9 +705,8 @@ libpqrcv_PQgetResult(PGconn *streamConn)
 static void
 libpqrcv_disconnect(WalReceiverConn *conn)
 {
-	PQfinish(conn->streamConn);
-	if (conn->recvBuf != NULL)
-		PQfreemem(conn->recvBuf);
+	libpqsrv_disconnect(conn->streamConn);
+	PQfreemem(conn->recvBuf);
 	pfree(conn);
 }
 
@@ -765,8 +732,7 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 {
 	int			rawlen;
 
-	if (conn->recvBuf != NULL)
-		PQfreemem(conn->recvBuf);
+	PQfreemem(conn->recvBuf);
 	conn->recvBuf = NULL;
 
 	/* Try to receive a CopyData message */

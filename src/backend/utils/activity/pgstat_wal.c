@@ -8,7 +8,7 @@
  * storage implementation and the details about individual types of
  * statistics.
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat_wal.c
@@ -34,7 +34,7 @@ static WalUsage prevWalUsage;
 
 /*
  * Calculate how much WAL usage counters have increased and update
- * shared statistics.
+ * shared WAL and IO statistics.
  *
  * Must be called by processes that generate WAL, that do not call
  * pgstat_report_stat(), like walwriter.
@@ -43,6 +43,8 @@ void
 pgstat_report_wal(bool force)
 {
 	pgstat_flush_wal(force);
+
+	pgstat_flush_io(force);
 }
 
 /*

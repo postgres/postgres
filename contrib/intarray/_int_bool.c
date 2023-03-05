@@ -35,6 +35,7 @@ typedef struct
 	char	   *buf;
 	int32		state;
 	int32		count;
+	struct Node *escontext;
 	/* reverse polish notation in list (for temporary usage) */
 	NODE	   *str;
 	/* number in str */
@@ -179,7 +180,7 @@ makepol(WORKSTATE *state)
 				else
 				{
 					if (lenstack == STACKDEPTH)
-						ereport(ERROR,
+						ereturn(state->escontext, ERR,
 								(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 								 errmsg("statement too complex")));
 					stack[lenstack] = val;
@@ -206,10 +207,9 @@ makepol(WORKSTATE *state)
 				break;
 			case ERR:
 			default:
-				ereport(ERROR,
+				ereturn(state->escontext, ERR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
-				return ERR;
 		}
 	}
 
@@ -483,6 +483,7 @@ bqarr_in(PG_FUNCTION_ARGS)
 	ITEM	   *ptr;
 	NODE	   *tmp;
 	int32		pos = 0;
+	struct Node *escontext = fcinfo->context;
 
 #ifdef BS_DEBUG
 	StringInfoData pbuf;
@@ -493,16 +494,18 @@ bqarr_in(PG_FUNCTION_ARGS)
 	state.count = 0;
 	state.num = 0;
 	state.str = NULL;
+	state.escontext = escontext;
 
 	/* make polish notation (postfix, but in reverse order) */
-	makepol(&state);
+	if (makepol(&state) == ERR)
+		PG_RETURN_NULL();
 	if (!state.num)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("empty query")));
 
 	if (state.num > QUERYTYPEMAXITEMS)
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("number of query items (%d) exceeds the maximum allowed (%d)",
 						state.num, (int) QUERYTYPEMAXITEMS)));

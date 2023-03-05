@@ -9,7 +9,7 @@
  * into a lot of low-level code.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/reloptions.h
@@ -195,16 +195,16 @@ extern void add_string_reloption(bits32 kinds, const char *name, const char *des
 								 const char *default_val, validate_string_relopt validator,
 								 LOCKMODE lockmode);
 
-extern void init_local_reloptions(local_relopts *opts, Size relopt_struct_size);
-extern void register_reloptions_validator(local_relopts *opts,
+extern void init_local_reloptions(local_relopts *relopts, Size relopt_struct_size);
+extern void register_reloptions_validator(local_relopts *relopts,
 										  relopts_validator validator);
-extern void add_local_bool_reloption(local_relopts *opts, const char *name,
+extern void add_local_bool_reloption(local_relopts *relopts, const char *name,
 									 const char *desc, bool default_val,
 									 int offset);
-extern void add_local_int_reloption(local_relopts *opts, const char *name,
+extern void add_local_int_reloption(local_relopts *relopts, const char *name,
 									const char *desc, int default_val,
 									int min_val, int max_val, int offset);
-extern void add_local_real_reloption(local_relopts *opts, const char *name,
+extern void add_local_real_reloption(local_relopts *relopts, const char *name,
 									 const char *desc, double default_val,
 									 double min_val, double max_val,
 									 int offset);
@@ -213,7 +213,7 @@ extern void add_local_enum_reloption(local_relopts *relopts,
 									 relopt_enum_elt_def *members,
 									 int default_val, const char *detailmsg,
 									 int offset);
-extern void add_local_string_reloption(local_relopts *opts, const char *name,
+extern void add_local_string_reloption(local_relopts *relopts, const char *name,
 									   const char *desc,
 									   const char *default_val,
 									   validate_string_relopt validator,

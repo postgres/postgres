@@ -40,6 +40,19 @@ select '[a,a)'::textrange;
 select '(a,a]'::textrange;
 select '(a,a)'::textrange;
 
+-- Also try it with non-error-throwing API
+select pg_input_is_valid('(1,4)', 'int4range');
+select pg_input_is_valid('(1,4', 'int4range');
+select * from pg_input_error_info('(1,4', 'int4range');
+select pg_input_is_valid('(4,1)', 'int4range');
+select * from pg_input_error_info('(4,1)', 'int4range');
+select pg_input_is_valid('(4,zed)', 'int4range');
+select * from pg_input_error_info('(4,zed)', 'int4range');
+select pg_input_is_valid('[1,2147483647]', 'int4range');
+select * from pg_input_error_info('[1,2147483647]', 'int4range');
+select pg_input_is_valid('[2000-01-01,5874897-12-31]', 'daterange');
+select * from pg_input_error_info('[2000-01-01,5874897-12-31]', 'daterange');
+
 --
 -- create some test data and test the operators
 --
@@ -548,7 +561,7 @@ select array[1,3] <@ arrayrange(array[1,2], array[2,1]);
 create type two_ints as (a int, b int);
 create type two_ints_range as range (subtype = two_ints);
 
--- with force_parallel_mode on, this exercises tqueue.c's range remapping
+-- with debug_parallel_query on, this exercises tqueue.c's range remapping
 select *, row_to_json(upper(t)) as u from
   (values (two_ints_range(row(1,2), row(3,4))),
           (two_ints_range(row(5,6), row(7,8)))) v(t);

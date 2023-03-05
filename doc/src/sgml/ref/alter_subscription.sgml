@@ -46,8 +46,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
 
   <para>
    You must own the subscription to use <command>ALTER SUBSCRIPTION</command>.
-   To alter the owner, you must also be a direct or indirect member of the
-   new owning role. The new owner has to be a superuser.
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role.  The new owner has to be a superuser.
    (Currently, all subscription owners must be superusers, so the owner checks
    will be bypassed in practice.  But this might change in the future.)
   </para>
@@ -172,6 +172,11 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
           Previously subscribed tables are not copied, even if a table's row
           filter <literal>WHERE</literal> clause has since been modified.
          </para>
+         <para>
+          See <xref linkend="sql-createsubscription-notes"/> for details of
+          how <literal>copy_data = true</literal> can interact with the
+          <literal>origin</literal> parameter.
+         </para>
         </listitem>
        </varlistentry>
       </variablelist></para>
@@ -207,8 +212,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       information.  The parameters that can be altered
       are <literal>slot_name</literal>,
       <literal>synchronous_commit</literal>,
-      <literal>binary</literal>, <literal>streaming</literal>, and
-      <literal>disable_on_error</literal>.
+      <literal>binary</literal>, <literal>streaming</literal>,
+      <literal>disable_on_error</literal>, and
+      <literal>origin</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -271,6 +277,13 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   When specifying a parameter of type <type>boolean</type>, the
+   <literal>=</literal> <replaceable class="parameter">value</replaceable>
+   part can be omitted, which is equivalent to
+   specifying <literal>TRUE</literal>.
+  </para>
  </refsect1>
 
  <refsect1>

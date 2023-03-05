@@ -78,10 +78,6 @@ Each test script should end with:
 
 	done_testing();
 
-Test::More::like entails use of the qr// operator.  Avoid Perl 5.8.8 bug
-#39185 by not using the "$" regular expression metacharacter in qr// when also
-using the "/m" modifier.  Instead of "$", use "\n" or "(?=\n|\z)".
-
 Test::Builder::Level controls how far up in the call stack a test will look
 at when reporting a failure.  This should be incremented by any subroutine
 which directly or indirectly calls test routines from Test::More, such as
@@ -103,7 +99,7 @@ Portability
 -----------
 
 Avoid using any bleeding-edge Perl features.  We have buildfarm animals
-running Perl versions as old as 5.8.3, so your tests will be expected
+running Perl versions as old as 5.14, so your tests will be expected
 to pass on that.
 
 Also, do not use any non-core Perl modules except IPC::Run.  Or, if you
@@ -116,8 +112,8 @@ One way to test for compatibility with old Perl versions is to use
 perlbrew; see http://perlbrew.pl .  After installing that, do
 
     export PERLBREW_CONFIGURE_FLAGS='-de -Duseshrplib'
-    perlbrew --force install 5.8.3
-    perlbrew use 5.8.3
+    perlbrew --force install 5.14.0
+    perlbrew use 5.14.0
     perlbrew install-cpanm
     cpanm install Test::Simple@0.98
     cpanm install IPC::Run@0.79

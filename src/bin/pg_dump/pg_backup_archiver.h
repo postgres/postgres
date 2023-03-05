@@ -32,30 +32,6 @@
 
 #define LOBBUFSIZE 16384
 
-#ifdef HAVE_LIBZ
-#include <zlib.h>
-#define GZCLOSE(fh) gzclose(fh)
-#define GZWRITE(p, s, n, fh) gzwrite(fh, p, (n) * (s))
-#define GZREAD(p, s, n, fh) gzread(fh, p, (n) * (s))
-#define GZEOF(fh)	gzeof(fh)
-#else
-#define GZCLOSE(fh) fclose(fh)
-#define GZWRITE(p, s, n, fh) (fwrite(p, s, n, fh) * (s))
-#define GZREAD(p, s, n, fh) fread(p, s, n, fh)
-#define GZEOF(fh)	feof(fh)
-/* this is just the redefinition of a libz constant */
-#define Z_DEFAULT_COMPRESSION (-1)
-
-typedef struct _z_stream
-{
-	void	   *next_in;
-	void	   *next_out;
-	size_t		avail_in;
-	size_t		avail_out;
-} z_stream;
-typedef z_stream *z_streamp;
-#endif
-
 /* Data block types */
 #define BLK_DATA 1
 #define BLK_BLOBS 3
@@ -70,7 +46,7 @@ typedef z_stream *z_streamp;
 /* Historical version numbers (checked in code) */
 #define K_VERS_1_0	MAKE_ARCHIVE_VERSION(1, 0, 0)
 #define K_VERS_1_2	MAKE_ARCHIVE_VERSION(1, 2, 0)	/* Allow No ZLIB */
-#define K_VERS_1_3	MAKE_ARCHIVE_VERSION(1, 3, 0)	/* BLOBs */
+#define K_VERS_1_3	MAKE_ARCHIVE_VERSION(1, 3, 0)	/* BLOBS */
 #define K_VERS_1_4	MAKE_ARCHIVE_VERSION(1, 4, 0)	/* Date & name in header */
 #define K_VERS_1_5	MAKE_ARCHIVE_VERSION(1, 5, 0)	/* Handle dependencies */
 #define K_VERS_1_6	MAKE_ARCHIVE_VERSION(1, 6, 0)	/* Schema field in TOCs */
@@ -89,10 +65,13 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_13 MAKE_ARCHIVE_VERSION(1, 13, 0)	/* change search_path
 													 * behavior */
 #define K_VERS_1_14 MAKE_ARCHIVE_VERSION(1, 14, 0)	/* add tableam */
+#define K_VERS_1_15 MAKE_ARCHIVE_VERSION(1, 15, 0)	/* add
+													 * compression_algorithm
+													 * in header */
 
 /* Current archive version number (the format we can output) */
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 14
+#define K_VERS_MINOR 15
 #define K_VERS_REV 0
 #define K_VERS_SELF MAKE_ARCHIVE_VERSION(K_VERS_MAJOR, K_VERS_MINOR, K_VERS_REV)
 
@@ -145,10 +124,10 @@ typedef void (*StartDataPtrType) (ArchiveHandle *AH, TocEntry *te);
 typedef void (*WriteDataPtrType) (ArchiveHandle *AH, const void *data, size_t dLen);
 typedef void (*EndDataPtrType) (ArchiveHandle *AH, TocEntry *te);
 
-typedef void (*StartBlobsPtrType) (ArchiveHandle *AH, TocEntry *te);
-typedef void (*StartBlobPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
-typedef void (*EndBlobPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
-typedef void (*EndBlobsPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*StartLOsPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*StartLOPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
+typedef void (*EndLOPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
+typedef void (*EndLOsPtrType) (ArchiveHandle *AH, TocEntry *te);
 
 typedef int (*WriteBytePtrType) (ArchiveHandle *AH, const int i);
 typedef int (*ReadBytePtrType) (ArchiveHandle *AH);
@@ -285,10 +264,10 @@ struct _archiveHandle
 	PrintExtraTocPtrType PrintExtraTocPtr;	/* Extra TOC info for format */
 	PrintTocDataPtrType PrintTocDataPtr;
 
-	StartBlobsPtrType StartBlobsPtr;
-	EndBlobsPtrType EndBlobsPtr;
-	StartBlobPtrType StartBlobPtr;
-	EndBlobPtrType EndBlobPtr;
+	StartLOsPtrType StartLOsPtr;
+	EndLOsPtrType EndLOsPtr;
+	StartLOPtrType StartLOPtr;
+	EndLOPtrType EndLOPtr;
 
 	SetupWorkerPtrType SetupWorkerPtr;
 	WorkerJobDumpPtrType WorkerJobDumpPtr;
@@ -313,14 +292,13 @@ struct _archiveHandle
 	ArchiverOutput outputKind;	/* Flag for what we're currently writing */
 	bool		pgCopyIn;		/* Currently in libpq 'COPY IN' mode. */
 
-	int			loFd;			/* BLOB fd */
-	int			writingBlob;	/* Flag */
-	int			blobCount;		/* # of blobs restored */
+	int			loFd;
+	bool		writingLO;
+	int			loCount;		/* # of LOs restored */
 
 	char	   *fSpec;			/* Archive File Spec */
 	FILE	   *FH;				/* General purpose file handle */
-	void	   *OF;
-	int			gzOut;			/* Output file */
+	void	   *OF;				/* Output file */
 
 	struct _tocEntry *toc;		/* Header of circular list of TOC entries */
 	int			tocCount;		/* Number of TOC entries */
@@ -331,14 +309,8 @@ struct _archiveHandle
 	DumpId	   *tableDataId;	/* TABLE DATA ids, indexed by table dumpId */
 
 	struct _tocEntry *currToc;	/* Used when dumping data */
-	int			compression;	/*---------
-								 * Compression requested on open().
-								 * Possible values for compression:
-								 * -1	Z_DEFAULT_COMPRESSION
-								 *  0	COMPRESSION_NONE
-								 * 1-9 levels for gzip compression
-								 *---------
-								 */
+	pg_compress_specification compression_spec; /* Requested specification for
+												 * compression */
 	bool		dosync;			/* data requested to be synced on sight */
 	ArchiveMode mode;			/* File mode - r or w */
 	void	   *formatData;		/* Header data specific to file format */
@@ -457,15 +429,15 @@ extern bool checkSeek(FILE *fp);
 extern size_t WriteInt(ArchiveHandle *AH, int i);
 extern int	ReadInt(ArchiveHandle *AH);
 extern char *ReadStr(ArchiveHandle *AH);
-extern size_t WriteStr(ArchiveHandle *AH, const char *s);
+extern size_t WriteStr(ArchiveHandle *AH, const char *c);
 
 int			ReadOffset(ArchiveHandle *, pgoff_t *);
 size_t		WriteOffset(ArchiveHandle *, pgoff_t, int);
 
-extern void StartRestoreBlobs(ArchiveHandle *AH);
-extern void StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop);
-extern void EndRestoreBlob(ArchiveHandle *AH, Oid oid);
-extern void EndRestoreBlobs(ArchiveHandle *AH);
+extern void StartRestoreLOs(ArchiveHandle *AH);
+extern void StartRestoreLO(ArchiveHandle *AH, Oid oid, bool drop);
+extern void EndRestoreLO(ArchiveHandle *AH, Oid oid);
+extern void EndRestoreLOs(ArchiveHandle *AH);
 
 extern void InitArchiveFmt_Custom(ArchiveHandle *AH);
 extern void InitArchiveFmt_Null(ArchiveHandle *AH);
@@ -475,7 +447,7 @@ extern void InitArchiveFmt_Tar(ArchiveHandle *AH);
 extern bool isValidTarHeader(char *header);
 
 extern void ReconnectToServer(ArchiveHandle *AH, const char *dbname);
-extern void DropBlobIfExists(ArchiveHandle *AH, Oid oid);
+extern void DropLOIfExists(ArchiveHandle *AH, Oid oid);
 
 void		ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
 int			ahprintf(ArchiveHandle *AH, const char *fmt,...) pg_attribute_printf(2, 3);

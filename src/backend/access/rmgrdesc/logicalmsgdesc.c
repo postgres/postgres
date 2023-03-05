@@ -3,7 +3,7 @@
  * logicalmsgdesc.c
  *	  rmgr descriptor routines for replication/logical/message.c
  *
- * Portions Copyright (c) 2015-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2015-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -28,7 +28,7 @@ logicalmsg_desc(StringInfo buf, XLogReaderState *record)
 		char	   *message = xlrec->message + xlrec->prefix_size;
 		char	   *sep = "";
 
-		Assert(prefix[xlrec->prefix_size] != '\0');
+		Assert(prefix[xlrec->prefix_size - 1] == '\0');
 
 		appendStringInfo(buf, "%s, prefix \"%s\"; payload (%zu bytes): ",
 						 xlrec->transactional ? "transactional" : "non-transactional",

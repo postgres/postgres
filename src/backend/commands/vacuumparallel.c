@@ -16,7 +16,7 @@
  * the parallel context is re-initialized so that the same DSM can be used for
  * multiple passes of index bulk-deletion and index cleanup.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -317,6 +317,7 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 
 	/* Prepare index vacuum stats */
 	indstats = (PVIndStats *) shm_toc_allocate(pcxt->toc, est_indstats_len);
+	MemSet(indstats, 0, est_indstats_len);
 	for (int i = 0; i < nindexes; i++)
 	{
 		Relation	indrel = indrels[i];
@@ -611,7 +612,7 @@ parallel_vacuum_process_all_indexes(ParallelVacuumState *pvs, int num_index_scan
 		Assert(indstats->status == PARALLEL_INDVAC_STATUS_INITIAL);
 		indstats->status = new_status;
 		indstats->parallel_workers_can_process =
-			(pvs->will_parallel_vacuum[i] &
+			(pvs->will_parallel_vacuum[i] &&
 			 parallel_vacuum_index_is_parallel_safe(pvs->indrels[i],
 													num_index_scans,
 													vacuum));

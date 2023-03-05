@@ -4,7 +4,7 @@
  *	  Lightweight lock manager
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/lwlock.h
@@ -22,6 +22,14 @@
 #include "storage/proclist_types.h"
 
 struct PGPROC;
+
+/* what state of the wait process is a backend in */
+typedef enum LWLockWaitState
+{
+	LW_WS_NOT_WAITING, /* not currently waiting / woken up */
+	LW_WS_WAITING, /* currently waiting */
+	LW_WS_PENDING_WAKEUP, /* removed from waitlist, but not yet signalled */
+} LWLockWaitState;
 
 /*
  * Code outside of lwlock.c should not manipulate the contents of this
@@ -50,6 +58,9 @@ typedef struct LWLock
  * locks is small but some are heavily contended.
  */
 #define LWLOCK_PADDED_SIZE	PG_CACHE_LINE_SIZE
+
+StaticAssertDecl(sizeof(LWLock) <= LWLOCK_PADDED_SIZE,
+				 "Miscalculated LWLock padding");
 
 /* LWLock, padded to a full cache line size */
 typedef union LWLockPadded
@@ -120,11 +131,11 @@ extern void LWLockRelease(LWLock *lock);
 extern void LWLockReleaseClearVar(LWLock *lock, uint64 *valptr, uint64 val);
 extern void LWLockReleaseAll(void);
 extern bool LWLockHeldByMe(LWLock *lock);
+extern bool LWLockAnyHeldByMe(LWLock *lock, int nlocks, size_t stride);
 extern bool LWLockHeldByMeInMode(LWLock *lock, LWLockMode mode);
-extern int	LWLockHeldCount(void);
 
 extern bool LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval);
-extern void LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 value);
+extern void LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val);
 
 extern Size LWLockShmemSize(void);
 extern void CreateLWLocks(void);
@@ -193,6 +204,8 @@ typedef enum BuiltinTrancheIds
 	LWTRANCHE_PGSTATS_DSA,
 	LWTRANCHE_PGSTATS_HASH,
 	LWTRANCHE_PGSTATS_DATA,
+	LWTRANCHE_LAUNCHER_DSA,
+	LWTRANCHE_LAUNCHER_HASH,
 	LWTRANCHE_FIRST_USER_DEFINED
 }			BuiltinTrancheIds;
 

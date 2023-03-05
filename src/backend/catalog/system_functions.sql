@@ -1,7 +1,7 @@
 /*
  * PostgreSQL System Functions
  *
- * Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * src/backend/catalog/system_functions.sql
  *
@@ -65,6 +65,13 @@ CREATE OR REPLACE FUNCTION bit_length(text)
  LANGUAGE sql
  IMMUTABLE PARALLEL SAFE STRICT COST 1
 RETURN octet_length($1) * 8;
+
+CREATE OR REPLACE FUNCTION
+ random_normal(mean float8 DEFAULT 0, stddev float8 DEFAULT 1)
+ RETURNS float8
+ LANGUAGE internal
+ VOLATILE PARALLEL RESTRICTED STRICT COST 1
+AS 'drandom_normal';
 
 CREATE OR REPLACE FUNCTION log(numeric)
  RETURNS numeric
@@ -594,6 +601,32 @@ LANGUAGE internal
 STRICT IMMUTABLE PARALLEL SAFE
 AS 'unicode_is_normalized';
 
+-- Functions with SQL-mandated special syntax and some defaults.
+CREATE OR REPLACE FUNCTION
+  "current_time"(int4 DEFAULT NULL)
+ RETURNS timetz
+ LANGUAGE internal
+ STABLE PARALLEL SAFE
+AS 'current_time';
+CREATE OR REPLACE FUNCTION
+  "current_timestamp"(int4 DEFAULT NULL)
+ RETURNS timestamptz
+ LANGUAGE internal
+ STABLE PARALLEL SAFE
+ AS 'current_timestamp';
+CREATE OR REPLACE FUNCTION
+  "localtime"(int4 DEFAULT NULL)
+ RETURNS time
+ LANGUAGE internal
+ STABLE PARALLEL SAFE
+ AS 'sql_localtime';
+CREATE OR REPLACE FUNCTION
+  "localtimestamp"(int4 DEFAULT NULL)
+ RETURNS timestamp
+ LANGUAGE internal
+ STABLE PARALLEL SAFE
+ AS 'sql_localtimestamp';
+
 --
 -- The default permissions for functions mean that anyone can execute them.
 -- A number of functions shouldn't be executable by just anyone, but rather
@@ -659,11 +692,15 @@ REVOKE EXECUTE ON FUNCTION pg_ls_tmpdir(oid) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_file(text) FROM public;
 
+REVOKE EXECUTE ON FUNCTION pg_read_file(text,boolean) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_read_file(text,bigint,bigint) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_file(text,bigint,bigint,boolean) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text) FROM public;
+
+REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text,boolean) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text,bigint,bigint) FROM public;
 

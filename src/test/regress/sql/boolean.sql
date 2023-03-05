@@ -62,6 +62,11 @@ SELECT bool '000' AS error;
 
 SELECT bool '' AS error;
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('true', 'bool');
+SELECT pg_input_is_valid('asdf', 'bool');
+SELECT * FROM pg_input_error_info('junk', 'bool');
+
 -- and, or, not in qualifications
 
 SELECT bool 't' or bool 'f' AS true;

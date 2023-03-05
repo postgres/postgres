@@ -10,7 +10,7 @@
  * This file will need work if we ever want it to.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -83,7 +83,6 @@ filtered_base_yylex(void)
 		case WITH:
 		case UIDENT:
 		case USCONST:
-		case WITHOUT:
 			break;
 		default:
 			return cur_token;
@@ -143,19 +142,6 @@ filtered_base_yylex(void)
 				case TIME:
 				case ORDINALITY:
 					cur_token = WITH_LA;
-					break;
-				case UNIQUE:
-					cur_token = WITH_LA_UNIQUE;
-					break;
-			}
-			break;
-
-		case WITHOUT:
-			/* Replace WITHOUT by WITHOUT_LA if it's followed by TIME */
-			switch (next_token)
-			{
-				case TIME:
-					cur_token = WITHOUT_LA;
 					break;
 			}
 			break;

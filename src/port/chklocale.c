@@ -4,7 +4,7 @@
  *		Functions for handling locale-related info
  *
  *
- * Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -191,19 +191,10 @@ static const struct encoding_match encoding_match_list[] = {
 /*
  * On Windows, use CP<code page number> instead of the nl_langinfo() result
  *
- * Visual Studio 2012 expanded the set of valid LC_CTYPE values, so have its
- * locale machinery determine the code page.  See comments at IsoLocaleName().
- * For other compilers, follow the locale's predictable format.
- *
- * Visual Studio 2015 should still be able to do the same, but the declaration
- * of lc_codepage is missing in _locale_t, causing this code compilation to
- * fail, hence this falls back instead on GetLocaleInfoEx. VS 2015 may be an
- * exception and post-VS2015 versions should be able to handle properly the
- * codepage number using _create_locale(). So, instead of the same logic as
- * VS 2012 and VS 2013, this routine uses GetLocaleInfoEx to parse short
- * locale names like "de-DE", "fr-FR", etc. If those cannot be parsed correctly
- * process falls back to the pre-VS-2010 manual parsing done with
- * using <Language>_<Country>.<CodePage> as a base.
+ * This routine uses GetLocaleInfoEx() to parse short locale names like
+ * "de-DE", "fr-FR", etc.  If those cannot be parsed correctly process falls
+ * back to the pre-VS-2010 manual parsing done with using
+ * <Language>_<Country>.<CodePage> as a base.
  *
  * Returns a malloc()'d string for the caller to free.
  */
@@ -211,22 +202,9 @@ static char *
 win32_langinfo(const char *ctype)
 {
 	char	   *r = NULL;
-
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-	_locale_t	loct = NULL;
-
-	loct = _create_locale(LC_CTYPE, ctype);
-	if (loct != NULL)
-	{
-		r = malloc(16);			/* excess */
-		if (r != NULL)
-			sprintf(r, "CP%u", loct->locinfo->lc_codepage);
-		_free_locale(loct);
-	}
-#else
 	char	   *codepage;
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+#if defined(_MSC_VER)
 	uint32		cp;
 	WCHAR		wctype[LOCALE_NAME_MAX_LENGTH];
 
@@ -279,7 +257,6 @@ win32_langinfo(const char *ctype)
 			}
 		}
 	}
-#endif
 
 	return r;
 }

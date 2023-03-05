@@ -46,7 +46,6 @@ typedef unsigned int Oid;
 /* Define a signed 64-bit integer type for use in client API declarations. */
 typedef PG_INT64_TYPE pg_int64;
 
-
 /*
  * Identifiers of error message fields.  Kept here to keep common
  * between frontend and backend, and also to export them to libpq

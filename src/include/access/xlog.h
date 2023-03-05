@@ -3,7 +3,7 @@
  *
  * PostgreSQL write-ahead log manager
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xlog.h
@@ -11,8 +11,8 @@
 #ifndef XLOG_H
 #define XLOG_H
 
+#include "access/xlogbackup.h"
 #include "access/xlogdefs.h"
-#include "access/xlogreader.h"
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
 #include "nodes/pg_list.h"
@@ -191,25 +191,26 @@ typedef enum WALAvailability
 } WALAvailability;
 
 struct XLogRecData;
+struct XLogReaderState;
 
 extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata,
 								   XLogRecPtr fpw_lsn,
 								   uint8 flags,
 								   int num_fpi,
 								   bool topxid_included);
-extern void XLogFlush(XLogRecPtr RecPtr);
+extern void XLogFlush(XLogRecPtr record);
 extern bool XLogBackgroundFlush(void);
-extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
-extern int	XLogFileInit(XLogSegNo segno, TimeLineID tli);
+extern bool XLogNeedsFlush(XLogRecPtr record);
+extern int	XLogFileInit(XLogSegNo logsegno, TimeLineID logtli);
 extern int	XLogFileOpen(XLogSegNo segno, TimeLineID tli);
 
 extern void CheckXLogRemoved(XLogSegNo segno, TimeLineID tli);
 extern XLogSegNo XLogGetLastRemovedSegno(void);
-extern void XLogSetAsyncXactLSN(XLogRecPtr record);
+extern void XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN);
 extern void XLogSetReplicationSlotMinimumLSN(XLogRecPtr lsn);
 
-extern void xlog_redo(XLogReaderState *record);
-extern void xlog_desc(StringInfo buf, XLogReaderState *record);
+extern void xlog_redo(struct XLogReaderState *record);
+extern void xlog_desc(StringInfo buf, struct XLogReaderState *record);
 extern const char *xlog_identify(uint8 info);
 
 extern void issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli);
@@ -227,6 +228,7 @@ extern XLogRecPtr GetFakeLSNForUnloggedRel(void);
 extern Size XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
 extern void BootStrapXLOG(void);
+extern void InitializeWalConsistencyChecking(void);
 extern void LocalProcessControlFile(bool reset);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(int code, Datum arg);
@@ -244,9 +246,6 @@ extern TimeLineID GetWALInsertionTimeLine(void);
 extern XLogRecPtr GetLastImportantRecPtr(void);
 
 extern void SetWalWriterSleeping(bool sleeping);
-
-extern void assign_max_wal_size(int newval, void *extra);
-extern void assign_checkpoint_completion_target(double newval, void *extra);
 
 /*
  * Routines used by xlogrecovery.c to call back into xlog.c during recovery.
@@ -279,11 +278,10 @@ typedef enum SessionBackupState
 	SESSION_BACKUP_RUNNING,
 } SessionBackupState;
 
-extern XLogRecPtr do_pg_backup_start(const char *backupidstr, bool fast,
-									 TimeLineID *starttli_p, StringInfo labelfile,
-									 List **tablespaces, StringInfo tblspcmapfile);
-extern XLogRecPtr do_pg_backup_stop(char *labelfile, bool waitforarchive,
-									TimeLineID *stoptli_p);
+extern void do_pg_backup_start(const char *backupidstr, bool fast,
+							   List **tablespaces, BackupState *state,
+							   StringInfo tblspcmapfile);
+extern void do_pg_backup_stop(BackupState *state, bool waitforarchive);
 extern void do_pg_abort_backup(int code, Datum arg);
 extern void register_persistent_abort_backup_handler(void);
 extern SessionBackupState get_backup_status(void);

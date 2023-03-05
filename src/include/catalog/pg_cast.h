@@ -6,7 +6,7 @@
  * As of Postgres 8.0, pg_cast describes not only type coercion functions
  * but also length coercion functions.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_cast.h
@@ -95,6 +95,8 @@ typedef enum CoercionMethod
 extern ObjectAddress CastCreate(Oid sourcetypeid,
 								Oid targettypeid,
 								Oid funcid,
+								Oid incastid,
+								Oid outcastid,
 								char castcontext,
 								char castmethod,
 								DependencyType behavior);

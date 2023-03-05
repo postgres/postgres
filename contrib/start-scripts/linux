@@ -34,7 +34,7 @@ prefix=/usr/local/pgsql
 # Data directory
 PGDATA="/usr/local/pgsql/data"
 
-# Who to run the postmaster as, usually "postgres".  (NOT "root")
+# Who to run postgres as, usually "postgres".  (NOT "root")
 PGUSER=postgres
 
 # Where to keep a log file
@@ -59,16 +59,16 @@ PGLOG="$PGDATA/serverlog"
 # The path that is to be used for the script
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-# What to use to start up the postmaster.  (If you want the script to wait
+# What to use to start up postgres.  (If you want the script to wait
 # until the server has started, you could use "pg_ctl start" here.)
-DAEMON="$prefix/bin/postmaster"
+DAEMON="$prefix/bin/postgres"
 
-# What to use to shut down the postmaster
+# What to use to shut down postgres
 PGCTL="$prefix/bin/pg_ctl"
 
 set -e
 
-# Only start if we can find the postmaster.
+# Only start if we can find postgres.
 test -x $DAEMON ||
 {
 	echo "$DAEMON not found"

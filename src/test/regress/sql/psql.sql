@@ -45,6 +45,20 @@ SELECT 1 as one, 2 as two \g (format=csv csv_fieldsep='\t')
 SELECT 1 as one, 2 as two \gx (title='foo bar')
 \g
 
+-- \bind (extended query protocol)
+
+SELECT 1 \bind \g
+SELECT $1 \bind 'foo' \g
+SELECT $1, $2 \bind 'foo' 'bar' \g
+
+-- errors
+-- parse error
+SELECT foo \bind \g
+-- tcop error
+SELECT 1 \; SELECT 2 \bind \g
+-- bind error
+SELECT $1, $2 \bind 'foo' \g
+
 -- \gset
 
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
@@ -1257,8 +1271,40 @@ reset work_mem;
 \df has_database_privilege oid text
 \df has_database_privilege oid text -
 \dfa bit* small*
+\df *._pg_expandarray
 \do - pg_catalog.int4
 \do && anyarray *
+
+-- check \df+
+-- we have to use functions with a predictable owner name, so make a role
+create role regress_psql_user superuser;
+begin;
+set session authorization regress_psql_user;
+
+create function psql_df_internal (float8)
+  returns float8
+  language internal immutable parallel safe strict
+  as 'dsin';
+create function psql_df_sql (x integer)
+  returns integer
+  security definer
+  begin atomic select x + 1; end;
+create function psql_df_plpgsql ()
+  returns void
+  language plpgsql
+  as $$ begin return; end; $$;
+comment on function psql_df_plpgsql () is 'some comment';
+
+\df+ psql_df_*
+rollback;
+drop role regress_psql_user;
+
+-- check \sf
+\sf information_schema._pg_expandarray
+\sf+ information_schema._pg_expandarray
+\sf+ interval_pl_time
+\sf ts_debug(text)
+\sf+ ts_debug(text)
 
 -- AUTOCOMMIT
 
@@ -1364,6 +1410,70 @@ SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
 
 \set SHOW_ALL_RESULTS on
 DROP FUNCTION warn(TEXT);
+
+--
+-- \g with file
+--
+\getenv abs_builddir PG_ABS_BUILDDIR
+\set g_out_file :abs_builddir '/results/psql-output1'
+
+CREATE TEMPORARY TABLE reload_output(
+  lineno int NOT NULL GENERATED ALWAYS AS IDENTITY,
+  line text
+);
+
+SELECT 1 AS a \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+SELECT 2 AS b\; SELECT 3 AS c\; SELECT 4 AS d \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+COPY (SELECT 'foo') TO STDOUT \; COPY (SELECT 'bar') TO STDOUT \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+
+SELECT line FROM reload_output ORDER BY lineno;
+TRUNCATE TABLE reload_output;
+
+--
+-- \o with file
+--
+\set o_out_file :abs_builddir '/results/psql-output2'
+
+\o :o_out_file
+SELECT max(unique1) FROM onek;
+SELECT 1 AS a\; SELECT 2 AS b\; SELECT 3 AS c;
+
+-- COPY TO file
+-- The data goes to :g_out_file and the status to :o_out_file
+\set QUIET false
+COPY (SELECT unique1 FROM onek ORDER BY unique1 LIMIT 10) TO :'g_out_file';
+-- DML command status
+UPDATE onek SET unique1 = unique1 WHERE false;
+\set QUIET true
+\o
+
+-- Check the contents of the files generated.
+COPY reload_output(line) FROM :'g_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+TRUNCATE TABLE reload_output;
+COPY reload_output(line) FROM :'o_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+TRUNCATE TABLE reload_output;
+
+-- Multiple COPY TO STDOUT with output file
+\o :o_out_file
+-- The data goes to :o_out_file with no status generated.
+COPY (SELECT 'foo1') TO STDOUT \; COPY (SELECT 'bar1') TO STDOUT;
+-- Combination of \o and \g file with multiple COPY queries.
+COPY (SELECT 'foo2') TO STDOUT \; COPY (SELECT 'bar2') TO STDOUT \g :g_out_file
+\o
+
+-- Check the contents of the files generated.
+COPY reload_output(line) FROM :'g_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+TRUNCATE TABLE reload_output;
+COPY reload_output(line) FROM :'o_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+
+DROP TABLE reload_output;
 
 --
 -- AUTOCOMMIT and combined queries

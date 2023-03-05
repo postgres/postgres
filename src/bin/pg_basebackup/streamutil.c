@@ -5,7 +5,7 @@
  *
  * Author: Magnus Hagander <magnus@hagander.net>
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/streamutil.c
@@ -154,8 +154,7 @@ GetConnection(void)
 		/* Get a new password if appropriate */
 		if (need_password)
 		{
-			if (password)
-				free(password);
+			free(password);
 			password = simple_prompt("Password: ", false);
 			need_password = false;
 		}
@@ -198,16 +197,14 @@ GetConnection(void)
 		PQfinish(tmpconn);
 		free(values);
 		free(keywords);
-		if (conn_opts)
-			PQconninfoFree(conn_opts);
+		PQconninfoFree(conn_opts);
 		return NULL;
 	}
 
 	/* Connection ok! */
 	free(values);
 	free(keywords);
-	if (conn_opts)
-		PQconninfoFree(conn_opts);
+	PQconninfoFree(conn_opts);
 
 	/*
 	 * Set always-secure search path, so malicious users can't get control.
@@ -522,7 +519,7 @@ GetSlotInformation(PGconn *conn, const char *slot_name,
 	 */
 	if (PQgetisnull(res, 0, 0))
 	{
-		pg_log_error("could not find replication slot \"%s\"", slot_name);
+		pg_log_error("replication slot \"%s\" does not exist", slot_name);
 		PQclear(res);
 		return false;
 	}

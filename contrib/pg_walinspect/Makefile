@@ -7,7 +7,7 @@ OBJS = \
 PGFILEDESC = "pg_walinspect - functions to inspect contents of PostgreSQL Write-Ahead Log"
 
 EXTENSION = pg_walinspect
-DATA = pg_walinspect--1.0.sql
+DATA = pg_walinspect--1.0.sql pg_walinspect--1.0--1.1.sql
 
 REGRESS = pg_walinspect
 

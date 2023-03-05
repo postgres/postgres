@@ -1,8 +1,7 @@
 # src/bin/pg_upgrade/nls.mk
 CATALOG_NAME     = pg_upgrade
-AVAIL_LANGUAGES  = cs de es fr ja ko ru sv tr uk zh_CN
 GETTEXT_FILES    = check.c controldata.c dump.c exec.c file.c function.c \
-                   info.c option.c parallel.c pg_upgrade.c relfilenode.c \
+                   info.c option.c parallel.c pg_upgrade.c relfilenumber.c \
                    server.c tablespace.c util.c version.c
 GETTEXT_TRIGGERS = pg_fatal pg_log:2 prep_status prep_status_progress report_status:2
 GETTEXT_FLAGS    = \

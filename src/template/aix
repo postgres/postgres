@@ -6,9 +6,6 @@
 # non-default CFLAGS setting.
 if test "$GCC" != yes ; then
   case $host_os in
-    aix3.2.5 | aix4.1*)
-      CFLAGS="-O -qmaxmem=16384"
-      ;;
     *)
       CFLAGS="-O2 -qmaxmem=16384"
       ;;

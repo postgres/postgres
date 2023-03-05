@@ -1,7 +1,7 @@
 --
 -- Verify that index scans encountering dead rows produced by an
 -- aborted subtransaction of the current transaction can utilize the
--- kill_prio_tuple optimization
+-- kill_prior_tuple optimization
 --
 -- NB: The table size is currently *not* expected to stay the same, we
 -- don't have logic to trigger opportunistic pruning in cases like

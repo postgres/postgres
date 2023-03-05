@@ -2,7 +2,7 @@
  * execPartition.h
  *		POSTGRES partitioning executor interface
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -123,9 +123,9 @@ typedef struct PartitionPruneState
 
 extern PartitionPruneState *ExecInitPartitionPruning(PlanState *planstate,
 													 int n_total_subplans,
-													 PartitionPruneInfo *pruneinfo,
+													 int part_prune_index,
+													 Bitmapset *root_parent_relids,
 													 Bitmapset **initially_valid_subplans);
 extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate,
 										   bool initial_prune);
-
 #endif							/* EXECPARTITION_H */

@@ -42,7 +42,7 @@ ROLLBACK [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
   </indexterm>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="sql-rollback-transaction">
     <term><literal>WORK</literal></term>
     <term><literal>TRANSACTION</literal></term>
     <listitem>
@@ -56,10 +56,10 @@ ROLLBACK [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
     <term><literal>AND CHAIN</literal></term>
     <listitem>
      <para>
-      If <literal>AND CHAIN</literal> is specified, a new transaction is
-      immediately started with the same transaction characteristics (see <xref
-      linkend="sql-set-transaction"/>) as the just finished one.  Otherwise,
-      no new transaction is started.
+      If <literal>AND CHAIN</literal> is specified, a new (not aborted)
+      transaction is immediately started with the same transaction
+      characteristics (see <xref linkend="sql-set-transaction"/>) as the
+      just finished one.  Otherwise, no new transaction is started.
      </para>
     </listitem>
    </varlistentry>

@@ -4,7 +4,7 @@
  *
  *	  Routines for aggregate-manipulation commands
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -25,6 +25,7 @@
 #include "access/htup_details.h"
 #include "catalog/dependency.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
@@ -104,7 +105,7 @@ DefineAggregate(ParseState *pstate,
 	aggNamespace = QualifiedNameGetCreationNamespace(name, &aggName);
 
 	/* Check we have creation rights in target namespace */
-	aclresult = pg_namespace_aclcheck(aggNamespace, GetUserId(), ACL_CREATE);
+	aclresult = object_aclcheck(NamespaceRelationId, aggNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(aggNamespace));

@@ -6,6 +6,7 @@
 
 #include "utils/geo_decls.h"	/* for Point */
 
+/* X/Open (XSI) requires <math.h> to provide M_PI, but core POSIX does not */
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif

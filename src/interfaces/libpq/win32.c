@@ -15,7 +15,7 @@
  * The error constants are taken from the Frambak Bakfram LGSOCKET
  * library guys who in turn took them from the Winsock FAQ.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  */
@@ -271,10 +271,6 @@ struct MessageDLL
  * Returns a description of the socket error by first trying
  * to find it in the lookup table, and if that fails, tries
  * to load any of the winsock dlls to find that message.
- * The DLL thing works from Nt4 (spX ?) up, but some special
- * versions of winsock might have this as well (seen on Win98 SE
- * special install)			   / Magnus Naeslund (mag@fbab.net)
- *
  */
 
 const char *

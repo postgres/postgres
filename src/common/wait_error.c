@@ -4,7 +4,7 @@
  *		Convert a wait/waitpid(2) result code to a human-readable string
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,14 +26,24 @@
 /*
  * Return a human-readable string explaining the reason a child process
  * terminated. The argument is a return code returned by wait(2) or
- * waitpid(2). The result is a translated, palloc'd or malloc'd string.
+ * waitpid(2), which also applies to pclose(3) and system(3). The result is a
+ * translated, palloc'd or malloc'd string.
  */
 char *
 wait_result_to_str(int exitstatus)
 {
 	char		str[512];
 
-	if (WIFEXITED(exitstatus))
+	/*
+	 * To simplify using this after pclose() and system(), handle status -1
+	 * first.  In that case, there is no wait result but some error indicated
+	 * by errno.
+	 */
+	if (exitstatus == -1)
+	{
+		snprintf(str, sizeof(str), "%m");
+	}
+	else if (WIFEXITED(exitstatus))
 	{
 		/*
 		 * Give more specific error message for some common exit codes that

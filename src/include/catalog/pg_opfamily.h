@@ -4,7 +4,7 @@
  *	  definition of the "operator family" system catalog (pg_opfamily)
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_opfamily.h
@@ -55,7 +55,8 @@ DECLARE_UNIQUE_INDEX_PKEY(pg_opfamily_oid_index, 2755, OpfamilyOidIndexId, on pg
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 
-#define IsBooleanOpfamily(opfamily) \
+/* This does not account for non-core opfamilies that might accept boolean */
+#define IsBuiltinBooleanOpfamily(opfamily) \
 	((opfamily) == BOOL_BTREE_FAM_OID || (opfamily) == BOOL_HASH_FAM_OID)
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */

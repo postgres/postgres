@@ -10,7 +10,7 @@
  * And contributors:
  * Nabil Sayegh <postgresql@e-trolley.de>
  *
- * Copyright (c) 2002-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2023, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
@@ -51,9 +51,9 @@ static Tuplestorestate *get_crosstab_tuplestore(char *sql,
 												HTAB *crosstab_hash,
 												TupleDesc tupdesc,
 												bool randomAccess);
-static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial);
-static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
-static void compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
+static void validateConnectbyTupleDesc(TupleDesc td, bool show_branch, bool show_serial);
+static bool compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc);
+static void compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc);
 static void get_normal_pair(float8 *x1, float8 *x2);
 static Tuplestorestate *connectby(char *relname,
 								  char *key_fld,

@@ -1,9 +1,9 @@
 -- Regression tests for prepareable statements. We query the content
 -- of the pg_prepared_statements view as prepared statements are
 -- created and removed.
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
- name | statement | parameter_types 
-------+-----------+-----------------
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
+ name | statement | parameter_types | result_types 
+------+-----------+-----------------+--------------
 (0 rows)
 
 PREPARE q1 AS SELECT 1 AS a;
@@ -13,10 +13,10 @@ EXECUTE q1;
  1
 (1 row)
 
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
- name |          statement           | parameter_types 
-------+------------------------------+-----------------
- q1   | PREPARE q1 AS SELECT 1 AS a; | {}
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
+ name |          statement           | parameter_types | result_types 
+------+------------------------------+-----------------+--------------
+ q1   | PREPARE q1 AS SELECT 1 AS a; | {}              | {integer}
 (1 row)
 
 -- should fail
@@ -32,26 +32,26 @@ EXECUTE q1;
 (1 row)
 
 PREPARE q2 AS SELECT 2 AS b;
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
- name |          statement           | parameter_types 
-------+------------------------------+-----------------
- q1   | PREPARE q1 AS SELECT 2;      | {}
- q2   | PREPARE q2 AS SELECT 2 AS b; | {}
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
+ name |          statement           | parameter_types | result_types 
+------+------------------------------+-----------------+--------------
+ q1   | PREPARE q1 AS SELECT 2;      | {}              | {integer}
+ q2   | PREPARE q2 AS SELECT 2 AS b; | {}              | {integer}
 (2 rows)
 
 -- sql92 syntax
 DEALLOCATE PREPARE q1;
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
- name |          statement           | parameter_types 
-------+------------------------------+-----------------
- q2   | PREPARE q2 AS SELECT 2 AS b; | {}
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
+ name |          statement           | parameter_types | result_types 
+------+------------------------------+-----------------+--------------
+ q2   | PREPARE q2 AS SELECT 2 AS b; | {}              | {integer}
 (1 row)
 
 DEALLOCATE PREPARE q2;
 -- the view should return the empty set again
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
- name | statement | parameter_types 
-------+-----------+-----------------
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
+ name | statement | parameter_types | result_types 
+------+-----------+-----------------+--------------
 (0 rows)
 
 -- parameterized queries
@@ -159,25 +159,30 @@ PREPARE q6 AS
     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;
 PREPARE q7(unknown) AS
     SELECT * FROM road WHERE thepath = $1;
-SELECT name, statement, parameter_types FROM pg_prepared_statements
+-- DML statements
+PREPARE q8 AS
+    UPDATE tenk1 SET stringu1 = $2 WHERE unique1 = $1;
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements
     ORDER BY name;
- name |                            statement                             |                  parameter_types                   
-------+------------------------------------------------------------------+----------------------------------------------------
- q2   | PREPARE q2(text) AS                                             +| {text}
-      |         SELECT datname, datistemplate, datallowconn             +| 
-      |         FROM pg_database WHERE datname = $1;                     | 
- q3   | PREPARE q3(text, int, float, boolean, smallint) AS              +| {text,integer,"double precision",boolean,smallint}
-      |         SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR+| 
-      |         ten = $3::bigint OR true = $4 OR odd = $5::int)         +| 
-      |         ORDER BY unique1;                                        | 
- q5   | PREPARE q5(int, text) AS                                        +| {integer,text}
-      |         SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2 +| 
-      |         ORDER BY unique1;                                        | 
- q6   | PREPARE q6 AS                                                   +| {integer,name}
-      |     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;    | 
- q7   | PREPARE q7(unknown) AS                                          +| {path}
-      |     SELECT * FROM road WHERE thepath = $1;                       | 
-(5 rows)
+ name |                            statement                             |                  parameter_types                   |                                                       result_types                                                       
+------+------------------------------------------------------------------+----------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------
+ q2   | PREPARE q2(text) AS                                             +| {text}                                             | {name,boolean,boolean}
+      |         SELECT datname, datistemplate, datallowconn             +|                                                    | 
+      |         FROM pg_database WHERE datname = $1;                     |                                                    | 
+ q3   | PREPARE q3(text, int, float, boolean, smallint) AS              +| {text,integer,"double precision",boolean,smallint} | {integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,name,name,name}
+      |         SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR+|                                                    | 
+      |         ten = $3::bigint OR true = $4 OR odd = $5::int)         +|                                                    | 
+      |         ORDER BY unique1;                                        |                                                    | 
+ q5   | PREPARE q5(int, text) AS                                        +| {integer,text}                                     | {integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,name,name,name}
+      |         SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2 +|                                                    | 
+      |         ORDER BY unique1;                                        |                                                    | 
+ q6   | PREPARE q6 AS                                                   +| {integer,name}                                     | {integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,integer,name,name,name}
+      |     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;    |                                                    | 
+ q7   | PREPARE q7(unknown) AS                                          +| {path}                                             | {text,path}
+      |     SELECT * FROM road WHERE thepath = $1;                       |                                                    | 
+ q8   | PREPARE q8 AS                                                   +| {integer,name}                                     | 
+      |     UPDATE tenk1 SET stringu1 = $2 WHERE unique1 = $1;           |                                                    | 
+(6 rows)
 
 -- test DEALLOCATE ALL;
 DEALLOCATE ALL;

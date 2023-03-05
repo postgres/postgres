@@ -44,25 +44,19 @@ install: all installdirs
 	$(INSTALL_DATA) pg_config.h     '$(DESTDIR)$(includedir_server)'
 	$(INSTALL_DATA) pg_config_ext.h '$(DESTDIR)$(includedir_server)'
 	$(INSTALL_DATA) pg_config_os.h  '$(DESTDIR)$(includedir_server)'
+	$(INSTALL_DATA) nodes/nodetags.h '$(DESTDIR)$(includedir_server)/nodes'
 	$(INSTALL_DATA) utils/errcodes.h '$(DESTDIR)$(includedir_server)/utils'
 	$(INSTALL_DATA) utils/fmgroids.h '$(DESTDIR)$(includedir_server)/utils'
 	$(INSTALL_DATA) utils/fmgrprotos.h '$(DESTDIR)$(includedir_server)/utils'
-# We don't use INSTALL_DATA for performance reasons --- there are a lot of files
-# (in fact, we have to take some pains to avoid overlength shell commands here)
-	cp $(srcdir)/*.h '$(DESTDIR)$(includedir_server)'/
+	$(INSTALL_DATA) $(srcdir)/*.h '$(DESTDIR)$(includedir_server)'
 	for dir in $(SUBDIRS); do \
-	  cp $(srcdir)/$$dir/*.h '$(DESTDIR)$(includedir_server)'/$$dir/ || exit; \
+	  $(INSTALL_DATA) $(srcdir)/$$dir/*.h '$(DESTDIR)$(includedir_server)'/$$dir || exit; \
 	done
 ifeq ($(vpath_build),yes)
-	for file in catalog/schemapg.h catalog/system_fk_info.h catalog/pg_*_d.h parser/gram.h storage/lwlocknames.h utils/probes.h; do \
-	  cp $$file '$(DESTDIR)$(includedir_server)'/$$file || exit; \
+	for file in catalog/schemapg.h catalog/system_fk_info.h catalog/pg_*_d.h storage/lwlocknames.h utils/probes.h; do \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	done
 endif
-	cd '$(DESTDIR)$(includedir_server)' && chmod $(INSTALL_DATA_MODE) *.h
-	for dir in $(SUBDIRS); do \
-	  cd '$(DESTDIR)$(includedir_server)'/$$dir || exit; \
-	  chmod $(INSTALL_DATA_MODE) *.h || exit; \
-	done
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(includedir)/libpq' '$(DESTDIR)$(includedir_internal)/libpq'
@@ -78,9 +72,10 @@ uninstall:
 
 clean:
 	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h utils/header-stamp
-	rm -f parser/gram.h storage/lwlocknames.h utils/probes.h
+	rm -f storage/lwlocknames.h utils/probes.h
 	rm -f catalog/schemapg.h catalog/system_fk_info.h
 	rm -f catalog/pg_*_d.h catalog/header-stamp
+	rm -f nodes/nodetags.h nodes/header-stamp
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h pg_config_ext.h pg_config_os.h stamp-h stamp-ext-h

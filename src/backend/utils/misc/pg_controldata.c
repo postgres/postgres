@@ -5,7 +5,7 @@
  * Routines to expose the contents of the control data file via
  * a set of SQL functions.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -38,20 +38,8 @@ pg_control_system(PG_FUNCTION_ARGS)
 	ControlFileData *ControlFile;
 	bool		crc_ok;
 
-	/*
-	 * Construct a tuple descriptor for the result row.  This must match this
-	 * function's pg_proc entry!
-	 */
-	tupdesc = CreateTemplateTupleDesc(4);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_control_version",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catalog_version_no",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "system_identifier",
-					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "pg_control_last_modified",
-					   TIMESTAMPTZOID, -1, 0);
-	tupdesc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	/* read the control file */
 	ControlFile = get_controlfile(DataDir, &crc_ok);
@@ -88,48 +76,8 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	char		xlogfilename[MAXFNAMELEN];
 	bool		crc_ok;
 
-	/*
-	 * Construct a tuple descriptor for the result row.  This must match this
-	 * function's pg_proc entry!
-	 */
-	tupdesc = CreateTemplateTupleDesc(18);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "checkpoint_lsn",
-					   PG_LSNOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "redo_lsn",
-					   PG_LSNOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "redo_wal_file",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "timeline_id",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "prev_timeline_id",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "full_page_writes",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "next_xid",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "next_oid",
-					   OIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "next_multixact_id",
-					   XIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "next_multi_offset",
-					   XIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "oldest_xid",
-					   XIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "oldest_xid_dbid",
-					   OIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 13, "oldest_active_xid",
-					   XIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 14, "oldest_multi_xid",
-					   XIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 15, "oldest_multi_dbid",
-					   OIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 16, "oldest_commit_ts_xid",
-					   XIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 17, "newest_commit_ts_xid",
-					   XIDOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 18, "checkpoint_time",
-					   TIMESTAMPTZOID, -1, 0);
-	tupdesc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	/* Read the control file. */
 	ControlFile = get_controlfile(DataDir, &crc_ok);
@@ -217,22 +165,8 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 	ControlFileData *ControlFile;
 	bool		crc_ok;
 
-	/*
-	 * Construct a tuple descriptor for the result row.  This must match this
-	 * function's pg_proc entry!
-	 */
-	tupdesc = CreateTemplateTupleDesc(5);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "min_recovery_end_lsn",
-					   PG_LSNOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "min_recovery_end_timeline",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "backup_start_lsn",
-					   PG_LSNOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "backup_end_lsn",
-					   PG_LSNOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "end_of_backup_record_required",
-					   BOOLOID, -1, 0);
-	tupdesc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	/* read the control file */
 	ControlFile = get_controlfile(DataDir, &crc_ok);
@@ -270,34 +204,8 @@ pg_control_init(PG_FUNCTION_ARGS)
 	ControlFileData *ControlFile;
 	bool		crc_ok;
 
-	/*
-	 * Construct a tuple descriptor for the result row.  This must match this
-	 * function's pg_proc entry!
-	 */
-	tupdesc = CreateTemplateTupleDesc(11);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "max_data_alignment",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database_block_size",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "blocks_per_segment",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "wal_block_size",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "bytes_per_wal_segment",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "max_identifier_length",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "max_index_columns",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "max_toast_chunk_size",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "large_object_chunk_size",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "float8_pass_by_value",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "data_page_checksum_version",
-					   INT4OID, -1, 0);
-	tupdesc = BlessTupleDesc(tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	/* read the control file */
 	ControlFile = get_controlfile(DataDir, &crc_ok);

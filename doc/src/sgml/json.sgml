@@ -701,17 +701,17 @@ UPDATE table_name SET jsonb_field[2] = '2';
    assigned value can be placed.
 
 <programlisting>
--- Where jsonb_field was {}, it is now {'a': [{'b': 1}]}
+-- Where jsonb_field was {}, it is now {"a": [{"b": 1}]}
 UPDATE table_name SET jsonb_field['a'][0]['b'] = '1';
 
--- Where jsonb_field was [], it is now [null, {'a': 1}]
+-- Where jsonb_field was [], it is now [null, {"a": 1}]
 UPDATE table_name SET jsonb_field[1]['a'] = '1';
 </programlisting>
 
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="datatype-json-transforms">
   <title>Transforms</title>
 
   <para>
@@ -778,6 +778,18 @@ UPDATE table_name SET jsonb_field[1]['a'] = '1';
     </para>
    </listitem>
   </itemizedlist>
+
+  <para>
+   Numeric literals in SQL/JSON path expressions follow JavaScript rules,
+   which are different from both SQL and JSON in some minor details.  For
+   example, SQL/JSON path allows <literal>.1</literal> and
+   <literal>1.</literal>, which are invalid in JSON.  Non-decimal integer
+   literals and underscore separators are supported, for example,
+   <literal>1_000_000</literal>, <literal>0x1EEE_FFFF</literal>,
+   <literal>0o273</literal>, <literal>0b100101</literal>.  In SQL/JSON path
+   (and in JavaScript, but not in SQL proper), there must not be an underscore
+   separator directly after the radix prefix.
+  </para>
 
   <para>
    An SQL/JSON path expression is typically written in an SQL query as an

@@ -5,7 +5,7 @@
  *	  infrastructure for selectivity and cost estimation.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/selfuncs.h
@@ -213,11 +213,6 @@ extern void mergejoinscansel(PlannerInfo *root, Node *clause,
 extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
 								  double input_rows, List **pgset,
 								  EstimationInfo *estinfo);
-
-extern double estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
-											  double input_rows, List **pgset,
-											  EstimationInfo *estinfo,
-											  List **cache_varinfos, int prevNExprs);
 
 extern void estimate_hash_bucket_stats(PlannerInfo *root,
 									   Node *hashkey, double nbuckets,

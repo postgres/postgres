@@ -9,6 +9,13 @@ INSERT INTO xmltest VALUES (3, '<wrong');
 
 SELECT * FROM xmltest;
 
+-- test non-throwing API, too
+SELECT pg_input_is_valid('<value>one</value>', 'xml');
+SELECT pg_input_is_valid('<value>one</', 'xml');
+SELECT message FROM pg_input_error_info('<value>one</', 'xml');
+SELECT pg_input_is_valid('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+SELECT message FROM pg_input_error_info('<?xml version="1.0" standalone="y"?><foo/>', 'xml');
+
 
 SELECT xmlcomment('test');
 SELECT xmlcomment('-test');
@@ -613,7 +620,7 @@ SELECT xmltable.* FROM xmltest2, LATERAL xmltable(('/d/r/' || lower(_path) || 'c
 -- XPath result can be boolean or number too
 SELECT * FROM XMLTABLE('*' PASSING '<a>a</a>' COLUMNS a xml PATH '.', b text PATH '.', c text PATH '"hi"', d boolean PATH '. = "a"', e integer PATH 'string-length(.)');
 \x
-SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>' COLUMNS x xml PATH 'node()', y xml PATH '/');
+SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>' COLUMNS x xml PATH '/e/n2', y xml PATH '/');
 \x
 
 SELECT * FROM XMLTABLE('.' PASSING XMLELEMENT(NAME a) columns a varchar(20) PATH '"<foo/>"', b xml PATH '"<foo/>"');

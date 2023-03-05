@@ -4,7 +4,7 @@
  *	  POSTGRES lock manager definitions.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/lmgr.h
@@ -106,6 +106,11 @@ extern void LockSharedObjectForSession(Oid classid, Oid objid, uint16 objsubid,
 									   LOCKMODE lockmode);
 extern void UnlockSharedObjectForSession(Oid classid, Oid objid, uint16 objsubid,
 										 LOCKMODE lockmode);
+
+extern void LockApplyTransactionForSession(Oid suboid, TransactionId xid, uint16 objid,
+										   LOCKMODE lockmode);
+extern void UnlockApplyTransactionForSession(Oid suboid, TransactionId xid, uint16 objid,
+											 LOCKMODE lockmode);
 
 /* Describe a locktag for error messages */
 extern void DescribeLockTag(StringInfo buf, const LOCKTAG *tag);

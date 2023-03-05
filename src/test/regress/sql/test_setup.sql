@@ -23,6 +23,10 @@ SET synchronous_commit = on;
 --
 GRANT ALL ON SCHEMA public TO public;
 
+-- Create a tablespace we can use in tests.
+SET allow_in_place_tablespaces = true;
+CREATE TABLESPACE regress_tblspace LOCATION '';
+
 --
 -- These tables have traditionally been referenced by many tests,
 -- so create and populate them.  Insert only non-error values here.

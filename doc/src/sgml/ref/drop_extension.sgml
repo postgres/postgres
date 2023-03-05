@@ -30,7 +30,10 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [
 
   <para>
    <command>DROP EXTENSION</command> removes extensions from the database.
-   Dropping an extension causes its component objects to be dropped as well.
+   Dropping an extension causes its member objects, and other explicitly
+   dependent routines (see <xref linkend="sql-alterroutine"/>,
+   the <literal>DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
+   </literal> action), to be dropped as well.
   </para>
 
   <para>
@@ -77,9 +80,9 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [
     <term><literal>RESTRICT</literal></term>
     <listitem>
      <para>
-      Refuse to drop the extension if any objects depend on it (other than
-      its own member objects and other extensions listed in the same
-      <command>DROP</command> command).  This is the default.
+      This option prevents the specified extensions from being dropped if
+      other objects, besides these extensions, their members, and their
+      explicitly dependent routines, depend on them.  This is the default.
      </para>
     </listitem>
    </varlistentry>

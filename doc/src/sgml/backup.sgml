@@ -593,7 +593,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     provide the database administrator with flexibility,
     <productname>PostgreSQL</productname> tries not to make any assumptions about how
     the archiving will be done.  Instead, <productname>PostgreSQL</productname> lets
-    the administrator specify an archive library to be executed to copy a
+    the administrator specify a shell command or an archive library to be executed to copy a
     completed segment file to wherever it needs to go.  This could be as simple
     as a shell command that uses <literal>cp</literal>, or it could invoke a
     complex C function &mdash; it's all up to you.
@@ -603,13 +603,15 @@ tar -cf backup.tar /usr/local/pgsql/data
     To enable WAL archiving, set the <xref linkend="guc-wal-level"/>
     configuration parameter to <literal>replica</literal> or higher,
     <xref linkend="guc-archive-mode"/> to <literal>on</literal>,
-    and specify the library to use in the <xref
+    specify the shell command to use in the <xref
+    linkend="guc-archive-command"/> configuration parameter
+    or specify the library to use in the <xref
     linkend="guc-archive-library"/> configuration parameter.  In practice
     these settings will always be placed in the
     <filename>postgresql.conf</filename> file.
-    One simple way to archive is to set <varname>archive_library</varname> to
-    an empty string and to specify a shell command in
-    <xref linkend="guc-archive-command"/>.
+   </para>
+
+   <para>
     In <varname>archive_command</varname>,
     <literal>%p</literal> is replaced by the path name of the file to
     archive, while <literal>%f</literal> is replaced by only the file name.
@@ -634,6 +636,24 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    </para>
 
    <para>
+    The archive command will be executed under the ownership of the same
+    user that the <productname>PostgreSQL</productname> server is running as.  Since
+    the series of WAL files being archived contains effectively everything
+    in your database, you will want to be sure that the archived data is
+    protected from prying eyes; for example, archive into a directory that
+    does not have group or world read access.
+   </para>
+
+   <para>
+    It is important that the archive command return zero exit status if and
+    only if it succeeds.  Upon getting a zero result,
+    <productname>PostgreSQL</productname> will assume that the file has been
+    successfully archived, and will remove or recycle it.  However, a nonzero
+    status tells <productname>PostgreSQL</productname> that the file was not archived;
+    it will try again periodically until it succeeds.
+   </para>
+
+   <para>
     Another way to archive is to use a custom archive module as the
     <varname>archive_library</varname>.  Since such modules are written in
     <literal>C</literal>, creating your own may require considerably more effort
@@ -644,51 +664,41 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    </para>
 
    <para>
-    The archive library will be executed under the ownership of the same
-    user that the <productname>PostgreSQL</productname> server is running as.  Since
-    the series of WAL files being archived contains effectively everything
-    in your database, you will want to be sure that the archived data is
-    protected from prying eyes; for example, archive into a directory that
-    does not have group or world read access.
+    When the archive command is terminated by a signal (other than
+    <systemitem>SIGTERM</systemitem> that is used as part of a server
+    shutdown) or an error by the shell with an exit status greater than
+    125 (such as command not found), or if the archive function emits an
+    <literal>ERROR</literal> or <literal>FATAL</literal>, the archiver process
+    aborts and gets restarted by the postmaster. In such cases, the failure is
+    not reported in <xref linkend="pg-stat-archiver-view"/>.
    </para>
 
    <para>
-    It is important that the archive function return <literal>true</literal> if
-    and only if it succeeds.  If <literal>true</literal> is returned,
-    <productname>PostgreSQL</productname> will assume that the file has been
-    successfully archived, and will remove or recycle it.  However, a return
-    value of <literal>false</literal> tells
-    <productname>PostgreSQL</productname> that the file was not archived; it
-    will try again periodically until it succeeds.  If you are archiving via a
-    shell command, the appropriate return values can be achieved by returning
-    <literal>0</literal> if the command succeeds and a nonzero value if it
-    fails.
-   </para>
-
-   <para>
-    If the archive function emits an <literal>ERROR</literal> or
-    <literal>FATAL</literal>, the archiver process aborts and gets restarted by
-    the postmaster.  If you are archiving via shell command, FATAL is emitted if
-    the command is terminated by a signal (other than
-    <systemitem>SIGTERM</systemitem> that is used as part of a server shutdown)
-    or an error by the shell with an exit status greater than 125 (such as
-    command not found).  In such cases, the failure is not reported in
-    <xref linkend="pg-stat-archiver-view"/>.
-   </para>
-
-   <para>
-    The archive library should generally be designed to refuse to overwrite
+    Archive commands and libraries should generally be designed to refuse to overwrite
     any pre-existing archive file.  This is an important safety feature to
     preserve the integrity of your archive in case of administrator error
     (such as sending the output of two different servers to the same archive
-    directory).
+    directory).  It is advisable to test your proposed archive library to ensure
+    that it does not overwrite an existing file.
    </para>
 
    <para>
-    It is advisable to test your proposed archive library to ensure that it
-    indeed does not overwrite an existing file, <emphasis>and that it returns
-    <literal>false</literal> in this case</emphasis>.
-    The example command above for Unix ensures this by including a separate
+    In rare cases, <productname>PostgreSQL</productname> may attempt to
+    re-archive a WAL file that was previously archived.  For example, if the
+    system crashes before the server makes a durable record of archival
+    success, the server will attempt to archive the file again after
+    restarting (provided archiving is still enabled).  When an archive command or library
+    encounters a pre-existing file, it should return a zero status or <literal>true</literal>, respectively,
+    if the WAL file has identical contents to the pre-existing archive and the
+    pre-existing archive is fully persisted to storage.  If a pre-existing
+    file contains different contents than the WAL file being archived, the
+    archive command or library <emphasis>must</emphasis> return a nonzero status or
+    <literal>false</literal>, respectively.
+   </para>
+
+   <para>
+    The example command above for Unix avoids overwriting a pre-existing archive
+    by including a separate
     <command>test</command> step.  On some Unix platforms, <command>cp</command> has
     switches such as <option>-i</option> that can be used to do the same thing
     less verbosely, but you should not rely on these without verifying that
@@ -699,7 +709,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
 
    <para>
     While designing your archiving setup, consider what will happen if
-    the archive library fails repeatedly because some aspect requires
+    the archive command or library fails repeatedly because some aspect requires
     operator intervention or the archive runs out of space. For example, this
     could occur if you write to tape without an autochanger; when the tape
     fills, nothing further can be archived until the tape is swapped.
@@ -714,7 +724,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    </para>
 
    <para>
-    The speed of the archive library is unimportant as long as it can keep up
+    The speed of the archive command or library is unimportant as long as it can keep up
     with the average rate at which your server generates WAL data.  Normal
     operation continues even if the archiving process falls a little behind.
     If archiving falls significantly behind, this will increase the amount of
@@ -726,11 +736,11 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    </para>
 
    <para>
-    In writing your archive library, you should assume that the file names to
+    In writing your archive command or library, you should assume that the file names to
     be archived can be up to 64 characters long and can contain any
     combination of ASCII letters, digits, and dots.  It is not necessary to
-    preserve the original relative path but it is necessary to preserve the file
-    name.
+    preserve the original relative path (<literal>%p</literal>) but it is necessary to
+    preserve the file name (<literal>%f</literal>).
    </para>
 
    <para>
@@ -747,7 +757,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    </para>
 
    <para>
-    The archive function is only invoked on completed WAL segments.  Hence,
+    The archive command or function is only invoked on completed WAL segments.  Hence,
     if your server generates only little WAL traffic (or has slack periods
     where it does so), there could be a long delay between the completion
     of a transaction and its safe recording in archive storage.  To put
@@ -776,7 +786,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
     turned on during execution of one of these statements, WAL would not
     contain enough information for archive recovery.  (Crash recovery is
     unaffected.)  For this reason, <varname>wal_level</varname> can only be changed at
-    server start.  However, <varname>archive_library</varname> can be changed with a
+    server start.  However, <varname>archive_command</varname> and <varname>archive_library</varname> can be changed with a
     configuration file reload.  If you are archiving via shell and wish to
     temporarily stop archiving,
     one way to do it is to set <varname>archive_command</varname> to the empty
@@ -872,8 +882,9 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    <listitem>
     <para>
      Connect to the server (it does not matter which database) as a user with
-     rights to run pg_backup_start (superuser, or a user who has been granted
-     EXECUTE on the function) and issue the command:
+     rights to run <function>pg_backup_start</function> (superuser,
+     or a user who has been granted <literal>EXECUTE</literal> on the
+     function) and issue the command:
 <programlisting>
 SELECT pg_backup_start(label => 'label', fast => false);
 </programlisting>
@@ -945,11 +956,11 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
      On a standby, <varname>archive_mode</varname> must be <literal>always</literal> in order
      for <function>pg_backup_stop</function> to wait.
      Archiving of these files happens automatically since you have
-     already configured <varname>archive_library</varname>. In most cases this
-     happens quickly, but you are advised to monitor your archive
-     system to ensure there are no delays.
-     If the archive process has fallen behind
-     because of failures of the archive library, it will keep retrying
+     already configured <varname>archive_command</varname> or <varname>archive_library</varname>.
+     In most cases this happens quickly, but you are advised to monitor your
+     archive system to ensure there are no delays.
+     If the archive process has fallen behind because of failures of the
+     archive command or library, it will keep retrying
      until the archive succeeds and the backup is complete.
      If you wish to place a time limit on the execution of
      <function>pg_backup_stop</function>, set an appropriate
@@ -1095,7 +1106,7 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
      require that you have enough free space on your system to hold two
      copies of your existing database. If you do not have enough space,
      you should at least save the contents of the cluster's <filename>pg_wal</filename>
-     subdirectory, as it might contain logs which
+     subdirectory, as it might contain WAL files which
      were not archived before the system went down.
     </para>
    </listitem>
@@ -1173,8 +1184,8 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
     which tells <productname>PostgreSQL</productname> how to retrieve archived
     WAL file segments.  Like the <varname>archive_command</varname>, this is
     a shell command string.  It can contain <literal>%f</literal>, which is
-    replaced by the name of the desired log file, and <literal>%p</literal>,
-    which is replaced by the path name to copy the log file to.
+    replaced by the name of the desired WAL file, and <literal>%p</literal>,
+    which is replaced by the path name to copy the WAL file to.
     (The path name is relative to the current working directory,
     i.e., the cluster's data directory.)
     Write <literal>%%</literal> if you need to embed an actual <literal>%</literal>
@@ -1462,9 +1473,9 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
      <link linkend="sql-createtablespace"><command>CREATE TABLESPACE</command></link>
      commands are WAL-logged with the literal absolute path, and will
      therefore be replayed as tablespace creations with the same
-     absolute path.  This might be undesirable if the log is being
+     absolute path.  This might be undesirable if the WAL is being
      replayed on a different machine.  It can be dangerous even if the
-     log is being replayed on the same machine, but into a new data
+     WAL is being replayed on the same machine, but into a new data
      directory: the replay will still overwrite the contents of the
      original tablespace.  To avoid potential gotchas of this sort,
      the best practice is to take a new base backup after creating or
@@ -1481,11 +1492,11 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
     we might need to fix partially-written disk pages.  Depending on
     your system hardware and software, the risk of partial writes might
     be small enough to ignore, in which case you can significantly
-    reduce the total volume of archived logs by turning off page
+    reduce the total volume of archived WAL files by turning off page
     snapshots using the <xref linkend="guc-full-page-writes"/>
     parameter.  (Read the notes and warnings in <xref linkend="wal"/>
     before you do so.)  Turning off page snapshots does not prevent
-    use of the logs for PITR operations.  An area for future
+    use of the WAL for PITR operations.  An area for future
     development is to compress archived WAL data by removing
     unnecessary page copies even when <varname>full_page_writes</varname> is
     on.  In the meantime, administrators might wish to reduce the number

@@ -51,13 +51,13 @@ out-of-memory.
 This might be used for example to canonicalize the spelling of a string
 value, round off a buffer size to the nearest supported value, or replace
 a special value such as "-1" with a computed default value.  If the
-function wishes to replace a string value, it must malloc (not palloc)
-the replacement value, and be sure to free() the previous value.
+function wishes to replace a string value, it must guc_malloc (not palloc)
+the replacement value, and be sure to guc_free() the previous value.
 
 * Derived information, such as the role OID represented by a user name,
-can be stored for use by the assign hook.  To do this, malloc (not palloc)
+can be stored for use by the assign hook.  To do this, guc_malloc (not palloc)
 storage space for the information, and return its address at *extra.
-guc.c will automatically free() this space when the associated GUC setting
+guc.c will automatically guc_free() this space when the associated GUC setting
 is no longer of interest.  *extra is initialized to NULL before call, so
 it can be ignored if not needed.
 
@@ -255,10 +255,9 @@ maintained by GUC.
 GUC Memory Handling
 -------------------
 
-String variable values are allocated with malloc/strdup, not with the
-palloc/pstrdup mechanisms.  We would need to keep them in a permanent
-context anyway, and malloc gives us more control over handling
-out-of-memory failures.
+String variable values are allocated with guc_malloc or guc_strdup,
+which ensure that the values are kept in a long-lived context, and provide
+more control over handling out-of-memory failures than bare palloc.
 
 We allow a string variable's actual value, reset_val, boot_val, and stacked
 values to point at the same storage.  This makes it slightly harder to free

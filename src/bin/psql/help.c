@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * src/bin/psql/help.c
  */
@@ -189,6 +189,7 @@ slashUsage(unsigned short int pager)
 	initPQExpBuffer(&buf);
 
 	HELP0("General\n");
+	HELP0("  \\bind [PARAM]...       set query parameters\n");
 	HELP0("  \\copyright             show PostgreSQL usage and distribution terms\n");
 	HELP0("  \\crosstabview [COLUMNS] execute query and display result in crosstab\n");
 	HELP0("  \\errverbose            show most recent error message at maximum verbosity\n");
@@ -747,7 +748,7 @@ print_copyright(void)
 {
 	puts("PostgreSQL Database Management System\n"
 		 "(formerly known as Postgres, then as Postgres95)\n\n"
-		 "Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group\n\n"
+		 "Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
 		 "Permission to use, copy, modify, and distribute this software and its\n"
 		 "documentation for any purpose, without fee, and without a written agreement\n"

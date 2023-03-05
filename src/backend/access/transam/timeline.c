@@ -21,7 +21,7 @@
  * The fields are separated by tabs. Lines beginning with # are comments, and
  * are ignored. Empty lines are also ignored.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/timeline.c
@@ -441,12 +441,8 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	 * Now move the completed history file into place with its final name.
 	 */
 	TLHistoryFilePath(path, newTLI);
-
-	/*
-	 * Perform the rename using link if available, paranoidly trying to avoid
-	 * overwriting an existing file (there shouldn't be one).
-	 */
-	durable_rename_excl(tmppath, path, ERROR);
+	Assert(access(path, F_OK) != 0 && errno == ENOENT);
+	durable_rename(tmppath, path, ERROR);
 
 	/* The history file can be archived immediately. */
 	if (XLogArchivingActive())
@@ -516,15 +512,11 @@ writeTimeLineHistoryFile(TimeLineID tli, char *content, int size)
 				 errmsg("could not close file \"%s\": %m", tmppath)));
 
 	/*
-	 * Now move the completed history file into place with its final name.
+	 * Now move the completed history file into place with its final name,
+	 * replacing any existing file with the same name.
 	 */
 	TLHistoryFilePath(path, tli);
-
-	/*
-	 * Perform the rename using link if available, paranoidly trying to avoid
-	 * overwriting an existing file (there shouldn't be one).
-	 */
-	durable_rename_excl(tmppath, path, ERROR);
+	durable_rename(tmppath, path, ERROR);
 }
 
 /*

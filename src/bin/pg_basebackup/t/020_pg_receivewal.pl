@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -251,7 +251,7 @@ $primary->command_fails_like(
 		'nonexistentslot', '-n', '--no-sync', '--verbose',
 		'--endpos',        $nextlsn
 	],
-	qr/pg_receivewal: error: could not find replication slot "nonexistentslot"/,
+	qr/pg_receivewal: error: replication slot "nonexistentslot" does not exist/,
 	'pg_receivewal fails with non-existing slot');
 $primary->command_ok(
 	[

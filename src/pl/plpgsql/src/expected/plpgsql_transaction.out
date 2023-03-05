@@ -576,8 +576,7 @@ BEGIN
     PERFORM 1;
     RAISE INFO '%', current_setting('transaction_isolation');
     COMMIT;
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    RESET TRANSACTION ISOLATION LEVEL;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
     PERFORM 1;
     RAISE INFO '%', current_setting('transaction_isolation');
     COMMIT;
@@ -585,7 +584,7 @@ END;
 $$;
 INFO:  read committed
 INFO:  repeatable read
-INFO:  read committed
+INFO:  serializable
 -- error cases
 DO LANGUAGE plpgsql $$
 BEGIN

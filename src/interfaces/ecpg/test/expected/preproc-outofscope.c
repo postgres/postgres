@@ -70,24 +70,24 @@ extern "C"
 
 numeric    *PGTYPESnumeric_new(void);
 decimal    *PGTYPESdecimal_new(void);
-void		PGTYPESnumeric_free(numeric *);
-void		PGTYPESdecimal_free(decimal *);
-numeric    *PGTYPESnumeric_from_asc(char *, char **);
-char	   *PGTYPESnumeric_to_asc(numeric *, int);
-int			PGTYPESnumeric_add(numeric *, numeric *, numeric *);
-int			PGTYPESnumeric_sub(numeric *, numeric *, numeric *);
-int			PGTYPESnumeric_mul(numeric *, numeric *, numeric *);
-int			PGTYPESnumeric_div(numeric *, numeric *, numeric *);
-int			PGTYPESnumeric_cmp(numeric *, numeric *);
-int			PGTYPESnumeric_from_int(signed int, numeric *);
-int			PGTYPESnumeric_from_long(signed long int, numeric *);
-int			PGTYPESnumeric_copy(numeric *, numeric *);
-int			PGTYPESnumeric_from_double(double, numeric *);
-int			PGTYPESnumeric_to_double(numeric *, double *);
-int			PGTYPESnumeric_to_int(numeric *, int *);
-int			PGTYPESnumeric_to_long(numeric *, long *);
-int			PGTYPESnumeric_to_decimal(numeric *, decimal *);
-int			PGTYPESnumeric_from_decimal(decimal *, numeric *);
+void		PGTYPESnumeric_free(numeric *var);
+void		PGTYPESdecimal_free(decimal *var);
+numeric    *PGTYPESnumeric_from_asc(char *str, char **endptr);
+char	   *PGTYPESnumeric_to_asc(numeric *num, int dscale);
+int			PGTYPESnumeric_add(numeric *var1, numeric *var2, numeric *result);
+int			PGTYPESnumeric_sub(numeric *var1, numeric *var2, numeric *result);
+int			PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result);
+int			PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result);
+int			PGTYPESnumeric_cmp(numeric *var1, numeric *var2);
+int			PGTYPESnumeric_from_int(signed int int_val, numeric *var);
+int			PGTYPESnumeric_from_long(signed long int long_val, numeric *var);
+int			PGTYPESnumeric_copy(numeric *src, numeric *dst);
+int			PGTYPESnumeric_from_double(double d, numeric *dst);
+int			PGTYPESnumeric_to_double(numeric *nv, double *dp);
+int			PGTYPESnumeric_to_int(numeric *nv, int *ip);
+int			PGTYPESnumeric_to_long(numeric *nv, long *lp);
+int			PGTYPESnumeric_to_decimal(numeric *src, decimal *dst);
+int			PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);
 
 #ifdef __cplusplus
 }

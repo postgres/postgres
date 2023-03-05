@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * src/bin/psql/common.h
  */
@@ -9,6 +9,7 @@
 #define COMMON_H
 
 #include <setjmp.h>
+#include <signal.h>
 
 #include "fe_utils/print.h"
 #include "fe_utils/psqlscan.h"
@@ -22,7 +23,7 @@ extern char *psql_get_variable(const char *varname, PsqlScanQuoteType quote,
 
 extern void NoticeProcessor(void *arg, const char *message);
 
-extern volatile bool sigint_interrupt_enabled;
+extern volatile sig_atomic_t sigint_interrupt_enabled;
 
 extern sigjmp_buf sigint_interrupt_jmp;
 

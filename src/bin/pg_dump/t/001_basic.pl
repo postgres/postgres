@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -121,24 +121,46 @@ command_fails_like(
 	'pg_restore: cannot specify both --single-transaction and multiple jobs');
 
 command_fails_like(
-	[ 'pg_dump', '-Z', '-1' ],
-	qr/\Qpg_dump: error: -Z\/--compress must be in range 0..9\E/,
-	'pg_dump: -Z/--compress must be in range');
+	[ 'pg_dump', '--compress', 'garbage' ],
+	qr/\Qpg_dump: error: unrecognized compression algorithm/,
+	'pg_dump: invalid --compress');
+
+command_fails_like(
+	[ 'pg_dump', '--compress', 'none:1' ],
+	qr/\Qpg_dump: error: invalid compression specification: compression algorithm "none" does not accept a compression level\E/,
+	'pg_dump: invalid compression specification: compression algorithm "none" does not accept a compression level'
+);
+
 
 if (check_pg_config("#define HAVE_LIBZ 1"))
 {
 	command_fails_like(
+		[ 'pg_dump', '-Z', '15' ],
+		qr/\Qpg_dump: error: invalid compression specification: compression algorithm "gzip" expects a compression level between 1 and 9 (default at -1)\E/,
+		'pg_dump: invalid compression specification: must be in range');
+
+	command_fails_like(
 		[ 'pg_dump', '--compress', '1', '--format', 'tar' ],
 		qr/\Qpg_dump: error: compression is not supported by tar archive format\E/,
 		'pg_dump: compression is not supported by tar archive format');
+
+	command_fails_like(
+		[ 'pg_dump', '-Z', 'gzip:nonInt' ],
+		qr/\Qpg_dump: error: invalid compression specification: unrecognized compression option: "nonInt"\E/,
+		'pg_dump: invalid compression specification: must be an integer');
 }
 else
 {
 	# --jobs > 1 forces an error with tar format.
 	command_fails_like(
-		[ 'pg_dump', '--compress', '1', '--format', 'tar', '-j3' ],
-		qr/\Qpg_dump: warning: requested compression not available in this installation -- archive will be uncompressed\E/,
-		'pg_dump: warning: compression not available in this installation');
+		[ 'pg_dump', '--format', 'tar', '-j3' ],
+		qr/\Qpg_dump: error: parallel backup only supported by the directory format\E/,
+		'pg_dump: warning: parallel backup not supported by tar format');
+
+	command_fails_like(
+		[ 'pg_dump', '-Z', 'gzip:nonInt', '--format', 'tar', '-j2' ],
+		qr/\Qpg_dump: error: invalid compression specification: unrecognized compression option\E/,
+		'pg_dump: invalid compression specification: must be an integer');
 }
 
 command_fails_like(

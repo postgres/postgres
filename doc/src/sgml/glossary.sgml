@@ -233,6 +233,25 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-bootstrap-superuser">
+   <glossterm>Bootstrap superuser</glossterm>
+   <glossdef>
+    <para>
+     The first <glossterm linkend="glossary-user">user</glossterm> initialized in a
+     <glossterm linkend="glossary-db-cluster">database cluster</glossterm>.
+    </para>
+    <para>
+     This user owns all system catalog tables in each database.  It is also the role
+     from which all granted permissions originate.  Because of these things, this
+     role may not be dropped.
+    </para>
+    <para>
+     This role also behaves as a normal
+     <glossterm linkend="glossary-database-superuser">database superuser</glossterm>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-cast">
    <glossterm>Cast</glossterm>
    <glossdef>
@@ -338,6 +357,23 @@
      by <glossterm linkend="glossary-connection">connecting</glossterm> to an
      <glossterm linkend="glossary-instance">instance</glossterm>
      to interact with a <glossterm linkend="glossary-database">database</glossterm>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-cluster-owner">
+   <glossterm>Cluster owner</glossterm>
+   <glossdef>
+    <para>
+     The operating system user that owns the
+     <glossterm linkend="glossary-data-directory">data directory</glossterm>
+     and under which the <literal>postgres</literal> process is run.
+     It is required that this user exist prior to creating a new
+     <glossterm linkend="glossary-db-cluster">database cluster</glossterm>.
+    </para>
+    <para>
+     On operating systems with a <literal>root</literal> user,
+     said user is not allowed to be the cluster owner.
     </para>
    </glossdef>
   </glossentry>
@@ -475,11 +511,19 @@
      and their common static and dynamic metadata.
      Sometimes referred to as a
      <firstterm>cluster</firstterm>.
+     A database cluster is created using the
+     <xref linkend="app-initdb" /> program.
     </para>
     <para>
      In <productname>PostgreSQL</productname>, the term
      <firstterm>cluster</firstterm> is also sometimes used to refer to an instance.
      (Don't confuse this term with the SQL command <command>CLUSTER</command>.)
+    </para>
+    <para>
+     See also <glossterm linkend="glossary-cluster-owner">cluster owner</glossterm>,
+     the operating-system owner of a cluster,
+     and <glossterm linkend="glossary-bootstrap-superuser">bootstrap superuser</glossterm>,
+     the <productname>PostgreSQL</productname> owner of a cluster.
     </para>
    </glossdef>
   </glossentry>
@@ -487,6 +531,19 @@
   <glossentry>
    <glossterm>Database server</glossterm>
    <glosssee otherterm="glossary-instance" />
+  </glossentry>
+
+  <glossentry id="glossary-database-superuser">
+   <glossterm>Database superuser</glossterm>
+   <glossdef>
+    <para>
+     A role having <firstterm>superuser status</firstterm>
+     (see <xref linkend="role-attributes"/>).
+    </para>
+    <para>
+     Frequently referred to as <firstterm>superuser</firstterm>.
+    </para>
+   </glossdef>
   </glossentry>
 
   <glossentry id="glossary-data-directory">
@@ -1577,6 +1634,16 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-superuser">
+   <glossterm>Superuser</glossterm>
+   <glossdef>
+    <para>
+     As used in this documentation, it is a synonym for
+     <glossterm linkend="glossary-database-superuser">database superuser</glossterm>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-system-catalog">
    <glossterm>System catalog</glossterm>
    <glossdef>
@@ -1710,7 +1777,8 @@
      <literal>3</literal> (values under that are reserved) and the
      epoch value is incremented by one.
      In some contexts, the epoch and xid values are
-     considered together as a single 64-bit value.
+     considered together as a single 64-bit value;  see <xref
+     linkend="transaction-id"/> for more details.
     </para>
     <para>
      For more information, see
@@ -1827,7 +1895,8 @@
    <glossdef>
     <para>
      A <glossterm linkend="glossary-role">role</glossterm> that has the
-     <literal>LOGIN</literal> privilege.
+     <firstterm>login privilege</firstterm>
+     (see <xref linkend="role-attributes"/>).
     </para>
    </glossdef>
   </glossentry>

@@ -3,7 +3,7 @@
  * rbtree.h
  *	  interface for PostgreSQL generic Red-Black binary tree package
  *
- * Copyright (c) 2009-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2009-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/include/lib/rbtree.h
@@ -67,6 +67,8 @@ extern RBTree *rbt_create(Size node_size,
 						  void *arg);
 
 extern RBTNode *rbt_find(RBTree *rbt, const RBTNode *data);
+extern RBTNode *rbt_find_great(RBTree *rbt, const RBTNode *data, bool equal_match);
+extern RBTNode *rbt_find_less(RBTree *rbt, const RBTNode *data, bool equal_match);
 extern RBTNode *rbt_leftmost(RBTree *rbt);
 
 extern RBTNode *rbt_insert(RBTree *rbt, const RBTNode *data, bool *isNew);

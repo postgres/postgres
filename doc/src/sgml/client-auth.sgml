@@ -89,8 +89,8 @@
   </para>
 
   <para>
-   Each record specifies a connection type, a client IP address range
-   (if relevant for the connection type), a database name, a user name,
+   Each authentication record specifies a connection type, a client IP address
+   range (if relevant for the connection type), a database name, a user name,
    and the authentication method to be used for connections matching
    these parameters. The first record with a matching connection type,
    client address, requested database, and user name is used to perform
@@ -101,19 +101,37 @@
   </para>
 
   <para>
+   Each record can be an include directive or an authentication record.
+   Include directives specify files that can be included, that contain
+   additional records. The records will be inserted in place of the
+   include records. These records only contain two fields:
+   <literal>include</literal>, <literal>include_if_exists</literal> or
+   <literal>include_dir</literal> directive and the file or directory to be
+   included. The file or directory can be a relative of absolute path, and can
+   be double-quoted.  For the <literal>include_dir</literal> form, all files
+   not starting with a <literal>.</literal> and ending with
+   <literal>.conf</literal> will be included. Multiple files within an include
+   directory are processed in file name order (according to C locale rules,
+   i.e., numbers before letters, and uppercase letters before lowercase ones).
+  </para>
+
+  <para>
    A record can have several formats:
 <synopsis>
-local         <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable> <optional><replaceable>auth-options</replaceable></optional>
-host          <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostssl       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnossl     <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostgssenc    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-host          <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostssl       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnossl     <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostgssenc    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+local               <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable> <optional><replaceable>auth-options</replaceable></optional>
+host                <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl             <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl           <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostgssenc          <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnogssenc        <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+host                <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl             <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl           <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostgssenc          <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnogssenc        <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+include             <replaceable>file</replaceable>
+include_if_exists   <replaceable>file</replaceable>
+include_dir         <replaceable>directory</replaceable>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -233,11 +251,20 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        doesn't match with logical replication connections. Note that physical
        replication connections do not specify any particular database whereas
        logical replication connections do specify it.
-       Otherwise, this is the name of
-       a specific <productname>PostgreSQL</productname> database.
-       Multiple database names can be supplied by separating them with
-       commas.  A separate file containing database names can be specified by
-       preceding the file name with <literal>@</literal>.
+       Otherwise, this is the name of a specific
+       <productname>PostgreSQL</productname> database or a regular expression.
+       Multiple database names and/or regular expressions can be supplied by
+       separating them with commas.
+      </para>
+      <para>
+       If the database name starts with a slash (<literal>/</literal>), the
+       remainder of the name is treated as a regular expression.
+       (See <xref linkend="posix-syntax-details"/> for details of
+       <productname>PostgreSQL</productname>'s regular expression syntax.)
+      </para>
+      <para>
+       A separate file containing database names and/or regular expressions
+       can be specified by preceding the file name with <literal>@</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -249,7 +276,8 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        Specifies which database user name(s) this record
        matches. The value <literal>all</literal> specifies that it
        matches all users.  Otherwise, this is either the name of a specific
-       database user, or a group name preceded by <literal>+</literal>.
+       database user, a regular expression (when starting with a slash
+       (<literal>/</literal>), or a group name preceded by <literal>+</literal>.
        (Recall that there is no real distinction between users and groups
        in <productname>PostgreSQL</productname>; a <literal>+</literal> mark really means
        <quote>match any of the roles that are directly or indirectly members
@@ -258,9 +286,18 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        considered to be a member of a role if they are explicitly a member
        of the role, directly or indirectly, and not just by virtue of
        being a superuser.
-       Multiple user names can be supplied by separating them with commas.
-       A separate file containing user names can be specified by preceding the
-       file name with <literal>@</literal>.
+       Multiple user names and/or regular expressions can be supplied by
+       separating them with commas.
+      </para>
+      <para>
+       If the user name starts with a slash (<literal>/</literal>), the
+       remainder of the name is treated as a regular expression.
+       (See <xref linkend="posix-syntax-details"/> for details of
+       <productname>PostgreSQL</productname>'s regular expression syntax.)
+      </para>
+      <para>
+       A separate file containing user names and/or regular expressions can
+       be specified by preceding the file name with <literal>@</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -305,8 +342,6 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        An entry given in IPv4 format will match only IPv4 connections,
        and an entry given in IPv6 format will match only IPv6 connections,
        even if the represented address is in the IPv4-in-IPv6 range.
-       Note that entries in IPv6 format will be rejected if the system's
-       C library does not have support for IPv6 addresses.
       </para>
 
       <para>
@@ -417,7 +452,9 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
       <para>
        Specifies the authentication method to use when a connection matches
        this record. The possible choices are summarized here; details
-       are in <xref linkend="auth-methods"/>.
+       are in <xref linkend="auth-methods"/>.  All the options
+       are lower case and treated case sensitively, so even acronyms like
+       <literal>ldap</literal> must be specified as lower case.
 
        <variablelist>
         <varlistentry>
@@ -636,6 +673,39 @@ openssl x509 -in myclient.crt -noout --subject -nameopt RFC2253 | sed "s/^subjec
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><literal>include</literal></term>
+     <listitem>
+      <para>
+       This line will be replaced by the contents of the given file.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>include_if_exists</literal></term>
+     <listitem>
+      <para>
+       This line will be replaced by the content of the given file if the
+       file exists. Otherwise, a message is logged to indicate that the file
+       has been skipped.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>include_dir</literal></term>
+     <listitem>
+      <para>
+       This line will be replaced by the contents of all the files found in
+       the directory, if they don't start with a <literal>.</literal> and end
+       with <literal>.conf</literal>, processed in file name order (according
+       to C locale rules, i.e., numbers before letters, and uppercase letters
+       before lowercase ones).
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
 
@@ -739,6 +809,14 @@ host    all             all             ::1/128                 trust
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             localhost               trust
 
+# The same using a regular expression for DATABASE, that allows connection
+# to the database db1, db2 and any databases with a name beginning by "db"
+# and finishing with a number using two to four digits (like "db1234" or
+# "db12").
+#
+# TYPE  DATABASE                   USER            ADDRESS          METHOD
+local   db1,"/^db\d{2,4}$",db2     all             localhost        trust
+
 # Allow any user from any host with IP address 192.168.93.x to connect
 # to database "postgres" as the same user name that ident reports for
 # the connection (typically the operating system user name).
@@ -785,15 +863,16 @@ host    all             all             192.168.12.10/32        gss
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             192.168.0.0/16          ident map=omicron
 
-# If these are the only three lines for local connections, they will
+# If these are the only four lines for local connections, they will
 # allow local users to connect only to their own databases (databases
-# with the same name as their database user name) except for administrators
-# and members of role "support", who can connect to all databases.  The file
-# $PGDATA/admins contains a list of names of administrators.  Passwords
-# are required in all cases.
+# with the same name as their database user name) except for users whose
+# name end with "helpdesk", administrators and members of role "support",
+# who can connect to all databases.  The file $PGDATA/admins contains a
+# list of names of administrators.  Passwords are required in all cases.
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 local   sameuser        all                                     md5
+local   all             /^.*helpdesk$                           md5
 local   all             @admins                                 md5
 local   all             +support                                md5
 
@@ -835,9 +914,12 @@ local   db1,db2,@demodbs  all                                   md5
    cluster's data directory.  (It is possible to place the map file
    elsewhere, however; see the <xref linkend="guc-ident-file"/>
    configuration parameter.)
-   The ident map file contains lines of the general form:
+   The ident map file contains lines of the general forms:
 <synopsis>
 <replaceable>map-name</replaceable> <replaceable>system-username</replaceable> <replaceable>database-username</replaceable>
+<replaceable>include</replaceable> <replaceable>file</replaceable>
+<replaceable>include_if_exists</replaceable> <replaceable>file</replaceable>
+<replaceable>include_dir</replaceable> <replaceable>directory</replaceable>
 </synopsis>
    Comments, whitespace and line continuations are handled in the same way as in
    <filename>pg_hba.conf</filename>.  The
@@ -848,6 +930,10 @@ local   db1,db2,@demodbs  all                                   md5
    used repeatedly to specify multiple user-mappings within a single map.
   </para>
   <para>
+   As for <filename>pg_hba.conf</filename>, the lines in this file can
+   be include directives, following the same rules.
+  </para>
+  <para>
    There is no restriction regarding how many database users a given
    operating system user can correspond to, nor vice versa.  Thus, entries
    in a map should be thought of as meaning <quote>this operating system
@@ -855,7 +941,22 @@ local   db1,db2,@demodbs  all                                   md5
    implying that they are equivalent.  The connection will be allowed if
    there is any map entry that pairs the user name obtained from the
    external authentication system with the database user name that the
-   user has requested to connect as.
+   user has requested to connect as. The value <literal>all</literal>
+   can be used as the <replaceable>database-username</replaceable> to specify
+   that if the <replaceable>system-user</replaceable> matches, then this user
+   is allowed to log in as any of the existing database users. Quoting
+   <literal>all</literal> makes the keyword lose its special meaning.
+  </para>
+  <para>
+   If the <replaceable>database-username</replaceable> begins with a
+   <literal>+</literal> character, then the operating system user can login as
+   any user belonging to that role, similarly to how user names beginning with
+   <literal>+</literal> are treated in <literal>pg_hba.conf</literal>.
+   Thus, a <literal>+</literal> mark means <quote>match any of the roles that
+   are directly or indirectly members of this role</quote>, while a name
+   without a <literal>+</literal> mark matches only that specific role. Quoting
+   a username starting with a <literal>+</literal> makes the
+   <literal>+</literal> lose its special meaning.
   </para>
   <para>
    If the <replaceable>system-username</replaceable> field starts with a slash (<literal>/</literal>),
@@ -874,6 +975,19 @@ mymap   /^(.*)@otherdomain\.com$   guest
    will remove the domain part for users with system user names that end with
    <literal>@mydomain.com</literal>, and allow any user whose system name ends with
    <literal>@otherdomain.com</literal> to log in as <literal>guest</literal>.
+   Quoting a <replaceable>database-username</replaceable> containing
+   <literal>\1</literal> <emphasis>does not</emphasis> make
+   <literal>\1</literal> lose its special meaning.
+  </para>
+  <para>
+   If the <replaceable>database-username</replaceable> field starts with
+   a slash (<literal>/</literal>), the remainder of the field is treated
+   as a regular expression (see <xref linkend="posix-syntax-details"/>
+   for details of <productname>PostgreSQL</productname>'s regular
+   expression syntax. It is not possible to use <literal>\1</literal>
+   to use a capture from regular expression on
+   <replaceable>system-username</replaceable> for a regular expression
+   on <replaceable>database-username</replaceable>.
   </para>
 
   <tip>
@@ -2227,7 +2341,7 @@ FATAL:  database "testdb" does not exist
 </programlisting>
     The database you are trying to connect to does not exist. Note that
     if you do not specify a database name, it defaults to the database
-    user name, which might or might not be the right thing.
+    user name.
    </para>
 
    <tip>

@@ -4,7 +4,7 @@
  *	  definition of the "text search dictionary" system catalog (pg_ts_dict)
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_ts_dict.h

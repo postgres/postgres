@@ -61,9 +61,12 @@ typedef struct NDBOX
 
 /* in cubescan.l */
 extern int	cube_yylex(void);
-extern void cube_yyerror(NDBOX **result, const char *message) pg_attribute_noreturn();
-extern void cube_scanner_init(const char *str);
+extern void cube_yyerror(NDBOX **result, Size scanbuflen,
+						 struct Node *escontext,
+						 const char *message);
+extern void cube_scanner_init(const char *str, Size *scanbuflen);
 extern void cube_scanner_finish(void);
 
 /* in cubeparse.y */
-extern int	cube_yyparse(NDBOX **result);
+extern int	cube_yyparse(NDBOX **result, Size scanbuflen,
+						 struct Node *escontext);

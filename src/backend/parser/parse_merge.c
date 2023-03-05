@@ -3,7 +3,7 @@
  * parse_merge.c
  *	  handle merge-statement in parser
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -155,15 +155,19 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 		/*
 		 * Check for unreachable WHEN clauses
 		 */
-		if (mergeWhenClause->condition == NULL)
-			is_terminal[when_type] = true;
-		else if (is_terminal[when_type])
+		if (is_terminal[when_type])
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("unreachable WHEN clause specified after unconditional WHEN clause")));
+		if (mergeWhenClause->condition == NULL)
+			is_terminal[when_type] = true;
 	}
 
-	/* Set up the MERGE target table. */
+	/*
+	 * Set up the MERGE target table.  The target table is added to the
+	 * namespace below and to joinlist in transform_MERGE_to_join, so don't
+	 * do it here.
+	 */
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 										 stmt->relation->inh,
 										 false, targetPerms);
@@ -178,7 +182,8 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 				 errmsg("cannot execute MERGE on relation \"%s\"",
 						RelationGetRelationName(pstate->p_target_relation)),
 				 errdetail_relkind_not_supported(pstate->p_target_relation->rd_rel->relkind)));
-	if (pstate->p_target_relation->rd_rel->relhasrules)
+	if (pstate->p_target_relation->rd_rules != NULL &&
+		pstate->p_target_relation->rd_rules->numLocks > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot execute MERGE on relation \"%s\"",
@@ -210,6 +215,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	 */
 	qry->targetList = NIL;
 	qry->rtable = pstate->p_rtable;
+	qry->rteperminfos = pstate->p_rteperminfos;
 
 	/*
 	 * Transform the join condition.  This includes references to the target
@@ -282,7 +288,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 				{
 					List	   *exprList = NIL;
 					ListCell   *lc;
-					RangeTblEntry *rte;
+					RTEPermissionInfo *perminfo;
 					ListCell   *icols;
 					ListCell   *attnos;
 					List	   *icolumns;
@@ -341,7 +347,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 					 * of expressions. Also, mark all the target columns as
 					 * needing insert permissions.
 					 */
-					rte = pstate->p_target_nsitem->p_rte;
+					perminfo = pstate->p_target_nsitem->p_perminfo;
 					forthree(lc, exprList, icols, icolumns, attnos, attrnos)
 					{
 						Expr	   *expr = (Expr *) lfirst(lc);
@@ -355,8 +361,8 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 											  false);
 						action->targetList = lappend(action->targetList, tle);
 
-						rte->insertedCols =
-							bms_add_member(rte->insertedCols,
+						perminfo->insertedCols =
+							bms_add_member(perminfo->insertedCols,
 										   attr_num - FirstLowInvalidHeapAttributeNumber);
 					}
 				}

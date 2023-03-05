@@ -8,7 +8,7 @@
  * determined by the PG_CMDTAG macro, which is not defined in this file;
  * it can be defined by the caller for special purposes.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/tcop/cmdtaglist.h
@@ -42,7 +42,7 @@ PG_CMDTAG(CMDTAG_ALTER_FUNCTION, "ALTER FUNCTION", true, false, false)
 PG_CMDTAG(CMDTAG_ALTER_INDEX, "ALTER INDEX", true, false, false)
 PG_CMDTAG(CMDTAG_ALTER_LANGUAGE, "ALTER LANGUAGE", true, false, false)
 PG_CMDTAG(CMDTAG_ALTER_LARGE_OBJECT, "ALTER LARGE OBJECT", true, false, false)
-PG_CMDTAG(CMDTAG_ALTER_MATERIALIZED_VIEW, "ALTER MATERIALIZED VIEW", true, false, false)
+PG_CMDTAG(CMDTAG_ALTER_MATERIALIZED_VIEW, "ALTER MATERIALIZED VIEW", true, true, false)
 PG_CMDTAG(CMDTAG_ALTER_OPERATOR, "ALTER OPERATOR", true, false, false)
 PG_CMDTAG(CMDTAG_ALTER_OPERATOR_CLASS, "ALTER OPERATOR CLASS", true, false, false)
 PG_CMDTAG(CMDTAG_ALTER_OPERATOR_FAMILY, "ALTER OPERATOR FAMILY", true, false, false)

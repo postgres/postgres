@@ -4,7 +4,7 @@
  *    Fallback for platforms without spinlock and/or atomics support. Slower
  *    than native atomics support, but not unusably slow.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/port/atomics/fallback.h
@@ -93,7 +93,7 @@ typedef struct pg_atomic_flag
 typedef struct pg_atomic_uint32
 {
 	/* Check pg_atomic_flag's definition above for an explanation */
-#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
+#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC */
 	int			sema[4];
 #else
 	int			sema;
@@ -111,7 +111,7 @@ typedef struct pg_atomic_uint32
 typedef struct pg_atomic_uint64
 {
 	/* Check pg_atomic_flag's definition above for an explanation */
-#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
+#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC */
 	int			sema[4];
 #else
 	int			sema;

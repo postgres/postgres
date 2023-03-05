@@ -3,7 +3,7 @@
  * hbafuncs.c
  *	  Support functions for SQL views of authentication files.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,10 +26,12 @@
 
 static ArrayType *get_hba_options(HbaLine *hba);
 static void fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
-						  int lineno, HbaLine *hba, const char *err_msg);
+						  int rule_number, char *filename, int lineno,
+						  HbaLine *hba, const char *err_msg);
 static void fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc);
 static void fill_ident_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
-							int lineno, IdentLine *ident, const char *err_msg);
+							int map_number, char *filename, int lineno,
+							IdentLine *ident, const char *err_msg);
 static void fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc);
 
 
@@ -151,13 +153,13 @@ get_hba_options(HbaLine *hba)
 	Assert(noptions <= MAX_HBA_OPTIONS);
 
 	if (noptions > 0)
-		return construct_array(options, noptions, TEXTOID, -1, false, TYPALIGN_INT);
+		return construct_array_builtin(options, noptions, TEXTOID);
 	else
 		return NULL;
 }
 
 /* Number of columns in pg_hba_file_rules view */
-#define NUM_PG_HBA_FILE_RULES_ATTS	 9
+#define NUM_PG_HBA_FILE_RULES_ATTS	 11
 
 /*
  * fill_hba_line
@@ -165,7 +167,9 @@ get_hba_options(HbaLine *hba)
  *
  * tuple_store: where to store data
  * tupdesc: tuple descriptor for the view
- * lineno: pg_hba.conf line number (must always be valid)
+ * rule_number: unique identifier among all valid rules
+ * filename: configuration file name (must always be valid)
+ * lineno: line number of configuration file (must always be valid)
  * hba: parsed line data (can be NULL, in which case err_msg should be set)
  * err_msg: error message (NULL if none)
  *
@@ -174,7 +178,8 @@ get_hba_options(HbaLine *hba)
  */
 static void
 fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
-			  int lineno, HbaLine *hba, const char *err_msg)
+			  int rule_number, char *filename, int lineno, HbaLine *hba,
+			  const char *err_msg)
 {
 	Datum		values[NUM_PG_HBA_FILE_RULES_ATTS];
 	bool		nulls[NUM_PG_HBA_FILE_RULES_ATTS];
@@ -192,6 +197,15 @@ fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 	memset(values, 0, sizeof(values));
 	memset(nulls, 0, sizeof(nulls));
 	index = 0;
+
+	/* rule_number, nothing on error */
+	if (err_msg)
+		nulls[index++] = true;
+	else
+		values[index++] = Int32GetDatum(rule_number);
+
+	/* file_name */
+	values[index++] = CStringGetTextDatum(filename);
 
 	/* line_number */
 	values[index++] = Int32GetDatum(lineno);
@@ -336,7 +350,7 @@ fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 	else
 	{
 		/* no parsing result, so set relevant fields to nulls */
-		memset(&nulls[1], true, (NUM_PG_HBA_FILE_RULES_ATTS - 2) * sizeof(bool));
+		memset(&nulls[3], true, (NUM_PG_HBA_FILE_RULES_ATTS - 4) * sizeof(bool));
 	}
 
 	/* error */
@@ -359,7 +373,7 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	FILE	   *file;
 	List	   *hba_lines = NIL;
 	ListCell   *line;
-	MemoryContext linecxt;
+	int			rule_number = 0;
 	MemoryContext hbacxt;
 	MemoryContext oldcxt;
 
@@ -369,15 +383,9 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	 * (Most other error conditions should result in a message in a view
 	 * entry.)
 	 */
-	file = AllocateFile(HbaFileName, "r");
-	if (file == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open configuration file \"%s\": %m",
-						HbaFileName)));
+	file = open_auth_file(HbaFileName, ERROR, 0, NULL);
 
-	linecxt = tokenize_auth_file(HbaFileName, file, &hba_lines, DEBUG3);
-	FreeFile(file);
+	tokenize_auth_file(HbaFileName, file, &hba_lines, DEBUG3, 0);
 
 	/* Now parse all the lines */
 	hbacxt = AllocSetContextCreate(CurrentMemoryContext,
@@ -393,12 +401,17 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 		if (tok_line->err_msg == NULL)
 			hbaline = parse_hba_line(tok_line, DEBUG3);
 
-		fill_hba_line(tuple_store, tupdesc, tok_line->line_num,
-					  hbaline, tok_line->err_msg);
+		/* No error, set a new rule number */
+		if (tok_line->err_msg == NULL)
+			rule_number++;
+
+		fill_hba_line(tuple_store, tupdesc, rule_number,
+					  tok_line->file_name, tok_line->line_num, hbaline,
+					  tok_line->err_msg);
 	}
 
 	/* Free tokenizer memory */
-	MemoryContextDelete(linecxt);
+	free_auth_file(file, 0);
 	/* Free parse_hba_line memory */
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(hbacxt);
@@ -421,7 +434,7 @@ pg_hba_file_rules(PG_FUNCTION_ARGS)
 	 * also more efficient than having to look up our current position in the
 	 * parsed list every time.
 	 */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* Fill the tuplestore */
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -431,7 +444,7 @@ pg_hba_file_rules(PG_FUNCTION_ARGS)
 }
 
 /* Number of columns in pg_ident_file_mappings view */
-#define NUM_PG_IDENT_FILE_MAPPINGS_ATTS	 5
+#define NUM_PG_IDENT_FILE_MAPPINGS_ATTS	 7
 
 /*
  * fill_ident_line: build one row of pg_ident_file_mappings view, add it to
@@ -439,7 +452,9 @@ pg_hba_file_rules(PG_FUNCTION_ARGS)
  *
  * tuple_store: where to store data
  * tupdesc: tuple descriptor for the view
- * lineno: pg_ident.conf line number (must always be valid)
+ * map_number: unique identifier among all valid maps
+ * filename: configuration file name (must always be valid)
+ * lineno: line number of configuration file (must always be valid)
  * ident: parsed line data (can be NULL, in which case err_msg should be set)
  * err_msg: error message (NULL if none)
  *
@@ -448,7 +463,8 @@ pg_hba_file_rules(PG_FUNCTION_ARGS)
  */
 static void
 fill_ident_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
-				int lineno, IdentLine *ident, const char *err_msg)
+				int map_number, char *filename, int lineno, IdentLine *ident,
+				const char *err_msg)
 {
 	Datum		values[NUM_PG_IDENT_FILE_MAPPINGS_ATTS];
 	bool		nulls[NUM_PG_IDENT_FILE_MAPPINGS_ATTS];
@@ -461,19 +477,28 @@ fill_ident_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 	memset(nulls, 0, sizeof(nulls));
 	index = 0;
 
+	/* map_number, nothing on error */
+	if (err_msg)
+		nulls[index++] = true;
+	else
+		values[index++] = Int32GetDatum(map_number);
+
+	/* file_name */
+	values[index++] = CStringGetTextDatum(filename);
+
 	/* line_number */
 	values[index++] = Int32GetDatum(lineno);
 
 	if (ident != NULL)
 	{
 		values[index++] = CStringGetTextDatum(ident->usermap);
-		values[index++] = CStringGetTextDatum(ident->ident_user);
-		values[index++] = CStringGetTextDatum(ident->pg_role);
+		values[index++] = CStringGetTextDatum(ident->system_user->string);
+		values[index++] = CStringGetTextDatum(ident->pg_user->string);
 	}
 	else
 	{
 		/* no parsing result, so set relevant fields to nulls */
-		memset(&nulls[1], true, (NUM_PG_IDENT_FILE_MAPPINGS_ATTS - 2) * sizeof(bool));
+		memset(&nulls[3], true, (NUM_PG_IDENT_FILE_MAPPINGS_ATTS - 4) * sizeof(bool));
 	}
 
 	/* error */
@@ -495,7 +520,7 @@ fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	FILE	   *file;
 	List	   *ident_lines = NIL;
 	ListCell   *line;
-	MemoryContext linecxt;
+	int			map_number = 0;
 	MemoryContext identcxt;
 	MemoryContext oldcxt;
 
@@ -505,15 +530,9 @@ fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	 * (Most other error conditions should result in a message in a view
 	 * entry.)
 	 */
-	file = AllocateFile(IdentFileName, "r");
-	if (file == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open usermap file \"%s\": %m",
-						IdentFileName)));
+	file = open_auth_file(IdentFileName, ERROR, 0, NULL);
 
-	linecxt = tokenize_auth_file(HbaFileName, file, &ident_lines, DEBUG3);
-	FreeFile(file);
+	tokenize_auth_file(IdentFileName, file, &ident_lines, DEBUG3, 0);
 
 	/* Now parse all the lines */
 	identcxt = AllocSetContextCreate(CurrentMemoryContext,
@@ -529,12 +548,17 @@ fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 		if (tok_line->err_msg == NULL)
 			identline = parse_ident_line(tok_line, DEBUG3);
 
-		fill_ident_line(tuple_store, tupdesc, tok_line->line_num, identline,
-						tok_line->err_msg);
+		/* no error, set a new mapping number */
+		if (tok_line->err_msg == NULL)
+			map_number++;
+
+		fill_ident_line(tuple_store, tupdesc, map_number,
+						tok_line->file_name, tok_line->line_num,
+						identline, tok_line->err_msg);
 	}
 
 	/* Free tokenizer memory */
-	MemoryContextDelete(linecxt);
+	free_auth_file(file, 0);
 	/* Free parse_ident_line memory */
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(identcxt);
@@ -554,7 +578,7 @@ pg_ident_file_mappings(PG_FUNCTION_ARGS)
 	 * also more efficient than having to look up our current position in the
 	 * parsed list every time.
 	 */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* Fill the tuplestore */
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;

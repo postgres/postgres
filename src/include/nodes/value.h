@@ -4,7 +4,7 @@
  *	  interface for value nodes
  *
  *
- * Copyright (c) 2003-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2023, PostgreSQL Global Development Group
  *
  * src/include/nodes/value.h
  *
@@ -27,6 +27,8 @@
 
 typedef struct Integer
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	int			ival;
 } Integer;
@@ -44,24 +46,32 @@ typedef struct Integer
  */
 typedef struct Float
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	char	   *fval;
 } Float;
 
 typedef struct Boolean
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	bool		boolval;
 } Boolean;
 
 typedef struct String
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	char	   *sval;
 } String;
 
 typedef struct BitString
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	char	   *bsval;
 } BitString;
@@ -73,7 +83,7 @@ typedef struct BitString
 
 extern Integer *makeInteger(int i);
 extern Float *makeFloat(char *numericStr);
-extern Boolean *makeBoolean(bool var);
+extern Boolean *makeBoolean(bool val);
 extern String *makeString(char *str);
 extern BitString *makeBitString(char *str);
 

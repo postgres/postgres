@@ -4,7 +4,7 @@
  *		parse analysis for optimizable statements
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/analyze.h
@@ -15,8 +15,8 @@
 #define ANALYZE_H
 
 #include "nodes/params.h"
+#include "nodes/queryjumble.h"
 #include "parser/parse_node.h"
-#include "utils/queryjumble.h"
 
 /* Hook for plugins to get control at end of parse analysis */
 typedef void (*post_parse_analyze_hook_type) (ParseState *pstate,
@@ -43,7 +43,7 @@ extern List *transformInsertRow(ParseState *pstate, List *exprlist,
 								List *stmtcols, List *icolumns, List *attrnos,
 								bool strip_indirection);
 extern List *transformUpdateTargetList(ParseState *pstate,
-									   List *targetList);
+									   List *origTlist);
 extern Query *transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 

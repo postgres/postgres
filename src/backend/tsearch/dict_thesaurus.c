@@ -3,7 +3,7 @@
  * dict_thesaurus.c
  *		Thesaurus dictionary: phrase to phrase substitution
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -599,6 +599,7 @@ thesaurus_init(PG_FUNCTION_ARGS)
 	DictThesaurus *d;
 	char	   *subdictname = NULL;
 	bool		fileloaded = false;
+	List	   *namelist;
 	ListCell   *l;
 
 	d = (DictThesaurus *) palloc0(sizeof(DictThesaurus));
@@ -642,7 +643,8 @@ thesaurus_init(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("missing Dictionary parameter")));
 
-	d->subdictOid = get_ts_dict_oid(stringToQualifiedNameList(subdictname), false);
+	namelist = stringToQualifiedNameList(subdictname, NULL);
+	d->subdictOid = get_ts_dict_oid(namelist, false);
 	d->subdict = lookup_ts_dictionary_cache(d->subdictOid);
 
 	compileTheLexeme(d);

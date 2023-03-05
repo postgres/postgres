@@ -3,7 +3,7 @@
  * test_integerset.c
  *		Test integer set data structure.
  *
- * Copyright (c) 2019-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2019-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_integerset/test_integerset.c
@@ -585,26 +585,26 @@ test_huge_distances(void)
 	 */
 	for (int i = 0; i < num_values; i++)
 	{
-		uint64		x = values[i];
+		uint64		y = values[i];
 		bool		expected;
 		bool		result;
 
-		if (x > 0)
+		if (y > 0)
 		{
-			expected = (values[i - 1] == x - 1);
-			result = intset_is_member(intset, x - 1);
+			expected = (values[i - 1] == y - 1);
+			result = intset_is_member(intset, y - 1);
 			if (result != expected)
-				elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x - 1);
+				elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, y - 1);
 		}
 
-		result = intset_is_member(intset, x);
+		result = intset_is_member(intset, y);
 		if (result != true)
-			elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x);
+			elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, y);
 
-		expected = (i != num_values - 1) ? (values[i + 1] == x + 1) : false;
-		result = intset_is_member(intset, x + 1);
+		expected = (i != num_values - 1) ? (values[i + 1] == y + 1) : false;
+		result = intset_is_member(intset, y + 1);
 		if (result != expected)
-			elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x + 1);
+			elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, y + 1);
 	}
 
 	/*

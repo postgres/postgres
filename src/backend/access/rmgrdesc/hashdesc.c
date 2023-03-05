@@ -3,7 +3,7 @@
  * hashdesc.c
  *	  rmgr descriptor routines for access/hash/hash.c
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -113,9 +113,9 @@ hash_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_hash_vacuum_one_page *xlrec = (xl_hash_vacuum_one_page *) rec;
 
-				appendStringInfo(buf, "ntuples %d, latestRemovedXid %u",
+				appendStringInfo(buf, "ntuples %d, snapshotConflictHorizon %u",
 								 xlrec->ntuples,
-								 xlrec->latestRemovedXid);
+								 xlrec->snapshotConflictHorizon);
 				break;
 			}
 	}

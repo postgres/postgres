@@ -29,7 +29,7 @@
  * and a non-lossy page.
  *
  *
- * Copyright (c) 2003-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/nodes/tidbitmap.c
@@ -853,11 +853,11 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 		if (ptbase != NULL)
 			pg_atomic_init_u32(&ptbase->refcount, 0);
 		if (npages > 1)
-			qsort_arg((void *) (ptpages->index), npages, sizeof(int),
-					  tbm_shared_comparator, (void *) ptbase->ptentry);
+			qsort_arg(ptpages->index, npages, sizeof(int),
+					  tbm_shared_comparator, ptbase->ptentry);
 		if (nchunks > 1)
-			qsort_arg((void *) (ptchunks->index), nchunks, sizeof(int),
-					  tbm_shared_comparator, (void *) ptbase->ptentry);
+			qsort_arg(ptchunks->index, nchunks, sizeof(int),
+					  tbm_shared_comparator, ptbase->ptentry);
 	}
 
 	/*

@@ -1,10 +1,10 @@
-%{
+%top{
 /*-------------------------------------------------------------------------
  *
  * syncrep_scanner.l
  *	  a lexical scanner for synchronous_standby_names
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -16,7 +16,17 @@
 #include "postgres.h"
 
 #include "lib/stringinfo.h"
+#include "nodes/pg_list.h"
 
+/*
+ * NB: include syncrep_gram.h only AFTER including syncrep.h, because syncrep.h
+ * includes node definitions needed for YYSTYPE.
+ */
+#include "replication/syncrep.h"
+#include "syncrep_gram.h"
+}
+
+%{
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
 #define fprintf(file, fmt, msg)  fprintf_to_ereport(fmt, msg)
@@ -82,28 +92,28 @@ xdinside		[^"]+
 				appendStringInfoString(&xdbuf, yytext);
 		}
 <xd>{xdstop} {
-				yylval.str = xdbuf.data;
+				syncrep_yylval.str = xdbuf.data;
 				xdbuf.data = NULL;
 				BEGIN(INITIAL);
 				return NAME;
 		}
 <xd><<EOF>> {
-				yyerror("unterminated quoted identifier");
+				syncrep_yyerror("unterminated quoted identifier");
 				return JUNK;
 		}
 
 {identifier} {
-				yylval.str = pstrdup(yytext);
+				syncrep_yylval.str = pstrdup(yytext);
 				return NAME;
 		}
 
 {digit}+	{
-				yylval.str = pstrdup(yytext);
+				syncrep_yylval.str = pstrdup(yytext);
 				return NUM;
 		}
 
 "*"		{
-				yylval.str = "*";
+				syncrep_yylval.str = "*";
 				return NAME;
 		}
 

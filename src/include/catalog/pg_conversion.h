@@ -3,7 +3,7 @@
  * pg_conversion.h
  *	  definition of the "conversion" system catalog (pg_conversion)
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_conversion.h
@@ -69,7 +69,7 @@ extern ObjectAddress ConversionCreate(const char *conname, Oid connamespace,
 									  Oid conowner,
 									  int32 conforencoding, int32 contoencoding,
 									  Oid conproc, bool def);
-extern Oid	FindDefaultConversion(Oid connamespace, int32 for_encoding,
+extern Oid	FindDefaultConversion(Oid name_space, int32 for_encoding,
 								  int32 to_encoding);
 
 #endif							/* PG_CONVERSION_H */

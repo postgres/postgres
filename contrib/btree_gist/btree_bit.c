@@ -84,7 +84,7 @@ gbt_bit_xfrm(bytea *leaf)
 	while (sz < padded_sz)
 		((char *) out)[sz++] = 0;
 	SET_VARSIZE(out, padded_sz);
-	memcpy((void *) VARDATA(out), (void *) VARBITS(leaf), VARBITBYTES(leaf));
+	memcpy(VARDATA(out), VARBITS(leaf), VARBITBYTES(leaf));
 	return out;
 }
 

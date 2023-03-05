@@ -3,7 +3,7 @@
  * dummy_index_am.c
  *		Index AM template main file.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -22,8 +22,6 @@
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;
-
-void		_PG_init(void);
 
 /* parse table for fillRelOptions */
 relopt_parse_elt di_relopt_tab[6];

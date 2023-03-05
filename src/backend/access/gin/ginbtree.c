@@ -4,7 +4,7 @@
  *	  page utilities routines for the postgres inverted index access method.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -470,7 +470,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 		savedRightLink = GinPageGetOpaque(page)->rightlink;
 
 		/* Begin setting up WAL record */
-		data.node = btree->index->rd_node;
+		data.locator = btree->index->rd_locator;
 		data.flags = xlflags;
 		if (BufferIsValid(childbuf))
 		{

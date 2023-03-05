@@ -29,16 +29,16 @@
 #include "pg_backup_utils.h"
 
 static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
-static void _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen);
+static void _WriteLOData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te);
-static void _StartBlobs(ArchiveHandle *AH, TocEntry *te);
-static void _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
-static void _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
-static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
+static void _StartLOs(ArchiveHandle *AH, TocEntry *te);
+static void _StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndLOs(ArchiveHandle *AH, TocEntry *te);
 
 
 /*
@@ -56,10 +56,10 @@ InitArchiveFmt_Null(ArchiveHandle *AH)
 	AH->ReopenPtr = NULL;
 	AH->PrintTocDataPtr = _PrintTocData;
 
-	AH->StartBlobsPtr = _StartBlobs;
-	AH->StartBlobPtr = _StartBlob;
-	AH->EndBlobPtr = _EndBlob;
-	AH->EndBlobsPtr = _EndBlobs;
+	AH->StartLOsPtr = _StartLOs;
+	AH->StartLOPtr = _StartLO;
+	AH->EndLOPtr = _EndLO;
+	AH->EndLOsPtr = _EndLOs;
 	AH->ClonePtr = NULL;
 	AH->DeClonePtr = NULL;
 
@@ -90,10 +90,10 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 
 /*
  * Called by dumper via archiver from within a data dump routine
- * We substitute this for _WriteData while emitting a BLOB
+ * We substitute this for _WriteData while emitting a LO
  */
 static void
-_WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
+_WriteLOData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	if (dLen > 0)
 	{
@@ -119,54 +119,54 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
 /*
  * Called by the archiver when starting to save all BLOB DATA (not schema).
  * This routine should save whatever format-specific information is needed
- * to read the BLOBs back into memory.
+ * to read the LOs back into memory.
  *
  * It is called just prior to the dumper's DataDumper routine.
  *
  * Optional, but strongly recommended.
  */
 static void
-_StartBlobs(ArchiveHandle *AH, TocEntry *te)
+_StartLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	ahprintf(AH, "BEGIN;\n\n");
 }
 
 /*
- * Called by the archiver when the dumper calls StartBlob.
+ * Called by the archiver when the dumper calls StartLO.
  *
  * Mandatory.
  *
  * Must save the passed OID for retrieval at restore-time.
  */
 static void
-_StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
+_StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
-	bool		old_blob_style = (AH->version < K_VERS_1_12);
+	bool		old_lo_style = (AH->version < K_VERS_1_12);
 
 	if (oid == 0)
 		pg_fatal("invalid OID for large object");
 
 	/* With an old archive we must do drop and create logic here */
-	if (old_blob_style && AH->public.ropt->dropSchema)
-		DropBlobIfExists(AH, oid);
+	if (old_lo_style && AH->public.ropt->dropSchema)
+		DropLOIfExists(AH, oid);
 
-	if (old_blob_style)
+	if (old_lo_style)
 		ahprintf(AH, "SELECT pg_catalog.lo_open(pg_catalog.lo_create('%u'), %d);\n",
 				 oid, INV_WRITE);
 	else
 		ahprintf(AH, "SELECT pg_catalog.lo_open('%u', %d);\n",
 				 oid, INV_WRITE);
 
-	AH->WriteDataPtr = _WriteBlobData;
+	AH->WriteDataPtr = _WriteLOData;
 }
 
 /*
- * Called by the archiver when the dumper calls EndBlob.
+ * Called by the archiver when the dumper calls EndLO.
  *
  * Optional.
  */
 static void
-_EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
+_EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	AH->WriteDataPtr = _WriteData;
 
@@ -179,7 +179,7 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
  * Optional.
  */
 static void
-_EndBlobs(ArchiveHandle *AH, TocEntry *te)
+_EndLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	ahprintf(AH, "COMMIT;\n\n");
 }
@@ -197,12 +197,12 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 		AH->currToc = te;
 
 		if (strcmp(te->desc, "BLOBS") == 0)
-			_StartBlobs(AH, te);
+			_StartLOs(AH, te);
 
 		te->dataDumper((Archive *) AH, te->dataDumperArg);
 
 		if (strcmp(te->desc, "BLOBS") == 0)
-			_EndBlobs(AH, te);
+			_EndLOs(AH, te);
 
 		AH->currToc = NULL;
 	}

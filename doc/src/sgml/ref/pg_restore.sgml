@@ -538,9 +538,9 @@ PostgreSQL documentation
         This option is relevant only when performing a data-only restore.
         It instructs <application>pg_restore</application> to execute commands
         to temporarily disable triggers on the target tables while
-        the data is reloaded.  Use this if you have referential
+        the data is restored.  Use this if you have referential
         integrity checks or other triggers on the tables that you
-        do not want to invoke during data reload.
+        do not want to invoke during data restore.
        </para>
 
        <para>
@@ -969,7 +969,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   To reload the dump into a new database called <literal>newdb</literal>:
+   To restore the dump into a new database called <literal>newdb</literal>:
 
 <screen>
 <prompt>$</prompt> <userinput>createdb -T template0 newdb</userinput>

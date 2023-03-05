@@ -1,4 +1,4 @@
-# Copyright (c) 2022, PostgreSQL Global Development Group
+# Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -54,7 +54,7 @@ b),
 # Test error cases in CREATE DATABASE involving locale-related options
 
 my ($ret, $stdout, $stderr) = $node1->psql('postgres',
-	q{CREATE DATABASE dbicu LOCALE_PROVIDER icu TEMPLATE template0});
+	q{CREATE DATABASE dbicu LOCALE_PROVIDER icu TEMPLATE template0 ENCODING UTF8});
 isnt($ret, 0,
 	"ICU locale must be specified for ICU provider: exit code not 0");
 like(

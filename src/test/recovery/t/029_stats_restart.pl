@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # Tests statistics handling around restarts, including handling of crashes and
 # invalid stats files, as well as restorting stats after "normal" restarts.

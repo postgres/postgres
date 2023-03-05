@@ -3,7 +3,7 @@
  * encode.c
  *	  Various data encoding/decoding things.
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -18,6 +18,7 @@
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "varatt.h"
 
 
 /*
@@ -171,8 +172,8 @@ hex_encode(const char *src, size_t len, char *dst)
 	return (uint64) len * 2;
 }
 
-static inline char
-get_hex(const char *cp)
+static inline bool
+get_hex(const char *cp, char *out)
 {
 	unsigned char c = (unsigned char) *cp;
 	int			res = -1;
@@ -180,17 +181,19 @@ get_hex(const char *cp)
 	if (c < 127)
 		res = hexlookup[c];
 
-	if (res < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid hexadecimal digit: \"%.*s\"",
-						pg_mblen(cp), cp)));
+	*out = (char) res;
 
-	return (char) res;
+	return (res >= 0);
 }
 
 uint64
 hex_decode(const char *src, size_t len, char *dst)
+{
+	return hex_decode_safe(src, len, dst, NULL);
+}
+
+uint64
+hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
 {
 	const char *s,
 			   *srcend;
@@ -208,16 +211,23 @@ hex_decode(const char *src, size_t len, char *dst)
 			s++;
 			continue;
 		}
-		v1 = get_hex(s) << 4;
+		if (!get_hex(s, &v1))
+			ereturn(escontext, 0,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid hexadecimal digit: \"%.*s\"",
+							pg_mblen(s), s)));
 		s++;
 		if (s >= srcend)
-			ereport(ERROR,
+			ereturn(escontext, 0,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid hexadecimal data: odd number of digits")));
-
-		v2 = get_hex(s);
+		if (!get_hex(s, &v2))
+			ereturn(escontext, 0,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid hexadecimal digit: \"%.*s\"",
+							pg_mblen(s), s)));
 		s++;
-		*p++ = v1 | v2;
+		*p++ = (v1 << 4) | v2;
 	}
 
 	return p - dst;

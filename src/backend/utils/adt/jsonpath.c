@@ -53,7 +53,7 @@
  * |	  |__|	|__||________________________||___________________|		   |
  * |_______________________________________________________________________|
  *
- * Copyright (c) 2019-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2019-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	src/backend/utils/adt/jsonpath.c
@@ -66,18 +66,19 @@
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
+#include "nodes/miscnodes.h"
 #include "miscadmin.h"
-#include "nodes/nodeFuncs.h"
 #include "utils/builtins.h"
-#include "utils/formatting.h"
 #include "utils/json.h"
 #include "utils/jsonpath.h"
 
 
-static Datum jsonPathFromCstring(char *in, int len);
+static Datum jsonPathFromCstring(char *in, int len, struct Node *escontext);
 static char *jsonPathToCstring(StringInfo out, JsonPath *in,
 							   int estimated_len);
-static int	flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
+static bool	flattenJsonPathParseItem(StringInfo buf, int *result,
+									 struct Node *escontext,
+									 JsonPathParseItem *item,
 									 int nestingLevel, bool insideArraySubscript);
 static void alignStringInfoInt(StringInfo buf);
 static int32 reserveSpaceForItemPointer(StringInfo buf);
@@ -97,7 +98,7 @@ jsonpath_in(PG_FUNCTION_ARGS)
 	char	   *in = PG_GETARG_CSTRING(0);
 	int			len = strlen(in);
 
-	return jsonPathFromCstring(in, len);
+	return jsonPathFromCstring(in, len, fcinfo->context);
 }
 
 /*
@@ -121,7 +122,7 @@ jsonpath_recv(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "unsupported jsonpath version number: %d", version);
 
-	return jsonPathFromCstring(str, nbytes);
+	return jsonPathFromCstring(str, nbytes, NULL);
 }
 
 /*
@@ -167,24 +168,29 @@ jsonpath_send(PG_FUNCTION_ARGS)
  * representation of jsonpath.
  */
 static Datum
-jsonPathFromCstring(char *in, int len)
+jsonPathFromCstring(char *in, int len, struct Node *escontext)
 {
-	JsonPathParseResult *jsonpath = parsejsonpath(in, len);
+	JsonPathParseResult *jsonpath = parsejsonpath(in, len, escontext);
 	JsonPath   *res;
 	StringInfoData buf;
+
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return (Datum) 0;
+
+	if (!jsonpath)
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"", "jsonpath",
+						in)));
 
 	initStringInfo(&buf);
 	enlargeStringInfo(&buf, 4 * len /* estimation */ );
 
 	appendStringInfoSpaces(&buf, JSONPATH_HDRSZ);
 
-	if (!jsonpath)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type %s: \"%s\"", "jsonpath",
-						in)));
-
-	flattenJsonPathParseItem(&buf, jsonpath->expr, 0, false);
+	if (!flattenJsonPathParseItem(&buf, NULL, escontext,
+								  jsonpath->expr, 0, false))
+		return (Datum) 0;
 
 	res = (JsonPath *) buf.data;
 	SET_VARSIZE(res, buf.len);
@@ -215,7 +221,7 @@ jsonPathToCstring(StringInfo out, JsonPath *in, int estimated_len)
 	enlargeStringInfo(out, estimated_len);
 
 	if (!(in->header & JSONPATH_LAX))
-		appendBinaryStringInfo(out, "strict ", 7);
+		appendStringInfoString(out, "strict ");
 
 	jspInit(&v, in);
 	printJsonPathItem(out, &v, false, true);
@@ -227,9 +233,10 @@ jsonPathToCstring(StringInfo out, JsonPath *in, int estimated_len)
  * Recursive function converting given jsonpath parse item and all its
  * children into a binary representation.
  */
-static int
-flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
-						 int nestingLevel, bool insideArraySubscript)
+static bool
+flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
+						 JsonPathParseItem *item, int nestingLevel,
+						 bool insideArraySubscript)
 {
 	/* position from beginning of jsonpath data */
 	int32		pos = buf->len - JSONPATH_HDRSZ;
@@ -260,18 +267,18 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 		case jpiString:
 		case jpiVariable:
 		case jpiKey:
-			appendBinaryStringInfo(buf, (char *) &item->value.string.len,
+			appendBinaryStringInfo(buf, &item->value.string.len,
 								   sizeof(item->value.string.len));
 			appendBinaryStringInfo(buf, item->value.string.val,
 								   item->value.string.len);
 			appendStringInfoChar(buf, '\0');
 			break;
 		case jpiNumeric:
-			appendBinaryStringInfo(buf, (char *) item->value.numeric,
+			appendBinaryStringInfo(buf, item->value.numeric,
 								   VARSIZE(item->value.numeric));
 			break;
 		case jpiBool:
-			appendBinaryStringInfo(buf, (char *) &item->value.boolean,
+			appendBinaryStringInfo(buf, &item->value.boolean,
 								   sizeof(item->value.boolean));
 			break;
 		case jpiAnd:
@@ -297,16 +304,22 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 				int32		left = reserveSpaceForItemPointer(buf);
 				int32		right = reserveSpaceForItemPointer(buf);
 
-				chld = !item->value.args.left ? pos :
-					flattenJsonPathParseItem(buf, item->value.args.left,
-											 nestingLevel + argNestingLevel,
-											 insideArraySubscript);
+				if (!item->value.args.left)
+					chld = pos;
+				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
+													item->value.args.left,
+													nestingLevel + argNestingLevel,
+													insideArraySubscript))
+					return false;
 				*(int32 *) (buf->data + left) = chld - pos;
 
-				chld = !item->value.args.right ? pos :
-					flattenJsonPathParseItem(buf, item->value.args.right,
-											 nestingLevel + argNestingLevel,
-											 insideArraySubscript);
+				if (!item->value.args.right)
+					chld = pos;
+				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
+													item->value.args.right,
+													nestingLevel + argNestingLevel,
+													insideArraySubscript))
+					return false;
 				*(int32 *) (buf->data + right) = chld - pos;
 			}
 			break;
@@ -315,19 +328,21 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 				int32		offs;
 
 				appendBinaryStringInfo(buf,
-									   (char *) &item->value.like_regex.flags,
+									   &item->value.like_regex.flags,
 									   sizeof(item->value.like_regex.flags));
 				offs = reserveSpaceForItemPointer(buf);
 				appendBinaryStringInfo(buf,
-									   (char *) &item->value.like_regex.patternlen,
+									   &item->value.like_regex.patternlen,
 									   sizeof(item->value.like_regex.patternlen));
 				appendBinaryStringInfo(buf, item->value.like_regex.pattern,
 									   item->value.like_regex.patternlen);
 				appendStringInfoChar(buf, '\0');
 
-				chld = flattenJsonPathParseItem(buf, item->value.like_regex.expr,
-												nestingLevel,
-												insideArraySubscript);
+				if (! flattenJsonPathParseItem(buf, &chld, escontext,
+											   item->value.like_regex.expr,
+											   nestingLevel,
+											   insideArraySubscript))
+					return false;
 				*(int32 *) (buf->data + offs) = chld - pos;
 			}
 			break;
@@ -343,10 +358,13 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 			{
 				int32		arg = reserveSpaceForItemPointer(buf);
 
-				chld = !item->value.arg ? pos :
-					flattenJsonPathParseItem(buf, item->value.arg,
-											 nestingLevel + argNestingLevel,
-											 insideArraySubscript);
+				if (!item->value.arg)
+					chld = pos;
+				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
+													item->value.arg,
+													nestingLevel + argNestingLevel,
+													insideArraySubscript))
+					return false;
 				*(int32 *) (buf->data + arg) = chld - pos;
 			}
 			break;
@@ -359,13 +377,13 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 			break;
 		case jpiCurrent:
 			if (nestingLevel <= 0)
-				ereport(ERROR,
+				ereturn(escontext, false,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("@ is not allowed in root expressions")));
 			break;
 		case jpiLast:
 			if (!insideArraySubscript)
-				ereport(ERROR,
+				ereturn(escontext, false,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("LAST is allowed only in array subscripts")));
 			break;
@@ -375,7 +393,7 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 				int			offset;
 				int			i;
 
-				appendBinaryStringInfo(buf, (char *) &nelems, sizeof(nelems));
+				appendBinaryStringInfo(buf, &nelems, sizeof(nelems));
 
 				offset = buf->len;
 
@@ -385,15 +403,22 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 				{
 					int32	   *ppos;
 					int32		topos;
-					int32		frompos =
-					flattenJsonPathParseItem(buf,
-											 item->value.array.elems[i].from,
-											 nestingLevel, true) - pos;
+					int32		frompos;
+
+					if (! flattenJsonPathParseItem(buf, &frompos, escontext,
+												   item->value.array.elems[i].from,
+												   nestingLevel, true))
+						return false;
+					frompos -= pos;
 
 					if (item->value.array.elems[i].to)
-						topos = flattenJsonPathParseItem(buf,
-														 item->value.array.elems[i].to,
-														 nestingLevel, true) - pos;
+					{
+						if (! flattenJsonPathParseItem(buf, &topos, escontext,
+													   item->value.array.elems[i].to,
+													   nestingLevel, true))
+							return false;
+						topos -= pos;
+					}
 					else
 						topos = 0;
 
@@ -406,10 +431,10 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 			break;
 		case jpiAny:
 			appendBinaryStringInfo(buf,
-								   (char *) &item->value.anybounds.first,
+								   &item->value.anybounds.first,
 								   sizeof(item->value.anybounds.first));
 			appendBinaryStringInfo(buf,
-								   (char *) &item->value.anybounds.last,
+								   &item->value.anybounds.last,
 								   sizeof(item->value.anybounds.last));
 			break;
 		case jpiType:
@@ -426,12 +451,17 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 
 	if (item->next)
 	{
-		chld = flattenJsonPathParseItem(buf, item->next, nestingLevel,
-										insideArraySubscript) - pos;
+		if (! flattenJsonPathParseItem(buf, &chld, escontext,
+									   item->next, nestingLevel,
+									   insideArraySubscript))
+			return false;
+		chld -= pos;
 		*(int32 *) (buf->data + next) = chld;
 	}
 
-	return pos;
+	if (result)
+		*result = pos;
+	return true;
 }
 
 /*
@@ -466,7 +496,7 @@ reserveSpaceForItemPointer(StringInfo buf)
 	int32		pos = buf->len;
 	int32		ptr = 0;
 
-	appendBinaryStringInfo(buf, (char *) &ptr, sizeof(ptr));
+	appendBinaryStringInfo(buf, &ptr, sizeof(ptr));
 
 	return pos;
 }
@@ -512,9 +542,9 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			break;
 		case jpiBool:
 			if (jspGetBool(v))
-				appendBinaryStringInfo(buf, "true", 4);
+				appendStringInfoString(buf, "true");
 			else
-				appendBinaryStringInfo(buf, "false", 5);
+				appendStringInfoString(buf, "false");
 			break;
 		case jpiAnd:
 		case jpiOr:
@@ -555,13 +585,13 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 							  operationPriority(elem.type) <=
 							  operationPriority(v->type));
 
-			appendBinaryStringInfo(buf, " like_regex ", 12);
+			appendStringInfoString(buf, " like_regex ");
 
 			escape_json(buf, v->content.like_regex.pattern);
 
 			if (v->content.like_regex.flags)
 			{
-				appendBinaryStringInfo(buf, " flag \"", 7);
+				appendStringInfoString(buf, " flag \"");
 
 				if (v->content.like_regex.flags & JSP_REGEX_ICASE)
 					appendStringInfoChar(buf, 'i');
@@ -593,13 +623,13 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 				appendStringInfoChar(buf, ')');
 			break;
 		case jpiFilter:
-			appendBinaryStringInfo(buf, "?(", 2);
+			appendStringInfoString(buf, "?(");
 			jspGetArg(v, &elem);
 			printJsonPathItem(buf, &elem, false, false);
 			appendStringInfoChar(buf, ')');
 			break;
 		case jpiNot:
-			appendBinaryStringInfo(buf, "!(", 2);
+			appendStringInfoString(buf, "!(");
 			jspGetArg(v, &elem);
 			printJsonPathItem(buf, &elem, false, false);
 			appendStringInfoChar(buf, ')');
@@ -608,10 +638,10 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			appendStringInfoChar(buf, '(');
 			jspGetArg(v, &elem);
 			printJsonPathItem(buf, &elem, false, false);
-			appendBinaryStringInfo(buf, ") is unknown", 12);
+			appendStringInfoString(buf, ") is unknown");
 			break;
 		case jpiExists:
-			appendBinaryStringInfo(buf, "exists (", 8);
+			appendStringInfoString(buf, "exists (");
 			jspGetArg(v, &elem);
 			printJsonPathItem(buf, &elem, false, false);
 			appendStringInfoChar(buf, ')');
@@ -625,10 +655,10 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			appendStringInfoChar(buf, '$');
 			break;
 		case jpiLast:
-			appendBinaryStringInfo(buf, "last", 4);
+			appendStringInfoString(buf, "last");
 			break;
 		case jpiAnyArray:
-			appendBinaryStringInfo(buf, "[*]", 3);
+			appendStringInfoString(buf, "[*]");
 			break;
 		case jpiAnyKey:
 			if (inKey)
@@ -650,7 +680,7 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 
 				if (range)
 				{
-					appendBinaryStringInfo(buf, " to ", 4);
+					appendStringInfoString(buf, " to ");
 					printJsonPathItem(buf, &to, false, false);
 				}
 			}
@@ -662,7 +692,7 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 
 			if (v->content.anybounds.first == 0 &&
 				v->content.anybounds.last == PG_UINT32_MAX)
-				appendBinaryStringInfo(buf, "**", 2);
+				appendStringInfoString(buf, "**");
 			else if (v->content.anybounds.first == v->content.anybounds.last)
 			{
 				if (v->content.anybounds.first == PG_UINT32_MAX)
@@ -683,25 +713,25 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 								 v->content.anybounds.last);
 			break;
 		case jpiType:
-			appendBinaryStringInfo(buf, ".type()", 7);
+			appendStringInfoString(buf, ".type()");
 			break;
 		case jpiSize:
-			appendBinaryStringInfo(buf, ".size()", 7);
+			appendStringInfoString(buf, ".size()");
 			break;
 		case jpiAbs:
-			appendBinaryStringInfo(buf, ".abs()", 6);
+			appendStringInfoString(buf, ".abs()");
 			break;
 		case jpiFloor:
-			appendBinaryStringInfo(buf, ".floor()", 8);
+			appendStringInfoString(buf, ".floor()");
 			break;
 		case jpiCeiling:
-			appendBinaryStringInfo(buf, ".ceiling()", 10);
+			appendStringInfoString(buf, ".ceiling()");
 			break;
 		case jpiDouble:
-			appendBinaryStringInfo(buf, ".double()", 9);
+			appendStringInfoString(buf, ".double()");
 			break;
 		case jpiDatetime:
-			appendBinaryStringInfo(buf, ".datetime(", 10);
+			appendStringInfoString(buf, ".datetime(");
 			if (v->content.arg)
 			{
 				jspGetArg(v, &elem);
@@ -710,7 +740,7 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			appendStringInfoChar(buf, ')');
 			break;
 		case jpiKeyValue:
-			appendBinaryStringInfo(buf, ".keyvalue()", 11);
+			appendStringInfoString(buf, ".keyvalue()");
 			break;
 		default:
 			elog(ERROR, "unrecognized jsonpath item type: %d", v->type);
@@ -1078,259 +1108,4 @@ jspGetArraySubscript(JsonPathItem *v, JsonPathItem *from, JsonPathItem *to,
 	jspInitByBuffer(to, v->base, v->content.array.elems[i].to);
 
 	return true;
-}
-
-/* SQL/JSON datatype status: */
-typedef enum JsonPathDatatypeStatus
-{
-	jpdsNonDateTime,			/* null, bool, numeric, string, array, object */
-	jpdsUnknownDateTime,		/* unknown datetime type */
-	jpdsDateTimeZoned,			/* timetz, timestamptz */
-	jpdsDateTimeNonZoned		/* time, timestamp, date */
-} JsonPathDatatypeStatus;
-
-/* Context for jspIsMutableWalker() */
-typedef struct JsonPathMutableContext
-{
-	List	   *varnames;		/* list of variable names */
-	List	   *varexprs;		/* list of variable expressions */
-	JsonPathDatatypeStatus current; /* status of @ item */
-	bool		lax;			/* jsonpath is lax or strict */
-	bool		mutable;		/* resulting mutability status */
-} JsonPathMutableContext;
-
-/*
- * Recursive walker for jspIsMutable()
- */
-static JsonPathDatatypeStatus
-jspIsMutableWalker(JsonPathItem *jpi, JsonPathMutableContext *cxt)
-{
-	JsonPathItem next;
-	JsonPathDatatypeStatus status = jpdsNonDateTime;
-
-	while (!cxt->mutable)
-	{
-		JsonPathItem arg;
-		JsonPathDatatypeStatus leftStatus;
-		JsonPathDatatypeStatus rightStatus;
-
-		switch (jpi->type)
-		{
-			case jpiRoot:
-				Assert(status == jpdsNonDateTime);
-				break;
-
-			case jpiCurrent:
-				Assert(status == jpdsNonDateTime);
-				status = cxt->current;
-				break;
-
-			case jpiFilter:
-				{
-					JsonPathDatatypeStatus prevStatus = cxt->current;
-
-					cxt->current = status;
-					jspGetArg(jpi, &arg);
-					jspIsMutableWalker(&arg, cxt);
-
-					cxt->current = prevStatus;
-					break;
-				}
-
-			case jpiVariable:
-				{
-					int32		len;
-					const char *name = jspGetString(jpi, &len);
-					ListCell   *lc1;
-					ListCell   *lc2;
-
-					Assert(status == jpdsNonDateTime);
-
-					forboth(lc1, cxt->varnames, lc2, cxt->varexprs)
-					{
-						String	   *varname = lfirst_node(String, lc1);
-						Node	   *varexpr = lfirst(lc2);
-
-						if (strncmp(varname->sval, name, len))
-							continue;
-
-						switch (exprType(varexpr))
-						{
-							case DATEOID:
-							case TIMEOID:
-							case TIMESTAMPOID:
-								status = jpdsDateTimeNonZoned;
-								break;
-
-							case TIMETZOID:
-							case TIMESTAMPTZOID:
-								status = jpdsDateTimeZoned;
-								break;
-
-							default:
-								status = jpdsNonDateTime;
-								break;
-						}
-
-						break;
-					}
-					break;
-				}
-
-			case jpiEqual:
-			case jpiNotEqual:
-			case jpiLess:
-			case jpiGreater:
-			case jpiLessOrEqual:
-			case jpiGreaterOrEqual:
-				Assert(status == jpdsNonDateTime);
-				jspGetLeftArg(jpi, &arg);
-				leftStatus = jspIsMutableWalker(&arg, cxt);
-
-				jspGetRightArg(jpi, &arg);
-				rightStatus = jspIsMutableWalker(&arg, cxt);
-
-				/*
-				 * Comparison of datetime type with different timezone status
-				 * is mutable.
-				 */
-				if (leftStatus != jpdsNonDateTime &&
-					rightStatus != jpdsNonDateTime &&
-					(leftStatus == jpdsUnknownDateTime ||
-					 rightStatus == jpdsUnknownDateTime ||
-					 leftStatus != rightStatus))
-					cxt->mutable = true;
-				break;
-
-			case jpiNot:
-			case jpiIsUnknown:
-			case jpiExists:
-			case jpiPlus:
-			case jpiMinus:
-				Assert(status == jpdsNonDateTime);
-				jspGetArg(jpi, &arg);
-				jspIsMutableWalker(&arg, cxt);
-				break;
-
-			case jpiAnd:
-			case jpiOr:
-			case jpiAdd:
-			case jpiSub:
-			case jpiMul:
-			case jpiDiv:
-			case jpiMod:
-			case jpiStartsWith:
-				Assert(status == jpdsNonDateTime);
-				jspGetLeftArg(jpi, &arg);
-				jspIsMutableWalker(&arg, cxt);
-				jspGetRightArg(jpi, &arg);
-				jspIsMutableWalker(&arg, cxt);
-				break;
-
-			case jpiIndexArray:
-				for (int i = 0; i < jpi->content.array.nelems; i++)
-				{
-					JsonPathItem from;
-					JsonPathItem to;
-
-					if (jspGetArraySubscript(jpi, &from, &to, i))
-						jspIsMutableWalker(&to, cxt);
-
-					jspIsMutableWalker(&from, cxt);
-				}
-				/* FALLTHROUGH */
-
-			case jpiAnyArray:
-				if (!cxt->lax)
-					status = jpdsNonDateTime;
-				break;
-
-			case jpiAny:
-				if (jpi->content.anybounds.first > 0)
-					status = jpdsNonDateTime;
-				break;
-
-			case jpiDatetime:
-				if (jpi->content.arg)
-				{
-					char	   *template;
-					int			flags;
-
-					jspGetArg(jpi, &arg);
-					if (arg.type != jpiString)
-					{
-						status = jpdsNonDateTime;
-						break;	/* there will be runtime error */
-					}
-
-					template = jspGetString(&arg, NULL);
-					flags = datetime_format_flags(template, NULL);
-					if (flags & DCH_ZONED)
-						status = jpdsDateTimeZoned;
-					else
-						status = jpdsDateTimeNonZoned;
-				}
-				else
-				{
-					status = jpdsUnknownDateTime;
-				}
-				break;
-
-			case jpiLikeRegex:
-				Assert(status == jpdsNonDateTime);
-				jspInitByBuffer(&arg, jpi->base, jpi->content.like_regex.expr);
-				jspIsMutableWalker(&arg, cxt);
-				break;
-
-				/* literals */
-			case jpiNull:
-			case jpiString:
-			case jpiNumeric:
-			case jpiBool:
-				/* accessors */
-			case jpiKey:
-			case jpiAnyKey:
-				/* special items */
-			case jpiSubscript:
-			case jpiLast:
-				/* item methods */
-			case jpiType:
-			case jpiSize:
-			case jpiAbs:
-			case jpiFloor:
-			case jpiCeiling:
-			case jpiDouble:
-			case jpiKeyValue:
-				status = jpdsNonDateTime;
-				break;
-		}
-
-		if (!jspGetNext(jpi, &next))
-			break;
-
-		jpi = &next;
-	}
-
-	return status;
-}
-
-/*
- * Check whether jsonpath expression is immutable or not.
- */
-bool
-jspIsMutable(JsonPath *path, List *varnames, List *varexprs)
-{
-	JsonPathMutableContext cxt;
-	JsonPathItem jpi;
-
-	cxt.varnames = varnames;
-	cxt.varexprs = varexprs;
-	cxt.current = jpdsNonDateTime;
-	cxt.lax = (path->header & JSONPATH_LAX) != 0;
-	cxt.mutable = false;
-
-	jspInit(&jpi, path);
-	jspIsMutableWalker(&jpi, &cxt);
-
-	return cxt.mutable;
 }

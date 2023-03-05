@@ -3,7 +3,7 @@
  * pg_enum.c
  *	  routines to support manipulation of the pg_enum relation
  *
- * Copyright (c) 2006-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -61,14 +61,14 @@ void
 EnumValuesCreate(Oid enumTypeOid, List *vals)
 {
 	Relation	pg_enum;
-	NameData	enumlabel;
 	Oid		   *oids;
 	int			elemno,
 				num_elems;
-	Datum		values[Natts_pg_enum];
-	bool		nulls[Natts_pg_enum];
 	ListCell   *lc;
-	HeapTuple	tup;
+	int			slotCount = 0;
+	int			nslots;
+	CatalogIndexState indstate;
+	TupleTableSlot **slot;
 
 	num_elems = list_length(vals);
 
@@ -111,12 +111,21 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	qsort(oids, num_elems, sizeof(Oid), oid_cmp);
 
 	/* and make the entries */
-	memset(nulls, false, sizeof(nulls));
+	indstate = CatalogOpenIndexes(pg_enum);
+
+	/* allocate the slots to use and initialize them */
+	nslots = Min(num_elems,
+				 MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_enum));
+	slot = palloc(sizeof(TupleTableSlot *) * nslots);
+	for (int i = 0; i < nslots; i++)
+		slot[i] = MakeSingleTupleTableSlot(RelationGetDescr(pg_enum),
+										   &TTSOpsHeapTuple);
 
 	elemno = 0;
 	foreach(lc, vals)
 	{
 		char	   *lab = strVal(lfirst(lc));
+		Name		enumlabel = palloc0(NAMEDATALEN);
 
 		/*
 		 * labels are stored in a name field, for easier syscache lookup, so
@@ -129,22 +138,42 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 					 errdetail("Labels must be %d bytes or less.",
 							   NAMEDATALEN - 1)));
 
-		values[Anum_pg_enum_oid - 1] = ObjectIdGetDatum(oids[elemno]);
-		values[Anum_pg_enum_enumtypid - 1] = ObjectIdGetDatum(enumTypeOid);
-		values[Anum_pg_enum_enumsortorder - 1] = Float4GetDatum(elemno + 1);
-		namestrcpy(&enumlabel, lab);
-		values[Anum_pg_enum_enumlabel - 1] = NameGetDatum(&enumlabel);
+		ExecClearTuple(slot[slotCount]);
 
-		tup = heap_form_tuple(RelationGetDescr(pg_enum), values, nulls);
+		memset(slot[slotCount]->tts_isnull, false,
+			   slot[slotCount]->tts_tupleDescriptor->natts * sizeof(bool));
 
-		CatalogTupleInsert(pg_enum, tup);
-		heap_freetuple(tup);
+		slot[slotCount]->tts_values[Anum_pg_enum_oid - 1] = ObjectIdGetDatum(oids[elemno]);
+		slot[slotCount]->tts_values[Anum_pg_enum_enumtypid - 1] = ObjectIdGetDatum(enumTypeOid);
+		slot[slotCount]->tts_values[Anum_pg_enum_enumsortorder - 1] = Float4GetDatum(elemno + 1);
+
+		namestrcpy(enumlabel, lab);
+		slot[slotCount]->tts_values[Anum_pg_enum_enumlabel - 1] = NameGetDatum(enumlabel);
+
+		ExecStoreVirtualTuple(slot[slotCount]);
+		slotCount++;
+
+		/* if slots are full, insert a batch of tuples */
+		if (slotCount == nslots)
+		{
+			CatalogTuplesMultiInsertWithInfo(pg_enum, slot, slotCount,
+											 indstate);
+			slotCount = 0;
+		}
 
 		elemno++;
 	}
 
+	/* Insert any tuples left in the buffer */
+	if (slotCount > 0)
+		CatalogTuplesMultiInsertWithInfo(pg_enum, slot, slotCount,
+										 indstate);
+
 	/* clean up */
 	pfree(oids);
+	for (int i = 0; i < nslots; i++)
+		ExecDropSingleTupleTableSlot(slot[i]);
+	CatalogCloseIndexes(indstate);
 	table_close(pg_enum, RowExclusiveLock);
 }
 

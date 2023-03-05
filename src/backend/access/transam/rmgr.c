@@ -89,13 +89,13 @@ RmgrNotFound(RmgrId rmid)
  * Register a new custom WAL resource manager.
  *
  * Resource manager IDs must be globally unique across all extensions. Refer
- * to https://wiki.postgresql.org/wiki/CustomWALResourceManager to reserve a
+ * to https://wiki.postgresql.org/wiki/CustomWALResourceManagers to reserve a
  * unique RmgrId for your extension, to avoid conflicts with other extension
  * developers. During development, use RM_EXPERIMENTAL_ID to avoid needlessly
  * reserving a new ID.
  */
 void
-RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr)
+RegisterCustomRmgr(RmgrId rmid, const RmgrData *rmgr)
 {
 	if (rmgr->rm_name == NULL || strlen(rmgr->rm_name) == 0)
 		ereport(ERROR, (errmsg("custom resource manager name is invalid"),
@@ -145,7 +145,7 @@ pg_get_wal_resource_managers(PG_FUNCTION_ARGS)
 	Datum		values[PG_GET_RESOURCE_MANAGERS_COLS];
 	bool		nulls[PG_GET_RESOURCE_MANAGERS_COLS] = {0};
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	for (int rmid = 0; rmid <= RM_MAX_ID; rmid++)
 	{

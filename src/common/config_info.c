@@ -4,7 +4,7 @@
  *		Common code for pg_config output
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -39,7 +39,7 @@ get_configdata(const char *my_exec_path, size_t *configdata_len)
 
 	/* Adjust this to match the number of items filled below */
 	*configdata_len = 23;
-	configdata = (ConfigData *) palloc(*configdata_len * sizeof(ConfigData));
+	configdata = palloc_array(ConfigData, *configdata_len);
 
 	configdata[i].name = pstrdup("BINDIR");
 	strlcpy(path, my_exec_path, sizeof(path));

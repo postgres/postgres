@@ -3,7 +3,7 @@
  * subscriptioncmds.c
  *		subscription catalog manipulation functions
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -34,6 +34,7 @@
 #include "nodes/makefuncs.h"
 #include "pgstat.h"
 #include "replication/logicallauncher.h"
+#include "replication/logicalworker.h"
 #include "replication/origin.h"
 #include "replication/slot.h"
 #include "replication/walreceiver.h"
@@ -64,6 +65,7 @@
 #define SUBOPT_TWOPHASE_COMMIT		0x00000200
 #define SUBOPT_DISABLE_ON_ERR		0x00000400
 #define SUBOPT_LSN					0x00000800
+#define SUBOPT_ORIGIN				0x00001000
 
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
@@ -83,13 +85,18 @@ typedef struct SubOpts
 	bool		copy_data;
 	bool		refresh;
 	bool		binary;
-	bool		streaming;
+	char		streaming;
 	bool		twophase;
 	bool		disableonerr;
+	char	   *origin;
 	XLogRecPtr	lsn;
 } SubOpts;
 
 static List *fetch_table_list(WalReceiverConn *wrconn, List *publications);
+static void check_publications_origin(WalReceiverConn *wrconn,
+									  List *publications, bool copydata,
+									  char *origin, Oid *subrel_local_oids,
+									  int subrel_count, char *subname);
 static void check_duplicates_in_publist(List *publist, Datum *datums);
 static List *merge_publications(List *oldpublist, List *newpublist, bool addpub, const char *subname);
 static void ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err);
@@ -118,7 +125,7 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 		   IsSet(supported_opts, SUBOPT_ENABLED | SUBOPT_CREATE_SLOT |
 				 SUBOPT_COPY_DATA));
 
-	/* Set default values for the boolean supported options. */
+	/* Set default values for the supported options. */
 	if (IsSet(supported_opts, SUBOPT_CONNECT))
 		opts->connect = true;
 	if (IsSet(supported_opts, SUBOPT_ENABLED))
@@ -132,11 +139,13 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 	if (IsSet(supported_opts, SUBOPT_BINARY))
 		opts->binary = false;
 	if (IsSet(supported_opts, SUBOPT_STREAMING))
-		opts->streaming = false;
+		opts->streaming = LOGICALREP_STREAM_OFF;
 	if (IsSet(supported_opts, SUBOPT_TWOPHASE_COMMIT))
 		opts->twophase = false;
 	if (IsSet(supported_opts, SUBOPT_DISABLE_ON_ERR))
 		opts->disableonerr = false;
+	if (IsSet(supported_opts, SUBOPT_ORIGIN))
+		opts->origin = pstrdup(LOGICALREP_ORIGIN_ANY);
 
 	/* Parse options */
 	foreach(lc, stmt_options)
@@ -233,7 +242,7 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 				errorConflictingDefElem(defel, pstate);
 
 			opts->specified_opts |= SUBOPT_STREAMING;
-			opts->streaming = defGetBoolean(defel);
+			opts->streaming = defGetStreamingMode(defel);
 		}
 		else if (strcmp(defel->defname, "two_phase") == 0)
 		{
@@ -264,6 +273,29 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 
 			opts->specified_opts |= SUBOPT_DISABLE_ON_ERR;
 			opts->disableonerr = defGetBoolean(defel);
+		}
+		else if (IsSet(supported_opts, SUBOPT_ORIGIN) &&
+				 strcmp(defel->defname, "origin") == 0)
+		{
+			if (IsSet(opts->specified_opts, SUBOPT_ORIGIN))
+				errorConflictingDefElem(defel, pstate);
+
+			opts->specified_opts |= SUBOPT_ORIGIN;
+			pfree(opts->origin);
+
+			/*
+			 * Even though the "origin" parameter allows only "none" and "any"
+			 * values, it is implemented as a string type so that the
+			 * parameter can be extended in future versions to support
+			 * filtering using origin names specified by the user.
+			 */
+			opts->origin = defGetString(defel);
+
+			if ((pg_strcasecmp(opts->origin, LOGICALREP_ORIGIN_NONE) != 0) &&
+				(pg_strcasecmp(opts->origin, LOGICALREP_ORIGIN_ANY) != 0))
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("unrecognized origin value: \"%s\"", opts->origin));
 		}
 		else if (IsSet(supported_opts, SUBOPT_LSN) &&
 				 strcmp(defel->defname, "lsn") == 0)
@@ -383,7 +415,7 @@ get_publications_str(List *publications, StringInfo dest, bool quote_literal)
 	ListCell   *lc;
 	bool		first = true;
 
-	Assert(list_length(publications) > 0);
+	Assert(publications != NIL);
 
 	foreach(lc, publications)
 	{
@@ -406,7 +438,7 @@ get_publications_str(List *publications, StringInfo dest, bool quote_literal)
 }
 
 /*
- * Check the specified publication(s) is(are) present in the publisher.
+ * Check that the specified publications are present on the publisher.
  */
 static void
 check_publications(WalReceiverConn *wrconn, List *publications)
@@ -430,10 +462,8 @@ check_publications(WalReceiverConn *wrconn, List *publications)
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
-				errmsg_plural("could not receive publication from the publisher: %s",
-							  "could not receive list of publications from the publisher: %s",
-							  list_length(publications),
-							  res->err));
+				errmsg("could not receive list of publications from the publisher: %s",
+					   res->err));
 
 	publicationsCopy = list_copy(publications);
 
@@ -464,8 +494,8 @@ check_publications(WalReceiverConn *wrconn, List *publications)
 		get_publications_str(publicationsCopy, pubnames, false);
 		ereport(WARNING,
 				errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg_plural("publication %s does not exist in the publisher",
-							  "publications %s do not exist in the publisher",
+				errmsg_plural("publication %s does not exist on the publisher",
+							  "publications %s do not exist on the publisher",
 							  list_length(publicationsCopy),
 							  pubnames->data));
 	}
@@ -494,8 +524,7 @@ publicationListToArray(List *publist)
 
 	MemoryContextSwitchTo(oldcxt);
 
-	arr = construct_array(datums, list_length(publist),
-						  TEXTOID, -1, false, TYPALIGN_INT);
+	arr = construct_array_builtin(datums, list_length(publist), TEXTOID);
 
 	MemoryContextDelete(memcxt);
 
@@ -531,7 +560,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					  SUBOPT_SLOT_NAME | SUBOPT_COPY_DATA |
 					  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
 					  SUBOPT_STREAMING | SUBOPT_TWOPHASE_COMMIT |
-					  SUBOPT_DISABLE_ON_ERR);
+					  SUBOPT_DISABLE_ON_ERR | SUBOPT_ORIGIN);
 	parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
 	/*
@@ -601,7 +630,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	values[Anum_pg_subscription_subowner - 1] = ObjectIdGetDatum(owner);
 	values[Anum_pg_subscription_subenabled - 1] = BoolGetDatum(opts.enabled);
 	values[Anum_pg_subscription_subbinary - 1] = BoolGetDatum(opts.binary);
-	values[Anum_pg_subscription_substream - 1] = BoolGetDatum(opts.streaming);
+	values[Anum_pg_subscription_substream - 1] = CharGetDatum(opts.streaming);
 	values[Anum_pg_subscription_subtwophasestate - 1] =
 		CharGetDatum(opts.twophase ?
 					 LOGICALREP_TWOPHASE_STATE_PENDING :
@@ -618,6 +647,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		CStringGetTextDatum(opts.synchronous_commit);
 	values[Anum_pg_subscription_subpublications - 1] =
 		publicationListToArray(publications);
+	values[Anum_pg_subscription_suborigin - 1] =
+		CStringGetTextDatum(opts.origin);
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
@@ -627,7 +658,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 	recordDependencyOnOwner(SubscriptionRelationId, subid, owner);
 
-	snprintf(originname, sizeof(originname), "pg_%u", subid);
+	ReplicationOriginNameForLogicalRep(subid, InvalidOid, originname, sizeof(originname));
 	replorigin_create(originname);
 
 	/*
@@ -652,6 +683,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		PG_TRY();
 		{
 			check_publications(wrconn, publications);
+			check_publications_origin(wrconn, publications, opts.copy_data,
+									  opts.origin, NULL, 0, stmt->subname);
 
 			/*
 			 * Set sync state based on if we were asked to do data copy or
@@ -728,9 +761,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	}
 	else
 		ereport(WARNING,
-		/* translator: %s is an SQL ALTER statement */
-				(errmsg("tables were not subscribed, you will have to run %s to subscribe the tables",
-						"ALTER SUBSCRIPTION ... REFRESH PUBLICATION")));
+				(errmsg("subscription was created, but is not connected"),
+				 errhint("To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.")));
 
 	table_close(rel, RowExclusiveLock);
 
@@ -758,6 +790,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 	ListCell   *lc;
 	int			off;
 	int			remove_rel_len;
+	int			subrel_count;
 	Relation	rel = NULL;
 	typedef struct SubRemoveRels
 	{
@@ -786,14 +819,15 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 		pubrel_names = fetch_table_list(wrconn, sub->publications);
 
 		/* Get local table list. */
-		subrel_states = GetSubscriptionRelations(sub->oid);
+		subrel_states = GetSubscriptionRelations(sub->oid, false);
+		subrel_count = list_length(subrel_states);
 
 		/*
 		 * Build qsorted array of local table oids for faster lookup. This can
 		 * potentially contain all tables in the database so speed of lookup
 		 * is important.
 		 */
-		subrel_local_oids = palloc(list_length(subrel_states) * sizeof(Oid));
+		subrel_local_oids = palloc(subrel_count * sizeof(Oid));
 		off = 0;
 		foreach(lc, subrel_states)
 		{
@@ -801,14 +835,18 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 
 			subrel_local_oids[off++] = relstate->relid;
 		}
-		qsort(subrel_local_oids, list_length(subrel_states),
+		qsort(subrel_local_oids, subrel_count,
 			  sizeof(Oid), oid_cmp);
+
+		check_publications_origin(wrconn, sub->publications, copy_data,
+								  sub->origin, subrel_local_oids,
+								  subrel_count, sub->name);
 
 		/*
 		 * Rels that we want to remove from subscription and drop any slots
 		 * and origins corresponding to them.
 		 */
-		sub_remove_rels = palloc(list_length(subrel_states) * sizeof(SubRemoveRels));
+		sub_remove_rels = palloc(subrel_count * sizeof(SubRemoveRels));
 
 		/*
 		 * Walk over the remote tables and try to match them to locally known
@@ -834,7 +872,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 			pubrel_local_oids[off++] = relid;
 
 			if (!bsearch(&relid, subrel_local_oids,
-						 list_length(subrel_states), sizeof(Oid), oid_cmp))
+						 subrel_count, sizeof(Oid), oid_cmp))
 			{
 				AddSubscriptionRelState(sub->oid, relid,
 										copy_data ? SUBREL_STATE_INIT : SUBREL_STATE_READY,
@@ -853,7 +891,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 			  sizeof(Oid), oid_cmp);
 
 		remove_rel_len = 0;
-		for (off = 0; off < list_length(subrel_states); off++)
+		for (off = 0; off < subrel_count; off++)
 		{
 			Oid			relid = subrel_local_oids[off];
 
@@ -903,13 +941,13 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 					 *
 					 * It is possible that the origin is not yet created for
 					 * tablesync worker, this can happen for the states before
-					 * SUBREL_STATE_FINISHEDCOPY. The apply worker can also
-					 * concurrently try to drop the origin and by this time
-					 * the origin might be already removed. For these reasons,
-					 * passing missing_ok = true.
+					 * SUBREL_STATE_FINISHEDCOPY. The tablesync worker or
+					 * apply worker can also concurrently try to drop the
+					 * origin and by this time the origin might be already
+					 * removed. For these reasons, passing missing_ok = true.
 					 */
-					ReplicationOriginNameForTablesync(sub->oid, relid, originname,
-													  sizeof(originname));
+					ReplicationOriginNameForLogicalRep(sub->oid, relid, originname,
+													   sizeof(originname));
 					replorigin_drop_by_name(originname, true, false);
 				}
 
@@ -995,7 +1033,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	subid = form->oid;
 
 	/* must be owner */
-	if (!pg_subscription_ownercheck(subid, GetUserId()))
+	if (!object_ownercheck(SubscriptionRelationId, subid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   stmt->subname);
 
@@ -1015,7 +1053,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 			{
 				supported_opts = (SUBOPT_SLOT_NAME |
 								  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
-								  SUBOPT_STREAMING | SUBOPT_DISABLE_ON_ERR);
+								  SUBOPT_STREAMING | SUBOPT_DISABLE_ON_ERR |
+								  SUBOPT_ORIGIN);
 
 				parse_subscription_options(pstate, stmt->options,
 										   supported_opts, &opts);
@@ -1060,7 +1099,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				if (IsSet(opts.specified_opts, SUBOPT_STREAMING))
 				{
 					values[Anum_pg_subscription_substream - 1] =
-						BoolGetDatum(opts.streaming);
+						CharGetDatum(opts.streaming);
 					replaces[Anum_pg_subscription_substream - 1] = true;
 				}
 
@@ -1070,6 +1109,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						= BoolGetDatum(opts.disableonerr);
 					replaces[Anum_pg_subscription_subdisableonerr - 1]
 						= true;
+				}
+
+				if (IsSet(opts.specified_opts, SUBOPT_ORIGIN))
+				{
+					values[Anum_pg_subscription_suborigin - 1] =
+						CStringGetTextDatum(opts.origin);
+					replaces[Anum_pg_subscription_suborigin - 1] = true;
 				}
 
 				update_tuple = true;
@@ -1137,10 +1183,9 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					 */
 					if (sub->twophasestate == LOGICALREP_TWOPHASE_STATE_ENABLED && opts.copy_data)
 						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("ALTER SUBSCRIPTION with refresh and copy_data is not allowed when two_phase is enabled"),
-								 errhint("Use ALTER SUBSCRIPTION ...SET PUBLICATION with refresh = false, or with copy_data = false"
-										 ", or use DROP/CREATE SUBSCRIPTION.")));
+								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION with refresh = false, or with copy_data = false, or use DROP/CREATE SUBSCRIPTION.")));
 
 					PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION with refresh");
 
@@ -1181,7 +1226,11 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						ereport(ERROR,
 								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions"),
-								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false).")));
+						/* translator: %s is an SQL ALTER command */
+								 errhint("Use %s instead.",
+										 isadd ?
+										 "ALTER SUBSCRIPTION ... ADD PUBLICATION ... WITH (refresh = false)" :
+										 "ALTER SUBSCRIPTION ... DROP PUBLICATION ... WITH (refresh = false)")));
 
 					/*
 					 * See ALTER_SUBSCRIPTION_REFRESH for details why this is
@@ -1189,10 +1238,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					 */
 					if (sub->twophasestate == LOGICALREP_TWOPHASE_STATE_ENABLED && opts.copy_data)
 						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("ALTER SUBSCRIPTION with refresh and copy_data is not allowed when two_phase is enabled"),
-								 errhint("Use ALTER SUBSCRIPTION ...SET PUBLICATION with refresh = false, or with copy_data = false"
-										 ", or use DROP/CREATE SUBSCRIPTION.")));
+						/* translator: %s is an SQL ALTER command */
+								 errhint("Use %s with refresh = false, or with copy_data = false, or use DROP/CREATE SUBSCRIPTION.",
+										 isadd ?
+										 "ALTER SUBSCRIPTION ... ADD PUBLICATION" :
+										 "ALTER SUBSCRIPTION ... DROP PUBLICATION")));
 
 					PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION with refresh");
 
@@ -1237,8 +1289,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("ALTER SUBSCRIPTION ... REFRESH with copy_data is not allowed when two_phase is enabled"),
-							 errhint("Use ALTER SUBSCRIPTION ... REFRESH with copy_data = false"
-									 ", or use DROP/CREATE SUBSCRIPTION.")));
+							 errhint("Use ALTER SUBSCRIPTION ... REFRESH with copy_data = false, or use DROP/CREATE SUBSCRIPTION.")));
 
 				PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION ... REFRESH");
 
@@ -1269,7 +1320,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					char		originname[NAMEDATALEN];
 					XLogRecPtr	remote_lsn;
 
-					snprintf(originname, sizeof(originname), "pg_%u", subid);
+					ReplicationOriginNameForLogicalRep(subid, InvalidOid,
+													   originname, sizeof(originname));
 					originid = replorigin_by_name(originname, false);
 					remote_lsn = replorigin_get_progress(originid, false);
 
@@ -1310,6 +1362,9 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	ObjectAddressSet(myself, SubscriptionRelationId, subid);
 
 	InvokeObjectPostAlterHook(SubscriptionRelationId, subid, 0);
+
+	/* Wake up related replication workers to handle this change quickly. */
+	LogicalRepWorkersWakeupAtCommit(subid);
 
 	return myself;
 }
@@ -1367,7 +1422,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	subid = form->oid;
 
 	/* must be owner */
-	if (!pg_subscription_ownercheck(subid, GetUserId()))
+	if (!object_ownercheck(SubscriptionRelationId, subid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   stmt->subname);
 
@@ -1450,6 +1505,16 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	list_free(subworkers);
 
 	/*
+	 * Remove the no-longer-useful entry in the launcher's table of apply
+	 * worker start times.
+	 *
+	 * If this transaction rolls back, the launcher might restart a failed
+	 * apply worker before wal_retrieve_retry_interval milliseconds have
+	 * elapsed, but that's pretty harmless.
+	 */
+	ApplyLauncherForgetWorkerStartTime(subid);
+
+	/*
 	 * Cleanup of tablesync replication origins.
 	 *
 	 * Any READY-state relations would already have dealt with clean-ups.
@@ -1458,7 +1523,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 * the apply and tablesync workers and they can't restart because of
 	 * exclusive lock on the subscription.
 	 */
-	rstates = GetSubscriptionNotReadyRelations(subid);
+	rstates = GetSubscriptionRelations(subid, true);
 	foreach(lc, rstates)
 	{
 		SubscriptionRelState *rstate = (SubscriptionRelState *) lfirst(lc);
@@ -1475,8 +1540,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		 * worker so passing missing_ok = true. This can happen for the states
 		 * before SUBREL_STATE_FINISHEDCOPY.
 		 */
-		ReplicationOriginNameForTablesync(subid, relid, originname,
-										  sizeof(originname));
+		ReplicationOriginNameForLogicalRep(subid, relid, originname,
+										   sizeof(originname));
 		replorigin_drop_by_name(originname, true, false);
 	}
 
@@ -1487,7 +1552,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	RemoveSubscriptionRel(subid, InvalidOid);
 
 	/* Remove the origin tracking if exists. */
-	snprintf(originname, sizeof(originname), "pg_%u", subid);
+	ReplicationOriginNameForLogicalRep(subid, InvalidOid, originname, sizeof(originname));
 	replorigin_drop_by_name(originname, true, false);
 
 	/*
@@ -1579,15 +1644,9 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 
 	/*
 	 * Tell the cumulative stats system that the subscription is getting
-	 * dropped. We can safely report dropping the subscription statistics here
-	 * if the subscription is associated with a replication slot since we
-	 * cannot run DROP SUBSCRIPTION inside a transaction block.  Subscription
-	 * statistics will be removed later by (auto)vacuum either if it's not
-	 * associated with a replication slot or if the message for dropping the
-	 * subscription gets lost.
+	 * dropped.
 	 */
-	if (slotname)
-		pgstat_drop_subscription(subid);
+	pgstat_drop_subscription(subid);
 
 	table_close(rel, NoLock);
 }
@@ -1664,7 +1723,7 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (form->subowner == newOwnerId)
 		return;
 
-	if (!pg_subscription_ownercheck(form->oid, GetUserId()))
+	if (!object_ownercheck(SubscriptionRelationId, form->oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   NameStr(form->subname));
 
@@ -1687,7 +1746,9 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	InvokeObjectPostAlterHook(SubscriptionRelationId,
 							  form->oid, 0);
 
+	/* Wake up related background processes to handle this change quickly. */
 	ApplyLauncherWakeupAtCommit();
+	LogicalRepWorkersWakeupAtCommit(form->oid);
 }
 
 /*
@@ -1749,6 +1810,117 @@ AlterSubscriptionOwner_oid(Oid subid, Oid newOwnerId)
 	heap_freetuple(tup);
 
 	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Check and log a warning if the publisher has subscribed to the same table
+ * from some other publisher. This check is required only if "copy_data = true"
+ * and "origin = none" for CREATE SUBSCRIPTION and
+ * ALTER SUBSCRIPTION ... REFRESH statements to notify the user that data
+ * having origin might have been copied.
+ *
+ * This check need not be performed on the tables that are already added
+ * because incremental sync for those tables will happen through WAL and the
+ * origin of the data can be identified from the WAL records.
+ *
+ * subrel_local_oids contains the list of relation oids that are already
+ * present on the subscriber.
+ */
+static void
+check_publications_origin(WalReceiverConn *wrconn, List *publications,
+						  bool copydata, char *origin, Oid *subrel_local_oids,
+						  int subrel_count, char *subname)
+{
+	WalRcvExecResult *res;
+	StringInfoData cmd;
+	TupleTableSlot *slot;
+	Oid			tableRow[1] = {TEXTOID};
+	List	   *publist = NIL;
+	int			i;
+
+	if (!copydata || !origin ||
+		(pg_strcasecmp(origin, LOGICALREP_ORIGIN_NONE) != 0))
+		return;
+
+	initStringInfo(&cmd);
+	appendStringInfoString(&cmd,
+						   "SELECT DISTINCT P.pubname AS pubname\n"
+						   "FROM pg_publication P,\n"
+						   "	 LATERAL pg_get_publication_tables(P.pubname) GPT\n"
+						   "	 JOIN pg_subscription_rel PS ON (GPT.relid = PS.srrelid),\n"
+						   "	 pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)\n"
+						   "WHERE C.oid = GPT.relid AND P.pubname IN (");
+	get_publications_str(publications, &cmd, true);
+	appendStringInfoString(&cmd, ")\n");
+
+	/*
+	 * In case of ALTER SUBSCRIPTION ... REFRESH, subrel_local_oids contains
+	 * the list of relation oids that are already present on the subscriber.
+	 * This check should be skipped for these tables.
+	 */
+	for (i = 0; i < subrel_count; i++)
+	{
+		Oid			relid = subrel_local_oids[i];
+		char	   *schemaname = get_namespace_name(get_rel_namespace(relid));
+		char	   *tablename = get_rel_name(relid);
+
+		appendStringInfo(&cmd, "AND NOT (N.nspname = '%s' AND C.relname = '%s')\n",
+						 schemaname, tablename);
+	}
+
+	res = walrcv_exec(wrconn, cmd.data, 1, tableRow);
+	pfree(cmd.data);
+
+	if (res->status != WALRCV_OK_TUPLES)
+		ereport(ERROR,
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("could not receive list of replicated tables from the publisher: %s",
+						res->err)));
+
+	/* Process tables. */
+	slot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
+	while (tuplestore_gettupleslot(res->tuplestore, true, false, slot))
+	{
+		char	   *pubname;
+		bool		isnull;
+
+		pubname = TextDatumGetCString(slot_getattr(slot, 1, &isnull));
+		Assert(!isnull);
+
+		ExecClearTuple(slot);
+		publist = list_append_unique(publist, makeString(pubname));
+	}
+
+	/*
+	 * Log a warning if the publisher has subscribed to the same table from
+	 * some other publisher. We cannot know the origin of data during the
+	 * initial sync. Data origins can be found only from the WAL by looking at
+	 * the origin id.
+	 *
+	 * XXX: For simplicity, we don't check whether the table has any data or
+	 * not. If the table doesn't have any data then we don't need to
+	 * distinguish between data having origin and data not having origin so we
+	 * can avoid logging a warning in that case.
+	 */
+	if (publist)
+	{
+		StringInfo	pubnames = makeStringInfo();
+
+		/* Prepare the list of publication(s) for warning message. */
+		get_publications_str(publist, pubnames, false);
+		ereport(WARNING,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("subscription \"%s\" requested copy_data with origin = NONE but might copy data that had a different origin",
+					   subname),
+				errdetail_plural("Subscribed publication %s is subscribing to other publications.",
+								 "Subscribed publications %s are subscribing to other publications.",
+								 list_length(publist), pubnames->data),
+				errhint("Verify that initial data copied from the publisher tables did not come from other origins."));
+	}
+
+	ExecDropSingleTupleTableSlot(slot);
+
+	walrcv_clear_result(res);
 }
 
 /*
@@ -1860,8 +2032,8 @@ ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_CONNECTION_FAILURE),
-			 errmsg("could not connect to publisher when attempting to "
-					"drop replication slot \"%s\": %s", slotname, err),
+			 errmsg("could not connect to publisher when attempting to drop replication slot \"%s\": %s",
+					slotname, err),
 	/* translator: %s is an SQL ALTER command */
 			 errhint("Use %s to disassociate the subscription from the slot.",
 					 "ALTER SUBSCRIPTION ... SET (slot_name = NONE)")));
@@ -1965,4 +2137,61 @@ merge_publications(List *oldpublist, List *newpublist, bool addpub, const char *
 				 errmsg("cannot drop all the publications from a subscription")));
 
 	return oldpublist;
+}
+
+/*
+ * Extract the streaming mode value from a DefElem.  This is like
+ * defGetBoolean() but also accepts the special value of "parallel".
+ */
+char
+defGetStreamingMode(DefElem *def)
+{
+	/*
+	 * If no parameter value given, assume "true" is meant.
+	 */
+	if (!def->arg)
+		return LOGICALREP_STREAM_ON;
+
+	/*
+	 * Allow 0, 1, "false", "true", "off", "on" or "parallel".
+	 */
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+			switch (intVal(def->arg))
+			{
+				case 0:
+					return LOGICALREP_STREAM_OFF;
+				case 1:
+					return LOGICALREP_STREAM_ON;
+				default:
+					/* otherwise, error out below */
+					break;
+			}
+			break;
+		default:
+			{
+				char	   *sval = defGetString(def);
+
+				/*
+				 * The set of strings accepted here should match up with the
+				 * grammar's opt_boolean_or_string production.
+				 */
+				if (pg_strcasecmp(sval, "false") == 0 ||
+					pg_strcasecmp(sval, "off") == 0)
+					return LOGICALREP_STREAM_OFF;
+				if (pg_strcasecmp(sval, "true") == 0 ||
+					pg_strcasecmp(sval, "on") == 0)
+					return LOGICALREP_STREAM_ON;
+				if (pg_strcasecmp(sval, "parallel") == 0)
+					return LOGICALREP_STREAM_PARALLEL;
+			}
+			break;
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("%s requires a Boolean value or \"parallel\"",
+					def->defname)));
+	return LOGICALREP_STREAM_OFF;	/* keep compiler quiet */
 }

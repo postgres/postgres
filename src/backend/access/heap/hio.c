@@ -3,7 +3,7 @@
  * hio.c
  *	  POSTGRES heap access method input/output code.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -678,29 +678,34 @@ loop:
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+		}
 
-			/*
-			 * Because the buffers were unlocked for a while, it's possible,
-			 * although unlikely, that an all-visible flag became set or that
-			 * somebody used up the available space in the new page.  We can
-			 * use GetVisibilityMapPins to deal with the first case.  In the
-			 * second case, just retry from start.
-			 */
-			GetVisibilityMapPins(relation, otherBuffer, buffer,
-								 otherBlock, targetBlock, vmbuffer_other,
-								 vmbuffer);
+		/*
+		 * Because the buffers were unlocked for a while, it's possible,
+		 * although unlikely, that an all-visible flag became set or that
+		 * somebody used up the available space in the new page.  We can use
+		 * GetVisibilityMapPins to deal with the first case.  In the second
+		 * case, just retry from start.
+		 */
+		GetVisibilityMapPins(relation, otherBuffer, buffer,
+							 otherBlock, targetBlock, vmbuffer_other,
+							 vmbuffer);
 
-			if (len > PageGetHeapFreeSpace(page))
-			{
-				LockBuffer(otherBuffer, BUFFER_LOCK_UNLOCK);
-				UnlockReleaseBuffer(buffer);
+		/*
+		 * Note that we have to check the available space even if our
+		 * conditional lock succeeded, because GetVisibilityMapPins might've
+		 * transiently released lock on the target buffer to acquire a VM pin
+		 * for the otherBuffer.
+		 */
+		if (len > PageGetHeapFreeSpace(page))
+		{
+			LockBuffer(otherBuffer, BUFFER_LOCK_UNLOCK);
+			UnlockReleaseBuffer(buffer);
 
-				goto loop;
-			}
+			goto loop;
 		}
 	}
-
-	if (len > PageGetHeapFreeSpace(page))
+	else if (len > PageGetHeapFreeSpace(page))
 	{
 		/* We should not get here given the test at the top */
 		elog(PANIC, "tuple is too big: size %zu", len);

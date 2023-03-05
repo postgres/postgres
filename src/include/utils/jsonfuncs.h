@@ -3,7 +3,7 @@
  * jsonfuncs.h
  *	  Functions to process JSON data types.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/jsonfuncs.h
@@ -39,14 +39,16 @@ typedef text *(*JsonTransformStringValuesAction) (void *state, char *elem_value,
 /* build a JsonLexContext from a text datum */
 extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
 
-/* try to parse json, and ereport(ERROR) on failure */
-extern void pg_parse_json_or_ereport(JsonLexContext *lex, JsonSemAction *sem);
+/* try to parse json, and errsave(escontext) on failure */
+extern bool pg_parse_json_or_errsave(JsonLexContext *lex, JsonSemAction *sem,
+									 struct Node *escontext);
 
-/* report an error during json lexing or parsing */
-extern void json_ereport_error(JsonParseErrorType error, JsonLexContext *lex);
+#define pg_parse_json_or_ereport(lex, sem) \
+	(void) pg_parse_json_or_errsave(lex, sem, NULL)
 
-/* get first JSON token */
-extern JsonTokenType json_get_first_token(text *json, bool throw_error);
+/* save an error during json lexing or parsing */
+extern void json_errsave_error(JsonParseErrorType error, JsonLexContext *lex,
+							   struct Node *escontext);
 
 extern uint32 parse_jsonb_index_flags(Jsonb *jb);
 extern void iterate_jsonb_values(Jsonb *jb, uint32 flags, void *state,
@@ -57,9 +59,5 @@ extern Jsonb *transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
 											JsonTransformStringValuesAction transform_action);
 extern text *transform_json_string_values(text *json, void *action_state,
 										  JsonTransformStringValuesAction transform_action);
-
-extern Datum json_populate_type(Datum json_val, Oid json_type,
-								Oid typid, int32 typmod,
-								void **cache, MemoryContext mcxt, bool *isnull);
 
 #endif

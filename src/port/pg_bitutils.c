@@ -3,7 +3,7 @@
  * pg_bitutils.c
  *	  Miscellaneous functions for bit-wise operations.
  *
- * Copyright (c) 2019-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2019-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/pg_bitutils.c

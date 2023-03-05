@@ -3,7 +3,7 @@
 # pg_type.dat
 #    Initial contents of the pg_type system catalog.
 #
-# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/include/catalog/pg_type.dat
@@ -267,9 +267,9 @@
 # OIDS 1000 - 1099
 
 { oid => '1033', array_type_oid => '1034', descr => 'access control list',
-  typname => 'aclitem', typlen => '12', typbyval => 'f', typcategory => 'U',
+  typname => 'aclitem', typlen => '16', typbyval => 'f', typcategory => 'U',
   typinput => 'aclitemin', typoutput => 'aclitemout', typreceive => '-',
-  typsend => '-', typalign => 'i' },
+  typsend => '-', typalign => 'd' },
 { oid => '1042', array_type_oid => '1014',
   descr => 'char(length), blank-padded string, fixed storage length',
   typname => 'bpchar', typlen => '-1', typbyval => 'f', typcategory => 'S',

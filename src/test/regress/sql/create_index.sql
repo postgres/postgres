@@ -617,6 +617,12 @@ create unique index on cwi_test (a);
 alter table cwi_test add primary key using index cwi_test_a_idx ;
 DROP TABLE cwi_test;
 
+-- PRIMARY KEY constraint cannot be backed by a NULLS NOT DISTINCT index
+CREATE TABLE cwi_test(a int, b int);
+CREATE UNIQUE INDEX cwi_a_nnd ON cwi_test (a) NULLS NOT DISTINCT;
+ALTER TABLE cwi_test ADD PRIMARY KEY USING INDEX cwi_a_nnd;
+DROP TABLE cwi_test;
+
 --
 -- Check handling of indexes on system columns
 --
@@ -1072,8 +1078,12 @@ REINDEX INDEX CONCURRENTLY pg_class_oid_index; -- no catalog index
 REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1260; -- no catalog toast table
 REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
+REINDEX (CONCURRENTLY) SYSTEM postgres; -- ditto
+REINDEX (CONCURRENTLY) SYSTEM;  -- ditto
 -- Warns about catalog relations
 REINDEX SCHEMA CONCURRENTLY pg_catalog;
+-- Not the current database
+REINDEX DATABASE not_current_database;
 
 -- Check the relation status, there should not be invalid indexes
 \d concur_reindex_tab

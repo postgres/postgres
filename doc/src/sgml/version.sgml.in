@@ -1,0 +1,2 @@
+<!ENTITY version @PG_VERSION@>
+<!ENTITY majorversion @PG_MAJORVERSION@>

@@ -3,7 +3,7 @@
  * _int_selfuncs.c
  *	  Functions for selectivity estimation of intarray operators
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -34,8 +34,8 @@ PG_FUNCTION_INFO_V1(_int_contained_joinsel);
 PG_FUNCTION_INFO_V1(_int_matchsel);
 
 
-static Selectivity int_query_opr_selec(ITEM *item, Datum *values, float4 *freqs,
-									   int nmncelems, float4 minfreq);
+static Selectivity int_query_opr_selec(ITEM *item, Datum *mcelems, float4 *mcefreqs,
+									   int nmcelems, float4 minfreq);
 static int	compare_val_int4(const void *a, const void *b);
 
 /*

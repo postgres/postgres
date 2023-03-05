@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -19,6 +19,10 @@ my $tempdir = PostgreSQL::Test::Utils::tempdir;
 # Each of these runs are named and those names are used below
 # to define how each test should (or shouldn't) treat a result
 # from a given run.
+#
+# compile_option indicates if the commands run depend on a compilation
+# option, if any.  This can be used to control if tests should be
+# skipped when a build dependency is not satisfied.
 #
 # test_key indicates that a given run should simply use the same
 # set of like/unlike tests as another run, and which run that is.
@@ -90,6 +94,7 @@ my %pgdump_runs = (
 	},
 	defaults_custom_format => {
 		test_key => 'defaults',
+		compile_option => 'gzip',
 		dump_cmd => [
 			'pg_dump', '--no-sync', '-Fc', '-Z6',
 			"--file=$tempdir/defaults_custom_format.dump", 'postgres',
@@ -269,7 +274,7 @@ my %pgdump_runs = (
 # as the regexps are used for each run the test applies to.
 
 # Tests which are considered 'full' dumps by pg_dump, but there
-# are flags used to exclude specific items (ACLs, blobs, etc).
+# are flags used to exclude specific items (ACLs, LOs, etc).
 my %full_runs = (
 	binary_upgrade    => 1,
 	clean             => 1,
@@ -749,6 +754,8 @@ $node->start;
 
 my $port = $node->port;
 
+my $supports_gzip = check_pg_config("#define HAVE_LIBZ 1");
+
 #########################################
 # Set up schemas, tables, etc, to be dumped.
 
@@ -791,6 +798,15 @@ foreach my $run (sort keys %pgdump_runs)
 {
 
 	my $test_key = $run;
+
+	# Skip command-level tests for gzip if there is no support for it.
+	if (   defined($pgdump_runs{$run}->{compile_option})
+		&& $pgdump_runs{$run}->{compile_option} eq 'gzip'
+		&& !$supports_gzip)
+	{
+		note "$run: skipped due to no gzip support";
+		next;
+	}
 
 	$node->command_ok(\@{ $pgdump_runs{$run}->{dump_cmd} },
 		"$run: pg_dump runs");

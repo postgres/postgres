@@ -32,11 +32,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/select.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 
 #include "libpq-fe.h"
 

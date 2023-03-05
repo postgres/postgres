@@ -3,7 +3,7 @@
  * heap_surgery.c
  *	  Functions to perform surgery on the damaged heap table.
  *
- * Copyright (c) 2020-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2020-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/pg_surgery/heap_surgery.c
@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/acl.h"
+#include "utils/array.h"
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;
@@ -117,7 +118,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 				 errmsg("only heap AM is supported")));
 
 	/* Must be owner of the table or superuser. */
-	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+	if (!object_ownercheck(RelationRelationId, RelationGetRelid(rel), GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER,
 					   get_relkind_objtype(rel->rd_rel->relkind),
 					   RelationGetRelationName(rel));
@@ -130,7 +131,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 	 * array.
 	 */
 	if (ntids > 1)
-		qsort((void *) tids, ntids, sizeof(ItemPointerData), tidcmp);
+		qsort(tids, ntids, sizeof(ItemPointerData), tidcmp);
 
 	curr_start_ptr = next_start_ptr = 0;
 	nblocks = RelationGetNumberOfBlocks(rel);

@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgrowlocks.sgml -->
 
 <sect1 id="pgrowlocks" xreflabel="pgrowlocks">
- <title>pgrowlocks</title>
+ <title>pgrowlocks &mdash; show a table's row locking information</title>
 
  <indexterm zone="pgrowlocks">
   <primary>pgrowlocks</primary>
@@ -19,7 +19,7 @@
  </para>
 
 
- <sect2>
+ <sect2 id="pgrowlocks-overview">
   <title>Overview</title>
 
   <indexterm>
@@ -57,7 +57,8 @@ pgrowlocks(text) returns setof record
      <row>
       <entry><structfield>locker</structfield></entry>
       <entry><type>xid</type></entry>
-      <entry>Transaction ID of locker, or multixact ID if multitransaction</entry>
+      <entry>Transaction ID of locker, or multixact ID if
+      multitransaction;  see <xref linkend="transaction-id"/></entry>
      </row>
      <row>
       <entry><structfield>multi</structfield></entry>
@@ -124,7 +125,7 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgrowlocks-sample-output">
   <title>Sample Output</title>
 
   <screen>
@@ -139,7 +140,7 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
 </screen>
  </sect2>
 
- <sect2>
+ <sect2 id="pgrowlocks-author">
   <title>Author</title>
 
   <para>

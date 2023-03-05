@@ -17,7 +17,7 @@
  * any database access.
  *
  *
- * Copyright (c) 2006-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/cache/ts_cache.c
@@ -38,10 +38,12 @@
 #include "catalog/pg_ts_template.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "tsearch/ts_cache.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
+#include "utils/guc_hooks.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -137,7 +139,7 @@ lookup_ts_parser_cache(Oid prsId)
 
 	/* Try to look up an existing entry */
 	entry = (TSParserCacheEntry *) hash_search(TSParserCacheHash,
-											   (void *) &prsId,
+											   &prsId,
 											   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
 	{
@@ -170,9 +172,7 @@ lookup_ts_parser_cache(Oid prsId)
 
 			/* Now make the cache entry */
 			entry = (TSParserCacheEntry *)
-				hash_search(TSParserCacheHash,
-							(void *) &prsId,
-							HASH_ENTER, &found);
+				hash_search(TSParserCacheHash, &prsId, HASH_ENTER, &found);
 			Assert(!found);		/* it wasn't there a moment ago */
 		}
 
@@ -236,7 +236,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 
 	/* Try to look up an existing entry */
 	entry = (TSDictionaryCacheEntry *) hash_search(TSDictionaryCacheHash,
-												   (void *) &dictId,
+												   &dictId,
 												   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
 	{
@@ -286,7 +286,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 			/* Now make the cache entry */
 			entry = (TSDictionaryCacheEntry *)
 				hash_search(TSDictionaryCacheHash,
-							(void *) &dictId,
+							&dictId,
 							HASH_ENTER, &found);
 			Assert(!found);		/* it wasn't there a moment ago */
 
@@ -399,7 +399,7 @@ lookup_ts_config_cache(Oid cfgId)
 
 	/* Try to look up an existing entry */
 	entry = (TSConfigCacheEntry *) hash_search(TSConfigCacheHash,
-											   (void *) &cfgId,
+											   &cfgId,
 											   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
 	{
@@ -439,7 +439,7 @@ lookup_ts_config_cache(Oid cfgId)
 			/* Now make the cache entry */
 			entry = (TSConfigCacheEntry *)
 				hash_search(TSConfigCacheHash,
-							(void *) &cfgId,
+							&cfgId,
 							HASH_ENTER, &found);
 			Assert(!found);		/* it wasn't there a moment ago */
 		}
@@ -555,6 +555,8 @@ lookup_ts_config_cache(Oid cfgId)
 Oid
 getTSCurrentConfig(bool emitError)
 {
+	List	   *namelist;
+
 	/* if we have a cached value, return it */
 	if (OidIsValid(TSCurrentConfigCache))
 		return TSCurrentConfigCache;
@@ -575,16 +577,29 @@ getTSCurrentConfig(bool emitError)
 	}
 
 	/* Look up the config */
-	TSCurrentConfigCache =
-		get_ts_config_oid(stringToQualifiedNameList(TSCurrentConfig),
-						  !emitError);
+	if (emitError)
+	{
+		namelist = stringToQualifiedNameList(TSCurrentConfig, NULL);
+		TSCurrentConfigCache = get_ts_config_oid(namelist, false);
+	}
+	else
+	{
+		ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+		namelist = stringToQualifiedNameList(TSCurrentConfig,
+											 (Node *) &escontext);
+		if (namelist != NIL)
+			TSCurrentConfigCache = get_ts_config_oid(namelist, true);
+		else
+			TSCurrentConfigCache = InvalidOid;	/* bad name list syntax */
+	}
 
 	return TSCurrentConfigCache;
 }
 
 /* GUC check_hook for default_text_search_config */
 bool
-check_TSCurrentConfig(char **newval, void **extra, GucSource source)
+check_default_text_search_config(char **newval, void **extra, GucSource source)
 {
 	/*
 	 * If we aren't inside a transaction, or connected to a database, we
@@ -593,12 +608,19 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 	 */
 	if (IsTransactionState() && MyDatabaseId != InvalidOid)
 	{
+		ErrorSaveContext escontext = {T_ErrorSaveContext};
+		List	   *namelist;
 		Oid			cfgId;
 		HeapTuple	tuple;
 		Form_pg_ts_config cfg;
 		char	   *buf;
 
-		cfgId = get_ts_config_oid(stringToQualifiedNameList(*newval), true);
+		namelist = stringToQualifiedNameList(*newval,
+											 (Node *) &escontext);
+		if (namelist != NIL)
+			cfgId = get_ts_config_oid(namelist, true);
+		else
+			cfgId = InvalidOid; /* bad name list syntax */
 
 		/*
 		 * When source == PGC_S_TEST, don't throw a hard error for a
@@ -632,9 +654,9 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 
 		ReleaseSysCache(tuple);
 
-		/* GUC wants it malloc'd not palloc'd */
-		free(*newval);
-		*newval = strdup(buf);
+		/* GUC wants it guc_malloc'd not palloc'd */
+		guc_free(*newval);
+		*newval = guc_strdup(LOG, buf);
 		pfree(buf);
 		if (!*newval)
 			return false;
@@ -645,7 +667,7 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 
 /* GUC assign_hook for default_text_search_config */
 void
-assign_TSCurrentConfig(const char *newval, void *extra)
+assign_default_text_search_config(const char *newval, void *extra)
 {
 	/* Just reset the cache to force a lookup on first use */
 	TSCurrentConfigCache = InvalidOid;

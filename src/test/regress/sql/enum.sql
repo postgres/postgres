@@ -15,6 +15,14 @@ SELECT COUNT(*) FROM pg_enum WHERE enumtypid = 'rainbow'::regtype;
 SELECT 'red'::rainbow;
 SELECT 'mauve'::rainbow;
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('red', 'rainbow');
+SELECT pg_input_is_valid('mauve', 'rainbow');
+SELECT * FROM pg_input_error_info('mauve', 'rainbow');
+\x
+SELECT * FROM pg_input_error_info(repeat('too_long', 32), 'rainbow');
+\x
+
 --
 -- adding new values
 --

@@ -157,10 +157,10 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      </para>
      <para>
       Note that the command is invoked by the shell, so if you need to pass
-      any arguments to shell command that come from an untrusted source, you
+      any arguments that come from an untrusted source, you
       must be careful to strip or escape any special characters that might
       have a special meaning for the shell. For security reasons, it is best
-      to use a fixed command string, or at least avoid passing any user input
+      to use a fixed command string, or at least avoid including any user input
       in it.
      </para>
     </listitem>
@@ -227,7 +227,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      <para>
       Note that all other sessions will immediately be able to see the data
       once it has been successfully loaded. This violates the normal rules
-      of MVCC visibility and users specifying should be aware of the
+      of MVCC visibility and users should be aware of the
       potential problems this might cause.
      </para>
     </listitem>
@@ -280,7 +280,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       option is set to <literal>true</literal> (or equivalent Boolean value).
       If this option is set to <literal>MATCH</literal>, the number and names
       of the columns in the header line must match the actual column names of
-      the table, otherwise an error is raised.
+      the table, in order;  otherwise an error is raised.
       This option is not allowed when using <literal>binary</literal> format.
       The <literal>MATCH</literal> option is only valid for <command>COPY
       FROM</command> commands.
@@ -708,7 +708,7 @@ COPY <replaceable class="parameter">count</replaceable>
     Separated Value (<literal>CSV</literal>) file format used by many other
     programs, such as spreadsheets. Instead of the escaping rules used by
     <productname>PostgreSQL</productname>'s standard text format, it
-    produces and recognizes the common CSV escaping mechanism.
+    produces and recognizes the common <literal>CSV</literal> escaping mechanism.
    </para>
 
    <para>
@@ -766,7 +766,7 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <note>
     <para>
-     CSV format will both recognize and produce CSV files with quoted
+     <literal>CSV</literal> format will both recognize and produce <literal>CSV</literal> files with quoted
      values containing embedded carriage returns and line feeds. Thus
      the files are not strictly one line per table row like text-format
      files.
@@ -775,7 +775,7 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <note>
     <para>
-     Many programs produce strange and occasionally perverse CSV files,
+     Many programs produce strange and occasionally perverse <literal>CSV</literal> files,
      so the file format is more a convention than a standard. Thus you
      might encounter some files that cannot be imported using this
      mechanism, and <command>COPY</command> might produce files that other

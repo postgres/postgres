@@ -229,7 +229,7 @@ MERGE
 MERGE is a multiple-table, multiple-action command: It specifies a target
 table and a source relation, and can contain multiple WHEN MATCHED and
 WHEN NOT MATCHED clauses, each of which specifies one UPDATE, INSERT,
-UPDATE, or DO NOTHING actions.  The target table is modified by MERGE,
+DELETE, or DO NOTHING actions.  The target table is modified by MERGE,
 and the source relation supplies additional data for the actions.  Each action
 optionally specifies a qualifying expression that is evaluated for each tuple.
 

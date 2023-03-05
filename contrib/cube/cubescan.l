@@ -1,9 +1,21 @@
-%{
+%top{
 /*
  * A scanner for EMP-style numeric ranges
  * contrib/cube/cubescan.l
  */
 
+#include "postgres.h"
+
+/*
+ * NB: include cubeparse.h only AFTER defining YYSTYPE (to match cubeparse.y)
+ * and cubedata.h for NDBOX.
+ */
+#include "cubedata.h"
+#define YYSTYPE char *
+#include "cubeparse.h"
+}
+
+%{
 /* LCOV_EXCL_START */
 
 /* No reason to constrain amount of data slurped */
@@ -21,9 +33,7 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 
 /* Handles to the buffer that the lexer uses internally */
 static YY_BUFFER_STATE scanbufhandle;
-/* this is now declared in cubeparse.y: */
-/* static char *scanbuf; */
-/* static int	scanbuflen; */
+static char *scanbuf;
 %}
 
 %option 8bit
@@ -45,14 +55,14 @@ NaN          [nN][aA][nN]
 
 %%
 
-{float}      yylval = yytext; return CUBEFLOAT;
-{infinity}   yylval = yytext; return CUBEFLOAT;
-{NaN}        yylval = yytext; return CUBEFLOAT;
-\[           yylval = "("; return O_BRACKET;
-\]           yylval = ")"; return C_BRACKET;
-\(           yylval = "("; return O_PAREN;
-\)           yylval = ")"; return C_PAREN;
-\,           yylval = ","; return COMMA;
+{float}      cube_yylval = yytext; return CUBEFLOAT;
+{infinity}   cube_yylval = yytext; return CUBEFLOAT;
+{NaN}        cube_yylval = yytext; return CUBEFLOAT;
+\[           cube_yylval = "("; return O_BRACKET;
+\]           cube_yylval = ")"; return C_BRACKET;
+\(           cube_yylval = "("; return O_PAREN;
+\)           cube_yylval = ")"; return C_PAREN;
+\,           cube_yylval = ","; return COMMA;
 [ \t\n\r\f]+ /* discard spaces */
 .            return yytext[0]; /* alert parser of the garbage */
 
@@ -60,13 +70,15 @@ NaN          [nN][aA][nN]
 
 /* LCOV_EXCL_STOP */
 
-/* result is not used, but Bison expects this signature */
+/* result and scanbuflen are not used, but Bison expects this signature */
 void
-yyerror(NDBOX **result, const char *message)
+cube_yyerror(NDBOX **result, Size scanbuflen,
+			 struct Node *escontext,
+			 const char *message)
 {
 	if (*yytext == YY_END_OF_BUFFER_CHAR)
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for cube"),
 				 /* translator: %s is typically "syntax error" */
@@ -74,7 +86,7 @@ yyerror(NDBOX **result, const char *message)
 	}
 	else
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for cube"),
 				 /* translator: first %s is typically "syntax error" */
@@ -87,9 +99,9 @@ yyerror(NDBOX **result, const char *message)
  * Called before any actual parsing is done
  */
 void
-cube_scanner_init(const char *str)
+cube_scanner_init(const char *str, Size *scanbuflen)
 {
-	Size	slen = strlen(str);
+	Size		slen = strlen(str);
 
 	/*
 	 * Might be left over after ereport()
@@ -100,7 +112,7 @@ cube_scanner_init(const char *str)
 	/*
 	 * Make a scan buffer with special termination needed by flex.
 	 */
-	scanbuflen = slen;
+	*scanbuflen = slen;
 	scanbuf = palloc(slen + 2);
 	memcpy(scanbuf, str, slen);
 	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;

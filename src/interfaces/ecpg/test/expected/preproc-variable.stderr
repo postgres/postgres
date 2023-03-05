@@ -2,167 +2,167 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 47: query: set datestyle to iso; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 49: query: set datestyle to iso; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 47: using PQexec
+[NO_PID]: ecpg_execute on line 49: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 47: OK: SET
+[NO_PID]: ecpg_process_output on line 49: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: query: create table family ( name char ( 8 ) , born integer , age smallint , married date , children integer ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 52: query: create table family ( name char ( 8 ) , born integer , age smallint , married date , children integer ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: using PQexec
+[NO_PID]: ecpg_execute on line 52: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 50: OK: CREATE TABLE
+[NO_PID]: ecpg_process_output on line 52: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 53: query: insert into family ( name , married , children ) values ( 'Mum' , '19870714' , 3 ); with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 53: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 53: OK: INSERT 0 1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 54: query: insert into family ( name , born , married , children ) values ( 'Dad' , '19610721' , '19870714' , 3 ); with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 54: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 54: OK: INSERT 0 1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: query: insert into family ( name , age ) values ( 'Child 1' , 16 ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 55: query: insert into family ( name , married , children ) values ( 'Mum' , '19870714' , 3 ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 55: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 55: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 56: query: insert into family ( name , age ) values ( 'Child 2' , 14 ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 56: query: insert into family ( name , born , married , children ) values ( 'Dad' , '19610721' , '19870714' , 3 ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 56: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 57: query: insert into family ( name , age ) values ( 'Child 3' , 9 ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 57: query: insert into family ( name , age ) values ( 'Child 1' , 16 ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 57: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 57: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 60: action "commit"; connection "ecpg1_regression"
+[NO_PID]: ecpg_execute on line 58: query: insert into family ( name , age ) values ( 'Child 2' , 14 ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 63: query: declare cur cursor for select name , born , age , married , children from family; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 58: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 63: using PQexec
+[NO_PID]: ecpg_process_output on line 58: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 63: OK: DECLARE CURSOR
+[NO_PID]: ecpg_execute on line 59: query: insert into family ( name , age ) values ( 'Child 3' , 9 ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 59: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: using PQexec
+[NO_PID]: ecpg_process_output on line 59: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 72: correctly got 1 tuples with 5 fields
+[NO_PID]: ECPGtrans on line 62: action "commit"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: Mum      offset: -1; array: no
+[NO_PID]: ecpg_execute on line 65: query: declare cur cursor for select name , born , age , married , children from family; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_execute on line 65: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 65: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result on line 72: allocating memory for 1 tuples
+[NO_PID]: ecpg_execute on line 74: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 1987-07-14 offset: -1; array: no
+[NO_PID]: ecpg_execute on line 74: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 3 offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 74: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_get_data on line 74: RESULT: Mum      offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: using PQexec
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 72: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: Dad      offset: -1; array: no
+[NO_PID]: ecpg_store_result on line 74: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 19610721 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 74: RESULT: 1987-07-14 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 74: RESULT: 3 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result on line 72: allocating memory for 1 tuples
+[NO_PID]: ecpg_execute on line 74: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 1987-07-14 offset: -1; array: no
+[NO_PID]: ecpg_execute on line 74: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 3 offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 74: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_get_data on line 74: RESULT: Dad      offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: using PQexec
+[NO_PID]: ecpg_get_data on line 74: RESULT: 19610721 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 72: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: Child 1  offset: -1; array: no
+[NO_PID]: ecpg_store_result on line 74: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 74: RESULT: 1987-07-14 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 16 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 74: RESULT: 3 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result on line 72: allocating memory for 1 tuples
+[NO_PID]: ecpg_execute on line 74: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_execute on line 74: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 74: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_get_data on line 74: RESULT: Child 1  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: using PQexec
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 72: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_get_data on line 74: RESULT: 16 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: Child 2  offset: -1; array: no
+[NO_PID]: ecpg_store_result on line 74: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 14 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result on line 72: allocating memory for 1 tuples
+[NO_PID]: ecpg_execute on line 74: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_execute on line 74: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 74: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_get_data on line 74: RESULT: Child 2  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: using PQexec
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 72: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_get_data on line 74: RESULT: 14 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: Child 3  offset: -1; array: no
+[NO_PID]: ecpg_store_result on line 74: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 9 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result on line 72: allocating memory for 1 tuples
+[NO_PID]: ecpg_execute on line 74: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_execute on line 74: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 74: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_get_data on line 74: RESULT: Child 3  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 72: using PQexec
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 72: correctly got 0 tuples with 5 fields
+[NO_PID]: ecpg_get_data on line 74: RESULT: 9 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 on line 72: no data found on line 72
+[NO_PID]: ecpg_store_result on line 74: allocating memory for 1 tuples
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 74: RESULT:  offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 74: query: fetch cur; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 74: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 74: correctly got 0 tuples with 5 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode 100 on line 74: no data found on line 74
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 89: query: close cur; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 91: query: close cur; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 89: using PQexec
+[NO_PID]: ecpg_execute on line 91: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 89: OK: CLOSE CURSOR
+[NO_PID]: ecpg_process_output on line 91: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 92: query: drop table family; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 94: query: drop table family; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 92: using PQexec
+[NO_PID]: ecpg_execute on line 94: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 92: OK: DROP TABLE
+[NO_PID]: ecpg_process_output on line 94: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 95: action "commit"; connection "ecpg1_regression"
+[NO_PID]: ECPGtrans on line 97: action "commit"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -4,7 +4,7 @@
  *	  Declarations for XML data type support.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/xml.h
@@ -47,8 +47,17 @@ typedef enum
 /* struct PgXmlErrorContext is private to xml.c */
 typedef struct PgXmlErrorContext PgXmlErrorContext;
 
-#define DatumGetXmlP(X)		((xmltype *) PG_DETOAST_DATUM(X))
-#define XmlPGetDatum(X)		PointerGetDatum(X)
+static inline xmltype *
+DatumGetXmlP(Datum X)
+{
+	return (xmltype *) PG_DETOAST_DATUM(X);
+}
+
+static inline Datum
+XmlPGetDatum(const xmltype *X)
+{
+	return PointerGetDatum(X);
+}
 
 #define PG_GETARG_XML_P(n)	DatumGetXmlP(PG_GETARG_DATUM(n))
 #define PG_RETURN_XML_P(x)	PG_RETURN_POINTER(x)
@@ -64,7 +73,7 @@ extern xmltype *xmlconcat(List *args);
 extern xmltype *xmlelement(XmlExpr *xexpr,
 						   Datum *named_argvalue, bool *named_argnull,
 						   Datum *argvalue, bool *argnull);
-extern xmltype *xmlparse(text *data, XmlOptionType xmloption, bool preserve_whitespace);
+extern xmltype *xmlparse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace);
 extern xmltype *xmlpi(const char *target, text *arg, bool arg_is_null, bool *result_is_null);
 extern xmltype *xmlroot(xmltype *data, text *version, int standalone);
 extern bool xml_is_document(xmltype *arg);

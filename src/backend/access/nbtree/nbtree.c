@@ -8,7 +8,7 @@
  *	  This file contains only the public interface routines.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -165,8 +165,8 @@ btbuildempty(Relation index)
 	 */
 	PageSetChecksumInplace(metapage, BTREE_METAPAGE);
 	smgrwrite(RelationGetSmgr(index), INIT_FORKNUM, BTREE_METAPAGE,
-			  (char *) metapage, true);
-	log_newpage(&RelationGetSmgr(index)->smgr_rnode.node, INIT_FORKNUM,
+			  metapage, true);
+	log_newpage(&RelationGetSmgr(index)->smgr_rlocator.locator, INIT_FORKNUM,
 				BTREE_METAPAGE, metapage, true);
 
 	/*

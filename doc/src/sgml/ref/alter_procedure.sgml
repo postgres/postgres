@@ -54,9 +54,10 @@ ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="para
    You must own the procedure to use <command>ALTER PROCEDURE</command>.
    To change a procedure's schema, you must also have <literal>CREATE</literal>
    privilege on the new schema.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role, and that role must have <literal>CREATE</literal> privilege on
-   the procedure's schema.  (These restrictions enforce that altering the owner
+   To alter the owner, you must be able to <literal>SET ROLE</literal> to the
+   new owning role, and that role must have <literal>CREATE</literal>
+   privilege on the procedure's schema.
+   (These restrictions enforce that altering the owner
    doesn't do anything you couldn't do by dropping and recreating the procedure.
    However, a superuser can alter ownership of any procedure anyway.)
   </para>
@@ -147,7 +148,12 @@ ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="para
     <term><replaceable class="parameter">extension_name</replaceable></term>
     <listitem>
      <para>
-      The name of the extension that the procedure is to depend on.
+      This form marks the procedure as dependent on the extension, or no longer
+      dependent on the extension if <literal>NO</literal> is specified.
+      A procedure that's marked as dependent on an extension is dropped when the
+      extension is dropped, even if cascade is not specified.
+      A procedure can depend upon multiple extensions, and will be dropped when
+      any one of those extensions is dropped.
      </para>
     </listitem>
    </varlistentry>

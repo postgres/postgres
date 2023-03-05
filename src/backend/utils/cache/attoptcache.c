@@ -6,7 +6,7 @@
  * Attribute options are cached separately from the fixed-size portion of
  * pg_attribute entries, which are handled by the relcache.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -22,6 +22,7 @@
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
+#include "varatt.h"
 
 
 /* Hash table for information about each attribute's options */
@@ -62,7 +63,7 @@ InvalidateAttoptCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 		if (attopt->opts)
 			pfree(attopt->opts);
 		if (hash_search(AttoptCacheHash,
-						(void *) &attopt->key,
+						&attopt->key,
 						HASH_REMOVE,
 						NULL) == NULL)
 			elog(ERROR, "hash table corrupted");
@@ -115,7 +116,7 @@ get_attribute_options(Oid attrelid, int attnum)
 	key.attnum = attnum;
 	attopt =
 		(AttoptCacheEntry *) hash_search(AttoptCacheHash,
-										 (void *) &key,
+										 &key,
 										 HASH_FIND,
 										 NULL);
 
@@ -162,7 +163,7 @@ get_attribute_options(Oid attrelid, int attnum)
 		 * pg_attribute, since the read could cause a cache flush.
 		 */
 		attopt = (AttoptCacheEntry *) hash_search(AttoptCacheHash,
-												  (void *) &key,
+												  &key,
 												  HASH_ENTER,
 												  NULL);
 		attopt->opts = opts;

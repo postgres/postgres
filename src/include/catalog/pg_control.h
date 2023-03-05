@@ -5,7 +5,7 @@
  *	  However, we define it here so that the format is documented.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_control.h
@@ -246,5 +246,13 @@ typedef struct ControlFileData
  * message instead of a read error if it's looking at an incompatible file.
  */
 #define PG_CONTROL_FILE_SIZE		8192
+
+/*
+ * Ensure that the size of the pg_control data structure is sane.
+ */
+StaticAssertDecl(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
+				 "pg_control is too large for atomic disk writes");
+StaticAssertDecl(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
+				 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
 
 #endif							/* PG_CONTROL_H */

@@ -3,38 +3,24 @@
  * preadv.c
  *	  Implementation of preadv(2) for platforms that lack one.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/preadv.c
- *
- * Note that this implementation changes the current file position, unlike
- * the POSIX-like function, so we use the name pg_preadv().
  *
  *-------------------------------------------------------------------------
  */
 
 
-#include "postgres.h"
+#include "c.h"
 
-#ifdef WIN32
-#include <windows.h>
-#else
 #include <unistd.h>
-#endif
 
 #include "port/pg_iovec.h"
 
 ssize_t
 pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 {
-#ifdef HAVE_READV
-	if (iovcnt == 1)
-		return pg_pread(fd, iov[0].iov_base, iov[0].iov_len, offset);
-	if (lseek(fd, offset, SEEK_SET) < 0)
-		return -1;
-	return readv(fd, iov, iovcnt);
-#else
 	ssize_t		sum = 0;
 	ssize_t		part;
 
@@ -54,5 +40,4 @@ pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 			return sum;
 	}
 	return sum;
-#endif
 }

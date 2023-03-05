@@ -8,7 +8,7 @@
  *
  * See src/tools/testint128.c for a simple test harness for this file.
  *
- * Copyright (c) 2017-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2023, PostgreSQL Global Development Group
  *
  * src/include/common/int128.h
  *
@@ -177,7 +177,7 @@ static inline void
 int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
 {
 	/* INT64_AU32 must use arithmetic right shift */
-	StaticAssertStmt(((int64) -1 >> 1) == (int64) -1,
+	StaticAssertDecl(((int64) -1 >> 1) == (int64) -1,
 					 "arithmetic right shift is needed");
 
 	/*----------

@@ -4,7 +4,7 @@
  *	  prototypes for typecmds.c.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/typecmds.h
@@ -34,7 +34,7 @@ extern Oid	AssignTypeMultirangeArrayOid(void);
 
 extern ObjectAddress AlterDomainDefault(List *names, Node *defaultRaw);
 extern ObjectAddress AlterDomainNotNull(List *names, bool notNull);
-extern ObjectAddress AlterDomainAddConstraint(List *names, Node *constr,
+extern ObjectAddress AlterDomainAddConstraint(List *names, Node *newConstraint,
 											  ObjectAddress *constrAddr);
 extern ObjectAddress AlterDomainValidateConstraint(List *names, const char *constrName);
 extern ObjectAddress AlterDomainDropConstraint(List *names, const char *constrName,

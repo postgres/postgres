@@ -23,7 +23,7 @@
  * The Windows implementation uses Windows events that are inherited by all
  * postmaster child processes. There's no need for the self-pipe trick there.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -282,6 +282,22 @@ InitializeLatchSupport(void)
 
 #ifdef WAIT_USE_SIGNALFD
 	sigset_t	signalfd_mask;
+
+	if (IsUnderPostmaster)
+	{
+		/*
+		 * It would probably be safe to re-use the inherited signalfd since
+		 * signalfds only see the current process's pending signals, but it
+		 * seems less surprising to close it and create our own.
+		 */
+		if (signal_fd != -1)
+		{
+			/* Release postmaster's signal FD; ignore any error */
+			(void) close(signal_fd);
+			signal_fd = -1;
+			ReleaseExternalFD();
+		}
+	}
 
 	/* Block SIGURG, because we'll receive it through a signalfd. */
 	sigaddset(&UnBlockSig, SIGURG);
@@ -853,6 +869,23 @@ FreeWaitEventSet(WaitEventSet *set)
 	pfree(set);
 }
 
+/*
+ * Free a previously created WaitEventSet in a child process after a fork().
+ */
+void
+FreeWaitEventSetAfterFork(WaitEventSet *set)
+{
+#if defined(WAIT_USE_EPOLL)
+	close(set->epoll_fd);
+	ReleaseExternalFD();
+#elif defined(WAIT_USE_KQUEUE)
+	/* kqueues are not normally inherited by child processes */
+	ReleaseExternalFD();
+#endif
+
+	pfree(set);
+}
+
 /* ---
  * Add an event to the set. Possible events are:
  * - WL_LATCH_SET: Wait for the latch to be set
@@ -864,6 +897,9 @@ FreeWaitEventSet(WaitEventSet *set)
  * - WL_SOCKET_CONNECTED: Wait for socket connection to be established,
  *	 can be combined with other WL_SOCKET_* events (on non-Windows
  *	 platforms, this is the same as WL_SOCKET_WRITEABLE)
+ * - WL_SOCKET_ACCEPT: Wait for new connection to a server socket,
+ *	 can be combined with other WL_SOCKET_* events (on non-Windows
+ *	 platforms, this is the same as WL_SOCKET_READABLE)
  * - WL_SOCKET_CLOSED: Wait for socket to be closed by remote peer.
  * - WL_EXIT_ON_PM_DEATH: Exit immediately if the postmaster dies
  *
@@ -874,7 +910,7 @@ FreeWaitEventSet(WaitEventSet *set)
  * i.e. it must be a process-local latch initialized with InitLatch, or a
  * shared latch associated with the current process by calling OwnLatch.
  *
- * In the WL_SOCKET_READABLE/WRITEABLE/CONNECTED cases, EOF and error
+ * In the WL_SOCKET_READABLE/WRITEABLE/CONNECTED/ACCEPT cases, EOF and error
  * conditions cause the socket to be reported as readable/writable/connected,
  * so that the caller can deal with the condition.
  *
@@ -1312,6 +1348,8 @@ WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event)
 			flags |= FD_WRITE;
 		if (event->events & WL_SOCKET_CONNECTED)
 			flags |= FD_CONNECT;
+		if (event->events & WL_SOCKET_ACCEPT)
+			flags |= FD_ACCEPT;
 
 		if (*handle == WSA_INVALID_EVENT)
 		{
@@ -1363,6 +1401,8 @@ WaitEventSetWait(WaitEventSet *set, long timeout,
 		Assert(timeout >= 0 && timeout <= INT_MAX);
 		cur_timeout = timeout;
 	}
+	else
+		INSTR_TIME_SET_ZERO(start_time);
 
 	pgstat_report_wait_start(wait_event_info);
 
@@ -1487,7 +1527,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 
 	/* Sleep */
 	rc = epoll_wait(set->epoll_fd, set->epoll_ret_events,
-					nevents, cur_timeout);
+					Min(nevents, set->nevents_space), cur_timeout);
 
 	/* Check return code */
 	if (rc < 0)
@@ -1647,7 +1687,8 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 
 	/* Sleep */
 	rc = kevent(set->kqueue_fd, NULL, 0,
-				set->kqueue_ret_events, nevents,
+				set->kqueue_ret_events,
+				Min(nevents, set->nevents_space),
 				timeout_p);
 
 	/* Check return code */
@@ -2066,6 +2107,12 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 		{
 			/* connected */
 			occurred_events->events |= WL_SOCKET_CONNECTED;
+		}
+		if ((cur_event->events & WL_SOCKET_ACCEPT) &&
+			(resEvents.lNetworkEvents & FD_ACCEPT))
+		{
+			/* incoming connection could be accepted */
+			occurred_events->events |= WL_SOCKET_ACCEPT;
 		}
 		if (resEvents.lNetworkEvents & FD_CLOSE)
 		{

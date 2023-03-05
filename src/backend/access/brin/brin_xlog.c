@@ -2,7 +2,7 @@
  * brin_xlog.c
  *		XLog replay routines for BRIN indexes
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -358,4 +358,10 @@ brin_mask(char *pagedata, BlockNumber blkno)
 	{
 		mask_unused_space(page);
 	}
+
+	/*
+	 * BRIN_EVACUATE_PAGE is not WAL-logged, since it's of no use in recovery.
+	 * Mask it.  See brin_start_evacuating_page() for details.
+	 */
+	BrinPageFlags(page) &= ~BRIN_EVACUATE_PAGE;
 }

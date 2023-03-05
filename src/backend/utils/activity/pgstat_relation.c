@@ -8,7 +8,7 @@
  * storage implementation and the details about individual types of
  * statistics.
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat_relation.c
@@ -25,6 +25,7 @@
 #include "utils/pgstat_internal.h"
 #include "utils/rel.h"
 #include "utils/timestamp.h"
+#include "catalog/catalog.h"
 
 
 /* Record that's written to 2PC state file when pgstat state is persisted */
@@ -205,7 +206,7 @@ pgstat_drop_relation(Relation rel)
 }
 
 /*
- * Report that the table was just vacuumed.
+ * Report that the table was just vacuumed and flush IO statistics.
  */
 void
 pgstat_report_vacuum(Oid tableoid, bool shared,
@@ -230,8 +231,8 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	shtabentry = (PgStatShared_Relation *) entry_ref->shared_stats;
 	tabentry = &shtabentry->stats;
 
-	tabentry->n_live_tuples = livetuples;
-	tabentry->n_dead_tuples = deadtuples;
+	tabentry->live_tuples = livetuples;
+	tabentry->dead_tuples = deadtuples;
 
 	/*
 	 * It is quite possible that a non-aggressive VACUUM ended up skipping
@@ -243,27 +244,35 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	 * autovacuum.  An anti-wraparound autovacuum will catch any persistent
 	 * stragglers.
 	 */
-	tabentry->inserts_since_vacuum = 0;
+	tabentry->ins_since_vacuum = 0;
 
 	if (IsAutoVacuumWorkerProcess())
 	{
-		tabentry->autovac_vacuum_timestamp = ts;
-		tabentry->autovac_vacuum_count++;
+		tabentry->last_autovacuum_time = ts;
+		tabentry->autovacuum_count++;
 	}
 	else
 	{
-		tabentry->vacuum_timestamp = ts;
+		tabentry->last_vacuum_time = ts;
 		tabentry->vacuum_count++;
 	}
 
 	pgstat_unlock_entry(entry_ref);
+
+	/*
+	 * Flush IO statistics now. pgstat_report_stat() will flush IO stats,
+	 * however this will not be called until after an entire autovacuum cycle
+	 * is done -- which will likely vacuum many relations -- or until the
+	 * VACUUM command has processed all tables and committed.
+	 */
+	pgstat_flush_io(false);
 }
 
 /*
- * Report that the table was just analyzed.
+ * Report that the table was just analyzed and flush IO statistics.
  *
  * Caller must provide new live- and dead-tuples estimates, as well as a
- * flag indicating whether to reset the changes_since_analyze counter.
+ * flag indicating whether to reset the mod_since_analyze counter.
  */
 void
 pgstat_report_analyze(Relation rel,
@@ -317,29 +326,32 @@ pgstat_report_analyze(Relation rel,
 	shtabentry = (PgStatShared_Relation *) entry_ref->shared_stats;
 	tabentry = &shtabentry->stats;
 
-	tabentry->n_live_tuples = livetuples;
-	tabentry->n_dead_tuples = deadtuples;
+	tabentry->live_tuples = livetuples;
+	tabentry->dead_tuples = deadtuples;
 
 	/*
-	 * If commanded, reset changes_since_analyze to zero.  This forgets any
+	 * If commanded, reset mod_since_analyze to zero.  This forgets any
 	 * changes that were committed while the ANALYZE was in progress, but we
 	 * have no good way to estimate how many of those there were.
 	 */
 	if (resetcounter)
-		tabentry->changes_since_analyze = 0;
+		tabentry->mod_since_analyze = 0;
 
 	if (IsAutoVacuumWorkerProcess())
 	{
-		tabentry->autovac_analyze_timestamp = GetCurrentTimestamp();
-		tabentry->autovac_analyze_count++;
+		tabentry->last_autoanalyze_time = GetCurrentTimestamp();
+		tabentry->autoanalyze_count++;
 	}
 	else
 	{
-		tabentry->analyze_timestamp = GetCurrentTimestamp();
+		tabentry->last_analyze_time = GetCurrentTimestamp();
 		tabentry->analyze_count++;
 	}
 
 	pgstat_unlock_entry(entry_ref);
+
+	/* see pgstat_report_vacuum() */
+	pgstat_flush_io(false);
 }
 
 /*
@@ -437,17 +449,7 @@ pgstat_update_heap_dead_tuples(Relation rel, int delta)
 PgStat_StatTabEntry *
 pgstat_fetch_stat_tabentry(Oid relid)
 {
-	PgStat_StatTabEntry *tabentry;
-
-	tabentry = pgstat_fetch_stat_tabentry_ext(false, relid);
-	if (tabentry != NULL)
-		return tabentry;
-
-	/*
-	 * If we didn't find it, maybe it's a shared table.
-	 */
-	tabentry = pgstat_fetch_stat_tabentry_ext(true, relid);
-	return tabentry;
+	return pgstat_fetch_stat_tabentry_ext(IsSharedRelation(relid), relid);
 }
 
 /*
@@ -789,6 +791,13 @@ pgstat_relation_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	tabentry = &shtabstats->stats;
 
 	tabentry->numscans += lstats->t_counts.t_numscans;
+	if (lstats->t_counts.t_numscans)
+	{
+		TimestampTz t = GetCurrentTransactionStopTimestamp();
+
+		if (t > tabentry->lastscan)
+			tabentry->lastscan = t;
+	}
 	tabentry->tuples_returned += lstats->t_counts.t_tuples_returned;
 	tabentry->tuples_fetched += lstats->t_counts.t_tuples_fetched;
 	tabentry->tuples_inserted += lstats->t_counts.t_tuples_inserted;
@@ -801,34 +810,34 @@ pgstat_relation_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	 */
 	if (lstats->t_counts.t_truncdropped)
 	{
-		tabentry->n_live_tuples = 0;
-		tabentry->n_dead_tuples = 0;
-		tabentry->inserts_since_vacuum = 0;
+		tabentry->live_tuples = 0;
+		tabentry->dead_tuples = 0;
+		tabentry->ins_since_vacuum = 0;
 	}
 
-	tabentry->n_live_tuples += lstats->t_counts.t_delta_live_tuples;
-	tabentry->n_dead_tuples += lstats->t_counts.t_delta_dead_tuples;
-	tabentry->changes_since_analyze += lstats->t_counts.t_changed_tuples;
-	tabentry->inserts_since_vacuum += lstats->t_counts.t_tuples_inserted;
+	tabentry->live_tuples += lstats->t_counts.t_delta_live_tuples;
+	tabentry->dead_tuples += lstats->t_counts.t_delta_dead_tuples;
+	tabentry->mod_since_analyze += lstats->t_counts.t_changed_tuples;
+	tabentry->ins_since_vacuum += lstats->t_counts.t_tuples_inserted;
 	tabentry->blocks_fetched += lstats->t_counts.t_blocks_fetched;
 	tabentry->blocks_hit += lstats->t_counts.t_blocks_hit;
 
-	/* Clamp n_live_tuples in case of negative delta_live_tuples */
-	tabentry->n_live_tuples = Max(tabentry->n_live_tuples, 0);
-	/* Likewise for n_dead_tuples */
-	tabentry->n_dead_tuples = Max(tabentry->n_dead_tuples, 0);
+	/* Clamp live_tuples in case of negative delta_live_tuples */
+	tabentry->live_tuples = Max(tabentry->live_tuples, 0);
+	/* Likewise for dead_tuples */
+	tabentry->dead_tuples = Max(tabentry->dead_tuples, 0);
 
 	pgstat_unlock_entry(entry_ref);
 
 	/* The entry was successfully flushed, add the same to database stats */
 	dbentry = pgstat_prep_database_pending(dboid);
-	dbentry->n_tuples_returned += lstats->t_counts.t_tuples_returned;
-	dbentry->n_tuples_fetched += lstats->t_counts.t_tuples_fetched;
-	dbentry->n_tuples_inserted += lstats->t_counts.t_tuples_inserted;
-	dbentry->n_tuples_updated += lstats->t_counts.t_tuples_updated;
-	dbentry->n_tuples_deleted += lstats->t_counts.t_tuples_deleted;
-	dbentry->n_blocks_fetched += lstats->t_counts.t_blocks_fetched;
-	dbentry->n_blocks_hit += lstats->t_counts.t_blocks_hit;
+	dbentry->tuples_returned += lstats->t_counts.t_tuples_returned;
+	dbentry->tuples_fetched += lstats->t_counts.t_tuples_fetched;
+	dbentry->tuples_inserted += lstats->t_counts.t_tuples_inserted;
+	dbentry->tuples_updated += lstats->t_counts.t_tuples_updated;
+	dbentry->tuples_deleted += lstats->t_counts.t_tuples_deleted;
+	dbentry->blocks_fetched += lstats->t_counts.t_blocks_fetched;
+	dbentry->blocks_hit += lstats->t_counts.t_blocks_hit;
 
 	return true;
 }

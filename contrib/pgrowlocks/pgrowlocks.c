@@ -75,7 +75,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 	char	  **values;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* Access the table */
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));

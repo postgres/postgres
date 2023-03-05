@@ -3,7 +3,7 @@
  * objectaddress.h
  *	  functions for working with object addresses
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/objectaddress.h
@@ -77,9 +77,9 @@ extern char *getObjectDescriptionOids(Oid classid, Oid objid);
 extern int	read_objtype_from_string(const char *objtype);
 extern char *getObjectTypeDescription(const ObjectAddress *object,
 									  bool missing_ok);
-extern char *getObjectIdentity(const ObjectAddress *address,
+extern char *getObjectIdentity(const ObjectAddress *object,
 							   bool missing_ok);
-extern char *getObjectIdentityParts(const ObjectAddress *address,
+extern char *getObjectIdentityParts(const ObjectAddress *object,
 									List **objname, List **objargs,
 									bool missing_ok);
 extern struct ArrayType *strlist_to_textarray(List *list);

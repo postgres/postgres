@@ -20,10 +20,28 @@ SELECT * FROM verify_heapam(relation := 'heaptest', skip := 'NONE');
 SELECT * FROM verify_heapam(relation := 'heaptest', skip := 'ALL-FROZEN');
 SELECT * FROM verify_heapam(relation := 'heaptest', skip := 'ALL-VISIBLE');
 
+
 -- Add some data so subsequent tests are not entirely trivial
 INSERT INTO heaptest (a, b)
 	(SELECT gs, repeat('x', gs)
 		FROM generate_series(1,50) gs);
+
+-- pg_stat_io test:
+-- verify_heapam always uses a BAS_BULKREAD BufferAccessStrategy, whereas a
+-- sequential scan does so only if the table is large enough when compared to
+-- shared buffers (see initscan()). CREATE DATABASE ... also unconditionally
+-- uses a BAS_BULKREAD strategy, but we have chosen to use a tablespace and
+-- verify_heapam to provide coverage instead of adding another expensive
+-- operation to the main regression test suite.
+--
+-- Create an alternative tablespace and move the heaptest table to it, causing
+-- it to be rewritten and all the blocks to reliably evicted from shared
+-- buffers -- guaranteeing actual reads when we next select from it.
+SET allow_in_place_tablespaces = true;
+CREATE TABLESPACE regress_test_stats_tblspc LOCATION '';
+SELECT sum(reads) AS stats_bulkreads_before
+  FROM pg_stat_io WHERE io_context = 'bulkread' \gset
+ALTER TABLE heaptest SET TABLESPACE regress_test_stats_tblspc;
 
 -- Check that valid options are not rejected nor corruption reported
 -- for a non-empty table
@@ -31,6 +49,14 @@ SELECT * FROM verify_heapam(relation := 'heaptest', skip := 'none');
 SELECT * FROM verify_heapam(relation := 'heaptest', skip := 'all-frozen');
 SELECT * FROM verify_heapam(relation := 'heaptest', skip := 'all-visible');
 SELECT * FROM verify_heapam(relation := 'heaptest', startblock := 0, endblock := 0);
+
+-- verify_heapam should have read in the page written out by
+--   ALTER TABLE ... SET TABLESPACE ...
+-- causing an additional bulkread, which should be reflected in pg_stat_io.
+SELECT pg_stat_force_next_flush();
+SELECT sum(reads) AS stats_bulkreads_after
+  FROM pg_stat_io WHERE io_context = 'bulkread' \gset
+SELECT :stats_bulkreads_after > :stats_bulkreads_before;
 
 CREATE ROLE regress_heaptest_role;
 
@@ -110,6 +136,7 @@ SELECT * FROM verify_heapam('test_foreign_table',
 
 -- cleanup
 DROP TABLE heaptest;
+DROP TABLESPACE regress_test_stats_tblspc;
 DROP TABLE test_partition;
 DROP TABLE test_partitioned;
 DROP OWNED BY regress_heaptest_role; -- permissions

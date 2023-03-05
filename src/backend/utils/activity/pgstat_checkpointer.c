@@ -8,7 +8,7 @@
  * storage implementation and the details about individual types of
  * statistics.
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat_checkpointer.c
@@ -24,7 +24,7 @@ PgStat_CheckpointerStats PendingCheckpointerStats = {0};
 
 
 /*
- * Report checkpointer statistics
+ * Report checkpointer and IO statistics
  */
 void
 pgstat_report_checkpointer(void)
@@ -62,6 +62,11 @@ pgstat_report_checkpointer(void)
 	 * Clear out the statistics buffer, so it can be re-used.
 	 */
 	MemSet(&PendingCheckpointerStats, 0, sizeof(PendingCheckpointerStats));
+
+	/*
+	 * Report IO statistics
+	 */
+	pgstat_flush_io(false);
 }
 
 /*

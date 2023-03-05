@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # Testing of logical decoding using SQL interface and/or pg_recvlogical
 #
@@ -45,7 +45,7 @@ ok( $stderr =~
 	replication => 'database');
 like(
 	$stderr,
-	qr/cannot use "READ_REPLICATION_SLOT" with logical replication slot "test_slot"/,
+	qr/cannot use READ_REPLICATION_SLOT with a logical replication slot/,
 	'READ_REPLICATION_SLOT not supported for logical slots');
 
 # Check case of walsender not using a database connection.  Logical

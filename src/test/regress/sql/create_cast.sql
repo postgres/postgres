@@ -52,3 +52,24 @@ $$ SELECT ('foo'::text || $1::text)::casttesttype; $$;
 
 CREATE CAST (int4 AS casttesttype) WITH FUNCTION int4_casttesttype(int4) AS IMPLICIT;
 SELECT 1234::int4::casttesttype; -- Should work now
+
+DROP FUNCTION int4_casttesttype(int4) CASCADE;
+
+-- Try it with a function that requires an implicit cast
+
+CREATE FUNCTION bar_int4_text(int4) RETURNS text LANGUAGE SQL AS
+$$ SELECT ('bar'::text || $1::text); $$;
+
+CREATE CAST (int4 AS casttesttype) WITH FUNCTION bar_int4_text(int4) AS IMPLICIT;
+SELECT 1234::int4::casttesttype; -- Should work now
+
+-- check dependencies generated for that
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid, refobjid, refobjsubid) as objref,
+       deptype
+FROM pg_depend
+WHERE classid = 'pg_cast'::regclass AND
+      objid = (SELECT oid FROM pg_cast
+               WHERE castsource = 'int4'::regtype
+                 AND casttarget = 'casttesttype'::regtype)
+ORDER BY refclassid;

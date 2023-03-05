@@ -4,7 +4,7 @@
  *	  routines to search and manipulate one FSM page.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -268,13 +268,13 @@ restart:
 			 *
 			 * Fix the corruption and restart.
 			 */
-			RelFileNode rnode;
+			RelFileLocator rlocator;
 			ForkNumber	forknum;
 			BlockNumber blknum;
 
-			BufferGetTag(buf, &rnode, &forknum, &blknum);
+			BufferGetTag(buf, &rlocator, &forknum, &blknum);
 			elog(DEBUG1, "fixing corrupt FSM block %u, relation %u/%u/%u",
-				 blknum, rnode.spcNode, rnode.dbNode, rnode.relNode);
+				 blknum, rlocator.spcOid, rlocator.dbOid, rlocator.relNumber);
 
 			/* make sure we hold an exclusive lock */
 			if (!exclusive_lock_held)

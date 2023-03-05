@@ -3,7 +3,7 @@
  * attoptcache.h
  *	  Attribute options cache.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/attoptcache.h
@@ -23,6 +23,6 @@ typedef struct AttributeOpts
 	float8		n_distinct_inherited;
 } AttributeOpts;
 
-extern AttributeOpts *get_attribute_options(Oid spcid, int attnum);
+extern AttributeOpts *get_attribute_options(Oid attrelid, int attnum);
 
 #endif							/* ATTOPTCACHE_H */

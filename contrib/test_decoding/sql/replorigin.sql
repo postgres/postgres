@@ -31,6 +31,11 @@ SELECT pg_replication_origin_create('regress_test_decoding: temp');
 SELECT pg_replication_origin_drop('regress_test_decoding: temp');
 SELECT pg_replication_origin_drop('regress_test_decoding: temp');
 
+-- specifying reserved origin names is not supported
+SELECT pg_replication_origin_create('any');
+SELECT pg_replication_origin_create('none');
+SELECT pg_replication_origin_create('pg_replication_origin');
+
 -- various failure checks for undefined slots
 select pg_replication_origin_advance('regress_test_decoding: temp', '0/1');
 select pg_replication_origin_session_setup('regress_test_decoding: temp');

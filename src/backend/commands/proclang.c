@@ -3,7 +3,7 @@
  * proclang.c
  *	  PostgreSQL LANGUAGE support code.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -134,7 +134,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 		/* This is currently pointless, since we already checked superuser */
 #ifdef NOT_USED
-		if (!pg_language_ownercheck(oldform->oid, languageOwner))
+		if (!object_ownercheck(LanguageRelationId, oldform->oid, languageOwner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_LANGUAGE,
 						   languageName);
 #endif

@@ -7,7 +7,7 @@
  * perspective, but allows regression testing independent of platform-specific
  * features like SELinux.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  */
 #include "postgres.h"
@@ -18,9 +18,6 @@
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;
-
-/* Entrypoint of the module */
-void		_PG_init(void);
 
 PG_FUNCTION_INFO_V1(dummy_seclabel_dummy);
 

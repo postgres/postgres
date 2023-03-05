@@ -21,7 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
+REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { INDEX | TABLE | SCHEMA } [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
+REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { DATABASE | SYSTEM } [ CONCURRENTLY ] [ <replaceable class="parameter">name</replaceable> ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
@@ -126,8 +127,9 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
     <term><literal>DATABASE</literal></term>
     <listitem>
      <para>
-      Recreate all indexes within the current database.
-      Indexes on shared system catalogs are also processed.
+      Recreate all indexes within the current database, except system
+      catalogs.
+      Indexes on shared system catalogs are not processed.
       This form of <command>REINDEX</command> cannot be executed inside a
       transaction block.
      </para>
@@ -154,8 +156,8 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
       The name of the specific index, table, or database to be
       reindexed.  Index and table names can be schema-qualified.
       Presently, <command>REINDEX DATABASE</command> and <command>REINDEX SYSTEM</command>
-      can only reindex the current database, so their parameter must match
-      the current database's name.
+      can only reindex the current database. Their parameter is optional,
+      and it must match the current database's name.
      </para>
     </listitem>
    </varlistentry>
@@ -291,15 +293,24 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
 
   <para>
    Reindexing a single index or table requires being the owner of that
-   index or table.  Reindexing a schema or database requires being the
-   owner of that schema or database.  Note specifically that it's thus
+   index or table, having privileges of the
+   <link linkend="predefined-roles-table"><literal>pg_maintain</literal></link>
+   role, or having the <literal>MAINTAIN</literal> privilege on the
+   table.  Reindexing a schema or database requires being the
+   owner of that schema or database or having privileges of the
+   <literal>pg_maintain</literal> role.  Note specifically that it's thus
    possible for non-superusers to rebuild indexes of tables owned by
    other users.  However, as a special exception, when
    <command>REINDEX DATABASE</command>, <command>REINDEX SCHEMA</command>
    or <command>REINDEX SYSTEM</command> is issued by a non-superuser,
    indexes on shared catalogs will be skipped unless the user owns the
-   catalog (which typically won't be the case).  Of course, superusers
-   can always reindex anything.
+   catalog (which typically won't be the case), has privileges of the
+   <literal>pg_maintain</literal> role, or has the <literal>MAINTAIN</literal>
+   privilege on the catalog.  If a role has permission to
+   <command>REINDEX</command> a partitioned table, it is also permitted to
+   <command>REINDEX</command> each of its partitions, regardless of whether the
+   role has the aforementioned privileges on the partition.  Of course,
+   superusers can always reindex anything.
   </para>
 
   <para>

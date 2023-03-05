@@ -95,7 +95,7 @@ gdb_date_dist(const void *a, const void *b, FmgrInfo *flinfo)
 										   DateADTGetDatum(*((const DateADT *) a)),
 										   DateADTGetDatum(*((const DateADT *) b)));
 
-	return (float8) Abs(DatumGetInt32(diff));
+	return (float8) abs(DatumGetInt32(diff));
 }
 
 
@@ -123,7 +123,7 @@ date_dist(PG_FUNCTION_ARGS)
 										   PG_GETARG_DATUM(0),
 										   PG_GETARG_DATUM(1));
 
-	PG_RETURN_INT32(Abs(DatumGetInt32(diff)));
+	PG_RETURN_INT32(abs(DatumGetInt32(diff)));
 }
 
 

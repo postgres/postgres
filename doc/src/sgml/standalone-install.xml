@@ -22,10 +22,9 @@ in the stand-alone version.
   C++</productname>, see the main documentation instead.
  </para>
 
- <xi:include href="postgres.sgml" xpointer="install-short" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- <xi:include href="postgres.sgml" xpointer="install-requirements" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- <xi:include href="postgres.sgml" xpointer="install-procedure" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- <xi:include href="postgres.sgml" xpointer="install-post" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres-full.xml" xpointer="install-requirements" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres-full.xml" xpointer="install-make" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres-full.xml" xpointer="install-post" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
  <sect1 id="install-getting-started">
   <title>Getting Started</title>

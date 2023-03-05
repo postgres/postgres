@@ -153,6 +153,10 @@ select first_value(max(x)) over (), y
   from (select unique1 as x, ten+four as y from tenk1) ss
   group by y;
 
+-- window functions returning pass-by-ref values from different rows
+select x, lag(x, 1) over (order by x), lead(x, 3) over (order by x)
+from (select x::numeric as x from generate_series(1,10) x);
+
 -- test non-default frame specifications
 SELECT four, ten,
 	sum(ten) over (partition by four order by ten),
@@ -968,6 +972,54 @@ SELECT sum(salary), row_number() OVER (ORDER BY depname), sum(
     depname
 FROM empsalary GROUP BY depname;
 
+--
+-- Test SupportRequestOptimizeWindowClause's ability to de-duplicate
+-- WindowClauses
+--
+
+-- Ensure WindowClause frameOptions are changed so that only a single
+-- WindowAgg exists in the plan.
+EXPLAIN (COSTS OFF)
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    dense_rank() OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                       CURRENT ROW AND CURRENT ROW) drnk,
+    ntile(10) OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                    CURRENT ROW AND UNBOUNDED FOLLOWING) nt,
+    percent_rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                         CURRENT ROW AND UNBOUNDED FOLLOWING) pr,
+    cume_dist() OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                      CURRENT ROW AND UNBOUNDED FOLLOWING) cd
+FROM empsalary;
+
+-- Ensure WindowFuncs which cannot support their WindowClause's frameOptions
+-- being changed are untouched
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    count(*) OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                   CURRENT ROW AND CURRENT ROW) cnt
+FROM empsalary;
+
+-- Ensure the above query gives us the expected results
+SELECT
+    empno,
+    depname,
+    row_number() OVER (PARTITION BY depname ORDER BY enroll_date) rn,
+    rank() OVER (PARTITION BY depname ORDER BY enroll_date ROWS BETWEEN
+                 UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) rnk,
+    count(*) OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
+                   CURRENT ROW AND CURRENT ROW) cnt
+FROM empsalary;
+
 -- Test pushdown of quals into a subquery containing window functions
 
 -- pushdown is safe because all PARTITION BY clauses include depname:
@@ -1150,6 +1202,17 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE c <= 3;
 
+-- Ensure we get the correct run condition when the window function is both
+-- monotonically increasing and decreasing.
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT empno,
+          depname,
+          salary,
+          count(empno) OVER () c
+   FROM empsalary) emp
+WHERE c = 1;
+
 -- Some more complex cases with multiple window clauses
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -1157,9 +1220,10 @@ SELECT * FROM
           count(salary) OVER (PARTITION BY depname || '') c1, -- w1
           row_number() OVER (PARTITION BY depname) rn, -- w2
           count(*) OVER (PARTITION BY depname) c2, -- w2
-          count(*) OVER (PARTITION BY '' || depname) c3 -- w3
+          count(*) OVER (PARTITION BY '' || depname) c3, -- w3
+          ntile(2) OVER (PARTITION BY depname) nt -- w2
    FROM empsalary
-) e WHERE rn <= 1 AND c1 <= 3;
+) e WHERE rn <= 1 AND c1 <= 3 AND nt < 2;
 
 -- Ensure we correctly filter out all of the run conditions from each window
 SELECT * FROM
@@ -1167,9 +1231,10 @@ SELECT * FROM
           count(salary) OVER (PARTITION BY depname || '') c1, -- w1
           row_number() OVER (PARTITION BY depname) rn, -- w2
           count(*) OVER (PARTITION BY depname) c2, -- w2
-          count(*) OVER (PARTITION BY '' || depname) c3 -- w3
+          count(*) OVER (PARTITION BY '' || depname) c3, -- w3
+          ntile(2) OVER (PARTITION BY depname) nt -- w2
    FROM empsalary
-) e WHERE rn <= 1 AND c1 <= 3;
+) e WHERE rn <= 1 AND c1 <= 3 AND nt < 2;
 
 -- Tests to ensure we don't push down the run condition when it's not valid to
 -- do so.
@@ -1212,6 +1277,56 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname, empno order by enroll_date) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
+
+-- Ensure that the evaluation order of the WindowAggs results in the WindowAgg
+-- with the same sort order that's required by the ORDER BY is evaluated last.
+EXPLAIN (COSTS OFF)
+SELECT empno,
+       enroll_date,
+       depname,
+       sum(salary) OVER (PARTITION BY depname order by empno) depsalary,
+       min(salary) OVER (PARTITION BY depname order by enroll_date) depminsalary
+FROM empsalary
+ORDER BY depname, empno;
+
+-- As above, but with an adjusted ORDER BY to ensure the above plan didn't
+-- perform only 2 sorts by accident.
+EXPLAIN (COSTS OFF)
+SELECT empno,
+       enroll_date,
+       depname,
+       sum(salary) OVER (PARTITION BY depname order by empno) depsalary,
+       min(salary) OVER (PARTITION BY depname order by enroll_date) depminsalary
+FROM empsalary
+ORDER BY depname, enroll_date;
+
+SET enable_hashagg TO off;
+
+-- Ensure we don't get a sort for both DISTINCT and ORDER BY.  We expect the
+-- sort for the DISTINCT to provide presorted input for the ORDER BY.
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT
+       empno,
+       enroll_date,
+       depname,
+       sum(salary) OVER (PARTITION BY depname order by empno) depsalary,
+       min(salary) OVER (PARTITION BY depname order by enroll_date) depminsalary
+FROM empsalary
+ORDER BY depname, enroll_date;
+
+-- As above but adjust the ORDER BY clause to help ensure the plan with the
+-- minimum amount of sorting wasn't a fluke.
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT
+       empno,
+       enroll_date,
+       depname,
+       sum(salary) OVER (PARTITION BY depname order by empno) depsalary,
+       min(salary) OVER (PARTITION BY depname order by enroll_date) depminsalary
+FROM empsalary
+ORDER BY depname, empno;
+
+RESET enable_hashagg;
 
 -- Test Sort node reordering
 EXPLAIN (COSTS OFF)

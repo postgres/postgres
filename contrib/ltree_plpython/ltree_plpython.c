@@ -6,8 +6,6 @@
 
 PG_MODULE_MAGIC;
 
-extern void _PG_init(void);
-
 /* Linkage to functions in plpython module */
 typedef PyObject *(*PLyUnicode_FromStringAndSize_t) (const char *s, Py_ssize_t size);
 static PLyUnicode_FromStringAndSize_t PLyUnicode_FromStringAndSize_p;

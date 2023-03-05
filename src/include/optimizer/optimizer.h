@@ -12,7 +12,7 @@
  * example.  For the most part, however, code outside the core planner
  * should not need to include any optimizer/ header except this one.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/optimizer.h
@@ -23,11 +23,6 @@
 #define OPTIMIZER_H
 
 #include "nodes/parsenodes.h"
-
-/* Test if an expression node represents a SRF call.  Beware multiple eval! */
-#define IS_SRF_CALL(node) \
-	((IsA(node, FuncExpr) && ((FuncExpr *) (node))->funcretset) || \
-	 (IsA(node, OpExpr) && ((OpExpr *) (node))->opretset))
 
 /*
  * We don't want to include nodes/pathnodes.h here, because non-planner
@@ -104,16 +99,16 @@ extern bool is_pseudo_constant_for_index(PlannerInfo *root, Node *expr,
 
 /* in plan/planner.c: */
 
-/* possible values for force_parallel_mode */
+/* possible values for debug_parallel_query */
 typedef enum
 {
-	FORCE_PARALLEL_OFF,
-	FORCE_PARALLEL_ON,
-	FORCE_PARALLEL_REGRESS
-}			ForceParallelMode;
+	DEBUG_PARALLEL_OFF,
+	DEBUG_PARALLEL_ON,
+	DEBUG_PARALLEL_REGRESS
+}			DebugParallelMode;
 
 /* GUC parameters */
-extern PGDLLIMPORT int force_parallel_mode;
+extern PGDLLIMPORT int debug_parallel_query;
 extern PGDLLIMPORT bool parallel_leader_participation;
 
 extern struct PlannedStmt *planner(Query *parse, const char *query_string,
@@ -202,6 +197,6 @@ extern bool contain_var_clause(Node *node);
 extern bool contain_vars_of_level(Node *node, int levelsup);
 extern int	locate_var_of_level(Node *node, int levelsup);
 extern List *pull_var_clause(Node *node, int flags);
-extern Node *flatten_join_alias_vars(Query *query, Node *node);
+extern Node *flatten_join_alias_vars(PlannerInfo *root, Query *query, Node *node);
 
 #endif							/* OPTIMIZER_H */

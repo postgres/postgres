@@ -4,7 +4,7 @@
  *	  Definition of (and support for) access control list data structures.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/acl.h
@@ -59,33 +59,33 @@ typedef struct AclItem
 } AclItem;
 
 /*
- * The upper 16 bits of the ai_privs field of an AclItem are the grant option
- * bits, and the lower 16 bits are the actual privileges.  We use "rights"
+ * The upper 32 bits of the ai_privs field of an AclItem are the grant option
+ * bits, and the lower 32 bits are the actual privileges.  We use "rights"
  * to mean the combined grant option and privilege bits fields.
  */
-#define ACLITEM_GET_PRIVS(item)    ((item).ai_privs & 0xFFFF)
-#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 16) & 0xFFFF)
+#define ACLITEM_GET_PRIVS(item)    ((item).ai_privs & 0xFFFFFFFF)
+#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 32) & 0xFFFFFFFF)
 #define ACLITEM_GET_RIGHTS(item)   ((item).ai_privs)
 
-#define ACL_GRANT_OPTION_FOR(privs) (((AclMode) (privs) & 0xFFFF) << 16)
-#define ACL_OPTION_TO_PRIVS(privs)	(((AclMode) (privs) >> 16) & 0xFFFF)
+#define ACL_GRANT_OPTION_FOR(privs) (((AclMode) (privs) & 0xFFFFFFFF) << 32)
+#define ACL_OPTION_TO_PRIVS(privs)	(((AclMode) (privs) >> 32) & 0xFFFFFFFF)
 
 #define ACLITEM_SET_PRIVS(item,privs) \
-  ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0xFFFF)) | \
-					 ((AclMode) (privs) & 0xFFFF))
+  ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0xFFFFFFFF)) | \
+					 ((AclMode) (privs) & 0xFFFFFFFF))
 #define ACLITEM_SET_GOPTIONS(item,goptions) \
-  ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0xFFFF) << 16)) | \
-					 (((AclMode) (goptions) & 0xFFFF) << 16))
+  ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0xFFFFFFFF) << 32)) | \
+					 (((AclMode) (goptions) & 0xFFFFFFFF) << 32))
 #define ACLITEM_SET_RIGHTS(item,rights) \
   ((item).ai_privs = (AclMode) (rights))
 
 #define ACLITEM_SET_PRIVS_GOPTIONS(item,privs,goptions) \
-  ((item).ai_privs = ((AclMode) (privs) & 0xFFFF) | \
-					 (((AclMode) (goptions) & 0xFFFF) << 16))
+  ((item).ai_privs = ((AclMode) (privs) & 0xFFFFFFFF) | \
+					 (((AclMode) (goptions) & 0xFFFFFFFF) << 32))
 
 
-#define ACLITEM_ALL_PRIV_BITS		((AclMode) 0xFFFF)
-#define ACLITEM_ALL_GOPTION_BITS	((AclMode) 0xFFFF << 16)
+#define ACLITEM_ALL_PRIV_BITS		((AclMode) 0xFFFFFFFF)
+#define ACLITEM_ALL_GOPTION_BITS	((AclMode) 0xFFFFFFFF << 32)
 
 /*
  * Definitions for convenient access to Acl (array of AclItem).
@@ -148,15 +148,16 @@ typedef struct ArrayType Acl;
 #define ACL_CONNECT_CHR			'c'
 #define ACL_SET_CHR				's'
 #define ACL_ALTER_SYSTEM_CHR	'A'
+#define ACL_MAINTAIN_CHR		'm'
 
 /* string holding all privilege code chars, in order by bitmask position */
-#define ACL_ALL_RIGHTS_STR	"arwdDxtXUCTcsA"
+#define ACL_ALL_RIGHTS_STR	"arwdDxtXUCTcsAm"
 
 /*
  * Bitmasks defining "all rights" for each supported object type
  */
 #define ACL_ALL_RIGHTS_COLUMN		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_REFERENCES)
-#define ACL_ALL_RIGHTS_RELATION		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_TRUNCATE|ACL_REFERENCES|ACL_TRIGGER)
+#define ACL_ALL_RIGHTS_RELATION		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_TRUNCATE|ACL_REFERENCES|ACL_TRIGGER|ACL_MAINTAIN)
 #define ACL_ALL_RIGHTS_SEQUENCE		(ACL_USAGE|ACL_SELECT|ACL_UPDATE)
 #define ACL_ALL_RIGHTS_DATABASE		(ACL_CREATE|ACL_CREATE_TEMP|ACL_CONNECT)
 #define ACL_ALL_RIGHTS_FDW			(ACL_USAGE)
@@ -209,12 +210,14 @@ extern AclMode aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 extern int	aclmembers(const Acl *acl, Oid **roleids);
 
 extern bool has_privs_of_role(Oid member, Oid role);
+extern bool member_can_set_role(Oid member, Oid role);
+extern void check_can_set_role(Oid member, Oid role);
 extern bool is_member_of_role(Oid member, Oid role);
 extern bool is_member_of_role_nosuper(Oid member, Oid role);
 extern bool is_admin_of_role(Oid member, Oid role);
-extern void check_is_member_of_role(Oid member, Oid role);
-extern Oid	get_role_oid(const char *rolename, bool missing_ok);
-extern Oid	get_role_oid_or_public(const char *rolename);
+extern Oid	select_best_admin(Oid member, Oid role);
+extern Oid	get_role_oid(const char *rolname, bool missing_ok);
+extern Oid	get_role_oid_or_public(const char *rolname);
 extern Oid	get_rolespec_oid(const RoleSpec *role, bool missing_ok);
 extern void check_rolespec_name(const RoleSpec *role, const char *detail_msg);
 extern HeapTuple get_rolespec_tuple(const RoleSpec *role);
@@ -234,39 +237,13 @@ extern void ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivi
 
 extern void RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid);
 
-extern AclMode pg_attribute_aclmask(Oid table_oid, AttrNumber attnum,
-									Oid roleid, AclMode mask, AclMaskHow how);
-extern AclMode pg_attribute_aclmask_ext(Oid table_oid, AttrNumber attnum,
-										Oid roleid, AclMode mask,
-										AclMaskHow how, bool *is_missing);
 extern AclMode pg_class_aclmask(Oid table_oid, Oid roleid,
 								AclMode mask, AclMaskHow how);
-extern AclMode pg_class_aclmask_ext(Oid table_oid, Oid roleid,
-									AclMode mask, AclMaskHow how,
-									bool *is_missing);
-extern AclMode pg_database_aclmask(Oid db_oid, Oid roleid,
-								   AclMode mask, AclMaskHow how);
-extern AclMode pg_parameter_aclmask(const char *name, Oid roleid,
-									AclMode mask, AclMaskHow how);
-extern AclMode pg_parameter_acl_aclmask(Oid acl_oid, Oid roleid,
-										AclMode mask, AclMaskHow how);
-extern AclMode pg_proc_aclmask(Oid proc_oid, Oid roleid,
-							   AclMode mask, AclMaskHow how);
-extern AclMode pg_language_aclmask(Oid lang_oid, Oid roleid,
-								   AclMode mask, AclMaskHow how);
-extern AclMode pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
-											   AclMode mask, AclMaskHow how, Snapshot snapshot);
-extern AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
-									AclMode mask, AclMaskHow how);
-extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
-									 AclMode mask, AclMaskHow how);
-extern AclMode pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
-											   AclMode mask, AclMaskHow how);
-extern AclMode pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
-										 AclMode mask, AclMaskHow how);
-extern AclMode pg_type_aclmask(Oid type_oid, Oid roleid,
-							   AclMode mask, AclMaskHow how);
 
+/* generic function */
+extern AclResult object_aclcheck(Oid classid, Oid objectid, Oid roleid, AclMode mode);
+
+/* special cases */
 extern AclResult pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
 									   Oid roleid, AclMode mode);
 extern AclResult pg_attribute_aclcheck_ext(Oid table_oid, AttrNumber attnum,
@@ -277,20 +254,10 @@ extern AclResult pg_attribute_aclcheck_all(Oid table_oid, Oid roleid,
 extern AclResult pg_class_aclcheck(Oid table_oid, Oid roleid, AclMode mode);
 extern AclResult pg_class_aclcheck_ext(Oid table_oid, Oid roleid,
 									   AclMode mode, bool *is_missing);
-extern AclResult pg_database_aclcheck(Oid db_oid, Oid roleid, AclMode mode);
 extern AclResult pg_parameter_aclcheck(const char *name, Oid roleid,
 									   AclMode mode);
-extern AclResult pg_parameter_acl_aclcheck(Oid acl_oid, Oid roleid,
-										   AclMode mode);
-extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid roleid, AclMode mode);
-extern AclResult pg_language_aclcheck(Oid lang_oid, Oid roleid, AclMode mode);
-extern AclResult pg_largeobject_aclcheck_snapshot(Oid lang_oid, Oid roleid,
+extern AclResult pg_largeobject_aclcheck_snapshot(Oid lobj_oid, Oid roleid,
 												  AclMode mode, Snapshot snapshot);
-extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode);
-extern AclResult pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode);
-extern AclResult pg_foreign_data_wrapper_aclcheck(Oid fdw_oid, Oid roleid, AclMode mode);
-extern AclResult pg_foreign_server_aclcheck(Oid srv_oid, Oid roleid, AclMode mode);
-extern AclResult pg_type_aclcheck(Oid type_oid, Oid roleid, AclMode mode);
 
 extern void aclcheck_error(AclResult aclerr, ObjectType objtype,
 						   const char *objectname);
@@ -305,28 +272,7 @@ extern void removeExtObjInitPriv(Oid objoid, Oid classoid);
 
 
 /* ownercheck routines just return true (owner) or false (not) */
-extern bool pg_class_ownercheck(Oid class_oid, Oid roleid);
-extern bool pg_type_ownercheck(Oid type_oid, Oid roleid);
-extern bool pg_oper_ownercheck(Oid oper_oid, Oid roleid);
-extern bool pg_proc_ownercheck(Oid proc_oid, Oid roleid);
-extern bool pg_language_ownercheck(Oid lan_oid, Oid roleid);
-extern bool pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid);
-extern bool pg_namespace_ownercheck(Oid nsp_oid, Oid roleid);
-extern bool pg_tablespace_ownercheck(Oid spc_oid, Oid roleid);
-extern bool pg_opclass_ownercheck(Oid opc_oid, Oid roleid);
-extern bool pg_opfamily_ownercheck(Oid opf_oid, Oid roleid);
-extern bool pg_database_ownercheck(Oid db_oid, Oid roleid);
-extern bool pg_collation_ownercheck(Oid coll_oid, Oid roleid);
-extern bool pg_conversion_ownercheck(Oid conv_oid, Oid roleid);
-extern bool pg_ts_dict_ownercheck(Oid dict_oid, Oid roleid);
-extern bool pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid);
-extern bool pg_foreign_data_wrapper_ownercheck(Oid srv_oid, Oid roleid);
-extern bool pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid);
-extern bool pg_event_trigger_ownercheck(Oid et_oid, Oid roleid);
-extern bool pg_extension_ownercheck(Oid ext_oid, Oid roleid);
-extern bool pg_publication_ownercheck(Oid pub_oid, Oid roleid);
-extern bool pg_subscription_ownercheck(Oid sub_oid, Oid roleid);
-extern bool pg_statistics_object_ownercheck(Oid stat_oid, Oid roleid);
+extern bool object_ownercheck(Oid classid, Oid objectid, Oid roleid);
 extern bool has_createrole_privilege(Oid roleid);
 extern bool has_bypassrls_privilege(Oid roleid);
 

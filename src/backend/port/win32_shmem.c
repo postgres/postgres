@@ -3,7 +3,7 @@
  * win32_shmem.c
  *	  Implement shared memory using win32 facilities
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/port/win32_shmem.c
@@ -16,6 +16,8 @@
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
+#include "utils/guc_hooks.h"
+
 
 /*
  * Early in a process's life, Windows asynchronously creates threads for the
@@ -216,6 +218,7 @@ PGSharedMemoryCreate(Size size,
 	SIZE_T		largePageSize = 0;
 	Size		orig_size = size;
 	DWORD		flProtect = PAGE_READWRITE;
+	DWORD		desiredAccess;
 
 	ShmemProtectiveRegion = VirtualAlloc(NULL, PROTECTIVE_REGION_SIZE,
 										 MEM_RESERVE, PAGE_NOACCESS);
@@ -353,12 +356,19 @@ retry:
 	if (!CloseHandle(hmap))
 		elog(LOG, "could not close handle to shared memory: error code %lu", GetLastError());
 
+	desiredAccess = FILE_MAP_WRITE | FILE_MAP_READ;
+
+#ifdef FILE_MAP_LARGE_PAGES
+	/* Set large pages if wanted. */
+	if ((flProtect & SEC_LARGE_PAGES) != 0)
+		desiredAccess |= FILE_MAP_LARGE_PAGES;
+#endif
 
 	/*
 	 * Get a pointer to the new shared memory segment. Map the whole segment
 	 * at once, and let the system decide on the initial address.
 	 */
-	memAddress = MapViewOfFileEx(hmap2, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0, NULL);
+	memAddress = MapViewOfFileEx(hmap2, desiredAccess, 0, 0, 0, NULL);
 	if (!memAddress)
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: error code %lu", GetLastError()),
@@ -618,4 +628,18 @@ GetHugePageSize(Size *hugepagesize, int *mmap_flags)
 		*hugepagesize = 0;
 	if (mmap_flags)
 		*mmap_flags = 0;
+}
+
+/*
+ * GUC check_hook for huge_page_size
+ */
+bool
+check_huge_page_size(int *newval, void **extra, GucSource source)
+{
+	if (*newval != 0)
+	{
+		GUC_check_errdetail("huge_page_size must be 0 on this platform.");
+		return false;
+	}
+	return true;
 }

@@ -2,12 +2,12 @@
 -- of the pg_prepared_statements view as prepared statements are
 -- created and removed.
 
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
 
 PREPARE q1 AS SELECT 1 AS a;
 EXECUTE q1;
 
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
 
 -- should fail
 PREPARE q1 AS SELECT 2;
@@ -18,16 +18,16 @@ PREPARE q1 AS SELECT 2;
 EXECUTE q1;
 
 PREPARE q2 AS SELECT 2 AS b;
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
 
 -- sql92 syntax
 DEALLOCATE PREPARE q1;
 
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
 
 DEALLOCATE PREPARE q2;
 -- the view should return the empty set again
-SELECT name, statement, parameter_types FROM pg_prepared_statements;
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements;
 
 -- parameterized queries
 PREPARE q2(text) AS
@@ -71,7 +71,11 @@ PREPARE q6 AS
 PREPARE q7(unknown) AS
     SELECT * FROM road WHERE thepath = $1;
 
-SELECT name, statement, parameter_types FROM pg_prepared_statements
+-- DML statements
+PREPARE q8 AS
+    UPDATE tenk1 SET stringu1 = $2 WHERE unique1 = $1;
+
+SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements
     ORDER BY name;
 
 -- test DEALLOCATE ALL;

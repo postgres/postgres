@@ -8,7 +8,7 @@
  * or call FUNCAPI-callable functions or macros.
  *
  *
- * Copyright (c) 2002-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2023, PostgreSQL Global Development Group
  *
  * src/include/funcapi.h
  *
@@ -204,7 +204,7 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  * Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple) - convert a
  *		HeapTupleHeader to a Datum.
  *
- * Macro declarations:
+ * Inline declarations:
  * HeapTupleGetDatum(HeapTuple tuple) - convert a HeapTuple to a Datum.
  *
  * Obsolete routines and macros:
@@ -217,10 +217,6 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  *----------
  */
 
-#define HeapTupleGetDatum(tuple)		HeapTupleHeaderGetDatum((tuple)->t_data)
-/* obsolete version of above */
-#define TupleGetDatum(_slot, _tuple)	HeapTupleGetDatum(_tuple)
-
 extern TupleDesc RelationNameGetTupleDesc(const char *relname);
 extern TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases);
 
@@ -229,6 +225,14 @@ extern TupleDesc BlessTupleDesc(TupleDesc tupdesc);
 extern AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc);
 extern HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values);
 extern Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple);
+
+static inline Datum
+HeapTupleGetDatum(const HeapTupleData *tuple)
+{
+	return HeapTupleHeaderGetDatum(tuple->t_data);
+}
+/* obsolete version of above */
+#define TupleGetDatum(_slot, _tuple)	HeapTupleGetDatum(_tuple)
 
 
 /*----------
@@ -278,7 +282,7 @@ extern Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple);
  * memory allocated in multi_call_memory_ctx, but holding file descriptors or
  * other non-memory resources open across calls is a bug.  SRFs that need
  * such resources should not use these macros, but instead populate a
- * tuplestore during a single call, as set up by SetSingleFuncCall() (see
+ * tuplestore during a single call, as set up by InitMaterializedSRF() (see
  * fmgr/README).  Alternatively, set up a callback to release resources
  * at query shutdown, using RegisterExprContextCallback().
  *
@@ -287,10 +291,11 @@ extern Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple);
 
 /* from funcapi.c */
 
-/* flag bits for SetSingleFuncCall() */
-#define SRF_SINGLE_USE_EXPECTED	0x01	/* use expectedDesc as tupdesc */
-#define SRF_SINGLE_BLESS		0x02	/* validate tuple for SRF */
-extern void SetSingleFuncCall(FunctionCallInfo fcinfo, bits32 flags);
+/* flag bits for InitMaterializedSRF() */
+#define MAT_SRF_USE_EXPECTED_DESC	0x01	/* use expectedDesc as tupdesc. */
+#define MAT_SRF_BLESS				0x02	/* "Bless" a tuple descriptor with
+											 * BlessTupleDesc(). */
+extern void InitMaterializedSRF(FunctionCallInfo fcinfo, bits32 flags);
 
 extern FuncCallContext *init_MultiFuncCall(PG_FUNCTION_ARGS);
 extern FuncCallContext *per_MultiFuncCall(PG_FUNCTION_ARGS);
@@ -348,7 +353,7 @@ extern void end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx);
  * "VARIADIC NULL".
  */
 extern int	extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
-								  bool convert_unknown, Datum **values,
+								  bool convert_unknown, Datum **args,
 								  Oid **types, bool **nulls);
 
 #endif							/* FUNCAPI_H */

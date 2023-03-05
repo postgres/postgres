@@ -3,7 +3,7 @@
  * tsquery.c
  *	  I/O functions for tsquery
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -16,12 +16,14 @@
 
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"
+#include "varatt.h"
 
 /* FTS operator priorities, see ts_type.h */
 const int	tsearch_op_priority[OP_COUNT] =
@@ -58,10 +60,16 @@ typedef enum
 /*
  * get token from query string
  *
- * *operator is filled in with OP_* when return values is PT_OPR,
- * but *weight could contain a distance value in case of phrase operator.
- * *strval, *lenval and *weight are filled in when return value is PT_VAL
+ * All arguments except "state" are output arguments.
  *
+ * If return value is PT_OPR, then *operator is filled with an OP_* code
+ * and *weight will contain a distance value in case of phrase operator.
+ *
+ * If return value is PT_VAL, then *lenval, *strval, *weight, and *prefix
+ * are filled.
+ *
+ * If PT_ERR is returned then a soft error has occurred.  If state->escontext
+ * isn't already filled then this should be reported as a generic parse error.
  */
 typedef ts_tokentype (*ts_tokenizer) (TSQueryParserState state, int8 *operator,
 									  int *lenval, char **strval,
@@ -93,6 +101,9 @@ struct TSQueryParserStateData
 
 	/* state for value's parser */
 	TSVectorParseState valstate;
+
+	/* context object for soft errors - must match valstate's escontext */
+	Node	   *escontext;
 };
 
 /*
@@ -194,7 +205,7 @@ parse_phrase_operator(TSQueryParserState pstate, int16 *distance)
 				if (ptr == endptr)
 					return false;
 				else if (errno == ERANGE || l < 0 || l > MAXENTRYPOS)
-					ereport(ERROR,
+					ereturn(pstate->escontext, false,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("distance in phrase operator must be an integer value between zero and %d inclusive",
 									MAXENTRYPOS)));
@@ -248,7 +259,7 @@ parse_or_operator(TSQueryParserState pstate)
 		return false;
 
 	/* it shouldn't be a part of any word */
-	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalpha(ptr) || t_isdigit(ptr))
+	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalnum(ptr))
 		return false;
 
 	for (;;)
@@ -301,10 +312,8 @@ gettoken_query_standard(TSQueryParserState state, int8 *operator,
 				}
 				else if (t_iseq(state->buf, ':'))
 				{
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsquery: \"%s\"",
-									state->buffer)));
+					/* generic syntax error message is fine */
+					return PT_ERR;
 				}
 				else if (!t_isspace(state->buf))
 				{
@@ -320,12 +329,17 @@ gettoken_query_standard(TSQueryParserState state, int8 *operator,
 						state->state = WAITOPERATOR;
 						return PT_VAL;
 					}
+					else if (SOFT_ERROR_OCCURRED(state->escontext))
+					{
+						/* gettoken_tsvector reported a soft error */
+						return PT_ERR;
+					}
 					else if (state->state == WAITFIRSTOPERAND)
 					{
 						return PT_END;
 					}
 					else
-						ereport(ERROR,
+						ereturn(state->escontext, PT_ERR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("no operand in tsquery: \"%s\"",
 										state->buffer)));
@@ -353,6 +367,11 @@ gettoken_query_standard(TSQueryParserState state, int8 *operator,
 					state->state = WAITOPERAND;
 					*operator = OP_PHRASE;
 					return PT_OPR;
+				}
+				else if (SOFT_ERROR_OCCURRED(state->escontext))
+				{
+					/* parse_phrase_operator reported a soft error */
+					return PT_ERR;
 				}
 				else if (t_iseq(state->buf, ')'))
 				{
@@ -437,6 +456,11 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 					{
 						state->state = WAITOPERATOR;
 						return PT_VAL;
+					}
+					else if (SOFT_ERROR_OCCURRED(state->escontext))
+					{
+						/* gettoken_tsvector reported a soft error */
+						return PT_ERR;
 					}
 					else if (state->state == WAITFIRSTOPERAND)
 					{
@@ -529,12 +553,12 @@ pushValue_internal(TSQueryParserState state, pg_crc32 valcrc, int distance, int 
 	QueryOperand *tmp;
 
 	if (distance >= MAXSTRPOS)
-		ereport(ERROR,
+		ereturn(state->escontext,,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("value is too big in tsquery: \"%s\"",
 						state->buffer)));
 	if (lenval >= MAXSTRLEN)
-		ereport(ERROR,
+		ereturn(state->escontext,,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("operand is too long in tsquery: \"%s\"",
 						state->buffer)));
@@ -562,7 +586,7 @@ pushValue(TSQueryParserState state, char *strval, int lenval, int16 weight, bool
 	pg_crc32	valcrc;
 
 	if (lenval >= MAXSTRLEN)
-		ereport(ERROR,
+		ereturn(state->escontext,,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("word is too long in tsquery: \"%s\"",
 						state->buffer)));
@@ -578,10 +602,10 @@ pushValue(TSQueryParserState state, char *strval, int lenval, int16 weight, bool
 		int			used = state->curop - state->op;
 
 		state->lenop *= 2;
-		state->op = (char *) repalloc((void *) state->op, state->lenop);
+		state->op = (char *) repalloc(state->op, state->lenop);
 		state->curop = state->op + used;
 	}
-	memcpy((void *) state->curop, (void *) strval, lenval);
+	memcpy(state->curop, strval, lenval);
 	state->curop += lenval;
 	*(state->curop) = '\0';
 	state->curop++;
@@ -686,11 +710,17 @@ makepol(TSQueryParserState state,
 				return;
 			case PT_ERR:
 			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsquery: \"%s\"",
-								state->buffer)));
+				/* don't overwrite a soft error saved by gettoken function */
+				if (!SOFT_ERROR_OCCURRED(state->escontext))
+					errsave(state->escontext,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error in tsquery: \"%s\"",
+									state->buffer)));
+				return;
 		}
+		/* detect soft error in pushval or recursion */
+		if (SOFT_ERROR_OCCURRED(state->escontext))
+			return;
 	}
 
 	cleanOpStack(state, opstack, &lenstack, OP_OR /* lowest */ );
@@ -769,6 +799,8 @@ findoprnd(QueryItem *ptr, int size, bool *needcleanup)
 
 
 /*
+ * Parse the tsquery stored in "buf".
+ *
  * Each value (operand) in the query is passed to pushval. pushval can
  * transform the simple value to an arbitrarily complex expression using
  * pushValue and pushOperator. It must push a single value with pushValue,
@@ -778,12 +810,19 @@ findoprnd(QueryItem *ptr, int size, bool *needcleanup)
  *
  * opaque is passed on to pushval as is, pushval can use it to store its
  * private state.
+ *
+ * The pushval function can record soft errors via escontext.
+ * Callers must check SOFT_ERROR_OCCURRED to detect that.
+ *
+ * A bitmask of flags (see ts_utils.h) and an error context object
+ * can be provided as well.  If a soft error occurs, NULL is returned.
  */
 TSQuery
 parse_tsquery(char *buf,
 			  PushFunction pushval,
 			  Datum opaque,
-			  int flags)
+			  int flags,
+			  Node *escontext)
 {
 	struct TSQueryParserStateData state;
 	int			i;
@@ -791,6 +830,7 @@ parse_tsquery(char *buf,
 	int			commonlen;
 	QueryItem  *ptr;
 	ListCell   *cell;
+	bool		noisy;
 	bool		needcleanup;
 	int			tsv_flags = P_TSV_OPR_IS_DELIM | P_TSV_IS_TSQUERY;
 
@@ -808,15 +848,19 @@ parse_tsquery(char *buf,
 	else
 		state.gettoken = gettoken_query_standard;
 
+	/* emit nuisance NOTICEs only if not doing soft errors */
+	noisy = !(escontext && IsA(escontext, ErrorSaveContext));
+
 	/* init state */
 	state.buffer = buf;
 	state.buf = buf;
 	state.count = 0;
 	state.state = WAITFIRSTOPERAND;
 	state.polstr = NIL;
+	state.escontext = escontext;
 
 	/* init value parser's state */
-	state.valstate = init_tsvector_parser(state.buffer, tsv_flags);
+	state.valstate = init_tsvector_parser(state.buffer, tsv_flags, escontext);
 
 	/* init list of operand */
 	state.sumlen = 0;
@@ -829,11 +873,15 @@ parse_tsquery(char *buf,
 
 	close_tsvector_parser(state.valstate);
 
-	if (list_length(state.polstr) == 0)
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return NULL;
+
+	if (state.polstr == NIL)
 	{
-		ereport(NOTICE,
-				(errmsg("text-search query doesn't contain lexemes: \"%s\"",
-						state.buffer)));
+		if (noisy)
+			ereport(NOTICE,
+					(errmsg("text-search query doesn't contain lexemes: \"%s\"",
+							state.buffer)));
 		query = (TSQuery) palloc(HDRSIZETQ);
 		SET_VARSIZE(query, HDRSIZETQ);
 		query->size = 0;
@@ -841,7 +889,7 @@ parse_tsquery(char *buf,
 	}
 
 	if (TSQUERY_TOO_BIG(list_length(state.polstr), state.sumlen))
-		ereport(ERROR,
+		ereturn(escontext, NULL,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("tsquery is too large")));
 	commonlen = COMPUTESIZE(list_length(state.polstr), state.sumlen);
@@ -876,7 +924,7 @@ parse_tsquery(char *buf,
 	}
 
 	/* Copy all the operand strings to TSQuery */
-	memcpy((void *) GETOPERAND(query), (void *) state.op, state.sumlen);
+	memcpy(GETOPERAND(query), state.op, state.sumlen);
 	pfree(state.op);
 
 	/*
@@ -889,7 +937,7 @@ parse_tsquery(char *buf,
 	 * If there are QI_VALSTOP nodes, delete them and simplify the tree.
 	 */
 	if (needcleanup)
-		query = cleanup_tsquery_stopwords(query);
+		query = cleanup_tsquery_stopwords(query, noisy);
 
 	return query;
 }
@@ -908,8 +956,13 @@ Datum
 tsqueryin(PG_FUNCTION_ARGS)
 {
 	char	   *in = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
 
-	PG_RETURN_TSQUERY(parse_tsquery(in, pushval_asis, PointerGetDatum(NULL), 0));
+	PG_RETURN_TSQUERY(parse_tsquery(in,
+									pushval_asis,
+									PointerGetDatum(NULL),
+									0,
+									escontext));
 }
 
 /*

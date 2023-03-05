@@ -280,14 +280,16 @@
 
 <para>
     Views in <productname>PostgreSQL</productname> are implemented
-    using the rule system. In fact, there is essentially no difference
-    between:
+    using the rule system.  A view is basically an empty table (having no
+    actual storage) with an <literal>ON SELECT DO INSTEAD</literal> rule.
+    Conventionally, that rule is named <literal>_RETURN</literal>.
+    So a view like
 
 <programlisting>
 CREATE VIEW myview AS SELECT * FROM mytab;
 </programlisting>
 
-    compared against the two commands:
+    is very nearly the same thing as
 
 <programlisting>
 CREATE TABLE myview (<replaceable>same column list as mytab</replaceable>);
@@ -295,13 +297,17 @@ CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
     SELECT * FROM mytab;
 </programlisting>
 
-    because this is exactly what the <command>CREATE VIEW</command>
-    command does internally.  This has some side effects. One of them
-    is that the information about a view in the
-    <productname>PostgreSQL</productname> system catalogs is exactly
-    the same as it is for a table. So for the parser, there is
-    absolutely no difference between a table and a view. They are the
-    same thing: relations.
+    although you can't actually write that, because tables are not
+    allowed to have <literal>ON SELECT</literal> rules.
+</para>
+
+<para>
+    A view can also have other kinds of <literal>DO INSTEAD</literal>
+    rules, allowing <command>INSERT</command>, <command>UPDATE</command>,
+    or <command>DELETE</command> commands to be performed on the view
+    despite its lack of underlying storage.
+    This is discussed further below, in
+    <xref linkend="rules-views-update"/>.
 </para>
 
 <sect2 id="rules-select">
@@ -637,7 +643,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
    </para>
 </sect2>
 
-<sect2>
+<sect2 id="rules-views-non-select">
 <title>View Rules in Non-<command>SELECT</command> Statements</title>
 
 <para>
@@ -757,7 +763,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </para>
 </sect2>
 
-<sect2>
+<sect2 id="rules-views-power">
 <title>The Power of Views in <productname>PostgreSQL</productname></title>
 
 <para>
@@ -1111,7 +1117,7 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
 <para>
     Rules that are defined on <command>INSERT</command>, <command>UPDATE</command>,
     and <command>DELETE</command> are significantly different from the view rules
-    described in the previous section. First, their <command>CREATE
+    described in the previous sections. First, their <command>CREATE
     RULE</command> command allows more:
 
     <itemizedlist>
@@ -1172,7 +1178,7 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
  </para>
 </caution>
 
-<sect2>
+<sect2 id="rules-update-how">
 <title>How Update Rules Work</title>
 
 <para>
@@ -1296,7 +1302,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
     there is no need to apply update rules to the output of view rewriting.
 </para>
 
-<sect3>
+<sect3 id="rules-update-how-first">
 <title>A First Rule Step by Step</title>
 
 <para>

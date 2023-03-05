@@ -3,7 +3,7 @@
  *	parallel_slot.h
  *		Parallel support for bin/scripts/
  *
- *	Copyright (c) 2003-2022, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2023, PostgreSQL Global Development Group
  *
  *	src/include/fe_utils/parallel_slot.h
  *
@@ -58,7 +58,7 @@ ParallelSlotClearHandler(ParallelSlot *slot)
 	slot->handler_context = NULL;
 }
 
-extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlotArray *slots,
+extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlotArray *sa,
 										  const char *dbname);
 
 extern ParallelSlotArray *ParallelSlotsSetup(int numslots, ConnParams *cparams,

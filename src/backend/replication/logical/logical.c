@@ -2,7 +2,7 @@
  * logical.c
  *	   PostgreSQL logical decoding coordination
  *
- * Copyright (c) 2012-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/logical.c
@@ -92,6 +92,11 @@ static void stream_message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *tx
 									  const char *prefix, Size message_size, const char *message);
 static void stream_truncate_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 									   int nrelations, Relation relations[], ReorderBufferChange *change);
+
+/* callback to update txn's progress */
+static void update_progress_txn_cb_wrapper(ReorderBuffer *cache,
+										   ReorderBufferTXN *txn,
+										   XLogRecPtr lsn);
 
 static void LoadOutputPlugin(OutputPluginCallbacks *callbacks, const char *plugin);
 
@@ -277,6 +282,12 @@ StartupDecodingContext(List *output_plugin_options,
 	ctx->reorder->prepare = prepare_cb_wrapper;
 	ctx->reorder->commit_prepared = commit_prepared_cb_wrapper;
 	ctx->reorder->rollback_prepared = rollback_prepared_cb_wrapper;
+
+	/*
+	 * Callback to support updating progress during sending data of a
+	 * transaction (and its subtransactions) to the output plugin.
+	 */
+	ctx->reorder->update_progress_txn = update_progress_txn_cb_wrapper;
 
 	ctx->out = makeStringInfo();
 	ctx->prepare_write = prepare_write;
@@ -555,8 +566,10 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 	/* Mark slot to allow two_phase decoding if not already marked */
 	if (ctx->twophase && !slot->data.two_phase)
 	{
+		SpinLockAcquire(&slot->mutex);
 		slot->data.two_phase = true;
 		slot->data.two_phase_at = start_lsn;
+		SpinLockRelease(&slot->mutex);
 		ReplicationSlotMarkDirty();
 		ReplicationSlotSave();
 		SnapBuildSetTwoPhaseAt(ctx->snapshot_builder, start_lsn);
@@ -1577,6 +1590,45 @@ stream_truncate_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->end_xact = false;
 
 	ctx->callbacks.stream_truncate_cb(ctx, txn, nrelations, relations, change);
+
+	/* Pop the error context stack */
+	error_context_stack = errcallback.previous;
+}
+
+static void
+update_progress_txn_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
+							   XLogRecPtr lsn)
+{
+	LogicalDecodingContext *ctx = cache->private_data;
+	LogicalErrorCallbackState state;
+	ErrorContextCallback errcallback;
+
+	Assert(!ctx->fast_forward);
+
+	/* Push callback + info on the error context stack */
+	state.ctx = ctx;
+	state.callback_name = "update_progress_txn";
+	state.report_location = lsn;
+	errcallback.callback = output_plugin_error_callback;
+	errcallback.arg = (void *) &state;
+	errcallback.previous = error_context_stack;
+	error_context_stack = &errcallback;
+
+	/* set output state */
+	ctx->accept_writes = false;
+	ctx->write_xid = txn->xid;
+
+	/*
+	 * Report this change's lsn so replies from clients can give an up-to-date
+	 * answer. This won't ever be enough (and shouldn't be!) to confirm
+	 * receipt of this transaction, but it might allow another transaction's
+	 * commit to be confirmed with one message.
+	 */
+	ctx->write_location = lsn;
+
+	ctx->end_xact = false;
+
+	OutputPluginUpdateProgress(ctx, false);
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;

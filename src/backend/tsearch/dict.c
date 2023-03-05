@@ -3,7 +3,7 @@
  * dict.c
  *		Standard interface to dictionary
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -16,6 +16,7 @@
 #include "catalog/pg_type.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_utils.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 
 
@@ -68,12 +69,7 @@ ts_lexize(PG_FUNCTION_ARGS)
 		ptr++;
 	}
 
-	a = construct_array(da,
-						ptr - res,
-						TEXTOID,
-						-1,
-						false,
-						TYPALIGN_INT);
+	a = construct_array_builtin(da, ptr - res, TEXTOID);
 
 	ptr = res;
 	while (ptr->lexeme)

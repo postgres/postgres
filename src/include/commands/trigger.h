@@ -3,7 +3,7 @@
  * trigger.h
  *	  Declarations for trigger handling.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/trigger.h
@@ -166,12 +166,13 @@ extern void TriggerSetParentTrigger(Relation trigRel,
 									Oid parentTrigId,
 									Oid childTableId);
 extern void RemoveTriggerById(Oid trigOid);
-extern Oid	get_trigger_oid(Oid relid, const char *name, bool missing_ok);
+extern Oid	get_trigger_oid(Oid relid, const char *trigname, bool missing_ok);
 
 extern ObjectAddress renametrig(RenameStmt *stmt);
 
-extern void EnableDisableTrigger(Relation rel, const char *tgname,
-								 char fires_when, bool skip_system, LOCKMODE lockmode);
+extern void EnableDisableTrigger(Relation rel, const char *tgname, Oid tgparent,
+								 char fires_when, bool skip_system, bool recurse,
+								 LOCKMODE lockmode);
 
 extern void RelationBuildTriggers(Relation relation);
 
@@ -230,22 +231,22 @@ extern bool ExecBRUpdateTriggers(EState *estate,
 								 ResultRelInfo *relinfo,
 								 ItemPointer tupleid,
 								 HeapTuple fdw_trigtuple,
-								 TupleTableSlot *slot,
-								 TM_FailureData *tmfdp);
+								 TupleTableSlot *newslot,
+								 TM_FailureData *tmfd);
 extern void ExecARUpdateTriggers(EState *estate,
 								 ResultRelInfo *relinfo,
 								 ResultRelInfo *src_partinfo,
 								 ResultRelInfo *dst_partinfo,
 								 ItemPointer tupleid,
 								 HeapTuple fdw_trigtuple,
-								 TupleTableSlot *slot,
+								 TupleTableSlot *newslot,
 								 List *recheckIndexes,
 								 TransitionCaptureState *transition_capture,
 								 bool is_crosspart_update);
 extern bool ExecIRUpdateTriggers(EState *estate,
 								 ResultRelInfo *relinfo,
 								 HeapTuple trigtuple,
-								 TupleTableSlot *slot);
+								 TupleTableSlot *newslot);
 extern void ExecBSTruncateTriggers(EState *estate,
 								   ResultRelInfo *relinfo);
 extern void ExecASTruncateTriggers(EState *estate,
@@ -266,9 +267,9 @@ extern bool AfterTriggerPendingOnRel(Oid relid);
  * in utils/adt/ri_triggers.c
  */
 extern bool RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
-										  TupleTableSlot *old_slot, TupleTableSlot *new_slot);
+										  TupleTableSlot *oldslot, TupleTableSlot *newslot);
 extern bool RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
-										  TupleTableSlot *old_slot, TupleTableSlot *new_slot);
+										  TupleTableSlot *oldslot, TupleTableSlot *newslot);
 extern bool RI_Initial_Check(Trigger *trigger,
 							 Relation fk_rel, Relation pk_rel);
 extern void RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel,

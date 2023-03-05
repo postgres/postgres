@@ -2,7 +2,7 @@
  * backend_status.c
  *	  Backend status reporting infrastructure.
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -842,13 +842,21 @@ pgstat_read_current_status(void)
 			CHECK_FOR_INTERRUPTS();
 		}
 
-		beentry++;
 		/* Only valid entries get included into the local array */
 		if (localentry->backendStatus.st_procpid > 0)
 		{
+			/*
+			 * The BackendStatusArray index is exactly the BackendId of the
+			 * source backend.  Note that this means localBackendStatusTable
+			 * is in order by backend_id.  pgstat_fetch_stat_beentry() depends
+			 * on that.
+			 */
+			localentry->backend_id = i;
 			BackendIdGetTransactionIds(i,
 									   &localentry->backend_xid,
-									   &localentry->backend_xmin);
+									   &localentry->backend_xmin,
+									   &localentry->backend_subxact_count,
+									   &localentry->backend_subxact_overflowed);
 
 			localentry++;
 			localappname += NAMEDATALEN;
@@ -862,6 +870,8 @@ pgstat_read_current_status(void)
 #endif
 			localNumBackends++;
 		}
+
+		beentry++;
 	}
 
 	/* Set the pointer only after completion of a valid table */
@@ -1045,26 +1055,57 @@ pgstat_get_my_query_id(void)
 	return MyBEEntry->st_query_id;
 }
 
+/* ----------
+ * cmp_lbestatus
+ *
+ *	Comparison function for bsearch() on an array of LocalPgBackendStatus.
+ *	The backend_id field is used to compare the arguments.
+ * ----------
+ */
+static int
+cmp_lbestatus(const void *a, const void *b)
+{
+	const LocalPgBackendStatus *lbestatus1 = (const LocalPgBackendStatus *) a;
+	const LocalPgBackendStatus *lbestatus2 = (const LocalPgBackendStatus *) b;
+
+	return lbestatus1->backend_id - lbestatus2->backend_id;
+}
 
 /* ----------
  * pgstat_fetch_stat_beentry() -
  *
  *	Support function for the SQL-callable pgstat* functions. Returns
- *	our local copy of the current-activity entry for one backend.
+ *	our local copy of the current-activity entry for one backend,
+ *	or NULL if the given beid doesn't identify any known session.
+ *
+ *	The beid argument is the BackendId of the desired session
+ *	(note that this is unlike pgstat_fetch_stat_local_beentry()).
  *
  *	NB: caller is responsible for a check if the user is permitted to see
  *	this info (especially the querystring).
  * ----------
  */
 PgBackendStatus *
-pgstat_fetch_stat_beentry(int beid)
+pgstat_fetch_stat_beentry(BackendId beid)
 {
+	LocalPgBackendStatus key;
+	LocalPgBackendStatus *ret;
+
 	pgstat_read_current_status();
 
-	if (beid < 1 || beid > localNumBackends)
-		return NULL;
+	/*
+	 * Since the localBackendStatusTable is in order by backend_id, we can use
+	 * bsearch() to search it efficiently.
+	 */
+	key.backend_id = beid;
+	ret = (LocalPgBackendStatus *) bsearch(&key, localBackendStatusTable,
+										   localNumBackends,
+										   sizeof(LocalPgBackendStatus),
+										   cmp_lbestatus);
+	if (ret)
+		return &ret->backendStatus;
 
-	return &localBackendStatusTable[beid - 1].backendStatus;
+	return NULL;
 }
 
 
@@ -1073,6 +1114,10 @@ pgstat_fetch_stat_beentry(int beid)
  *
  *	Like pgstat_fetch_stat_beentry() but with locally computed additions (like
  *	xid and xmin values of the backend)
+ *
+ *	The beid argument is a 1-based index in the localBackendStatusTable
+ *	(note that this is unlike pgstat_fetch_stat_beentry()).
+ *	Returns NULL if the argument is out of range (no current caller does that).
  *
  *	NB: caller is responsible for a check if the user is permitted to see
  *	this info (especially the querystring).
@@ -1094,7 +1139,8 @@ pgstat_fetch_stat_local_beentry(int beid)
  * pgstat_fetch_stat_numbackends() -
  *
  *	Support function for the SQL-callable pgstat* functions. Returns
- *	the maximum current backend id.
+ *	the number of sessions known in the localBackendStatusTable, i.e.
+ *	the maximum 1-based index to pass to pgstat_fetch_stat_local_beentry().
  * ----------
  */
 int

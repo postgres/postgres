@@ -23,6 +23,7 @@
 #ifndef PG_BACKUP_H
 #define PG_BACKUP_H
 
+#include "common/compression.h"
 #include "fe_utils/simple_list.h"
 #include "libpq-fe.h"
 
@@ -52,9 +53,9 @@ typedef enum _archiveMode
 
 typedef enum _teSection
 {
-	SECTION_NONE = 1,			/* COMMENTs, ACLs, etc; can be anywhere */
+	SECTION_NONE = 1,			/* comments, ACLs, etc; can be anywhere */
 	SECTION_PRE_DATA,			/* stuff to be processed before data */
-	SECTION_DATA,				/* TABLE DATA, BLOBS, BLOB COMMENTS */
+	SECTION_DATA,				/* table data, large objects, LO comments */
 	SECTION_POST_DATA			/* stuff to be processed after data */
 } teSection;
 
@@ -143,7 +144,8 @@ typedef struct _restoreOptions
 
 	int			noDataForFailedTables;
 	int			exit_on_error;
-	int			compression;
+	pg_compress_specification compression_spec; /* Specification for
+												 * compression */
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
 										 * to stderr */
 	bool		single_txn;
@@ -191,8 +193,8 @@ typedef struct _dumpOptions
 
 	int			outputClean;
 	int			outputCreateDB;
-	bool		outputBlobs;
-	bool		dontOutputBlobs;
+	bool		outputLOs;
+	bool		dontOutputLOs;
 	int			outputNoOwner;
 	char	   *outputSuperuser;
 
@@ -285,29 +287,30 @@ extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 
 /* Called to write *data* to the archive */
-extern void WriteData(Archive *AH, const void *data, size_t dLen);
+extern void WriteData(Archive *AHX, const void *data, size_t dLen);
 
-extern int	StartBlob(Archive *AH, Oid oid);
-extern int	EndBlob(Archive *AH, Oid oid);
+extern int	StartLO(Archive *AHX, Oid oid);
+extern int	EndLO(Archive *AHX, Oid oid);
 
-extern void CloseArchive(Archive *AH);
+extern void CloseArchive(Archive *AHX);
 
 extern void SetArchiveOptions(Archive *AH, DumpOptions *dopt, RestoreOptions *ropt);
 
-extern void ProcessArchiveRestoreOptions(Archive *AH);
+extern void ProcessArchiveRestoreOptions(Archive *AHX);
 
-extern void RestoreArchive(Archive *AH);
+extern void RestoreArchive(Archive *AHX);
 
 /* Open an existing archive */
 extern Archive *OpenArchive(const char *FileSpec, const ArchiveFormat fmt);
 
 /* Create a new archive */
 extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
-							  const int compression, bool dosync, ArchiveMode mode,
+							  const pg_compress_specification compression_spec,
+							  bool dosync, ArchiveMode mode,
 							  SetupWorkerPtrType setupDumpWorker);
 
 /* The --list option */
-extern void PrintTOCSummary(Archive *AH);
+extern void PrintTOCSummary(Archive *AHX);
 
 extern RestoreOptions *NewRestoreOptions(void);
 

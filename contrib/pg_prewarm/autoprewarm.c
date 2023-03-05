@@ -16,7 +16,7 @@
  *		relevant database in turn.  The former keeps running after the
  *		initial prewarm is complete to update the dump file periodically.
  *
- *	Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ *	Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  *	IDENTIFICATION
  *		contrib/pg_prewarm/autoprewarm.c
@@ -52,7 +52,7 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/relfilenodemap.h"
+#include "utils/relfilenumbermap.h"
 #include "utils/resowner.h"
 
 #define AUTOPREWARM_FILE "autoprewarm.blocks"
@@ -62,7 +62,7 @@ typedef struct BlockInfoRecord
 {
 	Oid			database;
 	Oid			tablespace;
-	Oid			filenode;
+	RelFileNumber filenumber;
 	ForkNumber	forknum;
 	BlockNumber blocknum;
 } BlockInfoRecord;
@@ -82,9 +82,8 @@ typedef struct AutoPrewarmSharedState
 	int			prewarmed_blocks;
 } AutoPrewarmSharedState;
 
-void		_PG_init(void);
-void		autoprewarm_main(Datum main_arg);
-void		autoprewarm_database_main(Datum main_arg);
+PGDLLEXPORT void autoprewarm_main(Datum main_arg);
+PGDLLEXPORT void autoprewarm_database_main(Datum main_arg);
 
 PG_FUNCTION_INFO_V1(autoprewarm_start_worker);
 PG_FUNCTION_INFO_V1(autoprewarm_dump_now);
@@ -104,7 +103,7 @@ static AutoPrewarmSharedState *apw_state = NULL;
 
 /* GUC variables. */
 static bool autoprewarm = true; /* start worker? */
-static int	autoprewarm_interval;	/* dump interval */
+static int	autoprewarm_interval = 300; /* dump interval */
 
 /*
  * Module load callback.
@@ -194,8 +193,8 @@ autoprewarm_main(Datum main_arg)
 	{
 		LWLockRelease(&apw_state->lock);
 		ereport(LOG,
-				(errmsg("autoprewarm worker is already running under PID %lu",
-						(unsigned long) apw_state->bgworker_pid)));
+				(errmsg("autoprewarm worker is already running under PID %d",
+						(int) apw_state->bgworker_pid)));
 		return;
 	}
 	apw_state->bgworker_pid = MyProcPid;
@@ -304,8 +303,8 @@ apw_load_buffers(void)
 	{
 		LWLockRelease(&apw_state->lock);
 		ereport(LOG,
-				(errmsg("skipping prewarm because block dump file is being written by PID %lu",
-						(unsigned long) apw_state->pid_using_dumpfile)));
+				(errmsg("skipping prewarm because block dump file is being written by PID %d",
+						(int) apw_state->pid_using_dumpfile)));
 		return;
 	}
 	LWLockRelease(&apw_state->lock);
@@ -347,7 +346,7 @@ apw_load_buffers(void)
 		unsigned	forknum;
 
 		if (fscanf(file, "%u,%u,%u,%u,%u\n", &blkinfo[i].database,
-				   &blkinfo[i].tablespace, &blkinfo[i].filenode,
+				   &blkinfo[i].tablespace, &blkinfo[i].filenumber,
 				   &forknum, &blkinfo[i].blocknum) != 5)
 			ereport(ERROR,
 					(errmsg("autoprewarm block dump file is corrupted at line %d",
@@ -494,7 +493,7 @@ autoprewarm_database_main(Datum main_arg)
 		 * relation. Note that rel will be NULL if try_relation_open failed
 		 * previously; in that case, there is nothing to close.
 		 */
-		if (old_blk != NULL && old_blk->filenode != blk->filenode &&
+		if (old_blk != NULL && old_blk->filenumber != blk->filenumber &&
 			rel != NULL)
 		{
 			relation_close(rel, AccessShareLock);
@@ -506,13 +505,13 @@ autoprewarm_database_main(Datum main_arg)
 		 * Try to open each new relation, but only once, when we first
 		 * encounter it. If it's been dropped, skip the associated blocks.
 		 */
-		if (old_blk == NULL || old_blk->filenode != blk->filenode)
+		if (old_blk == NULL || old_blk->filenumber != blk->filenumber)
 		{
 			Oid			reloid;
 
 			Assert(rel == NULL);
 			StartTransactionCommand();
-			reloid = RelidByRelfilenode(blk->tablespace, blk->filenode);
+			reloid = RelidByRelfilenumber(blk->tablespace, blk->filenumber);
 			if (OidIsValid(reloid))
 				rel = try_relation_open(reloid, AccessShareLock);
 
@@ -527,7 +526,7 @@ autoprewarm_database_main(Datum main_arg)
 
 		/* Once per fork, check for fork existence and size. */
 		if (old_blk == NULL ||
-			old_blk->filenode != blk->filenode ||
+			old_blk->filenumber != blk->filenumber ||
 			old_blk->forknum != blk->forknum)
 		{
 			/*
@@ -600,12 +599,12 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 	{
 		if (!is_bgworker)
 			ereport(ERROR,
-					(errmsg("could not perform block dump because dump file is being used by PID %lu",
-							(unsigned long) apw_state->pid_using_dumpfile)));
+					(errmsg("could not perform block dump because dump file is being used by PID %d",
+							(int) apw_state->pid_using_dumpfile)));
 
 		ereport(LOG,
-				(errmsg("skipping block dump because it is already being performed by PID %lu",
-						(unsigned long) apw_state->pid_using_dumpfile)));
+				(errmsg("skipping block dump because it is already being performed by PID %d",
+						(int) apw_state->pid_using_dumpfile)));
 		return 0;
 	}
 
@@ -631,10 +630,12 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 		if (buf_state & BM_TAG_VALID &&
 			((buf_state & BM_PERMANENT) || dump_unlogged))
 		{
-			block_info_array[num_blocks].database = bufHdr->tag.rnode.dbNode;
-			block_info_array[num_blocks].tablespace = bufHdr->tag.rnode.spcNode;
-			block_info_array[num_blocks].filenode = bufHdr->tag.rnode.relNode;
-			block_info_array[num_blocks].forknum = bufHdr->tag.forkNum;
+			block_info_array[num_blocks].database = bufHdr->tag.dbOid;
+			block_info_array[num_blocks].tablespace = bufHdr->tag.spcOid;
+			block_info_array[num_blocks].filenumber =
+				BufTagGetRelNumber(&bufHdr->tag);
+			block_info_array[num_blocks].forknum =
+				BufTagGetForkNum(&bufHdr->tag);
 			block_info_array[num_blocks].blocknum = bufHdr->tag.blockNum;
 			++num_blocks;
 		}
@@ -671,7 +672,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 		ret = fprintf(file, "%u,%u,%u,%u,%u\n",
 					  block_info_array[i].database,
 					  block_info_array[i].tablespace,
-					  block_info_array[i].filenode,
+					  block_info_array[i].filenumber,
 					  (uint32) block_info_array[i].forknum,
 					  block_info_array[i].blocknum);
 		if (ret < 0)
@@ -736,8 +737,8 @@ autoprewarm_start_worker(PG_FUNCTION_ARGS)
 	if (pid != InvalidPid)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("autoprewarm worker is already running under PID %lu",
-						(unsigned long) pid)));
+				 errmsg("autoprewarm worker is already running under PID %d",
+						(int) pid)));
 
 	apw_start_leader_worker();
 
@@ -900,7 +901,7 @@ do { \
  * We depend on all records for a particular database being consecutive
  * in the dump file; each per-database worker will preload blocks until
  * it sees a block for some other database.  Sorting by tablespace,
- * filenode, forknum, and blocknum isn't critical for correctness, but
+ * filenumber, forknum, and blocknum isn't critical for correctness, but
  * helps us get a sequential I/O pattern.
  */
 static int
@@ -911,7 +912,7 @@ apw_compare_blockinfo(const void *p, const void *q)
 
 	cmp_member_elem(database);
 	cmp_member_elem(tablespace);
-	cmp_member_elem(filenode);
+	cmp_member_elem(filenumber);
 	cmp_member_elem(forknum);
 	cmp_member_elem(blocknum);
 

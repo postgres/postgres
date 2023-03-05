@@ -4,7 +4,7 @@
  *
  *	Parallel support for pg_dump and pg_restore
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -53,13 +53,11 @@
 #include "postgres_fe.h"
 
 #ifndef WIN32
+#include <sys/select.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
 #endif
 
 #include "fe_utils/string_utils.h"
@@ -1738,7 +1736,7 @@ pgpipe(int handles[2])
 		return -1;
 	}
 
-	memset((void *) &serv_addr, 0, sizeof(serv_addr));
+	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = pg_hton16(0);
 	serv_addr.sin_addr.s_addr = pg_hton32(INADDR_LOOPBACK);

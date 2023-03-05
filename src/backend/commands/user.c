@@ -3,7 +3,7 @@
  * user.c
  *	  Commands for manipulating roles (formerly called users).
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/commands/user.c
@@ -35,26 +35,87 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
+#include "utils/varlena.h"
+
+/*
+ * Removing a role grant - or the admin option on it - might recurse to
+ * dependent grants. We use these values to reason about what would need to
+ * be done in such cases.
+ *
+ * RRG_NOOP indicates a grant that would not need to be altered by the
+ * operation.
+ *
+ * RRG_REMOVE_ADMIN_OPTION indicates a grant that would need to have
+ * admin_option set to false by the operation.
+ *
+ * Similarly, RRG_REMOVE_INHERIT_OPTION and RRG_REMOVE_SET_OPTION indicate
+ * grants that would need to have the corresponding options set to false.
+ *
+ * RRG_DELETE_GRANT indicates a grant that would need to be removed entirely
+ * by the operation.
+ */
+typedef enum
+{
+	RRG_NOOP,
+	RRG_REMOVE_ADMIN_OPTION,
+	RRG_REMOVE_INHERIT_OPTION,
+	RRG_REMOVE_SET_OPTION,
+	RRG_DELETE_GRANT
+} RevokeRoleGrantAction;
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
 
+typedef struct
+{
+	unsigned	specified;
+	bool		admin;
+	bool		inherit;
+	bool		set;
+} GrantRoleOptions;
 
-/* GUC parameter */
+#define GRANT_ROLE_SPECIFIED_ADMIN			0x0001
+#define GRANT_ROLE_SPECIFIED_INHERIT		0x0002
+#define GRANT_ROLE_SPECIFIED_SET			0x0004
+
+/* GUC parameters */
 int			Password_encryption = PASSWORD_TYPE_SCRAM_SHA_256;
+char	   *createrole_self_grant = "";
+bool		createrole_self_grant_enabled = false;
+GrantRoleOptions	createrole_self_grant_options;
 
 /* Hook to check passwords in CreateRole() and AlterRole() */
 check_password_hook_type check_password_hook = NULL;
 
-static void AddRoleMems(const char *rolename, Oid roleid,
+static void AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
-						Oid grantorId, bool admin_opt);
-static void DelRoleMems(const char *rolename, Oid roleid,
+						Oid grantorId, GrantRoleOptions *popt);
+static void DelRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
-						bool admin_opt);
+						Oid grantorId, GrantRoleOptions *popt,
+						DropBehavior behavior);
+static void check_role_membership_authorization(Oid currentUserId, Oid roleid,
+												bool is_grant);
+static Oid	check_role_grantor(Oid currentUserId, Oid roleid, Oid grantorId,
+							   bool is_grant);
+static RevokeRoleGrantAction *initialize_revoke_actions(CatCList *memlist);
+static bool plan_single_revoke(CatCList *memlist,
+							   RevokeRoleGrantAction *actions,
+							   Oid member, Oid grantor,
+							   GrantRoleOptions *popt,
+							   DropBehavior behavior);
+static void plan_member_revoke(CatCList *memlist,
+							   RevokeRoleGrantAction *actions, Oid member);
+static void plan_recursive_revoke(CatCList *memlist,
+								  RevokeRoleGrantAction *actions,
+								  int index,
+								  bool revoke_admin_option_only,
+								  DropBehavior behavior);
+static void InitGrantRoleOptions(GrantRoleOptions *popt);
 
 
 /* Check if current user has createrole privileges */
@@ -74,8 +135,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	Relation	pg_authid_rel;
 	TupleDesc	pg_authid_dsc;
 	HeapTuple	tuple;
-	Datum		new_record[Natts_pg_authid];
-	bool		new_record_nulls[Natts_pg_authid];
+	Datum		new_record[Natts_pg_authid] = {0};
+	bool		new_record_nulls[Natts_pg_authid] = {0};
+	Oid			currentUserId = GetUserId();
 	Oid			roleid;
 	ListCell   *item;
 	ListCell   *option;
@@ -107,6 +169,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	DefElem    *dadminmembers = NULL;
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
+	GrantRoleOptions	popt;
 
 	/* The defaults can vary depending on the original statement type */
 	switch (stmt->stmt_type)
@@ -248,33 +311,28 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 		bypassrls = boolVal(dbypassRLS->arg);
 
 	/* Check some permissions first */
-	if (issuper)
+	if (!superuser_arg(currentUserId))
 	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create superusers")));
-	}
-	else if (isreplication)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create replication users")));
-	}
-	else if (bypassrls)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create bypassrls users")));
-	}
-	else
-	{
-		if (!have_createrole_privilege())
+		if (!has_createrole_privilege(currentUserId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to create role")));
+		if (issuper)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to create superusers")));
+		if (createdb && !have_createdb_privilege())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have createdb permission to create createdb users")));
+		if (isreplication && !has_rolreplication(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have replication permission to create replication users")));
+		if (bypassrls && !has_bypassrls_privilege(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have bypassrls to create bypassrls users")));
 	}
 
 	/*
@@ -338,12 +396,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	/*
 	 * Build a tuple to insert
 	 */
-	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-
 	new_record[Anum_pg_authid_rolname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->role));
-
 	new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(issuper);
 	new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(inherit);
 	new_record[Anum_pg_authid_rolcreaterole - 1] = BoolGetDatum(createrole);
@@ -429,6 +483,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	if (addroleto || adminmembers || rolemembers)
 		CommandCounterIncrement();
 
+	/* Default grant. */
+	InitGrantRoleOptions(&popt);
+
 	/*
 	 * Add the new role to the specified existing roles.
 	 */
@@ -450,25 +507,85 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 			Oid			oldroleid = oldroleform->oid;
 			char	   *oldrolename = NameStr(oldroleform->rolname);
 
-			AddRoleMems(oldrolename, oldroleid,
+			/* can only add this role to roles for which you have rights */
+			check_role_membership_authorization(currentUserId, oldroleid, true);
+			AddRoleMems(currentUserId, oldrolename, oldroleid,
 						thisrole_list,
 						thisrole_oidlist,
-						GetUserId(), false);
+						InvalidOid, &popt);
 
 			ReleaseSysCache(oldroletup);
 		}
 	}
 
 	/*
+	 * If the current user isn't a superuser, make them an admin of the new
+	 * role so that they can administer the new object they just created.
+	 * Superusers will be able to do that anyway.
+	 *
+	 * The grantor of record for this implicit grant is the bootstrap
+	 * superuser, which means that the CREATEROLE user cannot revoke the
+	 * grant. They can however grant the created role back to themselves
+	 * with different options, since they enjoy ADMIN OPTION on it.
+	 */
+	if (!superuser())
+	{
+		RoleSpec   *current_role = makeNode(RoleSpec);
+		GrantRoleOptions poptself;
+		List	   *memberSpecs;
+		List	   *memberIds = list_make1_oid(currentUserId);
+
+		current_role->roletype = ROLESPEC_CURRENT_ROLE;
+		current_role->location = -1;
+		memberSpecs = list_make1(current_role);
+
+		poptself.specified = GRANT_ROLE_SPECIFIED_ADMIN
+			| GRANT_ROLE_SPECIFIED_INHERIT
+			| GRANT_ROLE_SPECIFIED_SET;
+		poptself.admin = true;
+		poptself.inherit = false;
+		poptself.set = false;
+
+		AddRoleMems(BOOTSTRAP_SUPERUSERID, stmt->role, roleid,
+					memberSpecs, memberIds,
+					BOOTSTRAP_SUPERUSERID, &poptself);
+
+		/*
+		 * We must make the implicit grant visible to the code below, else
+		 * the additional grants will fail.
+		 */
+		CommandCounterIncrement();
+
+		/*
+		 * Because of the implicit grant above, a CREATEROLE user who creates
+		 * a role has the ability to grant that role back to themselves with
+		 * the INHERIT or SET options, if they wish to inherit the role's
+		 * privileges or be able to SET ROLE to it. The createrole_self_grant
+		 * GUC can be used to make this happen automatically. This has no
+		 * security implications since the same user is able to make the same
+		 * grant using an explicit GRANT statement; it's just convenient.
+		 */
+		if (createrole_self_grant_enabled)
+			AddRoleMems(currentUserId, stmt->role, roleid,
+						memberSpecs, memberIds,
+						currentUserId, &createrole_self_grant_options);
+	}
+
+	/*
 	 * Add the specified members to this new role. adminmembers get the admin
 	 * option, rolemembers don't.
+	 *
+	 * NB: No permissions check is required here. If you have enough rights
+	 * to create a role, you can add any members you like.
 	 */
-	AddRoleMems(stmt->role, roleid,
-				adminmembers, roleSpecsToIds(adminmembers),
-				GetUserId(), true);
-	AddRoleMems(stmt->role, roleid,
+	AddRoleMems(currentUserId, stmt->role, roleid,
 				rolemembers, roleSpecsToIds(rolemembers),
-				GetUserId(), false);
+				InvalidOid, &popt);
+	popt.specified |= GRANT_ROLE_SPECIFIED_ADMIN;
+	popt.admin = true;
+	AddRoleMems(currentUserId, stmt->role, roleid,
+				adminmembers, roleSpecsToIds(adminmembers),
+				InvalidOid, &popt);
 
 	/* Post creation hook for new role */
 	InvokeObjectPostCreateHook(AuthIdRelationId, roleid, 0);
@@ -492,9 +609,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 Oid
 AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 {
-	Datum		new_record[Natts_pg_authid];
-	bool		new_record_nulls[Natts_pg_authid];
-	bool		new_record_repl[Natts_pg_authid];
+	Datum		new_record[Natts_pg_authid] = {0};
+	bool		new_record_nulls[Natts_pg_authid] = {0};
+	bool		new_record_repl[Natts_pg_authid] = {0};
 	Relation	pg_authid_rel;
 	TupleDesc	pg_authid_dsc;
 	HeapTuple	tuple,
@@ -519,9 +636,11 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
 	Oid			roleid;
+	Oid			currentUserId = GetUserId();
+	GrantRoleOptions	popt;
 
 	check_rolespec_name(stmt->role,
-						"Cannot alter reserved roles.");
+						_("Cannot alter reserved roles."));
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -624,42 +743,59 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	rolename = pstrdup(NameStr(authform->rolname));
 	roleid = authform->oid;
 
+	/* To mess with a superuser in any way you gotta be superuser. */
+	if (!superuser() && (authform->rolsuper || dissuper))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to alter superuser roles or change superuser attribute")));
+
 	/*
-	 * To mess with a superuser or replication role in any way you gotta be
-	 * superuser.  We also insist on superuser to change the BYPASSRLS
-	 * property.  Otherwise, if you don't have createrole, you're only allowed
-	 * to change your own password.
+	 * Most changes to a role require that you both have CREATEROLE privileges
+	 * and also ADMIN OPTION on the role.
 	 */
-	if (authform->rolsuper || dissuper)
+	if (!have_createrole_privilege() ||
+		!is_admin_of_role(GetUserId(), roleid))
 	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter superuser roles or change superuser attribute")));
-	}
-	else if (authform->rolreplication || disreplication)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter replication roles or change replication attribute")));
-	}
-	else if (dbypassRLS)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change bypassrls attribute")));
-	}
-	else if (!have_createrole_privilege())
-	{
-		/* check the rest */
+		/* things an unprivileged user certainly can't do */
 		if (dinherit || dcreaterole || dcreatedb || dcanlogin || dconnlimit ||
-			drolemembers || dvalidUntil || !dpassword || roleid != GetUserId())
+			dvalidUntil || disreplication || dbypassRLS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied")));
+
+		/* an unprivileged user can change their own password */
+		if (dpassword && roleid != currentUserId)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have CREATEROLE privilege to change another user's password")));
 	}
+	else if (!superuser())
+	{
+		/*
+		 * Even if you have both CREATEROLE and ADMIN OPTION on a role, you
+		 * can only change the CREATEDB, REPLICATION, or BYPASSRLS attributes
+		 * if they are set for your own role (or you are the superuser).
+		 */
+		if (dcreatedb && !have_createdb_privilege())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have createdb privilege to change createdb attribute")));
+		if (disreplication && !has_rolreplication(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have replication privilege to change replication attribute")));
+		if (dbypassRLS && !has_bypassrls_privilege(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have bypassrls privilege to change bypassrls attribute")));
+	}
+
+	/* To add members to a role, you need ADMIN OPTION. */
+	if (drolemembers && !is_admin_of_role(currentUserId, roleid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must have admin option on role \"%s\" to add members",
+						rolename)));
 
 	/* Convert validuntil to internal form */
 	if (dvalidUntil)
@@ -691,16 +827,20 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	/*
 	 * Build an updated tuple, perusing the information just obtained
 	 */
-	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
 	/*
 	 * issuper/createrole/etc
 	 */
 	if (dissuper)
 	{
-		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(boolVal(dissuper->arg));
+		bool	should_be_super = boolVal(dissuper->arg);
+
+		if (!should_be_super && roleid == BOOTSTRAP_SUPERUSERID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied: bootstrap user must be superuser")));
+
+		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(should_be_super);
 		new_record_repl[Anum_pg_authid_rolsuper - 1] = true;
 	}
 
@@ -792,6 +932,8 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	ReleaseSysCache(tuple);
 	heap_freetuple(new_tuple);
 
+	InitGrantRoleOptions(&popt);
+
 	/*
 	 * Advance command counter so we can see new record; else tests in
 	 * AddRoleMems may fail.
@@ -803,13 +945,13 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 		CommandCounterIncrement();
 
 		if (stmt->action == +1) /* add members to role */
-			AddRoleMems(rolename, roleid,
+			AddRoleMems(currentUserId, rolename, roleid,
 						rolemembers, roleSpecsToIds(rolemembers),
-						GetUserId(), false);
+						InvalidOid, &popt);
 		else if (stmt->action == -1)	/* drop members from role */
-			DelRoleMems(rolename, roleid,
+			DelRoleMems(currentUserId, rolename, roleid,
 						rolemembers, roleSpecsToIds(rolemembers),
-						false);
+						InvalidOid, &popt, DROP_RESTRICT);
 	}
 
 	/*
@@ -835,7 +977,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	if (stmt->role)
 	{
 		check_rolespec_name(stmt->role,
-							"Cannot alter reserved roles.");
+							_("Cannot alter reserved roles."));
 
 		roletuple = get_rolespec_tuple(stmt->role);
 		roleform = (Form_pg_authid) GETSTRUCT(roletuple);
@@ -848,8 +990,9 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		shdepLockAndCheckObject(AuthIdRelationId, roleid);
 
 		/*
-		 * To mess with a superuser you gotta be superuser; else you need
-		 * createrole, or just want to change your own settings
+		 * To mess with a superuser you gotta be superuser; otherwise you
+		 * need CREATEROLE plus admin option on the target role; unless you're
+		 * just trying to change your own settings
 		 */
 		if (roleform->rolsuper)
 		{
@@ -860,7 +1003,9 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		}
 		else
 		{
-			if (!have_createrole_privilege() && roleid != GetUserId())
+			if ((!have_createrole_privilege() ||
+				!is_admin_of_role(GetUserId(), roleid))
+				&& roleid != GetUserId())
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("permission denied")));
@@ -881,7 +1026,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 			 * If no role is specified, then this is effectively the same as
 			 * ALTER DATABASE ... SET, so use the same permission check.
 			 */
-			if (!pg_database_ownercheck(databaseid, GetUserId()))
+			if (!object_ownercheck(DatabaseRelationId, databaseid, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 							   stmt->database);
 		}
@@ -911,6 +1056,7 @@ DropRole(DropRoleStmt *stmt)
 	Relation	pg_authid_rel,
 				pg_auth_members_rel;
 	ListCell   *item;
+	List	   *role_addresses = NIL;
 
 	if (!have_createrole_privilege())
 		ereport(ERROR,
@@ -919,7 +1065,7 @@ DropRole(DropRoleStmt *stmt)
 
 	/*
 	 * Scan the pg_authid relation to find the Oid of the role(s) to be
-	 * deleted.
+	 * deleted and perform preliminary permissions and sanity checks.
 	 */
 	pg_authid_rel = table_open(AuthIdRelationId, RowExclusiveLock);
 	pg_auth_members_rel = table_open(AuthMemRelationId, RowExclusiveLock);
@@ -932,10 +1078,9 @@ DropRole(DropRoleStmt *stmt)
 					tmp_tuple;
 		Form_pg_authid roleform;
 		ScanKeyData scankey;
-		char	   *detail;
-		char	   *detail_log;
 		SysScanDesc sscan;
 		Oid			roleid;
+		ObjectAddress *role_address;
 
 		if (rolspec->roletype != ROLESPEC_CSTRING)
 			ereport(ERROR,
@@ -980,16 +1125,24 @@ DropRole(DropRoleStmt *stmt)
 
 		/*
 		 * For safety's sake, we allow createrole holders to drop ordinary
-		 * roles but not superuser roles.  This is mainly to avoid the
-		 * scenario where you accidentally drop the last superuser.
+		 * roles but not superuser roles, and only if they also have ADMIN
+		 * OPTION.
 		 */
 		if (roleform->rolsuper && !superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to drop superusers")));
+		if (!is_admin_of_role(GetUserId(), roleid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have admin option on role \"%s\"",
+							role)));
 
 		/* DROP hook for the role being removed */
 		InvokeObjectDropHook(AuthIdRelationId, roleid, 0);
+
+		/* Don't leak the syscache tuple */
+		ReleaseSysCache(tuple);
 
 		/*
 		 * Lock the role, so nobody can add dependencies to her while we drop
@@ -997,28 +1150,22 @@ DropRole(DropRoleStmt *stmt)
 		 */
 		LockSharedObject(AuthIdRelationId, roleid, 0, AccessExclusiveLock);
 
-		/* Check for pg_shdepend entries depending on this role */
-		if (checkSharedDependencies(AuthIdRelationId, roleid,
-									&detail, &detail_log))
-			ereport(ERROR,
-					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-					 errmsg("role \"%s\" cannot be dropped because some objects depend on it",
-							role),
-					 errdetail_internal("%s", detail),
-					 errdetail_log("%s", detail_log)));
-
 		/*
-		 * Remove the role from the pg_authid table
-		 */
-		CatalogTupleDelete(pg_authid_rel, &tuple->t_self);
-
-		ReleaseSysCache(tuple);
-
-		/*
-		 * Remove role from the pg_auth_members table.  We have to remove all
-		 * tuples that show it as either a role or a member.
+		 * If there is a pg_auth_members entry that has one of the roles to be
+		 * dropped as the roleid or member, it should be silently removed, but
+		 * if there is a pg_auth_members entry that has one of the roles to be
+		 * dropped as the grantor, the operation should fail.
 		 *
-		 * XXX what about grantor entries?	Maybe we should do one heap scan.
+		 * It's possible, however, that a single pg_auth_members entry could
+		 * fall into multiple categories - e.g. the user could do "GRANT foo
+		 * TO bar GRANTED BY baz" and then "DROP ROLE baz, bar". We want such
+		 * an operation to succeed regardless of the order in which the
+		 * to-be-dropped roles are passed to DROP ROLE.
+		 *
+		 * To make that work, we remove all pg_auth_members entries that can
+		 * be silently removed in this loop, and then below we'll make a
+		 * second pass over the list of roles to be removed and check for any
+		 * remaining dependencies.
 		 */
 		ScanKeyInit(&scankey,
 					Anum_pg_auth_members_roleid,
@@ -1030,6 +1177,11 @@ DropRole(DropRoleStmt *stmt)
 
 		while (HeapTupleIsValid(tmp_tuple = systable_getnext(sscan)))
 		{
+			Form_pg_auth_members authmem_form;
+
+			authmem_form = (Form_pg_auth_members) GETSTRUCT(tmp_tuple);
+			deleteSharedDependencyRecordsFor(AuthMemRelationId,
+											 authmem_form->oid, 0);
 			CatalogTupleDelete(pg_auth_members_rel, &tmp_tuple->t_self);
 		}
 
@@ -1045,21 +1197,15 @@ DropRole(DropRoleStmt *stmt)
 
 		while (HeapTupleIsValid(tmp_tuple = systable_getnext(sscan)))
 		{
+			Form_pg_auth_members authmem_form;
+
+			authmem_form = (Form_pg_auth_members) GETSTRUCT(tmp_tuple);
+			deleteSharedDependencyRecordsFor(AuthMemRelationId,
+											 authmem_form->oid, 0);
 			CatalogTupleDelete(pg_auth_members_rel, &tmp_tuple->t_self);
 		}
 
 		systable_endscan(sscan);
-
-		/*
-		 * Remove any comments or security labels on this role.
-		 */
-		DeleteSharedComments(roleid, AuthIdRelationId);
-		DeleteSharedSecurityLabel(roleid, AuthIdRelationId);
-
-		/*
-		 * Remove settings for this role.
-		 */
-		DropSetting(InvalidOid, roleid);
 
 		/*
 		 * Advance command counter so that later iterations of this loop will
@@ -1071,6 +1217,72 @@ DropRole(DropRoleStmt *stmt)
 		 * itself.)
 		 */
 		CommandCounterIncrement();
+
+		/* Looks tentatively OK, add it to the list. */
+		role_address = palloc(sizeof(ObjectAddress));
+		role_address->classId = AuthIdRelationId;
+		role_address->objectId = roleid;
+		role_address->objectSubId = 0;
+		role_addresses = lappend(role_addresses, role_address);
+	}
+
+	/*
+	 * Second pass over the roles to be removed.
+	 */
+	foreach(item, role_addresses)
+	{
+		ObjectAddress *role_address = lfirst(item);
+		Oid			roleid = role_address->objectId;
+		HeapTuple	tuple;
+		Form_pg_authid roleform;
+		char	   *detail;
+		char	   *detail_log;
+
+		/*
+		 * Re-find the pg_authid tuple.
+		 *
+		 * Since we've taken a lock on the role OID, it shouldn't be possible
+		 * for the tuple to have been deleted -- or for that matter updated --
+		 * unless the user is manually modifying the system catalogs.
+		 */
+		tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "could not find tuple for role %u", roleid);
+		roleform = (Form_pg_authid) GETSTRUCT(tuple);
+
+		/*
+		 * Check for pg_shdepend entries depending on this role.
+		 *
+		 * This needs to happen after we've completed removing any
+		 * pg_auth_members entries that can be removed silently, in order to
+		 * avoid spurious failures. See notes above for more details.
+		 */
+		if (checkSharedDependencies(AuthIdRelationId, roleid,
+									&detail, &detail_log))
+			ereport(ERROR,
+					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+					 errmsg("role \"%s\" cannot be dropped because some objects depend on it",
+							NameStr(roleform->rolname)),
+					 errdetail_internal("%s", detail),
+					 errdetail_log("%s", detail_log)));
+
+		/*
+		 * Remove the role from the pg_authid table
+		 */
+		CatalogTupleDelete(pg_authid_rel, &tuple->t_self);
+
+		ReleaseSysCache(tuple);
+
+		/*
+		 * Remove any comments or security labels on this role.
+		 */
+		DeleteSharedComments(roleid, AuthIdRelationId);
+		DeleteSharedSecurityLabel(roleid, AuthIdRelationId);
+
+		/*
+		 * Remove settings for this role.
+		 */
+		DropSetting(InvalidOid, roleid);
 	}
 
 	/*
@@ -1163,7 +1375,8 @@ RenameRole(const char *oldname, const char *newname)
 				 errmsg("role \"%s\" already exists", newname)));
 
 	/*
-	 * createrole is enough privilege unless you want to mess with a superuser
+	 * Only superusers can mess with superusers. Otherwise, a user with
+	 * CREATEROLE can rename a role for which they have ADMIN OPTION.
 	 */
 	if (((Form_pg_authid) GETSTRUCT(oldtuple))->rolsuper)
 	{
@@ -1174,7 +1387,8 @@ RenameRole(const char *oldname, const char *newname)
 	}
 	else
 	{
-		if (!have_createrole_privilege())
+		if (!have_createrole_privilege() ||
+			!is_admin_of_role(GetUserId(), roleid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to rename role")));
@@ -1224,17 +1438,59 @@ RenameRole(const char *oldname, const char *newname)
  * Grant/Revoke roles to/from roles
  */
 void
-GrantRole(GrantRoleStmt *stmt)
+GrantRole(ParseState *pstate, GrantRoleStmt *stmt)
 {
 	Relation	pg_authid_rel;
 	Oid			grantor;
 	List	   *grantee_ids;
 	ListCell   *item;
+	GrantRoleOptions	popt;
+	Oid			currentUserId = GetUserId();
 
+	/* Parse options list. */
+	InitGrantRoleOptions(&popt);
+	foreach(item, stmt->opt)
+	{
+		DefElem	   *opt = (DefElem *) lfirst(item);
+		char	   *optval = defGetString(opt);
+
+		if (strcmp(opt->defname, "admin") == 0)
+		{
+			popt.specified |= GRANT_ROLE_SPECIFIED_ADMIN;
+
+			if (parse_bool(optval, &popt.admin))
+				continue;
+		}
+		else if (strcmp(opt->defname, "inherit") == 0)
+		{
+			popt.specified |= GRANT_ROLE_SPECIFIED_INHERIT;
+			if (parse_bool(optval, &popt.inherit))
+				continue;
+		}
+		else if (strcmp(opt->defname, "set") == 0)
+		{
+			popt.specified |= GRANT_ROLE_SPECIFIED_SET;
+			if (parse_bool(optval, &popt.set))
+				continue;
+		}
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("unrecognized role option \"%s\"", opt->defname),
+					parser_errposition(pstate, opt->location));
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized value for role option \"%s\": \"%s\"",
+						opt->defname, optval),
+				 parser_errposition(pstate, opt->location)));
+	}
+
+	/* Lookup OID of grantor, if specified. */
 	if (stmt->grantor)
 		grantor = get_rolespec_oid(stmt->grantor, false);
 	else
-		grantor = GetUserId();
+		grantor = InvalidOid;
 
 	grantee_ids = roleSpecsToIds(stmt->grantee_roles);
 
@@ -1242,11 +1498,11 @@ GrantRole(GrantRoleStmt *stmt)
 	pg_authid_rel = table_open(AuthIdRelationId, AccessShareLock);
 
 	/*
-	 * Step through all of the granted roles and add/remove entries for the
-	 * grantees, or, if admin_opt is set, then just add/remove the admin
-	 * option.
-	 *
-	 * Note: Permissions checking is done by AddRoleMems/DelRoleMems
+	 * Step through all of the granted roles and add, update, or remove
+	 * entries in pg_auth_members as appropriate. If stmt->is_grant is true,
+	 * we are adding new grants or, if they already exist, updating options
+	 * on those grants. If stmt->is_grant is false, we are revoking grants or
+	 * removing options from them.
 	 */
 	foreach(item, stmt->granted_roles)
 	{
@@ -1261,14 +1517,16 @@ GrantRole(GrantRoleStmt *stmt)
 					 errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
 
 		roleid = get_role_oid(rolename, false);
+		check_role_membership_authorization(currentUserId,
+											roleid, stmt->is_grant);
 		if (stmt->is_grant)
-			AddRoleMems(rolename, roleid,
+			AddRoleMems(currentUserId, rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
-						grantor, stmt->admin_opt);
+						grantor, &popt);
 		else
-			DelRoleMems(rolename, roleid,
+			DelRoleMems(currentUserId, rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
-						stmt->admin_opt);
+						grantor, &popt, stmt->behavior);
 	}
 
 	/*
@@ -1365,17 +1623,19 @@ roleSpecsToIds(List *memberNames)
 /*
  * AddRoleMems -- Add given members to the specified role
  *
+ * currentUserId: OID of role performing the operation
  * rolename: name of role to add to (used only for error messages)
  * roleid: OID of role to add to
  * memberSpecs: list of RoleSpec of roles to add (used only for error messages)
  * memberIds: OIDs of roles to add
- * grantorId: who is granting the membership
- * admin_opt: granting admin option?
+ * grantorId: OID that should be recorded as having granted the membership
+ * (InvalidOid if not set explicitly)
+ * popt: information about grant options
  */
 static void
-AddRoleMems(const char *rolename, Oid roleid,
+AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
-			Oid grantorId, bool admin_opt)
+			Oid grantorId, GrantRoleOptions *popt)
 {
 	Relation	pg_authmem_rel;
 	TupleDesc	pg_authmem_dsc;
@@ -1384,65 +1644,25 @@ AddRoleMems(const char *rolename, Oid roleid,
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
 
-	/* Skip permission check if nothing to do */
-	if (!memberIds)
-		return;
-
-	/*
-	 * Check permissions: must have createrole or admin option on the role to
-	 * be changed.  To mess with a superuser role, you gotta be superuser.
-	 */
-	if (superuser_arg(roleid))
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter superusers")));
-	}
-	else
-	{
-		if (!have_createrole_privilege() &&
-			!is_admin_of_role(grantorId, roleid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must have admin option on role \"%s\"",
-							rolename)));
-	}
-
-	/*
-	 * The charter of pg_database_owner is to have exactly one, implicit,
-	 * situation-dependent member.  There's no technical need for this
-	 * restriction.  (One could lift it and take the further step of making
-	 * pg_database_ownercheck() equivalent to has_privs_of_role(roleid,
-	 * ROLE_PG_DATABASE_OWNER), in which case explicit, situation-independent
-	 * members could act as the owner of any database.)
-	 */
-	if (roleid == ROLE_PG_DATABASE_OWNER)
-		ereport(ERROR,
-				errmsg("role \"%s\" cannot have explicit members", rolename));
-
-	/*
-	 * The role membership grantor of record has little significance at
-	 * present.  Nonetheless, inasmuch as users might look to it for a crude
-	 * audit trail, let only superusers impute the grant to a third party.
-	 */
-	if (grantorId != GetUserId() && !superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to set grantor")));
+	/* Validate grantor (and resolve implicit grantor if not specified). */
+	grantorId = check_role_grantor(currentUserId, roleid, grantorId, true);
 
 	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
 	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
 
+	/*
+	 * Only allow changes to this role by one backend at a time, so that we
+	 * can check integrity constraints like the lack of circular ADMIN OPTION
+	 * grants without fear of race conditions.
+	 */
+	LockSharedObject(AuthIdRelationId, roleid, 0,
+					 ShareUpdateExclusiveLock);
+
+	/* Preliminary sanity checks. */
 	forboth(specitem, memberSpecs, iditem, memberIds)
 	{
 		RoleSpec   *memberRole = lfirst_node(RoleSpec, specitem);
 		Oid			memberid = lfirst_oid(iditem);
-		HeapTuple	authmem_tuple;
-		HeapTuple	tuple;
-		Datum		new_record[Natts_pg_auth_members];
-		bool		new_record_nulls[Natts_pg_auth_members];
-		bool		new_record_repl[Natts_pg_auth_members];
 
 		/*
 		 * pg_database_owner is never a role member.  Lifting this restriction
@@ -1480,50 +1700,210 @@ AddRoleMems(const char *rolename, Oid roleid,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 errmsg("role \"%s\" is a member of role \"%s\"",
 							rolename, get_rolespec_name(memberRole))));
+	}
+
+	/*
+	 * Disallow attempts to grant ADMIN OPTION back to a user who granted it
+	 * to you, similar to what check_circularity does for ACLs. We want the
+	 * chains of grants to remain acyclic, so that it's always possible to use
+	 * REVOKE .. CASCADE to clean up all grants that depend on the one being
+	 * revoked.
+	 *
+	 * NB: This check might look redundant with the check for membership loops
+	 * above, but it isn't. That's checking for role-member loop (e.g. A is a
+	 * member of B and B is a member of A) while this is checking for a
+	 * member-grantor loop (e.g. A gave ADMIN OPTION on X to B and now B, who
+	 * has no other source of ADMIN OPTION on X, tries to give ADMIN OPTION on
+	 * X back to A).
+	 */
+	if (popt->admin && grantorId != BOOTSTRAP_SUPERUSERID)
+	{
+		CatCList   *memlist;
+		RevokeRoleGrantAction *actions;
+		int			i;
+
+		/* Get the list of members for this role. */
+		memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
+									  ObjectIdGetDatum(roleid));
 
 		/*
-		 * Check if entry for this role/member already exists; if so, give
-		 * warning unless we are adding admin option.
+		 * Figure out what would happen if we removed all existing grants to
+		 * every role to which we've been asked to make a new grant.
 		 */
-		authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
-										ObjectIdGetDatum(roleid),
-										ObjectIdGetDatum(memberid));
-		if (HeapTupleIsValid(authmem_tuple) &&
-			(!admin_opt ||
-			 ((Form_pg_auth_members) GETSTRUCT(authmem_tuple))->admin_option))
+		actions = initialize_revoke_actions(memlist);
+		foreach(iditem, memberIds)
 		{
-			ereport(NOTICE,
-					(errmsg("role \"%s\" is already a member of role \"%s\"",
-							get_rolespec_name(memberRole), rolename)));
-			ReleaseSysCache(authmem_tuple);
-			continue;
+			Oid			memberid = lfirst_oid(iditem);
+
+			if (memberid == BOOTSTRAP_SUPERUSERID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("admin option cannot be granted back to your own grantor")));
+			plan_member_revoke(memlist, actions, memberid);
 		}
 
-		/* Build a tuple to insert or update */
-		MemSet(new_record, 0, sizeof(new_record));
-		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-		MemSet(new_record_repl, false, sizeof(new_record_repl));
+		/*
+		 * If the result would be that the grantor role would no longer have
+		 * the ability to perform the grant, then the proposed grant would
+		 * create a circularity.
+		 */
+		for (i = 0; i < memlist->n_members; ++i)
+		{
+			HeapTuple	authmem_tuple;
+			Form_pg_auth_members authmem_form;
 
-		new_record[Anum_pg_auth_members_roleid - 1] = ObjectIdGetDatum(roleid);
-		new_record[Anum_pg_auth_members_member - 1] = ObjectIdGetDatum(memberid);
-		new_record[Anum_pg_auth_members_grantor - 1] = ObjectIdGetDatum(grantorId);
-		new_record[Anum_pg_auth_members_admin_option - 1] = BoolGetDatum(admin_opt);
+			authmem_tuple = &memlist->members[i]->tuple;
+			authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
 
+			if (actions[i] == RRG_NOOP &&
+				authmem_form->member == grantorId &&
+				authmem_form->admin_option)
+				break;
+		}
+		if (i >= memlist->n_members)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+					 errmsg("admin option cannot be granted back to your own grantor")));
+
+		ReleaseSysCacheList(memlist);
+	}
+
+	/* Now perform the catalog updates. */
+	forboth(specitem, memberSpecs, iditem, memberIds)
+	{
+		RoleSpec   *memberRole = lfirst_node(RoleSpec, specitem);
+		Oid			memberid = lfirst_oid(iditem);
+		HeapTuple	authmem_tuple;
+		HeapTuple	tuple;
+		Datum		new_record[Natts_pg_auth_members] = {0};
+		bool		new_record_nulls[Natts_pg_auth_members] = {0};
+		bool		new_record_repl[Natts_pg_auth_members] = {0};
+
+		/* Common initialization for possible insert or update */
+		new_record[Anum_pg_auth_members_roleid - 1] =
+			ObjectIdGetDatum(roleid);
+		new_record[Anum_pg_auth_members_member - 1] =
+			ObjectIdGetDatum(memberid);
+		new_record[Anum_pg_auth_members_grantor - 1] =
+			ObjectIdGetDatum(grantorId);
+
+		/* Find any existing tuple */
+		authmem_tuple = SearchSysCache3(AUTHMEMROLEMEM,
+										ObjectIdGetDatum(roleid),
+										ObjectIdGetDatum(memberid),
+										ObjectIdGetDatum(grantorId));
+
+		/*
+		 * If we found a tuple, update it with new option values, unless
+		 * there are no changes, in which case issue a WARNING.
+		 *
+		 * If we didn't find a tuple, just insert one.
+		 */
 		if (HeapTupleIsValid(authmem_tuple))
 		{
-			new_record_repl[Anum_pg_auth_members_grantor - 1] = true;
-			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
+			Form_pg_auth_members authmem_form;
+			bool		at_least_one_change = false;
+
+			authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
+
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_ADMIN) != 0
+				&& authmem_form->admin_option != popt->admin)
+			{
+				new_record[Anum_pg_auth_members_admin_option - 1] =
+					BoolGetDatum(popt->admin);
+				new_record_repl[Anum_pg_auth_members_admin_option - 1] =
+					true;
+				at_least_one_change = true;
+			}
+
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_INHERIT) != 0
+				&& authmem_form->inherit_option != popt->inherit)
+			{
+				new_record[Anum_pg_auth_members_inherit_option - 1] =
+					BoolGetDatum(popt->inherit);
+				new_record_repl[Anum_pg_auth_members_inherit_option - 1] =
+					true;
+				at_least_one_change = true;
+			}
+
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_SET) != 0
+				&& authmem_form->set_option != popt->set)
+			{
+				new_record[Anum_pg_auth_members_set_option - 1] =
+					BoolGetDatum(popt->set);
+				new_record_repl[Anum_pg_auth_members_set_option - 1] =
+					true;
+				at_least_one_change = true;
+			}
+
+			if (!at_least_one_change)
+			{
+				ereport(NOTICE,
+						(errmsg("role \"%s\" has already been granted membership in role \"%s\" by role \"%s\"",
+								get_rolespec_name(memberRole), rolename,
+								GetUserNameFromId(grantorId, false))));
+				ReleaseSysCache(authmem_tuple);
+				continue;
+			}
+
 			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
 									  new_record,
 									  new_record_nulls, new_record_repl);
 			CatalogTupleUpdate(pg_authmem_rel, &tuple->t_self, tuple);
+
 			ReleaseSysCache(authmem_tuple);
 		}
 		else
 		{
+			Oid			objectId;
+			Oid		   *newmembers = palloc(sizeof(Oid));
+
+			/*
+			 * The values for these options can be taken directly from 'popt'.
+			 * Either they were specified, or the defaults as set by
+			 * InitGrantRoleOptions are correct.
+			 */
+			new_record[Anum_pg_auth_members_admin_option - 1] =
+				BoolGetDatum(popt->admin);
+			new_record[Anum_pg_auth_members_set_option - 1] =
+				BoolGetDatum(popt->set);
+
+			/*
+			 * If the user specified a value for the inherit option, use
+			 * whatever was specified. Otherwise, set the default value based
+			 * on the role-level property.
+			 */
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_INHERIT) != 0)
+				new_record[Anum_pg_auth_members_inherit_option - 1] =
+					popt->inherit;
+			else
+			{
+				HeapTuple		mrtup;
+				Form_pg_authid	mrform;
+
+				mrtup = SearchSysCache1(AUTHOID, memberid);
+				if (!HeapTupleIsValid(mrtup))
+					elog(ERROR, "cache lookup failed for role %u", memberid);
+				mrform = (Form_pg_authid) GETSTRUCT(mrtup);
+				new_record[Anum_pg_auth_members_inherit_option - 1] =
+					mrform->rolinherit;
+				ReleaseSysCache(mrtup);
+			}
+
+			/* get an OID for the new row and insert it */
+			objectId = GetNewOidWithIndex(pg_authmem_rel, AuthMemOidIndexId,
+										  Anum_pg_auth_members_oid);
+			new_record[Anum_pg_auth_members_oid - 1] = objectId;
 			tuple = heap_form_tuple(pg_authmem_dsc,
 									new_record, new_record_nulls);
 			CatalogTupleInsert(pg_authmem_rel, tuple);
+
+			/* updateAclDependencies wants to pfree array inputs */
+			newmembers[0] = grantorId;
+			updateAclDependencies(AuthMemRelationId, objectId,
+								  0, InvalidOid,
+								  0, NULL,
+								  1, newmembers);
 		}
 
 		/* CCI after each change, in case there are duplicates in list */
@@ -1543,103 +1923,579 @@ AddRoleMems(const char *rolename, Oid roleid,
  * roleid: OID of role to del from
  * memberSpecs: list of RoleSpec of roles to del (used only for error messages)
  * memberIds: OIDs of roles to del
- * admin_opt: remove admin option only?
+ * grantorId: who is revoking the membership
+ * popt: information about grant options
+ * behavior: RESTRICT or CASCADE behavior for recursive removal
  */
 static void
-DelRoleMems(const char *rolename, Oid roleid,
+DelRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
-			bool admin_opt)
+			Oid grantorId, GrantRoleOptions *popt, DropBehavior behavior)
 {
 	Relation	pg_authmem_rel;
 	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
+	CatCList   *memlist;
+	RevokeRoleGrantAction *actions;
+	int			i;
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
 
-	/* Skip permission check if nothing to do */
-	if (!memberIds)
-		return;
-
-	/*
-	 * Check permissions: must have createrole or admin option on the role to
-	 * be changed.  To mess with a superuser role, you gotta be superuser.
-	 */
-	if (superuser_arg(roleid))
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to alter superusers")));
-	}
-	else
-	{
-		if (!have_createrole_privilege() &&
-			!is_admin_of_role(GetUserId(), roleid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must have admin option on role \"%s\"",
-							rolename)));
-	}
+	/* Validate grantor (and resolve implicit grantor if not specified). */
+	grantorId = check_role_grantor(currentUserId, roleid, grantorId, false);
 
 	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
 	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
 
+	/*
+	 * Only allow changes to this role by one backend at a time, so that we
+	 * can check for things like dependent privileges without fear of race
+	 * conditions.
+	 */
+	LockSharedObject(AuthIdRelationId, roleid, 0,
+					 ShareUpdateExclusiveLock);
+
+	memlist = SearchSysCacheList1(AUTHMEMROLEMEM, ObjectIdGetDatum(roleid));
+	actions = initialize_revoke_actions(memlist);
+
+	/*
+	 * We may need to recurse to dependent privileges if DROP_CASCADE was
+	 * specified, or refuse to perform the operation if dependent privileges
+	 * exist and DROP_RESTRICT was specified. plan_single_revoke() will figure
+	 * out what to do with each catalog tuple.
+	 */
 	forboth(specitem, memberSpecs, iditem, memberIds)
 	{
 		RoleSpec   *memberRole = lfirst(specitem);
 		Oid			memberid = lfirst_oid(iditem);
-		HeapTuple	authmem_tuple;
 
-		/*
-		 * Find entry for this role/member
-		 */
-		authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
-										ObjectIdGetDatum(roleid),
-										ObjectIdGetDatum(memberid));
-		if (!HeapTupleIsValid(authmem_tuple))
+		if (!plan_single_revoke(memlist, actions, memberid, grantorId,
+								popt, behavior))
 		{
 			ereport(WARNING,
-					(errmsg("role \"%s\" is not a member of role \"%s\"",
-							get_rolespec_name(memberRole), rolename)));
+					(errmsg("role \"%s\" has not been granted membership in role \"%s\" by role \"%s\"",
+							get_rolespec_name(memberRole), rolename,
+							GetUserNameFromId(grantorId, false))));
 			continue;
 		}
+	}
 
-		if (!admin_opt)
+	/*
+	 * We now know what to do with each catalog tuple: it should either be
+	 * left alone, deleted, or just have the admin_option flag cleared.
+	 * Perform the appropriate action in each case.
+	 */
+	for (i = 0; i < memlist->n_members; ++i)
+	{
+		HeapTuple	authmem_tuple;
+		Form_pg_auth_members authmem_form;
+
+		if (actions[i] == RRG_NOOP)
+			continue;
+
+		authmem_tuple = &memlist->members[i]->tuple;
+		authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
+
+		if (actions[i] == RRG_DELETE_GRANT)
 		{
-			/* Remove the entry altogether */
+			/*
+			 * Remove the entry altogether, after first removing its
+			 * dependencies
+			 */
+			deleteSharedDependencyRecordsFor(AuthMemRelationId,
+											 authmem_form->oid, 0);
 			CatalogTupleDelete(pg_authmem_rel, &authmem_tuple->t_self);
 		}
 		else
 		{
-			/* Just turn off the admin option */
+			/* Just turn off the specified option */
 			HeapTuple	tuple;
-			Datum		new_record[Natts_pg_auth_members];
-			bool		new_record_nulls[Natts_pg_auth_members];
-			bool		new_record_repl[Natts_pg_auth_members];
+			Datum		new_record[Natts_pg_auth_members] = {0};
+			bool		new_record_nulls[Natts_pg_auth_members] = {0};
+			bool		new_record_repl[Natts_pg_auth_members] = {0};
 
 			/* Build a tuple to update with */
-			MemSet(new_record, 0, sizeof(new_record));
-			MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-			MemSet(new_record_repl, false, sizeof(new_record_repl));
-
-			new_record[Anum_pg_auth_members_admin_option - 1] = BoolGetDatum(false);
-			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
+			if (actions[i] == RRG_REMOVE_ADMIN_OPTION)
+			{
+				new_record[Anum_pg_auth_members_admin_option - 1] =
+					BoolGetDatum(false);
+				new_record_repl[Anum_pg_auth_members_admin_option - 1] =
+					true;
+			}
+			else if (actions[i] == RRG_REMOVE_INHERIT_OPTION)
+			{
+				new_record[Anum_pg_auth_members_inherit_option - 1] =
+					BoolGetDatum(false);
+				new_record_repl[Anum_pg_auth_members_inherit_option - 1] =
+					true;
+			}
+			else if (actions[i] == RRG_REMOVE_SET_OPTION)
+			{
+				new_record[Anum_pg_auth_members_set_option - 1] =
+					BoolGetDatum(false);
+				new_record_repl[Anum_pg_auth_members_set_option - 1] =
+					true;
+			}
+			else
+				elog(ERROR, "unknown role revoke action");
 
 			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
 									  new_record,
 									  new_record_nulls, new_record_repl);
 			CatalogTupleUpdate(pg_authmem_rel, &tuple->t_self, tuple);
 		}
-
-		ReleaseSysCache(authmem_tuple);
-
-		/* CCI after each change, in case there are duplicates in list */
-		CommandCounterIncrement();
 	}
+
+	ReleaseSysCacheList(memlist);
 
 	/*
 	 * Close pg_authmem, but keep lock till commit.
 	 */
 	table_close(pg_authmem_rel, NoLock);
+}
+
+/*
+ * Check that currentUserId has permission to modify the membership list for
+ * roleid. Throw an error if not.
+ */
+static void
+check_role_membership_authorization(Oid currentUserId, Oid roleid,
+									bool is_grant)
+{
+	/*
+	 * The charter of pg_database_owner is to have exactly one, implicit,
+	 * situation-dependent member.  There's no technical need for this
+	 * restriction.  (One could lift it and take the further step of making
+	 * object_ownercheck(DatabaseRelationId, ...) equivalent to
+	 * has_privs_of_role(roleid, ROLE_PG_DATABASE_OWNER), in which case
+	 * explicit, situation-independent members could act as the owner of any
+	 * database.)
+	 */
+	if (is_grant && roleid == ROLE_PG_DATABASE_OWNER)
+		ereport(ERROR,
+				errmsg("role \"%s\" cannot have explicit members",
+					   GetUserNameFromId(roleid, false)));
+
+	/* To mess with a superuser role, you gotta be superuser. */
+	if (superuser_arg(roleid))
+	{
+		if (!superuser_arg(currentUserId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to alter superusers")));
+	}
+	else
+	{
+		/*
+		 * Otherwise, must have admin option on the role to be changed.
+		 */
+		if (!is_admin_of_role(currentUserId, roleid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must have admin option on role \"%s\"",
+							GetUserNameFromId(roleid, false))));
+	}
+}
+
+/*
+ * Sanity-check, or infer, the grantor for a GRANT or REVOKE statement
+ * targeting a role.
+ *
+ * The grantor must always be either a role with ADMIN OPTION on the role in
+ * which membership is being granted, or the bootstrap superuser. This is
+ * similar to the restriction enforced by select_best_grantor, except that
+ * roles don't have owners, so we regard the bootstrap superuser as the
+ * implicit owner.
+ *
+ * If the grantor was not explicitly specified by the user, grantorId should
+ * be passed as InvalidOid, and this function will infer the user to be
+ * recorded as the grantor. In many cases, this will be the current user, but
+ * things get more complicated when the current user doesn't possess ADMIN
+ * OPTION on the role but rather relies on having SUPERUSER privileges, or
+ * on inheriting the privileges of a role which does have ADMIN OPTION. See
+ * below for details.
+ *
+ * If the grantor was specified by the user, then it must be a user that
+ * can legally be recorded as the grantor, as per the rule stated above.
+ * This is an integrity constraint, not a permissions check, and thus even
+ * superusers are subject to this restriction. However, there is also a
+ * permissions check: to specify a role as the grantor, the current user
+ * must possess the privileges of that role. Superusers will always pass
+ * this check, but for non-superusers it may lead to an error.
+ *
+ * The return value is the OID to be regarded as the grantor when executing
+ * the operation.
+ */
+static Oid
+check_role_grantor(Oid currentUserId, Oid roleid, Oid grantorId, bool is_grant)
+{
+	/* If the grantor ID was not specified, pick one to use. */
+	if (!OidIsValid(grantorId))
+	{
+		/*
+		 * Grants where the grantor is recorded as the bootstrap superuser do
+		 * not depend on any other existing grants, so always default to this
+		 * interpretation when possible.
+		 */
+		if (superuser_arg(currentUserId))
+			return BOOTSTRAP_SUPERUSERID;
+
+		/*
+		 * Otherwise, the grantor must either have ADMIN OPTION on the role or
+		 * inherit the privileges of a role which does. In the former case,
+		 * record the grantor as the current user; in the latter, pick one of
+		 * the roles that is "most directly" inherited by the current role
+		 * (i.e. fewest "hops").
+		 *
+		 * (We shouldn't fail to find a best grantor, because we've already
+		 * established that the current user has permission to perform the
+		 * operation.)
+		 */
+		grantorId = select_best_admin(currentUserId, roleid);
+		if (!OidIsValid(grantorId))
+			elog(ERROR, "no possible grantors");
+		return grantorId;
+	}
+
+	/*
+	 * If an explicit grantor is specified, it must be a role whose privileges
+	 * the current user possesses.
+	 *
+	 * It should also be a role that has ADMIN OPTION on the target role, but
+	 * we check this condition only in case of GRANT. For REVOKE, no matching
+	 * grant should exist anyway, but if it somehow does, let the user get rid
+	 * of it.
+	 */
+	if (is_grant)
+	{
+		if (!has_privs_of_role(currentUserId, grantorId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to grant privileges as role \"%s\"",
+							GetUserNameFromId(grantorId, false))));
+
+		if (grantorId != BOOTSTRAP_SUPERUSERID &&
+			select_best_admin(grantorId, roleid) != grantorId)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("grantor must have ADMIN OPTION on \"%s\"",
+							GetUserNameFromId(roleid, false))));
+	}
+	else
+	{
+		if (!has_privs_of_role(currentUserId, grantorId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to revoke privileges granted by role \"%s\"",
+							GetUserNameFromId(grantorId, false))));
+	}
+
+	/*
+	 * If a grantor was specified explicitly, always attribute the grant to
+	 * that role (unless we error out above).
+	 */
+	return grantorId;
+}
+
+/*
+ * Initialize an array of RevokeRoleGrantAction objects.
+ *
+ * 'memlist' should be a list of all grants for the target role.
+ *
+ * This constructs an array indicating that no actions are to be performed;
+ * that is, every element is initially RRG_NOOP.
+ */
+static RevokeRoleGrantAction *
+initialize_revoke_actions(CatCList *memlist)
+{
+	RevokeRoleGrantAction *result;
+	int			i;
+
+	if (memlist->n_members == 0)
+		return NULL;
+
+	result = palloc(sizeof(RevokeRoleGrantAction) * memlist->n_members);
+	for (i = 0; i < memlist->n_members; i++)
+		result[i] = RRG_NOOP;
+	return result;
+}
+
+/*
+ * Figure out what we would need to do in order to revoke a grant, or just the
+ * admin option on a grant, given that there might be dependent privileges.
+ *
+ * 'memlist' should be a list of all grants for the target role.
+ *
+ * Whatever actions prove to be necessary will be signalled by updating
+ * 'actions'.
+ *
+ * If behavior is DROP_RESTRICT, an error will occur if there are dependent
+ * role membership grants; if DROP_CASCADE, those grants will be scheduled
+ * for deletion.
+ *
+ * The return value is true if the matching grant was found in the list,
+ * and false if not.
+ */
+static bool
+plan_single_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
+				   Oid member, Oid grantor, GrantRoleOptions *popt,
+				   DropBehavior behavior)
+{
+	int			i;
+
+	/*
+	 * If popt.specified == 0, we're revoking the grant entirely; otherwise,
+	 * we expect just one bit to be set, and we're revoking the corresponding
+	 * option. As of this writing, there's no syntax that would allow for
+	 * an attempt to revoke multiple options at once, and the logic below
+	 * wouldn't work properly if such syntax were added, so assert that our
+	 * caller isn't trying to do that.
+	 */
+	Assert(pg_popcount32(popt->specified) <= 1);
+
+	for (i = 0; i < memlist->n_members; ++i)
+	{
+		HeapTuple	authmem_tuple;
+		Form_pg_auth_members authmem_form;
+
+		authmem_tuple = &memlist->members[i]->tuple;
+		authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
+
+		if (authmem_form->member == member &&
+			authmem_form->grantor == grantor)
+		{
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_INHERIT) != 0)
+			{
+				/*
+				 * Revoking the INHERIT option doesn't change anything for
+				 * dependent privileges, so we don't need to recurse.
+				 */
+				actions[i] = RRG_REMOVE_INHERIT_OPTION;
+			}
+			else if ((popt->specified & GRANT_ROLE_SPECIFIED_SET) != 0)
+			{
+				/* Here too, no need to recurse. */
+				actions[i] = RRG_REMOVE_SET_OPTION;
+			}
+			else
+			{
+				bool	revoke_admin_option_only;
+
+				/*
+				 * Revoking the grant entirely, or ADMIN option on a grant,
+				 * implicates dependent privileges, so we may need to recurse.
+				 */
+				revoke_admin_option_only =
+					(popt->specified & GRANT_ROLE_SPECIFIED_ADMIN) != 0;
+				plan_recursive_revoke(memlist, actions, i,
+									  revoke_admin_option_only, behavior);
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+ * Figure out what we would need to do in order to revoke all grants to
+ * a given member, given that there might be dependent privileges.
+ *
+ * 'memlist' should be a list of all grants for the target role.
+ *
+ * Whatever actions prove to be necessary will be signalled by updating
+ * 'actions'.
+ */
+static void
+plan_member_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
+				   Oid member)
+{
+	int			i;
+
+	for (i = 0; i < memlist->n_members; ++i)
+	{
+		HeapTuple	authmem_tuple;
+		Form_pg_auth_members authmem_form;
+
+		authmem_tuple = &memlist->members[i]->tuple;
+		authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
+
+		if (authmem_form->member == member)
+			plan_recursive_revoke(memlist, actions, i, false, DROP_CASCADE);
+	}
+}
+
+/*
+ * Workhorse for figuring out recursive revocation of role grants.
+ *
+ * This is similar to what recursive_revoke() does for ACLs.
+ */
+static void
+plan_recursive_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
+					  int index,
+					  bool revoke_admin_option_only, DropBehavior behavior)
+{
+	bool		would_still_have_admin_option = false;
+	HeapTuple	authmem_tuple;
+	Form_pg_auth_members authmem_form;
+	int			i;
+
+	/* If it's already been done, we can just return. */
+	if (actions[index] == RRG_DELETE_GRANT)
+		return;
+	if (actions[index] == RRG_REMOVE_ADMIN_OPTION &&
+		revoke_admin_option_only)
+		return;
+
+	/* Locate tuple data. */
+	authmem_tuple = &memlist->members[index]->tuple;
+	authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
+
+	/*
+	 * If the existing tuple does not have admin_option set, then we do not
+	 * need to recurse. If we're just supposed to clear that bit we don't need
+	 * to do anything at all; if we're supposed to remove the grant, we need
+	 * to do something, but only to the tuple, and not any others.
+	 */
+	if (!revoke_admin_option_only)
+	{
+		actions[index] = RRG_DELETE_GRANT;
+		if (!authmem_form->admin_option)
+			return;
+	}
+	else
+	{
+		if (!authmem_form->admin_option)
+			return;
+		actions[index] = RRG_REMOVE_ADMIN_OPTION;
+	}
+
+	/* Determine whether the member would still have ADMIN OPTION. */
+	for (i = 0; i < memlist->n_members; ++i)
+	{
+		HeapTuple	am_cascade_tuple;
+		Form_pg_auth_members am_cascade_form;
+
+		am_cascade_tuple = &memlist->members[i]->tuple;
+		am_cascade_form = (Form_pg_auth_members) GETSTRUCT(am_cascade_tuple);
+
+		if (am_cascade_form->member == authmem_form->member &&
+			am_cascade_form->admin_option && actions[i] == RRG_NOOP)
+		{
+			would_still_have_admin_option = true;
+			break;
+		}
+	}
+
+	/* If the member would still have ADMIN OPTION, we need not recurse. */
+	if (would_still_have_admin_option)
+		return;
+
+	/*
+	 * Recurse to grants that are not yet slated for deletion which have this
+	 * member as the grantor.
+	 */
+	for (i = 0; i < memlist->n_members; ++i)
+	{
+		HeapTuple	am_cascade_tuple;
+		Form_pg_auth_members am_cascade_form;
+
+		am_cascade_tuple = &memlist->members[i]->tuple;
+		am_cascade_form = (Form_pg_auth_members) GETSTRUCT(am_cascade_tuple);
+
+		if (am_cascade_form->grantor == authmem_form->member &&
+			actions[i] != RRG_DELETE_GRANT)
+		{
+			if (behavior == DROP_RESTRICT)
+				ereport(ERROR,
+						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+						 errmsg("dependent privileges exist"),
+						 errhint("Use CASCADE to revoke them too.")));
+
+			plan_recursive_revoke(memlist, actions, i, false, behavior);
+		}
+	}
+}
+
+/*
+ * Initialize a GrantRoleOptions object with default values.
+ */
+static void
+InitGrantRoleOptions(GrantRoleOptions *popt)
+{
+	popt->specified = 0;
+	popt->admin = false;
+	popt->inherit = false;
+	popt->set = true;
+}
+
+/*
+ * GUC check_hook for createrole_self_grant
+ */
+bool
+check_createrole_self_grant(char **newval, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	List	   *elemlist;
+	ListCell   *l;
+	unsigned	options = 0;
+	unsigned   *result;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(*newval);
+
+	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	{
+		/* syntax error in list */
+		GUC_check_errdetail("List syntax is invalid.");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
+	}
+
+	foreach(l, elemlist)
+	{
+		char	   *tok = (char *) lfirst(l);
+
+		if (pg_strcasecmp(tok, "SET") == 0)
+			options |= GRANT_ROLE_SPECIFIED_SET;
+		else if (pg_strcasecmp(tok, "INHERIT") == 0)
+			options |= GRANT_ROLE_SPECIFIED_INHERIT;
+		else
+		{
+			GUC_check_errdetail("Unrecognized key word: \"%s\".", tok);
+			pfree(rawstring);
+			list_free(elemlist);
+			return false;
+		}
+	}
+
+	pfree(rawstring);
+	list_free(elemlist);
+
+	result = (unsigned *) guc_malloc(LOG, sizeof(unsigned));
+	*result = options;
+	*extra = result;
+
+	return true;
+}
+
+/*
+ * GUC assign_hook for createrole_self_grant
+ */
+void
+assign_createrole_self_grant(const char *newval, void *extra)
+{
+	unsigned	options = * (unsigned *) extra;
+
+	createrole_self_grant_enabled = (options != 0);
+	createrole_self_grant_options.specified = GRANT_ROLE_SPECIFIED_ADMIN
+		| GRANT_ROLE_SPECIFIED_INHERIT
+		| GRANT_ROLE_SPECIFIED_SET;
+	createrole_self_grant_options.admin = false;
+	createrole_self_grant_options.inherit =
+		(options & GRANT_ROLE_SPECIFIED_INHERIT) != 0;
+	createrole_self_grant_options.set =
+		(options & GRANT_ROLE_SPECIFIED_SET) != 0;
 }

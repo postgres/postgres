@@ -6,7 +6,7 @@
  *	  message integrity and endpoint authentication.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -29,9 +29,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
-#endif
 #include <arpa/inet.h>
 #endif
 
@@ -256,15 +254,13 @@ pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 
 			case EPIPE:
 			case ECONNRESET:
-				appendPQExpBufferStr(&conn->errorMessage,
-									 libpq_gettext("server closed the connection unexpectedly\n"
-												   "\tThis probably means the server terminated abnormally\n"
-												   "\tbefore or while processing the request.\n"));
+				libpq_append_conn_error(conn, "server closed the connection unexpectedly\n"
+								   "\tThis probably means the server terminated abnormally\n"
+								   "\tbefore or while processing the request.");
 				break;
 
 			default:
-				appendPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("could not receive data from server: %s\n"),
+				libpq_append_conn_error(conn, "could not receive data from server: %s",
 								  SOCK_STRERROR(result_errno,
 												sebuf, sizeof(sebuf)));
 				break;
@@ -422,7 +418,9 @@ retry_masked:
 				snprintf(msgbuf, sizeof(msgbuf),
 						 libpq_gettext("server closed the connection unexpectedly\n"
 									   "\tThis probably means the server terminated abnormally\n"
-									   "\tbefore or while processing the request.\n"));
+									   "\tbefore or while processing the request."));
+				/* keep newline out of translated string */
+				strlcat(msgbuf, "\n", sizeof(msgbuf));
 				conn->write_err_msg = strdup(msgbuf);
 				/* Now claim the write succeeded */
 				n = len;
@@ -433,9 +431,11 @@ retry_masked:
 				/* Store error message in conn->write_err_msg, if possible */
 				/* (strdup failure is OK, we'll cope later) */
 				snprintf(msgbuf, sizeof(msgbuf),
-						 libpq_gettext("could not send data to server: %s\n"),
+						 libpq_gettext("could not send data to server: %s"),
 						 SOCK_STRERROR(result_errno,
 									   sebuf, sizeof(sebuf)));
+				/* keep newline out of translated string */
+				strlcat(msgbuf, "\n", sizeof(msgbuf));
 				conn->write_err_msg = strdup(msgbuf);
 				/* Now claim the write succeeded */
 				n = len;

@@ -17,6 +17,12 @@ INSERT INTO INT4_TBL(f1) VALUES ('');
 
 SELECT * FROM INT4_TBL;
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('34', 'int4');
+SELECT pg_input_is_valid('asdf', 'int4');
+SELECT pg_input_is_valid('1000000000000', 'int4');
+SELECT * FROM pg_input_error_info('1000000000000', 'int4');
+
 SELECT i.* FROM INT4_TBL i WHERE i.f1 <> int2 '0';
 
 SELECT i.* FROM INT4_TBL i WHERE i.f1 <> int4 '0';
@@ -164,3 +170,43 @@ FROM (VALUES (0::int4, 0::int4),
 
 SELECT lcm((-2147483648)::int4, 1::int4); -- overflow
 SELECT lcm(2147483647::int4, 2147483646::int4); -- overflow
+
+
+-- non-decimal literals
+
+SELECT int4 '0b100101';
+SELECT int4 '0o273';
+SELECT int4 '0x42F';
+
+SELECT int4 '0b';
+SELECT int4 '0o';
+SELECT int4 '0x';
+
+-- cases near overflow
+SELECT int4 '0b1111111111111111111111111111111';
+SELECT int4 '0b10000000000000000000000000000000';
+SELECT int4 '0o17777777777';
+SELECT int4 '0o20000000000';
+SELECT int4 '0x7FFFFFFF';
+SELECT int4 '0x80000000';
+
+SELECT int4 '-0b10000000000000000000000000000000';
+SELECT int4 '-0b10000000000000000000000000000001';
+SELECT int4 '-0o20000000000';
+SELECT int4 '-0o20000000001';
+SELECT int4 '-0x80000000';
+SELECT int4 '-0x80000001';
+
+
+-- underscores
+
+SELECT int4 '1_000_000';
+SELECT int4 '1_2_3';
+SELECT int4 '0x1EEE_FFFF';
+SELECT int4 '0o2_73';
+SELECT int4 '0b_10_0101';
+
+-- error cases
+SELECT int4 '_100';
+SELECT int4 '100_';
+SELECT int4 '100__000';

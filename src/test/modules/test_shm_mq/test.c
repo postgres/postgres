@@ -3,7 +3,7 @@
  * test.c
  *		Test harness code for shared memory message queues.
  *
- * Copyright (c) 2013-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_shm_mq/test.c
@@ -16,6 +16,7 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "varatt.h"
 
 #include "test_shm_mq.h"
 
@@ -23,8 +24,6 @@ PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(test_shm_mq);
 PG_FUNCTION_INFO_V1(test_shm_mq_pipelined);
-
-void		_PG_init(void);
 
 static void verify_message(Size origlen, char *origdata, Size newlen,
 						   char *newdata);

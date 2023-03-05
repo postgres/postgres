@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 =pod
 
@@ -189,11 +189,11 @@ INIT
 	# test may still fail, but it's more likely to report useful facts.
 	$SIG{PIPE} = 'IGNORE';
 
-	# Determine output directories, and create them.  The base path is the
-	# TESTDIR environment variable, which is normally set by the invoking
-	# Makefile.
-	$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}/tmp_check" : "tmp_check";
-	$log_path = "$tmp_check/log";
+	# Determine output directories, and create them.  The base paths are the
+	# TESTDATADIR / TESTLOGDIR environment variables, which are normally set
+	# by the invoking Makefile.
+	$tmp_check = $ENV{TESTDATADIR} ? "$ENV{TESTDATADIR}" : "tmp_check";
+	$log_path = $ENV{TESTLOGDIR} ? "$ENV{TESTLOGDIR}" : "log";
 
 	mkdir $tmp_check;
 	mkdir $log_path;
@@ -782,15 +782,11 @@ sub command_exit_is
 	my $h = IPC::Run::start $cmd;
 	$h->finish();
 
-	# On Windows, the exit status of the process is returned directly as the
-	# process's exit code, while on Unix, it's returned in the high bits
-	# of the exit code (see WEXITSTATUS macro in the standard <sys/wait.h>
-	# header file). IPC::Run's result function always returns exit code >> 8,
-	# assuming the Unix convention, which will always return 0 on Windows as
-	# long as the process was not terminated by an exception. To work around
-	# that, use $h->full_results on Windows instead.
+	# Normally, if the child called exit(N), IPC::Run::result() returns N.  On
+	# Windows, with IPC::Run v20220807.0 and earlier, full_results() is the
+	# method that returns N (https://github.com/toddr/IPC-Run/issues/161).
 	my $result =
-	    ($Config{osname} eq "MSWin32")
+	  ($Config{osname} eq "MSWin32" && $IPC::Run::VERSION <= 20220807.0)
 	  ? ($h->full_results)[0]
 	  : $h->result(0);
 	is($result, $expected, $test_name);

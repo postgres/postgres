@@ -4,7 +4,7 @@
  *	  vacuum for SP-GiST
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -504,7 +504,7 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
 	GlobalVisState *vistest;
 
 	xlrec.nToPlaceholder = 0;
-	xlrec.newestRedirectXid = InvalidTransactionId;
+	xlrec.snapshotConflictHorizon = InvalidTransactionId;
 
 	/* XXX: providing heap relation would allow more pruning */
 	vistest = GlobalVisTestFor(NULL);
@@ -533,9 +533,9 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
 			opaque->nPlaceholder++;
 
 			/* remember newest XID among the removed redirects */
-			if (!TransactionIdIsValid(xlrec.newestRedirectXid) ||
-				TransactionIdPrecedes(xlrec.newestRedirectXid, dt->xid))
-				xlrec.newestRedirectXid = dt->xid;
+			if (!TransactionIdIsValid(xlrec.snapshotConflictHorizon) ||
+				TransactionIdPrecedes(xlrec.snapshotConflictHorizon, dt->xid))
+				xlrec.snapshotConflictHorizon = dt->xid;
 
 			ItemPointerSetInvalid(&dt->pointer);
 

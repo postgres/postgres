@@ -33,7 +33,7 @@ PostgreSQL documentation
   </cmdsynopsis>
  </refsynopsisdiv>
 
- <refsect1 id="r1-app-pg_checksums-1">
+ <refsect1 id="r1-app-pgchecksums-1">
   <title>Description</title>
   <para>
    <application>pg_checksums</application> checks, enables or disables data

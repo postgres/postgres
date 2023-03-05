@@ -2,7 +2,7 @@
  *
  * dropdb
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/scripts/dropdb.c
@@ -65,12 +65,21 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "dropdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeif", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "efh:ip:U:wW", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
+			case 'e':
+				echo = true;
+				break;
+			case 'f':
+				force = true;
+				break;
 			case 'h':
 				host = pg_strdup(optarg);
+				break;
+			case 'i':
+				interactive = true;
 				break;
 			case 'p':
 				port = pg_strdup(optarg);
@@ -83,15 +92,6 @@ main(int argc, char *argv[])
 				break;
 			case 'W':
 				prompt_password = TRI_YES;
-				break;
-			case 'e':
-				echo = true;
-				break;
-			case 'i':
-				interactive = true;
-				break;
-			case 'f':
-				force = true;
 				break;
 			case 0:
 				/* this covers the long options */

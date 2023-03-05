@@ -17,7 +17,7 @@
  * a file is successfully archived and then the system crashes before
  * a durable record of the success has been made.
  *
- * Copyright (c) 2022, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/basic_archive/basic_archive.c
@@ -30,9 +30,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "archive/archive_module.h"
 #include "common/int.h"
 #include "miscadmin.h"
-#include "postmaster/pgarch.h"
 #include "storage/copydir.h"
 #include "storage/fd.h"
 #include "utils/guc.h"
@@ -40,17 +40,27 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-void		_PG_archive_module_init(ArchiveModuleCallbacks *cb);
+typedef struct BasicArchiveData
+{
+	MemoryContext context;
+} BasicArchiveData;
 
 static char *archive_directory = NULL;
-static MemoryContext basic_archive_context;
 
-static bool basic_archive_configured(void);
-static bool basic_archive_file(const char *file, const char *path);
+static void basic_archive_startup(ArchiveModuleState *state);
+static bool basic_archive_configured(ArchiveModuleState *state);
+static bool basic_archive_file(ArchiveModuleState *state, const char *file, const char *path);
 static void basic_archive_file_internal(const char *file, const char *path);
 static bool check_archive_directory(char **newval, void **extra, GucSource source);
 static bool compare_files(const char *file1, const char *file2);
+static void basic_archive_shutdown(ArchiveModuleState *state);
+
+static const ArchiveModuleCallbacks basic_archive_callbacks = {
+	.startup_cb = basic_archive_startup,
+	.check_configured_cb = basic_archive_configured,
+	.archive_file_cb = basic_archive_file,
+	.shutdown_cb = basic_archive_shutdown
+};
 
 /*
  * _PG_init
@@ -70,10 +80,6 @@ _PG_init(void)
 							   check_archive_directory, NULL, NULL);
 
 	MarkGUCPrefixReserved("basic_archive");
-
-	basic_archive_context = AllocSetContextCreate(TopMemoryContext,
-												  "basic_archive",
-												  ALLOCSET_DEFAULT_SIZES);
 }
 
 /*
@@ -81,13 +87,28 @@ _PG_init(void)
  *
  * Returns the module's archiving callbacks.
  */
-void
-_PG_archive_module_init(ArchiveModuleCallbacks *cb)
+const ArchiveModuleCallbacks *
+_PG_archive_module_init(void)
 {
-	AssertVariableIsOfType(&_PG_archive_module_init, ArchiveModuleInit);
+	return &basic_archive_callbacks;
+}
 
-	cb->check_configured_cb = basic_archive_configured;
-	cb->archive_file_cb = basic_archive_file;
+/*
+ * basic_archive_startup
+ *
+ * Creates the module's memory context.
+ */
+void
+basic_archive_startup(ArchiveModuleState *state)
+{
+	BasicArchiveData *data;
+
+	data = (BasicArchiveData *) MemoryContextAllocZero(TopMemoryContext,
+													   sizeof(BasicArchiveData));
+	data->context = AllocSetContextCreate(TopMemoryContext,
+										  "basic_archive",
+										  ALLOCSET_DEFAULT_SIZES);
+	state->private_data = (void *) data;
 }
 
 /*
@@ -114,7 +135,7 @@ check_archive_directory(char **newval, void **extra, GucSource source)
 	 */
 	if (strlen(*newval) + 64 + 2 >= MAXPGPATH)
 	{
-		GUC_check_errdetail("archive directory too long");
+		GUC_check_errdetail("Archive directory too long.");
 		return false;
 	}
 
@@ -125,7 +146,7 @@ check_archive_directory(char **newval, void **extra, GucSource source)
 	 */
 	if (stat(*newval, &st) != 0 || !S_ISDIR(st.st_mode))
 	{
-		GUC_check_errdetail("specified archive directory does not exist");
+		GUC_check_errdetail("Specified archive directory does not exist.");
 		return false;
 	}
 
@@ -138,7 +159,7 @@ check_archive_directory(char **newval, void **extra, GucSource source)
  * Checks that archive_directory is not blank.
  */
 static bool
-basic_archive_configured(void)
+basic_archive_configured(ArchiveModuleState *state)
 {
 	return archive_directory != NULL && archive_directory[0] != '\0';
 }
@@ -149,10 +170,12 @@ basic_archive_configured(void)
  * Archives one file.
  */
 static bool
-basic_archive_file(const char *file, const char *path)
+basic_archive_file(ArchiveModuleState *state, const char *file, const char *path)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext oldcontext;
+	BasicArchiveData *data = (BasicArchiveData *) state->private_data;
+	MemoryContext basic_archive_context = data->context;
 
 	/*
 	 * We run basic_archive_file_internal() in our own memory context so that
@@ -221,7 +244,7 @@ basic_archive_file_internal(const char *file, const char *path)
 	char		temp[MAXPGPATH + 256];
 	struct stat st;
 	struct timeval tv;
-	uint64		epoch;
+	uint64		epoch;			/* milliseconds */
 
 	ereport(DEBUG3,
 			(errmsg("archiving \"%s\" via basic_archive", file)));
@@ -268,7 +291,7 @@ basic_archive_file_internal(const char *file, const char *path)
 	 */
 	gettimeofday(&tv, NULL);
 	if (pg_mul_u64_overflow((uint64) 1000, (uint64) tv.tv_sec, &epoch) ||
-		pg_add_u64_overflow(epoch, (uint64) tv.tv_usec, &epoch))
+		pg_add_u64_overflow(epoch, (uint64) (tv.tv_usec / 1000), &epoch))
 		elog(ERROR, "could not generate temporary file name for archiving");
 
 	snprintf(temp, sizeof(temp), "%s/%s.%s.%d." UINT64_FORMAT,
@@ -278,13 +301,14 @@ basic_archive_file_internal(const char *file, const char *path)
 	 * Copy the file to its temporary destination.  Note that this will fail
 	 * if temp already exists.
 	 */
-	copy_file(unconstify(char *, path), temp);
+	copy_file(path, temp);
 
 	/*
 	 * Sync the temporary file to disk and move it to its final destination.
-	 * This will fail if destination already exists.
+	 * Note that this will overwrite any existing file, but this is only
+	 * possible if someone else created the file since the stat() above.
 	 */
-	(void) durable_rename_excl(temp, destination, ERROR);
+	(void) durable_rename(temp, destination, ERROR);
 
 	ereport(DEBUG1,
 			(errmsg("archived \"%s\" via basic_archive", file)));
@@ -369,4 +393,36 @@ compare_files(const char *file1, const char *file2)
 				 errmsg("could not close file \"%s\": %m", file2)));
 
 	return ret;
+}
+
+/*
+ * basic_archive_shutdown
+ *
+ * Frees our allocated state.
+ */
+static void
+basic_archive_shutdown(ArchiveModuleState *state)
+{
+	BasicArchiveData *data = (BasicArchiveData *) state->private_data;
+	MemoryContext basic_archive_context;
+
+	/*
+	 * If we didn't get to storing the pointer to our allocated state, we don't
+	 * have anything to clean up.
+	 */
+	if (data == NULL)
+		return;
+
+	basic_archive_context = data->context;
+	Assert(CurrentMemoryContext != basic_archive_context);
+
+	if (MemoryContextIsValid(basic_archive_context))
+		MemoryContextDelete(basic_archive_context);
+	data->context = NULL;
+
+	/*
+	 * Finally, free the state.
+	 */
+	pfree(data);
+	state->private_data = NULL;
 }

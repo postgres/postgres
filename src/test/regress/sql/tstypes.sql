@@ -19,6 +19,11 @@ SELECT '''w'':4A,3B,2C,1D,5 a:8';
 SELECT 'a:3A b:2a'::tsvector || 'ba:1234 a:1B';
 SELECT $$'' '1' '2'$$::tsvector;  -- error, empty lexeme is not allowed
 
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('foo', 'tsvector');
+SELECT pg_input_is_valid($$''$$, 'tsvector');
+SELECT * FROM pg_input_error_info($$''$$, 'tsvector');
+
 --Base tsquery test
 SELECT '1'::tsquery;
 SELECT '1 '::tsquery;
@@ -67,6 +72,12 @@ SELECT '!(!b)'::tsquery;
 SELECT 'a & !!b'::tsquery;
 SELECT '!!a & b'::tsquery;
 SELECT '!!a & !!b'::tsquery;
+
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('foo', 'tsquery');
+SELECT pg_input_is_valid('foo!', 'tsquery');
+SELECT * FROM pg_input_error_info('foo!', 'tsquery');
+SELECT * FROM pg_input_error_info('a <100000> b', 'tsquery');
 
 --comparisons
 SELECT 'a' < 'b & c'::tsquery as "true";

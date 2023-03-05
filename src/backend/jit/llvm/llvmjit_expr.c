@@ -3,7 +3,7 @@
  * llvmjit_expr.c
  *	  JIT compile expressions.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1549,12 +1549,6 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
-			case EEOP_SQLVALUEFUNCTION:
-				build_EvalXFunc(b, mod, "ExecEvalSQLValueFunction",
-								v_state, op);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
-
 			case EEOP_CURRENTOFEXPR:
 				build_EvalXFunc(b, mod, "ExecEvalCurrentOfExpr",
 								v_state, op);
@@ -2335,6 +2329,54 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
+			case EEOP_AGG_PRESORTED_DISTINCT_SINGLE:
+				{
+					AggState   *aggstate = castNode(AggState, state->parent);
+					AggStatePerTrans pertrans = op->d.agg_presorted_distinctcheck.pertrans;
+					int			jumpdistinct = op->d.agg_presorted_distinctcheck.jumpdistinct;
+
+					LLVMValueRef v_fn = llvm_pg_func(mod, "ExecEvalPreOrderedDistinctSingle");
+					LLVMValueRef v_args[2];
+					LLVMValueRef v_ret;
+
+					v_args[0] = l_ptr_const(aggstate, l_ptr(StructAggState));
+					v_args[1] = l_ptr_const(pertrans, l_ptr(StructAggStatePerTransData));
+
+					v_ret = LLVMBuildCall(b, v_fn, v_args, 2, "");
+					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
+
+					LLVMBuildCondBr(b,
+									LLVMBuildICmp(b, LLVMIntEQ, v_ret,
+												  l_sbool_const(1), ""),
+									opblocks[opno + 1],
+									opblocks[jumpdistinct]);
+					break;
+				}
+
+			case EEOP_AGG_PRESORTED_DISTINCT_MULTI:
+				{
+					AggState   *aggstate = castNode(AggState, state->parent);
+					AggStatePerTrans pertrans = op->d.agg_presorted_distinctcheck.pertrans;
+					int			jumpdistinct = op->d.agg_presorted_distinctcheck.jumpdistinct;
+
+					LLVMValueRef v_fn = llvm_pg_func(mod, "ExecEvalPreOrderedDistinctMulti");
+					LLVMValueRef v_args[2];
+					LLVMValueRef v_ret;
+
+					v_args[0] = l_ptr_const(aggstate, l_ptr(StructAggState));
+					v_args[1] = l_ptr_const(pertrans, l_ptr(StructAggStatePerTransData));
+
+					v_ret = LLVMBuildCall(b, v_fn, v_args, 2, "");
+					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
+
+					LLVMBuildCondBr(b,
+									LLVMBuildICmp(b, LLVMIntEQ, v_ret,
+												  l_sbool_const(1), ""),
+									opblocks[opno + 1],
+									opblocks[jumpdistinct]);
+					break;
+				}
+
 			case EEOP_AGG_ORDERED_TRANS_DATUM:
 				build_EvalXFunc(b, mod, "ExecEvalAggOrderedTransDatum",
 								v_state, op, v_econtext);
@@ -2343,24 +2385,6 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_AGG_ORDERED_TRANS_TUPLE:
 				build_EvalXFunc(b, mod, "ExecEvalAggOrderedTransTuple",
-								v_state, op, v_econtext);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
-
-			case EEOP_JSON_CONSTRUCTOR:
-				build_EvalXFunc(b, mod, "ExecEvalJsonConstructor",
-								v_state, op, v_econtext);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
-
-			case EEOP_IS_JSON:
-				build_EvalXFunc(b, mod, "ExecEvalJsonIsPredicate",
-								v_state, op);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
-
-			case EEOP_JSONEXPR:
-				build_EvalXFunc(b, mod, "ExecEvalJson",
 								v_state, op, v_econtext);
 				LLVMBuildBr(b, opblocks[opno + 1]);
 				break;

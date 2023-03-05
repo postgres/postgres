@@ -4,7 +4,7 @@
  *
  *	A directory format dump is a directory, which contains a "toc.dat" file
  *	for the TOC, and a separate file for each data entry, named "<oid>.dat".
- *	Large objects (BLOBs) are stored in separate files named "blob_<oid>.dat",
+ *	Large objects are stored in separate files named "blob_<oid>.dat",
  *	and there's a plain-text TOC file for them called "blobs.toc". If
  *	compression is used, each data file is individually compressed and the
  *	".gz" suffix is added to the filenames. The TOC files are never
@@ -17,7 +17,7 @@
  *	sync.
  *
  *
- *	Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ *	Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *	Portions Copyright (c) 1994, Regents of the University of California
  *	Portions Copyright (c) 2000, Philip Warner
  *
@@ -50,9 +50,8 @@ typedef struct
 	 */
 	char	   *directory;
 
-	cfp		   *dataFH;			/* currently open data file */
-
-	cfp		   *blobsTocFH;		/* file handle for blobs.toc */
+	CompressFileHandle *dataFH; /* currently open data file */
+	CompressFileHandle *LOsTocFH;	/* file handle for blobs.toc */
 	ParallelState *pstate;		/* for parallel backup / restore */
 } lclContext;
 
@@ -67,7 +66,7 @@ static void _StartData(ArchiveHandle *AH, TocEntry *te);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
-static int	_ReadByte(ArchiveHandle *);
+static int	_ReadByte(ArchiveHandle *AH);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
@@ -78,11 +77,11 @@ static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
 static void _ReadExtraToc(ArchiveHandle *AH, TocEntry *te);
 static void _PrintExtraToc(ArchiveHandle *AH, TocEntry *te);
 
-static void _StartBlobs(ArchiveHandle *AH, TocEntry *te);
-static void _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
-static void _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
-static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
-static void _LoadBlobs(ArchiveHandle *AH);
+static void _StartLOs(ArchiveHandle *AH, TocEntry *te);
+static void _StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndLOs(ArchiveHandle *AH, TocEntry *te);
+static void _LoadLOs(ArchiveHandle *AH);
 
 static void _PrepParallelRestore(ArchiveHandle *AH);
 static void _Clone(ArchiveHandle *AH);
@@ -125,10 +124,10 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 	AH->WriteExtraTocPtr = _WriteExtraToc;
 	AH->PrintExtraTocPtr = _PrintExtraToc;
 
-	AH->StartBlobsPtr = _StartBlobs;
-	AH->StartBlobPtr = _StartBlob;
-	AH->EndBlobPtr = _EndBlob;
-	AH->EndBlobsPtr = _EndBlobs;
+	AH->StartLOsPtr = _StartLOs;
+	AH->StartLOPtr = _StartLO;
+	AH->EndLOPtr = _EndLO;
+	AH->EndLOsPtr = _EndLOs;
 
 	AH->PrepParallelRestorePtr = _PrepParallelRestore;
 	AH->ClonePtr = _Clone;
@@ -142,7 +141,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 	AH->formatData = (void *) ctx;
 
 	ctx->dataFH = NULL;
-	ctx->blobsTocFH = NULL;
+	ctx->LOsTocFH = NULL;
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
@@ -198,11 +197,11 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 	else
 	{							/* Read Mode */
 		char		fname[MAXPGPATH];
-		cfp		   *tocFH;
+		CompressFileHandle *tocFH;
 
 		setFilePath(AH, fname, "toc.dat");
 
-		tocFH = cfopen_read(fname, PG_BINARY_R);
+		tocFH = InitDiscoverCompressFileHandle(fname, PG_BINARY_R);
 		if (tocFH == NULL)
 			pg_fatal("could not open input file \"%s\": %m", fname);
 
@@ -218,7 +217,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 		ReadToc(AH);
 
 		/* Nothing else in the file, so close it again... */
-		if (cfclose(tocFH) != 0)
+		if (EndCompressFileHandle(tocFH) != 0)
 			pg_fatal("could not close TOC file: %m");
 		ctx->dataFH = NULL;
 	}
@@ -327,15 +326,16 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 
 	setFilePath(AH, fname, tctx->filename);
 
-	ctx->dataFH = cfopen_write(fname, PG_BINARY_W, AH->compression);
-	if (ctx->dataFH == NULL)
+	ctx->dataFH = InitCompressFileHandle(AH->compression_spec);
+
+	if (ctx->dataFH->open_write_func(fname, PG_BINARY_W, ctx->dataFH))
 		pg_fatal("could not open output file \"%s\": %m", fname);
 }
 
 /*
  * Called by archiver when dumper calls WriteData. This routine is
- * called for both BLOB and TABLE data; it is the responsibility of
- * the format to manage each kind of data using StartBlob/StartData.
+ * called for both LO and table data; it is the responsibility of
+ * the format to manage each kind of data using StartLO/StartData.
  *
  * It should only be called from within a DataDumper routine.
  *
@@ -345,15 +345,16 @@ static void
 _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+	CompressFileHandle *CFH = ctx->dataFH;
 
 	errno = 0;
-	if (dLen > 0 && cfwrite(data, dLen, ctx->dataFH) != dLen)
+	if (dLen > 0 && CFH->write_func(data, dLen, CFH) != dLen)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
 		pg_fatal("could not write to output file: %s",
-				 get_cfp_error(ctx->dataFH));
+				 CFH->get_error_func(CFH));
 	}
 }
 
@@ -369,14 +370,14 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	/* Close the file */
-	if (cfclose(ctx->dataFH) != 0)
+	if (EndCompressFileHandle(ctx->dataFH) != 0)
 		pg_fatal("could not close data file: %m");
 
 	ctx->dataFH = NULL;
 }
 
 /*
- * Print data for a given file (can be a BLOB as well)
+ * Print data for a given file (can be a LO as well)
  */
 static void
 _PrintFileData(ArchiveHandle *AH, char *filename)
@@ -384,26 +385,25 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 	size_t		cnt;
 	char	   *buf;
 	size_t		buflen;
-	cfp		   *cfp;
+	CompressFileHandle *CFH;
 
 	if (!filename)
 		return;
 
-	cfp = cfopen_read(filename, PG_BINARY_R);
-
-	if (!cfp)
+	CFH = InitDiscoverCompressFileHandle(filename, PG_BINARY_R);
+	if (!CFH)
 		pg_fatal("could not open input file \"%s\": %m", filename);
 
 	buf = pg_malloc(ZLIB_OUT_SIZE);
 	buflen = ZLIB_OUT_SIZE;
 
-	while ((cnt = cfread(buf, buflen, cfp)))
+	while ((cnt = CFH->read_func(buf, buflen, CFH)))
 	{
 		ahwrite(buf, 1, cnt, AH);
 	}
 
 	free(buf);
-	if (cfclose(cfp) != 0)
+	if (EndCompressFileHandle(CFH) != 0)
 		pg_fatal("could not close data file \"%s\": %m", filename);
 }
 
@@ -419,7 +419,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 		return;
 
 	if (strcmp(te->desc, "BLOBS") == 0)
-		_LoadBlobs(AH);
+		_LoadLOs(AH);
 	else
 	{
 		char		fname[MAXPGPATH];
@@ -430,50 +430,51 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 }
 
 static void
-_LoadBlobs(ArchiveHandle *AH)
+_LoadLOs(ArchiveHandle *AH)
 {
 	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
+	CompressFileHandle *CFH;
 	char		tocfname[MAXPGPATH];
 	char		line[MAXPGPATH];
 
-	StartRestoreBlobs(AH);
+	StartRestoreLOs(AH);
 
 	setFilePath(AH, tocfname, "blobs.toc");
 
-	ctx->blobsTocFH = cfopen_read(tocfname, PG_BINARY_R);
+	CFH = ctx->LOsTocFH = InitDiscoverCompressFileHandle(tocfname, PG_BINARY_R);
 
-	if (ctx->blobsTocFH == NULL)
+	if (ctx->LOsTocFH == NULL)
 		pg_fatal("could not open large object TOC file \"%s\" for input: %m",
 				 tocfname);
 
-	/* Read the blobs TOC file line-by-line, and process each blob */
-	while ((cfgets(ctx->blobsTocFH, line, MAXPGPATH)) != NULL)
+	/* Read the LOs TOC file line-by-line, and process each LO */
+	while ((CFH->gets_func(line, MAXPGPATH, CFH)) != NULL)
 	{
-		char		blobfname[MAXPGPATH + 1];
+		char		lofname[MAXPGPATH + 1];
 		char		path[MAXPGPATH];
 
-		/* Can't overflow because line and blobfname are the same length */
-		if (sscanf(line, "%u %" CppAsString2(MAXPGPATH) "s\n", &oid, blobfname) != 2)
+		/* Can't overflow because line and lofname are the same length */
+		if (sscanf(line, "%u %" CppAsString2(MAXPGPATH) "s\n", &oid, lofname) != 2)
 			pg_fatal("invalid line in large object TOC file \"%s\": \"%s\"",
 					 tocfname, line);
 
-		StartRestoreBlob(AH, oid, AH->public.ropt->dropSchema);
-		snprintf(path, MAXPGPATH, "%s/%s", ctx->directory, blobfname);
+		StartRestoreLO(AH, oid, AH->public.ropt->dropSchema);
+		snprintf(path, MAXPGPATH, "%s/%s", ctx->directory, lofname);
 		_PrintFileData(AH, path);
-		EndRestoreBlob(AH, oid);
+		EndRestoreLO(AH, oid);
 	}
-	if (!cfeof(ctx->blobsTocFH))
+	if (!CFH->eof_func(CFH))
 		pg_fatal("error reading large object TOC file \"%s\"",
 				 tocfname);
 
-	if (cfclose(ctx->blobsTocFH) != 0)
+	if (EndCompressFileHandle(ctx->LOsTocFH) != 0)
 		pg_fatal("could not close large object TOC file \"%s\": %m",
 				 tocfname);
 
-	ctx->blobsTocFH = NULL;
+	ctx->LOsTocFH = NULL;
 
-	EndRestoreBlobs(AH);
+	EndRestoreLOs(AH);
 }
 
 
@@ -487,15 +488,16 @@ _WriteByte(ArchiveHandle *AH, const int i)
 {
 	unsigned char c = (unsigned char) i;
 	lclContext *ctx = (lclContext *) AH->formatData;
+	CompressFileHandle *CFH = ctx->dataFH;
 
 	errno = 0;
-	if (cfwrite(&c, 1, ctx->dataFH) != 1)
+	if (CFH->write_func(&c, 1, CFH) != 1)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
 		pg_fatal("could not write to output file: %s",
-				 get_cfp_error(ctx->dataFH));
+				 CFH->get_error_func(CFH));
 	}
 
 	return 1;
@@ -511,8 +513,9 @@ static int
 _ReadByte(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+	CompressFileHandle *CFH = ctx->dataFH;
 
-	return cfgetc(ctx->dataFH);
+	return CFH->getc_func(CFH);
 }
 
 /*
@@ -523,15 +526,16 @@ static void
 _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+	CompressFileHandle *CFH = ctx->dataFH;
 
 	errno = 0;
-	if (cfwrite(buf, len, ctx->dataFH) != len)
+	if (CFH->write_func(buf, len, CFH) != len)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
 		pg_fatal("could not write to output file: %s",
-				 get_cfp_error(ctx->dataFH));
+				 CFH->get_error_func(CFH));
 	}
 }
 
@@ -544,12 +548,13 @@ static void
 _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+	CompressFileHandle *CFH = ctx->dataFH;
 
 	/*
-	 * If there was an I/O error, we already exited in cfread(), so here we
+	 * If there was an I/O error, we already exited in readF(), so here we
 	 * exit on short reads.
 	 */
-	if (cfread(buf, len, ctx->dataFH) != len)
+	if (CFH->read_func(buf, len, CFH) != len)
 		pg_fatal("could not read from input file: end of file");
 }
 
@@ -563,7 +568,7 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
  * If an archive is to be written, this routine must call:
  *		WriteHead			to save the archive header
  *		WriteToc			to save the TOC entries
- *		WriteDataChunks		to save all DATA & BLOBs.
+ *		WriteDataChunks		to save all data & LOs.
  */
 static void
 _CloseArchive(ArchiveHandle *AH)
@@ -572,7 +577,8 @@ _CloseArchive(ArchiveHandle *AH)
 
 	if (AH->mode == archModeWrite)
 	{
-		cfp		   *tocFH;
+		CompressFileHandle *tocFH;
+		pg_compress_specification compression_spec = {0};
 		char		fname[MAXPGPATH];
 
 		setFilePath(AH, fname, "toc.dat");
@@ -581,8 +587,9 @@ _CloseArchive(ArchiveHandle *AH)
 		ctx->pstate = ParallelBackupStart(AH);
 
 		/* The TOC is always created uncompressed */
-		tocFH = cfopen_write(fname, PG_BINARY_W, 0);
-		if (tocFH == NULL)
+		compression_spec.algorithm = PG_COMPRESSION_NONE;
+		tocFH = InitCompressFileHandle(compression_spec);
+		if (tocFH->open_write_func(fname, PG_BINARY_W, tocFH))
 			pg_fatal("could not open output file \"%s\": %m", fname);
 		ctx->dataFH = tocFH;
 
@@ -595,7 +602,7 @@ _CloseArchive(ArchiveHandle *AH)
 		WriteHead(AH);
 		AH->format = archDirectory;
 		WriteToc(AH);
-		if (cfclose(tocFH) != 0)
+		if (EndCompressFileHandle(tocFH) != 0)
 			pg_fatal("could not close TOC file: %m");
 		WriteDataChunks(AH, ctx->pstate);
 
@@ -625,7 +632,7 @@ _ReopenArchive(ArchiveHandle *AH)
 }
 
 /*
- * BLOB support
+ * LO support
  */
 
 /*
@@ -633,77 +640,79 @@ _ReopenArchive(ArchiveHandle *AH)
  * It is called just prior to the dumper's DataDumper routine.
  *
  * We open the large object TOC file here, so that we can append a line to
- * it for each blob.
+ * it for each LO.
  */
 static void
-_StartBlobs(ArchiveHandle *AH, TocEntry *te)
+_StartLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+	pg_compress_specification compression_spec = {0};
 	char		fname[MAXPGPATH];
 
 	setFilePath(AH, fname, "blobs.toc");
 
-	/* The blob TOC file is never compressed */
-	ctx->blobsTocFH = cfopen_write(fname, "ab", 0);
-	if (ctx->blobsTocFH == NULL)
+	/* The LO TOC file is never compressed */
+	compression_spec.algorithm = PG_COMPRESSION_NONE;
+	ctx->LOsTocFH = InitCompressFileHandle(compression_spec);
+	if (ctx->LOsTocFH->open_write_func(fname, "ab", ctx->LOsTocFH))
 		pg_fatal("could not open output file \"%s\": %m", fname);
 }
 
 /*
- * Called by the archiver when we're about to start dumping a blob.
+ * Called by the archiver when we're about to start dumping a LO.
  *
- * We create a file to write the blob to.
+ * We create a file to write the LO to.
  */
 static void
-_StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
+_StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		fname[MAXPGPATH];
 
 	snprintf(fname, MAXPGPATH, "%s/blob_%u.dat", ctx->directory, oid);
 
-	ctx->dataFH = cfopen_write(fname, PG_BINARY_W, AH->compression);
-
-	if (ctx->dataFH == NULL)
+	ctx->dataFH = InitCompressFileHandle(AH->compression_spec);
+	if (ctx->dataFH->open_write_func(fname, PG_BINARY_W, ctx->dataFH))
 		pg_fatal("could not open output file \"%s\": %m", fname);
 }
 
 /*
- * Called by the archiver when the dumper is finished writing a blob.
+ * Called by the archiver when the dumper is finished writing a LO.
  *
- * We close the blob file and write an entry to the blob TOC file for it.
+ * We close the LO file and write an entry to the LO TOC file for it.
  */
 static void
-_EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
+_EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+	CompressFileHandle *CFH = ctx->LOsTocFH;
 	char		buf[50];
 	int			len;
 
 	/* Close the BLOB data file itself */
-	if (cfclose(ctx->dataFH) != 0)
-		pg_fatal("could not close blob data file: %m");
+	if (EndCompressFileHandle(ctx->dataFH) != 0)
+		pg_fatal("could not close LO data file: %m");
 	ctx->dataFH = NULL;
 
-	/* register the blob in blobs.toc */
+	/* register the LO in blobs.toc */
 	len = snprintf(buf, sizeof(buf), "%u blob_%u.dat\n", oid, oid);
-	if (cfwrite(buf, len, ctx->blobsTocFH) != len)
-		pg_fatal("could not write to blobs TOC file");
+	if (CFH->write_func(buf, len, CFH) != len)
+		pg_fatal("could not write to LOs TOC file");
 }
 
 /*
  * Called by the archiver when finishing saving all BLOB DATA.
  *
- * We close the blobs TOC file.
+ * We close the LOs TOC file.
  */
 static void
-_EndBlobs(ArchiveHandle *AH, TocEntry *te)
+_EndLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
-	if (cfclose(ctx->blobsTocFH) != 0)
-		pg_fatal("could not close blobs TOC file: %m");
-	ctx->blobsTocFH = NULL;
+	if (EndCompressFileHandle(ctx->LOsTocFH) != 0)
+		pg_fatal("could not close LOs TOC file: %m");
+	ctx->LOsTocFH = NULL;
 }
 
 /*
@@ -770,10 +779,13 @@ _PrepParallelRestore(ArchiveHandle *AH)
 
 		if (stat(fname, &st) == 0)
 			te->dataLength = st.st_size;
-		else
+		else if (AH->compression_spec.algorithm != PG_COMPRESSION_NONE)
 		{
-			/* It might be compressed */
-			strlcat(fname, ".gz", sizeof(fname));
+			if (AH->compression_spec.algorithm == PG_COMPRESSION_GZIP)
+				strlcat(fname, ".gz", sizeof(fname));
+			else if (AH->compression_spec.algorithm == PG_COMPRESSION_LZ4)
+				strlcat(fname, ".lz4", sizeof(fname));
+
 			if (stat(fname, &st) == 0)
 				te->dataLength = st.st_size;
 		}
@@ -782,7 +794,7 @@ _PrepParallelRestore(ArchiveHandle *AH)
 		 * If this is the BLOBS entry, what we stat'd was blobs.toc, which
 		 * most likely is a lot smaller than the actual blob data.  We don't
 		 * have a cheap way to estimate how much smaller, but fortunately it
-		 * doesn't matter too much as long as we get the blobs processed
+		 * doesn't matter too much as long as we get the LOs processed
 		 * reasonably early.  Arbitrarily scale up by a factor of 1K.
 		 */
 		if (strcmp(te->desc, "BLOBS") == 0)

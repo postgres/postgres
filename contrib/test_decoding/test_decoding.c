@@ -3,7 +3,7 @@
  * test_decoding.c
  *		  example logical decoding output plugin
  *
- * Copyright (c) 2012-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/test_decoding/test_decoding.c
@@ -23,10 +23,6 @@
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;
-
-/* These must be available to dlsym() */
-extern void _PG_init(void);
-extern void _PG_output_plugin_init(OutputPluginCallbacks *cb);
 
 typedef struct
 {
@@ -64,7 +60,7 @@ static void pg_output_begin(LogicalDecodingContext *ctx,
 static void pg_decode_commit_txn(LogicalDecodingContext *ctx,
 								 ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
 static void pg_decode_change(LogicalDecodingContext *ctx,
-							 ReorderBufferTXN *txn, Relation rel,
+							 ReorderBufferTXN *txn, Relation relation,
 							 ReorderBufferChange *change);
 static void pg_decode_truncate(LogicalDecodingContext *ctx,
 							   ReorderBufferTXN *txn,
@@ -73,7 +69,7 @@ static void pg_decode_truncate(LogicalDecodingContext *ctx,
 static bool pg_decode_filter(LogicalDecodingContext *ctx,
 							 RepOriginId origin_id);
 static void pg_decode_message(LogicalDecodingContext *ctx,
-							  ReorderBufferTXN *txn, XLogRecPtr message_lsn,
+							  ReorderBufferTXN *txn, XLogRecPtr lsn,
 							  bool transactional, const char *prefix,
 							  Size sz, const char *message);
 static bool pg_decode_filter_prepare(LogicalDecodingContext *ctx,
@@ -113,7 +109,7 @@ static void pg_decode_stream_change(LogicalDecodingContext *ctx,
 									Relation relation,
 									ReorderBufferChange *change);
 static void pg_decode_stream_message(LogicalDecodingContext *ctx,
-									 ReorderBufferTXN *txn, XLogRecPtr message_lsn,
+									 ReorderBufferTXN *txn, XLogRecPtr lsn,
 									 bool transactional, const char *prefix,
 									 Size sz, const char *message);
 static void pg_decode_stream_truncate(LogicalDecodingContext *ctx,
@@ -131,8 +127,6 @@ _PG_init(void)
 void
 _PG_output_plugin_init(OutputPluginCallbacks *cb)
 {
-	AssertVariableIsOfType(&_PG_output_plugin_init, LogicalOutputPluginInit);
-
 	cb->startup_cb = pg_decode_startup;
 	cb->begin_cb = pg_decode_begin_txn;
 	cb->change_cb = pg_decode_change;

@@ -3,7 +3,7 @@
  * mcxtfuncs.c
  *	  Functions to show backend memory context.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -46,7 +46,7 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	const char *name;
 	const char *ident;
 
-	AssertArg(MemoryContextIsValid(context));
+	Assert(MemoryContextIsValid(context));
 
 	name = context->name;
 	ident = context->ident;
@@ -121,7 +121,7 @@ pg_get_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 	PutMemoryContextsStatsTupleStore(rsinfo->setResult, rsinfo->setDesc,
 									 TopMemoryContext, NULL, 0);
 

@@ -216,7 +216,7 @@
    after the start-up phase.
   </para>
 
-  <sect2>
+  <sect2 id="protocol-flow-start-up">
    <title>Start-up</title>
 
    <para>
@@ -529,7 +529,7 @@
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-simple-query">
    <title>Simple Query</title>
 
    <para>
@@ -1050,7 +1050,66 @@ SELCT 1/0;<!-- this typo is intentional -->
    </note>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-pipelining">
+   <title>Pipelining</title>
+
+   <indexterm zone="protocol-flow-pipelining">
+    <primary>pipelining</primary>
+    <secondary>protocol specification</secondary>
+   </indexterm>
+
+   <para>
+    Use of the extended query protocol
+    allows <firstterm>pipelining</firstterm>, which means sending a series
+    of queries without waiting for earlier ones to complete.  This reduces
+    the number of network round trips needed to complete a given series of
+    operations.  However, the user must carefully consider the required
+    behavior if one of the steps fails, since later queries will already
+    be in flight to the server.
+   </para>
+
+   <para>
+    One way to deal with that is to make the whole query series be a
+    single transaction, that is wrap it in <command>BEGIN</command> ...
+    <command>COMMIT</command>.  However, this does not help if one wishes
+    for some of the commands to commit independently of others.
+   </para>
+
+   <para>
+    The extended query protocol provides another way to manage this
+    concern, which is to omit sending Sync messages between steps that
+    are dependent.  Since, after an error, the backend will skip command
+    messages until it finds Sync, this allows later commands in a pipeline
+    to be skipped automatically when an earlier one fails, without the
+    client having to manage that explicitly with <command>BEGIN</command>
+    and <command>COMMIT</command>.  Independently-committable segments
+    of the pipeline can be separated by Sync messages.
+   </para>
+
+   <para>
+    If the client has not issued an explicit <command>BEGIN</command>,
+    then each Sync ordinarily causes an implicit <command>COMMIT</command>
+    if the preceding step(s) succeeded, or an
+    implicit <command>ROLLBACK</command> if they failed.  However, there
+    are a few DDL commands (such as <command>CREATE DATABASE</command>)
+    that cannot be executed inside a transaction block.  If one of
+    these is executed in a pipeline, it will fail unless it is the first
+    command in the pipeline.  Furthermore, upon success it will force an
+    immediate commit to preserve database consistency.  Thus a Sync
+    immediately following one of these commands has no effect except to
+    respond with ReadyForQuery.
+   </para>
+
+   <para>
+    When using this method, completion of the pipeline must be determined
+    by counting ReadyForQuery messages and waiting for that to reach the
+    number of Syncs sent.  Counting command completion responses is
+    unreliable, since some of the commands may be skipped and thus not
+    produce a completion message.
+   </para>
+  </sect2>
+
+  <sect2 id="protocol-flow-function-call">
    <title>Function Call</title>
 
    <para>
@@ -1327,7 +1386,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </note>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-canceling-requests">
    <title>Canceling Requests in Progress</title>
 
    <para>
@@ -1391,7 +1450,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-termination">
    <title>Termination</title>
 
    <para>
@@ -1431,7 +1490,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-ssl">
    <title><acronym>SSL</acronym> Session Encryption</title>
 
    <para>
@@ -1504,7 +1563,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-gssapi">
    <title><acronym>GSSAPI</acronym> Session Encryption</title>
 
    <para>
@@ -1838,7 +1897,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        </varlistentry>
 
        <varlistentry>
-        <term><literal>timeline</literal> (<type>int4</type>)</term>
+        <term><literal>timeline</literal> (<type>int8</type>)</term>
         <listitem>
          <para>
           Current timeline ID. Also useful to check that the standby is
@@ -1929,7 +1988,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
     </varlistentry>
 
     <varlistentry id="protocol-replication-create-replication-slot" xreflabel="CREATE_REPLICATION_SLOT">
-     <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> | <literal>LOGICAL</literal> } [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
+     <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> | <literal>LOGICAL</literal> <replaceable class="parameter">output_plugin</replaceable> } [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
       <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
      </term>
      <listitem>
@@ -2659,7 +2718,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          <listitem>
           <para>
            If set to true, the backup will wait until the last required WAL
-           segment has been archived, or emit a warning if log archiving is
+           segment has been archived, or emit a warning if WAL archiving is
            not enabled. If false, the backup will neither wait nor warn,
            leaving the client responsible for ensuring the required log is
            available. The default is true.
@@ -2686,17 +2745,23 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
            be used in conjunction with the <literal>COMPRESSION</literal>
            option.  If the value is an integer, it specifies the compression
            level.  Otherwise, it should be a comma-separated list of items,
-           each of the form <literal>keyword</literal> or
-           <literal>keyword=value</literal>. Currently, the supported keywords
-           are <literal>level</literal> and <literal>workers</literal>.
+           each of the form <replaceable>keyword</replaceable> or
+           <replaceable>keyword=value</replaceable>. Currently, the supported
+           keywords are <literal>level</literal> and <literal>workers</literal>.
           </para>
 
           <para>
            The <literal>level</literal> keyword sets the compression level.
            For <literal>gzip</literal> the compression level should be an
-           integer between 1 and 9, for <literal>lz4</literal> an integer
-           between 1 and 12, and for <literal>zstd</literal> an integer
-           between 1 and 22.
+           integer between <literal>1</literal> and <literal>9</literal>
+           (default <literal>Z_DEFAULT_COMPRESSION</literal> or
+           <literal>-1</literal>), for <literal>lz4</literal> an integer
+           between 1 and 12 (default <literal>0</literal> for fast compression
+           mode), and for <literal>zstd</literal> an integer between
+           <literal>ZSTD_minCLevel()</literal> (usually <literal>-131072</literal>)
+           and <literal>ZSTD_maxCLevel()</literal> (usually <literal>22</literal>),
+           (default <literal>ZSTD_CLEVEL_DEFAULT</literal> or
+           <literal>3</literal>).
           </para>
 
           <para>
@@ -2846,7 +2911,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <varlistentry>
            <term>Byte1('n')</term>
            <listitem><para>
-            Identifes the messaage as indicating the start of a new archive.
+            Identifies the message as indicating the start of a new archive.
             There will be one archive for the main data directory and one
             for each additional tablespace; each will use tar format
             (following the <quote>ustar interchange format</quote> specified
@@ -2880,7 +2945,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <varlistentry>
            <term>Byte1('m')</term>
            <listitem><para>
-            Identifes the message as indicating the start of the backup
+            Identifies the message as indicating the start of the backup
             manifest.
            </para></listitem>
           </varlistentry>
@@ -2895,7 +2960,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <varlistentry>
            <term>Byte1('d')</term>
            <listitem><para>
-            Identifes the message as containing archive or manifest data.
+            Identifies the message as containing archive or manifest data.
            </para></listitem>
           </varlistentry>
 
@@ -2916,7 +2981,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <varlistentry>
            <term>Byte1('p')</term>
            <listitem><para>
-            Identifes the message as a progress report.
+            Identifies the message as a progress report.
            </para></listitem>
           </varlistentry>
 
@@ -3038,7 +3103,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
      <listitem>
       <para>
        Protocol version. Currently versions <literal>1</literal>, <literal>2</literal>,
-       and <literal>3</literal> are supported.
+       <literal>3</literal>, and <literal>4</literal> are supported.
       </para>
       <para>
        Version <literal>2</literal> is supported only for server version 14
@@ -3047,6 +3112,11 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
       <para>
        Version <literal>3</literal> is supported only for server version 15
        and above, and it allows streaming of two-phase commits.
+      </para>
+      <para>
+       Version <literal>4</literal> is supported only for server version 16
+       and above, and it allows streams of large in-progress transactions to
+       be applied in parallel.
       </para>
      </listitem>
     </varlistentry>
@@ -4043,6 +4113,13 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         For an <command>UPDATE</command> command, the tag is
         <literal>UPDATE <replaceable>rows</replaceable></literal> where
         <replaceable>rows</replaceable> is the number of rows updated.
+       </para>
+
+       <para>
+        For a <command>MERGE</command> command, the tag is
+        <literal>MERGE <replaceable>rows</replaceable></literal> where
+        <replaceable>rows</replaceable> is the number of rows inserted,
+        updated, or deleted.
        </para>
 
        <para>
@@ -6818,6 +6895,28 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry>
+       <term>Int64 (XLogRecPtr)</term>
+       <listitem>
+        <para>
+         The LSN of the abort. This field is available since protocol version
+         4.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>Int64 (TimestampTz)</term>
+       <listitem>
+        <para>
+         Abort timestamp of the transaction. The value is in number
+         of microseconds since PostgreSQL epoch (2000-01-01). This field is
+         available since protocol version 4.
+        </para>
+       </listitem>
+      </varlistentry>
+
      </variablelist>
     </listitem>
    </varlistentry>
@@ -6837,7 +6936,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('b')</term>
        <listitem>
         <para>
-         Identifies the message as the beginning of a two-phase transaction message.
+         Identifies the message as the beginning of a prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -6883,7 +6982,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -6899,7 +6998,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('P')</term>
        <listitem>
         <para>
-         Identifies the message as a two-phase prepared transaction message.
+         Identifies the message as a prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -6954,7 +7053,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -6970,7 +7069,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('K')</term>
        <listitem>
         <para>
-         Identifies the message as the commit of a two-phase transaction message.
+         Identifies the message as the commit of a prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -6988,7 +7087,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The LSN of the commit prepared.
+         The LSN of the commit of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -6997,7 +7096,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The end LSN of the commit prepared transaction.
+         The end LSN of the commit of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7025,7 +7124,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7041,7 +7140,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('r')</term>
        <listitem>
         <para>
-         Identifies the message as the rollback of a two-phase transaction message.
+         Identifies the message as the rollback of a prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -7068,7 +7167,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The end LSN of the rollback prepared transaction.
+         The end LSN of the rollback of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7106,7 +7205,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7122,7 +7221,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('p')</term>
        <listitem>
         <para>
-         Identifies the message as a two-phase stream prepare message.
+         Identifies the message as a stream prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -7149,7 +7248,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The end LSN of the prepare transaction.
+         The end LSN of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7177,7 +7276,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>

@@ -4,7 +4,7 @@
  *	  Helper functions for table AMs implementing compressed or
  *    out-of-line storage of varlena attributes.
  *
- * Copyright (c) 2000-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/access/table/toast_helper.c
@@ -19,6 +19,7 @@
 #include "access/toast_helper.h"
 #include "access/toast_internals.h"
 #include "catalog/pg_type_d.h"
+#include "varatt.h"
 
 
 /*
@@ -330,7 +331,7 @@ toast_delete_external(Relation rel, Datum *values, bool *isnull,
 
 			if (isnull[i])
 				continue;
-			else if (VARATT_IS_EXTERNAL_ONDISK(PointerGetDatum(value)))
+			else if (VARATT_IS_EXTERNAL_ONDISK(value))
 				toast_delete_datum(rel, value, is_speculative);
 		}
 	}

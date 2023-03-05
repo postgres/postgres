@@ -3,7 +3,7 @@
  * nbtutils.c
  *	  Utility code for Postgres btree implementation.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -488,8 +488,8 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 	fmgr_info(cmp_proc, &cxt.flinfo);
 	cxt.collation = skey->sk_collation;
 	cxt.reverse = reverse;
-	qsort_arg((void *) elems, nelems, sizeof(Datum),
-			  _bt_compare_array_elements, (void *) &cxt);
+	qsort_arg(elems, nelems, sizeof(Datum),
+			  _bt_compare_array_elements, &cxt);
 
 	/* Now scan the sorted elements and remove duplicates */
 	return qunique_arg(elems, nelems, sizeof(Datum),
@@ -2485,13 +2485,6 @@ _bt_check_natts(Relation rel, bool heapkeyspace, Page page, OffsetNumber offnum)
 
 	Assert(offnum >= FirstOffsetNumber &&
 		   offnum <= PageGetMaxOffsetNumber(page));
-
-	/*
-	 * Mask allocated for number of keys in index tuple must be able to fit
-	 * maximum possible number of index attributes
-	 */
-	StaticAssertStmt(BT_OFFSET_MASK >= INDEX_MAX_KEYS,
-					 "BT_OFFSET_MASK can't fit INDEX_MAX_KEYS");
 
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 	tupnatts = BTreeTupleGetNAtts(itup, rel);

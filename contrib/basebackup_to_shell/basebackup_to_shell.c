@@ -3,7 +3,7 @@
  * basebackup_to_shell.c
  *	  target base backup files to a shell command
  *
- * Copyright (c) 2016-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2023, PostgreSQL Global Development Group
  *
  *	  contrib/basebackup_to_shell/basebackup_to_shell.c
  *-------------------------------------------------------------------------
@@ -11,8 +11,9 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "backup/basebackup_target.h"
+#include "common/percentrepl.h"
 #include "miscadmin.h"
-#include "replication/basebackup_target.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
@@ -36,8 +37,6 @@ typedef struct bbsink_shell
 	/* Pipe to the running command. */
 	FILE	   *pipe;
 } bbsink_shell;
-
-void		_PG_init(void);
 
 static void *shell_check_detail(char *target, char *target_detail);
 static bbsink *shell_get_sink(bbsink *next_sink, void *detail_arg);
@@ -207,62 +206,11 @@ shell_get_sink(bbsink *next_sink, void *detail_arg)
  * making substitutions as appropriate for escape sequences.
  */
 static char *
-shell_construct_command(char *base_command, const char *filename,
-						char *target_detail)
+shell_construct_command(const char *base_command, const char *filename,
+						const char *target_detail)
 {
-	StringInfoData buf;
-	char	   *c;
-
-	initStringInfo(&buf);
-	for (c = base_command; *c != '\0'; ++c)
-	{
-		/* Anything other than '%' is copied verbatim. */
-		if (*c != '%')
-		{
-			appendStringInfoChar(&buf, *c);
-			continue;
-		}
-
-		/* Any time we see '%' we eat the following character as well. */
-		++c;
-
-		/*
-		 * The following character determines what we insert here, or may
-		 * cause us to throw an error.
-		 */
-		if (*c == '%')
-		{
-			/* '%%' is replaced by a single '%' */
-			appendStringInfoChar(&buf, '%');
-		}
-		else if (*c == 'f')
-		{
-			/* '%f' is replaced by the filename */
-			appendStringInfoString(&buf, filename);
-		}
-		else if (*c == 'd')
-		{
-			/* '%d' is replaced by the target detail */
-			appendStringInfoString(&buf, target_detail);
-		}
-		else if (*c == '\0')
-		{
-			/* Incomplete escape sequence, expected a character afterward */
-			ereport(ERROR,
-					errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("shell command ends unexpectedly after escape character \"%%\""));
-		}
-		else
-		{
-			/* Unknown escape sequence */
-			ereport(ERROR,
-					errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("shell command contains unexpected escape sequence \"%c\"",
-						   *c));
-		}
-	}
-
-	return buf.data;
+	return replace_percent_placeholders(base_command, "basebackup_to_shell.command",
+										"df", target_detail, filename);
 }
 
 /*

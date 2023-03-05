@@ -34,7 +34,7 @@
  * This code isn't concerned about the FSM at all. The caller is responsible
  * for initializing that.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -647,7 +647,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	if (wstate->btws_use_wal)
 	{
 		/* We use the XLOG_FPI record type for this */
-		log_newpage(&wstate->index->rd_node, MAIN_FORKNUM, blkno, page, true);
+		log_newpage(&wstate->index->rd_locator, MAIN_FORKNUM, blkno, page, true);
 	}
 
 	/*
@@ -664,7 +664,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 		/* don't set checksum for all-zero page */
 		smgrextend(RelationGetSmgr(wstate->index), MAIN_FORKNUM,
 				   wstate->btws_pages_written++,
-				   (char *) wstate->btws_zeropage,
+				   wstate->btws_zeropage,
 				   true);
 	}
 
@@ -678,14 +678,14 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	{
 		/* extending the file... */
 		smgrextend(RelationGetSmgr(wstate->index), MAIN_FORKNUM, blkno,
-				   (char *) page, true);
+				   page, true);
 		wstate->btws_pages_written++;
 	}
 	else
 	{
 		/* overwriting a block we zero-filled before */
 		smgrwrite(RelationGetSmgr(wstate->index), MAIN_FORKNUM, blkno,
-				  (char *) page, true);
+				  page, true);
 	}
 
 	pfree(page);
@@ -1226,7 +1226,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			/* Abbreviation is not supported here */
 			sortKey->abbreviate = false;
 
-			AssertState(sortKey->ssup_attno != 0);
+			Assert(sortKey->ssup_attno != 0);
 
 			strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
 				BTGreaterStrategyNumber : BTLessStrategyNumber;

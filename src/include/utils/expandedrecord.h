@@ -3,7 +3,7 @@
  * expandedrecord.h
  *	  Declarations for composite expanded objects.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/expandedrecord.h
@@ -138,10 +138,20 @@ typedef struct ExpandedRecordHeader
 	MemoryContextCallback er_mcb;
 } ExpandedRecordHeader;
 
-/* fmgr macros for expanded record objects */
+/* fmgr functions and macros for expanded record objects */
+static inline Datum
+ExpandedRecordGetDatum(const ExpandedRecordHeader *erh)
+{
+	return EOHPGetRWDatum(&erh->hdr);
+}
+
+static inline Datum
+ExpandedRecordGetRODatum(const ExpandedRecordHeader *erh)
+{
+	return EOHPGetRODatum(&erh->hdr);
+}
+
 #define PG_GETARG_EXPANDED_RECORD(n)  DatumGetExpandedRecord(PG_GETARG_DATUM(n))
-#define ExpandedRecordGetDatum(erh)   EOHPGetRWDatum(&(erh)->hdr)
-#define ExpandedRecordGetRODatum(erh) EOHPGetRODatum(&(erh)->hdr)
 #define PG_RETURN_EXPANDED_RECORD(x)  PG_RETURN_DATUM(ExpandedRecordGetDatum(x))
 
 /* assorted other macros */

@@ -132,7 +132,8 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-b</option></term>
-      <term><option>--blobs</option></term>
+      <term><option>--large-objects</option></term>
+      <term><option>--blobs</option> (deprecated)</term>
       <listitem>
        <para>
         Include large objects in the dump.  This is the default behavior
@@ -140,7 +141,7 @@ PostgreSQL documentation
         <option>--schema-only</option> is specified.  The <option>-b</option>
         switch is therefore only useful to add large objects to dumps
         where a specific schema or table has been requested.  Note that
-        blobs are considered data and therefore will be included when
+        large objects are considered data and therefore will be included when
         <option>--data-only</option> is used, but not
         when <option>--schema-only</option> is.
        </para>
@@ -149,7 +150,8 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-B</option></term>
-      <term><option>--no-blobs</option></term>
+      <term><option>--no-large-objects</option></term>
+      <term><option>--no-blobs</option> (deprecated)</term>
       <listitem>
        <para>
         Exclude large objects in the dump.
@@ -323,14 +325,15 @@ PostgreSQL documentation
           <para>
            Output a directory-format archive suitable for input into
            <application>pg_restore</application>. This will create a directory
-           with one file for each table and blob being dumped, plus a
+           with one file for each table and large object being dumped, plus a
            so-called Table of Contents file describing the dumped objects in a
            machine-readable format that <application>pg_restore</application>
            can read. A directory format archive can be manipulated with
            standard Unix tools; for example, files in an uncompressed archive
-           can be compressed with the <application>gzip</application> tool.
-           This format is compressed by default and also supports parallel
-           dumps.
+           can be compressed with the <application>gzip</application> or
+           <application>lz4</application> tools.
+           This format is compressed by default using <literal>gzip</literal>
+           and also supports parallel dumps.
           </para>
          </listitem>
         </varlistentry>
@@ -372,8 +375,8 @@ PostgreSQL documentation
        <para>
         Requesting exclusive locks on database objects while running a parallel dump could
         cause the dump to fail. The reason is that the <application>pg_dump</application> leader process
-        requests shared locks on the objects that the worker processes are going to dump later
-        in order to
+        requests shared locks (<link linkend="locking-tables">ACCESS SHARE</link>) on the
+        objects that the worker processes are going to dump later in order to
         make sure that nobody deletes them and makes them go away while the dump is running.
         If another client then requests an exclusive lock on a table, that lock will not be
         granted but will be queued waiting for the shared lock of the leader process to be
@@ -415,7 +418,7 @@ PostgreSQL documentation
         <replaceable class="parameter">pattern</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</application>'s <literal>\d</literal> commands
-        (see <xref linkend="app-psql-patterns"/> below),
+        (see <xref linkend="app-psql-patterns"/>),
         so multiple schemas can also be selected by writing wildcard characters
         in the pattern.  When using wildcards, be careful to quote the pattern
         if needed to prevent the shell from expanding the wildcards;  see
@@ -434,9 +437,9 @@ PostgreSQL documentation
 
        <note>
         <para>
-         Non-schema objects such as blobs are not dumped when <option>-n</option> is
-         specified.  You can add blobs back to the dump with the
-         <option>--blobs</option> switch.
+         Non-schema objects such as large objects are not dumped when <option>-n</option> is
+         specified.  You can add large objects back to the dump with the
+         <option>--large-objects</option> switch.
         </para>
        </note>
 
@@ -550,7 +553,7 @@ PostgreSQL documentation
         <replaceable class="parameter">pattern</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</application>'s <literal>\d</literal> commands
-        (see <xref linkend="app-psql-patterns"/> below),
+        (see <xref linkend="app-psql-patterns"/>),
         so multiple tables can also be selected by writing wildcard characters
         in the pattern.  When using wildcards, be careful to quote the pattern
         if needed to prevent the shell from expanding the wildcards;  see
@@ -644,17 +647,39 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-Z <replaceable class="parameter">0..9</replaceable></option></term>
-      <term><option>--compress=<replaceable class="parameter">0..9</replaceable></option></term>
+      <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
+      <term><option>-Z <replaceable class="parameter">method</replaceable></option>[:<replaceable>detail</replaceable>]</term>
+      <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
+      <term><option>--compress=<replaceable class="parameter">method</replaceable></option>[:<replaceable>detail</replaceable>]</term>
       <listitem>
        <para>
-        Specify the compression level to use.  Zero means no compression.
+        Specify the compression method and/or the compression level to use.
+        The compression method can be set to <literal>gzip</literal>,
+        <literal>lz4</literal>, or <literal>none</literal> for no compression.
+        A compression detail string can optionally be specified.  If the
+        detail string is an integer, it specifies the compression level.
+        Otherwise, it should be a comma-separated list of items, each of the
+        form <literal>keyword</literal> or <literal>keyword=value</literal>.
+        Currently, the only supported keyword is <literal>level</literal>.
+       </para>
+
+       <para>
+        If no compression level is specified, the default compression
+        level will be used. If only a level is specified without mentioning
+        an algorithm, <literal>gzip</literal> compression will be used if
+        the level is greater than <literal>0</literal>, and no compression
+        will be used if the level is <literal>0</literal>.
+       </para>
+
+       <para>
         For the custom and directory archive formats, this specifies compression of
-        individual table-data segments, and the default is to compress
-        at a moderate level.
-        For plain text output, setting a nonzero compression level causes
-        the entire output file to be compressed, as though it had been
-        fed through <application>gzip</application>; but the default is not to compress.
+        individual table-data segments, and the default is to compress using
+        <literal>gzip</literal> at a moderate level. For plain text output,
+        setting a nonzero compression level causes the entire output file to be compressed,
+        as though it had been fed through <application>gzip</application> or
+        <application>lz4</application>; but the default is not to compress.
+       </para>
+       <para>
         The tar archive format currently does not support compression at all.
        </para>
       </listitem>
@@ -684,7 +709,7 @@ PostgreSQL documentation
         ...</literal>).  This will make restoration very slow; it is mainly
         useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
-        Any error during reloading will cause only rows that are part of the
+        Any error during restoring will cause only rows that are part of the
         problematic <command>INSERT</command> to be lost, rather than the
         entire table contents.
        </para>
@@ -708,9 +733,9 @@ PostgreSQL documentation
         This option is relevant only when creating a data-only dump.
         It instructs <application>pg_dump</application> to include commands
         to temporarily disable triggers on the target tables while
-        the data is reloaded.  Use this if you have referential
+        the data is restored.  Use this if you have referential
         integrity checks or other triggers on the tables that you
-        do not want to invoke during data reload.
+        do not want to invoke during data restore.
        </para>
 
        <para>
@@ -801,7 +826,7 @@ PostgreSQL documentation
         Also, the <replaceable class="parameter">foreignserver</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</application>'s <literal>\d</literal> commands
-        (see <xref linkend="app-psql-patterns"/> below),
+        (see <xref linkend="app-psql-patterns"/>),
         so multiple foreign servers can also be selected by writing wildcard characters
         in the pattern.  When using wildcards, be careful to quote the pattern
         if needed to prevent the shell from expanding the wildcards; see
@@ -828,7 +853,7 @@ PostgreSQL documentation
         than <command>COPY</command>).  This will make restoration very slow;
         it is mainly useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
-        Any error during reloading will cause only rows that are part of the
+        Any error during restoring will cause only rows that are part of the
         problematic <command>INSERT</command> to be lost, rather than the
         entire table contents.  Note that the restore might fail altogether if
         you have rearranged column order.  The
@@ -847,7 +872,7 @@ PostgreSQL documentation
         target the root of the partitioning hierarchy that contains it, rather
         than the partition itself.  This causes the appropriate partition to
         be re-determined for each row when the data is loaded.  This may be
-        useful when reloading data on a server where rows do not always fall
+        useful when restoring data on a server where rows do not always fall
         into the same partitions as they did on the original server.  That
         could happen, for example, if the partitioning column is of type text
         and the two systems have different definitions of the collation used
@@ -859,7 +884,7 @@ PostgreSQL documentation
         with this option, because <application>pg_restore</application> will
         not know exactly which partition(s) a given archive data item will
         load data into.  This could result in inefficiency due to lock
-        conflicts between parallel jobs, or perhaps even reload failures due
+        conflicts between parallel jobs, or perhaps even restore failures due
         to foreign key constraints being set up before all the relevant data
         is loaded.
        </para>
@@ -1028,7 +1053,7 @@ PostgreSQL documentation
         Dump data as <command>INSERT</command> commands (rather than
         <command>COPY</command>).  Controls the maximum number of rows per
         <command>INSERT</command> command. The value specified must be a
-        number greater than zero.  Any error during reloading will cause only
+        number greater than zero.  Any error during restoring will cause only
         rows that are part of the problematic <command>INSERT</command> to be
         lost, rather than the entire table contents.
        </para>
@@ -1521,7 +1546,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <para>
    To specify an upper-case or mixed-case name in <option>-t</option> and related
    switches, you need to double-quote the name; else it will be folded to
-   lower case (see <xref linkend="app-psql-patterns"/> below).  But
+   lower case (see <xref linkend="app-psql-patterns"/>).  But
    double quotes are special to the shell, so in turn they must be quoted.
    Thus, to dump a single table with a mixed-case name, you need something
    like

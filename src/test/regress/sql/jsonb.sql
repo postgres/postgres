@@ -86,6 +86,12 @@ SELECT '{
 		"averyveryveryveryveryveryveryveryveryverylongfieldname":}'::jsonb;
 -- ERROR missing value for last field
 
+-- test non-error-throwing input
+select pg_input_is_valid('{"a":true}', 'jsonb');
+select pg_input_is_valid('{"a":true', 'jsonb');
+select * from pg_input_error_info('{"a":true', 'jsonb');
+select * from pg_input_error_info('{"a":1e1000000}', 'jsonb');
+
 -- make sure jsonb is passed through json generators without being escaped
 SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
 
@@ -1414,6 +1420,24 @@ delete from test_jsonb_subscript;
 insert into test_jsonb_subscript values (1, 'null');
 update test_jsonb_subscript set test_json[0] = '1';
 update test_jsonb_subscript set test_json[0][0] = '1';
+
+-- try some things with short-header and toasted subscript values
+
+drop table test_jsonb_subscript;
+create temp table test_jsonb_subscript (
+       id text,
+       test_json jsonb
+);
+
+insert into test_jsonb_subscript values('foo', '{"foo": "bar"}');
+insert into test_jsonb_subscript
+  select s, ('{"' || s || '": "bar"}')::jsonb from repeat('xyzzy', 500) s;
+select length(id), test_json[id] from test_jsonb_subscript;
+update test_jsonb_subscript set test_json[id] = '"baz"';
+select length(id), test_json[id] from test_jsonb_subscript;
+\x
+table test_jsonb_subscript;
+\x
 
 -- jsonb to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);

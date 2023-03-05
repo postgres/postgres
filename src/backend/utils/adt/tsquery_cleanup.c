@@ -4,7 +4,7 @@
  *	 Cleanup query from NOT values and/or stopword
  *	 Utility functions to correct work.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -17,6 +17,7 @@
 
 #include "miscadmin.h"
 #include "tsearch/ts_utils.h"
+#include "varatt.h"
 
 typedef struct NODE
 {
@@ -66,9 +67,9 @@ plainnode(PLAINTREE *state, NODE *node)
 	if (state->cur == state->len)
 	{
 		state->len *= 2;
-		state->ptr = (QueryItem *) repalloc((void *) state->ptr, state->len * sizeof(QueryItem));
+		state->ptr = (QueryItem *) repalloc(state->ptr, state->len * sizeof(QueryItem));
 	}
-	memcpy((void *) &(state->ptr[state->cur]), (void *) node->valnode, sizeof(QueryItem));
+	memcpy(&(state->ptr[state->cur]), node->valnode, sizeof(QueryItem));
 	if (node->valnode->type == QI_VAL)
 		state->cur++;
 	else if (node->valnode->qoperator.oper == OP_NOT)
@@ -383,7 +384,7 @@ calcstrlen(NODE *node)
  * Remove QI_VALSTOP (stopword) nodes from TSQuery.
  */
 TSQuery
-cleanup_tsquery_stopwords(TSQuery in)
+cleanup_tsquery_stopwords(TSQuery in, bool noisy)
 {
 	int32		len,
 				lenstr,
@@ -403,8 +404,9 @@ cleanup_tsquery_stopwords(TSQuery in)
 	root = clean_stopword_intree(maketree(GETQUERY(in)), &ladd, &radd);
 	if (root == NULL)
 	{
-		ereport(NOTICE,
-				(errmsg("text-search query contains only stop words or doesn't contain lexemes, ignored")));
+		if (noisy)
+			ereport(NOTICE,
+					(errmsg("text-search query contains only stop words or doesn't contain lexemes, ignored")));
 		out = palloc(HDRSIZETQ);
 		out->size = 0;
 		SET_VARSIZE(out, HDRSIZETQ);

@@ -4,7 +4,7 @@
  *	  POSTGRES generalized index access method definitions.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/genam.h
@@ -161,9 +161,10 @@ extern void index_rescan(IndexScanDesc scan,
 extern void index_endscan(IndexScanDesc scan);
 extern void index_markpos(IndexScanDesc scan);
 extern void index_restrpos(IndexScanDesc scan);
-extern Size index_parallelscan_estimate(Relation indexrel, Snapshot snapshot);
-extern void index_parallelscan_initialize(Relation heaprel, Relation indexrel,
-										  Snapshot snapshot, ParallelIndexScanDesc target);
+extern Size index_parallelscan_estimate(Relation indexRelation, Snapshot snapshot);
+extern void index_parallelscan_initialize(Relation heapRelation,
+										  Relation indexRelation, Snapshot snapshot,
+										  ParallelIndexScanDesc target);
 extern void index_parallelrescan(IndexScanDesc scan);
 extern IndexScanDesc index_beginscan_parallel(Relation heaprel,
 											  Relation indexrel, int nkeys, int norderbys,
@@ -191,7 +192,7 @@ extern void index_store_float8_orderby_distances(IndexScanDesc scan,
 												 Oid *orderByTypes,
 												 IndexOrderByDistance *distances,
 												 bool recheckOrderBy);
-extern bytea *index_opclass_options(Relation relation, AttrNumber attnum,
+extern bytea *index_opclass_options(Relation indrel, AttrNumber attnum,
 									Datum attoptions, bool validate);
 
 

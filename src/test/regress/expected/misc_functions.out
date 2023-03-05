@@ -372,6 +372,68 @@ select count(*) >= 0 as ok from pg_ls_archive_statusdir();
  t
 (1 row)
 
+-- pg_read_file()
+select length(pg_read_file('postmaster.pid')) > 20;
+ ?column? 
+----------
+ t
+(1 row)
+
+select length(pg_read_file('postmaster.pid', 1, 20));
+ length 
+--------
+     20
+(1 row)
+
+-- Test missing_ok
+select pg_read_file('does not exist'); -- error
+ERROR:  could not open file "does not exist" for reading: No such file or directory
+select pg_read_file('does not exist', true) IS NULL; -- ok
+ ?column? 
+----------
+ t
+(1 row)
+
+-- Test invalid argument
+select pg_read_file('does not exist', 0, -1); -- error
+ERROR:  requested length cannot be negative
+select pg_read_file('does not exist', 0, -1, true); -- error
+ERROR:  requested length cannot be negative
+-- pg_read_binary_file()
+select length(pg_read_binary_file('postmaster.pid')) > 20;
+ ?column? 
+----------
+ t
+(1 row)
+
+select length(pg_read_binary_file('postmaster.pid', 1, 20));
+ length 
+--------
+     20
+(1 row)
+
+-- Test missing_ok
+select pg_read_binary_file('does not exist'); -- error
+ERROR:  could not open file "does not exist" for reading: No such file or directory
+select pg_read_binary_file('does not exist', true) IS NULL; -- ok
+ ?column? 
+----------
+ t
+(1 row)
+
+-- Test invalid argument
+select pg_read_binary_file('does not exist', 0, -1); -- error
+ERROR:  requested length cannot be negative
+select pg_read_binary_file('does not exist', 0, -1, true); -- error
+ERROR:  requested length cannot be negative
+-- pg_stat_file()
+select size > 20, isdir from pg_stat_file('postmaster.pid');
+ ?column? | isdir 
+----------+-------
+ t        | f
+(1 row)
+
+-- pg_ls_dir()
 select * from (select pg_ls_dir('.') a) a where a = 'base' limit 1;
   a   
 ------
@@ -401,12 +463,14 @@ select count(*) = 1 as dot_found
  f
 (1 row)
 
+-- pg_timezone_names()
 select * from (select (pg_timezone_names()).name) ptn where name='UTC' limit 1;
  name 
 ------
  UTC
 (1 row)
 
+-- pg_tablespace_databases()
 select count(*) > 0 from
   (select pg_tablespace_databases(oid) as pts from pg_tablespace
    where spcname = 'pg_default') pts
@@ -529,4 +593,52 @@ SELECT * FROM tenk1 a JOIN my_gen_series(1,10) g ON a.unique1 = g;
    ->  Index Scan using tenk1_unique1 on tenk1 a
          Index Cond: (unique1 = g.g)
 (4 rows)
+
+-- Test functions for control data
+SELECT count(*) > 0 AS ok FROM pg_control_checkpoint();
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) > 0 AS ok FROM pg_control_init();
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) > 0 AS ok FROM pg_control_recovery();
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) > 0 AS ok FROM pg_control_system();
+ ok 
+----
+ t
+(1 row)
+
+-- pg_split_walfile_name
+SELECT * FROM pg_split_walfile_name(NULL);
+ segment_number | timeline_id 
+----------------+-------------
+                |            
+(1 row)
+
+SELECT * FROM pg_split_walfile_name('invalid');
+ERROR:  invalid WAL file name "invalid"
+SELECT segment_number > 0 AS ok_segment_number, timeline_id
+  FROM pg_split_walfile_name('000000010000000100000000');
+ ok_segment_number | timeline_id 
+-------------------+-------------
+ t                 |           1
+(1 row)
+
+SELECT segment_number > 0 AS ok_segment_number, timeline_id
+  FROM pg_split_walfile_name('ffffffFF00000001000000af');
+ ok_segment_number | timeline_id 
+-------------------+-------------
+ t                 |  4294967295
+(1 row)
 

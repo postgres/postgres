@@ -105,7 +105,7 @@ int2_dist(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
 
-	ra = Abs(r);
+	ra = abs(r);
 
 	PG_RETURN_INT16(ra);
 }

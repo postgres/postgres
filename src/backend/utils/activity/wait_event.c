@@ -2,7 +2,7 @@
  * wait_event.c
  *	  Wait event reporting infrastructure.
  *
- * Copyright (c) 2001-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -230,6 +230,9 @@ pgstat_get_wait_activity(WaitEventActivity w)
 		case WAIT_EVENT_LOGICAL_LAUNCHER_MAIN:
 			event_name = "LogicalLauncherMain";
 			break;
+		case WAIT_EVENT_LOGICAL_PARALLEL_APPLY_MAIN:
+			event_name = "LogicalParallelApplyMain";
+			break;
 		case WAIT_EVENT_RECOVERY_WAL_STREAM:
 			event_name = "RecoveryWalStream";
 			break;
@@ -388,6 +391,12 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_HASH_GROW_BUCKETS_REINSERT:
 			event_name = "HashGrowBucketsReinsert";
 			break;
+		case WAIT_EVENT_LOGICAL_APPLY_SEND_DATA:
+			event_name = "LogicalApplySendData";
+			break;
+		case WAIT_EVENT_LOGICAL_PARALLEL_APPLY_STATE_CHANGE:
+			event_name = "LogicalParallelApplyStateChange";
+			break;
 		case WAIT_EVENT_LOGICAL_SYNC_DATA:
 			event_name = "LogicalSyncData";
 			break;
@@ -497,6 +506,9 @@ pgstat_get_wait_timeout(WaitEventTimeout w)
 		case WAIT_EVENT_REGISTER_SYNC_REQUEST:
 			event_name = "RegisterSyncRequest";
 			break;
+		case WAIT_EVENT_SPIN_DELAY:
+			event_name = "SpinDelay";
+			break;
 		case WAIT_EVENT_VACUUM_DELAY:
 			event_name = "VacuumDelay";
 			break;
@@ -585,6 +597,9 @@ pgstat_get_wait_io(WaitEventIO w)
 		case WAIT_EVENT_DATA_FILE_WRITE:
 			event_name = "DataFileWrite";
 			break;
+		case WAIT_EVENT_DSM_ALLOCATE:
+			event_name = "DSMAllocate";
+			break;
 		case WAIT_EVENT_DSM_FILL_ZERO_WRITE:
 			event_name = "DSMFillZeroWrite";
 			break;
@@ -630,8 +645,8 @@ pgstat_get_wait_io(WaitEventIO w)
 		case WAIT_EVENT_RELATION_MAP_READ:
 			event_name = "RelationMapRead";
 			break;
-		case WAIT_EVENT_RELATION_MAP_SYNC:
-			event_name = "RelationMapSync";
+		case WAIT_EVENT_RELATION_MAP_REPLACE:
+			event_name = "RelationMapReplace";
 			break;
 		case WAIT_EVENT_RELATION_MAP_WRITE:
 			event_name = "RelationMapWrite";

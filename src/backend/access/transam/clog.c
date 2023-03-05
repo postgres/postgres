@@ -23,7 +23,7 @@
  * for aborts (whether sync or async), since the post-crash assumption would
  * be that such transactions failed anyway.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/clog.c
@@ -146,9 +146,7 @@ static void TransactionIdSetPageStatusInternal(TransactionId xid, int nsubxids,
  *					page2: set t2,t3 as sub-committed
  *					page3: set t4 as sub-committed
  *		2. update page1:
- *					set t1 as sub-committed,
- *					then set t as committed,
-					then set t1 as committed
+ *					page1: set t,t1 as committed
  *		3. update pages2-3:
  *					page2: set t2,t3 as committed
  *					page3: set t4 as committed
@@ -277,7 +275,7 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 						   bool all_xact_same_page)
 {
 	/* Can't use group update when PGPROC overflows. */
-	StaticAssertStmt(THRESHOLD_SUBTRANS_CLOG_OPT <= PGPROC_MAX_CACHED_SUBXIDS,
+	StaticAssertDecl(THRESHOLD_SUBTRANS_CLOG_OPT <= PGPROC_MAX_CACHED_SUBXIDS,
 					 "group clog threshold less than PGPROC cached subxids");
 
 	/*
@@ -516,23 +514,23 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	/* Walk the list and update the status of all XIDs. */
 	while (nextidx != INVALID_PGPROCNO)
 	{
-		PGPROC	   *proc = &ProcGlobal->allProcs[nextidx];
+		PGPROC	   *nextproc = &ProcGlobal->allProcs[nextidx];
 
 		/*
 		 * Transactions with more than THRESHOLD_SUBTRANS_CLOG_OPT sub-XIDs
 		 * should not use group XID status update mechanism.
 		 */
-		Assert(proc->subxidStatus.count <= THRESHOLD_SUBTRANS_CLOG_OPT);
+		Assert(nextproc->subxidStatus.count <= THRESHOLD_SUBTRANS_CLOG_OPT);
 
-		TransactionIdSetPageStatusInternal(proc->clogGroupMemberXid,
-										   proc->subxidStatus.count,
-										   proc->subxids.xids,
-										   proc->clogGroupMemberXidStatus,
-										   proc->clogGroupMemberLsn,
-										   proc->clogGroupMemberPage);
+		TransactionIdSetPageStatusInternal(nextproc->clogGroupMemberXid,
+										   nextproc->subxidStatus.count,
+										   nextproc->subxids.xids,
+										   nextproc->clogGroupMemberXidStatus,
+										   nextproc->clogGroupMemberLsn,
+										   nextproc->clogGroupMemberPage);
 
 		/* Move to next proc in list. */
-		nextidx = pg_atomic_read_u32(&proc->clogGroupNext);
+		nextidx = pg_atomic_read_u32(&nextproc->clogGroupNext);
 	}
 
 	/* We're done with the lock now. */
@@ -545,18 +543,18 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	 */
 	while (wakeidx != INVALID_PGPROCNO)
 	{
-		PGPROC	   *proc = &ProcGlobal->allProcs[wakeidx];
+		PGPROC	   *wakeproc = &ProcGlobal->allProcs[wakeidx];
 
-		wakeidx = pg_atomic_read_u32(&proc->clogGroupNext);
-		pg_atomic_write_u32(&proc->clogGroupNext, INVALID_PGPROCNO);
+		wakeidx = pg_atomic_read_u32(&wakeproc->clogGroupNext);
+		pg_atomic_write_u32(&wakeproc->clogGroupNext, INVALID_PGPROCNO);
 
 		/* ensure all previous writes are visible before follower continues. */
 		pg_write_barrier();
 
-		proc->clogGroupMember = false;
+		wakeproc->clogGroupMember = false;
 
-		if (proc != MyProc)
-			PGSemaphoreUnlock(proc->sem);
+		if (wakeproc != MyProc)
+			PGSemaphoreUnlock(wakeproc->sem);
 	}
 
 	return true;

@@ -3,7 +3,7 @@
  * pg_parameter_acl.c
  *	  routines to support manipulation of the pg_parameter_acl relation
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -21,6 +21,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_parameter_acl.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -74,8 +75,8 @@ ParameterAclCreate(const char *parameter)
 	Relation	rel;
 	TupleDesc	tupDesc;
 	HeapTuple	tuple;
-	Datum		values[Natts_pg_parameter_acl];
-	bool		nulls[Natts_pg_parameter_acl];
+	Datum		values[Natts_pg_parameter_acl] = {0};
+	bool		nulls[Natts_pg_parameter_acl] = {0};
 
 	/*
 	 * To prevent cluttering pg_parameter_acl with useless entries, insist
@@ -98,8 +99,6 @@ ParameterAclCreate(const char *parameter)
 	 */
 	rel = table_open(ParameterAclRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, false, sizeof(nulls));
 	parameterId = GetNewOidWithIndex(rel,
 									 ParameterAclOidIndexId,
 									 Anum_pg_parameter_acl_oid);

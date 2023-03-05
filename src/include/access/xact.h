@@ -4,7 +4,7 @@
  *	  postgres transaction system definitions
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xact.h
@@ -19,7 +19,7 @@
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
 #include "nodes/pg_list.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "storage/sinval.h"
 
 /*
@@ -108,6 +108,19 @@ extern PGDLLIMPORT int MyXactFlags;
 #define XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK	(1U << 1)
 
 /*
+ * XACT_FLAGS_NEEDIMMEDIATECOMMIT - records whether the top level statement
+ * is one that requires immediate commit, such as CREATE DATABASE.
+ */
+#define XACT_FLAGS_NEEDIMMEDIATECOMMIT			(1U << 2)
+
+/*
+ * XACT_FLAGS_PIPELINING - set when we complete an extended-query-protocol
+ * Execute message.  This is useful for detecting that an implicit transaction
+ * block has been created via pipelining.
+ */
+#define XACT_FLAGS_PIPELINING					(1U << 3)
+
+/*
  *	start- and end-of-transaction callbacks for dynamically loaded modules
  */
 typedef enum
@@ -174,7 +187,7 @@ typedef struct SavedTransactionCharacteristics
  */
 #define XACT_XINFO_HAS_DBINFO			(1U << 0)
 #define XACT_XINFO_HAS_SUBXACTS			(1U << 1)
-#define XACT_XINFO_HAS_RELFILENODES		(1U << 2)
+#define XACT_XINFO_HAS_RELFILELOCATORS	(1U << 2)
 #define XACT_XINFO_HAS_INVALS			(1U << 3)
 #define XACT_XINFO_HAS_TWOPHASE			(1U << 4)
 #define XACT_XINFO_HAS_ORIGIN			(1U << 5)
@@ -252,12 +265,12 @@ typedef struct xl_xact_subxacts
 } xl_xact_subxacts;
 #define MinSizeOfXactSubxacts offsetof(xl_xact_subxacts, subxacts)
 
-typedef struct xl_xact_relfilenodes
+typedef struct xl_xact_relfilelocators
 {
 	int			nrels;			/* number of relations */
-	RelFileNode xnodes[FLEXIBLE_ARRAY_MEMBER];
-} xl_xact_relfilenodes;
-#define MinSizeOfXactRelfilenodes offsetof(xl_xact_relfilenodes, xnodes)
+	RelFileLocator xlocators[FLEXIBLE_ARRAY_MEMBER];
+} xl_xact_relfilelocators;
+#define MinSizeOfXactRelfileLocators offsetof(xl_xact_relfilelocators, xlocators)
 
 /*
  * A transactionally dropped statistics entry.
@@ -305,7 +318,7 @@ typedef struct xl_xact_commit
 	/* xl_xact_xinfo follows if XLOG_XACT_HAS_INFO */
 	/* xl_xact_dbinfo follows if XINFO_HAS_DBINFO */
 	/* xl_xact_subxacts follows if XINFO_HAS_SUBXACT */
-	/* xl_xact_relfilenodes follows if XINFO_HAS_RELFILENODES */
+	/* xl_xact_relfilelocators follows if XINFO_HAS_RELFILELOCATORS */
 	/* xl_xact_stats_items follows if XINFO_HAS_DROPPED_STATS */
 	/* xl_xact_invals follows if XINFO_HAS_INVALS */
 	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
@@ -321,7 +334,7 @@ typedef struct xl_xact_abort
 	/* xl_xact_xinfo follows if XLOG_XACT_HAS_INFO */
 	/* xl_xact_dbinfo follows if XINFO_HAS_DBINFO */
 	/* xl_xact_subxacts follows if XINFO_HAS_SUBXACT */
-	/* xl_xact_relfilenodes follows if XINFO_HAS_RELFILENODES */
+	/* xl_xact_relfilelocators follows if XINFO_HAS_RELFILELOCATORS */
 	/* xl_xact_stats_items follows if XINFO_HAS_DROPPED_STATS */
 	/* No invalidation messages needed. */
 	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
@@ -367,7 +380,7 @@ typedef struct xl_xact_parsed_commit
 	TransactionId *subxacts;
 
 	int			nrels;
-	RelFileNode *xnodes;
+	RelFileLocator *xlocators;
 
 	int			nstats;
 	xl_xact_stats_item *stats;
@@ -378,7 +391,7 @@ typedef struct xl_xact_parsed_commit
 	TransactionId twophase_xid; /* only for 2PC */
 	char		twophase_gid[GIDSIZE];	/* only for 2PC */
 	int			nabortrels;		/* only for 2PC */
-	RelFileNode *abortnodes;	/* only for 2PC */
+	RelFileLocator *abortlocators;	/* only for 2PC */
 	int			nabortstats;	/* only for 2PC */
 	xl_xact_stats_item *abortstats; /* only for 2PC */
 
@@ -400,7 +413,7 @@ typedef struct xl_xact_parsed_abort
 	TransactionId *subxacts;
 
 	int			nrels;
-	RelFileNode *xnodes;
+	RelFileLocator *xlocators;
 
 	int			nstats;
 	xl_xact_stats_item *stats;
@@ -483,9 +496,9 @@ extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 									  int nsubxacts, TransactionId *subxacts,
-									  int nrels, RelFileNode *rels,
-									  int nstats,
-									  xl_xact_stats_item *stats,
+									  int nrels, RelFileLocator *rels,
+									  int ndroppedstats,
+									  xl_xact_stats_item *droppedstats,
 									  int nmsgs, SharedInvalidationMessage *msgs,
 									  bool relcacheInval,
 									  int xactflags,
@@ -494,9 +507,9 @@ extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 
 extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
 									 int nsubxacts, TransactionId *subxacts,
-									 int nrels, RelFileNode *rels,
-									 int nstats,
-									 xl_xact_stats_item *stats,
+									 int nrels, RelFileLocator *rels,
+									 int ndroppedstats,
+									 xl_xact_stats_item *droppedstats,
 									 int xactflags, TransactionId twophase_xid,
 									 const char *twophase_gid);
 extern void xact_redo(XLogReaderState *record);

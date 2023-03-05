@@ -3,7 +3,7 @@
  * atomics.c
  *	   Non-Inline parts of the atomics implementation
  *
- * Portions Copyright (c) 2013-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -54,7 +54,7 @@ pg_extern_compiler_barrier(void)
 void
 pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	StaticAssertStmt(sizeof(ptr->sema) >= sizeof(slock_t),
+	StaticAssertDecl(sizeof(ptr->sema) >= sizeof(slock_t),
 					 "size mismatch of atomic_flag vs slock_t");
 
 #ifndef HAVE_SPINLOCKS
@@ -105,7 +105,7 @@ pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr)
 void
 pg_atomic_init_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val_)
 {
-	StaticAssertStmt(sizeof(ptr->sema) >= sizeof(slock_t),
+	StaticAssertDecl(sizeof(ptr->sema) >= sizeof(slock_t),
 					 "size mismatch of atomic_uint32 vs slock_t");
 
 	/*
@@ -181,7 +181,7 @@ pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 void
 pg_atomic_init_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val_)
 {
-	StaticAssertStmt(sizeof(ptr->sema) >= sizeof(slock_t),
+	StaticAssertDecl(sizeof(ptr->sema) >= sizeof(slock_t),
 					 "size mismatch of atomic_uint64 vs slock_t");
 
 	/*

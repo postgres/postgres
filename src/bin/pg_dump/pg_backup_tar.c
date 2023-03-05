@@ -46,7 +46,7 @@ static void _StartData(ArchiveHandle *AH, TocEntry *te);
 static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
-static int	_ReadByte(ArchiveHandle *);
+static int	_ReadByte(ArchiveHandle *AH);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
@@ -55,10 +55,10 @@ static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
 static void _ReadExtraToc(ArchiveHandle *AH, TocEntry *te);
 static void _PrintExtraToc(ArchiveHandle *AH, TocEntry *te);
 
-static void _StartBlobs(ArchiveHandle *AH, TocEntry *te);
-static void _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
-static void _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
-static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
+static void _StartLOs(ArchiveHandle *AH, TocEntry *te);
+static void _StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndLOs(ArchiveHandle *AH, TocEntry *te);
 
 #define K_STD_BUF_SIZE 1024
 
@@ -79,7 +79,7 @@ typedef struct
 {
 	int			hasSeek;
 	pgoff_t		filePos;
-	TAR_MEMBER *blobToc;
+	TAR_MEMBER *loToc;
 	FILE	   *tarFH;
 	pgoff_t		tarFHpos;
 	pgoff_t		tarNextMember;
@@ -94,10 +94,10 @@ typedef struct
 	char	   *filename;
 } lclTocEntry;
 
-static void _LoadBlobs(ArchiveHandle *AH);
+static void _LoadLOs(ArchiveHandle *AH);
 
 static TAR_MEMBER *tarOpen(ArchiveHandle *AH, const char *filename, char mode);
-static void tarClose(ArchiveHandle *AH, TAR_MEMBER *TH);
+static void tarClose(ArchiveHandle *AH, TAR_MEMBER *th);
 
 #ifdef __NOT_USED__
 static char *tarGets(char *buf, size_t len, TAR_MEMBER *th);
@@ -138,10 +138,10 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	AH->WriteExtraTocPtr = _WriteExtraToc;
 	AH->PrintExtraTocPtr = _PrintExtraToc;
 
-	AH->StartBlobsPtr = _StartBlobs;
-	AH->StartBlobPtr = _StartBlob;
-	AH->EndBlobPtr = _EndBlob;
-	AH->EndBlobsPtr = _EndBlobs;
+	AH->StartLOsPtr = _StartLOs;
+	AH->StartLOPtr = _StartLO;
+	AH->EndLOPtr = _EndLO;
+	AH->EndLOsPtr = _EndLOs;
 	AH->ClonePtr = NULL;
 	AH->DeClonePtr = NULL;
 
@@ -151,7 +151,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	/*
 	 * Set up some special context used in compressing data.
 	 */
-	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
+	ctx = pg_malloc0_object(lclContext);
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
 	ctx->isSpecialScript = 0;
@@ -194,7 +194,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		 * possible since gzdopen uses buffered IO which totally screws file
 		 * positioning.
 		 */
-		if (AH->compression != 0)
+		if (AH->compression_spec.algorithm != PG_COMPRESSION_NONE)
 			pg_fatal("compression is not supported by tar archive format");
 	}
 	else
@@ -240,7 +240,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *ctx;
 	char		fn[K_STD_BUF_SIZE];
 
-	ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+	ctx = pg_malloc0_object(lclTocEntry);
 	if (te->dataDumper != NULL)
 	{
 		snprintf(fn, sizeof(fn), "%d.dat", te->dumpId);
@@ -272,7 +272,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (ctx == NULL)
 	{
-		ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+		ctx = pg_malloc0_object(lclTocEntry);
 		te->formatData = (void *) ctx;
 	}
 
@@ -328,7 +328,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 			}
 		}
 
-		if (AH->compression == 0)
+		if (AH->compression_spec.algorithm == PG_COMPRESSION_NONE)
 			tm->nFH = ctx->tarFH;
 		else
 			pg_fatal("compression is not supported by tar archive format");
@@ -337,7 +337,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	{
 		int			old_umask;
 
-		tm = pg_malloc0(sizeof(TAR_MEMBER));
+		tm = pg_malloc0_object(TAR_MEMBER);
 
 		/*
 		 * POSIX does not require, but permits, tmpfile() to restrict file
@@ -383,7 +383,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 
 		umask(old_umask);
 
-		if (AH->compression == 0)
+		if (AH->compression_spec.algorithm == PG_COMPRESSION_NONE)
 			tm->nFH = tm->tmpFH;
 		else
 			pg_fatal("compression is not supported by tar archive format");
@@ -401,7 +401,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 static void
 tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 {
-	if (AH->compression != 0)
+	if (AH->compression_spec.algorithm != PG_COMPRESSION_NONE)
 		pg_fatal("compression is not supported by tar archive format");
 
 	if (th->mode == 'w')
@@ -412,8 +412,7 @@ tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 	 * handle, and we don't use temp files.
 	 */
 
-	if (th->targetFile)
-		free(th->targetFile);
+	free(th->targetFile);
 
 	th->nFH = NULL;
 }
@@ -639,22 +638,22 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 	}
 
 	if (strcmp(te->desc, "BLOBS") == 0)
-		_LoadBlobs(AH);
+		_LoadLOs(AH);
 	else
 		_PrintFileData(AH, tctx->filename);
 }
 
 static void
-_LoadBlobs(ArchiveHandle *AH)
+_LoadLOs(ArchiveHandle *AH)
 {
 	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
 	TAR_MEMBER *th;
 	size_t		cnt;
-	bool		foundBlob = false;
+	bool		foundLO = false;
 	char		buf[4096];
 
-	StartRestoreBlobs(AH);
+	StartRestoreLOs(AH);
 
 	th = tarOpen(AH, NULL, 'r');	/* Open next file */
 	while (th != NULL)
@@ -668,15 +667,15 @@ _LoadBlobs(ArchiveHandle *AH)
 			{
 				pg_log_info("restoring large object with OID %u", oid);
 
-				StartRestoreBlob(AH, oid, AH->public.ropt->dropSchema);
+				StartRestoreLO(AH, oid, AH->public.ropt->dropSchema);
 
 				while ((cnt = tarRead(buf, 4095, th)) > 0)
 				{
 					buf[cnt] = '\0';
 					ahwrite(buf, 1, cnt, AH);
 				}
-				EndRestoreBlob(AH, oid);
-				foundBlob = true;
+				EndRestoreLO(AH, oid);
+				foundLO = true;
 			}
 			tarClose(AH, th);
 		}
@@ -685,18 +684,18 @@ _LoadBlobs(ArchiveHandle *AH)
 			tarClose(AH, th);
 
 			/*
-			 * Once we have found the first blob, stop at the first non-blob
+			 * Once we have found the first LO, stop at the first non-LO
 			 * entry (which will be 'blobs.toc').  This coding would eat all
-			 * the rest of the archive if there are no blobs ... but this
+			 * the rest of the archive if there are no LOs ... but this
 			 * function shouldn't be called at all in that case.
 			 */
-			if (foundBlob)
+			if (foundLO)
 				break;
 		}
 
 		th = tarOpen(AH, NULL, 'r');
 	}
-	EndRestoreBlobs(AH);
+	EndRestoreLOs(AH);
 }
 
 
@@ -774,7 +773,7 @@ _CloseArchive(ArchiveHandle *AH)
 		tarClose(AH, th);		/* Not needed any more */
 
 		/*
-		 * Now send the data (tables & blobs)
+		 * Now send the data (tables & LOs)
 		 */
 		WriteDataChunks(AH, NULL);
 
@@ -801,7 +800,6 @@ _CloseArchive(ArchiveHandle *AH)
 		memcpy(ropt, AH->public.ropt, sizeof(RestoreOptions));
 		ropt->filename = NULL;
 		ropt->dropSchema = 1;
-		ropt->compression = 0;
 		ropt->superuser = NULL;
 		ropt->suppressDumpWarnings = true;
 
@@ -849,13 +847,13 @@ _scriptOut(ArchiveHandle *AH, const void *buf, size_t len)
 }
 
 /*
- * BLOB support
+ * Large Object support
  */
 
 /*
  * Called by the archiver when starting to save all BLOB DATA (not schema).
  * This routine should save whatever format-specific information is needed
- * to read the BLOBs back into memory.
+ * to read the LOs back into memory.
  *
  * It is called just prior to the dumper's DataDumper routine.
  *
@@ -863,24 +861,24 @@ _scriptOut(ArchiveHandle *AH, const void *buf, size_t len)
  *
  */
 static void
-_StartBlobs(ArchiveHandle *AH, TocEntry *te)
+_StartLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		fname[K_STD_BUF_SIZE];
 
 	sprintf(fname, "blobs.toc");
-	ctx->blobToc = tarOpen(AH, fname, 'w');
+	ctx->loToc = tarOpen(AH, fname, 'w');
 }
 
 /*
- * Called by the archiver when the dumper calls StartBlob.
+ * Called by the archiver when the dumper calls StartLO.
  *
  * Mandatory.
  *
  * Must save the passed OID for retrieval at restore-time.
  */
 static void
-_StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
+_StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
@@ -889,24 +887,24 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	if (oid == 0)
 		pg_fatal("invalid OID for large object (%u)", oid);
 
-	if (AH->compression != 0)
+	if (AH->compression_spec.algorithm != PG_COMPRESSION_NONE)
 		pg_fatal("compression is not supported by tar archive format");
 
 	sprintf(fname, "blob_%u.dat", oid);
 
-	tarPrintf(ctx->blobToc, "%u %s\n", oid, fname);
+	tarPrintf(ctx->loToc, "%u %s\n", oid, fname);
 
 	tctx->TH = tarOpen(AH, fname, 'w');
 }
 
 /*
- * Called by the archiver when the dumper calls EndBlob.
+ * Called by the archiver when the dumper calls EndLO.
  *
  * Optional.
  *
  */
 static void
-_EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
+_EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
@@ -920,14 +918,14 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
  *
  */
 static void
-_EndBlobs(ArchiveHandle *AH, TocEntry *te)
+_EndLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
-	/* Write out a fake zero OID to mark end-of-blobs. */
+	/* Write out a fake zero OID to mark end-of-LOs. */
 	/* WriteInt(AH, 0); */
 
-	tarClose(AH, ctx->blobToc);
+	tarClose(AH, ctx->loToc);
 }
 
 
@@ -1053,7 +1051,7 @@ static TAR_MEMBER *
 _tarPositionTo(ArchiveHandle *AH, const char *filename)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	TAR_MEMBER *th = pg_malloc0(sizeof(TAR_MEMBER));
+	TAR_MEMBER *th = pg_malloc0_object(TAR_MEMBER);
 	char		c;
 	char		header[TAR_BLOCK_SIZE];
 	size_t		i,

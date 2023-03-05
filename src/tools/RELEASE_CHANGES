@@ -107,6 +107,10 @@ Starting a New Development Cycle
   placeholder), "git rm" the previous one, and update release.sgml and
   filelist.sgml to match.
 
+* In the newly-made branch, change src/backend/nodes/gen_node_support.pl
+  to enforce ABI stability of the NodeTag list (see "ARM ABI STABILITY
+  CHECK HERE" therein).
+
 * Notify the private committers email list, to ensure all committers
   are aware of the new branch even if they're not paying close attention
   to pgsql-hackers.

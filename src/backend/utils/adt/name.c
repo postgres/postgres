@@ -9,7 +9,7 @@
  * always use NAMEDATALEN as the symbolic constant!   - jolly 8/21/95
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -314,11 +314,7 @@ current_schemas(PG_FUNCTION_ARGS)
 	}
 	list_free(search_path);
 
-	array = construct_array(names, i,
-							NAMEOID,
-							NAMEDATALEN,	/* sizeof(Name) */
-							false,	/* Name is not by-val */
-							TYPALIGN_CHAR); /* alignment of Name */
+	array = construct_array_builtin(names, i, NAMEOID);
 
 	PG_RETURN_POINTER(array);
 }

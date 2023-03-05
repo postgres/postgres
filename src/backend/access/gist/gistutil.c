@@ -4,7 +4,7 @@
  *	  utilities routines for the postgres GiST index access method.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -113,7 +113,7 @@ gistextractpage(Page page, int *len /* out */ )
 IndexTuple *
 gistjoinvector(IndexTuple *itvec, int *len, IndexTuple *additvec, int addlen)
 {
-	itvec = (IndexTuple *) repalloc((void *) itvec, sizeof(IndexTuple) * ((*len) + addlen));
+	itvec = (IndexTuple *) repalloc(itvec, sizeof(IndexTuple) * ((*len) + addlen));
 	memmove(&itvec[*len], additvec, sizeof(IndexTuple) * addlen);
 	*len += addlen;
 	return itvec;
@@ -280,7 +280,7 @@ gistMakeUnionKey(GISTSTATE *giststate, int attno,
 bool
 gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b)
 {
-	bool		result;
+	bool		result = false; /* silence compiler warning */
 
 	FunctionCall3Coll(&giststate->equalFn[attno],
 					  giststate->supportCollation[attno],

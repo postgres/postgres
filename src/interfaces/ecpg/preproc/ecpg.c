@@ -1,7 +1,7 @@
 /* src/interfaces/ecpg/preproc/ecpg.c */
 
 /* Main for ecpg, the PostgreSQL embedded SQL precompiler. */
-/* Copyright (c) 1996-2022, PostgreSQL Global Development Group */
+/* Copyright (c) 1996-2023, PostgreSQL Global Development Group */
 
 #include "postgres_fe.h"
 
@@ -157,47 +157,12 @@ main(int argc, char *const argv[])
 	}
 
 	output_filename = NULL;
-	while ((c = getopt_long(argc, argv, "vcio:I:tD:dC:r:h", ecpg_options, NULL)) != -1)
+	while ((c = getopt_long(argc, argv, "cC:dD:hiI:o:r:tv", ecpg_options, NULL)) != -1)
 	{
 		switch (c)
 		{
-			case ECPG_GETOPT_LONG_REGRESSION:
-				regression_mode = true;
-				break;
-			case 'o':
-				output_filename = mm_strdup(optarg);
-				if (strcmp(output_filename, "-") == 0)
-					base_yyout = stdout;
-				else
-					base_yyout = fopen(output_filename, PG_BINARY_W);
-
-				if (base_yyout == NULL)
-				{
-					fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
-							progname, output_filename, strerror(errno));
-					output_filename = NULL;
-				}
-				else
-					out_option = 1;
-				break;
-			case 'I':
-				add_include_path(optarg);
-				break;
-			case 't':
-				autocommit = true;
-				break;
-			case 'v':
-				verbose = true;
-				break;
-			case 'h':
-				header_mode = true;
-				/* this must include "-c" to make sense, so fall through */
-				/* FALLTHROUGH */
 			case 'c':
 				auto_create_c = true;
-				break;
-			case 'i':
-				system_includes = true;
 				break;
 			case 'C':
 				if (pg_strcasecmp(optarg, "INFORMIX") == 0 || pg_strcasecmp(optarg, "INFORMIX_SE") == 0)
@@ -220,6 +185,44 @@ main(int argc, char *const argv[])
 					return ILLEGAL_OPTION;
 				}
 				break;
+			case 'd':
+#ifdef YYDEBUG
+				base_yydebug = 1;
+#else
+				fprintf(stderr, _("%s: parser debug support (-d) not available\n"),
+						progname);
+#endif
+				break;
+			case 'D':
+				add_preprocessor_define(optarg);
+				break;
+			case 'h':
+				header_mode = true;
+				/* this must include "-c" to make sense: */
+				auto_create_c = true;
+				break;
+			case 'i':
+				system_includes = true;
+				break;
+			case 'I':
+				add_include_path(optarg);
+				break;
+			case 'o':
+				output_filename = mm_strdup(optarg);
+				if (strcmp(output_filename, "-") == 0)
+					base_yyout = stdout;
+				else
+					base_yyout = fopen(output_filename, PG_BINARY_W);
+
+				if (base_yyout == NULL)
+				{
+					fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
+							progname, output_filename, strerror(errno));
+					output_filename = NULL;
+				}
+				else
+					out_option = 1;
+				break;
 			case 'r':
 				if (pg_strcasecmp(optarg, "no_indicator") == 0)
 					force_indicator = false;
@@ -233,16 +236,14 @@ main(int argc, char *const argv[])
 					return ILLEGAL_OPTION;
 				}
 				break;
-			case 'D':
-				add_preprocessor_define(optarg);
+			case 't':
+				autocommit = true;
 				break;
-			case 'd':
-#ifdef YYDEBUG
-				base_yydebug = 1;
-#else
-				fprintf(stderr, _("%s: parser debug support (-d) not available\n"),
-						progname);
-#endif
+			case 'v':
+				verbose = true;
+				break;
+			case ECPG_GETOPT_LONG_REGRESSION:
+				regression_mode = true;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), argv[0]);

@@ -9,7 +9,7 @@
  * though.)
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -259,7 +259,7 @@ StartupProcessMain(void)
 	/*
 	 * Unblock signals (they were blocked when the postmaster forked us)
 	 */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Do what we came for.
@@ -314,11 +314,22 @@ startup_progress_timeout_handler(void)
 	startup_progress_timer_expired = true;
 }
 
+void
+disable_startup_progress_timeout(void)
+{
+	/* Feature is disabled. */
+	if (log_startup_progress_interval == 0)
+		return;
+
+	disable_timeout(STARTUP_PROGRESS_TIMEOUT, false);
+	startup_progress_timer_expired = false;
+}
+
 /*
  * Set the start timestamp of the current operation and enable the timeout.
  */
 void
-begin_startup_progress_phase(void)
+enable_startup_progress_timeout(void)
 {
 	TimestampTz fin_time;
 
@@ -326,13 +337,26 @@ begin_startup_progress_phase(void)
 	if (log_startup_progress_interval == 0)
 		return;
 
-	disable_timeout(STARTUP_PROGRESS_TIMEOUT, false);
-	startup_progress_timer_expired = false;
 	startup_progress_phase_start_time = GetCurrentTimestamp();
 	fin_time = TimestampTzPlusMilliseconds(startup_progress_phase_start_time,
 										   log_startup_progress_interval);
 	enable_timeout_every(STARTUP_PROGRESS_TIMEOUT, fin_time,
 						 log_startup_progress_interval);
+}
+
+/*
+ * A thin wrapper to first disable and then enable the startup progress
+ * timeout.
+ */
+void
+begin_startup_progress_phase(void)
+{
+	/* Feature is disabled. */
+	if (log_startup_progress_interval == 0)
+		return;
+
+	disable_startup_progress_timeout();
+	enable_startup_progress_timeout();
 }
 
 /*

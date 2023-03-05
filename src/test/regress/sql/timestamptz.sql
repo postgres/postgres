@@ -50,6 +50,8 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('-infinity');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('infinity');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('epoch');
 
+SELECT timestamptz 'infinity' = timestamptz '+infinity' AS t;
+
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
 
@@ -106,6 +108,13 @@ SELECT '20500110 173201 Europe/Helsinki'::timestamptz; -- non-DST
 
 SELECT '205000-07-10 17:32:01 Europe/Helsinki'::timestamptz; -- DST
 SELECT '205000-01-10 17:32:01 Europe/Helsinki'::timestamptz; -- non-DST
+
+-- Test non-error-throwing API
+SELECT pg_input_is_valid('now', 'timestamptz');
+SELECT pg_input_is_valid('garbage', 'timestamptz');
+SELECT pg_input_is_valid('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamptz');
+SELECT * FROM pg_input_error_info('garbage', 'timestamptz');
+SELECT * FROM pg_input_error_info('2001-01-01 00:00 Nehwon/Lankhmar', 'timestamptz');
 
 -- Check date conversion and date arithmetic
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('1997-06-10 18:32:01 PDT');
@@ -296,6 +305,10 @@ SELECT date_part('epoch', '294270-01-01 00:00:00+00'::timestamptz);
 SELECT extract(epoch from '294270-01-01 00:00:00+00'::timestamptz);
 -- another internal overflow test case
 SELECT extract(epoch from '5000-01-01 00:00:00+00'::timestamptz);
+
+-- test edge-case overflow in timestamp subtraction
+SELECT timestamptz '294276-12-31 23:59:59 UTC' - timestamptz '1999-12-23 19:59:04.224193 UTC' AS ok;
+SELECT timestamptz '294276-12-31 23:59:59 UTC' - timestamptz '1999-12-23 19:59:04.224192 UTC' AS overflows;
 
 -- TO_CHAR()
 SELECT to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')

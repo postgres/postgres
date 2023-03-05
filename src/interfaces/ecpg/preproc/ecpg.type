@@ -3,7 +3,6 @@
 %type <str> ECPGCKeywords
 %type <str> ECPGColId
 %type <str> ECPGColLabel
-%type <str> ECPGColLabelCommon
 %type <str> ECPGConnect
 %type <str> ECPGCursorStmt
 %type <str> ECPGDeallocateDescr

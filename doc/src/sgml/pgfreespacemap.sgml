@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pgfreespacemap.sgml -->
 
 <sect1 id="pgfreespacemap" xreflabel="pg_freespacemap">
- <title>pg_freespacemap</title>
+ <title>pg_freespacemap &mdash; examine the free space map</title>
 
  <indexterm zone="pgfreespacemap">
   <primary>pg_freespacemap</primary>
@@ -21,7 +21,7 @@
   using <command>GRANT</command>.
  </para>
 
- <sect2>
+ <sect2 id="pgfreespacemap-funcs">
   <title>Functions</title>
 
   <variablelist>
@@ -71,7 +71,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgfreespacemap-sample-output">
   <title>Sample Output</title>
 
 <screen>
@@ -108,7 +108,7 @@ postgres=# SELECT * FROM pg_freespace('foo', 7);
 </screen>
  </sect2>
 
- <sect2>
+ <sect2 id="pgfreespacemap-author">
   <title>Author</title>
 
   <para>

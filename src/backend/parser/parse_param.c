@@ -12,7 +12,7 @@
  * Note that other approaches to parameters are possible using the parser
  * hooks defined in ParseState.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -145,14 +145,10 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 	{
 		/* Need to enlarge param array */
 		if (*parstate->paramTypes)
-			*parstate->paramTypes = (Oid *) repalloc(*parstate->paramTypes,
-													 paramno * sizeof(Oid));
+			*parstate->paramTypes = repalloc0_array(*parstate->paramTypes, Oid,
+													*parstate->numParams, paramno);
 		else
-			*parstate->paramTypes = (Oid *) palloc(paramno * sizeof(Oid));
-		/* Zero out the previously-unreferenced slots */
-		MemSet(*parstate->paramTypes + *parstate->numParams,
-			   0,
-			   (paramno - *parstate->numParams) * sizeof(Oid));
+			*parstate->paramTypes = palloc0_array(Oid, paramno);
 		*parstate->numParams = paramno;
 	}
 

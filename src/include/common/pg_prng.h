@@ -2,7 +2,7 @@
  *
  * Pseudo-Random Number Generator
  *
- * Copyright (c) 2021-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2023, PostgreSQL Global Development Group
  *
  * src/include/common/pg_prng.h
  *
@@ -55,6 +55,7 @@ extern uint32 pg_prng_uint32(pg_prng_state *state);
 extern int32 pg_prng_int32(pg_prng_state *state);
 extern int32 pg_prng_int32p(pg_prng_state *state);
 extern double pg_prng_double(pg_prng_state *state);
+extern double pg_prng_double_normal(pg_prng_state *state);
 extern bool pg_prng_bool(pg_prng_state *state);
 
 #endif							/* PG_PRNG_H */

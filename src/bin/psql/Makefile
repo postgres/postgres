@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/psql
 #
-# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/bin/psql/Makefile
@@ -56,7 +56,7 @@ sql_help.c: sql_help.h
 	touch $@
 
 sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
-	$(PERL) $< $(REFDOCDIR) $*
+	$(PERL) $< --docdir $(REFDOCDIR) --basename $*
 
 psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
 psqlscanslash.c: FLEX_NO_BACKUP=yes

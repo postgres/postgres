@@ -11,11 +11,6 @@
 # required setup steps
 test: test_setup
 
-# run tablespace by itself, and early, because it forces a checkpoint;
-# we'd prefer not to have checkpoints later in the tests because that
-# interferes with crash-recovery testing.
-test: tablespace
-
 # ----------
 # The first group of parallel tests
 # ----------
@@ -26,7 +21,7 @@ test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeri
 # multirangetypes depends on rangetypes
 # multirangetypes shouldn't run concurrently with type_sanity
 # ----------
-test: strings numerology point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 multirangetypes
+test: strings md5 numerology point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 multirangetypes
 
 # ----------
 # Another group of parallel tests
@@ -61,9 +56,6 @@ test: create_aggregate create_function_sql create_cast constraints triggers sele
 # ----------
 test: sanity_check
 
-# Note: the ignore: line does not skip random, just mark it as ignorable
-ignore: random
-
 # ----------
 # Another group of parallel tests
 # aggregates depends on create_aggregate
@@ -89,7 +81,7 @@ test: brin_bloom brin_multi
 test: create_table_like alter_generic alter_operator misc async dbsize merge misc_functions sysviews tsrf tid tidscan tidrangescan collate.icu.utf8 incremental_sort create_role
 
 # collate.*.utf8 tests cannot be run in parallel with each other
-test: rules psql psql_crosstab amutils stats_ext collate.linux.utf8
+test: rules psql psql_crosstab amutils stats_ext collate.linux.utf8 collate.windows.win1252
 
 # ----------
 # Run these alone so they don't run out of parallel workers
@@ -111,7 +103,7 @@ test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combo
 # ----------
 # Another group of parallel tests (JSON related)
 # ----------
-test: json jsonb json_encoding jsonpath jsonpath_encoding jsonb_jsonpath sqljson json_sqljson jsonb_sqljson
+test: json jsonb json_encoding jsonpath jsonpath_encoding jsonb_jsonpath
 
 # ----------
 # Another group of parallel tests
@@ -135,3 +127,7 @@ test: event_trigger oidjoins
 
 # this test also uses event triggers, so likewise run it by itself
 test: fast_default
+
+# run tablespace test at the end because it drops the tablespace created during
+# setup that other tests may use.
+test: tablespace

@@ -7,7 +7,7 @@
  * common code for calling set-returning functions according to the
  * ReturnSetInfo API.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,6 +20,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_proc.h"
 #include "executor/execdebug.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -701,7 +702,7 @@ init_sexpr(Oid foid, Oid input_collation, Expr *node,
 	size_t		numargs = list_length(sexpr->args);
 
 	/* Check permission to call function */
-	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+	aclresult = object_aclcheck(ProcedureRelationId, foid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 	InvokeFunctionExecuteHook(foid);

@@ -24,6 +24,11 @@ SELECT avg(four) AS avg_1 FROM onek;
 
 SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;
 
+SELECT any_value(v) FROM (VALUES (1), (2), (3)) AS v (v);
+SELECT any_value(v) FROM (VALUES (NULL)) AS v (v);
+SELECT any_value(v) FROM (VALUES (NULL), (1), (2)) AS v (v);
+SELECT any_value(v) FROM (VALUES (array['hello', 'world'])) AS v (v);
+
 -- In 7.1, avg(float4) is computed using float8 arithmetic.
 -- Round the result to 3 digits to avoid platform-specific results.
 
@@ -492,8 +497,8 @@ drop table p_t1;
 -- Test GROUP BY matching of join columns that are type-coerced due to USING
 --
 
-create temp table t1(f1 int, f2 bigint);
-create temp table t2(f1 bigint, f22 bigint);
+create temp table t1(f1 int, f2 int);
+create temp table t2(f1 bigint, f2 oid);
 
 select f1 from t1 left join t2 using (f1) group by f1;
 select f1 from t1 left join t2 using (f1) group by t1.f1;
@@ -501,7 +506,81 @@ select t1.f1 from t1 left join t2 using (f1) group by t1.f1;
 -- only this one should fail:
 select t1.f1 from t1 left join t2 using (f1) group by f1;
 
+-- check case where we have to inject nullingrels into coerced join alias
+select f1, count(*) from
+t1 x(x0,x1) left join (t1 left join t2 using(f1)) on (x0 = 0)
+group by f1;
+
+-- same, for a RelabelType coercion
+select f2, count(*) from
+t1 x(x0,x1) left join (t1 left join t2 using(f2)) on (x0 = 0)
+group by f2;
+
 drop table t1, t2;
+
+--
+-- Test planner's selection of pathkeys for ORDER BY aggregates
+--
+
+-- Ensure we order by four.  This suits the most aggregate functions.
+explain (costs off)
+select sum(two order by two),max(four order by four), min(four order by four)
+from tenk1;
+
+-- Ensure we order by two.  It's a tie between ordering by two and four but
+-- we tiebreak on the aggregate's position.
+explain (costs off)
+select
+  sum(two order by two), max(four order by four),
+  min(four order by four), max(two order by two)
+from tenk1;
+
+-- Similar to above, but tiebreak on ordering by four
+explain (costs off)
+select
+  max(four order by four), sum(two order by two),
+  min(four order by four), max(two order by two)
+from tenk1;
+
+-- Ensure this one orders by ten since there are 3 aggregates that require ten
+-- vs two that suit two and four.
+explain (costs off)
+select
+  max(four order by four), sum(two order by two),
+  min(four order by four), max(two order by two),
+  sum(ten order by ten), min(ten order by ten), max(ten order by ten)
+from tenk1;
+
+-- Try a case involving a GROUP BY clause where the GROUP BY column is also
+-- part of an aggregate's ORDER BY clause.  We want a sort order that works
+-- for the GROUP BY along with the first and the last aggregate.
+explain (costs off)
+select
+  sum(unique1 order by ten, two), sum(unique1 order by four),
+  sum(unique1 order by two, four)
+from tenk1
+group by ten;
+
+-- Ensure that we never choose to provide presorted input to an Aggref with
+-- a volatile function in the ORDER BY / DISTINCT clause.  We want to ensure
+-- these sorts are performed individually rather than at the query level.
+explain (costs off)
+select
+  sum(unique1 order by two), sum(unique1 order by four),
+  sum(unique1 order by four, two), sum(unique1 order by two, random()),
+  sum(unique1 order by two, random(), random() + 1)
+from tenk1
+group by ten;
+
+-- Ensure consecutive NULLs are properly treated as distinct from each other
+select array_agg(distinct val)
+from (select null as val from generate_series(1, 2));
+
+-- Ensure no ordering is requested when enable_presorted_aggregate is off
+set enable_presorted_aggregate to off;
+explain (costs off)
+select sum(two order by two) from tenk1;
+reset enable_presorted_aggregate;
 
 --
 -- Test combinations of DISTINCT and/or ORDER BY
@@ -657,6 +736,69 @@ select string_agg(v, decode('ee', 'hex')) from bytea_test_table;
 
 drop table bytea_test_table;
 
+-- Test parallel string_agg and array_agg
+create table pagg_test (x int, y int);
+insert into pagg_test
+select (case x % 4 when 1 then null else x end), x % 10
+from generate_series(1,5000) x;
+
+set parallel_setup_cost TO 0;
+set parallel_tuple_cost TO 0;
+set parallel_leader_participation TO 0;
+set min_parallel_table_scan_size = 0;
+set bytea_output = 'escape';
+set max_parallel_workers_per_gather = 2;
+
+-- create a view as we otherwise have to repeat this query a few times.
+create view v_pagg_test AS
+select
+	y,
+	min(t) AS tmin,max(t) AS tmax,count(distinct t) AS tndistinct,
+	min(b) AS bmin,max(b) AS bmax,count(distinct b) AS bndistinct,
+	min(a) AS amin,max(a) AS amax,count(distinct a) AS andistinct,
+	min(aa) AS aamin,max(aa) AS aamax,count(distinct aa) AS aandistinct
+from (
+	select
+		y,
+		unnest(regexp_split_to_array(a1.t, ','))::int AS t,
+		unnest(regexp_split_to_array(a1.b::text, ',')) AS b,
+		unnest(a1.a) AS a,
+		unnest(a1.aa) AS aa
+	from (
+		select
+			y,
+			string_agg(x::text, ',') AS t,
+			string_agg(x::text::bytea, ',') AS b,
+			array_agg(x) AS a,
+			array_agg(ARRAY[x]) AS aa
+		from pagg_test
+		group by y
+	) a1
+) a2
+group by y;
+
+-- Ensure results are correct.
+select * from v_pagg_test order by y;
+
+-- Ensure parallel aggregation is actually being used.
+explain (costs off) select * from v_pagg_test order by y;
+
+set max_parallel_workers_per_gather = 0;
+
+-- Ensure results are the same without parallel aggregation.
+select * from v_pagg_test order by y;
+
+-- Clean up
+reset max_parallel_workers_per_gather;
+reset bytea_output;
+reset min_parallel_table_scan_size;
+reset parallel_leader_participation;
+reset parallel_tuple_cost;
+reset parallel_setup_cost;
+
+drop view v_pagg_test;
+drop table pagg_test;
+
 -- FILTER tests
 
 select min(unique1) filter (where unique1 > 100) from tenk1;
@@ -672,6 +814,8 @@ having exists (select 1 from onek b where sum(distinct a.four) = b.four);
 
 select max(foo COLLATE "C") filter (where (bar collate "POSIX") > '0')
 from (values ('a', 'b')) AS v(foo,bar);
+
+select any_value(v) filter (where v > 2) from (values (1), (2), (3)) as v (v);
 
 -- outer reference in FILTER (PostgreSQL extension)
 select (select count(*)
@@ -1024,105 +1168,6 @@ CREATE AGGREGATE balk(int4)
 SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;
-
--- GROUP BY optimization by reorder columns
-
-SELECT
-	i AS id,
-	i/2 AS p,
-	format('%60s', i%2) AS v,
-	i/4 AS c,
-	i/8 AS d,
-	(random() * (10000/8))::int as e --the same as d but no correlation with p
-	INTO btg
-FROM
-	generate_series(1, 10000) i;
-
-VACUUM btg;
-ANALYZE btg;
-
--- GROUP BY optimization by reorder columns by frequency
-
-SET enable_hashagg=off;
-SET max_parallel_workers= 0;
-SET max_parallel_workers_per_gather = 0;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, c ORDER BY v, p, c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, d, c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, d, c ORDER BY v, p, d ,c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, d, c ORDER BY p, v, d ,c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, d, e;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, e, d;
-
-CREATE STATISTICS btg_dep ON d, e, p FROM btg;
-ANALYZE btg;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, d, e;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, e, d;
-
-
--- GROUP BY optimization by reorder columns by index scan
-
-CREATE INDEX ON btg(p, v);
-SET enable_seqscan=off;
-SET enable_bitmapscan=off;
-VACUUM btg;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, v ORDER BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p ORDER BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, c ORDER BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, c, p, d;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, c, p, d ORDER BY p, v;
-
-DROP TABLE btg;
-
-RESET enable_hashagg;
-RESET max_parallel_workers;
-RESET max_parallel_workers_per_gather;
-RESET enable_seqscan;
-RESET enable_bitmapscan;
-
 
 -- Secondly test the case of a parallel aggregate combiner function
 -- returning NULL. For that use normal transition function, but a

@@ -3,7 +3,7 @@
  * proto.c
  *		logical replication protocol functions
  *
- * Copyright (c) 2015-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/backend/replication/logical/proto.c
@@ -478,7 +478,7 @@ logicalrep_write_update(StringInfo out, TransactionId xid, Relation rel,
 			pq_sendbyte(out, 'O');	/* old tuple follows */
 		else
 			pq_sendbyte(out, 'K');	/* old key follows */
-		logicalrep_write_tuple(out, rel, oldslot, binary, NULL);
+		logicalrep_write_tuple(out, rel, oldslot, binary, columns);
 	}
 
 	pq_sendbyte(out, 'N');		/* new tuple follows */
@@ -531,7 +531,8 @@ logicalrep_read_update(StringInfo in, bool *has_oldtuple,
  */
 void
 logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
-						TupleTableSlot *oldslot, bool binary)
+						TupleTableSlot *oldslot, bool binary,
+						Bitmapset *columns)
 {
 	Assert(rel->rd_rel->relreplident == REPLICA_IDENTITY_DEFAULT ||
 		   rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL ||
@@ -551,7 +552,7 @@ logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
 	else
 		pq_sendbyte(out, 'K');	/* old key follows */
 
-	logicalrep_write_tuple(out, rel, oldslot, binary, NULL);
+	logicalrep_write_tuple(out, rel, oldslot, binary, columns);
 }
 
 /*
@@ -1163,10 +1164,14 @@ logicalrep_read_stream_commit(StringInfo in, LogicalRepCommitData *commit_data)
 /*
  * Write STREAM ABORT to the output stream. Note that xid and subxid will be
  * same for the top-level transaction abort.
+ *
+ * If write_abort_info is true, send the abort_lsn and abort_time fields,
+ * otherwise don't.
  */
 void
 logicalrep_write_stream_abort(StringInfo out, TransactionId xid,
-							  TransactionId subxid)
+							  TransactionId subxid, XLogRecPtr abort_lsn,
+							  TimestampTz abort_time, bool write_abort_info)
 {
 	pq_sendbyte(out, LOGICAL_REP_MSG_STREAM_ABORT);
 
@@ -1175,19 +1180,40 @@ logicalrep_write_stream_abort(StringInfo out, TransactionId xid,
 	/* transaction ID */
 	pq_sendint32(out, xid);
 	pq_sendint32(out, subxid);
+
+	if (write_abort_info)
+	{
+		pq_sendint64(out, abort_lsn);
+		pq_sendint64(out, abort_time);
+	}
 }
 
 /*
  * Read STREAM ABORT from the output stream.
+ *
+ * If read_abort_info is true, read the abort_lsn and abort_time fields,
+ * otherwise don't.
  */
 void
-logicalrep_read_stream_abort(StringInfo in, TransactionId *xid,
-							 TransactionId *subxid)
+logicalrep_read_stream_abort(StringInfo in,
+							 LogicalRepStreamAbortData *abort_data,
+							 bool read_abort_info)
 {
-	Assert(xid && subxid);
+	Assert(abort_data);
 
-	*xid = pq_getmsgint(in, 4);
-	*subxid = pq_getmsgint(in, 4);
+	abort_data->xid = pq_getmsgint(in, 4);
+	abort_data->subxid = pq_getmsgint(in, 4);
+
+	if (read_abort_info)
+	{
+		abort_data->abort_lsn = pq_getmsgint64(in);
+		abort_data->abort_time = pq_getmsgint64(in);
+	}
+	else
+	{
+		abort_data->abort_lsn = InvalidXLogRecPtr;
+		abort_data->abort_time = 0;
+	}
 }
 
 /*

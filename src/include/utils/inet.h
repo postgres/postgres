@@ -4,7 +4,7 @@
  *	  Declarations for operations on INET datatypes.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/inet.h
@@ -31,8 +31,8 @@ typedef struct
  * We use these values for the "family" field.
  *
  * Referencing all of the non-AF_INET types to AF_INET lets us work on
- * machines which may not have the appropriate address family (like
- * inet6 addresses when AF_INET6 isn't present) but doesn't cause a
+ * machines which did not have the appropriate address family (like
+ * inet6 addresses when AF_INET6 wasn't present) but didn't cause a
  * dump/reload requirement.  Pre-7.4 databases used AF_INET for the family
  * type on disk.
  */
@@ -119,23 +119,58 @@ typedef struct macaddr8
 /*
  * fmgr interface macros
  */
-#define DatumGetInetPP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
-#define InetPGetDatum(X)	PointerGetDatum(X)
+static inline inet *
+DatumGetInetPP(Datum X)
+{
+	return (inet *) PG_DETOAST_DATUM_PACKED(X);
+}
+
+static inline Datum
+InetPGetDatum(const inet *X)
+{
+	return PointerGetDatum(X);
+}
+
 #define PG_GETARG_INET_PP(n) DatumGetInetPP(PG_GETARG_DATUM(n))
 #define PG_RETURN_INET_P(x) return InetPGetDatum(x)
+
 /* obsolescent variants */
-#define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM(X))
+static inline inet *
+DatumGetInetP(Datum X)
+{
+	return (inet *) PG_DETOAST_DATUM(X);
+}
 #define PG_GETARG_INET_P(n) DatumGetInetP(PG_GETARG_DATUM(n))
 
 /* macaddr is a fixed-length pass-by-reference datatype */
-#define DatumGetMacaddrP(X)    ((macaddr *) DatumGetPointer(X))
-#define MacaddrPGetDatum(X)    PointerGetDatum(X)
+static inline macaddr *
+DatumGetMacaddrP(Datum X)
+{
+	return (macaddr *) DatumGetPointer(X);
+}
+
+static inline Datum
+MacaddrPGetDatum(const macaddr *X)
+{
+	return PointerGetDatum(X);
+}
+
 #define PG_GETARG_MACADDR_P(n) DatumGetMacaddrP(PG_GETARG_DATUM(n))
 #define PG_RETURN_MACADDR_P(x) return MacaddrPGetDatum(x)
 
 /* macaddr8 is a fixed-length pass-by-reference datatype */
-#define DatumGetMacaddr8P(X)	((macaddr8 *) DatumGetPointer(X))
-#define Macaddr8PGetDatum(X)	PointerGetDatum(X)
+static inline macaddr8 *
+DatumGetMacaddr8P(Datum X)
+{
+	return (macaddr8 *) DatumGetPointer(X);
+}
+
+static inline Datum
+Macaddr8PGetDatum(const macaddr8 *X)
+{
+	return PointerGetDatum(X);
+}
+
 #define PG_GETARG_MACADDR8_P(n) DatumGetMacaddr8P(PG_GETARG_DATUM(n))
 #define PG_RETURN_MACADDR8_P(x) return Macaddr8PGetDatum(x)
 

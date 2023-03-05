@@ -186,7 +186,8 @@
      language can be packaged together and defined as a function.
      Besides <command>SELECT</command> queries, the commands can include data
      modification queries (<command>INSERT</command>,
-     <command>UPDATE</command>, and <command>DELETE</command>), as well as
+     <command>UPDATE</command>, <command>DELETE</command>, and
+     <command>MERGE</command>), as well as
      other SQL commands. (You cannot use transaction control commands, e.g.,
      <command>COMMIT</command>, <command>SAVEPOINT</command>, and some utility
      commands, e.g.,  <literal>VACUUM</literal>, in <acronym>SQL</acronym> functions.)
@@ -1464,7 +1465,7 @@ SELECT concat_values('|', 1, 4, 2);
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-sql-collations">
     <title><acronym>SQL</acronym> Functions with Collations</title>
 
     <indexterm>
@@ -2343,7 +2344,7 @@ memcpy(destination->data, buffer, 40);
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-v1-call-conv">
     <title>Version 1 Calling Conventions</title>
 
     <para>
@@ -2390,6 +2391,7 @@ PG_FUNCTION_INFO_V1(funcname);
 #include <string.h>
 #include "fmgr.h"
 #include "utils/geo_decls.h"
+#include "varatt.h"
 
 PG_MODULE_MAGIC;
 
@@ -2455,8 +2457,8 @@ copytext(PG_FUNCTION_ARGS)
      * VARDATA is a pointer to the data region of the new struct.  The source
      * could be a short datum, so retrieve its data through VARDATA_ANY.
      */
-    memcpy((void *) VARDATA(new_t), /* destination */
-           (void *) VARDATA_ANY(t), /* source */
+    memcpy(VARDATA(new_t),          /* destination */
+           VARDATA_ANY(t),          /* source */
            VARSIZE_ANY_EXHDR(t));   /* how many bytes */
     PG_RETURN_TEXT_P(new_t);
 }
@@ -2593,7 +2595,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-code">
     <title>Writing Code</title>
 
     <para>
@@ -2700,7 +2702,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
 
 &dfunc;
 
-   <sect2>
+   <sect2 id="xfunc-c-composite-type-args">
     <title>Composite-Type Arguments</title>
 
     <para>
@@ -2763,7 +2765,7 @@ c_overpaid(PG_FUNCTION_ARGS)
      is  null.   <function>GetAttributeByName</function> returns a <type>Datum</type>
      value that you can convert to the proper data type by using the
      appropriate <function>DatumGet<replaceable>XXX</replaceable>()</function>
-     macro.  Note that the return value is meaningless if the null flag is
+     function.  Note that the return value is meaningless if the null flag is
      set; always check the null flag before trying to do anything with the
      result.
     </para>
@@ -2788,7 +2790,7 @@ CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-returning-rows">
     <title>Returning Rows (Composite Types)</title>
 
     <para>
@@ -3283,7 +3285,7 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-polymorphic">
     <title>Polymorphic Arguments and Return Types</title>
 
     <para>

@@ -46,7 +46,7 @@ physical relation in system catalogs.
 It is assumed that the main fork, fork number 0 or MAIN_FORKNUM, always
 exists. Fork numbers are assigned in src/include/common/relpath.h.
 Functions in smgr.c and md.c take an extra fork number argument, in addition
-to relfilenode and block number, to identify which relation fork you want to
+to relfilelocator and block number, to identify which relation fork you want to
 access. Since most code wants to access the main fork, a shortcut version of
 ReadBuffer that accesses MAIN_FORKNUM is provided in the buffer manager for
 convenience.

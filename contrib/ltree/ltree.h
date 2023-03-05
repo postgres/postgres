@@ -12,10 +12,10 @@
 
 /*
  * We want the maximum length of a label to be encoding-independent, so
- * set it somewhat arbitrarily at 255 characters (not bytes), while using
+ * set it somewhat arbitrarily at 1000 characters (not bytes), while using
  * uint16 fields to hold the byte length.
  */
-#define LTREE_LABEL_MAX_CHARS 255
+#define LTREE_LABEL_MAX_CHARS 1000
 
 /*
  * LOWER_NODE used to be defined in the Makefile via the compile flags.
@@ -126,7 +126,8 @@ typedef struct
 
 #define LQUERY_HASNOT		0x01
 
-#define ISALNUM(x)	( t_isalpha(x) || t_isdigit(x)	|| ( pg_mblen(x) == 1 && t_iseq((x), '_') ) )
+/* valid label chars are alphanumerics, underscores and hyphens */
+#define ISLABEL(x) ( t_isalnum(x) || t_iseq(x, '_') || t_iseq(x, '-') )
 
 /* full text query */
 
@@ -176,37 +177,37 @@ typedef struct
 
 
 /* use in array iterator */
-Datum		ltree_isparent(PG_FUNCTION_ARGS);
-Datum		ltree_risparent(PG_FUNCTION_ARGS);
-Datum		ltq_regex(PG_FUNCTION_ARGS);
-Datum		ltq_rregex(PG_FUNCTION_ARGS);
-Datum		lt_q_regex(PG_FUNCTION_ARGS);
-Datum		lt_q_rregex(PG_FUNCTION_ARGS);
-Datum		ltxtq_exec(PG_FUNCTION_ARGS);
-Datum		ltxtq_rexec(PG_FUNCTION_ARGS);
-Datum		_ltq_regex(PG_FUNCTION_ARGS);
-Datum		_ltq_rregex(PG_FUNCTION_ARGS);
-Datum		_lt_q_regex(PG_FUNCTION_ARGS);
-Datum		_lt_q_rregex(PG_FUNCTION_ARGS);
-Datum		_ltxtq_exec(PG_FUNCTION_ARGS);
-Datum		_ltxtq_rexec(PG_FUNCTION_ARGS);
-Datum		_ltree_isparent(PG_FUNCTION_ARGS);
-Datum		_ltree_risparent(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltree_isparent(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltree_risparent(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltq_regex(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltq_rregex(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum lt_q_regex(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum lt_q_rregex(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltxtq_exec(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltxtq_rexec(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum _ltq_regex(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum _ltq_rregex(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum _lt_q_regex(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum _lt_q_rregex(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum _ltxtq_exec(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum _ltxtq_rexec(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum _ltree_isparent(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum _ltree_risparent(PG_FUNCTION_ARGS);
 
 /* Concatenation functions */
-Datum		ltree_addltree(PG_FUNCTION_ARGS);
-Datum		ltree_addtext(PG_FUNCTION_ARGS);
-Datum		ltree_textadd(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltree_addltree(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltree_addtext(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltree_textadd(PG_FUNCTION_ARGS);
 
 /* Util function */
-Datum		ltree_in(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum ltree_in(PG_FUNCTION_ARGS);
 
 bool		ltree_execute(ITEM *curitem, void *checkval,
 						  bool calcnot, bool (*chkcond) (void *checkval, ITEM *val));
 
 int			ltree_compare(const ltree *a, const ltree *b);
 bool		inner_isparent(const ltree *c, const ltree *p);
-bool		compare_subnode(ltree_level *t, char *q, int len,
+bool		compare_subnode(ltree_level *t, char *qn, int len,
 							int (*cmpptr) (const char *, const char *, size_t), bool anyend);
 ltree	   *lca_inner(ltree **a, int len);
 int			ltree_strncasecmp(const char *a, const char *b, size_t s);

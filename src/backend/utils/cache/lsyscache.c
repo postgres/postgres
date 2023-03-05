@@ -3,7 +3,7 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -33,6 +33,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -3182,6 +3183,10 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  *
  * If it's desirable to call free_attstatsslot when get_attstatsslot might
  * not have been called, memset'ing sslot to zeroes will allow that.
+ *
+ * Passing flags=0 can be useful to quickly check if the requested slot type
+ * exists.  In this case no arrays are extracted, so free_attstatsslot need
+ * not be called.
  */
 bool
 get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
@@ -3577,4 +3582,104 @@ get_index_isclustered(Oid index_oid)
 	ReleaseSysCache(tuple);
 
 	return isclustered;
+}
+
+/*
+ * get_publication_oid - given a publication name, look up the OID
+ *
+ * If missing_ok is false, throw an error if name not found.  If true, just
+ * return InvalidOid.
+ */
+Oid
+get_publication_oid(const char *pubname, bool missing_ok)
+{
+	Oid			oid;
+
+	oid = GetSysCacheOid1(PUBLICATIONNAME, Anum_pg_publication_oid,
+						  CStringGetDatum(pubname));
+	if (!OidIsValid(oid) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("publication \"%s\" does not exist", pubname)));
+	return oid;
+}
+
+/*
+ * get_publication_name - given a publication Oid, look up the name
+ *
+ * If missing_ok is false, throw an error if name not found.  If true, just
+ * return NULL.
+ */
+char *
+get_publication_name(Oid pubid, bool missing_ok)
+{
+	HeapTuple	tup;
+	char	*pubname;
+	Form_pg_publication pubform;
+
+	tup = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
+
+	if (!HeapTupleIsValid(tup))
+	{
+		if (!missing_ok)
+			elog(ERROR, "cache lookup failed for publication %u", pubid);
+		return NULL;
+	}
+
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
+	pubname = pstrdup(NameStr(pubform->pubname));
+
+	ReleaseSysCache(tup);
+
+	return pubname;
+}
+
+/*
+ * get_subscription_oid - given a subscription name, look up the OID
+ *
+ * If missing_ok is false, throw an error if name not found.  If true, just
+ * return InvalidOid.
+ */
+Oid
+get_subscription_oid(const char* subname, bool missing_ok)
+{
+	Oid			oid;
+
+	oid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
+						   MyDatabaseId, CStringGetDatum(subname));
+	if (!OidIsValid(oid) && !missing_ok)
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("subscription \"%s\" does not exist", subname)));
+	return oid;
+}
+
+/*
+ * get_subscription_name - given a subscription OID, look up the name
+ *
+ * If missing_ok is false, throw an error if name not found.  If true, just
+ * return NULL.
+ */
+char *
+get_subscription_name(Oid subid, bool missing_ok)
+{
+	HeapTuple	tup;
+	char* subname;
+	Form_pg_subscription subform;
+
+	tup = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));
+
+	if (!HeapTupleIsValid(tup))
+	{
+		if (!missing_ok)
+			elog(ERROR, "cache lookup failed for subscription %u", subid);
+		return NULL;
+	}
+
+	subform = (Form_pg_subscription) GETSTRUCT(tup);
+	subname = pstrdup(NameStr(subform->subname));
+
+	ReleaseSysCache(tup);
+
+	return subname;
 }

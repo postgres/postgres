@@ -74,7 +74,9 @@ SELECT regproc('ng_catalog.now');
 SELECT regprocedure('ng_catalog.abs(numeric)');
 SELECT regclass('ng_catalog.pg_class');
 SELECT regtype('ng_catalog.int4');
+\set VERBOSITY sqlstate \\ -- error message is encoding-dependent
 SELECT regcollation('ng_catalog."POSIX"');
+\set VERBOSITY default
 
 -- schemaname not applicable
 
@@ -120,3 +122,26 @@ SELECT to_regrole('foo.bar');
 SELECT to_regnamespace('Nonexistent');
 SELECT to_regnamespace('"Nonexistent"');
 SELECT to_regnamespace('foo.bar');
+
+-- Test soft-error API
+
+SELECT * FROM pg_input_error_info('ng_catalog.pg_class', 'regclass');
+SELECT pg_input_is_valid('ng_catalog."POSIX"', 'regcollation');
+SELECT * FROM pg_input_error_info('no_such_config', 'regconfig');
+SELECT * FROM pg_input_error_info('no_such_dictionary', 'regdictionary');
+SELECT * FROM pg_input_error_info('Nonexistent', 'regnamespace');
+SELECT * FROM pg_input_error_info('ng_catalog.||/', 'regoper');
+SELECT * FROM pg_input_error_info('-', 'regoper');
+SELECT * FROM pg_input_error_info('ng_catalog.+(int4,int4)', 'regoperator');
+SELECT * FROM pg_input_error_info('-', 'regoperator');
+SELECT * FROM pg_input_error_info('ng_catalog.now', 'regproc');
+SELECT * FROM pg_input_error_info('ng_catalog.abs(numeric)', 'regprocedure');
+SELECT * FROM pg_input_error_info('ng_catalog.abs(numeric', 'regprocedure');
+SELECT * FROM pg_input_error_info('regress_regrole_test', 'regrole');
+SELECT * FROM pg_input_error_info('no_such_type', 'regtype');
+
+-- Some cases that should be soft errors, but are not yet
+SELECT * FROM pg_input_error_info('incorrect type name syntax', 'regtype');
+SELECT * FROM pg_input_error_info('numeric(1,2,3)', 'regtype');  -- bogus typmod
+SELECT * FROM pg_input_error_info('way.too.many.names', 'regtype');
+SELECT * FROM pg_input_error_info('no_such_catalog.schema.name', 'regtype');

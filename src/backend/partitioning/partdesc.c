@@ -3,7 +3,7 @@
  * partdesc.c
  *		Support routines for manipulating partition descriptors
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -290,6 +290,12 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	{
 		oldcxt = MemoryContextSwitchTo(new_pdcxt);
 		partdesc->boundinfo = partition_bounds_copy(boundinfo, key);
+
+		/* Initialize caching fields for speeding up ExecFindPartition */
+		partdesc->last_found_datum_index = -1;
+		partdesc->last_found_part_index = -1;
+		partdesc->last_found_count = 0;
+
 		partdesc->oids = (Oid *) palloc(nparts * sizeof(Oid));
 		partdesc->is_leaf = (bool *) palloc(nparts * sizeof(bool));
 

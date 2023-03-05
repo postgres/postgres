@@ -117,7 +117,7 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 #include <ctype.h>
 
 /* prototype for the main function we got from the perl module */
-static void DoubleMetaphone(char *, char **);
+static void DoubleMetaphone(char *str, char **codes);
 
 #ifndef DMETAPHONE_MAIN
 

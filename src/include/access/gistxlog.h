@@ -3,7 +3,7 @@
  * gistxlog.h
  *	  gist xlog routines
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/gistxlog.h
@@ -49,12 +49,10 @@ typedef struct gistxlogPageUpdate
  */
 typedef struct gistxlogDelete
 {
-	TransactionId latestRemovedXid;
+	TransactionId snapshotConflictHorizon;
 	uint16		ntodelete;		/* number of deleted offsets */
 
-	/*
-	 * In payload of blk 0 : todelete OffsetNumbers
-	 */
+	/* TODELETE OFFSET NUMBER ARRAY FOLLOWS */
 } gistxlogDelete;
 
 #define SizeOfGistxlogDelete	(offsetof(gistxlogDelete, ntodelete) + sizeof(uint16))
@@ -97,12 +95,12 @@ typedef struct gistxlogPageDelete
  */
 typedef struct gistxlogPageReuse
 {
-	RelFileNode node;
+	RelFileLocator locator;
 	BlockNumber block;
-	FullTransactionId latestRemovedFullXid;
+	FullTransactionId snapshotConflictHorizon;
 } gistxlogPageReuse;
 
-#define SizeOfGistxlogPageReuse	(offsetof(gistxlogPageReuse, latestRemovedFullXid) + sizeof(FullTransactionId))
+#define SizeOfGistxlogPageReuse	(offsetof(gistxlogPageReuse, snapshotConflictHorizon) + sizeof(FullTransactionId))
 
 extern void gist_redo(XLogReaderState *record);
 extern void gist_desc(StringInfo buf, XLogReaderState *record);

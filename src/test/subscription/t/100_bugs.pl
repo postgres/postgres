@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+# Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 # Tests for various bugs found over time
 use strict;
@@ -69,6 +69,12 @@ $node_publisher->wait_for_catchup('sub1');
 
 pass('index predicates do not cause crash');
 
+# We'll re-use these nodes below, so drop their replication state.
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION sub1");
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub1");
+# Drop the tables too.
+$node_publisher->safe_psql('postgres', "DROP TABLE tab1");
+
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
 
@@ -81,9 +87,12 @@ $node_subscriber->stop('fast');
 # identity set before accepting updates.  If it did not it would cause
 # an error when an update was attempted.
 
-$node_publisher = PostgreSQL::Test::Cluster->new('publisher2');
-$node_publisher->init(allows_streaming => 'logical');
-$node_publisher->start;
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+# Although we don't use node_subscriber in this test, keep its logfile
+# name in step with node_publisher for later tests.
+$node_subscriber->rotate_logfile();
 
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION pub FOR ALL TABLES");
@@ -102,7 +111,11 @@ is( $node_publisher->psql(
 	'update to unlogged table without replica identity with FOR ALL TABLES publication'
 );
 
+# Again, drop replication state but not tables.
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub");
+
 $node_publisher->stop('fast');
+
 
 # Bug #16643 - https://postgr.es/m/16643-eaadeb2a1a58d28c@postgresql.org
 #
@@ -144,12 +157,7 @@ $node_twoways->safe_psql('d2',
 # We cannot rely solely on wait_for_catchup() here; it isn't sufficient
 # when tablesync workers might still be running. So in addition to that,
 # verify that tables are synced.
-# XXX maybe this should be integrated in wait_for_catchup() itself.
-$node_twoways->wait_for_catchup('testsub');
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-$node_twoways->poll_query_until('d2', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_twoways->wait_for_subscription_sync($node_twoways, 'testsub', 'd2');
 
 is($node_twoways->safe_psql('d2', "SELECT count(f) FROM t"),
 	$rows * 2, "2x$rows rows in t");
@@ -231,13 +239,12 @@ $node_sub->stop('fast');
 # target table's relcache was not being invalidated. This leads to skipping
 # UPDATE/DELETE operations during apply on the subscriber side as the columns
 # required to search corresponding rows won't get logged.
-$node_publisher = PostgreSQL::Test::Cluster->new('publisher3');
-$node_publisher->init(allows_streaming => 'logical');
-$node_publisher->start;
 
-$node_subscriber = PostgreSQL::Test::Cluster->new('subscriber3');
-$node_subscriber->init(allows_streaming => 'logical');
-$node_subscriber->start;
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+$node_subscriber->rotate_logfile();
+$node_subscriber->start();
 
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_replidentity_index(a int not null, b int not null)");
@@ -278,11 +285,8 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub"
 );
 
-$node_publisher->wait_for_catchup('tap_sub');
-
-# Also wait for initial table sync to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+# Wait for initial table sync to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 is( $node_subscriber->safe_psql(
 		'postgres', "SELECT * FROM tab_replidentity_index"),
@@ -303,6 +307,68 @@ is( $node_subscriber->safe_psql(
 		'postgres', "SELECT * FROM tab_replidentity_index"),
 	qq(-1|1),
 	"update works with REPLICA IDENTITY");
+
+# Clean up
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub");
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION tap_pub");
+$node_publisher->safe_psql('postgres', "DROP TABLE tab_replidentity_index");
+$node_subscriber->safe_psql('postgres', "DROP TABLE tab_replidentity_index");
+
+# Test schema invalidation by renaming the schema
+
+# Create tables on publisher
+$node_publisher->safe_psql('postgres', "CREATE SCHEMA sch1");
+$node_publisher->safe_psql('postgres', "CREATE TABLE sch1.t1 (c1 int)");
+
+# Create tables on subscriber
+$node_subscriber->safe_psql('postgres', "CREATE SCHEMA sch1");
+$node_subscriber->safe_psql('postgres', "CREATE TABLE sch1.t1 (c1 int)");
+$node_subscriber->safe_psql('postgres', "CREATE SCHEMA sch2");
+$node_subscriber->safe_psql('postgres', "CREATE TABLE sch2.t1 (c1 int)");
+
+# Setup logical replication that will cover t1 under both schema names
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub_sch FOR ALL TABLES");
+$node_subscriber->safe_psql('postgres',
+	"CREATE SUBSCRIPTION tap_sub_sch CONNECTION '$publisher_connstr' PUBLICATION tap_pub_sch"
+);
+
+# Wait for initial table sync to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub_sch');
+
+# Check what happens to data inserted before and after schema rename
+$node_publisher->safe_psql(
+	'postgres',
+	"begin;
+insert into sch1.t1 values(1);
+alter schema sch1 rename to sch2;
+create schema sch1;
+create table sch1.t1(c1 int);
+insert into sch1.t1 values(2);
+insert into sch2.t1 values(3);
+commit;");
+
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub_sch');
+
+# Subscriber's sch1.t1 should receive the row inserted into the new sch1.t1,
+# but not the row inserted into the old sch1.t1 post-rename.
+my $result = $node_subscriber->safe_psql('postgres', "SELECT * FROM sch1.t1");
+is( $result, qq(1
+2), 'check data in subscriber sch1.t1 after schema rename');
+
+# Subscriber's sch2.t1 won't have gotten anything yet ...
+$result = $node_subscriber->safe_psql('postgres', "SELECT * FROM sch2.t1");
+is($result, '', 'no data yet in subscriber sch2.t1 after schema rename');
+
+# ... but it should show up after REFRESH.
+$node_subscriber->safe_psql('postgres',
+	'ALTER SUBSCRIPTION tap_sub_sch REFRESH PUBLICATION');
+
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub_sch');
+
+$result = $node_subscriber->safe_psql('postgres', "SELECT * FROM sch2.t1");
+is( $result, qq(1
+3), 'check data in subscriber sch2.t1 after schema rename');
 
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');

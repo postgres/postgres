@@ -10,11 +10,19 @@ select '010'::xid,
 	   '0xffffffffffffffff'::xid8,
 	   '-1'::xid8;
 
--- garbage values are not yet rejected (perhaps they should be)
+-- garbage values
 select ''::xid;
 select 'asdf'::xid;
 select ''::xid8;
 select 'asdf'::xid8;
+
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('42', 'xid');
+SELECT pg_input_is_valid('asdf', 'xid');
+SELECT * FROM pg_input_error_info('0xffffffffff', 'xid');
+SELECT pg_input_is_valid('42', 'xid8');
+SELECT pg_input_is_valid('asdf', 'xid8');
+SELECT * FROM pg_input_error_info('0xffffffffffffffffffff', 'xid8');
 
 -- equality
 select '1'::xid = '1'::xid;
@@ -67,6 +75,13 @@ select '31:12:'::pg_snapshot;
 select '0:1:'::pg_snapshot;
 select '12:13:0'::pg_snapshot;
 select '12:16:14,13'::pg_snapshot;
+
+-- also try it with non-error-throwing API
+select pg_input_is_valid('12:13:', 'pg_snapshot');
+select pg_input_is_valid('31:12:', 'pg_snapshot');
+select * from pg_input_error_info('31:12:', 'pg_snapshot');
+select pg_input_is_valid('12:16:14,13', 'pg_snapshot');
+select * from pg_input_error_info('12:16:14,13', 'pg_snapshot');
 
 create temp table snapshot_test (
 	nr	integer,

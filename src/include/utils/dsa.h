@@ -3,7 +3,7 @@
  * dsa.h
  *	  Dynamic shared memory areas.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -98,6 +98,10 @@ typedef pg_atomic_uint64 dsa_pointer_atomic;
  * code shouldn't assume that is true.
  */
 typedef dsm_handle dsa_handle;
+
+/* Sentinel value to use for invalid dsa_handles. */
+#define DSA_HANDLE_INVALID ((dsa_handle) DSM_HANDLE_INVALID)
+
 
 extern dsa_area *dsa_create(int tranche_id);
 extern dsa_area *dsa_create_in_place(void *place, size_t size,

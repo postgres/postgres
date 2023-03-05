@@ -1,44 +1,85 @@
 --
 -- RANDOM
--- Test the random function
+-- Test random() and allies
+--
+-- Tests in this file may have a small probability of failure,
+-- since we are dealing with randomness.  Try to keep the failure
+-- risk for any one test case under 1e-9.
 --
 
--- count the number of tuples originally, should be 1000
-SELECT count(*) FROM onek;
+-- There should be no duplicates in 1000 random() values.
+-- (Assuming 52 random bits in the float8 results, we could
+-- take as many as 3000 values and still have less than 1e-9 chance
+-- of failure, per https://en.wikipedia.org/wiki/Birthday_problem)
+SELECT r, count(*)
+FROM (SELECT random() r FROM generate_series(1, 1000)) ss
+GROUP BY r HAVING count(*) > 1;
 
--- pick three random rows, they shouldn't match
-(SELECT unique1 AS random
-  FROM onek ORDER BY random() LIMIT 1)
-INTERSECT
-(SELECT unique1 AS random
-  FROM onek ORDER BY random() LIMIT 1)
-INTERSECT
-(SELECT unique1 AS random
-  FROM onek ORDER BY random() LIMIT 1);
+-- The range should be [0, 1).  We can expect that at least one out of 2000
+-- random values is in the lowest or highest 1% of the range with failure
+-- probability less than about 1e-9.
 
--- count roughly 1/10 of the tuples
-CREATE TABLE RANDOM_TBL AS
-  SELECT count(*) AS random
-  FROM onek WHERE random() < 1.0/10;
+SELECT count(*) FILTER (WHERE r < 0 OR r >= 1) AS out_of_range,
+       (count(*) FILTER (WHERE r < 0.01)) > 0 AS has_small,
+       (count(*) FILTER (WHERE r > 0.99)) > 0 AS has_large
+FROM (SELECT random() r FROM generate_series(1, 2000)) ss;
 
--- select again, the count should be different
-INSERT INTO RANDOM_TBL (random)
-  SELECT count(*)
-  FROM onek WHERE random() < 1.0/10;
+-- Check for uniform distribution using the Kolmogorov-Smirnov test.
 
--- select again, the count should be different
-INSERT INTO RANDOM_TBL (random)
-  SELECT count(*)
-  FROM onek WHERE random() < 1.0/10;
+CREATE FUNCTION ks_test_uniform_random()
+RETURNS boolean AS
+$$
+DECLARE
+  n int := 1000;        -- Number of samples
+  c float8 := 1.94947;  -- Critical value for 99.9% confidence
+  ok boolean;
+BEGIN
+  ok := (
+    WITH samples AS (
+      SELECT random() r FROM generate_series(1, n) ORDER BY 1
+    ), indexed_samples AS (
+      SELECT (row_number() OVER())-1.0 i, r FROM samples
+    )
+    SELECT max(abs(i/n-r)) < c / sqrt(n) FROM indexed_samples
+  );
+  RETURN ok;
+END
+$$
+LANGUAGE plpgsql;
 
--- select again, the count should be different
-INSERT INTO RANDOM_TBL (random)
-  SELECT count(*)
-  FROM onek WHERE random() < 1.0/10;
+-- As written, ks_test_uniform_random() returns true about 99.9%
+-- of the time.  To get down to a roughly 1e-9 test failure rate,
+-- just run it 3 times and accept if any one of them passes.
+SELECT ks_test_uniform_random() OR
+       ks_test_uniform_random() OR
+       ks_test_uniform_random() AS uniform;
 
--- now test that they are different counts
-SELECT random, count(random) FROM RANDOM_TBL
-  GROUP BY random HAVING count(random) > 3;
+-- now test random_normal()
 
-SELECT AVG(random) FROM RANDOM_TBL
-  HAVING AVG(random) NOT BETWEEN 80 AND 120;
+-- As above, there should be no duplicates in 1000 random_normal() values.
+SELECT r, count(*)
+FROM (SELECT random_normal() r FROM generate_series(1, 1000)) ss
+GROUP BY r HAVING count(*) > 1;
+
+-- ... unless we force the range (standard deviation) to zero.
+-- This is a good place to check that the mean input does something, too.
+SELECT r, count(*)
+FROM (SELECT random_normal(10, 0) r FROM generate_series(1, 100)) ss
+GROUP BY r;
+SELECT r, count(*)
+FROM (SELECT random_normal(-10, 0) r FROM generate_series(1, 100)) ss
+GROUP BY r;
+
+-- setseed() should produce a reproducible series of random() values.
+
+SELECT setseed(0.5);
+
+SELECT random() FROM generate_series(1, 10);
+
+-- Likewise for random_normal(); however, since its implementation relies
+-- on libm functions that have different roundoff behaviors on different
+-- machines, we have to round off the results a bit to get consistent output.
+SET extra_float_digits = -1;
+
+SELECT random_normal() FROM generate_series(1, 10);
+SELECT random_normal(mean => 1, stddev => 0.1) r FROM generate_series(1, 10);

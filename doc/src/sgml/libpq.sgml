@@ -878,7 +878,7 @@ PQsslKeyPassHook_OpenSSL_type PQgetSSLKeyPassHook_OpenSSL(void);
     as further described below.
    </para>
 
-   <sect3>
+   <sect3 id="libpq-connstring-keyword-value">
     <title>Keyword/Value Connection Strings</title>
 
    <para>
@@ -906,7 +906,7 @@ host=localhost port=5432 dbname=mydb connect_timeout=10
    </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="libpq-connstring-uris">
     <title>Connection URIs</title>
 
    <para>
@@ -1070,9 +1070,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         specified, or is empty, is to connect to a Unix-domain
         socket<indexterm><primary>Unix domain socket</primary></indexterm> in
         <filename>/tmp</filename> (or whatever socket directory was specified
-        when <productname>PostgreSQL</productname> was built).  On Windows and
-        on machines without Unix-domain sockets, the default is to connect to
-        <literal>localhost</literal>.
+        when <productname>PostgreSQL</productname> was built).  On Windows,
+        the default is to connect to <literal>localhost</literal>.
        </para>
        <para>
         A comma-separated list of host names is also accepted, in which case
@@ -1152,8 +1151,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        <para>
         Without either a host name or host address,
         <application>libpq</application> will connect using a local
-        Unix-domain socket; or on Windows and on machines without Unix-domain
-        sockets, it will attempt to connect to <literal>localhost</literal>.
+        Unix-domain socket; or on Windows, it will attempt to connect to
+        <literal>localhost</literal>.
        </para>
        </listitem>
       </varlistentry>
@@ -1385,15 +1384,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         It is only supported on systems where <symbol>TCP_USER_TIMEOUT</symbol>
         is available; on other systems, it has no effect.
        </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="libpq-connect-tty" xreflabel="tty">
-      <term><literal>tty</literal></term>
-      <listitem>
-      <para>
-       Ignored (formerly, this specified where to send server debug output).
-      </para>
       </listitem>
      </varlistentry>
 
@@ -1746,8 +1736,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         revocation list (CRL).  Certificates listed in this file, if it
         exists, will be rejected while attempting to authenticate the
         server's certificate.  If neither
-        <xref linkend='libpq-connect-sslcrl'/> nor
-        <xref linkend='libpq-connect-sslcrldir'/> is set, this setting is
+        <xref linkend="libpq-connect-sslcrl"/> nor
+        <xref linkend="libpq-connect-sslcrldir"/> is set, this setting is
         taken as
         <filename>~/.postgresql/root.crl</filename>.
        </para>
@@ -2524,8 +2514,9 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
 
       <para>
        The list of available attributes varies depending on the SSL library
-       being used, and the type of connection. If an attribute is not
-       available, returns NULL.
+       being used and the type of connection.  Returns NULL if the connection
+       does not use SSL or the specified attribute name is not defined for the
+       library in use.
       </para>
 
       <para>
@@ -2573,9 +2564,7 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
          <term><literal>compression</literal></term>
           <listitem>
            <para>
-            If SSL compression is in use, returns the name of the compression
-            algorithm, or "on" if compression is used but the algorithm is
-            not known. If compression is not in use, returns "off".
+            Returns "on" if SSL compression is in use, else it returns "off".
            </para>
           </listitem>
          </varlistentry>
@@ -2584,12 +2573,15 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
 
       <para>
        As a special case, the <literal>library</literal> attribute may be
-       queried without an existing connection by passing NULL as the
-       <literal>conn</literal> argument. The historical behavior was to return
-       NULL for any attribute when a NULL <literal>conn</literal> was provided;
-       client programs needing to differentiate between the newer and older
-       implementations may check the
-       <literal>LIBPQ_HAS_SSL_LIBRARY_DETECTION</literal> feature macro.
+       queried without a connection by passing NULL as
+       the <literal>conn</literal> argument.  The result will be the default
+       SSL library name, or NULL if <application>libpq</application> was
+       compiled without any SSL support.  (Prior
+       to <productname>PostgreSQL</productname> version 15, passing NULL as
+       the <literal>conn</literal> argument always resulted in NULL.
+       Client programs needing to differentiate between the newer and older
+       implementations of this case may check the
+       <literal>LIBPQ_HAS_SSL_LIBRARY_DETECTION</literal> feature macro.)
       </para>
      </listitem>
     </varlistentry>
@@ -2598,10 +2590,21 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
      <term><function>PQsslAttributeNames</function><indexterm><primary>PQsslAttributeNames</primary></indexterm></term>
      <listitem>
       <para>
-       Return an array of SSL attribute names available. The array is terminated by a NULL pointer.
+       Returns an array of SSL attribute names that can be used
+       in <function>PQsslAttribute()</function>.
+       The array is terminated by a NULL pointer.
 <synopsis>
 const char * const * PQsslAttributeNames(const PGconn *conn);
 </synopsis>
+      </para>
+
+      <para>
+       If <literal>conn</literal> is NULL, the attributes available for the
+       default SSL library are returned, or an empty list
+       if <application>libpq</application> was compiled without any SSL
+       support.  If <literal>conn</literal> is not NULL, the attributes
+       available for the SSL library in use for the connection are returned,
+       or an empty list if the connection is not encrypted.
       </para>
      </listitem>
     </varlistentry>
@@ -2610,8 +2613,10 @@ const char * const * PQsslAttributeNames(const PGconn *conn);
      <term><function>PQsslStruct</function><indexterm><primary>PQsslStruct</primary></indexterm></term>
      <listitem>
       <para>
-       Return a pointer to an SSL-implementation-specific object describing
-       the connection.
+       Returns a pointer to an SSL-implementation-specific object describing
+       the connection.  Returns NULL if the connection is not encrypted
+       or the requested type of object is not available from the connection's
+       SSL implementation.
 <synopsis>
 void *PQsslStruct(const PGconn *conn, const char *struct_name);
 </synopsis>
@@ -2619,8 +2624,9 @@ void *PQsslStruct(const PGconn *conn, const char *struct_name);
       <para>
        The struct(s) available depend on the SSL implementation in use.
        For <productname>OpenSSL</productname>, there is one struct,
-       available under the name "OpenSSL", and it returns a pointer to the
-       <productname>OpenSSL</productname> <literal>SSL</literal> struct.
+       available under the name <literal>OpenSSL</literal>,
+       and it returns a pointer to
+       <productname>OpenSSL</productname>'s <literal>SSL</literal> struct.
        To use this function, code along the following lines could be used:
 <programlisting><![CDATA[
 #include <libpq-fe.h>
@@ -2653,7 +2659,7 @@ void *PQsslStruct(const PGconn *conn, const char *struct_name);
      <listitem>
       <para>
        <indexterm><primary>SSL</primary><secondary sortas="libpq">in libpq</secondary></indexterm>
-       Returns the SSL structure used in the connection, or null
+       Returns the SSL structure used in the connection, or NULL
        if SSL is not in use.
 
 <synopsis>
@@ -3628,6 +3634,9 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
 <synopsis>
 void PQclear(PGresult *res);
 </synopsis>
+
+        If the argument is a <symbol>NULL</symbol> pointer, no operation is
+        performed.
        </para>
 
        <para>
@@ -4024,7 +4033,7 @@ int PQnparams(const PGresult *res);
 
       <para>
        This function is only useful when inspecting the result of
-       <xref linkend="libpq-PQdescribePrepared"/>.  For other types of queries it
+       <xref linkend="libpq-PQdescribePrepared"/>.  For other types of results it
        will return zero.
       </para>
      </listitem>
@@ -4044,7 +4053,7 @@ Oid PQparamtype(const PGresult *res, int param_number);
 
       <para>
        This function is only useful when inspecting the result of
-       <xref linkend="libpq-PQdescribePrepared"/>.  For other types of queries it
+       <xref linkend="libpq-PQdescribePrepared"/>.  For other types of results it
        will return zero.
       </para>
      </listitem>
@@ -4608,8 +4617,7 @@ int PQsendQuery(PGconn *conn, const char *command);
       </para>
 
       <para>
-       In pipeline mode, command strings containing more than one SQL command
-       are disallowed.
+       In pipeline mode, this function is disallowed.
       </para>
      </listitem>
     </varlistentry>
@@ -5047,10 +5055,11 @@ int PQflush(PGconn *conn);
   </para>
 
   <para>
-   While the pipeline API was introduced in
+   While <application>libpq</application>'s pipeline API was introduced in
    <productname>PostgreSQL</productname> 14, it is a client-side feature
    which doesn't require special server support and works on any server
-   that supports the v3 extended query protocol.
+   that supports the v3 extended query protocol.  For more information see
+   <xref linkend="protocol-flow-pipelining"/>.
   </para>
 
   <sect2 id="libpq-pipeline-using">
@@ -5063,6 +5072,7 @@ int PQflush(PGconn *conn);
     <xref linkend="libpq-PQpipelineStatus"/> can be used
     to test whether pipeline mode is active.
     In pipeline mode, only <link linkend="libpq-async">asynchronous operations</link>
+    that utilize the extended query protocol
     are permitted, command strings containing multiple SQL commands are
     disallowed, and so is <literal>COPY</literal>.
     Using synchronous command execution functions
@@ -5074,6 +5084,8 @@ int PQflush(PGconn *conn);
     <function>PQdescribePrepared</function>,
     <function>PQdescribePortal</function>,
     is an error condition.
+    <function>PQsendQuery</function> is
+    also disallowed, because it uses the simple query protocol.
     Once all dispatched commands have had their results processed, and
     the end pipeline result has been consumed, the application may return
     to non-pipelined mode with <xref linkend="libpq-PQexitPipelineMode"/>.
@@ -5102,8 +5114,7 @@ int PQflush(PGconn *conn);
 
     <para>
      After entering pipeline mode, the application dispatches requests using
-     <xref linkend="libpq-PQsendQuery"/>,
-     <xref linkend="libpq-PQsendQueryParams"/>,
+     <xref linkend="libpq-PQsendQueryParams"/>
      or its prepared-query sibling
      <xref linkend="libpq-PQsendQueryPrepared"/>.
      These requests are queued on the client-side until flushed to the server;
@@ -6670,6 +6681,8 @@ void PQfreemem(void *ptr);
 <synopsis>
 void PQconninfoFree(PQconninfoOption *connOptions);
 </synopsis>
+      If the argument is a <symbol>NULL</symbol> pointer, no operation is
+      performed.
      </para>
 
      <para>
@@ -9206,11 +9219,9 @@ main(int argc, char **argv)
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/select.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 
 #include "libpq-fe.h"
 

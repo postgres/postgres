@@ -1,4 +1,4 @@
--- test plperl.on_plperl_init errors are fatal
+-- test plperl.on_plperl_init
 -- This test tests setting on_plperl_init after loading plperl
 LOAD 'plperl';
 SET SESSION plperl.on_plperl_init = ' system("/nonesuch"); ';
@@ -12,3 +12,29 @@ DO $$ warn 42 $$ language plperl;
 ERROR:  'system' trapped by operation mask at line 1.
 CONTEXT:  while executing plperl.on_plperl_init
 PL/Perl anonymous code block
+--
+-- Reconnect (to unload plperl), then test setting on_plperl_init
+-- as an unprivileged user
+--
+\c -
+CREATE ROLE regress_plperl_user;
+SET ROLE regress_plperl_user;
+-- this succeeds, since the GUC isn't known yet
+SET SESSION plperl.on_plperl_init = 'test';
+RESET ROLE;
+LOAD 'plperl';
+WARNING:  permission denied to set parameter "plperl.on_plperl_init"
+SHOW plperl.on_plperl_init;
+ plperl.on_plperl_init 
+-----------------------
+ 
+(1 row)
+
+DO $$ warn 42 $$ language plperl;
+WARNING:  42 at line 1.
+-- now we won't be allowed to set it in the first place
+SET ROLE regress_plperl_user;
+SET SESSION plperl.on_plperl_init = 'test';
+ERROR:  permission denied to set parameter "plperl.on_plperl_init"
+RESET ROLE;
+DROP ROLE regress_plperl_user;

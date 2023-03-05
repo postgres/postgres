@@ -1,0 +1,32 @@
+F	16	Parse	 "" "SELECT 1" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Flush
+B	4	ParseComplete
+B	4	BindComplete
+B	33	RowDescription	 1 "?column?" NNNN 0 NNNN 4 -1 0
+B	11	DataRow	 1 1 '1'
+B	13	CommandComplete	 "SELECT 1"
+F	16	Parse	 "" "SELECT 2" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Flush
+B	4	ParseComplete
+B	4	BindComplete
+B	33	RowDescription	 1 "?column?" NNNN 0 NNNN 4 -1 0
+B	11	DataRow	 1 1 '2'
+B	13	CommandComplete	 "SELECT 1"
+F	49	Parse	 "" "SELECT pg_catalog.pg_advisory_unlock(1,1)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Flush
+B	4	ParseComplete
+B	4	BindComplete
+B	43	RowDescription	 1 "pg_advisory_unlock" NNNN 0 NNNN 1 -1 0
+B	NN	NoticeResponse	 S "WARNING" V "WARNING" C "01000" M "you don't own a lock of type ExclusiveLock" F "SSSS" L "SSSS" R "SSSS" \x00
+B	11	DataRow	 1 1 'f'
+B	13	CommandComplete	 "SELECT 1"
+F	4	Terminate

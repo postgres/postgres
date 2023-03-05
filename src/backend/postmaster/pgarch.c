@@ -14,7 +14,7 @@
  *
  *	Initial author: Simon Riggs		simon@2ndquadrant.com
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -31,6 +31,8 @@
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
+#include "archive/archive_module.h"
+#include "archive/shell_archive.h"
 #include "lib/binaryheap.h"
 #include "libpq/pqsignal.h"
 #include "pgstat.h"
@@ -97,7 +99,8 @@ char	   *XLogArchiveLibrary = "";
  */
 static time_t last_sigterm_time = 0;
 static PgArchData *PgArch = NULL;
-static ArchiveModuleCallbacks ArchiveContext;
+static const ArchiveModuleCallbacks *ArchiveCallbacks;
+static ArchiveModuleState *archive_module_state;
 
 
 /*
@@ -144,7 +147,7 @@ static void pgarch_die(int code, Datum arg);
 static void HandlePgArchInterrupts(void);
 static int	ready_file_comparator(Datum a, Datum b, void *arg);
 static void LoadArchiveLibrary(void);
-static void call_archive_module_shutdown_callback(int code, Datum arg);
+static void pgarch_call_module_shutdown_cb(int code, Datum arg);
 
 /* Report shared memory space needed by PgArchShmemInit */
 Size
@@ -227,7 +230,7 @@ PgArchiverMain(void)
 	pqsignal(SIGCHLD, SIG_DFL);
 
 	/* Unblock signals (they were blocked when the postmaster forked us) */
-	PG_SETMASK(&UnBlockSig);
+	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/* We shouldn't be launched unnecessarily. */
 	Assert(XLogArchivingActive());
@@ -252,13 +255,7 @@ PgArchiverMain(void)
 	/* Load the archive_library. */
 	LoadArchiveLibrary();
 
-	PG_ENSURE_ERROR_CLEANUP(call_archive_module_shutdown_callback, 0);
-	{
-		pgarch_MainLoop();
-	}
-	PG_END_ENSURE_ERROR_CLEANUP(call_archive_module_shutdown_callback, 0);
-
-	call_archive_module_shutdown_callback(0, 0);
+	pgarch_MainLoop();
 
 	proc_exit(0);
 }
@@ -303,13 +300,12 @@ pgarch_waken_stop(SIGNAL_ARGS)
 static void
 pgarch_MainLoop(void)
 {
-	pg_time_t	last_copy_time = 0;
 	bool		time_to_stop;
 
 	/*
 	 * There shouldn't be anything for the archiver to do except to wait for a
-	 * signal ... however, the archiver exists to protect our data, so she
-	 * wakes up occasionally to allow herself to be proactive.
+	 * signal ... however, the archiver exists to protect our data, so it
+	 * wakes up occasionally to allow itself to be proactive.
 	 */
 	do
 	{
@@ -341,30 +337,21 @@ pgarch_MainLoop(void)
 
 		/* Do what we're here for */
 		pgarch_ArchiverCopyLoop();
-		last_copy_time = time(NULL);
 
 		/*
 		 * Sleep until a signal is received, or until a poll is forced by
-		 * PGARCH_AUTOWAKE_INTERVAL having passed since last_copy_time, or
-		 * until postmaster dies.
+		 * PGARCH_AUTOWAKE_INTERVAL, or until postmaster dies.
 		 */
 		if (!time_to_stop)		/* Don't wait during last iteration */
 		{
-			pg_time_t	curtime = (pg_time_t) time(NULL);
-			int			timeout;
+			int			rc;
 
-			timeout = PGARCH_AUTOWAKE_INTERVAL - (curtime - last_copy_time);
-			if (timeout > 0)
-			{
-				int			rc;
-
-				rc = WaitLatch(MyLatch,
-							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							   timeout * 1000L,
-							   WAIT_EVENT_ARCHIVER_MAIN);
-				if (rc & WL_POSTMASTER_DEATH)
-					time_to_stop = true;
-			}
+			rc = WaitLatch(MyLatch,
+						   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+						   PGARCH_AUTOWAKE_INTERVAL * 1000L,
+						   WAIT_EVENT_ARCHIVER_MAIN);
+			if (rc & WL_POSTMASTER_DEATH)
+				time_to_stop = true;
 		}
 
 		/*
@@ -422,8 +409,8 @@ pgarch_ArchiverCopyLoop(void)
 			HandlePgArchInterrupts();
 
 			/* can't do anything if not configured ... */
-			if (ArchiveContext.check_configured_cb != NULL &&
-				!ArchiveContext.check_configured_cb())
+			if (ArchiveCallbacks->check_configured_cb != NULL &&
+				!ArchiveCallbacks->check_configured_cb(archive_module_state))
 			{
 				ereport(WARNING,
 						(errmsg("archive_mode enabled, yet archiving is not configured")));
@@ -524,7 +511,7 @@ pgarch_archiveXlog(char *xlog)
 	snprintf(activitymsg, sizeof(activitymsg), "archiving %s", xlog);
 	set_ps_display(activitymsg);
 
-	ret = ArchiveContext.archive_file_cb(xlog, pathname);
+	ret = ArchiveCallbacks->archive_file_cb(archive_module_state, xlog, pathname);
 	if (ret)
 		snprintf(activitymsg, sizeof(activitymsg), "last was %s", xlog);
 	else
@@ -745,7 +732,19 @@ pgarch_archiveDone(char *xlog)
 
 	StatusFilePath(rlogready, xlog, ".ready");
 	StatusFilePath(rlogdone, xlog, ".done");
-	(void) durable_rename(rlogready, rlogdone, WARNING);
+
+	/*
+	 * To avoid extra overhead, we don't durably rename the .ready file to
+	 * .done.  Archive commands and libraries must gracefully handle attempts
+	 * to re-archive files (e.g., if the server crashes just before this
+	 * function is called), so it should be okay if the .ready file reappears
+	 * after a crash.
+	 */
+	if (rename(rlogready, rlogdone) < 0)
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
+						rlogready, rlogdone)));
 }
 
 
@@ -786,24 +785,25 @@ HandlePgArchInterrupts(void)
 		ConfigReloadPending = false;
 		ProcessConfigFile(PGC_SIGHUP);
 
+		if (XLogArchiveLibrary[0] != '\0' && XLogArchiveCommand[0] != '\0')
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("both archive_command and archive_library set"),
+					 errdetail("Only one of archive_command, archive_library may be set.")));
+
 		archiveLibChanged = strcmp(XLogArchiveLibrary, archiveLib) != 0;
 		pfree(archiveLib);
 
 		if (archiveLibChanged)
 		{
 			/*
-			 * Call the currently loaded archive module's shutdown callback,
-			 * if one is defined.
-			 */
-			call_archive_module_shutdown_callback(0, 0);
-
-			/*
 			 * Ideally, we would simply unload the previous archive module and
 			 * load the new one, but there is presently no mechanism for
 			 * unloading a library (see the comment above
 			 * internal_load_library()).  To deal with this, we simply restart
 			 * the archiver.  The new archive module will be loaded when the
-			 * new archiver process starts up.
+			 * new archiver process starts up.  Note that this triggers the
+			 * module's shutdown callback, if defined.
 			 */
 			ereport(LOG,
 					(errmsg("restarting archiver process because value of "
@@ -817,14 +817,18 @@ HandlePgArchInterrupts(void)
 /*
  * LoadArchiveLibrary
  *
- * Loads the archiving callbacks into our local ArchiveContext.
+ * Loads the archiving callbacks into our local ArchiveCallbacks.
  */
 static void
 LoadArchiveLibrary(void)
 {
 	ArchiveModuleInit archive_init;
 
-	memset(&ArchiveContext, 0, sizeof(ArchiveModuleCallbacks));
+	if (XLogArchiveLibrary[0] != '\0' && XLogArchiveCommand[0] != '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("both archive_command and archive_library set"),
+				 errdetail("Only one of archive_command, archive_library may be set.")));
 
 	/*
 	 * If shell archiving is enabled, use our special initialization function.
@@ -839,23 +843,27 @@ LoadArchiveLibrary(void)
 
 	if (archive_init == NULL)
 		ereport(ERROR,
-				(errmsg("archive modules have to declare the _PG_archive_module_init symbol")));
+				(errmsg("archive modules have to define the symbol %s", "_PG_archive_module_init")));
 
-	(*archive_init) (&ArchiveContext);
+	ArchiveCallbacks = (*archive_init) ();
 
-	if (ArchiveContext.archive_file_cb == NULL)
+	if (ArchiveCallbacks->archive_file_cb == NULL)
 		ereport(ERROR,
 				(errmsg("archive modules must register an archive callback")));
+
+	archive_module_state = (ArchiveModuleState *) palloc0(sizeof(ArchiveModuleState));
+	if (ArchiveCallbacks->startup_cb != NULL)
+		ArchiveCallbacks->startup_cb(archive_module_state);
+
+	before_shmem_exit(pgarch_call_module_shutdown_cb, 0);
 }
 
 /*
- * call_archive_module_shutdown_callback
- *
- * Calls the loaded archive module's shutdown callback, if one is defined.
+ * Call the shutdown callback of the loaded archive module, if defined.
  */
 static void
-call_archive_module_shutdown_callback(int code, Datum arg)
+pgarch_call_module_shutdown_cb(int code, Datum arg)
 {
-	if (ArchiveContext.shutdown_cb != NULL)
-		ArchiveContext.shutdown_cb();
+	if (ArchiveCallbacks->shutdown_cb != NULL)
+		ArchiveCallbacks->shutdown_cb(archive_module_state);
 }

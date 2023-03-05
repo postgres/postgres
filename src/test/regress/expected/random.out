@@ -1,53 +1,146 @@
 --
 -- RANDOM
--- Test the random function
+-- Test random() and allies
 --
--- count the number of tuples originally, should be 1000
-SELECT count(*) FROM onek;
- count 
--------
-  1000
+-- Tests in this file may have a small probability of failure,
+-- since we are dealing with randomness.  Try to keep the failure
+-- risk for any one test case under 1e-9.
+--
+-- There should be no duplicates in 1000 random() values.
+-- (Assuming 52 random bits in the float8 results, we could
+-- take as many as 3000 values and still have less than 1e-9 chance
+-- of failure, per https://en.wikipedia.org/wiki/Birthday_problem)
+SELECT r, count(*)
+FROM (SELECT random() r FROM generate_series(1, 1000)) ss
+GROUP BY r HAVING count(*) > 1;
+ r | count 
+---+-------
+(0 rows)
+
+-- The range should be [0, 1).  We can expect that at least one out of 2000
+-- random values is in the lowest or highest 1% of the range with failure
+-- probability less than about 1e-9.
+SELECT count(*) FILTER (WHERE r < 0 OR r >= 1) AS out_of_range,
+       (count(*) FILTER (WHERE r < 0.01)) > 0 AS has_small,
+       (count(*) FILTER (WHERE r > 0.99)) > 0 AS has_large
+FROM (SELECT random() r FROM generate_series(1, 2000)) ss;
+ out_of_range | has_small | has_large 
+--------------+-----------+-----------
+            0 | t         | t
 (1 row)
 
--- pick three random rows, they shouldn't match
-(SELECT unique1 AS random
-  FROM onek ORDER BY random() LIMIT 1)
-INTERSECT
-(SELECT unique1 AS random
-  FROM onek ORDER BY random() LIMIT 1)
-INTERSECT
-(SELECT unique1 AS random
-  FROM onek ORDER BY random() LIMIT 1);
- random 
---------
+-- Check for uniform distribution using the Kolmogorov-Smirnov test.
+CREATE FUNCTION ks_test_uniform_random()
+RETURNS boolean AS
+$$
+DECLARE
+  n int := 1000;        -- Number of samples
+  c float8 := 1.94947;  -- Critical value for 99.9% confidence
+  ok boolean;
+BEGIN
+  ok := (
+    WITH samples AS (
+      SELECT random() r FROM generate_series(1, n) ORDER BY 1
+    ), indexed_samples AS (
+      SELECT (row_number() OVER())-1.0 i, r FROM samples
+    )
+    SELECT max(abs(i/n-r)) < c / sqrt(n) FROM indexed_samples
+  );
+  RETURN ok;
+END
+$$
+LANGUAGE plpgsql;
+-- As written, ks_test_uniform_random() returns true about 99.9%
+-- of the time.  To get down to a roughly 1e-9 test failure rate,
+-- just run it 3 times and accept if any one of them passes.
+SELECT ks_test_uniform_random() OR
+       ks_test_uniform_random() OR
+       ks_test_uniform_random() AS uniform;
+ uniform 
+---------
+ t
+(1 row)
+
+-- now test random_normal()
+-- As above, there should be no duplicates in 1000 random_normal() values.
+SELECT r, count(*)
+FROM (SELECT random_normal() r FROM generate_series(1, 1000)) ss
+GROUP BY r HAVING count(*) > 1;
+ r | count 
+---+-------
 (0 rows)
 
--- count roughly 1/10 of the tuples
-CREATE TABLE RANDOM_TBL AS
-  SELECT count(*) AS random
-  FROM onek WHERE random() < 1.0/10;
--- select again, the count should be different
-INSERT INTO RANDOM_TBL (random)
-  SELECT count(*)
-  FROM onek WHERE random() < 1.0/10;
--- select again, the count should be different
-INSERT INTO RANDOM_TBL (random)
-  SELECT count(*)
-  FROM onek WHERE random() < 1.0/10;
--- select again, the count should be different
-INSERT INTO RANDOM_TBL (random)
-  SELECT count(*)
-  FROM onek WHERE random() < 1.0/10;
--- now test that they are different counts
-SELECT random, count(random) FROM RANDOM_TBL
-  GROUP BY random HAVING count(random) > 3;
- random | count 
---------+-------
-(0 rows)
+-- ... unless we force the range (standard deviation) to zero.
+-- This is a good place to check that the mean input does something, too.
+SELECT r, count(*)
+FROM (SELECT random_normal(10, 0) r FROM generate_series(1, 100)) ss
+GROUP BY r;
+ r  | count 
+----+-------
+ 10 |   100
+(1 row)
 
-SELECT AVG(random) FROM RANDOM_TBL
-  HAVING AVG(random) NOT BETWEEN 80 AND 120;
- avg 
------
-(0 rows)
+SELECT r, count(*)
+FROM (SELECT random_normal(-10, 0) r FROM generate_series(1, 100)) ss
+GROUP BY r;
+  r  | count 
+-----+-------
+ -10 |   100
+(1 row)
+
+-- setseed() should produce a reproducible series of random() values.
+SELECT setseed(0.5);
+ setseed 
+---------
+ 
+(1 row)
+
+SELECT random() FROM generate_series(1, 10);
+       random        
+---------------------
+  0.9851677175347999
+   0.825301858027981
+ 0.12974610012450416
+ 0.16356291958601088
+     0.6476186144084
+  0.8822771983038762
+  0.1404566845227775
+ 0.15619865764623442
+  0.5145227426983392
+  0.7712969548127826
+(10 rows)
+
+-- Likewise for random_normal(); however, since its implementation relies
+-- on libm functions that have different roundoff behaviors on different
+-- machines, we have to round off the results a bit to get consistent output.
+SET extra_float_digits = -1;
+SELECT random_normal() FROM generate_series(1, 10);
+   random_normal   
+-------------------
+  0.20853464493838
+  0.26453024054096
+ -0.60675246790043
+  0.82579942785265
+   1.7011161173536
+ -0.22344546371619
+    0.249712419191
+  -1.2494722990669
+  0.12562715204368
+  0.47539161454401
+(10 rows)
+
+SELECT random_normal(mean => 1, stddev => 0.1) r FROM generate_series(1, 10);
+        r         
+------------------
+  1.0060597281173
+    1.09685453015
+  1.0286920613201
+ 0.90947567671234
+ 0.98372476313426
+ 0.93934454957762
+  1.1871350020636
+ 0.96225768429293
+ 0.91444120680041
+ 0.96403105557543
+(10 rows)
 

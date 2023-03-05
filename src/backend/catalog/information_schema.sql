@@ -2,7 +2,7 @@
  * SQL Information Schema
  * as defined in ISO/IEC 9075-11:2016
  *
- * Copyright (c) 2003-2022, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2023, PostgreSQL Global Development Group
  *
  * src/backend/catalog/information_schema.sql
  *
@@ -119,7 +119,7 @@ RETURN
          WHEN 1700 /*numeric*/ THEN
               CASE WHEN $2 = -1
                    THEN null
-                   ELSE (($2 - 4) >> 16) & 65535
+                   ELSE (($2 - 4) >> 16) & 0xFFFF
                    END
          WHEN 700 /*float4*/ THEN 24 /*FLT_MANT_DIG*/
          WHEN 701 /*float8*/ THEN 53 /*DBL_MANT_DIG*/
@@ -147,7 +147,7 @@ RETURN
        WHEN $1 IN (1700) THEN
             CASE WHEN $2 = -1
                  THEN null
-                 ELSE ($2 - 4) & 65535
+                 ELSE ($2 - 4) & 0xFFFF
                  END
        ELSE null
   END;
@@ -163,7 +163,7 @@ RETURN
        WHEN $1 IN (1083, 1114, 1184, 1266) /* time, timestamp, same + tz */
            THEN CASE WHEN $2 < 0 THEN 6 ELSE $2 END
        WHEN $1 IN (1186) /* interval */
-           THEN CASE WHEN $2 < 0 OR $2 & 65535 = 65535 THEN 6 ELSE $2 & 65535 END
+           THEN CASE WHEN $2 < 0 OR $2 & 0xFFFF = 0xFFFF THEN 6 ELSE $2 & 0xFFFF END
        ELSE null
   END;
 

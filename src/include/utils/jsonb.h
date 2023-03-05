@@ -3,7 +3,7 @@
  * jsonb.h
  *	  Declarations for jsonb data type support.
  *
- * Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * src/include/utils/jsonb.h
  *
@@ -66,14 +66,6 @@ typedef enum
 #define JGINFLAG_STR	0x05	/* string value (if not an array element) */
 #define JGINFLAG_HASHED 0x10	/* OR'd into flag if value was hashed */
 #define JGIN_MAXLENGTH	125		/* max length of text part before hashing */
-
-/* Convenience macros */
-#define DatumGetJsonbP(d)	((Jsonb *) PG_DETOAST_DATUM(d))
-#define DatumGetJsonbPCopy(d)	((Jsonb *) PG_DETOAST_DATUM_COPY(d))
-#define JsonbPGetDatum(p)	PointerGetDatum(p)
-#define PG_GETARG_JSONB_P(x)	DatumGetJsonbP(PG_GETARG_DATUM(x))
-#define PG_GETARG_JSONB_P_COPY(x)	DatumGetJsonbPCopy(PG_GETARG_DATUM(x))
-#define PG_RETURN_JSONB_P(x)	PG_RETURN_POINTER(x)
 
 typedef struct JsonbPair JsonbPair;
 typedef struct JsonbValue JsonbValue;
@@ -329,8 +321,6 @@ typedef struct JsonbParseState
 	JsonbValue	contVal;
 	Size		size;
 	struct JsonbParseState *next;
-	bool		unique_keys;	/* Check object key uniqueness */
-	bool		skip_nulls;		/* Skip null object fields */
 } JsonbParseState;
 
 /*
@@ -376,34 +366,41 @@ typedef struct JsonbIterator
 	struct JsonbIterator *parent;
 } JsonbIterator;
 
-/* unlike with json categories, we need to treat json and jsonb differently */
-typedef enum					/* type categories for datum_to_jsonb */
+
+/* Convenience macros */
+static inline Jsonb *
+DatumGetJsonbP(Datum d)
 {
-	JSONBTYPE_NULL,				/* null, so we didn't bother to identify */
-	JSONBTYPE_BOOL,				/* boolean (built-in types only) */
-	JSONBTYPE_NUMERIC,			/* numeric (ditto) */
-	JSONBTYPE_DATE,				/* we use special formatting for datetimes */
-	JSONBTYPE_TIMESTAMP,		/* we use special formatting for timestamp */
-	JSONBTYPE_TIMESTAMPTZ,		/* ... and timestamptz */
-	JSONBTYPE_JSON,				/* JSON */
-	JSONBTYPE_JSONB,			/* JSONB */
-	JSONBTYPE_ARRAY,			/* array */
-	JSONBTYPE_COMPOSITE,		/* composite */
-	JSONBTYPE_JSONCAST,			/* something with an explicit cast to JSON */
-	JSONBTYPE_OTHER				/* all else */
-} JsonbTypeCategory;
+	return (Jsonb *) PG_DETOAST_DATUM(d);
+}
+
+static inline Jsonb *
+DatumGetJsonbPCopy(Datum d)
+{
+	return (Jsonb *) PG_DETOAST_DATUM_COPY(d);
+}
+
+static inline Datum
+JsonbPGetDatum(const Jsonb *p)
+{
+	return PointerGetDatum(p);
+}
+
+#define PG_GETARG_JSONB_P(x)	DatumGetJsonbP(PG_GETARG_DATUM(x))
+#define PG_GETARG_JSONB_P_COPY(x)	DatumGetJsonbPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_JSONB_P(x)	PG_RETURN_POINTER(x)
 
 /* Support functions */
 extern uint32 getJsonbOffset(const JsonbContainer *jc, int index);
 extern uint32 getJsonbLength(const JsonbContainer *jc, int index);
 extern int	compareJsonbContainers(JsonbContainer *a, JsonbContainer *b);
-extern JsonbValue *findJsonbValueFromContainer(JsonbContainer *sheader,
+extern JsonbValue *findJsonbValueFromContainer(JsonbContainer *container,
 											   uint32 flags,
 											   JsonbValue *key);
 extern JsonbValue *getKeyJsonValueFromContainer(JsonbContainer *container,
 												const char *keyVal, int keyLen,
 												JsonbValue *res);
-extern JsonbValue *getIthJsonbValueFromContainer(JsonbContainer *sheader,
+extern JsonbValue *getIthJsonbValueFromContainer(JsonbContainer *container,
 												 uint32 i);
 extern JsonbValue *pushJsonbValue(JsonbParseState **pstate,
 								  JsonbIteratorToken seq, JsonbValue *jbval);
@@ -419,30 +416,15 @@ extern void JsonbHashScalarValueExtended(const JsonbValue *scalarVal,
 										 uint64 *hash, uint64 seed);
 
 /* jsonb.c support functions */
-extern Datum jsonb_from_text(text *js, bool unique_keys);
 extern char *JsonbToCString(StringInfo out, JsonbContainer *in,
 							int estimated_len);
 extern char *JsonbToCStringIndent(StringInfo out, JsonbContainer *in,
 								  int estimated_len);
-extern Jsonb *JsonbMakeEmptyArray(void);
-extern Jsonb *JsonbMakeEmptyObject(void);
-extern char *JsonbUnquote(Jsonb *jb);
 extern bool JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res);
-extern const char *JsonbTypeName(JsonbValue *jb);
+extern const char *JsonbTypeName(JsonbValue *val);
 
 extern Datum jsonb_set_element(Jsonb *jb, Datum *path, int path_len,
 							   JsonbValue *newval);
 extern Datum jsonb_get_element(Jsonb *jb, Datum *path, int npath,
 							   bool *isnull, bool as_text);
-extern bool to_jsonb_is_immutable(Oid typoid);
-extern void jsonb_categorize_type(Oid typoid, JsonbTypeCategory *tcategory,
-								  Oid *outfuncoid);
-extern Datum to_jsonb_worker(Datum val, JsonbTypeCategory tcategory,
-							 Oid outfuncoid);
-extern Datum jsonb_build_object_worker(int nargs, Datum *args, bool *nulls,
-									   Oid *types, bool absent_on_null,
-									   bool unique_keys);
-extern Datum jsonb_build_array_worker(int nargs, Datum *args, bool *nulls,
-									  Oid *types, bool absent_on_null);
-
 #endif							/* __JSONB_H__ */

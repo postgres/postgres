@@ -21,7 +21,7 @@
  * the address family, everything goes into node 0 (which will probably
  * lead to creating an allTheSame tuple).
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -37,6 +37,7 @@
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
+#include "varatt.h"
 
 
 static int	inet_spg_node_number(const inet *val, int commonbits);

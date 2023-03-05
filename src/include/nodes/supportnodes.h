@@ -23,7 +23,7 @@
  * allows for future extensions of the set of request cases.
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/supportnodes.h
@@ -298,5 +298,49 @@ typedef struct SupportRequestWFuncMonotonic
 	/* Output fields: */
 	MonotonicFunction monotonic;
 } SupportRequestWFuncMonotonic;
+
+/*
+ * Some WindowFunc behavior might not be affected by certain variations in
+ * the WindowClause's frameOptions.  For example, row_number() is coded in
+ * such a way that the frame options don't change the returned row number.
+ * nodeWindowAgg.c will have less work to do if the ROWS option is used
+ * instead of the RANGE option as no check needs to be done for peer rows.
+ * Since RANGE is included in the default frame options, window functions
+ * such as row_number() might want to change that to ROW.
+ *
+ * Here we allow a WindowFunc's support function to determine which, if
+ * anything, can be changed about the WindowClause which the WindowFunc
+ * belongs to.  Currently only the frameOptions can be modified.  However,
+ * we may want to allow more optimizations in the future.
+ *
+ * The support function is responsible for ensuring the optimized version of
+ * the frameOptions doesn't affect the result of the window function.  The
+ * planner is responsible for only changing the frame options when all
+ * WindowFuncs using this particular WindowClause agree on what the optimized
+ * version of the frameOptions are.  If a particular WindowFunc being used
+ * does not have a support function then the planner will not make any changes
+ * to the WindowClause's frameOptions.
+ *
+ * 'window_func' and 'window_clause' are set by the planner before calling the
+ * support function so that the support function has these fields available.
+ * These may be required in order to determine which optimizations are
+ * possible.
+ *
+ * 'frameOptions' is set by the planner to WindowClause.frameOptions.  The
+ * support function must only adjust this if optimizations are possible for
+ * the given WindowFunc.
+ */
+typedef struct SupportRequestOptimizeWindowClause
+{
+	NodeTag		type;
+
+	/* Input fields: */
+	WindowFunc *window_func;	/* Pointer to the window function data */
+	struct WindowClause *window_clause; /* Pointer to the window clause data */
+
+	/* Input/Output fields: */
+	int			frameOptions;	/* New frameOptions, or left untouched if no
+								 * optimizations are possible. */
+} SupportRequestOptimizeWindowClause;
 
 #endif							/* SUPPORTNODES_H */

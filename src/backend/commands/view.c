@@ -3,7 +3,7 @@
  * view.c
  *	  use rewrite rules to construct views
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -190,7 +190,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		CommandCounterIncrement();
 
 		/*
-		 * Finally update the view options.
+		 * Update the view's options.
 		 *
 		 * The new options list replaces the existing options list, even if
 		 * it's empty.
@@ -203,7 +203,21 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		/* EventTriggerAlterTableStart called by ProcessUtilitySlow */
 		AlterTableInternal(viewOid, atcmds, true);
 
+		/*
+		 * There is very little to do here to update the view's dependencies.
+		 * Most view-level dependency relationships, such as those on the
+		 * owner, schema, and associated composite type, aren't changing.
+		 * Because we don't allow changing type or collation of an existing
+		 * view column, those dependencies of the existing columns don't
+		 * change either, while the AT_AddColumnToView machinery took care of
+		 * adding such dependencies for new view columns.  The dependencies of
+		 * the view's query could have changed arbitrarily, but that was dealt
+		 * with inside StoreViewQuery.  What remains is only to check that
+		 * view replacement is allowed when we're creating an extension.
+		 */
 		ObjectAddressSet(address, RelationRelationId, viewOid);
+
+		recordDependencyOnCurrentExtension(&address, true);
 
 		/*
 		 * Seems okay, so return the OID of the pre-existing view.
@@ -337,82 +351,6 @@ DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
 	/*
 	 * Someday: automatic ON INSERT, etc
 	 */
-}
-
-/*---------------------------------------------------------------
- * UpdateRangeTableOfViewParse
- *
- * Update the range table of the given parsetree.
- * This update consists of adding two new entries IN THE BEGINNING
- * of the range table (otherwise the rule system will die a slow,
- * horrible and painful death, and we do not want that now, do we?)
- * one for the OLD relation and one for the NEW one (both of
- * them refer in fact to the "view" relation).
- *
- * Of course we must also increase the 'varnos' of all the Var nodes
- * by 2...
- *
- * These extra RT entries are not actually used in the query,
- * except for run-time locking and permission checking.
- *---------------------------------------------------------------
- */
-static Query *
-UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
-{
-	Relation	viewRel;
-	List	   *new_rt;
-	ParseNamespaceItem *nsitem;
-	RangeTblEntry *rt_entry1,
-			   *rt_entry2;
-	ParseState *pstate;
-
-	/*
-	 * Make a copy of the given parsetree.  It's not so much that we don't
-	 * want to scribble on our input, it's that the parser has a bad habit of
-	 * outputting multiple links to the same subtree for constructs like
-	 * BETWEEN, and we mustn't have OffsetVarNodes increment the varno of a
-	 * Var node twice.  copyObject will expand any multiply-referenced subtree
-	 * into multiple copies.
-	 */
-	viewParse = copyObject(viewParse);
-
-	/* Create a dummy ParseState for addRangeTableEntryForRelation */
-	pstate = make_parsestate(NULL);
-
-	/* need to open the rel for addRangeTableEntryForRelation */
-	viewRel = relation_open(viewOid, AccessShareLock);
-
-	/*
-	 * Create the 2 new range table entries and form the new range table...
-	 * OLD first, then NEW....
-	 */
-	nsitem = addRangeTableEntryForRelation(pstate, viewRel,
-										   AccessShareLock,
-										   makeAlias("old", NIL),
-										   false, false);
-	rt_entry1 = nsitem->p_rte;
-	nsitem = addRangeTableEntryForRelation(pstate, viewRel,
-										   AccessShareLock,
-										   makeAlias("new", NIL),
-										   false, false);
-	rt_entry2 = nsitem->p_rte;
-
-	/* Must override addRangeTableEntry's default access-check flags */
-	rt_entry1->requiredPerms = 0;
-	rt_entry2->requiredPerms = 0;
-
-	new_rt = lcons(rt_entry1, lcons(rt_entry2, viewParse->rtable));
-
-	viewParse->rtable = new_rt;
-
-	/*
-	 * Now offset all var nodes by 2, and jointree RT indexes too.
-	 */
-	OffsetVarNodes((Node *) viewParse, 2, 0);
-
-	relation_close(viewRel, AccessShareLock);
-
-	return viewParse;
 }
 
 /*
@@ -577,12 +515,6 @@ DefineView(ViewStmt *stmt, const char *queryString,
 void
 StoreViewQuery(Oid viewOid, Query *viewParse, bool replace)
 {
-	/*
-	 * The range table of 'viewParse' does not contain entries for the "OLD"
-	 * and "NEW" relations. So... add them!
-	 */
-	viewParse = UpdateRangeTableOfViewParse(viewOid, viewParse);
-
 	/*
 	 * Now create the rules associated with the view.
 	 */

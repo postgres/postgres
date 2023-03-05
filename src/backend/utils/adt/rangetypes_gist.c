@@ -3,7 +3,7 @@
  * rangetypes_gist.c
  *	  GiST support for range types.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -743,8 +743,8 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 			emptyCount = total_count - nonEmptyCount;
 
 			if (infCount > 0 && nonInfCount > 0 &&
-				(Abs(infCount - nonInfCount) <=
-				 Abs(emptyCount - nonEmptyCount)))
+				(abs(infCount - nonInfCount) <=
+				 abs(emptyCount - nonEmptyCount)))
 			{
 				classes_groups[CLS_NORMAL] = SPLIT_RIGHT;
 				classes_groups[CLS_CONTAIN_EMPTY] = SPLIT_RIGHT;
@@ -876,7 +876,7 @@ range_super_union(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
 		((flags2 & RANGE_CONTAIN_EMPTY) || !(flags1 & RANGE_CONTAIN_EMPTY)))
 		return r2;
 
-	result = make_range(typcache, result_lower, result_upper, false);
+	result = make_range(typcache, result_lower, result_upper, false, NULL);
 
 	if ((flags1 & RANGE_CONTAIN_EMPTY) || (flags2 & RANGE_CONTAIN_EMPTY))
 		range_set_contain_empty(result);
@@ -1322,8 +1322,7 @@ range_gist_double_sorting_split(TypeCacheEntry *typcache,
 	ConsiderSplitContext context;
 	OffsetNumber i,
 				maxoff;
-	RangeType  *range,
-			   *left_range = NULL,
+	RangeType  *left_range = NULL,
 			   *right_range = NULL;
 	int			common_entries_count;
 	NonEmptyRange *by_lower,
@@ -1518,6 +1517,7 @@ range_gist_double_sorting_split(TypeCacheEntry *typcache,
 	 */
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
+		RangeType  *range;
 		RangeBound	lower,
 					upper;
 		bool		empty;
@@ -1593,6 +1593,7 @@ range_gist_double_sorting_split(TypeCacheEntry *typcache,
 		 */
 		for (i = 0; i < common_entries_count; i++)
 		{
+			RangeType  *range;
 			int			idx = common_entries[i].index;
 
 			range = DatumGetRangeTypeP(entryvec->vector[idx].key);

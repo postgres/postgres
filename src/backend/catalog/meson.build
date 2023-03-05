@@ -1,0 +1,46 @@
+# Copyright (c) 2022-2023, PostgreSQL Global Development Group
+
+backend_sources += files(
+  'aclchk.c',
+  'catalog.c',
+  'dependency.c',
+  'heap.c',
+  'index.c',
+  'indexing.c',
+  'namespace.c',
+  'objectaccess.c',
+  'objectaddress.c',
+  'partition.c',
+  'pg_aggregate.c',
+  'pg_attrdef.c',
+  'pg_cast.c',
+  'pg_class.c',
+  'pg_collation.c',
+  'pg_constraint.c',
+  'pg_conversion.c',
+  'pg_db_role_setting.c',
+  'pg_depend.c',
+  'pg_enum.c',
+  'pg_inherits.c',
+  'pg_largeobject.c',
+  'pg_namespace.c',
+  'pg_operator.c',
+  'pg_parameter_acl.c',
+  'pg_proc.c',
+  'pg_publication.c',
+  'pg_range.c',
+  'pg_shdepend.c',
+  'pg_subscription.c',
+  'pg_type.c',
+  'storage.c',
+  'toasting.c',
+)
+
+
+install_data(
+  'information_schema.sql',
+  'sql_features.txt',
+  'system_functions.sql',
+  'system_views.sql',
+  install_dir: dir_data,
+)

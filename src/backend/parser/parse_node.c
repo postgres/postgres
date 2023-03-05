@@ -3,7 +3,7 @@
  * parse_node.c
  *	  various routines that make nodes for querytrees
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
+#include "nodes/miscnodes.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/subscripting.h"
 #include "parser/parse_coerce.h"
@@ -82,7 +83,7 @@ free_parsestate(ParseState *pstate)
 	 */
 	if (pstate->p_next_resno - 1 > MaxTupleAttributeNumber)
 		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
 				 errmsg("target lists can have at most %d entries",
 						MaxTupleAttributeNumber)));
 
@@ -385,12 +386,11 @@ make_const(ParseState *pstate, A_Const *aconst)
 			{
 				/* could be an oversize integer as well as a float ... */
 
+				ErrorSaveContext escontext = {T_ErrorSaveContext};
 				int64		val64;
-				char	   *endptr;
 
-				errno = 0;
-				val64 = strtoi64(aconst->val.fval.fval, &endptr, 10);
-				if (errno == 0 && *endptr == '\0')
+				val64 = pg_strtoint64_safe(aconst->val.fval.fval, (Node *) &escontext);
+				if (!escontext.error_occurred)
 				{
 					/*
 					 * It might actually fit in int32. Probably only INT_MIN

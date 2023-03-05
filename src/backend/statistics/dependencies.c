@@ -3,7 +3,7 @@
  * dependencies.c
  *	  POSTGRES functional dependencies
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -509,7 +509,7 @@ statext_dependencies_deserialize(bytea *data)
 		return NULL;
 
 	if (VARSIZE_ANY_EXHDR(data) < SizeOfHeader)
-		elog(ERROR, "invalid MVDependencies size %zd (expected at least %zd)",
+		elog(ERROR, "invalid MVDependencies size %zu (expected at least %zu)",
 			 VARSIZE_ANY_EXHDR(data), SizeOfHeader);
 
 	/* read the MVDependencies header */
@@ -541,7 +541,7 @@ statext_dependencies_deserialize(bytea *data)
 	min_expected_size = SizeOfItem(dependencies->ndeps);
 
 	if (VARSIZE_ANY_EXHDR(data) < min_expected_size)
-		elog(ERROR, "invalid dependencies size %zd (expected at least %zd)",
+		elog(ERROR, "invalid dependencies size %zu (expected at least %zu)",
 			 VARSIZE_ANY_EXHDR(data), min_expected_size);
 
 	/* allocate space for the MCV items */
@@ -1265,7 +1265,6 @@ dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, N
 	else if (is_orclause(clause))
 	{
 		BoolExpr   *bool_expr = (BoolExpr *) clause;
-		ListCell   *lc;
 
 		/* start with no expression (we'll use the first match) */
 		*expr = NULL;
@@ -1693,7 +1692,6 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 				{
 					int			idx;
 					Node	   *expr;
-					int			k;
 					AttrNumber	unique_attnum = InvalidAttrNumber;
 					AttrNumber	attnum;
 
@@ -1741,15 +1739,15 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 					expr = (Node *) list_nth(stat->exprs, idx);
 
 					/* try to find the expression in the unique list */
-					for (k = 0; k < unique_exprs_cnt; k++)
+					for (int m = 0; m < unique_exprs_cnt; m++)
 					{
 						/*
 						 * found a matching unique expression, use the attnum
 						 * (derived from index of the unique expression)
 						 */
-						if (equal(unique_exprs[k], expr))
+						if (equal(unique_exprs[m], expr))
 						{
-							unique_attnum = -(k + 1) + attnum_offset;
+							unique_attnum = -(m + 1) + attnum_offset;
 							break;
 						}
 					}

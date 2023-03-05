@@ -3,7 +3,7 @@
  * parse_manifest.c
  *	  Parse a backup manifest in JSON format.
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_verifybackup/parse_manifest.c
@@ -88,14 +88,14 @@ typedef struct
 	char	   *manifest_checksum;
 } JsonManifestParseState;
 
-static void json_manifest_object_start(void *state);
-static void json_manifest_object_end(void *state);
-static void json_manifest_array_start(void *state);
-static void json_manifest_array_end(void *state);
-static void json_manifest_object_field_start(void *state, char *fname,
-											 bool isnull);
-static void json_manifest_scalar(void *state, char *token,
-								 JsonTokenType tokentype);
+static JsonParseErrorType json_manifest_object_start(void *state);
+static JsonParseErrorType json_manifest_object_end(void *state);
+static JsonParseErrorType json_manifest_array_start(void *state);
+static JsonParseErrorType json_manifest_array_end(void *state);
+static JsonParseErrorType json_manifest_object_field_start(void *state, char *fname,
+														   bool isnull);
+static JsonParseErrorType json_manifest_scalar(void *state, char *token,
+											   JsonTokenType tokentype);
 static void json_manifest_finalize_file(JsonManifestParseState *parse);
 static void json_manifest_finalize_wal_range(JsonManifestParseState *parse);
 static void verify_manifest_checksum(JsonManifestParseState *parse,
@@ -162,7 +162,7 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
  * WAL range is also expected to be an object. If we're anywhere else in the
  * document, it's an error.
  */
-static void
+static JsonParseErrorType
 json_manifest_object_start(void *state)
 {
 	JsonManifestParseState *parse = state;
@@ -191,6 +191,8 @@ json_manifest_object_start(void *state)
 										"unexpected object start");
 			break;
 	}
+
+	return JSON_SUCCESS;
 }
 
 /*
@@ -201,7 +203,7 @@ json_manifest_object_start(void *state)
  * reach the end of an object representing a particular file or WAL range,
  * we must call json_manifest_finalize_file() to save the associated details.
  */
-static void
+static JsonParseErrorType
 json_manifest_object_end(void *state)
 {
 	JsonManifestParseState *parse = state;
@@ -224,6 +226,8 @@ json_manifest_object_end(void *state)
 										"unexpected object end");
 			break;
 	}
+
+	return JSON_SUCCESS;
 }
 
 /*
@@ -233,7 +237,7 @@ json_manifest_object_end(void *state)
  * should be an array. Similarly for the "WAL-Ranges" key. No other arrays
  * are expected.
  */
-static void
+static JsonParseErrorType
 json_manifest_array_start(void *state)
 {
 	JsonManifestParseState *parse = state;
@@ -251,6 +255,8 @@ json_manifest_array_start(void *state)
 										"unexpected array start");
 			break;
 	}
+
+	return JSON_SUCCESS;
 }
 
 /*
@@ -258,7 +264,7 @@ json_manifest_array_start(void *state)
  *
  * The cases here are analogous to those in json_manifest_array_start.
  */
-static void
+static JsonParseErrorType
 json_manifest_array_end(void *state)
 {
 	JsonManifestParseState *parse = state;
@@ -274,12 +280,14 @@ json_manifest_array_end(void *state)
 										"unexpected array end");
 			break;
 	}
+
+	return JSON_SUCCESS;
 }
 
 /*
  * Invoked at the start of each object field in the JSON document.
  */
-static void
+static JsonParseErrorType
 json_manifest_object_field_start(void *state, char *fname, bool isnull)
 {
 	JsonManifestParseState *parse = state;
@@ -367,6 +375,8 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
 										"unexpected object field");
 			break;
 	}
+
+	return JSON_SUCCESS;
 }
 
 /*
@@ -384,7 +394,7 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
  * reach either the end of the object representing this file, or the end
  * of the manifest, as the case may be.
  */
-static void
+static JsonParseErrorType
 json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
 {
 	JsonManifestParseState *parse = state;
@@ -448,6 +458,8 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
 			json_manifest_parse_failure(parse->context, "unexpected scalar");
 			break;
 	}
+
+	return JSON_SUCCESS;
 }
 
 /*

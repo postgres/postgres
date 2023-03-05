@@ -639,7 +639,8 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    accumulate and adversely affect query latency and throughput.  This
    typically occurs with <command>UPDATE</command>-heavy workloads
    where most individual updates cannot apply the
-   <acronym>HOT</acronym> optimization.  Changing the value of only
+   <link linkend="storage-hot"><acronym>HOT</acronym> optimization.</link>
+   Changing the value of only
    one column covered by one index during an <command>UPDATE</command>
    <emphasis>always</emphasis> necessitates a new set of index tuples
    &mdash; one for <emphasis>each and every</emphasis> index on the

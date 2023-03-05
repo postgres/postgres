@@ -2929,6 +2929,9 @@ declare
   c2 cursor
        for select * from generate_series(41,43) i;
 begin
+  -- assign portal names to cursors to get stable output
+  c := 'c';
+  c2 := 'c2';
   for r in c(5,7) loop
     raise notice '% from %', r.i, c;
   end loop;
@@ -3001,6 +3004,23 @@ select forc01();
 select * from forc_test;
 
 drop function forc01();
+
+-- it's okay to re-use a cursor variable name, even when bound
+
+do $$
+declare cnt int := 0;
+  c1 cursor for select * from forc_test;
+begin
+  for r1 in c1 loop
+    declare c1 cursor for select * from forc_test;
+    begin
+      for r2 in c1 loop
+        cnt := cnt + 1;
+      end loop;
+    end;
+  end loop;
+  raise notice 'cnt = %', cnt;
+end $$;
 
 -- fail because cursor has no query bound to it
 

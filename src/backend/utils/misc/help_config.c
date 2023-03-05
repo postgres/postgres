@@ -7,7 +7,7 @@
  * or GUC_DISALLOW_IN_FILE are not displayed, unless the user specifically
  * requests that variable by name
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/misc/help_config.c
@@ -49,11 +49,10 @@ GucInfoMain(void)
 	int			numOpts,
 				i;
 
-	/* Initialize the guc_variables[] array */
+	/* Initialize the GUC hash table */
 	build_guc_variables();
 
-	guc_vars = get_guc_variables();
-	numOpts = GetNumConfigOptions();
+	guc_vars = get_guc_variables(&numOpts);
 
 	for (i = 0; i < numOpts; i++)
 	{

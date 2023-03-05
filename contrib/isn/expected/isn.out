@@ -260,6 +260,25 @@ SELECT '12345679'::ISSN = '9771234567003'::EAN13 AS "ok",
  t  | t  | t
 (1 row)
 
+-- test non-error-throwing input API
+SELECT str as isn, typ as "type",
+       pg_input_is_valid(str,typ) as ok,
+       errinfo.sql_error_code,
+       errinfo.message,
+       errinfo.detail,
+       errinfo.hint
+FROM (VALUES ('9780123456786', 'UPC'),
+             ('postgresql...','EAN13'),
+             ('9771234567003','ISSN'))
+      AS a(str,typ),
+     LATERAL pg_input_error_info(a.str, a.typ) as errinfo;
+      isn      | type  | ok | sql_error_code |                        message                         | detail | hint 
+---------------+-------+----+----------------+--------------------------------------------------------+--------+------
+ 9780123456786 | UPC   | f  | 22P02          | cannot cast ISBN to UPC for number: "9780123456786"    |        | 
+ postgresql... | EAN13 | f  | 22P02          | invalid input syntax for EAN13 number: "postgresql..." |        | 
+ 9771234567003 | ISSN  | t  |                |                                                        |        | 
+(3 rows)
+
 --
 -- cleanup
 --

@@ -4,7 +4,7 @@
  *	  per-process shared memory data structures
  *
  *
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/proc.h
@@ -32,6 +32,8 @@
  * If none of the caches have overflowed, we can assume that an XID that's not
  * listed anywhere in the PGPROC array is not a running transaction.  Else we
  * have to look at pg_subtrans.
+ *
+ * See src/test/isolation/specs/subxid-overflow.spec if you change this.
  */
 #define PGPROC_MAX_CACHED_SUBXIDS 64	/* XXX guessed-at value */
 
@@ -89,7 +91,7 @@ struct XidCache
 #define INVALID_PGPROCNO		PG_INT32_MAX
 
 /*
- * Flags for PGPROC.delayChkpt
+ * Flags for PGPROC.delayChkptFlags
  *
  * These flags can be used to delay the start or completion of a checkpoint
  * for short periods. A flag is in effect if the corresponding bit is set in
@@ -116,7 +118,7 @@ struct XidCache
  * to phase 3. This is useful if we are performing a WAL-logged operation that
  * might invalidate buffers, such as relation truncation. In this case, we need
  * to ensure that any buffers which were invalidated and thus not flushed by
- * the checkpoint are actaully destroyed on disk. Replay can cope with a file
+ * the checkpoint are actually destroyed on disk. Replay can cope with a file
  * or block that doesn't exist, but not with a block that has the wrong
  * contents.
  */
@@ -147,7 +149,7 @@ typedef enum
  * but its myProcLocks[] lists are valid.
  *
  * We allow many fields of this struct to be accessed without locks, such as
- * delayChkpt and isBackgroundWorker. However, keep in mind that writing
+ * delayChkptFlags and isBackgroundWorker. However, keep in mind that writing
  * mirrored ones (see below) requires holding ProcArrayLock or XidGenLock in
  * at least shared mode, so that pgxactoff does not change concurrently.
  *
@@ -165,8 +167,8 @@ typedef enum
 struct PGPROC
 {
 	/* proc->links MUST BE FIRST IN STRUCT (see ProcSleep,ProcWakeup,etc) */
-	SHM_QUEUE	links;			/* list link if process is in a list */
-	PGPROC	  **procgloballist; /* procglobal list that owns this PGPROC */
+	dlist_node	links;			/* list link if process is in a list */
+	dlist_head *procgloballist; /* procglobal list that owns this PGPROC */
 
 	PGSemaphore sem;			/* ONE semaphore to sleep on */
 	ProcWaitStatus waitStatus;
@@ -191,7 +193,11 @@ struct PGPROC
 
 	int			pgxactoff;		/* offset into various ProcGlobal->arrays with
 								 * data mirrored from this PGPROC */
-	int			pgprocno;
+
+	int			pgprocno;		/* Number of this PGPROC in
+								 * ProcGlobal->allProcs array. This is set
+								 * once by InitProcGlobal().
+								 * ProcGlobal->allProcs[n].pgprocno == n */
 
 	/* These fields are zero while a backend is still starting up: */
 	BackendId	backendId;		/* This backend's backend ID (if assigned) */
@@ -211,7 +217,7 @@ struct PGPROC
 	bool		recoveryConflictPending;
 
 	/* Info about LWLock the process is currently waiting for, if any. */
-	bool		lwWaiting;		/* true if waiting for an LW lock */
+	uint8		lwWaiting;		/* see LWLockWaitState */
 	uint8		lwWaitMode;		/* lwlock mode being waited for */
 	proclist_node lwWaitLink;	/* position in LW lock wait list */
 
@@ -242,14 +248,14 @@ struct PGPROC
 	 */
 	XLogRecPtr	waitLSN;		/* waiting for this LSN or higher */
 	int			syncRepState;	/* wait state for sync rep */
-	SHM_QUEUE	syncRepLinks;	/* list link if process is in syncrep queue */
+	dlist_node	syncRepLinks;	/* list link if process is in syncrep queue */
 
 	/*
 	 * All PROCLOCK objects for locks held or awaited by this backend are
 	 * linked into one of these lists, according to the partition number of
 	 * their lock.
 	 */
-	SHM_QUEUE	myProcLocks[NUM_LOCK_PARTITIONS];
+	dlist_head	myProcLocks[NUM_LOCK_PARTITIONS];
 
 	XidCacheStatus subxidStatus;	/* mirrored with
 									 * ProcGlobal->subxidStates[i] */
@@ -379,13 +385,13 @@ typedef struct PROC_HDR
 	/* Length of allProcs array */
 	uint32		allProcCount;
 	/* Head of list of free PGPROC structures */
-	PGPROC	   *freeProcs;
+	dlist_head	freeProcs;
 	/* Head of list of autovacuum's free PGPROC structures */
-	PGPROC	   *autovacFreeProcs;
+	dlist_head autovacFreeProcs;
 	/* Head of list of bgworker free PGPROC structures */
-	PGPROC	   *bgworkerFreeProcs;
+	dlist_head bgworkerFreeProcs;
 	/* Head of list of walsender free PGPROC structures */
-	PGPROC	   *walsenderFreeProcs;
+	dlist_head walsenderFreeProcs;
 	/* First pgproc waiting for group XID clear */
 	pg_atomic_uint32 procArrayGroupFirst;
 	/* First pgproc waiting for group transaction status update */
@@ -439,12 +445,11 @@ extern void InitAuxiliaryProcess(void);
 extern void SetStartupBufferPinWaitBufId(int bufid);
 extern int	GetStartupBufferPinWaitBufId(void);
 
-extern bool HaveNFreeProcs(int n);
+extern bool HaveNFreeProcs(int n, int *nfree);
 extern void ProcReleaseLocks(bool isCommit);
 
-extern void ProcQueueInit(PROC_QUEUE *queue);
 extern ProcWaitStatus ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable);
-extern PGPROC *ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus);
+extern void ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus);
 extern void ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock);
 extern void CheckDeadLockAlert(void);
 extern bool IsWaitingForLock(void);

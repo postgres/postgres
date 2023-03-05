@@ -101,10 +101,7 @@ free_statement(struct statement *stmt)
 	free_variable(stmt->outlist);
 	ecpg_free(stmt->command);
 	ecpg_free(stmt->name);
-#ifdef HAVE_USELOCALE
-	if (stmt->clocale)
-		freelocale(stmt->clocale);
-#else
+#ifndef HAVE_USELOCALE
 	ecpg_free(stmt->oldlocale);
 #endif
 	ecpg_free(stmt);
@@ -370,10 +367,10 @@ ecpg_store_result(const PGresult *results, int act_field,
 						/* check strlen for each tuple */
 						for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 						{
-							int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+							int			slen = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
 
-							if (len > var->varcharsize)
-								var->varcharsize = len;
+							if (slen > var->varcharsize)
+								var->varcharsize = slen;
 						}
 						var->offset *= var->varcharsize;
 						len = var->offset * ntuples;
@@ -1717,8 +1714,7 @@ ecpg_process_output(struct statement *stmt, bool clear_result)
 					status = false;
 				else
 				{
-					if (desc->result)
-						PQclear(desc->result);
+					PQclear(desc->result);
 					desc->result = stmt->results;
 					clear_result = false;
 					ecpg_log("ecpg_process_output on line %d: putting result (%d tuples) into descriptor %s\n",
@@ -1965,6 +1961,15 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 		return false;
 	}
 
+#ifdef ENABLE_THREAD_SAFETY
+	ecpg_pthreads_init();
+#endif
+
+	con = ecpg_get_connection(connection_name);
+
+	if (!ecpg_init(con, connection_name, lineno))
+		return false;
+
 	stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno);
 
 	if (stmt == NULL)
@@ -1979,13 +1984,13 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 	 * treat that situation as if the function doesn't exist.
 	 */
 #ifdef HAVE_USELOCALE
-	stmt->clocale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
-	if (stmt->clocale == (locale_t) 0)
-	{
-		ecpg_do_epilogue(stmt);
-		return false;
-	}
-	stmt->oldlocale = uselocale(stmt->clocale);
+
+	/*
+	 * Since ecpg_init() succeeded, we have a connection.  Any successful
+	 * connection initializes ecpg_clocale.
+	 */
+	Assert(ecpg_clocale);
+	stmt->oldlocale = uselocale(ecpg_clocale);
 	if (stmt->oldlocale == (locale_t) 0)
 	{
 		ecpg_do_epilogue(stmt);
@@ -2003,18 +2008,6 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 	}
 	setlocale(LC_NUMERIC, "C");
 #endif
-
-#ifdef ENABLE_THREAD_SAFETY
-	ecpg_pthreads_init();
-#endif
-
-	con = ecpg_get_connection(connection_name);
-
-	if (!ecpg_init(con, connection_name, lineno))
-	{
-		ecpg_do_epilogue(stmt);
-		return false;
-	}
 
 	/*
 	 * If statement type is ECPGst_prepnormal we are supposed to prepare the
