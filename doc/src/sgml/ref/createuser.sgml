@@ -348,7 +348,7 @@ PostgreSQL documentation
        <para>
         The new user will not have the <literal>REPLICATION</literal>
         privilege, which is described more fully in the documentation for <xref
-        linkend="sql-createrole"/>.
+        linkend="sql-createrole"/>.  This is the default.
        </para>
       </listitem>
      </varlistentry>

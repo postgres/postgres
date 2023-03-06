@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 		free(pw2);
 	}
 
-	if (superuser == 0)
+	if (superuser == TRI_DEFAULT)
 	{
 		if (interactive && yesno_prompt("Shall the new role be a superuser?"))
 			superuser = TRI_YES;
@@ -254,7 +254,7 @@ main(int argc, char *argv[])
 		createrole = TRI_YES;
 	}
 
-	if (createdb == 0)
+	if (createdb == TRI_DEFAULT)
 	{
 		if (interactive && yesno_prompt("Shall the new role be allowed to create databases?"))
 			createdb = TRI_YES;
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 			createdb = TRI_NO;
 	}
 
-	if (createrole == 0)
+	if (createrole == TRI_DEFAULT)
 	{
 		if (interactive && yesno_prompt("Shall the new role be allowed to create more new roles?"))
 			createrole = TRI_YES;
@@ -270,10 +270,16 @@ main(int argc, char *argv[])
 			createrole = TRI_NO;
 	}
 
-	if (inherit == 0)
+	if (bypassrls == TRI_DEFAULT)
+		bypassrls = TRI_NO;
+
+	if (replication == TRI_DEFAULT)
+		replication = TRI_NO;
+
+	if (inherit == TRI_DEFAULT)
 		inherit = TRI_YES;
 
-	if (login == 0)
+	if (login == TRI_DEFAULT)
 		login = TRI_YES;
 
 	cparams.dbname = NULL;		/* this program lacks any dbname option... */
@@ -432,9 +438,10 @@ help(const char *progname)
 	printf(_("  --interactive             prompt for missing role name and attributes rather\n"
 			 "                            than using defaults\n"));
 	printf(_("  --bypassrls               role can bypass row-level security (RLS) policy\n"));
-	printf(_("  --no-bypassrls            role cannot bypass row-level security (RLS) policy\n"));
+	printf(_("  --no-bypassrls            role cannot bypass row-level security (RLS) policy\n"
+			 "                            (default)\n"));
 	printf(_("  --replication             role can initiate replication\n"));
-	printf(_("  --no-replication          role cannot initiate replication\n"));
+	printf(_("  --no-replication          role cannot initiate replication (default)\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
