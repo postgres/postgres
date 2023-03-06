@@ -671,6 +671,7 @@ create_edata_for_relation(LogicalRepRelMapEntry *rel)
 	ApplyExecutionData *edata;
 	EState	   *estate;
 	RangeTblEntry *rte;
+	List	   *perminfos = NIL;
 	ResultRelInfo *resultRelInfo;
 
 	edata = (ApplyExecutionData *) palloc0(sizeof(ApplyExecutionData));
@@ -683,9 +684,10 @@ create_edata_for_relation(LogicalRepRelMapEntry *rel)
 	rte->relid = RelationGetRelid(rel->localrel);
 	rte->relkind = rel->localrel->rd_rel->relkind;
 	rte->rellockmode = AccessShareLock;
-	ExecInitRangeTable(estate, list_make1(rte));
 
-	addRTEPermissionInfo(&estate->es_rteperminfos, rte);
+	addRTEPermissionInfo(&perminfos, rte);
+
+	ExecInitRangeTable(estate, list_make1(rte), perminfos);
 
 	edata->targetRelInfo = resultRelInfo = makeNode(ResultRelInfo);
 

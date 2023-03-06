@@ -757,15 +757,9 @@ CopyFrom(CopyFromState cstate)
 	 * index-entry-making machinery.  (There used to be a huge amount of code
 	 * here that basically duplicated execUtils.c ...)
 	 */
-	ExecInitRangeTable(estate, cstate->range_table);
+	ExecInitRangeTable(estate, cstate->range_table, cstate->rteperminfos);
 	resultRelInfo = target_resultRelInfo = makeNode(ResultRelInfo);
 	ExecInitResultRelation(estate, resultRelInfo, 1);
-
-	/*
-	 * Copy the RTEPermissionInfos into estate as well, so that
-	 * ExecGetInsertedCols() et al will work correctly.
-	 */
-	estate->es_rteperminfos = cstate->rteperminfos;
 
 	/* Verify the named relation is a valid target for INSERT */
 	CheckValidResultRel(resultRelInfo, CMD_INSERT);

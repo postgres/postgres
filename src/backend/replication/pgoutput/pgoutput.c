@@ -23,6 +23,7 @@
 #include "fmgr.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/optimizer.h"
+#include "parser/parse_relation.h"
 #include "replication/logical.h"
 #include "replication/logicalproto.h"
 #include "replication/origin.h"
@@ -792,6 +793,7 @@ create_estate_for_relation(Relation rel)
 {
 	EState	   *estate;
 	RangeTblEntry *rte;
+	List	   *perminfos = NIL;
 
 	estate = CreateExecutorState();
 
@@ -800,7 +802,10 @@ create_estate_for_relation(Relation rel)
 	rte->relid = RelationGetRelid(rel);
 	rte->relkind = rel->rd_rel->relkind;
 	rte->rellockmode = AccessShareLock;
-	ExecInitRangeTable(estate, list_make1(rte));
+
+	addRTEPermissionInfo(&perminfos, rte);
+
+	ExecInitRangeTable(estate, list_make1(rte), perminfos);
 
 	estate->es_output_cid = GetCurrentCommandId(false);
 

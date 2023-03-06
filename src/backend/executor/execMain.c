@@ -807,15 +807,14 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	int			i;
 
 	/*
-	 * Do permissions checks and save the list for later use.
+	 * Do permissions checks
 	 */
 	ExecCheckPermissions(rangeTable, plannedstmt->permInfos, true);
-	estate->es_rteperminfos = plannedstmt->permInfos;
 
 	/*
 	 * initialize the node's execution state
 	 */
-	ExecInitRangeTable(estate, rangeTable);
+	ExecInitRangeTable(estate, rangeTable, plannedstmt->permInfos);
 
 	estate->es_plannedstmt = plannedstmt;
 	estate->es_part_prune_infos = plannedstmt->partPruneInfos;
@@ -2805,11 +2804,12 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 	rcestate->es_range_table = parentestate->es_range_table;
 	rcestate->es_range_table_size = parentestate->es_range_table_size;
 	rcestate->es_relations = parentestate->es_relations;
-	rcestate->es_queryEnv = parentestate->es_queryEnv;
 	rcestate->es_rowmarks = parentestate->es_rowmarks;
+	rcestate->es_rteperminfos = parentestate->es_rteperminfos;
 	rcestate->es_plannedstmt = parentestate->es_plannedstmt;
 	rcestate->es_junkFilter = parentestate->es_junkFilter;
 	rcestate->es_output_cid = parentestate->es_output_cid;
+	rcestate->es_queryEnv = parentestate->es_queryEnv;
 
 	/*
 	 * ResultRelInfos needed by subplans are initialized from scratch when the
