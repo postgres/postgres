@@ -1333,7 +1333,7 @@ ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 	{
 		ListCell   *lc;
 
-		/* In some code paths we can reach here before initializing the info */
+		/* Compute the info if we didn't already */
 		if (relinfo->ri_GeneratedExprs == NULL)
 			ExecInitStoredGenerated(relinfo, estate, CMD_UPDATE);
 		foreach(lc, estate->es_resultrelinfo_extra)
