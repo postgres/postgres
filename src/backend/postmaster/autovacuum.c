@@ -2860,7 +2860,9 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		 * skip vac_update_datfrozenxid(); we'll do that separately.
 		 */
 		tab->at_params.options =
-			(dovacuum ? (VACOPT_VACUUM | VACOPT_SKIP_DATABASE_STATS) : 0) |
+			(dovacuum ? (VACOPT_VACUUM |
+						 VACOPT_PROCESS_MAIN |
+						 VACOPT_SKIP_DATABASE_STATS) : 0) |
 			(doanalyze ? VACOPT_ANALYZE : 0) |
 			(!wraparound ? VACOPT_SKIP_LOCKED : 0);
 

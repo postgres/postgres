@@ -318,6 +318,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-process-main</option></term>
+      <listitem>
+       <para>
+        Skip the main relation.
+       </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 16 and later.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-process-toast</option></term>
       <listitem>
        <para>

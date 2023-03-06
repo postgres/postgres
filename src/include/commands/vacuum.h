@@ -186,10 +186,11 @@ typedef struct VacAttrStats
 #define VACOPT_FREEZE 0x08		/* FREEZE option */
 #define VACOPT_FULL 0x10		/* FULL (non-concurrent) vacuum */
 #define VACOPT_SKIP_LOCKED 0x20 /* skip if cannot get lock */
-#define VACOPT_PROCESS_TOAST 0x40	/* process the TOAST table, if any */
-#define VACOPT_DISABLE_PAGE_SKIPPING 0x80	/* don't skip any pages */
-#define VACOPT_SKIP_DATABASE_STATS 0x100	/* skip vac_update_datfrozenxid() */
-#define VACOPT_ONLY_DATABASE_STATS 0x200	/* only vac_update_datfrozenxid() */
+#define VACOPT_PROCESS_MAIN 0x40	/* process main relation */
+#define VACOPT_PROCESS_TOAST 0x80	/* process the TOAST table, if any */
+#define VACOPT_DISABLE_PAGE_SKIPPING 0x100	/* don't skip any pages */
+#define VACOPT_SKIP_DATABASE_STATS 0x200	/* skip vac_update_datfrozenxid() */
+#define VACOPT_ONLY_DATABASE_STATS 0x400	/* only vac_update_datfrozenxid() */
 
 /*
  * Values used by index_cleanup and truncate params.

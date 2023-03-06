@@ -33,6 +33,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     DISABLE_PAGE_SKIPPING [ <replaceable class="parameter">boolean</replaceable> ]
     SKIP_LOCKED [ <replaceable class="parameter">boolean</replaceable> ]
     INDEX_CLEANUP { AUTO | ON | OFF }
+    PROCESS_MAIN [ <replaceable class="parameter">boolean</replaceable> ]
     PROCESS_TOAST [ <replaceable class="parameter">boolean</replaceable> ]
     TRUNCATE [ <replaceable class="parameter">boolean</replaceable> ]
     PARALLEL <replaceable class="parameter">integer</replaceable>
@@ -234,6 +235,18 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       mechanism.  When triggered it will skip index vacuuming, even
       when <literal>INDEX_CLEANUP</literal> is set to
       <literal>ON</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PROCESS_MAIN</literal></term>
+    <listitem>
+     <para>
+      Specifies that <command>VACUUM</command> should attempt to process the
+      main relation. This is usually the desired behavior and is the default.
+      Setting this option to false may be useful when it is only necessary to
+      vacuum a relation's corresponding <literal>TOAST</literal> table.
      </para>
     </listitem>
    </varlistentry>

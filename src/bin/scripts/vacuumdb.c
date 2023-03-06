@@ -43,6 +43,7 @@ typedef struct vacuumingOptions
 	bool		no_index_cleanup;
 	bool		force_index_cleanup;
 	bool		do_truncate;
+	bool		process_main;
 	bool		process_toast;
 	bool		skip_database_stats;
 } vacuumingOptions;
@@ -121,6 +122,7 @@ main(int argc, char *argv[])
 		{"force-index-cleanup", no_argument, NULL, 9},
 		{"no-truncate", no_argument, NULL, 10},
 		{"no-process-toast", no_argument, NULL, 11},
+		{"no-process-main", no_argument, NULL, 12},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -148,6 +150,7 @@ main(int argc, char *argv[])
 	vacopts.no_index_cleanup = false;
 	vacopts.force_index_cleanup = false;
 	vacopts.do_truncate = true;
+	vacopts.process_main = true;
 	vacopts.process_toast = true;
 
 	pg_logging_init(argv[0]);
@@ -260,6 +263,9 @@ main(int argc, char *argv[])
 			case 11:
 				vacopts.process_toast = false;
 				break;
+			case 12:
+				vacopts.process_main = false;
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -312,6 +318,9 @@ main(int argc, char *argv[])
 		if (!vacopts.do_truncate)
 			pg_fatal("cannot use the \"%s\" option when performing only analyze",
 					 "no-truncate");
+		if (!vacopts.process_main)
+			pg_fatal("cannot use the \"%s\" option when performing only analyze",
+					 "no-process-main");
 		if (!vacopts.process_toast)
 			pg_fatal("cannot use the \"%s\" option when performing only analyze",
 					 "no-process-toast");
@@ -506,6 +515,13 @@ vacuum_one_database(ConnParams *cparams,
 		PQfinish(conn);
 		pg_fatal("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
 				 "no-truncate", "12");
+	}
+
+	if (!vacopts->process_main && PQserverVersion(conn) < 160000)
+	{
+		PQfinish(conn);
+		pg_fatal("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+				 "no-process-main", "16");
 	}
 
 	if (!vacopts->process_toast && PQserverVersion(conn) < 140000)
@@ -976,6 +992,13 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 				appendPQExpBuffer(sql, "%sTRUNCATE FALSE", sep);
 				sep = comma;
 			}
+			if (!vacopts->process_main)
+			{
+				/* PROCESS_MAIN is supported since v16 */
+				Assert(serverVersion >= 160000);
+				appendPQExpBuffer(sql, "%sPROCESS_MAIN FALSE", sep);
+				sep = comma;
+			}
 			if (!vacopts->process_toast)
 			{
 				/* PROCESS_TOAST is supported since v14 */
@@ -1090,6 +1113,7 @@ help(const char *progname)
 	printf(_("      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"));
 	printf(_("      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"));
 	printf(_("      --no-index-cleanup          don't remove index entries that point to dead tuples\n"));
+	printf(_("      --no-process-main           skip the main relation\n"));
 	printf(_("      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"));
 	printf(_("      --no-truncate               don't truncate empty pages at the end of the table\n"));
 	printf(_("  -n, --schema=PATTERN            vacuum tables in the specified schema(s) only\n"));

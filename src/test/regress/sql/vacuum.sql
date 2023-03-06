@@ -236,7 +236,8 @@ CREATE TABLE vac_option_tab (a INT, t TEXT);
 INSERT INTO vac_option_tab SELECT a, 't' || a FROM generate_series(1, 10) AS a;
 ALTER TABLE vac_option_tab ALTER COLUMN t SET STORAGE EXTERNAL;
 -- Check the number of vacuums done on table vac_option_tab and on its
--- toast relation, to check that PROCESS_TOAST works on what it should.
+-- toast relation, to check that PROCESS_TOAST and PROCESS_MAIN work on
+-- what they should.
 CREATE VIEW vac_option_tab_counts AS
   SELECT CASE WHEN c.relname IS NULL
     THEN 'main' ELSE 'toast' END as rel,
@@ -250,6 +251,26 @@ SELECT * FROM vac_option_tab_counts;
 VACUUM (PROCESS_TOAST FALSE) vac_option_tab;
 SELECT * FROM vac_option_tab_counts;
 VACUUM (PROCESS_TOAST FALSE, FULL) vac_option_tab; -- error
+
+-- PROCESS_MAIN option
+-- Only the toast table is processed.
+VACUUM (PROCESS_MAIN FALSE) vac_option_tab;
+SELECT * FROM vac_option_tab_counts;
+-- Nothing is processed.
+VACUUM (PROCESS_MAIN FALSE, PROCESS_TOAST FALSE) vac_option_tab;
+SELECT * FROM vac_option_tab_counts;
+-- Check if the filenodes nodes have been updated as wanted after FULL.
+SELECT relfilenode AS main_filenode FROM pg_class
+  WHERE relname = 'vac_option_tab' \gset
+SELECT t.relfilenode AS toast_filenode FROM pg_class c, pg_class t
+  WHERE c.reltoastrelid = t.oid AND c.relname = 'vac_option_tab' \gset
+-- Only the toast relation is processed.
+VACUUM (PROCESS_MAIN FALSE, FULL) vac_option_tab;
+SELECT relfilenode = :main_filenode AS is_same_main_filenode
+  FROM pg_class WHERE relname = 'vac_option_tab';
+SELECT t.relfilenode = :toast_filenode AS is_same_toast_filenode
+  FROM pg_class c, pg_class t
+  WHERE c.reltoastrelid = t.oid AND c.relname = 'vac_option_tab';
 
 -- SKIP_DATABASE_STATS option
 VACUUM (SKIP_DATABASE_STATS) vactst;
