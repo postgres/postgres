@@ -1,50 +1,23 @@
 Parsed test spec with 2 sessions
 
 starting permutation: s1r s2r1 s1c s2r2 s2c
-step s1r: SELECT * FROM foo;
- a
---
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-(10 rows)
+step s1r: SELECT COUNT(*) FROM foo;
+count
+-----
+  100
+(1 row)
 
-step s2r1: SELECT * FROM foo;
- a
---
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-(10 rows)
+step s2r1: SELECT COUNT(*) FROM foo;
+count
+-----
+  100
+(1 row)
 
 step s1c: COMMIT;
-step s2r2: SELECT * FROM foo;
- a
---
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-(10 rows)
+step s2r2: SELECT COUNT(*) FROM foo;
+count
+-----
+  100
+(1 row)
 
 step s2c: COMMIT;
