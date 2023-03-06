@@ -13,17 +13,14 @@ wal_bytes > 0 as wal_bytes_generated,
 wal_records > 0 as wal_records_generated,
 wal_records >= rows as wal_records_ge_rows
 FROM pg_stat_statements ORDER BY query COLLATE "C";
-                                    query                                     | calls | rows | wal_bytes_generated | wal_records_generated | wal_records_ge_rows 
-------------------------------------------------------------------------------+-------+------+---------------------+-----------------------+---------------------
- DELETE FROM pgss_wal_tab WHERE a > $1                                        |     1 |    1 | t                   | t                     | t
- DROP ROLE regress_stats_user1                                                |     1 |    0 | t                   | t                     | t
- DROP ROLE regress_stats_user2                                                |     1 |    0 | t                   | t                     | t
- INSERT INTO pgss_wal_tab VALUES(generate_series($1, $2), $3)                 |     1 |   10 | t                   | t                     | t
- SELECT pg_stat_statements_reset(0,0,0)                                       |     1 |    1 | f                   | f                     | f
- SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     1 |    1 | f                   | f                     | f
- SET pg_stat_statements.track_utility = FALSE                                 |     1 |    0 | f                   | f                     | t
- UPDATE pgss_wal_tab SET b = $1 WHERE a > $2                                  |     1 |    3 | t                   | t                     | t
-(8 rows)
+                            query                             | calls | rows | wal_bytes_generated | wal_records_generated | wal_records_ge_rows 
+--------------------------------------------------------------+-------+------+---------------------+-----------------------+---------------------
+ DELETE FROM pgss_wal_tab WHERE a > $1                        |     1 |    1 | t                   | t                     | t
+ INSERT INTO pgss_wal_tab VALUES(generate_series($1, $2), $3) |     1 |   10 | t                   | t                     | t
+ SELECT pg_stat_statements_reset()                            |     1 |    1 | f                   | f                     | f
+ SET pg_stat_statements.track_utility = FALSE                 |     1 |    0 | f                   | f                     | t
+ UPDATE pgss_wal_tab SET b = $1 WHERE a > $2                  |     1 |    3 | t                   | t                     | t
+(5 rows)
 
 SELECT pg_stat_statements_reset();
  pg_stat_statements_reset 

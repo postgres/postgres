@@ -276,3 +276,4 @@ SET enable_seqscan = on;
 RESET enable_seqscan;
 
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+SELECT pg_stat_statements_reset();

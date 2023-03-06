@@ -202,3 +202,9 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 -------+------+-------
 (0 rows)
 
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+

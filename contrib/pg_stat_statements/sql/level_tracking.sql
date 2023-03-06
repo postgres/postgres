@@ -97,3 +97,4 @@ SELECT 1 AS "one";
 SELECT 1 + 1 AS "two";
 
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+SELECT pg_stat_statements_reset();

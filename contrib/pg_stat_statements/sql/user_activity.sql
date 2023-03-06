@@ -63,3 +63,4 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 --
 DROP ROLE regress_stats_user1;
 DROP ROLE regress_stats_user2;
+SELECT pg_stat_statements_reset();
