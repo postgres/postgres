@@ -6,7 +6,8 @@
 
 setup
 {
- CREATE TABLE accounts (accountid text PRIMARY KEY, balance numeric not null);
+ CREATE TABLE accounts (accountid text PRIMARY KEY, balance numeric not null,
+   balance2 numeric GENERATED ALWAYS AS (balance * 2) STORED);
  INSERT INTO accounts VALUES ('checking', 600), ('savings', 600);
 
  CREATE FUNCTION update_checking(int) RETURNS bool LANGUAGE sql AS $$
@@ -33,7 +34,8 @@ setup
  CREATE TABLE jointest AS SELECT generate_series(1,10) AS id, 0 AS data;
  CREATE INDEX ON jointest(id);
 
- CREATE TABLE parttbl (a int, b int, c int) PARTITION BY LIST (a);
+ CREATE TABLE parttbl (a int, b int, c int,
+   d int GENERATED ALWAYS AS (a + b) STORED) PARTITION BY LIST (a);
  CREATE TABLE parttbl1 PARTITION OF parttbl FOR VALUES IN (1);
  CREATE TABLE parttbl2 PARTITION OF parttbl FOR VALUES IN (2);
  INSERT INTO parttbl VALUES (1, 1, 1);
@@ -171,7 +173,7 @@ step selectresultforupdate	{
 # test for EPQ on a partitioned result table
 
 step simplepartupdate	{
-	update parttbl set a = a;
+	update parttbl set b = b + 10;
 }
 
 # test scenarios where update may cause row movement
@@ -223,8 +225,8 @@ step updateforcip3	{
 step wrtwcte	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
 step wrjt	{ UPDATE jointest SET data = 42 WHERE id = 7; }
 step complexpartupdate	{
-	with u as (update parttbl set a = a returning parttbl.*)
-	update parttbl set a = u.a from u;
+	with u as (update parttbl set b = b + 1 returning parttbl.*)
+	update parttbl set b = u.b + 100 from u;
 }
 
 step complexpartupdate_route_err1 {
@@ -273,6 +275,7 @@ setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step read	{ SELECT * FROM accounts ORDER BY accountid; }
 step read_ext	{ SELECT * FROM accounts_ext ORDER BY accountid; }
 step read_a		{ SELECT * FROM table_a ORDER BY id; }
+step read_part	{ SELECT * FROM parttbl ORDER BY a; }
 
 # this test exercises EvalPlanQual with a CTE, cf bug #14328
 step readwcte	{
@@ -353,7 +356,7 @@ permutation wrjt selectjoinforupdate c2 c1
 permutation wrjt selectresultforupdate c2 c1
 permutation wrtwcte multireadwcte c1 c2
 
-permutation simplepartupdate complexpartupdate c1 c2
-permutation simplepartupdate_route1to2 complexpartupdate_route_err1 c1 c2
-permutation simplepartupdate_noroute complexpartupdate_route c1 c2
-permutation simplepartupdate_noroute complexpartupdate_doesnt_route c1 c2
+permutation simplepartupdate complexpartupdate c1 c2 read_part
+permutation simplepartupdate_route1to2 complexpartupdate_route_err1 c1 c2 read_part
+permutation simplepartupdate_noroute complexpartupdate_route c1 c2 read_part
+permutation simplepartupdate_noroute complexpartupdate_doesnt_route c1 c2 read_part

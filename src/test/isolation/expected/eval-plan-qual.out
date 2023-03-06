@@ -17,10 +17,10 @@ balance
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |    850
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |    850|    1700
+savings  |    600|    1200
 (2 rows)
 
 
@@ -40,10 +40,10 @@ balance
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1100
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1100|    2200
+savings  |    600|    1200
 (2 rows)
 
 
@@ -64,10 +64,10 @@ balance
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1050
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1050|    2100
+savings  |    600|    1200
 (2 rows)
 
 
@@ -88,10 +88,10 @@ balance
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1600
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1600|    3200
+savings  |    600|    1200
 (2 rows)
 
 
@@ -117,9 +117,9 @@ balance
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+savings  |    600|    1200
 (1 row)
 
 
@@ -140,9 +140,9 @@ balance
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+savings  |    600|    1200
 (1 row)
 
 
@@ -168,10 +168,10 @@ balance
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1500
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1500|    3000
+savings  |    600|    1200
 (2 rows)
 
 
@@ -192,9 +192,9 @@ balance
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+savings  |    600|    1200
 (1 row)
 
 
@@ -221,10 +221,10 @@ balance
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1050
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1050|    2100
+savings  |    600|    1200
 (2 rows)
 
 
@@ -245,9 +245,9 @@ balance
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+savings  |    600|    1200
 (1 row)
 
 
@@ -274,9 +274,9 @@ balance
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+savings  |    600|    1200
 (1 row)
 
 
@@ -298,9 +298,9 @@ balance
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+savings  |    600|    1200
 (1 row)
 
 
@@ -320,9 +320,9 @@ balance
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+savings  |    600|    1200
 (1 row)
 
 
@@ -343,10 +343,10 @@ balance
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1050
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1050|    2100
+savings  |    600|    1200
 (2 rows)
 
 
@@ -371,10 +371,10 @@ step wnested2:
 step c1: COMMIT;
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   -600
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   -600|   -1200
+savings  |    600|    1200
 (2 rows)
 
 
@@ -420,10 +420,10 @@ s2: NOTICE:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   -800
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   -800|   -1600
+savings  |    600|    1200
 (2 rows)
 
 
@@ -471,10 +471,10 @@ s2: NOTICE:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |    200
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |    200|     400
+savings  |    600|    1200
 (2 rows)
 
 
@@ -527,10 +527,10 @@ s2: NOTICE:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |    200
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |    200|     400
+savings  |    600|    1200
 (2 rows)
 
 
@@ -577,10 +577,10 @@ s2: NOTICE:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |    400
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |    400|     800
+savings  |    600|    1200
 (2 rows)
 
 
@@ -614,10 +614,10 @@ s2: NOTICE:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-cds      |    400
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+cds      |    400|     800
+savings  |    600|    1200
 (2 rows)
 
 
@@ -652,10 +652,10 @@ s2: NOTICE:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |    400
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |    400|     800
+savings  |    600|    1200
 (2 rows)
 
 
@@ -669,17 +669,17 @@ balance
 step updwcte: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *) UPDATE accounts a SET balance = doup.balance + 100 FROM doup RETURNING *; <waiting ...>
 step c1: COMMIT;
 step updwcte: <... completed>
-accountid|balance|accountid|balance
----------+-------+---------+-------
-savings  |   1600|checking |   1500
+accountid|balance|balance2|accountid|balance|balance2
+---------+-------+--------+---------+-------+--------
+savings  |   1600|    3200|checking |   1500|    3000
 (1 row)
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1500
-savings  |   1600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1500|    3000
+savings  |   1600|    3200
 (2 rows)
 
 
@@ -696,10 +696,10 @@ step updwctefail: <... completed>
 ERROR:  tuple to be updated was already modified by an operation triggered by the current command
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |    400
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |    400|     800
+savings  |    600|    1200
 (2 rows)
 
 
@@ -713,16 +713,16 @@ balance
 step delwcte: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *) DELETE FROM accounts a USING doup RETURNING *; <waiting ...>
 step c1: COMMIT;
 step delwcte: <... completed>
-accountid|balance|accountid|balance
----------+-------+---------+-------
-savings  |    600|checking |   1500
+accountid|balance|balance2|accountid|balance|balance2
+---------+-------+--------+---------+-------+--------
+savings  |    600|    1200|checking |   1500|    3000
 (1 row)
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1500
+accountid|balance|balance2
+---------+-------+--------
+checking |   1500|    3000
 (1 row)
 
 
@@ -739,10 +739,10 @@ step delwctefail: <... completed>
 ERROR:  tuple to be deleted was already modified by an operation triggered by the current command
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |    400
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |    400|     800
+savings  |    600|    1200
 (2 rows)
 
 
@@ -767,10 +767,10 @@ step c1: COMMIT;
 step upsert2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |    600
-savings  |   2334
+accountid|balance|balance2
+---------+-------+--------
+checking |    600|    1200
+savings  |   2334|    4668
 (2 rows)
 
 
@@ -856,18 +856,18 @@ step partiallock:
  <waiting ...>
 step c2: COMMIT;
 step partiallock: <... completed>
-accountid|balance|accountid|balance
----------+-------+---------+-------
-checking |   1050|checking |    600
-savings  |    600|savings  |    600
+accountid|balance|balance2|accountid|balance|balance2
+---------+-------+--------+---------+-------+--------
+checking |   1050|    2100|checking |    600|    1200
+savings  |    600|    1200|savings  |    600|    1200
 (2 rows)
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1050
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1050|    2100
+savings  |    600|    1200
 (2 rows)
 
 
@@ -887,18 +887,18 @@ step lockwithvalues:
  <waiting ...>
 step c2: COMMIT;
 step lockwithvalues: <... completed>
-accountid|balance|id      
----------+-------+--------
-checking |   1050|checking
-savings  |    600|savings 
+accountid|balance|balance2|id      
+---------+-------+--------+--------
+checking |   1050|    2100|checking
+savings  |    600|    1200|savings 
 (2 rows)
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid|balance
----------+-------
-checking |   1050
-savings  |    600
+accountid|balance|balance2
+---------+-------+--------
+checking |   1050|    2100
+savings  |    600|    1200
 (2 rows)
 
 
@@ -1104,25 +1104,31 @@ subid|id
 (1 row)
 
 
-starting permutation: simplepartupdate complexpartupdate c1 c2
+starting permutation: simplepartupdate complexpartupdate c1 c2 read_part
 step simplepartupdate: 
-	update parttbl set a = a;
+	update parttbl set b = b + 10;
 
 step complexpartupdate: 
-	with u as (update parttbl set a = a returning parttbl.*)
-	update parttbl set a = u.a from u;
+	with u as (update parttbl set b = b + 1 returning parttbl.*)
+	update parttbl set b = u.b + 100 from u;
  <waiting ...>
 step c1: COMMIT;
 step complexpartupdate: <... completed>
 step c2: COMMIT;
+step read_part: SELECT * FROM parttbl ORDER BY a;
+a| b|c| d
+-+--+-+--
+1|12|1|13
+(1 row)
 
-starting permutation: simplepartupdate_route1to2 complexpartupdate_route_err1 c1 c2
+
+starting permutation: simplepartupdate_route1to2 complexpartupdate_route_err1 c1 c2 read_part
 step simplepartupdate_route1to2: 
 	update parttbl set a = 2 where c = 1 returning *;
 
-a|b|c
--+-+-
-2|1|1
+a|b|c|d
+-+-+-+-
+2|1|1|3
 (1 row)
 
 step complexpartupdate_route_err1: 
@@ -1133,14 +1139,20 @@ step c1: COMMIT;
 step complexpartupdate_route_err1: <... completed>
 ERROR:  tuple to be locked was already moved to another partition due to concurrent update
 step c2: COMMIT;
+step read_part: SELECT * FROM parttbl ORDER BY a;
+a|b|c|d
+-+-+-+-
+2|1|1|3
+(1 row)
 
-starting permutation: simplepartupdate_noroute complexpartupdate_route c1 c2
+
+starting permutation: simplepartupdate_noroute complexpartupdate_route c1 c2 read_part
 step simplepartupdate_noroute: 
 	update parttbl set b = 2 where c = 1 returning *;
 
-a|b|c
--+-+-
-1|2|1
+a|b|c|d
+-+-+-+-
+1|2|1|3
 (1 row)
 
 step complexpartupdate_route: 
@@ -1149,20 +1161,26 @@ step complexpartupdate_route:
  <waiting ...>
 step c1: COMMIT;
 step complexpartupdate_route: <... completed>
-a|b|c
--+-+-
-2|2|1
+a|b|c|d
+-+-+-+-
+2|2|1|4
 (1 row)
 
 step c2: COMMIT;
+step read_part: SELECT * FROM parttbl ORDER BY a;
+a|b|c|d
+-+-+-+-
+2|2|1|4
+(1 row)
 
-starting permutation: simplepartupdate_noroute complexpartupdate_doesnt_route c1 c2
+
+starting permutation: simplepartupdate_noroute complexpartupdate_doesnt_route c1 c2 read_part
 step simplepartupdate_noroute: 
 	update parttbl set b = 2 where c = 1 returning *;
 
-a|b|c
--+-+-
-1|2|1
+a|b|c|d
+-+-+-+-
+1|2|1|3
 (1 row)
 
 step complexpartupdate_doesnt_route: 
@@ -1171,9 +1189,15 @@ step complexpartupdate_doesnt_route:
  <waiting ...>
 step c1: COMMIT;
 step complexpartupdate_doesnt_route: <... completed>
-a|b|c
--+-+-
-1|2|1
+a|b|c|d
+-+-+-+-
+1|2|1|3
 (1 row)
 
 step c2: COMMIT;
+step read_part: SELECT * FROM parttbl ORDER BY a;
+a|b|c|d
+-+-+-+-
+1|2|1|3
+(1 row)
+

@@ -390,9 +390,13 @@ DROP TABLE gtest_parent;
 -- partitioned table
 CREATE TABLE gtest_parent (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f1);
 CREATE TABLE gtest_child PARTITION OF gtest_parent FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
+CREATE TABLE gtest_child3 PARTITION OF gtest_parent FOR VALUES FROM ('2016-09-01') TO ('2016-10-01');
 INSERT INTO gtest_parent (f1, f2) VALUES ('2016-07-15', 1);
 SELECT * FROM gtest_parent;
 SELECT * FROM gtest_child;
+UPDATE gtest_parent SET f1 = f1 + 60, f2 = f2 + 1;
+SELECT * FROM gtest_parent;
+SELECT * FROM gtest_child3;
 DROP TABLE gtest_parent;
 
 -- generated columns in partition key (not allowed)

@@ -358,8 +358,9 @@ ExecCheckTIDVisible(EState *estate,
  *
  * This fills the resultRelInfo's ri_GeneratedExprs field and makes an
  * associated ResultRelInfoExtra struct to hold ri_extraUpdatedCols.
- * (Currently, ri_extraUpdatedCols is consulted only in UPDATE, but we might
- * as well fill it for INSERT too.)
+ * (Currently, ri_extraUpdatedCols is consulted only in UPDATE, but we
+ * must fill it in other cases too, since for example cmdtype might be
+ * MERGE yet an UPDATE might happen later.)
  */
 void
 ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
@@ -1918,9 +1919,10 @@ ExecUpdatePrologue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 }
 
 /*
- * ExecUpdatePrepareSlot -- subroutine for ExecUpdate
+ * ExecUpdatePrepareSlot -- subroutine for ExecUpdateAct
  *
  * Apply the final modifications to the tuple slot before the update.
+ * (This is split out because we also need it in the foreign-table code path.)
  */
 static void
 ExecUpdatePrepareSlot(ResultRelInfo *resultRelInfo,
@@ -1973,13 +1975,14 @@ ExecUpdateAct(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	updateCxt->crossPartUpdate = false;
 
 	/*
-	 * If we generate a new candidate tuple after EvalPlanQual testing, we
-	 * must loop back here and recheck any RLS policies and constraints. (We
-	 * don't need to redo triggers, however.  If there are any BEFORE triggers
-	 * then trigger.c will have done table_tuple_lock to lock the correct
-	 * tuple, so there's no need to do them again.)
+	 * If we move the tuple to a new partition, we loop back here to recompute
+	 * GENERATED values (which are allowed to be different across partitions)
+	 * and recheck any RLS policies and constraints.  We do not fire any
+	 * BEFORE triggers of the new partition, however.
 	 */
-lreplace:;
+lreplace:
+	/* Fill in GENERATEd columns */
+	ExecUpdatePrepareSlot(resultRelInfo, slot, estate);
 
 	/* ensure slot is independent, consider e.g. EPQ */
 	ExecMaterializeSlot(slot);
@@ -2279,6 +2282,7 @@ ExecUpdate(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
+		/* Fill in GENERATEd columns */
 		ExecUpdatePrepareSlot(resultRelInfo, slot, estate);
 
 		/*
@@ -2301,9 +2305,13 @@ ExecUpdate(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	}
 	else
 	{
-		/* Fill in the slot appropriately */
-		ExecUpdatePrepareSlot(resultRelInfo, slot, estate);
-
+		/*
+		 * If we generate a new candidate tuple after EvalPlanQual testing, we
+		 * must loop back here to try again.  (We don't need to redo triggers,
+		 * however.  If there are any BEFORE triggers then trigger.c will have
+		 * done table_tuple_lock to lock the correct tuple, so there's no need
+		 * to do them again.)
+		 */
 redo_act:
 		result = ExecUpdateAct(context, resultRelInfo, tupleid, oldtuple, slot,
 							   canSetTag, &updateCxt);
@@ -2887,7 +2895,6 @@ lmerge_matched:;
 					result = TM_Ok;
 					break;
 				}
-				ExecUpdatePrepareSlot(resultRelInfo, newslot, context->estate);
 				result = ExecUpdateAct(context, resultRelInfo, tupleid, NULL,
 									   newslot, false, &updateCxt);
 				if (result == TM_Ok && updateCxt.updated)
@@ -4149,9 +4156,12 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		/*
 		 * For INSERT/UPDATE/MERGE, prepare to evaluate any generated columns.
-		 * We must do this now, even if we never insert or update any rows,
-		 * because we have to fill resultRelInfo->ri_extraUpdatedCols for
-		 * possible use by the trigger machinery.
+		 * We must do this now, even if we never insert or update any rows, to
+		 * cover the case where a MERGE does some UPDATE operations and later
+		 * some INSERTs.  We'll need ri_GeneratedExprs to cover all generated
+		 * columns, so we force it now.  (It might be sufficient to do this
+		 * only for operation == CMD_MERGE, but we'll avoid changing the data
+		 * structure definition in back branches.)
 		 */
 		if (operation == CMD_INSERT || operation == CMD_UPDATE || operation == CMD_MERGE)
 			ExecInitStoredGenerated(resultRelInfo, estate, operation);
