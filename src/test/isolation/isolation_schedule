@@ -99,3 +99,4 @@ test: plpgsql-toast
 test: truncate-conflict
 test: serializable-parallel
 test: serializable-parallel-2
+test: serializable-parallel-3
