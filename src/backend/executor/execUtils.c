@@ -1339,8 +1339,8 @@ ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 Bitmapset *
 ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 {
-	/* In some code paths we can reach here before initializing the info */
-	if (relinfo->ri_GeneratedExprs == NULL)
+	/* Compute the info if we didn't already */
+	if (relinfo->ri_GeneratedExprsU == NULL)
 		ExecInitStoredGenerated(relinfo, estate, CMD_UPDATE);
 	return relinfo->ri_extraUpdatedCols;
 }

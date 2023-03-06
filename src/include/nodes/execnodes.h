@@ -462,7 +462,7 @@ typedef struct ResultRelInfo
 	 */
 	AttrNumber	ri_RowIdAttNo;
 
-	/* For INSERT/UPDATE, attnums of generated columns to be computed */
+	/* For UPDATE, attnums of generated columns to be computed */
 	Bitmapset  *ri_extraUpdatedCols;
 
 	/* Projection to generate new tuple in an INSERT/UPDATE */
@@ -516,11 +516,13 @@ typedef struct ResultRelInfo
 	/* array of constraint-checking expr states */
 	ExprState **ri_ConstraintExprs;
 
-	/* array of stored generated columns expr states */
-	ExprState **ri_GeneratedExprs;
+	/* arrays of stored generated columns expr states, for INSERT and UPDATE */
+	ExprState **ri_GeneratedExprsI;
+	ExprState **ri_GeneratedExprsU;
 
 	/* number of stored generated columns we need to compute */
-	int			ri_NumGeneratedNeeded;
+	int			ri_NumGeneratedNeededI;
+	int			ri_NumGeneratedNeededU;
 
 	/* list of RETURNING expressions */
 	List	   *ri_returningList;

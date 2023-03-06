@@ -356,9 +356,14 @@ ExecCheckTIDVisible(EState *estate,
 /*
  * Initialize to compute stored generated columns for a tuple
  *
- * This fills the resultRelInfo's ri_GeneratedExprs and ri_extraUpdatedCols
- * fields.  (Currently, ri_extraUpdatedCols is consulted only in UPDATE,
- * but we might as well fill it for INSERT too.)
+ * This fills the resultRelInfo's ri_GeneratedExprsI/ri_NumGeneratedNeededI
+ * or ri_GeneratedExprsU/ri_NumGeneratedNeededU fields, depending on cmdtype.
+ * If cmdType == CMD_UPDATE, the ri_extraUpdatedCols field is filled too.
+ *
+ * Note: usually, a given query would need only one of ri_GeneratedExprsI and
+ * ri_GeneratedExprsU per result rel; but MERGE can need both, and so can
+ * cross-partition UPDATEs, since a partition might be the target of both
+ * UPDATE and INSERT actions.
  */
 void
 ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
@@ -368,11 +373,10 @@ ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	int			natts = tupdesc->natts;
+	ExprState **ri_GeneratedExprs;
+	int			ri_NumGeneratedNeeded;
 	Bitmapset  *updatedCols;
 	MemoryContext oldContext;
-
-	/* Don't call twice */
-	Assert(resultRelInfo->ri_GeneratedExprs == NULL);
 
 	/* Nothing to do if no generated columns */
 	if (!(tupdesc->constr && tupdesc->constr->has_generated_stored))
@@ -396,9 +400,8 @@ ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 	 */
 	oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
 
-	resultRelInfo->ri_GeneratedExprs =
-		(ExprState **) palloc0(natts * sizeof(ExprState *));
-	resultRelInfo->ri_NumGeneratedNeeded = 0;
+	ri_GeneratedExprs = (ExprState **) palloc0(natts * sizeof(ExprState *));
+	ri_NumGeneratedNeeded = 0;
 
 	for (int i = 0; i < natts; i++)
 	{
@@ -427,14 +430,33 @@ ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 			}
 
 			/* No luck, so prepare the expression for execution */
-			resultRelInfo->ri_GeneratedExprs[i] = ExecPrepareExpr(expr, estate);
-			resultRelInfo->ri_NumGeneratedNeeded++;
+			ri_GeneratedExprs[i] = ExecPrepareExpr(expr, estate);
+			ri_NumGeneratedNeeded++;
 
-			/* And mark this column in resultRelInfo->ri_extraUpdatedCols */
-			resultRelInfo->ri_extraUpdatedCols =
-				bms_add_member(resultRelInfo->ri_extraUpdatedCols,
-							   i + 1 - FirstLowInvalidHeapAttributeNumber);
+			/* If UPDATE, mark column in resultRelInfo->ri_extraUpdatedCols */
+			if (cmdtype == CMD_UPDATE)
+				resultRelInfo->ri_extraUpdatedCols =
+					bms_add_member(resultRelInfo->ri_extraUpdatedCols,
+								   i + 1 - FirstLowInvalidHeapAttributeNumber);
 		}
+	}
+
+	/* Save in appropriate set of fields */
+	if (cmdtype == CMD_UPDATE)
+	{
+		/* Don't call twice */
+		Assert(resultRelInfo->ri_GeneratedExprsU == NULL);
+
+		resultRelInfo->ri_GeneratedExprsU = ri_GeneratedExprs;
+		resultRelInfo->ri_NumGeneratedNeededU = ri_NumGeneratedNeeded;
+	}
+	else
+	{
+		/* Don't call twice */
+		Assert(resultRelInfo->ri_GeneratedExprsI == NULL);
+
+		resultRelInfo->ri_GeneratedExprsI = ri_GeneratedExprs;
+		resultRelInfo->ri_NumGeneratedNeededI = ri_NumGeneratedNeeded;
 	}
 
 	MemoryContextSwitchTo(oldContext);
@@ -452,6 +474,7 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	int			natts = tupdesc->natts;
 	ExprContext *econtext = GetPerTupleExprContext(estate);
+	ExprState **ri_GeneratedExprs;
 	MemoryContext oldContext;
 	Datum	   *values;
 	bool	   *nulls;
@@ -460,20 +483,25 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 	Assert(tupdesc->constr && tupdesc->constr->has_generated_stored);
 
 	/*
-	 * For relations named directly in the query, ExecInitStoredGenerated
-	 * should have been called already; but this might not have happened yet
-	 * for a partition child rel.  Also, it's convenient for outside callers
-	 * to not have to call ExecInitStoredGenerated explicitly.
+	 * Initialize the expressions if we didn't already, and check whether we
+	 * can exit early because nothing needs to be computed.
 	 */
-	if (resultRelInfo->ri_GeneratedExprs == NULL)
-		ExecInitStoredGenerated(resultRelInfo, estate, cmdtype);
-
-	/*
-	 * If no generated columns have been affected by this change, then skip
-	 * the rest.
-	 */
-	if (resultRelInfo->ri_NumGeneratedNeeded == 0)
-		return;
+	if (cmdtype == CMD_UPDATE)
+	{
+		if (resultRelInfo->ri_GeneratedExprsU == NULL)
+			ExecInitStoredGenerated(resultRelInfo, estate, cmdtype);
+		if (resultRelInfo->ri_NumGeneratedNeededU == 0)
+			return;
+		ri_GeneratedExprs = resultRelInfo->ri_GeneratedExprsU;
+	}
+	else
+	{
+		if (resultRelInfo->ri_GeneratedExprsI == NULL)
+			ExecInitStoredGenerated(resultRelInfo, estate, cmdtype);
+		/* Early exit is impossible given the prior Assert */
+		Assert(resultRelInfo->ri_NumGeneratedNeededI > 0);
+		ri_GeneratedExprs = resultRelInfo->ri_GeneratedExprsI;
+	}
 
 	oldContext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
@@ -487,7 +515,7 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
-		if (resultRelInfo->ri_GeneratedExprs[i])
+		if (ri_GeneratedExprs[i])
 		{
 			Datum		val;
 			bool		isnull;
@@ -496,7 +524,7 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 
 			econtext->ecxt_scantuple = slot;
 
-			val = ExecEvalExpr(resultRelInfo->ri_GeneratedExprs[i], econtext, &isnull);
+			val = ExecEvalExpr(ri_GeneratedExprs[i], econtext, &isnull);
 
 			/*
 			 * We must make a copy of val as we have no guarantees about where
@@ -1910,9 +1938,10 @@ ExecUpdatePrologue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 }
 
 /*
- * ExecUpdatePrepareSlot -- subroutine for ExecUpdate
+ * ExecUpdatePrepareSlot -- subroutine for ExecUpdateAct
  *
  * Apply the final modifications to the tuple slot before the update.
+ * (This is split out because we also need it in the foreign-table code path.)
  */
 static void
 ExecUpdatePrepareSlot(ResultRelInfo *resultRelInfo,
@@ -1962,13 +1991,14 @@ ExecUpdateAct(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	updateCxt->crossPartUpdate = false;
 
 	/*
-	 * If we generate a new candidate tuple after EvalPlanQual testing, we
-	 * must loop back here and recheck any RLS policies and constraints. (We
-	 * don't need to redo triggers, however.  If there are any BEFORE triggers
-	 * then trigger.c will have done table_tuple_lock to lock the correct
-	 * tuple, so there's no need to do them again.)
+	 * If we move the tuple to a new partition, we loop back here to recompute
+	 * GENERATED values (which are allowed to be different across partitions)
+	 * and recheck any RLS policies and constraints.  We do not fire any
+	 * BEFORE triggers of the new partition, however.
 	 */
 lreplace:
+	/* Fill in GENERATEd columns */
+	ExecUpdatePrepareSlot(resultRelInfo, slot, estate);
 
 	/* ensure slot is independent, consider e.g. EPQ */
 	ExecMaterializeSlot(slot);
@@ -2268,6 +2298,7 @@ ExecUpdate(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
+		/* Fill in GENERATEd columns */
 		ExecUpdatePrepareSlot(resultRelInfo, slot, estate);
 
 		/*
@@ -2290,9 +2321,13 @@ ExecUpdate(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	}
 	else
 	{
-		/* Fill in the slot appropriately */
-		ExecUpdatePrepareSlot(resultRelInfo, slot, estate);
-
+		/*
+		 * If we generate a new candidate tuple after EvalPlanQual testing, we
+		 * must loop back here to try again.  (We don't need to redo triggers,
+		 * however.  If there are any BEFORE triggers then trigger.c will have
+		 * done table_tuple_lock to lock the correct tuple, so there's no need
+		 * to do them again.)
+		 */
 redo_act:
 		result = ExecUpdateAct(context, resultRelInfo, tupleid, oldtuple, slot,
 							   canSetTag, &updateCxt);
@@ -2876,7 +2911,6 @@ lmerge_matched:
 					result = TM_Ok;
 					break;
 				}
-				ExecUpdatePrepareSlot(resultRelInfo, newslot, context->estate);
 				result = ExecUpdateAct(context, resultRelInfo, tupleid, NULL,
 									   newslot, false, &updateCxt);
 				if (result == TM_Ok && updateCxt.updated)
@@ -4135,15 +4169,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 					elog(ERROR, "could not find junk wholerow column");
 			}
 		}
-
-		/*
-		 * For INSERT/UPDATE/MERGE, prepare to evaluate any generated columns.
-		 * We must do this now, even if we never insert or update any rows,
-		 * because we have to fill resultRelInfo->ri_extraUpdatedCols for
-		 * possible use by the trigger machinery.
-		 */
-		if (operation == CMD_INSERT || operation == CMD_UPDATE || operation == CMD_MERGE)
-			ExecInitStoredGenerated(resultRelInfo, estate, operation);
 	}
 
 	/*

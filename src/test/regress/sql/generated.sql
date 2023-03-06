@@ -413,6 +413,9 @@ ALTER TABLE gtest_parent ATTACH PARTITION gtest_child3 FOR VALUES FROM ('2016-09
 INSERT INTO gtest_parent (f1, f2) VALUES ('2016-07-15', 1);
 SELECT * FROM gtest_parent;
 SELECT * FROM gtest_child;
+UPDATE gtest_parent SET f1 = f1 + 60;
+SELECT * FROM gtest_parent;
+SELECT * FROM gtest_child3;
 -- we leave these tables around for purposes of testing dump/reload/upgrade
 
 -- generated columns in partition key (not allowed)

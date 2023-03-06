@@ -792,6 +792,19 @@ SELECT * FROM gtest_child;
  07-15-2016 |  1 |  2
 (1 row)
 
+UPDATE gtest_parent SET f1 = f1 + 60;
+SELECT * FROM gtest_parent;
+     f1     | f2 | f3 
+------------+----+----
+ 09-13-2016 |  1 | 33
+(1 row)
+
+SELECT * FROM gtest_child3;
+     f1     | f2 | f3 
+------------+----+----
+ 09-13-2016 |  1 | 33
+(1 row)
+
 -- we leave these tables around for purposes of testing dump/reload/upgrade
 -- generated columns in partition key (not allowed)
 CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f3);
