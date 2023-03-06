@@ -1602,11 +1602,21 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 						 * Retry the block on the first failure.  It's
 						 * possible that we read the first 4K page of the
 						 * block just before postgres updated the entire block
-						 * so it ends up looking torn to us.  We only need to
-						 * retry once because the LSN should be updated to
-						 * something we can ignore on the next pass.  If the
-						 * error happens again then it is a true validation
-						 * failure.
+						 * so it ends up looking torn to us. If, before we
+						 * retry the read, the concurrent write of the block
+						 * finishes, the page LSN will be updated and we'll
+						 * realize that we should ignore this block.
+						 *
+						 * There's no guarantee that this will actually
+						 * happen, though: the torn write could take an
+						 * arbitrarily long time to complete. Retrying multiple
+						 * times wouldn't fix this problem, either, though
+						 * it would reduce the chances of it happening in
+						 * practice. The only real fix here seems to be to
+						 * have some kind of interlock that allows us to wait
+						 * until we can be certain that no write to the block
+						 * is in progress. Since we don't have any such thing
+						 * right now, we just do this and hope for the best.
 						 */
 						if (block_retry == false)
 						{
