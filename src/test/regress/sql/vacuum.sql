@@ -232,10 +232,24 @@ ANALYZE vactst;
 COMMIT;
 
 -- PROCESS_TOAST option
-ALTER TABLE vactst ADD COLUMN t TEXT;
-ALTER TABLE vactst ALTER COLUMN t SET STORAGE EXTERNAL;
-VACUUM (PROCESS_TOAST FALSE) vactst;
-VACUUM (PROCESS_TOAST FALSE, FULL) vactst;
+CREATE TABLE vac_option_tab (a INT, t TEXT);
+INSERT INTO vac_option_tab SELECT a, 't' || a FROM generate_series(1, 10) AS a;
+ALTER TABLE vac_option_tab ALTER COLUMN t SET STORAGE EXTERNAL;
+-- Check the number of vacuums done on table vac_option_tab and on its
+-- toast relation, to check that PROCESS_TOAST works on what it should.
+CREATE VIEW vac_option_tab_counts AS
+  SELECT CASE WHEN c.relname IS NULL
+    THEN 'main' ELSE 'toast' END as rel,
+  s.vacuum_count
+  FROM pg_stat_all_tables s
+  LEFT JOIN pg_class c ON s.relid = c.reltoastrelid
+  WHERE c.relname = 'vac_option_tab' OR s.relname = 'vac_option_tab'
+  ORDER BY rel;
+VACUUM (PROCESS_TOAST TRUE) vac_option_tab;
+SELECT * FROM vac_option_tab_counts;
+VACUUM (PROCESS_TOAST FALSE) vac_option_tab;
+SELECT * FROM vac_option_tab_counts;
+VACUUM (PROCESS_TOAST FALSE, FULL) vac_option_tab; -- error
 
 -- SKIP_DATABASE_STATS option
 VACUUM (SKIP_DATABASE_STATS) vactst;
@@ -244,6 +258,8 @@ VACUUM (SKIP_DATABASE_STATS) vactst;
 VACUUM (ONLY_DATABASE_STATS);
 VACUUM (ONLY_DATABASE_STATS) vactst;  -- error
 
+DROP VIEW vac_option_tab_counts;
+DROP TABLE vac_option_tab;
 DROP TABLE vaccluster;
 DROP TABLE vactst;
 DROP TABLE vacparted;
