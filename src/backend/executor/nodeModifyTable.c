@@ -1194,6 +1194,15 @@ ExecUpdate(ModifyTableState *mtstate,
 		bool		update_indexes;
 
 		/*
+		 * If we generate a new candidate tuple after EvalPlanQual testing, we
+		 * must loop back here to try again.  (We don't need to redo triggers,
+		 * however.  If there are any BEFORE triggers then trigger.c will have
+		 * done table_tuple_lock to lock the correct tuple, so there's no need
+		 * to do them again.)
+		 */
+lreplace:
+
+		/*
 		 * Constraints and GENERATED expressions might reference the tableoid
 		 * column, so (re-)initialize tts_tableOid before evaluating them.
 		 */
@@ -1205,17 +1214,6 @@ ExecUpdate(ModifyTableState *mtstate,
 		if (resultRelationDesc->rd_att->constr &&
 			resultRelationDesc->rd_att->constr->has_generated_stored)
 			ExecComputeStoredGenerated(estate, slot);
-
-		/*
-		 * Check any RLS UPDATE WITH CHECK policies
-		 *
-		 * If we generate a new candidate tuple after EvalPlanQual testing, we
-		 * must loop back here and recheck any RLS policies and constraints.
-		 * (We don't need to redo triggers, however.  If there are any BEFORE
-		 * triggers then trigger.c will have done table_tuple_lock to lock the
-		 * correct tuple, so there's no need to do them again.)
-		 */
-lreplace:;
 
 		/* ensure slot is independent, consider e.g. EPQ */
 		ExecMaterializeSlot(slot);
@@ -1231,6 +1229,7 @@ lreplace:;
 			resultRelInfo->ri_PartitionCheck &&
 			!ExecPartitionCheck(resultRelInfo, slot, estate, false);
 
+		/* Check any RLS UPDATE WITH CHECK policies */
 		if (!partition_constraint_failed &&
 			resultRelInfo->ri_WithCheckOptions != NIL)
 		{
