@@ -531,68 +531,48 @@ pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 /*
  * pg_pwrite_zeros
  *
- * Writes zeros to file worth "size" bytes, using vectored I/O.
+ * Writes zeros to file worth "size" bytes at "offset" (from the start of the
+ * file), using vectored I/O.
  *
  * Returns the total amount of data written.  On failure, a negative value
  * is returned with errno set.
  */
 ssize_t
-pg_pwrite_zeros(int fd, size_t size)
+pg_pwrite_zeros(int fd, size_t size, off_t offset)
 {
-	PGAlignedBlock zbuffer;		/* worth BLCKSZ */
-	size_t		zbuffer_sz;
+	const static PGAlignedBlock zbuffer = {0};	/* worth BLCKSZ */
+	void	   *zerobuf_addr = unconstify(PGAlignedBlock *, &zbuffer)->data;
 	struct iovec iov[PG_IOV_MAX];
-	int			blocks;
-	size_t		remaining_size = 0;
-	int			i;
-	ssize_t		written;
+	size_t		remaining_size = size;
 	ssize_t		total_written = 0;
 
-	zbuffer_sz = sizeof(zbuffer.data);
-
-	/* Zero-fill the buffer. */
-	memset(zbuffer.data, 0, zbuffer_sz);
-
-	/* Prepare to write out a lot of copies of our zero buffer at once. */
-	for (i = 0; i < lengthof(iov); ++i)
-	{
-		iov[i].iov_base = zbuffer.data;
-		iov[i].iov_len = zbuffer_sz;
-	}
-
 	/* Loop, writing as many blocks as we can for each system call. */
-	blocks = size / zbuffer_sz;
-	remaining_size = size % zbuffer_sz;
-	for (i = 0; i < blocks;)
+	while (remaining_size > 0)
 	{
-		int			iovcnt = Min(blocks - i, lengthof(iov));
-		off_t		offset = i * zbuffer_sz;
+		int			iovcnt = 0;
+		ssize_t		written;
+
+		for (; iovcnt < PG_IOV_MAX && remaining_size > 0; iovcnt++)
+		{
+			size_t		this_iov_size;
+
+			iov[iovcnt].iov_base = zerobuf_addr;
+
+			if (remaining_size < BLCKSZ)
+				this_iov_size = remaining_size;
+			else
+				this_iov_size = BLCKSZ;
+
+			iov[iovcnt].iov_len = this_iov_size;
+			remaining_size -= this_iov_size;
+		}
 
 		written = pg_pwritev_with_retry(fd, iov, iovcnt, offset);
 
 		if (written < 0)
 			return written;
 
-		i += iovcnt;
-		total_written += written;
-	}
-
-	/* Now, write the remaining size, if any, of the file with zeros. */
-	if (remaining_size > 0)
-	{
-		/* We'll never write more than one block here */
-		int			iovcnt = 1;
-
-		/* Jump on to the end of previously written blocks */
-		off_t		offset = i * zbuffer_sz;
-
-		iov[0].iov_len = remaining_size;
-
-		written = pg_pwritev_with_retry(fd, iov, iovcnt, offset);
-
-		if (written < 0)
-			return written;
-
+		offset += written;
 		total_written += written;
 	}
 

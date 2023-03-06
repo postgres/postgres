@@ -2982,7 +2982,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 		 * indirect blocks are down on disk.  Therefore, fdatasync(2) or
 		 * O_DSYNC will be sufficient to sync future writes to the log file.
 		 */
-		rc = pg_pwrite_zeros(fd, wal_segment_size);
+		rc = pg_pwrite_zeros(fd, wal_segment_size, 0);
 
 		if (rc < 0)
 			save_errno = errno;

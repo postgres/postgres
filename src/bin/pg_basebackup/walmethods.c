@@ -222,7 +222,7 @@ dir_open_for_write(WalWriteMethod *wwmethod, const char *pathname,
 	{
 		ssize_t		rc;
 
-		rc = pg_pwrite_zeros(fd, pad_to_size);
+		rc = pg_pwrite_zeros(fd, pad_to_size, 0);
 
 		if (rc < 0)
 		{

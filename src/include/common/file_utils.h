@@ -44,6 +44,6 @@ extern ssize_t pg_pwritev_with_retry(int fd,
 									 int iovcnt,
 									 off_t offset);
 
-extern ssize_t pg_pwrite_zeros(int fd, size_t size);
+extern ssize_t pg_pwrite_zeros(int fd, size_t size, off_t offset);
 
 #endif							/* FILE_UTILS_H */
