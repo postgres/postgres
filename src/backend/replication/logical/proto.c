@@ -895,25 +895,19 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 				/* we don't receive the value of an unchanged column */
 				break;
 			case LOGICALREP_COLUMN_TEXT:
-				len = pq_getmsgint(in, 4);	/* read length */
-
-				/* and data */
-				value->data = palloc(len + 1);
-				pq_copymsgbytes(in, value->data, len);
-				value->data[len] = '\0';
-				/* make StringInfo fully valid */
-				value->len = len;
-				value->cursor = 0;
-				value->maxlen = len;
-				break;
 			case LOGICALREP_COLUMN_BINARY:
 				len = pq_getmsgint(in, 4);	/* read length */
 
 				/* and data */
 				value->data = palloc(len + 1);
 				pq_copymsgbytes(in, value->data, len);
-				/* not strictly necessary but per StringInfo practice */
+
+				/*
+				 * Not strictly necessary for LOGICALREP_COLUMN_BINARY, but
+				 * per StringInfo practice.
+				 */
 				value->data[len] = '\0';
+
 				/* make StringInfo fully valid */
 				value->len = len;
 				value->cursor = 0;
