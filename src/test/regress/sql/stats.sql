@@ -576,10 +576,14 @@ SELECT current_setting('fsync') = 'off'
 -- from it to cause it to be read back into shared buffers.
 SELECT sum(reads) AS io_sum_shared_before_reads
   FROM pg_stat_io WHERE io_context = 'normal' AND io_object = 'relation' \gset
+-- Do this in a transaction to prevent spurious failures due to concurrent accesses to our newly
+-- rewritten table, e.g. by autovacuum.
+BEGIN;
 ALTER TABLE test_io_shared SET TABLESPACE regress_tblspace;
 -- SELECT from the table so that the data is read into shared buffers and
 -- io_context 'normal', io_object 'relation' reads are counted.
 SELECT COUNT(*) FROM test_io_shared;
+COMMIT;
 SELECT pg_stat_force_next_flush();
 SELECT sum(reads) AS io_sum_shared_after_reads
   FROM pg_stat_io WHERE io_context = 'normal' AND io_object = 'relation'  \gset
