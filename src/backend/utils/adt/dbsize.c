@@ -46,7 +46,7 @@ struct size_pretty_unit
 								 * unit */
 };
 
-/* When adding units here also update the error message in pg_size_bytes */
+/* When adding units here also update the docs and the error message in pg_size_bytes */
 static const struct size_pretty_unit size_pretty_units[] = {
 	{"bytes", 10 * 1024, false, 0},
 	{"kB", 20 * 1024 - 1, true, 10},
@@ -55,6 +55,19 @@ static const struct size_pretty_unit size_pretty_units[] = {
 	{"TB", 20 * 1024 - 1, true, 40},
 	{"PB", 20 * 1024 - 1, true, 50},
 	{NULL, 0, false, 0}
+};
+
+/* Additional unit aliases accepted by pg_size_bytes */
+struct size_bytes_unit_alias
+{
+	const char *alias;
+	int			unit_index;		/* corresponding size_pretty_units element */
+};
+
+/* When adding units here also update the docs and the error message in pg_size_bytes */
+static const struct size_bytes_unit_alias size_bytes_aliases[] = {
+	{"B", 0},
+	{NULL}
 };
 
 /* Return physical size of directory contents, or 0 if dir doesn't exist */
@@ -801,9 +814,19 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 		{
 			/* Parse the unit case-insensitively */
 			if (pg_strcasecmp(strptr, unit->name) == 0)
-			{
-				multiplier = ((int64) 1) << unit->unitbits;
 				break;
+		}
+
+		/* If not found, look in table of aliases */
+		if (unit->name == NULL)
+		{
+			for (const struct size_bytes_unit_alias *a = size_bytes_aliases; a->alias != NULL; a++)
+			{
+				if (pg_strcasecmp(strptr, a->alias) == 0)
+				{
+					unit = &size_pretty_units[a->unit_index];
+					break;
+				}
 			}
 		}
 
@@ -813,7 +836,9 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid size: \"%s\"", text_to_cstring(arg)),
 					 errdetail("Invalid size unit: \"%s\".", strptr),
-					 errhint("Valid units are \"bytes\", \"kB\", \"MB\", \"GB\", \"TB\", and \"PB\".")));
+					 errhint("Valid units are \"bytes\", \"B\", \"kB\", \"MB\", \"GB\", \"TB\", and \"PB\".")));
+
+		multiplier = ((int64) 1) << unit->unitbits;
 
 		if (multiplier > 1)
 		{

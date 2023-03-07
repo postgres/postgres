@@ -27167,7 +27167,10 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
        </para>
        <para>
         Converts a size in human-readable format (as returned
-        by <function>pg_size_pretty</function>) into bytes.
+        by <function>pg_size_pretty</function>) into bytes.  Valid units are
+        <literal>bytes</literal>, <literal>B</literal>, <literal>kB</literal>,
+        <literal>MB</literal>, <literal>GB</literal>, <literal>TB</literal>,
+        and <literal>PB</literal>.
        </para></entry>
       </row>
 
