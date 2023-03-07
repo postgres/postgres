@@ -536,14 +536,21 @@ StreamLogicalLog(void)
 
 		bytes_left = r - hdr_len;
 		bytes_written = 0;
+		unsigned int message_length = bytes_left;
 
 		/* signal that a fsync is needed */
 		output_needs_fsync = true;
 
+		int ret = write(outfd, &message_length, sizeof(unsigned int));
+		if (ret < 0)
+		{
+			pg_log_error("could not write %d bytes to log file \"%s\": %m",
+							sizeof(unsigned int), outfile);
+			goto error;
+		}
+
 		while (bytes_left)
 		{
-			int			ret;
-
 			ret = write(outfd,
 						copybuf + hdr_len + bytes_written,
 						bytes_left);
