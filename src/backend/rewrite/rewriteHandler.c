@@ -26,6 +26,7 @@
 #include "catalog/dependency.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
+#include "executor/executor.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -1724,6 +1725,7 @@ ApplyRetrieveRule(Query *parsetree,
 	RangeTblEntry *rte,
 			   *subrte;
 	RowMarkClause *rc;
+	int			numCols;
 
 	if (list_length(rule->actions) != 1)
 		elog(ERROR, "expected just one rule action");
@@ -1882,6 +1884,20 @@ ApplyRetrieveRule(Query *parsetree,
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
 	rte->extraUpdatedCols = NULL;
+
+	/*
+	 * Since we allow CREATE OR REPLACE VIEW to add columns to a view, the
+	 * rule_action might emit more columns than we expected when the current
+	 * query was parsed.  Various places expect rte->eref->colnames to be
+	 * consistent with the non-junk output columns of the subquery, so patch
+	 * things up if necessary by adding some dummy column names.
+	 */
+	numCols = ExecCleanTargetListLength(rule_action->targetList);
+	while (list_length(rte->eref->colnames) < numCols)
+	{
+		rte->eref->colnames = lappend(rte->eref->colnames,
+									  makeString(pstrdup("?column?")));
+	}
 
 	return parsetree;
 }
