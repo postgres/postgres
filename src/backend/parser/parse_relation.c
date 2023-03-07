@@ -2697,15 +2697,16 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					Assert(varattno == te->resno);
 
 					/*
-					 * In scenarios where columns have been added to a view
-					 * since the outer query was originally parsed, there can
-					 * be more items in the subquery tlist than the outer
-					 * query expects.  We should ignore such extra column(s)
-					 * --- compare the behavior for composite-returning
-					 * functions, in the RTE_FUNCTION case below.
+					 * Formerly it was possible for the subquery tlist to have
+					 * more non-junk entries than the colnames list does (if
+					 * this RTE has been expanded from a view that has more
+					 * columns than it did when the current query was parsed).
+					 * Now that ApplyRetrieveRule cleans up such cases, we
+					 * shouldn't see that anymore, but let's just check.
 					 */
 					if (!aliasp_item)
-						break;
+						elog(ERROR, "too few column names for subquery %s",
+							 rte->eref->aliasname);
 
 					if (colnames)
 					{
