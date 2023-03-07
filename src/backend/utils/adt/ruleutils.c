@@ -1855,7 +1855,7 @@ pg_get_statisticsobjdef_expressions(PG_FUNCTION_ARGS)
  *
  * Returns the partition key specification, ie, the following:
  *
- * PARTITION BY { RANGE | LIST | HASH } (column opt_collation opt_opclass [, ...])
+ * { RANGE | LIST | HASH } (column opt_collation opt_opclass [, ...])
  */
 Datum
 pg_get_partkeydef(PG_FUNCTION_ARGS)
