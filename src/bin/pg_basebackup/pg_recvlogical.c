@@ -275,6 +275,8 @@ StreamLogicalLog(void)
 		int			bytes_written;
 		TimestampTz now;
 		int			hdr_len;
+		unsigned int message_length;
+		int ret;
 		XLogRecPtr	cur_record_lsn = InvalidXLogRecPtr;
 
 		if (copybuf != NULL)
@@ -536,15 +538,15 @@ StreamLogicalLog(void)
 
 		bytes_left = r - hdr_len;
 		bytes_written = 0;
-		unsigned int message_length = bytes_left;
+		message_length = bytes_left;
 
 		/* signal that a fsync is needed */
 		output_needs_fsync = true;
 
-		int ret = write(outfd, &message_length, sizeof(unsigned int));
+		ret = write(outfd, &message_length, sizeof(unsigned int));
 		if (ret < 0)
 		{
-			pg_log_error("could not write %d bytes to log file \"%s\": %m",
+			pg_log_error("could not write %zu bytes to log file \"%s\": %m",
 							sizeof(unsigned int), outfile);
 			goto error;
 		}
