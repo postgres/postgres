@@ -27185,7 +27185,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
        </para>
        <para>
         Converts a size in bytes into a more easily human-readable format with
-        size units (bytes, kB, MB, GB or TB as appropriate).  Note that the
+        size units (bytes, kB, MB, GB, TB, or PB as appropriate).  Note that the
         units are powers of 2 rather than powers of 10, so 1kB is 1024 bytes,
         1MB is 1024<superscript>2</superscript> = 1048576 bytes, and so on.
        </para></entry>
