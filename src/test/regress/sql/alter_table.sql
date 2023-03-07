@@ -1636,7 +1636,25 @@ drop view at_view_2;
 drop view at_view_1;
 drop table at_base_table;
 
--- check adding a column not iself requiring a rewrite, together with
+-- related case (bug #17811)
+begin;
+create temp table t1 as select * from int8_tbl;
+create temp view v1 as select 1::int8 as q1;
+create temp view v2 as select * from v1;
+create or replace temp view v1 with (security_barrier = true)
+  as select * from t1;
+
+create temp table log (q1 int8, q2 int8);
+create rule v1_upd_rule as on update to v1
+  do also insert into log values (new.*);
+
+update v2 set q1 = q1 + 1 where q1 = 123;
+
+select * from t1;
+select * from log;
+rollback;
+
+-- check adding a column not itself requiring a rewrite, together with
 -- a column requiring a default (bug #16038)
 
 -- ensure that rewrites aren't silently optimized away, removing the
