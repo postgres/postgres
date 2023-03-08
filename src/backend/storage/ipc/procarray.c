@@ -372,6 +372,9 @@ static inline void ProcArrayEndTransactionInternal(PGPROC *proc, TransactionId l
 static void ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid);
 static void MaintainLatestCompletedXid(TransactionId latestXid);
 static void MaintainLatestCompletedXidRecovery(TransactionId latestXid);
+static void TransactionIdRetreatSafely(TransactionId *xid,
+									   int retreat_by,
+									   FullTransactionId rel);
 
 static inline FullTransactionId FullXidRelativeTo(FullTransactionId rel,
 												  TransactionId xid);
@@ -1893,17 +1896,35 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		 * so guc.c should limit it to no more than the xidStopLimit threshold
 		 * in varsup.c.  Also note that we intentionally don't apply
 		 * vacuum_defer_cleanup_age on standby servers.
+		 *
+		 * Need to use TransactionIdRetreatSafely() instead of open-coding the
+		 * subtraction, to prevent creating an xid before
+		 * FirstNormalTransactionId.
 		 */
-		h->oldest_considered_running =
-			TransactionIdRetreatedBy(h->oldest_considered_running,
-									 vacuum_defer_cleanup_age);
-		h->shared_oldest_nonremovable =
-			TransactionIdRetreatedBy(h->shared_oldest_nonremovable,
-									 vacuum_defer_cleanup_age);
-		h->data_oldest_nonremovable =
-			TransactionIdRetreatedBy(h->data_oldest_nonremovable,
-									 vacuum_defer_cleanup_age);
-		/* defer doesn't apply to temp relations */
+		Assert(TransactionIdPrecedesOrEquals(h->oldest_considered_running,
+											 h->shared_oldest_nonremovable));
+		Assert(TransactionIdPrecedesOrEquals(h->shared_oldest_nonremovable,
+											 h->data_oldest_nonremovable));
+
+		if (vacuum_defer_cleanup_age > 0)
+		{
+			TransactionIdRetreatSafely(&h->oldest_considered_running,
+									   vacuum_defer_cleanup_age,
+									   h->latest_completed);
+			TransactionIdRetreatSafely(&h->shared_oldest_nonremovable,
+									   vacuum_defer_cleanup_age,
+									   h->latest_completed);
+			TransactionIdRetreatSafely(&h->data_oldest_nonremovable,
+									   vacuum_defer_cleanup_age,
+									   h->latest_completed);
+			/* defer doesn't apply to temp relations */
+
+
+			Assert(TransactionIdPrecedesOrEquals(h->oldest_considered_running,
+												 h->shared_oldest_nonremovable));
+			Assert(TransactionIdPrecedesOrEquals(h->shared_oldest_nonremovable,
+												 h->data_oldest_nonremovable));
+		}
 	}
 
 	/*
@@ -2474,8 +2495,10 @@ GetSnapshotData(Snapshot snapshot)
 		oldestfxid = FullXidRelativeTo(latest_completed, oldestxid);
 
 		/* apply vacuum_defer_cleanup_age */
-		def_vis_xid_data =
-			TransactionIdRetreatedBy(xmin, vacuum_defer_cleanup_age);
+		def_vis_xid_data = xmin;
+		TransactionIdRetreatSafely(&def_vis_xid_data,
+								   vacuum_defer_cleanup_age,
+								   oldestfxid);
 
 		/* Check whether there's a replication slot requiring an older xmin. */
 		def_vis_xid_data =
@@ -4338,6 +4361,44 @@ GlobalVisCheckRemovableXid(Relation rel, TransactionId xid)
 	state = GlobalVisTestFor(rel);
 
 	return GlobalVisTestIsRemovableXid(state, xid);
+}
+
+/*
+ * Safely retract *xid by retreat_by, store the result in *xid.
+ *
+ * Need to be careful to prevent *xid from retreating below
+ * FirstNormalTransactionId during epoch 0. This is important to prevent
+ * generating xids that cannot be converted to a FullTransactionId without
+ * wrapping around.
+ *
+ * If retreat_by would lead to a too old xid, FirstNormalTransactionId is
+ * returned instead.
+ */
+static void
+TransactionIdRetreatSafely(TransactionId *xid, int retreat_by, FullTransactionId rel)
+{
+	TransactionId original_xid = *xid;
+	FullTransactionId fxid;
+	uint64		fxid_i;
+
+	Assert(TransactionIdIsNormal(original_xid));
+	Assert(retreat_by >= 0);	/* relevant GUCs are stored as ints */
+	AssertTransactionIdInAllowableRange(original_xid);
+
+	if (retreat_by == 0)
+		return;
+
+	fxid = FullXidRelativeTo(rel, original_xid);
+	fxid_i = U64FromFullTransactionId(fxid);
+
+	if ((fxid_i - FirstNormalTransactionId) <= retreat_by)
+		*xid = FirstNormalTransactionId;
+	else
+	{
+		*xid = TransactionIdRetreatedBy(original_xid, retreat_by);
+		Assert(TransactionIdIsNormal(*xid));
+		Assert(NormalTransactionIdPrecedes(*xid, original_xid));
+	}
 }
 
 /*
