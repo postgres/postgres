@@ -2562,13 +2562,16 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				Oid			defCollId;
 
 				/*
-				 * Yes, try to merge the two column definitions. They must
-				 * have the same type, typmod, and collation.
+				 * Yes, try to merge the two column definitions.
 				 */
 				ereport(NOTICE,
 						(errmsg("merging multiple inherited definitions of column \"%s\"",
 								attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
+
+				/*
+				 * Must have the same type and typmod
+				 */
 				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
 				if (defTypeId != attribute->atttypid ||
 					deftypmod != attribute->atttypmod)
@@ -2581,6 +2584,10 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 																deftypmod),
 									   format_type_with_typemod(attribute->atttypid,
 																attribute->atttypmod))));
+
+				/*
+				 * Must have the same collation
+				 */
 				defCollId = GetColumnDefCollation(NULL, def, defTypeId);
 				if (defCollId != attribute->attcollation)
 					ereport(ERROR,
@@ -2591,7 +2598,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 									   get_collation_name(defCollId),
 									   get_collation_name(attribute->attcollation))));
 
-				/* Copy/check storage parameter */
+				/*
+				 * Copy/check storage parameter
+				 */
 				if (def->storage == 0)
 					def->storage = attribute->attstorage;
 				else if (def->storage != attribute->attstorage)
@@ -2603,7 +2612,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 									   storage_name(def->storage),
 									   storage_name(attribute->attstorage))));
 
-				/* Copy/check compression parameter */
+				/*
+				 * Copy/check compression parameter
+				 */
 				if (CompressionMethodIsValid(attribute->attcompression))
 				{
 					const char *compression =
@@ -2619,18 +2630,27 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 								 errdetail("%s versus %s", def->compression, compression)));
 				}
 
-				def->inhcount++;
-				/* Merge of NOT NULL constraints = OR 'em together */
+				/*
+				 * Merge of NOT NULL constraints = OR 'em together
+				 */
 				def->is_not_null |= attribute->attnotnull;
-				/* Default and other constraints are handled below */
-				newattmap->attnums[parent_attno - 1] = exist_attno;
 
-				/* Check for GENERATED conflicts */
+				/*
+				 * Check for GENERATED conflicts
+				 */
 				if (def->generated != attribute->attgenerated)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("inherited column \"%s\" has a generation conflict",
 									attributeName)));
+
+				/*
+				 * Default and other constraints are handled below
+				 */
+
+				def->inhcount++;
+
+				newattmap->attnums[parent_attno - 1] = exist_attno;
 			}
 			else
 			{
@@ -2853,8 +2873,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				Assert(!is_partition);
 
 				/*
-				 * Yes, try to merge the two column definitions. They must
-				 * have the same type, typmod, and collation.
+				 * Yes, try to merge the two column definitions.
 				 */
 				if (exist_attno == schema_attno)
 					ereport(NOTICE,
@@ -2865,6 +2884,10 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							(errmsg("moving and merging column \"%s\" with inherited definition", attributeName),
 							 errdetail("User-specified column moved to the position of the inherited column.")));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
+
+				/*
+				 * Must have the same type and typmod
+				 */
 				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
 				typenameTypeIdAndMod(NULL, newdef->typeName, &newTypeId, &newtypmod);
 				if (defTypeId != newTypeId || deftypmod != newtypmod)
@@ -2877,6 +2900,10 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 																deftypmod),
 									   format_type_with_typemod(newTypeId,
 																newtypmod))));
+
+				/*
+				 * Must have the same collation
+				 */
 				defcollid = GetColumnDefCollation(NULL, def, defTypeId);
 				newcollid = GetColumnDefCollation(NULL, newdef, newTypeId);
 				if (defcollid != newcollid)
@@ -2894,7 +2921,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				 */
 				def->identity = newdef->identity;
 
-				/* Copy storage parameter */
+				/*
+				 * Copy storage parameter
+				 */
 				if (def->storage == 0)
 					def->storage = newdef->storage;
 				else if (newdef->storage != 0 && def->storage != newdef->storage)
@@ -2906,7 +2935,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 									   storage_name(def->storage),
 									   storage_name(newdef->storage))));
 
-				/* Copy compression parameter */
+				/*
+				 * Copy compression parameter
+				 */
 				if (def->compression == NULL)
 					def->compression = newdef->compression;
 				else if (newdef->compression != NULL)
@@ -2919,9 +2950,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 								 errdetail("%s versus %s", def->compression, newdef->compression)));
 				}
 
-				/* Mark the column as locally defined */
-				def->is_local = true;
-				/* Merge of NOT NULL constraints = OR 'em together */
+				/*
+				 * Merge of NOT NULL constraints = OR 'em together
+				 */
 				def->is_not_null |= newdef->is_not_null;
 
 				/*
@@ -2962,12 +2993,17 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 								 errhint("A child table column cannot be generated unless its parent column is.")));
 				}
 
-				/* If new def has a default, override previous default */
+				/*
+				 * If new def has a default, override previous default
+				 */
 				if (newdef->raw_default != NULL)
 				{
 					def->raw_default = newdef->raw_default;
 					def->cooked_default = newdef->cooked_default;
 				}
+
+				/* Mark the column as locally defined */
+				def->is_local = true;
 			}
 			else
 			{
