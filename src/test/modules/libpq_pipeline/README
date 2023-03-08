@@ -1,4 +1,7 @@
 Test programs and libraries for libpq
+
+If you have Test::Differences installed, any differences in the trace files
+are displayed in a format that's easier to read than the standard format.
 =====================================
 
 This module was developed to test libpq's "pipeline" mode, but it can

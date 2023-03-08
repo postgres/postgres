@@ -8,6 +8,19 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Use Test::Differences if installed, and select unified diff output.
+# No decent way to select a context line count with this;
+# we could use a sub ref to allow that.
+BEGIN
+{
+	#<<< protect next line from pgperltidy
+	if (!eval q{ use Test::Differences; unified_diff(); 1 })    ## no critic (ProhibitStringyEval)
+	#>>>
+	{
+		*eq_or_diff = \&is;
+	}
+}
+
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->start;
@@ -55,7 +68,7 @@ for my $testname (@tests)
 		$result = slurp_file_eval($traceout);
 		next unless $result ne "";
 
-		is($result, $expected, "$testname trace match");
+		eq_or_diff($result, $expected, "$testname trace match");
 	}
 }
 
