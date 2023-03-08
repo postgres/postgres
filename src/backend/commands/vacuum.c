@@ -2058,25 +2058,33 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params, bool skip_privs)
 	save_nestlevel = NewGUCNestLevel();
 
 	/*
-	 * Do the actual work --- either FULL or "lazy" vacuum
+	 * If PROCESS_MAIN is set (the default), it's time to vacuum the main
+	 * relation.  Otherwise, we can skip this part.  If processing the TOAST
+	 * table is required (e.g., PROCESS_TOAST is set), we force PROCESS_MAIN
+	 * to be set when we recurse to the TOAST table.
 	 */
-	if ((params->options & VACOPT_FULL) &&
-		(params->options & VACOPT_PROCESS_MAIN))
+	if (params->options & VACOPT_PROCESS_MAIN)
 	{
-		ClusterParams cluster_params = {0};
+		/*
+		 * Do the actual work --- either FULL or "lazy" vacuum
+		 */
+		if (params->options & VACOPT_FULL)
+		{
+			ClusterParams cluster_params = {0};
 
-		/* close relation before vacuuming, but hold lock until commit */
-		relation_close(rel, NoLock);
-		rel = NULL;
+			/* close relation before vacuuming, but hold lock until commit */
+			relation_close(rel, NoLock);
+			rel = NULL;
 
-		if ((params->options & VACOPT_VERBOSE) != 0)
-			cluster_params.options |= CLUOPT_VERBOSE;
+			if ((params->options & VACOPT_VERBOSE) != 0)
+				cluster_params.options |= CLUOPT_VERBOSE;
 
-		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
-		cluster_rel(relid, InvalidOid, &cluster_params);
+			/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
+			cluster_rel(relid, InvalidOid, &cluster_params);
+		}
+		else
+			table_relation_vacuum(rel, params, vac_strategy);
 	}
-	else if (params->options & VACOPT_PROCESS_MAIN)
-		table_relation_vacuum(rel, params, vac_strategy);
 
 	/* Roll back any GUC changes executed by index functions */
 	AtEOXact_GUC(false, save_nestlevel);
