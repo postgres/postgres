@@ -135,6 +135,7 @@ static char *lc_time = NULL;
 static char *lc_messages = NULL;
 static char locale_provider = COLLPROVIDER_LIBC;
 static char *icu_locale = NULL;
+static char *icu_rules = NULL;
 static const char *default_text_search_config = NULL;
 static char *username = NULL;
 static bool pwprompt = false;
@@ -1312,7 +1313,10 @@ bootstrap_template1(void)
 							  escape_quotes_bki(lc_ctype));
 
 	bki_lines = replace_token(bki_lines, "ICU_LOCALE",
-							  locale_provider == COLLPROVIDER_ICU ? escape_quotes_bki(icu_locale) : "_null_");
+							  icu_locale ? escape_quotes_bki(icu_locale) : "_null_");
+
+	bki_lines = replace_token(bki_lines, "ICU_RULES",
+							  icu_rules ? escape_quotes_bki(icu_rules) : "_null_");
 
 	sprintf(buf, "%c", locale_provider);
 	bki_lines = replace_token(bki_lines, "LOCALE_PROVIDER", buf);
@@ -2107,6 +2111,7 @@ usage(const char *progname)
 	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
 	printf(_("  -g, --allow-group-access  allow group read/execute on data directory\n"));
 	printf(_("      --icu-locale=LOCALE   set ICU locale ID for new databases\n"));
+	printf(_("      --icu-rules=RULES     set additional ICU collation rules for new databases\n"));
 	printf(_("  -k, --data-checksums      use data page checksums\n"));
 	printf(_("      --locale=LOCALE       set default locale for new databases\n"));
 	printf(_("      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -2767,6 +2772,7 @@ main(int argc, char *argv[])
 		{"discard-caches", no_argument, NULL, 14},
 		{"locale-provider", required_argument, NULL, 15},
 		{"icu-locale", required_argument, NULL, 16},
+		{"icu-rules", required_argument, NULL, 17},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2924,6 +2930,9 @@ main(int argc, char *argv[])
 			case 16:
 				icu_locale = pg_strdup(optarg);
 				break;
+			case 17:
+				icu_rules = pg_strdup(optarg);
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -2953,6 +2962,10 @@ main(int argc, char *argv[])
 	if (icu_locale && locale_provider != COLLPROVIDER_ICU)
 		pg_fatal("%s cannot be specified unless locale provider \"%s\" is chosen",
 				 "--icu-locale", "icu");
+
+	if (icu_rules && locale_provider != COLLPROVIDER_ICU)
+		pg_fatal("%s cannot be specified unless locale provider \"%s\" is chosen",
+				 "--icu-rules", "icu");
 
 	atexit(cleanup_directories_atexit);
 

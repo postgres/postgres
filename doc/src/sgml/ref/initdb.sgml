@@ -239,6 +239,16 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry id="app-initdb-icu-rules">
+      <term><option>--icu-rules=<replaceable>rules</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies additional collation rules to customize the behavior of the
+        default collation.  This is supported for ICU only.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="app-initdb-data-checksums" xreflabel="data checksums">
       <term><option>-k</option></term>
       <term><option>--data-checksums</option></term>

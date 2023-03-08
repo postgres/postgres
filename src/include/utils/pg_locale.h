@@ -95,6 +95,7 @@ typedef struct pg_locale_struct *pg_locale_t;
 extern PGDLLIMPORT struct pg_locale_struct default_locale;
 
 extern void make_icu_collator(const char *iculocstr,
+							  const char *icurules,
 							  struct pg_locale_struct *resultp);
 
 extern bool pg_locale_deterministic(pg_locale_t locale);

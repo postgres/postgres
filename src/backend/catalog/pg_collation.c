@@ -50,6 +50,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 				int32 collencoding,
 				const char *collcollate, const char *collctype,
 				const char *colliculocale,
+				const char *collicurules,
 				const char *collversion,
 				bool if_not_exists,
 				bool quiet)
@@ -194,6 +195,10 @@ CollationCreate(const char *collname, Oid collnamespace,
 		values[Anum_pg_collation_colliculocale - 1] = CStringGetTextDatum(colliculocale);
 	else
 		nulls[Anum_pg_collation_colliculocale - 1] = true;
+	if (collicurules)
+		values[Anum_pg_collation_collicurules - 1] = CStringGetTextDatum(collicurules);
+	else
+		nulls[Anum_pg_collation_collicurules - 1] = true;
 	if (collversion)
 		values[Anum_pg_collation_collversion - 1] = CStringGetTextDatum(collversion);
 	else

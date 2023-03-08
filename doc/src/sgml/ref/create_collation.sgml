@@ -27,6 +27,7 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> (
     [ LC_CTYPE = <replaceable>lc_ctype</replaceable>, ]
     [ PROVIDER = <replaceable>provider</replaceable>, ]
     [ DETERMINISTIC = <replaceable>boolean</replaceable>, ]
+    [ RULES = <replaceable>rules</replaceable>, ]
     [ VERSION = <replaceable>version</replaceable> ]
 )
 CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replaceable>existing_collation</replaceable>
@@ -150,6 +151,19 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
     </varlistentry>
 
     <varlistentry>
+     <term><replaceable>rules</replaceable></term>
+
+     <listitem>
+      <para>
+       Specifies additional collation rules to customize the behavior of the
+       collation.  This is supported for ICU only.  See <ulink
+       url="https://unicode-org.github.io/icu/userguide/collation/customization/"/>
+       for details on the syntax.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><replaceable>version</replaceable></term>
 
      <listitem>
@@ -225,6 +239,14 @@ CREATE COLLATION french (locale = 'fr_FR.utf8');
    To create a collation using the ICU provider using German phone book sort order:
 <programlisting>
 CREATE COLLATION german_phonebook (provider = icu, locale = 'de-u-co-phonebk');
+</programlisting>
+  </para>
+
+  <para>
+   To create a collation using the ICU provider, based on the English ICU
+   locale, with custom rules:
+<programlisting>
+<![CDATA[CREATE COLLATION en_custom (provider = icu, locale = 'en', rules = '&a < g');]]>
 </programlisting>
   </para>
 

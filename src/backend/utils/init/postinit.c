@@ -421,10 +421,19 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 
 	if (dbform->datlocprovider == COLLPROVIDER_ICU)
 	{
+		char	   *icurules;
+
 		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_daticulocale, &isnull);
 		Assert(!isnull);
 		iculocale = TextDatumGetCString(datum);
-		make_icu_collator(iculocale, &default_locale);
+
+		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_daticurules, &isnull);
+		if (!isnull)
+			icurules = TextDatumGetCString(datum);
+		else
+			icurules = NULL;
+
+		make_icu_collator(iculocale, icurules, &default_locale);
 	}
 	else
 		iculocale = NULL;

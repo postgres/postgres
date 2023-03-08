@@ -472,6 +472,19 @@ CREATE COLLATION testcoll_de_phonebook (provider = icu, locale = 'de@collation=p
 SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE testcoll_de_phonebook;
 
 
+-- rules
+
+CREATE COLLATION testcoll_rules1 (provider = icu, locale = '', rules = '&a < g');
+CREATE TABLE test7 (a text);
+-- example from https://unicode-org.github.io/icu/userguide/collation/customization/#syntax
+INSERT INTO test7 VALUES ('Abernathy'), ('apple'), ('bird'), ('Boston'), ('Graham'), ('green');
+SELECT * FROM test7 ORDER BY a COLLATE "en-x-icu";
+SELECT * FROM test7 ORDER BY a COLLATE testcoll_rules1;
+DROP TABLE test7;
+
+CREATE COLLATION testcoll_rulesx (provider = icu, locale = '', rules = '!!wrong!!');
+
+
 -- nondeterministic collations
 
 CREATE COLLATION ctest_det (provider = icu, locale = '', deterministic = true);

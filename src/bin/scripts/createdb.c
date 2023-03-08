@@ -41,6 +41,7 @@ main(int argc, char *argv[])
 		{"maintenance-db", required_argument, NULL, 3},
 		{"locale-provider", required_argument, NULL, 4},
 		{"icu-locale", required_argument, NULL, 5},
+		{"icu-rules", required_argument, NULL, 6},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -67,6 +68,7 @@ main(int argc, char *argv[])
 	char	   *locale = NULL;
 	char	   *locale_provider = NULL;
 	char	   *icu_locale = NULL;
+	char	   *icu_rules = NULL;
 
 	PQExpBufferData sql;
 
@@ -133,6 +135,9 @@ main(int argc, char *argv[])
 				break;
 			case 5:
 				icu_locale = pg_strdup(optarg);
+				break;
+			case 6:
+				icu_rules = pg_strdup(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -231,6 +236,11 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(&sql, " ICU_LOCALE ");
 		appendStringLiteralConn(&sql, icu_locale, conn);
 	}
+	if (icu_rules)
+	{
+		appendPQExpBufferStr(&sql, " ICU_RULES ");
+		appendStringLiteralConn(&sql, icu_rules, conn);
+	}
 
 	appendPQExpBufferChar(&sql, ';');
 
@@ -288,6 +298,7 @@ help(const char *progname)
 	printf(_("      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"));
 	printf(_("      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"));
 	printf(_("      --icu-locale=LOCALE      ICU locale setting for the database\n"));
+	printf(_("      --icu-rules=RULES        ICU rules setting for the database\n"));
 	printf(_("      --locale-provider={libc|icu}\n"
 			 "                               locale provider for the database's default collation\n"));
 	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));

@@ -2843,6 +2843,7 @@ dumpDatabase(Archive *fout)
 				i_collate,
 				i_ctype,
 				i_daticulocale,
+				i_daticurules,
 				i_frozenxid,
 				i_minmxid,
 				i_datacl,
@@ -2861,6 +2862,7 @@ dumpDatabase(Archive *fout)
 			   *collate,
 			   *ctype,
 			   *iculocale,
+			   *icurules,
 			   *datistemplate,
 			   *datconnlimit,
 			   *tablespace;
@@ -2887,6 +2889,10 @@ dumpDatabase(Archive *fout)
 		appendPQExpBufferStr(dbQry, "datlocprovider, daticulocale, datcollversion, ");
 	else
 		appendPQExpBufferStr(dbQry, "'c' AS datlocprovider, NULL AS daticulocale, NULL AS datcollversion, ");
+	if (fout->remoteVersion >= 160000)
+		appendPQExpBufferStr(dbQry, "daticurules, ");
+	else
+		appendPQExpBufferStr(dbQry, "NULL AS daticurules, ");
 	appendPQExpBufferStr(dbQry,
 						 "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 						 "shobj_description(oid, 'pg_database') AS description "
@@ -2904,6 +2910,7 @@ dumpDatabase(Archive *fout)
 	i_collate = PQfnumber(res, "datcollate");
 	i_ctype = PQfnumber(res, "datctype");
 	i_daticulocale = PQfnumber(res, "daticulocale");
+	i_daticurules = PQfnumber(res, "daticurules");
 	i_frozenxid = PQfnumber(res, "datfrozenxid");
 	i_minmxid = PQfnumber(res, "datminmxid");
 	i_datacl = PQfnumber(res, "datacl");
@@ -2925,6 +2932,10 @@ dumpDatabase(Archive *fout)
 		iculocale = PQgetvalue(res, 0, i_daticulocale);
 	else
 		iculocale = NULL;
+	if (!PQgetisnull(res, 0, i_daticurules))
+		icurules = PQgetvalue(res, 0, i_daticurules);
+	else
+		icurules = NULL;
 	frozenxid = atooid(PQgetvalue(res, 0, i_frozenxid));
 	minmxid = atooid(PQgetvalue(res, 0, i_minmxid));
 	dbdacl.acl = PQgetvalue(res, 0, i_datacl);
@@ -2989,6 +3000,11 @@ dumpDatabase(Archive *fout)
 	{
 		appendPQExpBufferStr(creaQry, " ICU_LOCALE = ");
 		appendStringLiteralAH(creaQry, iculocale, fout);
+	}
+	if (icurules)
+	{
+		appendPQExpBufferStr(creaQry, " ICU_RULES = ");
+		appendStringLiteralAH(creaQry, icurules, fout);
 	}
 
 	/*
@@ -13153,10 +13169,12 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 	int			i_collcollate;
 	int			i_collctype;
 	int			i_colliculocale;
+	int			i_collicurules;
 	const char *collprovider;
 	const char *collcollate;
 	const char *collctype;
 	const char *colliculocale;
+	const char *collicurules;
 
 	/* Do nothing in data-only dump */
 	if (dopt->dataOnly)
@@ -13194,6 +13212,13 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 		appendPQExpBufferStr(query,
 							 "NULL AS colliculocale, ");
 
+	if (fout->remoteVersion >= 160000)
+		appendPQExpBufferStr(query,
+							 "collicurules, ");
+	else
+		appendPQExpBufferStr(query,
+							 "NULL AS collicurules, ");
+
 	appendPQExpBuffer(query,
 					  "collcollate, "
 					  "collctype "
@@ -13208,6 +13233,7 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 	i_collcollate = PQfnumber(res, "collcollate");
 	i_collctype = PQfnumber(res, "collctype");
 	i_colliculocale = PQfnumber(res, "colliculocale");
+	i_collicurules = PQfnumber(res, "collicurules");
 
 	collprovider = PQgetvalue(res, 0, i_collprovider);
 
@@ -13225,6 +13251,11 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 		colliculocale = PQgetvalue(res, 0, i_colliculocale);
 	else
 		colliculocale = NULL;
+
+	if (!PQgetisnull(res, 0, i_collicurules))
+		collicurules = PQgetvalue(res, 0, i_collicurules);
+	else
+		collicurules = NULL;
 
 	appendPQExpBuffer(delq, "DROP COLLATION %s;\n",
 					  fmtQualifiedDumpable(collinfo));
@@ -13269,6 +13300,12 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 			appendPQExpBufferStr(q, ", lc_ctype = ");
 			appendStringLiteralAH(q, collctype, fout);
 		}
+	}
+
+	if (collicurules)
+	{
+		appendPQExpBufferStr(q, ", rules = ");
+		appendStringLiteralAH(q, collicurules, fout);
 	}
 
 	/*

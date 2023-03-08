@@ -64,10 +64,12 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	DefElem    *lcctypeEl = NULL;
 	DefElem    *providerEl = NULL;
 	DefElem    *deterministicEl = NULL;
+	DefElem    *rulesEl = NULL;
 	DefElem    *versionEl = NULL;
 	char	   *collcollate;
 	char	   *collctype;
 	char	   *colliculocale;
+	char	   *collicurules;
 	bool		collisdeterministic;
 	int			collencoding;
 	char		collprovider;
@@ -99,6 +101,8 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 			defelp = &providerEl;
 		else if (strcmp(defel->defname, "deterministic") == 0)
 			defelp = &deterministicEl;
+		else if (strcmp(defel->defname, "rules") == 0)
+			defelp = &rulesEl;
 		else if (strcmp(defel->defname, "version") == 0)
 			defelp = &versionEl;
 		else
@@ -161,6 +165,12 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 		else
 			colliculocale = NULL;
 
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collicurules, &isnull);
+		if (!isnull)
+			collicurules = TextDatumGetCString(datum);
+		else
+			collicurules = NULL;
+
 		ReleaseSysCache(tp);
 
 		/*
@@ -182,6 +192,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 		collcollate = NULL;
 		collctype = NULL;
 		colliculocale = NULL;
+		collicurules = NULL;
 
 		if (providerEl)
 			collproviderstr = defGetString(providerEl);
@@ -190,6 +201,9 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 			collisdeterministic = defGetBoolean(deterministicEl);
 		else
 			collisdeterministic = true;
+
+		if (rulesEl)
+			collicurules = defGetString(rulesEl);
 
 		if (versionEl)
 			collversion = defGetString(versionEl);
@@ -297,6 +311,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 							 collcollate,
 							 collctype,
 							 colliculocale,
+							 collicurules,
 							 collversion,
 							 if_not_exists,
 							 false);	/* not quiet */
@@ -680,7 +695,7 @@ create_collation_from_locale(const char *locale, int nspid,
 	 */
 	collid = CollationCreate(locale, nspid, GetUserId(),
 							 COLLPROVIDER_LIBC, true, enc,
-							 locale, locale, NULL,
+							 locale, locale, NULL, NULL,
 							 get_collation_actual_version(COLLPROVIDER_LIBC, locale),
 							 true, true);
 	if (OidIsValid(collid))
@@ -755,7 +770,7 @@ win32_read_locale(LPWSTR pStr, DWORD dwFlags, LPARAM lparam)
 
 		collid = CollationCreate(alias, param->nspid, GetUserId(),
 								 COLLPROVIDER_LIBC, true, enc,
-								 localebuf, localebuf, NULL,
+								 localebuf, localebuf, NULL, NULL,
 								 get_collation_actual_version(COLLPROVIDER_LIBC, localebuf),
 								 true, true);
 		if (OidIsValid(collid))
@@ -889,7 +904,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 			collid = CollationCreate(alias, nspid, GetUserId(),
 									 COLLPROVIDER_LIBC, true, enc,
-									 locale, locale, NULL,
+									 locale, locale, NULL, NULL,
 									 get_collation_actual_version(COLLPROVIDER_LIBC, locale),
 									 true, true);
 			if (OidIsValid(collid))
@@ -951,7 +966,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			collid = CollationCreate(psprintf("%s-x-icu", langtag),
 									 nspid, GetUserId(),
 									 COLLPROVIDER_ICU, true, -1,
-									 NULL, NULL, iculocstr,
+									 NULL, NULL, iculocstr, NULL,
 									 get_collation_actual_version(COLLPROVIDER_ICU, iculocstr),
 									 true, true);
 			if (OidIsValid(collid))

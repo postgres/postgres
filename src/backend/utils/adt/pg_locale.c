@@ -69,6 +69,7 @@
 
 #ifdef USE_ICU
 #include <unicode/ucnv.h>
+#include <unicode/ustring.h>
 #endif
 
 #ifdef __GLIBC__
@@ -1421,6 +1422,7 @@ struct pg_locale_struct default_locale;
 
 void
 make_icu_collator(const char *iculocstr,
+				  const char *icurules,
 				  struct pg_locale_struct *resultp)
 {
 #ifdef USE_ICU
@@ -1436,6 +1438,35 @@ make_icu_collator(const char *iculocstr,
 
 	if (U_ICU_VERSION_MAJOR_NUM < 54)
 		icu_set_collation_attributes(collator, iculocstr);
+
+	/*
+	 * If rules are specified, we extract the rules of the standard collation,
+	 * add our own rules, and make a new collator with the combined rules.
+	 */
+	if (icurules)
+	{
+		const UChar *default_rules;
+		UChar	   *agg_rules;
+		UChar	   *my_rules;
+		int32_t		length;
+
+		default_rules = ucol_getRules(collator, &length);
+		icu_to_uchar(&my_rules, icurules, strlen(icurules));
+
+		agg_rules = palloc_array(UChar, u_strlen(default_rules) + u_strlen(my_rules) + 1);
+		u_strcpy(agg_rules, default_rules);
+		u_strcat(agg_rules, my_rules);
+
+		ucol_close(collator);
+
+		status = U_ZERO_ERROR;
+		collator = ucol_openRules(agg_rules, u_strlen(agg_rules),
+								  UCOL_DEFAULT, UCOL_DEFAULT_STRENGTH, NULL, &status);
+		if (U_FAILURE(status))
+			ereport(ERROR,
+					(errmsg("could not open collator for locale \"%s\" with rules \"%s\": %s",
+							iculocstr, icurules, u_errorName(status))));
+	}
 
 	/* We will leak this string if the caller errors later :-( */
 	resultp->info.icu.locale = MemoryContextStrdup(TopMemoryContext, iculocstr);
@@ -1608,11 +1639,19 @@ pg_newlocale_from_collation(Oid collid)
 		else if (collform->collprovider == COLLPROVIDER_ICU)
 		{
 			const char *iculocstr;
+			const char *icurules;
 
 			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
 			Assert(!isnull);
 			iculocstr = TextDatumGetCString(datum);
-			make_icu_collator(iculocstr, &result);
+
+			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collicurules, &isnull);
+			if (!isnull)
+				icurules = TextDatumGetCString(datum);
+			else
+				icurules = NULL;
+
+			make_icu_collator(iculocstr, icurules, &result);
 		}
 
 		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,

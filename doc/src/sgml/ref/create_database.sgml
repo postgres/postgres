@@ -30,6 +30,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
            [ ICU_LOCALE [=] <replaceable class="parameter">icu_locale</replaceable> ]
+           [ ICU_RULES [=] <replaceable class="parameter">icu_rules</replaceable> ]
            [ LOCALE_PROVIDER [=] <replaceable class="parameter">locale_provider</replaceable> ]
            [ COLLATION_VERSION = <replaceable>collation_version</replaceable> ]
            [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
@@ -188,6 +189,19 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <listitem>
        <para>
         Specifies the ICU locale ID if the ICU locale provider is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="create-database-icu-rules">
+      <term><replaceable class="parameter">icu_rules</replaceable></term>
+      <listitem>
+       <para>
+        Specifies additional collation rules to customize the behavior of the
+        default collation of this database.  This is supported for ICU only.
+        See <ulink
+        url="https://unicode-org.github.io/icu/userguide/collation/customization/"/>
+        for details on the syntax.
        </para>
       </listitem>
      </varlistentry>
