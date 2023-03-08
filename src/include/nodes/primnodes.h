@@ -128,8 +128,10 @@ typedef struct TableFunc
  * CREATE MATERIALIZED VIEW
  *
  * For CREATE MATERIALIZED VIEW, viewQuery is the parsed-but-not-rewritten
- * SELECT Query for the view; otherwise it's NULL.  (Although it's actually
- * Query*, we declare it as Node* to avoid a forward reference.)
+ * SELECT Query for the view; otherwise it's NULL.  This is irrelevant in
+ * the query jumbling as CreateTableAsStmt already includes a reference to
+ * its own Query, so ignore it.  (Although it's actually Query*, we declare
+ * it as Node* to avoid a forward reference.)
  */
 typedef struct IntoClause
 {
@@ -141,7 +143,8 @@ typedef struct IntoClause
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */
-	Node	   *viewQuery;		/* materialized view's SELECT query */
+	/* materialized view's SELECT query */
+	Node	   *viewQuery pg_node_attr(query_jumble_ignore);
 	bool		skipData;		/* true for WITH NO DATA */
 } IntoClause;
 
