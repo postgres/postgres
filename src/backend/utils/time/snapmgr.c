@@ -983,24 +983,36 @@ GetFullRecentGlobalXmin(void)
 	uint32		nextxid_epoch;
 	TransactionId nextxid_xid;
 	uint32		epoch;
+	TransactionId horizon = RecentGlobalXmin;
 
-	Assert(TransactionIdIsNormal(RecentGlobalXmin));
+	Assert(TransactionIdIsNormal(horizon));
 
 	/*
 	 * Compute the epoch from the next XID's epoch. This relies on the fact
 	 * that RecentGlobalXmin must be within the 2 billion XID horizon from the
 	 * next XID.
+	 *
+	 * Need to be careful to prevent wrapping around during epoch 0, otherwise
+	 * we would generate an xid far into the future when converting to a
+	 * FullTransactionId. This can happen because RecentGlobalXmin can be held
+	 * back via vacuum_defer_cleanup_age.
 	 */
 	nextxid_full = ReadNextFullTransactionId();
 	nextxid_epoch = EpochFromFullTransactionId(nextxid_full);
 	nextxid_xid = XidFromFullTransactionId(nextxid_full);
 
-	if (RecentGlobalXmin > nextxid_xid)
+	if (horizon <= nextxid_xid)
+		epoch = nextxid_epoch;
+	else if (nextxid_epoch > 0)
 		epoch = nextxid_epoch - 1;
 	else
-		epoch = nextxid_epoch;
+	{
+		/* don't wrap around */
+		epoch = 0;
+		horizon = FirstNormalTransactionId;
+	}
 
-	return FullTransactionIdFromEpochAndXid(epoch, RecentGlobalXmin);
+	return FullTransactionIdFromEpochAndXid(epoch, horizon);
 }
 
 /*
