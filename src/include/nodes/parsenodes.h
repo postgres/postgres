@@ -88,8 +88,7 @@ typedef uint64 AclMode;			/* a bitmask of privilege bits */
 #define ACL_REFERENCES	(1<<5)
 #define ACL_TRIGGER		(1<<6)
 #define ACL_EXECUTE		(1<<7)	/* for functions */
-#define ACL_USAGE		(1<<8)	/* for languages, namespaces, FDWs, and
-								 * servers */
+#define ACL_USAGE		(1<<8)	/* for various object types */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
 #define ACL_CONNECT		(1<<11) /* for databases */
