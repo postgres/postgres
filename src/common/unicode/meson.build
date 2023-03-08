@@ -5,7 +5,7 @@ UNICODE_VERSION = '15.0.0'
 unicode_data = {}
 unicode_baseurl = 'https://www.unicode.org/Public/@0@/ucd/@1@'
 
-if not wget.found()
+if not wget.found() or not cp.found()
   subdir_done()
 endif
 
@@ -100,7 +100,7 @@ update_unicode = custom_target('update-unicode',
   depends: update_unicode_dep,
   output: ['dont-exist'],
   input: update_unicode_targets,
-  command: ['cp', '@INPUT@', '@SOURCE_ROOT@/src/include/common/'],
+  command: [cp, '@INPUT@', '@SOURCE_ROOT@/src/include/common/'],
   build_by_default: false,
   build_always_stale: true,
 )
