@@ -6,23 +6,28 @@
 import argparse
 import shutil
 import os
+from pathlib import PurePath
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--datadir', type=str)
-parser.add_argument('--libdir', type=str)
-parser.add_argument('--install-data', type=str, nargs='*')
-parser.add_argument('--install-libs', type=str, nargs='*')
+parser.add_argument('--destdir', type=str, default=os.environ.get('DESTDIR', None))
+parser.add_argument('--prefix', type=str)
+parser.add_argument('--install', type=str, nargs='+', action='append')
 
 args = parser.parse_args()
 
+def copy_files(prefix: str, destdir: str, targetdir: str, src_list: list):
+    if not os.path.isabs(targetdir):
+        targetdir = os.path.join(prefix, targetdir)
 
-def copy_files(src_list: list, dest: str):
-    os.makedirs(dest, exist_ok=True)
+    if destdir is not None:
+        # copy of meson's logic for joining destdir and install paths
+        targetdir = str(PurePath(destdir, *PurePath(targetdir).parts[1:]))
+
+    os.makedirs(targetdir, exist_ok=True)
 
     for src in src_list:
-        shutil.copy2(src, dest)
+        shutil.copy2(src, targetdir)
 
-
-copy_files(args.install_data, args.datadir)
-copy_files(args.install_libs, args.libdir)
+for installs in args.install:
+    copy_files(args.prefix, args.destdir, installs[0], installs[1:])

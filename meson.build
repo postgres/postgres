@@ -2830,6 +2830,22 @@ generated_sources_ac += {'': ['GNUmakefile']}
 testprep_targets += test_install_libs
 
 
+# command to install files used for tests, which aren't installed by default
+install_test_files = files('src/tools/install_test_files')
+install_test_files_args = [
+  install_test_files,
+  '--prefix', dir_prefix,
+  '--install', contrib_data_dir, test_install_data,
+  '--install', dir_lib_pkg, test_install_libs,
+]
+
+# Target installing files required for installcheck of various modules
+run_target('install-test-files',
+  command: [python] + install_test_files_args,
+  depends: testprep_targets,
+)
+
+
 # If there are any files in the source directory that we also generate in the
 # build directory, they might get preferred over the newly generated files,
 # e.g. because of a #include "file", which always will search in the current
@@ -2922,21 +2938,9 @@ test('tmp_install',
     is_parallel: false,
     suite: ['setup'])
 
-# get full paths of test_install_libs to copy them
-test_install_libs_fp = []
-foreach lib: test_install_libs
-  test_install_libs_fp += lib.full_path()
-endforeach
-
-install_test_files = files('src/tools/install_test_files')
 test('install_test_files',
-    python, args: [
-      install_test_files,
-      '--datadir', test_install_location / contrib_data_args['install_dir'],
-      '--libdir', test_install_location / dir_lib_pkg,
-      '--install-data', test_install_data,
-      '--install-libs', test_install_libs_fp,
-    ],
+    python,
+    args: install_test_files_args + ['--destdir', test_install_destdir],
     priority: setup_tests_priority,
     is_parallel: false,
     suite: ['setup'])
