@@ -836,8 +836,10 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	if (query->utilityStmt)
 	{
 		if (pgss_track_utility && !PGSS_HANDLED_UTILITY(query->utilityStmt))
+		{
 			query->queryId = UINT64CONST(0);
-		return;
+			return;
+		}
 	}
 
 	/*

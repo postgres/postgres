@@ -16,10 +16,10 @@ CLOSE cursor_stats_1;
 DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT 2;
 CLOSE cursor_stats_1;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |                        query                         
--------+------+------------------------------------------------------
+ calls | rows |                         query                         
+-------+------+-------------------------------------------------------
      2 |    0 | CLOSE cursor_stats_1
-     2 |    0 | DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT 1
+     2 |    0 | DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT $1
      1 |    1 | SELECT pg_stat_statements_reset()
 (3 rows)
 
@@ -49,14 +49,14 @@ CLOSE cursor_stats_1;
 CLOSE cursor_stats_2;
 COMMIT;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |                        query                         
--------+------+------------------------------------------------------
+ calls | rows |                         query                         
+-------+------+-------------------------------------------------------
      1 |    0 | BEGIN
      1 |    0 | CLOSE cursor_stats_1
      1 |    0 | CLOSE cursor_stats_2
      1 |    0 | COMMIT
-     1 |    0 | DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT 2
-     1 |    0 | DECLARE cursor_stats_2 CURSOR WITH HOLD FOR SELECT 3
+     1 |    0 | DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT $1
+     1 |    0 | DECLARE cursor_stats_2 CURSOR WITH HOLD FOR SELECT $1
      1 |    1 | FETCH 1 IN cursor_stats_1
      1 |    1 | FETCH 1 IN cursor_stats_2
      1 |    1 | SELECT pg_stat_statements_reset()

@@ -226,10 +226,10 @@ EXPLAIN (costs off) SELECT a FROM generate_series(1,10) AS tab(a) WHERE a = 7;
 (2 rows)
 
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |                                     query                                     
--------+------+-------------------------------------------------------------------------------
-     2 |    0 | EXPLAIN (costs off) SELECT 1
-     2 |    0 | EXPLAIN (costs off) SELECT a FROM generate_series(1,10) AS tab(a) WHERE a = 3
+ calls | rows |                                      query                                      
+-------+------+---------------------------------------------------------------------------------
+     2 |    0 | EXPLAIN (costs off) SELECT $1
+     2 |    0 | EXPLAIN (costs off) SELECT a FROM generate_series($1,$2) AS tab(a) WHERE a = $3
      1 |    1 | SELECT pg_stat_statements_reset()
 (3 rows)
 
@@ -326,12 +326,12 @@ CREATE TABLE ctas_stats_2 AS
     FROM generate_series(1, 5) AS tab(a) WHERE a < 4 AND a > 1;
 DROP TABLE ctas_stats_2;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |                              query                              
--------+------+-----------------------------------------------------------------
-     2 |    2 | CREATE TABLE ctas_stats_1 AS SELECT 1 AS a
-     2 |    4 | CREATE TABLE ctas_stats_2 AS                                   +
-       |      |   SELECT a AS col1, 2::int AS col2                             +
-       |      |     FROM generate_series(1, 10) AS tab(a) WHERE a < 5 AND a > 2
+ calls | rows |                               query                                
+-------+------+--------------------------------------------------------------------
+     2 |    2 | CREATE TABLE ctas_stats_1 AS SELECT $1 AS a
+     2 |    4 | CREATE TABLE ctas_stats_2 AS                                      +
+       |      |   SELECT a AS col1, $1::int AS col2                               +
+       |      |     FROM generate_series($2, $3) AS tab(a) WHERE a < $4 AND a > $5
      2 |    0 | DROP TABLE ctas_stats_1
      2 |    0 | DROP TABLE ctas_stats_2
      1 |    1 | SELECT pg_stat_statements_reset()
@@ -354,11 +354,11 @@ CREATE MATERIALIZED VIEW matview_stats_1 AS
     FROM generate_series(1, 5) AS tab(a) WHERE a < 4 AND a > 3;
 DROP MATERIALIZED VIEW matview_stats_1;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |                              query                              
--------+------+-----------------------------------------------------------------
-     2 |    2 | CREATE MATERIALIZED VIEW matview_stats_1 AS                    +
-       |      |   SELECT a AS col1, 2::int AS col2                             +
-       |      |     FROM generate_series(1, 10) AS tab(a) WHERE a < 5 AND a > 2
+ calls | rows |                               query                                
+-------+------+--------------------------------------------------------------------
+     2 |    2 | CREATE MATERIALIZED VIEW matview_stats_1 AS                       +
+       |      |   SELECT a AS col1, $1::int AS col2                               +
+       |      |     FROM generate_series($2, $3) AS tab(a) WHERE a < $4 AND a > $5
      2 |    0 | DROP MATERIALIZED VIEW matview_stats_1
      1 |    1 | SELECT pg_stat_statements_reset()
 (3 rows)
@@ -508,19 +508,19 @@ FETCH FORWARD ALL pgss_cursor;
 
 COMMIT;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |                                   query                                    
--------+------+----------------------------------------------------------------------------
+ calls | rows |                                  query                                  
+-------+------+-------------------------------------------------------------------------
      1 |    0 | BEGIN
      1 |    0 | COMMIT
      1 |    3 | COPY pgss_ctas (a, b) FROM STDIN
      1 |   13 | CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas
-     1 |   10 | CREATE TABLE pgss_ctas AS SELECT a, 'ctas' b FROM generate_series(1, 10) a
+     1 |   10 | CREATE TABLE pgss_ctas AS SELECT a, $1 b FROM generate_series($2, $3) a
      1 |    0 | DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv
      1 |    5 | FETCH FORWARD 5 pgss_cursor
      1 |    7 | FETCH FORWARD ALL pgss_cursor
      1 |    1 | FETCH NEXT pgss_cursor
      1 |   13 | REFRESH MATERIALIZED VIEW pgss_matv
-     1 |   10 | SELECT generate_series(1, 10) c INTO pgss_select_into
+     1 |   10 | SELECT generate_series($1, $2) c INTO pgss_select_into
      1 |    1 | SELECT pg_stat_statements_reset()
 (12 rows)
 
