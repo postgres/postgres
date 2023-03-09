@@ -53,6 +53,9 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#ifdef USE_ICU
+#include <unicode/ucol.h>
+#endif
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
@@ -133,7 +136,11 @@ static char *lc_monetary = NULL;
 static char *lc_numeric = NULL;
 static char *lc_time = NULL;
 static char *lc_messages = NULL;
+#ifdef USE_ICU
+static char locale_provider = COLLPROVIDER_ICU;
+#else
 static char locale_provider = COLLPROVIDER_LIBC;
+#endif
 static char *icu_locale = NULL;
 static char *icu_rules = NULL;
 static const char *default_text_search_config = NULL;
@@ -2029,6 +2036,50 @@ check_icu_locale_encoding(int user_enc)
 }
 
 /*
+ * Check that ICU accepts the locale name; or if not specified, retrieve the
+ * default ICU locale.
+ */
+static void
+check_icu_locale(void)
+{
+#ifdef USE_ICU
+	UCollator	*collator;
+	UErrorCode   status;
+
+	status = U_ZERO_ERROR;
+	collator = ucol_open(icu_locale, &status);
+	if (U_FAILURE(status))
+	{
+		if (icu_locale)
+			pg_fatal("could not open collator for locale \"%s\": %s",
+					 icu_locale, u_errorName(status));
+		else
+			pg_fatal("could not open collator for default locale: %s",
+					 u_errorName(status));
+	}
+
+	/* if not specified, get locale from default collator */
+	if (icu_locale == NULL)
+	{
+		const char	*default_locale;
+
+		status = U_ZERO_ERROR;
+		default_locale = ucol_getLocaleByType(collator, ULOC_VALID_LOCALE,
+											  &status);
+		if (U_FAILURE(status))
+		{
+			ucol_close(collator);
+			pg_fatal("could not determine default ICU locale");
+		}
+
+		icu_locale = pg_strdup(default_locale);
+	}
+
+	ucol_close(collator);
+#endif
+}
+
+/*
  * set up the locale variables
  *
  * assumes we have called setlocale(LC_ALL, "") -- see set_pglocale_pgservice
@@ -2081,8 +2132,7 @@ setlocales(void)
 
 	if (locale_provider == COLLPROVIDER_ICU)
 	{
-		if (!icu_locale)
-			pg_fatal("ICU locale must be specified");
+		check_icu_locale();
 
 		/*
 		 * In supported builds, the ICU locale ID will be checked by the

@@ -16,7 +16,7 @@ subdir = src/bin/initdb
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(CPPFLAGS)
+override CPPFLAGS := -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(ICU_CFLAGS) $(CPPFLAGS)
 
 # Note: it's important that we link to encnames.o from libpgcommon, not
 # from libpq, else we have risks of version skew if we run with a libpq
@@ -24,7 +24,7 @@ override CPPFLAGS := -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(CPPFLAGS)
 # should ensure that that happens.
 #
 # We need libpq only because fe_utils does.
-LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
+LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport) $(ICU_LIBS)
 
 # use system timezone data?
 ifneq (,$(with_system_tzdata))

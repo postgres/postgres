@@ -1,9 +1,16 @@
 /*
  * This test must be run in a database with UTF-8 encoding
  * and a Unicode-aware locale.
+ *
+ * Also disable this file for ICU, because the test for the the
+ * Turkish dotted I is not correct for many ICU locales. citext always
+ * uses the default collation, so it's not easy to restrict the test
+ * to the "tr-TR-x-icu" collation where it will succeed.
  */
 SELECT getdatabaseencoding() <> 'UTF8' OR
-       current_setting('lc_ctype') = 'C'
+       current_setting('lc_ctype') = 'C' OR
+       (SELECT datlocprovider='i' FROM pg_database
+        WHERE datname=current_database())
        AS skip_test \gset
 \if :skip_test
 \quit

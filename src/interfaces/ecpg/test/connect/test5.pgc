@@ -55,7 +55,7 @@ exec sql end declare section;
 	exec sql connect to 'unix:postgresql://localhost/ecpg2_regression' as main user :user USING "connectpw";
 	exec sql disconnect main;
 
-	exec sql connect to unix:postgresql://localhost/ecpg2_regression?connect_timeout=180&client_encoding=latin1 as main user regress_ecpg_user1/connectpw;
+	exec sql connect to unix:postgresql://localhost/ecpg2_regression?connect_timeout=180&client_encoding=sql_ascii as main user regress_ecpg_user1/connectpw;
 	exec sql disconnect main;
 
 	exec sql connect to "unix:postgresql://200.46.204.71/ecpg2_regression" as main user regress_ecpg_user1/connectpw;

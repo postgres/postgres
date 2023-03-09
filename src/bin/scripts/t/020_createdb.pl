@@ -13,7 +13,7 @@ program_version_ok('createdb');
 program_options_handling_ok('createdb');
 
 my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init;
+$node->init(extra => ['--locale-provider=libc']);
 $node->start;
 
 $node->issues_sql_like(

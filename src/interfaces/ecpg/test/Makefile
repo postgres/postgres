@@ -14,9 +14,6 @@ override CPPFLAGS := \
 	'-DSHELLPROG="$(SHELL)"' \
 	$(CPPFLAGS)
 
-# default encoding for regression tests
-ENCODING = SQL_ASCII
-
 ifneq ($(build_os),mingw32)
 abs_builddir := $(shell pwd)
 else

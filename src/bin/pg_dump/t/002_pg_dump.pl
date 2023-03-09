@@ -1758,7 +1758,7 @@ my %tests = (
 		create_sql =>
 		  "CREATE DATABASE dump_test2 LOCALE = 'C' TEMPLATE = template0;",
 		regexp => qr/^
-			\QCREATE DATABASE dump_test2 \E.*\QLOCALE = 'C';\E
+			\QCREATE DATABASE dump_test2 \E.*\QLOCALE = 'C'\E
 			/xm,
 		like => { pg_dumpall_dbprivs => 1, },
 	},

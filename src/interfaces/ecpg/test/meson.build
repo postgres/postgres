@@ -69,7 +69,6 @@ ecpg_test_files = files(
 ecpg_regress_args = [
   '--dbname=ecpg1_regression,ecpg2_regression',
   '--create-role=regress_ecpg_user1,regress_ecpg_user2',
-  '--encoding=SQL_ASCII',
 ]
 
 tests += {
