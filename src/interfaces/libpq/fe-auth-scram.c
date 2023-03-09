@@ -716,7 +716,7 @@ read_server_final_message(fe_scram_state *state, char *input)
 			return false;
 		}
 		libpq_append_conn_error(conn, "error received from server in SCRAM exchange: %s",
-						   errmsg);
+								errmsg);
 		return false;
 	}
 

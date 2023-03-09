@@ -73,7 +73,7 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 		if (!ginbuf.value)
 		{
 			libpq_append_conn_error(conn, "out of memory allocating GSSAPI buffer (%d)",
-							  payloadlen);
+									payloadlen);
 			return STATUS_ERROR;
 		}
 		if (pqGetnchar(ginbuf.value, payloadlen, conn))
@@ -223,7 +223,7 @@ pg_SSPI_continue(PGconn *conn, int payloadlen)
 		if (!inputbuf)
 		{
 			libpq_append_conn_error(conn, "out of memory allocating SSPI buffer (%d)",
-							  payloadlen);
+									payloadlen);
 			return STATUS_ERROR;
 		}
 		if (pqGetnchar(inputbuf, payloadlen, conn))
@@ -623,7 +623,7 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 	if (!challenge)
 	{
 		libpq_append_conn_error(conn, "out of memory allocating SASL buffer (%d)",
-						  payloadlen);
+								payloadlen);
 		return STATUS_ERROR;
 	}
 
@@ -1277,7 +1277,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	else
 	{
 		libpq_append_conn_error(conn, "unrecognized password encryption algorithm \"%s\"",
-						  algorithm);
+								algorithm);
 		return NULL;
 	}
 

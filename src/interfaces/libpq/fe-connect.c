@@ -1079,7 +1079,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			libpq_append_conn_error(conn, "could not match %d host names to %d hostaddr values",
-							   count_comma_separated_elems(conn->pghost), conn->nconnhost);
+									count_comma_separated_elems(conn->pghost), conn->nconnhost);
 			return false;
 		}
 	}
@@ -1159,7 +1159,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			libpq_append_conn_error(conn, "could not match %d port numbers to %d hosts",
-							   count_comma_separated_elems(conn->pgport), conn->nconnhost);
+									count_comma_separated_elems(conn->pgport), conn->nconnhost);
 			return false;
 		}
 	}
@@ -1248,7 +1248,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			libpq_append_conn_error(conn, "invalid %s value: \"%s\"",
-							   "channel_binding", conn->channel_binding);
+									"channel_binding", conn->channel_binding);
 			return false;
 		}
 	}
@@ -1273,7 +1273,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			libpq_append_conn_error(conn, "invalid %s value: \"%s\"",
-							   "sslmode", conn->sslmode);
+									"sslmode", conn->sslmode);
 			return false;
 		}
 
@@ -1293,7 +1293,7 @@ connectOptions2(PGconn *conn)
 			case 'v':			/* "verify-ca" or "verify-full" */
 				conn->status = CONNECTION_BAD;
 				libpq_append_conn_error(conn, "sslmode value \"%s\" invalid when SSL support is not compiled in",
-								   conn->sslmode);
+										conn->sslmode);
 				return false;
 		}
 #endif
@@ -1313,16 +1313,16 @@ connectOptions2(PGconn *conn)
 	{
 		conn->status = CONNECTION_BAD;
 		libpq_append_conn_error(conn, "invalid %s value: \"%s\"",
-						   "ssl_min_protocol_version",
-						   conn->ssl_min_protocol_version);
+								"ssl_min_protocol_version",
+								conn->ssl_min_protocol_version);
 		return false;
 	}
 	if (!sslVerifyProtocolVersion(conn->ssl_max_protocol_version))
 	{
 		conn->status = CONNECTION_BAD;
 		libpq_append_conn_error(conn, "invalid %s value: \"%s\"",
-						   "ssl_max_protocol_version",
-						   conn->ssl_max_protocol_version);
+								"ssl_max_protocol_version",
+								conn->ssl_max_protocol_version);
 		return false;
 	}
 
@@ -1359,7 +1359,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			libpq_append_conn_error(conn, "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in",
-							   conn->gssencmode);
+									conn->gssencmode);
 			return false;
 		}
 #endif
@@ -1392,8 +1392,8 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			libpq_append_conn_error(conn, "invalid %s value: \"%s\"",
-							   "target_session_attrs",
-							   conn->target_session_attrs);
+									"target_session_attrs",
+									conn->target_session_attrs);
 			return false;
 		}
 	}
@@ -1609,7 +1609,7 @@ connectNoDelay(PGconn *conn)
 		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		libpq_append_conn_error(conn, "could not set socket to TCP no delay mode: %s",
-						   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+								SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
 #endif
@@ -1787,7 +1787,7 @@ parse_int_param(const char *value, int *result, PGconn *conn,
 
 error:
 	libpq_append_conn_error(conn, "invalid integer value \"%s\" for connection option \"%s\"",
-					   value, context);
+							value, context);
 	return false;
 }
 
@@ -1816,9 +1816,9 @@ setKeepalivesIdle(PGconn *conn)
 		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		libpq_append_conn_error(conn, "%s(%s) failed: %s",
-						   "setsockopt",
-						   PG_TCP_KEEPALIVE_IDLE_STR,
-						   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+								"setsockopt",
+								PG_TCP_KEEPALIVE_IDLE_STR,
+								SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
 #endif
@@ -1850,9 +1850,9 @@ setKeepalivesInterval(PGconn *conn)
 		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		libpq_append_conn_error(conn, "%s(%s) failed: %s",
-						   "setsockopt",
-						   "TCP_KEEPINTVL",
-						   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+								"setsockopt",
+								"TCP_KEEPINTVL",
+								SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
 #endif
@@ -1885,9 +1885,9 @@ setKeepalivesCount(PGconn *conn)
 		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		libpq_append_conn_error(conn, "%s(%s) failed: %s",
-						   "setsockopt",
-						   "TCP_KEEPCNT",
-						   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+								"setsockopt",
+								"TCP_KEEPCNT",
+								SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
 #endif
@@ -1949,8 +1949,8 @@ prepKeepalivesWin32(PGconn *conn)
 	if (!setKeepalivesWin32(conn->sock, idle, interval))
 	{
 		libpq_append_conn_error(conn, "%s(%s) failed: error code %d",
-						  "WSAIoctl", "SIO_KEEPALIVE_VALS",
-						  WSAGetLastError());
+								"WSAIoctl", "SIO_KEEPALIVE_VALS",
+								WSAGetLastError());
 		return 0;
 	}
 	return 1;
@@ -1983,9 +1983,9 @@ setTCPUserTimeout(PGconn *conn)
 		char		sebuf[256];
 
 		libpq_append_conn_error(conn, "%s(%s) failed: %s",
-						   "setsockopt",
-						   "TCP_USER_TIMEOUT",
-						   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+								"setsockopt",
+								"TCP_USER_TIMEOUT",
+								SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
 #endif
@@ -2354,7 +2354,7 @@ keep_going:						/* We will come back to here until there is
 				if (ret || !conn->addrlist)
 				{
 					libpq_append_conn_error(conn, "could not translate host name \"%s\" to address: %s",
-									   ch->host, gai_strerror(ret));
+											ch->host, gai_strerror(ret));
 					goto keep_going;
 				}
 				break;
@@ -2366,7 +2366,7 @@ keep_going:						/* We will come back to here until there is
 				if (ret || !conn->addrlist)
 				{
 					libpq_append_conn_error(conn, "could not parse network address \"%s\": %s",
-									   ch->hostaddr, gai_strerror(ret));
+											ch->hostaddr, gai_strerror(ret));
 					goto keep_going;
 				}
 				break;
@@ -2377,8 +2377,8 @@ keep_going:						/* We will come back to here until there is
 				if (strlen(portstr) >= UNIXSOCK_PATH_BUFLEN)
 				{
 					libpq_append_conn_error(conn, "Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
-									   portstr,
-									   (int) (UNIXSOCK_PATH_BUFLEN - 1));
+											portstr,
+											(int) (UNIXSOCK_PATH_BUFLEN - 1));
 					goto keep_going;
 				}
 
@@ -2391,7 +2391,7 @@ keep_going:						/* We will come back to here until there is
 				if (ret || !conn->addrlist)
 				{
 					libpq_append_conn_error(conn, "could not translate Unix-domain socket path \"%s\" to address: %s",
-									   portstr, gai_strerror(ret));
+											portstr, gai_strerror(ret));
 					goto keep_going;
 				}
 				break;
@@ -2513,7 +2513,7 @@ keep_going:						/* We will come back to here until there is
 						}
 						emitHostIdentityInfo(conn, host_addr);
 						libpq_append_conn_error(conn, "could not create socket: %s",
-										   SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)));
+												SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 
@@ -2543,7 +2543,7 @@ keep_going:						/* We will come back to here until there is
 					if (!pg_set_noblock(conn->sock))
 					{
 						libpq_append_conn_error(conn, "could not set socket to nonblocking mode: %s",
-										   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+												SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						conn->try_next_addr = true;
 						goto keep_going;
 					}
@@ -2552,7 +2552,7 @@ keep_going:						/* We will come back to here until there is
 					if (fcntl(conn->sock, F_SETFD, FD_CLOEXEC) == -1)
 					{
 						libpq_append_conn_error(conn, "could not set socket to close-on-exec mode: %s",
-										   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+												SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						conn->try_next_addr = true;
 						goto keep_going;
 					}
@@ -2581,9 +2581,9 @@ keep_going:						/* We will come back to here until there is
 											(char *) &on, sizeof(on)) < 0)
 						{
 							libpq_append_conn_error(conn, "%s(%s) failed: %s",
-											   "setsockopt",
-											   "SO_KEEPALIVE",
-											   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+													"setsockopt",
+													"SO_KEEPALIVE",
+													SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 							err = 1;
 						}
 						else if (!setKeepalivesIdle(conn)
@@ -2708,7 +2708,7 @@ keep_going:						/* We will come back to here until there is
 							   (char *) &optval, &optlen) == -1)
 				{
 					libpq_append_conn_error(conn, "could not get socket error status: %s",
-									   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+											SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					goto error_return;
 				}
 				else if (optval != 0)
@@ -2735,7 +2735,7 @@ keep_going:						/* We will come back to here until there is
 								&conn->laddr.salen) < 0)
 				{
 					libpq_append_conn_error(conn, "could not get client address from socket: %s",
-									   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+											SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					goto error_return;
 				}
 
@@ -2775,7 +2775,7 @@ keep_going:						/* We will come back to here until there is
 							libpq_append_conn_error(conn, "requirepeer parameter is not supported on this platform");
 						else
 							libpq_append_conn_error(conn, "could not get peer credentials: %s",
-											   strerror_r(errno, sebuf, sizeof(sebuf)));
+													strerror_r(errno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 
@@ -2788,7 +2788,7 @@ keep_going:						/* We will come back to here until there is
 					if (strcmp(remote_username, conn->requirepeer) != 0)
 					{
 						libpq_append_conn_error(conn, "requirepeer specifies \"%s\", but actual peer user name is \"%s\"",
-										   conn->requirepeer, remote_username);
+												conn->requirepeer, remote_username);
 						free(remote_username);
 						goto error_return;
 					}
@@ -2829,7 +2829,7 @@ keep_going:						/* We will come back to here until there is
 					if (pqPacketSend(conn, 0, &pv, sizeof(pv)) != STATUS_OK)
 					{
 						libpq_append_conn_error(conn, "could not send GSSAPI negotiation packet: %s",
-										   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+												SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 
@@ -2840,7 +2840,7 @@ keep_going:						/* We will come back to here until there is
 				else if (!conn->gctx && conn->gssencmode[0] == 'r')
 				{
 					libpq_append_conn_error(conn,
-									   "GSSAPI encryption required but was impossible (possibly no credential cache, no server support, or using a local socket)");
+											"GSSAPI encryption required but was impossible (possibly no credential cache, no server support, or using a local socket)");
 					goto error_return;
 				}
 #endif
@@ -2882,7 +2882,7 @@ keep_going:						/* We will come back to here until there is
 					if (pqPacketSend(conn, 0, &pv, sizeof(pv)) != STATUS_OK)
 					{
 						libpq_append_conn_error(conn, "could not send SSL negotiation packet: %s",
-										   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+												SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 					/* Ok, wait for response */
@@ -2911,7 +2911,7 @@ keep_going:						/* We will come back to here until there is
 				if (pqPacketSend(conn, 0, startpacket, packetlen) != STATUS_OK)
 				{
 					libpq_append_conn_error(conn, "could not send startup packet: %s",
-									   SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+											SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					free(startpacket);
 					goto error_return;
 				}
@@ -3012,7 +3012,7 @@ keep_going:						/* We will come back to here until there is
 					else
 					{
 						libpq_append_conn_error(conn, "received invalid response to SSL negotiation: %c",
-										   SSLok);
+												SSLok);
 						goto error_return;
 					}
 				}
@@ -3123,7 +3123,7 @@ keep_going:						/* We will come back to here until there is
 					else if (gss_ok != 'G')
 					{
 						libpq_append_conn_error(conn, "received invalid response to GSSAPI negotiation: %c",
-										   gss_ok);
+												gss_ok);
 						goto error_return;
 					}
 				}
@@ -3201,7 +3201,7 @@ keep_going:						/* We will come back to here until there is
 				if (!(beresp == 'R' || beresp == 'v' || beresp == 'E'))
 				{
 					libpq_append_conn_error(conn, "expected authentication request from server, but received %c",
-									   beresp);
+											beresp);
 					goto error_return;
 				}
 
@@ -3732,7 +3732,7 @@ keep_going:						/* We will come back to here until there is
 
 				/* Append error report to conn->errorMessage. */
 				libpq_append_conn_error(conn, "\"%s\" failed",
-								  "SHOW transaction_read_only");
+										"SHOW transaction_read_only");
 
 				/* Close connection politely. */
 				conn->status = CONNECTION_OK;
@@ -3782,7 +3782,7 @@ keep_going:						/* We will come back to here until there is
 
 				/* Append error report to conn->errorMessage. */
 				libpq_append_conn_error(conn, "\"%s\" failed",
-								  "SELECT pg_is_in_recovery()");
+										"SELECT pg_is_in_recovery()");
 
 				/* Close connection politely. */
 				conn->status = CONNECTION_OK;
@@ -3795,8 +3795,8 @@ keep_going:						/* We will come back to here until there is
 
 		default:
 			libpq_append_conn_error(conn,
-							   "invalid connection state %d, probably indicative of memory corruption",
-							  conn->status);
+									"invalid connection state %d, probably indicative of memory corruption",
+									conn->status);
 			goto error_return;
 	}
 
@@ -7175,7 +7175,7 @@ pgpassfileWarning(PGconn *conn)
 
 		if (sqlstate && strcmp(sqlstate, ERRCODE_INVALID_PASSWORD) == 0)
 			libpq_append_conn_error(conn, "password retrieved from file \"%s\"",
-							  conn->pgpassfile);
+									conn->pgpassfile);
 	}
 }
 
