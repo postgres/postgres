@@ -825,53 +825,77 @@ PG_TEST_NOCLEAN=1 make -C src/bin/pg_dump check
     instrumentation, so that it becomes possible to examine which
     parts of the code are covered by the regression tests or any other
     test suite that is run with the code.  This is currently supported
-    when compiling with GCC, and it requires the <command>gcov</command>
-    and <command>lcov</command> programs.
+    when compiling with GCC, and it requires the <literal>gcov</literal>
+    and <literal>lcov</literal> packages.
    </para>
 
-   <para>
-    A typical workflow looks like this:
+   <sect2 id="regress-coverage-configure">
+    <title>Coverage with Autoconf and Make</title>
+    <para>
+     A typical workflow looks like this:
 <screen>
 ./configure --enable-coverage ... OTHER OPTIONS ...
 make
 make check # or other test suite
 make coverage-html
 </screen>
-    Then point your HTML browser
-    to <filename>coverage/index.html</filename>.
-   </para>
+     Then point your HTML browser
+     to <filename>coverage/index.html</filename>.
+    </para>
 
-   <para>
-    If you don't have <command>lcov</command> or prefer text output over an
-    HTML report, you can run
+    <para>
+     If you don't have <command>lcov</command> or prefer text output over an
+     HTML report, you can run
 <screen>
 make coverage
 </screen>
-    instead of <literal>make coverage-html</literal>, which will
-    produce <filename>.gcov</filename> output files for each source file
-    relevant to the test.  (<literal>make coverage</literal> and <literal>make
-    coverage-html</literal> will overwrite each other's files, so mixing them
-    might be confusing.)
-   </para>
+     instead of <literal>make coverage-html</literal>, which will
+     produce <filename>.gcov</filename> output files for each source file
+     relevant to the test.  (<literal>make coverage</literal> and <literal>make
+     coverage-html</literal> will overwrite each other's files, so mixing them
+     might be confusing.)
+    </para>
 
-   <para>
-    You can run several different tests before making the coverage report;
-    the execution counts will accumulate.  If you want
-    to reset the execution counts between test runs, run:
+    <para>
+     You can run several different tests before making the coverage report;
+     the execution counts will accumulate.  If you want
+     to reset the execution counts between test runs, run:
 <screen>
 make coverage-clean
 </screen>
-   </para>
+    </para>
 
-   <para>
-    You can run the <literal>make coverage-html</literal> or <literal>make
-    coverage</literal> command in a subdirectory if you want a coverage
-    report for only a portion of the code tree.
-   </para>
+    <para>
+     You can run the <literal>make coverage-html</literal> or <literal>make
+     coverage</literal> command in a subdirectory if you want a coverage
+     report for only a portion of the code tree.
+    </para>
 
-   <para>
-    Use <literal>make distclean</literal> to clean up when done.
-   </para>
+    <para>
+     Use <literal>make distclean</literal> to clean up when done.
+    </para>
+   </sect2>
+
+   <sect2 id="regress-coverage-meson">
+    <title>Coverage with Meson</title>
+    <para>
+     A typical workflow looks like this:
+<screen>
+meson setup -Db_coverage=true ... OTHER OPTIONS ... builddir/
+meson compile -C builddir/
+meson test -C builddir/
+cd builddir/
+ninja coverage-html
+</screen>
+     Then point your HTML browser
+     to <filename>./meson-logs/coveragereport/index.html</filename>.
+    </para>
+
+    <para>
+     You can run several different tests before making the coverage report;
+     the execution counts will accumulate.
+    </para>
+   </sect2>
   </sect1>
 
 </chapter>
