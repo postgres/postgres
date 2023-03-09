@@ -283,6 +283,91 @@ SELECT date 'J0' AS "Julian Epoch";
  11-24-4714 BC
 (1 row)
 
+-- conflicting fields should throw errors
+SELECT date '1995-08-06 epoch';
+ERROR:  invalid input syntax for type date: "1995-08-06 epoch"
+LINE 1: SELECT date '1995-08-06 epoch';
+                    ^
+SELECT date '1995-08-06 infinity';
+ERROR:  invalid input syntax for type date: "1995-08-06 infinity"
+LINE 1: SELECT date '1995-08-06 infinity';
+                    ^
+SELECT date '1995-08-06 -infinity';
+ERROR:  invalid input syntax for type date: "1995-08-06 -infinity"
+LINE 1: SELECT date '1995-08-06 -infinity';
+                    ^
+SELECT date 'today infinity';
+ERROR:  invalid input syntax for type date: "today infinity"
+LINE 1: SELECT date 'today infinity';
+                    ^
+SELECT date '-infinity infinity';
+ERROR:  invalid input syntax for type date: "-infinity infinity"
+LINE 1: SELECT date '-infinity infinity';
+                    ^
+SELECT timestamp '1995-08-06 epoch';
+ERROR:  invalid input syntax for type timestamp: "1995-08-06 epoch"
+LINE 1: SELECT timestamp '1995-08-06 epoch';
+                         ^
+SELECT timestamp '1995-08-06 infinity';
+ERROR:  invalid input syntax for type timestamp: "1995-08-06 infinity"
+LINE 1: SELECT timestamp '1995-08-06 infinity';
+                         ^
+SELECT timestamp '1995-08-06 -infinity';
+ERROR:  invalid input syntax for type timestamp: "1995-08-06 -infinity"
+LINE 1: SELECT timestamp '1995-08-06 -infinity';
+                         ^
+SELECT timestamp 'epoch 01:01:01';
+ERROR:  invalid input syntax for type timestamp: "epoch 01:01:01"
+LINE 1: SELECT timestamp 'epoch 01:01:01';
+                         ^
+SELECT timestamp 'infinity 01:01:01';
+ERROR:  invalid input syntax for type timestamp: "infinity 01:01:01"
+LINE 1: SELECT timestamp 'infinity 01:01:01';
+                         ^
+SELECT timestamp '-infinity 01:01:01';
+ERROR:  invalid input syntax for type timestamp: "-infinity 01:01:01"
+LINE 1: SELECT timestamp '-infinity 01:01:01';
+                         ^
+SELECT timestamp 'now epoch';
+ERROR:  invalid input syntax for type timestamp: "now epoch"
+LINE 1: SELECT timestamp 'now epoch';
+                         ^
+SELECT timestamp '-infinity infinity';
+ERROR:  invalid input syntax for type timestamp: "-infinity infinity"
+LINE 1: SELECT timestamp '-infinity infinity';
+                         ^
+SELECT timestamptz '1995-08-06 epoch';
+ERROR:  invalid input syntax for type timestamp with time zone: "1995-08-06 epoch"
+LINE 1: SELECT timestamptz '1995-08-06 epoch';
+                           ^
+SELECT timestamptz '1995-08-06 infinity';
+ERROR:  invalid input syntax for type timestamp with time zone: "1995-08-06 infinity"
+LINE 1: SELECT timestamptz '1995-08-06 infinity';
+                           ^
+SELECT timestamptz '1995-08-06 -infinity';
+ERROR:  invalid input syntax for type timestamp with time zone: "1995-08-06 -infinity"
+LINE 1: SELECT timestamptz '1995-08-06 -infinity';
+                           ^
+SELECT timestamptz 'epoch 01:01:01';
+ERROR:  invalid input syntax for type timestamp with time zone: "epoch 01:01:01"
+LINE 1: SELECT timestamptz 'epoch 01:01:01';
+                           ^
+SELECT timestamptz 'infinity 01:01:01';
+ERROR:  invalid input syntax for type timestamp with time zone: "infinity 01:01:01"
+LINE 1: SELECT timestamptz 'infinity 01:01:01';
+                           ^
+SELECT timestamptz '-infinity 01:01:01';
+ERROR:  invalid input syntax for type timestamp with time zone: "-infinity 01:01:01"
+LINE 1: SELECT timestamptz '-infinity 01:01:01';
+                           ^
+SELECT timestamptz 'now epoch';
+ERROR:  invalid input syntax for type timestamp with time zone: "now epoch"
+LINE 1: SELECT timestamptz 'now epoch';
+                           ^
+SELECT timestamptz '-infinity infinity';
+ERROR:  invalid input syntax for type timestamp with time zone: "-infinity infinity"
+LINE 1: SELECT timestamptz '-infinity infinity';
+                           ^
 --
 -- date, time arithmetic
 --

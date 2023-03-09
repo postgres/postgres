@@ -1431,8 +1431,17 @@ DecodeDateTime(char **field, int *ftype, int nf,
 									*tzp = 0;
 								break;
 
-							default:
+							case DTK_EPOCH:
+							case DTK_LATE:
+							case DTK_EARLY:
+								tmask = (DTK_DATE_M | DTK_TIME_M | DTK_M(TZ));
 								*dtype = val;
+								/* caller ignores tm for these dtype codes */
+								break;
+
+							default:
+								elog(ERROR, "unrecognized RESERV datetime token: %d",
+									 val);
 						}
 
 						break;
@@ -1567,22 +1576,23 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		fmask |= tmask;
 	}							/* end loop over fields */
 
-	/* do final checking/adjustment of Y/M/D fields */
-	dterr = ValidateDate(fmask, isjulian, is2digits, bc, tm);
-	if (dterr)
-		return dterr;
-
-	/* handle AM/PM */
-	if (mer != HR24 && tm->tm_hour > HOURS_PER_DAY / 2)
-		return DTERR_FIELD_OVERFLOW;
-	if (mer == AM && tm->tm_hour == HOURS_PER_DAY / 2)
-		tm->tm_hour = 0;
-	else if (mer == PM && tm->tm_hour != HOURS_PER_DAY / 2)
-		tm->tm_hour += HOURS_PER_DAY / 2;
-
-	/* do additional checking for full date specs... */
+	/* do additional checking for normal date specs (but not "infinity" etc) */
 	if (*dtype == DTK_DATE)
 	{
+		/* do final checking/adjustment of Y/M/D fields */
+		dterr = ValidateDate(fmask, isjulian, is2digits, bc, tm);
+		if (dterr)
+			return dterr;
+
+		/* handle AM/PM */
+		if (mer != HR24 && tm->tm_hour > HOURS_PER_DAY / 2)
+			return DTERR_FIELD_OVERFLOW;
+		if (mer == AM && tm->tm_hour == HOURS_PER_DAY / 2)
+			tm->tm_hour = 0;
+		else if (mer == PM && tm->tm_hour != HOURS_PER_DAY / 2)
+			tm->tm_hour += HOURS_PER_DAY / 2;
+
+		/* check for incomplete input */
 		if ((fmask & DTK_DATE_M) != DTK_DATE_M)
 		{
 			if ((fmask & DTK_TIME_M) == DTK_TIME_M)

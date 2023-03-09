@@ -62,6 +62,29 @@ SET DateStyle = 'Postgres, MDY';
 SELECT date 'J1520447' AS "Confucius' Birthday";
 SELECT date 'J0' AS "Julian Epoch";
 
+-- conflicting fields should throw errors
+SELECT date '1995-08-06 epoch';
+SELECT date '1995-08-06 infinity';
+SELECT date '1995-08-06 -infinity';
+SELECT date 'today infinity';
+SELECT date '-infinity infinity';
+SELECT timestamp '1995-08-06 epoch';
+SELECT timestamp '1995-08-06 infinity';
+SELECT timestamp '1995-08-06 -infinity';
+SELECT timestamp 'epoch 01:01:01';
+SELECT timestamp 'infinity 01:01:01';
+SELECT timestamp '-infinity 01:01:01';
+SELECT timestamp 'now epoch';
+SELECT timestamp '-infinity infinity';
+SELECT timestamptz '1995-08-06 epoch';
+SELECT timestamptz '1995-08-06 infinity';
+SELECT timestamptz '1995-08-06 -infinity';
+SELECT timestamptz 'epoch 01:01:01';
+SELECT timestamptz 'infinity 01:01:01';
+SELECT timestamptz '-infinity 01:01:01';
+SELECT timestamptz 'now epoch';
+SELECT timestamptz '-infinity infinity';
+
 --
 -- date, time arithmetic
 --
