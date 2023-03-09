@@ -311,11 +311,19 @@ get_template0_info(ClusterInfo *cluster)
 	int				 i_datctype;
 	int				 i_daticulocale;
 
-	dbres = executeQueryOrDie(conn,
-							  "SELECT encoding, datlocprovider, "
-							  "       datcollate, datctype, daticulocale "
-							  "FROM	pg_catalog.pg_database "
-							  "WHERE datname='template0'");
+	if (GET_MAJOR_VERSION(cluster->major_version) >= 1500)
+		dbres = executeQueryOrDie(conn,
+								  "SELECT encoding, datlocprovider, "
+								  "       datcollate, datctype, daticulocale "
+								  "FROM	pg_catalog.pg_database "
+								  "WHERE datname='template0'");
+	else
+		dbres = executeQueryOrDie(conn,
+								  "SELECT encoding, 'c' AS datlocprovider, "
+								  "       datcollate, datctype, NULL AS daticulocale "
+								  "FROM	pg_catalog.pg_database "
+								  "WHERE datname='template0'");
+
 
 	if (PQntuples(dbres) != 1)
 		pg_fatal("template0 not found");

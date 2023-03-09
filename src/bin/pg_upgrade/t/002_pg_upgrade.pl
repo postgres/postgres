@@ -110,8 +110,12 @@ my $original_encoding = "6"; # UTF-8
 my $original_provider = "c";
 my $original_collate = "C";
 my $original_iculocale = "";
+my $provider_field = "'c' AS datlocprovider";
+my $iculocale_field = "NULL AS daticulocale";
 if ($oldnode->pg_version >= 15 && $ENV{with_icu} eq 'yes')
 {
+	$provider_field = "datlocprovider";
+	$iculocale_field = "daticulocale";
 	$original_provider = "i";
 	$original_iculocale = "fr-CA";
 }
@@ -132,8 +136,8 @@ $oldnode->start;
 
 my $result;
 $result = $oldnode->safe_psql(
-	'postgres', q{SELECT encoding, datlocprovider, datcollate, daticulocale
-                 FROM pg_database WHERE datname='template0'});
+	'postgres', "SELECT encoding, $provider_field, datcollate, $iculocale_field
+                 FROM pg_database WHERE datname='template0'");
 is($result, "$original_encoding|$original_provider|$original_collate|$original_iculocale",
 		"check locales in original cluster"
 	);
@@ -395,8 +399,8 @@ if (-d $log_path)
 
 # Test that upgraded cluster has original locale settings.
 $result = $newnode->safe_psql(
-	'postgres', q{SELECT encoding, datlocprovider, datcollate, datctype, daticulocale
-                 FROM pg_database WHERE datname='template0'});
+	'postgres', "SELECT encoding, $provider_field, datcollate, datctype, $iculocale_field
+                 FROM pg_database WHERE datname='template0'");
 is($result, "$original_encoding|$original_provider|$original_collate|$original_ctype|$original_iculocale",
 		"check that locales in new cluster match original cluster"
 	);
