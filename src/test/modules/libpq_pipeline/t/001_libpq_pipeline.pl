@@ -9,16 +9,16 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 
 # Use Test::Differences if installed, and select unified diff output.
-# No decent way to select a context line count with this;
-# we could use a sub ref to allow that.
 BEGIN
 {
-	#<<< protect next line from pgperltidy
-	if (!eval q{ use Test::Differences; unified_diff(); 1 })    ## no critic (ProhibitStringyEval)
-	#>>>
-	{
-		*eq_or_diff = \&is;
-	}
+	eval {
+		require Test::Differences;
+		Test::Differences->import;
+		unified_diff();
+	};
+
+	# No dice -- fall back to 'is'
+	*eq_or_diff = \&is if $@;
 }
 
 my $node = PostgreSQL::Test::Cluster->new('main');
