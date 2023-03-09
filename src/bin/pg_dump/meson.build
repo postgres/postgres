@@ -90,6 +90,7 @@ tests += {
     'env': {
       'GZIP_PROGRAM': gzip.path(),
       'LZ4': program_lz4.found() ? program_lz4.path() : '',
+      'with_icu': icu.found() ? 'yes' : 'no',
     },
     'tests': [
       't/001_basic.pl',

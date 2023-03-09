@@ -83,7 +83,7 @@ tests += {
     'env': {'GZIP_PROGRAM': gzip.path(),
             'TAR': tar.path(),
             'LZ4': program_lz4.found() ? program_lz4.path() : '',
-            'ZSTD': program_zstd.found() ? program_zstd.path() : ''},
+    },
     'tests': [
       't/010_pg_basebackup.pl',
       't/020_pg_receivewal.pl',
