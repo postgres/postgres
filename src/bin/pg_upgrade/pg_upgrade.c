@@ -51,6 +51,7 @@
 #include "fe_utils/string_utils.h"
 #include "pg_upgrade.h"
 
+static void set_locale_and_encoding(void);
 static void prepare_new_cluster(void);
 static void prepare_new_globals(void);
 static void create_new_objects(void);
@@ -138,6 +139,8 @@ main(int argc, char **argv)
 		   "\n"
 		   "Performing Upgrade\n"
 		   "------------------");
+
+	set_locale_and_encoding();
 
 	prepare_new_cluster();
 
@@ -363,6 +366,65 @@ setup(char *argv0, bool *live_check)
 			pg_fatal("There seems to be a postmaster servicing the new cluster.\n"
 					 "Please shutdown that postmaster and try again.");
 	}
+}
+
+
+/*
+ * Copy locale and encoding information into the new cluster's template0.
+ *
+ * We need to copy the encoding, datlocprovider, datcollate, datctype, and
+ * daticulocale. We don't need datcollversion because that's never set for
+ * template0.
+ */
+static void
+set_locale_and_encoding(void)
+{
+	PGconn		*conn_new_template1;
+	char		*datcollate_literal;
+	char		*datctype_literal;
+	char		*daticulocale_literal	= NULL;
+	DbLocaleInfo *locale = old_cluster.template0;
+
+	prep_status("Setting locale and encoding for new cluster");
+
+	/* escape literals with respect to new cluster */
+	conn_new_template1 = connectToServer(&new_cluster, "template1");
+
+	datcollate_literal = PQescapeLiteral(conn_new_template1,
+										 locale->db_collate,
+										 strlen(locale->db_collate));
+	datctype_literal = PQescapeLiteral(conn_new_template1,
+									   locale->db_ctype,
+									   strlen(locale->db_ctype));
+	if (locale->db_iculocale)
+		daticulocale_literal = PQescapeLiteral(conn_new_template1,
+											   locale->db_iculocale,
+											   strlen(locale->db_iculocale));
+	else
+		daticulocale_literal = pg_strdup("NULL");
+
+	/* update template0 in new cluster */
+	PQclear(executeQueryOrDie(conn_new_template1,
+							  "UPDATE pg_catalog.pg_database "
+							  "  SET encoding = %u, "
+							  "      datlocprovider = '%c', "
+							  "      datcollate = %s, "
+							  "      datctype = %s, "
+							  "      daticulocale = %s "
+							  "  WHERE datname = 'template0' ",
+							  locale->db_encoding,
+							  locale->db_collprovider,
+							  datcollate_literal,
+							  datctype_literal,
+							  daticulocale_literal));
+
+	PQfreemem(datcollate_literal);
+	PQfreemem(datctype_literal);
+	PQfreemem(daticulocale_literal);
+
+	PQfinish(conn_new_template1);
+
+	check_ok();
 }
 
 

@@ -38,6 +38,7 @@ tests += {
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'tap': {
+    'env': {'with_icu': icu.found() ? 'yes' : 'no'},
     'tests': [
       't/001_basic.pl',
       't/002_pg_upgrade.pl',

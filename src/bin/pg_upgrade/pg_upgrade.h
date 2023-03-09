@@ -175,13 +175,20 @@ typedef struct
 	char	   *db_name;		/* database name */
 	char		db_tablespace[MAXPGPATH];	/* database default tablespace
 											 * path */
+	RelInfoArr	rel_arr;		/* array of all user relinfos */
+} DbInfo;
+
+/*
+ * Locale information about a database.
+ */
+typedef struct
+{
 	char	   *db_collate;
 	char	   *db_ctype;
 	char		db_collprovider;
 	char	   *db_iculocale;
 	int			db_encoding;
-	RelInfoArr	rel_arr;		/* array of all user relinfos */
-} DbInfo;
+} DbLocaleInfo;
 
 typedef struct
 {
@@ -252,6 +259,7 @@ typedef enum
 typedef struct
 {
 	ControlData controldata;	/* pg_control information */
+	DbLocaleInfo *template0;	/* template0 locale info */
 	DbInfoArr	dbarr;			/* dbinfos array */
 	char	   *pgdata;			/* pathname for cluster's $PGDATA directory */
 	char	   *pgconfig;		/* pathname for cluster's config file

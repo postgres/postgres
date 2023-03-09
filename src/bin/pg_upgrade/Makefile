@@ -51,6 +51,8 @@ clean distclean maintainer-clean:
 	rm -rf delete_old_cluster.sh log/ tmp_check/ \
 	       reindex_hash.sql
 
+export with_icu
+
 check:
 	$(prove_check)
 
