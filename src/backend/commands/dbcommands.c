@@ -1066,6 +1066,11 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("ICU locale cannot be specified unless locale provider is ICU")));
+
+		if (dbicurules)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("ICU rules cannot be specified unless locale provider is ICU")));
 	}
 
 	/*

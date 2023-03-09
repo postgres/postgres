@@ -271,6 +271,11 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("nondeterministic collations not supported with this provider")));
 
+		if (collicurules && collprovider != COLLPROVIDER_ICU)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("ICU rules cannot be specified unless locale provider is ICU")));
+
 		if (collprovider == COLLPROVIDER_ICU)
 		{
 #ifdef USE_ICU
