@@ -76,6 +76,12 @@ div.example {
 	margin: 0.5ex;
 }
 
+/* Additional formatting for "simplelist" structures */
+table.simplelist td {
+	padding-left: 2em;
+	padding-right: 2em;
+}
+
 /* formatting for entries in tables of functions: indent all but first line */
 
 th.func_table_entry p,
