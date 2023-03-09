@@ -1847,24 +1847,6 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 		return snapshot;
 	}
 
-	/* Maintain serializable global xmin info. */
-	if (!TransactionIdIsValid(PredXact->SxactGlobalXmin))
-	{
-		Assert(PredXact->SxactGlobalXminCount == 0);
-		PredXact->SxactGlobalXmin = snapshot->xmin;
-		PredXact->SxactGlobalXminCount = 1;
-		SerialSetActiveSerXmin(snapshot->xmin);
-	}
-	else if (TransactionIdEquals(snapshot->xmin, PredXact->SxactGlobalXmin))
-	{
-		Assert(PredXact->SxactGlobalXminCount > 0);
-		PredXact->SxactGlobalXminCount++;
-	}
-	else
-	{
-		Assert(TransactionIdFollows(snapshot->xmin, PredXact->SxactGlobalXmin));
-	}
-
 	/* Initialize the structure. */
 	sxact->vxid = vxid;
 	sxact->SeqNo.lastCommitBeforeSnapshot = PredXact->LastSxactCommitSeqNo;
@@ -1902,12 +1884,43 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 				SetPossibleUnsafeConflict(sxact, othersxact);
 			}
 		}
+
+		/*
+		 * If we didn't find any possibly unsafe conflicts because every
+		 * uncommitted writable transaction turned out to be doomed, then we
+		 * can "opt out" immediately.  See comments above the earlier check for
+		 * PredXact->WritableSxactCount == 0.
+		 */
+		if (SHMQueueEmpty(&sxact->possibleUnsafeConflicts))
+		{
+			ReleasePredXact(sxact);
+			LWLockRelease(SerializableXactHashLock);
+			return snapshot;
+		}
 	}
 	else
 	{
 		++(PredXact->WritableSxactCount);
 		Assert(PredXact->WritableSxactCount <=
 			   (MaxBackends + max_prepared_xacts));
+	}
+
+	/* Maintain serializable global xmin info. */
+	if (!TransactionIdIsValid(PredXact->SxactGlobalXmin))
+	{
+		Assert(PredXact->SxactGlobalXminCount == 0);
+		PredXact->SxactGlobalXmin = snapshot->xmin;
+		PredXact->SxactGlobalXminCount = 1;
+		SerialSetActiveSerXmin(snapshot->xmin);
+	}
+	else if (TransactionIdEquals(snapshot->xmin, PredXact->SxactGlobalXmin))
+	{
+		Assert(PredXact->SxactGlobalXminCount > 0);
+		PredXact->SxactGlobalXminCount++;
+	}
+	else
+	{
+		Assert(TransactionIdFollows(snapshot->xmin, PredXact->SxactGlobalXmin));
 	}
 
 	MySerializableXact = sxact;
