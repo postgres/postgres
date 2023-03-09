@@ -94,8 +94,7 @@ pg_cryptohash_create(pg_cryptohash_type type)
 /*
  * pg_cryptohash_init
  *
- * Initialize a hash context.  Note that this implementation is designed
- * to never fail, so this always returns 0.
+ * Initialize a hash context.  Returns 0 on success, and -1 on failure.
  */
 int
 pg_cryptohash_init(pg_cryptohash_ctx *ctx)
@@ -131,9 +130,7 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 /*
  * pg_cryptohash_update
  *
- * Update a hash context.  Note that this implementation is designed
- * to never fail, so this always returns 0 except if the caller has
- * given a NULL context.
+ * Update a hash context.  Returns 0 on success, and -1 on failure.
  */
 int
 pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
@@ -169,9 +166,7 @@ pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 /*
  * pg_cryptohash_final
  *
- * Finalize a hash context.  Note that this implementation is designed to
- * never fail, so this always returns 0 except if the destination buffer
- * is not large enough.
+ * Finalize a hash context.  Returns 0 on success, and -1 on failure.
  */
 int
 pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
