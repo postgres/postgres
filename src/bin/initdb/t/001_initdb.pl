@@ -111,7 +111,7 @@ if ($ENV{with_icu} eq 'yes')
 			'--locale-provider=icu', '--icu-locale=@colNumeric=lower',
 			"$tempdir/dataX"
 		],
-		qr/error: could not open collator for locale/,
+		qr/could not open collator for locale/,
 		'fails for invalid ICU locale');
 
 	command_fails_like(
