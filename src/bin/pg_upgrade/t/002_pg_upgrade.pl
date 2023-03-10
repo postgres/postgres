@@ -108,7 +108,7 @@ if ($oldnode->pg_version >= 11)
 
 my $original_encoding = "6"; # UTF-8
 my $original_provider = "c";
-my $original_collate = "C";
+my $original_locale = "C";
 my $original_iculocale = "";
 my $provider_field = "'c' AS datlocprovider";
 my $iculocale_field = "NULL AS daticulocale";
@@ -123,7 +123,7 @@ if ($oldnode->pg_version >= 15 && $ENV{with_icu} eq 'yes')
 my @initdb_params = @custom_opts;
 
 push @initdb_params, ('--encoding', 'UTF-8');
-push @initdb_params, ('--lc-collate', $original_collate);
+push @initdb_params, ('--locale', $original_locale);
 if ($original_provider eq "i")
 {
 	push @initdb_params, ('--locale-provider', 'icu');
@@ -136,15 +136,11 @@ $oldnode->start;
 
 my $result;
 $result = $oldnode->safe_psql(
-	'postgres', "SELECT encoding, $provider_field, datcollate, $iculocale_field
+	'postgres', "SELECT encoding, $provider_field, datcollate, datctype, $iculocale_field
                  FROM pg_database WHERE datname='template0'");
-is($result, "$original_encoding|$original_provider|$original_collate|$original_iculocale",
+is($result, "$original_encoding|$original_provider|$original_locale|$original_locale|$original_iculocale",
 		"check locales in original cluster"
 	);
-
-# check ctype, which was acquired from environment by initdb
-my $original_ctype = $oldnode->safe_psql(
-	'postgres', q{SELECT datctype FROM pg_database WHERE datname='template0'});
 
 # The default location of the source code is the root of this directory.
 my $srcdir = abs_path("../../..");
@@ -224,7 +220,6 @@ my $newnode = PostgreSQL::Test::Cluster->new('new_node');
 # cluster.
 push @initdb_params, ('--encoding', 'SQL_ASCII');
 push @initdb_params, ('--locale-provider', 'libc');
-push @initdb_params, ('--lc-ctype', 'C');
 
 $node_params{extra} = \@initdb_params;
 $newnode->init(%node_params);
@@ -401,7 +396,7 @@ if (-d $log_path)
 $result = $newnode->safe_psql(
 	'postgres', "SELECT encoding, $provider_field, datcollate, datctype, $iculocale_field
                  FROM pg_database WHERE datname='template0'");
-is($result, "$original_encoding|$original_provider|$original_collate|$original_ctype|$original_iculocale",
+is($result, "$original_encoding|$original_provider|$original_locale|$original_locale|$original_iculocale",
 		"check that locales in new cluster match original cluster"
 	);
 

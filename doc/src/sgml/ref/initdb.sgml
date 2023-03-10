@@ -213,13 +213,19 @@ PostgreSQL documentation
       <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
       <listitem>
        <para>
-        Selects the encoding of the template databases. This will also
-        be the default encoding of any database you create later,
-        unless you override it then.  The default is derived from the locale,
-        if the libc locale provider is used, or <literal>UTF8</literal> if the
-        ICU locale provider is used.  The character sets supported by
-        the <productname>PostgreSQL</productname> server are described
-        in <xref linkend="multibyte-charset-supported"/>.
+        Selects the encoding of the template databases. This will also be the
+        default encoding of any database you create later, unless you override
+        it then. The character sets supported by the
+        <productname>PostgreSQL</productname> server are described in <xref
+        linkend="multibyte-charset-supported"/>.
+       </para>
+       <para>
+        By default, the template database encoding is derived from the
+        locale. If <xref linkend="app-initdb-option-no-locale"/> is specified
+        (or equivalently, if the locale is <literal>C</literal> or
+        <literal>POSIX</literal>), then the default is <literal>UTF8</literal>
+        for the ICU provider and <literal>SQL_ASCII</literal> for the
+        <literal>libc</literal> provider.
        </para>
       </listitem>
      </varlistentry>

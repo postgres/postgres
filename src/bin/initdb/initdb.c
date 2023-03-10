@@ -2350,17 +2350,18 @@ setup_locale_encoding(void)
 			   lc_time);
 	}
 
-	if (!encoding && locale_provider == COLLPROVIDER_ICU)
-	{
-		encodingid = PG_UTF8;
-		printf(_("The default database encoding has been set to \"%s\".\n"),
-			   pg_encoding_to_char(encodingid));
-	}
-	else if (!encoding)
+	if (!encoding)
 	{
 		int			ctype_enc;
 
 		ctype_enc = pg_get_encoding_from_locale(lc_ctype, true);
+
+		/*
+		 * If ctype_enc=SQL_ASCII, it's compatible with any encoding. ICU does
+		 * not support SQL_ASCII, so select UTF-8 instead.
+		 */
+		if (locale_provider == COLLPROVIDER_ICU && ctype_enc == PG_SQL_ASCII)
+			ctype_enc = PG_UTF8;
 
 		if (ctype_enc == -1)
 		{
