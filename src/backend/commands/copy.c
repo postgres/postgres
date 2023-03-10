@@ -243,11 +243,14 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 			/*
 			 * Build RangeVar for from clause, fully qualified based on the
-			 * relation which we have opened and locked.
+			 * relation which we have opened and locked.  Use "ONLY" so that
+			 * COPY retrieves rows from only the target table not any
+			 * inheritance children, the same as when RLS doesn't apply.
 			 */
 			from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
 								pstrdup(RelationGetRelationName(rel)),
 								-1);
+			from->inh = false;	/* apply ONLY */
 
 			/* Build query */
 			select = makeNode(SelectStmt);
