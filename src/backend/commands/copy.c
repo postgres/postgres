@@ -1018,11 +1018,14 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 			/*
 			 * Build RangeVar for from clause, fully qualified based on the
-			 * relation which we have opened and locked.
+			 * relation which we have opened and locked.  Use "ONLY" so that
+			 * COPY retrieves rows from only the target table not any
+			 * inheritance children, the same as when RLS doesn't apply.
 			 */
 			from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
 								pstrdup(RelationGetRelationName(rel)),
 								-1);
+			from->inh = false;	/* apply ONLY */
 
 			/* Build query */
 			select = makeNode(SelectStmt);
@@ -1585,8 +1588,8 @@ BeginCopy(ParseState *pstate,
 		/*
 		 * With row level security and a user using "COPY relation TO", we
 		 * have to convert the "COPY relation TO" to a query-based COPY (eg:
-		 * "COPY (SELECT * FROM relation) TO"), to allow the rewriter to add
-		 * in any RLS clauses.
+		 * "COPY (SELECT * FROM ONLY relation) TO"), to allow the rewriter to
+		 * add in any RLS clauses.
 		 *
 		 * When this happens, we are passed in the relid of the originally
 		 * found relation (which we have locked).  As the planner will look up
