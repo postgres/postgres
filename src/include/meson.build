@@ -129,6 +129,7 @@ subdir('utils')
 
 header_subdirs = [
   'access',
+  'archive',
   'catalog',
   'bootstrap',
   'commands',
