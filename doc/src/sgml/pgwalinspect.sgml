@@ -190,31 +190,39 @@ combined_size_percentage     | 2.8634072910530795
 
    <varlistentry>
     <term>
-     <function>pg_get_wal_fpi_info(start_lsn pg_lsn, end_lsn pg_lsn) returns setof record</function>
+     <function>pg_get_wal_block_info(start_lsn pg_lsn, end_lsn pg_lsn) returns setof record</function>
     </term>
 
     <listitem>
      <para>
-      Gets a copy of full page images as <type>bytea</type> values (after
-      applying decompression when necessary) and their information associated
-      with all the valid WAL records between
+      Gets a copy of the block information stored in WAL records. This includes
+      copies of the block data (<literal>NULL</literal> if none) and full page
+      images as <type>bytea</type> values (after
+      applying decompression when necessary, or <literal>NULL</literal> if none)
+      and their information associated with all the valid WAL records between
       <replaceable>start_lsn</replaceable> and
-      <replaceable>end_lsn</replaceable>. Returns one row per full page image.
-      If <replaceable>start_lsn</replaceable> or
+      <replaceable>end_lsn</replaceable>. Returns one row per block registered
+      in a WAL record. If <replaceable>start_lsn</replaceable> or
       <replaceable>end_lsn</replaceable> are not yet available, the function
       will raise an error. For example:
 <screen>
-postgres=# SELECT lsn, reltablespace, reldatabase, relfilenode, relblocknumber,
-                  forkname, substring(fpi for 24) as fpi_trimmed
-             FROM pg_get_wal_fpi_info('0/1801690', '0/1825C60');
+postgres=# SELECT lsn, blockid, reltablespace, reldatabase, relfilenode,
+                  relblocknumber, forkname,
+                  substring(blockdata for 24) as block_trimmed,
+                  substring(fpi for 24) as fpi_trimmed, fpilen, fpiinfo
+             FROM pg_get_wal_block_info('0/1871080', '0/1871440');
 -[ RECORD 1 ]--+---------------------------------------------------
-lsn            | 0/1807E20
+lsn            | 0/18712F8
+blockid        | 0
 reltablespace  | 1663
-reldatabase    | 5
-relfilenode    | 16396
-relblocknumber | 43
+reldatabase    | 16384
+relfilenode    | 16392
+relblocknumber | 0
 forkname       | main
-fpi_trimmed    | \x00000000b89e660100000000a003c0030020042000000000
+block_trimmed  | \x02800128180164000000
+fpi_trimmed    | \x0000000050108701000000002c00601f00200420e0020000
+fpilen         | 204
+fpiinfo        | {HAS_HOLE,APPLY}
 </screen>
      </para>
     </listitem>

@@ -53,20 +53,25 @@ SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', :'wal_lsn2'
 			WHERE resource_manager = 'Heap' AND record_type = 'INSERT';
 
 -- ===================================================================
--- Tests to get full page image (FPI) from WAL record
+-- Tests to get block information from WAL record
 -- ===================================================================
+
+-- Update table to generate some block data
 SELECT pg_current_wal_lsn() AS wal_lsn3 \gset
-
--- Force FPI on the next update.
-CHECKPOINT;
-
--- Update table to generate an FPI.
-UPDATE sample_tbl SET col1 = col1 * 100 WHERE col1 = 1;
+UPDATE sample_tbl SET col1 = col1 + 1 WHERE col1 = 1;
 SELECT pg_current_wal_lsn() AS wal_lsn4 \gset
+-- Check if we get block data from WAL record.
+SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_block_info(:'wal_lsn3', :'wal_lsn4')
+  WHERE relfilenode = :'sample_tbl_oid' AND blockdata IS NOT NULL;
 
+-- Force full-page image on the next update.
+SELECT pg_current_wal_lsn() AS wal_lsn5 \gset
+CHECKPOINT;
+UPDATE sample_tbl SET col1 = col1 + 1 WHERE col1 = 2;
+SELECT pg_current_wal_lsn() AS wal_lsn6 \gset
 -- Check if we get FPI from WAL record.
-SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_fpi_info(:'wal_lsn3', :'wal_lsn4')
-  WHERE relfilenode = :'sample_tbl_oid';
+SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_block_info(:'wal_lsn5', :'wal_lsn6')
+  WHERE relfilenode = :'sample_tbl_oid' AND fpi IS NOT NULL;
 
 -- ===================================================================
 -- Tests for permissions
@@ -83,7 +88,7 @@ SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- no
 
 SELECT has_function_privilege('regress_pg_walinspect',
-  'pg_get_wal_fpi_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- no
+  'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- no
 
 -- Functions accessible by users with role pg_read_server_files
 
@@ -99,7 +104,7 @@ SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- yes
 
 SELECT has_function_privilege('regress_pg_walinspect',
-  'pg_get_wal_fpi_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
+  'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
 
 REVOKE pg_read_server_files FROM regress_pg_walinspect;
 
@@ -113,7 +118,7 @@ GRANT EXECUTE ON FUNCTION pg_get_wal_records_info(pg_lsn, pg_lsn)
 GRANT EXECUTE ON FUNCTION pg_get_wal_stats(pg_lsn, pg_lsn, boolean)
   TO regress_pg_walinspect;
 
-GRANT EXECUTE ON FUNCTION pg_get_wal_fpi_info(pg_lsn, pg_lsn)
+GRANT EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn)
   TO regress_pg_walinspect;
 
 SELECT has_function_privilege('regress_pg_walinspect',
@@ -126,7 +131,7 @@ SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- yes
 
 SELECT has_function_privilege('regress_pg_walinspect',
-  'pg_get_wal_fpi_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
+  'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
 
 REVOKE EXECUTE ON FUNCTION pg_get_wal_record_info(pg_lsn)
   FROM regress_pg_walinspect;
@@ -137,7 +142,7 @@ REVOKE EXECUTE ON FUNCTION pg_get_wal_records_info(pg_lsn, pg_lsn)
 REVOKE EXECUTE ON FUNCTION pg_get_wal_stats(pg_lsn, pg_lsn, boolean)
   FROM regress_pg_walinspect;
 
-REVOKE EXECUTE ON FUNCTION pg_get_wal_fpi_info(pg_lsn, pg_lsn)
+REVOKE EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn)
   FROM regress_pg_walinspect;
 
 -- ===================================================================
