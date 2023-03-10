@@ -444,6 +444,11 @@ drop type textrange_c;
 drop type textrange_en_us;
 
 
+-- standard collations
+
+SELECT * FROM collate_test2 ORDER BY b COLLATE UCS_BASIC;
+
+
 -- test ICU collation customization
 
 -- test the attributes handled by icu_set_collation_attributes()

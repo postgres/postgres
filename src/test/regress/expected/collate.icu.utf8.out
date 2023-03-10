@@ -1141,6 +1141,16 @@ select textrange_en_us('A','Z') @> 'b'::text;
 
 drop type textrange_c;
 drop type textrange_en_us;
+-- standard collations
+SELECT * FROM collate_test2 ORDER BY b COLLATE UCS_BASIC;
+ a |  b  
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
 -- test ICU collation customization
 -- test the attributes handled by icu_set_collation_attributes()
 CREATE COLLATION testcoll_ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes');

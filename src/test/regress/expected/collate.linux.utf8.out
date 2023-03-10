@@ -1154,6 +1154,16 @@ select textrange_en_us('A','Z') @> 'b'::text;
 
 drop type textrange_c;
 drop type textrange_en_us;
+-- standard collations
+SELECT * FROM collate_test2 ORDER BY b COLLATE UCS_BASIC;
+ a |  b  
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
 -- nondeterministic collations
 -- (not supported with libc provider)
 CREATE COLLATION ctest_det (locale = 'en_US.utf8', deterministic = true);
