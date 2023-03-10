@@ -659,9 +659,34 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    </para>
 
    <para>
-    Additionally, the SQL standard collation name <literal>ucs_basic</literal>
-    is available for encoding <literal>UTF8</literal>.  It is equivalent
-    to <literal>C</literal> and sorts by Unicode code point.
+    Additionally, two SQL standard collation names are available:
+
+    <variablelist>
+     <varlistentry>
+      <term><literal>unicode</literal></term>
+      <listitem>
+       <para>
+        This collation sorts using the Unicode Collation Algorithm with the
+        Default Unicode Collation Element Table.  It is available in all
+        encodings.  ICU support is required to use this collation.  (This
+        collation has the same behavior as the ICU root locale; see <xref
+        linkend="collation-managing-predefined-icu-und-x-icu"/>.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ucs_basic</literal></term>
+      <listitem>
+       <para>
+        This collation sorts by Unicode code point.  It is only available for
+        encoding <literal>UTF8</literal>.  (This collation has the same
+        behavior as the libc locale specification <literal>C</literal> in
+        <literal>UTF8</literal> encoding.)
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
   </sect3>
 

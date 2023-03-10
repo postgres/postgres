@@ -447,6 +447,7 @@ drop type textrange_en_us;
 -- standard collations
 
 SELECT * FROM collate_test2 ORDER BY b COLLATE UCS_BASIC;
+SELECT * FROM collate_test2 ORDER BY b COLLATE UNICODE;
 
 
 -- test ICU collation customization

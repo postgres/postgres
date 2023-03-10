@@ -1151,6 +1151,15 @@ SELECT * FROM collate_test2 ORDER BY b COLLATE UCS_BASIC;
  2 | äbc
 (4 rows)
 
+SELECT * FROM collate_test2 ORDER BY b COLLATE UNICODE;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
+(4 rows)
+
 -- test ICU collation customization
 -- test the attributes handled by icu_set_collation_attributes()
 CREATE COLLATION testcoll_ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes');
