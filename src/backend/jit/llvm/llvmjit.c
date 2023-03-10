@@ -658,7 +658,7 @@ llvm_compile_module(LLVMJitContext *context)
 	{
 		char	   *filename;
 
-		filename = psprintf("%u.%zu.bc",
+		filename = psprintf("%d.%zu.bc",
 							MyProcPid,
 							context->module_generation);
 		LLVMWriteBitcodeToFile(context->module, filename);
@@ -677,7 +677,7 @@ llvm_compile_module(LLVMJitContext *context)
 	{
 		char	   *filename;
 
-		filename = psprintf("%u.%zu.optimized.bc",
+		filename = psprintf("%d.%zu.optimized.bc",
 							MyProcPid,
 							context->module_generation);
 		LLVMWriteBitcodeToFile(context->module, filename);
