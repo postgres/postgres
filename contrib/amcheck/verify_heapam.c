@@ -1578,6 +1578,9 @@ FullTransactionIdFromXidAndCtx(TransactionId xid, const HeapCheckContext *ctx)
 {
 	uint32		epoch;
 
+	Assert(TransactionIdIsNormal(ctx->next_xid));
+	Assert(FullTransactionIdIsNormal(ctx->next_fxid));
+
 	if (!TransactionIdIsNormal(xid))
 		return FullTransactionIdFromEpochAndXid(0, xid);
 	epoch = EpochFromFullTransactionId(ctx->next_fxid);
@@ -1599,8 +1602,8 @@ update_cached_xid_range(HeapCheckContext *ctx)
 	LWLockRelease(XidGenLock);
 
 	/* And compute alternate versions of the same */
-	ctx->oldest_fxid = FullTransactionIdFromXidAndCtx(ctx->oldest_xid, ctx);
 	ctx->next_xid = XidFromFullTransactionId(ctx->next_fxid);
+	ctx->oldest_fxid = FullTransactionIdFromXidAndCtx(ctx->oldest_xid, ctx);
 }
 
 /*
