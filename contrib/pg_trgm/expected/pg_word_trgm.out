@@ -1044,3 +1044,9 @@ select t,word_similarity('Kabankala',t) as sml from test_trgm2 where t %> 'Kaban
  Waikala                          |      0.3
 (89 rows)
 
+-- test unsatisfiable pattern
+select * from test_trgm2 where t ~ '.*$x';
+ t 
+---
+(0 rows)
+
