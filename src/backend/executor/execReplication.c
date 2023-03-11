@@ -243,6 +243,16 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 		Form_pg_attribute att;
 		TypeCacheEntry *typentry;
 
+
+		Form_pg_attribute attr = TupleDescAttr(slot1->tts_tupleDescriptor, attrnum);
+
+		/*
+		 * Dropped column is filled with NULL values on slot_store_data(),
+		 * so ignore for the comparison.
+		 */
+		if (attr->attisdropped)
+			continue;
+
 		/*
 		 * If one value is NULL and other is not, then they are certainly not
 		 * equal
