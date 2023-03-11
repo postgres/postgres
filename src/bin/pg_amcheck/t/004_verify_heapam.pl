@@ -217,17 +217,17 @@ my $rel = $node->safe_psql('postgres',
 my $relpath = "$pgdata/$rel";
 
 # Insert data and freeze public.test
-use constant ROWCOUNT => 17;
+my $ROWCOUNT = 17;
 $node->safe_psql(
 	'postgres', qq(
 	INSERT INTO public.test (a, b, c)
-		VALUES (
+		SELECT
 			x'DEADF9F9DEADF9F9'::bigint,
 			'abcdefg',
 			repeat('w', 10000)
-		);
-	VACUUM FREEZE public.test
-	)) for (1 .. ROWCOUNT);
+        FROM generate_series(1, $ROWCOUNT);
+	VACUUM FREEZE public.test;)
+);
 
 my $relfrozenxid = $node->safe_psql('postgres',
 	q(select relfrozenxid from pg_class where relname = 'test'));
@@ -246,16 +246,13 @@ if ($datfrozenxid <= 3 || $datfrozenxid >= $relfrozenxid)
 }
 
 # Find where each of the tuples is located on the page.
-my @lp_off;
-for my $tup (0 .. ROWCOUNT - 1)
-{
-	push(
-		@lp_off,
-		$node->safe_psql(
-			'postgres', qq(
-select lp_off from heap_page_items(get_raw_page('test', 'main', 0))
-	offset $tup limit 1)));
-}
+my @lp_off = split '\n', $node->safe_psql(
+	'postgres', qq(
+	    select lp_off from heap_page_items(get_raw_page('test', 'main', 0))
+		where lp <= $ROWCOUNT
+    )
+);
+is(scalar @lp_off, $ROWCOUNT, "acquired row offsets");
 
 # Sanity check that our 'test' table on disk layout matches expectations.  If
 # this is not so, we will have to skip the test until somebody updates the test
@@ -267,7 +264,7 @@ open($file, '+<', $relpath)
 binmode $file;
 
 my $ENDIANNESS;
-for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
+for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 {
 	my $offnum = $tupidx + 1;        # offnum is 1-based, not zero-based
 	my $offset = $lp_off[$tupidx];
@@ -345,7 +342,7 @@ open($file, '+<', $relpath)
   or BAIL_OUT("open failed: $!");
 binmode $file;
 
-for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
+for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 {
 	my $offnum = $tupidx + 1;        # offnum is 1-based, not zero-based
 	my $offset = $lp_off[$tupidx];
@@ -522,7 +519,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_infomask} &= ~HEAP_XMIN_INVALID;
 
 		push @expected,
-          qr/${$header}xmin ${xmin} equals or exceeds next valid transaction ID 0:\d+/;
+		  qr/${$header}xmin ${xmin} equals or exceeds next valid transaction ID 0:\d+/;
 	}
 	write_tuple($file, $offset, $tup);
 }
