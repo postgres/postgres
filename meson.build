@@ -1268,7 +1268,7 @@ if uuidopt != 'none'
   elif uuidopt == 'ossp'
     uuid = dependency('ossp-uuid', required: true)
     uuidfunc = 'uuid_export'
-    uuidheader = 'ossp/uuid.h'
+    uuidheader = 'uuid.h'
   else
     error('huh')
   endif
