@@ -3613,6 +3613,28 @@ from int4_tbl t1
    One-Time Filter: false
 (3 rows)
 
+-- Test handling of qual pushdown to appendrel members with non-Var outputs
+explain (verbose, costs off)
+select * from int4_tbl left join (
+  select text 'foo' union all select text 'bar'
+) ss(x) on true
+where ss.x is null;
+               QUERY PLAN                
+-----------------------------------------
+ Nested Loop Left Join
+   Output: int4_tbl.f1, ('foo'::text)
+   Filter: (('foo'::text) IS NULL)
+   ->  Seq Scan on public.int4_tbl
+         Output: int4_tbl.f1
+   ->  Materialize
+         Output: ('foo'::text)
+         ->  Append
+               ->  Result
+                     Output: 'foo'::text
+               ->  Result
+                     Output: 'bar'::text
+(12 rows)
+
 --
 -- test inlining of immutable functions
 --

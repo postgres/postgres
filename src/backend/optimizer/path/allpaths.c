@@ -979,8 +979,10 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		int			childRTindex;
 		RangeTblEntry *childRTE;
 		RelOptInfo *childrel;
+		List	   *childrinfos;
 		ListCell   *parentvars;
 		ListCell   *childvars;
+		ListCell   *lc;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
@@ -1021,6 +1023,28 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * Constraint exclusion failed, so copy the parent's join quals and
 		 * targetlist to the child, with appropriate variable substitutions.
 		 *
+		 * We skip join quals that came from above outer joins that can null
+		 * this rel, since they would be of no value while generating paths
+		 * for the child.  This saves some effort while processing the child
+		 * rel, and it also avoids an implementation restriction in
+		 * adjust_appendrel_attrs (it can't apply nullingrels to a non-Var).
+		 */
+		childrinfos = NIL;
+		foreach(lc, rel->joininfo)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+			if (!bms_overlap(rinfo->clause_relids, rel->nulling_relids))
+				childrinfos = lappend(childrinfos,
+									  adjust_appendrel_attrs(root,
+															 (Node *) rinfo,
+															 1, &appinfo));
+		}
+		childrel->joininfo = childrinfos;
+
+		/*
+		 * Now for the child's targetlist.
+		 *
 		 * NB: the resulting childrel->reltarget->exprs may contain arbitrary
 		 * expressions, which otherwise would not occur in a rel's targetlist.
 		 * Code that might be looking at an appendrel child must cope with
@@ -1028,10 +1052,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * PlaceHolderVars.)  XXX we do not bother to update the cost or width
 		 * fields of childrel->reltarget; not clear if that would be useful.
 		 */
-		childrel->joininfo = (List *)
-			adjust_appendrel_attrs(root,
-								   (Node *) rel->joininfo,
-								   1, &appinfo);
 		childrel->reltarget->exprs = (List *)
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->reltarget->exprs,

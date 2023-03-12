@@ -1189,6 +1189,13 @@ from int4_tbl t1
               left join information_schema.column_udt_usage on null)
   on null;
 
+-- Test handling of qual pushdown to appendrel members with non-Var outputs
+explain (verbose, costs off)
+select * from int4_tbl left join (
+  select text 'foo' union all select text 'bar'
+) ss(x) on true
+where ss.x is null;
+
 --
 -- test inlining of immutable functions
 --
