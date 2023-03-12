@@ -10,5 +10,6 @@ tests += {
       'alter_system_table',
       'guc_privs',
     ],
+    'runningcheck': false,
   },
 }
