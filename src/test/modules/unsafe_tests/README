@@ -1,6 +1,6 @@
 This directory doesn't actually contain any extension module.
 
-What it is is a home for regression tests that we don't want to run
+Instead it is a home for regression tests that we don't want to run
 during "make installcheck" because they could have side-effects that
 seem undesirable for a production installation.
 
