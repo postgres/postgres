@@ -3231,17 +3231,22 @@ keep_going:						/* We will come back to here until there is
 					conn->status = CONNECTION_MADE;
 					return PGRES_POLLING_WRITING;
 				}
-				else if (pollres == PGRES_POLLING_FAILED &&
-						 conn->gssencmode[0] == 'p')
+				else if (pollres == PGRES_POLLING_FAILED)
 				{
-					/*
-					 * We failed, but we can retry on "prefer".  Have to drop
-					 * the current connection to do so, though.
-					 */
-					conn->try_gss = false;
-					need_new_connection = true;
-					goto keep_going;
+					if (conn->gssencmode[0] == 'p')
+					{
+						/*
+						 * We failed, but we can retry on "prefer".  Have to
+						 * drop the current connection to do so, though.
+						 */
+						conn->try_gss = false;
+						need_new_connection = true;
+						goto keep_going;
+					}
+					/* Else it's a hard failure */
+					goto error_return;
 				}
+				/* Else, return POLLING_READING or POLLING_WRITING status */
 				return pollres;
 #else							/* !ENABLE_GSS */
 				/* unreachable */
