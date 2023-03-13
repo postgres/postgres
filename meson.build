@@ -1189,23 +1189,29 @@ if sslopt in ['auto', 'openssl']
 
   # via pkg-config et al
   ssl = dependency('openssl', required: false)
+  # only meson >= 0.57 supports declare_dependency() in cc.has_function(), so
+  # we pass cc.find_library() results if necessary
+  ssl_int = []
 
   # via library + headers
   if not ssl.found()
     ssl_lib = cc.find_library('ssl',
       dirs: test_lib_d,
       header_include_directories: postgres_inc,
-      has_headers: ['openssl/ssl.h', 'openssl/err.h'])
+      has_headers: ['openssl/ssl.h', 'openssl/err.h'],
+      required: openssl_required)
     crypto_lib = cc.find_library('crypto',
       dirs: test_lib_d,
-      header_include_directories: postgres_inc)
-    ssl_int = [ssl_lib, crypto_lib]
-
-    ssl = declare_dependency(dependencies: ssl_int,
-                             include_directories: postgres_inc)
+      required: openssl_required)
+    if ssl_lib.found() and crypto_lib.found()
+      ssl_int = [ssl_lib, crypto_lib]
+      ssl = declare_dependency(dependencies: ssl_int, include_directories: postgres_inc)
+    endif
   elif cc.has_header('openssl/ssl.h', args: test_c_args, dependencies: ssl, required: openssl_required) and \
        cc.has_header('openssl/err.h', args: test_c_args, dependencies: ssl, required: openssl_required)
     ssl_int = [ssl]
+  else
+    ssl = not_found_dep
   endif
 
   if ssl.found()
