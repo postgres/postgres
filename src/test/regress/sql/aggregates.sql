@@ -434,6 +434,9 @@ drop table minmaxtest cascade;
 -- check for correct detection of nested-aggregate errors
 select max(min(unique1)) from tenk1;
 select (select max(min(unique1)) from int8_tbl) from tenk1;
+select avg((select avg(a1.col1 order by (select avg(a2.col2) from tenk1 a3))
+            from tenk1 a1(col1)))
+from tenk1 a2(col2);
 
 --
 -- Test removal of redundant GROUP BY columns
