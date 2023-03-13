@@ -315,7 +315,7 @@ ERROR:  relation "cmdata2" does not exist
 INSERT INTO cmdata2 VALUES((SELECT array_agg(fipshash(g::TEXT))::TEXT FROM
 generate_series(1, 50) g), VERSION());
 ERROR:  relation "cmdata2" does not exist
-LINE 1: INSERT INTO cmdata2 VALUES((SELECT array_agg(fipshash(g::TEXT)...
+LINE 1: INSERT INTO cmdata2 VALUES((SELECT array_agg(fipshash(g::TEX...
                     ^
 -- check data is ok
 SELECT length(f1) FROM cmdata;
