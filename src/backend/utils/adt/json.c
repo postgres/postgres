@@ -750,6 +750,13 @@ json_lex(JsonLexContext *lex)
 
 /*
  * The next token in the input stream is known to be a string; lex it.
+ *
+ * If lex->strval isn't NULL, fill it with the decoded string.
+ * Set lex->token_terminator to the end of the decoded input, and in
+ * success cases, transfer its previous value to lex->prev_token_terminator.
+ *
+ * Note: be careful that all error cases advance lex->token_terminator
+ * to the point after the character we detected the error on.
  */
 static inline void
 json_lex_string(JsonLexContext *lex)
@@ -837,33 +844,42 @@ json_lex_string(JsonLexContext *lex)
 					if (ch >= 0xd800 && ch <= 0xdbff)
 					{
 						if (hi_surrogate != -1)
+						{
+							lex->token_terminator = s + pg_mblen(s);
 							ereport(ERROR,
 									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 									 errmsg("invalid input syntax for type %s",
 											"json"),
 									 errdetail("Unicode high surrogate must not follow a high surrogate."),
 									 report_json_context(lex)));
+						}
 						hi_surrogate = (ch & 0x3ff) << 10;
 						continue;
 					}
 					else if (ch >= 0xdc00 && ch <= 0xdfff)
 					{
 						if (hi_surrogate == -1)
+						{
+							lex->token_terminator = s + pg_mblen(s);
 							ereport(ERROR,
 									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 									 errmsg("invalid input syntax for type %s", "json"),
 									 errdetail("Unicode low surrogate must follow a high surrogate."),
 									 report_json_context(lex)));
+						}
 						ch = 0x10000 + hi_surrogate + (ch & 0x3ff);
 						hi_surrogate = -1;
 					}
 
 					if (hi_surrogate != -1)
+					{
+						lex->token_terminator = s + pg_mblen(s);
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type %s", "json"),
 								 errdetail("Unicode low surrogate must follow a high surrogate."),
 								 report_json_context(lex)));
+					}
 
 					/*
 					 * For UTF8, replace the escape sequence by the actual
@@ -875,6 +891,7 @@ json_lex_string(JsonLexContext *lex)
 					if (ch == 0)
 					{
 						/* We can't allow this, since our TEXT type doesn't */
+						lex->token_terminator = s + pg_mblen(s);
 						ereport(ERROR,
 								(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
 								 errmsg("unsupported Unicode escape sequence"),
@@ -898,24 +915,27 @@ json_lex_string(JsonLexContext *lex)
 					}
 					else
 					{
+						lex->token_terminator = s + pg_mblen(s);
 						ereport(ERROR,
 								(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
 								 errmsg("unsupported Unicode escape sequence"),
 								 errdetail("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8."),
 								 report_json_context(lex)));
 					}
-
 				}
 			}
 			else if (lex->strval != NULL)
 			{
 				if (hi_surrogate != -1)
+				{
+					lex->token_terminator = s + pg_mblen(s);
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 							 errmsg("invalid input syntax for type %s",
 									"json"),
 							 errdetail("Unicode low surrogate must follow a high surrogate."),
 							 report_json_context(lex)));
+				}
 
 				switch (*s)
 				{
@@ -968,16 +988,18 @@ json_lex_string(JsonLexContext *lex)
 								   extract_mb_char(s)),
 						 report_json_context(lex)));
 			}
-
 		}
 		else if (lex->strval != NULL)
 		{
 			if (hi_surrogate != -1)
+			{
+				lex->token_terminator = s + pg_mblen(s);
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type %s", "json"),
 						 errdetail("Unicode low surrogate must follow a high surrogate."),
 						 report_json_context(lex)));
+			}
 
 			appendStringInfoChar(lex->strval, *s);
 		}
@@ -985,11 +1007,14 @@ json_lex_string(JsonLexContext *lex)
 	}
 
 	if (hi_surrogate != -1)
+	{
+		lex->token_terminator = s + pg_mblen(s);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s", "json"),
 				 errdetail("Unicode low surrogate must follow a high surrogate."),
 				 report_json_context(lex)));
+	}
 
 	/* Hooray, we found the end of the string! */
 	lex->prev_token_terminator = lex->token_terminator;
