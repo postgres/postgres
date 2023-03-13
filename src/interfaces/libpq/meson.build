@@ -117,7 +117,7 @@ tests += {
       't/001_uri.pl',
       't/002_api.pl',
     ],
-    'env': {'with_ssl': get_option('ssl')},
+    'env': {'with_ssl': ssl_library},
   },
 }
 

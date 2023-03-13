@@ -66,7 +66,7 @@ pgxs_kv = {
   'SUN_STUDIO_CC': 'no', # not supported so far
 
   # want the chosen option, rather than the library
-  'with_ssl' : get_option('ssl'),
+  'with_ssl' : ssl_library,
   'with_uuid': uuidopt,
 
   'default_port': get_option('pgport'),

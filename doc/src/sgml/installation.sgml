@@ -2474,7 +2474,7 @@ ninja install
      </varlistentry>
 
      <varlistentry id="configure-with-ssl-meson">
-      <term><option>-Dssl=<replaceable>LIBRARY</replaceable></option>
+      <term><option>-Dssl={ auto | <replaceable>LIBRARY</replaceable> }</option>
       <indexterm>
        <primary>OpenSSL</primary>
        <seealso>SSL</seealso>
@@ -2488,7 +2488,7 @@ ninja install
         <productname>OpenSSL</productname> package to be installed.  Building
         with this will check for the required header files and libraries to
         make sure that your <productname>OpenSSL</productname> installation is
-        sufficient before proceeding.  The default for this option is none.
+        sufficient before proceeding.  The default for this option is auto.
        </para>
       </listitem>
      </varlistentry>

@@ -130,8 +130,8 @@ option('readline', type : 'feature', value : 'auto',
 option('selinux', type : 'feature', value : 'disabled',
   description: 'build with SELinux support')
 
-option('ssl', type : 'combo', choices : ['none', 'openssl'],
-  value : 'none',
+option('ssl', type : 'combo', choices : ['auto', 'none', 'openssl'],
+  value : 'auto',
   description: 'use LIB for SSL/TLS support (openssl)')
 
 option('systemd', type : 'feature', value: 'auto',

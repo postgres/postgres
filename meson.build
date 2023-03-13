@@ -43,6 +43,7 @@ cc = meson.get_compiler('c')
 
 not_found_dep = dependency('', required: false)
 thread_dep = dependency('threads')
+auto_features = get_option('auto_features')
 
 
 
@@ -1171,7 +1172,16 @@ cdata.set('USE_SYSTEMD', systemd.found() ? 1 : false)
 # Library: SSL
 ###############################################################
 
-if get_option('ssl') == 'openssl'
+ssl = not_found_dep
+ssl_library = 'none'
+sslopt = get_option('ssl')
+
+if sslopt == 'auto' and auto_features.disabled()
+  sslopt = 'none'
+endif
+
+if sslopt in ['auto', 'openssl']
+  openssl_required = (sslopt == 'openssl')
 
   # Try to find openssl via pkg-config et al, if that doesn't work
   # (e.g. because it's provided as part of the OS, like on FreeBSD), look for
@@ -1193,58 +1203,70 @@ if get_option('ssl') == 'openssl'
 
     ssl = declare_dependency(dependencies: ssl_int,
                              include_directories: postgres_inc)
-  else
-    cc.has_header('openssl/ssl.h', args: test_c_args, dependencies: ssl, required: true)
-    cc.has_header('openssl/err.h', args: test_c_args, dependencies: ssl, required: true)
-
+  elif cc.has_header('openssl/ssl.h', args: test_c_args, dependencies: ssl, required: openssl_required) and \
+       cc.has_header('openssl/err.h', args: test_c_args, dependencies: ssl, required: openssl_required)
     ssl_int = [ssl]
   endif
 
-  check_funcs = [
-    ['CRYPTO_new_ex_data', {'required': true}],
-    ['SSL_new', {'required': true}],
+  if ssl.found()
+    check_funcs = [
+      ['CRYPTO_new_ex_data', {'required': true}],
+      ['SSL_new', {'required': true}],
 
-    # Function introduced in OpenSSL 1.0.2.
-    ['X509_get_signature_nid'],
+      # Function introduced in OpenSSL 1.0.2.
+      ['X509_get_signature_nid'],
 
-    # Functions introduced in OpenSSL 1.1.0. We used to check for
-    # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
-    # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it
-    # doesn't have these OpenSSL 1.1.0 functions. So check for individual
-    # functions.
-    ['OPENSSL_init_ssl'],
-    ['BIO_get_data'],
-    ['BIO_meth_new'],
-    ['ASN1_STRING_get0_data'],
-    ['HMAC_CTX_new'],
-    ['HMAC_CTX_free'],
+      # Functions introduced in OpenSSL 1.1.0. We used to check for
+      # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
+      # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it
+      # doesn't have these OpenSSL 1.1.0 functions. So check for individual
+      # functions.
+      ['OPENSSL_init_ssl'],
+      ['BIO_get_data'],
+      ['BIO_meth_new'],
+      ['ASN1_STRING_get0_data'],
+      ['HMAC_CTX_new'],
+      ['HMAC_CTX_free'],
 
-    # OpenSSL versions before 1.1.0 required setting callback functions, for
-    # thread-safety. In 1.1.0, it's no longer required, and CRYPTO_lock()
-    # function was removed.
-    ['CRYPTO_lock'],
+      # OpenSSL versions before 1.1.0 required setting callback functions, for
+      # thread-safety. In 1.1.0, it's no longer required, and CRYPTO_lock()
+      # function was removed.
+      ['CRYPTO_lock'],
 
-    # Function introduced in OpenSSL 1.1.1
-    ['X509_get_signature_info'],
-  ]
+      # Function introduced in OpenSSL 1.1.1
+      ['X509_get_signature_info'],
+    ]
 
-  foreach c : check_funcs
-    func = c.get(0)
-    val = cc.has_function(func, args: test_c_args, dependencies: ssl_int)
-    required = c.get(1, {}).get('required', false)
-    if required and not val
-      error('openssl function @0@ is required'.format(func))
-    elif not required
-      cdata.set('HAVE_' + func.to_upper(), val ? 1 : false)
+    are_openssl_funcs_complete = true
+    foreach c : check_funcs
+      func = c.get(0)
+      val = cc.has_function(func, args: test_c_args, dependencies: ssl_int)
+      required = c.get(1, {}).get('required', false)
+      if required and not val
+        are_openssl_funcs_complete = false
+        if openssl_required
+          error('openssl function @0@ is required'.format(func))
+        endif
+        break
+      elif not required
+        cdata.set('HAVE_' + func.to_upper(), val ? 1 : false)
+      endif
+    endforeach
+
+    if are_openssl_funcs_complete
+      cdata.set('USE_OPENSSL', 1,
+                description: 'Define to 1 to build with OpenSSL support. (-Dssl=openssl)')
+      cdata.set('OPENSSL_API_COMPAT', '0x10001000L',
+                description: '''Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.''')
+      ssl_library = 'openssl'
+    else
+      ssl = not_found_dep
     endif
-  endforeach
+  endif
+endif
 
-  cdata.set('USE_OPENSSL', 1,
-            description: 'Define to 1 to build with OpenSSL support. (-Dssl=openssl)')
-  cdata.set('OPENSSL_API_COMPAT', '0x10001000L',
-            description: '''Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.''')
-else
-  ssl = not_found_dep
+if sslopt == 'auto' and auto_features.enabled() and not ssl.found()
+  error('no SSL library found')
 endif
 
 
@@ -3266,13 +3288,13 @@ if meson.version().version_compare('>=0.57')
       'llvm': llvm,
       'lz4': lz4,
       'nls': libintl,
+      'openssl': ssl,
       'pam': pam,
       'plperl': perl_dep,
       'plpython': python3_dep,
       'pltcl': tcl_dep,
       'readline': readline,
       'selinux': selinux,
-      'ssl': ssl,
       'systemd': systemd,
       'uuid': uuid,
       'zlib': zlib,

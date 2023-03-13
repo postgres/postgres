@@ -6,7 +6,7 @@ tests += {
   'bd': meson.current_build_dir(),
   'tap': {
     'env': {
-      'with_ssl': get_option('ssl'),
+      'with_ssl': ssl_library,
       'OPENSSL': openssl.path(),
     },
     'tests': [
