@@ -35,23 +35,23 @@ SELECT '"\uaBcD"'::json;		-- OK, uppercase and lower case both OK
 select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
 ERROR:  unsupported Unicode escape sequence
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ud83d\ude04...
 select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type json
 DETAIL:  Unicode high surrogate must not follow a high surrogate.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ud83d\ud83d...
 select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
 ERROR:  invalid input syntax for type json
 DETAIL:  Unicode low surrogate must follow a high surrogate.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ude04...
 select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
 ERROR:  invalid input syntax for type json
 DETAIL:  Unicode low surrogate must follow a high surrogate.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ud83dX...
 select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
 ERROR:  invalid input syntax for type json
 DETAIL:  Unicode low surrogate must follow a high surrogate.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ude04...
 --handling of simple unicode escapes
 select json '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
             correct_in_utf8            
@@ -86,7 +86,7 @@ select json '{ "a":  "null \\u0000 escape" }' as not_an_escape;
 select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
 ERROR:  unsupported Unicode escape sequence
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "the Copyright \u00a9...
 select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
  correct_everywhere 
 --------------------
@@ -102,7 +102,7 @@ select json '{ "a":  "dollar \\u0024 character" }' ->> 'a' as not_an_escape;
 select json '{ "a":  "null \u0000 escape" }' ->> 'a' as fails;
 ERROR:  unsupported Unicode escape sequence
 DETAIL:  \u0000 cannot be converted to text.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "null \u0000...
 select json '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
    not_an_escape    
 --------------------
@@ -140,7 +140,7 @@ ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT '"\u0000"'::jsonb;
                ^
 DETAIL:  \u0000 cannot be converted to text.
-CONTEXT:  JSON data, line 1: ...
+CONTEXT:  JSON data, line 1: "\u0000...
 -- use octet_length here so we don't get an odd unicode char in the
 -- output
 SELECT octet_length('"\uaBcD"'::jsonb::text); -- OK, uppercase and lower case both OK
@@ -148,45 +148,45 @@ ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT octet_length('"\uaBcD"'::jsonb::text);
                             ^
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: ...
+CONTEXT:  JSON data, line 1: "\uaBcD...
 -- handling of unicode surrogate pairs
 SELECT octet_length((jsonb '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a')::text) AS correct_in_utf8;
 ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT octet_length((jsonb '{ "a":  "\ud83d\ude04\ud83d\udc3...
                                    ^
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ud83d\ude04...
 SELECT jsonb '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type json
 LINE 1: SELECT jsonb '{ "a":  "\ud83d\ud83d" }' -> 'a';
                      ^
 DETAIL:  Unicode high surrogate must not follow a high surrogate.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ud83d\ud83d...
 SELECT jsonb '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
 ERROR:  invalid input syntax for type json
 LINE 1: SELECT jsonb '{ "a":  "\ude04\ud83d" }' -> 'a';
                      ^
 DETAIL:  Unicode low surrogate must follow a high surrogate.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ude04...
 SELECT jsonb '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
 ERROR:  invalid input syntax for type json
 LINE 1: SELECT jsonb '{ "a":  "\ud83dX" }' -> 'a';
                      ^
 DETAIL:  Unicode low surrogate must follow a high surrogate.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ud83dX...
 SELECT jsonb '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
 ERROR:  invalid input syntax for type json
 LINE 1: SELECT jsonb '{ "a":  "\ude04X" }' -> 'a';
                      ^
 DETAIL:  Unicode low surrogate must follow a high surrogate.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "\ude04...
 -- handling of simple unicode escapes
 SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
 ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' as corr...
                      ^
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "the Copyright \u00a9...
 SELECT jsonb '{ "a":  "dollar \u0024 character" }' as correct_everywhere;
      correct_everywhere      
 -----------------------------
@@ -204,7 +204,7 @@ ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT jsonb '{ "a":  "null \u0000 escape" }' as fails;
                      ^
 DETAIL:  \u0000 cannot be converted to text.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "null \u0000...
 SELECT jsonb '{ "a":  "null \\u0000 escape" }' as not_an_escape;
         not_an_escape         
 ------------------------------
@@ -216,7 +216,7 @@ ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a'...
                      ^
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "the Copyright \u00a9...
 SELECT jsonb '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
  correct_everywhere 
 --------------------
@@ -234,7 +234,7 @@ ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' as fai...
                      ^
 DETAIL:  \u0000 cannot be converted to text.
-CONTEXT:  JSON data, line 1: { "a":...
+CONTEXT:  JSON data, line 1: { "a":  "null \u0000...
 SELECT jsonb '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
    not_an_escape    
 --------------------
