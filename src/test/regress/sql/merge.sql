@@ -636,12 +636,25 @@ $$;
 SELECT * FROM target full outer join source on (sid = tid);
 create trigger merge_skip BEFORE INSERT OR UPDATE or DELETE
   ON target FOR EACH ROW EXECUTE FUNCTION skip_merge_op();
+DO $$
+DECLARE
+  result integer;
+BEGIN
 MERGE INTO target t
 USING source AS s
 ON t.tid = s.sid
 WHEN MATCHED AND s.sid = 3 THEN UPDATE SET balance = t.balance + s.delta
 WHEN MATCHED THEN DELETE
 WHEN NOT MATCHED THEN INSERT VALUES (sid, delta);
+IF FOUND THEN
+  RAISE NOTICE 'Found';
+ELSE
+  RAISE NOTICE 'Not found';
+END IF;
+GET DIAGNOSTICS result := ROW_COUNT;
+RAISE NOTICE 'ROW_COUNT = %', result;
+END;
+$$;
 SELECT * FROM target FULL OUTER JOIN source ON (sid = tid);
 DROP TRIGGER merge_skip ON target;
 DROP FUNCTION skip_merge_op();
