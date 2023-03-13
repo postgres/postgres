@@ -442,6 +442,14 @@ check_completion("blarg \t\t", qr//, "check completion failure path");
 
 clear_query();
 
+# check COPY FROM with DEFAULT option
+check_completion(
+	"COPY foo FROM stdin WITH ( DEF\t)",
+	qr/DEFAULT /,
+	"COPY FROM with DEFAULT completion");
+
+clear_line();
+
 # send psql an explicit \q to shut it down, else pty won't close properly
 $timer->start($PostgreSQL::Test::Utils::timeout_default);
 $in .= "\\q\n";

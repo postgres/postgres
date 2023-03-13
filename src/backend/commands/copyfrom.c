@@ -1565,11 +1565,11 @@ BeginCopyFrom(ParseState *pstate,
 							 &in_func_oid, &typioparams[attnum - 1]);
 		fmgr_info(in_func_oid, &in_functions[attnum - 1]);
 
-		/* Get default info if needed */
-		if (!list_member_int(cstate->attnumlist, attnum) && !att->attgenerated)
+		/* Get default info if available */
+		defexprs[attnum - 1] = NULL;
+
+		if (!att->attgenerated)
 		{
-			/* attribute is NOT to be copied from input */
-			/* use default value if one exists */
 			Expr	   *defexpr = (Expr *) build_column_default(cstate->rel,
 																attnum);
 
@@ -1579,9 +1579,15 @@ BeginCopyFrom(ParseState *pstate,
 				defexpr = expression_planner(defexpr);
 
 				/* Initialize executable expression in copycontext */
-				defexprs[num_defaults] = ExecInitExpr(defexpr, NULL);
-				defmap[num_defaults] = attnum - 1;
-				num_defaults++;
+				defexprs[attnum - 1] = ExecInitExpr(defexpr, NULL);
+
+				/* if NOT copied from input */
+				/* use default value if one exists */
+				if (!list_member_int(cstate->attnumlist, attnum))
+				{
+					defmap[num_defaults] = attnum - 1;
+					num_defaults++;
+				}
 
 				/*
 				 * If a default expression looks at the table being loaded,

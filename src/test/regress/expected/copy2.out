@@ -680,3 +680,101 @@ DROP TABLE instead_of_insert_tbl;
 DROP VIEW instead_of_insert_tbl_view;
 DROP VIEW instead_of_insert_tbl_view_2;
 DROP FUNCTION fun_instead_of_insert_tbl();
+--
+-- COPY FROM ... DEFAULT
+--
+create temp table copy_default (
+	id integer primary key,
+	text_value text not null default 'test',
+	ts_value timestamp without time zone not null default '2022-07-05'
+);
+-- if DEFAULT is not specified, then the marker will be regular data
+copy copy_default from stdin;
+select id, text_value, ts_value from copy_default;
+ id | text_value |         ts_value         
+----+------------+--------------------------
+  1 | value      | Mon Jul 04 00:00:00 2022
+  2 | D          | Tue Jul 05 00:00:00 2022
+(2 rows)
+
+truncate copy_default;
+copy copy_default from stdin with (format csv);
+select id, text_value, ts_value from copy_default;
+ id | text_value |         ts_value         
+----+------------+--------------------------
+  1 | value      | Mon Jul 04 00:00:00 2022
+  2 | \D         | Tue Jul 05 00:00:00 2022
+(2 rows)
+
+truncate copy_default;
+-- DEFAULT cannot be used in binary mode
+copy copy_default from stdin with (format binary, default '\D');
+ERROR:  cannot specify DEFAULT in BINARY mode
+-- DEFAULT cannot be new line nor carriage return
+copy copy_default from stdin with (default E'\n');
+ERROR:  COPY default representation cannot use newline or carriage return
+copy copy_default from stdin with (default E'\r');
+ERROR:  COPY default representation cannot use newline or carriage return
+-- DELIMITER cannot appear in DEFAULT spec
+copy copy_default from stdin with (delimiter ';', default 'test;test');
+ERROR:  COPY delimiter must not appear in the DEFAULT specification
+-- CSV quote cannot appear in DEFAULT spec
+copy copy_default from stdin with (format csv, quote '"', default 'test"test');
+ERROR:  CSV quote character must not appear in the DEFAULT specification
+-- NULL and DEFAULT spec must be different
+copy copy_default from stdin with (default '\N');
+ERROR:  NULL specification and DEFAULT specification cannot be the same
+-- cannot use DEFAULT marker in column that has no DEFAULT value
+copy copy_default from stdin with (default '\D');
+ERROR:  unexpected DEFAULT in COPY data
+DETAIL:  Column "id" has no DEFAULT value.
+CONTEXT:  COPY copy_default, line 1: "\D	value	'2022-07-04'"
+copy copy_default from stdin with (format csv, default '\D');
+ERROR:  unexpected DEFAULT in COPY data
+DETAIL:  Column "id" has no DEFAULT value.
+CONTEXT:  COPY copy_default, line 1: "\D,value,2022-07-04"
+-- The DEFAULT marker must be unquoted and unescaped or it's not recognized
+copy copy_default from stdin with (default '\D');
+select id, text_value, ts_value from copy_default;
+ id | text_value |         ts_value         
+----+------------+--------------------------
+  1 | test       | Mon Jul 04 00:00:00 2022
+  2 | \D         | Mon Jul 04 00:00:00 2022
+  3 | "D"        | Mon Jul 04 00:00:00 2022
+(3 rows)
+
+truncate copy_default;
+copy copy_default from stdin with (format csv, default '\D');
+select id, text_value, ts_value from copy_default;
+ id | text_value |         ts_value         
+----+------------+--------------------------
+  1 | test       | Mon Jul 04 00:00:00 2022
+  2 | \\D        | Mon Jul 04 00:00:00 2022
+  3 | \D         | Mon Jul 04 00:00:00 2022
+(3 rows)
+
+truncate copy_default;
+-- successful usage of DEFAULT option in COPY
+copy copy_default from stdin with (default '\D');
+select id, text_value, ts_value from copy_default;
+ id | text_value |         ts_value         
+----+------------+--------------------------
+  1 | value      | Mon Jul 04 00:00:00 2022
+  2 | test       | Sun Jul 03 00:00:00 2022
+  3 | test       | Tue Jul 05 00:00:00 2022
+(3 rows)
+
+truncate copy_default;
+copy copy_default from stdin with (format csv, default '\D');
+select id, text_value, ts_value from copy_default;
+ id | text_value |         ts_value         
+----+------------+--------------------------
+  1 | value      | Mon Jul 04 00:00:00 2022
+  2 | test       | Sun Jul 03 00:00:00 2022
+  3 | test       | Tue Jul 05 00:00:00 2022
+(3 rows)
+
+truncate copy_default;
+-- DEFAULT cannot be used in COPY TO
+copy (select 1 as test) TO stdout with (default '\D');
+ERROR:  COPY DEFAULT only available using COPY FROM

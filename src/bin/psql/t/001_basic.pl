@@ -325,4 +325,29 @@ is($row_count, '10',
 	'client-side error commits transaction, no ON_ERROR_STOP and multiple -c switches'
 );
 
+# Test \copy from with DEFAULT option
+$node->safe_psql(
+	'postgres',
+	"CREATE TABLE copy_default (
+		id integer PRIMARY KEY,
+		text_value text NOT NULL DEFAULT 'test',
+		ts_value timestamp without time zone NOT NULL DEFAULT '2022-07-05'
+	)"
+);
+
+my $copy_default_sql_file = "$tempdir/copy_default.csv";
+append_to_file($copy_default_sql_file, "1,value,2022-07-04\n");
+append_to_file($copy_default_sql_file, "2,placeholder,2022-07-03\n");
+append_to_file($copy_default_sql_file, "3,placeholder,placeholder\n");
+
+psql_like(
+	$node,
+	"\\copy copy_default from $copy_default_sql_file with (format 'csv', default 'placeholder');
+	SELECT * FROM copy_default",
+	qr/1\|value\|2022-07-04 00:00:00
+2|test|2022-07-03 00:00:00
+3|test|2022-07-05 00:00:00/,
+	'\copy from with DEFAULT'
+);
+
 done_testing();

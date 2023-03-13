@@ -44,8 +44,7 @@ typedef enum EolType
  */
 typedef enum CopyInsertMethod
 {
-	CIM_SINGLE,					/* use table_tuple_insert or
-								 * ExecForeignInsert */
+	CIM_SINGLE,					/* use table_tuple_insert or ExecForeignInsert */
 	CIM_MULTI,					/* always use table_multi_insert or
 								 * ExecForeignBatchInsert */
 	CIM_MULTI_CONDITIONAL		/* use table_multi_insert or
@@ -91,11 +90,16 @@ typedef struct CopyFromStateData
 	 */
 	MemoryContext copycontext;	/* per-copy execution context */
 
-	AttrNumber	num_defaults;
+	AttrNumber	num_defaults;	/* count of att that are missing and have
+								 * default value */
 	FmgrInfo   *in_functions;	/* array of input functions for each attrs */
 	Oid		   *typioparams;	/* array of element types for in_functions */
-	int		   *defmap;			/* array of default att numbers */
-	ExprState **defexprs;		/* array of default att expressions */
+	int		   *defmap;			/* array of default att numbers related to
+								 * missing att */
+	ExprState **defexprs;		/* array of default att expressions for all
+								 * att */
+	bool	   *defaults;		/* if DEFAULT marker was found for
+								 * corresponding att */
 	bool		volatile_defexprs;	/* is any of defexprs volatile? */
 	List	   *range_table;	/* single element list of RangeTblEntry */
 	List	   *rteperminfos;	/* single element list of RTEPermissionInfo */

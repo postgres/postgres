@@ -233,6 +233,17 @@ OPTIONS (format 'csv', filename :'filename', delimiter ',');
 SELECT a, c FROM gft1;
 DROP FOREIGN TABLE gft1;
 
+-- copy default tests
+\set filename :abs_srcdir '/data/copy_default.csv'
+CREATE FOREIGN TABLE copy_default (
+	id integer,
+	text_value text not null default 'test',
+	ts_value timestamp without time zone not null default '2022-07-05'
+) SERVER file_server
+OPTIONS (format 'csv', filename :'filename', default '\D');
+SELECT id, text_value, ts_value FROM copy_default;
+DROP FOREIGN TABLE copy_default;
+
 -- privilege tests
 SET ROLE regress_file_fdw_superuser;
 SELECT * FROM agg_text ORDER BY a;
