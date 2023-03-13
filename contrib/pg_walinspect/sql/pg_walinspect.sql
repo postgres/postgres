@@ -1,39 +1,59 @@
 CREATE EXTENSION pg_walinspect;
 
+-- Mask DETAIL messages as these could refer to current LSN positions.
+\set VERBOSITY terse
+
 -- Make sure checkpoints don't interfere with the test.
 SELECT 'init' FROM pg_create_physical_replication_slot('regress_pg_walinspect_slot', true, false);
 
 CREATE TABLE sample_tbl(col1 int, col2 int);
 
+-- Save some LSNs for comparisons
 SELECT pg_current_wal_lsn() AS wal_lsn1 \gset
-
 INSERT INTO sample_tbl SELECT * FROM generate_series(1, 2);
-
 SELECT pg_current_wal_lsn() AS wal_lsn2 \gset
-
 INSERT INTO sample_tbl SELECT * FROM generate_series(3, 4);
 
 -- ===================================================================
 -- Tests for input validation
 -- ===================================================================
 
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn2', :'wal_lsn1'); -- ERROR
+-- Invalid input LSN.
+SELECT * FROM pg_get_wal_record_info('0/0');
 
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn2', :'wal_lsn1'); -- ERROR
+-- Invalid start LSN.
+SELECT * FROM pg_get_wal_records_info('0/0', :'wal_lsn1');
+SELECT * FROM pg_get_wal_stats('0/0', :'wal_lsn1');
+SELECT * FROM pg_get_wal_block_info('0/0', :'wal_lsn1');
+
+-- Start LSN > End LSN.
+SELECT * FROM pg_get_wal_records_info(:'wal_lsn2', :'wal_lsn1');
+SELECT * FROM pg_get_wal_stats(:'wal_lsn2', :'wal_lsn1');
+SELECT * FROM pg_get_wal_block_info(:'wal_lsn2', :'wal_lsn1');
+
+-- LSNs with the highest value possible.
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_record_info('FFFFFFFF/FFFFFFFF');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info_till_end_of_wal('FFFFFFFF/FFFFFFFF');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal('FFFFFFFF/FFFFFFFF');
+-- failures with end LSNs
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
+-- failures with start LSNs
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
 
 -- ===================================================================
 -- Tests for all function executions
 -- ===================================================================
 
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_record_info(:'wal_lsn1');
-
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', :'wal_lsn2');
-
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info_till_end_of_wal(:'wal_lsn1');
-
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn1', :'wal_lsn2');
-
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal(:'wal_lsn1');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', :'wal_lsn2');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn1', :'wal_lsn2');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info(:'wal_lsn1', :'wal_lsn2');
 
 -- ===================================================================
 -- Test for filtering out WAL records of a particular table
@@ -80,29 +100,22 @@ CREATE ROLE regress_pg_walinspect;
 
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_record_info(pg_lsn)', 'EXECUTE'); -- no
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_records_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- no
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- no
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- no
 
 -- Functions accessible by users with role pg_read_server_files
 
 GRANT pg_read_server_files TO regress_pg_walinspect;
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_record_info(pg_lsn)', 'EXECUTE'); -- yes
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_records_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- yes
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
 
@@ -111,37 +124,28 @@ REVOKE pg_read_server_files FROM regress_pg_walinspect;
 -- Superuser can grant execute to other users
 GRANT EXECUTE ON FUNCTION pg_get_wal_record_info(pg_lsn)
   TO regress_pg_walinspect;
-
 GRANT EXECUTE ON FUNCTION pg_get_wal_records_info(pg_lsn, pg_lsn)
   TO regress_pg_walinspect;
-
 GRANT EXECUTE ON FUNCTION pg_get_wal_stats(pg_lsn, pg_lsn, boolean)
   TO regress_pg_walinspect;
-
 GRANT EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn)
   TO regress_pg_walinspect;
 
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_record_info(pg_lsn)', 'EXECUTE'); -- yes
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_records_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- yes
-
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
 
 REVOKE EXECUTE ON FUNCTION pg_get_wal_record_info(pg_lsn)
   FROM regress_pg_walinspect;
-
 REVOKE EXECUTE ON FUNCTION pg_get_wal_records_info(pg_lsn, pg_lsn)
   FROM regress_pg_walinspect;
-
 REVOKE EXECUTE ON FUNCTION pg_get_wal_stats(pg_lsn, pg_lsn, boolean)
   FROM regress_pg_walinspect;
-
 REVOKE EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn)
   FROM regress_pg_walinspect;
 
@@ -154,3 +158,4 @@ DROP ROLE regress_pg_walinspect;
 SELECT pg_drop_replication_slot('regress_pg_walinspect_slot');
 
 DROP TABLE sample_tbl;
+DROP EXTENSION pg_walinspect;

@@ -9,7 +9,7 @@ PGFILEDESC = "pg_walinspect - functions to inspect contents of PostgreSQL Write-
 EXTENSION = pg_walinspect
 DATA = pg_walinspect--1.0.sql pg_walinspect--1.0--1.1.sql
 
-REGRESS = pg_walinspect
+REGRESS = pg_walinspect oldextversions
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_walinspect/walinspect.conf
 

@@ -1,4 +1,6 @@
 CREATE EXTENSION pg_walinspect;
+-- Mask DETAIL messages as these could refer to current LSN positions.
+\set VERBOSITY terse
 -- Make sure checkpoints don't interfere with the test.
 SELECT 'init' FROM pg_create_physical_replication_slot('regress_pg_walinspect_slot', true, false);
  ?column? 
@@ -7,6 +9,7 @@ SELECT 'init' FROM pg_create_physical_replication_slot('regress_pg_walinspect_sl
 (1 row)
 
 CREATE TABLE sample_tbl(col1 int, col2 int);
+-- Save some LSNs for comparisons
 SELECT pg_current_wal_lsn() AS wal_lsn1 \gset
 INSERT INTO sample_tbl SELECT * FROM generate_series(1, 2);
 SELECT pg_current_wal_lsn() AS wal_lsn2 \gset
@@ -14,20 +17,48 @@ INSERT INTO sample_tbl SELECT * FROM generate_series(3, 4);
 -- ===================================================================
 -- Tests for input validation
 -- ===================================================================
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn2', :'wal_lsn1'); -- ERROR
+-- Invalid input LSN.
+SELECT * FROM pg_get_wal_record_info('0/0');
+ERROR:  could not read WAL at LSN 0/0
+-- Invalid start LSN.
+SELECT * FROM pg_get_wal_records_info('0/0', :'wal_lsn1');
+ERROR:  could not read WAL at LSN 0/0
+SELECT * FROM pg_get_wal_stats('0/0', :'wal_lsn1');
+ERROR:  could not read WAL at LSN 0/0
+SELECT * FROM pg_get_wal_block_info('0/0', :'wal_lsn1');
+ERROR:  could not read WAL at LSN 0/0
+-- Start LSN > End LSN.
+SELECT * FROM pg_get_wal_records_info(:'wal_lsn2', :'wal_lsn1');
 ERROR:  WAL start LSN must be less than end LSN
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn2', :'wal_lsn1'); -- ERROR
+SELECT * FROM pg_get_wal_stats(:'wal_lsn2', :'wal_lsn1');
 ERROR:  WAL start LSN must be less than end LSN
+SELECT * FROM pg_get_wal_block_info(:'wal_lsn2', :'wal_lsn1');
+ERROR:  WAL start LSN must be less than end LSN
+-- LSNs with the highest value possible.
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_record_info('FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future input LSN
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info_till_end_of_wal('FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future start LSN
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal('FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future start LSN
+-- failures with end LSNs
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future end LSN
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future end LSN
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future end LSN
+-- failures with start LSNs
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future start LSN
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future start LSN
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
+ERROR:  cannot accept future start LSN
 -- ===================================================================
 -- Tests for all function executions
 -- ===================================================================
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_record_info(:'wal_lsn1');
- ok 
-----
- t
-(1 row)
-
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', :'wal_lsn2');
  ok 
 ----
  t
@@ -39,13 +70,25 @@ SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info_till_end_of_wal(:'wal_ls
  t
 (1 row)
 
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal(:'wal_lsn1');
+ ok 
+----
+ t
+(1 row)
+
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', :'wal_lsn2');
+ ok 
+----
+ t
+(1 row)
+
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn1', :'wal_lsn2');
  ok 
 ----
  t
 (1 row)
 
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal(:'wal_lsn1');
+SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info(:'wal_lsn1', :'wal_lsn2');
  ok 
 ----
  t
@@ -220,3 +263,4 @@ SELECT pg_drop_replication_slot('regress_pg_walinspect_slot');
 (1 row)
 
 DROP TABLE sample_tbl;
+DROP EXTENSION pg_walinspect;

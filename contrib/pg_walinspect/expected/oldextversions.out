@@ -1,0 +1,30 @@
+-- test old extension version entry points
+CREATE EXTENSION pg_walinspect WITH VERSION '1.0';
+-- List what version 1.0 contains
+\dx+ pg_walinspect
+           Objects in extension "pg_walinspect"
+                    Object description                     
+-----------------------------------------------------------
+ function pg_get_wal_record_info(pg_lsn)
+ function pg_get_wal_records_info(pg_lsn,pg_lsn)
+ function pg_get_wal_records_info_till_end_of_wal(pg_lsn)
+ function pg_get_wal_stats(pg_lsn,pg_lsn,boolean)
+ function pg_get_wal_stats_till_end_of_wal(pg_lsn,boolean)
+(5 rows)
+
+-- Move to new version 1.1
+ALTER EXTENSION pg_walinspect UPDATE TO '1.1';
+-- List what version 1.1 contains
+\dx+ pg_walinspect
+           Objects in extension "pg_walinspect"
+                    Object description                     
+-----------------------------------------------------------
+ function pg_get_wal_block_info(pg_lsn,pg_lsn)
+ function pg_get_wal_record_info(pg_lsn)
+ function pg_get_wal_records_info(pg_lsn,pg_lsn)
+ function pg_get_wal_records_info_till_end_of_wal(pg_lsn)
+ function pg_get_wal_stats(pg_lsn,pg_lsn,boolean)
+ function pg_get_wal_stats_till_end_of_wal(pg_lsn,boolean)
+(6 rows)
+
+DROP EXTENSION pg_walinspect;

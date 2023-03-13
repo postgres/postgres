@@ -30,6 +30,7 @@ tests += {
   'regress': {
     'sql': [
       'pg_walinspect',
+      'oldextversions',
     ],
     # Disabled because these tests require "wal_level=replica", which
     # some runningcheck users do not have (e.g. buildfarm clients).
