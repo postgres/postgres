@@ -664,7 +664,7 @@ task:
 
     # Use larger ccache cache, as this task compiles with multiple compilers /
     # flag combinations
-    CCACHE_MAXSIZE: "1GB"
+    CCACHE_MAXSIZE: "1G"
     CCACHE_DIR: "/tmp/ccache_dir"
 
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
