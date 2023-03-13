@@ -530,7 +530,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE b = 1;
 CREATE TABLE brintest_3 (a text, b text, c text, d text);
 -- long random strings (~2000 chars each, so ~6kB for min/max on two
 -- columns) to trigger toasting
-WITH rand_value AS (SELECT string_agg(md5(i::text),'') AS val FROM generate_series(1,60) s(i))
+WITH rand_value AS (SELECT string_agg(fipshash(i::text),'') AS val FROM generate_series(1,60) s(i))
 INSERT INTO brintest_3
 SELECT val, val, val, val FROM rand_value;
 CREATE INDEX brin_test_toast_idx ON brintest_3 USING brin (b, c);
@@ -545,7 +545,7 @@ VACUUM brintest_3;
 -- retry insert with a different random-looking (but deterministic) value
 -- the value is different, and so should replace either min or max in the
 -- brin summary
-WITH rand_value AS (SELECT string_agg(md5((-i)::text),'') AS val FROM generate_series(1,60) s(i))
+WITH rand_value AS (SELECT string_agg(fipshash((-i)::text),'') AS val FROM generate_series(1,60) s(i))
 INSERT INTO brintest_3
 SELECT val, val, val, val FROM rand_value;
 -- now try some queries, accessing the brin index

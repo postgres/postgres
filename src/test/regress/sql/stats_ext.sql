@@ -1283,25 +1283,25 @@ WITH (autovacuum_enabled = off);
 
 INSERT INTO mcv_lists_uuid (a, b, c)
      SELECT
-         md5(mod(i,100)::text)::uuid,
-         md5(mod(i,50)::text)::uuid,
-         md5(mod(i,25)::text)::uuid
+         fipshash(mod(i,100)::text)::uuid,
+         fipshash(mod(i,50)::text)::uuid,
+         fipshash(mod(i,25)::text)::uuid
      FROM generate_series(1,5000) s(i);
 
 ANALYZE mcv_lists_uuid;
 
-SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_uuid WHERE a = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc'' AND b = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc''');
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_uuid WHERE a = ''e7f6c011-776e-8db7-cd33-0b54174fd76f'' AND b = ''e7f6c011-776e-8db7-cd33-0b54174fd76f''');
 
-SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_uuid WHERE a = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc'' AND b = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc'' AND c = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc''');
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_uuid WHERE a = ''e7f6c011-776e-8db7-cd33-0b54174fd76f'' AND b = ''e7f6c011-776e-8db7-cd33-0b54174fd76f'' AND c = ''e7f6c011-776e-8db7-cd33-0b54174fd76f''');
 
 CREATE STATISTICS mcv_lists_uuid_stats (mcv) ON a, b, c
   FROM mcv_lists_uuid;
 
 ANALYZE mcv_lists_uuid;
 
-SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_uuid WHERE a = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc'' AND b = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc''');
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_uuid WHERE a = ''e7f6c011-776e-8db7-cd33-0b54174fd76f'' AND b = ''e7f6c011-776e-8db7-cd33-0b54174fd76f''');
 
-SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_uuid WHERE a = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc'' AND b = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc'' AND c = ''1679091c-5a88-0faf-6fb5-e6087eb1b2dc''');
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_uuid WHERE a = ''e7f6c011-776e-8db7-cd33-0b54174fd76f'' AND b = ''e7f6c011-776e-8db7-cd33-0b54174fd76f'' AND c = ''e7f6c011-776e-8db7-cd33-0b54174fd76f''');
 
 DROP TABLE mcv_lists_uuid;
 
@@ -1315,7 +1315,7 @@ WITH (autovacuum_enabled = off);
 
 INSERT INTO mcv_lists_arrays (a, b, c)
      SELECT
-         ARRAY[md5((i/100)::text), md5((i/100-1)::text), md5((i/100+1)::text)],
+         ARRAY[fipshash((i/100)::text), fipshash((i/100-1)::text), fipshash((i/100+1)::text)],
          ARRAY[(i/100-1)::numeric/1000, (i/100)::numeric/1000, (i/100+1)::numeric/1000],
          ARRAY[(i/100-1), i/100, (i/100+1)]
      FROM generate_series(1,5000) s(i);
@@ -1515,7 +1515,7 @@ DROP TABLE expr_stats;
 
 -- statistics on expressions with different data types
 CREATE TABLE expr_stats (a int, b name, c text);
-INSERT INTO expr_stats SELECT mod(i,10), md5(mod(i,10)::text), md5(mod(i,10)::text) FROM generate_series(1,1000) s(i);
+INSERT INTO expr_stats SELECT mod(i,10), fipshash(mod(i,10)::text), fipshash(mod(i,10)::text) FROM generate_series(1,1000) s(i);
 ANALYZE expr_stats;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM expr_stats WHERE a = 0 AND (b || c) <= ''z'' AND (c || b) >= ''0''');

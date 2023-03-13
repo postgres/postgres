@@ -91,7 +91,7 @@ DROP TABLE flt;
 CREATE TABLE strtest (n name, t text);
 CREATE INDEX strtest_n_idx ON strtest (n);
 CREATE INDEX strtest_t_idx ON strtest (t);
-INSERT INTO strtest VALUES('one','one'),('two','two'),('three',repeat(md5('three'),100));
+INSERT INTO strtest VALUES('one','one'),('two','two'),('three',repeat(fipshash('three'),100));
 -- duplicate rows so we get some cache hits
 INSERT INTO strtest SELECT * FROM strtest;
 ANALYZE strtest;

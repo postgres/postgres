@@ -677,12 +677,12 @@ insert into src
 create type textandtext as (c1 text, c2 text);
 create temp table dest (f1 textandtext[]);
 insert into dest select array[row(f1,f1)::textandtext] from src;
-select length(md5((f1[1]).c2)) from dest;
+select length(fipshash((f1[1]).c2)) from dest;
 delete from src;
-select length(md5((f1[1]).c2)) from dest;
+select length(fipshash((f1[1]).c2)) from dest;
 truncate table src;
 drop table src;
-select length(md5((f1[1]).c2)) from dest;
+select length(fipshash((f1[1]).c2)) from dest;
 drop table dest;
 drop type textandtext;
 

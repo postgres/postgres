@@ -244,7 +244,7 @@ TRUNCATE lotest_stash_values;
 SELECT lo_from_bytea(0, lo_get(:newloid_1)) AS newloid_2
 \gset
 
-SELECT md5(lo_get(:newloid_1)) = md5(lo_get(:newloid_2));
+SELECT fipshash(lo_get(:newloid_1)) = fipshash(lo_get(:newloid_2));
 
 SELECT lo_get(:newloid_1, 0, 20);
 SELECT lo_get(:newloid_1, 10, 20);

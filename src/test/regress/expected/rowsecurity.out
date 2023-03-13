@@ -1408,9 +1408,9 @@ ERROR:  infinite recursion detected in policy for relation "rec1"
 --
 SET SESSION AUTHORIZATION regress_rls_alice;
 CREATE TABLE s1 (a int, b text);
-INSERT INTO s1 (SELECT x, md5(x::text) FROM generate_series(-10,10) x);
+INSERT INTO s1 (SELECT x, public.fipshash(x::text) FROM generate_series(-10,10) x);
 CREATE TABLE s2 (x int, y text);
-INSERT INTO s2 (SELECT x, md5(x::text) FROM generate_series(-6,6) x);
+INSERT INTO s2 (SELECT x, public.fipshash(x::text) FROM generate_series(-6,6) x);
 GRANT SELECT ON s1, s2 TO regress_rls_bob;
 CREATE POLICY p1 ON s1 USING (a in (select x from s2 where y like '%2f%'));
 CREATE POLICY p2 ON s2 USING (x in (select a from s1 where b like '%22%'));
@@ -1428,13 +1428,11 @@ DROP POLICY p3 on s1;
 ALTER POLICY p2 ON s2 USING (x % 2 = 0);
 SET SESSION AUTHORIZATION regress_rls_bob;
 SELECT * FROM s1 WHERE f_leak(b);	-- OK
-NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
-NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
- a |                b                 
----+----------------------------------
- 2 | c81e728d9d4c2f636f067f89cc14862c
- 4 | a87ff679a2f3e71d9181a67b7542122c
-(2 rows)
+NOTICE:  f_leak => 03b26944890929ff751653acb2f2af79
+ a  |                b                 
+----+----------------------------------
+ -6 | 03b26944890929ff751653acb2f2af79
+(1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM only s1 WHERE f_leak(b);
                         QUERY PLAN                         
@@ -1450,13 +1448,11 @@ SET SESSION AUTHORIZATION regress_rls_alice;
 ALTER POLICY p1 ON s1 USING (a in (select x from v2)); -- using VIEW in RLS policy
 SET SESSION AUTHORIZATION regress_rls_bob;
 SELECT * FROM s1 WHERE f_leak(b);	-- OK
-NOTICE:  f_leak => 0267aaf632e87a63288a08331f22c7c3
-NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
+NOTICE:  f_leak => 03b26944890929ff751653acb2f2af79
  a  |                b                 
 ----+----------------------------------
- -4 | 0267aaf632e87a63288a08331f22c7c3
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-(2 rows)
+ -6 | 03b26944890929ff751653acb2f2af79
+(1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM s1 WHERE f_leak(b);
                         QUERY PLAN                         
@@ -1471,10 +1467,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM s1 WHERE f_leak(b);
 SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
  xx | x  |                y                 
 ----+----+----------------------------------
- -6 | -6 | 596a3d04481816330f07e4f97510c28f
- -4 | -4 | 0267aaf632e87a63288a08331f22c7c3
-  2 |  2 | c81e728d9d4c2f636f067f89cc14862c
-(3 rows)
+ -4 | -4 | e5e0093f285a4fb94c3fcc2ad7fd04ed
+(1 row)
 
 EXPLAIN (COSTS OFF) SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
                                QUERY PLAN                                
@@ -1900,7 +1894,7 @@ NOTICE:  f_leak => yyyyyy
 --
 SET SESSION AUTHORIZATION regress_rls_alice;
 CREATE TABLE b1 (a int, b text);
-INSERT INTO b1 (SELECT x, md5(x::text) FROM generate_series(-10,10) x);
+INSERT INTO b1 (SELECT x, public.fipshash(x::text) FROM generate_series(-10,10) x);
 CREATE POLICY p1 ON b1 USING (a % 2 = 0);
 ALTER TABLE b1 ENABLE ROW LEVEL SECURITY;
 GRANT ALL ON b1 TO regress_rls_bob;
@@ -1918,18 +1912,18 @@ EXPLAIN (COSTS OFF) SELECT * FROM bv1 WHERE f_leak(b);
 (4 rows)
 
 SELECT * FROM bv1 WHERE f_leak(b);
-NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
-NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
-NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
-NOTICE:  f_leak => c9f0f895fb98ab9159f51fd0297e236d
-NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
+NOTICE:  f_leak => d4735e3a265e16eee03f59718b9b5d03
+NOTICE:  f_leak => 4b227777d4dd1fc61c6f884f48641d02
+NOTICE:  f_leak => e7f6c011776e8db7cd330b54174fd76f
+NOTICE:  f_leak => 2c624232cdd221771294dfbb310aca00
+NOTICE:  f_leak => 4a44dc15364204a80fe80e9039455cc1
  a  |                b                 
 ----+----------------------------------
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
- 10 | d3d9446802a44259755d38e6d163e820
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+ 10 | 4a44dc15364204a80fe80e9039455cc1
 (5 rows)
 
 INSERT INTO bv1 VALUES (-1, 'xxx'); -- should fail view WCO
@@ -1946,7 +1940,7 @@ EXPLAIN (COSTS OFF) UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
 (3 rows)
 
 UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
-NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
+NOTICE:  f_leak => 4b227777d4dd1fc61c6f884f48641d02
 EXPLAIN (COSTS OFF) DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
                               QUERY PLAN                               
 -----------------------------------------------------------------------
@@ -1956,30 +1950,30 @@ EXPLAIN (COSTS OFF) DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
 (3 rows)
 
 DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
-NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
+NOTICE:  f_leak => e7f6c011776e8db7cd330b54174fd76f
 SET SESSION AUTHORIZATION regress_rls_alice;
 SELECT * FROM b1;
   a  |                b                 
 -----+----------------------------------
- -10 | 1b0fd9efa5279c4203b7c70233f86dbf
-  -9 | 252e691406782824eec43d7eadc3d256
-  -8 | a8d2ec85eaf98407310b72eb73dda247
-  -7 | 74687a12d3915d3c4d83f1af7b3683d5
-  -6 | 596a3d04481816330f07e4f97510c28f
-  -5 | 47c1b025fa18ea96c33fbb6718688c0f
-  -4 | 0267aaf632e87a63288a08331f22c7c3
-  -3 | b3149ecea4628efd23d2f86e5a723472
-  -2 | 5d7b9adcbe1c629ec722529dd12e5129
-  -1 | 6bb61e3b7bce0931da574d19d1d82c88
-   0 | cfcd208495d565ef66e7dff9f98764da
-   1 | c4ca4238a0b923820dcc509a6f75849b
-   2 | c81e728d9d4c2f636f067f89cc14862c
-   3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
-   5 | e4da3b7fbbce2345d7772b0674a318d5
-   7 | 8f14e45fceea167a5a36dedd4bea2543
-   8 | c9f0f895fb98ab9159f51fd0297e236d
-   9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
-  10 | d3d9446802a44259755d38e6d163e820
+ -10 | c171d4ec282b23db89a99880cd624e9b
+  -9 | d5c534fde62beb89c745a59952c8efed
+  -8 | e91592205d3881e3ea35d66973bb4898
+  -7 | a770d3270c9dcdedf12ed9fd70444f7c
+  -6 | 03b26944890929ff751653acb2f2af79
+  -5 | 37aa1ccf80e481832b2db282d4d4f895
+  -4 | e5e0093f285a4fb94c3fcc2ad7fd04ed
+  -3 | 615bdd17c2556f82f384392ea8557f8c
+  -2 | cf3bae39dd692048a8bf961182e6a34d
+  -1 | 1bad6b8cf97131fceab8543e81f77571
+   0 | 5feceb66ffc86f38d952786c6d696c79
+   1 | 6b86b273ff34fce19d6b804eff5a3f57
+   2 | d4735e3a265e16eee03f59718b9b5d03
+   3 | 4e07408562bedb8b60ce05c1decfe3ad
+   5 | ef2d127de37b942baad06145e54b0c61
+   7 | 7902699be42c8a8e46fbbb4501726517
+   8 | 2c624232cdd221771294dfbb310aca00
+   9 | 19581e27de7ced00ff1ce50b2047e7a5
+  10 | 4a44dc15364204a80fe80e9039455cc1
   12 | xxx
    4 | yyy
 (21 rows)
@@ -3038,41 +3032,41 @@ DROP VIEW rls_sbv;
 -- Expression structure
 --
 SET SESSION AUTHORIZATION regress_rls_alice;
-INSERT INTO y2 (SELECT x, md5(x::text) FROM generate_series(0,20) x);
+INSERT INTO y2 (SELECT x, public.fipshash(x::text) FROM generate_series(0,20) x);
 CREATE POLICY p2 ON y2 USING (a % 3 = 0);
 CREATE POLICY p3 ON y2 USING (a % 4 = 0);
 SET SESSION AUTHORIZATION regress_rls_bob;
 SELECT * FROM y2 WHERE f_leak(b);
-NOTICE:  f_leak => cfcd208495d565ef66e7dff9f98764da
-NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
-NOTICE:  f_leak => eccbc87e4b5ce2fe28308fd9f2a7baf3
-NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
-NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
-NOTICE:  f_leak => c9f0f895fb98ab9159f51fd0297e236d
-NOTICE:  f_leak => 45c48cce2e2d7fbdea1afc51c7c6ad26
-NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
-NOTICE:  f_leak => c20ad4d76fe97759aa27a0c99bff6710
-NOTICE:  f_leak => aab3238922bcc25a6f606eb525ffdc56
-NOTICE:  f_leak => 9bf31c7ff062936a96d3c8bd1f8f2ff3
-NOTICE:  f_leak => c74d97b01eae257e44aa9d5bade97baf
-NOTICE:  f_leak => 6f4922f45568161a8cdf4ad2299f6d23
-NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
+NOTICE:  f_leak => 5feceb66ffc86f38d952786c6d696c79
+NOTICE:  f_leak => d4735e3a265e16eee03f59718b9b5d03
+NOTICE:  f_leak => 4e07408562bedb8b60ce05c1decfe3ad
+NOTICE:  f_leak => 4b227777d4dd1fc61c6f884f48641d02
+NOTICE:  f_leak => e7f6c011776e8db7cd330b54174fd76f
+NOTICE:  f_leak => 2c624232cdd221771294dfbb310aca00
+NOTICE:  f_leak => 19581e27de7ced00ff1ce50b2047e7a5
+NOTICE:  f_leak => 4a44dc15364204a80fe80e9039455cc1
+NOTICE:  f_leak => 6b51d431df5d7f141cbececcf79edf3d
+NOTICE:  f_leak => 8527a891e224136950ff32ca212b45bc
+NOTICE:  f_leak => e629fa6598d732768f7c726b4b621285
+NOTICE:  f_leak => b17ef6d19c7a5b1ee83b907c595526dc
+NOTICE:  f_leak => 4ec9599fc203d176a301536c2e091a19
+NOTICE:  f_leak => f5ca38f748a1d6eaf726b8a42fb575c3
  a  |                b                 
 ----+----------------------------------
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
-  9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 15 | 9bf31c7ff062936a96d3c8bd1f8f2ff3
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  3 | 4e07408562bedb8b60ce05c1decfe3ad
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+  9 | 19581e27de7ced00ff1ce50b2047e7a5
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 15 | e629fa6598d732768f7c726b4b621285
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
 (14 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
@@ -3109,20 +3103,20 @@ NOTICE:  f_leak => abc
 NOTICE:  f_leak => abc
  a  |                b                 
 ----+----------------------------------
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
-  9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 15 | 9bf31c7ff062936a96d3c8bd1f8f2ff3
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  3 | 4e07408562bedb8b60ce05c1decfe3ad
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+  9 | 19581e27de7ced00ff1ce50b2047e7a5
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 15 | e629fa6598d732768f7c726b4b621285
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
 (14 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak('abc');
@@ -3156,20 +3150,20 @@ EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE 
 (7 rows)
 
 SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
-NOTICE:  f_leak => cfcd208495d565ef66e7dff9f98764da
-NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
-NOTICE:  f_leak => eccbc87e4b5ce2fe28308fd9f2a7baf3
-NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
-NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
-NOTICE:  f_leak => c9f0f895fb98ab9159f51fd0297e236d
-NOTICE:  f_leak => 45c48cce2e2d7fbdea1afc51c7c6ad26
-NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
-NOTICE:  f_leak => c20ad4d76fe97759aa27a0c99bff6710
-NOTICE:  f_leak => aab3238922bcc25a6f606eb525ffdc56
-NOTICE:  f_leak => 9bf31c7ff062936a96d3c8bd1f8f2ff3
-NOTICE:  f_leak => c74d97b01eae257e44aa9d5bade97baf
-NOTICE:  f_leak => 6f4922f45568161a8cdf4ad2299f6d23
-NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
+NOTICE:  f_leak => 5feceb66ffc86f38d952786c6d696c79
+NOTICE:  f_leak => d4735e3a265e16eee03f59718b9b5d03
+NOTICE:  f_leak => 4e07408562bedb8b60ce05c1decfe3ad
+NOTICE:  f_leak => 4b227777d4dd1fc61c6f884f48641d02
+NOTICE:  f_leak => e7f6c011776e8db7cd330b54174fd76f
+NOTICE:  f_leak => 2c624232cdd221771294dfbb310aca00
+NOTICE:  f_leak => 19581e27de7ced00ff1ce50b2047e7a5
+NOTICE:  f_leak => 4a44dc15364204a80fe80e9039455cc1
+NOTICE:  f_leak => 6b51d431df5d7f141cbececcf79edf3d
+NOTICE:  f_leak => 8527a891e224136950ff32ca212b45bc
+NOTICE:  f_leak => e629fa6598d732768f7c726b4b621285
+NOTICE:  f_leak => b17ef6d19c7a5b1ee83b907c595526dc
+NOTICE:  f_leak => 4ec9599fc203d176a301536c2e091a19
+NOTICE:  f_leak => f5ca38f748a1d6eaf726b8a42fb575c3
  a | b | abc 
 ---+---+-----
 (0 rows)
@@ -3239,33 +3233,33 @@ CREATE TABLE t1 (a integer, b text);
 CREATE POLICY p1 ON t1 USING (a % 2 = 0);
 ALTER TABLE t1 ENABLE ROW LEVEL SECURITY;
 GRANT ALL ON t1 TO regress_rls_bob;
-INSERT INTO t1 (SELECT x, md5(x::text) FROM generate_series(0,20) x);
+INSERT INTO t1 (SELECT x, public.fipshash(x::text) FROM generate_series(0,20) x);
 SET SESSION AUTHORIZATION regress_rls_bob;
 WITH cte1 AS MATERIALIZED (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
-NOTICE:  f_leak => cfcd208495d565ef66e7dff9f98764da
-NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
-NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
-NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
-NOTICE:  f_leak => c9f0f895fb98ab9159f51fd0297e236d
-NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
-NOTICE:  f_leak => c20ad4d76fe97759aa27a0c99bff6710
-NOTICE:  f_leak => aab3238922bcc25a6f606eb525ffdc56
-NOTICE:  f_leak => c74d97b01eae257e44aa9d5bade97baf
-NOTICE:  f_leak => 6f4922f45568161a8cdf4ad2299f6d23
-NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
+NOTICE:  f_leak => 5feceb66ffc86f38d952786c6d696c79
+NOTICE:  f_leak => d4735e3a265e16eee03f59718b9b5d03
+NOTICE:  f_leak => 4b227777d4dd1fc61c6f884f48641d02
+NOTICE:  f_leak => e7f6c011776e8db7cd330b54174fd76f
+NOTICE:  f_leak => 2c624232cdd221771294dfbb310aca00
+NOTICE:  f_leak => 4a44dc15364204a80fe80e9039455cc1
+NOTICE:  f_leak => 6b51d431df5d7f141cbececcf79edf3d
+NOTICE:  f_leak => 8527a891e224136950ff32ca212b45bc
+NOTICE:  f_leak => b17ef6d19c7a5b1ee83b907c595526dc
+NOTICE:  f_leak => 4ec9599fc203d176a301536c2e091a19
+NOTICE:  f_leak => f5ca38f748a1d6eaf726b8a42fb575c3
  a  |                b                 
 ----+----------------------------------
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
 (11 rows)
 
 EXPLAIN (COSTS OFF)
@@ -3283,17 +3277,17 @@ ERROR:  new row violates row-level security policy for table "t1"
 WITH cte1 AS (UPDATE t1 SET a = a RETURNING *) SELECT * FROM cte1; --ok
  a  |                b                 
 ----+----------------------------------
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
 (11 rows)
 
 WITH cte1 AS (INSERT INTO t1 VALUES (21, 'Fail') RETURNING *) SELECT * FROM cte1; --fail
@@ -3346,17 +3340,17 @@ EXPLAIN (COSTS OFF) INSERT INTO t2 (SELECT * FROM t1);
 SELECT * FROM t2;
  a  |                b                 
 ----+----------------------------------
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
  20 | Success
 (12 rows)
 
@@ -3370,17 +3364,17 @@ CREATE TABLE t3 AS SELECT * FROM t1;
 SELECT * FROM t3;
  a  |                b                 
 ----+----------------------------------
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
  20 | Success
 (12 rows)
 
@@ -3388,17 +3382,17 @@ SELECT * INTO t4 FROM t1;
 SELECT * FROM t4;
  a  |                b                 
 ----+----------------------------------
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
  20 | Success
 (12 rows)
 
@@ -3471,27 +3465,27 @@ RESET SESSION AUTHORIZATION;
 SELECT * FROM t1;
  a  |                b                 
 ----+----------------------------------
-  1 | c4ca4238a0b923820dcc509a6f75849b
-  3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
-  5 | e4da3b7fbbce2345d7772b0674a318d5
-  7 | 8f14e45fceea167a5a36dedd4bea2543
-  9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
- 11 | 6512bd43d9caa6e02c990b0a82652dca
- 13 | c51ce410c124a10e0db5e4b97fc2af39
- 15 | 9bf31c7ff062936a96d3c8bd1f8f2ff3
- 17 | 70efdf2ec9b086079795c442636b55fb
- 19 | 1f0e3dad99908345f7439f8ffabdffc4
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  1 | 6b86b273ff34fce19d6b804eff5a3f57
+  3 | 4e07408562bedb8b60ce05c1decfe3ad
+  5 | ef2d127de37b942baad06145e54b0c61
+  7 | 7902699be42c8a8e46fbbb4501726517
+  9 | 19581e27de7ced00ff1ce50b2047e7a5
+ 11 | 4fc82b26aecb47d2868c4efbe3581732
+ 13 | 3fdba35f04dc8c462986c992bcf87554
+ 15 | e629fa6598d732768f7c726b4b621285
+ 17 | 4523540f1504cd17100c4835e85b7eef
+ 19 | 9400f1b21cb527d7fa3d3eabba93557a
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
  20 | Success
 (22 rows)
 
@@ -3506,27 +3500,27 @@ SET SESSION AUTHORIZATION regress_rls_alice;
 SELECT * FROM t1;
  a  |                b                 
 ----+----------------------------------
-  1 | c4ca4238a0b923820dcc509a6f75849b
-  3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
-  5 | e4da3b7fbbce2345d7772b0674a318d5
-  7 | 8f14e45fceea167a5a36dedd4bea2543
-  9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
- 11 | 6512bd43d9caa6e02c990b0a82652dca
- 13 | c51ce410c124a10e0db5e4b97fc2af39
- 15 | 9bf31c7ff062936a96d3c8bd1f8f2ff3
- 17 | 70efdf2ec9b086079795c442636b55fb
- 19 | 1f0e3dad99908345f7439f8ffabdffc4
-  0 | cfcd208495d565ef66e7dff9f98764da
-  2 | c81e728d9d4c2f636f067f89cc14862c
-  4 | a87ff679a2f3e71d9181a67b7542122c
-  6 | 1679091c5a880faf6fb5e6087eb1b2dc
-  8 | c9f0f895fb98ab9159f51fd0297e236d
- 10 | d3d9446802a44259755d38e6d163e820
- 12 | c20ad4d76fe97759aa27a0c99bff6710
- 14 | aab3238922bcc25a6f606eb525ffdc56
- 16 | c74d97b01eae257e44aa9d5bade97baf
- 18 | 6f4922f45568161a8cdf4ad2299f6d23
- 20 | 98f13708210194c475687be6106a3b84
+  1 | 6b86b273ff34fce19d6b804eff5a3f57
+  3 | 4e07408562bedb8b60ce05c1decfe3ad
+  5 | ef2d127de37b942baad06145e54b0c61
+  7 | 7902699be42c8a8e46fbbb4501726517
+  9 | 19581e27de7ced00ff1ce50b2047e7a5
+ 11 | 4fc82b26aecb47d2868c4efbe3581732
+ 13 | 3fdba35f04dc8c462986c992bcf87554
+ 15 | e629fa6598d732768f7c726b4b621285
+ 17 | 4523540f1504cd17100c4835e85b7eef
+ 19 | 9400f1b21cb527d7fa3d3eabba93557a
+  0 | 5feceb66ffc86f38d952786c6d696c79
+  2 | d4735e3a265e16eee03f59718b9b5d03
+  4 | 4b227777d4dd1fc61c6f884f48641d02
+  6 | e7f6c011776e8db7cd330b54174fd76f
+  8 | 2c624232cdd221771294dfbb310aca00
+ 10 | 4a44dc15364204a80fe80e9039455cc1
+ 12 | 6b51d431df5d7f141cbececcf79edf3d
+ 14 | 8527a891e224136950ff32ca212b45bc
+ 16 | b17ef6d19c7a5b1ee83b907c595526dc
+ 18 | 4ec9599fc203d176a301536c2e091a19
+ 20 | f5ca38f748a1d6eaf726b8a42fb575c3
  20 | Success
 (22 rows)
 
@@ -3574,35 +3568,35 @@ CREATE TABLE copy_t (a integer, b text);
 CREATE POLICY p1 ON copy_t USING (a % 2 = 0);
 ALTER TABLE copy_t ENABLE ROW LEVEL SECURITY;
 GRANT ALL ON copy_t TO regress_rls_bob, regress_rls_exempt_user;
-INSERT INTO copy_t (SELECT x, md5(x::text) FROM generate_series(0,10) x);
+INSERT INTO copy_t (SELECT x, public.fipshash(x::text) FROM generate_series(0,10) x);
 -- Check COPY TO as Superuser/owner.
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
-0,cfcd208495d565ef66e7dff9f98764da
-1,c4ca4238a0b923820dcc509a6f75849b
-2,c81e728d9d4c2f636f067f89cc14862c
-3,eccbc87e4b5ce2fe28308fd9f2a7baf3
-4,a87ff679a2f3e71d9181a67b7542122c
-5,e4da3b7fbbce2345d7772b0674a318d5
-6,1679091c5a880faf6fb5e6087eb1b2dc
-7,8f14e45fceea167a5a36dedd4bea2543
-8,c9f0f895fb98ab9159f51fd0297e236d
-9,45c48cce2e2d7fbdea1afc51c7c6ad26
-10,d3d9446802a44259755d38e6d163e820
+0,5feceb66ffc86f38d952786c6d696c79
+1,6b86b273ff34fce19d6b804eff5a3f57
+2,d4735e3a265e16eee03f59718b9b5d03
+3,4e07408562bedb8b60ce05c1decfe3ad
+4,4b227777d4dd1fc61c6f884f48641d02
+5,ef2d127de37b942baad06145e54b0c61
+6,e7f6c011776e8db7cd330b54174fd76f
+7,7902699be42c8a8e46fbbb4501726517
+8,2c624232cdd221771294dfbb310aca00
+9,19581e27de7ced00ff1ce50b2047e7a5
+10,4a44dc15364204a80fe80e9039455cc1
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
-0,cfcd208495d565ef66e7dff9f98764da
-1,c4ca4238a0b923820dcc509a6f75849b
-2,c81e728d9d4c2f636f067f89cc14862c
-3,eccbc87e4b5ce2fe28308fd9f2a7baf3
-4,a87ff679a2f3e71d9181a67b7542122c
-5,e4da3b7fbbce2345d7772b0674a318d5
-6,1679091c5a880faf6fb5e6087eb1b2dc
-7,8f14e45fceea167a5a36dedd4bea2543
-8,c9f0f895fb98ab9159f51fd0297e236d
-9,45c48cce2e2d7fbdea1afc51c7c6ad26
-10,d3d9446802a44259755d38e6d163e820
+0,5feceb66ffc86f38d952786c6d696c79
+1,6b86b273ff34fce19d6b804eff5a3f57
+2,d4735e3a265e16eee03f59718b9b5d03
+3,4e07408562bedb8b60ce05c1decfe3ad
+4,4b227777d4dd1fc61c6f884f48641d02
+5,ef2d127de37b942baad06145e54b0c61
+6,e7f6c011776e8db7cd330b54174fd76f
+7,7902699be42c8a8e46fbbb4501726517
+8,2c624232cdd221771294dfbb310aca00
+9,19581e27de7ced00ff1ce50b2047e7a5
+10,4a44dc15364204a80fe80e9039455cc1
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION regress_rls_bob;
 SET row_security TO OFF;
@@ -3610,40 +3604,40 @@ COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail 
 ERROR:  query would be affected by row-level security policy for table "copy_t"
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
-0,cfcd208495d565ef66e7dff9f98764da
-2,c81e728d9d4c2f636f067f89cc14862c
-4,a87ff679a2f3e71d9181a67b7542122c
-6,1679091c5a880faf6fb5e6087eb1b2dc
-8,c9f0f895fb98ab9159f51fd0297e236d
-10,d3d9446802a44259755d38e6d163e820
+0,5feceb66ffc86f38d952786c6d696c79
+2,d4735e3a265e16eee03f59718b9b5d03
+4,4b227777d4dd1fc61c6f884f48641d02
+6,e7f6c011776e8db7cd330b54174fd76f
+8,2c624232cdd221771294dfbb310aca00
+10,4a44dc15364204a80fe80e9039455cc1
 -- Check COPY TO as user with permissions and BYPASSRLS
 SET SESSION AUTHORIZATION regress_rls_exempt_user;
 SET row_security TO OFF;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
-0,cfcd208495d565ef66e7dff9f98764da
-1,c4ca4238a0b923820dcc509a6f75849b
-2,c81e728d9d4c2f636f067f89cc14862c
-3,eccbc87e4b5ce2fe28308fd9f2a7baf3
-4,a87ff679a2f3e71d9181a67b7542122c
-5,e4da3b7fbbce2345d7772b0674a318d5
-6,1679091c5a880faf6fb5e6087eb1b2dc
-7,8f14e45fceea167a5a36dedd4bea2543
-8,c9f0f895fb98ab9159f51fd0297e236d
-9,45c48cce2e2d7fbdea1afc51c7c6ad26
-10,d3d9446802a44259755d38e6d163e820
+0,5feceb66ffc86f38d952786c6d696c79
+1,6b86b273ff34fce19d6b804eff5a3f57
+2,d4735e3a265e16eee03f59718b9b5d03
+3,4e07408562bedb8b60ce05c1decfe3ad
+4,4b227777d4dd1fc61c6f884f48641d02
+5,ef2d127de37b942baad06145e54b0c61
+6,e7f6c011776e8db7cd330b54174fd76f
+7,7902699be42c8a8e46fbbb4501726517
+8,2c624232cdd221771294dfbb310aca00
+9,19581e27de7ced00ff1ce50b2047e7a5
+10,4a44dc15364204a80fe80e9039455cc1
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
-0,cfcd208495d565ef66e7dff9f98764da
-1,c4ca4238a0b923820dcc509a6f75849b
-2,c81e728d9d4c2f636f067f89cc14862c
-3,eccbc87e4b5ce2fe28308fd9f2a7baf3
-4,a87ff679a2f3e71d9181a67b7542122c
-5,e4da3b7fbbce2345d7772b0674a318d5
-6,1679091c5a880faf6fb5e6087eb1b2dc
-7,8f14e45fceea167a5a36dedd4bea2543
-8,c9f0f895fb98ab9159f51fd0297e236d
-9,45c48cce2e2d7fbdea1afc51c7c6ad26
-10,d3d9446802a44259755d38e6d163e820
+0,5feceb66ffc86f38d952786c6d696c79
+1,6b86b273ff34fce19d6b804eff5a3f57
+2,d4735e3a265e16eee03f59718b9b5d03
+3,4e07408562bedb8b60ce05c1decfe3ad
+4,4b227777d4dd1fc61c6f884f48641d02
+5,ef2d127de37b942baad06145e54b0c61
+6,e7f6c011776e8db7cd330b54174fd76f
+7,7902699be42c8a8e46fbbb4501726517
+8,2c624232cdd221771294dfbb310aca00
+9,19581e27de7ced00ff1ce50b2047e7a5
+10,4a44dc15364204a80fe80e9039455cc1
 -- Check COPY TO as user without permissions. SET row_security TO OFF;
 SET SESSION AUTHORIZATION regress_rls_carol;
 SET row_security TO OFF;
@@ -3659,15 +3653,15 @@ CREATE TABLE copy_rel_to (a integer, b text);
 CREATE POLICY p1 ON copy_rel_to USING (a % 2 = 0);
 ALTER TABLE copy_rel_to ENABLE ROW LEVEL SECURITY;
 GRANT ALL ON copy_rel_to TO regress_rls_bob, regress_rls_exempt_user;
-INSERT INTO copy_rel_to VALUES (1, md5('1'));
+INSERT INTO copy_rel_to VALUES (1, public.fipshash('1'));
 -- Check COPY TO as Superuser/owner.
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
-1,c4ca4238a0b923820dcc509a6f75849b
+1,6b86b273ff34fce19d6b804eff5a3f57
 SET row_security TO ON;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
-1,c4ca4238a0b923820dcc509a6f75849b
+1,6b86b273ff34fce19d6b804eff5a3f57
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION regress_rls_bob;
 SET row_security TO OFF;
@@ -3679,10 +3673,10 @@ COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
 SET SESSION AUTHORIZATION regress_rls_exempt_user;
 SET row_security TO OFF;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
-1,c4ca4238a0b923820dcc509a6f75849b
+1,6b86b273ff34fce19d6b804eff5a3f57
 SET row_security TO ON;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
-1,c4ca4238a0b923820dcc509a6f75849b
+1,6b86b273ff34fce19d6b804eff5a3f57
 -- Check COPY TO as user without permissions. SET row_security TO OFF;
 SET SESSION AUTHORIZATION regress_rls_carol;
 SET row_security TO OFF;
@@ -3700,10 +3694,10 @@ INSERT INTO copy_rel_to_child VALUES (1, 'one'), (2, 'two');
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
-1,c4ca4238a0b923820dcc509a6f75849b
+1,6b86b273ff34fce19d6b804eff5a3f57
 SET row_security TO ON;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
-1,c4ca4238a0b923820dcc509a6f75849b
+1,6b86b273ff34fce19d6b804eff5a3f57
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION regress_rls_bob;
 SET row_security TO OFF;
@@ -3715,10 +3709,10 @@ COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
 SET SESSION AUTHORIZATION regress_rls_exempt_user;
 SET row_security TO OFF;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
-1,c4ca4238a0b923820dcc509a6f75849b
+1,6b86b273ff34fce19d6b804eff5a3f57
 SET row_security TO ON;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
-1,c4ca4238a0b923820dcc509a6f75849b
+1,6b86b273ff34fce19d6b804eff5a3f57
 -- Check COPY TO as user without permissions. SET row_security TO OFF;
 SET SESSION AUTHORIZATION regress_rls_carol;
 SET row_security TO OFF;

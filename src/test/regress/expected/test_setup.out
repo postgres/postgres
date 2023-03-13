@@ -231,3 +231,15 @@ create function part_hashtext_length(value text, seed int8)
 create operator class part_test_text_ops for type text using hash as
     operator 1 =,
     function 2 part_hashtext_length(text, int8);
+--
+-- These functions are used in tests that used to use md5(), which we now
+-- mostly avoid so that the tests will pass in FIPS mode.
+--
+create function fipshash(bytea)
+    returns text
+    strict immutable parallel safe leakproof
+    return substr(encode(sha256($1), 'hex'), 1, 32);
+create function fipshash(text)
+    returns text
+    strict immutable parallel safe leakproof
+    return substr(encode(sha256($1::bytea), 'hex'), 1, 32);

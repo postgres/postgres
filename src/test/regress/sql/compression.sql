@@ -48,7 +48,7 @@ SELECT pg_column_compression(f1) FROM cmmove2;
 
 -- test externally stored compressed data
 CREATE OR REPLACE FUNCTION large_val() RETURNS TEXT LANGUAGE SQL AS
-'select array_agg(md5(g::text))::text from generate_series(1, 256) g';
+'select array_agg(fipshash(g::text))::text from generate_series(1, 256) g';
 CREATE TABLE cmdata2 (f1 text COMPRESSION pglz);
 INSERT INTO cmdata2 SELECT large_val() || repeat('a', 4000);
 SELECT pg_column_compression(f1) FROM cmdata2;
@@ -135,7 +135,7 @@ SELECT pg_column_compression(f1) FROM cmdata;
 DROP TABLE cmdata2;
 CREATE TABLE cmdata2 (f1 TEXT COMPRESSION pglz, f2 TEXT COMPRESSION lz4);
 CREATE UNIQUE INDEX idx1 ON cmdata2 ((f1 || f2));
-INSERT INTO cmdata2 VALUES((SELECT array_agg(md5(g::TEXT))::TEXT FROM
+INSERT INTO cmdata2 VALUES((SELECT array_agg(fipshash(g::TEXT))::TEXT FROM
 generate_series(1, 50) g), VERSION());
 
 -- check data is ok
