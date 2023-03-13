@@ -87,6 +87,7 @@ static bool GetTupleForTrigger(EState *estate,
 							   LockTupleMode lockmode,
 							   TupleTableSlot *oldslot,
 							   TupleTableSlot **epqslot,
+							   TM_Result *tmresultp,
 							   TM_FailureData *tmfdp);
 static bool TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 						   Trigger *trigger, TriggerEvent event,
@@ -2694,7 +2695,9 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
 					 HeapTuple fdw_trigtuple,
-					 TupleTableSlot **epqslot)
+					 TupleTableSlot **epqslot,
+					 TM_Result *tmresult,
+					 TM_FailureData *tmfd)
 {
 	TupleTableSlot *slot = ExecGetTriggerOldSlot(estate, relinfo);
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
@@ -2711,7 +2714,7 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 
 		if (!GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
 								LockTupleExclusive, slot, &epqslot_candidate,
-								NULL))
+								tmresult, tmfd))
 			return false;
 
 		/*
@@ -2801,6 +2804,7 @@ ExecARDeleteTriggers(EState *estate,
 							   tupleid,
 							   LockTupleExclusive,
 							   slot,
+							   NULL,
 							   NULL,
 							   NULL);
 		else
@@ -2943,6 +2947,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 					 ItemPointer tupleid,
 					 HeapTuple fdw_trigtuple,
 					 TupleTableSlot *newslot,
+					 TM_Result *tmresult,
 					 TM_FailureData *tmfd)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
@@ -2967,7 +2972,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		/* get a copy of the on-disk tuple we are planning to update */
 		if (!GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
 								lockmode, oldslot, &epqslot_candidate,
-								tmfd))
+								tmresult, tmfd))
 			return false;		/* cancel the update action */
 
 		/*
@@ -3121,6 +3126,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 							   tupleid,
 							   LockTupleExclusive,
 							   oldslot,
+							   NULL,
 							   NULL,
 							   NULL);
 		else if (fdw_trigtuple != NULL)
@@ -3277,6 +3283,7 @@ GetTupleForTrigger(EState *estate,
 				   LockTupleMode lockmode,
 				   TupleTableSlot *oldslot,
 				   TupleTableSlot **epqslot,
+				   TM_Result *tmresultp,
 				   TM_FailureData *tmfdp)
 {
 	Relation	relation = relinfo->ri_RelationDesc;
@@ -3304,6 +3311,8 @@ GetTupleForTrigger(EState *estate,
 								&tmfd);
 
 		/* Let the caller know about the status of this operation */
+		if (tmresultp)
+			*tmresultp = test;
 		if (tmfdp)
 			*tmfdp = tmfd;
 
@@ -3331,6 +3340,18 @@ GetTupleForTrigger(EState *estate,
 			case TM_Ok:
 				if (tmfd.traversed)
 				{
+					/*
+					 * Recheck the tuple using EPQ. For MERGE, we leave this
+					 * to the caller (it must do additional rechecking, and
+					 * might end up executing a different action entirely).
+					 */
+					if (estate->es_plannedstmt->commandType == CMD_MERGE)
+					{
+						if (tmresultp)
+							*tmresultp = TM_Updated;
+						return false;
+					}
+
 					*epqslot = EvalPlanQual(epqstate,
 											relation,
 											relinfo->ri_RangeTableIndex,
