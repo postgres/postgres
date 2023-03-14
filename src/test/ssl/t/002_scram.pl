@@ -140,6 +140,34 @@ $node->connect_ok(
 		qr/connection authenticated: identity="ssltestuser" method=scram-sha-256/
 	]);
 
+# channel_binding should continue to work independently of require_auth.
+$node->connect_ok(
+	"$common_connstr user=ssltestuser channel_binding=disable require_auth=scram-sha-256",
+	"SCRAM with SSL, channel_binding=disable, and require_auth=scram-sha-256"
+);
+$node->connect_fails(
+	"$common_connstr user=md5testuser require_auth=md5 channel_binding=require",
+	"channel_binding can fail even when require_auth succeeds",
+	expected_stderr =>
+	  qr/channel binding required but not supported by server's authentication request/
+);
+if ($supports_tls_server_end_point)
+{
+	$node->connect_ok(
+		"$common_connstr user=ssltestuser channel_binding=require require_auth=scram-sha-256",
+		"SCRAM with SSL, channel_binding=require, and require_auth=scram-sha-256"
+	);
+}
+else
+{
+	$node->connect_fails(
+		"$common_connstr user=ssltestuser channel_binding=require require_auth=scram-sha-256",
+		"SCRAM with SSL, channel_binding=require, and require_auth=scram-sha-256",
+		expected_stderr =>
+		  qr/channel binding is required, but server did not offer an authentication method that supports channel binding/
+	);
+}
+
 # Now test with a server certificate that uses the RSA-PSS algorithm.
 # This checks that the certificate can be loaded and that channel binding
 # works. (see bug #17760)

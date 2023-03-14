@@ -1220,6 +1220,111 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-require-auth" xreflabel="require_auth">
+      <term><literal>require_auth</literal></term>
+      <listitem>
+      <para>
+        Specifies the authentication method that the client requires from the
+        server. If the server does not use the required method to authenticate
+        the client, or if the authentication handshake is not fully completed by
+        the server, the connection will fail. A comma-separated list of methods
+        may also be provided, of which the server must use exactly one in order
+        for the connection to succeed. By default, any authentication method is
+        accepted, and the server is free to skip authentication altogether.
+      </para>
+      <para>
+        Methods may be negated with the addition of a <literal>!</literal>
+        prefix, in which case the server must <emphasis>not</emphasis> attempt
+        the listed method; any other method is accepted, and the server is free
+        not to authenticate the client at all. If a comma-separated list is
+        provided, the server may not attempt <emphasis>any</emphasis> of the
+        listed negated methods. Negated and non-negated forms may not be
+        combined in the same setting.
+      </para>
+      <para>
+        As a final special case, the <literal>none</literal> method requires the
+        server not to use an authentication challenge. (It may also be negated,
+        to require some form of authentication.)
+      </para>
+      <para>
+        The following methods may be specified:
+
+        <variablelist>
+         <varlistentry>
+          <term><literal>password</literal></term>
+          <listitem>
+           <para>
+            The server must request plaintext password authentication.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>md5</literal></term>
+          <listitem>
+           <para>
+            The server must request MD5 hashed password authentication.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>gss</literal></term>
+          <listitem>
+           <para>
+            The server must either request a Kerberos handshake via
+            <acronym>GSSAPI</acronym> or establish a
+            <acronym>GSS</acronym>-encrypted channel (see also
+            <xref linkend="libpq-connect-gssencmode" />).
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>sspi</literal></term>
+          <listitem>
+           <para>
+            The server must request Windows <acronym>SSPI</acronym>
+            authentication.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>scram-sha-256</literal></term>
+          <listitem>
+           <para>
+            The server must successfully complete a SCRAM-SHA-256 authentication
+            exchange with the client.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>creds</literal></term>
+          <listitem>
+           <para>
+            The server must request SCM credential authentication (deprecated
+            as of <productname>PostgreSQL</productname> 9.1).
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>none</literal></term>
+          <listitem>
+           <para>
+            The server must not prompt the client for an authentication
+            exchange. (This does not prohibit client certificate authentication
+            via TLS, nor GSS authentication via its encrypted transport.)
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+      </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-channel-binding" xreflabel="channel_binding">
       <term><literal>channel_binding</literal></term>
       <listitem>
@@ -7771,6 +7876,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGPASSFILE</envar> behaves the same as the <xref
       linkend="libpq-connect-passfile"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGREQUIREAUTH</envar></primary>
+      </indexterm>
+      <envar>PGREQUIREAUTH</envar> behaves the same as the <xref
+      linkend="libpq-connect-require-auth"/> connection parameter.
      </para>
     </listitem>
 

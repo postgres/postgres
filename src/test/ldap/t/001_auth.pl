@@ -101,6 +101,12 @@ test_access(
 		qr/connection authenticated: identity="uid=test1,dc=example,dc=net" method=ldap/
 	],);
 
+# require_auth=password should complete successfully; other methods should fail.
+$node->connect_ok("user=test1 require_auth=password",
+	"password authentication required, works with ldap auth");
+$node->connect_fails("user=test1 require_auth=scram-sha-256",
+	"SCRAM authentication required, fails with ldap auth");
+
 note "search+bind";
 
 unlink($node->data_dir . '/pg_hba.conf');

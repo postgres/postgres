@@ -282,6 +282,7 @@ scram_exchange(void *opaq, char *input, int inputlen,
 			}
 			*done = true;
 			state->state = FE_SCRAM_FINISHED;
+			state->conn->client_finished_auth = true;
 			break;
 
 		default:

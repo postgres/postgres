@@ -396,6 +396,7 @@ struct pg_conn
 	char	   *ssl_min_protocol_version;	/* minimum TLS protocol version */
 	char	   *ssl_max_protocol_version;	/* maximum TLS protocol version */
 	char	   *target_session_attrs;	/* desired session properties */
+	char	   *require_auth;	/* name of the expected auth method */
 
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
@@ -456,6 +457,14 @@ struct pg_conn
 	bool		sigpipe_flag;	/* can we mask SIGPIPE via MSG_NOSIGNAL? */
 	bool		write_failed;	/* have we had a write failure on sock? */
 	char	   *write_err_msg;	/* write error message, or NULL if OOM */
+
+	bool		auth_required;	/* require an authentication challenge from
+								 * the server? */
+	uint32		allowed_auth_methods;	/* bitmask of acceptable AuthRequest
+										 * codes */
+	bool		client_finished_auth;	/* have we finished our half of the
+										 * authentication exchange? */
+
 
 	/* Transient state needed while establishing connection */
 	PGTargetServerType target_server_type;	/* desired session properties */
