@@ -3,6 +3,10 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
 \echo Use "ALTER EXTENSION pg_walinspect UPDATE TO '1.1'" to load this file. \quit
 
+-- Unsupported functions after 1.1.
+DROP FUNCTION pg_get_wal_records_info_till_end_of_wal(pg_lsn);
+DROP FUNCTION pg_get_wal_stats_till_end_of_wal(pg_lsn, boolean);
+
 --
 -- pg_get_wal_block_info()
 --

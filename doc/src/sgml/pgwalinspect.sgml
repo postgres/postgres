@@ -94,9 +94,11 @@ block_ref        | blkref #0: rel 1663/5/60221 fork main blk 2
      <para>
       Gets information of all the valid WAL records between
       <replaceable>start_lsn</replaceable> and <replaceable>end_lsn</replaceable>.
-      Returns one row per WAL record. If <replaceable>start_lsn</replaceable>
-      or <replaceable>end_lsn</replaceable> are not yet available, the
-      function will raise an error. For example:
+      Returns one row per WAL record. If a future
+      <replaceable>end_lsn</replaceable> (i.e. ahead of the current LSN of
+      the server) is specified, it returns information until the end of WAL.
+      The function raises an error if <replaceable>start_lsn</replaceable>
+      is not available. For example, usage of the function is as follows:
 <screen>
 postgres=# SELECT * FROM pg_get_wal_records_info('0/1E913618', '0/1E913740') LIMIT 1;
 -[ RECORD 1 ]----+--------------------------------------------------------------
@@ -116,23 +118,6 @@ block_ref        |
     </listitem>
    </varlistentry>
 
-    <varlistentry id="pgwalinspect-funcs-pg-get-wal-records-info-till-end-of-wal">
-    <term>
-     <function>
-      pg_get_wal_records_info_till_end_of_wal(start_lsn pg_lsn)
-      returns setof record
-     </function>
-    </term>
-
-    <listitem>
-     <para>
-      This function is the same as <function>pg_get_wal_records_info()</function>,
-      except that it gets information of all the valid WAL records from
-      <replaceable>start_lsn</replaceable> till the end of WAL.
-     </para>
-    </listitem>
-   </varlistentry>
-
     <varlistentry id="pgwalinspect-funcs-pg-get-wal-stats">
     <term>
      <function>
@@ -148,10 +133,11 @@ block_ref        |
       <replaceable>end_lsn</replaceable>. By default, it returns one row per
       <replaceable>resource_manager</replaceable> type. When
       <replaceable>per_record</replaceable> is set to <literal>true</literal>,
-      it returns one row per <replaceable>record_type</replaceable>.
-      If <replaceable>start_lsn</replaceable>
-      or <replaceable>end_lsn</replaceable> are not yet available, the
-      function will raise an error. For example:
+      it returns one row per <replaceable>record_type</replaceable>. If a
+      future <replaceable>end_lsn</replaceable> (i.e. ahead of the current
+      LSN of the server) is specified, it returns statistics until the end
+      of WAL. An error is raised if <replaceable>start_lsn</replaceable> is
+      not available. For example, usage of the function is as follows:
 <screen>
 postgres=# SELECT * FROM pg_get_wal_stats('0/1E847D00', '0/1E84F500')
              WHERE count > 0 LIMIT 1 AND
@@ -171,23 +157,6 @@ combined_size_percentage     | 2.8634072910530795
     </listitem>
    </varlistentry>
 
-    <varlistentry id="pgwalinspect-funcs-pg-get-wal-stats-till-end-of-wal">
-    <term>
-     <function>
-      pg_get_wal_stats_till_end_of_wal(start_lsn pg_lsn, per_record boolean DEFAULT false)
-      returns setof record
-     </function>
-    </term>
-
-    <listitem>
-     <para>
-      This function is the same as <function>pg_get_wal_stats()</function>,
-      except that it gets statistics of all the valid WAL records from
-      <replaceable>start_lsn</replaceable> till end of WAL.
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry>
     <term>
      <function>pg_get_wal_block_info(start_lsn pg_lsn, end_lsn pg_lsn) returns setof record</function>
@@ -202,9 +171,11 @@ combined_size_percentage     | 2.8634072910530795
       and their information associated with all the valid WAL records between
       <replaceable>start_lsn</replaceable> and
       <replaceable>end_lsn</replaceable>. Returns one row per block registered
-      in a WAL record. If <replaceable>start_lsn</replaceable> or
-      <replaceable>end_lsn</replaceable> are not yet available, the function
-      will raise an error. For example:
+      in a WAL record. If a future <replaceable>end_lsn</replaceable> (i.e.
+      ahead of the current LSN of the server) is specified, it returns
+      statistics until the end of WAL. An error is raised if
+      <replaceable>start_lsn</replaceable> is not available. For example,
+      usage of the function is as follows:
 <screen>
 postgres=# SELECT lsn, blockid, reltablespace, reldatabase, relfilenode,
                   relblocknumber, forkname,

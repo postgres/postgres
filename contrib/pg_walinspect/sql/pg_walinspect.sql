@@ -33,9 +33,7 @@ SELECT * FROM pg_get_wal_block_info(:'wal_lsn2', :'wal_lsn1');
 
 -- LSNs with the highest value possible.
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_record_info('FFFFFFFF/FFFFFFFF');
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info_till_end_of_wal('FFFFFFFF/FFFFFFFF');
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal('FFFFFFFF/FFFFFFFF');
--- failures with end LSNs
+-- Success with end LSNs.
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
@@ -49,8 +47,6 @@ SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info('FFFFFFFF/FFFFFFFE', 'FFFF
 -- ===================================================================
 
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_record_info(:'wal_lsn1');
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info_till_end_of_wal(:'wal_lsn1');
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal(:'wal_lsn1');
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', :'wal_lsn2');
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn1', :'wal_lsn2');
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info(:'wal_lsn1', :'wal_lsn2');

@@ -36,41 +36,37 @@ SELECT * FROM pg_get_wal_block_info(:'wal_lsn2', :'wal_lsn1');
 ERROR:  WAL start LSN must be less than end LSN
 -- LSNs with the highest value possible.
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_record_info('FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future input LSN
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info_till_end_of_wal('FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future start LSN
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal('FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future start LSN
--- failures with end LSNs
+ERROR:  WAL input LSN must be less than current LSN
+-- Success with end LSNs.
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future end LSN
+ ok 
+----
+ t
+(1 row)
+
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future end LSN
+ ok 
+----
+ t
+(1 row)
+
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info(:'wal_lsn1', 'FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future end LSN
+ ok 
+----
+ t
+(1 row)
+
 -- failures with start LSNs
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future start LSN
+ERROR:  WAL start LSN must be less than current LSN
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future start LSN
+ERROR:  WAL start LSN must be less than current LSN
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_block_info('FFFFFFFF/FFFFFFFE', 'FFFFFFFF/FFFFFFFF');
-ERROR:  cannot accept future start LSN
+ERROR:  WAL start LSN must be less than current LSN
 -- ===================================================================
 -- Tests for all function executions
 -- ===================================================================
 SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_record_info(:'wal_lsn1');
- ok 
-----
- t
-(1 row)
-
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_records_info_till_end_of_wal(:'wal_lsn1');
- ok 
-----
- t
-(1 row)
-
-SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal(:'wal_lsn1');
  ok 
 ----
  t
