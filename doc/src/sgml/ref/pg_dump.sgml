@@ -776,6 +776,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--exclude-table-and-children=<replaceable class="parameter">pattern</replaceable></option></term>
+      <listitem>
+       <para>
+        This is the same as
+        the <option>-T</option>/<option>--exclude-table</option> option,
+        except that it also excludes any partitions or inheritance child
+        tables of the table(s) matching the
+        <replaceable class="parameter">pattern</replaceable>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--exclude-table-data=<replaceable class="parameter">pattern</replaceable></option></term>
       <listitem>
        <para>
@@ -789,6 +802,18 @@ PostgreSQL documentation
        </para>
        <para>
         To exclude data for all tables in the database, see <option>--schema-only</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--exclude-table-data-and-children=<replaceable class="parameter">pattern</replaceable></option></term>
+      <listitem>
+       <para>
+        This is the same as the <option>--exclude-table-data</option> option,
+        except that it also excludes data of any partitions or inheritance
+        child tables of the table(s) matching the
+        <replaceable class="parameter">pattern</replaceable>.
        </para>
       </listitem>
      </varlistentry>
@@ -1142,9 +1167,9 @@ PostgreSQL documentation
         Require that each
         extension (<option>-e</option>/<option>--extension</option>),
         schema (<option>-n</option>/<option>--schema</option>) and
-        table (<option>-t</option>/<option>--table</option>) qualifier
+        table (<option>-t</option>/<option>--table</option>) pattern
         match at least one extension/schema/table in the database to be dumped.
-        Note that if none of the extension/schema/table qualifiers find
+        Note that if none of the extension/schema/table patterns find
         matches, <application>pg_dump</application> will generate an error
         even without <option>--strict-names</option>.
        </para>
@@ -1154,6 +1179,19 @@ PostgreSQL documentation
         <option>-T</option>/<option>--exclude-table</option>,
         or <option>--exclude-table-data</option>.  An exclude pattern failing
         to match any objects is not considered an error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--table-and-children=<replaceable class="parameter">pattern</replaceable></option></term>
+      <listitem>
+       <para>
+        This is the same as
+        the <option>-t</option>/<option>--table</option> option,
+        except that it also includes any partitions or inheritance child
+        tables of the table(s) matching the
+        <replaceable class="parameter">pattern</replaceable>.
        </para>
       </listitem>
      </varlistentry>
