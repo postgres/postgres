@@ -3465,6 +3465,13 @@
   proname => 'atanh', prorettype => 'float8', proargtypes => 'float8',
   prosrc => 'datanh' },
 
+{ oid => '8788', descr => 'error function',
+  proname => 'erf', prorettype => 'float8', proargtypes => 'float8',
+  prosrc => 'derf' },
+{ oid => '8789', descr => 'complementary error function',
+  proname => 'erfc', prorettype => 'float8', proargtypes => 'float8',
+  prosrc => 'derfc' },
+
 { oid => '1618',
   proname => 'interval_mul', prorettype => 'interval',
   proargtypes => 'interval float8', prosrc => 'interval_mul' },

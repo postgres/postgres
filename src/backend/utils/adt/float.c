@@ -2742,6 +2742,53 @@ datanh(PG_FUNCTION_ARGS)
 }
 
 
+/* ========== ERROR FUNCTIONS ========== */
+
+
+/*
+ *		derf			- returns the error function: erf(arg1)
+ */
+Datum
+derf(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/*
+	 * For erf, we don't need an errno check because it never overflows.
+	 */
+	result = erf(arg1);
+
+	if (unlikely(isinf(result)))
+		float_overflow_error();
+
+	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ *		derfc			- returns the complementary error function: 1 - erf(arg1)
+ */
+Datum
+derfc(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/*
+	 * For erfc, we don't need an errno check because it never overflows.
+	 */
+	result = erfc(arg1);
+
+	if (unlikely(isinf(result)))
+		float_overflow_error();
+
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/* ========== RANDOM FUNCTIONS ========== */
+
+
 /*
  * initialize_drandom_seed - initialize drandom_seed if not yet done
  */

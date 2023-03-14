@@ -1289,6 +1289,41 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>erf</primary>
+        </indexterm>
+        <function>erf</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Error function
+       </para>
+       <para>
+        <literal>erf(1.0)</literal>
+        <returnvalue>0.8427007929497149</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>erfc</primary>
+        </indexterm>
+        <function>erfc</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Complementary error function (<literal>1 - erf(x)</literal>, without
+        loss of precision for large inputs)
+       </para>
+       <para>
+        <literal>erfc(1.0)</literal>
+        <returnvalue>0.15729920705028513</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>exp</primary>
         </indexterm>
         <function>exp</function> ( <type>numeric</type> )
