@@ -1929,6 +1929,12 @@ SELECT to_char('100'::numeric, 'FM999');
  100
 (1 row)
 
+SELECT to_char('12345678901'::float8, 'FM9999999999D9999900000000000000000');
+     to_char     
+-----------------
+ ##########.####
+(1 row)
+
 -- Check parsing of literal text in a format string
 SELECT to_char('100'::numeric, 'foo999');
  to_char 

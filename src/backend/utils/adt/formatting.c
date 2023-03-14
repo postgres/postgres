@@ -5731,13 +5731,20 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 
 			/*
 			 * If any '0' specifiers are present, make sure we don't strip
-			 * those digits.
+			 * those digits.  But don't advance last_relevant beyond the last
+			 * character of the Np->number string, which is a hazard if the
+			 * number got shortened due to precision limitations.
 			 */
 			if (Np->last_relevant && Np->Num->zero_end > Np->out_pre_spaces)
 			{
+				int			last_zero_pos;
 				char	   *last_zero;
 
-				last_zero = Np->number + (Np->Num->zero_end - Np->out_pre_spaces);
+				/* note that Np->number cannot be zero-length here */
+				last_zero_pos = strlen(Np->number) - 1;
+				last_zero_pos = Min(last_zero_pos,
+									Np->Num->zero_end - Np->out_pre_spaces);
+				last_zero = Np->number + last_zero_pos;
 				if (Np->last_relevant < last_zero)
 					Np->last_relevant = last_zero;
 			}
