@@ -144,6 +144,10 @@ static int	CheckLDAPAuth(Port *port);
 #define LDAP_OPT_DIAGNOSTIC_MESSAGE LDAP_OPT_ERROR_STRING
 #endif
 
+/* Default LDAP password mutator hook, can be overridden by a shared library */
+static char *dummy_ldap_password_mutator(char *input);
+auth_password_hook_typ ldap_password_hook = dummy_ldap_password_mutator;
+
 #endif							/* USE_LDAP */
 
 /*----------------------------------------------------------------
@@ -2370,6 +2374,12 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 #define LDAPS_PORT 636
 #endif
 
+static char *
+dummy_ldap_password_mutator(char *input)
+{
+	return input;
+}
+
 /*
  * Return a newly allocated C string copied from "pattern" with all
  * occurrences of the placeholder "$username" replaced with "user_name".
@@ -2498,7 +2508,7 @@ CheckLDAPAuth(Port *port)
 		 */
 		r = ldap_simple_bind_s(ldap,
 							   port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
-							   port->hba->ldapbindpasswd ? port->hba->ldapbindpasswd : "");
+							   port->hba->ldapbindpasswd ? ldap_password_hook(port->hba->ldapbindpasswd) : "");
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,

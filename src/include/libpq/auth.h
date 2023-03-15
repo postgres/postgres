@@ -28,4 +28,10 @@ extern void sendAuthRequest(Port *port, AuthRequest areq, const char *extradata,
 typedef void (*ClientAuthentication_hook_type) (Port *, int);
 extern PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
 
+/* hook type for password manglers */
+typedef char *(*auth_password_hook_typ) (char *input);
+
+/* Default LDAP password mutator hook, can be overridden by a shared library */
+extern PGDLLIMPORT auth_password_hook_typ ldap_password_hook;
+
 #endif							/* AUTH_H */
