@@ -25,9 +25,10 @@
 /*
  * pg_usleep --- delay the specified number of microseconds.
  *
- * NOTE: although the delay is specified in microseconds, the effective
- * resolution is only 1/HZ, or 10 milliseconds, on most Unixen.  Expect
- * the requested delay to be rounded up to the next resolution boundary.
+ * NOTE: Although the delay is specified in microseconds, older Unixen and
+ * Windows use periodic kernel ticks to wake up, which might increase the delay
+ * time significantly.  We've observed delay increases as large as 20
+ * milliseconds on supported platforms.
  *
  * On machines where "long" is 32 bits, the maximum delay is ~2000 seconds.
  *
