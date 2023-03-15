@@ -1225,6 +1225,16 @@ WHEN MATCHED THEN
 
 SELECT * FROM cj_target;
 
+-- try it with an outer join and PlaceHolderVar
+MERGE INTO cj_target t
+USING (SELECT *, 'join input'::text AS phv FROM cj_source1) fj
+	FULL JOIN cj_source2 fj2 ON fj.scat = fj2.sid2 * 10
+ON t.tid = fj.scat
+WHEN NOT MATCHED THEN
+	INSERT (tid, balance, val) VALUES (fj.scat, fj.delta, fj.phv);
+
+SELECT * FROM cj_target;
+
 ALTER TABLE cj_source1 RENAME COLUMN sid1 TO sid;
 ALTER TABLE cj_source2 RENAME COLUMN sid2 TO sid;
 
