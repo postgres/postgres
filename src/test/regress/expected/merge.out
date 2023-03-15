@@ -1905,6 +1905,27 @@ SELECT * FROM cj_target;
    2 |     320 | initial source2 300
 (4 rows)
 
+-- try it with an outer join and PlaceHolderVar
+MERGE INTO cj_target t
+USING (SELECT *, 'join input'::text AS phv FROM cj_source1) fj
+	FULL JOIN cj_source2 fj2 ON fj.scat = fj2.sid2 * 10
+ON t.tid = fj.scat
+WHEN NOT MATCHED THEN
+	INSERT (tid, balance, val) VALUES (fj.scat, fj.delta, fj.phv);
+SELECT * FROM cj_target;
+ tid | balance |               val                
+-----+---------+----------------------------------
+   3 |     400 | initial source2 updated by merge
+   1 |     220 | initial source2 200
+   1 |     110 | initial source2 200
+   2 |     320 | initial source2 300
+  10 |     100 | join input
+  10 |     400 | join input
+  20 |     200 | join input
+  20 |     300 | join input
+     |         | 
+(9 rows)
+
 ALTER TABLE cj_source1 RENAME COLUMN sid1 TO sid;
 ALTER TABLE cj_source2 RENAME COLUMN sid2 TO sid;
 TRUNCATE cj_target;

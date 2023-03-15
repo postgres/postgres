@@ -3840,17 +3840,15 @@ qual_is_pushdown_safe(Query *subquery, Index rti, RestrictInfo *rinfo,
 		return false;
 
 	/*
-	 * It would be unsafe to push down window function calls, but at least for
-	 * the moment we could never see any in a qual anyhow.  (The same applies
-	 * to aggregates, which we check for in pull_var_clause below.)
-	 */
-	Assert(!contain_window_function(qual));
-
-	/*
 	 * Examine all Vars used in clause.  Since it's a restriction clause, all
 	 * such Vars must refer to subselect output columns ... unless this is
 	 * part of a LATERAL subquery, in which case there could be lateral
 	 * references.
+	 *
+	 * By omitting the relevant flags, this also gives us a cheap sanity check
+	 * that no aggregates or window functions appear in the qual.  Those would
+	 * be unsafe to push down, but at least for the moment we could never see
+	 * any in a qual anyhow.
 	 */
 	vars = pull_var_clause(qual, PVC_INCLUDE_PLACEHOLDERS);
 	foreach(vl, vars)
