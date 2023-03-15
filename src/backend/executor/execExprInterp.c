@@ -3837,8 +3837,10 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 					return;
 				value = argvalue[0];
 
-				*op->resvalue = PointerGetDatum(xmltotext_with_xmloption(DatumGetXmlP(value),
-																		 xexpr->xmloption));
+				*op->resvalue =
+					PointerGetDatum(xmltotext_with_options(DatumGetXmlP(value),
+														   xexpr->xmloption,
+														   xexpr->indent));
 				*op->resnull = false;
 			}
 			break;

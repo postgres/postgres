@@ -132,6 +132,42 @@ SELECT xmlserialize(content data as character varying(20)) FROM xmltest;
 SELECT xmlserialize(content 'good' as char(10));
 SELECT xmlserialize(document 'bad' as text);
 
+-- indent
+SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text INDENT);
+SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val></bar></foo>' AS text INDENT);
+-- no indent
+SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
+SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
+-- indent non singly-rooted xml
+SELECT xmlserialize(DOCUMENT '<foo>73</foo><bar><val x="y">42</val></bar>' AS text INDENT);
+SELECT xmlserialize(CONTENT  '<foo>73</foo><bar><val x="y">42</val></bar>' AS text INDENT);
+-- indent non singly-rooted xml with mixed contents
+SELECT xmlserialize(DOCUMENT 'text node<foo>73</foo>text node<bar><val x="y">42</val></bar>' AS text INDENT);
+SELECT xmlserialize(CONTENT  'text node<foo>73</foo>text node<bar><val x="y">42</val></bar>' AS text INDENT);
+-- indent singly-rooted xml with mixed contents
+SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val><val x="y">text node<val>73</val></val></bar></foo>' AS text INDENT);
+SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val><val x="y">text node<val>73</val></val></bar></foo>' AS text INDENT);
+-- indent empty string
+SELECT xmlserialize(DOCUMENT '' AS text INDENT);
+SELECT xmlserialize(CONTENT  '' AS text INDENT);
+-- whitespaces
+SELECT xmlserialize(DOCUMENT '  ' AS text INDENT);
+SELECT xmlserialize(CONTENT  '  ' AS text INDENT);
+-- indent null
+SELECT xmlserialize(DOCUMENT NULL AS text INDENT);
+SELECT xmlserialize(CONTENT  NULL AS text INDENT);
+-- indent with XML declaration
+SELECT xmlserialize(DOCUMENT '<?xml version="1.0" encoding="UTF-8"?><foo><bar><val>73</val></bar></foo>' AS text INDENT);
+SELECT xmlserialize(CONTENT  '<?xml version="1.0" encoding="UTF-8"?><foo><bar><val>73</val></bar></foo>' AS text INDENT);
+-- indent containing DOCTYPE declaration
+SELECT xmlserialize(DOCUMENT '<!DOCTYPE a><a/>' AS text INDENT);
+SELECT xmlserialize(CONTENT  '<!DOCTYPE a><a/>' AS text INDENT);
+-- indent xml with empty element
+SELECT xmlserialize(DOCUMENT '<foo><bar></bar></foo>' AS text INDENT);
+SELECT xmlserialize(CONTENT  '<foo><bar></bar></foo>' AS text INDENT);
+-- 'no indent' = not using 'no indent'
+SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text) = xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
+SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val></bar></foo>' AS text) = xmlserialize(CONTENT '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
 
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
 SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;

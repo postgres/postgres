@@ -4460,7 +4460,7 @@ xml '<foo>bar</foo>'
     <type>xml</type>, uses the function
     <function>xmlserialize</function>:<indexterm><primary>xmlserialize</primary></indexterm>
 <synopsis>
-XMLSERIALIZE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable> AS <replaceable>type</replaceable> )
+XMLSERIALIZE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable> AS <replaceable>type</replaceable> [ [ NO ] INDENT ] )
 </synopsis>
     <replaceable>type</replaceable> can be
     <type>character</type>, <type>character varying</type>, or
@@ -4468,6 +4468,13 @@ XMLSERIALIZE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable> AS <repla
     to the SQL standard, this is the only way to convert between type
     <type>xml</type> and character types, but PostgreSQL also allows
     you to simply cast the value.
+   </para>
+
+   <para>
+    The <literal>INDENT</literal> option causes the result to be
+    pretty-printed, while <literal>NO INDENT</literal> (which is the
+    default) just emits the original input string.  Casting to a character
+    type likewise produces the original string.
    </para>
 
    <para>

@@ -1464,7 +1464,7 @@ typedef enum XmlExprOp
 	IS_XMLPARSE,				/* XMLPARSE(text, is_doc, preserve_ws) */
 	IS_XMLPI,					/* XMLPI(name [, args]) */
 	IS_XMLROOT,					/* XMLROOT(xml, version, standalone) */
-	IS_XMLSERIALIZE,			/* XMLSERIALIZE(is_document, xmlval) */
+	IS_XMLSERIALIZE,			/* XMLSERIALIZE(is_document, xmlval, indent) */
 	IS_DOCUMENT					/* xmlval IS DOCUMENT */
 } XmlExprOp;
 
@@ -1489,6 +1489,8 @@ typedef struct XmlExpr
 	List	   *args;
 	/* DOCUMENT or CONTENT */
 	XmlOptionType xmloption pg_node_attr(query_jumble_ignore);
+	/* INDENT option for XMLSERIALIZE */
+	bool		indent;
 	/* target type/typmod for XMLSERIALIZE */
 	Oid			type pg_node_attr(query_jumble_ignore);
 	int32		typmod pg_node_attr(query_jumble_ignore);

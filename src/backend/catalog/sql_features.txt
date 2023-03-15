@@ -621,7 +621,7 @@ X061	XMLParse: character string input and DOCUMENT option			YES
 X065	XMLParse: binary string input and CONTENT option			NO	
 X066	XMLParse: binary string input and DOCUMENT option			NO	
 X068	XMLSerialize: BOM			NO	
-X069	XMLSerialize: INDENT			NO	
+X069	XMLSerialize: INDENT			YES	
 X070	XMLSerialize: character string serialization and CONTENT option			YES	
 X071	XMLSerialize: character string serialization and DOCUMENT option			YES	
 X072	XMLSerialize: character string serialization			YES	

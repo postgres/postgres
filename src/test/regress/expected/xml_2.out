@@ -466,6 +466,192 @@ SELECT xmlserialize(content 'good' as char(10));
 
 SELECT xmlserialize(document 'bad' as text);
 ERROR:  not an XML document
+-- indent
+SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text INDENT);
+      xmlserialize       
+-------------------------
+ <foo>                  +
+   <bar>                +
+     <val x="y">42</val>+
+   </bar>               +
+ </foo>                 +
+ 
+(1 row)
+
+SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val></bar></foo>' AS text INDENT);
+      xmlserialize       
+-------------------------
+ <foo>                  +
+   <bar>                +
+     <val x="y">42</val>+
+   </bar>               +
+ </foo>
+(1 row)
+
+-- no indent
+SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
+               xmlserialize                
+-------------------------------------------
+ <foo><bar><val x="y">42</val></bar></foo>
+(1 row)
+
+SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
+               xmlserialize                
+-------------------------------------------
+ <foo><bar><val x="y">42</val></bar></foo>
+(1 row)
+
+-- indent non singly-rooted xml
+SELECT xmlserialize(DOCUMENT '<foo>73</foo><bar><val x="y">42</val></bar>' AS text INDENT);
+ERROR:  not an XML document
+SELECT xmlserialize(CONTENT  '<foo>73</foo><bar><val x="y">42</val></bar>' AS text INDENT);
+     xmlserialize      
+-----------------------
+ <foo>73</foo>        +
+ <bar>                +
+   <val x="y">42</val>+
+ </bar>
+(1 row)
+
+-- indent non singly-rooted xml with mixed contents
+SELECT xmlserialize(DOCUMENT 'text node<foo>73</foo>text node<bar><val x="y">42</val></bar>' AS text INDENT);
+ERROR:  not an XML document
+SELECT xmlserialize(CONTENT  'text node<foo>73</foo>text node<bar><val x="y">42</val></bar>' AS text INDENT);
+      xmlserialize      
+------------------------
+ text node             +
+ <foo>73</foo>text node+
+ <bar>                 +
+   <val x="y">42</val> +
+ </bar>
+(1 row)
+
+-- indent singly-rooted xml with mixed contents
+SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val><val x="y">text node<val>73</val></val></bar></foo>' AS text INDENT);
+                xmlserialize                 
+---------------------------------------------
+ <foo>                                      +
+   <bar>                                    +
+     <val x="y">42</val>                    +
+     <val x="y">text node<val>73</val></val>+
+   </bar>                                   +
+ </foo>                                     +
+ 
+(1 row)
+
+SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val><val x="y">text node<val>73</val></val></bar></foo>' AS text INDENT);
+                xmlserialize                 
+---------------------------------------------
+ <foo>                                      +
+   <bar>                                    +
+     <val x="y">42</val>                    +
+     <val x="y">text node<val>73</val></val>+
+   </bar>                                   +
+ </foo>
+(1 row)
+
+-- indent empty string
+SELECT xmlserialize(DOCUMENT '' AS text INDENT);
+ERROR:  not an XML document
+SELECT xmlserialize(CONTENT  '' AS text INDENT);
+ xmlserialize 
+--------------
+ 
+(1 row)
+
+-- whitespaces
+SELECT xmlserialize(DOCUMENT '  ' AS text INDENT);
+ERROR:  not an XML document
+SELECT xmlserialize(CONTENT  '  ' AS text INDENT);
+ xmlserialize 
+--------------
+   
+(1 row)
+
+-- indent null
+SELECT xmlserialize(DOCUMENT NULL AS text INDENT);
+ xmlserialize 
+--------------
+ 
+(1 row)
+
+SELECT xmlserialize(CONTENT  NULL AS text INDENT);
+ xmlserialize 
+--------------
+ 
+(1 row)
+
+-- indent with XML declaration
+SELECT xmlserialize(DOCUMENT '<?xml version="1.0" encoding="UTF-8"?><foo><bar><val>73</val></bar></foo>' AS text INDENT);
+              xmlserialize              
+----------------------------------------
+ <?xml version="1.0" encoding="UTF-8"?>+
+ <foo>                                 +
+   <bar>                               +
+     <val>73</val>                     +
+   </bar>                              +
+ </foo>                                +
+ 
+(1 row)
+
+SELECT xmlserialize(CONTENT  '<?xml version="1.0" encoding="UTF-8"?><foo><bar><val>73</val></bar></foo>' AS text INDENT);
+   xmlserialize    
+-------------------
+ <foo>            +
+   <bar>          +
+     <val>73</val>+
+   </bar>         +
+ </foo>
+(1 row)
+
+-- indent containing DOCTYPE declaration
+SELECT xmlserialize(DOCUMENT '<!DOCTYPE a><a/>' AS text INDENT);
+ xmlserialize 
+--------------
+ <!DOCTYPE a>+
+ <a/>        +
+ 
+(1 row)
+
+SELECT xmlserialize(CONTENT  '<!DOCTYPE a><a/>' AS text INDENT);
+ xmlserialize 
+--------------
+ <!DOCTYPE a>+
+ <a/>        +
+ 
+(1 row)
+
+-- indent xml with empty element
+SELECT xmlserialize(DOCUMENT '<foo><bar></bar></foo>' AS text INDENT);
+ xmlserialize 
+--------------
+ <foo>       +
+   <bar/>    +
+ </foo>      +
+ 
+(1 row)
+
+SELECT xmlserialize(CONTENT  '<foo><bar></bar></foo>' AS text INDENT);
+ xmlserialize 
+--------------
+ <foo>       +
+   <bar/>    +
+ </foo>
+(1 row)
+
+-- 'no indent' = not using 'no indent'
+SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text) = xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val></bar></foo>' AS text) = xmlserialize(CONTENT '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
+ ?column? 
+----------
+ t
+(1 row)
+
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
  ?column? 
 ----------

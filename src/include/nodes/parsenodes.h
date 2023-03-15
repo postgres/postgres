@@ -840,6 +840,7 @@ typedef struct XmlSerialize
 	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
 	Node	   *expr;
 	TypeName   *typeName;
+	bool		indent;			/* [NO] INDENT */
 	int			location;		/* token location, or -1 if unknown */
 } XmlSerialize;
 

@@ -52,6 +52,7 @@
 #include <libxml/tree.h>
 #include <libxml/uri.h>
 #include <libxml/xmlerror.h>
+#include <libxml/xmlsave.h>
 #include <libxml/xmlversion.h>
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
@@ -146,6 +147,8 @@ static bool print_xml_decl(StringInfo buf, const xmlChar *version,
 static bool xml_doctype_in_content(const xmlChar *str);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
 						   bool preserve_whitespace, int encoding,
+						   XmlOptionType *parsed_xmloptiontype,
+						   xmlNodePtr *parsed_nodes,
 						   Node *escontext);
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt);
 static int	xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
@@ -273,7 +276,7 @@ xml_in(PG_FUNCTION_ARGS)
 	 * Note: we don't need to worry about whether a soft error is detected.
 	 */
 	doc = xml_parse(vardata, xmloption, true, GetDatabaseEncoding(),
-					fcinfo->context);
+					NULL, NULL, fcinfo->context);
 	if (doc != NULL)
 		xmlFreeDoc(doc);
 
@@ -400,7 +403,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume that
 	 * xml_parse will throw ERROR if not.
 	 */
-	doc = xml_parse(result, xmloption, true, encoding, NULL);
+	doc = xml_parse(result, xmloption, true, encoding, NULL, NULL, NULL);
 	xmlFreeDoc(doc);
 
 	/* Now that we know what we're dealing with, convert to server encoding */
@@ -619,15 +622,182 @@ xmltotext(PG_FUNCTION_ARGS)
 
 
 text *
-xmltotext_with_xmloption(xmltype *data, XmlOptionType xmloption_arg)
+xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 {
-	if (xmloption_arg == XMLOPTION_DOCUMENT && !xml_is_document(data))
+#ifdef USE_LIBXML
+	text	   *volatile result;
+	xmlDocPtr	doc;
+	XmlOptionType parsed_xmloptiontype;
+	xmlNodePtr	content_nodes;
+	volatile xmlBufferPtr buf = NULL;
+	volatile	xmlSaveCtxtPtr ctxt = NULL;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+	PgXmlErrorContext *xmlerrcxt;
+#endif
+
+	if (xmloption_arg != XMLOPTION_DOCUMENT && !indent)
+	{
+		/*
+		 * We don't actually need to do anything, so just return the
+		 * binary-compatible input.  For backwards-compatibility reasons,
+		 * allow such cases to succeed even without USE_LIBXML.
+		 */
+		return (text *) data;
+	}
+
+#ifdef USE_LIBXML
+	/* Parse the input according to the xmloption */
+	doc = xml_parse(data, xmloption_arg, true, GetDatabaseEncoding(),
+					&parsed_xmloptiontype, &content_nodes,
+					(Node *) &escontext);
+	if (doc == NULL || escontext.error_occurred)
+	{
+		if (doc)
+			xmlFreeDoc(doc);
+		/* A soft error must be failure to conform to XMLOPTION_DOCUMENT */
 		ereport(ERROR,
 				(errcode(ERRCODE_NOT_AN_XML_DOCUMENT),
 				 errmsg("not an XML document")));
+	}
 
-	/* It's actually binary compatible, save for the above check. */
-	return (text *) data;
+	/* If we weren't asked to indent, we're done. */
+	if (!indent)
+	{
+		xmlFreeDoc(doc);
+		return (text *) data;
+	}
+
+	/* Otherwise, we gotta spin up some error handling. */
+	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
+
+	PG_TRY();
+	{
+		size_t		decl_len = 0;
+
+		/* The serialized data will go into this buffer. */
+		buf = xmlBufferCreate();
+
+		if (buf == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not allocate xmlBuffer");
+
+		/* Detect whether there's an XML declaration */
+		parse_xml_decl(xml_text2xmlChar(data), &decl_len, NULL, NULL, NULL);
+
+		/*
+		 * Emit declaration only if the input had one.  Note: some versions of
+		 * xmlSaveToBuffer leak memory if a non-null encoding argument is
+		 * passed, so don't do that.  We don't want any encoding conversion
+		 * anyway.
+		 */
+		if (decl_len == 0)
+			ctxt = xmlSaveToBuffer(buf, NULL,
+								   XML_SAVE_NO_DECL | XML_SAVE_FORMAT);
+		else
+			ctxt = xmlSaveToBuffer(buf, NULL,
+								   XML_SAVE_FORMAT);
+
+		if (ctxt == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not allocate xmlSaveCtxt");
+
+		if (parsed_xmloptiontype == XMLOPTION_DOCUMENT)
+		{
+			/* If it's a document, saving is easy. */
+			if (xmlSaveDoc(ctxt, doc) == -1 || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+							"could not save document to xmlBuffer");
+		}
+		else if (content_nodes != NULL)
+		{
+			/*
+			 * Deal with the case where we have non-singly-rooted XML.
+			 * libxml's dump functions don't work well for that without help.
+			 * We build a fake root node that serves as a container for the
+			 * content nodes, and then iterate over the nodes.
+			 */
+			xmlNodePtr	root;
+			xmlNodePtr	newline;
+
+			root = xmlNewNode(NULL, (const xmlChar *) "content-root");
+			if (root == NULL || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+							"could not allocate xml node");
+
+			/* This attaches root to doc, so we need not free it separately. */
+			xmlDocSetRootElement(doc, root);
+			xmlAddChild(root, content_nodes);
+
+			/*
+			 * We use this node to insert newlines in the dump.  Note: in at
+			 * least some libxml versions, xmlNewDocText would not attach the
+			 * node to the document even if we passed it.  Therefore, manage
+			 * freeing of this node manually, and pass NULL here to make sure
+			 * there's not a dangling link.
+			 */
+			newline = xmlNewDocText(NULL, (const xmlChar *) "\n");
+			if (newline == NULL || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+							"could not allocate xml node");
+
+			for (xmlNodePtr node = root->children; node; node = node->next)
+			{
+				/* insert newlines between nodes */
+				if (node->type != XML_TEXT_NODE && node->prev != NULL)
+				{
+					if (xmlSaveTree(ctxt, newline) == -1 || xmlerrcxt->err_occurred)
+					{
+						xmlFreeNode(newline);
+						xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+									"could not save newline to xmlBuffer");
+					}
+				}
+
+				if (xmlSaveTree(ctxt, node) == -1 || xmlerrcxt->err_occurred)
+				{
+					xmlFreeNode(newline);
+					xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+								"could not save content to xmlBuffer");
+				}
+			}
+
+			xmlFreeNode(newline);
+		}
+
+		if (xmlSaveClose(ctxt) == -1 || xmlerrcxt->err_occurred)
+		{
+			ctxt = NULL;		/* don't try to close it again */
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not close xmlSaveCtxtPtr");
+		}
+
+		result = (text *) xmlBuffer_to_xmltype(buf);
+	}
+	PG_CATCH();
+	{
+		if (ctxt)
+			xmlSaveClose(ctxt);
+		if (buf)
+			xmlBufferFree(buf);
+		if (doc)
+			xmlFreeDoc(doc);
+
+		pg_xml_done(xmlerrcxt, true);
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	xmlBufferFree(buf);
+	xmlFreeDoc(doc);
+
+	pg_xml_done(xmlerrcxt, false);
+
+	return result;
+#else
+	NO_XML_SUPPORT();
+	return NULL;
+#endif
 }
 
 
@@ -762,7 +932,7 @@ xmlparse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace)
 	xmlDocPtr	doc;
 
 	doc = xml_parse(data, xmloption_arg, preserve_whitespace,
-					GetDatabaseEncoding(), NULL);
+					GetDatabaseEncoding(), NULL, NULL, NULL);
 	xmlFreeDoc(doc);
 
 	return (xmltype *) data;
@@ -902,7 +1072,7 @@ xml_is_document(xmltype *arg)
 	 * We'll report "true" if no soft error is reported by xml_parse().
 	 */
 	doc = xml_parse((text *) arg, XMLOPTION_DOCUMENT, true,
-					GetDatabaseEncoding(), (Node *) &escontext);
+					GetDatabaseEncoding(), NULL, NULL, (Node *) &escontext);
 	if (doc)
 		xmlFreeDoc(doc);
 
@@ -1491,6 +1661,14 @@ xml_doctype_in_content(const xmlChar *str)
  * and xmloption_arg and preserve_whitespace are options for the
  * transformation.
  *
+ * If parsed_xmloptiontype isn't NULL, *parsed_xmloptiontype is set to the
+ * XmlOptionType actually used to parse the input (typically the same as
+ * xmloption_arg, but a DOCTYPE node in the input can force DOCUMENT mode).
+ *
+ * If parsed_nodes isn't NULL and the input is not an XML document, the list
+ * of parsed nodes from the xmlParseBalancedChunkMemory call will be returned
+ * to *parsed_nodes.
+ *
  * Errors normally result in ereport(ERROR), but if escontext is an
  * ErrorSaveContext, then "safe" errors are reported there instead, and the
  * caller must check SOFT_ERROR_OCCURRED() to see whether that happened.
@@ -1503,8 +1681,10 @@ xml_doctype_in_content(const xmlChar *str)
  * yet do not use SAX - see xmlreader.c)
  */
 static xmlDocPtr
-xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
-		  int encoding, Node *escontext)
+xml_parse(text *data, XmlOptionType xmloption_arg,
+		  bool preserve_whitespace, int encoding,
+		  XmlOptionType *parsed_xmloptiontype, xmlNodePtr *parsed_nodes,
+		  Node *escontext)
 {
 	int32		len;
 	xmlChar    *string;
@@ -1574,6 +1754,13 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 				parse_as_document = true;
 		}
 
+		/* initialize output parameters */
+		if (parsed_xmloptiontype != NULL)
+			*parsed_xmloptiontype = parse_as_document ? XMLOPTION_DOCUMENT :
+				XMLOPTION_CONTENT;
+		if (parsed_nodes != NULL)
+			*parsed_nodes = NULL;
+
 		if (parse_as_document)
 		{
 			/*
@@ -1620,7 +1807,8 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			if (*(utf8string + count))
 			{
 				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
-													   utf8string + count, NULL);
+													   utf8string + count,
+													   parsed_nodes);
 				if (res_code != 0 || xmlerrcxt->err_occurred)
 				{
 					xml_errsave(escontext, xmlerrcxt,
@@ -4305,7 +4493,7 @@ wellformed_xml(text *data, XmlOptionType xmloption_arg)
 	 * We'll report "true" if no soft error is reported by xml_parse().
 	 */
 	doc = xml_parse(data, xmloption_arg, true,
-					GetDatabaseEncoding(), (Node *) &escontext);
+					GetDatabaseEncoding(), NULL, NULL, (Node *) &escontext);
 	if (doc)
 		xmlFreeDoc(doc);
 
