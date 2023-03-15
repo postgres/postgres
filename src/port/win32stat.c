@@ -289,39 +289,66 @@ int
 _pgfstat64(int fileno, struct stat *buf)
 {
 	HANDLE		hFile = (HANDLE) _get_osfhandle(fileno);
-	BY_HANDLE_FILE_INFORMATION fiData;
+	DWORD		fileType = FILE_TYPE_UNKNOWN;
+	DWORD		lastError;
+	unsigned short st_mode;
 
-	if (hFile == INVALID_HANDLE_VALUE || buf == NULL)
+	/*
+	 * When stdin, stdout, and stderr aren't associated with a stream the
+	 * special value -2 is returned:
+	 * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/get-osfhandle
+	 */
+	if (hFile == INVALID_HANDLE_VALUE || hFile == (HANDLE) -2 || buf == NULL)
 	{
 		errno = EINVAL;
 		return -1;
 	}
 
+	fileType = GetFileType(hFile);
+	lastError = GetLastError();
+
 	/*
-	 * Check if the fileno is a data stream.  If so, unless it has been
-	 * redirected to a file, getting information through its HANDLE will fail,
-	 * so emulate its stat information in the most appropriate way and return
-	 * it instead.
+	 * Invoke GetLastError in order to distinguish between a "valid" return of
+	 * FILE_TYPE_UNKNOWN and its return due to a calling error.  In case of
+	 * success, GetLastError returns NO_ERROR.
 	 */
-	if ((fileno == _fileno(stdin) ||
-		 fileno == _fileno(stdout) ||
-		 fileno == _fileno(stderr)) &&
-		!GetFileInformationByHandle(hFile, &fiData))
+	if (fileType == FILE_TYPE_UNKNOWN && lastError != NO_ERROR)
 	{
-		memset(buf, 0, sizeof(*buf));
-		buf->st_mode = _S_IFCHR;
-		buf->st_dev = fileno;
-		buf->st_rdev = fileno;
-		buf->st_nlink = 1;
-		return 0;
+		_dosmaperr(lastError);
+		return -1;
 	}
 
-	/*
-	 * Since we already have a file handle there is no need to check for
-	 * ERROR_DELETE_PENDING.
-	 */
+	switch (fileType)
+	{
+			/* The specified file is a disk file */
+		case FILE_TYPE_DISK:
+			return fileinfo_to_stat(hFile, buf);
 
-	return fileinfo_to_stat(hFile, buf);
+			/*
+			 * The specified file is a socket, a named pipe, or an anonymous
+			 * pipe.
+			 */
+		case FILE_TYPE_PIPE:
+			st_mode = _S_IFIFO;
+			break;
+			/* The specified file is a character file */
+		case FILE_TYPE_CHAR:
+			st_mode = _S_IFCHR;
+			break;
+			/* Unused flag and unknown file type */
+		case FILE_TYPE_REMOTE:
+		case FILE_TYPE_UNKNOWN:
+		default:
+			errno = EINVAL;
+			return -1;
+	}
+
+	memset(buf, 0, sizeof(*buf));
+	buf->st_mode = st_mode;
+	buf->st_dev = fileno;
+	buf->st_rdev = fileno;
+	buf->st_nlink = 1;
+	return 0;
 }
 
 #endif							/* WIN32 */
