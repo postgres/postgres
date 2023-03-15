@@ -475,6 +475,11 @@ sub mkvcbuild
 		  'pgcrypto';
 	}
 
+	if (!$solution->{options}->{ldap})
+	{
+		push @contrib_excludes, 'ldap_password_func';
+	}
+
 	if (!$solution->{options}->{uuid})
 	{
 		push @contrib_excludes, 'uuid-ossp';
