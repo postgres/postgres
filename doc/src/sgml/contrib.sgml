@@ -84,6 +84,33 @@ CREATE EXTENSION <replaceable>extension_name</replaceable>;
   provide access to outside-the-database functionality.
  </para>
 
+ <para id="contrib-trusted-extensions">
+  The following extensions are trusted in a default installation:
+
+  <simplelist type="vert" columns="4">
+   <member><xref linkend="btree-gin"/></member>
+   <member><xref linkend="btree-gist"/></member>
+   <member><xref linkend="citext"/></member>
+   <member><xref linkend="cube"/></member>
+   <member><xref linkend="dict-int"/></member>
+   <member><xref linkend="fuzzystrmatch"/></member>
+   <member><xref linkend="hstore"/></member>
+   <member><xref linkend="intarray"/></member>
+   <member><xref linkend="isn"/></member>
+   <member><xref linkend="lo"/></member>
+   <member><xref linkend="ltree"/></member>
+   <member><xref linkend="pgcrypto"/></member>
+   <member><xref linkend="pgtrgm"/></member>
+   <member><xref linkend="seg"/></member>
+   <member><xref linkend="tablefunc"/></member>
+   <member><xref linkend="tcn"/></member>
+   <member><xref linkend="tsm-system-rows"/></member>
+   <member><xref linkend="tsm-system-time"/></member>
+   <member><xref linkend="unaccent"/></member>
+   <member><xref linkend="uuid-ossp"/></member>
+  </simplelist>
+ </para>
+
  <para>
   Many extensions allow you to install their objects in a schema of your
   choice.  To do that, add <literal>SCHEMA
@@ -98,6 +125,15 @@ CREATE EXTENSION <replaceable>extension_name</replaceable>;
   by way of
   <xref linkend="guc-shared-preload-libraries"/>.  See the documentation of each
   component for details.
+ </para>
+
+ <para id="contrib-obsolete">
+  The following modules and extensions are obsolete:
+
+  <simplelist type="inline">
+   <member><xref linkend="intagg"/></member>
+   <member><xref linkend="xml2"/></member>
+  </simplelist>
  </para>
 
  &adminpack;
