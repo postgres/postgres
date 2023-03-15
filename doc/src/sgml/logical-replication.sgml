@@ -132,7 +132,14 @@
    certain additional requirements) can also be set to be the replica
    identity.  If the table does not have any suitable key, then it can be set
    to replica identity <quote>full</quote>, which means the entire row becomes
-   the key.  This, however, is very inefficient and should only be used as a
+   the key.  When replica identity <quote>full</quote> is specified,
+   indexes can be used on the subscriber side for searching the rows.  Candidate
+   indexes must be btree, non-partial, and have at least one column reference
+   (i.e. cannot consist of only expressions).  These restrictions
+   on the non-unique index properties adhere to some of the restrictions that
+   are enforced for primary keys.  If there are no such suitable indexes,
+   the search on the subscriber side can be very inefficient, therefore
+   replica identity <quote>full</quote> should only be used as a
    fallback if no other solution is possible.  If a replica identity other
    than <quote>full</quote> is set on the publisher side, a replica identity
    comprising the same or fewer columns must also be set on the subscriber

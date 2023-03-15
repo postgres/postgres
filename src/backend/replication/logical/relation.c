@@ -17,8 +17,10 @@
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/table.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_subscription_rel.h"
 #include "executor/executor.h"
 #include "nodes/makefuncs.h"
@@ -49,6 +51,9 @@ typedef struct LogicalRepPartMapEntry
 	Oid			partoid;		/* LogicalRepPartMap's key */
 	LogicalRepRelMapEntry relmapentry;
 } LogicalRepPartMapEntry;
+
+static Oid	FindLogicalRepLocalIndex(Relation localrel, LogicalRepRelation *remoterel,
+									 AttrMap *attrMap);
 
 /*
  * Relcache invalidation callback for our relation map cache.
@@ -439,6 +444,15 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		 */
 		logicalrep_rel_mark_updatable(entry);
 
+		/*
+		 * Finding a usable index is an infrequent task. It occurs when an
+		 * operation is first performed on the relation, or after invalidation
+		 * of the relation cache entry (such as ANALYZE or CREATE/DROP index
+		 * on the relation).
+		 */
+		entry->localindexoid = FindLogicalRepLocalIndex(entry->localrel, remoterel,
+														entry->attrmap);
+
 		entry->localrelvalid = true;
 	}
 
@@ -697,10 +711,204 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	/* Set if the table's replica identity is enough to apply update/delete. */
 	logicalrep_rel_mark_updatable(entry);
 
-	entry->localrelvalid = true;
-
 	/* state and statelsn are left set to 0. */
 	MemoryContextSwitchTo(oldctx);
 
+	/*
+	 * Finding a usable index is an infrequent task. It occurs when an
+	 * operation is first performed on the relation, or after invalidation of
+	 * the relation cache entry (such as ANALYZE or CREATE/DROP index on the
+	 * relation).
+	 *
+	 * We also prefer to run this code on the oldctx so that we do not leak
+	 * anything in the LogicalRepPartMapContext (hence CacheMemoryContext).
+	 */
+	entry->localindexoid = FindLogicalRepLocalIndex(partrel, remoterel,
+													entry->attrmap);
+
+	entry->localrelvalid = true;
+
 	return entry;
+}
+
+/*
+ * Returns true if the given index consists only of expressions such as:
+ * 	CREATE INDEX idx ON table(foo(col));
+ *
+ * Returns false even if there is one column reference:
+ * 	 CREATE INDEX idx ON table(foo(col), col_2);
+ */
+static bool
+IsIndexOnlyOnExpression(IndexInfo *indexInfo)
+{
+	for (int i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
+	{
+		AttrNumber	attnum = indexInfo->ii_IndexAttrNumbers[i];
+
+		if (AttributeNumberIsValid(attnum))
+			return false;
+	}
+
+	return true;
+}
+
+/*
+ * Returns true if the attrmap contains the leftmost column of the index.
+ * Otherwise returns false.
+ *
+ * attrmap is a map of local attributes to remote ones. We can consult this
+ * map to check whether the local index attribute has a corresponding remote
+ * attribute.
+ */
+static bool
+RemoteRelContainsLeftMostColumnOnIdx(IndexInfo *indexInfo, AttrMap *attrmap)
+{
+	AttrNumber	keycol;
+
+	Assert(indexInfo->ii_NumIndexAttrs >= 1);
+
+	keycol = indexInfo->ii_IndexAttrNumbers[0];
+	if (!AttributeNumberIsValid(keycol))
+		return false;
+
+	if (attrmap->maplen <= AttrNumberGetAttrOffset(keycol))
+		return false;
+
+	return attrmap->attnums[AttrNumberGetAttrOffset(keycol)] >= 0;
+}
+
+/*
+ * Returns the oid of an index that can be used by the apply worker to scan
+ * the relation. The index must be btree, non-partial, and have at least
+ * one column reference (i.e. cannot consist of only expressions). These
+ * limitations help to keep the index scan similar to PK/RI index scans.
+ *
+ * Note that the limitations of index scans for replica identity full only
+ * adheres to a subset of the limitations of PK/RI. For example, we support
+ * columns that are marked as [NULL] or we are not interested in the [NOT
+ * DEFERRABLE] aspect of constraints here. It works for us because we always
+ * compare the tuples for non-PK/RI index scans. See
+ * RelationFindReplTupleByIndex().
+ *
+ * XXX: There are no fundamental problems for supporting non-btree indexes.
+ * We mostly need to relax the limitations in RelationFindReplTupleByIndex().
+ * For partial indexes, the required changes are likely to be larger. If
+ * none of the tuples satisfy the expression for the index scan, we fall-back
+ * to sequential execution, which might not be a good idea in some cases.
+ *
+ * We also skip indexes if the remote relation does not contain the leftmost
+ * column of the index. This is because in most such cases sequential scan is
+ * favorable over index scan.
+ *
+ * We expect to call this function when REPLICA IDENTITY FULL is defined for
+ * the remote relation.
+ *
+ * If no suitable index is found, returns InvalidOid.
+ */
+static Oid
+FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
+{
+	List	   *idxlist = RelationGetIndexList(localrel);
+	ListCell   *lc;
+
+	foreach(lc, idxlist)
+	{
+		Oid			idxoid = lfirst_oid(lc);
+		bool		isUsableIdx;
+		bool		containsLeftMostCol;
+		Relation	idxRel;
+		IndexInfo  *idxInfo;
+
+		idxRel = index_open(idxoid, AccessShareLock);
+		idxInfo = BuildIndexInfo(idxRel);
+		isUsableIdx = IsIndexUsableForReplicaIdentityFull(idxInfo);
+		containsLeftMostCol =
+			RemoteRelContainsLeftMostColumnOnIdx(idxInfo, attrmap);
+		index_close(idxRel, AccessShareLock);
+
+		/* Return the first eligible index found */
+		if (isUsableIdx && containsLeftMostCol)
+			return idxoid;
+	}
+
+	return InvalidOid;
+}
+
+/*
+ * Returns true if the index is usable for replica identity full. For details,
+ * see FindUsableIndexForReplicaIdentityFull.
+ */
+bool
+IsIndexUsableForReplicaIdentityFull(IndexInfo *indexInfo)
+{
+	bool		is_btree = (indexInfo->ii_Am == BTREE_AM_OID);
+	bool		is_partial = (indexInfo->ii_Predicate != NIL);
+	bool		is_only_on_expression = IsIndexOnlyOnExpression(indexInfo);
+
+	return is_btree && !is_partial && !is_only_on_expression;
+}
+
+/*
+ * Get replica identity index or if it is not defined a primary key.
+ *
+ * If neither is defined, returns InvalidOid
+ */
+Oid
+GetRelationIdentityOrPK(Relation rel)
+{
+	Oid			idxoid;
+
+	idxoid = RelationGetReplicaIndex(rel);
+
+	if (!OidIsValid(idxoid))
+		idxoid = RelationGetPrimaryKeyIndex(rel);
+
+	return idxoid;
+}
+
+/*
+ * Returns the index oid if we can use an index for subscriber. Otherwise,
+ * returns InvalidOid.
+ */
+static Oid
+FindLogicalRepLocalIndex(Relation localrel, LogicalRepRelation *remoterel,
+						 AttrMap *attrMap)
+{
+	Oid			idxoid;
+
+	/*
+	 * We never need index oid for partitioned tables, always rely on leaf
+	 * partition's index.
+	 */
+	if (localrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		return InvalidOid;
+
+	/*
+	 * Simple case, we already have a primary key or a replica identity index.
+	 */
+	idxoid = GetRelationIdentityOrPK(localrel);
+	if (OidIsValid(idxoid))
+		return idxoid;
+
+	if (remoterel->replident == REPLICA_IDENTITY_FULL)
+	{
+		/*
+		 * We are looking for one more opportunity for using an index. If
+		 * there are any indexes defined on the local relation, try to pick a
+		 * suitable index.
+		 *
+		 * The index selection safely assumes that all the columns are going
+		 * to be available for the index scan given that remote relation has
+		 * replica identity full.
+		 *
+		 * Note that we are not using the planner to find the cheapest method
+		 * to scan the relation as that would require us to either use lower
+		 * level planner functions which would be a maintenance burden in the
+		 * long run or use the full-fledged planner which could cause
+		 * overhead.
+		 */
+		return FindUsableIndexForReplicaIdentityFull(localrel, attrMap);
+	}
+
+	return InvalidOid;
 }
