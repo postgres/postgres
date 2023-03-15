@@ -1683,7 +1683,8 @@ CopyReadAttributesText(CopyFromState cstate)
 			strncmp(start_ptr, cstate->opts.null_print, input_len) == 0)
 			cstate->raw_fields[fieldno] = NULL;
 		/* Check whether raw input matched default marker */
-		else if (cstate->opts.default_print &&
+		else if (fieldno < list_length(cstate->attnumlist) &&
+				 cstate->opts.default_print &&
 				 input_len == cstate->opts.default_print_len &&
 				 strncmp(start_ptr, cstate->opts.default_print, input_len) == 0)
 		{
@@ -1897,7 +1898,8 @@ endfield:
 			strncmp(start_ptr, cstate->opts.null_print, input_len) == 0)
 			cstate->raw_fields[fieldno] = NULL;
 		/* Check whether raw input matched default marker */
-		else if (cstate->opts.default_print &&
+		else if (fieldno < list_length(cstate->attnumlist) &&
+				 cstate->opts.default_print &&
 				 input_len == cstate->opts.default_print_len &&
 				 strncmp(start_ptr, cstate->opts.default_print, input_len) == 0)
 		{
