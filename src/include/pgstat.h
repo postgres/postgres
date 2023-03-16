@@ -111,15 +111,6 @@ typedef struct PgStat_FunctionCounts
 	instr_time	f_self_time;
 } PgStat_FunctionCounts;
 
-/* ----------
- * PgStat_BackendFunctionEntry	Non-flushed function stats.
- * ----------
- */
-typedef struct PgStat_BackendFunctionEntry
-{
-	PgStat_FunctionCounts f_counts;
-} PgStat_BackendFunctionEntry;
-
 /*
  * Working state needed to accumulate per-function-call timing statistics.
  */
@@ -556,7 +547,7 @@ extern void pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu,
 									  bool finalize);
 
 extern PgStat_StatFuncEntry *pgstat_fetch_stat_funcentry(Oid func_id);
-extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
+extern PgStat_FunctionCounts *find_funcstat_entry(Oid func_id);
 
 
 /*

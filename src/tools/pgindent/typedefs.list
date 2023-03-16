@@ -2032,7 +2032,6 @@ PgStatShared_SLRU
 PgStatShared_Subscription
 PgStatShared_Wal
 PgStat_ArchiverStats
-PgStat_BackendFunctionEntry
 PgStat_BackendSubEntry
 PgStat_BgWriterStats
 PgStat_BktypeIO

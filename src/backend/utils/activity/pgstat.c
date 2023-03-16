@@ -292,7 +292,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.shared_size = sizeof(PgStatShared_Function),
 		.shared_data_off = offsetof(PgStatShared_Function, stats),
 		.shared_data_len = sizeof(((PgStatShared_Function *) 0)->stats),
-		.pending_size = sizeof(PgStat_BackendFunctionEntry),
+		.pending_size = sizeof(PgStat_FunctionCounts),
 
 		.flush_pending_cb = pgstat_function_flush_cb,
 	},

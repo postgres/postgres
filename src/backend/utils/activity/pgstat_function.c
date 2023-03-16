@@ -73,7 +73,7 @@ pgstat_init_function_usage(FunctionCallInfo fcinfo,
 						   PgStat_FunctionCallUsage *fcu)
 {
 	PgStat_EntryRef *entry_ref;
-	PgStat_BackendFunctionEntry *pending;
+	PgStat_FunctionCounts *pending;
 	bool		created_entry;
 
 	if (pgstat_track_functions <= fcinfo->flinfo->fn_stats)
@@ -121,10 +121,10 @@ pgstat_init_function_usage(FunctionCallInfo fcinfo,
 
 	pending = entry_ref->pending;
 
-	fcu->fs = &pending->f_counts;
+	fcu->fs = pending;
 
 	/* save stats for this function, later used to compensate for recursion */
-	fcu->save_f_total_time = pending->f_counts.f_total_time;
+	fcu->save_f_total_time = pending->f_total_time;
 
 	/* save current backend-wide total time */
 	fcu->save_total = total_func_time;
@@ -192,10 +192,10 @@ pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu, bool finalize)
 bool
 pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 {
-	PgStat_BackendFunctionEntry *localent;
+	PgStat_FunctionCounts *localent;
 	PgStatShared_Function *shfuncent;
 
-	localent = (PgStat_BackendFunctionEntry *) entry_ref->pending;
+	localent = (PgStat_FunctionCounts *) entry_ref->pending;
 	shfuncent = (PgStatShared_Function *) entry_ref->shared_stats;
 
 	/* localent always has non-zero content */
@@ -203,11 +203,11 @@ pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	if (!pgstat_lock_entry(entry_ref, nowait))
 		return false;
 
-	shfuncent->stats.f_numcalls += localent->f_counts.f_numcalls;
+	shfuncent->stats.f_numcalls += localent->f_numcalls;
 	shfuncent->stats.f_total_time +=
-		INSTR_TIME_GET_MICROSEC(localent->f_counts.f_total_time);
+		INSTR_TIME_GET_MICROSEC(localent->f_total_time);
 	shfuncent->stats.f_self_time +=
-		INSTR_TIME_GET_MICROSEC(localent->f_counts.f_self_time);
+		INSTR_TIME_GET_MICROSEC(localent->f_self_time);
 
 	pgstat_unlock_entry(entry_ref);
 
@@ -215,11 +215,11 @@ pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 }
 
 /*
- * find any existing PgStat_BackendFunctionEntry entry for specified function
+ * find any existing PgStat_FunctionCounts entry for specified function
  *
  * If no entry, return NULL, don't create a new one
  */
-PgStat_BackendFunctionEntry *
+PgStat_FunctionCounts *
 find_funcstat_entry(Oid func_id)
 {
 	PgStat_EntryRef *entry_ref;

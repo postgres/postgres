@@ -1652,33 +1652,33 @@ Datum
 pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS)
 {
 	Oid			funcid = PG_GETARG_OID(0);
-	PgStat_BackendFunctionEntry *funcentry;
+	PgStat_FunctionCounts *funcentry;
 
 	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
 		PG_RETURN_NULL();
-	PG_RETURN_INT64(funcentry->f_counts.f_numcalls);
+	PG_RETURN_INT64(funcentry->f_numcalls);
 }
 
 Datum
 pg_stat_get_xact_function_total_time(PG_FUNCTION_ARGS)
 {
 	Oid			funcid = PG_GETARG_OID(0);
-	PgStat_BackendFunctionEntry *funcentry;
+	PgStat_FunctionCounts *funcentry;
 
 	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
 		PG_RETURN_NULL();
-	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->f_counts.f_total_time));
+	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->f_total_time));
 }
 
 Datum
 pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS)
 {
 	Oid			funcid = PG_GETARG_OID(0);
-	PgStat_BackendFunctionEntry *funcentry;
+	PgStat_FunctionCounts *funcentry;
 
 	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
 		PG_RETURN_NULL();
-	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->f_counts.f_self_time));
+	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->f_self_time));
 }
 
 
