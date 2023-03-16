@@ -1378,7 +1378,7 @@ RenameRole(const char *oldname, const char *newname)
 	 * Only superusers can mess with superusers. Otherwise, a user with
 	 * CREATEROLE can rename a role for which they have ADMIN OPTION.
 	 */
-	if (((Form_pg_authid) GETSTRUCT(oldtuple))->rolsuper)
+	if (authform->rolsuper)
 	{
 		if (!superuser())
 			ereport(ERROR,
