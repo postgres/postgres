@@ -32,7 +32,7 @@ OBJS = \
 	$(WIN32RES) \
 	informix.o
 
-PKG_CONFIG_REQUIRES_PRIVATE = libecpg libpgtypes
+PKG_CONFIG_REQUIRES_PRIVATE = libecpg, libpgtypes
 
 all: all-lib
 

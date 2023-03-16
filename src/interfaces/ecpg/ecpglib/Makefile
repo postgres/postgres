@@ -41,7 +41,7 @@ SHLIB_PREREQS = submake-libpq submake-pgtypeslib
 
 SHLIB_EXPORTS = exports.txt
 
-PKG_CONFIG_REQUIRES_PRIVATE = libpq libpgtypes
+PKG_CONFIG_REQUIRES_PRIVATE = libpq, libpgtypes
 
 all: all-lib
 
