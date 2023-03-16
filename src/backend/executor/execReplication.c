@@ -290,10 +290,11 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 		TypeCacheEntry *typentry;
 
 		/*
-		 * Ignore dropped columns as the publisher doesn't send those
+		 * Ignore dropped and generated columns as the publisher doesn't
+		 * send those
 		 */
 		att = TupleDescAttr(slot1->tts_tupleDescriptor, attrnum);
-		if (att->attisdropped)
+		if (att->attisdropped || att->attgenerated)
 			continue;
 
 		/*
