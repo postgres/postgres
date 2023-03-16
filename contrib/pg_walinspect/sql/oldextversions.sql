@@ -5,8 +5,13 @@ CREATE EXTENSION pg_walinspect WITH VERSION '1.0';
 -- Mask DETAIL messages as these could refer to current LSN positions.
 \set VERBOSITY terse
 
--- List what version 1.0 contains
-\dx+ pg_walinspect
+-- List what version 1.0 contains, using a locale-independent sorting.
+SELECT pg_describe_object(classid, objid, 0) AS obj
+  FROM pg_depend
+  WHERE refclassid = 'pg_extension'::regclass AND
+    refobjid = (SELECT oid FROM pg_extension
+                  WHERE extname = 'pg_walinspect') AND deptype = 'e'
+  ORDER BY pg_describe_object(classid, objid, 0) COLLATE "C";
 
 -- Make sure checkpoints don't interfere with the test.
 SELECT 'init' FROM pg_create_physical_replication_slot('regress_pg_walinspect_slot', true, false);

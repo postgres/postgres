@@ -2,10 +2,14 @@
 CREATE EXTENSION pg_walinspect WITH VERSION '1.0';
 -- Mask DETAIL messages as these could refer to current LSN positions.
 \set VERBOSITY terse
--- List what version 1.0 contains
-\dx+ pg_walinspect
-           Objects in extension "pg_walinspect"
-                    Object description                     
+-- List what version 1.0 contains, using a locale-independent sorting.
+SELECT pg_describe_object(classid, objid, 0) AS obj
+  FROM pg_depend
+  WHERE refclassid = 'pg_extension'::regclass AND
+    refobjid = (SELECT oid FROM pg_extension
+                  WHERE extname = 'pg_walinspect') AND deptype = 'e'
+  ORDER BY pg_describe_object(classid, objid, 0) COLLATE "C";
+                            obj                            
 -----------------------------------------------------------
  function pg_get_wal_record_info(pg_lsn)
  function pg_get_wal_records_info(pg_lsn,pg_lsn)
