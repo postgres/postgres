@@ -586,12 +586,24 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      Operations such as TRUNCATE which normally affect a table and all of its
+      Operations such as <command>TRUNCATE</command>
+      which normally affect a table and all of its
       inheritance children will cascade to all partitions, but may also be
-      performed on an individual partition.  Note that dropping a partition
-      with <literal>DROP TABLE</literal> requires taking an <literal>ACCESS
-      EXCLUSIVE</literal> lock on the parent table.
+      performed on an individual partition.
      </para>
+
+     <para>
+      Note that creating a partition using <literal>PARTITION OF</literal>
+      requires taking an <literal>ACCESS EXCLUSIVE</literal> lock on the
+      parent partitioned table.  Likewise, dropping a partition
+      with <command>DROP TABLE</command> requires taking
+      an <literal>ACCESS EXCLUSIVE</literal> lock on the parent table.
+      It is possible to use <link linkend="sql-altertable"><command>ALTER
+      TABLE ATTACH/DETACH PARTITION</command></link> to perform these
+      operations with a weaker lock, thus reducing interference with
+      concurrent operations on the partitioned table.
+     </para>
+
     </listitem>
    </varlistentry>
 
