@@ -41,7 +41,7 @@ GRANT pg_read_all_settings TO regress_adminpack_user1;
 GRANT EXECUTE ON FUNCTION pg_file_write(text,text,bool) TO regress_adminpack_user1;
 SET ROLE regress_adminpack_user1;
 SELECT pg_file_write('../test_file0', 'test0', false);
-ERROR:  path must be in or below the current directory
+ERROR:  path must be in or below the data directory
 SELECT pg_file_write('/tmp/test_file0', 'test0', false);
 ERROR:  absolute path not allowed
 SELECT pg_file_write(current_setting('data_directory') || '/test_file4', 'test4', false);

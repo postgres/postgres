@@ -97,7 +97,7 @@ convert_and_check_filename(text *arg)
 	else if (!path_is_relative_and_below_cwd(filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("path must be in or below the current directory")));
+				 errmsg("path must be in or below the data directory")));
 
 	return filename;
 }
