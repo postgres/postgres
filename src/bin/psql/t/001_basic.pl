@@ -350,4 +350,21 @@ psql_like(
 	'\copy from with DEFAULT'
 );
 
+# Check \watch errors
+psql_fails_like(
+	$node,
+	'SELECT 1;\watch -10',
+	qr/incorrect interval value '-10'/,
+	'\watch, negative interval');
+psql_fails_like(
+	$node,
+	'SELECT 1;\watch 10ab',
+	qr/incorrect interval value '10ab'/,
+	'\watch incorrect interval');
+psql_fails_like(
+	$node,
+	'SELECT 1;\watch 10e400',
+	qr/incorrect interval value '10e400'/,
+	'\watch out-of-range interval');
+
 done_testing();
