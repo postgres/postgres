@@ -20,15 +20,13 @@ SELECT timestamp with time zone '2001-12-27 04:05:06.789-08';
 SELECT timestamp with time zone '2001.12.27 04:05:06.789-08';
 SELECT timestamp with time zone '2001/12/27 04:05:06.789-08';
 SELECT timestamp with time zone '12/27/2001 04:05:06.789-08';
+SELECT timestamp with time zone '2001-12-27 04:05:06.789 MET DST';
+SELECT timestamp with time zone '2001-12-27 allballs';
 -- should fail in mdy mode:
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
 set datestyle to dmy;
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
 reset datestyle;
-SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789+08';
-SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789-08';
-SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789+08';
-SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789-08';
 SELECT timestamp with time zone 'J2452271+08';
 SELECT timestamp with time zone 'J2452271-08';
 SELECT timestamp with time zone 'J2452271.5+08';
@@ -57,10 +55,23 @@ SELECT time with time zone 'T040506.789+08';
 SELECT time with time zone 'T040506.789-08';
 SELECT time with time zone 'T040506.789 +08';
 SELECT time with time zone 'T040506.789 -08';
+-- time with time zone should accept a date for DST resolution purposes
+SELECT time with time zone 'T040506.789 America/Los_Angeles';
+SELECT time with time zone '2001-12-27 T040506.789 America/Los_Angeles';
+SELECT time with time zone 'J2452271 T040506.789 America/Los_Angeles';
 SET DateStyle = 'Postgres, MDY';
 -- Check Julian dates BC
 SELECT date 'J1520447' AS "Confucius' Birthday";
 SELECT date 'J0' AS "Julian Epoch";
+
+-- test error on dangling Julian units
+SELECT date '1995-08-06  J J J';
+SELECT date 'J J 1520447';
+
+-- We used to accept this input style, but it was based on a misreading
+-- of ISO8601, and it was never documented anyway
+SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789+08';
+SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789-08';
 
 -- conflicting fields should throw errors
 SELECT date '1995-08-06 epoch';

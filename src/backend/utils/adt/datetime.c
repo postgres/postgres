@@ -983,7 +983,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			fmask = 0,
 				tmask,
 				type;
-	int			ptype = 0;		/* "prefix type" for ISO y2001m02d04 format */
+	int			ptype = 0;		/* "prefix type" for ISO and Julian formats */
 	int			i;
 	int			val;
 	int			dterr;
@@ -1071,6 +1071,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					{
 						char	   *cp;
 
+						/*
+						 * Allow a preceding "t" field, but no other units.
+						 */
 						if (ptype != 0)
 						{
 							/* Sanity check; should not fail this test */
@@ -1175,8 +1178,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			case DTK_NUMBER:
 
 				/*
-				 * Was this an "ISO date" with embedded field labels? An
-				 * example is "y2001m02d04" - thomas 2001-02-04
+				 * Deal with cases where previous field labeled this one
 				 */
 				if (ptype != 0)
 				{
@@ -1187,85 +1189,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					value = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
-
-					/*
-					 * only a few kinds are allowed to have an embedded
-					 * decimal
-					 */
-					if (*cp == '.')
-						switch (ptype)
-						{
-							case DTK_JULIAN:
-							case DTK_TIME:
-							case DTK_SECOND:
-								break;
-							default:
-								return DTERR_BAD_FORMAT;
-								break;
-						}
-					else if (*cp != '\0')
+					if (*cp != '.' && *cp != '\0')
 						return DTERR_BAD_FORMAT;
 
 					switch (ptype)
 					{
-						case DTK_YEAR:
-							tm->tm_year = value;
-							tmask = DTK_M(YEAR);
-							break;
-
-						case DTK_MONTH:
-
-							/*
-							 * already have a month and hour? then assume
-							 * minutes
-							 */
-							if ((fmask & DTK_M(MONTH)) != 0 &&
-								(fmask & DTK_M(HOUR)) != 0)
-							{
-								tm->tm_min = value;
-								tmask = DTK_M(MINUTE);
-							}
-							else
-							{
-								tm->tm_mon = value;
-								tmask = DTK_M(MONTH);
-							}
-							break;
-
-						case DTK_DAY:
-							tm->tm_mday = value;
-							tmask = DTK_M(DAY);
-							break;
-
-						case DTK_HOUR:
-							tm->tm_hour = value;
-							tmask = DTK_M(HOUR);
-							break;
-
-						case DTK_MINUTE:
-							tm->tm_min = value;
-							tmask = DTK_M(MINUTE);
-							break;
-
-						case DTK_SECOND:
-							tm->tm_sec = value;
-							tmask = DTK_M(SECOND);
-							if (*cp == '.')
-							{
-								dterr = ParseFractionalSecond(cp, fsec);
-								if (dterr)
-									return dterr;
-								tmask = DTK_ALL_SECS_M;
-							}
-							break;
-
-						case DTK_TZ:
-							tmask = DTK_M(TZ);
-							dterr = DecodeTimezone(field[i], tzp);
-							if (dterr)
-								return dterr;
-							break;
-
 						case DTK_JULIAN:
 							/* previous field was a label for "julian date" */
 							if (value < 0)
@@ -1519,6 +1447,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 					case UNITS:
 						tmask = 0;
+						/* reject consecutive unhandled units */
+						if (ptype != 0)
+							return DTERR_BAD_FORMAT;
 						ptype = val;
 						break;
 
@@ -1534,18 +1465,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						if ((fmask & DTK_DATE_M) != DTK_DATE_M)
 							return DTERR_BAD_FORMAT;
 
-						/***
-						 * We will need one of the following fields:
-						 *	DTK_NUMBER should be hhmmss.fff
-						 *	DTK_TIME should be hh:mm:ss.fff
-						 *	DTK_DATE should be hhmmss-zz
-						 ***/
-						if (i >= nf - 1 ||
-							(ftype[i + 1] != DTK_NUMBER &&
-							 ftype[i + 1] != DTK_TIME &&
-							 ftype[i + 1] != DTK_DATE))
+						/* reject consecutive unhandled units */
+						if (ptype != 0)
 							return DTERR_BAD_FORMAT;
-
 						ptype = val;
 						break;
 
@@ -1575,6 +1497,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			return DTERR_BAD_FORMAT;
 		fmask |= tmask;
 	}							/* end loop over fields */
+
+	/* reject if prefix type appeared and was never handled */
+	if (ptype != 0)
+		return DTERR_BAD_FORMAT;
 
 	/* do additional checking for normal date specs (but not "infinity" etc) */
 	if (*dtype == DTK_DATE)
@@ -1943,7 +1869,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	int			fmask = 0,
 				tmask,
 				type;
-	int			ptype = 0;		/* "prefix type" for ISO h04mm05s06 format */
+	int			ptype = 0;		/* "prefix type" for ISO and Julian formats */
 	int			i;
 	int			val;
 	int			dterr;
@@ -2070,112 +1996,26 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 			case DTK_NUMBER:
 
 				/*
-				 * Was this an "ISO time" with embedded field labels? An
-				 * example is "h04mm05s06" - thomas 2001-02-04
+				 * Deal with cases where previous field labeled this one
 				 */
 				if (ptype != 0)
 				{
 					char	   *cp;
 					int			value;
 
-					/* Only accept a date under limited circumstances */
-					switch (ptype)
-					{
-						case DTK_JULIAN:
-						case DTK_YEAR:
-						case DTK_MONTH:
-						case DTK_DAY:
-							if (tzp == NULL)
-								return DTERR_BAD_FORMAT;
-						default:
-							break;
-					}
-
 					errno = 0;
 					value = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
-
-					/*
-					 * only a few kinds are allowed to have an embedded
-					 * decimal
-					 */
-					if (*cp == '.')
-						switch (ptype)
-						{
-							case DTK_JULIAN:
-							case DTK_TIME:
-							case DTK_SECOND:
-								break;
-							default:
-								return DTERR_BAD_FORMAT;
-								break;
-						}
-					else if (*cp != '\0')
+					if (*cp != '.' && *cp != '\0')
 						return DTERR_BAD_FORMAT;
 
 					switch (ptype)
 					{
-						case DTK_YEAR:
-							tm->tm_year = value;
-							tmask = DTK_M(YEAR);
-							break;
-
-						case DTK_MONTH:
-
-							/*
-							 * already have a month and hour? then assume
-							 * minutes
-							 */
-							if ((fmask & DTK_M(MONTH)) != 0 &&
-								(fmask & DTK_M(HOUR)) != 0)
-							{
-								tm->tm_min = value;
-								tmask = DTK_M(MINUTE);
-							}
-							else
-							{
-								tm->tm_mon = value;
-								tmask = DTK_M(MONTH);
-							}
-							break;
-
-						case DTK_DAY:
-							tm->tm_mday = value;
-							tmask = DTK_M(DAY);
-							break;
-
-						case DTK_HOUR:
-							tm->tm_hour = value;
-							tmask = DTK_M(HOUR);
-							break;
-
-						case DTK_MINUTE:
-							tm->tm_min = value;
-							tmask = DTK_M(MINUTE);
-							break;
-
-						case DTK_SECOND:
-							tm->tm_sec = value;
-							tmask = DTK_M(SECOND);
-							if (*cp == '.')
-							{
-								dterr = ParseFractionalSecond(cp, fsec);
-								if (dterr)
-									return dterr;
-								tmask = DTK_ALL_SECS_M;
-							}
-							break;
-
-						case DTK_TZ:
-							tmask = DTK_M(TZ);
-							dterr = DecodeTimezone(field[i], tzp);
-							if (dterr)
-								return dterr;
-							break;
-
 						case DTK_JULIAN:
 							/* previous field was a label for "julian date" */
+							if (tzp == NULL)
+								return DTERR_BAD_FORMAT;
 							if (value < 0)
 								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
@@ -2378,24 +2218,17 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 					case UNITS:
 						tmask = 0;
+						/* reject consecutive unhandled units */
+						if (ptype != 0)
+							return DTERR_BAD_FORMAT;
 						ptype = val;
 						break;
 
 					case ISOTIME:
 						tmask = 0;
-
-						/***
-						 * We will need one of the following fields:
-						 *	DTK_NUMBER should be hhmmss.fff
-						 *	DTK_TIME should be hh:mm:ss.fff
-						 *	DTK_DATE should be hhmmss-zz
-						 ***/
-						if (i >= nf - 1 ||
-							(ftype[i + 1] != DTK_NUMBER &&
-							 ftype[i + 1] != DTK_TIME &&
-							 ftype[i + 1] != DTK_DATE))
+						/* reject consecutive unhandled units */
+						if (ptype != 0)
 							return DTERR_BAD_FORMAT;
-
 						ptype = val;
 						break;
 
@@ -2425,6 +2258,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 			return DTERR_BAD_FORMAT;
 		fmask |= tmask;
 	}							/* end loop over fields */
+
+	/* reject if prefix type appeared and was never handled */
+	if (ptype != 0)
+		return DTERR_BAD_FORMAT;
 
 	/* do final checking/adjustment of Y/M/D fields */
 	dterr = ValidateDate(fmask, isjulian, is2digits, bc, tm);

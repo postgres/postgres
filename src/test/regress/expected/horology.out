@@ -83,6 +83,18 @@ SELECT timestamp with time zone '12/27/2001 04:05:06.789-08';
  Thu Dec 27 04:05:06.789 2001 PST
 (1 row)
 
+SELECT timestamp with time zone '2001-12-27 04:05:06.789 MET DST';
+           timestamptz            
+----------------------------------
+ Wed Dec 26 18:05:06.789 2001 PST
+(1 row)
+
+SELECT timestamp with time zone '2001-12-27 allballs';
+         timestamptz          
+------------------------------
+ Wed Dec 26 16:00:00 2001 PST
+(1 row)
+
 -- should fail in mdy mode:
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
 ERROR:  date/time field value out of range: "27/12/2001 04:05:06.789-08"
@@ -97,30 +109,6 @@ SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
 (1 row)
 
 reset datestyle;
-SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789+08';
-           timestamptz            
-----------------------------------
- Wed Dec 26 12:05:06.789 2001 PST
-(1 row)
-
-SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789-08';
-           timestamptz            
-----------------------------------
- Thu Dec 27 04:05:06.789 2001 PST
-(1 row)
-
-SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789+08';
-           timestamptz            
-----------------------------------
- Wed Dec 26 12:05:06.789 2001 PST
-(1 row)
-
-SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789-08';
-           timestamptz            
-----------------------------------
- Thu Dec 27 04:05:06.789 2001 PST
-(1 row)
-
 SELECT timestamp with time zone 'J2452271+08';
          timestamptz          
 ------------------------------
@@ -269,6 +257,23 @@ SELECT time with time zone 'T040506.789 -08';
  04:05:06.789-08
 (1 row)
 
+-- time with time zone should accept a date for DST resolution purposes
+SELECT time with time zone 'T040506.789 America/Los_Angeles';
+ERROR:  invalid input syntax for type time with time zone: "T040506.789 America/Los_Angeles"
+LINE 1: SELECT time with time zone 'T040506.789 America/Los_Angeles'...
+                                   ^
+SELECT time with time zone '2001-12-27 T040506.789 America/Los_Angeles';
+     timetz      
+-----------------
+ 04:05:06.789-08
+(1 row)
+
+SELECT time with time zone 'J2452271 T040506.789 America/Los_Angeles';
+     timetz      
+-----------------
+ 04:05:06.789-08
+(1 row)
+
 SET DateStyle = 'Postgres, MDY';
 -- Check Julian dates BC
 SELECT date 'J1520447' AS "Confucius' Birthday";
@@ -283,6 +288,25 @@ SELECT date 'J0' AS "Julian Epoch";
  11-24-4714 BC
 (1 row)
 
+-- test error on dangling Julian units
+SELECT date '1995-08-06  J J J';
+ERROR:  invalid input syntax for type date: "1995-08-06  J J J"
+LINE 1: SELECT date '1995-08-06  J J J';
+                    ^
+SELECT date 'J J 1520447';
+ERROR:  invalid input syntax for type date: "J J 1520447"
+LINE 1: SELECT date 'J J 1520447';
+                    ^
+-- We used to accept this input style, but it was based on a misreading
+-- of ISO8601, and it was never documented anyway
+SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789+08';
+ERROR:  invalid input syntax for type timestamp with time zone: "Y2001M12D27H04M05S06.789+08"
+LINE 1: SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789+08...
+                                        ^
+SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789-08';
+ERROR:  invalid input syntax for type timestamp with time zone: "Y2001M12D27H04MM05S06.789-08"
+LINE 1: SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789-0...
+                                        ^
 -- conflicting fields should throw errors
 SELECT date '1995-08-06 epoch';
 ERROR:  invalid input syntax for type date: "1995-08-06 epoch"
