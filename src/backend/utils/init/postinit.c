@@ -962,7 +962,7 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	{
 		Assert(!bootstrap);
 
-		if (!superuser() && !has_rolreplication(GetUserId()))
+		if (!has_rolreplication(GetUserId()))
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser or replication role to start walsender")));

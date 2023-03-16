@@ -1140,7 +1140,7 @@ CheckSlotRequirements(void)
 void
 CheckSlotPermissions(void)
 {
-	if (!superuser() && !has_rolreplication(GetUserId()))
+	if (!has_rolreplication(GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser or replication role to use replication slots")));
