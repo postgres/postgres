@@ -1531,16 +1531,8 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 
 		prunequal = extract_actual_clauses(rel->baserestrictinfo, false);
 
-		if (best_path->path.param_info)
-		{
-			List	   *prmquals = best_path->path.param_info->ppi_clauses;
-
-			prmquals = extract_actual_clauses(prmquals, false);
-			prmquals = (List *) replace_nestloop_params(root,
-														(Node *) prmquals);
-
-			prunequal = list_concat(prunequal, prmquals);
-		}
+		/* We don't currently generate any parameterized MergeAppend paths */
+		Assert(best_path->path.param_info == NULL);
 
 		if (prunequal != NIL)
 			node->part_prune_index = make_partition_pruneinfo(root, rel,

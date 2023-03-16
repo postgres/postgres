@@ -1256,15 +1256,17 @@ create_append_path(PlannerInfo *root,
 	pathnode->path.pathtarget = rel->reltarget;
 
 	/*
-	 * When generating an Append path for a partitioned table, there may be
-	 * parameterized quals that are useful for run-time pruning.  Hence,
-	 * compute path.param_info the same way as for any other baserel, so that
-	 * such quals will be available for make_partition_pruneinfo().  (This
-	 * would not work right for a non-baserel, ie a scan on a non-leaf child
-	 * partition, and it's not necessary anyway in that case.  Must skip it if
-	 * we don't have "root", too.)
+	 * If this is for a baserel (not a join or non-leaf partition), we prefer
+	 * to apply get_baserel_parampathinfo to construct a full ParamPathInfo
+	 * for the path.  This supports building a Memoize path atop this path,
+	 * and if this is a partitioned table the info may be useful for run-time
+	 * pruning (cf make_partition_pruneinfo()).
+	 *
+	 * However, if we don't have "root" then that won't work and we fall back
+	 * on the simpler get_appendrel_parampathinfo.  There's no point in doing
+	 * the more expensive thing for a dummy path, either.
 	 */
-	if (root && rel->reloptkind == RELOPT_BASEREL && IS_PARTITIONED_REL(rel))
+	if (rel->reloptkind == RELOPT_BASEREL && root && subpaths != NIL)
 		pathnode->path.param_info = get_baserel_parampathinfo(root,
 															  rel,
 															  required_outer);

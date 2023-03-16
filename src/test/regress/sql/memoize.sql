@@ -121,6 +121,14 @@ ANALYZE prt;
 SELECT explain_memoize('
 SELECT * FROM prt t1 INNER JOIN prt t2 ON t1.a = t2.a;', false);
 
+-- Ensure memoize works with parameterized union-all Append path
+SET enable_partitionwise_join TO off;
+
+SELECT explain_memoize('
+SELECT * FROM prt_p1 t1 INNER JOIN
+(SELECT * FROM prt_p1 UNION ALL SELECT * FROM prt_p2) t2
+ON t1.a = t2.a;', false);
+
 DROP TABLE prt;
 
 RESET enable_partitionwise_join;
