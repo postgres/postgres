@@ -4840,11 +4840,6 @@ retry:
 	 * freed by a later call to waitpid().
 	 */
 	childinfo = palloc(sizeof(win32_deadchild_waitinfo));
-	if (!childinfo)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-
 	childinfo->procHandle = pi.hProcess;
 	childinfo->procId = pi.dwProcessId;
 
