@@ -52,13 +52,31 @@
 #include "utils/lsyscache.h"
 
 
+/* Bitmask flags for pushdown_safety_info.unsafeFlags */
+#define UNSAFE_HAS_VOLATILE_FUNC		(1 << 0)
+#define UNSAFE_HAS_SET_FUNC				(1 << 1)
+#define UNSAFE_NOTIN_DISTINCTON_CLAUSE	(1 << 2)
+#define UNSAFE_NOTIN_PARTITIONBY_CLAUSE	(1 << 3)
+#define UNSAFE_TYPE_MISMATCH			(1 << 4)
+
 /* results of subquery_is_pushdown_safe */
 typedef struct pushdown_safety_info
 {
-	bool	   *unsafeColumns;	/* which output columns are unsafe to use */
+	unsigned char *unsafeFlags; /* bitmask of reasons why this target list
+								 * column is unsafe for qual pushdown, or 0 if
+								 * no reason. */
 	bool		unsafeVolatile; /* don't push down volatile quals */
 	bool		unsafeLeaky;	/* don't push down leaky quals */
 } pushdown_safety_info;
+
+/* Return type for qual_is_pushdown_safe */
+typedef enum pushdown_safe_type
+{
+	PUSHDOWN_UNSAFE,			/* unsafe to push qual into subquery */
+	PUSHDOWN_SAFE,				/* safe to push qual into subquery */
+	PUSHDOWN_WINDOWCLAUSE_RUNCOND	/* unsafe, but may work as WindowClause
+									 * run condition */
+} pushdown_safe_type;
 
 /* These parameters are set by GUC */
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
@@ -136,9 +154,9 @@ static void check_output_expressions(Query *subquery,
 static void compare_tlist_datatypes(List *tlist, List *colTypes,
 									pushdown_safety_info *safetyInfo);
 static bool targetIsInAllPartitionLists(TargetEntry *tle, Query *query);
-static bool qual_is_pushdown_safe(Query *subquery, Index rti,
-								  RestrictInfo *rinfo,
-								  pushdown_safety_info *safetyInfo);
+static pushdown_safe_type qual_is_pushdown_safe(Query *subquery, Index rti,
+												RestrictInfo *rinfo,
+												pushdown_safety_info *safetyInfo);
 static void subquery_push_qual(Query *subquery,
 							   RangeTblEntry *rte, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
@@ -2218,6 +2236,10 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 	if (!IsA(wfunc, WindowFunc))
 		return false;
 
+	/* can't use it if there are subplans in the WindowFunc */
+	if (contain_subplans((Node *) wfunc))
+		return false;
+
 	prosupport = get_func_support(wfunc->winfnoid);
 
 	/* Check if there's a support function for 'wfunc' */
@@ -2500,13 +2522,14 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	/*
 	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
 	 * flags as needed while recursing.  In particular, we need a workspace
-	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
-	 * will be set true if we find that output column i of the subquery is
-	 * unsafe to use in a pushed-down qual.
+	 * for keeping track of the reasons why columns are unsafe to reference.
+	 * These reasons are stored in the bits inside unsafeFlags[i] when we
+	 * discover reasons that column i of the subquery is unsafe to be used in
+	 * a pushed-down qual.
 	 */
 	memset(&safetyInfo, 0, sizeof(safetyInfo));
-	safetyInfo.unsafeColumns = (bool *)
-		palloc0((list_length(subquery->targetList) + 1) * sizeof(bool));
+	safetyInfo.unsafeFlags = (unsigned char *)
+		palloc0((list_length(subquery->targetList) + 1) * sizeof(unsigned char));
 
 	/*
 	 * If the subquery has the "security_barrier" flag, it means the subquery
@@ -2549,37 +2572,50 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 			Node	   *clause = (Node *) rinfo->clause;
 
-			if (!rinfo->pseudoconstant &&
-				qual_is_pushdown_safe(subquery, rti, rinfo, &safetyInfo))
+			if (rinfo->pseudoconstant)
 			{
-				/* Push it down */
-				subquery_push_qual(subquery, rte, rti, clause);
+				upperrestrictlist = lappend(upperrestrictlist, rinfo);
+				continue;
 			}
-			else
+
+			switch (qual_is_pushdown_safe(subquery, rti, rinfo, &safetyInfo))
 			{
-				/*
-				 * Since we can't push the qual down into the subquery, check
-				 * if it happens to reference a window function.  If so then
-				 * it might be useful to use for the WindowAgg's runCondition.
-				 */
-				if (!subquery->hasWindowFuncs ||
-					check_and_push_window_quals(subquery, rte, rti, clause,
-												&run_cond_attrs))
-				{
+				case PUSHDOWN_SAFE:
+					/* Push it down */
+					subquery_push_qual(subquery, rte, rti, clause);
+					break;
+
+				case PUSHDOWN_WINDOWCLAUSE_RUNCOND:
+
 					/*
-					 * subquery has no window funcs or the clause is not a
-					 * suitable window run condition qual or it is, but the
-					 * original must also be kept in the upper query.
+					 * Since we can't push the qual down into the subquery,
+					 * check if it happens to reference a window function.  If
+					 * so then it might be useful to use for the WindowAgg's
+					 * runCondition.
 					 */
+					if (!subquery->hasWindowFuncs ||
+						check_and_push_window_quals(subquery, rte, rti, clause,
+													&run_cond_attrs))
+					{
+						/*
+						 * subquery has no window funcs or the clause is not a
+						 * suitable window run condition qual or it is, but
+						 * the original must also be kept in the upper query.
+						 */
+						upperrestrictlist = lappend(upperrestrictlist, rinfo);
+					}
+					break;
+
+				case PUSHDOWN_UNSAFE:
 					upperrestrictlist = lappend(upperrestrictlist, rinfo);
-				}
+					break;
 			}
 		}
 		rel->baserestrictinfo = upperrestrictlist;
 		/* We don't bother recomputing baserestrict_min_security */
 	}
 
-	pfree(safetyInfo.unsafeColumns);
+	pfree(safetyInfo.unsafeFlags);
 
 	/*
 	 * The upper query might not use all the subquery's output columns; if
@@ -3517,13 +3553,13 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  *
  * In addition, we make several checks on the subquery's output columns to see
  * if it is safe to reference them in pushed-down quals.  If output column k
- * is found to be unsafe to reference, we set safetyInfo->unsafeColumns[k]
- * to true, but we don't reject the subquery overall since column k might not
- * be referenced by some/all quals.  The unsafeColumns[] array will be
- * consulted later by qual_is_pushdown_safe().  It's better to do it this way
- * than to make the checks directly in qual_is_pushdown_safe(), because when
- * the subquery involves set operations we have to check the output
- * expressions in each arm of the set op.
+ * is found to be unsafe to reference, we set the reason for that inside
+ * safetyInfo->unsafeFlags[k], but we don't reject the subquery overall since
+ * column k might not be referenced by some/all quals.  The unsafeFlags[]
+ * array will be consulted later by qual_is_pushdown_safe().  It's better to
+ * do it this way than to make the checks directly in qual_is_pushdown_safe(),
+ * because when the subquery involves set operations we have to check the
+ * output expressions in each arm of the set op.
  *
  * Note: pushing quals into a DISTINCT subquery is theoretically dubious:
  * we're effectively assuming that the quals cannot distinguish values that
@@ -3571,9 +3607,9 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 
 	/*
 	 * If we're at a leaf query, check for unsafe expressions in its target
-	 * list, and mark any unsafe ones in unsafeColumns[].  (Non-leaf nodes in
-	 * setop trees have only simple Vars in their tlists, so no need to check
-	 * them.)
+	 * list, and mark any reasons why they're unsafe in unsafeFlags[].
+	 * (Non-leaf nodes in setop trees have only simple Vars in their tlists,
+	 * so no need to check them.)
 	 */
 	if (subquery->setOperations == NULL)
 		check_output_expressions(subquery, safetyInfo);
@@ -3644,9 +3680,9 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
  *
  * There are several cases in which it's unsafe to push down an upper-level
  * qual if it references a particular output column of a subquery.  We check
- * each output column of the subquery and set unsafeColumns[k] to true if
- * that column is unsafe for a pushed-down qual to reference.  The conditions
- * checked here are:
+ * each output column of the subquery and set flags in unsafeFlags[k] when we
+ * see that column is unsafe for a pushed-down qual to reference.  The
+ * conditions checked here are:
  *
  * 1. We must not push down any quals that refer to subselect outputs that
  * return sets, else we'd introduce functions-returning-sets into the
@@ -3670,7 +3706,9 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
  * every row of any one window partition, and totally excluding some
  * partitions will not change a window function's results for remaining
  * partitions.  (Again, this also requires nonvolatile quals, but
- * subquery_is_pushdown_safe handles that.)
+ * subquery_is_pushdown_safe handles that.).  Subquery columns marked as
+ * unsafe for this reason can still have WindowClause run conditions pushed
+ * down.
  */
 static void
 check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
@@ -3684,40 +3722,44 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 		if (tle->resjunk)
 			continue;			/* ignore resjunk columns */
 
-		/* We need not check further if output col is already known unsafe */
-		if (safetyInfo->unsafeColumns[tle->resno])
-			continue;
-
 		/* Functions returning sets are unsafe (point 1) */
 		if (subquery->hasTargetSRFs &&
+			(safetyInfo->unsafeFlags[tle->resno] &
+			 UNSAFE_HAS_SET_FUNC) == 0 &&
 			expression_returns_set((Node *) tle->expr))
 		{
-			safetyInfo->unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeFlags[tle->resno] |= UNSAFE_HAS_SET_FUNC;
 			continue;
 		}
 
 		/* Volatile functions are unsafe (point 2) */
-		if (contain_volatile_functions((Node *) tle->expr))
+		if ((safetyInfo->unsafeFlags[tle->resno] &
+			 UNSAFE_HAS_VOLATILE_FUNC) == 0 &&
+			contain_volatile_functions((Node *) tle->expr))
 		{
-			safetyInfo->unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeFlags[tle->resno] |= UNSAFE_HAS_VOLATILE_FUNC;
 			continue;
 		}
 
 		/* If subquery uses DISTINCT ON, check point 3 */
 		if (subquery->hasDistinctOn &&
+			(safetyInfo->unsafeFlags[tle->resno] &
+			 UNSAFE_NOTIN_DISTINCTON_CLAUSE) == 0 &&
 			!targetIsInSortList(tle, InvalidOid, subquery->distinctClause))
 		{
 			/* non-DISTINCT column, so mark it unsafe */
-			safetyInfo->unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeFlags[tle->resno] |= UNSAFE_NOTIN_DISTINCTON_CLAUSE;
 			continue;
 		}
 
 		/* If subquery uses window functions, check point 4 */
 		if (subquery->hasWindowFuncs &&
+			(safetyInfo->unsafeFlags[tle->resno] &
+			 UNSAFE_NOTIN_DISTINCTON_CLAUSE) == 0 &&
 			!targetIsInAllPartitionLists(tle, subquery))
 		{
 			/* not present in all PARTITION BY clauses, so mark it unsafe */
-			safetyInfo->unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeFlags[tle->resno] |= UNSAFE_NOTIN_PARTITIONBY_CLAUSE;
 			continue;
 		}
 	}
@@ -3729,8 +3771,8 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
  * subquery columns that suffer no type coercions in the set operation.
  * Otherwise there are possible semantic gotchas.  So, we check the
  * component queries to see if any of them have output types different from
- * the top-level setop outputs.  unsafeColumns[k] is set true if column k
- * has different type in any component.
+ * the top-level setop outputs.  We set the UNSAFE_TYPE_MISMATCH bit in
+ * unsafeFlags[k] if column k has different type in any component.
  *
  * We don't have to care about typmods here: the only allowed difference
  * between set-op input and output typmods is input is a specific typmod
@@ -3738,7 +3780,7 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
  *
  * tlist is a subquery tlist.
  * colTypes is an OID list of the top-level setop's output column types.
- * safetyInfo->unsafeColumns[] is the result array.
+ * safetyInfo is the pushdown_safety_info to set unsafeFlags[] for.
  */
 static void
 compare_tlist_datatypes(List *tlist, List *colTypes,
@@ -3756,7 +3798,7 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
 		if (colType == NULL)
 			elog(ERROR, "wrong number of tlist entries");
 		if (exprType((Node *) tle->expr) != lfirst_oid(colType))
-			safetyInfo->unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeFlags[tle->resno] |= UNSAFE_TYPE_MISMATCH;
 		colType = lnext(colTypes, colType);
 	}
 	if (colType != NULL)
@@ -3816,28 +3858,28 @@ targetIsInAllPartitionLists(TargetEntry *tle, Query *query)
  * 5. rinfo's clause must not refer to any subquery output columns that were
  * found to be unsafe to reference by subquery_is_pushdown_safe().
  */
-static bool
+static pushdown_safe_type
 qual_is_pushdown_safe(Query *subquery, Index rti, RestrictInfo *rinfo,
 					  pushdown_safety_info *safetyInfo)
 {
-	bool		safe = true;
+	pushdown_safe_type safe = PUSHDOWN_SAFE;
 	Node	   *qual = (Node *) rinfo->clause;
 	List	   *vars;
 	ListCell   *vl;
 
 	/* Refuse subselects (point 1) */
 	if (contain_subplans(qual))
-		return false;
+		return PUSHDOWN_UNSAFE;
 
 	/* Refuse volatile quals if we found they'd be unsafe (point 2) */
 	if (safetyInfo->unsafeVolatile &&
 		contain_volatile_functions((Node *) rinfo))
-		return false;
+		return PUSHDOWN_UNSAFE;
 
 	/* Refuse leaky quals if told to (point 3) */
 	if (safetyInfo->unsafeLeaky &&
 		contain_leaked_vars(qual))
-		return false;
+		return PUSHDOWN_UNSAFE;
 
 	/*
 	 * Examine all Vars used in clause.  Since it's a restriction clause, all
@@ -3864,7 +3906,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, RestrictInfo *rinfo,
 		 */
 		if (!IsA(var, Var))
 		{
-			safe = false;
+			safe = PUSHDOWN_UNSAFE;
 			break;
 		}
 
@@ -3876,7 +3918,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, RestrictInfo *rinfo,
 		 */
 		if (var->varno != rti)
 		{
-			safe = false;
+			safe = PUSHDOWN_UNSAFE;
 			break;
 		}
 
@@ -3886,15 +3928,26 @@ qual_is_pushdown_safe(Query *subquery, Index rti, RestrictInfo *rinfo,
 		/* Check point 4 */
 		if (var->varattno == 0)
 		{
-			safe = false;
+			safe = PUSHDOWN_UNSAFE;
 			break;
 		}
 
 		/* Check point 5 */
-		if (safetyInfo->unsafeColumns[var->varattno])
+		if (safetyInfo->unsafeFlags[var->varattno] != 0)
 		{
-			safe = false;
-			break;
+			if (safetyInfo->unsafeFlags[var->varattno] &
+				(UNSAFE_HAS_VOLATILE_FUNC | UNSAFE_HAS_SET_FUNC |
+				 UNSAFE_NOTIN_DISTINCTON_CLAUSE | UNSAFE_TYPE_MISMATCH))
+			{
+				safe = PUSHDOWN_UNSAFE;
+				break;
+			}
+			else
+			{
+				/* UNSAFE_NOTIN_PARTITIONBY_CLAUSE is ok for run conditions */
+				safe = PUSHDOWN_WINDOWCLAUSE_RUNCOND;
+				/* don't break, we might find another Var that's unsafe */
+			}
 		}
 	}
 
