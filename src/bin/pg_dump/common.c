@@ -83,8 +83,6 @@ static void flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 						  InhInfo *inhinfo, int numInherits);
 static void flagInhIndexes(Archive *fout, TableInfo *tblinfo, int numTables);
 static void flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables);
-static void findParentsByOid(TableInfo *self,
-							 InhInfo *inhinfo, int numInherits);
 static int	strInArray(const char *pattern, char **arr, int arr_size);
 static IndxInfo *findIndexByOid(Oid oid);
 
@@ -288,45 +286,70 @@ static void
 flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits)
 {
+	TableInfo  *child = NULL;
+	TableInfo  *parent = NULL;
 	int			i,
 				j;
 
+	/*
+	 * Set up links from child tables to their parents.
+	 *
+	 * We used to attempt to skip this work for tables that are not to be
+	 * dumped; but the optimizable cases are rare in practice, and setting up
+	 * these links in bulk is cheaper than the old way.  (Note in particular
+	 * that it's very rare for a child to have more than one parent.)
+	 */
+	for (i = 0; i < numInherits; i++)
+	{
+		/*
+		 * Skip a hashtable lookup if it's same table as last time.  This is
+		 * unlikely for the child, but less so for the parent.  (Maybe we
+		 * should ask the backend for a sorted array to make it more likely?
+		 * Not clear the sorting effort would be repaid, though.)
+		 */
+		if (child == NULL ||
+			child->dobj.catId.oid != inhinfo[i].inhrelid)
+		{
+			child = findTableByOid(inhinfo[i].inhrelid);
+
+			/*
+			 * If we find no TableInfo, assume the pg_inherits entry is for a
+			 * partitioned index, which we don't need to track.
+			 */
+			if (child == NULL)
+				continue;
+		}
+		if (parent == NULL ||
+			parent->dobj.catId.oid != inhinfo[i].inhparent)
+		{
+			parent = findTableByOid(inhinfo[i].inhparent);
+			if (parent == NULL)
+				pg_fatal("failed sanity check, parent OID %u of table \"%s\" (OID %u) not found",
+						 inhinfo[i].inhparent,
+						 child->dobj.name,
+						 child->dobj.catId.oid);
+		}
+		/* Add this parent to the child's list of parents. */
+		if (child->numParents > 0)
+			child->parents = pg_realloc_array(child->parents,
+											  TableInfo *,
+											  child->numParents + 1);
+		else
+			child->parents = pg_malloc_array(TableInfo *, 1);
+		child->parents[child->numParents++] = parent;
+	}
+
+	/*
+	 * Now consider all child tables and mark parents interesting as needed.
+	 */
 	for (i = 0; i < numTables; i++)
 	{
-		bool		find_parents = true;
-		bool		mark_parents = true;
-
-		/* Some kinds never have parents */
-		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
-			tblinfo[i].relkind == RELKIND_VIEW ||
-			tblinfo[i].relkind == RELKIND_MATVIEW)
-			continue;
-
-		/*
-		 * Normally, we don't bother computing anything for non-target tables.
-		 * However, we must find the parents of non-root partitioned tables in
-		 * any case, so that we can trace from leaf partitions up to the root
-		 * (in case a leaf is to be dumped but its parents are not).  We need
-		 * not mark such parents interesting for getTableAttrs, though.
-		 */
-		if (!tblinfo[i].dobj.dump)
-		{
-			mark_parents = false;
-
-			if (!(tblinfo[i].relkind == RELKIND_PARTITIONED_TABLE &&
-				  tblinfo[i].ispartition))
-				find_parents = false;
-		}
-
-		/* If needed, find all the immediate parent tables. */
-		if (find_parents)
-			findParentsByOid(&tblinfo[i], inhinfo, numInherits);
-
 		/*
 		 * If needed, mark the parents as interesting for getTableAttrs and
-		 * getIndexes.
+		 * getIndexes.  We only need this for direct parents of dumpable
+		 * tables.
 		 */
-		if (mark_parents)
+		if (tblinfo[i].dobj.dump)
 		{
 			int			numParents = tblinfo[i].numParents;
 			TableInfo **parents = tblinfo[i].parents;
@@ -336,7 +359,8 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 		}
 
 		/* Create TableAttachInfo object if needed */
-		if (tblinfo[i].dobj.dump && tblinfo[i].ispartition)
+		if ((tblinfo[i].dobj.dump & DUMP_COMPONENT_DEFINITION) &&
+			tblinfo[i].ispartition)
 		{
 			TableAttachInfo *attachinfo;
 
@@ -994,52 +1018,6 @@ findOwningExtension(CatalogId catalogId)
 	return entry->ext;
 }
 
-
-/*
- * findParentsByOid
- *	  find a table's parents in tblinfo[]
- */
-static void
-findParentsByOid(TableInfo *self,
-				 InhInfo *inhinfo, int numInherits)
-{
-	Oid			oid = self->dobj.catId.oid;
-	int			i,
-				j;
-	int			numParents;
-
-	numParents = 0;
-	for (i = 0; i < numInherits; i++)
-	{
-		if (inhinfo[i].inhrelid == oid)
-			numParents++;
-	}
-
-	self->numParents = numParents;
-
-	if (numParents > 0)
-	{
-		self->parents = pg_malloc_array(TableInfo *, numParents);
-		j = 0;
-		for (i = 0; i < numInherits; i++)
-		{
-			if (inhinfo[i].inhrelid == oid)
-			{
-				TableInfo  *parent;
-
-				parent = findTableByOid(inhinfo[i].inhparent);
-				if (parent == NULL)
-					pg_fatal("failed sanity check, parent OID %u of table \"%s\" (OID %u) not found",
-							 inhinfo[i].inhparent,
-							 self->dobj.name,
-							 oid);
-				self->parents[j++] = parent;
-			}
-		}
-	}
-	else
-		self->parents = NULL;
-}
 
 /*
  * parseOidArray

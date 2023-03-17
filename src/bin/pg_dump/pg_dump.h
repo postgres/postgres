@@ -320,6 +320,9 @@ typedef struct _tableInfo
 	bool		ispartition;	/* is table a partition? */
 	bool		unsafe_partitions;	/* is it an unsafe partitioned table? */
 
+	int			numParents;		/* number of (immediate) parent tables */
+	struct _tableInfo **parents;	/* TableInfos of immediate parents */
+
 	/*
 	 * These fields are computed only if we decide the table is interesting
 	 * (it's either a table to dump, or a direct parent of a dumpable table).
@@ -351,8 +354,6 @@ typedef struct _tableInfo
 	/*
 	 * Stuff computed only for dumpable tables.
 	 */
-	int			numParents;		/* number of (immediate) parent tables */
-	struct _tableInfo **parents;	/* TableInfos of immediate parents */
 	int			numIndexes;		/* number of indexes */
 	struct _indxInfo *indexes;	/* indexes */
 	struct _tableDataInfo *dataObj; /* TableDataInfo, if dumping its data */

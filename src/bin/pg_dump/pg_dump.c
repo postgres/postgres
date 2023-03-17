@@ -16180,9 +16180,6 @@ dumpTableAttach(Archive *fout, const TableAttachInfo *attachinfo)
 	if (dopt->dataOnly)
 		return;
 
-	if (!(attachinfo->partitionTbl->dobj.dump & DUMP_COMPONENT_DEFINITION))
-		return;
-
 	q = createPQExpBuffer();
 
 	if (!fout->is_prepared[PREPQUERY_DUMPTABLEATTACH])
