@@ -299,6 +299,7 @@ typedef struct _tableInfo
 	bool		dummy_view;		/* view's real definition must be postponed */
 	bool		postponed_def;	/* matview must be postponed into post-data */
 	bool		ispartition;	/* is table a partition? */
+	bool		unsafe_partitions;	/* is it an unsafe partitioned table? */
 
 	/*
 	 * These fields are computed only if we decide the table is interesting
@@ -701,6 +702,7 @@ extern ConvInfo *getConversions(Archive *fout, int *numConversions);
 extern TableInfo *getTables(Archive *fout, int *numTables);
 extern void getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables);
 extern InhInfo *getInherits(Archive *fout, int *numInherits);
+extern void getPartitioningInfo(Archive *fout);
 extern void getIndexes(Archive *fout, TableInfo tblinfo[], int numTables);
 extern void getExtendedStatistics(Archive *fout);
 extern void getConstraints(Archive *fout, TableInfo tblinfo[], int numTables);
