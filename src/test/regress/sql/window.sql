@@ -1205,15 +1205,24 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE 3 <= c;
 
--- Ensure we don't pushdown when there are multiple window clauses to evaluate
+-- Ensure we don't use a run condition when there's a volatile function in the
+-- WindowFunc
 EXPLAIN (COSTS OFF)
 SELECT * FROM
   (SELECT empno,
           salary,
-          count(*) OVER (ORDER BY empno DESC) c,
-          dense_rank() OVER (ORDER BY salary DESC) dr
+          count(random()) OVER (ORDER BY empno DESC) c
    FROM empsalary) emp
-WHERE dr = 1;
+WHERE c = 1;
+
+-- Ensure we don't use a run condition when the WindowFunc contains subplans
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT empno,
+          salary,
+          count((SELECT 1)) OVER (ORDER BY empno DESC) c
+   FROM empsalary) emp
+WHERE c = 1;
 
 -- Test Sort node collapsing
 EXPLAIN (COSTS OFF)
