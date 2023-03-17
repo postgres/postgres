@@ -252,7 +252,7 @@ table_tuple_get_latest_tid(TableScanDesc scan, ItemPointer tid)
 	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
 	 * xact.c where these variables are declared.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected table_tuple_get_latest_tid call during logical decoding");
 
 	/*

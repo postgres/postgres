@@ -1044,7 +1044,7 @@ table_scan_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableS
 	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
 	 * xact.c where these variables are declared.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected table_scan_getnextslot call during logical decoding");
 
 	return sscan->rs_rd->rd_tableam->scan_getnextslot(sscan, direction, slot);
@@ -1228,7 +1228,7 @@ table_index_fetch_tuple(struct IndexFetchTableData *scan,
 	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
 	 * xact.c where these variables are declared.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected table_index_fetch_tuple call during logical decoding");
 
 	return scan->rel->rd_tableam->index_fetch_tuple(scan, tid, snapshot,
@@ -1274,7 +1274,7 @@ table_tuple_fetch_row_version(Relation rel,
 	 * valid CheckXidAlive for catalog or regular tables.  See detailed
 	 * comments in xact.c where these variables are declared.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected table_tuple_fetch_row_version call during logical decoding");
 
 	return rel->rd_tableam->tuple_fetch_row_version(rel, tid, snapshot, slot);
@@ -1947,7 +1947,7 @@ table_scan_bitmap_next_block(TableScanDesc scan,
 	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
 	 * xact.c where these variables are declared.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected table_scan_bitmap_next_block call during logical decoding");
 
 	return scan->rs_rd->rd_tableam->scan_bitmap_next_block(scan,
@@ -1972,7 +1972,7 @@ table_scan_bitmap_next_tuple(TableScanDesc scan,
 	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
 	 * xact.c where these variables are declared.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected table_scan_bitmap_next_tuple call during logical decoding");
 
 	return scan->rs_rd->rd_tableam->scan_bitmap_next_tuple(scan,
@@ -1998,7 +1998,7 @@ table_scan_sample_next_block(TableScanDesc scan,
 	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
 	 * xact.c where these variables are declared.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected table_scan_sample_next_block call during logical decoding");
 	return scan->rs_rd->rd_tableam->scan_sample_next_block(scan, scanstate);
 }
@@ -2021,7 +2021,7 @@ table_scan_sample_next_tuple(TableScanDesc scan,
 	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
 	 * xact.c where these variables are declared.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected table_scan_sample_next_tuple call during logical decoding");
 	return scan->rs_rd->rd_tableam->scan_sample_next_tuple(scan, scanstate,
 														   slot);

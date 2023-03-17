@@ -1113,7 +1113,7 @@ heap_getnext(TableScanDesc sscan, ScanDirection direction)
 	 * level API but this is called from many places so we need to ensure it
 	 * here.
 	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && (sysscan_depth == 0)))
 		elog(ERROR, "unexpected heap_getnext call during logical decoding");
 
 	/* Note: no locking manipulations needed */

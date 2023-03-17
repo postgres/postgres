@@ -1875,7 +1875,7 @@ void
 ResetLogicalStreamingState(void)
 {
 	CheckXidAlive = InvalidTransactionId;
-	bsysscan = false;
+	sysscan_depth = 0;
 }
 
 /*
