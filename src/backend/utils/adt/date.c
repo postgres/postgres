@@ -3052,38 +3052,23 @@ timetz_zone(PG_FUNCTION_ARGS)
 	TimeTzADT  *result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-	char	   *lowzone;
-	int			dterr,
-				type,
+	int			type,
 				val;
 	pg_tz	   *tzp;
-	DateTimeErrorExtra extra;
 
 	/*
-	 * Look up the requested timezone.  First we look in the timezone
-	 * abbreviation table (to handle cases like "EST"), and if that fails, we
-	 * look in the timezone database (to handle cases like
-	 * "America/New_York").  (This matches the order in which timestamp input
-	 * checks the cases; it's important because the timezone database unwisely
-	 * uses a few zone names that are identical to offset abbreviations.)
+	 * Look up the requested timezone.
 	 */
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 
-	/* DecodeTimezoneAbbrev requires lowercase input */
-	lowzone = downcase_truncate_identifier(tzname,
-										   strlen(tzname),
-										   false);
+	type = DecodeTimezoneName(tzname, &val, &tzp);
 
-	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
-	if (dterr)
-		DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
-
-	if (type == TZ || type == DTZ)
+	if (type == TZNAME_FIXED_OFFSET)
 	{
 		/* fixed-offset abbreviation */
 		tz = -val;
 	}
-	else if (type == DYNTZ)
+	else if (type == TZNAME_DYNTZ)
 	{
 		/* dynamic-offset abbreviation, resolve using transaction start time */
 		TimestampTz now = GetCurrentTransactionStartTimestamp();
@@ -3093,27 +3078,15 @@ timetz_zone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		/* try it as a full zone name */
-		tzp = pg_tzset(tzname);
-		if (tzp)
-		{
-			/* Get the offset-from-GMT that is valid now for the zone */
-			TimestampTz now = GetCurrentTransactionStartTimestamp();
-			struct pg_tm tm;
-			fsec_t		fsec;
+		/* Get the offset-from-GMT that is valid now for the zone name */
+		TimestampTz now = GetCurrentTransactionStartTimestamp();
+		struct pg_tm tm;
+		fsec_t		fsec;
 
-			if (timestamp2tm(now, &tz, &tm, &fsec, NULL, tzp) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-		}
-		else
-		{
+		if (timestamp2tm(now, &tz, &tm, &fsec, NULL, tzp) != 0)
 			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("time zone \"%s\" not recognized", tzname)));
-			tz = 0;				/* keep compiler quiet */
-		}
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 	}
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));

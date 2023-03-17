@@ -479,12 +479,7 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 	/*
 	 * Look up the requested timezone.  First we try to interpret it as a
 	 * numeric timezone specification; if DecodeTimezone decides it doesn't
-	 * like the format, we look in the timezone abbreviation table (to handle
-	 * cases like "EST"), and if that also fails, we look in the timezone
-	 * database (to handle cases like "America/New_York").  (This matches the
-	 * order in which timestamp input checks the cases; it's important because
-	 * the timezone database unwisely uses a few zone names that are identical
-	 * to offset abbreviations.)
+	 * like the format, we try timezone abbreviations and names.
 	 *
 	 * Note pg_tzset happily parses numeric input that DecodeTimezone would
 	 * reject.  To avoid having it accept input that would otherwise be seen
@@ -501,11 +496,9 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 	dterr = DecodeTimezone(tzname, &tz);
 	if (dterr != 0)
 	{
-		char	   *lowzone;
 		int			type,
 					val;
 		pg_tz	   *tzp;
-		DateTimeErrorExtra extra;
 
 		if (dterr == DTERR_TZDISP_OVERFLOW)
 			ereport(ERROR,
@@ -516,34 +509,22 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("time zone \"%s\" not recognized", tzname)));
 
-		/* DecodeTimezoneAbbrev requires lowercase input */
-		lowzone = downcase_truncate_identifier(tzname,
-											   strlen(tzname),
-											   false);
-		dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
-		if (dterr)
-			DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
+		type = DecodeTimezoneName(tzname, &val, &tzp);
 
-		if (type == TZ || type == DTZ)
+		if (type == TZNAME_FIXED_OFFSET)
 		{
 			/* fixed-offset abbreviation */
 			tz = -val;
 		}
-		else if (type == DYNTZ)
+		else if (type == TZNAME_DYNTZ)
 		{
 			/* dynamic-offset abbreviation, resolve using specified time */
 			tz = DetermineTimeZoneAbbrevOffset(tm, tzname, tzp);
 		}
 		else
 		{
-			/* try it as a full zone name */
-			tzp = pg_tzset(tzname);
-			if (tzp)
-				tz = DetermineTimeZoneOffset(tm, tzp);
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("time zone \"%s\" not recognized", tzname)));
+			/* full zone name */
+			tz = DetermineTimeZoneOffset(tm, tzp);
 		}
 	}
 
@@ -4304,12 +4285,7 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 	text	   *zone = PG_GETARG_TEXT_PP(2);
 	TimestampTz result;
 	char		tzname[TZ_STRLEN_MAX + 1];
-	char	   *lowzone;
-	int			dterr,
-				type,
-				val;
 	pg_tz	   *tzp;
-	DateTimeErrorExtra extra;
 
 	/*
 	 * timestamptz_zone() doesn't look up the zone for infinite inputs, so we
@@ -4319,37 +4295,11 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMP(timestamp);
 
 	/*
-	 * Look up the requested timezone (see notes in timestamptz_zone()).
+	 * Look up the requested timezone.
 	 */
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 
-	/* DecodeTimezoneAbbrev requires lowercase input */
-	lowzone = downcase_truncate_identifier(tzname,
-										   strlen(tzname),
-										   false);
-
-	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
-	if (dterr)
-		DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
-
-	if (type == TZ || type == DTZ)
-	{
-		/* fixed-offset abbreviation, get a pg_tz descriptor for that */
-		tzp = pg_tzset_offset(-val);
-	}
-	else if (type == DYNTZ)
-	{
-		/* dynamic-offset abbreviation, use its referenced timezone */
-	}
-	else
-	{
-		/* try it as a full zone name */
-		tzp = pg_tzset(tzname);
-		if (!tzp)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("time zone \"%s\" not recognized", tzname)));
-	}
+	tzp = DecodeTimezoneNameToTz(tzname);
 
 	result = timestamptz_trunc_internal(units, timestamp, tzp);
 
@@ -5429,12 +5379,9 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	TimestampTz result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-	char	   *lowzone;
-	int			dterr,
-				type,
+	int			type,
 				val;
 	pg_tz	   *tzp;
-	DateTimeErrorExtra extra;
 	struct pg_tm tm;
 	fsec_t		fsec;
 
@@ -5442,31 +5389,19 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
 	/*
-	 * Look up the requested timezone.  First we look in the timezone
-	 * abbreviation table (to handle cases like "EST"), and if that fails, we
-	 * look in the timezone database (to handle cases like
-	 * "America/New_York").  (This matches the order in which timestamp input
-	 * checks the cases; it's important because the timezone database unwisely
-	 * uses a few zone names that are identical to offset abbreviations.)
+	 * Look up the requested timezone.
 	 */
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 
-	/* DecodeTimezoneAbbrev requires lowercase input */
-	lowzone = downcase_truncate_identifier(tzname,
-										   strlen(tzname),
-										   false);
+	type = DecodeTimezoneName(tzname, &val, &tzp);
 
-	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
-	if (dterr)
-		DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
-
-	if (type == TZ || type == DTZ)
+	if (type == TZNAME_FIXED_OFFSET)
 	{
 		/* fixed-offset abbreviation */
 		tz = val;
 		result = dt2local(timestamp, tz);
 	}
-	else if (type == DYNTZ)
+	else if (type == TZNAME_DYNTZ)
 	{
 		/* dynamic-offset abbreviation, resolve using specified time */
 		if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
@@ -5478,28 +5413,16 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		/* try it as a full zone name */
-		tzp = pg_tzset(tzname);
-		if (tzp)
-		{
-			/* Apply the timezone change */
-			if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-			tz = DetermineTimeZoneOffset(&tm, tzp);
-			if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-		}
-		else
-		{
+		/* full zone name, rotate to that zone */
+		if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
 			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("time zone \"%s\" not recognized", tzname)));
-			result = 0;			/* keep compiler quiet */
-		}
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+		tz = DetermineTimeZoneOffset(&tm, tzp);
+		if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 	}
 
 	if (!IS_VALID_TIMESTAMP(result))
@@ -5687,42 +5610,27 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-	char	   *lowzone;
-	int			dterr,
-				type,
+	int			type,
 				val;
 	pg_tz	   *tzp;
-	DateTimeErrorExtra extra;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
 
 	/*
-	 * Look up the requested timezone.  First we look in the timezone
-	 * abbreviation table (to handle cases like "EST"), and if that fails, we
-	 * look in the timezone database (to handle cases like
-	 * "America/New_York").  (This matches the order in which timestamp input
-	 * checks the cases; it's important because the timezone database unwisely
-	 * uses a few zone names that are identical to offset abbreviations.)
+	 * Look up the requested timezone.
 	 */
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 
-	/* DecodeTimezoneAbbrev requires lowercase input */
-	lowzone = downcase_truncate_identifier(tzname,
-										   strlen(tzname),
-										   false);
+	type = DecodeTimezoneName(tzname, &val, &tzp);
 
-	dterr = DecodeTimezoneAbbrev(0, lowzone, &type, &val, &tzp, &extra);
-	if (dterr)
-		DateTimeParseError(dterr, &extra, NULL, NULL, NULL);
-
-	if (type == TZ || type == DTZ)
+	if (type == TZNAME_FIXED_OFFSET)
 	{
 		/* fixed-offset abbreviation */
 		tz = -val;
 		result = dt2local(timestamp, tz);
 	}
-	else if (type == DYNTZ)
+	else if (type == TZNAME_DYNTZ)
 	{
 		/* dynamic-offset abbreviation, resolve using specified time */
 		int			isdst;
@@ -5732,30 +5640,18 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		/* try it as a full zone name */
-		tzp = pg_tzset(tzname);
-		if (tzp)
-		{
-			/* Apply the timezone change */
-			struct pg_tm tm;
-			fsec_t		fsec;
+		/* full zone name, rotate from that zone */
+		struct pg_tm tm;
+		fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-			if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-		}
-		else
-		{
+		if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0)
 			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("time zone \"%s\" not recognized", tzname)));
-			result = 0;			/* keep compiler quiet */
-		}
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+		if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 	}
 
 	if (!IS_VALID_TIMESTAMP(result))

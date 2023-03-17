@@ -295,6 +295,11 @@ typedef struct DateTimeErrorExtra
 	const char *dtee_abbrev;	/* relevant time zone abbreviation */
 } DateTimeErrorExtra;
 
+/* Result codes for DecodeTimezoneName() */
+#define TZNAME_FIXED_OFFSET	0
+#define TZNAME_DYNTZ		1
+#define TZNAME_ZONE			2
+
 
 extern void GetCurrentDateTime(struct pg_tm *tm);
 extern void GetCurrentTimeUsec(struct pg_tm *tm, fsec_t *fsec, int *tzp);
@@ -339,6 +344,9 @@ extern int	DecodeTimezoneAbbrev(int field, const char *lowtoken,
 								 DateTimeErrorExtra *extra);
 extern int	DecodeSpecial(int field, const char *lowtoken, int *val);
 extern int	DecodeUnits(int field, const char *lowtoken, int *val);
+
+extern int	DecodeTimezoneName(const char *tzname, int *offset, pg_tz **tz);
+extern pg_tz *DecodeTimezoneNameToTz(const char *tzname);
 
 extern int	j2day(int date);
 
