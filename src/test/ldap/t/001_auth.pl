@@ -78,6 +78,7 @@ include $ldap_schema_dir/inetorgperson.schema
 
 pidfile $slapd_pidfile
 logfile $slapd_logfile
+logfile-only on
 
 access to *
         by * read
