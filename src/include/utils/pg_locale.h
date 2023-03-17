@@ -49,6 +49,8 @@ extern PGDLLIMPORT char *localized_full_days[];
 extern PGDLLIMPORT char *localized_abbrev_months[];
 extern PGDLLIMPORT char *localized_full_months[];
 
+/* is the databases's LC_CTYPE the C locale? */
+extern PGDLLIMPORT bool	database_ctype_is_c;
 
 extern bool check_locale_messages(char **newval, void **extra, GucSource source);
 extern void assign_locale_messages(const char *newval, void *extra);

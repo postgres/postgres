@@ -38,10 +38,9 @@ t_isdigit(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
-	if (clen == 1 || lc_ctype_is_c(collation))
+	if (clen == 1 || database_ctype_is_c)
 		return isdigit(TOUCHAR(ptr));
 
 	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
@@ -54,10 +53,9 @@ t_isspace(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
-	if (clen == 1 || lc_ctype_is_c(collation))
+	if (clen == 1 || database_ctype_is_c)
 		return isspace(TOUCHAR(ptr));
 
 	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
@@ -70,10 +68,9 @@ t_isalpha(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
-	if (clen == 1 || lc_ctype_is_c(collation))
+	if (clen == 1 || database_ctype_is_c)
 		return isalpha(TOUCHAR(ptr));
 
 	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
@@ -86,10 +83,9 @@ t_isprint(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
-	if (clen == 1 || lc_ctype_is_c(collation))
+	if (clen == 1 || database_ctype_is_c)
 		return isprint(TOUCHAR(ptr));
 
 	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
@@ -257,7 +253,6 @@ char *
 lowerstr_with_len(const char *str, int len)
 {
 	char	   *out;
-	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (len == 0)
@@ -269,7 +264,7 @@ lowerstr_with_len(const char *str, int len)
 	 * Also, for a C locale there is no need to process as multibyte. From
 	 * backend/utils/adt/oracle_compat.c Teodor
 	 */
-	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c(collation))
+	if (pg_database_encoding_max_length() > 1 && !database_ctype_is_c)
 	{
 		wchar_t    *wstr,
 				   *wptr;
