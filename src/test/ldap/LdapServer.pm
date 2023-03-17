@@ -169,7 +169,6 @@ sub new
 
 		pidfile $slapd_pidfile
 		logfile $slapd_logfile
-		logfile-only on
 
 		access to *
 		        by * read
@@ -205,7 +204,8 @@ EOC
 	append_to_file($ldap_pwfile, $ldap_rootpw);
 	chmod 0600, $ldap_pwfile or die "chmod on $ldap_pwfile";
 
-	system_or_bail $slapd, '-f', $slapd_conf, '-h', "$ldap_url $ldaps_url";
+	# -s0 prevents log messages ending up in syslog
+	system_or_bail $slapd, '-f', $slapd_conf, '-s0', '-h', "$ldap_url $ldaps_url";
 
 	# wait until slapd accepts requests
 	my $retries = 0;
