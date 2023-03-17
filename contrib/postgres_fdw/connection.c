@@ -271,8 +271,7 @@ GetConnection(UserMapping *user, bool will_prep_stmt, PgFdwConnState **state)
 			 entry->conn);
 		disconnect_pg_server(entry);
 
-		if (entry->conn == NULL)
-			make_new_connection(entry, user);
+		make_new_connection(entry, user);
 
 		begin_remote_xact(entry);
 	}
