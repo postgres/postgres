@@ -1043,7 +1043,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("permission denied to alter role"),
 						 errdetail("Only roles with the %s attribute and the %s option on role \"%s\" may alter this role.",
-								   "CREATROLE", "ADMIN", NameStr(roleform->rolname))));
+								   "CREATEROLE", "ADMIN", NameStr(roleform->rolname))));
 		}
 
 		ReleaseSysCache(roletuple);
