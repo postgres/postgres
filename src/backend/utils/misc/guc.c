@@ -4209,8 +4209,9 @@ GetConfigOption(const char *name, bool missing_ok, bool restrict_privileged)
 		!ConfigOptionIsVisible(record))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser or have privileges of pg_read_all_settings to examine \"%s\"",
-						name)));
+				 errmsg("permission denied to examine \"%s\"", name),
+				 errdetail("Only roles with privileges of the \"%s\" role may examine this parameter.",
+						   "pg_read_all_settings")));
 
 	switch (record->vartype)
 	{
@@ -4255,8 +4256,9 @@ GetConfigOptionResetString(const char *name)
 	if (!ConfigOptionIsVisible(record))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser or have privileges of pg_read_all_settings to examine \"%s\"",
-						name)));
+				 errmsg("permission denied to examine \"%s\"", name),
+				 errdetail("Only roles with privileges of the \"%s\" role may examine this parameter.",
+						   "pg_read_all_settings")));
 
 	switch (record->vartype)
 	{
@@ -5261,8 +5263,9 @@ GetConfigOptionByName(const char *name, const char **varname, bool missing_ok)
 	if (!ConfigOptionIsVisible(record))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser or have privileges of pg_read_all_settings to examine \"%s\"",
-						name)));
+				 errmsg("permission denied to examine \"%s\"", name),
+				 errdetail("Only roles with privileges of the \"%s\" role may examine this parameter.",
+						   "pg_read_all_settings")));
 
 	if (varname)
 		*varname = record->name;

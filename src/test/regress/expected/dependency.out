@@ -48,12 +48,16 @@ SET SESSION AUTHORIZATION regress_dep_user0;
 -- permission denied
 DROP OWNED BY regress_dep_user1;
 ERROR:  permission denied to drop objects
+DETAIL:  Only roles with privileges of role "regress_dep_user1" may drop objects owned by it.
 DROP OWNED BY regress_dep_user0, regress_dep_user2;
 ERROR:  permission denied to drop objects
+DETAIL:  Only roles with privileges of role "regress_dep_user2" may drop objects owned by it.
 REASSIGN OWNED BY regress_dep_user0 TO regress_dep_user1;
 ERROR:  permission denied to reassign objects
+DETAIL:  Only roles with privileges of role "regress_dep_user1" may reassign objects to it.
 REASSIGN OWNED BY regress_dep_user1 TO regress_dep_user0;
 ERROR:  permission denied to reassign objects
+DETAIL:  Only roles with privileges of role "regress_dep_user1" may reassign objects owned by it.
 -- this one is allowed
 DROP OWNED BY regress_dep_user0;
 CREATE TABLE deptest1 (f1 int unique);

@@ -279,13 +279,19 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 				!has_privs_of_role(GetUserId(), ROLE_PG_READ_SERVER_FILES))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("only superuser or a role with privileges of the pg_read_server_files role may specify the filename option of a file_fdw foreign table")));
+						 errmsg("permission denied to set the \"%s\" option of a file_fdw foreign table",
+								"filename"),
+						 errdetail("Only roles with privileges of the \"%s\" role may set this option.",
+								   "pg_read_server_files")));
 
 			if (strcmp(def->defname, "program") == 0 &&
 				!has_privs_of_role(GetUserId(), ROLE_PG_EXECUTE_SERVER_PROGRAM))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("only superuser or a role with privileges of the pg_execute_server_program role may specify the program option of a file_fdw foreign table")));
+						 errmsg("permission denied to set the \"%s\" option of a file_fdw foreign table",
+								"program"),
+						 errdetail("Only roles with privileges of the \"%s\" role may set this option.",
+								   "pg_execute_server_program")));
 
 			filename = defGetString(def);
 		}

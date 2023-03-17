@@ -1143,7 +1143,9 @@ CheckSlotPermissions(void)
 	if (!has_rolreplication(GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser or replication role to use replication slots")));
+				 errmsg("permission denied to use replication slots"),
+				 errdetail("Only roles with the %s attribute may use replication slots.",
+						   "REPLICATION")));
 }
 
 /*

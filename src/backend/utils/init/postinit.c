@@ -949,12 +949,14 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		if (nfree < SuperuserReservedConnections)
 			ereport(FATAL,
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-					 errmsg("remaining connection slots are reserved for superusers")));
+					 errmsg("remaining connection slots are reserved for roles with %s",
+							"SUPERUSER")));
 
 		if (!has_privs_of_role(GetUserId(), ROLE_PG_USE_RESERVED_CONNECTIONS))
 			ereport(FATAL,
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-					 errmsg("remaining connection slots are reserved for roles with privileges of pg_use_reserved_connections")));
+					 errmsg("remaining connection slots are reserved for roles with privileges of the \"%s\" role",
+							"pg_use_reserved_connections")));
 	}
 
 	/* Check replication permissions needed for walsender processes. */
@@ -965,7 +967,9 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		if (!has_rolreplication(GetUserId()))
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser or replication role to start walsender")));
+					 errmsg("permission denied to start WAL sender"),
+					 errdetail("Only roles with the %s attribute may start a WAL sender process.",
+							   "REPLICATION")));
 	}
 
 	/*

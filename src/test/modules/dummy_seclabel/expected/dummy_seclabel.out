@@ -59,7 +59,8 @@ SECURITY LABEL ON ROLE regress_dummy_seclabel_user4 IS 'unclassified';	-- fail (
 ERROR:  role "regress_dummy_seclabel_user4" does not exist
 SET SESSION AUTHORIZATION regress_dummy_seclabel_user2;
 SECURITY LABEL ON ROLE regress_dummy_seclabel_user2 IS 'unclassified';	-- fail (not privileged)
-ERROR:  must have CREATEROLE privilege
+ERROR:  permission denied
+DETAIL:  The current user must have the CREATEROLE attribute.
 RESET SESSION AUTHORIZATION;
 --
 -- Test for various types of object

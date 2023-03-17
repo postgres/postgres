@@ -37,7 +37,7 @@ CREATE ROLE regress_priv_role;
 GRANT regress_priv_user1 TO regress_priv_user2 WITH ADMIN OPTION;
 GRANT regress_priv_user1 TO regress_priv_user3 WITH ADMIN OPTION GRANTED BY regress_priv_user2;
 GRANT regress_priv_user1 TO regress_priv_user2 WITH ADMIN OPTION GRANTED BY regress_priv_user3;
-ERROR:  admin option cannot be granted back to your own grantor
+ERROR:  ADMIN option cannot be granted back to your own grantor
 -- need CASCADE to revoke grant or admin option if dependent grants exist
 REVOKE ADMIN OPTION FOR regress_priv_user1 FROM regress_priv_user2; -- fail
 ERROR:  dependent privileges exist
@@ -156,7 +156,8 @@ ALTER GROUP regress_priv_group2 ADD USER regress_priv_user2;	-- duplicate
 NOTICE:  role "regress_priv_user2" has already been granted membership in role "regress_priv_group2" by role "regress_priv_user1"
 ALTER GROUP regress_priv_group2 DROP USER regress_priv_user2;
 ALTER USER regress_priv_user2 PASSWORD 'verysecret'; -- not permitted
-ERROR:  must have CREATEROLE privilege to change another user's password
+ERROR:  permission denied to alter role
+DETAIL:  To change another role's password, the current user must have the CREATEROLE attribute and the ADMIN option on the role.
 RESET SESSION AUTHORIZATION;
 ALTER GROUP regress_priv_group2 DROP USER regress_priv_user2;
 REVOKE ADMIN OPTION FOR regress_priv_group2 FROM regress_priv_user1;
@@ -168,7 +169,8 @@ CREATE FUNCTION leak(integer,integer) RETURNS boolean
 ALTER FUNCTION leak(integer,integer) OWNER TO regress_priv_user1;
 -- test owner privileges
 GRANT regress_priv_role TO regress_priv_user1 WITH ADMIN OPTION GRANTED BY regress_priv_role; -- error, doesn't have ADMIN OPTION
-ERROR:  grantor must have ADMIN OPTION on "regress_priv_role"
+ERROR:  permission denied to grant privileges as role "regress_priv_role"
+DETAIL:  The grantor must have the ADMIN option on role "regress_priv_role".
 GRANT regress_priv_role TO regress_priv_user1 WITH ADMIN OPTION GRANTED BY CURRENT_ROLE;
 REVOKE ADMIN OPTION FOR regress_priv_role FROM regress_priv_user1 GRANTED BY foo; -- error
 ERROR:  role "foo" does not exist
@@ -1795,7 +1797,8 @@ REFRESH MATERIALIZED VIEW sro_mv;
 ERROR:  cannot fire deferred trigger within security-restricted operation
 CONTEXT:  SQL function "mv_action" statement 1
 BEGIN; SET CONSTRAINTS ALL IMMEDIATE; REFRESH MATERIALIZED VIEW sro_mv; COMMIT;
-ERROR:  must have admin option on role "regress_priv_group2"
+ERROR:  permission denied to grant role "regress_priv_group2"
+DETAIL:  Only roles with the ADMIN option on role "regress_priv_group2" may grant this role.
 CONTEXT:  SQL function "unwanted_grant" statement 1
 SQL statement "SELECT unwanted_grant()"
 PL/pgSQL function sro_trojan() line 1 at PERFORM
@@ -1825,10 +1828,12 @@ CREATE FUNCTION dogrant_ok() RETURNS void LANGUAGE sql SECURITY DEFINER AS
 GRANT regress_priv_group2 TO regress_priv_user5; -- ok: had ADMIN OPTION
 SET ROLE regress_priv_group2;
 GRANT regress_priv_group2 TO regress_priv_user5; -- fails: SET ROLE suspended privilege
-ERROR:  must have admin option on role "regress_priv_group2"
+ERROR:  permission denied to grant role "regress_priv_group2"
+DETAIL:  Only roles with the ADMIN option on role "regress_priv_group2" may grant this role.
 SET SESSION AUTHORIZATION regress_priv_user1;
 GRANT regress_priv_group2 TO regress_priv_user5; -- fails: no ADMIN OPTION
-ERROR:  must have admin option on role "regress_priv_group2"
+ERROR:  permission denied to grant role "regress_priv_group2"
+DETAIL:  Only roles with the ADMIN option on role "regress_priv_group2" may grant this role.
 SELECT dogrant_ok();			-- ok: SECURITY DEFINER conveys ADMIN
 NOTICE:  role "regress_priv_user5" has already been granted membership in role "regress_priv_group2" by role "regress_priv_user4"
  dogrant_ok 
@@ -1838,10 +1843,12 @@ NOTICE:  role "regress_priv_user5" has already been granted membership in role "
 
 SET ROLE regress_priv_group2;
 GRANT regress_priv_group2 TO regress_priv_user5; -- fails: SET ROLE did not help
-ERROR:  must have admin option on role "regress_priv_group2"
+ERROR:  permission denied to grant role "regress_priv_group2"
+DETAIL:  Only roles with the ADMIN option on role "regress_priv_group2" may grant this role.
 SET SESSION AUTHORIZATION regress_priv_group2;
 GRANT regress_priv_group2 TO regress_priv_user5; -- fails: no self-admin
-ERROR:  must have admin option on role "regress_priv_group2"
+ERROR:  permission denied to grant role "regress_priv_group2"
+DETAIL:  Only roles with the ADMIN option on role "regress_priv_group2" may grant this role.
 SET SESSION AUTHORIZATION regress_priv_user4;
 DROP FUNCTION dogrant_ok();
 REVOKE regress_priv_group2 FROM regress_priv_user5;

@@ -491,7 +491,8 @@ ALTER FOREIGN TABLE agg_text OWNER TO regress_file_fdw_user;
 ALTER FOREIGN TABLE agg_text OPTIONS (SET format 'text');
 SET ROLE regress_file_fdw_user;
 ALTER FOREIGN TABLE agg_text OPTIONS (SET format 'text');
-ERROR:  only superuser or a role with privileges of the pg_read_server_files role may specify the filename option of a file_fdw foreign table
+ERROR:  permission denied to set the "filename" option of a file_fdw foreign table
+DETAIL:  Only roles with privileges of the "pg_read_server_files" role may set this option.
 SET ROLE regress_file_fdw_superuser;
 -- cleanup
 RESET ROLE;

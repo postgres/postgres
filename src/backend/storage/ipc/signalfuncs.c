@@ -121,12 +121,16 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 	if (r == SIGNAL_BACKEND_NOSUPERUSER)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be a superuser to cancel superuser query")));
+				 errmsg("permission denied to cancel query"),
+				 errdetail("Only roles with the %s attribute may cancel queries of roles with %s.",
+						   "SUPERUSER", "SUPERUSER")));
 
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be a member of the role whose query is being canceled or member of pg_signal_backend")));
+				 errmsg("permission denied to cancel query"),
+				 errdetail("Only roles with privileges of the role whose query is being canceled or with privileges of the \"%s\" role may cancel this query.",
+						   "pg_signal_backend")));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
@@ -223,12 +227,16 @@ pg_terminate_backend(PG_FUNCTION_ARGS)
 	if (r == SIGNAL_BACKEND_NOSUPERUSER)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be a superuser to terminate superuser process")));
+				 errmsg("permission denied to terminate process"),
+				 errdetail("Only roles with the %s attribute may terminate processes of roles with %s.",
+						   "SUPERUSER", "SUPERUSER")));
 
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be a member of the role whose process is being terminated or member of pg_signal_backend")));
+				 errmsg("permission denied to terminate process"),
+				 errdetail("Only roles with privileges of the role whose process is being terminated or with privileges of the \"%s\" role may terminate this process.",
+						   "pg_signal_backend")));
 
 	/* Wait only on success and if actually requested */
 	if (r == SIGNAL_BACKEND_SUCCESS && timeout > 0)
