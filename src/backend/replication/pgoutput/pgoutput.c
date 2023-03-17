@@ -694,8 +694,8 @@ maybe_send_schema(LogicalDecodingContext *ctx,
 	if (in_streaming)
 		xid = change->txn->xid;
 
-	if (change->txn->toptxn)
-		topxid = change->txn->toptxn->xid;
+	if (rbtxn_is_subtxn(change->txn))
+		topxid = rbtxn_get_toptxn(change->txn)->xid;
 	else
 		topxid = xid;
 
@@ -1879,7 +1879,7 @@ pgoutput_stream_abort(struct LogicalDecodingContext *ctx,
 	Assert(!in_streaming);
 
 	/* determine the toplevel transaction */
-	toptxn = (txn->toptxn) ? txn->toptxn : txn;
+	toptxn = rbtxn_get_toptxn(txn);
 
 	Assert(rbtxn_is_streamed(toptxn));
 

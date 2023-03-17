@@ -249,6 +249,24 @@ typedef struct ReorderBufferChange
 	((txn)->txn_flags & RBTXN_SKIPPED_PREPARE) != 0 \
 )
 
+/* Is this a top-level transaction? */
+#define rbtxn_is_toptxn(txn) \
+( \
+	(txn)->toptxn == NULL \
+)
+
+/* Is this a subtransaction? */
+#define rbtxn_is_subtxn(txn) \
+( \
+	(txn)->toptxn != NULL \
+)
+
+/* Get the top-level transaction of this (sub)transaction. */
+#define rbtxn_get_toptxn(txn) \
+( \
+	rbtxn_is_subtxn(txn) ? (txn)->toptxn : (txn) \
+)
+
 typedef struct ReorderBufferTXN
 {
 	/* See above */
