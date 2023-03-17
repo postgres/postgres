@@ -15181,22 +15181,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-ac_fn_c_check_type "$LINENO" "struct cmsgcred" "ac_cv_type_struct_cmsgcred" "#include <sys/socket.h>
-#include <sys/param.h>
-#ifdef HAVE_SYS_UCRED_H
-#include <sys/ucred.h>
-#endif
-"
-if test "x$ac_cv_type_struct_cmsgcred" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_CMSGCRED 1
-_ACEOF
-
-
-fi
-
-
 ac_fn_c_check_type "$LINENO" "struct option" "ac_cv_type_struct_option" "#ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif

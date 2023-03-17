@@ -1333,10 +1333,6 @@ connectOptions2(PGconn *conn)
 				bits |= (1 << AUTH_REQ_SASL_CONT);
 				bits |= (1 << AUTH_REQ_SASL_FIN);
 			}
-			else if (strcmp(method, "creds") == 0)
-			{
-				bits = (1 << AUTH_REQ_SCM_CREDS);
-			}
 			else if (strcmp(method, "none") == 0)
 			{
 				/*

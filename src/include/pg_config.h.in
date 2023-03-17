@@ -427,9 +427,6 @@
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL
 
-/* Define to 1 if the system has the type `struct cmsgcred'. */
-#undef HAVE_STRUCT_CMSGCRED
-
 /* Define to 1 if the system has the type `struct option'. */
 #undef HAVE_STRUCT_OPTION
 

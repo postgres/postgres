@@ -688,68 +688,6 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 	return STATUS_OK;
 }
 
-/*
- * Respond to AUTH_REQ_SCM_CREDS challenge.
- *
- * Note: this is dead code as of Postgres 9.1, because current backends will
- * never send this challenge.  But we must keep it as long as libpq needs to
- * interoperate with pre-9.1 servers.  It is believed to be needed only on
- * Debian/kFreeBSD (ie, FreeBSD kernel with Linux userland, so that the
- * getpeereid() function isn't provided by libc).
- */
-static int
-pg_local_sendauth(PGconn *conn)
-{
-#ifdef HAVE_STRUCT_CMSGCRED
-	char		buf;
-	struct iovec iov;
-	struct msghdr msg;
-	struct cmsghdr *cmsg;
-	union
-	{
-		struct cmsghdr hdr;
-		unsigned char buf[CMSG_SPACE(sizeof(struct cmsgcred))];
-	}			cmsgbuf;
-
-	/*
-	 * The backend doesn't care what we send here, but it wants exactly one
-	 * character to force recvmsg() to block and wait for us.
-	 */
-	buf = '\0';
-	iov.iov_base = &buf;
-	iov.iov_len = 1;
-
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-
-	/* We must set up a message that will be filled in by kernel */
-	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
-	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
-	cmsg = CMSG_FIRSTHDR(&msg);
-	cmsg->cmsg_len = CMSG_LEN(sizeof(struct cmsgcred));
-	cmsg->cmsg_level = SOL_SOCKET;
-	cmsg->cmsg_type = SCM_CREDS;
-
-	if (sendmsg(conn->sock, &msg, 0) == -1)
-	{
-		char		sebuf[PG_STRERROR_R_BUFLEN];
-
-		appendPQExpBuffer(&conn->errorMessage,
-						  "pg_local_sendauth: sendmsg: %s\n",
-						  strerror_r(errno, sebuf, sizeof(sebuf)));
-		return STATUS_ERROR;
-	}
-
-	conn->client_finished_auth = true;
-	return STATUS_OK;
-#else
-	libpq_append_conn_error(conn, "SCM_CRED authentication method not supported");
-	return STATUS_ERROR;
-#endif
-}
-
 static int
 pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 {
@@ -830,8 +768,6 @@ auth_method_description(AuthRequest areq)
 			return libpq_gettext("server requested GSSAPI authentication");
 		case AUTH_REQ_SSPI:
 			return libpq_gettext("server requested SSPI authentication");
-		case AUTH_REQ_SCM_CREDS:
-			return libpq_gettext("server requested UNIX socket credentials");
 		case AUTH_REQ_SASL:
 		case AUTH_REQ_SASL_CONT:
 		case AUTH_REQ_SASL_FIN:
@@ -922,7 +858,6 @@ check_expected_areq(AuthRequest areq, PGconn *conn)
 			case AUTH_REQ_GSS:
 			case AUTH_REQ_GSS_CONT:
 			case AUTH_REQ_SSPI:
-			case AUTH_REQ_SCM_CREDS:
 			case AUTH_REQ_SASL:
 			case AUTH_REQ_SASL_CONT:
 			case AUTH_REQ_SASL_FIN:
@@ -1181,11 +1116,6 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 										 "fe_sendauth: error in SASL authentication\n");
 				return STATUS_ERROR;
 			}
-			break;
-
-		case AUTH_REQ_SCM_CREDS:
-			if (pg_local_sendauth(conn) != STATUS_OK)
-				return STATUS_ERROR;
 			break;
 
 		default:

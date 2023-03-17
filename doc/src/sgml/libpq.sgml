@@ -1301,16 +1301,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
          </varlistentry>
 
          <varlistentry>
-          <term><literal>creds</literal></term>
-          <listitem>
-           <para>
-            The server must request SCM credential authentication (deprecated
-            as of <productname>PostgreSQL</productname> 9.1).
-           </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry>
           <term><literal>none</literal></term>
           <listitem>
            <para>

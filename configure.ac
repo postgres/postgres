@@ -1682,13 +1682,6 @@ AC_DEFINE_UNQUOTED([pg_restrict], [$pg_restrict],
 [Define to keyword to use for C99 restrict support, or to nothing if not
 supported])
 
-AC_CHECK_TYPES([struct cmsgcred], [], [],
-[#include <sys/socket.h>
-#include <sys/param.h>
-#ifdef HAVE_SYS_UCRED_H
-#include <sys/ucred.h>
-#endif])
-
 AC_CHECK_TYPES([struct option], [], [],
 [#ifdef HAVE_GETOPT_H
 #include <getopt.h>

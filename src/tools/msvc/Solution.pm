@@ -338,7 +338,6 @@ sub GenerateFiles
 		HAVE_STRLCPY                             => undef,
 		HAVE_STRNLEN                             => 1,
 		HAVE_STRSIGNAL                           => undef,
-		HAVE_STRUCT_CMSGCRED                     => undef,
 		HAVE_STRUCT_OPTION                       => undef,
 		HAVE_STRUCT_SOCKADDR_SA_LEN              => undef,
 		HAVE_STRUCT_TM_TM_ZONE                   => undef,

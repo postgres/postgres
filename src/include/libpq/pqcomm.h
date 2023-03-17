@@ -116,7 +116,7 @@ extern PGDLLIMPORT bool Db_user_namespace;
 #define AUTH_REQ_PASSWORD	3	/* Password */
 #define AUTH_REQ_CRYPT		4	/* crypt password. Not supported any more. */
 #define AUTH_REQ_MD5		5	/* md5 password */
-#define AUTH_REQ_SCM_CREDS	6	/* transfer SCM credentials */
+/* 6 is available.  It was used for SCM creds, not supported any more. */
 #define AUTH_REQ_GSS		7	/* GSSAPI without wrap() */
 #define AUTH_REQ_GSS_CONT	8	/* Continue GSS exchanges */
 #define AUTH_REQ_SSPI		9	/* SSPI negotiate without wrap() */

@@ -2144,20 +2144,6 @@ foreach c : decl_checks
 endforeach
 
 
-if cc.has_type('struct cmsgcred',
-    args: test_c_args + ['@0@'.format(cdata.get('HAVE_SYS_UCRED_H')) == 'false' ? '' : '-DHAVE_SYS_UCRED_H'],
-    include_directories: postgres_inc,
-    prefix: '''
-#include <sys/socket.h>
-#include <sys/param.h>
-#ifdef HAVE_SYS_UCRED_H
-#include <sys/ucred.h>
-#endif''')
-  cdata.set('HAVE_STRUCT_CMSGCRED', 1)
-else
-  cdata.set('HAVE_STRUCT_CMSGCRED', false)
-endif
-
 if cc.has_type('struct option',
     args: test_c_args, include_directories: postgres_inc,
     prefix: '@0@'.format(cdata.get('HAVE_GETOPT_H')) == '1' ? '#include <getopt.h>' : '')
