@@ -360,10 +360,6 @@ PostgreSQL documentation
         and the two systems have different definitions of the collation used
         to sort the partitioning column.
        </para>
-
-       <!-- Currently, we don't need pg_dump's warning about parallelism here,
-        since parallel restore from a pg_dumpall script is impossible.
-       -->
       </listitem>
      </varlistentry>
 

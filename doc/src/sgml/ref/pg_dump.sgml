@@ -863,16 +863,6 @@ PostgreSQL documentation
         and the two systems have different definitions of the collation used
         to sort the partitioning column.
        </para>
-
-       <para>
-        It is best not to use parallelism when restoring from an archive made
-        with this option, because <application>pg_restore</application> will
-        not know exactly which partition(s) a given archive data item will
-        load data into.  This could result in inefficiency due to lock
-        conflicts between parallel jobs, or perhaps even restore failures due
-        to foreign key constraints being set up before all the relevant data
-        is loaded.
-       </para>
       </listitem>
      </varlistentry>
 
