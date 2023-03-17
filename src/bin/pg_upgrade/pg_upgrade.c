@@ -407,7 +407,7 @@ set_locale_and_encoding(void)
 	if (GET_MAJOR_VERSION(new_cluster.major_version) >= 1500)
 		PQclear(executeQueryOrDie(conn_new_template1,
 								  "UPDATE pg_catalog.pg_database "
-								  "  SET encoding = %u, "
+								  "  SET encoding = %d, "
 								  "      datlocprovider = '%c', "
 								  "      datcollate = %s, "
 								  "      datctype = %s, "
@@ -421,7 +421,7 @@ set_locale_and_encoding(void)
 	else
 		PQclear(executeQueryOrDie(conn_new_template1,
 								  "UPDATE pg_catalog.pg_database "
-								  "  SET encoding = %u, "
+								  "  SET encoding = %d, "
 								  "      datcollate = %s, "
 								  "      datctype = %s "
 								  "  WHERE datname = 'template0' ",
