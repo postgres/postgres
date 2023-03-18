@@ -36,9 +36,11 @@ node_support_output = [
   'readfuncs.funcs.c', 'readfuncs.switch.c',
   'copyfuncs.funcs.c', 'copyfuncs.switch.c',
   'equalfuncs.funcs.c', 'equalfuncs.switch.c',
+  'queryjumblefuncs.funcs.c', 'queryjumblefuncs.switch.c',
 ]
 node_support_install = [
   dir_include_server / 'nodes',
+  false, false,
   false, false,
   false, false,
   false, false,
