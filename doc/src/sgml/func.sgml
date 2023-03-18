@@ -9268,6 +9268,28 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
        <row>
         <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>date_add</primary>
+         </indexterm>
+         <function>date_add</function> ( <type>timestamp with time zone</type>, <type>interval</type> <optional>, <type>text</type> </optional> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Add an <type>interval</type> to a <type>timestamp with time
+         zone</type>, computing times of day and daylight-savings adjustments
+         according to the time zone named by the third argument, or the
+         current <xref linkend="guc-timezone"/> setting if that is omitted.
+         The form with two arguments is equivalent to the <type>timestamp with
+         time zone</type> <literal>+</literal> <type>interval</type> operator.
+        </para>
+        <para>
+         <literal>date_add('2021-10-31 00:00:00+02'::timestamptz, '1 day'::interval, 'Europe/Warsaw')</literal>
+         <returnvalue>2021-10-31 23:00:00+00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
          <function>date_bin</function> ( <type>interval</type>, <type>timestamp</type>, <type>timestamp</type> )
          <returnvalue>timestamp</returnvalue>
         </para>
@@ -9310,6 +9332,28 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <para>
          <literal>date_part('month', interval '2 years 3 months')</literal>
          <returnvalue>3</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>date_subtract</primary>
+         </indexterm>
+         <function>date_subtract</function> ( <type>timestamp with time zone</type>, <type>interval</type> <optional>, <type>text</type> </optional> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Subtract an <type>interval</type> from a <type>timestamp with time
+         zone</type>, computing times of day and daylight-savings adjustments
+         according to the time zone named by the third argument, or the
+         current <xref linkend="guc-timezone"/> setting if that is omitted.
+         The form with two arguments is equivalent to the <type>timestamp with
+         time zone</type> <literal>-</literal> <type>interval</type> operator.
+        </para>
+        <para>
+         <literal>date_subtract('2021-11-01 00:00:00+01'::timestamptz, '1 day'::interval, 'Europe/Warsaw')</literal>
+         <returnvalue>2021-10-30 22:00:00+00</returnvalue>
         </para></entry>
        </row>
 
@@ -9808,13 +9852,23 @@ SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
 
   <para>
    When adding an <type>interval</type> value to (or subtracting an
-   <type>interval</type> value from) a <type>timestamp with time zone</type>
-   value, the days component advances or decrements the date of the
-   <type>timestamp with time zone</type> by the indicated number of days,
-   keeping the time of day the same.
-   Across daylight saving time changes (when the session time zone is set to a
-   time zone that recognizes DST), this means <literal>interval '1 day'</literal>
-   does not necessarily equal <literal>interval '24 hours'</literal>.
+   <type>interval</type> value from) a <type>timestamp</type>
+   or <type>timestamp with time zone</type> value, the months, days, and
+   microseconds fields of the <type>interval</type> value are handled in turn.
+   First, a nonzero months field advances or decrements the date of the
+   timestamp by the indicated number of months, keeping the day of month the
+   same unless it would be past the end of the new month, in which case the
+   last day of that month is used.  (For example, March 31 plus 1 month
+   becomes April 30, but March 31 plus 2 months becomes May 31.)
+   Then the days field advances or decrements the date of the timestamp by
+   the indicated number of days.  In both these steps the local time of day
+   is kept the same.  Finally, if there is a nonzero microseconds field, it
+   is added or subtracted literally.
+   When doing arithmetic on a <type>timestamp with time zone</type> value in
+   a time zone that recognizes DST, this means that adding or subtracting
+   (say) <literal>interval '1 day'</literal> does not necessarily have the
+   same result as adding or subtracting <literal>interval '24
+   hours'</literal>.
    For example, with the session time zone set
    to <literal>America/Denver</literal>:
 <screen>
@@ -22017,13 +22071,17 @@ AND
         <returnvalue>setof timestamp</returnvalue>
        </para>
        <para role="func_signature">
-        <function>generate_series</function> ( <parameter>start</parameter> <type>timestamp with time zone</type>, <parameter>stop</parameter> <type>timestamp with time zone</type>, <parameter>step</parameter> <type>interval</type> )
+        <function>generate_series</function> ( <parameter>start</parameter> <type>timestamp with time zone</type>, <parameter>stop</parameter> <type>timestamp with time zone</type>, <parameter>step</parameter> <type>interval</type> <optional>, <parameter>timezone</parameter> <type>text</type> </optional> )
         <returnvalue>setof timestamp with time zone</returnvalue>
        </para>
        <para>
         Generates a series of values from <parameter>start</parameter>
         to <parameter>stop</parameter>, with a step size
         of <parameter>step</parameter>.
+        In the timezone-aware form, times of day and daylight-savings
+        adjustments are computed according to the time zone named by
+        the <parameter>timezone</parameter> argument, or the current
+        <xref linkend="guc-timezone"/> setting if that is omitted.
        </para></entry>
       </row>
      </tbody>
@@ -22091,6 +22149,25 @@ SELECT * FROM generate_series('2008-03-01 00:00'::timestamp,
  2008-03-03 22:00:00
  2008-03-04 08:00:00
 (9 rows)
+
+-- this example assumes that TimeZone is set to UTC; note the DST transition:
+SELECT * FROM generate_series('2001-10-22 00:00 -04:00'::timestamptz,
+                              '2001-11-01 00:00 -05:00'::timestamptz,
+                              '1 day'::interval, 'America/New_York');
+    generate_series
+------------------------
+ 2001-10-22 04:00:00+00
+ 2001-10-23 04:00:00+00
+ 2001-10-24 04:00:00+00
+ 2001-10-25 04:00:00+00
+ 2001-10-26 04:00:00+00
+ 2001-10-27 04:00:00+00
+ 2001-10-28 04:00:00+00
+ 2001-10-29 05:00:00+00
+ 2001-10-30 05:00:00+00
+ 2001-10-31 05:00:00+00
+ 2001-11-01 05:00:00+00
+(11 rows)
 </programlisting>
   </para>
 

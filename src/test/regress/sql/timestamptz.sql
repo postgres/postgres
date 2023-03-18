@@ -459,6 +459,25 @@ select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
                               '0 hour'::interval);
 
+-- Interval crossing time shift for Europe/Warsaw timezone (with DST)
+SET TimeZone to 'UTC';
+
+SELECT date_add('2022-10-30 00:00:00+01'::timestamptz,
+                '1 day'::interval);
+SELECT date_add('2021-10-31 00:00:00+02'::timestamptz,
+                '1 day'::interval,
+                'Europe/Warsaw');
+SELECT date_subtract('2022-10-30 00:00:00+01'::timestamptz,
+                     '1 day'::interval);
+SELECT date_subtract('2021-10-31 00:00:00+02'::timestamptz,
+                     '1 day'::interval,
+                     'Europe/Warsaw');
+SELECT * FROM generate_series('2021-12-31 23:00:00+00'::timestamptz,
+                              '2020-12-31 23:00:00+00'::timestamptz,
+                              '-1 month'::interval,
+                              'Europe/Warsaw');
+RESET TimeZone;
+
 --
 -- Test behavior with a dynamic (time-varying) timezone abbreviation.
 -- These tests rely on the knowledge that MSK (Europe/Moscow standard time)

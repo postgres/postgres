@@ -69,6 +69,7 @@ typedef struct
 	TimestampTz finish;
 	Interval	step;
 	int			step_sign;
+	pg_tz	   *attimezone;
 } generate_series_timestamptz_fctx;
 
 
@@ -529,6 +530,21 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 	}
 
 	return tz;
+}
+
+/*
+ * Look up the requested timezone, returning a pg_tz struct.
+ *
+ * This is the same as DecodeTimezoneNameToTz, but starting with a text Datum.
+ */
+static pg_tz *
+lookup_timezone(text *zone)
+{
+	char		tzname[TZ_STRLEN_MAX + 1];
+
+	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
+
+	return DecodeTimezoneNameToTz(tzname);
 }
 
 /*
@@ -2998,20 +3014,22 @@ timestamp_mi_interval(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamptz_pl_interval()
- * Add an interval to a timestamp with time zone data type.
- * Note that interval has provisions for qualitative year/month
+/* timestamptz_pl_interval_internal()
+ * Add an interval to a timestamptz, in the given (or session) timezone.
+ *
+ * Note that interval has provisions for qualitative year/month and day
  *	units, so try to do the right thing with them.
  * To add a month, increment the month, and use the same day of month.
  * Then, if the next month has fewer days, set the day of month
  *	to the last day of month.
+ * To add a day, increment the mday, and use the same time of day.
  * Lastly, add in the "quantitative time".
  */
-Datum
-timestamptz_pl_interval(PG_FUNCTION_ARGS)
+static TimestampTz
+timestamptz_pl_interval_internal(TimestampTz timestamp,
+								 Interval *span,
+								 pg_tz *attimezone)
 {
-	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
-	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	TimestampTz result;
 	int			tz;
 
@@ -3019,13 +3037,17 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 		result = timestamp;
 	else
 	{
+		/* Use session timezone if caller asks for default */
+		if (attimezone == NULL)
+			attimezone = session_timezone;
+
 		if (span->month != 0)
 		{
 			struct pg_tm tt,
 					   *tm = &tt;
 			fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, attimezone) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -3046,7 +3068,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
-			tz = DetermineTimeZoneOffset(tm, session_timezone);
+			tz = DetermineTimeZoneOffset(tm, attimezone);
 
 			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 				ereport(ERROR,
@@ -3061,7 +3083,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			fsec_t		fsec;
 			int			julian;
 
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, attimezone) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -3070,7 +3092,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
 			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
-			tz = DetermineTimeZoneOffset(tm, session_timezone);
+			tz = DetermineTimeZoneOffset(tm, attimezone);
 
 			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 				ereport(ERROR,
@@ -3088,7 +3110,36 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 		result = timestamp;
 	}
 
-	PG_RETURN_TIMESTAMP(result);
+	return result;
+}
+
+/* timestamptz_mi_interval_internal()
+ * As above, but subtract the interval.
+ */
+static TimestampTz
+timestamptz_mi_interval_internal(TimestampTz timestamp,
+								 Interval *span,
+								 pg_tz *attimezone)
+{
+	Interval	tspan;
+
+	tspan.month = -span->month;
+	tspan.day = -span->day;
+	tspan.time = -span->time;
+
+	return timestamptz_pl_interval_internal(timestamp, &tspan, attimezone);
+}
+
+/* timestamptz_pl_interval()
+ * Add an interval to a timestamptz, in the session timezone.
+ */
+Datum
+timestamptz_pl_interval(PG_FUNCTION_ARGS)
+{
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
+
+	PG_RETURN_TIMESTAMP(timestamptz_pl_interval_internal(timestamp, span, NULL));
 }
 
 Datum
@@ -3096,17 +3147,34 @@ timestamptz_mi_interval(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
-	Interval	tspan;
 
-	tspan.month = -span->month;
-	tspan.day = -span->day;
-	tspan.time = -span->time;
-
-	return DirectFunctionCall2(timestamptz_pl_interval,
-							   TimestampGetDatum(timestamp),
-							   PointerGetDatum(&tspan));
+	PG_RETURN_TIMESTAMP(timestamptz_mi_interval_internal(timestamp, span, NULL));
 }
 
+/* timestamptz_pl_interval_at_zone()
+ * Add an interval to a timestamptz, in the specified timezone.
+ */
+Datum
+timestamptz_pl_interval_at_zone(PG_FUNCTION_ARGS)
+{
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
+	text	   *zone = PG_GETARG_TEXT_PP(2);
+	pg_tz	   *attimezone = lookup_timezone(zone);
+
+	PG_RETURN_TIMESTAMP(timestamptz_pl_interval_internal(timestamp, span, attimezone));
+}
+
+Datum
+timestamptz_mi_interval_at_zone(PG_FUNCTION_ARGS)
+{
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
+	text	   *zone = PG_GETARG_TEXT_PP(2);
+	pg_tz	   *attimezone = lookup_timezone(zone);
+
+	PG_RETURN_TIMESTAMP(timestamptz_mi_interval_internal(timestamp, span, attimezone));
+}
 
 Datum
 interval_um(PG_FUNCTION_ARGS)
@@ -3396,13 +3464,9 @@ in_range_timestamptz_interval(PG_FUNCTION_ARGS)
 
 	/* We don't currently bother to avoid overflow hazards here */
 	if (sub)
-		sum = DatumGetTimestampTz(DirectFunctionCall2(timestamptz_mi_interval,
-													  TimestampTzGetDatum(base),
-													  IntervalPGetDatum(offset)));
+		sum = timestamptz_mi_interval_internal(base, offset, NULL);
 	else
-		sum = DatumGetTimestampTz(DirectFunctionCall2(timestamptz_pl_interval,
-													  TimestampTzGetDatum(base),
-													  IntervalPGetDatum(offset)));
+		sum = timestamptz_pl_interval_internal(base, offset, NULL);
 
 	if (less)
 		PG_RETURN_BOOL(val <= sum);
@@ -4284,7 +4348,6 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	text	   *zone = PG_GETARG_TEXT_PP(2);
 	TimestampTz result;
-	char		tzname[TZ_STRLEN_MAX + 1];
 	pg_tz	   *tzp;
 
 	/*
@@ -4297,9 +4360,7 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 	/*
 	 * Look up the requested timezone.
 	 */
-	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
-
-	tzp = DecodeTimezoneNameToTz(tzname);
+	tzp = lookup_timezone(zone);
 
 	result = timestamptz_trunc_internal(units, timestamp, tzp);
 
@@ -5776,10 +5837,11 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 }
 
 /* generate_series_timestamptz()
- * Generate the set of timestamps from start to finish by step
+ * Generate the set of timestamps from start to finish by step,
+ * doing arithmetic in the specified or session timezone.
  */
-Datum
-generate_series_timestamptz(PG_FUNCTION_ARGS)
+static Datum
+generate_series_timestamptz_internal(FunctionCallInfo fcinfo)
 {
 	FuncCallContext *funcctx;
 	generate_series_timestamptz_fctx *fctx;
@@ -5791,6 +5853,7 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		TimestampTz start = PG_GETARG_TIMESTAMPTZ(0);
 		TimestampTz finish = PG_GETARG_TIMESTAMPTZ(1);
 		Interval   *step = PG_GETARG_INTERVAL_P(2);
+		text	   *zone = (PG_NARGS() == 4) ? PG_GETARG_TEXT_PP(3) : NULL;
 		MemoryContext oldcontext;
 		const Interval interval_zero = {0};
 
@@ -5813,6 +5876,7 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		fctx->current = start;
 		fctx->finish = finish;
 		fctx->step = *step;
+		fctx->attimezone = zone ? lookup_timezone(zone) : session_timezone;
 
 		/* Determine sign of the interval */
 		fctx->step_sign = interval_cmp_internal(&fctx->step, &interval_zero);
@@ -5840,9 +5904,9 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		timestamp_cmp_internal(result, fctx->finish) >= 0)
 	{
 		/* increment current in preparation for next iteration */
-		fctx->current = DatumGetTimestampTz(DirectFunctionCall2(timestamptz_pl_interval,
-																TimestampTzGetDatum(fctx->current),
-																PointerGetDatum(&fctx->step)));
+		fctx->current = timestamptz_pl_interval_internal(fctx->current,
+														 &fctx->step,
+														 fctx->attimezone);
 
 		/* do when there is more left to send */
 		SRF_RETURN_NEXT(funcctx, TimestampTzGetDatum(result));
@@ -5852,4 +5916,16 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
 	}
+}
+
+Datum
+generate_series_timestamptz(PG_FUNCTION_ARGS)
+{
+	return generate_series_timestamptz_internal(fcinfo);
+}
+
+Datum
+generate_series_timestamptz_at_zone(PG_FUNCTION_ARGS)
+{
+	return generate_series_timestamptz_internal(fcinfo);
 }

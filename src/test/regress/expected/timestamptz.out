@@ -2468,6 +2468,60 @@ select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
                               '0 hour'::interval);
 ERROR:  step size cannot equal zero
+-- Interval crossing time shift for Europe/Warsaw timezone (with DST)
+SET TimeZone to 'UTC';
+SELECT date_add('2022-10-30 00:00:00+01'::timestamptz,
+                '1 day'::interval);
+           date_add           
+------------------------------
+ Sun Oct 30 23:00:00 2022 UTC
+(1 row)
+
+SELECT date_add('2021-10-31 00:00:00+02'::timestamptz,
+                '1 day'::interval,
+                'Europe/Warsaw');
+           date_add           
+------------------------------
+ Sun Oct 31 23:00:00 2021 UTC
+(1 row)
+
+SELECT date_subtract('2022-10-30 00:00:00+01'::timestamptz,
+                     '1 day'::interval);
+        date_subtract         
+------------------------------
+ Fri Oct 28 23:00:00 2022 UTC
+(1 row)
+
+SELECT date_subtract('2021-10-31 00:00:00+02'::timestamptz,
+                     '1 day'::interval,
+                     'Europe/Warsaw');
+        date_subtract         
+------------------------------
+ Fri Oct 29 22:00:00 2021 UTC
+(1 row)
+
+SELECT * FROM generate_series('2021-12-31 23:00:00+00'::timestamptz,
+                              '2020-12-31 23:00:00+00'::timestamptz,
+                              '-1 month'::interval,
+                              'Europe/Warsaw');
+       generate_series        
+------------------------------
+ Fri Dec 31 23:00:00 2021 UTC
+ Tue Nov 30 23:00:00 2021 UTC
+ Sun Oct 31 23:00:00 2021 UTC
+ Thu Sep 30 22:00:00 2021 UTC
+ Tue Aug 31 22:00:00 2021 UTC
+ Sat Jul 31 22:00:00 2021 UTC
+ Wed Jun 30 22:00:00 2021 UTC
+ Mon May 31 22:00:00 2021 UTC
+ Fri Apr 30 22:00:00 2021 UTC
+ Wed Mar 31 22:00:00 2021 UTC
+ Sun Feb 28 23:00:00 2021 UTC
+ Sun Jan 31 23:00:00 2021 UTC
+ Thu Dec 31 23:00:00 2020 UTC
+(13 rows)
+
+RESET TimeZone;
 --
 -- Test behavior with a dynamic (time-varying) timezone abbreviation.
 -- These tests rely on the knowledge that MSK (Europe/Moscow standard time)
