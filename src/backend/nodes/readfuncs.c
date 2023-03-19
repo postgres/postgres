@@ -305,6 +305,7 @@ _readA_Const(void)
 {
 	READ_LOCALS(A_Const);
 
+	/* We expect either NULL or :val here */
 	token = pg_strtok(&length);
 	if (length == 4 && strncmp(token, "NULL", 4) == 0)
 		local_node->isnull = true;
@@ -312,7 +313,29 @@ _readA_Const(void)
 	{
 		union ValUnion *tmp = nodeRead(NULL, 0);
 
-		memcpy(&local_node->val, tmp, sizeof(*tmp));
+		/* To forestall valgrind complaints, copy only the valid data */
+		switch (nodeTag(tmp))
+		{
+			case T_Integer:
+				memcpy(&local_node->val, tmp, sizeof(Integer));
+				break;
+			case T_Float:
+				memcpy(&local_node->val, tmp, sizeof(Float));
+				break;
+			case T_Boolean:
+				memcpy(&local_node->val, tmp, sizeof(Boolean));
+				break;
+			case T_String:
+				memcpy(&local_node->val, tmp, sizeof(String));
+				break;
+			case T_BitString:
+				memcpy(&local_node->val, tmp, sizeof(BitString));
+				break;
+			default:
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(tmp));
+				break;
+		}
 	}
 
 	READ_LOCATION_FIELD(location);
