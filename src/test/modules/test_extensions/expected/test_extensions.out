@@ -312,3 +312,80 @@ Objects in extension "test_ext_cine"
  table ext_cine_tab3
 (9 rows)
 
+--
+-- Test @extschema:extname@ syntax and no_relocate option
+--
+CREATE SCHEMA test_s_dep;
+CREATE EXTENSION test_ext_req_schema1 SCHEMA test_s_dep;
+CREATE EXTENSION test_ext_req_schema3 CASCADE;
+NOTICE:  installing required extension "test_ext_req_schema2"
+SELECT test_s_dep.dep_req1();
+ dep_req1 
+----------
+ req1
+(1 row)
+
+SELECT dep_req2();
+ dep_req2  
+-----------
+ req1 req2
+(1 row)
+
+SELECT dep_req3();
+ dep_req3  
+-----------
+ req1 req3
+(1 row)
+
+SELECT dep_req3b();
+    dep_req3b    
+-----------------
+ req1 req2 req3b
+(1 row)
+
+CREATE SCHEMA test_s_dep2;
+ALTER EXTENSION test_ext_req_schema1 SET SCHEMA test_s_dep2;  -- fails
+ERROR:  cannot SET SCHEMA of extension "test_ext_req_schema1" because other extensions prevent it
+DETAIL:  Extension "test_ext_req_schema3" requests no relocation of extension "test_ext_req_schema1".
+ALTER EXTENSION test_ext_req_schema2 SET SCHEMA test_s_dep;  -- allowed
+SELECT test_s_dep.dep_req1();
+ dep_req1 
+----------
+ req1
+(1 row)
+
+SELECT test_s_dep.dep_req2();
+ dep_req2  
+-----------
+ req1 req2
+(1 row)
+
+SELECT dep_req3();
+ dep_req3  
+-----------
+ req1 req3
+(1 row)
+
+SELECT dep_req3b();  -- fails
+ERROR:  function public.dep_req2() does not exist
+LINE 1:  SELECT public.dep_req2() || ' req3b' 
+                ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:   SELECT public.dep_req2() || ' req3b' 
+CONTEXT:  SQL function "dep_req3b" during startup
+DROP EXTENSION test_ext_req_schema3;
+ALTER EXTENSION test_ext_req_schema1 SET SCHEMA test_s_dep2;  -- now ok
+SELECT test_s_dep2.dep_req1();
+ dep_req1 
+----------
+ req1
+(1 row)
+
+SELECT test_s_dep.dep_req2();
+ dep_req2  
+-----------
+ req1 req2
+(1 row)
+
+DROP EXTENSION test_ext_req_schema1 CASCADE;
+NOTICE:  drop cascades to extension test_ext_req_schema2

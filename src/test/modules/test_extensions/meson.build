@@ -30,6 +30,12 @@ test_install_data += files(
   'test_ext_evttrig--1.0--2.0.sql',
   'test_ext_evttrig--1.0.sql',
   'test_ext_evttrig.control',
+  'test_ext_req_schema1--1.0.sql',
+  'test_ext_req_schema1.control',
+  'test_ext_req_schema2--1.0.sql',
+  'test_ext_req_schema2.control',
+  'test_ext_req_schema3--1.0.sql',
+  'test_ext_req_schema3.control',
 )
 
 tests += {

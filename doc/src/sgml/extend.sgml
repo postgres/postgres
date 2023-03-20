@@ -739,6 +739,21 @@ RETURNS anycompatible AS ...
       </listitem>
      </varlistentry>
 
+     <varlistentry id="extend-extensions-files-no-relocate">
+      <term><varname>no_relocate</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        A list of names of extensions that this extension depends on that
+        should be barred from changing their schemas via <command>ALTER
+        EXTENSION ... SET SCHEMA</command>.
+        This is needed if this extension's script references the name
+        of a required extension's schema (using
+        the <literal>@extschema:<replaceable>name</replaceable>@</literal>
+        syntax) in a way that cannot track renames.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="extend-extensions-files-superuser">
       <term><varname>superuser</varname> (<type>boolean</type>)</term>
       <listitem>
@@ -902,8 +917,9 @@ RETURNS anycompatible AS ...
        For such an extension, set <literal>relocatable = false</literal> in its
        control file, and use <literal>@extschema@</literal> to refer to the target
        schema in the script file.  All occurrences of this string will be
-       replaced by the actual target schema's name before the script is
-       executed.  The user can set the target schema using the
+       replaced by the actual target schema's name (double-quoted if
+       necessary) before the script is executed.  The user can set the
+       target schema using the
        <literal>SCHEMA</literal> option of <command>CREATE EXTENSION</command>.
       </para>
      </listitem>
@@ -916,7 +932,7 @@ RETURNS anycompatible AS ...
        will prevent use of the <literal>SCHEMA</literal> option of <command>CREATE
        EXTENSION</command>, unless it specifies the same schema named in the control
        file.  This choice is typically necessary if the extension contains
-       internal assumptions about schema names that can't be replaced by
+       internal assumptions about its schema name that can't be replaced by
        uses of <literal>@extschema@</literal>.  The <literal>@extschema@</literal>
        substitution mechanism is available in this case too, although it is
        of limited use since the schema name is determined by the control file.
@@ -968,6 +984,29 @@ SET LOCAL search_path TO @extschema@, pg_temp;
      target schema.  Such an arrangement works conveniently with the default
      setting of <varname>search_path</varname> during creation of dependent
      extensions.
+    </para>
+
+    <para>
+     If an extension references objects belonging to another extension,
+     it is recommended to schema-qualify those references.  To do that,
+     write <literal>@extschema:<replaceable>name</replaceable>@</literal>
+     in the extension's script file, where <replaceable>name</replaceable>
+     is the name of the other extension (which must be listed in this
+     extension's <literal>requires</literal> list).  This string will be
+     replaced by the name (double-quoted if necessary) of that extension's
+     target schema.
+     Although this notation avoids the need to make hard-wired assumptions
+     about schema names in the extension's script file, its use may embed
+     the other extension's schema name into the installed objects of this
+     extension.  (Typically, that happens
+     when <literal>@extschema:<replaceable>name</replaceable>@</literal> is
+     used inside a string literal, such as a function body or
+     a <varname>search_path</varname> setting.  In other cases, the object
+     reference is reduced to an OID during parsing and does not require
+     subsequent lookups.)  If the other extension's schema name is so
+     embedded, you should prevent the other extension from being relocated
+     after yours is installed, by adding the name of the other extension to
+     this one's <literal>no_relocate</literal> list.
     </para>
    </sect2>
 

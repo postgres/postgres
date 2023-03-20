@@ -209,3 +209,26 @@ CREATE EXTENSION test_ext_cine;
 ALTER EXTENSION test_ext_cine UPDATE TO '1.1';
 
 \dx+ test_ext_cine
+
+--
+-- Test @extschema:extname@ syntax and no_relocate option
+--
+CREATE SCHEMA test_s_dep;
+CREATE EXTENSION test_ext_req_schema1 SCHEMA test_s_dep;
+CREATE EXTENSION test_ext_req_schema3 CASCADE;
+SELECT test_s_dep.dep_req1();
+SELECT dep_req2();
+SELECT dep_req3();
+SELECT dep_req3b();
+CREATE SCHEMA test_s_dep2;
+ALTER EXTENSION test_ext_req_schema1 SET SCHEMA test_s_dep2;  -- fails
+ALTER EXTENSION test_ext_req_schema2 SET SCHEMA test_s_dep;  -- allowed
+SELECT test_s_dep.dep_req1();
+SELECT test_s_dep.dep_req2();
+SELECT dep_req3();
+SELECT dep_req3b();  -- fails
+DROP EXTENSION test_ext_req_schema3;
+ALTER EXTENSION test_ext_req_schema1 SET SCHEMA test_s_dep2;  -- now ok
+SELECT test_s_dep2.dep_req1();
+SELECT test_s_dep.dep_req2();
+DROP EXTENSION test_ext_req_schema1 CASCADE;

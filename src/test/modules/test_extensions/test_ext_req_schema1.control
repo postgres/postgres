@@ -1,0 +1,3 @@
+comment = 'Required extension to be referenced'
+default_version = '1.0'
+relocatable = true
