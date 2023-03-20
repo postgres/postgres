@@ -4114,6 +4114,14 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </para>
 
        <para>
+        To specify a timeline ID in hexadecimal (for example, if extracted
+        from a WAL file name or history file), prefix it with a
+        <literal>0x</literal>.  For instance, if the WAL file name is
+        <filename>00000011000000A10000004F</filename>, then the timeline ID is
+        <literal>0x11</literal> (or 17 decimal).
+       </para>
+
+       <para>
         You usually only need to set this parameter
         in complex re-recovery situations, where you need to return to
         a state that itself was reached after a point-in-time recovery.
