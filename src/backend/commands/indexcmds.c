@@ -184,6 +184,7 @@ CheckIndexCompatible(Oid oldId,
 	Form_pg_am	accessMethodForm;
 	IndexAmRoutine *amRoutine;
 	bool		amcanorder;
+	bool		amsummarizing;
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
@@ -222,6 +223,7 @@ CheckIndexCompatible(Oid oldId,
 	ReleaseSysCache(tuple);
 
 	amcanorder = amRoutine->amcanorder;
+	amsummarizing = amRoutine->amsummarizing;
 
 	/*
 	 * Compute the operator classes, collations, and exclusion operators for
@@ -232,7 +234,8 @@ CheckIndexCompatible(Oid oldId,
 	 * ii_NumIndexKeyAttrs with same value.
 	 */
 	indexInfo = makeIndexInfo(numberOfAttributes, numberOfAttributes,
-							  accessMethodId, NIL, NIL, false, false, false, false);
+							  accessMethodId, NIL, NIL, false, false,
+							  false, false, amsummarizing);
 	typeObjectId = palloc_array(Oid, numberOfAttributes);
 	collationObjectId = palloc_array(Oid, numberOfAttributes);
 	classObjectId = palloc_array(Oid, numberOfAttributes);
@@ -550,6 +553,7 @@ DefineIndex(Oid relationId,
 	Form_pg_am	accessMethodForm;
 	IndexAmRoutine *amRoutine;
 	bool		amcanorder;
+	bool		amissummarizing;
 	amoptions_function amoptions;
 	bool		partitioned;
 	bool		safe_index;
@@ -866,6 +870,7 @@ DefineIndex(Oid relationId,
 
 	amcanorder = amRoutine->amcanorder;
 	amoptions = amRoutine->amoptions;
+	amissummarizing = amRoutine->amsummarizing;
 
 	pfree(amRoutine);
 	ReleaseSysCache(tuple);
@@ -897,7 +902,8 @@ DefineIndex(Oid relationId,
 							  stmt->unique,
 							  stmt->nulls_not_distinct,
 							  !concurrent,
-							  concurrent);
+							  concurrent,
+							  amissummarizing);
 
 	typeObjectId = palloc_array(Oid, numberOfAttributes);
 	collationObjectId = palloc_array(Oid, numberOfAttributes);

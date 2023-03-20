@@ -259,15 +259,24 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		into all the relations indexing the result relation
  *		when a heap tuple is inserted into the result relation.
  *
- *		When 'update' is true, executor is performing an UPDATE
- *		that could not use an optimization like heapam's HOT (in
- *		more general terms a call to table_tuple_update() took
- *		place and set 'update_indexes' to true).  Receiving this
- *		hint makes us consider if we should pass down the
- *		'indexUnchanged' hint in turn.  That's something that we
- *		figure out for each index_insert() call iff 'update' is
- *		true.  (When 'update' is false we already know not to pass
- *		the hint to any index.)
+ *		When 'update' is true and 'onlySummarizing' is false,
+ *		executor is performing an UPDATE that could not use an
+ *		optimization like heapam's HOT (in more general terms a
+ *		call to table_tuple_update() took place and set
+ *		'update_indexes' to TUUI_All).  Receiving this hint makes
+ *		us consider if we should pass down the 'indexUnchanged'
+ *		hint in turn.  That's something that we figure out for
+ *		each index_insert() call iff 'update' is true.
+ *		(When 'update' is false we already know not to pass the
+ *		hint to any index.)
+ *
+ *		If onlySummarizing is set, an equivalent optimization to
+ *		HOT has been applied and any updated columns are indexed
+ *		only by summarizing indexes (or in more general terms a
+ *		call to table_tuple_update() took place and set
+ *		'update_indexes' to TUUI_Summarizing). We can (and must)
+ *		therefore only update the indexes that have
+ *		'amsummarizing' = true.
  *
  *		Unique and exclusion constraints are enforced at the same
  *		time.  This returns a list of index OIDs for any unique or
@@ -287,7 +296,8 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 					  bool update,
 					  bool noDupErr,
 					  bool *specConflict,
-					  List *arbiterIndexes)
+					  List *arbiterIndexes,
+					  bool onlySummarizing)
 {
 	ItemPointer tupleid = &slot->tts_tid;
 	List	   *result = NIL;
@@ -341,6 +351,13 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 
 		/* If the index is marked as read-only, ignore it */
 		if (!indexInfo->ii_ReadyForInserts)
+			continue;
+
+		/*
+		 * Skip processing of non-summarizing indexes if we only
+		 * update summarizing indexes
+		 */
+		if (onlySummarizing && !indexInfo->ii_Summarizing)
 			continue;
 
 		/* Check for partial index */

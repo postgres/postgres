@@ -296,6 +296,7 @@ dihandler(PG_FUNCTION_ARGS)
 	amroutine->amcanparallel = false;
 	amroutine->amcaninclude = false;
 	amroutine->amusemaintenanceworkmem = false;
+	amroutine->amsummarizing = false;
 	amroutine->amparallelvacuumoptions = VACUUM_OPTION_NO_PARALLEL;
 	amroutine->amkeytype = InvalidOid;
 

@@ -56,10 +56,11 @@ extern bytea **RelationGetIndexAttOptions(Relation relation, bool copy);
 
 typedef enum IndexAttrBitmapKind
 {
-	INDEX_ATTR_BITMAP_ALL,
 	INDEX_ATTR_BITMAP_KEY,
 	INDEX_ATTR_BITMAP_PRIMARY_KEY,
-	INDEX_ATTR_BITMAP_IDENTITY_KEY
+	INDEX_ATTR_BITMAP_IDENTITY_KEY,
+	INDEX_ATTR_BITMAP_HOT_BLOCKING,
+	INDEX_ATTR_BITMAP_SUMMARIZED
 } IndexAttrBitmapKind;
 
 extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation,

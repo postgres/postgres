@@ -103,6 +103,22 @@ typedef enum TM_Result
 } TM_Result;
 
 /*
+ * Result codes for table_update(..., update_indexes*..).
+ * Used to determine which indexes to update.
+ */
+typedef enum TU_UpdateIndexes
+{
+	/* No indexed columns were updated (incl. TID addressing of tuple) */
+	TU_None,
+
+	/* A non-summarizing indexed column was updated, or the TID has changed */
+	TU_All,
+
+	/* Only summarized columns were updated, TID is unchanged */
+	TU_Summarizing
+} TU_UpdateIndexes;
+
+/*
  * When table_tuple_update, table_tuple_delete, or table_tuple_lock fail
  * because the target tuple is already outdated, they fill in this struct to
  * provide information to the caller about what happened.
@@ -526,7 +542,7 @@ typedef struct TableAmRoutine
 								 bool wait,
 								 TM_FailureData *tmfd,
 								 LockTupleMode *lockmode,
-								 bool *update_indexes);
+								 TU_UpdateIndexes *update_indexes);
 
 	/* see table_tuple_lock() for reference about parameters */
 	TM_Result	(*tuple_lock) (Relation rel,
@@ -1514,7 +1530,7 @@ static inline TM_Result
 table_tuple_update(Relation rel, ItemPointer otid, TupleTableSlot *slot,
 				   CommandId cid, Snapshot snapshot, Snapshot crosscheck,
 				   bool wait, TM_FailureData *tmfd, LockTupleMode *lockmode,
-				   bool *update_indexes)
+				   TU_UpdateIndexes *update_indexes)
 {
 	return rel->rd_tableam->tuple_update(rel, otid, slot,
 										 cid, snapshot, crosscheck,
@@ -2038,7 +2054,7 @@ extern void simple_table_tuple_delete(Relation rel, ItemPointer tid,
 									  Snapshot snapshot);
 extern void simple_table_tuple_update(Relation rel, ItemPointer otid,
 									  TupleTableSlot *slot, Snapshot snapshot,
-									  bool *update_indexes);
+									  TU_UpdateIndexes *update_indexes);
 
 
 /* ----------------------------------------------------------------------------

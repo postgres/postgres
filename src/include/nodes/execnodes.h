@@ -161,6 +161,7 @@ typedef struct ExprState
  *		IndexUnchanged		aminsert hint, cached for retail inserts
  *		Concurrent			are we doing a concurrent index build?
  *		BrokenHotChain		did we detect any broken HOT chains?
+ *		Summarizing			is it a summarizing index?
  *		ParallelWorkers		# of workers requested (excludes leader)
  *		Am					Oid of index AM
  *		AmCache				private cache area for index AM
@@ -194,6 +195,7 @@ typedef struct IndexInfo
 	bool		ii_IndexUnchanged;
 	bool		ii_Concurrent;
 	bool		ii_BrokenHotChain;
+	bool		ii_Summarizing;
 	int			ii_ParallelWorkers;
 	Oid			ii_Am;
 	void	   *ii_AmCache;

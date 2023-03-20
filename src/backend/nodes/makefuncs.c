@@ -743,7 +743,8 @@ make_ands_implicit(Expr *clause)
  */
 IndexInfo *
 makeIndexInfo(int numattrs, int numkeyattrs, Oid amoid, List *expressions,
-			  List *predicates, bool unique, bool nulls_not_distinct, bool isready, bool concurrent)
+			  List *predicates, bool unique, bool nulls_not_distinct,
+			  bool isready, bool concurrent, bool summarizing)
 {
 	IndexInfo  *n = makeNode(IndexInfo);
 
@@ -757,6 +758,10 @@ makeIndexInfo(int numattrs, int numkeyattrs, Oid amoid, List *expressions,
 	n->ii_CheckedUnchanged = false;
 	n->ii_IndexUnchanged = false;
 	n->ii_Concurrent = concurrent;
+	n->ii_Summarizing = summarizing;
+
+	/* summarizing indexes cannot contain non-key attributes */
+	Assert(!summarizing || (numkeyattrs == numattrs));
 
 	/* expressions */
 	n->ii_Expressions = expressions;
