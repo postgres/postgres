@@ -357,6 +357,13 @@ insert into public.brintest_multi (float8col) values (real 'nan');
 
 UPDATE brintest_multi SET int8col = int8col * int4col;
 
+-- Test handling of inet netmasks with inet_minmax_multi_ops
+CREATE TABLE brin_test_inet (a inet);
+CREATE INDEX ON brin_test_inet USING brin (a inet_minmax_multi_ops);
+INSERT INTO brin_test_inet VALUES ('127.0.0.1/0');
+INSERT INTO brin_test_inet VALUES ('0.0.0.0/12');
+DROP TABLE brin_test_inet;
+
 -- Tests for brin_summarize_new_values
 SELECT brin_summarize_new_values('brintest_multi'); -- error, not an index
 SELECT brin_summarize_new_values('tenk1_unique1'); -- error, not a BRIN index
