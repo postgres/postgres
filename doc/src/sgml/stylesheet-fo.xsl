@@ -69,6 +69,12 @@
   </fo:inline>
 </xsl:template>
 
+<!-- Make every sect1 in contrib get a page break -->
+<xsl:template match="id('contrib')/sect1">
+  <fo:block break-after='page'/>
+  <xsl:apply-imports/>
+</xsl:template>
+
 <!-- formatting for entries in tables of functions -->
 <xsl:template match="entry[@role='func_table_entry']/para">
   <fo:block margin-left="4em" text-align="left">
