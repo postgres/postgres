@@ -568,7 +568,7 @@ check_is_install_user(ClusterInfo *cluster)
 	 * users might match users defined in the old cluster and generate an
 	 * error during pg_dump restore.
 	 */
-	if (cluster == &new_cluster && atooid(PQgetvalue(res, 0, 0)) != 1)
+	if (cluster == &new_cluster && strcmp(PQgetvalue(res, 0, 0), "1") != 0)
 		pg_fatal("Only the install user can be defined in the new cluster.");
 
 	PQclear(res);
