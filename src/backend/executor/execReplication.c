@@ -242,6 +242,14 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2)
 		Form_pg_attribute att;
 		TypeCacheEntry *typentry;
 
+		att = TupleDescAttr(slot1->tts_tupleDescriptor, attrnum);
+
+		/*
+		 * Ignore dropped columns as the publisher doesn't send those
+		 */
+		if (att->attisdropped)
+			continue;
+
 		/*
 		 * If one value is NULL and other is not, then they are certainly not
 		 * equal
@@ -254,8 +262,6 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2)
 		 */
 		if (slot1->tts_isnull[attrnum] || slot2->tts_isnull[attrnum])
 			continue;
-
-		att = TupleDescAttr(slot1->tts_tupleDescriptor, attrnum);
 
 		typentry = lookup_type_cache(att->atttypid, TYPECACHE_EQ_OPR_FINFO);
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
