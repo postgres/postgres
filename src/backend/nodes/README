@@ -88,10 +88,10 @@ Suppose you want to define a node Foo:
    If you intend to inherit from, say a Plan node, put Plan as the first field
    of your struct definition.  (The T_Foo tag is created automatically.)
 2. Check that the generated support functions in copyfuncs.funcs.c,
-   equalfuncs.funcs.c, outfuncs.funcs.c and readfuncs.funcs.c look
-   correct.  Add attributes as necessary to control the outcome.  (For
-   some classes of node types, you don't need all four support functions.
-   Use node attributes similar to those of related node types.)
+   equalfuncs.funcs.c, outfuncs.funcs.c, queryjumblefuncs.funcs.c and
+   readfuncs.funcs.c look correct.  Add attributes as necessary to control the
+   outcome.  (For some classes of node types, you don't need all the support
+   functions.  Use node attributes similar to those of related node types.)
 3. Add cases to the functions in nodeFuncs.c as needed.  There are many
    other places you'll probably also need to teach about your new node
    type.  Best bet is to grep for references to one or two similar existing
