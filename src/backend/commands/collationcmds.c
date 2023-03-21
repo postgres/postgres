@@ -950,7 +950,6 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			const char *name;
 			char	   *langtag;
 			char	   *icucomment;
-			const char *iculocstr;
 			Oid			collid;
 
 			if (i == -1)
@@ -959,20 +958,19 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 				name = uloc_getAvailable(i);
 
 			langtag = get_icu_language_tag(name);
-			iculocstr = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : name;
 
 			/*
 			 * Be paranoid about not allowing any non-ASCII strings into
 			 * pg_collation
 			 */
-			if (!pg_is_ascii(langtag) || !pg_is_ascii(iculocstr))
+			if (!pg_is_ascii(langtag))
 				continue;
 
 			collid = CollationCreate(psprintf("%s-x-icu", langtag),
 									 nspid, GetUserId(),
 									 COLLPROVIDER_ICU, true, -1,
-									 NULL, NULL, iculocstr, NULL,
-									 get_collation_actual_version(COLLPROVIDER_ICU, iculocstr),
+									 NULL, NULL, langtag, NULL,
+									 get_collation_actual_version(COLLPROVIDER_ICU, langtag),
 									 true, true);
 			if (OidIsValid(collid))
 			{

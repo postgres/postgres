@@ -2634,9 +2634,12 @@ icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
 }
 
 /*
- * Parse collation attributes and apply them to the open collator.  This takes
- * a string like "und@colStrength=primary;colCaseLevel=yes" and parses and
- * applies the key-value arguments.
+ * Parse collation attributes from the given locale string and apply them to
+ * the open collator.
+ *
+ * First, the locale string is canonicalized to an ICU format locale ID such
+ * as "und@colStrength=primary;colCaseLevel=yes". Then, it parses and applies
+ * the key-value arguments.
  *
  * Starting with ICU version 54, the attributes are processed automatically by
  * ucol_open(), so this is only necessary for emulating this behavior on older
@@ -2646,9 +2649,34 @@ pg_attribute_unused()
 static void
 icu_set_collation_attributes(UCollator *collator, const char *loc)
 {
-	char	   *str = asc_tolower(loc, strlen(loc));
+	UErrorCode	status;
+	int32_t		len;
+	char	   *icu_locale_id;
+	char	   *lower_str;
+	char	   *str;
 
-	str = strchr(str, '@');
+	/*
+	 * The input locale may be a BCP 47 language tag, e.g.
+	 * "und-u-kc-ks-level1", which expresses the same attributes in a
+	 * different form. It will be converted to the equivalent ICU format
+	 * locale ID, e.g. "und@colcaselevel=yes;colstrength=primary", by
+	 * uloc_canonicalize().
+	 */
+	status = U_ZERO_ERROR;
+	len = uloc_canonicalize(loc, NULL, 0, &status);
+	icu_locale_id = palloc(len + 1);
+	status = U_ZERO_ERROR;
+	len = uloc_canonicalize(loc, icu_locale_id, len + 1, &status);
+	if (U_FAILURE(status))
+		ereport(ERROR,
+				(errmsg("canonicalization failed for locale string \"%s\": %s",
+						loc, u_errorName(status))));
+
+	lower_str = asc_tolower(icu_locale_id, strlen(icu_locale_id));
+
+	pfree(icu_locale_id);
+
+	str = strchr(lower_str, '@');
 	if (!str)
 		return;
 	str++;
@@ -2663,7 +2691,6 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 			char	   *value;
 			UColAttribute uattr;
 			UColAttributeValue uvalue;
-			UErrorCode	status;
 
 			status = U_ZERO_ERROR;
 
@@ -2730,6 +2757,8 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 								loc, u_errorName(status))));
 		}
 	}
+
+	pfree(lower_str);
 }
 
 #endif							/* USE_ICU */
