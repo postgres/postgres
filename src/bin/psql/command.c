@@ -5041,6 +5041,21 @@ do_shell(const char *command)
 	else
 		result = system(command);
 
+	if (result == 0)
+	{
+		SetVariable(pset.vars, "SHELL_EXIT_CODE", "0");
+		SetVariable(pset.vars, "SHELL_ERROR", "false");
+	}
+	else
+	{
+		int			exit_code = wait_result_to_exit_code(result);
+		char		buf[32];
+
+		snprintf(buf, sizeof(buf), "%d", exit_code);
+		SetVariable(pset.vars, "SHELL_EXIT_CODE", buf);
+		SetVariable(pset.vars, "SHELL_ERROR", "true");
+	}
+
 	if (result == 127 || result == -1)
 	{
 		pg_log_error("\\!: failed");

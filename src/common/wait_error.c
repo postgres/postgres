@@ -127,3 +127,22 @@ wait_result_is_any_signal(int exit_status, bool include_command_not_found)
 		return true;
 	return false;
 }
+
+/*
+ * Return the shell exit code (normally 0 to 255) that corresponds to the
+ * given wait status.  The argument is a wait status as returned by wait(2)
+ * or waitpid(2), which also applies to pclose(3) and system(3).  To support
+ * the latter two cases, we pass through "-1" unchanged.
+ */
+int
+wait_result_to_exit_code(int exit_status)
+{
+	if (exit_status == -1)
+		return -1;				/* failure of pclose() or system() */
+	if (WIFEXITED(exit_status))
+		return WEXITSTATUS(exit_status);
+	if (WIFSIGNALED(exit_status))
+		return 128 + WTERMSIG(exit_status);
+	/* On many systems, this is unreachable */
+	return -1;
+}

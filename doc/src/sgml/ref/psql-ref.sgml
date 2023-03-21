@@ -4267,6 +4267,34 @@ bar
         </listitem>
       </varlistentry>
 
+      <varlistentry id="app-psql-variables-shell-error">
+       <term><varname>SHELL_ERROR</varname></term>
+       <listitem>
+        <para>
+         <literal>true</literal> if the last shell command
+         failed, <literal>false</literal> if it succeeded.
+         This applies to shell commands invoked via the <literal>\!</literal>
+         meta-command or backquote (<literal>`</literal>) expansion.
+         See also <varname>SHELL_EXIT_CODE</varname>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="app-psql-variables-shell-exit-code">
+       <term><varname>SHELL_EXIT_CODE</varname></term>
+       <listitem>
+        <para>
+         The exit status returned by the last shell command.
+         0&ndash;127 represent program exit codes, 128&ndash;255
+         indicate termination by a signal, and -1 indicates failure
+         to launch a program or to collect its exit status.
+         This applies to shell commands invoked via the <literal>\!</literal>
+         meta-command or backquote (<literal>`</literal>) expansion.
+         See also <varname>SHELL_ERROR</varname>.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="app-psql-variables-show-all-results">
         <term><varname>SHOW_ALL_RESULTS</varname></term>
         <listitem>

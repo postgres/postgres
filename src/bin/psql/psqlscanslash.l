@@ -19,6 +19,8 @@
 #include "postgres_fe.h"
 
 #include "psqlscanslash.h"
+#include "settings.h"
+
 #include "common/logging.h"
 #include "fe_utils/conditional.h"
 
@@ -772,6 +774,7 @@ evaluate_backtick(PsqlScanState state)
 	PQExpBufferData cmd_output;
 	FILE	   *fd;
 	bool		error = false;
+	int			exit_code = 0;
 	char		buf[512];
 	size_t		result;
 
@@ -783,6 +786,7 @@ evaluate_backtick(PsqlScanState state)
 	{
 		pg_log_error("%s: %m", cmd);
 		error = true;
+		exit_code = -1;
 	}
 
 	if (!error)
@@ -800,10 +804,19 @@ evaluate_backtick(PsqlScanState state)
 		} while (!feof(fd));
 	}
 
-	if (fd && pclose(fd) == -1)
+	if (fd)
 	{
-		pg_log_error("%s: %m", cmd);
-		error = true;
+		/*
+		 * Although pclose's result always sets SHELL_EXIT_CODE, we
+		 * historically have abandoned the backtick substitution only if it
+		 * returns -1.
+		 */
+		exit_code = pclose(fd);
+		if (exit_code == -1)
+		{
+			pg_log_error("%s: %m", cmd);
+			error = true;
+		}
 	}
 
 	if (PQExpBufferDataBroken(cmd_output))
@@ -825,6 +838,11 @@ evaluate_backtick(PsqlScanState state)
 			cmd_output.len--;
 		appendBinaryPQExpBuffer(output_buf, cmd_output.data, cmd_output.len);
 	}
+
+	/* And finally, set the shell error variables */
+	snprintf(buf, sizeof(buf), "%d", wait_result_to_exit_code(exit_code));
+	SetVariable(pset.vars, "SHELL_EXIT_CODE", buf);
+	SetVariable(pset.vars, "SHELL_ERROR", (exit_code == 0) ? "false" : "true");
 
 	termPQExpBuffer(&cmd_output);
 }

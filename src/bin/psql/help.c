@@ -451,6 +451,10 @@ helpVariables(unsigned short int pager)
 	HELP0("  SERVER_VERSION_NAME\n"
 		  "  SERVER_VERSION_NUM\n"
 		  "    server's version (in short string or numeric format)\n");
+	HELP0("  SHELL_ERROR\n"
+		  "    true if the last shell command failed, false if it succeeded\n");
+	HELP0("  SHELL_EXIT_CODE\n"
+		  "    exit status of the last shell command\n");
 	HELP0("  SHOW_ALL_RESULTS\n"
 		  "    show all results of a combined query (\\;) instead of only the last\n");
 	HELP0("  SHOW_CONTEXT\n"
