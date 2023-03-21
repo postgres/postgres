@@ -1137,6 +1137,9 @@ SELECT pg_stat_get_subscription_stats(NULL);
 -- extends.
 SELECT sum(extends) AS io_sum_shared_before_extends
   FROM pg_stat_io WHERE io_context = 'normal' AND io_object = 'relation' \gset
+SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
+  FROM pg_stat_io
+  WHERE io_object = 'relation' \gset io_sum_shared_before_
 CREATE TABLE test_io_shared(a int);
 INSERT INTO test_io_shared SELECT i FROM generate_series(1,100)i;
 SELECT pg_stat_force_next_flush();
@@ -1155,15 +1158,12 @@ SELECT :io_sum_shared_after_extends > :io_sum_shared_before_extends;
 
 -- After a checkpoint, there should be some additional IOCONTEXT_NORMAL writes
 -- and fsyncs.
-SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
-  FROM pg_stat_io
-  WHERE io_context = 'normal' AND io_object = 'relation' \gset io_sum_shared_before_
 -- See comment above for rationale for two explicit CHECKPOINTs.
 CHECKPOINT;
 CHECKPOINT;
 SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
   FROM pg_stat_io
-  WHERE io_context = 'normal' AND io_object = 'relation' \gset io_sum_shared_after_
+  WHERE io_object = 'relation' \gset io_sum_shared_after_
 SELECT :io_sum_shared_after_writes > :io_sum_shared_before_writes;
  ?column? 
 ----------
