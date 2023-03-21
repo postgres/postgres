@@ -333,14 +333,21 @@ MultiExecParallelHash(HashState *node)
 	hashtable->nbuckets = pstate->nbuckets;
 	hashtable->log2_nbuckets = my_log2(hashtable->nbuckets);
 	hashtable->totalTuples = pstate->total_tuples;
-	ExecParallelHashEnsureBatchAccessors(hashtable);
+
+	/*
+	 * Unless we're completely done and the batch state has been freed, make
+	 * sure we have accessors.
+	 */
+	if (BarrierPhase(build_barrier) < PHJ_BUILD_DONE)
+		ExecParallelHashEnsureBatchAccessors(hashtable);
 
 	/*
 	 * The next synchronization point is in ExecHashJoin's HJ_BUILD_HASHTABLE
-	 * case, which will bring the build phase to PHJ_BUILD_DONE (if it isn't
-	 * there already).
+	 * case, which will bring the build phase to PHJ_BUILD_RUNNING (if it
+	 * isn't there already).
 	 */
 	Assert(BarrierPhase(build_barrier) == PHJ_BUILD_HASHING_OUTER ||
+		   BarrierPhase(build_barrier) == PHJ_BUILD_RUNNING ||
 		   BarrierPhase(build_barrier) == PHJ_BUILD_DONE);
 }
 
@@ -624,7 +631,7 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 		/*
 		 * The next Parallel Hash synchronization point is in
 		 * MultiExecParallelHash(), which will progress it all the way to
-		 * PHJ_BUILD_DONE.  The caller must not return control from this
+		 * PHJ_BUILD_RUNNING.  The caller must not return control from this
 		 * executor node between now and then.
 		 */
 	}
@@ -3068,14 +3075,11 @@ ExecParallelHashEnsureBatchAccessors(HashJoinTable hashtable)
 	}
 
 	/*
-	 * It's possible for a backend to start up very late so that the whole
-	 * join is finished and the shm state for tracking batches has already
-	 * been freed by ExecHashTableDetach().  In that case we'll just leave
-	 * hashtable->batches as NULL so that ExecParallelHashJoinNewBatch() gives
-	 * up early.
+	 * We should never see a state where the batch-tracking array is freed,
+	 * because we should have given up sooner if we join when the build
+	 * barrier has reached the PHJ_BUILD_DONE phase.
 	 */
-	if (!DsaPointerIsValid(pstate->batches))
-		return;
+	Assert(DsaPointerIsValid(pstate->batches));
 
 	/* Use hash join memory context. */
 	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
@@ -3195,9 +3199,18 @@ ExecHashTableDetachBatch(HashJoinTable hashtable)
 void
 ExecHashTableDetach(HashJoinTable hashtable)
 {
-	if (hashtable->parallel_state)
+	ParallelHashJoinState *pstate = hashtable->parallel_state;
+
+	/*
+	 * If we're involved in a parallel query, we must either have gotten all
+	 * the way to PHJ_BUILD_RUNNING, or joined too late and be in
+	 * PHJ_BUILD_DONE.
+	 */
+	Assert(!pstate ||
+		   BarrierPhase(&pstate->build_barrier) >= PHJ_BUILD_RUNNING);
+
+	if (pstate && BarrierPhase(&pstate->build_barrier) == PHJ_BUILD_RUNNING)
 	{
-		ParallelHashJoinState *pstate = hashtable->parallel_state;
 		int			i;
 
 		/* Make sure any temporary files are closed. */
@@ -3213,17 +3226,22 @@ ExecHashTableDetach(HashJoinTable hashtable)
 		}
 
 		/* If we're last to detach, clean up shared memory. */
-		if (BarrierDetach(&pstate->build_barrier))
+		if (BarrierArriveAndDetach(&pstate->build_barrier))
 		{
+			/*
+			 * Late joining processes will see this state and give up
+			 * immediately.
+			 */
+			Assert(BarrierPhase(&pstate->build_barrier) == PHJ_BUILD_DONE);
+
 			if (DsaPointerIsValid(pstate->batches))
 			{
 				dsa_free(hashtable->area, pstate->batches);
 				pstate->batches = InvalidDsaPointer;
 			}
 		}
-
-		hashtable->parallel_state = NULL;
 	}
+	hashtable->parallel_state = NULL;
 }
 
 /*
