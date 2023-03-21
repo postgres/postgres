@@ -79,7 +79,7 @@ CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>
     plpy.info('first message', 'second message', message='third message') 
 PL/Python anonymous code block
--- raise exception in python, handle exception in plgsql
+-- raise exception in python, handle exception in plpgsql
 CREATE OR REPLACE FUNCTION raise_exception(_message text, _detail text DEFAULT NULL, _hint text DEFAULT NULL,
                                            _sqlstate text DEFAULT NULL,
                                            _schema_name text DEFAULT NULL,

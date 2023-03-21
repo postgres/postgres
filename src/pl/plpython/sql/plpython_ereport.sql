@@ -40,7 +40,7 @@ DO $$ plpy.info('unsupported argument', blabla='fooboo') $$ LANGUAGE plpython3u;
 DO $$ plpy.info('first message', message='second message') $$ LANGUAGE plpython3u;
 DO $$ plpy.info('first message', 'second message', message='third message') $$ LANGUAGE plpython3u;
 
--- raise exception in python, handle exception in plgsql
+-- raise exception in python, handle exception in plpgsql
 CREATE OR REPLACE FUNCTION raise_exception(_message text, _detail text DEFAULT NULL, _hint text DEFAULT NULL,
                                            _sqlstate text DEFAULT NULL,
                                            _schema_name text DEFAULT NULL,

@@ -208,7 +208,7 @@ my %pgdump_runs = (
 		],
 	},
 
-	# plgsql in the list blocks the dump of extension test_pg_dump
+	# plpgsql in the list blocks the dump of extension test_pg_dump
 	without_extension => {
 		dump_cmd => [
 			'pg_dump', '--no-sync', "--file=$tempdir/without_extension.sql",
@@ -216,7 +216,7 @@ my %pgdump_runs = (
 		],
 	},
 
-	# plgsql in the list of extensions blocks the dump of extension
+	# plpgsql in the list of extensions blocks the dump of extension
 	# test_pg_dump.  "public" is the schema used by the extension
 	# test_pg_dump, but none of its objects should be dumped.
 	without_extension_explicit_schema => {
@@ -230,7 +230,7 @@ my %pgdump_runs = (
 		],
 	},
 
-	# plgsql in the list of extensions blocks the dump of extension
+	# plpgsql in the list of extensions blocks the dump of extension
 	# test_pg_dump, but not the dump of objects not dependent on the
 	# extension located on a schema maintained by the extension.
 	without_extension_internal_schema => {
