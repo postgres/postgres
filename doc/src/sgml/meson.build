@@ -123,7 +123,7 @@ if xsltproc_bin.found()
   # build multi-page html docs as part of docs target
   docs += html
 
-  html_help = custom_target('html_help',
+  htmlhelp = custom_target('htmlhelp',
     input: ['stylesheet-hh.xsl', postgres_full_xml],
     output: 'htmlhelp',
     depfile: 'htmlhelp.d',
@@ -131,7 +131,7 @@ if xsltproc_bin.found()
     command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTDIR@/', xsltproc_flags, '@INPUT@'],
     build_by_default: false,
   )
-  alldocs += html_help
+  alldocs += htmlhelp
 
 
   # single-page HTML
