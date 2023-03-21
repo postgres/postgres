@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 # Bug #15114
 
@@ -298,3 +298,57 @@ is( $node_subscriber->safe_psql(
 
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
+
+# The bug was that when the REPLICA IDENTITY FULL is used with dropped columns,
+# we fail to apply updates and deletes
+my $node_publisher_d_cols = get_new_node('node_publisher_d_cols');
+$node_publisher_d_cols->init(allows_streaming => 'logical');
+$node_publisher_d_cols->start;
+
+my $node_subscriber_d_cols = get_new_node('node_subscriber_d_cols');
+$node_subscriber_d_cols->init(allows_streaming => 'logical');
+$node_subscriber_d_cols->start;
+
+$node_publisher_d_cols->safe_psql(
+	'postgres', qq(
+	CREATE TABLE dropped_cols (a int, b_drop int, c int);
+	ALTER TABLE dropped_cols REPLICA IDENTITY FULL;
+	CREATE PUBLICATION pub_dropped_cols FOR TABLE dropped_cols;
+	-- some initial data
+	INSERT INTO dropped_cols VALUES (1, 1, 1);
+));
+
+$node_subscriber_d_cols->safe_psql(
+	'postgres', qq(
+	 CREATE TABLE dropped_cols (a int, b_drop int, c int);
+));
+
+my $publisher_connstr_d_cols =
+  $node_publisher_d_cols->connstr . ' dbname=postgres';
+$node_subscriber_d_cols->safe_psql('postgres',
+	"CREATE SUBSCRIPTION sub_dropped_cols CONNECTION '$publisher_connstr_d_cols' PUBLICATION pub_dropped_cols"
+);
+$node_subscriber_d_cols->wait_for_subscription_sync;
+
+$node_publisher_d_cols->safe_psql(
+	'postgres', qq(
+		ALTER TABLE dropped_cols DROP COLUMN b_drop;
+));
+$node_subscriber_d_cols->safe_psql(
+	'postgres', qq(
+		ALTER TABLE dropped_cols DROP COLUMN b_drop;
+));
+
+$node_publisher_d_cols->safe_psql(
+	'postgres', qq(
+		UPDATE dropped_cols SET a = 100;
+));
+$node_publisher_d_cols->wait_for_catchup('sub_dropped_cols');
+
+is( $node_subscriber_d_cols->safe_psql(
+		'postgres', "SELECT count(*) FROM dropped_cols WHERE a = 100"),
+	qq(1),
+	'replication with RI FULL and dropped columns');
+
+$node_publisher_d_cols->stop('fast');
+$node_subscriber_d_cols->stop('fast');
