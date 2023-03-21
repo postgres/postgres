@@ -2558,11 +2558,10 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	 * must look at how many scans are estimated in total for this node and
 	 * how many of those scans we expect to get a cache hit.
 	 */
-	hit_ratio = 1.0 / ndistinct * Min(est_cache_entries, ndistinct) -
-		(ndistinct / calls);
+	hit_ratio = ((calls - ndistinct) / calls) *
+		(est_cache_entries / Max(ndistinct, est_cache_entries));
 
-	/* Ensure we don't go negative */
-	hit_ratio = Max(hit_ratio, 0.0);
+	Assert(hit_ratio >= 0 && hit_ratio <= 1.0);
 
 	/*
 	 * Set the total_cost accounting for the expected cache hit ratio.  We
