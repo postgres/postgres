@@ -215,7 +215,8 @@ PostgreSQL documentation
        <para>
         Timeline from which to read WAL records. The default is to use the
         value in <replaceable>startseg</replaceable>, if that is specified; otherwise, the
-        default is 1.
+        default is 1.  The value can be specified in decimal or hexadecimal,
+        for example <literal>17</literal> or <literal>0x11</literal>.
        </para>
       </listitem>
      </varlistentry>
