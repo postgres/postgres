@@ -48,7 +48,13 @@ mkdir $datadir;
 	local (%ENV) = %ENV;
 	delete $ENV{TZ};
 
-	command_ok([ 'initdb', '-N', '-T', 'german', '-X', $xlogdir, $datadir ],
+	# while we are here, also exercise -T and -c options
+	command_ok(
+		[
+			'initdb', '-N', '-T', 'german', '-c',
+			'default_text_search_config=german',
+			'-X', $xlogdir, $datadir
+		],
 		'successful creation');
 
 	# Permissions on PGDATA should be default
@@ -141,5 +147,8 @@ command_fails(
 		"$tempdir/dataX"
 	],
 	'fails for invalid option combination');
+
+command_fails([ 'initdb', '--no-sync', '--set', 'foo=bar', "$tempdir/dataX" ],
+	'fails for invalid --set option');
 
 done_testing();

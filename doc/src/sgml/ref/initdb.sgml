@@ -464,6 +464,23 @@ PostgreSQL documentation
     Other, less commonly used, options are also available:
 
     <variablelist>
+     <varlistentry id="app-initdb-option-set">
+      <term><option>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></option></term>
+      <term><option>--set <replaceable>name</replaceable>=<replaceable>value</replaceable></option></term>
+      <listitem>
+       <para>
+        Forcibly set the server parameter <replaceable>name</replaceable>
+        to <replaceable>value</replaceable> during <command>initdb</command>,
+        and also install that setting in the
+        generated <filename>postgresql.conf</filename> file,
+        so that it will apply during future server runs.
+        This option can be given more than once to set several parameters.
+        It is primarily useful when the environment is such that the server
+        will not start at all using the default parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="app-initdb-option-debug">
       <term><option>-d</option></term>
       <term><option>--debug</option></term>

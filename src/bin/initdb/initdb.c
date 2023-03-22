@@ -85,6 +85,13 @@
 /* Ideally this would be in a .h file, but it hardly seems worth the trouble */
 extern const char *select_default_timezone(const char *share_path);
 
+/* simple list of strings */
+typedef struct _stringlist
+{
+	char	   *str;
+	struct _stringlist *next;
+} _stringlist;
+
 static const char *const auth_methods_host[] = {
 	"trust", "reject", "scram-sha-256", "md5", "password", "ident", "radius",
 #ifdef ENABLE_GSS
@@ -150,6 +157,8 @@ static char *pwfilename = NULL;
 static char *superuser_password = NULL;
 static const char *authmethodhost = NULL;
 static const char *authmethodlocal = NULL;
+static _stringlist *extra_guc_names = NULL;
+static _stringlist *extra_guc_values = NULL;
 static bool debug = false;
 static bool noclean = false;
 static bool noinstructions = false;
@@ -250,7 +259,10 @@ static char backend_exec[MAXPGPATH];
 
 static char **replace_token(char **lines,
 							const char *token, const char *replacement);
-
+static char **replace_guc_value(char **lines,
+								const char *guc_name, const char *guc_value,
+								bool mark_as_comment);
+static bool guc_value_requires_quotes(const char *guc_value);
 static char **readfile(const char *path);
 static void writefile(char *path, char **lines);
 static FILE *popen_check(const char *command, const char *mode);
@@ -261,6 +273,7 @@ static void check_input(char *path);
 static void write_version_file(const char *extrapath);
 static void set_null_conf(void);
 static void test_config_settings(void);
+static bool test_specific_config_settings(int test_conns, int test_buffs);
 static void setup_config(void);
 static void bootstrap_template1(void);
 static void setup_auth(FILE *cmdfd);
@@ -368,8 +381,33 @@ escape_quotes_bki(const char *src)
 }
 
 /*
- * make a copy of the array of lines, with token replaced by replacement
+ * Add an item at the end of a stringlist.
+ */
+static void
+add_stringlist_item(_stringlist **listhead, const char *str)
+{
+	_stringlist *newentry = pg_malloc(sizeof(_stringlist));
+	_stringlist *oldentry;
+
+	newentry->str = pg_strdup(str);
+	newentry->next = NULL;
+	if (*listhead == NULL)
+		*listhead = newentry;
+	else
+	{
+		for (oldentry = *listhead; oldentry->next; oldentry = oldentry->next)
+			 /* skip */ ;
+		oldentry->next = newentry;
+	}
+}
+
+/*
+ * Make a copy of the array of lines, with token replaced by replacement
  * the first time it occurs on each line.
+ *
+ * The original data structure is not changed, but we share any unchanged
+ * strings with it.  (This definition lends itself to memory leaks, but
+ * we don't care too much about leaks in this program.)
  *
  * This does most of what sed was used for in the shell script, but
  * doesn't need any regexp stuff.
@@ -422,6 +460,168 @@ replace_token(char **lines, const char *token, const char *replacement)
 	}
 
 	return result;
+}
+
+/*
+ * Make a copy of the array of lines, replacing the possibly-commented-out
+ * assignment of parameter guc_name with a live assignment of guc_value.
+ * The value will be suitably quoted.
+ *
+ * If mark_as_comment is true, the replacement line is prefixed with '#'.
+ * This is used for fixing up cases where the effective default might not
+ * match what is in postgresql.conf.sample.
+ *
+ * We assume there's at most one matching assignment.  If we find no match,
+ * append a new line with the desired assignment.
+ *
+ * The original data structure is not changed, but we share any unchanged
+ * strings with it.  (This definition lends itself to memory leaks, but
+ * we don't care too much about leaks in this program.)
+ */
+static char **
+replace_guc_value(char **lines, const char *guc_name, const char *guc_value,
+				  bool mark_as_comment)
+{
+	char	  **result;
+	int			namelen = strlen(guc_name);
+	PQExpBuffer newline = createPQExpBuffer();
+	int			numlines = 0;
+	int			i;
+
+	/* prepare the replacement line, except for possible comment and newline */
+	if (mark_as_comment)
+		appendPQExpBufferChar(newline, '#');
+	appendPQExpBuffer(newline, "%s = ", guc_name);
+	if (guc_value_requires_quotes(guc_value))
+		appendPQExpBuffer(newline, "'%s'", escape_quotes(guc_value));
+	else
+		appendPQExpBufferStr(newline, guc_value);
+
+	/* create the new pointer array */
+	for (i = 0; lines[i]; i++)
+		numlines++;
+
+	/* leave room for one extra string in case we need to append */
+	result = (char **) pg_malloc((numlines + 2) * sizeof(char *));
+
+	/* initialize result with all the same strings */
+	memcpy(result, lines, (numlines + 1) * sizeof(char *));
+
+	for (i = 0; i < numlines; i++)
+	{
+		const char *where;
+
+		/*
+		 * Look for a line assigning to guc_name.  Typically it will be
+		 * preceded by '#', but that might not be the case if a -c switch
+		 * overrides a previous assignment.  We allow leading whitespace too,
+		 * although normally there wouldn't be any.
+		 */
+		where = result[i];
+		while (*where == '#' || isspace((unsigned char) *where))
+			where++;
+		if (strncmp(where, guc_name, namelen) != 0)
+			continue;
+		where += namelen;
+		while (isspace((unsigned char) *where))
+			where++;
+		if (*where != '=')
+			continue;
+
+		/* found it -- append the original comment if any */
+		where = strrchr(where, '#');
+		if (where)
+		{
+			/*
+			 * We try to preserve original indentation, which is tedious.
+			 * oldindent and newindent are measured in de-tab-ified columns.
+			 */
+			const char *ptr;
+			int			oldindent = 0;
+			int			newindent;
+
+			for (ptr = result[i]; ptr < where; ptr++)
+			{
+				if (*ptr == '\t')
+					oldindent += 8 - (oldindent % 8);
+				else
+					oldindent++;
+			}
+			/* ignore the possibility of tabs in guc_value */
+			newindent = newline->len;
+			/* append appropriate tabs and spaces, forcing at least one */
+			oldindent = Max(oldindent, newindent + 1);
+			while (newindent < oldindent)
+			{
+				int			newindent_if_tab = newindent + 8 - (newindent % 8);
+
+				if (newindent_if_tab <= oldindent)
+				{
+					appendPQExpBufferChar(newline, '\t');
+					newindent = newindent_if_tab;
+				}
+				else
+				{
+					appendPQExpBufferChar(newline, ' ');
+					newindent++;
+				}
+			}
+			/* and finally append the old comment */
+			appendPQExpBufferStr(newline, where);
+			/* we'll have appended the original newline; don't add another */
+		}
+		else
+			appendPQExpBufferChar(newline, '\n');
+
+		result[i] = newline->data;
+
+		break;					/* assume there's only one match */
+	}
+
+	if (i >= numlines)
+	{
+		/*
+		 * No match, so append a new entry.  (We rely on the bootstrap server
+		 * to complain if it's not a valid GUC name.)
+		 */
+		appendPQExpBufferChar(newline, '\n');
+		result[numlines++] = newline->data;
+		result[numlines] = NULL;	/* keep the array null-terminated */
+	}
+
+	return result;
+}
+
+/*
+ * Decide if we should quote a replacement GUC value.  We aren't too tense
+ * here, but we'd like to avoid quoting simple identifiers and numbers
+ * with units, which are common cases.
+ */
+static bool
+guc_value_requires_quotes(const char *guc_value)
+{
+	/* Don't use <ctype.h> macros here, they might accept too much */
+#define LETTERS	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define DIGITS	"0123456789"
+
+	if (*guc_value == '\0')
+		return true;			/* empty string must be quoted */
+	if (strchr(LETTERS, *guc_value))
+	{
+		if (strspn(guc_value, LETTERS DIGITS) == strlen(guc_value))
+			return false;		/* it's an identifier */
+		return true;			/* nope */
+	}
+	if (strchr(DIGITS, *guc_value))
+	{
+		/* skip over digits */
+		guc_value += strspn(guc_value, DIGITS);
+		/* there can be zero or more unit letters after the digits */
+		if (strspn(guc_value, LETTERS) == strlen(guc_value))
+			return false;		/* it's a number, possibly with units */
+		return true;			/* nope */
+	}
+	return true;				/* all else must be quoted */
 }
 
 /*
@@ -881,11 +1081,9 @@ test_config_settings(void)
 		400, 300, 200, 100, 50
 	};
 
-	char		cmd[MAXPGPATH];
 	const int	connslen = sizeof(trial_conns) / sizeof(int);
 	const int	bufslen = sizeof(trial_bufs) / sizeof(int);
 	int			i,
-				status,
 				test_conns,
 				test_buffs,
 				ok_buffers = 0;
@@ -911,19 +1109,7 @@ test_config_settings(void)
 		test_conns = trial_conns[i];
 		test_buffs = MIN_BUFS_FOR_CONNS(test_conns);
 
-		snprintf(cmd, sizeof(cmd),
-				 "\"%s\" --check %s %s "
-				 "-c max_connections=%d "
-				 "-c shared_buffers=%d "
-				 "-c dynamic_shared_memory_type=%s "
-				 "< \"%s\" > \"%s\" 2>&1",
-				 backend_exec, boot_options, extra_options,
-				 test_conns, test_buffs,
-				 dynamic_shared_memory_type,
-				 DEVNULL, DEVNULL);
-		fflush(NULL);
-		status = system(cmd);
-		if (status == 0)
+		if (test_specific_config_settings(test_conns, test_buffs))
 		{
 			ok_buffers = test_buffs;
 			break;
@@ -948,19 +1134,7 @@ test_config_settings(void)
 			break;
 		}
 
-		snprintf(cmd, sizeof(cmd),
-				 "\"%s\" --check %s %s "
-				 "-c max_connections=%d "
-				 "-c shared_buffers=%d "
-				 "-c dynamic_shared_memory_type=%s "
-				 "< \"%s\" > \"%s\" 2>&1",
-				 backend_exec, boot_options, extra_options,
-				 n_connections, test_buffs,
-				 dynamic_shared_memory_type,
-				 DEVNULL, DEVNULL);
-		fflush(NULL);
-		status = system(cmd);
-		if (status == 0)
+		if (test_specific_config_settings(n_connections, test_buffs))
 			break;
 	}
 	n_buffers = test_buffs;
@@ -974,6 +1148,48 @@ test_config_settings(void)
 	fflush(stdout);
 	default_timezone = select_default_timezone(share_path);
 	printf("%s\n", default_timezone ? default_timezone : "GMT");
+}
+
+/*
+ * Test a specific combination of configuration settings.
+ */
+static bool
+test_specific_config_settings(int test_conns, int test_buffs)
+{
+	PQExpBuffer cmd = createPQExpBuffer();
+	_stringlist *gnames,
+			   *gvalues;
+	int			status;
+
+	/* Set up the test postmaster invocation */
+	printfPQExpBuffer(cmd,
+					  "\"%s\" --check %s %s "
+					  "-c max_connections=%d "
+					  "-c shared_buffers=%d "
+					  "-c dynamic_shared_memory_type=%s",
+					  backend_exec, boot_options, extra_options,
+					  test_conns, test_buffs,
+					  dynamic_shared_memory_type);
+
+	/* Add any user-given setting overrides */
+	for (gnames = extra_guc_names, gvalues = extra_guc_values;
+		 gnames != NULL;		/* assume lists have the same length */
+		 gnames = gnames->next, gvalues = gvalues->next)
+	{
+		appendPQExpBuffer(cmd, " -c %s=", gnames->str);
+		appendShellString(cmd, gvalues->str);
+	}
+
+	appendPQExpBuffer(cmd,
+					  " < \"%s\" > \"%s\" 2>&1",
+					  DEVNULL, DEVNULL);
+
+	fflush(NULL);
+	status = system(cmd->data);
+
+	destroyPQExpBuffer(cmd);
+
+	return (status == 0);
 }
 
 /*
@@ -1003,6 +1219,8 @@ setup_config(void)
 	char		repltok[MAXPGPATH];
 	char		path[MAXPGPATH];
 	char	   *autoconflines[3];
+	_stringlist *gnames,
+			   *gvalues;
 
 	fputs(_("creating configuration files ... "), stdout);
 	fflush(stdout);
@@ -1011,120 +1229,116 @@ setup_config(void)
 
 	conflines = readfile(conf_file);
 
-	snprintf(repltok, sizeof(repltok), "max_connections = %d", n_connections);
-	conflines = replace_token(conflines, "#max_connections = 100", repltok);
+	snprintf(repltok, sizeof(repltok), "%d", n_connections);
+	conflines = replace_guc_value(conflines, "max_connections",
+								  repltok, false);
 
 	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
-		snprintf(repltok, sizeof(repltok), "shared_buffers = %dMB",
+		snprintf(repltok, sizeof(repltok), "%dMB",
 				 (n_buffers * (BLCKSZ / 1024)) / 1024);
 	else
-		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB",
+		snprintf(repltok, sizeof(repltok), "%dkB",
 				 n_buffers * (BLCKSZ / 1024));
-	conflines = replace_token(conflines, "#shared_buffers = 128MB", repltok);
+	conflines = replace_guc_value(conflines, "shared_buffers",
+								  repltok, false);
 
-	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = '%s'",
-			 DEFAULT_PGSOCKET_DIR);
-	conflines = replace_token(conflines, "#unix_socket_directories = '/tmp'",
-							  repltok);
+	/*
+	 * Hack: don't replace the LC_XXX GUCs when their value is 'C', because
+	 * replace_guc_value will decide not to quote that, which looks strange.
+	 */
+	if (strcmp(lc_messages, "C") != 0)
+		conflines = replace_guc_value(conflines, "lc_messages",
+									  lc_messages, false);
 
-#if DEF_PGPORT != 5432
-	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
-	conflines = replace_token(conflines, "#port = 5432", repltok);
-#endif
+	if (strcmp(lc_monetary, "C") != 0)
+		conflines = replace_guc_value(conflines, "lc_monetary",
+									  lc_monetary, false);
 
-	/* set default max_wal_size and min_wal_size */
-	snprintf(repltok, sizeof(repltok), "min_wal_size = %s",
-			 pretty_wal_size(DEFAULT_MIN_WAL_SEGS));
-	conflines = replace_token(conflines, "#min_wal_size = 80MB", repltok);
+	if (strcmp(lc_numeric, "C") != 0)
+		conflines = replace_guc_value(conflines, "lc_numeric",
+									  lc_numeric, false);
 
-	snprintf(repltok, sizeof(repltok), "max_wal_size = %s",
-			 pretty_wal_size(DEFAULT_MAX_WAL_SEGS));
-	conflines = replace_token(conflines, "#max_wal_size = 1GB", repltok);
-
-	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'",
-			 escape_quotes(lc_messages));
-	conflines = replace_token(conflines, "#lc_messages = 'C'", repltok);
-
-	snprintf(repltok, sizeof(repltok), "lc_monetary = '%s'",
-			 escape_quotes(lc_monetary));
-	conflines = replace_token(conflines, "#lc_monetary = 'C'", repltok);
-
-	snprintf(repltok, sizeof(repltok), "lc_numeric = '%s'",
-			 escape_quotes(lc_numeric));
-	conflines = replace_token(conflines, "#lc_numeric = 'C'", repltok);
-
-	snprintf(repltok, sizeof(repltok), "lc_time = '%s'",
-			 escape_quotes(lc_time));
-	conflines = replace_token(conflines, "#lc_time = 'C'", repltok);
+	if (strcmp(lc_time, "C") != 0)
+		conflines = replace_guc_value(conflines, "lc_time",
+									  lc_time, false);
 
 	switch (locale_date_order(lc_time))
 	{
 		case DATEORDER_YMD:
-			strcpy(repltok, "datestyle = 'iso, ymd'");
+			strcpy(repltok, "iso, ymd");
 			break;
 		case DATEORDER_DMY:
-			strcpy(repltok, "datestyle = 'iso, dmy'");
+			strcpy(repltok, "iso, dmy");
 			break;
 		case DATEORDER_MDY:
 		default:
-			strcpy(repltok, "datestyle = 'iso, mdy'");
+			strcpy(repltok, "iso, mdy");
 			break;
 	}
-	conflines = replace_token(conflines, "#datestyle = 'iso, mdy'", repltok);
+	conflines = replace_guc_value(conflines, "datestyle",
+								  repltok, false);
 
-	snprintf(repltok, sizeof(repltok),
-			 "default_text_search_config = 'pg_catalog.%s'",
-			 escape_quotes(default_text_search_config));
-	conflines = replace_token(conflines,
-							  "#default_text_search_config = 'pg_catalog.simple'",
-							  repltok);
+	snprintf(repltok, sizeof(repltok), "pg_catalog.%s",
+			 default_text_search_config);
+	conflines = replace_guc_value(conflines, "default_text_search_config",
+								  repltok, false);
 
 	if (default_timezone)
 	{
-		snprintf(repltok, sizeof(repltok), "timezone = '%s'",
-				 escape_quotes(default_timezone));
-		conflines = replace_token(conflines, "#timezone = 'GMT'", repltok);
-		snprintf(repltok, sizeof(repltok), "log_timezone = '%s'",
-				 escape_quotes(default_timezone));
-		conflines = replace_token(conflines, "#log_timezone = 'GMT'", repltok);
+		conflines = replace_guc_value(conflines, "timezone",
+									  default_timezone, false);
+		conflines = replace_guc_value(conflines, "log_timezone",
+									  default_timezone, false);
 	}
 
-	snprintf(repltok, sizeof(repltok), "dynamic_shared_memory_type = %s",
-			 dynamic_shared_memory_type);
-	conflines = replace_token(conflines, "#dynamic_shared_memory_type = posix",
-							  repltok);
+	conflines = replace_guc_value(conflines, "dynamic_shared_memory_type",
+								  dynamic_shared_memory_type, false);
+
+	/*
+	 * Fix up various entries to match the true compile-time defaults.  Since
+	 * these are indeed defaults, keep the postgresql.conf lines commented.
+	 */
+	conflines = replace_guc_value(conflines, "unix_socket_directories",
+								  DEFAULT_PGSOCKET_DIR, true);
+
+	conflines = replace_guc_value(conflines, "port",
+								  DEF_PGPORT_STR, true);
+
+	conflines = replace_guc_value(conflines, "min_wal_size",
+								  pretty_wal_size(DEFAULT_MIN_WAL_SEGS), true);
+
+	conflines = replace_guc_value(conflines, "max_wal_size",
+								  pretty_wal_size(DEFAULT_MAX_WAL_SEGS), true);
 
 #if DEFAULT_BACKEND_FLUSH_AFTER > 0
-	snprintf(repltok, sizeof(repltok), "#backend_flush_after = %dkB",
+	snprintf(repltok, sizeof(repltok), "%dkB",
 			 DEFAULT_BACKEND_FLUSH_AFTER * (BLCKSZ / 1024));
-	conflines = replace_token(conflines, "#backend_flush_after = 0",
-							  repltok);
+	conflines = replace_guc_value(conflines, "backend_flush_after",
+								  repltok, true);
 #endif
 
 #if DEFAULT_BGWRITER_FLUSH_AFTER > 0
-	snprintf(repltok, sizeof(repltok), "#bgwriter_flush_after = %dkB",
+	snprintf(repltok, sizeof(repltok), "%dkB",
 			 DEFAULT_BGWRITER_FLUSH_AFTER * (BLCKSZ / 1024));
-	conflines = replace_token(conflines, "#bgwriter_flush_after = 0",
-							  repltok);
+	conflines = replace_guc_value(conflines, "bgwriter_flush_after",
+								  repltok, true);
 #endif
 
 #if DEFAULT_CHECKPOINT_FLUSH_AFTER > 0
-	snprintf(repltok, sizeof(repltok), "#checkpoint_flush_after = %dkB",
+	snprintf(repltok, sizeof(repltok), "%dkB",
 			 DEFAULT_CHECKPOINT_FLUSH_AFTER * (BLCKSZ / 1024));
-	conflines = replace_token(conflines, "#checkpoint_flush_after = 0",
-							  repltok);
+	conflines = replace_guc_value(conflines, "checkpoint_flush_after",
+								  repltok, true);
 #endif
 
 #ifndef USE_PREFETCH
-	conflines = replace_token(conflines,
-							  "#effective_io_concurrency = 1",
-							  "#effective_io_concurrency = 0");
+	conflines = replace_guc_value(conflines, "effective_io_concurrency",
+								  "0", true);
 #endif
 
 #ifdef WIN32
-	conflines = replace_token(conflines,
-							  "#update_process_title = on",
-							  "#update_process_title = off");
+	conflines = replace_guc_value(conflines, "update_process_title",
+								  "off", true);
 #endif
 
 	/*
@@ -1136,9 +1350,8 @@ setup_config(void)
 		(strcmp(authmethodhost, "md5") == 0 &&
 		 strcmp(authmethodlocal, "scram-sha-256") != 0))
 	{
-		conflines = replace_token(conflines,
-								  "#password_encryption = scram-sha-256",
-								  "password_encryption = md5");
+		conflines = replace_guc_value(conflines, "password_encryption",
+									  "md5", false);
 	}
 
 	/*
@@ -1149,23 +1362,33 @@ setup_config(void)
 	 */
 	if (pg_dir_create_mode == PG_DIR_MODE_GROUP)
 	{
-		conflines = replace_token(conflines,
-								  "#log_file_mode = 0600",
-								  "log_file_mode = 0640");
+		conflines = replace_guc_value(conflines, "log_file_mode",
+									  "0640", false);
 	}
 
+	/*
+	 * Now replace anything that's overridden via -c switches.
+	 */
+	for (gnames = extra_guc_names, gvalues = extra_guc_values;
+		 gnames != NULL;		/* assume lists have the same length */
+		 gnames = gnames->next, gvalues = gvalues->next)
+	{
+		conflines = replace_guc_value(conflines, gnames->str,
+									  gvalues->str, false);
+	}
+
+	/* ... and write out the finished postgresql.conf file */
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
 	writefile(path, conflines);
 	if (chmod(path, pg_file_create_mode) != 0)
 		pg_fatal("could not change permissions of \"%s\": %m", path);
 
-	/*
-	 * create the automatic configuration file to store the configuration
-	 * parameters set by ALTER SYSTEM command. The parameters present in this
-	 * file will override the value of parameters that exists before parse of
-	 * this file.
-	 */
+	free(conflines);
+
+
+	/* postgresql.auto.conf */
+
 	autoconflines[0] = pg_strdup("# Do not edit this file manually!\n");
 	autoconflines[1] = pg_strdup("# It will be overwritten by the ALTER SYSTEM command.\n");
 	autoconflines[2] = NULL;
@@ -1175,8 +1398,6 @@ setup_config(void)
 	writefile(path, autoconflines);
 	if (chmod(path, pg_file_create_mode) != 0)
 		pg_fatal("could not change permissions of \"%s\": %m", path);
-
-	free(conflines);
 
 
 	/* pg_hba.conf */
@@ -2183,6 +2404,7 @@ usage(const char *progname)
 	printf(_("  -X, --waldir=WALDIR       location for the write-ahead log directory\n"));
 	printf(_("      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"));
 	printf(_("\nLess commonly used options:\n"));
+	printf(_("  -c, --set NAME=VALUE      override default setting for server parameter\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("      --discard-caches      set debug_discard_caches=1\n"));
 	printf(_("  -L DIRECTORY              where to find the input files\n"));
@@ -2819,6 +3041,7 @@ main(int argc, char *argv[])
 		{"nosync", no_argument, NULL, 'N'}, /* for backwards compatibility */
 		{"no-sync", no_argument, NULL, 'N'},
 		{"no-instructions", no_argument, NULL, 13},
+		{"set", required_argument, NULL, 'c'},
 		{"sync-only", no_argument, NULL, 'S'},
 		{"waldir", required_argument, NULL, 'X'},
 		{"wal-segsize", required_argument, NULL, 12},
@@ -2869,7 +3092,8 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "A:dD:E:gkL:nNsST:U:WX:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "A:c:dD:E:gkL:nNsST:U:WX:",
+							long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -2891,6 +3115,24 @@ main(int argc, char *argv[])
 				break;
 			case 11:
 				authmethodhost = pg_strdup(optarg);
+				break;
+			case 'c':
+				{
+					char	   *buf = pg_strdup(optarg);
+					char	   *equals = strchr(buf, '=');
+
+					if (!equals)
+					{
+						pg_log_error("-c %s requires a value", buf);
+						pg_log_error_hint("Try \"%s --help\" for more information.",
+										  progname);
+						exit(1);
+					}
+					*equals++ = '\0';	/* terminate variable name */
+					add_stringlist_item(&extra_guc_names, buf);
+					add_stringlist_item(&extra_guc_values, equals);
+					pfree(buf);
+				}
 				break;
 			case 'D':
 				pg_data = pg_strdup(optarg);
