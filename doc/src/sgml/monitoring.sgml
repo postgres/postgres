@@ -1701,11 +1701,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        the outer relation.</entry>
      </row>
      <row>
-      <entry><literal>HashGrowBatchesAllocate</literal></entry>
-      <entry>Waiting for an elected Parallel Hash participant to allocate more
-       batches.</entry>
-     </row>
-     <row>
       <entry><literal>HashGrowBatchesDecide</literal></entry>
       <entry>Waiting to elect a Parallel Hash participant to decide on future
        batch growth.</entry>
@@ -1721,19 +1716,24 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        future batch growth.</entry>
      </row>
      <row>
+      <entry><literal>HashGrowBatchesReallocate</literal></entry>
+      <entry>Waiting for an elected Parallel Hash participant to allocate more
+       batches.</entry>
+     </row>
+     <row>
       <entry><literal>HashGrowBatchesRepartition</literal></entry>
       <entry>Waiting for other Parallel Hash participants to finish
        repartitioning.</entry>
      </row>
      <row>
-      <entry><literal>HashGrowBucketsAllocate</literal></entry>
-      <entry>Waiting for an elected Parallel Hash participant to finish
-       allocating more buckets.</entry>
-     </row>
-     <row>
       <entry><literal>HashGrowBucketsElect</literal></entry>
       <entry>Waiting to elect a Parallel Hash participant to allocate more
        buckets.</entry>
+     </row>
+     <row>
+      <entry><literal>HashGrowBucketsReallocate</literal></entry>
+      <entry>Waiting for an elected Parallel Hash participant to finish
+       allocating more buckets.</entry>
      </row>
      <row>
       <entry><literal>HashGrowBucketsReinsert</literal></entry>

@@ -254,32 +254,32 @@ typedef struct ParallelHashJoinState
 } ParallelHashJoinState;
 
 /* The phases for building batches, used by build_barrier. */
-#define PHJ_BUILD_ELECTING				0
-#define PHJ_BUILD_ALLOCATING			1
-#define PHJ_BUILD_HASHING_INNER			2
-#define PHJ_BUILD_HASHING_OUTER			3
-#define PHJ_BUILD_RUNNING				4
-#define PHJ_BUILD_DONE					5
+#define PHJ_BUILD_ELECT					0
+#define PHJ_BUILD_ALLOCATE				1
+#define PHJ_BUILD_HASH_INNER			2
+#define PHJ_BUILD_HASH_OUTER			3
+#define PHJ_BUILD_RUN					4
+#define PHJ_BUILD_FREE					5
 
 /* The phases for probing each batch, used by for batch_barrier. */
-#define PHJ_BATCH_ELECTING				0
-#define PHJ_BATCH_ALLOCATING			1
-#define PHJ_BATCH_LOADING				2
-#define PHJ_BATCH_PROBING				3
-#define PHJ_BATCH_DONE					4
+#define PHJ_BATCH_ELECT					0
+#define PHJ_BATCH_ALLOCATE				1
+#define PHJ_BATCH_LOAD					2
+#define PHJ_BATCH_PROBE					3
+#define PHJ_BATCH_FREE					4
 
 /* The phases of batch growth while hashing, for grow_batches_barrier. */
-#define PHJ_GROW_BATCHES_ELECTING		0
-#define PHJ_GROW_BATCHES_ALLOCATING		1
-#define PHJ_GROW_BATCHES_REPARTITIONING 2
-#define PHJ_GROW_BATCHES_DECIDING		3
-#define PHJ_GROW_BATCHES_FINISHING		4
+#define PHJ_GROW_BATCHES_ELECT			0
+#define PHJ_GROW_BATCHES_REALLOCATE		1
+#define PHJ_GROW_BATCHES_REPARTITION	2
+#define PHJ_GROW_BATCHES_DECIDE			3
+#define PHJ_GROW_BATCHES_FINISH			4
 #define PHJ_GROW_BATCHES_PHASE(n)		((n) % 5)	/* circular phases */
 
 /* The phases of bucket growth while hashing, for grow_buckets_barrier. */
-#define PHJ_GROW_BUCKETS_ELECTING		0
-#define PHJ_GROW_BUCKETS_ALLOCATING		1
-#define PHJ_GROW_BUCKETS_REINSERTING	2
+#define PHJ_GROW_BUCKETS_ELECT			0
+#define PHJ_GROW_BUCKETS_REALLOCATE		1
+#define PHJ_GROW_BUCKETS_REINSERT		2
 #define PHJ_GROW_BUCKETS_PHASE(n)		((n) % 3)	/* circular phases */
 
 typedef struct HashJoinTableData
