@@ -402,12 +402,11 @@ add_stringlist_item(_stringlist **listhead, const char *str)
 }
 
 /*
- * Make a copy of the array of lines, with token replaced by replacement
+ * Modify the array of lines, replacing "token" by "replacement"
  * the first time it occurs on each line.
  *
- * The original data structure is not changed, but we share any unchanged
- * strings with it.  (This definition lends itself to memory leaks, but
- * we don't care too much about leaks in this program.)
+ * The array must be a malloc'd array of individually malloc'd strings.
+ * We free any discarded strings.
  *
  * This does most of what sed was used for in the shell script, but
  * doesn't need any regexp stuff.
@@ -415,34 +414,23 @@ add_stringlist_item(_stringlist **listhead, const char *str)
 static char **
 replace_token(char **lines, const char *token, const char *replacement)
 {
-	int			numlines = 1;
-	int			i;
-	char	  **result;
 	int			toklen,
 				replen,
 				diff;
-
-	for (i = 0; lines[i]; i++)
-		numlines++;
-
-	result = (char **) pg_malloc(numlines * sizeof(char *));
 
 	toklen = strlen(token);
 	replen = strlen(replacement);
 	diff = replen - toklen;
 
-	for (i = 0; i < numlines; i++)
+	for (int i = 0; lines[i]; i++)
 	{
 		char	   *where;
 		char	   *newline;
 		int			pre;
 
-		/* just copy pointer if NULL or no change needed */
-		if (lines[i] == NULL || (where = strstr(lines[i], token)) == NULL)
-		{
-			result[i] = lines[i];
+		/* nothing to do if no change needed */
+		if ((where = strstr(lines[i], token)) == NULL)
 			continue;
-		}
 
 		/* if we get here a change is needed - set up new line */
 
@@ -456,14 +444,15 @@ replace_token(char **lines, const char *token, const char *replacement)
 
 		strcpy(newline + pre + replen, lines[i] + pre + toklen);
 
-		result[i] = newline;
+		free(lines[i]);
+		lines[i] = newline;
 	}
 
-	return result;
+	return lines;
 }
 
 /*
- * Make a copy of the array of lines, replacing the possibly-commented-out
+ * Modify the array of lines, replacing the possibly-commented-out
  * assignment of parameter guc_name with a live assignment of guc_value.
  * The value will be suitably quoted.
  *
@@ -474,18 +463,15 @@ replace_token(char **lines, const char *token, const char *replacement)
  * We assume there's at most one matching assignment.  If we find no match,
  * append a new line with the desired assignment.
  *
- * The original data structure is not changed, but we share any unchanged
- * strings with it.  (This definition lends itself to memory leaks, but
- * we don't care too much about leaks in this program.)
+ * The array must be a malloc'd array of individually malloc'd strings.
+ * We free any discarded strings.
  */
 static char **
 replace_guc_value(char **lines, const char *guc_name, const char *guc_value,
 				  bool mark_as_comment)
 {
-	char	  **result;
 	int			namelen = strlen(guc_name);
 	PQExpBuffer newline = createPQExpBuffer();
-	int			numlines = 0;
 	int			i;
 
 	/* prepare the replacement line, except for possible comment and newline */
@@ -497,17 +483,7 @@ replace_guc_value(char **lines, const char *guc_name, const char *guc_value,
 	else
 		appendPQExpBufferStr(newline, guc_value);
 
-	/* create the new pointer array */
 	for (i = 0; lines[i]; i++)
-		numlines++;
-
-	/* leave room for one extra string in case we need to append */
-	result = (char **) pg_malloc((numlines + 2) * sizeof(char *));
-
-	/* initialize result with all the same strings */
-	memcpy(result, lines, (numlines + 1) * sizeof(char *));
-
-	for (i = 0; i < numlines; i++)
 	{
 		const char *where;
 
@@ -517,7 +493,7 @@ replace_guc_value(char **lines, const char *guc_name, const char *guc_value,
 		 * overrides a previous assignment.  We allow leading whitespace too,
 		 * although normally there wouldn't be any.
 		 */
-		where = result[i];
+		where = lines[i];
 		while (*where == '#' || isspace((unsigned char) *where))
 			where++;
 		if (strncmp(where, guc_name, namelen) != 0)
@@ -540,7 +516,7 @@ replace_guc_value(char **lines, const char *guc_name, const char *guc_value,
 			int			oldindent = 0;
 			int			newindent;
 
-			for (ptr = result[i]; ptr < where; ptr++)
+			for (ptr = lines[i]; ptr < where; ptr++)
 			{
 				if (*ptr == '\t')
 					oldindent += 8 - (oldindent % 8);
@@ -573,23 +549,27 @@ replace_guc_value(char **lines, const char *guc_name, const char *guc_value,
 		else
 			appendPQExpBufferChar(newline, '\n');
 
-		result[i] = newline->data;
+		free(lines[i]);
+		lines[i] = newline->data;
 
 		break;					/* assume there's only one match */
 	}
 
-	if (i >= numlines)
+	if (lines[i] == NULL)
 	{
 		/*
 		 * No match, so append a new entry.  (We rely on the bootstrap server
 		 * to complain if it's not a valid GUC name.)
 		 */
 		appendPQExpBufferChar(newline, '\n');
-		result[numlines++] = newline->data;
-		result[numlines] = NULL;	/* keep the array null-terminated */
+		lines = pg_realloc_array(lines, char *, i + 2);
+		lines[i++] = newline->data;
+		lines[i] = NULL;		/* keep the array null-terminated */
 	}
 
-	return result;
+	free(newline);				/* but don't free newline->data */
+
+	return lines;
 }
 
 /*
@@ -626,6 +606,8 @@ guc_value_requires_quotes(const char *guc_value)
 
 /*
  * get the lines from a text file
+ *
+ * The result is a malloc'd array of individually malloc'd strings.
  */
 static char **
 readfile(const char *path)
@@ -668,6 +650,9 @@ readfile(const char *path)
 /*
  * write an array of lines to a file
  *
+ * "lines" must be a malloc'd array of individually malloc'd strings.
+ * All that data is freed here.
+ *
  * This is only used to write text files.  Use fopen "w" not PG_BINARY_W
  * so that the resulting configuration files are nicely editable on Windows.
  */
@@ -687,6 +672,7 @@ writefile(char *path, char **lines)
 	}
 	if (fclose(out_file))
 		pg_fatal("could not close file \"%s\": %m", path);
+	free(lines);
 }
 
 /*
@@ -1218,7 +1204,6 @@ setup_config(void)
 	char	  **conflines;
 	char		repltok[MAXPGPATH];
 	char		path[MAXPGPATH];
-	char	   *autoconflines[3];
 	_stringlist *gnames,
 			   *gvalues;
 
@@ -1384,18 +1369,17 @@ setup_config(void)
 	if (chmod(path, pg_file_create_mode) != 0)
 		pg_fatal("could not change permissions of \"%s\": %m", path);
 
-	free(conflines);
-
 
 	/* postgresql.auto.conf */
 
-	autoconflines[0] = pg_strdup("# Do not edit this file manually!\n");
-	autoconflines[1] = pg_strdup("# It will be overwritten by the ALTER SYSTEM command.\n");
-	autoconflines[2] = NULL;
+	conflines = pg_malloc_array(char *, 3);
+	conflines[0] = pg_strdup("# Do not edit this file manually!\n");
+	conflines[1] = pg_strdup("# It will be overwritten by the ALTER SYSTEM command.\n");
+	conflines[2] = NULL;
 
 	sprintf(path, "%s/postgresql.auto.conf", pg_data);
 
-	writefile(path, autoconflines);
+	writefile(path, conflines);
 	if (chmod(path, pg_file_create_mode) != 0)
 		pg_fatal("could not change permissions of \"%s\": %m", path);
 
@@ -1466,7 +1450,6 @@ setup_config(void)
 	if (chmod(path, pg_file_create_mode) != 0)
 		pg_fatal("could not change permissions of \"%s\": %m", path);
 
-	free(conflines);
 
 	/* pg_ident.conf */
 
@@ -1477,8 +1460,6 @@ setup_config(void)
 	writefile(path, conflines);
 	if (chmod(path, pg_file_create_mode) != 0)
 		pg_fatal("could not change permissions of \"%s\": %m", path);
-
-	free(conflines);
 
 	check_ok();
 }
