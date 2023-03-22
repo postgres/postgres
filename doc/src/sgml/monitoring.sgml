@@ -5041,6 +5041,34 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_stat_get_xact_blocks_fetched</primary>
+        </indexterm>
+        <function>pg_stat_get_xact_blocks_fetched</function> ( <type>oid</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the number of buffers fetched for table or index, in the current
+        transaction.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_xact_blocks_hit</primary>
+        </indexterm>
+        <function>pg_stat_get_xact_blocks_hit</function> ( <type>oid</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the number of buffer hits for table or index, in the current
+        transaction.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_stat_clear_snapshot</primary>
         </indexterm>
         <function>pg_stat_clear_snapshot</function> ()
