@@ -300,6 +300,44 @@ typedef struct MinimalTupleTableSlot
 #define TupIsNull(slot) \
 	((slot) == NULL || TTS_EMPTY(slot))
 
+/*----------
+ * LazyTupleTableSlot -- a lazy version of TupleTableSlot.
+ *
+ * Sometimes caller might need to pass to the function a slot, which most
+ * likely will reain undemanded.  Preallocating such slot would be a waste of
+ * resources in the  majority of cases.  Lazy slot is aimed to resolve this
+ * problem.  It is basically a promise to allocate the slot once it's needed.
+ * Once callee needs the slot, it could get it using LAZY_TTS_EVAL(lazySlot)
+ * macro.
+ */
+typedef struct
+{
+	TupleTableSlot *slot;		/* cached slot or NULL if not yet allocated */
+	TupleTableSlot *(*getSlot) (void *arg); /* callback for slot allocation */
+	void	   *getSlotArg;		/* argument for the callback above */
+} LazyTupleTableSlot;
+
+/*
+ * A constructor for the lazy slot.
+ */
+#define MAKE_LAZY_TTS(lazySlot, callback, arg) \
+	do { \
+		(lazySlot)->slot = NULL; \
+		(lazySlot)->getSlot = callback; \
+		(lazySlot)->getSlotArg = arg; \
+	} while (false)
+
+/*
+ * Macro for lazy slot evaluation.  NULL lazy slot evaluates to NULL slot.
+ * Cached version is used if present.  Use the callback otherwise.
+ */
+#define LAZY_TTS_EVAL(lazySlot) \
+	((lazySlot) ? \
+		((lazySlot)->slot ? \
+			(lazySlot)->slot : \
+			((lazySlot)->slot = (lazySlot)->getSlot((lazySlot)->getSlotArg))) : \
+		NULL)
+
 /* in executor/execTuples.c */
 extern TupleTableSlot *MakeTupleTableSlot(TupleDesc tupleDesc,
 										  const TupleTableSlotOps *tts_ops);
