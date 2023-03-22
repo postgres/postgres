@@ -630,7 +630,7 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 		die "offnum $offnum should be a redirect" if defined $tup;
 		sysseek($file, 92, 0) or BAIL_OUT("sysseek failed: $!");
 		syswrite($file,
-				 pack("L", $ENDIANNESS eq 'little' ? 0x00010011 : 0x11000100))
+				 pack("L", $ENDIANNESS eq 'little' ? 0x00010011 : 0x00230000))
 			or BAIL_OUT("syswrite failed: $!");
 		push @expected,
 		  qr/${header}redirected line pointer points to another redirected line pointer at offset \d+/;
@@ -647,7 +647,7 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 		# rewrite line pointer with lp.off = 25, lp_flags = 2, lp_len = 0
 		sysseek($file, 108, 0) or BAIL_OUT("sysseek failed: $!");
 		syswrite($file,
-				 pack("L", $ENDIANNESS eq 'little' ? 0x00010019 : 0x19000100))
+				 pack("L", $ENDIANNESS eq 'little' ? 0x00010019 : 0x00330000))
 			or BAIL_OUT("syswrite failed: $!");
 		push @expected,
 		  qr/${header}redirect line pointer points to offset \d+, but offset \d+ also points there/;
