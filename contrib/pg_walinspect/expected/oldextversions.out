@@ -1,4 +1,4 @@
--- test old extension version entry points
+-- Test old extension version entry points.
 CREATE EXTENSION pg_walinspect WITH VERSION '1.0';
 -- Mask DETAIL messages as these could refer to current LSN positions.
 \set VERBOSITY terse
@@ -28,7 +28,7 @@ SELECT 'init' FROM pg_create_physical_replication_slot('regress_pg_walinspect_sl
 CREATE TABLE sample_tbl(col1 int, col2 int);
 SELECT pg_current_wal_lsn() AS wal_lsn1 \gset
 INSERT INTO sample_tbl SELECT * FROM generate_series(1, 2);
--- Check bounds for these past functions.
+-- Tests for the past functions.
 SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_records_info_till_end_of_wal(:'wal_lsn1');
  ok 
 ----
@@ -41,13 +41,14 @@ SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_stats_till_end_of_wal(:'wal_lsn1');
  t
 (1 row)
 
-SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_records_info_till_end_of_wal('FFFFFFFF/FFFFFFFF');
+-- Failures with start LSNs.
+SELECT * FROM pg_get_wal_records_info_till_end_of_wal('FFFFFFFF/FFFFFFFF');
 ERROR:  WAL start LSN must be less than current LSN
-SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_stats_till_end_of_wal('FFFFFFFF/FFFFFFFF');
+SELECT * FROM pg_get_wal_stats_till_end_of_wal('FFFFFFFF/FFFFFFFF');
 ERROR:  WAL start LSN must be less than current LSN
--- Move to new version 1.1
+-- Move to new version 1.1.
 ALTER EXTENSION pg_walinspect UPDATE TO '1.1';
--- List what version 1.1 contains
+-- List what version 1.1 contains.
 \dx+ pg_walinspect
        Objects in extension "pg_walinspect"
                 Object description                
