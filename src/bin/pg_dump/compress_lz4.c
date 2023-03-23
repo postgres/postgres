@@ -185,12 +185,15 @@ LZ4File_get_error(CompressFileHandle *CFH)
 }
 
 /*
- * Prepare an already alloc'ed LZ4File struct for subsequent calls.
+ * Prepare an already alloc'ed LZ4File struct for subsequent calls (either
+ * compression or decompression).
  *
- * It creates the necessary contexts for the operations. When compressing,
- * it additionally writes the LZ4 header in the output stream.
+ * It creates the necessary contexts for the operations. When compressing data
+ * (indicated by compressing=true), it additionally writes the LZ4 header in the
+ * output stream.
  *
- * Returns true on success and false on error.
+ * Returns true on success. In case of a failure returns false, and stores the
+ * error code in fs->errcode.
  */
 static bool
 LZ4File_init(LZ4File *fs, int size, bool compressing)
@@ -203,9 +206,15 @@ LZ4File_init(LZ4File *fs, int size, bool compressing)
 	fs->compressing = compressing;
 	fs->inited = true;
 
+	/* When compressing, write LZ4 header to the output stream. */
 	if (fs->compressing)
 	{
 		fs->buflen = LZ4F_compressBound(DEFAULT_IO_BUFFER_SIZE, &fs->prefs);
+
+		/*
+		 * LZ4F_compressBegin requires a buffer that is greater or equal to
+		 * LZ4F_HEADER_SIZE_MAX. Verify that the requirement is met.
+		 */
 		if (fs->buflen < LZ4F_HEADER_SIZE_MAX)
 			fs->buflen = LZ4F_HEADER_SIZE_MAX;
 
@@ -255,9 +264,12 @@ LZ4File_init(LZ4File *fs, int size, bool compressing)
 /*
  * Read already decompressed content from the overflow buffer into 'ptr' up to
  * 'size' bytes, if available. If the eol_flag is set, then stop at the first
- * occurrence of the new line char prior to 'size' bytes.
+ * occurrence of the newline char prior to 'size' bytes.
  *
  * Any unread content in the overflow buffer is moved to the beginning.
+ *
+ * Returns the number of bytes read from the overflow buffer (and copied into
+ * the 'ptr' buffer), or 0 if the overflow buffer is empty.
  */
 static int
 LZ4File_read_overflow(LZ4File *fs, void *ptr, int size, bool eol_flag)
@@ -297,6 +309,9 @@ LZ4File_read_overflow(LZ4File *fs, void *ptr, int size, bool eol_flag)
  * at an overflow buffer within LZ4File. Of course, when the function is
  * called, it will first try to consume any decompressed content already
  * present in the overflow buffer, before decompressing new content.
+ *
+ * Returns the number of bytes of decompressed data copied into the ptr
+ * buffer, or -1 in case of error.
  */
 static int
 LZ4File_read_internal(LZ4File *fs, void *ptr, int ptrsize, bool eol_flag)
