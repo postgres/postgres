@@ -92,6 +92,9 @@ PG_STAT_GET_RELENTRY_INT64(tuples_fetched)
 /* pg_stat_get_tuples_hot_updated */
 PG_STAT_GET_RELENTRY_INT64(tuples_hot_updated)
 
+/* pg_stat_get_tuples_newpage_updated */
+PG_STAT_GET_RELENTRY_INT64(tuples_newpage_updated)
+
 /* pg_stat_get_tuples_inserted */
 PG_STAT_GET_RELENTRY_INT64(tuples_inserted)
 
@@ -1614,6 +1617,21 @@ pg_stat_get_xact_tuples_hot_updated(PG_FUNCTION_ARGS)
 		result = 0;
 	else
 		result = (int64) (tabentry->t_counts.t_tuples_hot_updated);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_tuples_newpage_updated(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->t_counts.t_tuples_newpage_updated);
 
 	PG_RETURN_INT64(result);
 }

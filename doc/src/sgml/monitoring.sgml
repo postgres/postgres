@@ -4789,7 +4789,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>n_tup_ins</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of rows inserted
+       Total number of rows inserted
       </para></entry>
      </row>
 
@@ -4798,7 +4798,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>n_tup_upd</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of rows updated (includes <link linkend="storage-hot">HOT updated rows</link>)
+       Total number of rows updated.  (This includes row updates
+       counted in <structfield>n_tup_hot_upd</structfield> and
+       <structfield>n_tup_newpage_upd</structfield>, and remaining
+       non-<acronym>HOT</acronym> updates.)
       </para></entry>
      </row>
 
@@ -4807,7 +4810,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>n_tup_del</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of rows deleted
+       Total number of rows deleted
       </para></entry>
      </row>
 
@@ -4816,8 +4819,23 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>n_tup_hot_upd</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of rows HOT updated (i.e., with no separate index
-       update required)
+       Number of rows <link linkend="storage-hot">HOT updated</link>.
+       These are updates where no successor versions are required in
+       indexes.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_tup_newpage_upd</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows updated where the successor version goes onto a
+       <emphasis>new</emphasis> heap page, leaving behind an original
+       version with a
+       <link linkend="storage-tuple-layout"><structfield>t_ctid</structfield>
+        field</link> that points to a different heap page.  These are
+       always non-<acronym>HOT</acronym> updates.
       </para></entry>
      </row>
 

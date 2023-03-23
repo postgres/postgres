@@ -151,8 +151,8 @@ typedef struct PgStat_BackendSubEntry
  * the index AM, while tuples_fetched is the number of tuples successfully
  * fetched by heap_fetch under the control of simple indexscans for this index.
  *
- * tuples_inserted/updated/deleted/hot_updated count attempted actions,
- * regardless of whether the transaction committed.  delta_live_tuples,
+ * tuples_inserted/updated/deleted/hot_updated/newpage_updated count attempted
+ * actions, regardless of whether the transaction committed.  delta_live_tuples,
  * delta_dead_tuples, and changed_tuples are set depending on commit or abort.
  * Note that delta_live_tuples and delta_dead_tuples can be negative!
  * ----------
@@ -168,6 +168,7 @@ typedef struct PgStat_TableCounts
 	PgStat_Counter t_tuples_updated;
 	PgStat_Counter t_tuples_deleted;
 	PgStat_Counter t_tuples_hot_updated;
+	PgStat_Counter t_tuples_newpage_updated;
 	bool		t_truncdropped;
 
 	PgStat_Counter t_delta_live_tuples;
@@ -401,6 +402,7 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter tuples_updated;
 	PgStat_Counter tuples_deleted;
 	PgStat_Counter tuples_hot_updated;
+	PgStat_Counter tuples_newpage_updated;
 
 	PgStat_Counter live_tuples;
 	PgStat_Counter dead_tuples;
@@ -616,7 +618,7 @@ extern void pgstat_report_analyze(Relation rel,
 	} while (0)
 
 extern void pgstat_count_heap_insert(Relation rel, PgStat_Counter n);
-extern void pgstat_count_heap_update(Relation rel, bool hot);
+extern void pgstat_count_heap_update(Relation rel, bool hot, bool newpage);
 extern void pgstat_count_heap_delete(Relation rel);
 extern void pgstat_count_truncate(Relation rel);
 extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);

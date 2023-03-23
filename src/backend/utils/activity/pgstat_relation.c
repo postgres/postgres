@@ -373,8 +373,10 @@ pgstat_count_heap_insert(Relation rel, PgStat_Counter n)
  * count a tuple update
  */
 void
-pgstat_count_heap_update(Relation rel, bool hot)
+pgstat_count_heap_update(Relation rel, bool hot, bool newpage)
 {
+	Assert(!(hot && newpage));
+
 	if (pgstat_should_count_relation(rel))
 	{
 		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
@@ -382,9 +384,14 @@ pgstat_count_heap_update(Relation rel, bool hot)
 		ensure_tabstat_xact_level(pgstat_info);
 		pgstat_info->trans->tuples_updated++;
 
-		/* t_tuples_hot_updated is nontransactional, so just advance it */
+		/*
+		 * t_tuples_hot_updated and t_tuples_newpage_updated counters are
+		 * nontransactional, so just advance them
+		 */
 		if (hot)
 			pgstat_info->t_counts.t_tuples_hot_updated++;
+		else if (newpage)
+			pgstat_info->t_counts.t_tuples_newpage_updated++;
 	}
 }
 
@@ -804,6 +811,7 @@ pgstat_relation_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	tabentry->tuples_updated += lstats->t_counts.t_tuples_updated;
 	tabentry->tuples_deleted += lstats->t_counts.t_tuples_deleted;
 	tabentry->tuples_hot_updated += lstats->t_counts.t_tuples_hot_updated;
+	tabentry->tuples_newpage_updated += lstats->t_counts.t_tuples_newpage_updated;
 
 	/*
 	 * If table was truncated/dropped, first reset the live/dead counters.

@@ -1789,6 +1789,7 @@ pg_stat_all_tables| SELECT c.oid AS relid,
     pg_stat_get_tuples_updated(c.oid) AS n_tup_upd,
     pg_stat_get_tuples_deleted(c.oid) AS n_tup_del,
     pg_stat_get_tuples_hot_updated(c.oid) AS n_tup_hot_upd,
+    pg_stat_get_tuples_newpage_updated(c.oid) AS n_tup_newpage_upd,
     pg_stat_get_live_tuples(c.oid) AS n_live_tup,
     pg_stat_get_dead_tuples(c.oid) AS n_dead_tup,
     pg_stat_get_mod_since_analyze(c.oid) AS n_mod_since_analyze,
@@ -2146,6 +2147,7 @@ pg_stat_sys_tables| SELECT relid,
     n_tup_upd,
     n_tup_del,
     n_tup_hot_upd,
+    n_tup_newpage_upd,
     n_live_tup,
     n_dead_tup,
     n_mod_since_analyze,
@@ -2193,6 +2195,7 @@ pg_stat_user_tables| SELECT relid,
     n_tup_upd,
     n_tup_del,
     n_tup_hot_upd,
+    n_tup_newpage_upd,
     n_live_tup,
     n_dead_tup,
     n_mod_since_analyze,
@@ -2244,7 +2247,8 @@ pg_stat_xact_all_tables| SELECT c.oid AS relid,
     pg_stat_get_xact_tuples_inserted(c.oid) AS n_tup_ins,
     pg_stat_get_xact_tuples_updated(c.oid) AS n_tup_upd,
     pg_stat_get_xact_tuples_deleted(c.oid) AS n_tup_del,
-    pg_stat_get_xact_tuples_hot_updated(c.oid) AS n_tup_hot_upd
+    pg_stat_get_xact_tuples_hot_updated(c.oid) AS n_tup_hot_upd,
+    pg_stat_get_xact_tuples_newpage_updated(c.oid) AS n_tup_newpage_upd
    FROM ((pg_class c
      LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
@@ -2260,7 +2264,8 @@ pg_stat_xact_sys_tables| SELECT relid,
     n_tup_ins,
     n_tup_upd,
     n_tup_del,
-    n_tup_hot_upd
+    n_tup_hot_upd,
+    n_tup_newpage_upd
    FROM pg_stat_xact_all_tables
   WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_stat_xact_user_functions| SELECT p.oid AS funcid,
@@ -2282,7 +2287,8 @@ pg_stat_xact_user_tables| SELECT relid,
     n_tup_ins,
     n_tup_upd,
     n_tup_del,
-    n_tup_hot_upd
+    n_tup_hot_upd,
+    n_tup_newpage_upd
    FROM pg_stat_xact_all_tables
   WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_statio_all_indexes| SELECT c.oid AS relid,
