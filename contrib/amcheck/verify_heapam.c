@@ -1012,7 +1012,9 @@ check_tuple_visibility(HeapCheckContext *ctx, bool *xmin_commit_status_ok,
 	switch (get_xid_status(xmin, ctx, &xmin_status))
 	{
 		case XID_INVALID:
-			break;
+			report_corruption(ctx,
+							  pstrdup("xmin is invalid"));
+			return false;
 		case XID_BOUNDS_OK:
 			*xmin_commit_status_ok = true;
 			*xmin_commit_status = xmin_status;
@@ -1350,6 +1352,9 @@ check_tuple_visibility(HeapCheckContext *ctx, bool *xmin_commit_status_ok,
 	xmax = HeapTupleHeaderGetRawXmax(tuphdr);
 	switch (get_xid_status(xmax, ctx, &xmax_status))
 	{
+		case XID_INVALID:
+			ctx->tuple_could_be_pruned = false;
+			return true;
 		case XID_IN_FUTURE:
 			report_corruption(ctx,
 							  psprintf("xmax %u equals or exceeds next valid transaction ID %u:%u",
@@ -1372,7 +1377,6 @@ check_tuple_visibility(HeapCheckContext *ctx, bool *xmin_commit_status_ok,
 									   XidFromFullTransactionId(ctx->oldest_fxid)));
 			return false;		/* corrupt */
 		case XID_BOUNDS_OK:
-		case XID_INVALID:
 			break;
 	}
 
