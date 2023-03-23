@@ -233,14 +233,14 @@ InitCompressorGzip(CompressorState *cs,
  *----------------------
  */
 
-static size_t
-Gzip_read(void *ptr, size_t size, CompressFileHandle *CFH)
+static bool
+Gzip_read(void *ptr, size_t size, size_t *rsize, CompressFileHandle *CFH)
 {
 	gzFile		gzfp = (gzFile) CFH->private_data;
-	size_t		ret;
+	int			gzret;
 
-	ret = gzread(gzfp, ptr, size);
-	if (ret != size && !gzeof(gzfp))
+	gzret = gzread(gzfp, ptr, size);
+	if (gzret <= 0 && !gzeof(gzfp))
 	{
 		int			errnum;
 		const char *errmsg = gzerror(gzfp, &errnum);
@@ -249,15 +249,18 @@ Gzip_read(void *ptr, size_t size, CompressFileHandle *CFH)
 				 errnum == Z_ERRNO ? strerror(errno) : errmsg);
 	}
 
-	return ret;
+	if (rsize)
+		*rsize = (size_t) gzret;
+
+	return true;
 }
 
-static size_t
+static bool
 Gzip_write(const void *ptr, size_t size, CompressFileHandle *CFH)
 {
 	gzFile		gzfp = (gzFile) CFH->private_data;
 
-	return gzwrite(gzfp, ptr, size);
+	return gzwrite(gzfp, ptr, size) > 0;
 }
 
 static int
@@ -287,22 +290,22 @@ Gzip_gets(char *ptr, int size, CompressFileHandle *CFH)
 	return gzgets(gzfp, ptr, size);
 }
 
-static int
+static bool
 Gzip_close(CompressFileHandle *CFH)
 {
 	gzFile		gzfp = (gzFile) CFH->private_data;
 
 	CFH->private_data = NULL;
 
-	return gzclose(gzfp);
+	return gzclose(gzfp) == Z_OK;
 }
 
-static int
+static bool
 Gzip_eof(CompressFileHandle *CFH)
 {
 	gzFile		gzfp = (gzFile) CFH->private_data;
 
-	return gzeof(gzfp);
+	return gzeof(gzfp) == 1;
 }
 
 static const char *
@@ -319,7 +322,7 @@ Gzip_get_error(CompressFileHandle *CFH)
 	return errmsg;
 }
 
-static int
+static bool
 Gzip_open(const char *path, int fd, const char *mode, CompressFileHandle *CFH)
 {
 	gzFile		gzfp;
@@ -342,18 +345,18 @@ Gzip_open(const char *path, int fd, const char *mode, CompressFileHandle *CFH)
 		gzfp = gzopen(path, mode_compression);
 
 	if (gzfp == NULL)
-		return 1;
+		return false;
 
 	CFH->private_data = gzfp;
 
-	return 0;
+	return true;
 }
 
-static int
+static bool
 Gzip_open_write(const char *path, const char *mode, CompressFileHandle *CFH)
 {
 	char	   *fname;
-	int			ret;
+	bool		ret;
 	int			save_errno;
 
 	fname = psprintf("%s.gz", path);

@@ -83,27 +83,36 @@ InitCompressorNone(CompressorState *cs,
  * Private routines
  */
 
-static size_t
-read_none(void *ptr, size_t size, CompressFileHandle *CFH)
+static bool
+read_none(void *ptr, size_t size, size_t *rsize, CompressFileHandle *CFH)
 {
 	FILE	   *fp = (FILE *) CFH->private_data;
 	size_t		ret;
 
 	if (size == 0)
-		return 0;
+		return true;
 
 	ret = fread(ptr, 1, size, fp);
 	if (ret != size && !feof(fp))
 		pg_fatal("could not read from input file: %s",
 				 strerror(errno));
 
-	return ret;
+	if (rsize)
+		*rsize = ret;
+
+	return true;
 }
 
-static size_t
+static bool
 write_none(const void *ptr, size_t size, CompressFileHandle *CFH)
 {
-	return fwrite(ptr, 1, size, (FILE *) CFH->private_data);
+	size_t		ret;
+
+	ret = fwrite(ptr, 1, size, (FILE *) CFH->private_data);
+	if (ret != size)
+		return false;
+
+	return true;
 }
 
 static const char *
@@ -136,7 +145,7 @@ getc_none(CompressFileHandle *CFH)
 	return ret;
 }
 
-static int
+static bool
 close_none(CompressFileHandle *CFH)
 {
 	FILE	   *fp = (FILE *) CFH->private_data;
@@ -147,16 +156,16 @@ close_none(CompressFileHandle *CFH)
 	if (fp)
 		ret = fclose(fp);
 
-	return ret;
+	return ret == 0;
 }
 
-static int
+static bool
 eof_none(CompressFileHandle *CFH)
 {
-	return feof((FILE *) CFH->private_data);
+	return feof((FILE *) CFH->private_data) != 0;
 }
 
-static int
+static bool
 open_none(const char *path, int fd, const char *mode, CompressFileHandle *CFH)
 {
 	Assert(CFH->private_data == NULL);
@@ -167,21 +176,21 @@ open_none(const char *path, int fd, const char *mode, CompressFileHandle *CFH)
 		CFH->private_data = fopen(path, mode);
 
 	if (CFH->private_data == NULL)
-		return 1;
+		return false;
 
-	return 0;
+	return true;
 }
 
-static int
+static bool
 open_write_none(const char *path, const char *mode, CompressFileHandle *CFH)
 {
 	Assert(CFH->private_data == NULL);
 
 	CFH->private_data = fopen(path, mode);
 	if (CFH->private_data == NULL)
-		return 1;
+		return false;
 
-	return 0;
+	return true;
 }
 
 /*

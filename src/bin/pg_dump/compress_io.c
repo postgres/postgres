@@ -262,7 +262,7 @@ InitDiscoverCompressFileHandle(const char *path, const char *mode)
 	}
 
 	CFH = InitCompressFileHandle(compression_spec);
-	if (CFH->open_func(fname, -1, mode, CFH))
+	if (!CFH->open_func(fname, -1, mode, CFH))
 	{
 		free_keep_errno(CFH);
 		CFH = NULL;
@@ -275,12 +275,12 @@ InitDiscoverCompressFileHandle(const char *path, const char *mode)
 /*
  * Close an open file handle and release its memory.
  *
- * On failure, returns an error value and sets errno appropriately.
+ * On failure, returns false and sets errno appropriately.
  */
-int
+bool
 EndCompressFileHandle(CompressFileHandle *CFH)
 {
-	int			ret = 0;
+	bool		ret = false;
 
 	if (CFH->private_data)
 		ret = CFH->close_func(CFH);

@@ -100,8 +100,10 @@ struct CompressFileHandle
 	 * Pass either 'path' or 'fd' depending on whether a file path or a file
 	 * descriptor is available. 'mode' can be one of 'r', 'rb', 'w', 'wb',
 	 * 'a', and 'ab'. Requires an already initialized CompressFileHandle.
+	 *
+	 * Returns true on success and false on error.
 	 */
-	int			(*open_func) (const char *path, int fd, const char *mode,
+	bool		(*open_func) (const char *path, int fd, const char *mode,
 							  CompressFileHandle *CFH);
 
 	/*
@@ -109,19 +111,27 @@ struct CompressFileHandle
 	 *
 	 * 'mode' can be one of 'w', 'wb', 'a', and 'ab'. Requires an already
 	 * initialized CompressFileHandle.
+	 *
+	 * Returns true on success and false on error.
 	 */
-	int			(*open_write_func) (const char *path, const char *mode,
+	bool		(*open_write_func) (const char *path, const char *mode,
 									CompressFileHandle *CFH);
 
 	/*
 	 * Read 'size' bytes of data from the file and store them into 'ptr'.
+	 * Optionally it will store the number of bytes read in 'rsize'.
+	 *
+	 * Returns true on success and throws an internal error otherwise.
 	 */
-	size_t		(*read_func) (void *ptr, size_t size, CompressFileHandle *CFH);
+	bool		(*read_func) (void *ptr, size_t size, size_t *rsize,
+							  CompressFileHandle *CFH);
 
 	/*
 	 * Write 'size' bytes of data into the file from 'ptr'.
+	 *
+	 * Returns true on success and false on error.
 	 */
-	size_t		(*write_func) (const void *ptr, size_t size,
+	bool		(*write_func) (const void *ptr, size_t size,
 							   struct CompressFileHandle *CFH);
 
 	/*
@@ -130,28 +140,38 @@ struct CompressFileHandle
 	 *
 	 * Stop if an EOF or a newline is found first. 's' is always null
 	 * terminated and contains the newline if it was found.
+	 *
+	 * Returns 's' on success, and NULL on error or when end of file occurs
+	 * while no characters have been read.
 	 */
 	char	   *(*gets_func) (char *s, int size, CompressFileHandle *CFH);
 
 	/*
 	 * Read the next character from the compress file handle as 'unsigned
 	 * char' cast into 'int'.
+	 *
+	 * Returns the character read on success and throws an internal error
+	 * otherwise. It treats EOF as error.
 	 */
 	int			(*getc_func) (CompressFileHandle *CFH);
 
 	/*
 	 * Test if EOF is reached in the compress file handle.
+	 *
+	 * Returns true if it is reached.
 	 */
-	int			(*eof_func) (CompressFileHandle *CFH);
+	bool		(*eof_func) (CompressFileHandle *CFH);
 
 	/*
 	 * Close an open file handle.
+	 *
+	 * Returns true on success and false on error.
 	 */
-	int			(*close_func) (CompressFileHandle *CFH);
+	bool		(*close_func) (CompressFileHandle *CFH);
 
 	/*
-	 * Get a pointer to a string that describes an error that occurred during a
-	 * compress file handle operation.
+	 * Get a pointer to a string that describes an error that occurred during
+	 * a compress file handle operation.
 	 */
 	const char *(*get_error_func) (CompressFileHandle *CFH);
 
@@ -178,5 +198,5 @@ extern CompressFileHandle *InitCompressFileHandle(const pg_compress_specificatio
  */
 extern CompressFileHandle *InitDiscoverCompressFileHandle(const char *path,
 														  const char *mode);
-extern int	EndCompressFileHandle(CompressFileHandle *CFH);
+extern bool EndCompressFileHandle(CompressFileHandle *CFH);
 #endif

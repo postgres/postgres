@@ -266,16 +266,13 @@ OpenArchive(const char *FileSpec, const ArchiveFormat fmt)
 void
 CloseArchive(Archive *AHX)
 {
-	int			res = 0;
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
 	AH->ClosePtr(AH);
 
 	/* Close the output */
 	errno = 0;
-	res = EndCompressFileHandle(AH->OF);
-
-	if (res != 0)
+	if (!EndCompressFileHandle(AH->OF))
 		pg_fatal("could not close output file: %m");
 }
 
@@ -1580,7 +1577,7 @@ SetOutput(ArchiveHandle *AH, const char *filename,
 
 	CFH = InitCompressFileHandle(compression_spec);
 
-	if (CFH->open_func(filename, fn, mode, CFH))
+	if (!CFH->open_func(filename, fn, mode, CFH))
 	{
 		if (filename)
 			pg_fatal("could not open output file \"%s\": %m", filename);
@@ -1600,12 +1597,8 @@ SaveOutput(ArchiveHandle *AH)
 static void
 RestoreOutput(ArchiveHandle *AH, CompressFileHandle *savedOutput)
 {
-	int			res;
-
 	errno = 0;
-	res = EndCompressFileHandle(AH->OF);
-
-	if (res != 0)
+	if (!EndCompressFileHandle(AH->OF))
 		pg_fatal("could not close output file: %m");
 
 	AH->OF = savedOutput;
@@ -1745,7 +1738,8 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 	{
 		CompressFileHandle *CFH = (CompressFileHandle *) AH->OF;
 
-		bytes_written = CFH->write_func(ptr, size * nmemb, CFH);
+		if (CFH->write_func(ptr, size * nmemb, CFH))
+			bytes_written = size * nmemb;
 	}
 
 	if (bytes_written != size * nmemb)
@@ -2294,7 +2288,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	/* Open stdout with no compression for AH output handle */
 	out_compress_spec.algorithm = PG_COMPRESSION_NONE;
 	CFH = InitCompressFileHandle(out_compress_spec);
-	if (CFH->open_func(NULL, fileno(stdout), PG_BINARY_A, CFH))
+	if (!CFH->open_func(NULL, fileno(stdout), PG_BINARY_A, CFH))
 		pg_fatal("could not open stdout for appending: %m");
 	AH->OF = CFH;
 
