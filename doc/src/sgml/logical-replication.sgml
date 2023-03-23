@@ -251,7 +251,9 @@
    column of type <type>bigint</type>.  The target table can also have
    additional columns not provided by the published table.  Any such columns
    will be filled with the default value as specified in the definition of the
-   target table.
+   target table. However, logical replication in binary format is more
+   restrictive. See the <link linkend="sql-createsubscription-binary"><literal>binary</literal>
+   option</link> of <command>CREATE SUBSCRIPTION</command> for details.
   </para>
 
   <sect2 id="logical-replication-subscription-slot">

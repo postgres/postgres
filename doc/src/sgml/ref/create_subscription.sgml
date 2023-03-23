@@ -185,15 +185,25 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
       <variablelist>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-binary" xreflabel="binary">
         <term><literal>binary</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
-          Specifies whether the subscription will request the publisher to
-          send the data in binary format (as opposed to text).
-          The default is <literal>false</literal>.
-          Even when this option is enabled, only data types having
-          binary send and receive functions will be transferred in binary.
+          Specifies whether the subscription will request the publisher to send
+          the data in binary format (as opposed to text). The default is
+          <literal>false</literal>. Any initial table synchronization copy
+          (see <literal>copy_data</literal>) also uses the same format. Binary
+          format can be faster than the text format, but it is less portable
+          across machine architectures and <productname>PostgreSQL</productname>
+          versions. Binary format is very data type specific; for example, it
+          will not allow copying from a <type>smallint</type> column to an
+          <type>integer</type> column, even though that would work fine in text
+          format. Even when this option is enabled, only data types having binary
+          send and receive functions will be transferred in binary. Note that
+          the initial synchronization requires all data types to have binary
+          send and receive functions, otherwise the synchronization will fail
+          (see <xref linkend="sql-createtype"/> for more about send/receive
+          functions).
          </para>
 
          <para>
@@ -202,6 +212,12 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           subscriber lacks a binary receive function for that type.  In
           such a case, data transfer will fail, and
           the <literal>binary</literal> option cannot be used.
+         </para>
+
+         <para>
+          If the publisher is a <productname>PostgreSQL</productname> version
+          before 16, then any initial table synchronization will use text format
+          even if <literal>binary = true</literal>.
          </para>
         </listitem>
        </varlistentry>
