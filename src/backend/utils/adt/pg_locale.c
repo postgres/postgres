@@ -140,6 +140,7 @@ static char *IsoLocaleName(const char *);
  */
 static UConverter *icu_converter = NULL;
 
+static UCollator *pg_ucol_open(const char *loc_str);
 static void init_icu_converter(void);
 static size_t uchar_length(UConverter *converter,
 						   const char *str, int32_t len);
@@ -1430,17 +1431,8 @@ make_icu_collator(const char *iculocstr,
 {
 #ifdef USE_ICU
 	UCollator  *collator;
-	UErrorCode	status;
 
-	status = U_ZERO_ERROR;
-	collator = ucol_open(iculocstr, &status);
-	if (U_FAILURE(status))
-		ereport(ERROR,
-				(errmsg("could not open collator for locale \"%s\": %s",
-						iculocstr, u_errorName(status))));
-
-	if (U_ICU_VERSION_MAJOR_NUM < 54)
-		icu_set_collation_attributes(collator, iculocstr);
+	collator = pg_ucol_open(iculocstr);
 
 	/*
 	 * If rules are specified, we extract the rules of the standard collation,
@@ -1451,6 +1443,7 @@ make_icu_collator(const char *iculocstr,
 		const UChar *default_rules;
 		UChar	   *agg_rules;
 		UChar	   *my_rules;
+		UErrorCode	status;
 		int32_t		length;
 
 		default_rules = ucol_getRules(collator, &length);
@@ -1722,16 +1715,11 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 	if (collprovider == COLLPROVIDER_ICU)
 	{
 		UCollator  *collator;
-		UErrorCode	status;
 		UVersionInfo versioninfo;
 		char		buf[U_MAX_VERSION_STRING_LENGTH];
 
-		status = U_ZERO_ERROR;
-		collator = ucol_open(collcollate, &status);
-		if (U_FAILURE(status))
-			ereport(ERROR,
-					(errmsg("could not open collator for locale \"%s\": %s",
-							collcollate, u_errorName(status))));
+		collator = pg_ucol_open(collcollate);
+
 		ucol_getVersion(collator, versioninfo);
 		ucol_close(collator);
 
@@ -2505,6 +2493,43 @@ pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 }
 
 #ifdef USE_ICU
+
+/*
+ * Wrapper around ucol_open() to handle API differences for older ICU
+ * versions.
+ */
+static UCollator *
+pg_ucol_open(const char *loc_str)
+{
+	UCollator  *collator;
+	UErrorCode	status;
+
+	/*
+	 * Must never open default collator, because it depends on the environment
+	 * and may change at any time.
+	 *
+	 * NB: the default collator is not the same as the collator for the root
+	 * locale. The root locale may be specified as the empty string, "und", or
+	 * "root". The default collator is opened by passing NULL to ucol_open().
+	 */
+	if (loc_str == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("opening default collator is not supported")));
+
+	status = U_ZERO_ERROR;
+	collator = ucol_open(loc_str, &status);
+	if (U_FAILURE(status))
+		ereport(ERROR,
+				(errmsg("could not open collator for locale \"%s\": %s",
+						loc_str, u_errorName(status))));
+
+	if (U_ICU_VERSION_MAJOR_NUM < 54)
+		icu_set_collation_attributes(collator, loc_str);
+
+	return collator;
+}
+
 static void
 init_icu_converter(void)
 {
@@ -2771,17 +2796,8 @@ check_icu_locale(const char *icu_locale)
 {
 #ifdef USE_ICU
 	UCollator  *collator;
-	UErrorCode	status;
 
-	status = U_ZERO_ERROR;
-	collator = ucol_open(icu_locale, &status);
-	if (U_FAILURE(status))
-		ereport(ERROR,
-				(errmsg("could not open collator for locale \"%s\": %s",
-						icu_locale, u_errorName(status))));
-
-	if (U_ICU_VERSION_MAJOR_NUM < 54)
-		icu_set_collation_attributes(collator, icu_locale);
+	collator = pg_ucol_open(icu_locale);
 	ucol_close(collator);
 #else
 	ereport(ERROR,
