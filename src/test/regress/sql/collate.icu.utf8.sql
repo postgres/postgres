@@ -521,6 +521,8 @@ SELECT 'abc' <= 'ABC' COLLATE case_insensitive, 'abc' >= 'ABC' COLLATE case_inse
 -- test language tags
 CREATE COLLATION lt_insensitive (provider = icu, locale = 'en-u-ks-level1', deterministic = false);
 SELECT 'aBcD' COLLATE lt_insensitive = 'AbCd' COLLATE lt_insensitive;
+CREATE COLLATION lt_upperfirst (provider = icu, locale = 'und-u-kf-upper');
+SELECT 'Z' COLLATE lt_upperfirst < 'z' COLLATE lt_upperfirst;
 
 CREATE TABLE test1cs (x text COLLATE case_sensitive);
 CREATE TABLE test2cs (x text COLLATE case_sensitive);

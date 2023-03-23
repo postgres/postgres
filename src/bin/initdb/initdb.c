@@ -1701,7 +1701,7 @@ setup_collation(FILE *cmdfd)
 	 * that they win if libc defines a locale with the same name.
 	 */
 	PG_CMD_PRINTF("INSERT INTO pg_collation (oid, collname, collnamespace, collowner, collprovider, collisdeterministic, collencoding, colliculocale)"
-				  "VALUES (pg_nextoid('pg_catalog.pg_collation', 'oid', 'pg_catalog.pg_collation_oid_index'), 'unicode', 'pg_catalog'::regnamespace, %u, '%c', true, -1, '');\n\n",
+				  "VALUES (pg_nextoid('pg_catalog.pg_collation', 'oid', 'pg_catalog.pg_collation_oid_index'), 'unicode', 'pg_catalog'::regnamespace, %u, '%c', true, -1, 'und');\n\n",
 				  BOOTSTRAP_SUPERUSERID, COLLPROVIDER_ICU);
 
 	PG_CMD_PRINTF("INSERT INTO pg_collation (oid, collname, collnamespace, collowner, collprovider, collisdeterministic, collencoding, collcollate, collctype)"

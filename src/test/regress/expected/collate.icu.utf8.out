@@ -1312,6 +1312,13 @@ SELECT 'aBcD' COLLATE lt_insensitive = 'AbCd' COLLATE lt_insensitive;
  t
 (1 row)
 
+CREATE COLLATION lt_upperfirst (provider = icu, locale = 'und-u-kf-upper');
+SELECT 'Z' COLLATE lt_upperfirst < 'z' COLLATE lt_upperfirst;
+ ?column? 
+----------
+ t
+(1 row)
+
 CREATE TABLE test1cs (x text COLLATE case_sensitive);
 CREATE TABLE test2cs (x text COLLATE case_sensitive);
 CREATE TABLE test3cs (x text COLLATE case_sensitive);
