@@ -7473,7 +7473,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
       <thead>
        <row>
         <entry>SQL standard</entry>
-        <entry>PostgreSQL</entry>
+        <entry><productname>PostgreSQL</productname></entry>
        </row>
       </thead>
 
