@@ -543,7 +543,8 @@ verify_heapam(PG_FUNCTION_ARGS)
 			 */
 			nextblkno = ItemPointerGetBlockNumber(&(ctx.tuphdr)->t_ctid);
 			nextoffnum = ItemPointerGetOffsetNumber(&(ctx.tuphdr)->t_ctid);
-			if (nextblkno == ctx.blkno && nextoffnum != ctx.offnum)
+			if (nextblkno == ctx.blkno && nextoffnum != ctx.offnum &&
+				nextoffnum >= FirstOffsetNumber && nextoffnum <= maxoff)
 				successor[ctx.offnum] = nextoffnum;
 		}
 
@@ -665,15 +666,18 @@ verify_heapam(PG_FUNCTION_ARGS)
 			 * tuple should be marked as a heap-only tuple. Conversely, if the
 			 * current tuple isn't marked as HOT-updated, then the next tuple
 			 * shouldn't be marked as a heap-only tuple.
+			 *
+			 * NB: Can't use HeapTupleHeaderIsHotUpdated() as it checks if
+			 * hint bits indicate xmin/xmax aborted.
 			 */
-			if (!HeapTupleHeaderIsHotUpdated(curr_htup) &&
+			if (!(curr_htup->t_infomask2 & HEAP_HOT_UPDATED) &&
 				HeapTupleHeaderIsHeapOnly(next_htup))
 			{
 				report_corruption(&ctx,
 								  psprintf("non-heap-only update produced a heap-only tuple at offset %u",
 										   (unsigned) nextoffnum));
 			}
-			if (HeapTupleHeaderIsHotUpdated(curr_htup) &&
+			if ((curr_htup->t_infomask2 & HEAP_HOT_UPDATED) &&
 				!HeapTupleHeaderIsHeapOnly(next_htup))
 			{
 				report_corruption(&ctx,
