@@ -13,6 +13,8 @@ subdir = src/tools/pg_bsd_indent
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
+
 OBJS = \
 	$(WIN32RES) \
 	args.o \
