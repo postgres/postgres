@@ -120,8 +120,8 @@ WriteDataToArchiveGzip(ArchiveHandle *AH, CompressorState *cs,
 		 * actually allocate one extra byte because some routines want to
 		 * append a trailing zero byte to the zlib output.
 		 */
-		gzipcs->outbuf = pg_malloc(ZLIB_OUT_SIZE + 1);
-		gzipcs->outsize = ZLIB_OUT_SIZE;
+		gzipcs->outsize = DEFAULT_IO_BUFFER_SIZE;
+		gzipcs->outbuf = pg_malloc(gzipcs->outsize + 1);
 
 		/*
 		 * A level of zero simply copies the input one block at the time. This
@@ -158,10 +158,10 @@ ReadDataFromArchiveGzip(ArchiveHandle *AH, CompressorState *cs)
 	zp->zfree = Z_NULL;
 	zp->opaque = Z_NULL;
 
-	buf = pg_malloc(ZLIB_IN_SIZE);
-	buflen = ZLIB_IN_SIZE;
+	buflen = DEFAULT_IO_BUFFER_SIZE;
+	buf = pg_malloc(buflen);
 
-	out = pg_malloc(ZLIB_OUT_SIZE + 1);
+	out = pg_malloc(DEFAULT_IO_BUFFER_SIZE + 1);
 
 	if (inflateInit(zp) != Z_OK)
 		pg_fatal("could not initialize compression library: %s",
@@ -176,14 +176,14 @@ ReadDataFromArchiveGzip(ArchiveHandle *AH, CompressorState *cs)
 		while (zp->avail_in > 0)
 		{
 			zp->next_out = (void *) out;
-			zp->avail_out = ZLIB_OUT_SIZE;
+			zp->avail_out = DEFAULT_IO_BUFFER_SIZE;
 
 			res = inflate(zp, 0);
 			if (res != Z_OK && res != Z_STREAM_END)
 				pg_fatal("could not uncompress data: %s", zp->msg);
 
-			out[ZLIB_OUT_SIZE - zp->avail_out] = '\0';
-			ahwrite(out, 1, ZLIB_OUT_SIZE - zp->avail_out, AH);
+			out[DEFAULT_IO_BUFFER_SIZE - zp->avail_out] = '\0';
+			ahwrite(out, 1, DEFAULT_IO_BUFFER_SIZE - zp->avail_out, AH);
 		}
 	}
 
@@ -192,13 +192,13 @@ ReadDataFromArchiveGzip(ArchiveHandle *AH, CompressorState *cs)
 	while (res != Z_STREAM_END)
 	{
 		zp->next_out = (void *) out;
-		zp->avail_out = ZLIB_OUT_SIZE;
+		zp->avail_out = DEFAULT_IO_BUFFER_SIZE;
 		res = inflate(zp, 0);
 		if (res != Z_OK && res != Z_STREAM_END)
 			pg_fatal("could not uncompress data: %s", zp->msg);
 
-		out[ZLIB_OUT_SIZE - zp->avail_out] = '\0';
-		ahwrite(out, 1, ZLIB_OUT_SIZE - zp->avail_out, AH);
+		out[DEFAULT_IO_BUFFER_SIZE - zp->avail_out] = '\0';
+		ahwrite(out, 1, DEFAULT_IO_BUFFER_SIZE - zp->avail_out, AH);
 	}
 
 	if (inflateEnd(zp) != Z_OK)

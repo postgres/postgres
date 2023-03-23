@@ -394,8 +394,8 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 	if (!CFH)
 		pg_fatal("could not open input file \"%s\": %m", filename);
 
-	buf = pg_malloc(ZLIB_OUT_SIZE);
-	buflen = ZLIB_OUT_SIZE;
+	buflen = DEFAULT_IO_BUFFER_SIZE;
+	buf = pg_malloc(buflen);
 
 	while (CFH->read_func(buf, buflen, &cnt, CFH) && cnt > 0)
 	{

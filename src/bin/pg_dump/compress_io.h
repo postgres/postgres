@@ -17,9 +17,8 @@
 
 #include "pg_backup_archiver.h"
 
-/* Initial buffer sizes used in zlib compression. */
-#define ZLIB_OUT_SIZE	4096
-#define ZLIB_IN_SIZE	4096
+/* Default size used for IO buffers */
+#define DEFAULT_IO_BUFFER_SIZE	4096
 
 extern char *supports_compression(const pg_compress_specification compression_spec);
 

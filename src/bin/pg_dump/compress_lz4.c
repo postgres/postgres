@@ -20,9 +20,6 @@
 #include <lz4.h>
 #include <lz4frame.h>
 
-#define LZ4_OUT_SIZE	(4 * 1024)
-#define LZ4_IN_SIZE		(16 * 1024)
-
 /*
  * LZ4F_HEADER_SIZE_MAX first appeared in v1.7.5 of the library.
  * Redefine it for installations with a lesser version.
@@ -57,7 +54,7 @@ ReadDataFromArchiveLZ4(ArchiveHandle *AH, CompressorState *cs)
 	size_t		buflen;
 	size_t		cnt;
 
-	buflen = LZ4_IN_SIZE;
+	buflen = DEFAULT_IO_BUFFER_SIZE;
 	buf = pg_malloc(buflen);
 	decbuf = pg_malloc(buflen);
 
@@ -208,7 +205,7 @@ LZ4File_init(LZ4File *fs, int size, bool compressing)
 
 	if (fs->compressing)
 	{
-		fs->buflen = LZ4F_compressBound(LZ4_IN_SIZE, &fs->prefs);
+		fs->buflen = LZ4F_compressBound(DEFAULT_IO_BUFFER_SIZE, &fs->prefs);
 		if (fs->buflen < LZ4F_HEADER_SIZE_MAX)
 			fs->buflen = LZ4F_HEADER_SIZE_MAX;
 
@@ -244,7 +241,7 @@ LZ4File_init(LZ4File *fs, int size, bool compressing)
 			return false;
 		}
 
-		fs->buflen = size > LZ4_OUT_SIZE ? size : LZ4_OUT_SIZE;
+		fs->buflen = Max(size, DEFAULT_IO_BUFFER_SIZE);
 		fs->buffer = pg_malloc(fs->buflen);
 
 		fs->overflowalloclen = fs->buflen;
@@ -423,7 +420,7 @@ LZ4File_write(const void *ptr, size_t size, CompressFileHandle *CFH)
 
 	while (remaining > 0)
 	{
-		int			chunk = remaining < LZ4_IN_SIZE ? remaining : LZ4_IN_SIZE;
+		int			chunk = Min(remaining, DEFAULT_IO_BUFFER_SIZE);
 
 		remaining -= chunk;
 

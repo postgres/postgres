@@ -33,8 +33,8 @@ ReadDataFromArchiveNone(ArchiveHandle *AH, CompressorState *cs)
 	char	   *buf;
 	size_t		buflen;
 
-	buf = pg_malloc(ZLIB_OUT_SIZE);
-	buflen = ZLIB_OUT_SIZE;
+	buflen = DEFAULT_IO_BUFFER_SIZE;
+	buf = pg_malloc(buflen);
 
 	while ((cnt = cs->readF(AH, &buf, &buflen)))
 	{
