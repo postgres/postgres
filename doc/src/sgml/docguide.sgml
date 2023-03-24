@@ -374,6 +374,16 @@ ADDITIONAL_FLAGS='-Xmx1500m'
    </para>
 
    <para>
+    In its default configuration <productname>FOP</productname> will emit an
+    <literal>INFO</literal> message for each page. The log level can be
+    changed via <filename>~/.foprc</filename>:
+<programlisting>
+LOGCHOICE=-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.SimpleLog
+LOGLEVEL=-Dorg.apache.commons.logging.simplelog.defaultlog=WARN
+</programlisting>
+   </para>
+
+   <para>
     Other XSL-FO processors can also be used manually, but the automated build
     process only supports FOP.
    </para>
