@@ -88,6 +88,32 @@ select true as "OK"
 select explain_filter_to_json('explain (settings, format json) select * from int8_tbl i8') #> '{0,Settings,plan_cache_mode}';
 rollback;
 
+-- GENERIC_PLAN option
+
+select explain_filter('explain (generic_plan) select unique1 from tenk1 where thousand = $1');
+-- should fail
+select explain_filter('explain (analyze, generic_plan) select unique1 from tenk1 where thousand = $1');
+
+-- Test EXPLAIN (GENERIC_PLAN) with partition pruning
+-- partitions should be pruned at plan time, based on constants,
+-- but there should be no pruning based on parameter placeholders
+create table gen_part (
+  key1 integer not null,
+  key2 integer not null
+) partition by list (key1);
+create table gen_part_1
+  partition of gen_part for values in (1)
+  partition by range (key2);
+create table gen_part_1_1
+  partition of gen_part_1 for values from (1) to (2);
+create table gen_part_1_2
+  partition of gen_part_1 for values from (2) to (3);
+create table gen_part_2
+  partition of gen_part for values in (2);
+-- should scan gen_part_1_1 and gen_part_1_2, but not gen_part_2
+select explain_filter('explain (generic_plan) select key1, key2 from gen_part where key1 = 1 and key2 = $1');
+drop table gen_part;
+
 --
 -- Test production of per-worker data
 --

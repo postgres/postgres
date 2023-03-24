@@ -40,6 +40,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
     VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
     COSTS [ <replaceable class="parameter">boolean</replaceable> ]
     SETTINGS [ <replaceable class="parameter">boolean</replaceable> ]
+    GENERIC_PLAN [ <replaceable class="parameter">boolean</replaceable> ]
     BUFFERS [ <replaceable class="parameter">boolean</replaceable> ]
     WAL [ <replaceable class="parameter">boolean</replaceable> ]
     TIMING [ <replaceable class="parameter">boolean</replaceable> ]
@@ -169,6 +170,22 @@ ROLLBACK;
    </varlistentry>
 
    <varlistentry>
+    <term><literal>GENERIC_PLAN</literal></term>
+    <listitem>
+     <para>
+      Allow the statement to contain parameter placeholders like
+      <literal>$1</literal>, and generate a generic plan that does not
+      depend on the values of those parameters.
+      See <link linkend="sql-prepare"><command>PREPARE</command></link>
+      for details about generic plans and the types of statement that
+      support parameters.
+      This parameter cannot be used together with <literal>ANALYZE</literal>.
+      It defaults to <literal>FALSE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>BUFFERS</literal></term>
     <listitem>
      <para>
@@ -191,7 +208,7 @@ ROLLBACK;
       query processing.
       The number of blocks shown for an
       upper-level node includes those used by all its child nodes.  In text
-      format, only non-zero values are printed.  It defaults to
+      format, only non-zero values are printed.  This parameter defaults to
       <literal>FALSE</literal>.
      </para>
     </listitem>
@@ -445,14 +462,15 @@ PREPARE query(int, int) AS SELECT sum(bar) FROM test
 EXPLAIN ANALYZE EXECUTE query(100, 200);
 
                                                        QUERY PLAN
--------------------------------------------------------------------&zwsp;-----------------------------------------------------
- HashAggregate  (cost=9.54..9.54 rows=1 width=8) (actual time=0.156..0.161 rows=11 loops=1)
+-------------------------------------------------------------------&zwsp;------------------------------------------------------
+ HashAggregate  (cost=10.77..10.87 rows=10 width=12) (actual time=0.043..0.044 rows=10 loops=1)
    Group Key: foo
-   -&gt;  Index Scan using test_pkey on test  (cost=0.29..9.29 rows=50 width=8) (actual time=0.039..0.091 rows=99 loops=1)
-         Index Cond: ((id &gt; $1) AND (id &lt; $2))
- Planning time: 0.197 ms
- Execution time: 0.225 ms
-(6 rows)
+   Batches: 1  Memory Usage: 24kB
+   -&gt;  Index Scan using test_pkey on test  (cost=0.29..10.27 rows=99 width=8) (actual time=0.009..0.025 rows=99 loops=1)
+         Index Cond: ((id &gt; 100) AND (id &lt; 200))
+ Planning Time: 0.244 ms
+ Execution Time: 0.073 ms
+(7 rows)
 </programlisting>
   </para>
 
@@ -466,6 +484,42 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
    possible for cost estimates to change after a fresh run of
    <command>ANALYZE</command>, even if the actual distribution of data
    in the table has not changed.
+  </para>
+
+  <para>
+   Notice that the previous example showed a <quote>custom</quote> plan
+   for the specific parameter values given in <command>EXECUTE</command>.
+   We might also wish to see the generic plan for a parameterized
+   query, which can be done with <literal>GENERIC_PLAN</literal>:
+
+<programlisting>
+EXPLAIN (GENERIC_PLAN)
+  SELECT sum(bar) FROM test
+    WHERE id &gt; $1 AND id &lt; $2
+    GROUP BY foo;
+
+                                  QUERY PLAN
+-------------------------------------------------------------------&zwsp;------------
+ HashAggregate  (cost=26.79..26.89 rows=10 width=12)
+   Group Key: foo
+   -&gt;  Index Scan using test_pkey on test  (cost=0.29..24.29 rows=500 width=8)
+         Index Cond: ((id &gt; $1) AND (id &lt; $2))
+(4 rows)
+</programlisting>
+
+   In this case the parser correctly inferred that <literal>$1</literal>
+   and <literal>$2</literal> should have the same data type
+   as <literal>id</literal>, so the lack of parameter type information
+   from <command>PREPARE</command> was not a problem.  In other cases
+   it might be necessary to explicitly specify types for the parameter
+   symbols, which can be done by casting them, for example:
+
+<programlisting>
+EXPLAIN (GENERIC_PLAN)
+  SELECT sum(bar) FROM test
+    WHERE id &gt; $1::integer AND id &lt; $2::integer
+    GROUP BY foo;
+</programlisting>
   </para>
  </refsect1>
 
