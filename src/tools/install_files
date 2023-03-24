@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+
+# Helper to install files that are not part of the default meson install
+# target.
+#
+# This includes files that should only get installed into the temporary
+# installation for tests and documentation.
+
+import argparse
+import os
+import shutil
+import sys
+from pathlib import PurePath
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--destdir', type=str,
+                    default=os.environ.get('DESTDIR', None))
+parser.add_argument('--prefix', type=str)
+parser.add_argument('--install', type=str, nargs='+',
+                    action='append', default=[])
+parser.add_argument('--install-dirs', type=str, nargs='+',
+                    action='append', default=[])
+parser.add_argument('--install-dir-contents', type=str, nargs='+',
+                    action='append', default=[])
+
+args = parser.parse_args()
+
+
+def error_exit(msg: str):
+    print(msg, file=sys.stderr)
+    exit(1)
+
+
+def create_target_dir(prefix: str, destdir: str, targetdir: str):
+    if not os.path.isabs(targetdir):
+        targetdir = os.path.join(prefix, targetdir)
+
+    if destdir is not None:
+        # copy of meson's logic for joining destdir and install paths
+        targetdir = str(PurePath(destdir, *PurePath(targetdir).parts[1:]))
+
+    os.makedirs(targetdir, exist_ok=True)
+
+    return targetdir
+
+
+def copy_files(targetdir: str, src_list: list):
+    for src in src_list:
+        shutil.copy2(src, targetdir)
+
+
+def copy_dirs(targetdir: str, src_list: list, contents: bool):
+    for src in src_list:
+        if not os.path.isdir(src):
+            error_exit('{0} is not a directory'.format(src))
+
+        if contents:
+            target = targetdir
+        else:
+            target = os.path.join(targetdir, os.path.split(src)[1])
+        shutil.copytree(src, target, dirs_exist_ok=True)
+
+
+for installs in args.install:
+    targetdir = create_target_dir(args.prefix, args.destdir, installs[0])
+    copy_files(targetdir, installs[1:])
+
+for installs in args.install_dirs:
+    targetdir = create_target_dir(args.prefix, args.destdir, installs[0])
+    copy_dirs(targetdir, installs[1:], contents=False)
+
+for installs in args.install_dir_contents:
+    targetdir = create_target_dir(args.prefix, args.destdir, installs[0])
+    copy_dirs(targetdir, installs[1:], contents=True)

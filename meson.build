@@ -369,6 +369,8 @@ flex_cmd = [python, flex_wrapper,
 wget = find_program('wget', required: false, native: true)
 wget_flags = ['-O', '@OUTPUT0@', '--no-use-server-timestamps']
 
+install_files = files('src/tools/install_files')
+
 
 
 ###############################################################
@@ -2845,9 +2847,8 @@ testprep_targets += test_install_libs
 
 
 # command to install files used for tests, which aren't installed by default
-install_test_files = files('src/tools/install_test_files')
 install_test_files_args = [
-  install_test_files,
+  install_files,
   '--prefix', dir_prefix,
   '--install', contrib_data_dir, test_install_data,
   '--install', dir_lib_pkg, test_install_libs,
