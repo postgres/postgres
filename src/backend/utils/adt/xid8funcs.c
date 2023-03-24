@@ -10,9 +10,9 @@
  * via functions such as SubTransGetTopmostTransaction().
  *
  * These functions are used to support the txid_XXX functions and the newer
- * pg_current_xact, pg_current_snapshot and related fmgr functions, since the
- * only difference between them is whether they expose xid8 or int8 values to
- * users.  The txid_XXX variants should eventually be dropped.
+ * pg_current_xact_id, pg_current_snapshot and related fmgr functions, since
+ * the only difference between them is whether they expose xid8 or int8 values
+ * to users.  The txid_XXX variants should eventually be dropped.
  *
  *
  *	Copyright (c) 2003-2023, PostgreSQL Global Development Group
