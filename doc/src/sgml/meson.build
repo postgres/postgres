@@ -1,6 +1,7 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 docs = []
+installdocs = []
 alldocs = []
 doc_generated = []
 
@@ -120,8 +121,19 @@ if xsltproc_bin.found()
   )
   alldocs += html
 
-  # build multi-page html docs as part of docs target
+  install_doc_html = custom_target('install-html',
+    output: 'install-html',
+    command: [
+      python, install_files, '--prefix', dir_prefix,
+      '--install-dir-contents', dir_doc_html, html],
+    build_always_stale: true, build_by_default: false,
+  )
+  alias_target('install-doc-html', install_doc_html)
+
+  # build and install multi-page html docs as part of docs target
   docs += html
+  installdocs += install_doc_html
+
 
   htmlhelp = custom_target('htmlhelp',
     input: ['stylesheet-hh.xsl', postgres_full_xml],
@@ -208,6 +220,19 @@ if xsltproc_bin.found()
     build_by_default: false,
   )
   alldocs += man
+
+  install_doc_man = custom_target('install-man',
+    output: 'install-man',
+    command: [
+      python, install_files, '--prefix', dir_prefix,
+      '--install-dirs', dir_man, man],
+    build_always_stale: true, build_by_default: false,
+  )
+  alias_target('install-doc-man', install_doc_man)
+
+  # even though we don't want to build man pages as part of 'docs', we do want
+  # to install them as part of install-docs
+  installdocs += install_doc_man
 endif
 
 
@@ -266,6 +291,7 @@ if docs.length() == 0
   run_target('docs', command: [missing, 'xsltproc'])
 else
   alias_target('docs', docs)
+  alias_target('install-docs', installdocs)
 endif
 
 if alldocs.length() == 0
