@@ -2942,7 +2942,7 @@ install_quiet = custom_target('install-quiet',
   output: 'install-quiet',
   build_always_stale: true,
   build_by_default: false,
-  command: meson_args + ['install', '--quiet', '--no-rebuild'],
+  command: [meson_bin, meson_args, 'install', '--quiet', '--no-rebuild'],
   depends: all_built,
 )
 
