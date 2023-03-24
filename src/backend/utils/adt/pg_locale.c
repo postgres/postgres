@@ -2810,9 +2810,12 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 			 * message across ICU versions.
 			 */
 			if (U_FAILURE(status))
+			{
+				ucol_close(collator);
 				ereport(ERROR,
 						(errmsg("could not open collator for locale \"%s\": %s",
 								loc, u_errorName(status))));
+			}
 		}
 	}
 
