@@ -1778,7 +1778,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 							collcollate,
 							GetLastError())));
 		}
-		collversion = psprintf("%ld.%ld,%ld.%ld",
+		collversion = psprintf("%lu.%lu,%lu.%lu",
 							   (version.dwNLSVersion >> 8) & 0xFFFF,
 							   version.dwNLSVersion & 0xFF,
 							   (version.dwDefinedVersion >> 8) & 0xFFFF,
