@@ -2507,16 +2507,15 @@ pg_ucol_open(const char *loc_str)
 
 	/*
 	 * Must never open default collator, because it depends on the environment
-	 * and may change at any time.
+	 * and may change at any time. Should not happen, but check here to catch
+	 * bugs that might be hard to catch otherwise.
 	 *
 	 * NB: the default collator is not the same as the collator for the root
 	 * locale. The root locale may be specified as the empty string, "und", or
 	 * "root". The default collator is opened by passing NULL to ucol_open().
 	 */
 	if (loc_str == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("opening default collator is not supported")));
+		elog(ERROR, "opening default collator is not supported");
 
 	/*
 	 * In ICU versions 54 and earlier, "und" is not a recognized spelling of
