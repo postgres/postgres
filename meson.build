@@ -2543,6 +2543,7 @@ bin_targets = []
 pl_targets = []
 contrib_targets = []
 testprep_targets = []
+nls_targets = []
 
 
 # Define the tests to distribute them to the correct test styles later
@@ -2846,21 +2847,6 @@ generated_sources_ac += {'': ['GNUmakefile']}
 testprep_targets += test_install_libs
 
 
-# command to install files used for tests, which aren't installed by default
-install_test_files_args = [
-  install_files,
-  '--prefix', dir_prefix,
-  '--install', contrib_data_dir, test_install_data,
-  '--install', dir_lib_pkg, test_install_libs,
-]
-
-# Target installing files required for installcheck of various modules
-run_target('install-test-files',
-  command: [python] + install_test_files_args,
-  depends: testprep_targets,
-)
-
-
 # If there are any files in the source directory that we also generate in the
 # build directory, they might get preferred over the newly generated files,
 # e.g. because of a #include "file", which always will search in the current
@@ -2912,6 +2898,64 @@ above, or by running configure and then make maintainer-clean.
   errmsg_cleanup = errmsg_cleanup.format(' '.join(conflicting_files))
   error(errmsg_nonclean_base.format(errmsg_cleanup))
 endif
+
+
+
+###############################################################
+# Install targets
+###############################################################
+
+
+# We want to define additional install targets beyond what meson provides. For
+# that we need to define targets depending on nearly everything. We collected
+# the results of i18n.gettext() invocations into nls_targets, that also
+# includes maintainer targets though. Collect the ones we want as a dependency.
+#
+# i18n.gettext() doesn't return the dependencies before 0.60 - but the gettext
+# generation happens during install, so that's not a real issue.
+nls_mo_targets = []
+if libintl.found() and meson.version().version_compare('>=0.60')
+  # use range() to avoid the flattening of the list that forech() would do
+  foreach off : range(0, nls_targets.length())
+    # i18n.gettext() list containing 1) list of built .mo files 2) maintainer
+    # -pot target 3) maintainer -pot target
+    nls_mo_targets += nls_targets[off][0]
+  endforeach
+  alias_target('nls', nls_mo_targets)
+endif
+
+
+all_built = [
+  backend_targets,
+  bin_targets,
+  libpq_st,
+  pl_targets,
+  contrib_targets,
+  nls_mo_targets,
+  testprep_targets,
+  ecpg_targets,
+]
+
+# Meson's default install target is quite verbose. Provide one that is quiet.
+install_quiet = custom_target('install-quiet',
+  output: 'install-quiet',
+  build_always_stale: true,
+  build_by_default: false,
+  command: meson_args + ['install', '--quiet', '--no-rebuild'],
+  depends: all_built,
+)
+
+# Target to install files used for tests, which aren't installed by default
+install_test_files_args = [
+  install_files,
+  '--prefix', dir_prefix,
+  '--install', contrib_data_dir, test_install_data,
+  '--install', dir_lib_pkg, test_install_libs,
+]
+run_target('install-test-files',
+  command: [python] + install_test_files_args,
+  depends: testprep_targets,
+)
 
 
 
@@ -3185,6 +3229,7 @@ if meson.version().version_compare('>=0.57')
 endif
 
 
+
 ###############################################################
 # Pseudo targets
 ###############################################################
@@ -3194,6 +3239,7 @@ alias_target('bin', bin_targets + [libpq_st])
 alias_target('pl', pl_targets)
 alias_target('contrib', contrib_targets)
 alias_target('testprep', testprep_targets)
+alias_target('install-world', install_quiet, installdocs)
 
 
 

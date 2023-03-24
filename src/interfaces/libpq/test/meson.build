@@ -10,7 +10,7 @@ if host_system == 'windows'
     '--FILEDESC', 'libpq test program',])
 endif
 
-executable('libpq_uri_regress',
+testprep_targets += executable('libpq_uri_regress',
   libpq_uri_regress_sources,
   dependencies: [frontend_code, libpq],
   kwargs: default_bin_args + {
@@ -29,7 +29,7 @@ if host_system == 'windows'
     '--FILEDESC', 'libpq test program',])
 endif
 
-executable('libpq_testclient',
+testprep_targets += executable('libpq_testclient',
   libpq_testclient_sources,
   dependencies: [frontend_code, libpq],
   kwargs: default_bin_args + {
