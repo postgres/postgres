@@ -437,7 +437,11 @@ OPTIONS (ADD password_required 'false');
       </para>
 
       <para>
-       This option also applies when copying into foreign tables.
+       This option also applies when copying into foreign tables.  In that case
+       the actual number of rows <filename>postgres_fdw</filename> copies at
+       once is determined in a similar way to the insert case, but it is
+       limited to at most 1000 due to implementation restrictions of the
+       <command>COPY</command> command.
       </para>
      </listitem>
     </varlistentry>
