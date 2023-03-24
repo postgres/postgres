@@ -384,6 +384,7 @@ struct pg_conn
 	char	   *sslkey;			/* client key filename */
 	char	   *sslcert;		/* client certificate filename */
 	char	   *sslpassword;	/* client key file password */
+	char	   *sslcertmode;	/* client cert mode (require,allow,disable) */
 	char	   *sslrootcert;	/* root certificate filename */
 	char	   *sslcrl;			/* certificate revocation list filename */
 	char	   *sslcrldir;		/* certificate revocation list directory name */
@@ -527,6 +528,8 @@ struct pg_conn
 
 	/* SSL structures */
 	bool		ssl_in_use;
+	bool		ssl_cert_requested; /* Did the server ask us for a cert? */
+	bool		ssl_cert_sent;	/* Did we send one in reply? */
 
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */

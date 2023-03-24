@@ -798,6 +798,25 @@ check_expected_areq(AuthRequest areq, PGconn *conn)
 	StaticAssertDecl((sizeof(conn->allowed_auth_methods) * CHAR_BIT) > AUTH_REQ_MAX,
 					 "AUTH_REQ_MAX overflows the allowed_auth_methods bitmask");
 
+	if (conn->sslcertmode[0] == 'r' /* require */
+		&& areq == AUTH_REQ_OK)
+	{
+		/*
+		 * Trade off a little bit of complexity to try to get these error
+		 * messages as precise as possible.
+		 */
+		if (!conn->ssl_cert_requested)
+		{
+			libpq_append_conn_error(conn, "server did not request an SSL certificate");
+			return false;
+		}
+		else if (!conn->ssl_cert_sent)
+		{
+			libpq_append_conn_error(conn, "server accepted connection without a valid SSL certificate");
+			return false;
+		}
+	}
+
 	/*
 	 * If the user required a specific auth method, or specified an allowed
 	 * set, then reject all others here, and make sure the server actually

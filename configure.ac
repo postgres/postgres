@@ -1373,8 +1373,9 @@ if test "$with_ssl" = openssl ; then
      AC_SEARCH_LIBS(CRYPTO_new_ex_data, [eay32 crypto], [], [AC_MSG_ERROR([library 'eay32' or 'crypto' is required for OpenSSL])])
      AC_SEARCH_LIBS(SSL_new, [ssleay32 ssl], [], [AC_MSG_ERROR([library 'ssleay32' or 'ssl' is required for OpenSSL])])
   fi
-  # Function introduced in OpenSSL 1.0.2.
-  AC_CHECK_FUNCS([X509_get_signature_nid])
+  # Functions introduced in OpenSSL 1.0.2. LibreSSL does not have
+  # SSL_CTX_set_cert_cb().
+  AC_CHECK_FUNCS([X509_get_signature_nid SSL_CTX_set_cert_cb])
   # Functions introduced in OpenSSL 1.1.0. We used to check for
   # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
   # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it

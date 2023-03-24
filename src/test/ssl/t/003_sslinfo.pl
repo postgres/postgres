@@ -43,6 +43,10 @@ my $SERVERHOSTADDR = '127.0.0.1';
 # This is the pattern to use in pg_hba.conf to match incoming connections.
 my $SERVERHOSTCIDR = '127.0.0.1/32';
 
+# Determine whether build supports sslcertmode=require.
+my $supports_sslcertmode_require =
+  check_pg_config("#define HAVE_SSL_CTX_SET_CERT_CB 1");
+
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
 
@@ -165,5 +169,25 @@ $result = $node->safe_psql(
 	"SELECT value, critical FROM ssl_extension_info() WHERE name = 'basicConstraints';",
 	connstr => $common_connstr);
 is($result, 'CA:FALSE|t', 'extract extension from cert');
+
+# Sanity tests for sslcertmode, using ssl_client_cert_present()
+my @cases = (
+	{ opts => "sslcertmode=allow",                 present => 't' },
+	{ opts => "sslcertmode=allow sslcert=invalid", present => 'f' },
+	{ opts => "sslcertmode=disable",               present => 'f' },);
+if ($supports_sslcertmode_require)
+{
+	push(@cases, { opts => "sslcertmode=require", present => 't' });
+}
+
+foreach my $c (@cases)
+{
+	$result = $node->safe_psql(
+		"trustdb",
+		"SELECT ssl_client_cert_present();",
+		connstr => "$common_connstr dbname=trustdb $c->{'opts'}");
+	is($result, $c->{'present'},
+		"ssl_client_cert_present() for $c->{'opts'}");
+}
 
 done_testing();

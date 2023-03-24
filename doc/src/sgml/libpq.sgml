@@ -1810,6 +1810,62 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-sslcertmode" xreflabel="sslcertmode">
+      <term><literal>sslcertmode</literal></term>
+      <listitem>
+       <para>
+        This option determines whether a client certificate may be sent to the
+        server, and whether the server is required to request one. There are
+        three modes:
+
+        <variablelist>
+         <varlistentry>
+          <term><literal>disable</literal></term>
+          <listitem>
+           <para>
+            A client certificate is never sent, even if one is available
+            (default location or provided via
+            <xref linkend="libpq-connect-sslcert" />).
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>allow</literal> (default)</term>
+          <listitem>
+           <para>
+            A certificate may be sent, if the server requests one and the
+            client has one to send.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>require</literal></term>
+          <listitem>
+           <para>
+            The server <emphasis>must</emphasis> request a certificate. The
+            connection will fail if the client does not send a certificate and
+            the server successfully authenticates the client anyway.
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
+
+       <note>
+        <para>
+         <literal>sslcertmode=require</literal> doesn't add any additional
+         security, since there is no guarantee that the server is validating
+         the certificate correctly; PostgreSQL servers generally request TLS
+         certificates from clients whether they validate them or not. The
+         option may be useful when troubleshooting more complicated TLS
+         setups.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-sslrootcert" xreflabel="sslrootcert">
       <term><literal>sslrootcert</literal></term>
       <listitem>
@@ -7983,6 +8039,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGSSLKEY</envar> behaves the same as the <xref
       linkend="libpq-connect-sslkey"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGSSLCERTMODE</envar></primary>
+      </indexterm>
+      <envar>PGSSLCERTMODE</envar> behaves the same as the <xref
+      linkend="libpq-connect-sslcertmode"/> connection parameter.
      </para>
     </listitem>
 

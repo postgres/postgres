@@ -462,6 +462,34 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	return ok;
 }
 
+#ifdef HAVE_SSL_CTX_SET_CERT_CB
+/*
+ * Certificate selection callback
+ *
+ * This callback lets us choose the client certificate we send to the server
+ * after seeing its CertificateRequest.  We only support sending a single
+ * hard-coded certificate via sslcert, so we don't actually set any certificates
+ * here; we just use it to record whether or not the server has actually asked
+ * for one and whether we have one to send.
+ */
+static int
+cert_cb(SSL *ssl, void *arg)
+{
+	PGconn	   *conn = arg;
+
+	conn->ssl_cert_requested = true;
+
+	/* Do we have a certificate loaded to send back? */
+	if (SSL_get_certificate(ssl))
+		conn->ssl_cert_sent = true;
+
+	/*
+	 * Tell OpenSSL that the callback succeeded; we're not required to
+	 * actually make any changes to the SSL handle.
+	 */
+	return 1;
+}
+#endif
 
 /*
  * OpenSSL-specific wrapper around
@@ -953,6 +981,11 @@ initialize_SSL(PGconn *conn)
 		SSL_CTX_set_default_passwd_cb_userdata(SSL_context, conn);
 	}
 
+#ifdef HAVE_SSL_CTX_SET_CERT_CB
+	/* Set up a certificate selection callback. */
+	SSL_CTX_set_cert_cb(SSL_context, cert_cb, conn);
+#endif
+
 	/* Disable old protocol versions */
 	SSL_CTX_set_options(SSL_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
@@ -1107,7 +1140,12 @@ initialize_SSL(PGconn *conn)
 	else
 		fnbuf[0] = '\0';
 
-	if (fnbuf[0] == '\0')
+	if (conn->sslcertmode[0] == 'd') /* disable */
+	{
+		/* don't send a client cert even if we have one */
+		have_cert = false;
+	}
+	else if (fnbuf[0] == '\0')
 	{
 		/* no home directory, proceed without a client cert */
 		have_cert = false;

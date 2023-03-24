@@ -42,6 +42,10 @@ my $SERVERHOSTADDR = '127.0.0.1';
 # This is the pattern to use in pg_hba.conf to match incoming connections.
 my $SERVERHOSTCIDR = '127.0.0.1/32';
 
+# Determine whether build supports sslcertmode=require.
+my $supports_sslcertmode_require =
+  check_pg_config("#define HAVE_SSL_CTX_SET_CERT_CB 1");
+
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
 
@@ -190,6 +194,22 @@ $node->connect_ok(
 $node->connect_ok(
 	"$common_connstr sslrootcert=ssl/both-cas-2.crt sslmode=verify-ca",
 	"cert root file that contains two certificates, order 2");
+
+# sslcertmode=allow and disable should both work without a client certificate.
+$node->connect_ok(
+	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require sslcertmode=disable",
+	"connect with sslcertmode=disable");
+$node->connect_ok(
+	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require sslcertmode=allow",
+	"connect with sslcertmode=allow");
+
+# sslcertmode=require, however, should fail.
+$node->connect_fails(
+	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require sslcertmode=require",
+	"connect with sslcertmode=require fails without a client certificate",
+	expected_stderr => $supports_sslcertmode_require
+	? qr/server accepted connection without a valid SSL certificate/
+	: qr/sslcertmode value "require" is not supported/);
 
 # CRL tests
 
@@ -537,6 +557,28 @@ $node->connect_ok(
 	  . " sslpassword='dUmmyP^#+'",
 	"certificate authorization succeeds with correct client cert in encrypted DER format"
 );
+
+# correct client cert with sslcertmode=allow or require
+if ($supports_sslcertmode_require)
+{
+	$node->connect_ok(
+		"$common_connstr user=ssltestuser sslcertmode=require sslcert=ssl/client.crt "
+		  . sslkey('client.key'),
+		"certificate authorization succeeds with correct client cert and sslcertmode=require"
+	);
+}
+$node->connect_ok(
+	"$common_connstr user=ssltestuser sslcertmode=allow sslcert=ssl/client.crt "
+	  . sslkey('client.key'),
+	"certificate authorization succeeds with correct client cert and sslcertmode=allow"
+);
+
+# client cert is not sent if sslcertmode=disable.
+$node->connect_fails(
+	"$common_connstr user=ssltestuser sslcertmode=disable sslcert=ssl/client.crt "
+	  . sslkey('client.key'),
+	"certificate authorization fails with correct client cert and sslcertmode=disable",
+	expected_stderr => qr/connection requires a valid client certificate/);
 
 # correct client cert in encrypted PEM with wrong password
 $node->connect_fails(

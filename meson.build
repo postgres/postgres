@@ -1221,8 +1221,9 @@ if sslopt in ['auto', 'openssl']
       ['CRYPTO_new_ex_data', {'required': true}],
       ['SSL_new', {'required': true}],
 
-      # Function introduced in OpenSSL 1.0.2.
+      # Functions introduced in OpenSSL 1.0.2.
       ['X509_get_signature_nid'],
+      ['SSL_CTX_set_cert_cb'], # not in LibreSSL
 
       # Functions introduced in OpenSSL 1.1.0. We used to check for
       # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
