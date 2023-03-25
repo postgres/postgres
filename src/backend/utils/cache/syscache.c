@@ -77,6 +77,7 @@
 #include "catalog/pg_user_mapping.h"
 #include "lib/qunique.h"
 #include "utils/catcache.h"
+#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
@@ -1097,6 +1098,32 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 	return heap_getattr(tup, attributeNumber,
 						SysCache[cacheId]->cc_tupdesc,
 						isNull);
+}
+
+/*
+ * SysCacheGetAttrNotNull
+ *
+ * As above, a version of SysCacheGetAttr which knows that the attr cannot
+ * be NULL.
+ */
+Datum
+SysCacheGetAttrNotNull(int cacheId, HeapTuple tup,
+					   AttrNumber attributeNumber)
+{
+	bool		isnull;
+	Datum		attr;
+
+	attr = SysCacheGetAttr(cacheId, tup, attributeNumber, &isnull);
+
+	if (isnull)
+	{
+		elog(ERROR,
+			 "unexpected null value in cached tuple for catalog %s column %s",
+			 get_rel_name(cacheinfo[cacheId].reloid),
+			 NameStr(TupleDescAttr(SysCache[cacheId]->cc_tupdesc, attributeNumber - 1)->attname));
+	}
+
+	return attr;
 }
 
 /*

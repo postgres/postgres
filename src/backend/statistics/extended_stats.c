@@ -465,9 +465,8 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 		}
 
 		/* decode the stxkind char array into a list of chars */
-		datum = SysCacheGetAttr(STATEXTOID, htup,
-								Anum_pg_statistic_ext_stxkind, &isnull);
-		Assert(!isnull);
+		datum = SysCacheGetAttrNotNull(STATEXTOID, htup,
+									   Anum_pg_statistic_ext_stxkind);
 		arr = DatumGetArrayTypeP(datum);
 		if (ARR_NDIM(arr) != 1 ||
 			ARR_HASNULL(arr) ||

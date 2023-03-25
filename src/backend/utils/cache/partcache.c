@@ -130,15 +130,13 @@ RelationBuildPartitionKey(Relation relation)
 
 	/* But use the hard way to retrieve further variable-length attributes */
 	/* Operator class */
-	datum = SysCacheGetAttr(PARTRELID, tuple,
-							Anum_pg_partitioned_table_partclass, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(PARTRELID, tuple,
+								   Anum_pg_partitioned_table_partclass);
 	opclass = (oidvector *) DatumGetPointer(datum);
 
 	/* Collation */
-	datum = SysCacheGetAttr(PARTRELID, tuple,
-							Anum_pg_partitioned_table_partcollation, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(PARTRELID, tuple,
+								   Anum_pg_partitioned_table_partcollation);
 	collation = (oidvector *) DatumGetPointer(datum);
 
 	/* Expressions */

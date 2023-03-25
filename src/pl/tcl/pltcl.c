@@ -1454,7 +1454,6 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		Form_pg_type typeStruct;
 		char		proc_internal_args[33 * FUNC_MAX_ARGS];
 		Datum		prosrcdatum;
-		bool		isnull;
 		char	   *proc_source;
 		char		buf[48];
 		Tcl_Interp *interp;
@@ -1673,10 +1672,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		/************************************************************
 		 * Add user's function definition to proc body
 		 ************************************************************/
-		prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
-									  Anum_pg_proc_prosrc, &isnull);
-		if (isnull)
-			elog(ERROR, "null prosrc");
+		prosrcdatum = SysCacheGetAttrNotNull(PROCOID, procTup,
+											 Anum_pg_proc_prosrc);
 		proc_source = TextDatumGetCString(prosrcdatum);
 		UTF_BEGIN;
 		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);

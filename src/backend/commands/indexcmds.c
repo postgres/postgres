@@ -189,7 +189,6 @@ CheckIndexCompatible(Oid oldId,
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
 	int			old_natts;
-	bool		isnull;
 	bool		ret = true;
 	oidvector  *old_indclass;
 	oidvector  *old_indcollation;
@@ -270,12 +269,10 @@ CheckIndexCompatible(Oid oldId,
 	old_natts = indexForm->indnkeyatts;
 	Assert(old_natts == numberOfAttributes);
 
-	d = SysCacheGetAttr(INDEXRELID, tuple, Anum_pg_index_indcollation, &isnull);
-	Assert(!isnull);
+	d = SysCacheGetAttrNotNull(INDEXRELID, tuple, Anum_pg_index_indcollation);
 	old_indcollation = (oidvector *) DatumGetPointer(d);
 
-	d = SysCacheGetAttr(INDEXRELID, tuple, Anum_pg_index_indclass, &isnull);
-	Assert(!isnull);
+	d = SysCacheGetAttrNotNull(INDEXRELID, tuple, Anum_pg_index_indclass);
 	old_indclass = (oidvector *) DatumGetPointer(d);
 
 	ret = (memcmp(old_indclass->values, classObjectId,

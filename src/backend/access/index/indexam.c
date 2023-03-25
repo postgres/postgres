@@ -961,7 +961,6 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 		Oid			opclass;
 		Datum		indclassDatum;
 		oidvector  *indclass;
-		bool		isnull;
 
 		if (!DatumGetPointer(attoptions))
 			return NULL;		/* ok, no options, no procedure */
@@ -970,9 +969,8 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 		 * Report an error if the opclass's options-parsing procedure does not
 		 * exist but the opclass options are specified.
 		 */
-		indclassDatum = SysCacheGetAttr(INDEXRELID, indrel->rd_indextuple,
-										Anum_pg_index_indclass, &isnull);
-		Assert(!isnull);
+		indclassDatum = SysCacheGetAttrNotNull(INDEXRELID, indrel->rd_indextuple,
+											   Anum_pg_index_indclass);
 		indclass = (oidvector *) DatumGetPointer(indclassDatum);
 		opclass = indclass->values[attnum - 1];
 

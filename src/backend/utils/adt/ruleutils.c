@@ -1228,7 +1228,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	Datum		indcollDatum;
 	Datum		indclassDatum;
 	Datum		indoptionDatum;
-	bool		isnull;
 	oidvector  *indcollation;
 	oidvector  *indclass;
 	int2vector *indoption;
@@ -1252,19 +1251,16 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	Assert(indexrelid == idxrec->indexrelid);
 
 	/* Must get indcollation, indclass, and indoption the hard way */
-	indcollDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-								   Anum_pg_index_indcollation, &isnull);
-	Assert(!isnull);
+	indcollDatum = SysCacheGetAttrNotNull(INDEXRELID, ht_idx,
+										  Anum_pg_index_indcollation);
 	indcollation = (oidvector *) DatumGetPointer(indcollDatum);
 
-	indclassDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-									Anum_pg_index_indclass, &isnull);
-	Assert(!isnull);
+	indclassDatum = SysCacheGetAttrNotNull(INDEXRELID, ht_idx,
+										   Anum_pg_index_indclass);
 	indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
-	indoptionDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-									 Anum_pg_index_indoption, &isnull);
-	Assert(!isnull);
+	indoptionDatum = SysCacheGetAttrNotNull(INDEXRELID, ht_idx,
+											Anum_pg_index_indoption);
 	indoption = (int2vector *) DatumGetPointer(indoptionDatum);
 
 	/*
@@ -1297,9 +1293,8 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		Datum		exprsDatum;
 		char	   *exprsString;
 
-		exprsDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-									 Anum_pg_index_indexprs, &isnull);
-		Assert(!isnull);
+		exprsDatum = SysCacheGetAttrNotNull(INDEXRELID, ht_idx,
+											Anum_pg_index_indexprs);
 		exprsString = TextDatumGetCString(exprsDatum);
 		indexprs = (List *) stringToNode(exprsString);
 		pfree(exprsString);
@@ -1494,9 +1489,8 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			char	   *predString;
 
 			/* Convert text string to node tree */
-			predDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-										Anum_pg_index_indpred, &isnull);
-			Assert(!isnull);
+			predDatum = SysCacheGetAttrNotNull(INDEXRELID, ht_idx,
+											   Anum_pg_index_indpred);
 			predString = TextDatumGetCString(predDatum);
 			node = (Node *) stringToNode(predString);
 			pfree(predString);
@@ -1637,12 +1631,10 @@ pg_get_statisticsobj_worker(Oid statextid, bool columns_only, bool missing_ok)
 	if (has_exprs)
 	{
 		Datum		exprsDatum;
-		bool		isnull;
 		char	   *exprsString;
 
-		exprsDatum = SysCacheGetAttr(STATEXTOID, statexttup,
-									 Anum_pg_statistic_ext_stxexprs, &isnull);
-		Assert(!isnull);
+		exprsDatum = SysCacheGetAttrNotNull(STATEXTOID, statexttup,
+											Anum_pg_statistic_ext_stxexprs);
 		exprsString = TextDatumGetCString(exprsDatum);
 		exprs = (List *) stringToNode(exprsString);
 		pfree(exprsString);
@@ -1657,8 +1649,6 @@ pg_get_statisticsobj_worker(Oid statextid, bool columns_only, bool missing_ok)
 
 	if (!columns_only)
 	{
-		bool		isnull;
-
 		nsp = get_namespace_name_or_temp(statextrec->stxnamespace);
 		appendStringInfo(&buf, "CREATE STATISTICS %s",
 						 quote_qualified_identifier(nsp,
@@ -1668,9 +1658,8 @@ pg_get_statisticsobj_worker(Oid statextid, bool columns_only, bool missing_ok)
 		 * Decode the stxkind column so that we know which stats types to
 		 * print.
 		 */
-		datum = SysCacheGetAttr(STATEXTOID, statexttup,
-								Anum_pg_statistic_ext_stxkind, &isnull);
-		Assert(!isnull);
+		datum = SysCacheGetAttrNotNull(STATEXTOID, statexttup,
+									   Anum_pg_statistic_ext_stxkind);
 		arr = DatumGetArrayTypeP(datum);
 		if (ARR_NDIM(arr) != 1 ||
 			ARR_HASNULL(arr) ||
@@ -1790,7 +1779,6 @@ pg_get_statisticsobjdef_expressions(PG_FUNCTION_ARGS)
 	Form_pg_statistic_ext statextrec;
 	HeapTuple	statexttup;
 	Datum		datum;
-	bool		isnull;
 	List	   *context;
 	ListCell   *lc;
 	List	   *exprs = NIL;
@@ -1818,10 +1806,8 @@ pg_get_statisticsobjdef_expressions(PG_FUNCTION_ARGS)
 	/*
 	 * Get the statistics expressions, and deparse them into text values.
 	 */
-	datum = SysCacheGetAttr(STATEXTOID, statexttup,
-							Anum_pg_statistic_ext_stxexprs, &isnull);
-
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(STATEXTOID, statexttup,
+								   Anum_pg_statistic_ext_stxexprs);
 	tmp = TextDatumGetCString(datum);
 	exprs = (List *) stringToNode(tmp);
 	pfree(tmp);
@@ -1897,7 +1883,6 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 	ListCell   *partexpr_item;
 	List	   *context;
 	Datum		datum;
-	bool		isnull;
 	StringInfoData buf;
 	int			keyno;
 	char	   *str;
@@ -1916,14 +1901,12 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 	Assert(form->partrelid == relid);
 
 	/* Must get partclass and partcollation the hard way */
-	datum = SysCacheGetAttr(PARTRELID, tuple,
-							Anum_pg_partitioned_table_partclass, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(PARTRELID, tuple,
+								   Anum_pg_partitioned_table_partclass);
 	partclass = (oidvector *) DatumGetPointer(datum);
 
-	datum = SysCacheGetAttr(PARTRELID, tuple,
-							Anum_pg_partitioned_table_partcollation, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(PARTRELID, tuple,
+								   Anum_pg_partitioned_table_partcollation);
 	partcollation = (oidvector *) DatumGetPointer(datum);
 
 
@@ -1937,9 +1920,8 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 		Datum		exprsDatum;
 		char	   *exprsString;
 
-		exprsDatum = SysCacheGetAttr(PARTRELID, tuple,
-									 Anum_pg_partitioned_table_partexprs, &isnull);
-		Assert(!isnull);
+		exprsDatum = SysCacheGetAttrNotNull(PARTRELID, tuple,
+											Anum_pg_partitioned_table_partexprs);
 		exprsString = TextDatumGetCString(exprsDatum);
 		partexprs = (List *) stringToNode(exprsString);
 
@@ -2229,11 +2211,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				appendStringInfoString(&buf, "FOREIGN KEY (");
 
 				/* Fetch and build referencing-column list */
-				val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_conkey, &isnull);
-				if (isnull)
-					elog(ERROR, "null conkey for constraint %u",
-						 constraintId);
+				val = SysCacheGetAttrNotNull(CONSTROID, tup,
+											 Anum_pg_constraint_conkey);
 
 				decompile_column_index_array(val, conForm->conrelid, &buf);
 
@@ -2243,11 +2222,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 														NIL));
 
 				/* Fetch and build referenced-column list */
-				val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_confkey, &isnull);
-				if (isnull)
-					elog(ERROR, "null confkey for constraint %u",
-						 constraintId);
+				val = SysCacheGetAttrNotNull(CONSTROID, tup,
+											 Anum_pg_constraint_confkey);
 
 				decompile_column_index_array(val, conForm->confrelid, &buf);
 
@@ -2345,7 +2321,6 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 		case CONSTRAINT_UNIQUE:
 			{
 				Datum		val;
-				bool		isnull;
 				Oid			indexId;
 				int			keyatts;
 				HeapTuple	indtup;
@@ -2368,21 +2343,16 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				appendStringInfoChar(&buf, '(');
 
 				/* Fetch and build target column list */
-				val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_conkey, &isnull);
-				if (isnull)
-					elog(ERROR, "null conkey for constraint %u",
-						 constraintId);
+				val = SysCacheGetAttrNotNull(CONSTROID, tup,
+											 Anum_pg_constraint_conkey);
 
 				keyatts = decompile_column_index_array(val, conForm->conrelid, &buf);
 
 				appendStringInfoChar(&buf, ')');
 
 				/* Build including column list (from pg_index.indkeys) */
-				val = SysCacheGetAttr(INDEXRELID, indtup,
-									  Anum_pg_index_indnatts, &isnull);
-				if (isnull)
-					elog(ERROR, "null indnatts for index %u", indexId);
+				val = SysCacheGetAttrNotNull(INDEXRELID, indtup,
+											 Anum_pg_index_indnatts);
 				if (DatumGetInt32(val) > keyatts)
 				{
 					Datum		cols;
@@ -2392,10 +2362,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 					appendStringInfoString(&buf, " INCLUDE (");
 
-					cols = SysCacheGetAttr(INDEXRELID, indtup,
-										   Anum_pg_index_indkey, &isnull);
-					if (isnull)
-						elog(ERROR, "null indkey for index %u", indexId);
+					cols = SysCacheGetAttrNotNull(INDEXRELID, indtup,
+												  Anum_pg_index_indkey);
 
 					deconstruct_array_builtin(DatumGetArrayTypeP(cols), INT2OID,
 											  &keys, NULL, &nKeys);
@@ -2444,18 +2412,14 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 		case CONSTRAINT_CHECK:
 			{
 				Datum		val;
-				bool		isnull;
 				char	   *conbin;
 				char	   *consrc;
 				Node	   *expr;
 				List	   *context;
 
 				/* Fetch constraint expression in parsetree form */
-				val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_conbin, &isnull);
-				if (isnull)
-					elog(ERROR, "null conbin for constraint %u",
-						 constraintId);
+				val = SysCacheGetAttrNotNull(CONSTROID, tup,
+											 Anum_pg_constraint_conbin);
 
 				conbin = TextDatumGetCString(val);
 				expr = stringToNode(conbin);
@@ -2507,19 +2471,14 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 			{
 				Oid			indexOid = conForm->conindid;
 				Datum		val;
-				bool		isnull;
 				Datum	   *elems;
 				int			nElems;
 				int			i;
 				Oid		   *operators;
 
 				/* Extract operator OIDs from the pg_constraint tuple */
-				val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_conexclop,
-									  &isnull);
-				if (isnull)
-					elog(ERROR, "null conexclop for constraint %u",
-						 constraintId);
+				val = SysCacheGetAttrNotNull(CONSTROID, tup,
+											 Anum_pg_constraint_conexclop);
 
 				deconstruct_array_builtin(DatumGetArrayTypeP(val), OIDOID,
 										  &elems, NULL, &nElems);
@@ -3088,9 +3047,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 			appendStringInfoString(&buf, ", "); /* assume prosrc isn't null */
 		}
 
-		tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
-		if (isnull)
-			elog(ERROR, "null prosrc");
+		tmp = SysCacheGetAttrNotNull(PROCOID, proctup, Anum_pg_proc_prosrc);
 		prosrc = TextDatumGetCString(tmp);
 
 		/*
@@ -3512,7 +3469,6 @@ print_function_sqlbody(StringInfo buf, HeapTuple proctup)
 	char	   *argmodes;
 	deparse_namespace dpns = {0};
 	Datum		tmp;
-	bool		isnull;
 	Node	   *n;
 
 	dpns.funcname = pstrdup(NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname));
@@ -3521,8 +3477,7 @@ print_function_sqlbody(StringInfo buf, HeapTuple proctup)
 	dpns.numargs = numargs;
 	dpns.argnames = argnames;
 
-	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosqlbody, &isnull);
-	Assert(!isnull);
+	tmp = SysCacheGetAttrNotNull(PROCOID, proctup, Anum_pg_proc_prosqlbody);
 	n = stringToNode(TextDatumGetCString(tmp));
 
 	if (IsA(n, List))

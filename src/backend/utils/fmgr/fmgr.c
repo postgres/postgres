@@ -151,7 +151,6 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
 	Datum		prosrcdatum;
-	bool		isnull;
 	char	   *prosrc;
 
 	/*
@@ -227,10 +226,8 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 			 * internal function is stored in prosrc (it doesn't have to be
 			 * the same as the name of the alias!)
 			 */
-			prosrcdatum = SysCacheGetAttr(PROCOID, procedureTuple,
-										  Anum_pg_proc_prosrc, &isnull);
-			if (isnull)
-				elog(ERROR, "null prosrc");
+			prosrcdatum = SysCacheGetAttrNotNull(PROCOID, procedureTuple,
+												 Anum_pg_proc_prosrc);
 			prosrc = TextDatumGetCString(prosrcdatum);
 			fbp = fmgr_lookupByName(prosrc);
 			if (fbp == NULL)
@@ -285,7 +282,6 @@ fmgr_symbol(Oid functionId, char **mod, char **fn)
 {
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
-	bool		isnull;
 	Datum		prosrcattr;
 	Datum		probinattr;
 
@@ -308,25 +304,19 @@ fmgr_symbol(Oid functionId, char **mod, char **fn)
 	switch (procedureStruct->prolang)
 	{
 		case INTERNALlanguageId:
-			prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
-										 Anum_pg_proc_prosrc, &isnull);
-			if (isnull)
-				elog(ERROR, "null prosrc");
+			prosrcattr = SysCacheGetAttrNotNull(PROCOID, procedureTuple,
+												Anum_pg_proc_prosrc);
 
 			*mod = NULL;		/* core binary */
 			*fn = TextDatumGetCString(prosrcattr);
 			break;
 
 		case ClanguageId:
-			prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
-										 Anum_pg_proc_prosrc, &isnull);
-			if (isnull)
-				elog(ERROR, "null prosrc for C function %u", functionId);
+			prosrcattr = SysCacheGetAttrNotNull(PROCOID, procedureTuple,
+												Anum_pg_proc_prosrc);
 
-			probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
-										 Anum_pg_proc_probin, &isnull);
-			if (isnull)
-				elog(ERROR, "null probin for C function %u", functionId);
+			probinattr = SysCacheGetAttrNotNull(PROCOID, procedureTuple,
+												Anum_pg_proc_probin);
 
 			/*
 			 * No need to check symbol presence / API version here, already
@@ -361,7 +351,6 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	CFuncHashTabEntry *hashentry;
 	PGFunction	user_fn;
 	const Pg_finfo_record *inforec;
-	bool		isnull;
 
 	/*
 	 * See if we have the function address cached already
@@ -385,16 +374,12 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 		 * While in general these columns might be null, that's not allowed
 		 * for C-language functions.
 		 */
-		prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
-									 Anum_pg_proc_prosrc, &isnull);
-		if (isnull)
-			elog(ERROR, "null prosrc for C function %u", functionId);
+		prosrcattr = SysCacheGetAttrNotNull(PROCOID, procedureTuple,
+											Anum_pg_proc_prosrc);
 		prosrcstring = TextDatumGetCString(prosrcattr);
 
-		probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
-									 Anum_pg_proc_probin, &isnull);
-		if (isnull)
-			elog(ERROR, "null probin for C function %u", functionId);
+		probinattr = SysCacheGetAttrNotNull(PROCOID, procedureTuple,
+											Anum_pg_proc_probin);
 		probinstring = TextDatumGetCString(probinattr);
 
 		/* Look up the function itself */

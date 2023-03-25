@@ -404,9 +404,7 @@ AlterCollation(AlterCollationStmt *stmt)
 	datum = SysCacheGetAttr(COLLOID, tup, Anum_pg_collation_collversion, &isnull);
 	oldversion = isnull ? NULL : TextDatumGetCString(datum);
 
-	datum = SysCacheGetAttr(COLLOID, tup, collForm->collprovider == COLLPROVIDER_ICU ? Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate, &isnull);
-	if (isnull)
-		elog(ERROR, "unexpected null in pg_collation");
+	datum = SysCacheGetAttrNotNull(COLLOID, tup, collForm->collprovider == COLLPROVIDER_ICU ? Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate);
 	newversion = get_collation_actual_version(collForm->collprovider, TextDatumGetCString(datum));
 
 	/* cannot change from NULL to non-NULL or vice versa */
@@ -457,7 +455,6 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 	char	*locale;
 	char	*version;
 	Datum	 datum;
-	bool	 isnull;
 
 	if (collid == DEFAULT_COLLATION_OID)
 	{
@@ -471,12 +468,9 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 
 		provider = ((Form_pg_database) GETSTRUCT(dbtup))->datlocprovider;
 
-		datum = SysCacheGetAttr(DATABASEOID, dbtup,
-								provider == COLLPROVIDER_ICU ?
-								Anum_pg_database_daticulocale : Anum_pg_database_datcollate,
-								&isnull);
-		if (isnull)
-			elog(ERROR, "unexpected null in pg_database");
+		datum = SysCacheGetAttrNotNull(DATABASEOID, dbtup,
+									   provider == COLLPROVIDER_ICU ?
+									   Anum_pg_database_daticulocale : Anum_pg_database_datcollate);
 
 		locale = TextDatumGetCString(datum);
 
@@ -494,12 +488,9 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 
 		provider = ((Form_pg_collation) GETSTRUCT(colltp))->collprovider;
 		Assert(provider != COLLPROVIDER_DEFAULT);
-		datum = SysCacheGetAttr(COLLOID, colltp,
-								provider == COLLPROVIDER_ICU ?
-								Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate,
-								&isnull);
-		if (isnull)
-			elog(ERROR, "unexpected null in pg_collation");
+		datum = SysCacheGetAttrNotNull(COLLOID, colltp,
+									   provider == COLLPROVIDER_ICU ?
+									   Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate);
 
 		locale = TextDatumGetCString(datum);
 

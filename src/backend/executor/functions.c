@@ -660,12 +660,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	/*
 	 * And of course we need the function body text.
 	 */
-	tmp = SysCacheGetAttr(PROCOID,
-						  procedureTuple,
-						  Anum_pg_proc_prosrc,
-						  &isNull);
-	if (isNull)
-		elog(ERROR, "null prosrc for function %u", foid);
+	tmp = SysCacheGetAttrNotNull(PROCOID, procedureTuple, Anum_pg_proc_prosrc);
 	fcache->src = TextDatumGetCString(tmp);
 
 	/* If we have prosqlbody, pay attention to that not prosrc. */

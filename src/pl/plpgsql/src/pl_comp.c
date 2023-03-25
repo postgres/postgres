@@ -271,7 +271,6 @@ do_compile(FunctionCallInfo fcinfo,
 	bool		is_dml_trigger = CALLED_AS_TRIGGER(fcinfo);
 	bool		is_event_trigger = CALLED_AS_EVENT_TRIGGER(fcinfo);
 	Datum		prosrcdatum;
-	bool		isnull;
 	char	   *proc_source;
 	HeapTuple	typeTup;
 	Form_pg_type typeStruct;
@@ -296,10 +295,7 @@ do_compile(FunctionCallInfo fcinfo,
 	 * cannot be invoked recursively, so there's no need to save and restore
 	 * the static variables used here.
 	 */
-	prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
-								  Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "null prosrc");
+	prosrcdatum = SysCacheGetAttrNotNull(PROCOID, procTup, Anum_pg_proc_prosrc);
 	proc_source = TextDatumGetCString(prosrcdatum);
 	plpgsql_scanner_init(proc_source);
 

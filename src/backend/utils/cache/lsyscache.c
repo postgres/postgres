@@ -3195,7 +3195,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 	Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(statstuple);
 	int			i;
 	Datum		val;
-	bool		isnull;
 	ArrayType  *statarray;
 	Oid			arrayelemtype;
 	int			narrayelem;
@@ -3219,11 +3218,8 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 
 	if (flags & ATTSTATSSLOT_VALUES)
 	{
-		val = SysCacheGetAttr(STATRELATTINH, statstuple,
-							  Anum_pg_statistic_stavalues1 + i,
-							  &isnull);
-		if (isnull)
-			elog(ERROR, "stavalues is null");
+		val = SysCacheGetAttrNotNull(STATRELATTINH, statstuple,
+									 Anum_pg_statistic_stavalues1 + i);
 
 		/*
 		 * Detoast the array if needed, and in any case make a copy that's
@@ -3267,11 +3263,8 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 
 	if (flags & ATTSTATSSLOT_NUMBERS)
 	{
-		val = SysCacheGetAttr(STATRELATTINH, statstuple,
-							  Anum_pg_statistic_stanumbers1 + i,
-							  &isnull);
-		if (isnull)
-			elog(ERROR, "stanumbers is null");
+		val = SysCacheGetAttrNotNull(STATRELATTINH, statstuple,
+									 Anum_pg_statistic_stanumbers1 + i);
 
 		/*
 		 * Detoast the array if needed, and in any case make a copy that's
@@ -3479,7 +3472,6 @@ get_index_column_opclass(Oid index_oid, int attno)
 	HeapTuple	tuple;
 	Form_pg_index rd_index;
 	Datum		datum;
-	bool		isnull;
 	oidvector  *indclass;
 	Oid			opclass;
 
@@ -3501,10 +3493,7 @@ get_index_column_opclass(Oid index_oid, int attno)
 		return InvalidOid;
 	}
 
-	datum = SysCacheGetAttr(INDEXRELID, tuple,
-							Anum_pg_index_indclass, &isnull);
-	Assert(!isnull);
-
+	datum = SysCacheGetAttrNotNull(INDEXRELID, tuple, Anum_pg_index_indclass);
 	indclass = ((oidvector *) DatumGetPointer(datum));
 
 	Assert(attno <= indclass->dim1);

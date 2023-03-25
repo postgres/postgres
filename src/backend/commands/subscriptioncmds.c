@@ -1436,15 +1436,13 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	LockSharedObject(SubscriptionRelationId, subid, 0, AccessExclusiveLock);
 
 	/* Get subname */
-	datum = SysCacheGetAttr(SUBSCRIPTIONOID, tup,
-							Anum_pg_subscription_subname, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID, tup,
+								   Anum_pg_subscription_subname);
 	subname = pstrdup(NameStr(*DatumGetName(datum)));
 
 	/* Get conninfo */
-	datum = SysCacheGetAttr(SUBSCRIPTIONOID, tup,
-							Anum_pg_subscription_subconninfo, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID, tup,
+								   Anum_pg_subscription_subconninfo);
 	conninfo = TextDatumGetCString(datum);
 
 	/* Get slotname */

@@ -119,7 +119,6 @@ test_indoption(HeapTuple tuple, int attno, bool guard,
 			   bool *res)
 {
 	Datum		datum;
-	bool		isnull;
 	int2vector *indoption;
 	int16		indoption_val;
 
@@ -129,9 +128,7 @@ test_indoption(HeapTuple tuple, int attno, bool guard,
 		return true;
 	}
 
-	datum = SysCacheGetAttr(INDEXRELID, tuple,
-							Anum_pg_index_indoption, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(INDEXRELID, tuple, Anum_pg_index_indoption);
 
 	indoption = ((int2vector *) DatumGetPointer(datum));
 	indoption_val = indoption->values[attno - 1];

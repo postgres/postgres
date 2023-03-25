@@ -1562,15 +1562,12 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 	amrec = (Form_pg_am) GETSTRUCT(ht_am);
 
 	/* Extract indcollation from the pg_index tuple */
-	datum = SysCacheGetAttr(INDEXRELID, ht_idx,
-							Anum_pg_index_indcollation, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(INDEXRELID, ht_idx,
+								   Anum_pg_index_indcollation);
 	indcollation = (oidvector *) DatumGetPointer(datum);
 
 	/* Extract indclass from the pg_index tuple */
-	datum = SysCacheGetAttr(INDEXRELID, ht_idx,
-							Anum_pg_index_indclass, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(INDEXRELID, ht_idx, Anum_pg_index_indclass);
 	indclass = (oidvector *) DatumGetPointer(datum);
 
 	/* Begin building the IndexStmt */
@@ -1641,13 +1638,8 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 
 				Assert(conrec->contype == CONSTRAINT_EXCLUSION);
 				/* Extract operator OIDs from the pg_constraint tuple */
-				datum = SysCacheGetAttr(CONSTROID, ht_constr,
-										Anum_pg_constraint_conexclop,
-										&isnull);
-				if (isnull)
-					elog(ERROR, "null conexclop for constraint %u",
-						 constraintId);
-
+				datum = SysCacheGetAttrNotNull(CONSTROID, ht_constr,
+											   Anum_pg_constraint_conexclop);
 				deconstruct_array_builtin(DatumGetArrayTypeP(datum), OIDOID, &elems, NULL, &nElems);
 
 				for (i = 0; i < nElems; i++)
@@ -1898,9 +1890,8 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 	statsrec = (Form_pg_statistic_ext) GETSTRUCT(ht_stats);
 
 	/* Determine which statistics types exist */
-	datum = SysCacheGetAttr(STATEXTOID, ht_stats,
-							Anum_pg_statistic_ext_stxkind, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(STATEXTOID, ht_stats,
+								   Anum_pg_statistic_ext_stxkind);
 	arr = DatumGetArrayTypeP(datum);
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_HASNULL(arr) ||
@@ -2228,7 +2219,6 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		Form_pg_index index_form;
 		oidvector  *indclass;
 		Datum		indclassDatum;
-		bool		isnull;
 		int			i;
 
 		/* Grammar should not allow this with explicit column list */
@@ -2327,9 +2317,9 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/* Must get indclass the hard way */
-		indclassDatum = SysCacheGetAttr(INDEXRELID, index_rel->rd_indextuple,
-										Anum_pg_index_indclass, &isnull);
-		Assert(!isnull);
+		indclassDatum = SysCacheGetAttrNotNull(INDEXRELID,
+											   index_rel->rd_indextuple,
+											   Anum_pg_index_indclass);
 		indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 		for (i = 0; i < index_form->indnatts; i++)

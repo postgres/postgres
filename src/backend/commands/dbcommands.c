@@ -2597,7 +2597,6 @@ pg_database_collation_actual_version(PG_FUNCTION_ARGS)
 	HeapTuple	tp;
 	char		datlocprovider;
 	Datum		datum;
-	bool		isnull;
 	char	   *version;
 
 	tp = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbid));
@@ -2608,9 +2607,7 @@ pg_database_collation_actual_version(PG_FUNCTION_ARGS)
 
 	datlocprovider = ((Form_pg_database) GETSTRUCT(tp))->datlocprovider;
 
-	datum = SysCacheGetAttr(DATABASEOID, tp, datlocprovider == COLLPROVIDER_ICU ? Anum_pg_database_daticulocale : Anum_pg_database_datcollate, &isnull);
-	if (isnull)
-		elog(ERROR, "unexpected null in pg_database");
+	datum = SysCacheGetAttrNotNull(DATABASEOID, tp, datlocprovider == COLLPROVIDER_ICU ? Anum_pg_database_daticulocale : Anum_pg_database_datcollate);
 	version = get_collation_actual_version(datlocprovider, TextDatumGetCString(datum));
 
 	ReleaseSysCache(tp);
@@ -2737,14 +2734,12 @@ get_db_info(const char *name, LOCKMODE lockmode,
 					*dbLocProvider = dbform->datlocprovider;
 				if (dbCollate)
 				{
-					datum = SysCacheGetAttr(DATABASEOID, tuple, Anum_pg_database_datcollate, &isnull);
-					Assert(!isnull);
+					datum = SysCacheGetAttrNotNull(DATABASEOID, tuple, Anum_pg_database_datcollate);
 					*dbCollate = TextDatumGetCString(datum);
 				}
 				if (dbCtype)
 				{
-					datum = SysCacheGetAttr(DATABASEOID, tuple, Anum_pg_database_datctype, &isnull);
-					Assert(!isnull);
+					datum = SysCacheGetAttrNotNull(DATABASEOID, tuple, Anum_pg_database_datctype);
 					*dbCtype = TextDatumGetCString(datum);
 				}
 				if (dbIculocale)

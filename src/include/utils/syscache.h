@@ -157,6 +157,9 @@ extern HeapTuple SearchSysCacheCopyAttNum(Oid relid, int16 attnum);
 extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
 							 AttrNumber attributeNumber, bool *isNull);
 
+extern Datum SysCacheGetAttrNotNull(int cacheId, HeapTuple tup,
+									AttrNumber attributeNumber);
+
 extern uint32 GetSysCacheHashValue(int cacheId,
 								   Datum key1, Datum key2, Datum key3, Datum key4);
 

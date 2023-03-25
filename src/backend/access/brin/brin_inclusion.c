@@ -630,7 +630,6 @@ inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 		HeapTuple	tuple;
 		Oid			opfamily,
 					oprid;
-		bool		isNull;
 
 		opfamily = bdesc->bd_index->rd_opfamily[attno - 1];
 		attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
@@ -643,10 +642,10 @@ inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 				 strategynum, attr->atttypid, subtype, opfamily);
 
-		oprid = DatumGetObjectId(SysCacheGetAttr(AMOPSTRATEGY, tuple,
-												 Anum_pg_amop_amopopr, &isNull));
+		oprid = DatumGetObjectId(SysCacheGetAttrNotNull(AMOPSTRATEGY, tuple,
+														Anum_pg_amop_amopopr));
 		ReleaseSysCache(tuple);
-		Assert(!isNull && RegProcedureIsValid(oprid));
+		Assert(RegProcedureIsValid(oprid));
 
 		fmgr_info_cxt(get_opcode(oprid),
 					  &opaque->strategy_procinfos[strategynum - 1],

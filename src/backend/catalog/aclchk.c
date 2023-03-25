@@ -2178,11 +2178,9 @@ ExecGrant_common(InternalGrant *istmt, Oid classid, AclMode default_privs,
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,
 		 * substitute the proper default.
 		 */
-		ownerId = DatumGetObjectId(SysCacheGetAttr(cacheid,
-												   tuple,
-												   get_object_attnum_owner(classid),
-												   &isNull));
-		Assert(!isNull);
+		ownerId = DatumGetObjectId(SysCacheGetAttrNotNull(cacheid,
+														  tuple,
+														  get_object_attnum_owner(classid)));
 		aclDatum = SysCacheGetAttr(cacheid,
 								   tuple,
 								   get_object_attnum_acl(classid),
@@ -2206,10 +2204,8 @@ ExecGrant_common(InternalGrant *istmt, Oid classid, AclMode default_privs,
 							old_acl, ownerId,
 							&grantorId, &avail_goptions);
 
-		nameDatum = SysCacheGetAttr(cacheid, tuple,
-									get_object_attnum_name(classid),
-									&isNull);
-		Assert(!isNull);
+		nameDatum = SysCacheGetAttrNotNull(cacheid, tuple,
+										   get_object_attnum_name(classid));
 
 		/*
 		 * Restrict the privileges to what we can actually grant, and emit the
@@ -2476,10 +2472,8 @@ ExecGrant_Parameter(InternalGrant *istmt)
 				 parameterId);
 
 		/* We'll need the GUC's name */
-		nameDatum = SysCacheGetAttr(PARAMETERACLOID, tuple,
-									Anum_pg_parameter_acl_parname,
-									&isNull);
-		Assert(!isNull);
+		nameDatum = SysCacheGetAttrNotNull(PARAMETERACLOID, tuple,
+										   Anum_pg_parameter_acl_parname);
 		parname = TextDatumGetCString(nameDatum);
 
 		/* Treat all parameters as belonging to the bootstrap superuser. */
@@ -3113,11 +3107,9 @@ object_aclmask(Oid classid, Oid objectid, Oid roleid,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("%s with OID %u does not exist", get_object_class_descr(classid), objectid)));
 
-	ownerId = DatumGetObjectId(SysCacheGetAttr(cacheid,
-											   tuple,
-											   get_object_attnum_owner(classid),
-											   &isNull));
-	Assert(!isNull);
+	ownerId = DatumGetObjectId(SysCacheGetAttrNotNull(cacheid,
+													  tuple,
+													  get_object_attnum_owner(classid)));
 
 	aclDatum = SysCacheGetAttr(cacheid, tuple, get_object_attnum_acl(classid),
 							   &isNull);
@@ -3994,7 +3986,6 @@ object_ownercheck(Oid classid, Oid objectid, Oid roleid)
 	if (cacheid != -1)
 	{
 		HeapTuple	tuple;
-		bool		isnull;
 
 		tuple = SearchSysCache1(cacheid, ObjectIdGetDatum(objectid));
 		if (!HeapTupleIsValid(tuple))
@@ -4002,12 +3993,9 @@ object_ownercheck(Oid classid, Oid objectid, Oid roleid)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("%s with OID %u does not exist", get_object_class_descr(classid), objectid)));
 
-		ownerId = DatumGetObjectId(SysCacheGetAttr(cacheid,
-												   tuple,
-												   get_object_attnum_owner(classid),
-												   &isnull));
-		Assert(!isnull);
-
+		ownerId = DatumGetObjectId(SysCacheGetAttrNotNull(cacheid,
+														  tuple,
+														  get_object_attnum_owner(classid)));
 		ReleaseSysCache(tuple);
 	}
 	else

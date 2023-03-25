@@ -398,11 +398,9 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 					PGC_BACKEND, PGC_S_DYNAMIC_DEFAULT);
 
 	/* assign locale variables */
-	datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_datcollate, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datcollate);
 	collate = TextDatumGetCString(datum);
-	datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_datctype, &isnull);
-	Assert(!isnull);
+	datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datctype);
 	ctype = TextDatumGetCString(datum);
 
 	if (pg_perm_setlocale(LC_COLLATE, collate) == NULL)
@@ -427,8 +425,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 	{
 		char	   *icurules;
 
-		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_daticulocale, &isnull);
-		Assert(!isnull);
+		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_daticulocale);
 		iculocale = TextDatumGetCString(datum);
 
 		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_daticurules, &isnull);

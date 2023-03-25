@@ -1320,14 +1320,12 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(oldIndexId));
 	if (!HeapTupleIsValid(indexTuple))
 		elog(ERROR, "cache lookup failed for index %u", oldIndexId);
-	indclassDatum = SysCacheGetAttr(INDEXRELID, indexTuple,
-									Anum_pg_index_indclass, &isnull);
-	Assert(!isnull);
+	indclassDatum = SysCacheGetAttrNotNull(INDEXRELID, indexTuple,
+										   Anum_pg_index_indclass);
 	indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
-	colOptionDatum = SysCacheGetAttr(INDEXRELID, indexTuple,
-									 Anum_pg_index_indoption, &isnull);
-	Assert(!isnull);
+	colOptionDatum = SysCacheGetAttrNotNull(INDEXRELID, indexTuple,
+											Anum_pg_index_indoption);
 	indcoloptions = (int2vector *) DatumGetPointer(colOptionDatum);
 
 	/* Fetch options of index if any */
@@ -1347,9 +1345,8 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 		Datum		exprDatum;
 		char	   *exprString;
 
-		exprDatum = SysCacheGetAttr(INDEXRELID, indexTuple,
-									Anum_pg_index_indexprs, &isnull);
-		Assert(!isnull);
+		exprDatum = SysCacheGetAttrNotNull(INDEXRELID, indexTuple,
+										   Anum_pg_index_indexprs);
 		exprString = TextDatumGetCString(exprDatum);
 		indexExprs = (List *) stringToNode(exprString);
 		pfree(exprString);
@@ -1359,9 +1356,8 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 		Datum		predDatum;
 		char	   *predString;
 
-		predDatum = SysCacheGetAttr(INDEXRELID, indexTuple,
-									Anum_pg_index_indpred, &isnull);
-		Assert(!isnull);
+		predDatum = SysCacheGetAttrNotNull(INDEXRELID, indexTuple,
+										   Anum_pg_index_indpred);
 		predString = TextDatumGetCString(predDatum);
 		indexPreds = (List *) stringToNode(predString);
 

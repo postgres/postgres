@@ -4311,19 +4311,14 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 			Oid			inhrelid = inhoids[k];
 			HeapTuple	tuple;
 			Datum		datum;
-			bool		isnull;
 			PartitionBoundSpec *bspec;
 
 			tuple = SearchSysCache1(RELOID, inhrelid);
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "cache lookup failed for relation %u", inhrelid);
 
-			datum = SysCacheGetAttr(RELOID, tuple,
-									Anum_pg_class_relpartbound,
-									&isnull);
-			if (isnull)
-				elog(ERROR, "null relpartbound for relation %u", inhrelid);
-
+			datum = SysCacheGetAttrNotNull(RELOID, tuple,
+										   Anum_pg_class_relpartbound);
 			bspec = (PartitionBoundSpec *)
 				stringToNode(TextDatumGetCString(datum));
 			if (!IsA(bspec, PartitionBoundSpec))

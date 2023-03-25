@@ -1285,15 +1285,12 @@ lookup_collation_cache(Oid collation, bool set_flags)
 		if (collform->collprovider == COLLPROVIDER_LIBC)
 		{
 			Datum		datum;
-			bool		isnull;
 			const char *collcollate;
 			const char *collctype;
 
-			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collcollate, &isnull);
-			Assert(!isnull);
+			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collcollate);
 			collcollate = TextDatumGetCString(datum);
-			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collctype, &isnull);
-			Assert(!isnull);
+			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collctype);
 			collctype = TextDatumGetCString(datum);
 
 			cache_entry->collate_is_c = ((strcmp(collcollate, "C") == 0) ||
@@ -1577,11 +1574,9 @@ pg_newlocale_from_collation(Oid collid)
 			const char *collctype pg_attribute_unused();
 			locale_t	loc;
 
-			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collcollate, &isnull);
-			Assert(!isnull);
+			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collcollate);
 			collcollate = TextDatumGetCString(datum);
-			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collctype, &isnull);
-			Assert(!isnull);
+			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collctype);
 			collctype = TextDatumGetCString(datum);
 
 			if (strcmp(collcollate, collctype) == 0)
@@ -1637,8 +1632,7 @@ pg_newlocale_from_collation(Oid collid)
 			const char *iculocstr;
 			const char *icurules;
 
-			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
-			Assert(!isnull);
+			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_colliculocale);
 			iculocstr = TextDatumGetCString(datum);
 
 			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collicurules, &isnull);
@@ -1659,8 +1653,7 @@ pg_newlocale_from_collation(Oid collid)
 
 			collversionstr = TextDatumGetCString(datum);
 
-			datum = SysCacheGetAttr(COLLOID, tp, collform->collprovider == COLLPROVIDER_ICU ? Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate, &isnull);
-			Assert(!isnull);
+			datum = SysCacheGetAttrNotNull(COLLOID, tp, collform->collprovider == COLLPROVIDER_ICU ? Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate);
 
 			actual_versionstr = get_collation_actual_version(collform->collprovider,
 															 TextDatumGetCString(datum));

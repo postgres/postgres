@@ -520,10 +520,8 @@ ProcedureCreate(const char *procedureName,
 								 dropcmd,
 								 format_procedure(oldproc->oid))));
 
-			proargdefaults = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
-											 Anum_pg_proc_proargdefaults,
-											 &isnull);
-			Assert(!isnull);
+			proargdefaults = SysCacheGetAttrNotNull(PROCNAMEARGSNSP, oldtup,
+													Anum_pg_proc_proargdefaults);
 			oldDefaults = castNode(List, stringToNode(TextDatumGetCString(proargdefaults)));
 			Assert(list_length(oldDefaults) == oldproc->pronargdefaults);
 
@@ -731,7 +729,6 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	tuple;
-	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
 
@@ -747,9 +744,7 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 
-	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "null prosrc");
+	tmp = SysCacheGetAttrNotNull(PROCOID, tuple, Anum_pg_proc_prosrc);
 	prosrc = TextDatumGetCString(tmp);
 
 	if (fmgr_internal_function(prosrc) == InvalidOid)
@@ -778,7 +773,6 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	void	   *libraryhandle;
 	HeapTuple	tuple;
-	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
 	char	   *probin;
@@ -796,14 +790,10 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 
-	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "null prosrc for C function %u", funcoid);
+	tmp = SysCacheGetAttrNotNull(PROCOID, tuple, Anum_pg_proc_prosrc);
 	prosrc = TextDatumGetCString(tmp);
 
-	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_probin, &isnull);
-	if (isnull)
-		elog(ERROR, "null probin for C function %u", funcoid);
+	tmp = SysCacheGetAttrNotNull(PROCOID, tuple, Anum_pg_proc_probin);
 	probin = TextDatumGetCString(tmp);
 
 	(void) load_external_function(probin, prosrc, true, &libraryhandle);
@@ -876,10 +866,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	/* Postpone body checks if !check_function_bodies */
 	if (check_function_bodies)
 	{
-		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
-		if (isnull)
-			elog(ERROR, "null prosrc");
-
+		tmp = SysCacheGetAttrNotNull(PROCOID, tuple, Anum_pg_proc_prosrc);
 		prosrc = TextDatumGetCString(tmp);
 
 		/*
