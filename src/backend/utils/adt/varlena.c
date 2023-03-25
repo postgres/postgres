@@ -2329,6 +2329,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 
 			bsize = pg_strxfrm_prefix(sss->buf2, sss->buf1,
 									  max_prefix_bytes, sss->locale);
+			sss->last_len2 = bsize;
 		}
 		else
 		{
