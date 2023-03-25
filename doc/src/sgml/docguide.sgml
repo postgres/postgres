@@ -378,7 +378,7 @@ ADDITIONAL_FLAGS='-Xmx1500m'
     <literal>INFO</literal> message for each page. The log level can be
     changed via <filename>~/.foprc</filename>:
 <programlisting>
-LOGCHOICE=-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.SimpleLog
+LOGCHOICE=-Dorg.apache.commons.logging.Log=&zwsp;org.apache.commons.logging.impl.SimpleLog
 LOGLEVEL=-Dorg.apache.commons.logging.simplelog.defaultlog=WARN
 </programlisting>
    </para>
