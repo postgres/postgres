@@ -2655,7 +2655,10 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 		/* Use PortalContext for any per-work-item allocations */
 		MemoryContextSwitchTo(PortalContext);
 
-		/* have at it */
+		/*
+		 * Have at it.  Functions called here are responsible for any required
+		 * user switch and sandbox.
+		 */
 		switch (workitem->avw_type)
 		{
 			case AVW_BRINSummarizeRange:
