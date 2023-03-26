@@ -2708,7 +2708,7 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 	{
 		/* Must be nested array expressions */
 		int			nbytes = 0;
-		int			nitems = 0;
+		int			nitems;
 		int			outer_nelems = 0;
 		int			elem_ndims = 0;
 		int		   *elem_dims = NULL;
@@ -2803,9 +2803,14 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 			subbitmaps[outer_nelems] = ARR_NULLBITMAP(array);
 			subbytes[outer_nelems] = ARR_SIZE(array) - ARR_DATA_OFFSET(array);
 			nbytes += subbytes[outer_nelems];
+			/* check for overflow of total request */
+			if (!AllocSizeIsValid(nbytes))
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("array size exceeds the maximum allowed (%d)",
+								(int) MaxAllocSize)));
 			subnitems[outer_nelems] = ArrayGetNItems(this_ndims,
 													 ARR_DIMS(array));
-			nitems += subnitems[outer_nelems];
 			havenulls |= ARR_HASNULL(array);
 			outer_nelems++;
 		}
@@ -2839,7 +2844,7 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 		}
 
 		/* check for subscript overflow */
-		(void) ArrayGetNItems(ndims, dims);
+		nitems = ArrayGetNItems(ndims, dims);
 		ArrayCheckBounds(ndims, dims, lbs);
 
 		if (havenulls)
@@ -2853,7 +2858,7 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 			nbytes += ARR_OVERHEAD_NONULLS(ndims);
 		}
 
-		result = (ArrayType *) palloc(nbytes);
+		result = (ArrayType *) palloc0(nbytes);
 		SET_VARSIZE(result, nbytes);
 		result->ndim = ndims;
 		result->dataoffset = dataoffset;
