@@ -186,8 +186,6 @@ GetWALRecordInfo(XLogReaderState *record, Datum *values,
 	RmgrData	desc;
 	uint32		fpi_len = 0;
 	StringInfoData rec_desc;
-	StringInfoData rec_blk_ref;
-	uint32		main_data_len;
 	int			i = 0;
 
 	desc = GetRmgr(XLogRecGetRmid(record));
@@ -199,12 +197,6 @@ GetWALRecordInfo(XLogReaderState *record, Datum *values,
 	initStringInfo(&rec_desc);
 	desc.rm_desc(&rec_desc, record);
 
-	/* Block references. */
-	initStringInfo(&rec_blk_ref);
-	XLogRecGetBlockRefInfo(record, false, true, &rec_blk_ref, &fpi_len);
-
-	main_data_len = XLogRecGetDataLen(record);
-
 	values[i++] = LSNGetDatum(record->ReadRecPtr);
 	values[i++] = LSNGetDatum(record->EndRecPtr);
 	values[i++] = LSNGetDatum(XLogRecGetPrev(record));
@@ -212,10 +204,26 @@ GetWALRecordInfo(XLogReaderState *record, Datum *values,
 	values[i++] = CStringGetTextDatum(desc.rm_name);
 	values[i++] = CStringGetTextDatum(id);
 	values[i++] = UInt32GetDatum(XLogRecGetTotalLen(record));
-	values[i++] = UInt32GetDatum(main_data_len);
+	values[i++] = UInt32GetDatum(XLogRecGetDataLen(record));
+
 	values[i++] = UInt32GetDatum(fpi_len);
-	values[i++] = CStringGetTextDatum(rec_desc.data);
-	values[i++] = CStringGetTextDatum(rec_blk_ref.data);
+
+	if (rec_desc.len > 0)
+		values[i++] = CStringGetTextDatum(rec_desc.data);
+	else
+		nulls[i++] = true;
+
+	/* Block references. */
+	if (XLogRecHasAnyBlockRefs(record))
+	{
+		StringInfoData rec_blk_ref;
+
+		initStringInfo(&rec_blk_ref);
+		XLogRecGetBlockRefInfo(record, false, true, &rec_blk_ref, &fpi_len);
+		values[i++] = CStringGetTextDatum(rec_blk_ref.data);
+	}
+	else
+		nulls[i++] = true;
 
 	Assert(i == ncols);
 }
@@ -377,6 +385,11 @@ pg_get_wal_block_info(PG_FUNCTION_ARGS)
 	while (ReadNextXLogRecord(xlogreader) &&
 		   xlogreader->EndRecPtr <= end_lsn)
 	{
+		CHECK_FOR_INTERRUPTS();
+
+		if (!XLogRecHasAnyBlockRefs(xlogreader))
+			continue;
+
 		/* Use the tmp context so we can clean up after each tuple is done */
 		old_cxt = MemoryContextSwitchTo(tmp_cxt);
 
@@ -385,8 +398,6 @@ pg_get_wal_block_info(PG_FUNCTION_ARGS)
 		/* clean up and switch back */
 		MemoryContextSwitchTo(old_cxt);
 		MemoryContextReset(tmp_cxt);
-
-		CHECK_FOR_INTERRUPTS();
 	}
 
 	MemoryContextDelete(tmp_cxt);
@@ -483,8 +494,6 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 #define PG_GET_WAL_RECORDS_INFO_COLS 11
 	XLogReaderState *xlogreader;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Datum		values[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
-	bool		nulls[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
 	MemoryContext old_cxt;
 	MemoryContext tmp_cxt;
 
@@ -501,6 +510,9 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 	while (ReadNextXLogRecord(xlogreader) &&
 		   xlogreader->EndRecPtr <= end_lsn)
 	{
+		Datum		values[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
+		bool		nulls[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
+
 		/* Use the tmp context so we can clean up after each tuple is done */
 		old_cxt = MemoryContextSwitchTo(tmp_cxt);
 
