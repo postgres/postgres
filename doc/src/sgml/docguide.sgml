@@ -209,9 +209,13 @@ brew install docbook docbook-xsl libxslt fop
 
    <para>
     The Homebrew-supplied programs require the following environment variable
-    to be set:
+    to be set.  For Intel based machines, use this:
 <programlisting>
 export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
+</programlisting>
+    On Apple Silicon based machines, use this:
+<programlisting>
+export XML_CATALOG_FILES=/opt/homebrew/etc/xml/catalog
 </programlisting>
     Without it, <command>xsltproc</command> will throw errors like this:
 <programlisting>
