@@ -624,17 +624,6 @@ verify_heapam(PG_FUNCTION_ARGS)
 											   (unsigned) nextoffnum));
 				}
 
-				/*
-				 * Redirects are created by updates, so successor should be
-				 * the result of an update.
-				 */
-				if ((next_htup->t_infomask & HEAP_UPDATED) == 0)
-				{
-					report_corruption(&ctx,
-									  psprintf("redirected line pointer points to a non-heap-updated tuple at offset %u",
-											   (unsigned) nextoffnum));
-				}
-
 				/* HOT chains should not intersect. */
 				if (predecessor[nextoffnum] != InvalidOffsetNumber)
 				{
@@ -952,6 +941,15 @@ check_tuple_header(HeapCheckContext *ctx)
 		 * justification for skipping further checks, we should still be able
 		 * to perform sensibly.
 		 */
+	}
+
+	if (HeapTupleHeaderIsHeapOnly(tuphdr) &&
+		((tuphdr->t_infomask & HEAP_UPDATED) == 0))
+	{
+		report_corruption(ctx,
+						  psprintf("tuple is heap only, but not the result of an update"));
+
+		/* Here again, we can still perform further checks. */
 	}
 
 	if (infomask & HEAP_HASNULL)

@@ -617,12 +617,10 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 	}
 	elsif ($offnum == 17)
 	{
-		# at offnum 19 we will unset HEAP_ONLY_TUPLE and HEAP_UPDATED flags.
+		# at offnum 19 we will unset HEAP_ONLY_TUPLE flag
 		die "offnum $offnum should be a redirect" if defined $tup;
 		push @expected,
 			qr/${header}redirected line pointer points to a non-heap-only tuple at offset \d+/;
-		push @expected,
-			qr/${header}redirected line pointer points to a non-heap-updated tuple at offset \d+/;
 	}
 	elsif ($offnum == 18)
 	{
@@ -637,10 +635,9 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 	}
 	elsif ($offnum == 19)
 	{
-		# unset HEAP_ONLY_TUPLE and HEAP_UPDATED flag, so that update chain
-		# validation will complain about offset 17
+		# unset HEAP_ONLY_TUPLE flag, so that update chain validation will
+		# complain about offset 17
 		$tup->{t_infomask2} &= ~HEAP_ONLY_TUPLE;
-		$tup->{t_infomask} &= ~HEAP_UPDATED;
 	}
 	elsif ($offnum == 22)
 	{
@@ -688,6 +685,8 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 		$tup->{t_infomask2} |= HEAP_ONLY_TUPLE;
 		push @expected,
 		  qr/${header}tuple is root of chain but is marked as heap-only tuple/;
+		push @expected,
+		  qr/${header}tuple is heap only, but not the result of an update/;
 	}
 	elsif ($offnum == 33)
 	{
