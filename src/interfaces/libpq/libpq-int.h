@@ -525,6 +525,7 @@ struct pg_conn
 	/* Assorted state for SASL, SSL, GSS, etc */
 	const pg_fe_sasl_mech *sasl;
 	void	   *sasl_state;
+	int			scram_sha_256_iterations;
 
 	/* SSL structures */
 	bool		ssl_in_use;

@@ -1132,6 +1132,26 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><varname>scram_iterations</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>scram_iterations</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        The number of computational iterations to be performed when encrypting
+        a password using SCRAM-SHA-256. The default is <literal>4096</literal>.
+        A higher number of iterations provides additional protection against
+        brute-force attacks on stored passwords, but makes authentication
+        slower. Changing the value has no effect on existing passwords
+        encrypted with SCRAM-SHA-256 as the iteration count is fixed at the
+        time of encryption. In order to make use of a changed value, a new
+        password must be set.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
       <term><varname>krb_server_keyfile</varname> (<type>string</type>)
       <indexterm>

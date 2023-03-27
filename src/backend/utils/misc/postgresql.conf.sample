@@ -95,6 +95,7 @@
 
 #authentication_timeout = 1min		# 1s-600s
 #password_encryption = scram-sha-256	# scram-sha-256 or md5
+#scram_iterations = 4096
 #db_user_namespace = off
 
 # GSSAPI using Kerberos

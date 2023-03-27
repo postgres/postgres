@@ -86,6 +86,21 @@ $node->safe_psql('postgres',
 	q{SET password_encryption='md5'; CREATE ROLE "md5,role" LOGIN PASSWORD 'pass';}
 );
 
+# Create a role with a non-default iteration count
+$node->safe_psql(
+	'postgres',
+	"SET password_encryption='scram-sha-256';
+	 SET scram_iterations=1024;
+	 CREATE ROLE scram_role_iter LOGIN PASSWORD 'pass';
+	 RESET scram_iterations;"
+);
+
+my $res = $node->safe_psql('postgres',
+	"SELECT substr(rolpassword,1,19)
+	 FROM pg_authid
+	 WHERE rolname = 'scram_role_iter'");
+is($res, 'SCRAM-SHA-256$1024:', 'scram_iterations in server side ROLE');
+
 # Create a database to test regular expression.
 $node->safe_psql('postgres', "CREATE database regex_testdb;");
 
@@ -98,7 +113,7 @@ test_conn($node, 'user=md5_role', 'trust', 0,
 	log_unlike => [qr/connection authenticated:/]);
 
 # SYSTEM_USER is null when not authenticated.
-my $res = $node->safe_psql('postgres', "SELECT SYSTEM_USER IS NULL;");
+$res = $node->safe_psql('postgres', "SELECT SYSTEM_USER IS NULL;");
 is($res, 't', "users with trust authentication use SYSTEM_USER = NULL");
 
 # Test SYSTEM_USER with parallel workers when not authenticated.
@@ -282,6 +297,14 @@ test_conn(
 	0,
 	log_like => [
 		qr/connection authenticated: identity="scram_role" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=scram_role_iter',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="scram_role_iter" method=scram-sha-256/
 	]);
 test_conn($node, 'user=md5_role', 'scram-sha-256', 2,
 	log_unlike => [qr/connection authenticated:/]);

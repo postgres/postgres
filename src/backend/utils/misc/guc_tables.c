@@ -41,9 +41,11 @@
 #include "commands/trigger.h"
 #include "commands/user.h"
 #include "commands/vacuum.h"
+#include "common/scram-common.h"
 #include "jit/jit.h"
 #include "libpq/auth.h"
 #include "libpq/libpq.h"
+#include "libpq/scram.h"
 #include "nodes/queryjumble.h"
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
@@ -3465,6 +3467,17 @@ struct config_int ConfigureNamesInt[] =
 		},
 		&log_startup_progress_interval,
 		10000, 0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"scram_iterations", PGC_USERSET, CONN_AUTH_AUTH,
+			gettext_noop("Sets the iteration count for SCRAM secret generation."),
+			NULL,
+			GUC_REPORT
+		},
+		&scram_sha_256_iterations,
+		SCRAM_SHA_256_DEFAULT_ITERATIONS, 1, INT_MAX,
 		NULL, NULL, NULL
 	},
 

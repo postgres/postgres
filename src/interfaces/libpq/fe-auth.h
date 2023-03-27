@@ -26,6 +26,7 @@ extern char *pg_fe_getauthname(PQExpBuffer errorMessage);
 /* Mechanisms in fe-auth-scram.c */
 extern const pg_fe_sasl_mech pg_scram_mech;
 extern char *pg_fe_scram_build_secret(const char *password,
+									  int iterations,
 									  const char **errstr);
 
 #endif							/* FE_AUTH_H */

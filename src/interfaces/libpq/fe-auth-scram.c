@@ -895,7 +895,7 @@ verify_server_signature(fe_scram_state *state, bool *match,
  * error details.
  */
 char *
-pg_fe_scram_build_secret(const char *password, const char **errstr)
+pg_fe_scram_build_secret(const char *password, int iterations, const char **errstr)
 {
 	char	   *prep_password;
 	pg_saslprep_rc rc;
@@ -927,7 +927,7 @@ pg_fe_scram_build_secret(const char *password, const char **errstr)
 
 	result = scram_build_secret(PG_SHA256, SCRAM_SHA_256_KEY_LEN, saltbuf,
 								SCRAM_DEFAULT_SALT_LEN,
-								SCRAM_DEFAULT_ITERATIONS, password,
+								iterations, password,
 								errstr);
 
 	free(prep_password);

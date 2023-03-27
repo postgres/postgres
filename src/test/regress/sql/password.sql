@@ -63,6 +63,10 @@ CREATE ROLE regress_passwd7 PASSWORD 'md5012345678901234567890123456789zz';
 -- invalid length
 CREATE ROLE regress_passwd8 PASSWORD 'md501234567890123456789012345678901zz';
 
+-- Changing the SCRAM iteration count
+SET scram_iterations = 1024;
+CREATE ROLE regress_passwd9 PASSWORD 'alterediterationcount';
+
 SELECT rolname, regexp_replace(rolpassword, '(SCRAM-SHA-256)\$(\d+):([a-zA-Z0-9+/=]+)\$([a-zA-Z0-9+=/]+):([a-zA-Z0-9+/=]+)', '\1$\2:<salt>$<storedkey>:<serverkey>') as rolpassword_masked
     FROM pg_authid
     WHERE rolname LIKE 'regress_passwd%'
@@ -97,6 +101,7 @@ DROP ROLE regress_passwd5;
 DROP ROLE regress_passwd6;
 DROP ROLE regress_passwd7;
 DROP ROLE regress_passwd8;
+DROP ROLE regress_passwd9;
 DROP ROLE regress_passwd_empty;
 DROP ROLE regress_passwd_sha_len0;
 DROP ROLE regress_passwd_sha_len1;

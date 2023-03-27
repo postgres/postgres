@@ -47,7 +47,7 @@
  * Default number of iterations when generating secret.  Should be at least
  * 4096 per RFC 7677.
  */
-#define SCRAM_DEFAULT_ITERATIONS	4096
+#define SCRAM_SHA_256_DEFAULT_ITERATIONS	4096
 
 extern int	scram_SaltedPassword(const char *password,
 								 pg_cryptohash_type hash_type, int key_length,

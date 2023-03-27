@@ -1181,6 +1181,10 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 		conn->in_hot_standby =
 			(strcmp(value, "on") == 0) ? PG_BOOL_YES : PG_BOOL_NO;
 	}
+	else if (strcmp(name, "scram_iterations") == 0)
+	{
+		conn->scram_sha_256_iterations = atoi(value);
+	}
 }
 
 

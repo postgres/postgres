@@ -1341,7 +1341,9 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	{
 		const char *errstr = NULL;
 
-		crypt_pwd = pg_fe_scram_build_secret(passwd, &errstr);
+		crypt_pwd = pg_fe_scram_build_secret(passwd,
+											 conn->scram_sha_256_iterations,
+											 &errstr);
 		if (!crypt_pwd)
 			libpq_append_conn_error(conn, "could not encrypt password: %s", errstr);
 	}

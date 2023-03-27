@@ -214,8 +214,7 @@ scram_build_secret(pg_cryptohash_type hash_type, int key_length,
 	/* Only this hash method is supported currently */
 	Assert(hash_type == PG_SHA256);
 
-	if (iterations <= 0)
-		iterations = SCRAM_DEFAULT_ITERATIONS;
+	Assert(iterations > 0);
 
 	/* Calculate StoredKey and ServerKey */
 	if (scram_SaltedPassword(password, hash_type, key_length,

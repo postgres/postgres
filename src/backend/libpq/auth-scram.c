@@ -192,6 +192,11 @@ static char *scram_mock_salt(const char *username,
 							 int key_length);
 
 /*
+ * The number of iterations to use when generating new secrets.
+ */
+int			scram_sha_256_iterations = SCRAM_SHA_256_DEFAULT_ITERATIONS;
+
+/*
  * Get a list of SASL mechanisms that this module supports.
  *
  * For the convenience of building the FE/BE packet that lists the
@@ -496,7 +501,7 @@ pg_be_scram_build_secret(const char *password)
 
 	result = scram_build_secret(PG_SHA256, SCRAM_SHA_256_KEY_LEN,
 								saltbuf, SCRAM_DEFAULT_SALT_LEN,
-								SCRAM_DEFAULT_ITERATIONS, password,
+								scram_sha_256_iterations, password,
 								&errstr);
 
 	if (prep_password)
@@ -717,7 +722,7 @@ mock_scram_secret(const char *username, pg_cryptohash_type *hash_type,
 	encoded_salt[encoded_len] = '\0';
 
 	*salt = encoded_salt;
-	*iterations = SCRAM_DEFAULT_ITERATIONS;
+	*iterations = SCRAM_SHA_256_DEFAULT_ITERATIONS;
 
 	/* StoredKey and ServerKey are not used in a doomed authentication */
 	memset(stored_key, 0, SCRAM_MAX_KEY_LEN);
