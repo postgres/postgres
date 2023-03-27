@@ -152,29 +152,26 @@ pg_stat_get_function_calls(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(funcentry->numcalls);
 }
 
-Datum
-pg_stat_get_function_total_time(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	PgStat_StatFuncEntry *funcentry;
-
-	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
-		PG_RETURN_NULL();
-	/* convert counter from microsec to millisec for display */
-	PG_RETURN_FLOAT8(((double) funcentry->total_time) / 1000.0);
+/* convert counter from microsec to millisec for display */
+#define PG_STAT_GET_FUNCENTRY_FLOAT8_MS(stat)						\
+Datum																\
+CppConcat(pg_stat_get_function_,stat)(PG_FUNCTION_ARGS)				\
+{																	\
+	Oid			funcid = PG_GETARG_OID(0);							\
+	double		result;												\
+	PgStat_StatFuncEntry *funcentry;								\
+																	\
+	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)	\
+		PG_RETURN_NULL();											\
+	result = ((double) funcentry->stat) / 1000.0;					\
+	PG_RETURN_FLOAT8(result);										\
 }
 
-Datum
-pg_stat_get_function_self_time(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	PgStat_StatFuncEntry *funcentry;
+/* pg_stat_get_function_total_time */
+PG_STAT_GET_FUNCENTRY_FLOAT8_MS(total_time)
 
-	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
-		PG_RETURN_NULL();
-	/* convert counter from microsec to millisec for display */
-	PG_RETURN_FLOAT8(((double) funcentry->self_time) / 1000.0);
-}
+/* pg_stat_get_function_self_time */
+PG_STAT_GET_FUNCENTRY_FLOAT8_MS(self_time)
 
 Datum
 pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
@@ -1147,7 +1144,8 @@ pg_stat_get_db_checksum_last_failure(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(result);
 }
 
-#define PG_STAT_GET_DBENTRY_FLOAT8(stat)						\
+/* convert counter from microsec to millisec for display */
+#define PG_STAT_GET_DBENTRY_FLOAT8_MS(stat)						\
 Datum															\
 CppConcat(pg_stat_get_db_,stat)(PG_FUNCTION_ARGS)				\
 {																\
@@ -1164,19 +1162,19 @@ CppConcat(pg_stat_get_db_,stat)(PG_FUNCTION_ARGS)				\
 }
 
 /* pg_stat_get_db_active_time */
-PG_STAT_GET_DBENTRY_FLOAT8(active_time)
+PG_STAT_GET_DBENTRY_FLOAT8_MS(active_time)
 
 /* pg_stat_get_db_blk_read_time */
-PG_STAT_GET_DBENTRY_FLOAT8(blk_read_time)
+PG_STAT_GET_DBENTRY_FLOAT8_MS(blk_read_time)
 
 /* pg_stat_get_db_blk_write_time */
-PG_STAT_GET_DBENTRY_FLOAT8(blk_write_time)
+PG_STAT_GET_DBENTRY_FLOAT8_MS(blk_write_time)
 
 /* pg_stat_get_db_idle_in_transaction_time */
-PG_STAT_GET_DBENTRY_FLOAT8(idle_in_transaction_time)
+PG_STAT_GET_DBENTRY_FLOAT8_MS(idle_in_transaction_time)
 
 /* pg_stat_get_db_session_time */
-PG_STAT_GET_DBENTRY_FLOAT8(session_time)
+PG_STAT_GET_DBENTRY_FLOAT8_MS(session_time)
 
 Datum
 pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS)
@@ -1609,28 +1607,23 @@ pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(funcentry->numcalls);
 }
 
-Datum
-pg_stat_get_xact_function_total_time(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	PgStat_FunctionCounts *funcentry;
-
-	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
-		PG_RETURN_NULL();
-	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->total_time));
+#define PG_STAT_GET_XACT_FUNCENTRY_FLOAT8_MS(stat)				\
+Datum															\
+CppConcat(pg_stat_get_xact_function_,stat)(PG_FUNCTION_ARGS)	\
+{																\
+	Oid			funcid = PG_GETARG_OID(0);						\
+	PgStat_FunctionCounts *funcentry;							\
+																\
+	if ((funcentry = find_funcstat_entry(funcid)) == NULL)		\
+		PG_RETURN_NULL();										\
+	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->stat));	\
 }
 
-Datum
-pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	PgStat_FunctionCounts *funcentry;
+/* pg_stat_get_xact_function_total_time */
+PG_STAT_GET_XACT_FUNCENTRY_FLOAT8_MS(total_time)
 
-	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
-		PG_RETURN_NULL();
-	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->self_time));
-}
-
+/* pg_stat_get_xact_function_self_time */
+PG_STAT_GET_XACT_FUNCENTRY_FLOAT8_MS(self_time)
 
 /* Get the timestamp of the current statistics snapshot */
 Datum
