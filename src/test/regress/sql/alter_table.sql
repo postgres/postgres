@@ -1984,6 +1984,14 @@ CREATE TYPE test_type1 AS (a int, b text);
 CREATE TABLE test_tbl1 (x int, y test_type1);
 ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 
+DROP TABLE test_tbl1;
+CREATE TABLE test_tbl1 (x int, y text);
+CREATE INDEX test_tbl1_idx ON test_tbl1((row(x,y)::test_type1));
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+
+DROP TABLE test_tbl1;
+DROP TYPE test_type1;
+
 CREATE TYPE test_type2 AS (a int, b text);
 CREATE TABLE test_tbl2 OF test_type2;
 CREATE TABLE test_tbl2_subclass () INHERITS (test_tbl2);
@@ -2011,7 +2019,8 @@ ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa CASCADE;
 \d test_tbl2
 \d test_tbl2_subclass
 
-DROP TABLE test_tbl2_subclass;
+DROP TABLE test_tbl2_subclass, test_tbl2;
+DROP TYPE test_type2;
 
 CREATE TYPE test_typex AS (a int, b text);
 CREATE TABLE test_tblx (x int, y test_typex check ((y).a > 0));
