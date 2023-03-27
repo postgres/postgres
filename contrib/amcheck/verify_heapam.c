@@ -481,11 +481,35 @@ verify_heapam(PG_FUNCTION_ARGS)
 											   (unsigned) maxoff));
 					continue;
 				}
+
+				/*
+				 * Since we've checked that this redirect points to a line
+				 * pointer between FirstOffsetNumber and maxoff, it should
+				 * now be safe to fetch the referenced line pointer. We expect
+				 * it to be LP_NORMAL; if not, that's corruption.
+				 */
 				rditem = PageGetItemId(ctx.page, rdoffnum);
 				if (!ItemIdIsUsed(rditem))
+				{
 					report_corruption(&ctx,
-									  psprintf("line pointer redirection to unused item at offset %u",
+									  psprintf("redirected line pointer points to an unused item at offset %u",
 											   (unsigned) rdoffnum));
+					continue;
+				}
+				else if (ItemIdIsDead(rditem))
+				{
+					report_corruption(&ctx,
+									  psprintf("redirected line pointer points to a dead item at offset %u",
+											   (unsigned) rdoffnum));
+					continue;
+				}
+				else if (ItemIdIsRedirected(rditem))
+				{
+					report_corruption(&ctx,
+									  psprintf("redirected line pointer points to another redirected line pointer at offset %u",
+											   (unsigned) rdoffnum));
+					continue;
+				}
 
 				/*
 				 * Record the fact that this line pointer has passed basic
@@ -584,14 +608,12 @@ verify_heapam(PG_FUNCTION_ARGS)
 			/* Handle the cases where the current line pointer is a redirect. */
 			if (ItemIdIsRedirected(curr_lp))
 			{
-				/* Can't redirect to another redirect. */
-				if (ItemIdIsRedirected(next_lp))
-				{
-					report_corruption(&ctx,
-									  psprintf("redirected line pointer points to another redirected line pointer at offset %u",
-											   (unsigned) nextoffnum));
-					continue;
-				}
+				/*
+				 * We should not have set successor[ctx.offnum] to a value
+				 * other than InvalidOffsetNumber unless that line pointer
+				 * is LP_NORMAL.
+				 */
+				Assert(ItemIdIsNormal(next_lp));
 
 				/* Can only redirect to a HOT tuple. */
 				next_htup = (HeapTupleHeader) PageGetItem(ctx.page, next_lp);
