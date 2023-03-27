@@ -213,7 +213,7 @@ brew install docbook docbook-xsl libxslt fop
 <programlisting>
 export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
 </programlisting>
-    On Apple M1 based machines, use this:
+    On Apple Silicon based machines, use this:
 <programlisting>
 export XML_CATALOG_FILES=/opt/homebrew/etc/xml/catalog
 </programlisting>
