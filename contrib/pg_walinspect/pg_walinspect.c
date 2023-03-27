@@ -379,7 +379,7 @@ pg_get_wal_block_info(PG_FUNCTION_ARGS)
 	xlogreader = InitXLogReaderState(start_lsn);
 
 	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
-									"pg_get_block_fpi_info temporary cxt",
+									"pg_get_wal_block_info temporary cxt",
 									ALLOCSET_DEFAULT_SIZES);
 
 	while (ReadNextXLogRecord(xlogreader) &&
