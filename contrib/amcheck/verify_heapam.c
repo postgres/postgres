@@ -774,8 +774,7 @@ check_tuple_visibility(HeapCheckContext *ctx)
 	switch (get_xid_status(xmin, ctx, &xmin_status))
 	{
 		case XID_INVALID:
-			report_corruption(ctx,
-							  pstrdup("xmin is invalid"));
+			/* Could be the result of a speculative insertion that aborted. */
 			return false;
 		case XID_BOUNDS_OK:
 			break;
