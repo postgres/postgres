@@ -1809,7 +1809,7 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 			memset(repl_repl, false, sizeof(repl_repl));
 
 			repl_repl[Anum_pg_attribute_attstattarget - 1] = true;
-			repl_val[Anum_pg_attribute_attstattarget - 1] = Int32GetDatum(attstattarget);
+			repl_val[Anum_pg_attribute_attstattarget - 1] = Int16GetDatum(attstattarget);
 
 			newTuple = heap_modify_tuple(attrTuple,
 										 RelationGetDescr(pg_attribute),

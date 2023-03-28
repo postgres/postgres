@@ -2650,6 +2650,10 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				 */
 
 				def->inhcount++;
+				if (def->inhcount < 0)
+					ereport(ERROR,
+							errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							errmsg("too many inheritance parents"));
 
 				newattmap->attnums[parent_attno - 1] = exist_attno;
 			}
@@ -3173,6 +3177,10 @@ MergeCheckConstraint(List *constraints, char *name, Node *expr)
 		{
 			/* OK to merge */
 			ccon->inhcount++;
+			if (ccon->inhcount < 0)
+				ereport(ERROR,
+						errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						errmsg("too many inheritance parents"));
 			return true;
 		}
 
@@ -6828,6 +6836,10 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 			/* Bump the existing child att's inhcount */
 			childatt->attinhcount++;
+			if (childatt->attinhcount < 0)
+				ereport(ERROR,
+						errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						errmsg("too many inheritance parents"));
 			CatalogTupleUpdate(attrdesc, &tuple->t_self, tuple);
 
 			heap_freetuple(tuple);
@@ -6919,6 +6931,10 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	attribute.attstattarget = (newattnum > 0) ? -1 : 0;
 	attribute.attlen = tform->typlen;
 	attribute.attnum = newattnum;
+	if (list_length(colDef->typeName->arrayBounds) > PG_INT16_MAX)
+		ereport(ERROR,
+				errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				errmsg("too many array dimensions"));
 	attribute.attndims = list_length(colDef->typeName->arrayBounds);
 	attribute.atttypmod = typmod;
 	attribute.attbyval = tform->typbyval;
@@ -12924,6 +12940,10 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	attTup->atttypid = targettype;
 	attTup->atttypmod = targettypmod;
 	attTup->attcollation = targetcollid;
+	if (list_length(typeName->arrayBounds) > PG_INT16_MAX)
+		ereport(ERROR,
+				errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				errmsg("too many array dimensions"));
 	attTup->attndims = list_length(typeName->arrayBounds);
 	attTup->attlen = tform->typlen;
 	attTup->attbyval = tform->typbyval;
@@ -15155,6 +15175,10 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 			 * later on, this change will just roll back.)
 			 */
 			childatt->attinhcount++;
+			if (childatt->attinhcount < 0)
+				ereport(ERROR,
+						errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						errmsg("too many inheritance parents"));
 
 			/*
 			 * In case of partitions, we must enforce that value of attislocal
@@ -15292,6 +15316,10 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 			child_copy = heap_copytuple(child_tuple);
 			child_con = (Form_pg_constraint) GETSTRUCT(child_copy);
 			child_con->coninhcount++;
+			if (child_con->coninhcount < 0)
+				ereport(ERROR,
+						errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						errmsg("too many inheritance parents"));
 
 			/*
 			 * In case of partitions, an inherited constraint must be

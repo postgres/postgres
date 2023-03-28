@@ -53,15 +53,6 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	Oid			atttypid BKI_LOOKUP_OPT(pg_type);
 
 	/*
-	 * attstattarget is the target number of statistics datapoints to collect
-	 * during VACUUM ANALYZE of this column.  A zero here indicates that we do
-	 * not wish to collect any stats about this column. A "-1" here indicates
-	 * that no value has been explicitly set for this column, so ANALYZE
-	 * should use the default setting.
-	 */
-	int32		attstattarget BKI_DEFAULT(-1);
-
-	/*
 	 * attlen is a copy of the typlen field from pg_type for this attribute.
 	 * See atttypid comments above.
 	 */
@@ -83,12 +74,6 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	int16		attnum;
 
 	/*
-	 * attndims is the declared number of dimensions, if an array type,
-	 * otherwise zero.
-	 */
-	int32		attndims;
-
-	/*
 	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes in
 	 * heap tuples.  The value actually stored in pg_attribute (-1) indicates
 	 * no cached value.  But when we copy these tuples into a tuple
@@ -104,6 +89,12 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	 * value will generally be -1 for types that do not need typmod.
 	 */
 	int32		atttypmod BKI_DEFAULT(-1);
+
+	/*
+	 * attndims is the declared number of dimensions, if an array type,
+	 * otherwise zero.
+	 */
+	int16		attndims;
 
 	/*
 	 * attbyval is a copy of the typbyval field from pg_type for this
@@ -165,7 +156,18 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	bool		attislocal BKI_DEFAULT(t);
 
 	/* Number of times inherited from direct parent relation(s) */
-	int32		attinhcount BKI_DEFAULT(0);
+	int16		attinhcount BKI_DEFAULT(0);
+
+	/*
+	 * attstattarget is the target number of statistics datapoints to collect
+	 * during VACUUM ANALYZE of this column.  A zero here indicates that we do
+	 * not wish to collect any stats about this column. A "-1" here indicates
+	 * that no value has been explicitly set for this column, so ANALYZE
+	 * should use the default setting.
+	 *
+	 * int16 is sufficient because the max value is currently 10000.
+	 */
+	int16		attstattarget BKI_DEFAULT(-1);
 
 	/* attribute's collation, if any */
 	Oid			attcollation BKI_LOOKUP_OPT(pg_collation);

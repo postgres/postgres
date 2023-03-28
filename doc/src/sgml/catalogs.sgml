@@ -1166,23 +1166,6 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>attstattarget</structfield> <type>int4</type>
-      </para>
-      <para>
-       <structfield>attstattarget</structfield> controls the level of detail
-       of statistics accumulated for this column by
-       <link linkend="sql-analyze"><command>ANALYZE</command></link>.
-       A zero value indicates that no statistics should be collected.
-       A negative value says to use the system default statistics target.
-       The exact meaning of positive values is data type-dependent.
-       For scalar data types, <structfield>attstattarget</structfield>
-       is both the target number of <quote>most common values</quote>
-       to collect, and the target number of histogram bins to create.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>attlen</structfield> <type>int2</type>
       </para>
       <para>
@@ -1199,17 +1182,6 @@
        The number of the column.  Ordinary columns are numbered from 1
        up.  System columns, such as <structfield>ctid</structfield>,
        have (arbitrary) negative numbers.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>attndims</structfield> <type>int4</type>
-      </para>
-      <para>
-       Number of dimensions, if the column is an array type; otherwise 0.
-       (Presently, the number of dimensions of an array is not enforced,
-       so any nonzero value effectively means <quote>it's an array</quote>.)
       </para></entry>
      </row>
 
@@ -1234,6 +1206,17 @@
        length of a <type>varchar</type> column).  It is passed to
        type-specific input functions and length coercion functions.
        The value will generally be -1 for types that do not need <structfield>atttypmod</structfield>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>attndims</structfield> <type>int2</type>
+      </para>
+      <para>
+       Number of dimensions, if the column is an array type; otherwise 0.
+       (Presently, the number of dimensions of an array is not enforced,
+       so any nonzero value effectively means <quote>it's an array</quote>.)
       </para></entry>
      </row>
 
@@ -1362,11 +1345,28 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>attinhcount</structfield> <type>int4</type>
+       <structfield>attinhcount</structfield> <type>int2</type>
       </para>
       <para>
        The number of direct ancestors this column has.  A column with a
        nonzero number of ancestors cannot be dropped nor renamed.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>attstattarget</structfield> <type>int2</type>
+      </para>
+      <para>
+       <structfield>attstattarget</structfield> controls the level of detail
+       of statistics accumulated for this column by
+       <link linkend="sql-analyze"><command>ANALYZE</command></link>.
+       A zero value indicates that no statistics should be collected.
+       A negative value says to use the system default statistics target.
+       The exact meaning of positive values is data type-dependent.
+       For scalar data types, <structfield>attstattarget</structfield>
+       is both the target number of <quote>most common values</quote>
+       to collect, and the target number of histogram bins to create.
       </para></entry>
      </row>
 
@@ -2691,7 +2691,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>coninhcount</structfield> <type>int4</type>
+       <structfield>coninhcount</structfield> <type>int2</type>
       </para>
       <para>
        The number of direct inheritance ancestors this constraint has.

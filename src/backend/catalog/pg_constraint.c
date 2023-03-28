@@ -190,7 +190,7 @@ CreateConstraintEntry(const char *constraintName,
 	values[Anum_pg_constraint_confdeltype - 1] = CharGetDatum(foreignDeleteType);
 	values[Anum_pg_constraint_confmatchtype - 1] = CharGetDatum(foreignMatchType);
 	values[Anum_pg_constraint_conislocal - 1] = BoolGetDatum(conIsLocal);
-	values[Anum_pg_constraint_coninhcount - 1] = Int32GetDatum(conInhCount);
+	values[Anum_pg_constraint_coninhcount - 1] = Int16GetDatum(conInhCount);
 	values[Anum_pg_constraint_connoinherit - 1] = BoolGetDatum(conNoInherit);
 
 	if (conkeyArray)
@@ -805,6 +805,10 @@ ConstraintSetParentConstraint(Oid childConstrId,
 
 		constrForm->conislocal = false;
 		constrForm->coninhcount++;
+		if (constrForm->coninhcount < 0)
+			ereport(ERROR,
+					errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("too many inheritance parents"));
 		constrForm->conparentid = parentConstrId;
 
 		CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);

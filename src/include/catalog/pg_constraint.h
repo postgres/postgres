@@ -102,7 +102,7 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	bool		conislocal;
 
 	/* Number of times inherited from direct parent relation(s) */
-	int32		coninhcount;
+	int16		coninhcount;
 
 	/* Has a local definition and cannot be inherited */
 	bool		connoinherit;
