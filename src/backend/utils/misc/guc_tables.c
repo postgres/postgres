@@ -166,6 +166,22 @@ static const struct config_enum_entry intervalstyle_options[] = {
 	{NULL, 0, false}
 };
 
+static const struct config_enum_entry icu_validation_level_options[] = {
+	{"disabled", -1, false},
+	{"debug5", DEBUG5, false},
+	{"debug4", DEBUG4, false},
+	{"debug3", DEBUG3, false},
+	{"debug2", DEBUG2, false},
+	{"debug1", DEBUG1, false},
+	{"debug", DEBUG2, true},
+	{"log", LOG, false},
+	{"info", INFO, true},
+	{"notice", NOTICE, false},
+	{"warning", WARNING, false},
+	{"error", ERROR, false},
+	{NULL, 0, false}
+};
+
 StaticAssertDecl(lengthof(intervalstyle_options) == (INTSTYLE_ISO_8601 + 2),
 				 "array length mismatch");
 
@@ -4640,6 +4656,16 @@ struct config_enum ConfigureNamesEnum[] =
 		},
 		&IntervalStyle,
 		INTSTYLE_POSTGRES, intervalstyle_options,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"icu_validation_level", PGC_USERSET, CLIENT_CONN_LOCALE,
+		 gettext_noop("Log level for reporting invalid ICU locale strings."),
+		 NULL
+		},
+		&icu_validation_level,
+		ERROR, icu_validation_level_options,
 		NULL, NULL, NULL
 	},
 

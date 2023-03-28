@@ -9804,6 +9804,32 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-icu-validation-level" xreflabel="icu_validation_level">
+      <term><varname>icu_validation_level</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>icu_validation_level</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When ICU locale validation problems are encountered, controls which
+        <link linkend="runtime-config-severity-levels">message level</link> is
+        used to report the problem. Valid values are
+        <literal>DISABLED</literal>, <literal>DEBUG5</literal>,
+        <literal>DEBUG4</literal>, <literal>DEBUG3</literal>,
+        <literal>DEBUG2</literal>, <literal>DEBUG1</literal>,
+        <literal>INFO</literal>, <literal>NOTICE</literal>,
+        <literal>WARNING</literal>, <literal>ERROR</literal>, and
+        <literal>LOG</literal>.
+       </para>
+       <para>
+        If set to <literal>DISABLED</literal>, does not report validation
+        problems at all. Otherwise reports problems at the given message
+        level. The default is <literal>ERROR</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-default-text-search-config" xreflabel="default_text_search_config">
       <term><varname>default_text_search_config</varname> (<type>string</type>)
       <indexterm>

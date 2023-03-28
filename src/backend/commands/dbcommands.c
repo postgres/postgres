@@ -1058,7 +1058,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("ICU locale must be specified")));
 
-		check_icu_locale(dbiculocale);
+		icu_validate_locale(dbiculocale);
 	}
 	else
 	{

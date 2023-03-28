@@ -258,6 +258,8 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("parameter \"locale\" must be specified")));
+
+			icu_validate_locale(colliculocale);
 		}
 
 		/*

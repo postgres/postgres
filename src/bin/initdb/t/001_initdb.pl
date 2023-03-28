@@ -128,6 +128,24 @@ if ($ENV{with_icu} eq 'yes')
 		],
 		qr/error: encoding mismatch/,
 		'fails for encoding not supported by ICU');
+
+	command_fails_like(
+		[
+			'initdb',                '--no-sync',
+			'--locale-provider=icu',
+			'--icu-locale=nonsense-nowhere', "$tempdir/dataX"
+		],
+		qr/error: locale "nonsense-nowhere" has unknown language "nonsense"/,
+		'fails for nonsense language');
+
+	command_fails_like(
+		[
+			'initdb',                '--no-sync',
+			'--locale-provider=icu',
+			'--icu-locale=@colNumeric=lower', "$tempdir/dataX"
+		],
+		qr/could not open collator for locale "\@colNumeric=lower": U_ILLEGAL_ARGUMENT_ERROR/,
+		'fails for invalid collation argument');
 }
 else
 {

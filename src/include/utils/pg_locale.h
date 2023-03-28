@@ -40,6 +40,7 @@ extern PGDLLIMPORT char *locale_messages;
 extern PGDLLIMPORT char *locale_monetary;
 extern PGDLLIMPORT char *locale_numeric;
 extern PGDLLIMPORT char *locale_time;
+extern PGDLLIMPORT int	 icu_validation_level;
 
 /* lc_time localization cache */
 extern PGDLLIMPORT char *localized_abbrev_days[];
@@ -118,11 +119,12 @@ extern size_t pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
 extern size_t pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 								 size_t srclen, pg_locale_t locale);
 
+extern void icu_validate_locale(const char *loc_str);
+
 #ifdef USE_ICU
 extern int32_t icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes);
 extern int32_t icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar);
 #endif
-extern void check_icu_locale(const char *icu_locale);
 
 /* These functions convert from/to libc's wchar_t, *not* pg_wchar_t */
 extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen,

@@ -58,6 +58,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_control.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
 #include "utils/guc_hooks.h"
@@ -94,6 +95,8 @@ char	   *locale_messages;
 char	   *locale_monetary;
 char	   *locale_numeric;
 char	   *locale_time;
+
+int			icu_validation_level = ERROR;
 
 /*
  * lc_time localization cache.
@@ -2821,24 +2824,77 @@ icu_set_collation_attributes(UCollator *collator, const char *loc,
 	pfree(lower_str);
 }
 
-#endif							/* USE_ICU */
+#endif
 
 /*
- * Check if the given locale ID is valid, and ereport(ERROR) if it isn't.
+ * Perform best-effort check that the locale is a valid one.
  */
 void
-check_icu_locale(const char *icu_locale)
+icu_validate_locale(const char *loc_str)
 {
 #ifdef USE_ICU
-	UCollator  *collator;
+	UCollator	*collator;
+	UErrorCode	 status;
+	char		 lang[ULOC_LANG_CAPACITY];
+	bool		 found	 = false;
+	int			 elevel = icu_validation_level;
 
-	collator = pg_ucol_open(icu_locale);
+	/* no validation */
+	if (elevel < 0)
+		return;
+
+	/* downgrade to WARNING during pg_upgrade */
+	if (IsBinaryUpgrade && elevel > WARNING)
+		elevel = WARNING;
+
+	/* validate that we can extract the language */
+	status = U_ZERO_ERROR;
+	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
+	if (U_FAILURE(status))
+	{
+		ereport(elevel,
+				(errmsg("could not get language from ICU locale \"%s\": %s",
+						loc_str, u_errorName(status)),
+				 errhint("To disable ICU locale validation, set parameter icu_validation_level to DISABLED.")));
+		return;
+	}
+
+	/* check for special language name */
+	if (strcmp(lang, "") == 0 ||
+		strcmp(lang, "root") == 0 || strcmp(lang, "und") == 0 ||
+		strcmp(lang, "c") == 0 || strcmp(lang, "posix") == 0)
+		found = true;
+
+	/* search for matching language within ICU */
+	for (int32_t i = 0; !found && i < uloc_countAvailable(); i++)
+	{
+		const char	*otherloc = uloc_getAvailable(i);
+		char		 otherlang[ULOC_LANG_CAPACITY];
+
+		status = U_ZERO_ERROR;
+		uloc_getLanguage(otherloc, otherlang, ULOC_LANG_CAPACITY, &status);
+		if (U_FAILURE(status))
+			continue;
+
+		if (strcmp(lang, otherlang) == 0)
+			found = true;
+	}
+
+	if (!found)
+		ereport(elevel,
+				(errmsg("ICU locale \"%s\" has unknown language \"%s\"",
+						loc_str, lang),
+				 errhint("To disable ICU locale validation, set parameter icu_validation_level to DISABLED.")));
+
+	/* check that it can be opened */
+	collator = pg_ucol_open(loc_str);
 	ucol_close(collator);
-#else
+#else							/* not USE_ICU */
+	/* could get here if a collation was created by a build with ICU */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("ICU is not supported in this build")));
-#endif
+#endif							/* not USE_ICU */
 }
 
 /*
