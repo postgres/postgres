@@ -1265,6 +1265,29 @@ my %tests = (
 		},
 	},
 
+	'LO create (with no data)' => {
+		create_sql =>
+		  'SELECT pg_catalog.lo_create(0);',
+		regexp => qr/^
+			\QSELECT pg_catalog.lo_open\E \('\d+',\ \d+\);\n
+			\QSELECT pg_catalog.lo_close(0);\E
+			/xm,
+		like   => {
+			%full_runs,
+			column_inserts         => 1,
+			data_only              => 1,
+			inserts                => 1,
+			section_data           => 1,
+			test_schema_plus_large_objects => 1,
+		},
+		unlike => {
+			binary_upgrade         => 1,
+			no_large_objects       => 1,
+			schema_only            => 1,
+			section_pre_data       => 1,
+		},
+	},
+
 	'COMMENT ON DATABASE postgres' => {
 		regexp => qr/^COMMENT ON DATABASE postgres IS .+;/m,
 
