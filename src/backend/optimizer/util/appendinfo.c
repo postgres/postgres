@@ -21,6 +21,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/appendinfo.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/planmain.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -968,9 +969,10 @@ distribute_row_identity_vars(PlannerInfo *root)
 	 * certainly process no rows.  Handle this edge case by re-opening the top
 	 * result relation and adding the row identity columns it would have used,
 	 * as preprocess_targetlist() would have done if it weren't marked "inh".
-	 * (This is a bit ugly, but it seems better to confine the ugliness and
-	 * extra cycles to this unusual corner case.)  We needn't worry about
-	 * fixing the rel's reltarget, as that won't affect the finished plan.
+	 * Then re-run build_base_rel_tlists() to ensure that the added columns
+	 * get propagated to the relation's reltarget.  (This is a bit ugly, but
+	 * it seems better to confine the ugliness and extra cycles to this
+	 * unusual corner case.)
 	 */
 	if (root->row_identity_vars == NIL)
 	{
@@ -980,6 +982,8 @@ distribute_row_identity_vars(PlannerInfo *root)
 		add_row_identity_columns(root, result_relation,
 								 target_rte, target_relation);
 		table_close(target_relation, NoLock);
+		build_base_rel_tlists(root, root->processed_tlist);
+		/* There are no ROWID_VAR Vars in this case, so we're done. */
 		return;
 	}
 
