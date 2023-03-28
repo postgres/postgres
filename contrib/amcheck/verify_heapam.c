@@ -1032,8 +1032,7 @@ check_tuple_visibility(HeapCheckContext *ctx, bool *xmin_commit_status_ok,
 	switch (get_xid_status(xmin, ctx, &xmin_status))
 	{
 		case XID_INVALID:
-			report_corruption(ctx,
-							  pstrdup("xmin is invalid"));
+			/* Could be the result of a speculative insertion that aborted. */
 			return false;
 		case XID_BOUNDS_OK:
 			*xmin_commit_status_ok = true;
