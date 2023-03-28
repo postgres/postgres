@@ -2339,7 +2339,10 @@ setlocales(void)
 	{
 		/* acquire default locale from the environment, if not specified */
 		if (icu_locale == NULL)
+		{
 			icu_locale = default_icu_locale();
+			printf(_("Using default ICU locale \"%s\".\n"), icu_locale);
+		}
 
 		/*
 		 * In supported builds, the ICU locale ID will be checked by the
