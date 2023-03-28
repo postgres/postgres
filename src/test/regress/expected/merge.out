@@ -1849,6 +1849,32 @@ TABLE pa_target;
    2
 (2 rows)
 
+-- Partition-less partitioned table
+-- (the bug we are checking for appeared only if table had partitions before)
+DROP TABLE pa_targetp;
+EXPLAIN (VERBOSE, COSTS OFF)
+MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
+  WHEN NOT MATCHED THEN INSERT VALUES (s.sid);
+                 QUERY PLAN                 
+--------------------------------------------
+ Merge on public.pa_target t
+   ->  Hash Left Join
+         Output: s.sid, t.ctid
+         Inner Unique: true
+         Hash Cond: (s.sid = t.tid)
+         ->  Seq Scan on public.pa_source s
+               Output: s.sid
+         ->  Hash
+               Output: t.tid, t.ctid
+               ->  Result
+                     Output: t.tid, t.ctid
+                     One-Time Filter: false
+(12 rows)
+
+MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
+  WHEN NOT MATCHED THEN INSERT VALUES (s.sid);
+ERROR:  no partition of relation "pa_target" found for row
+DETAIL:  Partition key of the failing row contains (tid) = (1).
 DROP TABLE pa_source;
 DROP TABLE pa_target CASCADE;
 -- some complex joins on the source side

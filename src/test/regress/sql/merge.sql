@@ -1169,6 +1169,18 @@ MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
 
 TABLE pa_target;
 
+-- Partition-less partitioned table
+-- (the bug we are checking for appeared only if table had partitions before)
+
+DROP TABLE pa_targetp;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
+  WHEN NOT MATCHED THEN INSERT VALUES (s.sid);
+
+MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
+  WHEN NOT MATCHED THEN INSERT VALUES (s.sid);
+
 DROP TABLE pa_source;
 DROP TABLE pa_target CASCADE;
 
