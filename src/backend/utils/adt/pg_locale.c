@@ -147,7 +147,8 @@ static size_t uchar_length(UConverter *converter,
 static int32_t uchar_convert(UConverter *converter,
 							 UChar *dest, int32_t destlen,
 							 const char *str, int32_t srclen);
-static void icu_set_collation_attributes(UCollator *collator, const char *loc);
+static void icu_set_collation_attributes(UCollator *collator, const char *loc,
+										 UErrorCode *status);
 #endif
 
 /*
@@ -2496,6 +2497,7 @@ pg_ucol_open(const char *loc_str)
 {
 	UCollator  *collator;
 	UErrorCode	status;
+	const char *orig_str = loc_str;
 	char	   *fixed_str = NULL;
 
 	/*
@@ -2544,11 +2546,27 @@ pg_ucol_open(const char *loc_str)
 	collator = ucol_open(loc_str, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
+				/* use original string for error report */
 				(errmsg("could not open collator for locale \"%s\": %s",
-						loc_str, u_errorName(status))));
+						orig_str, u_errorName(status))));
 
 	if (U_ICU_VERSION_MAJOR_NUM < 54)
-		icu_set_collation_attributes(collator, loc_str);
+	{
+		status = U_ZERO_ERROR;
+		icu_set_collation_attributes(collator, loc_str, &status);
+
+		/*
+		 * Pretend the error came from ucol_open(), for consistent error
+		 * message across ICU versions.
+		 */
+		if (U_FAILURE(status))
+		{
+			ucol_close(collator);
+			ereport(ERROR,
+					(errmsg("could not open collator for locale \"%s\": %s",
+							orig_str, u_errorName(status))));
+		}
+	}
 
 	if (fixed_str != NULL)
 		pfree(fixed_str);
@@ -2698,9 +2716,9 @@ icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
  */
 pg_attribute_unused()
 static void
-icu_set_collation_attributes(UCollator *collator, const char *loc)
+icu_set_collation_attributes(UCollator *collator, const char *loc,
+							 UErrorCode *status)
 {
-	UErrorCode	status;
 	int32_t		len;
 	char	   *icu_locale_id;
 	char	   *lower_str;
@@ -2713,15 +2731,13 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 	 * locale ID, e.g. "und@colcaselevel=yes;colstrength=primary", by
 	 * uloc_canonicalize().
 	 */
-	status = U_ZERO_ERROR;
-	len = uloc_canonicalize(loc, NULL, 0, &status);
+	*status = U_ZERO_ERROR;
+	len = uloc_canonicalize(loc, NULL, 0, status);
 	icu_locale_id = palloc(len + 1);
-	status = U_ZERO_ERROR;
-	len = uloc_canonicalize(loc, icu_locale_id, len + 1, &status);
-	if (U_FAILURE(status))
-		ereport(ERROR,
-				(errmsg("canonicalization failed for locale string \"%s\": %s",
-						loc, u_errorName(status))));
+	*status = U_ZERO_ERROR;
+	len = uloc_canonicalize(loc, icu_locale_id, len + 1, status);
+	if (U_FAILURE(*status))
+		return;
 
 	lower_str = asc_tolower(icu_locale_id, strlen(icu_locale_id));
 
@@ -2743,7 +2759,7 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 			UColAttribute uattr;
 			UColAttributeValue uvalue;
 
-			status = U_ZERO_ERROR;
+			*status = U_ZERO_ERROR;
 
 			*e = '\0';
 			name = token;
@@ -2793,22 +2809,12 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 			else if (strcmp(value, "upper") == 0)
 				uvalue = UCOL_UPPER_FIRST;
 			else
-				status = U_ILLEGAL_ARGUMENT_ERROR;
-
-			if (status == U_ZERO_ERROR)
-				ucol_setAttribute(collator, uattr, uvalue, &status);
-
-			/*
-			 * Pretend the error came from ucol_open(), for consistent error
-			 * message across ICU versions.
-			 */
-			if (U_FAILURE(status))
 			{
-				ucol_close(collator);
-				ereport(ERROR,
-						(errmsg("could not open collator for locale \"%s\": %s",
-								loc, u_errorName(status))));
+				*status = U_ILLEGAL_ARGUMENT_ERROR;
+				break;
 			}
+
+			ucol_setAttribute(collator, uattr, uvalue, status);
 		}
 	}
 
