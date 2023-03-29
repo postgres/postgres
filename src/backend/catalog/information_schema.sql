@@ -1411,7 +1411,7 @@ GRANT SELECT ON routine_privileges TO PUBLIC;
 
 
 /*
- * 5.42
+ * 5.43
  * ROLE_ROUTINE_GRANTS view
  */
 
@@ -1948,7 +1948,7 @@ GRANT SELECT ON table_privileges TO PUBLIC;
 
 
 /*
- * 5.43
+ * 5.44
  * ROLE_TABLE_GRANTS view
  */
 
@@ -2246,7 +2246,7 @@ GRANT SELECT ON udt_privileges TO PUBLIC;
 
 
 /*
- * 5.46
+ * 5.47
  * ROLE_UDT_GRANTS view
  */
 
@@ -2437,7 +2437,7 @@ GRANT SELECT ON usage_privileges TO PUBLIC;
 
 
 /*
- * 5.45
+ * 5.46
  * ROLE_USAGE_GRANTS view
  */
 
