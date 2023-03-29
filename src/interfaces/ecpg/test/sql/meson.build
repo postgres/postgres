@@ -25,6 +25,7 @@ pgc_files = [
   'quote',
   'show',
   'sqlda',
+  'sqljson',
   'twophase',
 ]
 

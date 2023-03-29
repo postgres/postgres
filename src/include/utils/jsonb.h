@@ -321,6 +321,8 @@ typedef struct JsonbParseState
 	JsonbValue	contVal;
 	Size		size;
 	struct JsonbParseState *next;
+	bool		unique_keys;	/* Check object key uniqueness */
+	bool		skip_nulls;		/* Skip null object fields */
 } JsonbParseState;
 
 /*
@@ -427,4 +429,11 @@ extern Datum jsonb_set_element(Jsonb *jb, Datum *path, int path_len,
 							   JsonbValue *newval);
 extern Datum jsonb_get_element(Jsonb *jb, Datum *path, int npath,
 							   bool *isnull, bool as_text);
+extern bool to_jsonb_is_immutable(Oid typoid);
+extern Datum jsonb_build_object_worker(int nargs, Datum *args, bool *nulls,
+									   Oid *types, bool absent_on_null,
+									   bool unique_keys);
+extern Datum jsonb_build_array_worker(int nargs, Datum *args, bool *nulls,
+									  Oid *types, bool absent_on_null);
+
 #endif							/* __JSONB_H__ */

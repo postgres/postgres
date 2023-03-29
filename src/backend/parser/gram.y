@@ -644,6 +644,22 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <defelt>		hash_partbound_elem
 
 
+%type <node>		json_format_clause_opt
+					json_value_expr
+					json_output_clause_opt
+					json_name_and_value
+					json_aggregate_func
+
+%type <list>		json_name_and_value_list
+					json_value_expr_list
+					json_array_aggregate_order_by_clause_opt
+
+%type <ival>		json_encoding_clause_opt
+
+%type <boolean>		json_key_uniqueness_constraint_opt
+					json_object_constructor_null_clause_opt
+					json_array_constructor_null_clause_opt
+
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
  * They must be listed first so that their numeric codes do not depend on
@@ -669,7 +685,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  */
 
 /* ordinary key words in alphabetical order */
-%token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
+%token <keyword> ABORT_P ABSENT ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
 	AGGREGATE ALL ALSO ALTER ALWAYS ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASENSITIVE ASSERTION ASSIGNMENT ASYMMETRIC ATOMIC AT ATTACH ATTRIBUTE AUTHORIZATION
 
@@ -695,7 +711,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	EXTENSION EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FILTER FINALIZE FIRST_P FLOAT_P FOLLOWING FOR
-	FORCE FOREIGN FORWARD FREEZE FROM FULL FUNCTION FUNCTIONS
+	FORCE FOREIGN FORMAT FORWARD FREEZE FROM FULL FUNCTION FUNCTIONS
 
 	GENERATED GLOBAL GRANT GRANTED GREATEST GROUP_P GROUPING GROUPS
 
@@ -706,9 +722,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	INNER_P INOUT INPUT_P INSENSITIVE INSERT INSTEAD INT_P INTEGER
 	INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
-	JOIN
+	JOIN JSON JSON_ARRAY JSON_ARRAYAGG JSON_OBJECT JSON_OBJECTAGG
 
-	KEY
+	KEY KEYS
 
 	LABEL LANGUAGE LARGE_P LAST_P LATERAL_P
 	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
@@ -772,9 +788,10 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  * NOT_LA exists so that productions such as NOT LIKE can be given the same
  * precedence as LIKE; otherwise they'd effectively have the same precedence
  * as NOT, at least with respect to their left-hand subexpression.
- * NULLS_LA and WITH_LA are needed to make the grammar LALR(1).
+ * FORMAT_LA, NULLS_LA, WITH_LA, and WITHOUT_LA are needed to make the grammar
+ * LALR(1).
  */
-%token		NOT_LA NULLS_LA WITH_LA
+%token		FORMAT_LA NOT_LA NULLS_LA WITH_LA WITHOUT_LA
 
 /*
  * The grammar likewise thinks these tokens are keywords, but they are never
@@ -792,6 +809,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 /* Precedence: lowest to highest */
 %nonassoc	SET				/* see relation_expr_opt_alias */
+%right		FORMAT
 %left		UNION EXCEPT
 %left		INTERSECT
 %left		OR
@@ -11698,6 +11716,7 @@ utility_option_elem:
 utility_option_name:
 			NonReservedWord							{ $$ = $1; }
 			| analyze_keyword						{ $$ = "analyze"; }
+			| FORMAT_LA								{ $$ = "format"; }
 		;
 
 utility_option_arg:
@@ -15185,6 +15204,16 @@ func_expr: func_application within_group_clause filter_clause over_clause
 					n->over = $4;
 					$$ = (Node *) n;
 				}
+			| json_aggregate_func filter_clause over_clause
+				{
+					JsonAggConstructor *n = IsA($1, JsonObjectAgg) ?
+						((JsonObjectAgg *) $1)->constructor :
+						((JsonArrayAgg *) $1)->constructor;
+
+					n->agg_filter = $2;
+					n->over = $3;
+					$$ = (Node *) $1;
+				}
 			| func_expr_common_subexpr
 				{ $$ = $1; }
 		;
@@ -15198,6 +15227,7 @@ func_expr: func_application within_group_clause filter_clause over_clause
 func_expr_windowless:
 			func_application						{ $$ = $1; }
 			| func_expr_common_subexpr				{ $$ = $1; }
+			| json_aggregate_func					{ $$ = $1; }
 		;
 
 /*
@@ -15540,6 +15570,79 @@ func_expr_common_subexpr:
 					n->expr = $4;
 					n->typeName = $6;
 					n->indent = $7;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| JSON_OBJECT '(' func_arg_list ')'
+				{
+					/* Support for legacy (non-standard) json_object() */
+					$$ = (Node *) makeFuncCall(SystemFuncName("json_object"),
+											   $3, COERCE_EXPLICIT_CALL, @1);
+				}
+			| JSON_OBJECT '(' json_name_and_value_list
+				json_object_constructor_null_clause_opt
+				json_key_uniqueness_constraint_opt
+				json_output_clause_opt ')'
+				{
+					JsonObjectConstructor *n = makeNode(JsonObjectConstructor);
+
+					n->exprs = $3;
+					n->absent_on_null = $4;
+					n->unique = $5;
+					n->output = (JsonOutput *) $6;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| JSON_OBJECT '(' json_output_clause_opt ')'
+				{
+					JsonObjectConstructor *n = makeNode(JsonObjectConstructor);
+
+					n->exprs = NULL;
+					n->absent_on_null = false;
+					n->unique = false;
+					n->output = (JsonOutput *) $3;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| JSON_ARRAY '('
+				json_value_expr_list
+				json_array_constructor_null_clause_opt
+				json_output_clause_opt
+			')'
+				{
+					JsonArrayConstructor *n = makeNode(JsonArrayConstructor);
+
+					n->exprs = $3;
+					n->absent_on_null = $4;
+					n->output = (JsonOutput *) $5;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| JSON_ARRAY '('
+				select_no_parens
+				json_format_clause_opt
+				/* json_array_constructor_null_clause_opt */
+				json_output_clause_opt
+			')'
+				{
+					JsonArrayQueryConstructor *n = makeNode(JsonArrayQueryConstructor);
+
+					n->query = $3;
+					n->format = (JsonFormat *) $4;
+					n->absent_on_null = true;	/* XXX */
+					n->output = (JsonOutput *) $5;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| JSON_ARRAY '('
+				json_output_clause_opt
+			')'
+				{
+					JsonArrayConstructor *n = makeNode(JsonArrayConstructor);
+
+					n->exprs = NIL;
+					n->absent_on_null = true;
+					n->output = (JsonOutput *) $3;
 					n->location = @1;
 					$$ = (Node *) n;
 				}
@@ -16267,6 +16370,132 @@ opt_asymmetric: ASYMMETRIC
 			| /*EMPTY*/
 		;
 
+/* SQL/JSON support */
+json_value_expr:
+			a_expr json_format_clause_opt
+			{
+				$$ = (Node *) makeJsonValueExpr((Expr *) $1, castNode(JsonFormat, $2));
+			}
+		;
+
+json_format_clause_opt:
+			FORMAT_LA JSON json_encoding_clause_opt
+				{
+					$$ = (Node *) makeJsonFormat(JS_FORMAT_JSON, $3, @1);
+				}
+			| /* EMPTY */
+				{
+					$$ = (Node *) makeJsonFormat(JS_FORMAT_DEFAULT, JS_ENC_DEFAULT, -1);
+				}
+		;
+
+json_encoding_clause_opt:
+			ENCODING name					{ $$ = makeJsonEncoding($2); }
+			| /* EMPTY */					{ $$ = JS_ENC_DEFAULT; }
+		;
+
+json_output_clause_opt:
+			RETURNING Typename json_format_clause_opt
+				{
+					JsonOutput *n = makeNode(JsonOutput);
+
+					n->typeName = $2;
+					n->returning = makeNode(JsonReturning);
+					n->returning->format = (JsonFormat *) $3;
+					$$ = (Node *) n;
+				}
+			| /* EMPTY */							{ $$ = NULL; }
+		;
+
+/* KEYS is a noise word here */
+json_key_uniqueness_constraint_opt:
+			WITH UNIQUE KEYS				{ $$ = true; }
+			| WITH UNIQUE				    { $$ = true; }
+			| WITHOUT_LA UNIQUE KEYS		{ $$ = false; }
+			| WITHOUT_LA UNIQUE			    { $$ = false; }
+			| /* EMPTY */ 					{ $$ = false; }
+		;
+
+json_name_and_value_list:
+			json_name_and_value
+				{ $$ = list_make1($1); }
+			| json_name_and_value_list ',' json_name_and_value
+				{ $$ = lappend($1, $3); }
+		;
+
+json_name_and_value:
+/* Supporting this syntax seems to require major surgery
+			KEY c_expr VALUE_P json_value_expr
+				{ $$ = makeJsonKeyValue($2, $4); }
+			|
+*/
+			c_expr VALUE_P json_value_expr
+				{ $$ = makeJsonKeyValue($1, $3); }
+			|
+			a_expr ':' json_value_expr
+				{ $$ = makeJsonKeyValue($1, $3); }
+		;
+
+/* empty means false for objects, true for arrays */
+json_object_constructor_null_clause_opt:
+			NULL_P ON NULL_P					{ $$ = false; }
+			| ABSENT ON NULL_P					{ $$ = true; }
+			| /* EMPTY */						{ $$ = false; }
+		;
+
+json_array_constructor_null_clause_opt:
+			NULL_P ON NULL_P						{ $$ = false; }
+			| ABSENT ON NULL_P						{ $$ = true; }
+			| /* EMPTY */							{ $$ = true; }
+		;
+
+json_value_expr_list:
+			json_value_expr								{ $$ = list_make1($1); }
+			| json_value_expr_list ',' json_value_expr	{ $$ = lappend($1, $3);}
+		;
+
+json_aggregate_func:
+			JSON_OBJECTAGG '('
+				json_name_and_value
+				json_object_constructor_null_clause_opt
+				json_key_uniqueness_constraint_opt
+				json_output_clause_opt
+			')'
+				{
+					JsonObjectAgg *n = makeNode(JsonObjectAgg);
+
+					n->arg = (JsonKeyValue *) $3;
+					n->absent_on_null = $4;
+					n->unique = $5;
+					n->constructor = makeNode(JsonAggConstructor);
+					n->constructor->output = (JsonOutput *) $6;
+					n->constructor->agg_order = NULL;
+					n->constructor->location = @1;
+					$$ = (Node *) n;
+				}
+			| JSON_ARRAYAGG '('
+				json_value_expr
+				json_array_aggregate_order_by_clause_opt
+				json_array_constructor_null_clause_opt
+				json_output_clause_opt
+			')'
+				{
+					JsonArrayAgg *n = makeNode(JsonArrayAgg);
+
+					n->arg = (JsonValueExpr *) $3;
+					n->absent_on_null = $5;
+					n->constructor = makeNode(JsonAggConstructor);
+					n->constructor->agg_order = $4;
+					n->constructor->output = (JsonOutput *) $6;
+					n->constructor->location = @1;
+					$$ = (Node *) n;
+				}
+		;
+
+json_array_aggregate_order_by_clause_opt:
+			ORDER BY sortby_list					{ $$ = $3; }
+			| /* EMPTY */							{ $$ = NIL; }
+		;
 
 /*****************************************************************************
  *
@@ -16718,6 +16947,7 @@ BareColLabel:	IDENT								{ $$ = $1; }
  */
 unreserved_keyword:
 			  ABORT_P
+			| ABSENT
 			| ABSOLUTE_P
 			| ACCESS
 			| ACTION
@@ -16814,6 +17044,7 @@ unreserved_keyword:
 			| FIRST_P
 			| FOLLOWING
 			| FORCE
+			| FORMAT
 			| FORWARD
 			| FUNCTION
 			| FUNCTIONS
@@ -16846,7 +17077,9 @@ unreserved_keyword:
 			| INSTEAD
 			| INVOKER
 			| ISOLATION
+			| JSON
 			| KEY
+			| KEYS
 			| LABEL
 			| LANGUAGE
 			| LARGE_P
@@ -17058,6 +17291,10 @@ col_name_keyword:
 			| INT_P
 			| INTEGER
 			| INTERVAL
+			| JSON_ARRAY
+			| JSON_ARRAYAGG
+			| JSON_OBJECT
+			| JSON_OBJECTAGG
 			| LEAST
 			| NATIONAL
 			| NCHAR
@@ -17227,6 +17464,7 @@ reserved_keyword:
  */
 bare_label_keyword:
 			  ABORT_P
+			| ABSENT
 			| ABSOLUTE_P
 			| ACCESS
 			| ACTION
@@ -17366,6 +17604,7 @@ bare_label_keyword:
 			| FOLLOWING
 			| FORCE
 			| FOREIGN
+			| FORMAT
 			| FORWARD
 			| FREEZE
 			| FULL
@@ -17411,7 +17650,13 @@ bare_label_keyword:
 			| IS
 			| ISOLATION
 			| JOIN
+			| JSON
+			| JSON_ARRAY
+			| JSON_ARRAYAGG
+			| JSON_OBJECT
+			| JSON_OBJECTAGG
 			| KEY
+			| KEYS
 			| LABEL
 			| LANGUAGE
 			| LARGE_P

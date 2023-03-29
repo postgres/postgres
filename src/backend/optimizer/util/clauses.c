@@ -51,6 +51,8 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
+#include "utils/json.h"
+#include "utils/jsonb.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -382,6 +384,33 @@ contain_mutable_functions_walker(Node *node, void *context)
 	if (check_functions_in_node(node, contain_mutable_functions_checker,
 								context))
 		return true;
+
+	if (IsA(node, JsonConstructorExpr))
+	{
+		const JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
+		ListCell   *lc;
+		bool		is_jsonb;
+
+		is_jsonb = ctor->returning->format->format_type == JS_FORMAT_JSONB;
+
+		/*
+		 * Check argument_type => json[b] conversions specifically.  We still
+		 * recurse to check 'args' below, but here we want to specifically
+		 * check whether or not the emitted clause would fail to be immutable
+		 * because of TimeZone, for example.
+		 */
+		foreach(lc, ctor->args)
+		{
+			Oid			typid = exprType(lfirst(lc));
+
+			if (is_jsonb ?
+				!to_jsonb_is_immutable(typid) :
+				!to_json_is_immutable(typid))
+				return true;
+		}
+
+		/* Check all subnodes */
+	}
 
 	if (IsA(node, NextValueExpr))
 	{
@@ -2786,6 +2815,32 @@ eval_const_expressions_mutator(Node *node,
 				}
 				break;
 			}
+
+		case T_JsonValueExpr:
+			{
+				JsonValueExpr *jve = (JsonValueExpr *) node;
+				Node	   *raw;
+
+				raw = eval_const_expressions_mutator((Node *) jve->raw_expr,
+													 context);
+				if (raw && IsA(raw, Const))
+				{
+					Node	   *formatted;
+					Node	   *save_case_val = context->case_val;
+
+					context->case_val = raw;
+
+					formatted = eval_const_expressions_mutator((Node *) jve->formatted_expr,
+															   context);
+
+					context->case_val = save_case_val;
+
+					if (formatted && IsA(formatted, Const))
+						return formatted;
+				}
+				break;
+			}
+
 		case T_SubPlan:
 		case T_AlternativeSubPlan:
 

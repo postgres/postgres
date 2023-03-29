@@ -71,6 +71,8 @@
 #include "utils/date.h"
 #include "utils/datum.h"
 #include "utils/expandedrecord.h"
+#include "utils/json.h"
+#include "utils/jsonb.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
@@ -474,6 +476,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_SCALARARRAYOP,
 		&&CASE_EEOP_HASHED_SCALARARRAYOP,
 		&&CASE_EEOP_XMLEXPR,
+		&&CASE_EEOP_JSON_CONSTRUCTOR,
 		&&CASE_EEOP_AGGREF,
 		&&CASE_EEOP_GROUPING_FUNC,
 		&&CASE_EEOP_WINDOW_FUNC,
@@ -1508,6 +1511,13 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			/* too complex for an inline implementation */
 			ExecEvalXmlExpr(state, op);
 
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_JSON_CONSTRUCTOR)
+		{
+			/* too complex for an inline implementation */
+			ExecEvalJsonConstructor(state, op, econtext);
 			EEO_NEXT();
 		}
 
@@ -4436,4 +4446,44 @@ ExecAggPlainTransByRef(AggState *aggstate, AggStatePerTrans pertrans,
 	pergroup->transValueIsNull = fcinfo->isnull;
 
 	MemoryContextSwitchTo(oldContext);
+}
+
+/*
+ * Evaluate a JSON constructor expression.
+ */
+void
+ExecEvalJsonConstructor(ExprState *state, ExprEvalStep *op,
+						ExprContext *econtext)
+{
+	Datum		res;
+	JsonConstructorExprState *jcstate = op->d.json_constructor.jcstate;
+	JsonConstructorExpr *ctor = jcstate->constructor;
+	bool		is_jsonb = ctor->returning->format->format_type == JS_FORMAT_JSONB;
+	bool		isnull = false;
+
+	if (ctor->type == JSCTOR_JSON_ARRAY)
+		res = (is_jsonb ?
+			   jsonb_build_array_worker :
+			   json_build_array_worker) (jcstate->nargs,
+										 jcstate->arg_values,
+										 jcstate->arg_nulls,
+										 jcstate->arg_types,
+										 jcstate->constructor->absent_on_null);
+	else if (ctor->type == JSCTOR_JSON_OBJECT)
+		res = (is_jsonb ?
+			   jsonb_build_object_worker :
+			   json_build_object_worker) (jcstate->nargs,
+										  jcstate->arg_values,
+										  jcstate->arg_nulls,
+										  jcstate->arg_types,
+										  jcstate->constructor->absent_on_null,
+										  jcstate->constructor->unique);
+	else
+	{
+		res = (Datum) 0;
+		elog(ERROR, "invalid JsonConstructorExpr type %d", ctor->type);
+	}
+
+	*op->resvalue = res;
+	*op->resnull = isnull;
 }

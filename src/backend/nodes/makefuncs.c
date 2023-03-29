@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "utils/errcodes.h"
 #include "utils/lsyscache.h"
 
 
@@ -824,4 +825,72 @@ makeVacuumRelation(RangeVar *relation, Oid oid, List *va_cols)
 	v->oid = oid;
 	v->va_cols = va_cols;
 	return v;
+}
+
+/*
+ * makeJsonFormat -
+ *	  creates a JsonFormat node
+ */
+JsonFormat *
+makeJsonFormat(JsonFormatType type, JsonEncoding encoding, int location)
+{
+	JsonFormat *jf = makeNode(JsonFormat);
+
+	jf->format_type = type;
+	jf->encoding = encoding;
+	jf->location = location;
+
+	return jf;
+}
+
+/*
+ * makeJsonValueExpr -
+ *	  creates a JsonValueExpr node
+ */
+JsonValueExpr *
+makeJsonValueExpr(Expr *expr, JsonFormat *format)
+{
+	JsonValueExpr *jve = makeNode(JsonValueExpr);
+
+	jve->raw_expr = expr;
+	jve->formatted_expr = NULL;
+	jve->format = format;
+
+	return jve;
+}
+
+/*
+ * makeJsonEncoding -
+ *	  converts JSON encoding name to enum JsonEncoding
+ */
+JsonEncoding
+makeJsonEncoding(char *name)
+{
+	if (!pg_strcasecmp(name, "utf8"))
+		return JS_ENC_UTF8;
+	if (!pg_strcasecmp(name, "utf16"))
+		return JS_ENC_UTF16;
+	if (!pg_strcasecmp(name, "utf32"))
+		return JS_ENC_UTF32;
+
+	ereport(ERROR,
+			errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("unrecognized JSON encoding: %s", name));
+
+	return JS_ENC_DEFAULT;
+}
+
+/*
+ * makeJsonKeyValue -
+ *	  creates a JsonKeyValue node
+ */
+Node *
+makeJsonKeyValue(Node *key, Node *value)
+{
+	JsonKeyValue *n = makeNode(JsonKeyValue);
+
+	n->key = (Expr *) key;
+	n->value = castNode(JsonValueExpr, value);
+
+	return (Node *) n;
 }

@@ -1,0 +1,756 @@
+-- JSON_OBJECT()
+SELECT JSON_OBJECT();
+ json_object 
+-------------
+ {}
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING json);
+ json_object 
+-------------
+ {}
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING json FORMAT JSON);
+ json_object 
+-------------
+ {}
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING jsonb);
+ json_object 
+-------------
+ {}
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING jsonb FORMAT JSON);
+ json_object 
+-------------
+ {}
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING text);
+ json_object 
+-------------
+ {}
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING text FORMAT JSON);
+ json_object 
+-------------
+ {}
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING text FORMAT JSON ENCODING UTF8);
+ERROR:  cannot set JSON encoding for non-bytea output types
+LINE 1: SELECT JSON_OBJECT(RETURNING text FORMAT JSON ENCODING UTF8)...
+                                          ^
+SELECT JSON_OBJECT(RETURNING text FORMAT JSON ENCODING INVALID_ENCODING);
+ERROR:  unrecognized JSON encoding: invalid_encoding
+SELECT JSON_OBJECT(RETURNING bytea);
+ json_object 
+-------------
+ \x7b7d
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING bytea FORMAT JSON);
+ json_object 
+-------------
+ \x7b7d
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING bytea FORMAT JSON ENCODING UTF8);
+ json_object 
+-------------
+ \x7b7d
+(1 row)
+
+SELECT JSON_OBJECT(RETURNING bytea FORMAT JSON ENCODING UTF16);
+ERROR:  unsupported JSON encoding
+LINE 1: SELECT JSON_OBJECT(RETURNING bytea FORMAT JSON ENCODING UTF1...
+                                           ^
+HINT:  Only UTF8 JSON encoding is supported.
+SELECT JSON_OBJECT(RETURNING bytea FORMAT JSON ENCODING UTF32);
+ERROR:  unsupported JSON encoding
+LINE 1: SELECT JSON_OBJECT(RETURNING bytea FORMAT JSON ENCODING UTF3...
+                                           ^
+HINT:  Only UTF8 JSON encoding is supported.
+SELECT JSON_OBJECT('foo': NULL::int FORMAT JSON);
+ERROR:  cannot use non-string types with explicit FORMAT JSON clause
+LINE 1: SELECT JSON_OBJECT('foo': NULL::int FORMAT JSON);
+                                            ^
+SELECT JSON_OBJECT('foo': NULL::int FORMAT JSON ENCODING UTF8);
+ERROR:  JSON ENCODING clause is only allowed for bytea input type
+LINE 1: SELECT JSON_OBJECT('foo': NULL::int FORMAT JSON ENCODING UTF...
+                                            ^
+SELECT JSON_OBJECT('foo': NULL::json FORMAT JSON);
+WARNING:  FORMAT JSON has no effect for json and jsonb types
+LINE 1: SELECT JSON_OBJECT('foo': NULL::json FORMAT JSON);
+                                             ^
+  json_object   
+----------------
+ {"foo" : null}
+(1 row)
+
+SELECT JSON_OBJECT('foo': NULL::json FORMAT JSON ENCODING UTF8);
+ERROR:  JSON ENCODING clause is only allowed for bytea input type
+LINE 1: SELECT JSON_OBJECT('foo': NULL::json FORMAT JSON ENCODING UT...
+                                             ^
+SELECT JSON_OBJECT('foo': NULL::jsonb FORMAT JSON);
+WARNING:  FORMAT JSON has no effect for json and jsonb types
+LINE 1: SELECT JSON_OBJECT('foo': NULL::jsonb FORMAT JSON);
+                                              ^
+  json_object  
+---------------
+ {"foo": null}
+(1 row)
+
+SELECT JSON_OBJECT('foo': NULL::jsonb FORMAT JSON ENCODING UTF8);
+ERROR:  JSON ENCODING clause is only allowed for bytea input type
+LINE 1: SELECT JSON_OBJECT('foo': NULL::jsonb FORMAT JSON ENCODING U...
+                                              ^
+SELECT JSON_OBJECT(NULL: 1);
+ERROR:  null value not allowed for object key
+SELECT JSON_OBJECT('a': 2 + 3);
+ json_object 
+-------------
+ {"a" : 5}
+(1 row)
+
+SELECT JSON_OBJECT('a' VALUE 2 + 3);
+ json_object 
+-------------
+ {"a" : 5}
+(1 row)
+
+--SELECT JSON_OBJECT(KEY 'a' VALUE 2 + 3);
+SELECT JSON_OBJECT('a' || 2: 1);
+ json_object 
+-------------
+ {"a2" : 1}
+(1 row)
+
+SELECT JSON_OBJECT(('a' || 2) VALUE 1);
+ json_object 
+-------------
+ {"a2" : 1}
+(1 row)
+
+--SELECT JSON_OBJECT('a' || 2 VALUE 1);
+--SELECT JSON_OBJECT(KEY 'a' || 2 VALUE 1);
+SELECT JSON_OBJECT('a': 2::text);
+ json_object 
+-------------
+ {"a" : "2"}
+(1 row)
+
+SELECT JSON_OBJECT('a' VALUE 2::text);
+ json_object 
+-------------
+ {"a" : "2"}
+(1 row)
+
+--SELECT JSON_OBJECT(KEY 'a' VALUE 2::text);
+SELECT JSON_OBJECT(1::text: 2);
+ json_object 
+-------------
+ {"1" : 2}
+(1 row)
+
+SELECT JSON_OBJECT((1::text) VALUE 2);
+ json_object 
+-------------
+ {"1" : 2}
+(1 row)
+
+--SELECT JSON_OBJECT(1::text VALUE 2);
+--SELECT JSON_OBJECT(KEY 1::text VALUE 2);
+SELECT JSON_OBJECT(json '[1]': 123);
+ERROR:  key value must be scalar, not array, composite, or json
+SELECT JSON_OBJECT(ARRAY[1,2,3]: 'aaa');
+ERROR:  key value must be scalar, not array, composite, or json
+SELECT JSON_OBJECT(
+	'a': '123',
+	1.23: 123,
+	'c': json '[ 1,true,{ } ]',
+	'd': jsonb '{ "x" : 123.45 }'
+);
+                            json_object                            
+-------------------------------------------------------------------
+ {"a": "123", "c": [1, true, {}], "d": {"x": 123.45}, "1.23": 123}
+(1 row)
+
+SELECT JSON_OBJECT(
+	'a': '123',
+	1.23: 123,
+	'c': json '[ 1,true,{ } ]',
+	'd': jsonb '{ "x" : 123.45 }'
+	RETURNING jsonb
+);
+                            json_object                            
+-------------------------------------------------------------------
+ {"a": "123", "c": [1, true, {}], "d": {"x": 123.45}, "1.23": 123}
+(1 row)
+
+/*
+SELECT JSON_OBJECT(
+	'a': '123',
+	KEY 1.23 VALUE 123,
+	'c' VALUE json '[1, true, {}]'
+);
+*/
+SELECT JSON_OBJECT('a': '123', 'b': JSON_OBJECT('a': 111, 'b': 'aaa'));
+                  json_object                  
+-----------------------------------------------
+ {"a" : "123", "b" : {"a" : 111, "b" : "aaa"}}
+(1 row)
+
+SELECT JSON_OBJECT('a': '123', 'b': JSON_OBJECT('a': 111, 'b': 'aaa' RETURNING jsonb));
+                json_object                
+-------------------------------------------
+ {"a": "123", "b": {"a": 111, "b": "aaa"}}
+(1 row)
+
+SELECT JSON_OBJECT('a': JSON_OBJECT('b': 1 RETURNING text));
+      json_object      
+-----------------------
+ {"a" : "{\"b\" : 1}"}
+(1 row)
+
+SELECT JSON_OBJECT('a': JSON_OBJECT('b': 1 RETURNING text) FORMAT JSON);
+    json_object    
+-------------------
+ {"a" : {"b" : 1}}
+(1 row)
+
+SELECT JSON_OBJECT('a': JSON_OBJECT('b': 1 RETURNING bytea));
+           json_object           
+---------------------------------
+ {"a" : "\\x7b226222203a20317d"}
+(1 row)
+
+SELECT JSON_OBJECT('a': JSON_OBJECT('b': 1 RETURNING bytea) FORMAT JSON);
+    json_object    
+-------------------
+ {"a" : {"b" : 1}}
+(1 row)
+
+SELECT JSON_OBJECT('a': '1', 'b': NULL, 'c': 2);
+           json_object            
+----------------------------------
+ {"a" : "1", "b" : null, "c" : 2}
+(1 row)
+
+SELECT JSON_OBJECT('a': '1', 'b': NULL, 'c': 2 NULL ON NULL);
+           json_object            
+----------------------------------
+ {"a" : "1", "b" : null, "c" : 2}
+(1 row)
+
+SELECT JSON_OBJECT('a': '1', 'b': NULL, 'c': 2 ABSENT ON NULL);
+     json_object      
+----------------------
+ {"a" : "1", "c" : 2}
+(1 row)
+
+SELECT JSON_OBJECT(1: 1, '1': NULL WITH UNIQUE);
+ERROR:  duplicate JSON key "1"
+SELECT JSON_OBJECT(1: 1, '1': NULL ABSENT ON NULL WITH UNIQUE);
+ERROR:  duplicate JSON key "1"
+SELECT JSON_OBJECT(1: 1, '1': NULL NULL ON NULL WITH UNIQUE RETURNING jsonb);
+ERROR:  duplicate JSON object key
+SELECT JSON_OBJECT(1: 1, '1': NULL ABSENT ON NULL WITH UNIQUE RETURNING jsonb);
+ERROR:  duplicate JSON object key
+SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 NULL ON NULL WITH UNIQUE);
+ERROR:  duplicate JSON key "1"
+SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITH UNIQUE);
+ERROR:  duplicate JSON key "1"
+SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITHOUT UNIQUE);
+    json_object     
+--------------------
+ {"1" : 1, "1" : 1}
+(1 row)
+
+SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITH UNIQUE RETURNING jsonb);
+ERROR:  duplicate JSON object key
+SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITHOUT UNIQUE RETURNING jsonb);
+ json_object 
+-------------
+ {"1": 1}
+(1 row)
+
+SELECT JSON_OBJECT(1: 1, '2': NULL, '3': 1, 4: NULL, '5': 'a' ABSENT ON NULL WITH UNIQUE RETURNING jsonb);
+        json_object         
+----------------------------
+ {"1": 1, "3": 1, "5": "a"}
+(1 row)
+
+-- JSON_ARRAY()
+SELECT JSON_ARRAY();
+ json_array 
+------------
+ []
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING json);
+ json_array 
+------------
+ []
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING json FORMAT JSON);
+ json_array 
+------------
+ []
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING jsonb);
+ json_array 
+------------
+ []
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING jsonb FORMAT JSON);
+ json_array 
+------------
+ []
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING text);
+ json_array 
+------------
+ []
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING text FORMAT JSON);
+ json_array 
+------------
+ []
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING text FORMAT JSON ENCODING UTF8);
+ERROR:  cannot set JSON encoding for non-bytea output types
+LINE 1: SELECT JSON_ARRAY(RETURNING text FORMAT JSON ENCODING UTF8);
+                                         ^
+SELECT JSON_ARRAY(RETURNING text FORMAT JSON ENCODING INVALID_ENCODING);
+ERROR:  unrecognized JSON encoding: invalid_encoding
+SELECT JSON_ARRAY(RETURNING bytea);
+ json_array 
+------------
+ \x5b5d
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING bytea FORMAT JSON);
+ json_array 
+------------
+ \x5b5d
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING bytea FORMAT JSON ENCODING UTF8);
+ json_array 
+------------
+ \x5b5d
+(1 row)
+
+SELECT JSON_ARRAY(RETURNING bytea FORMAT JSON ENCODING UTF16);
+ERROR:  unsupported JSON encoding
+LINE 1: SELECT JSON_ARRAY(RETURNING bytea FORMAT JSON ENCODING UTF16...
+                                          ^
+HINT:  Only UTF8 JSON encoding is supported.
+SELECT JSON_ARRAY(RETURNING bytea FORMAT JSON ENCODING UTF32);
+ERROR:  unsupported JSON encoding
+LINE 1: SELECT JSON_ARRAY(RETURNING bytea FORMAT JSON ENCODING UTF32...
+                                          ^
+HINT:  Only UTF8 JSON encoding is supported.
+SELECT JSON_ARRAY('aaa', 111, true, array[1,2,3], NULL, json '{"a": [1]}', jsonb '["a",3]');
+                     json_array                      
+-----------------------------------------------------
+ ["aaa", 111, true, [1, 2, 3], {"a": [1]}, ["a", 3]]
+(1 row)
+
+SELECT JSON_ARRAY('a',  NULL, 'b' NULL   ON NULL);
+    json_array    
+------------------
+ ["a", null, "b"]
+(1 row)
+
+SELECT JSON_ARRAY('a',  NULL, 'b' ABSENT ON NULL);
+ json_array 
+------------
+ ["a", "b"]
+(1 row)
+
+SELECT JSON_ARRAY(NULL, NULL, 'b' ABSENT ON NULL);
+ json_array 
+------------
+ ["b"]
+(1 row)
+
+SELECT JSON_ARRAY('a',  NULL, 'b' NULL   ON NULL RETURNING jsonb);
+    json_array    
+------------------
+ ["a", null, "b"]
+(1 row)
+
+SELECT JSON_ARRAY('a',  NULL, 'b' ABSENT ON NULL RETURNING jsonb);
+ json_array 
+------------
+ ["a", "b"]
+(1 row)
+
+SELECT JSON_ARRAY(NULL, NULL, 'b' ABSENT ON NULL RETURNING jsonb);
+ json_array 
+------------
+ ["b"]
+(1 row)
+
+SELECT JSON_ARRAY(JSON_ARRAY('{ "a" : 123 }' RETURNING text));
+          json_array           
+-------------------------------
+ ["[\"{ \\\"a\\\" : 123 }\"]"]
+(1 row)
+
+SELECT JSON_ARRAY(JSON_ARRAY('{ "a" : 123 }' FORMAT JSON RETURNING text));
+      json_array       
+-----------------------
+ ["[{ \"a\" : 123 }]"]
+(1 row)
+
+SELECT JSON_ARRAY(JSON_ARRAY('{ "a" : 123 }' FORMAT JSON RETURNING text) FORMAT JSON);
+    json_array     
+-------------------
+ [[{ "a" : 123 }]]
+(1 row)
+
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i));
+ json_array 
+------------
+ [1, 2, 4]
+(1 row)
+
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (NULL::int[]), ('{1,2}'), (NULL), (NULL), ('{3,4}'), (NULL)) foo(i));
+ json_array 
+------------
+ [[1,2],   +
+  [3,4]]
+(1 row)
+
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (NULL::int[]), ('{1,2}'), (NULL), (NULL), ('{3,4}'), (NULL)) foo(i) RETURNING jsonb);
+    json_array    
+------------------
+ [[1, 2], [3, 4]]
+(1 row)
+
+--SELECT JSON_ARRAY(SELECT i FROM (VALUES (NULL::int[]), ('{1,2}'), (NULL), (NULL), ('{3,4}'), (NULL)) foo(i) NULL ON NULL);
+--SELECT JSON_ARRAY(SELECT i FROM (VALUES (NULL::int[]), ('{1,2}'), (NULL), (NULL), ('{3,4}'), (NULL)) foo(i) NULL ON NULL RETURNING jsonb);
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (3), (1), (NULL), (2)) foo(i) ORDER BY i);
+ json_array 
+------------
+ [1, 2, 3]
+(1 row)
+
+-- Should fail
+SELECT JSON_ARRAY(SELECT FROM (VALUES (1)) foo(i));
+ERROR:  subquery must return only one column
+LINE 1: SELECT JSON_ARRAY(SELECT FROM (VALUES (1)) foo(i));
+               ^
+SELECT JSON_ARRAY(SELECT i, i FROM (VALUES (1)) foo(i));
+ERROR:  subquery must return only one column
+LINE 1: SELECT JSON_ARRAY(SELECT i, i FROM (VALUES (1)) foo(i));
+               ^
+SELECT JSON_ARRAY(SELECT * FROM (VALUES (1, 2)) foo(i, j));
+ERROR:  subquery must return only one column
+LINE 1: SELECT JSON_ARRAY(SELECT * FROM (VALUES (1, 2)) foo(i, j));
+               ^
+-- JSON_ARRAYAGG()
+SELECT	JSON_ARRAYAGG(i) IS NULL,
+		JSON_ARRAYAGG(i RETURNING jsonb) IS NULL
+FROM generate_series(1, 0) i;
+ ?column? | ?column? 
+----------+----------
+ t        | t
+(1 row)
+
+SELECT	JSON_ARRAYAGG(i),
+		JSON_ARRAYAGG(i RETURNING jsonb)
+FROM generate_series(1, 5) i;
+  json_arrayagg  |  json_arrayagg  
+-----------------+-----------------
+ [1, 2, 3, 4, 5] | [1, 2, 3, 4, 5]
+(1 row)
+
+SELECT JSON_ARRAYAGG(i ORDER BY i DESC)
+FROM generate_series(1, 5) i;
+  json_arrayagg  
+-----------------
+ [5, 4, 3, 2, 1]
+(1 row)
+
+SELECT JSON_ARRAYAGG(i::text::json)
+FROM generate_series(1, 5) i;
+  json_arrayagg  
+-----------------
+ [1, 2, 3, 4, 5]
+(1 row)
+
+SELECT JSON_ARRAYAGG(JSON_ARRAY(i, i + 1 RETURNING text) FORMAT JSON)
+FROM generate_series(1, 5) i;
+              json_arrayagg               
+------------------------------------------
+ [[1, 2], [2, 3], [3, 4], [4, 5], [5, 6]]
+(1 row)
+
+SELECT	JSON_ARRAYAGG(NULL),
+		JSON_ARRAYAGG(NULL RETURNING jsonb)
+FROM generate_series(1, 5);
+ json_arrayagg | json_arrayagg 
+---------------+---------------
+ []            | []
+(1 row)
+
+SELECT	JSON_ARRAYAGG(NULL NULL ON NULL),
+		JSON_ARRAYAGG(NULL NULL ON NULL RETURNING jsonb)
+FROM generate_series(1, 5);
+         json_arrayagg          |         json_arrayagg          
+--------------------------------+--------------------------------
+ [null, null, null, null, null] | [null, null, null, null, null]
+(1 row)
+
+\x
+SELECT
+	JSON_ARRAYAGG(bar) as no_options,
+	JSON_ARRAYAGG(bar RETURNING jsonb) as returning_jsonb,
+	JSON_ARRAYAGG(bar ABSENT ON NULL) as absent_on_null,
+	JSON_ARRAYAGG(bar ABSENT ON NULL RETURNING jsonb) as absentonnull_returning_jsonb,
+	JSON_ARRAYAGG(bar NULL ON NULL) as null_on_null,
+	JSON_ARRAYAGG(bar NULL ON NULL RETURNING jsonb) as nullonnull_returning_jsonb,
+	JSON_ARRAYAGG(foo) as row_no_options,
+	JSON_ARRAYAGG(foo RETURNING jsonb) as row_returning_jsonb,
+	JSON_ARRAYAGG(foo ORDER BY bar) FILTER (WHERE bar > 2) as row_filtered_agg,
+	JSON_ARRAYAGG(foo ORDER BY bar RETURNING jsonb) FILTER (WHERE bar > 2) as row_filtered_agg_returning_jsonb
+FROM
+	(VALUES (NULL), (3), (1), (NULL), (NULL), (5), (2), (4), (NULL)) foo(bar);
+-[ RECORD 1 ]--------------------+-------------------------------------------------------------------------------------------------------------------------
+no_options                       | [1, 2, 3, 4, 5]
+returning_jsonb                  | [1, 2, 3, 4, 5]
+absent_on_null                   | [1, 2, 3, 4, 5]
+absentonnull_returning_jsonb     | [1, 2, 3, 4, 5]
+null_on_null                     | [1, 2, 3, 4, 5, null, null, null, null]
+nullonnull_returning_jsonb       | [1, 2, 3, 4, 5, null, null, null, null]
+row_no_options                   | [{"bar":1},                                                                                                             +
+                                 |  {"bar":2},                                                                                                             +
+                                 |  {"bar":3},                                                                                                             +
+                                 |  {"bar":4},                                                                                                             +
+                                 |  {"bar":5},                                                                                                             +
+                                 |  {"bar":null},                                                                                                          +
+                                 |  {"bar":null},                                                                                                          +
+                                 |  {"bar":null},                                                                                                          +
+                                 |  {"bar":null}]
+row_returning_jsonb              | [{"bar": 1}, {"bar": 2}, {"bar": 3}, {"bar": 4}, {"bar": 5}, {"bar": null}, {"bar": null}, {"bar": null}, {"bar": null}]
+row_filtered_agg                 | [{"bar":3},                                                                                                             +
+                                 |  {"bar":4},                                                                                                             +
+                                 |  {"bar":5}]
+row_filtered_agg_returning_jsonb | [{"bar": 3}, {"bar": 4}, {"bar": 5}]
+
+\x
+SELECT
+	bar, JSON_ARRAYAGG(bar) FILTER (WHERE bar > 2) OVER (PARTITION BY foo.bar % 2)
+FROM
+	(VALUES (NULL), (3), (1), (NULL), (NULL), (5), (2), (4), (NULL), (5), (4)) foo(bar);
+ bar | json_arrayagg 
+-----+---------------
+   4 | [4, 4]
+   4 | [4, 4]
+   2 | [4, 4]
+   5 | [5, 3, 5]
+   3 | [5, 3, 5]
+   1 | [5, 3, 5]
+   5 | [5, 3, 5]
+     | 
+     | 
+     | 
+     | 
+(11 rows)
+
+-- JSON_OBJECTAGG()
+SELECT	JSON_OBJECTAGG('key': 1) IS NULL,
+		JSON_OBJECTAGG('key': 1 RETURNING jsonb) IS NULL
+WHERE FALSE;
+ ?column? | ?column? 
+----------+----------
+ t        | t
+(1 row)
+
+SELECT JSON_OBJECTAGG(NULL: 1);
+ERROR:  null value not allowed for object key
+SELECT JSON_OBJECTAGG(NULL: 1 RETURNING jsonb);
+ERROR:  field name must not be null
+SELECT
+	JSON_OBJECTAGG(i: i),
+--	JSON_OBJECTAGG(i VALUE i),
+--	JSON_OBJECTAGG(KEY i VALUE i),
+	JSON_OBJECTAGG(i: i RETURNING jsonb)
+FROM
+	generate_series(1, 5) i;
+                 json_objectagg                  |              json_objectagg              
+-------------------------------------------------+------------------------------------------
+ { "1" : 1, "2" : 2, "3" : 3, "4" : 4, "5" : 5 } | {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5}
+(1 row)
+
+SELECT
+	JSON_OBJECTAGG(k: v),
+	JSON_OBJECTAGG(k: v NULL ON NULL),
+	JSON_OBJECTAGG(k: v ABSENT ON NULL),
+	JSON_OBJECTAGG(k: v RETURNING jsonb),
+	JSON_OBJECTAGG(k: v NULL ON NULL RETURNING jsonb),
+	JSON_OBJECTAGG(k: v ABSENT ON NULL RETURNING jsonb)
+FROM
+	(VALUES (1, 1), (1, NULL), (2, NULL), (3, 3)) foo(k, v);
+                json_objectagg                |                json_objectagg                |    json_objectagg    |         json_objectagg         |         json_objectagg         |  json_objectagg  
+----------------------------------------------+----------------------------------------------+----------------------+--------------------------------+--------------------------------+------------------
+ { "1" : 1, "1" : null, "2" : null, "3" : 3 } | { "1" : 1, "1" : null, "2" : null, "3" : 3 } | { "1" : 1, "3" : 3 } | {"1": null, "2": null, "3": 3} | {"1": null, "2": null, "3": 3} | {"1": 1, "3": 3}
+(1 row)
+
+SELECT JSON_OBJECTAGG(k: v WITH UNIQUE KEYS)
+FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
+ERROR:  duplicate JSON key "1"
+SELECT JSON_OBJECTAGG(k: v ABSENT ON NULL WITH UNIQUE KEYS)
+FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
+ERROR:  duplicate JSON key "1"
+SELECT JSON_OBJECTAGG(k: v ABSENT ON NULL WITH UNIQUE KEYS)
+FROM (VALUES (1, 1), (0, NULL), (3, NULL), (2, 2), (4, NULL)) foo(k, v);
+    json_objectagg    
+----------------------
+ { "1" : 1, "2" : 2 }
+(1 row)
+
+SELECT JSON_OBJECTAGG(k: v WITH UNIQUE KEYS RETURNING jsonb)
+FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
+ERROR:  duplicate JSON object key
+SELECT JSON_OBJECTAGG(k: v ABSENT ON NULL WITH UNIQUE KEYS RETURNING jsonb)
+FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
+ERROR:  duplicate JSON object key
+-- Test JSON_OBJECT deparsing
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_OBJECT('foo' : '1' FORMAT JSON, 'bar' : 'baz' RETURNING json);
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Result
+   Output: JSON_OBJECT('foo' : '1'::json, 'bar' : 'baz'::text RETURNING json)
+(2 rows)
+
+CREATE VIEW json_object_view AS
+SELECT JSON_OBJECT('foo' : '1' FORMAT JSON, 'bar' : 'baz' RETURNING json);
+\sv json_object_view
+CREATE OR REPLACE VIEW public.json_object_view AS
+ SELECT JSON_OBJECT('foo' : '1'::text FORMAT JSON, 'bar' : 'baz'::text RETURNING json) AS "json_object"
+DROP VIEW json_object_view;
+-- Test JSON_ARRAY deparsing
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_ARRAY('1' FORMAT JSON, 2 RETURNING json);
+                    QUERY PLAN                     
+---------------------------------------------------
+ Result
+   Output: JSON_ARRAY('1'::json, 2 RETURNING json)
+(2 rows)
+
+CREATE VIEW json_array_view AS
+SELECT JSON_ARRAY('1' FORMAT JSON, 2 RETURNING json);
+\sv json_array_view
+CREATE OR REPLACE VIEW public.json_array_view AS
+ SELECT JSON_ARRAY('1'::text FORMAT JSON, 2 RETURNING json) AS "json_array"
+DROP VIEW json_array_view;
+-- Test JSON_OBJECTAGG deparsing
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_OBJECTAGG(i: ('111' || i)::bytea FORMAT JSON WITH UNIQUE RETURNING text) FILTER (WHERE i > 3)
+FROM generate_series(1,5) i;
+                                                              QUERY PLAN                                                              
+--------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: JSON_OBJECTAGG(i : (('111'::text || (i)::text))::bytea FORMAT JSON WITH UNIQUE KEYS RETURNING text) FILTER (WHERE (i > 3))
+   ->  Function Scan on pg_catalog.generate_series i
+         Output: i
+         Function Call: generate_series(1, 5)
+(5 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_OBJECTAGG(i: ('111' || i)::bytea FORMAT JSON WITH UNIQUE RETURNING text) OVER (PARTITION BY i % 2)
+FROM generate_series(1,5) i;
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ WindowAgg
+   Output: JSON_OBJECTAGG(i : (('111'::text || (i)::text))::bytea FORMAT JSON WITH UNIQUE KEYS RETURNING text) OVER (?), ((i % 2))
+   ->  Sort
+         Output: ((i % 2)), i
+         Sort Key: ((i.i % 2))
+         ->  Function Scan on pg_catalog.generate_series i
+               Output: (i % 2), i
+               Function Call: generate_series(1, 5)
+(8 rows)
+
+CREATE VIEW json_objectagg_view AS
+SELECT JSON_OBJECTAGG(i: ('111' || i)::bytea FORMAT JSON WITH UNIQUE RETURNING text) FILTER (WHERE i > 3)
+FROM generate_series(1,5) i;
+\sv json_objectagg_view
+CREATE OR REPLACE VIEW public.json_objectagg_view AS
+ SELECT JSON_OBJECTAGG(i : ('111'::text || i)::bytea FORMAT JSON WITH UNIQUE KEYS RETURNING text) FILTER (WHERE i > 3) AS "json_objectagg"
+   FROM generate_series(1, 5) i(i)
+DROP VIEW json_objectagg_view;
+-- Test JSON_ARRAYAGG deparsing
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_ARRAYAGG(('111' || i)::bytea FORMAT JSON NULL ON NULL RETURNING text) FILTER (WHERE i > 3)
+FROM generate_series(1,5) i;
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: JSON_ARRAYAGG((('111'::text || (i)::text))::bytea FORMAT JSON NULL ON NULL RETURNING text) FILTER (WHERE (i > 3))
+   ->  Function Scan on pg_catalog.generate_series i
+         Output: i
+         Function Call: generate_series(1, 5)
+(5 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_ARRAYAGG(('111' || i)::bytea FORMAT JSON NULL ON NULL RETURNING text) OVER (PARTITION BY i % 2)
+FROM generate_series(1,5) i;
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ WindowAgg
+   Output: JSON_ARRAYAGG((('111'::text || (i)::text))::bytea FORMAT JSON NULL ON NULL RETURNING text) OVER (?), ((i % 2))
+   ->  Sort
+         Output: ((i % 2)), i
+         Sort Key: ((i.i % 2))
+         ->  Function Scan on pg_catalog.generate_series i
+               Output: (i % 2), i
+               Function Call: generate_series(1, 5)
+(8 rows)
+
+CREATE VIEW json_arrayagg_view AS
+SELECT JSON_ARRAYAGG(('111' || i)::bytea FORMAT JSON NULL ON NULL RETURNING text) FILTER (WHERE i > 3)
+FROM generate_series(1,5) i;
+\sv json_arrayagg_view
+CREATE OR REPLACE VIEW public.json_arrayagg_view AS
+ SELECT JSON_ARRAYAGG(('111'::text || i)::bytea FORMAT JSON NULL ON NULL RETURNING text) FILTER (WHERE i > 3) AS "json_arrayagg"
+   FROM generate_series(1, 5) i(i)
+DROP VIEW json_arrayagg_view;
+-- Test JSON_ARRAY(subquery) deparsing
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING jsonb);
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Result
+   Output: $0
+   InitPlan 1 (returns $0)
+     ->  Aggregate
+           Output: JSON_ARRAYAGG("*VALUES*".column1 RETURNING jsonb)
+           ->  Values Scan on "*VALUES*"
+                 Output: "*VALUES*".column1
+(7 rows)
+
+CREATE VIEW json_array_subquery_view AS
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING jsonb);
+\sv json_array_subquery_view
+CREATE OR REPLACE VIEW public.json_array_subquery_view AS
+ SELECT ( SELECT JSON_ARRAYAGG(q.a RETURNING jsonb) AS "json_arrayagg"
+           FROM ( SELECT foo.i
+                   FROM ( VALUES (1), (2), (NULL::integer), (4)) foo(i)) q(a)) AS "json_array"
+DROP VIEW json_array_subquery_view;

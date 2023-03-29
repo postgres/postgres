@@ -1498,6 +1498,91 @@ typedef struct XmlExpr
 	int			location;
 } XmlExpr;
 
+/*
+ * JsonEncoding -
+ *		representation of JSON ENCODING clause
+ */
+typedef enum JsonEncoding
+{
+	JS_ENC_DEFAULT,				/* unspecified */
+	JS_ENC_UTF8,
+	JS_ENC_UTF16,
+	JS_ENC_UTF32,
+} JsonEncoding;
+
+/*
+ * JsonFormatType -
+ *		enumeration of JSON formats used in JSON FORMAT clause
+ */
+typedef enum JsonFormatType
+{
+	JS_FORMAT_DEFAULT,			/* unspecified */
+	JS_FORMAT_JSON,				/* FORMAT JSON [ENCODING ...] */
+	JS_FORMAT_JSONB				/* implicit internal format for RETURNING
+								 * jsonb */
+} JsonFormatType;
+
+/*
+ * JsonFormat -
+ *		representation of JSON FORMAT clause
+ */
+typedef struct JsonFormat
+{
+	NodeTag		type;
+	JsonFormatType format_type; /* format type */
+	JsonEncoding encoding;		/* JSON encoding */
+	int			location;		/* token location, or -1 if unknown */
+} JsonFormat;
+
+/*
+ * JsonReturning -
+ *		transformed representation of JSON RETURNING clause
+ */
+typedef struct JsonReturning
+{
+	NodeTag		type;
+	JsonFormat *format;			/* output JSON format */
+	Oid			typid;			/* target type Oid */
+	int32		typmod;			/* target type modifier */
+} JsonReturning;
+
+/*
+ * JsonValueExpr -
+ *		representation of JSON value expression (expr [FORMAT json_format])
+ */
+typedef struct JsonValueExpr
+{
+	NodeTag		type;
+	Expr	   *raw_expr;		/* raw expression */
+	Expr	   *formatted_expr; /* formatted expression or NULL */
+	JsonFormat *format;			/* FORMAT clause, if specified */
+} JsonValueExpr;
+
+typedef enum JsonConstructorType
+{
+	JSCTOR_JSON_OBJECT = 1,
+	JSCTOR_JSON_ARRAY = 2,
+	JSCTOR_JSON_OBJECTAGG = 3,
+	JSCTOR_JSON_ARRAYAGG = 4
+} JsonConstructorType;
+
+/*
+ * JsonConstructorExpr -
+ *		wrapper over FuncExpr/Aggref/WindowFunc for SQL/JSON constructors
+ */
+typedef struct JsonConstructorExpr
+{
+	Expr		xpr;
+	JsonConstructorType type;	/* constructor type */
+	List	   *args;
+	Expr	   *func;			/* underlying json[b]_xxx() function call */
+	Expr	   *coercion;		/* coercion to RETURNING type */
+	JsonReturning *returning;	/* RETURNING clause */
+	bool		absent_on_null; /* ABSENT ON NULL? */
+	bool		unique;			/* WITH UNIQUE KEYS? (JSON_OBJECT[AGG] only) */
+	int			location;
+} JsonConstructorExpr;
+
 /* ----------------
  * NullTest
  *

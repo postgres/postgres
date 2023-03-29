@@ -13,7 +13,9 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "common/hashfn.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -42,6 +44,34 @@ typedef enum					/* type categories for datum_to_json */
 	JSONTYPE_OTHER				/* all else */
 } JsonTypeCategory;
 
+
+/*
+ * Support for fast key uniqueness checking.
+ *
+ * We maintain a hash table of used keys in JSON objects for fast detection
+ * of duplicates.
+ */
+/* Common context for key uniqueness check */
+typedef struct HTAB *JsonUniqueCheckState;	/* hash table for key names */
+
+/* Hash entry for JsonUniqueCheckState */
+typedef struct JsonUniqueHashEntry
+{
+	const char *key;
+	int			key_len;
+	int			object_id;
+} JsonUniqueHashEntry;
+
+/* Context struct for key uniqueness check during JSON building */
+typedef struct JsonUniqueBuilderState
+{
+	JsonUniqueCheckState check; /* unique check */
+	StringInfoData skipped_keys;	/* skipped keys with NULL values */
+	MemoryContext mcxt;			/* context for saving skipped keys */
+} JsonUniqueBuilderState;
+
+
+/* State struct for JSON aggregation */
 typedef struct JsonAggState
 {
 	StringInfo	str;
@@ -49,6 +79,7 @@ typedef struct JsonAggState
 	Oid			key_output_func;
 	JsonTypeCategory val_category;
 	Oid			val_output_func;
+	JsonUniqueBuilderState unique_check;
 } JsonAggState;
 
 static void composite_to_json(Datum composite, StringInfo result,
@@ -724,6 +755,48 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Is the given type immutable when coming out of a JSON context?
+ *
+ * At present, datetimes are all considered mutable, because they
+ * depend on timezone.  XXX we should also drill down into objects
+ * and arrays, but do not.
+ */
+bool
+to_json_is_immutable(Oid typoid)
+{
+	JsonTypeCategory tcategory;
+	Oid			outfuncoid;
+
+	json_categorize_type(typoid, &tcategory, &outfuncoid);
+
+	switch (tcategory)
+	{
+		case JSONTYPE_BOOL:
+		case JSONTYPE_JSON:
+		case JSONTYPE_NULL:
+			return true;
+
+		case JSONTYPE_DATE:
+		case JSONTYPE_TIMESTAMP:
+		case JSONTYPE_TIMESTAMPTZ:
+			return false;
+
+		case JSONTYPE_ARRAY:
+			return false;		/* TODO recurse into elements */
+
+		case JSONTYPE_COMPOSITE:
+			return false;		/* TODO recurse into fields */
+
+		case JSONTYPE_NUMERIC:
+		case JSONTYPE_CAST:
+		case JSONTYPE_OTHER:
+			return func_volatile(outfuncoid) == PROVOLATILE_IMMUTABLE;
+	}
+
+	return false;				/* not reached */
+}
+
+/*
  * SQL function to_json(anyvalue)
  */
 Datum
@@ -755,8 +828,8 @@ to_json(PG_FUNCTION_ARGS)
  *
  * aggregate input column as a json array value.
  */
-Datum
-json_agg_transfn(PG_FUNCTION_ARGS)
+static Datum
+json_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 {
 	MemoryContext aggcontext,
 				oldcontext;
@@ -796,8 +869,13 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	else
 	{
 		state = (JsonAggState *) PG_GETARG_POINTER(0);
-		appendStringInfoString(state->str, ", ");
 	}
+
+	if (absent_on_null && PG_ARGISNULL(1))
+		PG_RETURN_POINTER(state);
+
+	if (state->str->len > 1)
+		appendStringInfoString(state->str, ", ");
 
 	/* fast path for NULLs */
 	if (PG_ARGISNULL(1))
@@ -810,7 +888,7 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	val = PG_GETARG_DATUM(1);
 
 	/* add some whitespace if structured type and not first item */
-	if (!PG_ARGISNULL(0) &&
+	if (!PG_ARGISNULL(0) && state->str->len > 1 &&
 		(state->val_category == JSONTYPE_ARRAY ||
 		 state->val_category == JSONTYPE_COMPOSITE))
 	{
@@ -826,6 +904,25 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	 * pass the JsonAggState pointer through nodeAgg.c's machinations.
 	 */
 	PG_RETURN_POINTER(state);
+}
+
+
+/*
+ * json_agg aggregate function
+ */
+Datum
+json_agg_transfn(PG_FUNCTION_ARGS)
+{
+	return json_agg_transfn_worker(fcinfo, false);
+}
+
+/*
+ * json_agg_strict aggregate function
+ */
+Datum
+json_agg_strict_transfn(PG_FUNCTION_ARGS)
+{
+	return json_agg_transfn_worker(fcinfo, true);
 }
 
 /*
@@ -851,18 +948,120 @@ json_agg_finalfn(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(catenate_stringinfo_string(state->str, "]"));
 }
 
+/* Functions implementing hash table for key uniqueness check */
+static uint32
+json_unique_hash(const void *key, Size keysize)
+{
+	const JsonUniqueHashEntry *entry = (JsonUniqueHashEntry *) key;
+	uint32		hash = hash_bytes_uint32(entry->object_id);
+
+	hash ^= hash_bytes((const unsigned char *) entry->key, entry->key_len);
+
+	return DatumGetUInt32(hash);
+}
+
+static int
+json_unique_hash_match(const void *key1, const void *key2, Size keysize)
+{
+	const JsonUniqueHashEntry *entry1 = (const JsonUniqueHashEntry *) key1;
+	const JsonUniqueHashEntry *entry2 = (const JsonUniqueHashEntry *) key2;
+
+	if (entry1->object_id != entry2->object_id)
+		return entry1->object_id > entry2->object_id ? 1 : -1;
+
+	if (entry1->key_len != entry2->key_len)
+		return entry1->key_len > entry2->key_len ? 1 : -1;
+
+	return strncmp(entry1->key, entry2->key, entry1->key_len);
+}
+
+/*
+ * Uniqueness detection support.
+ *
+ * In order to detect uniqueness during building or parsing of a JSON
+ * object, we maintain a hash table of key names already seen.
+ */
+static void
+json_unique_check_init(JsonUniqueCheckState *cxt)
+{
+	HASHCTL		ctl;
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(JsonUniqueHashEntry);
+	ctl.entrysize = sizeof(JsonUniqueHashEntry);
+	ctl.hcxt = CurrentMemoryContext;
+	ctl.hash = json_unique_hash;
+	ctl.match = json_unique_hash_match;
+
+	*cxt = hash_create("json object hashtable",
+					   32,
+					   &ctl,
+					   HASH_ELEM | HASH_CONTEXT | HASH_FUNCTION | HASH_COMPARE);
+}
+
+static void
+json_unique_builder_init(JsonUniqueBuilderState *cxt)
+{
+	json_unique_check_init(&cxt->check);
+	cxt->mcxt = CurrentMemoryContext;
+	cxt->skipped_keys.data = NULL;
+}
+
+static bool
+json_unique_check_key(JsonUniqueCheckState *cxt, const char *key, int object_id)
+{
+	JsonUniqueHashEntry entry;
+	bool		found;
+
+	entry.key = key;
+	entry.key_len = strlen(key);
+	entry.object_id = object_id;
+
+	(void) hash_search(*cxt, &entry, HASH_ENTER, &found);
+
+	return !found;
+}
+
+/*
+ * On-demand initialization of a throwaway StringInfo.  This is used to
+ * read a key name that we don't need to store in the output object, for
+ * duplicate key detection when the value is NULL.
+ */
+static StringInfo
+json_unique_builder_get_throwawaybuf(JsonUniqueBuilderState *cxt)
+{
+	StringInfo	out = &cxt->skipped_keys;
+
+	if (!out->data)
+	{
+		MemoryContext oldcxt = MemoryContextSwitchTo(cxt->mcxt);
+
+		initStringInfo(out);
+		MemoryContextSwitchTo(oldcxt);
+	}
+	else
+		/* Just reset the string to empty */
+		out->len = 0;
+
+	return out;
+}
+
 /*
  * json_object_agg transition function.
  *
  * aggregate two input columns as a single json object value.
  */
-Datum
-json_object_agg_transfn(PG_FUNCTION_ARGS)
+static Datum
+json_object_agg_transfn_worker(FunctionCallInfo fcinfo,
+							   bool absent_on_null, bool unique_keys)
 {
 	MemoryContext aggcontext,
 				oldcontext;
 	JsonAggState *state;
+	StringInfo	out;
 	Datum		arg;
+	bool		skip;
+	int			key_offset;
 
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
@@ -877,12 +1076,16 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 		/*
 		 * Make the StringInfo in a context where it will persist for the
 		 * duration of the aggregate call. Switching context is only needed
-		 * for this initial step, as the StringInfo routines make sure they
-		 * use the right context to enlarge the object if necessary.
+		 * for this initial step, as the StringInfo and dynahash routines make
+		 * sure they use the right context to enlarge the object if necessary.
 		 */
 		oldcontext = MemoryContextSwitchTo(aggcontext);
 		state = (JsonAggState *) palloc(sizeof(JsonAggState));
 		state->str = makeStringInfo();
+		if (unique_keys)
+			json_unique_builder_init(&state->unique_check);
+		else
+			memset(&state->unique_check, 0, sizeof(state->unique_check));
 		MemoryContextSwitchTo(oldcontext);
 
 		arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
@@ -910,7 +1113,6 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 	else
 	{
 		state = (JsonAggState *) PG_GETARG_POINTER(0);
-		appendStringInfoString(state->str, ", ");
 	}
 
 	/*
@@ -923,13 +1125,55 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(1))
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("field name must not be null")));
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("null value not allowed for object key")));
+
+	/* Skip null values if absent_on_null */
+	skip = absent_on_null && PG_ARGISNULL(2);
+
+	if (skip)
+	{
+		/*
+		 * We got a NULL value and we're not storing those; if we're not
+		 * testing key uniqueness, we're done.  If we are, use the throwaway
+		 * buffer to store the key name so that we can check it.
+		 */
+		if (!unique_keys)
+			PG_RETURN_POINTER(state);
+
+		out = json_unique_builder_get_throwawaybuf(&state->unique_check);
+	}
+	else
+	{
+		out = state->str;
+
+		/*
+		 * Append comma delimiter only if we have already output some fields
+		 * after the initial string "{ ".
+		 */
+		if (out->len > 2)
+			appendStringInfoString(out, ", ");
+	}
 
 	arg = PG_GETARG_DATUM(1);
 
-	datum_to_json(arg, false, state->str, state->key_category,
+	key_offset = out->len;
+
+	datum_to_json(arg, false, out, state->key_category,
 				  state->key_output_func, true);
+
+	if (unique_keys)
+	{
+		const char *key = &out->data[key_offset];
+
+		if (!json_unique_check_key(&state->unique_check.check, key, 0))
+			ereport(ERROR,
+					errcode(ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE),
+					errmsg("duplicate JSON key %s", key));
+
+		if (skip)
+			PG_RETURN_POINTER(state);
+	}
 
 	appendStringInfoString(state->str, " : ");
 
@@ -942,6 +1186,42 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 				  state->val_output_func, false);
 
 	PG_RETURN_POINTER(state);
+}
+
+/*
+ * json_object_agg aggregate function
+ */
+Datum
+json_object_agg_transfn(PG_FUNCTION_ARGS)
+{
+	return json_object_agg_transfn_worker(fcinfo, false, false);
+}
+
+/*
+ * json_object_agg_strict aggregate function
+ */
+Datum
+json_object_agg_strict_transfn(PG_FUNCTION_ARGS)
+{
+	return json_object_agg_transfn_worker(fcinfo, true, false);
+}
+
+/*
+ * json_object_agg_unique aggregate function
+ */
+Datum
+json_object_agg_unique_transfn(PG_FUNCTION_ARGS)
+{
+	return json_object_agg_transfn_worker(fcinfo, false, true);
+}
+
+/*
+ * json_object_agg_unique_strict aggregate function
+ */
+Datum
+json_object_agg_unique_strict_transfn(PG_FUNCTION_ARGS)
+{
+	return json_object_agg_transfn_worker(fcinfo, true, true);
 }
 
 /*
@@ -985,25 +1265,14 @@ catenate_stringinfo_string(StringInfo buffer, const char *addon)
 	return result;
 }
 
-/*
- * SQL function json_build_object(variadic "any")
- */
 Datum
-json_build_object(PG_FUNCTION_ARGS)
+json_build_object_worker(int nargs, Datum *args, bool *nulls, Oid *types,
+						 bool absent_on_null, bool unique_keys)
 {
-	int			nargs;
 	int			i;
 	const char *sep = "";
 	StringInfo	result;
-	Datum	   *args;
-	bool	   *nulls;
-	Oid		   *types;
-
-	/* fetch argument values to build the object */
-	nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
-
-	if (nargs < 0)
-		PG_RETURN_NULL();
+	JsonUniqueBuilderState unique_check;
 
 	if (nargs % 2 != 0)
 		ereport(ERROR,
@@ -1017,19 +1286,57 @@ json_build_object(PG_FUNCTION_ARGS)
 
 	appendStringInfoChar(result, '{');
 
+	if (unique_keys)
+		json_unique_builder_init(&unique_check);
+
 	for (i = 0; i < nargs; i += 2)
 	{
-		appendStringInfoString(result, sep);
-		sep = ", ";
+		StringInfo	out;
+		bool		skip;
+		int			key_offset;
+
+		/* Skip null values if absent_on_null */
+		skip = absent_on_null && nulls[i + 1];
+
+		if (skip)
+		{
+			/* If key uniqueness check is needed we must save skipped keys */
+			if (!unique_keys)
+				continue;
+
+			out = json_unique_builder_get_throwawaybuf(&unique_check);
+		}
+		else
+		{
+			appendStringInfoString(result, sep);
+			sep = ", ";
+			out = result;
+		}
 
 		/* process key */
 		if (nulls[i])
 			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("argument %d cannot be null", i + 1),
-					 errhint("Object keys should be text.")));
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("null value not allowed for object key")));
 
-		add_json(args[i], false, result, types[i], true);
+		/* save key offset before appending it */
+		key_offset = out->len;
+
+		add_json(args[i], false, out, types[i], true);
+
+		if (unique_keys)
+		{
+			/* check key uniqueness after key appending */
+			const char *key = &out->data[key_offset];
+
+			if (!json_unique_check_key(&unique_check.check, key, 0))
+				ereport(ERROR,
+						errcode(ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE),
+						errmsg("duplicate JSON key %s", key));
+
+			if (skip)
+				continue;
+		}
 
 		appendStringInfoString(result, " : ");
 
@@ -1039,7 +1346,27 @@ json_build_object(PG_FUNCTION_ARGS)
 
 	appendStringInfoChar(result, '}');
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	return PointerGetDatum(cstring_to_text_with_len(result->data, result->len));
+}
+
+/*
+ * SQL function json_build_object(variadic "any")
+ */
+Datum
+json_build_object(PG_FUNCTION_ARGS)
+{
+	Datum	   *args;
+	bool	   *nulls;
+	Oid		   *types;
+
+	/* build argument values to build the object */
+	int			nargs = extract_variadic_args(fcinfo, 0, true,
+											  &args, &types, &nulls);
+
+	if (nargs < 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(json_build_object_worker(nargs, args, nulls, types, false, false));
 }
 
 /*
@@ -1051,25 +1378,13 @@ json_build_object_noargs(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text_with_len("{}", 2));
 }
 
-/*
- * SQL function json_build_array(variadic "any")
- */
 Datum
-json_build_array(PG_FUNCTION_ARGS)
+json_build_array_worker(int nargs, Datum *args, bool *nulls, Oid *types,
+						bool absent_on_null)
 {
-	int			nargs;
 	int			i;
 	const char *sep = "";
 	StringInfo	result;
-	Datum	   *args;
-	bool	   *nulls;
-	Oid		   *types;
-
-	/* fetch argument values to build the array */
-	nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
-
-	if (nargs < 0)
-		PG_RETURN_NULL();
 
 	result = makeStringInfo();
 
@@ -1077,6 +1392,9 @@ json_build_array(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nargs; i++)
 	{
+		if (absent_on_null && nulls[i])
+			continue;
+
 		appendStringInfoString(result, sep);
 		sep = ", ";
 		add_json(args[i], nulls[i], result, types[i], false);
@@ -1084,7 +1402,27 @@ json_build_array(PG_FUNCTION_ARGS)
 
 	appendStringInfoChar(result, ']');
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	return PointerGetDatum(cstring_to_text_with_len(result->data, result->len));
+}
+
+/*
+ * SQL function json_build_array(variadic "any")
+ */
+Datum
+json_build_array(PG_FUNCTION_ARGS)
+{
+	Datum	   *args;
+	bool	   *nulls;
+	Oid		   *types;
+
+	/* build argument values to build the object */
+	int			nargs = extract_variadic_args(fcinfo, 0, true,
+											  &args, &types, &nulls);
+
+	if (nargs < 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(json_build_array_worker(nargs, args, nulls, types, false));
 }
 
 /*

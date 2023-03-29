@@ -15229,6 +15229,10 @@ table2-mapping
    <primary>JSON</primary>
    <secondary>functions and operators</secondary>
   </indexterm>
+   <indexterm zone="functions-json">
+    <primary>SQL/JSON</primary>
+    <secondary>functions and expressions</secondary>
+   </indexterm>
 
   <para>
    This section describes:
@@ -15245,6 +15249,42 @@ table2-mapping
      </para>
     </listitem>
    </itemizedlist>
+  </para>
+
+  <para>
+   To provide native support for JSON data types within the SQL environment,
+   <productname>PostgreSQL</productname> implements the
+   <firstterm>SQL/JSON data model</firstterm>.
+   This model comprises sequences of items. Each item can hold SQL scalar
+   values, with an additional SQL/JSON null value, and composite data structures
+   that use JSON arrays and objects. The model is a formalization of the implied
+   data model in the JSON specification
+   <ulink url="https://tools.ietf.org/html/rfc7159">RFC 7159</ulink>.
+  </para>
+
+  <para>
+   SQL/JSON allows you to handle JSON data alongside regular SQL data,
+   with transaction support, including:
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Uploading JSON data into the database and storing it in
+     regular SQL columns as character or binary strings.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Generating JSON objects and arrays from relational data.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Querying JSON data using SQL/JSON query functions and
+     SQL/JSON path language expressions.
+    </para>
+   </listitem>
+  </itemizedlist>
   </para>
 
   <para>
@@ -15677,6 +15717,12 @@ table2-mapping
   <para>
    <xref linkend="functions-json-creation-table"/> shows the functions that are
    available for constructing <type>json</type> and <type>jsonb</type> values.
+   Some functions in this table have a <literal>RETURNING</literal> clause,
+   which specifies the data type returned.  It must be one of <type>json</type>,
+   <type>jsonb</type>, <type>bytea</type>, a character string type (<type>text</type>,
+   <type>char</type>, <type>varchar</type>, or <type>nchar</type>), or a type
+   for which there is a cast from <type>json</type> to that type.
+   By default, the <type>json</type> type is returned.
   </para>
 
   <table id="functions-json-creation-table">
@@ -15761,6 +15807,45 @@ table2-mapping
       </row>
 
       <row>
+       <!--
+           Note that this is barely legible in the output; it looks like a
+           salad of braces and brackets.  It would be better to split it out
+           in multiple lines, but that's surprisingly hard to do in a way that
+           matches in HTML and PDF output.  Other standard SQL/JSON functions
+           have the same problem.
+         -->
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>json_array</primary></indexterm>
+         <function>json_array</function> (
+         <optional> { <replaceable>value_expression</replaceable> <optional> <literal>FORMAT JSON</literal> </optional> } <optional>, ...</optional> </optional>
+         <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+         <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        </para>
+        <para role="func_signature">
+         <function>json_array</function> (
+         <optional> <replaceable>query_expression</replaceable> </optional>
+         <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        </para>
+        <para>
+         Constructs a JSON array from either a series of
+         <replaceable>value_expression</replaceable> parameters or from the results
+         of <replaceable>query_expression</replaceable>,
+         which must be a SELECT query returning a single column. If
+         <literal>ABSENT ON NULL</literal> is specified, NULL values are ignored.
+         This is always the case if a
+         <replaceable>query_expression</replaceable> is used.
+        </para>
+        <para>
+         <literal>json_array(1,true,json '{"a":null}')</literal>
+         <returnvalue>[1, true, {"a":null}]</returnvalue>
+        </para>
+        <para>
+         <literal>json_array(SELECT * FROM (VALUES(1),(2)) t)</literal>
+         <returnvalue>[1, 2]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>row_to_json</primary>
@@ -15830,6 +15915,38 @@ table2-mapping
        <para>
         <literal>json_build_object('foo', 1, 2, row(3,'bar'))</literal>
         <returnvalue>{"foo" : 1, "2" : {"f1":3,"f2":"bar"}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+         <indexterm><primary>json_object</primary></indexterm>
+         <function>json_object</function> (
+         <optional> { <replaceable>key_expression</replaceable> { <literal>VALUE</literal> | ':' }
+          <replaceable>value_expression</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> }<optional>, ...</optional> </optional>
+         <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+         <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional> </optional>
+         <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        </para>
+        <para>
+         Constructs a JSON object of all the key/value pairs given,
+         or an empty object if none are given.
+         <replaceable>key_expression</replaceable> is a scalar expression
+         defining the <acronym>JSON</acronym> key, which is
+         converted to the <type>text</type> type.
+         It cannot be <literal>NULL</literal> nor can it
+         belong to a type that has a cast to the <type>json</type> type.
+         If <literal>WITH UNIQUE KEYS</literal> is specified, there must not
+         be any duplicate <replaceable>key_expression</replaceable>.
+         Any pair for which the <replaceable>value_expression</replaceable>
+         evaluates to <literal>NULL</literal> is omitted from the output
+         if <literal>ABSENT ON NULL</literal> is specified;
+         if <literal>NULL ON NULL</literal> is specified or the clause
+         omitted, the key is included with value <literal>NULL</literal>.
+        </para>
+        <para>
+         <literal>json_object('code' VALUE 'P123', 'title': 'Jaws')</literal>
+         <returnvalue>{"code" : "P123", "title" : "Jaws"}</returnvalue>
        </para></entry>
       </row>
 
@@ -20079,6 +20196,28 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm><primary>json_objectagg</primary></indexterm>
+         <function>json_objectagg</function> (
+         <optional> { <replaceable>key_expression</replaceable> { <literal>VALUE</literal> | ':' } <replaceable>value_expression</replaceable> } </optional>
+         <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+        <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional> </optional>
+        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        </para>
+        <para>
+         Behaves like <function>json_object</function><!-- xref -->, but as an
+         aggregate function, so it only takes one
+         <replaceable>key_expression</replaceable> and one
+         <replaceable>value_expression</replaceable> parameter.
+        </para>
+        <para>
+         <literal>SELECT json_objectagg(k:v) FROM (VALUES ('a'::text,current_date),('b',current_date + 1)) AS t(k,v)</literal>
+         <returnvalue>{ "a" : "2022-05-10", "b" : "2022-05-11" }</returnvalue>
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>json_object_agg</primary>
         </indexterm>
@@ -20098,9 +20237,122 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Collects all the key/value pairs into a JSON object.  Key arguments
-        are coerced to text; value arguments are converted as
-        per <function>to_json</function> or <function>to_jsonb</function>.
-        Values can be null, but not keys.
+        are coerced to text; value arguments are converted as per
+        <function>to_json</function> or <function>to_jsonb</function>.
+        Values can be null, but keys cannot.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_agg_strict</primary>
+        </indexterm>
+        <function>json_object_agg_strict</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_agg_strict</primary>
+        </indexterm>
+        <function>jsonb_object_agg_strict</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the key/value pairs into a JSON object.  Key arguments
+        are coerced to text; value arguments are converted as per
+        <function>to_json</function> or <function>to_jsonb</function>.
+        The <parameter>key</parameter> can not be null. If the
+        <parameter>value</parameter> is null then the entry is skipped,
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_agg_unique</primary>
+        </indexterm>
+        <function>json_object_agg_unique</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_agg_unique</primary>
+        </indexterm>
+        <function>jsonb_object_agg_unique</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the key/value pairs into a JSON object.  Key arguments
+        are coerced to text; value arguments are converted as per
+        <function>to_json</function> or <function>to_jsonb</function>.
+        Values can be null, but keys cannot.
+        If there is a duplicate key an error is thrown.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>json_arrayagg</primary></indexterm>
+        <function>json_arrayagg</function> (
+        <optional> <replaceable>value_expression</replaceable> </optional>
+        <optional> <literal>ORDER BY</literal> <replaceable>sort_expression</replaceable> </optional>
+        <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+       </para>
+       <para>
+        Behaves in the same way as <function>json_array</function>
+        but as an aggregate function so it only takes one
+        <replaceable>value_expression</replaceable> parameter.
+        If <literal>ABSENT ON NULL</literal> is specified, any NULL
+        values are omitted.
+        If <literal>ORDER BY</literal> is specified, the elements will
+        appear in the array in that order rather than in the input order.
+       </para>
+       <para>
+        <literal>SELECT json_arrayagg(v) FROM (VALUES(2),(1)) t(v)</literal>
+        <returnvalue>[2, 1]</returnvalue>
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_agg_unique_strict</primary>
+        </indexterm>
+        <function>json_object_agg_unique_strict</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_agg_unique_strict</primary>
+        </indexterm>
+        <function>jsonb_object_agg_unique_strict</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the key/value pairs into a JSON object.  Key arguments
+        are coerced to text; value arguments are converted as per
+        <function>to_json</function> or <function>to_jsonb</function>.
+        The <parameter>key</parameter> can not be null. If the
+        <parameter>value</parameter> is null then the entry is skipped.
+        If there is a duplicate key an error is thrown.
        </para></entry>
        <entry>No</entry>
       </row>
@@ -20179,6 +20431,29 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Computes the intersection of the non-null input values.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_agg_strict</primary>
+        </indexterm>
+        <function>json_agg_strict</function> ( <type>anyelement</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_agg_strict</primary>
+        </indexterm>
+        <function>jsonb_agg_strict</function> ( <type>anyelement</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the input values, skipping nulls, into a JSON array.
+        Values are converted to JSON as per <function>to_json</function>
+        or <function>to_jsonb</function>.
        </para></entry>
        <entry>No</entry>
       </row>
@@ -20278,7 +20553,12 @@ SELECT NULLIF(value, '(none)') ...
   <para>
    The aggregate functions <function>array_agg</function>,
    <function>json_agg</function>, <function>jsonb_agg</function>,
+   <function>json_agg_strict</function>, <function>jsonb_agg_strict</function>,
    <function>json_object_agg</function>, <function>jsonb_object_agg</function>,
+   <function>json_object_agg_strict</function>, <function>jsonb_object_agg_strict</function>,
+   <function>json_object_agg_unique</function>, <function>jsonb_object_agg_unique</function>,
+   <function>json_object_agg_unique_strict</function>,
+   <function>jsonb_object_agg_unique_strict</function>,
    <function>string_agg</function>,
    and <function>xmlagg</function>, as well as similar user-defined
    aggregate functions, produce meaningfully different result values
