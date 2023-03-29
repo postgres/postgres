@@ -3603,6 +3603,7 @@ pthread_mutex_t
 pthread_once_t
 pthread_t
 ptrdiff_t
+published_rel
 pull_var_clause_context
 pull_varattnos_context
 pull_varnos_context

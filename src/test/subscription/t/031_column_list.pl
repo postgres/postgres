@@ -959,16 +959,21 @@ $node_publisher->safe_psql(
 	CREATE TABLE test_root_1 PARTITION OF test_root FOR VALUES FROM (1) TO (10);
 	CREATE TABLE test_root_2 PARTITION OF test_root FOR VALUES FROM (10) TO (20);
 
-	CREATE PUBLICATION pub_root_true FOR TABLE test_root (a) WITH (publish_via_partition_root = true);
+	CREATE PUBLICATION pub_test_root FOR TABLE test_root (a) WITH (publish_via_partition_root = true);
+	CREATE PUBLICATION pub_test_root_1 FOR TABLE test_root_1 (a, b);
 
 	-- initial data
 	INSERT INTO test_root VALUES (1, 2, 3);
 	INSERT INTO test_root VALUES (10, 20, 30);
 ));
 
+# Subscribe to pub_test_root and pub_test_root_1 at the same time, which means
+# that the initial data will be synced once, and only the column list of the
+# parent table (test_root) in the publication pub_test_root will be used for
+# both table sync and data replication.
 $node_subscriber->safe_psql(
 	'postgres', qq(
-	CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub_root_true;
+	CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub_test_root, pub_test_root_1;
 ));
 
 $node_subscriber->wait_for_subscription_sync;

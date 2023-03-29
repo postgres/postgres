@@ -1936,21 +1936,60 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 	WalRcvExecResult *res;
 	StringInfoData cmd;
 	TupleTableSlot *slot;
-	Oid			tableRow[3] = {TEXTOID, TEXTOID, NAMEARRAYOID};
+	Oid			tableRow[3] = {TEXTOID, TEXTOID, InvalidOid};
 	List	   *tablelist = NIL;
-	bool		check_columnlist = (walrcv_server_version(wrconn) >= 150000);
+	int			server_version = walrcv_server_version(wrconn);
+	bool		check_columnlist = (server_version >= 150000);
 
 	initStringInfo(&cmd);
-	appendStringInfoString(&cmd, "SELECT DISTINCT t.schemaname, t.tablename \n");
 
-	/* Get column lists for each relation if the publisher supports it */
-	if (check_columnlist)
-		appendStringInfoString(&cmd, ", t.attnames\n");
+	/* Get the list of tables from the publisher. */
+	if (server_version >= 160000)
+	{
+		StringInfoData pub_names;
 
-	appendStringInfoString(&cmd, "FROM pg_catalog.pg_publication_tables t\n"
-						   " WHERE t.pubname IN (");
-	get_publications_str(publications, &cmd, true);
-	appendStringInfoChar(&cmd, ')');
+		tableRow[2] = INT2VECTOROID;
+		initStringInfo(&pub_names);
+		get_publications_str(publications, &pub_names, true);
+
+		/*
+		 * From version 16, we allowed passing multiple publications to the
+		 * function pg_get_publication_tables. This helped to filter out the
+		 * partition table whose ancestor is also published in this
+		 * publication array.
+		 *
+		 * Join pg_get_publication_tables with pg_publication to exclude
+		 * non-existing publications.
+		 *
+		 * Note that attrs are always stored in sorted order so we don't need
+		 * to worry if different publications have specified them in a
+		 * different order. See publication_translate_columns.
+		 */
+		appendStringInfo(&cmd, "SELECT DISTINCT n.nspname, c.relname, gpt.attrs\n"
+						 "       FROM pg_class c\n"
+						 "         JOIN pg_namespace n ON n.oid = c.relnamespace\n"
+						 "         JOIN ( SELECT (pg_get_publication_tables(VARIADIC array_agg(pubname::text))).*\n"
+						 "                FROM pg_publication\n"
+						 "                WHERE pubname IN ( %s )) AS gpt\n"
+						 "             ON gpt.relid = c.oid\n",
+						 pub_names.data);
+
+		pfree(pub_names.data);
+	}
+	else
+	{
+		tableRow[2] = NAMEARRAYOID;
+		appendStringInfoString(&cmd, "SELECT DISTINCT t.schemaname, t.tablename \n");
+
+		/* Get column lists for each relation if the publisher supports it */
+		if (check_columnlist)
+			appendStringInfoString(&cmd, ", t.attnames\n");
+
+		appendStringInfoString(&cmd, "FROM pg_catalog.pg_publication_tables t\n"
+							   " WHERE t.pubname IN (");
+		get_publications_str(publications, &cmd, true);
+		appendStringInfoChar(&cmd, ')');
+	}
 
 	res = walrcv_exec(wrconn, cmd.data, check_columnlist ? 3 : 2, tableRow);
 	pfree(cmd.data);

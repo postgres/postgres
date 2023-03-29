@@ -409,10 +409,10 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab4 (a int PRIMARY KEY) PARTITION BY LIST (a)");
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab4_1 PARTITION OF tab4 FOR VALUES IN (0, 1) PARTITION BY LIST (a)"
+	"CREATE TABLE tab4_1 PARTITION OF tab4 FOR VALUES IN (-1, 0, 1) PARTITION BY LIST (a)"
 );
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab4_1_1 PARTITION OF tab4_1 FOR VALUES IN (0, 1)");
+	"CREATE TABLE tab4_1_1 PARTITION OF tab4_1 FOR VALUES IN (-1, 0, 1)");
 
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION pub_all SET (publish_via_partition_root = true)");
@@ -424,13 +424,13 @@ $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION pub_viaroot FOR TABLE tab2, tab2_1, tab3_1 WITH (publish_via_partition_root = true)"
 );
 
-# for tab4, we publish changes through the "middle" partitioned table
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION pub_lower_level FOR TABLE tab4_1 WITH (publish_via_partition_root = true)"
 );
 
 # prepare data for the initial sync
 $node_publisher->safe_psql('postgres', "INSERT INTO tab2 VALUES (1)");
+$node_publisher->safe_psql('postgres', "INSERT INTO tab4 VALUES (-1)");
 
 # subscriber 1
 $node_subscriber1->safe_psql('postgres', "DROP SUBSCRIPTION sub1");
@@ -479,9 +479,10 @@ $node_subscriber2->safe_psql('postgres',
 	"CREATE TABLE tab4 (a int PRIMARY KEY)");
 $node_subscriber2->safe_psql('postgres',
 	"CREATE TABLE tab4_1 (a int PRIMARY KEY)");
-# Publication that sub2 points to now publishes via root, so must update
-# subscription target relations. We set the list of publications so that
-# the FOR ALL TABLES publication is second (the list order matters).
+# Since we specified publish_via_partition_root in pub_all and
+# pub_lower_level, all partition tables use their root tables' identity and
+# schema. We set the list of publications so that the FOR ALL TABLES
+# publication is second (the list order matters).
 $node_subscriber2->safe_psql('postgres',
 	"ALTER SUBSCRIPTION sub2 SET PUBLICATION pub_lower_level, pub_all");
 
@@ -492,6 +493,12 @@ $node_subscriber2->wait_for_subscription_sync;
 # check that data is synced correctly
 $result = $node_subscriber1->safe_psql('postgres', "SELECT c, a FROM tab2");
 is($result, qq(sub1_tab2|1), 'initial data synced for pub_viaroot');
+$result =
+  $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4 ORDER BY 1");
+is($result, qq(-1), 'initial data synced for pub_lower_level and pub_all');
+$result =
+  $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4_1 ORDER BY 1");
+is($result, qq(), 'initial data synced for pub_lower_level and pub_all');
 
 # insert
 $node_publisher->safe_psql('postgres', "INSERT INTO tab1 VALUES (1), (0)");
@@ -548,7 +555,8 @@ sub2_tab3|5), 'inserts into tab3 replicated');
 # maps to the tab4 relation on subscriber.
 $result =
   $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4 ORDER BY 1");
-is($result, qq(0), 'inserts into tab4 replicated');
+is( $result, qq(-1
+0), 'inserts into tab4 replicated');
 
 $result =
   $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4_1 ORDER BY 1");
@@ -574,7 +582,8 @@ $node_publisher->wait_for_catchup('sub2');
 # maps to the tab4 relation on subscriber.
 $result =
   $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4 ORDER BY 1");
-is( $result, qq(0
+is( $result, qq(-1
+0
 1), 'inserts into tab4 replicated');
 
 $result =

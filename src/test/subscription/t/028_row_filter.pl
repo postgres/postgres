@@ -235,6 +235,11 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_viaroot_part_1 PARTITION OF tab_rowfilter_viaroot_part FOR VALUES FROM (1) TO (20)"
 );
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_parent_sync (a int) PARTITION BY RANGE (a)");
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_child_sync PARTITION OF tab_rowfilter_parent_sync FOR VALUES FROM (1) TO (20)"
+);
 
 # setup structure on subscriber
 $node_subscriber->safe_psql('postgres',
@@ -285,6 +290,10 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_viaroot_part (a int)");
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_viaroot_part_1 (a int)");
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_parent_sync (a int)");
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_child_sync (a int)");
 
 # setup logical replication
 $node_publisher->safe_psql('postgres',
@@ -341,6 +350,15 @@ $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_viaroot_2 FOR TABLE tab_rowfilter_viaroot_part_1 WHERE (a < 15) WITH (publish_via_partition_root)"
 );
 
+# two publications, one publishing through ancestor and another one directly
+# publishing the partition, with different row filters
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub_parent_sync FOR TABLE tab_rowfilter_parent_sync WHERE (a > 15) WITH (publish_via_partition_root)"
+);
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub_child_sync FOR TABLE tab_rowfilter_child_sync WHERE (a < 15)"
+);
+
 #
 # The following INSERTs are executed before the CREATE SUBSCRIPTION, so these
 # SQL commands are for testing the initial data copy using logical replication.
@@ -361,6 +379,9 @@ $node_publisher->safe_psql('postgres',
 );
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rowfilter_4 (c) SELECT generate_series(1, 10)");
+
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab_rowfilter_parent_sync(a) VALUES(14), (16)");
 
 # insert data into partitioned table and directly on the partition
 $node_publisher->safe_psql('postgres',
@@ -387,7 +408,7 @@ $node_publisher->safe_psql('postgres',
 );
 
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_1, tap_pub_2, tap_pub_3, tap_pub_4a, tap_pub_4b, tap_pub_5a, tap_pub_5b, tap_pub_toast, tap_pub_inherits, tap_pub_viaroot_2, tap_pub_viaroot_1"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_1, tap_pub_2, tap_pub_3, tap_pub_4a, tap_pub_4b, tap_pub_5a, tap_pub_5b, tap_pub_toast, tap_pub_inherits, tap_pub_viaroot_2, tap_pub_viaroot_1, tap_pub_parent_sync, tap_pub_child_sync"
 );
 
 # wait for initial table synchronization to finish
@@ -511,6 +532,25 @@ $result =
 is( $result, qq(20
 30
 40), 'check initial data copy from table tab_rowfilter_inherited');
+
+# Check expected replicated rows for tap_pub_parent_sync and
+# tap_pub_child_sync.
+# Since the option publish_via_partition_root of tap_pub_parent_sync is true,
+# so the row filter of tap_pub_parent_sync will be used:
+# tap_pub_parent_sync filter is: (a > 15)
+# tap_pub_child_sync filter is: (a < 15)
+# - INSERT (14)        NO, 14 < 15
+# - INSERT (16)        YES, 16 > 15
+$result =
+  $node_subscriber->safe_psql('postgres',
+	"SELECT a FROM tab_rowfilter_parent_sync ORDER BY 1");
+is( $result, qq(16),
+	'check initial data copy from tab_rowfilter_parent_sync');
+$result =
+  $node_subscriber->safe_psql('postgres',
+	"SELECT a FROM tab_rowfilter_child_sync ORDER BY 1");
+is( $result, qq(),
+	'check initial data copy from tab_rowfilter_child_sync');
 
 # The following commands are executed after CREATE SUBSCRIPTION, so these SQL
 # commands are for testing normal logical replication behavior.

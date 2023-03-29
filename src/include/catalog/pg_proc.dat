@@ -11756,11 +11756,13 @@
   prosrc => 'pg_show_replication_origin_status' },
 
 # publications
-{ oid => '6119', descr => 'get information of tables in a publication',
-  proname => 'pg_get_publication_tables', prorows => '1000', proretset => 't',
-  provolatile => 's', prorettype => 'record', proargtypes => 'text',
-  proallargtypes => '{text,oid,int2vector,pg_node_tree}',
-  proargmodes => '{i,o,o,o}', proargnames => '{pubname,relid,attrs,qual}',
+{ oid => '6119',
+  descr => 'get information of the tables that are part of the specified publications',
+  proname => 'pg_get_publication_tables', prorows => '1000',
+  provariadic => 'text', proretset => 't', provolatile => 's',
+  prorettype => 'record', proargtypes => '_text',
+  proallargtypes => '{_text,oid,oid,int2vector,pg_node_tree}',
+  proargmodes => '{v,o,o,o,o}', proargnames => '{pubname,pubid,relid,attrs,qual}',
   prosrc => 'pg_get_publication_tables' },
 { oid => '6121',
   descr => 'returns whether a relation can be part of a publication',
