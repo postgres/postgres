@@ -900,6 +900,19 @@ gistBuildCallback(Relation index,
 						 true);
 	itup->t_tid = *tid;
 
+	/* Update tuple count and total size. */
+	buildstate->indtuples += 1;
+	buildstate->indtuplesSize += IndexTupleSize(itup);
+
+	/*
+	 * XXX In buffering builds, the tempCxt is also reset down inside
+	 * gistProcessEmptyingQueue().  This is not great because it risks
+	 * confusion and possible use of dangling pointers (for example, itup
+	 * might be already freed when control returns here).  It's generally
+	 * better that a memory context be "owned" by only one function.  However,
+	 * currently this isn't causing issues so it doesn't seem worth the amount
+	 * of refactoring that would be needed to avoid it.
+	 */
 	if (buildstate->buildMode == GIST_BUFFERING_ACTIVE)
 	{
 		/* We have buffers, so use them. */
@@ -914,10 +927,6 @@ gistBuildCallback(Relation index,
 		gistdoinsert(index, itup, buildstate->freespace,
 					 buildstate->giststate, buildstate->heaprel, true);
 	}
-
-	/* Update tuple count and total size. */
-	buildstate->indtuples += 1;
-	buildstate->indtuplesSize += IndexTupleSize(itup);
 
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextReset(buildstate->giststate->tempCxt);
