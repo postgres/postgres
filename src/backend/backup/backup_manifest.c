@@ -349,7 +349,7 @@ SendBackupManifest(backup_manifest_info *manifest, bbsink *sink)
 	 * We've written all the data to the manifest file.  Rewind the file so
 	 * that we can read it all back.
 	 */
-	if (BufFileSeek(manifest->buffile, 0, 0L, SEEK_SET))
+	if (BufFileSeek(manifest->buffile, 0, 0, SEEK_SET))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not rewind temporary file")));

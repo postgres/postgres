@@ -333,7 +333,7 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
 
 		/* run the plan to completion */
-		ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
+		ExecutorRun(queryDesc, ForwardScanDirection, 0, true);
 
 		/* save the rowcount if we're given a qc to fill */
 		if (qc)

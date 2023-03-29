@@ -148,7 +148,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 		Assert(strcmp(lastRestartPointFname, xlogfname) <= 0);
 	}
 	else
-		XLogFileName(lastRestartPointFname, 0, 0L, wal_segment_size);
+		XLogFileName(lastRestartPointFname, 0, 0, wal_segment_size);
 
 	/* Build the restore command to execute */
 	xlogRestoreCmd = BuildRestoreCommand(recoveryRestoreCommand,

@@ -119,7 +119,7 @@ makeBufFileCommon(int nfiles)
 	file->dirty = false;
 	file->resowner = CurrentResourceOwner;
 	file->curFile = 0;
-	file->curOffset = 0L;
+	file->curOffset = 0;
 	file->pos = 0;
 	file->nbytes = 0;
 
@@ -439,7 +439,7 @@ BufFileLoadBuffer(BufFile *file)
 		file->curFile + 1 < file->numFiles)
 	{
 		file->curFile++;
-		file->curOffset = 0L;
+		file->curOffset = 0;
 	}
 
 	thisfile = file->files[file->curFile];
@@ -511,7 +511,7 @@ BufFileDumpBuffer(BufFile *file)
 			while (file->curFile + 1 >= file->numFiles)
 				extendBufFile(file);
 			file->curFile++;
-			file->curOffset = 0L;
+			file->curOffset = 0;
 		}
 
 		/*

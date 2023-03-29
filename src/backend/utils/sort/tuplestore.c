@@ -1246,11 +1246,11 @@ tuplestore_rescan(Tuplestorestate *state)
 		case TSS_WRITEFILE:
 			readptr->eof_reached = false;
 			readptr->file = 0;
-			readptr->offset = 0L;
+			readptr->offset = 0;
 			break;
 		case TSS_READFILE:
 			readptr->eof_reached = false;
-			if (BufFileSeek(state->myfile, 0, 0L, SEEK_SET) != 0)
+			if (BufFileSeek(state->myfile, 0, 0, SEEK_SET) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not seek in tuplestore temporary file")));
