@@ -252,8 +252,9 @@
    additional columns not provided by the published table.  Any such columns
    will be filled with the default value as specified in the definition of the
    target table. However, logical replication in binary format is more
-   restrictive. See the <link linkend="sql-createsubscription-binary"><literal>binary</literal>
-   option</link> of <command>CREATE SUBSCRIPTION</command> for details.
+   restrictive. See the
+   <link linkend="sql-createsubscription-with-binary"><literal>binary</literal></link>
+   option of <command>CREATE SUBSCRIPTION</command> for details.
   </para>
 
   <sect2 id="logical-replication-subscription-slot">
@@ -587,7 +588,9 @@ ALTER SUBSCRIPTION
 
    <para>
     Example 2: Where the subscription says <literal>connect = false</literal>,
-    but also specifies the <literal>slot_name</literal>
+    but also specifies the
+    <link linkend="sql-createsubscription-with-slot-name"><literal>slot_name</literal></link>
+    option.
     <itemizedlist>
      <listitem>
       <para>
@@ -704,9 +707,10 @@ ALTER SUBSCRIPTION
     If the row filter evaluates to <literal>false</literal> or <literal>NULL</literal>
     then the row is not replicated. The <literal>WHERE</literal> clause expression
     is evaluated with the same role used for the replication connection (i.e.
-    the role specified in the <literal>CONNECTION</literal> clause of the
-    <xref linkend="sql-createsubscription"/>). Row filters have no effect for
-    <command>TRUNCATE</command> command.
+    the role specified in the
+    <link linkend="sql-createsubscription-connection"><literal>CONNECTION</literal></link>
+    clause of the <xref linkend="sql-createsubscription"/>). Row filters have
+    no effect for <command>TRUNCATE</command> command.
    </para>
 
   </sect2>
@@ -1500,9 +1504,10 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    <function>pg_replication_origin_advance()</function></link> function.
    Before using this function, the subscription needs to be disabled temporarily
    either by <command>ALTER SUBSCRIPTION ... DISABLE</command> or, the
-   subscription can be used with the <literal>disable_on_error</literal> option.
-   Then, you can use <function>pg_replication_origin_advance()</function> function
-   with the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>)
+   subscription can be used with the
+   <link linkend="sql-createsubscription-with-disable-on-error"><literal>disable_on_error</literal></link>
+   option. Then, you can use <function>pg_replication_origin_advance()</function>
+   function with the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>)
    and the next LSN of the finish LSN (i.e., 0/14C0379).  The current position of
    origins can be seen in the <link linkend="view-pg-replication-origin-status">
    <structname>pg_replication_origin_status</structname></link> system view.
@@ -1512,11 +1517,13 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <para>
-   When the streaming mode is <literal>parallel</literal>, the finish LSN of
-   failed transactions may not be logged. In that case, it may be necessary to
-   change the streaming mode to <literal>on</literal> or <literal>off</literal> and
-   cause the same conflicts again so the finish LSN of the failed transaction will
-   be written to the server log. For the usage of finish LSN, please refer to <link
+   When the
+   <link linkend="sql-createsubscription-with-streaming"><literal>streaming</literal></link>
+   mode is <literal>parallel</literal>, the finish LSN of failed transactions
+   may not be logged. In that case, it may be necessary to change the streaming
+   mode to <literal>on</literal> or <literal>off</literal> and cause the same
+   conflicts again so the finish LSN of the failed transaction will be written
+   to the server log. For the usage of finish LSN, please refer to <link
    linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ...
    SKIP</command></link>.
   </para>
@@ -1701,8 +1708,10 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    subscription.  A disabled subscription or a crashed subscription will have
    zero rows in this view.  If the initial data synchronization of any
    table is in progress, there will be additional workers for the tables
-   being synchronized. Moreover, if the streaming transaction is applied in
-   parallel, there may be additional parallel apply workers.
+   being synchronized. Moreover, if the
+   <link linkend="sql-createsubscription-with-streaming"><literal>streaming</literal></link>
+   transaction is applied in parallel, there may be additional parallel apply
+   workers.
   </para>
  </sect1>
 

@@ -61,7 +61,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
   <title>Parameters</title>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="sql-createsubscription-name">
     <term><replaceable class="parameter">subscription_name</replaceable></term>
     <listitem>
      <para>
@@ -70,7 +70,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-createsubscription-connection">
     <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
     <listitem>
      <para>
@@ -81,7 +81,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-createsubscription-publication">
     <term><literal>PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...]</literal></term>
     <listitem>
      <para>
@@ -90,7 +90,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-createsubscription-with">
     <term><literal>WITH ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
@@ -102,7 +102,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
       <variablelist>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-connect">
         <term><literal>connect</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -129,7 +129,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-create-slot">
         <term><literal>create_slot</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -145,7 +145,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-enabled">
         <term><literal>enabled</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -156,7 +156,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-slot-name">
         <term><literal>slot_name</literal> (<type>string</type>)</term>
         <listitem>
          <para>
@@ -185,7 +185,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
       <variablelist>
 
-       <varlistentry id="sql-createsubscription-binary" xreflabel="binary">
+       <varlistentry id="sql-createsubscription-with-binary">
         <term><literal>binary</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -222,7 +222,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-copy-data">
         <term><literal>copy_data</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -243,7 +243,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-streaming">
         <term><literal>streaming</literal> (<type>enum</type>)</term>
         <listitem>
          <para>
@@ -271,7 +271,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-synchronous-commit">
         <term><literal>synchronous_commit</literal> (<type>enum</type>)</term>
         <listitem>
          <para>
@@ -303,7 +303,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-two-phase">
         <term><literal>two_phase</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -334,7 +334,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-disable-on-error">
         <term><literal>disable_on_error</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -346,7 +346,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry>
+       <varlistentry id="sql-createsubscription-with-origin">
         <term><literal>origin</literal> (<type>string</type>)</term>
         <listitem>
          <para>
