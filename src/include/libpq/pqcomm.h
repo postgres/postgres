@@ -27,6 +27,12 @@ typedef struct
 	socklen_t	salen;
 } SockAddr;
 
+typedef struct
+{
+	int			family;
+	SockAddr	addr;
+} AddrInfo;
+
 /* Configure the UNIX socket location for the well known port. */
 
 #define UNIXSOCK_PATH(path, port, sockdir) \

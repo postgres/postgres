@@ -26,6 +26,7 @@ AcquireSampleRowsFunc
 ActionList
 ActiveSnapshotElt
 AddForeignUpdateTargets_function
+AddrInfo
 AffixNode
 AffixNodeData
 AfterTriggerEvent

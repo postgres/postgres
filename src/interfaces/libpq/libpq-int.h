@@ -471,9 +471,10 @@ struct pg_conn
 	PGTargetServerType target_server_type;	/* desired session properties */
 	bool		try_next_addr;	/* time to advance to next address/host? */
 	bool		try_next_host;	/* time to advance to next connhost[]? */
-	struct addrinfo *addrlist;	/* list of addresses for current connhost */
-	struct addrinfo *addr_cur;	/* the one currently being tried */
-	int			addrlist_family;	/* needed to know how to free addrlist */
+	int			naddr;			/* number of addresses returned by getaddrinfo */
+	int			whichaddr;		/* the address currently being tried */
+	AddrInfo   *addr;			/* the array of addresses for the currently
+								 * tried host */
 	bool		send_appname;	/* okay to send application_name? */
 
 	/* Miscellaneous stuff */
