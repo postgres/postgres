@@ -23,5 +23,12 @@
   descr => 'standard POSIX collation',
   collname => 'POSIX', collprovider => 'c', collencoding => '-1',
   collcollate => 'POSIX', collctype => 'POSIX' },
+{ oid => '962', descr => 'sorts by Unicode code point',
+  collname => 'ucs_basic', collprovider => 'c', collencoding => '6',
+  collcollate => 'C', collctype => 'C' },
+{ oid => '963',
+  descr => 'sorts using the Unicode Collation Algorithm with default settings',
+  collname => 'unicode', collprovider => 'i', collencoding => '-1',
+  colliculocale => 'und' },
 
 ]
