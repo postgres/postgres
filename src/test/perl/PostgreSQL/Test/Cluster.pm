@@ -2569,6 +2569,22 @@ sub issues_sql_like
 
 =pod
 
+=item $node->log_content()
+
+Returns the contents of log of the node
+
+=cut
+
+sub log_content
+{
+	my ($self) = @_;
+	return
+	  PostgreSQL::Test::Utils::slurp_file($self->logfile);
+}
+
+
+=pod
+
 =item $node->run_log(...)
 
 Runs a shell command like PostgreSQL::Test::Utils::run_log, but with connection parameters set

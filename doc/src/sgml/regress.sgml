@@ -256,7 +256,7 @@ make check-world -j8 >/dev/null
    <varname>PG_TEST_EXTRA</varname> to a whitespace-separated list, for
    example:
 <programlisting>
-make check-world PG_TEST_EXTRA='kerberos ldap ssl'
+make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance'
 </programlisting>
    The following values are currently supported:
    <variablelist>
@@ -286,6 +286,17 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl'
      <listitem>
       <para>
        Runs the test suite under <filename>src/test/ssl</filename>.  This opens TCP/IP listen sockets.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>load_balance</literal></term>
+     <listitem>
+      <para>
+       Runs the test <filename>src/interfaces/libpq/t/004_load_balance_dns.pl</filename>.
+       This requires editing the system <filename>hosts</filename> file and
+       opens TCP/IP listen sockets.
       </para>
      </listitem>
     </varlistentry>

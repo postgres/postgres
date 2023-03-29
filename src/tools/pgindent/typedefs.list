@@ -1705,6 +1705,7 @@ PGFileType
 PGFunction
 PGLZ_HistEntry
 PGLZ_Strategy
+PGLoadBalanceType
 PGMessageField
 PGModuleMagicFunction
 PGNoticeHooks

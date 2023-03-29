@@ -25,7 +25,7 @@ env:
   MTEST_ARGS: --print-errorlogs --no-rebuild -C build
   PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
-  PG_TEST_EXTRA: kerberos ldap ssl
+  PG_TEST_EXTRA: kerberos ldap ssl load_balance
 
 
 # What files to preserve in case tests fail
@@ -313,6 +313,14 @@ task:
     mkdir -m 770 /tmp/cores
     chown root:postgres /tmp/cores
     sysctl kernel.core_pattern='/tmp/cores/%e-%s-%p.core'
+
+  setup_hosts_file_script: |
+    cat >> /etc/hosts <<-EOF
+      127.0.0.1 pg-loadbalancetest
+      127.0.0.2 pg-loadbalancetest
+      127.0.0.3 pg-loadbalancetest
+    EOF
+
   setup_additional_packages_script: |
     #apt-get update
     #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
@@ -563,6 +571,12 @@ task:
 
   setup_additional_packages_script: |
     REM choco install -y --no-progress ...
+
+  setup_hosts_file_script: |
+    echo 127.0.0.1 pg-loadbalancetest >> c:\Windows\System32\Drivers\etc\hosts
+    echo 127.0.0.2 pg-loadbalancetest >> c:\Windows\System32\Drivers\etc\hosts
+    echo 127.0.0.3 pg-loadbalancetest >> c:\Windows\System32\Drivers\etc\hosts
+    type c:\Windows\System32\Drivers\etc\hosts
 
   # Use /DEBUG:FASTLINK to avoid high memory usage during linking
   configure_script: |

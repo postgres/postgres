@@ -2115,6 +2115,67 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="libpq-connect-load-balance-hosts" xreflabel="load_balance_hosts">
+      <term><literal>load_balance_hosts</literal></term>
+      <listitem>
+       <para>
+        Controls the order in which the client tries to connect to the available
+        hosts and addresses. Once a connection attempt is successful no other
+        hosts and addresses will be tried. This parameter is typically used in
+        combination with multiple host names or a DNS record that returns
+        multiple IPs. This parameter can be used in combination with
+        <xref linkend="libpq-connect-target-session-attrs"/>
+        to, for example, load balance over standby servers only. Once successfully
+        connected, subsequent queries on the returned connection will all be
+        sent to the same server. There are currently two modes:
+        <variablelist>
+         <varlistentry>
+          <term><literal>disable</literal> (default)</term>
+          <listitem>
+           <para>
+            No load balancing across hosts is performed.  Hosts are tried in
+            the order in which they are provided and addresses are tried in
+            the order they are received from DNS or a hosts file.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>random</literal></term>
+          <listitem>
+           <para>
+            Hosts and addresses are tried in random order. This value is mostly
+            useful when opening multiple connections at the same time, possibly
+            from different machines. This way connections can be load balanced
+            across multiple <productname>PostgreSQL</productname> servers.
+           </para>
+           <para>
+            While random load balancing, due to its random nature, will almost
+            never result in a completely uniform distribution, it statistically
+            gets quite close. One important aspect here is that this algorithm
+            uses two levels of random choices: First the hosts
+            will be resolved in random order. Then secondly, before resolving
+            the next host, all resolved addresses for the current host will be
+            tried in random order. This behaviour can skew the amount of
+            connections each node gets greatly in certain cases, for instance
+            when some hosts resolve to more addresses than others. But such a
+            skew can also be used on purpose, e.g. to increase the number of
+            connections a larger server gets by providing its hostname multiple
+            times in the host string.
+           </para>
+           <para>
+            When using this value it's recommended to also configure a reasonable
+            value for <xref linkend="libpq-connect-connect-timeout"/>. Because then,
+            if one of the nodes that are used for load balancing is not responding,
+            a new node will be tried.
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
   </sect2>
