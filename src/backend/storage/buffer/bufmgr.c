@@ -2789,16 +2789,6 @@ CheckPointBuffers(int flags)
 	BufferSync(flags);
 }
 
-
-/*
- * Do whatever is needed to prepare for commit at the bufmgr and smgr levels
- */
-void
-BufmgrCommit(void)
-{
-	/* Nothing to do in bufmgr anymore... */
-}
-
 /*
  * BufferGetBlockNumber
  *		Returns the block number associated with a buffer.

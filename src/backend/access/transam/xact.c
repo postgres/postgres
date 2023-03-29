@@ -1374,12 +1374,6 @@ RecordTransactionCommit(void)
 					  replorigin_session_origin != DoNotReplicateId);
 
 		/*
-		 * Begin commit critical section and insert the commit XLOG record.
-		 */
-		/* Tell bufmgr and smgr to prepare for commit */
-		BufmgrCommit();
-
-		/*
 		 * Mark ourselves as within our "commit critical section".  This
 		 * forces any concurrent checkpoint to wait until we've updated
 		 * pg_xact.  Without this, it is possible for the checkpoint to set
@@ -1400,6 +1394,9 @@ RecordTransactionCommit(void)
 		START_CRIT_SECTION();
 		MyProc->delayChkptFlags |= DELAY_CHKPT_START;
 
+		/*
+		 * Insert the commit XLOG record.
+		 */
 		XactLogCommitRecord(GetCurrentTransactionStopTimestamp(),
 							nchildren, children, nrels, rels,
 							ndroppedstats, droppedstats,
@@ -2535,9 +2532,6 @@ PrepareTransaction(void)
 	s->state = TRANS_PREPARE;
 
 	prepared_at = GetCurrentTimestamp();
-
-	/* Tell bufmgr and smgr to prepare for commit */
-	BufmgrCommit();
 
 	/*
 	 * Reserve the GID for this transaction. This could fail if the requested
