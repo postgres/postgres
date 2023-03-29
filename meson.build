@@ -18,7 +18,7 @@ project('postgresql',
   default_options: [
     'warning_level=1', #-Wall equivalent
     'b_pch=false',
-    'buildtype=release',
+    'buildtype=debugoptimized', # -O2 + debug
     # For compatibility with the autoconf build, set a default prefix. This
     # works even on windows, where it's a drive-relative path (i.e. when on
     # d:/somepath it'll install to d:/usr/local/pgsql)

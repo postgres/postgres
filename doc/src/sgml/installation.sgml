@@ -3001,7 +3001,7 @@ ninja install
       <listitem>
        <para>
         This option can be used to specify the buildtype to use; defaults to
-        <option>release</option>.  If you'd like finer control on the debug
+        <option>debugoptimized</option>.  If you'd like finer control on the debug
         symbols and optimization levels than what this option provides, you
         can refer to the <option>--debug</option> and
         <option>--optimization</option> flags.
