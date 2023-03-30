@@ -1988,9 +1988,9 @@ FilePrefetch(File file, off_t offset, off_t amount, uint32 wait_event_info)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FilePrefetch: %d (%s) " INT64_FORMAT " %d",
+	DO_DB(elog(LOG, "FilePrefetch: %d (%s) " INT64_FORMAT " " INT64_FORMAT,
 			   file, VfdCache[file].fileName,
-			   (int64) offset, amount));
+			   (int64) offset, (int64) amount));
 
 	returnCode = FileAccess(file);
 	if (returnCode < 0)
@@ -2096,7 +2096,7 @@ FileWrite(File file, const void *buffer, size_t amount, off_t offset,
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FileWrite: %d (%s) " INT64_FORMAT " %d %p",
+	DO_DB(elog(LOG, "FileWrite: %d (%s) " INT64_FORMAT " %zu %p",
 			   file, VfdCache[file].fileName,
 			   (int64) offset,
 			   amount, buffer));
