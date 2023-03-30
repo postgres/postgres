@@ -1045,7 +1045,7 @@ libpq_prng_init(PGconn *conn)
 
 	gettimeofday(&tval, NULL);
 
-	rseed = ((uint64) conn) ^
+	rseed = ((uintptr_t) conn) ^
 			((uint64) getpid()) ^
 			((uint64) tval.tv_usec) ^
 			((uint64) tval.tv_sec);
