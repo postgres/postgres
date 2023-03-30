@@ -1548,7 +1548,7 @@ typedef struct JsonReturning
 
 /*
  * JsonValueExpr -
- *		representation of JSON value expression (expr [FORMAT json_format])
+ *		representation of JSON value expression (expr [FORMAT JsonFormat])
  */
 typedef struct JsonValueExpr
 {

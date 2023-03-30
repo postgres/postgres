@@ -10654,7 +10654,7 @@ get_json_constructor(JsonConstructorExpr *ctor, deparse_context *context,
 			funcname = "JSON_ARRAY";
 			break;
 		default:
-			elog(ERROR, "invalid JsonConstructorExprType %d", ctor->type);
+			elog(ERROR, "invalid JsonConstructorType %d", ctor->type);
 	}
 
 	appendStringInfo(buf, "%s(", funcname);

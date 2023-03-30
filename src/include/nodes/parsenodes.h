@@ -1809,7 +1809,7 @@ typedef struct JsonObjectAgg
 
 /*
  * JsonArrayAgg -
- *		untransformed representation of JSON_ARRRAYAGG()
+ *		untransformed representation of JSON_ARRAYAGG()
  */
 typedef struct JsonArrayAgg
 {

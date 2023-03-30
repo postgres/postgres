@@ -3138,7 +3138,7 @@ makeJsonByteaToTextConversion(Node *expr, JsonFormat *format, int location)
 }
 
 /*
- * Make CaseTestExpr node.
+ * Make a CaseTestExpr node.
  */
 static Node *
 makeCaseTestExpr(Node *expr)
@@ -3456,6 +3456,9 @@ coerceJsonFuncExpr(ParseState *pstate, Node *expr,
 	return res;
 }
 
+/*
+ * Make a JsonConstructorExpr node.
+ */
 static Node *
 makeJsonConstructorExpr(ParseState *pstate, JsonConstructorType type,
 						List *args, Expr *fexpr, JsonReturning *returning,
@@ -3464,8 +3467,6 @@ makeJsonConstructorExpr(ParseState *pstate, JsonConstructorType type,
 	JsonConstructorExpr *jsctor = makeNode(JsonConstructorExpr);
 	Node	   *placeholder;
 	Node	   *coercion;
-	Oid			intermediate_typid =
-	returning->format->format_type == JS_FORMAT_JSONB ? JSONBOID : JSONOID;
 
 	jsctor->args = args;
 	jsctor->func = fexpr;
@@ -3481,7 +3482,8 @@ makeJsonConstructorExpr(ParseState *pstate, JsonConstructorType type,
 	{
 		CaseTestExpr *cte = makeNode(CaseTestExpr);
 
-		cte->typeId = intermediate_typid;
+		cte->typeId = returning->format->format_type == JS_FORMAT_JSONB ?
+			JSONBOID : JSONOID;
 		cte->typeMod = -1;
 		cte->collation = InvalidOid;
 
@@ -3501,7 +3503,7 @@ makeJsonConstructorExpr(ParseState *pstate, JsonConstructorType type,
  *
  * JSON_OBJECT() is transformed into json[b]_build_object[_ext]() call
  * depending on the output JSON format. The first two arguments of
- * json[b]_build_object_ext() are absent_on_null and check_key_uniqueness.
+ * json[b]_build_object_ext() are absent_on_null and check_unique.
  *
  * Then function call result is coerced to the target type.
  */
@@ -3615,9 +3617,11 @@ transformJsonAggConstructor(ParseState *pstate, JsonAggConstructor *agg_ctor,
 {
 	Oid			aggfnoid;
 	Node	   *node;
-	Expr	   *aggfilter = agg_ctor->agg_filter ? (Expr *)
-	transformWhereClause(pstate, agg_ctor->agg_filter,
-						 EXPR_KIND_FILTER, "FILTER") : NULL;
+	Expr	   *aggfilter;
+
+	aggfilter = agg_ctor->agg_filter ? (Expr *)
+		transformWhereClause(pstate, agg_ctor->agg_filter,
+							 EXPR_KIND_FILTER, "FILTER") : NULL;
 
 	aggfnoid = DatumGetInt32(DirectFunctionCall1(regprocin,
 												 CStringGetDatum(aggfn)));
@@ -3631,10 +3635,10 @@ transformJsonAggConstructor(ParseState *pstate, JsonAggConstructor *agg_ctor,
 		wfunc->wintype = aggtype;
 		/* wincollid and inputcollid will be set by parse_collate.c */
 		wfunc->args = args;
+		wfunc->aggfilter = aggfilter;
 		/* winref will be set by transformWindowFuncCall */
 		wfunc->winstar = false;
 		wfunc->winagg = true;
-		wfunc->aggfilter = aggfilter;
 		wfunc->location = agg_ctor->location;
 
 		/*
@@ -3659,7 +3663,7 @@ transformJsonAggConstructor(ParseState *pstate, JsonAggConstructor *agg_ctor,
 		aggref->aggtype = aggtype;
 
 		/* aggcollid and inputcollid will be set by parse_collate.c */
-		aggref->aggtranstype = InvalidOid;	/* will be set by planner */
+		/* aggtranstype will be set by planner */
 		/* aggargtypes will be set by transformAggregateCall */
 		/* aggdirectargs and args will be set by transformAggregateCall */
 		/* aggorder and aggdistinct will be set by transformAggregateCall */
@@ -3667,8 +3671,11 @@ transformJsonAggConstructor(ParseState *pstate, JsonAggConstructor *agg_ctor,
 		aggref->aggstar = false;
 		aggref->aggvariadic = false;
 		aggref->aggkind = AGGKIND_NORMAL;
+		aggref->aggpresorted = false;
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->aggsplit = AGGSPLIT_SIMPLE; /* planner might change this */
+		aggref->aggno = -1;		/* planner will set aggno and aggtransno */
+		aggref->aggtransno = -1;
 		aggref->location = agg_ctor->location;
 
 		transformAggregateCall(pstate, aggref, args, agg_ctor->agg_order, false);
@@ -3685,7 +3692,7 @@ transformJsonAggConstructor(ParseState *pstate, JsonAggConstructor *agg_ctor,
  * Transform JSON_OBJECTAGG() aggregate function.
  *
  * JSON_OBJECTAGG() is transformed into
- * json[b]_objectagg(key, value, absent_on_null, check_unique) call depending on
+ * json[b]_objectagg[_unique][_strict](key, value) call depending on
  * the output JSON format.  Then the function call result is coerced to the
  * target output type.
  */
