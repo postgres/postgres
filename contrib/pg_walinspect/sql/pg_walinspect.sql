@@ -78,7 +78,7 @@ UPDATE sample_tbl SET col1 = col1 + 1 WHERE col1 = 1;
 SELECT pg_current_wal_lsn() AS wal_lsn4 \gset
 -- Check if we get block data from WAL record.
 SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_block_info(:'wal_lsn3', :'wal_lsn4')
-  WHERE relfilenode = :'sample_tbl_oid' AND blockdata IS NOT NULL;
+  WHERE relfilenode = :'sample_tbl_oid' AND block_data IS NOT NULL;
 
 -- Force full-page image on the next update.
 SELECT pg_current_wal_lsn() AS wal_lsn5 \gset
@@ -87,7 +87,7 @@ UPDATE sample_tbl SET col1 = col1 + 1 WHERE col1 = 2;
 SELECT pg_current_wal_lsn() AS wal_lsn6 \gset
 -- Check if we get FPI from WAL record.
 SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_block_info(:'wal_lsn5', :'wal_lsn6')
-  WHERE relfilenode = :'sample_tbl_oid' AND fpi IS NOT NULL;
+  WHERE relfilenode = :'sample_tbl_oid' AND block_fpi_data IS NOT NULL;
 
 -- ===================================================================
 -- Tests for permissions

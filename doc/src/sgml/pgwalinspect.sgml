@@ -18,29 +18,38 @@
 
  <para>
   All the functions of this module will provide the WAL information using the
-  current server's timeline ID.
- </para>
-
- <para>
-  All the functions of this module will try to find the first valid WAL record
-  that is at or after the given <replaceable>in_lsn</replaceable> or
-  <replaceable>start_lsn</replaceable> and will emit error if no such record
-  is available. Similarly, the <replaceable>end_lsn</replaceable> must be
-  available, and if it falls in the middle of a record, the entire record must
-  be available.
+  server's current timeline ID.
  </para>
 
  <note>
   <para>
-   Some functions, such as <function><link
-   linkend="pg-logical-emit-message">pg_logical_emit_message</link></function>,
-   return the LSN <emphasis>after</emphasis> the record just
-   inserted. Therefore, if you pass that LSN as
-   <replaceable>in_lsn</replaceable> or <replaceable>start_lsn</replaceable>
-   to one of these functions, it will return the <emphasis>next</emphasis>
-   record.
+   The <filename>pg_walinspect</filename> functions are often called
+   using an LSN argument that specifies the location at which a known
+   WAL record of interest <emphasis>begins</emphasis>.  However, some
+   functions, such as
+   <function><link linkend="pg-logical-emit-message">pg_logical_emit_message</link></function>,
+   return the LSN <emphasis>after</emphasis> the record that was just
+   inserted.
   </para>
  </note>
+ <tip>
+  <para>
+   All of the <filename>pg_walinspect</filename> functions that show
+   information about records that fall within a certain LSN range are
+   permissive about accepting <replaceable>end_lsn</replaceable>
+   arguments that are after the server's current LSN.  Using an
+   <replaceable>end_lsn</replaceable> <quote>from the future</quote>
+   will not raise an error.
+  </para>
+  <para>
+   It may be convenient to provide the value
+   <literal>FFFFFFFF/FFFFFFFF</literal> (the maximum valid
+   <type>pg_lsn</type> value) as an <replaceable>end_lsn</replaceable>
+   argument.  This is equivalent to providing an
+   <replaceable>end_lsn</replaceable> argument matching the server's
+   current LSN.
+  </para>
+ </tip>
  <para>
   By default, use of these functions is restricted to superusers and members of
   the <literal>pg_read_server_files</literal> role. Access may be granted by
@@ -58,11 +67,9 @@
 
     <listitem>
      <para>
-      Gets WAL record information of a given LSN. If the given LSN isn't
-      at the start of a WAL record, it gives the information of the next
-      available valid WAL record; or an error if no such record is found.
-      For example, usage of the function is as
-      follows:
+      Gets WAL record information about a record that is located at or
+      after the <replaceable>in_lsn</replaceable> argument.  For
+      example:
 <screen>
 postgres=# SELECT * FROM pg_get_wal_record_info('0/1E826E98');
 -[ RECORD 1 ]----+----------------------------------------------------
@@ -79,6 +86,12 @@ description      | snapshotConflictHorizon 33748 nredirected 0 ndead 2
 block_ref        | blkref #0: rel 1663/5/60221 fork main blk 2
 </screen>
      </para>
+     <para>
+      If <replaceable>in_lsn</replaceable> isn't at the start of a WAL
+      record, information about the next valid WAL record is shown
+      instead.  If there is no next valid WAL record, the function
+      raises an error.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -94,11 +107,7 @@ block_ref        | blkref #0: rel 1663/5/60221 fork main blk 2
      <para>
       Gets information of all the valid WAL records between
       <replaceable>start_lsn</replaceable> and <replaceable>end_lsn</replaceable>.
-      Returns one row per WAL record. If a future
-      <replaceable>end_lsn</replaceable> (i.e. ahead of the current LSN of
-      the server) is specified, it returns information until the end of WAL.
-      The function raises an error if <replaceable>start_lsn</replaceable>
-      is not available. For example, usage of the function is as follows:
+      Returns one row per WAL record.  For example:
 <screen>
 postgres=# SELECT * FROM pg_get_wal_records_info('0/1E913618', '0/1E913740') LIMIT 1;
 -[ RECORD 1 ]----+--------------------------------------------------------------
@@ -114,6 +123,99 @@ fpi_length       | 0
 description      | nextXid 33775 latestCompletedXid 33774 oldestRunningXid 33775
 block_ref        |
 </screen>
+     </para>
+     <para>
+      The function raises an error if
+      <replaceable>start_lsn</replaceable> is not available.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>pg_get_wal_block_info(start_lsn pg_lsn, end_lsn pg_lsn) returns setof record</function>
+    </term>
+
+    <listitem>
+     <para>
+      Gets information about each block reference from all the valid
+      WAL records between <replaceable>start_lsn</replaceable> and
+      <replaceable>end_lsn</replaceable> with one or more block
+      references.  Returns one row per block reference per WAL record.
+      For example:
+<screen>
+postgres=# SELECT * FROM pg_get_wal_block_info('0/10E9D80', '0/10E9DC0') LIMIT 1;
+-[ RECORD 1 ]-----+-----------------------------------
+start_lsn         | 0/10E9D80
+end_lsn           | 0/10E9DC0
+prev_lsn          | 0/10E9860
+block_id          | 0
+reltablespace     | 1663
+reldatabase       | 1
+relfilenode       | 2690
+relforknumber     | 0
+relblocknumber    | 5
+xid               | 117
+resource_manager  | Btree
+record_type       | INSERT_LEAF
+record_length     | 64
+main_data_length  | 2
+block_data_length | 16
+block_fpi_length  | 0
+block_fpi_info    |
+description       | off 14
+block_data        | \x00005400020010001407000000000000
+block_fpi_data    |
+</screen>
+     </para>
+     <para>
+      This example involves a WAL record that only contains one block
+      reference, but many WAL records contain several block
+      references.  Rows output by
+      <function>pg_get_wal_block_info</function> are guaranteed to
+      have a unique combination of
+      <replaceable>start_lsn</replaceable> and
+      <replaceable>block_id</replaceable> values.
+     </para>
+     <para>
+      Much of the information shown here matches the output that
+      <function>pg_get_wal_records_info</function> would show, given
+      the same arguments.  However,
+      <function>pg_get_wal_block_info</function> unnests the
+      information from each WAL record into an expanded form by
+      outputting one row per block reference, so certain details are
+      tracked at the block reference level rather than at the
+      whole-record level.  This structure is useful with queries that
+      track how individual blocks changed over time.  Note that
+      records with no block references (e.g.,
+      <literal>COMMIT</literal> WAL records) will have no rows
+      returned, so <function>pg_get_wal_block_info</function> may
+      actually return <emphasis>fewer</emphasis> rows than
+      <function>pg_get_wal_records_info</function>.
+     </para>
+     <para>
+      The <structfield>reltablespace</structfield>,
+      <structfield>reldatabase</structfield>, and
+      <structfield>relfilenode</structfield> parameters reference
+      <link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.<structfield>oid</structfield>,
+      <link linkend="catalog-pg-database"><structname>pg_database</structname></link>.<structfield>oid</structfield>, and
+      <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relfilenode</structfield>
+      respectively.  The <structfield>relforknumber</structfield>
+      field is the fork number within the relation for the block
+      reference; see <filename>common/relpath.h</filename> for
+      details.
+     </para>
+     <tip>
+      <para>
+       The <function>pg_filenode_relation</function> function (see
+       <xref linkend="functions-admin-dblocation"/>) can help you to
+       determine which block/relation was modified by each WAL record
+       during original execution
+      </para>
+     </tip>
+     <para>
+      The function raises an error if
+      <replaceable>start_lsn</replaceable> is not available.
      </para>
     </listitem>
    </varlistentry>
@@ -133,11 +235,8 @@ block_ref        |
       <replaceable>end_lsn</replaceable>. By default, it returns one row per
       <replaceable>resource_manager</replaceable> type. When
       <replaceable>per_record</replaceable> is set to <literal>true</literal>,
-      it returns one row per <replaceable>record_type</replaceable>. If a
-      future <replaceable>end_lsn</replaceable> (i.e. ahead of the current
-      LSN of the server) is specified, it returns statistics until the end
-      of WAL. An error is raised if <replaceable>start_lsn</replaceable> is
-      not available. For example, usage of the function is as follows:
+      it returns one row per <replaceable>record_type</replaceable>.
+      For example:
 <screen>
 postgres=# SELECT * FROM pg_get_wal_stats('0/1E847D00', '0/1E84F500')
              WHERE count > 0 LIMIT 1 AND
@@ -154,47 +253,9 @@ combined_size                | 875
 combined_size_percentage     | 2.8634072910530795
 </screen>
      </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <function>pg_get_wal_block_info(start_lsn pg_lsn, end_lsn pg_lsn) returns setof record</function>
-    </term>
-
-    <listitem>
      <para>
-      Gets a copy of the block information stored in WAL records. This includes
-      copies of the block data (<literal>NULL</literal> if none) and full page
-      images as <type>bytea</type> values (after
-      applying decompression when necessary, or <literal>NULL</literal> if none)
-      and their information associated with all the valid WAL records between
-      <replaceable>start_lsn</replaceable> and
-      <replaceable>end_lsn</replaceable>. Returns one row per block registered
-      in a WAL record. If a future <replaceable>end_lsn</replaceable> (i.e.
-      ahead of the current LSN of the server) is specified, it returns
-      statistics until the end of WAL. An error is raised if
-      <replaceable>start_lsn</replaceable> is not available. For example,
-      usage of the function is as follows:
-<screen>
-postgres=# SELECT lsn, blockid, reltablespace, reldatabase, relfilenode,
-                  relblocknumber, forkname,
-                  substring(blockdata for 24) as block_trimmed,
-                  substring(fpi for 24) as fpi_trimmed, fpilen, fpiinfo
-             FROM pg_get_wal_block_info('0/1871080', '0/1871440');
--[ RECORD 1 ]--+---------------------------------------------------
-lsn            | 0/18712F8
-blockid        | 0
-reltablespace  | 1663
-reldatabase    | 16384
-relfilenode    | 16392
-relblocknumber | 0
-forkname       | main
-block_trimmed  | \x02800128180164000000
-fpi_trimmed    | \x0000000050108701000000002c00601f00200420e0020000
-fpilen         | 204
-fpiinfo        | {HAS_HOLE,APPLY}
-</screen>
+      The function raises an error if
+      <replaceable>start_lsn</replaceable> is not available.
      </para>
     </listitem>
    </varlistentry>

@@ -12,17 +12,26 @@ DROP FUNCTION pg_get_wal_stats_till_end_of_wal(pg_lsn, boolean);
 --
 CREATE FUNCTION pg_get_wal_block_info(IN start_lsn pg_lsn,
 	IN end_lsn pg_lsn,
-	OUT lsn pg_lsn,
-	OUT blockid int2,
+	OUT start_lsn pg_lsn,
+	OUT end_lsn pg_lsn,
+	OUT prev_lsn pg_lsn,
+	OUT block_id int2,
 	OUT reltablespace oid,
 	OUT reldatabase oid,
 	OUT relfilenode oid,
+	OUT relforknumber int2,
 	OUT relblocknumber int8,
-	OUT forkname text,
-	OUT blockdata bytea,
-	OUT fpi bytea,
-	OUT fpilen int4,
-	OUT fpiinfo text[]
+	OUT xid xid,
+	OUT resource_manager text,
+	OUT record_type text,
+	OUT record_length int4,
+	OUT main_data_length int4,
+	OUT block_data_length int4,
+	OUT block_fpi_length int4,
+	OUT block_fpi_info text[],
+	OUT description text,
+	OUT block_data bytea,
+	OUT block_fpi_data bytea
 )
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'pg_get_wal_block_info'

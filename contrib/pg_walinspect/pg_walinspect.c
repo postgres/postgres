@@ -176,13 +176,18 @@ ReadNextXLogRecord(XLogReaderState *xlogreader)
 }
 
 /*
- * Get a single WAL record info.
+ * Output values that make up a row describing caller's WAL record.
+ *
+ * This function leaks memory.  Caller may need to use its own custom memory
+ * context.
+ *
+ * Keep this in sync with GetWALBlockInfo.
  */
 static void
 GetWALRecordInfo(XLogReaderState *record, Datum *values,
 				 bool *nulls, uint32 ncols)
 {
-	const char *id;
+	const char *record_type;
 	RmgrData	desc;
 	uint32		fpi_len = 0;
 	StringInfoData rec_desc;
@@ -190,10 +195,10 @@ GetWALRecordInfo(XLogReaderState *record, Datum *values,
 	int			i = 0;
 
 	desc = GetRmgr(XLogRecGetRmid(record));
-	id = desc.rm_identify(XLogRecGetInfo(record));
+	record_type = desc.rm_identify(XLogRecGetInfo(record));
 
-	if (id == NULL)
-		id = psprintf("UNKNOWN (%x)", XLogRecGetInfo(record) & ~XLR_INFO_MASK);
+	if (record_type == NULL)
+		record_type = psprintf("UNKNOWN (%x)", XLogRecGetInfo(record) & ~XLR_INFO_MASK);
 
 	initStringInfo(&rec_desc);
 	desc.rm_desc(&rec_desc, record);
@@ -209,7 +214,7 @@ GetWALRecordInfo(XLogReaderState *record, Datum *values,
 	values[i++] = LSNGetDatum(XLogRecGetPrev(record));
 	values[i++] = TransactionIdGetDatum(XLogRecGetXid(record));
 	values[i++] = CStringGetTextDatum(desc.rm_name);
-	values[i++] = CStringGetTextDatum(id);
+	values[i++] = CStringGetTextDatum(record_type);
 	values[i++] = UInt32GetDatum(XLogRecGetTotalLen(record));
 	values[i++] = UInt32GetDatum(XLogRecGetDataLen(record));
 	values[i++] = UInt32GetDatum(fpi_len);
@@ -229,24 +234,48 @@ GetWALRecordInfo(XLogReaderState *record, Datum *values,
 
 
 /*
- * Store a set of block information from a single record (FPI and block
- * information).
+ * Output one or more rows in rsinfo tuple store, each describing a single
+ * block reference from caller's WAL record. (Should only be called with
+ * records that have block references.)
+ *
+ * This function leaks memory.  Caller may need to use its own custom memory
+ * context.
+ *
+ * Keep this in sync with GetWALRecordInfo.
  */
 static void
 GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record)
 {
-#define PG_GET_WAL_BLOCK_INFO_COLS 11
+#define PG_GET_WAL_BLOCK_INFO_COLS 20
 	int			block_id;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	RmgrData	desc;
+	const char	*record_type;
+	StringInfoData	rec_desc;
+
+	Assert(XLogRecHasAnyBlockRefs(record));
+
+	desc = GetRmgr(XLogRecGetRmid(record));
+	record_type = desc.rm_identify(XLogRecGetInfo(record));
+
+	if (record_type == NULL)
+		record_type = psprintf("UNKNOWN (%x)",
+							   XLogRecGetInfo(record) & ~XLR_INFO_MASK);
+
+	initStringInfo(&rec_desc);
+	desc.rm_desc(&rec_desc, record);
 
 	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
 		DecodedBkpBlock *blk;
 		BlockNumber blkno;
 		RelFileLocator rnode;
-		ForkNumber	fork;
+		ForkNumber	forknum;
 		Datum		values[PG_GET_WAL_BLOCK_INFO_COLS] = {0};
 		bool		nulls[PG_GET_WAL_BLOCK_INFO_COLS] = {0};
+		uint32		block_data_len = 0,
+					block_fpi_len = 0;
+		ArrayType  *block_fpi_info = NULL;
 		int			i = 0;
 
 		if (!XLogRecHasBlockRef(record, block_id))
@@ -255,75 +284,26 @@ GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record)
 		blk = XLogRecGetBlock(record, block_id);
 
 		(void) XLogRecGetBlockTagExtended(record, block_id,
-										  &rnode, &fork, &blkno, NULL);
+										  &rnode, &forknum, &blkno, NULL);
 
-		values[i++] = LSNGetDatum(record->ReadRecPtr);
-		values[i++] = Int16GetDatum(block_id);
-		values[i++] = ObjectIdGetDatum(blk->rlocator.spcOid);
-		values[i++] = ObjectIdGetDatum(blk->rlocator.dbOid);
-		values[i++] = ObjectIdGetDatum(blk->rlocator.relNumber);
-		values[i++] = Int64GetDatum((int64) blkno);
-
-		if (fork >= 0 && fork <= MAX_FORKNUM)
-			values[i++] = CStringGetTextDatum(forkNames[fork]);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg_internal("invalid fork number: %u", fork)));
-
-		/* Block data */
+		/* Save block_data_len */
 		if (blk->has_data)
-		{
-			bytea	   *raw_data;
-
-			/* Initialize bytea buffer to copy the data to */
-			raw_data = (bytea *) palloc(blk->data_len + VARHDRSZ);
-			SET_VARSIZE(raw_data, blk->data_len + VARHDRSZ);
-
-			/* Copy the data */
-			memcpy(VARDATA(raw_data), blk->data, blk->data_len);
-			values[i++] = PointerGetDatum(raw_data);
-		}
-		else
-		{
-			/* No data, so set this field to NULL */
-			nulls[i++] = true;
-		}
+			block_data_len = blk->data_len;
 
 		if (blk->has_image)
 		{
-			PGAlignedBlock buf;
-			Page		page;
-			bytea	   *raw_page;
+			/* Block reference has an FPI, so prepare relevant output */
 			int			bitcnt;
 			int			cnt = 0;
 			Datum	   *flags;
-			ArrayType  *a;
 
-			page = (Page) buf.data;
+			/* Save block_fpi_len */
+			block_fpi_len = blk->bimg_len;
 
-			/* Full page image exists, so let's save it */
-			if (!RestoreBlockImage(record, block_id, page))
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg_internal("%s", record->errormsg_buf)));
-
-			/* Initialize bytea buffer to copy the FPI to */
-			raw_page = (bytea *) palloc(BLCKSZ + VARHDRSZ);
-			SET_VARSIZE(raw_page, BLCKSZ + VARHDRSZ);
-
-			/* Take a verbatim copy of the FPI */
-			memcpy(VARDATA(raw_page), page, BLCKSZ);
-
-			values[i++] = PointerGetDatum(raw_page);
-			values[i++] = UInt32GetDatum(blk->bimg_len);
-
-			/* FPI flags */
+			/* Construct and save block_fpi_info */
 			bitcnt = pg_popcount((const char *) &blk->bimg_info,
 								 sizeof(uint8));
-			/* Build set of raw flags */
 			flags = (Datum *) palloc0(sizeof(Datum) * bitcnt);
-
 			if ((blk->bimg_info & BKPIMAGE_HAS_HOLE) != 0)
 				flags[cnt++] = CStringGetTextDatum("HAS_HOLE");
 			if (blk->apply_image)
@@ -336,18 +316,85 @@ GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record)
 				flags[cnt++] = CStringGetTextDatum("COMPRESS_ZSTD");
 
 			Assert(cnt <= bitcnt);
-			a = construct_array_builtin(flags, cnt, TEXTOID);
-			values[i++] = PointerGetDatum(a);
+			block_fpi_info = construct_array_builtin(flags, cnt, TEXTOID);
+		}
+
+		/* start_lsn, end_lsn, prev_lsn, and blockid outputs */
+		values[i++] = LSNGetDatum(record->ReadRecPtr);
+		values[i++] = LSNGetDatum(record->EndRecPtr);
+		values[i++] = LSNGetDatum(XLogRecGetPrev(record));
+		values[i++] = Int16GetDatum(block_id);
+
+		/* relfile and block related outputs */
+		values[i++] = ObjectIdGetDatum(blk->rlocator.spcOid);
+		values[i++] = ObjectIdGetDatum(blk->rlocator.dbOid);
+		values[i++] = ObjectIdGetDatum(blk->rlocator.relNumber);
+		values[i++] = Int16GetDatum(forknum);
+		values[i++] = Int64GetDatum((int64) blkno);
+
+		/* xid, resource_manager, and record_type outputs */
+		values[i++] = TransactionIdGetDatum(XLogRecGetXid(record));
+		values[i++] = CStringGetTextDatum(desc.rm_name);
+		values[i++] = CStringGetTextDatum(record_type);
+
+		/*
+		 * record_length, main_data_length, block_data_len, and
+		 * block_fpi_length outputs
+		 */
+		values[i++] = UInt32GetDatum(XLogRecGetTotalLen(record));
+		values[i++] = UInt32GetDatum(XLogRecGetDataLen(record));
+		values[i++] = UInt32GetDatum(block_data_len);
+		values[i++] = UInt32GetDatum(block_fpi_len);
+
+		/* block_fpi_info (text array) output */
+		if (block_fpi_info)
+			values[i++] = PointerGetDatum(block_fpi_info);
+		else
+			nulls[i++] = true;
+
+		/* description output (describes WAL record) */
+		if (rec_desc.len > 0)
+			values[i++] = CStringGetTextDatum(rec_desc.data);
+		else
+			nulls[i++] = true;
+
+		/* block_data output */
+		if (blk->has_data)
+		{
+			bytea	   *block_data;
+
+			block_data = (bytea *) palloc(block_data_len + VARHDRSZ);
+			SET_VARSIZE(block_data, block_data_len + VARHDRSZ);
+			memcpy(VARDATA(block_data), blk->data, block_data_len);
+			values[i++] = PointerGetDatum(block_data);
 		}
 		else
+			nulls[i++] = true;
+
+		/* block_fpi_data output */
+		if (blk->has_image)
 		{
-			/* No full page image, so store NULLs for all its fields */
-			memset(&nulls[i], true, 3 * sizeof(bool));
-			i += 3;
+			PGAlignedBlock buf;
+			Page		page;
+			bytea	   *block_fpi_data;
+
+			page = (Page) buf.data;
+			if (!RestoreBlockImage(record, block_id, page))
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg_internal("%s", record->errormsg_buf)));
+
+			block_fpi_data = (bytea *) palloc(BLCKSZ + VARHDRSZ);
+			SET_VARSIZE(block_fpi_data, BLCKSZ + VARHDRSZ);
+			memcpy(VARDATA(block_fpi_data), page, BLCKSZ);
+			values[i++] = PointerGetDatum(block_fpi_data);
 		}
+		else
+			nulls[i++] = true;
 
 		Assert(i == PG_GET_WAL_BLOCK_INFO_COLS);
 
+		/* Store a tuple for this block reference */
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
 							 values, nulls);
 	}
@@ -356,11 +403,7 @@ GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record)
 }
 
 /*
- * Get information about all the blocks saved in WAL records between start
- * and end LSNs. This produces information about the full page images with
- * their relation information, and the data saved in each block associated
- * to a record. Decompression is applied to the full page images, if
- * necessary.
+ * Get WAL record info, unnested by block reference
  */
 Datum
 pg_get_wal_block_info(PG_FUNCTION_ARGS)
@@ -484,7 +527,7 @@ ValidateInputLSNs(XLogRecPtr start_lsn, XLogRecPtr *end_lsn)
 }
 
 /*
- * Get info and data of all WAL records between start LSN and end LSN.
+ * Get info of all WAL records between start LSN and end LSN.
  */
 static void
 GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
@@ -536,7 +579,7 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 }
 
 /*
- * Get info and data of all WAL records between start LSN and end LSN.
+ * Get info of all WAL records between start LSN and end LSN.
  */
 Datum
 pg_get_wal_records_info(PG_FUNCTION_ARGS)
