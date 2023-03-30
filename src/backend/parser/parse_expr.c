@@ -3611,20 +3611,16 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 static Node *
 transformJsonAggConstructor(ParseState *pstate, JsonAggConstructor *agg_ctor,
 							JsonReturning *returning, List *args,
-							const char *aggfn, Oid aggtype,
+							Oid aggfnoid, Oid aggtype,
 							JsonConstructorType ctor_type,
 							bool unique, bool absent_on_null)
 {
-	Oid			aggfnoid;
 	Node	   *node;
 	Expr	   *aggfilter;
 
 	aggfilter = agg_ctor->agg_filter ? (Expr *)
 		transformWhereClause(pstate, agg_ctor->agg_filter,
 							 EXPR_KIND_FILTER, "FILTER") : NULL;
-
-	aggfnoid = DatumGetInt32(DirectFunctionCall1(regprocin,
-												 CStringGetDatum(aggfn)));
 
 	if (agg_ctor->over)
 	{
@@ -3703,7 +3699,7 @@ transformJsonObjectAgg(ParseState *pstate, JsonObjectAgg *agg)
 	Node	   *key;
 	Node	   *val;
 	List	   *args;
-	const char *aggfnname;
+	Oid			aggfnoid;
 	Oid			aggtype;
 
 	key = transformExprRecurse(pstate, (Node *) agg->arg->key);
@@ -3717,13 +3713,13 @@ transformJsonObjectAgg(ParseState *pstate, JsonObjectAgg *agg)
 	{
 		if (agg->absent_on_null)
 			if (agg->unique)
-				aggfnname = "pg_catalog.jsonb_object_agg_unique_strict";
+				aggfnoid = F_JSONB_OBJECT_AGG_UNIQUE_STRICT;
 			else
-				aggfnname = "pg_catalog.jsonb_object_agg_strict";
+				aggfnoid = F_JSONB_OBJECT_AGG_STRICT;
 		else if (agg->unique)
-			aggfnname = "pg_catalog.jsonb_object_agg_unique";
+			aggfnoid = F_JSONB_OBJECT_AGG_UNIQUE;
 		else
-			aggfnname = "pg_catalog.jsonb_object_agg";
+			aggfnoid = F_JSONB_OBJECT_AGG;
 
 		aggtype = JSONBOID;
 	}
@@ -3731,19 +3727,19 @@ transformJsonObjectAgg(ParseState *pstate, JsonObjectAgg *agg)
 	{
 		if (agg->absent_on_null)
 			if (agg->unique)
-				aggfnname = "pg_catalog.json_object_agg_unique_strict";
+				aggfnoid = F_JSON_OBJECT_AGG_UNIQUE_STRICT;
 			else
-				aggfnname = "pg_catalog.json_object_agg_strict";
+				aggfnoid = F_JSON_OBJECT_AGG_STRICT;
 		else if (agg->unique)
-			aggfnname = "pg_catalog.json_object_agg_unique";
+			aggfnoid = F_JSON_OBJECT_AGG_UNIQUE;
 		else
-			aggfnname = "pg_catalog.json_object_agg";
+			aggfnoid = F_JSON_OBJECT_AGG;
 
 		aggtype = JSONOID;
 	}
 
 	return transformJsonAggConstructor(pstate, agg->constructor, returning,
-									   args, aggfnname, aggtype,
+									   args, aggfnoid, aggtype,
 									   JSCTOR_JSON_OBJECTAGG,
 									   agg->unique, agg->absent_on_null);
 }
@@ -3760,7 +3756,7 @@ transformJsonArrayAgg(ParseState *pstate, JsonArrayAgg *agg)
 {
 	JsonReturning *returning;
 	Node	   *arg;
-	const char *aggfnname;
+	Oid			aggfnoid;
 	Oid			aggtype;
 
 	arg = transformJsonValueExpr(pstate, agg->arg, JS_FORMAT_DEFAULT);
@@ -3770,19 +3766,17 @@ transformJsonArrayAgg(ParseState *pstate, JsonArrayAgg *agg)
 
 	if (returning->format->format_type == JS_FORMAT_JSONB)
 	{
-		aggfnname = agg->absent_on_null ?
-			"pg_catalog.jsonb_agg_strict" : "pg_catalog.jsonb_agg";
+		aggfnoid = agg->absent_on_null ? F_JSONB_AGG_STRICT : F_JSONB_AGG;
 		aggtype = JSONBOID;
 	}
 	else
 	{
-		aggfnname = agg->absent_on_null ?
-			"pg_catalog.json_agg_strict" : "pg_catalog.json_agg";
+		aggfnoid = agg->absent_on_null ? F_JSON_AGG_STRICT : F_JSON_AGG;
 		aggtype = JSONOID;
 	}
 
 	return transformJsonAggConstructor(pstate, agg->constructor, returning,
-									   list_make1(arg), aggfnname, aggtype,
+									   list_make1(arg), aggfnoid, aggtype,
 									   JSCTOR_JSON_ARRAYAGG,
 									   false, agg->absent_on_null);
 }
