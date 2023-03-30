@@ -350,6 +350,29 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 			palloc0(list_length(glob->subplans) * sizeof(bool));
 	}
 
+	/* Also fix up the information in PartitionPruneInfos. */
+	foreach(lc, root->partPruneInfos)
+	{
+		PartitionPruneInfo *pruneinfo = lfirst(lc);
+		ListCell   *l;
+
+		pruneinfo->root_parent_relids =
+			offset_relid_set(pruneinfo->root_parent_relids, rtoffset);
+		foreach(l, pruneinfo->prune_infos)
+		{
+			List	   *prune_infos = lfirst(l);
+			ListCell   *l2;
+
+			foreach(l2, prune_infos)
+			{
+				PartitionedRelPruneInfo *pinfo = lfirst(l2);
+
+				/* RT index of the table to which the pinfo belongs. */
+				pinfo->rtindex += rtoffset;
+			}
+		}
+	}
+
 	/* Now fix the Plan tree */
 	result = set_plan_refs(root, plan, rtoffset);
 
@@ -376,31 +399,6 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 			if (root->isAltSubplan[ndx] && !root->isUsedSubplan[ndx])
 				lfirst(lc) = NULL;
 		}
-	}
-
-	/* Also fix up the information in PartitionPruneInfos. */
-	foreach(lc, root->partPruneInfos)
-	{
-		PartitionPruneInfo *pruneinfo = lfirst(lc);
-		ListCell   *l;
-
-		pruneinfo->root_parent_relids =
-			offset_relid_set(pruneinfo->root_parent_relids, rtoffset);
-		foreach(l, pruneinfo->prune_infos)
-		{
-			List	   *prune_infos = lfirst(l);
-			ListCell   *l2;
-
-			foreach(l2, prune_infos)
-			{
-				PartitionedRelPruneInfo *pinfo = lfirst(l2);
-
-				/* RT index of the table to which the pinfo belongs. */
-				pinfo->rtindex += rtoffset;
-			}
-		}
-
-		glob->partPruneInfos = lappend(glob->partPruneInfos, pruneinfo);
 	}
 
 	return result;
@@ -1719,6 +1717,29 @@ set_customscan_references(PlannerInfo *root,
 }
 
 /*
+ * register_partpruneinfo
+ *		Subroutine for set_append_references and set_mergeappend_references
+ *
+ * Add the PartitionPruneInfo from root->partPruneInfos at the given index
+ * into PlannerGlobal->partPruneInfos and return its index there.
+ */
+static int
+register_partpruneinfo(PlannerInfo *root, int part_prune_index)
+{
+	PlannerGlobal  *glob = root->glob;
+	PartitionPruneInfo *pruneinfo;
+
+	Assert(part_prune_index >= 0 &&
+		   part_prune_index < list_length(root->partPruneInfos));
+	pruneinfo = list_nth_node(PartitionPruneInfo, root->partPruneInfos,
+							  part_prune_index);
+
+	glob->partPruneInfos = lappend(glob->partPruneInfos, pruneinfo);
+
+	return list_length(glob->partPruneInfos) - 1;
+}
+
+/*
  * set_append_references
  *		Do set_plan_references processing on an Append
  *
@@ -1771,11 +1792,11 @@ set_append_references(PlannerInfo *root,
 	aplan->apprelids = offset_relid_set(aplan->apprelids, rtoffset);
 
 	/*
-	 * PartitionPruneInfos will be added to a list in PlannerGlobal, so update
-	 * the index.
+	 * Add PartitionPruneInfo, if any, to PlannerGlobal and update the index.
 	 */
 	if (aplan->part_prune_index >= 0)
-		aplan->part_prune_index += list_length(root->glob->partPruneInfos);
+		aplan->part_prune_index =
+			register_partpruneinfo(root, aplan->part_prune_index);
 
 	/* We don't need to recurse to lefttree or righttree ... */
 	Assert(aplan->plan.lefttree == NULL);
@@ -1838,11 +1859,11 @@ set_mergeappend_references(PlannerInfo *root,
 	mplan->apprelids = offset_relid_set(mplan->apprelids, rtoffset);
 
 	/*
-	 * PartitionPruneInfos will be added to a list in PlannerGlobal, so update
-	 * the index.
+	 * Add PartitionPruneInfo, if any, to PlannerGlobal and update the index.
 	 */
 	if (mplan->part_prune_index >= 0)
-		mplan->part_prune_index += list_length(root->glob->partPruneInfos);
+		mplan->part_prune_index =
+			register_partpruneinfo(root, mplan->part_prune_index);
 
 	/* We don't need to recurse to lefttree or righttree ... */
 	Assert(mplan->plan.lefttree == NULL);
