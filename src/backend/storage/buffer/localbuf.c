@@ -305,7 +305,7 @@ MarkLocalBufferDirty(Buffer buffer)
 	fprintf(stderr, "LB DIRTY %d\n", buffer);
 #endif
 
-	bufid = -(buffer + 1);
+	bufid = -buffer - 1;
 
 	Assert(LocalRefCount[bufid] > 0);
 
