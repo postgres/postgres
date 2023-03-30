@@ -435,6 +435,21 @@ typedef struct PgStat_WalStats
 	TimestampTz stat_reset_timestamp;
 } PgStat_WalStats;
 
+/*
+ * This struct stores wal-related durations as instr_time, which makes it
+ * cheaper and easier to accumulate them, by not requiring type
+ * conversions. During stats flush instr_time will be converted into
+ * microseconds.
+ */
+typedef struct PgStat_PendingWalStats
+{
+	PgStat_Counter wal_buffers_full;
+	PgStat_Counter wal_write;
+	PgStat_Counter wal_sync;
+	instr_time	wal_write_time;
+	instr_time	wal_sync_time;
+} PgStat_PendingWalStats;
+
 
 /*
  * Functions in pgstat.c
@@ -748,7 +763,7 @@ extern PGDLLIMPORT SessionEndType pgStatSessionEndCause;
  */
 
 /* updated directly by backends and background processes */
-extern PGDLLIMPORT PgStat_WalStats PendingWalStats;
+extern PGDLLIMPORT PgStat_PendingWalStats PendingWalStats;
 
 
 #endif							/* PGSTAT_H */

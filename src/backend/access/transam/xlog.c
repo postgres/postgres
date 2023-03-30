@@ -2206,8 +2206,7 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 					instr_time	duration;
 
 					INSTR_TIME_SET_CURRENT(duration);
-					INSTR_TIME_SUBTRACT(duration, start);
-					PendingWalStats.wal_write_time += INSTR_TIME_GET_MICROSEC(duration);
+					INSTR_TIME_ACCUM_DIFF(PendingWalStats.wal_write_time, duration, start);
 				}
 
 				PendingWalStats.wal_write++;
@@ -8204,8 +8203,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 		instr_time	duration;
 
 		INSTR_TIME_SET_CURRENT(duration);
-		INSTR_TIME_SUBTRACT(duration, start);
-		PendingWalStats.wal_sync_time += INSTR_TIME_GET_MICROSEC(duration);
+		INSTR_TIME_ACCUM_DIFF(PendingWalStats.wal_sync_time, duration, start);
 	}
 
 	PendingWalStats.wal_sync++;

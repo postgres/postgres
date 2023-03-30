@@ -21,7 +21,7 @@
 #include "executor/instrument.h"
 
 
-PgStat_WalStats PendingWalStats = {0};
+PgStat_PendingWalStats PendingWalStats = {0};
 
 /*
  * WAL usage counters saved from pgWALUsage at the previous call to
@@ -70,7 +70,7 @@ bool
 pgstat_flush_wal(bool nowait)
 {
 	PgStatShared_Wal *stats_shmem = &pgStatLocal.shmem->wal;
-	WalUsage	diff = {0};
+	WalUsage	wal_usage_diff = {0};
 
 	Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
 	Assert(pgStatLocal.shmem != NULL &&
@@ -88,25 +88,26 @@ pgstat_flush_wal(bool nowait)
 	 * Calculate how much WAL usage counters were increased by subtracting the
 	 * previous counters from the current ones.
 	 */
-	WalUsageAccumDiff(&diff, &pgWalUsage, &prevWalUsage);
-	PendingWalStats.wal_records = diff.wal_records;
-	PendingWalStats.wal_fpi = diff.wal_fpi;
-	PendingWalStats.wal_bytes = diff.wal_bytes;
+	WalUsageAccumDiff(&wal_usage_diff, &pgWalUsage, &prevWalUsage);
 
 	if (!nowait)
 		LWLockAcquire(&stats_shmem->lock, LW_EXCLUSIVE);
 	else if (!LWLockConditionalAcquire(&stats_shmem->lock, LW_EXCLUSIVE))
 		return true;
 
-#define WALSTAT_ACC(fld) stats_shmem->stats.fld += PendingWalStats.fld
-	WALSTAT_ACC(wal_records);
-	WALSTAT_ACC(wal_fpi);
-	WALSTAT_ACC(wal_bytes);
-	WALSTAT_ACC(wal_buffers_full);
-	WALSTAT_ACC(wal_write);
-	WALSTAT_ACC(wal_sync);
-	WALSTAT_ACC(wal_write_time);
-	WALSTAT_ACC(wal_sync_time);
+#define WALSTAT_ACC(fld, var_to_add) \
+	(stats_shmem->stats.fld += var_to_add.fld)
+#define WALSTAT_ACC_INSTR_TIME(fld) \
+	(stats_shmem->stats.fld += INSTR_TIME_GET_MICROSEC(PendingWalStats.fld))
+	WALSTAT_ACC(wal_records, wal_usage_diff);
+	WALSTAT_ACC(wal_fpi, wal_usage_diff);
+	WALSTAT_ACC(wal_bytes, wal_usage_diff);
+	WALSTAT_ACC(wal_buffers_full, PendingWalStats);
+	WALSTAT_ACC(wal_write, PendingWalStats);
+	WALSTAT_ACC(wal_sync, PendingWalStats);
+	WALSTAT_ACC_INSTR_TIME(wal_write_time);
+	WALSTAT_ACC_INSTR_TIME(wal_sync_time);
+#undef WALSTAT_ACC_INSTR_TIME
 #undef WALSTAT_ACC
 
 	LWLockRelease(&stats_shmem->lock);
