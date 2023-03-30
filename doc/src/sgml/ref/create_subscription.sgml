@@ -353,6 +353,19 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
+       <varlistentry id="sql-createsubscription-with-password-required">
+        <term><literal>password_required</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether connections to the publisher made as a result
+          of this subscription must use password authentication. This setting
+          is ignored when the subscription is owned by a superuser.
+          The default is <literal>true</literal>. Only superusers can set
+          this value to <literal>false</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
        <varlistentry id="sql-createsubscription-with-origin">
         <term><literal>origin</literal> (<type>string</type>)</term>
         <listitem>
@@ -369,19 +382,6 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           See <xref linkend="sql-createsubscription-notes"/> for details of how
           <literal>copy_data = true</literal> can interact with the
           <literal>origin</literal> parameter.
-         </para>
-        </listitem>
-       </varlistentry>
-
-       <varlistentry>
-        <term><literal>password_required</literal> (<type>string</type>)</term>
-        <listitem>
-         <para>
-          Specifies whether connections to the publisher made as a result
-          of this subscription must use password authentication. This setting
-          is ignored when the subscription is owned by a superuser.
-          The default is <literal>true</literal>. Only superusers can set
-          this value to <literal>false</literal>.
          </para>
         </listitem>
        </varlistentry>
