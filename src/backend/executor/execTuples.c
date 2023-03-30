@@ -385,8 +385,8 @@ tts_heap_materialize(TupleTableSlot *slot)
 	{
 		/*
 		 * The tuple contained in this slot is not allocated in the memory
-		 * context of the given slot (else it would have TTS_SHOULDFREE set).
-		 * Copy the tuple into the given slot's memory context.
+		 * context of the given slot (else it would have TTS_FLAG_SHOULDFREE
+		 * set).  Copy the tuple into the given slot's memory context.
 		 */
 		hslot->tuple = heap_copytuple(hslot->tuple);
 	}
@@ -554,8 +554,9 @@ tts_minimal_materialize(TupleTableSlot *slot)
 	{
 		/*
 		 * The minimal tuple contained in this slot is not allocated in the
-		 * memory context of the given slot (else it would have TTS_SHOULDFREE
-		 * set).  Copy the minimal tuple into the given slot's memory context.
+		 * memory context of the given slot (else it would have
+		 * TTS_FLAG_SHOULDFREE set).  Copy the minimal tuple into the given
+		 * slot's memory context.
 		 */
 		mslot->mintuple = heap_copy_minimal_tuple(mslot->mintuple);
 	}
