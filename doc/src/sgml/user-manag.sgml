@@ -699,6 +699,12 @@ DROP ROLE doomed_role;
        <entry>Allow use of connection slots reserved via
        <xref linkend="guc-reserved-connections"/>.</entry>
       </row>
+      <row>
+       <entry>pg_create_subscription</entry>
+       <entry>Allow users with <literal>CREATE</literal> permission on the
+       database to issue
+       <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>.</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

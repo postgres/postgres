@@ -4521,6 +4521,7 @@ ApplyWorkerMain(Datum main_arg)
 		RepOriginId originid;
 		TimeLineID	startpointTLI;
 		char	   *err;
+		bool		must_use_password;
 
 		myslotname = MySubscription->slotname;
 
@@ -4546,7 +4547,12 @@ ApplyWorkerMain(Datum main_arg)
 		origin_startpos = replorigin_session_get_progress(false);
 		CommitTransactionCommand();
 
+		/* Is the use of a password mandatory? */
+		must_use_password = MySubscription->passwordrequired &&
+			!superuser_arg(MySubscription->owner);
+
 		LogRepWorkerWalRcvConn = walrcv_connect(MySubscription->conninfo, true,
+												must_use_password,
 												MySubscription->name, &err);
 		if (LogRepWorkerWalRcvConn == NULL)
 			ereport(ERROR,

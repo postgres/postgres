@@ -4,6 +4,7 @@
 
 CREATE ROLE regress_subscription_user LOGIN SUPERUSER;
 CREATE ROLE regress_subscription_user2;
+CREATE ROLE regress_subscription_user3 IN ROLE pg_create_subscription;
 CREATE ROLE regress_subscription_user_dummy LOGIN NOSUPERUSER;
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 
@@ -92,6 +93,8 @@ ALTER SUBSCRIPTION regress_testsub CONNECTION 'foobar';
 ALTER SUBSCRIPTION regress_testsub SET PUBLICATION testpub2, testpub3 WITH (refresh = false);
 ALTER SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist2';
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = 'newname');
+ALTER SUBSCRIPTION regress_testsub SET (password_required = false);
+ALTER SUBSCRIPTION regress_testsub SET (password_required = true);
 
 -- fail
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = '');
@@ -138,10 +141,7 @@ ALTER SUBSCRIPTION regress_testsub_foo SET (synchronous_commit = foobar);
 -- rename back to keep the rest simple
 ALTER SUBSCRIPTION regress_testsub_foo RENAME TO regress_testsub;
 
--- fail - new owner must be superuser
-ALTER SUBSCRIPTION regress_testsub OWNER TO regress_subscription_user2;
-ALTER ROLE regress_subscription_user2 SUPERUSER;
--- now it works
+-- ok, we're a superuser
 ALTER SUBSCRIPTION regress_testsub OWNER TO regress_subscription_user2;
 
 -- fail - cannot do DROP SUBSCRIPTION inside transaction block with slot name
@@ -283,6 +283,52 @@ ALTER SUBSCRIPTION regress_testsub SET (disable_on_error = true);
 
 \dRs+
 
+ALTER SUBSCRIPTION regress_testsub SET (slot_name = NONE);
+DROP SUBSCRIPTION regress_testsub;
+
+-- let's do some tests with pg_create_subscription rather than superuser
+SET SESSION AUTHORIZATION regress_subscription_user3;
+
+-- fail, not enough privileges
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false);
+
+-- fail, must specify password
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON DATABASE REGRESSION TO regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false);
+
+-- fail, can't set password_required=false
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON DATABASE REGRESSION TO regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, password_required = false);
+
+-- ok
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON DATABASE REGRESSION TO regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist password=regress_fakepassword' PUBLICATION testpub WITH (connect = false);
+
+-- we cannot give the subscription away to some random user
+ALTER SUBSCRIPTION regress_testsub OWNER TO regress_subscription_user;
+
+-- but we can rename the subscription we just created
+ALTER SUBSCRIPTION regress_testsub RENAME TO regress_testsub2;
+
+-- ok, even after losing pg_create_subscription we can still rename it
+RESET SESSION AUTHORIZATION;
+REVOKE pg_create_subscription FROM regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+ALTER SUBSCRIPTION regress_testsub2 RENAME TO regress_testsub;
+
+-- fail, after losing CREATE on the database we can't rename it any more
+RESET SESSION AUTHORIZATION;
+REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+ALTER SUBSCRIPTION regress_testsub RENAME TO regress_testsub2;
+
+-- ok, owning it is enough for this stuff
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = NONE);
 DROP SUBSCRIPTION regress_testsub;
 

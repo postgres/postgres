@@ -49,9 +49,10 @@ struct WalReceiverConn
 
 /* Prototypes for interface functions */
 static WalReceiverConn *libpqrcv_connect(const char *conninfo,
-										 bool logical, const char *appname,
-										 char **err);
-static void libpqrcv_check_conninfo(const char *conninfo);
+										 bool logical, bool must_use_password,
+										 const char *appname, char **err);
+static void libpqrcv_check_conninfo(const char *conninfo,
+									bool must_use_password);
 static char *libpqrcv_get_conninfo(WalReceiverConn *conn);
 static void libpqrcv_get_senderinfo(WalReceiverConn *conn,
 									char **sender_host, int *sender_port);
@@ -119,11 +120,17 @@ _PG_init(void)
 /*
  * Establish the connection to the primary server for XLOG streaming
  *
- * Returns NULL on error and fills the err with palloc'ed error message.
+ * If an error occurs, this function will normally return NULL and set *err
+ * to a palloc'ed error message. However, if must_use_password is true and
+ * the connection fails to use the password, this function will ereport(ERROR).
+ * We do this because in that case the error includes a detail and a hint for
+ * consistency with other parts of the system, and it's not worth adding the
+ * machinery to pass all of those back to the caller just to cover this one
+ * case.
  */
 static WalReceiverConn *
-libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
-				 char **err)
+libpqrcv_connect(const char *conninfo, bool logical, bool must_use_password,
+				 const char *appname, char **err)
 {
 	WalReceiverConn *conn;
 	const char *keys[6];
@@ -180,6 +187,18 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	if (PQstatus(conn->streamConn) != CONNECTION_OK)
 		goto bad_connection_errmsg;
 
+	if (must_use_password && !PQconnectionUsedPassword(conn->streamConn))
+	{
+		libpqsrv_disconnect(conn->streamConn);
+		pfree(conn);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+				 errmsg("password is required"),
+				 errdetail("Non-superuser cannot connect if the server does not request a password."),
+				 errhint("Target server's authentication method must be changed. or set password_required=false in the subscription attributes.")));
+	}
+
 	if (logical)
 	{
 		PGresult   *res;
@@ -212,12 +231,18 @@ bad_connection:
 }
 
 /*
- * Validate connection info string (just try to parse it)
+ * Validate connection info string, and determine whether it might cause
+ * local filesystem access to be attempted.
+ *
+ * If the connection string can't be parsed, this function will raise
+ * an error and will not return. If it can, it will return true if this
+ * connection string specifies a password and false otherwise.
  */
 static void
-libpqrcv_check_conninfo(const char *conninfo)
+libpqrcv_check_conninfo(const char *conninfo, bool must_use_password)
 {
 	PQconninfoOption *opts = NULL;
+	PQconninfoOption *opt;
 	char	   *err = NULL;
 
 	opts = PQconninfoParse(conninfo, &err);
@@ -230,6 +255,30 @@ libpqrcv_check_conninfo(const char *conninfo)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid connection string syntax: %s", errcopy)));
+	}
+
+	if (must_use_password)
+	{
+		bool	uses_password = false;
+
+		for (opt = opts; opt->keyword != NULL; ++opt)
+		{
+			/* Ignore connection options that are not present. */
+			if (opt->val == NULL)
+				continue;
+
+			if (strcmp(opt->keyword, "password") == 0 && opt->val[0] != '\0')
+			{
+				uses_password = true;
+				break;
+			}
+		}
+
+		if (!uses_password)
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+					 errmsg("password is required"),
+					 errdetail("Non-superusers must provide a password in the connection string.")));
 	}
 
 	PQconninfoFree(opts);

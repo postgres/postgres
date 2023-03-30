@@ -33,7 +33,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
   <para>
    <command>CREATE SUBSCRIPTION</command> adds a new logical-replication
-   subscription.  The subscription name must be distinct from the name of
+   subscription.  The user that creates a subscription becomes the owner
+   of the subscription. The subscription name must be distinct from the name of
    any existing subscription in the current database.
   </para>
 
@@ -47,6 +48,12 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    A logical replication worker will be started to replicate data for the new
    subscription at the commit of the transaction where this command is run,
    unless the subscription is initially disabled.
+  </para>
+
+  <para>
+   To be able to create a subscription, you must have the privileges of the
+   the <literal>pg_create_subscription</literal> role, as well as
+   <literal>CREATE</literal> privileges on the current database.
   </para>
 
   <para>
@@ -362,6 +369,19 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           See <xref linkend="sql-createsubscription-notes"/> for details of how
           <literal>copy_data = true</literal> can interact with the
           <literal>origin</literal> parameter.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>password_required</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether connections to the publisher made as a result
+          of this subscription must use password authentication. This setting
+          is ignored when the subscription is owned by a superuser.
+          The default is <literal>true</literal>. Only superusers can set
+          this value to <literal>false</literal>.
          </para>
         </listitem>
        </varlistentry>

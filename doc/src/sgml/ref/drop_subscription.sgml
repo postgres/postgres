@@ -34,7 +34,7 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
   </para>
 
   <para>
-   A subscription can only be dropped by a superuser.
+   To execute this command the user must be the owner of the subscription.
   </para>
 
   <para>

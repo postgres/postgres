@@ -23,9 +23,12 @@
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/objectaddress.h"
+#include "catalog/pg_authid_d.h"
+#include "catalog/pg_database_d.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
 #include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/subscriptioncmds.h"
@@ -64,8 +67,9 @@
 #define SUBOPT_STREAMING			0x00000100
 #define SUBOPT_TWOPHASE_COMMIT		0x00000200
 #define SUBOPT_DISABLE_ON_ERR		0x00000400
-#define SUBOPT_LSN					0x00000800
-#define SUBOPT_ORIGIN				0x00001000
+#define SUBOPT_PASSWORD_REQUIRED	0x00000800
+#define SUBOPT_LSN					0x00001000
+#define SUBOPT_ORIGIN				0x00002000
 
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
@@ -88,6 +92,7 @@ typedef struct SubOpts
 	char		streaming;
 	bool		twophase;
 	bool		disableonerr;
+	bool		passwordrequired;
 	char	   *origin;
 	XLogRecPtr	lsn;
 } SubOpts;
@@ -144,6 +149,8 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 		opts->twophase = false;
 	if (IsSet(supported_opts, SUBOPT_DISABLE_ON_ERR))
 		opts->disableonerr = false;
+	if (IsSet(supported_opts, SUBOPT_PASSWORD_REQUIRED))
+		opts->passwordrequired = true;
 	if (IsSet(supported_opts, SUBOPT_ORIGIN))
 		opts->origin = pstrdup(LOGICALREP_ORIGIN_ANY);
 
@@ -273,6 +280,15 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 
 			opts->specified_opts |= SUBOPT_DISABLE_ON_ERR;
 			opts->disableonerr = defGetBoolean(defel);
+		}
+		else if (IsSet(supported_opts, SUBOPT_PASSWORD_REQUIRED) &&
+				 strcmp(defel->defname, "password_required") == 0)
+		{
+			if (IsSet(opts->specified_opts, SUBOPT_PASSWORD_REQUIRED))
+				errorConflictingDefElem(defel, pstate);
+
+			opts->specified_opts |= SUBOPT_PASSWORD_REQUIRED;
+			opts->passwordrequired = defGetBoolean(defel);
 		}
 		else if (IsSet(supported_opts, SUBOPT_ORIGIN) &&
 				 strcmp(defel->defname, "origin") == 0)
@@ -550,6 +566,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	List	   *publications;
 	bits32		supported_opts;
 	SubOpts		opts = {0};
+	AclResult	aclresult;
 
 	/*
 	 * Parse and check options.
@@ -560,7 +577,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					  SUBOPT_SLOT_NAME | SUBOPT_COPY_DATA |
 					  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
 					  SUBOPT_STREAMING | SUBOPT_TWOPHASE_COMMIT |
-					  SUBOPT_DISABLE_ON_ERR | SUBOPT_ORIGIN);
+					  SUBOPT_DISABLE_ON_ERR | SUBOPT_PASSWORD_REQUIRED |
+					  SUBOPT_ORIGIN);
 	parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
 	/*
@@ -572,10 +590,36 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	if (opts.create_slot)
 		PreventInTransactionBlock(isTopLevel, "CREATE SUBSCRIPTION ... WITH (create_slot = true)");
 
-	if (!superuser())
+	/*
+	 * We don't want to allow unprivileged users to be able to trigger attempts
+	 * to access arbitrary network destinations, so require the user to have
+	 * been specifically authorized to create subscriptions.
+	 */
+	if (!has_privs_of_role(owner, ROLE_PG_CREATE_SUBSCRIPTION))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to create subscriptions")));
+				 errmsg("must have privileges of pg_create_subscription to create subscriptions")));
+
+	/*
+	 * Since a subscription is a database object, we also check for CREATE
+	 * permission on the database.
+	 */
+	aclresult = object_aclcheck(DatabaseRelationId, MyDatabaseId,
+								owner, ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, OBJECT_DATABASE,
+					   get_database_name(MyDatabaseId));
+
+	/*
+	 * Non-superusers are required to set a password for authentication, and
+	 * that password must be used by the target server, but the superuser can
+	 * exempt a subscription from this requirement.
+	 */
+	if (!opts.passwordrequired && !superuser_arg(owner))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("password_required=false is superuser-only"),
+					 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
 
 	/*
 	 * If built with appropriate switch, whine when regression-testing
@@ -614,7 +658,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	load_file("libpqwalreceiver", false);
 
 	/* Check the connection info string. */
-	walrcv_check_conninfo(conninfo);
+	walrcv_check_conninfo(conninfo, opts.passwordrequired && !superuser());
 
 	/* Everything ok, form a new tuple. */
 	memset(values, 0, sizeof(values));
@@ -636,6 +680,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					 LOGICALREP_TWOPHASE_STATE_PENDING :
 					 LOGICALREP_TWOPHASE_STATE_DISABLED);
 	values[Anum_pg_subscription_subdisableonerr - 1] = BoolGetDatum(opts.disableonerr);
+	values[Anum_pg_subscription_subpasswordrequired - 1] = BoolGetDatum(opts.passwordrequired);
 	values[Anum_pg_subscription_subconninfo - 1] =
 		CStringGetTextDatum(conninfo);
 	if (opts.slot_name)
@@ -672,9 +717,12 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		List	   *tables;
 		ListCell   *lc;
 		char		table_state;
+		bool		must_use_password;
 
 		/* Try to connect to the publisher. */
-		wrconn = walrcv_connect(conninfo, true, stmt->subname, &err);
+		must_use_password = !superuser_arg(owner) && opts.passwordrequired;
+		wrconn = walrcv_connect(conninfo, true, must_use_password,
+								stmt->subname, &err);
 		if (!wrconn)
 			ereport(ERROR,
 					(errcode(ERRCODE_CONNECTION_FAILURE),
@@ -799,12 +847,15 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 	} SubRemoveRels;
 	SubRemoveRels *sub_remove_rels;
 	WalReceiverConn *wrconn;
+	bool		must_use_password;
 
 	/* Load the library providing us libpq calls. */
 	load_file("libpqwalreceiver", false);
 
 	/* Try to connect to the publisher. */
-	wrconn = walrcv_connect(sub->conninfo, true, sub->name, &err);
+	must_use_password = !superuser_arg(sub->owner) && sub->passwordrequired;
+	wrconn = walrcv_connect(sub->conninfo, true, must_use_password,
+							sub->name, &err);
 	if (!wrconn)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONNECTION_FAILURE),
@@ -1039,6 +1090,16 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 	sub = GetSubscription(subid, false);
 
+	/*
+	 * Don't allow non-superuser modification of a subscription with
+	 * password_required=false.
+	 */
+	if (!sub->passwordrequired && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("password_required=false is superuser-only"),
+						 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
+
 	/* Lock the subscription so nobody else can do anything with it. */
 	LockSharedObject(SubscriptionRelationId, subid, 0, AccessExclusiveLock);
 
@@ -1054,7 +1115,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				supported_opts = (SUBOPT_SLOT_NAME |
 								  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
 								  SUBOPT_STREAMING | SUBOPT_DISABLE_ON_ERR |
-								  SUBOPT_ORIGIN);
+								  SUBOPT_PASSWORD_REQUIRED | SUBOPT_ORIGIN);
 
 				parse_subscription_options(pstate, stmt->options,
 										   supported_opts, &opts);
@@ -1111,6 +1172,21 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						= true;
 				}
 
+				if (IsSet(opts.specified_opts, SUBOPT_PASSWORD_REQUIRED))
+				{
+					/* Non-superuser may not disable password_required. */
+					if (!opts.passwordrequired && !superuser())
+						ereport(ERROR,
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("password_required=false is superuser-only"),
+								 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
+
+					values[Anum_pg_subscription_subpasswordrequired - 1]
+						= BoolGetDatum(opts.passwordrequired);
+					replaces[Anum_pg_subscription_subpasswordrequired - 1]
+						= true;
+				}
+
 				if (IsSet(opts.specified_opts, SUBOPT_ORIGIN))
 				{
 					values[Anum_pg_subscription_suborigin - 1] =
@@ -1148,7 +1224,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 			/* Load the library providing us libpq calls. */
 			load_file("libpqwalreceiver", false);
 			/* Check the connection info string. */
-			walrcv_check_conninfo(stmt->conninfo);
+			walrcv_check_conninfo(stmt->conninfo,
+								  sub->passwordrequired && !superuser_arg(sub->owner));
 
 			values[Anum_pg_subscription_subconninfo - 1] =
 				CStringGetTextDatum(stmt->conninfo);
@@ -1305,11 +1382,6 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				/* ALTER SUBSCRIPTION ... SKIP supports only LSN option */
 				Assert(IsSet(opts.specified_opts, SUBOPT_LSN));
 
-				if (!superuser())
-					ereport(ERROR,
-							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("must be superuser to skip transaction")));
-
 				/*
 				 * If the user sets subskiplsn, we do a sanity check to make
 				 * sure that the specified LSN is a probable value.
@@ -1379,6 +1451,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	ObjectAddress myself;
 	HeapTuple	tup;
 	Oid			subid;
+	Oid			subowner;
 	Datum		datum;
 	bool		isnull;
 	char	   *subname;
@@ -1391,6 +1464,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	WalReceiverConn *wrconn;
 	Form_pg_subscription form;
 	List	   *rstates;
+	bool		must_use_password;
 
 	/*
 	 * Lock pg_subscription with AccessExclusiveLock to ensure that the
@@ -1420,6 +1494,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 
 	form = (Form_pg_subscription) GETSTRUCT(tup);
 	subid = form->oid;
+	subowner = form->subowner;
+	must_use_password = !superuser_arg(subowner) && form->subpasswordrequired;
 
 	/* must be owner */
 	if (!object_ownercheck(SubscriptionRelationId, subid, GetUserId()))
@@ -1576,7 +1652,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 */
 	load_file("libpqwalreceiver", false);
 
-	wrconn = walrcv_connect(conninfo, true, subname, &err);
+	wrconn = walrcv_connect(conninfo, true, must_use_password,
+							subname, &err);
 	if (wrconn == NULL)
 	{
 		if (!slotname)
@@ -1715,6 +1792,7 @@ static void
 AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 {
 	Form_pg_subscription form;
+	AclResult	aclresult;
 
 	form = (Form_pg_subscription) GETSTRUCT(tup);
 
@@ -1725,13 +1803,31 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   NameStr(form->subname));
 
-	/* New owner must be a superuser */
-	if (!superuser_arg(newOwnerId))
+	/*
+	 * Don't allow non-superuser modification of a subscription with
+	 * password_required=false.
+	 */
+	if (!form->subpasswordrequired && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to change owner of subscription \"%s\"",
-						NameStr(form->subname)),
-				 errhint("The owner of a subscription must be a superuser.")));
+						 errmsg("password_required=false is superuser-only"),
+						 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
+
+	/* Must be able to become new owner */
+	check_can_set_role(GetUserId(), newOwnerId);
+
+	/*
+	 * current owner must have CREATE on database
+	 *
+	 * This is consistent with how ALTER SCHEMA ... OWNER TO works, but some
+	 * other object types behave differently (e.g. you can't give a table to
+	 * a user who lacks CREATE privileges on a schema).
+	 */
+	aclresult = object_aclcheck(DatabaseRelationId, MyDatabaseId,
+								GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, OBJECT_DATABASE,
+					   get_database_name(MyDatabaseId));
 
 	form->subowner = newOwnerId;
 	CatalogTupleUpdate(rel, &tup->t_self, tup);

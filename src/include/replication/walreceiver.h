@@ -239,6 +239,7 @@ typedef struct WalRcvExecResult
  */
 typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo,
 											   bool logical,
+											   bool must_use_password,
 											   const char *appname,
 											   char **err);
 
@@ -247,7 +248,8 @@ typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo,
  *
  * Parse and validate the connection string given as of 'conninfo'.
  */
-typedef void (*walrcv_check_conninfo_fn) (const char *conninfo);
+typedef void (*walrcv_check_conninfo_fn) (const char *conninfo,
+										  bool must_use_password);
 
 /*
  * walrcv_get_conninfo_fn
@@ -405,10 +407,10 @@ typedef struct WalReceiverFunctionsType
 
 extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 
-#define walrcv_connect(conninfo, logical, appname, err) \
-	WalReceiverFunctions->walrcv_connect(conninfo, logical, appname, err)
-#define walrcv_check_conninfo(conninfo) \
-	WalReceiverFunctions->walrcv_check_conninfo(conninfo)
+#define walrcv_connect(conninfo, logical, must_use_password, appname, err) \
+	WalReceiverFunctions->walrcv_connect(conninfo, logical, must_use_password, appname, err)
+#define walrcv_check_conninfo(conninfo, must_use_password) \
+	WalReceiverFunctions->walrcv_check_conninfo(conninfo, must_use_password)
 #define walrcv_get_conninfo(conn) \
 	WalReceiverFunctions->walrcv_get_conninfo(conn)
 #define walrcv_get_senderinfo(conn, sender_host, sender_port) \

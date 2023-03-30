@@ -150,7 +150,7 @@ CREATE PUBLICATION alice
 $node_subscriber->safe_psql(
 	'postgres', qq(
 SET SESSION AUTHORIZATION regress_admin;
-CREATE SUBSCRIPTION admin_sub CONNECTION '$publisher_connstr' PUBLICATION alice;
+CREATE SUBSCRIPTION admin_sub CONNECTION '$publisher_connstr' PUBLICATION alice WITH (password_required=false);
 ));
 
 # Wait for initial sync to finish
