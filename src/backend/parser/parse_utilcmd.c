@@ -381,6 +381,9 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	List	   *attnamelist;
 	int			nameEl_idx = -1;
 
+	/* Make a copy of this as we may end up modifying it in the code below */
+	seqoptions = list_copy(seqoptions);
+
 	/*
 	 * Determine namespace and name to use for the sequence.
 	 *
