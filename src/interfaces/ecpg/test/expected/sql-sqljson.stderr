@@ -2,68 +2,90 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGsetcommit on line 18: action "on"; connection "ecpg1_regression"
+[NO_PID]: ECPGsetcommit on line 19: action "on"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 20: query: select json_object ( returning text ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 21: query: select json_object ( returning text ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 20: using PQexec
+[NO_PID]: ecpg_execute on line 21: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 20: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 21: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 20: RESULT: {} offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 21: RESULT: {} offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 23: query: select json_object ( returning text format json ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 24: query: select json_object ( returning text format json ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 23: using PQexec
+[NO_PID]: ecpg_execute on line 24: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 23: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 24: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 23: RESULT: {} offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 24: RESULT: {} offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 26: query: select json_array ( returning jsonb ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 27: query: select json_array ( returning jsonb ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 26: using PQexec
+[NO_PID]: ecpg_execute on line 27: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 26: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 27: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_is_type_an_array on line 26: type (3802); C (1); array (no)
+[NO_PID]: ecpg_is_type_an_array on line 27: type (3802); C (1); array (no)
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 26: RESULT: [] offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 27: RESULT: [] offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 29: query: select json_array ( returning jsonb format json ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 30: query: select json_array ( returning jsonb format json ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 29: using PQexec
+[NO_PID]: ecpg_execute on line 30: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 29: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 30: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 29: RESULT: [] offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 30: RESULT: [] offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 32: query: select json_object ( 1 : 1 , '1' : null with unique ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 33: query: select json_object ( 1 : 1 , '1' : null with unique ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 32: using PQexec
+[NO_PID]: ecpg_execute on line 33: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult on line 32: bad response - ERROR:  duplicate JSON key "1"
+[NO_PID]: ecpg_check_PQresult on line 33: bad response - ERROR:  duplicate JSON key "1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 22030 (sqlcode -400): duplicate JSON key "1" on line 32
+[NO_PID]: raising sqlstate 22030 (sqlcode -400): duplicate JSON key "1" on line 33
 [NO_PID]: sqlca: code: -400, state: 22030
-SQL error: duplicate JSON key "1" on line 32
-[NO_PID]: ecpg_execute on line 35: query: select json_object ( 1 : 1 , '2' : null , 1 : '2' absent on null without unique keys ); with 0 parameter(s) on connection ecpg1_regression
+SQL error: duplicate JSON key "1" on line 33
+[NO_PID]: ecpg_execute on line 36: query: select json_object ( 1 : 1 , '2' : null , 1 : '2' absent on null without unique keys ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 35: using PQexec
+[NO_PID]: ecpg_execute on line 36: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 35: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 36: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_is_type_an_array on line 35: type (114); C (1); array (no)
+[NO_PID]: ecpg_is_type_an_array on line 36: type (114); C (1); array (no)
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 35: RESULT: {"1" : 1, "1" : "2"} offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 36: RESULT: {"1" : 1, "1" : "2"} offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 38: query: select json_object ( 1 : 1 , '2' : null absent on null without unique returning jsonb ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 39: query: select json_object ( 1 : 1 , '2' : null absent on null without unique returning jsonb ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 38: using PQexec
+[NO_PID]: ecpg_execute on line 39: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 38: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 39: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 38: RESULT: {"1": 1} offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 39: RESULT: {"1": 1} offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 42: query: with val ( js ) as ( values ( '{ "a": 1, "b": [{ "a": 1, "b": 0, "a": 2 }] }' ) ) select js is json "IS JSON" , js is not json "IS NOT JSON" , js is json value "IS VALUE" , js is json object "IS OBJECT" , js is json array "IS ARRAY" , js is json scalar "IS SCALAR" , js is json without unique keys "WITHOUT UNIQUE" , js is json with unique keys "WITH UNIQUE" from val; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 42: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 42: correctly got 1 tuples with 8 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 42: RESULT: t offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 42: RESULT: f offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 42: RESULT: t offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 42: RESULT: t offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 42: RESULT: f offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 42: RESULT: f offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 42: RESULT: t offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 42: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

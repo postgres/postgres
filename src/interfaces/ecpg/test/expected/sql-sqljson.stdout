@@ -4,3 +4,11 @@ Found json=[]
 Found json=[]
 Found json={"1" : 1, "1" : "2"}
 Found json={"1": 1}
+Found is_json[0]: true
+Found is_json[1]: false
+Found is_json[2]: true
+Found is_json[3]: true
+Found is_json[4]: false
+Found is_json[5]: false
+Found is_json[6]: true
+Found is_json[7]: false

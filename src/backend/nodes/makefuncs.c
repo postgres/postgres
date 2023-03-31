@@ -894,3 +894,22 @@ makeJsonKeyValue(Node *key, Node *value)
 
 	return (Node *) n;
 }
+
+/*
+ * makeJsonIsPredicate -
+ *	  creates a JsonIsPredicate node
+ */
+Node *
+makeJsonIsPredicate(Node *expr, JsonFormat *format, JsonValueType item_type,
+					bool unique_keys, int location)
+{
+	JsonIsPredicate *n = makeNode(JsonIsPredicate);
+
+	n->expr = expr;
+	n->format = format;
+	n->item_type = item_type;
+	n->unique_keys = unique_keys;
+	n->location = location;
+
+	return (Node *) n;
+}

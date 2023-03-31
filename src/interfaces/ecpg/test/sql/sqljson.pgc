@@ -10,6 +10,7 @@ main ()
 {
 EXEC SQL BEGIN DECLARE SECTION;
   char json[1024];
+  bool is_json[8];
 EXEC SQL END DECLARE SECTION;
 
   ECPGdebug (1, stderr);
@@ -37,6 +38,22 @@ EXEC SQL END DECLARE SECTION;
 
   EXEC SQL SELECT JSON_OBJECT(1: 1, '2': NULL ABSENT ON NULL WITHOUT UNIQUE RETURNING jsonb) INTO :json;
   printf("Found json=%s\n", json);
+
+  EXEC SQL WITH val (js) AS (VALUES ('{ "a": 1, "b": [{ "a": 1, "b": 0, "a": 2 }] }'))
+	  SELECT
+	  js IS JSON "IS JSON",
+	  js IS NOT JSON "IS NOT JSON",
+	  js IS JSON VALUE "IS VALUE",
+	  js IS JSON OBJECT "IS OBJECT",
+	  js IS JSON ARRAY "IS ARRAY",
+	  js IS JSON SCALAR "IS SCALAR",
+	  js IS JSON WITHOUT UNIQUE KEYS "WITHOUT UNIQUE",
+	  js IS JSON WITH UNIQUE KEYS "WITH UNIQUE"
+		  INTO :is_json[0], :is_json[1], :is_json[2], :is_json[3], :is_json[4],
+		  :is_json[5], :is_json[6], :is_json[7]
+		  FROM val;
+	  for (int i = 0; i < sizeof(is_json); i++)
+		  printf("Found is_json[%d]: %s\n", i, is_json[i] ? "true" : "false");
 
   EXEC SQL DISCONNECT;
 

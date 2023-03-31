@@ -16006,6 +16006,86 @@ table2-mapping
    </table>
 
   <para>
+   <xref linkend="functions-sqljson-misc" /> details SQL/JSON
+   facilities for testing JSON.
+  </para>
+
+  <table id="functions-sqljson-misc">
+   <title>SQL/JSON Testing Functions</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+        Function signature
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+      </para></entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>IS JSON</primary></indexterm>
+        <replaceable>expression</replaceable> <literal>IS</literal> <optional> <literal>NOT</literal> </optional> <literal>JSON</literal>
+        <optional> { <literal>VALUE</literal> | <literal>SCALAR</literal> | <literal>ARRAY</literal> | <literal>OBJECT</literal> } </optional>
+        <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional> </optional>
+       </para>
+       <para>
+        This predicate tests whether <replaceable>expression</replaceable> can be
+        parsed as JSON, possibly of a specified type.
+        If <literal>SCALAR</literal> or <literal>ARRAY</literal> or
+        <literal>OBJECT</literal> is specified, the
+        test is whether or not the JSON is of that particular type. If
+        <literal>WITH UNIQUE KEYS</literal> is specified, then any object in the
+        <replaceable>expression</replaceable> is also tested to see if it
+        has duplicate keys.
+       </para>
+       <para>
+<programlisting>
+SELECT js,
+  js IS JSON "json?",
+  js IS JSON SCALAR "scalar?",
+  js IS JSON OBJECT "object?",
+  js IS JSON ARRAY "array?"
+FROM (VALUES
+      ('123'), ('"abc"'), ('{"a": "b"}'), ('[1,2]'),('abc')) foo(js);
+     js     | json? | scalar? | object? | array? 
+------------+-------+---------+---------+--------
+ 123        | t     | t       | f       | f
+ "abc"      | t     | t       | f       | f
+ {"a": "b"} | t     | f       | t       | f
+ [1,2]      | t     | f       | f       | t
+ abc        | f     | f       | f       | f
+</programlisting>
+       </para>
+       <para>
+<programlisting>
+SELECT js,
+  js IS JSON OBJECT "object?",
+  js IS JSON ARRAY "array?",
+  js IS JSON ARRAY WITH UNIQUE KEYS "array w. UK?",
+  js IS JSON ARRAY WITHOUT UNIQUE KEYS "array w/o UK?"
+FROM (VALUES ('[{"a":"1"},
+ {"b":"2","b":"3"}]')) foo(js);
+-[ RECORD 1 ]-+--------------------
+js            | [{"a":"1"},        +
+              |  {"b":"2","b":"3"}]
+object?       | f
+array?        | t
+array w. UK?  | f
+array w/o UK? | t
+</programlisting>
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
    <xref linkend="functions-json-processing-table"/> shows the functions that
    are available for processing <type>json</type> and <type>jsonb</type> values.
   </para>

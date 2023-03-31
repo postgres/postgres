@@ -50,6 +50,9 @@ extern bool pg_parse_json_or_errsave(JsonLexContext *lex, JsonSemAction *sem,
 extern void json_errsave_error(JsonParseErrorType error, JsonLexContext *lex,
 							   struct Node *escontext);
 
+/* get first JSON token */
+extern JsonTokenType json_get_first_token(text *json, bool throw_error);
+
 extern uint32 parse_jsonb_index_flags(Jsonb *jb);
 extern void iterate_jsonb_values(Jsonb *jb, uint32 flags, void *state,
 								 JsonIterateStringValuesAction action);

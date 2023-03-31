@@ -5665,3 +5665,23 @@ transform_string_values_scalar(void *state, char *token, JsonTokenType tokentype
 
 	return JSON_SUCCESS;
 }
+
+JsonTokenType
+json_get_first_token(text *json, bool throw_error)
+{
+	JsonLexContext *lex;
+	JsonParseErrorType result;
+
+	lex = makeJsonLexContext(json, false);
+
+	/* Lex exactly one token from the input and check its type. */
+	result = json_lex(lex);
+
+	if (result == JSON_SUCCESS)
+		return lex->token_type;
+
+	if (throw_error)
+		json_errsave_error(result, lex, NULL);
+
+	return JSON_TOKEN_INVALID;	/* invalid json */
+}

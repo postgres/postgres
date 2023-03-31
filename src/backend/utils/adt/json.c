@@ -62,6 +62,23 @@ typedef struct JsonUniqueHashEntry
 	int			object_id;
 } JsonUniqueHashEntry;
 
+/* Stack element for key uniqueness check during JSON parsing */
+typedef struct JsonUniqueStackEntry
+{
+	struct JsonUniqueStackEntry *parent;
+	int			object_id;
+} JsonUniqueStackEntry;
+
+/* Context struct for key uniqueness check during JSON parsing */
+typedef struct JsonUniqueParsingState
+{
+	JsonLexContext *lex;
+	JsonUniqueCheckState check;
+	JsonUniqueStackEntry *stack;
+	int			id_counter;
+	bool		unique;
+} JsonUniqueParsingState;
+
 /* Context struct for key uniqueness check during JSON building */
 typedef struct JsonUniqueBuilderState
 {
@@ -1648,6 +1665,110 @@ escape_json(StringInfo buf, const char *str)
 	appendStringInfoCharMacro(buf, '"');
 }
 
+/* Semantic actions for key uniqueness check */
+static JsonParseErrorType
+json_unique_object_start(void *_state)
+{
+	JsonUniqueParsingState *state = _state;
+	JsonUniqueStackEntry *entry;
+
+	if (!state->unique)
+		return JSON_SUCCESS;
+
+	/* push object entry to stack */
+	entry = palloc(sizeof(*entry));
+	entry->object_id = state->id_counter++;
+	entry->parent = state->stack;
+	state->stack = entry;
+
+	return JSON_SUCCESS;
+}
+
+static JsonParseErrorType
+json_unique_object_end(void *_state)
+{
+	JsonUniqueParsingState *state = _state;
+	JsonUniqueStackEntry *entry;
+
+	if (!state->unique)
+		return JSON_SUCCESS;
+
+	entry = state->stack;
+	state->stack = entry->parent;	/* pop object from stack */
+	pfree(entry);
+	return JSON_SUCCESS;
+}
+
+static JsonParseErrorType
+json_unique_object_field_start(void *_state, char *field, bool isnull)
+{
+	JsonUniqueParsingState *state = _state;
+	JsonUniqueStackEntry *entry;
+
+	if (!state->unique)
+		return JSON_SUCCESS;
+
+	/* find key collision in the current object */
+	if (json_unique_check_key(&state->check, field, state->stack->object_id))
+		return JSON_SUCCESS;
+
+	state->unique = false;
+
+	/* pop all objects entries */
+	while ((entry = state->stack))
+	{
+		state->stack = entry->parent;
+		pfree(entry);
+	}
+	return JSON_SUCCESS;
+}
+
+/* Validate JSON text and additionally check key uniqueness */
+bool
+json_validate(text *json, bool check_unique_keys, bool throw_error)
+{
+	JsonLexContext *lex = makeJsonLexContext(json, check_unique_keys);
+	JsonSemAction uniqueSemAction = {0};
+	JsonUniqueParsingState state;
+	JsonParseErrorType result;
+
+	if (check_unique_keys)
+	{
+		state.lex = lex;
+		state.stack = NULL;
+		state.id_counter = 0;
+		state.unique = true;
+		json_unique_check_init(&state.check);
+
+		uniqueSemAction.semstate = &state;
+		uniqueSemAction.object_start = json_unique_object_start;
+		uniqueSemAction.object_field_start = json_unique_object_field_start;
+		uniqueSemAction.object_end = json_unique_object_end;
+	}
+
+	result = pg_parse_json(lex, check_unique_keys ? &uniqueSemAction : &nullSemAction);
+
+	if (result != JSON_SUCCESS)
+	{
+		if (throw_error)
+			json_errsave_error(result, lex, NULL);
+
+		return false;			/* invalid json */
+	}
+
+	if (check_unique_keys && !state.unique)
+	{
+		if (throw_error)
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE),
+					 errmsg("duplicate JSON object key value")));
+
+		return false;			/* not unique keys */
+	}
+
+	return true;				/* ok */
+}
+
 /*
  * SQL function json_typeof(json) -> text
  *
@@ -1663,21 +1784,18 @@ escape_json(StringInfo buf, const char *str)
 Datum
 json_typeof(PG_FUNCTION_ARGS)
 {
-	text	   *json;
-
-	JsonLexContext *lex;
-	JsonTokenType tok;
+	text	   *json = PG_GETARG_TEXT_PP(0);
+	JsonLexContext *lex = makeJsonLexContext(json, false);
 	char	   *type;
+	JsonTokenType tok;
 	JsonParseErrorType result;
-
-	json = PG_GETARG_TEXT_PP(0);
-	lex = makeJsonLexContext(json, false);
 
 	/* Lex exactly one token from the input and check its type. */
 	result = json_lex(lex);
 	if (result != JSON_SUCCESS)
 		json_errsave_error(result, lex, NULL);
 	tok = lex->token_type;
+
 	switch (tok)
 	{
 		case JSON_TOKEN_OBJECT_START:

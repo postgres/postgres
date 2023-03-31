@@ -655,6 +655,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 					json_array_aggregate_order_by_clause_opt
 
 %type <ival>		json_encoding_clause_opt
+					json_predicate_type_constraint
 
 %type <boolean>		json_key_uniqueness_constraint_opt
 					json_object_constructor_null_clause_opt
@@ -754,7 +755,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	RESET RESTART RESTRICT RETURN RETURNING RETURNS REVOKE RIGHT ROLE ROLLBACK ROLLUP
 	ROUTINE ROUTINES ROW ROWS RULE
 
-	SAVEPOINT SCHEMA SCHEMAS SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE SEQUENCES
+	SAVEPOINT SCALAR SCHEMA SCHEMAS SCROLL SEARCH SECOND_P SECURITY SELECT
+	SEQUENCE SEQUENCES
 	SERIALIZABLE SERVER SESSION SESSION_USER SET SETS SETOF SHARE SHOW
 	SIMILAR SIMPLE SKIP SMALLINT SNAPSHOT SOME SQL_P STABLE STANDALONE_P
 	START STATEMENT STATISTICS STDIN STDOUT STORAGE STORED STRICT_P STRIP_P
@@ -818,6 +820,12 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %nonassoc	'<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 %nonassoc	BETWEEN IN_P LIKE ILIKE SIMILAR NOT_LA
 %nonassoc	ESCAPE			/* ESCAPE must be just above LIKE/ILIKE/SIMILAR */
+
+/* SQL/JSON related keywords */
+%nonassoc	UNIQUE JSON
+%nonassoc	KEYS OBJECT_P SCALAR VALUE_P
+%nonassoc	WITH WITHOUT_LA
+
 /*
  * To support target_el without AS, it used to be necessary to assign IDENT an
  * explicit precedence just less than Op.  While that's not really necessary
@@ -14850,6 +14858,44 @@ a_expr:		c_expr									{ $$ = $1; }
 														   @2),
 									 @2);
 				}
+			| a_expr IS json_predicate_type_constraint
+					json_key_uniqueness_constraint_opt		%prec IS
+				{
+					JsonFormat *format = makeJsonFormat(JS_FORMAT_DEFAULT, JS_ENC_DEFAULT, -1);
+
+					$$ = makeJsonIsPredicate($1, format, $3, $4, @1);
+				}
+			/*
+			 * Required by SQL/JSON, but there are conflicts
+			| a_expr
+				FORMAT_LA JSON json_encoding_clause_opt
+				IS  json_predicate_type_constraint
+					json_key_uniqueness_constraint_opt		%prec IS
+				{
+					$3.location = @2;
+					$$ = makeJsonIsPredicate($1, $3, $5, $6, @1);
+				}
+			*/
+			| a_expr IS NOT
+					json_predicate_type_constraint
+					json_key_uniqueness_constraint_opt		%prec IS
+				{
+					JsonFormat *format = makeJsonFormat(JS_FORMAT_DEFAULT, JS_ENC_DEFAULT, -1);
+
+					$$ = makeNotExpr(makeJsonIsPredicate($1, format, $4, $5, @1), @1);
+				}
+			/*
+			 * Required by SQL/JSON, but there are conflicts
+			| a_expr
+				FORMAT_LA JSON json_encoding_clause_opt
+				IS NOT
+					json_predicate_type_constraint
+					json_key_uniqueness_constraint_opt		%prec IS
+				{
+					$3.location = @2;
+					$$ = makeNotExpr(makeJsonIsPredicate($1, $3, $6, $7, @1), @1);
+				}
+			*/
 			| DEFAULT
 				{
 					/*
@@ -16406,13 +16452,21 @@ json_output_clause_opt:
 			| /* EMPTY */							{ $$ = NULL; }
 		;
 
+json_predicate_type_constraint:
+			JSON									{ $$ = JS_TYPE_ANY; }
+			| JSON VALUE_P							{ $$ = JS_TYPE_ANY; }
+			| JSON ARRAY							{ $$ = JS_TYPE_ARRAY; }
+			| JSON OBJECT_P							{ $$ = JS_TYPE_OBJECT; }
+			| JSON SCALAR							{ $$ = JS_TYPE_SCALAR; }
+		;
+
 /* KEYS is a noise word here */
 json_key_uniqueness_constraint_opt:
-			WITH UNIQUE KEYS				{ $$ = true; }
-			| WITH UNIQUE				    { $$ = true; }
-			| WITHOUT_LA UNIQUE KEYS		{ $$ = false; }
-			| WITHOUT_LA UNIQUE			    { $$ = false; }
-			| /* EMPTY */ 					{ $$ = false; }
+			WITH UNIQUE KEYS							{ $$ = true; }
+			| WITH UNIQUE								{ $$ = true; }
+			| WITHOUT_LA UNIQUE KEYS					{ $$ = false; }
+			| WITHOUT_LA UNIQUE							{ $$ = false; }
+			| /* EMPTY */ 				%prec KEYS		{ $$ = false; }
 		;
 
 json_name_and_value_list:
@@ -17182,6 +17236,7 @@ unreserved_keyword:
 			| ROWS
 			| RULE
 			| SAVEPOINT
+			| SCALAR
 			| SCHEMA
 			| SCHEMAS
 			| SCROLL
@@ -17784,6 +17839,7 @@ bare_label_keyword:
 			| ROWS
 			| RULE
 			| SAVEPOINT
+			| SCALAR
 			| SCHEMA
 			| SCHEMAS
 			| SCROLL
