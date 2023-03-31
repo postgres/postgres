@@ -54,7 +54,8 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal> action on the
    subscribing side in order to become effective. Note also that
    <literal>DROP TABLES IN SCHEMA</literal> will not drop any schema tables
-   that were specified using <literal>FOR TABLE</literal>/
+   that were specified using
+   <link linkend="sql-createpublication-for-table"><literal>FOR TABLE</literal></link>/
    <literal>ADD TABLE</literal>, and the combination of <literal>DROP</literal>
    with a <literal>WHERE</literal> clause is not allowed.
   </para>
@@ -79,8 +80,9 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    To alter the owner, you must be able to <literal>SET ROLE</literal> to the
    new owning role, and that role must have <literal>CREATE</literal>
    privilege on the database.
-   Also, the new owner of a <literal>FOR ALL TABLES</literal> or
-   <literal>FOR TABLES IN SCHEMA</literal>
+   Also, the new owner of a
+   <link linkend="sql-createpublication-for-all-tables"><literal>FOR ALL TABLES</literal></link>
+   or <link linkend="sql-createpublication-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
    publication must be a superuser. However, a superuser can
    change the ownership of a publication regardless of these restrictions.
   </para>

@@ -438,16 +438,18 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    the case of different <literal>WHERE</literal> clauses, if one of the
    publications has no <literal>WHERE</literal> clause (referring to that
    publish operation) or the publication is declared as
-   <literal>FOR ALL TABLES</literal> or
-   <literal>FOR TABLES IN SCHEMA</literal>, rows are always published
-   regardless of the definition of the other expressions.
-   If the subscriber is a <productname>PostgreSQL</productname> version before
-   15, then any row filtering is ignored during the initial data synchronization
-   phase. For this case, the user might want to consider deleting any initially
-   copied data that would be incompatible with subsequent filtering.
-   Because initial data synchronization does not take into account the publication
-   <literal>publish</literal> parameter when copying existing table data, some rows
-   may be copied that would not be replicated using DML. See
+   <link linkend="sql-createpublication-for-all-tables"><literal>FOR ALL TABLES</literal></link>
+   or <link linkend="sql-createpublication-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>,
+   rows are always published regardless of the definition of the other
+   expressions. If the subscriber is a <productname>PostgreSQL</productname>
+   version before 15, then any row filtering is ignored during the initial data
+   synchronization phase. For this case, the user might want to consider
+   deleting any initially copied data that would be incompatible with
+   subsequent filtering. Because initial data synchronization does not take
+   into account the publication
+   <link linkend="sql-createpublication-with-publish"><literal>publish</literal></link>
+   parameter when copying existing table data, some rows may be copied that
+   would not be replicated using DML. See
    <xref linkend="logical-replication-subscription-examples"/> for examples.
   </para>
 
