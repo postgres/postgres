@@ -795,15 +795,16 @@ SELECT * FROM FKTABLE ORDER BY id;
 
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
-CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
+-- Test some invalid FK definitions
+CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY, someoid oid);
 CREATE TABLE FKTABLE_FAIL1 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest2) REFERENCES PKTABLE);
 ERROR:  column "ftest2" referenced in foreign key constraint does not exist
 CREATE TABLE FKTABLE_FAIL2 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest1) REFERENCES PKTABLE(ptest2));
 ERROR:  column "ptest2" referenced in foreign key constraint does not exist
-DROP TABLE FKTABLE_FAIL1;
-ERROR:  table "fktable_fail1" does not exist
-DROP TABLE FKTABLE_FAIL2;
-ERROR:  table "fktable_fail2" does not exist
+CREATE TABLE FKTABLE_FAIL3 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (tableoid) REFERENCES PKTABLE(someoid));
+ERROR:  system columns cannot be used in foreign keys
+CREATE TABLE FKTABLE_FAIL4 ( ftest1 oid, CONSTRAINT fkfail1 FOREIGN KEY (ftest1) REFERENCES PKTABLE(tableoid));
+ERROR:  system columns cannot be used in foreign keys
 DROP TABLE PKTABLE;
 -- Test for referencing column number smaller than referenced constraint
 CREATE TABLE PKTABLE (ptest1 int, ptest2 int, UNIQUE(ptest1, ptest2));
