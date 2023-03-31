@@ -59,7 +59,8 @@ static void GetWalStats(FunctionCallInfo fcinfo,
 						XLogRecPtr start_lsn,
 						XLogRecPtr end_lsn,
 						bool stats_per_record);
-static void GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record);
+static void GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record,
+							bool show_data);
 
 /*
  * Return the LSN up to which the server has WAL.
@@ -244,7 +245,8 @@ GetWALRecordInfo(XLogReaderState *record, Datum *values,
  * Keep this in sync with GetWALRecordInfo.
  */
 static void
-GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record)
+GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record,
+				bool show_data)
 {
 #define PG_GET_WAL_BLOCK_INFO_COLS 20
 	int			block_id;
@@ -359,7 +361,7 @@ GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record)
 			nulls[i++] = true;
 
 		/* block_data output */
-		if (blk->has_data)
+		if (blk->has_data && show_data)
 		{
 			bytea	   *block_data;
 
@@ -372,7 +374,7 @@ GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record)
 			nulls[i++] = true;
 
 		/* block_fpi_data output */
-		if (blk->has_image)
+		if (blk->has_image && show_data)
 		{
 			PGAlignedBlock buf;
 			Page		page;
@@ -410,6 +412,7 @@ pg_get_wal_block_info(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	start_lsn = PG_GETARG_LSN(0);
 	XLogRecPtr	end_lsn = PG_GETARG_LSN(1);
+	bool		show_data = PG_GETARG_BOOL(2);
 	XLogReaderState *xlogreader;
 	MemoryContext old_cxt;
 	MemoryContext tmp_cxt;
@@ -435,7 +438,7 @@ pg_get_wal_block_info(PG_FUNCTION_ARGS)
 		/* Use the tmp context so we can clean up after each tuple is done */
 		old_cxt = MemoryContextSwitchTo(tmp_cxt);
 
-		GetWALBlockInfo(fcinfo, xlogreader);
+		GetWALBlockInfo(fcinfo, xlogreader, show_data);
 
 		/* clean up and switch back */
 		MemoryContextSwitchTo(old_cxt);

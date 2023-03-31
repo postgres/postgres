@@ -101,7 +101,7 @@ SELECT has_function_privilege('regress_pg_walinspect',
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- no
 SELECT has_function_privilege('regress_pg_walinspect',
-  'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- no
+  'pg_get_wal_block_info(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- no
 
 -- Functions accessible by users with role pg_read_server_files.
 GRANT pg_read_server_files TO regress_pg_walinspect;
@@ -113,7 +113,7 @@ SELECT has_function_privilege('regress_pg_walinspect',
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- yes
 SELECT has_function_privilege('regress_pg_walinspect',
-  'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
+  'pg_get_wal_block_info(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- yes
 
 REVOKE pg_read_server_files FROM regress_pg_walinspect;
 
@@ -124,7 +124,7 @@ GRANT EXECUTE ON FUNCTION pg_get_wal_records_info(pg_lsn, pg_lsn)
   TO regress_pg_walinspect;
 GRANT EXECUTE ON FUNCTION pg_get_wal_stats(pg_lsn, pg_lsn, boolean)
   TO regress_pg_walinspect;
-GRANT EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn)
+GRANT EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn, boolean)
   TO regress_pg_walinspect;
 
 SELECT has_function_privilege('regress_pg_walinspect',
@@ -134,7 +134,7 @@ SELECT has_function_privilege('regress_pg_walinspect',
 SELECT has_function_privilege('regress_pg_walinspect',
   'pg_get_wal_stats(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- yes
 SELECT has_function_privilege('regress_pg_walinspect',
-  'pg_get_wal_block_info(pg_lsn, pg_lsn) ', 'EXECUTE'); -- yes
+  'pg_get_wal_block_info(pg_lsn, pg_lsn, boolean) ', 'EXECUTE'); -- yes
 
 REVOKE EXECUTE ON FUNCTION pg_get_wal_record_info(pg_lsn)
   FROM regress_pg_walinspect;
@@ -142,7 +142,7 @@ REVOKE EXECUTE ON FUNCTION pg_get_wal_records_info(pg_lsn, pg_lsn)
   FROM regress_pg_walinspect;
 REVOKE EXECUTE ON FUNCTION pg_get_wal_stats(pg_lsn, pg_lsn, boolean)
   FROM regress_pg_walinspect;
-REVOKE EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn)
+REVOKE EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn, boolean)
   FROM regress_pg_walinspect;
 
 -- ===================================================================

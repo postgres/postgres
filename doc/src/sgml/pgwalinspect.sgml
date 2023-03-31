@@ -133,7 +133,7 @@ block_ref        |
 
    <varlistentry>
     <term>
-     <function>pg_get_wal_block_info(start_lsn pg_lsn, end_lsn pg_lsn) returns setof record</function>
+     <function>pg_get_wal_block_info(start_lsn pg_lsn, end_lsn pg_lsn, show_data boolean DEFAULT true) returns setof record</function>
     </term>
 
     <listitem>
@@ -209,10 +209,21 @@ block_fpi_data    |
       <para>
        The <function>pg_filenode_relation</function> function (see
        <xref linkend="functions-admin-dblocation"/>) can help you to
-       determine which block/relation was modified by each WAL record
-       during original execution
+       determine which relation was modified during original execution
       </para>
      </tip>
+     <para>
+      It is possible for clients to avoid the overhead of
+      materializing block data.  This may make function execution
+      significantly faster.  When <replaceable>show_data</replaceable>
+      is set to <literal>false</literal>, <structfield>block_data</structfield>
+      and <structfield>block_fpi_data</structfield> values are omitted
+      (that is, the <structfield>block_data</structfield> and
+      <structfield>block_fpi_data</structfield> <literal>OUT</literal>
+      arguments are <literal>NULL</literal> for all rows returned).
+      Obviously, this optimization is only feasible with queries where
+      block data isn't truly required.
+     </para>
      <para>
       The function raises an error if
       <replaceable>start_lsn</replaceable> is not available.

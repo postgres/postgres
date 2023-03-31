@@ -12,6 +12,7 @@ DROP FUNCTION pg_get_wal_stats_till_end_of_wal(pg_lsn, boolean);
 --
 CREATE FUNCTION pg_get_wal_block_info(IN start_lsn pg_lsn,
 	IN end_lsn pg_lsn,
+	IN show_data boolean DEFAULT true,
 	OUT start_lsn pg_lsn,
 	OUT end_lsn pg_lsn,
 	OUT prev_lsn pg_lsn,
@@ -37,5 +38,5 @@ RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'pg_get_wal_block_info'
 LANGUAGE C STRICT PARALLEL SAFE;
 
-REVOKE EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn) TO pg_read_server_files;
+REVOKE EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn, boolean) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pg_get_wal_block_info(pg_lsn, pg_lsn, boolean) TO pg_read_server_files;
