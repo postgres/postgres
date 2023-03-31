@@ -1473,6 +1473,31 @@ FROM generate_series(0, 110, 10) x;
  110 |   0 |   0
 (12 rows)
 
+-- Another roundoff-error hazard
+SELECT width_bucket(0, -1e100::numeric, 1, 10);
+ width_bucket 
+--------------
+           10
+(1 row)
+
+SELECT width_bucket(0, -1e100::float8, 1, 10);
+ width_bucket 
+--------------
+           10
+(1 row)
+
+SELECT width_bucket(1, 1e100::numeric, 0, 10);
+ width_bucket 
+--------------
+           10
+(1 row)
+
+SELECT width_bucket(1, 1e100::float8, 0, 10);
+ width_bucket 
+--------------
+           10
+(1 row)
+
 -- Check cases that could trigger overflow or underflow within the calculation
 SELECT oper, low, high, cnt, width_bucket(oper, low, high, cnt)
 FROM

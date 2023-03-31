@@ -909,6 +909,11 @@ FROM generate_series(0, 110, 10) x;
 SELECT x, width_bucket(x::float8, 100, 10, 9) as flt,
        width_bucket(x::numeric, 100, 10, 9) as num
 FROM generate_series(0, 110, 10) x;
+-- Another roundoff-error hazard
+SELECT width_bucket(0, -1e100::numeric, 1, 10);
+SELECT width_bucket(0, -1e100::float8, 1, 10);
+SELECT width_bucket(1, 1e100::numeric, 0, 10);
+SELECT width_bucket(1, 1e100::float8, 0, 10);
 
 -- Check cases that could trigger overflow or underflow within the calculation
 SELECT oper, low, high, cnt, width_bucket(oper, low, high, cnt)

@@ -1907,7 +1907,7 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 }
 
 /*
- * If 'operand' is not outside the bucket range, determine the correct
+ * 'operand' is inside the bucket range, so determine the correct
  * bucket for it to go. The calculations performed by this function
  * are derived directly from the SQL2003 spec. Note however that we
  * multiply by count before dividing, to avoid unnecessary roundoff error.
@@ -1940,8 +1940,19 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 			operand_var.dscale + count_var->dscale);
 	div_var(&operand_var, &bound2_var, result_var,
 			select_div_scale(&operand_var, &bound2_var), true);
-	add_var(result_var, &const_one, result_var);
-	floor_var(result_var, result_var);
+
+	/*
+	 * Roundoff in the division could give us a quotient exactly equal to
+	 * "count", which is too large.  Clamp so that we do not emit a result
+	 * larger than "count".
+	 */
+	if (cmp_var(result_var, count_var) >= 0)
+		set_var_from_var(count_var, result_var);
+	else
+	{
+		add_var(result_var, &const_one, result_var);
+		floor_var(result_var, result_var);
+	}
 
 	free_var(&bound1_var);
 	free_var(&bound2_var);

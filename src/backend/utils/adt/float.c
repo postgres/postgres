@@ -4108,39 +4108,63 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 
 	if (bound1 < bound2)
 	{
-		/* In all cases, we'll add one at the end */
 		if (operand < bound1)
-			result = -1;
+			result = 0;
 		else if (operand >= bound2)
-			result = count;
-		else if (!isinf(bound2 - bound1))
 		{
-			/* Result of division is surely in [0,1], so this can't overflow */
-			result = count * ((operand - bound1) / (bound2 - bound1));
+			if (pg_add_s32_overflow(count, 1, &result))
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("integer out of range")));
 		}
 		else
 		{
-			/*
-			 * We get here if bound2 - bound1 overflows DBL_MAX.  Since both
-			 * bounds are finite, their difference can't exceed twice DBL_MAX;
-			 * so we can perform the computation without overflow by dividing
-			 * all the inputs by 2.  That should be exact, too, except in the
-			 * case where a very small operand underflows to zero, which would
-			 * have negligible impact on the result given such large bounds.
-			 */
-			result = count * ((operand / 2 - bound1 / 2) / (bound2 / 2 - bound1 / 2));
+			if (!isinf(bound2 - bound1))
+			{
+				/* The quotient is surely in [0,1], so this can't overflow */
+				result = count * ((operand - bound1) / (bound2 - bound1));
+			}
+			else
+			{
+				/*
+				 * We get here if bound2 - bound1 overflows DBL_MAX.  Since
+				 * both bounds are finite, their difference can't exceed twice
+				 * DBL_MAX; so we can perform the computation without overflow
+				 * by dividing all the inputs by 2.  That should be exact too,
+				 * except in the case where a very small operand underflows to
+				 * zero, which would have negligible impact on the result
+				 * given such large bounds.
+				 */
+				result = count * ((operand / 2 - bound1 / 2) / (bound2 / 2 - bound1 / 2));
+			}
+			/* The quotient could round to 1.0, which would be a lie */
+			if (result >= count)
+				result = count - 1;
+			/* Having done that, we can add 1 without fear of overflow */
+			result++;
 		}
 	}
 	else if (bound1 > bound2)
 	{
 		if (operand > bound1)
-			result = -1;
+			result = 0;
 		else if (operand <= bound2)
-			result = count;
-		else if (!isinf(bound1 - bound2))
-			result = count * ((bound1 - operand) / (bound1 - bound2));
+		{
+			if (pg_add_s32_overflow(count, 1, &result))
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("integer out of range")));
+		}
 		else
-			result = count * ((bound1 / 2 - operand / 2) / (bound1 / 2 - bound2 / 2));
+		{
+			if (!isinf(bound1 - bound2))
+				result = count * ((bound1 - operand) / (bound1 - bound2));
+			else
+				result = count * ((bound1 / 2 - operand / 2) / (bound1 / 2 - bound2 / 2));
+			if (result >= count)
+				result = count - 1;
+			result++;
+		}
 	}
 	else
 	{
@@ -4149,11 +4173,6 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 				 errmsg("lower bound cannot equal upper bound")));
 		result = 0;				/* keep the compiler quiet */
 	}
-
-	if (pg_add_s32_overflow(result, 1, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
 
 	PG_RETURN_INT32(result);
 }
