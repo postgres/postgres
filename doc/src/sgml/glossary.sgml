@@ -252,6 +252,34 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-buffer-access-strategy">
+   <glossterm>Buffer Access Strategy</glossterm>
+   <glossdef>
+    <para>
+     Some operations will access a large number of
+     <glossterm linkend="glossary-data-page">pages</glossterm>.  A
+     <firstterm>Buffer Access Strategy</firstterm> helps to prevent these
+     operations from evicting too many pages from
+     <glossterm linkend="glossary-shared-memory">shared buffers</glossterm>.
+    </para>
+    <para>
+     A Buffer Access Strategy sets up references to a limited number of
+     <glossterm linkend="glossary-shared-memory">shared buffers</glossterm> and
+     reuses them circularly.  When the operation requires a new page, a victim
+     buffer is chosen from the buffers in the strategy ring, which may require
+     flushing the page's dirty data and possibly also unflushed
+     <glossterm linkend="glossary-wal">WAL</glossterm> to permanent storage.
+    </para>
+    <para>
+     Buffer Access Strategies are used for various operations such as
+     sequential scans of large tables, <command>VACUUM</command>,
+     <command>COPY</command>, <command>CREATE TABLE AS SELECT</command>,
+     <command>ALTER TABLE</command>, <command>CREATE DATABASE</command>,
+     <command>CREATE INDEX</command>, and <command>CLUSTER</command>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-cast">
    <glossterm>Cast</glossterm>
    <glossdef>
