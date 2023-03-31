@@ -5749,9 +5749,9 @@
   proname => 'pg_stat_get_io', provolatile => 'v',
   prorows => '30', proretset => 't',
   proparallel => 'r', prorettype => 'record', proargtypes => '',
-  proallargtypes => '{text,text,text,int8,int8,int8,int8,int8,int8,int8,timestamptz}',
-  proargmodes => '{o,o,o,o,o,o,o,o,o,o,o}',
-  proargnames => '{backend_type,io_object,io_context,reads,writes,extends,op_bytes,evictions,reuses,fsyncs,stats_reset}',
+  proallargtypes => '{text,text,text,int8,int8,int8,int8,int8,int8,int8,int8,timestamptz}',
+  proargmodes => '{o,o,o,o,o,o,o,o,o,o,o,o}',
+  proargnames => '{backend_type,io_object,io_context,reads,writes,extends,op_bytes,hits,evictions,reuses,fsyncs,stats_reset}',
   prosrc => 'pg_stat_get_io' },
 
 { oid => '1136', descr => 'statistics: information about WAL activity',

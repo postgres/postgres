@@ -1131,6 +1131,7 @@ SELECT pg_stat_get_subscription_stats(NULL);
 -- - writes of shared buffers to permanent storage
 -- - extends of relations using shared buffers
 -- - fsyncs done to ensure the durability of data dirtying shared buffers
+-- - shared buffer hits
 -- There is no test for blocks evicted from shared buffers, because we cannot
 -- be sure of the state of shared buffers at the point the test is run.
 -- Create a regular table and insert some data to generate IOCONTEXT_NORMAL
@@ -1203,6 +1204,47 @@ SELECT pg_stat_force_next_flush();
 SELECT sum(reads) AS io_sum_shared_after_reads
   FROM pg_stat_io WHERE io_context = 'normal' AND io_object = 'relation'  \gset
 SELECT :io_sum_shared_after_reads > :io_sum_shared_before_reads;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT sum(hits) AS io_sum_shared_before_hits
+  FROM pg_stat_io WHERE io_context = 'normal' AND io_object = 'relation' \gset
+-- Select from the table again to count hits.
+-- Ensure we generate hits by forcing a nested loop self-join with no
+-- materialize node. The outer side's buffer will stay pinned, preventing its
+-- eviction, while we loop through the inner side and generate hits.
+BEGIN;
+SET LOCAL enable_nestloop TO on; SET LOCAL enable_mergejoin TO off;
+SET LOCAL enable_hashjoin TO off; SET LOCAL enable_material TO off;
+-- ensure plan stays as we expect it to
+EXPLAIN (COSTS OFF) SELECT COUNT(*) FROM test_io_shared t1 INNER JOIN test_io_shared t2 USING (a);
+                QUERY PLAN                 
+-------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         Join Filter: (t1.a = t2.a)
+         ->  Seq Scan on test_io_shared t1
+         ->  Seq Scan on test_io_shared t2
+(5 rows)
+
+SELECT COUNT(*) FROM test_io_shared t1 INNER JOIN test_io_shared t2 USING (a);
+ count 
+-------
+   100
+(1 row)
+
+COMMIT;
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+SELECT sum(hits) AS io_sum_shared_after_hits
+  FROM pg_stat_io WHERE io_context = 'normal' AND io_object = 'relation' \gset
+SELECT :io_sum_shared_after_hits > :io_sum_shared_before_hits;
  ?column? 
 ----------
  t
@@ -1342,7 +1384,7 @@ SELECT pg_stat_have_stats('io', 0, 0);
  t
 (1 row)
 
-SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) AS io_stats_pre_reset
+SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) + sum(hits) AS io_stats_pre_reset
   FROM pg_stat_io \gset
 SELECT pg_stat_reset_shared('io');
  pg_stat_reset_shared 
@@ -1350,7 +1392,7 @@ SELECT pg_stat_reset_shared('io');
  
 (1 row)
 
-SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) AS io_stats_post_reset
+SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) + sum(hits) AS io_stats_post_reset
   FROM pg_stat_io \gset
 SELECT :io_stats_post_reset < :io_stats_pre_reset;
  ?column? 

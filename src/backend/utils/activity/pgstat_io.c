@@ -344,7 +344,7 @@ pgstat_tracks_io_op(BackendType bktype, IOObject io_object,
 	 * Some BackendTypes will not do certain IOOps.
 	 */
 	if ((bktype == B_BG_WRITER || bktype == B_CHECKPOINTER) &&
-		(io_op == IOOP_READ || io_op == IOOP_EVICT))
+		(io_op == IOOP_READ || io_op == IOOP_EVICT || io_op == IOOP_HIT))
 		return false;
 
 	if ((bktype == B_AUTOVAC_LAUNCHER || bktype == B_BG_WRITER ||

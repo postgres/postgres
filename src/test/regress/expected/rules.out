@@ -1884,11 +1884,12 @@ pg_stat_io| SELECT backend_type,
     writes,
     extends,
     op_bytes,
+    hits,
     evictions,
     reuses,
     fsyncs,
     stats_reset
-   FROM pg_stat_get_io() b(backend_type, io_object, io_context, reads, writes, extends, op_bytes, evictions, reuses, fsyncs, stats_reset);
+   FROM pg_stat_get_io() b(backend_type, io_object, io_context, reads, writes, extends, op_bytes, hits, evictions, reuses, fsyncs, stats_reset);
 pg_stat_progress_analyze| SELECT s.pid,
     s.datid,
     d.datname,

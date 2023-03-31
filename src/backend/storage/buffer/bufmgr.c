@@ -472,7 +472,7 @@ static BufferDesc *BufferAlloc(SMgrRelation smgr,
 							   ForkNumber forkNum,
 							   BlockNumber blockNum,
 							   BufferAccessStrategy strategy,
-							   bool *foundPtr, IOContext *io_context);
+							   bool *foundPtr, IOContext io_context);
 static void FlushBuffer(BufferDesc *buf, SMgrRelation reln,
 						IOObject io_object, IOContext io_context);
 static void FindAndDropRelationBuffers(RelFileLocator rlocator,
@@ -850,13 +850,14 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	if (isLocalBuf)
 	{
 		/*
-		 * LocalBufferAlloc() will set the io_context to IOCONTEXT_NORMAL. We
-		 * do not use a BufferAccessStrategy for I/O of temporary tables.
+		 * We do not use a BufferAccessStrategy for I/O of temporary tables.
 		 * However, in some cases, the "strategy" may not be NULL, so we can't
 		 * rely on IOContextForStrategy() to set the right IOContext for us.
 		 * This may happen in cases like CREATE TEMPORARY TABLE AS...
 		 */
-		bufHdr = LocalBufferAlloc(smgr, forkNum, blockNum, &found, &io_context);
+		io_context = IOCONTEXT_NORMAL;
+		io_object = IOOBJECT_TEMP_RELATION;
+		bufHdr = LocalBufferAlloc(smgr, forkNum, blockNum, &found);
 		if (found)
 			pgBufferUsage.local_blks_hit++;
 		else if (isExtend)
@@ -871,8 +872,10 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested block is
 		 * not currently in memory.
 		 */
+		io_context = IOContextForStrategy(strategy);
+		io_object = IOOBJECT_RELATION;
 		bufHdr = BufferAlloc(smgr, relpersistence, forkNum, blockNum,
-							 strategy, &found, &io_context);
+							 strategy, &found, io_context);
 		if (found)
 			pgBufferUsage.shared_blks_hit++;
 		else if (isExtend)
@@ -892,6 +895,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			/* Just need to update stats before we exit */
 			*hit = true;
 			VacuumPageHit++;
+			pgstat_count_io_op(io_object, io_context, IOOP_HIT);
 
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageHit;
@@ -987,16 +991,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	 */
 	Assert(!(pg_atomic_read_u32(&bufHdr->state) & BM_VALID));	/* spinlock not needed */
 
-	if (isLocalBuf)
-	{
-		bufBlock = LocalBufHdrGetBlock(bufHdr);
-		io_object = IOOBJECT_TEMP_RELATION;
-	}
-	else
-	{
-		bufBlock = BufHdrGetBlock(bufHdr);
-		io_object = IOOBJECT_RELATION;
-	}
+	bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 
 	if (isExtend)
 	{
@@ -1139,7 +1134,7 @@ static BufferDesc *
 BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			BlockNumber blockNum,
 			BufferAccessStrategy strategy,
-			bool *foundPtr, IOContext *io_context)
+			bool *foundPtr, IOContext io_context)
 {
 	bool		from_ring;
 	BufferTag	newTag;			/* identity of requested block */
@@ -1193,11 +1188,8 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			{
 				/*
 				 * If we get here, previous attempts to read the buffer must
-				 * have failed ... but we shall bravely try again. Set
-				 * io_context since we will in fact need to count an IO
-				 * Operation.
+				 * have failed ... but we shall bravely try again.
 				 */
-				*io_context = IOContextForStrategy(strategy);
 				*foundPtr = false;
 			}
 		}
@@ -1210,8 +1202,6 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	 * buffer.  Remember to unlock the mapping lock while doing the work.
 	 */
 	LWLockRelease(newPartitionLock);
-
-	*io_context = IOContextForStrategy(strategy);
 
 	/* Loop here in case we have to try another victim buffer */
 	for (;;)
@@ -1295,7 +1285,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 														  smgr->smgr_rlocator.locator.dbOid,
 														  smgr->smgr_rlocator.locator.relNumber);
 
-				FlushBuffer(buf, NULL, IOOBJECT_RELATION, *io_context);
+				FlushBuffer(buf, NULL, IOOBJECT_RELATION, io_context);
 				LWLockRelease(BufferDescriptorGetContentLock(buf));
 
 				ScheduleBufferTagForWriteback(&BackendWritebackContext,
@@ -1494,7 +1484,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		 * we may have been forced to release the buffer due to concurrent
 		 * pinners or erroring out.
 		 */
-		pgstat_count_io_op(IOOBJECT_RELATION, *io_context,
+		pgstat_count_io_op(IOOBJECT_RELATION, io_context,
 						   from_ring ? IOOP_REUSE : IOOP_EVICT);
 	}
 

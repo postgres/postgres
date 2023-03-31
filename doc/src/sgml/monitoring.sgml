@@ -3858,6 +3858,17 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <row>
       <entry role="catalog_table_entry">
        <para role="column_definition">
+        <structfield>hits</structfield> <type>bigint</type>
+       </para>
+       <para>
+        The number of times a desired block was found in a shared buffer.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
         <structfield>evictions</structfield> <type>bigint</type>
        </para>
        <para>

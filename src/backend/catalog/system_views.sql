@@ -1128,6 +1128,7 @@ SELECT
        b.writes,
        b.extends,
        b.op_bytes,
+       b.hits,
        b.evictions,
        b.reuses,
        b.fsyncs,
