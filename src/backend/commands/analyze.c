@@ -1409,6 +1409,10 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	ListCell   *lc;
 	bool		has_child;
 
+	/* Initialize output parameters to zero now, in case we exit early */
+	*totalrows = 0;
+	*totaldeadrows = 0;
+
 	/*
 	 * Find all members of inheritance set.  We only need AccessShareLock on
 	 * the children.
@@ -1542,8 +1546,6 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	pgstat_progress_update_param(PROGRESS_ANALYZE_CHILD_TABLES_TOTAL,
 								 nrels);
 	numrows = 0;
-	*totalrows = 0;
-	*totaldeadrows = 0;
 	for (i = 0; i < nrels; i++)
 	{
 		Relation	childrel = rels[i];
