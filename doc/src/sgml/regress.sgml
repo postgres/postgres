@@ -30,6 +30,8 @@
    parallel method starts up multiple server processes to run groups
    of tests in parallel.  Parallel testing adds confidence that
    interprocess communication and locking are working correctly.
+   Some tests may run sequentially even in the <quote>parallel</quote>
+   mode in case this is required by the test.
   </para>
 
   <sect2 id="regress-run-temp-inst">
@@ -43,12 +45,12 @@ make check
 </screen>
    in the top-level directory.  (Or you can change to
    <filename>src/test/regress</filename> and run the command there.)
+   Tests which are run in parallel are prefixed with <quote>+</quote>, and
+   tests which run sequentially are prefixed with <quote>-</quote>.
    At the end you should see something like:
 <screen>
 <computeroutput>
-=======================
- All 193 tests passed.
-=======================
+# All 213 tests passed.
 </computeroutput>
 </screen>
    or otherwise a note about which tests failed.  See <xref

@@ -3118,6 +3118,7 @@ foreach test_dir : tests
       env.prepend('PATH', temp_install_bindir, test_dir['bd'])
 
       test_kwargs = {
+        'protocol': 'tap',
         'priority': 10,
         'timeout': 1000,
         'depends': test_deps + t.get('deps', []),
