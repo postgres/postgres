@@ -809,7 +809,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 /* Precedence: lowest to highest */
 %nonassoc	SET				/* see relation_expr_opt_alias */
-%right		FORMAT
 %left		UNION EXCEPT
 %left		INTERSECT
 %left		OR
