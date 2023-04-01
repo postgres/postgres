@@ -281,6 +281,10 @@ extern JsonPathParseResult *parsejsonpath(const char *str, int len,
 extern bool jspConvertRegexFlags(uint32 xflags, int *result,
 								 struct Node *escontext);
 
+extern Datum jsonPathFromParseResult(JsonPathParseResult *jsonpath,
+									 int estimated_len,
+									 struct Node *escontext);
+
 /*
  * Struct for details about external variables passed into jsonpath executor
  */

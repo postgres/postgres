@@ -166,15 +166,13 @@ jsonpath_send(PG_FUNCTION_ARGS)
  * Converts C-string to a jsonpath value.
  *
  * Uses jsonpath parser to turn string into an AST, then
- * flattenJsonPathParseItem() does second pass turning AST into binary
+ * jsonPathFromParseResult() does second pass turning AST into binary
  * representation of jsonpath.
  */
 static Datum
 jsonPathFromCstring(char *in, int len, struct Node *escontext)
 {
 	JsonPathParseResult *jsonpath = parsejsonpath(in, len, escontext);
-	JsonPath   *res;
-	StringInfoData buf;
 
 	if (SOFT_ERROR_OCCURRED(escontext))
 		return (Datum) 0;
@@ -185,8 +183,21 @@ jsonPathFromCstring(char *in, int len, struct Node *escontext)
 				 errmsg("invalid input syntax for type %s: \"%s\"", "jsonpath",
 						in)));
 
+	return jsonPathFromParseResult(jsonpath, 4 * len, escontext);
+}
+
+/*
+ * Converts jsonpath AST into jsonpath value in binary.
+ */
+Datum
+jsonPathFromParseResult(JsonPathParseResult *jsonpath, int estimated_len,
+						struct Node *escontext)
+{
+	JsonPath   *res;
+	StringInfoData buf;
+
 	initStringInfo(&buf);
-	enlargeStringInfo(&buf, 4 * len /* estimation */ );
+	enlargeStringInfo(&buf, estimated_len);
 
 	appendStringInfoSpaces(&buf, JSONPATH_HDRSZ);
 
