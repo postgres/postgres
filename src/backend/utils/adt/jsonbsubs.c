@@ -15,21 +15,30 @@
 #include "postgres.h"
 
 #include "executor/execExpr.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/subscripting.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "utils/builtins.h"
 #include "utils/jsonb.h"
+#include "utils/jsonpath.h"
 
 
-/* SubscriptingRefState.workspace for jsonb subscripting execution */
+/*
+ * SubscriptingRefState.workspace for generic jsonb subscripting execution.
+ *
+ * Stores state for both jsonb simple subscripting and dot notation access.
+ * Dot notation additionally uses `jsonpath` for JsonPath evaluation.
+ */
 typedef struct JsonbSubWorkspace
 {
 	bool		expectArray;	/* jsonb root is expected to be an array */
 	Oid		   *indexOid;		/* OID of coerced subscript expression, could
 								 * be only integer or text */
 	Datum	   *index;			/* Subscript values in Datum format */
+	JsonPath   *jsonpath;		/* JsonPath for dot notation execution via
+								 * JsonPathQuery() */
 } JsonbSubWorkspace;
 
 static Oid
@@ -111,6 +120,228 @@ coerce_jsonpath_subscript(ParseState *pstate, Node *subExpr, Oid numtype)
 }
 
 /*
+ * During transformation, determine whether to build a JsonPath
+ * for JsonPathQuery() execution.
+ *
+ * JsonPath is needed if the indirection list includes:
+ * - String-based access (dot notation)
+ * - Wildcard (`*`)
+ * - Slice-based subscripting
+ *
+ * Otherwise, simple jsonb subscripting is sufficient.
+ */
+static bool
+jsonb_check_jsonpath_needed(List *indirection)
+{
+	ListCell   *lc;
+
+	foreach(lc, indirection)
+	{
+		Node	   *accessor = lfirst(lc);
+
+		if (IsA(accessor, String) ||
+			IsA(accessor, A_Star))
+			return true;
+		else
+		{
+			A_Indices  *ai;
+
+			Assert(IsA(accessor, A_Indices));
+			ai = castNode(A_Indices, accessor);
+
+			if (!ai->uidx || ai->lidx)
+			{
+				Assert(ai->is_slice);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/*
+ * Helper functions for constructing JsonPath expressions.
+ *
+ * The following functions create various types of JsonPathParseItem nodes,
+ * which are used to build JsonPath expressions for jsonb simplified accessor.
+ */
+
+static JsonPathParseItem *
+make_jsonpath_item(JsonPathItemType type)
+{
+	JsonPathParseItem *v = palloc(sizeof(*v));
+
+	v->type = type;
+	v->next = NULL;
+
+	return v;
+}
+
+static JsonPathParseItem *
+make_jsonpath_item_int(int32 val, List **exprs)
+{
+	JsonPathParseItem *jpi = make_jsonpath_item(jpiNumeric);
+
+	jpi->value.numeric =
+		DatumGetNumeric(DirectFunctionCall1(int4_numeric, Int32GetDatum(val)));
+
+	*exprs = lappend(*exprs, makeConst(INT4OID, -1, InvalidOid, 4,
+									   Int32GetDatum(val), false, true));
+
+	return jpi;
+}
+
+/*
+ * Convert an expression into a JsonPathParseItem.
+ * If the expression is a constant integer, create a direct numeric item.
+ * Otherwise, create a variable reference and add it to the expression list.
+ */
+static JsonPathParseItem *
+make_jsonpath_item_expr(ParseState *pstate, Node *expr, List **exprs)
+{
+	Const	   *cnst;
+
+	expr = transformExpr(pstate, expr, pstate->p_expr_kind);
+
+	if (!IsA(expr, Const))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("jsonb simplified accessor supports subscripting in const int4, got type: %s",
+						format_type_be(exprType(expr))),
+				 parser_errposition(pstate, exprLocation(expr))));
+
+	cnst = (Const *) expr;
+
+	if (cnst->consttype == INT4OID && !cnst->constisnull)
+	{
+		int32		val = DatumGetInt32(cnst->constvalue);
+
+		return make_jsonpath_item_int(val, exprs);
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_DATATYPE_MISMATCH),
+			 errmsg("jsonb simplified accessor supports subscripting in type: INT4, got type: %s",
+					format_type_be(cnst->consttype)),
+			 parser_errposition(pstate, exprLocation(expr))));
+}
+
+/*
+ * jsonb_subscript_make_jsonpath
+ *
+ * Constructs a JsonPath expression from a list of indirections.
+ * This function is used when jsonb subscripting involves dot notation,
+ * wildcards (*), or slice-based subscripting, requiring JsonPath-based
+ * evaluation.
+ *
+ * The function modifies the indirection list in place, removing processed
+ * elements as it converts them into JsonPath components, as follows:
+ * - String keys (dot notation) -> jpiKey items.
+ * - Wildcard (*) -> jpiAnyKey item.
+ * - Array indices and slices -> jpiIndexArray items.
+ *
+ * Parameters:
+ * - pstate: Parse state context.
+ * - indirection: List of subscripting expressions (modified in-place).
+ * - uexprs: Upper-bound expressions extracted from subscripts.
+ * - lexprs: Lower-bound expressions extracted from subscripts.
+ * Returns:
+ * - a Const node containing the transformed JsonPath expression.
+ */
+static Node *
+jsonb_subscript_make_jsonpath(ParseState *pstate, List **indirection,
+							  List **uexprs, List **lexprs)
+{
+	JsonPathParseResult jpres;
+	JsonPathParseItem *path = make_jsonpath_item(jpiRoot);
+	ListCell   *lc;
+	Datum		jsp;
+	int			pathlen = 0;
+
+	*uexprs = NIL;
+	*lexprs = NIL;
+
+	jpres.expr = path;
+	jpres.lax = true;
+
+	foreach(lc, *indirection)
+	{
+		Node	   *accessor = lfirst(lc);
+		JsonPathParseItem *jpi;
+
+		if (IsA(accessor, String))
+		{
+			char	   *field = strVal(accessor);
+
+			jpi = make_jsonpath_item(jpiKey);
+			jpi->value.string.val = field;
+			jpi->value.string.len = strlen(field);
+
+			*uexprs = lappend(*uexprs, accessor);
+		}
+		else if (IsA(accessor, A_Star))
+		{
+			jpi = make_jsonpath_item(jpiAnyKey);
+
+			*uexprs = lappend(*uexprs, NULL);
+		}
+		else if (IsA(accessor, A_Indices))
+		{
+			A_Indices  *ai = castNode(A_Indices, accessor);
+
+			jpi = make_jsonpath_item(jpiIndexArray);
+			jpi->value.array.nelems = 1;
+			jpi->value.array.elems = palloc(sizeof(jpi->value.array.elems[0]));
+
+			if (ai->is_slice)
+			{
+				while (list_length(*lexprs) < list_length(*uexprs))
+					*lexprs = lappend(*lexprs, NULL);
+
+				if (ai->lidx)
+					jpi->value.array.elems[0].from = make_jsonpath_item_expr(pstate, ai->lidx, lexprs);
+				else
+					jpi->value.array.elems[0].from = make_jsonpath_item_int(0, lexprs);
+
+				if (ai->uidx)
+					jpi->value.array.elems[0].to = make_jsonpath_item_expr(pstate, ai->uidx, uexprs);
+				else
+				{
+					jpi->value.array.elems[0].to = make_jsonpath_item(jpiLast);
+					*uexprs = lappend(*uexprs, NULL);
+				}
+			}
+			else
+			{
+				Assert(ai->uidx && !ai->lidx);
+				jpi->value.array.elems[0].from = make_jsonpath_item_expr(pstate, ai->uidx, uexprs);
+				jpi->value.array.elems[0].to = NULL;
+			}
+		}
+		else
+			break;
+
+		/* append path item */
+		path->next = jpi;
+		path = jpi;
+		pathlen++;
+	}
+
+	if (*lexprs)
+	{
+		while (list_length(*lexprs) < list_length(*uexprs))
+			*lexprs = lappend(*lexprs, NULL);
+	}
+
+	*indirection = list_delete_first_n(*indirection, pathlen);
+
+	jsp = jsonPathFromParseResult(&jpres, 0, NULL);
+
+	return (Node *) makeConst(JSONPATHOID, -1, InvalidOid, -1, jsp, false, false);
+}
+
+/*
  * Finish parse analysis of a SubscriptingRef expression for a jsonb.
  *
  * Transform the subscript expressions, coerce them to text,
@@ -126,19 +357,32 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 	List	   *upperIndexpr = NIL;
 	ListCell   *idx;
 
+	/* Determine the result type of the subscripting operation; always jsonb */
+	sbsref->refrestype = JSONBOID;
+	sbsref->reftypmod = -1;
+
+	if (jsonb_check_jsonpath_needed(*indirection))
+	{
+		sbsref->refjsonbpath =
+			jsonb_subscript_make_jsonpath(pstate, indirection,
+										  &sbsref->refupperindexpr,
+										  &sbsref->reflowerindexpr);
+		return;
+	}
+
 	/*
 	 * Transform and convert the subscript expressions. Jsonb subscripting
 	 * does not support slices, look only and the upper index.
 	 */
 	foreach(idx, *indirection)
 	{
+		Node	   *i = lfirst(idx);
 		A_Indices  *ai;
 		Node	   *subExpr;
 
-		if (!IsA(lfirst(idx), A_Indices))
-			break;
+		Assert(IsA(i, A_Indices));
 
-		ai = lfirst_node(A_Indices, idx);
+		ai = castNode(A_Indices, i);
 
 		if (isSlice)
 		{
@@ -174,10 +418,6 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 	/* store the transformed lists into the SubscriptRef node */
 	sbsref->refupperindexpr = upperIndexpr;
 	sbsref->reflowerindexpr = NIL;
-
-	/* Determine the result type of the subscripting operation; always jsonb */
-	sbsref->refrestype = JSONBOID;
-	sbsref->reftypmod = -1;
 
 	/* Remove processed elements */
 	if (upperIndexpr)
@@ -233,7 +473,7 @@ jsonb_subscript_check_subscripts(ExprState *state,
 			 * For jsonb fetch and assign functions we need to provide path in
 			 * text format. Convert if it's not already text.
 			 */
-			if (workspace->indexOid[i] == INT4OID)
+			if (!workspace->jsonpath && workspace->indexOid[i] == INT4OID)
 			{
 				Datum		datum = sbsrefstate->upperindex[i];
 				char	   *cs = DatumGetCString(DirectFunctionCall1(int4out, datum));
@@ -261,17 +501,32 @@ jsonb_subscript_fetch(ExprState *state,
 {
 	SubscriptingRefState *sbsrefstate = op->d.sbsref.state;
 	JsonbSubWorkspace *workspace = (JsonbSubWorkspace *) sbsrefstate->workspace;
-	Jsonb	   *jsonbSource;
 
 	/* Should not get here if source jsonb (or any subscript) is null */
 	Assert(!(*op->resnull));
 
-	jsonbSource = DatumGetJsonbP(*op->resvalue);
-	*op->resvalue = jsonb_get_element(jsonbSource,
-									  workspace->index,
-									  sbsrefstate->numupper,
-									  op->resnull,
-									  false);
+	if (workspace->jsonpath)
+	{
+		bool		empty = false;
+		bool		error = false;
+
+		*op->resvalue = JsonPathQuery(*op->resvalue, workspace->jsonpath,
+									  JSW_CONDITIONAL,
+									  &empty, &error, NULL,
+									  NULL);
+
+		*op->resnull = empty || error;
+	}
+	else
+	{
+		Jsonb	   *jsonbSource = DatumGetJsonbP(*op->resvalue);
+
+		*op->resvalue = jsonb_get_element(jsonbSource,
+										  workspace->index,
+										  sbsrefstate->numupper,
+										  op->resnull,
+										  false);
+	}
 }
 
 /*
@@ -381,12 +636,16 @@ jsonb_exec_setup(const SubscriptingRef *sbsref,
 	ListCell   *lc;
 	int			nupper = sbsref->refupperindexpr->length;
 	char	   *ptr;
+	bool		useJsonpath = sbsref->refjsonbpath != NULL;
 
 	/* Allocate type-specific workspace with space for per-subscript data */
 	workspace = palloc0(MAXALIGN(sizeof(JsonbSubWorkspace)) +
 						nupper * (sizeof(Datum) + sizeof(Oid)));
 	workspace->expectArray = false;
 	ptr = ((char *) workspace) + MAXALIGN(sizeof(JsonbSubWorkspace));
+
+	if (useJsonpath)
+		workspace->jsonpath = DatumGetJsonPathP(castNode(Const, sbsref->refjsonbpath)->constvalue);
 
 	/*
 	 * This coding assumes sizeof(Datum) >= sizeof(Oid), else we might
@@ -404,7 +663,7 @@ jsonb_exec_setup(const SubscriptingRef *sbsref,
 		Node	   *expr = lfirst(lc);
 		int			i = foreach_current_index(lc);
 
-		workspace->indexOid[i] = exprType(expr);
+		workspace->indexOid[i] = jsonb_subscript_type(expr);
 	}
 
 	/*

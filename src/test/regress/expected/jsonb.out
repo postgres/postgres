@@ -4939,6 +4939,12 @@ select ('123'::jsonb)['a'];
  
 (1 row)
 
+select ('123'::jsonb).a;
+ a 
+---
+ 
+(1 row)
+
 select ('123'::jsonb)[0];
  jsonb 
 -------
@@ -4951,9 +4957,21 @@ select ('123'::jsonb)[NULL];
  
 (1 row)
 
+select ('123'::jsonb).NULL;
+ null 
+------
+ 
+(1 row)
+
 select ('{"a": 1}'::jsonb)['a'];
  jsonb 
 -------
+ 1
+(1 row)
+
+select ('{"a": 1}'::jsonb).a;
+ a 
+---
  1
 (1 row)
 
@@ -4969,6 +4987,12 @@ select ('{"a": 1}'::jsonb)['not_exist'];
  
 (1 row)
 
+select ('{"a": 1}'::jsonb)."not_exist";
+ not_exist 
+-----------
+ 
+(1 row)
+
 select ('{"a": 1}'::jsonb)[NULL];
  jsonb 
 -------
@@ -4978,6 +5002,12 @@ select ('{"a": 1}'::jsonb)[NULL];
 select ('[1, "2", null]'::jsonb)['a'];
  jsonb 
 -------
+ 
+(1 row)
+
+select ('[1, "2", null]'::jsonb).a;
+ a 
+---
  
 (1 row)
 
@@ -4991,6 +5021,12 @@ select ('[1, "2", null]'::jsonb)['1'];
  jsonb 
 -------
  "2"
+(1 row)
+
+select ('[1, "2", null]'::jsonb)."1";
+ 1 
+---
+ 
 (1 row)
 
 select ('[1, "2", null]'::jsonb)[1.0];
@@ -5022,6 +5058,12 @@ select ('[1, "2", null]'::jsonb)[1]['a'];
  
 (1 row)
 
+select ('[1, "2", null]'::jsonb)[1].a;
+ a 
+---
+ 
+(1 row)
+
 select ('[1, "2", null]'::jsonb)[1][0];
  jsonb 
 -------
@@ -5034,8 +5076,20 @@ select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb)['b'];
  "c"
 (1 row)
 
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb).b;
+  b  
+-----
+ "c"
+(1 row)
+
 select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb)['d'];
    jsonb   
+-----------
+ [1, 2, 3]
+(1 row)
+
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb).d;
+     d     
 -----------
  [1, 2, 3]
 (1 row)
@@ -5046,14 +5100,36 @@ select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb)['d'][1];
  2
 (1 row)
 
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb).d[1];
+ d 
+---
+ 2
+(1 row)
+
 select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb)['d']['a'];
  jsonb 
 -------
  
 (1 row)
 
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb).d['a'];
+ERROR:  jsonb simplified accessor supports subscripting in type: INT4, got type: unknown
+LINE 1: select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb).d['a'];
+                                                               ^
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb).d.a;
+ a 
+---
+ 
+(1 row)
+
 select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb)['a']['a1'];
      jsonb     
+---------------
+ {"a2": "aaa"}
+(1 row)
+
+select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb).a.a1;
+      a1       
 ---------------
  {"a2": "aaa"}
 (1 row)
@@ -5064,14 +5140,32 @@ select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb)['a']['a1'
  "aaa"
 (1 row)
 
+select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb).a.a1.a2;
+  a2   
+-------
+ "aaa"
+(1 row)
+
 select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb)['a']['a1']['a2']['a3'];
  jsonb 
 -------
  
 (1 row)
 
+select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb).a.a1.a2.a3;
+ a3 
+----
+ 
+(1 row)
+
 select ('{"a": ["a1", {"b1": ["aaa", "bbb", "ccc"]}], "b": "bb"}'::jsonb)['a'][1]['b1'];
          jsonb         
+-----------------------
+ ["aaa", "bbb", "ccc"]
+(1 row)
+
+select ('{"a": ["a1", {"b1": ["aaa", "bbb", "ccc"]}], "b": "bb"}'::jsonb).a[1].b1;
+          b1           
 -----------------------
  ["aaa", "bbb", "ccc"]
 (1 row)
@@ -5082,25 +5176,39 @@ select ('{"a": ["a1", {"b1": ["aaa", "bbb", "ccc"]}], "b": "bb"}'::jsonb)['a'][1
  "ccc"
 (1 row)
 
+select ('{"a": ["a1", {"b1": ["aaa", "bbb", "ccc"]}], "b": "bb"}'::jsonb).a[1].b1[2];
+  b1   
+-------
+ "ccc"
+(1 row)
+
 -- slices are not supported
 select ('{"a": 1}'::jsonb)['a':'b'];
-ERROR:  jsonb subscript does not support slices
+ERROR:  jsonb simplified accessor supports subscripting in type: INT4, got type: unknown
 LINE 1: select ('{"a": 1}'::jsonb)['a':'b'];
-                                       ^
+                                   ^
 select ('[1, "2", null]'::jsonb)[1:2];
-ERROR:  jsonb subscript does not support slices
-LINE 1: select ('[1, "2", null]'::jsonb)[1:2];
-                                           ^
+    jsonb    
+-------------
+ ["2", null]
+(1 row)
+
 select ('[1, "2", null]'::jsonb)[:2];
 ERROR:  jsonb subscript does not support slices
 LINE 1: select ('[1, "2", null]'::jsonb)[:2];
                                           ^
 select ('[1, "2", null]'::jsonb)[1:];
-ERROR:  jsonb subscript does not support slices
-LINE 1: select ('[1, "2", null]'::jsonb)[1:];
-                                         ^
+    jsonb    
+-------------
+ ["2", null]
+(1 row)
+
 select ('[1, "2", null]'::jsonb)[:];
-ERROR:  jsonb subscript does not support slices
+     jsonb      
+----------------
+ [1, "2", null]
+(1 row)
+
 create TEMP TABLE test_jsonb_subscript (
        id int,
        test_json jsonb
@@ -5779,5 +5887,128 @@ select '12345.0000000000000000000000000000000000000000000005'::jsonb::int8;
  int8  
 -------
  12345
+(1 row)
+
+-- dot notation
+CREATE TABLE test_jsonb_dot_notation AS
+SELECT '{"a": [1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}], "b": [3, 4, {"b": "g", "x": {"y": "YYY", "z": "ZZZ"}}]}'::jsonb jb;
+SELECT (jb).a FROM test_jsonb_dot_notation;
+                                    a                                    
+-------------------------------------------------------------------------
+ [1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}]
+(1 row)
+
+SELECT (jb)."a" FROM test_jsonb_dot_notation; -- double quote should work
+                                    a                                    
+-------------------------------------------------------------------------
+ [1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}]
+(1 row)
+
+SELECT (jb).'a' FROM test_jsonb_dot_notation; -- single quote should not work
+ERROR:  syntax error at or near "'a'"
+LINE 1: SELECT (jb).'a' FROM test_jsonb_dot_notation;
+                    ^
+SELECT (jb).b FROM test_jsonb_dot_notation;
+                         b                         
+---------------------------------------------------
+ [3, 4, {"b": "g", "x": {"y": "YYY", "z": "ZZZ"}}]
+(1 row)
+
+SELECT (jb).c FROM test_jsonb_dot_notation;
+ c 
+---
+ 
+(1 row)
+
+SELECT (jb).a.b FROM test_jsonb_dot_notation;
+     b      
+------------
+ ["c", "d"]
+(1 row)
+
+SELECT (jb).a[2].b FROM test_jsonb_dot_notation;
+  b  
+-----
+ "c"
+(1 row)
+
+SELECT (jb).a[2:3].b FROM test_jsonb_dot_notation;
+     b      
+------------
+ ["c", "d"]
+(1 row)
+
+SELECT (jb).a[2:].b FROM test_jsonb_dot_notation;
+     b      
+------------
+ ["c", "d"]
+(1 row)
+
+SELECT (jb).a[:2].b FROM test_jsonb_dot_notation;
+  b  
+-----
+ "c"
+(1 row)
+
+SELECT (jb).a[:].b FROM test_jsonb_dot_notation;
+     b      
+------------
+ ["c", "d"]
+(1 row)
+
+SELECT (jb).a.x.y FROM test_jsonb_dot_notation;
+   y   
+-------
+ "yyy"
+(1 row)
+
+SELECT ((jb).b)[:].x FROM test_jsonb_dot_notation t;
+            x             
+--------------------------
+ {"y": "YYY", "z": "ZZZ"}
+(1 row)
+
+SELECT (jb).b.x.z FROM test_jsonb_dot_notation;
+   z   
+-------
+ "ZZZ"
+(1 row)
+
+SELECT (jb).a.b.c FROM test_jsonb_dot_notation;
+ c 
+---
+ 
+(1 row)
+
+SELECT (jb).a.* FROM test_jsonb_dot_notation;
+ERROR:  type jsonb is not composite
+EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).* FROM test_jsonb_dot_notation;
+ERROR:  type jsonb is not composite
+SELECT (jb).* FROM test_jsonb_dot_notation;
+ERROR:  type jsonb is not composite
+EXPLAIN (VERBOSE, COSTS OFF) SELECT (t.jb).a FROM test_jsonb_dot_notation t;
+                  QUERY PLAN                  
+----------------------------------------------
+ Seq Scan on public.test_jsonb_dot_notation t
+   Output: jb.a
+(2 rows)
+
+SELECT (t.jb).a FROM test_jsonb_dot_notation t;
+                                    a                                    
+-------------------------------------------------------------------------
+ [1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}]
+(1 row)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).a[1] FROM test_jsonb_dot_notation;
+                 QUERY PLAN                 
+--------------------------------------------
+ Seq Scan on public.test_jsonb_dot_notation
+   Output: jb.a[1]
+(2 rows)
+
+SELECT (jb).a[1] FROM test_jsonb_dot_notation;
+ a 
+---
+ 2
 (1 row)
 

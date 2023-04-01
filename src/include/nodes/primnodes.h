@@ -718,6 +718,13 @@ typedef struct SubscriptingRef
 	Expr	   *refexpr;
 	/* expression for the source value, or NULL if fetch */
 	Expr	   *refassgnexpr;
+
+	/*
+	 * container-specific extra information, currently used only by jsonb.
+	 * stores a JsonPath expression when jsonb dot notation is used. NULL for
+	 * simple subscripting.
+	 */
+	Node	   *refjsonbpath;
 } SubscriptingRef;
 
 /*
