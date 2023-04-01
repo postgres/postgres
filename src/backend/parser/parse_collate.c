@@ -680,11 +680,25 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 							 * contribute anything.)
 							 */
 							SubscriptingRef *sbsref = (SubscriptingRef *) node;
+							ListCell   *lc;
 
-							assign_expr_collations(context->pstate,
-												   (Node *) sbsref->refupperindexpr);
-							assign_expr_collations(context->pstate,
-												   (Node *) sbsref->reflowerindexpr);
+							/* skip String subscripts used for dot notation */
+							foreach(lc, sbsref->refupperindexpr)
+							{
+								Node	   *expr = lfirst(lc);
+
+								if (expr && !IsA(expr, String))
+									assign_expr_collations(context->pstate, expr);
+							}
+
+							foreach(lc, sbsref->reflowerindexpr)
+							{
+								Node	   *expr = lfirst(lc);
+
+								if (expr && !IsA(expr, String))
+									assign_expr_collations(context->pstate, expr);
+							}
+
 							(void) assign_collations_walker((Node *) sbsref->refexpr,
 															&loccontext);
 							(void) assign_collations_walker((Node *) sbsref->refassgnexpr,

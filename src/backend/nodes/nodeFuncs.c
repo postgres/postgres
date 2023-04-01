@@ -2182,12 +2182,28 @@ expression_tree_walker_impl(Node *node,
 		case T_SubscriptingRef:
 			{
 				SubscriptingRef *sbsref = (SubscriptingRef *) node;
+				ListCell   *lc;
 
-				/* recurse directly for upper/lower container index lists */
-				if (LIST_WALK(sbsref->refupperindexpr))
-					return true;
-				if (LIST_WALK(sbsref->reflowerindexpr))
-					return true;
+				/*
+				 * Recurse directly for upper/lower container index lists,
+				 * skipping String subscripts used for dot notation.
+				 */
+				foreach(lc, sbsref->refupperindexpr)
+				{
+					Node	   *expr = lfirst(lc);
+
+					if (expr && !IsA(expr, String) && WALK(expr))
+						return true;
+				}
+
+				foreach(lc, sbsref->reflowerindexpr)
+				{
+					Node	   *expr = lfirst(lc);
+
+					if (expr && !IsA(expr, String) && WALK(expr))
+						return true;
+				}
+
 				/* walker must see the refexpr and refassgnexpr, however */
 				if (WALK(sbsref->refexpr))
 					return true;
@@ -3082,12 +3098,51 @@ expression_tree_mutator_impl(Node *node,
 			{
 				SubscriptingRef *sbsref = (SubscriptingRef *) node;
 				SubscriptingRef *newnode;
+				ListCell   *lc;
+				List	   *exprs = NIL;
 
 				FLATCOPY(newnode, sbsref, SubscriptingRef);
-				MUTATE(newnode->refupperindexpr, sbsref->refupperindexpr,
-					   List *);
-				MUTATE(newnode->reflowerindexpr, sbsref->reflowerindexpr,
-					   List *);
+
+				foreach(lc, sbsref->refupperindexpr)
+				{
+					Node	   *expr = lfirst(lc);
+
+					if (expr && IsA(expr, String))
+					{
+						String	   *str;
+
+						FLATCOPY(str, expr, String);
+						expr = (Node *) str;
+					}
+					else
+						expr = mutator(expr, context);
+
+					exprs = lappend(exprs, expr);
+				}
+
+				newnode->refupperindexpr = exprs;
+
+				exprs = NIL;
+
+				foreach(lc, sbsref->reflowerindexpr)
+				{
+					Node	   *expr = lfirst(lc);
+
+					if (expr && IsA(expr, String))
+					{
+						String	   *str;
+
+						FLATCOPY(str, expr, String);
+						expr = (Node *) str;
+					}
+					else
+						expr = mutator(expr, context);
+
+					exprs = lappend(exprs, expr);
+				}
+
+				newnode->reflowerindexpr = exprs;
+
 				MUTATE(newnode->refexpr, sbsref->refexpr,
 					   Expr *);
 				MUTATE(newnode->refassgnexpr, sbsref->refassgnexpr,

@@ -47,6 +47,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/pathnodes.h"
+#include "nodes/subscripting.h"
 #include "optimizer/optimizer.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_func.h"
@@ -12923,17 +12924,29 @@ printSubscripts(SubscriptingRef *sbsref, deparse_context *context)
 	lowlist_item = list_head(sbsref->reflowerindexpr);	/* could be NULL */
 	foreach(uplist_item, sbsref->refupperindexpr)
 	{
-		appendStringInfoChar(buf, '[');
-		if (lowlist_item)
+		Node	   *up = (Node *) lfirst(uplist_item);
+
+		if (IsA(up, String))
 		{
-			/* If subexpression is NULL, get_rule_expr prints nothing */
-			get_rule_expr((Node *) lfirst(lowlist_item), context, false);
-			appendStringInfoChar(buf, ':');
-			lowlist_item = lnext(sbsref->reflowerindexpr, lowlist_item);
+			appendStringInfoChar(buf, '.');
+			appendStringInfoString(buf, quote_identifier(strVal(up)));
 		}
-		/* If subexpression is NULL, get_rule_expr prints nothing */
-		get_rule_expr((Node *) lfirst(uplist_item), context, false);
-		appendStringInfoChar(buf, ']');
+		else
+		{
+			appendStringInfoChar(buf, '[');
+			if (lowlist_item)
+			{
+				/* If subexpression is NULL, get_rule_expr prints nothing */
+				get_rule_expr((Node *) lfirst(lowlist_item), context, false);
+				appendStringInfoChar(buf, ':');
+			}
+			/* If subexpression is NULL, get_rule_expr prints nothing */
+			get_rule_expr((Node *) lfirst(uplist_item), context, false);
+			appendStringInfoChar(buf, ']');
+		}
+
+		if (lowlist_item)
+			lowlist_item = lnext(sbsref->reflowerindexpr, lowlist_item);
 	}
 }
 

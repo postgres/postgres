@@ -3328,9 +3328,15 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 		{
 			sbsrefstate->upperprovided[i] = true;
 			/* Each subscript is evaluated into appropriate array entry */
-			ExecInitExprRec(e, state,
-							&sbsrefstate->upperindex[i],
-							&sbsrefstate->upperindexnull[i]);
+			if (IsA(e, String))
+			{
+				sbsrefstate->upperindex[i] = CStringGetTextDatum(strVal(e));
+				sbsrefstate->upperindexnull[i] = false;
+			}
+			else
+				ExecInitExprRec(e, state,
+								&sbsrefstate->upperindex[i],
+								&sbsrefstate->upperindexnull[i]);
 		}
 		i++;
 	}
@@ -3351,9 +3357,15 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 		{
 			sbsrefstate->lowerprovided[i] = true;
 			/* Each subscript is evaluated into appropriate array entry */
-			ExecInitExprRec(e, state,
-							&sbsrefstate->lowerindex[i],
-							&sbsrefstate->lowerindexnull[i]);
+			if (IsA(e, String))
+			{
+				sbsrefstate->lowerindex[i] = CStringGetTextDatum(strVal(e));
+				sbsrefstate->lowerindexnull[i] = false;
+			}
+			else
+				ExecInitExprRec(e, state,
+								&sbsrefstate->lowerindex[i],
+								&sbsrefstate->lowerindexnull[i]);
 		}
 		i++;
 	}
