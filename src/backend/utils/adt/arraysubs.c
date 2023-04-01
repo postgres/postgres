@@ -62,6 +62,7 @@ array_subscript_transform(SubscriptingRef *sbsref,
 	List	   *upperIndexpr = NIL;
 	List	   *lowerIndexpr = NIL;
 	ListCell   *idx;
+	int			ndim;
 
 	/*
 	 * Transform the subscript expressions, and separate upper and lower
@@ -73,8 +74,13 @@ array_subscript_transform(SubscriptingRef *sbsref,
 	 */
 	foreach(idx, *indirection)
 	{
-		A_Indices  *ai = lfirst_node(A_Indices, idx);
+		A_Indices  *ai;
 		Node	   *subexpr;
+
+		if (!IsA(lfirst(idx), A_Indices))
+			break;
+
+		ai = lfirst_node(A_Indices, idx);
 
 		if (isSlice)
 		{
@@ -145,14 +151,15 @@ array_subscript_transform(SubscriptingRef *sbsref,
 	sbsref->reflowerindexpr = lowerIndexpr;
 
 	/* Verify subscript list lengths are within implementation limit */
-	if (list_length(upperIndexpr) > MAXDIM)
+	ndim = list_length(upperIndexpr);
+	if (ndim > MAXDIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 						list_length(upperIndexpr), MAXDIM)));
 	/* We need not check lowerIndexpr separately */
 
-	*indirection = NIL;
+	*indirection = list_delete_first_n(*indirection, ndim);
 
 	/*
 	 * Determine the result type of the subscripting operation.  It's the same

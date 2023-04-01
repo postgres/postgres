@@ -55,8 +55,13 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 	 */
 	foreach(idx, *indirection)
 	{
-		A_Indices  *ai = lfirst_node(A_Indices, idx);
+		A_Indices  *ai;
 		Node	   *subExpr;
+
+		if (!IsA(lfirst(idx), A_Indices))
+			break;
+
+		ai = lfirst_node(A_Indices, idx);
 
 		if (isSlice)
 		{
@@ -160,7 +165,9 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 	sbsref->refrestype = JSONBOID;
 	sbsref->reftypmod = -1;
 
-	*indirection = NIL;
+	/* Remove processed elements */
+	if (upperIndexpr)
+		*indirection = list_delete_first_n(*indirection, list_length(upperIndexpr));
 }
 
 /*

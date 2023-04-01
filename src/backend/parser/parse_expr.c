@@ -442,8 +442,9 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 	ListCell   *i;
 
 	/*
-	 * We have to split any field-selection operations apart from
-	 * subscripting.  Adjacent A_Indices nodes have to be treated as a single
+	 * Combine field names and subscripts into a single indirection list, as
+	 * some subscripting containers, such as jsonb, support field access using
+	 * dot notation. Adjacent A_Indices nodes have to be treated as a single
 	 * multidimensional subscript operation.
 	 */
 	foreach(i, ind->indirection)
@@ -461,19 +462,43 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 		}
 		else
 		{
-			Node	   *newresult;
-
 			Assert(IsA(n, String));
+			subscripts = lappend(subscripts, n);
+		}
+	}
 
-			/* process subscripts before this field selection */
-			while (subscripts)
-				result = (Node *) transformContainerSubscripts(pstate,
-															   result,
-															   exprType(result),
-															   exprTypmod(result),
-															   &subscripts,
-															   false);
+	while (subscripts)
+	{
+		/* try processing container subscripts first */
+		Node	   *newresult = (Node *)
+			transformContainerSubscripts(pstate,
+										 result,
+										 exprType(result),
+										 exprTypmod(result),
+										 &subscripts,
+										 false,
+										 true);
 
+		if (!newresult)
+		{
+			/*
+			 * generic subscripting failed; falling back to function call or
+			 * field selection for a composite type.
+			 */
+			Node	   *n;
+
+			Assert(subscripts);
+
+			n = linitial(subscripts);
+
+			if (!IsA(n, String))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("cannot subscript type %s because it does not support subscripting",
+								format_type_be(exprType(result))),
+						 parser_errposition(pstate, exprLocation(result))));
+
+			/* try to find function for field selection */
 			newresult = ParseFuncOrColumn(pstate,
 										  list_make1(n),
 										  list_make1(result),
@@ -481,19 +506,16 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 										  NULL,
 										  false,
 										  location);
-			if (newresult == NULL)
+
+			if (!newresult)
 				unknown_attribute(pstate, result, strVal(n), location);
-			result = newresult;
+
+			/* consume field select */
+			subscripts = list_delete_first(subscripts);
 		}
+
+		result = newresult;
 	}
-	/* process trailing subscripts, if any */
-	while (subscripts)
-		result = (Node *) transformContainerSubscripts(pstate,
-													   result,
-													   exprType(result),
-													   exprTypmod(result),
-													   &subscripts,
-													   false);
 
 	return result;
 }
