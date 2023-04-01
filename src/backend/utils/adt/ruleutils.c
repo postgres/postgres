@@ -12926,7 +12926,11 @@ printSubscripts(SubscriptingRef *sbsref, deparse_context *context)
 	{
 		Node	   *up = (Node *) lfirst(uplist_item);
 
-		if (IsA(up, String))
+		if (!up)
+		{
+			appendStringInfoString(buf, ".*");
+		}
+		else if (IsA(up, String))
 		{
 			appendStringInfoChar(buf, '.');
 			appendStringInfoString(buf, quote_identifier(strVal(up)));

@@ -1609,7 +1609,34 @@ SELECT (jb).a.x.y FROM test_jsonb_dot_notation;
 SELECT ((jb).b)[:].x FROM test_jsonb_dot_notation t;
 SELECT (jb).b.x.z FROM test_jsonb_dot_notation;
 SELECT (jb).a.b.c FROM test_jsonb_dot_notation;
+
+/* wild card member access */
 SELECT (jb).a.* FROM test_jsonb_dot_notation;
+SELECT (jb).* FROM test_jsonb_dot_notation;
+SELECT (jb).* FROM test_jsonb_dot_notation t;
+SELECT (t.jb).* FROM test_jsonb_dot_notation t;
+SELECT (jb).* FROM test_jsonb_dot_notation;
+SELECT (t.jb).* FROM test_jsonb_dot_notation;
+SELECT (t.jb).* FROM test_jsonb_dot_notation t;
+SELECT (jb).a.* FROM test_jsonb_dot_notation;
+SELECT (jb).a.*.b FROM test_jsonb_dot_notation;
+SELECT (jb).a.*.x FROM test_jsonb_dot_notation;
+SELECT (jb).a.*.y FROM test_jsonb_dot_notation;
+SELECT (jb).a.*.* FROM test_jsonb_dot_notation;
+SELECT (jb).*.x FROM test_jsonb_dot_notation;
+SELECT (jb).*.x FROM test_jsonb_dot_notation t;
+SELECT ((jb).*).x FROM test_jsonb_dot_notation t;
+SELECT ((jb).*).x FROM test_jsonb_dot_notation t;
+SELECT ((jb).*)[:].x FROM test_jsonb_dot_notation t;
+SELECT (jb).*.x FROM test_jsonb_dot_notation;
+SELECT (jb).*.x.* FROM test_jsonb_dot_notation;
+SELECT (jb).*.x.y FROM test_jsonb_dot_notation;
+SELECT (jb).*.x.z FROM test_jsonb_dot_notation;
+SELECT (jb).*.*.y FROM test_jsonb_dot_notation;
+SELECT (jb).*.*.* FROM test_jsonb_dot_notation;
+SELECT (jb).*.*.*.* FROM test_jsonb_dot_notation;
+SELECT (jb).a.b.c.* FROM test_jsonb_dot_notation;
+SELECT (jb).a.**.x FROM test_jsonb_dot_notation; -- not supported
 
 EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).* FROM test_jsonb_dot_notation;
 SELECT (jb).* FROM test_jsonb_dot_notation;
@@ -1617,3 +1644,7 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT (t.jb).a FROM test_jsonb_dot_notation t;
 SELECT (t.jb).a FROM test_jsonb_dot_notation t;
 EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).a[1] FROM test_jsonb_dot_notation;
 SELECT (jb).a[1] FROM test_jsonb_dot_notation;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).a.* FROM test_jsonb_dot_notation;
+SELECT (jb).a.* FROM test_jsonb_dot_notation;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).a.*[1:2].*.b FROM test_jsonb_dot_notation;
+SELECT (jb).a.*[1:2].*.b FROM test_jsonb_dot_notation;

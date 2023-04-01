@@ -22,4 +22,7 @@ extern Node *transformExpr(ParseState *pstate, Node *expr, ParseExprKind exprKin
 
 extern const char *ParseExprKindName(ParseExprKind exprKind);
 
+extern Node *transformIndirection(ParseState *pstate, A_Indirection *ind,
+								  bool *trailing_star_expansion);
+
 #endif							/* PARSE_EXPR_H */

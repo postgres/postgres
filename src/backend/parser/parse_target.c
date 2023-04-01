@@ -48,7 +48,7 @@ static Node *transformAssignmentSubscripts(ParseState *pstate,
 static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 								 bool make_target_entry);
 static List *ExpandAllTables(ParseState *pstate, int location);
-static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
+static Node *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 								   bool make_target_entry, ParseExprKind exprKind);
 static List *ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
 							   int sublevels_up, int location,
@@ -134,6 +134,7 @@ transformTargetList(ParseState *pstate, List *targetlist,
 	foreach(o_target, targetlist)
 	{
 		ResTarget  *res = (ResTarget *) lfirst(o_target);
+		Node	   *transformed = NULL;
 
 		/*
 		 * Check for "something.*".  Depending on the complexity of the
@@ -162,13 +163,19 @@ transformTargetList(ParseState *pstate, List *targetlist,
 
 				if (IsA(llast(ind->indirection), A_Star))
 				{
-					/* It is something.*, expand into multiple items */
-					p_target = list_concat(p_target,
-										   ExpandIndirectionStar(pstate,
-																 ind,
-																 true,
-																 exprKind));
-					continue;
+					Node	   *columns = ExpandIndirectionStar(pstate,
+																ind,
+																true,
+																exprKind);
+
+					if (IsA(columns, List))
+					{
+						/* It is something.*, expand into multiple items */
+						p_target = list_concat(p_target, (List *) columns);
+						continue;
+					}
+
+					transformed = (Node *) columns;
 				}
 			}
 		}
@@ -180,7 +187,7 @@ transformTargetList(ParseState *pstate, List *targetlist,
 		p_target = lappend(p_target,
 						   transformTargetEntry(pstate,
 												res->val,
-												NULL,
+												transformed,
 												exprKind,
 												res->name,
 												false));
@@ -251,10 +258,15 @@ transformExpressionList(ParseState *pstate, List *exprlist,
 
 			if (IsA(llast(ind->indirection), A_Star))
 			{
-				/* It is something.*, expand into multiple items */
-				result = list_concat(result,
-									 ExpandIndirectionStar(pstate, ind,
-														   false, exprKind));
+				Node	   *cols = ExpandIndirectionStar(pstate, ind,
+														 false, exprKind);
+
+				if (!cols || IsA(cols, List))
+					/* It is something.*, expand into multiple items */
+					result = list_concat(result, (List *) cols);
+				else
+					result = lappend(result, cols);
+
 				continue;
 			}
 		}
@@ -1345,22 +1357,30 @@ ExpandAllTables(ParseState *pstate, int location)
  * For robustness, we use a separate "make_target_entry" flag to control
  * this rather than relying on exprKind.
  */
-static List *
+static Node *
 ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 					  bool make_target_entry, ParseExprKind exprKind)
 {
 	Node	   *expr;
+	ParseExprKind sv_expr_kind;
+	bool		trailing_star_expansion = false;
+
+	/* Save and restore identity of expression type we're parsing */
+	Assert(exprKind != EXPR_KIND_NONE);
+	sv_expr_kind = pstate->p_expr_kind;
+	pstate->p_expr_kind = exprKind;
 
 	/* Strip off the '*' to create a reference to the rowtype object */
-	ind = copyObject(ind);
-	ind->indirection = list_truncate(ind->indirection,
-									 list_length(ind->indirection) - 1);
+	expr = transformIndirection(pstate, ind, &trailing_star_expansion);
 
-	/* And transform that */
-	expr = transformExpr(pstate, (Node *) ind, exprKind);
+	pstate->p_expr_kind = sv_expr_kind;
+
+	/* '*' was consumed by generic type subscripting */
+	if (!trailing_star_expansion)
+		return expr;
 
 	/* Expand the rowtype expression into individual fields */
-	return ExpandRowReference(pstate, expr, make_target_entry);
+	return (Node *) ExpandRowReference(pstate, expr, make_target_entry);
 }
 
 /*

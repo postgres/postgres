@@ -74,7 +74,6 @@ static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate,
 								  ParseNamespaceItem *nsitem,
 								  int sublevels_up, int location);
-static Node *transformIndirection(ParseState *pstate, A_Indirection *ind);
 static Node *transformTypeCast(ParseState *pstate, TypeCast *tc);
 static Node *transformCollateClause(ParseState *pstate, CollateClause *c);
 static Node *transformJsonObjectConstructor(ParseState *pstate,
@@ -158,7 +157,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			break;
 
 		case T_A_Indirection:
-			result = transformIndirection(pstate, (A_Indirection *) expr);
+			result = transformIndirection(pstate, (A_Indirection *) expr, NULL);
 			break;
 
 		case T_A_ArrayExpr:
@@ -432,8 +431,9 @@ unknown_attribute(ParseState *pstate, Node *relref, const char *attname,
 	}
 }
 
-static Node *
-transformIndirection(ParseState *pstate, A_Indirection *ind)
+Node *
+transformIndirection(ParseState *pstate, A_Indirection *ind,
+					 bool *trailing_star_expansion)
 {
 	Node	   *last_srf = pstate->p_last_srf;
 	Node	   *result = transformExprRecurse(pstate, ind->arg);
@@ -454,12 +454,7 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 		if (IsA(n, A_Indices))
 			subscripts = lappend(subscripts, n);
 		else if (IsA(n, A_Star))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("row expansion via \"*\" is not supported here"),
-					 parser_errposition(pstate, location)));
-		}
+			subscripts = lappend(subscripts, n);
 		else
 		{
 			Assert(IsA(n, String));
@@ -491,7 +486,21 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 
 			n = linitial(subscripts);
 
-			if (!IsA(n, String))
+			if (IsA(n, A_Star))
+			{
+				/* Success, if trailing star expansion is allowed */
+				if (trailing_star_expansion && list_length(subscripts) == 1)
+				{
+					*trailing_star_expansion = true;
+					return result;
+				}
+
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("row expansion via \"*\" is not supported here"),
+						 parser_errposition(pstate, location)));
+			}
+			else if (!IsA(n, String))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("cannot subscript type %s because it does not support subscripting",
@@ -516,6 +525,9 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 
 		result = newresult;
 	}
+
+	if (trailing_star_expansion)
+		*trailing_star_expansion = false;
 
 	return result;
 }

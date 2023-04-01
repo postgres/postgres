@@ -5980,12 +5980,172 @@ SELECT (jb).a.b.c FROM test_jsonb_dot_notation;
  
 (1 row)
 
+/* wild card member access */
 SELECT (jb).a.* FROM test_jsonb_dot_notation;
-ERROR:  type jsonb is not composite
-EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).* FROM test_jsonb_dot_notation;
-ERROR:  type jsonb is not composite
+                     a                     
+-------------------------------------------
+ ["c", "d", "f", {"y": "yyy", "z": "zzz"}]
+(1 row)
+
 SELECT (jb).* FROM test_jsonb_dot_notation;
-ERROR:  type jsonb is not composite
+                                                              jb                                                              
+------------------------------------------------------------------------------------------------------------------------------
+ [[1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}], [3, 4, {"b": "g", "x": {"y": "YYY", "z": "ZZZ"}}]]
+(1 row)
+
+SELECT (jb).* FROM test_jsonb_dot_notation t;
+                                                              jb                                                              
+------------------------------------------------------------------------------------------------------------------------------
+ [[1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}], [3, 4, {"b": "g", "x": {"y": "YYY", "z": "ZZZ"}}]]
+(1 row)
+
+SELECT (t.jb).* FROM test_jsonb_dot_notation t;
+                                                              jb                                                              
+------------------------------------------------------------------------------------------------------------------------------
+ [[1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}], [3, 4, {"b": "g", "x": {"y": "YYY", "z": "ZZZ"}}]]
+(1 row)
+
+SELECT (jb).* FROM test_jsonb_dot_notation;
+                                                              jb                                                              
+------------------------------------------------------------------------------------------------------------------------------
+ [[1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}], [3, 4, {"b": "g", "x": {"y": "YYY", "z": "ZZZ"}}]]
+(1 row)
+
+SELECT (t.jb).* FROM test_jsonb_dot_notation;
+ERROR:  missing FROM-clause entry for table "t"
+LINE 1: SELECT (t.jb).* FROM test_jsonb_dot_notation;
+                ^
+SELECT (t.jb).* FROM test_jsonb_dot_notation t;
+                                                              jb                                                              
+------------------------------------------------------------------------------------------------------------------------------
+ [[1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}], [3, 4, {"b": "g", "x": {"y": "YYY", "z": "ZZZ"}}]]
+(1 row)
+
+SELECT (jb).a.* FROM test_jsonb_dot_notation;
+                     a                     
+-------------------------------------------
+ ["c", "d", "f", {"y": "yyy", "z": "zzz"}]
+(1 row)
+
+SELECT (jb).a.*.b FROM test_jsonb_dot_notation;
+ b 
+---
+ 
+(1 row)
+
+SELECT (jb).a.*.x FROM test_jsonb_dot_notation;
+ x 
+---
+ 
+(1 row)
+
+SELECT (jb).a.*.y FROM test_jsonb_dot_notation;
+   y   
+-------
+ "yyy"
+(1 row)
+
+SELECT (jb).a.*.* FROM test_jsonb_dot_notation;
+       a        
+----------------
+ ["yyy", "zzz"]
+(1 row)
+
+SELECT (jb).*.x FROM test_jsonb_dot_notation;
+                          x                           
+------------------------------------------------------
+ [{"y": "yyy", "z": "zzz"}, {"y": "YYY", "z": "ZZZ"}]
+(1 row)
+
+SELECT (jb).*.x FROM test_jsonb_dot_notation t;
+                          x                           
+------------------------------------------------------
+ [{"y": "yyy", "z": "zzz"}, {"y": "YYY", "z": "ZZZ"}]
+(1 row)
+
+SELECT ((jb).*).x FROM test_jsonb_dot_notation t;
+ x 
+---
+ 
+(1 row)
+
+SELECT ((jb).*).x FROM test_jsonb_dot_notation t;
+ x 
+---
+ 
+(1 row)
+
+SELECT ((jb).*)[:].x FROM test_jsonb_dot_notation t;
+                          x                           
+------------------------------------------------------
+ [{"y": "yyy", "z": "zzz"}, {"y": "YYY", "z": "ZZZ"}]
+(1 row)
+
+SELECT (jb).*.x FROM test_jsonb_dot_notation;
+                          x                           
+------------------------------------------------------
+ [{"y": "yyy", "z": "zzz"}, {"y": "YYY", "z": "ZZZ"}]
+(1 row)
+
+SELECT (jb).*.x.* FROM test_jsonb_dot_notation;
+              x               
+------------------------------
+ ["yyy", "zzz", "YYY", "ZZZ"]
+(1 row)
+
+SELECT (jb).*.x.y FROM test_jsonb_dot_notation;
+       y        
+----------------
+ ["yyy", "YYY"]
+(1 row)
+
+SELECT (jb).*.x.z FROM test_jsonb_dot_notation;
+       z        
+----------------
+ ["zzz", "ZZZ"]
+(1 row)
+
+SELECT (jb).*.*.y FROM test_jsonb_dot_notation;
+       y        
+----------------
+ ["yyy", "YYY"]
+(1 row)
+
+SELECT (jb).*.*.* FROM test_jsonb_dot_notation;
+              jb              
+------------------------------
+ ["yyy", "zzz", "YYY", "ZZZ"]
+(1 row)
+
+SELECT (jb).*.*.*.* FROM test_jsonb_dot_notation;
+ jb 
+----
+ 
+(1 row)
+
+SELECT (jb).a.b.c.* FROM test_jsonb_dot_notation;
+ c 
+---
+ 
+(1 row)
+
+SELECT (jb).a.**.x FROM test_jsonb_dot_notation; -- not supported
+ERROR:  syntax error at or near "**"
+LINE 1: SELECT (jb).a.**.x FROM test_jsonb_dot_notation;
+                      ^
+EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).* FROM test_jsonb_dot_notation;
+                 QUERY PLAN                 
+--------------------------------------------
+ Seq Scan on public.test_jsonb_dot_notation
+   Output: jb.*
+(2 rows)
+
+SELECT (jb).* FROM test_jsonb_dot_notation;
+                                                              jb                                                              
+------------------------------------------------------------------------------------------------------------------------------
+ [[1, 2, {"b": "c"}, {"b": "d", "e": "f", "x": {"y": "yyy", "z": "zzz"}}], [3, 4, {"b": "g", "x": {"y": "YYY", "z": "ZZZ"}}]]
+(1 row)
+
 EXPLAIN (VERBOSE, COSTS OFF) SELECT (t.jb).a FROM test_jsonb_dot_notation t;
                   QUERY PLAN                  
 ----------------------------------------------
@@ -6010,5 +6170,31 @@ SELECT (jb).a[1] FROM test_jsonb_dot_notation;
  a 
 ---
  2
+(1 row)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).a.* FROM test_jsonb_dot_notation;
+                 QUERY PLAN                 
+--------------------------------------------
+ Seq Scan on public.test_jsonb_dot_notation
+   Output: jb.a.*
+(2 rows)
+
+SELECT (jb).a.* FROM test_jsonb_dot_notation;
+                     a                     
+-------------------------------------------
+ ["c", "d", "f", {"y": "yyy", "z": "zzz"}]
+(1 row)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT (jb).a.*[1:2].*.b FROM test_jsonb_dot_notation;
+                 QUERY PLAN                 
+--------------------------------------------
+ Seq Scan on public.test_jsonb_dot_notation
+   Output: jb.a.*[1:2].*.b
+(2 rows)
+
+SELECT (jb).a.*[1:2].*.b FROM test_jsonb_dot_notation;
+ b 
+---
+ 
 (1 row)
 
