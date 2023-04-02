@@ -418,6 +418,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 			xl_heap_prune xlrec;
 			XLogRecPtr	recptr;
 
+			xlrec.isCatalogRel = RelationIsAccessibleInLogicalDecoding(relation);
 			xlrec.snapshotConflictHorizon = prstate.snapshotConflictHorizon;
 			xlrec.nredirected = prstate.nredirected;
 			xlrec.ndead = prstate.ndead;

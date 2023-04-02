@@ -177,6 +177,7 @@ gistRedoDeleteRecord(XLogReaderState *record)
 	gistxlogDelete *xldata = (gistxlogDelete *) XLogRecGetData(record);
 	Buffer		buffer;
 	Page		page;
+	OffsetNumber *toDelete = xldata->offsets;
 
 	/*
 	 * If we have any conflict processing to do, it must happen before we
@@ -203,14 +204,7 @@ gistRedoDeleteRecord(XLogReaderState *record)
 	{
 		page = (Page) BufferGetPage(buffer);
 
-		if (XLogRecGetDataLen(record) > SizeOfGistxlogDelete)
-		{
-			OffsetNumber *todelete;
-
-			todelete = (OffsetNumber *) ((char *) xldata + SizeOfGistxlogDelete);
-
-			PageIndexMultiDelete(page, todelete, xldata->ntodelete);
-		}
+		PageIndexMultiDelete(page, toDelete, xldata->ntodelete);
 
 		GistClearPageHasGarbage(page);
 		GistMarkTuplesDeleted(page);
@@ -609,6 +603,7 @@ gistXLogPageReuse(Relation rel, Relation heaprel,
 	 */
 
 	/* XLOG stuff */
+	xlrec_reuse.isCatalogRel = RelationIsAccessibleInLogicalDecoding(heaprel);
 	xlrec_reuse.locator = rel->rd_locator;
 	xlrec_reuse.block = blkno;
 	xlrec_reuse.snapshotConflictHorizon = deleteXid;
@@ -678,6 +673,7 @@ gistXLogDelete(Buffer buffer, OffsetNumber *todelete, int ntodelete,
 	gistxlogDelete xlrec;
 	XLogRecPtr	recptr;
 
+	xlrec.isCatalogRel = RelationIsAccessibleInLogicalDecoding(heaprel);
 	xlrec.snapshotConflictHorizon = snapshotConflictHorizon;
 	xlrec.ntodelete = ntodelete;
 

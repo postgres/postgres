@@ -6698,6 +6698,7 @@ heap_freeze_execute_prepared(Relation rel, Buffer buffer,
 		nplans = heap_log_freeze_plan(tuples, ntuples, plans, offsets);
 
 		xlrec.snapshotConflictHorizon = snapshotConflictHorizon;
+		xlrec.isCatalogRel = RelationIsAccessibleInLogicalDecoding(rel);
 		xlrec.nplans = nplans;
 
 		XLogBeginInsert();
@@ -8280,6 +8281,8 @@ log_heap_visible(Relation rel, Buffer heap_buffer, Buffer vm_buffer,
 
 	xlrec.snapshotConflictHorizon = snapshotConflictHorizon;
 	xlrec.flags = vmflags;
+	if (RelationIsAccessibleInLogicalDecoding(rel))
+		xlrec.flags |= VISIBILITYMAP_XLOG_CATALOG_REL;
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, SizeOfHeapVisible);
 
@@ -8870,6 +8873,8 @@ heap_xlog_visible(XLogReaderState *record)
 	BlockNumber blkno;
 	XLogRedoAction action;
 
+	Assert((xlrec->flags & VISIBILITYMAP_XLOG_VALID_BITS) == xlrec->flags);
+
 	XLogRecGetBlockTag(record, 1, &rlocator, NULL, &blkno);
 
 	/*
@@ -8956,10 +8961,14 @@ heap_xlog_visible(XLogReaderState *record)
 	{
 		Page		vmpage = BufferGetPage(vmbuffer);
 		Relation	reln;
+		uint8		vmbits;
 
 		/* initialize the page if it was read as zeros */
 		if (PageIsNew(vmpage))
 			PageInit(vmpage, BLCKSZ, 0);
+
+		/* remove VISIBILITYMAP_XLOG_* */
+		vmbits = xlrec->flags & VISIBILITYMAP_VALID_BITS;
 
 		/*
 		 * XLogReadBufferForRedoExtended locked the buffer. But
@@ -8971,7 +8980,7 @@ heap_xlog_visible(XLogReaderState *record)
 		visibilitymap_pin(reln, blkno, &vmbuffer);
 
 		visibilitymap_set(reln, blkno, InvalidBuffer, lsn, vmbuffer,
-						  xlrec->snapshotConflictHorizon, xlrec->flags);
+						  xlrec->snapshotConflictHorizon, vmbits);
 
 		ReleaseBuffer(vmbuffer);
 		FreeFakeRelcacheEntry(reln);

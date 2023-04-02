@@ -188,9 +188,11 @@ typedef struct xl_btree_reuse_page
 	RelFileLocator locator;
 	BlockNumber block;
 	FullTransactionId snapshotConflictHorizon;
+	bool		isCatalogRel;	/* to handle recovery conflict during logical
+								 * decoding on standby */
 } xl_btree_reuse_page;
 
-#define SizeOfBtreeReusePage	(sizeof(xl_btree_reuse_page))
+#define SizeOfBtreeReusePage	(offsetof(xl_btree_reuse_page, isCatalogRel) + sizeof(bool))
 
 /*
  * xl_btree_vacuum and xl_btree_delete records describe deletion of index
@@ -235,6 +237,8 @@ typedef struct xl_btree_delete
 	TransactionId snapshotConflictHorizon;
 	uint16		ndeleted;
 	uint16		nupdated;
+	bool		isCatalogRel;	/* to handle recovery conflict during logical
+								 * decoding on standby */
 
 	/*----
 	 * In payload of blk 0 :
@@ -245,7 +249,7 @@ typedef struct xl_btree_delete
 	 */
 } xl_btree_delete;
 
-#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, nupdated) + sizeof(uint16))
+#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, isCatalogRel) + sizeof(bool))
 
 /*
  * The offsets that appear in xl_btree_update metadata are offsets into the

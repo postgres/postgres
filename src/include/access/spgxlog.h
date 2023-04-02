@@ -240,6 +240,8 @@ typedef struct spgxlogVacuumRedirect
 	uint16		nToPlaceholder; /* number of redirects to make placeholders */
 	OffsetNumber firstPlaceholder;	/* first placeholder tuple to remove */
 	TransactionId snapshotConflictHorizon;	/* newest XID of removed redirects */
+	bool		isCatalogRel;	/* to handle recovery conflict during logical
+								 * decoding on standby */
 
 	/* offsets of redirect tuples to make placeholders follow */
 	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];

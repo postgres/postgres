@@ -51,11 +51,14 @@ typedef struct gistxlogDelete
 {
 	TransactionId snapshotConflictHorizon;
 	uint16		ntodelete;		/* number of deleted offsets */
+	bool		isCatalogRel;	/* to handle recovery conflict during logical
+								 * decoding on standby */
 
-	/* TODELETE OFFSET NUMBER ARRAY FOLLOWS */
+	/* TODELETE OFFSET NUMBERS */
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } gistxlogDelete;
 
-#define SizeOfGistxlogDelete	(offsetof(gistxlogDelete, ntodelete) + sizeof(uint16))
+#define SizeOfGistxlogDelete	offsetof(gistxlogDelete, offsets)
 
 /*
  * Backup Blk 0: If this operation completes a page split, by inserting a
@@ -98,9 +101,11 @@ typedef struct gistxlogPageReuse
 	RelFileLocator locator;
 	BlockNumber block;
 	FullTransactionId snapshotConflictHorizon;
+	bool		isCatalogRel;	/* to handle recovery conflict during logical
+								 * decoding on standby */
 } gistxlogPageReuse;
 
-#define SizeOfGistxlogPageReuse	(offsetof(gistxlogPageReuse, snapshotConflictHorizon) + sizeof(FullTransactionId))
+#define SizeOfGistxlogPageReuse	(offsetof(gistxlogPageReuse, isCatalogRel) + sizeof(bool))
 
 extern void gist_redo(XLogReaderState *record);
 extern void gist_desc(StringInfo buf, XLogReaderState *record);

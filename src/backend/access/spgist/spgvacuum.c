@@ -503,6 +503,7 @@ vacuumRedirectAndPlaceholder(Relation index, Relation heaprel, Buffer buffer)
 	spgxlogVacuumRedirect xlrec;
 	GlobalVisState *vistest;
 
+	xlrec.isCatalogRel = RelationIsAccessibleInLogicalDecoding(heaprel);
 	xlrec.nToPlaceholder = 0;
 	xlrec.snapshotConflictHorizon = InvalidTransactionId;
 

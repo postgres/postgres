@@ -836,6 +836,7 @@ _bt_log_reuse_page(Relation rel, Relation heaprel, BlockNumber blkno,
 	 */
 
 	/* XLOG stuff */
+	xlrec_reuse.isCatalogRel = RelationIsAccessibleInLogicalDecoding(heaprel);
 	xlrec_reuse.locator = rel->rd_locator;
 	xlrec_reuse.block = blkno;
 	xlrec_reuse.snapshotConflictHorizon = safexid;
@@ -1358,6 +1359,7 @@ _bt_delitems_delete(Relation rel, Relation heaprel, Buffer buf,
 		XLogRecPtr	recptr;
 		xl_btree_delete xlrec_delete;
 
+		xlrec_delete.isCatalogRel = RelationIsAccessibleInLogicalDecoding(heaprel);
 		xlrec_delete.snapshotConflictHorizon = snapshotConflictHorizon;
 		xlrec_delete.ndeleted = ndeletable;
 		xlrec_delete.nupdated = nupdatable;

@@ -251,13 +251,15 @@ typedef struct xl_hash_init_bitmap_page
 typedef struct xl_hash_vacuum_one_page
 {
 	TransactionId snapshotConflictHorizon;
-	uint16			ntuples;
+	uint16		ntuples;
+	bool		isCatalogRel;	/* to handle recovery conflict during logical
+								 * decoding on standby */
 
-	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
+	/* TARGET OFFSET NUMBERS */
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } xl_hash_vacuum_one_page;
 
-#define SizeOfHashVacuumOnePage \
-	(offsetof(xl_hash_vacuum_one_page, ntuples) + sizeof(uint16))
+#define SizeOfHashVacuumOnePage offsetof(xl_hash_vacuum_one_page, offsets)
 
 extern void hash_redo(XLogReaderState *record);
 extern void hash_desc(StringInfo buf, XLogReaderState *record);
