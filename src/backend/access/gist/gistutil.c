@@ -821,7 +821,7 @@ gistcheckpage(Relation rel, Buffer buf)
  * Caller is responsible for initializing the page by calling GISTInitBuffer
  */
 Buffer
-gistNewBuffer(Relation r)
+gistNewBuffer(Relation r, Relation heaprel)
 {
 	Buffer		buffer;
 	bool		needLock;
@@ -865,7 +865,7 @@ gistNewBuffer(Relation r)
 				 * page's deleteXid.
 				 */
 				if (XLogStandbyInfoActive() && RelationNeedsWAL(r))
-					gistXLogPageReuse(r, blkno, GistPageGetDeleteXid(page));
+					gistXLogPageReuse(r, heaprel, blkno, GistPageGetDeleteXid(page));
 
 				return buffer;
 			}

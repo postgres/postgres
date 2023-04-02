@@ -50,6 +50,7 @@ typedef struct IndexVacuumInfo
 	int			message_level;	/* ereport level for progress messages */
 	double		num_heap_tuples;	/* tuples remaining in heap */
 	BufferAccessStrategy strategy;	/* access strategy for reads */
+	Relation	heaprel;		/* the heap relation the index belongs to */
 } IndexVacuumInfo;
 
 /*

@@ -597,7 +597,8 @@ gistXLogAssignLSN(void)
  * Write XLOG record about reuse of a deleted page.
  */
 void
-gistXLogPageReuse(Relation rel, BlockNumber blkno, FullTransactionId deleteXid)
+gistXLogPageReuse(Relation rel, Relation heaprel,
+				  BlockNumber blkno, FullTransactionId deleteXid)
 {
 	gistxlogPageReuse xlrec_reuse;
 
@@ -672,7 +673,7 @@ gistXLogUpdate(Buffer buffer,
  */
 XLogRecPtr
 gistXLogDelete(Buffer buffer, OffsetNumber *todelete, int ntodelete,
-			   TransactionId snapshotConflictHorizon)
+			   TransactionId snapshotConflictHorizon, Relation heaprel)
 {
 	gistxlogDelete xlrec;
 	XLogRecPtr	recptr;

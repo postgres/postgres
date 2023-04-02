@@ -38,25 +38,24 @@
 #include "utils/snapmgr.h"
 
 static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
-static void _bt_log_reuse_page(Relation rel, BlockNumber blkno,
+static void _bt_log_reuse_page(Relation rel, Relation heaprel, BlockNumber blkno,
 							   FullTransactionId safexid);
-static void _bt_delitems_delete(Relation rel, Buffer buf,
+static void _bt_delitems_delete(Relation rel, Relation heaprel, Buffer buf,
 								TransactionId snapshotConflictHorizon,
 								OffsetNumber *deletable, int ndeletable,
 								BTVacuumPosting *updatable, int nupdatable);
 static char *_bt_delitems_update(BTVacuumPosting *updatable, int nupdatable,
 								 OffsetNumber *updatedoffsets,
 								 Size *updatedbuflen, bool needswal);
-static bool _bt_mark_page_halfdead(Relation rel, Buffer leafbuf,
-								   BTStack stack);
+static bool _bt_mark_page_halfdead(Relation rel, Relation heaprel,
+								   Buffer leafbuf, BTStack stack);
 static bool _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf,
 									 BlockNumber scanblkno,
 									 bool *rightsib_empty,
 									 BTVacState *vstate);
-static bool _bt_lock_subtree_parent(Relation rel, BlockNumber child,
-									BTStack stack,
-									Buffer *subtreeparent,
-									OffsetNumber *poffset,
+static bool _bt_lock_subtree_parent(Relation rel, Relation heaprel,
+									BlockNumber child, BTStack stack,
+									Buffer *subtreeparent, OffsetNumber *poffset,
 									BlockNumber *topparent,
 									BlockNumber *topparentrightsib);
 static void _bt_pendingfsm_add(BTVacState *vstate, BlockNumber target,
@@ -178,7 +177,7 @@ _bt_getmeta(Relation rel, Buffer metabuf)
  * index tuples needed to be deleted.
  */
 bool
-_bt_vacuum_needs_cleanup(Relation rel)
+_bt_vacuum_needs_cleanup(Relation rel, Relation heaprel)
 {
 	Buffer		metabuf;
 	Page		metapg;
@@ -191,7 +190,7 @@ _bt_vacuum_needs_cleanup(Relation rel)
 	 *
 	 * Note that we deliberately avoid using cached version of metapage here.
 	 */
-	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 	btm_version = metad->btm_version;
@@ -231,7 +230,7 @@ _bt_vacuum_needs_cleanup(Relation rel)
  * finalized.
  */
 void
-_bt_set_cleanup_info(Relation rel, BlockNumber num_delpages)
+_bt_set_cleanup_info(Relation rel, Relation heaprel, BlockNumber num_delpages)
 {
 	Buffer		metabuf;
 	Page		metapg;
@@ -255,7 +254,7 @@ _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages)
 	 * no longer used as of PostgreSQL 14.  We set it to -1.0 on rewrite, just
 	 * to be consistent.
 	 */
-	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 
@@ -340,7 +339,7 @@ _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages)
  *		The metadata page is not locked or pinned on exit.
  */
 Buffer
-_bt_getroot(Relation rel, int access)
+_bt_getroot(Relation rel, Relation heaprel, int access)
 {
 	Buffer		metabuf;
 	Buffer		rootbuf;
@@ -370,7 +369,7 @@ _bt_getroot(Relation rel, int access)
 		Assert(rootblkno != P_NONE);
 		rootlevel = metad->btm_fastlevel;
 
-		rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
+		rootbuf = _bt_getbuf(rel, heaprel, rootblkno, BT_READ);
 		rootpage = BufferGetPage(rootbuf);
 		rootopaque = BTPageGetOpaque(rootpage);
 
@@ -396,7 +395,7 @@ _bt_getroot(Relation rel, int access)
 		rel->rd_amcache = NULL;
 	}
 
-	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
 	metad = _bt_getmeta(rel, metabuf);
 
 	/* if no root page initialized yet, do it */
@@ -429,7 +428,7 @@ _bt_getroot(Relation rel, int access)
 			 * to optimize this case.)
 			 */
 			_bt_relbuf(rel, metabuf);
-			return _bt_getroot(rel, access);
+			return _bt_getroot(rel, heaprel, access);
 		}
 
 		/*
@@ -437,7 +436,7 @@ _bt_getroot(Relation rel, int access)
 		 * the new root page.  Since this is the first page in the tree, it's
 		 * a leaf as well as the root.
 		 */
-		rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
+		rootbuf = _bt_getbuf(rel, heaprel, P_NEW, BT_WRITE);
 		rootblkno = BufferGetBlockNumber(rootbuf);
 		rootpage = BufferGetPage(rootbuf);
 		rootopaque = BTPageGetOpaque(rootpage);
@@ -574,7 +573,7 @@ _bt_getroot(Relation rel, int access)
  * moving to the root --- that'd deadlock against any concurrent root split.)
  */
 Buffer
-_bt_gettrueroot(Relation rel)
+_bt_gettrueroot(Relation rel, Relation heaprel)
 {
 	Buffer		metabuf;
 	Page		metapg;
@@ -596,7 +595,7 @@ _bt_gettrueroot(Relation rel)
 		pfree(rel->rd_amcache);
 	rel->rd_amcache = NULL;
 
-	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
 	metaopaque = BTPageGetOpaque(metapg);
 	metad = BTPageGetMeta(metapg);
@@ -669,7 +668,7 @@ _bt_gettrueroot(Relation rel)
  *		about updating previously cached data.
  */
 int
-_bt_getrootheight(Relation rel)
+_bt_getrootheight(Relation rel, Relation heaprel)
 {
 	BTMetaPageData *metad;
 
@@ -677,7 +676,7 @@ _bt_getrootheight(Relation rel)
 	{
 		Buffer		metabuf;
 
-		metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+		metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
 		metad = _bt_getmeta(rel, metabuf);
 
 		/*
@@ -733,7 +732,7 @@ _bt_getrootheight(Relation rel)
  *		pg_upgrade'd from Postgres 12.
  */
 void
-_bt_metaversion(Relation rel, bool *heapkeyspace, bool *allequalimage)
+_bt_metaversion(Relation rel, Relation heaprel, bool *heapkeyspace, bool *allequalimage)
 {
 	BTMetaPageData *metad;
 
@@ -741,7 +740,7 @@ _bt_metaversion(Relation rel, bool *heapkeyspace, bool *allequalimage)
 	{
 		Buffer		metabuf;
 
-		metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+		metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
 		metad = _bt_getmeta(rel, metabuf);
 
 		/*
@@ -825,7 +824,8 @@ _bt_checkpage(Relation rel, Buffer buf)
  * Log the reuse of a page from the FSM.
  */
 static void
-_bt_log_reuse_page(Relation rel, BlockNumber blkno, FullTransactionId safexid)
+_bt_log_reuse_page(Relation rel, Relation heaprel, BlockNumber blkno,
+				   FullTransactionId safexid)
 {
 	xl_btree_reuse_page xlrec_reuse;
 
@@ -868,7 +868,7 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, FullTransactionId safexid)
  *		as _bt_lockbuf().
  */
 Buffer
-_bt_getbuf(Relation rel, BlockNumber blkno, int access)
+_bt_getbuf(Relation rel, Relation heaprel, BlockNumber blkno, int access)
 {
 	Buffer		buf;
 
@@ -943,7 +943,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 					 * than safexid value
 					 */
 					if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
-						_bt_log_reuse_page(rel, blkno,
+						_bt_log_reuse_page(rel, heaprel, blkno,
 										   BTPageGetDeleteXid(page));
 
 					/* Okay to use page.  Re-initialize and return it. */
@@ -1293,7 +1293,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
  * clear page's VACUUM cycle ID.
  */
 static void
-_bt_delitems_delete(Relation rel, Buffer buf,
+_bt_delitems_delete(Relation rel, Relation heaprel, Buffer buf,
 					TransactionId snapshotConflictHorizon,
 					OffsetNumber *deletable, int ndeletable,
 					BTVacuumPosting *updatable, int nupdatable)
@@ -1684,8 +1684,8 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
 	}
 
 	/* Physically delete tuples (or TIDs) using deletable (or updatable) */
-	_bt_delitems_delete(rel, buf, snapshotConflictHorizon,
-						deletable, ndeletable, updatable, nupdatable);
+	_bt_delitems_delete(rel, heapRel, buf, snapshotConflictHorizon, deletable,
+						ndeletable, updatable, nupdatable);
 
 	/* be tidy */
 	for (int i = 0; i < nupdatable; i++)
@@ -1706,7 +1706,8 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
  * same level must always be locked left to right to avoid deadlocks.
  */
 static bool
-_bt_leftsib_splitflag(Relation rel, BlockNumber leftsib, BlockNumber target)
+_bt_leftsib_splitflag(Relation rel, Relation heaprel, BlockNumber leftsib,
+					  BlockNumber target)
 {
 	Buffer		buf;
 	Page		page;
@@ -1717,7 +1718,7 @@ _bt_leftsib_splitflag(Relation rel, BlockNumber leftsib, BlockNumber target)
 	if (leftsib == P_NONE)
 		return false;
 
-	buf = _bt_getbuf(rel, leftsib, BT_READ);
+	buf = _bt_getbuf(rel, heaprel, leftsib, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = BTPageGetOpaque(page);
 
@@ -1763,7 +1764,7 @@ _bt_leftsib_splitflag(Relation rel, BlockNumber leftsib, BlockNumber target)
  * to-be-deleted subtree.)
  */
 static bool
-_bt_rightsib_halfdeadflag(Relation rel, BlockNumber leafrightsib)
+_bt_rightsib_halfdeadflag(Relation rel, Relation heaprel, BlockNumber leafrightsib)
 {
 	Buffer		buf;
 	Page		page;
@@ -1772,7 +1773,7 @@ _bt_rightsib_halfdeadflag(Relation rel, BlockNumber leafrightsib)
 
 	Assert(leafrightsib != P_NONE);
 
-	buf = _bt_getbuf(rel, leafrightsib, BT_READ);
+	buf = _bt_getbuf(rel, heaprel, leafrightsib, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = BTPageGetOpaque(page);
 
@@ -1961,17 +1962,18 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 				 * marked with INCOMPLETE_SPLIT flag before proceeding
 				 */
 				Assert(leafblkno == scanblkno);
-				if (_bt_leftsib_splitflag(rel, leftsib, leafblkno))
+				if (_bt_leftsib_splitflag(rel, vstate->info->heaprel, leftsib, leafblkno))
 				{
 					ReleaseBuffer(leafbuf);
 					return;
 				}
 
 				/* we need an insertion scan key for the search, so build one */
-				itup_key = _bt_mkscankey(rel, targetkey);
+				itup_key = _bt_mkscankey(rel, vstate->info->heaprel, targetkey);
 				/* find the leftmost leaf page with matching pivot/high key */
 				itup_key->pivotsearch = true;
-				stack = _bt_search(rel, itup_key, &sleafbuf, BT_READ, NULL);
+				stack = _bt_search(rel, vstate->info->heaprel, itup_key,
+								   &sleafbuf, BT_READ, NULL);
 				/* won't need a second lock or pin on leafbuf */
 				_bt_relbuf(rel, sleafbuf);
 
@@ -2002,7 +2004,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 			 * leafbuf page half-dead.
 			 */
 			Assert(P_ISLEAF(opaque) && !P_IGNORE(opaque));
-			if (!_bt_mark_page_halfdead(rel, leafbuf, stack))
+			if (!_bt_mark_page_halfdead(rel, vstate->info->heaprel, leafbuf, stack))
 			{
 				_bt_relbuf(rel, leafbuf);
 				return;
@@ -2065,7 +2067,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 		if (!rightsib_empty)
 			break;
 
-		leafbuf = _bt_getbuf(rel, rightsib, BT_WRITE);
+		leafbuf = _bt_getbuf(rel, vstate->info->heaprel, rightsib, BT_WRITE);
 	}
 }
 
@@ -2084,7 +2086,8 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
  * successfully.
  */
 static bool
-_bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
+_bt_mark_page_halfdead(Relation rel, Relation heaprel, Buffer leafbuf,
+					   BTStack stack)
 {
 	BlockNumber leafblkno;
 	BlockNumber leafrightsib;
@@ -2119,7 +2122,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 * delete the downlink.  It would fail the "right sibling of target page
 	 * is also the next child in parent page" cross-check below.
 	 */
-	if (_bt_rightsib_halfdeadflag(rel, leafrightsib))
+	if (_bt_rightsib_halfdeadflag(rel, heaprel, leafrightsib))
 	{
 		elog(DEBUG1, "could not delete page %u because its right sibling %u is half-dead",
 			 leafblkno, leafrightsib);
@@ -2143,7 +2146,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 */
 	topparent = leafblkno;
 	topparentrightsib = leafrightsib;
-	if (!_bt_lock_subtree_parent(rel, leafblkno, stack,
+	if (!_bt_lock_subtree_parent(rel, heaprel, leafblkno, stack,
 								 &subtreeparent, &poffset,
 								 &topparent, &topparentrightsib))
 		return false;
@@ -2363,7 +2366,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 		Assert(target != leafblkno);
 
 		/* Fetch the block number of the target's left sibling */
-		buf = _bt_getbuf(rel, target, BT_READ);
+		buf = _bt_getbuf(rel, vstate->info->heaprel, target, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = BTPageGetOpaque(page);
 		leftsib = opaque->btpo_prev;
@@ -2390,7 +2393,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 		_bt_lockbuf(rel, leafbuf, BT_WRITE);
 	if (leftsib != P_NONE)
 	{
-		lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
+		lbuf = _bt_getbuf(rel, vstate->info->heaprel, leftsib, BT_WRITE);
 		page = BufferGetPage(lbuf);
 		opaque = BTPageGetOpaque(page);
 		while (P_ISDELETED(opaque) || opaque->btpo_next != target)
@@ -2440,7 +2443,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 			CHECK_FOR_INTERRUPTS();
 
 			/* step right one page */
-			lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
+			lbuf = _bt_getbuf(rel, vstate->info->heaprel, leftsib, BT_WRITE);
 			page = BufferGetPage(lbuf);
 			opaque = BTPageGetOpaque(page);
 		}
@@ -2504,7 +2507,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 * And next write-lock the (current) right sibling.
 	 */
 	rightsib = opaque->btpo_next;
-	rbuf = _bt_getbuf(rel, rightsib, BT_WRITE);
+	rbuf = _bt_getbuf(rel, vstate->info->heaprel, rightsib, BT_WRITE);
 	page = BufferGetPage(rbuf);
 	opaque = BTPageGetOpaque(page);
 	if (opaque->btpo_prev != target)
@@ -2533,7 +2536,8 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 		if (P_RIGHTMOST(opaque))
 		{
 			/* rightsib will be the only one left on the level */
-			metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
+			metabuf = _bt_getbuf(rel, vstate->info->heaprel, BTREE_METAPAGE,
+								 BT_WRITE);
 			metapg = BufferGetPage(metabuf);
 			metad = BTPageGetMeta(metapg);
 
@@ -2773,9 +2777,10 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
  * parent block in the leafbuf page using BTreeTupleSetTopParent()).
  */
 static bool
-_bt_lock_subtree_parent(Relation rel, BlockNumber child, BTStack stack,
-						Buffer *subtreeparent, OffsetNumber *poffset,
-						BlockNumber *topparent, BlockNumber *topparentrightsib)
+_bt_lock_subtree_parent(Relation rel, Relation heaprel, BlockNumber child,
+						BTStack stack, Buffer *subtreeparent,
+						OffsetNumber *poffset, BlockNumber *topparent,
+						BlockNumber *topparentrightsib)
 {
 	BlockNumber parent,
 				leftsibparent;
@@ -2789,7 +2794,7 @@ _bt_lock_subtree_parent(Relation rel, BlockNumber child, BTStack stack,
 	 * Locate the pivot tuple whose downlink points to "child".  Write lock
 	 * the parent page itself.
 	 */
-	pbuf = _bt_getstackbuf(rel, stack, child);
+	pbuf = _bt_getstackbuf(rel, heaprel, stack, child);
 	if (pbuf == InvalidBuffer)
 	{
 		/*
@@ -2889,11 +2894,11 @@ _bt_lock_subtree_parent(Relation rel, BlockNumber child, BTStack stack,
 	 *
 	 * Note: We deliberately avoid completing incomplete splits here.
 	 */
-	if (_bt_leftsib_splitflag(rel, leftsibparent, parent))
+	if (_bt_leftsib_splitflag(rel, heaprel, leftsibparent, parent))
 		return false;
 
 	/* Recurse to examine child page's grandparent page */
-	return _bt_lock_subtree_parent(rel, parent, stack->bts_parent,
+	return _bt_lock_subtree_parent(rel, heaprel, parent, stack->bts_parent,
 								   subtreeparent, poffset,
 								   topparent, topparentrightsib);
 }

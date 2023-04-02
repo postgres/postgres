@@ -207,6 +207,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 Tuplesortstate *
 tuplesort_begin_cluster(TupleDesc tupDesc,
 						Relation indexRel,
+						Relation heaprel,
 						int workMem,
 						SortCoordinate coordinate, int sortopt)
 {
@@ -260,7 +261,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 
 	arg->tupDesc = tupDesc;		/* assume we need not copy tupDesc */
 
-	indexScanKey = _bt_mkscankey(indexRel, NULL);
+	indexScanKey = _bt_mkscankey(indexRel, heaprel, NULL);
 
 	if (arg->indexInfo->ii_Expressions != NULL)
 	{
@@ -361,7 +362,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	arg->enforceUnique = enforceUnique;
 	arg->uniqueNullsNotDistinct = uniqueNullsNotDistinct;
 
-	indexScanKey = _bt_mkscankey(indexRel, NULL);
+	indexScanKey = _bt_mkscankey(indexRel, heapRel, NULL);
 
 	/* Prepare SortSupport data for each column */
 	base->sortKeys = (SortSupport) palloc0(base->nKeys *

@@ -42,7 +42,8 @@ static bool _bt_steppage(IndexScanDesc scan, ScanDirection dir);
 static bool _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir);
 static bool _bt_parallel_readpage(IndexScanDesc scan, BlockNumber blkno,
 								  ScanDirection dir);
-static Buffer _bt_walk_left(Relation rel, Buffer buf, Snapshot snapshot);
+static Buffer _bt_walk_left(Relation rel, Relation heaprel, Buffer buf,
+							Snapshot snapshot);
 static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 static inline void _bt_initialize_more_data(BTScanOpaque so, ScanDirection dir);
 
@@ -93,14 +94,14 @@ _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp)
  * during the search will be finished.
  */
 BTStack
-_bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
-		   Snapshot snapshot)
+_bt_search(Relation rel, Relation heaprel, BTScanInsert key, Buffer *bufP,
+		   int access, Snapshot snapshot)
 {
 	BTStack		stack_in = NULL;
 	int			page_access = BT_READ;
 
 	/* Get the root page to start with */
-	*bufP = _bt_getroot(rel, access);
+	*bufP = _bt_getroot(rel, heaprel, access);
 
 	/* If index is empty and access = BT_READ, no root page is created. */
 	if (!BufferIsValid(*bufP))
@@ -129,8 +130,8 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 		 * also taken care of in _bt_getstackbuf).  But this is a good
 		 * opportunity to finish splits of internal pages too.
 		 */
-		*bufP = _bt_moveright(rel, key, *bufP, (access == BT_WRITE), stack_in,
-							  page_access, snapshot);
+		*bufP = _bt_moveright(rel, heaprel, key, *bufP, (access == BT_WRITE),
+							  stack_in, page_access, snapshot);
 
 		/* if this is a leaf page, we're done */
 		page = BufferGetPage(*bufP);
@@ -190,7 +191,7 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 		 * but before we acquired a write lock.  If it has, we may need to
 		 * move right to its new sibling.  Do that.
 		 */
-		*bufP = _bt_moveright(rel, key, *bufP, true, stack_in, BT_WRITE,
+		*bufP = _bt_moveright(rel, heaprel, key, *bufP, true, stack_in, BT_WRITE,
 							  snapshot);
 	}
 
@@ -234,6 +235,7 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
  */
 Buffer
 _bt_moveright(Relation rel,
+			  Relation heaprel,
 			  BTScanInsert key,
 			  Buffer buf,
 			  bool forupdate,
@@ -288,12 +290,12 @@ _bt_moveright(Relation rel,
 			}
 
 			if (P_INCOMPLETE_SPLIT(opaque))
-				_bt_finish_split(rel, buf, stack);
+				_bt_finish_split(rel, heaprel, buf, stack);
 			else
 				_bt_relbuf(rel, buf);
 
 			/* re-acquire the lock in the right mode, and re-check */
-			buf = _bt_getbuf(rel, blkno, access);
+			buf = _bt_getbuf(rel, heaprel, blkno, access);
 			continue;
 		}
 
@@ -860,6 +862,7 @@ bool
 _bt_first(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
+	Relation	heaprel = scan->heapRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Buffer		buf;
 	BTStack		stack;
@@ -1352,7 +1355,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/* Initialize remaining insertion scan key fields */
-	_bt_metaversion(rel, &inskey.heapkeyspace, &inskey.allequalimage);
+	_bt_metaversion(rel, heaprel, &inskey.heapkeyspace, &inskey.allequalimage);
 	inskey.anynullkeys = false; /* unused */
 	inskey.nextkey = nextkey;
 	inskey.pivotsearch = false;
@@ -1363,7 +1366,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * Use the manufactured insertion scan key to descend the tree and
 	 * position ourselves on the target leaf page.
 	 */
-	stack = _bt_search(rel, &inskey, &buf, BT_READ, scan->xs_snapshot);
+	stack = _bt_search(rel, heaprel, &inskey, &buf, BT_READ, scan->xs_snapshot);
 
 	/* don't need to keep the stack around... */
 	_bt_freestack(stack);
@@ -2004,7 +2007,7 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 			/* check for interrupts while we're not holding any buffer lock */
 			CHECK_FOR_INTERRUPTS();
 			/* step right one page */
-			so->currPos.buf = _bt_getbuf(rel, blkno, BT_READ);
+			so->currPos.buf = _bt_getbuf(rel, scan->heapRelation, blkno, BT_READ);
 			page = BufferGetPage(so->currPos.buf);
 			TestForOldSnapshot(scan->xs_snapshot, rel, page);
 			opaque = BTPageGetOpaque(page);
@@ -2078,7 +2081,8 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 		if (BTScanPosIsPinned(so->currPos))
 			_bt_lockbuf(rel, so->currPos.buf, BT_READ);
 		else
-			so->currPos.buf = _bt_getbuf(rel, so->currPos.currPage, BT_READ);
+			so->currPos.buf = _bt_getbuf(rel, scan->heapRelation,
+										 so->currPos.currPage, BT_READ);
 
 		for (;;)
 		{
@@ -2092,8 +2096,8 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 			}
 
 			/* Step to next physical page */
-			so->currPos.buf = _bt_walk_left(rel, so->currPos.buf,
-											scan->xs_snapshot);
+			so->currPos.buf = _bt_walk_left(rel, scan->heapRelation,
+											so->currPos.buf, scan->xs_snapshot);
 
 			/* if we're physically at end of index, return failure */
 			if (so->currPos.buf == InvalidBuffer)
@@ -2140,7 +2144,8 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 					BTScanPosInvalidate(so->currPos);
 					return false;
 				}
-				so->currPos.buf = _bt_getbuf(rel, blkno, BT_READ);
+				so->currPos.buf = _bt_getbuf(rel, scan->heapRelation, blkno,
+											 BT_READ);
 			}
 		}
 	}
@@ -2185,7 +2190,7 @@ _bt_parallel_readpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
  * again if it's important.
  */
 static Buffer
-_bt_walk_left(Relation rel, Buffer buf, Snapshot snapshot)
+_bt_walk_left(Relation rel, Relation heaprel, Buffer buf, Snapshot snapshot)
 {
 	Page		page;
 	BTPageOpaque opaque;
@@ -2213,7 +2218,7 @@ _bt_walk_left(Relation rel, Buffer buf, Snapshot snapshot)
 		_bt_relbuf(rel, buf);
 		/* check for interrupts while we're not holding any buffer lock */
 		CHECK_FOR_INTERRUPTS();
-		buf = _bt_getbuf(rel, blkno, BT_READ);
+		buf = _bt_getbuf(rel, heaprel, blkno, BT_READ);
 		page = BufferGetPage(buf);
 		TestForOldSnapshot(snapshot, rel, page);
 		opaque = BTPageGetOpaque(page);
@@ -2304,7 +2309,7 @@ _bt_walk_left(Relation rel, Buffer buf, Snapshot snapshot)
  * The returned buffer is pinned and read-locked.
  */
 Buffer
-_bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
+_bt_get_endpoint(Relation rel, Relation heaprel, uint32 level, bool rightmost,
 				 Snapshot snapshot)
 {
 	Buffer		buf;
@@ -2320,9 +2325,9 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
 	 * smarter about intermediate levels.)
 	 */
 	if (level == 0)
-		buf = _bt_getroot(rel, BT_READ);
+		buf = _bt_getroot(rel, heaprel, BT_READ);
 	else
-		buf = _bt_gettrueroot(rel);
+		buf = _bt_gettrueroot(rel, heaprel);
 
 	if (!BufferIsValid(buf))
 		return InvalidBuffer;
@@ -2403,7 +2408,8 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	 * version of _bt_search().  We don't maintain a stack since we know we
 	 * won't need it.
 	 */
-	buf = _bt_get_endpoint(rel, 0, ScanDirectionIsBackward(dir), scan->xs_snapshot);
+	buf = _bt_get_endpoint(rel, scan->heapRelation, 0,
+						   ScanDirectionIsBackward(dir), scan->xs_snapshot);
 
 	if (!BufferIsValid(buf))
 	{

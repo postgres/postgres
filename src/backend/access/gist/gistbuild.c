@@ -298,7 +298,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 		Page		page;
 
 		/* initialize the root page */
-		buffer = gistNewBuffer(index);
+		buffer = gistNewBuffer(index, heap);
 		Assert(BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO);
 		page = BufferGetPage(buffer);
 

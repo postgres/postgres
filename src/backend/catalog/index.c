@@ -3364,6 +3364,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	ivinfo.message_level = DEBUG2;
 	ivinfo.num_heap_tuples = heapRelation->rd_rel->reltuples;
 	ivinfo.strategy = NULL;
+	ivinfo.heaprel = heapRelation;
 
 	/*
 	 * Encode TIDs as int8 values for the sort, rather than directly sorting

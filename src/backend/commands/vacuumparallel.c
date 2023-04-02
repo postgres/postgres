@@ -148,6 +148,9 @@ struct ParallelVacuumState
 	/* NULL for worker processes */
 	ParallelContext *pcxt;
 
+	/* Parent Heap Relation */
+	Relation	heaprel;
+
 	/* Target indexes */
 	Relation   *indrels;
 	int			nindexes;
@@ -266,6 +269,7 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 	pvs->nindexes = nindexes;
 	pvs->will_parallel_vacuum = will_parallel_vacuum;
 	pvs->bstrategy = bstrategy;
+	pvs->heaprel = rel;
 
 	EnterParallelMode();
 	pcxt = CreateParallelContext("postgres", "parallel_vacuum_main",
@@ -838,6 +842,7 @@ parallel_vacuum_process_one_index(ParallelVacuumState *pvs, Relation indrel,
 	ivinfo.estimated_count = pvs->shared->estimated_count;
 	ivinfo.num_heap_tuples = pvs->shared->reltuples;
 	ivinfo.strategy = pvs->bstrategy;
+	ivinfo.heaprel = pvs->heaprel;
 
 	/* Update error traceback information */
 	pvs->indname = pstrdup(RelationGetRelationName(indrel));
@@ -1007,6 +1012,7 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	pvs.dead_items = dead_items;
 	pvs.relnamespace = get_namespace_name(RelationGetNamespace(rel));
 	pvs.relname = pstrdup(RelationGetRelationName(rel));
+	pvs.heaprel = rel;
 
 	/* These fields will be filled during index vacuum or cleanup */
 	pvs.indname = NULL;

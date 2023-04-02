@@ -489,7 +489,7 @@ vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
  * Unlike the routines above, this works on both leaf and inner pages.
  */
 static void
-vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
+vacuumRedirectAndPlaceholder(Relation index, Relation heaprel, Buffer buffer)
 {
 	Page		page = BufferGetPage(buffer);
 	SpGistPageOpaque opaque = SpGistPageGetOpaque(page);
@@ -643,13 +643,13 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 		else
 		{
 			vacuumLeafPage(bds, index, buffer, false);
-			vacuumRedirectAndPlaceholder(index, buffer);
+			vacuumRedirectAndPlaceholder(index, bds->info->heaprel, buffer);
 		}
 	}
 	else
 	{
 		/* inner page */
-		vacuumRedirectAndPlaceholder(index, buffer);
+		vacuumRedirectAndPlaceholder(index, bds->info->heaprel, buffer);
 	}
 
 	/*
@@ -719,7 +719,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 			/* deal with any deletable tuples */
 			vacuumLeafPage(bds, index, buffer, true);
 			/* might as well do this while we are here */
-			vacuumRedirectAndPlaceholder(index, buffer);
+			vacuumRedirectAndPlaceholder(index, bds->info->heaprel, buffer);
 
 			SpGistSetLastUsedPage(index, buffer);
 
