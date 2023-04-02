@@ -624,6 +624,13 @@ loop:
 	buffer = ReadBufferBI(relation, P_NEW, RBM_ZERO_AND_LOCK, bistate);
 
 	/*
+	 * Release the file-extension lock; it's now OK for someone else to extend
+	 * the relation some more.
+	 */
+	if (needLock)
+		UnlockRelationForExtension(relation, ExclusiveLock);
+
+	/*
 	 * We need to initialize the empty new page.  Double-check that it really
 	 * is empty (this should never happen, but if it does we don't want to
 	 * risk wiping out valid data).
@@ -646,13 +653,6 @@ loop:
 		Assert(PageGetMaxOffsetNumber(BufferGetPage(buffer)) == 0);
 		visibilitymap_pin(relation, BufferGetBlockNumber(buffer), vmbuffer);
 	}
-
-	/*
-	 * Release the file-extension lock; it's now OK for someone else to extend
-	 * the relation some more.
-	 */
-	if (needLock)
-		UnlockRelationForExtension(relation, ExclusiveLock);
 
 	/*
 	 * Lock the other buffer. It's guaranteed to be of a lower page number
