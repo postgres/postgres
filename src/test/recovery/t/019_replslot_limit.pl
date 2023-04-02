@@ -182,7 +182,7 @@ $node_primary->safe_psql('postgres',
 	'ALTER SYSTEM RESET max_wal_size; SELECT pg_reload_conf()');
 $node_primary->safe_psql('postgres', "CHECKPOINT;");
 my $invalidated = 0;
-for (my $i = 0; $i < 10000; $i++)
+for (my $i = 0; $i < 10 * $PostgreSQL::Test::Utils::timeout_default; $i++)
 {
 	if (find_in_log(
 			$node_primary, 'invalidating obsolete replication slot "rep1"',
@@ -205,7 +205,7 @@ is($result, "rep1|f|t|lost|",
 
 # Wait until current checkpoint ends
 my $checkpoint_ended = 0;
-for (my $i = 0; $i < 10000; $i++)
+for (my $i = 0; $i < 10 * $PostgreSQL::Test::Utils::timeout_default; $i++)
 {
 	if (find_in_log($node_primary, "checkpoint complete: ", $logstart))
 	{
@@ -235,7 +235,7 @@ $logstart = get_log_size($node_standby);
 $node_standby->start;
 
 my $failed = 0;
-for (my $i = 0; $i < 10000; $i++)
+for (my $i = 0; $i < 10 * $PostgreSQL::Test::Utils::timeout_default; $i++)
 {
 	if (find_in_log(
 			$node_standby,
@@ -353,8 +353,7 @@ while (1)
 		stderr => \$stderr);
 	diag $stdout, $stderr;
 
-	# unlikely that the problem would resolve after 15s, so give up at point
-	if ($i++ == 150)
+	if ($i++ == 10 * $PostgreSQL::Test::Utils::timeout_default)
 	{
 		# An immediate shutdown may hide evidence of a locking bug. If
 		# retrying didn't resolve the issue, shut down in fast mode.
