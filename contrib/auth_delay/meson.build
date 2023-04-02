@@ -10,8 +10,8 @@ if host_system == 'windows'
     '--FILEDESC', 'auth_delay - delay authentication failure reports',])
 endif
 
-autoinc = shared_module('auth_delay',
+auth_delay = shared_module('auth_delay',
   auth_delay_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += autoinc
+contrib_targets += auth_delay
