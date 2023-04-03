@@ -1325,61 +1325,25 @@ ExecDeletePrologue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 }
 
 /*
- * The implementation for LazyTupleTableSlot wrapper for EPQ slot to be passed
- * to table_tuple_update()/table_tuple_delete().
- */
-typedef struct
-{
-	EPQState   *epqstate;
-	ResultRelInfo *resultRelInfo;
-} GetEPQSlotArg;
-
-static TupleTableSlot *
-GetEPQSlot(void *arg)
-{
-	GetEPQSlotArg *slotArg = (GetEPQSlotArg *) arg;
-
-	return EvalPlanQualSlot(slotArg->epqstate,
-							slotArg->resultRelInfo->ri_RelationDesc,
-							slotArg->resultRelInfo->ri_RangeTableIndex);
-}
-
-/*
  * ExecDeleteAct -- subroutine for ExecDelete
  *
  * Actually delete the tuple from a plain table.
- *
- * If the 'lockUpdated' flag is set and the target tuple is updated, then
- * the latest version gets locked and fetched into the EPQ slot.
  *
  * Caller is in charge of doing EvalPlanQual as necessary
  */
 static TM_Result
 ExecDeleteAct(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
-			  ItemPointer tupleid, bool changingPart, bool lockUpdated)
+			  ItemPointer tupleid, bool changingPart)
 {
 	EState	   *estate = context->estate;
-	GetEPQSlotArg slotArg = {context->epqstate, resultRelInfo};
-	LazyTupleTableSlot lazyEPQSlot,
-			   *lazyEPQSlotPtr;
 
-	if (lockUpdated)
-	{
-		MAKE_LAZY_TTS(&lazyEPQSlot, GetEPQSlot, &slotArg);
-		lazyEPQSlotPtr = &lazyEPQSlot;
-	}
-	else
-	{
-		lazyEPQSlotPtr = NULL;
-	}
 	return table_tuple_delete(resultRelInfo->ri_RelationDesc, tupleid,
 							  estate->es_output_cid,
 							  estate->es_snapshot,
 							  estate->es_crosscheck_snapshot,
 							  true /* wait for commit */ ,
 							  &context->tmfd,
-							  changingPart,
-							  lazyEPQSlotPtr);
+							  changingPart);
 }
 
 /*
@@ -1524,8 +1488,7 @@ ExecDelete(ModifyTableContext *context,
 		 * transaction-snapshot mode transactions.
 		 */
 ldelete:
-		result = ExecDeleteAct(context, resultRelInfo, tupleid, changingPart,
-							   !IsolationUsesXactSnapshot());
+		result = ExecDeleteAct(context, resultRelInfo, tupleid, changingPart);
 
 		switch (result)
 		{
@@ -1578,49 +1541,103 @@ ldelete:
 								 errmsg("could not serialize access due to concurrent update")));
 
 					/*
-					 * ExecDeleteAct() has already locked the old tuple for
-					 * us. Now we need to copy it to the right slot.
+					 * Already know that we're going to need to do EPQ, so
+					 * fetch tuple directly into the right slot.
 					 */
 					EvalPlanQualBegin(context->epqstate);
 					inputslot = EvalPlanQualSlot(context->epqstate, resultRelationDesc,
 												 resultRelInfo->ri_RangeTableIndex);
 
-					/*
-					 * Save locked table for further processing for RETURNING
-					 * clause.
-					 */
-					if (processReturning &&
-						resultRelInfo->ri_projectReturning &&
-						!resultRelInfo->ri_FdwRoutine)
-					{
-						TupleTableSlot *returningSlot;
+					result = table_tuple_lock(resultRelationDesc, tupleid,
+											  estate->es_snapshot,
+											  inputslot, estate->es_output_cid,
+											  LockTupleExclusive, LockWaitBlock,
+											  TUPLE_LOCK_FLAG_FIND_LAST_VERSION,
+											  &context->tmfd);
 
-						returningSlot = ExecGetReturningSlot(estate,
-															 resultRelInfo);
-						ExecCopySlot(returningSlot, inputslot);
-						ExecMaterializeSlot(returningSlot);
+					switch (result)
+					{
+						case TM_Ok:
+							Assert(context->tmfd.traversed);
+
+							/*
+							 * Save locked tuple for further processing of
+							 * RETURNING clause.
+							 */
+							if (processReturning &&
+								resultRelInfo->ri_projectReturning &&
+								!resultRelInfo->ri_FdwRoutine)
+							{
+								TupleTableSlot *returningSlot;
+
+								returningSlot = ExecGetReturningSlot(estate, resultRelInfo);
+								ExecCopySlot(returningSlot, inputslot);
+								ExecMaterializeSlot(returningSlot);
+							}
+
+							epqslot = EvalPlanQual(context->epqstate,
+												   resultRelationDesc,
+												   resultRelInfo->ri_RangeTableIndex,
+												   inputslot);
+							if (TupIsNull(epqslot))
+								/* Tuple not passing quals anymore, exiting... */
+								return NULL;
+
+							/*
+							 * If requested, skip delete and pass back the
+							 * updated row.
+							 */
+							if (epqreturnslot)
+							{
+								*epqreturnslot = epqslot;
+								return NULL;
+							}
+							else
+								goto ldelete;
+
+						case TM_SelfModified:
+
+							/*
+							 * This can be reached when following an update
+							 * chain from a tuple updated by another session,
+							 * reaching a tuple that was already updated in
+							 * this transaction. If previously updated by this
+							 * command, ignore the delete, otherwise error
+							 * out.
+							 *
+							 * See also TM_SelfModified response to
+							 * table_tuple_delete() above.
+							 */
+							if (context->tmfd.cmax != estate->es_output_cid)
+								ereport(ERROR,
+										(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
+										 errmsg("tuple to be deleted was already modified by an operation triggered by the current command"),
+										 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
+							return NULL;
+
+						case TM_Deleted:
+							/* tuple already deleted; nothing to do */
+							return NULL;
+
+						default:
+
+							/*
+							 * TM_Invisible should be impossible because we're
+							 * waiting for updated row versions, and would
+							 * already have errored out if the first version
+							 * is invisible.
+							 *
+							 * TM_Updated should be impossible, because we're
+							 * locking the latest version via
+							 * TUPLE_LOCK_FLAG_FIND_LAST_VERSION.
+							 */
+							elog(ERROR, "unexpected table_tuple_lock status: %u",
+								 result);
+							return NULL;
 					}
 
-					Assert(context->tmfd.traversed);
-					epqslot = EvalPlanQual(context->epqstate,
-										   resultRelationDesc,
-										   resultRelInfo->ri_RangeTableIndex,
-										   inputslot);
-					if (TupIsNull(epqslot))
-						/* Tuple not passing quals anymore, exiting... */
-						return NULL;
-
-					/*
-					 * If requested, skip delete and pass back the updated
-					 * row.
-					 */
-					if (epqreturnslot)
-					{
-						*epqreturnslot = epqslot;
-						return NULL;
-					}
-					else
-						goto ldelete;
+					Assert(false);
+					break;
 				}
 
 			case TM_Deleted:
@@ -1965,15 +1982,12 @@ ExecUpdatePrepareSlot(ResultRelInfo *resultRelInfo,
 static TM_Result
 ExecUpdateAct(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 			  ItemPointer tupleid, HeapTuple oldtuple, TupleTableSlot *slot,
-			  bool canSetTag, bool lockUpdated, UpdateContext *updateCxt)
+			  bool canSetTag, UpdateContext *updateCxt)
 {
 	EState	   *estate = context->estate;
 	Relation	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 	bool		partition_constraint_failed;
 	TM_Result	result;
-	GetEPQSlotArg slotArg = {context->epqstate, resultRelInfo};
-	LazyTupleTableSlot lazyEPQSlot,
-			   *lazyEPQSlotPtr;
 
 	updateCxt->crossPartUpdate = false;
 
@@ -2099,23 +2113,13 @@ lreplace:
 	 * for referential integrity updates in transaction-snapshot mode
 	 * transactions.
 	 */
-	if (lockUpdated)
-	{
-		MAKE_LAZY_TTS(&lazyEPQSlot, GetEPQSlot, &slotArg);
-		lazyEPQSlotPtr = &lazyEPQSlot;
-	}
-	else
-	{
-		lazyEPQSlotPtr = NULL;
-	}
 	result = table_tuple_update(resultRelationDesc, tupleid, slot,
 								estate->es_output_cid,
 								estate->es_snapshot,
 								estate->es_crosscheck_snapshot,
 								true /* wait for commit */ ,
 								&context->tmfd, &updateCxt->lockmode,
-								&updateCxt->updateIndexes,
-								lazyEPQSlotPtr);
+								&updateCxt->updateIndexes);
 	if (result == TM_Ok)
 		updateCxt->updated = true;
 
@@ -2269,7 +2273,7 @@ ExecCrossPartitionUpdateForeignKey(ModifyTableContext *context,
 static TupleTableSlot *
 ExecUpdate(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 		   ItemPointer tupleid, HeapTuple oldtuple, TupleTableSlot *slot,
-		   bool canSetTag, bool locked)
+		   bool canSetTag)
 {
 	EState	   *estate = context->estate;
 	Relation	resultRelationDesc = resultRelInfo->ri_RelationDesc;
@@ -2331,8 +2335,7 @@ ExecUpdate(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 		 */
 redo_act:
 		result = ExecUpdateAct(context, resultRelInfo, tupleid, oldtuple, slot,
-							   canSetTag, !IsolationUsesXactSnapshot(),
-							   &updateCxt);
+							   canSetTag, &updateCxt);
 
 		/*
 		 * If ExecUpdateAct reports that a cross-partition update was done,
@@ -2391,39 +2394,81 @@ redo_act:
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 								 errmsg("could not serialize access due to concurrent update")));
-					Assert(!locked);
 
 					/*
-					 * ExecUpdateAct() has already locked the old tuple for
-					 * us. Now we need to copy it to the right slot.
+					 * Already know that we're going to need to do EPQ, so
+					 * fetch tuple directly into the right slot.
 					 */
 					inputslot = EvalPlanQualSlot(context->epqstate, resultRelationDesc,
 												 resultRelInfo->ri_RangeTableIndex);
 
-					/* Make sure ri_oldTupleSlot is initialized. */
-					if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
-						ExecInitUpdateProjection(context->mtstate,
-												 resultRelInfo);
+					result = table_tuple_lock(resultRelationDesc, tupleid,
+											  estate->es_snapshot,
+											  inputslot, estate->es_output_cid,
+											  updateCxt.lockmode, LockWaitBlock,
+											  TUPLE_LOCK_FLAG_FIND_LAST_VERSION,
+											  &context->tmfd);
 
-					/*
-					 * Save the locked tuple for further calculation of the
-					 * new tuple.
-					 */
-					oldSlot = resultRelInfo->ri_oldTupleSlot;
-					ExecCopySlot(oldSlot, inputslot);
-					ExecMaterializeSlot(oldSlot);
-					Assert(context->tmfd.traversed);
+					switch (result)
+					{
+						case TM_Ok:
+							Assert(context->tmfd.traversed);
 
-					epqslot = EvalPlanQual(context->epqstate,
-										   resultRelationDesc,
-										   resultRelInfo->ri_RangeTableIndex,
-										   inputslot);
-					if (TupIsNull(epqslot))
-						/* Tuple not passing quals anymore, exiting... */
-						return NULL;
-					slot = ExecGetUpdateNewTuple(resultRelInfo,
-												 epqslot, oldSlot);
-					goto redo_act;
+							/* Make sure ri_oldTupleSlot is initialized. */
+							if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
+								ExecInitUpdateProjection(context->mtstate,
+														 resultRelInfo);
+
+							/*
+							 * Save the locked tuple for further calculation
+							 * of the new tuple.
+							 */
+							oldSlot = resultRelInfo->ri_oldTupleSlot;
+							ExecCopySlot(oldSlot, inputslot);
+							ExecMaterializeSlot(oldSlot);
+
+							epqslot = EvalPlanQual(context->epqstate,
+												   resultRelationDesc,
+												   resultRelInfo->ri_RangeTableIndex,
+												   inputslot);
+							if (TupIsNull(epqslot))
+								/* Tuple not passing quals anymore, exiting... */
+								return NULL;
+
+							slot = ExecGetUpdateNewTuple(resultRelInfo,
+														 epqslot, oldSlot);
+							goto redo_act;
+
+						case TM_Deleted:
+							/* tuple already deleted; nothing to do */
+							return NULL;
+
+						case TM_SelfModified:
+
+							/*
+							 * This can be reached when following an update
+							 * chain from a tuple updated by another session,
+							 * reaching a tuple that was already updated in
+							 * this transaction. If previously modified by
+							 * this command, ignore the redundant update,
+							 * otherwise error out.
+							 *
+							 * See also TM_SelfModified response to
+							 * table_tuple_update() above.
+							 */
+							if (context->tmfd.cmax != estate->es_output_cid)
+								ereport(ERROR,
+										(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
+										 errmsg("tuple to be updated was already modified by an operation triggered by the current command"),
+										 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
+							return NULL;
+
+						default:
+							/* see table_tuple_lock call in ExecDelete() */
+							elog(ERROR, "unexpected table_tuple_lock status: %u",
+								 result);
+							return NULL;
+					}
 				}
 
 				break;
@@ -2665,7 +2710,7 @@ ExecOnConflictUpdate(ModifyTableContext *context,
 	*returning = ExecUpdate(context, resultRelInfo,
 							conflictTid, NULL,
 							resultRelInfo->ri_onConflict->oc_ProjSlot,
-							canSetTag, true);
+							canSetTag);
 
 	/*
 	 * Clear out existing tuple, as there might not be another conflict among
@@ -2868,7 +2913,7 @@ lmerge_matched:
 					break;		/* concurrent update/delete */
 				}
 				result = ExecUpdateAct(context, resultRelInfo, tupleid, NULL,
-									   newslot, false, false, &updateCxt);
+									   newslot, false, &updateCxt);
 				if (result == TM_Ok && updateCxt.updated)
 				{
 					ExecUpdateEpilogue(context, &updateCxt, resultRelInfo,
@@ -2886,8 +2931,7 @@ lmerge_matched:
 						return true;	/* "do nothing" */
 					break;		/* concurrent update/delete */
 				}
-				result = ExecDeleteAct(context, resultRelInfo, tupleid,
-									   false, false);
+				result = ExecDeleteAct(context, resultRelInfo, tupleid, false);
 				if (result == TM_Ok)
 				{
 					ExecDeleteEpilogue(context, resultRelInfo, tupleid, NULL,
@@ -3793,7 +3837,7 @@ ExecModifyTable(PlanState *pstate)
 
 				/* Now apply the update. */
 				slot = ExecUpdate(&context, resultRelInfo, tupleid, oldtuple,
-								  slot, node->canSetTag, false);
+								  slot, node->canSetTag);
 				break;
 
 			case CMD_DELETE:
