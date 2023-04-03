@@ -507,8 +507,7 @@ vacuumRedirectAndPlaceholder(Relation index, Relation heaprel, Buffer buffer)
 	xlrec.nToPlaceholder = 0;
 	xlrec.snapshotConflictHorizon = InvalidTransactionId;
 
-	/* XXX: providing heap relation would allow more pruning */
-	vistest = GlobalVisTestFor(NULL);
+	vistest = GlobalVisTestFor(heaprel);
 
 	START_CRIT_SECTION();
 
