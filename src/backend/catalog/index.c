@@ -3358,13 +3358,13 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	 * Scan the index and gather up all the TIDs into a tuplesort object.
 	 */
 	ivinfo.index = indexRelation;
+	ivinfo.heaprel = heapRelation;
 	ivinfo.analyze_only = false;
 	ivinfo.report_progress = true;
 	ivinfo.estimated_count = true;
 	ivinfo.message_level = DEBUG2;
 	ivinfo.num_heap_tuples = heapRelation->rd_rel->reltuples;
 	ivinfo.strategy = NULL;
-	ivinfo.heaprel = heapRelation;
 
 	/*
 	 * Encode TIDs as int8 values for the sort, rather than directly sorting
