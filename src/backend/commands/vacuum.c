@@ -393,7 +393,9 @@ vacuum(List *relations, VacuumParams *params,
 	 * If caller didn't give us a buffer strategy object, make one in the
 	 * cross-transaction memory context.
 	 */
-	if (bstrategy == NULL)
+	if (bstrategy == NULL &&
+		!(params->options & VACOPT_ONLY_DATABASE_STATS ||
+		  params->options & VACOPT_FULL))
 	{
 		MemoryContext old_context = MemoryContextSwitchTo(vac_context);
 
