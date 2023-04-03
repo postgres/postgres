@@ -4545,11 +4545,13 @@ ApplyWorkerMain(Datum main_arg)
 		replorigin_session_setup(originid, 0);
 		replorigin_session_origin = originid;
 		origin_startpos = replorigin_session_get_progress(false);
-		CommitTransactionCommand();
 
 		/* Is the use of a password mandatory? */
 		must_use_password = MySubscription->passwordrequired &&
 			!superuser_arg(MySubscription->owner);
+
+		/* Note that the superuser_arg call can access the DB */
+		CommitTransactionCommand();
 
 		LogRepWorkerWalRcvConn = walrcv_connect(MySubscription->conninfo, true,
 												must_use_password,
