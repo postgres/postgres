@@ -31,7 +31,7 @@
 
 #define ERRCODE_DUPLICATE_OBJECT  "42710"
 
-uint32		WalSegSz;
+int			WalSegSz;
 
 static bool RetrieveDataDirCreatePerm(PGconn *conn);
 

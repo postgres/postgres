@@ -24,7 +24,7 @@ extern char *dbuser;
 extern char *dbport;
 extern char *dbname;
 extern int	dbgetpassword;
-extern uint32 WalSegSz;
+extern int	WalSegSz;
 
 /* Connection kept global so we can disconnect easily */
 extern PGconn *conn;
