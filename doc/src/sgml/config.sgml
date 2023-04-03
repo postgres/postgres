@@ -9320,8 +9320,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
        <para>
         When the failsafe is triggered, any cost-based delay that is
-        in effect will no longer be applied, and further non-essential
-        maintenance tasks (such as index vacuuming) are bypassed.
+        in effect will no longer be applied, further non-essential
+        maintenance tasks (such as index vacuuming) are bypassed, and any
+        <glossterm linkend="glossary-buffer-access-strategy">Buffer Access Strategy</glossterm>
+        in use will be disabled resulting in <command>VACUUM</command> being
+        free to make use of all of
+        <glossterm linkend="glossary-shared-memory">shared buffers</glossterm>.
        </para>
        <para>
         The default is 1.6 billion transactions.  Although users can

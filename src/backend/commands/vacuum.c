@@ -391,11 +391,13 @@ vacuum(List *relations, VacuumParams *params,
 
 	/*
 	 * If caller didn't give us a buffer strategy object, make one in the
-	 * cross-transaction memory context.
+	 * cross-transaction memory context.  We needn't bother making this for
+	 * VACUUM (FULL) or VACUUM (ONLY_DATABASE_STATS) as they'll not make use
+	 * of it.
 	 */
 	if (bstrategy == NULL &&
-		!(params->options & VACOPT_ONLY_DATABASE_STATS ||
-		  params->options & VACOPT_FULL))
+		(params->options & (VACOPT_ONLY_DATABASE_STATS |
+							VACOPT_FULL)) == 0)
 	{
 		MemoryContext old_context = MemoryContextSwitchTo(vac_context);
 
