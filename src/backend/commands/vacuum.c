@@ -72,12 +72,6 @@ int			vacuum_multixact_freeze_table_age;
 int			vacuum_failsafe_age;
 int			vacuum_multixact_failsafe_age;
 
-
-/* A few variables that don't seem worth passing around as parameters */
-static MemoryContext vac_context = NULL;
-static BufferAccessStrategy vac_strategy;
-
-
 /*
  * Variables for cost-based parallel vacuum.  See comments atop
  * compute_parallel_delay to understand how it works.
@@ -87,14 +81,15 @@ pg_atomic_uint32 *VacuumActiveNWorkers = NULL;
 int			VacuumCostBalanceLocal = 0;
 
 /* non-export function prototypes */
-static List *expand_vacuum_rel(VacuumRelation *vrel, int options);
-static List *get_all_vacuum_rels(int options);
+static List *expand_vacuum_rel(VacuumRelation *vrel,
+							   MemoryContext vac_context, int options);
+static List *get_all_vacuum_rels(MemoryContext vac_context, int options);
 static void vac_truncate_clog(TransactionId frozenXID,
 							  MultiXactId minMulti,
 							  TransactionId lastSaneFrozenXid,
 							  MultiXactId lastSaneMinMulti);
 static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
-					   bool skip_privs);
+					   bool skip_privs, BufferAccessStrategy bstrategy);
 static double compute_parallel_delay(void);
 static VacOptValue get_vacoptval_from_boolean(DefElem *def);
 static bool vac_tid_reaped(ItemPointer itemptr, void *state);
@@ -313,6 +308,7 @@ vacuum(List *relations, VacuumParams *params,
 {
 	static bool in_vacuum = false;
 
+	MemoryContext vac_context;
 	const char *stmttype;
 	volatile bool in_outer_xact,
 				use_own_xacts;
@@ -338,9 +334,9 @@ vacuum(List *relations, VacuumParams *params,
 		in_outer_xact = IsInTransactionBlock(isTopLevel);
 
 	/*
-	 * Due to static variables vac_context, anl_context and vac_strategy,
-	 * vacuum() is not reentrant.  This matters when VACUUM FULL or ANALYZE
-	 * calls a hostile index expression that itself calls ANALYZE.
+	 * Check for and disallow recursive calls.  This could happen when VACUUM
+	 * FULL or ANALYZE calls a hostile index expression that itself calls
+	 * ANALYZE.
 	 */
 	if (in_vacuum)
 		ereport(ERROR,
@@ -404,7 +400,6 @@ vacuum(List *relations, VacuumParams *params,
 		bstrategy = GetAccessStrategy(BAS_VACUUM);
 		MemoryContextSwitchTo(old_context);
 	}
-	vac_strategy = bstrategy;
 
 	/*
 	 * Build list of relation(s) to process, putting any new data in
@@ -426,7 +421,7 @@ vacuum(List *relations, VacuumParams *params,
 			List	   *sublist;
 			MemoryContext old_context;
 
-			sublist = expand_vacuum_rel(vrel, params->options);
+			sublist = expand_vacuum_rel(vrel, vac_context, params->options);
 			old_context = MemoryContextSwitchTo(vac_context);
 			newrels = list_concat(newrels, sublist);
 			MemoryContextSwitchTo(old_context);
@@ -434,7 +429,7 @@ vacuum(List *relations, VacuumParams *params,
 		relations = newrels;
 	}
 	else
-		relations = get_all_vacuum_rels(params->options);
+		relations = get_all_vacuum_rels(vac_context, params->options);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -509,7 +504,8 @@ vacuum(List *relations, VacuumParams *params,
 
 			if (params->options & VACOPT_VACUUM)
 			{
-				if (!vacuum_rel(vrel->oid, vrel->relation, params, false))
+				if (!vacuum_rel(vrel->oid, vrel->relation, params, false,
+								bstrategy))
 					continue;
 			}
 
@@ -527,7 +523,7 @@ vacuum(List *relations, VacuumParams *params,
 				}
 
 				analyze_rel(vrel->oid, vrel->relation, params,
-							vrel->va_cols, in_outer_xact, vac_strategy);
+							vrel->va_cols, in_outer_xact, bstrategy);
 
 				if (use_own_xacts)
 				{
@@ -582,7 +578,6 @@ vacuum(List *relations, VacuumParams *params,
 	 * context!
 	 */
 	MemoryContextDelete(vac_context);
-	vac_context = NULL;
 }
 
 /*
@@ -760,7 +755,8 @@ vacuum_open_relation(Oid relid, RangeVar *relation, bits32 options,
  * are made in vac_context.
  */
 static List *
-expand_vacuum_rel(VacuumRelation *vrel, int options)
+expand_vacuum_rel(VacuumRelation *vrel, MemoryContext vac_context,
+				  int options)
 {
 	List	   *vacrels = NIL;
 	MemoryContext oldcontext;
@@ -899,7 +895,7 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
  * the current database.  The list is built in vac_context.
  */
 static List *
-get_all_vacuum_rels(int options)
+get_all_vacuum_rels(MemoryContext vac_context, int options)
 {
 	List	   *vacrels = NIL;
 	Relation	pgclass;
@@ -1838,7 +1834,8 @@ vac_truncate_clog(TransactionId frozenXID,
  *		At entry and exit, we are not inside a transaction.
  */
 static bool
-vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params, bool skip_privs)
+vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
+		   bool skip_privs, BufferAccessStrategy bstrategy)
 {
 	LOCKMODE	lmode;
 	Relation	rel;
@@ -2084,7 +2081,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params, bool skip_privs)
 			cluster_rel(relid, InvalidOid, &cluster_params);
 		}
 		else
-			table_relation_vacuum(rel, params, vac_strategy);
+			table_relation_vacuum(rel, params, bstrategy);
 	}
 
 	/* Roll back any GUC changes executed by index functions */
@@ -2118,7 +2115,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params, bool skip_privs)
 		memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
 		toast_vacuum_params.options |= VACOPT_PROCESS_MAIN;
 
-		vacuum_rel(toast_relid, NULL, &toast_vacuum_params, true);
+		vacuum_rel(toast_relid, NULL, &toast_vacuum_params, true, bstrategy);
 	}
 
 	/*
