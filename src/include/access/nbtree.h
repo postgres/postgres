@@ -288,7 +288,7 @@ BTPageGetDeleteXid(Page page)
  * well need special handling for new pages anyway.
  */
 static inline bool
-BTPageIsRecyclable(Page page)
+BTPageIsRecyclable(Page page, Relation heaprel)
 {
 	BTPageOpaque opaque;
 
@@ -307,12 +307,8 @@ BTPageIsRecyclable(Page page)
 		 * For that check if the deletion XID could still be visible to
 		 * anyone. If not, then no scan that's still in progress could have
 		 * seen its downlink, and we can recycle it.
-		 *
-		 * XXX: If we had the heap relation we could be more aggressive about
-		 * recycling deleted pages in non-catalog relations.  For now we just
-		 * pass NULL.  That is at least simple and consistent.
 		 */
-		return GlobalVisCheckRemovableFullXid(NULL, BTPageGetDeleteXid(page));
+		return GlobalVisCheckRemovableFullXid(heaprel, BTPageGetDeleteXid(page));
 	}
 
 	return false;

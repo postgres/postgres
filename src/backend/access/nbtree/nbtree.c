@@ -1039,6 +1039,7 @@ btvacuumpage(BTVacState *vstate, BlockNumber scanblkno)
 	IndexBulkDeleteCallback callback = vstate->callback;
 	void	   *callback_state = vstate->callback_state;
 	Relation	rel = info->index;
+	Relation	heaprel = info->heaprel;
 	bool		attempt_pagedel;
 	BlockNumber blkno,
 				backtrack_to;
@@ -1124,7 +1125,7 @@ backtrack:
 		}
 	}
 
-	if (!opaque || BTPageIsRecyclable(page))
+	if (!opaque || BTPageIsRecyclable(page, heaprel))
 	{
 		/* Okay to recycle this page (which could be leaf or internal) */
 		RecordFreeIndexPage(rel, blkno);
