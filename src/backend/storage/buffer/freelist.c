@@ -74,7 +74,7 @@ typedef struct BufferAccessStrategyData
 	/* Overall strategy type */
 	BufferAccessStrategyType btype;
 	/* Number of elements in buffers[] array */
-	int			ring_size;
+	int			nbuffers;
 
 	/*
 	 * Index of the "current" slot in the ring, ie, the one most recently
@@ -541,7 +541,7 @@ BufferAccessStrategy
 GetAccessStrategy(BufferAccessStrategyType btype)
 {
 	BufferAccessStrategy strategy;
-	int			ring_size;
+	int			nbuffers;
 
 	/*
 	 * Select ring size to use.  See buffer/README for rationales.
@@ -556,13 +556,13 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 			return NULL;
 
 		case BAS_BULKREAD:
-			ring_size = 256 * 1024 / BLCKSZ;
+			nbuffers = 256 * 1024 / BLCKSZ;
 			break;
 		case BAS_BULKWRITE:
-			ring_size = 16 * 1024 * 1024 / BLCKSZ;
+			nbuffers = 16 * 1024 * 1024 / BLCKSZ;
 			break;
 		case BAS_VACUUM:
-			ring_size = 256 * 1024 / BLCKSZ;
+			nbuffers = 256 * 1024 / BLCKSZ;
 			break;
 
 		default:
@@ -572,16 +572,16 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 	}
 
 	/* Make sure ring isn't an undue fraction of shared buffers */
-	ring_size = Min(NBuffers / 8, ring_size);
+	nbuffers = Min(NBuffers / 8, nbuffers);
 
 	/* Allocate the object and initialize all elements to zeroes */
 	strategy = (BufferAccessStrategy)
 		palloc0(offsetof(BufferAccessStrategyData, buffers) +
-				ring_size * sizeof(Buffer));
+				nbuffers * sizeof(Buffer));
 
 	/* Set fields that don't start out zero */
 	strategy->btype = btype;
-	strategy->ring_size = ring_size;
+	strategy->nbuffers = nbuffers;
 
 	return strategy;
 }
@@ -615,7 +615,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 
 
 	/* Advance to next ring slot */
-	if (++strategy->current >= strategy->ring_size)
+	if (++strategy->current >= strategy->nbuffers)
 		strategy->current = 0;
 
 	/*
