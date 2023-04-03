@@ -38,7 +38,7 @@ commit history / PRs, and can also be viewed in the cirrus-ci UI at
 https://cirrus-ci.com/github/<username>/<reponame>/
 
 Hint: all build log files are uploaded to cirrus-ci and can be downloaded
-from the "Artifacts" section fron the cirrus-ci UI after clicking into a
+from the "Artifacts" section from the cirrus-ci UI after clicking into a
 specific task on a build's summary page.
 
 
