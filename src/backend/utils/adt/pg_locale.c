@@ -2908,6 +2908,7 @@ icu_language_tag(const char *loc_str, int elevel)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("ICU is not supported in this build")));
+	return NULL;		/* keep compiler quiet */
 #endif							/* not USE_ICU */
 }
 

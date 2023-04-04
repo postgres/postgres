@@ -2298,6 +2298,7 @@ icu_language_tag(const char *loc_str)
 	return langtag;
 #else
 	pg_fatal("ICU is not supported in this build");
+	return NULL;		/* keep compiler quiet */
 #endif
 }
 
