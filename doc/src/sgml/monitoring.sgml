@@ -3296,8 +3296,11 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <entry><literal><function>pg_stat_get_xact_blocks_fetched</function>(oid)</literal><indexterm><primary>pg_stat_get_xact_blocks_fetched</primary></indexterm></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Returns the number of buffers fetched for table or index, in the current
-       transaction.
+       Returns the number of block read requests for table or index, in the
+       current transaction. This number minus
+       <function>pg_stat_get_xact_blocks_hit</function> gives the number of
+       kernel <function>read()</function> calls; the number of actual
+       physical reads is usually lower due to kernel-level buffering.
       </entry>
      </row>
 
@@ -3305,8 +3308,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <entry><literal><function>pg_stat_get_xact_blocks_hit</function>(oid)</literal><indexterm><primary>pg_stat_get_xact_blocks_hit</primary></indexterm></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Returns the number of buffer hits for table or index, in the current
-       transaction.
+       Returns the number of block read requests for table or index, in the
+       current transaction, found in cache (not triggering kernel
+       <function>read()</function> calls).
       </entry>
      </row>
 
