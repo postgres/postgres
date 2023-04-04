@@ -366,6 +366,20 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
+       <varlistentry id="sql-createsubscription-with-run-as-owner">
+        <term><literal>run_as_owner</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          If true, all replication actions are performed as the subscription
+          owner. If false, replication workers will perform actions on each
+          table as the owner of that table. The latter configuration is
+          generally much more secure; for details, see
+          <xref linkend="logical-replication-security" />.
+          The default is <literal>false</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
        <varlistentry id="sql-createsubscription-with-origin">
         <term><literal>origin</literal> (<type>string</type>)</term>
         <listitem>

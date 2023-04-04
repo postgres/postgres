@@ -2401,6 +2401,7 @@ apply_handle_insert(StringInfo s)
 	EState	   *estate;
 	TupleTableSlot *remoteslot;
 	MemoryContext oldctx;
+	bool		run_as_owner;
 
 	/*
 	 * Quick return if we are skipping data modification changes or handling
@@ -2425,8 +2426,13 @@ apply_handle_insert(StringInfo s)
 		return;
 	}
 
-	/* Make sure that any user-supplied code runs as the table owner. */
-	SwitchToUntrustedUser(rel->localrel->rd_rel->relowner, &ucxt);
+	/*
+	 * Make sure that any user-supplied code runs as the table owner, unless
+	 * the user has opted out of that behavior.
+	 */
+	run_as_owner = MySubscription->runasowner;
+	if (!run_as_owner)
+		SwitchToUntrustedUser(rel->localrel->rd_rel->relowner, &ucxt);
 
 	/* Set relation for error callback */
 	apply_error_callback_arg.rel = rel;
@@ -2457,7 +2463,8 @@ apply_handle_insert(StringInfo s)
 	/* Reset relation for error callback */
 	apply_error_callback_arg.rel = NULL;
 
-	RestoreUserContext(&ucxt);
+	if (!run_as_owner)
+		RestoreUserContext(&ucxt);
 
 	logicalrep_rel_close(rel, NoLock);
 
@@ -2546,6 +2553,7 @@ apply_handle_update(StringInfo s)
 	TupleTableSlot *remoteslot;
 	RTEPermissionInfo *target_perminfo;
 	MemoryContext oldctx;
+	bool		run_as_owner;
 
 	/*
 	 * Quick return if we are skipping data modification changes or handling
@@ -2577,8 +2585,13 @@ apply_handle_update(StringInfo s)
 	/* Check if we can do the update. */
 	check_relation_updatable(rel);
 
-	/* Make sure that any user-supplied code runs as the table owner. */
-	SwitchToUntrustedUser(rel->localrel->rd_rel->relowner, &ucxt);
+	/*
+	 * Make sure that any user-supplied code runs as the table owner, unless
+	 * the user has opted out of that behavior.
+	 */
+	run_as_owner = MySubscription->runasowner;
+	if (!run_as_owner)
+		SwitchToUntrustedUser(rel->localrel->rd_rel->relowner, &ucxt);
 
 	/* Initialize the executor state. */
 	edata = create_edata_for_relation(rel);
@@ -2630,7 +2643,8 @@ apply_handle_update(StringInfo s)
 	/* Reset relation for error callback */
 	apply_error_callback_arg.rel = NULL;
 
-	RestoreUserContext(&ucxt);
+	if (!run_as_owner)
+		RestoreUserContext(&ucxt);
 
 	logicalrep_rel_close(rel, NoLock);
 
@@ -2720,6 +2734,7 @@ apply_handle_delete(StringInfo s)
 	EState	   *estate;
 	TupleTableSlot *remoteslot;
 	MemoryContext oldctx;
+	bool		run_as_owner;
 
 	/*
 	 * Quick return if we are skipping data modification changes or handling
@@ -2750,8 +2765,13 @@ apply_handle_delete(StringInfo s)
 	/* Check if we can do the delete. */
 	check_relation_updatable(rel);
 
-	/* Make sure that any user-supplied code runs as the table owner. */
-	SwitchToUntrustedUser(rel->localrel->rd_rel->relowner, &ucxt);
+	/*
+	 * Make sure that any user-supplied code runs as the table owner, unless
+	 * the user has opted out of that behavior.
+	 */
+	run_as_owner = MySubscription->runasowner;
+	if (!run_as_owner)
+		SwitchToUntrustedUser(rel->localrel->rd_rel->relowner, &ucxt);
 
 	/* Initialize the executor state. */
 	edata = create_edata_for_relation(rel);
@@ -2778,7 +2798,8 @@ apply_handle_delete(StringInfo s)
 	/* Reset relation for error callback */
 	apply_error_callback_arg.rel = NULL;
 
-	RestoreUserContext(&ucxt);
+	if (!run_as_owner)
+		RestoreUserContext(&ucxt);
 
 	logicalrep_rel_close(rel, NoLock);
 
@@ -3225,13 +3246,18 @@ apply_handle_truncate(StringInfo s)
 	 * Even if we used CASCADE on the upstream primary we explicitly default
 	 * to replaying changes without further cascading. This might be later
 	 * changeable with a user specified option.
+	 *
+	 * MySubscription->runasowner tells us whether we want to execute
+	 * replication actions as the subscription owner; the last argument to
+	 * TruncateGuts tells it whether we want to switch to the table owner.
+	 * Those are exactly opposite conditions.
 	 */
 	ExecuteTruncateGuts(rels,
 						relids,
 						relids_logged,
 						DROP_RESTRICT,
 						restart_seqs,
-						true);
+						!MySubscription->runasowner);
 	foreach(lc, remote_rels)
 	{
 		LogicalRepRelMapEntry *rel = lfirst(lc);

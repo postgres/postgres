@@ -1786,6 +1786,23 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <para>
+   If the subscription has been configured with
+   <literal>run_as_owner = true</literal>, then no user switching will
+   occur. Instead, all operations will be performed with the permissions
+   of the subscription owner. In this case, the subscription owner only
+   needs privileges to <literal>SELECT</literal>, <literal>INSERT</literal>,
+   <literal>UPDATE</literal>, and <literal>DELETE</literal> from the
+   target table, and does not need privileges to <literal>SET ROLE</literal>
+   to the table owner. However, this also means that any user who owns
+   a table into which replication is happening can execute arbitrary code with
+   the privileges of the subscription owner. For example, they could do this
+   by simply attaching a trigger to one of the tables which they own.
+   Because it is usually undesirable to allow one role to freely assume
+   the privileges of another, this option should be avoided unless user
+   security within the database is of no concern.
+  </para>
+
+  <para>
    On the publisher, privileges are only checked once at the start of a
    replication connection and are not re-checked as each change record is read.
   </para>

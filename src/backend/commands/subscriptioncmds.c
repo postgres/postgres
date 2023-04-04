@@ -68,8 +68,9 @@
 #define SUBOPT_TWOPHASE_COMMIT		0x00000200
 #define SUBOPT_DISABLE_ON_ERR		0x00000400
 #define SUBOPT_PASSWORD_REQUIRED	0x00000800
-#define SUBOPT_LSN					0x00001000
-#define SUBOPT_ORIGIN				0x00002000
+#define SUBOPT_RUN_AS_OWNER			0x00001000
+#define SUBOPT_LSN					0x00002000
+#define SUBOPT_ORIGIN				0x00004000
 
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
@@ -93,6 +94,7 @@ typedef struct SubOpts
 	bool		twophase;
 	bool		disableonerr;
 	bool		passwordrequired;
+	bool		runasowner;
 	char	   *origin;
 	XLogRecPtr	lsn;
 } SubOpts;
@@ -151,6 +153,8 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 		opts->disableonerr = false;
 	if (IsSet(supported_opts, SUBOPT_PASSWORD_REQUIRED))
 		opts->passwordrequired = true;
+	if (IsSet(supported_opts, SUBOPT_RUN_AS_OWNER))
+		opts->runasowner = false;
 	if (IsSet(supported_opts, SUBOPT_ORIGIN))
 		opts->origin = pstrdup(LOGICALREP_ORIGIN_ANY);
 
@@ -289,6 +293,15 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 
 			opts->specified_opts |= SUBOPT_PASSWORD_REQUIRED;
 			opts->passwordrequired = defGetBoolean(defel);
+		}
+		else if (IsSet(supported_opts, SUBOPT_RUN_AS_OWNER) &&
+				 strcmp(defel->defname, "run_as_owner") == 0)
+		{
+			if (IsSet(opts->specified_opts, SUBOPT_RUN_AS_OWNER))
+				errorConflictingDefElem(defel, pstate);
+
+			opts->specified_opts |= SUBOPT_RUN_AS_OWNER;
+			opts->runasowner = defGetBoolean(defel);
 		}
 		else if (IsSet(supported_opts, SUBOPT_ORIGIN) &&
 				 strcmp(defel->defname, "origin") == 0)
@@ -578,7 +591,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
 					  SUBOPT_STREAMING | SUBOPT_TWOPHASE_COMMIT |
 					  SUBOPT_DISABLE_ON_ERR | SUBOPT_PASSWORD_REQUIRED |
-					  SUBOPT_ORIGIN);
+					  SUBOPT_RUN_AS_OWNER | SUBOPT_ORIGIN);
 	parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
 	/*
@@ -681,6 +694,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					 LOGICALREP_TWOPHASE_STATE_DISABLED);
 	values[Anum_pg_subscription_subdisableonerr - 1] = BoolGetDatum(opts.disableonerr);
 	values[Anum_pg_subscription_subpasswordrequired - 1] = BoolGetDatum(opts.passwordrequired);
+	values[Anum_pg_subscription_subrunasowner - 1] = BoolGetDatum(opts.runasowner);
 	values[Anum_pg_subscription_subconninfo - 1] =
 		CStringGetTextDatum(conninfo);
 	if (opts.slot_name)
@@ -1115,7 +1129,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				supported_opts = (SUBOPT_SLOT_NAME |
 								  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
 								  SUBOPT_STREAMING | SUBOPT_DISABLE_ON_ERR |
-								  SUBOPT_PASSWORD_REQUIRED | SUBOPT_ORIGIN);
+								  SUBOPT_PASSWORD_REQUIRED |
+								  SUBOPT_RUN_AS_OWNER | SUBOPT_ORIGIN);
 
 				parse_subscription_options(pstate, stmt->options,
 										   supported_opts, &opts);

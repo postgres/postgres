@@ -224,7 +224,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       <link linkend="sql-createsubscription-with-binary"><literal>binary</literal></link>,
       <link linkend="sql-createsubscription-with-streaming"><literal>streaming</literal></link>,
       <link linkend="sql-createsubscription-with-disable-on-error"><literal>disable_on_error</literal></link>,
-      <link linkend="sql-createsubscription-with-password-required"><literal>password_required</literal></link>, and
+      <link linkend="sql-createsubscription-with-password-required"><literal>password_required</literal></link>,
+      <link linkend="sql-createsubscription-with-run-as-owner"><literal>run_as_owner</literal></link>, and
       <link linkend="sql-createsubscription-with-origin"><literal>origin</literal></link>.
       Only a superuser can set <literal>password_required = false</literal>.
      </para>
