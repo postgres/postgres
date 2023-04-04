@@ -131,7 +131,7 @@ block_ref        |
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="pgwalinspect-funcs-pg-get-wal-block-info">
     <term>
      <function>pg_get_wal_block_info(start_lsn pg_lsn, end_lsn pg_lsn, show_data boolean DEFAULT true) returns setof record</function>
     </term>

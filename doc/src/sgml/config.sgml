@@ -1132,7 +1132,7 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-scram-iterations" xreflabel="scram_iterations">
       <term><varname>scram_iterations</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>scram_iterations</varname> configuration parameter</primary>
