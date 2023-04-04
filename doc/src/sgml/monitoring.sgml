@@ -5047,8 +5047,11 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <returnvalue>bigint</returnvalue>
        </para>
        <para>
-        Returns the number of buffers fetched for table or index, in the current
-        transaction.
+        Returns the number of block read requests for table or index, in the
+        current transaction. This number minus
+        <function>pg_stat_get_xact_blocks_hit</function> gives the number of
+        kernel <function>read()</function> calls; the number of actual
+        physical reads is usually lower due to kernel-level buffering.
        </para></entry>
       </row>
 
@@ -5061,8 +5064,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <returnvalue>bigint</returnvalue>
        </para>
        <para>
-        Returns the number of buffer hits for table or index, in the current
-        transaction.
+        Returns the number of block read requests for table or index, in the
+        current transaction, found in cache (not triggering kernel
+        <function>read()</function> calls).
        </para></entry>
       </row>
 
