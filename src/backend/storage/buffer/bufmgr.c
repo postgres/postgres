@@ -1280,21 +1280,11 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 				}
 
 				/* OK, do the I/O */
-				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-														  smgr->smgr_rlocator.locator.spcOid,
-														  smgr->smgr_rlocator.locator.dbOid,
-														  smgr->smgr_rlocator.locator.relNumber);
-
 				FlushBuffer(buf, NULL, IOOBJECT_RELATION, io_context);
 				LWLockRelease(BufferDescriptorGetContentLock(buf));
 
 				ScheduleBufferTagForWriteback(&BackendWritebackContext,
 											  &buf->tag);
-
-				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-														 smgr->smgr_rlocator.locator.spcOid,
-														 smgr->smgr_rlocator.locator.dbOid,
-														 smgr->smgr_rlocator.locator.relNumber);
 			}
 			else
 			{

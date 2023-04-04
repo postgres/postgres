@@ -66,8 +66,6 @@ provider postgresql {
 	probe buffer__sync__start(int, int);
 	probe buffer__sync__written(int);
 	probe buffer__sync__done(int, int, int);
-	probe buffer__write__dirty__start(ForkNumber, BlockNumber, Oid, Oid, Oid);
-	probe buffer__write__dirty__done(ForkNumber, BlockNumber, Oid, Oid, Oid);
 
 	probe deadlock__found();
 

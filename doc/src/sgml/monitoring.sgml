@@ -7818,23 +7818,6 @@ FROM pg_stat_get_backend_idset() AS backendid;
       The arguments are the same as for <literal>buffer-flush-start</literal>.</entry>
     </row>
     <row>
-     <entry><literal>buffer-write-dirty-start</literal></entry>
-     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid)</literal></entry>
-     <entry>Probe that fires when a server process begins to write a dirty
-      buffer.  (If this happens often, it implies that
-      <xref linkend="guc-shared-buffers"/> is too
-      small or the background writer control parameters need adjustment.)
-      arg0 and arg1 contain the fork and block numbers of the page.
-      arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
-      identifying the relation.</entry>
-    </row>
-    <row>
-     <entry><literal>buffer-write-dirty-done</literal></entry>
-     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid)</literal></entry>
-     <entry>Probe that fires when a dirty-buffer write is complete.
-      The arguments are the same as for <literal>buffer-write-dirty-start</literal>.</entry>
-    </row>
-    <row>
      <entry><literal>wal-buffer-write-dirty-start</literal></entry>
      <entry><literal>()</literal></entry>
      <entry>Probe that fires when a server process begins to write a
