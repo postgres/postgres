@@ -1639,6 +1639,11 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
          <entry>line(s) of text describing the current call stack
           (see <xref linkend="plpgsql-call-stack"/>)</entry>
         </row>
+        <row>
+         <entry><literal>PG_ROUTINE_OID</literal></entry>
+         <entry><type>oid</type></entry>
+         <entry>OID of the current function</entry>
+        </row>
        </tbody>
       </tgroup>
      </table>

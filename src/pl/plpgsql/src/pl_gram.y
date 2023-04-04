@@ -322,6 +322,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <keyword>	K_PG_EXCEPTION_CONTEXT
 %token <keyword>	K_PG_EXCEPTION_DETAIL
 %token <keyword>	K_PG_EXCEPTION_HINT
+%token <keyword>	K_PG_ROUTINE_OID
 %token <keyword>	K_PRINT_STRICT_PARAMS
 %token <keyword>	K_PRIOR
 %token <keyword>	K_QUERY
@@ -1008,6 +1009,7 @@ stmt_getdiag	: K_GET getdiag_area_opt K_DIAGNOSTICS getdiag_list ';'
 							{
 								/* these fields are disallowed in stacked case */
 								case PLPGSQL_GETDIAG_ROW_COUNT:
+								case PLPGSQL_GETDIAG_ROUTINE_OID:
 									if (new->is_stacked)
 										ereport(ERROR,
 												(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1090,6 +1092,9 @@ getdiag_item :
 						if (tok_is_keyword(tok, &yylval,
 										   K_ROW_COUNT, "row_count"))
 							$$ = PLPGSQL_GETDIAG_ROW_COUNT;
+						else if (tok_is_keyword(tok, &yylval,
+												K_PG_ROUTINE_OID, "pg_routine_oid"))
+							$$ = PLPGSQL_GETDIAG_ROUTINE_OID;
 						else if (tok_is_keyword(tok, &yylval,
 												K_PG_CONTEXT, "pg_context"))
 							$$ = PLPGSQL_GETDIAG_CONTEXT;
@@ -2528,6 +2533,7 @@ unreserved_keyword	:
 				| K_PG_EXCEPTION_CONTEXT
 				| K_PG_EXCEPTION_DETAIL
 				| K_PG_EXCEPTION_HINT
+				| K_PG_ROUTINE_OID
 				| K_PRINT_STRICT_PARAMS
 				| K_PRIOR
 				| K_QUERY

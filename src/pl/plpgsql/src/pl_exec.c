@@ -2411,6 +2411,12 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 								  false, INT8OID, -1);
 				break;
 
+			case PLPGSQL_GETDIAG_ROUTINE_OID:
+				exec_assign_value(estate, var,
+								  ObjectIdGetDatum(estate->func->fn_oid),
+								  false, OIDOID, -1);
+				break;
+
 			case PLPGSQL_GETDIAG_ERROR_CONTEXT:
 				exec_assign_c_string(estate, var,
 									 estate->cur_error->context);

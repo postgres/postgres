@@ -5229,7 +5229,7 @@ NOTICE:  outer_func() done
                20
 (1 row)
 
--- repeated call should to work
+-- repeated call should work
 select outer_outer_func(20);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
@@ -5311,7 +5311,7 @@ NOTICE:  outer_func() done
                20
 (1 row)
 
--- repeated call should to work
+-- repeated call should work
 select outer_outer_func(20);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
@@ -5332,6 +5332,33 @@ NOTICE:  outer_func() done
 drop function outer_outer_func(int);
 drop function outer_func(int);
 drop function inner_func(int);
+-- Test pg_routine_oid
+create function current_function(text)
+returns regprocedure as $$
+declare
+  fn_oid regprocedure;
+begin
+  get diagnostics fn_oid = pg_routine_oid;
+  return fn_oid;
+end;
+$$ language plpgsql;
+select current_function('foo');
+    current_function    
+------------------------
+ current_function(text)
+(1 row)
+
+drop function current_function(text);
+-- shouldn't fail in DO, even though there's no useful data
+do $$
+declare
+  fn_oid oid;
+begin
+  get diagnostics fn_oid = pg_routine_oid;
+  raise notice 'pg_routine_oid = %', fn_oid;
+end;
+$$;
+NOTICE:  pg_routine_oid = 0
 --
 -- Test ASSERT
 --
