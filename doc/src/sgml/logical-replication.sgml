@@ -1730,19 +1730,6 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <title>Security</title>
 
   <para>
-   A user able to modify the schema of subscriber-side tables can execute
-   arbitrary code as the role which owns any subscription which modifies those tables.  Limit ownership
-   and <literal>TRIGGER</literal> privilege on such tables to trusted roles.
-   Moreover, if untrusted users can create tables, use only
-   publications that list tables explicitly.  That is to say, create a
-   subscription
-   <link linkend="sql-createpublication-for-all-tables"><literal>FOR ALL TABLES</literal></link>
-   or <link linkend="sql-createpublication-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
-   only when superusers trust every user permitted to create a non-temp table
-   on the publisher or the subscriber.
-  </para>
-
-  <para>
    The role used for the replication connection must have
    the <literal>REPLICATION</literal> attribute (or be a superuser).  If the
    role lacks <literal>SUPERUSER</literal> and <literal>BYPASSRLS</literal>,
@@ -1784,12 +1771,18 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <para>
-   To create a subscription, the user must be a superuser.
+   To create a subscription, the user must have the privileges of the
+   the <literal>pg_create_subscription</literal> role, as well as
+   <literal>CREATE</literal> privileges on the database.
   </para>
 
   <para>
-   The subscription apply process will run in the local database with the
-   privileges of the subscription owner.
+   The subscription apply process will, at a session level, run with the
+   privileges of the subscription owner. However, when performing an insert,
+   update, delete, or truncate operation on a particular table, it will switch
+   roles to the table owner and perform the operation with the table owner's
+   privileges. This means that the subscription owner needs to be able to
+   <literal>SET ROLE</literal> to each role that owns a replicated table.
   </para>
 
   <para>

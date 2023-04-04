@@ -76,22 +76,6 @@ sub grant_superuser
   ALTER ROLE $role SUPERUSER));
 }
 
-sub revoke_bypassrls
-{
-	my ($role) = @_;
-	$node_subscriber->safe_psql(
-		'postgres', qq(
-  ALTER ROLE $role NOBYPASSRLS));
-}
-
-sub grant_bypassrls
-{
-	my ($role) = @_;
-	$node_subscriber->safe_psql(
-		'postgres', qq(
-  ALTER ROLE $role BYPASSRLS));
-}
-
 # Create publisher and subscriber nodes with schemas owned and published by
 # "regress_alice" but subscribed and replicated by different role
 # "regress_admin".  For partitioned tables, layout the partitions differently
@@ -177,59 +161,32 @@ expect_failure(
 	2,
 	5,
 	7,
-	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
+	qr/ERROR: ( [A-Z0-9]+:)? role "regress_admin" cannot SET ROLE to "regress_alice"/msi,
 	"non-superuser admin fails to replicate update");
 grant_superuser("regress_admin");
 expect_replication("alice.unpartitioned", 2, 7, 9,
 	"admin with restored superuser privilege replicates update");
 
-# Grant INSERT, UPDATE, DELETE privileges on the target tables to
-# "regress_admin" so that superuser privileges are not necessary for
-# replication.
-#
-# Note that UPDATE and DELETE also require SELECT privileges, which
-# will be granted in subsequent test.
-#
+# Privileges on the target role suffice for non-superuser replication.
 $node_subscriber->safe_psql(
 	'postgres', qq(
 ALTER ROLE regress_admin NOSUPERUSER;
-SET SESSION AUTHORIZATION regress_alice;
-GRANT INSERT,UPDATE,DELETE ON
-  alice.unpartitioned,
-  alice.hashpart, alice.hashpart_a, alice.hashpart_b
-  TO regress_admin;
-REVOKE SELECT ON alice.unpartitioned FROM regress_admin;
+GRANT regress_alice TO regress_admin;
 ));
 
 publish_insert("alice.unpartitioned", 11);
 expect_replication("alice.unpartitioned", 3, 7, 11,
-	"nosuperuser admin with INSERT privileges can replicate into unpartitioned"
+	"nosuperuser admin with privileges on role can replicate INSERT into unpartitioned"
 );
 
 publish_update("alice.unpartitioned", 7 => 13);
-expect_failure(
-	"alice.unpartitioned",
-	3,
-	7,
-	11,
-	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
-	"non-superuser admin without SELECT privileges fails to replicate update"
+expect_replication("alice.unpartitioned", 3, 9, 13,
+	"nosuperuser admin with privileges on role can replicate UPDATE into unpartitioned"
 );
-
-# Now grant SELECT
-#
-$node_subscriber->safe_psql(
-	'postgres', qq(
-SET SESSION AUTHORIZATION regress_alice;
-GRANT SELECT ON
-  alice.unpartitioned,
-  alice.hashpart, alice.hashpart_a, alice.hashpart_b
-  TO regress_admin;
-));
 
 publish_delete("alice.unpartitioned", 9);
 expect_replication("alice.unpartitioned", 2, 11, 13,
-	"nosuperuser admin with all table privileges can replicate into unpartitioned"
+	"nosuperuser admin with privileges on role can replicate DELETE into unpartitioned"
 );
 
 # Test partitioning
@@ -240,80 +197,114 @@ publish_insert("alice.hashpart", 103);
 publish_update("alice.hashpart", 102 => 120);
 publish_delete("alice.hashpart", 101);
 expect_replication("alice.hashpart", 2, 103, 120,
-	"nosuperuser admin with all table privileges can replicate into hashpart"
+	"nosuperuser admin with privileges on role can replicate into hashpart"
 );
 
-
-# Enable RLS on the target table and check that "regress_admin" can
-# only replicate into it when superuser or bypassrls.
-#
+# Force RLS on the target table and check that replication fails.
 $node_subscriber->safe_psql(
 	'postgres', qq(
 SET SESSION AUTHORIZATION regress_alice;
 ALTER TABLE alice.unpartitioned ENABLE ROW LEVEL SECURITY;
+ALTER TABLE alice.unpartitioned FORCE ROW LEVEL SECURITY;
 ));
 
-revoke_superuser("regress_admin");
 publish_insert("alice.unpartitioned", 15);
 expect_failure(
 	"alice.unpartitioned",
 	2,
 	11,
 	13,
-	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
-	"non-superuser admin fails to replicate insert into rls enabled table");
-grant_superuser("regress_admin");
+	qr/ERROR: ( [A-Z0-9]+:)? user "regress_alice" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
+	"replication of insert into table with forced rls fails");
+
+# Since replication acts as the table owner, replication will succeed if we don't force it.
+$node_subscriber->safe_psql(
+	'postgres', qq(
+ALTER TABLE alice.unpartitioned NO FORCE ROW LEVEL SECURITY;
+));
 expect_replication("alice.unpartitioned", 3, 11, 15,
-	"admin with restored superuser privilege replicates insert into rls enabled unpartitioned"
+	"non-superuser admin can replicate insert if rls is not forced"
 );
 
-revoke_superuser("regress_admin");
+$node_subscriber->safe_psql(
+	'postgres', qq(
+ALTER TABLE alice.unpartitioned FORCE ROW LEVEL SECURITY;
+));
 publish_update("alice.unpartitioned", 11 => 17);
 expect_failure(
 	"alice.unpartitioned",
 	3,
 	11,
 	15,
-	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
-	"non-superuser admin fails to replicate update into rls enabled unpartitioned"
+	qr/ERROR: ( [A-Z0-9]+:)? user "regress_alice" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
+	"replication of update into table with forced rls fails"
 );
-
-grant_bypassrls("regress_admin");
+$node_subscriber->safe_psql(
+	'postgres', qq(
+ALTER TABLE alice.unpartitioned NO FORCE ROW LEVEL SECURITY;
+));
 expect_replication("alice.unpartitioned", 3, 13, 17,
-	"admin with bypassrls replicates update into rls enabled unpartitioned");
+	"non-superuser admin can replicate update if rls is not forced");
 
-revoke_bypassrls("regress_admin");
-publish_delete("alice.unpartitioned", 13);
+# Remove some of alice's privileges on her own table. Then replication should fail.
+$node_subscriber->safe_psql(
+	'postgres', qq(
+REVOKE SELECT, INSERT ON alice.unpartitioned FROM regress_alice;
+));
+publish_insert("alice.unpartitioned", 19);
 expect_failure(
 	"alice.unpartitioned",
 	3,
 	13,
 	17,
-	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
-	"non-superuser admin without bypassrls fails to replicate delete into rls enabled unpartitioned"
+	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
+	"replication of insert fails if table owner lacks insert permission"
 );
-grant_bypassrls("regress_admin");
-expect_replication("alice.unpartitioned", 2, 15, 17,
-	"admin with bypassrls replicates delete into rls enabled unpartitioned");
-grant_superuser("regress_admin");
 
-# Alter the subscription owner to "regress_alice".  She has neither superuser
-# nor bypassrls, but as the table owner should be able to replicate.
-#
+# alice needs INSERT but not SELECT to replicate an INSERT.
 $node_subscriber->safe_psql(
 	'postgres', qq(
-ALTER SUBSCRIPTION admin_sub DISABLE;
-ALTER ROLE regress_alice SUPERUSER;
-ALTER SUBSCRIPTION admin_sub OWNER TO regress_alice;
-ALTER ROLE regress_alice NOSUPERUSER;
-ALTER SUBSCRIPTION admin_sub ENABLE;
+GRANT INSERT ON alice.unpartitioned TO regress_alice;
 ));
+expect_replication("alice.unpartitioned", 4, 13, 19,
+	"restoring insert permission permits replication to continue");
 
-publish_insert("alice.unpartitioned", 23);
-publish_update("alice.unpartitioned", 15 => 25);
-publish_delete("alice.unpartitioned", 17);
-expect_replication("alice.unpartitioned", 2, 23, 25,
-	"nosuperuser nobypassrls table owner can replicate delete into unpartitioned despite rls"
+# Now let's try an UPDATE and a DELETE.
+$node_subscriber->safe_psql(
+	'postgres', qq(
+REVOKE UPDATE, DELETE ON alice.unpartitioned FROM regress_alice;
+));
+publish_update("alice.unpartitioned", 13 => 21);
+publish_delete("alice.unpartitioned", 15);
+expect_failure(
+	"alice.unpartitioned",
+	4,
+	13,
+	19,
+	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
+	"replication of update/delete fails if table owner lacks corresponding permission"
 );
+
+# Restoring UPDATE and DELETE is insufficient.
+$node_subscriber->safe_psql(
+	'postgres', qq(
+GRANT UPDATE, DELETE ON alice.unpartitioned TO regress_alice;
+));
+expect_failure(
+	"alice.unpartitioned",
+	4,
+	13,
+	19,
+	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
+	"replication of update/delete fails if table owner lacks SELECT permission"
+);
+
+# alice needs INSERT but not SELECT to replicate an INSERT.
+$node_subscriber->safe_psql(
+	'postgres', qq(
+GRANT SELECT ON alice.unpartitioned TO regress_alice;
+));
+expect_replication("alice.unpartitioned", 3, 17, 21,
+	"restoring SELECT permission permits replication to continue");
 
 done_testing();

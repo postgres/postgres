@@ -15,6 +15,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = \
 	globals.o \
 	miscinit.o \
-	postinit.o
+	postinit.o \
+	usercontext.o
 
 include $(top_srcdir)/src/backend/common.mk

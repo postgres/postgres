@@ -3,4 +3,5 @@
 backend_sources += files(
   'globals.c',
   'miscinit.c',
-  'postinit.c')
+  'postinit.c',
+  'usercontext.c')
