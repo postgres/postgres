@@ -357,6 +357,8 @@ CREATE ROLE regress_test_role;
 CREATE SCHEMA test_schema;
 
 -- We need to do this this way to cope with varying names for encodings:
+SET client_min_messages TO WARNING;
+
 do $$
 BEGIN
   EXECUTE 'CREATE COLLATION test0 (provider = icu, locale = ' ||
@@ -370,9 +372,14 @@ BEGIN
           quote_literal(current_setting('lc_collate')) || ');';
 END
 $$;
+
+RESET client_min_messages;
+
 CREATE COLLATION test3 (provider = icu, lc_collate = 'en_US.utf8'); -- fail, needs "locale"
 CREATE COLLATION testx (provider = icu, locale = 'nonsense-nowhere'); -- fails
+CREATE COLLATION testx (provider = icu, locale = '@colStrength=primary;nonsense=yes'); -- fails
 SET icu_validation_level = WARNING;
+CREATE COLLATION testx (provider = icu, locale = '@colStrength=primary;nonsense=yes'); DROP COLLATION testx;
 CREATE COLLATION testx (provider = icu, locale = 'nonsense-nowhere'); DROP COLLATION testx;
 RESET icu_validation_level;
 
@@ -457,10 +464,14 @@ SELECT * FROM collate_test2 ORDER BY b COLLATE UNICODE;
 
 -- test the attributes handled by icu_set_collation_attributes()
 
+SET client_min_messages=WARNING;
 CREATE COLLATION testcoll_ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes');
+RESET client_min_messages;
 SELECT 'aaá' > 'AAA' COLLATE "und-x-icu", 'aaá' < 'AAA' COLLATE testcoll_ignore_accents;
 
+SET client_min_messages=WARNING;
 CREATE COLLATION testcoll_backwards (provider = icu, locale = '@colBackwards=yes');
+RESET client_min_messages;
 SELECT 'coté' < 'côte' COLLATE "und-x-icu", 'coté' > 'côte' COLLATE testcoll_backwards;
 
 CREATE COLLATION testcoll_lower_first (provider = icu, locale = '@colCaseFirst=lower');
@@ -470,7 +481,9 @@ SELECT 'aaa' < 'AAA' COLLATE testcoll_lower_first, 'aaa' > 'AAA' COLLATE testcol
 CREATE COLLATION testcoll_shifted (provider = icu, locale = '@colAlternate=shifted');
 SELECT 'de-luge' < 'deanza' COLLATE "und-x-icu", 'de-luge' > 'deanza' COLLATE testcoll_shifted;
 
+SET client_min_messages=WARNING;
 CREATE COLLATION testcoll_numeric (provider = icu, locale = '@colNumeric=yes');
+RESET client_min_messages;
 SELECT 'A-21' > 'A-123' COLLATE "und-x-icu", 'A-21' < 'A-123' COLLATE testcoll_numeric;
 
 CREATE COLLATION testcoll_error1 (provider = icu, locale = '@colNumeric=lower');
@@ -659,7 +672,9 @@ INSERT INTO inner_text VALUES ('a', NULL);
 SELECT * FROM outer_text WHERE (f1, f2) NOT IN (SELECT * FROM inner_text);
 
 -- accents
+SET client_min_messages=WARNING;
 CREATE COLLATION ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes', deterministic = false);
+RESET client_min_messages;
 
 CREATE TABLE test4 (a int, b text);
 INSERT INTO test4 VALUES (1, 'cote'), (2, 'côte'), (3, 'coté'), (4, 'côté');

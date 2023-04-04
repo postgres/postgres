@@ -1860,9 +1860,9 @@ my %tests = (
 
 	'CREATE COLLATION icu_collation' => {
 		create_order => 76,
-		create_sql   => "CREATE COLLATION icu_collation (PROVIDER = icu, LOCALE = 'C');",
+		create_sql   => "CREATE COLLATION icu_collation (PROVIDER = icu, LOCALE = 'en-US-u-va-posix');",
 		regexp =>
-		  qr/CREATE COLLATION public.icu_collation \(provider = icu, locale = 'C'(, version = '[^']*')?\);/m,
+		  qr/CREATE COLLATION public.icu_collation \(provider = icu, locale = 'en-US-u-va-posix'(, version = '[^']*')?\);/m,
 		icu => 1,
 		like      => { %full_runs, section_pre_data => 1, },
 	},

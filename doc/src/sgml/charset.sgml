@@ -893,7 +893,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
         The first example selects the ICU locale using a <quote>language
         tag</quote> per BCP 47.  The second example uses the traditional
         ICU-specific locale syntax.  The first style is preferred going
-        forward, but it is not supported by older ICU versions.
+        forward, and is used internally to store locales.
        </para>
        <para>
         Note that you can name the collation objects in the SQL environment

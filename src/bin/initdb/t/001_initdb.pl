@@ -144,7 +144,7 @@ if ($ENV{with_icu} eq 'yes')
 			'--locale-provider=icu',
 			'--icu-locale=@colNumeric=lower', "$tempdir/dataX"
 		],
-		qr/could not open collator for locale "\@colNumeric=lower": U_ILLEGAL_ARGUMENT_ERROR/,
+		qr/could not open collator for locale "und-u-kn-lower": U_ILLEGAL_ARGUMENT_ERROR/,
 		'fails for invalid collation argument');
 }
 else

@@ -2827,6 +2827,91 @@ icu_set_collation_attributes(UCollator *collator, const char *loc,
 #endif
 
 /*
+ * Return the BCP47 language tag representation of the requested locale.
+ *
+ * This function should be called before passing the string to ucol_open(),
+ * because conversion to a language tag also performs "level 2
+ * canonicalization". In addition to producing a consistent format, level 2
+ * canonicalization is able to more accurately interpret different input
+ * locale string formats, such as POSIX and .NET IDs.
+ */
+char *
+icu_language_tag(const char *loc_str, int elevel)
+{
+#ifdef USE_ICU
+	UErrorCode	 status;
+	char		 lang[ULOC_LANG_CAPACITY];
+	char		*langtag;
+	size_t		 buflen = 32;	/* arbitrary starting buffer size */
+	const bool	 strict = true;
+
+	status = U_ZERO_ERROR;
+	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
+	if (U_FAILURE(status))
+	{
+		if (elevel > 0)
+			ereport(elevel,
+					(errmsg("could not get language from locale \"%s\": %s",
+							loc_str, u_errorName(status))));
+		return NULL;
+	}
+
+	/* C/POSIX locales aren't handled by uloc_getLanguageTag() */
+	if (strcmp(lang, "c") == 0 || strcmp(lang, "posix") == 0)
+		return pstrdup("en-US-u-va-posix");
+
+	/*
+	 * A BCP47 language tag doesn't have a clearly-defined upper limit
+	 * (cf. RFC5646 section 4.4). Additionally, in older ICU versions,
+	 * uloc_toLanguageTag() doesn't always return the ultimate length on the
+	 * first call, necessitating a loop.
+	 */
+	langtag = palloc(buflen);
+	while (true)
+	{
+		int32_t		len;
+
+		status = U_ZERO_ERROR;
+		len = uloc_toLanguageTag(loc_str, langtag, buflen, strict, &status);
+
+		/*
+		 * If the result fits in the buffer exactly (len == buflen),
+		 * uloc_toLanguageTag() will return success without nul-terminating
+		 * the result. Check for either U_BUFFER_OVERFLOW_ERROR or len >=
+		 * buflen and try again.
+		 */
+		if ((status == U_BUFFER_OVERFLOW_ERROR ||
+			 (U_SUCCESS(status) && len >= buflen)) &&
+			buflen < MaxAllocSize)
+		{
+			buflen = Min(buflen * 2, MaxAllocSize);
+			langtag = repalloc(langtag, buflen);
+			continue;
+		}
+
+		break;
+	}
+
+	if (U_FAILURE(status))
+	{
+		pfree(langtag);
+
+		if (elevel > 0)
+			ereport(elevel,
+					(errmsg("could not convert locale name \"%s\" to language tag: %s",
+							loc_str, u_errorName(status))));
+		return NULL;
+	}
+
+	return langtag;
+#else							/* not USE_ICU */
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("ICU is not supported in this build")));
+#endif							/* not USE_ICU */
+}
+
+/*
  * Perform best-effort check that the locale is a valid one.
  */
 void

@@ -2230,6 +2230,78 @@ check_icu_locale_encoding(int user_enc)
 }
 
 /*
+ * Convert to canonical BCP47 language tag. Must be consistent with
+ * icu_language_tag().
+ */
+static char *
+icu_language_tag(const char *loc_str)
+{
+#ifdef USE_ICU
+	UErrorCode	 status;
+	char		 lang[ULOC_LANG_CAPACITY];
+	char		*langtag;
+	size_t		 buflen = 32;	/* arbitrary starting buffer size */
+	const bool	 strict = true;
+
+	status = U_ZERO_ERROR;
+	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
+	if (U_FAILURE(status))
+	{
+		pg_fatal("could not get language from locale \"%s\": %s",
+				 loc_str, u_errorName(status));
+		return NULL;
+	}
+
+	/* C/POSIX locales aren't handled by uloc_getLanguageTag() */
+	if (strcmp(lang, "c") == 0 || strcmp(lang, "posix") == 0)
+		return pstrdup("en-US-u-va-posix");
+
+	/*
+	 * A BCP47 language tag doesn't have a clearly-defined upper limit
+	 * (cf. RFC5646 section 4.4). Additionally, in older ICU versions,
+	 * uloc_toLanguageTag() doesn't always return the ultimate length on the
+	 * first call, necessitating a loop.
+	 */
+	langtag = pg_malloc(buflen);
+	while (true)
+	{
+		int32_t		len;
+
+		status = U_ZERO_ERROR;
+		len = uloc_toLanguageTag(loc_str, langtag, buflen, strict, &status);
+
+		/*
+		 * If the result fits in the buffer exactly (len == buflen),
+		 * uloc_toLanguageTag() will return success without nul-terminating
+		 * the result. Check for either U_BUFFER_OVERFLOW_ERROR or len >=
+		 * buflen and try again.
+		 */
+		if (status == U_BUFFER_OVERFLOW_ERROR ||
+			(U_SUCCESS(status) && len >= buflen))
+		{
+			buflen = buflen * 2;
+			langtag = pg_realloc(langtag, buflen);
+			continue;
+		}
+
+		break;
+	}
+
+	if (U_FAILURE(status))
+	{
+		pg_free(langtag);
+
+		pg_fatal("could not convert locale name \"%s\" to language tag: %s",
+				 loc_str, u_errorName(status));
+	}
+
+	return langtag;
+#else
+	pg_fatal("ICU is not supported in this build");
+#endif
+}
+
+/*
  * Perform best-effort check that the locale is a valid one. Should be
  * consistent with pg_locale.c, except that it doesn't need to open the
  * collator (that will happen during post-bootstrap initialization).
@@ -2376,12 +2448,21 @@ setlocales(void)
 
 	if (locale_provider == COLLPROVIDER_ICU)
 	{
+		char *langtag;
+
 		/* acquire default locale from the environment, if not specified */
 		if (icu_locale == NULL)
 		{
 			icu_locale = default_icu_locale();
 			printf(_("Using default ICU locale \"%s\".\n"), icu_locale);
 		}
+
+		/* canonicalize to a language tag */
+		langtag = icu_language_tag(icu_locale);
+		printf(_("Using language tag \"%s\" for ICU locale \"%s\".\n"),
+			   langtag, icu_locale);
+		pg_free(icu_locale);
+		icu_locale = langtag;
 
 		icu_validate_locale(icu_locale);
 

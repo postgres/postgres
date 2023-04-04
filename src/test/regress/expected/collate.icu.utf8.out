@@ -1019,6 +1019,7 @@ reset enable_seqscan;
 CREATE ROLE regress_test_role;
 CREATE SCHEMA test_schema;
 -- We need to do this this way to cope with varying names for encodings:
+SET client_min_messages TO WARNING;
 do $$
 BEGIN
   EXECUTE 'CREATE COLLATION test0 (provider = icu, locale = ' ||
@@ -1033,12 +1034,17 @@ BEGIN
           quote_literal(current_setting('lc_collate')) || ');';
 END
 $$;
+RESET client_min_messages;
 CREATE COLLATION test3 (provider = icu, lc_collate = 'en_US.utf8'); -- fail, needs "locale"
 ERROR:  parameter "locale" must be specified
 CREATE COLLATION testx (provider = icu, locale = 'nonsense-nowhere'); -- fails
 ERROR:  ICU locale "nonsense-nowhere" has unknown language "nonsense"
 HINT:  To disable ICU locale validation, set parameter icu_validation_level to DISABLED.
+CREATE COLLATION testx (provider = icu, locale = '@colStrength=primary;nonsense=yes'); -- fails
+ERROR:  could not convert locale name "@colStrength=primary;nonsense=yes" to language tag: U_ILLEGAL_ARGUMENT_ERROR
 SET icu_validation_level = WARNING;
+CREATE COLLATION testx (provider = icu, locale = '@colStrength=primary;nonsense=yes'); DROP COLLATION testx;
+WARNING:  could not convert locale name "@colStrength=primary;nonsense=yes" to language tag: U_ILLEGAL_ARGUMENT_ERROR
 CREATE COLLATION testx (provider = icu, locale = 'nonsense-nowhere'); DROP COLLATION testx;
 WARNING:  ICU locale "nonsense-nowhere" has unknown language "nonsense"
 HINT:  To disable ICU locale validation, set parameter icu_validation_level to DISABLED.
@@ -1169,14 +1175,18 @@ SELECT * FROM collate_test2 ORDER BY b COLLATE UNICODE;
 
 -- test ICU collation customization
 -- test the attributes handled by icu_set_collation_attributes()
+SET client_min_messages=WARNING;
 CREATE COLLATION testcoll_ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes');
+RESET client_min_messages;
 SELECT 'aaá' > 'AAA' COLLATE "und-x-icu", 'aaá' < 'AAA' COLLATE testcoll_ignore_accents;
  ?column? | ?column? 
 ----------+----------
  t        | t
 (1 row)
 
+SET client_min_messages=WARNING;
 CREATE COLLATION testcoll_backwards (provider = icu, locale = '@colBackwards=yes');
+RESET client_min_messages;
 SELECT 'coté' < 'côte' COLLATE "und-x-icu", 'coté' > 'côte' COLLATE testcoll_backwards;
  ?column? | ?column? 
 ----------+----------
@@ -1184,7 +1194,9 @@ SELECT 'coté' < 'côte' COLLATE "und-x-icu", 'coté' > 'côte' COLLATE testcoll
 (1 row)
 
 CREATE COLLATION testcoll_lower_first (provider = icu, locale = '@colCaseFirst=lower');
+NOTICE:  using standard form "und-u-kf-lower" for locale "@colCaseFirst=lower"
 CREATE COLLATION testcoll_upper_first (provider = icu, locale = '@colCaseFirst=upper');
+NOTICE:  using standard form "und-u-kf-upper" for locale "@colCaseFirst=upper"
 SELECT 'aaa' < 'AAA' COLLATE testcoll_lower_first, 'aaa' > 'AAA' COLLATE testcoll_upper_first;
  ?column? | ?column? 
 ----------+----------
@@ -1192,13 +1204,16 @@ SELECT 'aaa' < 'AAA' COLLATE testcoll_lower_first, 'aaa' > 'AAA' COLLATE testcol
 (1 row)
 
 CREATE COLLATION testcoll_shifted (provider = icu, locale = '@colAlternate=shifted');
+NOTICE:  using standard form "und-u-ka-shifted" for locale "@colAlternate=shifted"
 SELECT 'de-luge' < 'deanza' COLLATE "und-x-icu", 'de-luge' > 'deanza' COLLATE testcoll_shifted;
  ?column? | ?column? 
 ----------+----------
  t        | t
 (1 row)
 
+SET client_min_messages=WARNING;
 CREATE COLLATION testcoll_numeric (provider = icu, locale = '@colNumeric=yes');
+RESET client_min_messages;
 SELECT 'A-21' > 'A-123' COLLATE "und-x-icu", 'A-21' < 'A-123' COLLATE testcoll_numeric;
  ?column? | ?column? 
 ----------+----------
@@ -1206,10 +1221,12 @@ SELECT 'A-21' > 'A-123' COLLATE "und-x-icu", 'A-21' < 'A-123' COLLATE testcoll_n
 (1 row)
 
 CREATE COLLATION testcoll_error1 (provider = icu, locale = '@colNumeric=lower');
-ERROR:  could not open collator for locale "@colNumeric=lower": U_ILLEGAL_ARGUMENT_ERROR
+NOTICE:  using standard form "und-u-kn-lower" for locale "@colNumeric=lower"
+ERROR:  could not open collator for locale "und-u-kn-lower": U_ILLEGAL_ARGUMENT_ERROR
 -- test that attributes not handled by icu_set_collation_attributes()
 -- (handled by ucol_open() directly) also work
 CREATE COLLATION testcoll_de_phonebook (provider = icu, locale = 'de@collation=phonebook');
+NOTICE:  using standard form "de-u-co-phonebk" for locale "de@collation=phonebook"
 SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE testcoll_de_phonebook;
  ?column? | ?column? 
 ----------+----------
@@ -1218,6 +1235,7 @@ SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE tes
 
 -- rules
 CREATE COLLATION testcoll_rules1 (provider = icu, locale = '', rules = '&a < g');
+NOTICE:  using standard form "und" for locale ""
 CREATE TABLE test7 (a text);
 -- example from https://unicode-org.github.io/icu/userguide/collation/customization/#syntax
 INSERT INTO test7 VALUES ('Abernathy'), ('apple'), ('bird'), ('Boston'), ('Graham'), ('green');
@@ -1245,10 +1263,13 @@ SELECT * FROM test7 ORDER BY a COLLATE testcoll_rules1;
 
 DROP TABLE test7;
 CREATE COLLATION testcoll_rulesx (provider = icu, locale = '', rules = '!!wrong!!');
-ERROR:  could not open collator for locale "" with rules "!!wrong!!": U_INVALID_FORMAT_ERROR
+NOTICE:  using standard form "und" for locale ""
+ERROR:  could not open collator for locale "und" with rules "!!wrong!!": U_INVALID_FORMAT_ERROR
 -- nondeterministic collations
 CREATE COLLATION ctest_det (provider = icu, locale = '', deterministic = true);
+NOTICE:  using standard form "und" for locale ""
 CREATE COLLATION ctest_nondet (provider = icu, locale = '', deterministic = false);
+NOTICE:  using standard form "und" for locale ""
 CREATE TABLE test6 (a int, b text);
 -- same string in different normal forms
 INSERT INTO test6 VALUES (1, U&'\00E4bc');
@@ -1298,7 +1319,9 @@ SELECT * FROM test6a WHERE b = ARRAY['äbc'] COLLATE ctest_nondet;
 (2 rows)
 
 CREATE COLLATION case_sensitive (provider = icu, locale = '');
+NOTICE:  using standard form "und" for locale ""
 CREATE COLLATION case_insensitive (provider = icu, locale = '@colStrength=secondary', deterministic = false);
+NOTICE:  using standard form "und-u-ks-level2" for locale "@colStrength=secondary"
 SELECT 'abc' <= 'ABC' COLLATE case_sensitive, 'abc' >= 'ABC' COLLATE case_sensitive;
  ?column? | ?column? 
 ----------+----------
@@ -1780,7 +1803,9 @@ SELECT * FROM outer_text WHERE (f1, f2) NOT IN (SELECT * FROM inner_text);
 (2 rows)
 
 -- accents
+SET client_min_messages=WARNING;
 CREATE COLLATION ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes', deterministic = false);
+RESET client_min_messages;
 CREATE TABLE test4 (a int, b text);
 INSERT INTO test4 VALUES (1, 'cote'), (2, 'côte'), (3, 'coté'), (4, 'côté');
 SELECT * FROM test4 WHERE b = 'cote';
