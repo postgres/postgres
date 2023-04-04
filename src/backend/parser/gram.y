@@ -824,7 +824,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 /* SQL/JSON related keywords */
 %nonassoc	UNIQUE JSON
 %nonassoc	KEYS OBJECT_P SCALAR VALUE_P
-%nonassoc	WITH WITHOUT_LA
+%nonassoc	WITH WITHOUT
 
 /*
  * To support target_el without AS, it used to be necessary to assign IDENT an
@@ -14313,7 +14313,7 @@ ConstInterval:
 
 opt_timezone:
 			WITH_LA TIME ZONE						{ $$ = true; }
-			| WITHOUT TIME ZONE						{ $$ = false; }
+			| WITHOUT_LA TIME ZONE					{ $$ = false; }
 			| /*EMPTY*/								{ $$ = false; }
 		;
 
@@ -16464,8 +16464,8 @@ json_predicate_type_constraint:
 json_key_uniqueness_constraint_opt:
 			WITH UNIQUE KEYS							{ $$ = true; }
 			| WITH UNIQUE								{ $$ = true; }
-			| WITHOUT_LA UNIQUE KEYS					{ $$ = false; }
-			| WITHOUT_LA UNIQUE							{ $$ = false; }
+			| WITHOUT UNIQUE KEYS						{ $$ = false; }
+			| WITHOUT UNIQUE							{ $$ = false; }
 			| /* EMPTY */ 				%prec KEYS		{ $$ = false; }
 		;
 
