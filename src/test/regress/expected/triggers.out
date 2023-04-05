@@ -2692,6 +2692,45 @@ select tgrelid::regclass, tgname, tgenabled from pg_trigger
  parent  | tg_stmt | A
 (3 rows)
 
+-- This variant malfunctioned in some releases.
+alter table parent disable trigger user;
+select tgrelid::regclass, tgname, tgenabled from pg_trigger
+  where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text, tgname;
+ tgrelid | tgname  | tgenabled 
+---------+---------+-----------
+ child1  | tg      | D
+ parent  | tg      | D
+ parent  | tg_stmt | D
+(3 rows)
+
+drop table parent, child1;
+-- Check processing of foreign key triggers
+create table parent (a int primary key, f int references parent)
+  partition by list (a);
+create table child1 partition of parent for values in (1);
+select tgrelid::regclass, rtrim(tgname, '0123456789') as tgname,
+  tgfoid::regproc, tgenabled
+  from pg_trigger where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text, tgfoid;
+ tgrelid |         tgname          |       tgfoid        | tgenabled 
+---------+-------------------------+---------------------+-----------
+ child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins" | O
+ child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd" | O
+(2 rows)
+
+-- Before v15, this has no effect because parent has no triggers:
+alter table parent disable trigger all;
+select tgrelid::regclass, rtrim(tgname, '0123456789') as tgname,
+  tgfoid::regproc, tgenabled
+  from pg_trigger where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text, tgfoid;
+ tgrelid |         tgname          |       tgfoid        | tgenabled 
+---------+-------------------------+---------------------+-----------
+ child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins" | O
+ child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd" | O
+(2 rows)
+
 drop table parent, child1;
 -- Verify that firing state propagates correctly on creation, too
 CREATE TABLE trgfire (i int) PARTITION BY RANGE (i);

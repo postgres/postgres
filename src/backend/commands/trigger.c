@@ -1589,7 +1589,7 @@ EnableDisableTriggerNew(Relation rel, const char *tgname,
 	{
 		Form_pg_trigger oldtrig = (Form_pg_trigger) GETSTRUCT(tuple);
 
-		if (oldtrig->tgisinternal)
+		if (oldtrig->tgisinternal && !OidIsValid(oldtrig->tgparentid))
 		{
 			/* system trigger ... ok to process? */
 			if (skip_system)
