@@ -1,0 +1,8 @@
+<!--
+    wrapper around stylesheet.css.xml to allow it to be loaded via docbook-xsl's
+    generate.css.header parameter.
+-->
+<!DOCTYPE style [
+<!ENTITY css SYSTEM "stylesheet.css">
+]>
+<style>&css;</style>

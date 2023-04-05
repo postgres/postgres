@@ -39,7 +39,7 @@ ifndef FOP
 FOP = $(missing) fop
 endif
 
-XMLINCLUDE = --path .
+XMLINCLUDE = --path . --path $(srcdir)
 
 ifdef XMLLINT
 XMLLINT := $(XMLLINT) --nonet
@@ -144,7 +144,6 @@ html: html-stamp
 
 html-stamp: stylesheet.xsl postgres-full.xml $(ALL_IMAGES)
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $(wordlist 1,2,$^)
-	cp $(srcdir)/stylesheet.css html/
 	touch $@
 
 # single-page HTML

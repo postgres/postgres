@@ -96,7 +96,7 @@ if xsltproc_bin.found()
   xsltproc_flags = [
     '--nonet',
     '--stringparam', 'pg.version', pg_version,
-    '--path', '@OUTDIR@',
+    '--path', '@OUTDIR@', '--path', '@CURRENT_SOURCE_DIR@',
   ]
 
   xsltproc = xmltools_wrapper + [

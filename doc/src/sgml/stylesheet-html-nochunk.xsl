@@ -7,6 +7,9 @@
 <xsl:include href="stylesheet-html-common.xsl" />
 <xsl:include href="stylesheet-speedup-xhtml.xsl" />
 
+<!-- except when referencing the online stylesheet, embed stylesheet -->
+<xsl:param name="generate.css.header" select="$website.stylesheet = 0"/>
+
 <!-- embed SVG images into output file -->
 <xsl:template match="imagedata[@format='SVG']">
   <xsl:variable name="filename">

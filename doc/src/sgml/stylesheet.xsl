@@ -17,17 +17,6 @@
 <xsl:param name="chunk.quietly" select="1"></xsl:param>
 <xsl:param name="admon.style"></xsl:param>  <!-- handled by CSS stylesheet -->
 
-<xsl:param name="website.stylesheet" select="0"/>
-
-<xsl:param name="html.stylesheet">
-  <xsl:choose>
-    <xsl:when test="$website.stylesheet = 0">stylesheet.css</xsl:when>
-    <xsl:otherwise>
-      https://www.postgresql.org/media/css/docs-complete.css
-    </xsl:otherwise>
-  </xsl:choose>
-</xsl:param>
-
 
 <!-- copy images to the output directory, so the output is self contained -->
 <xsl:template match="imageobject">

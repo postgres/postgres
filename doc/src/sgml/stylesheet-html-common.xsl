@@ -18,6 +18,14 @@
 <xsl:param name="make.graphic.viewport" select="0"/>
 <xsl:param name="link.mailto.url">pgsql-docs@lists.postgresql.org</xsl:param>
 <xsl:param name="toc.max.depth">2</xsl:param>
+<xsl:param name="website.stylesheet" select="0"/>
+<xsl:param name="custom.css.source">
+  <xsl:if test="$website.stylesheet = 0">stylesheet.css.xml</xsl:if>
+</xsl:param>
+<xsl:param name="html.stylesheet">
+  <xsl:if test="not($website.stylesheet = 0)">https://www.postgresql.org/media/css/docs-complete.css</xsl:if>
+</xsl:param>
+
 
 <!--
   The below allows the stylesheets provided by the website to be applied fully
