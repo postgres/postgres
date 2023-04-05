@@ -2457,7 +2457,7 @@ postgres=&gt; table passwd;
 postgres=&gt; set role alice;
 SET
 postgres=&gt; table passwd;
-ERROR:  permission denied for relation passwd
+ERROR:  permission denied for table passwd
 postgres=&gt; select user_name,real_name,home_phone,extra_info,home_dir,shell from passwd;
  user_name | real_name |  home_phone  | extra_info | home_dir    |   shell
 -----------+-----------+--------------+------------+-------------+-----------
@@ -2467,7 +2467,7 @@ postgres=&gt; select user_name,real_name,home_phone,extra_info,home_dir,shell fr
 (3 rows)
 
 postgres=&gt; update passwd set user_name = 'joe';
-ERROR:  permission denied for relation passwd
+ERROR:  permission denied for table passwd
 -- Alice is allowed to change her own real_name, but no others
 postgres=&gt; update passwd set real_name = 'Alice Doe';
 UPDATE 1
@@ -2476,9 +2476,9 @@ UPDATE 0
 postgres=&gt; update passwd set shell = '/bin/xx';
 ERROR:  new row violates WITH CHECK OPTION for "passwd"
 postgres=&gt; delete from passwd;
-ERROR:  permission denied for relation passwd
+ERROR:  permission denied for table passwd
 postgres=&gt; insert into passwd (user_name) values ('xxx');
-ERROR:  permission denied for relation passwd
+ERROR:  permission denied for table passwd
 -- Alice can change her own password; RLS silently prevents updating other rows
 postgres=&gt; update passwd set pwhash = 'abc';
 UPDATE 1
