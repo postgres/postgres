@@ -406,8 +406,8 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		 * point of the available_rels machinations is to ensure that we only
 		 * pull up quals for which that's okay.
 		 *
-		 * We don't expect to see any pre-existing JOIN_SEMI or JOIN_ANTI
-		 * nodes here.
+		 * We don't expect to see any pre-existing JOIN_SEMI, JOIN_ANTI, or
+		 * JOIN_RIGHT_ANTI jointypes here.
 		 */
 		switch (j->jointype)
 		{
@@ -2640,9 +2640,10 @@ flatten_simple_union_all(PlannerInfo *root)
  * distribute_qual_to_rels to get rid of such clauses.
  *
  * Also, we get rid of JOIN_RIGHT cases by flipping them around to become
- * JOIN_LEFT.  This saves some code here and in some later planner routines,
- * but the main reason to do it is to not need to invent a JOIN_REVERSE_ANTI
- * join type.
+ * JOIN_LEFT.  This saves some code here and in some later planner routines;
+ * the main benefit is to reduce the number of jointypes that can appear in
+ * SpecialJoinInfo nodes.  Note that we can still generate Paths and Plans
+ * that use JOIN_RIGHT (or JOIN_RIGHT_ANTI) by switching the inputs again.
  *
  * To ease recognition of strict qual clauses, we require this routine to be
  * run after expression preprocessing (i.e., qual canonicalization and JOIN
@@ -2896,7 +2897,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 				/*
 				 * These could only have been introduced by pull_up_sublinks,
 				 * so there's no way that upper quals could refer to their
-				 * righthand sides, and no point in checking.
+				 * righthand sides, and no point in checking.  We don't expect
+				 * to see JOIN_RIGHT_ANTI yet.
 				 */
 				break;
 			default:

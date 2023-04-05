@@ -806,6 +806,14 @@ ExecMergeJoin(PlanState *pstate)
 					}
 
 					/*
+					 * In a right-antijoin, we never return a matched tuple.
+					 * And we need to stay on the current outer tuple to
+					 * continue scanning the inner side for matches.
+					 */
+					if (node->js.jointype == JOIN_RIGHT_ANTI)
+						break;
+
+					/*
 					 * If we only need to join to the first matching inner
 					 * tuple, then consider returning this one, but after that
 					 * continue with next outer tuple.
@@ -1063,12 +1071,12 @@ ExecMergeJoin(PlanState *pstate)
 					 * them will match this new outer tuple and therefore
 					 * won't be emitted as fill tuples.  This works *only*
 					 * because we require the extra joinquals to be constant
-					 * when doing a right or full join --- otherwise some of
-					 * the rescanned tuples might fail the extra joinquals.
-					 * This obviously won't happen for a constant-true extra
-					 * joinqual, while the constant-false case is handled by
-					 * forcing the merge clause to never match, so we never
-					 * get here.
+					 * when doing a right, right-anti or full join ---
+					 * otherwise some of the rescanned tuples might fail the
+					 * extra joinquals.  This obviously won't happen for a
+					 * constant-true extra joinqual, while the constant-false
+					 * case is handled by forcing the merge clause to never
+					 * match, so we never get here.
 					 */
 					if (!node->mj_SkipMarkRestore)
 					{
@@ -1332,8 +1340,8 @@ ExecMergeJoin(PlanState *pstate)
 
 				/*
 				 * EXEC_MJ_ENDOUTER means we have run out of outer tuples, but
-				 * are doing a right/full join and therefore must null-fill
-				 * any remaining unmatched inner tuples.
+				 * are doing a right/right-anti/full join and therefore must
+				 * null-fill any remaining unmatched inner tuples.
 				 */
 			case EXEC_MJ_ENDOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_ENDOUTER\n");
@@ -1554,14 +1562,15 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 				ExecInitNullTupleSlot(estate, innerDesc, &TTSOpsVirtual);
 			break;
 		case JOIN_RIGHT:
+		case JOIN_RIGHT_ANTI:
 			mergestate->mj_FillOuter = false;
 			mergestate->mj_FillInner = true;
 			mergestate->mj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate, outerDesc, &TTSOpsVirtual);
 
 			/*
-			 * Can't handle right or full join with non-constant extra
-			 * joinclauses.  This should have been caught by planner.
+			 * Can't handle right, right-anti or full join with non-constant
+			 * extra joinclauses.  This should have been caught by planner.
 			 */
 			if (!check_constant_qual(node->join.joinqual,
 									 &mergestate->mj_ConstFalseJoin))
@@ -1578,8 +1587,8 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 				ExecInitNullTupleSlot(estate, innerDesc, &TTSOpsVirtual);
 
 			/*
-			 * Can't handle right or full join with non-constant extra
-			 * joinclauses.  This should have been caught by planner.
+			 * Can't handle right, right-anti or full join with non-constant
+			 * extra joinclauses.  This should have been caught by planner.
 			 */
 			if (!check_constant_qual(node->join.joinqual,
 									 &mergestate->mj_ConstFalseJoin))

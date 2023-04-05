@@ -3330,7 +3330,8 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 			outerstartsel = 0.0;
 			outerendsel = 1.0;
 		}
-		else if (jointype == JOIN_RIGHT)
+		else if (jointype == JOIN_RIGHT ||
+				 jointype == JOIN_RIGHT_ANTI)
 		{
 			innerstartsel = 0.0;
 			innerendsel = 1.0;

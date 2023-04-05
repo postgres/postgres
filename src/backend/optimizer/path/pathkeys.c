@@ -1077,9 +1077,9 @@ find_var_for_subquery_tle(RelOptInfo *rel, TargetEntry *tle)
  *	  Build the path keys for a join relation constructed by mergejoin or
  *	  nestloop join.  This is normally the same as the outer path's keys.
  *
- *	  EXCEPTION: in a FULL or RIGHT join, we cannot treat the result as
- *	  having the outer path's path keys, because null lefthand rows may be
- *	  inserted at random points.  It must be treated as unsorted.
+ *	  EXCEPTION: in a FULL, RIGHT or RIGHT_ANTI join, we cannot treat the
+ *	  result as having the outer path's path keys, because null lefthand rows
+ *	  may be inserted at random points.  It must be treated as unsorted.
  *
  *	  We truncate away any pathkeys that are uninteresting for higher joins.
  *
@@ -1095,7 +1095,9 @@ build_join_pathkeys(PlannerInfo *root,
 					JoinType jointype,
 					List *outer_pathkeys)
 {
-	if (jointype == JOIN_FULL || jointype == JOIN_RIGHT)
+	if (jointype == JOIN_FULL ||
+		jointype == JOIN_RIGHT ||
+		jointype == JOIN_RIGHT_ANTI)
 		return NIL;
 
 	/*

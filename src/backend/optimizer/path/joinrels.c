@@ -925,6 +925,9 @@ populate_joinrel_with_paths(PlannerInfo *root, RelOptInfo *rel1,
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
 								 JOIN_ANTI, sjinfo,
 								 restrictlist);
+			add_paths_to_joinrel(root, joinrel, rel2, rel1,
+								 JOIN_RIGHT_ANTI, sjinfo,
+								 restrictlist);
 			break;
 		default:
 			/* other values not expected here */

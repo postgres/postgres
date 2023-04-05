@@ -317,6 +317,7 @@ typedef enum JoinType
 	 */
 	JOIN_SEMI,					/* 1 copy of each LHS row that has match(es) */
 	JOIN_ANTI,					/* 1 copy of each LHS row that has no match */
+	JOIN_RIGHT_ANTI,			/* 1 copy of each RHS row that has no match */
 
 	/*
 	 * These codes are used internally in the planner, but are not supported
@@ -349,7 +350,8 @@ typedef enum JoinType
 	  ((1 << JOIN_LEFT) | \
 	   (1 << JOIN_FULL) | \
 	   (1 << JOIN_RIGHT) | \
-	   (1 << JOIN_ANTI))) != 0)
+	   (1 << JOIN_ANTI) | \
+	   (1 << JOIN_RIGHT_ANTI))) != 0)
 
 /*
  * AggStrategy -
