@@ -1735,6 +1735,8 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy)
 	bool		result;
 	PrivateRefCountEntry *ref;
 
+	Assert(!BufferIsLocal(b));
+
 	ref = GetPrivateRefCountEntry(b, true);
 
 	if (ref == NULL)
@@ -1879,6 +1881,8 @@ UnpinBuffer(BufferDesc *buf)
 {
 	PrivateRefCountEntry *ref;
 	Buffer		b = BufferDescriptorGetBuffer(buf);
+
+	Assert(!BufferIsLocal(b));
 
 	/* not moving as we're likely deleting it soon anyway */
 	ref = GetPrivateRefCountEntry(b, false);
@@ -4254,6 +4258,29 @@ ConditionalLockBuffer(Buffer buffer)
 }
 
 /*
+ * Verify that this backend is pinning the buffer exactly once.
+ *
+ * NOTE: Like in BufferIsPinned(), what we check here is that *this* backend
+ * holds a pin on the buffer.  We do not care whether some other backend does.
+ */
+void
+CheckBufferIsPinnedOnce(Buffer buffer)
+{
+	if (BufferIsLocal(buffer))
+	{
+		if (LocalRefCount[-buffer - 1] != 1)
+			elog(ERROR, "incorrect local pin count: %d",
+				 LocalRefCount[-buffer - 1]);
+	}
+	else
+	{
+		if (GetPrivateRefCount(buffer) != 1)
+			elog(ERROR, "incorrect local pin count: %d",
+				 GetPrivateRefCount(buffer));
+	}
+}
+
+/*
  * LockBufferForCleanup - lock a buffer in preparation for deleting items
  *
  * Items may be deleted from a disk page only when the caller (a) holds an
@@ -4280,20 +4307,11 @@ LockBufferForCleanup(Buffer buffer)
 	Assert(BufferIsPinned(buffer));
 	Assert(PinCountWaitBuf == NULL);
 
-	if (BufferIsLocal(buffer))
-	{
-		/* There should be exactly one pin */
-		if (LocalRefCount[-buffer - 1] != 1)
-			elog(ERROR, "incorrect local pin count: %d",
-				 LocalRefCount[-buffer - 1]);
-		/* Nobody else to wait for */
-		return;
-	}
+	CheckBufferIsPinnedOnce(buffer);
 
-	/* There should be exactly one local pin */
-	if (GetPrivateRefCount(buffer) != 1)
-		elog(ERROR, "incorrect local pin count: %d",
-			 GetPrivateRefCount(buffer));
+	/* Nobody else to wait for */
+	if (BufferIsLocal(buffer))
+		return;
 
 	bufHdr = GetBufferDescriptor(buffer - 1);
 
@@ -4793,6 +4811,8 @@ LockBufHdr(BufferDesc *desc)
 {
 	SpinDelayStatus delayStatus;
 	uint32		old_buf_state;
+
+	Assert(!BufferIsLocal(BufferDescriptorGetBuffer(desc)));
 
 	init_local_spin_delay(&delayStatus);
 
