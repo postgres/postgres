@@ -868,11 +868,6 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 
 	/*
 	 * Build the new pg_trigger tuple.
-	 *
-	 * When we're creating a trigger in a partition, we mark it as internal,
-	 * even though we don't do the isInternal magic in this function.  This
-	 * makes the triggers in partitions identical to the ones in the
-	 * partitioned tables, except that they are marked internal.
 	 */
 	memset(nulls, false, sizeof(nulls));
 
