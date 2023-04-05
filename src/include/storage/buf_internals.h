@@ -415,6 +415,8 @@ extern int	BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id);
 extern void BufTableDelete(BufferTag *tagPtr, uint32 hashcode);
 
 /* localbuf.c */
+extern bool PinLocalBuffer(BufferDesc *buf_hdr, bool adjust_usagecount);
+extern void UnpinLocalBuffer(Buffer buffer);
 extern PrefetchBufferResult PrefetchLocalBuffer(SMgrRelation smgr,
 												ForkNumber forkNum,
 												BlockNumber blockNum);

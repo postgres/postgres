@@ -137,27 +137,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		fprintf(stderr, "LB ALLOC (%u,%d,%d) %d\n",
 				smgr->smgr_rlocator.locator.relNumber, forkNum, blockNum, -b - 1);
 #endif
-		buf_state = pg_atomic_read_u32(&bufHdr->state);
 
-		/* this part is equivalent to PinBuffer for a shared buffer */
-		if (LocalRefCount[b] == 0)
-		{
-			if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
-			{
-				buf_state += BUF_USAGECOUNT_ONE;
-				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
-			}
-		}
-		LocalRefCount[b]++;
-		ResourceOwnerRememberBuffer(CurrentResourceOwner,
-									BufferDescriptorGetBuffer(bufHdr));
-		if (buf_state & BM_VALID)
-			*foundPtr = true;
-		else
-		{
-			/* Previous read attempt must have failed; try again */
-			*foundPtr = false;
-		}
+		*foundPtr = PinLocalBuffer(bufHdr, true);
 		return bufHdr;
 	}
 
@@ -194,9 +175,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 			else
 			{
 				/* Found a usable buffer */
-				LocalRefCount[b]++;
-				ResourceOwnerRememberBuffer(CurrentResourceOwner,
-											BufferDescriptorGetBuffer(bufHdr));
+				PinLocalBuffer(bufHdr, false);
 				break;
 			}
 		}
@@ -482,6 +461,48 @@ InitLocalBuffers(void)
 
 	/* Initialization done, mark buffers allocated */
 	NLocBuffer = nbufs;
+}
+
+/*
+ * XXX: We could have a slightly more efficient version of PinLocalBuffer()
+ * that does not support adjusting the usagecount - but so far it does not
+ * seem worth the trouble.
+ */
+bool
+PinLocalBuffer(BufferDesc *buf_hdr, bool adjust_usagecount)
+{
+	uint32		buf_state;
+	Buffer		buffer = BufferDescriptorGetBuffer(buf_hdr);
+	int			bufid = -buffer - 1;
+
+	buf_state = pg_atomic_read_u32(&buf_hdr->state);
+
+	if (LocalRefCount[bufid] == 0)
+	{
+		if (adjust_usagecount &&
+			BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
+		{
+			buf_state += BUF_USAGECOUNT_ONE;
+			pg_atomic_unlocked_write_u32(&buf_hdr->state, buf_state);
+		}
+	}
+	LocalRefCount[bufid]++;
+	ResourceOwnerRememberBuffer(CurrentResourceOwner,
+								BufferDescriptorGetBuffer(buf_hdr));
+
+	return buf_state & BM_VALID;
+}
+
+void
+UnpinLocalBuffer(Buffer buffer)
+{
+	int			buffid = -buffer - 1;
+
+	Assert(BufferIsLocal(buffer));
+	Assert(LocalRefCount[buffid] > 0);
+
+	ResourceOwnerForgetBuffer(CurrentResourceOwner, buffer);
+	LocalRefCount[buffid]--;
 }
 
 /*
