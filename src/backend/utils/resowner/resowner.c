@@ -121,6 +121,7 @@ typedef struct ResourceOwnerData
 
 	/* We have built-in support for remembering: */
 	ResourceArray bufferarr;	/* owned buffers */
+	ResourceArray bufferioarr;	/* in-progress buffer IO */
 	ResourceArray catrefarr;	/* catcache references */
 	ResourceArray catlistrefarr;	/* catcache-list pins */
 	ResourceArray relrefarr;	/* relcache references */
@@ -441,6 +442,7 @@ ResourceOwnerCreate(ResourceOwner parent, const char *name)
 	}
 
 	ResourceArrayInit(&(owner->bufferarr), BufferGetDatum(InvalidBuffer));
+	ResourceArrayInit(&(owner->bufferioarr), BufferGetDatum(InvalidBuffer));
 	ResourceArrayInit(&(owner->catrefarr), PointerGetDatum(NULL));
 	ResourceArrayInit(&(owner->catlistrefarr), PointerGetDatum(NULL));
 	ResourceArrayInit(&(owner->relrefarr), PointerGetDatum(NULL));
@@ -517,6 +519,24 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 
 	if (phase == RESOURCE_RELEASE_BEFORE_LOCKS)
 	{
+		/*
+		 * Abort failed buffer IO. AbortBufferIO()->TerminateBufferIO() calls
+		 * ResourceOwnerForgetBufferIOs(), so we just have to iterate till
+		 * there are none.
+		 *
+		 * Needs to be before we release buffer pins.
+		 *
+		 * During a commit, there shouldn't be any in-progress IO.
+		 */
+		while (ResourceArrayGetAny(&(owner->bufferioarr), &foundres))
+		{
+			Buffer		res = DatumGetBuffer(foundres);
+
+			if (isCommit)
+				elog(PANIC, "lost track of buffer IO on buffer %u", res);
+			AbortBufferIO(res);
+		}
+
 		/*
 		 * Release buffer pins.  Note that ReleaseBuffer will remove the
 		 * buffer entry from our array, so we just have to iterate till there
@@ -746,6 +766,7 @@ ResourceOwnerDelete(ResourceOwner owner)
 
 	/* And it better not own any resources, either */
 	Assert(owner->bufferarr.nitems == 0);
+	Assert(owner->bufferioarr.nitems == 0);
 	Assert(owner->catrefarr.nitems == 0);
 	Assert(owner->catlistrefarr.nitems == 0);
 	Assert(owner->relrefarr.nitems == 0);
@@ -775,6 +796,7 @@ ResourceOwnerDelete(ResourceOwner owner)
 
 	/* And free the object. */
 	ResourceArrayFree(&(owner->bufferarr));
+	ResourceArrayFree(&(owner->bufferioarr));
 	ResourceArrayFree(&(owner->catrefarr));
 	ResourceArrayFree(&(owner->catlistrefarr));
 	ResourceArrayFree(&(owner->relrefarr));
@@ -973,6 +995,44 @@ ResourceOwnerForgetBuffer(ResourceOwner owner, Buffer buffer)
 {
 	if (!ResourceArrayRemove(&(owner->bufferarr), BufferGetDatum(buffer)))
 		elog(ERROR, "buffer %d is not owned by resource owner %s",
+			 buffer, owner->name);
+}
+
+
+/*
+ * Make sure there is room for at least one more entry in a ResourceOwner's
+ * buffer array.
+ *
+ * This is separate from actually inserting an entry because if we run out
+ * of memory, it's critical to do so *before* acquiring the resource.
+ */
+void
+ResourceOwnerEnlargeBufferIOs(ResourceOwner owner)
+{
+	/* We used to allow pinning buffers without a resowner, but no more */
+	Assert(owner != NULL);
+	ResourceArrayEnlarge(&(owner->bufferioarr));
+}
+
+/*
+ * Remember that a buffer IO is owned by a ResourceOwner
+ *
+ * Caller must have previously done ResourceOwnerEnlargeBufferIOs()
+ */
+void
+ResourceOwnerRememberBufferIO(ResourceOwner owner, Buffer buffer)
+{
+	ResourceArrayAdd(&(owner->bufferioarr), BufferGetDatum(buffer));
+}
+
+/*
+ * Forget that a buffer IO is owned by a ResourceOwner
+ */
+void
+ResourceOwnerForgetBufferIO(ResourceOwner owner, Buffer buffer)
+{
+	if (!ResourceArrayRemove(&(owner->bufferioarr), BufferGetDatum(buffer)))
+		elog(PANIC, "buffer IO %d is not owned by resource owner %s",
 			 buffer, owner->name);
 }
 
