@@ -80,7 +80,7 @@ SwitchToUntrustedUser(Oid userid, UserContext *context)
 /*
  * Switch back to the original user ID.
  *
- * If we created a new GUC nest level, also role back any changes that were
+ * If we created a new GUC nest level, also roll back any changes that were
  * made within it.
  */
 void
