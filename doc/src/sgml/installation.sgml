@@ -2923,6 +2923,18 @@ ninja install
       </listitem>
      </varlistentry>
 
+     <varlistentry id="configure-docs-html-style">
+      <term><option>-Ddocs_html_style={ simple | website }</option></term>
+      <listitem>
+       <para>
+        Controls which <acronym>CSS</acronym> stylesheet is used.  The default
+        is <literal>simple</literal>.  If set to <literal>website</literal>,
+        the HTML documentation will reference the stylesheet for <ulink
+        url="https://www.postgresql.org/docs/current/">postgresql.org</ulink>.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </sect3>
 

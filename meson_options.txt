@@ -85,6 +85,9 @@ option('docs', type : 'feature', value: 'auto',
 option('docs_pdf', type : 'feature', value: 'auto',
   description: 'documentation in PDF format')
 
+option('docs_html_style', type : 'combo', choices: ['simple', 'website'],
+  description: 'CSS stylesheet for HTML documentation')
+
 option('dtrace', type : 'feature', value: 'disabled',
   description: 'DTrace support')
 

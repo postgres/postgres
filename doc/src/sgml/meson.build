@@ -103,9 +103,10 @@ if xsltproc_bin.found()
     '--tool', xsltproc_bin, '--',
   ]
 
-  xsltproc_html_flags = xsltproc_flags + [
-    '--param', 'website.stylesheet', '1'
-  ]
+  xsltproc_html_flags = xsltproc_flags
+  if get_option('docs_html_style') == 'website'
+    xsltproc_html_flags += ['--param', 'website.stylesheet', '1']
+  endif
 endif
 
 
