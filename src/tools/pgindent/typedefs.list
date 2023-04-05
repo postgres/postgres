@@ -708,6 +708,8 @@ ExprEvalRowtypeCache
 ExprEvalStep
 ExprState
 ExprStateEvalFunc
+ExtendBufferedFlags
+ExtendBufferedWhat
 ExtensibleNode
 ExtensibleNodeEntry
 ExtensibleNodeMethods

@@ -60,6 +60,53 @@ typedef struct PrefetchBufferResult
 	bool		initiated_io;	/* If true, a miss resulting in async I/O */
 } PrefetchBufferResult;
 
+/*
+ * Flags influencing the behaviour of ExtendBufferedRel*
+ */
+typedef enum ExtendBufferedFlags
+{
+	/*
+	 * Don't acquire extension lock. This is safe only if the relation isn't
+	 * shared, an access exclusive lock is held or if this is the startup
+	 * process.
+	 */
+	EB_SKIP_EXTENSION_LOCK = (1 << 0),
+
+	/* Is this extension part of recovery? */
+	EB_PERFORMING_RECOVERY = (1 << 1),
+
+	/*
+	 * Should the fork be created if it does not currently exist? This likely
+	 * only ever makes sense for relation forks.
+	 */
+	EB_CREATE_FORK_IF_NEEDED = (1 << 2),
+
+	/* Should the first (possibly only) return buffer be returned locked? */
+	EB_LOCK_FIRST = (1 << 3),
+
+	/* Should the smgr size cache be cleared? */
+	EB_CLEAR_SIZE_CACHE = (1 << 4),
+
+	/* internal flags follow */
+	EB_LOCK_TARGET = (1 << 5),
+} ExtendBufferedFlags;
+
+/*
+ * To identify the relation - either relation or smgr + relpersistence has to
+ * be specified. Used via the EB_REL()/EB_SMGR() macros below. This allows us
+ * to use the same function for both crash recovery and normal operation.
+ */
+typedef struct ExtendBufferedWhat
+{
+	Relation	rel;
+	struct SMgrRelationData *smgr;
+	char		relpersistence;
+} ExtendBufferedWhat;
+
+#define EB_REL(p_rel) ((ExtendBufferedWhat){.rel = p_rel})
+#define EB_SMGR(p_smgr, p_relpersistence) ((ExtendBufferedWhat){.smgr = p_smgr, .relpersistence = p_relpersistence})
+
+
 /* forward declared, to avoid having to expose buf_internals.h here */
 struct WritebackContext;
 
@@ -137,6 +184,24 @@ extern void IncrBufferRefCount(Buffer buffer);
 extern void CheckBufferIsPinnedOnce(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 								   BlockNumber blockNum);
+
+extern Buffer ExtendBufferedRel(ExtendBufferedWhat eb,
+								ForkNumber forkNum,
+								BufferAccessStrategy strategy,
+								uint32 flags);
+extern BlockNumber ExtendBufferedRelBy(ExtendBufferedWhat eb,
+									   ForkNumber fork,
+									   BufferAccessStrategy strategy,
+									   uint32 flags,
+									   uint32 extend_by,
+									   Buffer *buffers,
+									   uint32 *extended_by);
+extern Buffer ExtendBufferedRelTo(ExtendBufferedWhat eb,
+								  ForkNumber fork,
+								  BufferAccessStrategy strategy,
+								  uint32 flags,
+								  BlockNumber extend_to,
+								  ReadBufferMode mode);
 
 extern void InitBufferPoolAccess(void);
 extern void AtEOXact_Buffers(bool isCommit);

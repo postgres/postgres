@@ -422,6 +422,13 @@ extern PrefetchBufferResult PrefetchLocalBuffer(SMgrRelation smgr,
 												BlockNumber blockNum);
 extern BufferDesc *LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 									BlockNumber blockNum, bool *foundPtr);
+extern BlockNumber ExtendBufferedRelLocal(ExtendBufferedWhat eb,
+										  ForkNumber fork,
+										  uint32 flags,
+										  uint32 extend_by,
+										  BlockNumber extend_upto,
+										  Buffer *buffers,
+										  uint32 *extended_by);
 extern void MarkLocalBufferDirty(Buffer buffer);
 extern void DropRelationLocalBuffers(RelFileLocator rlocator,
 									 ForkNumber forkNum,
