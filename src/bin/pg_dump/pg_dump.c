@@ -56,6 +56,7 @@
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
 #include "common/relpath.h"
+#include "compress_io.h"
 #include "dumputils.h"
 #include "fe_utils/option_utils.h"
 #include "fe_utils/string_utils.h"
@@ -735,18 +736,18 @@ main(int argc, char **argv)
 		pg_fatal("invalid compression specification: %s",
 				 error_detail);
 
-	switch (compression_algorithm)
-	{
-		case PG_COMPRESSION_NONE:
-			/* fallthrough */
-		case PG_COMPRESSION_GZIP:
-			/* fallthrough */
-		case PG_COMPRESSION_LZ4:
-			break;
-		case PG_COMPRESSION_ZSTD:
-			pg_fatal("compression with %s is not yet supported", "ZSTD");
-			break;
-	}
+	error_detail = supports_compression(compression_spec);
+	if (error_detail != NULL)
+		pg_fatal("%s", error_detail);
+
+	/*
+	 * Disable support for zstd workers for now - these are based on threading,
+	 * and it's unclear how it interacts with parallel dumps on platforms where
+	 * that relies on threads too (e.g. Windows).
+	 */
+	if (compression_spec.options & PG_COMPRESSION_OPTION_WORKERS)
+		pg_log_warning("compression option \"%s\" is not currently supported by pg_dump",
+					   "workers");
 
 	/*
 	 * Custom and directory formats are compressed by default with gzip when

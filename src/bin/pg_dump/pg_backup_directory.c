@@ -785,6 +785,8 @@ _PrepParallelRestore(ArchiveHandle *AH)
 				strlcat(fname, ".gz", sizeof(fname));
 			else if (AH->compression_spec.algorithm == PG_COMPRESSION_LZ4)
 				strlcat(fname, ".lz4", sizeof(fname));
+			else if (AH->compression_spec.algorithm == PG_COMPRESSION_ZSTD)
+				strlcat(fname, ".zst", sizeof(fname));
 
 			if (stat(fname, &st) == 0)
 				te->dataLength = st.st_size;

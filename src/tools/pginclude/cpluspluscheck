@@ -154,6 +154,7 @@ do
 	test "$f" = src/bin/pg_dump/compress_io.h && continue
 	test "$f" = src/bin/pg_dump/compress_lz4.h && continue
 	test "$f" = src/bin/pg_dump/compress_none.h && continue
+	test "$f" = src/bin/pg_dump/compress_zstd.h && continue
 	test "$f" = src/bin/pg_dump/parallel.h && continue
 	test "$f" = src/bin/pg_dump/pg_backup_archiver.h && continue
 	test "$f" = src/bin/pg_dump/pg_dump.h && continue

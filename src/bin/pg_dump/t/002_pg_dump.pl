@@ -54,8 +54,9 @@ my $tempdir = PostgreSQL::Test::Utils::tempdir;
 # those lines) to validate that part of the process.
 
 my $supports_icu  = ($ENV{with_icu} eq 'yes');
-my $supports_lz4  = check_pg_config("#define USE_LZ4 1");
 my $supports_gzip = check_pg_config("#define HAVE_LIBZ 1");
+my $supports_lz4  = check_pg_config("#define USE_LZ4 1");
+my $supports_zstd  = check_pg_config("#define USE_ZSTD 1");
 
 my %pgdump_runs = (
 	binary_upgrade => {
@@ -209,6 +210,77 @@ my %pgdump_runs = (
 				'-d', '-f',
 				"$tempdir/compression_lz4_plain.sql.lz4",
 				"$tempdir/compression_lz4_plain.sql",
+			],
+		},
+	},
+
+	compression_zstd_custom => {
+		test_key       => 'compression',
+		compile_option => 'zstd',
+		dump_cmd       => [
+			'pg_dump',      '--format=custom',
+			'--compress=zstd', "--file=$tempdir/compression_zstd_custom.dump",
+			'postgres',
+		],
+		restore_cmd => [
+			'pg_restore',
+			"--file=$tempdir/compression_zstd_custom.sql",
+			"$tempdir/compression_zstd_custom.dump",
+		],
+		command_like => {
+			command => [
+				'pg_restore',
+				'-l', "$tempdir/compression_zstd_custom.dump",
+			],
+			expected => qr/Compression: zstd/,
+			name => 'data content is zstd compressed'
+		},
+	},
+
+	compression_zstd_dir => {
+		test_key       => 'compression',
+		compile_option => 'zstd',
+		dump_cmd       => [
+			'pg_dump',                              '--jobs=2',
+			'--format=directory',                   '--compress=zstd:1',
+			"--file=$tempdir/compression_zstd_dir", 'postgres',
+		],
+		# Give coverage for manually compressed blob.toc files during
+		# restore.
+		compress_cmd => {
+			program => $ENV{'ZSTD'},
+			args    => [
+				'-z', '-f', '--rm',
+				"$tempdir/compression_zstd_dir/blobs.toc",
+				"-o", "$tempdir/compression_zstd_dir/blobs.toc.zst",
+			],
+		},
+		# Verify that data files were compressed
+		glob_patterns => [
+		    "$tempdir/compression_zstd_dir/toc.dat",
+		    "$tempdir/compression_zstd_dir/*.dat.zst",
+		],
+		restore_cmd => [
+			'pg_restore', '--jobs=2',
+			"--file=$tempdir/compression_zstd_dir.sql",
+			"$tempdir/compression_zstd_dir",
+		],
+	},
+
+	compression_zstd_plain => {
+		test_key       => 'compression',
+		compile_option => 'zstd',
+		dump_cmd       => [
+			'pg_dump', '--format=plain', '--compress=zstd',
+			"--file=$tempdir/compression_zstd_plain.sql.zst", 'postgres',
+		],
+		# Decompress the generated file to run through the tests.
+		compress_cmd => {
+			program => $ENV{'ZSTD'},
+			args    => [
+				'-d', '-f',
+				"$tempdir/compression_zstd_plain.sql.zst",
+				"-o", "$tempdir/compression_zstd_plain.sql",
 			],
 		},
 	},
@@ -4648,10 +4720,11 @@ foreach my $run (sort keys %pgdump_runs)
 	my $test_key = $run;
 	my $run_db   = 'postgres';
 
-	# Skip command-level tests for gzip/lz4 if there is no support for it.
+	# Skip command-level tests for gzip/lz4/zstd if the tool is not supported
 	if ($pgdump_runs{$run}->{compile_option} &&
 		(($pgdump_runs{$run}->{compile_option} eq 'gzip' && !$supports_gzip) ||
-		($pgdump_runs{$run}->{compile_option} eq 'lz4' && !$supports_lz4)))
+		($pgdump_runs{$run}->{compile_option} eq 'lz4' && !$supports_lz4) ||
+		($pgdump_runs{$run}->{compile_option} eq 'zstd' && !$supports_zstd)))
 	{
 		note "$run: skipped due to no $pgdump_runs{$run}->{compile_option} support";
 		next;
