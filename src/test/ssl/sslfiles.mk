@@ -61,7 +61,8 @@ COMBINATIONS := \
 	ssl/root+server.crl \
 	ssl/root+client_ca.crt \
 	ssl/root+client.crl \
-	ssl/client+client_ca.crt
+	ssl/client+client_ca.crt \
+	ssl/server-cn-only+server_ca.crt
 
 CERTIFICATES := root_ca server_ca client_ca $(SERVERS) $(CLIENTS)
 STANDARD_CERTS := $(CERTIFICATES:%=ssl/%.crt)
@@ -149,6 +150,9 @@ ssl/root+client_ca.crt: ssl/root_ca.crt ssl/client_ca.crt
 
 # and for the client, to present to the server
 ssl/client+client_ca.crt: ssl/client.crt ssl/client_ca.crt
+
+# for the server, to present to a client that only knows the root
+ssl/server-cn-only+server_ca.crt: ssl/server-cn-only.crt ssl/server_ca.crt
 
 # If a CRL is used, OpenSSL requires a CRL file for *all* the CAs in the
 # chain, even if some of them are empty.

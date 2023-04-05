@@ -1876,6 +1876,30 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         to be signed by one of these authorities.  The default is
         <filename>~/.postgresql/root.crt</filename>.
        </para>
+       <para>
+        The special value <literal>system</literal> may be specified instead, in
+        which case the system's trusted CA roots will be loaded. The exact
+        locations of these root certificates differ by SSL implementation and
+        platform. For <productname>OpenSSL</productname> in particular, the
+        locations may be further modified by the <envar>SSL_CERT_DIR</envar>
+        and <envar>SSL_CERT_FILE</envar> environment variables.
+       </para>
+       <note>
+        <para>
+         When using <literal>sslrootcert=system</literal>, the default
+         <literal>sslmode</literal> is changed to <literal>verify-full</literal>,
+         and any weaker setting will result in an error. In most cases it is
+         trivial for anyone to obtain a certificate trusted by the system for a
+         hostname they control, rendering <literal>verify-ca</literal> and all
+         weaker modes useless.
+        </para>
+        <para>
+         The magic <literal>system</literal> value will take precedence over a
+         local certificate file with the same name. If for some reason you find
+         yourself in this situation, use an alternative path like
+         <literal>sslrootcert=./system</literal> instead.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 

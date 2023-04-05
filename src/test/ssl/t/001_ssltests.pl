@@ -33,6 +33,12 @@ sub switch_server_cert
 {
 	$ssl_server->switch_server_cert(@_);
 }
+
+# Determine whether this build uses OpenSSL or LibreSSL. As a heuristic, the
+# HAVE_SSL_CTX_SET_CERT_CB macro isn't defined for LibreSSL. (Nor for OpenSSL
+# 1.0.1, but that's old enough that accommodating it isn't worth the cost.)
+my $libressl = not check_pg_config("#define HAVE_SSL_CTX_SET_CERT_CB 1");
+
 #### Some configuration
 
 # This is the hostname used to connect to the server. This cannot be a
@@ -460,6 +466,43 @@ $node->connect_fails(
 	"server certificate without CN or SANs sslmode=verify-full",
 	expected_stderr =>
 	  qr/could not get server's host name from server certificate/);
+
+# Test system trusted roots.
+switch_server_cert($node,
+	certfile => 'server-cn-only+server_ca',
+	keyfile => 'server-cn-only',
+	cafile => 'root_ca');
+$common_connstr =
+  "$default_ssl_connstr user=ssltestuser dbname=trustdb sslrootcert=system hostaddr=$SERVERHOSTADDR";
+
+# By default our custom-CA-signed certificate should not be trusted.
+$node->connect_fails(
+	"$common_connstr sslmode=verify-full host=common-name.pg-ssltest.test",
+	"sslrootcert=system does not connect with private CA",
+	expected_stderr => qr/SSL error: certificate verify failed/);
+
+# Modes other than verify-full cannot be mixed with sslrootcert=system.
+$node->connect_fails(
+	"$common_connstr sslmode=verify-ca host=common-name.pg-ssltest.test",
+	"sslrootcert=system only accepts sslmode=verify-full",
+	expected_stderr => qr/weak sslmode "verify-ca" may not be used with sslrootcert=system/);
+
+SKIP:
+{
+	skip "SSL_CERT_FILE is not supported with LibreSSL" if $libressl;
+
+	# We can modify the definition of "system" to get it trusted again.
+	local $ENV{SSL_CERT_FILE} = $node->data_dir . "/root_ca.crt";
+	$node->connect_ok(
+		"$common_connstr sslmode=verify-full host=common-name.pg-ssltest.test",
+		"sslrootcert=system connects with overridden SSL_CERT_FILE");
+
+	# verify-full mode should be the default for system CAs.
+	$node->connect_fails(
+		"$common_connstr host=common-name.pg-ssltest.test.bad",
+		"sslrootcert=system defaults to sslmode=verify-full",
+		expected_stderr => qr/server certificate for "common-name.pg-ssltest.test" does not match host name "common-name.pg-ssltest.test.bad"/);
+}
 
 # Test that the CRL works
 switch_server_cert($node, certfile => 'server-revoked');

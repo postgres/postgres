@@ -2007,7 +2007,11 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    (<xref linkend="ssl-tcp"/>). The TCP client must connect using
    <literal>sslmode=verify-ca</literal> or
    <literal>verify-full</literal> and have the appropriate root certificate
-   file installed (<xref linkend="libq-ssl-certificates"/>).
+   file installed (<xref linkend="libq-ssl-certificates"/>). Alternatively the
+   system CA pool can be used using <literal>sslrootcert=system</literal>; in
+   this case, <literal>sslmode=verify-full</literal> is forced for safety, since
+   it is generally trivial to obtain certificates which are signed by a public
+   CA.
   </para>
 
   <para>

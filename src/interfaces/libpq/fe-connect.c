@@ -1465,6 +1465,23 @@ connectOptions2(PGconn *conn)
 			goto oom_error;
 	}
 
+#ifndef USE_SSL
+
+	/*
+	 * sslrootcert=system is not supported. Since setting this changes the
+	 * default sslmode, check this _before_ we validate sslmode, to avoid
+	 * confusing the user with errors for an option they may not have set.
+	 */
+	if (conn->sslrootcert
+		&& strcmp(conn->sslrootcert, "system") == 0)
+	{
+		conn->status = CONNECTION_BAD;
+		libpq_append_conn_error(conn, "sslrootcert value \"%s\" invalid when SSL support is not compiled in",
+								conn->sslrootcert);
+		return false;
+	}
+#endif
+
 	/*
 	 * validate sslmode option
 	 */
@@ -1510,6 +1527,22 @@ connectOptions2(PGconn *conn)
 		if (!conn->sslmode)
 			goto oom_error;
 	}
+
+#ifdef USE_SSL
+
+	/*
+	 * If sslrootcert=system, make sure our chosen sslmode is compatible.
+	 */
+	if (conn->sslrootcert
+		&& strcmp(conn->sslrootcert, "system") == 0
+		&& strcmp(conn->sslmode, "verify-full") != 0)
+	{
+		conn->status = CONNECTION_BAD;
+		libpq_append_conn_error(conn, "weak sslmode \"%s\" may not be used with sslrootcert=system (use verify-full)",
+								conn->sslmode);
+		return false;
+	}
+#endif
 
 	/*
 	 * Validate TLS protocol versions for ssl_min_protocol_version and
@@ -6236,6 +6269,8 @@ static bool
 conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 {
 	PQconninfoOption *option;
+	PQconninfoOption *sslmode_default = NULL,
+			   *sslrootcert = NULL;
 	char	   *tmp;
 
 	/*
@@ -6252,6 +6287,9 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 	 */
 	for (option = options; option->keyword != NULL; option++)
 	{
+		if (strcmp(option->keyword, "sslrootcert") == 0)
+			sslrootcert = option;	/* save for later */
+
 		if (option->val != NULL)
 			continue;			/* Value was in conninfo or service */
 
@@ -6294,6 +6332,13 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 				}
 				continue;
 			}
+
+			/*
+			 * sslmode is not specified. Let it be filled in with the compiled
+			 * default for now, but if sslrootcert=system, we'll override the
+			 * default later before returning.
+			 */
+			sslmode_default = option;
 		}
 
 		/*
@@ -6323,6 +6368,27 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 		{
 			option->val = pg_fe_getauthname(NULL);
 			continue;
+		}
+	}
+
+	/*
+	 * Special handling for sslrootcert=system with no sslmode explicitly
+	 * defined. In this case we want to strengthen the default sslmode to
+	 * verify-full.
+	 */
+	if (sslmode_default && sslrootcert)
+	{
+		if (sslrootcert->val && strcmp(sslrootcert->val, "system") == 0)
+		{
+			free(sslmode_default->val);
+
+			sslmode_default->val = strdup("verify-full");
+			if (!sslmode_default->val)
+			{
+				if (errorMessage)
+					libpq_append_error(errorMessage, "out of memory");
+				return false;
+			}
 		}
 	}
 

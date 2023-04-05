@@ -8,7 +8,9 @@ use IPC::Run;
 
 
 # List of URIs tests. For each test the first element is the input string, the
-# second the expected stdout and the third the expected stderr.
+# second the expected stdout and the third the expected stderr. Optionally,
+# additional arguments may specify key/value pairs which will override
+# environment variables for the duration of the test.
 my @tests = (
 	[
 		q{postgresql://uri-user:secret@host:12345/db},
@@ -209,20 +211,44 @@ my @tests = (
 		q{postgres://%2Fvar%2Flib%2Fpostgresql/dbname},
 		q{dbname='dbname' host='/var/lib/postgresql' (local)},
 		q{},
+	],
+	# Usually the default sslmode is 'prefer' (for libraries with SSL) or
+	# 'disable' (for those without). This default changes to 'verify-full' if
+	# the system CA store is in use.
+	[
+		q{postgresql://host?sslmode=disable},
+		q{host='host' sslmode='disable' (inet)},
+		q{},
+		PGSSLROOTCERT => "system",
+	],
+	[
+		q{postgresql://host?sslmode=prefer},
+		q{host='host' sslmode='prefer' (inet)},
+		q{},
+		PGSSLROOTCERT => "system",
+	],
+	[
+		q{postgresql://host?sslmode=verify-full},
+		q{host='host' (inet)},
+		q{},
+		PGSSLROOTCERT => "system",
 	]);
 
 # test to run for each of the above test definitions
 sub test_uri
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
+	local %ENV = %ENV;
 
 	my $uri;
 	my %expect;
+	my %envvars;
 	my %result;
 
-	($uri, $expect{stdout}, $expect{stderr}) = @$_;
+	($uri, $expect{stdout}, $expect{stderr}, %envvars) = @$_;
 
 	$expect{'exit'} = $expect{stderr} eq '';
+	%ENV = (%ENV, %envvars);
 
 	my $cmd = [ 'libpq_uri_regress', $uri ];
 	$result{exit} = IPC::Run::run $cmd, '>', \$result{stdout}, '2>',
