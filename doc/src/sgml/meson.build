@@ -5,9 +5,6 @@ installdocs = []
 alldocs = []
 doc_generated = []
 
-xmllint_bin = find_program(get_option('XMLLINT'), native: true, required: false)
-
-
 version_sgml = configure_file(
   input: 'version.sgml.in',
   output: 'version.sgml',
@@ -68,8 +65,6 @@ if not xmllint_bin.found()
 endif
 
 pandoc = find_program('pandoc', native: true, required: false)
-xsltproc_bin = find_program(get_option('XSLTPROC'), native: true, required: false)
-fop = find_program('fop', native: true, required: false)
 
 xmltools_wrapper = [
   python, files('xmltools_dep_wrapper'),
@@ -117,7 +112,7 @@ endif
 #
 # Full documentation as html, text
 #
-if xsltproc_bin.found()
+if docs_dep.found()
   html = custom_target('html',
     input: ['stylesheet.xsl', postgres_full_xml],
     output: 'html',
@@ -167,7 +162,7 @@ endif
 #
 # INSTALL in html, text
 #
-if xsltproc_bin.found()
+if docs_dep.found()
   # Depend on postgres_full_xml, so validity errors are raised in one place,
   # and so dependencies don't need to be re-specified.
   install_xml = custom_target('INSTALL.xml',
@@ -204,7 +199,7 @@ endif
 #
 # Man pages
 #
-if xsltproc_bin.found()
+if docs_dep.found()
   # FIXME: implement / consider sqlmansectnum logic
   man = custom_target('man',
     input: ['stylesheet-man.xsl', postgres_full_xml],
@@ -233,7 +228,7 @@ endif
 #
 # Full documentation as PDF
 #
-if fop.found() and xsltproc_bin.found()
+if docs_pdf_dep.found()
   xsltproc_fo_flags = xsltproc_flags + [
     '--stringparam', 'img.src.path', meson.current_source_dir() + '/'
   ]
@@ -291,7 +286,7 @@ db2x_xsltproc = find_program('db2x_xsltproc', native: true, required: false)
 db2x_texixml = find_program('db2x_texixml', native: true, required: false)
 makeinfo = find_program('makeinfo', native: true, required: false)
 
-if db2x_texixml.found() and db2x_xsltproc.found() and makeinfo.found()
+if xsltproc_bin.found() and db2x_texixml.found() and db2x_xsltproc.found() and makeinfo.found()
   postgres_texixml = custom_target('postgres.texixml',
     output: 'postgres.texixml',
     command: [db2x_xsltproc, '-s', 'texi',
@@ -315,15 +310,11 @@ if db2x_texixml.found() and db2x_xsltproc.found() and makeinfo.found()
 endif
 
 
-if docs.length() == 0
-  run_target('docs', command: [missing, 'xsltproc'])
-else
+if docs_dep.found()
   alias_target('docs', docs)
   alias_target('install-docs', installdocs)
 endif
 
-if alldocs.length() == 0
-  run_target('alldocs', command: [missing, 'xsltproc'])
-else
+if alldocs.length() != 0
   alias_target('alldocs', alldocs)
 endif

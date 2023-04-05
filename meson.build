@@ -341,6 +341,8 @@ program_zstd = find_program(get_option('ZSTD'), native: true, required: false)
 dtrace = find_program(get_option('DTRACE'), native: true, required: get_option('dtrace'))
 missing = find_program('config/missing', native: true)
 cp = find_program('cp', required: false, native: true)
+xmllint_bin = find_program(get_option('XMLLINT'), native: true, required: false)
+xsltproc_bin = find_program(get_option('XSLTPROC'), native: true, required: false)
 
 bison_flags = []
 if bison.found()
@@ -563,6 +565,39 @@ if cc.check_header('dns_sd.h', required: bonjouropt,
     args: test_c_args, include_directories: postgres_inc)
   cdata.set('USE_BONJOUR', 1)
   bonjour = declare_dependency()
+endif
+
+
+
+###############################################################
+# Option: docs in HTML and man page format
+###############################################################
+
+docs_opt = get_option('docs')
+docs_dep = not_found_dep
+if not docs_opt.disabled()
+  if xmllint_bin.found() and xsltproc_bin.found()
+    docs_dep = declare_dependency()
+  elif docs_opt.enabled()
+    error('missing required tools for docs in HTML / man page format')
+  endif
+endif
+
+
+
+###############################################################
+# Option: docs in PDF format
+###############################################################
+
+docs_pdf_opt = get_option('docs_pdf')
+docs_pdf_dep = not_found_dep
+if not docs_pdf_opt.disabled()
+  fop = find_program(get_option('FOP'), native: true, required: docs_pdf_opt)
+  if xmllint_bin.found() and xsltproc_bin.found() and fop.found()
+    docs_pdf_dep = declare_dependency()
+  elif docs_pdf_opt.enabled()
+    error('missing required tools for docs in PDF format')
+  endif
 endif
 
 
@@ -3323,6 +3358,8 @@ if meson.version().version_compare('>=0.57')
     {
       'bonjour': bonjour,
       'bsd_auth': bsd_auth,
+      'docs': docs_dep,
+      'docs_pdf': docs_pdf_dep,
       'gss': gssapi,
       'icu': icu,
       'ldap': ldap,

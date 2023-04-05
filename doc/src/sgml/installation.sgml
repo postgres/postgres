@@ -2893,6 +2893,39 @@ ninja install
     </variablelist>
    </sect3>
 
+   <sect3 id="meson-options-docs">
+    <title>Documentation</title>
+
+    <para>
+     See <xref linkend="docguide-toolsets"/> for the tools needed for building
+     the documentation.
+    </para>
+
+    <variablelist>
+
+     <varlistentry id="configure-docs-meson">
+      <term><option>-Ddocs={ auto | enabled | disabled }</option></term>
+      <listitem>
+       <para>
+        Enables building the documentation in <acronym>HTML</acronym> and
+        <acronym>man</acronym> format. It defaults to auto.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="configure-docs-pdf-meson">
+      <term><option>-Ddocs_pdf={ auto | enabled | disabled }</option></term>
+      <listitem>
+       <para>
+        Enables building the documentation in <acronym>PDF</acronym>
+        format. It defaults to auto.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </sect3>
+
    <sect3 id="meson-options-misc">
     <title>Miscellaneous</title>
 
