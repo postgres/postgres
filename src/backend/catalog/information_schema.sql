@@ -1,6 +1,6 @@
 /*
  * SQL Information Schema
- * as defined in ISO/IEC 9075-11:2016
+ * as defined in ISO/IEC 9075-11:2023
  *
  * Copyright (c) 2003-2023, PostgreSQL Global Development Group
  *
@@ -26,7 +26,7 @@
 
 
 /*
- * 5.1
+ * 6.2
  * INFORMATION_SCHEMA schema
  */
 
@@ -179,11 +179,11 @@ RETURN
   END;
 
 
--- 5.2 INFORMATION_SCHEMA_CATALOG_NAME view appears later.
+-- 6.3 INFORMATION_SCHEMA_CATALOG_NAME view appears later.
 
 
 /*
- * 5.3
+ * 6.4
  * CARDINAL_NUMBER domain
  */
 
@@ -192,7 +192,7 @@ CREATE DOMAIN cardinal_number AS integer
 
 
 /*
- * 5.4
+ * 6.5
  * CHARACTER_DATA domain
  */
 
@@ -200,7 +200,7 @@ CREATE DOMAIN character_data AS character varying COLLATE "C";
 
 
 /*
- * 5.5
+ * 6.6
  * SQL_IDENTIFIER domain
  */
 
@@ -208,7 +208,7 @@ CREATE DOMAIN sql_identifier AS name;
 
 
 /*
- * 5.2
+ * 6.3
  * INFORMATION_SCHEMA_CATALOG_NAME view
  */
 
@@ -219,7 +219,7 @@ GRANT SELECT ON information_schema_catalog_name TO PUBLIC;
 
 
 /*
- * 5.6
+ * 6.7
  * TIME_STAMP domain
  */
 
@@ -227,7 +227,7 @@ CREATE DOMAIN time_stamp AS timestamp(2) with time zone
     DEFAULT current_timestamp(2);
 
 /*
- * 5.7
+ * 6.8
  * YES_OR_NO domain
  */
 
@@ -235,11 +235,11 @@ CREATE DOMAIN yes_or_no AS character varying(3) COLLATE "C"
     CONSTRAINT yes_or_no_check CHECK (value IN ('YES', 'NO'));
 
 
--- 5.8 ADMINISTRABLE_ROLE_AUTHORIZATIONS view appears later.
+-- 6.9 ADMINISTRABLE_ROLE_AUTHORIZATIONS view appears later.
 
 
 /*
- * 5.9
+ * 6.10
  * APPLICABLE_ROLES view
  */
 
@@ -263,7 +263,7 @@ GRANT SELECT ON applicable_roles TO PUBLIC;
 
 
 /*
- * 5.8
+ * 6.9
  * ADMINISTRABLE_ROLE_AUTHORIZATIONS view
  */
 
@@ -276,7 +276,7 @@ GRANT SELECT ON administrable_role_authorizations TO PUBLIC;
 
 
 /*
- * 5.10
+ * 6.11
  * ASSERTIONS view
  */
 
@@ -284,7 +284,7 @@ GRANT SELECT ON administrable_role_authorizations TO PUBLIC;
 
 
 /*
- * 5.11
+ * 6.12
  * ATTRIBUTES view
  */
 
@@ -377,7 +377,7 @@ GRANT SELECT ON attributes TO PUBLIC;
 
 
 /*
- * 5.12
+ * 6.13
  * CHARACTER_SETS view
  */
 
@@ -401,7 +401,7 @@ GRANT SELECT ON character_sets TO PUBLIC;
 
 
 /*
- * 5.13
+ * 6.14
  * CHECK_CONSTRAINT_ROUTINE_USAGE view
  */
 
@@ -427,7 +427,7 @@ GRANT SELECT ON check_constraint_routine_usage TO PUBLIC;
 
 
 /*
- * 5.14
+ * 6.15
  * CHECK_CONSTRAINTS view
  */
 
@@ -465,7 +465,7 @@ GRANT SELECT ON check_constraints TO PUBLIC;
 
 
 /*
- * 5.15
+ * 6.16
  * COLLATIONS view
  */
 
@@ -482,7 +482,7 @@ GRANT SELECT ON collations TO PUBLIC;
 
 
 /*
- * 5.16
+ * 6.17
  * COLLATION_CHARACTER_SET_APPLICABILITY view
  */
 
@@ -501,7 +501,7 @@ GRANT SELECT ON collation_character_set_applicability TO PUBLIC;
 
 
 /*
- * 5.17
+ * 6.18
  * COLUMN_COLUMN_USAGE view
  */
 
@@ -534,7 +534,7 @@ GRANT SELECT ON column_column_usage TO PUBLIC;
 
 
 /*
- * 5.18
+ * 6.19
  * COLUMN_DOMAIN_USAGE view
  */
 
@@ -564,7 +564,7 @@ GRANT SELECT ON column_domain_usage TO PUBLIC;
 
 
 /*
- * 5.19
+ * 6.20
  * COLUMN_PRIVILEGES
  */
 
@@ -638,7 +638,7 @@ GRANT SELECT ON column_privileges TO PUBLIC;
 
 
 /*
- * 5.20
+ * 6.21
  * COLUMN_UDT_USAGE view
  */
 
@@ -667,7 +667,7 @@ GRANT SELECT ON column_udt_usage TO PUBLIC;
 
 
 /*
- * 5.21
+ * 6.22
  * COLUMNS view
  */
 
@@ -797,7 +797,7 @@ GRANT SELECT ON columns TO PUBLIC;
 
 
 /*
- * 5.22
+ * 6.23
  * CONSTRAINT_COLUMN_USAGE view
  */
 
@@ -849,7 +849,7 @@ GRANT SELECT ON constraint_column_usage TO PUBLIC;
 
 
 /*
- * 5.23
+ * 6.24
  * CONSTRAINT_PERIOD_USAGE view
  */
 
@@ -857,7 +857,7 @@ GRANT SELECT ON constraint_column_usage TO PUBLIC;
 
 
 /*
- * 5.24
+ * 6.25
  * CONSTRAINT_TABLE_USAGE view
  */
 
@@ -881,11 +881,11 @@ CREATE VIEW constraint_table_usage AS
 GRANT SELECT ON constraint_table_usage TO PUBLIC;
 
 
--- 5.25 DATA_TYPE_PRIVILEGES view appears later.
+-- 6.26 DATA_TYPE_PRIVILEGES view appears later.
 
 
 /*
- * 5.26
+ * 6.27
  * DIRECT_SUPERTABLES view
  */
 
@@ -893,7 +893,7 @@ GRANT SELECT ON constraint_table_usage TO PUBLIC;
 
 
 /*
- * 5.27
+ * 6.28
  * DIRECT_SUPERTYPES view
  */
 
@@ -901,7 +901,7 @@ GRANT SELECT ON constraint_table_usage TO PUBLIC;
 
 
 /*
- * 5.28
+ * 6.29
  * DOMAIN_CONSTRAINTS view
  */
 
@@ -952,7 +952,7 @@ GRANT SELECT ON domain_udt_usage TO PUBLIC;
 
 
 /*
- * 5.29
+ * 6.30
  * DOMAINS view
  */
 
@@ -1037,11 +1037,11 @@ CREATE VIEW domains AS
 GRANT SELECT ON domains TO PUBLIC;
 
 
--- 5.30 ELEMENT_TYPES view appears later.
+-- 6.31 ELEMENT_TYPES view appears later.
 
 
 /*
- * 5.31
+ * 6.32
  * ENABLED_ROLES view
  */
 
@@ -1054,7 +1054,7 @@ GRANT SELECT ON enabled_roles TO PUBLIC;
 
 
 /*
- * 5.32
+ * 6.33
  * FIELDS view
  */
 
@@ -1062,7 +1062,7 @@ GRANT SELECT ON enabled_roles TO PUBLIC;
 
 
 /*
- * 5.33
+ * 6.34
  * KEY_COLUMN_USAGE view
  */
 
@@ -1105,7 +1105,7 @@ GRANT SELECT ON key_column_usage TO PUBLIC;
 
 
 /*
- * 5.34
+ * 6.35
  * KEY_PERIOD_USAGE view
  */
 
@@ -1113,7 +1113,7 @@ GRANT SELECT ON key_column_usage TO PUBLIC;
 
 
 /*
- * 5.35
+ * 6.36
  * METHOD_SPECIFICATION_PARAMETERS view
  */
 
@@ -1121,7 +1121,7 @@ GRANT SELECT ON key_column_usage TO PUBLIC;
 
 
 /*
- * 5.36
+ * 6.37
  * METHOD_SPECIFICATIONS view
  */
 
@@ -1129,7 +1129,7 @@ GRANT SELECT ON key_column_usage TO PUBLIC;
 
 
 /*
- * 5.37
+ * 6.38
  * PARAMETERS view
  */
 
@@ -1196,7 +1196,7 @@ GRANT SELECT ON parameters TO PUBLIC;
 
 
 /*
- * 5.38
+ * 6.39
  * PERIODS view
  */
 
@@ -1204,7 +1204,7 @@ GRANT SELECT ON parameters TO PUBLIC;
 
 
 /*
- * 5.39
+ * 6.40
  * PRIVATE_PARAMETERS view
  */
 
@@ -1212,7 +1212,7 @@ GRANT SELECT ON parameters TO PUBLIC;
 
 
 /*
- * 5.40
+ * 6.41
  * REFERENCED_TYPES view
  */
 
@@ -1220,7 +1220,7 @@ GRANT SELECT ON parameters TO PUBLIC;
 
 
 /*
- * 5.41
+ * 6.42
  * REFERENTIAL_CONSTRAINTS view
  */
 
@@ -1282,7 +1282,7 @@ GRANT SELECT ON referential_constraints TO PUBLIC;
 
 
 /*
- * 5.42
+ * 6.43
  * ROLE_COLUMN_GRANTS view
  */
 
@@ -1302,14 +1302,14 @@ CREATE VIEW role_column_grants AS
 GRANT SELECT ON role_column_grants TO PUBLIC;
 
 
--- 5.43 ROLE_ROUTINE_GRANTS view is based on 5.50 ROUTINE_PRIVILEGES and is defined there instead.
+-- 6.44 ROLE_ROUTINE_GRANTS view is based on 6.51 ROUTINE_PRIVILEGES and is defined there instead.
 
 
--- 5.44 ROLE_TABLE_GRANTS view is based on 5.63 TABLE_PRIVILEGES and is defined there instead.
+-- 6.45 ROLE_TABLE_GRANTS view is based on 6.64 TABLE_PRIVILEGES and is defined there instead.
 
 
 /*
- * 5.45
+ * 6.46
  * ROLE_TABLE_METHOD_GRANTS view
  */
 
@@ -1317,14 +1317,14 @@ GRANT SELECT ON role_column_grants TO PUBLIC;
 
 
 
--- 5.46 ROLE_USAGE_GRANTS view is based on 5.75 USAGE_PRIVILEGES and is defined there instead.
+-- 6.47 ROLE_USAGE_GRANTS view is based on 6.76 USAGE_PRIVILEGES and is defined there instead.
 
 
--- 5.47 ROLE_UDT_GRANTS view is based on 5.74 UDT_PRIVILEGES and is defined there instead.
+-- 6.48 ROLE_UDT_GRANTS view is based on 6.75 UDT_PRIVILEGES and is defined there instead.
 
 
 /*
- * 5.48
+ * 6.49
  * ROUTINE_COLUMN_USAGE view
  */
 
@@ -1359,7 +1359,7 @@ GRANT SELECT ON routine_column_usage TO PUBLIC;
 
 
 /*
- * 5.49
+ * 6.50
  * ROUTINE_PERIOD_USAGE view
  */
 
@@ -1367,7 +1367,7 @@ GRANT SELECT ON routine_column_usage TO PUBLIC;
 
 
 /*
- * 5.50
+ * 6.51
  * ROUTINE_PRIVILEGES view
  */
 
@@ -1411,7 +1411,7 @@ GRANT SELECT ON routine_privileges TO PUBLIC;
 
 
 /*
- * 5.43
+ * 6.43
  * ROLE_ROUTINE_GRANTS view
  */
 
@@ -1434,7 +1434,7 @@ GRANT SELECT ON role_routine_grants TO PUBLIC;
 
 
 /*
- * 5.51
+ * 6.52
  * ROUTINE_ROUTINE_USAGE view
  */
 
@@ -1463,7 +1463,7 @@ GRANT SELECT ON routine_routine_usage TO PUBLIC;
 
 
 /*
- * 5.52
+ * 6.53
  * ROUTINE_SEQUENCE_USAGE view
  */
 
@@ -1495,7 +1495,7 @@ GRANT SELECT ON routine_sequence_usage TO PUBLIC;
 
 
 /*
- * 5.53
+ * 6.54
  * ROUTINE_TABLE_USAGE view
  */
 
@@ -1527,7 +1527,7 @@ GRANT SELECT ON routine_table_usage TO PUBLIC;
 
 
 /*
- * 5.54
+ * 6.55
  * ROUTINES view
  */
 
@@ -1645,7 +1645,7 @@ GRANT SELECT ON routines TO PUBLIC;
 
 
 /*
- * 5.55
+ * 6.56
  * SCHEMATA view
  */
 
@@ -1666,7 +1666,7 @@ GRANT SELECT ON schemata TO PUBLIC;
 
 
 /*
- * 5.56
+ * 6.57
  * SEQUENCES view
  */
 
@@ -1696,7 +1696,7 @@ GRANT SELECT ON sequences TO PUBLIC;
 
 
 /*
- * 5.57
+ * 6.58
  * SQL_FEATURES table
  */
 
@@ -1716,12 +1716,9 @@ GRANT SELECT ON sql_features TO PUBLIC;
 
 
 /*
- * 5.58
+ * 6.59
  * SQL_IMPLEMENTATION_INFO table
  */
-
--- Note: Implementation information items are defined in ISO/IEC 9075-3:2008,
--- clause 9.1.
 
 CREATE TABLE sql_implementation_info (
     implementation_info_id      character_data,
@@ -1748,7 +1745,7 @@ GRANT SELECT ON sql_implementation_info TO PUBLIC;
 
 
 /*
- * 5.59
+ * 6.60
  * SQL_PARTS table
  */
 
@@ -1774,11 +1771,9 @@ INSERT INTO sql_parts VALUES ('16', 'Property Graph Queries (SQL/PGQ)', 'NO', NU
 
 
 /*
- * 5.60
+ * 6.61
  * SQL_SIZING table
  */
-
--- Note: Sizing items are defined in ISO/IEC 9075-3:2008, clause 9.2.
 
 CREATE TABLE sql_sizing (
     sizing_id       cardinal_number,
@@ -1820,7 +1815,7 @@ GRANT SELECT ON sql_sizing TO PUBLIC;
 
 
 /*
- * 5.61
+ * 6.62
  * TABLE_CONSTRAINTS view
  */
 
@@ -1898,7 +1893,7 @@ GRANT SELECT ON table_constraints TO PUBLIC;
 
 
 /*
- * 5.62
+ * 6.63
  * TABLE_METHOD_PRIVILEGES view
  */
 
@@ -1906,7 +1901,7 @@ GRANT SELECT ON table_constraints TO PUBLIC;
 
 
 /*
- * 5.63
+ * 6.64
  * TABLE_PRIVILEGES view
  */
 
@@ -1949,7 +1944,7 @@ GRANT SELECT ON table_privileges TO PUBLIC;
 
 
 /*
- * 5.44
+ * 6.45
  * ROLE_TABLE_GRANTS view
  */
 
@@ -1970,7 +1965,7 @@ GRANT SELECT ON role_table_grants TO PUBLIC;
 
 
 /*
- * 5.63
+ * 6.65
  * TABLES view
  */
 
@@ -2016,7 +2011,7 @@ GRANT SELECT ON tables TO PUBLIC;
 
 
 /*
- * 5.65
+ * 6.66
  * TRANSFORMS view
  */
 
@@ -2056,7 +2051,7 @@ CREATE VIEW transforms AS
 
 
 /*
- * 5.66
+ * 6.67
  * TRANSLATIONS view
  */
 
@@ -2064,7 +2059,7 @@ CREATE VIEW transforms AS
 
 
 /*
- * 5.67
+ * 6.68
  * TRIGGERED_UPDATE_COLUMNS view
  */
 
@@ -2096,7 +2091,7 @@ GRANT SELECT ON triggered_update_columns TO PUBLIC;
 
 
 /*
- * 5.68
+ * 6.69
  * TRIGGER_COLUMN_USAGE view
  */
 
@@ -2104,7 +2099,7 @@ GRANT SELECT ON triggered_update_columns TO PUBLIC;
 
 
 /*
- * 5.69
+ * 6.70
  * TRIGGER_PERIOD_USAGE view
  */
 
@@ -2112,7 +2107,7 @@ GRANT SELECT ON triggered_update_columns TO PUBLIC;
 
 
 /*
- * 5.70
+ * 6.71
  * TRIGGER_ROUTINE_USAGE view
  */
 
@@ -2120,7 +2115,7 @@ GRANT SELECT ON triggered_update_columns TO PUBLIC;
 
 
 /*
- * 5.71
+ * 6.72
  * TRIGGER_SEQUENCE_USAGE view
  */
 
@@ -2128,7 +2123,7 @@ GRANT SELECT ON triggered_update_columns TO PUBLIC;
 
 
 /*
- * 5.72
+ * 6.73
  * TRIGGER_TABLE_USAGE view
  */
 
@@ -2136,7 +2131,7 @@ GRANT SELECT ON triggered_update_columns TO PUBLIC;
 
 
 /*
- * 5.73
+ * 6.74
  * TRIGGERS view
  */
 
@@ -2205,7 +2200,7 @@ GRANT SELECT ON triggers TO PUBLIC;
 
 
 /*
- * 5.74
+ * 6.75
  * UDT_PRIVILEGES view
  */
 
@@ -2247,7 +2242,7 @@ GRANT SELECT ON udt_privileges TO PUBLIC;
 
 
 /*
- * 5.47
+ * 6.48
  * ROLE_UDT_GRANTS view
  */
 
@@ -2267,7 +2262,7 @@ GRANT SELECT ON role_udt_grants TO PUBLIC;
 
 
 /*
- * 5.75
+ * 6.76
  * USAGE_PRIVILEGES view
  */
 
@@ -2438,7 +2433,7 @@ GRANT SELECT ON usage_privileges TO PUBLIC;
 
 
 /*
- * 5.46
+ * 6.47
  * ROLE_USAGE_GRANTS view
  */
 
@@ -2459,7 +2454,7 @@ GRANT SELECT ON role_usage_grants TO PUBLIC;
 
 
 /*
- * 5.76
+ * 6.77
  * USER_DEFINED_TYPES view
  */
 
@@ -2506,7 +2501,7 @@ GRANT SELECT ON user_defined_types TO PUBLIC;
 
 
 /*
- * 5.77
+ * 6.78
  * VIEW_COLUMN_USAGE
  */
 
@@ -2545,7 +2540,7 @@ GRANT SELECT ON view_column_usage TO PUBLIC;
 
 
 /*
- * 5.78
+ * 6.79
  * VIEW_PERIOD_USAGE
  */
 
@@ -2553,7 +2548,7 @@ GRANT SELECT ON view_column_usage TO PUBLIC;
 
 
 /*
- * 5.79
+ * 6.80
  * VIEW_ROUTINE_USAGE
  */
 
@@ -2586,7 +2581,7 @@ GRANT SELECT ON view_routine_usage TO PUBLIC;
 
 
 /*
- * 5.80
+ * 6.81
  * VIEW_TABLE_USAGE
  */
 
@@ -2621,7 +2616,7 @@ GRANT SELECT ON view_table_usage TO PUBLIC;
 
 
 /*
- * 5.81
+ * 6.82
  * VIEWS view
  */
 
@@ -2689,7 +2684,7 @@ GRANT SELECT ON views TO PUBLIC;
 -- The following views have dependencies that force them to appear out of order.
 
 /*
- * 5.25
+ * 6.26
  * DATA_TYPE_PRIVILEGES view
  */
 
@@ -2717,7 +2712,7 @@ GRANT SELECT ON data_type_privileges TO PUBLIC;
 
 
 /*
- * 5.30
+ * 6.31
  * ELEMENT_TYPES view
  */
 
@@ -2833,7 +2828,7 @@ CREATE VIEW _pg_foreign_table_columns AS
           AND a.attnum > 0;
 
 /*
- * 24.2
+ * 24.3
  * COLUMN_OPTIONS view
  */
 CREATE VIEW column_options AS
@@ -2864,7 +2859,7 @@ CREATE VIEW _pg_foreign_data_wrappers AS
 
 
 /*
- * 24.4
+ * 24.5
  * FOREIGN_DATA_WRAPPER_OPTIONS view
  */
 CREATE VIEW foreign_data_wrapper_options AS
@@ -2878,7 +2873,7 @@ GRANT SELECT ON foreign_data_wrapper_options TO PUBLIC;
 
 
 /*
- * 24.5
+ * 24.6
  * FOREIGN_DATA_WRAPPERS view
  */
 CREATE VIEW foreign_data_wrappers AS
@@ -2911,7 +2906,7 @@ CREATE VIEW _pg_foreign_servers AS
 
 
 /*
- * 24.6
+ * 24.7
  * FOREIGN_SERVER_OPTIONS view
  */
 CREATE VIEW foreign_server_options AS
@@ -2925,7 +2920,7 @@ GRANT SELECT ON TABLE foreign_server_options TO PUBLIC;
 
 
 /*
- * 24.7
+ * 24.8
  * FOREIGN_SERVERS view
  */
 CREATE VIEW foreign_servers AS
@@ -2965,7 +2960,7 @@ CREATE VIEW _pg_foreign_tables AS
 
 
 /*
- * 24.8
+ * 24.9
  * FOREIGN_TABLE_OPTIONS view
  */
 CREATE VIEW foreign_table_options AS
@@ -2980,7 +2975,7 @@ GRANT SELECT ON TABLE foreign_table_options TO PUBLIC;
 
 
 /*
- * 24.9
+ * 24.10
  * FOREIGN_TABLES view
  */
 CREATE VIEW foreign_tables AS
@@ -3010,7 +3005,7 @@ CREATE VIEW _pg_user_mappings AS
 
 
 /*
- * 24.12
+ * 24.13
  * USER_MAPPING_OPTIONS view
  */
 CREATE VIEW user_mapping_options AS
@@ -3030,7 +3025,7 @@ GRANT SELECT ON user_mapping_options TO PUBLIC;
 
 
 /*
- * 24.13
+ * 24.14
  * USER_MAPPINGS view
  */
 CREATE VIEW user_mappings AS
