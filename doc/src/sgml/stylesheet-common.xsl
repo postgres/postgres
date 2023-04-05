@@ -101,4 +101,26 @@
   <xsl:apply-templates select="." mode="xref"/>
 </xsl:template>
 
+
+<!--
+  Support for copying images to the output directory, so the output is self
+  contained.
+-->
+<xsl:template name="write-image">
+ <xsl:variable name="input_filename">
+   <xsl:value-of select="imagedata/@fileref"/>
+ </xsl:variable>
+
+ <!-- references images directly, without images/ -->
+ <xsl:variable name="output_filename">
+   <xsl:value-of select="concat($chunk.base.dir, substring-after($input_filename, '/'))"/>
+ </xsl:variable>
+
+ <xsl:call-template name="write.chunk">
+  <xsl:with-param name="filename" select="$output_filename"/>
+  <xsl:with-param name="content" select="document($input_filename)"/>
+ </xsl:call-template>
+</xsl:template>
+
+
 </xsl:stylesheet>
