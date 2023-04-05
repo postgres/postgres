@@ -1,3 +1,5 @@
+# Copyright (c) 2022-2023, PostgreSQL Global Development Group
+
 # Set of tests for pg_upgrade, including cross-version checks.
 use strict;
 use warnings;
