@@ -106,6 +106,9 @@ extern int	FilePrefetch(File file, off_t offset, off_t amount, uint32 wait_event
 extern int	FileRead(File file, void *buffer, size_t amount, off_t offset, uint32 wait_event_info);
 extern int	FileWrite(File file, const void *buffer, size_t amount, off_t offset, uint32 wait_event_info);
 extern int	FileSync(File file, uint32 wait_event_info);
+extern int	FileZero(File file, off_t offset, off_t amount, uint32 wait_event_info);
+extern int	FileFallocate(File file, off_t offset, off_t amount, uint32 wait_event_info);
+
 extern off_t FileSize(File file);
 extern int	FileTruncate(File file, off_t offset, uint32 wait_event_info);
 extern void FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info);
