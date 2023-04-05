@@ -135,17 +135,6 @@ if xsltproc_bin.found()
   installdocs += install_doc_html
 
 
-  htmlhelp = custom_target('htmlhelp',
-    input: ['stylesheet-hh.xsl', postgres_full_xml],
-    output: 'htmlhelp',
-    depfile: 'htmlhelp.d',
-    depends: doc_generated,
-    command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTDIR@/', xsltproc_flags, '@INPUT@'],
-    build_by_default: false,
-  )
-  alldocs += htmlhelp
-
-
   # single-page HTML
   postgres_html = custom_target('postgres.html',
     input: ['stylesheet-html-nochunk.xsl', postgres_full_xml],
