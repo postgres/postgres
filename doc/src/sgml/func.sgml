@@ -2455,6 +2455,26 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>btrim</primary>
+        </indexterm>
+        <function>btrim</function> ( <parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only characters
+        in <parameter>characters</parameter> (a space by default)
+        from the start and end of <parameter>string</parameter>.
+       </para>
+       <para>
+        <literal>btrim('xyxtrimyyx', 'xyz')</literal>
+        <returnvalue>trim</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>normalized</primary>
         </indexterm>
         <indexterm>
@@ -2544,6 +2564,49 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         <literal>lower('TOM')</literal>
         <returnvalue>tom</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lpad</primary>
+        </indexterm>
+        <function>lpad</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>length</parameter> <type>integer</type>
+        <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extends the <parameter>string</parameter> to length
+        <parameter>length</parameter> by prepending the characters
+        <parameter>fill</parameter> (a space by default).  If the
+        <parameter>string</parameter> is already longer than
+        <parameter>length</parameter> then it is truncated (on the right).
+       </para>
+       <para>
+        <literal>lpad('hi', 5, 'xy')</literal>
+        <returnvalue>xyxhi</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>ltrim</primary>
+        </indexterm>
+        <function>ltrim</function> ( <parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only characters in
+        <parameter>characters</parameter> (a space by default) from the start of
+        <parameter>string</parameter>.
+       </para>
+       <para>
+        <literal>ltrim('zzzytest', 'xyz')</literal>
+        <returnvalue>test</returnvalue>
        </para></entry>
       </row>
 
@@ -2647,6 +2710,49 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         <literal>position('om' in 'Thomas')</literal>
         <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>rpad</primary>
+        </indexterm>
+        <function>rpad</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>length</parameter> <type>integer</type>
+        <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extends the <parameter>string</parameter> to length
+        <parameter>length</parameter> by appending the characters
+        <parameter>fill</parameter> (a space by default).  If the
+        <parameter>string</parameter> is already longer than
+        <parameter>length</parameter> then it is truncated.
+       </para>
+       <para>
+        <literal>rpad('hi', 5, 'xy')</literal>
+        <returnvalue>hixyx</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>rtrim</primary>
+        </indexterm>
+        <function>rtrim</function> ( <parameter>string</parameter> <type>text</type>
+         <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only characters in
+        <parameter>characters</parameter> (a space by default) from the end of
+        <parameter>string</parameter>.
+       </para>
+       <para>
+        <literal>rtrim('testxxzx', 'xyz')</literal>
+        <returnvalue>test</returnvalue>
        </para></entry>
       </row>
 
@@ -2845,26 +2951,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>btrim</primary>
-        </indexterm>
-        <function>btrim</function> ( <parameter>string</parameter> <type>text</type>
-        <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
-        <returnvalue>text</returnvalue>
-       </para>
-       <para>
-        Removes the longest string containing only characters
-        in <parameter>characters</parameter> (a space by default)
-        from the start and end of <parameter>string</parameter>.
-       </para>
-       <para>
-        <literal>btrim('xyxtrimyyx', 'xyz')</literal>
-        <returnvalue>trim</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
          <primary>chr</primary>
         </indexterm>
         <function>chr</function> ( <type>integer</type> )
@@ -2996,49 +3082,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         <literal>length('jose')</literal>
         <returnvalue>4</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>lpad</primary>
-        </indexterm>
-        <function>lpad</function> ( <parameter>string</parameter> <type>text</type>,
-        <parameter>length</parameter> <type>integer</type>
-        <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
-        <returnvalue>text</returnvalue>
-       </para>
-       <para>
-        Extends the <parameter>string</parameter> to length
-        <parameter>length</parameter> by prepending the characters
-        <parameter>fill</parameter> (a space by default).  If the
-        <parameter>string</parameter> is already longer than
-        <parameter>length</parameter> then it is truncated (on the right).
-       </para>
-       <para>
-        <literal>lpad('hi', 5, 'xy')</literal>
-        <returnvalue>xyxhi</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>ltrim</primary>
-        </indexterm>
-        <function>ltrim</function> ( <parameter>string</parameter> <type>text</type>
-        <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
-        <returnvalue>text</returnvalue>
-       </para>
-       <para>
-        Removes the longest string containing only characters in
-        <parameter>characters</parameter> (a space by default) from the start of
-        <parameter>string</parameter>.
-       </para>
-       <para>
-        <literal>ltrim('zzzytest', 'xyz')</literal>
-        <returnvalue>test</returnvalue>
        </para></entry>
       </row>
 
@@ -3502,49 +3545,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         <literal>right('abcde', 2)</literal>
         <returnvalue>de</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>rpad</primary>
-        </indexterm>
-        <function>rpad</function> ( <parameter>string</parameter> <type>text</type>,
-        <parameter>length</parameter> <type>integer</type>
-        <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
-        <returnvalue>text</returnvalue>
-       </para>
-       <para>
-        Extends the <parameter>string</parameter> to length
-        <parameter>length</parameter> by appending the characters
-        <parameter>fill</parameter> (a space by default).  If the
-        <parameter>string</parameter> is already longer than
-        <parameter>length</parameter> then it is truncated.
-       </para>
-       <para>
-        <literal>rpad('hi', 5, 'xy')</literal>
-        <returnvalue>hixyx</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>rtrim</primary>
-        </indexterm>
-        <function>rtrim</function> ( <parameter>string</parameter> <type>text</type>
-         <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
-        <returnvalue>text</returnvalue>
-       </para>
-       <para>
-        Removes the longest string containing only characters in
-        <parameter>characters</parameter> (a space by default) from the end of
-        <parameter>string</parameter>.
-       </para>
-       <para>
-        <literal>rtrim('testxxzx', 'xyz')</literal>
-        <returnvalue>test</returnvalue>
        </para></entry>
       </row>
 
@@ -4141,6 +4141,46 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>btrim</primary>
+        </indexterm>
+        <function>btrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>bytesremoved</parameter> <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only bytes appearing in
+        <parameter>bytesremoved</parameter> from the start and end of
+        <parameter>bytes</parameter>.
+       </para>
+       <para>
+        <literal>btrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+        <returnvalue>\x345678</returnvalue>
+       </para></entry>
+      </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>ltrim</primary>
+         </indexterm>
+         <function>ltrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+         <parameter>bytesremoved</parameter> <type>bytea</type> )
+         <returnvalue>bytea</returnvalue>
+        </para>
+        <para>
+         Removes the longest string containing only bytes appearing in
+         <parameter>bytesremoved</parameter> from the start of
+         <parameter>bytes</parameter>.
+        </para>
+        <para>
+         <literal>ltrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+         <returnvalue>\x34567890</returnvalue>
+        </para></entry>
+       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>octet_length</primary>
         </indexterm>
         <function>octet_length</function> ( <type>bytea</type> )
@@ -4195,6 +4235,26 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <returnvalue>3</returnvalue>
        </para></entry>
       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>rtrim</primary>
+         </indexterm>
+         <function>rtrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+         <parameter>bytesremoved</parameter> <type>bytea</type> )
+         <returnvalue>bytea</returnvalue>
+        </para>
+        <para>
+         Removes the longest string containing only bytes appearing in
+         <parameter>bytesremoved</parameter> from the end of
+         <parameter>bytes</parameter>.
+        </para>
+        <para>
+         <literal>rtrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+         <returnvalue>\x12345678</returnvalue>
+        </para></entry>
+       </row>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
@@ -4309,26 +4369,6 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>btrim</primary>
-        </indexterm>
-        <function>btrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
-        <parameter>bytesremoved</parameter> <type>bytea</type> )
-        <returnvalue>bytea</returnvalue>
-       </para>
-       <para>
-        Removes the longest string containing only bytes appearing in
-        <parameter>bytesremoved</parameter> from the start and end of
-        <parameter>bytes</parameter>.
-       </para>
-       <para>
-       <literal>btrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
-       <returnvalue>\x345678</returnvalue>
-      </para></entry>
-     </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
          <primary>get_bit</primary>
         </indexterm>
         <function>get_bit</function> ( <parameter>bytes</parameter> <type>bytea</type>,
@@ -4407,26 +4447,6 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       </row>
 
       <row>
-        <entry role="func_table_entry"><para role="func_signature">
-         <indexterm>
-          <primary>ltrim</primary>
-         </indexterm>
-         <function>ltrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
-         <parameter>bytesremoved</parameter> <type>bytea</type> )
-         <returnvalue>bytea</returnvalue>
-        </para>
-        <para>
-         Removes the longest string containing only bytes appearing in
-         <parameter>bytesremoved</parameter> from the start of
-         <parameter>bytes</parameter>.
-        </para>
-        <para>
-         <literal>ltrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
-         <returnvalue>\x34567890</returnvalue>
-        </para></entry>
-       </row>
-
-      <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>md5</primary>
@@ -4443,26 +4463,6 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <returnvalue>8ab2d3c9689aaf18&zwsp;b4958c334c82d8b1</returnvalue>
        </para></entry>
       </row>
-
-      <row>
-        <entry role="func_table_entry"><para role="func_signature">
-         <indexterm>
-          <primary>rtrim</primary>
-         </indexterm>
-         <function>rtrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
-         <parameter>bytesremoved</parameter> <type>bytea</type> )
-         <returnvalue>bytea</returnvalue>
-        </para>
-        <para>
-         Removes the longest string containing only bytes appearing in
-         <parameter>bytesremoved</parameter> from the end of
-         <parameter>bytes</parameter>.
-        </para>
-        <para>
-         <literal>rtrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
-         <returnvalue>\x12345678</returnvalue>
-        </para></entry>
-       </row>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
@@ -18354,16 +18354,14 @@ SELECT NULLIF(value, '(none)') ...
     largest or smallest value from a list of any number of expressions.
     The expressions must all be convertible to a common data type, which
     will be the type of the result
-    (see <xref linkend="typeconv-union-case"/> for details).  NULL values
-    in the list are ignored.  The result will be NULL only if all the
-    expressions evaluate to NULL.
+    (see <xref linkend="typeconv-union-case"/> for details).
    </para>
 
    <para>
-    Note that <function>GREATEST</function> and <function>LEAST</function> are not in
-    the SQL standard, but are a common extension.  Some other databases
-    make them return NULL if any argument is NULL, rather than only when
-    all are NULL.
+    NULL values in the argument list are ignored.  The result will be NULL
+    only if all the expressions evaluate to NULL.  (This is a deviation from
+    the SQL standard.  According to the standard, the return value is NULL if
+    any argument is NULL.  Some other databases behave this way.)
    </para>
   </sect2>
  </sect1>

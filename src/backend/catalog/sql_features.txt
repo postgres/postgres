@@ -6,12 +6,13 @@ B015	Embedded MUMPS			NO
 B016	Embedded Pascal			NO	
 B017	Embedded PL/I			NO	
 B021	Direct SQL			YES	
+B030	Enhanced dynamic SQL			NO	
 B031	Basic dynamic SQL			NO	
 B032	Extended dynamic SQL			NO	
-B032	Extended dynamic SQL	01	<describe input statement>	NO	
 B033	Untyped SQL-invoked function arguments			NO	
 B034	Dynamic specification of cursor attributes			NO	
 B035	Non-extended descriptor names			NO	
+B036	Describe input statement			NO	
 B041	Extensions to embedded SQL exception declarations			NO	
 B051	Enhanced execution rights			NO	
 B111	Module language Ada			NO	
@@ -31,7 +32,7 @@ B127	Routine language PL/I			NO
 B128	Routine language SQL			YES	
 B200	Polymorphic table functions			NO	
 B201	More than one PTF generic table parameter			NO	
-B202	PTF Copartitioning			NO	
+B202	PTF copartitioning			NO	
 B203	More than one copartition specification			NO	
 B204	PRUNE WHEN EMPTY			NO	
 B205	Pass-through columns			NO	
@@ -166,9 +167,10 @@ F031	Basic schema manipulation	19	REVOKE statement: RESTRICT clause	YES
 F032	CASCADE drop behavior			YES	
 F033	ALTER TABLE statement: DROP COLUMN clause			YES	
 F034	Extended REVOKE statement			YES	
-F034	Extended REVOKE statement	01	REVOKE statement performed by other than the owner of a schema object	YES	
-F034	Extended REVOKE statement	02	REVOKE statement: GRANT OPTION FOR clause	YES	
-F034	Extended REVOKE statement	03	REVOKE statement to revoke a privilege that the grantee has WITH GRANT OPTION	YES	
+F035	REVOKE with CASCADE			YES	
+F036	REVOKE statement performed by non-owner			YES	
+F037	REVOKE statement: GRANT OPTION FOR clause			YES	
+F038	REVOKE of a WITH GRANT OPTION privilege			YES	
 F041	Basic joined table			YES	
 F041	Basic joined table	01	Inner join (but not necessarily the INNER keyword)	YES	
 F041	Basic joined table	02	INNER keyword	YES	
@@ -191,14 +193,14 @@ F053	OVERLAPS predicate			YES
 F054	TIMESTAMP in DATE type precedence list			NO	
 F081	UNION and EXCEPT in views			YES	
 F111	Isolation levels other than SERIALIZABLE			YES	
-F111	Isolation levels other than SERIALIZABLE	01	READ UNCOMMITTED isolation level	YES	
-F111	Isolation levels other than SERIALIZABLE	02	READ COMMITTED isolation level	YES	
-F111	Isolation levels other than SERIALIZABLE	03	REPEATABLE READ isolation level	YES	
+F112	Isolation level READ UNCOMMITTED			YES	
+F113	Isolation level READ COMMITTED			YES	
+F114	Isolation level REPEATABLE READ			YES	
+F120	Get diagnostics statement			NO	
 F121	Basic diagnostics management			NO	
-F121	Basic diagnostics management	01	GET DIAGNOSTICS statement	NO	
-F121	Basic diagnostics management	02	SET TRANSACTION statement: DIAGNOSTICS SIZE clause	NO	
 F122	Enhanced diagnostics management			NO	
 F123	All diagnostics			NO	
+F124	SET TRANSACTION statement: DIAGNOSTICS SIZE clause			NO	
 F131	Grouped operations			YES	
 F131	Grouped operations	01	WHERE, GROUP BY, and HAVING clauses supported in queries with grouped views	YES	
 F131	Grouped operations	02	Multiple tables supported in queries with grouped views	YES	
@@ -214,9 +216,6 @@ F202	TRUNCATE TABLE: identity column restart option			YES
 F221	Explicit defaults			YES	
 F222	INSERT statement: DEFAULT VALUES clause			YES	
 F231	Privilege tables			YES	
-F231	Privilege tables	01	TABLE_PRIVILEGES view	YES	
-F231	Privilege tables	02	COLUMN_PRIVILEGES view	YES	
-F231	Privilege tables	03	USAGE_PRIVILEGES view	YES	
 F251	Domain support			YES	
 F261	CASE expression			YES	
 F261	CASE expression	01	Simple CASE	YES	
@@ -228,12 +227,13 @@ F263	Comma-separated predicates in simple CASE expression			NO
 F271	Compound character literals			YES	
 F281	LIKE enhancements			YES	
 F291	UNIQUE predicate			NO	
-F292	UNIQUE null treatment			YES	SQL:202x draft
+F292	UNIQUE null treatment			YES	
 F301	CORRESPONDING in query expressions			NO	
 F302	INTERSECT table operator			YES	
-F302	INTERSECT table operator	01	INTERSECT DISTINCT table operator	YES	
+F303	INTERSECT DISTINCT table operator			YES	
 F302	INTERSECT table operator	02	INTERSECT ALL table operator	YES	
 F304	EXCEPT ALL table operator			YES	
+F305	INTERSECT ALL table operator			YES	
 F311	Schema definition statement			YES	
 F311	Schema definition statement	01	CREATE SCHEMA	YES	
 F311	Schema definition statement	02	CREATE TABLE for persistent base tables	YES	
@@ -247,34 +247,34 @@ F321	User authorization			YES
 F341	Usage tables			YES	
 F361	Subprogram support			YES	
 F381	Extended schema manipulation			YES	
-F381	Extended schema manipulation	01	ALTER TABLE statement: ALTER COLUMN clause	YES	
-F381	Extended schema manipulation	02	ALTER TABLE statement: ADD CONSTRAINT clause	YES	
-F381	Extended schema manipulation	03	ALTER TABLE statement: DROP CONSTRAINT clause	YES	
 F382	Alter column data type			YES	
 F383	Set column not null clause			YES	
 F384	Drop identity property clause			YES	
 F385	Drop column generation expression clause			YES	
 F386	Set identity column generation clause			YES	
+F387	ALTER TABLE statement: ALTER COLUMN clause			YES	
+F388	ALTER TABLE statement: ADD/DROP CONSTRAINT clause			YES	
 F391	Long identifiers			YES	
 F392	Unicode escapes in identifiers			YES	
 F393	Unicode escapes in literals			YES	
 F394	Optional normal form specification			YES	
 F401	Extended joined table			YES	
-F401	Extended joined table	01	NATURAL JOIN	YES	
-F401	Extended joined table	02	FULL OUTER JOIN	YES	
-F401	Extended joined table	04	CROSS JOIN	YES	
 F402	Named column joins for LOBs, arrays, and multisets			YES	
 F403	Partitioned join tables			NO	
 F404	Range variable for common column names			YES	
+F405	NATURAL JOIN			YES	
+F406	FULL OUTER JOIN			YES	
+F407	CROSS JOIN			YES	
 F411	Time zone specification			YES	differences regarding literal interpretation
 F421	National character			YES	
 F431	Read-only scrollable cursors			YES	
-F431	Read-only scrollable cursors	01	FETCH with explicit NEXT	YES	
-F431	Read-only scrollable cursors	02	FETCH FIRST	YES	
-F431	Read-only scrollable cursors	03	FETCH LAST	YES	
-F431	Read-only scrollable cursors	04	FETCH PRIOR	YES	
-F431	Read-only scrollable cursors	05	FETCH ABSOLUTE	YES	
-F431	Read-only scrollable cursors	06	FETCH RELATIVE	YES	
+F432	FETCH with explicit NEXT			YES	
+F433	FETCH FIRST			YES	
+F434	FETCH LAST			YES	
+F435	FETCH PRIOR			YES	
+F436	FETCH ABSOLUTE			YES	
+F437	FETCH RELATIVE			YES	
+F438	Scrollable cursors			YES	
 F441	Extended set function support			YES	
 F442	Mixed column references in set functions			YES	
 F451	Character set definition			NO	
@@ -298,7 +298,7 @@ F641	Row and table constructors			YES
 F651	Catalog name qualifiers			YES	
 F661	Simple tables			YES	
 F671	Subqueries in CHECK constraints			NO	intentionally omitted
-F672	Retrospective check constraints			YES	
+F672	Retrospective CHECK constraints			YES	
 F673	Reads SQL-data routine invocations in CHECK constraints			NO	
 F690	Collation support			YES	but no character set support
 F692	Extended collation support			YES	
@@ -322,8 +322,8 @@ F812	Basic flagging			NO
 F813	Extended flagging			NO	
 F821	Local table references			NO	
 F831	Full cursor update			NO	
-F831	Full cursor update	01	Updatable scrollable cursors	NO	
-F831	Full cursor update	02	Updatable ordered cursors	NO	
+F832	Updatable scrollable cursors			NO	
+F833	Updatable ordered cursors			NO	
 F841	LIKE_REGEX predicate			NO	consider regexp_like()
 F842	OCCURRENCES_REGEX function			NO	consider regexp_matches()
 F843	POSITION_REGEX function			NO	consider regexp_instr()
@@ -339,7 +339,7 @@ F856	Nested <fetch first clause> in <query expression>			YES
 F857	Top-level <fetch first clause> in <query expression>			YES	
 F858	<fetch first clause> in subqueries			YES	
 F859	Top-level <fetch first clause> in views			YES	
-F860	<fetch first row count> in <fetch first clause>			YES	
+F860	Dynamic FETCH FIRST row count			YES	
 F861	Top-level <result offset clause> in <query expression>			YES	
 F862	<result offset clause> in subqueries			YES	
 F863	Nested <result offset clause> in <query expression>			YES	
@@ -347,6 +347,7 @@ F864	Top-level <result offset clause> in views			YES
 F865	<offset row count> in <result offset clause>			YES	
 F866	FETCH FIRST clause: PERCENT option			NO	
 F867	FETCH FIRST clause: WITH TIES option			YES	
+F868	ORDER BY in grouped table			YES	
 R010	Row pattern recognition: FROM clause			NO	
 R020	Row pattern recognition: WINDOW clause			NO	
 R030	Row pattern recognition: full aggregate support			NO	
@@ -363,24 +364,24 @@ S043	Enhanced reference types			NO
 S051	Create table of type			NO	partially supported
 S071	SQL paths in function and type name resolution			YES	
 S081	Subtables			NO	
+S090	Minimal array support			YES	
 S091	Basic array support			NO	partially supported
-S091	Basic array support	01	Arrays of built-in data types	YES	
-S091	Basic array support	02	Arrays of distinct types	NO	
-S091	Basic array support	03	Array expressions	YES	
 S092	Arrays of user-defined types			YES	
+S093	Arrays of distinct types			NO	
 S094	Arrays of reference types			NO	
 S095	Array constructors by query			YES	
 S096	Optional array bounds			YES	
 S097	Array element assignment			NO	
 S098	ARRAY_AGG			YES	
+S099	Array expressions			YES	
 S111	ONLY in query expressions			YES	
 S151	Type predicate			NO	see pg_typeof()
 S161	Subtype treatment			NO	
 S162	Subtype treatment for references			NO	
 S201	SQL-invoked routines on arrays			YES	
-S201	SQL-invoked routines on arrays	01	Array parameters	YES	
-S201	SQL-invoked routines on arrays	02	Array as result type of functions	YES	
 S202	SQL-invoked routines on multisets			NO	
+S203	Array parameters			YES	
+S204	Array as result type of functions			YES	
 S211	User-defined cast functions			YES	
 S231	Structured type locators			NO	
 S232	Array locators			NO	
@@ -406,27 +407,34 @@ T022	Advanced support for BINARY and VARBINARY data types			NO
 T023	Compound binary literals			NO	
 T024	Spaces in binary literals			NO	
 T031	BOOLEAN data type			YES	
+T039	CLOB locator: non-holdable			NO	
+T040	Concatenation of CLOBs			NO	
 T041	Basic LOB data type support			NO	
-T041	Basic LOB data type support	01	BLOB data type	NO	
-T041	Basic LOB data type support	02	CLOB data type	NO	
-T041	Basic LOB data type support	03	POSITION, LENGTH, LOWER, TRIM, UPPER, and SUBSTRING functions for LOB data types	NO	
-T041	Basic LOB data type support	04	Concatenation of LOB data types	NO	
-T041	Basic LOB data type support	05	LOB locator: non-holdable	NO	
 T042	Extended LOB data type support			NO	
 T043	Multiplier T			NO	
 T044	Multiplier P			NO	
+T045	BLOB data type			NO	
+T046	CLOB data type			NO	
+T047	POSITION, OCTET_LENGTH, TRIM, and SUBSTRING for BLOBs			NO	
+T048	Concatenation of BLOBs			NO	
+T049	BLOB locator: non-holdable			NO	
+T050	POSITION, CHAR_LENGTH, OCTET_LENGTH, LOWER, TRIM, UPPER, and SUBSTRING CLOBs			NO	
 T051	Row types			NO	
 T053	Explicit aliases for all-fields reference			NO	
+T054	GREATEST and LEAST			YES	different null handling
+T055	String padding functions			YES	
+T056	Multi-character TRIM functions			YES	
 T061	UCS support			NO	
 T071	BIGINT data type			YES	
 T076	DECFLOAT data type			NO	
+T081	Optional string types maximum length			YES	
 T101	Enhanced nullability determination			NO	
 T111	Updatable joins, unions, and columns			NO	
 T121	WITH (excluding RECURSIVE) in query expression			YES	
 T122	WITH (excluding RECURSIVE) in subquery			YES	
 T131	Recursive query			YES	
 T132	Recursive query in subquery			YES	
-T133	Enhanced cycle mark values			YES	SQL:202x draft
+T133	Enhanced cycle mark values			YES	
 T141	SIMILAR predicate			YES	
 T151	DISTINCT predicate			YES	
 T152	DISTINCT predicate with negation			YES	
@@ -441,22 +449,21 @@ T178	Identity columns: simple restart option			YES
 T180	System-versioned tables			NO	
 T181	Application-time period tables			NO	
 T191	Referential action RESTRICT			YES	
+T200	Trigger DDL			NO	similar but not fully compatible
 T201	Comparable data types for referential constraints			YES	
 T211	Basic trigger capability			NO	
-T211	Basic trigger capability	01	Triggers activated on UPDATE, INSERT, or DELETE of one base table	YES	
-T211	Basic trigger capability	02	BEFORE triggers	YES	
-T211	Basic trigger capability	03	AFTER triggers	YES	
-T211	Basic trigger capability	04	FOR EACH ROW triggers	YES	
-T211	Basic trigger capability	05	Ability to specify a search condition that must be true before the trigger is invoked	YES	
-T211	Basic trigger capability	06	Support for run-time rules for the interaction of triggers and constraints	NO	
-T211	Basic trigger capability	07	TRIGGER privilege	YES	
-T211	Basic trigger capability	08	Multiple triggers for the same event are executed in the order in which they were created in the catalog	NO	intentionally omitted
 T212	Enhanced trigger capability			YES	
 T213	INSTEAD OF triggers			YES	
+T214	BEFORE triggers			YES	
+T215	AFTER triggers			YES	
+T216	Ability to require true search condition before trigger is invoked			YES	
+T217	TRIGGER privilege			YES	
+T218	Multiple triggers for the same event executed in the order created			NO	intentionally omitted
 T231	Sensitive cursors			NO	
 T241	START TRANSACTION statement			YES	
 T251	SET TRANSACTION statement: LOCAL option			NO	
 T261	Chained transactions			YES	
+T262	Multiple server transactions			NO	
 T271	Savepoints			YES	
 T272	Enhanced savepoint management			NO	
 T281	SELECT privilege with column granularity			YES	
@@ -520,7 +527,8 @@ T622	Trigonometric functions			YES
 T623	General logarithm functions			YES	
 T624	Common logarithm functions			YES	
 T625	LISTAGG			NO	
-T626	ANY_VALUE			YES	SQL:202x draft
+T626	ANY_VALUE			YES	
+T627	Window framed COUNT DISTINCT			YES	
 T631	IN predicate with one list element			YES	
 T641	Multiple column assignment			NO	only some syntax variants supported
 T651	SQL-schema statements in SQL routines			YES	
@@ -528,8 +536,12 @@ T652	SQL-dynamic statements in SQL routines			NO
 T653	SQL-schema statements in external routines			YES	
 T654	SQL-dynamic statements in external routines			NO	
 T655	Cyclically dependent routines			YES	
-T661	Non-decimal integer literals			YES	SQL:202x draft
-T662	Underscores in integer literals			YES	SQL:202x draft
+T661	Non-decimal integer literals			YES	
+T662	Underscores in numeric literals			YES	
+T670	Schema and data statement mixing			YES	
+T801	JSON data type			NO	
+T802	Enhanced JSON data type			NO	
+T803	String-based JSON			NO	
 T811	Basic SQL/JSON constructor functions			NO	
 T812	SQL/JSON: JSON_OBJECTAGG			NO	
 T813	SQL/JSON: JSON_ARRAYAGG with ORDER BY			NO	
@@ -553,7 +565,31 @@ T836	SQL/JSON path language: starts with predicate			YES
 T837	SQL/JSON path language: regex_like predicate			YES	
 T838	JSON_TABLE: PLAN DEFAULT clause			NO	
 T839	Formatted cast of datetimes to/from character strings			NO	
-T840	Hex integer literals in SQL/JSON path language			YES	SQL:202x draft
+T840	Hex integer literals in SQL/JSON path language			YES	
+T851	SQL/JSON: optional keywords for default syntax			NO	
+T860	SQL/JSON simplified accessor: column reference only			NO	
+T861	SQL/JSON simplified accessor: case-sensitive JSON member accessor			NO	
+T862	SQL/JSON simplified accessor: wildcard member accessor			NO	
+T863	SQL/JSON simplified accessor: single-quoted string literal as member accessor			NO	
+T864	SQL/JSON simplified accessor			NO	
+T865	SQL/JSON item method: bigint()			NO	
+T866	SQL/JSON item method: boolean()			NO	
+T867	SQL/JSON item method: date()			NO	
+T868	SQL/JSON item method: decimal()			NO	
+T869	SQL/JSON item method: decimal() with precision and scale			NO	
+T870	SQL/JSON item method: integer()			NO	
+T871	SQL/JSON item method: number()			NO	
+T872	SQL/JSON item method: string()			NO	
+T873	SQL/JSON item method: time()			NO	
+T874	SQL/JSON item method: time_tz()			NO	
+T875	SQL/JSON item method: time precision			NO	
+T876	SQL/JSON item method: timestamp()			NO	
+T877	SQL/JSON item method: timestamp_tz()			NO	
+T878	SQL/JSON item method: timestamp precision			NO	
+T879	JSON in equality operations			NO	
+T880	JSON in grouping operations			NO	
+T881	JSON in ordering operations			NO	
+T882	JSON in multiset element grouping operations			NO	
 M001	Datalinks			NO	
 M002	Datalinks via SQL/CLI			NO	
 M003	Datalinks via Embedded SQL			NO	
