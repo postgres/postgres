@@ -97,26 +97,32 @@ docs += postgres_full_xml
 alldocs += postgres_full_xml
 
 
-#
-# Full documentation as html, text
-#
 if xsltproc_bin.found()
   xsltproc_flags = [
     '--nonet',
     '--stringparam', 'pg.version', pg_version,
-    '--param', 'website.stylesheet', '1'
+    '--path', '@OUTDIR@',
   ]
 
   xsltproc = xmltools_wrapper + [
     '--tool', xsltproc_bin, '--',
   ]
 
+  xsltproc_html_flags = xsltproc_flags + [
+    '--param', 'website.stylesheet', '1'
+  ]
+endif
+
+
+#
+# Full documentation as html, text
+#
+if xsltproc_bin.found()
   html = custom_target('html',
     input: ['stylesheet.xsl', postgres_full_xml],
     output: 'html',
     depfile: 'html.d',
-    depends: doc_generated,
-    command: [xsltproc, '-o', '@OUTDIR@/', xsltproc_flags, '@INPUT@'],
+    command: [xsltproc, '-o', '@OUTDIR@/', xsltproc_html_flags, '@INPUT@'],
     build_by_default: false,
   )
   alldocs += html
@@ -140,8 +146,7 @@ if xsltproc_bin.found()
     input: ['stylesheet-html-nochunk.xsl', postgres_full_xml],
     output: 'postgres.html',
     depfile: 'postgres.html.d',
-    depends: doc_generated,
-    command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTPUT@', xsltproc_flags, '@INPUT@'],
+    command: [xsltproc, '-o', '@OUTPUT@', xsltproc_html_flags, '@INPUT@'],
     build_by_default: false,
   )
   alldocs += postgres_html
@@ -151,7 +156,6 @@ if xsltproc_bin.found()
     postgres_txt = custom_target('postgres.txt',
       input: [postgres_html],
       output: 'postgres.txt',
-      depends: doc_generated,
       command: [pandoc, '-t', 'plain', '-o', '@OUTPUT@', '@INPUT@'],
       build_by_default: false,
     )
@@ -164,19 +168,21 @@ endif
 # INSTALL in html, text
 #
 if xsltproc_bin.found()
+  # Depend on postgres_full_xml, so validity errors are raised in one place,
+  # and so dependencies don't need to be re-specified.
   install_xml = custom_target('INSTALL.xml',
     input: ['standalone-profile.xsl', 'standalone-install.xml'],
     output: 'INSTALL.xml',
     depfile: 'INSTALL.xml.d',
-    depends: doc_generated + [postgres_full_xml],
-    command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTPUT@', xsltproc_flags, '--xinclude', '@INPUT@'],
+    depends: postgres_full_xml,
+    command: [xsltproc, '-o', '@OUTPUT@', xsltproc_flags, '--xinclude', '@INPUT@'],
     build_by_default: false,
   )
   install_html = custom_target('INSTALL.html',
     input: ['stylesheet-text.xsl', install_xml],
     output: 'INSTALL.html',
     depfile: 'INSTALL.html.d',
-    command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTPUT@', xsltproc_flags, '@INPUT@'],
+    command: [xsltproc, '-o', '@OUTPUT@', xsltproc_html_flags, '@INPUT@'],
     build_by_default: false,
   )
   alldocs += install_html
@@ -204,8 +210,7 @@ if xsltproc_bin.found()
     input: ['stylesheet-man.xsl', postgres_full_xml],
     output: ['man1', 'man3', 'man7'],
     depfile: 'man.d',
-    depends: doc_generated,
-    command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTDIR@/', xsltproc_flags, '@INPUT@'],
+    command: [xsltproc, '-o', '@OUTDIR@/', xsltproc_html_flags, '@INPUT@'],
     build_by_default: false,
   )
   alldocs += man
@@ -229,7 +234,9 @@ endif
 # Full documentation as PDF
 #
 if fop.found() and xsltproc_bin.found()
-  xsltproc_fo_flags = xsltproc_flags + ['--stringparam', 'img.src.path', meson.current_source_dir() + '/']
+  xsltproc_fo_flags = xsltproc_flags + [
+    '--stringparam', 'img.src.path', meson.current_source_dir() + '/'
+  ]
 
   foreach format, detail: {'A4': 'A4', 'US': 'USletter'}
     postgres_x_fo_f = 'postgres-@0@.fo'.format(format)
@@ -239,9 +246,8 @@ if fop.found() and xsltproc_bin.found()
     postgres_x_fo = custom_target(postgres_x_fo_f,
       input: ['stylesheet-fo.xsl', postgres_full_xml],
       output: postgres_x_fo_f,
-      depends: doc_generated,
       depfile: postgres_x_fo_dep,
-      command: [xsltproc, '--path', '@OUTDIR@/', xsltproc_fo_flags,
+      command: [xsltproc, xsltproc_fo_flags,
                 '--stringparam', 'paper.type', detail,
                 '-o', '@OUTPUT@', '@INPUT@'],
       build_by_default: false,
