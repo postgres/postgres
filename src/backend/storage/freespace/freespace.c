@@ -608,10 +608,9 @@ static void
 fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 {
 	BlockNumber fsm_nblocks_now;
-	PGAlignedBlock pg;
+	PGAlignedBlock pg = {0};
 	SMgrRelation reln;
 
-	PageInit((Page) pg.data, BLCKSZ, 0);
 
 	/*
 	 * We use the relation extension lock to lock out other backends trying to
@@ -649,8 +648,6 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 	/* Extend as needed. */
 	while (fsm_nblocks_now < fsm_nblocks)
 	{
-		PageSetChecksumInplace((Page) pg.data, fsm_nblocks_now);
-
 		smgrextend(reln, FSM_FORKNUM, fsm_nblocks_now,
 				   pg.data, false);
 		fsm_nblocks_now++;
