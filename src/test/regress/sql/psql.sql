@@ -1022,7 +1022,7 @@ select \if false \\ (bogus \else \\ 42 \endif \\ forty_two;
 	\timing arg1
 	\unset arg1
 	\w arg1
-	\watch arg1
+	\watch arg1 arg2
 	\x arg1
 	-- \else here is eaten as part of OT_FILEPIPE argument
 	\w |/no/such/file \else

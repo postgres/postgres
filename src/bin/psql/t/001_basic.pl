@@ -350,21 +350,38 @@ psql_like(
 	'\copy from with DEFAULT'
 );
 
+# Check \watch
+psql_like(
+	$node,
+	'SELECT 1 \watch c=3 i=0.01',
+	qr/1\n1\n1/,
+	'\watch with 3 iterations');
+
 # Check \watch errors
 psql_fails_like(
 	$node,
-	'SELECT 1;\watch -10',
-	qr/incorrect interval value '-10'/,
+	'SELECT 1 \watch -10',
+	qr/incorrect interval value "-10"/,
 	'\watch, negative interval');
 psql_fails_like(
 	$node,
-	'SELECT 1;\watch 10ab',
-	qr/incorrect interval value '10ab'/,
-	'\watch incorrect interval');
+	'SELECT 1 \watch 10ab',
+	qr/incorrect interval value "10ab"/,
+	'\watch, incorrect interval');
 psql_fails_like(
 	$node,
-	'SELECT 1;\watch 10e400',
-	qr/incorrect interval value '10e400'/,
-	'\watch out-of-range interval');
+	'SELECT 1 \watch 10e400',
+	qr/incorrect interval value "10e400"/,
+	'\watch, out-of-range interval');
+psql_fails_like(
+	$node,
+	'SELECT 1 \watch 1 1',
+	qr/interval value is specified more than once/,
+	'\watch, interval value is specified more than once');
+psql_fails_like(
+	$node,
+	'SELECT 1 \watch c=1 c=1',
+	qr/iteration count is specified more than once/,
+	'\watch, iteration count is specified more than once');
 
 done_testing();

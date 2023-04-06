@@ -200,7 +200,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\gset [PREFIX]         execute query and store result in psql variables\n");
 	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
 	HELP0("  \\q                     quit psql\n");
-	HELP0("  \\watch [SEC]           execute query every SEC seconds\n");
+	HELP0("  \\watch [[i=]SEC] [c=N] execute query every SEC seconds, up to N times\n");
 	HELP0("\n");
 
 	HELP0("Help\n");
