@@ -134,14 +134,17 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
  * To avoid complexity in the callers, either buffer1 or buffer2 may be
  * InvalidBuffer if only one buffer is involved. For the same reason, block2
  * may be smaller than block1.
+ *
+ * Returns whether buffer locks were temporarily released.
  */
-static void
+static bool
 GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 					 BlockNumber block1, BlockNumber block2,
 					 Buffer *vmbuffer1, Buffer *vmbuffer2)
 {
 	bool		need_to_pin_buffer1;
 	bool		need_to_pin_buffer2;
+	bool		released_locks = false;
 
 	/*
 	 * Swap buffers around to handle case of a single block/buffer, and to
@@ -175,9 +178,10 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 			&& PageIsAllVisible(BufferGetPage(buffer2))
 			&& !visibilitymap_pin_ok(block2, *vmbuffer2);
 		if (!need_to_pin_buffer1 && !need_to_pin_buffer2)
-			return;
+			break;
 
 		/* We must unlock both buffers before doing any I/O. */
+		released_locks = true;
 		LockBuffer(buffer1, BUFFER_LOCK_UNLOCK);
 		if (buffer2 != InvalidBuffer && buffer2 != buffer1)
 			LockBuffer(buffer2, BUFFER_LOCK_UNLOCK);
@@ -203,6 +207,8 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 			|| (need_to_pin_buffer1 && need_to_pin_buffer2))
 			break;
 	}
+
+	return released_locks;
 }
 
 /*
@@ -365,6 +371,8 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	BlockNumber targetBlock,
 				otherBlock;
 	bool		needLock;
+	bool		unlockedTargetBuffer;
+	bool		recheckVmPins;
 
 	len = MAXALIGN(len);		/* be conservative */
 
@@ -645,6 +653,9 @@ loop:
 	if (needLock)
 		UnlockRelationForExtension(relation, ExclusiveLock);
 
+	unlockedTargetBuffer = false;
+	targetBlock = BufferGetBlockNumber(buffer);
+
 	/*
 	 * We need to initialize the empty new page.  Double-check that it really
 	 * is empty (this should never happen, but if it does we don't want to
@@ -654,75 +665,108 @@ loop:
 
 	if (!PageIsNew(page))
 		elog(ERROR, "page %u of relation \"%s\" should be empty but is not",
-			 BufferGetBlockNumber(buffer),
+			 targetBlock,
 			 RelationGetRelationName(relation));
 
 	PageInit(page, BufferGetPageSize(buffer), 0);
 	MarkBufferDirty(buffer);
 
 	/*
-	 * The page is empty, pin vmbuffer to set all_frozen bit.
+	 * The page is empty, pin vmbuffer to set all_frozen bit. We don't want to
+	 * do IO while the buffer is locked, so we unlock the page first if IO is
+	 * needed (necessitating checks below).
 	 */
 	if (options & HEAP_INSERT_FROZEN)
 	{
-		Assert(PageGetMaxOffsetNumber(BufferGetPage(buffer)) == 0);
-		visibilitymap_pin(relation, BufferGetBlockNumber(buffer), vmbuffer);
+		Assert(PageGetMaxOffsetNumber(page) == 0);
+
+		if (!visibilitymap_pin_ok(targetBlock, *vmbuffer))
+		{
+			unlockedTargetBuffer = true;
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			visibilitymap_pin(relation, targetBlock, vmbuffer);
+		}
 	}
 
 	/*
-	 * Lock the other buffer. It's guaranteed to be of a lower page number
-	 * than the new page. To conform with the deadlock prevent rules, we ought
-	 * to lock otherBuffer first, but that would give other backends a chance
-	 * to put tuples on our page. To reduce the likelihood of that, attempt to
-	 * lock the other buffer conditionally, that's very likely to work.
-	 * Otherwise we need to lock buffers in the correct order, and retry if
-	 * the space has been used in the mean time.
+	 * Reacquire locks if necessary.
 	 *
-	 * Alternatively, we could acquire the lock on otherBuffer before
-	 * extending the relation, but that'd require holding the lock while
-	 * performing IO, which seems worse than an unlikely retry.
+	 * If the target buffer was unlocked above, or is unlocked while
+	 * reacquiring the lock on otherBuffer below, it's unlikely, but possible,
+	 * that another backend used space on this page. We check for that below,
+	 * and retry if necessary.
 	 */
-	if (otherBuffer != InvalidBuffer)
+	recheckVmPins = false;
+	if (unlockedTargetBuffer)
 	{
+		/* released lock on target buffer above */
+		if (otherBuffer != InvalidBuffer)
+			LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
+		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+		recheckVmPins = true;
+	}
+	else if (otherBuffer != InvalidBuffer)
+	{
+		/*
+		 * We did not release the target buffer, and otherBuffer is valid,
+		 * need to lock the other buffer. It's guaranteed to be of a lower
+		 * page number than the new page.  To conform with the deadlock
+		 * prevent rules, we ought to lock otherBuffer first, but that would
+		 * give other backends a chance to put tuples on our page. To reduce
+		 * the likelihood of that, attempt to lock the other buffer
+		 * conditionally, that's very likely to work.
+		 *
+		 * Alternatively, we could acquire the lock on otherBuffer before
+		 * extending the relation, but that'd require holding the lock while
+		 * performing IO, which seems worse than an unlikely retry.
+		 */
 		Assert(otherBuffer != buffer);
-		targetBlock = BufferGetBlockNumber(buffer);
 		Assert(targetBlock > otherBlock);
 
 		if (unlikely(!ConditionalLockBuffer(otherBuffer)))
 		{
+			unlockedTargetBuffer = true;
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		}
+		recheckVmPins = true;
+	}
 
-		/*
-		 * Because the buffers were unlocked for a while, it's possible,
-		 * although unlikely, that an all-visible flag became set or that
-		 * somebody used up the available space in the new page.  We can use
-		 * GetVisibilityMapPins to deal with the first case.  In the second
-		 * case, just retry from start.
-		 */
-		GetVisibilityMapPins(relation, otherBuffer, buffer,
-							 otherBlock, targetBlock, vmbuffer_other,
-							 vmbuffer);
+	/*
+	 * If one of the buffers was unlocked (always the case if otherBuffer is
+	 * valid), it's possible, although unlikely, that an all-visible flag
+	 * became set.  We can use GetVisibilityMapPins to deal with that. It's
+	 * possible that GetVisibilityMapPins() might need to temporarily release
+	 * buffer locks, in which case we'll need to check if there's still enough
+	 * space on the page below.
+	 */
+	if (recheckVmPins)
+	{
+		if (GetVisibilityMapPins(relation, otherBuffer, buffer,
+								 otherBlock, targetBlock, vmbuffer_other,
+								 vmbuffer))
+			unlockedTargetBuffer = true;
+	}
 
-		/*
-		 * Note that we have to check the available space even if our
-		 * conditional lock succeeded, because GetVisibilityMapPins might've
-		 * transiently released lock on the target buffer to acquire a VM pin
-		 * for the otherBuffer.
-		 */
-		if (len > PageGetHeapFreeSpace(page))
+	/*
+	 * If the target buffer was temporarily unlocked since the relation
+	 * extension, it's possible, although unlikely, that all the space on the
+	 * page was already used. If so, we just retry from the start.  If we
+	 * didn't unlock, something has gone wrong if there's not enough space -
+	 * the test at the top should have prevented reaching this case.
+	 */
+	pageFreeSpace = PageGetHeapFreeSpace(page);
+	if (len > pageFreeSpace)
+	{
+		if (unlockedTargetBuffer)
 		{
-			LockBuffer(otherBuffer, BUFFER_LOCK_UNLOCK);
+			if (otherBuffer != InvalidBuffer)
+				LockBuffer(otherBuffer, BUFFER_LOCK_UNLOCK);
 			UnlockReleaseBuffer(buffer);
 
 			goto loop;
 		}
-	}
-	else if (len > PageGetHeapFreeSpace(page))
-	{
-		/* We should not get here given the test at the top */
 		elog(PANIC, "tuple is too big: size %zu", len);
 	}
 
@@ -735,7 +779,7 @@ loop:
 	 * current backend to make more insertions or not, which is probably a
 	 * good bet most of the time.  So for now, don't add it to FSM yet.
 	 */
-	RelationSetTargetBlock(relation, BufferGetBlockNumber(buffer));
+	RelationSetTargetBlock(relation, targetBlock);
 
 	return buffer;
 }
