@@ -153,8 +153,6 @@ typedef struct LVRelState
 	bool		aggressive;
 	/* Use visibility map to skip? (disabled by DISABLE_PAGE_SKIPPING) */
 	bool		skipwithvm;
-	/* Wraparound failsafe has been triggered? */
-	bool		failsafe_active;
 	/* Consider index vacuuming bypass optimization? */
 	bool		consider_bypass_optimization;
 
@@ -391,7 +389,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	Assert(params->index_cleanup != VACOPTVALUE_UNSPECIFIED);
 	Assert(params->truncate != VACOPTVALUE_UNSPECIFIED &&
 		   params->truncate != VACOPTVALUE_AUTO);
-	vacrel->failsafe_active = false;
+	VacuumFailsafeActive = false;
 	vacrel->consider_bypass_optimization = true;
 	vacrel->do_index_vacuuming = true;
 	vacrel->do_index_cleanup = true;
@@ -709,7 +707,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			}
 			else
 			{
-				if (!vacrel->failsafe_active)
+				if (!VacuumFailsafeActive)
 					appendStringInfoString(&buf, _("index scan bypassed: "));
 				else
 					appendStringInfoString(&buf, _("index scan bypassed by failsafe: "));
@@ -2293,7 +2291,7 @@ lazy_vacuum(LVRelState *vacrel)
 		 * vacuuming or heap vacuuming.  This VACUUM operation won't end up
 		 * back here again.
 		 */
-		Assert(vacrel->failsafe_active);
+		Assert(VacuumFailsafeActive);
 	}
 
 	/*
@@ -2374,7 +2372,7 @@ lazy_vacuum_all_indexes(LVRelState *vacrel)
 	 */
 	Assert(vacrel->num_index_scans > 0 ||
 		   vacrel->dead_items->num_items == vacrel->lpdead_items);
-	Assert(allindexes || vacrel->failsafe_active);
+	Assert(allindexes || VacuumFailsafeActive);
 
 	/*
 	 * Increase and report the number of index scans.
@@ -2616,12 +2614,12 @@ static bool
 lazy_check_wraparound_failsafe(LVRelState *vacrel)
 {
 	/* Don't warn more than once per VACUUM */
-	if (vacrel->failsafe_active)
+	if (VacuumFailsafeActive)
 		return true;
 
 	if (unlikely(vacuum_xid_failsafe_check(&vacrel->cutoffs)))
 	{
-		vacrel->failsafe_active = true;
+		VacuumFailsafeActive = true;
 
 		/*
 		 * Abandon use of a buffer access strategy to allow use of all of
@@ -2820,7 +2818,7 @@ should_attempt_truncation(LVRelState *vacrel)
 {
 	BlockNumber possibly_freeable;
 
-	if (!vacrel->do_rel_truncate || vacrel->failsafe_active ||
+	if (!vacrel->do_rel_truncate || VacuumFailsafeActive ||
 		old_snapshot_threshold >= 0)
 		return false;
 
