@@ -301,6 +301,11 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
  *	Returns pinned and exclusive-locked buffer of a page in given relation
  *	with free space >= given len.
  *
+ *	If num_pages is > 1, we will try to extend the relation by at least that
+ *	many pages when we decide to extend the relation. This is more efficient
+ *	for callers that know they will need multiple pages
+ *	(e.g. heap_multi_insert()).
+ *
  *	If otherBuffer is not InvalidBuffer, then it references a previously
  *	pinned buffer of another page in the same relation; on return, this
  *	buffer will also be exclusive-locked.  (This case is used by heap_update;
@@ -359,7 +364,8 @@ Buffer
 RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer, int options,
 						  BulkInsertState bistate,
-						  Buffer *vmbuffer, Buffer *vmbuffer_other)
+						  Buffer *vmbuffer, Buffer *vmbuffer_other,
+						  int num_pages)
 {
 	bool		use_fsm = !(options & HEAP_INSERT_SKIP_FSM);
 	Buffer		buffer = InvalidBuffer;
