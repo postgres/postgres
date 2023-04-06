@@ -206,14 +206,14 @@ _hash_getnewbuf(Relation rel, BlockNumber blkno, ForkNumber forkNum)
 		elog(ERROR, "access to noncontiguous page in hash index \"%s\"",
 			 RelationGetRelationName(rel));
 
-	/* smgr insists we use P_NEW to extend the relation */
+	/* smgr insists we explicitly extend the relation */
 	if (blkno == nblocks)
 	{
-		buf = ReadBufferExtended(rel, forkNum, P_NEW, RBM_NORMAL, NULL);
+		buf = ExtendBufferedRel(EB_REL(rel), forkNum, NULL,
+								EB_LOCK_FIRST | EB_SKIP_EXTENSION_LOCK);
 		if (BufferGetBlockNumber(buf) != blkno)
 			elog(ERROR, "unexpected hash relation size: %u, should be %u",
 				 BufferGetBlockNumber(buf), blkno);
-		LockBuffer(buf, HASH_WRITE);
 	}
 	else
 	{

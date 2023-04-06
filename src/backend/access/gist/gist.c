@@ -134,8 +134,8 @@ gistbuildempty(Relation index)
 	Buffer		buffer;
 
 	/* Initialize the root page */
-	buffer = ReadBufferExtended(index, INIT_FORKNUM, P_NEW, RBM_NORMAL, NULL);
-	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+	buffer = ExtendBufferedRel(EB_REL(index), INIT_FORKNUM, NULL,
+							   EB_SKIP_EXTENSION_LOCK | EB_LOCK_FIRST);
 
 	/* Initialize and xlog buffer */
 	START_CRIT_SECTION();
