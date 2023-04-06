@@ -63,9 +63,6 @@ extern int	StartAutoVacWorker(void);
 /* called from postmaster when a worker could not be forked */
 extern void AutoVacWorkerFailed(void);
 
-/* autovacuum cost-delay balancer */
-extern void AutoVacuumUpdateDelay(void);
-
 #ifdef EXEC_BACKEND
 extern void AutoVacLauncherMain(int argc, char *argv[]) pg_attribute_noreturn();
 extern void AutoVacWorkerMain(int argc, char *argv[]) pg_attribute_noreturn();

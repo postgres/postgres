@@ -307,6 +307,8 @@ extern PGDLLIMPORT pg_atomic_uint32 *VacuumActiveNWorkers;
 extern PGDLLIMPORT int VacuumCostBalanceLocal;
 
 extern PGDLLIMPORT bool VacuumFailsafeActive;
+extern PGDLLIMPORT double vacuum_cost_delay;
+extern PGDLLIMPORT int vacuum_cost_limit;
 
 /* in commands/vacuum.c */
 extern void ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel);
@@ -346,6 +348,9 @@ extern IndexBulkDeleteResult *vac_bulkdel_one_index(IndexVacuumInfo *ivinfo,
 extern IndexBulkDeleteResult *vac_cleanup_one_index(IndexVacuumInfo *ivinfo,
 													IndexBulkDeleteResult *istat);
 extern Size vac_max_items_to_alloc_size(int max_items);
+
+/* In postmaster/autovacuum.c */
+extern void VacuumUpdateCosts(void);
 
 /* in commands/vacuumparallel.c */
 extern ParallelVacuumState *parallel_vacuum_init(Relation rel, Relation *indrels,

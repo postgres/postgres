@@ -1773,16 +1773,24 @@ FreeWorkerInfo(int code, Datum arg)
 }
 
 /*
- * Update the cost-based delay parameters, so that multiple workers consume
- * each a fraction of the total available I/O.
+ * Update vacuum cost-based delay-related parameters for autovacuum workers and
+ * backends executing VACUUM or ANALYZE using the value of relevant GUCs and
+ * global state. This must be called during setup for vacuum and after every
+ * config reload to ensure up-to-date values.
  */
 void
-AutoVacuumUpdateDelay(void)
+VacuumUpdateCosts(void)
 {
 	if (MyWorkerInfo)
 	{
-		VacuumCostDelay = MyWorkerInfo->wi_cost_delay;
-		VacuumCostLimit = MyWorkerInfo->wi_cost_limit;
+		vacuum_cost_delay = MyWorkerInfo->wi_cost_delay;
+		vacuum_cost_limit = MyWorkerInfo->wi_cost_limit;
+	}
+	else
+	{
+		/* Must be explicit VACUUM or ANALYZE */
+		vacuum_cost_delay = VacuumCostDelay;
+		vacuum_cost_limit = VacuumCostLimit;
 	}
 }
 
@@ -2311,8 +2319,6 @@ do_autovacuum(void)
 		autovac_table *tab;
 		bool		isshared;
 		bool		skipit;
-		double		stdVacuumCostDelay;
-		int			stdVacuumCostLimit;
 		dlist_iter	iter;
 
 		CHECK_FOR_INTERRUPTS();
@@ -2415,14 +2421,6 @@ do_autovacuum(void)
 			continue;
 		}
 
-		/*
-		 * Remember the prevailing values of the vacuum cost GUCs.  We have to
-		 * restore these at the bottom of the loop, else we'll compute wrong
-		 * values in the next iteration of autovac_balance_cost().
-		 */
-		stdVacuumCostDelay = VacuumCostDelay;
-		stdVacuumCostLimit = VacuumCostLimit;
-
 		/* Must hold AutovacuumLock while mucking with cost balance info */
 		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
 
@@ -2436,7 +2434,7 @@ do_autovacuum(void)
 		autovac_balance_cost();
 
 		/* set the active cost parameters from the result of that */
-		AutoVacuumUpdateDelay();
+		VacuumUpdateCosts();
 
 		/* done */
 		LWLockRelease(AutovacuumLock);
@@ -2533,10 +2531,6 @@ deleted:
 		MyWorkerInfo->wi_tableoid = InvalidOid;
 		MyWorkerInfo->wi_sharedrel = false;
 		LWLockRelease(AutovacuumScheduleLock);
-
-		/* restore vacuum cost GUCs for the next iteration */
-		VacuumCostDelay = stdVacuumCostDelay;
-		VacuumCostLimit = stdVacuumCostLimit;
 	}
 
 	/*
