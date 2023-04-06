@@ -18,8 +18,8 @@
  */
 #include "postgres_fe.h"
 
+#include "common.h"
 #include "psqlscanslash.h"
-#include "settings.h"
 
 #include "common/logging.h"
 #include "fe_utils/conditional.h"
@@ -807,7 +807,7 @@ evaluate_backtick(PsqlScanState state)
 	if (fd)
 	{
 		/*
-		 * Although pclose's result always sets SHELL_EXIT_CODE, we
+		 * Although pclose's result always sets the shell result variables, we
 		 * historically have abandoned the backtick substitution only if it
 		 * returns -1.
 		 */
@@ -839,10 +839,8 @@ evaluate_backtick(PsqlScanState state)
 		appendBinaryPQExpBuffer(output_buf, cmd_output.data, cmd_output.len);
 	}
 
-	/* And finally, set the shell error variables */
-	snprintf(buf, sizeof(buf), "%d", wait_result_to_exit_code(exit_code));
-	SetVariable(pset.vars, "SHELL_EXIT_CODE", buf);
-	SetVariable(pset.vars, "SHELL_ERROR", (exit_code == 0) ? "false" : "true");
+	/* And finally, set the shell result variables */
+	SetShellResultVariables(exit_code);
 
 	termPQExpBuffer(&cmd_output);
 }

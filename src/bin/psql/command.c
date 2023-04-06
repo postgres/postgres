@@ -2734,6 +2734,7 @@ exec_command_write(PsqlScanState scan_state, bool active_branch,
 					pg_log_error("%s: %s", fname, wait_result_to_str(result));
 					status = PSQL_CMD_ERROR;
 				}
+				SetShellResultVariables(result);
 			}
 			else
 			{
@@ -5119,20 +5120,7 @@ do_shell(const char *command)
 	else
 		result = system(command);
 
-	if (result == 0)
-	{
-		SetVariable(pset.vars, "SHELL_EXIT_CODE", "0");
-		SetVariable(pset.vars, "SHELL_ERROR", "false");
-	}
-	else
-	{
-		int			exit_code = wait_result_to_exit_code(result);
-		char		buf[32];
-
-		snprintf(buf, sizeof(buf), "%d", exit_code);
-		SetVariable(pset.vars, "SHELL_EXIT_CODE", buf);
-		SetVariable(pset.vars, "SHELL_ERROR", "true");
-	}
+	SetShellResultVariables(result);
 
 	if (result == 127 || result == -1)
 	{

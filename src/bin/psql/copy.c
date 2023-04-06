@@ -391,6 +391,7 @@ do_copy(const char *args)
 				}
 				success = false;
 			}
+			SetShellResultVariables(pclose_rc);
 			restore_sigpipe_trap();
 		}
 		else
