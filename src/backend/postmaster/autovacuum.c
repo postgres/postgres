@@ -3140,6 +3140,9 @@ relation_needs_vacanalyze(Oid relid,
 /*
  * autovacuum_do_vac_analyze
  *		Vacuum and/or analyze the specified table
+ *
+ * We expect the caller to have switched into a memory context that won't
+ * disappear at transaction commit.
  */
 static void
 autovacuum_do_vac_analyze(autovac_table *tab, BufferAccessStrategy bstrategy)
@@ -3147,6 +3150,7 @@ autovacuum_do_vac_analyze(autovac_table *tab, BufferAccessStrategy bstrategy)
 	RangeVar   *rangevar;
 	VacuumRelation *rel;
 	List	   *rel_list;
+	MemoryContext vac_context;
 
 	/* Let pgstat know what we're doing */
 	autovac_report_activity(tab);
@@ -3156,7 +3160,13 @@ autovacuum_do_vac_analyze(autovac_table *tab, BufferAccessStrategy bstrategy)
 	rel = makeVacuumRelation(rangevar, tab->at_relid, NIL);
 	rel_list = list_make1(rel);
 
-	vacuum(rel_list, &tab->at_params, bstrategy, true);
+	vac_context = AllocSetContextCreate(CurrentMemoryContext,
+										"Vacuum",
+										ALLOCSET_DEFAULT_SIZES);
+
+	vacuum(rel_list, &tab->at_params, bstrategy, vac_context, true);
+
+	MemoryContextDelete(vac_context);
 }
 
 /*

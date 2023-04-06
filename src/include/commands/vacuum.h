@@ -310,7 +310,8 @@ extern PGDLLIMPORT int VacuumCostBalanceLocal;
 /* in commands/vacuum.c */
 extern void ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel);
 extern void vacuum(List *relations, VacuumParams *params,
-				   BufferAccessStrategy bstrategy, bool isTopLevel);
+				   BufferAccessStrategy bstrategy, MemoryContext vac_context,
+				   bool isTopLevel);
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 							 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);

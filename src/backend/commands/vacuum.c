@@ -105,6 +105,7 @@ void
 ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 {
 	VacuumParams params;
+	BufferAccessStrategy bstrategy = NULL;
 	bool		verbose = false;
 	bool		skip_locked = false;
 	bool		analyze = false;
@@ -115,6 +116,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	bool		process_toast = true;
 	bool		skip_database_stats = false;
 	bool		only_database_stats = false;
+	MemoryContext vac_context;
 	ListCell   *lc;
 
 	/* index_cleanup and truncate values unspecified for now */
@@ -254,6 +256,42 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		}
 	}
 
+
+	/*
+	 * Sanity check DISABLE_PAGE_SKIPPING option.
+	 */
+	if ((params.options & VACOPT_FULL) != 0 &&
+		(params.options & VACOPT_DISABLE_PAGE_SKIPPING) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("VACUUM option DISABLE_PAGE_SKIPPING cannot be used with FULL")));
+
+	/* sanity check for PROCESS_TOAST */
+	if ((params.options & VACOPT_FULL) != 0 &&
+		(params.options & VACOPT_PROCESS_TOAST) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("PROCESS_TOAST required with VACUUM FULL")));
+
+	/* sanity check for ONLY_DATABASE_STATS */
+	if (params.options & VACOPT_ONLY_DATABASE_STATS)
+	{
+		Assert(params.options & VACOPT_VACUUM);
+		if (vacstmt->rels != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("ONLY_DATABASE_STATS cannot be specified with a list of tables")));
+		/* don't require people to turn off PROCESS_TOAST/MAIN explicitly */
+		if (params.options & ~(VACOPT_VACUUM |
+							   VACOPT_VERBOSE |
+							   VACOPT_PROCESS_MAIN |
+							   VACOPT_PROCESS_TOAST |
+							   VACOPT_ONLY_DATABASE_STATS))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("ONLY_DATABASE_STATS cannot be specified with other VACUUM options")));
+	}
+
 	/*
 	 * All freeze ages are zero if the FREEZE option is given; otherwise pass
 	 * them as -1 which means to use the default values.
@@ -279,12 +317,43 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	/* user-invoked vacuum uses VACOPT_VERBOSE instead of log_min_duration */
 	params.log_min_duration = -1;
 
+	/*
+	 * Create special memory context for cross-transaction storage.
+	 *
+	 * Since it is a child of PortalContext, it will go away eventually even
+	 * if we suffer an error; there's no need for special abort cleanup logic.
+	 */
+	vac_context = AllocSetContextCreate(PortalContext,
+										"Vacuum",
+										ALLOCSET_DEFAULT_SIZES);
+
+	/*
+	 * Make a buffer strategy object in the cross-transaction memory context.
+	 * We needn't bother making this for VACUUM (FULL) or VACUUM
+	 * (ONLY_DATABASE_STATS) as they'll not make use of it.  VACUUM (FULL,
+	 * ANALYZE) is possible, so we'd better ensure that we make a strategy
+	 * when we see ANALYZE.
+	 */
+	if ((params.options & (VACOPT_ONLY_DATABASE_STATS |
+						   VACOPT_FULL)) == 0 ||
+		(params.options & VACOPT_ANALYZE) != 0)
+	{
+
+		MemoryContext old_context = MemoryContextSwitchTo(vac_context);
+
+		bstrategy = GetAccessStrategy(BAS_VACUUM);
+		MemoryContextSwitchTo(old_context);
+	}
+
 	/* Now go through the common routine */
-	vacuum(vacstmt->rels, &params, NULL, isTopLevel);
+	vacuum(vacstmt->rels, &params, bstrategy, vac_context, isTopLevel);
+
+	/* Finally, clean up the vacuum memory context */
+	MemoryContextDelete(vac_context);
 }
 
 /*
- * Internal entry point for VACUUM and ANALYZE commands.
+ * Internal entry point for autovacuum and the VACUUM / ANALYZE commands.
  *
  * relations, if not NIL, is a list of VacuumRelation to process; otherwise,
  * we process all relevant tables in the database.  For each VacuumRelation,
@@ -294,8 +363,11 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
  * params contains a set of parameters that can be used to customize the
  * behavior.
  *
- * bstrategy is normally given as NULL, but in autovacuum it can be passed
- * in to use the same buffer strategy object across multiple vacuum() calls.
+ * bstrategy may be passed in as NULL when the caller does not want to
+ * restrict the number of shared_buffers that VACUUM / ANALYZE can use,
+ * otherwise, the caller must build a BufferAccessStrategy with the number of
+ * shared_buffers that VACUUM / ANALYZE should try to limit themselves to
+ * using.
  *
  * isTopLevel should be passed down from ProcessUtility.
  *
@@ -303,12 +375,11 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
  * memory context that will not disappear at transaction commit.
  */
 void
-vacuum(List *relations, VacuumParams *params,
-	   BufferAccessStrategy bstrategy, bool isTopLevel)
+vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
+	   MemoryContext vac_context, bool isTopLevel)
 {
 	static bool in_vacuum = false;
 
-	MemoryContext vac_context;
 	const char *stmttype;
 	volatile bool in_outer_xact,
 				use_own_xacts;
@@ -343,69 +414,6 @@ vacuum(List *relations, VacuumParams *params,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s cannot be executed from VACUUM or ANALYZE",
 						stmttype)));
-
-	/*
-	 * Sanity check DISABLE_PAGE_SKIPPING option.
-	 */
-	if ((params->options & VACOPT_FULL) != 0 &&
-		(params->options & VACOPT_DISABLE_PAGE_SKIPPING) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("VACUUM option DISABLE_PAGE_SKIPPING cannot be used with FULL")));
-
-	/* sanity check for PROCESS_TOAST */
-	if ((params->options & VACOPT_FULL) != 0 &&
-		(params->options & VACOPT_PROCESS_TOAST) == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("PROCESS_TOAST required with VACUUM FULL")));
-
-	/* sanity check for ONLY_DATABASE_STATS */
-	if (params->options & VACOPT_ONLY_DATABASE_STATS)
-	{
-		Assert(params->options & VACOPT_VACUUM);
-		if (relations != NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("ONLY_DATABASE_STATS cannot be specified with a list of tables")));
-		/* don't require people to turn off PROCESS_TOAST/MAIN explicitly */
-		if (params->options & ~(VACOPT_VACUUM |
-								VACOPT_VERBOSE |
-								VACOPT_PROCESS_MAIN |
-								VACOPT_PROCESS_TOAST |
-								VACOPT_ONLY_DATABASE_STATS))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("ONLY_DATABASE_STATS cannot be specified with other VACUUM options")));
-	}
-
-	/*
-	 * Create special memory context for cross-transaction storage.
-	 *
-	 * Since it is a child of PortalContext, it will go away eventually even
-	 * if we suffer an error; there's no need for special abort cleanup logic.
-	 */
-	vac_context = AllocSetContextCreate(PortalContext,
-										"Vacuum",
-										ALLOCSET_DEFAULT_SIZES);
-
-	/*
-	 * If caller didn't give us a buffer strategy object, make one in the
-	 * cross-transaction memory context.  We needn't bother making this for
-	 * VACUUM (FULL) or VACUUM (ONLY_DATABASE_STATS) as they'll not make use
-	 * of it.  VACUUM (FULL, ANALYZE) is possible, so we'd better ensure that
-	 * we make a strategy when we see ANALYZE.
-	 */
-	if (bstrategy == NULL &&
-		((params->options & (VACOPT_ONLY_DATABASE_STATS |
-							 VACOPT_FULL)) == 0 ||
-		 (params->options & VACOPT_ANALYZE) != 0))
-	{
-		MemoryContext old_context = MemoryContextSwitchTo(vac_context);
-
-		bstrategy = GetAccessStrategy(BAS_VACUUM);
-		MemoryContextSwitchTo(old_context);
-	}
 
 	/*
 	 * Build list of relation(s) to process, putting any new data in
@@ -578,12 +586,6 @@ vacuum(List *relations, VacuumParams *params,
 		vac_update_datfrozenxid();
 	}
 
-	/*
-	 * Clean up working storage --- note we must do this after
-	 * StartTransactionCommand, else we might be trying to delete the active
-	 * context!
-	 */
-	MemoryContextDelete(vac_context);
 }
 
 /*
