@@ -350,6 +350,25 @@ SELECT t.relfilenode = :toast_filenode AS is_same_toast_filenode
  f
 (1 row)
 
+-- BUFFER_USAGE_LIMIT option
+VACUUM (BUFFER_USAGE_LIMIT '512 kB') vac_option_tab;
+ANALYZE (BUFFER_USAGE_LIMIT '512 kB') vac_option_tab;
+-- try disabling the buffer usage limit
+VACUUM (BUFFER_USAGE_LIMIT 0) vac_option_tab;
+ANALYZE (BUFFER_USAGE_LIMIT 0) vac_option_tab;
+-- value exceeds max size error
+VACUUM (BUFFER_USAGE_LIMIT 16777220) vac_option_tab;
+ERROR:  buffer_usage_limit option must be 0 or between 128 KB and 16777216 KB
+-- value is less than min size error
+VACUUM (BUFFER_USAGE_LIMIT 120) vac_option_tab;
+ERROR:  buffer_usage_limit option must be 0 or between 128 KB and 16777216 KB
+-- integer overflow error
+VACUUM (BUFFER_USAGE_LIMIT 10000000000) vac_option_tab;
+ERROR:  value: "10000000000": is invalid for buffer_usage_limit
+HINT:  Value exceeds integer range.
+-- incompatible with VACUUM FULL error
+VACUUM (BUFFER_USAGE_LIMIT '512 kB', FULL) vac_option_tab;
+ERROR:  BUFFER_USAGE_LIMIT cannot be specified for VACUUM FULL
 -- SKIP_DATABASE_STATS option
 VACUUM (SKIP_DATABASE_STATS) vactst;
 -- ONLY_DATABASE_STATS option

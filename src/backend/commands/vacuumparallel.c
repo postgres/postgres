@@ -88,6 +88,12 @@ typedef struct PVShared
 	int			maintenance_work_mem_worker;
 
 	/*
+	 * The number of buffers each worker's Buffer Access Strategy ring should
+	 * contain.
+	 */
+	int			ring_nbuffers;
+
+	/*
 	 * Shared vacuum cost balance.  During parallel vacuum,
 	 * VacuumSharedCostBalance points to this value and it accumulates the
 	 * balance of each parallel vacuum worker.
@@ -364,6 +370,9 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 		(nindexes_mwm > 0) ?
 		maintenance_work_mem / Min(parallel_workers, nindexes_mwm) :
 		maintenance_work_mem;
+
+	/* Use the same buffer size for all workers */
+	shared->ring_nbuffers = GetAccessStrategyBufferCount(bstrategy);
 
 	pg_atomic_init_u32(&(shared->cost_balance), 0);
 	pg_atomic_init_u32(&(shared->active_nworkers), 0);
@@ -1018,8 +1027,9 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	pvs.indname = NULL;
 	pvs.status = PARALLEL_INDVAC_STATUS_INITIAL;
 
-	/* Each parallel VACUUM worker gets its own access strategy */
-	pvs.bstrategy = GetAccessStrategy(BAS_VACUUM);
+	/* Each parallel VACUUM worker gets its own access strategy. */
+	pvs.bstrategy = GetAccessStrategyWithSize(BAS_VACUUM,
+											  shared->ring_nbuffers * (BLCKSZ / 1024));
 
 	/* Setup error traceback support for ereport() */
 	errcallback.callback = parallel_vacuum_error_callback;

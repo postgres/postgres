@@ -2349,11 +2349,21 @@ do_autovacuum(void)
 	}
 
 	/*
-	 * Create a buffer access strategy object for VACUUM to use.  We want to
-	 * use the same one across all the vacuum operations we perform, since the
-	 * point is for VACUUM not to blow out the shared cache.
+	 * Optionally, create a buffer access strategy object for VACUUM to use.
+	 * We use the same BufferAccessStrategy object for all tables VACUUMed by
+	 * this worker to prevent autovacuum from blowing out shared buffers.
+	 *
+	 * VacuumBufferUsageLimit being set to 0 results in
+	 * GetAccessStrategyWithSize returning NULL, effectively meaning we can
+	 * use up to all of shared buffers.
+	 *
+	 * If we later enter failsafe mode on any of the tables being vacuumed, we
+	 * will cease use of the BufferAccessStrategy only for that table.
+	 *
+	 * XXX should we consider adding code to adjust the size of this if
+	 * VacuumBufferUsageLimit changes?
 	 */
-	bstrategy = GetAccessStrategy(BAS_VACUUM);
+	bstrategy = GetAccessStrategyWithSize(BAS_VACUUM, VacuumBufferUsageLimit);
 
 	/*
 	 * create a memory context to act as fake PortalContext, so that the

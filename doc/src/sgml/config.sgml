@@ -2001,6 +2001,36 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-vacuum-buffer-usage-limit" xreflabel="vacuum_buffer_usage_limit">
+      <term>
+       <varname>vacuum_buffer_usage_limit</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_buffer_usage_limit</varname> configuration parameter</primary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the size of the
+        <glossterm linkend="glossary-buffer-access-strategy">Buffer Access Strategy</glossterm>
+        used by the <command>VACUUM</command> and <command>ANALYZE</command>
+        commands.  A setting of <literal>0</literal> will allow the operation
+        to use any number of <varname>shared_buffers</varname>.  Otherwise
+        valid sizes range from <literal>128 KB</literal> to
+        <literal>16 GB</literal>.  If the specified size would exceed 1/8 the
+        size of <varname>shared_buffers</varname>, the size is silently capped
+        to that value.  The default value is <literal>256 KB</literal>.  If
+        this value is specified without units, it is taken as kilobytes.  This
+        parameter can be set at any time.  It can be overridden for
+        <xref linkend="sql-vacuum"/> and <xref linkend="sql-analyze"/>
+        when passing the <option>BUFFER_USAGE_LIMIT</option> option.  Higher
+        settings can allow <command>VACUUM</command> and
+        <command>ANALYZE</command> to run more quickly, but having too large a
+        setting may cause too many other useful pages to be evicted from
+        shared buffers.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-logical-decoding-work-mem" xreflabel="logical_decoding_work_mem">
       <term><varname>logical_decoding_work_mem</varname> (<type>integer</type>)
       <indexterm>

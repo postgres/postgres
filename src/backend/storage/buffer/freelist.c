@@ -540,8 +540,7 @@ StrategyInitialize(bool init)
 BufferAccessStrategy
 GetAccessStrategy(BufferAccessStrategyType btype)
 {
-	BufferAccessStrategy strategy;
-	int			nbuffers;
+	int			ring_size_kb;
 
 	/*
 	 * Select ring size to use.  See buffer/README for rationales.
@@ -556,13 +555,13 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 			return NULL;
 
 		case BAS_BULKREAD:
-			nbuffers = 256 * 1024 / BLCKSZ;
+			ring_size_kb = 256;
 			break;
 		case BAS_BULKWRITE:
-			nbuffers = 16 * 1024 * 1024 / BLCKSZ;
+			ring_size_kb = 16 * 1024;
 			break;
 		case BAS_VACUUM:
-			nbuffers = 256 * 1024 / BLCKSZ;
+			ring_size_kb = 256;
 			break;
 
 		default:
@@ -571,19 +570,63 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 			return NULL;		/* keep compiler quiet */
 	}
 
-	/* Make sure ring isn't an undue fraction of shared buffers */
-	nbuffers = Min(NBuffers / 8, nbuffers);
+	return GetAccessStrategyWithSize(btype, ring_size_kb);
+}
+
+/*
+ * GetAccessStrategyWithSize -- create a BufferAccessStrategy object with a
+ *		number of buffers equivalent to the passed in size.
+ *
+ * If the given ring size is 0, no BufferAccessStrategy will be created and
+ * the function will return NULL.  ring_size_kb must not be negative.
+ */
+BufferAccessStrategy
+GetAccessStrategyWithSize(BufferAccessStrategyType btype, int ring_size_kb)
+{
+	int			ring_buffers;
+	BufferAccessStrategy strategy;
+
+	Assert(ring_size_kb >= 0);
+
+	/* Figure out how many buffers ring_size_kb is */
+	ring_buffers = ring_size_kb / (BLCKSZ / 1024);
+
+	/* 0 means unlimited, so no BufferAccessStrategy required */
+	if (ring_buffers == 0)
+		return NULL;
+
+	/* Cap to 1/8th of shared_buffers */
+	ring_buffers = Min(NBuffers / 8, ring_buffers);
+
+	/* NBuffers should never be less than 16, so this shouldn't happen */
+	Assert(ring_buffers > 0);
 
 	/* Allocate the object and initialize all elements to zeroes */
 	strategy = (BufferAccessStrategy)
 		palloc0(offsetof(BufferAccessStrategyData, buffers) +
-				nbuffers * sizeof(Buffer));
+				ring_buffers * sizeof(Buffer));
 
 	/* Set fields that don't start out zero */
 	strategy->btype = btype;
-	strategy->nbuffers = nbuffers;
+	strategy->nbuffers = ring_buffers;
 
 	return strategy;
+}
+
+/*
+ * GetAccessStrategyBufferCount -- an accessor for the number of buffers in
+ *		the ring
+ *
+ * Returns 0 on NULL input to match behavior of GetAccessStrategyWithSize()
+ * returning NULL with 0 size.
+ */
+int
+GetAccessStrategyBufferCount(BufferAccessStrategy strategy)
+{
+	if (strategy == NULL)
+		return 0;
+
+	return strategy->nbuffers;
 }
 
 /*

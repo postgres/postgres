@@ -229,12 +229,12 @@ update hint bits).  In a scan that modifies every page in the scan, like a
 bulk UPDATE or DELETE, the buffers in the ring will always be dirtied and
 the ring strategy effectively degrades to the normal strategy.
 
-VACUUM uses a 256KB ring like sequential scans, but dirty pages are not
-removed from the ring.  Instead, WAL is flushed if needed to allow reuse of
-the buffers.  Before introducing the buffer ring strategy in 8.3, VACUUM's
-buffers were sent to the freelist, which was effectively a buffer ring of 1
-buffer, resulting in excessive WAL flushing.  Allowing VACUUM to update
-256KB between WAL flushes should be more efficient.
+VACUUM uses a ring like sequential scans, however, the size of this ring is
+controlled by the vacuum_buffer_usage_limit GUC.  Dirty pages are not removed
+from the ring.  Instead, WAL is flushed if needed to allow reuse of the
+buffers.  Before introducing the buffer ring strategy in 8.3, VACUUM's buffers
+were sent to the freelist, which was effectively a buffer ring of 1 buffer,
+resulting in excessive WAL flushing.
 
 Bulk writes work similarly to VACUUM.  Currently this applies only to
 COPY IN and CREATE TABLE AS SELECT.  (Might it be interesting to make
