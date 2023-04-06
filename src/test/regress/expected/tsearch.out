@@ -1990,6 +1990,27 @@ to_tsquery('english','Lorem') && phraseto_tsquery('english','ullamcorper urna'),
  <b>Lorem</b> ipsum <b>urna</b>.  Nullam nullam <b>ullamcorper</b> <b>urna</b>
 (1 row)
 
+-- Edge cases with empty query
+SELECT ts_headline('english',
+'', ''::tsquery);
+NOTICE:  text-search query doesn't contain lexemes: ""
+LINE 2: '', ''::tsquery);
+            ^
+ ts_headline 
+-------------
+ 
+(1 row)
+
+SELECT ts_headline('english',
+'foo bar', ''::tsquery);
+NOTICE:  text-search query doesn't contain lexemes: ""
+LINE 2: 'foo bar', ''::tsquery);
+                   ^
+ ts_headline 
+-------------
+ foo bar
+(1 row)
+
 --Rewrite sub system
 CREATE TABLE test_tsquery (txtkeyword TEXT, txtsample TEXT);
 \set ECHO none

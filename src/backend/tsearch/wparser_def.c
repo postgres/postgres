@@ -2039,6 +2039,9 @@ hlCover(HeadlineParsedText *prs, TSQuery query, int max_cover,
 				nextpmax;
 	hlCheck		ch;
 
+	if (query->size <= 0)
+		return false;			/* empty query matches nothing */
+
 	/*
 	 * We look for the earliest, shortest substring of prs->words that
 	 * satisfies the query.  Both the pmin and pmax indices must be words
@@ -2343,7 +2346,8 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, bool highlightall,
 	/* show the first min_words words if we have not marked anything */
 	if (num_f <= 0)
 	{
-		startpos = endpos = curlen = 0;
+		startpos = curlen = 0;
+		endpos = -1;
 		for (i = 0; i < prs->curwords && curlen < min_words; i++)
 		{
 			if (!NONWORDTOKEN(prs->words[i].type))
@@ -2498,7 +2502,7 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, bool highlightall,
 		if (bestlen < 0)
 		{
 			curlen = 0;
-			pose = 0;
+			pose = -1;
 			for (i = 0; i < prs->curwords && curlen < min_words; i++)
 			{
 				if (!NONWORDTOKEN(prs->words[i].type))

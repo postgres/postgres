@@ -549,6 +549,12 @@ SELECT ts_headline('english',
 to_tsquery('english','Lorem') && phraseto_tsquery('english','ullamcorper urna'),
 'MaxFragments=100, MaxWords=100, MinWords=1');
 
+-- Edge cases with empty query
+SELECT ts_headline('english',
+'', ''::tsquery);
+SELECT ts_headline('english',
+'foo bar', ''::tsquery);
+
 --Rewrite sub system
 
 CREATE TABLE test_tsquery (txtkeyword TEXT, txtsample TEXT);
