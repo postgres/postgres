@@ -551,9 +551,9 @@ to_tsquery('english','Lorem') && phraseto_tsquery('english','ullamcorper urna'),
 
 -- Edge cases with empty query
 SELECT ts_headline('english',
-'', ''::tsquery);
+'', to_tsquery('english', ''));
 SELECT ts_headline('english',
-'foo bar', ''::tsquery);
+'foo bar', to_tsquery('english', ''));
 
 --Rewrite sub system
 
