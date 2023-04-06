@@ -131,9 +131,9 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
  * For each heap page which is all-visible, acquire a pin on the appropriate
  * visibility map page, if we haven't already got one.
  *
- * buffer2 may be InvalidBuffer, if only one buffer is involved.  buffer1
- * must not be InvalidBuffer.  If both buffers are specified, block1 must
- * be less than block2.
+ * To avoid complexity in the callers, either buffer1 or buffer2 may be
+ * InvalidBuffer if only one buffer is involved. For the same reason, block2
+ * may be smaller than block1.
  */
 static void
 GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
@@ -142,6 +142,26 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 {
 	bool		need_to_pin_buffer1;
 	bool		need_to_pin_buffer2;
+
+	/*
+	 * Swap buffers around to handle case of a single block/buffer, and to
+	 * handle if lock ordering rules require to lock block2 first.
+	 */
+	if (!BufferIsValid(buffer1) ||
+		(BufferIsValid(buffer2) && block1 > block2))
+	{
+		Buffer		tmpbuf = buffer1;
+		Buffer	   *tmpvmbuf = vmbuffer1;
+		BlockNumber tmpblock = block1;
+
+		buffer1 = buffer2;
+		vmbuffer1 = vmbuffer2;
+		block1 = block2;
+
+		buffer2 = tmpbuf;
+		vmbuffer2 = tmpvmbuf;
+		block2 = tmpblock;
+	}
 
 	Assert(BufferIsValid(buffer1));
 	Assert(buffer2 == InvalidBuffer || block1 <= block2);
@@ -502,14 +522,9 @@ loop:
 		 * done a bit of extra work for no gain, but there's no real harm
 		 * done.
 		 */
-		if (otherBuffer == InvalidBuffer || targetBlock <= otherBlock)
-			GetVisibilityMapPins(relation, buffer, otherBuffer,
-								 targetBlock, otherBlock, vmbuffer,
-								 vmbuffer_other);
-		else
-			GetVisibilityMapPins(relation, otherBuffer, buffer,
-								 otherBlock, targetBlock, vmbuffer_other,
-								 vmbuffer);
+		GetVisibilityMapPins(relation, buffer, otherBuffer,
+							 targetBlock, otherBlock, vmbuffer,
+							 vmbuffer_other);
 
 		/*
 		 * Now we can check to see if there's enough free space here. If so,
