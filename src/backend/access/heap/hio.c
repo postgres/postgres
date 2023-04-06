@@ -212,87 +212,207 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 }
 
 /*
- * Extend a relation by multiple blocks to avoid future contention on the
- * relation extension lock.  Our goal is to pre-extend the relation by an
- * amount which ramps up as the degree of contention ramps up, but limiting
- * the result to some sane overall value.
+ * Extend the relation. By multiple pages, if beneficial.
+ *
+ * If the caller needs multiple pages (num_pages > 1), we always try to extend
+ * by at least that much.
+ *
+ * If there is contention on the extension lock, we don't just extend "for
+ * ourselves", but we try to help others. We can do so by adding empty pages
+ * into the FSM. Typically there is no contention when we can't use the FSM.
+ *
+ * We do have to limit the number of pages to extend by to some value, as the
+ * buffers for all the extended pages need to, temporarily, be pinned. For now
+ * we define MAX_BUFFERS_TO_EXTEND_BY to be 64 buffers, it's hard to see
+ * benefits with higher numbers. This partially is because copyfrom.c's
+ * MAX_BUFFERED_TUPLES / MAX_BUFFERED_BYTES prevents larger multi_inserts.
+ *
+ * Returns a buffer for a newly extended block. If possible, the buffer is
+ * returned exclusively locked. *did_unlock is set to true if the lock had to
+ * be released, false otherwise.
+ *
+ *
+ * XXX: It would likely be beneficial for some workloads to extend more
+ * aggressively, e.g. using a heuristic based on the relation size.
  */
-static void
-RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
+static Buffer
+RelationAddBlocks(Relation relation, BulkInsertState bistate,
+				  int num_pages, bool use_fsm, bool *did_unlock)
 {
-	BlockNumber blockNum,
-				firstBlock = InvalidBlockNumber;
-	int			extraBlocks;
-	int			lockWaiters;
-
-	/* Use the length of the lock wait queue to judge how much to extend. */
-	lockWaiters = RelationExtensionLockWaiterCount(relation);
-	if (lockWaiters <= 0)
-		return;
+#define MAX_BUFFERS_TO_EXTEND_BY 64
+	Buffer		victim_buffers[MAX_BUFFERS_TO_EXTEND_BY];
+	BlockNumber first_block = InvalidBlockNumber;
+	BlockNumber last_block = InvalidBlockNumber;
+	uint32		extend_by_pages;
+	uint32		not_in_fsm_pages;
+	Buffer		buffer;
+	Page		page;
 
 	/*
-	 * It might seem like multiplying the number of lock waiters by as much as
-	 * 20 is too aggressive, but benchmarking revealed that smaller numbers
-	 * were insufficient.  512 is just an arbitrary cap to prevent
-	 * pathological results.
+	 * Determine by how many pages to try to extend by.
 	 */
-	extraBlocks = Min(512, lockWaiters * 20);
-
-	do
+	if (bistate == NULL && !use_fsm)
 	{
-		Buffer		buffer;
-		Page		page;
-		Size		freespace;
-
 		/*
-		 * Extend by one page.  This should generally match the main-line
-		 * extension code in RelationGetBufferForTuple, except that we hold
-		 * the relation extension lock throughout, and we don't immediately
-		 * initialize the page (see below).
+		 * If we have neither bistate, nor can use the FSM, we can't bulk
+		 * extend - there'd be no way to find the additional pages.
 		 */
-		buffer = ReadBufferBI(relation, P_NEW, RBM_ZERO_AND_LOCK, bistate);
-		page = BufferGetPage(buffer);
-
-		if (!PageIsNew(page))
-			elog(ERROR, "page %u of relation \"%s\" should be empty but is not",
-				 BufferGetBlockNumber(buffer),
-				 RelationGetRelationName(relation));
-
-		/*
-		 * Add the page to the FSM without initializing. If we were to
-		 * initialize here, the page would potentially get flushed out to disk
-		 * before we add any useful content. There's no guarantee that that'd
-		 * happen before a potential crash, so we need to deal with
-		 * uninitialized pages anyway, thus avoid the potential for
-		 * unnecessary writes.
-		 */
-
-		/* we'll need this info below */
-		blockNum = BufferGetBlockNumber(buffer);
-		freespace = BufferGetPageSize(buffer) - SizeOfPageHeaderData;
-
-		UnlockReleaseBuffer(buffer);
-
-		/* Remember first block number thus added. */
-		if (firstBlock == InvalidBlockNumber)
-			firstBlock = blockNum;
-
-		/*
-		 * Immediately update the bottom level of the FSM.  This has a good
-		 * chance of making this page visible to other concurrently inserting
-		 * backends, and we want that to happen without delay.
-		 */
-		RecordPageWithFreeSpace(relation, blockNum, freespace);
+		extend_by_pages = 1;
 	}
-	while (--extraBlocks > 0);
+	else
+	{
+		uint32		waitcount;
+
+		/*
+		 * Try to extend at least by the number of pages the caller needs. We
+		 * can remember the additional pages (either via FSM or bistate).
+		 */
+		extend_by_pages = num_pages;
+
+		if (!RELATION_IS_LOCAL(relation))
+			waitcount = RelationExtensionLockWaiterCount(relation);
+		else
+			waitcount = 0;
+
+		/*
+		 * Multiply the number of pages to extend by the number of waiters. Do
+		 * this even if we're not using the FSM, as it still relieves
+		 * contention, by deferring the next time this backend needs to
+		 * extend. In that case the extended pages will be found via
+		 * bistate->next_free.
+		 */
+		extend_by_pages += extend_by_pages * waitcount;
+
+		/*
+		 * Can't extend by more than MAX_BUFFERS_TO_EXTEND_BY, we need to pin
+		 * them all concurrently.
+		 */
+		extend_by_pages = Min(extend_by_pages, MAX_BUFFERS_TO_EXTEND_BY);
+	}
 
 	/*
-	 * Updating the upper levels of the free space map is too expensive to do
-	 * for every block, but it's worth doing once at the end to make sure that
-	 * subsequent insertion activity sees all of those nifty free pages we
-	 * just inserted.
+	 * How many of the extended pages should be entered into the FSM?
+	 *
+	 * If we have a bistate, only enter pages that we don't need ourselves
+	 * into the FSM.  Otherwise every other backend will immediately try to
+	 * use the pages this backend needs for itself, causing unnecessary
+	 * contention.  If we don't have a bistate, we can't avoid the FSM.
+	 *
+	 * Never enter the page returned into the FSM, we'll immediately use it.
 	 */
-	FreeSpaceMapVacuumRange(relation, firstBlock, blockNum + 1);
+	if (num_pages > 1 && bistate == NULL)
+		not_in_fsm_pages = 1;
+	else
+		not_in_fsm_pages = num_pages;
+
+	/* prepare to put another buffer into the bistate */
+	if (bistate && bistate->current_buf != InvalidBuffer)
+	{
+		ReleaseBuffer(bistate->current_buf);
+		bistate->current_buf = InvalidBuffer;
+	}
+
+	/*
+	 * Extend the relation. We ask for the first returned page to be locked,
+	 * so that we are sure that nobody has inserted into the page
+	 * concurrently.
+	 *
+	 * With the current MAX_BUFFERS_TO_EXTEND_BY there's no danger of
+	 * [auto]vacuum trying to truncate later pages as REL_TRUNCATE_MINIMUM is
+	 * way larger.
+	 */
+	first_block = ExtendBufferedRelBy(EB_REL(relation), MAIN_FORKNUM,
+									  bistate ? bistate->strategy : NULL,
+									  EB_LOCK_FIRST,
+									  extend_by_pages,
+									  victim_buffers,
+									  &extend_by_pages);
+	buffer = victim_buffers[0]; /* the buffer the function will return */
+	last_block = first_block + (extend_by_pages - 1);
+	Assert(first_block == BufferGetBlockNumber(buffer));
+
+	/*
+	 * Relation is now extended. Initialize the page. We do this here, before
+	 * potentially releasing the lock on the page, because it allows us to
+	 * double check that the page contents are empty (this should never
+	 * happen, but if it does we don't want to risk wiping out valid data).
+	 */
+	page = BufferGetPage(buffer);
+	if (!PageIsNew(page))
+		elog(ERROR, "page %u of relation \"%s\" should be empty but is not",
+			 first_block,
+			 RelationGetRelationName(relation));
+
+	PageInit(page, BufferGetPageSize(buffer), 0);
+	MarkBufferDirty(buffer);
+
+	/*
+	 * If we decided to put pages into the FSM, release the buffer lock (but
+	 * not pin), we don't want to do IO while holding a buffer lock. This will
+	 * necessitate a bit more extensive checking in our caller.
+	 */
+	if (use_fsm && not_in_fsm_pages < extend_by_pages)
+	{
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		*did_unlock = true;
+	}
+	else
+		*did_unlock = false;
+
+	/*
+	 * Relation is now extended. Release pins on all buffers, except for the
+	 * first (which we'll return).  If we decided to put pages into the FSM,
+	 * we can do that as part of the same loop.
+	 */
+	for (uint32 i = 1; i < extend_by_pages; i++)
+	{
+		BlockNumber curBlock = first_block + i;
+
+		Assert(curBlock == BufferGetBlockNumber(victim_buffers[i]));
+		Assert(BlockNumberIsValid(curBlock));
+
+		ReleaseBuffer(victim_buffers[i]);
+
+		if (use_fsm && i >= not_in_fsm_pages)
+		{
+			Size		freespace = BufferGetPageSize(victim_buffers[i]) -
+			SizeOfPageHeaderData;
+
+			RecordPageWithFreeSpace(relation, curBlock, freespace);
+		}
+	}
+
+	if (use_fsm && not_in_fsm_pages < extend_by_pages)
+	{
+		BlockNumber first_fsm_block = first_block + not_in_fsm_pages;
+
+		FreeSpaceMapVacuumRange(relation, first_fsm_block, last_block);
+	}
+
+	if (bistate)
+	{
+		/*
+		 * Remember the additional pages we extended by, so we later can use
+		 * them without looking into the FSM.
+		 */
+		if (extend_by_pages > 1)
+		{
+			bistate->next_free = first_block + 1;
+			bistate->last_free = last_block;
+		}
+		else
+		{
+			bistate->next_free = InvalidBlockNumber;
+			bistate->last_free = InvalidBlockNumber;
+		}
+
+		/* maintain bistate->current_buf */
+		IncrBufferRefCount(buffer);
+		bistate->current_buf = buffer;
+	}
+
+	return buffer;
+#undef MAX_BUFFERS_TO_EXTEND_BY
 }
 
 /*
@@ -376,11 +496,14 @@ RelationGetBufferForTuple(Relation relation, Size len,
 				targetFreeSpace = 0;
 	BlockNumber targetBlock,
 				otherBlock;
-	bool		needLock;
 	bool		unlockedTargetBuffer;
 	bool		recheckVmPins;
 
 	len = MAXALIGN(len);		/* be conservative */
+
+	/* if the caller doesn't know by how many pages to extend, extend by 1 */
+	if (num_pages <= 0)
+		num_pages = 1;
 
 	/* Bulk insert is not supported for updates, only inserts. */
 	Assert(otherBuffer == InvalidBuffer || !bistate);
@@ -581,101 +704,53 @@ loop:
 			ReleaseBuffer(buffer);
 		}
 
-		/* Without FSM, always fall out of the loop and extend */
-		if (!use_fsm)
-			break;
-
-		/*
-		 * Update FSM as to condition of this page, and ask for another page
-		 * to try.
-		 */
-		targetBlock = RecordAndGetPageWithFreeSpace(relation,
-													targetBlock,
-													pageFreeSpace,
-													targetFreeSpace);
-	}
-
-	/*
-	 * Have to extend the relation.
-	 *
-	 * We have to use a lock to ensure no one else is extending the rel at the
-	 * same time, else we will both try to initialize the same new page.  We
-	 * can skip locking for new or temp relations, however, since no one else
-	 * could be accessing them.
-	 */
-	needLock = !RELATION_IS_LOCAL(relation);
-
-	/*
-	 * If we need the lock but are not able to acquire it immediately, we'll
-	 * consider extending the relation by multiple blocks at a time to manage
-	 * contention on the relation extension lock.  However, this only makes
-	 * sense if we're using the FSM; otherwise, there's no point.
-	 */
-	if (needLock)
-	{
-		if (!use_fsm)
-			LockRelationForExtension(relation, ExclusiveLock);
-		else if (!ConditionalLockRelationForExtension(relation, ExclusiveLock))
+		/* Is there an ongoing bulk extension? */
+		if (bistate && bistate->next_free != InvalidBlockNumber)
 		{
-			/* Couldn't get the lock immediately; wait for it. */
-			LockRelationForExtension(relation, ExclusiveLock);
+			Assert(bistate->next_free <= bistate->last_free);
 
 			/*
-			 * Check if some other backend has extended a block for us while
-			 * we were waiting on the lock.
+			 * We bulk extended the relation before, and there are still some
+			 * unused pages from that extension, so we don't need to look in
+			 * the FSM for a new page. But do record the free space from the
+			 * last page, somebody might insert narrower tuples later.
 			 */
-			targetBlock = GetPageWithFreeSpace(relation, targetFreeSpace);
+			if (use_fsm)
+				RecordPageWithFreeSpace(relation, targetBlock, pageFreeSpace);
 
-			/*
-			 * If some other waiter has already extended the relation, we
-			 * don't need to do so; just use the existing freespace.
-			 */
-			if (targetBlock != InvalidBlockNumber)
+			targetBlock = bistate->next_free;
+			if (bistate->next_free >= bistate->last_free)
 			{
-				UnlockRelationForExtension(relation, ExclusiveLock);
-				goto loop;
+				bistate->next_free = InvalidBlockNumber;
+				bistate->last_free = InvalidBlockNumber;
 			}
-
-			/* Time to bulk-extend. */
-			RelationAddExtraBlocks(relation, bistate);
+			else
+				bistate->next_free++;
+		}
+		else if (!use_fsm)
+		{
+			/* Without FSM, always fall out of the loop and extend */
+			break;
+		}
+		else
+		{
+			/*
+			 * Update FSM as to condition of this page, and ask for another
+			 * page to try.
+			 */
+			targetBlock = RecordAndGetPageWithFreeSpace(relation,
+														targetBlock,
+														pageFreeSpace,
+														targetFreeSpace);
 		}
 	}
 
-	/*
-	 * In addition to whatever extension we performed above, we always add at
-	 * least one block to satisfy our own request.
-	 *
-	 * XXX This does an lseek - rather expensive - but at the moment it is the
-	 * only way to accurately determine how many blocks are in a relation.  Is
-	 * it worth keeping an accurate file length in shared memory someplace,
-	 * rather than relying on the kernel to do it for us?
-	 */
-	buffer = ReadBufferBI(relation, P_NEW, RBM_ZERO_AND_LOCK, bistate);
+	/* Have to extend the relation */
+	buffer = RelationAddBlocks(relation, bistate, num_pages, use_fsm,
+							   &unlockedTargetBuffer);
 
-	/*
-	 * Release the file-extension lock; it's now OK for someone else to extend
-	 * the relation some more.
-	 */
-	if (needLock)
-		UnlockRelationForExtension(relation, ExclusiveLock);
-
-	unlockedTargetBuffer = false;
 	targetBlock = BufferGetBlockNumber(buffer);
-
-	/*
-	 * We need to initialize the empty new page.  Double-check that it really
-	 * is empty (this should never happen, but if it does we don't want to
-	 * risk wiping out valid data).
-	 */
 	page = BufferGetPage(buffer);
-
-	if (!PageIsNew(page))
-		elog(ERROR, "page %u of relation \"%s\" should be empty but is not",
-			 targetBlock,
-			 RelationGetRelationName(relation));
-
-	PageInit(page, BufferGetPageSize(buffer), 0);
-	MarkBufferDirty(buffer);
 
 	/*
 	 * The page is empty, pin vmbuffer to set all_frozen bit. We don't want to
@@ -688,8 +763,9 @@ loop:
 
 		if (!visibilitymap_pin_ok(targetBlock, *vmbuffer))
 		{
+			if (!unlockedTargetBuffer)
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			unlockedTargetBuffer = true;
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			visibilitymap_pin(relation, targetBlock, vmbuffer);
 		}
 	}
