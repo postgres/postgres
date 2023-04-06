@@ -661,7 +661,10 @@ typedef struct EState
 
 	List	   *es_tupleTable;	/* List of TupleTableSlots */
 
-	uint64		es_processed;	/* # of tuples processed */
+	uint64		es_processed;	/* # of tuples processed during one
+								 * ExecutorRun() call. */
+	uint64		es_total_processed; /* total # of tuples aggregated across all
+									 * ExecutorRun() calls. */
 
 	int			es_top_eflags;	/* eflags passed to ExecutorStart */
 	int			es_instrument;	/* OR of InstrumentOption flags */

@@ -1060,7 +1060,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 				   queryDesc->plannedstmt->stmt_len,
 				   PGSS_EXEC,
 				   queryDesc->totaltime->total * 1000.0,	/* convert to msec */
-				   queryDesc->estate->es_processed,
+				   queryDesc->estate->es_total_processed,
 				   &queryDesc->totaltime->bufusage,
 				   &queryDesc->totaltime->walusage,
 				   queryDesc->estate->es_jit ? &queryDesc->estate->es_jit->instr : NULL,
