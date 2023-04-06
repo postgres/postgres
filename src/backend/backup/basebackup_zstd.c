@@ -118,6 +118,18 @@ bbsink_zstd_begin_backup(bbsink *sink)
 						   compress->workers, ZSTD_getErrorName(ret)));
 	}
 
+	if ((compress->options & PG_COMPRESSION_OPTION_LONG_DISTANCE) != 0)
+	{
+		ret = ZSTD_CCtx_setParameter(mysink->cctx,
+									 ZSTD_c_enableLongDistanceMatching,
+									 compress->long_distance);
+		if (ZSTD_isError(ret))
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("could not set compression flag for %s: %s",
+						   "long", ZSTD_getErrorName(ret)));
+	}
+
 	/*
 	 * We need our own buffer, because we're going to pass different data to
 	 * the next sink than what gets passed to us.

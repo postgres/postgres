@@ -106,6 +106,19 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, pg_compress_specification *comp
 					 compress->workers, ZSTD_getErrorName(ret));
 	}
 
+	if ((compress->options & PG_COMPRESSION_OPTION_LONG_DISTANCE) != 0)
+	{
+		ret = ZSTD_CCtx_setParameter(streamer->cctx,
+									 ZSTD_c_enableLongDistanceMatching,
+									 compress->long_distance);
+		if (ZSTD_isError(ret))
+		{
+			pg_log_error("could not set compression flag for %s: %s",
+						 "long", ZSTD_getErrorName(ret));
+			exit(1);
+		}
+	}
+
 	/* Initialize the ZSTD output buffer. */
 	streamer->zstd_outBuf.dst = streamer->base.bbs_buffer.data;
 	streamer->zstd_outBuf.size = streamer->base.bbs_buffer.maxlen;

@@ -49,6 +49,14 @@ my @test_configuration = (
 		'decompress_program' => $ENV{'ZSTD'},
 		'decompress_flags'   => ['-d'],
 		'enabled'            => check_pg_config("#define USE_ZSTD 1")
+	},
+	{
+		'compression_method' => 'zstd',
+		'backup_flags'       => [ '--compress', 'server-zstd:level=1,long' ],
+		'backup_archive'     => 'base.tar.zst',
+		'decompress_program' => $ENV{'ZSTD'},
+		'decompress_flags'   => ['-d'],
+		'enabled'            => check_pg_config("#define USE_ZSTD 1")
 	});
 
 for my $tc (@test_configuration)

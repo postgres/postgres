@@ -2729,7 +2729,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
            level.  Otherwise, it should be a comma-separated list of items,
            each of the form <replaceable>keyword</replaceable> or
            <replaceable>keyword=value</replaceable>. Currently, the supported
-           keywords are <literal>level</literal> and <literal>workers</literal>.
+           keywords are <literal>level</literal>, <literal>long</literal> and
+           <literal>workers</literal>.
           </para>
 
           <para>
@@ -2744,6 +2745,13 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
            and <literal>ZSTD_maxCLevel()</literal> (usually <literal>22</literal>),
            (default <literal>ZSTD_CLEVEL_DEFAULT</literal> or
            <literal>3</literal>).
+          </para>
+
+          <para>
+           The <literal>long</literal> keyword enables long-distance matching
+           mode, for improved compression ratio, at the expense of higher memory
+           use.  Long-distance mode is supported only for
+           <literal>zstd</literal>.
           </para>
 
           <para>

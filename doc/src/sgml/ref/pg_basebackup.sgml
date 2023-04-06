@@ -424,8 +424,8 @@ PostgreSQL documentation
         level.  Otherwise, it should be a comma-separated list of items,
         each of the form <literal>keyword</literal> or
         <literal>keyword=value</literal>.
-        Currently, the supported keywords are <literal>level</literal>
-        and <literal>workers</literal>.
+        Currently, the supported keywords are <literal>level</literal>,
+        <literal>long</literal>, and <literal>workers</literal>.
         The detail string cannot be used when the compression method
         is specified as a plain integer.
        </para>

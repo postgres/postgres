@@ -12,7 +12,7 @@
  * Otherwise, a compression specification is a comma-separated list of items,
  * each having the form keyword or keyword=value.
  *
- * Currently, the only supported keywords are "level" and "workers".
+ * Currently, the supported keywords are "level", "long", and "workers".
  *
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
@@ -37,6 +37,8 @@
 #include "common/compression.h"
 
 static int	expect_integer_value(char *keyword, char *value,
+								 pg_compress_specification *result);
+static bool expect_boolean_value(char *keyword, char *value,
 								 pg_compress_specification *result);
 
 /*
@@ -232,6 +234,11 @@ parse_compress_specification(pg_compress_algorithm algorithm, char *specificatio
 			result->workers = expect_integer_value(keyword, value, result);
 			result->options |= PG_COMPRESSION_OPTION_WORKERS;
 		}
+		else if (strcmp(keyword, "long") == 0)
+		{
+			result->long_distance = expect_boolean_value(keyword, value, result);
+			result->options |= PG_COMPRESSION_OPTION_LONG_DISTANCE;
+		}
 		else
 			result->parse_error =
 				psprintf(_("unrecognized compression option: \"%s\""), keyword);
@@ -287,6 +294,43 @@ expect_integer_value(char *keyword, char *value, pg_compress_specification *resu
 		return -1;
 	}
 	return ivalue;
+}
+
+/*
+ * Parse 'value' as a boolean and return the result.
+ *
+ * If parsing fails, set result->parse_error to an appropriate message
+ * and return -1.  The caller must check result->parse_error to determine if
+ * the call was successful.
+ *
+ * Valid values are: yes, no, on, off, 1, 0.
+ *
+ * Inspired by ParseVariableBool().
+ */
+static bool
+expect_boolean_value(char *keyword, char *value, pg_compress_specification *result)
+{
+	if (value == NULL)
+		return true;
+
+	if (pg_strcasecmp(value, "yes") == 0)
+		return true;
+	if (pg_strcasecmp(value, "on") == 0)
+		return true;
+	if (pg_strcasecmp(value, "1") == 0)
+		return true;
+
+	if (pg_strcasecmp(value, "no") == 0)
+		return false;
+	if (pg_strcasecmp(value, "off") == 0)
+		return false;
+	if (pg_strcasecmp(value, "0") == 0)
+		return false;
+
+	result->parse_error =
+		psprintf(_("value for compression option \"%s\" must be a boolean"),
+				 keyword);
+	return false;
 }
 
 /*
@@ -351,6 +395,17 @@ validate_compress_specification(pg_compress_specification *spec)
 		(spec->algorithm != PG_COMPRESSION_ZSTD))
 	{
 		return psprintf(_("compression algorithm \"%s\" does not accept a worker count"),
+						get_compress_algorithm_name(spec->algorithm));
+	}
+
+	/*
+	 * Of the compression algorithms that we currently support, only zstd
+	 * supports long-distance mode.
+	 */
+	if ((spec->options & PG_COMPRESSION_OPTION_LONG_DISTANCE) != 0 &&
+		(spec->algorithm != PG_COMPRESSION_ZSTD))
+	{
+		return psprintf(_("compression algorithm \"%s\" does not support long-distance mode"),
 						get_compress_algorithm_name(spec->algorithm));
 	}
 

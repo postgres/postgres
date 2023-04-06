@@ -681,6 +681,8 @@ PostgreSQL documentation
         as though it had been fed through <application>gzip</application>,
         <application>lz4</application>, or <application>zstd</application>;
         but the default is not to compress.
+        With zstd compression, <literal>long</literal> mode may improve the
+        compression ratio, at the cost of increased memory use.
        </para>
        <para>
         The tar archive format currently does not support compression at all.

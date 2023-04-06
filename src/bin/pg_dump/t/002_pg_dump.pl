@@ -267,11 +267,12 @@ my %pgdump_runs = (
 		],
 	},
 
+	# Exercise long mode for test coverage
 	compression_zstd_plain => {
 		test_key       => 'compression',
 		compile_option => 'zstd',
 		dump_cmd       => [
-			'pg_dump', '--format=plain', '--compress=zstd',
+			'pg_dump', '--format=plain', '--compress=zstd:long',
 			"--file=$tempdir/compression_zstd_plain.sql.zst", 'postgres',
 		],
 		# Decompress the generated file to run through the tests.

@@ -139,7 +139,14 @@ SKIP:
 			'gzip:workers=3',
 			'invalid compression specification: compression algorithm "gzip" does not accept a worker count',
 			'failure on worker count for gzip'
-		],);
+		],
+		[
+			'gzip:long',
+			'invalid compression specification: compression algorithm "gzip" does not support long-distance mode',
+			'failure on long mode for gzip'
+		],
+	);
+
 	for my $cft (@compression_failure_tests)
 	{
 		my $cfail = quotemeta($client_fails . $cft->[1]);
