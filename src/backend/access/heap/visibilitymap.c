@@ -126,7 +126,7 @@
 
 /* prototypes for internal routines */
 static Buffer vm_readbuf(Relation rel, BlockNumber blkno, bool extend);
-static void vm_extend(Relation rel, BlockNumber vm_nblocks);
+static Buffer vm_extend(Relation rel, BlockNumber vm_nblocks);
 
 
 /*
@@ -574,22 +574,29 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 			reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = 0;
 	}
 
-	/* Handle requests beyond EOF */
+	/*
+	 * For reading we use ZERO_ON_ERROR mode, and initialize the page if
+	 * necessary. It's always safe to clear bits, so it's better to clear
+	 * corrupt pages than error out.
+	 *
+	 * We use the same path below to initialize pages when extending the
+	 * relation, as a concurrent extension can end up with vm_extend()
+	 * returning an already-initialized page.
+	 */
 	if (blkno >= reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM])
 	{
 		if (extend)
-			vm_extend(rel, blkno + 1);
+			buf = vm_extend(rel, blkno + 1);
 		else
 			return InvalidBuffer;
 	}
+	else
+		buf = ReadBufferExtended(rel, VISIBILITYMAP_FORKNUM, blkno,
+								 RBM_ZERO_ON_ERROR, NULL);
 
 	/*
-	 * Use ZERO_ON_ERROR mode, and initialize the page if necessary. It's
-	 * always safe to clear bits, so it's better to clear corrupt pages than
-	 * error out.
-	 *
-	 * The initialize-the-page part is trickier than it looks, because of the
-	 * possibility of multiple backends doing this concurrently, and our
+	 * Initializing the page when needed is trickier than it looks, because of
+	 * the possibility of multiple backends doing this concurrently, and our
 	 * desire to not uselessly take the buffer lock in the normal path where
 	 * the page is OK.  We must take the lock to initialize the page, so
 	 * recheck page newness after we have the lock, in case someone else
@@ -602,8 +609,6 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 	 * long as it doesn't depend on the page header having correct contents.
 	 * Current usage is safe because PageGetContents() does not require that.
 	 */
-	buf = ReadBufferExtended(rel, VISIBILITYMAP_FORKNUM, blkno,
-							 RBM_ZERO_ON_ERROR, NULL);
 	if (PageIsNew(BufferGetPage(buf)))
 	{
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
@@ -618,51 +623,16 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
  * Ensure that the visibility map fork is at least vm_nblocks long, extending
  * it if necessary with zeroed pages.
  */
-static void
+static Buffer
 vm_extend(Relation rel, BlockNumber vm_nblocks)
 {
-	BlockNumber vm_nblocks_now;
-	PGAlignedBlock pg = {0};
-	SMgrRelation reln;
+	Buffer buf;
 
-	/*
-	 * We use the relation extension lock to lock out other backends trying to
-	 * extend the visibility map at the same time. It also locks out extension
-	 * of the main fork, unnecessarily, but extending the visibility map
-	 * happens seldom enough that it doesn't seem worthwhile to have a
-	 * separate lock tag type for it.
-	 *
-	 * Note that another backend might have extended or created the relation
-	 * by the time we get the lock.
-	 */
-	LockRelationForExtension(rel, ExclusiveLock);
-
-	/*
-	 * Caution: re-using this smgr pointer could fail if the relcache entry
-	 * gets closed.  It's safe as long as we only do smgr-level operations
-	 * between here and the last use of the pointer.
-	 */
-	reln = RelationGetSmgr(rel);
-
-	/*
-	 * Create the file first if it doesn't exist.  If smgr_vm_nblocks is
-	 * positive then it must exist, no need for an smgrexists call.
-	 */
-	if ((reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == 0 ||
-		 reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == InvalidBlockNumber) &&
-		!smgrexists(reln, VISIBILITYMAP_FORKNUM))
-		smgrcreate(reln, VISIBILITYMAP_FORKNUM, false);
-
-	/* Invalidate cache so that smgrnblocks() asks the kernel. */
-	reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = InvalidBlockNumber;
-	vm_nblocks_now = smgrnblocks(reln, VISIBILITYMAP_FORKNUM);
-
-	/* Now extend the file */
-	while (vm_nblocks_now < vm_nblocks)
-	{
-		smgrextend(reln, VISIBILITYMAP_FORKNUM, vm_nblocks_now, pg.data, false);
-		vm_nblocks_now++;
-	}
+	buf = ExtendBufferedRelTo(EB_REL(rel), VISIBILITYMAP_FORKNUM, NULL,
+							  EB_CREATE_FORK_IF_NEEDED |
+							  EB_CLEAR_SIZE_CACHE,
+							  vm_nblocks,
+							  RBM_ZERO_ON_ERROR);
 
 	/*
 	 * Send a shared-inval message to force other backends to close any smgr
@@ -671,7 +641,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	 * to keep checking for creation or extension of the file, which happens
 	 * infrequently.
 	 */
-	CacheInvalidateSmgr(reln->smgr_rlocator);
+	CacheInvalidateSmgr(RelationGetSmgr(rel)->smgr_rlocator);
 
-	UnlockRelationForExtension(rel, ExclusiveLock);
+	return buf;
 }
