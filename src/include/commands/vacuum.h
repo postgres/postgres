@@ -350,6 +350,7 @@ extern IndexBulkDeleteResult *vac_cleanup_one_index(IndexVacuumInfo *ivinfo,
 extern Size vac_max_items_to_alloc_size(int max_items);
 
 /* In postmaster/autovacuum.c */
+extern void AutoVacuumUpdateCostLimit(void);
 extern void VacuumUpdateCosts(void);
 
 /* in commands/vacuumparallel.c */
