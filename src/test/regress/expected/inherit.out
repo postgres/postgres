@@ -2185,23 +2185,23 @@ drop cascades to table d1
 -- with explicitly specified not null constraints
 create table inh_parent_1(f1 int);
 create table inh_parent_2(f2 text);
-create table child(f1 int not null, f2 text not null) inherits(inh_parent_1, inh_parent_2);
+create table inh_child(f1 int not null, f2 text not null) inherits(inh_parent_1, inh_parent_2);
 NOTICE:  merging column "f1" with inherited definition
 NOTICE:  merging column "f2" with inherited definition
 -- show constraint info
 select conrelid::regclass, conname, contype, coninhcount, conislocal
  from pg_constraint where contype = 'n' and
- conrelid in ('inh_parent_1'::regclass, 'inh_parent_2'::regclass, 'child'::regclass)
+ conrelid in ('inh_parent_1'::regclass, 'inh_parent_2'::regclass, 'inh_child'::regclass)
  order by 2, 1;
- conrelid |      conname      | contype | coninhcount | conislocal 
-----------+-------------------+---------+-------------+------------
- child    | child_f1_not_null | n       |           0 | t
- child    | child_f2_not_null | n       |           0 | t
+ conrelid  |        conname        | contype | coninhcount | conislocal 
+-----------+-----------------------+---------+-------------+------------
+ inh_child | inh_child_f1_not_null | n       |           0 | t
+ inh_child | inh_child_f2_not_null | n       |           0 | t
 (2 rows)
 
--- also drops child table
+-- also drops inh_child table
 drop table inh_parent_1 cascade;
-NOTICE:  drop cascades to table child
+NOTICE:  drop cascades to table inh_child
 drop table inh_parent_2;
 -- test multi layer inheritance tree
 create table inh_p1(f1 int not null);

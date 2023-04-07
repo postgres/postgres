@@ -848,15 +848,15 @@ drop table inh_parent cascade;
 -- with explicitly specified not null constraints
 create table inh_parent_1(f1 int);
 create table inh_parent_2(f2 text);
-create table child(f1 int not null, f2 text not null) inherits(inh_parent_1, inh_parent_2);
+create table inh_child(f1 int not null, f2 text not null) inherits(inh_parent_1, inh_parent_2);
 
 -- show constraint info
 select conrelid::regclass, conname, contype, coninhcount, conislocal
  from pg_constraint where contype = 'n' and
- conrelid in ('inh_parent_1'::regclass, 'inh_parent_2'::regclass, 'child'::regclass)
+ conrelid in ('inh_parent_1'::regclass, 'inh_parent_2'::regclass, 'inh_child'::regclass)
  order by 2, 1;
 
--- also drops child table
+-- also drops inh_child table
 drop table inh_parent_1 cascade;
 drop table inh_parent_2;
 
