@@ -22,9 +22,10 @@
  </indexterm>
 
  <para>
-  The module provides the <function>pg_buffercache_pages()</function>
-  function, wrapped in the <structname>pg_buffercache</structname> view, and
-  the <function>pg_buffercache_summary()</function> function.
+  This module provides the <function>pg_buffercache_pages()</function>
+  function (wrapped in the <structname>pg_buffercache</structname> view),
+  the <function>pg_buffercache_summary()</function> function, and the
+  <function>pg_buffercache_usage_counts()</function> function.
  </para>
 
  <para>
@@ -37,6 +38,12 @@
  <para>
   The <function>pg_buffercache_summary()</function> function returns a single
   row summarizing the state of the shared buffer cache.
+ </para>
+
+ <para>
+  The <function>pg_buffercache_usage_counts()</function> function returns a set
+  of records, each row describing the number of buffers with a given usage
+  count.
  </para>
 
  <para>
@@ -243,7 +250,7 @@
        <structfield>usagecount_avg</structfield> <type>float8</type>
       </para>
       <para>
-       Average usagecount of used shared buffers
+       Average usage count of used shared buffers
       </para></entry>
      </row>
     </tbody>
@@ -261,6 +268,84 @@
   <para>
    Like the <structname>pg_buffercache</structname> view,
    <function>pg_buffercache_summary()</function> does not acquire buffer
+   manager locks. Therefore concurrent activity can lead to minor inaccuracies
+   in the result.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>The <function>pg_buffercache_usage_counts()</function> Function</title>
+
+  <para>
+   The definitions of the columns exposed by the function are shown in
+   <xref linkend="pgbuffercache_usage_counts-columns"/>.
+  </para>
+
+  <table id="pgbuffercache_usage_counts-columns">
+   <title><function>pg_buffercache_usage_counts()</function> Output Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usage_count</structfield> <type>int4</type>
+      </para>
+      <para>
+       A possible buffer usage count
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of buffers with the usage count
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>dirty</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of dirty buffers with the usage count
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pinned</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of pinned buffers with the usage count
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <function>pg_buffercache_usage_counts()</function> function returns a
+   set of rows summarizing the states of all shared buffers, aggregated over
+   the possible usage count values.  Similar and more detailed information is
+   provided by the <structname>pg_buffercache</structname> view, but
+   <function>pg_buffercache_usage_counts()</function> is significantly cheaper.
+  </para>
+
+  <para>
+   Like the <structname>pg_buffercache</structname> view,
+   <function>pg_buffercache_usage_counts()</function> does not acquire buffer
    manager locks. Therefore concurrent activity can lead to minor inaccuracies
    in the result.
   </para>
@@ -300,6 +385,18 @@ regression=# SELECT * FROM pg_buffercache_summary();
 --------------+----------------+---------------+----------------+----------------
           248 |        2096904 |            39 |              0 |       3.141129
 (1 row)
+
+
+regression=# SELECT * FROM pg_buffercache_usage_counts();
+ usage_count | buffers | dirty | pinned
+-------------+---------+-------+--------
+           0 |   14650 |     0 |      0
+           1 |    1436 |   671 |      0
+           2 |     102 |    88 |      0
+           3 |      23 |    21 |      0
+           4 |       9 |     7 |      0
+           5 |     164 |   106 |      0
+(6 rows)
 </screen>
  </sect2>
 

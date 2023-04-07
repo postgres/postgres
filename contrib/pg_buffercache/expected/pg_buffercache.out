@@ -17,6 +17,12 @@ from pg_buffercache_summary();
  t        | t        | t
 (1 row)
 
+SELECT count(*) > 0 FROM pg_buffercache_usage_counts() WHERE buffers >= 0;
+ ?column? 
+----------
+ t
+(1 row)
+
 -- Check that the functions / views can't be accessed by default. To avoid
 -- having to create a dedicated user, use the pg_database_owner pseudo-role.
 SET ROLE pg_database_owner;
@@ -26,6 +32,8 @@ SELECT * FROM pg_buffercache_pages() AS p (wrong int);
 ERROR:  permission denied for function pg_buffercache_pages
 SELECT * FROM pg_buffercache_summary();
 ERROR:  permission denied for function pg_buffercache_summary
+SELECT * FROM pg_buffercache_usage_counts();
+ERROR:  permission denied for function pg_buffercache_usage_counts
 RESET role;
 -- Check that pg_monitor is allowed to query view / function
 SET ROLE pg_monitor;
@@ -36,6 +44,12 @@ SELECT count(*) > 0 FROM pg_buffercache;
 (1 row)
 
 SELECT buffers_used + buffers_unused > 0 FROM pg_buffercache_summary();
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT count(*) > 0 FROM pg_buffercache_usage_counts();
  ?column? 
 ----------
  t
