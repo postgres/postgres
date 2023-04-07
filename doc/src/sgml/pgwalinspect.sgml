@@ -71,19 +71,19 @@
       after the <replaceable>in_lsn</replaceable> argument.  For
       example:
 <screen>
-postgres=# SELECT * FROM pg_get_wal_record_info('0/1E826E98');
--[ RECORD 1 ]----+----------------------------------------------------
-start_lsn        | 0/1E826F20
-end_lsn          | 0/1E826F60
-prev_lsn         | 0/1E826C80
+postgres=# SELECT * FROM pg_get_wal_record_info('0/E84F5E8');
+-[ RECORD 1 ]----+--------------------------------------------------
+start_lsn        | 0/E84F5E8
+end_lsn          | 0/E84F620
+prev_lsn         | 0/E84F5A8
 xid              | 0
 resource_manager | Heap2
-record_type      | PRUNE
-record_length    | 58
-main_data_length | 8
+record_type      | VACUUM
+record_length    | 50
+main_data_length | 2
 fpi_length       | 0
-description      | snapshotConflictHorizon 33748 nredirected 0 ndead 2
-block_ref        | blkref #0: rel 1663/5/60221 fork main blk 2
+description      | nunused: 1, unused: [ 22 ]
+block_ref        | blkref #0: rel 1663/16389/20884 fork main blk 126
 </screen>
      </para>
      <para>
@@ -144,7 +144,7 @@ block_ref        |
       references.  Returns one row per block reference per WAL record.
       For example:
 <screen>
-postgres=# SELECT * FROM pg_get_wal_block_info('0/10E9D80', '0/10E9DC0') LIMIT 1;
+postgres=# SELECT * FROM pg_get_wal_block_info('0/10E9D80', '0/10E9DC0');
 -[ RECORD 1 ]-----+-----------------------------------
 start_lsn         | 0/10E9D80
 end_lsn           | 0/10E9DC0

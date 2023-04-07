@@ -23,6 +23,7 @@ OBJS = \
 	nbtdesc.o \
 	relmapdesc.o \
 	replorigindesc.o \
+	rmgrdesc_utils.o \
 	seqdesc.o \
 	smgrdesc.o \
 	spgdesc.o \
