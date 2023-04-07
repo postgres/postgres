@@ -16053,7 +16053,7 @@ SELECT js,
   js IS JSON ARRAY "array?"
 FROM (VALUES
       ('123'), ('"abc"'), ('{"a": "b"}'), ('[1,2]'),('abc')) foo(js);
-     js     | json? | scalar? | object? | array? 
+     js     | json? | scalar? | object? | array?
 ------------+-------+---------+---------+--------
  123        | t     | t       | f       | f
  "abc"      | t     | t       | f       | f
@@ -18774,6 +18774,48 @@ SELECT NULLIF(value, '(none)') ...
        <para>
         <literal>array_replace(ARRAY[1,2,5,4], 5, 3)</literal>
         <returnvalue>{1,2,3,4}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_sample</primary>
+        </indexterm>
+        <function>array_sample</function> ( <parameter>array</parameter> <type>anyarray</type>, <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Returns an array of <parameter>n</parameter> items randomly selected
+        from <parameter>array</parameter>.  <parameter>n</parameter> may not
+        exceed the length of <parameter>array</parameter>'s first dimension.
+        If <parameter>array</parameter> is multi-dimensional,
+        an <quote>item</quote> is a slice having a given first subscript.
+       </para>
+       <para>
+        <literal>array_sample(ARRAY[1,2,3,4,5,6], 3)</literal>
+        <returnvalue>{2,6,1}</returnvalue>
+       </para>
+       <para>
+        <literal>array_sample(ARRAY[[1,2],[3,4],[5,6]], 2)</literal>
+        <returnvalue>{{5,6},{1,2}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_shuffle</primary>
+        </indexterm>
+        <function>array_shuffle</function> ( <type>anyarray</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Randomly shuffles the first dimension of the array.
+       </para>
+       <para>
+        <literal>array_shuffle(ARRAY[[1,2],[3,4],[5,6]])</literal>
+        <returnvalue>{{5,6},{1,2},{3,4}}</returnvalue>
        </para></entry>
       </row>
 

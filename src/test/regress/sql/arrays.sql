@@ -761,3 +761,17 @@ FROM
 SELECT trim_array(ARRAY[1, 2, 3], -1); -- fail
 SELECT trim_array(ARRAY[1, 2, 3], 10); -- fail
 SELECT trim_array(ARRAY[]::int[], 1); -- fail
+
+-- array_shuffle
+SELECT array_shuffle('{1,2,3,4,5,6}'::int[]) <@ '{1,2,3,4,5,6}';
+SELECT array_shuffle('{1,2,3,4,5,6}'::int[]) @> '{1,2,3,4,5,6}';
+SELECT array_dims(array_shuffle('[-1:2][2:3]={{1,2},{3,NULL},{5,6},{7,8}}'::int[]));
+SELECT array_dims(array_shuffle('{{{1,2},{3,NULL}},{{5,6},{7,8}},{{9,10},{11,12}}}'::int[]));
+
+-- array_sample
+SELECT array_sample('{1,2,3,4,5,6}'::int[], 3) <@ '{1,2,3,4,5,6}';
+SELECT array_length(array_sample('{1,2,3,4,5,6}'::int[], 3), 1);
+SELECT array_dims(array_sample('[-1:2][2:3]={{1,2},{3,NULL},{5,6},{7,8}}'::int[], 3));
+SELECT array_dims(array_sample('{{{1,2},{3,NULL}},{{5,6},{7,8}},{{9,10},{11,12}}}'::int[], 2));
+SELECT array_sample('{1,2,3,4,5,6}'::int[], -1); -- fail
+SELECT array_sample('{1,2,3,4,5,6}'::int[], 7); --fail
