@@ -279,6 +279,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--buffer-usage-limit <replaceable class="parameter">buffer_usage_limit</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the
+        <glossterm linkend="glossary-buffer-access-strategy">Buffer Access Strategy</glossterm>
+        ring buffer size for a given invocation of <application>vacuumdb</application>.
+        This size is used to calculate the number of shared buffers which will
+        be reused as part of this strategy.  See <xref linkend="sql-vacuum"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-n <replaceable class="parameter">schema</replaceable></option></term>
       <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
       <listitem>

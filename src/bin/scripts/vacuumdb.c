@@ -46,6 +46,7 @@ typedef struct vacuumingOptions
 	bool		process_main;
 	bool		process_toast;
 	bool		skip_database_stats;
+	char	   *buffer_usage_limit;
 } vacuumingOptions;
 
 /* object filter options */
@@ -123,6 +124,7 @@ main(int argc, char *argv[])
 		{"no-truncate", no_argument, NULL, 10},
 		{"no-process-toast", no_argument, NULL, 11},
 		{"no-process-main", no_argument, NULL, 12},
+		{"buffer-usage-limit", required_argument, NULL, 13},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -147,6 +149,7 @@ main(int argc, char *argv[])
 	/* initialize options */
 	memset(&vacopts, 0, sizeof(vacopts));
 	vacopts.parallel_workers = -1;
+	vacopts.buffer_usage_limit = NULL;
 	vacopts.no_index_cleanup = false;
 	vacopts.force_index_cleanup = false;
 	vacopts.do_truncate = true;
@@ -266,6 +269,9 @@ main(int argc, char *argv[])
 			case 12:
 				vacopts.process_main = false;
 				break;
+			case 13:
+				vacopts.buffer_usage_limit = pg_strdup(optarg);
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -342,6 +348,14 @@ main(int argc, char *argv[])
 	if (vacopts.no_index_cleanup && vacopts.force_index_cleanup)
 		pg_fatal("cannot use the \"%s\" option with the \"%s\" option",
 				 "no-index-cleanup", "force-index-cleanup");
+
+	/*
+	 * buffer-usage-limit is not allowed with VACUUM FULL unless ANALYZE is
+	 * included too.
+	 */
+	if (vacopts.buffer_usage_limit && vacopts.full && !vacopts.and_analyze)
+		pg_fatal("cannot use the \"%s\" option with the \"%s\" option",
+				 "buffer-usage-limit", "full");
 
 	/* fill cparams except for dbname, which is set below */
 	cparams.pghost = host;
@@ -549,6 +563,10 @@ vacuum_one_database(ConnParams *cparams,
 	if (vacopts->parallel_workers >= 0 && PQserverVersion(conn) < 130000)
 		pg_fatal("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
 				 "--parallel", "13");
+
+	if (vacopts->buffer_usage_limit && PQserverVersion(conn) < 160000)
+		pg_fatal("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+				 "--buffer-usage-limit", "16");
 
 	/* skip_database_stats is used automatically if server supports it */
 	vacopts->skip_database_stats = (PQserverVersion(conn) >= 160000);
@@ -1048,6 +1066,13 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 								  vacopts->parallel_workers);
 				sep = comma;
 			}
+			if (vacopts->buffer_usage_limit)
+			{
+				Assert(serverVersion >= 160000);
+				appendPQExpBuffer(sql, "%sBUFFER_USAGE_LIMIT '%s'", sep,
+								  vacopts->buffer_usage_limit);
+				sep = comma;
+			}
 			if (sep != paren)
 				appendPQExpBufferChar(sql, ')');
 		}
@@ -1111,6 +1136,7 @@ help(const char *progname)
 	printf(_("      --force-index-cleanup       always remove index entries that point to dead tuples\n"));
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"));
+	printf(_("      --buffer-usage-limit=BUFSIZE size of ring buffer used for vacuum\n"));
 	printf(_("      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"));
 	printf(_("      --no-index-cleanup          don't remove index entries that point to dead tuples\n"));
 	printf(_("      --no-process-main           skip the main relation\n"));

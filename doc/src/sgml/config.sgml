@@ -2015,10 +2015,10 @@ include_dir 'conf.d'
         used by the <command>VACUUM</command> and <command>ANALYZE</command>
         commands.  A setting of <literal>0</literal> will allow the operation
         to use any number of <varname>shared_buffers</varname>.  Otherwise
-        valid sizes range from <literal>128 KB</literal> to
+        valid sizes range from <literal>128 kB</literal> to
         <literal>16 GB</literal>.  If the specified size would exceed 1/8 the
         size of <varname>shared_buffers</varname>, the size is silently capped
-        to that value.  The default value is <literal>256 KB</literal>.  If
+        to that value.  The default value is <literal>256 kB</literal>.  If
         this value is specified without units, it is taken as kilobytes.  This
         parameter can be set at any time.  It can be overridden for
         <xref linkend="sql-vacuum"/> and <xref linkend="sql-analyze"/>
