@@ -20,6 +20,7 @@
 #include "access/xlogutils.h"
 #include "lib/ilist.h"
 #include "storage/bufmgr.h"
+#include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/md.h"
 #include "storage/smgr.h"

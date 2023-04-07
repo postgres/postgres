@@ -44,6 +44,7 @@
 #define FD_H
 
 #include <dirent.h>
+#include <fcntl.h>
 
 typedef enum RecoveryInitSyncMethod
 {
@@ -54,10 +55,16 @@ typedef enum RecoveryInitSyncMethod
 typedef int File;
 
 
+#define IO_DIRECT_DATA			0x01
+#define IO_DIRECT_WAL			0x02
+#define IO_DIRECT_WAL_INIT		0x04
+
+
 /* GUC parameter */
 extern PGDLLIMPORT int max_files_per_process;
 extern PGDLLIMPORT bool data_sync_retry;
 extern PGDLLIMPORT int recovery_init_sync_method;
+extern PGDLLIMPORT int io_direct_flags;
 
 /*
  * This is private to fd.c, but exported for save/restore_backend_variables()

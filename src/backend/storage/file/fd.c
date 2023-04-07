@@ -98,7 +98,9 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/resowner_private.h"
+#include "utils/varlena.h"
 
 /* Define PG_FLUSH_DATA_WORKS if we have an implementation for pg_flush_data */
 #if defined(HAVE_SYNC_FILE_RANGE)
@@ -161,6 +163,9 @@ bool		data_sync_retry = false;
 
 /* How SyncDataDirectory() should do its job. */
 int			recovery_init_sync_method = RECOVERY_INIT_SYNC_METHOD_FSYNC;
+
+/* Which kinds of files should be opened with PG_O_DIRECT. */
+int			io_direct_flags;
 
 /* Debugging.... */
 
@@ -2022,6 +2027,9 @@ FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
 	if (nbytes <= 0)
 		return;
 
+	if (VfdCache[file].fileFlags & PG_O_DIRECT)
+		return;
+
 	returnCode = FileAccess(file);
 	if (returnCode < 0)
 		return;
@@ -3825,4 +3833,94 @@ int
 data_sync_elevel(int elevel)
 {
 	return data_sync_retry ? elevel : PANIC;
+}
+
+bool
+check_io_direct(char **newval, void **extra, GucSource source)
+{
+	bool		result = true;
+	int			flags;
+
+#if PG_O_DIRECT == 0
+	if (strcmp(*newval, "") != 0)
+	{
+		GUC_check_errdetail("io_direct is not supported on this platform.");
+		result = false;
+	}
+	flags = 0;
+#else
+	List	   *elemlist;
+	ListCell   *l;
+	char	   *rawstring;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(*newval);
+
+	if (!SplitGUCList(rawstring, ',', &elemlist))
+	{
+		GUC_check_errdetail("invalid list syntax in parameter \"%s\"",
+							"io_direct");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
+	}
+
+	flags = 0;
+	foreach(l, elemlist)
+	{
+		char	   *item = (char *) lfirst(l);
+
+		if (pg_strcasecmp(item, "data") == 0)
+			flags |= IO_DIRECT_DATA;
+		else if (pg_strcasecmp(item, "wal") == 0)
+			flags |= IO_DIRECT_WAL;
+		else if (pg_strcasecmp(item, "wal_init") == 0)
+			flags |= IO_DIRECT_WAL_INIT;
+		else
+		{
+			GUC_check_errdetail("invalid option \"%s\"", item);
+			result = false;
+			break;
+		}
+	}
+
+	/*
+	 * It's possible to configure block sizes smaller than our assumed I/O
+	 * alignment size, which could result in invalid I/O requests.
+	 */
+#if XLOG_BLCKSZ < PG_IO_ALIGN_SIZE
+	if (result && (flags & (IO_DIRECT_WAL | IO_DIRECT_WAL_INIT)))
+	{
+		GUC_check_errdetail("io_direct is not supported for WAL because XLOG_BLCKSZ is too small");
+		result = false;
+	}
+#endif
+#if BLCKSZ < PG_IO_ALIGN_SIZE
+	if (result && (flags & IO_DIRECT_DATA))
+	{
+		GUC_check_errdetail("io_direct is not supported for data because BLCKSZ is too small");
+		result = false;
+	}
+#endif
+
+	pfree(rawstring);
+	list_free(elemlist);
+#endif
+
+	if (!result)
+		return result;
+
+	/* Save the flags in *extra, for use by assign_io_direct */
+	*extra = guc_malloc(ERROR, sizeof(int));
+	*((int *) *extra) = flags;
+
+	return result;
+}
+
+extern void
+assign_io_direct(const char *newval, void *extra)
+{
+	int		   *flags = (int *) extra;
+
+	io_direct_flags = *flags;
 }

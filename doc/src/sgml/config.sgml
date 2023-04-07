@@ -3172,7 +3172,6 @@ include_dir 'conf.d'
         </listitem>
        </itemizedlist>
        <para>
-        The <literal>open_</literal>* options also use <literal>O_DIRECT</literal> if available.
         Not all of these choices are available on all platforms.
         The default is the first method in the above list that is supported
         by the platform, except that <literal>fdatasync</literal> is the default on
@@ -11252,6 +11251,38 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         update the indexes when modifying the tables).  This is useful
         when recovering from damaged system indexes.
         This parameter cannot be changed after session start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-io-direct" xreflabel="io_direct">
+      <term><varname>io_direct</varname> (<type>string</type>)
+      <indexterm>
+        <primary><varname>io_direct</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Ask the kernel to minimize caching effects for relation data and WAL
+        files using <literal>O_DIRECT</literal> (most Unix-like systems),
+        <literal>F_NOCACHE</literal> (macOS) or
+        <literal>FILE_FLAG_NO_BUFFERING</literal> (Windows).
+       </para>
+       <para>
+        May be set to an empty string (the default) to disable use of direct
+        I/O, or a comma-separated list of operations that should use direct I/O.
+        The valid options are <literal>data</literal> for
+        main data files, <literal>wal</literal> for WAL files, and
+        <literal>wal_init</literal> for WAL files when being initially
+        allocated.
+       </para>
+       <para>
+        Some operating systems and file systems do not support direct I/O, so
+        non-default settings may be rejected at startup or cause errors.
+       </para>
+       <para>
+        Currently this feature reduces performance, and is intended for
+        developer testing only.
        </para>
       </listitem>
      </varlistentry>

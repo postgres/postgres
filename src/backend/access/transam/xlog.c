@@ -2926,6 +2926,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 	XLogSegNo	max_segno;
 	int			fd;
 	int			save_errno;
+	int			open_flags = O_RDWR | O_CREAT | O_EXCL | PG_BINARY;
 
 	Assert(logtli != 0);
 
@@ -2959,8 +2960,11 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 
 	unlink(tmppath);
 
+	if (io_direct_flags & IO_DIRECT_WAL_INIT)
+		open_flags |= PG_O_DIRECT;
+
 	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
-	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY);
+	fd = BasicOpenFile(tmppath, open_flags);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -3354,7 +3358,7 @@ XLogFileClose(void)
 	 * use the cache to read the WAL segment.
 	 */
 #if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
-	if (!XLogIsNeeded())
+	if (!XLogIsNeeded() && (io_direct_flags & IO_DIRECT_WAL) == 0)
 		(void) posix_fadvise(openLogFile, 0, 0, POSIX_FADV_DONTNEED);
 #endif
 
@@ -4444,7 +4448,6 @@ show_in_hot_standby(void)
 	 */
 	return RecoveryInProgress() ? "on" : "off";
 }
-
 
 /*
  * Read the control file, set respective GUCs.
@@ -8029,34 +8032,26 @@ xlog_redo(XLogReaderState *record)
 }
 
 /*
- * Return the (possible) sync flag used for opening a file, depending on the
- * value of the GUC wal_sync_method.
+ * Return the extra open flags used for opening a file, depending on the
+ * value of the GUCs wal_sync_method, fsync and io_direct.
  */
 static int
 get_sync_bit(int method)
 {
 	int			o_direct_flag = 0;
 
-	/* If fsync is disabled, never open in sync mode */
-	if (!enableFsync)
-		return 0;
-
 	/*
-	 * Optimize writes by bypassing kernel cache with O_DIRECT when using
-	 * O_SYNC and O_DSYNC.  But only if archiving and streaming are disabled,
-	 * otherwise the archive command or walsender process will read the WAL
-	 * soon after writing it, which is guaranteed to cause a physical read if
-	 * we bypassed the kernel cache. We also skip the
-	 * posix_fadvise(POSIX_FADV_DONTNEED) call in XLogFileClose() for the same
-	 * reason.
-	 *
-	 * Never use O_DIRECT in walreceiver process for similar reasons; the WAL
+	 * Use O_DIRECT if requested, except in walreceiver process.  The WAL
 	 * written by walreceiver is normally read by the startup process soon
-	 * after it's written. Also, walreceiver performs unaligned writes, which
+	 * after it's written.  Also, walreceiver performs unaligned writes, which
 	 * don't work with O_DIRECT, so it is required for correctness too.
 	 */
-	if (!XLogIsNeeded() && !AmWalReceiverProcess())
+	if ((io_direct_flags & IO_DIRECT_WAL) && !AmWalReceiverProcess())
 		o_direct_flag = PG_O_DIRECT;
+
+	/* If fsync is disabled, never open in sync mode */
+	if (!enableFsync)
+		return o_direct_flag;
 
 	switch (method)
 	{
@@ -8069,7 +8064,7 @@ get_sync_bit(int method)
 		case SYNC_METHOD_FSYNC:
 		case SYNC_METHOD_FSYNC_WRITETHROUGH:
 		case SYNC_METHOD_FDATASYNC:
-			return 0;
+			return o_direct_flag;
 #ifdef O_SYNC
 		case SYNC_METHOD_OPEN:
 			return O_SYNC | o_direct_flag;

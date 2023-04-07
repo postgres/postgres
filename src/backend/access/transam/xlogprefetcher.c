@@ -785,7 +785,7 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 				block->prefetch_buffer = InvalidBuffer;
 				return LRQ_NEXT_IO;
 			}
-			else
+			else if ((io_direct_flags & IO_DIRECT_DATA) == 0)
 			{
 				/*
 				 * This shouldn't be possible, because we already determined

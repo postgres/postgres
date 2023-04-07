@@ -92,8 +92,11 @@ PrefetchLocalBuffer(SMgrRelation smgr, ForkNumber forkNum,
 	{
 #ifdef USE_PREFETCH
 		/* Not in buffers, so initiate prefetch */
-		smgrprefetch(smgr, forkNum, blockNum);
-		result.initiated_io = true;
+		if ((io_direct_flags & IO_DIRECT_DATA) == 0 &&
+			smgrprefetch(smgr, forkNum, blockNum))
+		{
+			result.initiated_io = true;
+		}
 #endif							/* USE_PREFETCH */
 	}
 
