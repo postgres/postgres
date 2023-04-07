@@ -2218,15 +2218,15 @@ select conrelid::regclass, contype, conname,
  from pg_constraint where contype = 'n' and
  conrelid::regclass in ('inh_p1', 'inh_p2', 'inh_p3', 'inh_p4',
 	'inh_multiparent')
- order by 1, 2;
+ order by conrelid::regclass::text, conname;
     conrelid     | contype |      conname       | attname | coninhcount | conislocal 
 -----------------+---------+--------------------+---------+-------------+------------
+ inh_multiparent | n       | inh_p1_f1_not_null | f1      |           3 | f
+ inh_multiparent | n       | inh_p4_f3_not_null | f3      |           1 | f
  inh_p1          | n       | inh_p1_f1_not_null | f1      |           0 | t
  inh_p2          | n       | inh_p2_f1_not_null | f1      |           0 | t
  inh_p4          | n       | inh_p4_f1_not_null | f1      |           0 | t
  inh_p4          | n       | inh_p4_f3_not_null | f3      |           0 | t
- inh_multiparent | n       | inh_p1_f1_not_null | f1      |           3 | f
- inh_multiparent | n       | inh_p4_f3_not_null | f3      |           1 | f
 (6 rows)
 
 create table inh_multiparent2 (a int not null, f1 int) inherits(inh_p3, inh_multiparent);
@@ -2237,7 +2237,7 @@ select conrelid::regclass, contype, conname,
   coninhcount, conislocal
  from pg_constraint where contype = 'n' and
  conrelid::regclass in ('inh_p3', 'inh_multiparent', 'inh_multiparent2')
- order by 1, 2;
+ order by conrelid::regclass::text, conname;
      conrelid     | contype |           conname           | attname | coninhcount | conislocal 
 ------------------+---------+-----------------------------+---------+-------------+------------
  inh_multiparent  | n       | inh_p1_f1_not_null          | f1      |           3 | f
