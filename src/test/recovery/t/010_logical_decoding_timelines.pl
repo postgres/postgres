@@ -28,7 +28,6 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 use File::Copy;
-use IPC::Run ();
 use Scalar::Util qw(blessed);
 
 my ($stdout, $stderr, $ret);
