@@ -453,6 +453,10 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	int			nbytes;
 	MdfdVec    *v;
 
+	/* If this build supports direct I/O, the buffer must be I/O aligned. */
+	if (PG_O_DIRECT != 0 && PG_IO_ALIGN_SIZE <= BLCKSZ)
+		Assert((uintptr_t) buffer == TYPEALIGN(PG_IO_ALIGN_SIZE, buffer));
+
 	/* This assert is too expensive to have on normally ... */
 #ifdef CHECK_WRITE_VS_EXTEND
 	Assert(blocknum >= mdnblocks(reln, forknum));
@@ -783,6 +787,10 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	int			nbytes;
 	MdfdVec    *v;
 
+	/* If this build supports direct I/O, the buffer must be I/O aligned. */
+	if (PG_O_DIRECT != 0 && PG_IO_ALIGN_SIZE <= BLCKSZ)
+		Assert((uintptr_t) buffer == TYPEALIGN(PG_IO_ALIGN_SIZE, buffer));
+
 	TRACE_POSTGRESQL_SMGR_MD_READ_START(forknum, blocknum,
 										reln->smgr_rlocator.locator.spcOid,
 										reln->smgr_rlocator.locator.dbOid,
@@ -847,6 +855,10 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	off_t		seekpos;
 	int			nbytes;
 	MdfdVec    *v;
+
+	/* If this build supports direct I/O, the buffer must be I/O aligned. */
+	if (PG_O_DIRECT != 0 && PG_IO_ALIGN_SIZE <= BLCKSZ)
+		Assert((uintptr_t) buffer == TYPEALIGN(PG_IO_ALIGN_SIZE, buffer));
 
 	/* This assert is too expensive to have on normally ... */
 #ifdef CHECK_WRITE_VS_EXTEND
@@ -1429,7 +1441,8 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			 */
 			if (nblocks < ((BlockNumber) RELSEG_SIZE))
 			{
-				char	   *zerobuf = palloc0(BLCKSZ);
+				char	   *zerobuf = palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE,
+													 MCXT_ALLOC_ZERO);
 
 				mdextend(reln, forknum,
 						 nextsegno * ((BlockNumber) RELSEG_SIZE) - 1,

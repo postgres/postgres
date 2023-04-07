@@ -58,14 +58,17 @@ typedef struct
 	char		delta[MAX_DELTA_SIZE];	/* delta between page images */
 } PageData;
 
-/* State of generic xlog record construction */
+/*
+ * State of generic xlog record construction.  Must be allocated at an I/O
+ * aligned address.
+ */
 struct GenericXLogState
 {
+	/* Page images (properly aligned, must be first) */
+	PGIOAlignedBlock images[MAX_GENERIC_XLOG_PAGES];
 	/* Info about each page, see above */
 	PageData	pages[MAX_GENERIC_XLOG_PAGES];
 	bool		isLogged;
-	/* Page images (properly aligned) */
-	PGAlignedBlock images[MAX_GENERIC_XLOG_PAGES];
 };
 
 static void writeFragment(PageData *pageData, OffsetNumber offset,
@@ -269,7 +272,9 @@ GenericXLogStart(Relation relation)
 	GenericXLogState *state;
 	int			i;
 
-	state = (GenericXLogState *) palloc(sizeof(GenericXLogState));
+	state = (GenericXLogState *) palloc_aligned(sizeof(GenericXLogState),
+												PG_IO_ALIGN_SIZE,
+												0);
 	state->isLogged = RelationNeedsWAL(relation);
 
 	for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)

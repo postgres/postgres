@@ -166,7 +166,7 @@ blbuildempty(Relation index)
 	Page		metapage;
 
 	/* Construct metapage. */
-	metapage = (Page) palloc(BLCKSZ);
+	metapage = (Page) palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE, 0);
 	BloomFillMetapage(index, metapage);
 
 	/*

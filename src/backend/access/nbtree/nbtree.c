@@ -154,7 +154,7 @@ btbuildempty(Relation index)
 	Page		metapage;
 
 	/* Construct metapage. */
-	metapage = (Page) palloc(BLCKSZ);
+	metapage = (Page) palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE, 0);
 	_bt_initmetapage(metapage, P_NONE, 0, _bt_allequalimage(index, false));
 
 	/*

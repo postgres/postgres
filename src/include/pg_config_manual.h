@@ -228,6 +228,12 @@
 #define PG_CACHE_LINE_SIZE		128
 
 /*
+ * Assumed alignment requirement for direct I/O.  4K corresponds to common
+ * sector and memory page size.
+ */
+#define PG_IO_ALIGN_SIZE		4096
+
+/*
  *------------------------------------------------------------------------
  * The following symbols are for enabling debugging code, not for
  * controlling user-visible features or resource limits.

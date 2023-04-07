@@ -178,8 +178,8 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 {
 	int			src_fd;
 	int			dst_fd;
-	PGAlignedBlock buffer;
-	PGAlignedBlock new_vmbuf;
+	PGIOAlignedBlock buffer;
+	PGIOAlignedBlock new_vmbuf;
 	ssize_t		totalBytesRead = 0;
 	ssize_t		src_filesize;
 	int			rewriteVmBytesPerPage;

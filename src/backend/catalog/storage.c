@@ -451,7 +451,7 @@ void
 RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 					ForkNumber forkNum, char relpersistence)
 {
-	PGAlignedBlock buf;
+	PGIOAlignedBlock buf;
 	Page		page;
 	bool		use_wal;
 	bool		copying_initfork;

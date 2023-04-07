@@ -78,9 +78,12 @@ InitBufferPool(void)
 						NBuffers * sizeof(BufferDescPadded),
 						&foundDescs);
 
+	/* Align buffer pool on IO page size boundary. */
 	BufferBlocks = (char *)
-		ShmemInitStruct("Buffer Blocks",
-						NBuffers * (Size) BLCKSZ, &foundBufs);
+		TYPEALIGN(PG_IO_ALIGN_SIZE,
+				  ShmemInitStruct("Buffer Blocks",
+								  NBuffers * (Size) BLCKSZ + PG_IO_ALIGN_SIZE,
+								  &foundBufs));
 
 	/* Align condition variables to cacheline boundary. */
 	BufferIOCVArray = (ConditionVariableMinimallyPadded *)
@@ -163,7 +166,8 @@ BufferShmemSize(void)
 	/* to allow aligning buffer descriptors */
 	size = add_size(size, PG_CACHE_LINE_SIZE);
 
-	/* size of data pages */
+	/* size of data pages, plus alignment padding */
+	size = add_size(size, PG_IO_ALIGN_SIZE);
 	size = add_size(size, mul_size(NBuffers, BLCKSZ));
 
 	/* size of stuff controlled by freelist.c */

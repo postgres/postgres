@@ -1119,14 +1119,11 @@ extern void ExceptionalCondition(const char *conditionName,
 
 /*
  * Use this, not "char buf[BLCKSZ]", to declare a field or local variable
- * holding a page buffer, if that page might be accessed as a page and not
- * just a string of bytes.  Otherwise the variable might be under-aligned,
- * causing problems on alignment-picky hardware.  (In some places, we use
- * this to declare buffers even though we only pass them to read() and
- * write(), because copying to/from aligned buffers is usually faster than
- * using unaligned buffers.)  We include both "double" and "int64" in the
- * union to ensure that the compiler knows the value must be MAXALIGN'ed
- * (cf. configure's computation of MAXIMUM_ALIGNOF).
+ * holding a page buffer, if that page might be accessed as a page.  Otherwise
+ * the variable might be under-aligned, causing problems on alignment-picky
+ * hardware.  We include both "double" and "int64" in the union to ensure that
+ * the compiler knows the value must be MAXALIGN'ed (cf. configure's
+ * computation of MAXIMUM_ALIGNOF).
  */
 typedef union PGAlignedBlock
 {
@@ -1135,9 +1132,30 @@ typedef union PGAlignedBlock
 	int64		force_align_i64;
 } PGAlignedBlock;
 
+/*
+ * Use this to declare a field or local variable holding a page buffer, if that
+ * page might be accessed as a page or passed to an SMgr I/O function.  If
+ * allocating using the MemoryContext API, the aligned allocation functions
+ * should be used with PG_IO_ALIGN_SIZE.  This alignment may be more efficient
+ * for I/O in general, but may be strictly required on some platforms when
+ * using direct I/O.
+ */
+typedef union PGIOAlignedBlock
+{
+#ifdef pg_attribute_aligned
+	pg_attribute_aligned(PG_IO_ALIGN_SIZE)
+#endif
+	char		data[BLCKSZ];
+	double		force_align_d;
+	int64		force_align_i64;
+} PGIOAlignedBlock;
+
 /* Same, but for an XLOG_BLCKSZ-sized buffer */
 typedef union PGAlignedXLogBlock
 {
+#ifdef pg_attribute_aligned
+	pg_attribute_aligned(PG_IO_ALIGN_SIZE)
+#endif
 	char		data[XLOG_BLCKSZ];
 	double		force_align_d;
 	int64		force_align_i64;

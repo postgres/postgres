@@ -183,7 +183,7 @@ skipfile(const char *fn)
 static void
 scan_file(const char *fn, int segmentno)
 {
-	PGAlignedBlock buf;
+	PGIOAlignedBlock buf;
 	PageHeader	header = (PageHeader) buf.data;
 	int			f;
 	BlockNumber blockno;

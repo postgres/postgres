@@ -415,7 +415,7 @@ gist_indexsortbuild(GISTBuildState *state)
 	 * Write an empty page as a placeholder for the root page. It will be
 	 * replaced with the real root page at the end.
 	 */
-	page = palloc0(BLCKSZ);
+	page = palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE, MCXT_ALLOC_ZERO);
 	smgrextend(RelationGetSmgr(state->indexrel), MAIN_FORKNUM, GIST_ROOT_BLKNO,
 			   page, true);
 	state->pages_allocated++;
@@ -509,7 +509,8 @@ gist_indexsortbuild_levelstate_add(GISTBuildState *state,
 			levelstate->current_page++;
 
 		if (levelstate->pages[levelstate->current_page] == NULL)
-			levelstate->pages[levelstate->current_page] = palloc(BLCKSZ);
+			levelstate->pages[levelstate->current_page] =
+				palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE, 0);
 
 		newPage = levelstate->pages[levelstate->current_page];
 		gistinitpage(newPage, old_page_flags);
@@ -579,7 +580,7 @@ gist_indexsortbuild_levelstate_flush(GISTBuildState *state,
 
 		/* Create page and copy data */
 		data = (char *) (dist->list);
-		target = palloc0(BLCKSZ);
+		target = palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE, MCXT_ALLOC_ZERO);
 		gistinitpage(target, isleaf ? F_LEAF : 0);
 		for (int i = 0; i < dist->block.num; i++)
 		{
@@ -630,7 +631,7 @@ gist_indexsortbuild_levelstate_flush(GISTBuildState *state,
 		if (parent == NULL)
 		{
 			parent = palloc0(sizeof(GistSortedBuildLevelState));
-			parent->pages[0] = (Page) palloc(BLCKSZ);
+			parent->pages[0] = (Page) palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE, 0);
 			parent->parent = NULL;
 			gistinitpage(parent->pages[0], 0);
 

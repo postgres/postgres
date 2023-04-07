@@ -82,9 +82,10 @@ extern PGDLLIMPORT int max_safe_fds;
  * to the appropriate Windows flag in src/port/open.c.  We simulate it with
  * fcntl(F_NOCACHE) on macOS inside fd.c's open() wrapper.  We use the name
  * PG_O_DIRECT rather than defining O_DIRECT in that case (probably not a good
- * idea on a Unix).
+ * idea on a Unix).  We can only use it if the compiler will correctly align
+ * PGIOAlignedBlock for us, though.
  */
-#if defined(O_DIRECT)
+#if defined(O_DIRECT) && defined(pg_attribute_aligned)
 #define		PG_O_DIRECT O_DIRECT
 #elif defined(F_NOCACHE)
 #define		PG_O_DIRECT 0x80000000

@@ -992,7 +992,7 @@ static bool
 _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 {
 	BlockNumber lastblock;
-	PGAlignedBlock zerobuf;
+	PGIOAlignedBlock zerobuf;
 	Page		page;
 	HashPageOpaque ovflopaque;
 

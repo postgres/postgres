@@ -4250,7 +4250,7 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 	bool		use_wal;
 	BlockNumber nblocks;
 	BlockNumber blkno;
-	PGAlignedBlock buf;
+	PGIOAlignedBlock buf;
 	BufferAccessStrategy bstrategy_src;
 	BufferAccessStrategy bstrategy_dst;
 

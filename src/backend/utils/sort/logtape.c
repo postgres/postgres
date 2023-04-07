@@ -252,7 +252,7 @@ ltsWriteBlock(LogicalTapeSet *lts, long blocknum, const void *buffer)
 	 */
 	while (blocknum > lts->nBlocksWritten)
 	{
-		PGAlignedBlock zerobuf;
+		PGIOAlignedBlock zerobuf;
 
 		MemSet(zerobuf.data, 0, sizeof(zerobuf));
 

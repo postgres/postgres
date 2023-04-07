@@ -95,6 +95,12 @@ struct BufFile
 	off_t		curOffset;		/* offset part of current pos */
 	int			pos;			/* next read/write position in buffer */
 	int			nbytes;			/* total # of valid bytes in buffer */
+
+	/*
+	 * XXX Should ideally us PGIOAlignedBlock, but might need a way to avoid
+	 * wasting per-file alignment padding when some users create many
+	 * files.
+	 */
 	PGAlignedBlock buffer;
 };
 

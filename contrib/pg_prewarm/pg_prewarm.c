@@ -36,7 +36,7 @@ typedef enum
 	PREWARM_BUFFER
 } PrewarmType;
 
-static PGAlignedBlock blockbuffer;
+static PGIOAlignedBlock blockbuffer;
 
 /*
  * pg_prewarm(regclass, mode text, fork text,
