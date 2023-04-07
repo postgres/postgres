@@ -100,6 +100,11 @@ $krb5_version = $1;
 # that information in DNS, and also because we're using a
 # non-standard KDC port.
 #
+# Also explicitly disable DNS lookups since this isn't really
+# our domain and we shouldn't be causing random DNS requests
+# to be sent out (not to mention that broken DNS environments
+# can cause the tests to take an extra long time and timeout).
+#
 # Reverse DNS is explicitly disabled to avoid any issue with a
 # captive portal or other cases where the reverse DNS succeeds
 # and the Kerberos library uses that as the canonical name of
@@ -111,6 +116,8 @@ default = FILE:$krb5_log
 kdc = FILE:$kdc_log
 
 [libdefaults]
+dns_lookup_realm = false
+dns_lookup_kdc = false
 default_realm = $realm
 rdns = false
 
