@@ -65,3 +65,174 @@ SELECT dmetaphone_alt('gumbo');
  KMP
 (1 row)
 
+-- Wovels
+SELECT daitch_mokotoff('Augsburg');
+ daitch_mokotoff 
+-----------------
+ {054795}
+(1 row)
+
+SELECT daitch_mokotoff('Breuer');
+ daitch_mokotoff 
+-----------------
+ {791900}
+(1 row)
+
+SELECT daitch_mokotoff('Freud');
+ daitch_mokotoff 
+-----------------
+ {793000}
+(1 row)
+
+-- The letter "H"
+SELECT daitch_mokotoff('Halberstadt');
+ daitch_mokotoff 
+-----------------
+ {587943,587433}
+(1 row)
+
+SELECT daitch_mokotoff('Mannheim');
+ daitch_mokotoff 
+-----------------
+ {665600}
+(1 row)
+
+-- Adjacent sounds
+SELECT daitch_mokotoff('Chernowitz');
+ daitch_mokotoff 
+-----------------
+ {596740,496740}
+(1 row)
+
+-- Adjacent letters with identical adjacent code digits
+SELECT daitch_mokotoff('Cherkassy');
+ daitch_mokotoff 
+-----------------
+ {595400,495400}
+(1 row)
+
+SELECT daitch_mokotoff('Kleinman');
+ daitch_mokotoff 
+-----------------
+ {586660}
+(1 row)
+
+-- More than one word
+SELECT daitch_mokotoff('Nowy Targ');
+ daitch_mokotoff 
+-----------------
+ {673950}
+(1 row)
+
+-- Padded with "0"
+SELECT daitch_mokotoff('Berlin');
+ daitch_mokotoff 
+-----------------
+ {798600}
+(1 row)
+
+-- Other examples from https://www.avotaynu.com/soundex.htm
+SELECT daitch_mokotoff('Ceniow');
+ daitch_mokotoff 
+-----------------
+ {567000,467000}
+(1 row)
+
+SELECT daitch_mokotoff('Tsenyuv');
+ daitch_mokotoff 
+-----------------
+ {467000}
+(1 row)
+
+SELECT daitch_mokotoff('Holubica');
+ daitch_mokotoff 
+-----------------
+ {587500,587400}
+(1 row)
+
+SELECT daitch_mokotoff('Golubitsa');
+ daitch_mokotoff 
+-----------------
+ {587400}
+(1 row)
+
+SELECT daitch_mokotoff('Przemysl');
+ daitch_mokotoff 
+-----------------
+ {794648,746480}
+(1 row)
+
+SELECT daitch_mokotoff('Pshemeshil');
+ daitch_mokotoff 
+-----------------
+ {746480}
+(1 row)
+
+SELECT daitch_mokotoff('Rosochowaciec');
+                      daitch_mokotoff                      
+-----------------------------------------------------------
+ {945755,945754,945745,945744,944755,944754,944745,944744}
+(1 row)
+
+SELECT daitch_mokotoff('Rosokhovatsets');
+ daitch_mokotoff 
+-----------------
+ {945744}
+(1 row)
+
+-- Ignored characters
+SELECT daitch_mokotoff('''OBrien');
+ daitch_mokotoff 
+-----------------
+ {079600}
+(1 row)
+
+SELECT daitch_mokotoff('O''Brien');
+ daitch_mokotoff 
+-----------------
+ {079600}
+(1 row)
+
+-- "Difficult" cases, likely to cause trouble for other implementations.
+SELECT daitch_mokotoff('CJC');
+               daitch_mokotoff               
+---------------------------------------------
+ {550000,540000,545000,450000,400000,440000}
+(1 row)
+
+SELECT daitch_mokotoff('BESST');
+ daitch_mokotoff 
+-----------------
+ {743000}
+(1 row)
+
+SELECT daitch_mokotoff('BOUEY');
+ daitch_mokotoff 
+-----------------
+ {710000}
+(1 row)
+
+SELECT daitch_mokotoff('HANNMANN');
+ daitch_mokotoff 
+-----------------
+ {566600}
+(1 row)
+
+SELECT daitch_mokotoff('MCCOYJR');
+                      daitch_mokotoff                      
+-----------------------------------------------------------
+ {651900,654900,654190,654490,645190,645490,641900,644900}
+(1 row)
+
+SELECT daitch_mokotoff('ACCURSO');
+                      daitch_mokotoff                      
+-----------------------------------------------------------
+ {059400,054000,054940,054400,045940,045400,049400,044000}
+(1 row)
+
+SELECT daitch_mokotoff('BIERSCHBACH');
+                      daitch_mokotoff                      
+-----------------------------------------------------------
+ {794575,794574,794750,794740,745750,745740,747500,747400}
+(1 row)
+

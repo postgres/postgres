@@ -17,6 +17,8 @@
    At present, the <function>soundex</function>, <function>metaphone</function>,
    <function>dmetaphone</function>, and <function>dmetaphone_alt</function> functions do
    not work well with multibyte encodings (such as UTF-8).
+   Use <function>daitch_mokotoff</function>
+   or <function>levenshtein</function> with such data.
   </para>
  </caution>
 
@@ -88,6 +90,159 @@ SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
 </programlisting>
  </sect2>
 
+ <sect2 id="fuzzystrmatch-daitch-mokotoff">
+  <title>Daitch-Mokotoff Soundex</title>
+
+  <para>
+   Like the original Soundex system, Daitch-Mokotoff Soundex matches
+   similar-sounding names by converting them to the same code.
+   However, Daitch-Mokotoff Soundex is significantly more useful for
+   non-English names than the original system.
+   Major improvements over the original system include:
+
+   <itemizedlist spacing="compact" mark="bullet">
+    <listitem>
+     <para>
+      The code is based on the first six meaningful letters rather than four.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A letter or combination of letters maps into ten possible codes rather
+      than seven.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Where two consecutive letters have a single sound, they are coded as a
+      single number.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      When a letter or combination of letters may have different sounds,
+      multiple codes are emitted to cover all possibilities.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <indexterm>
+   <primary>daitch_mokotoff</primary>
+  </indexterm>
+
+  <para>
+   This function generates the Daitch-Mokotoff soundex codes for its input:
+  </para>
+
+<synopsis>
+daitch_mokotoff(<parameter>source</parameter> text) returns text[]
+</synopsis>
+
+  <para>
+   The result may contain one or more codes depending on how many plausible
+   pronunciations there are, so it is represented as an array.
+  </para>
+
+  <para>
+   Since a Daitch-Mokotoff soundex code consists of only 6 digits,
+   <parameter>source</parameter> should be preferably a single word or name.
+  </para>
+
+  <para>
+   Here are some examples:
+  </para>
+
+<programlisting>
+SELECT daitch_mokotoff('George');
+ daitch_mokotoff
+-----------------
+ {595000}
+
+SELECT daitch_mokotoff('John');
+ daitch_mokotoff
+-----------------
+ {160000,460000}
+
+SELECT daitch_mokotoff('Bierschbach');
+                      daitch_mokotoff
+-----------------------------------------------------------
+ {794575,794574,794750,794740,745750,745740,747500,747400}
+
+SELECT daitch_mokotoff('Schwartzenegger');
+ daitch_mokotoff
+-----------------
+ {479465}
+</programlisting>
+
+  <para>
+   For matching of single names, returned text arrays can be matched
+   directly using the <literal>&amp;&amp;</literal> operator: any overlap
+   can be considered a match.  A GIN index may
+   be used for efficiency, see <xref linkend="gin"/> and this example:
+  </para>
+
+<programlisting>
+CREATE TABLE s (nm text);
+CREATE INDEX ix_s_dm ON s USING gin (daitch_mokotoff(nm)) WITH (fastupdate = off);
+
+INSERT INTO s (nm) VALUES
+  ('Schwartzenegger'),
+  ('John'),
+  ('James'),
+  ('Steinman'),
+  ('Steinmetz');
+
+SELECT * FROM s WHERE daitch_mokotoff(nm) &amp;&amp; daitch_mokotoff('Swartzenegger');
+SELECT * FROM s WHERE daitch_mokotoff(nm) &amp;&amp; daitch_mokotoff('Jane');
+SELECT * FROM s WHERE daitch_mokotoff(nm) &amp;&amp; daitch_mokotoff('Jens');
+</programlisting>
+
+  <para>
+   For indexing and matching of any number of names in any order, Full Text
+   Search features can be used. See <xref linkend="textsearch"/> and this
+   example:
+  </para>
+
+<programlisting>
+CREATE FUNCTION soundex_tsvector(v_name text) RETURNS tsvector
+BEGIN ATOMIC
+  SELECT to_tsvector('simple',
+                     string_agg(array_to_string(daitch_mokotoff(n), ' '), ' '))
+  FROM regexp_split_to_table(v_name, '\s+') AS n;
+END;
+
+CREATE FUNCTION soundex_tsquery(v_name text) RETURNS tsquery
+BEGIN ATOMIC
+  SELECT string_agg('(' || array_to_string(daitch_mokotoff(n), '|') || ')', '&amp;')::tsquery
+  FROM regexp_split_to_table(v_name, '\s+') AS n;
+END;
+
+CREATE TABLE s (nm text);
+CREATE INDEX ix_s_txt ON s USING gin (soundex_tsvector(nm)) WITH (fastupdate = off);
+
+INSERT INTO s (nm) VALUES
+  ('John Doe'),
+  ('Jane Roe'),
+  ('Public John Q.'),
+  ('George Best'),
+  ('John Yamson');
+
+SELECT * FROM s WHERE soundex_tsvector(nm) @@ soundex_tsquery('john');
+SELECT * FROM s WHERE soundex_tsvector(nm) @@ soundex_tsquery('jane doe');
+SELECT * FROM s WHERE soundex_tsvector(nm) @@ soundex_tsquery('john public');
+SELECT * FROM s WHERE soundex_tsvector(nm) @@ soundex_tsquery('besst, giorgio');
+SELECT * FROM s WHERE soundex_tsvector(nm) @@ soundex_tsquery('Jameson John');
+</programlisting>
+
+  <para>
+   If it is desired to avoid recalculation of soundex codes during index
+   rechecks, an index on a separate column can be used instead of an index on
+   an expression.  A stored generated column can be used for this; see
+   <xref linkend="ddl-generated-columns"/>.
+  </para>
+ </sect2>
+
  <sect2 id="fuzzystrmatch-levenshtein">
   <title>Levenshtein</title>
 
@@ -104,10 +259,10 @@ SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
   </indexterm>
 
 <synopsis>
-levenshtein(text source, text target, int ins_cost, int del_cost, int sub_cost) returns int
-levenshtein(text source, text target) returns int
-levenshtein_less_equal(text source, text target, int ins_cost, int del_cost, int sub_cost, int max_d) returns int
-levenshtein_less_equal(text source, text target, int max_d) returns int
+levenshtein(source text, target text, ins_cost int, del_cost int, sub_cost int) returns int
+levenshtein(source text, target text) returns int
+levenshtein_less_equal(source text, target text, ins_cost int, del_cost int, sub_cost int, max_d int) returns int
+levenshtein_less_equal(source text, target text, max_d int) returns int
 </synopsis>
 
   <para>
@@ -177,7 +332,7 @@ test=# SELECT levenshtein_less_equal('extensive', 'exhaustive', 4);
   </indexterm>
 
 <synopsis>
-metaphone(text source, int max_output_length) returns text
+metaphone(source text, max_output_length int) returns text
 </synopsis>
 
   <para>
@@ -220,8 +375,8 @@ test=# SELECT metaphone('GUMBO', 4);
   </indexterm>
 
 <synopsis>
-dmetaphone(text source) returns text
-dmetaphone_alt(text source) returns text
+dmetaphone(source text) returns text
+dmetaphone_alt(source text) returns text
 </synopsis>
 
   <para>
