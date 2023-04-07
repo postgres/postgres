@@ -15,6 +15,61 @@
 #include "postgres.h"
 
 #include "access/nbtxlog.h"
+#include "access/rmgrdesc_utils.h"
+
+static void btree_del_desc(StringInfo buf, char *block_data, uint16 ndeleted,
+						   uint16 nupdated);
+static void btree_update_elem_desc(StringInfo buf, void *update, void *data);
+
+static void
+btree_del_desc(StringInfo buf, char *block_data, uint16 ndeleted,
+			   uint16 nupdated)
+{
+	OffsetNumber *updatedoffsets;
+	xl_btree_update *updates;
+	OffsetNumber *data = (OffsetNumber *) block_data;
+
+	appendStringInfoString(buf, ", deleted:");
+	array_desc(buf, data, sizeof(OffsetNumber), ndeleted,
+			   &offset_elem_desc, NULL);
+
+	appendStringInfoString(buf, ", updated:");
+	array_desc(buf, data, sizeof(OffsetNumber), nupdated,
+			   &offset_elem_desc, NULL);
+
+	if (nupdated <= 0)
+		return;
+
+	updatedoffsets = (OffsetNumber *)
+		((char *) data + ndeleted * sizeof(OffsetNumber));
+	updates = (xl_btree_update *) ((char *) updatedoffsets +
+								   nupdated *
+								   sizeof(OffsetNumber));
+
+	appendStringInfoString(buf, ", updates:");
+	array_desc(buf, updates, sizeof(xl_btree_update),
+			   nupdated, &btree_update_elem_desc,
+			   &updatedoffsets);
+}
+
+static void
+btree_update_elem_desc(StringInfo buf, void *update, void *data)
+{
+	xl_btree_update *new_update = (xl_btree_update *) update;
+	OffsetNumber *updated_offset = *((OffsetNumber **) data);
+
+	appendStringInfo(buf, "{ updated offset: %u, ndeleted tids: %u",
+					 *updated_offset, new_update->ndeletedtids);
+
+	appendStringInfoString(buf, ", deleted tids:");
+
+	array_desc(buf, (char *) new_update + SizeOfBtreeUpdate, sizeof(uint16),
+			   new_update->ndeletedtids, &uint16_elem_desc, NULL);
+
+	updated_offset++;
+
+	appendStringInfo(buf, " }");
+}
 
 void
 btree_desc(StringInfo buf, XLogReaderState *record)
@@ -31,7 +86,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-				appendStringInfo(buf, "off %u", xlrec->offnum);
+				appendStringInfo(buf, "off: %u", xlrec->offnum);
 				break;
 			}
 		case XLOG_BTREE_SPLIT_L:
@@ -39,7 +94,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-				appendStringInfo(buf, "level %u, firstrightoff %d, newitemoff %d, postingoff %d",
+				appendStringInfo(buf, "level: %u, firstrightoff: %d, newitemoff: %d, postingoff: %d",
 								 xlrec->level, xlrec->firstrightoff,
 								 xlrec->newitemoff, xlrec->postingoff);
 				break;
@@ -48,31 +103,41 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_dedup *xlrec = (xl_btree_dedup *) rec;
 
-				appendStringInfo(buf, "nintervals %u", xlrec->nintervals);
+				appendStringInfo(buf, "nintervals: %u", xlrec->nintervals);
 				break;
 			}
 		case XLOG_BTREE_VACUUM:
 			{
 				xl_btree_vacuum *xlrec = (xl_btree_vacuum *) rec;
 
-				appendStringInfo(buf, "ndeleted %u; nupdated %u",
+				appendStringInfo(buf, "ndeleted: %u, nupdated: %u",
 								 xlrec->ndeleted, xlrec->nupdated);
+
+				if (!XLogRecHasBlockImage(record, 0))
+					btree_del_desc(buf, XLogRecGetBlockData(record, 0, NULL),
+								   xlrec->ndeleted, xlrec->nupdated);
+
 				break;
 			}
 		case XLOG_BTREE_DELETE:
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-				appendStringInfo(buf, "snapshotConflictHorizon %u; ndeleted %u; nupdated %u",
+				appendStringInfo(buf, "snapshotConflictHorizon: %u, ndeleted: %u, nupdated: %u",
 								 xlrec->snapshotConflictHorizon,
 								 xlrec->ndeleted, xlrec->nupdated);
+
+				if (!XLogRecHasBlockImage(record, 0))
+					btree_del_desc(buf, XLogRecGetBlockData(record, 0, NULL),
+								   xlrec->ndeleted, xlrec->nupdated);
+
 				break;
 			}
 		case XLOG_BTREE_MARK_PAGE_HALFDEAD:
 			{
 				xl_btree_mark_page_halfdead *xlrec = (xl_btree_mark_page_halfdead *) rec;
 
-				appendStringInfo(buf, "topparent %u; leaf %u; left %u; right %u",
+				appendStringInfo(buf, "topparent: %u; leaf: %u; left: %u; right: %u",
 								 xlrec->topparent, xlrec->leafblk, xlrec->leftblk, xlrec->rightblk);
 				break;
 			}
@@ -81,11 +146,11 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_unlink_page *xlrec = (xl_btree_unlink_page *) rec;
 
-				appendStringInfo(buf, "left %u; right %u; level %u; safexid %u:%u; ",
+				appendStringInfo(buf, "left: %u; right: %u; level: %u; safexid: %u:%u; ",
 								 xlrec->leftsib, xlrec->rightsib, xlrec->level,
 								 EpochFromFullTransactionId(xlrec->safexid),
 								 XidFromFullTransactionId(xlrec->safexid));
-				appendStringInfo(buf, "leafleft %u; leafright %u; leaftopparent %u",
+				appendStringInfo(buf, "leafleft: %u; leafright: %u; leaftopparent: %u",
 								 xlrec->leafleftsib, xlrec->leafrightsib,
 								 xlrec->leaftopparent);
 				break;
@@ -94,14 +159,14 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_newroot *xlrec = (xl_btree_newroot *) rec;
 
-				appendStringInfo(buf, "lev %u", xlrec->level);
+				appendStringInfo(buf, "lev: %u", xlrec->level);
 				break;
 			}
 		case XLOG_BTREE_REUSE_PAGE:
 			{
 				xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) rec;
 
-				appendStringInfo(buf, "rel %u/%u/%u; snapshotConflictHorizon %u:%u",
+				appendStringInfo(buf, "rel: %u/%u/%u, snapshotConflictHorizon: %u:%u",
 								 xlrec->locator.spcOid, xlrec->locator.dbOid,
 								 xlrec->locator.relNumber,
 								 EpochFromFullTransactionId(xlrec->snapshotConflictHorizon),
@@ -114,7 +179,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 
 				xlrec = (xl_btree_metadata *) XLogRecGetBlockData(record, 0,
 																  NULL);
-				appendStringInfo(buf, "last_cleanup_num_delpages %u",
+				appendStringInfo(buf, "last_cleanup_num_delpages: %u",
 								 xlrec->last_cleanup_num_delpages);
 				break;
 			}

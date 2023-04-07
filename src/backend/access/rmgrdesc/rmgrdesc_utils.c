@@ -82,3 +82,9 @@ relid_desc(StringInfo buf, void *relid, void *data)
 {
 	appendStringInfo(buf, "%u", *(Oid *) relid);
 }
+
+void
+uint16_elem_desc(StringInfo buf, void *value, void *data)
+{
+	appendStringInfo(buf, "%u", *(uint16 *) value);
+}
