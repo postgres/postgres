@@ -524,28 +524,13 @@ XLogReadBufferExtended(RelFileLocator rlocator, ForkNumber forknum,
 		/* OK to extend the file */
 		/* we do this in recovery only - no rel-extension lock needed */
 		Assert(InRecovery);
-		buffer = InvalidBuffer;
-		do
-		{
-			if (buffer != InvalidBuffer)
-			{
-				if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
-					LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				ReleaseBuffer(buffer);
-			}
-			buffer = ReadBufferWithoutRelcache(rlocator, forknum,
-											   P_NEW, mode, NULL, true);
-		}
-		while (BufferGetBlockNumber(buffer) < blkno);
-		/* Handle the corner case that P_NEW returns non-consecutive pages */
-		if (BufferGetBlockNumber(buffer) != blkno)
-		{
-			if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
-			buffer = ReadBufferWithoutRelcache(rlocator, forknum, blkno,
-											   mode, NULL, true);
-		}
+		buffer = ExtendBufferedRelTo(EB_SMGR(smgr, RELPERSISTENCE_PERMANENT),
+									 forknum,
+									 NULL,
+									 EB_PERFORMING_RECOVERY |
+									 EB_SKIP_EXTENSION_LOCK,
+									 blkno + 1,
+									 mode);
 	}
 
 recent_buffer_fast_path:
