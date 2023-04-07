@@ -5199,7 +5199,7 @@ AbortBufferIO(Buffer buf)
 	}
 	else
 	{
-		Assert(!(buf_state & BM_DIRTY));
+		Assert(buf_state & BM_DIRTY);
 		UnlockBufHdr(buf_hdr, buf_state);
 
 		/* Issue notice if this is not the first failure... */
