@@ -1125,13 +1125,17 @@ SELECT
        b.io_object,
        b.io_context,
        b.reads,
+       b.read_time,
        b.writes,
+       b.write_time,
        b.extends,
+       b.extend_time,
        b.op_bytes,
        b.hits,
        b.evictions,
        b.reuses,
        b.fsyncs,
+       b.fsync_time,
        b.stats_reset
 FROM pg_stat_get_io() b;
 

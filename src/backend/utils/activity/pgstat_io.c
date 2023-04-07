@@ -16,44 +16,55 @@
 
 #include "postgres.h"
 
+#include "executor/instrument.h"
+#include "storage/bufmgr.h"
 #include "utils/pgstat_internal.h"
 
 
-static PgStat_BktypeIO PendingIOStats;
+typedef struct PgStat_PendingIO
+{
+	PgStat_Counter counts[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
+	instr_time	pending_times[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
+} PgStat_PendingIO;
+
+
+static PgStat_PendingIO PendingIOStats;
 bool		have_iostats = false;
 
 
 /*
  * Check that stats have not been counted for any combination of IOObject,
- * IOContext, and IOOp which are not tracked for the passed-in BackendType. The
- * passed-in PgStat_BktypeIO must contain stats from the BackendType specified
- * by the second parameter. Caller is responsible for locking the passed-in
- * PgStat_BktypeIO, if needed.
+ * IOContext, and IOOp which are not tracked for the passed-in BackendType. If
+ * stats are tracked for this combination and IO times are non-zero, counts
+ * should be non-zero.
+ *
+ * The passed-in PgStat_BktypeIO must contain stats from the BackendType
+ * specified by the second parameter. Caller is responsible for locking the
+ * passed-in PgStat_BktypeIO, if needed.
  */
 bool
 pgstat_bktype_io_stats_valid(PgStat_BktypeIO *backend_io,
 							 BackendType bktype)
 {
-	bool		bktype_tracked = pgstat_tracks_io_bktype(bktype);
-
 	for (int io_object = 0; io_object < IOOBJECT_NUM_TYPES; io_object++)
 	{
 		for (int io_context = 0; io_context < IOCONTEXT_NUM_TYPES; io_context++)
 		{
-			/*
-			 * Don't bother trying to skip to the next loop iteration if
-			 * pgstat_tracks_io_object() would return false here. We still
-			 * need to validate that each counter is zero anyway.
-			 */
 			for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
 			{
-				/* No stats, so nothing to validate */
-				if (backend_io->data[io_object][io_context][io_op] == 0)
-					continue;
+				/* we do track it */
+				if (pgstat_tracks_io_op(bktype, io_object, io_context, io_op))
+				{
+					/* ensure that if IO times are non-zero, counts are > 0 */
+					if (backend_io->times[io_object][io_context][io_op] != 0 &&
+						backend_io->counts[io_object][io_context][io_op] <= 0)
+						return false;
 
-				/* There are stats and there shouldn't be */
-				if (!bktype_tracked ||
-					!pgstat_tracks_io_op(bktype, io_object, io_context, io_op))
+					continue;
+				}
+
+				/* we don't track it, and it is not 0 */
+				if (backend_io->counts[io_object][io_context][io_op] != 0)
 					return false;
 			}
 		}
@@ -76,9 +87,56 @@ pgstat_count_io_op_n(IOObject io_object, IOContext io_context, IOOp io_op, uint3
 	Assert((unsigned int) io_op < IOOP_NUM_TYPES);
 	Assert(pgstat_tracks_io_op(MyBackendType, io_object, io_context, io_op));
 
-	PendingIOStats.data[io_object][io_context][io_op] += cnt;
+	PendingIOStats.counts[io_object][io_context][io_op] += cnt;
 
 	have_iostats = true;
+}
+
+instr_time
+pgstat_prepare_io_time(void)
+{
+	instr_time	io_start;
+
+	if (track_io_timing)
+		INSTR_TIME_SET_CURRENT(io_start);
+	else
+		INSTR_TIME_SET_ZERO(io_start);
+
+	return io_start;
+}
+
+/*
+ * Like pgstat_count_io_op_n() except it also accumulates time.
+ */
+void
+pgstat_count_io_op_time(IOObject io_obj, IOContext io_context, IOOp io_op,
+						instr_time start_time, uint32 cnt)
+{
+	if (track_io_timing)
+	{
+		instr_time	io_time;
+
+		INSTR_TIME_SET_CURRENT(io_time);
+		INSTR_TIME_SUBTRACT(io_time, start_time);
+
+		if (io_op == IOOP_WRITE)
+		{
+			pgstat_count_buffer_write_time(INSTR_TIME_GET_MICROSEC(io_time));
+			if (io_obj == IOOBJECT_RELATION)
+				INSTR_TIME_ADD(pgBufferUsage.blk_write_time, io_time);
+		}
+		else if (io_op == IOOP_READ)
+		{
+			pgstat_count_buffer_read_time(INSTR_TIME_GET_MICROSEC(io_time));
+			if (io_obj == IOOBJECT_RELATION)
+				INSTR_TIME_ADD(pgBufferUsage.blk_read_time, io_time);
+		}
+
+		INSTR_TIME_ADD(PendingIOStats.pending_times[io_obj][io_context][io_op],
+					   io_time);
+	}
+
+	pgstat_count_io_op_n(io_obj, io_context, io_op, cnt);
 }
 
 PgStat_IO *
@@ -120,8 +178,17 @@ pgstat_flush_io(bool nowait)
 		for (int io_context = 0; io_context < IOCONTEXT_NUM_TYPES; io_context++)
 		{
 			for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
-				bktype_shstats->data[io_object][io_context][io_op] +=
-					PendingIOStats.data[io_object][io_context][io_op];
+			{
+				instr_time	time;
+
+				bktype_shstats->counts[io_object][io_context][io_op] +=
+					PendingIOStats.counts[io_object][io_context][io_op];
+
+				time = PendingIOStats.pending_times[io_object][io_context][io_op];
+
+				bktype_shstats->times[io_object][io_context][io_op] +=
+					INSTR_TIME_GET_MICROSEC(time);
+			}
 		}
 	}
 
