@@ -2177,6 +2177,7 @@ typedef enum AlterTableType
 	AT_CookedColumnDefault,		/* add a pre-cooked column default */
 	AT_DropNotNull,				/* alter column drop not null */
 	AT_SetNotNull,				/* alter column set not null */
+	AT_SetAttNotNull,			/* set attnotnull w/o a constraint */
 	AT_DropExpression,			/* alter column drop expression */
 	AT_CheckNotNull,			/* check column is already marked not null */
 	AT_SetStatistics,			/* alter column set statistics */
@@ -2462,10 +2463,11 @@ typedef struct VariableShowStmt
  *		Create Table Statement
  *
  * NOTE: in the raw gram.y output, ColumnDef and Constraint nodes are
- * intermixed in tableElts, and constraints is NIL.  After parse analysis,
- * tableElts contains just ColumnDefs, and constraints contains just
- * Constraint nodes (in fact, only CONSTR_CHECK nodes, in the present
- * implementation).
+ * intermixed in tableElts, and constraints and notnullcols are NIL.  After
+ * parse analysis, tableElts contains just ColumnDefs, notnullcols has been
+ * filled with not-nullable column names from various sources, and constraints
+ * contains just Constraint nodes (in fact, only CONSTR_CHECK nodes, in the
+ * present implementation).
  * ----------------------
  */
 
@@ -2480,6 +2482,7 @@ typedef struct CreateStmt
 	PartitionSpec *partspec;	/* PARTITION BY clause */
 	TypeName   *ofTypename;		/* OF typename */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
+	List	   *nnconstraints;	/* NOT NULL constraints (ditto) */
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
 	char	   *tablespacename; /* table space to use, or NULL */
@@ -2567,6 +2570,9 @@ typedef struct Constraint
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
 	char		generated_when; /* ALWAYS or BY DEFAULT */
+
+	/* Fields used for "raw" NOT NULL constraints: */
+	char	   *colname;		/* column it applies to */
 
 	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
 	bool		nulls_not_distinct; /* null treatment for UNIQUE constraints */

@@ -288,6 +288,28 @@ ERROR:  new row for relation "atacc1" violates check constraint "atacc1_test2_ch
 DETAIL:  Failing row contains (null, 3).
 DROP TABLE ATACC1 CASCADE;
 NOTICE:  drop cascades to table atacc2
+-- NOT NULL NO INHERIT
+CREATE TABLE ATACC1 (a int, not null a no inherit);
+CREATE TABLE ATACC2 () INHERITS (ATACC1);
+\d ATACC2
+               Table "public.atacc2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Inherits: atacc1
+
+DROP TABLE ATACC1, ATACC2;
+CREATE TABLE ATACC1 (a int);
+ALTER TABLE ATACC1 ADD NOT NULL a NO INHERIT;
+CREATE TABLE ATACC2 () INHERITS (ATACC1);
+\d ATACC2
+               Table "public.atacc2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Inherits: atacc1
+
+DROP TABLE ATACC1, ATACC2;
 --
 -- Check constraints on INSERT INTO
 --
@@ -754,6 +776,98 @@ ALTER TABLE deferred_excl ADD EXCLUDE (f1 WITH =);
 ERROR:  could not create exclusion constraint "deferred_excl_f1_excl"
 DETAIL:  Key (f1)=(3) conflicts with key (f1)=(3).
 DROP TABLE deferred_excl;
+-- verify constraints created for NOT NULL clauses
+CREATE TABLE notnull_tbl1 (a INTEGER NOT NULL);
+\d notnull_tbl1
+            Table "public.notnull_tbl1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           | not null | 
+
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+         conname         | contype | conkey 
+-------------------------+---------+--------
+ notnull_tbl1_a_not_null | n       | {1}
+(1 row)
+
+-- DROP NOT NULL gets rid of both the attnotnull flag and the constraint itself
+ALTER TABLE notnull_tbl1 ALTER a DROP NOT NULL;
+\d notnull_tbl1
+            Table "public.notnull_tbl1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+ conname | contype | conkey 
+---------+---------+--------
+(0 rows)
+
+-- SET NOT NULL puts both back
+ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
+\d notnull_tbl1
+            Table "public.notnull_tbl1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           | not null | 
+
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+         conname         | contype | conkey 
+-------------------------+---------+--------
+ notnull_tbl1_a_not_null | n       | {1}
+(1 row)
+
+-- Doing it twice doesn't create a redundant constraint
+ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+         conname         | contype | conkey 
+-------------------------+---------+--------
+ notnull_tbl1_a_not_null | n       | {1}
+(1 row)
+
+-- Using the "table constraint" syntax also works
+ALTER TABLE notnull_tbl1 ALTER a DROP NOT NULL;
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT foobar NOT NULL a;
+\d notnull_tbl1
+            Table "public.notnull_tbl1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           | not null | 
+
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+ conname | contype | conkey 
+---------+---------+--------
+ foobar  | n       | {1}
+(1 row)
+
+DROP TABLE notnull_tbl1;
+CREATE TABLE notnull_tbl2 (a INTEGER PRIMARY KEY);
+ALTER TABLE notnull_tbl2 ALTER a DROP NOT NULL;
+ERROR:  column "a" is in a primary key
+CREATE TABLE notnull_tbl3 (a INTEGER NOT NULL, CHECK (a IS NOT NULL));
+ALTER TABLE notnull_tbl3 ALTER A DROP NOT NULL;
+ALTER TABLE notnull_tbl3 ADD b int, ADD CONSTRAINT pk PRIMARY KEY (a, b);
+\d notnull_tbl3
+            Table "public.notnull_tbl3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           | not null | 
+ b      | integer |           | not null | 
+Indexes:
+    "pk" PRIMARY KEY, btree (a, b)
+Check constraints:
+    "notnull_tbl3_a_check" CHECK (a IS NOT NULL)
+
+ALTER TABLE notnull_tbl3 DROP CONSTRAINT pk;
+\d notnull_tbl3
+            Table "public.notnull_tbl3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Check constraints:
+    "notnull_tbl3_a_check" CHECK (a IS NOT NULL)
+
 -- Comments
 -- Setup a low-level role to enforce non-superuser checks.
 CREATE ROLE regress_constraint_comments;

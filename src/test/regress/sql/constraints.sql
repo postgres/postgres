@@ -196,6 +196,17 @@ INSERT INTO ATACC2 (TEST2) VALUES (3);
 INSERT INTO ATACC1 (TEST2) VALUES (3);
 DROP TABLE ATACC1 CASCADE;
 
+-- NOT NULL NO INHERIT
+CREATE TABLE ATACC1 (a int, not null a no inherit);
+CREATE TABLE ATACC2 () INHERITS (ATACC1);
+\d ATACC2
+DROP TABLE ATACC1, ATACC2;
+CREATE TABLE ATACC1 (a int);
+ALTER TABLE ATACC1 ADD NOT NULL a NO INHERIT;
+CREATE TABLE ATACC2 () INHERITS (ATACC1);
+\d ATACC2
+DROP TABLE ATACC1, ATACC2;
+
 --
 -- Check constraints on INSERT INTO
 --
@@ -555,6 +566,38 @@ UPDATE deferred_excl SET f1 = 3;
 ALTER TABLE deferred_excl ADD EXCLUDE (f1 WITH =);
 
 DROP TABLE deferred_excl;
+
+-- verify constraints created for NOT NULL clauses
+CREATE TABLE notnull_tbl1 (a INTEGER NOT NULL);
+\d notnull_tbl1
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+-- DROP NOT NULL gets rid of both the attnotnull flag and the constraint itself
+ALTER TABLE notnull_tbl1 ALTER a DROP NOT NULL;
+\d notnull_tbl1
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+-- SET NOT NULL puts both back
+ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
+\d notnull_tbl1
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+-- Doing it twice doesn't create a redundant constraint
+ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+-- Using the "table constraint" syntax also works
+ALTER TABLE notnull_tbl1 ALTER a DROP NOT NULL;
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT foobar NOT NULL a;
+\d notnull_tbl1
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+DROP TABLE notnull_tbl1;
+
+CREATE TABLE notnull_tbl2 (a INTEGER PRIMARY KEY);
+ALTER TABLE notnull_tbl2 ALTER a DROP NOT NULL;
+
+CREATE TABLE notnull_tbl3 (a INTEGER NOT NULL, CHECK (a IS NOT NULL));
+ALTER TABLE notnull_tbl3 ALTER A DROP NOT NULL;
+ALTER TABLE notnull_tbl3 ADD b int, ADD CONSTRAINT pk PRIMARY KEY (a, b);
+\d notnull_tbl3
+ALTER TABLE notnull_tbl3 DROP CONSTRAINT pk;
+\d notnull_tbl3
 
 -- Comments
 -- Setup a low-level role to enforce non-superuser checks.

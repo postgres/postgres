@@ -1119,9 +1119,13 @@ ERROR:  relation "non_existent" does not exist
 create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 alter table atacc1 alter column test drop not null;
-ERROR:  column "test" is in a primary key
 alter table atacc1 drop constraint "atacc1_pkey";
-alter table atacc1 alter column test drop not null;
+\d atacc1
+               Table "public.atacc1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ test   | integer |           |          | 
+
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;
 ERROR:  column "test" of relation "atacc1" contains null values
@@ -1191,23 +1195,10 @@ alter table parent alter a drop not null;
 insert into parent values (NULL);
 insert into child (a, b) values (NULL, 'foo');
 alter table only parent alter a set not null;
-ERROR:  column "a" of relation "parent" contains null values
+ERROR:  cannot add constraint only to table with inheritance children
+HINT:  Do not specify the ONLY keyword.
 alter table child alter a set not null;
 ERROR:  column "a" of relation "child" contains null values
-delete from parent;
-alter table only parent alter a set not null;
-insert into parent values (NULL);
-ERROR:  null value in column "a" of relation "parent" violates not-null constraint
-DETAIL:  Failing row contains (null).
-alter table child alter a set not null;
-insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" of relation "child" violates not-null constraint
-DETAIL:  Failing row contains (null, foo).
-delete from child;
-alter table child alter a set not null;
-insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" of relation "child" violates not-null constraint
-DETAIL:  Failing row contains (null, foo).
 drop table child;
 drop table parent;
 -- test setting and removing default values
@@ -3834,6 +3825,28 @@ Referenced by:
     TABLE "ataddindex" CONSTRAINT "ataddindex_ref_id_fkey" FOREIGN KEY (ref_id) REFERENCES ataddindex(id)
 
 DROP TABLE ataddindex;
+CREATE TABLE atnotnull1 ();
+ALTER TABLE atnotnull1
+  ADD COLUMN a INT,
+  ALTER a SET NOT NULL;
+ALTER TABLE atnotnull1
+  ADD COLUMN b INT,
+  ADD NOT NULL b;
+ALTER TABLE atnotnull1
+  ADD COLUMN c INT,
+  ADD PRIMARY KEY (c);
+SELECT conrelid::regclass, conname, contype, conkey,
+ (SELECT attname FROM pg_attribute WHERE attrelid = conrelid AND attnum = conkey[1]),
+ coninhcount, conislocal
+ FROM pg_constraint WHERE contype IN ('n','p') AND
+ conrelid IN ('atnotnull1'::regclass);
+  conrelid  |        conname        | contype | conkey | attname | coninhcount | conislocal 
+------------+-----------------------+---------+--------+---------+-------------+------------
+ atnotnull1 | atnotnull1_a_not_null | n       | {1}    | a       |           0 | t
+ atnotnull1 | atnotnull1_b_not_null | n       | {2}    | b       |           0 | t
+ atnotnull1 | atnotnull1_pkey       | p       | {3}    | c       |           0 | t
+(3 rows)
+
 -- unsupported constraint types for partitioned tables
 CREATE TABLE partitioned (
 	a int,
@@ -4355,8 +4368,7 @@ ERROR:  cannot alter inherited column "b"
 -- cannot add/drop NOT NULL or check constraints to *only* the parent, when
 -- partitions exist
 ALTER TABLE ONLY list_parted2 ALTER b SET NOT NULL;
-ERROR:  constraint must be added to child tables too
-DETAIL:  Column "b" of relation "part_2" is not already NOT NULL.
+ERROR:  cannot add constraint to only the partitioned table when partitions exist
 HINT:  Do not specify the ONLY keyword.
 ALTER TABLE ONLY list_parted2 ADD CONSTRAINT check_b CHECK (b <> 'zz');
 ERROR:  constraint must be added to child tables too

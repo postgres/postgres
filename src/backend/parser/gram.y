@@ -4099,6 +4099,19 @@ ConstraintElem:
 					n->initially_valid = !n->skip_validation;
 					$$ = (Node *) n;
 				}
+			| NOT NULL_P ColId ConstraintAttributeSpec
+				{
+					Constraint *n = makeNode(Constraint);
+
+					n->contype = CONSTR_NOTNULL;
+					n->location = @1;
+					n->colname = $3;
+					processCASbits($4, @4, "NOT NULL",
+								   NULL, NULL, NULL,
+								   &n->is_no_inherit, yyscanner);
+					n->initially_valid = !n->skip_validation;
+					$$ = (Node *) n;
+				}
 			| UNIQUE opt_unique_null_treatment '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec
 				{

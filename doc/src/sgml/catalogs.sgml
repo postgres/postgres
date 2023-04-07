@@ -2552,6 +2552,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        <literal>c</literal> = check constraint,
        <literal>f</literal> = foreign key constraint,
+       <literal>n</literal> = not null constraint,
        <literal>p</literal> = primary key constraint,
        <literal>u</literal> = unique constraint,
        <literal>t</literal> = constraint trigger,

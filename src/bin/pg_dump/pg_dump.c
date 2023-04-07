@@ -8372,6 +8372,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer tbloids = createPQExpBuffer();
 	PQExpBuffer checkoids = createPQExpBuffer();
+	PQExpBuffer defaultoids = createPQExpBuffer();
 	PGresult   *res;
 	int			ntups;
 	int			curtblindx;
@@ -8389,6 +8390,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i_attalign;
 	int			i_attislocal;
 	int			i_attnotnull;
+	int			i_localnotnull;
 	int			i_attoptions;
 	int			i_attcollation;
 	int			i_attcompression;
@@ -8398,16 +8400,17 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 
 	/*
 	 * We want to perform just one query against pg_attribute, and then just
-	 * one against pg_attrdef (for DEFAULTs) and one against pg_constraint
-	 * (for CHECK constraints).  However, we mustn't try to select every row
-	 * of those catalogs and then sort it out on the client side, because some
-	 * of the server-side functions we need would be unsafe to apply to tables
-	 * we don't have lock on.  Hence, we build an array of the OIDs of tables
-	 * we care about (and now have lock on!), and use a WHERE clause to
-	 * constrain which rows are selected.
+	 * one against pg_attrdef (for DEFAULTs) and two against pg_constraint
+	 * (for CHECK constraints and for NOT NULL constraints).  However, we
+	 * mustn't try to select every row of those catalogs and then sort it out
+	 * on the client side, because some of the server-side functions we need
+	 * would be unsafe to apply to tables we don't have lock on.  Hence, we
+	 * build an array of the OIDs of tables we care about (and now have lock
+	 * on!), and use a WHERE clause to constrain which rows are selected.
 	 */
 	appendPQExpBufferChar(tbloids, '{');
 	appendPQExpBufferChar(checkoids, '{');
+	appendPQExpBufferChar(defaultoids, '{');
 	for (int i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
@@ -8451,7 +8454,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 						 "a.attstattarget,\n"
 						 "a.attstorage,\n"
 						 "t.typstorage,\n"
-						 "a.attnotnull,\n"
 						 "a.atthasdef,\n"
 						 "a.attisdropped,\n"
 						 "a.attlen,\n"
@@ -8467,6 +8469,21 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 						 "FROM pg_catalog.pg_options_to_table(attfdwoptions) "
 						 "ORDER BY option_name"
 						 "), E',\n    ') AS attfdwoptions,\n");
+
+	/*
+	 * Write out NOT NULL.  In 16 and up we have to read pg_constraint, and we
+	 * only print it for constraints that aren't connoinherit.  A NULL result
+	 * means there's no contype='n' row for the column, so we mustn't print
+	 * anything then either.  We also track conislocal so that we can handle
+	 * the case of partitioned tables and binary upgrade especially.
+	 */
+	if (fout->remoteVersion >= 160000)
+		appendPQExpBufferStr(q,
+							 "co.connoinherit IS NOT NULL AS attnotnull,\n"
+							 "coalesce(co.conislocal, false) AS local_notnull,\n");
+	else
+		appendPQExpBufferStr(q,
+							 "a.attnotnull, false AS local_notnull,\n");
 
 	if (fout->remoteVersion >= 140000)
 		appendPQExpBufferStr(q,
@@ -8502,10 +8519,19 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 					  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
 					  "JOIN pg_catalog.pg_attribute a ON (src.tbloid = a.attrelid) "
 					  "LEFT JOIN pg_catalog.pg_type t "
-					  "ON (a.atttypid = t.oid)\n"
-					  "WHERE a.attnum > 0::pg_catalog.int2\n"
-					  "ORDER BY a.attrelid, a.attnum",
+					  "ON (a.atttypid = t.oid)\n",
 					  tbloids->data);
+
+	/* in 16, need pg_constraint for NOT NULLs */
+	if (fout->remoteVersion >= 160000)
+		appendPQExpBufferStr(q,
+							 " LEFT JOIN pg_catalog.pg_constraint co ON "
+							 "(a.attrelid = co.conrelid\n"
+							 "   AND co.contype = 'n' AND "
+							 "co.conkey = array[a.attnum])\n");
+	appendPQExpBufferStr(q,
+						 "WHERE a.attnum > 0::pg_catalog.int2\n"
+						 "ORDER BY a.attrelid, a.attnum");
 
 	res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
 
@@ -8525,6 +8551,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	i_attalign = PQfnumber(res, "attalign");
 	i_attislocal = PQfnumber(res, "attislocal");
 	i_attnotnull = PQfnumber(res, "attnotnull");
+	i_localnotnull = PQfnumber(res, "local_notnull");
 	i_attoptions = PQfnumber(res, "attoptions");
 	i_attcollation = PQfnumber(res, "attcollation");
 	i_attcompression = PQfnumber(res, "attcompression");
@@ -8533,8 +8560,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	i_atthasdef = PQfnumber(res, "atthasdef");
 
 	/* Within the next loop, we'll accumulate OIDs of tables with defaults */
-	resetPQExpBuffer(tbloids);
-	appendPQExpBufferChar(tbloids, '{');
+	resetPQExpBuffer(defaultoids);
+	appendPQExpBufferChar(defaultoids, '{');
 
 	/*
 	 * Outer loop iterates once per table, not once per row.  Incrementing of
@@ -8590,7 +8617,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		tbinfo->attfdwoptions = (char **) pg_malloc(numatts * sizeof(char *));
 		tbinfo->attmissingval = (char **) pg_malloc(numatts * sizeof(char *));
 		tbinfo->notnull = (bool *) pg_malloc(numatts * sizeof(bool));
-		tbinfo->inhNotNull = (bool *) pg_malloc(numatts * sizeof(bool));
+		tbinfo->localNotNull = (bool *) pg_malloc(numatts * sizeof(bool));
 		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(numatts * sizeof(AttrDefInfo *));
 		hasdefaults = false;
 
@@ -8612,6 +8639,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			tbinfo->attalign[j] = *(PQgetvalue(res, r, i_attalign));
 			tbinfo->attislocal[j] = (PQgetvalue(res, r, i_attislocal)[0] == 't');
 			tbinfo->notnull[j] = (PQgetvalue(res, r, i_attnotnull)[0] == 't');
+			tbinfo->localNotNull[j] = (PQgetvalue(res, r, i_localnotnull)[0] == 't');
 			tbinfo->attoptions[j] = pg_strdup(PQgetvalue(res, r, i_attoptions));
 			tbinfo->attcollation[j] = atooid(PQgetvalue(res, r, i_attcollation));
 			tbinfo->attcompression[j] = *(PQgetvalue(res, r, i_attcompression));
@@ -8620,16 +8648,14 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, r, i_atthasdef)[0] == 't')
 				hasdefaults = true;
-			/* these flags will be set in flagInhAttrs() */
-			tbinfo->inhNotNull[j] = false;
 		}
 
 		if (hasdefaults)
 		{
 			/* Collect OIDs of interesting tables that have defaults */
-			if (tbloids->len > 1)	/* do we have more than the '{'? */
-				appendPQExpBufferChar(tbloids, ',');
-			appendPQExpBuffer(tbloids, "%u", tbinfo->dobj.catId.oid);
+			if (defaultoids->len > 1)	/* do we have more than the '{'? */
+				appendPQExpBufferChar(defaultoids, ',');
+			appendPQExpBuffer(defaultoids, "%u", tbinfo->dobj.catId.oid);
 		}
 	}
 
@@ -8639,7 +8665,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	 * Now get info about column defaults.  This is skipped for a data-only
 	 * dump, as it is only needed for table schemas.
 	 */
-	if (!dopt->dataOnly && tbloids->len > 1)
+	if (!dopt->dataOnly && defaultoids->len > 1)
 	{
 		AttrDefInfo *attrdefs;
 		int			numDefaults;
@@ -8647,14 +8673,14 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 
 		pg_log_info("finding table default expressions");
 
-		appendPQExpBufferChar(tbloids, '}');
+		appendPQExpBufferChar(defaultoids, '}');
 
 		printfPQExpBuffer(q, "SELECT a.tableoid, a.oid, adrelid, adnum, "
 						  "pg_catalog.pg_get_expr(adbin, adrelid) AS adsrc\n"
 						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
 						  "JOIN pg_catalog.pg_attrdef a ON (src.tbloid = a.adrelid)\n"
 						  "ORDER BY a.adrelid, a.adnum",
-						  tbloids->data);
+						  defaultoids->data);
 
 		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
 
@@ -8897,9 +8923,112 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		PQclear(res);
 	}
 
+	/*
+	 * Get info about table NOT NULL constraints.  This is skipped for a
+	 * data-only dump, as it is only needed for table schemas.
+	 *
+	 * Optimizing for tables that have no NOT NULL constraint seems
+	 * pointless, so we don't try.
+	 */
+	if (!dopt->dataOnly)
+	{
+		ConstraintInfo *constrs;
+		int			numConstrs;
+		int			i_tableoid;
+		int			i_oid;
+		int			i_conrelid;
+		int			i_conname;
+		int			i_condef;
+		int			i_conislocal;
+
+		pg_log_info("finding table not null constraints");
+
+		/*
+		 * Only constraints marked connoinherit need to be handled here;
+		 * the normal constraints are instead handled by writing NOT NULL
+		 * when each column is defined.
+		 */
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q,
+						  "SELECT co.tableoid, co.oid, conrelid, conname, "
+						  "pg_catalog.pg_get_constraintdef(co.oid) AS condef,\n"
+						  "  conislocal, coninhcount, connoinherit "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_constraint co ON (src.tbloid = co.conrelid)\n"
+						  "JOIN pg_catalog.pg_class c ON (conrelid = c.oid)\n"
+						  "WHERE contype = 'n' AND connoinherit\n"
+						  "ORDER BY co.conrelid, co.conname",
+						  tbloids->data);
+
+		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
+
+		numConstrs = PQntuples(res);
+		constrs = (ConstraintInfo *) pg_malloc(numConstrs * sizeof(ConstraintInfo));
+
+		i_tableoid = PQfnumber(res, "tableoid");
+		i_oid = PQfnumber(res, "oid");
+		i_conrelid = PQfnumber(res, "conrelid");
+		i_conname = PQfnumber(res, "conname");
+		i_condef = PQfnumber(res, "condef");
+		i_conislocal = PQfnumber(res, "conislocal");
+
+		/* As above, this loop iterates once per table, not once per row */
+		curtblindx = -1;
+		for (int j = 0; j < numConstrs;)
+		{
+			Oid			conrelid = atooid(PQgetvalue(res, j, i_conrelid));
+			TableInfo  *tbinfo = NULL;
+			int			numcons;
+
+			/* Count rows for this table */
+			for (numcons = 1; numcons < numConstrs - j; numcons++)
+				if (atooid(PQgetvalue(res, j + numcons, i_conrelid)) != conrelid)
+					break;
+
+			/*
+			 * Locate the associated TableInfo; we rely on tblinfo[] being in
+			 * OID order.
+			 */
+			while (++curtblindx < numTables)
+			{
+				tbinfo = &tblinfo[curtblindx];
+				if (tbinfo->dobj.catId.oid == conrelid)
+					break;
+			}
+			if (curtblindx >= numTables)
+				pg_fatal("unrecognized table OID %u", conrelid);
+
+			for (int c = 0; c < numcons; c++, j++)
+			{
+				constrs[j].dobj.objType = DO_CONSTRAINT;
+				constrs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
+				constrs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_oid));
+				AssignDumpId(&constrs[j].dobj);
+				constrs[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
+				constrs[j].dobj.namespace = tbinfo->dobj.namespace;
+				constrs[j].contable = tbinfo;
+				constrs[j].condomain = NULL;
+				constrs[j].contype = 'n';
+				constrs[j].condef = pg_strdup(PQgetvalue(res, j, i_condef));
+				constrs[j].confrelid = InvalidOid;
+				constrs[j].conindex = 0;
+				constrs[j].condeferrable = false;
+				constrs[j].condeferred = false;
+				constrs[j].conislocal = (PQgetvalue(res, j, i_conislocal)[0] == 't');
+
+				constrs[j].separate = true;
+
+				constrs[j].dobj.dump = tbinfo->dobj.dump;
+			}
+		}
+
+		PQclear(res);
+	}
+
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(tbloids);
 	destroyPQExpBuffer(checkoids);
+	destroyPQExpBuffer(defaultoids);
 }
 
 /*
@@ -15572,12 +15701,12 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 									 !tbinfo->attrdefs[j]->separate);
 
 					/*
-					 * Not Null constraint --- suppress if inherited, except
-					 * if partition, or in binary-upgrade case where that
-					 * won't work.
+					 * Not Null constraint --- suppress unless it is locally
+					 * defined, except if partition, or in binary-upgrade case
+					 * where that won't work.
 					 */
 					print_notnull = (tbinfo->notnull[j] &&
-									 (!tbinfo->inhNotNull[j] ||
+									 (tbinfo->localNotNull[j] ||
 									  tbinfo->ispartition || dopt->binary_upgrade));
 
 					/*
@@ -15970,7 +16099,8 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 			 * we have to mark it separately.
 			 */
 			if (!shouldPrintColumn(dopt, tbinfo, j) &&
-				tbinfo->notnull[j] && !tbinfo->inhNotNull[j])
+				tbinfo->notnull[j] && tbinfo->localNotNull[j] &&
+				tbinfo->ispartition)
 				appendPQExpBuffer(q,
 								  "ALTER %sTABLE ONLY %s ALTER COLUMN %s SET NOT NULL;\n",
 								  foreign, qualrelname,
@@ -16791,6 +16921,31 @@ dumpConstraint(Archive *fout, const ConstraintInfo *coninfo)
 									  .namespace = tbinfo->dobj.namespace->dobj.name,
 									  .owner = tbinfo->rolname,
 									  .description = "FK CONSTRAINT",
+									  .section = SECTION_POST_DATA,
+									  .createStmt = q->data,
+									  .dropStmt = delq->data));
+	}
+	else if (coninfo->contype == 'n')
+	{
+		appendPQExpBuffer(q, "ALTER %sTABLE %s\n", foreign,
+						  fmtQualifiedDumpable(tbinfo));
+		appendPQExpBuffer(q, "    ADD CONSTRAINT %s %s;\n",
+						  fmtId(coninfo->dobj.name),
+						  coninfo->condef);
+
+		appendPQExpBuffer(delq, "ALTER %sTABLE %s\n", foreign,
+						  fmtQualifiedDumpable(tbinfo));
+		appendPQExpBuffer(delq, "DROP CONSTRAINT %s;\n",
+						  fmtId(coninfo->dobj.name));
+
+		tag = psprintf("%s %s", tbinfo->dobj.name, coninfo->dobj.name);
+
+		if (coninfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
+			ArchiveEntry(fout, coninfo->dobj.catId, coninfo->dobj.dumpId,
+						 ARCHIVE_OPTS(.tag = tag,
+									  .namespace = tbinfo->dobj.namespace->dobj.name,
+									  .owner = tbinfo->rolname,
+									  .description = "NOT NULL CONSTRAINT",
 									  .section = SECTION_POST_DATA,
 									  .createStmt = q->data,
 									  .dropStmt = delq->data));

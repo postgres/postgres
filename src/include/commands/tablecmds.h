@@ -73,6 +73,8 @@ extern ObjectAddress renameatt(RenameStmt *stmt);
 
 extern ObjectAddress RenameConstraint(RenameStmt *stmt);
 
+extern List *RelationGetNotNullConstraints(Relation relation, bool cooked);
+
 extern ObjectAddress RenameRelation(RenameStmt *stmt);
 
 extern void RenameRelationInternal(Oid myrelid,

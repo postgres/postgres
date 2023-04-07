@@ -601,6 +601,7 @@ RestoreArchive(Archive *AHX)
 
 								if (strcmp(te->desc, "CONSTRAINT") == 0 ||
 									strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
+									strcmp(te->desc, "NOT NULL CONSTRAINT") == 0 ||
 									strcmp(te->desc, "FK CONSTRAINT") == 0)
 									strcpy(buffer, "DROP CONSTRAINT");
 								else
@@ -3511,6 +3512,7 @@ _getObjectDescription(PQExpBuffer buf, const TocEntry *te)
 	/* these object types don't have separate owners */
 	else if (strcmp(type, "CAST") == 0 ||
 			 strcmp(type, "CHECK CONSTRAINT") == 0 ||
+			 strcmp(type, "NOT NULL CONSTRAINT") == 0 ||
 			 strcmp(type, "CONSTRAINT") == 0 ||
 			 strcmp(type, "DATABASE PROPERTIES") == 0 ||
 			 strcmp(type, "DEFAULT") == 0 ||
