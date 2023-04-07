@@ -4062,6 +4062,8 @@ FlushRelationBuffers(Relation rel)
 {
 	int			i;
 	BufferDesc *bufHdr;
+	instr_time	io_start,
+				io_time;
 
 	if (RelationUsesLocalBuffers(rel))
 	{
@@ -4087,6 +4089,11 @@ FlushRelationBuffers(Relation rel)
 
 				PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
 
+				if (track_io_timing)
+					INSTR_TIME_SET_CURRENT(io_start);
+				else
+					INSTR_TIME_SET_ZERO(io_start);
+
 				smgrwrite(RelationGetSmgr(rel),
 						  BufTagGetForkNum(&bufHdr->tag),
 						  bufHdr->tag.blockNum,
@@ -4097,6 +4104,16 @@ FlushRelationBuffers(Relation rel)
 				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
 				pgstat_count_io_op(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_WRITE);
+
+				if (track_io_timing)
+				{
+					INSTR_TIME_SET_CURRENT(io_time);
+					INSTR_TIME_SUBTRACT(io_time, io_start);
+					pgstat_count_buffer_write_time(INSTR_TIME_GET_MICROSEC(io_time));
+					INSTR_TIME_ADD(pgBufferUsage.blk_write_time, io_time);
+				}
+
+				pgBufferUsage.local_blks_written++;
 
 				/* Pop the error context stack */
 				error_context_stack = errcallback.previous;

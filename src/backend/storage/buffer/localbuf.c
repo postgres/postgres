@@ -176,6 +176,8 @@ GetLocalVictimBuffer(void)
 	int			trycounter;
 	uint32		buf_state;
 	BufferDesc *bufHdr;
+	instr_time	io_start,
+				io_time;
 
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
@@ -239,6 +241,11 @@ GetLocalVictimBuffer(void)
 
 		PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
 
+		if (track_io_timing)
+			INSTR_TIME_SET_CURRENT(io_start);
+		else
+			INSTR_TIME_SET_ZERO(io_start);
+
 		/* And write... */
 		smgrwrite(oreln,
 				  BufTagGetForkNum(&bufHdr->tag),
@@ -252,6 +259,15 @@ GetLocalVictimBuffer(void)
 
 		/* Temporary table I/O does not use Buffer Access Strategies */
 		pgstat_count_io_op(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_WRITE);
+
+		if (track_io_timing)
+		{
+			INSTR_TIME_SET_CURRENT(io_time);
+			INSTR_TIME_SUBTRACT(io_time, io_start);
+			pgstat_count_buffer_write_time(INSTR_TIME_GET_MICROSEC(io_time));
+			INSTR_TIME_ADD(pgBufferUsage.blk_write_time, io_time);
+		}
+
 		pgBufferUsage.local_blks_written++;
 	}
 
