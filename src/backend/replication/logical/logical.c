@@ -518,6 +518,22 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 				 errmsg("replication slot \"%s\" was not created in this database",
 						NameStr(slot->data.name))));
 
+	/*
+	 * Check if slot has been invalidated due to max_slot_wal_keep_size. Avoid
+	 * "cannot get changes" wording in this errmsg because that'd be
+	 * confusingly ambiguous about no changes being available when called from
+	 * pg_logical_slot_get_changes_guts().
+	 */
+	if (MyReplicationSlot->data.invalidated == RS_INVAL_WAL_REMOVED)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("can no longer get changes from replication slot \"%s\"",
+						NameStr(MyReplicationSlot->data.name)),
+				 errdetail("This slot has been invalidated because it exceeded the maximum reserved size.")));
+
+	Assert(MyReplicationSlot->data.invalidated == RS_INVAL_NONE);
+	Assert(MyReplicationSlot->data.restart_lsn != InvalidXLogRecPtr);
+
 	if (start_lsn == InvalidXLogRecPtr)
 	{
 		/* continue from last position */

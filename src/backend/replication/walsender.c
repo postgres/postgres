@@ -1253,13 +1253,6 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 
 	ReplicationSlotAcquire(cmd->slotname, true);
 
-	if (XLogRecPtrIsInvalid(MyReplicationSlot->data.restart_lsn))
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot read from logical replication slot \"%s\"",
-						cmd->slotname),
-				 errdetail("This slot has been invalidated because it exceeded the maximum reserved size.")));
-
 	/*
 	 * Force a disconnect, so that the decoding code doesn't need to care
 	 * about an eventual switch from running in recovery, to running in a
