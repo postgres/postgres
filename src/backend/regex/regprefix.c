@@ -32,7 +32,7 @@ static int	findprefix(struct cnfa *cnfa, struct colormap *cm,
  *	REG_EXACT: all strings satisfying the regex must match the same string
  *	or a REG_XXX error code
  *
- * In the non-failure cases, *string is set to a malloc'd string containing
+ * In the non-failure cases, *string is set to a palloc'd string containing
  * the common prefix or exact value, of length *slength (measured in chrs
  * not bytes!).
  *
