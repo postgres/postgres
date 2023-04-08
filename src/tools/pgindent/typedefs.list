@@ -2339,6 +2339,7 @@ ReplicaIdentityStmt
 ReplicationKind
 ReplicationSlot
 ReplicationSlotCtlData
+ReplicationSlotInvalidationCause
 ReplicationSlotOnDisk
 ReplicationSlotPersistency
 ReplicationSlotPersistentData

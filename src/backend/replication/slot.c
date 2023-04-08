@@ -89,7 +89,7 @@ typedef struct ReplicationSlotOnDisk
 	sizeof(ReplicationSlotOnDisk) - ReplicationSlotOnDiskConstantSize
 
 #define SLOT_MAGIC		0x1051CA1	/* format identifier */
-#define SLOT_VERSION	2		/* version for new files */
+#define SLOT_VERSION	3		/* version for new files */
 
 /* Control array for replication slot management */
 ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
@@ -855,8 +855,7 @@ ReplicationSlotsComputeRequiredXmin(bool already_locked)
 		SpinLockAcquire(&s->mutex);
 		effective_xmin = s->effective_xmin;
 		effective_catalog_xmin = s->effective_catalog_xmin;
-		invalidated = (!XLogRecPtrIsInvalid(s->data.invalidated_at) &&
-					   XLogRecPtrIsInvalid(s->data.restart_lsn));
+		invalidated = s->data.invalidated != RS_INVAL_NONE;
 		SpinLockRelease(&s->mutex);
 
 		/* invalidated slots need not apply */
@@ -901,13 +900,19 @@ ReplicationSlotsComputeRequiredLSN(void)
 	{
 		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 		XLogRecPtr	restart_lsn;
+		bool		invalidated;
 
 		if (!s->in_use)
 			continue;
 
 		SpinLockAcquire(&s->mutex);
 		restart_lsn = s->data.restart_lsn;
+		invalidated = s->data.invalidated != RS_INVAL_NONE;
 		SpinLockRelease(&s->mutex);
+
+		/* invalidated slots need not apply */
+		if (invalidated)
+			continue;
 
 		if (restart_lsn != InvalidXLogRecPtr &&
 			(min_required == InvalidXLogRecPtr ||
@@ -946,6 +951,7 @@ ReplicationSlotsComputeLogicalRestartLSN(void)
 	{
 		ReplicationSlot *s;
 		XLogRecPtr	restart_lsn;
+		bool		invalidated;
 
 		s = &ReplicationSlotCtl->replication_slots[i];
 
@@ -960,7 +966,12 @@ ReplicationSlotsComputeLogicalRestartLSN(void)
 		/* read once, it's ok if it increases while we're checking */
 		SpinLockAcquire(&s->mutex);
 		restart_lsn = s->data.restart_lsn;
+		invalidated = s->data.invalidated != RS_INVAL_NONE;
 		SpinLockRelease(&s->mutex);
+
+		/* invalidated slots need not apply */
+		if (invalidated)
+			continue;
 
 		if (restart_lsn == InvalidXLogRecPtr)
 			continue;
@@ -1011,6 +1022,8 @@ ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive)
 		/* not our database, skip */
 		if (s->data.database != dboid)
 			continue;
+
+		/* NB: intentionally counting invalidated slots */
 
 		/* count slots with spinlock held */
 		SpinLockAcquire(&s->mutex);
@@ -1068,6 +1081,8 @@ restart:
 		/* not our database, skip */
 		if (s->data.database != dboid)
 			continue;
+
+		/* NB: intentionally including invalidated slots */
 
 		/* acquire slot, so ReplicationSlotDropAcquired can be reused  */
 		SpinLockAcquire(&s->mutex);
@@ -1294,7 +1309,12 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN,
 		{
 			MyReplicationSlot = s;
 			s->active_pid = MyProcPid;
-			s->data.invalidated_at = restart_lsn;
+			s->data.invalidated = RS_INVAL_WAL_REMOVED;
+
+			/*
+			 * XXX: We should consider not overwriting restart_lsn and instead
+			 * just rely on .invalidated.
+			 */
 			s->data.restart_lsn = InvalidXLogRecPtr;
 
 			/* Let caller know */

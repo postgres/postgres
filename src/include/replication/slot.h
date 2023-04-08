@@ -38,6 +38,17 @@ typedef enum ReplicationSlotPersistency
 } ReplicationSlotPersistency;
 
 /*
+ * Slots can be invalidated, e.g. due to max_slot_wal_keep_size. If so, the
+ * 'invalidated' field is set to a value other than _NONE.
+ */
+typedef enum ReplicationSlotInvalidationCause
+{
+	RS_INVAL_NONE,
+	/* required WAL has been removed */
+	RS_INVAL_WAL_REMOVED,
+} ReplicationSlotInvalidationCause;
+
+/*
  * On-Disk data of a replication slot, preserved across restarts.
  */
 typedef struct ReplicationSlotPersistentData
@@ -72,8 +83,8 @@ typedef struct ReplicationSlotPersistentData
 	/* oldest LSN that might be required by this replication slot */
 	XLogRecPtr	restart_lsn;
 
-	/* restart_lsn is copied here when the slot is invalidated */
-	XLogRecPtr	invalidated_at;
+	/* RS_INVAL_NONE if valid, or the reason for having been invalidated */
+	ReplicationSlotInvalidationCause invalidated;
 
 	/*
 	 * Oldest LSN that the client has acked receipt for.  This is used as the

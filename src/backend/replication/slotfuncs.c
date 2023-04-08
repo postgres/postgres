@@ -315,12 +315,10 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 			nulls[i++] = true;
 
 		/*
-		 * If invalidated_at is valid and restart_lsn is invalid, we know for
-		 * certain that the slot has been invalidated.  Otherwise, test
-		 * availability from restart_lsn.
+		 * If the slot has not been invalidated, test availability from
+		 * restart_lsn.
 		 */
-		if (XLogRecPtrIsInvalid(slot_contents.data.restart_lsn) &&
-			!XLogRecPtrIsInvalid(slot_contents.data.invalidated_at))
+		if (slot_contents.data.invalidated != RS_INVAL_NONE)
 			walstate = WALAVAIL_REMOVED;
 		else
 			walstate = GetWALAvailability(slot_contents.data.restart_lsn);
