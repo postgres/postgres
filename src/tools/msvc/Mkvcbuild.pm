@@ -861,7 +861,7 @@ sub mkvcbuild
 	# files symlinked on Unix are copied on windows
 	my $pg_waldump = AddSimpleFrontend('pg_waldump');
 	$pg_waldump->AddDefine('FRONTEND');
-	foreach my $xf (glob('src/backend/access/rmgrdesc/*desc.c'))
+	foreach my $xf (glob('src/backend/access/rmgrdesc/*desc*.c'))
 	{
 		$pg_waldump->AddFile($xf);
 	}
