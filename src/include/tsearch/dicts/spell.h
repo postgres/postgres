@@ -82,17 +82,6 @@ typedef struct spell_struct
 #define SPELLHDRSZ	(offsetof(SPELL, word))
 
 /*
- * If an affix uses a regex, we have to store that separately in a struct
- * that won't move around when arrays of affixes are enlarged or sorted.
- * This is so that it can be found to be cleaned up at context destruction.
- */
-typedef struct aff_regex_struct
-{
-	regex_t		regex;
-	MemoryContextCallback mcallback;
-} aff_regex_struct;
-
-/*
  * Represents an entry in an affix list.
  */
 typedef struct aff_struct
@@ -108,7 +97,12 @@ typedef struct aff_struct
 	char	   *repl;
 	union
 	{
-		aff_regex_struct *pregex;
+		/*
+		 * Arrays of AFFIX are moved and sorted.  We'll use a pointer to
+		 * regex_t to keep this struct small, and avoid assuming that regex_t
+		 * is movable.
+		 */
+		regex_t    *pregex;
 		Regis		regis;
 	}			reg;
 } AFFIX;

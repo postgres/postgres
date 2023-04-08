@@ -656,17 +656,6 @@ FindWord(IspellDict *Conf, const char *word, const char *affixflag, int flag)
 }
 
 /*
- * Context reset/delete callback for a regular expression used in an affix
- */
-static void
-regex_affix_deletion_callback(void *arg)
-{
-	aff_regex_struct *pregex = (aff_regex_struct *) arg;
-
-	pg_regfree(&(pregex->regex));
-}
-
-/*
  * Adds a new affix rule to the Affix field.
  *
  * Conf: current dictionary.
@@ -728,7 +717,6 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 		int			err;
 		pg_wchar   *wmask;
 		char	   *tmask;
-		aff_regex_struct *pregex;
 
 		Affix->issimple = 0;
 		Affix->isregis = 0;
@@ -743,31 +731,23 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 		wmasklen = pg_mb2wchar_with_len(tmask, wmask, masklen);
 
 		/*
-		 * The regex engine stores its stuff using malloc not palloc, so we
-		 * must arrange to explicitly clean up the regex when the dictionary's
-		 * context is cleared.  That means the regex_t has to stay in a fixed
-		 * location within the context; we can't keep it directly in the AFFIX
-		 * struct, since we may sort and resize the array of AFFIXes.
+		 * The regex and all internal state created by pg_regcomp are
+		 * allocated in the dictionary's memory context, and will be freed
+		 * automatically when it is destroyed.
 		 */
-		Affix->reg.pregex = pregex = palloc(sizeof(aff_regex_struct));
-
-		err = pg_regcomp(&(pregex->regex), wmask, wmasklen,
+		Affix->reg.pregex = palloc(sizeof(regex_t));
+		err = pg_regcomp(Affix->reg.pregex, wmask, wmasklen,
 						 REG_ADVANCED | REG_NOSUB,
 						 DEFAULT_COLLATION_OID);
 		if (err)
 		{
 			char		errstr[100];
 
-			pg_regerror(err, &(pregex->regex), errstr, sizeof(errstr));
+			pg_regerror(err, Affix->reg.pregex, errstr, sizeof(errstr));
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 					 errmsg("invalid regular expression: %s", errstr)));
 		}
-
-		pregex->mcallback.func = regex_affix_deletion_callback;
-		pregex->mcallback.arg = (void *) pregex;
-		MemoryContextRegisterResetCallback(CurrentMemoryContext,
-										   &pregex->mcallback);
 	}
 
 	Affix->flagflags = flagflags;
@@ -2161,7 +2141,7 @@ CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *neww
 		data = (pg_wchar *) palloc((newword_len + 1) * sizeof(pg_wchar));
 		data_len = pg_mb2wchar_with_len(newword, data, newword_len);
 
-		if (pg_regexec(&(Affix->reg.pregex->regex), data, data_len,
+		if (pg_regexec(Affix->reg.pregex, data, data_len,
 					   0, NULL, 0, NULL, 0) == REG_OKAY)
 		{
 			pfree(data);
