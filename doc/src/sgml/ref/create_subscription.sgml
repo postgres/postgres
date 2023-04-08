@@ -354,7 +354,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
        </varlistentry>
 
        <varlistentry id="sql-createsubscription-with-password-required">
-        <term><literal>password_required</literal> (<type>string</type>)</term>
+        <term><literal>password_required</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
           Specifies whether connections to the publisher made as a result
@@ -367,7 +367,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
        </varlistentry>
 
        <varlistentry id="sql-createsubscription-with-run-as-owner">
-        <term><literal>run_as_owner</literal> (<type>string</type>)</term>
+        <term><literal>run_as_owner</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
           If true, all replication actions are performed as the subscription
