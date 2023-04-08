@@ -107,7 +107,7 @@ is($res, 'SCRAM-SHA-256$1024:', 'scram_iterations in server side ROLE');
 SKIP:
 {
 	skip "IO::Pty and IPC::Run >= 0.98 required", 1 unless
-		(eval { require IO::Pty; } && eval { $IPC::Run::VERSION >= '0.98' });
+		eval { require IO::Pty; IPC::Run->VERSION('0.98'); };
 
 	# Alter the password on the created role using \password in psql to ensure
 	# that clientside password changes use the scram_iterations value when
