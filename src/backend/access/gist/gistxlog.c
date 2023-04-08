@@ -197,6 +197,7 @@ gistRedoDeleteRecord(XLogReaderState *record)
 		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
 
 		ResolveRecoveryConflictWithSnapshot(xldata->snapshotConflictHorizon,
+											xldata->isCatalogRel,
 											rlocator);
 	}
 
@@ -390,6 +391,7 @@ gistRedoPageReuse(XLogReaderState *record)
 	 */
 	if (InHotStandby)
 		ResolveRecoveryConflictWithSnapshotFullXid(xlrec->snapshotConflictHorizon,
+												   xlrec->isCatalogRel,
 												   xlrec->locator);
 }
 

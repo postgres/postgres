@@ -669,6 +669,7 @@ btree_xlog_delete(XLogReaderState *record)
 		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
 
 		ResolveRecoveryConflictWithSnapshot(xlrec->snapshotConflictHorizon,
+											xlrec->isCatalogRel,
 											rlocator);
 	}
 
@@ -1007,6 +1008,7 @@ btree_xlog_reuse_page(XLogReaderState *record)
 
 	if (InHotStandby)
 		ResolveRecoveryConflictWithSnapshotFullXid(xlrec->snapshotConflictHorizon,
+												   xlrec->isCatalogRel,
 												   xlrec->locator);
 }
 

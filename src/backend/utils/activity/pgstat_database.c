@@ -109,6 +109,9 @@ pgstat_report_recovery_conflict(int reason)
 		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
 			dbentry->conflict_bufferpin++;
 			break;
+		case PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT:
+			dbentry->conflict_logicalslot++;
+			break;
 		case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
 			dbentry->conflict_startup_deadlock++;
 			break;
@@ -387,6 +390,7 @@ pgstat_database_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	PGSTAT_ACCUM_DBCOUNT(conflict_tablespace);
 	PGSTAT_ACCUM_DBCOUNT(conflict_lock);
 	PGSTAT_ACCUM_DBCOUNT(conflict_snapshot);
+	PGSTAT_ACCUM_DBCOUNT(conflict_logicalslot);
 	PGSTAT_ACCUM_DBCOUNT(conflict_bufferpin);
 	PGSTAT_ACCUM_DBCOUNT(conflict_startup_deadlock);
 

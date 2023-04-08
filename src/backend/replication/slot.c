@@ -1442,7 +1442,13 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 									   slotname, restart_lsn,
 									   oldestLSN, snapshotConflictHorizon);
 
-				(void) kill(active_pid, SIGTERM);
+				if (MyBackendType == B_STARTUP)
+					(void) SendProcSignal(active_pid,
+										  PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT,
+										  InvalidBackendId);
+				else
+					(void) kill(active_pid, SIGTERM);
+
 				last_signaled_pid = active_pid;
 			}
 

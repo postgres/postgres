@@ -4742,6 +4742,17 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        deadlocks
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_active_logicalslot</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of uses of logical slots in this database that have been
+       canceled due to old snapshots or a too low <xref linkend="guc-wal-level"/>
+       on the primary
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

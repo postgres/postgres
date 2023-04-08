@@ -879,6 +879,7 @@ spgRedoVacuumRedirect(XLogReaderState *record)
 
 		XLogRecGetBlockTag(record, 0, &locator, NULL, NULL);
 		ResolveRecoveryConflictWithSnapshot(xldata->snapshotConflictHorizon,
+											xldata->isCatalogRel,
 											locator);
 	}
 
