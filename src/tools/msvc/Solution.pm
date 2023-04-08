@@ -640,6 +640,16 @@ sub GenerateFiles
 		);
 	}
 
+	if (IsNewer('contrib/fuzzystrmatch/daitch_mokotoff.h',
+				'contrib/fuzzystrmatch/daitch_mokotoff_header.pl'))
+	{
+		print "Generating daitch_mokotoff.h...\n";
+		system(
+			'perl contrib/fuzzystrmatch/daitch_mokotoff_header.pl ' .
+			'contrib/fuzzystrmatch/daitch_mokotoff.h'
+		);
+	}
+
 	if (IsNewer('src/bin/psql/sql_help.h', 'src/bin/psql/create_help.pl'))
 	{
 		print "Generating sql_help.h...\n";
