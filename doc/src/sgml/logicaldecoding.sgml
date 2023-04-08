@@ -316,6 +316,33 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      may consume changes from a slot at any given time.
     </para>
 
+    <para>
+     A logical replication slot can also be created on a hot standby. To prevent
+     <command>VACUUM</command> from removing required rows from the system
+     catalogs, <varname>hot_standby_feedback</varname> should be set on the
+     standby. In spite of that, if any required rows get removed, the slot gets
+     invalidated. It's highly recommended to use a physical slot between the primary
+     and the standby. Otherwise, hot_standby_feedback will work, but only while the
+     connection is alive (for example a node restart would break it). Then, the
+     primary may delete system catalog rows that could be needed by the logical
+     decoding on the standby (as it does not know about the catalog_xmin on the
+     standby). Existing logical slots on standby also get invalidated if wal_level
+     on primary is reduced to less than 'logical'. This is done as soon as the
+     standby detects such a change in the WAL stream. It means, that for walsenders
+     that are lagging (if any), some WAL records up to the wal_level parameter change
+     on the primary won't be decoded.
+    </para>
+
+    <para>
+     Creation of a logical slot requires information about all the currently
+     running transactions. On the primary, this information is available
+     directly, but on a standby, this information has to be obtained from
+     primary. Thus, slot creation may need to wait for some activity to happen
+     on the primary. If the primary is idle, creating a logical slot on
+     standby may take noticeable time. This can be sped up by calling the
+     <function>pg_log_standby_snapshot</function> on the primary.
+    </para>
+
     <caution>
      <para>
       Replication slots persist across crashes and know nothing about the state
