@@ -549,22 +549,9 @@ createTrgmNFA(text *text_re, Oid collation,
 			   REG_ADVANCED | REG_NOSUB, collation);
 #endif
 
-	/*
-	 * Since the regexp library allocates its internal data structures with
-	 * malloc, we need to use a PG_TRY block to ensure that pg_regfree() gets
-	 * done even if there's an error.
-	 */
-	PG_TRY();
-	{
-		trg = createTrgmNFAInternal(&regex, graph, rcontext);
-	}
-	PG_FINALLY();
-	{
-		pg_regfree(&regex);
-	}
-	PG_END_TRY();
+	trg = createTrgmNFAInternal(&regex, graph, rcontext);
 
-	/* Clean up all the cruft we created */
+	/* Clean up all the cruft we created (including regex) */
 	MemoryContextSwitchTo(oldcontext);
 	MemoryContextDelete(tmpcontext);
 
