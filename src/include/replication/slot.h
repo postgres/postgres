@@ -46,6 +46,10 @@ typedef enum ReplicationSlotInvalidationCause
 	RS_INVAL_NONE,
 	/* required WAL has been removed */
 	RS_INVAL_WAL_REMOVED,
+	/* required rows have been removed */
+	RS_INVAL_HORIZON,
+	/* wal_level insufficient for slot */
+	RS_INVAL_WAL_LEVEL,
 } ReplicationSlotInvalidationCause;
 
 /*
@@ -226,7 +230,10 @@ extern void ReplicationSlotsComputeRequiredLSN(void);
 extern XLogRecPtr ReplicationSlotsComputeLogicalRestartLSN(void);
 extern bool ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive);
 extern void ReplicationSlotsDropDBSlots(Oid dboid);
-extern bool InvalidateObsoleteReplicationSlots(XLogSegNo oldestSegno);
+extern bool InvalidateObsoleteReplicationSlots(ReplicationSlotInvalidationCause cause,
+											   XLogSegNo oldestSegno,
+											   Oid dboid,
+											   TransactionId snapshotConflictHorizon);
 extern ReplicationSlot *SearchNamedReplicationSlot(const char *name, bool need_lock);
 extern int	ReplicationSlotIndex(ReplicationSlot *slot);
 extern bool ReplicationSlotName(int index, Name name);
