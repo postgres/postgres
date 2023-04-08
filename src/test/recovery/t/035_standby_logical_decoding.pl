@@ -460,7 +460,7 @@ $logstart = -s $node_standby->logfile;
 reactive_slots_change_hfs_and_wait_for_xmins('row_removal_', 'shared_row_removal_', 0, 1);
 
 # Trigger the conflict
-diag $node_primary->safe_psql('testdb', qq[
+$node_primary->safe_psql('testdb', qq[
   CREATE ROLE create_trash;
   DROP ROLE create_trash;
   VACUUM pg_authid;
