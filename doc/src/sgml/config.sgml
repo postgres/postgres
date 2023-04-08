@@ -1190,23 +1190,6 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-gss-accept-deleg" xreflabel="gss_accept_deleg">
-      <term><varname>gss_accept_deleg</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>gss_accept_deleg</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Sets whether GSSAPI delegation should be accepted from the client.
-        The default is <literal>off</literal> meaning credentials from the client will
-        NOT be accepted.  Changing this to <literal>on</literal> will make the server
-        accept credentials delegated to it from the client. This parameter can only be
-        set in the <filename>postgresql.conf</filename> file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
       <term><varname>db_user_namespace</varname> (<type>boolean</type>)
       <indexterm>

@@ -477,8 +477,7 @@ pqsecure_open_gss(PGconn *conn)
 {
 	ssize_t		ret;
 	OM_uint32	major,
-				minor,
-				gss_flags = GSS_REQUIRED_FLAGS;
+				minor;
 	uint32		netlen;
 	PostgresPollingStatusType result;
 	gss_buffer_desc input = GSS_C_EMPTY_BUFFER,
@@ -622,30 +621,13 @@ pqsecure_open_gss(PGconn *conn)
 	if (ret != STATUS_OK)
 		return PGRES_POLLING_FAILED;
 
-	if (conn->gssdeleg && pg_strcasecmp(conn->gssdeleg, "enable") == 0)
-	{
-		/* Acquire credentials if possbile */
-		if (conn->gcred == GSS_C_NO_CREDENTIAL)
-			(void) pg_GSS_have_cred_cache(&conn->gcred);
-
-		/*
-		 * We have credentials and gssdeleg is enabled, so request credential
-		 * delegation.  This may or may not actually result in credentials
-		 * being delegated- it depends on if the forwardable flag has been set
-		 * in the credential and if the server is configured to accept
-		 * delegated credentials.
-		 */
-		if (conn->gcred != GSS_C_NO_CREDENTIAL)
-			gss_flags |= GSS_C_DELEG_FLAG;
-	}
-
 	/*
 	 * Call GSS init context, either with an empty input, or with a complete
 	 * packet from the server.
 	 */
 	major = gss_init_sec_context(&minor, conn->gcred, &conn->gctx,
 								 conn->gtarg_nam, GSS_C_NO_OID,
-								 gss_flags, 0, 0, &input, NULL,
+								 GSS_REQUIRED_FLAGS, 0, 0, &input, NULL,
 								 &output, NULL, NULL);
 
 	/* GSS Init Sec Context uses the whole packet, so clear it */
@@ -665,7 +647,6 @@ pqsecure_open_gss(PGconn *conn)
 		 * to do GSS wrapping/unwrapping.
 		 */
 		conn->gssenc = true;
-		conn->gssapi_used = true;
 
 		/* Clean up */
 		gss_release_cred(&minor, &conn->gcred);

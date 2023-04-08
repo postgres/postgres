@@ -101,7 +101,6 @@
 # GSSAPI using Kerberos
 #krb_server_keyfile = 'FILE:${sysconfdir}/krb5.keytab'
 #krb_caseins_users = off
-#gss_accept_deleg = off
 
 # - SSL -
 

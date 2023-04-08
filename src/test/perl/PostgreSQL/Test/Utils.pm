@@ -65,7 +65,6 @@ our @EXPORT = qw(
   slurp_dir
   slurp_file
   append_to_file
-  string_replace_file
   check_mode_recursive
   chmod_recursive
   check_pg_config
@@ -545,32 +544,6 @@ sub append_to_file
 	  or croak "could not write \"$filename\": $!";
 	print $fh $str;
 	close $fh;
-	return;
-}
-
-=pod
-
-=item string_replace_file(filename, find, replace)
-
-Find and replace string of a given file.
-
-=cut
-
-sub string_replace_file
-{
-	my ($filename, $find, $replace) = @_;
-	open(my $in, '<', $filename);
-	my $content;
-	while(<$in>)
-	{
-		$_ =~ s/$find/$replace/;
-		$content = $content.$_;
-	}
-	close $in;
-	open(my $out, '>', $filename);
-	print $out $content;
-	close($out);
-
 	return;
 }
 

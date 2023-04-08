@@ -186,4 +186,3 @@ PQpipelineStatus          183
 PQsetTraceFlags           184
 PQmblenBounded            185
 PQsendFlushRequest        186
-PQconnectionUsedGSSAPI    187

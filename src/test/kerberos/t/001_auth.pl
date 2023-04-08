@@ -7,9 +7,6 @@
 # that the server-side pg_stat_gssapi view reports what we expect to
 # see for each test and that SYSTEM_USER returns what we expect to see.
 #
-# Also test that GSSAPI delegation is working properly and that those
-# credentials can be used to make dblink / postgres_fdw connections.
-#
 # Since this requires setting up a full KDC, it doesn't make much sense
 # to have multiple test scripts (since they'd have to also create their
 # own KDC and that could cause race conditions or other problems)- so
@@ -59,7 +56,6 @@ elsif ($^O eq 'linux')
 
 my $krb5_config  = 'krb5-config';
 my $kinit        = 'kinit';
-my $klist        = 'klist';
 my $kdb5_util    = 'kdb5_util';
 my $kadmin_local = 'kadmin.local';
 my $krb5kdc      = 'krb5kdc';
@@ -68,7 +64,6 @@ if ($krb5_bin_dir && -d $krb5_bin_dir)
 {
 	$krb5_config = $krb5_bin_dir . '/' . $krb5_config;
 	$kinit       = $krb5_bin_dir . '/' . $kinit;
-	$klist       = $krb5_bin_dir . '/' . $klist;
 }
 if ($krb5_sbin_dir && -d $krb5_sbin_dir)
 {
@@ -91,8 +86,6 @@ my $kdc_datadir = "${PostgreSQL::Test::Utils::tmp_check}/krb5kdc";
 my $kdc_pidfile = "${PostgreSQL::Test::Utils::tmp_check}/krb5kdc.pid";
 my $keytab      = "${PostgreSQL::Test::Utils::tmp_check}/krb5.keytab";
 
-my $pgpass      = "${PostgreSQL::Test::Utils::tmp_check}/.pgpass";
-
 my $dbname      = 'postgres';
 my $username    = 'test1';
 my $application = '001_auth.pl';
@@ -106,14 +99,6 @@ BAIL_OUT("Heimdal is not supported") if $stdout =~ m/heimdal/;
 $stdout =~ m/Kerberos 5 release ([0-9]+\.[0-9]+)/
   or BAIL_OUT("could not get Kerberos version");
 $krb5_version = $1;
-
-# Construct a pgpass file to make sure we don't use it
-append_to_file(
-	$pgpass,
-	'*:*:*:*:abc123'
-);
-
-chmod 0600, $pgpass;
 
 # Build the krb5.conf to use.
 #
@@ -141,14 +126,12 @@ kdc = FILE:$kdc_log
 dns_lookup_realm = false
 dns_lookup_kdc = false
 default_realm = $realm
-forwardable = false
 rdns = false
 
 [realms]
 $realm = {
     kdc = $hostaddr:$kdc_port
-}
-!);
+}!);
 
 append_to_file(
 	$kdc_conf,
@@ -221,28 +204,7 @@ lc_messages = 'C'
 });
 $node->start;
 
-my $port = $node->port();
-
 $node->safe_psql('postgres', 'CREATE USER test1;');
-$node->safe_psql('postgres', "CREATE USER test2 WITH ENCRYPTED PASSWORD 'abc123';");
-$node->safe_psql('postgres', 'CREATE EXTENSION postgres_fdw;');
-$node->safe_psql('postgres', 'CREATE EXTENSION dblink;');
-$node->safe_psql('postgres', "CREATE SERVER s1 FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host '$host', hostaddr '$hostaddr', port '$port', dbname 'postgres');");
-$node->safe_psql('postgres', "CREATE SERVER s2 FOREIGN DATA WRAPPER postgres_fdw OPTIONS (port '$port', dbname 'postgres', passfile '$pgpass');");
-
-$node->safe_psql('postgres', 'GRANT USAGE ON FOREIGN SERVER s1 TO test1;');
-
-$node->safe_psql('postgres', "CREATE USER MAPPING FOR test1 SERVER s1 OPTIONS (user 'test1');");
-$node->safe_psql('postgres', "CREATE USER MAPPING FOR test1 SERVER s2 OPTIONS (user 'test2');");
-
-$node->safe_psql('postgres', "CREATE TABLE t1 (c1 int);");
-$node->safe_psql('postgres', "INSERT INTO t1 VALUES (1);");
-$node->safe_psql('postgres', "CREATE FOREIGN TABLE tf1 (c1 int) SERVER s1 OPTIONS (schema_name 'public', table_name 't1');");
-$node->safe_psql('postgres', "GRANT SELECT ON t1 TO test1;");
-$node->safe_psql('postgres', "GRANT SELECT ON tf1 TO test1;");
-
-$node->safe_psql('postgres', "CREATE FOREIGN TABLE tf2 (c1 int) SERVER s2 OPTIONS (schema_name 'public', table_name 't1');");
-$node->safe_psql('postgres', "GRANT SELECT ON tf2 TO test1;");
 
 # Set up a table for SYSTEM_USER parallel worker testing.
 $node->safe_psql('postgres',
@@ -309,16 +271,12 @@ sub test_query
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
-	qq{
-local all test2 scram-sha-256
-host all all $hostaddr/32 gss map=mymap
-});
+	qq{host all all $hostaddr/32 gss map=mymap});
 $node->restart;
 
 test_access($node, 'test1', 'SELECT true', 2, '', 'fails without ticket');
 
 run_log [ $kinit, 'test1' ], \$test1_password or BAIL_OUT($?);
-run_log [ $klist, '-f' ] or BAIL_OUT($?);
 
 test_access(
 	$node,
@@ -336,57 +294,34 @@ $node->restart;
 test_access(
 	$node,
 	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
 	'',
-	'succeeds with mapping with default gssencmode and host hba, ticket not forwardable',
+	'succeeds with mapping with default gssencmode and host hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
 );
 
 test_access(
 	$node,
 	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
 	'gssencmode=prefer',
-	'succeeds with GSS-encrypted access preferred with host hba, ticket not forwardable',
+	'succeeds with GSS-encrypted access preferred with host hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
 );
-
 test_access(
 	$node,
 	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
 	'gssencmode=require',
-	'succeeds with GSS-encrypted access required with host hba, ticket not forwardable',
+	'succeeds with GSS-encrypted access required with host hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
 );
-
-test_access(
-	$node,
-	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
-	0,
-	'gssencmode=prefer gssdeleg=enable',
-	'succeeds with GSS-encrypted access preferred with host hba and credentials not delegated even though asked for (ticket not forwardable)',
-	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
-);
-test_access(
-	$node,
-	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
-	0,
-	'gssencmode=require gssdeleg=enable',
-	'succeeds with GSS-encrypted access required with host hba and credentials not delegated even though asked for (ticket not forwardable)',
-	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
-);
-
 
 # Test that we can transport a reasonable amount of data.
 test_query(
@@ -454,164 +389,29 @@ test_query(
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
-	qq{
-    local all test2 scram-sha-256
-	hostgssenc all all $hostaddr/32 gss map=mymap
-});
-
-string_replace_file($krb5_conf, "forwardable = false", "forwardable = true");
-
-run_log [ $kinit, 'test1' ], \$test1_password or BAIL_OUT($?);
-run_log [ $klist, '-f' ] or BAIL_OUT($?);
-
-test_access(
-	$node,
-	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated from pg_stat_gssapi where pid = pg_backend_pid();',
-	0,
-	'gssencmode=prefer gssdeleg=enable',
-	'succeeds with GSS-encrypted access preferred and hostgssenc hba and credentials not forwarded (server does not accept them, default)',
-	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
-);
-test_access(
-	$node,
-	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated from pg_stat_gssapi where pid = pg_backend_pid();',
-	0,
-	'gssencmode=require gssdeleg=enable',
-	'succeeds with GSS-encrypted access required and hostgssenc hba and credentials not forwarded (server does not accept them, default)',
-	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
-);
-
-$node->append_conf('postgresql.conf',
-	qq{gss_accept_deleg=off});
+	qq{hostgssenc all all $hostaddr/32 gss map=mymap});
 $node->restart;
 
 test_access(
 	$node,
 	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated from pg_stat_gssapi where pid = pg_backend_pid();',
-	0,
-	'gssencmode=prefer gssdeleg=enable',
-	'succeeds with GSS-encrypted access preferred and hostgssenc hba and credentials not forwarded (server does not accept them, explicitly disabled)',
-	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
-);
-test_access(
-	$node,
-	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated from pg_stat_gssapi where pid = pg_backend_pid();',
-	0,
-	'gssencmode=require gssdeleg=enable',
-	'succeeds with GSS-encrypted access required and hostgssenc hba and credentials not forwarded (server does not accept them, explicitly disabled)',
-	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
-);
-
-$node->append_conf('postgresql.conf',
-	qq{gss_accept_deleg=on});
-$node->restart;
-
-test_access(
-	$node,
-	'test1',
-	'SELECT gss_authenticated AND encrypted AND credentials_delegated from pg_stat_gssapi where pid = pg_backend_pid();',
-	0,
-	'gssencmode=prefer gssdeleg=enable',
-	'succeeds with GSS-encrypted access preferred and hostgssenc hba and credentials forwarded',
-	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=yes, principal=test1\@$realm)"
-);
-test_access(
-	$node,
-	'test1',
-	'SELECT gss_authenticated AND encrypted AND credentials_delegated from pg_stat_gssapi where pid = pg_backend_pid();',
-	0,
-	'gssencmode=require gssdeleg=enable',
-	'succeeds with GSS-encrypted access required and hostgssenc hba and credentials forwarded',
-	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=yes, principal=test1\@$realm)"
-);
-test_access(
-	$node,
-	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
 	'gssencmode=prefer',
-	'succeeds with GSS-encrypted access preferred and hostgssenc hba and credentials not forwarded',
+	'succeeds with GSS-encrypted access preferred and hostgssenc hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
 );
 test_access(
 	$node,
 	'test1',
-	'SELECT gss_authenticated AND encrypted AND NOT credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	'gssencmode=require gssdeleg=disable',
-	'succeeds with GSS-encrypted access required and hostgssenc hba and credentials explicitly not forwarded',
+	'gssencmode=require',
+	'succeeds with GSS-encrypted access required and hostgssenc hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
 );
-
-my $psql_out = '';
-my $psql_stderr = '';
-my $psql_rc = '';
-
-$psql_rc = $node->psql(
-    'postgres',
-	"SELECT * FROM dblink('user=test1 dbname=$dbname host=$host hostaddr=$hostaddr port=$port','select 1') as t1(c1 int);",
-	connstr => "user=test1 host=$host hostaddr=$hostaddr gssencmode=require gssdeleg=disable",
-	stdout => \$psql_out,
-	stderr => \$psql_stderr
-);
-is($psql_rc,'3','dblink attempt fails without delegated credentials');
-like($psql_stderr, qr/password or GSSAPI delegated credentials required/,'dblink does not work without delegated credentials');
-like($psql_out, qr/^$/,'dblink does not work without delegated credentials');
-
-$psql_out = '';
-$psql_stderr = '';
-
-$psql_rc = $node->psql(
-    'postgres',
-	"SELECT * FROM dblink('user=test2 dbname=$dbname port=$port passfile=$pgpass','select 1') as t1(c1 int);",
-	connstr => "user=test1 host=$host hostaddr=$hostaddr gssencmode=require gssdeleg=disable",
-	stdout => \$psql_out,
-	stderr => \$psql_stderr
-);
-is($psql_rc,'3','dblink does not work without delegated credentials and with passfile');
-like($psql_stderr, qr/password or GSSAPI delegated credentials required/,'dblink does not work without delegated credentials and with passfile');
-like($psql_out, qr/^$/,'dblink does not work without delegated credentials and with passfile');
-
-$psql_out = '';
-$psql_stderr = '';
-
-$psql_rc = $node->psql(
-    'postgres',
-	"TABLE tf1;",
-	connstr => "user=test1 host=$host hostaddr=$hostaddr gssencmode=require gssdeleg=disable",
-	stdout => \$psql_out,
-	stderr => \$psql_stderr
-);
-is($psql_rc,'3','postgres_fdw does not work without delegated credentials');
-like($psql_stderr, qr/password or GSSAPI delegated credentials required/,'postgres_fdw does not work without delegated credentials');
-like($psql_out, qr/^$/,'postgres_fdw does not work without delegated credentials');
-
-$psql_out = '';
-$psql_stderr = '';
-
-$psql_rc = $node->psql(
-    'postgres',
-	"TABLE tf2;",
-	connstr => "user=test1 host=$host hostaddr=$hostaddr gssencmode=require gssdeleg=disable",
-	stdout => \$psql_out,
-	stderr => \$psql_stderr
-);
-is($psql_rc,'3','postgres_fdw does not work without delegated credentials and with passfile');
-like($psql_stderr, qr/password or GSSAPI delegated credentials required/,'postgres_fdw does not work without delegated credentials and with passfile');
-like($psql_out, qr/^$/,'postgres_fdw does not work without delegated credentials and with passfile');
-
 test_access($node, 'test1', 'SELECT true', 2, 'gssencmode=disable',
 	'fails with GSS encryption disabled and hostgssenc hba');
 
@@ -627,123 +427,54 @@ $node->connect_ok(
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
-	qq{
-    local all test2 scram-sha-256
-	hostnogssenc all all $hostaddr/32 gss map=mymap
-});
+	qq{hostnogssenc all all $hostaddr/32 gss map=mymap});
 $node->restart;
 
 test_access(
 	$node,
 	'test1',
-	'SELECT gss_authenticated AND NOT encrypted AND credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
+	'SELECT gss_authenticated and not encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	'gssencmode=prefer gssdeleg=enable',
+	'gssencmode=prefer',
 	'succeeds with GSS-encrypted access preferred and hostnogssenc hba, but no encryption',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, deleg_credentials=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, principal=test1\@$realm)"
 );
 test_access($node, 'test1', 'SELECT true', 2, 'gssencmode=require',
 	'fails with GSS-encrypted access required and hostnogssenc hba');
 test_access(
 	$node,
 	'test1',
-	'SELECT gss_authenticated AND NOT encrypted AND credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
+	'SELECT gss_authenticated and not encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	'gssencmode=disable gssdeleg=enable',
+	'gssencmode=disable',
 	'succeeds with GSS encryption disabled and hostnogssenc hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, deleg_credentials=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, principal=test1\@$realm)"
 );
-
-test_query(
-	$node,
-	'test1',
-	"SELECT * FROM dblink('user=test1 dbname=$dbname host=$host hostaddr=$hostaddr port=$port','select 1') as t1(c1 int);",
-	qr/^1$/s,
-	'gssencmode=prefer gssdeleg=enable',
-	'dblink works not-encrypted (server not configured to accept encrypted GSSAPI connections)');
-
-test_query(
-	$node,
-	'test1',
-	"TABLE tf1;",
-	qr/^1$/s,
-	'gssencmode=prefer gssdeleg=enable',
-	'postgres_fdw works not-encrypted (server not configured to accept encrypted GSSAPI connections)');
-
-$psql_out = '';
-$psql_stderr = '';
-
-$psql_rc = $node->psql(
-    'postgres',
-	"SELECT * FROM dblink('user=test2 dbname=$dbname port=$port passfile=$pgpass','select 1') as t1(c1 int);",
-	connstr => "user=test1 host=$host hostaddr=$hostaddr gssencmode=prefer gssdeleg=enable",
-	stdout => \$psql_out,
-	stderr => \$psql_stderr
-);
-is($psql_rc,'3','dblink does not work with delegated credentials and with passfile');
-like($psql_stderr, qr/password or GSSAPI delegated credentials required/,'dblink does not work with delegated credentials and with passfile');
-like($psql_out, qr/^$/,'dblink does not work with delegated credentials and with passfile');
-
-$psql_out = '';
-$psql_stderr = '';
-
-$psql_rc = $node->psql(
-    'postgres',
-	"TABLE tf2;",
-	connstr => "user=test1 host=$host hostaddr=$hostaddr gssencmode=prefer gssdeleg=enable",
-	stdout => \$psql_out,
-	stderr => \$psql_stderr
-);
-is($psql_rc,'3','postgres_fdw does not work with delegated credentials and with passfile');
-like($psql_stderr, qr/password or GSSAPI delegated credentials required/,'postgres_fdw does not work with delegated credentials and with passfile');
-like($psql_out, qr/^$/,'postgres_fdw does not work with delegated credentials and with passfile');
 
 truncate($node->data_dir . '/pg_ident.conf', 0);
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
-	qq{
-    local all test2 scram-sha-256
-	host all all $hostaddr/32 gss include_realm=0
-});
+	qq{host all all $hostaddr/32 gss include_realm=0});
 $node->restart;
 
 test_access(
 	$node,
 	'test1',
-	'SELECT gss_authenticated AND encrypted AND credentials_delegated FROM pg_stat_gssapi WHERE pid = pg_backend_pid();',
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	'gssdeleg=enable',
+	'',
 	'succeeds with include_realm=0 and defaults',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
 );
-
-test_query(
-	$node,
-	'test1',
-	"SELECT * FROM dblink('user=test1 dbname=$dbname host=$host hostaddr=$hostaddr port=$port password=1234','select 1') as t1(c1 int);",
-	qr/^1$/s,
-	'gssencmode=require gssdeleg=enable',
-	'dblink works encrypted');
-
-test_query(
-	$node,
-	'test1',
-	"TABLE tf1;",
-	qr/^1$/s,
-	'gssencmode=require gssdeleg=enable',
-	'postgres_fdw works encrypted');
 
 # Reset pg_hba.conf, and cause a usermap failure with an authentication
 # that has passed.
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
-	qq{
-    local all test2 scram-sha-256
-	host all all $hostaddr/32 gss include_realm=0 krb_realm=EXAMPLE.ORG
-});
+	qq{host all all $hostaddr/32 gss include_realm=0 krb_realm=EXAMPLE.ORG});
 $node->restart;
 
 test_access(

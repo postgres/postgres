@@ -77,7 +77,6 @@ typedef struct PgBackendGSSStatus
 	char		gss_princ[NAMEDATALEN]; /* GSSAPI Principal used to auth */
 	bool		gss_auth;		/* If GSSAPI authentication was used */
 	bool		gss_enc;		/* If encryption is being used */
-	bool		gss_deleg;		/* If credentials delegated */
 
 } PgBackendGSSStatus;
 

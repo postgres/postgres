@@ -58,8 +58,7 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 {
 	OM_uint32	maj_stat,
 				min_stat,
-				lmin_s,
-				gss_flags = GSS_C_MUTUAL_FLAG;
+				lmin_s;
 	gss_buffer_desc ginbuf;
 	gss_buffer_desc goutbuf;
 
@@ -93,19 +92,12 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 		ginbuf.value = NULL;
 	}
 
-	/* Only try to acquire credentials if GSS delegation isn't disabled. */
-	if (!pg_GSS_have_cred_cache(&conn->gcred))
-		conn->gcred = GSS_C_NO_CREDENTIAL;
-
-	if (conn->gssdeleg && pg_strcasecmp(conn->gssdeleg, "enable") == 0)
-		gss_flags |= GSS_C_DELEG_FLAG;
-
 	maj_stat = gss_init_sec_context(&min_stat,
-									conn->gcred,
+									GSS_C_NO_CREDENTIAL,
 									&conn->gctx,
 									conn->gtarg_nam,
 									GSS_C_NO_OID,
-									gss_flags,
+									GSS_C_MUTUAL_FLAG,
 									0,
 									GSS_C_NO_CHANNEL_BINDINGS,
 									(ginbuf.value == NULL) ? GSS_C_NO_BUFFER : &ginbuf,
@@ -147,7 +139,6 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 	{
 		conn->client_finished_auth = true;
 		gss_release_name(&lmin_s, &conn->gtarg_nam);
-		conn->gssapi_used = true;
 	}
 
 	return STATUS_OK;

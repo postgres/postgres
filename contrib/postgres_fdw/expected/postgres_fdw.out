@@ -171,8 +171,7 @@ ALTER SERVER testserver1 OPTIONS (
 	sslcrl 'value',
 	--requirepeer 'value',
 	krbsrvname 'value',
-	gsslib 'value',
-	gssdeleg 'value'
+	gsslib 'value'
 	--replication 'value'
 );
 -- Error, invalid list syntax
@@ -9841,8 +9840,8 @@ CREATE FOREIGN TABLE pg_temp.ft1_nopw (
 	c8 user_enum
 ) SERVER loopback_nopw OPTIONS (schema_name 'public', table_name 'ft1');
 SELECT 1 FROM ft1_nopw LIMIT 1;
-ERROR:  password or GSSAPI delegated credentials required
-DETAIL:  Non-superusers must delegate GSSAPI credentials or provide a password in the user mapping.
+ERROR:  password is required
+DETAIL:  Non-superusers must provide a password in the user mapping.
 -- If we add a password to the connstr it'll fail, because we don't allow passwords
 -- in connstrs only in user mappings.
 ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw');
@@ -9854,16 +9853,16 @@ HINT:  Perhaps you meant the option "passfile".
 -- This won't work with installcheck, but neither will most of the FDW checks.
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password 'dummypw');
 SELECT 1 FROM ft1_nopw LIMIT 1;
-ERROR:  password or GSSAPI delegated credentials required
-DETAIL:  Non-superuser cannot connect if the server does not request a password or use GSSAPI with delegated credentials.
+ERROR:  password is required
+DETAIL:  Non-superuser cannot connect if the server does not request a password.
 HINT:  Target server's authentication method must be changed or password_required=false set in the user mapping attributes.
 -- Unpriv user cannot make the mapping passwordless
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password_required 'false');
 ERROR:  password_required=false is superuser-only
 HINT:  User mappings with the password_required option set to false may only be created or modified by the superuser.
 SELECT 1 FROM ft1_nopw LIMIT 1;
-ERROR:  password or GSSAPI delegated credentials required
-DETAIL:  Non-superuser cannot connect if the server does not request a password or use GSSAPI with delegated credentials.
+ERROR:  password is required
+DETAIL:  Non-superuser cannot connect if the server does not request a password.
 HINT:  Target server's authentication method must be changed or password_required=false set in the user mapping attributes.
 RESET ROLE;
 -- But the superuser can
@@ -9891,8 +9890,8 @@ DROP USER MAPPING FOR CURRENT_USER SERVER loopback_nopw;
 -- This will fail again as it'll resolve the user mapping for public, which
 -- lacks password_required=false
 SELECT 1 FROM ft1_nopw LIMIT 1;
-ERROR:  password or GSSAPI delegated credentials required
-DETAIL:  Non-superusers must delegate GSSAPI credentials or provide a password in the user mapping.
+ERROR:  password is required
+DETAIL:  Non-superusers must provide a password in the user mapping.
 RESET ROLE;
 -- The user mapping for public is passwordless and lacks the password_required=false
 -- mapping option, but will work because the current user is a superuser.
