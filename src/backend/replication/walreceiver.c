@@ -1010,7 +1010,7 @@ XLogWalRcvFlush(bool dying, TimeLineID tli)
 		/* Signal the startup process and walsender that new WAL has arrived */
 		WakeupRecovery();
 		if (AllowCascadeReplication())
-			WalSndWakeup();
+			WalSndWakeup(true, false);
 
 		/* Report XLOG streaming progress in PS display */
 		if (update_process_title)

@@ -42,7 +42,7 @@ extern void WalSndResourceCleanup(bool isCommit);
 extern void WalSndSignals(void);
 extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
-extern void WalSndWakeup(void);
+extern void WalSndWakeup(bool physical, bool logical);
 extern void WalSndInitStopping(void);
 extern void WalSndWaitStopping(void);
 extern void HandleWalSndInitStopping(void);
@@ -60,15 +60,15 @@ extern void WalSndRqstFileReload(void);
 /*
  * wakeup walsenders if there is work to be done
  */
-#define WalSndWakeupProcessRequests()		\
-	do										\
-	{										\
-		if (wake_wal_senders)				\
-		{									\
-			wake_wal_senders = false;		\
-			if (max_wal_senders > 0)		\
-				WalSndWakeup();				\
-		}									\
-	} while (0)
+static inline void
+WalSndWakeupProcessRequests(bool physical, bool logical)
+{
+	if (wake_wal_senders)
+	{
+		wake_wal_senders = false;
+		if (max_wal_senders > 0)
+			WalSndWakeup(physical, logical);
+	}
+}
 
 #endif							/* _WALSENDER_H */

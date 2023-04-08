@@ -421,7 +421,7 @@ KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
 	 * if we restored something other than a WAL segment, but it does no harm
 	 * either.
 	 */
-	WalSndWakeup();
+	WalSndWakeup(true, false);
 }
 
 /*
