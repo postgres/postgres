@@ -475,11 +475,7 @@ range(struct vars *v,			/* context */
 			}
 			addchr(cv, cc);
 		}
-		if (CANCEL_REQUESTED(v->re))
-		{
-			ERR(REG_CANCEL);
-			return NULL;
-		}
+		INTERRUPT(v->re);
 	}
 
 	return cv;

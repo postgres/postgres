@@ -81,7 +81,3 @@
 {
 	REG_ECOLORS, "REG_ECOLORS", "too many colors"
 },
-
-{
-	REG_CANCEL, "REG_CANCEL", "operation cancelled"
-},

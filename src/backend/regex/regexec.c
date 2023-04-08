@@ -764,8 +764,7 @@ cdissect(struct vars *v,
 	MDEBUG(("%d: cdissect %c %ld-%ld\n", t->id, t->op, LOFF(begin), LOFF(end)));
 
 	/* handy place to check for operation cancel */
-	if (CANCEL_REQUESTED(v->re))
-		return REG_CANCEL;
+	INTERRUPT(v->re);
 	/* ... and stack overrun */
 	if (STACK_TOO_DEEP(v->re))
 		return REG_ETOOBIG;

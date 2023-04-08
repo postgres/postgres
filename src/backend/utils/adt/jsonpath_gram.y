@@ -553,8 +553,6 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 		{
 			char        errMsg[100];
 
-			/* See regexp.c for explanation */
-			CHECK_FOR_INTERRUPTS();
 			pg_regerror(re_result, &re_tmp, errMsg, sizeof(errMsg));
 			ereturn(escontext, false,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),

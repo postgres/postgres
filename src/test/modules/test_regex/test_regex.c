@@ -185,15 +185,6 @@ test_re_compile(text *text_re, int cflags, Oid collation,
 	if (regcomp_result != REG_OKAY)
 	{
 		/* re didn't compile (no need for pg_regfree, if so) */
-
-		/*
-		 * Here and in other places in this file, do CHECK_FOR_INTERRUPTS
-		 * before reporting a regex error.  This is so that if the regex
-		 * library aborts and returns REG_CANCEL, we don't print an error
-		 * message that implies the regex was invalid.
-		 */
-		CHECK_FOR_INTERRUPTS();
-
 		pg_regerror(regcomp_result, result_re, errMsg, sizeof(errMsg));
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
@@ -239,7 +230,6 @@ test_re_execute(regex_t *re, pg_wchar *data, int data_len,
 	if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
 	{
 		/* re failed??? */
-		CHECK_FOR_INTERRUPTS();
 		pg_regerror(regexec_result, re, errMsg, sizeof(errMsg));
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),

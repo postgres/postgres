@@ -805,11 +805,7 @@ miss(struct vars *v,
 	 * Checking for operation cancel in the inner text search loop seems
 	 * unduly expensive.  As a compromise, check during cache misses.
 	 */
-	if (CANCEL_REQUESTED(v->re))
-	{
-		ERR(REG_CANCEL);
-		return NULL;
-	}
+	INTERRUPT(v->re);
 
 	/*
 	 * What set of states would we end up in after consuming the co character?

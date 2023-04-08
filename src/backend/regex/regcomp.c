@@ -86,7 +86,6 @@ static int	newlacon(struct vars *v, struct state *begin, struct state *end,
 					 int latype);
 static void freelacons(struct subre *subs, int n);
 static void rfree(regex_t *re);
-static int	rcancelrequested(void);
 static int	rstacktoodeep(void);
 
 #ifdef REG_DEBUG
@@ -356,7 +355,6 @@ struct vars
 /* static function list */
 static const struct fns functions = {
 	rfree,						/* regfree insides */
-	rcancelrequested,			/* check for cancel request */
 	rstacktoodeep				/* check for stack getting dangerously deep */
 };
 
@@ -2466,22 +2464,6 @@ rfree(regex_t *re)
 			freecnfa(&g->search);
 		FREE(g);
 	}
-}
-
-/*
- * rcancelrequested - check for external request to cancel regex operation
- *
- * Return nonzero to fail the operation with error code REG_CANCEL,
- * zero to keep going
- *
- * The current implementation is Postgres-specific.  If we ever get around
- * to splitting the regex code out as a standalone library, there will need
- * to be some API to let applications define a callback function for this.
- */
-static int
-rcancelrequested(void)
-{
-	return InterruptPending && (QueryCancelPending || ProcDiePending);
 }
 
 /*
