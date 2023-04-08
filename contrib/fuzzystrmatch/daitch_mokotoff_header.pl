@@ -11,10 +11,6 @@
 use strict;
 use warnings;
 
-use utf8;
-use open IO => ':encoding(UTF-8)', ':std';
-use Data::Dumper;
-
 die "Usage: $0 OUTPUT_FILE\n" if @ARGV != 1;
 my $output_file = $ARGV[0];
 
