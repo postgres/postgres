@@ -102,10 +102,12 @@ my $res = $node->safe_psql('postgres',
 is($res, 'SCRAM-SHA-256$1024:', 'scram_iterations in server side ROLE');
 
 # If we don't have IO::Pty, forget it, because IPC::Run depends on that
-# to support pty connections
+# to support pty connections. Also skip if IPC::Run isn't at least 0.98
+# as earlier version cause the session to time out.
 SKIP:
 {
-	skip "IO::Pty required", 1 unless eval { require IO::Pty; };
+	skip "IO::Pty and IPC::Run >= 0.98 required", 1 unless
+		(eval { require IO::Pty; } && eval { $IPC::Run::VERSION >= '0.98' });
 
 	# Alter the password on the created role using \password in psql to ensure
 	# that clientside password changes use the scram_iterations value when
