@@ -747,19 +747,22 @@ select conrelid::regclass, conname, contype, conkey,
  (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
  coninhcount, conislocal, connoinherit
  from pg_constraint where contype in ('n','p') and
- conrelid in ('inh_child'::regclass, 'inh_parent'::regclass);
+ conrelid in ('inh_child'::regclass, 'inh_parent'::regclass)
+ order by 1, 2;
 alter table inh_child alter a drop not null;
 select conrelid::regclass, conname, contype, conkey,
  (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
  coninhcount, conislocal, connoinherit
  from pg_constraint where contype in ('n','p') and
- conrelid in ('inh_child'::regclass, 'inh_parent'::regclass);
+ conrelid in ('inh_child'::regclass, 'inh_parent'::regclass)
+ order by 1, 2;
 alter table inh_parent alter a drop not null;
 select conrelid::regclass, conname, contype, conkey,
  (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
  coninhcount, conislocal, connoinherit
  from pg_constraint where contype in ('n','p') and
- conrelid in ('inh_child'::regclass, 'inh_parent'::regclass);
+ conrelid in ('inh_child'::regclass, 'inh_parent'::regclass)
+ order by 1, 2;
 drop table inh_parent, inh_child;
 
 -- NOT NULL NO INHERIT

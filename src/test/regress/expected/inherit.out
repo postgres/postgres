@@ -1997,7 +1997,8 @@ select conrelid::regclass, conname, contype, conkey,
  (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
  coninhcount, conislocal, connoinherit
  from pg_constraint where contype in ('n','p') and
- conrelid in ('inh_child'::regclass, 'inh_parent'::regclass);
+ conrelid in ('inh_child'::regclass, 'inh_parent'::regclass)
+ order by 1, 2;
   conrelid  |        conname        | contype | conkey | attname | coninhcount | conislocal | connoinherit 
 ------------+-----------------------+---------+--------+---------+-------------+------------+--------------
  inh_parent | inh_parent_a_not_null | n       | {1}    | a       |           0 | t          | f
@@ -2009,7 +2010,8 @@ select conrelid::regclass, conname, contype, conkey,
  (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
  coninhcount, conislocal, connoinherit
  from pg_constraint where contype in ('n','p') and
- conrelid in ('inh_child'::regclass, 'inh_parent'::regclass);
+ conrelid in ('inh_child'::regclass, 'inh_parent'::regclass)
+ order by 1, 2;
   conrelid  |        conname        | contype | conkey | attname | coninhcount | conislocal | connoinherit 
 ------------+-----------------------+---------+--------+---------+-------------+------------+--------------
  inh_parent | inh_parent_a_not_null | n       | {1}    | a       |           0 | t          | f
@@ -2021,7 +2023,8 @@ select conrelid::regclass, conname, contype, conkey,
  (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
  coninhcount, conislocal, connoinherit
  from pg_constraint where contype in ('n','p') and
- conrelid in ('inh_child'::regclass, 'inh_parent'::regclass);
+ conrelid in ('inh_child'::regclass, 'inh_parent'::regclass)
+ order by 1, 2;
  conrelid | conname | contype | conkey | attname | coninhcount | conislocal | connoinherit 
 ----------+---------+---------+--------+---------+-------------+------------+--------------
 (0 rows)
