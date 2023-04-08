@@ -13,7 +13,7 @@ use IO::Handle;
 use Getopt::Long;
 
 # Update for pg_bsd_indent version
-my $INDENT_VERSION = "2.1.1";
+my $INDENT_VERSION = "2.1.2";
 
 # Our standard indent settings
 my $indent_opts =

@@ -201,11 +201,12 @@ dump_line(void)
     ps.decl_on_line = ps.in_decl;	/* if we are in the middle of a
 					 * declaration, remember that fact for
 					 * proper comment indentation */
-    ps.ind_stmt = ps.in_stmt & ~ps.in_decl;	/* next line should be
-						 * indented if we have not
-						 * completed this stmt and if
-						 * we are not in the middle of
-						 * a declaration */
+    /* next line should be indented if we have not completed this stmt, and
+     * either we are not in a declaration or we are in an initialization
+     * assignment; but not if we're within braces in an initialization,
+     * because that scenario is handled by other rules. */
+    ps.ind_stmt = ps.in_stmt &&
+	(!ps.in_decl || (ps.block_init && ps.block_init_level <= 0));
     ps.use_ff = false;
     ps.dumped_decl_indent = 0;
     *(e_lab = s_lab) = '\0';	/* reset buffers */

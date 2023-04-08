@@ -51,7 +51,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #include "indent_globs.h"
 #include "indent.h"
 
-#define INDENT_VERSION	"2.1.1"
+#define INDENT_VERSION	"2.1.2"
 
 /* profile types */
 #define	PRO_SPECIAL	1	/* special case */
