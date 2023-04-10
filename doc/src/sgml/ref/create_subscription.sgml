@@ -496,12 +496,14 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    other subscriptions created on the publisher) try this SQL query:
 <programlisting>
 # substitute &lt;pub-names&gt; below with your publication name(s) to be queried
-SELECT DISTINCT N.nspname AS schemaname, C.relname AS tablename
-FROM pg_publication P,
-     LATERAL pg_get_publication_tables(P.pubname) GPT
-     JOIN pg_subscription_rel PS ON (GPT.relid = PS.srrelid),
-     pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)
-WHERE C.oid = GPT.relid AND P.pubname IN (&lt;pub-names&gt;);
+SELECT DISTINCT PT.schemaname, PT.tablename
+FROM pg_publication_tables PT,
+     pg_subscription_rel PS
+     JOIN pg_class C ON (C.oid = PS.srrelid)
+     JOIN pg_namespace N ON (N.oid = C.relnamespace)
+WHERE N.nspname = PT.schemaname AND
+      C.relname = PT.tablename AND
+      PT.pubname IN (&lt;pub-names&gt;);
 </programlisting></para>
 
  </refsect1>
