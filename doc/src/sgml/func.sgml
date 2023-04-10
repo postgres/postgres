@@ -9389,11 +9389,11 @@ SELECT timestamp with time zone '2005-04-02 12:00:00-07' + interval '24 hours';
 <screen>
 SELECT EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
        EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00');
-<lineannotation>Result: </lineannotation><computeroutput>10537200</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>10537200.000000</computeroutput>
 SELECT (EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
         EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00'))
         / 60 / 60 / 24;
-<lineannotation>Result: </lineannotation><computeroutput>121.958333333333</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>121.9583333333333333</computeroutput>
 SELECT timestamptz '2013-07-01 12:00:00' - timestamptz '2013-03-01 12:00:00';
 <lineannotation>Result: </lineannotation><computeroutput>121 days 23:00:00</computeroutput>
 SELECT age(timestamptz '2013-07-01 12:00:00', timestamptz '2013-03-01 12:00:00');
@@ -9539,13 +9539,13 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
 
 <screen>
 SELECT EXTRACT(EPOCH FROM TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40.12-08');
-<lineannotation>Result: </lineannotation><computeroutput>982384720.12</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>982384720.120000</computeroutput>
 
 SELECT EXTRACT(EPOCH FROM TIMESTAMP '2001-02-16 20:38:40.12');
-<lineannotation>Result: </lineannotation><computeroutput>982355920.12</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>982355920.120000</computeroutput>
 
 SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
-<lineannotation>Result: </lineannotation><computeroutput>442800</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>442800.000000</computeroutput>
 </screen>
 
        <para>
@@ -9692,7 +9692,7 @@ SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
 
 <screen>
 SELECT EXTRACT(MILLISECONDS FROM TIME '17:12:28.5');
-<lineannotation>Result: </lineannotation><computeroutput>28500</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>28500.000</computeroutput>
 </screen>
       </listitem>
      </varlistentry>
@@ -9756,10 +9756,10 @@ SELECT EXTRACT(QUARTER FROM TIMESTAMP '2001-02-16 20:38:40');
 
 <screen>
 SELECT EXTRACT(SECOND FROM TIMESTAMP '2001-02-16 20:38:40');
-<lineannotation>Result: </lineannotation><computeroutput>40</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>40.000000</computeroutput>
 
 SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
-<lineannotation>Result: </lineannotation><computeroutput>28.5</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>28.500000</computeroutput>
 </screen>
       </listitem>
      </varlistentry>
