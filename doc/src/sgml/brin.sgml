@@ -1229,6 +1229,10 @@ typedef struct BrinOpcInfo
      <entry>internal function <function>brin_bloom_union()</function></entry>
     </row>
     <row>
+     <entry>Support Procedure 5</entry>
+     <entry>internal function <function>brin_bloom_options()</function></entry>
+    </row>
+    <row>
      <entry>Support Procedure 11</entry>
      <entry>function to compute hash of an element</entry>
     </row>
@@ -1285,6 +1289,10 @@ typedef struct BrinOpcInfo
     <row>
      <entry>Support Procedure 4</entry>
      <entry>internal function <function>brin_minmax_multi_union()</function></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 5</entry>
+     <entry>internal function <function>brin_minmax_multi_options()</function></entry>
     </row>
     <row>
      <entry>Support Procedure 11</entry>
