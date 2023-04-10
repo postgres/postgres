@@ -71,19 +71,19 @@
       after the <replaceable>in_lsn</replaceable> argument.  For
       example:
 <screen>
-postgres=# SELECT * FROM pg_get_wal_record_info('0/E84F5E8');
--[ RECORD 1 ]----+--------------------------------------------------
-start_lsn        | 0/E84F5E8
-end_lsn          | 0/E84F620
-prev_lsn         | 0/E84F5A8
+postgres=# SELECT * FROM pg_get_wal_record_info('0/E419E28');
+-[ RECORD 1 ]----+-------------------------------------------------
+start_lsn        | 0/E419E28
+end_lsn          | 0/E419E68
+prev_lsn         | 0/E419D78
 xid              | 0
 resource_manager | Heap2
 record_type      | VACUUM
-record_length    | 50
+record_length    | 58
 main_data_length | 2
 fpi_length       | 0
-description      | nunused: 1, unused: [ 22 ]
-block_ref        | blkref #0: rel 1663/16389/20884 fork main blk 126
+description      | nunused: 5, unused: [1, 2, 3, 4, 5]
+block_ref        | blkref #0: rel 1663/16385/1249 fork main blk 364
 </screen>
      </para>
      <para>
@@ -144,18 +144,18 @@ block_ref        |
       references.  Returns one row per block reference per WAL record.
       For example:
 <screen>
-postgres=# SELECT * FROM pg_get_wal_block_info('0/10E9D80', '0/10E9DC0');
+postgres=# SELECT * FROM pg_get_wal_block_info('0/1230278', '0/12302B8');
 -[ RECORD 1 ]-----+-----------------------------------
-start_lsn         | 0/10E9D80
-end_lsn           | 0/10E9DC0
-prev_lsn          | 0/10E9860
+start_lsn         | 0/1230278
+end_lsn           | 0/12302B8
+prev_lsn          | 0/122FD40
 block_id          | 0
 reltablespace     | 1663
 reldatabase       | 1
-relfilenode       | 2690
+relfilenode       | 2658
 relforknumber     | 0
-relblocknumber    | 5
-xid               | 117
+relblocknumber    | 11
+xid               | 341
 resource_manager  | Btree
 record_type       | INSERT_LEAF
 record_length     | 64
@@ -163,8 +163,8 @@ main_data_length  | 2
 block_data_length | 16
 block_fpi_length  | 0
 block_fpi_info    |
-description       | off 14
-block_data        | \x00005400020010001407000000000000
+description       | off: 46
+block_data        | \x00002a00070010402630000070696400
 block_fpi_data    |
 </screen>
      </para>

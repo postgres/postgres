@@ -17,59 +17,8 @@
 #include "access/nbtxlog.h"
 #include "access/rmgrdesc_utils.h"
 
-static void btree_del_desc(StringInfo buf, char *block_data, uint16 ndeleted,
-						   uint16 nupdated);
-static void btree_update_elem_desc(StringInfo buf, void *update, void *data);
-
-static void
-btree_del_desc(StringInfo buf, char *block_data, uint16 ndeleted,
-			   uint16 nupdated)
-{
-	OffsetNumber *updatedoffsets;
-	xl_btree_update *updates;
-	OffsetNumber *data = (OffsetNumber *) block_data;
-
-	appendStringInfoString(buf, ", deleted:");
-	array_desc(buf, data, sizeof(OffsetNumber), ndeleted,
-			   &offset_elem_desc, NULL);
-
-	appendStringInfoString(buf, ", updated:");
-	array_desc(buf, data, sizeof(OffsetNumber), nupdated,
-			   &offset_elem_desc, NULL);
-
-	if (nupdated <= 0)
-		return;
-
-	updatedoffsets = (OffsetNumber *)
-		((char *) data + ndeleted * sizeof(OffsetNumber));
-	updates = (xl_btree_update *) ((char *) updatedoffsets +
-								   nupdated *
-								   sizeof(OffsetNumber));
-
-	appendStringInfoString(buf, ", updates:");
-	array_desc(buf, updates, sizeof(xl_btree_update),
-			   nupdated, &btree_update_elem_desc,
-			   &updatedoffsets);
-}
-
-static void
-btree_update_elem_desc(StringInfo buf, void *update, void *data)
-{
-	xl_btree_update *new_update = (xl_btree_update *) update;
-	OffsetNumber *updated_offset = *((OffsetNumber **) data);
-
-	appendStringInfo(buf, "{ updated offset: %u, ndeleted tids: %u",
-					 *updated_offset, new_update->ndeletedtids);
-
-	appendStringInfoString(buf, ", deleted tids:");
-
-	array_desc(buf, (char *) new_update + SizeOfBtreeUpdate, sizeof(uint16),
-			   new_update->ndeletedtids, &uint16_elem_desc, NULL);
-
-	updated_offset++;
-
-	appendStringInfo(buf, " }");
-}
+static void delvacuum_desc(StringInfo buf, char *block_data,
+						   uint16 ndeleted, uint16 nupdated);
 
 void
 btree_desc(StringInfo buf, XLogReaderState *record)
@@ -114,9 +63,8 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 								 xlrec->ndeleted, xlrec->nupdated);
 
 				if (!XLogRecHasBlockImage(record, 0))
-					btree_del_desc(buf, XLogRecGetBlockData(record, 0, NULL),
+					delvacuum_desc(buf, XLogRecGetBlockData(record, 0, NULL),
 								   xlrec->ndeleted, xlrec->nupdated);
-
 				break;
 			}
 		case XLOG_BTREE_DELETE:
@@ -128,16 +76,15 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 								 xlrec->ndeleted, xlrec->nupdated);
 
 				if (!XLogRecHasBlockImage(record, 0))
-					btree_del_desc(buf, XLogRecGetBlockData(record, 0, NULL),
+					delvacuum_desc(buf, XLogRecGetBlockData(record, 0, NULL),
 								   xlrec->ndeleted, xlrec->nupdated);
-
 				break;
 			}
 		case XLOG_BTREE_MARK_PAGE_HALFDEAD:
 			{
 				xl_btree_mark_page_halfdead *xlrec = (xl_btree_mark_page_halfdead *) rec;
 
-				appendStringInfo(buf, "topparent: %u; leaf: %u; left: %u; right: %u",
+				appendStringInfo(buf, "topparent: %u, leaf: %u, left: %u, right: %u",
 								 xlrec->topparent, xlrec->leafblk, xlrec->leftblk, xlrec->rightblk);
 				break;
 			}
@@ -146,11 +93,11 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_unlink_page *xlrec = (xl_btree_unlink_page *) rec;
 
-				appendStringInfo(buf, "left: %u; right: %u; level: %u; safexid: %u:%u; ",
+				appendStringInfo(buf, "left: %u, right: %u, level: %u, safexid: %u:%u, ",
 								 xlrec->leftsib, xlrec->rightsib, xlrec->level,
 								 EpochFromFullTransactionId(xlrec->safexid),
 								 XidFromFullTransactionId(xlrec->safexid));
-				appendStringInfo(buf, "leafleft: %u; leafright: %u; leaftopparent: %u",
+				appendStringInfo(buf, "leafleft: %u, leafright: %u, leaftopparent: %u",
 								 xlrec->leafleftsib, xlrec->leafrightsib,
 								 xlrec->leaftopparent);
 				break;
@@ -241,4 +188,60 @@ btree_identify(uint8 info)
 	}
 
 	return id;
+}
+
+static void
+delvacuum_desc(StringInfo buf, char *block_data,
+			   uint16 ndeleted, uint16 nupdated)
+{
+	OffsetNumber *deletedoffsets;
+	OffsetNumber *updatedoffsets;
+	xl_btree_update *updates;
+
+	/* Output deleted page offset number array */
+	appendStringInfoString(buf, ", deleted:");
+	deletedoffsets = (OffsetNumber *) block_data;
+	array_desc(buf, deletedoffsets, sizeof(OffsetNumber), ndeleted,
+			   &offset_elem_desc, NULL);
+
+	/*
+	 * Output updates as an array of "update objects", where each element
+	 * contains a page offset number from updated array.  (This is not the
+	 * most literal representation of the underlying physical data structure
+	 * that we could use.  Readability seems more important here.)
+	 */
+	appendStringInfoString(buf, ", updated: [");
+	updatedoffsets = (OffsetNumber *) (block_data + ndeleted *
+									   sizeof(OffsetNumber));
+	updates = (xl_btree_update *) ((char *) updatedoffsets +
+								   nupdated *
+								   sizeof(OffsetNumber));
+	for (int i = 0; i < nupdated; i++)
+	{
+		OffsetNumber off = updatedoffsets[i];
+
+		Assert(OffsetNumberIsValid(off));
+		Assert(updates->ndeletedtids > 0);
+
+		appendStringInfo(buf, "{ off: %u, nptids: %u, ptids: [",
+						 off, updates->ndeletedtids);
+		for (int p = 0; p < updates->ndeletedtids; p++)
+		{
+			uint16	   *ptid;
+
+			ptid = (uint16 *) ((char *) updates + SizeOfBtreeUpdate) + p;
+			appendStringInfo(buf, "%u", *ptid);
+
+			if (p < updates->ndeletedtids - 1)
+				appendStringInfoString(buf, ", ");
+		}
+		appendStringInfoString(buf, "] }");
+		if (i < nupdated - 1)
+			appendStringInfoString(buf, ", ");
+
+		updates = (xl_btree_update *)
+			((char *) updates + SizeOfBtreeUpdate +
+			 updates->ndeletedtids * sizeof(uint16));
+	}
+	appendStringInfoString(buf, "]");
 }

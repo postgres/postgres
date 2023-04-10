@@ -127,7 +127,7 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 		appendStringInfo(buf, ", nrelids: %u", xlrec->nrelids);
 		appendStringInfoString(buf, ", relids:");
 		array_desc(buf, xlrec->relids, sizeof(Oid), xlrec->nrelids,
-				   &relid_desc, NULL);
+				   &oid_elem_desc, NULL);
 	}
 	else if (info == XLOG_HEAP_CONFIRM)
 	{
