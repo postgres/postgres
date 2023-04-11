@@ -16,26 +16,6 @@
 #include "access/rmgrdesc_utils.h"
 #include "storage/off.h"
 
-/*
- * Guidelines for formatting desc functions:
- *
- * member1_name: member1_value, member2_name: member2_value
- *
- * If the value is a list, please use:
- *
- * member3_name: [ member3_list_value1, member3_list_value2 ]
- *
- * The first item appended to the string should not be prepended by any spaces
- * or comma, however all subsequent appends to the string are responsible for
- * prepending themselves with a comma followed by a space.
- *
- * Flags should be in ALL CAPS.
- *
- * For lists/arrays of items, the number of those items should be listed at
- * the beginning with all of the other numbers.
- *
- * Composite objects in a list should be surrounded with { }.
- */
 void
 array_desc(StringInfo buf, void *array, size_t elem_size, int count,
 		   void (*elem_desc) (StringInfo buf, void *elem, void *data),
