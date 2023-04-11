@@ -1506,7 +1506,7 @@ EXEC SQL TYPE serial_t IS long;
      </para>
 
      <para>
-      Any word you declare as a typedef cannot be used as a SQL keyword
+      Any word you declare as a typedef cannot be used as an SQL keyword
       in <literal>EXEC SQL</literal> commands later in the same program.
       For example, this won't work:
 <programlisting>
@@ -1518,7 +1518,7 @@ EXEC SQL START TRANSACTION;
 </programlisting>
       ECPG will report a syntax error for <literal>START
       TRANSACTION</literal>, because it no longer
-      recognizes <literal>START</literal> as a SQL keyword,
+      recognizes <literal>START</literal> as an SQL keyword,
       only as a typedef.
       (If you have such a conflict, and renaming the typedef
       seems impractical, you could write the SQL command
@@ -1530,7 +1530,7 @@ EXEC SQL START TRANSACTION;
        In <productname>PostgreSQL</productname> releases before v16, use
        of SQL keywords as typedef names was likely to result in syntax
        errors associated with use of the typedef itself, rather than use
-       of the name as a SQL keyword.  The new behavior is less likely to
+       of the name as an SQL keyword.  The new behavior is less likely to
        cause problems when an existing ECPG application is recompiled in
        a new <productname>PostgreSQL</productname> release with new
        keywords.
