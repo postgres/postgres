@@ -139,8 +139,8 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;
 
-		appendStringInfo(buf, "off: %u, xid: %u, flags: 0x%02X",
-						 xlrec->offnum, xlrec->locking_xid, xlrec->flags);
+		appendStringInfo(buf, "off: %u, xmax: %u, flags: 0x%02X",
+						 xlrec->offnum, xlrec->xmax, xlrec->flags);
 		out_infobits(buf, xlrec->infobits_set);
 	}
 	else if (info == XLOG_HEAP_INPLACE)

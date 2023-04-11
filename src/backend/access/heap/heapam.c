@@ -3567,7 +3567,7 @@ l2:
 			XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
 
 			xlrec.offnum = ItemPointerGetOffsetNumber(&oldtup.t_self);
-			xlrec.locking_xid = xmax_lock_old_tuple;
+			xlrec.xmax = xmax_lock_old_tuple;
 			xlrec.infobits_set = compute_infobits(oldtup.t_data->t_infomask,
 												  oldtup.t_data->t_infomask2);
 			xlrec.flags =
@@ -4777,7 +4777,7 @@ failed:
 		XLogRegisterBuffer(0, *buffer, REGBUF_STANDARD);
 
 		xlrec.offnum = ItemPointerGetOffsetNumber(&tuple->t_self);
-		xlrec.locking_xid = xid;
+		xlrec.xmax = xid;
 		xlrec.infobits_set = compute_infobits(new_infomask,
 											  tuple->t_data->t_infomask2);
 		xlrec.flags = cleared_all_frozen ? XLH_LOCK_ALL_FROZEN_CLEARED : 0;
@@ -9848,7 +9848,7 @@ heap_xlog_lock(XLogReaderState *record)
 						   BufferGetBlockNumber(buffer),
 						   offnum);
 		}
-		HeapTupleHeaderSetXmax(htup, xlrec->locking_xid);
+		HeapTupleHeaderSetXmax(htup, xlrec->xmax);
 		HeapTupleHeaderSetCmax(htup, FirstCommandId, false);
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);

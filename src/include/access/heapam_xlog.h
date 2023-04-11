@@ -279,13 +279,13 @@ typedef struct xl_heap_vacuum
 /* This is what we need to know about lock */
 typedef struct xl_heap_lock
 {
-	TransactionId locking_xid;	/* might be a MultiXactId not xid */
+	TransactionId xmax;			/* might be a MultiXactId */
 	OffsetNumber offnum;		/* locked tuple's offset on page */
-	int8		infobits_set;	/* infomask and infomask2 bits to set */
+	uint8		infobits_set;	/* infomask and infomask2 bits to set */
 	uint8		flags;			/* XLH_LOCK_* flag bits */
 } xl_heap_lock;
 
-#define SizeOfHeapLock	(offsetof(xl_heap_lock, flags) + sizeof(int8))
+#define SizeOfHeapLock	(offsetof(xl_heap_lock, flags) + sizeof(uint8))
 
 /* This is what we need to know about locking an updated version of a row */
 typedef struct xl_heap_lock_updated
