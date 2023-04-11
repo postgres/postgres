@@ -358,13 +358,13 @@ VACUUM (BUFFER_USAGE_LIMIT 0) vac_option_tab;
 ANALYZE (BUFFER_USAGE_LIMIT 0) vac_option_tab;
 -- value exceeds max size error
 VACUUM (BUFFER_USAGE_LIMIT 16777220) vac_option_tab;
-ERROR:  buffer_usage_limit option must be 0 or between 128 kB and 16777216 kB
+ERROR:  BUFFER_USAGE_LIMIT option must be 0 or between 128 kB and 16777216 kB
 -- value is less than min size error
 VACUUM (BUFFER_USAGE_LIMIT 120) vac_option_tab;
-ERROR:  buffer_usage_limit option must be 0 or between 128 kB and 16777216 kB
+ERROR:  BUFFER_USAGE_LIMIT option must be 0 or between 128 kB and 16777216 kB
 -- integer overflow error
 VACUUM (BUFFER_USAGE_LIMIT 10000000000) vac_option_tab;
-ERROR:  value: "10000000000": is invalid for buffer_usage_limit
+ERROR:  BUFFER_USAGE_LIMIT option must be 0 or between 128 kB and 16777216 kB
 HINT:  Value exceeds integer range.
 -- incompatible with VACUUM FULL error
 VACUUM (BUFFER_USAGE_LIMIT '512 kB', FULL) vac_option_tab;

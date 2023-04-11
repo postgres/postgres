@@ -195,38 +195,21 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 			int			result;
 			char	   *vac_buffer_size;
 
-			if (opt->arg == NULL)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("buffer_usage_limit option requires a valid value"),
-						 parser_errposition(pstate, opt->location)));
-			}
-
 			vac_buffer_size = defGetString(opt);
 
-			if (!parse_int(vac_buffer_size, &result, GUC_UNIT_KB, &hintmsg))
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("value: \"%s\": is invalid for buffer_usage_limit",
-								vac_buffer_size),
-						 hintmsg ? errhint("%s", _(hintmsg)) : 0));
-			}
-
 			/*
-			 * Check that the specified size falls within the hard upper and
-			 * lower limits if it is not 0.  We explicitly disallow -1 since
-			 * that behavior can be obtained by not specifying
-			 * BUFFER_USAGE_LIMIT.
+			 * Check that the specified value is valid and the size falls
+			 * within the hard upper and lower limits if it is not 0.
 			 */
-			if (result != 0 &&
-				(result < MIN_BAS_VAC_RING_SIZE_KB || result > MAX_BAS_VAC_RING_SIZE_KB))
+			if (!parse_int(vac_buffer_size, &result, GUC_UNIT_KB, &hintmsg) ||
+				(result != 0 &&
+				 (result < MIN_BAS_VAC_RING_SIZE_KB || result > MAX_BAS_VAC_RING_SIZE_KB)))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("buffer_usage_limit option must be 0 or between %d kB and %d kB",
-								MIN_BAS_VAC_RING_SIZE_KB, MAX_BAS_VAC_RING_SIZE_KB)));
+						 errmsg("BUFFER_USAGE_LIMIT option must be 0 or between %d kB and %d kB",
+								MIN_BAS_VAC_RING_SIZE_KB, MAX_BAS_VAC_RING_SIZE_KB),
+						 hintmsg ? errhint("%s", _(hintmsg)) : 0));
 			}
 
 			ring_size = result;
