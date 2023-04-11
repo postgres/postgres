@@ -653,8 +653,14 @@ $node_standby->reload;
 $node_primary->psql('postgres', q[CREATE DATABASE testdb]);
 $node_primary->safe_psql('testdb', qq[CREATE TABLE decoding_test(x integer, y text);]);
 
+# Wait for the standby to catchup before creating the slots
+$node_primary->wait_for_replay_catchup($node_standby);
+
 # create the logical slots
 create_logical_slots($node_standby, 'promotion_');
+
+# Wait for the cascading standby to catchup before creating the slots
+$node_standby->wait_for_replay_catchup($node_cascading_standby, $node_primary);
 
 # create the logical slots on the cascading standby too
 create_logical_slots($node_cascading_standby, 'promotion_');
