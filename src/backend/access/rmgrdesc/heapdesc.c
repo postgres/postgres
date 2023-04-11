@@ -17,30 +17,58 @@
 #include "access/heapam_xlog.h"
 #include "access/rmgrdesc_utils.h"
 
+/*
+ * NOTE: "keyname" argument cannot have trailing spaces or punctuation
+ * characters
+ */
 static void
-out_infobits(StringInfo buf, uint8 infobits)
+infobits_desc(StringInfo buf, uint8 infobits, const char *keyname)
 {
-	if ((infobits & XLHL_XMAX_IS_MULTI) == 0 &&
-		(infobits & XLHL_XMAX_LOCK_ONLY) == 0 &&
-		(infobits & XLHL_XMAX_EXCL_LOCK) == 0 &&
-		(infobits & XLHL_XMAX_KEYSHR_LOCK) == 0 &&
-		(infobits & XLHL_KEYS_UPDATED) == 0)
-		return;
+	appendStringInfo(buf, "%s: [", keyname);
 
-	appendStringInfoString(buf, ", infobits: [");
+	Assert(buf->data[buf->len - 1] != ' ');
 
 	if (infobits & XLHL_XMAX_IS_MULTI)
-		appendStringInfoString(buf, " IS_MULTI");
+		appendStringInfoString(buf, "IS_MULTI, ");
 	if (infobits & XLHL_XMAX_LOCK_ONLY)
-		appendStringInfoString(buf, ", LOCK_ONLY");
+		appendStringInfoString(buf, "LOCK_ONLY, ");
 	if (infobits & XLHL_XMAX_EXCL_LOCK)
-		appendStringInfoString(buf, ", EXCL_LOCK");
+		appendStringInfoString(buf, "EXCL_LOCK, ");
 	if (infobits & XLHL_XMAX_KEYSHR_LOCK)
-		appendStringInfoString(buf, ", KEYSHR_LOCK");
+		appendStringInfoString(buf, "KEYSHR_LOCK, ");
 	if (infobits & XLHL_KEYS_UPDATED)
-		appendStringInfoString(buf, ", KEYS_UPDATED");
+		appendStringInfoString(buf, "KEYS_UPDATED, ");
 
-	appendStringInfoString(buf, " ]");
+	if (buf->data[buf->len - 1] == ' ')
+	{
+		/* Truncate-away final unneeded ", "  */
+		Assert(buf->data[buf->len - 2] == ',');
+		buf->len -= 2;
+		buf->data[buf->len] = '\0';
+	}
+
+	appendStringInfoString(buf, "]");
+}
+
+static void
+truncate_flags_desc(StringInfo buf, uint8 flags)
+{
+	appendStringInfoString(buf, "flags: [");
+
+	if (flags & XLH_TRUNCATE_CASCADE)
+		appendStringInfoString(buf, "CASCADE, ");
+	if (flags & XLH_TRUNCATE_RESTART_SEQS)
+		appendStringInfoString(buf, "RESTART_SEQS, ");
+
+	if (buf->data[buf->len - 1] == ' ')
+	{
+		/* Truncate-away final unneeded ", "  */
+		Assert(buf->data[buf->len - 2] == ',');
+		buf->len -= 2;
+		buf->data[buf->len] = '\0';
+	}
+
+	appendStringInfoString(buf, "]");
 }
 
 static void
@@ -82,48 +110,36 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_delete *xlrec = (xl_heap_delete *) rec;
 
-		appendStringInfo(buf, "off: %u, flags: 0x%02X",
-						 xlrec->offnum,
-						 xlrec->flags);
-		out_infobits(buf, xlrec->infobits_set);
+		appendStringInfo(buf, "xmax: %u, off: %u, ",
+						 xlrec->xmax, xlrec->offnum);
+		infobits_desc(buf, xlrec->infobits_set, "infobits");
+		appendStringInfo(buf, ", flags: 0x%02X", xlrec->flags);
 	}
 	else if (info == XLOG_HEAP_UPDATE)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		appendStringInfo(buf, "off: %u, xmax: %u, flags: 0x%02X",
-						 xlrec->old_offnum,
-						 xlrec->old_xmax,
-						 xlrec->flags);
-		out_infobits(buf, xlrec->old_infobits_set);
-		appendStringInfo(buf, ", new off: %u, xmax %u",
-						 xlrec->new_offnum,
-						 xlrec->new_xmax);
+		appendStringInfo(buf, "old_xmax: %u, old_off: %u, ",
+						 xlrec->old_xmax, xlrec->old_offnum);
+		infobits_desc(buf, xlrec->old_infobits_set, "old_infobits");
+		appendStringInfo(buf, ", flags: 0x%02X, new_xmax: %u, new_off: %u",
+						 xlrec->flags, xlrec->new_xmax, xlrec->new_offnum);
 	}
 	else if (info == XLOG_HEAP_HOT_UPDATE)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		appendStringInfo(buf, "off: %u, xmax: %u, flags: 0x%02X",
-						 xlrec->old_offnum,
-						 xlrec->old_xmax,
-						 xlrec->flags);
-		out_infobits(buf, xlrec->old_infobits_set);
-		appendStringInfo(buf, ", new off: %u, xmax: %u",
-						 xlrec->new_offnum,
-						 xlrec->new_xmax);
+		appendStringInfo(buf, "old_xmax: %u, old_off: %u, ",
+						 xlrec->old_xmax, xlrec->old_offnum);
+		infobits_desc(buf, xlrec->old_infobits_set, "old_infobits");
+		appendStringInfo(buf, ", flags: 0x%02X, new_xmax: %u, new_off: %u",
+						 xlrec->flags, xlrec->new_xmax, xlrec->new_offnum);
 	}
 	else if (info == XLOG_HEAP_TRUNCATE)
 	{
 		xl_heap_truncate *xlrec = (xl_heap_truncate *) rec;
 
-		appendStringInfoString(buf, "flags: [");
-		if (xlrec->flags & XLH_TRUNCATE_CASCADE)
-			appendStringInfoString(buf, " CASCADE");
-		if (xlrec->flags & XLH_TRUNCATE_RESTART_SEQS)
-			appendStringInfoString(buf, ", RESTART_SEQS");
-		appendStringInfoString(buf, " ]");
-
+		truncate_flags_desc(buf, xlrec->flags);
 		appendStringInfo(buf, ", nrelids: %u", xlrec->nrelids);
 		appendStringInfoString(buf, ", relids:");
 		array_desc(buf, xlrec->relids, sizeof(Oid), xlrec->nrelids,
@@ -139,9 +155,10 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;
 
-		appendStringInfo(buf, "off: %u, xmax: %u, flags: 0x%02X",
-						 xlrec->offnum, xlrec->xmax, xlrec->flags);
-		out_infobits(buf, xlrec->infobits_set);
+		appendStringInfo(buf, "xmax: %u, off: %u, ",
+						 xlrec->xmax, xlrec->offnum);
+		infobits_desc(buf, xlrec->infobits_set, "infobits");
+		appendStringInfo(buf, ", flags: 0x%02X", xlrec->flags);
 	}
 	else if (info == XLOG_HEAP_INPLACE)
 	{
@@ -230,7 +247,9 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 			OffsetNumber *offsets;
 
 			plans = (xl_heap_freeze_plan *) XLogRecGetBlockData(record, 0, NULL);
-			offsets = (OffsetNumber *) &plans[xlrec->nplans];
+			offsets = (OffsetNumber *) ((char *) plans +
+										(xlrec->nplans *
+										 sizeof(xl_heap_freeze_plan)));
 			appendStringInfoString(buf, ", plans:");
 			array_desc(buf, plans, sizeof(xl_heap_freeze_plan), xlrec->nplans,
 					   &plan_elem_desc, &offsets);
@@ -251,18 +270,21 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 		appendStringInfo(buf, "ntuples: %d, flags: 0x%02X", xlrec->ntuples,
 						 xlrec->flags);
 
-		appendStringInfoString(buf, ", offsets:");
 		if (!XLogRecHasBlockImage(record, 0) && !isinit)
+		{
+			appendStringInfoString(buf, ", offsets:");
 			array_desc(buf, xlrec->offsets, sizeof(OffsetNumber),
 					   xlrec->ntuples, &offset_elem_desc, NULL);
+		}
 	}
 	else if (info == XLOG_HEAP2_LOCK_UPDATED)
 	{
 		xl_heap_lock_updated *xlrec = (xl_heap_lock_updated *) rec;
 
-		appendStringInfo(buf, "off: %u, xmax: %u, flags: 0x%02X",
-						 xlrec->offnum, xlrec->xmax, xlrec->flags);
-		out_infobits(buf, xlrec->infobits_set);
+		appendStringInfo(buf, "xmax: %u, off: %u, ",
+						 xlrec->xmax, xlrec->offnum);
+		infobits_desc(buf, xlrec->infobits_set, "infobits");
+		appendStringInfo(buf, ", flags: 0x%02X", xlrec->flags);
 	}
 	else if (info == XLOG_HEAP2_NEW_CID)
 	{
