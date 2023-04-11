@@ -223,6 +223,11 @@ delvacuum_desc(StringInfo buf, char *block_data,
 		Assert(OffsetNumberIsValid(off));
 		Assert(updates->ndeletedtids > 0);
 
+		/*
+		 * "ptid" is the symbol name used when building each xl_btree_update's
+		 * array of offsets into a posting list tuple's ItemPointerData array.
+		 * xl_btree_update describes a subset of the existing TIDs to delete.
+		 */
 		appendStringInfo(buf, "{ off: %u, nptids: %u, ptids: [",
 						 off, updates->ndeletedtids);
 		for (int p = 0; p < updates->ndeletedtids; p++)
