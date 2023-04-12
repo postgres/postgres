@@ -390,14 +390,8 @@ _readConstraint(void)
 	switch (local_node->contype)
 	{
 		case CONSTR_NULL:
-			/* no extra fields */
-			break;
-
 		case CONSTR_NOTNULL:
-			READ_BOOL_FIELD(is_no_inherit);
-			READ_STRING_FIELD(colname);
-			READ_BOOL_FIELD(skip_validation);
-			READ_BOOL_FIELD(initially_valid);
+			/* no extra fields */
 			break;
 
 		case CONSTR_DEFAULT:

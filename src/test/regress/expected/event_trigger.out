@@ -408,7 +408,6 @@ NOTICE:  END: command_tag=CREATE SCHEMA type=schema identity=evttrig
 NOTICE:  END: command_tag=CREATE SEQUENCE type=sequence identity=evttrig.one_col_a_seq
 NOTICE:  END: command_tag=CREATE SEQUENCE type=sequence identity=evttrig.one_col_c_seq
 NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.one
-NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.one
 NOTICE:  END: command_tag=CREATE INDEX type=index identity=evttrig.one_pkey
 NOTICE:  END: command_tag=ALTER SEQUENCE type=sequence identity=evttrig.one_col_a_seq
 NOTICE:  END: command_tag=ALTER SEQUENCE type=sequence identity=evttrig.one_col_c_seq
@@ -423,7 +422,6 @@ CREATE TABLE evttrig.parted (
     id int PRIMARY KEY)
     PARTITION BY RANGE (id);
 NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.parted
-NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.parted
 NOTICE:  END: command_tag=CREATE INDEX type=index identity=evttrig.parted_pkey
 CREATE TABLE evttrig.part_1_10 PARTITION OF evttrig.parted (id)
   FOR VALUES FROM (1) TO (10);

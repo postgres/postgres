@@ -852,7 +852,7 @@ create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 alter table atacc1 alter column test drop not null;
 alter table atacc1 drop constraint "atacc1_pkey";
-\d atacc1
+alter table atacc1 alter column test drop not null;
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;
 delete from atacc1;
@@ -917,6 +917,14 @@ insert into parent values (NULL);
 insert into child (a, b) values (NULL, 'foo');
 alter table only parent alter a set not null;
 alter table child alter a set not null;
+delete from parent;
+alter table only parent alter a set not null;
+insert into parent values (NULL);
+alter table child alter a set not null;
+insert into child (a, b) values (NULL, 'foo');
+delete from child;
+alter table child alter a set not null;
+insert into child (a, b) values (NULL, 'foo');
 drop table child;
 drop table parent;
 
@@ -2333,22 +2341,6 @@ ALTER TABLE ataddindex
   ADD FOREIGN KEY (ref_id) REFERENCES ataddindex (id);
 \d ataddindex
 DROP TABLE ataddindex;
-
-CREATE TABLE atnotnull1 ();
-ALTER TABLE atnotnull1
-  ADD COLUMN a INT,
-  ALTER a SET NOT NULL;
-ALTER TABLE atnotnull1
-  ADD COLUMN b INT,
-  ADD NOT NULL b;
-ALTER TABLE atnotnull1
-  ADD COLUMN c INT,
-  ADD PRIMARY KEY (c);
-SELECT conrelid::regclass, conname, contype, conkey,
- (SELECT attname FROM pg_attribute WHERE attrelid = conrelid AND attnum = conkey[1]),
- coninhcount, conislocal
- FROM pg_constraint WHERE contype IN ('n','p') AND
- conrelid IN ('atnotnull1'::regclass);
 
 -- unsupported constraint types for partitioned tables
 CREATE TABLE partitioned (

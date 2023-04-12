@@ -3115,7 +3115,7 @@ my %tests = (
 					   );',
 		regexp => qr/^
 			\QCREATE TABLE dump_test.fk_reference_test_table (\E
-			\n\s+\Qcol1 integer\E
+			\n\s+\Qcol1 integer NOT NULL\E
 			\n\);
 			/xm,
 		like =>
@@ -3507,7 +3507,7 @@ my %tests = (
 					   );',
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_table_generated (\E\n
-			\s+\Qcol1 integer,\E\n
+			\s+\Qcol1 integer NOT NULL,\E\n
 			\s+\Qcol2 integer GENERATED ALWAYS AS ((col1 * 2)) STORED\E\n
 			\);
 			/xms,
@@ -3621,7 +3621,7 @@ my %tests = (
 						) INHERITS (dump_test.test_inheritance_parent);',
 		regexp => qr/^
 		\QCREATE TABLE dump_test.test_inheritance_child (\E\n
-		\s+\Qcol1 integer NOT NULL,\E\n
+		\s+\Qcol1 integer,\E\n
 		\s+\QCONSTRAINT test_inheritance_child CHECK ((col2 >= 142857))\E\n
 		\)\n
 		\QINHERITS (dump_test.test_inheritance_parent);\E\n

@@ -1652,12 +1652,11 @@ SELECT relname, conname, contype, conislocal, coninhcount, connoinherit
   FROM pg_class AS pc JOIN pg_constraint AS pgc ON (conrelid = pc.oid)
   WHERE pc.relname = 'fd_pt1'
   ORDER BY 1,2;
- relname |      conname       | contype | conislocal | coninhcount | connoinherit 
----------+--------------------+---------+------------+-------------+--------------
- fd_pt1  | fd_pt1_c1_not_null | n       | t          |           0 | f
- fd_pt1  | fd_pt1chk1         | c       | t          |           0 | t
- fd_pt1  | fd_pt1chk2         | c       | t          |           0 | f
-(3 rows)
+ relname |  conname   | contype | conislocal | coninhcount | connoinherit 
+---------+------------+---------+------------+-------------+--------------
+ fd_pt1  | fd_pt1chk1 | c       | t          |           0 | t
+ fd_pt1  | fd_pt1chk2 | c       | t          |           0 | f
+(2 rows)
 
 -- child does not inherit NO INHERIT constraints
 \d+ fd_pt1
