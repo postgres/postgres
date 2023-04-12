@@ -409,6 +409,26 @@
    </varlistentry>
 
    <varlistentry>
+    <term><acronym>MCF</acronym></term>
+    <listitem>
+     <para>
+      Most Common Frequency, that is the frequency associated with some
+      Most Common Value
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>MCV</acronym></term>
+    <listitem>
+     <para>
+      Most Common Value, one of the values appearing most often within a
+      particular table column
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>MITM</acronym></term>
     <listitem>
      <para>

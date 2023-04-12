@@ -203,7 +203,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE stringu1 = 'xxx';
    <acronym>MCV</acronym>s:
 
 <programlisting>
-selectivity = (1 - sum(mvf))/(num_distinct - num_mcv)
+selectivity = (1 - sum(mcv_freqs))/(num_distinct - num_mcv)
             = (1 - (0.00333333 + 0.003 + 0.003 + 0.003 + 0.003 + 0.003 +
                     0.003 + 0.003 + 0.003 + 0.003))/(676 - 10)
             = 0.0014559
