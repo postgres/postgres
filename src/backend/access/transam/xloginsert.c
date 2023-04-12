@@ -357,7 +357,7 @@ XLogRegisterData(char *data, uint32 len)
 	if (num_rdatas >= max_rdatas)
 		ereport(ERROR,
 				(errmsg_internal("too much WAL data"),
-				 errdetail_internal("%u out of %u data segments are already in use.",
+				 errdetail_internal("%d out of %d data segments are already in use.",
 									num_rdatas, max_rdatas)));
 	rdata = &rdatas[num_rdatas++];
 
@@ -411,7 +411,7 @@ XLogRegisterBufData(uint8 block_id, char *data, uint32 len)
 	if (num_rdatas >= max_rdatas)
 		ereport(ERROR,
 				(errmsg_internal("too much WAL data"),
-				 errdetail_internal("%u out of %u data segments are already in use.",
+				 errdetail_internal("%d out of %d data segments are already in use.",
 									num_rdatas, max_rdatas)));
 	if (regbuf->rdata_len + len > UINT16_MAX || len > UINT16_MAX)
 		ereport(ERROR,

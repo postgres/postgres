@@ -204,7 +204,7 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 			nunused = (end - nowunused);
 			Assert(nunused >= 0);
 
-			appendStringInfo(buf, ", nunused: %u", nunused);
+			appendStringInfo(buf, ", nunused: %d", nunused);
 
 			appendStringInfoString(buf, ", redirected:");
 			array_desc(buf, redirected, sizeof(OffsetNumber) * 2,

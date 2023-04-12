@@ -533,7 +533,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			Buffer		res = DatumGetBuffer(foundres);
 
 			if (isCommit)
-				elog(PANIC, "lost track of buffer IO on buffer %u", res);
+				elog(PANIC, "lost track of buffer IO on buffer %d", res);
 			AbortBufferIO(res);
 		}
 
