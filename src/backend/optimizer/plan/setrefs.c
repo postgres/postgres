@@ -1102,7 +1102,14 @@ set_subqueryscan_references(PlannerInfo *root,
 
 		result = plan->subplan;
 
-		/* We have to be sure we don't lose any initplans */
+		/*
+		 * We have to be sure we don't lose any initplans, so move any that
+		 * were attached to the parent plan to the child.  If we do move any,
+		 * the child is no longer parallel-safe.
+		 */
+		if (plan->scan.plan.initPlan)
+			result->parallel_safe = false;
+
 		result->initPlan = list_concat(plan->scan.plan.initPlan,
 									   result->initPlan);
 
