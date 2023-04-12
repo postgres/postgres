@@ -160,7 +160,11 @@ ALTER TABLE regtest_table ALTER b SET DEFAULT 'abcd';   -- not supported yet
 ALTER TABLE regtest_table ALTER b SET DEFAULT 'XYZ';    -- not supported yet
 ALTER TABLE regtest_table ALTER b DROP DEFAULT;         -- not supported yet
 ALTER TABLE regtest_table ALTER b SET NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b" permissive=0
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b" permissive=0
 ALTER TABLE regtest_table ALTER b DROP NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b" permissive=0
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b" permissive=0
 ALTER TABLE regtest_table ALTER b SET STATISTICS -1;
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b" permissive=0
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b" permissive=0
@@ -236,7 +240,13 @@ ALTER TABLE regtest_ptable ALTER p SET DEFAULT 'abcd';   -- not supported by sep
 ALTER TABLE regtest_ptable ALTER p SET DEFAULT 'XYZ';    -- not supported by sepgsql
 ALTER TABLE regtest_ptable ALTER p DROP DEFAULT;         -- not supported by sepgsql
 ALTER TABLE regtest_ptable ALTER p SET NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.p" permissive=0
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p" permissive=0
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.p" permissive=0
 ALTER TABLE regtest_ptable ALTER p DROP NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.p" permissive=0
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p" permissive=0
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.p" permissive=0
 ALTER TABLE regtest_ptable ALTER p SET STATISTICS -1;
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.p" permissive=0
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p" permissive=0
@@ -256,7 +266,9 @@ ALTER TABLE regtest_table_part ALTER p SET DEFAULT 'abcd';   -- not supported by
 ALTER TABLE regtest_table_part ALTER p SET DEFAULT 'XYZ';    -- not supported by sepgsql
 ALTER TABLE regtest_table_part ALTER p DROP DEFAULT;         -- not supported by sepgsql
 ALTER TABLE regtest_table_part ALTER p SET NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p" permissive=0
 ALTER TABLE regtest_table_part ALTER p DROP NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p" permissive=0
 ALTER TABLE regtest_table_part ALTER p SET STATISTICS -1;
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p" permissive=0
 ALTER TABLE regtest_table_part ALTER p SET (n_distinct = 999);
