@@ -16493,6 +16493,12 @@ esac
 esac
 
   case " $LIBOBJS " in
+  *" win32common.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32common.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
   *" win32dlopen.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS win32dlopen.$ac_objext"
  ;;

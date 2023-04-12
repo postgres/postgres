@@ -108,9 +108,11 @@ sub mkvcbuild
 	  pg_strong_random.c pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c
 	  pqsignal.c mkdtemp.c qsort.c qsort_arg.c bsearch_arg.c quotes.c system.c
 	  strerror.c tar.c
+	  win32common.c
 	  win32dlopen.c
 	  win32env.c win32error.c
 	  win32fdatasync.c
+	  win32fseek.c
 	  win32getrusage.c
 	  win32gettimeofday.c
 	  win32link.c

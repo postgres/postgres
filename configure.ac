@@ -1894,6 +1894,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(kill)
   AC_LIBOBJ(open)
   AC_LIBOBJ(system)
+  AC_LIBOBJ(win32common)
   AC_LIBOBJ(win32dlopen)
   AC_LIBOBJ(win32env)
   AC_LIBOBJ(win32error)
