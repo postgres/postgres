@@ -290,33 +290,17 @@ _pgfstat64(int fileno, struct stat *buf)
 {
 	HANDLE		hFile = (HANDLE) _get_osfhandle(fileno);
 	DWORD		fileType = FILE_TYPE_UNKNOWN;
-	DWORD		lastError;
 	unsigned short st_mode;
 
-	/*
-	 * When stdin, stdout, and stderr aren't associated with a stream the
-	 * special value -2 is returned:
-	 * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/get-osfhandle
-	 */
-	if (hFile == INVALID_HANDLE_VALUE || hFile == (HANDLE) -2 || buf == NULL)
+	if (buf == NULL)
 	{
 		errno = EINVAL;
 		return -1;
 	}
 
-	fileType = GetFileType(hFile);
-	lastError = GetLastError();
-
-	/*
-	 * Invoke GetLastError in order to distinguish between a "valid" return of
-	 * FILE_TYPE_UNKNOWN and its return due to a calling error.  In case of
-	 * success, GetLastError returns NO_ERROR.
-	 */
-	if (fileType == FILE_TYPE_UNKNOWN && lastError != NO_ERROR)
-	{
-		_dosmaperr(lastError);
+	fileType = pgwin32_get_file_type(hFile);
+	if (errno != 0)
 		return -1;
-	}
 
 	switch (fileType)
 	{
