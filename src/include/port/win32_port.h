@@ -201,15 +201,21 @@ struct itimerval
 
 int			setitimer(int which, const struct itimerval *value, struct itimerval *ovalue);
 
+/* Convenience wrapper for GetFileType() */
+extern DWORD pgwin32_get_file_type(HANDLE hFile);
+
 /*
  * WIN32 does not provide 64-bit off_t, but does provide the functions operating
- * with 64-bit offsets.
+ * with 64-bit offsets.  Also, fseek() might not give an error for unseekable
+ * streams, so harden that function with our version.
  */
 #define pgoff_t __int64
 
 #ifdef _MSC_VER
-#define fseeko(stream, offset, origin) _fseeki64(stream, offset, origin)
-#define ftello(stream) _ftelli64(stream)
+extern int	_pgfseeko64(FILE *stream, pgoff_t offset, int origin);
+extern pgoff_t _pgftello64(FILE *stream);
+#define fseeko(stream, offset, origin) _pgfseeko64(stream, offset, origin)
+#define ftello(stream) _pgftello64(stream)
 #else
 #ifndef fseeko
 #define fseeko(stream, offset, origin) fseeko64(stream, offset, origin)
