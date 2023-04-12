@@ -257,7 +257,7 @@ typedef struct IndexAmRoutine
    Access methods that do not point to individual tuples, but to block ranges
    (like <acronym>BRIN</acronym>), may allow the <acronym>HOT</acronym> optimization
    to continue. This does not apply to attributes referenced in index
-   predicates, an update of such attribute always disables <acronym>HOT</acronym>.
+   predicates, an update of such an attribute always disables <acronym>HOT</acronym>.
   </para>
 
  </sect1>

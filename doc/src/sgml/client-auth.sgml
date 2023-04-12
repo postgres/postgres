@@ -104,10 +104,10 @@
    Each record can be an include directive or an authentication record.
    Include directives specify files that can be included, that contain
    additional records. The records will be inserted in place of the
-   include records. These records only contain two fields:
+   include directives. Include directives only contain two fields:
    <literal>include</literal>, <literal>include_if_exists</literal> or
    <literal>include_dir</literal> directive and the file or directory to be
-   included. The file or directory can be a relative of absolute path, and can
+   included. The file or directory can be a relative or absolute path, and can
    be double-quoted.  For the <literal>include_dir</literal> form, all files
    not starting with a <literal>.</literal> and ending with
    <literal>.conf</literal> will be included. Multiple files within an include
@@ -810,7 +810,7 @@ host    all             all             ::1/128                 trust
 host    all             all             localhost               trust
 
 # The same using a regular expression for DATABASE, that allows connection
-# to the database db1, db2 and any databases with a name beginning by "db"
+# to the database db1, db2 and any databases with a name beginning with "db"
 # and finishing with a number using two to four digits (like "db1234" or
 # "db12").
 #

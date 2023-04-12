@@ -295,7 +295,7 @@ PostgreSQL documentation
            <row>
             <entry>FORK</entry>
             <entry>
-             The name of the fork the full page image came from, as of
+             The name of the fork the full page image came from, such as
              <literal>_main</literal>, <literal>_fsm</literal>,
              <literal>_vm</literal>, or <literal>_init</literal>.
             </entry>

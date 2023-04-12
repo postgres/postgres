@@ -129,7 +129,7 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { DA
      <para>
       Recreate all indexes within the current database, except system
       catalogs.
-      Indexes on shared system catalogs are not processed.
+      Indexes on system catalogs are not processed.
       This form of <command>REINDEX</command> cannot be executed inside a
       transaction block.
      </para>

@@ -205,7 +205,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
           There can be a case where a subscription combines multiple
           publications. If a partitioned table is published by any
           subscribed publications which set
-          <literal>publish_via_partition_root</literal> = true, changes on this
+          <literal>publish_via_partition_root = true</literal>, changes on this
           partitioned table (or on its partitions) will be published using
           the identity and schema of this partitioned table rather than
           that of the individual partitions.

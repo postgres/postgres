@@ -550,7 +550,7 @@ $ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
     <varlistentry>
      <term><varname>OPENSSL</varname></term>
      <listitem><para>
-      Path to a <application>openssl</application> command. The default is
+      Path to an <application>openssl</application> command. The default is
       <literal>openssl</literal>, which will search for a command by that
       name in the configured <envar>PATH</envar>.
      </para></listitem>

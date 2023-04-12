@@ -2903,17 +2903,16 @@ lo_import 152801
 
           <para>
            <literal>full</literal>: the expanded header is not truncated,
-           and will be as wide as the widest output
-           line.
+           and will be as wide as the widest output line.
           </para>
 
           <para>
-           <literal>column</literal>: truncate the header line at the
+           <literal>column</literal>: truncate the header line to the
            width of the first column.
           </para>
 
           <para>
-           <literal>page</literal>: truncate the header line at the terminal
+           <literal>page</literal>: truncate the header line to the terminal
            width.
           </para>
 

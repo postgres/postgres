@@ -214,7 +214,7 @@
        <structfield>buffers_used</structfield> <type>int4</type>
       </para>
       <para>
-       Number of unused shared buffers
+       Number of used shared buffers
       </para></entry>
      </row>
 
