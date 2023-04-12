@@ -596,8 +596,8 @@ check_for_invalidation('wal_level_', $logstart, 'due to wal_level');
 check_slots_conflicting_status(1);
 
 $handle = make_slot_active($node_standby, 'wal_level_', 0, \$stdout, \$stderr);
-# We are not able to read from the slot as it requires wal_level at least logical on the primary server
-check_pg_recvlogical_stderr($handle, "logical decoding on a standby requires wal_level to be at least logical on the primary");
+# We are not able to read from the slot as it requires wal_level >= logical on the primary server
+check_pg_recvlogical_stderr($handle, "logical decoding on standby requires wal_level >= logical on the primary");
 
 # Restore primary wal_level
 $node_primary->append_conf('postgresql.conf',q[

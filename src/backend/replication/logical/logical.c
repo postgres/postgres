@@ -137,7 +137,7 @@ CheckLogicalDecodingRequirements(void)
 		if (GetActiveWalLevelOnStandby() < WAL_LEVEL_LOGICAL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("logical decoding on a standby requires wal_level to be at least logical on the primary")));
+					 errmsg("logical decoding on standby requires wal_level >= logical on the primary")));
 	}
 }
 

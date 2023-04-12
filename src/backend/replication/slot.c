@@ -1274,7 +1274,7 @@ ReportSlotInvalidation(ReplicationSlotInvalidationCause cause,
 			break;
 
 		case RS_INVAL_WAL_LEVEL:
-			appendStringInfo(&err_detail, _("Logical decoding on standby requires wal_level to be at least logical on the primary server"));
+			appendStringInfo(&err_detail, _("Logical decoding on standby requires wal_level >= logical on the primary server."));
 			break;
 		case RS_INVAL_NONE:
 			pg_unreachable();
