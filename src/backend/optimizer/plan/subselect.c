@@ -2121,7 +2121,7 @@ SS_identify_outer_params(PlannerInfo *root)
  * This is separate from SS_attach_initplans because we might conditionally
  * create more initPlans during create_plan(), depending on which Path we
  * select.  However, Paths that would generate such initPlans are expected
- * to have included their cost already.
+ * to have included their cost and parallel-safety effects already.
  */
 void
 SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
@@ -2177,8 +2177,10 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
  * (In principle the initPlans could go in any node at or above where they're
  * referenced; but there seems no reason to put them any lower than the
  * topmost node, so we don't bother to track exactly where they came from.)
- * We do not touch the plan node's cost; the initplans should have been
- * accounted for in path costing.
+ *
+ * We do not touch the plan node's cost or parallel_safe flag.  The initplans
+ * must have been accounted for in SS_charge_for_initplans, or by any later
+ * code that adds initplans via SS_make_initplan_from_plan.
  */
 void
 SS_attach_initplans(PlannerInfo *root, Plan *plan)
