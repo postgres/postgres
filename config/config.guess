@@ -1,10 +1,10 @@
 #! /bin/sh
 # Attempt to guess a canonical system name.
-#   Copyright 1992-2022 Free Software Foundation, Inc.
+#   Copyright 1992-2023 Free Software Foundation, Inc.
 
 # shellcheck disable=SC2006,SC2268 # see below for rationale
 
-timestamp='2022-01-09'
+timestamp='2023-01-01'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ version="\
 GNU config.guess ($timestamp)
 
 Originally written by Per Bothner.
-Copyright 1992-2022 Free Software Foundation, Inc.
+Copyright 1992-2023 Free Software Foundation, Inc.
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -966,6 +966,12 @@ EOF
 	GNU_REL=`echo "$UNAME_RELEASE" | sed -e 's/[-(].*//'`
 	GUESS=$UNAME_MACHINE-unknown-$GNU_SYS$GNU_REL-$LIBC
 	;;
+    x86_64:[Mm]anagarm:*:*|i?86:[Mm]anagarm:*:*)
+	GUESS="$UNAME_MACHINE-pc-managarm-mlibc"
+	;;
+    *:[Mm]anagarm:*:*)
+	GUESS="$UNAME_MACHINE-unknown-managarm-mlibc"
+	;;
     *:Minix:*:*)
 	GUESS=$UNAME_MACHINE-unknown-minix
 	;;
@@ -1036,7 +1042,7 @@ EOF
     k1om:Linux:*:*)
 	GUESS=$UNAME_MACHINE-unknown-linux-$LIBC
 	;;
-    loongarch32:Linux:*:* | loongarch64:Linux:*:* | loongarchx32:Linux:*:*)
+    loongarch32:Linux:*:* | loongarch64:Linux:*:*)
 	GUESS=$UNAME_MACHINE-unknown-linux-$LIBC
 	;;
     m32r*:Linux:*:*)
@@ -1151,16 +1157,27 @@ EOF
 	;;
     x86_64:Linux:*:*)
 	set_cc_for_build
+	CPU=$UNAME_MACHINE
 	LIBCABI=$LIBC
 	if test "$CC_FOR_BUILD" != no_compiler_found; then
-	    if (echo '#ifdef __ILP32__'; echo IS_X32; echo '#endif') | \
-		(CCOPTS="" $CC_FOR_BUILD -E - 2>/dev/null) | \
-		grep IS_X32 >/dev/null
-	    then
-		LIBCABI=${LIBC}x32
-	    fi
+	    ABI=64
+	    sed 's/^	    //' << EOF > "$dummy.c"
+	    #ifdef __i386__
+	    ABI=x86
+	    #else
+	    #ifdef __ILP32__
+	    ABI=x32
+	    #endif
+	    #endif
+EOF
+	    cc_set_abi=`$CC_FOR_BUILD -E "$dummy.c" 2>/dev/null | grep '^ABI' | sed 's, ,,g'`
+	    eval "$cc_set_abi"
+	    case $ABI in
+		x86) CPU=i686 ;;
+		x32) LIBCABI=${LIBC}x32 ;;
+	    esac
 	fi
-	GUESS=$UNAME_MACHINE-pc-linux-$LIBCABI
+	GUESS=$CPU-pc-linux-$LIBCABI
 	;;
     xtensa*:Linux:*:*)
 	GUESS=$UNAME_MACHINE-unknown-linux-$LIBC
@@ -1367,8 +1384,11 @@ EOF
     BePC:Haiku:*:*)	# Haiku running on Intel PC compatible.
 	GUESS=i586-pc-haiku
 	;;
-    x86_64:Haiku:*:*)
-	GUESS=x86_64-unknown-haiku
+    ppc:Haiku:*:*)	# Haiku running on Apple PowerPC
+	GUESS=powerpc-apple-haiku
+	;;
+    *:Haiku:*:*)	# Haiku modern gcc (not bound by BeOS compat)
+	GUESS=$UNAME_MACHINE-unknown-haiku
 	;;
     SX-4:SUPER-UX:*:*)
 	GUESS=sx4-nec-superux$UNAME_RELEASE
