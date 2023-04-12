@@ -315,6 +315,11 @@ shell_run_command(bbsink_shell *sink, const char *filename)
 
 	/* Run it. */
 	sink->pipe = OpenPipeStream(sink->current_command, PG_BINARY_W);
+	if (sink->pipe == NULL)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not execute command \"%s\": %m",
+						sink->current_command)));
 }
 
 /*
