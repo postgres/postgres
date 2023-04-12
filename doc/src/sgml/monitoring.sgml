@@ -1273,6 +1273,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for base backup to read from a file.</entry>
      </row>
      <row>
+      <entry><literal>BaseBackupSync</literal></entry>
+      <entry>Waiting for data written by a base backup to reach durable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>BaseBackupWrite</literal></entry>
+      <entry>Waiting for base backup to write to a file.</entry>
+     </row>
+     <row>
       <entry><literal>BufFileRead</literal></entry>
       <entry>Waiting for a read from a buffered file.</entry>
      </row>
