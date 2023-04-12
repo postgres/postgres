@@ -2115,7 +2115,6 @@ ExecParallelPrepHashTableForUnmatched(HashJoinState *hjstate)
 
 	/* Now we are alone with this batch. */
 	Assert(BarrierPhase(&batch->batch_barrier) == PHJ_BATCH_SCAN);
-	Assert(BarrierParticipants(&batch->batch_barrier) == 1);
 
 	/*
 	 * Has another process decided to give up early and command all processes
