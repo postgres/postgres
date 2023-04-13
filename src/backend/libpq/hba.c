@@ -95,11 +95,6 @@ static MemoryContext parsed_hba_context = NULL;
 /*
  * pre-parsed content of ident mapping file: list of IdentLine structs.
  * parsed_ident_context is the memory context where it lives.
- *
- * NOTE: the IdentLine structs can contain AuthTokens with pre-compiled
- * regular expressions that live outside the memory context. Before
- * destroying or resetting the memory context, they need to be explicitly
- * free'd.
  */
 static List *parsed_ident_lines = NIL;
 static MemoryContext parsed_ident_context = NULL;
@@ -314,30 +309,6 @@ free_auth_token(AuthToken *token)
 {
 	if (token_has_regexp(token))
 		pg_regfree(token->regex);
-}
-
-/*
- * Free a HbaLine.  Its list of AuthTokens for databases and roles may include
- * regular expressions that need to be cleaned up explicitly.
- */
-static void
-free_hba_line(HbaLine *line)
-{
-	ListCell   *cell;
-
-	foreach(cell, line->roles)
-	{
-		AuthToken  *tok = lfirst(cell);
-
-		free_auth_token(tok);
-	}
-
-	foreach(cell, line->databases)
-	{
-		AuthToken  *tok = lfirst(cell);
-
-		free_auth_token(tok);
-	}
 }
 
 /*
@@ -2722,30 +2693,14 @@ load_hba(void)
 	if (!ok)
 	{
 		/*
-		 * File contained one or more errors, so bail out, first being careful
-		 * to clean up whatever we allocated.  Most stuff will go away via
-		 * MemoryContextDelete, but we have to clean up regexes explicitly.
+		 * File contained one or more errors, so bail out.  MemoryContextDelete
+		 * is enough to clean up everything, including regexes.
 		 */
-		foreach(line, new_parsed_lines)
-		{
-			HbaLine    *newline = (HbaLine *) lfirst(line);
-
-			free_hba_line(newline);
-		}
 		MemoryContextDelete(hbacxt);
 		return false;
 	}
 
 	/* Loaded new file successfully, replace the one we use */
-	if (parsed_hba_lines != NIL)
-	{
-		foreach(line, parsed_hba_lines)
-		{
-			HbaLine    *newline = (HbaLine *) lfirst(line);
-
-			free_hba_line(newline);
-		}
-	}
 	if (parsed_hba_context != NULL)
 		MemoryContextDelete(parsed_hba_context);
 	parsed_hba_context = hbacxt;
@@ -3044,8 +2999,7 @@ load_ident(void)
 {
 	FILE	   *file;
 	List	   *ident_lines = NIL;
-	ListCell   *line_cell,
-			   *parsed_line_cell;
+	ListCell   *line_cell;
 	List	   *new_parsed_lines = NIL;
 	bool		ok = true;
 	MemoryContext oldcxt;
@@ -3102,30 +3056,14 @@ load_ident(void)
 	if (!ok)
 	{
 		/*
-		 * File contained one or more errors, so bail out, first being careful
-		 * to clean up whatever we allocated.  Most stuff will go away via
-		 * MemoryContextDelete, but we have to clean up regexes explicitly.
+		 * File contained one or more errors, so bail out.  MemoryContextDelete
+		 * is enough to clean up everything, including regexes.
 		 */
-		foreach(parsed_line_cell, new_parsed_lines)
-		{
-			newline = (IdentLine *) lfirst(parsed_line_cell);
-			free_auth_token(newline->system_user);
-			free_auth_token(newline->pg_user);
-		}
 		MemoryContextDelete(ident_context);
 		return false;
 	}
 
 	/* Loaded new file successfully, replace the one we use */
-	if (parsed_ident_lines != NIL)
-	{
-		foreach(parsed_line_cell, parsed_ident_lines)
-		{
-			newline = (IdentLine *) lfirst(parsed_line_cell);
-			free_auth_token(newline->system_user);
-			free_auth_token(newline->pg_user);
-		}
-	}
 	if (parsed_ident_context != NULL)
 		MemoryContextDelete(parsed_ident_context);
 
