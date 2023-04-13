@@ -3581,6 +3581,15 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        True if GSSAPI encryption is in use on this connection
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>credentials_delegated</structfield> <type>boolean</type>
+      </para>
+      <para>
+       True if GSSAPI credentials were delegated on this connection.
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

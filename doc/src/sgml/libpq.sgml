@@ -2054,6 +2054,18 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-gssdeleg" xreflabel="gssdeleg">
+      <term><literal>gssdeleg</literal></term>
+      <listitem>
+       <para>
+        Forward (delegate) GSS credentials to the server.  The default is
+        <literal>disable</literal> which means credentials will not be forwarded
+        to the server.  Set this to <literal>enable</literal> to have
+        credentials forwarded when possible.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-service" xreflabel="service">
       <term><literal>service</literal></term>
       <listitem>
@@ -2712,6 +2724,25 @@ int PQconnectionUsedPassword(const PGconn *conn);
       <para>
        This function can be applied after either a failed or successful
        connection attempt to detect whether the server demanded a password.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQconnectionUsedGSSAPI">
+     <term><function>PQconnectionUsedGSSAPI</function><indexterm><primary>PQconnectionUsedGSSAPI</primary></indexterm></term>
+     <listitem>
+      <para>
+       Returns true (1) if the connection authentication method
+       used GSSAPI. Returns false (0) if not.
+
+<synopsis>
+int PQconnectionUsedGSSAPI(const PGconn *conn);
+</synopsis>
+      </para>
+
+      <para>
+       This function can be applied to detect whether the connection was
+       authenticated with GSSAPI.
       </para>
      </listitem>
     </varlistentry>
@@ -8234,6 +8265,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGGSSLIB</envar> behaves the same as the <xref
       linkend="libpq-connect-gsslib"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGGSSDELEG</envar></primary>
+      </indexterm>
+      <envar>PGGSSDELEG</envar> behaves the same as the <xref
+      linkend="libpq-connect-gssdeleg"/> connection parameter.
      </para>
     </listitem>
 

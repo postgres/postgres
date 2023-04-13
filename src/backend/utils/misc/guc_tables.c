@@ -1728,6 +1728,16 @@ struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"gss_accept_deleg", PGC_SIGHUP, CONN_AUTH_AUTH,
+			gettext_noop("Sets whether GSSAPI delegation should be accepted from the client."),
+			NULL
+		},
+		&pg_gss_accept_deleg,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"escape_string_warning", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Warn about backslash escapes in ordinary string literals."),
 			NULL

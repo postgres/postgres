@@ -574,6 +574,7 @@ static const struct ConnectionOption libpq_conninfo_options[] = {
 	{"requiressl", ForeignServerRelationId},
 	{"sslmode", ForeignServerRelationId},
 	{"gsslib", ForeignServerRelationId},
+	{"gssdeleg", ForeignServerRelationId},
 	{NULL, InvalidOid}
 };
 

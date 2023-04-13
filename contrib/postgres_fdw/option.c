@@ -288,6 +288,12 @@ InitPgFdwOptions(void)
 		{"sslcert", UserMappingRelationId, true},
 		{"sslkey", UserMappingRelationId, true},
 
+		/*
+		 * gssdeleg is also a libpq option but should be allowed in a user
+		 * mapping context too
+		 */
+		{"gssdeleg", UserMappingRelationId, true},
+
 		{NULL, InvalidOid, false}
 	};
 

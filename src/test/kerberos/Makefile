@@ -13,6 +13,9 @@ subdir = src/test/kerberos
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+EXTRA_INSTALL += contrib/postgres_fdw
+EXTRA_INSTALL += contrib/dblink
+
 export with_gssapi with_krb_srvnam
 
 check:

@@ -343,6 +343,10 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"GSS-library", "", 7,	/* sizeof("gssapi") == 7 */
 	offsetof(struct pg_conn, gsslib)},
 
+	{"gssdeleg", "PGGSSDELEG", NULL, NULL,
+		"GSS-delegation", "", 8,	/* sizeof("disable") == 8 */
+	offsetof(struct pg_conn, gssdeleg)},
+
 	{"replication", NULL, NULL, NULL,
 		"Replication", "D", 5,
 	offsetof(struct pg_conn, replication)},
@@ -617,6 +621,7 @@ pqDropServerData(PGconn *conn)
 	conn->auth_req_received = false;
 	conn->client_finished_auth = false;
 	conn->password_needed = false;
+	conn->gssapi_used = false;
 	conn->write_failed = false;
 	free(conn->write_err_msg);
 	conn->write_err_msg = NULL;
@@ -4448,6 +4453,7 @@ freePGconn(PGconn *conn)
 	free(conn->gssencmode);
 	free(conn->krbsrvname);
 	free(conn->gsslib);
+	free(conn->gssdeleg);
 	free(conn->connip);
 	/* Note that conn->Pfdebug is not ours to close or free */
 	free(conn->write_err_msg);
@@ -7307,6 +7313,17 @@ PQconnectionUsedPassword(const PGconn *conn)
 	if (!conn)
 		return false;
 	if (conn->password_needed)
+		return true;
+	else
+		return false;
+}
+
+int
+PQconnectionUsedGSSAPI(const PGconn *conn)
+{
+	if (!conn)
+		return false;
+	if (conn->gssapi_used)
 		return true;
 	else
 		return false;

@@ -169,9 +169,10 @@
     <literal>sslcert</literal> or <literal>sslkey</literal> settings.
    </para>
    <para>
-    Only superusers may connect to foreign servers without password
-    authentication, so always specify the <literal>password</literal> option
-    for user mappings belonging to non-superusers.
+    Non-superusers may connect to foreign servers using password
+    authentication or with GSSAPI delegated credentials, so specify the
+    <literal>password</literal> option for user mappings belonging to
+    non-superusers where password authentication is required.
    </para>
    <para>
     A superuser may override this check on a per-user-mapping basis by setting

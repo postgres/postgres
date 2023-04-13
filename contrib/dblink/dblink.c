@@ -48,6 +48,7 @@
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "libpq-fe.h"
+#include "libpq/libpq-be.h"
 #include "libpq/libpq-be-fe-helpers.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -111,7 +112,8 @@ static HeapTuple get_tuple_of_interest(Relation rel, int *pkattnums, int pknumat
 static Relation get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclMode aclmode);
 static char *generate_relation_name(Relation rel);
 static void dblink_connstr_check(const char *connstr);
-static void dblink_security_check(PGconn *conn, remoteConn *rconn);
+static bool dblink_connstr_has_pw(const char *connstr);
+static void dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr);
 static void dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 							 bool fail, const char *fmt,...) pg_attribute_printf(5, 6);
 static char *get_connect_string(const char *servername);
@@ -213,7 +215,7 @@ dblink_get_conn(char *conname_or_str,
 					 errmsg("could not establish connection"),
 					 errdetail_internal("%s", msg)));
 		}
-		dblink_security_check(conn, rconn);
+		dblink_security_check(conn, rconn, connstr);
 		if (PQclientEncoding(conn) != GetDatabaseEncoding())
 			PQsetClientEncoding(conn, GetDatabaseEncodingName());
 		freeconn = true;
@@ -307,7 +309,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 	}
 
 	/* check password actually used if not superuser */
-	dblink_security_check(conn, rconn);
+	dblink_security_check(conn, rconn, connstr);
 
 	/* attempt to set client encoding to match server encoding, if needed */
 	if (PQclientEncoding(conn) != GetDatabaseEncoding())
@@ -2584,64 +2586,99 @@ deleteConnection(const char *name)
 				 errmsg("undefined connection name")));
 }
 
+/*
+ * We need to make sure that the connection made used credentials
+ * which were provided by the user, so check what credentials were
+ * used to connect and then make sure that they came from the user.
+ */
 static void
-dblink_security_check(PGconn *conn, remoteConn *rconn)
+dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr)
 {
-	if (!superuser())
-	{
-		if (!PQconnectionUsedPassword(conn))
-		{
-			libpqsrv_disconnect(conn);
-			if (rconn)
-				pfree(rconn);
+	/* Superuser bypasses security check */
+	if (superuser())
+		return;
 
-			ereport(ERROR,
-					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-					 errmsg("password is required"),
-					 errdetail("Non-superuser cannot connect if the server does not request a password."),
-					 errhint("Target server's authentication method must be changed.")));
-		}
-	}
+	/* If password was used to connect, make sure it was one provided */
+	if (PQconnectionUsedPassword(conn) && dblink_connstr_has_pw(connstr))
+		return;
+
+#ifdef ENABLE_GSS
+	/* If GSSAPI creds used to connect, make sure it was one delegated */
+	if (PQconnectionUsedGSSAPI(conn) && be_gssapi_get_deleg(MyProcPort))
+		return;
+#endif
+
+	/* Otherwise, fail out */
+	libpqsrv_disconnect(conn);
+	if (rconn)
+		pfree(rconn);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+			 errmsg("password or GSSAPI delegated credentials required"),
+			 errdetail("Non-superusers may only connect using credentials they provide, eg: password in connection string or delegated GSSAPI credentials"),
+			 errhint("Ensure provided credentials match target server's authentication method.")));
 }
 
 /*
- * For non-superusers, insist that the connstr specify a password.  This
- * prevents a password from being picked up from .pgpass, a service file,
- * the environment, etc.  We don't want the postgres user's passwords
- * to be accessible to non-superusers.
+ * Function to check if the connection string includes an explicit
+ * password, needed to ensure that non-superuser password-based auth
+ * is using a provided password and not one picked up from the
+ * environment.
+ */
+static bool
+dblink_connstr_has_pw(const char *connstr)
+{
+	PQconninfoOption *options;
+	PQconninfoOption *option;
+	bool		connstr_gives_password = false;
+
+	options = PQconninfoParse(connstr, NULL);
+	if (options)
+	{
+		for (option = options; option->keyword != NULL; option++)
+		{
+			if (strcmp(option->keyword, "password") == 0)
+			{
+				if (option->val != NULL && option->val[0] != '\0')
+				{
+					connstr_gives_password = true;
+					break;
+				}
+			}
+		}
+		PQconninfoFree(options);
+	}
+
+	return connstr_gives_password;
+}
+
+/*
+ * For non-superusers, insist that the connstr specify a password, except
+ * if GSSAPI credentials have been delegated (and we check that they are used
+ * for the connection in dblink_security_check later).  This prevents a
+ * password or GSSAPI credentials from being picked up from .pgpass, a
+ * service file, the environment, etc.  We don't want the postgres user's
+ * passwords or Kerberos credentials to be accessible to non-superusers.
  */
 static void
 dblink_connstr_check(const char *connstr)
 {
-	if (!superuser())
-	{
-		PQconninfoOption *options;
-		PQconninfoOption *option;
-		bool		connstr_gives_password = false;
+	if (superuser())
+		return;
 
-		options = PQconninfoParse(connstr, NULL);
-		if (options)
-		{
-			for (option = options; option->keyword != NULL; option++)
-			{
-				if (strcmp(option->keyword, "password") == 0)
-				{
-					if (option->val != NULL && option->val[0] != '\0')
-					{
-						connstr_gives_password = true;
-						break;
-					}
-				}
-			}
-			PQconninfoFree(options);
-		}
+	if (dblink_connstr_has_pw(connstr))
+		return;
 
-		if (!connstr_gives_password)
-			ereport(ERROR,
-					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-					 errmsg("password is required"),
-					 errdetail("Non-superusers must provide a password in the connection string.")));
-	}
+#ifdef ENABLE_GSS
+	if (be_gssapi_get_deleg(MyProcPort))
+		return;
+#endif
+
+	ereport(ERROR,
+			(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+			 errmsg("password or GSSAPI delegated credentials required"),
+			 errdetail("Non-superusers must provide a password in the connection string or send delegated GSSAPI credentials.")));
 }
 
 /*

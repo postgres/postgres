@@ -303,7 +303,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_activity(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_ACTIVITY_COLS	30
+#define PG_STAT_GET_ACTIVITY_COLS	31
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;
 	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
@@ -395,7 +395,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			pfree(clipped_activity);
 
 			/* leader_pid */
-			nulls[28] = true;
+			nulls[29] = true;
 
 			proc = BackendPidGetProc(beentry->st_procpid);
 
@@ -432,8 +432,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				 */
 				if (leader && leader->pid != beentry->st_procpid)
 				{
-					values[28] = Int32GetDatum(leader->pid);
-					nulls[28] = false;
+					values[29] = Int32GetDatum(leader->pid);
+					nulls[29] = false;
 				}
 				else if (beentry->st_backendType == B_BG_WORKER)
 				{
@@ -441,8 +441,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 					if (leader_pid != InvalidPid)
 					{
-						values[28] = Int32GetDatum(leader_pid);
-						nulls[28] = false;
+						values[29] = Int32GetDatum(leader_pid);
+						nulls[29] = false;
 					}
 				}
 			}
@@ -600,6 +600,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				values[25] = BoolGetDatum(beentry->st_gssstatus->gss_auth); /* gss_auth */
 				values[26] = CStringGetTextDatum(beentry->st_gssstatus->gss_princ);
 				values[27] = BoolGetDatum(beentry->st_gssstatus->gss_enc);	/* GSS Encryption in use */
+				values[28] = BoolGetDatum(beentry->st_gssstatus->gss_deleg);	/* GSS credentials
+																				 * delegated */
 			}
 			else
 			{
@@ -607,11 +609,13 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				nulls[26] = true;	/* No GSS principal */
 				values[27] = BoolGetDatum(false);	/* GSS Encryption not in
 													 * use */
+				values[28] = BoolGetDatum(false);	/* GSS credentials not
+													 * delegated */
 			}
 			if (beentry->st_query_id == 0)
-				nulls[29] = true;
+				nulls[30] = true;
 			else
-				values[29] = UInt64GetDatum(beentry->st_query_id);
+				values[30] = UInt64GetDatum(beentry->st_query_id);
 		}
 		else
 		{
@@ -640,6 +644,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[27] = true;
 			nulls[28] = true;
 			nulls[29] = true;
+			nulls[30] = true;
 		}
 
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
