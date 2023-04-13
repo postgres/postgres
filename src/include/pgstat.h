@@ -515,13 +515,13 @@ extern PgStat_CheckpointerStats *pgstat_fetch_stat_checkpointer(void);
  * Functions in pgstat_io.c
  */
 
-extern bool pgstat_bktype_io_stats_valid(PgStat_BktypeIO *context_ops,
+extern bool pgstat_bktype_io_stats_valid(PgStat_BktypeIO *backend_io,
 										 BackendType bktype);
 extern void pgstat_count_io_op(IOObject io_object, IOContext io_context, IOOp io_op);
 extern void pgstat_count_io_op_n(IOObject io_object, IOContext io_context, IOOp io_op, uint32 cnt);
 extern instr_time pgstat_prepare_io_time(void);
 extern void pgstat_count_io_op_time(IOObject io_object, IOContext io_context,
-									IOOp io_op, instr_time time, uint32 cnt);
+									IOOp io_op, instr_time start_time, uint32 cnt);
 
 extern PgStat_IO *pgstat_fetch_stat_io(void);
 extern const char *pgstat_get_io_context_name(IOContext io_context);

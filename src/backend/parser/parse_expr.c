@@ -83,7 +83,7 @@ static Node *transformJsonArrayQueryConstructor(ParseState *pstate,
 												JsonArrayQueryConstructor *ctor);
 static Node *transformJsonObjectAgg(ParseState *pstate, JsonObjectAgg *agg);
 static Node *transformJsonArrayAgg(ParseState *pstate, JsonArrayAgg *agg);
-static Node *transformJsonIsPredicate(ParseState *pstate, JsonIsPredicate *p);
+static Node *transformJsonIsPredicate(ParseState *pstate, JsonIsPredicate *pred);
 static Node *make_row_comparison_op(ParseState *pstate, List *opname,
 									List *largs, List *rargs, int location);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,

@@ -149,7 +149,7 @@ static size_t uchar_length(UConverter *converter,
 						   const char *str, int32_t len);
 static int32_t uchar_convert(UConverter *converter,
 							 UChar *dest, int32_t destlen,
-							 const char *str, int32_t srclen);
+							 const char *src, int32_t srclen);
 static void icu_set_collation_attributes(UCollator *collator, const char *loc,
 										 UErrorCode *status);
 #endif

@@ -282,7 +282,7 @@ extern void pa_switch_to_partial_serialize(ParallelApplyWorkerInfo *winfo,
 										   bool stream_locked);
 
 extern void pa_set_xact_state(ParallelApplyWorkerShared *wshared,
-							  ParallelTransState in_xact);
+							  ParallelTransState xact_state);
 extern void pa_set_stream_apply_worker(ParallelApplyWorkerInfo *winfo);
 
 extern void pa_start_subtrans(TransactionId current_xid,

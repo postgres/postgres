@@ -109,7 +109,7 @@ pgstat_prepare_io_time(void)
  * Like pgstat_count_io_op_n() except it also accumulates time.
  */
 void
-pgstat_count_io_op_time(IOObject io_obj, IOContext io_context, IOOp io_op,
+pgstat_count_io_op_time(IOObject io_object, IOContext io_context, IOOp io_op,
 						instr_time start_time, uint32 cnt)
 {
 	if (track_io_timing)
@@ -122,21 +122,21 @@ pgstat_count_io_op_time(IOObject io_obj, IOContext io_context, IOOp io_op,
 		if (io_op == IOOP_WRITE)
 		{
 			pgstat_count_buffer_write_time(INSTR_TIME_GET_MICROSEC(io_time));
-			if (io_obj == IOOBJECT_RELATION)
+			if (io_object == IOOBJECT_RELATION)
 				INSTR_TIME_ADD(pgBufferUsage.blk_write_time, io_time);
 		}
 		else if (io_op == IOOP_READ)
 		{
 			pgstat_count_buffer_read_time(INSTR_TIME_GET_MICROSEC(io_time));
-			if (io_obj == IOOBJECT_RELATION)
+			if (io_object == IOOBJECT_RELATION)
 				INSTR_TIME_ADD(pgBufferUsage.blk_read_time, io_time);
 		}
 
-		INSTR_TIME_ADD(PendingIOStats.pending_times[io_obj][io_context][io_op],
+		INSTR_TIME_ADD(PendingIOStats.pending_times[io_object][io_context][io_op],
 					   io_time);
 	}
 
-	pgstat_count_io_op_n(io_obj, io_context, io_op, cnt);
+	pgstat_count_io_op_n(io_object, io_context, io_op, cnt);
 }
 
 PgStat_IO *

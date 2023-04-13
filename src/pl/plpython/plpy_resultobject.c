@@ -20,7 +20,7 @@ static Py_ssize_t PLy_result_length(PyObject *arg);
 static PyObject *PLy_result_item(PyObject *arg, Py_ssize_t idx);
 static PyObject *PLy_result_str(PyObject *arg);
 static PyObject *PLy_result_subscript(PyObject *arg, PyObject *item);
-static int	PLy_result_ass_subscript(PyObject *self, PyObject *item, PyObject *value);
+static int	PLy_result_ass_subscript(PyObject *arg, PyObject *item, PyObject *value);
 
 static char PLy_result_doc[] = "Results of a PostgreSQL query";
 

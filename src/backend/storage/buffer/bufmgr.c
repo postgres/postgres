@@ -5176,9 +5176,9 @@ TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag_bits)
  *	possible the error condition wasn't related to the I/O.
  */
 void
-AbortBufferIO(Buffer buf)
+AbortBufferIO(Buffer buffer)
 {
-	BufferDesc *buf_hdr = GetBufferDescriptor(buf - 1);
+	BufferDesc *buf_hdr = GetBufferDescriptor(buffer - 1);
 	uint32		buf_state;
 
 	buf_state = LockBufHdr(buf_hdr);
