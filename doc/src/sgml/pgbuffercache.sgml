@@ -273,7 +273,7 @@
   </para>
  </sect2>
 
- <sect2>
+ <sect2 id="pgbuffercache-usage-counts">
   <title>The <function>pg_buffercache_usage_counts()</function> Function</title>
 
   <para>
