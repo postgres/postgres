@@ -49,4 +49,4 @@ and net/openldap24-server.)
 macOS: We do not recommend trying to use the Apple-provided version of
 OpenLDAP; it's very old, plus Apple seem to have changed the launching
 conventions for slapd.  The paths in the test file are set on the
-assumption that you installed OpenLDAP using Homebrew.
+assumption that you installed OpenLDAP using Homebrew or MacPorts.
