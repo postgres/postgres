@@ -624,6 +624,16 @@ if not gssapiopt.disabled()
   endif
 
   if not have_gssapi
+  elif cc.check_header('gssapi/gssapi_ext.h', dependencies: gssapi, required: false,
+      args: test_c_args, include_directories: postgres_inc)
+    cdata.set('HAVE_GSSAPI_GSSAPI_EXT_H', 1)
+  elif cc.check_header('gssapi_ext.h', args: test_c_args, dependencies: gssapi, required: gssapiopt)
+    cdata.set('HAVE_GSSAPI_EXT_H', 1)
+  else
+    have_gssapi = false
+  endif
+
+  if not have_gssapi
   elif cc.has_function('gss_init_sec_context', dependencies: gssapi,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('ENABLE_GSS', 1)

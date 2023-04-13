@@ -1426,7 +1426,7 @@ omicron         bryanh                  guest1
     The keytab file is generated using the Kerberos software; see the
     Kerberos documentation for details. The following example shows
     doing this using the <application>kadmin</application> tool of
-    MIT-compatible Kerberos 5 implementations:
+    MIT Kerberos:
 <screen>
 <prompt>kadmin% </prompt><userinput>addprinc -randkey postgres/server.my.domain.org</userinput>
 <prompt>kadmin% </prompt><userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</userinput>

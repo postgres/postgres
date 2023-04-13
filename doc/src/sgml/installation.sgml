@@ -252,9 +252,9 @@ documentation.  See standalone-profile.xsl for details.
 
     <listitem>
      <para>
-      You need <application>Kerberos</application>, <productname>OpenLDAP</productname>,
-      and/or <application>PAM</application>, if you want to support authentication
-      using those services.
+      You need <application>MIT Kerberos</application> (for GSSAPI),
+      <productname>OpenLDAP</productname>, and/or <application>PAM</application>,
+      if you want to support authentication using those services.
      </para>
     </listitem>
 
@@ -1048,9 +1048,9 @@ build-postgresql:
        <term><option>--with-gssapi</option></term>
        <listitem>
         <para>
-         Build with support for GSSAPI authentication. On many systems, the
-         GSSAPI system (usually a part of the Kerberos installation) is not
-         installed in a location
+         Build with support for GSSAPI authentication. MIT Kerberos is required
+         to be installed for GSSAPI.  On many systems, the GSSAPI system (a part
+         of the MIT Kerberos installation) is not installed in a location
          that is searched by default (e.g., <filename>/usr/include</filename>,
          <filename>/usr/lib</filename>), so you must use the options
          <option>--with-includes</option> and <option>--with-libraries</option> in
@@ -2497,10 +2497,11 @@ ninja install
       <term><option>-Dgssapi={ auto | enabled | disabled }</option></term>
       <listitem>
        <para>
-        Build with support for GSSAPI authentication. On many systems, the
-        GSSAPI system (usually a part of the Kerberos installation) is not
-        installed in a location that is searched by default (e.g.,
-        <filename>/usr/include</filename>, <filename>/usr/lib</filename>).  In
+        Build with support for GSSAPI authentication. MIT Kerberos is required
+        to be installed for GSSAPI.  On many systems, the GSSAPI system (a part
+        of the MIT Kerberos installation) is not installed in a location
+        that is searched by default (e.g., <filename>/usr/include</filename>,
+        <filename>/usr/lib</filename>).  In
         those cases, PostgreSQL will query <command>pkg-config</command> to
         detect the required compiler and linker options.  Defaults to auto.
         <filename>meson configure</filename> will check for the required

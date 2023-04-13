@@ -14106,6 +14106,33 @@ fi
 
 done
 
+  for ac_header in gssapi/gssapi_ext.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "gssapi/gssapi_ext.h" "ac_cv_header_gssapi_gssapi_ext_h" "$ac_includes_default"
+if test "x$ac_cv_header_gssapi_gssapi_ext_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GSSAPI_GSSAPI_EXT_H 1
+_ACEOF
+
+else
+  for ac_header in gssapi_ext.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "gssapi_ext.h" "ac_cv_header_gssapi_ext_h" "$ac_includes_default"
+if test "x$ac_cv_header_gssapi_ext_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GSSAPI_EXT_H 1
+_ACEOF
+
+else
+  as_fn_error $? "gssapi_ext.h header file is required for GSSAPI" "$LINENO" 5
+fi
+
+done
+
+fi
+
+done
+
 fi
 
 if test -z "$OPENSSL"; then
