@@ -169,3 +169,14 @@ acronym		{ font-style: inherit; }
     width: 75%;
   }
 }
+
+/* links to ids of headers and definition terms */
+
+a.id_link {
+	color: inherit;
+	visibility: hidden;
+}
+
+*:hover > a.id_link {
+	visibility: visible;
+}
