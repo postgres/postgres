@@ -2,19 +2,38 @@
 
 use strict;
 use warnings;
+use Fcntl;
+use IO::File;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-# Systems that we know to have direct I/O support, and whose typical local
-# filesystems support it or at least won't fail with an error.  (illumos should
-# probably be in this list, but perl reports it as solaris.  Solaris should not
-# be in the list because we don't support its way of turning on direct I/O, and
-# even if we did, its version of ZFS rejects it, and OpenBSD just doesn't have
-# it.)
-if (!grep { $^O eq $_ } qw(aix darwin dragonfly freebsd linux MSWin32 netbsd))
+# We know that macOS has F_NOCACHE, and we know that Windows has
+# FILE_FLAG_NO_BUFFERING, and we assume that their typical file systems will
+# accept those flags.  For every other system, we'll probe for O_DIRECT
+# support.
+
+if ($^O ne 'darwin' && $^O ne 'MSWin32')
 {
-	plan skip_all => "no direct I/O support";
+	# Perl's Fcntl module knows if this system has O_DIRECT in <fcntl.h>.
+	if (defined &O_DIRECT)
+	{
+		# Can we open a file in O_DIRECT mode in the file system where
+		# tmp_check lives?
+		my $f = IO::File->new(
+			"${PostgreSQL::Test::Utils::tmp_check}/test_o_direct_file",
+			O_RDWR | O_DIRECT | O_CREAT);
+		if (!$f)
+		{
+			plan skip_all =>
+			  "pre-flight test if we can open a file with O_DIRECT failed: $!";
+		}
+		$f->close;
+	}
+	else
+	{
+		plan skip_all => "no O_DIRECT";
+	}
 }
 
 my $node = PostgreSQL::Test::Cluster->new('main');
