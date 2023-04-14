@@ -201,7 +201,8 @@ static PruneStepResult *perform_pruning_combine_step(PartitionPruneContext *cont
 static PartClauseMatchStatus match_boolean_partition_clause(Oid partopfamily,
 															Expr *clause,
 															Expr *partkey,
-															Expr **outconst);
+															Expr **outconst,
+															bool *noteq);
 static void partkey_datum_from_expr(PartitionPruneContext *context,
 									Expr *expr, int stateidx,
 									Datum *value, bool *isnull);
@@ -1802,12 +1803,13 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 	Oid			partopfamily = part_scheme->partopfamily[partkeyidx],
 				partcoll = part_scheme->partcollation[partkeyidx];
 	Expr	   *expr;
+	bool		noteq;
 
 	/*
 	 * Recognize specially shaped clauses that match a Boolean partition key.
 	 */
 	boolmatchstatus = match_boolean_partition_clause(partopfamily, clause,
-													 partkey, &expr);
+													 partkey, &expr, &noteq);
 
 	if (boolmatchstatus == PARTCLAUSE_MATCH_CLAUSE)
 	{
@@ -1817,7 +1819,7 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 		partclause->keyno = partkeyidx;
 		/* Do pruning with the Boolean equality operator. */
 		partclause->opno = BooleanEqualOperator;
-		partclause->op_is_ne = false;
+		partclause->op_is_ne = noteq;
 		partclause->expr = expr;
 		/* We know that expr is of Boolean type. */
 		partclause->cmpfn = part_scheme->partsupfunc[partkeyidx].fn_oid;
@@ -3581,20 +3583,22 @@ perform_pruning_combine_step(PartitionPruneContext *context,
  * match_boolean_partition_clause
  *
  * If we're able to match the clause to the partition key as specially-shaped
- * boolean clause, set *outconst to a Const containing a true or false value
- * and return PARTCLAUSE_MATCH_CLAUSE.  Returns PARTCLAUSE_UNSUPPORTED if the
- * clause is not a boolean clause or if the boolean clause is unsuitable for
- * partition pruning.  Returns PARTCLAUSE_NOMATCH if it's a bool quals but
- * just does not match this partition key.  *outconst is set to NULL in the
- * latter two cases.
+ * boolean clause, set *outconst to a Const containing a true or false value,
+ * set *noteq according to if the clause was in the "not" form, i.e. "is not
+ * true" or "is not false", and return PARTCLAUSE_MATCH_CLAUSE.  Returns
+ * PARTCLAUSE_UNSUPPORTED if the clause is not a boolean clause or if the
+ * boolean clause is unsuitable for partition pruning.  Returns
+ * PARTCLAUSE_NOMATCH if it's a bool quals but just does not match this
+ * partition key.  *outconst is set to NULL in the latter two cases.
  */
 static PartClauseMatchStatus
 match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
-							   Expr **outconst)
+							   Expr **outconst, bool *noteq)
 {
 	Expr	   *leftop;
 
 	*outconst = NULL;
+	*noteq = false;
 
 	if (!IsBooleanOpfamily(partopfamily))
 		return PARTCLAUSE_UNSUPPORTED;
@@ -3613,11 +3617,25 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
 			leftop = ((RelabelType *) leftop)->arg;
 
 		if (equal(leftop, partkey))
-			*outconst = (btest->booltesttype == IS_TRUE ||
-						 btest->booltesttype == IS_NOT_FALSE)
-				? (Expr *) makeBoolConst(true, false)
-				: (Expr *) makeBoolConst(false, false);
-
+		{
+			switch (btest->booltesttype)
+			{
+				case IS_NOT_TRUE:
+					*noteq = true;
+					/* fall through */
+				case IS_TRUE:
+					*outconst = (Expr *) makeBoolConst(true, false);
+					break;
+				case IS_NOT_FALSE:
+					*noteq = true;
+					/* fall through */
+				case IS_FALSE:
+					*outconst = (Expr *) makeBoolConst(false, false);
+					break;
+				default:
+					return PARTCLAUSE_UNSUPPORTED;
+			}
+		}
 		if (*outconst)
 			return PARTCLAUSE_MATCH_CLAUSE;
 	}
@@ -3632,11 +3650,9 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
 
 		/* Compare to the partition key, and make up a clause ... */
 		if (equal(leftop, partkey))
-			*outconst = is_not_clause ?
-				(Expr *) makeBoolConst(false, false) :
-				(Expr *) makeBoolConst(true, false);
+			*outconst = (Expr *) makeBoolConst(!is_not_clause, false);
 		else if (equal(negate_clause((Node *) leftop), partkey))
-			*outconst = (Expr *) makeBoolConst(false, false);
+			*outconst = (Expr *) makeBoolConst(is_not_clause, false);
 
 		if (*outconst)
 			return PARTCLAUSE_MATCH_CLAUSE;

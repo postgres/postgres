@@ -1038,6 +1038,7 @@ create table boolpart (a bool) partition by list (a);
 create table boolpart_default partition of boolpart default;
 create table boolpart_t partition of boolpart for values in ('true');
 create table boolpart_f partition of boolpart for values in ('false');
+insert into boolpart values (true), (false), (null);
 explain (costs off) select * from boolpart where a in (true, false);
                    QUERY PLAN                   
 ------------------------------------------------
@@ -1070,20 +1071,25 @@ explain (costs off) select * from boolpart where a is true or a is not true;
          Filter: ((a IS TRUE) OR (a IS NOT TRUE))
    ->  Seq Scan on boolpart_t boolpart_2
          Filter: ((a IS TRUE) OR (a IS NOT TRUE))
-(5 rows)
+   ->  Seq Scan on boolpart_default boolpart_3
+         Filter: ((a IS TRUE) OR (a IS NOT TRUE))
+(7 rows)
 
 explain (costs off) select * from boolpart where a is not true;
-           QUERY PLAN            
----------------------------------
- Seq Scan on boolpart_f boolpart
-   Filter: (a IS NOT TRUE)
-(2 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Append
+   ->  Seq Scan on boolpart_f boolpart_1
+         Filter: (a IS NOT TRUE)
+   ->  Seq Scan on boolpart_default boolpart_2
+         Filter: (a IS NOT TRUE)
+(5 rows)
 
 explain (costs off) select * from boolpart where a is not true and a is not false;
-        QUERY PLAN        
---------------------------
- Result
-   One-Time Filter: false
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on boolpart_default boolpart
+   Filter: ((a IS NOT TRUE) AND (a IS NOT FALSE))
 (2 rows)
 
 explain (costs off) select * from boolpart where a is unknown;
@@ -1109,6 +1115,205 @@ explain (costs off) select * from boolpart where a is not unknown;
    ->  Seq Scan on boolpart_default boolpart_3
          Filter: (a IS NOT UNKNOWN)
 (7 rows)
+
+select * from boolpart where a in (true, false);
+ a 
+---
+ f
+ t
+(2 rows)
+
+select * from boolpart where a = false;
+ a 
+---
+ f
+(1 row)
+
+select * from boolpart where not a = false;
+ a 
+---
+ t
+(1 row)
+
+select * from boolpart where a is true or a is not true;
+ a 
+---
+ f
+ t
+ 
+(3 rows)
+
+select * from boolpart where a is not true;
+ a 
+---
+ f
+ 
+(2 rows)
+
+select * from boolpart where a is not true and a is not false;
+ a 
+---
+ 
+(1 row)
+
+select * from boolpart where a is unknown;
+ a 
+---
+ 
+(1 row)
+
+select * from boolpart where a is not unknown;
+ a 
+---
+ f
+ t
+(2 rows)
+
+-- inverse boolean partitioning - a seemingly unlikely design, but we've got
+-- code for it, so we'd better test it.
+create table iboolpart (a bool) partition by list ((not a));
+create table iboolpart_default partition of iboolpart default;
+create table iboolpart_f partition of iboolpart for values in ('true');
+create table iboolpart_t partition of iboolpart for values in ('false');
+insert into iboolpart values (true), (false), (null);
+explain (costs off) select * from iboolpart where a in (true, false);
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on iboolpart_t iboolpart_1
+         Filter: (a = ANY ('{t,f}'::boolean[]))
+   ->  Seq Scan on iboolpart_f iboolpart_2
+         Filter: (a = ANY ('{t,f}'::boolean[]))
+   ->  Seq Scan on iboolpart_default iboolpart_3
+         Filter: (a = ANY ('{t,f}'::boolean[]))
+(7 rows)
+
+explain (costs off) select * from iboolpart where a = false;
+            QUERY PLAN             
+-----------------------------------
+ Seq Scan on iboolpart_f iboolpart
+   Filter: (NOT a)
+(2 rows)
+
+explain (costs off) select * from iboolpart where not a = false;
+            QUERY PLAN             
+-----------------------------------
+ Seq Scan on iboolpart_t iboolpart
+   Filter: a
+(2 rows)
+
+explain (costs off) select * from iboolpart where a is true or a is not true;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Append
+   ->  Seq Scan on iboolpart_t iboolpart_1
+         Filter: ((a IS TRUE) OR (a IS NOT TRUE))
+   ->  Seq Scan on iboolpart_f iboolpart_2
+         Filter: ((a IS TRUE) OR (a IS NOT TRUE))
+   ->  Seq Scan on iboolpart_default iboolpart_3
+         Filter: ((a IS TRUE) OR (a IS NOT TRUE))
+(7 rows)
+
+explain (costs off) select * from iboolpart where a is not true;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on iboolpart_t iboolpart_1
+         Filter: (a IS NOT TRUE)
+   ->  Seq Scan on iboolpart_f iboolpart_2
+         Filter: (a IS NOT TRUE)
+   ->  Seq Scan on iboolpart_default iboolpart_3
+         Filter: (a IS NOT TRUE)
+(7 rows)
+
+explain (costs off) select * from iboolpart where a is not true and a is not false;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Append
+   ->  Seq Scan on iboolpart_t iboolpart_1
+         Filter: ((a IS NOT TRUE) AND (a IS NOT FALSE))
+   ->  Seq Scan on iboolpart_f iboolpart_2
+         Filter: ((a IS NOT TRUE) AND (a IS NOT FALSE))
+   ->  Seq Scan on iboolpart_default iboolpart_3
+         Filter: ((a IS NOT TRUE) AND (a IS NOT FALSE))
+(7 rows)
+
+explain (costs off) select * from iboolpart where a is unknown;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on iboolpart_t iboolpart_1
+         Filter: (a IS UNKNOWN)
+   ->  Seq Scan on iboolpart_f iboolpart_2
+         Filter: (a IS UNKNOWN)
+   ->  Seq Scan on iboolpart_default iboolpart_3
+         Filter: (a IS UNKNOWN)
+(7 rows)
+
+explain (costs off) select * from iboolpart where a is not unknown;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on iboolpart_t iboolpart_1
+         Filter: (a IS NOT UNKNOWN)
+   ->  Seq Scan on iboolpart_f iboolpart_2
+         Filter: (a IS NOT UNKNOWN)
+   ->  Seq Scan on iboolpart_default iboolpart_3
+         Filter: (a IS NOT UNKNOWN)
+(7 rows)
+
+select * from iboolpart where a in (true, false);
+ a 
+---
+ t
+ f
+(2 rows)
+
+select * from iboolpart where a = false;
+ a 
+---
+ f
+(1 row)
+
+select * from iboolpart where not a = false;
+ a 
+---
+ t
+(1 row)
+
+select * from iboolpart where a is true or a is not true;
+ a 
+---
+ t
+ f
+ 
+(3 rows)
+
+select * from iboolpart where a is not true;
+ a 
+---
+ f
+ 
+(2 rows)
+
+select * from iboolpart where a is not true and a is not false;
+ a 
+---
+ 
+(1 row)
+
+select * from iboolpart where a is unknown;
+ a 
+---
+ 
+(1 row)
+
+select * from iboolpart where a is not unknown;
+ a 
+---
+ t
+ f
+(2 rows)
 
 create table boolrangep (a bool, b bool, c int) partition by range (a,b,c);
 create table boolrangep_tf partition of boolrangep for values from ('true', 'false', 0) to ('true', 'false', 100);
@@ -1530,7 +1735,7 @@ explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
    Filter: (a > '100000000000000'::bigint)
 (2 rows)
 
-drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, boolrangep, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
+drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, iboolpart, boolrangep, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
 --
 -- Test Partition pruning for HASH partitioning
 --

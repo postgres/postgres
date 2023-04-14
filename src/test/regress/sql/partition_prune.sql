@@ -158,6 +158,7 @@ create table boolpart (a bool) partition by list (a);
 create table boolpart_default partition of boolpart default;
 create table boolpart_t partition of boolpart for values in ('true');
 create table boolpart_f partition of boolpart for values in ('false');
+insert into boolpart values (true), (false), (null);
 
 explain (costs off) select * from boolpart where a in (true, false);
 explain (costs off) select * from boolpart where a = false;
@@ -167,6 +168,41 @@ explain (costs off) select * from boolpart where a is not true;
 explain (costs off) select * from boolpart where a is not true and a is not false;
 explain (costs off) select * from boolpart where a is unknown;
 explain (costs off) select * from boolpart where a is not unknown;
+
+select * from boolpart where a in (true, false);
+select * from boolpart where a = false;
+select * from boolpart where not a = false;
+select * from boolpart where a is true or a is not true;
+select * from boolpart where a is not true;
+select * from boolpart where a is not true and a is not false;
+select * from boolpart where a is unknown;
+select * from boolpart where a is not unknown;
+
+-- inverse boolean partitioning - a seemingly unlikely design, but we've got
+-- code for it, so we'd better test it.
+create table iboolpart (a bool) partition by list ((not a));
+create table iboolpart_default partition of iboolpart default;
+create table iboolpart_f partition of iboolpart for values in ('true');
+create table iboolpart_t partition of iboolpart for values in ('false');
+insert into iboolpart values (true), (false), (null);
+
+explain (costs off) select * from iboolpart where a in (true, false);
+explain (costs off) select * from iboolpart where a = false;
+explain (costs off) select * from iboolpart where not a = false;
+explain (costs off) select * from iboolpart where a is true or a is not true;
+explain (costs off) select * from iboolpart where a is not true;
+explain (costs off) select * from iboolpart where a is not true and a is not false;
+explain (costs off) select * from iboolpart where a is unknown;
+explain (costs off) select * from iboolpart where a is not unknown;
+
+select * from iboolpart where a in (true, false);
+select * from iboolpart where a = false;
+select * from iboolpart where not a = false;
+select * from iboolpart where a is true or a is not true;
+select * from iboolpart where a is not true;
+select * from iboolpart where a is not true and a is not false;
+select * from iboolpart where a is unknown;
+select * from iboolpart where a is not unknown;
 
 create table boolrangep (a bool, b bool, c int) partition by range (a,b,c);
 create table boolrangep_tf partition of boolrangep for values from ('true', 'false', 0) to ('true', 'false', 100);
@@ -294,7 +330,7 @@ create table rparted_by_int2_maxvalue partition of rparted_by_int2 for values fr
 -- all partitions but rparted_by_int2_maxvalue pruned
 explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
 
-drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, boolrangep, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
+drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, iboolpart, boolrangep, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
 
 --
 -- Test Partition pruning for HASH partitioning
