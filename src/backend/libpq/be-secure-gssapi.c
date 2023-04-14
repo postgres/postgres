@@ -752,7 +752,7 @@ bool
 be_gssapi_get_deleg(Port *port)
 {
 	if (!port || !port->gss)
-		return NULL;
+		return false;
 
 	return port->gss->delegated_creds;
 }
