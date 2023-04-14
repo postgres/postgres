@@ -27084,8 +27084,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
        </para>
        <para>
         Take a snapshot of running transactions and write it to WAL, without
-        having to wait bgwriter or checkpointer to log one. This is useful for
-        logical decoding on standby, as logical slot creation has to wait
+        having to wait for bgwriter or checkpointer to log one. This is useful
+        for logical decoding on standby, as logical slot creation has to wait
         until such a record is replayed on the standby.
        </para></entry>
       </row>

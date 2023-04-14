@@ -4757,7 +4757,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </para>
       <para>
        Number of uses of logical slots in this database that have been
-       canceled due to old snapshots or a too low <xref linkend="guc-wal-level"/>
+       canceled due to old snapshots or too low a <xref linkend="guc-wal-level"/>
        on the primary
       </para></entry>
      </row>
