@@ -190,7 +190,13 @@ GetMemoryChunkMethodID(const void *pointer)
 	 */
 	Assert(pointer == (const void *) MAXALIGN(pointer));
 
+	/* Allow access to the uint64 header */
+	VALGRIND_MAKE_MEM_DEFINED((char *) pointer - sizeof(uint64), sizeof(uint64));
+
 	header = *((const uint64 *) ((const char *) pointer - sizeof(uint64)));
+
+	/* Disallow access to the uint64 header */
+	VALGRIND_MAKE_MEM_NOACCESS((char *) pointer - sizeof(uint64), sizeof(uint64));
 
 	return (MemoryContextMethodID) (header & MEMORY_CONTEXT_METHODID_MASK);
 }
@@ -204,7 +210,17 @@ GetMemoryChunkMethodID(const void *pointer)
 static inline uint64
 GetMemoryChunkHeader(const void *pointer)
 {
-	return *((const uint64 *) ((const char *) pointer - sizeof(uint64)));
+	uint64		header;
+
+	/* Allow access to the uint64 header */
+	VALGRIND_MAKE_MEM_DEFINED((char *) pointer - sizeof(uint64), sizeof(uint64));
+
+	header = *((const uint64 *) ((const char *) pointer - sizeof(uint64)));
+
+	/* Disallow access to the uint64 header */
+	VALGRIND_MAKE_MEM_NOACCESS((char *) pointer - sizeof(uint64), sizeof(uint64));
+
+	return header;
 }
 
 /*
@@ -1404,6 +1420,10 @@ MemoryContextAllocAligned(MemoryContext context,
 	/* Mark the bytes before the redirection header as noaccess */
 	VALGRIND_MAKE_MEM_NOACCESS(unaligned,
 							   (char *) alignedchunk - (char *) unaligned);
+
+	/* Disallow access to the redirection chunk header. */
+	VALGRIND_MAKE_MEM_NOACCESS(alignedchunk, sizeof(MemoryChunk));
+
 	return aligned;
 }
 

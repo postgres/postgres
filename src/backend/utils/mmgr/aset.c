@@ -189,14 +189,6 @@ typedef struct AllocBlockData
 }			AllocBlockData;
 
 /*
- * Only the "hdrmask" field should be accessed outside this module.
- * We keep the rest of an allocated chunk's header marked NOACCESS when using
- * valgrind.  But note that chunk headers that are in a freelist are kept
- * accessible, for simplicity.
- */
-#define ALLOCCHUNK_PRIVATE_LEN	offsetof(MemoryChunk, hdrmask)
-
-/*
  * AllocPointerIsValid
  *		True iff pointer is valid allocation pointer.
  */
@@ -777,8 +769,8 @@ AllocSetAlloc(MemoryContext context, Size size)
 		VALGRIND_MAKE_MEM_NOACCESS((char *) MemoryChunkGetPointer(chunk) + size,
 								   chunk_size - size);
 
-		/* Disallow external access to private part of chunk header. */
-		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
+		/* Disallow access to the chunk header. */
+		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 		return MemoryChunkGetPointer(chunk);
 	}
@@ -800,6 +792,9 @@ AllocSetAlloc(MemoryContext context, Size size)
 	if (chunk != NULL)
 	{
 		AllocFreeListLink *link = GetFreeListLink(chunk);
+
+		/* Allow access to the chunk header. */
+		VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOC_CHUNKHDRSZ);
 
 		Assert(fidx == MemoryChunkGetValue(chunk));
 
@@ -823,8 +818,8 @@ AllocSetAlloc(MemoryContext context, Size size)
 		VALGRIND_MAKE_MEM_NOACCESS((char *) MemoryChunkGetPointer(chunk) + size,
 								   GetChunkSizeFromFreeListIdx(fidx) - size);
 
-		/* Disallow external access to private part of chunk header. */
-		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
+		/* Disallow access to the chunk header. */
+		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 		return MemoryChunkGetPointer(chunk);
 	}
@@ -989,8 +984,8 @@ AllocSetAlloc(MemoryContext context, Size size)
 	VALGRIND_MAKE_MEM_NOACCESS((char *) MemoryChunkGetPointer(chunk) + size,
 							   chunk_size - size);
 
-	/* Disallow external access to private part of chunk header. */
-	VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
+	/* Disallow access to the chunk header. */
+	VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 	return MemoryChunkGetPointer(chunk);
 }
@@ -1005,8 +1000,8 @@ AllocSetFree(void *pointer)
 	AllocSet	set;
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
 
-	/* Allow access to private part of chunk header. */
-	VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOCCHUNK_PRIVATE_LEN);
+	/* Allow access to the chunk header. */
+	VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOC_CHUNKHDRSZ);
 
 	if (MemoryChunkIsExternal(chunk))
 	{
@@ -1115,8 +1110,8 @@ AllocSetRealloc(void *pointer, Size size)
 	Size		oldchksize;
 	int			fidx;
 
-	/* Allow access to private part of chunk header. */
-	VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOCCHUNK_PRIVATE_LEN);
+	/* Allow access to the chunk header. */
+	VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOC_CHUNKHDRSZ);
 
 	if (MemoryChunkIsExternal(chunk))
 	{
@@ -1164,8 +1159,8 @@ AllocSetRealloc(void *pointer, Size size)
 		block = (AllocBlock) realloc(block, blksize);
 		if (block == NULL)
 		{
-			/* Disallow external access to private part of chunk header. */
-			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
+			/* Disallow access to the chunk header. */
+			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 			return NULL;
 		}
 
@@ -1232,8 +1227,8 @@ AllocSetRealloc(void *pointer, Size size)
 		/* Ensure any padding bytes are marked NOACCESS. */
 		VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size, chksize - size);
 
-		/* Disallow external access to private part of chunk header. */
-		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
+		/* Disallow access to the chunk header . */
+		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 		return pointer;
 	}
@@ -1305,8 +1300,8 @@ AllocSetRealloc(void *pointer, Size size)
 		VALGRIND_MAKE_MEM_DEFINED(pointer, size);
 #endif
 
-		/* Disallow external access to private part of chunk header. */
-		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
+		/* Disallow access to the chunk header. */
+		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 		return pointer;
 	}
@@ -1332,8 +1327,8 @@ AllocSetRealloc(void *pointer, Size size)
 		/* leave immediately if request was not completed */
 		if (newPointer == NULL)
 		{
-			/* Disallow external access to private part of chunk header. */
-			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
+			/* Disallow access to the chunk header. */
+			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 			return NULL;
 		}
 
@@ -1374,10 +1369,16 @@ AllocSetGetChunkContext(void *pointer)
 	AllocBlock	block;
 	AllocSet	set;
 
+	/* Allow access to the chunk header. */
+	VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOC_CHUNKHDRSZ);
+
 	if (MemoryChunkIsExternal(chunk))
 		block = ExternalChunkGetBlock(chunk);
 	else
 		block = (AllocBlock) MemoryChunkGetBlock(chunk);
+
+	/* Disallow access to the chunk header. */
+	VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 	Assert(AllocBlockIsValid(block));
 	set = block->aset;
@@ -1396,16 +1397,27 @@ AllocSetGetChunkSpace(void *pointer)
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
 	int			fidx;
 
+	/* Allow access to the chunk header. */
+	VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOC_CHUNKHDRSZ);
+
 	if (MemoryChunkIsExternal(chunk))
 	{
 		AllocBlock	block = ExternalChunkGetBlock(chunk);
 
+		/* Disallow access to the chunk header. */
+		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
+
 		Assert(AllocBlockIsValid(block));
+
 		return block->endptr - (char *) chunk;
 	}
 
 	fidx = MemoryChunkGetValue(chunk);
 	Assert(FreeListIdxIsValid(fidx));
+
+	/* Disallow access to the chunk header. */
+	VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
+
 	return GetChunkSizeFromFreeListIdx(fidx) + ALLOC_CHUNKHDRSZ;
 }
 
@@ -1471,7 +1483,10 @@ AllocSetStats(MemoryContext context,
 		{
 			AllocFreeListLink *link = GetFreeListLink(chunk);
 
+			/* Allow access to the chunk header. */
+			VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOC_CHUNKHDRSZ);
 			Assert(MemoryChunkGetValue(chunk) == fidx);
+			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 			freechunks++;
 			freespace += chksz + ALLOC_CHUNKHDRSZ;
@@ -1566,8 +1581,8 @@ AllocSetCheck(MemoryContext context)
 			Size		chsize,
 						dsize;
 
-			/* Allow access to private part of chunk header. */
-			VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOCCHUNK_PRIVATE_LEN);
+			/* Allow access to the chunk header. */
+			VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOC_CHUNKHDRSZ);
 
 			if (MemoryChunkIsExternal(chunk))
 			{
@@ -1617,12 +1632,9 @@ AllocSetCheck(MemoryContext context)
 				elog(WARNING, "problem in alloc set %s: detected write past chunk end in block %p, chunk %p",
 					 name, block, chunk);
 
-			/*
-			 * If chunk is allocated, disallow external access to private part
-			 * of chunk header.
-			 */
+			/* if chunk is allocated, disallow access to the chunk header */
 			if (dsize != InvalidAllocSize)
-				VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
+				VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 			blk_data += chsize;
 			nchunks++;

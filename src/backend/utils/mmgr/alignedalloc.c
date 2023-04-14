@@ -31,6 +31,8 @@ AlignedAllocFree(void *pointer)
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
 	void	   *unaligned;
 
+	VALGRIND_MAKE_MEM_DEFINED(chunk, sizeof(MemoryChunk));
+
 	Assert(!MemoryChunkIsExternal(chunk));
 
 	/* obtain the original (unaligned) allocated pointer */
@@ -58,11 +60,16 @@ void *
 AlignedAllocRealloc(void *pointer, Size size)
 {
 	MemoryChunk *redirchunk = PointerGetMemoryChunk(pointer);
-	Size		alignto = MemoryChunkGetValue(redirchunk);
-	void	   *unaligned = MemoryChunkGetBlock(redirchunk);
+	Size		alignto;
+	void	   *unaligned;
 	MemoryContext ctx;
 	Size		old_size;
 	void	   *newptr;
+
+	VALGRIND_MAKE_MEM_DEFINED(redirchunk, sizeof(MemoryChunk));
+
+	alignto = MemoryChunkGetValue(redirchunk);
+	unaligned = MemoryChunkGetBlock(redirchunk);
 
 	/* sanity check this is a power of 2 value */
 	Assert((alignto & (alignto - 1)) == 0);
@@ -110,11 +117,18 @@ AlignedAllocRealloc(void *pointer, Size size)
 MemoryContext
 AlignedAllocGetChunkContext(void *pointer)
 {
-	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
+	MemoryChunk *redirchunk = PointerGetMemoryChunk(pointer);
+	MemoryContext cxt;
 
-	Assert(!MemoryChunkIsExternal(chunk));
+	VALGRIND_MAKE_MEM_DEFINED(redirchunk, sizeof(MemoryChunk));
 
-	return GetMemoryChunkContext(MemoryChunkGetBlock(chunk));
+	Assert(!MemoryChunkIsExternal(redirchunk));
+
+	cxt = GetMemoryChunkContext(MemoryChunkGetBlock(redirchunk));
+
+	VALGRIND_MAKE_MEM_NOACCESS(redirchunk, sizeof(MemoryChunk));
+
+	return cxt;
 }
 
 /*
@@ -126,7 +140,15 @@ Size
 AlignedAllocGetChunkSpace(void *pointer)
 {
 	MemoryChunk *redirchunk = PointerGetMemoryChunk(pointer);
-	void	   *unaligned = MemoryChunkGetBlock(redirchunk);
+	void	   *unaligned;
+	Size		space;
 
-	return GetMemoryChunkSpace(unaligned);
+	VALGRIND_MAKE_MEM_DEFINED(redirchunk, sizeof(MemoryChunk));
+
+	unaligned = MemoryChunkGetBlock(redirchunk);
+	space = GetMemoryChunkSpace(unaligned);
+
+	VALGRIND_MAKE_MEM_NOACCESS(redirchunk, sizeof(MemoryChunk));
+
+	return space;
 }

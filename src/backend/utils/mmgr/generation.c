@@ -99,14 +99,6 @@ struct GenerationBlock
 };
 
 /*
- * Only the "hdrmask" field should be accessed outside this module.
- * We keep the rest of an allocated chunk's header marked NOACCESS when using
- * valgrind.  But note that freed chunk headers are kept accessible, for
- * simplicity.
- */
-#define GENERATIONCHUNK_PRIVATE_LEN	offsetof(MemoryChunk, hdrmask)
-
-/*
  * GenerationIsValid
  *		True iff set is valid generation set.
  */
@@ -407,8 +399,8 @@ GenerationAlloc(MemoryContext context, Size size)
 		VALGRIND_MAKE_MEM_NOACCESS((char *) MemoryChunkGetPointer(chunk) + size,
 								   chunk_size - size);
 
-		/* Disallow external access to private part of chunk header. */
-		VALGRIND_MAKE_MEM_NOACCESS(chunk, GENERATIONCHUNK_PRIVATE_LEN);
+		/* Disallow access to the chunk header. */
+		VALGRIND_MAKE_MEM_NOACCESS(chunk, Generation_CHUNKHDRSZ);
 
 		return MemoryChunkGetPointer(chunk);
 	}
@@ -522,8 +514,8 @@ GenerationAlloc(MemoryContext context, Size size)
 	VALGRIND_MAKE_MEM_NOACCESS((char *) MemoryChunkGetPointer(chunk) + size,
 							   chunk_size - size);
 
-	/* Disallow external access to private part of chunk header. */
-	VALGRIND_MAKE_MEM_NOACCESS(chunk, GENERATIONCHUNK_PRIVATE_LEN);
+	/* Disallow access to the chunk header. */
+	VALGRIND_MAKE_MEM_NOACCESS(chunk, Generation_CHUNKHDRSZ);
 
 	return MemoryChunkGetPointer(chunk);
 }
@@ -634,6 +626,9 @@ GenerationFree(void *pointer)
 	Size		chunksize;
 #endif
 
+	/* Allow access to the chunk header. */
+	VALGRIND_MAKE_MEM_DEFINED(chunk, Generation_CHUNKHDRSZ);
+
 	if (MemoryChunkIsExternal(chunk))
 	{
 		block = ExternalChunkGetBlock(chunk);
@@ -666,9 +661,6 @@ GenerationFree(void *pointer)
 		chunksize = MemoryChunkGetValue(chunk);
 #endif
 	}
-
-	/* Allow access to private part of chunk header. */
-	VALGRIND_MAKE_MEM_DEFINED(chunk, GENERATIONCHUNK_PRIVATE_LEN);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
@@ -747,8 +739,8 @@ GenerationRealloc(void *pointer, Size size)
 	GenerationPointer newPointer;
 	Size		oldsize;
 
-	/* Allow access to private part of chunk header. */
-	VALGRIND_MAKE_MEM_DEFINED(chunk, GENERATIONCHUNK_PRIVATE_LEN);
+	/* Allow access to the chunk header. */
+	VALGRIND_MAKE_MEM_DEFINED(chunk, Generation_CHUNKHDRSZ);
 
 	if (MemoryChunkIsExternal(chunk))
 	{
@@ -835,8 +827,8 @@ GenerationRealloc(void *pointer, Size size)
 		VALGRIND_MAKE_MEM_DEFINED(pointer, size);
 #endif
 
-		/* Disallow external access to private part of chunk header. */
-		VALGRIND_MAKE_MEM_NOACCESS(chunk, GENERATIONCHUNK_PRIVATE_LEN);
+		/* Disallow access to the chunk header. */
+		VALGRIND_MAKE_MEM_NOACCESS(chunk, Generation_CHUNKHDRSZ);
 
 		return pointer;
 	}
@@ -847,8 +839,8 @@ GenerationRealloc(void *pointer, Size size)
 	/* leave immediately if request was not completed */
 	if (newPointer == NULL)
 	{
-		/* Disallow external access to private part of chunk header. */
-		VALGRIND_MAKE_MEM_NOACCESS(chunk, GENERATIONCHUNK_PRIVATE_LEN);
+		/* Disallow access to the chunk header. */
+		VALGRIND_MAKE_MEM_NOACCESS(chunk, Generation_CHUNKHDRSZ);
 		return NULL;
 	}
 
@@ -886,10 +878,16 @@ GenerationGetChunkContext(void *pointer)
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
 	GenerationBlock *block;
 
+	/* Allow access to the chunk header. */
+	VALGRIND_MAKE_MEM_DEFINED(chunk, Generation_CHUNKHDRSZ);
+
 	if (MemoryChunkIsExternal(chunk))
 		block = ExternalChunkGetBlock(chunk);
 	else
 		block = (GenerationBlock *) MemoryChunkGetBlock(chunk);
+
+	/* Disallow access to the chunk header. */
+	VALGRIND_MAKE_MEM_NOACCESS(chunk, Generation_CHUNKHDRSZ);
 
 	Assert(GenerationBlockIsValid(block));
 	return &block->context->header;
@@ -906,6 +904,9 @@ GenerationGetChunkSpace(void *pointer)
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
 	Size		chunksize;
 
+	/* Allow access to the chunk header. */
+	VALGRIND_MAKE_MEM_DEFINED(chunk, Generation_CHUNKHDRSZ);
+
 	if (MemoryChunkIsExternal(chunk))
 	{
 		GenerationBlock *block = ExternalChunkGetBlock(chunk);
@@ -915,6 +916,9 @@ GenerationGetChunkSpace(void *pointer)
 	}
 	else
 		chunksize = MemoryChunkGetValue(chunk);
+
+	/* Disallow access to the chunk header. */
+	VALGRIND_MAKE_MEM_NOACCESS(chunk, Generation_CHUNKHDRSZ);
 
 	return Generation_CHUNKHDRSZ + chunksize;
 }
@@ -1057,8 +1061,8 @@ GenerationCheck(MemoryContext context)
 			GenerationBlock *chunkblock;
 			Size		chunksize;
 
-			/* Allow access to private part of chunk header. */
-			VALGRIND_MAKE_MEM_DEFINED(chunk, GENERATIONCHUNK_PRIVATE_LEN);
+			/* Allow access to the chunk header. */
+			VALGRIND_MAKE_MEM_DEFINED(chunk, Generation_CHUNKHDRSZ);
 
 			if (MemoryChunkIsExternal(chunk))
 			{
@@ -1101,12 +1105,9 @@ GenerationCheck(MemoryContext context)
 			else
 				nfree += 1;
 
-			/*
-			 * If chunk is allocated, disallow external access to private part
-			 * of chunk header.
-			 */
+			/* if chunk is allocated, disallow access to the chunk header */
 			if (chunk->requested_size != InvalidAllocSize)
-				VALGRIND_MAKE_MEM_NOACCESS(chunk, GENERATIONCHUNK_PRIVATE_LEN);
+				VALGRIND_MAKE_MEM_NOACCESS(chunk, Generation_CHUNKHDRSZ);
 		}
 
 		/*
