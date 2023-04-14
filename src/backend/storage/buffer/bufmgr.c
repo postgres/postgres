@@ -888,8 +888,6 @@ ExtendBufferedRelTo(ExtendBufferedWhat eb,
 	Assert((eb.rel != NULL) != (eb.smgr != NULL));
 	Assert(eb.smgr == NULL || eb.relpersistence != 0);
 	Assert(extend_to != InvalidBlockNumber && extend_to > 0);
-	Assert(mode == RBM_NORMAL || mode == RBM_ZERO_ON_ERROR ||
-		   mode == RBM_ZERO_AND_LOCK);
 
 	if (eb.smgr == NULL)
 	{
@@ -933,7 +931,13 @@ ExtendBufferedRelTo(ExtendBufferedWhat eb,
 	 */
 	current_size = smgrnblocks(eb.smgr, fork);
 
-	if (mode == RBM_ZERO_AND_LOCK)
+	/*
+	 * Since no-one else can be looking at the page contents yet, there is no
+	 * difference between an exclusive lock and a cleanup-strength lock. Note
+	 * that we pass the original mode to ReadBuffer_common() below, when
+	 * falling back to reading the buffer to a concurrent relation extension.
+	 */
+	if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
 		flags |= EB_LOCK_TARGET;
 
 	while (current_size < extend_to)
@@ -1008,11 +1012,12 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	{
 		uint32		flags = EB_SKIP_EXTENSION_LOCK;
 
-		Assert(mode == RBM_NORMAL ||
-			   mode == RBM_ZERO_AND_LOCK ||
-			   mode == RBM_ZERO_ON_ERROR);
-
-		if (mode == RBM_ZERO_AND_LOCK)
+		/*
+		 * Since no-one else can be looking at the page contents yet, there is
+		 * no difference between an exclusive lock and a cleanup-strength
+		 * lock.
+		 */
+		if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
 			flags |= EB_LOCK_FIRST;
 
 		return ExtendBufferedRel(EB_SMGR(smgr, relpersistence),
@@ -1145,9 +1150,10 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	}
 
 	/*
-	 * In RBM_ZERO_AND_LOCK mode, grab the buffer content lock before marking
-	 * the page as valid, to make sure that no other backend sees the zeroed
-	 * page before the caller has had a chance to initialize it.
+	 * In RBM_ZERO_AND_LOCK / RBM_ZERO_AND_CLEANUP_LOCK mode, grab the buffer
+	 * content lock before marking the page as valid, to make sure that no
+	 * other backend sees the zeroed page before the caller has had a chance
+	 * to initialize it.
 	 *
 	 * Since no-one else can be looking at the page contents yet, there is no
 	 * difference between an exclusive lock and a cleanup-strength lock. (Note

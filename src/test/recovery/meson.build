@@ -41,6 +41,7 @@ tests += {
       't/033_replay_tsp_drops.pl',
       't/034_create_database.pl',
       't/035_standby_logical_decoding.pl',
+      't/036_truncated_dropped.pl',
     ],
   },
 }
