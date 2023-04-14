@@ -11,6 +11,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    timeline.c \
                    xlogreader.c \
                    ../../common/fe_memutils.c \
+                   ../../common/percentrepl.c \
                    ../../common/restricted_token.c \
                    ../../fe_utils/archive.c \
                    ../../fe_utils/recovery_gen.c
