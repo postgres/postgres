@@ -3131,8 +3131,8 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
  * trees in which each level of assignment has its own CaseTestExpr, and the
  * recursive structure appears within the newvals or refassgnexpr field.
  * There is an exception, though: if the array is an array-of-domain, we will
- * have a CoerceToDomain as the refassgnexpr, and we need to be able to look
- * through that.
+ * have a CoerceToDomain or RelabelType as the refassgnexpr, and we need to
+ * be able to look through that.
  */
 static bool
 isAssignmentIndirectionExpr(Expr *expr)
@@ -3158,6 +3158,12 @@ isAssignmentIndirectionExpr(Expr *expr)
 		CoerceToDomain *cd = (CoerceToDomain *) expr;
 
 		return isAssignmentIndirectionExpr(cd->arg);
+	}
+	else if (IsA(expr, RelabelType))
+	{
+		RelabelType *r = (RelabelType *) expr;
+
+		return isAssignmentIndirectionExpr(r->arg);
 	}
 	return false;
 }
