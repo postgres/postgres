@@ -112,7 +112,7 @@ static const dm_codes end_codes[2] =
 /* Mapping from ISO8859-1 to upper-case ASCII, covering the range 0x60..0xFF. */
 static const char iso8859_1_to_ascii_upper[] =
 /*
-"`abcdefghijklmnopqrstuvwxyz{|}~                                  ¡¢£¤¥¦§¨©ª«¬ ®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
+"`abcdefghijklmnopqrstuvwxyz{|}~                                  ¡.....various odd symbols.....¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ*ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö/øùúûüýþÿ"
 */
 "`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~                                  !                             ?AAAAAAECEEEEIIIIDNOOOOO*OUUUUYDSAAAAAAECEEEEIIIIDNOOOOO/OUUUUYDY";
 
