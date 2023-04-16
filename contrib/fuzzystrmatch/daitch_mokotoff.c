@@ -111,9 +111,6 @@ static const dm_codes end_codes[2] =
 
 /* Mapping from ISO8859-1 to upper-case ASCII, covering the range 0x60..0xFF. */
 static const char iso8859_1_to_ascii_upper[] =
-/*
-"`abcdefghijklmnopqrstuvwxyz{|}~                                  ¡.....various odd symbols.....¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ*ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö/øùúûüýþÿ"
-*/
 "`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~                                  !                             ?AAAAAAECEEEEIIIIDNOOOOO*OUUUUYDSAAAAAAECEEEEIIIIDNOOOOO/OUUUUYDY";
 
 /* Internal C implementation */
@@ -413,7 +410,7 @@ read_char(const unsigned char *str, int *ix)
 	/* Convert. */
 	if (c >= (unsigned char) '[' && c <= (unsigned char) ']')
 	{
-		/* ASCII characters [, \, and ] are reserved for Ą, Ę, and Ţ/Ț. */
+		/* ASCII characters [, \, and ] are reserved for conversions below. */
 		return na;
 	}
 	else if (c < 0x60)
@@ -431,19 +428,16 @@ read_char(const unsigned char *str, int *ix)
 		/* Conversion of non-ASCII characters in the coding chart. */
 		switch (c)
 		{
-			case 0x0104:
-			case 0x0105:
-				/* Ą/ą */
+			case 0x0104:		/* LATIN CAPITAL LETTER A WITH OGONEK */
+			case 0x0105:		/* LATIN SMALL LETTER A WITH OGONEK */
 				return '[';
-			case 0x0118:
-			case 0x0119:
-				/* Ę/ę */
+			case 0x0118:		/* LATIN CAPITAL LETTER E WITH OGONEK */
+			case 0x0119:		/* LATIN SMALL LETTER E WITH OGONEK */
 				return '\\';
-			case 0x0162:
-			case 0x0163:
-			case 0x021A:
-			case 0x021B:
-				/* Ţ/ţ or Ț/ț */
+			case 0x0162:		/* LATIN CAPITAL LETTER T WITH CEDILLA */
+			case 0x0163:		/* LATIN SMALL LETTER T WITH CEDILLA */
+			case 0x021A:		/* LATIN CAPITAL LETTER T WITH COMMA BELOW */
+			case 0x021B:		/* LATIN SMALL LETTER T WITH COMMA BELOW */
 				return ']';
 			default:
 				return na;
