@@ -623,10 +623,15 @@ finalize_windowaggregate(WindowAggState *winstate,
 		}
 		else
 		{
+			Datum		res;
+
 			winstate->curaggcontext = peraggstate->aggcontext;
-			*result = FunctionCallInvoke(fcinfo);
+			res = FunctionCallInvoke(fcinfo);
 			winstate->curaggcontext = NULL;
 			*isnull = fcinfo->isnull;
+			*result = MakeExpandedObjectReadOnly(res,
+												 fcinfo->isnull,
+												 peraggstate->resulttypeLen);
 		}
 	}
 	else

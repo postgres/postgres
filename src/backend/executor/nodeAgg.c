@@ -1040,9 +1040,10 @@ process_ordered_aggregate_multi(AggState *aggstate,
  * (But note that in some cases, such as when there is no finalfn, the
  * result might be a pointer to or into the agg's transition value.)
  *
- * The finalfn uses the state as set in the transno. This also might be
+ * The finalfn uses the state as set in the transno.  This also might be
  * being used by another aggregate function, so it's important that we do
- * nothing destructive here.
+ * nothing destructive here.  Moreover, the aggregate's final value might
+ * get used in multiple places, so we mustn't return a R/W expanded datum.
  */
 static void
 finalize_aggregate(AggState *aggstate,
@@ -1116,8 +1117,13 @@ finalize_aggregate(AggState *aggstate,
 		}
 		else
 		{
-			*resultVal = FunctionCallInvoke(fcinfo);
+			Datum		result;
+
+			result = FunctionCallInvoke(fcinfo);
 			*resultIsNull = fcinfo->isnull;
+			*resultVal = MakeExpandedObjectReadOnly(result,
+													fcinfo->isnull,
+													peragg->resulttypeLen);
 		}
 		aggstate->curperagg = NULL;
 	}
@@ -1165,6 +1171,7 @@ finalize_partialaggregate(AggState *aggstate,
 		else
 		{
 			FunctionCallInfo fcinfo = pertrans->serialfn_fcinfo;
+			Datum		result;
 
 			fcinfo->args[0].value =
 				MakeExpandedObjectReadOnly(pergroupstate->transValue,
@@ -1173,8 +1180,11 @@ finalize_partialaggregate(AggState *aggstate,
 			fcinfo->args[0].isnull = pergroupstate->transValueIsNull;
 			fcinfo->isnull = false;
 
-			*resultVal = FunctionCallInvoke(fcinfo);
+			result = FunctionCallInvoke(fcinfo);
 			*resultIsNull = fcinfo->isnull;
+			*resultVal = MakeExpandedObjectReadOnly(result,
+													fcinfo->isnull,
+													peragg->resulttypeLen);
 		}
 	}
 	else
