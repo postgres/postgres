@@ -131,6 +131,12 @@ PostgreSQL documentation
         This size is used to calculate the number of shared buffers which will
         be reused as part of this strategy.  See <xref linkend="sql-vacuum"/>.
        </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 16 and later.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
