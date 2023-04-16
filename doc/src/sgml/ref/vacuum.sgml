@@ -39,7 +39,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     PARALLEL <replaceable class="parameter">integer</replaceable>
     SKIP_DATABASE_STATS [ <replaceable class="parameter">boolean</replaceable> ]
     ONLY_DATABASE_STATS [ <replaceable class="parameter">boolean</replaceable> ]
-    BUFFER_USAGE_LIMIT [ <replaceable class="parameter">string</replaceable> ]
+    BUFFER_USAGE_LIMIT [ <replaceable class="parameter">size</replaceable> ]
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -364,7 +364,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       <xref linkend="guc-vacuum-buffer-usage-limit"/>.  Higher settings can
       allow <command>VACUUM</command> to run more quickly, but having too
       large a setting may cause too many other useful pages to be evicted from
-      shared buffers.
+      shared buffers.  The minimum value is <literal>128 kB</literal> and the
+      maximum value is <literal>16 GB</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -388,6 +389,19 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     <listitem>
      <para>
       Specifies a non-negative integer value passed to the selected option.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">size</replaceable></term>
+    <listitem>
+     <para>
+      Specifies an amount of memory in kilobytes.  Sizes may also be specified
+      as a string containing the numerical size followed by any one of the
+      following memory units: <literal>kB</literal> (kilobytes),
+      <literal>MB</literal> (megabytes), <literal>GB</literal> (gigabytes), or
+      <literal>TB</literal> (terabytes).
      </para>
     </listitem>
    </varlistentry>
