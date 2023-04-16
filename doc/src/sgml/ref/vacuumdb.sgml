@@ -131,12 +131,6 @@ PostgreSQL documentation
         This size is used to calculate the number of shared buffers which will
         be reused as part of this strategy.  See <xref linkend="sql-vacuum"/>.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 16 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -164,12 +158,6 @@ PostgreSQL documentation
        <para>
         Disable skipping pages based on the contents of the visibility map.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 9.6 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -210,12 +198,6 @@ PostgreSQL documentation
        <para>
         Always remove index entries pointing to dead tuples.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 12 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -261,12 +243,6 @@ PostgreSQL documentation
         <acronym>TOAST</acronym> table for the relation if necessary, it does
         not need to be considered separately.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 9.6 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -288,12 +264,6 @@ PostgreSQL documentation
         <acronym>TOAST</acronym> table for the relation if necessary, it does
         not need to be considered separately.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 9.6 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -327,12 +297,6 @@ PostgreSQL documentation
        <para>
         Do not remove index entries pointing to dead tuples.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 12 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -342,12 +306,6 @@ PostgreSQL documentation
        <para>
         Skip the main relation.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 16 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -357,12 +315,6 @@ PostgreSQL documentation
        <para>
         Skip the TOAST table associated with the table to vacuum, if any.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 14 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -372,12 +324,6 @@ PostgreSQL documentation
        <para>
         Do not truncate empty pages at the end of the table.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 12 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -390,12 +336,6 @@ PostgreSQL documentation
         This allows the vacuum to leverage multiple CPUs to process indexes.
         See <xref linkend="sql-vacuum"/>.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 13 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -415,12 +355,6 @@ PostgreSQL documentation
        <para>
         Skip relations that cannot be immediately locked for processing.
        </para>
-       <note>
-        <para>
-         This option is only available for servers running
-         <productname>PostgreSQL</productname> 12 and later.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
