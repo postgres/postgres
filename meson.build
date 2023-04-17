@@ -634,14 +634,14 @@ if not gssapiopt.disabled()
   endif
 
   if not have_gssapi
-  elif cc.has_function('gss_init_sec_context', dependencies: gssapi,
+  elif cc.has_function('gss_store_cred_into', dependencies: gssapi,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('ENABLE_GSS', 1)
 
     krb_srvtab = 'FILE:/@0@/krb5.keytab)'.format(get_option('sysconfdir'))
     cdata.set_quoted('PG_KRB_SRVTAB', krb_srvtab)
   elif gssapiopt.enabled()
-    error('''could not find function 'gss_init_sec_context' required for GSSAPI''')
+    error('''could not find function 'gss_store_cred_into' required for GSSAPI''')
   else
     have_gssapi = false
   endif

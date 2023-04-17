@@ -1340,8 +1340,8 @@ fi
 
 if test "$with_gssapi" = yes ; then
   if test "$PORTNAME" != "win32"; then
-    AC_SEARCH_LIBS(gss_init_sec_context, [gssapi_krb5 gss 'gssapi -lkrb5 -lcrypto'], [],
-                   [AC_MSG_ERROR([could not find function 'gss_init_sec_context' required for GSSAPI])])
+    AC_SEARCH_LIBS(gss_store_cred_into, [gssapi_krb5 gss 'gssapi -lkrb5 -lcrypto'], [],
+                   [AC_MSG_ERROR([could not find function 'gss_store_cred_into' required for GSSAPI])])
   else
     LIBS="$LIBS -lgssapi32"
   fi
