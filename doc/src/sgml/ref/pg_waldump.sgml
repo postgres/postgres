@@ -242,6 +242,37 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-x <replaceable>xid</replaceable></option></term>
+      <term><option>--xid=<replaceable>xid</replaceable></option></term>
+      <listitem>
+       <para>
+        Only display records marked with the given transaction ID.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-z</option></term>
+      <term><option>--stats[=record]</option></term>
+      <listitem>
+       <para>
+        Display summary statistics (number and size of records and
+        full-page images) instead of individual records. Optionally
+        generate statistics per-record instead of per-rmgr.
+       </para>
+
+       <para>
+        If <application>pg_waldump</application> is terminated by signal
+        <systemitem>SIGINT</systemitem>
+        (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>),
+        the summary of the statistics computed is displayed up to the
+        termination point. This operation is not supported on
+        <productname>Windows</productname>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>--save-fullpage=<replaceable>save_path</replaceable></option></term>
        <listitem>
        <para>
@@ -305,37 +336,6 @@ PostgreSQL documentation
         </informaltable>
        </para>
        </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-x <replaceable>xid</replaceable></option></term>
-      <term><option>--xid=<replaceable>xid</replaceable></option></term>
-      <listitem>
-       <para>
-        Only display records marked with the given transaction ID.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-z</option></term>
-      <term><option>--stats[=record]</option></term>
-      <listitem>
-       <para>
-        Display summary statistics (number and size of records and
-        full-page images) instead of individual records. Optionally
-        generate statistics per-record instead of per-rmgr.
-       </para>
-
-       <para>
-        If <application>pg_waldump</application> is terminated by signal
-        <systemitem>SIGINT</systemitem>
-        (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>),
-        the summary of the statistics computed is displayed up to the
-        termination point. This operation is not supported on
-        <productname>Windows</productname>.
-       </para>
-      </listitem>
      </varlistentry>
 
      <varlistentry>
