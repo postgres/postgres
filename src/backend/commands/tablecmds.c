@@ -17062,8 +17062,8 @@ RangeVarCallbackForTruncate(const RangeVar *relation,
 }
 
 /*
- * Callback to RangeVarGetRelidExtended(), similar to
- * RangeVarCallbackOwnsTable() but without checks on the type of the relation.
+ * Callback for RangeVarGetRelidExtended().  Checks that the current user is
+ * the owner of the relation, or superuser.
  */
 void
 RangeVarCallbackOwnsRelation(const RangeVar *relation,
