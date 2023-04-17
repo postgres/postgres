@@ -201,7 +201,7 @@ typedef struct xl_btree_reuse_page
  * when btinsert() is called.
  *
  * The records are very similar.  The only difference is that xl_btree_delete
- * has a snapshotConflictHorizon field to generate recovery conflicts.
+ * have snapshotConflictHorizon/isCatalogRel fields for recovery conflicts.
  * (VACUUM operations can just rely on earlier conflicts generated during
  * pruning of the table whose TIDs the to-be-deleted index tuples point to.
  * There are also small differences between each REDO routine that we don't go
@@ -225,9 +225,13 @@ typedef struct xl_btree_vacuum
 	uint16		ndeleted;
 	uint16		nupdated;
 
-	/* DELETED TARGET OFFSET NUMBERS FOLLOW */
-	/* UPDATED TARGET OFFSET NUMBERS FOLLOW */
-	/* UPDATED TUPLES METADATA (xl_btree_update) ARRAY FOLLOWS */
+	/*----
+	 * In payload of blk 0 :
+	 * - DELETED TARGET OFFSET NUMBERS
+	 * - UPDATED TARGET OFFSET NUMBERS
+	 * - UPDATED TUPLES METADATA (xl_btree_update) ITEMS
+	 *----
+	 */
 } xl_btree_vacuum;
 
 #define SizeOfBtreeVacuum	(offsetof(xl_btree_vacuum, nupdated) + sizeof(uint16))
@@ -244,7 +248,7 @@ typedef struct xl_btree_delete
 	 * In payload of blk 0 :
 	 * - DELETED TARGET OFFSET NUMBERS
 	 * - UPDATED TARGET OFFSET NUMBERS
-	 * - UPDATED TUPLES METADATA (xl_btree_update) ARRAY
+	 * - UPDATED TUPLES METADATA (xl_btree_update) ITEMS
 	 *----
 	 */
 } xl_btree_delete;
