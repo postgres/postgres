@@ -277,27 +277,48 @@ bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
 }
 
 /*
+ * Should we tolerate an already-existing directory?
+ *
+ * When streaming WAL, pg_wal (or pg_xlog for pre-9.6 clusters) will have been
+ * created by the wal receiver process. Also, when the WAL directory location
+ * was specified, pg_wal (or pg_xlog) has already been created as a symbolic
+ * link before starting the actual backup.  So just ignore creation failures
+ * on related directories.
+ *
+ * If in-place tablespaces are used, pg_tblspc and subdirectories may already
+ * exist when we get here. So tolerate that case, too.
+ */
+static bool
+should_allow_existing_directory(const char *pathname)
+{
+	const char *filename = last_dir_separator(pathname) + 1;
+
+	if (strcmp(filename, "pg_wal") == 0 ||
+		strcmp(filename, "pg_xlog") == 0 ||
+		strcmp(filename, "archive_status") == 0 ||
+		strcmp(filename, "pg_tblspc") == 0)
+		return true;
+
+	if (strspn(filename, "0123456789") == strlen(filename))
+	{
+		const char *pg_tblspc = strstr(pathname, "/pg_tblspc/");
+
+		return pg_tblspc != NULL && pg_tblspc + 11 == filename;
+	}
+
+	return false;
+}
+
+/*
  * Create a directory.
  */
 static void
 extract_directory(const char *filename, mode_t mode)
 {
-	if (mkdir(filename, pg_dir_create_mode) != 0)
-	{
-		/*
-		 * When streaming WAL, pg_wal (or pg_xlog for pre-9.6 clusters) will
-		 * have been created by the wal receiver process. Also, when the WAL
-		 * directory location was specified, pg_wal (or pg_xlog) has already
-		 * been created as a symbolic link before starting the actual backup.
-		 * So just ignore creation failures on related directories.
-		 */
-		if (!((pg_str_endswith(filename, "/pg_wal") ||
-			   pg_str_endswith(filename, "/pg_xlog") ||
-			   pg_str_endswith(filename, "/archive_status")) &&
-			  errno == EEXIST))
-			pg_fatal("could not create directory \"%s\": %m",
-					 filename);
-	}
+	if (mkdir(filename, pg_dir_create_mode) != 0 &&
+		(errno != EEXIST || !should_allow_existing_directory(filename)))
+		pg_fatal("could not create directory \"%s\": %m",
+				 filename);
 
 #ifndef WIN32
 	if (chmod(filename, mode))

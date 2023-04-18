@@ -8454,9 +8454,8 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 			char		fullpath[MAXPGPATH + 10];
 			char		linkpath[MAXPGPATH];
 			char	   *relpath = NULL;
-			int			rllen;
-			StringInfoData escapedpath;
 			char	   *s;
+			PGFileType	de_type;
 
 			/* Skip anything that doesn't look like a tablespace */
 			if (strspn(de->d_name, "0123456789") != strlen(de->d_name))
@@ -8464,66 +8463,83 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 
 			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
 
-			/*
-			 * Skip anything that isn't a symlink/junction.  For testing only,
-			 * we sometimes use allow_in_place_tablespaces to create
-			 * directories directly under pg_tblspc, which would fail below.
-			 */
-			if (get_dirent_type(fullpath, de, false, ERROR) != PGFILETYPE_LNK)
-				continue;
+			de_type = get_dirent_type(fullpath, de, false, ERROR);
 
-			rllen = readlink(fullpath, linkpath, sizeof(linkpath));
-			if (rllen < 0)
+			if (de_type == PGFILETYPE_LNK)
 			{
-				ereport(WARNING,
-						(errmsg("could not read symbolic link \"%s\": %m",
-								fullpath)));
+				StringInfoData escapedpath;
+				int			rllen;
+
+				rllen = readlink(fullpath, linkpath, sizeof(linkpath));
+				if (rllen < 0)
+				{
+					ereport(WARNING,
+							(errmsg("could not read symbolic link \"%s\": %m",
+									fullpath)));
+					continue;
+				}
+				else if (rllen >= sizeof(linkpath))
+				{
+					ereport(WARNING,
+							(errmsg("symbolic link \"%s\" target is too long",
+									fullpath)));
+					continue;
+				}
+				linkpath[rllen] = '\0';
+
+				/*
+				 * Relpath holds the relative path of the tablespace directory
+				 * when it's located within PGDATA, or NULL if it's located
+				 * elsewhere.
+				 */
+				if (rllen > datadirpathlen &&
+					strncmp(linkpath, DataDir, datadirpathlen) == 0 &&
+						IS_DIR_SEP(linkpath[datadirpathlen]))
+					relpath = pstrdup(linkpath + datadirpathlen + 1);
+
+				/*
+				 * Add a backslash-escaped version of the link path to the
+				 * tablespace map file.
+				 */
+				initStringInfo(&escapedpath);
+				for (s = linkpath; *s; s++)
+				{
+					if (*s == '\n' || *s == '\r' || *s == '\\')
+						appendStringInfoChar(&escapedpath, '\\');
+					appendStringInfoChar(&escapedpath, *s);
+				}
+				appendStringInfo(tblspcmapfile, "%s %s\n",
+								 de->d_name, escapedpath.data);
+				pfree(escapedpath.data);
+			}
+			else if (de_type == PGFILETYPE_DIR)
+			{
+				/*
+				 * It's possible to use allow_in_place_tablespaces to create
+				 * directories directly under pg_tblspc, for testing purposes
+				 * only.
+				 *
+				 * In this case, we store a relative path rather than an
+				 * absolute path into the tablespaceinfo.
+				 */
+				snprintf(linkpath, sizeof(linkpath), "pg_tblspc/%s",
+						 de->d_name);
+				relpath = pstrdup(linkpath);
+			}
+			else
+			{
+				/* Skip any other file type that appears here. */
 				continue;
 			}
-			else if (rllen >= sizeof(linkpath))
-			{
-				ereport(WARNING,
-						(errmsg("symbolic link \"%s\" target is too long",
-								fullpath)));
-				continue;
-			}
-			linkpath[rllen] = '\0';
-
-			/*
-			 * Build a backslash-escaped version of the link path to include
-			 * in the tablespace map file.
-			 */
-			initStringInfo(&escapedpath);
-			for (s = linkpath; *s; s++)
-			{
-				if (*s == '\n' || *s == '\r' || *s == '\\')
-					appendStringInfoChar(&escapedpath, '\\');
-				appendStringInfoChar(&escapedpath, *s);
-			}
-
-			/*
-			 * Relpath holds the relative path of the tablespace directory
-			 * when it's located within PGDATA, or NULL if it's located
-			 * elsewhere.
-			 */
-			if (rllen > datadirpathlen &&
-				strncmp(linkpath, DataDir, datadirpathlen) == 0 &&
-				IS_DIR_SEP(linkpath[datadirpathlen]))
-				relpath = linkpath + datadirpathlen + 1;
 
 			ti = palloc(sizeof(tablespaceinfo));
 			ti->oid = pstrdup(de->d_name);
 			ti->path = pstrdup(linkpath);
-			ti->rpath = relpath ? pstrdup(relpath) : NULL;
+			ti->rpath = relpath;
 			ti->size = -1;
 
 			if (tablespaces)
 				*tablespaces = lappend(*tablespaces, ti);
-
-			appendStringInfo(tblspcmapfile, "%s %s\n",
-							 ti->oid, escapedpath.data);
-
-			pfree(escapedpath.data);
 		}
 		FreeDir(tblspcdir);
 
