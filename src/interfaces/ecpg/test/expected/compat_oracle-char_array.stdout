@@ -6,5 +6,10 @@ Full Str.  :  Short  Ind.
 "ABCDEF    ": "ABCD"  6
 "ABCDEFGHIJ": "ABCD"  10
 
+-----------------
+type    : data
+numeric : "123"
+varchar : "t"
+
 GOOD-BYE!!
 
