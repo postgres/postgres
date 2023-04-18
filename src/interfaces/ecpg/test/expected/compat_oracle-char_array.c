@@ -67,7 +67,7 @@ int main() {
 
 
   const char *ppppp = "XXXXX";
-  int loopcount;
+  int loopcount, i;
   sqlda_t *sqlda = NULL;
 
   /* exec sql begin declare section */
@@ -280,7 +280,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
   printf("\n-----------------\ntype    : data\n");
-  for (int i = 0 ; i < sqlda->sqld ; i++)
+  for (i = 0 ; i < sqlda->sqld ; i++)
   {
 	  sqlvar_t v = sqlda->sqlvar[i];
 	  char *sqldata = v.sqldata;

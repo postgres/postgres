@@ -23,7 +23,7 @@ int main() {
   EXEC SQL WHENEVER SQLERROR SQLPRINT;
 
   const char *ppppp = "XXXXX";
-  int loopcount;
+  int loopcount, i;
   sqlda_t *sqlda = NULL;
 
   EXEC SQL BEGIN DECLARE SECTION;
@@ -70,7 +70,7 @@ int main() {
   EXEC SQL FETCH NEXT FROM cur1 INTO DESCRIPTOR sqlda;
 
   printf("\n-----------------\ntype    : data\n");
-  for (int i = 0 ; i < sqlda->sqld ; i++)
+  for (i = 0 ; i < sqlda->sqld ; i++)
   {
 	  sqlvar_t v = sqlda->sqlvar[i];
 	  char *sqldata = v.sqldata;
