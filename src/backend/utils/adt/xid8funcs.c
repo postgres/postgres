@@ -678,7 +678,7 @@ pg_xact_status(PG_FUNCTION_ARGS)
 		Assert(TransactionIdIsValid(xid));
 
 		/*
-		 * Like when doing visiblity checks on a row, check whether the
+		 * Like when doing visibility checks on a row, check whether the
 		 * transaction is still in progress before looking into the CLOG.
 		 * Otherwise we would incorrectly return "committed" for a transaction
 		 * that is committing and has already updated the CLOG, but hasn't

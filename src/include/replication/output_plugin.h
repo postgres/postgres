@@ -112,7 +112,7 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
 											  const char *gid);
 
 /*
- * Callback called for every BEGIN of a prepared trnsaction.
+ * Callback called for every BEGIN of a prepared transaction.
  */
 typedef void (*LogicalDecodeBeginPrepareCB) (struct LogicalDecodingContext *ctx,
 											 ReorderBufferTXN *txn);

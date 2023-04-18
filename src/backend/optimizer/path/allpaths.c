@@ -4051,7 +4051,7 @@ recurse_push_qual(Node *setOp, Query *topquery,
  *
  * extra_used_attrs can be passed as non-NULL to mark any columns (offset by
  * FirstLowInvalidHeapAttributeNumber) that we should not remove.  This
- * parameter is modifed by the function, so callers must make a copy if they
+ * parameter is modified by the function, so callers must make a copy if they
  * need to use the passed in Bitmapset after calling this function.
  *
  * To avoid affecting column numbering in the targetlist, we don't physically

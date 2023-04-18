@@ -321,7 +321,7 @@ tas(volatile slock_t *lock)
 /*
  * Solaris has always run sparc processors in TSO (total store) mode, but
  * linux didn't use to and the *BSDs still don't. So, be careful about
- * acquire/release semantics. The CPU will treat superfluous membars as
+ * acquire/release semantics. The CPU will treat superfluous members as
  * NOPs, so it's just code space.
  */
 #define HAS_TEST_AND_SET

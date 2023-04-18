@@ -165,7 +165,7 @@ bbstreamer_buffer_bytes(bbstreamer *streamer, const char **data, int *len,
 }
 
 /*
- * This is a convenence method for use when implementing a bbstreamer; it is
+ * This is a convenience method for use when implementing a bbstreamer; it is
  * not for use by outsider callers. It attempts to add enough data to the
  * bbstreamer's buffer to reach a length of target_bytes and adjusts '*len'
  * and '*data' accordingly. It returns true if the target length has been

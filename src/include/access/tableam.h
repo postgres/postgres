@@ -1895,7 +1895,7 @@ table_relation_toast_am(Relation rel)
  *
  * toastrel is the relation in which the toasted value is stored.
  *
- * valueid identifes which toast value is to be fetched. For the heap,
+ * valueid identifies which toast value is to be fetched. For the heap,
  * this corresponds to the values stored in the chunk_id column.
  *
  * attrsize is the total size of the toast value to be fetched.

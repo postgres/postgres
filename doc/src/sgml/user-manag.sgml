@@ -346,7 +346,7 @@ ALTER ROLE myname SET enable_indexscan TO off;
    role using <literal>SET ROLE</literal>. However, since any user who has
    <literal>ADMIN OPTION</literal> on a role can grant membership in that
    role to any other user, the <literal>CREATEROLE</literal> user can gain
-   access to the created role by simplying granting that role back to
+   access to the created role by simply granting that role back to
    themselves with the <literal>INHERIT</literal> and/or <literal>SET</literal>
    options. Thus, the fact that privileges are not inherited by default nor
    is <literal>SET ROLE</literal> granted by default is a safeguard against

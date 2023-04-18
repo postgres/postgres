@@ -3,7 +3,7 @@
 void
 t(void)
 {
-	/* The two if statements below excercise two different code paths. */
+	/* The two if statements below exercise two different code paths. */
 
 	if (1)			/* a */
 		int		a;

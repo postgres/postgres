@@ -1,7 +1,7 @@
 /* $FreeBSD$ */
 /* See r303484 and r309342 */
 void t(void) {
-	/* The two if statements below excercise two different code paths. */
+	/* The two if statements below exercise two different code paths. */
 
 	if (1) /* a */ int a; else /* b */ int b;
 

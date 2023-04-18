@@ -1,6 +1,6 @@
 # Exercise the case where a read-only serializable transaction has
 # SXACT_FLAG_RO_SAFE set in a parallel query.  This variant is like
-# two copies of #2 running at the same time, and excercises the case
+# two copies of #2 running at the same time, and exercises the case
 # where another transaction has the same xmin, and it is the oldest.
 
 setup

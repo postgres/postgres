@@ -3541,7 +3541,7 @@ printVerboseErrorMessages(CState *st, pg_time_usec_t *now, bool is_retry)
 							   "ends the failed transaction"));
 	appendPQExpBuffer(buf, " (try %u", st->tries);
 
-	/* Print max_tries if it is not unlimitted. */
+	/* Print max_tries if it is not unlimited. */
 	if (max_tries)
 		appendPQExpBuffer(buf, "/%u", max_tries);
 
@@ -5303,7 +5303,7 @@ GetTableInfo(PGconn *con, bool scale_given)
 		pg_log_error_hint("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".", PQdb(con));
 		exit(1);
 	}
-	else						/* PQntupes(res) == 1 */
+	else						/* PQntuples(res) == 1 */
 	{
 		/* normal case, extract partition information */
 		if (PQgetisnull(res, 0, 1))

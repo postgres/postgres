@@ -1771,7 +1771,7 @@ static void
 pgoutput_stream_stop(struct LogicalDecodingContext *ctx,
 					 ReorderBufferTXN *txn)
 {
-	/* we should be streaming a trasanction */
+	/* we should be streaming a transaction */
 	Assert(in_streaming);
 
 	OutputPluginPrepareWrite(ctx, true);

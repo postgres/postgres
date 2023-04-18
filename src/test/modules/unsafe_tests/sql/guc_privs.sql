@@ -133,7 +133,7 @@ GRANT SET, ALTER SYSTEM ON PARAMETER
     autovacuum_work_mem, hash_mem_multiplier, max_stack_depth,
     shared_buffers, temp_file_limit, work_mem
 TO regress_host_resource_admin;
--- Check the new role now has privilges on parameters
+-- Check the new role now has privileges on parameters
 SELECT has_parameter_privilege('regress_host_resource_admin', 'work_mem', 'SET, ALTER SYSTEM');
 SELECT has_parameter_privilege('regress_host_resource_admin', 'work_mem', 'SET');
 SELECT has_parameter_privilege('regress_host_resource_admin', 'work_mem', 'ALTER SYSTEM');
