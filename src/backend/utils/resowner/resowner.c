@@ -521,7 +521,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 	{
 		/*
 		 * Abort failed buffer IO. AbortBufferIO()->TerminateBufferIO() calls
-		 * ResourceOwnerForgetBufferIOs(), so we just have to iterate till
+		 * ResourceOwnerForgetBufferIO(), so we just have to iterate till
 		 * there are none.
 		 *
 		 * Needs to be before we release buffer pins.

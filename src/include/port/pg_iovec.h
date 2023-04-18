@@ -36,7 +36,7 @@ struct iovec
 #define PG_IOV_MAX Min(IOV_MAX, 32)
 
 /*
- * Note that pg_preadv and pg_writev have a pg_ prefix as a warning that the
+ * Note that pg_preadv and pg_pwritev have a pg_ prefix as a warning that the
  * Windows implementations have the side-effect of changing the file position.
  */
 

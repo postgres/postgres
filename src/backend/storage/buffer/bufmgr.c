@@ -2046,7 +2046,7 @@ ExtendBufferedRelShared(ExtendBufferedWhat eb,
 	io_start = pgstat_prepare_io_time();
 
 	/*
-	 * Note: if smgzerorextend fails, we will end up with buffers that are
+	 * Note: if smgrzeroextend fails, we will end up with buffers that are
 	 * allocated but not marked BM_VALID.  The next relation extension will
 	 * still select the same block number (because the relation didn't get any
 	 * longer on disk) and so future attempts to extend the relation will find

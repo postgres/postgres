@@ -37,8 +37,8 @@
  * In some cases, for example when memory allocations become large, it's
  * possible fields 3 and 4 above are not large enough to store the values
  * required for the chunk.  In this case, the MemoryContext can choose to mark
- * the chunk as "external" by calling the MemoryChunkSetExternal() function.
- * When this is done, fields 3 and 4 are unavailable for use by the
+ * the chunk as "external" by calling the MemoryChunkSetHdrMaskExternal()
+ * function.  When this is done, fields 3 and 4 are unavailable for use by the
  * MemoryContext and it's up to the MemoryContext itself to devise its own
  * method for getting the reference to the block.
  *

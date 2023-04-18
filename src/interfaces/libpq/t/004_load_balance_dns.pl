@@ -14,17 +14,17 @@ if ($ENV{PG_TEST_EXTRA} !~ /\bload_balance\b/)
 
 # This tests loadbalancing based on a DNS entry that contains multiple records
 # for different IPs. Since setting up a DNS server is more effort than we
-# consider reasonable to run this test, this situation is instead immitated by
+# consider reasonable to run this test, this situation is instead imitated by
 # using a hosts file where a single hostname maps to multiple different IP
-# addresses. This test requires the adminstrator to add the following lines to
-# the hosts file (if we detect that this hasn't happend we skip the test):
+# addresses. This test requires the administrator to add the following lines to
+# the hosts file (if we detect that this hasn't happened we skip the test):
 #
 # 127.0.0.1 pg-loadbalancetest
 # 127.0.0.2 pg-loadbalancetest
 # 127.0.0.3 pg-loadbalancetest
 #
 # Windows or Linux are required to run this test because these OSes allow
-# binding to 127.0.0.2 and 127.0.0.3 addresess by default, but other OSes
+# binding to 127.0.0.2 and 127.0.0.3 addresses by default, but other OSes
 # don't. We need to bind to different IP addresses, so that we can use these
 # different IP addresses in the hosts file.
 #

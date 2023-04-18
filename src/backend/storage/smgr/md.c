@@ -597,7 +597,7 @@ mdzeroextend(SMgrRelation reln, ForkNumber forknum,
 			/*
 			 * Even if we don't want to use fallocate, we can still extend a
 			 * bit more efficiently than writing each 8kB block individually.
-			 * pg_pwrite_zeroes() (via FileZero()) uses
+			 * pg_pwrite_zeros() (via FileZero()) uses
 			 * pg_pwritev_with_retry() to avoid multiple writes or needing a
 			 * zeroed buffer for the whole length of the extension.
 			 */

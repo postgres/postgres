@@ -276,7 +276,7 @@ test_status_print(bool ok, const char *testname, double runtime, bool parallel)
 	 * Testnumbers are padded to 5 characters to ensure that testnames align
 	 * vertically (assuming at most 9999 tests).  Testnames are prefixed with
 	 * a leading character to indicate being run in parallel or not. A leading
-	 * '+' indicates a parellel test, '-' indicates a single test.
+	 * '+' indicates a parallel test, '-' indicates a single test.
 	 */
 	emit_tap_output(TEST_STATUS, "%sok %-5i%*s %c %-*s %8.0f ms",
 					(ok ? "" : "not "),

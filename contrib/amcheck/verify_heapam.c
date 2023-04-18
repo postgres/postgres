@@ -1009,7 +1009,7 @@ check_tuple_header(HeapCheckContext *ctx)
  * TOAST tuples -- are eligible for pruning.
  *
  * Sets *xmin_commit_status_ok to true if the commit status of xmin is known
- * and false otherwise. If it's set to true, then also set *xid_commit_status
+ * and false otherwise. If it's set to true, then also set *xmin_commit_status
  * to the actual commit status.
  */
 static bool

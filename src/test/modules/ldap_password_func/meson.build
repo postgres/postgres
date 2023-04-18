@@ -9,7 +9,7 @@ ldap_password_func_sources = files(
 if host_system == 'windows'
   ldap_password_func_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
     '--NAME', 'ldap_password_func',
-    '--FILEDESC', 'set hook to mutate ldapbindpassw',])
+    '--FILEDESC', 'set hook to mutate ldapbindpasswd',])
 endif
 
 ldap_password_func = shared_module('ldap_password_func',

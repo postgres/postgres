@@ -1387,7 +1387,7 @@ check_GUC_name_for_parameter_acl(const char *name)
  *
  * This performs two sanity checks.  First, it checks that the initial
  * value of a GUC is the same when declared and when loaded to prevent
- * anybody looking at the C declarations of these GUCS from being fooled by
+ * anybody looking at the C declarations of these GUCs from being fooled by
  * mismatched values.  Second, it checks for incorrect flag combinations.
  *
  * The following validation rules apply for the values:
@@ -6272,7 +6272,7 @@ ProcessGUCArray(ArrayType *array, ArrayType *usersetArray,
 			userSetDatum = BoolGetDatum(false);
 
 		/*
-		 * USER SET values are appliciable only for PGC_USERSET parameters. We
+		 * USER SET values are applicable only for PGC_USERSET parameters. We
 		 * use InvalidOid as role in order to evade possible privileges of the
 		 * current user.
 		 */
@@ -6365,8 +6365,8 @@ GUCArrayAdd(ArrayType *array, ArrayType **usersetArray,
 				}
 
 				/*
-				 * Recheck permissons if we found an option without USER SET
-				 * flag while we're setting an optionn with USER SET flag.
+				 * Recheck permissions if we found an option without USER SET
+				 * flag while we're setting an option with USER SET flag.
 				 */
 				if (!currentUserSet && user_set)
 					(void) validate_option_array_item(name, value,

@@ -5016,7 +5016,7 @@ postgresGetAnalyzeInfoForForeignTable(Relation relation, bool *can_tablesample)
 			pgfdw_report_error(ERROR, res, conn, false, sql.data);
 
 		if (PQntuples(res) != 1 || PQnfields(res) != 2)
-			elog(ERROR, "unexpected result from deparseAnalyzeTuplesSql query");
+			elog(ERROR, "unexpected result from deparseAnalyzeInfoSql query");
 		reltuples = strtod(PQgetvalue(res, 0, 0), NULL);
 		relkind = *(PQgetvalue(res, 0, 1));
 	}

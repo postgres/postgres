@@ -1043,7 +1043,7 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 		state1->nitems += state2->nitems;
 
 		state1->dims[0] += state2->dims[0];
-		/* remaing dims already match, per test above */
+		/* remaining dims already match, per test above */
 
 		Assert(state1->array_type == state2->array_type);
 		Assert(state1->element_type == state2->element_type);

@@ -1403,7 +1403,7 @@ GetResultRTEPermissionInfo(ResultRelInfo *relinfo, EState *estate)
 }
 
 /*
- * GetResultRelCheckAsUser
+ * ExecGetResultRelCheckAsUser
  *		Returns the user to modify passed-in result relation as
  *
  * The user is chosen by looking up the relation's or, if a child table, its

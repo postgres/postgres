@@ -413,7 +413,7 @@ test_query(
 $node->connect_ok(
 	$node->connstr('postgres')
 	  . " user=test1 host=$host hostaddr=$hostaddr gssencmode=disable require_auth=gss",
-	"GSS authentication requested, works with non-encyrpted GSS");
+	"GSS authentication requested, works with non-encrypted GSS");
 $node->connect_ok(
 	$node->connstr('postgres')
 	  . " user=test1 host=$host hostaddr=$hostaddr gssencmode=require require_auth=gss",

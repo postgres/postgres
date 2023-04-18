@@ -1686,7 +1686,7 @@ pgfdw_abort_cleanup(ConnCacheEntry *entry, bool toplevel)
  *
  * Returns true if the abort command or cancel request is successfully issued,
  * false otherwise.  If the abort command is successfully issued, the given
- * connection cache entry is appended to *pending_entries.  Othewise, if the
+ * connection cache entry is appended to *pending_entries.  Otherwise, if the
  * cancel request is successfully issued, it is appended to *cancel_requested.
  */
 static bool

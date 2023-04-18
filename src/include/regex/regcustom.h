@@ -44,7 +44,7 @@
 
 #include "mb/pg_wchar.h"
 
-#include "miscadmin.h"			/* needed by stacktoodeep */
+#include "miscadmin.h"			/* needed by rstacktoodeep */
 
 
 /* overrides for regguts.h definitions, if any */

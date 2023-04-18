@@ -1923,7 +1923,7 @@ dumpTimestamp(const char *msg)
 }
 
 /*
- * Helper function for rolenamehash hash table.
+ * Helper function for rolename_hash hash table.
  */
 static uint32
 hash_string_pointer(char *s)

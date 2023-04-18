@@ -71,7 +71,7 @@ $node->issues_sql_like(
 	'vacuumdb --no-process-main');
 $node->command_fails(
 	[ 'vacuumdb', '--analyze-only', '--no-process-main', 'postgres' ],
-	'--analyze-only and --no-process_main specified together');
+	'--analyze-only and --no-process-main specified together');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--no-process-toast', 'postgres' ],
 	qr/statement: VACUUM \(PROCESS_TOAST FALSE, SKIP_DATABASE_STATS\).*;/,

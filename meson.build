@@ -2963,7 +2963,7 @@ endif
 # generation happens during install, so that's not a real issue.
 nls_mo_targets = []
 if libintl.found() and meson.version().version_compare('>=0.60')
-  # use range() to avoid the flattening of the list that forech() would do
+  # use range() to avoid the flattening of the list that foreach() would do
   foreach off : range(0, nls_targets.length())
     # i18n.gettext() list containing 1) list of built .mo files 2) maintainer
     # -pot target 3) maintainer -pot target

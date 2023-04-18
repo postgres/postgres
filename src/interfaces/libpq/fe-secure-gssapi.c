@@ -624,7 +624,7 @@ pqsecure_open_gss(PGconn *conn)
 
 	if (conn->gssdeleg && pg_strcasecmp(conn->gssdeleg, "enable") == 0)
 	{
-		/* Acquire credentials if possbile */
+		/* Acquire credentials if possible */
 		if (conn->gcred == GSS_C_NO_CREDENTIAL)
 			(void) pg_GSS_have_cred_cache(&conn->gcred);
 

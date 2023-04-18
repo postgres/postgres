@@ -254,7 +254,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 
 	total_checksum_failures = 0;
 
-	/* Allocate backup related varilables. */
+	/* Allocate backup related variables. */
 	backup_state = (BackupState *) palloc0(sizeof(BackupState));
 	tablespace_map = makeStringInfo();
 

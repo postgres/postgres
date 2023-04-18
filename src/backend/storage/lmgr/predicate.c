@@ -164,7 +164,7 @@
  *		PredicateLockPage(Relation relation, BlockNumber blkno,
  *						Snapshot snapshot)
  *		PredicateLockTID(Relation relation, ItemPointer tid, Snapshot snapshot,
- *						 TransactionId insert_xid)
+ *						 TransactionId tuple_xid)
  *		PredicateLockPageSplit(Relation relation, BlockNumber oldblkno,
  *							   BlockNumber newblkno)
  *		PredicateLockPageCombine(Relation relation, BlockNumber oldblkno,

@@ -63,4 +63,4 @@ extern void offset_elem_desc(StringInfo buf, void *offset, void *data);
 extern void redirect_elem_desc(StringInfo buf, void *offset, void *data);
 extern void oid_elem_desc(StringInfo buf, void *relid, void *data);
 
-#endif							/* RMGRDESC_UTILS_H */
+#endif							/* RMGRDESC_UTILS_H_ */

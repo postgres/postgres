@@ -4825,7 +4825,7 @@ RoleMembershipCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
  * Get a list of roles that the specified roleid is a member of
  *
  * Type ROLERECURSE_MEMBERS recurses through all grants; ROLERECURSE_PRIVS
- * recurses only through inheritable grants; and ROLERECURSE_SETROLe recurses
+ * recurses only through inheritable grants; and ROLERECURSE_SETROLE recurses
  * only through grants with set_option.
  *
  * Since indirect membership testing is relatively expensive, we cache
@@ -5020,7 +5020,7 @@ member_can_set_role(Oid member, Oid role)
 }
 
 /*
- * Permission violation eror unless able to SET ROLE to target role.
+ * Permission violation error unless able to SET ROLE to target role.
  */
 void
 check_can_set_role(Oid member, Oid role)

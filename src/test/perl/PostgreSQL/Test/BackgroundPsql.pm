@@ -68,7 +68,7 @@ use Test::More;
 
 =over
 
-=item PostgreSQL::Test::BackroundPsql->new(interactive, @params)
+=item PostgreSQL::Test::BackgroundPsql->new(interactive, @params)
 
 Builds a new object of class C<PostgreSQL::Test::BackgroundPsql> for either
 an interactive or background session and starts it. If C<interactive> is
@@ -201,7 +201,7 @@ sub query
 	$self->{timeout}->start() if (defined($self->{query_timer_restart}));
 
 	# Feed the query to psql's stdin, followed by \n (so psql processes the
-	# line), by a ; (so that psql issues the query, if it doesnt't include a ;
+	# line), by a ; (so that psql issues the query, if it doesn't include a ;
 	# itself), and a separator echoed with \echo, that we can wait on.
 	my $banner = "background_psql: QUERY_SEPARATOR";
 	$self->{stdin} .= "$query\n;\n\\echo $banner\n";

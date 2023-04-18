@@ -342,7 +342,7 @@ LZ4Stream_get_error(CompressFileHandle *CFH)
 /*
  * Initialize an already alloc'ed LZ4State struct for subsequent calls.
  *
- * Creates the necessary contexts for either compresion or decompression. When
+ * Creates the necessary contexts for either compression or decompression. When
  * compressing data (indicated by compressing=true), it additionally writes the
  * LZ4 header in the output stream.
  *

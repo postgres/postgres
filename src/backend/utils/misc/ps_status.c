@@ -87,7 +87,7 @@ static size_t ps_buffer_cur_len;	/* nominal strlen(ps_buffer) */
 static size_t ps_buffer_fixed_size; /* size of the constant prefix */
 
 /*
- * Length of ps_buffer before the suffix was appeneded to the end, or 0 if we
+ * Length of ps_buffer before the suffix was appended to the end, or 0 if we
  * didn't set a suffix.
  */
 static size_t ps_buffer_nosuffix_len;

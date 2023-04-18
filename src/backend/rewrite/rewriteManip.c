@@ -343,7 +343,7 @@ contains_multiexpr_param(Node *node, void *context)
  * the RTEs in 'src_rtable' to now point to the perminfos' indexes in
  * *dst_perminfos.
  *
- * Note that this changes both 'dst_rtable' and 'dst_perminfo' destructively,
+ * Note that this changes both 'dst_rtable' and 'dst_perminfos' destructively,
  * so the caller should have better passed safe-to-modify copies.
  */
 void

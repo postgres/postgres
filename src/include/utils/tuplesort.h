@@ -146,7 +146,7 @@ typedef int (*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
 
 /*
  * The public part of a Tuple sort operation state.  This data structure
- * containsthe  definition of sort-variant-specific interface methods and
+ * contains the definition of sort-variant-specific interface methods and
  * the part of Tuple sort operation state required by their implementations.
  */
 typedef struct
@@ -189,7 +189,7 @@ typedef struct
 	 * Function to do some specific release of resources for the sort variant.
 	 * In particular, this function should free everything stored in the "arg"
 	 * field, which wouldn't be cleared on reset of the Tuple sort memory
-	 * contextes.  This can be NULL if nothing specific needs to be done.
+	 * contexts.  This can be NULL if nothing specific needs to be done.
 	 */
 	void		(*freestate) (Tuplesortstate *state);
 

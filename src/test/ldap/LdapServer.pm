@@ -19,7 +19,7 @@ LdapServer - class for an LDAP server for testing pg_hba.conf authentication
 
   use LdapServer;
 
-  # have we found openldap binaies suitable for setting up a server?
+  # have we found openldap binaries suitable for setting up a server?
   my $ldap_binaries_found = $LdapServer::setup;
 
   # create a server with the given root password and auth type
@@ -254,7 +254,7 @@ sub _ldapenv
 
 =over
 
-=item ldap_add(filename)
+=item ldapadd_file(filename)
 
 filename is the path to a file containing LDIF data which is added to the LDAP
 server.
