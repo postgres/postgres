@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <pgtypes_numeric.h>
+
+EXEC SQL INCLUDE sqlda.h;
+
 EXEC SQL INCLUDE ../regression;
 
 static void warn(void)
@@ -20,6 +24,8 @@ int main() {
 
   const char *ppppp = "XXXXX";
   int loopcount;
+  sqlda_t *sqlda = NULL;
+
   EXEC SQL BEGIN DECLARE SECTION;
   char shortstr[5];
   char bigstr[11];
@@ -53,10 +59,33 @@ int main() {
 
   EXEC SQL CLOSE C;
   EXEC SQL DROP TABLE strdbase;
+  EXEC SQL COMMIT WORK;
+
+  /* SQLDA handling */
+  EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+  EXEC SQL WHENEVER NOT FOUND STOP;
+  EXEC SQL PREPARE stmt1 FROM "SELECT 123::numeric(3,0), 't'::varchar(2)";
+  EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
+  EXEC SQL OPEN cur1;
+  EXEC SQL FETCH NEXT FROM cur1 INTO DESCRIPTOR sqlda;
+
+  printf("\n-----------------\ntype    : data\n");
+  for (int i = 0 ; i < sqlda->sqld ; i++)
+  {
+	  sqlvar_t v = sqlda->sqlvar[i];
+	  char *sqldata = v.sqldata;
+
+	  if (v.sqltype == ECPGt_numeric)
+		  sqldata =
+			  PGTYPESnumeric_to_asc((numeric*) sqlda->sqlvar[i].sqldata, -1);
+
+	  printf("%-8s: \"%s\"\n", v.sqlname.data, sqldata);
+  }
+
+  EXEC SQL CLOSE cur1;
+  EXEC SQL COMMIT WORK;
 
   printf("\nGOOD-BYE!!\n\n");
-
-  EXEC SQL COMMIT WORK;
 
   EXEC SQL DISCONNECT ALL;
 
