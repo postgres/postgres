@@ -2769,8 +2769,8 @@ _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
 
 	/* Perform deduplication pass (when enabled and index-is-allequalimage) */
 	if (BTGetDeduplicateItems(rel) && itup_key->allequalimage)
-		_bt_dedup_pass(rel, buffer, heapRel, insertstate->itup,
-					   insertstate->itemsz, (indexUnchanged || uniquedup));
+		_bt_dedup_pass(rel, buffer, insertstate->itup, insertstate->itemsz,
+					   (indexUnchanged || uniquedup));
 }
 
 /*

@@ -55,8 +55,8 @@ static bool _bt_posting_valid(IndexTuple posting);
  * LP_DEAD bits set.
  */
 void
-_bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
-			   Size newitemsz, bool bottomupdedup)
+_bt_dedup_pass(Relation rel, Buffer buf, IndexTuple newitem, Size newitemsz,
+			   bool bottomupdedup)
 {
 	OffsetNumber offnum,
 				minoff,
