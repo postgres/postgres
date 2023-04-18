@@ -2,138 +2,174 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 33: query: create table strdbase ( strval varchar ( 10 ) ); with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 33: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 33: OK: CREATE TABLE
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 34: query: insert into strdbase values ( '' ); with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 34: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 34: OK: INSERT 0 1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 35: query: insert into strdbase values ( 'AB' ); with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 35: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 35: OK: INSERT 0 1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 36: query: insert into strdbase values ( 'ABCD' ); with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 36: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 36: OK: INSERT 0 1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 37: query: insert into strdbase values ( 'ABCDE' ); with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 37: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 37: OK: INSERT 0 1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 38: query: insert into strdbase values ( 'ABCDEF' ); with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 38: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 38: OK: INSERT 0 1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 39: query: insert into strdbase values ( 'ABCDEFGHIJ' ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 39: query: create table strdbase ( strval varchar ( 10 ) ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 39: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 39: OK: INSERT 0 1
+[NO_PID]: ecpg_process_output on line 39: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 42: query: declare C cursor for select strval , strval from strdbase; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 40: query: insert into strdbase values ( '' ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 40: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 40: OK: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 41: query: insert into strdbase values ( 'AB' ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 41: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 41: OK: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 42: query: insert into strdbase values ( 'ABCD' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 42: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 42: OK: DECLARE CURSOR
+[NO_PID]: ecpg_process_output on line 42: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 43: query: insert into strdbase values ( 'ABCDE' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: using PQexec
+[NO_PID]: ecpg_execute on line 43: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 50: correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_process_output on line 43: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_execute on line 44: query: insert into strdbase values ( 'ABCDEF' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT:  offset: -1; array: no
+[NO_PID]: ecpg_execute on line 44: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_process_output on line 44: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: using PQexec
+[NO_PID]: ecpg_execute on line 45: query: insert into strdbase values ( 'ABCDEFGHIJ' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 50: correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 45: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: AB offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 45: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: AB offset: -1; array: no
+[NO_PID]: ecpg_execute on line 48: query: declare C cursor for select strval , strval from strdbase; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 48: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: using PQexec
+[NO_PID]: ecpg_process_output on line 48: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 50: correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 56: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: ABCD offset: -1; array: no
+[NO_PID]: ecpg_execute on line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: ABCD offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 56: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_get_data on line 56: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: using PQexec
+[NO_PID]: ecpg_get_data on line 56: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 50: correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 56: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: ABCDE offset: -1; array: no
+[NO_PID]: ecpg_execute on line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: ABCDE offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 56: correctly got 1 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 56: RESULT: AB offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 56: RESULT: AB offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 56: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 56: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 56: correctly got 1 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 56: RESULT: ABCD offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 56: RESULT: ABCD offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 56: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 56: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 56: correctly got 1 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 56: RESULT: ABCDE offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 56: RESULT: ABCDE offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 Warning: At least one column was truncated
-[NO_PID]: ecpg_execute on line 50: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 56: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: using PQexec
+[NO_PID]: ecpg_execute on line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 50: correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_process_output on line 56: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: ABCDEF offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 56: RESULT: ABCDEF offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: ABCDEF offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-Warning: At least one column was truncated
-[NO_PID]: ecpg_execute on line 50: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 50: correctly got 1 tuples with 2 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: ABCDEFGHIJ offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 50: RESULT: ABCDEFGHIJ offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 56: RESULT: ABCDEF offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 Warning: At least one column was truncated
-[NO_PID]: ecpg_execute on line 50: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 56: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: using PQexec
+[NO_PID]: ecpg_execute on line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 50: correctly got 0 tuples with 2 fields
+[NO_PID]: ecpg_process_output on line 56: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 on line 50: no data found on line 50
+[NO_PID]: ecpg_get_data on line 56: RESULT: ABCDEFGHIJ offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 56: RESULT: ABCDEFGHIJ offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+Warning: At least one column was truncated
+[NO_PID]: ecpg_execute on line 56: query: fetch C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 56: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 56: correctly got 0 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode 100 on line 56: no data found on line 56
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 54: query: close C; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 60: query: close C; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 54: using PQexec
+[NO_PID]: ecpg_execute on line 60: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 54: OK: CLOSE CURSOR
+[NO_PID]: ecpg_process_output on line 60: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: query: drop table strdbase; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 61: query: drop table strdbase; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: using PQexec
+[NO_PID]: ecpg_execute on line 61: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 55: OK: DROP TABLE
+[NO_PID]: ecpg_process_output on line 61: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 59: action "commit work"; connection "ecpg1_regression"
+[NO_PID]: ECPGtrans on line 62: action "commit work"; connection "ecpg1_regression"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: prepare_common on line 67: name stmt1; query: "SELECT 123::numeric(3,0), 't'::varchar(2)"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 69: query: declare cur1 cursor for SELECT 123::numeric(3,0), 't'::varchar(2); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 69: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 69: OK: DECLARE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 70: query: fetch next from cur1; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 70: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 70: correctly got 1 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_build_native_sqlda on line 70 sqld = 2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 70: new sqlda was built
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_set_native_sqlda on line 70 row 0 col 0 IS NOT NULL
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_set_native_sqlda on line 70 row 0 col 1 IS NOT NULL
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 70: RESULT: t offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 70: putting result (1 tuple 2 fields) into sqlda descriptor
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 85: query: close cur1; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 85: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 85: OK: CLOSE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans on line 86: action "commit work"; connection "ecpg1_regression"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: deallocate_one on line 0: name stmt1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000
