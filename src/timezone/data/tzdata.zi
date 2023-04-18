@@ -1,4 +1,4 @@
-# version 2022g
+# version 2023c
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -75,6 +75,8 @@ R K 2014 o - May 15 24 1 S
 R K 2014 o - Jun 26 24 0 -
 R K 2014 o - Jul 31 24 1 S
 R K 2014 o - S lastTh 24 0 -
+R K 2023 ma - Ap lastF 0 1 S
+R K 2023 ma - O lastTh 24 0 -
 Z Africa/Cairo 2:5:9 - LMT 1900 O
 2 K EE%sT
 Z Africa/Bissau -1:2:20 - LMT 1912 Ja 1 1u
@@ -172,7 +174,7 @@ R M 2021 o - May 16 2 0 -
 R M 2022 o - Mar 27 3 -1 -
 R M 2022 o - May 8 2 0 -
 R M 2023 o - Mar 19 3 -1 -
-R M 2023 o - Ap 30 2 0 -
+R M 2023 o - Ap 23 2 0 -
 R M 2024 o - Mar 10 3 -1 -
 R M 2024 o - Ap 14 2 0 -
 R M 2025 o - F 23 3 -1 -
@@ -188,7 +190,7 @@ R M 2029 o - F 18 2 0 -
 R M 2029 o - D 30 3 -1 -
 R M 2030 o - F 10 2 0 -
 R M 2030 o - D 22 3 -1 -
-R M 2031 o - F 2 2 0 -
+R M 2031 o - Ja 26 2 0 -
 R M 2031 o - D 14 3 -1 -
 R M 2032 o - Ja 18 2 0 -
 R M 2032 o - N 28 3 -1 -
@@ -204,7 +206,7 @@ R M 2036 o - N 23 2 0 -
 R M 2037 o - O 4 3 -1 -
 R M 2037 o - N 15 2 0 -
 R M 2038 o - S 26 3 -1 -
-R M 2038 o - N 7 2 0 -
+R M 2038 o - O 31 2 0 -
 R M 2039 o - S 18 3 -1 -
 R M 2039 o - O 23 2 0 -
 R M 2040 o - S 2 3 -1 -
@@ -220,7 +222,7 @@ R M 2044 o - Au 28 2 0 -
 R M 2045 o - Jul 9 3 -1 -
 R M 2045 o - Au 20 2 0 -
 R M 2046 o - Jul 1 3 -1 -
-R M 2046 o - Au 12 2 0 -
+R M 2046 o - Au 5 2 0 -
 R M 2047 o - Jun 23 3 -1 -
 R M 2047 o - Jul 28 2 0 -
 R M 2048 o - Jun 7 3 -1 -
@@ -236,7 +238,7 @@ R M 2052 o - Jun 2 2 0 -
 R M 2053 o - Ap 13 3 -1 -
 R M 2053 o - May 25 2 0 -
 R M 2054 o - Ap 5 3 -1 -
-R M 2054 o - May 17 2 0 -
+R M 2054 o - May 10 2 0 -
 R M 2055 o - Mar 28 3 -1 -
 R M 2055 o - May 2 2 0 -
 R M 2056 o - Mar 12 3 -1 -
@@ -252,7 +254,7 @@ R M 2060 o - Mar 7 2 0 -
 R M 2061 o - Ja 16 3 -1 -
 R M 2061 o - F 27 2 0 -
 R M 2062 o - Ja 8 3 -1 -
-R M 2062 o - F 19 2 0 -
+R M 2062 o - F 12 2 0 -
 R M 2062 o - D 31 3 -1 -
 R M 2063 o - F 4 2 0 -
 R M 2063 o - D 16 3 -1 -
@@ -268,7 +270,7 @@ R M 2067 o - D 11 2 0 -
 R M 2068 o - O 21 3 -1 -
 R M 2068 o - D 2 2 0 -
 R M 2069 o - O 13 3 -1 -
-R M 2069 o - N 24 2 0 -
+R M 2069 o - N 17 2 0 -
 R M 2070 o - O 5 3 -1 -
 R M 2070 o - N 9 2 0 -
 R M 2071 o - S 20 3 -1 -
@@ -284,7 +286,7 @@ R M 2075 o - S 15 2 0 -
 R M 2076 o - Jul 26 3 -1 -
 R M 2076 o - S 6 2 0 -
 R M 2077 o - Jul 18 3 -1 -
-R M 2077 o - Au 29 2 0 -
+R M 2077 o - Au 22 2 0 -
 R M 2078 o - Jul 10 3 -1 -
 R M 2078 o - Au 14 2 0 -
 R M 2079 o - Jun 25 3 -1 -
@@ -294,13 +296,13 @@ R M 2080 o - Jul 21 2 0 -
 R M 2081 o - Jun 1 3 -1 -
 R M 2081 o - Jul 13 2 0 -
 R M 2082 o - May 24 3 -1 -
-R M 2082 o - Jul 5 2 0 -
+R M 2082 o - Jun 28 2 0 -
 R M 2083 o - May 16 3 -1 -
 R M 2083 o - Jun 20 2 0 -
 R M 2084 o - Ap 30 3 -1 -
 R M 2084 o - Jun 11 2 0 -
 R M 2085 o - Ap 22 3 -1 -
-R M 2085 o - Jun 3 2 0 -
+R M 2085 o - May 27 2 0 -
 R M 2086 o - Ap 14 3 -1 -
 R M 2086 o - May 19 2 0 -
 R M 2087 o - Mar 30 3 -1 -
@@ -997,8 +999,86 @@ R P 2020 2021 - Mar Sa<=30 0 1 S
 R P 2020 o - O 24 1 0 -
 R P 2021 o - O 29 1 0 -
 R P 2022 o - Mar 27 0 1 S
-R P 2022 ma - O Sa<=30 2 0 -
-R P 2023 ma - Mar Sa<=30 2 1 S
+R P 2022 2035 - O Sa<=30 2 0 -
+R P 2023 o - Ap 29 2 1 S
+R P 2024 o - Ap 13 2 1 S
+R P 2025 o - Ap 5 2 1 S
+R P 2026 2054 - Mar Sa<=30 2 1 S
+R P 2036 o - O 18 2 0 -
+R P 2037 o - O 10 2 0 -
+R P 2038 o - S 25 2 0 -
+R P 2039 o - S 17 2 0 -
+R P 2039 o - O 22 2 1 S
+R P 2039 2067 - O Sa<=30 2 0 -
+R P 2040 o - S 1 2 0 -
+R P 2040 o - O 13 2 1 S
+R P 2041 o - Au 24 2 0 -
+R P 2041 o - S 28 2 1 S
+R P 2042 o - Au 16 2 0 -
+R P 2042 o - S 20 2 1 S
+R P 2043 o - Au 1 2 0 -
+R P 2043 o - S 12 2 1 S
+R P 2044 o - Jul 23 2 0 -
+R P 2044 o - Au 27 2 1 S
+R P 2045 o - Jul 15 2 0 -
+R P 2045 o - Au 19 2 1 S
+R P 2046 o - Jun 30 2 0 -
+R P 2046 o - Au 11 2 1 S
+R P 2047 o - Jun 22 2 0 -
+R P 2047 o - Jul 27 2 1 S
+R P 2048 o - Jun 6 2 0 -
+R P 2048 o - Jul 18 2 1 S
+R P 2049 o - May 29 2 0 -
+R P 2049 o - Jul 3 2 1 S
+R P 2050 o - May 21 2 0 -
+R P 2050 o - Jun 25 2 1 S
+R P 2051 o - May 6 2 0 -
+R P 2051 o - Jun 17 2 1 S
+R P 2052 o - Ap 27 2 0 -
+R P 2052 o - Jun 1 2 1 S
+R P 2053 o - Ap 12 2 0 -
+R P 2053 o - May 24 2 1 S
+R P 2054 o - Ap 4 2 0 -
+R P 2054 o - May 16 2 1 S
+R P 2055 o - May 1 2 1 S
+R P 2056 o - Ap 22 2 1 S
+R P 2057 o - Ap 7 2 1 S
+R P 2058 ma - Mar Sa<=30 2 1 S
+R P 2068 o - O 20 2 0 -
+R P 2069 o - O 12 2 0 -
+R P 2070 o - O 4 2 0 -
+R P 2071 o - S 19 2 0 -
+R P 2072 o - S 10 2 0 -
+R P 2072 o - O 15 2 1 S
+R P 2073 o - S 2 2 0 -
+R P 2073 o - O 7 2 1 S
+R P 2074 o - Au 18 2 0 -
+R P 2074 o - S 29 2 1 S
+R P 2075 o - Au 10 2 0 -
+R P 2075 o - S 14 2 1 S
+R P 2075 ma - O Sa<=30 2 0 -
+R P 2076 o - Jul 25 2 0 -
+R P 2076 o - S 5 2 1 S
+R P 2077 o - Jul 17 2 0 -
+R P 2077 o - Au 28 2 1 S
+R P 2078 o - Jul 9 2 0 -
+R P 2078 o - Au 13 2 1 S
+R P 2079 o - Jun 24 2 0 -
+R P 2079 o - Au 5 2 1 S
+R P 2080 o - Jun 15 2 0 -
+R P 2080 o - Jul 20 2 1 S
+R P 2081 o - Jun 7 2 0 -
+R P 2081 o - Jul 12 2 1 S
+R P 2082 o - May 23 2 0 -
+R P 2082 o - Jul 4 2 1 S
+R P 2083 o - May 15 2 0 -
+R P 2083 o - Jun 19 2 1 S
+R P 2084 o - Ap 29 2 0 -
+R P 2084 o - Jun 10 2 1 S
+R P 2085 o - Ap 21 2 0 -
+R P 2085 o - Jun 2 2 1 S
+R P 2086 o - Ap 13 2 0 -
+R P 2086 o - May 18 2 1 S
 Z Asia/Gaza 2:17:52 - LMT 1900 O
 2 Z EET/EEST 1948 May 15
 2 K EE%sT 1967 Jun 5
@@ -1754,8 +1834,8 @@ Z America/Scoresbysund -1:27:52 - LMT 1916 Jul 28
 -1 E -01/+00
 Z America/Nuuk -3:26:56 - LMT 1916 Jul 28
 -3 - -03 1980 Ap 6 2
--3 E -03/-02 2023 Mar 25 22
--2 - -02
+-3 E -03/-02 2023 O 29 1u
+-2 E -02/-01
 Z America/Thule -4:35:8 - LMT 1916 Jul 28
 -4 Th A%sT
 Z Europe/Tallinn 1:39 - LMT 1880
@@ -2175,13 +2255,13 @@ Z Europe/Volgograd 2:57:40 - LMT 1920 Ja 3
 3 - +03 1930 Jun 21
 4 - +04 1961 N 11
 4 R +04/+05 1988 Mar 27 2s
-3 R +03/+04 1991 Mar 31 2s
+3 R MSK/MSD 1991 Mar 31 2s
 4 - +04 1992 Mar 29 2s
-3 R +03/+04 2011 Mar 27 2s
-4 - +04 2014 O 26 2s
-3 - +03 2018 O 28 2s
+3 R MSK/MSD 2011 Mar 27 2s
+4 - MSK 2014 O 26 2s
+3 - MSK 2018 O 28 2s
 4 - +04 2020 D 27 2s
-3 - +03
+3 - MSK
 Z Europe/Saratov 3:4:18 - LMT 1919 Jul 1 0u
 3 - +03 1930 Jun 21
 4 R +04/+05 1988 Mar 27 2s
@@ -2194,11 +2274,11 @@ Z Europe/Saratov 3:4:18 - LMT 1919 Jul 1 0u
 Z Europe/Kirov 3:18:48 - LMT 1919 Jul 1 0u
 3 - +03 1930 Jun 21
 4 R +04/+05 1989 Mar 26 2s
-3 R +03/+04 1991 Mar 31 2s
+3 R MSK/MSD 1991 Mar 31 2s
 4 - +04 1992 Mar 29 2s
-3 R +03/+04 2011 Mar 27 2s
-4 - +04 2014 O 26 2s
-3 - +03
+3 R MSK/MSD 2011 Mar 27 2s
+4 - MSK 2014 O 26 2s
+3 - MSK
 Z Europe/Samara 3:20:20 - LMT 1919 Jul 1 0u
 3 - +03 1930 Jun 21
 4 - +04 1935 Ja 27
@@ -3069,9 +3149,6 @@ Z America/Cambridge_Bay 0 - -00 1920
 -6 C C%sT 2000 O 29 2
 -5 - EST 2000 N 5
 -6 - CST 2001 Ap 1 3
--7 C M%sT
-Z America/Yellowknife 0 - -00 1935
--7 Y M%sT 1980
 -7 C M%sT
 Z America/Inuvik 0 - -00 1953
 -8 Y P%sT 1979 Ap lastSu 2
@@ -4171,6 +4248,7 @@ L America/Argentina/Cordoba America/Rosario
 L America/Tijuana America/Santa_Isabel
 L America/Denver America/Shiprock
 L America/Toronto America/Thunder_Bay
+L America/Edmonton America/Yellowknife
 L Pacific/Auckland Antarctica/South_Pole
 L Asia/Shanghai Asia/Chongqing
 L Asia/Shanghai Asia/Harbin
