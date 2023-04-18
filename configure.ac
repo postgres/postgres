@@ -853,13 +853,17 @@ AC_SUBST(enable_thread_safety)
 # ICU
 #
 AC_MSG_CHECKING([whether to build with ICU support])
-PGAC_ARG_BOOL(with, icu, no, [build with ICU support],
+PGAC_ARG_BOOL(with, icu, yes, [build without ICU support],
               [AC_DEFINE([USE_ICU], 1, [Define to build with ICU support. (--with-icu)])])
 AC_MSG_RESULT([$with_icu])
 AC_SUBST(with_icu)
 
 if test "$with_icu" = yes; then
-  PKG_CHECK_MODULES(ICU, icu-uc icu-i18n)
+  PKG_CHECK_MODULES(ICU, icu-uc icu-i18n, [],
+    [AC_MSG_ERROR([ICU library not found
+If you have ICU already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
+Use --without-icu to disable ICU support.])])
 fi
 
 #

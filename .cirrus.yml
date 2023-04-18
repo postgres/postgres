@@ -776,6 +776,7 @@ task:
       time ./configure \
         --host=x86_64-w64-mingw32 \
         --enable-cassert \
+        --without-icu \
         CC="ccache x86_64-w64-mingw32-gcc" \
         CXX="ccache x86_64-w64-mingw32-g++"
       make -s -j${BUILD_JOBS} clean
