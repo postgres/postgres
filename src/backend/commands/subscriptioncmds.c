@@ -1955,9 +1955,9 @@ check_publications_origin(WalReceiverConn *wrconn, List *publications,
 	appendStringInfoString(&cmd,
 						   "SELECT DISTINCT P.pubname AS pubname\n"
 						   "FROM pg_publication P,\n"
-						   "	 LATERAL pg_get_publication_tables(P.pubname) GPT\n"
-						   "	 JOIN pg_subscription_rel PS ON (GPT.relid = PS.srrelid),\n"
-						   "	 pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)\n"
+						   "     LATERAL pg_get_publication_tables(P.pubname) GPT\n"
+						   "     JOIN pg_subscription_rel PS ON (GPT.relid = PS.srrelid),\n"
+						   "     pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)\n"
 						   "WHERE C.oid = GPT.relid AND P.pubname IN (");
 	get_publications_str(publications, &cmd, true);
 	appendStringInfoString(&cmd, ")\n");
