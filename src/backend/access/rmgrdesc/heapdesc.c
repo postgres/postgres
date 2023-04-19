@@ -184,7 +184,7 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 						 xlrec->nredirected,
 						 xlrec->ndead);
 
-		if (!XLogRecHasBlockImage(record, 0))
+		if (XLogRecHasBlockData(record, 0))
 		{
 			OffsetNumber *end;
 			OffsetNumber *redirected;
@@ -223,7 +223,7 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "nunused: %u", xlrec->nunused);
 
-		if (!XLogRecHasBlockImage(record, 0))
+		if (XLogRecHasBlockData(record, 0))
 		{
 			OffsetNumber *nowunused;
 
@@ -241,7 +241,7 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 		appendStringInfo(buf, "snapshotConflictHorizon: %u, nplans: %u",
 						 xlrec->snapshotConflictHorizon, xlrec->nplans);
 
-		if (!XLogRecHasBlockImage(record, 0))
+		if (XLogRecHasBlockData(record, 0))
 		{
 			xl_heap_freeze_plan *plans;
 			OffsetNumber *offsets;
@@ -270,7 +270,7 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 		appendStringInfo(buf, "ntuples: %d, flags: 0x%02X", xlrec->ntuples,
 						 xlrec->flags);
 
-		if (!XLogRecHasBlockImage(record, 0) && !isinit)
+		if (XLogRecHasBlockData(record, 0) && !isinit)
 		{
 			appendStringInfoString(buf, ", offsets:");
 			array_desc(buf, xlrec->offsets, sizeof(OffsetNumber),

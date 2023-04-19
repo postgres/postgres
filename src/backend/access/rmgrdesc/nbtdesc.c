@@ -62,7 +62,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 				appendStringInfo(buf, "ndeleted: %u, nupdated: %u",
 								 xlrec->ndeleted, xlrec->nupdated);
 
-				if (!XLogRecHasBlockImage(record, 0))
+				if (XLogRecHasBlockData(record, 0))
 					delvacuum_desc(buf, XLogRecGetBlockData(record, 0, NULL),
 								   xlrec->ndeleted, xlrec->nupdated);
 				break;
@@ -75,7 +75,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 								 xlrec->snapshotConflictHorizon,
 								 xlrec->ndeleted, xlrec->nupdated);
 
-				if (!XLogRecHasBlockImage(record, 0))
+				if (XLogRecHasBlockData(record, 0))
 					delvacuum_desc(buf, XLogRecGetBlockData(record, 0, NULL),
 								   xlrec->ndeleted, xlrec->nupdated);
 				break;
