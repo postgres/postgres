@@ -3152,7 +3152,7 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 /*
  * check_memoizable
  *	  If the restrictinfo's clause is suitable to be used for a Memoize node,
- *	  set the lefthasheqoperator and righthasheqoperator to the hash equality
+ *	  set the left_hasheqoperator and right_hasheqoperator to the hash equality
  *	  operator that will be needed during caching.
  */
 static void

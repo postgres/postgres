@@ -2000,7 +2000,7 @@ static inline GlobalVisHorizonKind
 GlobalVisHorizonKindForRel(Relation rel)
 {
 	/*
-	 * Other relkkinds currently don't contain xids, nor always the necessary
+	 * Other relkinds currently don't contain xids, nor always the necessary
 	 * logical decoding markers.
 	 */
 	Assert(!rel ||

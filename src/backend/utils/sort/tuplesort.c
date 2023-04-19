@@ -494,7 +494,7 @@ static void tuplesort_updatemax(Tuplesortstate *state);
  * abbreviations of text or multi-key sorts.  There could be!  Is it worth it?
  */
 
-/* Used if first key's comparator is ssup_datum_unsigned_compare */
+/* Used if first key's comparator is ssup_datum_unsigned_cmp */
 static pg_attribute_always_inline int
 qsort_tuple_unsigned_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 {
@@ -517,7 +517,7 @@ qsort_tuple_unsigned_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 }
 
 #if SIZEOF_DATUM >= 8
-/* Used if first key's comparator is ssup_datum_signed_compare */
+/* Used if first key's comparator is ssup_datum_signed_cmp */
 static pg_attribute_always_inline int
 qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 {
@@ -541,7 +541,7 @@ qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 }
 #endif
 
-/* Used if first key's comparator is ssup_datum_int32_compare */
+/* Used if first key's comparator is ssup_datum_int32_cmp */
 static pg_attribute_always_inline int
 qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 {

@@ -5835,7 +5835,7 @@ ReachedEndOfBackup(XLogRecPtr EndRecPtr, TimeLineID tli)
 {
 	/*
 	 * We have reached the end of base backup, as indicated by pg_control. The
-	 * data on disk is now consistent (unless minRecovery point is further
+	 * data on disk is now consistent (unless minRecoveryPoint is further
 	 * ahead, which can happen if we crashed during previous recovery).  Reset
 	 * backupStartPoint and backupEndPoint, and update minRecoveryPoint to
 	 * make sure we don't allow starting up at an earlier point even if

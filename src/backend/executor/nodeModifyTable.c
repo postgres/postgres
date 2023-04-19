@@ -740,7 +740,7 @@ ExecGetUpdateNewTuple(ResultRelInfo *relinfo,
  *
  *		Returns RETURNING result if any, otherwise NULL.
  *		*inserted_tuple is the tuple that's effectively inserted;
- *		*inserted_destrel is the relation where it was inserted.
+ *		*insert_destrel is the relation where it was inserted.
  *		These are only set on success.
  *
  *		This may change the currently active tuple conversion map in

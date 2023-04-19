@@ -372,7 +372,7 @@ ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
 
 /*
  * Datum comparison functions that we have specialized sort routines for.
- * Datatypes that install these as their comparator or abbrevated comparator
+ * Datatypes that install these as their comparator or abbreviated comparator
  * are eligible for faster sorting.
  */
 extern int	ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup);

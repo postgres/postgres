@@ -8,7 +8,7 @@
  * or standby mode, depending on configuration options and the state of
  * the control file and possible backup label file.  PerformWalRecovery()
  * performs the actual WAL replay, calling the rmgr-specific redo routines.
- * EndWalRecovery() performs end-of-recovery checks and cleanup actions,
+ * FinishWalRecovery() performs end-of-recovery checks and cleanup actions,
  * and prepares information needed to initialize the WAL for writes.  In
  * addition to these three main functions, there are a bunch of functions
  * for interrogating recovery state and controlling the recovery process.
@@ -505,7 +505,7 @@ EnableStandbyMode(void)
  * disk does after initializing other subsystems, but before calling
  * PerformWalRecovery().
  *
- * This initializes some global variables like ArchiveModeRequested, and
+ * This initializes some global variables like ArchiveRecoveryRequested, and
  * StandbyModeRequested and InRecovery.
  */
 void
@@ -1396,11 +1396,11 @@ read_tablespace_map(List **tablespaces)
  *
  * This does not close the 'xlogreader' yet, because in some cases the caller
  * still wants to re-read the last checkpoint record by calling
- * ReadCheckPointRecord().
+ * ReadCheckpointRecord().
  *
  * Returns the position of the last valid or applied record, after which new
  * WAL should be appended, information about why recovery was ended, and some
- * other things. See the WalRecoveryResult struct for details.
+ * other things. See the EndOfWalRecoveryInfo struct for details.
  */
 EndOfWalRecoveryInfo *
 FinishWalRecovery(void)

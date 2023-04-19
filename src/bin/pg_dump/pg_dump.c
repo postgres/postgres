@@ -9636,7 +9636,7 @@ getAdditionalACLs(Archive *fout)
 				{
 					if (dobj->objType == DO_TABLE)
 					{
-						/* For a column initpriv, set the table's ACL flags */
+						/* For a column initprivs, set the table's ACL flags */
 						dobj->components |= DUMP_COMPONENT_ACL;
 						((TableInfo *) dobj)->hascolumnACLs = true;
 					}

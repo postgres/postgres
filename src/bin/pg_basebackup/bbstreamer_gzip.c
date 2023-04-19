@@ -150,7 +150,7 @@ bbstreamer_gzip_writer_content(bbstreamer *streamer,
  * calling gzclose.
  *
  * It makes no difference whether we opened the file or the caller did it,
- * because libz provides no way of avoiding a close on the underling file
+ * because libz provides no way of avoiding a close on the underlying file
  * handle. Notice, however, that bbstreamer_gzip_writer_new() uses dup() to
  * work around this issue, so that the behavior from the caller's viewpoint
  * is the same as for bbstreamer_plain_writer.

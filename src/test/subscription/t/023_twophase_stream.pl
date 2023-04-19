@@ -264,7 +264,7 @@ sub test_streaming
 	is($result, qq(1), 'transaction is prepared on subscriber');
 
 	# Insert a different record (now we are outside of the 2PC transaction)
-	# Note: the 2PC transaction still holds row locks so make sure this insert is for a separare primary key
+	# Note: the 2PC transaction still holds row locks so make sure this insert is for a separate primary key
 	$node_publisher->safe_psql('postgres',
 		"INSERT INTO test_tab VALUES (99999, 'foobar')");
 

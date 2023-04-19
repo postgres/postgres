@@ -1556,7 +1556,7 @@ FetchTableStates(bool *started_tx)
 		 * Does the subscription have tables?
 		 *
 		 * If there were not-READY relations found then we know it does. But
-		 * if table_state_not_ready was empty we still need to check again to
+		 * if table_states_not_ready was empty we still need to check again to
 		 * see if there are 0 tables.
 		 */
 		has_subrels = (table_states_not_ready != NIL) ||

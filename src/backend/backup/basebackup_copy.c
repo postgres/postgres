@@ -3,7 +3,7 @@
  * basebackup_copy.c
  *	  send basebackup archives using COPY OUT
  *
- * We send a result set with information about the tabelspaces to be included
+ * We send a result set with information about the tablespaces to be included
  * in the backup before starting COPY OUT. Then, we start a single COPY OUT
  * operation and transmits all the archives and the manifest if present during
  * the course of that single COPY OUT. Each CopyData message begins with a

@@ -49,7 +49,7 @@ $node->command_fails_like(
 	qr/shell command for backup is not configured/,
 	'fails if basebackup_to_shell.command is not set');
 
-# Configure basebackup_to_shell.command and reload the configuation file.
+# Configure basebackup_to_shell.command and reload the configuration file.
 my $backup_path         = PostgreSQL::Test::Utils::tempdir;
 my $escaped_backup_path = $backup_path;
 $escaped_backup_path =~ s{\\}{\\\\}g

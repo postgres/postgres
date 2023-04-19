@@ -376,7 +376,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 
 		/*
 		 * Serialize the transaction snapshot if the transaction
-		 * isolation-level uses a transaction snapshot.
+		 * isolation level uses a transaction snapshot.
 		 */
 		if (IsolationUsesXactSnapshot())
 		{

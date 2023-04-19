@@ -1630,7 +1630,7 @@ ThereAreNoPriorRegisteredSnapshots(void)
 }
 
 /*
- * HaveRegisteredOrActiveSnapshots
+ * HaveRegisteredOrActiveSnapshot
  *		Is there any registered or active snapshot?
  *
  * NB: Unless pushed or active, the cached catalog snapshot will not cause

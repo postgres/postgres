@@ -13,7 +13,7 @@ my $offset = 0;
 # Test skipping the transaction. This function must be called after the caller
 # has inserted data that conflicts with the subscriber.  The finish LSN of the
 # error transaction that is used to specify to ALTER SUBSCRIPTION ... SKIP is
-# fetched from the server logs. After executing ALTER SUBSCRITPION ... SKIP, we
+# fetched from the server logs. After executing ALTER SUBSCRIPTION ... SKIP, we
 # check if logical replication can continue working by inserting $nonconflict_data
 # on the publisher.
 sub test_skip_lsn

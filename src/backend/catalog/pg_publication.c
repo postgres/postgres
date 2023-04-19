@@ -497,7 +497,7 @@ compare_int16(const void *a, const void *b)
  * and a Bitmapset with them; verify that each attribute is appropriate
  * to have in a publication column list (no system or generated attributes,
  * no duplicates).  Additional checks with replica identity are done later;
- * see check_publication_columns.
+ * see pub_collist_contains_invalid_column.
  *
  * Note that the attribute numbers are *not* offset by
  * FirstLowInvalidHeapAttributeNumber; system columns are forbidden so this

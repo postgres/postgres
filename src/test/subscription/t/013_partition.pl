@@ -564,7 +564,7 @@ is($result, qq(), 'inserts into tab4_1 replicated');
 
 
 # now switch the order of publications in the list, try again, the result
-# should be the same (no dependence on order of pulications)
+# should be the same (no dependence on order of publications)
 $node_subscriber2->safe_psql('postgres',
 	"ALTER SUBSCRIPTION sub2 SET PUBLICATION pub_all, pub_lower_level");
 

@@ -102,7 +102,7 @@ typedef struct PgStatShared_HashEntry
 } PgStatShared_HashEntry;
 
 /*
- * Common header struct for PgStatShm_Stat*Entry.
+ * Common header struct for PgStatShared_*.
  */
 typedef struct PgStatShared_Common
 {

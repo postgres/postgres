@@ -432,7 +432,7 @@ AtEOXact_SPI(bool isCommit)
 
 	/*
 	 * Pop stack entries, stopping if we find one marked internal_xact (that
-	 * one belongs to the caller of SPI_commit or SPI_abort).
+	 * one belongs to the caller of SPI_commit or SPI_rollback).
 	 */
 	while (_SPI_connected >= 0)
 	{

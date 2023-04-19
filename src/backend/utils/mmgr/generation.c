@@ -544,7 +544,7 @@ GenerationBlockInit(GenerationContext *context, GenerationBlock *block,
 
 /*
  * GenerationBlockIsEmpty
- *		Returns true iif 'block' contains no chunks
+ *		Returns true iff 'block' contains no chunks
  */
 static inline bool
 GenerationBlockIsEmpty(GenerationBlock *block)

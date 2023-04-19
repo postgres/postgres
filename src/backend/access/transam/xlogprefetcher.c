@@ -457,9 +457,9 @@ XLogPrefetcherComputeStats(XLogPrefetcher *prefetcher)
  * *lsn, and the I/O will be considered to have completed once that LSN is
  * replayed.
  *
- * Returns LRQ_NO_IO if we examined the next block reference and found that it
- * was already in the buffer pool, or we decided for various reasons not to
- * prefetch.
+ * Returns LRQ_NEXT_NO_IO if we examined the next block reference and found
+ * that it was already in the buffer pool, or we decided for various reasons
+ * not to prefetch.
  */
 static LsnReadQueueNextStatus
 XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)

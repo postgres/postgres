@@ -85,7 +85,7 @@ GetCurrentLSN(void)
 }
 
 /*
- * Intialize WAL reader and identify first valid LSN.
+ * Initialize WAL reader and identify first valid LSN.
  */
 static XLogReaderState *
 InitXLogReaderState(XLogRecPtr lsn)
