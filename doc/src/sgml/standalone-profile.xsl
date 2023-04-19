@@ -40,6 +40,10 @@ variant without links and references to the main documentation.
   <xsl:text>the documentation about client authentication and libpq</xsl:text>
 </xsl:template>
 
+<xsl:template match="xref[@linkend='collation']">
+  <xsl:text>the documentation</xsl:text>
+</xsl:template>
+
 <xsl:template match="xref[@linkend='docguide-toolsets']">
   <xsl:text>the main documentation's appendix on documentation</xsl:text>
 </xsl:template>
@@ -57,6 +61,10 @@ variant without links and references to the main documentation.
 </xsl:template>
 
 <xsl:template match="xref[@linkend='install-windows']">
+  <xsl:text>the documentation</xsl:text>
+</xsl:template>
+
+<xsl:template match="xref[@linkend='locale-providers']">
   <xsl:text>the documentation</xsl:text>
 </xsl:template>
 
