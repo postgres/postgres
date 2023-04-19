@@ -106,7 +106,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_newroot *xlrec = (xl_btree_newroot *) rec;
 
-				appendStringInfo(buf, "lev: %u", xlrec->level);
+				appendStringInfo(buf, "level: %u", xlrec->level);
 				break;
 			}
 		case XLOG_BTREE_REUSE_PAGE:
