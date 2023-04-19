@@ -476,10 +476,12 @@ $common_connstr =
   "$default_ssl_connstr user=ssltestuser dbname=trustdb sslrootcert=system hostaddr=$SERVERHOSTADDR";
 
 # By default our custom-CA-signed certificate should not be trusted.
+# OpenSSL 3.0 reports a missing/invalid system CA as "unregistered schema"
+# instead of a failed certificate verification.
 $node->connect_fails(
 	"$common_connstr sslmode=verify-full host=common-name.pg-ssltest.test",
 	"sslrootcert=system does not connect with private CA",
-	expected_stderr => qr/SSL error: certificate verify failed/);
+	expected_stderr => qr/SSL error: (certificate verify failed|unregistered scheme)/);
 
 # Modes other than verify-full cannot be mixed with sslrootcert=system.
 $node->connect_fails(
