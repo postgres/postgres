@@ -9712,7 +9712,7 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether it is possible to strip libraries" >&5
 $as_echo_n "checking whether it is possible to strip libraries... " >&6; }
   if test x"$STRIP" != x"" && "$STRIP" -V 2>&1 | grep "GNU strip" >/dev/null; then
-    STRIP_STATIC_LIB="$STRIP -x"
+    STRIP_STATIC_LIB="$STRIP --strip-unneeded"
     STRIP_SHARED_LIB="$STRIP --strip-unneeded"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }

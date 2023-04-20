@@ -16,7 +16,7 @@ if strip_bin.found()
       strip_version.stdout().contains('GNU strip') or
       strip_version.stderr().contains('GNU strip'))
     working_strip = true
-    strip_static_cmd = strip_cmd + ['-x']
+    strip_static_cmd = strip_cmd + ['--strip-unneeded']
     strip_shared_cmd = strip_cmd + ['--strip-unneeded']
   elif host_system == 'darwin'
     working_strip = true
