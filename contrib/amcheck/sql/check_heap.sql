@@ -40,7 +40,7 @@ INSERT INTO heaptest (a, b)
 SET allow_in_place_tablespaces = true;
 CREATE TABLESPACE regress_test_stats_tblspc LOCATION '';
 SELECT sum(reads) AS stats_bulkreads_before
-  FROM pg_stat_io WHERE io_context = 'bulkread' \gset
+  FROM pg_stat_io WHERE context = 'bulkread' \gset
 ALTER TABLE heaptest SET TABLESPACE regress_test_stats_tblspc;
 
 -- Check that valid options are not rejected nor corruption reported
@@ -55,7 +55,7 @@ SELECT * FROM verify_heapam(relation := 'heaptest', startblock := 0, endblock :=
 -- causing an additional bulkread, which should be reflected in pg_stat_io.
 SELECT pg_stat_force_next_flush();
 SELECT sum(reads) AS stats_bulkreads_after
-  FROM pg_stat_io WHERE io_context = 'bulkread' \gset
+  FROM pg_stat_io WHERE context = 'bulkread' \gset
 SELECT :stats_bulkreads_after > :stats_bulkreads_before;
 
 CREATE ROLE regress_heaptest_role;

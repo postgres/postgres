@@ -3754,7 +3754,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <row>
       <entry role="catalog_table_entry">
        <para role="column_definition">
-        <structfield>io_object</structfield> <type>text</type>
+        <structfield>object</structfield> <type>text</type>
        </para>
        <para>
         Target object of an I/O operation. Possible values are:
@@ -3777,7 +3777,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <row>
       <entry role="catalog_table_entry">
        <para role="column_definition">
-        <structfield>io_context</structfield> <type>text</type>
+        <structfield>context</structfield> <type>text</type>
        </para>
        <para>
         The context of an I/O operation. Possible values are:
@@ -3786,10 +3786,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <listitem>
          <para>
           <literal>normal</literal>: The default or standard
-          <varname>io_context</varname> for a type of I/O operation. For
+          <varname>context</varname> for a type of I/O operation. For
           example, by default, relation data is read into and written out from
           shared buffers. Thus, reads and writes of relation data to and from
-          shared buffers are tracked in <varname>io_context</varname>
+          shared buffers are tracked in <varname>context</varname>
           <literal>normal</literal>.
          </para>
         </listitem>
@@ -3798,7 +3798,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
           <literal>vacuum</literal>: I/O operations performed outside of shared
           buffers while vacuuming and analyzing permanent relations. Temporary
           table vacuums use the same local buffer pool as other temporary table
-          IO operations and are tracked in <varname>io_context</varname>
+          IO operations and are tracked in <varname>context</varname>
           <literal>normal</literal>.
          </para>
         </listitem>
@@ -3929,9 +3929,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         buffer in order to make it available for another use.
        </para>
        <para>
-        In <varname>io_context</varname> <literal>normal</literal>, this counts
+        In <varname>context</varname> <literal>normal</literal>, this counts
         the number of times a block was evicted from a buffer and replaced with
-        another block. In <varname>io_context</varname>s
+        another block. In <varname>context</varname>s
         <literal>bulkwrite</literal>, <literal>bulkread</literal>, and
         <literal>vacuum</literal>, this counts the number of times a block was
         evicted from shared buffers in order to add the shared buffer to a
@@ -3949,7 +3949,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         The number of times an existing buffer in a size-limited ring buffer
         outside of shared buffers was reused as part of an I/O operation in the
         <literal>bulkread</literal>, <literal>bulkwrite</literal>, or
-        <literal>vacuum</literal> <varname>io_context</varname>s.
+        <literal>vacuum</literal> <varname>context</varname>s.
        </para>
       </entry>
      </row>
@@ -3961,7 +3961,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        </para>
        <para>
         Number of <literal>fsync</literal> calls. These are only tracked in
-        <varname>io_context</varname> <literal>normal</literal>.
+        <varname>context</varname> <literal>normal</literal>.
        </para>
       </entry>
      </row>
@@ -3997,7 +3997,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    in some I/O contexts. These rows are omitted from the view. For example, the
    checkpointer does not checkpoint temporary tables, so there will be no rows
    for <varname>backend_type</varname> <literal>checkpointer</literal> and
-   <varname>io_object</varname> <literal>temp relation</literal>.
+   <varname>object</varname> <literal>temp relation</literal>.
   </para>
 
   <para>
@@ -4005,7 +4005,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    backend types or on certain I/O objects and/or in certain I/O contexts.
    These cells will be NULL. For example, temporary tables are not
    <literal>fsync</literal>ed, so <varname>fsyncs</varname> will be NULL for
-   <varname>io_object</varname> <literal>temp relation</literal>. Also, the
+   <varname>object</varname> <literal>temp relation</literal>. Also, the
    background writer does not perform reads, so <varname>reads</varname> will
    be NULL in rows for <varname>backend_type</varname> <literal>background
    writer</literal>.

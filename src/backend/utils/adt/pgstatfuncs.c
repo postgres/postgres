@@ -1262,8 +1262,8 @@ typedef enum io_stat_col
 {
 	IO_COL_INVALID = -1,
 	IO_COL_BACKEND_TYPE,
-	IO_COL_IO_OBJECT,
-	IO_COL_IO_CONTEXT,
+	IO_COL_OBJECT,
+	IO_COL_CONTEXT,
 	IO_COL_READS,
 	IO_COL_READ_TIME,
 	IO_COL_WRITES,
@@ -1394,8 +1394,8 @@ pg_stat_get_io(PG_FUNCTION_ARGS)
 					continue;
 
 				values[IO_COL_BACKEND_TYPE] = bktype_desc;
-				values[IO_COL_IO_CONTEXT] = CStringGetTextDatum(context_name);
-				values[IO_COL_IO_OBJECT] = CStringGetTextDatum(obj_name);
+				values[IO_COL_CONTEXT] = CStringGetTextDatum(context_name);
+				values[IO_COL_OBJECT] = CStringGetTextDatum(obj_name);
 				values[IO_COL_RESET_TIME] = TimestampTzGetDatum(reset_time);
 
 				/*

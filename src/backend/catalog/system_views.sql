@@ -1125,8 +1125,8 @@ CREATE VIEW pg_stat_bgwriter AS
 CREATE VIEW pg_stat_io AS
 SELECT
        b.backend_type,
-       b.io_object,
-       b.io_context,
+       b.object,
+       b.context,
        b.reads,
        b.read_time,
        b.writes,

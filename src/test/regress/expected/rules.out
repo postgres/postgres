@@ -1881,8 +1881,8 @@ pg_stat_gssapi| SELECT pid,
    FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, backend_type, ssl, sslversion, sslcipher, sslbits, ssl_client_dn, ssl_client_serial, ssl_issuer_dn, gss_auth, gss_princ, gss_enc, gss_deleg, leader_pid, query_id)
   WHERE (client_port IS NOT NULL);
 pg_stat_io| SELECT backend_type,
-    io_object,
-    io_context,
+    object,
+    context,
     reads,
     read_time,
     writes,
@@ -1896,7 +1896,7 @@ pg_stat_io| SELECT backend_type,
     fsyncs,
     fsync_time,
     stats_reset
-   FROM pg_stat_get_io() b(backend_type, io_object, io_context, reads, read_time, writes, write_time, extends, extend_time, op_bytes, hits, evictions, reuses, fsyncs, fsync_time, stats_reset);
+   FROM pg_stat_get_io() b(backend_type, object, context, reads, read_time, writes, write_time, extends, extend_time, op_bytes, hits, evictions, reuses, fsyncs, fsync_time, stats_reset);
 pg_stat_progress_analyze| SELECT s.pid,
     s.datid,
     d.datname,
