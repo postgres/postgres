@@ -487,8 +487,6 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 	SetConfigOption("lc_collate", collate, PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
 	SetConfigOption("lc_ctype", ctype, PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
 
-	check_strxfrm_bug();
-
 	ReleaseSysCache(tup);
 }
 
