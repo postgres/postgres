@@ -189,7 +189,7 @@ getid(const char *s, char *n, Node *escontext)
 /*
  * Write a role name at *p, adding double quotes if needed.
  * There must be at least (2*NAMEDATALEN)+2 bytes available at *p.
- * This needs to be kept in sync with copyAclUserName in pg_dump/dumputils.c
+ * This needs to be kept in sync with dequoteAclUserName in pg_dump/dumputils.c
  */
 static void
 putid(char *p, const char *s)
