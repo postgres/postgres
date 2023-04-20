@@ -1785,9 +1785,6 @@ FreeWorkerInfo(int code, Datum arg)
 void
 VacuumUpdateCosts(void)
 {
-	double		original_cost_delay = vacuum_cost_delay;
-	int			original_cost_limit = vacuum_cost_limit;
-
 	if (MyWorkerInfo)
 	{
 		if (av_storage_param_cost_delay >= 0)
@@ -1821,15 +1818,14 @@ VacuumUpdateCosts(void)
 		VacuumCostBalance = 0;
 	}
 
-	if (MyWorkerInfo)
+	/*
+	 * Since the cost logging requires a lock, avoid rendering the log message
+	 * in case we are using a message level where the log wouldn't be emitted.
+	 */
+	if (MyWorkerInfo && message_level_is_interesting(DEBUG2))
 	{
 		Oid			dboid,
 					tableoid;
-
-		/* Only log updates to cost-related variables */
-		if (vacuum_cost_delay == original_cost_delay &&
-			vacuum_cost_limit == original_cost_limit)
-			return;
 
 		Assert(!LWLockHeldByMe(AutovacuumLock));
 
@@ -1844,7 +1840,6 @@ VacuumUpdateCosts(void)
 			 vacuum_cost_limit, vacuum_cost_delay,
 			 vacuum_cost_delay > 0 ? "yes" : "no",
 			 VacuumFailsafeActive ? "yes" : "no");
-
 	}
 }
 
