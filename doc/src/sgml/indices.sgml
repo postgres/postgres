@@ -664,16 +664,18 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
    Indexes can also be used to enforce uniqueness of a column's value,
    or the uniqueness of the combined values of more than one column.
 <synopsis>
-CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <optional>, ...</optional>);
+CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <optional>, ...</optional>) <optional> NULLS <optional> NOT </optional> DISTINCT </optional>;
 </synopsis>
    Currently, only B-tree indexes can be declared unique.
   </para>
 
   <para>
    When an index is declared unique, multiple table rows with equal
-   indexed values are not allowed.  Null values are not considered
-   equal.  A multicolumn unique index will only reject cases where all
-   indexed columns are equal in multiple rows.
+   indexed values are not allowed.  By default, null values in a unique column
+   are not considered equal, allowing multiple nulls in the column.  The
+   <literal>NULLS NOT DISTINCT</literal> option modifies this and causes the
+   index to treat nulls as equal.  A multicolumn unique index will only reject
+   cases where all indexed columns are equal in multiple rows.
   </para>
 
   <para>
