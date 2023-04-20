@@ -309,7 +309,7 @@ AC_DEFUN([PGAC_CHECK_STRIP],
 
   AC_MSG_CHECKING([whether it is possible to strip libraries])
   if test x"$STRIP" != x"" && "$STRIP" -V 2>&1 | grep "GNU strip" >/dev/null; then
-    STRIP_STATIC_LIB="$STRIP -x"
+    STRIP_STATIC_LIB="$STRIP --strip-unneeded"
     STRIP_SHARED_LIB="$STRIP --strip-unneeded"
     AC_MSG_RESULT(yes)
   else
