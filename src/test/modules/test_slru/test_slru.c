@@ -50,9 +50,6 @@ static SlruCtlData TestSlruCtlData;
 static shmem_request_hook_type prev_shmem_request_hook = NULL;
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
 
-/* LWLock name */
-const char	test_tranche_name[] = "test_slru_tranche";
-
 static bool
 test_slru_scan_cb(SlruCtl ctl, char *filename, int segpage, void *data)
 {
