@@ -1553,10 +1553,10 @@ list_copy_head(const List *oldlist, int len)
 {
 	List	   *newlist;
 
-	len = Min(oldlist->length, len);
-
-	if (len <= 0)
+	if (oldlist == NIL || len <= 0)
 		return NIL;
+
+	len = Min(oldlist->length, len);
 
 	newlist = new_list(oldlist->type, len);
 	memcpy(newlist->elements, oldlist->elements, len * sizeof(ListCell));
