@@ -264,7 +264,7 @@ $node->connect_fails(
 $node->connect_fails(
 	"user=scram_role require_auth=none,abcdefg",
 	"unknown require_auth methods are rejected",
-	expected_stderr => qr/invalid require_auth method: "abcdefg"/);
+	expected_stderr => qr/invalid require_auth value: "abcdefg"/);
 
 # For plain "password" method, all users should also be able to connect.
 reset_pg_hba($node, 'all', 'all', 'password');

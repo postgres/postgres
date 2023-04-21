@@ -1407,8 +1407,8 @@ connectOptions2(PGconn *conn)
 			else
 			{
 				conn->status = CONNECTION_BAD;
-				libpq_append_conn_error(conn, "invalid require_auth method: \"%s\"",
-										method);
+				libpq_append_conn_error(conn, "invalid %s value: \"%s\"",
+										"require_auth", method);
 
 				free(part);
 				return false;
