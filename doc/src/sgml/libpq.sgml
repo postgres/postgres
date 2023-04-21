@@ -8307,6 +8307,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       linkend="libpq-connect-target-session-attrs"/> connection parameter.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGLOADBALANCEHOSTS</envar></primary>
+      </indexterm>
+      <envar>PGLOADBALANCEHOSTS</envar> behaves the same as the <xref
+      linkend="libpq-connect-load-balance-hosts"/> connection parameter.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
 
