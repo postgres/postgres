@@ -3297,6 +3297,7 @@ main(int argc, char *argv[])
 				break;
 			case 8:
 				locale = "C";
+				locale_provider = COLLPROVIDER_LIBC;
 				break;
 			case 9:
 				pwfilename = pg_strdup(optarg);
