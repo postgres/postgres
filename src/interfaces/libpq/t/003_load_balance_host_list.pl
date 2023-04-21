@@ -36,8 +36,8 @@ $node1->connect_fails(
 # load_balance_hosts=disable should always choose the first one.
 $node1->connect_ok("host=$hostlist port=$portlist load_balance_hosts=disable",
 	"load_balance_hosts=disable connects to the first node",
-	sql => "SELECT 'connect2'",
-	log_like => [qr/statement: SELECT 'connect2'/]);
+	sql => "SELECT 'connect1'",
+	log_like => [qr/statement: SELECT 'connect1'/]);
 
 # Statistically the following loop with load_balance_hosts=random will almost
 # certainly connect at least once to each of the nodes. The chance of that not
@@ -45,12 +45,12 @@ $node1->connect_ok("host=$hostlist port=$portlist load_balance_hosts=disable",
 foreach my $i (1 .. 50) {
 	$node1->connect_ok("host=$hostlist port=$portlist load_balance_hosts=random",
 		"repeated connections with random load balancing",
-		sql => "SELECT 'connect1'");
+		sql => "SELECT 'connect2'");
 }
 
-my $node1_occurences = () = $node1->log_content() =~ /statement: SELECT 'connect1'/g;
-my $node2_occurences = () = $node2->log_content() =~ /statement: SELECT 'connect1'/g;
-my $node3_occurences = () = $node3->log_content() =~ /statement: SELECT 'connect1'/g;
+my $node1_occurences = () = $node1->log_content() =~ /statement: SELECT 'connect2'/g;
+my $node2_occurences = () = $node2->log_content() =~ /statement: SELECT 'connect2'/g;
+my $node3_occurences = () = $node3->log_content() =~ /statement: SELECT 'connect2'/g;
 
 my $total_occurences = $node1_occurences + $node2_occurences + $node3_occurences;
 
