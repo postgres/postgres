@@ -129,8 +129,8 @@ BSD indent
 
 We have standardized on FreeBSD's indent, and renamed it pg_bsd_indent.
 pg_bsd_indent does differ slightly from FreeBSD's version, mostly in
-being more easily portable to non-BSD platforms.  You can obtain it from
-https://git.postgresql.org/git/pg_bsd_indent.git
+being more easily portable to non-BSD platforms.  Find it in the
+sibling directory src/tools/pg_bsd_indent.
 
 GNU indent, version 2.2.6, has several problems, and is not recommended.
 These bugs become pretty major when you are doing >500k lines of code.
