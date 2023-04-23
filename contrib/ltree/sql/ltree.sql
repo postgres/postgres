@@ -325,6 +325,8 @@ SELECT * FROM ltreetest WHERE t ? '{23.*.1,23.*.2}' order by t asc;
 drop index tstidx;
 create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=0));
 create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2025));
+create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2028));
+create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2019));
 create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2024));
 
 SELECT count(*) FROM ltreetest WHERE t <  '12.3';
