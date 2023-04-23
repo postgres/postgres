@@ -716,6 +716,18 @@ ltree_consistent(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(res);
 }
 
+static void
+ltree_gist_relopts_validator(void *parsed_options, relopt_value *vals,
+							 int nvals)
+{
+	LtreeGistOptions *options = (LtreeGistOptions *) parsed_options;
+
+	if (options->siglen != INTALIGN(options->siglen))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("siglen value must be a multiple of %d", ALIGNOF_INT)));
+}
+
 Datum
 ltree_gist_options(PG_FUNCTION_ARGS)
 {
@@ -724,8 +736,11 @@ ltree_gist_options(PG_FUNCTION_ARGS)
 	init_local_reloptions(relopts, sizeof(LtreeGistOptions));
 	add_local_int_reloption(relopts, "siglen",
 							"signature length in bytes",
-							LTREE_SIGLEN_DEFAULT, 1, LTREE_SIGLEN_MAX,
+							LTREE_SIGLEN_DEFAULT,
+							INTALIGN(1),
+							LTREE_SIGLEN_MAX,
 							offsetof(LtreeGistOptions, siglen));
+	register_reloptions_validator(relopts, ltree_gist_relopts_validator);
 
 	PG_RETURN_VOID();
 }
