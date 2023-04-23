@@ -1972,8 +1972,9 @@ build_local_reloptions(local_relopts *relopts, Datum options, bool validate)
 	fillRelOptions(opts, relopts->relopt_struct_size, vals, noptions, validate,
 				   elems, noptions);
 
-	foreach(lc, relopts->validators)
-		((relopts_validator) lfirst(lc)) (opts, vals, noptions);
+	if (validate)
+		foreach(lc, relopts->validators)
+			((relopts_validator) lfirst(lc)) (opts, vals, noptions);
 
 	if (elems)
 		pfree(elems);
