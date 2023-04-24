@@ -127,15 +127,6 @@ CREATE EXTENSION <replaceable>extension_name</replaceable>;
   component for details.
  </para>
 
- <para id="contrib-obsolete">
-  The following modules and extensions are obsolete:
-
-  <simplelist type="inline">
-   <member><xref linkend="intagg"/></member>
-   <member><xref linkend="xml2"/></member>
-  </simplelist>
- </para>
-
  &adminpack;
  &amcheck;
  &auth-delay;
