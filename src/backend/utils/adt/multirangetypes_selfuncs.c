@@ -35,7 +35,6 @@ static double calc_multirangesel(TypeCacheEntry *typcache,
 								 VariableStatData *vardata,
 								 const MultirangeType *constval, Oid operator);
 static double default_multirange_selectivity(Oid operator);
-static double default_multirange_selectivity(Oid operator);
 static double calc_hist_selectivity(TypeCacheEntry *typcache,
 									VariableStatData *vardata,
 									const MultirangeType *constval,
