@@ -102,7 +102,7 @@ FunctionReturningBool(void)
 void	   *referenced_functions[] =
 {
 	ExecAggInitGroup,
-	ExecAggTransReparent,
+	ExecAggCopyTransValue,
 	ExecEvalPreOrderedDistinctSingle,
 	ExecEvalPreOrderedDistinctMulti,
 	ExecEvalAggOrderedTransDatum,

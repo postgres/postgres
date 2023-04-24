@@ -807,9 +807,9 @@ extern void ExecEvalSysVar(ExprState *state, ExprEvalStep *op,
 
 extern void ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggStatePerGroup pergroup,
 							 ExprContext *aggcontext);
-extern Datum ExecAggTransReparent(AggState *aggstate, AggStatePerTrans pertrans,
-								  Datum newValue, bool newValueIsNull,
-								  Datum oldValue, bool oldValueIsNull);
+extern Datum ExecAggCopyTransValue(AggState *aggstate, AggStatePerTrans pertrans,
+								   Datum newValue, bool newValueIsNull,
+								   Datum oldValue, bool oldValueIsNull);
 extern bool ExecEvalPreOrderedDistinctSingle(AggState *aggstate,
 											 AggStatePerTrans pertrans);
 extern bool ExecEvalPreOrderedDistinctMulti(AggState *aggstate,

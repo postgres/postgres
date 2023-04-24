@@ -778,12 +778,10 @@ advance_transition_function(AggState *aggstate,
 	/*
 	 * If pass-by-ref datatype, must copy the new value into aggcontext and
 	 * free the prior transValue.  But if transfn returned a pointer to its
-	 * first input, we don't need to do anything.  Also, if transfn returned a
-	 * pointer to a R/W expanded object that is already a child of the
-	 * aggcontext, assume we can adopt that value without copying it.
+	 * first input, we don't need to do anything.
 	 *
 	 * It's safe to compare newVal with pergroup->transValue without regard
-	 * for either being NULL, because ExecAggTransReparent() takes care to set
+	 * for either being NULL, because ExecAggCopyTransValue takes care to set
 	 * transValue to 0 when NULL. Otherwise we could end up accidentally not
 	 * reparenting, when the transValue has the same numerical value as
 	 * newValue, despite being NULL.  This is a somewhat hot path, making it
@@ -793,10 +791,10 @@ advance_transition_function(AggState *aggstate,
 	 */
 	if (!pertrans->transtypeByVal &&
 		DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
-		newVal = ExecAggTransReparent(aggstate, pertrans,
-									  newVal, fcinfo->isnull,
-									  pergroupstate->transValue,
-									  pergroupstate->transValueIsNull);
+		newVal = ExecAggCopyTransValue(aggstate, pertrans,
+									   newVal, fcinfo->isnull,
+									   pergroupstate->transValue,
+									   pergroupstate->transValueIsNull);
 
 	pergroupstate->transValue = newVal;
 	pergroupstate->transValueIsNull = fcinfo->isnull;

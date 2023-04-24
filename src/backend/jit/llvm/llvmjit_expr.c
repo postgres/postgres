@@ -2314,7 +2314,7 @@ llvm_compile_expr(ExprState *state)
 						params[5] = LLVMBuildTrunc(b, v_transnull,
 												   TypeParamBool, "");
 
-						v_fn = llvm_pg_func(mod, "ExecAggTransReparent");
+						v_fn = llvm_pg_func(mod, "ExecAggCopyTransValue");
 						v_newval =
 							LLVMBuildCall(b, v_fn,
 										  params, lengthof(params),

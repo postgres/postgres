@@ -4341,15 +4341,40 @@ ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggStatePerGroup
 }
 
 /*
- * Ensure that the current transition value is a child of the aggcontext,
- * rather than the per-tuple context.
+ * Ensure that the new transition value is stored in the aggcontext,
+ * rather than the per-tuple context.  This should be invoked only when
+ * we know (a) the transition data type is pass-by-reference, and (b)
+ * the newValue is distinct from the oldValue.
  *
  * NB: This can change the current memory context.
+ *
+ * We copy the presented newValue into the aggcontext, except when the datum
+ * points to a R/W expanded object that is already a child of the aggcontext,
+ * in which case we need not copy.  We then delete the oldValue, if not null.
+ *
+ * If the presented datum points to a R/W expanded object that is a child of
+ * some other context, ideally we would just reparent it under the aggcontext.
+ * Unfortunately, that doesn't work easily, and it wouldn't help anyway for
+ * aggregate-aware transfns.  We expect that a transfn that deals in expanded
+ * objects and is aware of the memory management conventions for aggregate
+ * transition values will (1) on first call, return a R/W expanded object that
+ * is already in the right context, allowing us to do nothing here, and (2) on
+ * subsequent calls, modify and return that same object, so that control
+ * doesn't even reach here.  However, if we have a generic transfn that
+ * returns a new R/W expanded object (probably in the per-tuple context),
+ * reparenting that result would cause problems.  We'd pass that R/W object to
+ * the next invocation of the transfn, and then it would be at liberty to
+ * change or delete that object, and if it deletes it then our own attempt to
+ * delete the now-old transvalue afterwards would be a double free.  We avoid
+ * this problem by forcing the stored transvalue to always be a flat
+ * non-expanded object unless the transfn is visibly doing aggregate-aware
+ * memory management.  This is somewhat inefficient, but the best answer to
+ * that is to write a smarter transfn.
  */
 Datum
-ExecAggTransReparent(AggState *aggstate, AggStatePerTrans pertrans,
-					 Datum newValue, bool newValueIsNull,
-					 Datum oldValue, bool oldValueIsNull)
+ExecAggCopyTransValue(AggState *aggstate, AggStatePerTrans pertrans,
+					  Datum newValue, bool newValueIsNull,
+					  Datum oldValue, bool oldValueIsNull)
 {
 	Assert(newValue != oldValue);
 
@@ -4559,12 +4584,10 @@ ExecAggPlainTransByRef(AggState *aggstate, AggStatePerTrans pertrans,
 	/*
 	 * For pass-by-ref datatype, must copy the new value into aggcontext and
 	 * free the prior transValue.  But if transfn returned a pointer to its
-	 * first input, we don't need to do anything.  Also, if transfn returned a
-	 * pointer to a R/W expanded object that is already a child of the
-	 * aggcontext, assume we can adopt that value without copying it.
+	 * first input, we don't need to do anything.
 	 *
 	 * It's safe to compare newVal with pergroup->transValue without regard
-	 * for either being NULL, because ExecAggTransReparent() takes care to set
+	 * for either being NULL, because ExecAggCopyTransValue takes care to set
 	 * transValue to 0 when NULL. Otherwise we could end up accidentally not
 	 * reparenting, when the transValue has the same numerical value as
 	 * newValue, despite being NULL.  This is a somewhat hot path, making it
@@ -4573,10 +4596,10 @@ ExecAggPlainTransByRef(AggState *aggstate, AggStatePerTrans pertrans,
 	 * argument.
 	 */
 	if (DatumGetPointer(newVal) != DatumGetPointer(pergroup->transValue))
-		newVal = ExecAggTransReparent(aggstate, pertrans,
-									  newVal, fcinfo->isnull,
-									  pergroup->transValue,
-									  pergroup->transValueIsNull);
+		newVal = ExecAggCopyTransValue(aggstate, pertrans,
+									   newVal, fcinfo->isnull,
+									   pergroup->transValue,
+									   pergroup->transValueIsNull);
 
 	pergroup->transValue = newVal;
 	pergroup->transValueIsNull = fcinfo->isnull;
