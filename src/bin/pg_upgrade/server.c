@@ -234,9 +234,6 @@ start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 	 * we only modify the new cluster, so only use it there.  If there is a
 	 * crash, the new cluster has to be recreated anyway.  fsync=off is a big
 	 * win on ext4.
-	 *
-	 * Force vacuum_defer_cleanup_age to 0 on the new cluster, so that
-	 * vacuumdb --freeze actually freezes the tuples.
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s/pg_ctl\" -w -l \"%s/%s\" -D \"%s\" -o \"-p %d -b%s %s%s\" start",
@@ -244,7 +241,7 @@ start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 			 log_opts.logdir,
 			 SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
 			 (cluster == &new_cluster) ?
-			 " -c synchronous_commit=off -c fsync=off -c full_page_writes=off -c vacuum_defer_cleanup_age=0" : "",
+			 " -c synchronous_commit=off -c fsync=off -c full_page_writes=off" : "",
 			 cluster->pgopts ? cluster->pgopts : "", socket_string);
 
 	/*

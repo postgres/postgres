@@ -21,7 +21,6 @@
 #include "storage/standbydefs.h"
 
 /* User-settable GUC parameters */
-extern PGDLLIMPORT int vacuum_defer_cleanup_age;
 extern PGDLLIMPORT int max_standby_archive_delay;
 extern PGDLLIMPORT int max_standby_streaming_delay;
 extern PGDLLIMPORT bool log_recovery_conflict_waits;

@@ -944,12 +944,11 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     retained by replication slots.
    </para>
    <para>
-    Similarly, <xref linkend="guc-hot-standby-feedback"/>
-    and <xref linkend="guc-vacuum-defer-cleanup-age"/> provide protection against
-    relevant rows being removed by vacuum, but the former provides no
-    protection during any time period when the standby is not connected,
-    and the latter often needs to be set to a high value to provide adequate
-    protection.  Replication slots overcome these disadvantages.
+    Similarly, <xref linkend="guc-hot-standby-feedback"/> on its own, without
+    also using a replication slot, provides protection against relevant rows
+    being removed by vacuum, but provides no protection during any time period
+    when the standby is not connected.  Replication slots overcome these
+    disadvantages.
    </para>
    <sect3 id="streaming-replication-slots-manipulation">
     <title>Querying and Manipulating Replication Slots</title>
@@ -1911,17 +1910,6 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    <para>
-    Another option is to increase <xref linkend="guc-vacuum-defer-cleanup-age"/>
-    on the primary server, so that dead rows will not be cleaned up as quickly
-    as they normally would be.  This will allow more time for queries to
-    execute before they are canceled on the standby, without having to set
-    a high <varname>max_standby_streaming_delay</varname>.  However it is
-    difficult to guarantee any specific execution-time window with this
-    approach, since <varname>vacuum_defer_cleanup_age</varname> is measured in
-    transactions executed on the primary server.
-   </para>
-
-   <para>
     The number of query cancels and the reason for them can be viewed using
     the <structname>pg_stat_database_conflicts</structname> system view on the standby
     server. The <structname>pg_stat_database</structname> system view also contains
@@ -2257,8 +2245,7 @@ HINT:  You can then restart the server after making the necessary configuration 
    </para>
 
    <para>
-    On the primary, parameters <xref linkend="guc-wal-level"/> and
-    <xref linkend="guc-vacuum-defer-cleanup-age"/> can be used.
+    On the primary, the <xref linkend="guc-wal-level"/> parameter can be used.
     <xref linkend="guc-max-standby-archive-delay"/> and
     <xref linkend="guc-max-standby-streaming-delay"/> have no effect if set on
     the primary.
@@ -2268,9 +2255,6 @@ HINT:  You can then restart the server after making the necessary configuration 
     On the standby, parameters <xref linkend="guc-hot-standby"/>,
     <xref linkend="guc-max-standby-archive-delay"/> and
     <xref linkend="guc-max-standby-streaming-delay"/> can be used.
-    <xref linkend="guc-vacuum-defer-cleanup-age"/> has no effect
-    as long as the server remains in standby mode, though it will
-    become relevant if the standby becomes primary.
    </para>
   </sect2>
 

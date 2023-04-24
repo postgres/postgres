@@ -2577,15 +2577,6 @@ struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_defer_cleanup_age", PGC_SIGHUP, REPLICATION_PRIMARY,
-			gettext_noop("Number of transactions by which VACUUM and HOT cleanup should be deferred, if any."),
-			NULL
-		},
-		&vacuum_defer_cleanup_age,
-		0, 0, 1000000,			/* see ComputeXidHorizons */
-		NULL, NULL, NULL
-	},
-	{
 		{"vacuum_failsafe_age", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Age at which VACUUM should trigger failsafe to avoid a wraparound outage."),
 			NULL

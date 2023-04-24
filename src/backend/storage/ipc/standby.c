@@ -38,7 +38,6 @@
 #include "utils/timestamp.h"
 
 /* User-settable GUC parameters */
-int			vacuum_defer_cleanup_age;
 int			max_standby_archive_delay = 30 * 1000;
 int			max_standby_streaming_delay = 30 * 1000;
 bool		log_recovery_conflict_waits = false;

@@ -4614,41 +4614,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-vacuum-defer-cleanup-age" xreflabel="vacuum_defer_cleanup_age">
-      <term><varname>vacuum_defer_cleanup_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>vacuum_defer_cleanup_age</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the number of transactions by which <command>VACUUM</command> and
-        <link linkend="storage-hot"><acronym>HOT</acronym> updates</link>
-        will defer cleanup of dead row versions. The
-        default is zero transactions, meaning that dead row versions can be
-        removed as soon as possible, that is, as soon as they are no longer
-        visible to any open transaction.  You may wish to set this to a
-        non-zero value on a primary server that is supporting hot standby
-        servers, as described in <xref linkend="hot-standby"/>.  This allows
-        more time for queries on the standby to complete without incurring
-        conflicts due to early cleanup of rows.  However, since the value
-        is measured in terms of number of write transactions occurring on the
-        primary server, it is difficult to predict just how much additional
-        grace time will be made available to standby queries.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
-       </para>
-       <para>
-        You should also consider setting <varname>hot_standby_feedback</varname>
-        on standby server(s) as an alternative to using this parameter.
-       </para>
-       <para>
-        This does not prevent cleanup of dead rows which have reached the age
-        specified by <varname>old_snapshot_threshold</varname>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      </variablelist>
     </sect2>
 
