@@ -330,21 +330,21 @@ F843	POSITION_REGEX function			NO	consider regexp_instr()
 F844	SUBSTRING_REGEX function			NO	consider regexp_substr()
 F845	TRANSLATE_REGEX function			NO	consider regexp_replace()
 F846	Octet support in regular expression operators			NO	
-F847	Nonconstant regular expressions			NO	
-F850	Top-level <order by clause> in <query expression>			YES	
-F851	<order by clause> in subqueries			YES	
-F852	Top-level <order by clause> in views			YES	
-F855	Nested <order by clause> in <query expression>			YES	
-F856	Nested <fetch first clause> in <query expression>			YES	
-F857	Top-level <fetch first clause> in <query expression>			YES	
-F858	<fetch first clause> in subqueries			YES	
-F859	Top-level <fetch first clause> in views			YES	
+F847	Non-constant regular expressions			NO	
+F850	Top-level ORDER BY in query expression			YES	
+F851	ORDER BY in subqueries			YES	
+F852	Top-level ORDER BY in views			YES	
+F855	Nested ORDER BY in query expression			YES	
+F856	Nested FETCH FIRST in query expression			YES	
+F857	Top-level FETCH FIRST in query expression			YES	
+F858	FETCH FIRST in subqueries			YES	
+F859	Top-level FETCH FIRST in views			YES	
 F860	Dynamic FETCH FIRST row count			YES	
-F861	Top-level <result offset clause> in <query expression>			YES	
-F862	<result offset clause> in subqueries			YES	
-F863	Nested <result offset clause> in <query expression>			YES	
-F864	Top-level <result offset clause> in views			YES	
-F865	<offset row count> in <result offset clause>			YES	
+F861	Top-level OFFSET in query expression			YES	
+F862	OFFSET in subqueries			YES	
+F863	Nested OFFSET in query expression			YES	
+F864	Top-level OFFSET in views			YES	
+F865	Dynamic offset row count in OFFSET			YES	
 F866	FETCH FIRST clause: PERCENT option			NO	
 F867	FETCH FIRST clause: WITH TIES option			YES	
 F868	ORDER BY in grouped table			YES	
@@ -419,7 +419,7 @@ T046	CLOB data type			NO
 T047	POSITION, OCTET_LENGTH, TRIM, and SUBSTRING for BLOBs			NO	
 T048	Concatenation of BLOBs			NO	
 T049	BLOB locator: non-holdable			NO	
-T050	POSITION, CHAR_LENGTH, OCTET_LENGTH, LOWER, TRIM, UPPER, and SUBSTRING CLOBs			NO	
+T050	POSITION, CHAR_LENGTH, OCTET_LENGTH, LOWER, TRIM, UPPER, and SUBSTRING for CLOBs			NO	
 T051	Row types			NO	
 T053	Explicit aliases for all-fields reference			NO	
 T054	GREATEST and LEAST			YES	different null handling
@@ -487,11 +487,11 @@ T325	Qualified SQL parameter references			YES
 T326	Table functions			NO	
 T331	Basic roles			YES	
 T332	Extended roles			YES	
-T341	Overloading of SQL-invoked functions and procedures			YES	
-T351	Bracketed SQL comments (/*...*/ comments)			YES	
+T341	Overloading of SQL-invoked functions and SQL-invoked procedures			YES	
+T351	Bracketed comments			YES	
 T431	Extended grouping capabilities			YES	
 T432	Nested and concatenated GROUPING SETS			YES	
-T433	Multiargument GROUPING function			YES	
+T433	Multi-argument GROUPING function			YES	
 T434	GROUP BY DISTINCT			YES	
 T441	ABS and MOD functions			YES	
 T461	Symmetric BETWEEN predicate			YES	
@@ -703,8 +703,8 @@ X152	IS VALID predicate: with CONTENT option			NO
 X153	IS VALID predicate: with SEQUENCE option			NO	
 X155	IS VALID predicate: NAMESPACE without ELEMENT clause			NO	
 X157	IS VALID predicate: NO NAMESPACE with ELEMENT clause			NO	
-X160	Basic Information Schema for registered XML Schemas			NO	
-X161	Advanced Information Schema for registered XML Schemas			NO	
+X160	Basic Information Schema for registered XML schemas			NO	
+X161	Advanced Information Schema for registered XML schemas			NO	
 X170	XML null handling options			NO	
 X171	NIL ON NO CONTENT option			NO	
 X181	XML(DOCUMENT(UNTYPED)) type			NO	
