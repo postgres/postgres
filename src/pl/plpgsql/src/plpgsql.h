@@ -1075,7 +1075,7 @@ typedef struct PLpgSQL_execstate
 
 	/* lookup table to use for executing type casts */
 	HTAB	   *cast_hash;
-	MemoryContext cast_hash_context;
+	MemoryContext cast_hash_context;	/* not used; now always NULL */
 
 	/* memory context for statement-lifespan temporary values */
 	MemoryContext stmt_mcontext;	/* current stmt context, or NULL if none */
