@@ -658,7 +658,7 @@ handle_streamed_transaction(LogicalRepMsgType action, StringInfo s)
 			return false;
 
 		default:
-			Assert(false);
+			elog(ERROR, "unexpected apply action: %d", (int) apply_action);
 			return false;		/* silence compiler warning */
 	}
 }
