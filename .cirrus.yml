@@ -477,24 +477,12 @@ task:
       make \
       meson \
       openldap \
-      openssl@3 \
+      openssl \
       python \
       tcl-tk \
       zstd
 
     brew cleanup -s # to reduce cache size
-
-    # brew cleanup removes the empty certs directory in OPENSSLDIR, causing
-    # OpenSSL to report unexpected errors ("unregistered scheme") during
-    # verification failures. Put it back for now as a workaround.
-    #
-    #   https://github.com/orgs/Homebrew/discussions/4030
-    #
-    # Note that $(brew --prefix openssl) will give us the opt/ prefix but not
-    # the etc/ prefix, so we hardcode the full path here. openssl@3 is pinned
-    # above to try to minimize the chances of this changing beneath us, but it's
-    # brittle...
-    mkdir -p "/opt/homebrew/etc/openssl@3/certs"
   upload_caches: homebrew
 
   ccache_cache:
