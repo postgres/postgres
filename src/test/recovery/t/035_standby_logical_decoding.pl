@@ -235,8 +235,6 @@ $node_primary->append_conf('postgresql.conf', q{
 wal_level = 'logical'
 max_replication_slots = 4
 max_wal_senders = 4
-log_min_messages = 'debug2'
-log_error_verbosity = verbose
 });
 $node_primary->dump_info;
 $node_primary->start;
