@@ -17,7 +17,6 @@
 #include "lib/ilist.h"
 #include "storage/block.h"
 #include "storage/relfilelocator.h"
-#include "utils/guc.h"
 
 /*
  * smgr.c maintains a table of SMgrRelation objects, which are essentially
