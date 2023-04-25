@@ -2913,7 +2913,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		 */
 		tab->at_dobalance =
 			!(avopts && (avopts->vacuum_cost_limit > 0 ||
-						 avopts->vacuum_cost_delay > 0));
+						 avopts->vacuum_cost_delay >= 0));
 	}
 
 	heap_freetuple(classTup);
