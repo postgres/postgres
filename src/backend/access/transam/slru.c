@@ -1603,7 +1603,9 @@ SlruSyncFileTag(SlruCtl ctl, const FileTag *ftag, char *path)
 	if (fd < 0)
 		return -1;
 
+	pgstat_report_wait_start(WAIT_EVENT_SLRU_FLUSH_SYNC);
 	result = pg_fsync(fd);
+	pgstat_report_wait_end();
 	save_errno = errno;
 
 	CloseTransientFile(fd);
