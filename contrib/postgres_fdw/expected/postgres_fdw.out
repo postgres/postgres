@@ -6724,6 +6724,28 @@ select * from grem1;
 (2 rows)
 
 delete from grem1;
+-- batch insert with foreign partitions.
+-- This schema uses two partitions, one local and one remote with a modulo
+-- to loop across all of them in batches.
+create table tab_batch_local (id int, data text);
+insert into tab_batch_local select i, 'test'|| i from generate_series(1, 45) i;
+create table tab_batch_sharded (id int, data text) partition by hash(id);
+create table tab_batch_sharded_p0 partition of tab_batch_sharded
+  for values with (modulus 2, remainder 0);
+create table tab_batch_sharded_p1_remote (id int, data text);
+create foreign table tab_batch_sharded_p1 partition of tab_batch_sharded
+  for values with (modulus 2, remainder 1)
+  server loopback options (table_name 'tab_batch_sharded_p1_remote');
+insert into tab_batch_sharded select * from tab_batch_local;
+select count(*) from tab_batch_sharded;
+ count 
+-------
+    45
+(1 row)
+
+drop table tab_batch_local;
+drop table tab_batch_sharded;
+drop table tab_batch_sharded_p1_remote;
 alter server loopback options (drop batch_size);
 -- ===================================================================
 -- test local triggers
