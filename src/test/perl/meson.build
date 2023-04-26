@@ -11,4 +11,5 @@ install_data(
   'PostgreSQL/Test/SimpleTee.pm',
   'PostgreSQL/Test/RecursiveCopy.pm',
   'PostgreSQL/Test/Cluster.pm',
+  'PostgreSQL/Test/BackgroundPsql.pm',
   install_dir: dir_pgxs / 'src/test/perl/PostgreSQL/Test')
