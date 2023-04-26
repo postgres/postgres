@@ -1052,6 +1052,7 @@ dumpRoleMembership(PGconn *conn)
 				PQfinish(conn);
 				exit_nicely(1);
 			}
+			prev_remaining = remaining;
 
 			/* Make one pass over the grants for this role. */
 			for (i = start; i < end; ++i)
