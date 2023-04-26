@@ -540,8 +540,8 @@ OPTIONS (ADD password_required 'false');
      <term><literal>parallel_abort</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
-       This option controls whether <filename>postgres_fdw</filename> aborts
-       in parallel remote transactions opened on a foreign server in a local
+       This option controls whether <filename>postgres_fdw</filename> aborts,
+       in parallel, remote transactions opened on a foreign server in a local
        transaction when the local transaction is aborted. This setting also
        applies to remote and local subtransactions. This option can only be
        specified for foreign servers, not per-table. The default is
