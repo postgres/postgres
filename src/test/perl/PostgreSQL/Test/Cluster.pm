@@ -2611,8 +2611,14 @@ When doing physical replication, the standby is usually identified by
 passing its PostgreSQL::Test::Cluster instance.  When doing logical
 replication, standby_name identifies a subscription.
 
-The default value of target_lsn is $node->lsn('write'), which ensures
-that the standby has caught up to what has been committed on the primary.
+When not in recovery, the default value of target_lsn is $node->lsn('write'),
+which ensures that the standby has caught up to what has been committed on
+the primary.
+
+When in recovery, the default value of target_lsn is $node->lsn('replay')
+instead which ensures that the cascaded standby has caught up to what has been
+replayed on the standby.
+
 If you pass an explicit value of target_lsn, it should almost always be
 the primary's write LSN; so this parameter is seldom needed except when
 querying some intermediate replication node rather than the primary.
@@ -2644,7 +2650,16 @@ sub wait_for_catchup
 	}
 	if (!defined($target_lsn))
 	{
-		$target_lsn = $self->lsn('write');
+		my $isrecovery = $self->safe_psql('postgres', "SELECT pg_is_in_recovery()");
+		chomp($isrecovery);
+		if ($isrecovery eq 't')
+		{
+			$target_lsn = $self->lsn('replay');
+		}
+		else
+		{
+			$target_lsn = $self->lsn('write');
+		}
 	}
 	print "Waiting for replication conn "
 	  . $standby_name . "'s "

@@ -10,12 +10,17 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my ($stdin, $stdout, $stderr, $cascading_stdout, $cascading_stderr, $ret, $handle, $slot);
+my ($stdin,             $stdout,            $stderr,
+	$cascading_stdout,  $cascading_stderr,  $subscriber_stdin,
+	$subscriber_stdout, $subscriber_stderr, $ret,
+	$handle,            $slot);
 
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 my $node_standby = PostgreSQL::Test::Cluster->new('standby');
 my $node_cascading_standby = PostgreSQL::Test::Cluster->new('cascading_standby');
+my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 my $default_timeout = $PostgreSQL::Test::Utils::timeout_default;
+my $psql_timeout    = IPC::Run::timer($default_timeout);
 my $res;
 
 # Name for the physical slot on primary
@@ -267,7 +272,8 @@ $node_standby->init_from_backup(
 	has_streaming => 1,
 	has_restoring => 1);
 $node_standby->append_conf('postgresql.conf',
-	qq[primary_slot_name = '$primary_slotname']);
+	qq[primary_slot_name = '$primary_slotname'
+       max_replication_slots = 5]);
 $node_standby->start;
 $node_primary->wait_for_replay_catchup($node_standby);
 $node_standby->safe_psql('testdb', qq[SELECT * FROM pg_create_physical_replication_slot('$standby_physical_slotname');]);
@@ -284,6 +290,26 @@ $node_cascading_standby->append_conf('postgresql.conf',
 	qq[primary_slot_name = '$standby_physical_slotname']);
 $node_cascading_standby->start;
 $node_standby->wait_for_replay_catchup($node_cascading_standby, $node_primary);
+
+#######################
+# Initialize subscriber node
+#######################
+$node_subscriber->init(allows_streaming => 'logical');
+$node_subscriber->start;
+
+my %psql_subscriber = (
+	'subscriber_stdin'  => '',
+	'subscriber_stdout' => '',
+	'subscriber_stderr' => '');
+$psql_subscriber{run} = IPC::Run::start(
+	[ 'psql', '-XA', '-f', '-', '-d', $node_subscriber->connstr('postgres') ],
+	'<',
+	\$psql_subscriber{subscriber_stdin},
+	'>',
+	\$psql_subscriber{subscriber_stdout},
+	'2>',
+	\$psql_subscriber{subscriber_stderr},
+	$psql_timeout);
 
 ##################################################
 # Test that logical decoding on the standby
@@ -364,6 +390,67 @@ is( $node_primary->psql(
     ),
     3,
     'replaying logical slot from another database fails');
+
+##################################################
+# Test that we can subscribe on the standby with the publication
+# created on the primary.
+##################################################
+
+# Create a table on the primary
+$node_primary->safe_psql('postgres',
+	"CREATE TABLE tab_rep (a int primary key)");
+
+# Create a table (same structure) on the subscriber node
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE tab_rep (a int primary key)");
+
+# Create a publication on the primary
+$node_primary->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub for table tab_rep");
+
+$node_primary->wait_for_replay_catchup($node_standby);
+
+# Subscribe on the standby
+my $standby_connstr = $node_standby->connstr . ' dbname=postgres';
+
+# Not using safe_psql() here as it would wait for activity on the primary
+# and we wouldn't be able to launch pg_log_standby_snapshot() on the primary
+# while waiting.
+# psql_subscriber() allows to not wait synchronously.
+$psql_subscriber{subscriber_stdin} .=
+  qq[CREATE SUBSCRIPTION tap_sub
+     CONNECTION '$standby_connstr'
+     PUBLICATION tap_pub
+     WITH (copy_data = off);];
+$psql_subscriber{subscriber_stdin} .= "\n";
+
+$psql_subscriber{run}->pump_nb();
+
+# Speed up the subscription creation
+$node_primary->safe_psql('postgres', "SELECT pg_log_standby_snapshot()");
+
+# Explicitly shut down psql instance gracefully - to avoid hangs
+# or worse on windows
+$psql_subscriber{subscriber_stdin} .= "\\q\n";
+$psql_subscriber{run}->finish;
+
+$node_subscriber->wait_for_subscription_sync($node_standby, 'tap_sub');
+
+# Insert some rows on the primary
+$node_primary->safe_psql('postgres',
+	qq[INSERT INTO tab_rep select generate_series(1,10);]);
+
+$node_primary->wait_for_replay_catchup($node_standby);
+$node_standby->wait_for_catchup('tap_sub');
+
+# Check that the subscriber can see the rows inserted in the primary
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab_rep");
+is($result, qq(10), 'check replicated inserts after subscription on standby');
+
+# We do not need the subscription and the subscriber anymore
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub");
+$node_subscriber->stop;
 
 ##################################################
 # Recovery conflict: Invalidate conflicting slots, including in-use slots
