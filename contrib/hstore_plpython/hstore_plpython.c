@@ -127,7 +127,13 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 	HStore	   *volatile out;
 
 	dict = (PyObject *) PG_GETARG_POINTER(0);
-	if (!PyMapping_Check(dict))
+
+	/*
+	 * As of Python 3, PyMapping_Check() is unreliable unless one first checks
+	 * that the object isn't a sequence.  (Cleaner solutions exist, but not
+	 * before Python 3.10, which we're not prepared to require yet.)
+	 */
+	if (PySequence_Check(dict) || !PyMapping_Check(dict))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("not a Python mapping")));
