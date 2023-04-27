@@ -6496,7 +6496,8 @@ GUCArrayDelete(ArrayType *array, ArrayType **usersetArray, const char *name)
 		{
 			newarray = construct_array_builtin(&d, 1, TEXTOID);
 			if (usersetArray)
-				newUsersetArray = construct_array_builtin(&d, 1, BOOLOID);
+				newUsersetArray = construct_array_builtin(&userSetDatum, 1,
+														  BOOLOID);
 		}
 
 		index++;
