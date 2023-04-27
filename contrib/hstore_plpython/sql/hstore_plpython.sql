@@ -27,6 +27,17 @@ $$;
 SELECT test1n('aa=>bb, cc=>NULL'::hstore);
 
 
+-- test that a non-mapping result is correctly rejected
+CREATE FUNCTION test1bad() RETURNS hstore
+LANGUAGE plpythonu
+TRANSFORM FOR TYPE hstore
+AS $$
+return "foo"
+$$;
+
+SELECT test1bad();
+
+
 -- test hstore[] -> python
 CREATE FUNCTION test1arr(val hstore[]) RETURNS int
 LANGUAGE plpythonu
