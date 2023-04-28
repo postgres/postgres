@@ -1144,7 +1144,7 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 	int			i;
 	Datum	   *elems;
 	bool	   *nulls;
-	int64		len;
+	int			len;
 	int			ndim;
 	int			dims[MAXDIM];
 	int			lbs[MAXDIM];
@@ -1163,7 +1163,6 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 	 * Determine the number of dimensions, and their sizes.
 	 */
 	ndim = 0;
-	len = 1;
 
 	Py_INCREF(plrv);
 
@@ -1181,17 +1180,6 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 		dims[ndim] = PySequence_Length(pyptr);
 		if (dims[ndim] < 0)
 			PLy_elog(ERROR, "could not determine sequence length for function return value");
-
-		if (dims[ndim] > MaxAllocSize)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("array size exceeds the maximum allowed")));
-
-		len *= dims[ndim];
-		if (len > MaxAllocSize)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("array size exceeds the maximum allowed")));
 
 		if (dims[ndim] == 0)
 		{
@@ -1222,15 +1210,18 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 					 errmsg("return value of function with array return type is not a Python sequence")));
 
 		ndim = 1;
-		len = dims[0] = PySequence_Length(plrv);
+		dims[0] = PySequence_Length(plrv);
 	}
+
+	/* Allocate space for work arrays, after detecting array size overflow */
+	len = ArrayGetNItems(ndim, dims);
+	elems = palloc(sizeof(Datum) * len);
+	nulls = palloc(sizeof(bool) * len);
 
 	/*
 	 * Traverse the Python lists, in depth-first order, and collect all the
 	 * elements at the bottom level into 'elems'/'nulls' arrays.
 	 */
-	elems = palloc(sizeof(Datum) * len);
-	nulls = palloc(sizeof(bool) * len);
 	currelem = 0;
 	PLySequence_ToArray_recurse(arg->u.array.elm, plrv,
 								dims, ndim, 0,

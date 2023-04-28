@@ -328,6 +328,13 @@ $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_array_mixed2();
 
+CREATE FUNCTION test_type_conversion_array_mixed3() RETURNS text[] AS $$
+return [[], 'a']
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_mixed3();
+
+
 CREATE FUNCTION test_type_conversion_mdarray_malformed() RETURNS int[] AS $$
 return [[1,2,3],[4,5]]
 $$ LANGUAGE plpythonu;
