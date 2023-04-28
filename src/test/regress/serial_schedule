@@ -61,6 +61,7 @@ test: insert_conflict
 test: create_misc
 test: create_operator
 test: create_procedure
+test: create_schema
 test: create_index
 test: create_index_spgist
 test: create_view
