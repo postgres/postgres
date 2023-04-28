@@ -361,7 +361,7 @@ $node_primary->safe_psql('testdb',
 	qq[INSERT INTO decoding_test(x,y) SELECT s, s::text FROM generate_series(5,50) s;]
 );
 
-$node_primary->wait_for_catchup($node_standby);
+$node_primary->wait_for_replay_catchup($node_standby);
 
 my $stdout_recv = $node_standby->pg_recvlogical_upto(
     'testdb', 'behaves_ok_activeslot', $endpos, $default_timeout,
@@ -384,12 +384,17 @@ is($stdout_recv, '', 'pg_recvlogical acknowledged changes');
 
 $node_primary->safe_psql('postgres', 'CREATE DATABASE otherdb');
 
-is( $node_primary->psql(
+# Wait for catchup to ensure that the new database is visible to other sessions
+# on the standby.
+$node_primary->wait_for_replay_catchup($node_standby);
+
+($result, $stdout, $stderr) = $node_standby->psql(
         'otherdb',
         "SELECT lsn FROM pg_logical_slot_peek_changes('behaves_ok_activeslot', NULL, NULL) ORDER BY lsn DESC LIMIT 1;"
-    ),
-    3,
-    'replaying logical slot from another database fails');
+    );
+ok( $stderr =~
+	  m/replication slot "behaves_ok_activeslot" was not created in this database/,
+	"replaying logical slot from another database fails");
 
 ##################################################
 # Test that we can subscribe on the standby with the publication
