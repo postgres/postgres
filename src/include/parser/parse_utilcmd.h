@@ -30,7 +30,8 @@ extern CreateStatsStmt *transformStatsStmt(Oid relid, CreateStatsStmt *stmt,
 										   const char *queryString);
 extern void transformRuleStmt(RuleStmt *stmt, const char *queryString,
 							  List **actions, Node **whereClause);
-extern List *transformCreateSchemaStmt(CreateSchemaStmt *stmt);
+extern List *transformCreateSchemaStmtElements(List *schemaElts,
+											   const char *schemaName);
 extern PartitionBoundSpec *transformPartitionBound(ParseState *pstate, Relation parent,
 												   PartitionBoundSpec *spec);
 extern List *expandTableLikeClause(RangeVar *heapRel,

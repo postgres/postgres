@@ -95,12 +95,10 @@ typedef struct
 	bool		ofType;			/* true if statement contains OF typename */
 } CreateStmtContext;
 
-/* State shared by transformCreateSchemaStmt and its subroutines */
+/* State shared by transformCreateSchemaStmtElements and its subroutines */
 typedef struct
 {
-	const char *stmtType;		/* "CREATE SCHEMA" or "ALTER SCHEMA" */
-	char	   *schemaname;		/* name of schema */
-	RoleSpec   *authrole;		/* owner of schema */
+	const char *schemaname;		/* name of schema */
 	List	   *sequences;		/* CREATE SEQUENCE items */
 	List	   *tables;			/* CREATE TABLE items */
 	List	   *views;			/* CREATE VIEW items */
@@ -134,7 +132,7 @@ static void transformCheckConstraints(CreateStmtContext *cxt,
 static void transformConstraintAttrs(CreateStmtContext *cxt,
 									 List *constraintList);
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
-static void setSchemaName(char *context_schema, char **stmt_schema_name);
+static void setSchemaName(const char *context_schema, char **stmt_schema_name);
 static void transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd);
 static List *transformPartitionRangeBounds(ParseState *pstate, List *blist,
 										   Relation parent);
@@ -3784,14 +3782,18 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
 
 
 /*
- * transformCreateSchemaStmt -
- *	  analyzes the CREATE SCHEMA statement
+ * transformCreateSchemaStmtElements -
+ *	  analyzes the elements of a CREATE SCHEMA statement
  *
- * Split the schema element list into individual commands and place
- * them in the result list in an order such that there are no forward
- * references (e.g. GRANT to a table created later in the list). Note
- * that the logic we use for determining forward references is
- * presently quite incomplete.
+ * Split the schema element list from a CREATE SCHEMA statement into
+ * individual commands and place them in the result list in an order
+ * such that there are no forward references (e.g. GRANT to a table
+ * created later in the list). Note that the logic we use for determining
+ * forward references is presently quite incomplete.
+ *
+ * "schemaName" is the name of the schema that will be used for the creation
+ * of the objects listed, that may be compiled from the schema name defined
+ * in the statement or a role specification.
  *
  * SQL also allows constraints to make forward references, so thumb through
  * the table columns and move forward references to a posterior alter-table
@@ -3807,15 +3809,13 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
  * extent.
  */
 List *
-transformCreateSchemaStmt(CreateSchemaStmt *stmt)
+transformCreateSchemaStmtElements(List *schemaElts, const char *schemaName)
 {
 	CreateSchemaStmtContext cxt;
 	List	   *result;
 	ListCell   *elements;
 
-	cxt.stmtType = "CREATE SCHEMA";
-	cxt.schemaname = stmt->schemaname;
-	cxt.authrole = (RoleSpec *) stmt->authrole;
+	cxt.schemaname = schemaName;
 	cxt.sequences = NIL;
 	cxt.tables = NIL;
 	cxt.views = NIL;
@@ -3827,7 +3827,7 @@ transformCreateSchemaStmt(CreateSchemaStmt *stmt)
 	 * Run through each schema element in the schema element list. Separate
 	 * statements by type, and do preliminary analysis.
 	 */
-	foreach(elements, stmt->schemaElts)
+	foreach(elements, schemaElts)
 	{
 		Node	   *element = lfirst(elements);
 
@@ -3912,10 +3912,10 @@ transformCreateSchemaStmt(CreateSchemaStmt *stmt)
  *		Set or check schema name in an element of a CREATE SCHEMA command
  */
 static void
-setSchemaName(char *context_schema, char **stmt_schema_name)
+setSchemaName(const char *context_schema, char **stmt_schema_name)
 {
 	if (*stmt_schema_name == NULL)
-		*stmt_schema_name = context_schema;
+		*stmt_schema_name = unconstify(char *, context_schema);
 	else if (strcmp(context_schema, *stmt_schema_name) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
