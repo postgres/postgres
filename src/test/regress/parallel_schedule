@@ -47,7 +47,7 @@ test: copy copyselect copydml insert insert_conflict
 # More groups of parallel tests
 # Note: many of the tests in later groups depend on create_index
 # ----------
-test: create_function_c create_misc create_operator create_procedure create_table create_type
+test: create_function_c create_misc create_operator create_procedure create_table create_type create_schema
 test: create_index create_index_spgist create_view index_including index_including_gist
 
 # ----------

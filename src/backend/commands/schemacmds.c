@@ -178,7 +178,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 * we cannot, in general, run parse analysis on one statement until we
 	 * have actually executed the prior ones.
 	 */
-	parsetree_list = transformCreateSchemaStmt(stmt);
+	parsetree_list = transformCreateSchemaStmtElements(stmt->schemaElts,
+													   schemaName);
 
 	/*
 	 * Execute each command contained in the CREATE SCHEMA.  Since the grammar
