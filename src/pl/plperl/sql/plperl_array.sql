@@ -159,6 +159,43 @@ $$ LANGUAGE plperl;
 
 select plperl_arrays_inout_l('{{1}, {2}, {3}}');
 
+-- check output of multi-dimensional arrays
+CREATE FUNCTION plperl_md_array_out() RETURNS text[] AS $$
+	return [['a'], ['b'], ['c']];
+$$ LANGUAGE plperl;
+
+select plperl_md_array_out();
+
+CREATE OR REPLACE FUNCTION plperl_md_array_out() RETURNS text[] AS $$
+	return [[], []];
+$$ LANGUAGE plperl;
+
+select plperl_md_array_out();
+
+CREATE OR REPLACE FUNCTION plperl_md_array_out() RETURNS text[] AS $$
+	return [[], [1]];
+$$ LANGUAGE plperl;
+
+select plperl_md_array_out();  -- fail
+
+CREATE OR REPLACE FUNCTION plperl_md_array_out() RETURNS text[] AS $$
+	return [[], 1];
+$$ LANGUAGE plperl;
+
+select plperl_md_array_out();  -- fail
+
+CREATE OR REPLACE FUNCTION plperl_md_array_out() RETURNS text[] AS $$
+	return [1, []];
+$$ LANGUAGE plperl;
+
+select plperl_md_array_out();  -- fail
+
+CREATE OR REPLACE FUNCTION plperl_md_array_out() RETURNS text[] AS $$
+	return [[1], [[]]];
+$$ LANGUAGE plperl;
+
+select plperl_md_array_out();  -- fail
+
 -- make sure setof works
 create or replace function perl_setof_array(integer[]) returns setof integer[] language plperl as $$
 	my $arr = shift;
