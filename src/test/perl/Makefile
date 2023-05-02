@@ -31,6 +31,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/PostgreSQL/Test/SimpleTee.pm'
 	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/PostgreSQL/Test/RecursiveCopy.pm'
 	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/PostgreSQL/Test/Cluster.pm'
+	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/PostgreSQL/Test/BackgroundPsql.pm'
 	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/PostgreSQL/Version.pm'
 
 endif
