@@ -160,7 +160,7 @@ PostgreSQL documentation
        Patterns may be unqualified, e.g. <literal>myrel*</literal>, or they
        may be schema-qualified, e.g. <literal>myschema*.myrel*</literal> or
        database-qualified and schema-qualified, e.g.
-       <literal>mydb*.myscheam*.myrel*</literal>. A database-qualified
+       <literal>mydb*.myschema*.myrel*</literal>. A database-qualified
        pattern will add matching databases to the list of databases to be
        checked.
       </para>
