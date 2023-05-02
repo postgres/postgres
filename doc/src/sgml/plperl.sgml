@@ -441,7 +441,7 @@ use strict;
    <variablelist>
     <varlistentry>
      <term>
-      <literal><function>spi_exec_query</function>(<replaceable>query</replaceable> [, <replaceable>max-rows</replaceable>])</literal>
+      <literal><function>spi_exec_query</function>(<replaceable>query</replaceable> [, <replaceable>limit</replaceable>])</literal>
       <indexterm>
        <primary>spi_exec_query</primary>
        <secondary>in PL/Perl</secondary>
@@ -449,9 +449,17 @@ use strict;
      </term>
      <listitem>
       <para>
-       <literal>spi_exec_query</literal> executes an SQL command and
-returns the entire row set as a reference to an array of hash
-references.  <emphasis>You should only use this command when you know
+       <function>spi_exec_query</function> executes an SQL command and
+returns the entire row set as a reference to an array of hash references.
+If <replaceable>limit</replaceable> is specified and is greater than zero,
+then <function>spi_exec_query</function> retrieves at
+most <replaceable>limit</replaceable> rows, much as if the query included
+a <literal>LIMIT</literal> clause.  Omitting <replaceable>limit</replaceable>
+or specifying it as zero results in no row limit.
+      </para>
+
+      <para>
+<emphasis>You should only use this command when you know
 that the result set will be relatively small.</emphasis>  Here is an
 example of a query (<command>SELECT</command> command) with the
 optional maximum number of rows:
@@ -643,7 +651,10 @@ $plan = spi_prepare('SELECT * FROM test WHERE id &gt; $1 AND name = $2',
     by <literal>spi_exec_query</literal>, or in <literal>spi_query_prepared</literal> which returns a cursor
     exactly as <literal>spi_query</literal> does, which can be later passed to <literal>spi_fetchrow</literal>.
     The optional second parameter to <literal>spi_exec_prepared</literal> is a hash reference of attributes;
-    the only attribute currently supported is <literal>limit</literal>, which sets the maximum number of rows returned by a query.
+    the only attribute currently supported is <literal>limit</literal>, which
+    sets the maximum number of rows returned from the query.
+    Omitting <literal>limit</literal> or specifying it as zero results in no
+    row limit.
     </para>
 
     <para>
