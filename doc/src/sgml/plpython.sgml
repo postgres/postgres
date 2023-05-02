@@ -789,12 +789,21 @@ $$ LANGUAGE plpython3u;
 
   <variablelist>
    <varlistentry>
-    <term><literal>plpy.<function>execute</function>(<replaceable>query</replaceable> [, <replaceable>max-rows</replaceable>])</literal></term>
+    <term><literal>plpy.<function>execute</function>(<replaceable>query</replaceable> [, <replaceable>limit</replaceable>])</literal></term>
     <listitem>
      <para>
       Calling <function>plpy.execute</function> with a query string and an
       optional row limit argument causes that query to be run and the result to
       be returned in a result object.
+     </para>
+
+     <para>
+      If <replaceable>limit</replaceable> is specified and is greater than
+      zero, then <function>plpy.execute</function> retrieves at
+      most <replaceable>limit</replaceable> rows, much as if the query
+      included a <literal>LIMIT</literal>
+      clause.  Omitting <replaceable>limit</replaceable> or specifying it as
+      zero results in no row limit.
      </para>
 
      <para>
@@ -887,7 +896,7 @@ foo = rv[i]["my_column"]
 
    <varlistentry>
     <term><literal>plpy.<function>prepare</function>(<replaceable>query</replaceable> [, <replaceable>argtypes</replaceable>])</literal></term>
-    <term><literal>plpy.<function>execute</function>(<replaceable>plan</replaceable> [, <replaceable>arguments</replaceable> [, <replaceable>max-rows</replaceable>]])</literal></term>
+    <term><literal>plpy.<function>execute</function>(<replaceable>plan</replaceable> [, <replaceable>arguments</replaceable> [, <replaceable>limit</replaceable>]])</literal></term>
     <listitem>
      <para>
       <indexterm><primary>preparing a query</primary><secondary>in PL/Python</secondary></indexterm>
