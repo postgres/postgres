@@ -957,7 +957,7 @@ stmtmulti:	stmtmulti ';' toplevel_stmt
 
 /*
  * toplevel_stmt includes BEGIN and END.  stmt does not include them, because
- * those words have different meanings in function bodys.
+ * those words have different meanings in function bodies.
  */
 toplevel_stmt:
 			stmt

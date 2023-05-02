@@ -1012,7 +1012,7 @@ search_locale_enum(LPWSTR pStr, DWORD dwFlags, LPARAM lparam)
 	{
 		/*
 		 * If the enumerated locale does not have a hyphen ("en") OR the
-		 * lc_message input does not have an underscore ("English"), we only
+		 * locale_name input does not have an underscore ("English"), we only
 		 * need to compare the <Language> tags.
 		 */
 		if (wcsrchr(pStr, '-') == NULL || wcsrchr(argv[0], '_') == NULL)

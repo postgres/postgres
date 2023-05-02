@@ -819,7 +819,7 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 	Oid			amoid,			/* our AM's oid */
 				opfamilyoid;	/* oid of opfamily */
 	int			maxOpNumber,	/* amstrategies value */
-				optsProcNumber, /* amopclassopts value */
+				optsProcNumber, /* amoptsprocnum value */
 				maxProcNumber;	/* amsupport value */
 	HeapTuple	tup;
 	Form_pg_am	amform;
@@ -1321,7 +1321,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 			/*
 			 * pg_amproc functions are indexed by (lefttype, righttype), but
 			 * an equalimage function can only be called at CREATE INDEX time.
-			 * The same opclass opcintype OID is always used for leftype and
+			 * The same opclass opcintype OID is always used for lefttype and
 			 * righttype.  Providing a cross-type routine isn't sensible.
 			 * Reject cross-type ALTER OPERATOR FAMILY ...  ADD FUNCTION 4
 			 * statements here.

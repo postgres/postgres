@@ -43,7 +43,7 @@ typedef struct
 	/*
 	 * Before calling toast_tuple_init, the caller must initialize the
 	 * following fields.  Each array must have a length equal to
-	 * ttc_rel->rd_att->natts.  The tts_oldvalues and tts_oldisnull fields
+	 * ttc_rel->rd_att->natts.  The ttc_oldvalues and ttc_oldisnull fields
 	 * should be NULL in the case of an insert.
 	 */
 	Relation	ttc_rel;		/* the relation that contains the tuple */
@@ -53,9 +53,9 @@ typedef struct
 	bool	   *ttc_oldisnull;	/* null flags from previous tuple */
 
 	/*
-	 * Before calling toast_tuple_init, the caller should set tts_attr to
+	 * Before calling toast_tuple_init, the caller should set ttc_attr to
 	 * point to an array of ToastAttrInfo structures of a length equal to
-	 * tts_rel->rd_att->natts.  The contents of the array need not be
+	 * ttc_rel->rd_att->natts.  The contents of the array need not be
 	 * initialized.  ttc_flags also does not need to be initialized.
 	 */
 	uint8		ttc_flags;

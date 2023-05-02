@@ -1721,7 +1721,7 @@ case $os in
 	# Likewise for "kernel-abi"
 	eabi* | gnueabi*)
 		;;
-	# VxWorks passes extra cpu info in the 4th filed.
+	# VxWorks passes extra cpu info in the 4th field.
 	simlinux | simwindows | spe)
 		;;
 	# Now accept the basic system types.

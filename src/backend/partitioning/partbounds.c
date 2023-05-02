@@ -2340,7 +2340,7 @@ merge_default_partitions(PartitionMap *outer_map,
 		/*
 		 * The default partitions have to be joined with each other, so merge
 		 * them.  Note that each of the default partitions isn't merged yet
-		 * (see, process_outer_partition()/process_innerer_partition()), so
+		 * (see, process_outer_partition()/process_inner_partition()), so
 		 * they should be merged successfully.  The merged partition will act
 		 * as the default partition of the join relation.
 		 */

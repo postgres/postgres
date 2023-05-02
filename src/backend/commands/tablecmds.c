@@ -2984,7 +2984,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				 * generated column, we'll take its generation expression in
 				 * preference to the parent's.  We must check that the child
 				 * column doesn't specify a default value or identity, which
-				 * matches the rules for a single column in parse_util.c.
+				 * matches the rules for a single column in parse_utilcmd.c.
 				 *
 				 * Conversely, if the parent column is not generated, the
 				 * child column can't be either.  (We used to allow that, but
@@ -8017,7 +8017,7 @@ ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recurs
 	 * is a bit complicated.  GENERATED clauses must be attached to the column
 	 * definition and cannot be added later like DEFAULT, so if a child table
 	 * has a generation expression that the parent does not have, the child
-	 * column will necessarily be an attlocal column.  So to implement ONLY
+	 * column will necessarily be an attislocal column.  So to implement ONLY
 	 * here, we'd need extra code to update attislocal of the direct child
 	 * tables, somewhat similar to how DROP COLUMN does it, so that the
 	 * resulting state can be properly dumped and restored.
@@ -10930,7 +10930,7 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd, bool recurse,
 	}
 
 	/*
-	 * ATExecConstrRecurse already invalidated relcache for the relations
+	 * ATExecAlterConstrRecurse already invalidated relcache for the relations
 	 * having the constraint itself; here we also invalidate for relations
 	 * that have any triggers that are part of the constraint.
 	 */

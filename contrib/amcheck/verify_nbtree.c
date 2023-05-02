@@ -104,7 +104,7 @@ typedef struct BtreeCheckState
 
 	/*
 	 * The rightlink and incomplete split flag of block one level down to the
-	 * target page, which was visited last time via downlink from taget page.
+	 * target page, which was visited last time via downlink from target page.
 	 * We use it to check for missing downlinks.
 	 */
 	BlockNumber prevrightlink;

@@ -580,8 +580,8 @@ gistXLogAssignLSN(void)
 	int			dummy = 0;
 
 	/*
-	 * Records other than SWITCH_WAL must have content. We use an integer 0 to
-	 * follow the restriction.
+	 * Records other than XLOG_SWITCH must have content. We use an integer 0
+	 * to follow the restriction.
 	 */
 	XLogBeginInsert();
 	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);

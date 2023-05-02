@@ -151,7 +151,7 @@ struct WaitEventSet
 #endif
 };
 
-/* A common WaitEventSet used to implement WatchLatch() */
+/* A common WaitEventSet used to implement WaitLatch() */
 static WaitEventSet *LatchWaitSet;
 
 /* The position of the latch in LatchWaitSet. */

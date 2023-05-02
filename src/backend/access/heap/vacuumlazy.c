@@ -2575,7 +2575,7 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 	END_CRIT_SECTION();
 
 	/*
-	 * Now that we have removed the LD_DEAD items from the page, once again
+	 * Now that we have removed the LP_DEAD items from the page, once again
 	 * check if the page has become all-visible.  The page is already marked
 	 * dirty, exclusively locked, and, if needed, a full page image has been
 	 * emitted.

@@ -24,7 +24,7 @@
 PgStat_PendingWalStats PendingWalStats = {0};
 
 /*
- * WAL usage counters saved from pgWALUsage at the previous call to
+ * WAL usage counters saved from pgWalUsage at the previous call to
  * pgstat_report_wal(). This is used to calculate how much WAL usage
  * happens between pgstat_report_wal() calls, by subtracting
  * the previous counters from the current ones.

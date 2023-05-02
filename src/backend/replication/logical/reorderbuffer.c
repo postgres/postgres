@@ -1885,7 +1885,7 @@ ReorderBufferStreamCommit(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		/*
 		 * This is a PREPARED transaction, part of a two-phase commit. The
 		 * full cleanup will happen as part of the COMMIT PREPAREDs, so now
-		 * just truncate txn by removing changes and tuple_cids.
+		 * just truncate txn by removing changes and tuplecids.
 		 */
 		ReorderBufferTruncateTXN(rb, txn, true);
 		/* Reset the CheckXidAlive */
@@ -4010,7 +4010,7 @@ ReorderBufferStreamTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	 * After that we need to reuse the snapshot from the previous run.
 	 *
 	 * Unlike DecodeCommit which adds xids of all the subtransactions in
-	 * snapshot's xip array via SnapBuildCommittedTxn, we can't do that here
+	 * snapshot's xip array via SnapBuildCommitTxn, we can't do that here
 	 * but we do add them to subxip array instead via ReorderBufferCopySnap.
 	 * This allows the catalog changes made in subtransactions decoded till
 	 * now to be visible.

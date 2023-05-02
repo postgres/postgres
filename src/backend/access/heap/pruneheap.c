@@ -198,8 +198,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		/*
 		 * Now that we have buffer lock, get accurate information about the
 		 * page's free space, and recheck the heuristic about whether to
-		 * prune. (We needn't recheck PageIsPrunable, since no one else could
-		 * have pruned while we hold pin.)
+		 * prune.
 		 */
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
@@ -490,7 +489,7 @@ heap_page_prune(Relation relation, Buffer buffer,
  *
  * Due to its cost we also only want to call
  * TransactionIdLimitedForOldSnapshots() if necessary, i.e. we might not have
- * done so in heap_hot_prune_opt() if pd_prune_xid was old enough. But we
+ * done so in heap_page_prune_opt() if pd_prune_xid was old enough. But we
  * still want to be able to remove rows that are too new to be removed
  * according to prstate->vistest, but that can be removed based on
  * old_snapshot_threshold. So we call TransactionIdLimitedForOldSnapshots() on

@@ -358,7 +358,7 @@ typedef struct TableAmRoutine
 	 * allowed by the AM.
 	 *
 	 * Implementations can assume that scan_set_tidrange is always called
-	 * before can_getnextslot_tidrange or after scan_rescan and before any
+	 * before scan_getnextslot_tidrange or after scan_rescan and before any
 	 * further calls to scan_getnextslot_tidrange.
 	 */
 	void		(*scan_set_tidrange) (TableScanDesc scan,

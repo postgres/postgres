@@ -386,7 +386,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	ntest = makeNode(NullTest);
 	ntest->nulltesttype = IS_NOT_NULL;
 	ntest->arg = copyObject(mminfo->target);
-	/* we checked it wasn't a rowtype in find_minmax_aggs_walker */
+	/* we checked it wasn't a rowtype in can_minmax_aggs */
 	ntest->argisrow = false;
 	ntest->location = -1;
 

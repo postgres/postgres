@@ -3004,7 +3004,7 @@ hashagg_batch_new(LogicalTape *input_tape, int setno,
 }
 
 /*
- * read_spilled_tuple
+ * hashagg_batch_read
  * 		read the next tuple from a batch's tape.  Return NULL if no more.
  */
 static MinimalTuple

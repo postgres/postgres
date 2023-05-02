@@ -2125,7 +2125,7 @@ plperl_create_sub(plperl_proc_desc *prodesc, const char *s, Oid fn_oid)
 	/*
 	 * G_KEEPERR seems to be needed here, else we don't recognize compile
 	 * errors properly.  Perhaps it's because there's another level of eval
-	 * inside mksafefunc?
+	 * inside mkfunc?
 	 */
 	count = call_pv("PostgreSQL::InServer::mkfunc",
 					G_SCALAR | G_EVAL | G_KEEPERR);

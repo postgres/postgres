@@ -974,8 +974,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 				 *
 				 * Even if new worker for this particular rel is restarted it
 				 * won't be able to make any progress as we hold exclusive
-				 * lock on subscription_rel till the transaction end. It will
-				 * simply exit as there is no corresponding rel entry.
+				 * lock on pg_subscription_rel till the transaction end. It
+				 * will simply exit as there is no corresponding rel entry.
 				 *
 				 * This locking also ensures that the state of rels won't
 				 * change till we are done with this refresh operation.

@@ -804,7 +804,7 @@ standby_priority_comparator(const void *a, const void *b)
 
 	/*
 	 * We might have equal priority values; arbitrarily break ties by position
-	 * in the WALSnd array.  (This is utterly bogus, since that is arrival
+	 * in the WalSnd array.  (This is utterly bogus, since that is arrival
 	 * order dependent, but there are regression tests that rely on it.)
 	 */
 	return sa->walsnd_index - sb->walsnd_index;

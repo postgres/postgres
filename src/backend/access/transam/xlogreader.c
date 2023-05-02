@@ -1476,7 +1476,7 @@ err:
 }
 
 /*
- * Helper function to ease writing of XLogRoutine->page_read callbacks.
+ * Helper function to ease writing of XLogReaderRoutine->page_read callbacks.
  * If this function is used, caller must supply a segment_open callback in
  * 'state', as that is used here.
  *
@@ -1513,7 +1513,7 @@ WALRead(XLogReaderState *state,
 		/*
 		 * If the data we want is not in a segment we have open, close what we
 		 * have (if anything) and open the next one, using the caller's
-		 * provided openSegment callback.
+		 * provided segment_open callback.
 		 */
 		if (state->seg.ws_file < 0 ||
 			!XLByteInSeg(recptr, state->seg.ws_segno, state->segcxt.ws_segsize) ||

@@ -4717,8 +4717,8 @@ pg_has_role_id_id(PG_FUNCTION_ARGS)
  *		Convert text string to AclMode value.
  *
  * We use USAGE to denote whether the privileges of the role are accessible
- * (has_privs), MEMBER to denote is_member, and MEMBER WITH GRANT OPTION
- * (or ADMIN OPTION) to denote is_admin.  There is no ACL bit corresponding
+ * (has_privs_of_role), MEMBER to denote is_member, and MEMBER WITH GRANT
+ * (or ADMIN) OPTION to denote is_admin.  There is no ACL bit corresponding
  * to MEMBER so we cheat and use ACL_CREATE for that.  This convention
  * is shared only with pg_role_aclcheck, below.
  */

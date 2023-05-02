@@ -3069,7 +3069,7 @@ AtEOXact_Files(bool isCommit)
 /*
  * BeforeShmemExit_Files
  *
- * before_shmem_access hook to clean up temp files during backend shutdown.
+ * before_shmem_exit hook to clean up temp files during backend shutdown.
  * Here, we want to clean up *all* temp files including interXact ones.
  */
 static void

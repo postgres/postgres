@@ -816,7 +816,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 				 * If the last pages of the scan were empty, we would go to
 				 * the next phase while heap_blks_scanned != heap_blks_total.
 				 * Instead, to ensure that heap_blks_scanned is equivalent to
-				 * total_heap_blks after the table scan phase, this parameter
+				 * heap_blks_total after the table scan phase, this parameter
 				 * is manually updated to the correct value when the table
 				 * scan finishes.
 				 */

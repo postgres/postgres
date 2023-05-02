@@ -4210,7 +4210,7 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 			 * Process complex expressions, not just simple Vars.
 			 *
 			 * First, we search for an exact match of an expression. If we
-			 * find one, we can just discard the whole GroupExprInfo, with all
+			 * find one, we can just discard the whole GroupVarInfo, with all
 			 * the variables we extracted from it.
 			 *
 			 * Otherwise we inspect the individual vars, and try matching it

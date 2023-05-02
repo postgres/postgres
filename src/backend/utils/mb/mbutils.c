@@ -453,7 +453,7 @@ pg_do_encoding_conversion(unsigned char *src, int len,
  *
  * The output is null-terminated.
  *
- * If destlen < srclen * MAX_CONVERSION_LENGTH + 1, the converted output
+ * If destlen < srclen * MAX_CONVERSION_INPUT_LENGTH + 1, the converted output
  * wouldn't necessarily fit in the output buffer, and the function will not
  * convert the whole input.
  *

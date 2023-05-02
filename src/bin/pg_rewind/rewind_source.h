@@ -83,4 +83,4 @@ extern rewind_source *init_libpq_source(PGconn *conn);
 /* in local_source.c */
 extern rewind_source *init_local_source(const char *datadir);
 
-#endif							/* FETCH_H */
+#endif							/* REWIND_SOURCE_H */

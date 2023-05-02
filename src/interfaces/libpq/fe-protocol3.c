@@ -1500,7 +1500,7 @@ getNotify(PGconn *conn)
 	}
 
 	/*
-	 * Store the strings right after the PQnotify structure so it can all be
+	 * Store the strings right after the PGnotify structure so it can all be
 	 * freed at once.  We don't use NAMEDATALEN because we don't want to tie
 	 * this interface to a specific server name length.
 	 */

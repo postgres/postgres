@@ -11,8 +11,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef QUERYJUBLE_H
-#define QUERYJUBLE_H
+#ifndef QUERYJUMBLE_H
+#define QUERYJUMBLE_H
 
 #include "nodes/parsenodes.h"
 

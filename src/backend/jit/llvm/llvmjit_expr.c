@@ -2121,8 +2121,8 @@ llvm_compile_expr(ExprState *state)
 
 					/*
 					 * pergroup = &aggstate->all_pergroups
-					 * [op->d.agg_strict_trans_check.setoff]
-					 * [op->d.agg_init_trans_check.transno];
+					 * [op->d.agg_trans.setoff]
+					 * [op->d.agg_trans.transno];
 					 */
 					v_allpergroupsp =
 						l_load_struct_gep(b, v_aggstatep,

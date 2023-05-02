@@ -119,7 +119,7 @@ static inline IndexTuple _bt_split_firstright(FindSplitData *state,
  * righthand page (which is called firstrightoff), plus a boolean
  * indicating whether the new tuple goes on the left or right page.  You
  * can think of the returned state as a point _between_ two adjacent data
- * items (laftleft and firstright data items) on an imaginary version of
+ * items (lastleft and firstright data items) on an imaginary version of
  * origpage that already includes newitem.  The bool is necessary to
  * disambiguate the case where firstrightoff == newitemoff (i.e. it is
  * sometimes needed to determine if the firstright tuple for the split is
