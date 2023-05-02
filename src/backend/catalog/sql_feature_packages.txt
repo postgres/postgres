@@ -31,7 +31,6 @@ F311	Core
 F471	Core
 F481	Core
 F501	Core
-F812	Core
 S011	Core
 T321	Core
 T631	Core

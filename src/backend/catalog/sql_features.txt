@@ -300,7 +300,7 @@ F661	Simple tables			YES
 F671	Subqueries in CHECK constraints			NO	intentionally omitted
 F672	Retrospective CHECK constraints			YES	
 F673	Reads SQL-data routine invocations in CHECK constraints			NO	
-F690	Collation support			YES	but no character set support
+F690	Collation support			YES	
 F692	Extended collation support			YES	
 F693	SQL-session and client module collations			NO	
 F695	Translation support			NO	
@@ -425,7 +425,7 @@ T053	Explicit aliases for all-fields reference			NO
 T054	GREATEST and LEAST			YES	different null handling
 T055	String padding functions			YES	
 T056	Multi-character TRIM functions			YES	
-T061	UCS support			NO	
+T061	UCS support			YES	
 T062	Character length units			NO	
 T071	BIGINT data type			YES	
 T076	DECFLOAT data type			NO	
@@ -543,13 +543,13 @@ T662	Underscores in numeric literals			YES
 T670	Schema and data statement mixing			YES	
 T801	JSON data type			NO	
 T802	Enhanced JSON data type			NO	
-T803	String-based JSON			NO	
-T811	Basic SQL/JSON constructor functions			NO	
-T812	SQL/JSON: JSON_OBJECTAGG			NO	
-T813	SQL/JSON: JSON_ARRAYAGG with ORDER BY			NO	
-T814	Colon in JSON_OBJECT or JSON_OBJECTAGG			NO	
+T803	String-based JSON			YES	
+T811	Basic SQL/JSON constructor functions			YES	
+T812	SQL/JSON: JSON_OBJECTAGG			YES	
+T813	SQL/JSON: JSON_ARRAYAGG with ORDER BY			YES	
+T814	Colon in JSON_OBJECT or JSON_OBJECTAGG			YES	
 T821	Basic SQL/JSON query operators			NO	
-T822	SQL/JSON: IS JSON WITH UNIQUE KEYS predicate			NO	
+T822	SQL/JSON: IS JSON WITH UNIQUE KEYS predicate			YES	
 T823	SQL/JSON: PASSING clause			NO	
 T824	JSON_TABLE: specific PLAN clause			NO	
 T825	SQL/JSON: ON EMPTY and ON ERROR clauses			NO	
@@ -557,7 +557,7 @@ T826	General value expression in ON ERROR or ON EMPTY clauses			NO
 T827	JSON_TABLE: sibling NESTED COLUMNS clauses			NO	
 T828	JSON_QUERY			NO	
 T829	JSON_QUERY: array wrapper options			NO	
-T830	Enforcing unique keys in SQL/JSON constructor functions			NO	
+T830	Enforcing unique keys in SQL/JSON constructor functions			YES	
 T831	SQL/JSON path language: strict mode			YES	
 T832	SQL/JSON path language: item method			YES	
 T833	SQL/JSON path language: multiple subscripts			YES	
@@ -568,7 +568,7 @@ T837	SQL/JSON path language: regex_like predicate			YES
 T838	JSON_TABLE: PLAN DEFAULT clause			NO	
 T839	Formatted cast of datetimes to/from character strings			NO	
 T840	Hex integer literals in SQL/JSON path language			YES	
-T851	SQL/JSON: optional keywords for default syntax			NO	
+T851	SQL/JSON: optional keywords for default syntax			YES	
 T860	SQL/JSON simplified accessor: column reference only			NO	
 T861	SQL/JSON simplified accessor: case-sensitive JSON member accessor			NO	
 T862	SQL/JSON simplified accessor: wildcard member accessor			NO	
@@ -588,9 +588,9 @@ T875	SQL/JSON item method: time precision			NO
 T876	SQL/JSON item method: timestamp()			NO	
 T877	SQL/JSON item method: timestamp_tz()			NO	
 T878	SQL/JSON item method: timestamp precision			NO	
-T879	JSON in equality operations			NO	
-T880	JSON in grouping operations			NO	
-T881	JSON in ordering operations			NO	
+T879	JSON in equality operations			YES	with jsonb
+T880	JSON in grouping operations			YES	with jsonb
+T881	JSON in ordering operations			NO	with jsonb, partially supported
 T882	JSON in multiset element grouping operations			NO	
 M001	Datalinks			NO	
 M002	Datalinks via SQL/CLI			NO	
