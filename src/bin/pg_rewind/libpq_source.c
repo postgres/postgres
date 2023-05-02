@@ -304,7 +304,7 @@ libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 		else
 			type = FILE_TYPE_REGULAR;
 
-		process_source_file(path, type, filesize, link_target);
+		callback(path, type, filesize, link_target);
 	}
 	PQclear(res);
 }

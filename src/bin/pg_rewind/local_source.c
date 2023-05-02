@@ -59,7 +59,7 @@ init_local_source(const char *datadir)
 static void
 local_traverse_files(rewind_source *source, process_file_callback_t callback)
 {
-	traverse_datadir(((local_source *) source)->datadir, &process_source_file);
+	traverse_datadir(((local_source *) source)->datadir, callback);
 }
 
 static char *
