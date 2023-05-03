@@ -75,7 +75,8 @@ $node->command_ok(
 		'--save-fullpage', "$tmp_folder/raw",
 		'--relation',      $relation,
 		$walfile
-	]);
+	],
+	'pg_waldump with --save-fullpage runs');
 
 # This regexp will match filenames formatted as:
 # XXXXXXXX-XXXXXXXX.DBOID.TLOID.NODEOID.dd_fork with the components being:
