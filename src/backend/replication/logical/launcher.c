@@ -797,8 +797,11 @@ logicalrep_worker_onexit(int code, Datum arg)
 	 * Session level locks may be acquired outside of a transaction in
 	 * parallel apply mode and will not be released when the worker
 	 * terminates, so manually release all locks before the worker exits.
+	 *
+	 * The locks will be acquired once the worker is initialized.
 	 */
-	LockReleaseAll(DEFAULT_LOCKMETHOD, true);
+	if (!InitializingApplyWorker)
+		LockReleaseAll(DEFAULT_LOCKMETHOD, true);
 
 	ApplyLauncherWakeup();
 }

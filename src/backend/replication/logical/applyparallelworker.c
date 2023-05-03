@@ -873,6 +873,8 @@ ParallelApplyWorkerMain(Datum main_arg)
 	int			worker_slot = DatumGetInt32(main_arg);
 	char		originname[NAMEDATALEN];
 
+	InitializingApplyWorker = true;
+
 	/* Setup signal handling. */
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, SignalHandlerForShutdownRequest);
@@ -939,6 +941,8 @@ ParallelApplyWorkerMain(Datum main_arg)
 		MyLogicalRepWorker->reply_time = 0;
 
 	InitializeApplyWorker();
+
+	InitializingApplyWorker = false;
 
 	/* Setup replication origin tracking. */
 	StartTransactionCommand();
