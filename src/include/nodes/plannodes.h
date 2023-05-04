@@ -70,9 +70,6 @@ typedef struct PlannedStmt
 
 	struct Plan *planTree;		/* tree of Plan nodes */
 
-	List	   *partPruneInfos; /* List of PartitionPruneInfo contained in the
-								 * plan */
-
 	List	   *rtable;			/* list of RangeTblEntry nodes */
 
 	List	   *permInfos;		/* list of RTEPermissionInfo nodes for rtable
@@ -276,8 +273,8 @@ typedef struct Append
 	 */
 	int			first_partial_plan;
 
-	/* Index to PlannerInfo.partPruneInfos or -1 if no run-time pruning */
-	int			part_prune_index;
+	/* Info for run-time subplan pruning; NULL if we're not doing that */
+	struct PartitionPruneInfo *part_prune_info;
 } Append;
 
 /* ----------------
@@ -311,8 +308,8 @@ typedef struct MergeAppend
 	/* NULLS FIRST/LAST directions */
 	bool	   *nullsFirst pg_node_attr(array_size(numCols));
 
-	/* Index to PlannerInfo.partPruneInfos or -1 if no run-time pruning */
-	int			part_prune_index;
+	/* Info for run-time subplan pruning; NULL if we're not doing that */
+	struct PartitionPruneInfo *part_prune_info;
 } MergeAppend;
 
 /* ----------------
@@ -1414,8 +1411,6 @@ typedef struct PlanRowMark
  * Then, since an Append-type node could have multiple partitioning
  * hierarchies among its children, we have an unordered List of those Lists.
  *
- * root_parent_relids	RelOptInfo.relids of the relation to which the parent
- *						plan node and this PartitionPruneInfo node belong
  * prune_infos			List of Lists containing PartitionedRelPruneInfo nodes,
  *						one sublist per run-time-prunable partition hierarchy
  *						appearing in the parent plan node's subplans.
@@ -1428,7 +1423,6 @@ typedef struct PartitionPruneInfo
 	pg_node_attr(no_equal, no_query_jumble)
 
 	NodeTag		type;
-	Bitmapset  *root_parent_relids;
 	List	   *prune_infos;
 	Bitmapset  *other_subplans;
 } PartitionPruneInfo;

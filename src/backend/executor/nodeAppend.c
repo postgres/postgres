@@ -134,7 +134,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	appendstate->as_begun = false;
 
 	/* If run-time partition pruning is enabled, then set that up now */
-	if (node->part_prune_index >= 0)
+	if (node->part_prune_info != NULL)
 	{
 		PartitionPruneState *prunestate;
 
@@ -145,8 +145,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 		 */
 		prunestate = ExecInitPartitionPruning(&appendstate->ps,
 											  list_length(node->appendplans),
-											  node->part_prune_index,
-											  node->apprelids,
+											  node->part_prune_info,
 											  &validsubplans);
 		appendstate->as_prune_state = prunestate;
 		nplans = bms_num_members(validsubplans);

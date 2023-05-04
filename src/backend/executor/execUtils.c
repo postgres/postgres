@@ -123,7 +123,6 @@ CreateExecutorState(void)
 	estate->es_rowmarks = NULL;
 	estate->es_rteperminfos = NIL;
 	estate->es_plannedstmt = NULL;
-	estate->es_part_prune_infos = NIL;
 
 	estate->es_junkFilter = NULL;
 

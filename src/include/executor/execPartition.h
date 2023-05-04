@@ -123,9 +123,9 @@ typedef struct PartitionPruneState
 
 extern PartitionPruneState *ExecInitPartitionPruning(PlanState *planstate,
 													 int n_total_subplans,
-													 int part_prune_index,
-													 Bitmapset *root_parent_relids,
+													 PartitionPruneInfo *pruneinfo,
 													 Bitmapset **initially_valid_subplans);
 extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate,
 										   bool initial_prune);
+
 #endif							/* EXECPARTITION_H */
