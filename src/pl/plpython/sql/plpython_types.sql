@@ -328,11 +328,43 @@ $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_array_mixed2();
 
-CREATE FUNCTION test_type_conversion_array_mixed3() RETURNS text[] AS $$
-return [[], 'a']
+
+-- check output of multi-dimensional arrays
+CREATE FUNCTION test_type_conversion_md_array_out() RETURNS text[] AS $$
+return [['a'], ['b'], ['c']]
 $$ LANGUAGE plpythonu;
 
-SELECT * FROM test_type_conversion_array_mixed3();
+select test_type_conversion_md_array_out();
+
+CREATE OR REPLACE FUNCTION test_type_conversion_md_array_out() RETURNS text[] AS $$
+return [[], []]
+$$ LANGUAGE plpythonu;
+
+select test_type_conversion_md_array_out();
+
+CREATE OR REPLACE FUNCTION test_type_conversion_md_array_out() RETURNS text[] AS $$
+return [[], [1]]
+$$ LANGUAGE plpythonu;
+
+select test_type_conversion_md_array_out();  -- fail
+
+CREATE OR REPLACE FUNCTION test_type_conversion_md_array_out() RETURNS text[] AS $$
+return [[], 1]
+$$ LANGUAGE plpythonu;
+
+select test_type_conversion_md_array_out();  -- fail
+
+CREATE OR REPLACE FUNCTION test_type_conversion_md_array_out() RETURNS text[] AS $$
+return [1, []]
+$$ LANGUAGE plpythonu;
+
+select test_type_conversion_md_array_out();  -- fail
+
+CREATE OR REPLACE FUNCTION test_type_conversion_md_array_out() RETURNS text[] AS $$
+return [[1], [[]]]
+$$ LANGUAGE plpythonu;
+
+select test_type_conversion_md_array_out();  -- fail
 
 
 CREATE FUNCTION test_type_conversion_mdarray_malformed() RETURNS int[] AS $$
@@ -340,6 +372,18 @@ return [[1,2,3],[4,5]]
 $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_mdarray_malformed();
+
+CREATE FUNCTION test_type_conversion_mdarray_malformed2() RETURNS text[] AS $$
+return [[1,2,3], "abc"]
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_mdarray_malformed2();
+
+CREATE FUNCTION test_type_conversion_mdarray_malformed3() RETURNS text[] AS $$
+return ["abc", [1,2,3]]
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_mdarray_malformed3();
 
 CREATE FUNCTION test_type_conversion_mdarray_toodeep() RETURNS int[] AS $$
 return [[[[[[[1]]]]]]]
