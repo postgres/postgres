@@ -402,8 +402,7 @@
     <term><acronym>LSN</acronym></term>
     <listitem>
      <para>
-      Log Sequence Number, see <link linkend="datatype-pg-lsn"><type>pg_lsn</type></link>
-      and <link linkend="wal-internals">WAL Internals</link>.
+      <glossterm linkend="glossary-log-sequence-number">Log Sequence Number</glossterm>
      </para>
     </listitem>
    </varlistentry>

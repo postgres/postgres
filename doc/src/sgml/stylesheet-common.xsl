@@ -28,6 +28,7 @@
 </xsl:param>
 
 <xsl:param name="callout.graphics" select="'0'"></xsl:param>
+<xsl:param name="glossentry.show.acronym">yes</xsl:param>
 <xsl:param name="toc.section.depth">2</xsl:param>
 <xsl:param name="linenumbering.extension" select="'0'"></xsl:param>
 <xsl:param name="section.autolabel" select="1"></xsl:param>

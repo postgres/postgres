@@ -1039,6 +1039,28 @@
     </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-log-sequence-number">
+   <glossterm>Log sequence number</glossterm>
+   <acronym>LSN</acronym>
+   <glossdef>
+    <para>
+     Byte offset into the <glossterm linkend="glossary-wal">WAL</glossterm>,
+     increasing monotonically with each new <glossterm
+     linkend="glossary-wal-record">WAL record</glossterm>.
+    </para>
+    <para>
+     For more information, see <link
+     linkend="datatype-pg-lsn"><type>pg_lsn</type></link> and <xref
+     linkend="wal-internals"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry>
+   <glossterm>LSN</glossterm>
+   <glosssee otherterm="glossary-log-sequence-number"/>
+  </glossentry>
+
   <glossentry>
    <glossterm>Master (server)</glossterm>
    <glosssee otherterm="glossary-primary-server" />
@@ -1338,6 +1360,20 @@
      where all file changes from one server are copied verbatim,
      or <firstterm>logical replication</firstterm> where a defined subset
      of data changes are conveyed using a higher-level representation.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-restartpoint">
+   <glossterm>Restartpoint</glossterm>
+   <glossdef>
+    <para>
+     A variant of a <glossterm
+     linkend="glossary-checkpoint">checkpoint</glossterm> performed on a
+     <glossterm linkend="glossary-replica">replica</glossterm>.
+    </para>
+    <para>
+     For more information, see <xref linkend="wal-configuration"/>.
     </para>
    </glossdef>
   </glossentry>
