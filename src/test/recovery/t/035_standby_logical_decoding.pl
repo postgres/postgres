@@ -500,9 +500,43 @@ $node_standby->restart;
 check_slots_conflicting_status(1);
 
 ##################################################
-# Verify that invalidated logical slots do not lead to retaining WAL
+# Verify that invalidated logical slots do not lead to retaining WAL.
 ##################################################
-# XXXXX TODO
+
+# Wait for the cascading standby to catchup before removing the WAL file(s)
+$node_standby->wait_for_replay_catchup($node_cascading_standby, $node_primary);
+
+# Get the restart_lsn from an invalidated slot
+my $restart_lsn = $node_standby->safe_psql('postgres',
+	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = 'vacuum_full_activeslot' and conflicting is true;"
+);
+
+chomp($restart_lsn);
+
+# As pg_walfile_name() can not be executed on the standby,
+# get the WAL file name associated to this lsn from the primary
+my $walfile_name = $node_primary->safe_psql('postgres',
+	"SELECT pg_walfile_name('$restart_lsn')");
+
+chomp($walfile_name);
+
+# Generate some activity and switch WAL file on the primary
+$node_primary->safe_psql(
+	'postgres', "create table retain_test(a int);
+									 select pg_switch_wal();
+									 insert into retain_test values(1);
+									 checkpoint;");
+
+# Wait for the standby to catch up
+$node_primary->wait_for_replay_catchup($node_standby);
+
+# Request a checkpoint on the standby to trigger the WAL file(s) removal
+$node_standby->safe_psql('postgres', 'checkpoint;');
+
+# Verify that the WAL file has not been retained on the standby
+my $standby_walfile = $node_standby->data_dir . '/pg_wal/' . $walfile_name;
+ok(!-f "$standby_walfile",
+	"invalidated logical slots do not lead to retaining WAL");
 
 ##################################################
 # Recovery conflict: Invalidate conflicting slots, including in-use slots
