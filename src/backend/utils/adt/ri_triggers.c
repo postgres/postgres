@@ -1373,10 +1373,11 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 	char		pkattname[MAX_QUOTED_NAME_LEN + 3];
 	char		fkattname[MAX_QUOTED_NAME_LEN + 3];
-	RangeTblEntry *pkrte;
-	RangeTblEntry *fkrte;
+	RangeTblEntry *rte;
 	RTEPermissionInfo *pk_perminfo;
 	RTEPermissionInfo *fk_perminfo;
+	List	   *rtes = NIL;
+	List	   *perminfos = NIL;
 	const char *sep;
 	const char *fk_only;
 	const char *pk_only;
@@ -1394,25 +1395,29 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 *
 	 * XXX are there any other show-stopper conditions to check?
 	 */
-	pkrte = makeNode(RangeTblEntry);
-	pkrte->rtekind = RTE_RELATION;
-	pkrte->relid = RelationGetRelid(pk_rel);
-	pkrte->relkind = pk_rel->rd_rel->relkind;
-	pkrte->rellockmode = AccessShareLock;
-
 	pk_perminfo = makeNode(RTEPermissionInfo);
 	pk_perminfo->relid = RelationGetRelid(pk_rel);
 	pk_perminfo->requiredPerms = ACL_SELECT;
-
-	fkrte = makeNode(RangeTblEntry);
-	fkrte->rtekind = RTE_RELATION;
-	fkrte->relid = RelationGetRelid(fk_rel);
-	fkrte->relkind = fk_rel->rd_rel->relkind;
-	fkrte->rellockmode = AccessShareLock;
+	perminfos = lappend(perminfos, pk_perminfo);
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = RelationGetRelid(pk_rel);
+	rte->relkind = pk_rel->rd_rel->relkind;
+	rte->rellockmode = AccessShareLock;
+	rte->perminfoindex = list_length(perminfos);
+	rtes = lappend(rtes, rte);
 
 	fk_perminfo = makeNode(RTEPermissionInfo);
 	fk_perminfo->relid = RelationGetRelid(fk_rel);
 	fk_perminfo->requiredPerms = ACL_SELECT;
+	perminfos = lappend(perminfos, fk_perminfo);
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = RelationGetRelid(fk_rel);
+	rte->relkind = fk_rel->rd_rel->relkind;
+	rte->rellockmode = AccessShareLock;
+	rte->perminfoindex = list_length(perminfos);
+	rtes = lappend(rtes, rte);
 
 	for (int i = 0; i < riinfo->nkeys; i++)
 	{
@@ -1425,8 +1430,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 		fk_perminfo->selectedCols = bms_add_member(fk_perminfo->selectedCols, attno);
 	}
 
-	if (!ExecCheckPermissions(list_make2(fkrte, pkrte),
-							  list_make2(fk_perminfo, pk_perminfo), false))
+	if (!ExecCheckPermissions(rtes, perminfos, false))
 		return false;
 
 	/*
@@ -1436,9 +1440,11 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 */
 	if (!has_bypassrls_privilege(GetUserId()) &&
 		((pk_rel->rd_rel->relrowsecurity &&
-		  !object_ownercheck(RelationRelationId, pkrte->relid, GetUserId())) ||
+		  !object_ownercheck(RelationRelationId, RelationGetRelid(pk_rel),
+							 GetUserId())) ||
 		 (fk_rel->rd_rel->relrowsecurity &&
-		  !object_ownercheck(RelationRelationId, fkrte->relid, GetUserId()))))
+		  !object_ownercheck(RelationRelationId, RelationGetRelid(fk_rel),
+							 GetUserId()))))
 		return false;
 
 	/*----------
