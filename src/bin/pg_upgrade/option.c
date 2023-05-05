@@ -432,7 +432,7 @@ adjust_data_dir(ClusterInfo *cluster)
 
 	rc = pclose(output);
 	if (rc != 0)
-		pg_fatal("could not get control data directory using %s: %s",
+		pg_fatal("could not get data directory using %s: %s",
 				 cmd, wait_result_to_str(rc));
 
 	/* strip trailing newline and carriage return */
