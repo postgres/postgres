@@ -159,23 +159,18 @@ Branch: REL_15_STABLE [5d8ec1b9f] 2023-02-15 20:37:44 +0100
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [4766eef31] 2023-04-05 12:56:32 -0400
-Branch: REL_15_STABLE [2624de79e] 2023-04-05 12:56:30 -0400
-Branch: REL_14_STABLE [0a6aaf011] 2023-04-05 12:56:30 -0400
-Branch: REL_13_STABLE [b02bf1e46] 2023-04-05 12:56:30 -0400
-Note: no live bug fixed in v15 or HEAD
+Branch: master [41e2c52fd] 2023-05-07 11:01:15 -0400
+Branch: REL_15_STABLE [f200b9695] 2023-05-07 11:01:15 -0400
 -->
      <para>
-      Fix enabling/disabling of cloned triggers in partitioned tables
-      (Tom Lane)
+      Add support for decompiling <command>MERGE</command>
+      commands (&Aacute;lvaro Herrera)
      </para>
 
      <para>
-      <command>ALTER TABLE ... ENABLE/DISABLE TRIGGER USER</command>
-      skipped cloned triggers, mistaking them for system triggers.
-      Other variants of <literal>ENABLE/DISABLE TRIGGER</literal> would
-      process them, but only after improperly enforcing a superuserness
-      check.
+      This was overlooked when <command>MERGE</command> was added, but
+      it's essential support for <command>MERGE</command> in new-style SQL
+      functions.
      </para>
     </listitem>
 
