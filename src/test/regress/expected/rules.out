@@ -3571,6 +3571,91 @@ MERGE INTO rule_merge2 t USING (SELECT 1 AS a) s
 		DELETE
 	WHEN NOT MATCHED THEN
 		INSERT VALUES (s.a, '');
+-- test deparsing
+CREATE TABLE sf_target(id int, data text, filling int[]);
+CREATE FUNCTION merge_sf_test()
+ RETURNS void
+ LANGUAGE sql
+BEGIN ATOMIC
+ MERGE INTO sf_target t
+   USING rule_merge1 s
+   ON (s.a = t.id)
+WHEN MATCHED
+   AND (s.a + t.id) = 42
+   THEN UPDATE SET data = repeat(t.data, s.a) || s.b, id = length(s.b)
+WHEN NOT MATCHED
+   AND (s.b IS NOT NULL)
+   THEN INSERT (data, id)
+   VALUES (s.b, s.a)
+WHEN MATCHED
+   AND length(s.b || t.data) > 10
+   THEN UPDATE SET data = s.b
+WHEN MATCHED
+   AND s.a > 200
+   THEN UPDATE SET filling[s.a] = t.id
+WHEN MATCHED
+   AND s.a > 100
+   THEN DELETE
+WHEN MATCHED
+   THEN DO NOTHING
+WHEN NOT MATCHED
+   AND s.a > 200
+   THEN INSERT DEFAULT VALUES
+WHEN NOT MATCHED
+   AND s.a > 100
+   THEN INSERT (id, data) OVERRIDING USER VALUE
+   VALUES (s.a, DEFAULT)
+WHEN NOT MATCHED
+   AND s.a > 0
+   THEN INSERT
+   VALUES (s.a, s.b, DEFAULT)
+WHEN NOT MATCHED
+   THEN INSERT (filling[1], id)
+   VALUES (s.a, s.a);
+END;
+\sf merge_sf_test
+CREATE OR REPLACE FUNCTION public.merge_sf_test()
+ RETURNS void
+ LANGUAGE sql
+BEGIN ATOMIC
+ MERGE INTO sf_target t
+    USING rule_merge1 s
+    ON (s.a = t.id)
+    WHEN MATCHED
+     AND ((s.a + t.id) = 42)
+     THEN UPDATE SET data = (repeat(t.data, s.a) || s.b), id = length(s.b)
+    WHEN NOT MATCHED
+     AND (s.b IS NOT NULL)
+     THEN INSERT (data, id)
+      VALUES (s.b, s.a)
+    WHEN MATCHED
+     AND (length((s.b || t.data)) > 10)
+     THEN UPDATE SET data = s.b
+    WHEN MATCHED
+     AND (s.a > 200)
+     THEN UPDATE SET filling[s.a] = t.id
+    WHEN MATCHED
+     AND (s.a > 100)
+     THEN DELETE
+    WHEN MATCHED
+     THEN DO NOTHING
+    WHEN NOT MATCHED
+     AND (s.a > 200)
+     THEN INSERT DEFAULT VALUES
+    WHEN NOT MATCHED
+     AND (s.a > 100)
+     THEN INSERT (id, data) OVERRIDING USER VALUE
+      VALUES (s.a, DEFAULT)
+    WHEN NOT MATCHED
+     AND (s.a > 0)
+     THEN INSERT (id, data, filling)
+      VALUES (s.a, s.b, DEFAULT)
+    WHEN NOT MATCHED
+     THEN INSERT (filling[1], id)
+      VALUES (s.a, s.a);
+END
+DROP FUNCTION merge_sf_test;
+DROP TABLE sf_target;
 --
 -- Test enabling/disabling
 --
