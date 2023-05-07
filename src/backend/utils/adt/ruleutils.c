@@ -411,6 +411,8 @@ static void get_update_query_targetlist_def(Query *query, List *targetList,
 											RangeTblEntry *rte);
 static void get_delete_query_def(Query *query, deparse_context *context,
 								 bool colNamesVisible);
+static void get_merge_query_def(Query *query, deparse_context *context,
+								bool colNamesVisible);
 static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context,
 								   TupleDesc resultDesc, bool colNamesVisible);
@@ -5448,6 +5450,10 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 			get_delete_query_def(query, &context, colNamesVisible);
 			break;
 
+		case CMD_MERGE:
+			get_merge_query_def(query, &context, colNamesVisible);
+			break;
+
 		case CMD_NOTHING:
 			appendStringInfoString(buf, "NOTHING");
 			break;
@@ -7041,6 +7047,128 @@ get_delete_query_def(Query *query, deparse_context *context,
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
 		get_target_list(query->returningList, context, NULL, colNamesVisible);
 	}
+}
+
+
+/* ----------
+ * get_merge_query_def				- Parse back a MERGE parsetree
+ * ----------
+ */
+static void
+get_merge_query_def(Query *query, deparse_context *context,
+					bool colNamesVisible)
+{
+	StringInfo	buf = context->buf;
+	RangeTblEntry *rte;
+	ListCell   *lc;
+
+	/* Insert the WITH clause if given */
+	get_with_clause(query, context);
+
+	/*
+	 * Start the query with MERGE INTO relname
+	 */
+	rte = rt_fetch(query->resultRelation, query->rtable);
+	Assert(rte->rtekind == RTE_RELATION);
+	if (PRETTY_INDENT(context))
+	{
+		appendStringInfoChar(buf, ' ');
+		context->indentLevel += PRETTYINDENT_STD;
+	}
+	appendStringInfo(buf, "MERGE INTO %s%s",
+					 only_marker(rte),
+					 generate_relation_name(rte->relid, NIL));
+
+	/* Print the relation alias, if needed */
+	get_rte_alias(rte, query->resultRelation, false, context);
+
+	/* Print the source relation and join clause */
+	get_from_clause(query, " USING ", context);
+	appendContextKeyword(context, " ON ",
+						 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
+	get_rule_expr(query->jointree->quals, context, false);
+
+	/* Print each merge action */
+	foreach(lc, query->mergeActionList)
+	{
+		MergeAction *action = lfirst_node(MergeAction, lc);
+
+		appendContextKeyword(context, " WHEN ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
+		appendStringInfo(buf, "%sMATCHED", action->matched ? "" : "NOT ");
+
+		if (action->qual)
+		{
+			appendContextKeyword(context, " AND ",
+								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 3);
+			get_rule_expr(action->qual, context, false);
+		}
+		appendContextKeyword(context, " THEN ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 3);
+
+		if (action->commandType == CMD_INSERT)
+		{
+			/* This generally matches get_insert_query_def() */
+			List	   *strippedexprs = NIL;
+			const char *sep = "";
+			ListCell   *lc2;
+
+			appendStringInfoString(buf, "INSERT");
+
+			if (action->targetList)
+				appendStringInfoString(buf, " (");
+			foreach(lc2, action->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(lc2);
+
+				Assert(!tle->resjunk);
+
+				appendStringInfoString(buf, sep);
+				sep = ", ";
+
+				appendStringInfoString(buf,
+									   quote_identifier(get_attname(rte->relid,
+																	tle->resno,
+																	false)));
+				strippedexprs = lappend(strippedexprs,
+										processIndirection((Node *) tle->expr,
+														   context));
+			}
+			if (action->targetList)
+				appendStringInfoChar(buf, ')');
+
+			if (action->override)
+			{
+				if (action->override == OVERRIDING_SYSTEM_VALUE)
+					appendStringInfoString(buf, " OVERRIDING SYSTEM VALUE");
+				else if (action->override == OVERRIDING_USER_VALUE)
+					appendStringInfoString(buf, " OVERRIDING USER VALUE");
+			}
+
+			if (strippedexprs)
+			{
+				appendContextKeyword(context, " VALUES (",
+									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 4);
+				get_rule_list_toplevel(strippedexprs, context, false);
+				appendStringInfoChar(buf, ')');
+			}
+			else
+				appendStringInfoString(buf, " DEFAULT VALUES");
+		}
+		else if (action->commandType == CMD_UPDATE)
+		{
+			appendStringInfoString(buf, "UPDATE SET ");
+			get_update_query_targetlist_def(query, action->targetList,
+											context, rte);
+		}
+		else if (action->commandType == CMD_DELETE)
+			appendStringInfoString(buf, "DELETE");
+		else if (action->commandType == CMD_NOTHING)
+			appendStringInfoString(buf, "DO NOTHING");
+	}
+
+	/* No RETURNING support in MERGE yet */
+	Assert(query->returningList == NIL);
 }
 
 
