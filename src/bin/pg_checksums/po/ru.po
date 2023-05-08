@@ -81,8 +81,8 @@ msgstr " [-D, --pgdata=]КАТ_ДАННЫХ каталог данных\n"
 #, c-format
 msgid "  -c, --check              check data checksums (default)\n"
 msgstr ""
-"  -c, --check              проверить контрольные суммы данных (по умолчанию)"
-"\n"
+"  -c, --check              проверить контрольные суммы данных (по "
+"умолчанию)\n"
 
 #: pg_checksums.c:85
 #, c-format

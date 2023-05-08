@@ -1,0 +1,1073 @@
+# LANGUAGE message translation file for pg_rewind
+# Copyright (C) 2015 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Ioseph Kim <ioseph@uri.sarang.net>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_rewind (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-04-12 00:50+0000\n"
+"PO-Revision-Date: 2023-04-05 18:07+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "오류: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "경고: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "상세정보: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "힌트: "
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#, c-format
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "null 포인터를 복제할 수 없음(내부 오류)\n"
+
+#: ../../common/restricted_token.c:64
+#, c-format
+msgid "could not load library \"%s\": error code %lu"
+msgstr "\"%s\" 라이브러리를 불러 올 수 없음: 오류 코드 %lu"
+
+#: ../../common/restricted_token.c:73
+#, c-format
+msgid "cannot create restricted tokens on this platform: error code %lu"
+msgstr "이 운영체제에서 restricted 토큰을 만들 수 없음: 오류 코드 %lu"
+
+#: ../../common/restricted_token.c:82
+#, c-format
+msgid "could not open process token: error code %lu"
+msgstr "프로세스 토큰을 열 수 없음: 오류 코드 %lu"
+
+#: ../../common/restricted_token.c:97
+#, c-format
+msgid "could not allocate SIDs: error code %lu"
+msgstr "SID를 할당할 수 없음: 오류 코드 %lu"
+
+#: ../../common/restricted_token.c:119
+#, c-format
+msgid "could not create restricted token: error code %lu"
+msgstr "restricted token을 만들 수 없음: 오류 코드 %lu"
+
+#: ../../common/restricted_token.c:140
+#, c-format
+msgid "could not start process for command \"%s\": error code %lu"
+msgstr "\"%s\" 명령을 위한 프로세스를 시작할 수 없음: 오류 코드 %lu"
+
+#: ../../common/restricted_token.c:178
+#, c-format
+msgid "could not re-execute with restricted token: error code %lu"
+msgstr "restricted token을 재실행 할 수 없음: 오류 코드 %lu"
+
+#: ../../common/restricted_token.c:193
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "하위 프로세스의 종료 코드를 구할 수 없음: 오류 코드 %lu"
+
+#: ../../fe_utils/archive.c:52
+#, c-format
+msgid "cannot use restore_command with %%r placeholder"
+msgstr "%%r 치환문자열로 restore_command 사용할 수 없음"
+
+#: ../../fe_utils/archive.c:70
+#, c-format
+msgid "unexpected file size for \"%s\": %lld instead of %lld"
+msgstr "\"%s\" 파일 크기가 이상함: %lld 로 비정상, 정상값 %lld"
+
+#: ../../fe_utils/archive.c:78
+#, c-format
+msgid "could not open file \"%s\" restored from archive: %m"
+msgstr "아카이브에서 \"%s\" 파일 복원 실패: %m"
+
+#: ../../fe_utils/archive.c:87 file_ops.c:417
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "\"%s\" 파일의 상태값을 알 수 없음: %m"
+
+#: ../../fe_utils/archive.c:99
+#, c-format
+msgid "restore_command failed: %s"
+msgstr "restore_command 실패: %s"
+
+#: ../../fe_utils/archive.c:106
+#, c-format
+msgid "could not restore file \"%s\" from archive"
+msgstr "아카이브에서 \"%s\" 파일 복원 실패"
+
+#: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
+#: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
+#: ../../fe_utils/recovery_gen.c:149
+#, c-format
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: ../../fe_utils/recovery_gen.c:121 parsexlog.c:312
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" 파일을 열 수 없음: %m"
+
+#: ../../fe_utils/recovery_gen.c:124
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "\"%s\" 파일 쓰기 실패: %m"
+
+#: ../../fe_utils/recovery_gen.c:133
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "\"%s\" 파일을 만들 수 없음: %m"
+
+#: file_ops.c:67
+#, c-format
+msgid "could not open target file \"%s\": %m"
+msgstr "\"%s\" 대상 파일을 열 수 없음: %m"
+
+#: file_ops.c:81
+#, c-format
+msgid "could not close target file \"%s\": %m"
+msgstr "\"%s\" 대상 파일을 닫을 수 없음: %m"
+
+#: file_ops.c:101
+#, c-format
+msgid "could not seek in target file \"%s\": %m"
+msgstr "\"%s\" 대상 파일에서 seek 작업을 할 수 없음: %m"
+
+#: file_ops.c:117
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "\"%s\" 파일 쓰기 실패: %m"
+
+#: file_ops.c:150 file_ops.c:177
+#, c-format
+msgid "undefined file type for \"%s\""
+msgstr "알 수 없는 파일 포멧: \"%s\""
+
+#: file_ops.c:173
+#, c-format
+msgid "invalid action (CREATE) for regular file"
+msgstr "일반 파일에 대한 잘못 된 작업 (CREATE)"
+
+#: file_ops.c:200
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "\"%s\" 파일을 삭제할 수 없음: %m"
+
+#: file_ops.c:218
+#, c-format
+msgid "could not open file \"%s\" for truncation: %m"
+msgstr "트랙잭션을 위한 \"%s\" 파일을 열 수 없음: %m"
+
+#: file_ops.c:222
+#, c-format
+msgid "could not truncate file \"%s\" to %u: %m"
+msgstr "\"%s\" 파일을 %u 크기로 정리할 수 없음: %m"
+
+#: file_ops.c:238
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 만들 수 없음: %m"
+
+#: file_ops.c:252
+#, c-format
+msgid "could not remove directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 삭제할 수 없음: %m"
+
+#: file_ops.c:266
+#, c-format
+msgid "could not create symbolic link at \"%s\": %m"
+msgstr "\"%s\"에 대한 심볼릭 링크를 만들 수 없음: %m"
+
+#: file_ops.c:280
+#, c-format
+msgid "could not remove symbolic link \"%s\": %m"
+msgstr "\"%s\" 심벌릭 링크를 삭제할 수 없음: %m"
+
+#: file_ops.c:326 file_ops.c:330
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "\"%s\" 파일 일기 모드로 열기 실패: %m"
+
+#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:350
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "\"%s\" 파일을 읽을 수 없음: %m"
+
+#: file_ops.c:344 parsexlog.c:352
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "\"%s\" 파일을 읽을 수 없음: %d 읽음, 전체 %zu"
+
+#: file_ops.c:388
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리 열 수 없음: %m"
+
+#: file_ops.c:446
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "\"%s\" 심볼릭 링크 파일을 읽을 수 없음: %m"
+
+#: file_ops.c:449
+#, c-format
+msgid "symbolic link \"%s\" target is too long"
+msgstr "\"%s\" 심볼릭 링크의 대상이 너무 긺"
+
+#: file_ops.c:464
+#, c-format
+msgid ""
+"\"%s\" is a symbolic link, but symbolic links are not supported on this "
+"platform"
+msgstr ""
+"\"%s\" 파일은 심볼릭 링크 파일이지만 이 운영체제는 심볼릭 링크 파일을 지원하"
+"지 않음"
+
+#: file_ops.c:471
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
+
+#: file_ops.c:475
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 닫을 수 없음: %m"
+
+#: filemap.c:236
+#, c-format
+msgid "data file \"%s\" in source is not a regular file"
+msgstr "\"%s\" 자료 파일은 일반 파일이 아님"
+
+#: filemap.c:241 filemap.c:274
+#, c-format
+msgid "duplicate source file \"%s\""
+msgstr "\"%s\" 소스 파일을 두 번 지정했습니다"
+
+#: filemap.c:329
+#, c-format
+msgid "unexpected page modification for non-regular file \"%s\""
+msgstr "\"%s\" 비일반 파일의 페이지 변경 정보가 잘못됨"
+
+#: filemap.c:679 filemap.c:773
+#, c-format
+msgid "unknown file type for \"%s\""
+msgstr "\"%s\" 파일 형식을 알 수 없음"
+
+#: filemap.c:706
+#, c-format
+msgid "file \"%s\" is of different type in source and target"
+msgstr "\"%s\" 파일 형식이 소스와 타켓이 서로 다름"
+
+#: filemap.c:778
+#, c-format
+msgid "could not decide what to do with file \"%s\""
+msgstr "\"%s\" 파일로 뭘 해야할지 결정할 수 없음"
+
+#: libpq_source.c:130
+#, c-format
+msgid "could not clear search_path: %s"
+msgstr "search_path를 지울 수 없음: %s"
+
+#: libpq_source.c:141
+#, c-format
+msgid "full_page_writes must be enabled in the source server"
+msgstr "원본 서버는 full_page_writes 옵션으로 운영되어야 함"
+
+#: libpq_source.c:152
+#, c-format
+msgid "could not prepare statement to fetch file contents: %s"
+msgstr "파일 내용을 뽑기 위한 구문을 준비할 수 없음: %s"
+
+#: libpq_source.c:171
+#, c-format
+msgid "error running query (%s) on source server: %s"
+msgstr "원본 서버에서 쿼리 (%s) 실행 오류: %s"
+
+#: libpq_source.c:176
+#, c-format
+msgid "unexpected result set from query"
+msgstr "쿼리 결과가 바르지 않음"
+
+#: libpq_source.c:198
+#, c-format
+msgid "error running query (%s) in source server: %s"
+msgstr "원본에서에서 쿼리(%s) 실행 오류: %s"
+
+#: libpq_source.c:219
+#, c-format
+msgid "unrecognized result \"%s\" for current WAL insert location"
+msgstr "현재 WAL 삽입 위치를 위한 결과가 잘못됨 : \"%s\""
+
+#: libpq_source.c:270
+#, c-format
+msgid "could not fetch file list: %s"
+msgstr "파일 목록을 가져올 수 없음: %s"
+
+#: libpq_source.c:275
+#, c-format
+msgid "unexpected result set while fetching file list"
+msgstr "파일 목록을 가져온 결과가 잘못 됨"
+
+#: libpq_source.c:467
+#, c-format
+msgid "could not send query: %s"
+msgstr "쿼리를 보낼 수 없음: %s"
+
+#: libpq_source.c:470
+#, c-format
+msgid "could not set libpq connection to single row mode"
+msgstr "libpq 연결을 단일 로우 모드로 지정할 수 없음"
+
+#: libpq_source.c:500
+#, c-format
+msgid "unexpected result while fetching remote files: %s"
+msgstr "원격 파일을 가져오는 도중 결과가 잘못됨: %s"
+
+#: libpq_source.c:505
+#, c-format
+msgid "received more data chunks than requested"
+msgstr "용천 된 것보다 많은 데이터 청크를 받았음"
+
+#: libpq_source.c:509
+#, c-format
+msgid "unexpected result set size while fetching remote files"
+msgstr "원격 파일을 가져오는 도중 결과 집합의 크기가 잘못 됨"
+
+#: libpq_source.c:515
+#, c-format
+msgid ""
+"unexpected data types in result set while fetching remote files: %u %u %u"
+msgstr "원격 파일을 가져오는 도중 결과 집합의 자료형이 잘못 됨: %u %u %u"
+
+#: libpq_source.c:523
+#, c-format
+msgid "unexpected result format while fetching remote files"
+msgstr "원격 파일을 가져오는 중 예상치 못한 결과 형식 발견"
+
+#: libpq_source.c:529
+#, c-format
+msgid "unexpected null values in result while fetching remote files"
+msgstr "원격 파일을 가져오는 도중 결과안에 null 값이 잘못됨"
+
+#: libpq_source.c:533
+#, c-format
+msgid "unexpected result length while fetching remote files"
+msgstr "원격 파일을 가져오는 도중 결과 길이가 잘못됨"
+
+#: libpq_source.c:566
+#, c-format
+msgid "received data for file \"%s\", when requested for \"%s\""
+msgstr "\"%s\" 파일용 데이터를 받았음, \"%s\" 요청 처리용"
+
+#: libpq_source.c:570
+#, c-format
+msgid ""
+"received data at offset %lld of file \"%s\", when requested for offset %lld"
+msgstr ""
+"%lld 오프셋(해당파일: \"%s\")에 데이터를 받았음, %lld 오프셋 요청 처리용"
+
+#: libpq_source.c:582
+#, c-format
+msgid "received more than requested for file \"%s\""
+msgstr "\"%s\" 파일을 위한 보다 많은 요청을 받았음"
+
+#: libpq_source.c:595
+#, c-format
+msgid "unexpected number of data chunks received"
+msgstr "데이터 청크 수신 숫자가 이상함"
+
+#: libpq_source.c:638
+#, c-format
+msgid "could not fetch remote file \"%s\": %s"
+msgstr "\"%s\" 원격 파일을 가져올 수 없음: %s"
+
+#: libpq_source.c:643
+#, c-format
+msgid "unexpected result set while fetching remote file \"%s\""
+msgstr "\"%s\" 원격파일을 가져오는 도중 결과 집합이 잘못 됨"
+
+#: local_source.c:90 local_source.c:142
+#, c-format
+msgid "could not open source file \"%s\": %m"
+msgstr "\"%s\" 원본 파일을 열 수 없음: %m"
+
+#: local_source.c:117
+#, c-format
+msgid ""
+"size of source file \"%s\" changed concurrently: %d bytes expected, %d copied"
+msgstr "\"%s\" 소스 파일 크기가 현재 변경 되었음: 기대값: %d, 실재값 %d"
+
+#: local_source.c:121 local_source.c:172
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "\"%s\" 파일을 닫을 수 없음: %m"
+
+#: local_source.c:146
+#, c-format
+msgid "could not seek in source file: %m"
+msgstr "원본 파일에서 seek 작업을 할 수 없음: %m"
+
+#: local_source.c:165
+#, c-format
+msgid "unexpected EOF while reading file \"%s\""
+msgstr "\"%s\" 파일을 읽는 중 예상치 못한 EOF"
+
+#: parsexlog.c:80 parsexlog.c:139 parsexlog.c:199
+#, c-format
+msgid "out of memory while allocating a WAL reading processor"
+msgstr "WAL 읽기 프로세서를 할당하는 중 메모리 부족"
+
+#: parsexlog.c:92 parsexlog.c:146
+#, c-format
+msgid "could not read WAL record at %X/%X: %s"
+msgstr "%X/%X 위치에서 WAL 레코드를 읽을 수 없음: %s"
+
+#: parsexlog.c:96 parsexlog.c:149
+#, c-format
+msgid "could not read WAL record at %X/%X"
+msgstr "%X/%X 위치에서 WAL 레코드를 읽을 수 없음"
+
+#: parsexlog.c:108
+#, c-format
+msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
+msgstr "%X/%X 끝 포인터는 바른값이 아님; 기대값: %X/%X"
+
+#: parsexlog.c:212
+#, c-format
+msgid "could not find previous WAL record at %X/%X: %s"
+msgstr "%X/%X 위치에서 이전 WAL 레코드를 찾을 수 없음: %s"
+
+#: parsexlog.c:216
+#, c-format
+msgid "could not find previous WAL record at %X/%X"
+msgstr "%X/%X 위치에서 이전 WAL 레코드를 찾을 수 없음"
+
+#: parsexlog.c:341
+#, c-format
+msgid "could not seek in file \"%s\": %m"
+msgstr "\"%s\" 파일에서 seek 작업을 할 수 없음: %m"
+
+#: parsexlog.c:440
+#, c-format
+msgid ""
+"WAL record modifies a relation, but record type is not recognized: lsn: %X/"
+"%X, rmid: %d, rmgr: %s, info: %02X"
+msgstr ""
+"WAL 레코드가 릴레이션을 변경하려고 하지만, 레코드 형태가 바르지 않음: lsn: "
+"%X/%X, rmid: %d, rmgr: %s, info: %02X"
+
+#: pg_rewind.c:86
+#, c-format
+msgid ""
+"%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 PostgreSQL 한 클러스터에서 다른 클러스터로 재동기화 하는 도구입"
+"니다.\n"
+"\n"
+
+#: pg_rewind.c:87
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]...\n"
+"\n"
+msgstr ""
+"사용법:\n"
+"  %s [옵션]...\n"
+"\n"
+
+#: pg_rewind.c:88
+#, c-format
+msgid "Options:\n"
+msgstr "옵션들:\n"
+
+#: pg_rewind.c:89
+#, c-format
+msgid ""
+"  -c, --restore-target-wal       use restore_command in target configuration "
+"to\n"
+"                                 retrieve WAL files from archives\n"
+msgstr ""
+"  -c, --restore-target-wal       아카이브에서 WAL 파일을 가져오기 위해\n"
+"                                 대상 환경 설정 restore_command 사용\n"
+
+#: pg_rewind.c:91
+#, c-format
+msgid "  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"
+msgstr "  -D, --target-pgdata=디렉터리   변경하려는 데이터 디렉터리\n"
+
+#: pg_rewind.c:92
+#, c-format
+msgid ""
+"      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
+msgstr "      --source-pgdata=디렉터리   동기화 원본이 되는 데이터 디렉터리\n"
+
+#: pg_rewind.c:93
+#, c-format
+msgid "      --source-server=CONNSTR    source server to synchronize with\n"
+msgstr "      --source-server=연결문자열  원본 서버 접속 정보\n"
+
+#: pg_rewind.c:94
+#, c-format
+msgid "  -n, --dry-run                  stop before modifying anything\n"
+msgstr "  -n, --dry-run                  변경 작업 전에 멈춤(검사, 확인용)\n"
+
+#: pg_rewind.c:95
+#, c-format
+msgid ""
+"  -N, --no-sync                  do not wait for changes to be written\n"
+"                                 safely to disk\n"
+msgstr ""
+"  -N, --no-sync                  작업 완료 뒤 디스크 동기화 작업을 하지 않"
+"음\n"
+
+#: pg_rewind.c:97
+#, c-format
+msgid "  -P, --progress                 write progress messages\n"
+msgstr "  -P, --progress                 진행 과정 메시지를 보여줌\n"
+
+#: pg_rewind.c:98
+#, c-format
+msgid ""
+"  -R, --write-recovery-conf      write configuration for replication\n"
+"                                 (requires --source-server)\n"
+msgstr ""
+"  -R, --write-recovery-conf      복제를 위한 환경 설정 함\n"
+"                                 (--source-server 설정 필요함)\n"
+
+#: pg_rewind.c:100
+#, c-format
+msgid ""
+"      --config-file=FILENAME     use specified main server configuration\n"
+"                                 file when running target cluster\n"
+msgstr ""
+"      --config-file=파일이름     대상 클러스터를 실행할 때 사용할\n"
+"                                 서버 환경 설정 파일 지정\n"
+
+#: pg_rewind.c:102
+#, c-format
+msgid "      --debug                    write a lot of debug messages\n"
+msgstr "      --debug                    디버그 메시지를 보여줌\n"
+
+#: pg_rewind.c:103
+#, c-format
+msgid ""
+"      --no-ensure-shutdown       do not automatically fix unclean shutdown\n"
+msgstr ""
+"      --no-ensure-shutdown       비정상 종료 시 자동 뒷정리 작업 안함\n"
+
+#: pg_rewind.c:104
+#, c-format
+msgid ""
+"  -V, --version                  output version information, then exit\n"
+msgstr "  -V, --version                  버전 정보를 보여주고 마침\n"
+
+#: pg_rewind.c:105
+#, c-format
+msgid "  -?, --help                     show this help, then exit\n"
+msgstr "  -?, --help                     이 도움말을 보여주고 마침\n"
+
+#: pg_rewind.c:106
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"문제점 보고 주소: <%s>\n"
+
+#: pg_rewind.c:107
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 홈페이지: <%s>\n"
+
+#: pg_rewind.c:215 pg_rewind.c:223 pg_rewind.c:230 pg_rewind.c:237
+#: pg_rewind.c:244 pg_rewind.c:252
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
+
+#: pg_rewind.c:222
+#, c-format
+msgid "no source specified (--source-pgdata or --source-server)"
+msgstr ""
+"원본을 지정하지 않았음 (--source-pgdata 또는 --source-server 옵션을 지정 해"
+"야 함)"
+
+#: pg_rewind.c:229
+#, c-format
+msgid "only one of --source-pgdata or --source-server can be specified"
+msgstr "--source-pgdata 또는 --source-server 옵션 중 하나만 지정해야 함"
+
+#: pg_rewind.c:236
+#, c-format
+msgid "no target data directory specified (--target-pgdata)"
+msgstr "대상 데이터 디렉토리가 지정되지 않았음 (--target-pgdata 옵션 사용)"
+
+#: pg_rewind.c:243
+#, c-format
+msgid ""
+"no source server information (--source-server) specified for --write-"
+"recovery-conf"
+msgstr "--write-recovery-conf 용 원보 서버 정보(--source-server) 없음"
+
+#: pg_rewind.c:250
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "너무 많은 명령행 인수를 지정했습니다. (처음 \"%s\")"
+
+#: pg_rewind.c:265
+#, c-format
+msgid "cannot be executed by \"root\""
+msgstr "\"root\" 계정으로는 실행 할 수 없음"
+
+#: pg_rewind.c:266
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser."
+msgstr "PostgreSQL superuser로 %s 프로그램을 실행하십시오."
+
+#: pg_rewind.c:276
+#, c-format
+msgid "could not read permissions of directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리 읽기 권한 없음: %m"
+
+#: pg_rewind.c:294
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_rewind.c:297
+#, c-format
+msgid "connected to server"
+msgstr "서버 접속 완료"
+
+#: pg_rewind.c:344
+#, c-format
+msgid "source and target cluster are on the same timeline"
+msgstr "원본과 대상 클러스터의 타임라인이 같음"
+
+#: pg_rewind.c:353
+#, c-format
+msgid "servers diverged at WAL location %X/%X on timeline %u"
+msgstr "서버 분기 WAL 위치: %X/%X, 타임라인 %u"
+
+#: pg_rewind.c:401
+#, c-format
+msgid "no rewind required"
+msgstr "되감을 필요 없음"
+
+#: pg_rewind.c:410
+#, c-format
+msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
+msgstr "재동기화 시작함, 마지막 체크포인트 위치 %X/%X, 타임라인 %u"
+
+#: pg_rewind.c:420
+#, c-format
+msgid "reading source file list"
+msgstr "원본 파일 목록 읽는 중"
+
+#: pg_rewind.c:424
+#, c-format
+msgid "reading target file list"
+msgstr "대상 파일 목록 읽는 중"
+
+#: pg_rewind.c:433
+#, c-format
+msgid "reading WAL in target"
+msgstr "대상 서버에서 WAL 읽는 중"
+
+#: pg_rewind.c:454
+#, c-format
+msgid "need to copy %lu MB (total source directory size is %lu MB)"
+msgstr "복사를 위해서 %lu MB 필요함 (원본 디렉토리 전체 크기는 %lu MB)"
+
+#: pg_rewind.c:472
+#, c-format
+msgid "syncing target data directory"
+msgstr "대상 데이터 디렉터리 동기화 중"
+
+#: pg_rewind.c:488
+#, c-format
+msgid "Done!"
+msgstr "완료!"
+
+#: pg_rewind.c:568
+#, c-format
+msgid "no action decided for file \"%s\""
+msgstr "%s 외부 테이블 접근 권한 없음"
+
+#: pg_rewind.c:600
+#, c-format
+msgid "source system was modified while pg_rewind was running"
+msgstr "pg_rewind 실행 되고 있는 중에 원본 시스템이 변경 되었음"
+
+#: pg_rewind.c:604
+#, c-format
+msgid "creating backup label and updating control file"
+msgstr "백업 라벨을 만들고, 컨트롤 파일을 갱신 중"
+
+#: pg_rewind.c:654
+#, c-format
+msgid "source system was in unexpected state at end of rewind"
+msgstr "rewind 끝에 원본 시스템의 상태가 예상값과 다름"
+
+#: pg_rewind.c:685
+#, c-format
+msgid "source and target clusters are from different systems"
+msgstr "원본과 대상 클러스터가 서로 다른 시스템임"
+
+#: pg_rewind.c:693
+#, c-format
+msgid "clusters are not compatible with this version of pg_rewind"
+msgstr "해당 클러스터는 이 pg_rewind 버전으로 작업할 수 없음"
+
+#: pg_rewind.c:703
+#, c-format
+msgid ""
+"target server needs to use either data checksums or \"wal_log_hints = on\""
+msgstr ""
+"대상 서버의 데이터 클러스터가 데이터 체크섬 기능을 켰거나,  \"wal_log_hints "
+"= on\" 설정이 되어야 함"
+
+#: pg_rewind.c:714
+#, c-format
+msgid "target server must be shut down cleanly"
+msgstr "대상 서버는 정상 종료되어야 함"
+
+#: pg_rewind.c:724
+#, c-format
+msgid "source data directory must be shut down cleanly"
+msgstr "원본 데이터 디렉토리는 정상적으로 종료되어야 함"
+
+#: pg_rewind.c:771
+#, c-format
+msgid "%*s/%s kB (%d%%) copied"
+msgstr "%*s/%s kB (%d%%) 복사됨"
+
+#: pg_rewind.c:834
+#, c-format
+msgid "invalid control file"
+msgstr "잘못된 컨트롤 파일"
+
+#: pg_rewind.c:918
+#, c-format
+msgid ""
+"could not find common ancestor of the source and target cluster's timelines"
+msgstr "원본과 대상 서버의 공통된 상위 타임라인을 찾을 수 없음"
+
+#: pg_rewind.c:959
+#, c-format
+msgid "backup label buffer too small"
+msgstr "백업 라벨 버퍼가 너무 작음"
+
+#: pg_rewind.c:982
+#, c-format
+msgid "unexpected control file CRC"
+msgstr "컨트롤 파일 CRC 오류"
+
+#: pg_rewind.c:994
+#, c-format
+msgid "unexpected control file size %d, expected %d"
+msgstr "컨트롤 파일의 크기가 %d 로 비정상, 정상값 %d"
+
+#: pg_rewind.c:1003
+#, c-format
+msgid ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the "
+"control file specifies %d byte"
+msgid_plural ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the "
+"control file specifies %d bytes"
+msgstr[0] ""
+"WAL 조각 파일은 1MB부터 1GB 사이 2^n 크기여야 하지만, 컨트롤 파일에는 %d 바이"
+"트로 지정되었음"
+
+#: pg_rewind.c:1042 pg_rewind.c:1112
+#, c-format
+msgid ""
+"program \"%s\" is needed by %s but was not found in the same directory as "
+"\"%s\""
+msgstr ""
+"\"%s\" 프로그램이 %s 작업에서 필요합니다. 그런데, 이 파일이 \"%s\" 파일이 있"
+"는 디렉터리안에 없습니다."
+
+#: pg_rewind.c:1045 pg_rewind.c:1115
+#, c-format
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
+msgstr ""
+"\"%s\" 프로그램을 \"%s\" 작업 때문에 찾았지만 이 파일은 %s 프로그램의 버전과 "
+"다릅니다."
+
+#: pg_rewind.c:1078
+#, c-format
+msgid "restore_command is not set in the target cluster"
+msgstr "대상 클러스터에 restore_command 설정이 없음"
+
+#: pg_rewind.c:1119
+#, c-format
+msgid "executing \"%s\" for target server to complete crash recovery"
+msgstr "대상 서버에서 비정상 종료 후 복구 작업을 위해 \"%s\" 실행 중"
+
+#: pg_rewind.c:1156
+#, c-format
+msgid "postgres single-user mode in target cluster failed"
+msgstr "대상 클러스터를 단일 사용자 모드로 postgres 실행 실패"
+
+#: pg_rewind.c:1157
+#, c-format
+msgid "Command was: %s"
+msgstr "사용된 명령: %s"
+
+#: timeline.c:75 timeline.c:81
+#, c-format
+msgid "syntax error in history file: %s"
+msgstr "히스토리 파일에서 문법오류: %s"
+
+#: timeline.c:76
+#, c-format
+msgid "Expected a numeric timeline ID."
+msgstr "숫자 타임라인 ID가 필요합니다."
+
+#: timeline.c:82
+#, c-format
+msgid "Expected a write-ahead log switchpoint location."
+msgstr "트랜잭션 로그 전환 위치 값이 있어야 함"
+
+#: timeline.c:87
+#, c-format
+msgid "invalid data in history file: %s"
+msgstr "작업내역 파일에 잘못된 자료가 있음: %s"
+
+#: timeline.c:88
+#, c-format
+msgid "Timeline IDs must be in increasing sequence."
+msgstr "타임라인 ID 값은 그 값이 증가하는 순번값이어야합니다."
+
+#: timeline.c:108
+#, c-format
+msgid "invalid data in history file"
+msgstr "내역 파일에 잘못된 자료가 있음"
+
+#: timeline.c:109
+#, c-format
+msgid "Timeline IDs must be less than child timeline's ID."
+msgstr "타임라인 ID는 하위 타임라인 ID보다 작아야 합니다."
+
+#: xlogreader.c:625
+#, c-format
+msgid "invalid record offset at %X/%X"
+msgstr "잘못된 레코드 위치: %X/%X"
+
+#: xlogreader.c:633
+#, c-format
+msgid "contrecord is requested by %X/%X"
+msgstr "%X/%X에서 contrecord를 필요로 함"
+
+#: xlogreader.c:674 xlogreader.c:1121
+#, c-format
+msgid "invalid record length at %X/%X: wanted %u, got %u"
+msgstr "잘못된 레코드 길이: %X/%X, 기대값 %u, 실재값 %u"
+
+#: xlogreader.c:703
+#, c-format
+msgid "out of memory while trying to decode a record of length %u"
+msgstr "%u 길이의 레코드를 디코딩 하는 중 메모리 부족"
+
+#: xlogreader.c:725
+#, c-format
+msgid "record length %u at %X/%X too long"
+msgstr "너무 긴 길이(%u)의 레코드가 %X/%X에 있음"
+
+#: xlogreader.c:774
+#, c-format
+msgid "there is no contrecord flag at %X/%X"
+msgstr "%X/%X 위치에 contrecord 플래그가 없음"
+
+#: xlogreader.c:787
+#, c-format
+msgid "invalid contrecord length %u (expected %lld) at %X/%X"
+msgstr "잘못된 contrecord 길이 %u (기대값: %lld), 위치 %X/%X"
+
+#: xlogreader.c:922
+#, c-format
+msgid "missing contrecord at %X/%X"
+msgstr "%X/%X 위치에 contrecord 없음"
+
+#: xlogreader.c:1129
+#, c-format
+msgid "invalid resource manager ID %u at %X/%X"
+msgstr "잘못된 자원 관리 ID %u, 위치: %X/%X"
+
+#: xlogreader.c:1142 xlogreader.c:1158
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "레코드의 잘못된 프리링크 %X/%X, 해당 레코드 %X/%X"
+
+#: xlogreader.c:1194
+#, c-format
+msgid "incorrect resource manager data checksum in record at %X/%X"
+msgstr "잘못된 자원관리자 데이터 체크섬, 위치: %X/%X 레코드"
+
+#: xlogreader.c:1231
+#, c-format
+msgid "invalid magic number %04X in log segment %s, offset %u"
+msgstr "%04X 매직 번호가 잘못됨, 로그 파일 %s, 위치 %u"
+
+#: xlogreader.c:1245 xlogreader.c:1286
+#, c-format
+msgid "invalid info bits %04X in log segment %s, offset %u"
+msgstr "잘못된 정보 비트 %04X, 로그 파일 %s, 위치 %u"
+
+#: xlogreader.c:1260
+#, c-format
+msgid ""
+"WAL file is from different database system: WAL file database system "
+"identifier is %llu, pg_control database system identifier is %llu"
+msgstr ""
+"WAL 파일이 다른 시스템의 것입니다. WAL 파일의 시스템 식별자는 %llu, "
+"pg_control 의 식별자는 %llu"
+
+#: xlogreader.c:1268
+#, c-format
+msgid ""
+"WAL file is from different database system: incorrect segment size in page "
+"header"
+msgstr ""
+"WAL 파일이 다른 데이터베이스 시스템의 것입니다: 페이지 헤더에 지정된 값이 잘"
+"못된 조각 크기임"
+
+#: xlogreader.c:1274
+#, c-format
+msgid ""
+"WAL file is from different database system: incorrect XLOG_BLCKSZ in page "
+"header"
+msgstr ""
+"WAL 파일이 다른 데이터베이스 시스템의 것입니다: 페이지 헤더의 XLOG_BLCKSZ 값"
+"이 바르지 않음"
+
+#: xlogreader.c:1305
+#, c-format
+msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
+msgstr "잘못된 페이지 주소 %X/%X, 로그 파일 %s, 위치 %u"
+
+#: xlogreader.c:1330
+#, c-format
+msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
+msgstr "타임라인 범위 벗어남 %u (이전 번호 %u), 로그 파일 %s, 위치 %u"
+
+#: xlogreader.c:1735
+#, c-format
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "%u block_id는 범위를 벗어남, 위치 %X/%X"
+
+#: xlogreader.c:1759
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA 지정했지만, %X/%X 에 자료가 없음"
+
+#: xlogreader.c:1766
+#, c-format
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA 지정 않았지만, %u 길이의 자료가 있음, 위치 %X/%X"
+
+#: xlogreader.c:1802
+#, c-format
+msgid ""
+"BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at "
+"%X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE 설정이 되어 있지만, 옵셋: %u, 길이: %u, 블록 이미지 길이: "
+"%u, 대상: %X/%X"
+
+#: xlogreader.c:1818
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE 설정이 안되어 있지만, 옵셋: %u, 길이: %u, 대상: %X/%X"
+
+#: xlogreader.c:1832
+#, c-format
+msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
+msgstr ""
+"BKPIMAGE_COMPRESSED 설정이 되어 있지만, 블록 이미지 길이: %u, 대상: %X/%X"
+
+#: xlogreader.c:1847
+#, c-format
+msgid ""
+"neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image "
+"length is %u at %X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE, BKPIMAGE_COMPRESSED 지정 안되어 있으나, 블록 이미지 길이"
+"는 %u, 대상: %X/%X"
+
+#: xlogreader.c:1863
+#, c-format
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
+msgstr "BKPBLOCK_SAME_REL 설정이 되어 있지만, %X/%X 에 이전 릴레이션 없음"
+
+#: xlogreader.c:1875
+#, c-format
+msgid "invalid block_id %u at %X/%X"
+msgstr "잘못된 block_id %u, 위치 %X/%X"
+
+#: xlogreader.c:1942
+#, c-format
+msgid "record with invalid length at %X/%X"
+msgstr "잘못된 레코드 길이, 위치 %X/%X"
+
+#: xlogreader.c:1967
+#, c-format
+msgid "could not locate backup block with ID %d in WAL record"
+msgstr "WAL 레코드에 %d ID 백업 블록이 없음"
+
+#: xlogreader.c:2051
+#, c-format
+msgid "could not restore image at %X/%X with invalid block %d specified"
+msgstr "%X/%X 위치에 이미지 복원 실패(%d 블록이 바르지 않음)"
+
+#: xlogreader.c:2058
+#, c-format
+msgid "could not restore image at %X/%X with invalid state, block %d"
+msgstr "%X/%X 에 잘못된 상태값으로 이미지 복원 실패, 블록 %d"
+
+#: xlogreader.c:2085 xlogreader.c:2102
+#, c-format
+msgid ""
+"could not restore image at %X/%X compressed with %s not supported by build, "
+"block %d"
+msgstr ""
+"%X/%X 위치에 %s 압축된 이미지 복원 실패, 해당 엔진이 지원하지 않음, 해당블"
+"록: %d"
+
+#: xlogreader.c:2111
+#, c-format
+msgid ""
+"could not restore image at %X/%X compressed with unknown method, block %d"
+msgstr "%X/%X 위치에 알수 없는 압축 방식의 이미지 복원 실패, 해당블록: %d"
+
+#: xlogreader.c:2119
+#, c-format
+msgid "could not decompress image at %X/%X, block %d"
+msgstr "%X/%X 에서 이미 압축 풀기 실패, 블록 %d"

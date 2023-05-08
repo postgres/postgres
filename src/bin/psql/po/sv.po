@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-02-03 19:46+0000\n"
-"PO-Revision-Date: 2023-02-03 23:10+0100\n"
+"PO-Revision-Date: 2023-03-09 22:34+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -1112,25 +1112,30 @@ msgstr "proc"
 msgid "func"
 msgstr "funk"
 
+# Vi väljer att bevara den engelska termen då det dels refererar till kommandot CREATE TRIGGER
+# och dels för att detta begreppet normalt benäms som triggers i dagligt tal i Sverige.
 #: describe.c:374 describe.c:1390
 msgid "trigger"
-msgstr "utlösare"
+msgstr "trigger"
 
+# Vi väljer att bevara den engelska termen då det refererar till en del av CREATE FUNCTION-syntaxen
 #: describe.c:386
 msgid "immutable"
-msgstr "oföränderlig"
+msgstr "immutable"
 
+# Vi väljer att bevara den engelska termen då det refererar till en del av CREATE FUNCTION-syntaxen
 #: describe.c:387
 msgid "stable"
-msgstr "stabil"
+msgstr "stable"
 
+# Vi väljer att bevara den engelska termen då det refererar till en del av CREATE FUNCTION-syntaxen
 #: describe.c:388
 msgid "volatile"
-msgstr "instabil"
+msgstr "volatile"
 
 #: describe.c:389
 msgid "Volatility"
-msgstr "Instabilitet"
+msgstr "Flyktighet"
 
 #: describe.c:397
 msgid "restricted"
@@ -1625,23 +1630,23 @@ msgstr "Vydefinition:"
 
 #: describe.c:3236
 msgid "Triggers:"
-msgstr "Utlösare:"
+msgstr "Triggrar:"
 
 #: describe.c:3239
 msgid "Disabled user triggers:"
-msgstr "Avstängda användarutlösare:"
+msgstr "Avstängda användartriggrar:"
 
 #: describe.c:3242
 msgid "Disabled internal triggers:"
-msgstr "Avstängda interna utlösare:"
+msgstr "Avstängda interna triggrar:"
 
 #: describe.c:3245
 msgid "Triggers firing always:"
-msgstr "Utlösare som alltid aktiveras:"
+msgstr "Triggrar som alltid körs:"
 
 #: describe.c:3248
 msgid "Triggers firing on replica only:"
-msgstr "Utlösare som aktiveras enbart på replika:"
+msgstr "Triggrar som enbart körs på replika:"
 
 #: describe.c:3319
 #, c-format
@@ -1936,7 +1941,7 @@ msgstr "Lista med icke-defaulta konfigurationsparametrar"
 #: describe.c:4567
 #, c-format
 msgid "The server (version %s) does not support event triggers."
-msgstr "Servern (version %s) stöder inte händelseutlösare."
+msgstr "Servern (version %s) stöder inte händelsetriggrar."
 
 #: describe.c:4587
 msgid "Event"
@@ -1968,7 +1973,7 @@ msgstr "Etiketter"
 
 #: describe.c:4619
 msgid "List of event triggers"
-msgstr "Lista med händelseutlösare"
+msgstr "Lista med händelsetriggrar"
 
 #: describe.c:4646
 #, c-format
@@ -2917,7 +2922,7 @@ msgid ""
 "                         list [only agg/normal/procedure/trigger/window] functions\n"
 msgstr ""
 "  \\df[anptw][S+] [FUNKMALL [TYPMALL ...]]\n"
-"                         lista [endast agg/normala/procedur/utlösar/window] funktioner\n"
+"                         lista [endast agg/normala/procedur/trigger/window] funktioner\n"
 
 #: help.c:266
 msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
@@ -3023,7 +3028,7 @@ msgstr "  \\dX     [MALL]         lista utökad statistik\n"
 
 #: help.c:291
 msgid "  \\dy[+]  [PATTERN]      list event triggers\n"
-msgstr "  \\dy[+]  [MALL]         lista händelseutlösare\n"
+msgstr "  \\dy[+]  [MALL]         lista händelsetriggrar\n"
 
 #: help.c:292
 msgid "  \\l[+]   [PATTERN]      list databases\n"
@@ -4414,7 +4419,7 @@ msgstr "tabellvillkor"
 #: sql_help.c:479 sql_help.c:480 sql_help.c:481 sql_help.c:482 sql_help.c:1364
 #: sql_help.c:1365 sql_help.c:1366 sql_help.c:1367 sql_help.c:1905
 msgid "trigger_name"
-msgstr "utlösarnamn"
+msgstr "triggernamn"
 
 #: sql_help.c:483 sql_help.c:484 sql_help.c:1378 sql_help.c:1379
 #: sql_help.c:2332 sql_help.c:2337 sql_help.c:2895 sql_help.c:2918
@@ -5705,7 +5710,7 @@ msgstr "ändra definitionen av en domän"
 
 #: sql_help.c:5170
 msgid "change the definition of an event trigger"
-msgstr "ändra definitionen av en händelseutlösare"
+msgstr "ändra definitionen av en händelsetrigger"
 
 #: sql_help.c:5176
 msgid "change the definition of an extension"
@@ -5829,7 +5834,7 @@ msgstr "ändra definitionen av en textsökmall"
 
 #: sql_help.c:5356
 msgid "change the definition of a trigger"
-msgstr "ändra definitionen av en utlösare"
+msgstr "ändra definitionen av en trigger"
 
 #: sql_help.c:5362
 msgid "change the definition of a type"
@@ -5913,7 +5918,7 @@ msgstr "definiera en ny domän"
 
 #: sql_help.c:5488
 msgid "define a new event trigger"
-msgstr "definiera en ny händelseutlösare"
+msgstr "definiera en ny händelsetrigger"
 
 #: sql_help.c:5494
 msgid "install an extension"
@@ -6029,7 +6034,7 @@ msgstr "definiera en ny transform"
 
 #: sql_help.c:5668
 msgid "define a new trigger"
-msgstr "definiera en ny utlösare"
+msgstr "definiera en ny trigger"
 
 #: sql_help.c:5674
 msgid "define a new data type"
@@ -6093,7 +6098,7 @@ msgstr "ta bort en domän"
 
 #: sql_help.c:5770
 msgid "remove an event trigger"
-msgstr "ta bort en händelseutlösare"
+msgstr "ta bort en händelsetrigger"
 
 #: sql_help.c:5776
 msgid "remove an extension"
@@ -6213,7 +6218,7 @@ msgstr "ta bort en transform"
 
 #: sql_help.c:5956
 msgid "remove a trigger"
-msgstr "ta bort en utlösare"
+msgstr "ta bort en trigger"
 
 #: sql_help.c:5962
 msgid "remove a data type"

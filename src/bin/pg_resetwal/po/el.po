@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_resetwal (PostgreSQL) 14\n"
+"Project-Id-Version: pg_resetwal (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 10:16+0000\n"
-"PO-Revision-Date: 2021-11-08 12:02+0100\n"
+"POT-Creation-Date: 2023-04-14 09:18+0000\n"
+"PO-Revision-Date: 2023-04-14 13:51+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -18,22 +18,27 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.2.2\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "κρίσιμο: "
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "σφάλμα: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "προειδοποίηση: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "λεπτομέρεια: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "υπόδειξη: "
 
 #: ../../common/restricted_token.c:64
 #, c-format
@@ -70,123 +75,123 @@ msgstr "δεν ήταν δυνατή η εκκίνηση διεργασίας γ
 msgid "could not re-execute with restricted token: error code %lu"
 msgstr "δεν ήταν δυνατή η επανεκκίνηση με διακριτικό περιορισμού: κωδικός σφάλματος %lu"
 
-#: ../../common/restricted_token.c:194
+#: ../../common/restricted_token.c:193
 #, c-format
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "δεν ήταν δυνατή η απόκτηση κωδικού εξόδου από την υποδιεργασία: κωδικός σφάλματος %lu"
 
 #. translator: the second %s is a command line argument (-e, etc)
-#: pg_resetwal.c:162 pg_resetwal.c:177 pg_resetwal.c:192 pg_resetwal.c:207
-#: pg_resetwal.c:214 pg_resetwal.c:238 pg_resetwal.c:253 pg_resetwal.c:261
-#: pg_resetwal.c:286 pg_resetwal.c:300
+#: pg_resetwal.c:163 pg_resetwal.c:176 pg_resetwal.c:189 pg_resetwal.c:202
+#: pg_resetwal.c:209 pg_resetwal.c:228 pg_resetwal.c:241 pg_resetwal.c:249
+#: pg_resetwal.c:269 pg_resetwal.c:280
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "μη έγκυρη παράμετρος για την επιλογή %s"
 
-#: pg_resetwal.c:163 pg_resetwal.c:178 pg_resetwal.c:193 pg_resetwal.c:208
-#: pg_resetwal.c:215 pg_resetwal.c:239 pg_resetwal.c:254 pg_resetwal.c:262
-#: pg_resetwal.c:287 pg_resetwal.c:301 pg_resetwal.c:327 pg_resetwal.c:340
-#: pg_resetwal.c:348
+#: pg_resetwal.c:164 pg_resetwal.c:177 pg_resetwal.c:190 pg_resetwal.c:203
+#: pg_resetwal.c:210 pg_resetwal.c:229 pg_resetwal.c:242 pg_resetwal.c:250
+#: pg_resetwal.c:270 pg_resetwal.c:281 pg_resetwal.c:303 pg_resetwal.c:316
+#: pg_resetwal.c:323
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες."
 
 #: pg_resetwal.c:168
 #, c-format
 msgid "transaction ID epoch (-e) must not be -1"
 msgstr "η εποχή αναγνωριστικού συναλλαγής (-e) δεν πρέπει να είναι -1"
 
-#: pg_resetwal.c:183
+#: pg_resetwal.c:181
 #, c-format
 msgid "oldest transaction ID (-u) must be greater than or equal to %u"
 msgstr "το παλαιότερο αναγνωριστικό συναλλαγής (-u) πρέπει να είναι μεγαλύτερο ή ίσο με %u"
 
-#: pg_resetwal.c:198
+#: pg_resetwal.c:194
 #, c-format
 msgid "transaction ID (-x) must be greater than or equal to %u"
 msgstr "το αναγνωριστικό συναλλαγής (-x) πρέπει να είναι μεγαλύτερο ή ίσο με %u"
 
-#: pg_resetwal.c:222 pg_resetwal.c:229
+#: pg_resetwal.c:216 pg_resetwal.c:220
 #, c-format
 msgid "transaction ID (-c) must be either 0 or greater than or equal to 2"
 msgstr "το αναγνωριστικό συναλλαγής (-c) πρέπει να είναι είτε 0 είτε μεγαλύτερο ή ίσο με 2"
 
-#: pg_resetwal.c:244
+#: pg_resetwal.c:233
 #, c-format
 msgid "OID (-o) must not be 0"
 msgstr "OID (-o) δεν πρέπει να είναι 0"
 
-#: pg_resetwal.c:267
+#: pg_resetwal.c:254
 #, c-format
 msgid "multitransaction ID (-m) must not be 0"
 msgstr "το αναγνωριστικό πολλαπλής συναλλαγής (-m) δεν πρέπει να είναι 0"
 
-#: pg_resetwal.c:277
+#: pg_resetwal.c:261
 #, c-format
 msgid "oldest multitransaction ID (-m) must not be 0"
 msgstr "το παλαιότερο αναγνωριστικό πολλαπλής συναλλαγής (-m) δεν πρέπει να είναι 0"
 
-#: pg_resetwal.c:292
+#: pg_resetwal.c:274
 #, c-format
 msgid "multitransaction offset (-O) must not be -1"
 msgstr "η μετατόπιση πολλαπλής συναλλαγής (-O) δεν πρέπει να είναι -1"
 
-#: pg_resetwal.c:316
+#: pg_resetwal.c:296
 #, c-format
 msgid "argument of --wal-segsize must be a number"
 msgstr "η παράμετρος --wal-segsize πρέπει να είναι αριθμός"
 
-#: pg_resetwal.c:321
+#: pg_resetwal.c:298
 #, c-format
 msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
 msgstr "η παράμετρος --wal-segsize πρέπει να έχει τιμή δύναμης 2 μεταξύ 1 και 1024"
 
-#: pg_resetwal.c:338
+#: pg_resetwal.c:314
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
-#: pg_resetwal.c:347
+#: pg_resetwal.c:322
 #, c-format
 msgid "no data directory specified"
 msgstr "δεν ορίστηκε κατάλογος δεδομένων"
 
-#: pg_resetwal.c:361
+#: pg_resetwal.c:336
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "δεν είναι δυνατή η εκτέλεση από \"root\""
 
-#: pg_resetwal.c:362
+#: pg_resetwal.c:337
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "Πρέπει να εκτελέσετε %s ως υπερχρήστης PostgreSQL."
 
-#: pg_resetwal.c:373
+#: pg_resetwal.c:347
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "δεν ήταν δυνατή η ανάγνωση δικαιωμάτων του καταλόγου «%s»: %m"
 
-#: pg_resetwal.c:382
+#: pg_resetwal.c:353
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο «%s»: %m"
 
-#: pg_resetwal.c:398 pg_resetwal.c:553 pg_resetwal.c:604
+#: pg_resetwal.c:366 pg_resetwal.c:518 pg_resetwal.c:566
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου «%s» για ανάγνωση: %m"
 
-#: pg_resetwal.c:405
+#: pg_resetwal.c:371
 #, c-format
 msgid "lock file \"%s\" exists"
 msgstr "το αρχείο κλειδώματος \"%s\" υπάρχει"
 
-#: pg_resetwal.c:406
+#: pg_resetwal.c:372
 #, c-format
 msgid "Is a server running?  If not, delete the lock file and try again."
 msgstr "Εκτελείται ο διακομιστής;  Εάν όχι, διαγράψτε το αρχείο κλειδώματος και προσπαθήστε ξανά."
 
-#: pg_resetwal.c:501
+#: pg_resetwal.c:467
 #, c-format
 msgid ""
 "\n"
@@ -195,7 +200,7 @@ msgstr ""
 "\n"
 "Εάν αυτές οι τιμές φαίνονται αποδεκτές, χρησιμοποιήστε το -f για να αναγκάσετε την επαναφορά.\n"
 
-#: pg_resetwal.c:513
+#: pg_resetwal.c:479
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
@@ -206,32 +211,32 @@ msgstr ""
 "Η επαναφορά του write-ahead log ενδέχεται να προκαλέσει απώλεια δεδομένων.\n"
 "Εάν θέλετε να προχωρήσετε ούτως ή άλλως, χρησιμοποιήστε -f για να αναγκάσετε την επαναφορά.\n"
 
-#: pg_resetwal.c:527
+#: pg_resetwal.c:493
 #, c-format
 msgid "Write-ahead log reset\n"
 msgstr "Επαναφορά write-ahead log\n"
 
-#: pg_resetwal.c:562
+#: pg_resetwal.c:525
 #, c-format
 msgid "unexpected empty file \"%s\""
 msgstr "μη αναμενόμενο κενό αρχείο «%s»"
 
-#: pg_resetwal.c:564 pg_resetwal.c:620
+#: pg_resetwal.c:527 pg_resetwal.c:581
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
 
-#: pg_resetwal.c:573
+#: pg_resetwal.c:535
 #, c-format
 msgid "data directory is of wrong version"
 msgstr "ο κατάλογος δεδομένων είναι εσφαλμένης έκδοσης"
 
-#: pg_resetwal.c:574
+#: pg_resetwal.c:536
 #, c-format
 msgid "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\"."
 msgstr "Το αρχείο «%s» περιέχει «%s», το οποίο δεν είναι συμβατό με την έκδοση «%s» αυτού του προγράμματος."
 
-#: pg_resetwal.c:607
+#: pg_resetwal.c:569
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -242,24 +247,24 @@ msgstr ""
 "  touch %s\n"
 "και προσπάθησε ξανά."
 
-#: pg_resetwal.c:638
+#: pg_resetwal.c:597
 #, c-format
 msgid "pg_control exists but has invalid CRC; proceed with caution"
 msgstr "pg_control υπάρχει αλλά δεν έχει έγκυρο CRC· προχωρήστε με προσοχή"
 
-#: pg_resetwal.c:647
+#: pg_resetwal.c:606
 #, c-format
 msgid "pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
 msgid_plural "pg_control specifies invalid WAL segment size (%d bytes); proceed with caution"
 msgstr[0] "pg_control καθορίζει το μη έγκυρο μέγεθος τμήματος WAL (%d byte)· προχωρήστε με προσοχή"
 msgstr[1] "pg_control καθορίζει το μη έγκυρο μέγεθος τμήματος WAL (%d bytes)· προχωρήστε με προσοχή"
 
-#: pg_resetwal.c:658
+#: pg_resetwal.c:617
 #, c-format
 msgid "pg_control exists but is broken or wrong version; ignoring it"
 msgstr "pg_control υπάρχει, αλλά είναι κατεστραμμένη ή λάθος έκδοση· παραβλέπεται"
 
-#: pg_resetwal.c:753
+#: pg_resetwal.c:712
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -268,7 +273,7 @@ msgstr ""
 "Μάντεψε τιμές pg_control:\n"
 "\n"
 
-#: pg_resetwal.c:755
+#: pg_resetwal.c:714
 #, c-format
 msgid ""
 "Current pg_control values:\n"
@@ -277,169 +282,169 @@ msgstr ""
 "Τρέχουσες τιμές pg_control:\n"
 "\n"
 
-#: pg_resetwal.c:757
+#: pg_resetwal.c:716
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr ""
 "pg_control αριθμός έκδοσης:                         %u\n"
 "\n"
 
-#: pg_resetwal.c:759
+#: pg_resetwal.c:718
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Αριθμός έκδοσης καταλόγου:                          %u\n"
 
-#: pg_resetwal.c:761
+#: pg_resetwal.c:720
 #, c-format
 msgid "Database system identifier:           %llu\n"
 msgstr "Αναγνωριστικό συστήματος βάσης δεδομένων:           %llu\n"
 
-#: pg_resetwal.c:763
+#: pg_resetwal.c:722
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Πιο πρόσφατο TimeLineID του σημείου ελέγχου:        %u\n"
 
-#: pg_resetwal.c:765
+#: pg_resetwal.c:724
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "Πιο πρόσφατο full_page_writes του σημείου ελέγχου:  %s\n"
 
-#: pg_resetwal.c:766
+#: pg_resetwal.c:725
 msgid "off"
 msgstr "κλειστό"
 
-#: pg_resetwal.c:766
+#: pg_resetwal.c:725
 msgid "on"
 msgstr "ανοικτό"
 
-#: pg_resetwal.c:767
+#: pg_resetwal.c:726
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "Πιο πρόσφατο NextXID του σημείου ελέγχου:           %u:%u\n"
 
-#: pg_resetwal.c:770
+#: pg_resetwal.c:729
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Πιο πρόσφατο NextOID του σημείου ελέγχου:           %u\n"
 
-#: pg_resetwal.c:772
+#: pg_resetwal.c:731
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "Πιο πρόσφατο NextMultiXactId του σημείου ελέγχου:   %u\n"
 
-#: pg_resetwal.c:774
+#: pg_resetwal.c:733
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "Πιο πρόσφατο NextMultiOffset του σημείου ελέγχου:   %u\n"
 
-#: pg_resetwal.c:776
+#: pg_resetwal.c:735
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "Πιο πρόσφατο oldestXID του σημείου ελέγχου:         %u\n"
 
-#: pg_resetwal.c:778
+#: pg_resetwal.c:737
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "Πιο πρόσφατο oldestXID’s DB του σημείου ελέγχου:    %u\n"
 
-#: pg_resetwal.c:780
+#: pg_resetwal.c:739
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "Πιο πρόσφατο oldestActiveXID του σημείου ελέγχου:   %u\n"
 
-#: pg_resetwal.c:782
+#: pg_resetwal.c:741
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "Πιο πρόσφατο oldestMultiXid του σημείου ελέγχου:    %u\n"
 
-#: pg_resetwal.c:784
+#: pg_resetwal.c:743
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "Πιο πρόσφατο oldestMulti’s DB του σημείου ελέγχου:  %u\n"
 
-#: pg_resetwal.c:786
+#: pg_resetwal.c:745
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "Πιο πρόσφατο oldestCommitTsXid του σημείου ελέγχου: %u\n"
 
-#: pg_resetwal.c:788
+#: pg_resetwal.c:747
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "Πιο πρόσφατο newestCommitTsXid του σημείου ελέγχου: %u\n"
 
-#: pg_resetwal.c:790
+#: pg_resetwal.c:749
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Μέγιστη στοίχιση δεδομένων:                         %u\n"
 
-#: pg_resetwal.c:793
+#: pg_resetwal.c:752
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Μέγεθος μπλοκ βάσης δεδομένων:                      %u\n"
 
-#: pg_resetwal.c:795
+#: pg_resetwal.c:754
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Μπλοκ ανά τμήμα μεγάλης σχέσης:                     %u\n"
 
-#: pg_resetwal.c:797
+#: pg_resetwal.c:756
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Μέγεθος μπλοκ WAL:                                  %u\n"
 
-#: pg_resetwal.c:799 pg_resetwal.c:885
+#: pg_resetwal.c:758 pg_resetwal.c:844
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Bytes ανά τμήμα WAL:                                %u\n"
 
-#: pg_resetwal.c:801
+#: pg_resetwal.c:760
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Μέγιστο μήκος αναγνωριστικών:                       %u\n"
 
-#: pg_resetwal.c:803
+#: pg_resetwal.c:762
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Μέγιστες στήλες σε ένα ευρετήριο:                   %u\n"
 
-#: pg_resetwal.c:805
+#: pg_resetwal.c:764
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Μέγιστο μέγεθος ενός τμήματος TOAST:                %u\n"
 
-#: pg_resetwal.c:807
+#: pg_resetwal.c:766
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "Μέγεθος τμήματος μεγάλου αντικειμένου:              %u\n"
 
-#: pg_resetwal.c:810
+#: pg_resetwal.c:769
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Τύπος αποθήκευσης ημερομηνίας/ώρας:                 %s\n"
 
-#: pg_resetwal.c:811
+#: pg_resetwal.c:770
 msgid "64-bit integers"
 msgstr "Ακέραιοι 64-bit"
 
-#: pg_resetwal.c:812
+#: pg_resetwal.c:771
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Μεταβλητή Float8 τέθηκε:                            %s\n"
 
-#: pg_resetwal.c:813
+#: pg_resetwal.c:772
 msgid "by reference"
 msgstr "με αναφορά"
 
-#: pg_resetwal.c:813
+#: pg_resetwal.c:772
 msgid "by value"
 msgstr "με τιμή"
 
-#: pg_resetwal.c:814
+#: pg_resetwal.c:773
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "Έκδοση αθροίσματος ελέγχου σελίδας δεδομένων:       %u\n"
 
-#: pg_resetwal.c:828
+#: pg_resetwal.c:787
 #, c-format
 msgid ""
 "\n"
@@ -451,102 +456,102 @@ msgstr ""
 "Τιμές προς αλλαγή:\n"
 "\n"
 
-#: pg_resetwal.c:832
+#: pg_resetwal.c:791
 #, c-format
 msgid "First log segment after reset:        %s\n"
 msgstr "Πρώτο τμήμα καταγραφής μετά την επαναφορά:          %s\n"
 
-#: pg_resetwal.c:836
+#: pg_resetwal.c:795
 #, c-format
 msgid "NextMultiXactId:                      %u\n"
 msgstr "NextMultiXactId:                                    %u\n"
 
-#: pg_resetwal.c:838
+#: pg_resetwal.c:797
 #, c-format
 msgid "OldestMultiXid:                       %u\n"
 msgstr "OldestMultiXid:                                     %u\n"
 
-#: pg_resetwal.c:840
+#: pg_resetwal.c:799
 #, c-format
 msgid "OldestMulti's DB:                     %u\n"
 msgstr "OldestMulti’s DB:                                   %u\n"
 
-#: pg_resetwal.c:846
+#: pg_resetwal.c:805
 #, c-format
 msgid "NextMultiOffset:                      %u\n"
 msgstr "NextMultiOffset:                                    %u\n"
 
-#: pg_resetwal.c:852
+#: pg_resetwal.c:811
 #, c-format
 msgid "NextOID:                              %u\n"
 msgstr "NextOID:                                            %u\n"
 
-#: pg_resetwal.c:858
+#: pg_resetwal.c:817
 #, c-format
 msgid "NextXID:                              %u\n"
 msgstr "NextXID:                                            %u\n"
 
-#: pg_resetwal.c:860
+#: pg_resetwal.c:819
 #, c-format
 msgid "OldestXID:                            %u\n"
 msgstr "OldestXID:                                          %u\n"
 
-#: pg_resetwal.c:862
+#: pg_resetwal.c:821
 #, c-format
 msgid "OldestXID's DB:                       %u\n"
 msgstr "OldestXID’s DB:                                     %u\n"
 
-#: pg_resetwal.c:868
+#: pg_resetwal.c:827
 #, c-format
 msgid "NextXID epoch:                        %u\n"
 msgstr "NextXID epoch:                                      %u\n"
 
-#: pg_resetwal.c:874
+#: pg_resetwal.c:833
 #, c-format
 msgid "oldestCommitTsXid:                    %u\n"
 msgstr "oldestCommitTsXid:                                  %u\n"
 
-#: pg_resetwal.c:879
+#: pg_resetwal.c:838
 #, c-format
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                                  %u\n"
 
-#: pg_resetwal.c:965 pg_resetwal.c:1033 pg_resetwal.c:1080
+#: pg_resetwal.c:922 pg_resetwal.c:981 pg_resetwal.c:1016
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
 
-#: pg_resetwal.c:1000 pg_resetwal.c:1053 pg_resetwal.c:1103
+#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου «%s»: %m"
 
-#: pg_resetwal.c:1006 pg_resetwal.c:1059 pg_resetwal.c:1109
+#: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου «%s»: %m"
 
-#: pg_resetwal.c:1045 pg_resetwal.c:1095
+#: pg_resetwal.c:990 pg_resetwal.c:1028
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου \"%s\": %m"
 
-#: pg_resetwal.c:1176
+#: pg_resetwal.c:1100
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
 
-#: pg_resetwal.c:1186 pg_resetwal.c:1199
+#: pg_resetwal.c:1108 pg_resetwal.c:1120
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εγγραφή αρχείου «%s»: %m"
 
-#: pg_resetwal.c:1206
+#: pg_resetwal.c:1125
 #, c-format
 msgid "fsync error: %m"
 msgstr "σφάλμα fsync: %m"
 
-#: pg_resetwal.c:1217
+#: pg_resetwal.c:1134
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -555,7 +560,7 @@ msgstr ""
 "%s επαναφέρει το write-ahead log της PostgreSQL.\n"
 "\n"
 
-#: pg_resetwal.c:1218
+#: pg_resetwal.c:1135
 #, c-format
 msgid ""
 "Usage:\n"
@@ -566,12 +571,12 @@ msgstr ""
 "  %s [ΕΠΙΛΟΓΗ]… DATADIR\n"
 "\n"
 
-#: pg_resetwal.c:1219
+#: pg_resetwal.c:1136
 #, c-format
 msgid "Options:\n"
 msgstr "Επιλογές:\n"
 
-#: pg_resetwal.c:1220
+#: pg_resetwal.c:1137
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
@@ -582,72 +587,72 @@ msgstr ""
 "                                   ορισμός παλαιότερων και νεότερων συναλλαγών που φέρουν\n"
 "                                   χρονική σήμανση ολοκλήρωσης (μηδέν σημαίνει καμία αλλαγή)\n"
 
-#: pg_resetwal.c:1223
+#: pg_resetwal.c:1140
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
 msgstr " [-D, --pgdata=]DATADIR            κατάλογος δεδομένων\n"
 
-#: pg_resetwal.c:1224
+#: pg_resetwal.c:1141
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
 msgstr "  -e, --epoch=XIDEPOCH             όρισε την εποχή του επόμενου αναγνωριστικού συναλλαγής\n"
 
-#: pg_resetwal.c:1225
+#: pg_resetwal.c:1142
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
 msgstr "  -f, --force                      επέβαλλε την ενημέρωση\n"
 
-#: pg_resetwal.c:1226
+#: pg_resetwal.c:1143
 #, c-format
 msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
 msgstr "  -l, --next-wal-file=WALFILE      όρισε την ελάχιστη θέση εκκίνησης του νέου WAL\n"
 
-#: pg_resetwal.c:1227
+#: pg_resetwal.c:1144
 #, c-format
 msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
 msgstr "  -m, --multixact-ids=MXID,MXID    όρισε το επόμενο και παλαιότερο αναγνωριστικό πολλαπλής συναλλαγής\n"
 
-#: pg_resetwal.c:1228
+#: pg_resetwal.c:1145
 #, c-format
 msgid "  -n, --dry-run                    no update, just show what would be done\n"
 msgstr "  -n, --dry-run                    καμία ενημέρωση, απλά εμφάνισε τι θα συνέβαινε\n"
 
-#: pg_resetwal.c:1229
+#: pg_resetwal.c:1146
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
 msgstr "  -o, --next-oid=OID               όρισε το επόμενο OID\n"
 
-#: pg_resetwal.c:1230
+#: pg_resetwal.c:1147
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
 msgstr "  -O, --multixact-offset=OFFSET    όρισε την επόμενη μετατόπιση πολλαπλής συναλλαγής\n"
 
-#: pg_resetwal.c:1231
+#: pg_resetwal.c:1148
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
-msgstr "  -x, --next-transaction-id=XID    όρισε το επόμενο αναγνωριστικό συναλλαγής\n"
+msgstr "  -u, --oldest-transaction-id=XID  όρισε το παλαιότερο ID συναλλαγής\n"
 
-#: pg_resetwal.c:1232
+#: pg_resetwal.c:1149
 #, c-format
 msgid "  -V, --version                    output version information, then exit\n"
 msgstr "  -V, --version                    εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
 
-#: pg_resetwal.c:1233
+#: pg_resetwal.c:1150
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
 msgstr "  -x, --next-transaction-id=XID    όρισε το επόμενο αναγνωριστικό συναλλαγής\n"
 
-#: pg_resetwal.c:1234
+#: pg_resetwal.c:1151
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=SIZE           μέγεθος των τμημάτων WAL, σε megabytes\n"
 
-#: pg_resetwal.c:1235
+#: pg_resetwal.c:1152
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
 msgstr "  -?, --help                       εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
 
-#: pg_resetwal.c:1236
+#: pg_resetwal.c:1153
 #, c-format
 msgid ""
 "\n"
@@ -656,7 +661,7 @@ msgstr ""
 "\n"
 "Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
 
-#: pg_resetwal.c:1237
+#: pg_resetwal.c:1154
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s αρχική σελίδα: <%s>\n"
@@ -666,6 +671,9 @@ msgstr "%s αρχική σελίδα: <%s>\n"
 
 #~ msgid "  -V, --version                  output version information, then exit\n"
 #~ msgstr "  -V, --version                  εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#~ msgid "fatal: "
+#~ msgstr "κρίσιμο: "
 
 #~ msgid "transaction ID (-x) must not be 0"
 #~ msgstr "το αναγνωριστικό συναλλαγής (-x) δεν πρέπει να είναι 0"

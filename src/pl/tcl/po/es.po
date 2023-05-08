@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-24 23:08+0000\n"
+"POT-Creation-Date: 2023-05-07 16:38+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -98,22 +98,22 @@ msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "no se pudo crear procedimiento interno «%s»: %s"
 
-#: pltcl.c:3201
+#: pltcl.c:3202
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "la lista de nombres de columnas y valores debe tener un número par de elementos"
 
-#: pltcl.c:3219
+#: pltcl.c:3220
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "la lista de nombres de columnas y valores contiene el nombre de columna no existente «%s»"
 
-#: pltcl.c:3226
+#: pltcl.c:3227
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
 
-#: pltcl.c:3232
+#: pltcl.c:3233
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "no se puede definir el atributo generado «%s»"

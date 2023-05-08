@@ -7,224 +7,234 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
+"Project-Id-Version: pg_amcheck (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 10:17+0000\n"
-"PO-Revision-Date: 2021-11-08 11:49+0100\n"
+"POT-Creation-Date: 2023-04-12 16:50+0000\n"
+"PO-Revision-Date: 2023-04-13 13:49+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.2.2\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "κρίσιμο: "
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "σφάλμα: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "προειδοποίηση: "
 
-#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "λεπτομέρεια: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "υπόδειξη: "
+
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
 msgid "Cancel request sent\n"
 msgstr "Αίτηση ακύρωσης εστάλη\n"
 
-#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
 msgid "Could not send cancel request: "
 msgstr "Δεν ήταν δυνατή η αποστολή αίτησης ακύρωσης: "
 
-#: ../../fe_utils/connect_utils.c:92
+#: ../../fe_utils/connect_utils.c:91
 #, c-format
 msgid "could not connect to database %s: out of memory"
 msgstr "δεν ήταν δυνατή η σύνδεση με τη βάσης δεδομένων %s: έλλειψη μνήμης"
 
-#: ../../fe_utils/connect_utils.c:120
+#: ../../fe_utils/connect_utils.c:117
 #, c-format
 msgid "%s"
 msgstr "%s"
 
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "μη έγκυρη τιμή  «%s» για την επιλογή %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s πρέπει να βρίσκεται εντός εύρους %d..%d"
+
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1657 pg_amcheck.c:2105
+#: pg_amcheck.c:1647 pg_amcheck.c:2092
 #, c-format
 msgid "query failed: %s"
 msgstr "το ερώτημα απέτυχε: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:598 pg_amcheck.c:1128 pg_amcheck.c:1658 pg_amcheck.c:2106
+#: pg_amcheck.c:571 pg_amcheck.c:1102 pg_amcheck.c:1648 pg_amcheck.c:2093
 #, c-format
-msgid "query was: %s"
-msgstr "το ερώτημα ήταν: %s"
+msgid "Query was: %s"
+msgstr "Το ερώτημα ήταν: %s"
 
-#: pg_amcheck.c:330
-#, c-format
-msgid "number of parallel jobs must be at least 1"
-msgstr "ο αριθμός παράλληλων εργασιών πρέπει να είναι τουλάχιστον 1"
-
-#: pg_amcheck.c:402
+#: pg_amcheck.c:399
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "μη έγκυρη παράμετρος για την επιλογή %s"
 
-#: pg_amcheck.c:411
+#: pg_amcheck.c:405
 #, c-format
 msgid "invalid start block"
 msgstr "μη έγκυρο μπλοκ εκκίνησης"
 
-#: pg_amcheck.c:416
+#: pg_amcheck.c:407
 #, c-format
 msgid "start block out of bounds"
 msgstr "μπλοκ εκκίνησης εκτός ορίων"
 
-#: pg_amcheck.c:426
+#: pg_amcheck.c:414
 #, c-format
 msgid "invalid end block"
 msgstr "μη έγκυρο μπλοκ τερματισμού"
 
-#: pg_amcheck.c:431
+#: pg_amcheck.c:416
 #, c-format
 msgid "end block out of bounds"
 msgstr "μπλοκ τερματισμού εκτός ορίων"
 
-#: pg_amcheck.c:456 pg_amcheck.c:482
+#: pg_amcheck.c:439 pg_amcheck.c:461
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες."
 
-#: pg_amcheck.c:464
+#: pg_amcheck.c:445
 #, c-format
 msgid "end block precedes start block"
 msgstr "μπλοκ τερματισμού προηγείται του μπλοκ εκκίνησης"
 
-#: pg_amcheck.c:480
+#: pg_amcheck.c:459
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
-#: pg_amcheck.c:501
+#: pg_amcheck.c:479
 #, c-format
 msgid "cannot specify a database name with --all"
 msgstr "δεν είναι δυνατό να οριστεί ένα όνομα βάσης δεδομένων μαζί με --all"
 
-#: pg_amcheck.c:510
+#: pg_amcheck.c:485
 #, c-format
 msgid "cannot specify both a database name and database patterns"
 msgstr "δεν είναι δυνατός ο καθορισμός τόσο ενός ονόματος βάσης δεδομένων όσο και μοτίβων βάσης δεδομένων"
 
-#: pg_amcheck.c:540
+#: pg_amcheck.c:513
 #, c-format
 msgid "no databases to check"
 msgstr "καθόλου βάσεις δεδομένων για έλεγχο"
 
-#: pg_amcheck.c:596
+#: pg_amcheck.c:569
 #, c-format
 msgid "database \"%s\": %s"
 msgstr "βάση δεδομένων «%s»: %s"
 
-#: pg_amcheck.c:607
+#: pg_amcheck.c:580
 #, c-format
 msgid "skipping database \"%s\": amcheck is not installed"
 msgstr "παρακάμπτει βάση δεδομένων «%s»: το amcheck δεν είναι εγκαταστημένο"
 
-#: pg_amcheck.c:615
+#: pg_amcheck.c:588
 #, c-format
 msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
 msgstr "στη βάση δεδομένων «%s»: χρησιμοποιώντας την έκδοση «%s» του amcheck στο σχήμα «%s»"
 
-#: pg_amcheck.c:637
+#: pg_amcheck.c:610
 #, c-format
 msgid "no heap tables to check matching \"%s\""
 msgstr "δεν υπάρχουν πίνακες heap για έλεγχο που ταιριάζουν με «%s»"
 
-#: pg_amcheck.c:640
+#: pg_amcheck.c:613
 #, c-format
 msgid "no btree indexes to check matching \"%s\""
 msgstr "δεν υπάρχουν ευρετήρια BTREE για έλεγχο που ταιριάζουν με «%s»"
 
-#: pg_amcheck.c:643
+#: pg_amcheck.c:616
 #, c-format
 msgid "no relations to check in schemas matching \"%s\""
 msgstr "καθόλου σχέσεις για έλεγχο σε σχήματα που ταιριάζουν με «%s»"
 
-#: pg_amcheck.c:646
+#: pg_amcheck.c:619
 #, c-format
 msgid "no relations to check matching \"%s\""
 msgstr "καθόλου σχέσεις για έλεγχο που ταιριάζουν με «%s»"
 
-#: pg_amcheck.c:674
+#: pg_amcheck.c:647
 #, c-format
 msgid "no relations to check"
 msgstr "καθόλου σχέσεις για έλεγχο"
 
-#: pg_amcheck.c:758
+#: pg_amcheck.c:730
 #, c-format
 msgid "checking heap table \"%s.%s.%s\""
 msgstr "ελέγχει τον πίνακα heap «%s.%s.%s»"
 
-#: pg_amcheck.c:774
+#: pg_amcheck.c:746
 #, c-format
 msgid "checking btree index \"%s.%s.%s\""
 msgstr "ελέγχει το ευρετήριο btree «%s.%s.%s»"
 
-#: pg_amcheck.c:921
+#: pg_amcheck.c:893
 #, c-format
 msgid "error sending command to database \"%s\": %s"
 msgstr "εντολή αποστολής σφάλματος στη βάση δεδομένων «%s»: %s"
 
-#: pg_amcheck.c:924
+#: pg_amcheck.c:896
 #, c-format
-msgid "command was: %s"
-msgstr "η εντολή ήταν: %s"
+msgid "Command was: %s"
+msgstr "Η εντολή ήταν: %s"
 
-#: pg_amcheck.c:1041
+#: pg_amcheck.c:1015
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
 msgstr "πίνακας heap «%s.%s.%s», μπλοκ %s, μετατόπιση %s, χαρακτηριστικό %s:\n"
 
-#: pg_amcheck.c:1048
+#: pg_amcheck.c:1022
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
 msgstr "πίνακας heap «%s.%s.%s», μπλοκ %s, μετατόπιση %s:\n"
 
-#: pg_amcheck.c:1054
+#: pg_amcheck.c:1028
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s:\n"
 msgstr "πίνακας heap «%s.%s.%s», μπλοκ %s:\n"
 
-#: pg_amcheck.c:1059 pg_amcheck.c:1070
+#: pg_amcheck.c:1033 pg_amcheck.c:1044
 #, c-format
 msgid "heap table \"%s.%s.%s\":\n"
 msgstr "πίνακας heap «%s.%s.%s»:\n"
 
-#: pg_amcheck.c:1074 pg_amcheck.c:1143
+#: pg_amcheck.c:1048 pg_amcheck.c:1117
 #, c-format
 msgid "query was: %s\n"
 msgstr "το ερώτημα ήταν: %s\n"
 
-#: pg_amcheck.c:1125
+#: pg_amcheck.c:1099
 #, c-format
 msgid "btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d"
 msgstr "ευρετήριο btree «%s.%s.%s»: η συνάρτηση ελέγχου btree επέστρεψε απροσδόκητο αριθμό γραμμών: %d"
 
-#: pg_amcheck.c:1129
+#: pg_amcheck.c:1103
 #, c-format
 msgid "Are %s's and amcheck's versions compatible?"
 msgstr "Είναι συμβατές οι εκδόσεις του %s και του amcheck;"
 
-#: pg_amcheck.c:1139
+#: pg_amcheck.c:1113
 #, c-format
 msgid "btree index \"%s.%s.%s\":\n"
 msgstr "ευρετήριο btree «%s.%s.%s»:\n"
 
-#: pg_amcheck.c:1164
+#: pg_amcheck.c:1138
 #, c-format
 msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
@@ -233,17 +243,17 @@ msgstr ""
 "%s ελέγχει αντικείμενα σε μια βάση δεδομένων PostgreSQL για αλλοίωση.\n"
 "\n"
 
-#: pg_amcheck.c:1165
+#: pg_amcheck.c:1139
 #, c-format
 msgid "Usage:\n"
 msgstr "Χρήση:\n"
 
-#: pg_amcheck.c:1166
+#: pg_amcheck.c:1140
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ΕΠΙΛΟΓΗ]... [DBNAME]\n"
 
-#: pg_amcheck.c:1167
+#: pg_amcheck.c:1141
 #, c-format
 msgid ""
 "\n"
@@ -252,77 +262,77 @@ msgstr ""
 "\n"
 "Επιλογές στόχου:\n"
 
-#: pg_amcheck.c:1168
+#: pg_amcheck.c:1142
 #, c-format
 msgid "  -a, --all                       check all databases\n"
 msgstr "  -a, --all                       έλεγξε όλες τις βάσεις δεδομένων\n"
 
-#: pg_amcheck.c:1169
+#: pg_amcheck.c:1143
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
 msgstr "  -d, --database=PATTERN          έλεγξε ταιριαστή(-ες) με το μοτίβο βάση(-εις) δεδομένων\n"
 
-#: pg_amcheck.c:1170
+#: pg_amcheck.c:1144
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
 msgstr "  -D, --exclude-database=PATTERN  να ΜΗΝ ελέγξει ταιριαστή(-ες) με το μοτίβο βάση(-εις) δεδομένων\n"
 
-#: pg_amcheck.c:1171
+#: pg_amcheck.c:1145
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
 msgstr "  -i, --index=PATTERN             έλεγξε ταιριαστό(-ά) με το μοτίβο ευρετήριο(-ά)\n"
 
-#: pg_amcheck.c:1172
+#: pg_amcheck.c:1146
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
 msgstr "  -I, --exclude-index=PATTERN     να ΜΗΝ ελέγξει ταιριαστό(-ά) με το μοτίβο ευρετήριο(-ά)\n"
 
-#: pg_amcheck.c:1173
+#: pg_amcheck.c:1147
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
 msgstr "  -i, --index=PATTERN             έλεγξε ταιριαστή(-ές) με το μοτίβο σχέση(-εις)\n"
 
-#: pg_amcheck.c:1174
+#: pg_amcheck.c:1148
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
 msgstr "  -R, --exclude-relation=PATTERN  να ΜΗΝ ελέγξει ταιριαστή(-ές) με το μοτίβο σχέση(-εις)\n"
 
-#: pg_amcheck.c:1175
+#: pg_amcheck.c:1149
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
 msgstr "  -s, --schema=PATTERN            έλεγξε ταιριαστό(-ά) με το μοτίβο σχήμα(-τα)\n"
 
-#: pg_amcheck.c:1176
+#: pg_amcheck.c:1150
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
 msgstr "  -S, --exclude-schema=PATTERN    να ΜΗΝ ελέγξει ταιριαστό(-ά) με το μοτίβο σχήμα(-τα)\n"
 
-#: pg_amcheck.c:1177
+#: pg_amcheck.c:1151
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
 msgstr "  -t, --table=PATTERN             έλεγξε ταιριαστό(-ούς) με το μοτίβο πίνακα(-ες)\n"
 
-#: pg_amcheck.c:1178
+#: pg_amcheck.c:1152
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
 msgstr "  -T, --exclude-table=PATTERN     να ΜΗΝ ελέγξει ταιριαστό(-ούς) με το μοτίβο πίνακα(-ες)\n"
 
-#: pg_amcheck.c:1179
+#: pg_amcheck.c:1153
 #, c-format
 msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
 msgstr "      --no-dependent-indexes      να ΜΗΝ επεκτείνεις τη λίστα σχέσεων ώστε να συμπεριλάβει ευρετήρια\n"
 
-#: pg_amcheck.c:1180
+#: pg_amcheck.c:1154
 #, c-format
 msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
 msgstr "      --no-dependent-toast        να ΜΗΝ επεκτείνεις τη λίστα σχέσεων ώστε να συμπεριλάβει πίνακες TOAST\n"
 
-#: pg_amcheck.c:1181
+#: pg_amcheck.c:1155
 #, c-format
 msgid "      --no-strict-names           do NOT require patterns to match objects\n"
 msgstr "      --no-strict-names           να ΜΗΝ απαιτήσει μοτίβα για την αντιστοίχιση αντικειμένων\n"
 
-#: pg_amcheck.c:1182
+#: pg_amcheck.c:1156
 #, c-format
 msgid ""
 "\n"
@@ -331,32 +341,32 @@ msgstr ""
 "\n"
 "Επιλογές ελέγχου πίνακα:\n"
 
-#: pg_amcheck.c:1183
+#: pg_amcheck.c:1157
 #, c-format
 msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
 msgstr "      --exclude-toast-pointers    να ΜΗΝ ακολουθήσει τους δείκτες σχέσεων TOAST\n"
 
-#: pg_amcheck.c:1184
+#: pg_amcheck.c:1158
 #, c-format
 msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
 msgstr "      --on-error-stop             διακοπή ελέγχου στο τέλος της πρώτης αλλοιωμένης σελίδας\n"
 
-#: pg_amcheck.c:1185
+#: pg_amcheck.c:1159
 #, c-format
 msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
 msgstr "      --skip=OPTION               να ΜΗΝ ελέγξει τα «all-frozen» ή «all-visible» μπλοκ\n"
 
-#: pg_amcheck.c:1186
+#: pg_amcheck.c:1160
 #, c-format
 msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
 msgstr "      --startblock=BLOCK          εκκίνηση του ελέγχου πίνακα(-ων) από τον δοσμένο αριθμό μπλοκ\n"
 
-#: pg_amcheck.c:1187
+#: pg_amcheck.c:1161
 #, c-format
 msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
 msgstr "      --endblock=BLOCK            τερματισμός του ελέγχου πίνακα(-ων) από τον δοσμένο αριθμό μπλοκ\n"
 
-#: pg_amcheck.c:1188
+#: pg_amcheck.c:1162
 #, c-format
 msgid ""
 "\n"
@@ -365,22 +375,22 @@ msgstr ""
 "\n"
 "Επιλογές ελέγχου ευρετηρίου B-tree:\n"
 
-#: pg_amcheck.c:1189
+#: pg_amcheck.c:1163
 #, c-format
 msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
 msgstr "      --heapallindexed            έλεγξε ότι όλες οι πλειάδες heap περιλαμβάνονται σε ευρετήρια\n"
 
-#: pg_amcheck.c:1190
+#: pg_amcheck.c:1164
 #, c-format
 msgid "      --parent-check              check index parent/child relationships\n"
 msgstr "      --parent-check              έλεγξε σχέσεις γονέα/απογόνου ευρετηρίου\n"
 
-#: pg_amcheck.c:1191
+#: pg_amcheck.c:1165
 #, c-format
 msgid "      --rootdescend               search from root page to refind tuples\n"
 msgstr "      --rootdescend               αναζήτησε από τη ριζική σελίδα για την επανεύρεση πλειάδων\n"
 
-#: pg_amcheck.c:1192
+#: pg_amcheck.c:1166
 #, c-format
 msgid ""
 "\n"
@@ -389,37 +399,37 @@ msgstr ""
 "\n"
 "Επιλογές σύνδεσης:\n"
 
-#: pg_amcheck.c:1193
+#: pg_amcheck.c:1167
 #, c-format
 msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME             διακομιστής βάσης δεδομένων ή κατάλογος υποδοχών\n"
 
-#: pg_amcheck.c:1194
+#: pg_amcheck.c:1168
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
 msgstr "  -p, --port=PORT                 θύρα διακομιστή βάσης δεδομένων\n"
 
-#: pg_amcheck.c:1195
+#: pg_amcheck.c:1169
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
 msgstr "  -U, --username=USERNAME         όνομα χρήστη με το οποίο να συνδεθεί\n"
 
-#: pg_amcheck.c:1196
+#: pg_amcheck.c:1170
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
 msgstr "  -w, --no-password               να μην ζητείται ποτέ κωδικός πρόσβασης\n"
 
-#: pg_amcheck.c:1197
+#: pg_amcheck.c:1171
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
 msgstr "  -W, --password                  αναγκαστική προτροπή κωδικού πρόσβασης\n"
 
-#: pg_amcheck.c:1198
+#: pg_amcheck.c:1172
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
 msgstr "      --maintenance-db=DBNAME     εναλλακτική βάση δεδομένων συντήρησης\n"
 
-#: pg_amcheck.c:1199
+#: pg_amcheck.c:1173
 #, c-format
 msgid ""
 "\n"
@@ -428,42 +438,42 @@ msgstr ""
 "\n"
 "Άλλες επιλογές:\n"
 
-#: pg_amcheck.c:1200
+#: pg_amcheck.c:1174
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      εμφάνισε τις εντολές που αποστέλλονται στο διακομιστή\n"
 
-#: pg_amcheck.c:1201
+#: pg_amcheck.c:1175
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
 msgstr "  -j, --jobs=NUM                  χρησιμοποιήσε τόσες πολλές ταυτόχρονες συνδέσεις με το διακομιστή\n"
 
-#: pg_amcheck.c:1202
+#: pg_amcheck.c:1176
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
 msgstr "  -P, --progress                  εμφάνισε πληροφορίες προόδου\n"
 
-#: pg_amcheck.c:1203
+#: pg_amcheck.c:1177
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   γράψε πολλά μηνύματα εξόδου\n"
 
-#: pg_amcheck.c:1204
+#: pg_amcheck.c:1178
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
 
-#: pg_amcheck.c:1205
+#: pg_amcheck.c:1179
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
 msgstr "      --install-missing           εγκατάστησε επεκτάσεις που λείπουν\n"
 
-#: pg_amcheck.c:1206
+#: pg_amcheck.c:1180
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
 
-#: pg_amcheck.c:1208
+#: pg_amcheck.c:1182
 #, c-format
 msgid ""
 "\n"
@@ -472,45 +482,64 @@ msgstr ""
 "\n"
 "Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
 
-#: pg_amcheck.c:1209
+#: pg_amcheck.c:1183
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s αρχική σελίδα: <%s>\n"
 
-#: pg_amcheck.c:1267
+#: pg_amcheck.c:1236
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
 msgstr "%*s/%s σχέσεις (%d%%),  %*s/%s σελίδες (%d%%) %*s"
 
-#: pg_amcheck.c:1278
+#: pg_amcheck.c:1247
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
 msgstr "%*s/%s σχέσεις (%d%%), %*s/%s σελίδες (%d%%) (%s%-*.*s)"
 
-#: pg_amcheck.c:1293
+#: pg_amcheck.c:1262
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
 msgstr "%*s/%s σχέσεις (%d%%), %*s/%s σελίδες (%d%%)"
 
-#: pg_amcheck.c:1562 pg_amcheck.c:1704
+#: pg_amcheck.c:1321 pg_amcheck.c:1354
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "ακατάλληλο αναγνωρισμένο όνομα (πάρα πολλά διάστικτα ονόματα): %s"
+
+#: pg_amcheck.c:1399
+#, c-format
+msgid "improper relation name (too many dotted names): %s"
+msgstr "ακατάλληλο όνομα σχέσης (πολλά διάστικτα ονόματα): %s"
+
+#: pg_amcheck.c:1552 pg_amcheck.c:1691
 #, c-format
 msgid "including database \"%s\""
 msgstr "συμπεριλαμβανομένης της βάσης δεδομένων «%s»"
 
-#: pg_amcheck.c:1684
+#: pg_amcheck.c:1673
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
 msgstr "εσωτερικό σφάλμα: ελήφθη μη αναμενόμενο pattern_id %d"
 
-#: pg_amcheck.c:1688
+#: pg_amcheck.c:1675
 #, c-format
 msgid "no connectable databases to check matching \"%s\""
 msgstr "δεν υπάρχουν βάσεις δεδομένων με δυνατότητα σύνδεσης για έλεγχο που να ταιριάζουν με «%s»"
 
-#: pg_amcheck.c:2147
+#: pg_amcheck.c:2133
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr "εσωτερικό σφάλμα: ελήφθη μη αναμενόμενο pattern_id σχέσης %d"
 
 #~ msgid "  -q, --quiet                     don't write any messages\n"
 #~ msgstr "  -q, --quiet                     να μην γράψεις κανένα μήνυμα\n"
+
+#~ msgid "command was: %s"
+#~ msgstr "η εντολή ήταν: %s"
+
+#~ msgid "fatal: "
+#~ msgstr "κρίσιμο: "
+
+#~ msgid "number of parallel jobs must be at least 1"
+#~ msgstr "ο αριθμός παράλληλων εργασιών πρέπει να είναι τουλάχιστον 1"

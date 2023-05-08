@@ -24,7 +24,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-01-21 18:45+0000\n"
-"PO-Revision-Date: 2023-01-22 17:01+0100\n"
+"PO-Revision-Date: 2023-03-09 22:57+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -3340,12 +3340,12 @@ msgstr "tog emot förfrågan om befordring"
 #: access/transam/xlogrecovery.c:4383
 #, c-format
 msgid "promote trigger file found: %s"
-msgstr "utlösarfil för befordring hittad: %s"
+msgstr "triggerfil för befordring hittad: %s"
 
 #: access/transam/xlogrecovery.c:4391
 #, c-format
 msgid "could not stat promote trigger file \"%s\": %m"
-msgstr "kunde inte göra stat() på utlösarfil för befordring \"%s\": %m"
+msgstr "kunde inte göra stat() på triggerfil för befordring \"%s\": %m"
 
 #: access/transam/xlogrecovery.c:4616
 #, c-format
@@ -3915,7 +3915,7 @@ msgstr "rättighet saknas för domän %s"
 #: catalog/aclchk.c:3545
 #, c-format
 msgid "permission denied for event trigger %s"
-msgstr "rättighet saknas för händelseutlösare %s"
+msgstr "rättighet saknas för händelsetrigger %s"
 
 #: catalog/aclchk.c:3548
 #, c-format
@@ -4082,7 +4082,7 @@ msgstr "måste vara ägaren av domänen %s"
 #: catalog/aclchk.c:3677
 #, c-format
 msgid "must be owner of event trigger %s"
-msgstr "måste vara ägaren till händelseutlösaren %s"
+msgstr "måste vara ägaren till händelsetrigger %s"
 
 #: catalog/aclchk.c:3680
 #, c-format
@@ -4305,7 +4305,7 @@ msgstr "textsökkonfiguration med OID %u existerar inte"
 #: catalog/aclchk.c:5575 commands/event_trigger.c:453
 #, c-format
 msgid "event trigger with OID %u does not exist"
-msgstr "händelseutlösare med OID %u existerar inte"
+msgstr "händelsetrigger med OID %u existerar inte"
 
 #: catalog/aclchk.c:5628 commands/collationcmds.c:439
 #, c-format
@@ -5143,7 +5143,7 @@ msgstr "regel %s på %s"
 #: catalog/objectaddress.c:3468
 #, c-format
 msgid "trigger %s on %s"
-msgstr "utlösare %s på %s"
+msgstr "trigger %s på %s"
 
 #: catalog/objectaddress.c:3488
 #, c-format
@@ -6151,7 +6151,7 @@ msgstr "parameter \"%s\" måste vara READ_ONLY, SHAREABLE eller READ_WRITE"
 #: commands/alter.c:84 commands/event_trigger.c:174
 #, c-format
 msgid "event trigger \"%s\" already exists"
-msgstr "händelseutlösare \"%s\" finns redan"
+msgstr "händelsetrigger \"%s\" finns redan"
 
 #: commands/alter.c:87 commands/foreigncmds.c:593
 #, c-format
@@ -6540,7 +6540,7 @@ msgstr "kan inte sätta kommentar på relationen \"%s\""
 #: commands/constraint.c:63 utils/adt/ri_triggers.c:2014
 #, c-format
 msgid "function \"%s\" was not called by trigger manager"
-msgstr "funktionen \"%s\" anropades inte av utlösar-hanteraren"
+msgstr "funktionen \"%s\" anropades inte av triggerhanteraren"
 
 #: commands/constraint.c:70 utils/adt/ri_triggers.c:2023
 #, c-format
@@ -6800,7 +6800,7 @@ msgstr "kan inte kopiera till vyn \"%s\""
 #: commands/copyfrom.c:571
 #, c-format
 msgid "To enable copying to a view, provide an INSTEAD OF INSERT trigger."
-msgstr "För att tillåta kopiering till en vy, testa med en INSTEAD OF INSERT-utlösare."
+msgstr "För att tillåta kopiering till en vy, testa med en INSTEAD OF INSERT-trigger."
 
 #: commands/copyfrom.c:575
 #, c-format
@@ -7615,7 +7615,7 @@ msgstr "transform för typ %s språk \"%s\" finns inte, hoppar över"
 #: commands/dropcmds.c:420
 #, c-format
 msgid "trigger \"%s\" for relation \"%s\" does not exist, skipping"
-msgstr "utlösare \"%s\" för relation \"%s\" finns inte, hoppar över"
+msgstr "trigger \"%s\" för relation \"%s\" finns inte, hoppar över"
 
 #: commands/dropcmds.c:429
 #, c-format
@@ -7625,7 +7625,7 @@ msgstr "policy \"%s\" för relation \"%s\" finns inte, hoppar över"
 #: commands/dropcmds.c:436
 #, c-format
 msgid "event trigger \"%s\" does not exist, skipping"
-msgstr "händelseutlösare \"%s\" finns inte, hoppar över"
+msgstr "händelsetrigger \"%s\" finns inte, hoppar över"
 
 #: commands/dropcmds.c:442
 #, c-format
@@ -7660,12 +7660,12 @@ msgstr "publicering \"%s\" finns inte, hoppar över"
 #: commands/event_trigger.c:125
 #, c-format
 msgid "permission denied to create event trigger \"%s\""
-msgstr "rättighet saknas för att skapa händelseutlösare \"%s\""
+msgstr "rättighet saknas för att skapa händelsetrigger \"%s\""
 
 #: commands/event_trigger.c:127
 #, c-format
 msgid "Must be superuser to create an event trigger."
-msgstr "Måste vara superuser för att skapa en händelsutlösare."
+msgstr "Måste vara superuser för att skapa en händelsetrigger."
 
 #: commands/event_trigger.c:136
 #, c-format
@@ -7697,32 +7697,32 @@ msgstr "filtervariabel \"%s\" angiven mer än en gång"
 #: commands/event_trigger.c:515
 #, c-format
 msgid "event trigger \"%s\" does not exist"
-msgstr "händelseutlösare \"%s\" finns inte"
+msgstr "händelsetrigger \"%s\" finns inte"
 
 #: commands/event_trigger.c:483
 #, c-format
 msgid "permission denied to change owner of event trigger \"%s\""
-msgstr "rättighet saknas för att byta ägare på händelseutlösare \"%s\""
+msgstr "rättighet saknas för att byta ägare på händelsetrigger \"%s\""
 
 #: commands/event_trigger.c:485
 #, c-format
 msgid "The owner of an event trigger must be a superuser."
-msgstr "Ägaren för en händelseutlösare måste vara en superuser."
+msgstr "Ägaren för en händelsetrigger måste vara en superuser."
 
 #: commands/event_trigger.c:1304
 #, c-format
 msgid "%s can only be called in a sql_drop event trigger function"
-msgstr "%s kan bara anropas i en sql_drop-händelseutlösarfunktion"
+msgstr "%s kan bara anropas i en sql_drop-händelsetriggerfunktion"
 
 #: commands/event_trigger.c:1400 commands/event_trigger.c:1421
 #, c-format
 msgid "%s can only be called in a table_rewrite event trigger function"
-msgstr "%s kan bara anropas i en tabell_rewrite-händelseutlösarfunktion"
+msgstr "%s kan bara anropas i en tabell_rewrite-händelsetriggerfunktion"
 
 #: commands/event_trigger.c:1834
 #, c-format
 msgid "%s can only be called in an event trigger function"
-msgstr "%s kan bara anropas i en händelseutlösarfunktion"
+msgstr "%s kan bara anropas i en händelsetriggerfunktion"
 
 #: commands/explain.c:218
 #, c-format
@@ -10182,7 +10182,7 @@ msgstr "kan inte %s \"%s\" då den används av aktiva frågor i denna session"
 #: commands/tablecmds.c:4017
 #, c-format
 msgid "cannot %s \"%s\" because it has pending trigger events"
-msgstr "kan inte %s \"%s\" då den har utlösarhändelser som väntar"
+msgstr "kan inte %s \"%s\" då den har triggerhändelser som väntar"
 
 #: commands/tablecmds.c:4486
 #, c-format
@@ -10739,7 +10739,7 @@ msgstr "%s beror på kolumn \"%s\""
 #: commands/tablecmds.c:12662
 #, c-format
 msgid "cannot alter type of a column used in a trigger definition"
-msgstr "kan inte ändra typ på en kolumn som används i en utlösardefinition"
+msgstr "kan inte ändra typ på en kolumn som används i en triggerdefinition"
 
 #: commands/tablecmds.c:12680
 #, c-format
@@ -10855,12 +10855,12 @@ msgstr "\"%s\" är redan ett barn till \"%s\""
 #: commands/tablecmds.c:14905
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming an inheritance child"
-msgstr "utlösare \"%s\" förhindrar tabell \"%s\" från att bli ett arvsbarn"
+msgstr "trigger \"%s\" förhindrar tabell \"%s\" från att bli ett arvsbarn"
 
 #: commands/tablecmds.c:14907
 #, c-format
 msgid "ROW triggers with transition tables are not supported in inheritance hierarchies."
-msgstr "ROW-utlösare med övergångstabeller stöds inte i arvshierarkier."
+msgstr "ROW-triggrar med övergångstabeller stöds inte i arvshierarkier."
 
 #: commands/tablecmds.c:15110
 #, c-format
@@ -11156,12 +11156,12 @@ msgstr "Den nya partitionen får bara innehålla kolumner som finns i förälder
 #: commands/tablecmds.c:17862
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming a partition"
-msgstr "utlösare \"%s\" förhindrar att tabell \"%s\" blir en partition"
+msgstr "trigger \"%s\" förhindrar att tabell \"%s\" blir en partition"
 
 #: commands/tablecmds.c:17864
 #, c-format
 msgid "ROW triggers with transition tables are not supported on partitions."
-msgstr "ROW-utlösare med övergångstabeller stöds inte för partitioner."
+msgstr "ROW-triggrar med övergångstabeller stöds inte för partitioner."
 
 #: commands/tablecmds.c:18043
 #, c-format
@@ -11367,7 +11367,7 @@ msgstr "\"%s\" är en tabell"
 #: commands/trigger.c:231 commands/trigger.c:242
 #, c-format
 msgid "Tables cannot have INSTEAD OF triggers."
-msgstr "Tabeller kan inte ha INSTEAD OF-utlösare."
+msgstr "Tabeller kan inte ha INSTEAD OF-triggrar."
 
 #: commands/trigger.c:263
 #, c-format
@@ -11377,7 +11377,7 @@ msgstr "\"%s\" är en partitionerad tabell"
 #: commands/trigger.c:265
 #, c-format
 msgid "ROW triggers with transition tables are not supported on partitioned tables."
-msgstr "ROW-utlösare med övergångstabeller stöds inte för partitionerade tabeller."
+msgstr "ROW-triggrar med övergångstabeller stöds inte för partitionerade tabeller."
 
 #: commands/trigger.c:277 commands/trigger.c:284 commands/trigger.c:455
 #, c-format
@@ -11387,12 +11387,12 @@ msgstr "\"%s\" är en vy"
 #: commands/trigger.c:279
 #, c-format
 msgid "Views cannot have row-level BEFORE or AFTER triggers."
-msgstr "Vyer kan inte ha BEFORE- eller AFTER-utlösare på radnivå."
+msgstr "Vyer kan inte ha BEFORE- eller AFTER-triggrar på radnivå."
 
 #: commands/trigger.c:286
 #, c-format
 msgid "Views cannot have TRUNCATE triggers."
-msgstr "Vyer kan inte ha TRUNCATE-utlösare."
+msgstr "Vyer kan inte ha TRUNCATE-triggrar."
 
 #: commands/trigger.c:294 commands/trigger.c:301 commands/trigger.c:313
 #: commands/trigger.c:448
@@ -11403,42 +11403,42 @@ msgstr "\"%s\" är en främmande tabell"
 #: commands/trigger.c:296
 #, c-format
 msgid "Foreign tables cannot have INSTEAD OF triggers."
-msgstr "Främmande tabeller kan inte ha INSTEAD OF-utlösare."
+msgstr "Främmande tabeller kan inte ha INSTEAD OF-triggrar."
 
 #: commands/trigger.c:303
 #, c-format
 msgid "Foreign tables cannot have TRUNCATE triggers."
-msgstr "Främmande tabeller kan inte ha TRUNCATE-utlösare."
+msgstr "Främmande tabeller kan inte ha TRUNCATE-triggrar."
 
 #: commands/trigger.c:315
 #, c-format
 msgid "Foreign tables cannot have constraint triggers."
-msgstr "Främmande tabeller kan inte ha villkorsutlösare."
+msgstr "Främmande tabeller kan inte ha villkorstriggrar."
 
 #: commands/trigger.c:320 commands/trigger.c:1375 commands/trigger.c:1482
 #, c-format
 msgid "relation \"%s\" cannot have triggers"
-msgstr "relationen \"%s\" kan inte ha utlösare"
+msgstr "relationen \"%s\" kan inte ha triggrar"
 
 #: commands/trigger.c:391
 #, c-format
 msgid "TRUNCATE FOR EACH ROW triggers are not supported"
-msgstr "TRUNCATE FOR EACH ROW-utlösare stöds inte"
+msgstr "TRUNCATE FOR EACH ROW-triggrar stöds inte"
 
 #: commands/trigger.c:399
 #, c-format
 msgid "INSTEAD OF triggers must be FOR EACH ROW"
-msgstr "INSTEAD OF-utlösare måste vara FOR EACH ROW"
+msgstr "INSTEAD OF-trigger måste vara FOR EACH ROW"
 
 #: commands/trigger.c:403
 #, c-format
 msgid "INSTEAD OF triggers cannot have WHEN conditions"
-msgstr "INSTEAD OF-utlösare kan inte ha WHEN-villkor"
+msgstr "INSTEAD OF-trigger kan inte ha WHEN-villkor"
 
 #: commands/trigger.c:407
 #, c-format
 msgid "INSTEAD OF triggers cannot have column lists"
-msgstr "INSTEAD OF-utlösare kan inte ha en kolumnlista"
+msgstr "INSTEAD OF-trigger kan inte ha en kolumnlista"
 
 #: commands/trigger.c:436
 #, c-format
@@ -11453,47 +11453,47 @@ msgstr "Använd OLD TABLE eller NEW TABLE för att namnge övergångstabeller."
 #: commands/trigger.c:450
 #, c-format
 msgid "Triggers on foreign tables cannot have transition tables."
-msgstr "Utlösare på främmande tabeller kan inte ha övergångstabeller."
+msgstr "Triggrar på främmande tabeller kan inte ha övergångstabeller."
 
 #: commands/trigger.c:457
 #, c-format
 msgid "Triggers on views cannot have transition tables."
-msgstr "Utlösare på vyer kan inte ha övergångstabeller."
+msgstr "Triggrar på vyer kan inte ha övergångstabeller."
 
 #: commands/trigger.c:473
 #, c-format
 msgid "ROW triggers with transition tables are not supported on partitions"
-msgstr "ROW-utlösare med övergångstabeller stöds inte för partitioner"
+msgstr "ROW-triggrar med övergångstabeller stöds inte för partitioner"
 
 #: commands/trigger.c:477
 #, c-format
 msgid "ROW triggers with transition tables are not supported on inheritance children"
-msgstr "ROW-utlösare med övergångstabeller stöds inte på arvsbarn"
+msgstr "ROW-triggrar med övergångstabeller stöds inte på arvsbarn"
 
 #: commands/trigger.c:483
 #, c-format
 msgid "transition table name can only be specified for an AFTER trigger"
-msgstr "övergångstabellnamn kan bara anges för AFTER-utlösare"
+msgstr "övergångstabellnamn kan bara anges för en AFTER-trigger"
 
 #: commands/trigger.c:488
 #, c-format
 msgid "TRUNCATE triggers with transition tables are not supported"
-msgstr "TRUNCATE-utlösare med övergångstabeller stöds inte"
+msgstr "TRUNCATE-triggrar med övergångstabeller stöds inte"
 
 #: commands/trigger.c:505
 #, c-format
 msgid "transition tables cannot be specified for triggers with more than one event"
-msgstr "övergångstabeller kan inte anges för utlösare med mer än ett event"
+msgstr "övergångstabeller kan inte anges för triggrar med mer än ett event"
 
 #: commands/trigger.c:516
 #, c-format
 msgid "transition tables cannot be specified for triggers with column lists"
-msgstr "övergångstabeller kan inte anges för utlösare med kolumnlistor"
+msgstr "övergångstabeller kan inte anges för triggrar med kolumnlistor"
 
 #: commands/trigger.c:533
 #, c-format
 msgid "NEW TABLE can only be specified for an INSERT or UPDATE trigger"
-msgstr "NEW TABLE kan bara anges för INSERT- eller UPDATE-utlösare"
+msgstr "NEW TABLE kan bara anges för en INSERT- eller UPDATE-trigger"
 
 #: commands/trigger.c:538
 #, c-format
@@ -11503,7 +11503,7 @@ msgstr "NEW TABLE kan inte anges flera gånger"
 #: commands/trigger.c:548
 #, c-format
 msgid "OLD TABLE can only be specified for a DELETE or UPDATE trigger"
-msgstr "OLD TABLE kan bara anges för DELETE- eller UPDATE-utlösare"
+msgstr "OLD TABLE kan bara anges för en DELETE- eller UPDATE-trigger"
 
 #: commands/trigger.c:553
 #, c-format
@@ -11518,27 +11518,27 @@ msgstr "OLD TABLE-namn och NEW TABLE-namn får inte vara samma"
 #: commands/trigger.c:627 commands/trigger.c:640
 #, c-format
 msgid "statement trigger's WHEN condition cannot reference column values"
-msgstr "satsutlösares WHEN-villkor kan inte referera till kolumnvärden"
+msgstr "satstriggrars WHEN-villkor kan inte referera till kolumnvärden"
 
 #: commands/trigger.c:632
 #, c-format
 msgid "INSERT trigger's WHEN condition cannot reference OLD values"
-msgstr "INSERT-utlösares WHEN-villkor kan inte referera till OLD-värden"
+msgstr "INSERT-triggrars WHEN-villkor kan inte referera till OLD-värden"
 
 #: commands/trigger.c:645
 #, c-format
 msgid "DELETE trigger's WHEN condition cannot reference NEW values"
-msgstr "DELETE-utlösares WHEN-villkor kan inte referera till NEW-värden"
+msgstr "DELETE-triggrars WHEN-villkor kan inte referera till NEW-värden"
 
 #: commands/trigger.c:650
 #, c-format
 msgid "BEFORE trigger's WHEN condition cannot reference NEW system columns"
-msgstr "BEFORE-utlösares WHEN-villkor kan inte referera till NEW-systemkolumner"
+msgstr "BEFORE-triggrars WHEN-villkor kan inte referera till NEW-systemkolumner"
 
 #: commands/trigger.c:658 commands/trigger.c:666
 #, c-format
 msgid "BEFORE trigger's WHEN condition cannot reference NEW generated columns"
-msgstr "BEFORE-utlösares WHEN-villkor kan inte referera till genererade NEW-kolumner"
+msgstr "BEFORE-triggrars WHEN-villkor kan inte referera till genererade NEW-kolumner"
 
 #: commands/trigger.c:659
 #, c-format
@@ -11548,76 +11548,76 @@ msgstr "En hela-raden-referens används och tabellen innehåller genererade kolu
 #: commands/trigger.c:774 commands/trigger.c:1657
 #, c-format
 msgid "trigger \"%s\" for relation \"%s\" already exists"
-msgstr "utlösare \"%s\" för relation \"%s\" existerar redan"
+msgstr "trigger \"%s\" för relation \"%s\" existerar redan"
 
 #: commands/trigger.c:787
 #, c-format
 msgid "trigger \"%s\" for relation \"%s\" is an internal or a child trigger"
-msgstr "utlösare \"%s\" för relation \"%s\" är en intern eller barnutlösare"
+msgstr "trigger \"%s\" för relation \"%s\" är en intern eller barntrigger"
 
 #: commands/trigger.c:806
 #, c-format
 msgid "trigger \"%s\" for relation \"%s\" is a constraint trigger"
-msgstr "utlösare \"%s\" för relation \"%s\" är en villkorsutlösare"
+msgstr "trigger \"%s\" för relation \"%s\" är en villkorstrigger"
 
 #: commands/trigger.c:1447 commands/trigger.c:1600 commands/trigger.c:1876
 #, c-format
 msgid "trigger \"%s\" for table \"%s\" does not exist"
-msgstr "utlösare \"%s\" för tabell \"%s\" finns inte"
+msgstr "trigger \"%s\" för tabell \"%s\" finns inte"
 
 #: commands/trigger.c:1572
 #, c-format
 msgid "cannot rename trigger \"%s\" on table \"%s\""
-msgstr "kan inte byta namn på utlösaren \"%s\" på tabell \"%s\""
+msgstr "kan inte byta namn på triggern \"%s\" på tabell \"%s\""
 
 #: commands/trigger.c:1574
 #, c-format
 msgid "Rename the trigger on the partitioned table \"%s\" instead."
-msgstr "Byt istället namn på utlösaren i den partitionerade tabellen \"%s\"."
+msgstr "Byt istället namn på triggern i den partitionerade tabellen \"%s\"."
 
 #: commands/trigger.c:1674
 #, c-format
 msgid "renamed trigger \"%s\" on relation \"%s\""
-msgstr "bytte namn på utlösaren \"%s\" i relationen \"%s\""
+msgstr "bytte namn på triggern \"%s\" i relationen \"%s\""
 
 #: commands/trigger.c:1816
 #, c-format
 msgid "permission denied: \"%s\" is a system trigger"
-msgstr "rättighet saknas: \"%s\" är en systemutlösare"
+msgstr "rättighet saknas: \"%s\" är en systemtrigger"
 
 #: commands/trigger.c:2437
 #, c-format
 msgid "trigger function %u returned null value"
-msgstr "utlösarfunktionen %u returnerade null-värde"
+msgstr "triggerfunktionen %u returnerade null-värde"
 
 #: commands/trigger.c:2497 commands/trigger.c:2715 commands/trigger.c:2965
 #: commands/trigger.c:3298
 #, c-format
 msgid "BEFORE STATEMENT trigger cannot return a value"
-msgstr "BEFORE STATEMENT-utlösare kan inte returnera ett värde"
+msgstr "BEFORE STATEMENT-trigger kan inte returnera ett värde"
 
 #: commands/trigger.c:2573
 #, c-format
 msgid "moving row to another partition during a BEFORE FOR EACH ROW trigger is not supported"
-msgstr "flytta en rad från en annan partition under en BEFORE FOR EACH ROW-utlösare stöds inte"
+msgstr "flytta en rad från en annan partition under en BEFORE FOR EACH ROW-trigger stöds inte"
 
 #: commands/trigger.c:2574
 #, c-format
 msgid "Before executing trigger \"%s\", the row was to be in partition \"%s.%s\"."
-msgstr "Innan exekvering av utlösare  \"%s\" så var raden i partition \"%s.%s\"."
+msgstr "Innan exekvering av triggern \"%s\" så var raden i partition \"%s.%s\"."
 
 #: commands/trigger.c:3372 executor/nodeModifyTable.c:2349
 #: executor/nodeModifyTable.c:2432
 #, c-format
 msgid "tuple to be updated was already modified by an operation triggered by the current command"
-msgstr "tupel som skall uppdateras hade redan ändrats av en operation som utlösts av aktuellt kommando"
+msgstr "tupel som skall uppdateras hade redan ändrats av en operation som triggats av aktuellt kommando"
 
 #: commands/trigger.c:3373 executor/nodeModifyTable.c:1535
 #: executor/nodeModifyTable.c:1609 executor/nodeModifyTable.c:2350
 #: executor/nodeModifyTable.c:2433 executor/nodeModifyTable.c:3091
 #, c-format
 msgid "Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows."
-msgstr "Överväg att använda en AFTER-utlösare istället för en BEFORE-utlösare för att propagera ändringar till andra rader."
+msgstr "Överväg att använda en AFTER-trigger istället för en BEFORE-trigger för att propagera ändringar till andra rader."
 
 #: commands/trigger.c:3402 executor/nodeLockRows.c:229
 #: executor/nodeLockRows.c:238 executor/nodeModifyTable.c:331
@@ -11637,7 +11637,7 @@ msgstr "kunde inte serialisera åtkomst på grund av samtidig borttagning"
 #: commands/trigger.c:4586
 #, c-format
 msgid "cannot fire deferred trigger within security-restricted operation"
-msgstr "kan inte trigga uppskjuten utlösare i en säkerhetsbegränsad operation"
+msgstr "kan inte trigga uppskjuten trigger i en säkerhetsbegränsad operation"
 
 #: commands/trigger.c:5769
 #, c-format
@@ -12857,7 +12857,7 @@ msgstr "kan inte sätta in i vy \"%s\""
 #: rewrite/rewriteHandler.c:3919
 #, c-format
 msgid "To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule."
-msgstr "För att tillåta insättning i en vy så skapa en INSTEAD OF INSERT-utlösare eller en villkorslös ON INSERT DO INSTEAD-regel."
+msgstr "För att tillåta insättning i en vy så skapa en INSTEAD OF INSERT-trigger eller en villkorslös ON INSERT DO INSTEAD-regel."
 
 #: executor/execMain.c:1041 rewrite/rewriteHandler.c:3077
 #: rewrite/rewriteHandler.c:3924
@@ -12869,7 +12869,7 @@ msgstr "kan inte uppdatera vy \"%s\""
 #: rewrite/rewriteHandler.c:3927
 #, c-format
 msgid "To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule."
-msgstr "För att tillåta uppdatering av en vy så skapa en INSTEAD OF UPDATE-utlösare eller en villkorslös ON UPDATE DO INSTEAD-regel."
+msgstr "För att tillåta uppdatering av en vy så skapa en INSTEAD OF UPDATE-trigger eller en villkorslös ON UPDATE DO INSTEAD-regel."
 
 #: executor/execMain.c:1049 rewrite/rewriteHandler.c:3085
 #: rewrite/rewriteHandler.c:3932
@@ -12881,7 +12881,7 @@ msgstr "kan inte radera från vy \"%s\""
 #: rewrite/rewriteHandler.c:3935
 #, c-format
 msgid "To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule."
-msgstr "För att tillåta bortagning i en vy så skapa en INSTEAD OF DELETE-utlösare eller en villkorslös ON DELETE DO INSTEAD-regel."
+msgstr "För att tillåta bortagning i en vy så skapa en INSTEAD OF DELETE-trigger eller en villkorslös ON DELETE DO INSTEAD-regel."
 
 #: executor/execMain.c:1062
 #, c-format
@@ -13289,7 +13289,7 @@ msgstr "Frågan har för få kolumner"
 #: executor/nodeModifyTable.c:1534 executor/nodeModifyTable.c:1608
 #, c-format
 msgid "tuple to be deleted was already modified by an operation triggered by the current command"
-msgstr "tupel som skall tas bort hade redan ändrats av en operation som utlösts av aktuellt kommando"
+msgstr "tupel som skall tas bort hade redan ändrats av en operation som triggats av aktuellt kommando"
 
 #: executor/nodeModifyTable.c:1759
 #, c-format
@@ -13340,7 +13340,7 @@ msgstr "tupel som skall raderas har redan flyttats till en annan partition på g
 #: executor/nodeModifyTable.c:3090
 #, c-format
 msgid "tuple to be updated or deleted was already modified by an operation triggered by the current command"
-msgstr "tupel som skall uppdateras eller raderas hade redan ändrats av en operation som utlösts av aktuellt kommando"
+msgstr "tupel som skall uppdateras eller raderas hade redan ändrats av en operation som triggats av aktuellt kommando"
 
 #: executor/nodeSamplescan.c:260
 #, c-format
@@ -13632,7 +13632,7 @@ msgstr "CREATE OR REPLACE CONSTRAINT TRIGGER stöds inte"
 
 #: gram.y:5795
 msgid "duplicate trigger events specified"
-msgstr "multipla utlösarhändelser angivna"
+msgstr "multipla triggerhändelser angivna"
 
 #: gram.y:5937 parser/parse_utilcmd.c:3716 parser/parse_utilcmd.c:3742
 #, c-format
@@ -17396,7 +17396,7 @@ msgstr "kan inte använda subfråga i EXECUTE-parameter"
 
 #: parser/parse_expr.c:1757
 msgid "cannot use subquery in trigger WHEN condition"
-msgstr "kan inte använda subfråga i utlösares WHEN-villkor"
+msgstr "kan inte använda subfråga i triggerns WHEN-villkor"
 
 #: parser/parse_expr.c:1760
 msgid "cannot use subquery in partition bound"
@@ -20825,7 +20825,7 @@ msgstr "regelhandlingar på OLD är inte implementerat"
 #: rewrite/rewriteDefine.c:303
 #, c-format
 msgid "Use views or triggers instead."
-msgstr "Använd vyer eller utlösare (trigger) istället."
+msgstr "Använd vyer eller triggrar istället."
 
 #: rewrite/rewriteDefine.c:307
 #, c-format
@@ -20835,7 +20835,7 @@ msgstr "regelhandlingar på NEW är inte implementerat"
 #: rewrite/rewriteDefine.c:308
 #, c-format
 msgid "Use triggers instead."
-msgstr "Använd utlösare (trigger) istället."
+msgstr "Använd triggrar istället."
 
 #: rewrite/rewriteDefine.c:321
 #, c-format
@@ -20895,7 +20895,7 @@ msgstr "kunde inte konvertera tabell \"%s\" till en vy då den inte är tom"
 #: rewrite/rewriteDefine.c:463
 #, c-format
 msgid "could not convert table \"%s\" to a view because it has triggers"
-msgstr "kunde inte konvertera tabell \"%s\" till en vy då den har utlösare"
+msgstr "kunde inte konvertera tabell \"%s\" till en vy då den har triggrar"
 
 #: rewrite/rewriteDefine.c:465
 #, c-format
@@ -25324,12 +25324,12 @@ msgstr "funktionen \"%s\" måste köras för DELETE"
 #: utils/adt/ri_triggers.c:2066
 #, c-format
 msgid "no pg_constraint entry for trigger \"%s\" on table \"%s\""
-msgstr "ingen pg_constraint-post för utlösare \"%s\" på tabell \"%s\""
+msgstr "ingen pg_constraint-post för trigger \"%s\" på tabell \"%s\""
 
 #: utils/adt/ri_triggers.c:2068
 #, c-format
 msgid "Remove this referential integrity trigger and its mates, then do ALTER TABLE ADD CONSTRAINT."
-msgstr "Ta bort denna utlösare för referensiell integritet och dess kollegor, gör sen ALTER TABLE ADD CONSTRAINT."
+msgstr "Ta bort denna trigger för referensiell integritet och dess kollegor, gör sen ALTER TABLE ADD CONSTRAINT."
 
 #: utils/adt/ri_triggers.c:2423
 #, c-format
@@ -25543,7 +25543,7 @@ msgstr "Månader har vanligtvis veckor som decimaltal."
 #: utils/adt/trigfuncs.c:42
 #, c-format
 msgid "suppress_redundant_updates_trigger: must be called as trigger"
-msgstr "suppress_redundant_updates_trigger: måste anropas som utlösare"
+msgstr "suppress_redundant_updates_trigger: måste anropas som trigger"
 
 #: utils/adt/trigfuncs.c:48
 #, c-format
@@ -27813,7 +27813,7 @@ msgstr "Sätter maximal storlek som WAL kan krympas till."
 
 #: utils/misc/guc.c:2864
 msgid "Sets the WAL size that triggers a checkpoint."
-msgstr "Sätter WAL-storlek som utlöser en checkpoint."
+msgstr "Sätter WAL-storlek som triggar en checkpoint."
 
 #: utils/misc/guc.c:2876
 msgid "Sets the maximum time between automatic WAL checkpoints."
@@ -27841,7 +27841,7 @@ msgstr "Tid mellan WAL-flush:ar utförda i WAL-skrivaren."
 
 #: utils/misc/guc.c:2935
 msgid "Amount of WAL written out by WAL writer that triggers a flush."
-msgstr "Mängden WAL utskrivna av WAL-skrivaren som utlöser en flush."
+msgstr "Mängden WAL utskrivna av WAL-skrivaren som triggar en flush."
 
 #: utils/misc/guc.c:2946
 msgid "Minimum size of new file to fsync instead of writing WAL."
@@ -28642,7 +28642,7 @@ msgstr "Ställer in syslog-\"facility\" som används när syslog är påslagen."
 
 #: utils/misc/guc.c:4878
 msgid "Sets the session's behavior for triggers and rewrite rules."
-msgstr "Sätter sessionens beteende för utlösare och omskrivningsregler."
+msgstr "Sätter sessionens beteende för triggrar och omskrivningsregler."
 
 #: utils/misc/guc.c:4888
 msgid "Sets the current transaction's synchronization level."

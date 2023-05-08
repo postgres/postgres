@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-24 23:19+0000\n"
+"POT-Creation-Date: 2023-05-07 16:48+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -1058,12 +1058,12 @@ msgstr ""
 "\n"
 "bases de datos de destino:\n"
 
-#: info.c:605
+#: info.c:604
 #, c-format
 msgid "Database: %s\n"
 msgstr "Base de datos: %s\n"
 
-#: info.c:607
+#: info.c:606
 #, c-format
 msgid ""
 "\n"
@@ -1072,7 +1072,7 @@ msgstr ""
 "\n"
 "\n"
 
-#: info.c:618
+#: info.c:617
 #, c-format
 msgid "relname: %s.%s: reloid: %u reltblspace: %s\n"
 msgstr "relname: %s.%s: reloid: %u reltblspace: %s\n"

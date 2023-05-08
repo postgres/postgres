@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-24 23:21+0000\n"
+"POT-Creation-Date: 2023-05-07 16:50+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -879,7 +879,6 @@ msgstr "largo de contrecord %u no válido (se esperaba %lld) en %X/%X"
 
 #: xlogreader.c:922
 #, c-format
-#| msgid "there is no contrecord flag at %X/%X"
 msgid "missing contrecord at %X/%X"
 msgstr "falta un contrecord en %X/%X"
 
@@ -985,7 +984,6 @@ msgstr "registro con largo no válido en %X/%X"
 
 #: xlogreader.c:1967
 #, c-format
-#| msgid "failed to locate backup block with ID %d in WAL record"
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "no se pudo localizar un bloque de respaldo con ID %d en el registro WAL"
 
@@ -996,24 +994,20 @@ msgstr "no se pudo restaurar la imagen en %X/%X con bloque especificado %d no v�
 
 #: xlogreader.c:2058
 #, c-format
-#| msgid "invalid compressed image at %X/%X, block %d"
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X con estado no válido, bloque %d"
 
 #: xlogreader.c:2085 xlogreader.c:2102
 #, c-format
-#| msgid "image at %X/%X compressed with %s not supported by build, block %d"
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X comprimida con %s que no está soportado por esta instalación, bloque %d"
 
 #: xlogreader.c:2111
 #, c-format
-#| msgid "image at %X/%X compressed with unknown method, block %d"
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X comprimida con un método desconocido, bloque %d"
 
 #: xlogreader.c:2119
 #, c-format
-#| msgid "invalid compressed image at %X/%X, block %d"
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "no se pudo descomprimir la imagen en %X/%X, bloque %d"

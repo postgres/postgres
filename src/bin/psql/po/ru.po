@@ -18,8 +18,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -234,8 +234,8 @@ msgid ""
 "You are connected to database \"%s\" as user \"%s\" on address \"%s\" at "
 "port \"%s\".\n"
 msgstr ""
-"Вы подключены к базе данных \"%s\" как пользователь \"%s\" (адрес сервера \""
-"%s\", порт \"%s\").\n"
+"Вы подключены к базе данных \"%s\" как пользователь \"%s\" (адрес сервера "
+"\"%s\", порт \"%s\").\n"
 
 #: command.c:630
 #, c-format
@@ -243,8 +243,8 @@ msgid ""
 "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at "
 "port \"%s\".\n"
 msgstr ""
-"Вы подключены к базе данных \"%s\" как пользователь \"%s\" через сокет в \""
-"%s\", порт \"%s\".\n"
+"Вы подключены к базе данных \"%s\" как пользователь \"%s\" через сокет в "
+"\"%s\", порт \"%s\".\n"
 
 #: command.c:636
 #, c-format
@@ -258,8 +258,8 @@ msgstr ""
 #: command.c:639
 #, c-format
 msgid ""
-"You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \""
-"%s\".\n"
+"You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port "
+"\"%s\".\n"
 msgstr ""
 "Вы подключены к базе данных \"%s\" как пользователь \"%s\" (сервер \"%s\", "
 "порт \"%s\").\n"
@@ -445,17 +445,17 @@ msgid ""
 "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
 "at port \"%s\".\n"
 msgstr ""
-"Вы подключены к базе данных \"%s\" как пользователь \"%s\" через сокет в \""
-"%s\", порт \"%s\".\n"
+"Вы подключены к базе данных \"%s\" как пользователь \"%s\" через сокет в "
+"\"%s\", порт \"%s\".\n"
 
 #: command.c:3582
 #, c-format
 msgid ""
-"You are now connected to database \"%s\" as user \"%s\" on host \"%s\" "
-"(address \"%s\") at port \"%s\".\n"
+"You are now connected to database \"%s\" as user \"%s\" on host "
+"\"%s\" (address \"%s\") at port \"%s\".\n"
 msgstr ""
-"Сейчас вы подключены к базе данных \"%s\" как пользователь \"%s\" (сервер \""
-"%s\": адрес \"%s\", порт \"%s\").\n"
+"Сейчас вы подключены к базе данных \"%s\" как пользователь \"%s\" (сервер "
+"\"%s\": адрес \"%s\", порт \"%s\").\n"
 
 #: command.c:3585
 #, c-format
@@ -920,14 +920,14 @@ msgstr "попытка выполнить \\gset со специальной п�
 #: common.c:1043
 #, c-format
 msgid ""
-"***(Single step mode: verify command)"
-"*******************************************\n"
+"***(Single step mode: verify "
+"command)*******************************************\n"
 "%s\n"
-"***(press return to proceed or enter x and return to cancel)"
-"********************\n"
+"***(press return to proceed or enter x and return to "
+"cancel)********************\n"
 msgstr ""
-"***(Пошаговый режим: проверка команды)"
-"******************************************\n"
+"***(Пошаговый режим: проверка "
+"команды)******************************************\n"
 "%s\n"
 "***(Enter - выполнение; x и Enter - отмена)**************\n"
 
@@ -1110,13 +1110,13 @@ msgid "Argument data types"
 msgstr "Типы данных аргументов"
 
 #: describe.c:98 describe.c:105 describe.c:178 describe.c:243 describe.c:423
-#: describe.c:667 describe.c:828 describe.c:965 describe.c:1260
-#: describe.c:2041 describe.c:3676 describe.c:3935 describe.c:4137
-#: describe.c:4280 describe.c:4354 describe.c:4432 describe.c:4599
-#: describe.c:4777 describe.c:4903 describe.c:4976 describe.c:5097
-#: describe.c:5248 describe.c:5290 describe.c:5356 describe.c:5413
-#: describe.c:5422 describe.c:5479 describe.c:5695 describe.c:5770
-#: describe.c:5895 describe.c:5960 describe.c:6992
+#: describe.c:667 describe.c:828 describe.c:965 describe.c:1260 describe.c:2041
+#: describe.c:3676 describe.c:3935 describe.c:4137 describe.c:4280
+#: describe.c:4354 describe.c:4432 describe.c:4599 describe.c:4777
+#: describe.c:4903 describe.c:4976 describe.c:5097 describe.c:5248
+#: describe.c:5290 describe.c:5356 describe.c:5413 describe.c:5422
+#: describe.c:5479 describe.c:5695 describe.c:5770 describe.c:5895
+#: describe.c:5960 describe.c:6992
 msgid "Description"
 msgstr "Описание"
 
@@ -2538,8 +2538,8 @@ msgstr ""
 msgid ""
 "  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
 msgstr ""
-"  -d, --dbname=БД          имя подключаемой базы данных (по умолчанию \"%s\")"
-"\n"
+"  -d, --dbname=БД          имя подключаемой базы данных (по умолчанию "
+"\"%s\")\n"
 
 #: help.c:87
 msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
@@ -2631,8 +2631,8 @@ msgstr ""
 #: help.c:107
 msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
 msgstr ""
-"  -o, --output=ИМЯ_ФАЙЛА   направить результаты запроса в файл (или канал |)"
-"\n"
+"  -o, --output=ИМЯ_ФАЙЛА   направить результаты запроса в файл (или канал "
+"|)\n"
 
 #: help.c:108
 msgid ""
@@ -2678,8 +2678,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  -F, --field-separator=STRING\n"
-"                           field separator for unaligned output (default: \""
-"%s\")\n"
+"                           field separator for unaligned output (default: "
+"\"%s\")\n"
 msgstr ""
 "  -F, --field-separator=СТРОКА\n"
 "                           разделителей полей при невыровненном выводе\n"
@@ -2789,8 +2789,8 @@ msgstr ""
 #: help.c:145
 msgid ""
 "\n"
-"For more information, type \"\\?\" (for internal commands) or \"\\help\" "
-"(for SQL\n"
+"For more information, type \"\\?\" (for internal commands) or "
+"\"\\help\" (for SQL\n"
 "commands) from within psql, or consult the psql section in the PostgreSQL\n"
 "documentation.\n"
 "\n"
@@ -2885,8 +2885,8 @@ msgstr ""
 "  \\watch [СЕК]           повторять запрос в цикле через заданное число "
 "секунд\n"
 
-#: help.c:203 help.c:211 help.c:223 help.c:233 help.c:240 help.c:296
-#: help.c:304 help.c:324 help.c:337 help.c:346
+#: help.c:203 help.c:211 help.c:223 help.c:233 help.c:240 help.c:296 help.c:304
+#: help.c:324 help.c:337 help.c:346
 msgid "\n"
 msgstr "\n"
 
@@ -2966,8 +2966,8 @@ msgstr "  \\copy ...              выполнить SQL COPY на сторон�
 
 #: help.c:227
 msgid ""
-"  \\echo [-n] [STRING]    write string to standard output (-n for no newline)"
-"\n"
+"  \\echo [-n] [STRING]    write string to standard output (-n for no "
+"newline)\n"
 msgstr ""
 "  \\echo [-n] [СТРОКА]    записать строку в поток стандартного вывода\n"
 "                         (-n отключает перевод строки)\n"
@@ -3000,8 +3000,8 @@ msgstr ""
 
 #: help.c:232
 msgid ""
-"  \\warn [-n] [STRING]    write string to standard error (-n for no newline)"
-"\n"
+"  \\warn [-n] [STRING]    write string to standard error (-n for no "
+"newline)\n"
 msgstr ""
 "  \\warn [-n] [СТРОКА]    записать строку в поток вывода ошибок\n"
 "                         (-n отключает перевод строки)\n"
@@ -3357,18 +3357,17 @@ msgstr "  \\t [on|off]            режим вывода только стро�
 
 #: help.c:321
 msgid ""
-"  \\T [STRING]            set HTML "
-"<table> tag attributes, or unset if none\n"
+"  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
 msgstr ""
-"  \\T [СТРОКА]            задать атрибуты для "
-"<table> или убрать, если не заданы\n"
+"  \\T [СТРОКА]            задать атрибуты для <table> или убрать, если не "
+"заданы\n"
 
 #: help.c:322
 #, c-format
 msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
 msgstr ""
-"  \\x [on|off|auto]       переключить режим расширенного вывода (сейчас: %s)"
-"\n"
+"  \\x [on|off|auto]       переключить режим расширенного вывода (сейчас: "
+"%s)\n"
 
 #: help.c:323
 msgid "auto"
@@ -3553,8 +3552,8 @@ msgstr ""
 #: help.c:413
 msgid ""
 "  FETCH_COUNT\n"
-"    the number of result rows to fetch and display at a time (0 = unlimited)"
-"\n"
+"    the number of result rows to fetch and display at a time (0 = "
+"unlimited)\n"
 msgstr ""
 "  FETCH_COUNT\n"
 "    число результирующих строк, извлекаемых и отображаемых за раз\n"
@@ -4491,22 +4490,22 @@ msgstr "где допустимое предложение_GRANT_или_REVOKE:"
 msgid "role_name"
 msgstr "имя_роли"
 
-#: sql_help.c:239 sql_help.c:462 sql_help.c:912 sql_help.c:1337
-#: sql_help.c:1339 sql_help.c:1391 sql_help.c:1403 sql_help.c:1428
-#: sql_help.c:1684 sql_help.c:2231 sql_help.c:2235 sql_help.c:2347
-#: sql_help.c:2352 sql_help.c:2460 sql_help.c:2630 sql_help.c:2769
-#: sql_help.c:2774 sql_help.c:2776 sql_help.c:2897 sql_help.c:2910
-#: sql_help.c:2924 sql_help.c:2933 sql_help.c:2945 sql_help.c:2974
-#: sql_help.c:3981 sql_help.c:3996 sql_help.c:3998 sql_help.c:4085
-#: sql_help.c:4088 sql_help.c:4090 sql_help.c:4548 sql_help.c:4549
-#: sql_help.c:4558 sql_help.c:4605 sql_help.c:4606 sql_help.c:4607
-#: sql_help.c:4608 sql_help.c:4609 sql_help.c:4610 sql_help.c:4650
-#: sql_help.c:4651 sql_help.c:4656 sql_help.c:4661 sql_help.c:4805
-#: sql_help.c:4806 sql_help.c:4815 sql_help.c:4862 sql_help.c:4863
-#: sql_help.c:4864 sql_help.c:4865 sql_help.c:4866 sql_help.c:4867
-#: sql_help.c:4921 sql_help.c:4923 sql_help.c:4983 sql_help.c:5043
-#: sql_help.c:5044 sql_help.c:5053 sql_help.c:5100 sql_help.c:5101
-#: sql_help.c:5102 sql_help.c:5103 sql_help.c:5104 sql_help.c:5105
+#: sql_help.c:239 sql_help.c:462 sql_help.c:912 sql_help.c:1337 sql_help.c:1339
+#: sql_help.c:1391 sql_help.c:1403 sql_help.c:1428 sql_help.c:1684
+#: sql_help.c:2231 sql_help.c:2235 sql_help.c:2347 sql_help.c:2352
+#: sql_help.c:2460 sql_help.c:2630 sql_help.c:2769 sql_help.c:2774
+#: sql_help.c:2776 sql_help.c:2897 sql_help.c:2910 sql_help.c:2924
+#: sql_help.c:2933 sql_help.c:2945 sql_help.c:2974 sql_help.c:3981
+#: sql_help.c:3996 sql_help.c:3998 sql_help.c:4085 sql_help.c:4088
+#: sql_help.c:4090 sql_help.c:4548 sql_help.c:4549 sql_help.c:4558
+#: sql_help.c:4605 sql_help.c:4606 sql_help.c:4607 sql_help.c:4608
+#: sql_help.c:4609 sql_help.c:4610 sql_help.c:4650 sql_help.c:4651
+#: sql_help.c:4656 sql_help.c:4661 sql_help.c:4805 sql_help.c:4806
+#: sql_help.c:4815 sql_help.c:4862 sql_help.c:4863 sql_help.c:4864
+#: sql_help.c:4865 sql_help.c:4866 sql_help.c:4867 sql_help.c:4921
+#: sql_help.c:4923 sql_help.c:4983 sql_help.c:5043 sql_help.c:5044
+#: sql_help.c:5053 sql_help.c:5100 sql_help.c:5101 sql_help.c:5102
+#: sql_help.c:5103 sql_help.c:5104 sql_help.c:5105
 msgid "expression"
 msgstr "выражение"
 
@@ -4820,8 +4819,8 @@ msgid "strategy_number"
 msgstr "номер_стратегии"
 
 #: sql_help.c:780 sql_help.c:781 sql_help.c:784 sql_help.c:785 sql_help.c:791
-#: sql_help.c:792 sql_help.c:794 sql_help.c:795 sql_help.c:2543
-#: sql_help.c:2544 sql_help.c:2547 sql_help.c:2548
+#: sql_help.c:792 sql_help.c:794 sql_help.c:795 sql_help.c:2543 sql_help.c:2544
+#: sql_help.c:2547 sql_help.c:2548
 msgid "op_type"
 msgstr "тип_операции"
 
@@ -4838,20 +4837,20 @@ msgstr "номер_опорной_процедуры"
 msgid "argument_type"
 msgstr "тип_аргумента"
 
-#: sql_help.c:818 sql_help.c:821 sql_help.c:910 sql_help.c:1039
-#: sql_help.c:1079 sql_help.c:1546 sql_help.c:1549 sql_help.c:1725
-#: sql_help.c:1779 sql_help.c:1782 sql_help.c:1853 sql_help.c:1878
-#: sql_help.c:1891 sql_help.c:1906 sql_help.c:1963 sql_help.c:1969
-#: sql_help.c:2324 sql_help.c:2336 sql_help.c:2457 sql_help.c:2497
-#: sql_help.c:2574 sql_help.c:2628 sql_help.c:2685 sql_help.c:2737
-#: sql_help.c:2770 sql_help.c:2777 sql_help.c:2886 sql_help.c:2904
-#: sql_help.c:2917 sql_help.c:2993 sql_help.c:3113 sql_help.c:3294
-#: sql_help.c:3517 sql_help.c:3566 sql_help.c:3672 sql_help.c:3879
-#: sql_help.c:3885 sql_help.c:3946 sql_help.c:3978 sql_help.c:4328
-#: sql_help.c:4334 sql_help.c:4452 sql_help.c:4563 sql_help.c:4565
-#: sql_help.c:4627 sql_help.c:4666 sql_help.c:4820 sql_help.c:4822
-#: sql_help.c:4884 sql_help.c:4918 sql_help.c:4970 sql_help.c:5058
-#: sql_help.c:5060 sql_help.c:5122
+#: sql_help.c:818 sql_help.c:821 sql_help.c:910 sql_help.c:1039 sql_help.c:1079
+#: sql_help.c:1546 sql_help.c:1549 sql_help.c:1725 sql_help.c:1779
+#: sql_help.c:1782 sql_help.c:1853 sql_help.c:1878 sql_help.c:1891
+#: sql_help.c:1906 sql_help.c:1963 sql_help.c:1969 sql_help.c:2324
+#: sql_help.c:2336 sql_help.c:2457 sql_help.c:2497 sql_help.c:2574
+#: sql_help.c:2628 sql_help.c:2685 sql_help.c:2737 sql_help.c:2770
+#: sql_help.c:2777 sql_help.c:2886 sql_help.c:2904 sql_help.c:2917
+#: sql_help.c:2993 sql_help.c:3113 sql_help.c:3294 sql_help.c:3517
+#: sql_help.c:3566 sql_help.c:3672 sql_help.c:3879 sql_help.c:3885
+#: sql_help.c:3946 sql_help.c:3978 sql_help.c:4328 sql_help.c:4334
+#: sql_help.c:4452 sql_help.c:4563 sql_help.c:4565 sql_help.c:4627
+#: sql_help.c:4666 sql_help.c:4820 sql_help.c:4822 sql_help.c:4884
+#: sql_help.c:4918 sql_help.c:4970 sql_help.c:5058 sql_help.c:5060
+#: sql_help.c:5122
 msgid "table_name"
 msgstr "имя_таблицы"
 
@@ -6857,8 +6856,8 @@ msgstr ""
 #~ msgstr "Об ошибках сообщайте по адресу <pgsql-bugs@lists.postgresql.org>.\n"
 
 #~ msgid ""
-#~ "  \\g [FILE] or ;         execute query (and send results to file or "
-#~ "|pipe)\n"
+#~ "  \\g [FILE] or ;         execute query (and send results to file or |"
+#~ "pipe)\n"
 #~ msgstr ""
 #~ "  \\g [ФАЙЛ] или ;        выполнить запрос\n"
 #~ "                         (и направить результаты в файл или канал |)\n"
@@ -6901,8 +6900,8 @@ msgstr ""
 
 #~ msgid "No per-database role settings support in this server version.\n"
 #~ msgstr ""
-#~ "Это версия сервера не поддерживает параметры ролей на уровне базы данных."
-#~ "\n"
+#~ "Это версия сервера не поддерживает параметры ролей на уровне базы "
+#~ "данных.\n"
 
 #~ msgid "No matching settings found.\n"
 #~ msgstr "Соответствующие параметры не найдены.\n"

@@ -1,14 +1,14 @@
 # Swedish message translation file for plpgsql
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-04-11 13:39+0000\n"
-"PO-Revision-Date: 2022-04-11 16:02+0200\n"
+"PO-Revision-Date: 2023-03-09 22:40+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -30,7 +30,7 @@ msgstr "kunde inte bestämma aktuell returtyp för polymorfisk funktion \"%s\""
 #: pl_comp.c:560
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "utlösarfunktioner kan bara anropas som utlösare"
+msgstr "triggerfunktioner kan bara anropas som triggrar"
 
 #: pl_comp.c:564 pl_handler.c:480
 #, c-format
@@ -40,17 +40,17 @@ msgstr "PL/pgSQL-funktioner kan inte returnera typ %s"
 #: pl_comp.c:604
 #, c-format
 msgid "trigger functions cannot have declared arguments"
-msgstr "utlösarfunktioner kan inte ha deklarerade argument"
+msgstr "triggerfunktioner kan inte ha deklarerade argument"
 
 #: pl_comp.c:605
 #, c-format
 msgid "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead."
-msgstr "Argumenten till utlösaren kan accessas via TG_NARGS och TG_ARGV istället."
+msgstr "Argumenten till triggern kan accessas via TG_NARGS och TG_ARGV istället."
 
 #: pl_comp.c:738
 #, c-format
 msgid "event trigger functions cannot have declared arguments"
-msgstr "händelseutlösarfunktioner kan inte ha deklarerade argument"
+msgstr "händelsetriggerfunktioner kan inte ha deklarerade argument"
 
 #: pl_comp.c:1002
 #, c-format
@@ -155,16 +155,16 @@ msgstr "returnerad posttyp matchar inte förväntad posttyp"
 #: pl_exec.c:1035 pl_exec.c:1193
 #, c-format
 msgid "control reached end of trigger procedure without RETURN"
-msgstr "kontroll nådde slutet på utlösarprocedur utan RETURN"
+msgstr "programflödet nådde slutet på triggerprocedur utan RETURN"
 
 #: pl_exec.c:1043
 #, c-format
 msgid "trigger procedure cannot return a set"
-msgstr "utlösarprocedur kan inte returnera en mängd"
+msgstr "triggerprocedur kan inte returnera en mängd"
 
 #: pl_exec.c:1082 pl_exec.c:1110
 msgid "returned row structure does not match the structure of the triggering table"
-msgstr "returnerad radstruktur matchar inte strukturen på utlösande tabell"
+msgstr "returnerad radstruktur matchar inte strukturen på triggad tabell"
 
 #. translator: last %s is a phrase such as "during statement block
 #. local variable initialization"

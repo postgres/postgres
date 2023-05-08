@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-27 14:52+0300\n"
+"POT-Creation-Date: 2023-05-03 05:56+0300\n"
 "PO-Revision-Date: 2022-09-05 13:38+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -14,8 +14,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: pltcl.c:463
 msgid "PL/Tcl function to call once when pltcl is first used."
@@ -98,23 +98,23 @@ msgstr "функции PL/Tcl не могут принимать тип %s"
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "не удалось создать внутреннюю процедуру \"%s\": %s"
 
-#: pltcl.c:3201
+#: pltcl.c:3202
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "в списке имён/значений столбцов должно быть чётное число элементов"
 
-#: pltcl.c:3219
+#: pltcl.c:3220
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr ""
 "список имён/значений столбцов содержит имя несуществующего столбца \"%s\""
 
-#: pltcl.c:3226
+#: pltcl.c:3227
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "присвоить значение системному атрибуту \"%s\" нельзя"
 
-#: pltcl.c:3232
+#: pltcl.c:3233
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "присвоить значение генерируемому столбцу \"%s\" нельзя"

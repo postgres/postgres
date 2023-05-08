@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-02-02 08:42+0300\n"
+"POT-Creation-Date: 2023-05-03 05:56+0300\n"
 "PO-Revision-Date: 2022-09-29 11:40+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -73,15 +73,15 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-auth-scram.c:727 fe-auth-scram.c:766 fe-auth.c:290 fe-auth.c:362
 #: fe-auth.c:398 fe-auth.c:623 fe-auth.c:799 fe-auth.c:1152 fe-auth.c:1322
 #: fe-connect.c:907 fe-connect.c:1456 fe-connect.c:1625 fe-connect.c:2977
-#: fe-connect.c:4824 fe-connect.c:5085 fe-connect.c:5204 fe-connect.c:5456
-#: fe-connect.c:5537 fe-connect.c:5636 fe-connect.c:5892 fe-connect.c:5921
-#: fe-connect.c:5993 fe-connect.c:6017 fe-connect.c:6035 fe-connect.c:6136
-#: fe-connect.c:6145 fe-connect.c:6503 fe-connect.c:6653 fe-connect.c:6919
+#: fe-connect.c:4829 fe-connect.c:5090 fe-connect.c:5209 fe-connect.c:5461
+#: fe-connect.c:5542 fe-connect.c:5641 fe-connect.c:5897 fe-connect.c:5926
+#: fe-connect.c:5998 fe-connect.c:6022 fe-connect.c:6040 fe-connect.c:6141
+#: fe-connect.c:6150 fe-connect.c:6508 fe-connect.c:6658 fe-connect.c:6924
 #: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3144 fe-exec.c:3328
 #: fe-exec.c:4110 fe-exec.c:4275 fe-gssapi-common.c:111 fe-lobj.c:884
 #: fe-protocol3.c:973 fe-protocol3.c:988 fe-protocol3.c:1021
 #: fe-protocol3.c:1729 fe-protocol3.c:2132 fe-secure-common.c:112
-#: fe-secure-gssapi.c:504 fe-secure-openssl.c:449 fe-secure-openssl.c:1261
+#: fe-secure-gssapi.c:504 fe-secure-openssl.c:454 fe-secure-openssl.c:1266
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
@@ -499,128 +499,128 @@ msgid "received unencrypted data after GSSAPI encryption response\n"
 msgstr ""
 "после ответа на запрос шифрования GSSAPI получены незашифрованные данные\n"
 
-#: fe-connect.c:3286 fe-connect.c:3311
+#: fe-connect.c:3291 fe-connect.c:3316
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "ожидался запрос аутентификации от сервера, но получено: %c\n"
 
-#: fe-connect.c:3518
+#: fe-connect.c:3523
 msgid "unexpected message from server during startup\n"
 msgstr "неожиданное сообщение от сервера в начале работы\n"
 
-#: fe-connect.c:3610
+#: fe-connect.c:3615
 msgid "session is read-only\n"
 msgstr "сеанс не допускает запись\n"
 
-#: fe-connect.c:3613
+#: fe-connect.c:3618
 msgid "session is not read-only\n"
 msgstr "сеанс допускает запись\n"
 
-#: fe-connect.c:3667
+#: fe-connect.c:3672
 msgid "server is in hot standby mode\n"
 msgstr "сервер работает в режиме горячего резерва\n"
 
-#: fe-connect.c:3670
+#: fe-connect.c:3675
 msgid "server is not in hot standby mode\n"
 msgstr "сервер работает не в режиме горячего резерва\n"
 
-#: fe-connect.c:3788 fe-connect.c:3840
+#: fe-connect.c:3793 fe-connect.c:3845
 #, c-format
 msgid "\"%s\" failed\n"
 msgstr "выполнить \"%s\" не удалось\n"
 
-#: fe-connect.c:3854
+#: fe-connect.c:3859
 #, c-format
 msgid "invalid connection state %d, probably indicative of memory corruption\n"
 msgstr "неверное состояние соединения %d - возможно разрушение памяти\n"
 
-#: fe-connect.c:4837
+#: fe-connect.c:4842
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "некорректный адрес LDAP \"%s\": схема должна быть ldap://\n"
 
-#: fe-connect.c:4852
+#: fe-connect.c:4857
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "некорректный адрес LDAP \"%s\": отсутствует уникальное имя\n"
 
-#: fe-connect.c:4864 fe-connect.c:4922
+#: fe-connect.c:4869 fe-connect.c:4927
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "некорректный адрес LDAP \"%s\": должен быть только один атрибут\n"
 
-#: fe-connect.c:4876 fe-connect.c:4938
+#: fe-connect.c:4881 fe-connect.c:4943
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr ""
 "некорректный адрес LDAP \"%s\": не указана область поиска (base/one/sub)\n"
 
-#: fe-connect.c:4888
+#: fe-connect.c:4893
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "некорректный адрес LDAP \"%s\": нет фильтра\n"
 
-#: fe-connect.c:4910
+#: fe-connect.c:4915
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "некорректный адрес LDAP \"%s\": неверный номер порта\n"
 
-#: fe-connect.c:4948
+#: fe-connect.c:4953
 msgid "could not create LDAP structure\n"
 msgstr "не удалось создать структуру LDAP\n"
 
-#: fe-connect.c:5024
+#: fe-connect.c:5029
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "ошибка поиска на сервере LDAP: %s\n"
 
-#: fe-connect.c:5035
+#: fe-connect.c:5040
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "при поиске LDAP найдено более одного вхождения\n"
 
-#: fe-connect.c:5036 fe-connect.c:5048
+#: fe-connect.c:5041 fe-connect.c:5053
 msgid "no entry found on LDAP lookup\n"
 msgstr "при поиске LDAP ничего не найдено\n"
 
-#: fe-connect.c:5059 fe-connect.c:5072
+#: fe-connect.c:5064 fe-connect.c:5077
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "атрибут не содержит значений при поиске LDAP\n"
 
-#: fe-connect.c:5124 fe-connect.c:5143 fe-connect.c:5675
+#: fe-connect.c:5129 fe-connect.c:5148 fe-connect.c:5680
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "в строке соединения нет \"=\" после \"%s\"\n"
 
-#: fe-connect.c:5216 fe-connect.c:5860 fe-connect.c:6636
+#: fe-connect.c:5221 fe-connect.c:5865 fe-connect.c:6641
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "неверный параметр соединения \"%s\"\n"
 
-#: fe-connect.c:5232 fe-connect.c:5724
+#: fe-connect.c:5237 fe-connect.c:5729
 msgid "unterminated quoted string in connection info string\n"
 msgstr "в строке соединения не хватает закрывающей кавычки\n"
 
-#: fe-connect.c:5313
+#: fe-connect.c:5318
 #, c-format
 msgid "definition of service \"%s\" not found\n"
 msgstr "определение службы \"%s\" не найдено\n"
 
-#: fe-connect.c:5339
+#: fe-connect.c:5344
 #, c-format
 msgid "service file \"%s\" not found\n"
 msgstr "файл определений служб \"%s\" не найден\n"
 
-#: fe-connect.c:5353
+#: fe-connect.c:5358
 #, c-format
 msgid "line %d too long in service file \"%s\"\n"
 msgstr "слишком длинная строка (%d) в файле определений служб \"%s\"\n"
 
-#: fe-connect.c:5424 fe-connect.c:5468
+#: fe-connect.c:5429 fe-connect.c:5473
 #, c-format
 msgid "syntax error in service file \"%s\", line %d\n"
 msgstr "синтаксическая ошибка в файле определения служб \"%s\" (строка %d)\n"
 
-#: fe-connect.c:5435
+#: fe-connect.c:5440
 #, c-format
 msgid ""
 "nested service specifications not supported in service file \"%s\", line %d\n"
@@ -628,24 +628,24 @@ msgstr ""
 "рекурсивные определения служб не поддерживаются (файл определения служб "
 "\"%s\", строка %d)\n"
 
-#: fe-connect.c:6156
+#: fe-connect.c:6161
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\"\n"
 msgstr "во внутреннюю процедуру разбора строки передан ошибочный URI: \"%s\"\n"
 
-#: fe-connect.c:6233
+#: fe-connect.c:6238
 #, c-format
 msgid ""
 "end of string reached when looking for matching \"]\" in IPv6 host address "
 "in URI: \"%s\"\n"
 msgstr "URI не содержит символ \"]\" после адреса IPv6: \"%s\"\n"
 
-#: fe-connect.c:6240
+#: fe-connect.c:6245
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
 msgstr "IPv6, содержащийся в URI, не может быть пустым: \"%s\"\n"
 
-#: fe-connect.c:6255
+#: fe-connect.c:6260
 #, c-format
 msgid ""
 "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): "
@@ -654,41 +654,41 @@ msgstr ""
 "неожиданный символ \"%c\" в позиции %d в URI (ожидалось \":\" или \"/\"): "
 "\"%s\"\n"
 
-#: fe-connect.c:6385
+#: fe-connect.c:6390
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "лишний разделитель ключа/значения \"=\" в параметрах URI: \"%s\"\n"
 
-#: fe-connect.c:6405
+#: fe-connect.c:6410
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "в параметрах URI не хватает разделителя ключа/значения \"=\": \"%s\"\n"
 
-#: fe-connect.c:6457
+#: fe-connect.c:6462
 #, c-format
 msgid "invalid URI query parameter: \"%s\"\n"
 msgstr "неверный параметр в URI: \"%s\"\n"
 
-#: fe-connect.c:6531
+#: fe-connect.c:6536
 #, c-format
 msgid "invalid percent-encoded token: \"%s\"\n"
 msgstr "неверный символ, закодированный с %%: \"%s\"\n"
 
-#: fe-connect.c:6541
+#: fe-connect.c:6546
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
 msgstr "недопустимое значение %%00 для символа, закодированного с %%: \"%s\"\n"
 
-#: fe-connect.c:6911
+#: fe-connect.c:6916
 msgid "connection pointer is NULL\n"
 msgstr "нулевой указатель соединения\n"
 
-#: fe-connect.c:7199
+#: fe-connect.c:7204
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: файл паролей \"%s\" - не обычный файл\n"
 
-#: fe-connect.c:7208
+#: fe-connect.c:7213
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has group or world access; permissions should "
@@ -697,7 +697,7 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: к файлу паролей \"%s\" имеют доступ все или группа; права "
 "должны быть u=rw (0600) или более ограниченные\n"
 
-#: fe-connect.c:7316
+#: fe-connect.c:7321
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "пароль получен из файла \"%s\"\n"
@@ -1098,7 +1098,7 @@ msgstr "исходящее сообщение GSSAPI не будет защищ�
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
 msgstr "клиент попытался передать чрезмерно большой пакет GSSAPI (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:596
+#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:598
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
 msgstr "сервер передал чрезмерно большой пакет GSSAPI (%zu > %zu)\n"
@@ -1111,28 +1111,28 @@ msgstr "ошибка развёртывания сообщения в GSSAPI"
 msgid "incoming GSSAPI message did not use confidentiality\n"
 msgstr "входящее сообщение GSSAPI не защищено\n"
 
-#: fe-secure-gssapi.c:642
+#: fe-secure-gssapi.c:644
 msgid "could not initiate GSSAPI security context"
 msgstr "не удалось инициализировать контекст безопасности GSSAPI"
 
-#: fe-secure-gssapi.c:670
+#: fe-secure-gssapi.c:672
 msgid "GSSAPI size check error"
 msgstr "ошибка проверки размера в GSSAPI"
 
-#: fe-secure-gssapi.c:681
+#: fe-secure-gssapi.c:683
 msgid "GSSAPI context establishment error"
 msgstr "ошибка установления контекста в GSSAPI"
 
-#: fe-secure-openssl.c:223 fe-secure-openssl.c:330 fe-secure-openssl.c:1499
+#: fe-secure-openssl.c:223 fe-secure-openssl.c:330 fe-secure-openssl.c:1504
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ошибка SSL SYSCALL: %s\n"
 
-#: fe-secure-openssl.c:230 fe-secure-openssl.c:337 fe-secure-openssl.c:1503
+#: fe-secure-openssl.c:230 fe-secure-openssl.c:337 fe-secure-openssl.c:1508
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ошибка SSL SYSCALL: конец файла (EOF)\n"
 
-#: fe-secure-openssl.c:241 fe-secure-openssl.c:348 fe-secure-openssl.c:1512
+#: fe-secure-openssl.c:241 fe-secure-openssl.c:348 fe-secure-openssl.c:1517
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "ошибка SSL: %s\n"
@@ -1141,63 +1141,63 @@ msgstr "ошибка SSL: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL-соединение было неожиданно закрыто\n"
 
-#: fe-secure-openssl.c:262 fe-secure-openssl.c:369 fe-secure-openssl.c:1562
+#: fe-secure-openssl.c:262 fe-secure-openssl.c:369 fe-secure-openssl.c:1567
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "нераспознанный код ошибки SSL: %d\n"
 
-#: fe-secure-openssl.c:409
+#: fe-secure-openssl.c:414
 msgid "could not determine server certificate signature algorithm\n"
 msgstr "не удалось определить алгоритм подписи сертификата сервера\n"
 
-#: fe-secure-openssl.c:430
+#: fe-secure-openssl.c:435
 #, c-format
 msgid "could not find digest for NID %s\n"
 msgstr "не удалось найти алгоритм хеширования по NID %s\n"
 
-#: fe-secure-openssl.c:440
+#: fe-secure-openssl.c:445
 msgid "could not generate peer certificate hash\n"
 msgstr "не удалось сгенерировать хеш сертификата сервера\n"
 
-#: fe-secure-openssl.c:497
+#: fe-secure-openssl.c:502
 msgid "SSL certificate's name entry is missing\n"
 msgstr "запись имени в SSL-сертификате отсутствует\n"
 
-#: fe-secure-openssl.c:532
+#: fe-secure-openssl.c:537
 msgid "SSL certificate's address entry is missing\n"
 msgstr "в SSL-сертификате отсутствует запись адреса\n"
 
-#: fe-secure-openssl.c:950
+#: fe-secure-openssl.c:955
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "не удалось создать контекст SSL: %s\n"
 
-#: fe-secure-openssl.c:989
+#: fe-secure-openssl.c:994
 #, c-format
 msgid "invalid value \"%s\" for minimum SSL protocol version\n"
 msgstr "неверное значение \"%s\" для минимальной версии протокола SSL\n"
 
-#: fe-secure-openssl.c:1000
+#: fe-secure-openssl.c:1005
 #, c-format
 msgid "could not set minimum SSL protocol version: %s\n"
 msgstr "не удалось задать минимальную версию протокола SSL: %s\n"
 
-#: fe-secure-openssl.c:1018
+#: fe-secure-openssl.c:1023
 #, c-format
 msgid "invalid value \"%s\" for maximum SSL protocol version\n"
 msgstr "неверное значение \"%s\" для максимальной версии протокола SSL\n"
 
-#: fe-secure-openssl.c:1029
+#: fe-secure-openssl.c:1034
 #, c-format
 msgid "could not set maximum SSL protocol version: %s\n"
 msgstr "не удалось задать максимальную версию протокола SSL: %s\n"
 
-#: fe-secure-openssl.c:1065
+#: fe-secure-openssl.c:1070
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "не удалось прочитать файл корневых сертификатов \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1118
+#: fe-secure-openssl.c:1123
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate "
@@ -1207,7 +1207,7 @@ msgstr ""
 "Укажите полный путь к файлу или отключите проверку сертификата сервера, "
 "изменив sslmode.\n"
 
-#: fe-secure-openssl.c:1122
+#: fe-secure-openssl.c:1127
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1218,63 +1218,63 @@ msgstr ""
 "Укажите полный путь к файлу или отключите проверку сертификата сервера, "
 "изменив sslmode.\n"
 
-#: fe-secure-openssl.c:1153
+#: fe-secure-openssl.c:1158
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "не удалось открыть файл сертификата \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1172
+#: fe-secure-openssl.c:1177
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "не удалось прочитать файл сертификата \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1197
+#: fe-secure-openssl.c:1202
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "не удалось установить SSL-соединение: %s\n"
 
-#: fe-secure-openssl.c:1231
+#: fe-secure-openssl.c:1236
 #, c-format
 msgid "could not set SSL Server Name Indication (SNI): %s\n"
 msgstr ""
 "не удалось задать SNI (Server Name Indication) для SSL-подключения: %s\n"
 
-#: fe-secure-openssl.c:1277
+#: fe-secure-openssl.c:1282
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "не удалось загрузить модуль SSL ENGINE \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1289
+#: fe-secure-openssl.c:1294
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "не удалось инициализировать модуль SSL ENGINE \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1305
+#: fe-secure-openssl.c:1310
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "не удалось прочитать закрытый ключ SSL \"%s\" из модуля \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1319
+#: fe-secure-openssl.c:1324
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "не удалось загрузить закрытый ключ SSL \"%s\" из модуля \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1357
+#: fe-secure-openssl.c:1362
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "сертификат присутствует, но файла закрытого ключа \"%s\" нет\n"
 
-#: fe-secure-openssl.c:1361
+#: fe-secure-openssl.c:1366
 #, c-format
 msgid "could not stat private key file \"%s\": %m\n"
 msgstr "не удалось получить информацию о файле закрытого ключа \"%s\": %m\n"
 
-#: fe-secure-openssl.c:1370
+#: fe-secure-openssl.c:1375
 #, c-format
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "файл закрытого ключа \"%s\" - не обычный файл\n"
 
-#: fe-secure-openssl.c:1403
+#: fe-secure-openssl.c:1408
 #, c-format
 msgid ""
 "private key file \"%s\" has group or world access; file must have "
@@ -1286,17 +1286,17 @@ msgstr ""
 "текущему пользователю, либо u=rw,g=r (0640) или более строгие, если он "
 "принадлежит root\n"
 
-#: fe-secure-openssl.c:1428
+#: fe-secure-openssl.c:1433
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "не удалось загрузить файл закрытого ключа \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1445
+#: fe-secure-openssl.c:1450
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "сертификат не соответствует файлу закрытого ключа \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1545
+#: fe-secure-openssl.c:1550
 #, c-format
 msgid ""
 "This may indicate that the server does not support any SSL protocol version "
@@ -1305,22 +1305,22 @@ msgstr ""
 "Это может указывать на то, что сервер не поддерживает ни одну версию "
 "протокола SSL между %s и %s.\n"
 
-#: fe-secure-openssl.c:1581
+#: fe-secure-openssl.c:1586
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "не удалось получить сертификат: %s\n"
 
-#: fe-secure-openssl.c:1687
+#: fe-secure-openssl.c:1692
 #, c-format
 msgid "no SSL error reported"
 msgstr "нет сообщения об ошибке SSL"
 
-#: fe-secure-openssl.c:1696
+#: fe-secure-openssl.c:1701
 #, c-format
 msgid "SSL error code %lu"
 msgstr "код ошибки SSL: %lu"
 
-#: fe-secure-openssl.c:1951
+#: fe-secure-openssl.c:1956
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: значение sslpassword усечено\n"

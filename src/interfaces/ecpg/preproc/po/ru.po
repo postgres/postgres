@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-29 10:17+0300\n"
+"POT-Creation-Date: 2023-05-03 05:56+0300\n"
 "PO-Revision-Date: 2022-09-05 13:32+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -14,8 +14,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 
 #: descriptor.c:64
 #, c-format
@@ -399,7 +399,7 @@ msgstr "имя типа \"string\" в режиме Informix зарезервир
 msgid "type \"%s\" is already defined"
 msgstr "тип \"%s\" уже определён"
 
-#: preproc.y:577 preproc.y:18560 preproc.y:18885 variable.c:621
+#: preproc.y:577 preproc.y:18560 preproc.y:18885 variable.c:620
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "многомерные массивы с простыми типами данных не поддерживаются"
@@ -660,52 +660,52 @@ msgstr "в структуре индикаторе \"%s\" слишком мно�
 msgid "unrecognized descriptor item code %d"
 msgstr "нераспознанный код элемента дескриптора %d"
 
-#: variable.c:89 variable.c:116
+#: variable.c:89 variable.c:115
 #, c-format
 msgid "incorrectly formed variable \"%s\""
 msgstr "неправильно оформленная переменная \"%s\""
 
-#: variable.c:139
+#: variable.c:138
 #, c-format
 msgid "variable \"%s\" is not a pointer"
 msgstr "переменная \"%s\" - не указатель"
 
-#: variable.c:142 variable.c:167
+#: variable.c:141 variable.c:166
 #, c-format
 msgid "variable \"%s\" is not a pointer to a structure or a union"
 msgstr "переменная \"%s\" - не указатель на структуру или объединение"
 
-#: variable.c:154
+#: variable.c:153
 #, c-format
 msgid "variable \"%s\" is neither a structure nor a union"
 msgstr "переменная \"%s\" - не структура и не объединение"
 
-#: variable.c:164
+#: variable.c:163
 #, c-format
 msgid "variable \"%s\" is not an array"
 msgstr "переменная \"%s\" - не массив"
 
-#: variable.c:233 variable.c:255
+#: variable.c:232 variable.c:254
 #, c-format
 msgid "variable \"%s\" is not declared"
 msgstr "переменная \"%s\" не объявлена"
 
-#: variable.c:494
+#: variable.c:493
 #, c-format
 msgid "indicator variable must have an integer type"
 msgstr "переменная-индикатор должна быть целочисленной"
 
-#: variable.c:506
+#: variable.c:505
 #, c-format
 msgid "unrecognized data type name \"%s\""
 msgstr "нераспознанное имя типа данных \"%s\""
 
-#: variable.c:517 variable.c:525 variable.c:542 variable.c:545
+#: variable.c:516 variable.c:524 variable.c:541 variable.c:544
 #, c-format
 msgid "multidimensional arrays are not supported"
 msgstr "многомерные массивы не поддерживаются"
 
-#: variable.c:534
+#: variable.c:533
 #, c-format
 msgid ""
 "multilevel pointers (more than 2 levels) are not supported; found %d level"
@@ -721,12 +721,12 @@ msgstr[2] ""
 "многоуровневые указатели (больше 2 уровней) не поддерживаются, обнаружено %d "
 "уровней"
 
-#: variable.c:539
+#: variable.c:538
 #, c-format
 msgid "pointer to pointer is not supported for this data type"
 msgstr "для этого типа данных указатели на указатели не поддерживаются"
 
-#: variable.c:559
+#: variable.c:558
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "многомерные массивы структур не поддерживаются"

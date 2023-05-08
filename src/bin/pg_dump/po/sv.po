@@ -1,13 +1,13 @@
 # Swedish message translation file for pg_dump
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2009, 2010.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-05-09 18:50+0000\n"
-"PO-Revision-Date: 2022-05-09 21:46+0200\n"
+"PO-Revision-Date: 2023-03-09 22:37+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -249,7 +249,7 @@ msgstr "läser information om arv av tabeller"
 #: common.c:216
 #, c-format
 msgid "reading event triggers"
-msgstr "läser händelseutlösare"
+msgstr "läser händelsetriggrar"
 
 #: common.c:220
 #, c-format
@@ -294,7 +294,7 @@ msgstr "läser integritetsvillkor"
 #: common.c:245
 #, c-format
 msgid "reading triggers"
-msgstr "läser utlösare"
+msgstr "läser triggrar"
 
 #: common.c:248
 #, c-format
@@ -566,12 +566,12 @@ msgstr "kör %s %s"
 #: pg_backup_archiver.c:986
 #, c-format
 msgid "disabling triggers for %s"
-msgstr "stänger av utlösare för %s"
+msgstr "stänger av trigger för %s"
 
 #: pg_backup_archiver.c:1012
 #, c-format
 msgid "enabling triggers for %s"
-msgstr "slår på utlösare för %s"
+msgstr "slår på trigger för %s"
 
 #: pg_backup_archiver.c:1040
 #, c-format
@@ -804,7 +804,7 @@ msgstr "funktion \"%s\" hittades inte"
 #: pg_backup_archiver.c:2750
 #, c-format
 msgid "trigger \"%s\" not found"
-msgstr "utlösare \"%s\" hittades inte"
+msgstr "trigger \"%s\" hittades inte"
 
 #: pg_backup_archiver.c:3143
 #, c-format
@@ -1501,7 +1501,7 @@ msgstr "  --disable-dollar-quoting     slå av dollar-citering, använd standard
 #: pg_dump.c:1025 pg_dumpall.c:628 pg_restore.c:464
 #, c-format
 msgid "  --disable-triggers           disable triggers during data-only restore\n"
-msgstr "  --disable-triggers           slå av utlösare vid återställning av enbart data\n"
+msgstr "  --disable-triggers           slå av triggrar vid återställning av enbart data\n"
 
 #: pg_dump.c:1026
 #, c-format
@@ -1890,7 +1890,7 @@ msgstr "misslyckades med riktighetskontroll, föräldratabell med OID %u för pg
 #: pg_dump.c:7637
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)"
-msgstr "fråga producerade null som refererad tabell för främmande nyckel-utlösare \"%s\" i tabell \"%s\" (OID för tabell : %u)"
+msgstr "fråga producerade null som refererad tabell för främmande nyckel-trigger \"%s\" i tabell \"%s\" (OID för tabell : %u)"
 
 #: pg_dump.c:8256
 #, c-format
@@ -2104,7 +2104,7 @@ msgstr "oväntat tgtype-värde: %d"
 #: pg_dump.c:17002
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
-msgstr "felaktig argumentsträng (%s) för utlösare \"%s\" i tabell \"%s\""
+msgstr "felaktig argumentsträng (%s) för trigger \"%s\" i tabell \"%s\""
 
 #: pg_dump.c:17271
 #, c-format
@@ -2503,7 +2503,7 @@ msgstr "  -s, --schema-only            återställ bara scheman, inte data\n"
 #: pg_restore.c:459
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
-msgstr "  -S, --superuser=NAMN         namn på superuser för att slå av utlösare\n"
+msgstr "  -S, --superuser=NAMN         namn på superuser för att slå av triggrar\n"
 
 #: pg_restore.c:460
 #, c-format
@@ -2513,7 +2513,7 @@ msgstr "  -t, --table=NAMN             återställ namngiven relation (tabell, v
 #: pg_restore.c:461
 #, c-format
 msgid "  -T, --trigger=NAME           restore named trigger\n"
-msgstr "  -T, --trigger=NAMN           återställ namngiven utlösare\n"
+msgstr "  -T, --trigger=NAMN           återställ namngiven trigger\n"
 
 #: pg_restore.c:462
 #, c-format

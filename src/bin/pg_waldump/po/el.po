@@ -1,0 +1,564 @@
+# Greek message translation file for pg_waldump
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_waldump (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_waldump (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-04-16 09:47+0000\n"
+"PO-Revision-Date: 2023-04-17 11:17+0200\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "σφάλμα: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "προειδοποίηση: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "λεπτομέρεια: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "υπόδειξη: "
+
+#: pg_waldump.c:160
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
+
+#: pg_waldump.c:216
+#, c-format
+msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
+msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
+msgstr[0] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά η κεφαλίδα «%s» του αρχείου WAL καθορίζει %d byte"
+msgstr[1] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά η κεφαλίδα «%s» του αρχείου WAL καθορίζει %d bytes"
+
+#: pg_waldump.c:222
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
+
+#: pg_waldump.c:225
+#, c-format
+msgid "could not read file \"%s\": read %d of %d"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: ανέγνωσε %d από %d"
+
+#: pg_waldump.c:286
+#, c-format
+msgid "could not locate WAL file \"%s\""
+msgstr "δεν ήταν δυνατός ο εντοπισμός του αρχείου WAL «%s»"
+
+#: pg_waldump.c:288
+#, c-format
+msgid "could not find any WAL file"
+msgstr "δεν ήταν δυνατή η εύρεση οποιουδήποτε αρχείου WAL"
+
+#: pg_waldump.c:329
+#, c-format
+msgid "could not find file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εύρεση του αρχείου «%s»: %m"
+
+#: pg_waldump.c:378
+#, c-format
+msgid "could not read from file %s, offset %d: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση από αρχείο %s, μετατόπιση %d: %m"
+
+#: pg_waldump.c:382
+#, c-format
+msgid "could not read from file %s, offset %d: read %d of %d"
+msgstr "δεν ήταν δυνατή η ανάγνωση από αρχείο %s, μετατόπιση %d: ανέγνωσε %d από %d"
+
+#: pg_waldump.c:658
+#, c-format
+msgid ""
+"%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
+"\n"
+msgstr ""
+"%s αποκωδικοποιεί και εμφανίζει αρχεία καταγραφής εμπρόσθιας-εγγραφής PostgreSQL για αποσφαλμάτωση.\n"
+"\n"
+
+#: pg_waldump.c:660
+#, c-format
+msgid "Usage:\n"
+msgstr "Χρήση:\n"
+
+#: pg_waldump.c:661
+#, c-format
+msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... [STARTSEG [ENDSEG]]\n"
+
+#: pg_waldump.c:662
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Επιλογές:\n"
+
+#: pg_waldump.c:663
+#, c-format
+msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
+msgstr "  -b, --bkp-details      πάραγε λεπτομερείς πληροφορίες σχετικά με τα μπλοκ αντιγράφων ασφαλείας\n"
+
+#: pg_waldump.c:664
+#, c-format
+msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
+msgstr "  -B, --block=N          μαζί με --relation, εμφάνισε μόνο εγγραφές που τροποποιούν το μπλοκ N\n"
+
+#: pg_waldump.c:665
+#, c-format
+msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
+msgstr "  -e, --end=RECPTR       σταμάτησε την ανάγνωση στη τοποθεσία WAL RECPTR\n"
+
+#: pg_waldump.c:666
+#, c-format
+msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
+msgstr "  -f, --follow           εξακολούθησε την προσπάθεια μετά την επίτευξη του τέλους του WAL\n"
+
+#: pg_waldump.c:667
+#, c-format
+msgid ""
+"  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
+"                         valid names are main, fsm, vm, init\n"
+msgstr ""
+"  -F, --fork=FORK        εμφάνισε μόνο εγγραφές που τροποποιούν μπλοκ στο fork FORK,\n"
+"                         έγκυρες ονομασίες είναι main, fsm, vm, init\n"
+
+#: pg_waldump.c:669
+#, c-format
+msgid "  -n, --limit=N          number of records to display\n"
+msgstr "  -n, --limit=N          αριθμός των εγγραφών για εμφάνιση\n"
+
+#: pg_waldump.c:670
+#, c-format
+msgid ""
+"  -p, --path=PATH        directory in which to find log segment files or a\n"
+"                         directory with a ./pg_wal that contains such files\n"
+"                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
+msgstr ""
+"  -p, --path=PATH        κατάλογος στον οποίο βρίσκονται αρχεία τμήματος καταγραφής ή\n"
+"                         ένα κατάλογο με ./pg_wal που περιέχει τέτοια αρχεία\n"
+"                         (προεπιλογή: τρέχων κατάλογος, ./pg_wal, $PGDATA/pg_wal)\n"
+
+#: pg_waldump.c:673
+#, c-format
+msgid "  -q, --quiet            do not print any output, except for errors\n"
+msgstr "  -q, --quiet            να μην εκτυπωθεί καμία έξοδος, εκτός από σφάλματα\n"
+
+#: pg_waldump.c:674
+#, c-format
+msgid ""
+"  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
+"                         use --rmgr=list to list valid resource manager names\n"
+msgstr ""
+"  -r, --rmgr=RMGR        εμφάνισε μόνο εγγραφές που δημιουργούνται από τον διαχειριστή πόρων RMGR·\n"
+"                         χρησιμοποίησε --rmgr=list για την παράθεση έγκυρων ονομάτων διαχειριστών πόρων\n"
+
+#: pg_waldump.c:676
+#, c-format
+msgid "  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"
+msgstr "  -R, --relation=T/D/R   εμφάνισε μόνο εγγραφές που τροποποιούν μπλοκ στη σχέση T/D/R\n"
+
+#: pg_waldump.c:677
+#, c-format
+msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
+msgstr "  -s, --start=RECPTR     άρχισε την ανάγνωση WAL από την τοποθεσία RECPTR\n"
+
+#: pg_waldump.c:678
+#, c-format
+msgid ""
+"  -t, --timeline=TLI     timeline from which to read log records\n"
+"                         (default: 1 or the value used in STARTSEG)\n"
+msgstr ""
+"  -t, --timeline=TLI     χρονογραμή από την οποία να αναγνωστούν εγγραφές καταγραφής\n"
+"                         (προεπιλογή: 1 ή η τιμή που χρησιμοποιήθηκε στο STARTSEG)\n"
+
+#: pg_waldump.c:680
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#: pg_waldump.c:681
+#, c-format
+msgid "  -w, --fullpage         only show records with a full page write\n"
+msgstr "  -w, --fullpage         εμφάνισε μόνο εγγραφές με εγγραφή πλήρους σελίδας\n"
+
+#: pg_waldump.c:682
+#, c-format
+msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
+msgstr "  -x, --xid=XID          εμφάνισε μόνο εγγραφές με ID συναλλαγής XID\n"
+
+#: pg_waldump.c:683
+#, c-format
+msgid ""
+"  -z, --stats[=record]   show statistics instead of records\n"
+"                         (optionally, show per-record statistics)\n"
+msgstr ""
+"  -z, --stats[=record]   εμφάνισε στατιστικά στοιχεία αντί για εγγραφές\n"
+"                         (προαιρετικά, εμφάνισε στατιστικά στοιχεία ανά εγγραφή)\n"
+
+#: pg_waldump.c:685
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+
+#: pg_waldump.c:686
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
+
+#: pg_waldump.c:687
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s αρχική σελίδα: <%s>\n"
+
+#: pg_waldump.c:781
+#, c-format
+msgid "no arguments specified"
+msgstr "δεν καθορίστηκαν παράμετροι"
+
+#: pg_waldump.c:797
+#, c-format
+msgid "invalid block number: \"%s\""
+msgstr "μη έγκυρος αριθμός μπλοκ: «%s»"
+
+#: pg_waldump.c:806 pg_waldump.c:904
+#, c-format
+msgid "invalid WAL location: \"%s\""
+msgstr "άκυρη τοποθεσία WAL: «%s»"
+
+#: pg_waldump.c:819
+#, c-format
+msgid "invalid fork name: \"%s\""
+msgstr "μη έγκυρη ονομασία fork «%s»"
+
+#: pg_waldump.c:827
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "μη έγκυρη τιμή  «%s» για την επιλογή %s"
+
+#: pg_waldump.c:858
+#, c-format
+msgid "custom resource manager \"%s\" does not exist"
+msgstr "ο προσαρμοσμένος διαχειριστής πόρων «%s» δεν υπάρχει"
+
+#: pg_waldump.c:879
+#, c-format
+msgid "resource manager \"%s\" does not exist"
+msgstr "ο διαχειριστής πόρων «%s» δεν υπάρχει"
+
+#: pg_waldump.c:894
+#, c-format
+msgid "invalid relation specification: \"%s\""
+msgstr "μη έγκυρη προδιαγραφή σχέσης: «%s»"
+
+#: pg_waldump.c:895
+#, c-format
+msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
+msgstr "Αναμένει \"tablespace OID/database OID/relation filenode\"."
+
+#: pg_waldump.c:914
+#, c-format
+msgid "invalid timeline specification: \"%s\""
+msgstr "άκυρη προδιαγραφή χρονοδιαγραμμής: «%s»"
+
+#: pg_waldump.c:924
+#, c-format
+msgid "invalid transaction ID specification: \"%s\""
+msgstr "μη έγκυρη προδιαγραφή ID συναλλαγής: «%s»"
+
+#: pg_waldump.c:939
+#, c-format
+msgid "unrecognized value for option %s: %s"
+msgstr "μη αναγνωρίσιμη τιμή για την επιλογή %s: %s"
+
+#: pg_waldump.c:953
+#, c-format
+msgid "option %s requires option %s to be specified"
+msgstr "η επιλογή %s απαιτεί να έχει καθοριστεί η επιλογή %s"
+
+#: pg_waldump.c:960
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
+
+#: pg_waldump.c:970 pg_waldump.c:990
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
+
+#: pg_waldump.c:996 pg_waldump.c:1026
+#, c-format
+msgid "could not open file \"%s\""
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»"
+
+#: pg_waldump.c:1006
+#, c-format
+msgid "start WAL location %X/%X is not inside file \"%s\""
+msgstr "τοποθεσία εκκίνησης WAL %X/%X δεν βρίσκεται μέσα στο αρχείο «%s»"
+
+#: pg_waldump.c:1033
+#, c-format
+msgid "ENDSEG %s is before STARTSEG %s"
+msgstr "ENDSEG %s βρίσκεται πριν από STARTSEG %s"
+
+#: pg_waldump.c:1048
+#, c-format
+msgid "end WAL location %X/%X is not inside file \"%s\""
+msgstr "η τελική τοποθεσία WAL %X/%X δεν βρίσκεται μέσα στο αρχείο «%s»"
+
+#: pg_waldump.c:1060
+#, c-format
+msgid "no start WAL location given"
+msgstr "δεν δόθηκε καμία τοποθεσία έναρξης WAL"
+
+#: pg_waldump.c:1074
+#, c-format
+msgid "out of memory while allocating a WAL reading processor"
+msgstr "η μνήμη δεν επαρκεί για την εκχώρηση επεξεργαστή ανάγνωσης WAL"
+
+#: pg_waldump.c:1080
+#, c-format
+msgid "could not find a valid record after %X/%X"
+msgstr "δεν ήταν δυνατή η εύρεση έγκυρης εγγραφής μετά %X/%X"
+
+#: pg_waldump.c:1090
+#, c-format
+msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
+msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
+msgstr[0] "πρώτη εγγραφή βρίσκεται μετά από %X/%X, σε %X/%X, παρακάμπτοντας %u byte\n"
+msgstr[1] "πρώτη εγγραφή βρίσκεται μετά από %X/%X, σε %X/%X, παρακάμπτοντας %u bytes\n"
+
+#: pg_waldump.c:1171
+#, c-format
+msgid "error in WAL record at %X/%X: %s"
+msgstr "σφάλμα στην εγγραφή WAL στο %X/%X: %s"
+
+#: pg_waldump.c:1180
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες."
+
+#: xlogreader.c:625
+#, c-format
+msgid "invalid record offset at %X/%X"
+msgstr "μη έγκυρη μετατόπιση εγγραφών σε %X/%X"
+
+#: xlogreader.c:633
+#, c-format
+msgid "contrecord is requested by %X/%X"
+msgstr "contrecord ζητείται από %X/%X"
+
+#: xlogreader.c:674 xlogreader.c:1121
+#, c-format
+msgid "invalid record length at %X/%X: wanted %u, got %u"
+msgstr "μη έγκυρο μήκος εγγραφής σε %X/%X: χρειαζόταν %u, έλαβε %u"
+
+#: xlogreader.c:703
+#, c-format
+msgid "out of memory while trying to decode a record of length %u"
+msgstr "έλλειψη μνήμης κατά την προσπάθεια αποκωδικοποίησης εγγραφής με μήκος %u"
+
+#: xlogreader.c:725
+#, c-format
+msgid "record length %u at %X/%X too long"
+msgstr "μήκος εγγραφής %u σε %X/%X πολύ μακρύ"
+
+#: xlogreader.c:774
+#, c-format
+msgid "there is no contrecord flag at %X/%X"
+msgstr "δεν υπάρχει σημαία contrecord στο %X/%X"
+
+#: xlogreader.c:787
+#, c-format
+msgid "invalid contrecord length %u (expected %lld) at %X/%X"
+msgstr "μη έγκυρο μήκος contrecord %u (αναμένεται %lld) σε %X/%X"
+
+#: xlogreader.c:922
+#, c-format
+msgid "missing contrecord at %X/%X"
+msgstr "λείπει contrecord στο %X/%X"
+
+#: xlogreader.c:1129
+#, c-format
+msgid "invalid resource manager ID %u at %X/%X"
+msgstr "μη έγκυρο ID %u διαχειριστή πόρων στο %X/%X"
+
+#: xlogreader.c:1142 xlogreader.c:1158
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "εγγραφή με εσφαλμένο prev-link %X/%X σε %X/%X"
+
+#: xlogreader.c:1194
+#, c-format
+msgid "incorrect resource manager data checksum in record at %X/%X"
+msgstr "εσφαλμένο άθροισμα ελέγχου δεδομένων διαχειριστή πόρων σε εγγραφή στο %X/%X"
+
+#: xlogreader.c:1231
+#, c-format
+msgid "invalid magic number %04X in log segment %s, offset %u"
+msgstr "μη έγκυρος μαγικός αριθμός %04X στο τμήμα καταγραφής %s, μετατόπιση %u"
+
+#: xlogreader.c:1245 xlogreader.c:1286
+#, c-format
+msgid "invalid info bits %04X in log segment %s, offset %u"
+msgstr "μη έγκυρα info bits %04X στο τμήμα καταγραφής %s, μετατόπιση %u"
+
+#: xlogreader.c:1260
+#, c-format
+msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
+msgstr "WAL αρχείο προέρχεται από διαφορετικό σύστημα βάσης δεδομένων: το WAL αναγνωριστικό συστήματος βάσης δεδομένων αρχείων είναι %llu, το pg_control αναγνωριστικό συστήματος βάσης δεδομένων είναι %llu"
+
+#: xlogreader.c:1268
+#, c-format
+msgid "WAL file is from different database system: incorrect segment size in page header"
+msgstr "WAL αρχείο προέρχεται από διαφορετικό σύστημα βάσης δεδομένων: εσφαλμένο μέγεθος τμήματος στην κεφαλίδα σελίδας"
+
+#: xlogreader.c:1274
+#, c-format
+msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
+msgstr "WAL αρχείο προέρχεται από διαφορετικό σύστημα βάσης δεδομένων: εσφαλμένο XLOG_BLCKSZ στην κεφαλίδα σελίδας"
+
+#: xlogreader.c:1305
+#, c-format
+msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
+msgstr "μη αναμενόμενο pageaddr %X/%X στο τμήμα καταγραφής %s, μετατόπιση %u"
+
+#: xlogreader.c:1330
+#, c-format
+msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
+msgstr "εκτός ακολουθίας ID χρονογραμμής %u (μετά %u) στο τμήμα καταγραφής %s, μετατόπιση %u"
+
+#: xlogreader.c:1735
+#, c-format
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "εκτός ακολουθίας block_id %u στο %X/%X"
+
+#: xlogreader.c:1759
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA έχει οριστεί, αλλά δεν περιλαμβάνονται δεδομένα σε %X/%X"
+
+#: xlogreader.c:1766
+#, c-format
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA δεν έχει οριστεί, αλλά το μήκος των δεδομένων είναι %u σε %X/%X"
+
+#: xlogreader.c:1802
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE έχει οριστεί, αλλά οπή με μετατόπιση %u μήκος %u μήκος μπλοκ εικόνας %u σε %X/%X"
+
+#: xlogreader.c:1818
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE δεν έχει οριστεί, αλλά οπή με μετατόπιση %u μήκος %u σε %X/%X"
+
+#: xlogreader.c:1832
+#, c-format
+msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
+msgstr "BKPIMAGE_IS_COMPRESSED έχει οριστεί, αλλά μέγεθος μπλοκ εικόνας %u σε %X/%X"
+
+#: xlogreader.c:1847
+#, c-format
+msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
+msgstr "ούτε BKPIMAGE_HAS_HOLE ούτε BKPIMAGE_IS_COMPRESSED είναι ορισμένα, αλλά το μήκος της εικόνας μπλοκ είναι %u στο %X/%X"
+
+#: xlogreader.c:1863
+#, c-format
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
+msgstr "BKPBLOCK_SAME_REL είναι ορισμένο, αλλά καμία προηγούμενη rel στο %X/%X"
+
+#: xlogreader.c:1875
+#, c-format
+msgid "invalid block_id %u at %X/%X"
+msgstr "μη έγκυρο block_id %u στο %X/%X"
+
+#: xlogreader.c:1942
+#, c-format
+msgid "record with invalid length at %X/%X"
+msgstr "εγγραφή με μη έγκυρο μήκος στο %X/%X"
+
+#: xlogreader.c:1967
+#, c-format
+msgid "could not locate backup block with ID %d in WAL record"
+msgstr "δεν ήταν δυνατή η εύρεση μπλοκ αντιγράφου με ID %d στην εγγραφή WAL"
+
+#: xlogreader.c:2051
+#, c-format
+msgid "could not restore image at %X/%X with invalid block %d specified"
+msgstr "δεν ήταν δυνατή η επαναφορά εικόνας στο %X/%X με ορισμένο άκυρο μπλοκ %d"
+
+#: xlogreader.c:2058
+#, c-format
+msgid "could not restore image at %X/%X with invalid state, block %d"
+msgstr "δεν ήταν δυνατή η επαναφορά εικόνας στο %X/%X με άκυρη κατάσταση, μπλοκ %d"
+
+#: xlogreader.c:2085 xlogreader.c:2102
+#, c-format
+msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
+msgstr "δεν ήταν δυνατή η επαναφορά εικόνας σε %X/%X συμπιεσμένη με %s που δεν υποστηρίζεται από την υλοποίηση, μπλοκ %d"
+
+#: xlogreader.c:2111
+#, c-format
+msgid "could not restore image at %X/%X compressed with unknown method, block %d"
+msgstr "δεν ήταν δυνατή η επαναφορά εικόνας σε %X/%X συμπιεσμένη με άγνωστη μέθοδο, μπλοκ %d"
+
+#: xlogreader.c:2119
+#, c-format
+msgid "could not decompress image at %X/%X, block %d"
+msgstr "δεν ήταν δυνατή η αποσυμπιέση εικόνας στο %X/%X, μπλοκ %d"
+
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+
+#~ msgid "could not parse \"%s\" as a transaction ID"
+#~ msgstr "δεν ήταν δυνατή η ανάλυση του «%s» ως ID συναλλαγής"
+
+#~ msgid "could not parse end WAL location \"%s\""
+#~ msgstr "δεν ήταν δυνατή η ανάλυση της τελικής τοποθεσίας WAL «%s»"
+
+#~ msgid "could not parse limit \"%s\""
+#~ msgstr "δεν ήταν δυνατή η ανάλυση του ορίου «%s»"
+
+#~ msgid "could not parse start WAL location \"%s\""
+#~ msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής τοποθεσίας WAL «%s»"
+
+#~ msgid "could not parse timeline \"%s\""
+#~ msgstr "δεν ήταν δυνατή η ανάλυση της χρονογραμμής «%s»"
+
+#~ msgid "could not read file \"%s\": read %d of %zu"
+#~ msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: ανέγνωσε %d από %zu"
+
+#~ msgid "fatal: "
+#~ msgstr "κρίσιμο: "
+
+#~ msgid "out of memory"
+#~ msgstr "έλλειψη μνήμης"
+
+#~ msgid "unrecognized argument to --stats: %s"
+#~ msgstr "μη αναγνωρισμένη παράμετρος για --stats: %s"

@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config (PostgreSQL) 13\n"
+"Project-Id-Version: pg_config (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-10-05 20:44+0000\n"
-"PO-Revision-Date: 2020-10-06 11:15+0900\n"
+"POT-Creation-Date: 2023-04-12 00:47+0000\n"
+"PO-Revision-Date: 2023-04-05 18:06+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -22,42 +22,42 @@ msgstr ""
 msgid "not recorded"
 msgstr "기록되어 있지 않음"
 
-#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
+#: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "현재 디렉터리를 알 수 없음: %m"
 
-#: ../../common/exec.c:156
+#: ../../common/exec.c:168
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "잘못된 바이너리 파일: \"%s\""
 
-#: ../../common/exec.c:206
+#: ../../common/exec.c:218
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "\"%s\" 바이너리 파일을 읽을 수 없음"
 
-#: ../../common/exec.c:214
+#: ../../common/exec.c:226
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "실행할 \"%s\" 파일 찾을 수 없음"
 
-#: ../../common/exec.c:270 ../../common/exec.c:309
+#: ../../common/exec.c:282 ../../common/exec.c:321
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "\"%s\" 디렉터리로 바꿀 수 없음: %m"
 
-#: ../../common/exec.c:287
+#: ../../common/exec.c:299
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "\"%s\" 심벌릭 링크를 읽을 수 없음: %m"
 
-#: ../../common/exec.c:410
+#: ../../common/exec.c:422
 #, c-format
-msgid "pclose failed: %m"
-msgstr "pclose 실패: %m"
+msgid "%s() failed: %m"
+msgstr "%s() 실패: %m"
 
-#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
+#: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
 msgid "out of memory"
 msgstr "메모리 부족"
 
@@ -273,3 +273,7 @@ msgstr "%s: 실행 가능한 프로그램을 찾을 수 없습니다\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: 잘못된 인수: %s\n"
+
+#, c-format
+#~ msgid "pclose failed: %m"
+#~ msgstr "pclose 실패: %m"

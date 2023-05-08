@@ -1,21 +1,21 @@
 # Russian message translation file for plpython
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-27 14:52+0300\n"
-"PO-Revision-Date: 2019-08-29 15:42+0300\n"
+"POT-Creation-Date: 2023-05-05 05:23+0300\n"
+"PO-Revision-Date: 2023-05-05 06:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 
 #: plpy_cursorobject.c:72
 #, c-format
@@ -134,44 +134,44 @@ msgstr ""
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "Ожидалось None, \"OK\", \"SKIP\" или \"MODIFY\"."
 
-#: plpy_exec.c:441
+#: plpy_exec.c:446
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "ошибка в PyList_SetItem() при настройке аргументов"
 
-#: plpy_exec.c:445
+#: plpy_exec.c:450
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "ошибка в PyDict_SetItemString() при настройке аргументов"
 
-#: plpy_exec.c:457
+#: plpy_exec.c:462
 #, c-format
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr ""
 "функция, возвращающая запись, вызвана в контексте, не допускающем этот тип"
 
-#: plpy_exec.c:674
+#: plpy_exec.c:679
 #, c-format
 msgid "while creating return value"
 msgstr "при создании возвращаемого значения"
 
-#: plpy_exec.c:908
+#: plpy_exec.c:926
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "элемент TD[\"new\"] удалён -- изменить строку нельзя"
 
-#: plpy_exec.c:913
+#: plpy_exec.c:931
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] - не словарь"
 
-#: plpy_exec.c:938
+#: plpy_exec.c:956
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "ключ словаря TD[\"new\"] с порядковым номером %d не является строкой"
 
-#: plpy_exec.c:945
+#: plpy_exec.c:963
 #, c-format
 msgid ""
 "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
@@ -180,22 +180,22 @@ msgstr ""
 "ключу \"%s\", найденному в TD[\"new\"], не соответствует столбец в строке, "
 "обрабатываемой триггером"
 
-#: plpy_exec.c:950
+#: plpy_exec.c:968
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "присвоить значение системному атрибуту \"%s\" нельзя"
 
-#: plpy_exec.c:955
+#: plpy_exec.c:973
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "присвоить значение генерируемому столбцу \"%s\" нельзя"
 
-#: plpy_exec.c:1013
+#: plpy_exec.c:1031
 #, c-format
 msgid "while modifying trigger row"
 msgstr "при изменении строки в триггере"
 
-#: plpy_exec.c:1071
+#: plpy_exec.c:1089
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "принудительное прерывание незавершённой подтранзакции"
@@ -364,32 +364,32 @@ msgstr "эта подтранзакция ещё не начата"
 msgid "there is no subtransaction to exit from"
 msgstr "нет подтранзакции, которую нужно закончить"
 
-#: plpy_typeio.c:587
+#: plpy_typeio.c:588
 #, c-format
 msgid "could not import a module for Decimal constructor"
 msgstr "не удалось импортировать модуль для конструктора Decimal"
 
-#: plpy_typeio.c:591
+#: plpy_typeio.c:592
 #, c-format
 msgid "no Decimal attribute in module"
 msgstr "в модуле нет атрибута Decimal"
 
-#: plpy_typeio.c:597
+#: plpy_typeio.c:598
 #, c-format
 msgid "conversion from numeric to Decimal failed"
 msgstr "не удалось преобразовать numeric в Decimal"
 
-#: plpy_typeio.c:911
+#: plpy_typeio.c:912
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "не удалось создать байтовое представление объекта Python"
 
-#: plpy_typeio.c:1048
+#: plpy_typeio.c:1049
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "не удалось создать строковое представление объекта Python"
 
-#: plpy_typeio.c:1059
+#: plpy_typeio.c:1060
 #, c-format
 msgid ""
 "could not convert Python object into cstring: Python string representation "
@@ -398,24 +398,7 @@ msgstr ""
 "не удалось преобразовать объект Python в cstring: похоже, представление "
 "строки Python содержит нулевые байты"
 
-#: plpy_typeio.c:1170
-#, c-format
-msgid "number of array dimensions exceeds the maximum allowed (%d)"
-msgstr "число размерностей массива превышает предел (%d)"
-
-#: plpy_typeio.c:1175
-#, c-format
-msgid "could not determine sequence length for function return value"
-msgstr ""
-"не удалось определить длину последовательности в возвращаемом функцией "
-"значении"
-
-#: plpy_typeio.c:1180 plpy_typeio.c:1186
-#, c-format
-msgid "array size exceeds the maximum allowed"
-msgstr "размер массива превышает предел"
-
-#: plpy_typeio.c:1214
+#: plpy_typeio.c:1157
 #, c-format
 msgid ""
 "return value of function with array return type is not a Python sequence"
@@ -423,31 +406,37 @@ msgstr ""
 "возвращаемое значение функции с результатом-массивом не является "
 "последовательностью"
 
-#: plpy_typeio.c:1261
+#: plpy_typeio.c:1202
 #, c-format
-msgid "wrong length of inner sequence: has length %d, but %d was expected"
-msgstr "неверная длина внутренней последовательности: %d (ожидалось: %d)"
+msgid "could not determine sequence length for function return value"
+msgstr ""
+"не удалось определить длину последовательности в возвращаемом функцией "
+"значении"
 
-#: plpy_typeio.c:1263
+#: plpy_typeio.c:1222 plpy_typeio.c:1237 plpy_typeio.c:1253
 #, c-format
 msgid ""
-"To construct a multidimensional array, the inner sequences must all have the "
-"same length."
+"multidimensional arrays must have array expressions with matching dimensions"
 msgstr ""
-"Для образования многомерного массива внутренние последовательности должны "
-"иметь одинаковую длину."
+"для многомерных массивов должны задаваться выражения с соответствующими "
+"размерностями"
 
-#: plpy_typeio.c:1342
+#: plpy_typeio.c:1227
+#, c-format
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "число размерностей массива превышает предел (%d)"
+
+#: plpy_typeio.c:1329
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "ошибка в литерале записи: \"%s\""
 
-#: plpy_typeio.c:1343
+#: plpy_typeio.c:1330
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Отсутствует левая скобка."
 
-#: plpy_typeio.c:1344 plpy_typeio.c:1545
+#: plpy_typeio.c:1331 plpy_typeio.c:1532
 #, c-format
 msgid ""
 "To return a composite type in an array, return the composite type as a "
@@ -456,12 +445,12 @@ msgstr ""
 "Чтобы возвратить составной тип в массиве, нужно возвратить составное "
 "значение в виде кортежа Python, например: \"[('foo',)]\"."
 
-#: plpy_typeio.c:1391
+#: plpy_typeio.c:1378
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не найден в сопоставлении"
 
-#: plpy_typeio.c:1392
+#: plpy_typeio.c:1379
 #, c-format
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
@@ -470,17 +459,17 @@ msgstr ""
 "Чтобы присвоить столбцу NULL, добавьте в сопоставление значение None с "
 "ключом-именем столбца."
 
-#: plpy_typeio.c:1445
+#: plpy_typeio.c:1432
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "длина возвращённой последовательности не равна числу столбцов в строке"
 
-#: plpy_typeio.c:1543
+#: plpy_typeio.c:1530
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "в объекте Python не существует атрибут \"%s\""
 
-#: plpy_typeio.c:1546
+#: plpy_typeio.c:1533
 #, c-format
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
@@ -499,6 +488,22 @@ msgstr "не удалось преобразовать объект Python Unico
 msgid "could not extract bytes from encoded string"
 msgstr "не удалось извлечь байты из кодированной строки"
 
+#, c-format
+#~ msgid "wrong length of inner sequence: has length %d, but %d was expected"
+#~ msgstr "неверная длина внутренней последовательности: %d (ожидалось: %d)"
+
+#, c-format
+#~ msgid ""
+#~ "To construct a multidimensional array, the inner sequences must all have "
+#~ "the same length."
+#~ msgstr ""
+#~ "Для образования многомерного массива внутренние последовательности должны "
+#~ "иметь одинаковую длину."
+
+#, c-format
+#~ msgid "array size exceeds the maximum allowed"
+#~ msgstr "размер массива превышает предел"
+
 #~ msgid "could not create new dictionary while building trigger arguments"
 #~ msgstr "не удалось создать словарь для передачи аргументов триггера"
 
@@ -510,15 +515,6 @@ msgstr "не удалось извлечь байты из кодированн�
 
 #~ msgid "could not create new dictionary"
 #~ msgstr "не удалось создать словарь"
-
-#~ msgid ""
-#~ "multidimensional arrays must have array expressions with matching "
-#~ "dimensions. PL/Python function return value has sequence length %d while "
-#~ "expected %d"
-#~ msgstr ""
-#~ "для многомерных массивов должны задаваться выражения с соответствующими "
-#~ "размерностями. В возвращаемом функцией на PL/Python значении "
-#~ "последовательность имеет длину %d (а ожидалось %d)"
 
 #~ msgid "plan.status takes no arguments"
 #~ msgstr "plan.status не принимает аргументы"

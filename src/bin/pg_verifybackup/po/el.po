@@ -7,32 +7,37 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_verifybackup (PostgreSQL) 14\n"
+"Project-Id-Version: pg_verifybackup (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-07-14 08:14+0000\n"
-"PO-Revision-Date: 2021-06-04 09:16+0200\n"
+"POT-Creation-Date: 2023-04-14 09:16+0000\n"
+"PO-Revision-Date: 2023-04-14 14:44+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.2.2\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "κρίσιμο: "
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "σφάλμα: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "προειδοποίηση: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "λεπτομέρεια: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "υπόδειξη: "
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
@@ -45,84 +50,88 @@ msgstr "έλλειψη μνήμης\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "δεν ήταν δυνατή η αντιγραφή δείκτη null (εσωτερικό σφάλμα)\n"
 
-#: ../../common/jsonapi.c:1066
+#: ../../common/jsonapi.c:1092
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "Η ακολουθία διαφυγής «\\%s» δεν είναι έγκυρη."
 
-#: ../../common/jsonapi.c:1069
+#: ../../common/jsonapi.c:1095
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Ο χαρακτήρας με τιμή 0x%02x πρέπει να διαφύγει."
 
-#: ../../common/jsonapi.c:1072
+#: ../../common/jsonapi.c:1098
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Ανέμενε τέλος εισόδου, αλλά βρήκε «%s»."
 
-#: ../../common/jsonapi.c:1075
+#: ../../common/jsonapi.c:1101
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Ανέμενε στοιχείο συστυχίας ή «]», αλλά βρέθηκε «%s»."
 
-#: ../../common/jsonapi.c:1078
+#: ../../common/jsonapi.c:1104
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "Ανέμενε «,» ή «]», αλλά βρήκε «%s»."
 
-#: ../../common/jsonapi.c:1081
+#: ../../common/jsonapi.c:1107
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "Ανέμενε «:», αλλά βρήκε «%s»."
 
-#: ../../common/jsonapi.c:1084
+#: ../../common/jsonapi.c:1110
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "Ανέμενε τιμή JSON, αλλά βρήκε «%s»."
 
-#: ../../common/jsonapi.c:1087
+#: ../../common/jsonapi.c:1113
 msgid "The input string ended unexpectedly."
 msgstr "Η συμβολοσειρά εισόδου τερματίστηκε αναπάντεχα."
 
-#: ../../common/jsonapi.c:1089
+#: ../../common/jsonapi.c:1115
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Ανέμενε συμβολοσειρά ή «}», αλλά βρήκε «%s»."
 
-#: ../../common/jsonapi.c:1092
+#: ../../common/jsonapi.c:1118
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "Ανέμενε «,» ή «}», αλλά βρήκε «%s»."
 
-#: ../../common/jsonapi.c:1095
+#: ../../common/jsonapi.c:1121
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Ανέμενε συμβολοσειρά, αλλά βρήκε «%s»."
 
-#: ../../common/jsonapi.c:1098
+#: ../../common/jsonapi.c:1124
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "Το διακριτικό «%s» δεν είναι έγκυρο."
 
-#: ../../common/jsonapi.c:1101
+#: ../../common/jsonapi.c:1127
 msgid "\\u0000 cannot be converted to text."
 msgstr "Δεν είναι δυνατή η μετατροπή του \\u0000 σε κείμενο."
 
-#: ../../common/jsonapi.c:1103
+#: ../../common/jsonapi.c:1129
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "Το «\\u» πρέπει να ακολουθείται από τέσσερα δεκαεξαδικά ψηφία."
 
-#: ../../common/jsonapi.c:1106
+#: ../../common/jsonapi.c:1132
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Δεν μπορούν να χρησιμοποιηθούν τιμές διαφυγής Unicode για τιμές σημείου κώδικα άνω του 007F όταν η κωδικοποίηση δεν είναι UTF8."
 
-#: ../../common/jsonapi.c:1108
+#: ../../common/jsonapi.c:1134
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Υψηλό διακριτικό Unicode δεν πρέπει να ακολουθεί υψηλό διακριτικό."
 
-#: ../../common/jsonapi.c:1110
+#: ../../common/jsonapi.c:1136
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Χαμηλό διακριτικό Unicode πρέπει να ακολουθεί υψηλό διακριτικό."
+
+#: parse_manifest.c:150
+msgid "parsing failed"
+msgstr "απέτυχε η ανάλυση"
 
 #: parse_manifest.c:152
 msgid "manifest ended unexpectedly"
@@ -278,149 +287,137 @@ msgstr "αναντιστοιχία ελέγχου αθροίσματος δια�
 msgid "could not parse backup manifest: %s"
 msgstr "δεν ήταν δυνατή η ανάλυση του αντιγράφου ασφαλείας της διακήρυξης: %s"
 
-#: pg_verifybackup.c:255 pg_verifybackup.c:265 pg_verifybackup.c:277
+#: pg_verifybackup.c:256 pg_verifybackup.c:265 pg_verifybackup.c:276
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες."
 
 #: pg_verifybackup.c:264
 #, c-format
 msgid "no backup directory specified"
 msgstr "δεν ορίστηκε κατάλογος αντιγράφου ασφαλείας"
 
-#: pg_verifybackup.c:275
+#: pg_verifybackup.c:274
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
-#: pg_verifybackup.c:298
+#: pg_verifybackup.c:297
 #, c-format
-msgid ""
-"The program \"%s\" is needed by %s but was not found in the\n"
-"same directory as \"%s\".\n"
-"Check your installation."
-msgstr ""
-"Το πρόγραμμα «%s» απαιτείται από %s αλλά δεν βρέθηκε στον\n"
-"ίδιο κατάλογο με το «%s».\n"
-"Ελέγξτε την εγκατάστασή σας."
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
+msgstr "το πρόγραμμα «%s» απαιτείται από %s αλλά δεν βρέθηκε στον ίδιο κατάλογο με το «%s»"
 
-#: pg_verifybackup.c:303
+#: pg_verifybackup.c:300
 #, c-format
-msgid ""
-"The program \"%s\" was found by \"%s\"\n"
-"but was not the same version as %s.\n"
-"Check your installation."
-msgstr ""
-"Το πρόγραμμα «%s» βρέθηκε από το \"%s\"\n"
-"αλλά δεν ήταν η ίδια εκδοχή με %s.\n"
-"Ελέγξτε την εγκατάστασή σας."
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
+msgstr "το πρόγραμμα «%s» βρέθηκε από το «%s» αλλά δεν ήταν η ίδια έκδοση με το %s"
 
-#: pg_verifybackup.c:361
+#: pg_verifybackup.c:356
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "το αντίγραφο ασφαλείας επαληθεύτηκε με επιτυχία\n"
 
-#: pg_verifybackup.c:387 pg_verifybackup.c:723
+#: pg_verifybackup.c:382 pg_verifybackup.c:718
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
 
-#: pg_verifybackup.c:391
+#: pg_verifybackup.c:386
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο «%s»: %m"
 
-#: pg_verifybackup.c:411 pg_verifybackup.c:752
+#: pg_verifybackup.c:406 pg_verifybackup.c:745
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
 
-#: pg_verifybackup.c:414
+#: pg_verifybackup.c:409
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: ανέγνωσε %d από %lld"
 
-#: pg_verifybackup.c:474
+#: pg_verifybackup.c:469
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "διπλότυπο όνομα διαδρομής στη διακήρυξη αντιγράφου ασφαλείας: «%s»"
 
-#: pg_verifybackup.c:537 pg_verifybackup.c:544
+#: pg_verifybackup.c:532 pg_verifybackup.c:539
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
 
-#: pg_verifybackup.c:576
+#: pg_verifybackup.c:571
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου «%s»: %m"
 
-#: pg_verifybackup.c:596
+#: pg_verifybackup.c:591
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο ή κατάλογο «%s»: %m"
 
-#: pg_verifybackup.c:619
+#: pg_verifybackup.c:614
 #, c-format
 msgid "\"%s\" is not a file or directory"
 msgstr "«%s» δεν είναι αρχείο ή κατάλογος"
 
-#: pg_verifybackup.c:629
+#: pg_verifybackup.c:624
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "«%s» βρίσκεται στο δίσκο, αλλά όχι στη διακήρυξη"
 
-#: pg_verifybackup.c:641
+#: pg_verifybackup.c:636
 #, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
 msgstr "«%s» έχει μέγεθος %lld στο δίσκο, αλλά μέγεθος %zu στη διακήρυξη"
 
-#: pg_verifybackup.c:668
+#: pg_verifybackup.c:663
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "«%s» βρίσκεται στη διακήρυξη αλλά όχι στο δίσκο"
 
-#: pg_verifybackup.c:731
+#: pg_verifybackup.c:726
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "δεν ήταν δυνατή η αρχικοποίηση του αθροίσματος ελέγχου του αρχείου «%s»"
 
-#: pg_verifybackup.c:743
+#: pg_verifybackup.c:738
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "δεν ήταν δυνατή η ενημέρωση αθροίσματος ελέγχου του αρχείου «%s»"
 
-#: pg_verifybackup.c:758
+#: pg_verifybackup.c:751
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου «%s»: %m"
 
-#: pg_verifybackup.c:777
+#: pg_verifybackup.c:770
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "το αρχείο «%s» έπρεπε να περιέχει %zu bytes, αλλά να αναγνώστηκαν %zu bytes"
 
-#: pg_verifybackup.c:787
+#: pg_verifybackup.c:780
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "δεν ήταν δυνατή η ολοκλήρωση του αθροίσματος ελέγχου του αρχείου «%s»"
 
-#: pg_verifybackup.c:795
+#: pg_verifybackup.c:788
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "το αρχείο «%s» έχει άθροισμα ελέγχου μήκους %d, αλλά αναμένεται %d"
 
-#: pg_verifybackup.c:799
+#: pg_verifybackup.c:792
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "αναντιστοιχία αθροίσματος ελέγχου για το αρχείο «%s»"
 
-#: pg_verifybackup.c:823
+#: pg_verifybackup.c:816
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "απέτυχε η ανάλυση WAL για την χρονογραμμή %u"
 
-#: pg_verifybackup.c:909
+#: pg_verifybackup.c:902
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -429,7 +426,7 @@ msgstr ""
 "%s επαληθεύει ένα αντίγραφο ασφαλείας έναντι της διακήρυξης αντιγράφων ασφαλείας.\n"
 "\n"
 
-#: pg_verifybackup.c:910
+#: pg_verifybackup.c:903
 #, c-format
 msgid ""
 "Usage:\n"
@@ -440,57 +437,57 @@ msgstr ""
 "  %s [ΕΠΙΛΟΓΗ]... BACKUPDIR\n"
 "\n"
 
-#: pg_verifybackup.c:911
+#: pg_verifybackup.c:904
 #, c-format
 msgid "Options:\n"
 msgstr "Επιλογές:\n"
 
-#: pg_verifybackup.c:912
+#: pg_verifybackup.c:905
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         να εξέλθει άμεσα σε σφάλμα\n"
 
-#: pg_verifybackup.c:913
+#: pg_verifybackup.c:906
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH  αγνόησε την υποδεικνυόμενη διαδρομή\n"
 
-#: pg_verifybackup.c:914
+#: pg_verifybackup.c:907
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH    χρησιμοποίησε την καθορισμένη διαδρομή για την διακήρυξη\n"
 
-#: pg_verifybackup.c:915
+#: pg_verifybackup.c:908
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          μην δοκιμάσεις να αναλύσεις αρχεία WAL\n"
 
-#: pg_verifybackup.c:916
+#: pg_verifybackup.c:909
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 να μην εκτυπώσεις καμία έξοδο, εκτός από σφάλματα\n"
 
-#: pg_verifybackup.c:917
+#: pg_verifybackup.c:910
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        παράκαμψε την επαλήθευση αθροισμάτων ελέγχου\n"
 
-#: pg_verifybackup.c:918
+#: pg_verifybackup.c:911
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=PATH    χρησιμοποίησε την καθορισμένη διαδρομή για αρχεία WAL\n"
 
-#: pg_verifybackup.c:919
+#: pg_verifybackup.c:912
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
 
-#: pg_verifybackup.c:920
+#: pg_verifybackup.c:913
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
 
-#: pg_verifybackup.c:921
+#: pg_verifybackup.c:914
 #, c-format
 msgid ""
 "\n"
@@ -499,7 +496,10 @@ msgstr ""
 "\n"
 "Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
 
-#: pg_verifybackup.c:922
+#: pg_verifybackup.c:915
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s αρχική σελίδα: <%s>\n"
+
+#~ msgid "fatal: "
+#~ msgstr "κρίσιμο: "

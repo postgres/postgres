@@ -1,0 +1,355 @@
+# LANGUAGE message translation file for pg_verify_checksums
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_verify_checksums (PostgreSQL) package.
+# Ioseph Kim <ioseph@uri.sarang.net>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_checksums (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-04-12 00:51+0000\n"
+"PO-Revision-Date: 2023-04-05 18:06+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: PostgreSQL Korea <kr@postgresql.org>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "오류: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "경고: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "상세정보: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "힌트: "
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "\"%s\" 값은 \"%s\" 옵션값으로 유효하지 않음"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s 값은 %d부터 %d까지 지정할 수 있습니다."
+
+#: pg_checksums.c:79
+#, c-format
+msgid ""
+"%s enables, disables, or verifies data checksums in a PostgreSQL database "
+"cluster.\n"
+"\n"
+msgstr ""
+"%s 명령은 PostgreSQL 데이터베이스 클러스터 내 자료 체크섬을 활성화 또는\n"
+"비활성화 또는 유효성 검사를 합니다.\n"
+"\n"
+
+#: pg_checksums.c:80
+#, c-format
+msgid "Usage:\n"
+msgstr "사용법:\n"
+
+#: pg_checksums.c:81
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [옵션]... [DATADIR]\n"
+
+#: pg_checksums.c:82
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"옵션들:\n"
+
+#: pg_checksums.c:83
+#, c-format
+msgid " [-D, --pgdata=]DATADIR    data directory\n"
+msgstr " [-D, --pgdata=]DATADIR    데이터 디렉터리\n"
+
+#: pg_checksums.c:84
+#, c-format
+msgid "  -c, --check              check data checksums (default)\n"
+msgstr "  -c, --check              실 작업 없이, 그냥 검사만 (기본값)\n"
+
+#: pg_checksums.c:85
+#, c-format
+msgid "  -d, --disable            disable data checksums\n"
+msgstr "  -d, --disable            자료 페이지 체크섬 비활성화\n"
+
+#: pg_checksums.c:86
+#, c-format
+msgid "  -e, --enable             enable data checksums\n"
+msgstr "  -e, --enable             자료 페이지 체크섬 활성화\n"
+
+#: pg_checksums.c:87
+#, c-format
+msgid ""
+"  -f, --filenode=FILENODE  check only relation with specified filenode\n"
+msgstr "  -f, --filenode=FILENODE  지정한 파일노드만 검사\n"
+
+#: pg_checksums.c:88
+#, c-format
+msgid ""
+"  -N, --no-sync            do not wait for changes to be written safely to "
+"disk\n"
+msgstr ""
+"  -N, --no-sync            작업 완료 뒤 디스크 동기화 작업을 하지 않음\n"
+
+#: pg_checksums.c:89
+#, c-format
+msgid "  -P, --progress           show progress information\n"
+msgstr "  -P, --progress           진행 과정 보여줌\n"
+
+#: pg_checksums.c:90
+#, c-format
+msgid "  -v, --verbose            output verbose messages\n"
+msgstr "  -v, --verbose            자세한 작업 메시지 보여줌\n"
+
+#: pg_checksums.c:91
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            버전 정보를 보여주고 마침\n"
+
+#: pg_checksums.c:92
+#, c-format
+msgid "  -?, --help               show this help, then exit\n"
+msgstr "  -?, --help               이 도움말을 보여주고 마침\n"
+
+#: pg_checksums.c:93
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable "
+"PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"DATADIR인 데이터 디렉터리를 지정하지 않으며, PGDATA 환경 변수값을\n"
+"사용합니다.\n"
+"\n"
+
+#: pg_checksums.c:95
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr "문제점 보고 주소: <%s>\n"
+
+#: pg_checksums.c:96
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 홈페이지: <%s>\n"
+
+#: pg_checksums.c:153
+#, c-format
+msgid "%lld/%lld MB (%d%%) computed"
+msgstr "%lld/%lld MB (%d%%) 계산됨"
+
+#: pg_checksums.c:200
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" 파일을 열 수 없음: %m"
+
+#: pg_checksums.c:214
+#, c-format
+msgid "could not read block %u in file \"%s\": %m"
+msgstr "%u 블럭을 \"%s\" 파일에서 읽을 수 없음: %m"
+
+#: pg_checksums.c:217
+#, c-format
+msgid "could not read block %u in file \"%s\": read %d of %d"
+msgstr "%u 블럭을 \"%s\" 파일에서 읽을 수 없음: %d / %d 바이트만 읽음"
+
+#: pg_checksums.c:240
+#, c-format
+msgid ""
+"checksum verification failed in file \"%s\", block %u: calculated checksum "
+"%X but block contains %X"
+msgstr ""
+"\"%s\" 파일, %u 블럭의  체크섬 검사 실패: 계산된 체크섬은 %X 값이지만, 블럭에"
+"는 %X 값이 있음"
+
+#: pg_checksums.c:263
+#, c-format
+msgid "seek failed for block %u in file \"%s\": %m"
+msgstr "%u 블럭을 \"%s\" 파일에서 찾을 수 없음: %m"
+
+#: pg_checksums.c:270
+#, c-format
+msgid "could not write block %u in file \"%s\": %m"
+msgstr "%u 블럭을 \"%s\" 파일에 쓸 수 없음: %m"
+
+#: pg_checksums.c:273
+#, c-format
+msgid "could not write block %u in file \"%s\": wrote %d of %d"
+msgstr "%u 블럭을 \"%s\" 파일에 쓸 수 없음: %d / %d 바이트만 씀"
+
+#: pg_checksums.c:285
+#, c-format
+msgid "checksums verified in file \"%s\""
+msgstr "\"%s\" 파일 체크섬 검사 마침"
+
+#: pg_checksums.c:287
+#, c-format
+msgid "checksums enabled in file \"%s\""
+msgstr "\"%s\" 파일 체크섬 활성화 함"
+
+#: pg_checksums.c:318
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리 열 수 없음: %m"
+
+#: pg_checksums.c:342 pg_checksums.c:415
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "\"%s\" 파일의 상태값을 알 수 없음: %m"
+
+#: pg_checksums.c:366
+#, c-format
+msgid "invalid segment number %d in file name \"%s\""
+msgstr "잘못된 조각 번호 %d, 해당 파일: \"%s\""
+
+#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:546
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
+
+#: pg_checksums.c:527
+#, c-format
+msgid "no data directory specified"
+msgstr "데이터 디렉터리를 지정하지 않았음"
+
+#: pg_checksums.c:536
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "너무 많은 명령행 인수를 지정했음 (처음 \"%s\")"
+
+#: pg_checksums.c:545
+#, c-format
+msgid "option -f/--filenode can only be used with --check"
+msgstr "-f/--filenode 옵션은 --check 옵션만 사용할 수 있음"
+
+#: pg_checksums.c:553
+#, c-format
+msgid "pg_control CRC value is incorrect"
+msgstr "pg_control CRC 값이 잘못되었음"
+
+#: pg_checksums.c:556
+#, c-format
+msgid "cluster is not compatible with this version of pg_checksums"
+msgstr "해당 클러스터는 이 버전 pg_checksum과 호환되지 않음"
+
+#: pg_checksums.c:560
+#, c-format
+msgid "database cluster is not compatible"
+msgstr "데이터베이스 클러스터는 호환되지 않음"
+
+#: pg_checksums.c:561
+#, c-format
+msgid ""
+"The database cluster was initialized with block size %u, but pg_checksums "
+"was compiled with block size %u."
+msgstr ""
+"이 데이터베이스 클러스터는 %u 블록 크기로 초기화 되었지만, pg_checksum은 %u "
+"블록 크기로 컴파일 되어있습니다."
+
+#: pg_checksums.c:573
+#, c-format
+msgid "cluster must be shut down"
+msgstr "먼저 서버가 중지되어야 함"
+
+#: pg_checksums.c:577
+#, c-format
+msgid "data checksums are not enabled in cluster"
+msgstr "이 클러스터는 자료 체크섬이 비활성화 상태임"
+
+#: pg_checksums.c:581
+#, c-format
+msgid "data checksums are already disabled in cluster"
+msgstr "이 클러스터는 이미 자료 체크섬이 비활성화 상태임"
+
+#: pg_checksums.c:585
+#, c-format
+msgid "data checksums are already enabled in cluster"
+msgstr "이 클러스터는 이미 자료 체크섬이 활성화 상태임"
+
+#: pg_checksums.c:609
+#, c-format
+msgid "Checksum operation completed\n"
+msgstr "체크섬 작업 완료\n"
+
+#: pg_checksums.c:610
+#, c-format
+msgid "Files scanned:   %lld\n"
+msgstr "조사한 파일수: %lld\n"
+
+#: pg_checksums.c:611
+#, c-format
+msgid "Blocks scanned:  %lld\n"
+msgstr "조사한 블럭수: %lld\n"
+
+#: pg_checksums.c:614
+#, c-format
+msgid "Bad checksums:  %lld\n"
+msgstr "잘못된 체크섬: %lld\n"
+
+#: pg_checksums.c:615 pg_checksums.c:647
+#, c-format
+msgid "Data checksum version: %u\n"
+msgstr "자료 체크섬 버전: %u\n"
+
+#: pg_checksums.c:622
+#, c-format
+msgid "Files written:  %lld\n"
+msgstr "기록한 파일수: %lld\n"
+
+#: pg_checksums.c:623
+#, c-format
+msgid "Blocks written: %lld\n"
+msgstr "기록한 블럭수: %lld\n"
+
+#: pg_checksums.c:639
+#, c-format
+msgid "syncing data directory"
+msgstr "데이터 디렉터리 fsync 중"
+
+#: pg_checksums.c:643
+#, c-format
+msgid "updating control file"
+msgstr "컨트롤 파일 바꾸는 중"
+
+#: pg_checksums.c:649
+#, c-format
+msgid "Checksums enabled in cluster\n"
+msgstr "이 클러스터는 자료 체크섬 옵션이 활성화 되었음\n"
+
+#: pg_checksums.c:651
+#, c-format
+msgid "Checksums disabled in cluster\n"
+msgstr "이 클러스터는 자료 체크섬 옵션이 비활성화 되었음\n"
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "자제한 사항은 \"%s --help\" 명령으로 살펴보십시오.\n"
+
+#, c-format
+#~ msgid "fatal: "
+#~ msgstr "심각: "
+
+#, c-format
+#~ msgid "invalid filenode specification, must be numeric: %s"
+#~ msgstr "파일노드 값이 이상함. 이 값은 숫자여야 함: %s"

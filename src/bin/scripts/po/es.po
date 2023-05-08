@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-24 23:20+0000\n"
+"POT-Creation-Date: 2023-05-07 16:49+0000\n"
 "PO-Revision-Date: 2022-11-04 13:14+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -1189,11 +1189,3 @@ msgid ""
 msgstr ""
 "\n"
 "Lea la descripción de la orden VACUUM de SQL para obtener mayores detalles.\n"
-
-#, c-format
-#~ msgid "only one of --locale and --lc-ctype can be specified"
-#~ msgstr "sólo uno de --locale y --lc-ctype puede ser especificado"
-
-#, c-format
-#~ msgid "only one of --locale and --lc-collate can be specified"
-#~ msgstr "sólo uno de --locale y --lc-collate puede ser especificado"
