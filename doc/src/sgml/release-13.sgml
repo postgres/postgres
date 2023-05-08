@@ -35,6 +35,76 @@
 
     <listitem>
 <!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [681d9e462] 2023-05-08 06:14:07 -0700
+Branch: REL_15_STABLE [dbd5795e7] 2023-05-08 06:14:11 -0700
+Branch: REL_14_STABLE [01e8182c7] 2023-05-08 06:14:11 -0700
+Branch: REL_13_STABLE [2212f7db8] 2023-05-08 06:14:12 -0700
+Branch: REL_12_STABLE [78119a0bf] 2023-05-08 06:14:12 -0700
+Branch: REL_11_STABLE [23cb8eaeb] 2023-05-08 06:14:12 -0700
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8d525d7b9] 2023-05-08 11:24:47 -0400
+Branch: REL_15_STABLE [1b761d896] 2023-05-08 11:24:47 -0400
+Branch: REL_14_STABLE [1913f63dc] 2023-05-08 11:24:47 -0400
+Branch: REL_13_STABLE [feb9e7fbb] 2023-05-08 11:24:47 -0400
+Branch: REL_12_STABLE [2cd843cc9] 2023-05-08 11:24:47 -0400
+Branch: REL_11_STABLE [766e06140] 2023-05-08 11:24:47 -0400
+-->
+     <para>
+      Prevent <command>CREATE SCHEMA</command> from defeating changes
+      in <varname>search_path</varname> (Alexander Lakhin)
+     </para>
+
+     <para>
+      Within a <command>CREATE SCHEMA</command> command, objects in the
+      prevailing <varname>search_path</varname>, as well as those in the
+      newly-created schema, would be visible even within a called
+      function or script that attempted to set a
+      secure <varname>search_path</varname>.  This could allow any user
+      having permission to create a schema to hijack the privileges of a
+      security definer function or extension script.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Alexander Lakhin for reporting this problem.
+      (CVE-2023-2454)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ca73753b0] 2023-05-08 10:12:44 -0400
+Branch: REL_15_STABLE [04e560604] 2023-05-08 10:12:44 -0400
+Branch: REL_14_STABLE [f8d799eda] 2023-05-08 10:12:44 -0400
+Branch: REL_13_STABLE [b8e28f04f] 2023-05-08 10:12:44 -0400
+Branch: REL_12_STABLE [ee87b482c] 2023-05-08 10:12:45 -0400
+Branch: REL_11_STABLE [473626cf0] 2023-05-08 10:12:45 -0400
+-->
+     <para>
+      Enforce row-level security policies correctly after inlining a
+      set-returning function (Stephen Frost, Tom Lane)
+     </para>
+
+     <para>
+      If a set-returning SQL-language function refers to a table having
+      row-level security policies, and it can be inlined into a calling
+      query, those RLS policies would not get enforced properly in some
+      cases involving re-using a cached plan under a different role.
+      This could allow a user to see or modify rows that should have been
+      invisible.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Wolfgang Walther for reporting this problem.
+      (CVE-2023-2455)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [4dadd660f] 2023-04-28 19:29:12 +0900
 Branch: REL_15_STABLE [b9ad73ad2] 2023-04-28 19:29:36 +0900
