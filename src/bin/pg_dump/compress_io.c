@@ -106,7 +106,7 @@ supports_compression(const pg_compress_specification compression_spec)
 #endif
 
 	if (!supported)
-		return psprintf("this build does not support compression with %s",
+		return psprintf(_("this build does not support compression with %s"),
 						get_compress_algorithm_name(algorithm));
 
 	return NULL;
