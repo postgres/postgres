@@ -24,7 +24,6 @@ LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_reg
 CREATE USER regress_sepgsql_test_user;
 CREATE SCHEMA regtest_schema;
 LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema" permissive=0
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public" permissive=0
 GRANT ALL ON SCHEMA regtest_schema TO regress_sepgsql_test_user;
 SET search_path = regtest_schema, public;
 CREATE TABLE regtest_table (x serial primary key, y text);
