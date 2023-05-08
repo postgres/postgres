@@ -3457,6 +3457,10 @@ OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
 /*
  * PushOverrideSearchPath - temporarily override the search path
  *
+ * Do not use this function; almost any usage introduces a security
+ * vulnerability.  It exists for the benefit of legacy code running in
+ * non-security-sensitive environments.
+ *
  * We allow nested overrides, hence the push/pop terminology.  The GUC
  * search_path variable is ignored while an override is active.
  *
