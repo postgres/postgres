@@ -22,6 +22,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    parallel.h \
                    pg_backup_utils.c \
                    pg_backup_utils.h \
+                   ../../common/compression.c \
                    ../../common/exec.c \
                    ../../common/fe_memutils.c \
                    ../../common/wait_error.c \
