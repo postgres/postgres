@@ -5143,6 +5143,13 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 */
 	record_plan_function_dependency(root, func_oid);
 
+	/*
+	 * We must also notice if the inserted query adds a dependency on the
+	 * calling role due to RLS quals.
+	 */
+	if (querytree->hasRowSecurity)
+		root->glob->dependsOnRole = true;
+
 	return querytree;
 
 	/* Here if func is not inlinable: release temp memory and return NULL */
