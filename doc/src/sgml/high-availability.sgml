@@ -1873,10 +1873,16 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    <para>
-    Experienced users should note that both row version cleanup and row version
-    freezing will potentially conflict with standby queries. Running a manual
-    <command>VACUUM FREEZE</command> is likely to cause conflicts even on tables with
-    no updated or deleted rows.
+    Row version cleanup isn't the only potential cause of conflicts with
+    standby queries.  All index-only scans (including those that run on
+    standbys) must use an <acronym>MVCC</acronym> snapshot that
+    <quote>agrees</quote> with the visibility map.  Conflicts are therefore
+    required whenever <command>VACUUM</command> <link
+     linkend="vacuum-for-visibility-map">sets a page as all-visible in the
+     visibility map</link> containing one or more rows
+    <emphasis>not</emphasis> visible to all standby queries.  So even running
+    <command>VACUUM</command> against a table with no updated or deleted rows
+    requiring cleanup might lead to conflicts.
    </para>
 
    <para>
