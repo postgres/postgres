@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 20:25+0000\n"
+"POT-Creation-Date: 2023-05-07 16:54+0000\n"
 "PO-Revision-Date: 2019-06-06 17:26-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -128,63 +128,63 @@ msgstr "función de disparador de PL/Python retorno «MODIFY» en un disparador 
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "Se esperaba None, «OK», «SKIP» o «MODIFY»."
 
-#: plpy_exec.c:443
+#: plpy_exec.c:448
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "PyList_SetItem() falló, mientras se inicializaban los argumentos"
 
-#: plpy_exec.c:447
+#: plpy_exec.c:452
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "PyDict_SetItemString() falló, mientras se inicializaban los argumentos"
 
-#: plpy_exec.c:459
+#: plpy_exec.c:464
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
 
-#: plpy_exec.c:676
+#: plpy_exec.c:681
 #, c-format
 msgid "while creating return value"
 msgstr "mientras se creaba el valor de retorno"
 
-#: plpy_exec.c:910
+#: plpy_exec.c:928
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] borrado, no se puede modicar el registro"
 
-#: plpy_exec.c:915
+#: plpy_exec.c:933
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] no es un diccionario"
 
-#: plpy_exec.c:942
+#: plpy_exec.c:960
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "el nombre del atributo de TD[\"new\"] en la posición %d no es una cadena"
 
-#: plpy_exec.c:949
+#: plpy_exec.c:967
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "la llave «%s» en TD[\"new\"] no existe como columna en la fila disparadora"
 
-#: plpy_exec.c:954
+#: plpy_exec.c:972
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
 
-#: plpy_exec.c:959
+#: plpy_exec.c:977
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "no se puede definir el atributo generado «%s»"
 
-#: plpy_exec.c:1017
+#: plpy_exec.c:1035
 #, c-format
 msgid "while modifying trigger row"
 msgstr "mientras se modificaba la fila de disparador"
 
 # FIXME not very happy with this
-#: plpy_exec.c:1075
+#: plpy_exec.c:1093
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "abortando una subtransacción que no se ha cerrado"
@@ -353,102 +353,92 @@ msgstr "no se ha entrado en esta subtransacción"
 msgid "there is no subtransaction to exit from"
 msgstr "no hay una subtransacción de la cual salir"
 
-#: plpy_typeio.c:587
+#: plpy_typeio.c:588
 #, c-format
 msgid "could not import a module for Decimal constructor"
 msgstr "no se pudo importar un módulo para el constructor Decimal"
 
-#: plpy_typeio.c:591
+#: plpy_typeio.c:592
 #, c-format
 msgid "no Decimal attribute in module"
 msgstr "no se encontró atributo Decimal en el módulo"
 
-#: plpy_typeio.c:597
+#: plpy_typeio.c:598
 #, c-format
 msgid "conversion from numeric to Decimal failed"
 msgstr "falló la conversión de numeric a Decimal"
 
-#: plpy_typeio.c:911
+#: plpy_typeio.c:912
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "no se pudo crear la representación de cadena de bytes de Python"
 
-#: plpy_typeio.c:1056
+#: plpy_typeio.c:1057
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "no se pudo crear la representación de cadena de texto del objeto de Python"
 
-#: plpy_typeio.c:1067
+#: plpy_typeio.c:1068
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "no se pudo convertir el objeto Python a un cstring: la representación de cadena Python parece tener bytes nulos (\\0)"
 
-#: plpy_typeio.c:1178
-#, c-format
-msgid "number of array dimensions exceeds the maximum allowed (%d)"
-msgstr "el número de dimensiones del array excede el máximo permitido (%d)"
-
-#: plpy_typeio.c:1183
-#, c-format
-msgid "could not determine sequence length for function return value"
-msgstr "no se pudo determinar el largo de secuencia del retorno de valor de la función"
-
-#: plpy_typeio.c:1188 plpy_typeio.c:1194
-#, c-format
-msgid "array size exceeds the maximum allowed"
-msgstr "el tamaño del array excede el máximo permitido"
-
-#: plpy_typeio.c:1222
+#: plpy_typeio.c:1165
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "el valor de retorno de la función con tipo de retorno array no es una secuencia Python"
 
-#: plpy_typeio.c:1269
+#: plpy_typeio.c:1210
 #, c-format
-msgid "wrong length of inner sequence: has length %d, but %d was expected"
-msgstr "largo incorrecto de secuencia interna: tiene largo %d, pero se esperaba %d"
+msgid "could not determine sequence length for function return value"
+msgstr "no se pudo determinar el largo de secuencia del retorno de valor de la función"
 
-#: plpy_typeio.c:1271
+#: plpy_typeio.c:1230 plpy_typeio.c:1245 plpy_typeio.c:1261
 #, c-format
-msgid "To construct a multidimensional array, the inner sequences must all have the same length."
-msgstr "Para construir un array multidimensional, las secuencias internas deben tener todas el mismo largo."
+msgid "multidimensional arrays must have array expressions with matching dimensions"
+msgstr "los arrays multidimensionales deben tener expresiones de arrays con dimensiones coincidentes"
 
-#: plpy_typeio.c:1350
+#: plpy_typeio.c:1235
+#, c-format
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "el número de dimensiones del array excede el máximo permitido (%d)"
+
+#: plpy_typeio.c:1337
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "literal de record no es válido: «%s»"
 
-#: plpy_typeio.c:1351
+#: plpy_typeio.c:1338
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Falta paréntesis izquierdo."
 
-#: plpy_typeio.c:1352 plpy_typeio.c:1553
+#: plpy_typeio.c:1339 plpy_typeio.c:1540
 #, c-format
 msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
 msgstr "Para retornar un tipo compuesto en un array, retorne el tipo compuesto como una tupla de Python, e.g., «[('foo',)]»."
 
-#: plpy_typeio.c:1399
+#: plpy_typeio.c:1386
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "la llave «%s» no fue encontrada en el mapa"
 
-#: plpy_typeio.c:1400
+#: plpy_typeio.c:1387
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Para retornar null en una columna, agregue el valor None al mapa, con llave llamada igual que la columna."
 
-#: plpy_typeio.c:1453
+#: plpy_typeio.c:1440
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "el tamaño de la secuencia retornada no concuerda con el número de columnas de la fila"
 
-#: plpy_typeio.c:1551
+#: plpy_typeio.c:1538
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "el atributo «%s» no existe en el objeto Python"
 
-#: plpy_typeio.c:1554
+#: plpy_typeio.c:1541
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Para retornar null en una columna, haga que el objeto retornado tenga un atributo llamado igual que la columna, con valor None."

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 20:33+0000\n"
+"POT-Creation-Date: 2023-05-07 17:01+0000\n"
 "PO-Revision-Date: 2021-05-20 23:11-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -27,42 +27,42 @@ msgstr ""
 msgid "not recorded"
 msgstr "no registrado"
 
-#: ../../common/exec.c:141 ../../common/exec.c:258 ../../common/exec.c:304
+#: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "no se pudo identificar el directorio actual: %m"
 
-#: ../../common/exec.c:160
+#: ../../common/exec.c:168
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "el binario «%s» no es válido"
 
-#: ../../common/exec.c:210
+#: ../../common/exec.c:218
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "no se pudo leer el binario «%s»"
 
-#: ../../common/exec.c:218
+#: ../../common/exec.c:226
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "no se pudo encontrar un «%s» para ejecutar"
 
-#: ../../common/exec.c:274 ../../common/exec.c:313
+#: ../../common/exec.c:282 ../../common/exec.c:321
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "no se pudo cambiar al directorio «%s»: %m"
 
-#: ../../common/exec.c:291
+#: ../../common/exec.c:299
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "no se pudo leer el enlace simbólico «%s»: %m"
 
-#: ../../common/exec.c:414
+#: ../../common/exec.c:422
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() falló: %m"
 
-#: ../../common/exec.c:527 ../../common/exec.c:572 ../../common/exec.c:664
+#: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
 msgid "out of memory"
 msgstr "memoria agotada"
 
