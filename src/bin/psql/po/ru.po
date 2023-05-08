@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-02-03 15:08+0300\n"
+"POT-Creation-Date: 2023-05-03 05:57+0300\n"
 "PO-Revision-Date: 2023-02-03 15:12+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -36,42 +36,42 @@ msgstr "ошибка: "
 msgid "warning: "
 msgstr "предупреждение: "
 
-#: ../../common/exec.c:143 ../../common/exec.c:260 ../../common/exec.c:306
+#: ../../common/exec.c:151 ../../common/exec.c:268 ../../common/exec.c:314
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "не удалось определить текущий каталог: %m"
 
-#: ../../common/exec.c:162
+#: ../../common/exec.c:170
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "неверный исполняемый файл \"%s\""
 
-#: ../../common/exec.c:212
+#: ../../common/exec.c:220
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "не удалось прочитать исполняемый файл \"%s\""
 
-#: ../../common/exec.c:220
+#: ../../common/exec.c:228
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "не удалось найти запускаемый файл \"%s\""
 
-#: ../../common/exec.c:276 ../../common/exec.c:315
+#: ../../common/exec.c:284 ../../common/exec.c:323
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "не удалось перейти в каталог \"%s\": %m"
 
-#: ../../common/exec.c:293
+#: ../../common/exec.c:301
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
 
-#: ../../common/exec.c:546
+#: ../../common/exec.c:554
 #, c-format
 msgid "pclose failed: %m"
 msgstr "ошибка pclose: %m"
 
-#: ../../common/exec.c:675 ../../common/exec.c:720 ../../common/exec.c:812
+#: ../../common/exec.c:708 ../../common/exec.c:753 ../../common/exec.c:845
 #: command.c:1219 command.c:3062 command.c:3111 command.c:3228 input.c:228
 #: mainloop.c:82 mainloop.c:386
 #, c-format

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-03 04:28+0000\n"
+"POT-Creation-Date: 2023-05-07 17:26+0000\n"
 "PO-Revision-Date: 2020-05-17 02:26-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -926,7 +926,7 @@ msgstr "Verificando la presencia de las bibliotecas requeridas"
 msgid "could not load library \"%s\": %s"
 msgstr "no se pudo cargar la biblioteca «%s»: %s"
 
-#: function.c:259 info.c:633
+#: function.c:259 info.c:632
 #, c-format
 msgid "Database: %s\n"
 msgstr "Base de datos: %s\n"
@@ -1002,7 +1002,7 @@ msgstr "mapeos para la base de datos «%s»:\n"
 msgid "%s.%s: %u to %u\n"
 msgstr "%s.%s: %u a %u\n"
 
-#: info.c:299 info.c:635
+#: info.c:299 info.c:634
 #, c-format
 msgid ""
 "\n"
@@ -1029,7 +1029,7 @@ msgstr ""
 "\n"
 "bases de datos de destino:\n"
 
-#: info.c:646
+#: info.c:645
 #, c-format
 msgid "relname: %s.%s: reloid: %u reltblspace: %s\n"
 msgstr "relname: %s.%s: reloid: %u reltblspace: %s\n"

@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-06-15 08:25+0000\n"
-"PO-Revision-Date: 2022-06-19 10:10\n"
+"POT-Creation-Date: 2023-04-18 19:54+0000\n"
+"PO-Revision-Date: 2023-04-19 15:37\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -32,42 +32,42 @@ msgstr "помилка: "
 msgid "warning: "
 msgstr "попередження: "
 
-#: ../../common/exec.c:143 ../../common/exec.c:260 ../../common/exec.c:306
+#: ../../common/exec.c:151 ../../common/exec.c:268 ../../common/exec.c:314
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "не вдалося визначити поточний каталог: %m"
 
-#: ../../common/exec.c:162
+#: ../../common/exec.c:170
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "невірний бінарний файл \"%s\""
 
-#: ../../common/exec.c:212
+#: ../../common/exec.c:220
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "неможливо прочитати бінарний файл \"%s\""
 
-#: ../../common/exec.c:220
+#: ../../common/exec.c:228
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "неможливо знайти \"%s\" для виконання"
 
-#: ../../common/exec.c:276 ../../common/exec.c:315
+#: ../../common/exec.c:284 ../../common/exec.c:323
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "не вдалося змінити каталог на \"%s\": %m"
 
-#: ../../common/exec.c:293
+#: ../../common/exec.c:301
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не можливо прочитати символічне послання \"%s\": %m"
 
-#: ../../common/exec.c:546
+#: ../../common/exec.c:554
 #, c-format
 msgid "pclose failed: %m"
 msgstr "помилка pclose: %m"
 
-#: ../../common/exec.c:675 ../../common/exec.c:720 ../../common/exec.c:812
+#: ../../common/exec.c:708 ../../common/exec.c:753 ../../common/exec.c:845
 #: command.c:1219 command.c:3062 command.c:3111 command.c:3228 input.c:228
 #: mainloop.c:82 mainloop.c:386
 #, c-format
@@ -223,7 +223,7 @@ msgstr "Ви під'єднані до бази даних \"%s\" як корис
 msgid "no query buffer"
 msgstr "немає буферу запитів"
 
-#: command.c:964 command.c:4995
+#: command.c:964 command.c:5003
 #, c-format
 msgid "invalid line number: %s"
 msgstr "невірний номер рядка: %s"
@@ -247,7 +247,7 @@ msgstr "Без змін"
 msgid "%s: invalid encoding name or conversion procedure not found"
 msgstr "%s: невірне ім'я кодування або не знайдено процедуру конверсії"
 
-#: command.c:1215 command.c:1865 command.c:3058 command.c:3250 command.c:5097
+#: command.c:1215 command.c:1865 command.c:3058 command.c:3250 command.c:5105
 #: common.c:177 common.c:226 common.c:537 common.c:1385 common.c:1413
 #: common.c:1522 common.c:1625 common.c:1663 copy.c:490 copy.c:709 help.c:63
 #: large_obj.c:157 large_obj.c:192 large_obj.c:254 startup.c:303
@@ -709,7 +709,7 @@ msgstr "%s\t%s (кожні %g сек)\n"
 msgid "%s (every %gs)\n"
 msgstr "%s (кожні %g сек)\n"
 
-#: command.c:4691 command.c:4698 common.c:697 common.c:704 common.c:1368
+#: command.c:4699 command.c:4706 common.c:697 common.c:704 common.c:1368
 #, c-format
 msgid "********* QUERY **********\n"
 "%s\n"
@@ -718,12 +718,12 @@ msgstr "********* ЗАПИТ **********\n"
 "%s\n"
 "**************************\n\n"
 
-#: command.c:4890
+#: command.c:4898
 #, c-format
 msgid "\"%s.%s\" is not a view"
 msgstr "\"%s.%s\" не є поданням"
 
-#: command.c:4906
+#: command.c:4914
 #, c-format
 msgid "could not parse reloptions array"
 msgstr "неможливо розібрати масив reloptions"
@@ -3749,8 +3749,8 @@ msgstr "%s: бракує пам'яті"
 #: sql_help.c:3495 sql_help.c:3503 sql_help.c:3511 sql_help.c:3519
 #: sql_help.c:3527 sql_help.c:3544 sql_help.c:3553 sql_help.c:3561
 #: sql_help.c:3578 sql_help.c:3593 sql_help.c:3866 sql_help.c:3917
-#: sql_help.c:3946 sql_help.c:3954 sql_help.c:4398 sql_help.c:4446
-#: sql_help.c:4587
+#: sql_help.c:3946 sql_help.c:3954 sql_help.c:4406 sql_help.c:4454
+#: sql_help.c:4602
 msgid "name"
 msgstr "назва"
 
@@ -3838,7 +3838,7 @@ msgstr "тип_аргументу"
 #: sql_help.c:1656 sql_help.c:1895 sql_help.c:1902 sql_help.c:2195
 #: sql_help.c:2245 sql_help.c:2252 sql_help.c:2261 sql_help.c:2348
 #: sql_help.c:2560 sql_help.c:2652 sql_help.c:2923 sql_help.c:3104
-#: sql_help.c:3126 sql_help.c:3614 sql_help.c:3785 sql_help.c:4648
+#: sql_help.c:3126 sql_help.c:3614 sql_help.c:3785 sql_help.c:4663
 msgid "option"
 msgstr "параметр"
 
@@ -3870,7 +3870,7 @@ msgstr "новий_табл_простір"
 #: sql_help.c:942 sql_help.c:945 sql_help.c:1007 sql_help.c:1009
 #: sql_help.c:1010 sql_help.c:1141 sql_help.c:1144 sql_help.c:1585
 #: sql_help.c:1589 sql_help.c:1592 sql_help.c:2315 sql_help.c:2513
-#: sql_help.c:3971 sql_help.c:4387
+#: sql_help.c:3971 sql_help.c:4394
 msgid "configuration_parameter"
 msgstr "параметр_конфігурації"
 
@@ -3885,7 +3885,8 @@ msgstr "параметр_конфігурації"
 #: sql_help.c:2514 sql_help.c:2515 sql_help.c:2532 sql_help.c:2653
 #: sql_help.c:2683 sql_help.c:2788 sql_help.c:2801 sql_help.c:2815
 #: sql_help.c:2856 sql_help.c:2880 sql_help.c:2897 sql_help.c:2924
-#: sql_help.c:3127 sql_help.c:3786 sql_help.c:4388 sql_help.c:4389
+#: sql_help.c:3127 sql_help.c:3786 sql_help.c:4395 sql_help.c:4396
+#: sql_help.c:4397 sql_help.c:4398
 msgid "value"
 msgstr "значення"
 
@@ -3915,7 +3916,7 @@ msgstr "де скорочено_GRANT_або_REVOKE є одним з:"
 #: sql_help.c:2565 sql_help.c:2566 sql_help.c:2567 sql_help.c:2568
 #: sql_help.c:2569 sql_help.c:3109 sql_help.c:3110 sql_help.c:3111
 #: sql_help.c:3112 sql_help.c:3113 sql_help.c:3765 sql_help.c:3769
-#: sql_help.c:4107 sql_help.c:4111 sql_help.c:4408
+#: sql_help.c:4107 sql_help.c:4111 sql_help.c:4416
 msgid "role_name"
 msgstr "ім'я_ролі"
 
@@ -3924,15 +3925,15 @@ msgstr "ім'я_ролі"
 #: sql_help.c:2147 sql_help.c:2151 sql_help.c:2265 sql_help.c:2270
 #: sql_help.c:2375 sql_help.c:2783 sql_help.c:2796 sql_help.c:2810
 #: sql_help.c:2819 sql_help.c:2831 sql_help.c:2860 sql_help.c:3817
-#: sql_help.c:3832 sql_help.c:3834 sql_help.c:4273 sql_help.c:4274
-#: sql_help.c:4283 sql_help.c:4324 sql_help.c:4325 sql_help.c:4326
-#: sql_help.c:4327 sql_help.c:4328 sql_help.c:4329 sql_help.c:4362
-#: sql_help.c:4363 sql_help.c:4368 sql_help.c:4373 sql_help.c:4512
-#: sql_help.c:4513 sql_help.c:4522 sql_help.c:4563 sql_help.c:4564
-#: sql_help.c:4565 sql_help.c:4566 sql_help.c:4567 sql_help.c:4568
-#: sql_help.c:4615 sql_help.c:4617 sql_help.c:4674 sql_help.c:4730
-#: sql_help.c:4731 sql_help.c:4740 sql_help.c:4781 sql_help.c:4782
-#: sql_help.c:4783 sql_help.c:4784 sql_help.c:4785 sql_help.c:4786
+#: sql_help.c:3832 sql_help.c:3834 sql_help.c:4275 sql_help.c:4276
+#: sql_help.c:4285 sql_help.c:4331 sql_help.c:4332 sql_help.c:4333
+#: sql_help.c:4334 sql_help.c:4335 sql_help.c:4336 sql_help.c:4369
+#: sql_help.c:4370 sql_help.c:4375 sql_help.c:4380 sql_help.c:4522
+#: sql_help.c:4523 sql_help.c:4532 sql_help.c:4578 sql_help.c:4579
+#: sql_help.c:4580 sql_help.c:4581 sql_help.c:4582 sql_help.c:4583
+#: sql_help.c:4630 sql_help.c:4632 sql_help.c:4689 sql_help.c:4747
+#: sql_help.c:4748 sql_help.c:4757 sql_help.c:4803 sql_help.c:4804
+#: sql_help.c:4805 sql_help.c:4806 sql_help.c:4807 sql_help.c:4808
 msgid "expression"
 msgstr "вираз"
 
@@ -3999,10 +4000,10 @@ msgstr "тип_цілі"
 
 #: sql_help.c:336 sql_help.c:777 sql_help.c:1791 sql_help.c:2061
 #: sql_help.c:2102 sql_help.c:2166 sql_help.c:2431 sql_help.c:2462
-#: sql_help.c:3000 sql_help.c:4091 sql_help.c:4189 sql_help.c:4302
-#: sql_help.c:4306 sql_help.c:4310 sql_help.c:4313 sql_help.c:4541
-#: sql_help.c:4545 sql_help.c:4549 sql_help.c:4552 sql_help.c:4759
-#: sql_help.c:4763 sql_help.c:4767 sql_help.c:4770
+#: sql_help.c:3000 sql_help.c:4091 sql_help.c:4189 sql_help.c:4304
+#: sql_help.c:4308 sql_help.c:4312 sql_help.c:4315 sql_help.c:4551
+#: sql_help.c:4555 sql_help.c:4559 sql_help.c:4562 sql_help.c:4776
+#: sql_help.c:4780 sql_help.c:4784 sql_help.c:4787
 msgid "function_name"
 msgstr "ім'я_функції"
 
@@ -4082,9 +4083,9 @@ msgstr "дія"
 #: sql_help.c:2841 sql_help.c:2854 sql_help.c:2859 sql_help.c:2877
 #: sql_help.c:3003 sql_help.c:3139 sql_help.c:3734 sql_help.c:3735
 #: sql_help.c:3816 sql_help.c:3831 sql_help.c:3833 sql_help.c:3835
-#: sql_help.c:4076 sql_help.c:4077 sql_help.c:4182 sql_help.c:4333
-#: sql_help.c:4572 sql_help.c:4614 sql_help.c:4616 sql_help.c:4618
-#: sql_help.c:4662 sql_help.c:4790
+#: sql_help.c:4076 sql_help.c:4077 sql_help.c:4182 sql_help.c:4340
+#: sql_help.c:4587 sql_help.c:4629 sql_help.c:4631 sql_help.c:4633
+#: sql_help.c:4677 sql_help.c:4812
 msgid "column_name"
 msgstr "назва_стовпця"
 
@@ -4173,7 +4174,7 @@ msgid "role_specification"
 msgstr "вказання_ролі"
 
 #: sql_help.c:566 sql_help.c:568 sql_help.c:1606 sql_help.c:2120
-#: sql_help.c:2617 sql_help.c:3124 sql_help.c:3569 sql_help.c:4418
+#: sql_help.c:2617 sql_help.c:3124 sql_help.c:3569 sql_help.c:4426
 msgid "user_name"
 msgstr "ім'я_користувача"
 
@@ -4254,10 +4255,10 @@ msgstr "тип_аргументу"
 #: sql_help.c:2876 sql_help.c:2996 sql_help.c:3173 sql_help.c:3390
 #: sql_help.c:3439 sql_help.c:3545 sql_help.c:3731 sql_help.c:3736
 #: sql_help.c:3782 sql_help.c:3814 sql_help.c:4073 sql_help.c:4078
-#: sql_help.c:4181 sql_help.c:4288 sql_help.c:4290 sql_help.c:4339
-#: sql_help.c:4378 sql_help.c:4527 sql_help.c:4529 sql_help.c:4578
-#: sql_help.c:4612 sql_help.c:4661 sql_help.c:4745 sql_help.c:4747
-#: sql_help.c:4796
+#: sql_help.c:4181 sql_help.c:4290 sql_help.c:4292 sql_help.c:4346
+#: sql_help.c:4385 sql_help.c:4537 sql_help.c:4539 sql_help.c:4593
+#: sql_help.c:4627 sql_help.c:4676 sql_help.c:4762 sql_help.c:4764
+#: sql_help.c:4818
 msgid "table_name"
 msgstr "ім'я_таблиці"
 
@@ -4301,8 +4302,8 @@ msgstr "мін_значення"
 msgid "maxvalue"
 msgstr "макс_значення"
 
-#: sql_help.c:1055 sql_help.c:2635 sql_help.c:4286 sql_help.c:4376
-#: sql_help.c:4525 sql_help.c:4678 sql_help.c:4743
+#: sql_help.c:1055 sql_help.c:2635 sql_help.c:4288 sql_help.c:4383
+#: sql_help.c:4535 sql_help.c:4693 sql_help.c:4760
 msgid "start"
 msgstr "початок"
 
@@ -4413,8 +4414,8 @@ msgstr "і обмеження_таблиці:"
 msgid "exclude_element"
 msgstr "об'єкт_виключення"
 
-#: sql_help.c:1360 sql_help.c:2838 sql_help.c:4284 sql_help.c:4374
-#: sql_help.c:4523 sql_help.c:4676 sql_help.c:4741
+#: sql_help.c:1360 sql_help.c:2838 sql_help.c:4286 sql_help.c:4381
+#: sql_help.c:4533 sql_help.c:4691 sql_help.c:4758
 msgid "operator"
 msgstr "оператор"
 
@@ -4494,38 +4495,38 @@ msgstr "ім'я_параметра_представлення"
 msgid "view_option_value"
 msgstr "значення_параметра_представлення"
 
-#: sql_help.c:1657 sql_help.c:1658 sql_help.c:4649 sql_help.c:4650
+#: sql_help.c:1657 sql_help.c:1658 sql_help.c:4664 sql_help.c:4665
 msgid "table_and_columns"
 msgstr "таблиця_і_стовпці"
 
-#: sql_help.c:1659 sql_help.c:1903 sql_help.c:3617 sql_help.c:4651
+#: sql_help.c:1659 sql_help.c:1903 sql_help.c:3617 sql_help.c:4666
 msgid "where option can be one of:"
 msgstr "де параметр може бути одним із:"
 
 #: sql_help.c:1660 sql_help.c:1661 sql_help.c:1905 sql_help.c:1908
 #: sql_help.c:2087 sql_help.c:3618 sql_help.c:3619 sql_help.c:3620
 #: sql_help.c:3621 sql_help.c:3622 sql_help.c:3623 sql_help.c:3624
-#: sql_help.c:4652 sql_help.c:4653 sql_help.c:4654 sql_help.c:4655
-#: sql_help.c:4656 sql_help.c:4657 sql_help.c:4658 sql_help.c:4659
+#: sql_help.c:4667 sql_help.c:4668 sql_help.c:4669 sql_help.c:4670
+#: sql_help.c:4671 sql_help.c:4672 sql_help.c:4673 sql_help.c:4674
 msgid "boolean"
 msgstr "логічний"
 
-#: sql_help.c:1662 sql_help.c:4660
+#: sql_help.c:1662 sql_help.c:4675
 msgid "and table_and_columns is:"
 msgstr "і таблиця_і_стовпці:"
 
-#: sql_help.c:1678 sql_help.c:4434 sql_help.c:4436 sql_help.c:4460
+#: sql_help.c:1678 sql_help.c:4442 sql_help.c:4444 sql_help.c:4468
 msgid "transaction_mode"
 msgstr "режим_транзакції"
 
-#: sql_help.c:1679 sql_help.c:4437 sql_help.c:4461
+#: sql_help.c:1679 sql_help.c:4445 sql_help.c:4469
 msgid "where transaction_mode is one of:"
 msgstr "де режим_транзакції один з:"
 
-#: sql_help.c:1688 sql_help.c:4294 sql_help.c:4303 sql_help.c:4307
-#: sql_help.c:4311 sql_help.c:4314 sql_help.c:4533 sql_help.c:4542
-#: sql_help.c:4546 sql_help.c:4550 sql_help.c:4553 sql_help.c:4751
-#: sql_help.c:4760 sql_help.c:4764 sql_help.c:4768 sql_help.c:4771
+#: sql_help.c:1688 sql_help.c:4296 sql_help.c:4305 sql_help.c:4309
+#: sql_help.c:4313 sql_help.c:4316 sql_help.c:4543 sql_help.c:4552
+#: sql_help.c:4556 sql_help.c:4560 sql_help.c:4563 sql_help.c:4768
+#: sql_help.c:4777 sql_help.c:4781 sql_help.c:4785 sql_help.c:4788
 msgid "argument"
 msgstr "аргумент"
 
@@ -4545,9 +4546,9 @@ msgstr "назва_політики"
 msgid "rule_name"
 msgstr "назва_правила"
 
-#: sql_help.c:1837
-msgid "text"
-msgstr "текст"
+#: sql_help.c:1837 sql_help.c:4212
+msgid "string_literal"
+msgstr "рядковий_літерал"
 
 #: sql_help.c:1862 sql_help.c:3927 sql_help.c:4126
 msgid "transaction_id"
@@ -4563,9 +4564,9 @@ msgid "command"
 msgstr "команда"
 
 #: sql_help.c:1896 sql_help.c:2587 sql_help.c:2999 sql_help.c:3176
-#: sql_help.c:3837 sql_help.c:4277 sql_help.c:4279 sql_help.c:4367
-#: sql_help.c:4369 sql_help.c:4516 sql_help.c:4518 sql_help.c:4621
-#: sql_help.c:4734 sql_help.c:4736
+#: sql_help.c:3837 sql_help.c:4279 sql_help.c:4281 sql_help.c:4374
+#: sql_help.c:4376 sql_help.c:4526 sql_help.c:4528 sql_help.c:4636
+#: sql_help.c:4751 sql_help.c:4753
 msgid "condition"
 msgstr "умова"
 
@@ -4903,7 +4904,7 @@ msgstr "ім'я_перехідного_відношення"
 msgid "arguments"
 msgstr "аргументи"
 
-#: sql_help.c:3051 sql_help.c:4212
+#: sql_help.c:3051
 msgid "label"
 msgstr "мітка"
 
@@ -4991,36 +4992,39 @@ msgstr "роздільник"
 msgid "collatable"
 msgstr "сортувальний"
 
-#: sql_help.c:3172 sql_help.c:3813 sql_help.c:4272 sql_help.c:4361
-#: sql_help.c:4511 sql_help.c:4611 sql_help.c:4729
+#: sql_help.c:3172 sql_help.c:3813 sql_help.c:4274 sql_help.c:4368
+#: sql_help.c:4521 sql_help.c:4626 sql_help.c:4746
 msgid "with_query"
 msgstr "with_запит"
 
-#: sql_help.c:3174 sql_help.c:3815 sql_help.c:4291 sql_help.c:4297
-#: sql_help.c:4300 sql_help.c:4304 sql_help.c:4308 sql_help.c:4316
-#: sql_help.c:4530 sql_help.c:4536 sql_help.c:4539 sql_help.c:4543
-#: sql_help.c:4547 sql_help.c:4555 sql_help.c:4613 sql_help.c:4748
-#: sql_help.c:4754 sql_help.c:4757 sql_help.c:4761 sql_help.c:4765
-#: sql_help.c:4773
+#: sql_help.c:3174 sql_help.c:3815 sql_help.c:4293 sql_help.c:4299
+#: sql_help.c:4302 sql_help.c:4306 sql_help.c:4310 sql_help.c:4318
+#: sql_help.c:4540 sql_help.c:4546 sql_help.c:4549 sql_help.c:4553
+#: sql_help.c:4557 sql_help.c:4565 sql_help.c:4628 sql_help.c:4765
+#: sql_help.c:4771 sql_help.c:4774 sql_help.c:4778 sql_help.c:4782
+#: sql_help.c:4790
 msgid "alias"
 msgstr "псевдонім"
 
-#: sql_help.c:3175 sql_help.c:4276 sql_help.c:4318 sql_help.c:4320
-#: sql_help.c:4366 sql_help.c:4515 sql_help.c:4557 sql_help.c:4559
-#: sql_help.c:4620 sql_help.c:4733 sql_help.c:4775 sql_help.c:4777
+#: sql_help.c:3175 sql_help.c:4278 sql_help.c:4320 sql_help.c:4322
+#: sql_help.c:4325 sql_help.c:4327 sql_help.c:4328 sql_help.c:4329
+#: sql_help.c:4373 sql_help.c:4525 sql_help.c:4567 sql_help.c:4569
+#: sql_help.c:4572 sql_help.c:4574 sql_help.c:4575 sql_help.c:4576
+#: sql_help.c:4635 sql_help.c:4750 sql_help.c:4792 sql_help.c:4794
+#: sql_help.c:4797 sql_help.c:4799 sql_help.c:4800 sql_help.c:4801
 msgid "from_item"
 msgstr "джерело_даних"
 
-#: sql_help.c:3177 sql_help.c:3650 sql_help.c:3894 sql_help.c:4622
+#: sql_help.c:3177 sql_help.c:3650 sql_help.c:3894 sql_help.c:4637
 msgid "cursor_name"
 msgstr "ім'я_курсору"
 
-#: sql_help.c:3178 sql_help.c:3821 sql_help.c:4623
+#: sql_help.c:3178 sql_help.c:3821 sql_help.c:4638
 msgid "output_expression"
 msgstr "вираз_результату"
 
-#: sql_help.c:3179 sql_help.c:3822 sql_help.c:4275 sql_help.c:4364
-#: sql_help.c:4514 sql_help.c:4624 sql_help.c:4732
+#: sql_help.c:3179 sql_help.c:3822 sql_help.c:4277 sql_help.c:4371
+#: sql_help.c:4524 sql_help.c:4639 sql_help.c:4749
 msgid "output_name"
 msgstr "ім'я_результату"
 
@@ -5041,14 +5045,14 @@ msgid "direction"
 msgstr "напрямок"
 
 #: sql_help.c:3651 sql_help.c:3895
-msgid "where direction can be empty or one of:"
-msgstr "де напрямок може бути пустим або одним із:"
+msgid "where direction can be one of:"
+msgstr "де напрямок може бути одним із:"
 
 #: sql_help.c:3652 sql_help.c:3653 sql_help.c:3654 sql_help.c:3655
 #: sql_help.c:3656 sql_help.c:3896 sql_help.c:3897 sql_help.c:3898
-#: sql_help.c:3899 sql_help.c:3900 sql_help.c:4285 sql_help.c:4287
-#: sql_help.c:4375 sql_help.c:4377 sql_help.c:4524 sql_help.c:4526
-#: sql_help.c:4677 sql_help.c:4679 sql_help.c:4742 sql_help.c:4744
+#: sql_help.c:3899 sql_help.c:3900 sql_help.c:4287 sql_help.c:4289
+#: sql_help.c:4382 sql_help.c:4384 sql_help.c:4534 sql_help.c:4536
+#: sql_help.c:4692 sql_help.c:4694 sql_help.c:4759 sql_help.c:4761
 msgid "count"
 msgstr "кількість"
 
@@ -5104,11 +5108,11 @@ msgstr "предикат_індексу"
 msgid "and conflict_action is one of:"
 msgstr "і дія_при_конфлікті одна з:"
 
-#: sql_help.c:3836 sql_help.c:4619
+#: sql_help.c:3836 sql_help.c:4634
 msgid "sub-SELECT"
 msgstr "вкладений-SELECT"
 
-#: sql_help.c:3845 sql_help.c:3908 sql_help.c:4595
+#: sql_help.c:3845 sql_help.c:3908 sql_help.c:4610
 msgid "channel"
 msgstr "канал"
 
@@ -5136,796 +5140,793 @@ msgstr "нова_роль"
 msgid "savepoint_name"
 msgstr "ім'я_точки_збереження"
 
-#: sql_help.c:4278 sql_help.c:4330 sql_help.c:4517 sql_help.c:4569
-#: sql_help.c:4735 sql_help.c:4787
+#: sql_help.c:4280 sql_help.c:4337 sql_help.c:4527 sql_help.c:4584
+#: sql_help.c:4752 sql_help.c:4809
 msgid "grouping_element"
 msgstr "елемент_групування"
 
-#: sql_help.c:4280 sql_help.c:4370 sql_help.c:4519 sql_help.c:4737
+#: sql_help.c:4282 sql_help.c:4377 sql_help.c:4529 sql_help.c:4754
 msgid "window_name"
 msgstr "назва_вікна"
 
-#: sql_help.c:4281 sql_help.c:4371 sql_help.c:4520 sql_help.c:4738
+#: sql_help.c:4283 sql_help.c:4378 sql_help.c:4530 sql_help.c:4755
 msgid "window_definition"
 msgstr "визначення_вікна"
 
-#: sql_help.c:4282 sql_help.c:4296 sql_help.c:4334 sql_help.c:4372
-#: sql_help.c:4521 sql_help.c:4535 sql_help.c:4573 sql_help.c:4739
-#: sql_help.c:4753 sql_help.c:4791
+#: sql_help.c:4284 sql_help.c:4298 sql_help.c:4341 sql_help.c:4379
+#: sql_help.c:4531 sql_help.c:4545 sql_help.c:4588 sql_help.c:4756
+#: sql_help.c:4770 sql_help.c:4813
 msgid "select"
 msgstr "виберіть"
 
-#: sql_help.c:4289 sql_help.c:4528 sql_help.c:4746
+#: sql_help.c:4291 sql_help.c:4538 sql_help.c:4763
 msgid "where from_item can be one of:"
 msgstr "де джерело_даних може бути одним з:"
 
-#: sql_help.c:4292 sql_help.c:4298 sql_help.c:4301 sql_help.c:4305
-#: sql_help.c:4317 sql_help.c:4531 sql_help.c:4537 sql_help.c:4540
-#: sql_help.c:4544 sql_help.c:4556 sql_help.c:4749 sql_help.c:4755
-#: sql_help.c:4758 sql_help.c:4762 sql_help.c:4774
+#: sql_help.c:4294 sql_help.c:4300 sql_help.c:4303 sql_help.c:4307
+#: sql_help.c:4319 sql_help.c:4541 sql_help.c:4547 sql_help.c:4550
+#: sql_help.c:4554 sql_help.c:4566 sql_help.c:4766 sql_help.c:4772
+#: sql_help.c:4775 sql_help.c:4779 sql_help.c:4791
 msgid "column_alias"
 msgstr "псевдонім_стовпця"
 
-#: sql_help.c:4293 sql_help.c:4532 sql_help.c:4750
+#: sql_help.c:4295 sql_help.c:4542 sql_help.c:4767
 msgid "sampling_method"
 msgstr "метод_вибірки"
 
-#: sql_help.c:4295 sql_help.c:4534 sql_help.c:4752
+#: sql_help.c:4297 sql_help.c:4544 sql_help.c:4769
 msgid "seed"
 msgstr "початкове_число"
 
-#: sql_help.c:4299 sql_help.c:4332 sql_help.c:4538 sql_help.c:4571
-#: sql_help.c:4756 sql_help.c:4789
+#: sql_help.c:4301 sql_help.c:4339 sql_help.c:4548 sql_help.c:4586
+#: sql_help.c:4773 sql_help.c:4811
 msgid "with_query_name"
 msgstr "ім'я_запиту_WITH"
 
-#: sql_help.c:4309 sql_help.c:4312 sql_help.c:4315 sql_help.c:4548
-#: sql_help.c:4551 sql_help.c:4554 sql_help.c:4766 sql_help.c:4769
-#: sql_help.c:4772
+#: sql_help.c:4311 sql_help.c:4314 sql_help.c:4317 sql_help.c:4558
+#: sql_help.c:4561 sql_help.c:4564 sql_help.c:4783 sql_help.c:4786
+#: sql_help.c:4789
 msgid "column_definition"
 msgstr "визначення_стовпця"
 
-#: sql_help.c:4319 sql_help.c:4558 sql_help.c:4776
+#: sql_help.c:4321 sql_help.c:4326 sql_help.c:4568 sql_help.c:4573
+#: sql_help.c:4793 sql_help.c:4798
 msgid "join_type"
 msgstr "тип_поєднання"
 
-#: sql_help.c:4321 sql_help.c:4560 sql_help.c:4778
+#: sql_help.c:4323 sql_help.c:4570 sql_help.c:4795
 msgid "join_condition"
 msgstr "умова_поєднання"
 
-#: sql_help.c:4322 sql_help.c:4561 sql_help.c:4779
+#: sql_help.c:4324 sql_help.c:4571 sql_help.c:4796
 msgid "join_column"
 msgstr "стовпець_поєднання"
 
-#: sql_help.c:4323 sql_help.c:4562 sql_help.c:4780
+#: sql_help.c:4330 sql_help.c:4577 sql_help.c:4802
 msgid "and grouping_element can be one of:"
 msgstr "і елемент_групування може бути одним з:"
 
-#: sql_help.c:4331 sql_help.c:4570 sql_help.c:4788
+#: sql_help.c:4338 sql_help.c:4585 sql_help.c:4810
 msgid "and with_query is:"
 msgstr "і запит_WITH:"
 
-#: sql_help.c:4335 sql_help.c:4574 sql_help.c:4792
+#: sql_help.c:4342 sql_help.c:4589 sql_help.c:4814
 msgid "values"
 msgstr "значення"
 
-#: sql_help.c:4336 sql_help.c:4575 sql_help.c:4793
+#: sql_help.c:4343 sql_help.c:4590 sql_help.c:4815
 msgid "insert"
 msgstr "вставка"
 
-#: sql_help.c:4337 sql_help.c:4576 sql_help.c:4794
+#: sql_help.c:4344 sql_help.c:4591 sql_help.c:4816
 msgid "update"
 msgstr "оновлення"
 
-#: sql_help.c:4338 sql_help.c:4577 sql_help.c:4795
+#: sql_help.c:4345 sql_help.c:4592 sql_help.c:4817
 msgid "delete"
 msgstr "видалення"
 
-#: sql_help.c:4365
+#: sql_help.c:4372
 msgid "new_table"
 msgstr "нова_таблиця"
 
-#: sql_help.c:4390
-msgid "timezone"
-msgstr "часовий пояс"
-
-#: sql_help.c:4435
+#: sql_help.c:4443
 msgid "snapshot_id"
 msgstr "код_знімку"
 
-#: sql_help.c:4675
+#: sql_help.c:4690
 msgid "sort_expression"
 msgstr "вираз_сортування"
 
-#: sql_help.c:4802 sql_help.c:5780
+#: sql_help.c:4824 sql_help.c:5802
 msgid "abort the current transaction"
 msgstr "перервати поточну транзакцію"
 
-#: sql_help.c:4808
+#: sql_help.c:4830
 msgid "change the definition of an aggregate function"
 msgstr "змінити визначення агрегатної функції"
 
-#: sql_help.c:4814
+#: sql_help.c:4836
 msgid "change the definition of a collation"
 msgstr "змінити визначення правила сортування"
 
-#: sql_help.c:4820
+#: sql_help.c:4842
 msgid "change the definition of a conversion"
 msgstr "змінити визначення перетворення"
 
-#: sql_help.c:4826
+#: sql_help.c:4848
 msgid "change a database"
 msgstr "змінити базу даних"
 
-#: sql_help.c:4832
+#: sql_help.c:4854
 msgid "define default access privileges"
 msgstr "визначити права доступу за замовчуванням"
 
-#: sql_help.c:4838
+#: sql_help.c:4860
 msgid "change the definition of a domain"
 msgstr "змінити визначення домену"
 
-#: sql_help.c:4844
+#: sql_help.c:4866
 msgid "change the definition of an event trigger"
 msgstr "змінити визначення тригеру події"
 
-#: sql_help.c:4850
+#: sql_help.c:4872
 msgid "change the definition of an extension"
 msgstr "змінити визначення розширення"
 
-#: sql_help.c:4856
+#: sql_help.c:4878
 msgid "change the definition of a foreign-data wrapper"
 msgstr "змінити визначення джерела сторонніх даних"
 
-#: sql_help.c:4862
+#: sql_help.c:4884
 msgid "change the definition of a foreign table"
 msgstr "змінити визначення сторонньої таблиці"
 
-#: sql_help.c:4868
+#: sql_help.c:4890
 msgid "change the definition of a function"
 msgstr "змінити визначення функції"
 
-#: sql_help.c:4874
+#: sql_help.c:4896
 msgid "change role name or membership"
 msgstr "змінити назву ролі або членства"
 
-#: sql_help.c:4880
+#: sql_help.c:4902
 msgid "change the definition of an index"
 msgstr "змінити визначення індексу"
 
-#: sql_help.c:4886
+#: sql_help.c:4908
 msgid "change the definition of a procedural language"
 msgstr "змінити визначення процедурної мови"
 
-#: sql_help.c:4892
+#: sql_help.c:4914
 msgid "change the definition of a large object"
 msgstr "змінити визначення великого об'єкту"
 
-#: sql_help.c:4898
+#: sql_help.c:4920
 msgid "change the definition of a materialized view"
 msgstr "змінити визначення матеріалізованого подання"
 
-#: sql_help.c:4904
+#: sql_help.c:4926
 msgid "change the definition of an operator"
 msgstr "змінити визначення оператора"
 
-#: sql_help.c:4910
+#: sql_help.c:4932
 msgid "change the definition of an operator class"
 msgstr "змінити визначення класа операторів"
 
-#: sql_help.c:4916
+#: sql_help.c:4938
 msgid "change the definition of an operator family"
 msgstr "змінити визначення сімейства операторів"
 
-#: sql_help.c:4922
+#: sql_help.c:4944
 msgid "change the definition of a row level security policy"
 msgstr "змінити визначення політики безпеки на рівні рядків"
 
-#: sql_help.c:4928
+#: sql_help.c:4950
 msgid "change the definition of a procedure"
 msgstr "змінити визначення процедури"
 
-#: sql_help.c:4934
+#: sql_help.c:4956
 msgid "change the definition of a publication"
 msgstr "змінити визначення публікації"
 
-#: sql_help.c:4940 sql_help.c:5042
+#: sql_help.c:4962 sql_help.c:5064
 msgid "change a database role"
 msgstr "змінити роль бази даних"
 
-#: sql_help.c:4946
+#: sql_help.c:4968
 msgid "change the definition of a routine"
 msgstr "змінити визначення підпрограми"
 
-#: sql_help.c:4952
+#: sql_help.c:4974
 msgid "change the definition of a rule"
 msgstr "змінити визначення правила"
 
-#: sql_help.c:4958
+#: sql_help.c:4980
 msgid "change the definition of a schema"
 msgstr "змінити визначення схеми"
 
-#: sql_help.c:4964
+#: sql_help.c:4986
 msgid "change the definition of a sequence generator"
 msgstr "змінити визначення генератору послідовності"
 
-#: sql_help.c:4970
+#: sql_help.c:4992
 msgid "change the definition of a foreign server"
 msgstr "змінити визначення стороннього серверу"
 
-#: sql_help.c:4976
+#: sql_help.c:4998
 msgid "change the definition of an extended statistics object"
 msgstr "змінити визначення об'єкту розширеної статистики"
 
-#: sql_help.c:4982
+#: sql_help.c:5004
 msgid "change the definition of a subscription"
 msgstr "змінити визначення підписки"
 
-#: sql_help.c:4988
+#: sql_help.c:5010
 msgid "change a server configuration parameter"
 msgstr "змінити параметр конфігурації сервера"
 
-#: sql_help.c:4994
+#: sql_help.c:5016
 msgid "change the definition of a table"
 msgstr "змінити визначення таблиці"
 
-#: sql_help.c:5000
+#: sql_help.c:5022
 msgid "change the definition of a tablespace"
 msgstr "змінити визначення табличного простору"
 
-#: sql_help.c:5006
+#: sql_help.c:5028
 msgid "change the definition of a text search configuration"
 msgstr "змінити визначення конфігурації текстового пошуку"
 
-#: sql_help.c:5012
+#: sql_help.c:5034
 msgid "change the definition of a text search dictionary"
 msgstr "змінити визначення словника текстового пошуку"
 
-#: sql_help.c:5018
+#: sql_help.c:5040
 msgid "change the definition of a text search parser"
 msgstr "змінити визначення парсера текстового пошуку"
 
-#: sql_help.c:5024
+#: sql_help.c:5046
 msgid "change the definition of a text search template"
 msgstr "змінити визначення шаблона текстового пошуку"
 
-#: sql_help.c:5030
+#: sql_help.c:5052
 msgid "change the definition of a trigger"
 msgstr "змінити визначення тригеру"
 
-#: sql_help.c:5036
+#: sql_help.c:5058
 msgid "change the definition of a type"
 msgstr "змінити визначення типу"
 
-#: sql_help.c:5048
+#: sql_help.c:5070
 msgid "change the definition of a user mapping"
 msgstr "змінити визначення зіставлень користувачів"
 
-#: sql_help.c:5054
+#: sql_help.c:5076
 msgid "change the definition of a view"
 msgstr "змінити визначення подання"
 
-#: sql_help.c:5060
+#: sql_help.c:5082
 msgid "collect statistics about a database"
 msgstr "зібрати статистику про базу даних"
 
-#: sql_help.c:5066 sql_help.c:5858
+#: sql_help.c:5088 sql_help.c:5880
 msgid "start a transaction block"
 msgstr "розпочати транзакцію"
 
-#: sql_help.c:5072
+#: sql_help.c:5094
 msgid "invoke a procedure"
 msgstr "викликати процедуру"
 
-#: sql_help.c:5078
+#: sql_help.c:5100
 msgid "force a write-ahead log checkpoint"
 msgstr "провести контрольну точку в журналі попереднього запису"
 
-#: sql_help.c:5084
+#: sql_help.c:5106
 msgid "close a cursor"
 msgstr "закрити курсор"
 
-#: sql_help.c:5090
+#: sql_help.c:5112
 msgid "cluster a table according to an index"
 msgstr "перегрупувати таблицю за індексом"
 
-#: sql_help.c:5096
+#: sql_help.c:5118
 msgid "define or change the comment of an object"
 msgstr "задати або змінити коментар об'єкта"
 
-#: sql_help.c:5102 sql_help.c:5660
+#: sql_help.c:5124 sql_help.c:5682
 msgid "commit the current transaction"
 msgstr "затвердити поточну транзакцію"
 
-#: sql_help.c:5108
+#: sql_help.c:5130
 msgid "commit a transaction that was earlier prepared for two-phase commit"
 msgstr "затвердити транзакцію, раніше підготовлену до двохфазного затвердження"
 
-#: sql_help.c:5114
+#: sql_help.c:5136
 msgid "copy data between a file and a table"
 msgstr "копіювати дані між файлом та таблицею"
 
-#: sql_help.c:5120
+#: sql_help.c:5142
 msgid "define a new access method"
 msgstr "визначити новий метод доступу"
 
-#: sql_help.c:5126
+#: sql_help.c:5148
 msgid "define a new aggregate function"
 msgstr "визначити нову агрегатну функцію"
 
-#: sql_help.c:5132
+#: sql_help.c:5154
 msgid "define a new cast"
 msgstr "визначити приведення типів"
 
-#: sql_help.c:5138
+#: sql_help.c:5160
 msgid "define a new collation"
 msgstr "визначити нове правило сортування"
 
-#: sql_help.c:5144
+#: sql_help.c:5166
 msgid "define a new encoding conversion"
 msgstr "визначити нове перетворення кодування"
 
-#: sql_help.c:5150
+#: sql_help.c:5172
 msgid "create a new database"
 msgstr "створити нову базу даних"
 
-#: sql_help.c:5156
+#: sql_help.c:5178
 msgid "define a new domain"
 msgstr "визначити новий домен"
 
-#: sql_help.c:5162
+#: sql_help.c:5184
 msgid "define a new event trigger"
 msgstr "визначити новий тригер події"
 
-#: sql_help.c:5168
+#: sql_help.c:5190
 msgid "install an extension"
 msgstr "встановити розширення"
 
-#: sql_help.c:5174
+#: sql_help.c:5196
 msgid "define a new foreign-data wrapper"
 msgstr "визначити нове джерело сторонніх даних"
 
-#: sql_help.c:5180
+#: sql_help.c:5202
 msgid "define a new foreign table"
 msgstr "визначити нову сторонню таблицю"
 
-#: sql_help.c:5186
+#: sql_help.c:5208
 msgid "define a new function"
 msgstr "визначити нову функцію"
 
-#: sql_help.c:5192 sql_help.c:5252 sql_help.c:5354
+#: sql_help.c:5214 sql_help.c:5274 sql_help.c:5376
 msgid "define a new database role"
 msgstr "визначити нову роль бази даних"
 
-#: sql_help.c:5198
+#: sql_help.c:5220
 msgid "define a new index"
 msgstr "визначити новий індекс"
 
-#: sql_help.c:5204
+#: sql_help.c:5226
 msgid "define a new procedural language"
 msgstr "визначити нову процедурну мову"
 
-#: sql_help.c:5210
+#: sql_help.c:5232
 msgid "define a new materialized view"
 msgstr "визначити нове матеріалізоване подання"
 
-#: sql_help.c:5216
+#: sql_help.c:5238
 msgid "define a new operator"
 msgstr "визначити новий оператор"
 
-#: sql_help.c:5222
+#: sql_help.c:5244
 msgid "define a new operator class"
 msgstr "визначити новий клас оператора"
 
-#: sql_help.c:5228
+#: sql_help.c:5250
 msgid "define a new operator family"
 msgstr "визначити нове сімейство операторів"
 
-#: sql_help.c:5234
+#: sql_help.c:5256
 msgid "define a new row level security policy for a table"
 msgstr "визначити нову політику безпеки на рівні рядків для таблиці"
 
-#: sql_help.c:5240
+#: sql_help.c:5262
 msgid "define a new procedure"
 msgstr "визначити нову процедуру"
 
-#: sql_help.c:5246
+#: sql_help.c:5268
 msgid "define a new publication"
 msgstr "визначити нову публікацію"
 
-#: sql_help.c:5258
+#: sql_help.c:5280
 msgid "define a new rewrite rule"
 msgstr "визначити нове правило перезапису"
 
-#: sql_help.c:5264
+#: sql_help.c:5286
 msgid "define a new schema"
 msgstr "визначити нову схему"
 
-#: sql_help.c:5270
+#: sql_help.c:5292
 msgid "define a new sequence generator"
 msgstr "визначити новий генератор послідовностей"
 
-#: sql_help.c:5276
+#: sql_help.c:5298
 msgid "define a new foreign server"
 msgstr "визначити новий сторонній сервер"
 
-#: sql_help.c:5282
+#: sql_help.c:5304
 msgid "define extended statistics"
 msgstr "визначити розширену статистику"
 
-#: sql_help.c:5288
+#: sql_help.c:5310
 msgid "define a new subscription"
 msgstr "визначити нову підписку"
 
-#: sql_help.c:5294
+#: sql_help.c:5316
 msgid "define a new table"
 msgstr "визначити нову таблицю"
 
-#: sql_help.c:5300 sql_help.c:5816
+#: sql_help.c:5322 sql_help.c:5838
 msgid "define a new table from the results of a query"
 msgstr "визначити нову таблицю з результатів запиту"
 
-#: sql_help.c:5306
+#: sql_help.c:5328
 msgid "define a new tablespace"
 msgstr "визначити новий табличний простір"
 
-#: sql_help.c:5312
+#: sql_help.c:5334
 msgid "define a new text search configuration"
 msgstr "визначити нову конфігурацію текстового пошуку"
 
-#: sql_help.c:5318
+#: sql_help.c:5340
 msgid "define a new text search dictionary"
 msgstr "визначити новий словник текстового пошуку"
 
-#: sql_help.c:5324
+#: sql_help.c:5346
 msgid "define a new text search parser"
 msgstr "визначити новий аналізатор текстового пошуку"
 
-#: sql_help.c:5330
+#: sql_help.c:5352
 msgid "define a new text search template"
 msgstr "визначити новий шаблон текстового пошуку"
 
-#: sql_help.c:5336
+#: sql_help.c:5358
 msgid "define a new transform"
 msgstr "визначити нове перетворення"
 
-#: sql_help.c:5342
+#: sql_help.c:5364
 msgid "define a new trigger"
 msgstr "визначити новий тригер"
 
-#: sql_help.c:5348
+#: sql_help.c:5370
 msgid "define a new data type"
 msgstr "визначити новий тип даних"
 
-#: sql_help.c:5360
+#: sql_help.c:5382
 msgid "define a new mapping of a user to a foreign server"
 msgstr "визначити нове зіставлення користувача для стороннього сервера"
 
-#: sql_help.c:5366
+#: sql_help.c:5388
 msgid "define a new view"
 msgstr "визначити нове подання"
 
-#: sql_help.c:5372
+#: sql_help.c:5394
 msgid "deallocate a prepared statement"
 msgstr "звільнити підготовлену команду"
 
-#: sql_help.c:5378
+#: sql_help.c:5400
 msgid "define a cursor"
 msgstr "визначити курсор"
 
-#: sql_help.c:5384
+#: sql_help.c:5406
 msgid "delete rows of a table"
 msgstr "видалити рядки таблиці"
 
-#: sql_help.c:5390
+#: sql_help.c:5412
 msgid "discard session state"
 msgstr "очистити стан сесії"
 
-#: sql_help.c:5396
+#: sql_help.c:5418
 msgid "execute an anonymous code block"
 msgstr "виконати анонімний блок коду"
 
-#: sql_help.c:5402
+#: sql_help.c:5424
 msgid "remove an access method"
 msgstr "видалити метод доступу"
 
-#: sql_help.c:5408
+#: sql_help.c:5430
 msgid "remove an aggregate function"
 msgstr "видалити агрегатну функцію"
 
-#: sql_help.c:5414
+#: sql_help.c:5436
 msgid "remove a cast"
 msgstr "видалити приведення типів"
 
-#: sql_help.c:5420
+#: sql_help.c:5442
 msgid "remove a collation"
 msgstr "видалити правило сортування"
 
-#: sql_help.c:5426
+#: sql_help.c:5448
 msgid "remove a conversion"
 msgstr "видалити перетворення"
 
-#: sql_help.c:5432
+#: sql_help.c:5454
 msgid "remove a database"
 msgstr "видалити базу даних"
 
-#: sql_help.c:5438
+#: sql_help.c:5460
 msgid "remove a domain"
 msgstr "видалити домен"
 
-#: sql_help.c:5444
+#: sql_help.c:5466
 msgid "remove an event trigger"
 msgstr "видалити тригер події"
 
-#: sql_help.c:5450
+#: sql_help.c:5472
 msgid "remove an extension"
 msgstr "видалити розширення"
 
-#: sql_help.c:5456
+#: sql_help.c:5478
 msgid "remove a foreign-data wrapper"
 msgstr "видалити джерело сторонніх даних"
 
-#: sql_help.c:5462
+#: sql_help.c:5484
 msgid "remove a foreign table"
 msgstr "видалити сторонню таблицю"
 
-#: sql_help.c:5468
+#: sql_help.c:5490
 msgid "remove a function"
 msgstr "видалити функцію"
 
-#: sql_help.c:5474 sql_help.c:5540 sql_help.c:5642
+#: sql_help.c:5496 sql_help.c:5562 sql_help.c:5664
 msgid "remove a database role"
 msgstr "видалити роль бази даних"
 
-#: sql_help.c:5480
+#: sql_help.c:5502
 msgid "remove an index"
 msgstr "видалити індекс"
 
-#: sql_help.c:5486
+#: sql_help.c:5508
 msgid "remove a procedural language"
 msgstr "видалити процедурну мову"
 
-#: sql_help.c:5492
+#: sql_help.c:5514
 msgid "remove a materialized view"
 msgstr "видалити матеріалізоване подання"
 
-#: sql_help.c:5498
+#: sql_help.c:5520
 msgid "remove an operator"
 msgstr "видалити оператор"
 
-#: sql_help.c:5504
+#: sql_help.c:5526
 msgid "remove an operator class"
 msgstr "видалити клас операторів"
 
-#: sql_help.c:5510
+#: sql_help.c:5532
 msgid "remove an operator family"
 msgstr "видалити сімейство операторів"
 
-#: sql_help.c:5516
+#: sql_help.c:5538
 msgid "remove database objects owned by a database role"
 msgstr "видалити об'єкти бази даних, що належать ролі"
 
-#: sql_help.c:5522
+#: sql_help.c:5544
 msgid "remove a row level security policy from a table"
 msgstr "видалити політику безпеки на рівні рядків з таблиці"
 
-#: sql_help.c:5528
+#: sql_help.c:5550
 msgid "remove a procedure"
 msgstr "видалити процедуру"
 
-#: sql_help.c:5534
+#: sql_help.c:5556
 msgid "remove a publication"
 msgstr "видалити публікацію"
 
-#: sql_help.c:5546
+#: sql_help.c:5568
 msgid "remove a routine"
 msgstr "видалити підпрограму"
 
-#: sql_help.c:5552
+#: sql_help.c:5574
 msgid "remove a rewrite rule"
 msgstr "видалити правило перезапису"
 
-#: sql_help.c:5558
+#: sql_help.c:5580
 msgid "remove a schema"
 msgstr "видалити схему"
 
-#: sql_help.c:5564
+#: sql_help.c:5586
 msgid "remove a sequence"
 msgstr "видалити послідовність"
 
-#: sql_help.c:5570
+#: sql_help.c:5592
 msgid "remove a foreign server descriptor"
 msgstr "видалити опис стороннього серверу"
 
-#: sql_help.c:5576
+#: sql_help.c:5598
 msgid "remove extended statistics"
 msgstr "видалити розширену статистику"
 
-#: sql_help.c:5582
+#: sql_help.c:5604
 msgid "remove a subscription"
 msgstr "видалити підписку"
 
-#: sql_help.c:5588
+#: sql_help.c:5610
 msgid "remove a table"
 msgstr "видалити таблицю"
 
-#: sql_help.c:5594
+#: sql_help.c:5616
 msgid "remove a tablespace"
 msgstr "видалити табличний простір"
 
-#: sql_help.c:5600
+#: sql_help.c:5622
 msgid "remove a text search configuration"
 msgstr "видалити конфігурацію тектового пошуку"
 
-#: sql_help.c:5606
+#: sql_help.c:5628
 msgid "remove a text search dictionary"
 msgstr "видалити словник тектового пошуку"
 
-#: sql_help.c:5612
+#: sql_help.c:5634
 msgid "remove a text search parser"
 msgstr "видалити парсер тектового пошуку"
 
-#: sql_help.c:5618
+#: sql_help.c:5640
 msgid "remove a text search template"
 msgstr "видалити шаблон тектового пошуку"
 
-#: sql_help.c:5624
+#: sql_help.c:5646
 msgid "remove a transform"
 msgstr "видалити перетворення"
 
-#: sql_help.c:5630
+#: sql_help.c:5652
 msgid "remove a trigger"
 msgstr "видалити тригер"
 
-#: sql_help.c:5636
+#: sql_help.c:5658
 msgid "remove a data type"
 msgstr "видалити тип даних"
 
-#: sql_help.c:5648
+#: sql_help.c:5670
 msgid "remove a user mapping for a foreign server"
 msgstr "видалити зіставлення користувача для стороннього серверу"
 
-#: sql_help.c:5654
+#: sql_help.c:5676
 msgid "remove a view"
 msgstr "видалити подання"
 
-#: sql_help.c:5666
+#: sql_help.c:5688
 msgid "execute a prepared statement"
 msgstr "виконати підготовлену команду"
 
-#: sql_help.c:5672
+#: sql_help.c:5694
 msgid "show the execution plan of a statement"
 msgstr "показати план виконання команди"
 
-#: sql_help.c:5678
+#: sql_help.c:5700
 msgid "retrieve rows from a query using a cursor"
 msgstr "отримати рядки запиту з курсору"
 
-#: sql_help.c:5684
+#: sql_help.c:5706
 msgid "define access privileges"
 msgstr "визначити права доступу"
 
-#: sql_help.c:5690
+#: sql_help.c:5712
 msgid "import table definitions from a foreign server"
 msgstr "імпортувати визначення таблиць зі стороннього серверу"
 
-#: sql_help.c:5696
+#: sql_help.c:5718
 msgid "create new rows in a table"
 msgstr "створити нові рядки в таблиці"
 
-#: sql_help.c:5702
+#: sql_help.c:5724
 msgid "listen for a notification"
 msgstr "очікувати на повідомлення"
 
-#: sql_help.c:5708
+#: sql_help.c:5730
 msgid "load a shared library file"
 msgstr "завантажити файл спільної бібліотеки"
 
-#: sql_help.c:5714
+#: sql_help.c:5736
 msgid "lock a table"
 msgstr "заблокувати таблицю"
 
-#: sql_help.c:5720
+#: sql_help.c:5742
 msgid "position a cursor"
 msgstr "розташувати курсор"
 
-#: sql_help.c:5726
+#: sql_help.c:5748
 msgid "generate a notification"
 msgstr "згенерувати повідомлення"
 
-#: sql_help.c:5732
+#: sql_help.c:5754
 msgid "prepare a statement for execution"
 msgstr "підготувати команду для виконання"
 
-#: sql_help.c:5738
+#: sql_help.c:5760
 msgid "prepare the current transaction for two-phase commit"
 msgstr "підготувати поточну транзакцію для двохфазного затвердження"
 
-#: sql_help.c:5744
+#: sql_help.c:5766
 msgid "change the ownership of database objects owned by a database role"
 msgstr "змінити власника об'єктів БД, що належать заданій ролі"
 
-#: sql_help.c:5750
+#: sql_help.c:5772
 msgid "replace the contents of a materialized view"
 msgstr "замінити вміст матеріалізованого подання"
 
-#: sql_help.c:5756
+#: sql_help.c:5778
 msgid "rebuild indexes"
 msgstr "перебудувати індекси"
 
-#: sql_help.c:5762
+#: sql_help.c:5784
 msgid "destroy a previously defined savepoint"
 msgstr "видалити раніше визначену точку збереження"
 
-#: sql_help.c:5768
+#: sql_help.c:5790
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "відновити початкове значення параметру виконання"
 
-#: sql_help.c:5774
+#: sql_help.c:5796
 msgid "remove access privileges"
 msgstr "видалити права доступу"
 
-#: sql_help.c:5786
+#: sql_help.c:5808
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
 msgstr "скасувати транзакцію, раніше підготовлену до двохфазного затвердження"
 
-#: sql_help.c:5792
+#: sql_help.c:5814
 msgid "roll back to a savepoint"
 msgstr "відкотитися до точки збереження"
 
-#: sql_help.c:5798
+#: sql_help.c:5820
 msgid "define a new savepoint within the current transaction"
 msgstr "визначити нову точку збереження в рамках поточної транзакції"
 
-#: sql_help.c:5804
+#: sql_help.c:5826
 msgid "define or change a security label applied to an object"
 msgstr "визначити або змінити мітку безпеки, застосовану до об'єкта"
 
-#: sql_help.c:5810 sql_help.c:5864 sql_help.c:5900
+#: sql_help.c:5832 sql_help.c:5886 sql_help.c:5922
 msgid "retrieve rows from a table or view"
 msgstr "отримати рядки з таблиці або подання"
 
-#: sql_help.c:5822
+#: sql_help.c:5844
 msgid "change a run-time parameter"
 msgstr "змінити параметр виконання"
 
-#: sql_help.c:5828
+#: sql_help.c:5850
 msgid "set constraint check timing for the current transaction"
 msgstr "встановити час перевірки обмеження для поточної транзакції"
 
-#: sql_help.c:5834
+#: sql_help.c:5856
 msgid "set the current user identifier of the current session"
 msgstr "встановити ідентифікатор поточного користувача в поточній сесії"
 
-#: sql_help.c:5840
+#: sql_help.c:5862
 msgid "set the session user identifier and the current user identifier of the current session"
 msgstr "встановити ідентифікатор користувача сесії й ідентифікатор поточного користувача в поточній сесії"
 
-#: sql_help.c:5846
+#: sql_help.c:5868
 msgid "set the characteristics of the current transaction"
 msgstr "встановити характеристики поточної транзакції"
 
-#: sql_help.c:5852
+#: sql_help.c:5874
 msgid "show the value of a run-time parameter"
 msgstr "показати значення параметра виконання"
 
-#: sql_help.c:5870
+#: sql_help.c:5892
 msgid "empty a table or set of tables"
 msgstr "очистити таблицю або декілька таблиць"
 
-#: sql_help.c:5876
+#: sql_help.c:5898
 msgid "stop listening for a notification"
 msgstr "припинити очікування повідомлень"
 
-#: sql_help.c:5882
+#: sql_help.c:5904
 msgid "update rows of a table"
 msgstr "змінити рядки таблиці"
 
-#: sql_help.c:5888
+#: sql_help.c:5910
 msgid "garbage-collect and optionally analyze a database"
 msgstr "виконати збір сміття і проаналізувати базу даних"
 
-#: sql_help.c:5894
+#: sql_help.c:5916
 msgid "compute a set of rows"
 msgstr "отримати набір рядків"
 
@@ -5964,7 +5965,7 @@ msgstr "зайвий аргумент \"%s\" проігнорований"
 msgid "could not find own program executable"
 msgstr "не вдалося знайти ехе файл власної програми"
 
-#: tab-complete.c:4410
+#: tab-complete.c:4411
 #, c-format
 msgid "tab completion query failed: %s\n"
 "Query was:\n"
