@@ -358,6 +358,7 @@ CREATE SCHEMA test_schema;
 
 -- We need to do this this way to cope with varying names for encodings:
 SET client_min_messages TO WARNING;
+SET icu_validation_level = disabled;
 
 do $$
 BEGIN
@@ -373,13 +374,16 @@ BEGIN
 END
 $$;
 
+RESET icu_validation_level;
 RESET client_min_messages;
 
 CREATE COLLATION test3 (provider = icu, lc_collate = 'en_US.utf8'); -- fail, needs "locale"
 CREATE COLLATION testx (provider = icu, locale = 'nonsense-nowhere'); -- fails
+CREATE COLLATION testx (provider = icu, locale = 'C'); -- fails
 CREATE COLLATION testx (provider = icu, locale = '@colStrength=primary;nonsense=yes'); -- fails
 SET icu_validation_level = WARNING;
 CREATE COLLATION testx (provider = icu, locale = '@colStrength=primary;nonsense=yes'); DROP COLLATION testx;
+CREATE COLLATION testx (provider = icu, locale = 'C'); DROP COLLATION testx;
 CREATE COLLATION testx (provider = icu, locale = 'nonsense-nowhere'); DROP COLLATION testx;
 RESET icu_validation_level;
 

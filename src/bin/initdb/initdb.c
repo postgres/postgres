@@ -2238,23 +2238,9 @@ icu_language_tag(const char *loc_str)
 {
 #ifdef USE_ICU
 	UErrorCode	 status;
-	char		 lang[ULOC_LANG_CAPACITY];
 	char		*langtag;
 	size_t		 buflen = 32;	/* arbitrary starting buffer size */
 	const bool	 strict = true;
-
-	status = U_ZERO_ERROR;
-	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
-	if (U_FAILURE(status))
-	{
-		pg_fatal("could not get language from locale \"%s\": %s",
-				 loc_str, u_errorName(status));
-		return NULL;
-	}
-
-	/* C/POSIX locales aren't handled by uloc_getLanguageTag() */
-	if (strcmp(lang, "c") == 0 || strcmp(lang, "posix") == 0)
-		return pstrdup("en-US-u-va-posix");
 
 	/*
 	 * A BCP47 language tag doesn't have a clearly-defined upper limit
@@ -2327,8 +2313,7 @@ icu_validate_locale(const char *loc_str)
 
 	/* check for special language name */
 	if (strcmp(lang, "") == 0 ||
-		strcmp(lang, "root") == 0 || strcmp(lang, "und") == 0 ||
-		strcmp(lang, "c") == 0 || strcmp(lang, "posix") == 0)
+		strcmp(lang, "root") == 0 || strcmp(lang, "und") == 0)
 		found = true;
 
 	/* search for matching language within ICU */

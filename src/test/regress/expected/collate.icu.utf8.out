@@ -1020,6 +1020,7 @@ CREATE ROLE regress_test_role;
 CREATE SCHEMA test_schema;
 -- We need to do this this way to cope with varying names for encodings:
 SET client_min_messages TO WARNING;
+SET icu_validation_level = disabled;
 do $$
 BEGIN
   EXECUTE 'CREATE COLLATION test0 (provider = icu, locale = ' ||
@@ -1034,17 +1035,24 @@ BEGIN
           quote_literal(current_setting('lc_collate')) || ');';
 END
 $$;
+RESET icu_validation_level;
 RESET client_min_messages;
 CREATE COLLATION test3 (provider = icu, lc_collate = 'en_US.utf8'); -- fail, needs "locale"
 ERROR:  parameter "locale" must be specified
 CREATE COLLATION testx (provider = icu, locale = 'nonsense-nowhere'); -- fails
 ERROR:  ICU locale "nonsense-nowhere" has unknown language "nonsense"
 HINT:  To disable ICU locale validation, set parameter icu_validation_level to DISABLED.
+CREATE COLLATION testx (provider = icu, locale = 'C'); -- fails
+ERROR:  could not convert locale name "C" to language tag: U_ILLEGAL_ARGUMENT_ERROR
 CREATE COLLATION testx (provider = icu, locale = '@colStrength=primary;nonsense=yes'); -- fails
 ERROR:  could not convert locale name "@colStrength=primary;nonsense=yes" to language tag: U_ILLEGAL_ARGUMENT_ERROR
 SET icu_validation_level = WARNING;
 CREATE COLLATION testx (provider = icu, locale = '@colStrength=primary;nonsense=yes'); DROP COLLATION testx;
 WARNING:  could not convert locale name "@colStrength=primary;nonsense=yes" to language tag: U_ILLEGAL_ARGUMENT_ERROR
+CREATE COLLATION testx (provider = icu, locale = 'C'); DROP COLLATION testx;
+WARNING:  could not convert locale name "C" to language tag: U_ILLEGAL_ARGUMENT_ERROR
+WARNING:  ICU locale "C" has unknown language "c"
+HINT:  To disable ICU locale validation, set parameter icu_validation_level to DISABLED.
 CREATE COLLATION testx (provider = icu, locale = 'nonsense-nowhere'); DROP COLLATION testx;
 WARNING:  ICU locale "nonsense-nowhere" has unknown language "nonsense"
 HINT:  To disable ICU locale validation, set parameter icu_validation_level to DISABLED.
