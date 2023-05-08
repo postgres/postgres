@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 21:03+0000\n"
+"POT-Creation-Date: 2023-05-07 17:31+0000\n"
 "PO-Revision-Date: 2019-04-21 00:54-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -109,7 +109,7 @@ msgstr "el tipo %s no es compuesto"
 msgid "unrecognized exception condition \"%s\""
 msgstr "no se reconoce la condición de excepción «%s»"
 
-#: pl_comp.c:2477
+#: pl_comp.c:2485
 #, c-format
 msgid "could not determine actual argument type for polymorphic function \"%s\""
 msgstr "no se pudo determinar el verdadero tipo de argumento para la función polimórfica «%s»"

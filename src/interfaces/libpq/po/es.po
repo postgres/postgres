@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 21:04+0000\n"
+"POT-Creation-Date: 2023-05-07 17:32+0000\n"
 "PO-Revision-Date: 2019-04-21 00:10-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -61,10 +61,10 @@ msgstr "no se pude generar nonce\n"
 #: fe-connect.c:4428 fe-connect.c:4547 fe-connect.c:4801 fe-connect.c:4881
 #: fe-connect.c:4980 fe-connect.c:5236 fe-connect.c:5265 fe-connect.c:5337
 #: fe-connect.c:5361 fe-connect.c:5379 fe-connect.c:5480 fe-connect.c:5489
-#: fe-connect.c:5845 fe-connect.c:5995 fe-exec.c:2705 fe-exec.c:3452
-#: fe-exec.c:3617 fe-lobj.c:895 fe-protocol2.c:1213 fe-protocol3.c:967
-#: fe-protocol3.c:1653 fe-secure-common.c:110 fe-secure-openssl.c:438
-#: fe-secure-openssl.c:1025
+#: fe-connect.c:5845 fe-connect.c:5995 fe-exec.c:2705 fe-exec.c:3456
+#: fe-exec.c:3621 fe-lobj.c:895 fe-protocol2.c:1213 fe-protocol3.c:967
+#: fe-protocol3.c:1653 fe-secure-common.c:110 fe-secure-openssl.c:443
+#: fe-secure-openssl.c:1030
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
@@ -678,7 +678,7 @@ msgstr "el número de parámetro %d está fuera del rango 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "no se pudo interpretar el resultado del servidor: %s"
 
-#: fe-exec.c:3350 fe-exec.c:3434
+#: fe-exec.c:3354 fe-exec.c:3438
 msgid "incomplete multibyte character\n"
 msgstr "carácter multibyte incompleto\n"
 
@@ -977,16 +977,16 @@ msgstr "el certificado de servidor para «%s» no coincide con el nombre de serv
 msgid "could not get server's host name from server certificate\n"
 msgstr "no se pudo obtener el nombre de servidor desde el certificado del servidor\n"
 
-#: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1253
+#: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1258
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ERROR en llamada SSL: %s\n"
 
-#: fe-secure-openssl.c:218 fe-secure-openssl.c:326 fe-secure-openssl.c:1257
+#: fe-secure-openssl.c:218 fe-secure-openssl.c:326 fe-secure-openssl.c:1262
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ERROR en llamada SSL: detectado fin de archivo\n"
 
-#: fe-secure-openssl.c:229 fe-secure-openssl.c:337 fe-secure-openssl.c:1266
+#: fe-secure-openssl.c:229 fe-secure-openssl.c:337 fe-secure-openssl.c:1271
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "error de SSL: %s\n"
@@ -995,44 +995,44 @@ msgstr "error de SSL: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "la conexión SSL se ha cerrado inesperadamente\n"
 
-#: fe-secure-openssl.c:250 fe-secure-openssl.c:358 fe-secure-openssl.c:1275
+#: fe-secure-openssl.c:250 fe-secure-openssl.c:358 fe-secure-openssl.c:1280
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "código de error SSL no reconocido: %d\n"
 
-#: fe-secure-openssl.c:398
+#: fe-secure-openssl.c:403
 msgid "could not determine server certificate signature algorithm\n"
 msgstr "no se pudo determinar el algoritmo de firma del certificado del servidor\n"
 
-#: fe-secure-openssl.c:419
+#: fe-secure-openssl.c:424
 #, c-format
 msgid "could not find digest for NID %s\n"
 msgstr "no se pudo encontrar «digest» para el NID %s\n"
 
-#: fe-secure-openssl.c:429
+#: fe-secure-openssl.c:434
 msgid "could not generate peer certificate hash\n"
 msgstr "no se pudo generar hash de certificado de la contraparte\n"
 
-#: fe-secure-openssl.c:486
+#: fe-secure-openssl.c:491
 msgid "SSL certificate's name entry is missing\n"
 msgstr "falta el elemento de nombre en el certificado SSL\n"
 
-#: fe-secure-openssl.c:815
+#: fe-secure-openssl.c:820
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "no se pudo crear un contexto SSL: %s\n"
 
-#: fe-secure-openssl.c:852
+#: fe-secure-openssl.c:857
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "no se pudo leer la lista de certificado raíz «%s»: %s\n"
 
-#: fe-secure-openssl.c:880
+#: fe-secure-openssl.c:885
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "la biblioteca SSL no soporta certificados CRL (archivo «%s»)\n"
 
-#: fe-secure-openssl.c:908
+#: fe-secure-openssl.c:913
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate verification.\n"
@@ -1040,7 +1040,7 @@ msgstr ""
 "no se pudo obtener el directorio «home» para ubicar el archivo del certificado raíz\n"
 "Debe ya sea entregar este archivo, o bien cambiar sslmode para deshabilitar la verificación de certificados del servidor.\n"
 
-#: fe-secure-openssl.c:912
+#: fe-secure-openssl.c:917
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1049,77 +1049,77 @@ msgstr ""
 "el archivo de certificado raíz «%s» no existe\n"
 "Debe ya sea entregar este archivo, o bien cambiar sslmode para deshabilitar la verificación de certificados del servidor.\n"
 
-#: fe-secure-openssl.c:943
+#: fe-secure-openssl.c:948
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "no se pudo abrir el archivo de certificado «%s»: %s\n"
 
-#: fe-secure-openssl.c:962
+#: fe-secure-openssl.c:967
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "no se pudo leer el archivo de certificado «%s»: %s\n"
 
-#: fe-secure-openssl.c:987
+#: fe-secure-openssl.c:992
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "no se pudo establecer conexión SSL: %s\n"
 
-#: fe-secure-openssl.c:1041
+#: fe-secure-openssl.c:1046
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "no se pudo cargar el motor SSL «%s»: %s\n"
 
-#: fe-secure-openssl.c:1053
+#: fe-secure-openssl.c:1058
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "no se pudo inicializar el motor SSL «%s»: %s\n"
 
-#: fe-secure-openssl.c:1069
+#: fe-secure-openssl.c:1074
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "no se pudo leer el archivo de la llave privada SSL «%s» desde el motor «%s»: %s\n"
 
-#: fe-secure-openssl.c:1083
+#: fe-secure-openssl.c:1088
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "no se pudo leer la llave privada SSL «%s» desde el motor «%s»: %s\n"
 
-#: fe-secure-openssl.c:1120
+#: fe-secure-openssl.c:1125
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "el certificado está presente, pero no la llave privada «%s»\n"
 
-#: fe-secure-openssl.c:1129
+#: fe-secure-openssl.c:1134
 #, c-format
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "el archivo de llave privada «%s» no es un archivo regular\n"
 
-#: fe-secure-openssl.c:1162
+#: fe-secure-openssl.c:1167
 #, c-format
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"
 msgstr "el archivo de llave privada «%s» tiene acceso de grupo o para todos; debe tener permisos u=rw (0600) o menos si es de propiedad del usuario de base de datos, o permisos u=rw,g=r (0640) o menos si es de root\n"
 
-#: fe-secure-openssl.c:1173
+#: fe-secure-openssl.c:1178
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "no se pudo cargar el archivo de la llave privada «%s»: %s\n"
 
-#: fe-secure-openssl.c:1187
+#: fe-secure-openssl.c:1192
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "el certificado no coincide con la llave privada «%s»: %s\n"
 
-#: fe-secure-openssl.c:1296
+#: fe-secure-openssl.c:1301
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "el certificado no pudo ser obtenido: %s\n"
 
-#: fe-secure-openssl.c:1385
+#: fe-secure-openssl.c:1390
 #, c-format
 msgid "no SSL error reported"
 msgstr "código de error SSL no reportado"
 
-#: fe-secure-openssl.c:1394
+#: fe-secure-openssl.c:1399
 #, c-format
 msgid "SSL error code %lu"
 msgstr "código de error SSL %lu"

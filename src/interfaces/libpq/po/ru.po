@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2022-08-17 12:25+0300\n"
+"POT-Creation-Date: 2023-05-03 05:57+0300\n"
 "PO-Revision-Date: 2022-05-07 06:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -64,8 +64,8 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-connect.c:5361 fe-connect.c:5379 fe-connect.c:5480 fe-connect.c:5489
 #: fe-connect.c:5845 fe-connect.c:5995 fe-exec.c:2705 fe-exec.c:3456
 #: fe-exec.c:3621 fe-lobj.c:895 fe-protocol2.c:1213 fe-protocol3.c:967
-#: fe-protocol3.c:1653 fe-secure-common.c:110 fe-secure-openssl.c:438
-#: fe-secure-openssl.c:1025
+#: fe-protocol3.c:1653 fe-secure-common.c:110 fe-secure-openssl.c:443
+#: fe-secure-openssl.c:1030
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
@@ -1022,16 +1022,16 @@ msgstr ""
 msgid "could not get server's host name from server certificate\n"
 msgstr "не удалось получить имя сервера из сертификата\n"
 
-#: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1253
+#: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1258
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ошибка SSL SYSCALL: %s\n"
 
-#: fe-secure-openssl.c:218 fe-secure-openssl.c:326 fe-secure-openssl.c:1257
+#: fe-secure-openssl.c:218 fe-secure-openssl.c:326 fe-secure-openssl.c:1262
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ошибка SSL SYSCALL: конец файла (EOF)\n"
 
-#: fe-secure-openssl.c:229 fe-secure-openssl.c:337 fe-secure-openssl.c:1266
+#: fe-secure-openssl.c:229 fe-secure-openssl.c:337 fe-secure-openssl.c:1271
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "ошибка SSL: %s\n"
@@ -1040,44 +1040,44 @@ msgstr "ошибка SSL: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL-соединение было неожиданно закрыто\n"
 
-#: fe-secure-openssl.c:250 fe-secure-openssl.c:358 fe-secure-openssl.c:1275
+#: fe-secure-openssl.c:250 fe-secure-openssl.c:358 fe-secure-openssl.c:1280
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "нераспознанный код ошибки SSL: %d\n"
 
-#: fe-secure-openssl.c:398
+#: fe-secure-openssl.c:403
 msgid "could not determine server certificate signature algorithm\n"
 msgstr "не удалось определить алгоритм подписи сертификата сервера\n"
 
-#: fe-secure-openssl.c:419
+#: fe-secure-openssl.c:424
 #, c-format
 msgid "could not find digest for NID %s\n"
 msgstr "не удалось найти алгоритм хеширования по NID %s\n"
 
-#: fe-secure-openssl.c:429
+#: fe-secure-openssl.c:434
 msgid "could not generate peer certificate hash\n"
 msgstr "не удалось сгенерировать хеш сертификата сервера\n"
 
-#: fe-secure-openssl.c:486
+#: fe-secure-openssl.c:491
 msgid "SSL certificate's name entry is missing\n"
 msgstr "запись имени в SSL-сертификате отсутствует\n"
 
-#: fe-secure-openssl.c:815
+#: fe-secure-openssl.c:820
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "не удалось создать контекст SSL: %s\n"
 
-#: fe-secure-openssl.c:852
+#: fe-secure-openssl.c:857
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "не удалось прочитать файл корневых сертификатов \"%s\": %s\n"
 
-#: fe-secure-openssl.c:880
+#: fe-secure-openssl.c:885
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "Библиотека SSL не поддерживает проверку CRL (файл \"%s\")\n"
 
-#: fe-secure-openssl.c:908
+#: fe-secure-openssl.c:913
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate "
@@ -1087,7 +1087,7 @@ msgstr ""
 "Укажите полный путь к файлу или отключите проверку сертификата сервера, "
 "изменив sslmode.\n"
 
-#: fe-secure-openssl.c:912
+#: fe-secure-openssl.c:917
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1098,52 +1098,52 @@ msgstr ""
 "Укажите полный путь к файлу или отключите проверку сертификата сервера, "
 "изменив sslmode.\n"
 
-#: fe-secure-openssl.c:943
+#: fe-secure-openssl.c:948
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "не удалось открыть файл сертификата \"%s\": %s\n"
 
-#: fe-secure-openssl.c:962
+#: fe-secure-openssl.c:967
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "не удалось прочитать файл сертификата \"%s\": %s\n"
 
-#: fe-secure-openssl.c:987
+#: fe-secure-openssl.c:992
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "не удалось установить SSL-соединение: %s\n"
 
-#: fe-secure-openssl.c:1041
+#: fe-secure-openssl.c:1046
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "не удалось загрузить модуль SSL ENGINE \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1053
+#: fe-secure-openssl.c:1058
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "не удалось инициализировать модуль SSL ENGINE \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1069
+#: fe-secure-openssl.c:1074
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "не удалось прочитать закрытый ключ SSL \"%s\" из модуля \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1083
+#: fe-secure-openssl.c:1088
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "не удалось загрузить закрытый ключ SSL \"%s\" из модуля \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1120
+#: fe-secure-openssl.c:1125
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "сертификат присутствует, но файла закрытого ключа \"%s\" нет\n"
 
-#: fe-secure-openssl.c:1129
+#: fe-secure-openssl.c:1134
 #, c-format
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "файл закрытого ключа \"%s\" - не обычный файл\n"
 
-#: fe-secure-openssl.c:1162
+#: fe-secure-openssl.c:1167
 #, c-format
 msgid ""
 "private key file \"%s\" has group or world access; file must have "
@@ -1155,27 +1155,27 @@ msgstr ""
 "текущему пользователю, либо u=rw,g=r (0640) или более строгие, если он "
 "принадлежит root\n"
 
-#: fe-secure-openssl.c:1173
+#: fe-secure-openssl.c:1178
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "не удалось загрузить файл закрытого ключа \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1187
+#: fe-secure-openssl.c:1192
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "сертификат не соответствует файлу закрытого ключа \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1296
+#: fe-secure-openssl.c:1301
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "не удалось получить сертификат: %s\n"
 
-#: fe-secure-openssl.c:1385
+#: fe-secure-openssl.c:1390
 #, c-format
 msgid "no SSL error reported"
 msgstr "нет сообщения об ошибке SSL"
 
-#: fe-secure-openssl.c:1394
+#: fe-secure-openssl.c:1399
 #, c-format
 msgid "SSL error code %lu"
 msgstr "код ошибки SSL: %lu"
