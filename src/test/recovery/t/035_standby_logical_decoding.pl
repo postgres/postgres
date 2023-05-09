@@ -276,20 +276,6 @@ $node_standby->append_conf('postgresql.conf',
        max_replication_slots = 5]);
 $node_standby->start;
 $node_primary->wait_for_replay_catchup($node_standby);
-$node_standby->safe_psql('testdb', qq[SELECT * FROM pg_create_physical_replication_slot('$standby_physical_slotname');]);
-
-#######################
-# Initialize cascading standby node
-#######################
-$node_standby->backup($backup_name);
-$node_cascading_standby->init_from_backup(
-	$node_standby, $backup_name,
-	has_streaming => 1,
-	has_restoring => 1);
-$node_cascading_standby->append_conf('postgresql.conf',
-	qq[primary_slot_name = '$standby_physical_slotname']);
-$node_cascading_standby->start;
-$node_standby->wait_for_replay_catchup($node_cascading_standby, $node_primary);
 
 #######################
 # Initialize subscriber node
@@ -502,9 +488,6 @@ check_slots_conflicting_status(1);
 ##################################################
 # Verify that invalidated logical slots do not lead to retaining WAL.
 ##################################################
-
-# Wait for the cascading standby to catchup before removing the WAL file(s)
-$node_standby->wait_for_replay_catchup($node_cascading_standby, $node_primary);
 
 # Get the restart_lsn from an invalidated slot
 my $restart_lsn = $node_standby->safe_psql('postgres',
@@ -777,8 +760,25 @@ $node_standby->reload;
 $node_primary->psql('postgres', q[CREATE DATABASE testdb]);
 $node_primary->safe_psql('testdb', qq[CREATE TABLE decoding_test(x integer, y text);]);
 
-# Wait for the standby to catchup before creating the slots
+# Wait for the standby to catchup before initializing the cascading standby
 $node_primary->wait_for_replay_catchup($node_standby);
+
+# Create a physical replication slot on the standby.
+# Keep this step after the "Verify that invalidated logical slots do not lead
+# to retaining WAL" test (as the physical slot on the standby could prevent the
+# WAL file removal).
+$node_standby->safe_psql('testdb', qq[SELECT * FROM pg_create_physical_replication_slot('$standby_physical_slotname');]);
+
+# Initialize cascading standby node
+$node_standby->backup($backup_name);
+$node_cascading_standby->init_from_backup(
+	$node_standby, $backup_name,
+	has_streaming => 1,
+	has_restoring => 1);
+$node_cascading_standby->append_conf('postgresql.conf',
+	qq[primary_slot_name = '$standby_physical_slotname'
+	   hot_standby_feedback = on]);
+$node_cascading_standby->start;
 
 # create the logical slots
 create_logical_slots($node_standby, 'promotion_');
