@@ -79,6 +79,10 @@ CREATE PUBLICATION testpub_for_tbl_schema FOR TABLES IN SCHEMA pub_test, TABLE p
 RESET client_min_messages;
 \dRp+ testpub_for_tbl_schema
 
+-- weird parser corner case
+CREATE PUBLICATION testpub_parsertst FOR TABLE pub_test.testpub_nopk, CURRENT_SCHEMA;
+CREATE PUBLICATION testpub_parsertst FOR TABLES IN SCHEMA foo, test.foo;
+
 -- should be able to add a table of the same schema to the schema publication
 ALTER PUBLICATION testpub_forschema ADD TABLE pub_test.testpub_nopk;
 \dRp+ testpub_forschema
