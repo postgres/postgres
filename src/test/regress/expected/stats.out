@@ -985,6 +985,65 @@ SELECT pg_stat_get_snapshot_timestamp();
 
 COMMIT;
 ----
+-- Changing stats_fetch_consistency in a transaction.
+----
+BEGIN;
+-- Stats filled under the cache mode
+SET LOCAL stats_fetch_consistency = cache;
+SELECT pg_stat_get_function_calls(0);
+ pg_stat_get_function_calls 
+----------------------------
+                           
+(1 row)
+
+SELECT pg_stat_get_snapshot_timestamp() IS NOT NULL AS snapshot_ok;
+ snapshot_ok 
+-------------
+ f
+(1 row)
+
+-- Success in accessing pre-existing snapshot data.
+SET LOCAL stats_fetch_consistency = snapshot;
+SELECT pg_stat_get_snapshot_timestamp() IS NOT NULL AS snapshot_ok;
+ snapshot_ok 
+-------------
+ f
+(1 row)
+
+SELECT pg_stat_get_function_calls(0);
+ pg_stat_get_function_calls 
+----------------------------
+                           
+(1 row)
+
+SELECT pg_stat_get_snapshot_timestamp() IS NOT NULL AS snapshot_ok;
+ snapshot_ok 
+-------------
+ t
+(1 row)
+
+-- Snapshot cleared.
+SET LOCAL stats_fetch_consistency = none;
+SELECT pg_stat_get_snapshot_timestamp() IS NOT NULL AS snapshot_ok;
+ snapshot_ok 
+-------------
+ f
+(1 row)
+
+SELECT pg_stat_get_function_calls(0);
+ pg_stat_get_function_calls 
+----------------------------
+                           
+(1 row)
+
+SELECT pg_stat_get_snapshot_timestamp() IS NOT NULL AS snapshot_ok;
+ snapshot_ok 
+-------------
+ f
+(1 row)
+
+ROLLBACK;
+----
 -- pg_stat_have_stats behavior
 ----
 -- fixed-numbered stats exist

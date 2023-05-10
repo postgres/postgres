@@ -121,6 +121,7 @@ extern void assign_search_path(const char *newval, void *extra);
 extern bool check_session_authorization(char **newval, void **extra, GucSource source);
 extern void assign_session_authorization(const char *newval, void *extra);
 extern void assign_session_replication_role(int newval, void *extra);
+extern void assign_stats_fetch_consistency(int newval, void *extra);
 extern bool check_ssl(bool *newval, void **extra, GucSource source);
 extern bool check_stage_log_stats(bool *newval, void **extra, GucSource source);
 extern bool check_synchronous_standby_names(char **newval, void **extra,

@@ -8219,8 +8219,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         called. When set to <literal>snapshot</literal>, the first statistics
         access caches all statistics accessible in the current database, until
         the end of the transaction unless
-        <function>pg_stat_clear_snapshot()</function> is called. The default
-        is <literal>cache</literal>.
+        <function>pg_stat_clear_snapshot()</function> is called. Changing this
+        parameter in a transaction discards the statistics snapshot.
+        The default is <literal>cache</literal>.
        </para>
        <note>
         <para>

@@ -4821,7 +4821,7 @@ struct config_enum ConfigureNamesEnum[] =
 		},
 		&pgstat_fetch_consistency,
 		PGSTAT_FETCH_CONSISTENCY_CACHE, stats_fetch_consistency,
-		NULL, NULL, NULL
+		NULL, assign_stats_fetch_consistency, NULL
 	},
 
 	{
