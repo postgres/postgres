@@ -132,6 +132,15 @@ Tables:
 Tables from schemas:
     "pub_test"
 
+-- weird parser corner case
+CREATE PUBLICATION testpub_parsertst FOR TABLE pub_test.testpub_nopk, CURRENT_SCHEMA;
+ERROR:  invalid table name
+LINE 1: ...estpub_parsertst FOR TABLE pub_test.testpub_nopk, CURRENT_SC...
+                                                             ^
+CREATE PUBLICATION testpub_parsertst FOR TABLES IN SCHEMA foo, test.foo;
+ERROR:  invalid schema name
+LINE 1: ...CATION testpub_parsertst FOR TABLES IN SCHEMA foo, test.foo;
+                                                              ^
 -- should be able to add a table of the same schema to the schema publication
 ALTER PUBLICATION testpub_forschema ADD TABLE pub_test.testpub_nopk;
 \dRp+ testpub_forschema
