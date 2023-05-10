@@ -227,6 +227,13 @@ static dlist_head pgStatPending = DLIST_STATIC_INIT(pgStatPending);
 static bool pgStatForceNextFlush = false;
 
 /*
+ * Force-clear existing snapshot before next use when stats_fetch_consistency
+ * is changed.
+ */
+static bool force_stats_snapshot_clear = false;
+
+
+/*
  * For assertions that check pgstat is not used before initialization / after
  * shutdown.
  */
@@ -746,7 +753,8 @@ pgstat_reset_of_kind(PgStat_Kind kind)
  * request will cause new snapshots to be read.
  *
  * This is also invoked during transaction commit or abort to discard
- * the no-longer-wanted snapshot.
+ * the no-longer-wanted snapshot.  Updates of stats_fetch_consistency can
+ * cause this routine to be called.
  */
 void
 pgstat_clear_snapshot(void)
@@ -773,6 +781,9 @@ pgstat_clear_snapshot(void)
 	 * forward the reset request.
 	 */
 	pgstat_clear_backend_activity_snapshot();
+
+	/* Reset this flag, as it may be possible that a cleanup was forced. */
+	force_stats_snapshot_clear = false;
 }
 
 void *
@@ -871,6 +882,9 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
 TimestampTz
 pgstat_get_stat_snapshot_timestamp(bool *have_snapshot)
 {
+	if (force_stats_snapshot_clear)
+		pgstat_clear_snapshot();
+
 	if (pgStatLocal.snapshot.mode == PGSTAT_FETCH_CONSISTENCY_SNAPSHOT)
 	{
 		*have_snapshot = true;
@@ -915,6 +929,9 @@ pgstat_snapshot_fixed(PgStat_Kind kind)
 static void
 pgstat_prep_snapshot(void)
 {
+	if (force_stats_snapshot_clear)
+		pgstat_clear_snapshot();
+
 	if (pgstat_fetch_consistency == PGSTAT_FETCH_CONSISTENCY_NONE ||
 		pgStatLocal.snapshot.stats != NULL)
 		return;
@@ -1643,4 +1660,19 @@ pgstat_reset_after_failure(void)
 
 	/* and drop variable-numbered ones */
 	pgstat_drop_all_entries();
+}
+
+/*
+ * GUC assign_hook for stats_fetch_consistency.
+ */
+void
+assign_stats_fetch_consistency(int newval, void *extra)
+{
+	/*
+	 * Changing this value in a transaction may cause snapshot state
+	 * inconsistencies, so force a clear of the current snapshot on the next
+	 * snapshot build attempt.
+	 */
+	if (pgstat_fetch_consistency != newval)
+		force_stats_snapshot_clear = true;
 }
