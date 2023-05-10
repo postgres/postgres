@@ -1136,7 +1136,7 @@ data. Empty in ordinary tables.</entry>
   if columns used by indexes are not updated.  You can
   increase the likelihood of sufficient page space for
   <acronym>HOT</acronym> updates by decreasing a table's <link
-  linkend="sql-createtable"><literal>fillfactor</literal></link>.
+  linkend="reloption-fillfactor"><literal>fillfactor</literal></link>.
   If you don't, <acronym>HOT</acronym> updates will still happen because
   new rows will naturally migrate to new pages and existing pages with
   sufficient free space for new row versions.  The system view <link
