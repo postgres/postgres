@@ -7,8 +7,11 @@ GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS) \
     GUC_check_errhint \
     write_stderr \
     yyerror \
+    jsonpath_yyerror:3 \
     parser_yyerror \
+    replication_yyerror \
     scanner_yyerror \
+    syncrep_yyerror \
     report_invalid_record:2 \
     ereport_startup_progress
 GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS) \
