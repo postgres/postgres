@@ -1927,6 +1927,12 @@ explain (costs off)
 select 1 from (select a.id FROM a left join b on a.b_id = b.id) q,
 			  lateral generate_series(1, q.id) gs(i) where q.id = gs.i;
 
+-- check join removal within RHS of an outer join
+explain (costs off)
+select c.id, ss.a from c
+  left join (select d.a from onerow, d left join b on d.a = b.id) ss
+  on c.id = ss.a;
+
 CREATE TEMP TABLE parted_b (id int PRIMARY KEY) partition by range(id);
 CREATE TEMP TABLE parted_b1 partition of parted_b for values from (0) to (10);
 

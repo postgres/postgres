@@ -466,12 +466,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 
 		remove_join_clause_from_rels(root, rinfo, rinfo->required_relids);
 
-		/*
-		 * If the qual lists ojrelid in its required_relids, it must have come
-		 * from above the outer join we're removing (so we need to keep it);
-		 * if it does not, then it didn't and we can discard it.
-		 */
-		if (bms_is_member(ojrelid, rinfo->required_relids))
+		if (RINFO_IS_PUSHED_DOWN(rinfo, joinrelids))
 		{
 			/*
 			 * There might be references to relid or ojrelid in the
