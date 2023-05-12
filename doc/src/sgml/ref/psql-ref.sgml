@@ -3039,8 +3039,21 @@ lo_import 152801
           <listitem>
           <para>
           Controls use of a pager program for query and <application>psql</application>
-          help output.  If the environment variable <envar>PSQL_PAGER</envar>
-          or <envar>PAGER</envar> is set, the output is piped to the
+          help output.
+          When the <literal>pager</literal> option is <literal>off</literal>, the pager
+          program is not used. When the <literal>pager</literal> option is
+          <literal>on</literal>, the pager is used when appropriate, i.e., when the
+          output is to a terminal and will not fit on the screen.
+          The <literal>pager</literal> option can also be set to <literal>always</literal>,
+          which causes the pager to be used for all terminal output regardless
+          of whether it fits on the screen.  <literal>\pset pager</literal>
+          without a <replaceable class="parameter">value</replaceable>
+          toggles pager use on and off.
+          </para>
+
+          <para>
+          If the environment variable <envar>PSQL_PAGER</envar>
+          or <envar>PAGER</envar> is set, output to be paged is piped to the
           specified program.  Otherwise a platform-dependent default program
           (such as <filename>more</filename>) is used.
           </para>
@@ -3053,18 +3066,6 @@ lo_import 152801
           can be used to send output to tools that understand
           <application>psql</application>'s output format (such as
           <filename>pspg --stream</filename>).
-          </para>
-
-          <para>
-          When the <literal>pager</literal> option is <literal>off</literal>, the pager
-          program is not used. When the <literal>pager</literal> option is
-          <literal>on</literal>, the pager is used when appropriate, i.e., when the
-          output is to a terminal and will not fit on the screen.
-          The <literal>pager</literal> option can also be set to <literal>always</literal>,
-          which causes the pager to be used for all terminal output regardless
-          of whether it fits on the screen.  <literal>\pset pager</literal>
-          without a <replaceable class="parameter">value</replaceable>
-          toggles pager use on and off.
           </para>
           </listitem>
           </varlistentry>
@@ -4775,7 +4776,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
       pager-related options of the <command>\pset</command> command.
       These variables are examined in the order listed;
       the first that is set is used.
-      If none of them is set, the default is to use <literal>more</literal> on most
+      If neither of them is set, the default is to use <literal>more</literal> on most
       platforms, but <literal>less</literal> on Cygwin.
      </para>
 
