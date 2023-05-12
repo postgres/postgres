@@ -1695,6 +1695,13 @@ setup_description(FILE *cmdfd)
 static void
 setup_collation(FILE *cmdfd)
 {
+	/*
+	 * Set the collation version for collations defined in pg_collation.dat,
+	 * but not the ones where we know that the collation behavior will never
+	 * change.
+	 */
+	PG_CMD_PUTS("UPDATE pg_collation SET collversion = pg_collation_actual_version(oid) WHERE collname = 'unicode';\n\n");
+
 	/* Import all collations we can find in the operating system */
 	PG_CMD_PUTS("SELECT pg_import_system_collations('pg_catalog');\n\n");
 }
