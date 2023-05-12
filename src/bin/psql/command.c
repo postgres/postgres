@@ -5197,14 +5197,20 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter)
 
 	/*
 	 * For \watch, we ignore the size of the result and always use the pager
-	 * if PSQL_WATCH_PAGER is set.  We also ignore the regular PSQL_PAGER or
-	 * PAGER environment variables, because traditional pagers probably won't
-	 * be very useful for showing a stream of results.
+	 * as long as we're talking to a terminal and "\pset pager" is enabled.
+	 * However, we'll only use the pager identified by PSQL_WATCH_PAGER.  We
+	 * ignore the regular PSQL_PAGER or PAGER environment variables, because
+	 * traditional pagers probably won't be very useful for showing a stream
+	 * of results.
 	 */
 #ifndef WIN32
 	pagerprog = getenv("PSQL_WATCH_PAGER");
+	/* if variable is empty or all-white-space, don't use pager */
+	if (pagerprog && strspn(pagerprog, " \t\r\n") == strlen(pagerprog))
+		pagerprog = NULL;
 #endif
-	if (pagerprog && myopt.topt.pager)
+	if (pagerprog && myopt.topt.pager &&
+		isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	{
 		fflush(NULL);
 		disable_sigpipe_trap();
