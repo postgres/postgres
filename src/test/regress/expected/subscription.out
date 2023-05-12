@@ -79,7 +79,8 @@ ERROR:  subscription "regress_testsub" already exists
 -- fail - must be superuser
 SET SESSION AUTHORIZATION 'regress_subscription_user2';
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION foo WITH (connect = false);
-ERROR:  must have privileges of pg_create_subscription to create subscriptions
+ERROR:  permission denied to create subscription
+DETAIL:  Only roles with privileges of the "pg_create_subscription" role may create subscriptions.
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 -- fail - invalid option combinations
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, copy_data = true);
