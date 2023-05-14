@@ -12,6 +12,8 @@
 #ifndef _WALWRITER_H
 #define _WALWRITER_H
 
+#define DEFAULT_WAL_WRITER_FLUSH_AFTER ((1024 * 1024) / XLOG_BLCKSZ)
+
 /* GUC options */
 extern PGDLLIMPORT int WalWriterDelay;
 extern PGDLLIMPORT int WalWriterFlushAfter;
