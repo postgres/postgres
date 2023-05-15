@@ -45,7 +45,7 @@ use Test::More;
 # offsets within the tuple.  We choose a structure without padding on all
 # supported architectures:
 #
-# 	a BIGINT
+#	a BIGINT
 #	b TEXT
 #	c TEXT
 #
@@ -77,7 +77,7 @@ use Test::More;
 #    xx xx xx xx xx xx xx xx   'b': xxxxxxxx	offset = 32		CCCCCCCC
 #    xx xx xx xx xx xx xx xx   'c': xxxxxxxx	offset = 40		CCllLL
 #    xx xx xx xx xx xx xx xx      : xxxxxxxx	 ...continued
-#    xx xx                        : xx      	 ...continued
+#    xx xx                        : xx			 ...continued
 #
 # We could choose to read and write columns 'b' and 'c' in other ways, but
 # it is convenient enough to do it this way.  We define packing code
