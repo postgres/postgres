@@ -340,7 +340,7 @@ my @lp_off = split '\n', $node->safe_psql(
 	    FROM heap_page_items(get_raw_page('test', 'main', 0))
     )
 );
-is(scalar @lp_off, $ROWCOUNT, "acquired row offsets");
+scalar @lp_off == $ROWCOUNT or BAIL_OUT("row offset counts mismatch");
 
 # Sanity check that our 'test' table on disk layout matches expectations.  If
 # this is not so, we will have to skip the test until somebody updates the test
