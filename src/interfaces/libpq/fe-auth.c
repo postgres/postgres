@@ -909,7 +909,7 @@ check_expected_areq(AuthRequest areq, PGconn *conn)
 		if (!reason)
 			reason = auth_method_description(areq);
 
-		libpq_append_conn_error(conn, "auth method \"%s\" requirement failed: %s",
+		libpq_append_conn_error(conn, "authentication method requirement \"%s\" failed: %s",
 								conn->require_auth, reason);
 		return result;
 	}

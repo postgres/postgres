@@ -425,14 +425,14 @@ $node->connect_fails(
 	  . " user=test1 host=$host hostaddr=$hostaddr gssencmode=disable require_auth=sspi",
 	"SSPI authentication requested, fails with non-encrypted GSS",
 	expected_stderr =>
-	  qr/auth method "sspi" requirement failed: server requested GSSAPI authentication/
+	  qr/authentication method requirement "sspi" failed: server requested GSSAPI authentication/
 );
 $node->connect_fails(
 	$node->connstr('postgres')
 	  . " user=test1 host=$host hostaddr=$hostaddr gssencmode=require require_auth=sspi",
 	"SSPI authentication requested, fails with encrypted GSS",
 	expected_stderr =>
-	  qr/auth method "sspi" requirement failed: server did not complete authentication/
+	  qr/authentication method requirement "sspi" failed: server did not complete authentication/
 );
 
 # Test that SYSTEM_USER works.
