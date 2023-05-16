@@ -6555,7 +6555,7 @@ describeSubscriptions(const char *pattern, bool verbose)
 							  ", subrunasowner AS \"%s\"\n",
 							  gettext_noop("Origin"),
 							  gettext_noop("Password required"),
-							  gettext_noop("Run as Owner?"));
+							  gettext_noop("Run as owner?"));
 
 		appendPQExpBuffer(&buf,
 						  ",  subsynccommit AS \"%s\"\n"
