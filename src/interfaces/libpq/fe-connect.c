@@ -1481,8 +1481,8 @@ connectOptions2(PGconn *conn)
 		&& strcmp(conn->sslrootcert, "system") == 0)
 	{
 		conn->status = CONNECTION_BAD;
-		libpq_append_conn_error(conn, "sslrootcert value \"%s\" invalid when SSL support is not compiled in",
-								conn->sslrootcert);
+		libpq_append_conn_error(conn, "%s value \"%s\" invalid when SSL support is not compiled in",
+								"sslrootcert", conn->sslrootcert);
 		return false;
 	}
 #endif
