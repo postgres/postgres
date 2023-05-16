@@ -3003,8 +3003,8 @@ hashagg_batch_read(HashAggBatch *batch, uint32 *hashp)
 	if (nread != sizeof(uint32))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("unexpected EOF for tape %p: requested %zu bytes, read %zu bytes",
-						tape, sizeof(uint32), nread)));
+				 errmsg_internal("unexpected EOF for tape %p: requested %zu bytes, read %zu bytes",
+								 tape, sizeof(uint32), nread)));
 	if (hashp != NULL)
 		*hashp = hash;
 
@@ -3012,8 +3012,8 @@ hashagg_batch_read(HashAggBatch *batch, uint32 *hashp)
 	if (nread != sizeof(uint32))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("unexpected EOF for tape %p: requested %zu bytes, read %zu bytes",
-						tape, sizeof(uint32), nread)));
+				 errmsg_internal("unexpected EOF for tape %p: requested %zu bytes, read %zu bytes",
+								 tape, sizeof(uint32), nread)));
 
 	tuple = (MinimalTuple) palloc(t_len);
 	tuple->t_len = t_len;
@@ -3024,8 +3024,8 @@ hashagg_batch_read(HashAggBatch *batch, uint32 *hashp)
 	if (nread != t_len - sizeof(uint32))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("unexpected EOF for tape %p: requested %zu bytes, read %zu bytes",
-						tape, t_len - sizeof(uint32), nread)));
+				 errmsg_internal("unexpected EOF for tape %p: requested %zu bytes, read %zu bytes",
+								 tape, t_len - sizeof(uint32), nread)));
 
 	return tuple;
 }
