@@ -1285,12 +1285,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for a read from a buffered file.</entry>
      </row>
      <row>
-      <entry><literal>BufFileWrite</literal></entry>
-      <entry>Waiting for a write to a buffered file.</entry>
-     </row>
-     <row>
       <entry><literal>BufFileTruncate</literal></entry>
       <entry>Waiting for a buffered file to be truncated.</entry>
+     </row>
+     <row>
+      <entry><literal>BufFileWrite</literal></entry>
+      <entry>Waiting for a write to a buffered file.</entry>
      </row>
      <row>
       <entry><literal>ControlFileRead</literal></entry>
