@@ -23,6 +23,12 @@ SELECT soundex('Anne'), soundex('Margaret'), difference('Anne', 'Margaret');
  A500    | M626    |          0
 (1 row)
 
+SELECT soundex(''), difference('', '');
+ soundex | difference 
+---------+------------
+         |          4
+(1 row)
+
 SELECT levenshtein('GUMBO', 'GAMBOL');
  levenshtein 
 -------------

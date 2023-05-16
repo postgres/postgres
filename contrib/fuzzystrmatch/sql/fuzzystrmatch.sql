@@ -6,6 +6,7 @@ SELECT soundex('hello world!');
 SELECT soundex('Anne'), soundex('Ann'), difference('Anne', 'Ann');
 SELECT soundex('Anne'), soundex('Andrew'), difference('Anne', 'Andrew');
 SELECT soundex('Anne'), soundex('Margaret'), difference('Anne', 'Margaret');
+SELECT soundex(''), difference('', '');
 
 
 SELECT levenshtein('GUMBO', 'GAMBOL');
