@@ -113,16 +113,16 @@ replace_percent_placeholders(const char *instr, const char *param_name, const ch
 				va_end(ap);
 				if (!found)
 				{
-					/* Unknown escape sequence */
+					/* Unknown placeholder */
 #ifdef FRONTEND
 					pg_log_error("invalid value for parameter \"%s\": \"%s\"", param_name, instr);
-					pg_log_error_detail("String contains unexpected escape sequence \"%c\".", *sp);
+					pg_log_error_detail("String contains unexpected placeholder \"%%%c\".", *sp);
 					exit(1);
 #else
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							errmsg("invalid value for parameter \"%s\": \"%s\"", param_name, instr),
-							errdetail("String contains unexpected escape sequence \"%c\".", *sp));
+							errdetail("String contains unexpected placeholder \"%%%c\".", *sp));
 #endif
 				}
 			}
