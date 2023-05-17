@@ -601,32 +601,6 @@ LANGUAGE internal
 STRICT IMMUTABLE PARALLEL SAFE
 AS 'unicode_is_normalized';
 
--- Functions with SQL-mandated special syntax and some defaults.
-CREATE OR REPLACE FUNCTION
-  "current_time"(int4 DEFAULT NULL)
- RETURNS timetz
- LANGUAGE internal
- STABLE PARALLEL SAFE
-AS 'current_time';
-CREATE OR REPLACE FUNCTION
-  "current_timestamp"(int4 DEFAULT NULL)
- RETURNS timestamptz
- LANGUAGE internal
- STABLE PARALLEL SAFE
- AS 'current_timestamp';
-CREATE OR REPLACE FUNCTION
-  "localtime"(int4 DEFAULT NULL)
- RETURNS time
- LANGUAGE internal
- STABLE PARALLEL SAFE
- AS 'sql_localtime';
-CREATE OR REPLACE FUNCTION
-  "localtimestamp"(int4 DEFAULT NULL)
- RETURNS timestamp
- LANGUAGE internal
- STABLE PARALLEL SAFE
- AS 'sql_localtimestamp';
-
 --
 -- The default permissions for functions mean that anyone can execute them.
 -- A number of functions shouldn't be executable by just anyone, but rather

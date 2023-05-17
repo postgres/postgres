@@ -455,6 +455,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_DISTINCT,
 		&&CASE_EEOP_NOT_DISTINCT,
 		&&CASE_EEOP_NULLIF,
+		&&CASE_EEOP_SQLVALUEFUNCTION,
 		&&CASE_EEOP_CURRENTOFEXPR,
 		&&CASE_EEOP_NEXTVALUEEXPR,
 		&&CASE_EEOP_ARRAYEXPR,
@@ -1301,6 +1302,17 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			/* Arguments aren't equal, so return the first one */
 			*op->resvalue = fcinfo->args[0].value;
 			*op->resnull = fcinfo->args[0].isnull;
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_SQLVALUEFUNCTION)
+		{
+			/*
+			 * Doesn't seem worthwhile to have an inline implementation
+			 * efficiency-wise.
+			 */
+			ExecEvalSQLValueFunction(state, op);
 
 			EEO_NEXT();
 		}
@@ -2495,6 +2507,67 @@ ExecEvalParamExtern(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
 			 errmsg("no value found for parameter %d", paramId)));
+}
+
+/*
+ * Evaluate a SQLValueFunction expression.
+ */
+void
+ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op)
+{
+	LOCAL_FCINFO(fcinfo, 0);
+	SQLValueFunction *svf = op->d.sqlvaluefunction.svf;
+
+	*op->resnull = false;
+
+	/*
+	 * Note: current_schema() can return NULL.  current_user() etc currently
+	 * cannot, but might as well code those cases the same way for safety.
+	 */
+	switch (svf->op)
+	{
+		case SVFOP_CURRENT_DATE:
+			*op->resvalue = DateADTGetDatum(GetSQLCurrentDate());
+			break;
+		case SVFOP_CURRENT_TIME:
+		case SVFOP_CURRENT_TIME_N:
+			*op->resvalue = TimeTzADTPGetDatum(GetSQLCurrentTime(svf->typmod));
+			break;
+		case SVFOP_CURRENT_TIMESTAMP:
+		case SVFOP_CURRENT_TIMESTAMP_N:
+			*op->resvalue = TimestampTzGetDatum(GetSQLCurrentTimestamp(svf->typmod));
+			break;
+		case SVFOP_LOCALTIME:
+		case SVFOP_LOCALTIME_N:
+			*op->resvalue = TimeADTGetDatum(GetSQLLocalTime(svf->typmod));
+			break;
+		case SVFOP_LOCALTIMESTAMP:
+		case SVFOP_LOCALTIMESTAMP_N:
+			*op->resvalue = TimestampGetDatum(GetSQLLocalTimestamp(svf->typmod));
+			break;
+		case SVFOP_CURRENT_ROLE:
+		case SVFOP_CURRENT_USER:
+		case SVFOP_USER:
+			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			*op->resvalue = current_user(fcinfo);
+			*op->resnull = fcinfo->isnull;
+			break;
+		case SVFOP_SESSION_USER:
+			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			*op->resvalue = session_user(fcinfo);
+			*op->resnull = fcinfo->isnull;
+			break;
+		case SVFOP_CURRENT_CATALOG:
+			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			*op->resvalue = current_database(fcinfo);
+			*op->resnull = fcinfo->isnull;
+			break;
+		case SVFOP_CURRENT_SCHEMA:
+			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			*op->resvalue = current_schema(fcinfo);
+			*op->resnull = fcinfo->isnull;
+			break;
+	}
 }
 
 /*

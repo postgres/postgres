@@ -83,6 +83,27 @@ static Timestamp timestamptz2timestamp(TimestampTz timestamp);
 
 /* common code for timestamptypmodin and timestamptztypmodin */
 static int32
+anytimestamp_typmodin(bool istz, ArrayType *ta)
+{
+	int32	   *tl;
+	int			n;
+
+	tl = ArrayGetIntegerTypmods(ta, &n);
+
+	/*
+	 * we're not too tense about good error message here because grammar
+	 * shouldn't allow wrong number of modifiers for TIMESTAMP
+	 */
+	if (n != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid type modifier")));
+
+	return anytimestamp_typmod_check(istz, tl[0]);
+}
+
+/* exported so parse_expr.c can use it */
+int32
 anytimestamp_typmod_check(bool istz, int32 typmod)
 {
 	if (typmod < 0)
@@ -101,26 +122,6 @@ anytimestamp_typmod_check(bool istz, int32 typmod)
 	}
 
 	return typmod;
-}
-
-static int32
-anytimestamp_typmodin(bool istz, ArrayType *ta)
-{
-	int32	   *tl;
-	int			n;
-
-	tl = ArrayGetIntegerTypmods(ta, &n);
-
-	/*
-	 * we're not too tense about good error message here because grammar
-	 * shouldn't allow wrong number of modifiers for TIMESTAMP
-	 */
-	if (n != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid type modifier")));
-
-	return anytimestamp_typmod_check(istz, tl[0]);
 }
 
 /* common code for timestamptypmodout and timestamptztypmodout */
@@ -1594,41 +1595,32 @@ GetCurrentTimestamp(void)
 }
 
 /*
- * current_timestamp -- implements CURRENT_TIMESTAMP, CURRENT_TIMESTAMP(n)
+ * GetSQLCurrentTimestamp -- implements CURRENT_TIMESTAMP, CURRENT_TIMESTAMP(n)
  */
-Datum
-current_timestamp(PG_FUNCTION_ARGS)
+TimestampTz
+GetSQLCurrentTimestamp(int32 typmod)
 {
 	TimestampTz ts;
-	int32		typmod = -1;
-
-	if (!PG_ARGISNULL(0))
-		typmod = anytimestamp_typmod_check(true, PG_GETARG_INT32(0));
 
 	ts = GetCurrentTransactionStartTimestamp();
 	if (typmod >= 0)
 		AdjustTimestampForTypmod(&ts, typmod, NULL);
-	return TimestampTzGetDatum(ts);
+	return ts;
 }
 
 /*
- * sql_localtimestamp -- implements LOCALTIMESTAMP, LOCALTIMESTAMP(n)
+ * GetSQLLocalTimestamp -- implements LOCALTIMESTAMP, LOCALTIMESTAMP(n)
  */
-Datum
-sql_localtimestamp(PG_FUNCTION_ARGS)
+Timestamp
+GetSQLLocalTimestamp(int32 typmod)
 {
 	Timestamp	ts;
-	int32		typmod = -1;
-
-	if (!PG_ARGISNULL(0))
-		typmod = anytimestamp_typmod_check(false, PG_GETARG_INT32(0));
 
 	ts = timestamptz2timestamp(GetCurrentTransactionStartTimestamp());
 	if (typmod >= 0)
 		AdjustTimestampForTypmod(&ts, typmod, NULL);
-	return TimestampGetDatum(ts);
+	return ts;
 }
-
 
 /*
  * timeofday(*) -- returns the current time as a text.

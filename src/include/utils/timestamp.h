@@ -95,7 +95,11 @@ extern PGDLLIMPORT TimestampTz PgReloadTime;
 
 /* Internal routines (not fmgr-callable) */
 
+extern int32 anytimestamp_typmod_check(bool istz, int32 typmod);
+
 extern TimestampTz GetCurrentTimestamp(void);
+extern TimestampTz GetSQLCurrentTimestamp(int32 typmod);
+extern Timestamp GetSQLLocalTimestamp(int32 typmod);
 extern void TimestampDifference(TimestampTz start_time, TimestampTz stop_time,
 								long *secs, int *microsecs);
 extern long TimestampDifferenceMilliseconds(TimestampTz start_time,

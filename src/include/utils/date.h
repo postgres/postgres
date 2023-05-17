@@ -96,6 +96,7 @@ TimeTzADTPGetDatum(const TimeTzADT *X)
 
 
 /* date.c */
+extern int32 anytime_typmod_check(bool istz, int32 typmod);
 extern double date2timestamp_no_overflow(DateADT dateVal);
 extern Timestamp date2timestamp_opt_overflow(DateADT dateVal, int *overflow);
 extern TimestampTz date2timestamptz_opt_overflow(DateADT dateVal, int *overflow);
@@ -103,6 +104,9 @@ extern int32 date_cmp_timestamp_internal(DateADT dateVal, Timestamp dt2);
 extern int32 date_cmp_timestamptz_internal(DateADT dateVal, TimestampTz dt2);
 
 extern void EncodeSpecialDate(DateADT dt, char *str);
+extern DateADT GetSQLCurrentDate(void);
+extern TimeTzADT *GetSQLCurrentTime(int32 typmod);
+extern TimeADT GetSQLLocalTime(int32 typmod);
 extern int	time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec);
 extern int	timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp);
 extern int	tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result);

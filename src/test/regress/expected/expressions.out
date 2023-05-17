@@ -2,7 +2,7 @@
 -- expression evaluation tests that don't fit into a more specific file
 --
 --
--- Tests for various FuncCalls with COERCE_SQL_SYNTAX.
+-- Tests for SQLValueFunction
 --
 -- current_date  (always matches because of transactional behaviour)
 SELECT date(now())::text = current_date::text;

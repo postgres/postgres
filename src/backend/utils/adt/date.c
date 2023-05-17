@@ -46,6 +46,27 @@
 
 /* common code for timetypmodin and timetztypmodin */
 static int32
+anytime_typmodin(bool istz, ArrayType *ta)
+{
+	int32	   *tl;
+	int			n;
+
+	tl = ArrayGetIntegerTypmods(ta, &n);
+
+	/*
+	 * we're not too tense about good error message here because grammar
+	 * shouldn't allow wrong number of modifiers for TIME
+	 */
+	if (n != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid type modifier")));
+
+	return anytime_typmod_check(istz, tl[0]);
+}
+
+/* exported so parse_expr.c can use it */
+int32
 anytime_typmod_check(bool istz, int32 typmod)
 {
 	if (typmod < 0)
@@ -64,26 +85,6 @@ anytime_typmod_check(bool istz, int32 typmod)
 	}
 
 	return typmod;
-}
-
-static int32
-anytime_typmodin(bool istz, ArrayType *ta)
-{
-	int32	   *tl;
-	int			n;
-
-	tl = ArrayGetIntegerTypmods(ta, &n);
-
-	/*
-	 * we're not too tense about good error message here because grammar
-	 * shouldn't allow wrong number of modifiers for TIME
-	 */
-	if (n != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid type modifier")));
-
-	return anytime_typmod_check(istz, tl[0]);
 }
 
 /* common code for timetypmodout and timetztypmodout */
@@ -301,10 +302,10 @@ EncodeSpecialDate(DateADT dt, char *str)
 
 
 /*
- * current_date -- implements CURRENT_DATE
+ * GetSQLCurrentDate -- implements CURRENT_DATE
  */
-Datum
-current_date(PG_FUNCTION_ARGS)
+DateADT
+GetSQLCurrentDate(void)
 {
 	struct pg_tm tm;
 
@@ -330,56 +331,46 @@ current_date(PG_FUNCTION_ARGS)
 		cache_mday = tm.tm_mday;
 	}
 
-	return DateADTGetDatum(cache_date);
+	return cache_date;
 }
 
 /*
- * current_time -- implements CURRENT_TIME, CURRENT_TIME(n)
+ * GetSQLCurrentTime -- implements CURRENT_TIME, CURRENT_TIME(n)
  */
-Datum
-current_time(PG_FUNCTION_ARGS)
+TimeTzADT *
+GetSQLCurrentTime(int32 typmod)
 {
 	TimeTzADT  *result;
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
-	int32		typmod = -1;
-
-	if (!PG_ARGISNULL(0))
-		typmod = anytime_typmod_check(true, PG_GETARG_INT32(0));
 
 	GetCurrentTimeUsec(tm, &fsec, &tz);
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 	tm2timetz(tm, fsec, tz, result);
 	AdjustTimeForTypmod(&(result->time), typmod);
-
-	return TimeTzADTPGetDatum(result);
+	return result;
 }
 
 /*
- * sql_localtime -- implements LOCALTIME, LOCALTIME(n)
+ * GetSQLLocalTime -- implements LOCALTIME, LOCALTIME(n)
  */
-Datum
-sql_localtime(PG_FUNCTION_ARGS)
+TimeADT
+GetSQLLocalTime(int32 typmod)
 {
 	TimeADT		result;
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
-	int32		typmod = -1;
-
-	if (!PG_ARGISNULL(0))
-		typmod = anytime_typmod_check(false, PG_GETARG_INT32(0));
 
 	GetCurrentTimeUsec(tm, &fsec, &tz);
 
 	tm2time(tm, fsec, &result);
 	AdjustTimeForTypmod(&result, typmod);
-
-	return TimeADTGetDatum(result);
+	return result;
 }
 
 

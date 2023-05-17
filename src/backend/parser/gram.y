@@ -198,6 +198,8 @@ static Node *makeAndExpr(Node *lexpr, Node *rexpr, int location);
 static Node *makeOrExpr(Node *lexpr, Node *rexpr, int location);
 static Node *makeNotExpr(Node *expr, int location);
 static Node *makeAArrayExpr(List *elements, int location);
+static Node *makeSQLValueFunction(SQLValueFunctionOp op, int32 typmod,
+								  int location);
 static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args,
 						 List *args, int location);
 static List *mergeTableFuncParameters(List *func_args, List *columns);
@@ -15288,87 +15290,51 @@ func_expr_common_subexpr:
 				}
 			| CURRENT_DATE
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_date"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_DATE, -1, @1);
 				}
 			| CURRENT_TIME
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_time"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_TIME, -1, @1);
 				}
 			| CURRENT_TIME '(' Iconst ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_time"),
-											   list_make1(makeIntConst($3, @3)),
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_TIME_N, $3, @1);
 				}
 			| CURRENT_TIMESTAMP
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_timestamp"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_TIMESTAMP, -1, @1);
 				}
 			| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_timestamp"),
-											   list_make1(makeIntConst($3, @3)),
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_TIMESTAMP_N, $3, @1);
 				}
 			| LOCALTIME
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("localtime"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_LOCALTIME, -1, @1);
 				}
 			| LOCALTIME '(' Iconst ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("localtime"),
-											   list_make1(makeIntConst($3, @3)),
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_LOCALTIME_N, $3, @1);
 				}
 			| LOCALTIMESTAMP
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("localtimestamp"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_LOCALTIMESTAMP, -1, @1);
 				}
 			| LOCALTIMESTAMP '(' Iconst ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("localtimestamp"),
-											   list_make1(makeIntConst($3, @3)),
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_LOCALTIMESTAMP_N, $3, @1);
 				}
 			| CURRENT_ROLE
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_role"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_ROLE, -1, @1);
 				}
 			| CURRENT_USER
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_user"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_USER, -1, @1);
 				}
 			| SESSION_USER
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("session_user"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_SESSION_USER, -1, @1);
 				}
 			| SYSTEM_USER
 				{
@@ -15379,24 +15345,15 @@ func_expr_common_subexpr:
 				}
 			| USER
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("user"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_USER, -1, @1);
 				}
 			| CURRENT_CATALOG
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_catalog"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_CATALOG, -1, @1);
 				}
 			| CURRENT_SCHEMA
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_schema"),
-											   NIL,
-											   COERCE_SQL_SYNTAX,
-											   @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_SCHEMA, -1, @1);
 				}
 			| CAST '(' a_expr AS Typename ')'
 				{ $$ = makeTypeCast($3, $5, @1); }
@@ -18517,6 +18474,18 @@ makeAArrayExpr(List *elements, int location)
 	n->elements = elements;
 	n->location = location;
 	return (Node *) n;
+}
+
+static Node *
+makeSQLValueFunction(SQLValueFunctionOp op, int32 typmod, int location)
+{
+	SQLValueFunction *svf = makeNode(SQLValueFunction);
+
+	svf->op = op;
+	/* svf->type will be filled during parse analysis */
+	svf->typmod = typmod;
+	svf->location = location;
+	return (Node *) svf;
 }
 
 static Node *
