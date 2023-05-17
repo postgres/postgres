@@ -425,6 +425,14 @@ pgstat_tracks_io_op(BackendType bktype, IOObject io_object,
 		return false;
 
 	/*
+	 * Temporary tables are not logged and thus do not require fsync'ing.
+	 * Writeback is not requested for temporary tables.
+	 */
+	if (io_object == IOOBJECT_TEMP_RELATION &&
+		(io_op == IOOP_FSYNC || io_op == IOOP_WRITEBACK))
+		return false;
+
+	/*
 	 * Some IOOps are not valid in certain IOContexts and some IOOps are only
 	 * valid in certain contexts.
 	 */
@@ -448,12 +456,6 @@ pgstat_tracks_io_op(BackendType bktype, IOObject io_object,
 	if (strategy_io_context && io_op == IOOP_FSYNC)
 		return false;
 
-	/*
-	 * Temporary tables are not logged and thus do not require fsync'ing.
-	 */
-	if (io_context == IOCONTEXT_NORMAL &&
-		io_object == IOOBJECT_TEMP_RELATION && io_op == IOOP_FSYNC)
-		return false;
 
 	return true;
 }

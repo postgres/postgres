@@ -300,9 +300,10 @@ typedef enum IOOp
 	IOOP_READ,
 	IOOP_REUSE,
 	IOOP_WRITE,
+	IOOP_WRITEBACK,
 } IOOp;
 
-#define IOOP_NUM_TYPES (IOOP_WRITE + 1)
+#define IOOP_NUM_TYPES (IOOP_WRITEBACK + 1)
 
 typedef struct PgStat_BktypeIO
 {

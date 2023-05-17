@@ -1131,6 +1131,8 @@ SELECT
        b.read_time,
        b.writes,
        b.write_time,
+       b.writebacks,
+       b.writeback_time,
        b.extends,
        b.extend_time,
        b.op_bytes,

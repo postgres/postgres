@@ -3870,6 +3870,32 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <row>
       <entry role="catalog_table_entry">
        <para role="column_definition">
+        <structfield>writebacks</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of units of size <varname>op_bytes</varname> which the process
+        requested the kernel write out to permanent storage.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>writeback_time</structfield> <type>double precision</type>
+       </para>
+       <para>
+        Time spent in writeback operations in milliseconds (if
+        <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero). This
+        includes the time spent queueing write-out requests and, potentially,
+        the time spent to write out the dirty data.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
         <structfield>extends</structfield> <type>bigint</type>
        </para>
        <para>

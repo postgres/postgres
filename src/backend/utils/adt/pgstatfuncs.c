@@ -1268,6 +1268,8 @@ typedef enum io_stat_col
 	IO_COL_READ_TIME,
 	IO_COL_WRITES,
 	IO_COL_WRITE_TIME,
+	IO_COL_WRITEBACKS,
+	IO_COL_WRITEBACK_TIME,
 	IO_COL_EXTENDS,
 	IO_COL_EXTEND_TIME,
 	IO_COL_CONVERSION,
@@ -1303,6 +1305,8 @@ pgstat_get_io_op_index(IOOp io_op)
 			return IO_COL_REUSES;
 		case IOOP_WRITE:
 			return IO_COL_WRITES;
+		case IOOP_WRITEBACK:
+			return IO_COL_WRITEBACKS;
 	}
 
 	elog(ERROR, "unrecognized IOOp value: %d", io_op);
@@ -1322,6 +1326,7 @@ pgstat_get_io_time_index(IOOp io_op)
 	{
 		case IOOP_READ:
 		case IOOP_WRITE:
+		case IOOP_WRITEBACK:
 		case IOOP_EXTEND:
 		case IOOP_FSYNC:
 			return pgstat_get_io_op_index(io_op) + 1;

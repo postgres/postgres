@@ -1685,7 +1685,7 @@ again:
 		FlushBuffer(buf_hdr, NULL, IOOBJECT_RELATION, io_context);
 		LWLockRelease(content_lock);
 
-		ScheduleBufferTagForWriteback(&BackendWritebackContext,
+		ScheduleBufferTagForWriteback(&BackendWritebackContext, io_context,
 									  &buf_hdr->tag);
 	}
 
@@ -2725,8 +2725,11 @@ BufferSync(int flags)
 		CheckpointWriteDelay(flags, (double) num_processed / num_to_scan);
 	}
 
-	/* issue all pending flushes */
-	IssuePendingWritebacks(&wb_context);
+	/*
+	 * Issue all pending flushes. Only checkpointer calls BufferSync(), so
+	 * IOContext will always be IOCONTEXT_NORMAL.
+	 */
+	IssuePendingWritebacks(&wb_context, IOCONTEXT_NORMAL);
 
 	pfree(per_ts_stat);
 	per_ts_stat = NULL;
@@ -3110,7 +3113,11 @@ SyncOneBuffer(int buf_id, bool skip_recently_used, WritebackContext *wb_context)
 
 	UnpinBuffer(bufHdr);
 
-	ScheduleBufferTagForWriteback(wb_context, &tag);
+	/*
+	 * SyncOneBuffer() is only called by checkpointer and bgwriter, so
+	 * IOContext will always be IOCONTEXT_NORMAL.
+	 */
+	ScheduleBufferTagForWriteback(wb_context, IOCONTEXT_NORMAL, &tag);
 
 	return result | BUF_WRITTEN;
 }
@@ -5445,7 +5452,8 @@ WritebackContextInit(WritebackContext *context, int *max_pending)
  * Add buffer to list of pending writeback requests.
  */
 void
-ScheduleBufferTagForWriteback(WritebackContext *wb_context, BufferTag *tag)
+ScheduleBufferTagForWriteback(WritebackContext *wb_context, IOContext io_context,
+							  BufferTag *tag)
 {
 	PendingWriteback *pending;
 
@@ -5471,7 +5479,7 @@ ScheduleBufferTagForWriteback(WritebackContext *wb_context, BufferTag *tag)
 	 * is now disabled.
 	 */
 	if (wb_context->nr_pending >= *wb_context->max_pending)
-		IssuePendingWritebacks(wb_context);
+		IssuePendingWritebacks(wb_context, io_context);
 }
 
 #define ST_SORT sort_pending_writebacks
@@ -5489,8 +5497,9 @@ ScheduleBufferTagForWriteback(WritebackContext *wb_context, BufferTag *tag)
  * error out - it's just a hint.
  */
 void
-IssuePendingWritebacks(WritebackContext *wb_context)
+IssuePendingWritebacks(WritebackContext *wb_context, IOContext io_context)
 {
+	instr_time	io_start;
 	int			i;
 
 	if (wb_context->nr_pending == 0)
@@ -5502,6 +5511,8 @@ IssuePendingWritebacks(WritebackContext *wb_context)
 	 */
 	sort_pending_writebacks(wb_context->pending_writebacks,
 							wb_context->nr_pending);
+
+	io_start = pgstat_prepare_io_time();
 
 	/*
 	 * Coalesce neighbouring writes, but nothing else. For that we iterate
@@ -5555,6 +5566,13 @@ IssuePendingWritebacks(WritebackContext *wb_context)
 		reln = smgropen(currlocator, InvalidBackendId);
 		smgrwriteback(reln, BufTagGetForkNum(&tag), tag.blockNum, nblocks);
 	}
+
+	/*
+	 * Assume that writeback requests are only issued for buffers containing
+	 * blocks of permanent relations.
+	 */
+	pgstat_count_io_op_time(IOOBJECT_RELATION, io_context,
+							IOOP_WRITEBACK, io_start, wb_context->nr_pending);
 
 	wb_context->nr_pending = 0;
 }

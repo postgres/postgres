@@ -1887,6 +1887,8 @@ pg_stat_io| SELECT backend_type,
     read_time,
     writes,
     write_time,
+    writebacks,
+    writeback_time,
     extends,
     extend_time,
     op_bytes,
@@ -1896,7 +1898,7 @@ pg_stat_io| SELECT backend_type,
     fsyncs,
     fsync_time,
     stats_reset
-   FROM pg_stat_get_io() b(backend_type, object, context, reads, read_time, writes, write_time, extends, extend_time, op_bytes, hits, evictions, reuses, fsyncs, fsync_time, stats_reset);
+   FROM pg_stat_get_io() b(backend_type, object, context, reads, read_time, writes, write_time, writebacks, writeback_time, extends, extend_time, op_bytes, hits, evictions, reuses, fsyncs, fsync_time, stats_reset);
 pg_stat_progress_analyze| SELECT s.pid,
     s.datid,
     d.datname,
