@@ -459,6 +459,10 @@ LZ4Stream_read_internal(LZ4State *state, void *ptr, int ptrsize, bool eol_flag)
 	if (!LZ4Stream_init(state, size, false /* decompressing */ ))
 		return -1;
 
+	/* No work needs to be done for a zero-sized output buffer */
+	if (size <= 0)
+		return 0;
+
 	/* Verify that there is enough space in the outbuf */
 	if (size > state->buflen)
 	{
@@ -636,13 +640,19 @@ LZ4Stream_gets(char *ptr, int size, CompressFileHandle *CFH)
 	LZ4State   *state = (LZ4State *) CFH->private_data;
 	int			ret;
 
-	ret = LZ4Stream_read_internal(state, ptr, size, true);
+	ret = LZ4Stream_read_internal(state, ptr, size - 1, true);
 	if (ret < 0 || (ret == 0 && !LZ4Stream_eof(CFH)))
 		pg_fatal("could not read from input file: %s", LZ4Stream_get_error(CFH));
 
 	/* Done reading */
 	if (ret == 0)
 		return NULL;
+
+	/*
+	 * Our caller expects the return string to be NULL terminated
+	 * and we know that ret is greater than zero.
+	 */
+	ptr[ret - 1] = '\0';
 
 	return ptr;
 }
