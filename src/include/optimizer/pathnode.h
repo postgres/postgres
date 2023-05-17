@@ -311,6 +311,7 @@ extern RelOptInfo *build_join_rel(PlannerInfo *root,
 								  RelOptInfo *outer_rel,
 								  RelOptInfo *inner_rel,
 								  SpecialJoinInfo *sjinfo,
+								  List *pushed_down_joins,
 								  List **restrictlist_ptr);
 extern Relids min_join_parameterization(PlannerInfo *root,
 										Relids joinrelids,

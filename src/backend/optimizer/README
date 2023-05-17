@@ -507,6 +507,27 @@ problem for join relation identification either, since whether a semijoin
 has been completed is again implicit in the set of base relations
 included in the join.
 
+As usual, outer join identity 3 complicates matters.  If we start with
+	(A leftjoin B on (Pab)) leftjoin C on (Pbc)
+then the parser will have marked any C Vars appearing above these joins
+with the RT index of the B/C join.  If we now transform to
+	A leftjoin (B leftjoin C on (Pbc)) on (Pab)
+then it would appear that a clause using only such Vars could be pushed
+down and applied as a filter clause (not a join clause) at the lower
+B/C join.  But *this might not give the right answer* since the clause
+might see a non-null value for the C Var that will be replaced by null
+once the A/B join is performed.  We handle this by saying that the
+pushed-down join hasn't completely performed the work of the B/C join
+and hence is not entitled to include that outer join relid in its
+relid set.  When we form the A/B join, both outer joins' relids will
+be added to its relid set, and then the upper clause will be applied
+at the correct join level.  (Note there is no problem when identity 3
+is applied in the other direction: if we started with the second form
+then upper C Vars are marked with both outer join relids, so they
+cannot drop below whichever join is applied second.)  Similarly,
+Vars representing the output of a pushed-down join do not acquire
+nullingrel bits for that join until after the upper join is performed.
+
 There is one additional complication for qual clause placement, which
 occurs when we have made multiple versions of an outer-join clause as
 described previously (that is, we have both "Pbc" and "Pb*c" forms of

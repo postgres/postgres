@@ -691,6 +691,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	Relids		joinrelids;
 	SpecialJoinInfo *sjinfo;
 	bool		reversed;
+	List	   *pushed_down_joins = NIL;
 	SpecialJoinInfo sjinfo_data;
 	RelOptInfo *joinrel;
 	List	   *restrictlist;
@@ -710,9 +711,12 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		return NULL;
 	}
 
-	/* If we have an outer join, add its RTI to form the canonical relids. */
-	if (sjinfo && sjinfo->ojrelid != 0)
-		joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
+	/*
+	 * Add outer join relid(s) to form the canonical relids.  Any added outer
+	 * joins besides sjinfo itself are appended to pushed_down_joins.
+	 */
+	joinrelids = add_outer_joins_to_relids(root, joinrelids, sjinfo,
+										   &pushed_down_joins);
 
 	/* Swap rels if needed to match the join info. */
 	if (reversed)
@@ -740,7 +744,8 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		sjinfo->ojrelid = 0;
 		sjinfo->commute_above_l = NULL;
 		sjinfo->commute_above_r = NULL;
-		sjinfo->commute_below = NULL;
+		sjinfo->commute_below_l = NULL;
+		sjinfo->commute_below_r = NULL;
 		/* we don't bother trying to make the remaining fields valid */
 		sjinfo->lhs_strict = false;
 		sjinfo->semi_can_btree = false;
@@ -753,7 +758,8 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	 * Find or build the join RelOptInfo, and compute the restrictlist that
 	 * goes with this particular joining.
 	 */
-	joinrel = build_join_rel(root, joinrelids, rel1, rel2, sjinfo,
+	joinrel = build_join_rel(root, joinrelids, rel1, rel2,
+							 sjinfo, pushed_down_joins,
 							 &restrictlist);
 
 	/*
@@ -773,6 +779,108 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	bms_free(joinrelids);
 
 	return joinrel;
+}
+
+/*
+ * add_outer_joins_to_relids
+ *	  Add relids to input_relids to represent any outer joins that will be
+ *	  calculated at this join.
+ *
+ * input_relids is the union of the relid sets of the two input relations.
+ * Note that we modify this in-place and return it; caller must bms_copy()
+ * it first, if a separate value is desired.
+ *
+ * sjinfo represents the join being performed.
+ *
+ * If the current join completes the calculation of any outer joins that
+ * have been pushed down per outer-join identity 3, those relids will be
+ * added to the result along with sjinfo's own relid.  If pushed_down_joins
+ * is not NULL, then also the SpecialJoinInfos for such added outer joins will
+ * be appended to *pushed_down_joins (so caller must initialize it to NIL).
+ */
+Relids
+add_outer_joins_to_relids(PlannerInfo *root, Relids input_relids,
+						  SpecialJoinInfo *sjinfo,
+						  List **pushed_down_joins)
+{
+	/* Nothing to do if this isn't an outer join with an assigned relid. */
+	if (sjinfo == NULL || sjinfo->ojrelid == 0)
+		return input_relids;
+
+	/*
+	 * If it's not a left join, we have no rules that would permit executing
+	 * it in non-syntactic order, so just form the syntactic relid set.  (This
+	 * is just a quick-exit test; we'd come to the same conclusion anyway,
+	 * since its commute_below_l and commute_above_l sets must be empty.)
+	 */
+	if (sjinfo->jointype != JOIN_LEFT)
+		return bms_add_member(input_relids, sjinfo->ojrelid);
+
+	/*
+	 * We cannot add the OJ relid if this join has been pushed into the RHS of
+	 * a syntactically-lower left join per OJ identity 3.  (If it has, then we
+	 * cannot claim that its outputs represent the final state of its RHS.)
+	 * There will not be any other OJs that can be added either, so we're
+	 * done.
+	 */
+	if (!bms_is_subset(sjinfo->commute_below_l, input_relids))
+		return input_relids;
+
+	/* OK to add OJ's own relid */
+	input_relids = bms_add_member(input_relids, sjinfo->ojrelid);
+
+	/*
+	 * Contrariwise, if we are now forming the final result of such a commuted
+	 * pair of OJs, it's time to add the relid(s) of the pushed-down join(s).
+	 * We can skip this if this join was never a candidate to be pushed up.
+	 */
+	if (sjinfo->commute_above_l)
+	{
+		Relids		commute_above_rels = bms_copy(sjinfo->commute_above_l);
+		ListCell   *lc;
+
+		/*
+		 * The current join could complete the nulling of more than one
+		 * pushed-down join, so we have to examine all the SpecialJoinInfos.
+		 * Because join_info_list was built in bottom-up order, it's
+		 * sufficient to traverse it once: an ojrelid we add in one loop
+		 * iteration would not have affected decisions of earlier iterations.
+		 */
+		foreach(lc, root->join_info_list)
+		{
+			SpecialJoinInfo *othersj = (SpecialJoinInfo *) lfirst(lc);
+
+			if (othersj == sjinfo ||
+				othersj->ojrelid == 0 || othersj->jointype != JOIN_LEFT)
+				continue;		/* definitely not interesting */
+
+			if (!bms_is_member(othersj->ojrelid, commute_above_rels))
+				continue;
+
+			/* Add it if not already present but conditions now satisfied */
+			if (!bms_is_member(othersj->ojrelid, input_relids) &&
+				bms_is_subset(othersj->min_lefthand, input_relids) &&
+				bms_is_subset(othersj->min_righthand, input_relids) &&
+				bms_is_subset(othersj->commute_below_l, input_relids))
+			{
+				input_relids = bms_add_member(input_relids, othersj->ojrelid);
+				/* report such pushed down outer joins, if asked */
+				if (pushed_down_joins != NULL)
+					*pushed_down_joins = lappend(*pushed_down_joins, othersj);
+
+				/*
+				 * We must also check any joins that othersj potentially
+				 * commutes with.  They likewise must appear later in
+				 * join_info_list than othersj itself, so we can visit them
+				 * later in this loop.
+				 */
+				commute_above_rels = bms_add_members(commute_above_rels,
+													 othersj->commute_above_l);
+			}
+		}
+	}
+
+	return input_relids;
 }
 
 /*
@@ -1534,9 +1642,8 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 		/* Build correct join relids for child join */
 		child_joinrelids = bms_union(child_rel1->relids, child_rel2->relids);
-		if (child_sjinfo->ojrelid != 0)
-			child_joinrelids = bms_add_member(child_joinrelids,
-											  child_sjinfo->ojrelid);
+		child_joinrelids = add_outer_joins_to_relids(root, child_joinrelids,
+													 child_sjinfo, NULL);
 
 		/* Find the AppendRelInfo structures */
 		appinfos = find_appinfos_by_relids(root, child_joinrelids, &nappinfos);

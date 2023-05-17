@@ -4789,7 +4789,8 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	norm_sjinfo.ojrelid = 0;
 	norm_sjinfo.commute_above_l = NULL;
 	norm_sjinfo.commute_above_r = NULL;
-	norm_sjinfo.commute_below = NULL;
+	norm_sjinfo.commute_below_l = NULL;
+	norm_sjinfo.commute_below_r = NULL;
 	/* we don't bother trying to make the remaining fields valid */
 	norm_sjinfo.lhs_strict = false;
 	norm_sjinfo.semi_can_btree = false;
@@ -4957,7 +4958,8 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 	sjinfo.ojrelid = 0;
 	sjinfo.commute_above_l = NULL;
 	sjinfo.commute_above_r = NULL;
-	sjinfo.commute_below = NULL;
+	sjinfo.commute_below_l = NULL;
+	sjinfo.commute_below_r = NULL;
 	/* we don't bother trying to make the remaining fields valid */
 	sjinfo.lhs_strict = false;
 	sjinfo.semi_can_btree = false;

@@ -104,6 +104,9 @@ extern void add_paths_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 extern void join_search_one_level(PlannerInfo *root, int level);
 extern RelOptInfo *make_join_rel(PlannerInfo *root,
 								 RelOptInfo *rel1, RelOptInfo *rel2);
+extern Relids add_outer_joins_to_relids(PlannerInfo *root, Relids input_relids,
+										SpecialJoinInfo *sjinfo,
+										List **pushed_down_joins);
 extern bool have_join_order_restriction(PlannerInfo *root,
 										RelOptInfo *rel1, RelOptInfo *rel2);
 extern bool have_dangerous_phv(PlannerInfo *root,
@@ -150,7 +153,7 @@ extern List *generate_join_implied_equalities(PlannerInfo *root,
 											  Relids join_relids,
 											  Relids outer_relids,
 											  RelOptInfo *inner_rel,
-											  Index ojrelid);
+											  SpecialJoinInfo *sjinfo);
 extern List *generate_join_implied_equalities_for_ecs(PlannerInfo *root,
 													  List *eclasses,
 													  Relids join_relids,

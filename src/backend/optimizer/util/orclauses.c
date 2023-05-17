@@ -334,7 +334,8 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 		sjinfo.ojrelid = 0;
 		sjinfo.commute_above_l = NULL;
 		sjinfo.commute_above_r = NULL;
-		sjinfo.commute_below = NULL;
+		sjinfo.commute_below_l = NULL;
+		sjinfo.commute_below_r = NULL;
 		/* we don't bother trying to make the remaining fields valid */
 		sjinfo.lhs_strict = false;
 		sjinfo.semi_can_btree = false;

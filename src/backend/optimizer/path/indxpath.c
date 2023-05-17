@@ -3364,7 +3364,7 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 																   otherrels),
 														 otherrels,
 														 rel,
-														 0));
+														 NULL));
 
 	/*
 	 * Normally we remove quals that are implied by a partial index's

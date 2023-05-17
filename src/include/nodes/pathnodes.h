@@ -2783,11 +2783,15 @@ typedef struct PlaceHolderVar
  * 3, when this join is in the RHS of the upper join (so, this is the lower
  * join in the second form of the identity).
  *
- * commute_below is filled with the relids of syntactically-lower outer joins
- * that have been found to commute with this one per outer join identity 3.
- * (We need not record which side they are on, since that can be determined
- * by seeing whether the lower join's relid appears in syn_lefthand or
- * syn_righthand.)
+ * commute_below_l is filled with the relids of syntactically-lower outer
+ * joins that have been found to commute with this one per outer join identity
+ * 3 and are in the LHS of this join (so, this is the upper join in the first
+ * form of the identity).
+ *
+ * commute_below_r is filled with the relids of syntactically-lower outer
+ * joins that have been found to commute with this one per outer join identity
+ * 3 and are in the RHS of this join (so, this is the upper join in the second
+ * form of the identity).
  *
  * lhs_strict is true if the special join's condition cannot succeed when the
  * LHS variables are all NULL (this means that an outer join can commute with
@@ -2829,7 +2833,8 @@ struct SpecialJoinInfo
 	Index		ojrelid;		/* outer join's RT index; 0 if none */
 	Relids		commute_above_l;	/* commuting OJs above this one, if LHS */
 	Relids		commute_above_r;	/* commuting OJs above this one, if RHS */
-	Relids		commute_below;	/* commuting OJs below this one */
+	Relids		commute_below_l;	/* commuting OJs in this one's LHS */
+	Relids		commute_below_r;	/* commuting OJs in this one's RHS */
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
 	/* Remaining fields are set only for JOIN_SEMI jointype: */
 	bool		semi_can_btree; /* true if semi_operators are all btree */

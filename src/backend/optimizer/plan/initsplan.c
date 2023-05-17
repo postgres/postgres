@@ -1213,8 +1213,8 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem)
 			 * positioning decisions will be made later, when we revisit the
 			 * postponed clauses.
 			 */
-			if (sjinfo->commute_below)
-				ojscope = bms_add_members(ojscope, sjinfo->commute_below);
+			ojscope = bms_add_members(ojscope, sjinfo->commute_below_l);
+			ojscope = bms_add_members(ojscope, sjinfo->commute_below_r);
 		}
 		else
 			postponed_oj_qual_list = NULL;
@@ -1400,7 +1400,8 @@ make_outerjoininfo(PlannerInfo *root,
 	/* these fields may get added to later: */
 	sjinfo->commute_above_l = NULL;
 	sjinfo->commute_above_r = NULL;
-	sjinfo->commute_below = NULL;
+	sjinfo->commute_below_l = NULL;
+	sjinfo->commute_below_r = NULL;
 
 	compute_semijoin_info(root, sjinfo, clause);
 
@@ -1643,37 +1644,30 @@ make_outerjoininfo(PlannerInfo *root,
 	 * Now that we've identified the correct min_lefthand and min_righthand,
 	 * any commute_below_l or commute_below_r relids that have not gotten
 	 * added back into those sets (due to intervening outer joins) are indeed
-	 * commutable with this one.  Update the derived data in the
-	 * SpecialJoinInfos.
+	 * commutable with this one.
+	 *
+	 * First, delete any subsequently-added-back relids (this is easier than
+	 * maintaining commute_below_l/r precisely through all the above).
 	 */
+	commute_below_l = bms_del_members(commute_below_l, min_lefthand);
+	commute_below_r = bms_del_members(commute_below_r, min_righthand);
+
+	/* Anything left? */
 	if (commute_below_l || commute_below_r)
 	{
-		Relids		commute_below;
-
-		/*
-		 * Delete any subsequently-added-back relids (this is easier than
-		 * maintaining commute_below_l/r precisely through all the above).
-		 */
-		commute_below_l = bms_del_members(commute_below_l, min_lefthand);
-		commute_below_r = bms_del_members(commute_below_r, min_righthand);
-
-		/* Anything left? */
-		commute_below = bms_union(commute_below_l, commute_below_r);
-		if (!bms_is_empty(commute_below))
+		/* Yup, so we must update the derived data in the SpecialJoinInfos */
+		sjinfo->commute_below_l = commute_below_l;
+		sjinfo->commute_below_r = commute_below_r;
+		foreach(l, root->join_info_list)
 		{
-			/* Yup, so we must update the data structures */
-			sjinfo->commute_below = commute_below;
-			foreach(l, root->join_info_list)
-			{
-				SpecialJoinInfo *otherinfo = (SpecialJoinInfo *) lfirst(l);
+			SpecialJoinInfo *otherinfo = (SpecialJoinInfo *) lfirst(l);
 
-				if (bms_is_member(otherinfo->ojrelid, commute_below_l))
-					otherinfo->commute_above_l =
-						bms_add_member(otherinfo->commute_above_l, ojrelid);
-				else if (bms_is_member(otherinfo->ojrelid, commute_below_r))
-					otherinfo->commute_above_r =
-						bms_add_member(otherinfo->commute_above_r, ojrelid);
-			}
+			if (bms_is_member(otherinfo->ojrelid, commute_below_l))
+				otherinfo->commute_above_l =
+					bms_add_member(otherinfo->commute_above_l, ojrelid);
+			else if (bms_is_member(otherinfo->ojrelid, commute_below_r))
+				otherinfo->commute_above_r =
+					bms_add_member(otherinfo->commute_above_r, ojrelid);
 		}
 	}
 
@@ -1889,8 +1883,7 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 	 * as-is.
 	 */
 	Assert(sjinfo->lhs_strict); /* else we shouldn't be here */
-	if (sjinfo->commute_above_r ||
-		bms_overlap(sjinfo->commute_below, sjinfo->syn_lefthand))
+	if (sjinfo->commute_above_r || sjinfo->commute_below_l)
 	{
 		Relids		joins_above;
 		Relids		joins_below;
@@ -1901,8 +1894,7 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 
 		/* Identify the outer joins this one commutes with */
 		joins_above = sjinfo->commute_above_r;
-		joins_below = bms_intersect(sjinfo->commute_below,
-									sjinfo->syn_lefthand);
+		joins_below = sjinfo->commute_below_l;
 
 		/*
 		 * Generate qual variants with different sets of nullingrels bits.

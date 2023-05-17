@@ -88,8 +88,11 @@ restart:
 		 */
 		innerrelid = bms_singleton_member(sjinfo->min_righthand);
 
-		/* Compute the relid set for the join we are considering */
-		joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+		/*
+		 * Compute the relid set for the join we are considering.  We can
+		 * assume things are done in syntactic order.
+		 */
+		joinrelids = bms_union(sjinfo->syn_lefthand, sjinfo->syn_righthand);
 		if (sjinfo->ojrelid != 0)
 			joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
 
@@ -201,8 +204,8 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	if (!rel_supports_distinctness(root, innerrel))
 		return false;
 
-	/* Compute the relid set for the join we are considering */
-	inputrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+	/* Compute the syntactic relid set for the join we are considering */
+	inputrelids = bms_union(sjinfo->syn_lefthand, sjinfo->syn_righthand);
 	Assert(sjinfo->ojrelid != 0);
 	joinrelids = bms_copy(inputrelids);
 	joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
@@ -399,7 +402,8 @@ remove_rel_from_query(PlannerInfo *root, int relid, int ojrelid,
 		/* relid cannot appear in these fields, but ojrelid can: */
 		sjinfo->commute_above_l = bms_del_member(sjinfo->commute_above_l, ojrelid);
 		sjinfo->commute_above_r = bms_del_member(sjinfo->commute_above_r, ojrelid);
-		sjinfo->commute_below = bms_del_member(sjinfo->commute_below, ojrelid);
+		sjinfo->commute_below_l = bms_del_member(sjinfo->commute_below_l, ojrelid);
+		sjinfo->commute_below_r = bms_del_member(sjinfo->commute_below_r, ojrelid);
 	}
 
 	/*
@@ -665,7 +669,7 @@ reduce_unique_semijoins(PlannerInfo *root)
 														 joinrelids,
 														 sjinfo->min_lefthand,
 														 innerrel,
-														 0),
+														 NULL),
 						innerrel->joininfo);
 
 		/* Test whether the innerrel is unique for those clauses. */

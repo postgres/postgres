@@ -2358,6 +2358,149 @@ where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
 (0 rows)
 
 --
+-- checks for correct handling of quals in multiway outer joins
+--
+explain (costs off)
+select t1.f1
+from int4_tbl t1, int4_tbl t2
+  left join int4_tbl t3 on t3.f1 > 0
+  left join int4_tbl t4 on t3.f1 > 1
+where t4.f1 is null;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Nested Loop
+   ->  Nested Loop Left Join
+         Filter: (t4.f1 IS NULL)
+         ->  Seq Scan on int4_tbl t2
+         ->  Materialize
+               ->  Nested Loop Left Join
+                     Join Filter: (t3.f1 > 1)
+                     ->  Seq Scan on int4_tbl t3
+                           Filter: (f1 > 0)
+                     ->  Materialize
+                           ->  Seq Scan on int4_tbl t4
+   ->  Seq Scan on int4_tbl t1
+(12 rows)
+
+select t1.f1
+from int4_tbl t1, int4_tbl t2
+  left join int4_tbl t3 on t3.f1 > 0
+  left join int4_tbl t4 on t3.f1 > 1
+where t4.f1 is null;
+ f1 
+----
+(0 rows)
+
+explain (costs off)
+select *
+from int4_tbl t1 left join int4_tbl t2 on true
+  left join int4_tbl t3 on t2.f1 > 0
+  left join int4_tbl t4 on t3.f1 > 0;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on int4_tbl t1
+   ->  Materialize
+         ->  Nested Loop Left Join
+               Join Filter: (t3.f1 > 0)
+               ->  Nested Loop Left Join
+                     Join Filter: (t2.f1 > 0)
+                     ->  Seq Scan on int4_tbl t2
+                     ->  Materialize
+                           ->  Seq Scan on int4_tbl t3
+               ->  Materialize
+                     ->  Seq Scan on int4_tbl t4
+(12 rows)
+
+explain (costs off)
+select * from onek t1
+  left join onek t2 on t1.unique1 = t2.unique1
+  left join onek t3 on t2.unique1 != t3.unique1
+  left join onek t4 on t3.unique1 = t4.unique1;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (t2.unique1 <> t3.unique1)
+   ->  Hash Left Join
+         Hash Cond: (t1.unique1 = t2.unique1)
+         ->  Seq Scan on onek t1
+         ->  Hash
+               ->  Seq Scan on onek t2
+   ->  Materialize
+         ->  Hash Left Join
+               Hash Cond: (t3.unique1 = t4.unique1)
+               ->  Seq Scan on onek t3
+               ->  Hash
+                     ->  Seq Scan on onek t4
+(13 rows)
+
+explain (costs off)
+select * from int4_tbl t1
+  left join (select now() from int4_tbl t2
+             left join int4_tbl t3 on t2.f1 = t3.f1
+             left join int4_tbl t4 on t3.f1 = t4.f1) s on true
+  inner join int4_tbl t5 on true;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Nested Loop
+   ->  Nested Loop Left Join
+         ->  Seq Scan on int4_tbl t1
+         ->  Materialize
+               ->  Hash Left Join
+                     Hash Cond: (t3.f1 = t4.f1)
+                     ->  Hash Left Join
+                           Hash Cond: (t2.f1 = t3.f1)
+                           ->  Seq Scan on int4_tbl t2
+                           ->  Hash
+                                 ->  Seq Scan on int4_tbl t3
+                     ->  Hash
+                           ->  Seq Scan on int4_tbl t4
+   ->  Materialize
+         ->  Seq Scan on int4_tbl t5
+(15 rows)
+
+explain (costs off)
+select * from int4_tbl t1
+  left join int4_tbl t2 on true
+  left join int4_tbl t3 on true
+  left join int4_tbl t4 on t2.f1 = t3.f1;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (t2.f1 = t3.f1)
+   ->  Nested Loop Left Join
+         ->  Nested Loop Left Join
+               ->  Seq Scan on int4_tbl t1
+               ->  Materialize
+                     ->  Seq Scan on int4_tbl t2
+         ->  Materialize
+               ->  Seq Scan on int4_tbl t3
+   ->  Materialize
+         ->  Seq Scan on int4_tbl t4
+(11 rows)
+
+explain (costs off)
+select * from int4_tbl t1
+  left join int4_tbl t2 on true
+  left join int4_tbl t3 on t2.f1 = t3.f1
+  left join int4_tbl t4 on t3.f1 != t4.f1;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on int4_tbl t1
+   ->  Materialize
+         ->  Nested Loop Left Join
+               Join Filter: (t3.f1 <> t4.f1)
+               ->  Hash Left Join
+                     Hash Cond: (t2.f1 = t3.f1)
+                     ->  Seq Scan on int4_tbl t2
+                     ->  Hash
+                           ->  Seq Scan on int4_tbl t3
+               ->  Materialize
+                     ->  Seq Scan on int4_tbl t4
+(12 rows)
+
+--
 -- check a case where we formerly got confused by conflicting sort orders
 -- in redundant merge join path keys
 --

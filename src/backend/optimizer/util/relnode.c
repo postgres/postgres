@@ -43,6 +43,7 @@ typedef struct JoinHashEntry
 static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 								RelOptInfo *input_rel,
 								SpecialJoinInfo *sjinfo,
+								List *pushed_down_joins,
 								bool can_null);
 static List *build_joinrel_restrictlist(PlannerInfo *root,
 										RelOptInfo *joinrel,
@@ -632,6 +633,7 @@ add_join_rel(PlannerInfo *root, RelOptInfo *joinrel)
  * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
  *		joined
  * 'sjinfo': join context info
+ * 'pushed_down_joins': any pushed-down outer joins that are now completed
  * 'restrictlist_ptr': result variable.  If not NULL, *restrictlist_ptr
  *		receives the list of RestrictInfo nodes that apply to this
  *		particular pair of joinable relations.
@@ -645,6 +647,7 @@ build_join_rel(PlannerInfo *root,
 			   RelOptInfo *outer_rel,
 			   RelOptInfo *inner_rel,
 			   SpecialJoinInfo *sjinfo,
+			   List *pushed_down_joins,
 			   List **restrictlist_ptr)
 {
 	RelOptInfo *joinrel;
@@ -757,9 +760,9 @@ build_join_rel(PlannerInfo *root,
 	 * and inner rels we first try to build it from.  But the contents should
 	 * be the same regardless.
 	 */
-	build_joinrel_tlist(root, joinrel, outer_rel, sjinfo,
+	build_joinrel_tlist(root, joinrel, outer_rel, sjinfo, pushed_down_joins,
 						(sjinfo->jointype == JOIN_FULL));
-	build_joinrel_tlist(root, joinrel, inner_rel, sjinfo,
+	build_joinrel_tlist(root, joinrel, inner_rel, sjinfo, pushed_down_joins,
 						(sjinfo->jointype != JOIN_INNER));
 	add_placeholders_to_joinrel(root, joinrel, outer_rel, inner_rel, sjinfo);
 
@@ -870,8 +873,8 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 
 	joinrel->reloptkind = RELOPT_OTHER_JOINREL;
 	joinrel->relids = bms_union(outer_rel->relids, inner_rel->relids);
-	if (sjinfo->ojrelid != 0)
-		joinrel->relids = bms_add_member(joinrel->relids, sjinfo->ojrelid);
+	joinrel->relids = add_outer_joins_to_relids(root, joinrel->relids, sjinfo,
+												NULL);
 	joinrel->rows = 0;
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	joinrel->consider_startup = (root->tuple_fraction > 0);
@@ -1042,22 +1045,32 @@ min_join_parameterization(PlannerInfo *root,
  * from this input relation.  If so, we will (normally) add the join's relid
  * to the nulling bitmaps of Vars and PHVs bubbled up from the input.
  *
- * When forming an outer join's target list, special handling is needed
- * in case the outer join was commuted with another one per outer join
- * identity 3 (see optimizer/README).  We must take steps to ensure that
- * the output Vars have the same nulling bitmaps that they would if the
- * two joins had been done in syntactic order; else they won't match Vars
- * appearing higher in the query tree.  We need to do two things:
+ * When forming an outer join's target list, special handling is needed in
+ * case the outer join was commuted with another one per outer join identity 3
+ * (see optimizer/README).  We must take steps to ensure that the output Vars
+ * have the same nulling bitmaps that they would if the two joins had been
+ * done in syntactic order; else they won't match Vars appearing higher in
+ * the query tree.  An exception to the match-the-syntactic-order rule is
+ * that when an outer join is pushed down into another one's RHS per identity
+ * 3, we can't mark its Vars as nulled until the now-upper outer join is also
+ * completed.  So we need to do three things:
  *
- * First, we add the outer join's relid to the nulling bitmap only if the Var
- * or PHV actually comes from within the syntactically nullable side(s) of the
- * outer join.  This takes care of the possibility that we have transformed
+ * First, we add the outer join's relid to the nulling bitmap only if the
+ * outer join has been completely performed and the Var or PHV actually
+ * comes from within the syntactically nullable side(s) of the outer join.
+ * This takes care of the possibility that we have transformed
  *		(A leftjoin B on (Pab)) leftjoin C on (Pbc)
  * to
  *		A leftjoin (B leftjoin C on (Pbc)) on (Pab)
- * Here the now-upper A/B join must not mark C columns as nulled by itself.
+ * Here the pushed-down B/C join cannot mark C columns as nulled yet,
+ * while the now-upper A/B join must not mark C columns as nulled by itself.
  *
- * Second, any relid in sjinfo->commute_above_r that is already part of
+ * Second, perform the same operation for each SpecialJoinInfo listed in
+ * pushed_down_joins (which, in this example, would be the B/C join when
+ * we are at the now-upper A/B join).  This allows the now-upper join to
+ * complete the marking of "C" Vars that now have fully valid values.
+ *
+ * Third, any relid in sjinfo->commute_above_r that is already part of
  * the joinrel is added to the nulling bitmaps of nullable Vars and PHVs.
  * This takes care of the reverse case where we implement
  *		A leftjoin (B leftjoin C on (Pbc)) on (Pab)
@@ -1071,10 +1084,12 @@ static void
 build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 					RelOptInfo *input_rel,
 					SpecialJoinInfo *sjinfo,
+					List *pushed_down_joins,
 					bool can_null)
 {
 	Relids		relids = joinrel->relids;
 	ListCell   *vars;
+	ListCell   *lc;
 
 	foreach(vars, input_rel->reltarget->exprs)
 	{
@@ -1101,11 +1116,21 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 					phv = copyObject(phv);
 					/* See comments above to understand this logic */
 					if (sjinfo->ojrelid != 0 &&
+						bms_is_member(sjinfo->ojrelid, relids) &&
 						(bms_is_subset(phv->phrels, sjinfo->syn_righthand) ||
 						 (sjinfo->jointype == JOIN_FULL &&
 						  bms_is_subset(phv->phrels, sjinfo->syn_lefthand))))
 						phv->phnullingrels = bms_add_member(phv->phnullingrels,
 															sjinfo->ojrelid);
+					foreach(lc, pushed_down_joins)
+					{
+						SpecialJoinInfo *othersj = (SpecialJoinInfo *) lfirst(lc);
+
+						Assert(bms_is_member(othersj->ojrelid, relids));
+						if (bms_is_subset(phv->phrels, othersj->syn_righthand))
+							phv->phnullingrels = bms_add_member(phv->phnullingrels,
+																othersj->ojrelid);
+					}
 					phv->phnullingrels =
 						bms_join(phv->phnullingrels,
 								 bms_intersect(sjinfo->commute_above_r,
@@ -1166,11 +1191,21 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 			var = copyObject(var);
 			/* See comments above to understand this logic */
 			if (sjinfo->ojrelid != 0 &&
+				bms_is_member(sjinfo->ojrelid, relids) &&
 				(bms_is_member(var->varno, sjinfo->syn_righthand) ||
 				 (sjinfo->jointype == JOIN_FULL &&
 				  bms_is_member(var->varno, sjinfo->syn_lefthand))))
 				var->varnullingrels = bms_add_member(var->varnullingrels,
 													 sjinfo->ojrelid);
+			foreach(lc, pushed_down_joins)
+			{
+				SpecialJoinInfo *othersj = (SpecialJoinInfo *) lfirst(lc);
+
+				Assert(bms_is_member(othersj->ojrelid, relids));
+				if (bms_is_member(var->varno, othersj->syn_righthand))
+					var->varnullingrels = bms_add_member(var->varnullingrels,
+														 othersj->ojrelid);
+			}
 			var->varnullingrels =
 				bms_join(var->varnullingrels,
 						 bms_intersect(sjinfo->commute_above_r,
@@ -1259,7 +1294,7 @@ build_joinrel_restrictlist(PlannerInfo *root,
 														  joinrel->relids,
 														  outer_rel->relids,
 														  inner_rel,
-														  sjinfo->ojrelid));
+														  sjinfo));
 
 	return result;
 }
@@ -1543,7 +1578,7 @@ get_baserel_parampathinfo(PlannerInfo *root, RelOptInfo *baserel,
 															joinrelids,
 															required_outer,
 															baserel,
-															0));
+															NULL));
 
 	/* Compute set of serial numbers of the enforced clauses */
 	pserials = NULL;
@@ -1666,7 +1701,7 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 												join_and_req,
 												required_outer,
 												joinrel,
-												0);
+												NULL);
 	/* We only want ones that aren't movable to lower levels */
 	dropped_ecs = NIL;
 	foreach(lc, eclauses)

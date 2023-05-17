@@ -1366,19 +1366,20 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  * commutative duplicates, i.e. if the algorithm selects "a.x = b.y" but
  * we already have "b.y = a.x", we return the existing clause.
  *
- * If we are considering an outer join, ojrelid is the associated OJ relid,
- * otherwise it's zero.
+ * If we are considering an outer join, sjinfo is the associated OJ info,
+ * otherwise it can be NULL.
  *
  * join_relids should always equal bms_union(outer_relids, inner_rel->relids)
- * plus ojrelid if that's not zero.  We could simplify this function's API by
- * computing it internally, but most callers have the value at hand anyway.
+ * plus whatever add_outer_joins_to_relids() would add.  We could simplify
+ * this function's API by computing it internally, but most callers have the
+ * value at hand anyway.
  */
 List *
 generate_join_implied_equalities(PlannerInfo *root,
 								 Relids join_relids,
 								 Relids outer_relids,
 								 RelOptInfo *inner_rel,
-								 Index ojrelid)
+								 SpecialJoinInfo *sjinfo)
 {
 	List	   *result = NIL;
 	Relids		inner_relids = inner_rel->relids;
@@ -1396,8 +1397,10 @@ generate_join_implied_equalities(PlannerInfo *root,
 		nominal_inner_relids = inner_rel->top_parent_relids;
 		/* ECs will be marked with the parent's relid, not the child's */
 		nominal_join_relids = bms_union(outer_relids, nominal_inner_relids);
-		if (ojrelid != 0)
-			nominal_join_relids = bms_add_member(nominal_join_relids, ojrelid);
+		nominal_join_relids = add_outer_joins_to_relids(root,
+														nominal_join_relids,
+														sjinfo,
+														NULL);
 	}
 	else
 	{
@@ -1418,7 +1421,7 @@ generate_join_implied_equalities(PlannerInfo *root,
 	 * At inner joins, we can be smarter: only consider eclasses mentioning
 	 * both input rels.
 	 */
-	if (ojrelid != 0)
+	if (sjinfo && sjinfo->ojrelid != 0)
 		matching_ecs = get_eclass_indexes_for_relids(root, nominal_join_relids);
 	else
 		matching_ecs = get_common_eclass_indexes(root, nominal_inner_relids,
@@ -1467,7 +1470,7 @@ generate_join_implied_equalities(PlannerInfo *root,
  * generate_join_implied_equalities_for_ecs
  *	  As above, but consider only the listed ECs.
  *
- * For the sole current caller, we can assume ojrelid == 0, that is we are
+ * For the sole current caller, we can assume sjinfo == NULL, that is we are
  * not interested in outer-join filter clauses.  This might need to change
  * in future.
  */
