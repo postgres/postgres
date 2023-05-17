@@ -63,23 +63,14 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 		if (HeapTupleIsValid(tuple))
 		{
 			ArrayType  *new = NULL;
-			ArrayType  *usersetArray;
 			Datum		datum;
-			Datum		usersetDatum;
 			bool		isnull;
-			bool		usersetIsnull;
 
 			datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
 								 RelationGetDescr(rel), &isnull);
-			usersetDatum = heap_getattr(tuple, Anum_pg_db_role_setting_setuser,
-										RelationGetDescr(rel), &usersetIsnull);
 
 			if (!isnull)
-			{
-				Assert(!usersetIsnull);
-				usersetArray = DatumGetArrayTypeP(usersetDatum);
-				new = GUCArrayReset(DatumGetArrayTypeP(datum), &usersetArray);
-			}
+				new = GUCArrayReset(DatumGetArrayTypeP(datum));
 
 			if (new)
 			{
@@ -94,11 +85,6 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 					PointerGetDatum(new);
 				repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
 				repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
-
-				repl_val[Anum_pg_db_role_setting_setuser - 1] =
-					PointerGetDatum(usersetArray);
-				repl_repl[Anum_pg_db_role_setting_setuser - 1] = true;
-				repl_null[Anum_pg_db_role_setting_setuser - 1] = false;
 
 				newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
 											 repl_val, repl_null, repl_repl);
@@ -115,39 +101,28 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 		bool		repl_repl[Natts_pg_db_role_setting];
 		HeapTuple	newtuple;
 		Datum		datum;
-		Datum		usersetDatum;
 		bool		isnull;
-		bool		usersetIsnull;
 		ArrayType  *a;
-		ArrayType  *usersetArray;
 
 		memset(repl_repl, false, sizeof(repl_repl));
 		repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
 		repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
-		repl_repl[Anum_pg_db_role_setting_setuser - 1] = true;
-		repl_null[Anum_pg_db_role_setting_setuser - 1] = false;
 
-		/* Extract old values of setconfig and setuser */
+		/* Extract old value of setconfig */
 		datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
 							 RelationGetDescr(rel), &isnull);
 		a = isnull ? NULL : DatumGetArrayTypeP(datum);
 
-		usersetDatum = heap_getattr(tuple, Anum_pg_db_role_setting_setuser,
-									RelationGetDescr(rel), &usersetIsnull);
-		usersetArray = usersetIsnull ? NULL : DatumGetArrayTypeP(usersetDatum);
-
 		/* Update (valuestr is NULL in RESET cases) */
 		if (valuestr)
-			a = GUCArrayAdd(a, &usersetArray, setstmt->name, valuestr, setstmt->user_set);
+			a = GUCArrayAdd(a, setstmt->name, valuestr);
 		else
-			a = GUCArrayDelete(a, &usersetArray, setstmt->name);
+			a = GUCArrayDelete(a, setstmt->name);
 
 		if (a)
 		{
 			repl_val[Anum_pg_db_role_setting_setconfig - 1] =
 				PointerGetDatum(a);
-			repl_val[Anum_pg_db_role_setting_setuser - 1] =
-				PointerGetDatum(usersetArray);
 
 			newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
 										 repl_val, repl_null, repl_repl);
@@ -162,18 +137,16 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_db_role_setting];
 		bool		nulls[Natts_pg_db_role_setting];
-		ArrayType  *a,
-				   *usersetArray;
+		ArrayType  *a;
 
 		memset(nulls, false, sizeof(nulls));
 
-		a = GUCArrayAdd(NULL, &usersetArray, setstmt->name, valuestr, setstmt->user_set);
+		a = GUCArrayAdd(NULL, setstmt->name, valuestr);
 
 		values[Anum_pg_db_role_setting_setdatabase - 1] =
 			ObjectIdGetDatum(databaseid);
 		values[Anum_pg_db_role_setting_setrole - 1] = ObjectIdGetDatum(roleid);
 		values[Anum_pg_db_role_setting_setconfig - 1] = PointerGetDatum(a);
-		values[Anum_pg_db_role_setting_setuser - 1] = PointerGetDatum(usersetArray);
 		newtuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 		CatalogTupleInsert(rel, newtuple);
@@ -267,25 +240,20 @@ ApplySetting(Snapshot snapshot, Oid databaseid, Oid roleid,
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		bool		isnull;
-		bool		usersetIsnull;
 		Datum		datum;
-		Datum		usersetDatum;
 
 		datum = heap_getattr(tup, Anum_pg_db_role_setting_setconfig,
 							 RelationGetDescr(relsetting), &isnull);
-		usersetDatum = heap_getattr(tup, Anum_pg_db_role_setting_setuser,
-									RelationGetDescr(relsetting), &usersetIsnull);
 		if (!isnull)
 		{
 			ArrayType  *a = DatumGetArrayTypeP(datum);
-			ArrayType  *usersetArray = DatumGetArrayTypeP(usersetDatum);
 
 			/*
 			 * We process all the options at SUSET level.  We assume that the
 			 * right to insert an option into pg_db_role_setting was checked
 			 * when it was inserted.
 			 */
-			ProcessGUCArray(a, usersetArray, PGC_SUSET, source, GUC_ACTION_SET);
+			ProcessGUCArray(a, PGC_SUSET, source, GUC_ACTION_SET);
 		}
 	}
 

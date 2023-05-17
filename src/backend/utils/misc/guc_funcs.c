@@ -166,22 +166,12 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 char *
 ExtractSetVariableArgs(VariableSetStmt *stmt)
 {
-
 	switch (stmt->kind)
 	{
 		case VAR_SET_VALUE:
 			return flatten_set_variable_args(stmt->name, stmt->args);
 		case VAR_SET_CURRENT:
-			{
-				struct config_generic *record;
-				char	   *result;
-
-				result = GetConfigOptionByName(stmt->name, NULL, false);
-				record = find_option(stmt->name, false, false, ERROR);
-				stmt->user_set = (record->scontext == PGC_USERSET);
-
-				return result;
-			}
+			return GetConfigOptionByName(stmt->name, NULL, false);
 		default:
 			return NULL;
 	}

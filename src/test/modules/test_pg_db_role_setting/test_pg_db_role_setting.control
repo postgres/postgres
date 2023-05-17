@@ -1,7 +1,0 @@
-# test_pg_db_role_setting extension
-comment = 'test_pg_db_role_setting - tests for default GUC values stored in pg_db_role_setting'
-default_version = '1.0'
-module_pathname = '$libdir/test_pg_db_role_setting'
-relocatable = true
-superuser = false
-trusted = true

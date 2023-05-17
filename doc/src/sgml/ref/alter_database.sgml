@@ -37,7 +37,7 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> SET TABLESPACE 
 
 ALTER DATABASE <replaceable class="parameter">name</replaceable> REFRESH COLLATION VERSION
 
-ALTER DATABASE <replaceable class="parameter">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | <replaceable>value</replaceable> USER SET | DEFAULT }
+ALTER DATABASE <replaceable class="parameter">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER DATABASE <replaceable class="parameter">name</replaceable> SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
 ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET <replaceable>configuration_parameter</replaceable>
 ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
@@ -203,19 +203,6 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
         See <xref linkend="sql-set"/> and <xref linkend="runtime-config"/>
         for more information about allowed parameter names
         and values.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>USER SET</literal></term>
-      <listitem>
-       <para>
-        Specifies that the variable should be set on behalf of an ordinary role.
-        That allows non-superuser and non-replication roles to set placeholder
-        variables, whose permission requirements are not known yet;
-        see <xref linkend="runtime-config-custom"/>. The variable won't
-        be set if it appears to require superuser privileges.
        </para>
       </listitem>
      </varlistentry>

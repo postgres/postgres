@@ -38,7 +38,7 @@ ALTER ROLE <replaceable class="parameter">role_specification</replaceable> [ WIT
 
 ALTER ROLE <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
-ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | <replaceable>value</replaceable> USER SET | DEFAULT }
+ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
 ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
 ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] RESET ALL
@@ -239,19 +239,6 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry id="sql-alterrole-user-set">
-      <term><literal>USER SET</literal></term>
-      <listitem>
-       <para>
-        Specifies that the variable should be set on behalf of an ordinary role.
-        That allows non-superuser and non-replication roles to set placeholder
-        variables, whose permission requirements are not known yet;
-        see <xref linkend="runtime-config-custom"/>. The variable won't
-        be set if it appears to require superuser privileges.
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
  </refsect1>
 
@@ -347,13 +334,6 @@ ALTER ROLE worker_bee SET maintenance_work_mem = 100000;
 
 <programlisting>
 ALTER ROLE fred IN DATABASE devel SET client_min_messages = DEBUG;
-</programlisting></para>
-
-  <para>
-   Give a role a non-default placeholder setting on behalf of ordinary user:
-
-<programlisting>
-ALTER ROLE fred SET my.param = 'value' USER SET;
 </programlisting></para>
  </refsect1>
 

@@ -4515,10 +4515,6 @@ psql_completion(const char *text, int start, int end)
 			}
 		}
 	}
-	/* Complete ALTER DATABASE|ROLE|USER ... SET ... TO ... USER SET */
-	else if (HeadMatches("ALTER", "DATABASE|ROLE|USER") &&
-			 TailMatches("SET", MatchAny, "TO|=", MatchAny))
-		COMPLETE_WITH("USER SET");
 
 /* START TRANSACTION */
 	else if (Matches("START"))

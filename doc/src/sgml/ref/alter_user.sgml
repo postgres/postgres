@@ -38,7 +38,7 @@ ALTER USER <replaceable class="parameter">role_specification</replaceable> [ WIT
 
 ALTER USER <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
-ALTER USER { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | <replaceable>value</replaceable> USER SET | DEFAULT }
+ALTER USER { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER USER { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
 ALTER USER { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
 ALTER USER { <replaceable class="parameter">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="parameter">database_name</replaceable> ] RESET ALL

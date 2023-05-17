@@ -225,6 +225,7 @@ static bool reporting_enabled;	/* true to enable GUC_REPORT */
 
 static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
+
 static int	guc_var_compare(const void *a, const void *b);
 static uint32 guc_name_hash(const void *key, Size keysize);
 static int	guc_name_match(const void *key1, const void *key2, Size keysize);
@@ -244,7 +245,7 @@ static void reapply_stacked_values(struct config_generic *variable,
 								   GucContext curscontext, GucSource cursource,
 								   Oid cursrole);
 static bool validate_option_array_item(const char *name, const char *value,
-									   bool user_set, bool skipIfNoPermissions);
+									   bool skipIfNoPermissions);
 static void write_auto_conf_file(int fd, const char *filename, ConfigVariable *head);
 static void replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 									  const char *name, const char *value);
@@ -6197,6 +6198,7 @@ ParseLongOption(const char *string, char **name, char **value)
 	{
 		*name = palloc(equal_pos + 1);
 		strlcpy(*name, string, equal_pos + 1);
+
 		*value = pstrdup(&string[equal_pos + 1]);
 	}
 	else
@@ -6219,7 +6221,7 @@ ParseLongOption(const char *string, char **name, char **value)
  * The array parameter must be an array of TEXT (it must not be NULL).
  */
 void
-ProcessGUCArray(ArrayType *array, ArrayType *usersetArray,
+ProcessGUCArray(ArrayType *array,
 				GucContext context, GucSource source, GucAction action)
 {
 	int			i;
@@ -6232,7 +6234,6 @@ ProcessGUCArray(ArrayType *array, ArrayType *usersetArray,
 	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
 	{
 		Datum		d;
-		Datum		userSetDatum = BoolGetDatum(false);
 		bool		isnull;
 		char	   *s;
 		char	   *name;
@@ -6261,29 +6262,9 @@ ProcessGUCArray(ArrayType *array, ArrayType *usersetArray,
 			continue;
 		}
 
-		if (usersetArray)
-			userSetDatum = array_ref(usersetArray, 1, &i,
-									 -1 /* varlenarray */ ,
-									 sizeof(bool) /* BOOL's typlen */ ,
-									 true /* BOOL's typbyval */ ,
-									 TYPALIGN_CHAR /* BOOL's typalign */ ,
-									 &isnull);
-		if (isnull)
-			userSetDatum = BoolGetDatum(false);
-
-		/*
-		 * USER SET values are applicable only for PGC_USERSET parameters. We
-		 * use InvalidOid as role in order to evade possible privileges of the
-		 * current user.
-		 */
-		if (!DatumGetBool(userSetDatum))
-			(void) set_config_option(name, value,
-									 context, source,
-									 action, true, 0, false);
-		else
-			(void) set_config_option_ext(name, value,
-										 PGC_USERSET, source, InvalidOid,
-										 action, true, 0, false);
+		(void) set_config_option(name, value,
+								 context, source,
+								 action, true, 0, false);
 
 		pfree(name);
 		pfree(value);
@@ -6297,8 +6278,7 @@ ProcessGUCArray(ArrayType *array, ArrayType *usersetArray,
  * to indicate the current table entry is NULL.
  */
 ArrayType *
-GUCArrayAdd(ArrayType *array, ArrayType **usersetArray,
-			const char *name, const char *value, bool user_set)
+GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 {
 	struct config_generic *record;
 	Datum		datum;
@@ -6309,7 +6289,7 @@ GUCArrayAdd(ArrayType *array, ArrayType **usersetArray,
 	Assert(value);
 
 	/* test if the option is valid and we're allowed to set it */
-	(void) validate_option_array_item(name, value, user_set, false);
+	(void) validate_option_array_item(name, value, false);
 
 	/* normalize name (converts obsolete GUC names to modern spellings) */
 	record = find_option(name, false, true, WARNING);
@@ -6350,27 +6330,6 @@ GUCArrayAdd(ArrayType *array, ArrayType **usersetArray,
 			/* check for match up through and including '=' */
 			if (strncmp(current, newval, strlen(name) + 1) == 0)
 			{
-				bool		currentUserSet = false;
-
-				if (usersetArray)
-				{
-					currentUserSet = DatumGetBool(array_ref(*usersetArray, 1, &i,
-															-1 /* varlenarray */ ,
-															sizeof(bool) /* BOOL's typlen */ ,
-															true /* BOOL's typbyval */ ,
-															TYPALIGN_CHAR /* BOOL's typalign */ ,
-															&isnull));
-					if (isnull)
-						currentUserSet = false;
-				}
-
-				/*
-				 * Recheck permissions if we found an option without USER SET
-				 * flag while we're setting an option with USER SET flag.
-				 */
-				if (!currentUserSet && user_set)
-					(void) validate_option_array_item(name, value,
-													  false, false);
 				index = i;
 				break;
 			}
@@ -6383,25 +6342,9 @@ GUCArrayAdd(ArrayType *array, ArrayType **usersetArray,
 					  -1 /* TEXT's typlen */ ,
 					  false /* TEXT's typbyval */ ,
 					  TYPALIGN_INT /* TEXT's typalign */ );
-
-		if (usersetArray)
-			*usersetArray = array_set(*usersetArray, 1, &index,
-									  BoolGetDatum(user_set),
-									  false,
-									  -1 /* varlena array */ ,
-									  sizeof(bool) /* BOOL's typlen */ ,
-									  true /* BOOL's typbyval */ ,
-									  TYPALIGN_CHAR /* BOOL's typalign */ );
 	}
 	else
-	{
 		a = construct_array_builtin(&datum, 1, TEXTOID);
-		if (usersetArray)
-		{
-			datum = BoolGetDatum(user_set);
-			*usersetArray = construct_array_builtin(&datum, 1, BOOLOID);
-		}
-	}
 
 	return a;
 }
@@ -6413,15 +6356,17 @@ GUCArrayAdd(ArrayType *array, ArrayType **usersetArray,
  * is NULL then a null should be stored.
  */
 ArrayType *
-GUCArrayDelete(ArrayType *array, ArrayType **usersetArray, const char *name)
+GUCArrayDelete(ArrayType *array, const char *name)
 {
 	struct config_generic *record;
 	ArrayType  *newarray;
-	ArrayType  *newUsersetArray;
 	int			i;
 	int			index;
 
 	Assert(name);
+
+	/* test if the option is valid and we're allowed to set it */
+	(void) validate_option_array_item(name, NULL, false);
 
 	/* normalize name (converts obsolete GUC names to modern spellings) */
 	record = find_option(name, false, true, WARNING);
@@ -6433,13 +6378,11 @@ GUCArrayDelete(ArrayType *array, ArrayType **usersetArray, const char *name)
 		return NULL;
 
 	newarray = NULL;
-	newUsersetArray = NULL;
 	index = 1;
 
 	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
 	{
 		Datum		d;
-		Datum		userSetDatum = BoolGetDatum(false);
 		char	   *val;
 		bool		isnull;
 
@@ -6453,29 +6396,13 @@ GUCArrayDelete(ArrayType *array, ArrayType **usersetArray, const char *name)
 			continue;
 		val = TextDatumGetCString(d);
 
-		if (usersetArray)
-			userSetDatum = array_ref(*usersetArray, 1, &i,
-									 -1 /* varlenarray */ ,
-									 sizeof(bool) /* BOOL's typlen */ ,
-									 true /* BOOL's typbyval */ ,
-									 TYPALIGN_CHAR /* BOOL's typalign */ ,
-									 &isnull);
-		if (isnull)
-			userSetDatum = BoolGetDatum(false);
-
 		/* ignore entry if it's what we want to delete */
 		if (strncmp(val, name, strlen(name)) == 0
 			&& val[strlen(name)] == '=')
-		{
-			/* test if the option is valid and we're allowed to set it */
-			(void) validate_option_array_item(name, NULL,
-											  DatumGetBool(userSetDatum), false);
 			continue;
-		}
 
 		/* else add it to the output array */
 		if (newarray)
-		{
 			newarray = array_set(newarray, 1, &index,
 								 d,
 								 false,
@@ -6483,28 +6410,11 @@ GUCArrayDelete(ArrayType *array, ArrayType **usersetArray, const char *name)
 								 -1 /* TEXT's typlen */ ,
 								 false /* TEXT's typbyval */ ,
 								 TYPALIGN_INT /* TEXT's typalign */ );
-			if (usersetArray)
-				newUsersetArray = array_set(newUsersetArray, 1, &index,
-											userSetDatum,
-											false,
-											-1 /* varlena array */ ,
-											sizeof(bool) /* BOOL's typlen */ ,
-											true /* BOOL's typbyval */ ,
-											TYPALIGN_CHAR /* BOOL's typalign */ );
-		}
 		else
-		{
 			newarray = construct_array_builtin(&d, 1, TEXTOID);
-			if (usersetArray)
-				newUsersetArray = construct_array_builtin(&userSetDatum, 1,
-														  BOOLOID);
-		}
 
 		index++;
 	}
-
-	if (usersetArray)
-		*usersetArray = newUsersetArray;
 
 	return newarray;
 }
@@ -6516,10 +6426,9 @@ GUCArrayDelete(ArrayType *array, ArrayType **usersetArray, const char *name)
  * those that are PGC_USERSET or we have permission to set
  */
 ArrayType *
-GUCArrayReset(ArrayType *array, ArrayType **usersetArray)
+GUCArrayReset(ArrayType *array)
 {
 	ArrayType  *newarray;
-	ArrayType  *newUsersetArray;
 	int			i;
 	int			index;
 
@@ -6532,13 +6441,11 @@ GUCArrayReset(ArrayType *array, ArrayType **usersetArray)
 		return NULL;
 
 	newarray = NULL;
-	newUsersetArray = NULL;
 	index = 1;
 
 	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
 	{
 		Datum		d;
-		Datum		userSetDatum = BoolGetDatum(false);
 		char	   *val;
 		char	   *eqsgn;
 		bool		isnull;
@@ -6553,27 +6460,15 @@ GUCArrayReset(ArrayType *array, ArrayType **usersetArray)
 			continue;
 		val = TextDatumGetCString(d);
 
-		if (usersetArray)
-			userSetDatum = array_ref(*usersetArray, 1, &i,
-									 -1 /* varlenarray */ ,
-									 sizeof(bool) /* BOOL's typlen */ ,
-									 true /* BOOL's typbyval */ ,
-									 TYPALIGN_CHAR /* BOOL's typalign */ ,
-									 &isnull);
-		if (isnull)
-			userSetDatum = BoolGetDatum(false);
-
 		eqsgn = strchr(val, '=');
 		*eqsgn = '\0';
 
 		/* skip if we have permission to delete it */
-		if (validate_option_array_item(val, NULL,
-									   DatumGetBool(userSetDatum), true))
+		if (validate_option_array_item(val, NULL, true))
 			continue;
 
 		/* else add it to the output array */
 		if (newarray)
-		{
 			newarray = array_set(newarray, 1, &index,
 								 d,
 								 false,
@@ -6581,28 +6476,12 @@ GUCArrayReset(ArrayType *array, ArrayType **usersetArray)
 								 -1 /* TEXT's typlen */ ,
 								 false /* TEXT's typbyval */ ,
 								 TYPALIGN_INT /* TEXT's typalign */ );
-			if (usersetArray)
-				newUsersetArray = array_set(newUsersetArray, 1, &index,
-											userSetDatum,
-											false,
-											-1 /* varlena array */ ,
-											sizeof(bool) /* BOOL's typlen */ ,
-											true /* BOOL's typbyval */ ,
-											TYPALIGN_CHAR /* BOOL's typalign */ );
-		}
 		else
-		{
 			newarray = construct_array_builtin(&d, 1, TEXTOID);
-			if (usersetArray)
-				newUsersetArray = construct_array_builtin(&userSetDatum, 1, BOOLOID);
-		}
 
 		index++;
 		pfree(val);
 	}
-
-	if (usersetArray)
-		*usersetArray = newUsersetArray;
 
 	return newarray;
 }
@@ -6611,16 +6490,15 @@ GUCArrayReset(ArrayType *array, ArrayType **usersetArray)
  * Validate a proposed option setting for GUCArrayAdd/Delete/Reset.
  *
  * name is the option name.  value is the proposed value for the Add case,
- * or NULL for the Delete/Reset cases.  user_set indicates this is the USER SET
- * option.  If skipIfNoPermissions is true, it's not an error to have no
- * permissions to set the option.
+ * or NULL for the Delete/Reset cases.  If skipIfNoPermissions is true, it's
+ * not an error to have no permissions to set the option.
  *
  * Returns true if OK, false if skipIfNoPermissions is true and user does not
  * have permission to change this option (all other error cases result in an
  * error being thrown).
  */
 static bool
-validate_option_array_item(const char *name, const char *value, bool user_set,
+validate_option_array_item(const char *name, const char *value,
 						   bool skipIfNoPermissions)
 
 {
@@ -6656,10 +6534,8 @@ validate_option_array_item(const char *name, const char *value, bool user_set,
 	{
 		/*
 		 * We cannot do any meaningful check on the value, so only permissions
-		 * are useful to check.  USER SET options are always allowed.
+		 * are useful to check.
 		 */
-		if (user_set)
-			return true;
 		if (superuser() ||
 			pg_parameter_aclcheck(name, GetUserId(), ACL_SET) == ACLCHECK_OK)
 			return true;
