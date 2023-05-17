@@ -63,7 +63,7 @@ _Zstd_CCtx_setParam_or_die(ZSTD_CStream *cstream,
 
 	res = ZSTD_CCtx_setParameter(cstream, param, value);
 	if (ZSTD_isError(res))
-		pg_fatal("could not set compression parameter: \"%s\": %s",
+		pg_fatal("could not set compression parameter \"%s\": %s",
 				 paramname, ZSTD_getErrorName(res));
 }
 
@@ -498,7 +498,7 @@ Zstd_open(const char *path, int fd, const char *mode,
 			pg_fatal("could not initialize compression library");
 	}
 	else
-		pg_fatal("unhandled mode");
+		pg_fatal("unhandled mode \"%s\"", mode);
 
 	return true;
 }
