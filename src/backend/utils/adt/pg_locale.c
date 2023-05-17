@@ -96,7 +96,7 @@ char	   *locale_monetary;
 char	   *locale_numeric;
 char	   *locale_time;
 
-int			icu_validation_level = ERROR;
+int			icu_validation_level = WARNING;
 
 /*
  * lc_time localization cache.

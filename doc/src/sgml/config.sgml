@@ -9841,7 +9841,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
        <para>
         If set to <literal>DISABLED</literal>, does not report validation
         problems at all. Otherwise reports problems at the given message
-        level. The default is <literal>ERROR</literal>.
+        level. The default is <literal>WARNING</literal>.
        </para>
       </listitem>
      </varlistentry>
