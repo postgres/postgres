@@ -3108,6 +3108,52 @@ my %tests = (
 		},
 	},
 
+	'CREATE TABLE test_compression_method' => {
+		create_order => 110,
+		create_sql   => 'CREATE TABLE dump_test.test_compression_method (
+						   col1 text
+					   );',
+		regexp => qr/^
+			\QCREATE TABLE dump_test.test_compression_method (\E\n
+			\s+\Qcol1 text\E\n
+			\Q);\E
+			/xm,
+		like => {
+			%full_runs,
+			%dump_test_schema_runs,
+			section_pre_data     => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement    => 1,
+		},
+	},
+
+	# Insert enough data to surpass DEFAULT_IO_BUFFER_SIZE during
+	# (de)compression operations
+	'COPY test_compression_method' => {
+		create_order => 111,
+		create_sql   => 'INSERT INTO dump_test.test_compression_method (col1) '
+		  . 'SELECT string_agg(a::text, \'\') FROM generate_series(1,4096) a;',
+		regexp => qr/^
+			\QCOPY dump_test.test_compression_method (col1) FROM stdin;\E
+			\n(?:\d{15277}\n){1}\\\.\n
+			/xm,
+		like => {
+			%full_runs,
+			data_only                => 1,
+			section_data             => 1,
+			only_dump_test_schema    => 1,
+			test_schema_plus_large_objects    => 1,
+		},
+		unlike => {
+			binary_upgrade           => 1,
+			exclude_dump_test_schema => 1,
+			schema_only              => 1,
+			only_dump_measurement    => 1,
+		},
+	},
+
 	'CREATE TABLE fk_reference_test_table' => {
 		create_order => 21,
 		create_sql   => 'CREATE TABLE dump_test.fk_reference_test_table (

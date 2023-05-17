@@ -17,7 +17,13 @@
 
 #include "pg_backup_archiver.h"
 
-/* Default size used for IO buffers */
+/*
+ * Default size used for IO buffers
+ *
+ * When changing this value, it's necessary to check the relevant test cases
+ * still exercise all the branches. This applies especially if the value is
+ * increased, in which case the overflow buffer may not be needed.
+ */
 #define DEFAULT_IO_BUFFER_SIZE	4096
 
 extern char *supports_compression(const pg_compress_specification compression_spec);

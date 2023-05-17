@@ -588,6 +588,8 @@ LZ4Stream_write(const void *ptr, size_t size, CompressFileHandle *CFH)
 			errno = (errno) ? errno : ENOSPC;
 			return false;
 		}
+
+		ptr = ((const char *) ptr) + chunk;
 	}
 
 	return true;
