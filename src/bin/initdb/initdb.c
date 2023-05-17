@@ -2252,7 +2252,7 @@ icu_language_tag(const char *loc_str)
 
 	status = U_ZERO_ERROR;
 	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
-	if (U_FAILURE(status))
+	if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 	{
 		pg_fatal("could not get language from locale \"%s\": %s",
 				 loc_str, u_errorName(status));
@@ -2272,19 +2272,12 @@ icu_language_tag(const char *loc_str)
 	langtag = pg_malloc(buflen);
 	while (true)
 	{
-		int32_t		len;
-
 		status = U_ZERO_ERROR;
-		len = uloc_toLanguageTag(loc_str, langtag, buflen, strict, &status);
+		uloc_toLanguageTag(loc_str, langtag, buflen, strict, &status);
 
-		/*
-		 * If the result fits in the buffer exactly (len == buflen),
-		 * uloc_toLanguageTag() will return success without nul-terminating
-		 * the result. Check for either U_BUFFER_OVERFLOW_ERROR or len >=
-		 * buflen and try again.
-		 */
+		/* try again if the buffer is not large enough */
 		if (status == U_BUFFER_OVERFLOW_ERROR ||
-			(U_SUCCESS(status) && len >= buflen))
+			status == U_STRING_NOT_TERMINATED_WARNING)
 		{
 			buflen = buflen * 2;
 			langtag = pg_realloc(langtag, buflen);

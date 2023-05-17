@@ -2468,7 +2468,7 @@ pg_ucol_open(const char *loc_str)
 
 		status = U_ZERO_ERROR;
 		uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
-		if (U_FAILURE(status))
+		if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 		{
 			ereport(ERROR,
 					(errmsg("could not get language from locale \"%s\": %s",
@@ -2504,7 +2504,7 @@ pg_ucol_open(const char *loc_str)
 		 * Pretend the error came from ucol_open(), for consistent error
 		 * message across ICU versions.
 		 */
-		if (U_FAILURE(status))
+		if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 		{
 			ucol_close(collator);
 			ereport(ERROR,
@@ -2639,7 +2639,8 @@ icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
 	status = U_ZERO_ERROR;
 	len_result = ucnv_fromUChars(icu_converter, *result, len_result + 1,
 								 buff_uchar, len_uchar, &status);
-	if (U_FAILURE(status))
+	if (U_FAILURE(status) ||
+		status == U_STRING_NOT_TERMINATED_WARNING)
 		ereport(ERROR,
 				(errmsg("%s failed: %s", "ucnv_fromUChars",
 						u_errorName(status))));
@@ -2681,7 +2682,7 @@ icu_set_collation_attributes(UCollator *collator, const char *loc,
 	icu_locale_id = palloc(len + 1);
 	*status = U_ZERO_ERROR;
 	len = uloc_canonicalize(loc, icu_locale_id, len + 1, status);
-	if (U_FAILURE(*status))
+	if (U_FAILURE(*status) || *status == U_STRING_NOT_TERMINATED_WARNING)
 		return;
 
 	lower_str = asc_tolower(icu_locale_id, strlen(icu_locale_id));
@@ -2765,7 +2766,6 @@ icu_set_collation_attributes(UCollator *collator, const char *loc,
 
 	pfree(lower_str);
 }
-
 #endif
 
 /*
@@ -2789,7 +2789,7 @@ icu_language_tag(const char *loc_str, int elevel)
 
 	status = U_ZERO_ERROR;
 	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
-	if (U_FAILURE(status))
+	if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 	{
 		if (elevel > 0)
 			ereport(elevel,
@@ -2811,19 +2811,12 @@ icu_language_tag(const char *loc_str, int elevel)
 	langtag = palloc(buflen);
 	while (true)
 	{
-		int32_t		len;
-
 		status = U_ZERO_ERROR;
-		len = uloc_toLanguageTag(loc_str, langtag, buflen, strict, &status);
+		uloc_toLanguageTag(loc_str, langtag, buflen, strict, &status);
 
-		/*
-		 * If the result fits in the buffer exactly (len == buflen),
-		 * uloc_toLanguageTag() will return success without nul-terminating
-		 * the result. Check for either U_BUFFER_OVERFLOW_ERROR or len >=
-		 * buflen and try again.
-		 */
+		/* try again if the buffer is not large enough */
 		if ((status == U_BUFFER_OVERFLOW_ERROR ||
-			 (U_SUCCESS(status) && len >= buflen)) &&
+			 status == U_STRING_NOT_TERMINATED_WARNING) &&
 			buflen < MaxAllocSize)
 		{
 			buflen = Min(buflen * 2, MaxAllocSize);
@@ -2878,7 +2871,7 @@ icu_validate_locale(const char *loc_str)
 	/* validate that we can extract the language */
 	status = U_ZERO_ERROR;
 	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
-	if (U_FAILURE(status))
+	if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 	{
 		ereport(elevel,
 				(errmsg("could not get language from ICU locale \"%s\": %s",
@@ -2901,7 +2894,7 @@ icu_validate_locale(const char *loc_str)
 
 		status = U_ZERO_ERROR;
 		uloc_getLanguage(otherloc, otherlang, ULOC_LANG_CAPACITY, &status);
-		if (U_FAILURE(status))
+		if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 			continue;
 
 		if (strcmp(lang, otherlang) == 0)
