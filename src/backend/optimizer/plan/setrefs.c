@@ -42,9 +42,7 @@ typedef struct
 	int			varno;			/* RT index of Var */
 	AttrNumber	varattno;		/* attr number of Var */
 	AttrNumber	resno;			/* TLE position of Var */
-#ifdef USE_ASSERT_CHECKING
 	Bitmapset  *varnullingrels; /* Var's varnullingrels */
-#endif
 } tlist_vinfo;
 
 typedef struct
@@ -2682,9 +2680,7 @@ build_tlist_index(List *tlist)
 			vinfo->varno = var->varno;
 			vinfo->varattno = var->varattno;
 			vinfo->resno = tle->resno;
-#ifdef USE_ASSERT_CHECKING
 			vinfo->varnullingrels = var->varnullingrels;
-#endif
 			vinfo++;
 		}
 		else if (tle->expr && IsA(tle->expr, PlaceHolderVar))
@@ -2737,9 +2733,7 @@ build_tlist_index_other_vars(List *tlist, int ignore_rel)
 				vinfo->varno = var->varno;
 				vinfo->varattno = var->varattno;
 				vinfo->resno = tle->resno;
-#ifdef USE_ASSERT_CHECKING
 				vinfo->varnullingrels = var->varnullingrels;
-#endif
 				vinfo++;
 			}
 		}
