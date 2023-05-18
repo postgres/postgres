@@ -349,6 +349,9 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 	if (tuple->bt_placeholder)
 		rettuple->bt_info |= BRIN_PLACEHOLDER_MASK;
 
+	if (tuple->bt_empty_range)
+		rettuple->bt_info |= BRIN_EMPTY_RANGE_MASK;
+
 	*size = len;
 	return rettuple;
 }
@@ -376,7 +379,7 @@ brin_form_placeholder_tuple(BrinDesc *brdesc, BlockNumber blkno, Size *size)
 	rettuple = palloc0(len);
 	rettuple->bt_blkno = blkno;
 	rettuple->bt_info = hoff;
-	rettuple->bt_info |= BRIN_NULLS_MASK | BRIN_PLACEHOLDER_MASK;
+	rettuple->bt_info |= BRIN_NULLS_MASK | BRIN_PLACEHOLDER_MASK | BRIN_EMPTY_RANGE_MASK;
 
 	bitP = ((bits8 *) ((char *) rettuple + SizeOfBrinTuple)) - 1;
 	bitmask = HIGHBIT;
@@ -466,6 +469,8 @@ brin_new_memtuple(BrinDesc *brdesc)
 	dtup->bt_allnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
 	dtup->bt_hasnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
 
+	dtup->bt_empty_range = true;
+
 	dtup->bt_context = AllocSetContextCreate(CurrentMemoryContext,
 											 "brin dtuple",
 											 ALLOCSET_DEFAULT_SIZES);
@@ -498,6 +503,8 @@ brin_memtuple_initialize(BrinMemTuple *dtuple, BrinDesc *brdesc)
 		dtuple->bt_columns[i].bv_values = (Datum *) currdatum;
 		currdatum += sizeof(Datum) * brdesc->bd_info[i]->oi_nstored;
 	}
+
+	dtuple->bt_empty_range = true;
 
 	return dtuple;
 }
@@ -532,6 +539,11 @@ brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple, BrinMemTuple *dMemtuple)
 
 	if (BrinTupleIsPlaceholder(tuple))
 		dtup->bt_placeholder = true;
+
+	/* ranges start as empty, depends on the BrinTuple */
+	if (!BrinTupleIsEmptyRange(tuple))
+		dtup->bt_empty_range = false;
+
 	dtup->bt_blkno = tuple->bt_blkno;
 
 	values = dtup->bt_values;
