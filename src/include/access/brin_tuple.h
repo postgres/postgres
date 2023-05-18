@@ -36,6 +36,7 @@ typedef struct BrinValues
 typedef struct BrinMemTuple
 {
 	bool		bt_placeholder; /* this is a placeholder tuple */
+	bool		bt_empty_range;	/* range represents no tuples */
 	BlockNumber bt_blkno;		/* heap blkno that the tuple is for */
 	MemoryContext bt_context;	/* memcxt holding the bt_columns values */
 	/* output arrays for brin_deform_tuple: */
@@ -61,7 +62,7 @@ typedef struct BrinTuple
 	 *
 	 * 7th (high) bit: has nulls
 	 * 6th bit: is placeholder tuple
-	 * 5th bit: unused
+	 * 5th bit: range is empty
 	 * 4-0 bit: offset of data
 	 * ---------------
 	 */
@@ -74,13 +75,14 @@ typedef struct BrinTuple
  * bt_info manipulation macros
  */
 #define BRIN_OFFSET_MASK		0x1F
-/* bit 0x20 is not used at present */
+#define BRIN_EMPTY_RANGE_MASK	0x20
 #define BRIN_PLACEHOLDER_MASK	0x40
 #define BRIN_NULLS_MASK			0x80
 
 #define BrinTupleDataOffset(tup)	((Size) (((BrinTuple *) (tup))->bt_info & BRIN_OFFSET_MASK))
 #define BrinTupleHasNulls(tup)	(((((BrinTuple *) (tup))->bt_info & BRIN_NULLS_MASK)) != 0)
 #define BrinTupleIsPlaceholder(tup) (((((BrinTuple *) (tup))->bt_info & BRIN_PLACEHOLDER_MASK)) != 0)
+#define BrinTupleIsEmptyRange(tup) (((((BrinTuple *) (tup))->bt_info & BRIN_EMPTY_RANGE_MASK)) != 0)
 
 
 extern BrinTuple *brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno,
