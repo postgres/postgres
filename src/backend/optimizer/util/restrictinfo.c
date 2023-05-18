@@ -541,9 +541,10 @@ extract_actual_join_clauses(List *restrictinfo_list,
  */
 bool
 clause_is_computable_at(PlannerInfo *root,
-						Relids clause_relids,
+						RestrictInfo *rinfo,
 						Relids eval_relids)
 {
+	Relids		clause_relids = rinfo->clause_relids;
 	ListCell   *lc;
 
 	/* Nothing to do if no outer joins have been performed yet. */

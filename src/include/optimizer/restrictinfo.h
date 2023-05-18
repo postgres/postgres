@@ -40,7 +40,7 @@ extern void extract_actual_join_clauses(List *restrictinfo_list,
 										List **joinquals,
 										List **otherquals);
 extern bool clause_is_computable_at(PlannerInfo *root,
-									Relids clause_relids,
+									RestrictInfo *rinfo,
 									Relids eval_relids);
 extern bool join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel);
 extern bool join_clause_is_movable_into(RestrictInfo *rinfo,
