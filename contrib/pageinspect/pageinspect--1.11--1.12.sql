@@ -21,3 +21,20 @@ CREATE FUNCTION bt_multi_page_stats(IN relname text, IN blkno int8, IN blk_count
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'bt_multi_page_stats'
 LANGUAGE C STRICT PARALLEL RESTRICTED;
+
+--
+-- add information about BRIN empty ranges
+--
+DROP FUNCTION brin_page_items(IN page bytea, IN index_oid regclass);
+CREATE FUNCTION brin_page_items(IN page bytea, IN index_oid regclass,
+    OUT itemoffset int,
+    OUT blknum int8,
+    OUT attnum int,
+    OUT allnulls bool,
+    OUT hasnulls bool,
+    OUT placeholder bool,
+    OUT empty bool,
+    OUT value text)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME', 'brin_page_items'
+LANGUAGE C STRICT PARALLEL RESTRICTED;
