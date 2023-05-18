@@ -515,10 +515,13 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	FmgrInfo   *finfo;
 	Datum		result;
 
+	/* Does the "b" summary represent any NULL values? */
+	bool		b_has_nulls = (col_b->bv_hasnulls || col_b->bv_allnulls);
+
 	Assert(col_a->bv_attno == col_b->bv_attno);
 
 	/* Adjust "hasnulls". */
-	if (!col_a->bv_hasnulls && col_b->bv_hasnulls)
+	if (!col_a->bv_allnulls && b_has_nulls)
 		col_a->bv_hasnulls = true;
 
 	/* If there are no values in B, there's nothing left to do. */
@@ -533,10 +536,15 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	 * B into A, and we're done.  We cannot run the operators in this case,
 	 * because values in A might contain garbage.  Note we already established
 	 * that B contains values.
+	 *
+	 * Also adjust "hasnulls" in order not to forget the summary represents NULL
+	 * values. This is not redundant with the earlier update, because that only
+	 * happens when allnulls=false.
 	 */
 	if (col_a->bv_allnulls)
 	{
 		col_a->bv_allnulls = false;
+		col_a->bv_hasnulls = true;
 		col_a->bv_values[INCLUSION_UNION] =
 			datumCopy(col_b->bv_values[INCLUSION_UNION],
 					  attr->attbyval, attr->attlen);
