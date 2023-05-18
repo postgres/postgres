@@ -1139,7 +1139,7 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
     <para>
      <table id="icu-collation-levels">
       <title>ICU Collation Levels</title>
-      <tgroup cols="3">
+      <tgroup cols="8">
        <thead>
         <row>
          <entry>Level</entry>
