@@ -253,7 +253,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Allow incremental sorts in more cases, including DISTINCT (David Rowley)window
+Allow incremental sorts in more cases, including DISTINCT (David Rowley)
 </para>
 </listitem>
 
@@ -981,7 +981,7 @@ Store server variables in a hash table (Tom Lane)
 </para>
 
 <para>
-This allows faster addition of server variables.
+This allows the faster addition of server variables.
 </para>
 </listitem>
 
@@ -992,7 +992,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Tighten restrictions on what server variables can be reset (Masahiko Sawada)
+Tighten restrictions on which server variables can be reset (Masahiko Sawada)
 </para>
 
 <para>
@@ -1086,7 +1086,7 @@ Allow the postmaster to terminate children with an abort signal (Tom Lane)
 </para>
 
 <para>
-Abort normally creates a core dump.  This is controlled by send_abort_for_crash and send_abort_for_kill.  postmaster -T now the same as setting send_abort_for_crash.
+Abort normally creates a core dump.  This is controlled by send_abort_for_crash and send_abort_for_kill.  postmaster -T is now the same as setting send_abort_for_crash.
 </para>
 </listitem>
 
@@ -1113,63 +1113,6 @@ Allow the server to reserve backend slots for roles with pg_use_reserved_connect
 
 <para>
 The number of reserved slots is set by server variable reserved_connections.
-</para>
-</listitem>
-
-<!--
-Author: Jeff Davis <jdavis@postgresql.org>
-2023-03-10 [c45dc7ffb] initdb: derive encoding from locale for ICU; similar to 
--->
-
-<listitem>
-<para>
-Determine the ICU default locale from the environment (Jeff Davis)
-</para>
-
-<para>
-However, ICU doesn't support the C local so UTF-8 is used in such cases.  Previously the default was always UTF-8.
-</para>
-</listitem>
-
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2023-03-10 [0d21d4b9b] Add standard collation UNICODE
--->
-
-<listitem>
-<para>
-Add predefined collations "unicode" and "ucs_basic" (Peter Eisentraut)
-</para>
-
-<para>
-This only works if ICU support is enabled.
-</para>
-</listitem>
-
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2023-03-08 [30a53b792] Allow tailoring of ICU locales with custom rules
--->
-
-<listitem>
-<para>
-Allow custom ICU collation rules to be created (Peter Eisentraut)
-</para>
-
-<para>
-This is done using CREATE COLLATION's new new RULES clause, as well as new options for CREATE DATABASE, createdb, and initdb.
-</para>
-</listitem>
-
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2023-01-03 [bf03cfd16] Windows support in pg_import_system_collations
--->
-
-<listitem>
-<para>
-Add Windows process the system collations (Jose Santamaria Flecha)
-ADD THIS?
 </para>
 </listitem>
 
@@ -1265,6 +1208,72 @@ Author: Michael Paquier <michael@paquier.xyz>
 <listitem>
 <para>
 Add rule and map numbers to the system view pg_hba_file_rules (Julien Rouhaud)
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-16-localization">
+     <title><link linkend="charset">Localization</link></title>
+
+     <itemizedlist>
+
+<!--
+Author: Jeff Davis <jdavis@postgresql.org>
+2023-03-10 [c45dc7ffb] initdb: derive encoding from locale for ICU; similar to
+-->
+
+<listitem>
+<para>
+Determine the ICU default locale from the environment (Jeff Davis)
+</para>
+
+<para>
+However, ICU doesn't support the C local so UTF-8 is used in such cases.  Previously the default was always UTF-8.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2023-03-10 [0d21d4b9b] Add standard collation UNICODE
+-->
+
+<listitem>
+<para>
+Add predefined collations "unicode" and "ucs_basic" (Peter Eisentraut)
+</para>
+
+<para>
+This only works if ICU support is enabled.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2023-03-08 [30a53b792] Allow tailoring of ICU locales with custom rules
+-->
+
+<listitem>
+<para>
+Allow custom ICU collation rules to be created (Peter Eisentraut)
+</para>
+
+<para>
+This is done using CREATE COLLATION's new new RULES clause, as well as new options for CREATE DATABASE, createdb, and initdb.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2023-01-03 [bf03cfd16] Windows support in pg_import_system_collations
+-->
+
+<listitem>
+<para>
+Add Windows process the system collations (Jose Santamaria Flecha)
+ADD THIS?
 </para>
 </listitem>
 
