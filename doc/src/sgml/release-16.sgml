@@ -1724,17 +1724,6 @@ The IS JSON checks include checks for values, arrays, objects, scalars, and uniq
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2023-03-15 [483bdb2af] Support [NO] INDENT option in XMLSERIALIZE().
--->
-
-<listitem>
-<para>
-Add XMLSERIALIZE() option INDENT to pretty-print its output (Jim Jones)
-</para>
-</listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-19 [5a617d75d] Fix ts_headline() to handle ORs and phrase queries more 
 -->
 
@@ -1771,6 +1760,21 @@ Change date_trunc(unit, timestamptz, time_zone) to be an immutable function (Prz
 
 <para>
 This allows the creation of expression indexes using this function.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2022-09-29 [0823d061b] Introduce SYSTEM_USER
+-->
+
+<listitem>
+<para>
+Add server variable SYSTEM_USER (Bertrand Drouvot)
+</para>
+
+<para>
+This reports the authentication method and its authenticated user.
 </para>
 </listitem>
 
@@ -1830,17 +1834,13 @@ Improve the accuracy of numeric power() for integer exponents (Dean Rasheed)
 </listitem>
 
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2022-09-29 [0823d061b] Introduce SYSTEM_USER
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-03-15 [483bdb2af] Support [NO] INDENT option in XMLSERIALIZE().
 -->
 
 <listitem>
 <para>
-Add server variable SYSTEM_USER (Bertrand Drouvot)
-</para>
-
-<para>
-This reports the authentication method and its authenticated user.
+Add XMLSERIALIZE() option INDENT to pretty-print its output (Jim Jones)
 </para>
 </listitem>
 
@@ -2049,6 +2049,21 @@ Add "FOREIGN" designation to psql \d+ for foreign table children and partitions 
 </listitem>
 
 <!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2022-11-15 [5b66de343] psql: Add command to use extended query protocol
+-->
+
+<listitem>
+<para>
+Allow psql to submit queries using the extended query protocol (Peter Eisentraut)
+</para>
+
+<para>
+Passing arguments to such queries is done using the new psql \bind command.
+</para>
+</listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-04-06 [00beecfe8] psql: add an optional execution-count limit to \watch.
 -->
@@ -2088,21 +2103,6 @@ Allow psql to detect the exit status of shell commands and queries (Corey Huinke
 
 <para>
 The new psql control variables are SHELL_ERROR and SHELL_EXIT_CODE.
-</para>
-</listitem>
-
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2022-11-15 [5b66de343] psql: Add command to use extended query protocol
--->
-
-<listitem>
-<para>
-Allow psql to submit queries using the extended query protocol (Peter Eisentraut)
-</para>
-
-<para>
-Passing arguments to such queries is done using the new psql \bind command.
 </para>
 </listitem>
 
