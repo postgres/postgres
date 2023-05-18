@@ -1623,8 +1623,11 @@ union_tuples(BrinDesc *bdesc, BrinMemTuple *a, BrinTuple *b)
 
 		if (opcinfo->oi_regular_nulls)
 		{
+			/* Does the "b" summary represent any NULL values? */
+			bool		b_has_nulls = (col_b->bv_hasnulls || col_b->bv_allnulls);
+
 			/* Adjust "hasnulls". */
-			if (!col_a->bv_hasnulls && col_b->bv_hasnulls)
+			if (!col_a->bv_allnulls && b_has_nulls)
 				col_a->bv_hasnulls = true;
 
 			/* If there are no values in B, there's nothing left to do. */
@@ -1636,12 +1639,17 @@ union_tuples(BrinDesc *bdesc, BrinMemTuple *a, BrinTuple *b)
 			 * values from B into A, and we're done.  We cannot run the
 			 * operators in this case, because values in A might contain
 			 * garbage.  Note we already established that B contains values.
+			 *
+			 * Also adjust "hasnulls" in order not to forget the summary
+			 * represents NULL values. This is not redundant with the earlier
+			 * update, because that only happens when allnulls=false.
 			 */
 			if (col_a->bv_allnulls)
 			{
 				int			i;
 
 				col_a->bv_allnulls = false;
+				col_a->bv_hasnulls = true;
 
 				for (i = 0; i < opcinfo->oi_nstored; i++)
 					col_a->bv_values[i] =
