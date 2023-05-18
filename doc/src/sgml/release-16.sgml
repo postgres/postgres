@@ -49,13 +49,28 @@
    <itemizedlist>
 
 <!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2023-01-26 [37e267335] Don't install postmaster symlink anymore
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-01-01 [d747dc85a] In plpgsql, don't preassign portal names to bound cursor
 -->
 
 <listitem>
 <para>
-Remove symbolic links for the postmaster binary (Peter Eisentraut)
+Change assignment rules for PL/pgSQL bound cursor variables (Tom Lane)
+</para>
+
+<para>
+Previously, the string value of such variables was set to match the variable name during cursor assignment;  now it will be assigned during OPEN, and will not match the variable name.
+</para>
+</listitem>
+
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2023-02-24 [d95952325] Disallow NULLS NOT DISTINCT indexes for primary keys
+-->
+
+<listitem>
+<para>
+Disallow NULLS NOT DISTINCT indexes for primary keys (Daniel Gustafsson)
 </para>
 </listitem>
 
@@ -92,28 +107,15 @@ Backend support for this authentication method was removed in PostgreSQL 9.1.
 </listitem>
 
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2023-01-01 [d747dc85a] In plpgsql, don't preassign portal names to bound cursor
+Author: David Rowley <drowley@postgresql.org>
+2023-02-15 [5352ca22e] Rename force_parallel_mode to debug_parallel_query
+Author: David Rowley <drowley@postgresql.org>
+2023-04-14 [0981846b9] Remove old GUC name mapping for "force_parallel_mode"
 -->
 
 <listitem>
 <para>
-Change assignment rules for PL/pgSQL bound cursor variables (Tom Lane)
-</para>
-
-<para>
-Previously, the string value of such variables was set to match the variable name during cursor assignment;  now it will be assigned during OPEN, and will not match the variable name.
-</para>
-</listitem>
-
-<!--
-Author: Daniel Gustafsson <dgustafsson@postgresql.org>
-2023-02-24 [d95952325] Disallow NULLS NOT DISTINCT indexes for primary keys
--->
-
-<listitem>
-<para>
-Disallow NULLS NOT DISTINCT indexes for primary keys (Daniel Gustafsson)
+Rename server variable force_parallel_mode to debug_parallel_query (David Rowley)
 </para>
 </listitem>
 
@@ -125,6 +127,21 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <listitem>
 <para>
 Remove the ability to create views manually with ON SELECT rules (Tom Lane)
+</para>
+</listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2023-04-24 [1118cd37e] Remove vacuum_defer_cleanup_age
+-->
+
+<listitem>
+<para>
+Remove the server variable vacuum_defer_cleanup_age (Andres Freund)
+</para>
+
+<para>
+This has been unnecessary since hot_standby_feedback and replication slots were added.
 </para>
 </listitem>
 
@@ -144,30 +161,13 @@ This was used to promote a standby to primary, but is now easier accomplished wi
 </listitem>
 
 <!--
-Author: David Rowley <drowley@postgresql.org>
-2023-02-15 [5352ca22e] Rename force_parallel_mode to debug_parallel_query
-Author: David Rowley <drowley@postgresql.org>
-2023-04-14 [0981846b9] Remove old GUC name mapping for "force_parallel_mode"
+Author: Peter Eisentraut <peter@eisentraut.org>
+2023-01-26 [37e267335] Don't install postmaster symlink anymore
 -->
 
 <listitem>
 <para>
-Rename server variable force_parallel_mode to debug_parallel_query (David Rowley)
-</para>
-</listitem>
-
-<!--
-Author: Andres Freund <andres@anarazel.de>
-2023-04-24 [1118cd37e] Remove vacuum_defer_cleanup_age
--->
-
-<listitem>
-<para>
-Remove the server variable vacuum_defer_cleanup_age (Andres Freund)
-</para>
-
-<para>
-This has been unnecessary since hot_standby_feedback and replication slots were added.
+Remove symbolic links for the postmaster binary (Peter Eisentraut)
 </para>
 </listitem>
 
@@ -969,62 +969,6 @@ Allow the SCRAM iteration count to be set with server variable scram_iterations 
 </listitem>
 
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2022-10-24 [8fea86830] Add support for regexps on database and user entries in 
--->
-
-<listitem>
-<para>
-Add support for regular expression matching on database and role entries in pg_hba.conf (Bertrand Drouvot)
-</para>
-
-<para>
-Regular expression patterns are prefixed with a slash.  Database and role names that begin with slashes need to be double-quoted if referenced in pg_hba.conf.
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-01-20 [efb6f4a4f] Support the same patterns for pg-user in pg_ident.conf a
--->
-
-<listitem>
-<para>
-Improve user-column handling of pg_ident.conf to match pg_hba.conf (Jelte Fennema)
-</para>
-
-<para>
-Specifically, add support for "all", role membership with "+", and regular expressions with a leading slash.  Any user name that matches these patterns must be double-quoted.
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2022-11-24 [a54b658ce] Add support for file inclusions in HBA and ident configu
--->
-
-<listitem>
-<para>
-Allow include files in pg_hba.conf and pg_ident.conf (Julien Rouhaud)
-</para>
-
-<para>
-These are controlled by "include", "include_if_exists", and "include_dir".  System views pg_hba_file_rules and pg_ident_file_mappings now display the file name.
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2022-10-26 [c591300a8] Add rule_number to pg_hba_file_rules and map_number to p
--->
-
-<listitem>
-<para>
-Add rule and map numbers to the system view pg_hba_file_rules (Julien Rouhaud)
-</para>
-</listitem>
-
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-10-14 [3057465ac] Replace the sorted array of GUC variables with a hash ta
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -1256,6 +1200,71 @@ Author: Michael Paquier <michael@paquier.xyz>
 <listitem>
 <para>
 Add function pg_dissect_walfile_name() to report the segment and timeline values of WAL file names (Bharath Rupireddy)
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-16-pg-hba">
+     <title><link linkend="auth-pg-hba-conf">pg_hba.conf</link></title>
+
+     <itemizedlist>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2022-10-24 [8fea86830] Add support for regexps on database and user entries in
+-->
+
+<listitem>
+<para>
+Add support for regular expression matching on database and role entries in pg_hba.conf (Bertrand Drouvot)
+</para>
+
+<para>
+Regular expression patterns are prefixed with a slash.  Database and role names that begin with slashes need to be double-quoted if referenced in pg_hba.conf.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2023-01-20 [efb6f4a4f] Support the same patterns for pg-user in pg_ident.conf a
+-->
+
+<listitem>
+<para>
+Improve user-column handling of pg_ident.conf to match pg_hba.conf (Jelte Fennema)
+</para>
+
+<para>
+Specifically, add support for "all", role membership with "+", and regular expressions with a leading slash.  Any user name that matches these patterns must be double-quoted.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2022-11-24 [a54b658ce] Add support for file inclusions in HBA and ident configu
+-->
+
+<listitem>
+<para>
+Allow include files in pg_hba.conf and pg_ident.conf (Julien Rouhaud)
+</para>
+
+<para>
+These are controlled by "include", "include_if_exists", and "include_dir".  System views pg_hba_file_rules and pg_ident_file_mappings now display the file name.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2022-10-26 [c591300a8] Add rule_number to pg_hba_file_rules and map_number to p
+-->
+
+<listitem>
+<para>
+Add rule and map numbers to the system view pg_hba_file_rules (Julien Rouhaud)
 </para>
 </listitem>
 
@@ -2766,7 +2775,7 @@ Allow auto_explain to log query parameters used in executing prepared statements
 
 <para>
 This is controlled by auto_explain.log_parameter_max_length, and by default query parameters will be logged with no length restriction.
-SHOULD THIS BE MORE CLEARLY IDENTIFIED AS CONTROLLING THE EXECUTION OF PREPARED STATEMENTS.
+SHOULD THIS BE MORE CLEARLY IDENTIFIED AS CONTROLLING THE EXECUTION OF PREPARED STATEMENTS?
 </para>
 </listitem>
 
@@ -2838,65 +2847,6 @@ Redesign archive modules to be more flexible (Nathan Bossart)
 
 <para>
 Initialization changes will require modules written for older versions of Postgres to be updated.
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-01-23 [c31cf1c03] pg_walinspect: Add pg_get_wal_fpi_info()
-Author: Michael Paquier <michael@paquier.xyz>
-2023-03-10 [9ecb134a9] pg_walinspect: pg_get_wal_fpi_info() -> pg_get_wal_block
--->
-
-<listitem>
-<para>
-Add pg_walinspect function pg_get_wal_block() to report WAL block information (Michael Paquier, Melanie Plageman, Bharath Rupireddy)
-</para>
-</listitem>
-
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-03-30 [122376f02] Show record information in pg_get_wal_block_info.
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-03-31 [df4f3ab51] Add show_data option to pg_get_wal_block_info.
--->
-
-<listitem>
-<para>
-Add output fields to pg_walinspect's function pg_get_wal_block_info() (Bharath Rupireddy, Peter Geoghegan)
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-03-14 [5c1b66280] Rework design of functions in pg_walinspect
--->
-
-<listitem>
-<para>
-Change how pg_walinspect functions pg_get_wal_records_info(), pg_get_wal_stats(), and pg_get_wal_block_info() interpret ending LSNs (Bharath Rupireddy)
-</para>
-
-<para>
-Previously ending LSNs which represent nonexistent WAL locations would generate an error, while they will now be interpreted as the end of the WAL.  Functions pg_get_wal_records_info_till_end_of_wal() and
-pg_get_wal_stats_till_end_of_wal() have been removed.
-</para>
-</listitem>
-
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-04-07 [7d8219a44] Show more detail in heapam rmgr descriptions.
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-04-07 [1c453cfd8] Show more detail in nbtree rmgr descriptions.
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-04-11 [96149a180] Fix Heap rmgr's desc output for infobits arrays.
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-04-19 [50547a3fa] Fix wal_consistency_checking enhanced desc output.
--->
-
-<listitem>
-<para>
-Improve descriptions of pg_walinspect items (Melanie Plageman, Peter Geoghegan)
 </para>
 </listitem>
 
@@ -3015,6 +2965,74 @@ Author: Andres Freund <andres@anarazel.de>
 <listitem>
 <para>
 Have postgres_fdw and dblink handle interrupts during connection establishment (Andres Freund)
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-16-walinspect">
+     <title><link linkend="pgwalinspect"><application>pg_walinspect</application></link></title>
+
+     <itemizedlist>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2023-01-23 [c31cf1c03] pg_walinspect: Add pg_get_wal_fpi_info()
+Author: Michael Paquier <michael@paquier.xyz>
+2023-03-10 [9ecb134a9] pg_walinspect: pg_get_wal_fpi_info() -> pg_get_wal_block
+-->
+
+<listitem>
+<para>
+Add pg_walinspect function pg_get_wal_block() to report WAL block information (Michael Paquier, Melanie Plageman, Bharath Rupireddy)
+</para>
+</listitem>
+
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-03-30 [122376f02] Show record information in pg_get_wal_block_info.
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-03-31 [df4f3ab51] Add show_data option to pg_get_wal_block_info.
+-->
+
+<listitem>
+<para>
+Add output fields to pg_walinspect's function pg_get_wal_block_info() (Bharath Rupireddy, Peter Geoghegan)
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2023-03-14 [5c1b66280] Rework design of functions in pg_walinspect
+-->
+
+<listitem>
+<para>
+Change how pg_walinspect functions pg_get_wal_records_info(), pg_get_wal_stats(), and pg_get_wal_block_info() interpret ending LSNs (Bharath Rupireddy)
+</para>
+
+<para>
+Previously ending LSNs which represent nonexistent WAL locations would generate an error, while they will now be interpreted as the end of the WAL.  Functions pg_get_wal_records_info_till_end_of_wal() and
+pg_get_wal_stats_till_end_of_wal() have been removed.
+</para>
+</listitem>
+
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-04-07 [7d8219a44] Show more detail in heapam rmgr descriptions.
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-04-07 [1c453cfd8] Show more detail in nbtree rmgr descriptions.
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-04-11 [96149a180] Fix Heap rmgr's desc output for infobits arrays.
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-04-19 [50547a3fa] Fix wal_consistency_checking enhanced desc output.
+-->
+
+<listitem>
+<para>
+Improve descriptions of pg_walinspect items (Melanie Plageman, Peter Geoghegan)
 </para>
 </listitem>
 
