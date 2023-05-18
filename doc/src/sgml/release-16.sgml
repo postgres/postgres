@@ -341,6 +341,25 @@ Allow more efficient addition of multiple heap and index pages (Andres Freund)
 </listitem>
 
 <!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2022-09-08 [d977ffd92] Instrument freezing in autovacuum log reports.
+Author: Peter Geoghegan <pg@bowt.ie>
+2022-11-15 [9e5405993] Deduplicate freeze plans in freeze WAL records.
+Author: Peter Geoghegan <pg@bowt.ie>
+2022-12-28 [1de58df4f] Add page-level freezing to VACUUM.
+-->
+
+<listitem>
+<para>
+During non-freeze operations, perform page freezing where appropriate (Peter Geoghegan)
+</para>
+
+<para>
+This makes full-table freeze vacuums less necessary.
+</para>
+</listitem>
+
+<!--
 Author: David Rowley <drowley@postgresql.org>
 2022-12-23 [ed1a88dda] Allow window functions to adjust their frameOptions
 -->
@@ -3041,7 +3060,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
 <listitem>
 <para>
-Improve descriptions of pg_walinspect items (Melanie Plageman, Peter Geoghegan)
+Improve descriptions of pg_walinspect WAL record descriptions (Melanie Plageman, Peter Geoghegan)
 </para>
 </listitem>
 
