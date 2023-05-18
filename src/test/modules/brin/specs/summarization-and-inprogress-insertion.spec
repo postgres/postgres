@@ -9,6 +9,7 @@ setup
     ) WITH (fillfactor=10);
     CREATE INDEX brinidx ON brin_iso USING brin (value) WITH (pages_per_range=1);
     -- this fills the first page
+    INSERT INTO brin_iso VALUES (NULL);
     DO $$
     DECLARE curtid tid;
     BEGIN
