@@ -4,7 +4,7 @@ starting permutation: s2check s1b s2b s1i s2summ s1c s2c s2check
 step s2check: SELECT * FROM brin_page_items(get_raw_page('brinidx', 2), 'brinidx'::regclass);
 itemoffset|blknum|attnum|allnulls|hasnulls|placeholder|value   
 ----------+------+------+--------+--------+-----------+--------
-         1|     0|     1|f       |f       |f          |{1 .. 1}
+         1|     0|     1|f       |t       |f          |{1 .. 1}
 (1 row)
 
 step s1b: BEGIN ISOLATION LEVEL REPEATABLE READ;
@@ -26,7 +26,7 @@ step s2c: COMMIT;
 step s2check: SELECT * FROM brin_page_items(get_raw_page('brinidx', 2), 'brinidx'::regclass);
 itemoffset|blknum|attnum|allnulls|hasnulls|placeholder|value      
 ----------+------+------+--------+--------+-----------+-----------
-         1|     0|     1|f       |f       |f          |{1 .. 1}   
+         1|     0|     1|f       |t       |f          |{1 .. 1}   
          2|     1|     1|f       |f       |f          |{1 .. 1000}
 (2 rows)
 
@@ -35,7 +35,7 @@ starting permutation: s2check s1b s1i s2vacuum s1c s2check
 step s2check: SELECT * FROM brin_page_items(get_raw_page('brinidx', 2), 'brinidx'::regclass);
 itemoffset|blknum|attnum|allnulls|hasnulls|placeholder|value   
 ----------+------+------+--------+--------+-----------+--------
-         1|     0|     1|f       |f       |f          |{1 .. 1}
+         1|     0|     1|f       |t       |f          |{1 .. 1}
 (1 row)
 
 step s1b: BEGIN ISOLATION LEVEL REPEATABLE READ;
@@ -45,7 +45,7 @@ step s1c: COMMIT;
 step s2check: SELECT * FROM brin_page_items(get_raw_page('brinidx', 2), 'brinidx'::regclass);
 itemoffset|blknum|attnum|allnulls|hasnulls|placeholder|value      
 ----------+------+------+--------+--------+-----------+-----------
-         1|     0|     1|f       |f       |f          |{1 .. 1}   
+         1|     0|     1|f       |t       |f          |{1 .. 1}   
          2|     1|     1|f       |f       |f          |{1 .. 1000}
 (2 rows)
 
