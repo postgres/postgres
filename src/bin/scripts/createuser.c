@@ -433,7 +433,7 @@ help(const char *progname)
 	printf(_("  -s, --superuser           role will be superuser\n"));
 	printf(_("  -S, --no-superuser        role will not be superuser (default)\n"));
 	printf(_("  -v, --valid-until=TIMESTAMP\n"
-			 "                            password expiration date for role\n"));
+			 "                            password expiration date and time for role\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("  --interactive             prompt for missing role name and attributes rather\n"
 			 "                            than using defaults\n"));

@@ -92,7 +92,7 @@ rmtree(const char *path, bool rmtopdir)
 			default:
 				if (unlink(pathbuf) != 0 && errno != ENOENT)
 				{
-					pg_log_warning("could not unlink file \"%s\": %m", pathbuf);
+					pg_log_warning("could not remove file \"%s\": %m", pathbuf);
 					result = false;
 				}
 				break;

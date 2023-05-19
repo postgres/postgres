@@ -113,8 +113,8 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, pg_compress_specification *comp
 									 compress->long_distance);
 		if (ZSTD_isError(ret))
 		{
-			pg_log_error("could not set compression flag for %s: %s",
-						 "long", ZSTD_getErrorName(ret));
+			pg_log_error("could not enable long-distance mode: %s",
+						 ZSTD_getErrorName(ret));
 			exit(1);
 		}
 	}

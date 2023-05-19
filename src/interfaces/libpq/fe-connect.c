@@ -1543,7 +1543,7 @@ connectOptions2(PGconn *conn)
 		&& strcmp(conn->sslmode, "verify-full") != 0)
 	{
 		conn->status = CONNECTION_BAD;
-		libpq_append_conn_error(conn, "weak sslmode \"%s\" may not be used with sslrootcert=system (use verify-full)",
+		libpq_append_conn_error(conn, "weak sslmode \"%s\" may not be used with sslrootcert=system (use \"verify-full\")",
 								conn->sslmode);
 		return false;
 	}

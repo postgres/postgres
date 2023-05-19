@@ -410,7 +410,7 @@ helpVariables(unsigned short int pager)
 	HELP0("  ENCODING\n"
 		  "    current client character set encoding\n");
 	HELP0("  ERROR\n"
-		  "    true if last query failed, else false\n");
+		  "    \"true\" if last query failed, else \"false\"\n");
 	HELP0("  FETCH_COUNT\n"
 		  "    the number of result rows to fetch and display at a time (0 = unlimited)\n");
 	HELP0("  HIDE_TABLEAM\n"
@@ -452,7 +452,7 @@ helpVariables(unsigned short int pager)
 		  "  SERVER_VERSION_NUM\n"
 		  "    server's version (in short string or numeric format)\n");
 	HELP0("  SHELL_ERROR\n"
-		  "    true if the last shell command failed, false if it succeeded\n");
+		  "    \"true\" if the last shell command failed, \"false\" if it succeeded\n");
 	HELP0("  SHELL_EXIT_CODE\n"
 		  "    exit status of the last shell command\n");
 	HELP0("  SHOW_ALL_RESULTS\n"

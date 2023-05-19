@@ -224,7 +224,7 @@ WriteDataToArchiveLZ4(ArchiveHandle *AH, CompressorState *cs,
 									 data, chunk, NULL);
 
 		if (LZ4F_isError(status))
-			pg_fatal("failed to LZ4 compress data: %s",
+			pg_fatal("could not compress data: %s",
 					 LZ4F_getErrorName(status));
 
 		cs->writeF(AH, state->buffer, status);
@@ -256,14 +256,14 @@ EndCompressorLZ4(ArchiveHandle *AH, CompressorState *cs)
 							  state->buffer, state->buflen,
 							  NULL);
 	if (LZ4F_isError(status))
-		pg_fatal("failed to end compression: %s",
+		pg_fatal("could not end compression: %s",
 				 LZ4F_getErrorName(status));
 
 	cs->writeF(AH, state->buffer, status);
 
 	status = LZ4F_freeCompressionContext(state->ctx);
 	if (LZ4F_isError(status))
-		pg_fatal("failed to end compression: %s",
+		pg_fatal("could not end compression: %s",
 				 LZ4F_getErrorName(status));
 
 	pg_free(state->buffer);
@@ -677,7 +677,7 @@ LZ4Stream_close(CompressFileHandle *CFH)
 		{
 			status = LZ4F_compressEnd(state->ctx, state->buffer, state->buflen, NULL);
 			if (LZ4F_isError(status))
-				pg_fatal("failed to end compression: %s",
+				pg_fatal("could not end compression: %s",
 						 LZ4F_getErrorName(status));
 			else if (fwrite(state->buffer, 1, status, state->fp) != status)
 			{
@@ -687,14 +687,14 @@ LZ4Stream_close(CompressFileHandle *CFH)
 
 			status = LZ4F_freeCompressionContext(state->ctx);
 			if (LZ4F_isError(status))
-				pg_fatal("failed to end compression: %s",
+				pg_fatal("could not end compression: %s",
 						 LZ4F_getErrorName(status));
 		}
 		else
 		{
 			status = LZ4F_freeDecompressionContext(state->dtx);
 			if (LZ4F_isError(status))
-				pg_fatal("failed to end decompression: %s",
+				pg_fatal("could not end decompression: %s",
 						 LZ4F_getErrorName(status));
 			pg_free(state->overflowbuf);
 		}

@@ -1215,7 +1215,7 @@ check_for_aclitem_data_type_usage(ClusterInfo *cluster)
 {
 	char		output_path[MAXPGPATH];
 
-	prep_status("Checking for incompatible aclitem data type in user tables");
+	prep_status("Checking for incompatible \"aclitem\" data type in user tables");
 
 	snprintf(output_path, sizeof(output_path), "tables_using_aclitem.txt");
 
@@ -1312,7 +1312,7 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 		fclose(script);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains roles starting with \"pg_\".\n"
-				 "\"pg_\" is a reserved prefix for system roles, the cluster\n"
+				 "\"pg_\" is a reserved prefix for system roles.  The cluster\n"
 				 "cannot be upgraded until these roles are renamed.\n"
 				 "A list of roles starting with \"pg_\" is in the file:\n"
 				 "    %s", output_path);

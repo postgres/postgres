@@ -1064,7 +1064,7 @@ help(const char *progname)
 	printf(_("  -j, --jobs=NUM               use this many parallel jobs to dump\n"));
 	printf(_("  -v, --verbose                verbose mode\n"));
 	printf(_("  -V, --version                output version information, then exit\n"));
-	printf(_("  -Z, --compress=METHOD[:LEVEL]\n"
+	printf(_("  -Z, --compress=METHOD[:DETAIL]\n"
 			 "                               compress as specified\n"));
 	printf(_("  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"));
 	printf(_("  --no-sync                    do not wait for changes to be written safely to disk\n"));
@@ -1072,10 +1072,10 @@ help(const char *progname)
 
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only              dump only the data, not the schema\n"));
-	printf(_("  -b, --large-objects          include large objects in dump\n"
-			 "  --blobs                      (same as --large-objects, deprecated)\n"));
-	printf(_("  -B, --no-large-objects       exclude large objects in dump\n"
-			 "  --no-blobs                   (same as --no-large-objects, deprecated)\n"));
+	printf(_("  -b, --large-objects          include large objects in dump\n"));
+	printf(_("  --blobs                      (same as --large-objects, deprecated)\n"));
+	printf(_("  -B, --no-large-objects       exclude large objects in dump\n"));
+	printf(_("  --no-blobs                   (same as --no-large-objects, deprecated)\n"));
 	printf(_("  -c, --clean                  clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create                 include commands to create database in dump\n"));
 	printf(_("  -e, --extension=PATTERN      dump the specified extension(s) only\n"));
@@ -1096,8 +1096,8 @@ help(const char *progname)
 	printf(_("  --enable-row-security        enable row security (dump only content user has\n"
 			 "                               access to)\n"));
 	printf(_("  --exclude-table-and-children=PATTERN\n"
-			 "                               do NOT dump the specified table(s),\n"
-			 "                               including child and partition tables\n"));
+			 "                               do NOT dump the specified table(s), including\n"
+			 "                               child and partition tables\n"));
 	printf(_("  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"));
 	printf(_("  --exclude-table-data-and-children=PATTERN\n"
 			 "                               do NOT dump data for the specified table(s),\n"
@@ -1125,8 +1125,8 @@ help(const char *progname)
 	printf(_("  --snapshot=SNAPSHOT          use given snapshot for the dump\n"));
 	printf(_("  --strict-names               require table and/or schema include patterns to\n"
 			 "                               match at least one entity each\n"));
-	printf(_("  --table-and-children=PATTERN dump only the specified table(s),\n"
-			 "                               including child and partition tables\n"));
+	printf(_("  --table-and-children=PATTERN dump only the specified table(s), including\n"
+			 "                               child and partition tables\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));

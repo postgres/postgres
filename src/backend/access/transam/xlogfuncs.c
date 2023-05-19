@@ -212,7 +212,8 @@ pg_log_standby_snapshot(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
-				 errhint("pg_log_standby_snapshot() cannot be executed during recovery.")));
+				 errhint("%s cannot be executed during recovery.",
+						 "pg_log_standby_snapshot()")));
 
 	if (!XLogStandbyInfoActive())
 		ereport(ERROR,

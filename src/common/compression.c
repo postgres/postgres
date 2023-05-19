@@ -328,7 +328,7 @@ expect_boolean_value(char *keyword, char *value, pg_compress_specification *resu
 		return false;
 
 	result->parse_error =
-		psprintf(_("value for compression option \"%s\" must be a boolean"),
+		psprintf(_("value for compression option \"%s\" must be a Boolean value"),
 				 keyword);
 	return false;
 }
