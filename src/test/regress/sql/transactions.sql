@@ -358,10 +358,10 @@ drop function inverse(int);
 begin;
 
 savepoint x;
-create table abc (a int);
-insert into abc values (5);
-insert into abc values (10);
-declare foo cursor for select * from abc;
+create table trans_abc (a int);
+insert into trans_abc values (5);
+insert into trans_abc values (10);
+declare foo cursor for select * from trans_abc;
 fetch from foo;
 rollback to x;
 
@@ -371,11 +371,11 @@ commit;
 
 begin;
 
-create table abc (a int);
-insert into abc values (5);
-insert into abc values (10);
-insert into abc values (15);
-declare foo cursor for select * from abc;
+create table trans_abc (a int);
+insert into trans_abc values (5);
+insert into trans_abc values (10);
+insert into trans_abc values (15);
+declare foo cursor for select * from trans_abc;
 
 fetch from foo;
 
