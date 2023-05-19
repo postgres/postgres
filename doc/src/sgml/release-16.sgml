@@ -93,6 +93,17 @@ Processing such indexes is still possible using REINDEX SYSTEM.
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
+2023-03-14 [5c1b66280] Rework design of functions in pg_walinspect
+-->
+
+<listitem>
+<para>
+Remove pg_walinspect functions pg_get_wal_records_info_till_end_of_wal() and pg_get_wal_stats_till_end_of_wal().
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
 2023-03-17 [98ae2c84a] libpq: Remove code for SCM credential authentication
 -->
 
@@ -2849,6 +2860,55 @@ Previously constants appeared instead of placeholders, e.g., $1.
 </listitem>
 
 <!--
+Author: Michael Paquier <michael@paquier.xyz>
+2023-01-23 [c31cf1c03] pg_walinspect: Add pg_get_wal_fpi_info()
+Author: Michael Paquier <michael@paquier.xyz>
+2023-03-10 [9ecb134a9] pg_walinspect: pg_get_wal_fpi_info() -> pg_get_wal_block
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-03-30 [122376f02] Show record information in pg_get_wal_block_info.
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-03-31 [df4f3ab51] Add show_data option to pg_get_wal_block_info.
+-->
+
+<listitem>
+<para>
+Add pg_walinspect function pg_get_wal_block_info() to report WAL block information (Michael Paquier, Melanie Plageman, Bharath Rupireddy)
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2023-03-14 [5c1b66280] Rework design of functions in pg_walinspect
+-->
+
+<listitem>
+<para>
+Change how pg_walinspect functions pg_get_wal_records_info(), pg_get_wal_stats(), and pg_get_wal_block_info() interpret ending LSNs (Bharath Rupireddy)
+</para>
+
+<para>
+Previously ending LSNs which represent nonexistent WAL locations would generate an error, while they will now be interpreted as the end of the WAL.
+</para>
+</listitem>
+
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-04-07 [7d8219a44] Show more detail in heapam rmgr descriptions.
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-04-07 [1c453cfd8] Show more detail in nbtree rmgr descriptions.
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-04-11 [96149a180] Fix Heap rmgr's desc output for infobits arrays.
+Author: Peter Geoghegan <pg@bowt.ie>
+2023-04-19 [50547a3fa] Fix wal_consistency_checking enhanced desc output.
+-->
+
+<listitem>
+<para>
+Improve descriptions of pg_walinspect WAL record descriptions (Melanie Plageman, Peter Geoghegan)
+</para>
+</listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-02 [1fd3dd204] Add bt_multi_page_stats() function to contrib/pageinspec
 -->
@@ -2993,74 +3053,6 @@ Author: Andres Freund <andres@anarazel.de>
 <listitem>
 <para>
 Have postgres_fdw and dblink handle interrupts during connection establishment (Andres Freund)
-</para>
-</listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4 id="release-16-walinspect">
-     <title><link linkend="pgwalinspect"><application>pg_walinspect</application></link></title>
-
-     <itemizedlist>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-01-23 [c31cf1c03] pg_walinspect: Add pg_get_wal_fpi_info()
-Author: Michael Paquier <michael@paquier.xyz>
-2023-03-10 [9ecb134a9] pg_walinspect: pg_get_wal_fpi_info() -> pg_get_wal_block
--->
-
-<listitem>
-<para>
-Add pg_walinspect function pg_get_wal_block() to report WAL block information (Michael Paquier, Melanie Plageman, Bharath Rupireddy)
-</para>
-</listitem>
-
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-03-30 [122376f02] Show record information in pg_get_wal_block_info.
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-03-31 [df4f3ab51] Add show_data option to pg_get_wal_block_info.
--->
-
-<listitem>
-<para>
-Add output fields to pg_walinspect's function pg_get_wal_block_info() (Bharath Rupireddy, Peter Geoghegan)
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-03-14 [5c1b66280] Rework design of functions in pg_walinspect
--->
-
-<listitem>
-<para>
-Change how pg_walinspect functions pg_get_wal_records_info(), pg_get_wal_stats(), and pg_get_wal_block_info() interpret ending LSNs (Bharath Rupireddy)
-</para>
-
-<para>
-Previously ending LSNs which represent nonexistent WAL locations would generate an error, while they will now be interpreted as the end of the WAL.  Functions pg_get_wal_records_info_till_end_of_wal() and
-pg_get_wal_stats_till_end_of_wal() have been removed.
-</para>
-</listitem>
-
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-04-07 [7d8219a44] Show more detail in heapam rmgr descriptions.
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-04-07 [1c453cfd8] Show more detail in nbtree rmgr descriptions.
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-04-11 [96149a180] Fix Heap rmgr's desc output for infobits arrays.
-Author: Peter Geoghegan <pg@bowt.ie>
-2023-04-19 [50547a3fa] Fix wal_consistency_checking enhanced desc output.
--->
-
-<listitem>
-<para>
-Improve descriptions of pg_walinspect WAL record descriptions (Melanie Plageman, Peter Geoghegan)
 </para>
 </listitem>
 
