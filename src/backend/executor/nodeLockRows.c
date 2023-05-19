@@ -108,7 +108,6 @@ lnext:
 				/* this child is inactive right now */
 				erm->ermActive = false;
 				ItemPointerSetInvalid(&(erm->curCtid));
-				ExecClearTuple(markSlot);
 				continue;
 			}
 		}
@@ -370,7 +369,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 
 	/* Now we have the info needed to set up EPQ state */
 	EvalPlanQualInit(&lrstate->lr_epqstate, estate,
-					 outerPlan, epq_arowmarks, node->epqParam);
+					 outerPlan, epq_arowmarks, node->epqParam, NIL);
 
 	return lrstate;
 }

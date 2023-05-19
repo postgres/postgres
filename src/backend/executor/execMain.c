@@ -2469,7 +2469,7 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
  *	relation - table containing tuple
  *	rti - rangetable index of table containing tuple
  *	inputslot - tuple for processing - this can be the slot from
- *		EvalPlanQualSlot(), for the increased efficiency.
+ *		EvalPlanQualSlot() for this rel, for increased efficiency.
  *
  * This tests whether the tuple in inputslot still matches the relevant
  * quals. For that result to be useful, typically the input tuple has to be
@@ -2504,6 +2504,14 @@ EvalPlanQual(EPQState *epqstate, Relation relation,
 		ExecCopySlot(testslot, inputslot);
 
 	/*
+	 * Mark that an EPQ tuple is available for this relation.  (If there is
+	 * more than one result relation, the others remain marked as having no
+	 * tuple available.)
+	 */
+	epqstate->relsubs_done[rti - 1] = false;
+	epqstate->relsubs_blocked[rti - 1] = false;
+
+	/*
 	 * Run the EPQ query.  We assume it will return at most one tuple.
 	 */
 	slot = EvalPlanQualNext(epqstate);
@@ -2519,11 +2527,12 @@ EvalPlanQual(EPQState *epqstate, Relation relation,
 		ExecMaterializeSlot(slot);
 
 	/*
-	 * Clear out the test tuple.  This is needed in case the EPQ query is
-	 * re-used to test a tuple for a different relation.  (Not clear that can
-	 * really happen, but let's be safe.)
+	 * Clear out the test tuple, and mark that no tuple is available here.
+	 * This is needed in case the EPQ state is re-used to test a tuple for a
+	 * different target relation.
 	 */
 	ExecClearTuple(testslot);
+	epqstate->relsubs_blocked[rti - 1] = true;
 
 	return slot;
 }
@@ -2532,18 +2541,26 @@ EvalPlanQual(EPQState *epqstate, Relation relation,
  * EvalPlanQualInit -- initialize during creation of a plan state node
  * that might need to invoke EPQ processing.
  *
+ * If the caller intends to use EvalPlanQual(), resultRelations should be
+ * a list of RT indexes of potential target relations for EvalPlanQual(),
+ * and we will arrange that the other listed relations don't return any
+ * tuple during an EvalPlanQual() call.  Otherwise resultRelations
+ * should be NIL.
+ *
  * Note: subplan/auxrowmarks can be NULL/NIL if they will be set later
  * with EvalPlanQualSetPlan.
  */
 void
 EvalPlanQualInit(EPQState *epqstate, EState *parentestate,
-				 Plan *subplan, List *auxrowmarks, int epqParam)
+				 Plan *subplan, List *auxrowmarks,
+				 int epqParam, List *resultRelations)
 {
 	Index		rtsize = parentestate->es_range_table_size;
 
 	/* initialize data not changing over EPQState's lifetime */
 	epqstate->parentestate = parentestate;
 	epqstate->epqParam = epqParam;
+	epqstate->resultRelations = resultRelations;
 
 	/*
 	 * Allocate space to reference a slot for each potential rti - do so now
@@ -2566,6 +2583,7 @@ EvalPlanQualInit(EPQState *epqstate, EState *parentestate,
 	epqstate->recheckplanstate = NULL;
 	epqstate->relsubs_rowmark = NULL;
 	epqstate->relsubs_done = NULL;
+	epqstate->relsubs_blocked = NULL;
 }
 
 /*
@@ -2763,7 +2781,13 @@ EvalPlanQualBegin(EPQState *epqstate)
 		Index		rtsize = parentestate->es_range_table_size;
 		PlanState  *rcplanstate = epqstate->recheckplanstate;
 
-		MemSet(epqstate->relsubs_done, 0, rtsize * sizeof(bool));
+		/*
+		 * Reset the relsubs_done[] flags to equal relsubs_blocked[], so that
+		 * the EPQ run will never attempt to fetch tuples from blocked target
+		 * relations.
+		 */
+		memcpy(epqstate->relsubs_done, epqstate->relsubs_blocked,
+			   rtsize * sizeof(bool));
 
 		/* Recopy current values of parent parameters */
 		if (parentestate->es_plannedstmt->paramExecTypes != NIL)
@@ -2931,10 +2955,22 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 	}
 
 	/*
-	 * Initialize per-relation EPQ tuple states to not-fetched.
+	 * Initialize per-relation EPQ tuple states.  Result relations, if any,
+	 * get marked as blocked; others as not-fetched.
 	 */
-	epqstate->relsubs_done = (bool *)
-		palloc0(rtsize * sizeof(bool));
+	epqstate->relsubs_done = palloc_array(bool, rtsize);
+	epqstate->relsubs_blocked = palloc0_array(bool, rtsize);
+
+	foreach(l, epqstate->resultRelations)
+	{
+		int			rtindex = lfirst_int(l);
+
+		Assert(rtindex > 0 && rtindex <= rtsize);
+		epqstate->relsubs_blocked[rtindex - 1] = true;
+	}
+
+	memcpy(epqstate->relsubs_done, epqstate->relsubs_blocked,
+		   rtsize * sizeof(bool));
 
 	/*
 	 * Initialize the private state information for all the nodes in the part
@@ -3010,4 +3046,5 @@ EvalPlanQualEnd(EPQState *epqstate)
 	epqstate->recheckplanstate = NULL;
 	epqstate->relsubs_rowmark = NULL;
 	epqstate->relsubs_done = NULL;
+	epqstate->relsubs_blocked = NULL;
 }

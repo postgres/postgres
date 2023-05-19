@@ -1169,15 +1169,16 @@ typedef struct PlanState
  */
 typedef struct EPQState
 {
-	/* Initialized at EvalPlanQualInit() time: */
-
+	/* These are initialized by EvalPlanQualInit() and do not change later: */
 	EState	   *parentestate;	/* main query's EState */
 	int			epqParam;		/* ID of Param to force scan node re-eval */
+	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
 	/*
-	 * Tuples to be substituted by scan nodes. They need to set up, before
-	 * calling EvalPlanQual()/EvalPlanQualNext(), into the slot returned by
-	 * EvalPlanQualSlot(scanrelid). The array is indexed by scanrelid - 1.
+	 * relsubs_slot[scanrelid - 1] holds the EPQ test tuple to be returned by
+	 * the scan node for the scanrelid'th RT index, in place of performing an
+	 * actual table scan.  Callers should use EvalPlanQualSlot() to fetch
+	 * these slots.
 	 */
 	List	   *tuple_table;	/* tuple table for relsubs_slot */
 	TupleTableSlot **relsubs_slot;
@@ -1211,10 +1212,20 @@ typedef struct EPQState
 	ExecAuxRowMark **relsubs_rowmark;
 
 	/*
-	 * True if a relation's EPQ tuple has been fetched for relation, indexed
-	 * by scanrelid - 1.
+	 * relsubs_done[scanrelid - 1] is true if there is no EPQ tuple for this
+	 * target relation or it has already been fetched in the current scan of
+	 * this target relation within the current EvalPlanQual test.
 	 */
 	bool	   *relsubs_done;
+
+	/*
+	 * relsubs_blocked[scanrelid - 1] is true if there is no EPQ tuple for
+	 * this target relation during the current EvalPlanQual test.  We keep
+	 * these flags set for all relids listed in resultRelations, but
+	 * transiently clear the one for the relation whose tuple is actually
+	 * passed to EvalPlanQual().
+	 */
+	bool	   *relsubs_blocked;
 
 	PlanState  *recheckplanstate;	/* EPQ specific exec nodes, for ->plan */
 } EPQState;

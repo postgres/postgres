@@ -40,7 +40,7 @@ setup
  CREATE TABLE parttbl2 PARTITION OF parttbl
    (d WITH OPTIONS GENERATED ALWAYS AS (a + b + 1000) STORED)
    FOR VALUES IN (2);
- INSERT INTO parttbl VALUES (1, 1, 1);
+ INSERT INTO parttbl VALUES (1, 1, 1), (2, 2, 2);
 
  CREATE TABLE another_parttbl (a int, b int, c int) PARTITION BY LIST (a);
  CREATE TABLE another_parttbl1 PARTITION OF another_parttbl FOR VALUES IN (1);
@@ -102,11 +102,15 @@ step upsert1	{
 # when the first updated tuple was in a non-first child table.
 # writep2/returningp1 tests a memory allocation issue
 # writep3a/writep3b tests updates touching more than one table
+# writep4a/writep4b tests a case where matches in another table confused EPQ
+# writep4a/deletep4 tests the same case in the DELETE path
 
+step readp		{ SELECT tableoid::regclass, ctid, * FROM p; }
 step readp1		{ SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; }
 step writep1	{ UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0; }
 step writep2	{ UPDATE p SET b = -b WHERE a = 1 AND c = 0; }
 step writep3a	{ UPDATE p SET b = -b WHERE c = 0; }
+step writep4a	{ UPDATE p SET c = 4 WHERE c = 0; }
 step c1		{ COMMIT; }
 step r1		{ ROLLBACK; }
 
@@ -210,6 +214,8 @@ step returningp1 {
 	  SELECT * FROM u;
 }
 step writep3b	{ UPDATE p SET b = -b WHERE c = 0; }
+step writep4b	{ UPDATE p SET b = -4 WHERE c = 0; }
+step deletep4	{ DELETE FROM p WHERE c = 0; }
 step readforss	{
 	SELECT ta.id AS ta_id, ta.value AS ta_value,
 		(SELECT ROW(tb.id, tb.value)
@@ -226,9 +232,14 @@ step updateforcip3	{
 }
 step wrtwcte	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
 step wrjt	{ UPDATE jointest SET data = 42 WHERE id = 7; }
+
+step conditionalpartupdate	{
+	update parttbl set c = -c where b < 10;
+}
+
 step complexpartupdate	{
 	with u as (update parttbl set b = b + 1 returning parttbl.*)
-	update parttbl set b = u.b + 100 from u;
+	update parttbl p set b = u.b + 100 from u where p.a = u.a;
 }
 
 step complexpartupdate_route_err1 {
@@ -277,7 +288,7 @@ setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step read	{ SELECT * FROM accounts ORDER BY accountid; }
 step read_ext	{ SELECT * FROM accounts_ext ORDER BY accountid; }
 step read_a		{ SELECT * FROM table_a ORDER BY id; }
-step read_part	{ SELECT * FROM parttbl ORDER BY a; }
+step read_part	{ SELECT * FROM parttbl ORDER BY a, c; }
 
 # this test exercises EvalPlanQual with a CTE, cf bug #14328
 step readwcte	{
@@ -347,6 +358,8 @@ permutation upsert1 upsert2 c1 c2 read
 permutation readp1 writep1 readp2 c1 c2
 permutation writep2 returningp1 c1 c2
 permutation writep3a writep3b c1 c2
+permutation writep4a writep4b c1 c2 readp
+permutation writep4a deletep4 c1 c2 readp
 permutation wx2 partiallock c2 c1 read
 permutation wx2 lockwithvalues c2 c1 read
 permutation wx2_ext partiallock_ext c2 c1 read_ext
@@ -358,6 +371,7 @@ permutation wrjt selectjoinforupdate c2 c1
 permutation wrjt selectresultforupdate c2 c1
 permutation wrtwcte multireadwcte c1 c2
 
+permutation simplepartupdate conditionalpartupdate c1 c2 read_part
 permutation simplepartupdate complexpartupdate c1 c2 read_part
 permutation simplepartupdate_route1to2 complexpartupdate_route_err1 c1 c2 read_part
 permutation simplepartupdate_noroute complexpartupdate_route c1 c2 read_part

@@ -233,7 +233,8 @@ extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EPQState *epqstate, Relation relation,
 									Index rti, TupleTableSlot *inputslot);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *parentestate,
-							 Plan *subplan, List *auxrowmarks, int epqParam);
+							 Plan *subplan, List *auxrowmarks,
+							 int epqParam, List *resultRelations);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,
 								Plan *subplan, List *auxrowmarks);
 extern TupleTableSlot *EvalPlanQualSlot(EPQState *epqstate,

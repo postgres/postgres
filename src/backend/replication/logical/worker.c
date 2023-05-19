@@ -2674,7 +2674,7 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 	bool		found;
 	MemoryContext oldctx;
 
-	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1);
+	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1, NIL);
 	ExecOpenIndices(relinfo, false);
 
 	found = FindReplTupleInLocalRel(estate, localrel,
@@ -2827,7 +2827,7 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
 	TupleTableSlot *localslot;
 	bool		found;
 
-	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1);
+	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1, NIL);
 	ExecOpenIndices(relinfo, false);
 
 	found = FindReplTupleInLocalRel(estate, localrel, remoterel, localindexoid,
@@ -3054,7 +3054,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 					 */
 					EPQState	epqstate;
 
-					EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1);
+					EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1, NIL);
 					ExecOpenIndices(partrelinfo, false);
 
 					EvalPlanQualSetSlot(&epqstate, remoteslot_part);
