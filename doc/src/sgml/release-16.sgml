@@ -191,7 +191,7 @@ Remove symbolic links for the postmaster binary (Peter Eisentraut)
 
    <para>
     Below you will find a detailed account of the changes between
-    <productname>PostgreSQL</productname> 15 and the previous major
+    <productname>PostgreSQL</productname> 16 and the previous major
     release.
    </para>
 
@@ -670,22 +670,11 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Create a predefined role with permission to perform maintenance operations (Nathan Bossart)
+Create a predefined role and grantable privilege with permission to perform maintenance operations (Nathan Bossart)
 </para>
 
 <para>
-This is called pg_maintain.
-</para>
-</listitem>
-
-<!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-2022-11-28 [b5d638249] Provide per-table permissions for vacuum and analyze.
--->
-
-<listitem>
-<para>
-Allow GRANT to give vacuum and analyze permission to users beyond the table owner or superusers (Nathan Bossart)
+The predefined role is is called pg_maintain.
 </para>
 </listitem>
 
