@@ -4521,13 +4521,16 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.expanded_header_width_type = PRINT_XHEADER_PAGE;
 		else
 		{
-			popt->topt.expanded_header_width_type = PRINT_XHEADER_EXACT_WIDTH;
-			popt->topt.expanded_header_exact_width = atoi(value);
-			if (popt->topt.expanded_header_exact_width == 0)
+			int			intval = atoi(value);
+
+			if (intval == 0)
 			{
 				pg_log_error("\\pset: allowed xheader_width values are \"%s\" (default), \"%s\", \"%s\", or a number specifying the exact width", "full", "column", "page");
 				return false;
 			}
+
+			popt->topt.expanded_header_width_type = PRINT_XHEADER_EXACT_WIDTH;
+			popt->topt.expanded_header_exact_width = intval;
 		}
 	}
 
@@ -4660,8 +4663,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* set minimum lines for pager use */
 	else if (strcmp(param, "pager_min_lines") == 0)
 	{
-		if (value)
-			popt->topt.pager_min_lines = atoi(value);
+		if (value &&
+			!ParseVariableNum(value, "pager_min_lines", &popt->topt.pager_min_lines))
+			return false;
 	}
 
 	/* disable "(x rows)" footer */
