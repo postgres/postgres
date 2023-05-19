@@ -372,6 +372,6 @@ typedef struct HashJoinTableData
 	ParallelHashJoinState *parallel_state;
 	ParallelHashJoinBatchAccessor *batches;
 	dsa_pointer current_chunk_shared;
-}			HashJoinTableData;
+} HashJoinTableData;
 
 #endif							/* HASHJOIN_H */

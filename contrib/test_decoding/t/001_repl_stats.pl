@@ -92,7 +92,7 @@ regression_slot3|t|t),
 # replication statistics data is fine after restart.
 
 $node->stop;
-my $datadir           = $node->data_dir;
+my $datadir = $node->data_dir;
 my $slot3_replslotdir = "$datadir/pg_replslot/regression_slot3";
 
 rmtree($slot3_replslotdir);

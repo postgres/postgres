@@ -87,8 +87,8 @@
 char *
 supports_compression(const pg_compress_specification compression_spec)
 {
-	const pg_compress_algorithm	algorithm = compression_spec.algorithm;
-	bool						supported = false;
+	const pg_compress_algorithm algorithm = compression_spec.algorithm;
+	bool		supported = false;
 
 	if (algorithm == PG_COMPRESSION_NONE)
 		supported = true;

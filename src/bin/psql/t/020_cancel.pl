@@ -43,7 +43,7 @@ SKIP:
 	# Get the PID
 	$stdout = '';
 	$stderr = '';
-	$stdin  = "\\! echo \$PPID >$tempdir/psql.pid\n";
+	$stdin = "\\! echo \$PPID >$tempdir/psql.pid\n";
 	pump $h while length $stdin;
 	my $count;
 	my $psql_pid;

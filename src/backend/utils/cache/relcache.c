@@ -3084,10 +3084,10 @@ static void
 AssertPendingSyncConsistency(Relation relation)
 {
 	bool		relcache_verdict =
-	RelationIsPermanent(relation) &&
-	((relation->rd_createSubid != InvalidSubTransactionId &&
-	  RELKIND_HAS_STORAGE(relation->rd_rel->relkind)) ||
-	 relation->rd_firstRelfilelocatorSubid != InvalidSubTransactionId);
+		RelationIsPermanent(relation) &&
+		((relation->rd_createSubid != InvalidSubTransactionId &&
+		  RELKIND_HAS_STORAGE(relation->rd_rel->relkind)) ||
+		 relation->rd_firstRelfilelocatorSubid != InvalidSubTransactionId);
 
 	Assert(relcache_verdict == RelFileLocatorSkippingWAL(relation->rd_locator));
 
@@ -3765,12 +3765,12 @@ RelationSetNewRelfilenumber(Relation relation, char persistence)
 	 */
 	if (IsBinaryUpgrade)
 	{
-		SMgrRelation	srel;
+		SMgrRelation srel;
 
 		/*
 		 * During a binary upgrade, we use this code path to ensure that
-		 * pg_largeobject and its index have the same relfilenumbers as in
-		 * the old cluster. This is necessary because pg_upgrade treats
+		 * pg_largeobject and its index have the same relfilenumbers as in the
+		 * old cluster. This is necessary because pg_upgrade treats
 		 * pg_largeobject like a user table, not a system table. It is however
 		 * possible that a table or index may need to end up with the same
 		 * relfilenumber in the new cluster as what it had in the old cluster.
@@ -5171,8 +5171,8 @@ RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 	Bitmapset  *uindexattrs;	/* columns in unique indexes */
 	Bitmapset  *pkindexattrs;	/* columns in the primary index */
 	Bitmapset  *idindexattrs;	/* columns in the replica identity */
-	Bitmapset  *hotblockingattrs;   /* columns with HOT blocking indexes */
-	Bitmapset  *summarizedattrs;   /* columns with summarizing indexes */
+	Bitmapset  *hotblockingattrs;	/* columns with HOT blocking indexes */
+	Bitmapset  *summarizedattrs;	/* columns with summarizing indexes */
 	List	   *indexoidlist;
 	List	   *newindexoidlist;
 	Oid			relpkindex;
@@ -5314,8 +5314,8 @@ restart:
 			 * when the column value changes, thus require a separate
 			 * attribute bitmapset.
 			 *
-			 * Obviously, non-key columns couldn't be referenced by
-			 * foreign key or identity key. Hence we do not include them into
+			 * Obviously, non-key columns couldn't be referenced by foreign
+			 * key or identity key. Hence we do not include them into
 			 * uindexattrs, pkindexattrs and idindexattrs bitmaps.
 			 */
 			if (attrnum != 0)

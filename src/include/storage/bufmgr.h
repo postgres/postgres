@@ -89,7 +89,7 @@ typedef enum ExtendBufferedFlags
 
 	/* internal flags follow */
 	EB_LOCK_TARGET = (1 << 5),
-} ExtendBufferedFlags;
+}			ExtendBufferedFlags;
 
 /*
  * To identify the relation - either relation or smgr + relpersistence has to

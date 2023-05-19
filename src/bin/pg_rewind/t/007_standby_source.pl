@@ -124,8 +124,8 @@ copy(
 	# recovery configuration automatically.
 	command_ok(
 		[
-			'pg_rewind',                      "--debug",
-			"--source-server",                $node_b->connstr('postgres'),
+			'pg_rewind', "--debug",
+			"--source-server", $node_b->connstr('postgres'),
 			"--target-pgdata=$node_c_pgdata", "--no-sync",
 			"--write-recovery-conf"
 		],

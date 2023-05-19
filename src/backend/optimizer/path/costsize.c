@@ -2011,7 +2011,7 @@ cost_incremental_sort(Path *path,
 	{
 		PathKey    *key = (PathKey *) lfirst(l);
 		EquivalenceMember *member = (EquivalenceMember *)
-		linitial(key->pk_eclass->ec_members);
+			linitial(key->pk_eclass->ec_members);
 
 		/*
 		 * Check if the expression contains Var with "varno 0" so that we

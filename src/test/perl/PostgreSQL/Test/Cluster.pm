@@ -112,10 +112,10 @@ use PostgreSQL::Version;
 use PostgreSQL::Test::RecursiveCopy;
 use Socket;
 use Test::More;
-use PostgreSQL::Test::Utils ();
+use PostgreSQL::Test::Utils          ();
 use PostgreSQL::Test::BackgroundPsql ();
-use Time::HiRes qw(usleep);
-use Scalar::Util qw(blessed);
+use Time::HiRes                      qw(usleep);
+use Scalar::Util                     qw(blessed);
 
 our ($use_tcp, $test_localhost, $test_pghost, $last_host_assigned,
 	$last_port_assigned, @all_nodes, $died, $portdir);
@@ -132,8 +132,8 @@ INIT
 
 	# Set PGHOST for backward compatibility.  This doesn't work for own_host
 	# nodes, so prefer to not rely on this when writing new tests.
-	$use_tcp            = !$PostgreSQL::Test::Utils::use_unix_sockets;
-	$test_localhost     = "127.0.0.1";
+	$use_tcp = !$PostgreSQL::Test::Utils::use_unix_sockets;
+	$test_localhost = "127.0.0.1";
 	$last_host_assigned = 1;
 	if ($use_tcp)
 	{
@@ -147,7 +147,7 @@ INIT
 		$test_pghost = PostgreSQL::Test::Utils::tempdir_short;
 		$test_pghost =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 	}
-	$ENV{PGHOST}     = $test_pghost;
+	$ENV{PGHOST} = $test_pghost;
 	$ENV{PGDATABASE} = 'postgres';
 
 	# Tracking of last port value assigned to accelerate free port lookup.
@@ -160,9 +160,10 @@ INIT
 	$portdir = $ENV{PG_TEST_PORT_DIR};
 	# Otherwise, try to use a directory at the top of the build tree
 	# or as a last resort use the tmp_check directory
-	my $build_dir = $ENV{MESON_BUILD_ROOT}
+	my $build_dir =
+		 $ENV{MESON_BUILD_ROOT}
 	  || $ENV{top_builddir}
-	  || $PostgreSQL::Test::Utils::tmp_check ;
+	  || $PostgreSQL::Test::Utils::tmp_check;
 	$portdir ||= "$build_dir/portlock";
 	$portdir =~ s!\\!/!g;
 	# Make sure the directory exists
@@ -408,7 +409,7 @@ sub config_data
 	my @map;
 	foreach my $line (@lines)
 	{
-		my ($k,$v) = split (/ = /,$line,2);
+		my ($k, $v) = split(/ = /, $line, 2);
 		push(@map, $k, $v);
 	}
 	return @map;
@@ -509,14 +510,14 @@ disabled.
 sub init
 {
 	my ($self, %params) = @_;
-	my $port   = $self->port;
+	my $port = $self->port;
 	my $pgdata = $self->data_dir;
-	my $host   = $self->host;
+	my $host = $self->host;
 
 	local %ENV = $self->_get_env();
 
 	$params{allows_streaming} = 0 unless defined $params{allows_streaming};
-	$params{has_archiving}    = 0 unless defined $params{has_archiving};
+	$params{has_archiving} = 0 unless defined $params{has_archiving};
 
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;
@@ -585,7 +586,7 @@ sub init
 	  or die("unable to set permissions for $pgdata/postgresql.conf");
 
 	$self->set_replication_conf if $params{allows_streaming};
-	$self->enable_archiving     if $params{has_archiving};
+	$self->enable_archiving if $params{has_archiving};
 	return;
 }
 
@@ -680,17 +681,17 @@ sub backup
 {
 	my ($self, $backup_name, %params) = @_;
 	my $backup_path = $self->backup_dir . '/' . $backup_name;
-	my $name        = $self->name;
+	my $name = $self->name;
 
 	local %ENV = $self->_get_env();
 
 	print "# Taking pg_basebackup $backup_name from node \"$name\"\n";
 	PostgreSQL::Test::Utils::system_or_bail(
 		'pg_basebackup', '-D',
-		$backup_path,    '-h',
-		$self->host,     '-p',
-		$self->port,     '--checkpoint',
-		'fast',          '--no-sync',
+		$backup_path, '-h',
+		$self->host, '-p',
+		$self->port, '--checkpoint',
+		'fast', '--no-sync',
 		@{ $params{backup_options} });
 	print "# Backup finished\n";
 	return;
@@ -755,14 +756,14 @@ sub init_from_backup
 {
 	my ($self, $root_node, $backup_name, %params) = @_;
 	my $backup_path = $root_node->backup_dir . '/' . $backup_name;
-	my $host        = $self->host;
-	my $port        = $self->port;
-	my $node_name   = $self->name;
-	my $root_name   = $root_node->name;
+	my $host = $self->host;
+	my $port = $self->port;
+	my $node_name = $self->name;
+	my $root_name = $root_node->name;
 
 	$params{has_streaming} = 0 unless defined $params{has_streaming};
 	$params{has_restoring} = 0 unless defined $params{has_restoring};
-	$params{standby}       = 1 unless defined $params{standby};
+	$params{standby} = 1 unless defined $params{standby};
 
 	print
 	  "# Initializing node \"$node_name\" from backup \"$backup_name\" of node \"$root_name\"\n";
@@ -780,7 +781,7 @@ sub init_from_backup
 			$backup_path . '/base.tar',
 			'-C', $data_path);
 		PostgreSQL::Test::Utils::system_or_bail(
-			$params{tar_program},         'xf',
+			$params{tar_program}, 'xf',
 			$backup_path . '/pg_wal.tar', '-C',
 			$data_path . '/pg_wal');
 	}
@@ -853,9 +854,9 @@ instead return a true or false value to indicate success or failure.
 sub start
 {
 	my ($self, %params) = @_;
-	my $port   = $self->port;
+	my $port = $self->port;
 	my $pgdata = $self->data_dir;
-	my $name   = $self->name;
+	my $name = $self->name;
 	my $ret;
 
 	BAIL_OUT("node \"$name\" is already running") if defined $self->{_pid};
@@ -872,8 +873,8 @@ sub start
 	# -w is now the default but having it here does no harm and helps
 	# compatibility with older versions.
 	$ret = PostgreSQL::Test::Utils::system_log(
-		'pg_ctl', '-w',           '-D', $self->data_dir,
-		'-l',     $self->logfile, '-o', "--cluster-name=$name",
+		'pg_ctl', '-w', '-D', $self->data_dir,
+		'-l', $self->logfile, '-o', "--cluster-name=$name",
 		'start');
 
 	if ($ret != 0)
@@ -938,7 +939,7 @@ sub stop
 {
 	my ($self, $mode, %params) = @_;
 	my $pgdata = $self->data_dir;
-	my $name   = $self->name;
+	my $name = $self->name;
 	my $ret;
 
 	local %ENV = $self->_get_env();
@@ -976,9 +977,9 @@ Reload configuration parameters on the node.
 sub reload
 {
 	my ($self) = @_;
-	my $port   = $self->port;
+	my $port = $self->port;
 	my $pgdata = $self->data_dir;
-	my $name   = $self->name;
+	my $name = $self->name;
 
 	local %ENV = $self->_get_env();
 
@@ -998,11 +999,11 @@ Wrapper for pg_ctl restart
 
 sub restart
 {
-	my ($self)  = @_;
-	my $port    = $self->port;
-	my $pgdata  = $self->data_dir;
+	my ($self) = @_;
+	my $port = $self->port;
+	my $pgdata = $self->data_dir;
 	my $logfile = $self->logfile;
-	my $name    = $self->name;
+	my $name = $self->name;
 
 	local %ENV = $self->_get_env(PGAPPNAME => undef);
 
@@ -1027,11 +1028,11 @@ Wrapper for pg_ctl promote
 
 sub promote
 {
-	my ($self)  = @_;
-	my $port    = $self->port;
-	my $pgdata  = $self->data_dir;
+	my ($self) = @_;
+	my $port = $self->port;
+	my $pgdata = $self->data_dir;
 	my $logfile = $self->logfile;
-	my $name    = $self->name;
+	my $name = $self->name;
 
 	local %ENV = $self->_get_env();
 
@@ -1051,11 +1052,11 @@ Wrapper for pg_ctl logrotate
 
 sub logrotate
 {
-	my ($self)  = @_;
-	my $port    = $self->port;
-	my $pgdata  = $self->data_dir;
+	my ($self) = @_;
+	my $port = $self->port;
+	my $pgdata = $self->data_dir;
 	my $logfile = $self->logfile;
-	my $name    = $self->name;
+	my $name = $self->name;
 
 	local %ENV = $self->_get_env();
 
@@ -1070,7 +1071,7 @@ sub enable_streaming
 {
 	my ($self, $root_node) = @_;
 	my $root_connstr = $root_node->connstr;
-	my $name         = $self->name;
+	my $name = $self->name;
 
 	print "### Enabling streaming replication for node \"$name\"\n";
 	$self->append_conf(
@@ -1155,8 +1156,8 @@ sub set_standby_mode
 sub enable_archiving
 {
 	my ($self) = @_;
-	my $path   = $self->archive_dir;
-	my $name   = $self->name;
+	my $path = $self->archive_dir;
+	my $name = $self->name;
 
 	print "### Enabling WAL archiving for node \"$name\"\n";
 
@@ -1301,7 +1302,7 @@ sub new
 		_host => $host,
 		_basedir =>
 		  "$PostgreSQL::Test::Utils::tmp_check/t_${testname}_${name}_data",
-		_name               => $name,
+		_name => $name,
 		_logfile_generation => 0,
 		_logfile_base =>
 		  "$PostgreSQL::Test::Utils::log_path/${testname}_${name}",
@@ -1354,8 +1355,8 @@ sub new
 #
 sub _set_pg_version
 {
-	my ($self)    = @_;
-	my $inst      = $self->{_install_path};
+	my ($self) = @_;
+	my $inst = $self->{_install_path};
 	my $pg_config = "pg_config";
 
 	if (defined $inst)
@@ -1509,7 +1510,7 @@ called from outside the module as C<PostgreSQL::Test::Cluster::get_free_port()>.
 sub get_free_port
 {
 	my $found = 0;
-	my $port  = $last_port_assigned;
+	my $port = $last_port_assigned;
 
 	while ($found == 0)
 	{
@@ -1589,14 +1590,14 @@ sub _reserve_port
 	my $port = shift;
 	# open in rw mode so we don't have to reopen it and lose the lock
 	my $filename = "$portdir/$port.rsv";
-	sysopen(my $portfile, $filename, O_RDWR|O_CREAT)
+	sysopen(my $portfile, $filename, O_RDWR | O_CREAT)
 	  || die "opening port file $filename: $!";
 	# take an exclusive lock to avoid concurrent access
 	flock($portfile, LOCK_EX) || die "locking port file $filename: $!";
 	# see if someone else has or had a reservation of this port
 	my $pid = <$portfile> || "0";
 	chomp $pid;
-	if ($pid +0 > 0)
+	if ($pid + 0 > 0)
 	{
 		if (kill 0, $pid)
 		{
@@ -1609,7 +1610,7 @@ sub _reserve_port
 	# All good, go ahead and reserve the port
 	seek($portfile, 0, SEEK_SET);
 	# print the pid with a fixed width so we don't leave any trailing junk
-	print $portfile sprintf("%10d\n",$$);
+	print $portfile sprintf("%10d\n", $$);
 	flock($portfile, LOCK_UN);
 	close($portfile);
 	push(@port_reservation_files, $filename);
@@ -1705,9 +1706,9 @@ sub safe_psql
 	my $ret = $self->psql(
 		$dbname, $sql,
 		%params,
-		stdout        => \$stdout,
-		stderr        => \$stderr,
-		on_error_die  => 1,
+		stdout => \$stdout,
+		stderr => \$stderr,
+		on_error_die => 1,
 		on_error_stop => 1);
 
 	# psql can emit stderr from NOTICEs etc
@@ -1819,10 +1820,10 @@ sub psql
 
 	local %ENV = $self->_get_env();
 
-	my $stdout            = $params{stdout};
-	my $stderr            = $params{stderr};
-	my $replication       = $params{replication};
-	my $timeout           = undef;
+	my $stdout = $params{stdout};
+	my $stderr = $params{stderr};
+	my $replication = $params{replication};
+	my $timeout = undef;
 	my $timeout_exception = 'psql timed out';
 
 	# Build the connection string.
@@ -1859,7 +1860,7 @@ sub psql
 	}
 
 	$params{on_error_stop} = 1 unless defined $params{on_error_stop};
-	$params{on_error_die}  = 0 unless defined $params{on_error_die};
+	$params{on_error_die} = 0 unless defined $params{on_error_die};
 
 	push @psql_params, '-v', 'ON_ERROR_STOP=1' if $params{on_error_stop};
 	push @psql_params, @{ $params{extra_params} }
@@ -1888,7 +1889,7 @@ sub psql
 		local $@;
 		eval {
 			my @ipcrun_opts = (\@psql_params, '<', \$sql);
-			push @ipcrun_opts, '>',  $stdout if defined $stdout;
+			push @ipcrun_opts, '>', $stdout if defined $stdout;
 			push @ipcrun_opts, '2>', $stderr if defined $stderr;
 			push @ipcrun_opts, $timeout if defined $timeout;
 
@@ -2231,8 +2232,8 @@ sub connect_ok
 	my ($ret, $stdout, $stderr) = $self->psql(
 		'postgres',
 		$sql,
-		extra_params  => ['-w'],
-		connstr       => "$connstr",
+		extra_params => ['-w'],
+		connstr => "$connstr",
 		on_error_stop => 0);
 
 	is($ret, 0, $test_name);
@@ -2306,7 +2307,7 @@ sub connect_fails
 		'postgres',
 		undef,
 		extra_params => ['-w'],
-		connstr      => "$connstr");
+		connstr => "$connstr");
 
 	isnt($ret, 0, $test_name);
 
@@ -2353,11 +2354,11 @@ sub poll_query_until
 
 	my $cmd = [
 		$self->installed_command('psql'), '-XAt',
-		'-d',                             $self->connstr($dbname)
+		'-d', $self->connstr($dbname)
 	];
 	my ($stdout, $stderr);
 	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
-	my $attempts     = 0;
+	my $attempts = 0;
 
 	while ($attempts < $max_attempts)
 	{
@@ -2531,8 +2532,7 @@ Returns the contents of log of the node
 sub log_content
 {
 	my ($self) = @_;
-	return
-	  PostgreSQL::Test::Utils::slurp_file($self->logfile);
+	return PostgreSQL::Test::Utils::slurp_file($self->logfile);
 }
 
 
@@ -2574,11 +2574,11 @@ sub lsn
 {
 	my ($self, $mode) = @_;
 	my %modes = (
-		'insert'  => 'pg_current_wal_insert_lsn()',
-		'flush'   => 'pg_current_wal_flush_lsn()',
-		'write'   => 'pg_current_wal_lsn()',
+		'insert' => 'pg_current_wal_insert_lsn()',
+		'flush' => 'pg_current_wal_flush_lsn()',
+		'write' => 'pg_current_wal_lsn()',
 		'receive' => 'pg_last_wal_receive_lsn()',
-		'replay'  => 'pg_last_wal_replay_lsn()');
+		'replay' => 'pg_last_wal_replay_lsn()');
 
 	$mode = '<undef>' if !defined($mode);
 	croak "unknown mode for 'lsn': '$mode', valid modes are "
@@ -2650,7 +2650,8 @@ sub wait_for_catchup
 	}
 	if (!defined($target_lsn))
 	{
-		my $isrecovery = $self->safe_psql('postgres', "SELECT pg_is_in_recovery()");
+		my $isrecovery =
+		  $self->safe_psql('postgres', "SELECT pg_is_in_recovery()");
 		chomp($isrecovery);
 		if ($isrecovery eq 't')
 		{
@@ -2788,7 +2789,7 @@ sub wait_for_subscription_sync
 	# Wait for all tables to finish initial sync.
 	print "Waiting for all subscriptions in \"$name\" to synchronize data\n";
 	my $query =
-	    qq[SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');];
+	  qq[SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');];
 	$self->poll_query_until($dbname, $query)
 	  or croak "timed out waiting for subscriber to synchronize data";
 
@@ -2821,7 +2822,7 @@ sub wait_for_log
 	$offset = 0 unless defined $offset;
 
 	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
-	my $attempts     = 0;
+	my $attempts = 0;
 
 	while ($attempts < $max_attempts)
 	{
@@ -2903,8 +2904,8 @@ sub slot
 {
 	my ($self, $slot_name) = @_;
 	my @columns = (
-		'plugin', 'slot_type',  'datoid', 'database',
-		'active', 'active_pid', 'xmin',   'catalog_xmin',
+		'plugin', 'slot_type', 'datoid', 'database',
+		'active', 'active_pid', 'xmin', 'catalog_xmin',
 		'restart_lsn');
 	return $self->query_hash(
 		'postgres',
@@ -2943,7 +2944,7 @@ sub pg_recvlogical_upto
 	my $timeout_exception = 'pg_recvlogical timed out';
 
 	croak 'slot name must be specified' unless defined($slot_name);
-	croak 'endpos must be specified'    unless defined($endpos);
+	croak 'endpos must be specified' unless defined($endpos);
 
 	my @cmd = (
 		$self->installed_command('pg_recvlogical'),
@@ -3057,7 +3058,17 @@ sub create_logical_slot_on_standby
 
 	my $handle;
 
-	$handle = IPC::Run::start(['pg_recvlogical', '-d', $self->connstr($dbname), '-P', 'test_decoding', '-S', $slot_name, '--create-slot'], '>', \$stdout, '2>', \$stderr);
+	$handle = IPC::Run::start(
+		[
+			'pg_recvlogical', '-d',
+			$self->connstr($dbname), '-P',
+			'test_decoding', '-S',
+			$slot_name, '--create-slot'
+		],
+		'>',
+		\$stdout,
+		'2>',
+		\$stderr);
 
 	# Once the slot's restart_lsn is determined, the standby looks for
 	# xl_running_xacts WAL record from the restart_lsn onwards. First wait
@@ -3067,7 +3078,9 @@ sub create_logical_slot_on_standby
 		'postgres', qq[
 		SELECT restart_lsn IS NOT NULL
 		FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name'
-	]) or die "timed out waiting for logical slot to calculate its restart_lsn";
+	])
+	  or die
+	  "timed out waiting for logical slot to calculate its restart_lsn";
 
 	# Then arrange for the xl_running_xacts record for which pg_recvlogical is
 	# waiting.
@@ -3075,8 +3088,9 @@ sub create_logical_slot_on_standby
 
 	$handle->finish();
 
-	is($self->slot($slot_name)->{'slot_type'}, 'logical', $slot_name . ' on standby created')
-		or die "could not create slot" . $slot_name;
+	is($self->slot($slot_name)->{'slot_type'},
+		'logical', $slot_name . ' on standby created')
+	  or die "could not create slot" . $slot_name;
 }
 
 =pod

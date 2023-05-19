@@ -64,7 +64,7 @@ INSERT INTO foo VALUES(2);
 my $node_standby = PostgreSQL::Test::Cluster->new('standby');
 $node_standby->init_from_backup(
 	$node_primary, $backup_name,
-	standby       => 1,
+	standby => 1,
 	has_streaming => 1,
 	has_archiving => 1,
 	has_restoring => 0);
@@ -118,7 +118,7 @@ $node_standby->stop;
 my $node_pitr = PostgreSQL::Test::Cluster->new('node_pitr');
 $node_pitr->init_from_backup(
 	$node_primary, $backup_name,
-	standby       => 0,
+	standby => 0,
 	has_restoring => 1);
 $node_pitr->append_conf(
 	'postgresql.conf', qq{
@@ -156,7 +156,7 @@ $node_pitr->stop();
 my $node_pitr2 = PostgreSQL::Test::Cluster->new('node_pitr2');
 $node_pitr2->init_from_backup(
 	$node_primary, $backup_name,
-	standby       => 0,
+	standby => 0,
 	has_restoring => 1);
 $node_pitr2->append_conf(
 	'postgresql.conf', qq{

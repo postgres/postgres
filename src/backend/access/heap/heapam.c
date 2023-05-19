@@ -2491,7 +2491,7 @@ static inline bool
 xmax_infomask_changed(uint16 new_infomask, uint16 old_infomask)
 {
 	const uint16 interesting =
-	HEAP_XMAX_IS_MULTI | HEAP_XMAX_LOCK_ONLY | HEAP_LOCK_MASK;
+		HEAP_XMAX_IS_MULTI | HEAP_XMAX_LOCK_ONLY | HEAP_LOCK_MASK;
 
 	if ((new_infomask & interesting) != (old_infomask & interesting))
 		return true;

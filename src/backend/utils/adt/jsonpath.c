@@ -76,7 +76,7 @@
 static Datum jsonPathFromCstring(char *in, int len, struct Node *escontext);
 static char *jsonPathToCstring(StringInfo out, JsonPath *in,
 							   int estimated_len);
-static bool	flattenJsonPathParseItem(StringInfo buf, int *result,
+static bool flattenJsonPathParseItem(StringInfo buf, int *result,
 									 struct Node *escontext,
 									 JsonPathParseItem *item,
 									 int nestingLevel, bool insideArraySubscript);
@@ -234,7 +234,7 @@ jsonPathToCstring(StringInfo out, JsonPath *in, int estimated_len)
  * children into a binary representation.
  */
 static bool
-flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
+flattenJsonPathParseItem(StringInfo buf, int *result, struct Node *escontext,
 						 JsonPathParseItem *item, int nestingLevel,
 						 bool insideArraySubscript)
 {
@@ -306,19 +306,19 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 
 				if (!item->value.args.left)
 					chld = pos;
-				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
-													item->value.args.left,
-													nestingLevel + argNestingLevel,
-													insideArraySubscript))
+				else if (!flattenJsonPathParseItem(buf, &chld, escontext,
+												   item->value.args.left,
+												   nestingLevel + argNestingLevel,
+												   insideArraySubscript))
 					return false;
 				*(int32 *) (buf->data + left) = chld - pos;
 
 				if (!item->value.args.right)
 					chld = pos;
-				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
-													item->value.args.right,
-													nestingLevel + argNestingLevel,
-													insideArraySubscript))
+				else if (!flattenJsonPathParseItem(buf, &chld, escontext,
+												   item->value.args.right,
+												   nestingLevel + argNestingLevel,
+												   insideArraySubscript))
 					return false;
 				*(int32 *) (buf->data + right) = chld - pos;
 			}
@@ -338,10 +338,10 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 									   item->value.like_regex.patternlen);
 				appendStringInfoChar(buf, '\0');
 
-				if (! flattenJsonPathParseItem(buf, &chld, escontext,
-											   item->value.like_regex.expr,
-											   nestingLevel,
-											   insideArraySubscript))
+				if (!flattenJsonPathParseItem(buf, &chld, escontext,
+											  item->value.like_regex.expr,
+											  nestingLevel,
+											  insideArraySubscript))
 					return false;
 				*(int32 *) (buf->data + offs) = chld - pos;
 			}
@@ -360,10 +360,10 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 
 				if (!item->value.arg)
 					chld = pos;
-				else if (! flattenJsonPathParseItem(buf, &chld, escontext,
-													item->value.arg,
-													nestingLevel + argNestingLevel,
-													insideArraySubscript))
+				else if (!flattenJsonPathParseItem(buf, &chld, escontext,
+												   item->value.arg,
+												   nestingLevel + argNestingLevel,
+												   insideArraySubscript))
 					return false;
 				*(int32 *) (buf->data + arg) = chld - pos;
 			}
@@ -405,17 +405,17 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 					int32		topos;
 					int32		frompos;
 
-					if (! flattenJsonPathParseItem(buf, &frompos, escontext,
-												   item->value.array.elems[i].from,
-												   nestingLevel, true))
+					if (!flattenJsonPathParseItem(buf, &frompos, escontext,
+												  item->value.array.elems[i].from,
+												  nestingLevel, true))
 						return false;
 					frompos -= pos;
 
 					if (item->value.array.elems[i].to)
 					{
-						if (! flattenJsonPathParseItem(buf, &topos, escontext,
-													   item->value.array.elems[i].to,
-													   nestingLevel, true))
+						if (!flattenJsonPathParseItem(buf, &topos, escontext,
+													  item->value.array.elems[i].to,
+													  nestingLevel, true))
 							return false;
 						topos -= pos;
 					}
@@ -451,9 +451,9 @@ flattenJsonPathParseItem(StringInfo buf,  int *result, struct Node *escontext,
 
 	if (item->next)
 	{
-		if (! flattenJsonPathParseItem(buf, &chld, escontext,
-									   item->next, nestingLevel,
-									   insideArraySubscript))
+		if (!flattenJsonPathParseItem(buf, &chld, escontext,
+									  item->next, nestingLevel,
+									  insideArraySubscript))
 			return false;
 		chld -= pos;
 		*(int32 *) (buf->data + next) = chld;

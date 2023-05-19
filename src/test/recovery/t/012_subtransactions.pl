@@ -35,7 +35,7 @@ $node_primary->append_conf(
 $node_primary->psql('postgres', "SELECT pg_reload_conf()");
 
 my $psql_out = '';
-my $psql_rc  = '';
+my $psql_rc = '';
 
 ###############################################################################
 # Check that replay will correctly set SUBTRANS and properly advance nextXid

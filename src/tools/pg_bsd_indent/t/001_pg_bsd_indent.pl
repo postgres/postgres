@@ -41,7 +41,7 @@ while (my $test_src = glob("$src_dir/tests/*.0"))
 	command_ok(
 		[
 			'pg_bsd_indent', $test_src,
-			"$test.out",     "-P$src_dir/tests/$test.pro"
+			"$test.out", "-P$src_dir/tests/$test.pro"
 		],
 		"pg_bsd_indent succeeds on $test");
 	# check result matches, adding any diff to $diff_file

@@ -354,8 +354,8 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 			continue;
 
 		/*
-		 * Skip processing of non-summarizing indexes if we only
-		 * update summarizing indexes
+		 * Skip processing of non-summarizing indexes if we only update
+		 * summarizing indexes
 		 */
 		if (onlySummarizing && !indexInfo->ii_Summarizing)
 			continue;

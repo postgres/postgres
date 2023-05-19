@@ -44,7 +44,7 @@ typedef struct ClosestMatchState
 	int			min_d;
 	int			max_d;
 	const char *match;
-}			ClosestMatchState;
+} ClosestMatchState;
 
 extern void initClosestMatch(ClosestMatchState *state, const char *source, int max_d);
 extern void updateClosestMatch(ClosestMatchState *state, const char *candidate);

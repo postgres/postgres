@@ -3548,7 +3548,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 		if (parsetree->withCheckOptions != NIL)
 		{
 			WithCheckOption *parent_wco =
-			(WithCheckOption *) linitial(parsetree->withCheckOptions);
+				(WithCheckOption *) linitial(parsetree->withCheckOptions);
 
 			if (parent_wco->cascaded)
 			{

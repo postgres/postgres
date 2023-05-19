@@ -165,8 +165,8 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 
 	/*
 	 * Set up the MERGE target table.  The target table is added to the
-	 * namespace below and to joinlist in transform_MERGE_to_join, so don't
-	 * do it here.
+	 * namespace below and to joinlist in transform_MERGE_to_join, so don't do
+	 * it here.
 	 */
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 										 stmt->relation->inh,

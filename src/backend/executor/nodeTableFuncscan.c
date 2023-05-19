@@ -352,7 +352,7 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 	int			colno;
 	Datum		value;
 	int			ordinalitycol =
-	((TableFuncScan *) (tstate->ss.ps.plan))->tablefunc->ordinalitycol;
+		((TableFuncScan *) (tstate->ss.ps.plan))->tablefunc->ordinalitycol;
 
 	/*
 	 * Install the document as a possibly-toasted Datum into the tablefunc

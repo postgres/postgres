@@ -70,15 +70,15 @@ sub test_recovery_wal_level_minimal
 	$recovery_node->init_from_backup(
 		$node, $backup_name,
 		has_restoring => 1,
-		standby       => $standby_setting);
+		standby => $standby_setting);
 
 	# Use run_log instead of recovery_node->start because this test expects
 	# that the server ends with an error during recovery.
 	run_log(
 		[
-			'pg_ctl',                 '-D',
+			'pg_ctl', '-D',
 			$recovery_node->data_dir, '-l',
-			$recovery_node->logfile,  'start'
+			$recovery_node->logfile, 'start'
 		]);
 
 	# wait for postgres to terminate

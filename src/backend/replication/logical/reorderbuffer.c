@@ -1408,7 +1408,7 @@ ReorderBufferIterTXNNext(ReorderBuffer *rb, ReorderBufferIterTXNState *state)
 	{
 		dlist_node *next = dlist_next_node(&entry->txn->changes, &change->node);
 		ReorderBufferChange *next_change =
-		dlist_container(ReorderBufferChange, node, next);
+			dlist_container(ReorderBufferChange, node, next);
 
 		/* txn stays the same */
 		state->entries[off].lsn = next_change->lsn;
@@ -1439,8 +1439,8 @@ ReorderBufferIterTXNNext(ReorderBuffer *rb, ReorderBufferIterTXNState *state)
 		{
 			/* successfully restored changes from disk */
 			ReorderBufferChange *next_change =
-			dlist_head_element(ReorderBufferChange, node,
-							   &entry->txn->changes);
+				dlist_head_element(ReorderBufferChange, node,
+								   &entry->txn->changes);
 
 			elog(DEBUG2, "restored %u/%u changes from disk",
 				 (uint32) entry->txn->nentries_mem,
@@ -1582,7 +1582,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		dclist_delete_from(&rb->catchange_txns, &txn->catchange_node);
 
 	/* now remove reference from buffer */
-	hash_search(rb->by_txn,	&txn->xid, HASH_REMOVE,	&found);
+	hash_search(rb->by_txn, &txn->xid, HASH_REMOVE, &found);
 	Assert(found);
 
 	/* remove entries spilled to disk */
@@ -3580,8 +3580,8 @@ ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
 	ReorderBufferTXN *txn;
 
 	/*
-	 * Bail out if logical_replication_mode is buffered and we haven't exceeded
-	 * the memory limit.
+	 * Bail out if logical_replication_mode is buffered and we haven't
+	 * exceeded the memory limit.
 	 */
 	if (logical_replication_mode == LOGICAL_REP_MODE_BUFFERED &&
 		rb->size < logical_decoding_work_mem * 1024L)
@@ -3841,7 +3841,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			{
 				char	   *data;
 				Size		inval_size = sizeof(SharedInvalidationMessage) *
-				change->data.inval.ninvalidations;
+					change->data.inval.ninvalidations;
 
 				sz += inval_size;
 
@@ -4010,10 +4010,10 @@ ReorderBufferStreamTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	 * After that we need to reuse the snapshot from the previous run.
 	 *
 	 * Unlike DecodeCommit which adds xids of all the subtransactions in
-	 * snapshot's xip array via SnapBuildCommitTxn, we can't do that here
-	 * but we do add them to subxip array instead via ReorderBufferCopySnap.
-	 * This allows the catalog changes made in subtransactions decoded till
-	 * now to be visible.
+	 * snapshot's xip array via SnapBuildCommitTxn, we can't do that here but
+	 * we do add them to subxip array instead via ReorderBufferCopySnap. This
+	 * allows the catalog changes made in subtransactions decoded till now to
+	 * be visible.
 	 */
 	if (txn->snapshot_now == NULL)
 	{
@@ -4206,7 +4206,7 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	dlist_foreach_modify(cleanup_iter, &txn->changes)
 	{
 		ReorderBufferChange *cleanup =
-		dlist_container(ReorderBufferChange, node, cleanup_iter.cur);
+			dlist_container(ReorderBufferChange, node, cleanup_iter.cur);
 
 		dlist_delete(&cleanup->node);
 		ReorderBufferReturnChange(rb, cleanup, true);
@@ -4431,7 +4431,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		case REORDER_BUFFER_CHANGE_INVALIDATION:
 			{
 				Size		inval_size = sizeof(SharedInvalidationMessage) *
-				change->data.inval.ninvalidations;
+					change->data.inval.ninvalidations;
 
 				change->data.inval.invalidations =
 					MemoryContextAlloc(rb->context, inval_size);
@@ -4936,7 +4936,7 @@ ReorderBufferToastReset(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		dlist_foreach_modify(it, &ent->chunks)
 		{
 			ReorderBufferChange *change =
-			dlist_container(ReorderBufferChange, node, it.cur);
+				dlist_container(ReorderBufferChange, node, it.cur);
 
 			dlist_delete(&change->node);
 			ReorderBufferReturnChange(rb, change, true);

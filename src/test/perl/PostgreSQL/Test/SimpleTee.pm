@@ -27,7 +27,7 @@ BEGIN { $last_time = time; }
 
 sub _time_str
 {
-	my $tm   = time;
+	my $tm = time;
 	my $diff = $tm - $last_time;
 	$last_time = $tm;
 	my ($sec, $min, $hour) = localtime($tm);
@@ -45,12 +45,12 @@ sub TIEHANDLE
 sub PRINT
 {
 	my $self = shift;
-	my $ok   = 1;
+	my $ok = 1;
 	# The first file argument passed to tiehandle in PostgreSQL::Test::Utils is
 	# the original stdout, which is what PROVE sees. Additional decorations
 	# confuse it, so only put out the time string on files after the first.
 	my $skip = 1;
-	my $ts   = _time_str;
+	my $ts = _time_str;
 	for my $fh (@$self)
 	{
 		print $fh ($skip ? "" : $ts), @_ or $ok = 0;

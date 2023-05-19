@@ -155,7 +155,7 @@ my $deffile;
 my $tempdir = '.';
 
 GetOptions(
-	'arch:s'    => \$arch,
+	'arch:s' => \$arch,
 	'deffile:s' => \$deffile,
 	'tempdir:s' => \$tempdir,) or usage();
 

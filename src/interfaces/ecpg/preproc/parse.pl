@@ -16,9 +16,9 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-my $srcdir  = '.';
+my $srcdir = '.';
 my $outfile = '';
-my $parser  = '';
+my $parser = '';
 
 GetOptions(
 	'srcdir=s' => \$srcdir,
@@ -29,13 +29,13 @@ GetOptions(
 open(my $parserfh, '<', $parser) or die "could not open parser file $parser";
 open(my $outfh, '>', $outfile) or die "could not open output file $outfile";
 
-my $copymode              = 0;
-my $brace_indent          = 0;
-my $yaccmode              = 0;
-my $in_rule               = 0;
-my $header_included       = 0;
+my $copymode = 0;
+my $brace_indent = 0;
+my $yaccmode = 0;
+my $in_rule = 0;
+my $header_included = 0;
 my $feature_not_supported = 0;
-my $tokenmode             = 0;
+my $tokenmode = 0;
 
 my (%buff, $infield, $comment, %tokens, %addons);
 my ($stmt_mode, @fields);
@@ -50,67 +50,67 @@ my %replace_token = (
 	'FCONST' => 'ecpg_fconst',
 	'Sconst' => 'ecpg_sconst',
 	'XCONST' => 'ecpg_xconst',
-	'IDENT'  => 'ecpg_ident',
-	'PARAM'  => 'ecpg_param',);
+	'IDENT' => 'ecpg_ident',
+	'PARAM' => 'ecpg_param',);
 
 # or in the block
 my %replace_string = (
-	'FORMAT_LA'      => 'format',
-	'NOT_LA'         => 'not',
-	'NULLS_LA'       => 'nulls',
-	'WITH_LA'        => 'with',
-	'WITHOUT_LA'     => 'without',
-	'TYPECAST'       => '::',
-	'DOT_DOT'        => '..',
-	'COLON_EQUALS'   => ':=',
+	'FORMAT_LA' => 'format',
+	'NOT_LA' => 'not',
+	'NULLS_LA' => 'nulls',
+	'WITH_LA' => 'with',
+	'WITHOUT_LA' => 'without',
+	'TYPECAST' => '::',
+	'DOT_DOT' => '..',
+	'COLON_EQUALS' => ':=',
 	'EQUALS_GREATER' => '=>',
-	'LESS_EQUALS'    => '<=',
+	'LESS_EQUALS' => '<=',
 	'GREATER_EQUALS' => '>=',
-	'NOT_EQUALS'     => '<>',);
+	'NOT_EQUALS' => '<>',);
 
 # specific replace_types for specific non-terminals - never include the ':'
 # ECPG-only replace_types are defined in ecpg-replace_types
 my %replace_types = (
-	'PrepareStmt'      => '<prep>',
-	'ExecuteStmt'      => '<exec>',
+	'PrepareStmt' => '<prep>',
+	'ExecuteStmt' => '<exec>',
 	'opt_array_bounds' => '<index>',
 
 	# "ignore" means: do not create type and rules for this non-term-id
-	'parse_toplevel'      => 'ignore',
-	'stmtmulti'           => 'ignore',
-	'CreateAsStmt'        => 'ignore',
-	'DeallocateStmt'      => 'ignore',
-	'ColId'               => 'ignore',
-	'type_function_name'  => 'ignore',
-	'ColLabel'            => 'ignore',
-	'Sconst'              => 'ignore',
+	'parse_toplevel' => 'ignore',
+	'stmtmulti' => 'ignore',
+	'CreateAsStmt' => 'ignore',
+	'DeallocateStmt' => 'ignore',
+	'ColId' => 'ignore',
+	'type_function_name' => 'ignore',
+	'ColLabel' => 'ignore',
+	'Sconst' => 'ignore',
 	'opt_distinct_clause' => 'ignore',
-	'PLpgSQL_Expr'        => 'ignore',
-	'PLAssignStmt'        => 'ignore',
-	'plassign_target'     => 'ignore',
-	'plassign_equals'     => 'ignore',);
+	'PLpgSQL_Expr' => 'ignore',
+	'PLAssignStmt' => 'ignore',
+	'plassign_target' => 'ignore',
+	'plassign_equals' => 'ignore',);
 
 # these replace_line commands excise certain keywords from the core keyword
 # lists.  Be sure to account for these in ColLabel and related productions.
 my %replace_line = (
 	'unreserved_keywordCONNECTION' => 'ignore',
-	'unreserved_keywordCURRENT_P'  => 'ignore',
-	'unreserved_keywordDAY_P'      => 'ignore',
-	'unreserved_keywordHOUR_P'     => 'ignore',
-	'unreserved_keywordINPUT_P'    => 'ignore',
-	'unreserved_keywordMINUTE_P'   => 'ignore',
-	'unreserved_keywordMONTH_P'    => 'ignore',
-	'unreserved_keywordSECOND_P'   => 'ignore',
-	'unreserved_keywordYEAR_P'     => 'ignore',
-	'col_name_keywordCHAR_P'       => 'ignore',
-	'col_name_keywordINT_P'        => 'ignore',
-	'col_name_keywordVALUES'       => 'ignore',
-	'reserved_keywordTO'           => 'ignore',
-	'reserved_keywordUNION'        => 'ignore',
+	'unreserved_keywordCURRENT_P' => 'ignore',
+	'unreserved_keywordDAY_P' => 'ignore',
+	'unreserved_keywordHOUR_P' => 'ignore',
+	'unreserved_keywordINPUT_P' => 'ignore',
+	'unreserved_keywordMINUTE_P' => 'ignore',
+	'unreserved_keywordMONTH_P' => 'ignore',
+	'unreserved_keywordSECOND_P' => 'ignore',
+	'unreserved_keywordYEAR_P' => 'ignore',
+	'col_name_keywordCHAR_P' => 'ignore',
+	'col_name_keywordINT_P' => 'ignore',
+	'col_name_keywordVALUES' => 'ignore',
+	'reserved_keywordTO' => 'ignore',
+	'reserved_keywordUNION' => 'ignore',
 
 	# some other production rules have to be ignored or replaced
-	'fetch_argsFORWARDopt_from_incursor_name'      => 'ignore',
-	'fetch_argsBACKWARDopt_from_incursor_name'     => 'ignore',
+	'fetch_argsFORWARDopt_from_incursor_name' => 'ignore',
+	'fetch_argsBACKWARDopt_from_incursor_name' => 'ignore',
 	"opt_array_boundsopt_array_bounds'['Iconst']'" => 'ignore',
 	'VariableShowStmtSHOWvar_name' => 'SHOW var_name ecpg_into',
 	'VariableShowStmtSHOWTIMEZONE' => 'SHOW TIME ZONE ecpg_into',
@@ -139,7 +139,7 @@ dump_buffer('tokens');
 dump_buffer('types');
 dump_buffer('ecpgtype');
 dump_buffer('orig_tokens');
-print $outfh '%%',                "\n";
+print $outfh '%%', "\n";
 print $outfh 'prog: statements;', "\n";
 dump_buffer('rules');
 include_file('trailer', 'ecpg.trailer');
@@ -177,7 +177,7 @@ sub main
 		if (/^%%/)
 		{
 			$tokenmode = 2;
-			$copymode  = 1;
+			$copymode = 1;
 			$yaccmode++;
 			$infield = 0;
 		}
@@ -212,14 +212,14 @@ sub main
 		}
 		elsif ($arr[0] eq '%type' && $header_included == 0)
 		{
-			include_file('header',   'ecpg.header');
+			include_file('header', 'ecpg.header');
 			include_file('ecpgtype', 'ecpg.type');
 			$header_included = 1;
 		}
 
 		if ($tokenmode == 1)
 		{
-			my $str   = '';
+			my $str = '';
 			my $prior = '';
 			for my $a (@arr)
 			{
@@ -320,9 +320,9 @@ sub main
 				{
 					$copymode = 1;
 				}
-				@fields  = ();
+				@fields = ();
 				$infield = 0;
-				$line    = '';
+				$line = '';
 				$in_rule = 0;
 				next;
 			}
@@ -365,7 +365,7 @@ sub main
 				elsif ($replace_types{$non_term_id} eq 'ignore')
 				{
 					$copymode = 0;
-					$line     = '';
+					$line = '';
 					next line;
 				}
 				$line = $line . ' ' . $arr[$fieldIndexer];
@@ -390,7 +390,7 @@ sub main
 					$stmt_mode = 0;
 				}
 				my $tstr =
-				    '%type '
+					'%type '
 				  . $replace_types{$non_term_id} . ' '
 				  . $non_term_id;
 				add_to_buffer('types', $tstr);
@@ -399,8 +399,8 @@ sub main
 				{
 					add_to_buffer('rules', $line);
 				}
-				$line    = '';
-				@fields  = ();
+				$line = '';
+				@fields = ();
 				$infield = 1;
 				die "unterminated rule at grammar line $.\n"
 				  if $in_rule;
@@ -699,11 +699,11 @@ sub preload_addons
 				{
 					push(@{ $x->{lines} }, @code);
 				}
-				@code       = ();
+				@code = ();
 				@needsRules = ();
 			}
-			$record          = {};
-			$record->{type}  = $2;
+			$record = {};
+			$record->{type} = $2;
 			$record->{lines} = [];
 			if (exists $addons{$1}) { die "Ga! there are dups!\n"; }
 			$addons{$1} = $record;

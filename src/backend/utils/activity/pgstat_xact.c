@@ -76,7 +76,7 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 	dclist_foreach_modify(iter, &xact_state->pending_drops)
 	{
 		PgStat_PendingDroppedStatsItem *pending =
-		dclist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
+			dclist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
 		xl_xact_stats_item *it = &pending->item;
 
 		if (isCommit && !pending->is_create)
@@ -148,7 +148,7 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 	dclist_foreach_modify(iter, &xact_state->pending_drops)
 	{
 		PgStat_PendingDroppedStatsItem *pending =
-		dclist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
+			dclist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
 		xl_xact_stats_item *it = &pending->item;
 
 		dclist_delete_from(&xact_state->pending_drops, &pending->node);
@@ -290,7 +290,7 @@ pgstat_get_transactional_drops(bool isCommit, xl_xact_stats_item **items)
 	dclist_foreach(iter, &xact_state->pending_drops)
 	{
 		PgStat_PendingDroppedStatsItem *pending =
-		dclist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
+			dclist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
 
 		if (isCommit && pending->is_create)
 			continue;
@@ -335,7 +335,7 @@ create_drop_transactional_internal(PgStat_Kind kind, Oid dboid, Oid objoid, bool
 	int			nest_level = GetCurrentTransactionNestLevel();
 	PgStat_SubXactStatus *xact_state;
 	PgStat_PendingDroppedStatsItem *drop = (PgStat_PendingDroppedStatsItem *)
-	MemoryContextAlloc(TopTransactionContext, sizeof(PgStat_PendingDroppedStatsItem));
+		MemoryContextAlloc(TopTransactionContext, sizeof(PgStat_PendingDroppedStatsItem));
 
 	xact_state = pgstat_get_xact_stack_level(nest_level);
 

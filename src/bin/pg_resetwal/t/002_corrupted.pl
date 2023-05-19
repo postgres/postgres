@@ -14,7 +14,7 @@ my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 
 my $pg_control = $node->data_dir . '/global/pg_control';
-my $size       = (stat($pg_control))[7];
+my $size = (stat($pg_control))[7];
 
 # Read out the head of the file to get PG_CONTROL_VERSION in
 # particular.

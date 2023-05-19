@@ -71,8 +71,8 @@ sub init
 	chmod(0600, glob "$pgdata/server-*.key")
 	  or die "failed to change permissions on server keys: $!";
 	_copy_files("ssl/root+client_ca.crt", $pgdata);
-	_copy_files("ssl/root_ca.crt",        $pgdata);
-	_copy_files("ssl/root+client.crl",    $pgdata);
+	_copy_files("ssl/root_ca.crt", $pgdata);
+	_copy_files("ssl/root+client.crl", $pgdata);
 	mkdir("$pgdata/root+client-crldir")
 	  or die "unable to create server CRL dir $pgdata/root+client-crldir: $!";
 	_copy_files("ssl/root+client-crldir/*", "$pgdata/root+client-crldir/");
@@ -84,11 +84,11 @@ sub init
 	# the tests. To get the full path for inclusion in connection strings, the
 	# %key hash can be interrogated.
 	my $cert_tempdir = PostgreSQL::Test::Utils::tempdir();
-	my @keys         = (
-		"client.key",               "client-revoked.key",
-		"client-der.key",           "client-encrypted-pem.key",
+	my @keys = (
+		"client.key", "client-revoked.key",
+		"client-der.key", "client-encrypted-pem.key",
 		"client-encrypted-der.key", "client-dn.key",
-		"client_ext.key",           "client-long.key",
+		"client_ext.key", "client-long.key",
 		"client-revoked-utf8.key");
 	foreach my $keyfile (@keys)
 	{
@@ -174,13 +174,13 @@ sub set_server_cert
 {
 	my ($self, $params) = @_;
 
-	$params->{cafile}  = 'root+client_ca'  unless defined $params->{cafile};
+	$params->{cafile} = 'root+client_ca' unless defined $params->{cafile};
 	$params->{crlfile} = 'root+client.crl' unless defined $params->{crlfile};
 	$params->{keyfile} = $params->{certfile}
 	  unless defined $params->{keyfile};
 
 	my $sslconf =
-	    "ssl_ca_file='$params->{cafile}.crt'\n"
+		"ssl_ca_file='$params->{cafile}.crt'\n"
 	  . "ssl_cert_file='$params->{certfile}.crt'\n"
 	  . "ssl_key_file='$params->{keyfile}.key'\n"
 	  . "ssl_crl_file='$params->{crlfile}'\n";

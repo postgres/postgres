@@ -23,7 +23,7 @@ use List::Util qw(first);
 
 use Exporter;
 our (@ISA, @EXPORT_OK);
-@ISA       = qw(Exporter);
+@ISA = qw(Exporter);
 @EXPORT_OK = qw(Mkvcbuild);
 
 my $solution;
@@ -35,21 +35,21 @@ my $libpq;
 my @unlink_on_exit;
 
 # Set of variables for modules in contrib/ and src/test/modules/
-my $contrib_defines        = {};
-my @contrib_uselibpq       = ();
-my @contrib_uselibpgport   = ();
+my $contrib_defines = {};
+my @contrib_uselibpq = ();
+my @contrib_uselibpgport = ();
 my @contrib_uselibpgcommon = ();
-my $contrib_extralibs      = { 'libpq_pipeline' => ['ws2_32.lib'] };
-my $contrib_extraincludes  = {};
-my $contrib_extrasource    = {};
-my @contrib_excludes       = (
-	'bool_plperl',     'commit_ts',
-	'hstore_plperl',   'hstore_plpython',
-	'intagg',          'jsonb_plperl',
-	'jsonb_plpython',  'ltree_plpython',
-	'sepgsql',         'brin',
+my $contrib_extralibs = { 'libpq_pipeline' => ['ws2_32.lib'] };
+my $contrib_extraincludes = {};
+my $contrib_extrasource = {};
+my @contrib_excludes = (
+	'bool_plperl', 'commit_ts',
+	'hstore_plperl', 'hstore_plpython',
+	'intagg', 'jsonb_plperl',
+	'jsonb_plpython', 'ltree_plpython',
+	'sepgsql', 'brin',
 	'test_extensions', 'test_misc',
-	'test_pg_dump',    'snapshot_too_old',
+	'test_pg_dump', 'snapshot_too_old',
 	'unsafe_tests');
 
 # Set of variables for frontend modules
@@ -57,25 +57,25 @@ my $frontend_defines = { 'pgbench' => 'FD_SETSIZE=1024' };
 my @frontend_uselibpq =
   ('pg_amcheck', 'pg_ctl', 'pg_upgrade', 'pgbench', 'psql', 'initdb');
 my @frontend_uselibpgport = (
-	'pg_amcheck',    'pg_archivecleanup',
+	'pg_amcheck', 'pg_archivecleanup',
 	'pg_test_fsync', 'pg_test_timing',
-	'pg_upgrade',    'pg_waldump',
+	'pg_upgrade', 'pg_waldump',
 	'pgbench');
 my @frontend_uselibpgcommon = (
-	'pg_amcheck',    'pg_archivecleanup',
+	'pg_amcheck', 'pg_archivecleanup',
 	'pg_test_fsync', 'pg_test_timing',
-	'pg_upgrade',    'pg_waldump',
+	'pg_upgrade', 'pg_waldump',
 	'pgbench');
 my $frontend_extralibs = {
-	'initdb'     => ['ws2_32.lib'],
+	'initdb' => ['ws2_32.lib'],
 	'pg_amcheck' => ['ws2_32.lib'],
 	'pg_restore' => ['ws2_32.lib'],
-	'pgbench'    => ['ws2_32.lib'],
-	'psql'       => ['ws2_32.lib']
+	'pgbench' => ['ws2_32.lib'],
+	'psql' => ['ws2_32.lib']
 };
 my $frontend_extraincludes = {
 	'initdb' => ['src/timezone'],
-	'psql'   => ['src/backend']
+	'psql' => ['src/backend']
 };
 my $frontend_extrasource = {
 	'psql' => ['src/bin/psql/psqlscanslash.l'],
@@ -83,7 +83,7 @@ my $frontend_extrasource = {
 	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y' ]
 };
 my @frontend_excludes = (
-	'pgevent',    'pg_basebackup', 'pg_rewind', 'pg_dump',
+	'pgevent', 'pg_basebackup', 'pg_rewind', 'pg_dump',
 	'pg_waldump', 'scripts');
 
 sub mkvcbuild
@@ -191,7 +191,7 @@ sub mkvcbuild
 		'src/backend/port/win32_sema.c');
 	$postgres->ReplaceFile('src/backend/port/pg_shmem.c',
 		'src/backend/port/win32_shmem.c');
-	$postgres->AddFiles('src/port',   @pgportfiles);
+	$postgres->AddFiles('src/port', @pgportfiles);
 	$postgres->AddFiles('src/common', @pgcommonbkndfiles);
 	$postgres->AddDir('src/timezone');
 
@@ -204,7 +204,7 @@ sub mkvcbuild
 	$postgres->AddFiles('src/backend/utils/misc', 'guc-file.l');
 	$postgres->AddFiles(
 		'src/backend/replication', 'repl_scanner.l',
-		'repl_gram.y',             'syncrep_scanner.l',
+		'repl_gram.y', 'syncrep_scanner.l',
 		'syncrep_gram.y');
 	$postgres->AddFiles('src/backend/utils/adt', 'jsonpath_scan.l',
 		'jsonpath_gram.y');
@@ -334,7 +334,7 @@ sub mkvcbuild
 
 	my $libecpgcompat = $solution->AddProject(
 		'libecpg_compat', 'dll',
-		'interfaces',     'src/interfaces/ecpg/compatlib');
+		'interfaces', 'src/interfaces/ecpg/compatlib');
 	$libecpgcompat->AddIncludeDir('src/interfaces/ecpg/include');
 	$libecpgcompat->AddIncludeDir('src/interfaces/libpq');
 	$libecpgcompat->UseDef('src/interfaces/ecpg/compatlib/compatlib.def');
@@ -536,19 +536,19 @@ sub mkvcbuild
 		# Add transform modules dependent on plpython
 		my $hstore_plpython = AddTransformModule(
 			'hstore_plpython' . $pymajorver, 'contrib/hstore_plpython',
-			'plpython' . $pymajorver,        'src/pl/plpython',
-			'hstore',                        'contrib');
+			'plpython' . $pymajorver, 'src/pl/plpython',
+			'hstore', 'contrib');
 		$hstore_plpython->AddDefine(
 			'PLPYTHON_LIBNAME="plpython' . $pymajorver . '"');
 		my $jsonb_plpython = AddTransformModule(
 			'jsonb_plpython' . $pymajorver, 'contrib/jsonb_plpython',
-			'plpython' . $pymajorver,       'src/pl/plpython');
+			'plpython' . $pymajorver, 'src/pl/plpython');
 		$jsonb_plpython->AddDefine(
 			'PLPYTHON_LIBNAME="plpython' . $pymajorver . '"');
 		my $ltree_plpython = AddTransformModule(
 			'ltree_plpython' . $pymajorver, 'contrib/ltree_plpython',
-			'plpython' . $pymajorver,       'src/pl/plpython',
-			'ltree',                        'contrib');
+			'plpython' . $pymajorver, 'src/pl/plpython',
+			'ltree', 'contrib');
 		$ltree_plpython->AddDefine(
 			'PLPYTHON_LIBNAME="plpython' . $pymajorver . '"');
 	}
@@ -612,9 +612,9 @@ sub mkvcbuild
 		if ($solution->{platform} eq 'Win32')
 		{
 			my $source_file = 'conftest.c';
-			my $obj         = 'conftest.obj';
-			my $exe         = 'conftest.exe';
-			my @conftest    = ($source_file, $obj, $exe);
+			my $obj = 'conftest.obj';
+			my $exe = 'conftest.exe';
+			my @conftest = ($source_file, $obj, $exe);
 			push @unlink_on_exit, @conftest;
 			unlink $source_file;
 			open my $o, '>', $source_file
@@ -689,8 +689,8 @@ sub mkvcbuild
 			};
 
 			my $define_32bit_time = '_USE_32BIT_TIME_T';
-			my $ok_now            = $try_define->(undef);
-			my $ok_32bit          = $try_define->($define_32bit_time);
+			my $ok_now = $try_define->(undef);
+			my $ok_32bit = $try_define->($define_32bit_time);
 			unlink @conftest;
 			if (!$ok_now && !$ok_32bit)
 			{
@@ -790,14 +790,14 @@ sub mkvcbuild
 		# Add transform modules dependent on plperl
 		my $bool_plperl = AddTransformModule(
 			'bool_plperl', 'contrib/bool_plperl',
-			'plperl',      'src/pl/plperl');
+			'plperl', 'src/pl/plperl');
 		my $hstore_plperl = AddTransformModule(
 			'hstore_plperl', 'contrib/hstore_plperl',
-			'plperl',        'src/pl/plperl',
-			'hstore',        'contrib');
+			'plperl', 'src/pl/plperl',
+			'hstore', 'contrib');
 		my $jsonb_plperl = AddTransformModule(
 			'jsonb_plperl', 'contrib/jsonb_plperl',
-			'plperl',       'src/pl/plperl');
+			'plperl', 'src/pl/plperl');
 
 		foreach my $f (@perl_embed_ccflags)
 		{
@@ -880,7 +880,7 @@ sub mkvcbuild
 # Add a simple frontend project (exe)
 sub AddSimpleFrontend
 {
-	my $n        = shift;
+	my $n = shift;
 	my $uselibpq = shift;
 
 	my $p = $solution->AddProject($n, 'exe', 'bin');
@@ -901,12 +901,12 @@ sub AddSimpleFrontend
 # Add a simple transform module
 sub AddTransformModule
 {
-	my $n            = shift;
-	my $n_src        = shift;
+	my $n = shift;
+	my $n_src = shift;
 	my $pl_proj_name = shift;
-	my $pl_src       = shift;
-	my $type_name    = shift;
-	my $type_src     = shift;
+	my $pl_src = shift;
+	my $type_name = shift;
+	my $type_src = shift;
 
 	my $type_proj = undef;
 	if ($type_name)
@@ -969,9 +969,9 @@ sub AddTransformModule
 # Add a simple contrib project
 sub AddContrib
 {
-	my $subdir   = shift;
-	my $n        = shift;
-	my $mf       = Project::read_file("$subdir/$n/Makefile");
+	my $subdir = shift;
+	my $n = shift;
+	my $mf = Project::read_file("$subdir/$n/Makefile");
 	my @projects = ();
 
 	if ($mf =~ /^MODULE_big\s*=\s*(.*)$/mg)
@@ -1084,7 +1084,7 @@ sub AddContrib
 
 sub GenerateContribSqlFiles
 {
-	my $n  = shift;
+	my $n = shift;
 	my $mf = shift;
 	$mf =~ s{\\\r?\n}{}g;
 	if ($mf =~ /^DATA_built\s*=\s*(.*)$/mg)
@@ -1100,7 +1100,7 @@ sub GenerateContribSqlFiles
 			{
 				$pcount++ if (substr($l, $i, 1) eq '(');
 				$pcount-- if (substr($l, $i, 1) eq ')');
-				last      if ($pcount < 0);
+				last if ($pcount < 0);
 			}
 			$l =
 			  substr($l, 0, index($l, '$(addsuffix ')) . substr($l, $i + 1);
@@ -1108,14 +1108,14 @@ sub GenerateContribSqlFiles
 
 		foreach my $d (split /\s+/, $l)
 		{
-			my $in  = "$d.in";
+			my $in = "$d.in";
 			my $out = "$d";
 
 			if (Solution::IsNewer("contrib/$n/$out", "contrib/$n/$in"))
 			{
 				print "Building $out from $in (contrib/$n)...\n";
 				my $cont = Project::read_file("contrib/$n/$in");
-				my $dn   = $out;
+				my $dn = $out;
 				$dn =~ s/\.sql$//;
 				$cont =~ s/MODULE_PATHNAME/\$libdir\/$dn/g;
 				my $o;
@@ -1133,10 +1133,10 @@ sub AdjustContribProj
 {
 	my $proj = shift;
 	AdjustModule(
-		$proj,                    $contrib_defines,
-		\@contrib_uselibpq,       \@contrib_uselibpgport,
+		$proj, $contrib_defines,
+		\@contrib_uselibpq, \@contrib_uselibpgport,
 		\@contrib_uselibpgcommon, $contrib_extralibs,
-		$contrib_extrasource,     $contrib_extraincludes);
+		$contrib_extrasource, $contrib_extraincludes);
 	return;
 }
 
@@ -1144,24 +1144,24 @@ sub AdjustFrontendProj
 {
 	my $proj = shift;
 	AdjustModule(
-		$proj,                     $frontend_defines,
-		\@frontend_uselibpq,       \@frontend_uselibpgport,
+		$proj, $frontend_defines,
+		\@frontend_uselibpq, \@frontend_uselibpgport,
 		\@frontend_uselibpgcommon, $frontend_extralibs,
-		$frontend_extrasource,     $frontend_extraincludes);
+		$frontend_extrasource, $frontend_extraincludes);
 	return;
 }
 
 sub AdjustModule
 {
-	my $proj                  = shift;
-	my $module_defines        = shift;
-	my $module_uselibpq       = shift;
-	my $module_uselibpgport   = shift;
+	my $proj = shift;
+	my $module_defines = shift;
+	my $module_uselibpq = shift;
+	my $module_uselibpgport = shift;
 	my $module_uselibpgcommon = shift;
-	my $module_extralibs      = shift;
-	my $module_extrasource    = shift;
-	my $module_extraincludes  = shift;
-	my $n                     = $proj->{name};
+	my $module_extralibs = shift;
+	my $module_extrasource = shift;
+	my $module_extraincludes = shift;
+	my $n = $proj->{name};
 
 	if ($module_defines->{$n})
 	{

@@ -21,7 +21,7 @@ $node->start;
 
 # setup
 $node->safe_psql("postgres",
-	    "CREATE EXTENSION pg_prewarm;\n"
+		"CREATE EXTENSION pg_prewarm;\n"
 	  . "CREATE TABLE test(c1 int);\n"
 	  . "INSERT INTO test SELECT generate_series(1, 100);");
 

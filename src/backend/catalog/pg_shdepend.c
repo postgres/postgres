@@ -1414,6 +1414,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					/* FALLTHROUGH */
 
 				case SHARED_DEPENDENCY_OWNER:
+
 					/*
 					 * Save it for deletion below, if it's a local object or a
 					 * role grant. Other shared objects, such as databases,

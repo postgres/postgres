@@ -69,7 +69,7 @@ my $ret =
 
 
 # with a bad passphrase the server should not start
-ok($ret,                       "pg_ctl fails with bad passphrase");
+ok($ret, "pg_ctl fails with bad passphrase");
 ok(!-e "$ddir/postmaster.pid", "postgres not started with bad passphrase");
 
 # just in case

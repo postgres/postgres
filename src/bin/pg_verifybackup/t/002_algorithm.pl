@@ -17,7 +17,7 @@ $primary->start;
 for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
 {
 	my $backup_path = $primary->backup_dir . '/' . $algorithm;
-	my @backup      = (
+	my @backup = (
 		'pg_basebackup', '-D', $backup_path,
 		'--manifest-checksums', $algorithm, '--no-sync', '-cfast');
 	my @verify = ('pg_verifybackup', '-e', $backup_path);

@@ -34,7 +34,7 @@ $node->issues_sql_like(
 	'create a superuser');
 $node->issues_sql_like(
 	[
-		'createuser',    '-a',
+		'createuser', '-a',
 		'regress_user1', '-a',
 		'regress user2', 'regress user #4'
 	],
@@ -42,8 +42,8 @@ $node->issues_sql_like(
 	'add a role as a member with admin option of the newly created role');
 $node->issues_sql_like(
 	[
-		'createuser',      '-m',
-		'regress_user3',   '-m',
+		'createuser', '-m',
+		'regress_user3', '-m',
 		'regress user #4', 'REGRESS_USER5'
 	],
 	qr/statement: CREATE ROLE "REGRESS_USER5" NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN NOREPLICATION NOBYPASSRLS ROLE regress_user3,"regress user #4";/,

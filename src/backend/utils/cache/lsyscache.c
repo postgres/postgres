@@ -3603,7 +3603,7 @@ char *
 get_publication_name(Oid pubid, bool missing_ok)
 {
 	HeapTuple	tup;
-	char	*pubname;
+	char	   *pubname;
 	Form_pg_publication pubform;
 
 	tup = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
@@ -3630,16 +3630,16 @@ get_publication_name(Oid pubid, bool missing_ok)
  * return InvalidOid.
  */
 Oid
-get_subscription_oid(const char* subname, bool missing_ok)
+get_subscription_oid(const char *subname, bool missing_ok)
 {
 	Oid			oid;
 
 	oid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
-						   MyDatabaseId, CStringGetDatum(subname));
+						  MyDatabaseId, CStringGetDatum(subname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("subscription \"%s\" does not exist", subname)));
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("subscription \"%s\" does not exist", subname)));
 	return oid;
 }
 
@@ -3653,7 +3653,7 @@ char *
 get_subscription_name(Oid subid, bool missing_ok)
 {
 	HeapTuple	tup;
-	char* subname;
+	char	   *subname;
 	Form_pg_subscription subform;
 
 	tup = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));

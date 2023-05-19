@@ -26,7 +26,7 @@ typedef enum
 {
 	LOGICAL_REP_MODE_BUFFERED,
 	LOGICAL_REP_MODE_IMMEDIATE
-} LogicalRepMode;
+}			LogicalRepMode;
 
 /* an individual tuple, stored in one chunk of memory */
 typedef struct ReorderBufferTupleBuf

@@ -73,8 +73,8 @@ close $contents;
 # Cross-check that all the GUCs found in the sample file match the ones
 # fetched above.  This maps the arrays to a hash, making the creation of
 # each exclude and intersection list easier.
-my %gucs_in_file_hash  = map { $_ => 1 } @gucs_in_file;
-my %all_params_hash    = map { $_ => 1 } @all_params_array;
+my %gucs_in_file_hash = map { $_ => 1 } @gucs_in_file;
+my %all_params_hash = map { $_ => 1 } @all_params_array;
 my %not_in_sample_hash = map { $_ => 1 } @not_in_sample_array;
 
 my @missing_from_file = grep(!$gucs_in_file_hash{$_}, @all_params_array);
@@ -91,7 +91,9 @@ is(scalar(@sample_intersect),
 # These would log some information only on errors.
 foreach my $param (@missing_from_file)
 {
-	print("found GUC $param in guc_tables.c, missing from postgresql.conf.sample\n");
+	print(
+		"found GUC $param in guc_tables.c, missing from postgresql.conf.sample\n"
+	);
 }
 foreach my $param (@missing_from_list)
 {

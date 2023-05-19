@@ -18,10 +18,10 @@ use Test::More;
 # at the end.
 sub check_relation_corruption
 {
-	my $node       = shift;
-	my $table      = shift;
+	my $node = shift;
+	my $table = shift;
 	my $tablespace = shift;
-	my $pgdata     = $node->data_dir;
+	my $pgdata = $node->data_dir;
 
 	# Create table and discover its filesystem location.
 	$node->safe_psql(
@@ -44,8 +44,8 @@ sub check_relation_corruption
 	command_ok(
 		[
 			'pg_checksums', '--check',
-			'-D',           $pgdata,
-			'--filenode',   $relfilenode_corrupted
+			'-D', $pgdata,
+			'--filenode', $relfilenode_corrupted
 		],
 		"succeeds for single relfilenode on tablespace $tablespace with offline cluster"
 	);
@@ -57,8 +57,8 @@ sub check_relation_corruption
 	$node->command_checks_all(
 		[
 			'pg_checksums', '--check',
-			'-D',           $pgdata,
-			'--filenode',   $relfilenode_corrupted
+			'-D', $pgdata,
+			'--filenode', $relfilenode_corrupted
 		],
 		1,
 		[qr/Bad checksums:.*1/],
@@ -97,21 +97,21 @@ command_like(
 	'checksums disabled in control file');
 
 # These are correct but empty files, so they should pass through.
-append_to_file "$pgdata/global/99999",          "";
-append_to_file "$pgdata/global/99999.123",      "";
-append_to_file "$pgdata/global/99999_fsm",      "";
-append_to_file "$pgdata/global/99999_init",     "";
-append_to_file "$pgdata/global/99999_vm",       "";
+append_to_file "$pgdata/global/99999", "";
+append_to_file "$pgdata/global/99999.123", "";
+append_to_file "$pgdata/global/99999_fsm", "";
+append_to_file "$pgdata/global/99999_init", "";
+append_to_file "$pgdata/global/99999_vm", "";
 append_to_file "$pgdata/global/99999_init.123", "";
-append_to_file "$pgdata/global/99999_fsm.123",  "";
-append_to_file "$pgdata/global/99999_vm.123",   "";
+append_to_file "$pgdata/global/99999_fsm.123", "";
+append_to_file "$pgdata/global/99999_vm.123", "";
 
 # These are temporary files and folders with dummy contents, which
 # should be ignored by the scan.
 append_to_file "$pgdata/global/pgsql_tmp_123", "foo";
 mkdir "$pgdata/global/pgsql_tmp";
-append_to_file "$pgdata/global/pgsql_tmp/1.1",        "foo";
-append_to_file "$pgdata/global/pg_internal.init",     "foo";
+append_to_file "$pgdata/global/pgsql_tmp/1.1", "foo";
+append_to_file "$pgdata/global/pg_internal.init", "foo";
 append_to_file "$pgdata/global/pg_internal.init.123", "foo";
 
 # Enable checksums.
@@ -197,7 +197,7 @@ command_fails([ 'pg_checksums', '--check', '-D', $pgdata ],
 check_relation_corruption($node, 'corrupt1', 'pg_default');
 
 # Create tablespace to check corruptions in a non-default tablespace.
-my $basedir        = $node->basedir;
+my $basedir = $node->basedir;
 my $tablespace_dir = "$basedir/ts_corrupt_dir";
 mkdir($tablespace_dir);
 $node->safe_psql('postgres',
@@ -208,8 +208,8 @@ check_relation_corruption($node, 'corrupt2', 'ts_corrupt');
 # correctly-named relation files filled with some corrupted data.
 sub fail_corrupt
 {
-	my $node   = shift;
-	my $file   = shift;
+	my $node = shift;
+	my $file = shift;
 	my $pgdata = $node->data_dir;
 
 	# Create the file with some dummy data in it.

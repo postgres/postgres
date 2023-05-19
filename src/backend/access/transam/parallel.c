@@ -375,8 +375,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_COMBO_CID, combocidspace);
 
 		/*
-		 * Serialize the transaction snapshot if the transaction
-		 * isolation level uses a transaction snapshot.
+		 * Serialize the transaction snapshot if the transaction isolation
+		 * level uses a transaction snapshot.
 		 */
 		if (IsolationUsesXactSnapshot())
 		{
@@ -1497,8 +1497,8 @@ ParallelWorkerMain(Datum main_arg)
 	RestoreClientConnectionInfo(clientconninfospace);
 
 	/*
-	 * Initialize SystemUser now that MyClientConnectionInfo is restored.
-	 * Also ensure that auth_method is actually valid, aka authn_id is not NULL.
+	 * Initialize SystemUser now that MyClientConnectionInfo is restored. Also
+	 * ensure that auth_method is actually valid, aka authn_id is not NULL.
 	 */
 	if (MyClientConnectionInfo.authn_id)
 		InitializeSystemUser(MyClientConnectionInfo.authn_id,

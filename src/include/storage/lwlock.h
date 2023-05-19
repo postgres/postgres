@@ -26,10 +26,11 @@ struct PGPROC;
 /* what state of the wait process is a backend in */
 typedef enum LWLockWaitState
 {
-	LW_WS_NOT_WAITING, /* not currently waiting / woken up */
-	LW_WS_WAITING, /* currently waiting */
-	LW_WS_PENDING_WAKEUP, /* removed from waitlist, but not yet signalled */
-} LWLockWaitState;
+	LW_WS_NOT_WAITING,			/* not currently waiting / woken up */
+	LW_WS_WAITING,				/* currently waiting */
+	LW_WS_PENDING_WAKEUP,		/* removed from waitlist, but not yet
+								 * signalled */
+}			LWLockWaitState;
 
 /*
  * Code outside of lwlock.c should not manipulate the contents of this

@@ -37,8 +37,7 @@ sub test_tablespace
 		has_streaming => 1);
 	$node_standby->append_conf('postgresql.conf',
 		"allow_in_place_tablespaces = on");
-	$node_standby->append_conf('postgresql.conf',
-		"primary_slot_name = slot");
+	$node_standby->append_conf('postgresql.conf', "primary_slot_name = slot");
 	$node_standby->start;
 
 	# Make sure the connection is made
@@ -137,7 +136,8 @@ while ($max_attempts-- >= 0)
 	last
 	  if (
 		find_in_log(
-			$node_standby, qr!WARNING: ( [A-Z0-9]+:)? creating missing directory: pg_tblspc/!,
+			$node_standby,
+			qr!WARNING: ( [A-Z0-9]+:)? creating missing directory: pg_tblspc/!,
 			$logstart));
 	usleep(100_000);
 }

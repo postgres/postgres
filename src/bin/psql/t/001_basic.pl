@@ -22,7 +22,7 @@ sub psql_like
 
 	my ($ret, $stdout, $stderr) = $node->psql('postgres', $sql);
 
-	is($ret,    0,  "$test_name: exit code 0");
+	is($ret, 0, "$test_name: exit code 0");
 	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
 
@@ -69,9 +69,9 @@ max_wal_senders = 4
 });
 $node->start;
 
-psql_like($node, '\copyright',   qr/Copyright/, '\copyright');
-psql_like($node, '\help',        qr/ALTER/,     '\help without arguments');
-psql_like($node, '\help SELECT', qr/SELECT/,    '\help with argument');
+psql_like($node, '\copyright', qr/Copyright/, '\copyright');
+psql_like($node, '\help', qr/ALTER/, '\help without arguments');
+psql_like($node, '\help SELECT', qr/SELECT/, '\help with argument');
 
 # Test clean handling of unsupported replication command responses
 psql_fails_like(
@@ -132,7 +132,7 @@ NOTIFY foo, 'bar';",
 
 # test behavior and output on server crash
 my ($ret, $out, $err) = $node->psql('postgres',
-	    "SELECT 'before' AS running;\n"
+		"SELECT 'before' AS running;\n"
 	  . "SELECT pg_terminate_backend(pg_backend_pid());\n"
 	  . "SELECT 'AFTER' AS not_running;\n");
 
@@ -216,9 +216,9 @@ $node->safe_psql('postgres', "CREATE TABLE tab_psql_single (a int);");
 # Tests with ON_ERROR_STOP.
 $node->command_ok(
 	[
-		'psql',                                   '-X',
-		'--single-transaction',                   '-v',
-		'ON_ERROR_STOP=1',                        '-c',
+		'psql', '-X',
+		'--single-transaction', '-v',
+		'ON_ERROR_STOP=1', '-c',
 		'INSERT INTO tab_psql_single VALUES (1)', '-c',
 		'INSERT INTO tab_psql_single VALUES (2)'
 	],
@@ -231,9 +231,9 @@ is($row_count, '2',
 
 $node->command_fails(
 	[
-		'psql',                                   '-X',
-		'--single-transaction',                   '-v',
-		'ON_ERROR_STOP=1',                        '-c',
+		'psql', '-X',
+		'--single-transaction', '-v',
+		'ON_ERROR_STOP=1', '-c',
 		'INSERT INTO tab_psql_single VALUES (3)', '-c',
 		"\\copy tab_psql_single FROM '$tempdir/nonexistent'"
 	],
@@ -245,15 +245,15 @@ is($row_count, '2',
 );
 
 # Tests mixing files and commands.
-my $copy_sql_file   = "$tempdir/tab_copy.sql";
+my $copy_sql_file = "$tempdir/tab_copy.sql";
 my $insert_sql_file = "$tempdir/tab_insert.sql";
 append_to_file($copy_sql_file,
 	"\\copy tab_psql_single FROM '$tempdir/nonexistent';");
 append_to_file($insert_sql_file, 'INSERT INTO tab_psql_single VALUES (4);');
 $node->command_ok(
 	[
-		'psql',            '-X', '--single-transaction', '-v',
-		'ON_ERROR_STOP=1', '-f', $insert_sql_file,       '-f',
+		'psql', '-X', '--single-transaction', '-v',
+		'ON_ERROR_STOP=1', '-f', $insert_sql_file, '-f',
 		$insert_sql_file
 	],
 	'ON_ERROR_STOP, --single-transaction and multiple -f switches');
@@ -265,8 +265,8 @@ is($row_count, '4',
 
 $node->command_fails(
 	[
-		'psql',            '-X', '--single-transaction', '-v',
-		'ON_ERROR_STOP=1', '-f', $insert_sql_file,       '-f',
+		'psql', '-X', '--single-transaction', '-v',
+		'ON_ERROR_STOP=1', '-f', $insert_sql_file, '-f',
 		$copy_sql_file
 	],
 	'ON_ERROR_STOP, --single-transaction and multiple -f switches, error');
@@ -281,10 +281,10 @@ is($row_count, '4',
 # transaction commits.
 $node->command_fails(
 	[
-		'psql',                 '-X',
+		'psql', '-X',
 		'--single-transaction', '-f',
-		$insert_sql_file,       '-f',
-		$insert_sql_file,       '-c',
+		$insert_sql_file, '-f',
+		$insert_sql_file, '-c',
 		"\\copy tab_psql_single FROM '$tempdir/nonexistent'"
 	],
 	'no ON_ERROR_STOP, --single-transaction and multiple -f/-c switches');
@@ -298,8 +298,8 @@ is($row_count, '6',
 # returns a success and the transaction commits.
 $node->command_ok(
 	[
-		'psql',           '-X', '--single-transaction', '-f',
-		$insert_sql_file, '-f', $insert_sql_file,       '-f',
+		'psql', '-X', '--single-transaction', '-f',
+		$insert_sql_file, '-f', $insert_sql_file, '-f',
 		$copy_sql_file
 	],
 	'no ON_ERROR_STOP, --single-transaction and multiple -f switches');
@@ -313,10 +313,10 @@ is($row_count, '8',
 # the transaction commit even if there is a failure in-between.
 $node->command_ok(
 	[
-		'psql',                                   '-X',
-		'--single-transaction',                   '-c',
+		'psql', '-X',
+		'--single-transaction', '-c',
 		'INSERT INTO tab_psql_single VALUES (5)', '-f',
-		$copy_sql_file,                           '-c',
+		$copy_sql_file, '-c',
 		'INSERT INTO tab_psql_single VALUES (6)'
 	],
 	'no ON_ERROR_STOP, --single-transaction and multiple -c switches');
@@ -348,16 +348,12 @@ psql_like(
 	qr/1\|value\|2022-07-04 00:00:00
 2|test|2022-07-03 00:00:00
 3|test|2022-07-05 00:00:00/,
-	'\copy from with DEFAULT'
-);
+	'\copy from with DEFAULT');
 
 # Check \watch
 # Note: the interval value is parsed with locale-aware strtod()
-psql_like(
-	$node,
-	sprintf('SELECT 1 \watch c=3 i=%g', 0.01),
-	qr/1\n1\n1/,
-	'\watch with 3 iterations');
+psql_like($node, sprintf('SELECT 1 \watch c=3 i=%g', 0.01),
+	qr/1\n1\n1/, '\watch with 3 iterations');
 
 # Check \watch errors
 psql_fails_like(

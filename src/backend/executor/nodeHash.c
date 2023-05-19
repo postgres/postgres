@@ -1339,7 +1339,7 @@ ExecParallelHashRepartitionFirst(HashJoinTable hashtable)
 			else
 			{
 				size_t		tuple_size =
-				MAXALIGN(HJTUPLE_OVERHEAD + tuple->t_len);
+					MAXALIGN(HJTUPLE_OVERHEAD + tuple->t_len);
 
 				/* It belongs in a later batch. */
 				hashtable->batches[batchno].estimated_size += tuple_size;
@@ -1381,7 +1381,7 @@ ExecParallelHashRepartitionRest(HashJoinTable hashtable)
 	for (i = 1; i < old_nbatch; ++i)
 	{
 		ParallelHashJoinBatch *shared =
-		NthParallelHashJoinBatch(old_batches, i);
+			NthParallelHashJoinBatch(old_batches, i);
 
 		old_inner_tuples[i] = sts_attach(ParallelHashJoinBatchInner(shared),
 										 ParallelWorkerNumber + 1,
@@ -3337,7 +3337,7 @@ ExecHashTableDetachBatch(HashJoinTable hashtable)
 			while (DsaPointerIsValid(batch->chunks))
 			{
 				HashMemoryChunk chunk =
-				dsa_get_address(hashtable->area, batch->chunks);
+					dsa_get_address(hashtable->area, batch->chunks);
 				dsa_pointer next = chunk->next.shared;
 
 				dsa_free(hashtable->area, batch->chunks);

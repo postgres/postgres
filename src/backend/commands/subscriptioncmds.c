@@ -604,9 +604,9 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		PreventInTransactionBlock(isTopLevel, "CREATE SUBSCRIPTION ... WITH (create_slot = true)");
 
 	/*
-	 * We don't want to allow unprivileged users to be able to trigger attempts
-	 * to access arbitrary network destinations, so require the user to have
-	 * been specifically authorized to create subscriptions.
+	 * We don't want to allow unprivileged users to be able to trigger
+	 * attempts to access arbitrary network destinations, so require the user
+	 * to have been specifically authorized to create subscriptions.
 	 */
 	if (!has_privs_of_role(owner, ROLE_PG_CREATE_SUBSCRIPTION))
 		ereport(ERROR,
@@ -631,10 +631,10 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	 * exempt a subscription from this requirement.
 	 */
 	if (!opts.passwordrequired && !superuser_arg(owner))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("password_required=false is superuser-only"),
-					 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("password_required=false is superuser-only"),
+				 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
 
 	/*
 	 * If built with appropriate switch, whine when regression-testing
@@ -1113,8 +1113,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	if (!sub->passwordrequired && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("password_required=false is superuser-only"),
-						 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
+				 errmsg("password_required=false is superuser-only"),
+				 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
 
 	/* Lock the subscription so nobody else can do anything with it. */
 	LockSharedObject(SubscriptionRelationId, subid, 0, AccessExclusiveLock);
@@ -1827,8 +1827,8 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (!form->subpasswordrequired && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("password_required=false is superuser-only"),
-						 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
+				 errmsg("password_required=false is superuser-only"),
+				 errhint("Subscriptions with the password_required option set to false may only be created or modified by the superuser.")));
 
 	/* Must be able to become new owner */
 	check_can_set_role(GetUserId(), newOwnerId);
@@ -1837,8 +1837,8 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	 * current owner must have CREATE on database
 	 *
 	 * This is consistent with how ALTER SCHEMA ... OWNER TO works, but some
-	 * other object types behave differently (e.g. you can't give a table to
-	 * a user who lacks CREATE privileges on a schema).
+	 * other object types behave differently (e.g. you can't give a table to a
+	 * user who lacks CREATE privileges on a schema).
 	 */
 	aclresult = object_aclcheck(DatabaseRelationId, MyDatabaseId,
 								GetUserId(), ACL_CREATE);

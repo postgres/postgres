@@ -289,7 +289,8 @@ hashtext(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		Size		bsize, rsize;
+		Size		bsize,
+					rsize;
 		char	   *buf;
 		const char *keydata = VARDATA_ANY(key);
 		size_t		keylen = VARSIZE_ANY_EXHDR(key);
@@ -304,8 +305,8 @@ hashtext(PG_FUNCTION_ARGS)
 
 		/*
 		 * In principle, there's no reason to include the terminating NUL
-		 * character in the hash, but it was done before and the behavior
-		 * must be preserved.
+		 * character in the hash, but it was done before and the behavior must
+		 * be preserved.
 		 */
 		result = hash_any((uint8_t *) buf, bsize + 1);
 
@@ -343,7 +344,8 @@ hashtextextended(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		Size		bsize, rsize;
+		Size		bsize,
+					rsize;
 		char	   *buf;
 		const char *keydata = VARDATA_ANY(key);
 		size_t		keylen = VARSIZE_ANY_EXHDR(key);
@@ -357,8 +359,8 @@ hashtextextended(PG_FUNCTION_ARGS)
 
 		/*
 		 * In principle, there's no reason to include the terminating NUL
-		 * character in the hash, but it was done before and the behavior
-		 * must be preserved.
+		 * character in the hash, but it was done before and the behavior must
+		 * be preserved.
 		 */
 		result = hash_any_extended((uint8_t *) buf, bsize + 1,
 								   PG_GETARG_INT64(1));

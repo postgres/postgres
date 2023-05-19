@@ -20,7 +20,7 @@ typedef struct JsonPathString
 	char	   *val;
 	int			len;
 	int			total;
-}			JsonPathString;
+} JsonPathString;
 
 #include "utils/jsonpath.h"
 #include "jsonpath_gram.h"
@@ -29,8 +29,8 @@ typedef struct JsonPathString
 							  JsonPathParseResult **result, \
 							  struct Node *escontext)
 YY_DECL;
-extern int     jsonpath_yyparse(JsonPathParseResult **result,
-								struct Node *escontext);
+extern int	jsonpath_yyparse(JsonPathParseResult **result,
+							 struct Node *escontext);
 extern void jsonpath_yyerror(JsonPathParseResult **result,
 							 struct Node *escontext,
 							 const char *message);

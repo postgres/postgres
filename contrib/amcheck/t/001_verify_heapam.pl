@@ -81,7 +81,7 @@ sub relation_filepath
 	my ($relname) = @_;
 
 	my $pgdata = $node->data_dir;
-	my $rel    = $node->safe_psql('postgres',
+	my $rel = $node->safe_psql('postgres',
 		qq(SELECT pg_relation_filepath('$relname')));
 	die "path not found for relation $relname" unless defined $rel;
 	return "$pgdata/$rel";
@@ -267,7 +267,7 @@ sub check_all_options_uncorrupted
 					for my $endblock (qw(NULL 0))
 					{
 						my $opts =
-						    "on_error_stop := $stop, "
+							"on_error_stop := $stop, "
 						  . "check_toast := $check_toast, "
 						  . "skip := $skip, "
 						  . "startblock := $startblock, "

@@ -30,13 +30,13 @@ sub test_streaming
 	# Interleave a pair of transactions, each exceeding the 64kB limit.
 	my $offset = 0;
 
-	my $h = $node_publisher->background_psql('postgres',
-		on_error_stop => 0);
+	my $h = $node_publisher->background_psql('postgres', on_error_stop => 0);
 
 	# Check the subscriber log from now on.
 	$offset = -s $node_subscriber->logfile;
 
-	$h->query_safe(q{
+	$h->query_safe(
+		q{
 	BEGIN;
 	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
@@ -52,7 +52,7 @@ sub test_streaming
 	});
 
 	$h->query_safe('COMMIT');
-    # errors make the next test fail, so ignore them here
+	# errors make the next test fail, so ignore them here
 	$h->quit;
 
 	$node_publisher->wait_for_catchup($appname);
@@ -211,15 +211,15 @@ $node_subscriber->reload;
 $node_subscriber->safe_psql('postgres', q{SELECT 1});
 
 # Interleave a pair of transactions, each exceeding the 64kB limit.
-my $h = $node_publisher->background_psql('postgres',
-	on_error_stop => 0);
+my $h = $node_publisher->background_psql('postgres', on_error_stop => 0);
 
 # Confirm if a deadlock between the leader apply worker and the parallel apply
 # worker can be detected.
 
 my $offset = -s $node_subscriber->logfile;
 
-$h->query_safe(q{
+$h->query_safe(
+	q{
 BEGIN;
 INSERT INTO test_tab_2 SELECT i FROM generate_series(1, 5000) s(i);
 });
@@ -260,7 +260,8 @@ $node_subscriber->safe_psql('postgres',
 # Check the subscriber log from now on.
 $offset = -s $node_subscriber->logfile;
 
-$h->query_safe(q{
+$h->query_safe(
+	q{
 BEGIN;
 INSERT INTO test_tab_2 SELECT i FROM generate_series(1, 5000) s(i);
 });
@@ -296,7 +297,8 @@ is($result, qq(10000), 'data replicated to subscriber after dropping index');
 $node_subscriber->append_conf('postgresql.conf',
 	'logical_replication_mode = immediate');
 # Reset the log_min_messages to default.
-$node_subscriber->append_conf('postgresql.conf', "log_min_messages = warning");
+$node_subscriber->append_conf('postgresql.conf',
+	"log_min_messages = warning");
 $node_subscriber->reload;
 
 # Run a query to make sure that the reload has taken effect.
@@ -317,7 +319,8 @@ $node_publisher->wait_for_catchup($appname);
 # Check that transaction is committed on subscriber
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM test_tab_2");
-is($result, qq(15000), 'parallel apply worker replayed all changes from file');
+is($result, qq(15000),
+	'parallel apply worker replayed all changes from file');
 
 $node_subscriber->stop;
 $node_publisher->stop;

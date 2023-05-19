@@ -82,8 +82,8 @@ _ZstdCStreamParams(pg_compress_specification compress)
 
 	if (compress.options & PG_COMPRESSION_OPTION_LONG_DISTANCE)
 		_Zstd_CCtx_setParam_or_die(cstream,
-								  ZSTD_c_enableLongDistanceMatching,
-								  compress.long_distance, "long");
+								   ZSTD_c_enableLongDistanceMatching,
+								   compress.long_distance, "long");
 
 	return cstream;
 }

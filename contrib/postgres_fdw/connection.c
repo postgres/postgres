@@ -61,7 +61,7 @@ typedef struct ConnCacheEntry
 	bool		have_error;		/* have any subxacts aborted in this xact? */
 	bool		changing_xact_state;	/* xact state change in process */
 	bool		parallel_commit;	/* do we commit (sub)xacts in parallel? */
-	bool		parallel_abort;	/* do we abort (sub)xacts in parallel? */
+	bool		parallel_abort; /* do we abort (sub)xacts in parallel? */
 	bool		invalidated;	/* true if reconnect is pending */
 	bool		keep_connections;	/* setting value of keep_connections
 									 * server option */

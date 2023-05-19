@@ -1186,7 +1186,7 @@ pgstat_flush_pending_entries(bool nowait)
 	while (cur)
 	{
 		PgStat_EntryRef *entry_ref =
-		dlist_container(PgStat_EntryRef, pending_node, cur);
+			dlist_container(PgStat_EntryRef, pending_node, cur);
 		PgStat_HashKey key = entry_ref->shared_entry->key;
 		PgStat_Kind kind = key.kind;
 		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);

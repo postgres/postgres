@@ -44,14 +44,14 @@ static Walfile *dir_open_for_write(WalWriteMethod *wwmethod,
 								   const char *pathname,
 								   const char *temp_suffix,
 								   size_t pad_to_size);
-static int dir_close(Walfile *f, WalCloseMethod method);
+static int	dir_close(Walfile *f, WalCloseMethod method);
 static bool dir_existsfile(WalWriteMethod *wwmethod, const char *pathname);
 static ssize_t dir_get_file_size(WalWriteMethod *wwmethod,
 								 const char *pathname);
 static char *dir_get_file_name(WalWriteMethod *wwmethod,
 							   const char *pathname, const char *temp_suffix);
 static ssize_t dir_write(Walfile *f, const void *buf, size_t count);
-static int dir_sync(Walfile *f);
+static int	dir_sync(Walfile *f);
 static bool dir_finish(WalWriteMethod *wwmethod);
 static void dir_free(WalWriteMethod *wwmethod);
 
@@ -72,7 +72,7 @@ const WalWriteMethodOps WalDirectoryMethodOps = {
  */
 typedef struct DirectoryMethodData
 {
-	WalWriteMethod	base;
+	WalWriteMethod base;
 	char	   *basedir;
 } DirectoryMethodData;
 
@@ -660,14 +660,14 @@ static Walfile *tar_open_for_write(WalWriteMethod *wwmethod,
 								   const char *pathname,
 								   const char *temp_suffix,
 								   size_t pad_to_size);
-static int tar_close(Walfile *f, WalCloseMethod method);
+static int	tar_close(Walfile *f, WalCloseMethod method);
 static bool tar_existsfile(WalWriteMethod *wwmethod, const char *pathname);
 static ssize_t tar_get_file_size(WalWriteMethod *wwmethod,
 								 const char *pathname);
 static char *tar_get_file_name(WalWriteMethod *wwmethod,
 							   const char *pathname, const char *temp_suffix);
 static ssize_t tar_write(Walfile *f, const void *buf, size_t count);
-static int tar_sync(Walfile *f);
+static int	tar_sync(Walfile *f);
 static bool tar_finish(WalWriteMethod *wwmethod);
 static void tar_free(WalWriteMethod *wwmethod);
 
@@ -693,7 +693,7 @@ typedef struct TarMethodFile
 
 typedef struct TarMethodData
 {
-	WalWriteMethod	base;
+	WalWriteMethod base;
 	char	   *tarfilename;
 	int			fd;
 	TarMethodFile *currentfile;
@@ -1353,7 +1353,7 @@ CreateWalTarMethod(const char *tarbase,
 {
 	TarMethodData *wwmethod;
 	const char *suffix = (compression_algorithm == PG_COMPRESSION_GZIP) ?
-	".tar.gz" : ".tar";
+		".tar.gz" : ".tar";
 
 	wwmethod = pg_malloc0(sizeof(TarMethodData));
 	*((const WalWriteMethodOps **) &wwmethod->base.ops) =

@@ -23,9 +23,9 @@ if (!$use_unix_sockets)
 # and then execute a reload to refresh it.
 sub reset_pg_hba
 {
-	my $node       = shift;
-	my $database   = shift;
-	my $role       = shift;
+	my $node = shift;
+	my $database = shift;
+	my $role = shift;
 	my $hba_method = shift;
 
 	unlink($node->data_dir . '/pg_hba.conf');
@@ -95,7 +95,8 @@ $node->safe_psql(
 	 RESET scram_iterations;"
 );
 
-my $res = $node->safe_psql('postgres',
+my $res = $node->safe_psql(
+	'postgres',
 	"SELECT substr(rolpassword,1,19)
 	 FROM pg_authid
 	 WHERE rolname = 'scram_role_iter'");
@@ -106,8 +107,8 @@ is($res, 'SCRAM-SHA-256$1024:', 'scram_iterations in server side ROLE');
 # as earlier version cause the session to time out.
 SKIP:
 {
-	skip "IO::Pty and IPC::Run >= 0.98 required", 1 unless
-		eval { require IO::Pty; IPC::Run->VERSION('0.98'); };
+	skip "IO::Pty and IPC::Run >= 0.98 required", 1
+	  unless eval { require IO::Pty; IPC::Run->VERSION('0.98'); };
 
 	# Alter the password on the created role using \password in psql to ensure
 	# that clientside password changes use the scram_iterations value when
@@ -117,16 +118,19 @@ SKIP:
 	$session->set_query_timer_restart();
 	$session->query("SET password_encryption='scram-sha-256';");
 	$session->query("SET scram_iterations=42;");
-	$session->query_until(qr/Enter new password/, "\\password scram_role_iter\n");
+	$session->query_until(qr/Enter new password/,
+		"\\password scram_role_iter\n");
 	$session->query_until(qr/Enter it again/, "pass\n");
 	$session->query_until(qr/postgres=# /, "pass\n");
 	$session->quit;
 
-	$res = $node->safe_psql('postgres',
+	$res = $node->safe_psql(
+		'postgres',
 		"SELECT substr(rolpassword,1,17)
 		 FROM pg_authid
 		 WHERE rolname = 'scram_role_iter'");
-	is($res, 'SCRAM-SHA-256$42:', 'scram_iterations in psql \password command');
+	is($res, 'SCRAM-SHA-256$42:',
+		'scram_iterations in psql \password command');
 }
 
 # Create a database to test regular expression.
@@ -482,7 +486,7 @@ chmod 0600, $pgpassfile or die;
 
 reset_pg_hba($node, 'all', 'all', 'password');
 test_conn($node, 'user=scram_role', 'password from pgpass', 0);
-test_conn($node, 'user=md5_role',   'password from pgpass', 2);
+test_conn($node, 'user=md5_role', 'password from pgpass', 2);
 
 append_to_file(
 	$pgpassfile, qq!

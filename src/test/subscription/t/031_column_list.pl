@@ -20,7 +20,7 @@ $node_subscriber->append_conf('postgresql.conf',
 $node_subscriber->start;
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
-my $offset            = 0;
+my $offset = 0;
 
 # setup tables on both nodes
 

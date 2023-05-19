@@ -19,7 +19,7 @@ use Solution;
 use MSBuildProject;
 
 our (@ISA, @EXPORT);
-@ISA    = qw(Exporter);
+@ISA = qw(Exporter);
 @EXPORT = qw(CreateSolution CreateProject DetermineVisualStudioVersion);
 
 no warnings qw(redefine);    ## no critic

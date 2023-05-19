@@ -581,7 +581,7 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 	if (row_security_policy_hook_restrictive)
 	{
 		List	   *hook_policies =
-		(*row_security_policy_hook_restrictive) (cmd, relation);
+			(*row_security_policy_hook_restrictive) (cmd, relation);
 
 		/*
 		 * As with built-in restrictive policies, we sort any hook-provided
@@ -603,7 +603,7 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 	if (row_security_policy_hook_permissive)
 	{
 		List	   *hook_policies =
-		(*row_security_policy_hook_permissive) (cmd, relation);
+			(*row_security_policy_hook_permissive) (cmd, relation);
 
 		foreach(item, hook_policies)
 		{

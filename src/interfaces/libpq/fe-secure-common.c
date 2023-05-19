@@ -226,7 +226,7 @@ pq_verify_peer_name_matches_certificate_ip(PGconn *conn,
 		 * wrong given the subject matter.
 		 */
 		libpq_append_conn_error(conn, "certificate contains IP address with invalid length %zu",
-						  iplen);
+								iplen);
 		return -1;
 	}
 
@@ -235,7 +235,7 @@ pq_verify_peer_name_matches_certificate_ip(PGconn *conn,
 	if (!addrstr)
 	{
 		libpq_append_conn_error(conn, "could not convert certificate's IP address to string: %s",
-						  strerror_r(errno, sebuf, sizeof(sebuf)));
+								strerror_r(errno, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 
@@ -292,7 +292,7 @@ pq_verify_peer_name_matches_certificate(PGconn *conn)
 		else if (names_examined == 1)
 		{
 			libpq_append_conn_error(conn, "server certificate for \"%s\" does not match host name \"%s\"",
-							  first_name, host);
+									first_name, host);
 		}
 		else
 		{

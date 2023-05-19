@@ -124,7 +124,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 		{
 			int			len;
 			const char *s = (j < numFieldName && po->fieldName[j][0]) ?
-			po->fieldName[j] : PQfname(res, j);
+				po->fieldName[j] : PQfname(res, j);
 
 			fieldNames[j] = s;
 			len = s ? strlen(s) : 0;

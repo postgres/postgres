@@ -13,7 +13,7 @@ use File::Basename;
 
 do './src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
 
-my ($bisonver) = `bison -V`;    # grab first line
+my ($bisonver) = `bison -V`;                 # grab first line
 $bisonver = (split(/\s+/, $bisonver))[3];    # grab version number
 
 unless ($bisonver ge '2.3')

@@ -362,7 +362,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 		 */
 		if (!am_superuser &&
 			object_aclcheck(DatabaseRelationId, MyDatabaseId, GetUserId(),
-								 ACL_CONNECT) != ACLCHECK_OK)
+							ACL_CONNECT) != ACLCHECK_OK)
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied for database \"%s\"", name),
@@ -933,10 +933,10 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	}
 
 	/*
-	 * The last few connection slots are reserved for superusers and roles with
-	 * privileges of pg_use_reserved_connections.  Replication connections are
-	 * drawn from slots reserved with max_wal_senders and are not limited by
-	 * max_connections, superuser_reserved_connections, or
+	 * The last few connection slots are reserved for superusers and roles
+	 * with privileges of pg_use_reserved_connections.  Replication
+	 * connections are drawn from slots reserved with max_wal_senders and are
+	 * not limited by max_connections, superuser_reserved_connections, or
 	 * reserved_connections.
 	 *
 	 * Note: At this point, the new backend has already claimed a proc struct,

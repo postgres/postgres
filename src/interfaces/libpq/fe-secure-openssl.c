@@ -213,12 +213,12 @@ rloop:
 				if (result_errno == EPIPE ||
 					result_errno == ECONNRESET)
 					libpq_append_conn_error(conn, "server closed the connection unexpectedly\n"
-									   "\tThis probably means the server terminated abnormally\n"
-									   "\tbefore or while processing the request.");
+											"\tThis probably means the server terminated abnormally\n"
+											"\tbefore or while processing the request.");
 				else
 					libpq_append_conn_error(conn, "SSL SYSCALL error: %s",
-									  SOCK_STRERROR(result_errno,
-													sebuf, sizeof(sebuf)));
+											SOCK_STRERROR(result_errno,
+														  sebuf, sizeof(sebuf)));
 			}
 			else
 			{
@@ -313,12 +313,12 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 				result_errno = SOCK_ERRNO;
 				if (result_errno == EPIPE || result_errno == ECONNRESET)
 					libpq_append_conn_error(conn, "server closed the connection unexpectedly\n"
-									   "\tThis probably means the server terminated abnormally\n"
-									   "\tbefore or while processing the request.");
+											"\tThis probably means the server terminated abnormally\n"
+											"\tbefore or while processing the request.");
 				else
 					libpq_append_conn_error(conn, "SSL SYSCALL error: %s",
-									  SOCK_STRERROR(result_errno,
-													sebuf, sizeof(sebuf)));
+											SOCK_STRERROR(result_errno,
+														  sebuf, sizeof(sebuf)));
 			}
 			else
 			{
@@ -415,7 +415,7 @@ pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 			if (algo_type == NULL)
 			{
 				libpq_append_conn_error(conn, "could not find digest for NID %s",
-								  OBJ_nid2sn(algo_nid));
+										OBJ_nid2sn(algo_nid));
 				return NULL;
 			}
 			break;
@@ -1000,7 +1000,7 @@ initialize_SSL(PGconn *conn)
 		if (ssl_min_ver == -1)
 		{
 			libpq_append_conn_error(conn, "invalid value \"%s\" for minimum SSL protocol version",
-							  conn->ssl_min_protocol_version);
+									conn->ssl_min_protocol_version);
 			SSL_CTX_free(SSL_context);
 			return -1;
 		}
@@ -1026,7 +1026,7 @@ initialize_SSL(PGconn *conn)
 		if (ssl_max_ver == -1)
 		{
 			libpq_append_conn_error(conn, "invalid value \"%s\" for maximum SSL protocol version",
-							  conn->ssl_max_protocol_version);
+									conn->ssl_max_protocol_version);
 			SSL_CTX_free(SSL_context);
 			return -1;
 		}
@@ -1091,7 +1091,7 @@ initialize_SSL(PGconn *conn)
 			char	   *err = SSLerrmessage(ERR_get_error());
 
 			libpq_append_conn_error(conn, "could not read root certificate file \"%s\": %s",
-							  fnbuf, err);
+									fnbuf, err);
 			SSLerrfree(err);
 			SSL_CTX_free(SSL_context);
 			return -1;
@@ -1161,7 +1161,7 @@ initialize_SSL(PGconn *conn)
 	else
 		fnbuf[0] = '\0';
 
-	if (conn->sslcertmode[0] == 'd') /* disable */
+	if (conn->sslcertmode[0] == 'd')	/* disable */
 	{
 		/* don't send a client cert even if we have one */
 		have_cert = false;
@@ -1181,7 +1181,7 @@ initialize_SSL(PGconn *conn)
 		if (errno != ENOENT && errno != ENOTDIR)
 		{
 			libpq_append_conn_error(conn, "could not open certificate file \"%s\": %s",
-							  fnbuf, strerror_r(errno, sebuf, sizeof(sebuf)));
+									fnbuf, strerror_r(errno, sebuf, sizeof(sebuf)));
 			SSL_CTX_free(SSL_context);
 			return -1;
 		}
@@ -1199,7 +1199,7 @@ initialize_SSL(PGconn *conn)
 			char	   *err = SSLerrmessage(ERR_get_error());
 
 			libpq_append_conn_error(conn, "could not read certificate file \"%s\": %s",
-							  fnbuf, err);
+									fnbuf, err);
 			SSLerrfree(err);
 			SSL_CTX_free(SSL_context);
 			return -1;
@@ -1298,7 +1298,7 @@ initialize_SSL(PGconn *conn)
 				char	   *err = SSLerrmessage(ERR_get_error());
 
 				libpq_append_conn_error(conn, "could not load SSL engine \"%s\": %s",
-								  engine_str, err);
+										engine_str, err);
 				SSLerrfree(err);
 				free(engine_str);
 				return -1;
@@ -1309,7 +1309,7 @@ initialize_SSL(PGconn *conn)
 				char	   *err = SSLerrmessage(ERR_get_error());
 
 				libpq_append_conn_error(conn, "could not initialize SSL engine \"%s\": %s",
-								  engine_str, err);
+										engine_str, err);
 				SSLerrfree(err);
 				ENGINE_free(conn->engine);
 				conn->engine = NULL;
@@ -1324,7 +1324,7 @@ initialize_SSL(PGconn *conn)
 				char	   *err = SSLerrmessage(ERR_get_error());
 
 				libpq_append_conn_error(conn, "could not read private SSL key \"%s\" from engine \"%s\": %s",
-								  engine_colon, engine_str, err);
+										engine_colon, engine_str, err);
 				SSLerrfree(err);
 				ENGINE_finish(conn->engine);
 				ENGINE_free(conn->engine);
@@ -1337,7 +1337,7 @@ initialize_SSL(PGconn *conn)
 				char	   *err = SSLerrmessage(ERR_get_error());
 
 				libpq_append_conn_error(conn, "could not load private SSL key \"%s\" from engine \"%s\": %s",
-								  engine_colon, engine_str, err);
+										engine_colon, engine_str, err);
 				SSLerrfree(err);
 				ENGINE_finish(conn->engine);
 				ENGINE_free(conn->engine);
@@ -1374,10 +1374,10 @@ initialize_SSL(PGconn *conn)
 		{
 			if (errno == ENOENT)
 				libpq_append_conn_error(conn, "certificate present, but not private key file \"%s\"",
-								  fnbuf);
+										fnbuf);
 			else
 				libpq_append_conn_error(conn, "could not stat private key file \"%s\": %m",
-								  fnbuf);
+										fnbuf);
 			return -1;
 		}
 
@@ -1385,7 +1385,7 @@ initialize_SSL(PGconn *conn)
 		if (!S_ISREG(buf.st_mode))
 		{
 			libpq_append_conn_error(conn, "private key file \"%s\" is not a regular file",
-							  fnbuf);
+									fnbuf);
 			return -1;
 		}
 
@@ -1442,7 +1442,7 @@ initialize_SSL(PGconn *conn)
 			if (SSL_use_PrivateKey_file(conn->ssl, fnbuf, SSL_FILETYPE_ASN1) != 1)
 			{
 				libpq_append_conn_error(conn, "could not load private key file \"%s\": %s",
-								  fnbuf, err);
+										fnbuf, err);
 				SSLerrfree(err);
 				return -1;
 			}
@@ -1458,7 +1458,7 @@ initialize_SSL(PGconn *conn)
 		char	   *err = SSLerrmessage(ERR_get_error());
 
 		libpq_append_conn_error(conn, "certificate does not match private key file \"%s\": %s",
-						  fnbuf, err);
+								fnbuf, err);
 		SSLerrfree(err);
 		return -1;
 	}
@@ -1520,8 +1520,8 @@ open_client_SSL(PGconn *conn)
 					 * it means that verification failed due to a missing
 					 * system CA pool without it being a protocol error. We
 					 * inspect the sslrootcert setting to ensure that the user
-					 * was using the system CA pool. For other errors, log them
-					 * using the normal SYSCALL logging.
+					 * was using the system CA pool. For other errors, log
+					 * them using the normal SYSCALL logging.
 					 */
 					if (!save_errno && vcode == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY &&
 						strcmp(conn->sslrootcert, "system") == 0)
@@ -1529,7 +1529,7 @@ open_client_SSL(PGconn *conn)
 												X509_verify_cert_error_string(vcode));
 					else if (r == -1)
 						libpq_append_conn_error(conn, "SSL SYSCALL error: %s",
-										  SOCK_STRERROR(save_errno, sebuf, sizeof(sebuf)));
+												SOCK_STRERROR(save_errno, sebuf, sizeof(sebuf)));
 					else
 						libpq_append_conn_error(conn, "SSL SYSCALL error: EOF detected");
 					pgtls_close(conn);
@@ -1571,12 +1571,12 @@ open_client_SSL(PGconn *conn)
 						case SSL_R_VERSION_TOO_LOW:
 #endif
 							libpq_append_conn_error(conn, "This may indicate that the server does not support any SSL protocol version between %s and %s.",
-											  conn->ssl_min_protocol_version ?
-											  conn->ssl_min_protocol_version :
-											  MIN_OPENSSL_TLS_VERSION,
-											  conn->ssl_max_protocol_version ?
-											  conn->ssl_max_protocol_version :
-											  MAX_OPENSSL_TLS_VERSION);
+													conn->ssl_min_protocol_version ?
+													conn->ssl_min_protocol_version :
+													MIN_OPENSSL_TLS_VERSION,
+													conn->ssl_max_protocol_version ?
+													conn->ssl_max_protocol_version :
+													MAX_OPENSSL_TLS_VERSION);
 							break;
 						default:
 							break;

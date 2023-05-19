@@ -30,8 +30,8 @@ my @extras;
 
 foreach my $i (@$mapping)
 {
-	my $ucs      = $i->{ucs};
-	my $code     = $i->{code};
+	my $ucs = $i->{ucs};
+	my $code = $i->{code};
 	my $origcode = $i->{code};
 
 	my $plane = ($code & 0x1f0000) >> 16;
@@ -56,12 +56,12 @@ foreach my $i (@$mapping)
 	{
 		push @extras,
 		  {
-			ucs       => $i->{ucs},
-			code      => ($i->{code} + 0x8ea10000),
-			rest      => $i->{rest},
+			ucs => $i->{ucs},
+			code => ($i->{code} + 0x8ea10000),
+			rest => $i->{rest},
 			direction => TO_UNICODE,
-			f         => $i->{f},
-			l         => $i->{l}
+			f => $i->{f},
+			l => $i->{l}
 		  };
 	}
 }

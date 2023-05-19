@@ -8,12 +8,15 @@ my $input;
 my $output;
 
 GetOptions(
-	'format:s'   => \$format,
-	'libname:s'    => \$libname,
+	'format:s' => \$format,
+	'libname:s' => \$libname,
 	'input:s' => \$input,
-	'output:s'  => \$output) or die "wrong arguments";
+	'output:s' => \$output) or die "wrong arguments";
 
-if (not ($format eq 'aix' or $format eq 'darwin' or $format eq 'gnu' or $format eq 'win'))
+if (not(   $format eq 'aix'
+		or $format eq 'darwin'
+		or $format eq 'gnu'
+		or $format eq 'win'))
 {
 	die "$0: $format is not yet handled (only aix, darwin, gnu, win are)\n";
 }

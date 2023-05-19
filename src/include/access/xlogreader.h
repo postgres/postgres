@@ -332,6 +332,7 @@ extern XLogReaderState *XLogReaderAllocate(int wal_segment_size,
 										   const char *waldir,
 										   XLogReaderRoutine *routine,
 										   void *private_data);
+
 /* Free an XLogReader */
 extern void XLogReaderFree(XLogReaderState *state);
 

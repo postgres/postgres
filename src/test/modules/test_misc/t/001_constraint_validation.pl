@@ -25,8 +25,8 @@ sub run_sql_command
 	$node->psql(
 		'postgres',
 		$sql,
-		stderr        => \$stderr,
-		on_error_die  => 1,
+		stderr => \$stderr,
+		on_error_die => 1,
 		on_error_stop => 1);
 	return $stderr;
 }

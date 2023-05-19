@@ -88,10 +88,10 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 	bool		subdisableonerr;	/* True if a worker error should cause the
 									 * subscription to be disabled */
 
-	bool		subpasswordrequired; /* Must connection use a password? */
+	bool		subpasswordrequired;	/* Must connection use a password? */
 
-	bool		subrunasowner;		/* True if replication should execute as
-									 * the subscription owner */
+	bool		subrunasowner;	/* True if replication should execute as the
+								 * subscription owner */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Connection string to the publisher */

@@ -759,6 +759,7 @@ lexescape(struct vars *v)
 			RETV(PLAIN, c);
 			break;
 		default:
+
 			/*
 			 * Throw an error for unrecognized ASCII alpha escape sequences,
 			 * which reserves them for future use if needed.

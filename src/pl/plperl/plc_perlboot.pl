@@ -110,7 +110,7 @@ sub ::encode_array_constructor
 	use warnings;
 
 	use overload
-	  '""'  => \&to_str,
+	  '""' => \&to_str,
 	  '@{}' => \&to_arr;
 
 	sub to_str

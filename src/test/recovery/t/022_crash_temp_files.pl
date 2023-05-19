@@ -98,7 +98,7 @@ SELECT $$in-progress-before-sigkill$$;
 INSERT INTO tab_crash (a) SELECT i FROM generate_series(1, 5000) s(i);
 ];
 ok( pump_until(
-		$killme,         $psql_timeout,
+		$killme, $psql_timeout,
 		\$killme_stdout, qr/in-progress-before-sigkill/m),
 	'insert in-progress-before-sigkill');
 $killme_stdout = '';
@@ -205,7 +205,7 @@ SELECT $$in-progress-before-sigkill$$;
 INSERT INTO tab_crash (a) SELECT i FROM generate_series(1, 5000) s(i);
 ];
 ok( pump_until(
-		$killme,         $psql_timeout,
+		$killme, $psql_timeout,
 		\$killme_stdout, qr/in-progress-before-sigkill/m),
 	'insert in-progress-before-sigkill');
 $killme_stdout = '';

@@ -34,7 +34,7 @@ print "<tbody>\n";
 while (<$feat>)
 {
 	chomp;
-	my ($feature_id,      $feature_name, $subfeature_id,
+	my ($feature_id, $feature_name, $subfeature_id,
 		$subfeature_name, $is_supported, $comments) = split /\t/;
 
 	$is_supported eq $yesno || next;

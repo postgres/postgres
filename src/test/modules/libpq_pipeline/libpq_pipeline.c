@@ -985,7 +985,7 @@ test_prepared(PGconn *conn)
 static void
 notice_processor(void *arg, const char *message)
 {
-	int	   *n_notices = (int *) arg;
+	int		   *n_notices = (int *) arg;
 
 	(*n_notices)++;
 	fprintf(stderr, "NOTICE %d: %s", *n_notices, message);

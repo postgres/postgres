@@ -563,7 +563,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 				 * the lock.
 				 */
 				int			nsyncworkers =
-				logicalrep_sync_worker_count(MyLogicalRepWorker->subid);
+					logicalrep_sync_worker_count(MyLogicalRepWorker->subid);
 
 				/* Now safe to release the LWLock */
 				LWLockRelease(LogicalRepWorkerLock);

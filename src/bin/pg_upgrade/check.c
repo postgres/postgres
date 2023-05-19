@@ -105,8 +105,8 @@ check_and_dump_old_cluster(bool live_check)
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
 	/*
-	 * PG 16 increased the size of the 'aclitem' type, which breaks the on-disk
-	 * format for existing data.
+	 * PG 16 increased the size of the 'aclitem' type, which breaks the
+	 * on-disk format for existing data.
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1500)
 		check_for_aclitem_data_type_usage(&old_cluster);

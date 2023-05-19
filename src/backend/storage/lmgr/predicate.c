@@ -625,7 +625,7 @@ RWConflictExists(const SERIALIZABLEXACT *reader, const SERIALIZABLEXACT *writer)
 	dlist_foreach(iter, &unconstify(SERIALIZABLEXACT *, reader)->outConflicts)
 	{
 		RWConflict	conflict =
-		dlist_container(RWConflictData, outLink, iter.cur);
+			dlist_container(RWConflictData, outLink, iter.cur);
 
 		if (conflict->sxactIn == writer)
 			return true;
@@ -708,7 +708,7 @@ FlagSxactUnsafe(SERIALIZABLEXACT *sxact)
 	dlist_foreach_modify(iter, &sxact->possibleUnsafeConflicts)
 	{
 		RWConflict	conflict =
-		dlist_container(RWConflictData, inLink, iter.cur);
+			dlist_container(RWConflictData, inLink, iter.cur);
 
 		Assert(!SxactIsReadOnly(conflict->sxactOut));
 		Assert(sxact == conflict->sxactIn);
@@ -1587,7 +1587,7 @@ GetSafeSnapshotBlockingPids(int blocked_pid, int *output, int output_size)
 		dlist_foreach(iter, &blocking_sxact->possibleUnsafeConflicts)
 		{
 			RWConflict	possibleUnsafeConflict =
-			dlist_container(RWConflictData, inLink, iter.cur);
+				dlist_container(RWConflictData, inLink, iter.cur);
 
 			output[num_written++] = possibleUnsafeConflict->sxactOut->pid;
 
@@ -1825,8 +1825,8 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 		/*
 		 * If we didn't find any possibly unsafe conflicts because every
 		 * uncommitted writable transaction turned out to be doomed, then we
-		 * can "opt out" immediately.  See comments above the earlier check for
-		 * PredXact->WritableSxactCount == 0.
+		 * can "opt out" immediately.  See comments above the earlier check
+		 * for PredXact->WritableSxactCount == 0.
 		 */
 		if (dlist_is_empty(&sxact->possibleUnsafeConflicts))
 		{
@@ -2613,7 +2613,7 @@ DeleteLockTarget(PREDICATELOCKTARGET *target, uint32 targettaghash)
 	dlist_foreach_modify(iter, &target->predicateLocks)
 	{
 		PREDICATELOCK *predlock =
-		dlist_container(PREDICATELOCK, targetLink, iter.cur);
+			dlist_container(PREDICATELOCK, targetLink, iter.cur);
 		bool		found;
 
 		dlist_delete(&(predlock->xactLink));
@@ -2754,7 +2754,7 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 		dlist_foreach_modify(iter, &oldtarget->predicateLocks)
 		{
 			PREDICATELOCK *oldpredlock =
-			dlist_container(PREDICATELOCK, targetLink, iter.cur);
+				dlist_container(PREDICATELOCK, targetLink, iter.cur);
 			PREDICATELOCK *newpredlock;
 			SerCommitSeqNo oldCommitSeqNo = oldpredlock->commitSeqNo;
 
@@ -2976,7 +2976,7 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 		dlist_foreach_modify(iter, &oldtarget->predicateLocks)
 		{
 			PREDICATELOCK *oldpredlock =
-			dlist_container(PREDICATELOCK, targetLink, iter.cur);
+				dlist_container(PREDICATELOCK, targetLink, iter.cur);
 			PREDICATELOCK *newpredlock;
 			SerCommitSeqNo oldCommitSeqNo;
 			SERIALIZABLEXACT *oldXact;
@@ -3194,7 +3194,7 @@ SetNewSxactGlobalXmin(void)
 	dlist_foreach(iter, &PredXact->activeList)
 	{
 		SERIALIZABLEXACT *sxact =
-		dlist_container(SERIALIZABLEXACT, xactLink, iter.cur);
+			dlist_container(SERIALIZABLEXACT, xactLink, iter.cur);
 
 		if (!SxactIsRolledBack(sxact)
 			&& !SxactIsCommitted(sxact)
@@ -3440,7 +3440,7 @@ ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
 		dlist_foreach_modify(iter, &MySerializableXact->possibleUnsafeConflicts)
 		{
 			RWConflict	possibleUnsafeConflict =
-			dlist_container(RWConflictData, inLink, iter.cur);
+				dlist_container(RWConflictData, inLink, iter.cur);
 
 			Assert(!SxactIsReadOnly(possibleUnsafeConflict->sxactOut));
 			Assert(MySerializableXact == possibleUnsafeConflict->sxactIn);
@@ -3471,7 +3471,7 @@ ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
 	dlist_foreach_modify(iter, &MySerializableXact->outConflicts)
 	{
 		RWConflict	conflict =
-		dlist_container(RWConflictData, outLink, iter.cur);
+			dlist_container(RWConflictData, outLink, iter.cur);
 
 		if (isCommit
 			&& !SxactIsReadOnly(MySerializableXact)
@@ -3496,7 +3496,7 @@ ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
 	dlist_foreach_modify(iter, &MySerializableXact->inConflicts)
 	{
 		RWConflict	conflict =
-		dlist_container(RWConflictData, inLink, iter.cur);
+			dlist_container(RWConflictData, inLink, iter.cur);
 
 		if (!isCommit
 			|| SxactIsCommitted(conflict->sxactOut)
@@ -3515,7 +3515,7 @@ ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
 		dlist_foreach_modify(iter, &MySerializableXact->possibleUnsafeConflicts)
 		{
 			RWConflict	possibleUnsafeConflict =
-			dlist_container(RWConflictData, outLink, iter.cur);
+				dlist_container(RWConflictData, outLink, iter.cur);
 
 			roXact = possibleUnsafeConflict->sxactIn;
 			Assert(MySerializableXact == possibleUnsafeConflict->sxactOut);
@@ -3564,8 +3564,8 @@ ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
 	 * xmin and purge any transactions which finished before this transaction
 	 * was launched.
 	 *
-	 * For parallel queries in read-only transactions, it might run twice.
-	 * We only release the reference on the first call.
+	 * For parallel queries in read-only transactions, it might run twice. We
+	 * only release the reference on the first call.
 	 */
 	needToClear = false;
 	if ((partiallyReleasing ||
@@ -3641,7 +3641,7 @@ ClearOldPredicateLocks(void)
 	dlist_foreach_modify(iter, FinishedSerializableTransactions)
 	{
 		SERIALIZABLEXACT *finishedSxact =
-		dlist_container(SERIALIZABLEXACT, finishedLink, iter.cur);
+			dlist_container(SERIALIZABLEXACT, finishedLink, iter.cur);
 
 		if (!TransactionIdIsValid(PredXact->SxactGlobalXmin)
 			|| TransactionIdPrecedesOrEquals(finishedSxact->finishedBefore,
@@ -3700,7 +3700,7 @@ ClearOldPredicateLocks(void)
 	dlist_foreach_modify(iter, &OldCommittedSxact->predicateLocks)
 	{
 		PREDICATELOCK *predlock =
-		dlist_container(PREDICATELOCK, xactLink, iter.cur);
+			dlist_container(PREDICATELOCK, xactLink, iter.cur);
 		bool		canDoPartialCleanup;
 
 		LWLockAcquire(SerializableXactHashLock, LW_SHARED);
@@ -3787,7 +3787,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 	dlist_foreach_modify(iter, &sxact->predicateLocks)
 	{
 		PREDICATELOCK *predlock =
-		dlist_container(PREDICATELOCK, xactLink, iter.cur);
+			dlist_container(PREDICATELOCK, xactLink, iter.cur);
 		PREDICATELOCKTAG tag;
 		PREDICATELOCKTARGET *target;
 		PREDICATELOCKTARGETTAG targettag;
@@ -3864,7 +3864,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 		dlist_foreach_modify(iter, &sxact->outConflicts)
 		{
 			RWConflict	conflict =
-			dlist_container(RWConflictData, outLink, iter.cur);
+				dlist_container(RWConflictData, outLink, iter.cur);
 
 			if (summarize)
 				conflict->sxactIn->flags |= SXACT_FLAG_SUMMARY_CONFLICT_IN;
@@ -3876,7 +3876,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 	dlist_foreach_modify(iter, &sxact->inConflicts)
 	{
 		RWConflict	conflict =
-		dlist_container(RWConflictData, inLink, iter.cur);
+			dlist_container(RWConflictData, inLink, iter.cur);
 
 		if (summarize)
 			conflict->sxactOut->flags |= SXACT_FLAG_SUMMARY_CONFLICT_OUT;
@@ -4134,7 +4134,7 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 	dlist_foreach_modify(iter, &target->predicateLocks)
 	{
 		PREDICATELOCK *predlock =
-		dlist_container(PREDICATELOCK, targetLink, iter.cur);
+			dlist_container(PREDICATELOCK, targetLink, iter.cur);
 		SERIALIZABLEXACT *sxact = predlock->tag.myXact;
 
 		if (sxact == MySerializableXact)
@@ -4407,7 +4407,7 @@ CheckTableForSerializableConflictIn(Relation relation)
 		dlist_foreach_modify(iter, &target->predicateLocks)
 		{
 			PREDICATELOCK *predlock =
-			dlist_container(PREDICATELOCK, targetLink, iter.cur);
+				dlist_container(PREDICATELOCK, targetLink, iter.cur);
 
 			if (predlock->tag.myXact != MySerializableXact
 				&& !RWConflictExists(predlock->tag.myXact, MySerializableXact))
@@ -4519,7 +4519,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 		dlist_foreach(iter, &writer->outConflicts)
 		{
 			RWConflict	conflict =
-			dlist_container(RWConflictData, outLink, iter.cur);
+				dlist_container(RWConflictData, outLink, iter.cur);
 			SERIALIZABLEXACT *t2 = conflict->sxactIn;
 
 			if (SxactIsPrepared(t2)
@@ -4566,7 +4566,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 			dlist_foreach(iter, &unconstify(SERIALIZABLEXACT *, reader)->inConflicts)
 			{
 				const RWConflict conflict =
-				dlist_container(RWConflictData, inLink, iter.cur);
+					dlist_container(RWConflictData, inLink, iter.cur);
 				const SERIALIZABLEXACT *t0 = conflict->sxactOut;
 
 				if (!SxactIsDoomed(t0)
@@ -4664,7 +4664,7 @@ PreCommit_CheckForSerializationFailure(void)
 	dlist_foreach(near_iter, &MySerializableXact->inConflicts)
 	{
 		RWConflict	nearConflict =
-		dlist_container(RWConflictData, inLink, near_iter.cur);
+			dlist_container(RWConflictData, inLink, near_iter.cur);
 
 		if (!SxactIsCommitted(nearConflict->sxactOut)
 			&& !SxactIsDoomed(nearConflict->sxactOut))
@@ -4674,7 +4674,7 @@ PreCommit_CheckForSerializationFailure(void)
 			dlist_foreach(far_iter, &nearConflict->sxactOut->inConflicts)
 			{
 				RWConflict	farConflict =
-				dlist_container(RWConflictData, inLink, far_iter.cur);
+					dlist_container(RWConflictData, inLink, far_iter.cur);
 
 				if (farConflict->sxactOut == MySerializableXact
 					|| (!SxactIsCommitted(farConflict->sxactOut)
@@ -4770,7 +4770,7 @@ AtPrepare_PredicateLocks(void)
 	dlist_foreach(iter, &sxact->predicateLocks)
 	{
 		PREDICATELOCK *predlock =
-		dlist_container(PREDICATELOCK, xactLink, iter.cur);
+			dlist_container(PREDICATELOCK, xactLink, iter.cur);
 
 		record.type = TWOPHASEPREDICATERECORD_LOCK;
 		lockRecord->target = predlock->tag.myTarget->tag;

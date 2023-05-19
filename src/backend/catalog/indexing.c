@@ -148,8 +148,8 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple,
 #endif							/* USE_ASSERT_CHECKING */
 
 		/*
-		 * Skip insertions into non-summarizing indexes if we only need
-		 * to update summarizing indexes.
+		 * Skip insertions into non-summarizing indexes if we only need to
+		 * update summarizing indexes.
 		 */
 		if (onlySummarized && !indexInfo->ii_Summarizing)
 			continue;

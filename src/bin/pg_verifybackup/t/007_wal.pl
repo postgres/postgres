@@ -19,7 +19,7 @@ $primary->command_ok(
 	"base backup ok");
 
 # Rename pg_wal.
-my $original_pg_wal  = $backup_path . '/pg_wal';
+my $original_pg_wal = $backup_path . '/pg_wal';
 my $relocated_pg_wal = $primary->backup_dir . '/relocated_pg_wal';
 rename($original_pg_wal, $relocated_pg_wal) || die "rename pg_wal: $!";
 
@@ -46,7 +46,7 @@ my @walfiles = grep { /^[0-9A-F]{24}$/ } slurp_dir($original_pg_wal);
 
 # Replace the contents of one of the files with garbage of equal length.
 my $wal_corruption_target = $original_pg_wal . '/' . $walfiles[0];
-my $wal_size              = -s $wal_corruption_target;
+my $wal_size = -s $wal_corruption_target;
 open(my $fh, '>', $wal_corruption_target)
   || die "open $wal_corruption_target: $!";
 print $fh 'w' x $wal_size;

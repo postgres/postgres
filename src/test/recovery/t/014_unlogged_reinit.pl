@@ -30,9 +30,9 @@ my $seqUnloggedPath = $node->safe_psql('postgres',
 
 # Test that main and init forks exist.
 ok(-f "$pgdata/${baseUnloggedPath}_init", 'table init fork exists');
-ok(-f "$pgdata/$baseUnloggedPath",        'table main fork exists');
-ok(-f "$pgdata/${seqUnloggedPath}_init",  'sequence init fork exists');
-ok(-f "$pgdata/$seqUnloggedPath",         'sequence main fork exists');
+ok(-f "$pgdata/$baseUnloggedPath", 'table main fork exists');
+ok(-f "$pgdata/${seqUnloggedPath}_init", 'sequence init fork exists');
+ok(-f "$pgdata/$seqUnloggedPath", 'sequence main fork exists');
 
 # Test the sequence
 is($node->safe_psql('postgres', "SELECT nextval('seq_unlogged')"),
@@ -54,7 +54,7 @@ my $ts1UnloggedPath = $node->safe_psql('postgres',
 
 # Test that main and init forks exist.
 ok(-f "$pgdata/${ts1UnloggedPath}_init", 'init fork in tablespace exists');
-ok(-f "$pgdata/$ts1UnloggedPath",        'main fork in tablespace exists');
+ok(-f "$pgdata/$ts1UnloggedPath", 'main fork in tablespace exists');
 
 # Create more unlogged sequences for testing.
 $node->safe_psql('postgres', 'CREATE UNLOGGED SEQUENCE seq_unlogged2');
@@ -73,7 +73,7 @@ $node->safe_psql('postgres', 'INSERT INTO tab_seq_unlogged3 DEFAULT VALUES');
 $node->stop('immediate');
 
 # Write fake forks to test that they are removed during recovery.
-append_to_file("$pgdata/${baseUnloggedPath}_vm",  'TEST_VM');
+append_to_file("$pgdata/${baseUnloggedPath}_vm", 'TEST_VM');
 append_to_file("$pgdata/${baseUnloggedPath}_fsm", 'TEST_FSM');
 
 # Remove main fork to test that it is recopied from init.
@@ -83,7 +83,7 @@ unlink("$pgdata/${seqUnloggedPath}")
   or BAIL_OUT("could not remove \"${seqUnloggedPath}\": $!");
 
 # the same for the tablespace
-append_to_file("$pgdata/${ts1UnloggedPath}_vm",  'TEST_VM');
+append_to_file("$pgdata/${ts1UnloggedPath}_vm", 'TEST_VM');
 append_to_file("$pgdata/${ts1UnloggedPath}_fsm", 'TEST_FSM');
 unlink("$pgdata/${ts1UnloggedPath}")
   or BAIL_OUT("could not remove \"${ts1UnloggedPath}\": $!");

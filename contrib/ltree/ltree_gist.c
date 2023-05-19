@@ -43,7 +43,7 @@ ltree_gist_alloc(bool isalltrue, BITVECP sign, int siglen,
 				 ltree *left, ltree *right)
 {
 	int32		size = LTG_HDRSIZE + (isalltrue ? 0 : siglen) +
-	(left ? VARSIZE(left) + (right ? VARSIZE(right) : 0) : 0);
+		(left ? VARSIZE(left) + (right ? VARSIZE(right) : 0) : 0);
 	ltree_gist *result = palloc(size);
 
 	SET_VARSIZE(result, size);

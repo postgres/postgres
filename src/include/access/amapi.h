@@ -245,7 +245,7 @@ typedef struct IndexAmRoutine
 	/* does AM use maintenance_work_mem? */
 	bool		amusemaintenanceworkmem;
 	/* does AM store tuple information only at block granularity? */
-	bool        amsummarizing;
+	bool		amsummarizing;
 	/* OR of parallel vacuum flags.  See vacuum.h for flags. */
 	uint8		amparallelvacuumoptions;
 	/* type of data stored in index, or InvalidOid if variable */

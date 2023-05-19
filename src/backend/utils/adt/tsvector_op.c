@@ -525,7 +525,7 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 		if (arrin[i].haspos)
 		{
 			int			len = POSDATALEN(tsv, arrin + i) * sizeof(WordEntryPos)
-			+ sizeof(uint16);
+				+ sizeof(uint16);
 
 			curoff = SHORTALIGN(curoff);
 			memcpy(dataout + curoff,

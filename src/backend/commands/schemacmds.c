@@ -400,7 +400,7 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		 * no special case for them.
 		 */
 		aclresult = object_aclcheck(DatabaseRelationId, MyDatabaseId, GetUserId(),
-										 ACL_CREATE);
+									ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_DATABASE,
 						   get_database_name(MyDatabaseId));

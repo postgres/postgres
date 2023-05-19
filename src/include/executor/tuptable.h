@@ -409,7 +409,7 @@ slot_getattr(TupleTableSlot *slot, int attnum,
 static inline Datum
 slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
-	Assert(attnum < 0);		/* caller error */
+	Assert(attnum < 0);			/* caller error */
 
 	if (attnum == TableOidAttributeNumber)
 	{

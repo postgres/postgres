@@ -11,7 +11,7 @@ use Test::More;
 use PostgreSQL::Test::Cluster;
 
 my $bkplabel = 'backup';
-my $primary  = PostgreSQL::Test::Cluster->new('primary');
+my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 
 $primary->append_conf(

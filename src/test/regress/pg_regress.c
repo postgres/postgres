@@ -85,14 +85,14 @@ typedef enum TAPtype
 	TEST_STATUS,
 	PLAN,
 	NONE
-}			TAPtype;
+} TAPtype;
 
 /* options settable from command line */
 _stringlist *dblist = NULL;
 bool		debug = false;
 char	   *inputdir = ".";
 char	   *outputdir = ".";
-char       *expecteddir = ".";
+char	   *expecteddir = ".";
 char	   *bindir = PGBINDIR;
 char	   *launcher = NULL;
 static _stringlist *loadextension = NULL;

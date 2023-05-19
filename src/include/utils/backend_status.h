@@ -271,13 +271,13 @@ typedef struct LocalPgBackendStatus
 	/*
 	 * Number of cached subtransactions in the current session.
 	 */
-	int	backend_subxact_count;
+	int			backend_subxact_count;
 
 	/*
 	 * The number of subtransactions in the current session which exceeded the
 	 * cached subtransaction limit.
 	 */
-	bool backend_subxact_overflowed;
+	bool		backend_subxact_overflowed;
 } LocalPgBackendStatus;
 
 

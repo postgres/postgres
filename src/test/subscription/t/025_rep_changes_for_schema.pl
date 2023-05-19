@@ -63,7 +63,8 @@ $node_subscriber->safe_psql('postgres',
 );
 
 # Wait for initial table sync to finish
-$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub_schema');
+$node_subscriber->wait_for_subscription_sync($node_publisher,
+	'tap_sub_schema');
 
 # Check the schema table data is synced up
 my $result = $node_subscriber->safe_psql('postgres',

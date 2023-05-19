@@ -1216,7 +1216,7 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 		{
 			SharedTuplestoreAccessor *inner_tuples;
 			Barrier    *batch_barrier =
-			&hashtable->batches[batchno].shared->batch_barrier;
+				&hashtable->batches[batchno].shared->batch_barrier;
 
 			switch (BarrierAttach(batch_barrier))
 			{
@@ -1330,22 +1330,22 @@ ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
 	BufFile    *file = *fileptr;
 
 	/*
-	 * The batch file is lazily created. If this is the first tuple
-	 * written to this batch, the batch file is created and its buffer is
-	 * allocated in the spillCxt context, NOT in the batchCxt.
+	 * The batch file is lazily created. If this is the first tuple written to
+	 * this batch, the batch file is created and its buffer is allocated in
+	 * the spillCxt context, NOT in the batchCxt.
 	 *
-	 * During the build phase, buffered files are created for inner
-	 * batches. Each batch's buffered file is closed (and its buffer freed)
-	 * after the batch is loaded into memory during the outer side scan.
-	 * Therefore, it is necessary to allocate the batch file buffer in a
-	 * memory context which outlives the batch itself.
+	 * During the build phase, buffered files are created for inner batches.
+	 * Each batch's buffered file is closed (and its buffer freed) after the
+	 * batch is loaded into memory during the outer side scan. Therefore, it
+	 * is necessary to allocate the batch file buffer in a memory context
+	 * which outlives the batch itself.
 	 *
-	 * Also, we use spillCxt instead of hashCxt for a better accounting of
-	 * the spilling memory consumption.
+	 * Also, we use spillCxt instead of hashCxt for a better accounting of the
+	 * spilling memory consumption.
 	 */
 	if (file == NULL)
 	{
-		MemoryContext	oldctx = MemoryContextSwitchTo(hashtable->spillCxt);
+		MemoryContext oldctx = MemoryContextSwitchTo(hashtable->spillCxt);
 
 		file = BufFileCreateTemp(false);
 		*fileptr = file;
@@ -1622,7 +1622,7 @@ ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 {
 	int			plan_node_id = state->js.ps.plan->plan_node_id;
 	ParallelHashJoinState *pstate =
-	shm_toc_lookup(pcxt->toc, plan_node_id, false);
+		shm_toc_lookup(pcxt->toc, plan_node_id, false);
 
 	/*
 	 * It would be possible to reuse the shared hash table in single-batch
@@ -1657,7 +1657,7 @@ ExecHashJoinInitializeWorker(HashJoinState *state,
 	HashState  *hashNode;
 	int			plan_node_id = state->js.ps.plan->plan_node_id;
 	ParallelHashJoinState *pstate =
-	shm_toc_lookup(pwcxt->toc, plan_node_id, false);
+		shm_toc_lookup(pwcxt->toc, plan_node_id, false);
 
 	/* Attach to the space for shared temporary files. */
 	SharedFileSetAttach(&pstate->fileset, pwcxt->seg);

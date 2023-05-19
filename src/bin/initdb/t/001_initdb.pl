@@ -105,7 +105,7 @@ if ($ENV{with_icu} eq 'yes')
 {
 	command_ok(
 		[
-			'initdb',                '--no-sync',
+			'initdb', '--no-sync',
 			'--locale-provider=icu', '--icu-locale=en',
 			"$tempdir/data3"
 		],
@@ -113,7 +113,7 @@ if ($ENV{with_icu} eq 'yes')
 
 	command_fails_like(
 		[
-			'initdb',                '--no-sync',
+			'initdb', '--no-sync',
 			'--locale-provider=icu', '--icu-locale=@colNumeric=lower',
 			"$tempdir/dataX"
 		],
@@ -122,7 +122,7 @@ if ($ENV{with_icu} eq 'yes')
 
 	command_fails_like(
 		[
-			'initdb',                '--no-sync',
+			'initdb', '--no-sync',
 			'--locale-provider=icu', '--encoding=SQL_ASCII',
 			'--icu-locale=en', "$tempdir/dataX"
 		],
@@ -131,18 +131,18 @@ if ($ENV{with_icu} eq 'yes')
 
 	command_fails_like(
 		[
-			'initdb',                '--no-sync',
-			'--locale-provider=icu',
-			'--icu-locale=nonsense-nowhere', "$tempdir/dataX"
+			'initdb', '--no-sync',
+			'--locale-provider=icu', '--icu-locale=nonsense-nowhere',
+			"$tempdir/dataX"
 		],
 		qr/error: locale "nonsense-nowhere" has unknown language "nonsense"/,
 		'fails for nonsense language');
 
 	command_fails_like(
 		[
-			'initdb',                '--no-sync',
-			'--locale-provider=icu',
-			'--icu-locale=@colNumeric=lower', "$tempdir/dataX"
+			'initdb', '--no-sync',
+			'--locale-provider=icu', '--icu-locale=@colNumeric=lower',
+			"$tempdir/dataX"
 		],
 		qr/could not open collator for locale "und-u-kn-lower": U_ILLEGAL_ARGUMENT_ERROR/,
 		'fails for invalid collation argument');
@@ -160,7 +160,7 @@ command_fails(
 
 command_fails(
 	[
-		'initdb',                 '--no-sync',
+		'initdb', '--no-sync',
 		'--locale-provider=libc', '--icu-locale=en',
 		"$tempdir/dataX"
 	],

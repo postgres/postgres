@@ -1117,7 +1117,7 @@ gistformdownlink(Relation rel, Buffer buf, GISTSTATE *giststate,
 	for (offset = FirstOffsetNumber; offset <= maxoff; offset = OffsetNumberNext(offset))
 	{
 		IndexTuple	ituple = (IndexTuple)
-		PageGetItem(page, PageGetItemId(page, offset));
+			PageGetItem(page, PageGetItemId(page, offset));
 
 		if (downlink == NULL)
 			downlink = CopyIndexTuple(ituple);

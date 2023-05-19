@@ -1794,8 +1794,7 @@ pg_strncoll_libc_win32_utf8(const char *arg1, size_t len1, const char *arg2,
 	else
 #endif
 		result = wcscoll((LPWSTR) a1p, (LPWSTR) a2p);
-	if (result == 2147483647)	/* _NLSCMPERROR; missing from mingw
-								 * headers */
+	if (result == 2147483647)	/* _NLSCMPERROR; missing from mingw headers */
 		ereport(ERROR,
 				(errmsg("could not compare Unicode strings: %m")));
 
@@ -1818,14 +1817,15 @@ pg_strncoll_libc_win32_utf8(const char *arg1, size_t len1, const char *arg2,
 static int
 pg_strcoll_libc(const char *arg1, const char *arg2, pg_locale_t locale)
 {
-	int result;
+	int			result;
 
 	Assert(!locale || locale->provider == COLLPROVIDER_LIBC);
 #ifdef WIN32
 	if (GetDatabaseEncoding() == PG_UTF8)
 	{
-		size_t len1 = strlen(arg1);
-		size_t len2 = strlen(arg2);
+		size_t		len1 = strlen(arg1);
+		size_t		len2 = strlen(arg2);
+
 		result = pg_strncoll_libc_win32_utf8(arg1, len1, arg2, len2, locale);
 	}
 	else
@@ -1854,13 +1854,13 @@ static int
 pg_strncoll_libc(const char *arg1, size_t len1, const char *arg2, size_t len2,
 				 pg_locale_t locale)
 {
-	char	 sbuf[TEXTBUFLEN];
-	char	*buf	  = sbuf;
-	size_t	 bufsize1 = len1 + 1;
-	size_t	 bufsize2 = len2 + 1;
-	char	*arg1n;
-	char	*arg2n;
-	int		 result;
+	char		sbuf[TEXTBUFLEN];
+	char	   *buf = sbuf;
+	size_t		bufsize1 = len1 + 1;
+	size_t		bufsize2 = len2 + 1;
+	char	   *arg1n;
+	char	   *arg2n;
+	int			result;
 
 	Assert(!locale || locale->provider == COLLPROVIDER_LIBC);
 
@@ -1906,15 +1906,15 @@ static int
 pg_strncoll_icu_no_utf8(const char *arg1, int32_t len1,
 						const char *arg2, int32_t len2, pg_locale_t locale)
 {
-	char	 sbuf[TEXTBUFLEN];
-	char	*buf = sbuf;
-	int32_t	 ulen1;
-	int32_t	 ulen2;
-	size_t   bufsize1;
-	size_t   bufsize2;
-	UChar	*uchar1,
-			*uchar2;
-	int		 result;
+	char		sbuf[TEXTBUFLEN];
+	char	   *buf = sbuf;
+	int32_t		ulen1;
+	int32_t		ulen2;
+	size_t		bufsize1;
+	size_t		bufsize2;
+	UChar	   *uchar1,
+			   *uchar2;
+	int			result;
 
 	Assert(locale->provider == COLLPROVIDER_ICU);
 #ifdef HAVE_UCOL_STRCOLLUTF8
@@ -1961,7 +1961,7 @@ static int
 pg_strncoll_icu(const char *arg1, int32_t len1, const char *arg2, int32_t len2,
 				pg_locale_t locale)
 {
-	int result;
+	int			result;
 
 	Assert(locale->provider == COLLPROVIDER_ICU);
 
@@ -2042,7 +2042,7 @@ int
 pg_strncoll(const char *arg1, size_t len1, const char *arg2, size_t len2,
 			pg_locale_t locale)
 {
-	int		 result;
+	int			result;
 
 	if (!locale || locale->provider == COLLPROVIDER_LIBC)
 		result = pg_strncoll_libc(arg1, len1, arg2, len2, locale);
@@ -2074,7 +2074,7 @@ pg_strxfrm_libc(char *dest, const char *src, size_t destsize,
 #else
 	/* shouldn't happen */
 	elog(ERROR, "unsupported collprovider: %c", locale->provider);
-	return 0; /* keep compiler quiet */
+	return 0;					/* keep compiler quiet */
 #endif
 }
 
@@ -2082,10 +2082,10 @@ static size_t
 pg_strnxfrm_libc(char *dest, const char *src, size_t srclen, size_t destsize,
 				 pg_locale_t locale)
 {
-	char	 sbuf[TEXTBUFLEN];
-	char	*buf	 = sbuf;
-	size_t	 bufsize = srclen + 1;
-	size_t	 result;
+	char		sbuf[TEXTBUFLEN];
+	char	   *buf = sbuf;
+	size_t		bufsize = srclen + 1;
+	size_t		result;
 
 	Assert(!locale || locale->provider == COLLPROVIDER_LIBC);
 
@@ -2114,12 +2114,12 @@ static size_t
 pg_strnxfrm_icu(char *dest, const char *src, int32_t srclen, int32_t destsize,
 				pg_locale_t locale)
 {
-	char	 sbuf[TEXTBUFLEN];
-	char	*buf	= sbuf;
-	UChar	*uchar;
-	int32_t	 ulen;
-	size_t   uchar_bsize;
-	Size	 result_bsize;
+	char		sbuf[TEXTBUFLEN];
+	char	   *buf = sbuf;
+	UChar	   *uchar;
+	int32_t		ulen;
+	size_t		uchar_bsize;
+	Size		result_bsize;
 
 	Assert(locale->provider == COLLPROVIDER_ICU);
 
@@ -2161,15 +2161,15 @@ static size_t
 pg_strnxfrm_prefix_icu_no_utf8(char *dest, const char *src, int32_t srclen,
 							   int32_t destsize, pg_locale_t locale)
 {
-	char			 sbuf[TEXTBUFLEN];
-	char			*buf   = sbuf;
-	UCharIterator	 iter;
-	uint32_t		 state[2];
-	UErrorCode		 status;
-	int32_t			 ulen  = -1;
-	UChar			*uchar = NULL;
-	size_t			 uchar_bsize;
-	Size			 result_bsize;
+	char		sbuf[TEXTBUFLEN];
+	char	   *buf = sbuf;
+	UCharIterator iter;
+	uint32_t	state[2];
+	UErrorCode	status;
+	int32_t		ulen = -1;
+	UChar	   *uchar = NULL;
+	size_t		uchar_bsize;
+	Size		result_bsize;
 
 	Assert(locale->provider == COLLPROVIDER_ICU);
 	Assert(GetDatabaseEncoding() != PG_UTF8);
@@ -2209,7 +2209,7 @@ static size_t
 pg_strnxfrm_prefix_icu(char *dest, const char *src, int32_t srclen,
 					   int32_t destsize, pg_locale_t locale)
 {
-	size_t result;
+	size_t		result;
 
 	Assert(locale->provider == COLLPROVIDER_ICU);
 
@@ -2271,7 +2271,7 @@ pg_strxfrm_enabled(pg_locale_t locale)
 		/* shouldn't happen */
 		elog(ERROR, "unsupported collprovider: %c", locale->provider);
 
-	return false; /* keep compiler quiet */
+	return false;				/* keep compiler quiet */
 }
 
 /*
@@ -2291,7 +2291,7 @@ pg_strxfrm_enabled(pg_locale_t locale)
 size_t
 pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
 {
-	size_t result = 0; /* keep compiler quiet */
+	size_t		result = 0;		/* keep compiler quiet */
 
 	if (!locale || locale->provider == COLLPROVIDER_LIBC)
 		result = pg_strxfrm_libc(dest, src, destsize, locale);
@@ -2328,7 +2328,7 @@ size_t
 pg_strnxfrm(char *dest, size_t destsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
-	size_t result = 0; /* keep compiler quiet */
+	size_t		result = 0;		/* keep compiler quiet */
 
 	if (!locale || locale->provider == COLLPROVIDER_LIBC)
 		result = pg_strnxfrm_libc(dest, src, srclen, destsize, locale);
@@ -2358,7 +2358,7 @@ pg_strxfrm_prefix_enabled(pg_locale_t locale)
 		/* shouldn't happen */
 		elog(ERROR, "unsupported collprovider: %c", locale->provider);
 
-	return false; /* keep compiler quiet */
+	return false;				/* keep compiler quiet */
 }
 
 /*
@@ -2378,7 +2378,7 @@ size_t
 pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
 				  pg_locale_t locale)
 {
-	size_t result = 0; /* keep compiler quiet */
+	size_t		result = 0;		/* keep compiler quiet */
 
 	if (!locale || locale->provider == COLLPROVIDER_LIBC)
 		elog(ERROR, "collprovider '%c' does not support pg_strxfrm_prefix()",
@@ -2415,7 +2415,7 @@ size_t
 pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 				   size_t srclen, pg_locale_t locale)
 {
-	size_t result = 0; /* keep compiler quiet */
+	size_t		result = 0;		/* keep compiler quiet */
 
 	if (!locale || locale->provider == COLLPROVIDER_LIBC)
 		elog(ERROR, "collprovider '%c' does not support pg_strnxfrm_prefix()",
@@ -2491,7 +2491,7 @@ pg_ucol_open(const char *loc_str)
 	collator = ucol_open(loc_str, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
-				/* use original string for error report */
+		/* use original string for error report */
 				(errmsg("could not open collator for locale \"%s\": %s",
 						orig_str, u_errorName(status))));
 
@@ -2554,6 +2554,7 @@ uchar_length(UConverter *converter, const char *str, int32_t len)
 {
 	UErrorCode	status = U_ZERO_ERROR;
 	int32_t		ulen;
+
 	ulen = ucnv_toUChars(converter, NULL, 0, str, len, &status);
 	if (U_FAILURE(status) && status != U_BUFFER_OVERFLOW_ERROR)
 		ereport(ERROR,
@@ -2571,6 +2572,7 @@ uchar_convert(UConverter *converter, UChar *dest, int32_t destlen,
 {
 	UErrorCode	status = U_ZERO_ERROR;
 	int32_t		ulen;
+
 	status = U_ZERO_ERROR;
 	ulen = ucnv_toUChars(converter, dest, destlen, src, srclen, &status);
 	if (U_FAILURE(status))
@@ -2594,7 +2596,7 @@ uchar_convert(UConverter *converter, UChar *dest, int32_t destlen,
 int32_t
 icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 {
-	int32_t len_uchar;
+	int32_t		len_uchar;
 
 	init_icu_converter();
 
@@ -2781,11 +2783,11 @@ char *
 icu_language_tag(const char *loc_str, int elevel)
 {
 #ifdef USE_ICU
-	UErrorCode	 status;
-	char		 lang[ULOC_LANG_CAPACITY];
-	char		*langtag;
-	size_t		 buflen = 32;	/* arbitrary starting buffer size */
-	const bool	 strict = true;
+	UErrorCode	status;
+	char		lang[ULOC_LANG_CAPACITY];
+	char	   *langtag;
+	size_t		buflen = 32;	/* arbitrary starting buffer size */
+	const bool	strict = true;
 
 	status = U_ZERO_ERROR;
 	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
@@ -2803,8 +2805,8 @@ icu_language_tag(const char *loc_str, int elevel)
 		return pstrdup("en-US-u-va-posix");
 
 	/*
-	 * A BCP47 language tag doesn't have a clearly-defined upper limit
-	 * (cf. RFC5646 section 4.4). Additionally, in older ICU versions,
+	 * A BCP47 language tag doesn't have a clearly-defined upper limit (cf.
+	 * RFC5646 section 4.4). Additionally, in older ICU versions,
 	 * uloc_toLanguageTag() doesn't always return the ultimate length on the
 	 * first call, necessitating a loop.
 	 */
@@ -2843,7 +2845,7 @@ icu_language_tag(const char *loc_str, int elevel)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("ICU is not supported in this build")));
-	return NULL;		/* keep compiler quiet */
+	return NULL;				/* keep compiler quiet */
 #endif							/* not USE_ICU */
 }
 
@@ -2854,11 +2856,11 @@ void
 icu_validate_locale(const char *loc_str)
 {
 #ifdef USE_ICU
-	UCollator	*collator;
-	UErrorCode	 status;
-	char		 lang[ULOC_LANG_CAPACITY];
-	bool		 found	 = false;
-	int			 elevel = icu_validation_level;
+	UCollator  *collator;
+	UErrorCode	status;
+	char		lang[ULOC_LANG_CAPACITY];
+	bool		found = false;
+	int			elevel = icu_validation_level;
 
 	/* no validation */
 	if (elevel < 0)
@@ -2889,8 +2891,8 @@ icu_validate_locale(const char *loc_str)
 	/* search for matching language within ICU */
 	for (int32_t i = 0; !found && i < uloc_countAvailable(); i++)
 	{
-		const char	*otherloc = uloc_getAvailable(i);
-		char		 otherlang[ULOC_LANG_CAPACITY];
+		const char *otherloc = uloc_getAvailable(i);
+		char		otherlang[ULOC_LANG_CAPACITY];
 
 		status = U_ZERO_ERROR;
 		uloc_getLanguage(otherloc, otherlang, ULOC_LANG_CAPACITY, &status);

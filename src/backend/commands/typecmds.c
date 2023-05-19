@@ -734,7 +734,7 @@ DefineDomain(CreateDomainStmt *stmt)
 
 	/* Check we have creation rights in target namespace */
 	aclresult = object_aclcheck(NamespaceRelationId, domainNamespace, GetUserId(),
-									  ACL_CREATE);
+								ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(domainNamespace));
@@ -3743,8 +3743,8 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 
 			/* New owner must have CREATE privilege on namespace */
 			aclresult = object_aclcheck(NamespaceRelationId, typTup->typnamespace,
-											  newOwnerId,
-											  ACL_CREATE);
+										newOwnerId,
+										ACL_CREATE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_SCHEMA,
 							   get_namespace_name(typTup->typnamespace));

@@ -23,20 +23,20 @@ sub _new
 	};
 	confess("Bad project type: $type\n") unless exists $good_types->{$type};
 	my $self = {
-		name                  => $name,
-		type                  => $type,
-		guid                  => $^O eq "MSWin32" ? Win32::GuidGen() : 'FAKE',
-		files                 => {},
-		references            => [],
-		libraries             => [],
-		suffixlib             => [],
-		includes              => [],
-		prefixincludes        => '',
-		defines               => ';',
-		solution              => $solution,
-		disablewarnings       => '4018;4244;4273;4101;4102;4090;4267',
+		name => $name,
+		type => $type,
+		guid => $^O eq "MSWin32" ? Win32::GuidGen() : 'FAKE',
+		files => {},
+		references => [],
+		libraries => [],
+		suffixlib => [],
+		includes => [],
+		prefixincludes => '',
+		defines => ';',
+		solution => $solution,
+		disablewarnings => '4018;4244;4273;4101;4102;4090;4267',
 		disablelinkerwarnings => '',
-		platform              => $solution->{platform},
+		platform => $solution->{platform},
 	};
 
 	bless($self, $classname);
@@ -63,7 +63,7 @@ sub AddDependantFiles
 sub AddFiles
 {
 	my $self = shift;
-	my $dir  = shift;
+	my $dir = shift;
 
 	while (my $f = shift)
 	{
@@ -76,11 +76,11 @@ sub AddFiles
 # name but a different file extension and add those files too.
 sub FindAndAddAdditionalFiles
 {
-	my $self  = shift;
+	my $self = shift;
 	my $fname = shift;
 	$fname =~ /(.*)(\.[^.]+)$/;
 	my $filenoext = $1;
-	my $fileext   = $2;
+	my $fileext = $2;
 
 	# For .c files, check if either a .l or .y file of the same name
 	# exists and add that too.
@@ -229,8 +229,8 @@ sub FullExportDLL
 	my ($self, $libname) = @_;
 
 	$self->{builddef} = 1;
-	$self->{def}      = "./__CFGNAME__/$self->{name}/$self->{name}.def";
-	$self->{implib}   = "__CFGNAME__/$self->{name}/$libname";
+	$self->{def} = "./__CFGNAME__/$self->{name}/$self->{name}.def";
+	$self->{implib} = "__CFGNAME__/$self->{name}/$libname";
 	return;
 }
 
@@ -263,13 +263,13 @@ sub AddDir
 	}
 	while ($mf =~ m{^(?:EXTRA_)?OBJS[^=]*=\s*(.*)$}m)
 	{
-		my $s         = $1;
+		my $s = $1;
 		my $filter_re = qr{\$\(filter ([^,]+),\s+\$\(([^\)]+)\)\)};
 		while ($s =~ /$filter_re/)
 		{
 
 			# Process $(filter a b c, $(VAR)) expressions
-			my $list   = $1;
+			my $list = $1;
 			my $filter = $2;
 			$list =~ s/\.o/\.c/g;
 			my @pieces = split /\s+/, $list;
@@ -321,8 +321,8 @@ sub AddDir
 	  qr{^([^:\n\$]+\.c)\s*:\s*(?:%\s*: )?\$(\([^\)]+\))\/(.*)\/[^\/]+\n}m;
 	while ($mf =~ m{$replace_re}m)
 	{
-		my $match  = $1;
-		my $top    = $2;
+		my $match = $1;
+		my $top = $2;
 		my $target = $3;
 		my @pieces = split /\s+/, $match;
 		foreach my $fn (@pieces)

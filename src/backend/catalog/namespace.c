@@ -3842,7 +3842,7 @@ recomputeNamespacePath(void)
 				if (OidIsValid(namespaceId) &&
 					!list_member_oid(oidlist, namespaceId) &&
 					object_aclcheck(NamespaceRelationId, namespaceId, roleid,
-										  ACL_USAGE) == ACLCHECK_OK &&
+									ACL_USAGE) == ACLCHECK_OK &&
 					InvokeNamespaceSearchHook(namespaceId, false))
 					oidlist = lappend_oid(oidlist, namespaceId);
 			}
@@ -3870,7 +3870,7 @@ recomputeNamespacePath(void)
 			if (OidIsValid(namespaceId) &&
 				!list_member_oid(oidlist, namespaceId) &&
 				object_aclcheck(NamespaceRelationId, namespaceId, roleid,
-									  ACL_USAGE) == ACLCHECK_OK &&
+								ACL_USAGE) == ACLCHECK_OK &&
 				InvokeNamespaceSearchHook(namespaceId, false))
 				oidlist = lappend_oid(oidlist, namespaceId);
 		}
@@ -4006,7 +4006,7 @@ InitTempTableNamespace(void)
 	 * temp table creation request is made by someone with appropriate rights.
 	 */
 	if (object_aclcheck(DatabaseRelationId, MyDatabaseId, GetUserId(),
-							 ACL_CREATE_TEMP) != ACLCHECK_OK)
+						ACL_CREATE_TEMP) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create temporary tables in database \"%s\"",

@@ -108,7 +108,7 @@ unlike(
 # Test valid manifest with nonexistent backup directory.
 command_fails_like(
 	[
-		'pg_verifybackup',              '-m',
+		'pg_verifybackup', '-m',
 		"$backup_path/backup_manifest", "$backup_path/fake"
 	],
 	qr/could not open directory/,

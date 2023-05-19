@@ -749,8 +749,8 @@ retry4:
 	 */
 definitelyEOF:
 	libpq_append_conn_error(conn, "server closed the connection unexpectedly\n"
-					   "\tThis probably means the server terminated abnormally\n"
-					   "\tbefore or while processing the request.");
+							"\tThis probably means the server terminated abnormally\n"
+							"\tbefore or while processing the request.");
 
 	/* Come here if lower-level code already set a suitable errorMessage */
 definitelyFailed:
@@ -1067,7 +1067,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		libpq_append_conn_error(conn, "%s() failed: %s", "select",
-						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+								SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 	}
 
 	return result;
@@ -1280,7 +1280,7 @@ libpq_ngettext(const char *msgid, const char *msgid_plural, unsigned long n)
  * newline.
  */
 void
-libpq_append_error(PQExpBuffer errorMessage, const char *fmt, ...)
+libpq_append_error(PQExpBuffer errorMessage, const char *fmt,...)
 {
 	int			save_errno = errno;
 	bool		done;
@@ -1309,7 +1309,7 @@ libpq_append_error(PQExpBuffer errorMessage, const char *fmt, ...)
  * format should not end with a newline.
  */
 void
-libpq_append_conn_error(PGconn *conn, const char *fmt, ...)
+libpq_append_conn_error(PGconn *conn, const char *fmt,...)
 {
 	int			save_errno = errno;
 	bool		done;

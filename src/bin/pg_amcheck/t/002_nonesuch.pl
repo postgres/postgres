@@ -183,7 +183,7 @@ $node->command_checks_all(
 $node->command_checks_all(
 	[
 		'pg_amcheck', '--no-strict-names',
-		'-t',         'this.is.a.really.long.dotted.string'
+		'-t', 'this.is.a.really.long.dotted.string'
 	],
 	2,
 	[qr/^$/],
@@ -252,20 +252,20 @@ $node->command_checks_all(
 $node->command_checks_all(
 	[
 		'pg_amcheck', '--no-strict-names',
-		'-t',         'no_such_table',
-		'-t',         'no*such*table',
-		'-i',         'no_such_index',
-		'-i',         'no*such*index',
-		'-r',         'no_such_relation',
-		'-r',         'no*such*relation',
-		'-d',         'no_such_database',
-		'-d',         'no*such*database',
-		'-r',         'none.none',
-		'-r',         'none.none.none',
-		'-r',         'postgres.none.none',
-		'-r',         'postgres.pg_catalog.none',
-		'-r',         'postgres.none.pg_class',
-		'-t',         'postgres.pg_catalog.pg_class',    # This exists
+		'-t', 'no_such_table',
+		'-t', 'no*such*table',
+		'-i', 'no_such_index',
+		'-i', 'no*such*index',
+		'-r', 'no_such_relation',
+		'-r', 'no*such*relation',
+		'-d', 'no_such_database',
+		'-d', 'no*such*database',
+		'-r', 'none.none',
+		'-r', 'none.none.none',
+		'-r', 'postgres.none.none',
+		'-r', 'postgres.pg_catalog.none',
+		'-r', 'postgres.none.pg_class',
+		'-t', 'postgres.pg_catalog.pg_class',    # This exists
 	],
 	0,
 	[qr/^$/],
@@ -304,13 +304,13 @@ $node->safe_psql('postgres', q(CREATE DATABASE another_db));
 $node->command_checks_all(
 	[
 		'pg_amcheck', '-d',
-		'postgres',   '--no-strict-names',
-		'-t',         'template1.public.foo',
-		'-t',         'another_db.public.foo',
-		'-t',         'no_such_database.public.foo',
-		'-i',         'template1.public.foo_idx',
-		'-i',         'another_db.public.foo_idx',
-		'-i',         'no_such_database.public.foo_idx',
+		'postgres', '--no-strict-names',
+		'-t', 'template1.public.foo',
+		'-t', 'another_db.public.foo',
+		'-t', 'no_such_database.public.foo',
+		'-i', 'template1.public.foo_idx',
+		'-i', 'another_db.public.foo_idx',
+		'-i', 'no_such_database.public.foo_idx',
 	],
 	1,
 	[qr/^$/],
@@ -334,8 +334,8 @@ $node->command_checks_all(
 $node->command_checks_all(
 	[
 		'pg_amcheck', '--all', '--no-strict-names', '-S',
-		'public',     '-S',    'pg_catalog',        '-S',
-		'pg_toast',   '-S',    'information_schema',
+		'public', '-S', 'pg_catalog', '-S',
+		'pg_toast', '-S', 'information_schema',
 	],
 	1,
 	[qr/^$/],
@@ -348,9 +348,9 @@ $node->command_checks_all(
 # Check with schema exclusion patterns overriding relation and schema inclusion patterns
 $node->command_checks_all(
 	[
-		'pg_amcheck',          '--all', '--no-strict-names',  '-s',
-		'public',              '-s',    'pg_catalog',         '-s',
-		'pg_toast',            '-s',    'information_schema', '-t',
+		'pg_amcheck', '--all', '--no-strict-names', '-s',
+		'public', '-s', 'pg_catalog', '-s',
+		'pg_toast', '-s', 'information_schema', '-t',
 		'pg_catalog.pg_class', '-S*'
 	],
 	1,

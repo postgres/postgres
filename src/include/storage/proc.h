@@ -387,11 +387,11 @@ typedef struct PROC_HDR
 	/* Head of list of free PGPROC structures */
 	dlist_head	freeProcs;
 	/* Head of list of autovacuum's free PGPROC structures */
-	dlist_head autovacFreeProcs;
+	dlist_head	autovacFreeProcs;
 	/* Head of list of bgworker free PGPROC structures */
-	dlist_head bgworkerFreeProcs;
+	dlist_head	bgworkerFreeProcs;
 	/* Head of list of walsender free PGPROC structures */
-	dlist_head walsenderFreeProcs;
+	dlist_head	walsenderFreeProcs;
 	/* First pgproc waiting for group XID clear */
 	pg_atomic_uint32 procArrayGroupFirst;
 	/* First pgproc waiting for group transaction status update */

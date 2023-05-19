@@ -67,8 +67,8 @@ $node_primary->wait_for_replay_catchup($node_standby);
 
 
 # a longrunning psql that we can use to trigger conflicts
-my $psql_standby = $node_standby->background_psql($test_db,
-	on_error_stop => 0);
+my $psql_standby =
+  $node_standby->background_psql($test_db, on_error_stop => 0);
 my $expected_conflicts = 0;
 
 
@@ -96,7 +96,8 @@ my $cursor1 = "test_recovery_conflict_cursor";
 
 # DECLARE and use a cursor on standby, causing buffer with the only block of
 # the relation to be pinned on the standby
-my $res = $psql_standby->query_safe(qq[
+my $res = $psql_standby->query_safe(
+	qq[
     BEGIN;
     DECLARE $cursor1 CURSOR FOR SELECT b FROM $table1;
     FETCH FORWARD FROM $cursor1;
@@ -131,7 +132,8 @@ $node_primary->safe_psql($test_db,
 $node_primary->wait_for_replay_catchup($node_standby);
 
 # DECLARE and FETCH from cursor on the standby
-$res = $psql_standby->query_safe(qq[
+$res = $psql_standby->query_safe(
+	qq[
         BEGIN;
         DECLARE $cursor1 CURSOR FOR SELECT b FROM $table1;
         FETCH FORWARD FROM $cursor1;
@@ -159,7 +161,8 @@ $sect = "lock conflict";
 $expected_conflicts++;
 
 # acquire lock to conflict with
-$res = $psql_standby->query_safe(qq[
+$res = $psql_standby->query_safe(
+	qq[
         BEGIN;
         LOCK TABLE $table1 IN ACCESS SHARE MODE;
         SELECT 1;
@@ -183,7 +186,8 @@ $expected_conflicts++;
 # DECLARE a cursor for a query which, with sufficiently low work_mem, will
 # spill tuples into temp files in the temporary tablespace created during
 # setup.
-$res = $psql_standby->query_safe(qq[
+$res = $psql_standby->query_safe(
+	qq[
         BEGIN;
         SET work_mem = '64kB';
         DECLARE $cursor1 CURSOR FOR
@@ -240,7 +244,8 @@ SELECT txid_current();
 
 $node_primary->wait_for_replay_catchup($node_standby);
 
-$res = $psql_standby->query_until(qr/^1$/m, qq[
+$res = $psql_standby->query_until(
+	qr/^1$/m, qq[
     BEGIN;
     -- hold pin
     DECLARE $cursor1 CURSOR FOR SELECT a FROM $table1;
@@ -248,7 +253,9 @@ $res = $psql_standby->query_until(qr/^1$/m, qq[
     -- wait for lock held by prepared transaction
 	SELECT * FROM $table2;
     ]);
-ok( 1, "$sect: cursor holding conflicting pin, also waiting for lock, established");
+ok(1,
+	"$sect: cursor holding conflicting pin, also waiting for lock, established"
+);
 
 # just to make sure we're waiting for lock already
 ok( $node_standby->poll_query_until(
@@ -305,7 +312,7 @@ done_testing();
 
 sub check_conflict_log
 {
-	my $message          = shift;
+	my $message = shift;
 	my $old_log_location = $log_location;
 
 	$log_location = $node_standby->wait_for_log(qr/$message/, $log_location);
@@ -318,7 +325,7 @@ sub check_conflict_log
 sub check_conflict_stat
 {
 	my $conflict_type = shift;
-	my $count         = $node_standby->safe_psql($test_db,
+	my $count = $node_standby->safe_psql($test_db,
 		qq[SELECT confl_$conflict_type FROM pg_stat_database_conflicts WHERE datname='$test_db';]
 	);
 

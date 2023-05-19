@@ -73,7 +73,7 @@ sub revoke_superuser
 # "regress_admin".  For partitioned tables, layout the partitions differently
 # on the publisher than on the subscriber.
 #
-$node_publisher  = PostgreSQL::Test::Cluster->new('publisher');
+$node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_publisher->init(allows_streaming => 'logical');
 $node_subscriber->init;
@@ -120,18 +120,14 @@ publish_insert("alice.unpartitioned", 3);
 publish_insert("alice.unpartitioned", 5);
 publish_update("alice.unpartitioned", 1 => 7);
 publish_delete("alice.unpartitioned", 3);
-expect_replication("alice.unpartitioned", 2, 5, 7,
-	"superuser can replicate");
+expect_replication("alice.unpartitioned", 2, 5, 7, "superuser can replicate");
 
 # Revoke superuser privilege for "regress_admin", and verify that we now
 # fail to replicate an insert.
 revoke_superuser("regress_admin");
 publish_insert("alice.unpartitioned", 9);
 expect_failure(
-	"alice.unpartitioned",
-	2,
-	5,
-	7,
+	"alice.unpartitioned", 2, 5, 7,
 	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
 	"with no privileges cannot replicate");
 
@@ -144,8 +140,7 @@ GRANT INSERT,UPDATE,DELETE ON alice.unpartitioned TO regress_admin;
 REVOKE SELECT ON alice.unpartitioned FROM regress_admin;
 ));
 expect_replication("alice.unpartitioned", 3, 5, 9,
-	"with INSERT privilege can replicate INSERT"
-);
+	"with INSERT privilege can replicate INSERT");
 
 # We can't yet replicate an UPDATE because we don't have SELECT.
 publish_update("alice.unpartitioned", 5 => 11);
@@ -156,8 +151,7 @@ expect_failure(
 	5,
 	9,
 	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
-	"without SELECT privilege cannot replicate UPDATE or DELETE"
-);
+	"without SELECT privilege cannot replicate UPDATE or DELETE");
 
 # After granting SELECT, replication resumes.
 $node_subscriber->safe_psql(
@@ -166,8 +160,7 @@ SET SESSION AUTHORIZATION regress_alice;
 GRANT SELECT ON alice.unpartitioned TO regress_admin;
 ));
 expect_replication("alice.unpartitioned", 2, 7, 11,
-	"with all privileges can replicate"
-);
+	"with all privileges can replicate");
 
 # Remove all privileges again. Instead, give the ability to SET ROLE to
 # regress_alice.
@@ -189,8 +182,7 @@ expect_failure(
 	7,
 	11,
 	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
-	"with SET ROLE but not INHERIT cannot replicate"
-);
+	"with SET ROLE but not INHERIT cannot replicate");
 
 # Now remove SET ROLE and add INHERIT and check that things start working.
 $node_subscriber->safe_psql(
@@ -198,7 +190,6 @@ $node_subscriber->safe_psql(
 GRANT regress_alice TO regress_admin WITH INHERIT TRUE, SET FALSE;
 ));
 expect_replication("alice.unpartitioned", 3, 7, 13,
-	"with INHERIT but not SET ROLE can replicate"
-);
+	"with INHERIT but not SET ROLE can replicate");
 
 done_testing();

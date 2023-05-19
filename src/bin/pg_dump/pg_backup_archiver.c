@@ -386,10 +386,11 @@ RestoreArchive(Archive *AHX)
 		{
 			if (te->hadDumper && (te->reqs & REQ_DATA) != 0)
 			{
-				char *errmsg = supports_compression(AH->compression_spec);
+				char	   *errmsg = supports_compression(AH->compression_spec);
+
 				if (errmsg)
 					pg_fatal("cannot restore from compressed archive (%s)",
-							  errmsg);
+							 errmsg);
 				else
 					break;
 			}
@@ -2985,11 +2986,11 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	if (!te->hadDumper)
 	{
 		/*
-		 * Special Case: If 'SEQUENCE SET' or anything to do with LOs, then
-		 * it is considered a data entry.  We don't need to check for the
-		 * BLOBS entry or old-style BLOB COMMENTS, because they will have
-		 * hadDumper = true ... but we do need to check new-style BLOB ACLs,
-		 * comments, etc.
+		 * Special Case: If 'SEQUENCE SET' or anything to do with LOs, then it
+		 * is considered a data entry.  We don't need to check for the BLOBS
+		 * entry or old-style BLOB COMMENTS, because they will have hadDumper
+		 * = true ... but we do need to check new-style BLOB ACLs, comments,
+		 * etc.
 		 */
 		if (strcmp(te->desc, "SEQUENCE SET") == 0 ||
 			strcmp(te->desc, "BLOB") == 0 ||
@@ -3480,6 +3481,7 @@ _getObjectDescription(PQExpBuffer buf, const TocEntry *te)
 	{
 		appendPQExpBuffer(buf, "LARGE OBJECT %s", te->tag);
 	}
+
 	/*
 	 * These object types require additional decoration.  Fortunately, the
 	 * information needed is exactly what's in the DROP command.
@@ -3639,6 +3641,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 
 		initPQExpBuffer(&temp);
 		_getObjectDescription(&temp, te);
+
 		/*
 		 * If _getObjectDescription() didn't fill the buffer, then there is no
 		 * owner.
@@ -3802,7 +3805,7 @@ ReadHead(ArchiveHandle *AH)
 	if (errmsg)
 	{
 		pg_log_warning("archive is compressed, but this installation does not support compression (%s) -- no data will be available",
-						errmsg);
+					   errmsg);
 		pg_free(errmsg);
 	}
 

@@ -3270,7 +3270,7 @@ multixact_redo(XLogReaderState *record)
 	else if (info == XLOG_MULTIXACT_CREATE_ID)
 	{
 		xl_multixact_create *xlrec =
-		(xl_multixact_create *) XLogRecGetData(record);
+			(xl_multixact_create *) XLogRecGetData(record);
 		TransactionId max_xid;
 		int			i;
 

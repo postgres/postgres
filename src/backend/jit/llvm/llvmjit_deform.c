@@ -650,7 +650,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		{
 			LLVMValueRef v_tmp_loaddata;
 			LLVMTypeRef vartypep =
-			LLVMPointerType(LLVMIntType(att->attlen * 8), 0);
+				LLVMPointerType(LLVMIntType(att->attlen * 8), 0);
 
 			v_tmp_loaddata =
 				LLVMBuildPointerCast(b, v_attdatap, vartypep, "");

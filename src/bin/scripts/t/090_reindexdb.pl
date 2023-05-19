@@ -53,7 +53,8 @@ my $fetch_toast_relfilenodes =
   WHERE b.oid IN ('pg_constraint'::regclass, 'test1'::regclass)};
 # Same for relfilenodes of normal indexes.  This saves the relfilenode
 # from an index of pg_constraint, and from the index of the test table.
-my $fetch_index_relfilenodes = qq{SELECT i.indrelid, a.oid::regclass::text, a.oid, a.relfilenode
+my $fetch_index_relfilenodes =
+  qq{SELECT i.indrelid, a.oid::regclass::text, a.oid, a.relfilenode
   FROM pg_class a
     JOIN pg_index i ON (i.indexrelid = a.oid)
   WHERE a.relname IN ('pg_constraint_oid_index', 'test1x')};
@@ -128,7 +129,7 @@ $node->issues_sql_like(
 	'reindex with verbose output');
 $node->issues_sql_like(
 	[
-		'reindexdb',    '-v',          '-t', 'test1',
+		'reindexdb', '-v', '-t', 'test1',
 		'--tablespace', $tbspace_name, 'postgres'
 	],
 	qr/statement: REINDEX \(VERBOSE, TABLESPACE $tbspace_name\) TABLE public\.test1;/,
@@ -171,8 +172,8 @@ $node->issues_sql_like(
 	'reindex with verbose output concurrently');
 $node->issues_sql_like(
 	[
-		'reindexdb', '--concurrently', '-v',          '-t',
-		'test1',     '--tablespace',   $tbspace_name, 'postgres'
+		'reindexdb', '--concurrently', '-v', '-t',
+		'test1', '--tablespace', $tbspace_name, 'postgres'
 	],
 	qr/statement: REINDEX \(VERBOSE, TABLESPACE $tbspace_name\) TABLE CONCURRENTLY public\.test1;/,
 	'reindex concurrently with verbose output and tablespace');
@@ -184,7 +185,7 @@ $node->issues_sql_like(
 # messages.
 $node->command_checks_all(
 	[
-		'reindexdb',   '-t', $toast_table, '--tablespace',
+		'reindexdb', '-t', $toast_table, '--tablespace',
 		$tbspace_name, 'postgres'
 	],
 	1,
@@ -193,8 +194,8 @@ $node->command_checks_all(
 	'reindex toast table with tablespace');
 $node->command_checks_all(
 	[
-		'reindexdb',    '--concurrently', '-t', $toast_table,
-		'--tablespace', $tbspace_name,    'postgres'
+		'reindexdb', '--concurrently', '-t', $toast_table,
+		'--tablespace', $tbspace_name, 'postgres'
 	],
 	1,
 	[],
@@ -202,7 +203,7 @@ $node->command_checks_all(
 	'reindex toast table concurrently with tablespace');
 $node->command_checks_all(
 	[
-		'reindexdb',   '-i', $toast_index, '--tablespace',
+		'reindexdb', '-i', $toast_index, '--tablespace',
 		$tbspace_name, 'postgres'
 	],
 	1,
@@ -211,8 +212,8 @@ $node->command_checks_all(
 	'reindex toast index with tablespace');
 $node->command_checks_all(
 	[
-		'reindexdb',    '--concurrently', '-i', $toast_index,
-		'--tablespace', $tbspace_name,    'postgres'
+		'reindexdb', '--concurrently', '-i', $toast_index,
+		'--tablespace', $tbspace_name, 'postgres'
 	],
 	1,
 	[],

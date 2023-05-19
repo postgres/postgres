@@ -329,13 +329,13 @@ sub adjust_old_dumpfile
 		# adjust some places where we don't print so many parens anymore
 
 		my $prefix = "CONSTRAINT (?:sequence|copy)_con CHECK [(][(]";
-		my $orig   = "((x > 3) AND (y <> 'check failed'::text))";
-		my $repl   = "(x > 3) AND (y <> 'check failed'::text)";
+		my $orig = "((x > 3) AND (y <> 'check failed'::text))";
+		my $repl = "(x > 3) AND (y <> 'check failed'::text)";
 		$dump =~ s/($prefix)\Q$orig\E/$1$repl/mg;
 
 		$prefix = "CONSTRAINT insert_con CHECK [(][(]";
-		$orig   = "((x >= 3) AND (y <> 'check failed'::text))";
-		$repl   = "(x >= 3) AND (y <> 'check failed'::text)";
+		$orig = "((x >= 3) AND (y <> 'check failed'::text))";
+		$repl = "(x >= 3) AND (y <> 'check failed'::text)";
 		$dump =~ s/($prefix)\Q$orig\E/$1$repl/mg;
 
 		$orig = "DEFAULT ((-1) * currval('public.insert_seq'::regclass))";
@@ -406,78 +406,78 @@ sub adjust_old_dumpfile
 # Data for _mash_view_qualifiers
 my @_unused_view_qualifiers = (
 	# Present at least since 9.2
-	{ obj => 'VIEW public.trigger_test_view',  qual => 'trigger_test' },
-	{ obj => 'VIEW public.domview',            qual => 'domtab' },
+	{ obj => 'VIEW public.trigger_test_view', qual => 'trigger_test' },
+	{ obj => 'VIEW public.domview', qual => 'domtab' },
 	{ obj => 'VIEW public.my_property_normal', qual => 'customer' },
 	{ obj => 'VIEW public.my_property_secure', qual => 'customer' },
-	{ obj => 'VIEW public.pfield_v1',          qual => 'pf' },
-	{ obj => 'VIEW public.rtest_v1',           qual => 'rtest_t1' },
-	{ obj => 'VIEW public.rtest_vview1',       qual => 'x' },
-	{ obj => 'VIEW public.rtest_vview2',       qual => 'rtest_view1' },
-	{ obj => 'VIEW public.rtest_vview3',       qual => 'x' },
-	{ obj => 'VIEW public.rtest_vview5',       qual => 'rtest_view1' },
-	{ obj => 'VIEW public.shoelace_obsolete',  qual => 'shoelace' },
+	{ obj => 'VIEW public.pfield_v1', qual => 'pf' },
+	{ obj => 'VIEW public.rtest_v1', qual => 'rtest_t1' },
+	{ obj => 'VIEW public.rtest_vview1', qual => 'x' },
+	{ obj => 'VIEW public.rtest_vview2', qual => 'rtest_view1' },
+	{ obj => 'VIEW public.rtest_vview3', qual => 'x' },
+	{ obj => 'VIEW public.rtest_vview5', qual => 'rtest_view1' },
+	{ obj => 'VIEW public.shoelace_obsolete', qual => 'shoelace' },
 	{ obj => 'VIEW public.shoelace_candelete', qual => 'shoelace_obsolete' },
-	{ obj => 'VIEW public.toyemp',             qual => 'emp' },
-	{ obj => 'VIEW public.xmlview4',           qual => 'emp' },
+	{ obj => 'VIEW public.toyemp', qual => 'emp' },
+	{ obj => 'VIEW public.xmlview4', qual => 'emp' },
 	# Since 9.3 (some of these were removed in 9.6)
-	{ obj => 'VIEW public.tv',                 qual => 't' },
+	{ obj => 'VIEW public.tv', qual => 't' },
 	{ obj => 'MATERIALIZED VIEW mvschema.tvm', qual => 'tv' },
-	{ obj => 'VIEW public.tvv',                qual => 'tv' },
-	{ obj => 'MATERIALIZED VIEW public.tvvm',  qual => 'tvv' },
-	{ obj => 'VIEW public.tvvmv',              qual => 'tvvm' },
-	{ obj => 'MATERIALIZED VIEW public.bb',    qual => 'tvvmv' },
-	{ obj => 'VIEW public.nums',               qual => 'nums' },
-	{ obj => 'VIEW public.sums_1_100',         qual => 't' },
-	{ obj => 'MATERIALIZED VIEW public.tm',    qual => 't' },
-	{ obj => 'MATERIALIZED VIEW public.tmm',   qual => 'tm' },
-	{ obj => 'MATERIALIZED VIEW public.tvmm',  qual => 'tvm' },
+	{ obj => 'VIEW public.tvv', qual => 'tv' },
+	{ obj => 'MATERIALIZED VIEW public.tvvm', qual => 'tvv' },
+	{ obj => 'VIEW public.tvvmv', qual => 'tvvm' },
+	{ obj => 'MATERIALIZED VIEW public.bb', qual => 'tvvmv' },
+	{ obj => 'VIEW public.nums', qual => 'nums' },
+	{ obj => 'VIEW public.sums_1_100', qual => 't' },
+	{ obj => 'MATERIALIZED VIEW public.tm', qual => 't' },
+	{ obj => 'MATERIALIZED VIEW public.tmm', qual => 'tm' },
+	{ obj => 'MATERIALIZED VIEW public.tvmm', qual => 'tvm' },
 	# Since 9.4
 	{
-		obj  => 'MATERIALIZED VIEW public.citext_matview',
+		obj => 'MATERIALIZED VIEW public.citext_matview',
 		qual => 'citext_table'
 	},
 	{
-		obj  => 'OR REPLACE VIEW public.key_dependent_view',
+		obj => 'OR REPLACE VIEW public.key_dependent_view',
 		qual => 'view_base_table'
 	},
 	{
-		obj  => 'OR REPLACE VIEW public.key_dependent_view_no_cols',
+		obj => 'OR REPLACE VIEW public.key_dependent_view_no_cols',
 		qual => 'view_base_table'
 	},
 	# Since 9.5
 	{
-		obj  => 'VIEW public.dummy_seclabel_view1',
+		obj => 'VIEW public.dummy_seclabel_view1',
 		qual => 'dummy_seclabel_tbl2'
 	},
-	{ obj => 'VIEW public.vv',                  qual => 'test_tablesample' },
+	{ obj => 'VIEW public.vv', qual => 'test_tablesample' },
 	{ obj => 'VIEW public.test_tablesample_v1', qual => 'test_tablesample' },
 	{ obj => 'VIEW public.test_tablesample_v2', qual => 'test_tablesample' },
 	# Since 9.6
 	{
-		obj  => 'MATERIALIZED VIEW public.test_pg_dump_mv1',
+		obj => 'MATERIALIZED VIEW public.test_pg_dump_mv1',
 		qual => 'test_pg_dump_t1'
 	},
 	{ obj => 'VIEW public.test_pg_dump_v1', qual => 'test_pg_dump_t1' },
-	{ obj => 'VIEW public.mvtest_tv',       qual => 'mvtest_t' },
+	{ obj => 'VIEW public.mvtest_tv', qual => 'mvtest_t' },
 	{
-		obj  => 'MATERIALIZED VIEW mvtest_mvschema.mvtest_tvm',
+		obj => 'MATERIALIZED VIEW mvtest_mvschema.mvtest_tvm',
 		qual => 'mvtest_tv'
 	},
-	{ obj => 'VIEW public.mvtest_tvv',               qual => 'mvtest_tv' },
+	{ obj => 'VIEW public.mvtest_tvv', qual => 'mvtest_tv' },
 	{ obj => 'MATERIALIZED VIEW public.mvtest_tvvm', qual => 'mvtest_tvv' },
-	{ obj => 'VIEW public.mvtest_tvvmv',             qual => 'mvtest_tvvm' },
-	{ obj => 'MATERIALIZED VIEW public.mvtest_bb',   qual => 'mvtest_tvvmv' },
-	{ obj => 'MATERIALIZED VIEW public.mvtest_tm',   qual => 'mvtest_t' },
-	{ obj => 'MATERIALIZED VIEW public.mvtest_tmm',  qual => 'mvtest_tm' },
+	{ obj => 'VIEW public.mvtest_tvvmv', qual => 'mvtest_tvvm' },
+	{ obj => 'MATERIALIZED VIEW public.mvtest_bb', qual => 'mvtest_tvvmv' },
+	{ obj => 'MATERIALIZED VIEW public.mvtest_tm', qual => 'mvtest_t' },
+	{ obj => 'MATERIALIZED VIEW public.mvtest_tmm', qual => 'mvtest_tm' },
 	{ obj => 'MATERIALIZED VIEW public.mvtest_tvmm', qual => 'mvtest_tvm' },
 	# Since 10 (some removed in 12)
-	{ obj => 'VIEW public.itestv10',      qual => 'itest10' },
-	{ obj => 'VIEW public.itestv11',      qual => 'itest11' },
+	{ obj => 'VIEW public.itestv10', qual => 'itest10' },
+	{ obj => 'VIEW public.itestv11', qual => 'itest11' },
 	{ obj => 'VIEW public.xmltableview2', qual => '"xmltable"' },
 	# Since 12
 	{
-		obj  => 'MATERIALIZED VIEW public.tableam_tblmv_heap2',
+		obj => 'MATERIALIZED VIEW public.tableam_tblmv_heap2',
 		qual => 'tableam_tbl_heap2'
 	},
 	# Since 13
@@ -496,7 +496,7 @@ sub _mash_view_qualifiers
 
 	for my $uvq (@_unused_view_qualifiers)
 	{
-		my $leader    = "CREATE $uvq->{obj} ";
+		my $leader = "CREATE $uvq->{obj} ";
 		my $qualifier = $uvq->{qual};
 		# Note: we loop because there are presently some cases where the same
 		# view name appears in multiple databases.  Fortunately, the same
@@ -507,8 +507,8 @@ sub _mash_view_qualifiers
 		foreach my $chunk (@splitchunks)
 		{
 			my @thischunks = split /;/, $chunk, 2;
-			my $stmt       = shift(@thischunks);
-			my $ostmt      = $stmt;
+			my $stmt = shift(@thischunks);
+			my $ostmt = $stmt;
 
 			# now $stmt is just the body of the CREATE [MATERIALIZED] VIEW
 			$stmt =~ s/$qualifier\.//g;

@@ -105,31 +105,31 @@ sub read_tuple
 
 	@_ = unpack(HEAPTUPLE_PACK_CODE, $buffer);
 	%tup = (
-		t_xmin          => shift,
-		t_xmax          => shift,
-		t_field3        => shift,
-		bi_hi           => shift,
-		bi_lo           => shift,
-		ip_posid        => shift,
-		t_infomask2     => shift,
-		t_infomask      => shift,
-		t_hoff          => shift,
-		t_bits          => shift,
-		a_1             => shift,
-		a_2             => shift,
-		b_header        => shift,
-		b_body1         => shift,
-		b_body2         => shift,
-		b_body3         => shift,
-		b_body4         => shift,
-		b_body5         => shift,
-		b_body6         => shift,
-		b_body7         => shift,
-		c_va_header     => shift,
-		c_va_vartag     => shift,
-		c_va_rawsize    => shift,
-		c_va_extinfo    => shift,
-		c_va_valueid    => shift,
+		t_xmin => shift,
+		t_xmax => shift,
+		t_field3 => shift,
+		bi_hi => shift,
+		bi_lo => shift,
+		ip_posid => shift,
+		t_infomask2 => shift,
+		t_infomask => shift,
+		t_hoff => shift,
+		t_bits => shift,
+		a_1 => shift,
+		a_2 => shift,
+		b_header => shift,
+		b_body1 => shift,
+		b_body2 => shift,
+		b_body3 => shift,
+		b_body4 => shift,
+		b_body5 => shift,
+		b_body6 => shift,
+		b_body7 => shift,
+		c_va_header => shift,
+		c_va_vartag => shift,
+		c_va_rawsize => shift,
+		c_va_extinfo => shift,
+		c_va_valueid => shift,
 		c_va_toastrelid => shift);
 	# Stitch together the text for column 'b'
 	$tup{b} = join('', map { chr($tup{"b_body$_"}) } (1 .. 7));
@@ -151,17 +151,17 @@ sub write_tuple
 	my ($fh, $offset, $tup) = @_;
 	my $buffer = pack(
 		HEAPTUPLE_PACK_CODE,
-		$tup->{t_xmin},       $tup->{t_xmax},
-		$tup->{t_field3},     $tup->{bi_hi},
-		$tup->{bi_lo},        $tup->{ip_posid},
-		$tup->{t_infomask2},  $tup->{t_infomask},
-		$tup->{t_hoff},       $tup->{t_bits},
-		$tup->{a_1},          $tup->{a_2},
-		$tup->{b_header},     $tup->{b_body1},
-		$tup->{b_body2},      $tup->{b_body3},
-		$tup->{b_body4},      $tup->{b_body5},
-		$tup->{b_body6},      $tup->{b_body7},
-		$tup->{c_va_header},  $tup->{c_va_vartag},
+		$tup->{t_xmin}, $tup->{t_xmax},
+		$tup->{t_field3}, $tup->{bi_hi},
+		$tup->{bi_lo}, $tup->{ip_posid},
+		$tup->{t_infomask2}, $tup->{t_infomask},
+		$tup->{t_hoff}, $tup->{t_bits},
+		$tup->{a_1}, $tup->{a_2},
+		$tup->{b_header}, $tup->{b_body1},
+		$tup->{b_body2}, $tup->{b_body3},
+		$tup->{b_body4}, $tup->{b_body5},
+		$tup->{b_body6}, $tup->{b_body7},
+		$tup->{c_va_header}, $tup->{c_va_vartag},
 		$tup->{c_va_rawsize}, $tup->{c_va_extinfo},
 		$tup->{c_va_valueid}, $tup->{c_va_toastrelid});
 	sysseek($fh, $offset, 0)
@@ -188,7 +188,7 @@ $node->append_conf('postgresql.conf', 'max_prepared_transactions=10');
 # Start the node and load the extensions.  We depend on both
 # amcheck and pageinspect for this test.
 $node->start;
-my $port   = $node->port;
+my $port = $node->port;
 my $pgdata = $node->data_dir;
 $node->safe_psql('postgres', "CREATE EXTENSION amcheck");
 $node->safe_psql('postgres', "CREATE EXTENSION pageinspect");
@@ -354,23 +354,23 @@ binmode $file;
 my $ENDIANNESS;
 for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 {
-	my $offnum = $tupidx + 1;        # offnum is 1-based, not zero-based
+	my $offnum = $tupidx + 1;    # offnum is 1-based, not zero-based
 	my $offset = $lp_off[$tupidx];
-	next if $offset == -1;			 # ignore redirect line pointers
+	next if $offset == -1;       # ignore redirect line pointers
 	my $tup = read_tuple($file, $offset);
 
 	# Sanity-check that the data appears on the page where we expect.
 	my $a_1 = $tup->{a_1};
 	my $a_2 = $tup->{a_2};
-	my $b   = $tup->{b};
+	my $b = $tup->{b};
 	if ($a_1 != 0xDEADF9F9 || $a_2 != 0xDEADF9F9 || $b ne 'abcdefg')
 	{
 		close($file);    # ignore errors on close; we're exiting anyway
 		$node->clean_node;
 		plan skip_all =>
 		  sprintf(
-			"Page layout of index %d differs from our expectations: expected (%x, %x, \"%s\"), got (%x, %x, \"%s\")", $tupidx,
-			0xDEADF9F9, 0xDEADF9F9, "abcdefg", $a_1, $a_2, $b);
+			"Page layout of index %d differs from our expectations: expected (%x, %x, \"%s\"), got (%x, %x, \"%s\")",
+			$tupidx, 0xDEADF9F9, 0xDEADF9F9, "abcdefg", $a_1, $a_2, $b);
 		exit;
 	}
 
@@ -395,18 +395,18 @@ $node->command_ok([ 'pg_amcheck', '-p', $port, 'postgres' ],
 $node->stop;
 
 # Some #define constants from access/htup_details.h for use while corrupting.
-use constant HEAP_HASNULL        => 0x0001;
+use constant HEAP_HASNULL => 0x0001;
 use constant HEAP_XMAX_LOCK_ONLY => 0x0080;
 use constant HEAP_XMIN_COMMITTED => 0x0100;
-use constant HEAP_XMIN_INVALID   => 0x0200;
+use constant HEAP_XMIN_INVALID => 0x0200;
 use constant HEAP_XMAX_COMMITTED => 0x0400;
-use constant HEAP_XMAX_INVALID   => 0x0800;
-use constant HEAP_NATTS_MASK     => 0x07FF;
-use constant HEAP_XMAX_IS_MULTI  => 0x1000;
-use constant HEAP_KEYS_UPDATED   => 0x2000;
-use constant HEAP_HOT_UPDATED    => 0x4000;
-use constant HEAP_ONLY_TUPLE     => 0x8000;
-use constant HEAP_UPDATED        => 0x2000;
+use constant HEAP_XMAX_INVALID => 0x0800;
+use constant HEAP_NATTS_MASK => 0x07FF;
+use constant HEAP_XMAX_IS_MULTI => 0x1000;
+use constant HEAP_KEYS_UPDATED => 0x2000;
+use constant HEAP_HOT_UPDATED => 0x4000;
+use constant HEAP_ONLY_TUPLE => 0x8000;
+use constant HEAP_UPDATED => 0x2000;
 
 # Helper function to generate a regular expression matching the header we
 # expect verify_heapam() to return given which fields we expect to be non-null.
@@ -436,7 +436,7 @@ binmode $file;
 
 for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 {
-	my $offnum = $tupidx + 1;        # offnum is 1-based, not zero-based
+	my $offnum = $tupidx + 1;    # offnum is 1-based, not zero-based
 	my $offset = $lp_off[$tupidx];
 	my $header = header(0, $offnum, undef);
 
@@ -534,7 +534,7 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 		# Corrupt the tuple to look like it has lots of attributes, some of
 		# them null.  This falsely creates the impression that the t_bits
 		# array is longer than just one byte, but t_hoff still says otherwise.
-		$tup->{t_infomask}  |= HEAP_HASNULL;
+		$tup->{t_infomask} |= HEAP_HASNULL;
 		$tup->{t_infomask2} |= HEAP_NATTS_MASK;
 		$tup->{t_bits} = 0xAA;
 
@@ -544,7 +544,7 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 	elsif ($offnum == 11)
 	{
 		# Same as above, but this time t_hoff plays along
-		$tup->{t_infomask}  |= HEAP_HASNULL;
+		$tup->{t_infomask} |= HEAP_HASNULL;
 		$tup->{t_infomask2} |= (HEAP_NATTS_MASK & 0x40);
 		$tup->{t_bits} = 0xAA;
 		$tup->{t_hoff} = 32;
@@ -568,9 +568,9 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 		# bytes with 0xFF using 0x3FFFFFFF.
 		#
 		$tup->{b_header} = $ENDIANNESS eq 'little' ? 0xFC : 0x3F;
-		$tup->{b_body1}  = 0xFF;
-		$tup->{b_body2}  = 0xFF;
-		$tup->{b_body3}  = 0xFF;
+		$tup->{b_body1} = 0xFF;
+		$tup->{b_body2} = 0xFF;
+		$tup->{b_body3} = 0xFF;
 
 		$header = header(0, $offnum, 1);
 		push @expected,
@@ -620,7 +620,7 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 		# at offnum 19 we will unset HEAP_ONLY_TUPLE flag
 		die "offnum $offnum should be a redirect" if defined $tup;
 		push @expected,
-			qr/${header}redirected line pointer points to a non-heap-only tuple at offset \d+/;
+		  qr/${header}redirected line pointer points to a non-heap-only tuple at offset \d+/;
 	}
 	elsif ($offnum == 18)
 	{
@@ -628,8 +628,8 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 		die "offnum $offnum should be a redirect" if defined $tup;
 		sysseek($file, 92, 0) or BAIL_OUT("sysseek failed: $!");
 		syswrite($file,
-				 pack("L", $ENDIANNESS eq 'little' ? 0x00010011 : 0x00230000))
-			or BAIL_OUT("syswrite failed: $!");
+			pack("L", $ENDIANNESS eq 'little' ? 0x00010011 : 0x00230000))
+		  or BAIL_OUT("syswrite failed: $!");
 		push @expected,
 		  qr/${header}redirected line pointer points to another redirected line pointer at offset \d+/;
 	}
@@ -644,8 +644,8 @@ for (my $tupidx = 0; $tupidx < $ROWCOUNT; $tupidx++)
 		# rewrite line pointer with lp.off = 25, lp_flags = 2, lp_len = 0
 		sysseek($file, 108, 0) or BAIL_OUT("sysseek failed: $!");
 		syswrite($file,
-				 pack("L", $ENDIANNESS eq 'little' ? 0x00010019 : 0x00330000))
-			or BAIL_OUT("syswrite failed: $!");
+			pack("L", $ENDIANNESS eq 'little' ? 0x00010019 : 0x00330000))
+		  or BAIL_OUT("syswrite failed: $!");
 		push @expected,
 		  qr/${header}redirect line pointer points to offset \d+, but offset \d+ also points there/;
 	}
@@ -756,7 +756,7 @@ $node->command_checks_all(
 	[ 'pg_amcheck', '--no-dependent-indexes', '-p', $port, 'postgres' ],
 	2, [@expected], [], 'Expected corruption message output');
 $node->safe_psql(
-        'postgres', qq(
+	'postgres', qq(
                         COMMIT PREPARED 'in_progress_tx';
         ));
 

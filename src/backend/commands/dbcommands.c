@@ -259,7 +259,7 @@ ScanSourceDatabasePgClass(Oid tbid, Oid dbid, char *srcpath)
 	List	   *rlocatorlist = NIL;
 	LockRelId	relid;
 	Snapshot	snapshot;
-	SMgrRelation	smgr;
+	SMgrRelation smgr;
 	BufferAccessStrategy bstrategy;
 
 	/* Get pg_class relfilenumber. */
@@ -1065,8 +1065,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		 */
 		if (!IsBinaryUpgrade && dbiculocale != src_iculocale)
 		{
-			char *langtag = icu_language_tag(dbiculocale,
-											 icu_validation_level);
+			char	   *langtag = icu_language_tag(dbiculocale,
+												   icu_validation_level);
 
 			if (langtag && strcmp(dbiculocale, langtag) != 0)
 			{
@@ -1219,7 +1219,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		dst_deftablespace = get_tablespace_oid(tablespacename, false);
 		/* check permissions */
 		aclresult = object_aclcheck(TableSpaceRelationId, dst_deftablespace, GetUserId(),
-										   ACL_CREATE);
+									ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_TABLESPACE,
 						   tablespacename);
@@ -1406,8 +1406,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	 * If we're going to be reading data for the to-be-created database into
 	 * shared_buffers, take a lock on it. Nobody should know that this
 	 * database exists yet, but it's good to maintain the invariant that an
-	 * AccessExclusiveLock on the database is sufficient to drop all
-	 * of its buffers without worrying about more being read later.
+	 * AccessExclusiveLock on the database is sufficient to drop all of its
+	 * buffers without worrying about more being read later.
 	 *
 	 * Note that we need to do this before entering the
 	 * PG_ENSURE_ERROR_CLEANUP block below, because createdb_failure_callback
@@ -1933,7 +1933,7 @@ movedb(const char *dbname, const char *tblspcname)
 	 * Permission checks
 	 */
 	aclresult = object_aclcheck(TableSpaceRelationId, dst_tblspcoid, GetUserId(),
-									   ACL_CREATE);
+								ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_TABLESPACE,
 					   tblspcname);
@@ -3110,7 +3110,7 @@ dbase_redo(XLogReaderState *record)
 	if (info == XLOG_DBASE_CREATE_FILE_COPY)
 	{
 		xl_dbase_create_file_copy_rec *xlrec =
-		(xl_dbase_create_file_copy_rec *) XLogRecGetData(record);
+			(xl_dbase_create_file_copy_rec *) XLogRecGetData(record);
 		char	   *src_path;
 		char	   *dst_path;
 		char	   *parent_path;
@@ -3182,7 +3182,7 @@ dbase_redo(XLogReaderState *record)
 	else if (info == XLOG_DBASE_CREATE_WAL_LOG)
 	{
 		xl_dbase_create_wal_log_rec *xlrec =
-		(xl_dbase_create_wal_log_rec *) XLogRecGetData(record);
+			(xl_dbase_create_wal_log_rec *) XLogRecGetData(record);
 		char	   *dbpath;
 		char	   *parent_path;
 

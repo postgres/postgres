@@ -357,14 +357,15 @@ dsm_impl_posix_resize(int fd, off_t size)
 	/*
 	 * Block all blockable signals, except SIGQUIT.  posix_fallocate() can run
 	 * for quite a long time, and is an all-or-nothing operation.  If we
-	 * allowed SIGUSR1 to interrupt us repeatedly (for example, due to recovery
-	 * conflicts), the retry loop might never succeed.
+	 * allowed SIGUSR1 to interrupt us repeatedly (for example, due to
+	 * recovery conflicts), the retry loop might never succeed.
 	 */
 	if (IsUnderPostmaster)
 		sigprocmask(SIG_SETMASK, &BlockSig, &save_sigmask);
 
 	pgstat_report_wait_start(WAIT_EVENT_DSM_ALLOCATE);
 #if defined(HAVE_POSIX_FALLOCATE) && defined(__linux__)
+
 	/*
 	 * On Linux, a shm_open fd is backed by a tmpfs file.  If we were to use
 	 * ftruncate, the file would contain a hole.  Accessing memory backed by a
@@ -374,8 +375,8 @@ dsm_impl_posix_resize(int fd, off_t size)
 	 * SIGBUS later.
 	 *
 	 * We still use a traditional EINTR retry loop to handle SIGCONT.
-	 * posix_fallocate() doesn't restart automatically, and we don't want
-	 * this to fail if you attach a debugger.
+	 * posix_fallocate() doesn't restart automatically, and we don't want this
+	 * to fail if you attach a debugger.
 	 */
 	do
 	{
@@ -383,9 +384,9 @@ dsm_impl_posix_resize(int fd, off_t size)
 	} while (rc == EINTR);
 
 	/*
-	 * The caller expects errno to be set, but posix_fallocate() doesn't
-	 * set it.  Instead it returns error numbers directly.  So set errno,
-	 * even though we'll also return rc to indicate success or failure.
+	 * The caller expects errno to be set, but posix_fallocate() doesn't set
+	 * it.  Instead it returns error numbers directly.  So set errno, even
+	 * though we'll also return rc to indicate success or failure.
 	 */
 	errno = rc;
 #else

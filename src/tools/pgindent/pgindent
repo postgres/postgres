@@ -21,22 +21,21 @@ my $indent_opts =
 
 my $devnull = File::Spec->devnull;
 
-my ($typedefs_file, $typedef_str,
-	@excludes,      $indent,      $build,
-	$show_diff,     $silent_diff, $help,
-	@commits,);
+my ($typedefs_file, $typedef_str, @excludes,
+	$indent, $build, $show_diff,
+	$silent_diff, $help, @commits,);
 
 $help = 0;
 
 my %options = (
-	"help"               => \$help,
-	"commit=s"           => \@commits,
-	"typedefs=s"         => \$typedefs_file,
+	"help" => \$help,
+	"commit=s" => \@commits,
+	"typedefs=s" => \$typedefs_file,
 	"list-of-typedefs=s" => \$typedef_str,
-	"excludes=s"         => \@excludes,
-	"indent=s"           => \$indent,
-	"show-diff"          => \$show_diff,
-	"silent-diff"        => \$silent_diff,);
+	"excludes=s" => \@excludes,
+	"indent=s" => \$indent,
+	"show-diff" => \$show_diff,
+	"silent-diff" => \$silent_diff,);
 GetOptions(%options) || usage("bad command line argument");
 
 usage() if $help;
@@ -61,7 +60,7 @@ my $sourcedir = locate_sourcedir();
 if ($sourcedir)
 {
 	my $exclude_candidate = "$sourcedir/exclude_file_patterns";
-	push (@excludes, $exclude_candidate) if -f $exclude_candidate;
+	push(@excludes, $exclude_candidate) if -f $exclude_candidate;
 }
 
 # The typedef list that's mechanically extracted by the buildfarm may omit
@@ -117,12 +116,12 @@ sub locate_sourcedir
 	return $sub if -d $sub;
 	# try to find it from an ancestor directory
 	$sub = "../src/tools/pgindent";
-	foreach (1..4)
+	foreach (1 .. 4)
 	{
 		return $sub if -d $sub;
 		$sub = "../$sub";
 	}
-	return; # undef if nothing found
+	return;    # undef if nothing found
 }
 
 sub load_typedefs
@@ -204,7 +203,7 @@ sub read_source
 
 sub write_source
 {
-	my $source          = shift;
+	my $source = shift;
 	my $source_filename = shift;
 
 	open(my $src_fh, '>', $source_filename)
@@ -231,7 +230,7 @@ sub pre_indent
 	# Prevent indenting of code in 'extern "C"' blocks.
 	# we replace the braces with comments which we'll reverse later
 	my $extern_c_start = '/* Open extern "C" */';
-	my $extern_c_stop  = '/* Close extern "C" */';
+	my $extern_c_stop = '/* Close extern "C" */';
 	$source =~
 	  s!(^#ifdef[ \t]+__cplusplus.*\nextern[ \t]+"C"[ \t]*\n)\{[ \t]*$!$1$extern_c_start!gm;
 	$source =~ s!(^#ifdef[ \t]+__cplusplus.*\n)\}[ \t]*$!$1$extern_c_stop!gm;
@@ -271,7 +270,7 @@ sub post_indent
 
 sub run_indent
 {
-	my $source        = shift;
+	my $source = shift;
 	my $error_message = shift;
 
 	my $cmd = "$indent $indent_opts -U" . $filtered_typedefs_fh->filename;
@@ -297,7 +296,7 @@ sub run_indent
 
 sub show_diff
 {
-	my $indented        = shift;
+	my $indented = shift;
 	my $source_filename = shift;
 
 	my $post_fh = new File::Temp(TEMPLATE => "pgdiffXXXXX");
@@ -313,7 +312,7 @@ sub show_diff
 
 sub usage
 {
-	my $message  = shift;
+	my $message = shift;
 	my $helptext = <<'EOF';
 Usage:
 pgindent [OPTION]... [FILE|DIR]...
@@ -346,8 +345,7 @@ $filtered_typedefs_fh = load_typedefs();
 
 check_indent();
 
-my $wanted = sub
-{
+my $wanted = sub {
 	my ($dev, $ino, $mode, $nlink, $uid, $gid);
 	(($dev, $ino, $mode, $nlink, $uid, $gid) = lstat($_))
 	  && -f _
@@ -356,7 +354,7 @@ my $wanted = sub
 };
 
 # any non-option arguments are files or directories to be processed
-File::Find::find({wanted => $wanted}, @ARGV) if @ARGV;
+File::Find::find({ wanted => $wanted }, @ARGV) if @ARGV;
 
 # commit file locations are relative to the source root
 chdir "$sourcedir/../../.." if @commits && $sourcedir;
@@ -364,11 +362,11 @@ chdir "$sourcedir/../../.." if @commits && $sourcedir;
 # process named commits by comparing each with their immediate ancestor
 foreach my $commit (@commits)
 {
-	my $prev="$commit~";
-	my @affected=`git diff --diff-filter=ACMR --name-only $prev $commit`;
+	my $prev = "$commit~";
+	my @affected = `git diff --diff-filter=ACMR --name-only $prev $commit`;
 	die "git error" if $?;
 	chomp(@affected);
-	push(@files,@affected);
+	push(@files, @affected);
 }
 
 warn "No files to process" unless @files;
@@ -402,8 +400,8 @@ foreach my $source_filename (@files)
 	$otherfile =~ s/\.y$/.l/;
 	next if $otherfile ne $source_filename && -f $otherfile;
 
-	my $source        = read_source($source_filename);
-	my $orig_source   = $source;
+	my $source = read_source($source_filename);
+	my $orig_source = $source;
 	my $error_message = '';
 
 	$source = pre_indent($source);

@@ -574,7 +574,7 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	Assert(builder->building_full_snapshot);
 
 	/* don't allow older snapshots */
-	InvalidateCatalogSnapshot(); /* about to overwrite MyProc->xmin */
+	InvalidateCatalogSnapshot();	/* about to overwrite MyProc->xmin */
 	if (HaveRegisteredOrActiveSnapshot())
 		elog(ERROR, "cannot build an initial slot snapshot when snapshots exist");
 	Assert(!HistoricSnapshotActive());
@@ -1338,8 +1338,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 */
 
 	/*
-	 * xl_running_xacts record is older than what we can use, we might not have
-	 * all necessary catalog rows anymore.
+	 * xl_running_xacts record is older than what we can use, we might not
+	 * have all necessary catalog rows anymore.
 	 */
 	if (TransactionIdIsNormal(builder->initial_xmin_horizon) &&
 		NormalTransactionIdPrecedes(running->oldestRunningXid,

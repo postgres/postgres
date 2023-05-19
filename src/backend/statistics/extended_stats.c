@@ -2237,8 +2237,8 @@ compute_expr_stats(Relation onerel, double totalrows,
 		if (tcnt > 0)
 		{
 			AttributeOpts *aopt =
-			get_attribute_options(stats->attr->attrelid,
-								  stats->attr->attnum);
+				get_attribute_options(stats->attr->attrelid,
+									  stats->attr->attnum);
 
 			stats->exprvals = exprvals;
 			stats->exprnulls = exprnulls;

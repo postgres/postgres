@@ -196,7 +196,7 @@ typedef struct RWConflictData
 	dlist_node	inLink;			/* link for list of conflicts in to a sxact */
 	SERIALIZABLEXACT *sxactOut;
 	SERIALIZABLEXACT *sxactIn;
-}			RWConflictData;
+} RWConflictData;
 
 typedef struct RWConflictData *RWConflict;
 

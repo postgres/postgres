@@ -80,7 +80,7 @@ BEGIN;
 INSERT INTO alive VALUES($$in-progress-before-sigquit$$) RETURNING status;
 ];
 ok( pump_until(
-		$killme,         $psql_timeout,
+		$killme, $psql_timeout,
 		\$killme_stdout, qr/in-progress-before-sigquit/m),
 	'inserted in-progress-before-sigquit');
 $killme_stdout = '';
@@ -164,7 +164,7 @@ BEGIN;
 INSERT INTO alive VALUES($$in-progress-before-sigkill$$) RETURNING status;
 ];
 ok( pump_until(
-		$killme,         $psql_timeout,
+		$killme, $psql_timeout,
 		\$killme_stdout, qr/in-progress-before-sigkill/m),
 	'inserted in-progress-before-sigkill');
 $killme_stdout = '';

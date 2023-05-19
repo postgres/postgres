@@ -2947,7 +2947,7 @@ void
 _bt_pendingfsm_finalize(Relation rel, BTVacState *vstate)
 {
 	IndexBulkDeleteResult *stats = vstate->stats;
-	Relation    heaprel = vstate->info->heaprel;
+	Relation	heaprel = vstate->info->heaprel;
 
 	Assert(stats->pages_newly_deleted >= vstate->npendingpages);
 
@@ -3027,7 +3027,7 @@ _bt_pendingfsm_add(BTVacState *vstate,
 	if (vstate->npendingpages > 0)
 	{
 		FullTransactionId lastsafexid =
-		vstate->pendingpages[vstate->npendingpages - 1].safexid;
+			vstate->pendingpages[vstate->npendingpages - 1].safexid;
 
 		Assert(FullTransactionIdFollowsOrEquals(safexid, lastsafexid));
 	}

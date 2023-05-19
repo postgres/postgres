@@ -78,8 +78,8 @@ copytext(PG_FUNCTION_ARGS)
 	 * VARDATA is a pointer to the data region of the new struct.  The source
 	 * could be a short datum, so retrieve its data through VARDATA_ANY.
 	 */
-	memcpy(VARDATA(new_t),          /* destination */
-		   VARDATA_ANY(t),          /* source */
+	memcpy(VARDATA(new_t),		/* destination */
+		   VARDATA_ANY(t),		/* source */
 		   VARSIZE_ANY_EXHDR(t));	/* how many bytes */
 	PG_RETURN_TEXT_P(new_t);
 }

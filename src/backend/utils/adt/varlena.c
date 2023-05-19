@@ -2312,8 +2312,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 		memcpy(sss->buf1, authoritative_data, len);
 
 		/*
-		 * pg_strxfrm() and pg_strxfrm_prefix expect NUL-terminated
-		 * strings.
+		 * pg_strxfrm() and pg_strxfrm_prefix expect NUL-terminated strings.
 		 */
 		sss->buf1[len] = '\0';
 		sss->last_len1 = len;
@@ -4523,7 +4522,7 @@ text_to_array(PG_FUNCTION_ARGS)
 		PG_RETURN_ARRAYTYPE_P(construct_empty_array(TEXTOID));
 
 	PG_RETURN_DATUM(makeArrayResult(tstate.astate,
-										  CurrentMemoryContext));
+									CurrentMemoryContext));
 }
 
 /*

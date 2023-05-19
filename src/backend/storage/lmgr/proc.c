@@ -101,7 +101,7 @@ ProcGlobalShmemSize(void)
 {
 	Size		size = 0;
 	Size		TotalProcs =
-	add_size(MaxBackends, add_size(NUM_AUXILIARY_PROCS, max_prepared_xacts));
+		add_size(MaxBackends, add_size(NUM_AUXILIARY_PROCS, max_prepared_xacts));
 
 	/* ProcGlobal */
 	size = add_size(size, sizeof(PROC_HDR));
@@ -331,7 +331,7 @@ InitProcess(void)
 
 	if (!dlist_is_empty(procgloballist))
 	{
-		MyProc = (PGPROC*) dlist_pop_head_node(procgloballist);
+		MyProc = (PGPROC *) dlist_pop_head_node(procgloballist);
 		SpinLockRelease(ProcStructLock);
 	}
 	else
@@ -1009,7 +1009,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	uint32		hashcode = locallock->hashcode;
 	LWLock	   *partitionLock = LockHashPartitionLock(hashcode);
 	dclist_head *waitQueue = &lock->waitProcs;
-	PGPROC     *insert_before = NULL;
+	PGPROC	   *insert_before = NULL;
 	LOCKMASK	myHeldLocks = MyProc->heldLocks;
 	TimestampTz standbyWaitStart = 0;
 	bool		early_deadlock = false;
@@ -1244,7 +1244,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		if (InHotStandby)
 		{
 			bool		maybe_log_conflict =
-			(standbyWaitStart != 0 && !logged_recovery_conflict);
+				(standbyWaitStart != 0 && !logged_recovery_conflict);
 
 			/* Set a timer and wait for that or for the lock to be granted */
 			ResolveRecoveryConflictWithLock(locallock->tag.lock,

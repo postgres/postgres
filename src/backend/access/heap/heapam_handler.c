@@ -334,8 +334,8 @@ heapam_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slot,
 	 * Note: heap_update returns the tid (location) of the new tuple in the
 	 * t_self field.
 	 *
-	 * If the update is not HOT, we must update all indexes. If the update
-	 * is HOT, it could be that we updated summarized columns, so we either
+	 * If the update is not HOT, we must update all indexes. If the update is
+	 * HOT, it could be that we updated summarized columns, so we either
 	 * update only summarized indexes, or none at all.
 	 */
 	if (result != TM_Ok)

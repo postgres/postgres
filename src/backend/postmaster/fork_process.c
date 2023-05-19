@@ -58,8 +58,8 @@ fork_process(void)
 	/*
 	 * We start postmaster children with signals blocked.  This allows them to
 	 * install their own handlers before unblocking, to avoid races where they
-	 * might run the postmaster's handler and miss an important control signal.
-	 * With more analysis this could potentially be relaxed.
+	 * might run the postmaster's handler and miss an important control
+	 * signal. With more analysis this could potentially be relaxed.
 	 */
 	sigprocmask(SIG_SETMASK, &BlockSig, &save_mask);
 	result = fork();

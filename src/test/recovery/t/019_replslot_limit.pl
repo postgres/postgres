@@ -377,7 +377,7 @@ $logstart = get_log_size($node_primary3);
 kill 'STOP', $senderpid, $receiverpid;
 advance_wal($node_primary3, 2);
 
-my $msg_logged   = 0;
+my $msg_logged = 0;
 my $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {
@@ -402,7 +402,7 @@ $node_primary3->poll_query_until('postgres',
 	"lost")
   or die "timed out waiting for slot to be lost";
 
-$msg_logged   = 0;
+$msg_logged = 0;
 $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {

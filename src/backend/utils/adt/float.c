@@ -189,8 +189,7 @@ float4in_internal(char *num, char **endptr_p,
 	/*
 	 * endptr points to the first character _after_ the sequence we recognized
 	 * as a valid floating point number. orig_string points to the original
-	 * input
-	 * string.
+	 * input string.
 	 */
 
 	/* skip leading whitespace */

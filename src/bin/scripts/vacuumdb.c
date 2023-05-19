@@ -52,12 +52,12 @@ typedef struct vacuumingOptions
 /* object filter options */
 typedef enum
 {
-	OBJFILTER_NONE = 0,					/* no filter used */
-	OBJFILTER_ALL_DBS = (1 << 0),		/* -a | --all */
-	OBJFILTER_DATABASE = (1 << 1),		/* -d | --dbname */
-	OBJFILTER_TABLE = (1 << 2),			/* -t | --table */
-	OBJFILTER_SCHEMA = (1 << 3),		/* -n | --schema */
-	OBJFILTER_SCHEMA_EXCLUDE = (1 << 4)	/* -N | --exclude-schema */
+	OBJFILTER_NONE = 0,			/* no filter used */
+	OBJFILTER_ALL_DBS = (1 << 0),	/* -a | --all */
+	OBJFILTER_DATABASE = (1 << 1),	/* -d | --dbname */
+	OBJFILTER_TABLE = (1 << 2), /* -t | --table */
+	OBJFILTER_SCHEMA = (1 << 3),	/* -n | --schema */
+	OBJFILTER_SCHEMA_EXCLUDE = (1 << 4) /* -N | --exclude-schema */
 } VacObjFilter;
 
 VacObjFilter objfilter = OBJFILTER_NONE;
@@ -83,7 +83,7 @@ static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 
 static void help(const char *progname);
 
-void check_objfilter(void);
+void		check_objfilter(void);
 
 /* For analyze-in-stages mode */
 #define ANALYZE_NO_STAGE	-1

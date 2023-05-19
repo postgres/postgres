@@ -146,7 +146,7 @@ $node->command_fails(
 	'vacuumdb --min-xid-age with incorrect value');
 $node->issues_sql_like(
 	[
-		'vacuumdb',   '--table', 'vactable', '--min-mxid-age',
+		'vacuumdb', '--table', 'vactable', '--min-mxid-age',
 		'2147483000', 'postgres'
 	],
 	qr/GREATEST.*relminmxid.*2147483000/,

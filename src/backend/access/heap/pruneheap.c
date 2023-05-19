@@ -532,7 +532,7 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 		if (!TransactionIdIsValid(prstate->old_snap_xmin))
 		{
 			TransactionId horizon =
-			GlobalVisTestNonRemovableHorizon(prstate->vistest);
+				GlobalVisTestNonRemovableHorizon(prstate->vistest);
 
 			TransactionIdLimitedForOldSnapshots(horizon, prstate->rel,
 												&prstate->old_snap_xmin,

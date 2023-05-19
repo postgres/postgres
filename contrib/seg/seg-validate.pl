@@ -6,14 +6,14 @@ use strict;
 use warnings;
 
 my $integer = '[+-]?[0-9]+';
-my $real    = '[+-]?[0-9]+\.[0-9]+';
+my $real = '[+-]?[0-9]+\.[0-9]+';
 
-my $RANGE     = '(\.\.)(\.)?';
-my $PLUMIN    = q(\'\+\-\');
-my $FLOAT     = "(($integer)|($real))([eE]($integer))?";
+my $RANGE = '(\.\.)(\.)?';
+my $PLUMIN = q(\'\+\-\');
+my $FLOAT = "(($integer)|($real))([eE]($integer))?";
 my $EXTENSION = '<|>|~';
 
-my $boundary  = "($EXTENSION)?$FLOAT";
+my $boundary = "($EXTENSION)?$FLOAT";
 my $deviation = $FLOAT;
 
 my $rule_1 = $boundary . $PLUMIN . $deviation;

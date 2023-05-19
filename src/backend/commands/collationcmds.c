@@ -270,8 +270,8 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 			 */
 			if (!IsBinaryUpgrade)
 			{
-				char *langtag = icu_language_tag(colliculocale,
-												 icu_validation_level);
+				char	   *langtag = icu_language_tag(colliculocale,
+													   icu_validation_level);
 
 				if (langtag && strcmp(colliculocale, langtag) != 0)
 				{
@@ -476,17 +476,18 @@ AlterCollation(AlterCollationStmt *stmt)
 Datum
 pg_collation_actual_version(PG_FUNCTION_ARGS)
 {
-	Oid		 collid = PG_GETARG_OID(0);
-	char	 provider;
-	char	*locale;
-	char	*version;
-	Datum	 datum;
+	Oid			collid = PG_GETARG_OID(0);
+	char		provider;
+	char	   *locale;
+	char	   *version;
+	Datum		datum;
 
 	if (collid == DEFAULT_COLLATION_OID)
 	{
 		/* retrieve from pg_database */
 
 		HeapTuple	dbtup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+
 		if (!HeapTupleIsValid(dbtup))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -506,7 +507,8 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 	{
 		/* retrieve from pg_collation */
 
-		HeapTuple	colltp		= SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+		HeapTuple	colltp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+
 		if (!HeapTupleIsValid(colltp))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -657,11 +659,10 @@ create_collation_from_locale(const char *locale, int nspid,
 	Oid			collid;
 
 	/*
-	 * Some systems have locale names that don't consist entirely of
-	 * ASCII letters (such as "bokm&aring;l" or "fran&ccedil;ais").
-	 * This is pretty silly, since we need the locale itself to
-	 * interpret the non-ASCII characters. We can't do much with
-	 * those, so we filter them out.
+	 * Some systems have locale names that don't consist entirely of ASCII
+	 * letters (such as "bokm&aring;l" or "fran&ccedil;ais"). This is pretty
+	 * silly, since we need the locale itself to interpret the non-ASCII
+	 * characters. We can't do much with those, so we filter them out.
 	 */
 	if (!pg_is_ascii(locale))
 	{
@@ -681,19 +682,18 @@ create_collation_from_locale(const char *locale, int nspid,
 		return -1;
 	}
 	if (enc == PG_SQL_ASCII)
-		return -1;		/* C/POSIX are already in the catalog */
+		return -1;				/* C/POSIX are already in the catalog */
 
 	/* count valid locales found in operating system */
 	(*nvalidp)++;
 
 	/*
-	 * Create a collation named the same as the locale, but quietly
-	 * doing nothing if it already exists.  This is the behavior we
-	 * need even at initdb time, because some versions of "locale -a"
-	 * can report the same locale name more than once.  And it's
-	 * convenient for later import runs, too, since you just about
-	 * always want to add on new locales without a lot of chatter
-	 * about existing ones.
+	 * Create a collation named the same as the locale, but quietly doing
+	 * nothing if it already exists.  This is the behavior we need even at
+	 * initdb time, because some versions of "locale -a" can report the same
+	 * locale name more than once.  And it's convenient for later import runs,
+	 * too, since you just about always want to add on new locales without a
+	 * lot of chatter about existing ones.
 	 */
 	collid = CollationCreate(locale, nspid, GetUserId(),
 							 COLLPROVIDER_LIBC, true, enc,
@@ -995,8 +995,8 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		param.nvalidp = &nvalid;
 
 		/*
-		 * Enumerate the locales that are either installed on or supported
-		 * by the OS.
+		 * Enumerate the locales that are either installed on or supported by
+		 * the OS.
 		 */
 		if (!EnumSystemLocalesEx(win32_read_locale, LOCALE_ALL,
 								 (LPARAM) &param, NULL))

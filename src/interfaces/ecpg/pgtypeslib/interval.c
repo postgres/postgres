@@ -780,17 +780,17 @@ EncodeInterval(struct /* pg_ */ tm *tm, fsec_t fsec, int style, char *str)
 		case INTSTYLE_SQL_STANDARD:
 			{
 				bool		has_negative = year < 0 || mon < 0 ||
-				mday < 0 || hour < 0 ||
-				min < 0 || sec < 0 || fsec < 0;
+					mday < 0 || hour < 0 ||
+					min < 0 || sec < 0 || fsec < 0;
 				bool		has_positive = year > 0 || mon > 0 ||
-				mday > 0 || hour > 0 ||
-				min > 0 || sec > 0 || fsec > 0;
+					mday > 0 || hour > 0 ||
+					min > 0 || sec > 0 || fsec > 0;
 				bool		has_year_month = year != 0 || mon != 0;
 				bool		has_day_time = mday != 0 || hour != 0 ||
-				min != 0 || sec != 0 || fsec != 0;
+					min != 0 || sec != 0 || fsec != 0;
 				bool		has_day = mday != 0;
 				bool		sql_standard_value = !(has_negative && has_positive) &&
-				!(has_year_month && has_day_time);
+					!(has_year_month && has_day_time);
 
 				/*
 				 * SQL Standard wants only 1 "<sign>" preceding the whole

@@ -14,8 +14,8 @@ use Time::HiRes qw(usleep);
 sub fetch_file_name
 {
 	my $logfiles = shift;
-	my $format   = shift;
-	my @lines    = split(/\n/, $logfiles);
+	my $format = shift;
+	my @lines = split(/\n/, $logfiles);
 	my $filename = undef;
 	foreach my $line (@lines)
 	{
@@ -33,11 +33,11 @@ sub check_log_pattern
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-	my $format   = shift;
+	my $format = shift;
 	my $logfiles = shift;
-	my $pattern  = shift;
-	my $node     = shift;
-	my $lfname   = fetch_file_name($logfiles, $format);
+	my $pattern = shift;
+	my $node = shift;
+	my $lfname = fetch_file_name($logfiles, $format);
 
 	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
 
@@ -100,8 +100,8 @@ csvlog log/postgresql-.*csv
 jsonlog log/postgresql-.*json$|,
 	'current_logfiles is sane');
 
-check_log_pattern('stderr',  $current_logfiles, 'division by zero', $node);
-check_log_pattern('csvlog',  $current_logfiles, 'division by zero', $node);
+check_log_pattern('stderr', $current_logfiles, 'division by zero', $node);
+check_log_pattern('csvlog', $current_logfiles, 'division by zero', $node);
 check_log_pattern('jsonlog', $current_logfiles, 'division by zero', $node);
 
 # Sleep 2 seconds and ask for log rotation; this should result in
@@ -131,8 +131,8 @@ jsonlog log/postgresql-.*json$|,
 # Verify that log output gets to this file, too
 $node->psql('postgres', 'fee fi fo fum');
 
-check_log_pattern('stderr',  $new_current_logfiles, 'syntax error', $node);
-check_log_pattern('csvlog',  $new_current_logfiles, 'syntax error', $node);
+check_log_pattern('stderr', $new_current_logfiles, 'syntax error', $node);
+check_log_pattern('csvlog', $new_current_logfiles, 'syntax error', $node);
 check_log_pattern('jsonlog', $new_current_logfiles, 'syntax error', $node);
 
 $node->stop();

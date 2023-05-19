@@ -17,28 +17,28 @@ $primary->start;
 my @test_configuration = (
 	{
 		'compression_method' => 'none',
-		'backup_flags'       => [],
-		'enabled'            => 1
+		'backup_flags' => [],
+		'enabled' => 1
 	},
 	{
 		'compression_method' => 'gzip',
-		'backup_flags'       => [ '--compress', 'server-gzip:5' ],
-		'enabled'            => check_pg_config("#define HAVE_LIBZ 1")
+		'backup_flags' => [ '--compress', 'server-gzip:5' ],
+		'enabled' => check_pg_config("#define HAVE_LIBZ 1")
 	},
 	{
 		'compression_method' => 'lz4',
-		'backup_flags'       => [ '--compress', 'server-lz4:5' ],
-		'enabled'            => check_pg_config("#define USE_LZ4 1")
+		'backup_flags' => [ '--compress', 'server-lz4:5' ],
+		'enabled' => check_pg_config("#define USE_LZ4 1")
 	},
 	{
 		'compression_method' => 'zstd',
-		'backup_flags'       => [ '--compress', 'server-zstd:5' ],
-		'enabled'            => check_pg_config("#define USE_ZSTD 1")
+		'backup_flags' => [ '--compress', 'server-zstd:5' ],
+		'enabled' => check_pg_config("#define USE_ZSTD 1")
 	},
 	{
 		'compression_method' => 'parallel zstd',
-		'backup_flags'       => [ '--compress', 'server-zstd:workers=3' ],
-		'enabled'            => check_pg_config("#define USE_ZSTD 1"),
+		'backup_flags' => [ '--compress', 'server-zstd:workers=3' ],
+		'enabled' => check_pg_config("#define USE_ZSTD 1"),
 		'possibly_unsupported' =>
 		  qr/could not set compression worker count to 3: Unsupported parameter/
 	});
@@ -46,7 +46,7 @@ my @test_configuration = (
 for my $tc (@test_configuration)
 {
 	my $backup_path = $primary->backup_dir . '/' . 'extract_backup';
-	my $method      = $tc->{'compression_method'};
+	my $method = $tc->{'compression_method'};
 
   SKIP:
 	{

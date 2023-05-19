@@ -40,13 +40,13 @@ my @tests = (
 		q{user='uri-user' host='host' (inet)},
 		q{},
 	],
-	[ q{postgresql://uri-user@},   q{user='uri-user' (local)},         q{}, ],
+	[ q{postgresql://uri-user@}, q{user='uri-user' (local)}, q{}, ],
 	[ q{postgresql://host:12345/}, q{host='host' port='12345' (inet)}, q{}, ],
-	[ q{postgresql://host:12345},  q{host='host' port='12345' (inet)}, q{}, ],
-	[ q{postgresql://host/db},     q{dbname='db' host='host' (inet)},  q{}, ],
-	[ q{postgresql://host/},       q{host='host' (inet)},              q{}, ],
-	[ q{postgresql://host},        q{host='host' (inet)},              q{}, ],
-	[ q{postgresql://},            q{(local)},                         q{}, ],
+	[ q{postgresql://host:12345}, q{host='host' port='12345' (inet)}, q{}, ],
+	[ q{postgresql://host/db}, q{dbname='db' host='host' (inet)}, q{}, ],
+	[ q{postgresql://host/}, q{host='host' (inet)}, q{}, ],
+	[ q{postgresql://host}, q{host='host' (inet)}, q{}, ],
+	[ q{postgresql://}, q{(local)}, q{}, ],
 	[
 		q{postgresql://?hostaddr=127.0.0.1}, q{hostaddr='127.0.0.1' (inet)},
 		q{},
@@ -101,10 +101,10 @@ my @tests = (
 		q{postgresql://[200z:db8::1234]/}, q{host='200z:db8::1234' (inet)},
 		q{},
 	],
-	[ q{postgresql://[::1]}, q{host='::1' (inet)},   q{}, ],
-	[ q{postgres://},        q{(local)},             q{}, ],
-	[ q{postgres:///},       q{(local)},             q{}, ],
-	[ q{postgres:///db},     q{dbname='db' (local)}, q{}, ],
+	[ q{postgresql://[::1]}, q{host='::1' (inet)}, q{}, ],
+	[ q{postgres://}, q{(local)}, q{}, ],
+	[ q{postgres:///}, q{(local)}, q{}, ],
+	[ q{postgres:///db}, q{dbname='db' (local)}, q{}, ],
 	[
 		q{postgres://uri-user@/db}, q{user='uri-user' dbname='db' (local)},
 		q{},
@@ -174,8 +174,8 @@ my @tests = (
 		q{postgresql://%}, q{},
 		q{libpq_uri_regress: invalid percent-encoded token: "%"},
 	],
-	[ q{postgres://@host},   q{host='host' (inet)},   q{}, ],
-	[ q{postgres://host:/},  q{host='host' (inet)},   q{}, ],
+	[ q{postgres://@host}, q{host='host' (inet)}, q{}, ],
+	[ q{postgres://host:/}, q{host='host' (inet)}, q{}, ],
 	[ q{postgres://:12345/}, q{port='12345' (local)}, q{}, ],
 	[
 		q{postgres://otheruser@?host=/no/such/directory},
@@ -230,8 +230,7 @@ my @tests = (
 	[
 		q{postgresql://host?sslmode=verify-full},
 		q{host='host' (inet)},
-		q{},
-		PGSSLROOTCERT => "system",
+		q{}, PGSSLROOTCERT => "system",
 	]);
 
 # test to run for each of the above test definitions

@@ -106,7 +106,7 @@ my @nodetag_only_files = qw(
 # In HEAD, these variables should be left undef, since we don't promise
 # ABI stability during development.
 
-my $last_nodetag    = undef;
+my $last_nodetag = undef;
 my $last_nodetag_no = undef;
 
 # output file names
@@ -161,9 +161,9 @@ push @node_types, qw(List);
 # (Ideally we'd mark List as "special copy/equal" not "no copy/equal".
 # But until there's other use-cases for that, just hot-wire the tests
 # that would need to distinguish.)
-push @no_copy,            qw(List);
-push @no_equal,           qw(List);
-push @no_query_jumble,    qw(List);
+push @no_copy, qw(List);
+push @no_equal, qw(List);
+push @no_query_jumble, qw(List);
 push @special_read_write, qw(List);
 
 # Nodes with custom copy/equal implementations are skipped from
@@ -230,7 +230,7 @@ foreach my $infile (@ARGV)
 	}
 	$file_content .= $raw_file_content;
 
-	my $lineno   = 0;
+	my $lineno = 0;
 	my $prevline = '';
 	foreach my $line (split /\n/, $file_content)
 	{
@@ -247,7 +247,7 @@ foreach my $infile (@ARGV)
 			if ($line =~ /;$/)
 			{
 				# found the end, re-attach any previous line(s)
-				$line     = $prevline . $line;
+				$line = $prevline . $line;
 				$prevline = '';
 			}
 			elsif ($prevline eq ''
@@ -272,7 +272,7 @@ foreach my $infile (@ARGV)
 			if ($subline == 1)
 			{
 				$is_node_struct = 0;
-				$supertype      = undef;
+				$supertype = undef;
 				next if $line eq '{';
 				die "$infile:$lineno: expected opening brace\n";
 			}
@@ -280,7 +280,7 @@ foreach my $infile (@ARGV)
 			elsif ($subline == 2
 				&& $line =~ /^\s*pg_node_attr\(([\w(), ]*)\)$/)
 			{
-				$node_attrs        = $1;
+				$node_attrs = $1;
 				$node_attrs_lineno = $lineno;
 				# hack: don't count the line
 				$subline--;
@@ -296,8 +296,8 @@ foreach my $infile (@ARGV)
 				}
 				elsif ($line =~ /\s*(\w+)\s+(\w+);/ and elem $1, @node_types)
 				{
-					$is_node_struct  = 1;
-					$supertype       = $1;
+					$is_node_struct = 1;
+					$supertype = $1;
 					$supertype_field = $2;
 					next;
 				}
@@ -339,7 +339,7 @@ foreach my $infile (@ARGV)
 						}
 						elsif ($attr eq 'no_copy_equal')
 						{
-							push @no_copy,  $in_struct;
+							push @no_copy, $in_struct;
 							push @no_equal, $in_struct;
 						}
 						elsif ($attr eq 'no_query_jumble')
@@ -373,7 +373,7 @@ foreach my $infile (@ARGV)
 					push @node_types, $in_struct;
 
 					# field names, types, attributes
-					my @f  = @my_fields;
+					my @f = @my_fields;
 					my %ft = %my_field_types;
 					my %fa = %my_field_attrs;
 
@@ -405,7 +405,7 @@ foreach my $infile (@ARGV)
 						unshift @f, @superfields;
 					}
 					# save in global info structure
-					$node_type_info{$in_struct}->{fields}      = \@f;
+					$node_type_info{$in_struct}->{fields} = \@f;
 					$node_type_info{$in_struct}->{field_types} = \%ft;
 					$node_type_info{$in_struct}->{field_attrs} = \%fa;
 
@@ -428,9 +428,9 @@ foreach my $infile (@ARGV)
 				}
 
 				# start new cycle
-				$in_struct      = undef;
-				$node_attrs     = '';
-				@my_fields      = ();
+				$in_struct = undef;
+				$node_attrs = '';
+				@my_fields = ();
 				%my_field_types = ();
 				%my_field_attrs = ();
 			}
@@ -441,10 +441,10 @@ foreach my $infile (@ARGV)
 			{
 				if ($is_node_struct)
 				{
-					my $type       = $1;
-					my $name       = $2;
+					my $type = $1;
+					my $name = $2;
 					my $array_size = $3;
-					my $attrs      = $4;
+					my $attrs = $4;
 
 					# strip "const"
 					$type =~ s/^const\s*//;
@@ -499,9 +499,9 @@ foreach my $infile (@ARGV)
 			{
 				if ($is_node_struct)
 				{
-					my $type  = $1;
-					my $name  = $2;
-					my $args  = $3;
+					my $type = $1;
+					my $name = $2;
+					my $args = $3;
 					my $attrs = $4;
 
 					my @attrs;
@@ -540,20 +540,20 @@ foreach my $infile (@ARGV)
 			if ($line =~ /^(?:typedef )?struct (\w+)$/ && $1 ne 'Node')
 			{
 				$in_struct = $1;
-				$subline   = 0;
+				$subline = 0;
 			}
 			# one node type typedef'ed directly from another
 			elsif ($line =~ /^typedef (\w+) (\w+);$/ and elem $1, @node_types)
 			{
 				my $alias_of = $1;
-				my $n        = $2;
+				my $n = $2;
 
 				# copy everything over
 				push @node_types, $n;
-				my @f  = @{ $node_type_info{$alias_of}->{fields} };
+				my @f = @{ $node_type_info{$alias_of}->{fields} };
 				my %ft = %{ $node_type_info{$alias_of}->{field_types} };
 				my %fa = %{ $node_type_info{$alias_of}->{field_attrs} };
-				$node_type_info{$n}->{fields}      = \@f;
+				$node_type_info{$n}->{fields} = \@f;
 				$node_type_info{$n}->{field_types} = \%ft;
 				$node_type_info{$n}->{field_attrs} = \%fa;
 			}
@@ -608,7 +608,7 @@ open my $nt, '>', "$output_path/nodetags.h$tmpext"
 
 printf $nt $header_comment, 'nodetags.h';
 
-my $tagno    = 0;
+my $tagno = 0;
 my $last_tag = undef;
 foreach my $n (@node_types, @extra_tags)
 {
@@ -669,7 +669,7 @@ foreach my $n (@node_types)
 {
 	next if elem $n, @abstract_types;
 	next if elem $n, @nodetag_only;
-	my $struct_no_copy  = (elem $n, @no_copy);
+	my $struct_no_copy = (elem $n, @no_copy);
 	my $struct_no_equal = (elem $n, @no_equal);
 	next if $struct_no_copy && $struct_no_equal;
 
@@ -705,15 +705,15 @@ _equal${n}(const $n *a, const $n *b)
 	# print instructions for each field
 	foreach my $f (@{ $node_type_info{$n}->{fields} })
 	{
-		my $t            = $node_type_info{$n}->{field_types}{$f};
-		my @a            = @{ $node_type_info{$n}->{field_attrs}{$f} };
-		my $copy_ignore  = $struct_no_copy;
+		my $t = $node_type_info{$n}->{field_types}{$f};
+		my @a = @{ $node_type_info{$n}->{field_attrs}{$f} };
+		my $copy_ignore = $struct_no_copy;
 		my $equal_ignore = $struct_no_equal;
 
 		# extract per-field attributes
 		my $array_size_field;
 		my $copy_as_field;
-		my $copy_as_scalar  = 0;
+		my $copy_as_scalar = 0;
 		my $equal_as_scalar = 0;
 		foreach my $a (@a)
 		{
@@ -768,7 +768,7 @@ _equal${n}(const $n *a, const $n *b)
 		# select instructions by field type
 		if ($t eq 'char*')
 		{
-			print $cff "\tCOPY_STRING_FIELD($f);\n"    unless $copy_ignore;
+			print $cff "\tCOPY_STRING_FIELD($f);\n" unless $copy_ignore;
 			print $eff "\tCOMPARE_STRING_FIELD($f);\n" unless $equal_ignore;
 		}
 		elsif ($t eq 'Bitmapset*' || $t eq 'Relids')
@@ -779,7 +779,7 @@ _equal${n}(const $n *a, const $n *b)
 		}
 		elsif ($t eq 'int' && $f =~ 'location$')
 		{
-			print $cff "\tCOPY_LOCATION_FIELD($f);\n"    unless $copy_ignore;
+			print $cff "\tCOPY_LOCATION_FIELD($f);\n" unless $copy_ignore;
 			print $eff "\tCOMPARE_LOCATION_FIELD($f);\n" unless $equal_ignore;
 		}
 		elsif (elem $t, @scalar_types or elem $t, @enum_types)
@@ -828,7 +828,7 @@ _equal${n}(const $n *a, const $n *b)
 		elsif ($t eq 'function pointer')
 		{
 			# we can copy and compare as a scalar
-			print $cff "\tCOPY_SCALAR_FIELD($f);\n"    unless $copy_ignore;
+			print $cff "\tCOPY_SCALAR_FIELD($f);\n" unless $copy_ignore;
 			print $eff "\tCOMPARE_SCALAR_FIELD($f);\n" unless $equal_ignore;
 		}
 		# node type
@@ -846,13 +846,13 @@ _equal${n}(const $n *a, const $n *b)
 			  and $1 ne 'List'
 			  and !$equal_ignore;
 
-			print $cff "\tCOPY_NODE_FIELD($f);\n"    unless $copy_ignore;
+			print $cff "\tCOPY_NODE_FIELD($f);\n" unless $copy_ignore;
 			print $eff "\tCOMPARE_NODE_FIELD($f);\n" unless $equal_ignore;
 		}
 		# array (inline)
 		elsif ($t =~ /^\w+\[\w+\]$/)
 		{
-			print $cff "\tCOPY_ARRAY_FIELD($f);\n"    unless $copy_ignore;
+			print $cff "\tCOPY_ARRAY_FIELD($f);\n" unless $copy_ignore;
 			print $eff "\tCOMPARE_ARRAY_FIELD($f);\n" unless $equal_ignore;
 		}
 		elsif ($t eq 'struct CustomPathMethods*'
@@ -861,7 +861,7 @@ _equal${n}(const $n *a, const $n *b)
 			# Fields of these types are required to be a pointer to a
 			# static table of callback functions.  So we don't copy
 			# the table itself, just reference the original one.
-			print $cff "\tCOPY_SCALAR_FIELD($f);\n"    unless $copy_ignore;
+			print $cff "\tCOPY_SCALAR_FIELD($f);\n" unless $copy_ignore;
 			print $eff "\tCOMPARE_SCALAR_FIELD($f);\n" unless $equal_ignore;
 		}
 		else
@@ -1073,7 +1073,7 @@ _read${n}(void)
 		{
 			print $off "\tWRITE_FLOAT_FIELD($f.startup);\n";
 			print $off "\tWRITE_FLOAT_FIELD($f.per_tuple);\n";
-			print $rff "\tREAD_FLOAT_FIELD($f.startup);\n"   unless $no_read;
+			print $rff "\tREAD_FLOAT_FIELD($f.startup);\n" unless $no_read;
 			print $rff "\tREAD_FLOAT_FIELD($f.per_tuple);\n" unless $no_read;
 		}
 		elsif ($t eq 'Selectivity')
@@ -1278,8 +1278,8 @@ _jumble${n}(JumbleState *jstate, Node *node)
 	# print instructions for each field
 	foreach my $f (@{ $node_type_info{$n}->{fields} })
 	{
-		my $t                   = $node_type_info{$n}->{field_types}{$f};
-		my @a                   = @{ $node_type_info{$n}->{field_attrs}{$f} };
+		my $t = $node_type_info{$n}->{field_types}{$f};
+		my @a = @{ $node_type_info{$n}->{field_attrs}{$f} };
 		my $query_jumble_ignore = $struct_no_query_jumble;
 		my $query_jumble_location = 0;
 

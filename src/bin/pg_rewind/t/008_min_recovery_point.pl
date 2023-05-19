@@ -132,7 +132,7 @@ $node_2->poll_query_until('postgres',
 $node_2->stop('fast');
 $node_3->stop('fast');
 
-my $node_2_pgdata  = $node_2->data_dir;
+my $node_2_pgdata = $node_2->data_dir;
 my $node_1_connstr = $node_1->connstr;
 
 # Keep a temporary postgresql.conf or it would be overwritten during the rewind.
@@ -142,7 +142,7 @@ copy(
 
 command_ok(
 	[
-		'pg_rewind',                      "--source-server=$node_1_connstr",
+		'pg_rewind', "--source-server=$node_1_connstr",
 		"--target-pgdata=$node_2_pgdata", "--debug"
 	],
 	'run pg_rewind');

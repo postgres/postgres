@@ -4511,7 +4511,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* header line width in expanded mode */
 	else if (strcmp(param, "xheader_width") == 0)
 	{
-		if (! value)
+		if (!value)
 			;
 		else if (pg_strcasecmp(value, "full") == 0)
 			popt->topt.expanded_header_width_type = PRINT_XHEADER_FULL;
@@ -5063,15 +5063,16 @@ pset_value_string(const char *param, printQueryOpt *popt)
 	else if (strcmp(param, "xheader_width") == 0)
 	{
 		if (popt->topt.expanded_header_width_type == PRINT_XHEADER_FULL)
-			return(pstrdup("full"));
+			return pstrdup("full");
 		else if (popt->topt.expanded_header_width_type == PRINT_XHEADER_COLUMN)
-			return(pstrdup("column"));
+			return pstrdup("column");
 		else if (popt->topt.expanded_header_width_type == PRINT_XHEADER_PAGE)
-			return(pstrdup("page"));
+			return pstrdup("page");
 		else
 		{
 			/* must be PRINT_XHEADER_EXACT_WIDTH */
-			char wbuff[32];
+			char		wbuff[32];
+
 			snprintf(wbuff, sizeof(wbuff), "%d",
 					 popt->topt.expanded_header_exact_width);
 			return pstrdup(wbuff);

@@ -39,7 +39,7 @@ $node->start;
 
 # set up a few database objects
 $node->safe_psql('postgres',
-	    "CREATE TABLE tab1 (c1 int primary key, c2 text);\n"
+		"CREATE TABLE tab1 (c1 int primary key, c2 text);\n"
 	  . "CREATE TABLE mytab123 (f1 int, f2 text);\n"
 	  . "CREATE TABLE mytab246 (f1 int, f2 text);\n"
 	  . "CREATE TABLE \"mixedName\" (f1 int, f2 text);\n"
@@ -71,7 +71,8 @@ delete $ENV{LS_COLORS};
 # completion tests is too variable.
 if ($ENV{TESTDATADIR})
 {
-	chdir $ENV{TESTDATADIR} or die "could not chdir to \"$ENV{TESTDATADIR}\": $!";
+	chdir $ENV{TESTDATADIR}
+	  or die "could not chdir to \"$ENV{TESTDATADIR}\": $!";
 }
 
 # Create some junk files for filename completion testing.
@@ -331,8 +332,8 @@ clear_line();
 # check completion of a keyword offered in addition to object names;
 # such a keyword should obey COMP_KEYWORD_CASE
 foreach (
-	[ 'lower',          'CO', 'column' ],
-	[ 'upper',          'co', 'COLUMN' ],
+	[ 'lower', 'CO', 'column' ],
+	[ 'upper', 'co', 'COLUMN' ],
 	[ 'preserve-lower', 'co', 'column' ],
 	[ 'preserve-upper', 'CO', 'COLUMN' ],)
 {

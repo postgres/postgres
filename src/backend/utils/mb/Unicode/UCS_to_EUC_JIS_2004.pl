@@ -37,13 +37,13 @@ while (my $line = <$in>)
 
 		push @all,
 		  {
-			direction  => BOTH,
-			ucs        => $ucs1,
+			direction => BOTH,
+			ucs => $ucs1,
 			ucs_second => $ucs2,
-			code       => $code,
-			comment    => $rest,
-			f          => $in_file,
-			l          => $.
+			code => $code,
+			comment => $rest,
+			f => $in_file,
+			l => $.
 		  };
 	}
 	elsif ($line =~ /^0x(\w+)\s*U\+(\w+)\s*#\s*(\S.*)?\s*$/)
@@ -51,7 +51,7 @@ while (my $line = <$in>)
 
 		# non-combined characters
 		my ($c, $u, $rest) = ($1, $2, "U+" . $2 . $3);
-		my $ucs  = hex($u);
+		my $ucs = hex($u);
 		my $code = hex($c);
 
 		next if ($code < 0x80 && $ucs < 0x80);
@@ -59,11 +59,11 @@ while (my $line = <$in>)
 		push @all,
 		  {
 			direction => BOTH,
-			ucs       => $ucs,
-			code      => $code,
-			comment   => $rest,
-			f         => $in_file,
-			l         => $.
+			ucs => $ucs,
+			code => $code,
+			comment => $rest,
+			f => $in_file,
+			l => $.
 		  };
 	}
 }

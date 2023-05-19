@@ -16,12 +16,12 @@ sub test_recovery_standby
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-	my $test_name       = shift;
-	my $node_name       = shift;
-	my $node_primary    = shift;
+	my $test_name = shift;
+	my $node_name = shift;
+	my $node_primary = shift;
 	my $recovery_params = shift;
-	my $num_rows        = shift;
-	my $until_lsn       = shift;
+	my $num_rows = shift;
+	my $until_lsn = shift;
 
 	my $node_standby = PostgreSQL::Test::Cluster->new($node_name);
 	$node_standby->init_from_backup($node_primary, 'my_backup',
@@ -147,7 +147,7 @@ recovery_target_time = '$recovery_time'");
 
 my $res = run_log(
 	[
-		'pg_ctl',               '-D', $node_standby->data_dir, '-l',
+		'pg_ctl', '-D', $node_standby->data_dir, '-l',
 		$node_standby->logfile, 'start'
 	]);
 ok(!$res, 'invalid recovery startup fails');
@@ -162,13 +162,13 @@ $node_standby = PostgreSQL::Test::Cluster->new('standby_8');
 $node_standby->init_from_backup(
 	$node_primary, 'my_backup',
 	has_restoring => 1,
-	standby       => 0);
+	standby => 0);
 $node_standby->append_conf('postgresql.conf',
 	"recovery_target_name = 'does_not_exist'");
 
 run_log(
 	[
-		'pg_ctl',               '-D', $node_standby->data_dir, '-l',
+		'pg_ctl', '-D', $node_standby->data_dir, '-l',
 		$node_standby->logfile, 'start'
 	]);
 

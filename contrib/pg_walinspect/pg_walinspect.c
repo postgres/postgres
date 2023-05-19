@@ -252,8 +252,8 @@ GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record,
 	int			block_id;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	RmgrData	desc;
-	const char	*record_type;
-	StringInfoData	rec_desc;
+	const char *record_type;
+	StringInfoData rec_desc;
 
 	Assert(XLogRecHasAnyBlockRefs(record));
 

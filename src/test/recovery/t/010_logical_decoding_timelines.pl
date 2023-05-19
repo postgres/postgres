@@ -187,8 +187,8 @@ my $endpos = $node_replica->safe_psql('postgres',
 
 $stdout = $node_replica->pg_recvlogical_upto(
 	'postgres', 'before_basebackup',
-	$endpos,    $PostgreSQL::Test::Utils::timeout_default,
-	'include-xids'     => '0',
+	$endpos, $PostgreSQL::Test::Utils::timeout_default,
+	'include-xids' => '0',
 	'skip-empty-xacts' => '1');
 
 # walsender likes to add a newline

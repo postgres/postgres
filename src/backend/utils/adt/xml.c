@@ -630,7 +630,7 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 	XmlOptionType parsed_xmloptiontype;
 	xmlNodePtr	content_nodes;
 	volatile xmlBufferPtr buf = NULL;
-	volatile	xmlSaveCtxtPtr ctxt = NULL;
+	volatile xmlSaveCtxtPtr ctxt = NULL;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
 	PgXmlErrorContext *xmlerrcxt;
 #endif

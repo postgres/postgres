@@ -233,7 +233,8 @@ $node_subscriber->safe_psql('postgres',
 );
 
 # Wait for initial table sync to finish
-$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub_temp1');
+$node_subscriber->wait_for_subscription_sync($node_publisher,
+	'tap_sub_temp1');
 
 # Subscriber table will have no rows initially
 $result =

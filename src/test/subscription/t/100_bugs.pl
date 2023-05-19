@@ -127,8 +127,8 @@ $node_twoways->start;
 for my $db (qw(d1 d2))
 {
 	$node_twoways->safe_psql('postgres', "CREATE DATABASE $db");
-	$node_twoways->safe_psql($db,        "CREATE TABLE t (f int)");
-	$node_twoways->safe_psql($db,        "CREATE TABLE t2 (f int)");
+	$node_twoways->safe_psql($db, "CREATE TABLE t (f int)");
+	$node_twoways->safe_psql($db, "CREATE TABLE t2 (f int)");
 }
 
 my $rows = 3000;
@@ -141,7 +141,7 @@ $node_twoways->safe_psql(
 	});
 
 $node_twoways->safe_psql('d2',
-	    "CREATE SUBSCRIPTION testsub CONNECTION \$\$"
+		"CREATE SUBSCRIPTION testsub CONNECTION \$\$"
 	  . $node_twoways->connstr('d1')
 	  . "\$\$ PUBLICATION testpub WITH (create_slot=false, "
 	  . "slot_name='testslot')");

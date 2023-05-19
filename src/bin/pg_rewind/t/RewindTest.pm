@@ -38,7 +38,7 @@ use Carp;
 use Exporter 'import';
 use File::Copy;
 use File::Path qw(rmtree);
-use IPC::Run qw(run);
+use IPC::Run   qw(run);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::RecursiveCopy;
 use PostgreSQL::Test::Utils;
@@ -101,8 +101,8 @@ sub check_query
 	  ],
 	  '>', \$stdout, '2>', \$stderr;
 
-	is($result, 1,                "$test_name: psql exit code");
-	is($stderr, '',               "$test_name: psql no stderr");
+	is($result, 1, "$test_name: psql exit code");
+	is($stderr, '', "$test_name: psql no stderr");
 	is($stdout, $expected_stdout, "$test_name: query result matches");
 
 	return;
@@ -111,7 +111,7 @@ sub check_query
 sub setup_cluster
 {
 	my $extra_name = shift;    # Used to differentiate clusters
-	my $extra      = shift;    # Extra params for initdb
+	my $extra = shift;         # Extra params for initdb
 
 	# Initialize primary, data checksums are mandatory
 	$node_primary =
@@ -123,8 +123,8 @@ sub setup_cluster
 	# minimal permissions enough to rewind from an online source.
 	$node_primary->init(
 		allows_streaming => 1,
-		extra            => $extra,
-		auth_extra       => [ '--create-role', 'rewind_user' ]);
+		extra => $extra,
+		auth_extra => [ '--create-role', 'rewind_user' ]);
 
 	# Set wal_keep_size to prevent WAL segment recycling after enforced
 	# checkpoints in the tests.
@@ -203,11 +203,11 @@ sub promote_standby
 
 sub run_pg_rewind
 {
-	my $test_mode       = shift;
-	my $primary_pgdata  = $node_primary->data_dir;
-	my $standby_pgdata  = $node_standby->data_dir;
+	my $test_mode = shift;
+	my $primary_pgdata = $node_primary->data_dir;
+	my $standby_pgdata = $node_standby->data_dir;
 	my $standby_connstr = $node_standby->connstr('postgres');
-	my $tmp_folder      = PostgreSQL::Test::Utils::tempdir;
+	my $tmp_folder = PostgreSQL::Test::Utils::tempdir;
 
 	# Append the rewind-specific role to the connection string.
 	$standby_connstr = "$standby_connstr user=rewind_user";
@@ -269,10 +269,10 @@ sub run_pg_rewind
 		# recovery configuration automatically.
 		command_ok(
 			[
-				'pg_rewind',                       "--debug",
-				"--source-server",                 $standby_connstr,
+				'pg_rewind', "--debug",
+				"--source-server", $standby_connstr,
 				"--target-pgdata=$primary_pgdata", "--no-sync",
-				"--write-recovery-conf",           "--config-file",
+				"--write-recovery-conf", "--config-file",
 				"$tmp_folder/primary-postgresql.conf.tmp"
 			],
 			'pg_rewind remote');

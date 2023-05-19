@@ -376,7 +376,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
 		if (use_fsm && i >= not_in_fsm_pages)
 		{
 			Size		freespace = BufferGetPageSize(victim_buffers[i]) -
-			SizeOfPageHeaderData;
+				SizeOfPageHeaderData;
 
 			RecordPageWithFreeSpace(relation, curBlock, freespace);
 		}

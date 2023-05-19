@@ -10,10 +10,9 @@ use Getopt::Long;
 my $output_path = '.';
 
 my $lastlockidx = -1;
-my $continue    = "\n";
+my $continue = "\n";
 
-GetOptions(
-	'outdir:s'       => \$output_path);
+GetOptions('outdir:s' => \$output_path);
 
 open my $lwlocknames, '<', $ARGV[0] or die;
 
@@ -48,7 +47,7 @@ while (<$lwlocknames>)
 	$trimmedlockname =~ s/Lock$//;
 	die "lock names must end with 'Lock'" if $trimmedlockname eq $lockname;
 
-	die "lwlocknames.txt not in order"   if $lockidx < $lastlockidx;
+	die "lwlocknames.txt not in order" if $lockidx < $lastlockidx;
 	die "lwlocknames.txt has duplicates" if $lockidx == $lastlockidx;
 
 	while ($lastlockidx < $lockidx - 1)
@@ -59,7 +58,7 @@ while (<$lwlocknames>)
 	}
 	printf $c "%s	\"%s\"", $continue, $trimmedlockname;
 	$lastlockidx = $lockidx;
-	$continue    = ",\n";
+	$continue = ",\n";
 
 	print $h "#define $lockname (&MainLWLockArray[$lockidx].lock)\n";
 }
@@ -71,7 +70,8 @@ printf $h "#define NUM_INDIVIDUAL_LWLOCKS		%s\n", $lastlockidx + 1;
 close $h;
 close $c;
 
-rename($htmp, "$output_path/lwlocknames.h") || die "rename: $htmp to $output_path/lwlocknames.h: $!";
+rename($htmp, "$output_path/lwlocknames.h")
+  || die "rename: $htmp to $output_path/lwlocknames.h: $!";
 rename($ctmp, "$output_path/lwlocknames.c") || die "rename: $ctmp: $!";
 
 close $lwlocknames;

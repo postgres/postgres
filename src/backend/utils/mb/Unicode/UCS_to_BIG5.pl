@@ -40,7 +40,7 @@ my $cp950txt = &read_source("CP950.TXT");
 foreach my $i (@$cp950txt)
 {
 	my $code = $i->{code};
-	my $ucs  = $i->{ucs};
+	my $ucs = $i->{ucs};
 
 	# Pick only the ETEN extended characters in the range 0xf9d6 - 0xf9dc
 	# from CP950.TXT
@@ -51,12 +51,12 @@ foreach my $i (@$cp950txt)
 	{
 		push @$all,
 		  {
-			code      => $code,
-			ucs       => $ucs,
-			comment   => $i->{comment},
+			code => $code,
+			ucs => $ucs,
+			comment => $i->{comment},
 			direction => BOTH,
-			f         => $i->{f},
-			l         => $i->{l}
+			f => $i->{f},
+			l => $i->{l}
 		  };
 	}
 }
@@ -64,7 +64,7 @@ foreach my $i (@$cp950txt)
 foreach my $i (@$all)
 {
 	my $code = $i->{code};
-	my $ucs  = $i->{ucs};
+	my $ucs = $i->{ucs};
 
 	# BIG5.TXT maps several BIG5 characters to U+FFFD. The UTF-8 to BIG5 mapping can
 	# contain only one of them. XXX: Doesn't really make sense to include any of them,

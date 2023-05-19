@@ -18,7 +18,7 @@ $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->start;
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
-my $appname           = 'tap_sub';
+my $appname = 'tap_sub';
 
 # ====================================================================
 # Testcase start: FOR ALL TABLES
@@ -544,13 +544,11 @@ is( $result, qq(20
 $result =
   $node_subscriber->safe_psql('postgres',
 	"SELECT a FROM tab_rowfilter_parent_sync ORDER BY 1");
-is( $result, qq(16),
-	'check initial data copy from tab_rowfilter_parent_sync');
+is($result, qq(16), 'check initial data copy from tab_rowfilter_parent_sync');
 $result =
   $node_subscriber->safe_psql('postgres',
 	"SELECT a FROM tab_rowfilter_child_sync ORDER BY 1");
-is( $result, qq(),
-	'check initial data copy from tab_rowfilter_child_sync');
+is($result, qq(), 'check initial data copy from tab_rowfilter_child_sync');
 
 # The following commands are executed after CREATE SUBSCRIPTION, so these SQL
 # commands are for testing normal logical replication behavior.

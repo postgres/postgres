@@ -598,7 +598,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	{
 		GISTPageSplitInfo *si = (GISTPageSplitInfo *) lfirst(lc);
 		GISTNodeBuffer *newNodeBuffer;
-		int				i = foreach_current_index(lc);
+		int			i = foreach_current_index(lc);
 
 		/* Decompress parent index tuple of node buffer page. */
 		gistDeCompressAtt(giststate, r,

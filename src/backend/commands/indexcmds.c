@@ -748,7 +748,7 @@ DefineIndex(Oid relationId,
 		AclResult	aclresult;
 
 		aclresult = object_aclcheck(NamespaceRelationId, namespaceId, root_save_userid,
-										  ACL_CREATE);
+									ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_SCHEMA,
 						   get_namespace_name(namespaceId));
@@ -780,7 +780,7 @@ DefineIndex(Oid relationId,
 		AclResult	aclresult;
 
 		aclresult = object_aclcheck(TableSpaceRelationId, tablespaceId, root_save_userid,
-										   ACL_CREATE);
+									ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_TABLESPACE,
 						   get_tablespace_name(tablespaceId));
@@ -2708,7 +2708,7 @@ ExecReindex(ParseState *pstate, ReindexStmt *stmt, bool isTopLevel)
 			AclResult	aclresult;
 
 			aclresult = object_aclcheck(TableSpaceRelationId, params.tablespaceOid,
-											   GetUserId(), ACL_CREATE);
+										GetUserId(), ACL_CREATE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_TABLESPACE,
 							   get_tablespace_name(params.tablespaceOid));
@@ -3066,11 +3066,12 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		/*
 		 * The table can be reindexed if the user has been granted MAINTAIN on
 		 * the table or one of its partition ancestors or the user is a
-		 * superuser, the table owner, or the database/schema owner (but in the
-		 * latter case, only if it's not a shared relation).  pg_class_aclcheck
-		 * includes the superuser case, and depending on objectKind we already
-		 * know that the user has permission to run REINDEX on this database or
-		 * schema per the permission checks at the beginning of this routine.
+		 * superuser, the table owner, or the database/schema owner (but in
+		 * the latter case, only if it's not a shared relation).
+		 * pg_class_aclcheck includes the superuser case, and depending on
+		 * objectKind we already know that the user has permission to run
+		 * REINDEX on this database or schema per the permission checks at the
+		 * beginning of this routine.
 		 */
 		if (classtuple->relisshared &&
 			pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK &&
@@ -3312,7 +3313,7 @@ ReindexMultipleInternal(List *relids, ReindexParams *params)
 			AclResult	aclresult;
 
 			aclresult = object_aclcheck(TableSpaceRelationId, params->tablespaceOid,
-											   GetUserId(), ACL_CREATE);
+										GetUserId(), ACL_CREATE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_TABLESPACE,
 							   get_tablespace_name(params->tablespaceOid));

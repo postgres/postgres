@@ -34,7 +34,7 @@ CATALOG(pg_auth_members,1261,AuthMemRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_
 	Oid			member BKI_LOOKUP(pg_authid);	/* ID of a member of that role */
 	Oid			grantor BKI_LOOKUP(pg_authid);	/* who granted the membership */
 	bool		admin_option;	/* granted with admin option? */
-	bool		inherit_option;	/* exercise privileges without SET ROLE? */
+	bool		inherit_option; /* exercise privileges without SET ROLE? */
 	bool		set_option;		/* use SET ROLE to the target role? */
 } FormData_pg_auth_members;
 

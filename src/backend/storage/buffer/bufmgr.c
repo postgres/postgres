@@ -2667,7 +2667,7 @@ BufferSync(int flags)
 	{
 		BufferDesc *bufHdr = NULL;
 		CkptTsStatus *ts_stat = (CkptTsStatus *)
-		DatumGetPointer(binaryheap_first(ts_heap));
+			DatumGetPointer(binaryheap_first(ts_heap));
 
 		buf_id = CkptBufferIds[ts_stat->index].buf_id;
 		Assert(buf_id != -1);

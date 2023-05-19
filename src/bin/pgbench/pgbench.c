@@ -4621,7 +4621,7 @@ processXactStats(TState *thread, CState *st, pg_time_usec_t *now,
 	double		latency = 0.0,
 				lag = 0.0;
 	bool		detailed = progress || throttle_delay || latency_limit ||
-	use_log || per_script_stats;
+		use_log || per_script_stats;
 
 	if (detailed && !skipped && st->estatus == ESTATUS_NO_ERROR)
 	{
@@ -6400,7 +6400,7 @@ printResults(StatsData *total,
 				StatsData  *sstats = &sql_script[i].stats;
 				int64		script_failures = getFailures(sstats);
 				int64		script_total_cnt =
-				sstats->cnt + sstats->skipped + script_failures;
+					sstats->cnt + sstats->skipped + script_failures;
 
 				printf("SQL script %d: %s\n"
 					   " - weight: %d (targets %.1f%% of total)\n"

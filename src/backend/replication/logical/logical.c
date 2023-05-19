@@ -341,8 +341,8 @@ CreateInitDecodingContext(const char *plugin,
 	MemoryContext old_context;
 
 	/*
-	 * On a standby, this check is also required while creating the
-	 * slot. Check the comments in the function.
+	 * On a standby, this check is also required while creating the slot.
+	 * Check the comments in the function.
 	 */
 	CheckLogicalDecodingRequirements();
 

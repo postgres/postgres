@@ -37,9 +37,9 @@ my %line_counters = ('hba_rule' => 0, 'ident_rule' => 0);
 # is loaded by the backend.
 sub add_hba_line
 {
-	my $node     = shift;
+	my $node = shift;
 	my $filename = shift;
-	my $entry    = shift;
+	my $entry = shift;
 	my $globline;
 	my $fileline;
 	my @tokens;
@@ -64,7 +64,7 @@ sub add_hba_line
 	$globline = ++$line_counters{'hba_rule'};
 
 	# Generate the expected pg_hba_file_rules line
-	@tokens    = split(/ /, $entry);
+	@tokens = split(/ /, $entry);
 	$tokens[1] = '{' . $tokens[1] . '}';    # database
 	$tokens[2] = '{' . $tokens[2] . '}';    # user_name
 
@@ -95,9 +95,9 @@ sub add_hba_line
 # returns an entry to match with pg_ident_file_mappings.
 sub add_ident_line
 {
-	my $node     = shift;
+	my $node = shift;
 	my $filename = shift;
-	my $entry    = shift;
+	my $entry = shift;
 	my $globline;
 	my $fileline;
 	my @tokens;
@@ -136,7 +136,7 @@ sub add_ident_line
 }
 
 # Locations for the entry points of the HBA and ident files.
-my $hba_file   = 'subdir1/pg_hba_custom.conf';
+my $hba_file = 'subdir1/pg_hba_custom.conf';
 my $ident_file = 'subdir2/pg_ident_custom.conf';
 
 my $node = PostgreSQL::Test::Cluster->new('primary');
@@ -147,7 +147,7 @@ my $data_dir = $node->data_dir;
 
 note "Generating HBA structure with include directives";
 
-my $hba_expected   = '';
+my $hba_expected = '';
 my $ident_expected = '';
 
 # customise main auth file names
@@ -230,7 +230,7 @@ mkdir("$data_dir/ident_pos");
 $ident_expected .=
   add_ident_line($node, "$ident_file", "include ../pg_ident_pre.conf");
 $ident_expected .= add_ident_line($node, 'pg_ident_pre.conf', "pre foo bar");
-$ident_expected .= add_ident_line($node, "$ident_file",       "test a b");
+$ident_expected .= add_ident_line($node, "$ident_file", "test a b");
 $ident_expected .= add_ident_line($node, "$ident_file",
 	"include ../ident_pos/pg_ident_pos.conf");
 $ident_expected .=

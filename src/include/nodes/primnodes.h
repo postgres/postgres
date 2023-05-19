@@ -1479,6 +1479,7 @@ typedef struct SQLValueFunction
 {
 	Expr		xpr;
 	SQLValueFunctionOp op;		/* which function this is */
+
 	/*
 	 * Result type/typmod.  Type is fully determined by "op", so no need to
 	 * include this Oid in the query jumbling.

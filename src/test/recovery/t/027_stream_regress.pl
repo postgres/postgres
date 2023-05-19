@@ -60,7 +60,7 @@ $node_standby_1->append_conf('postgresql.conf',
 	'max_standby_streaming_delay = 600s');
 $node_standby_1->start;
 
-my $dlpath    = dirname($ENV{REGRESS_SHLIB});
+my $dlpath = dirname($ENV{REGRESS_SHLIB});
 my $outputdir = $PostgreSQL::Test::Utils::tmp_check;
 
 # Run the regression tests against the primary.
@@ -103,7 +103,7 @@ $node_primary->wait_for_replay_catchup($node_standby_1);
 command_ok(
 	[
 		'pg_dumpall', '-f', $outputdir . '/primary.dump',
-		'--no-sync',  '-p', $node_primary->port,
+		'--no-sync', '-p', $node_primary->port,
 		'--no-unlogged-table-data'    # if unlogged, standby has schema only
 	],
 	'dump primary server');

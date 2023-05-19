@@ -52,7 +52,7 @@ use Scalar::Util qw(blessed);
 use overload
   '<=>' => \&_version_cmp,
   'cmp' => \&_version_cmp,
-  '""'  => \&_stringify;
+  '""' => \&_stringify;
 
 =pod
 
@@ -74,7 +74,7 @@ of a Postgres command like `psql --version` or `pg_config --version`;
 sub new
 {
 	my $class = shift;
-	my $arg   = shift;
+	my $arg = shift;
 
 	chomp $arg;
 

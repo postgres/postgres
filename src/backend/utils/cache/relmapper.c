@@ -801,11 +801,11 @@ read_relmap_file(RelMapFile *map, char *dbpath, bool lock_held, int elevel)
 	/*
 	 * Open the target file.
 	 *
-	 * Because Windows isn't happy about the idea of renaming over a file
-	 * that someone has open, we only open this file after acquiring the lock,
-	 * and for the same reason, we close it before releasing the lock. That
-	 * way, by the time write_relmap_file() acquires an exclusive lock, no
-	 * one else will have it open.
+	 * Because Windows isn't happy about the idea of renaming over a file that
+	 * someone has open, we only open this file after acquiring the lock, and
+	 * for the same reason, we close it before releasing the lock. That way,
+	 * by the time write_relmap_file() acquires an exclusive lock, no one else
+	 * will have it open.
 	 */
 	snprintf(mapfilename, sizeof(mapfilename), "%s/%s", dbpath,
 			 RELMAPPER_FILENAME);

@@ -40,7 +40,7 @@ extern PGDLLIMPORT char *locale_messages;
 extern PGDLLIMPORT char *locale_monetary;
 extern PGDLLIMPORT char *locale_numeric;
 extern PGDLLIMPORT char *locale_time;
-extern PGDLLIMPORT int	 icu_validation_level;
+extern PGDLLIMPORT int icu_validation_level;
 
 /* lc_time localization cache */
 extern PGDLLIMPORT char *localized_abbrev_days[];
@@ -49,7 +49,7 @@ extern PGDLLIMPORT char *localized_abbrev_months[];
 extern PGDLLIMPORT char *localized_full_months[];
 
 /* is the databases's LC_CTYPE the C locale? */
-extern PGDLLIMPORT bool	database_ctype_is_c;
+extern PGDLLIMPORT bool database_ctype_is_c;
 
 extern bool check_locale(int category, const char *locale, char **canonname);
 extern char *pg_perm_setlocale(int category, const char *locale);
@@ -104,9 +104,9 @@ extern bool pg_locale_deterministic(pg_locale_t locale);
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
 extern char *get_collation_actual_version(char collprovider, const char *collcollate);
-extern int pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale);
-extern int pg_strncoll(const char *arg1, size_t len1,
-					   const char *arg2, size_t len2, pg_locale_t locale);
+extern int	pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale);
+extern int	pg_strncoll(const char *arg1, size_t len1,
+						const char *arg2, size_t len2, pg_locale_t locale);
 extern bool pg_strxfrm_enabled(pg_locale_t locale);
 extern size_t pg_strxfrm(char *dest, const char *src, size_t destsize,
 						 pg_locale_t locale);

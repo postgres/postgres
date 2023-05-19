@@ -407,7 +407,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 		OffsetNumber successor[MaxOffsetNumber];
 		bool		lp_valid[MaxOffsetNumber];
 		bool		xmin_commit_status_ok[MaxOffsetNumber];
-		XidCommitStatus	xmin_commit_status[MaxOffsetNumber];
+		XidCommitStatus xmin_commit_status[MaxOffsetNumber];
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -444,7 +444,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 		for (ctx.offnum = FirstOffsetNumber; ctx.offnum <= maxoff;
 			 ctx.offnum = OffsetNumberNext(ctx.offnum))
 		{
-			BlockNumber	nextblkno;
+			BlockNumber nextblkno;
 			OffsetNumber nextoffnum;
 
 			successor[ctx.offnum] = InvalidOffsetNumber;
@@ -484,9 +484,9 @@ verify_heapam(PG_FUNCTION_ARGS)
 
 				/*
 				 * Since we've checked that this redirect points to a line
-				 * pointer between FirstOffsetNumber and maxoff, it should
-				 * now be safe to fetch the referenced line pointer. We expect
-				 * it to be LP_NORMAL; if not, that's corruption.
+				 * pointer between FirstOffsetNumber and maxoff, it should now
+				 * be safe to fetch the referenced line pointer. We expect it
+				 * to be LP_NORMAL; if not, that's corruption.
 				 */
 				rditem = PageGetItemId(ctx.page, rdoffnum);
 				if (!ItemIdIsUsed(rditem))
@@ -610,8 +610,8 @@ verify_heapam(PG_FUNCTION_ARGS)
 			{
 				/*
 				 * We should not have set successor[ctx.offnum] to a value
-				 * other than InvalidOffsetNumber unless that line pointer
-				 * is LP_NORMAL.
+				 * other than InvalidOffsetNumber unless that line pointer is
+				 * LP_NORMAL.
 				 */
 				Assert(ItemIdIsNormal(next_lp));
 
@@ -642,8 +642,8 @@ verify_heapam(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * If the next line pointer is a redirect, or if it's a tuple
-			 * but the XMAX of this tuple doesn't match the XMIN of the next
+			 * If the next line pointer is a redirect, or if it's a tuple but
+			 * the XMAX of this tuple doesn't match the XMIN of the next
 			 * tuple, then the two aren't part of the same update chain and
 			 * there is nothing more to do.
 			 */
@@ -667,8 +667,8 @@ verify_heapam(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * This tuple and the tuple to which it points seem to be part
-			 * of an update chain.
+			 * This tuple and the tuple to which it points seem to be part of
+			 * an update chain.
 			 */
 			predecessor[nextoffnum] = ctx.offnum;
 
@@ -721,8 +721,8 @@ verify_heapam(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * If the current tuple's xmin is aborted but the successor tuple's
-			 * xmin is in-progress or committed, that's corruption.
+			 * If the current tuple's xmin is aborted but the successor
+			 * tuple's xmin is in-progress or committed, that's corruption.
 			 */
 			if (xmin_commit_status_ok[ctx.offnum] &&
 				xmin_commit_status[ctx.offnum] == XID_ABORTED &&
@@ -1025,7 +1025,7 @@ check_tuple_visibility(HeapCheckContext *ctx, bool *xmin_commit_status_ok,
 	HeapTupleHeader tuphdr = ctx->tuphdr;
 
 	ctx->tuple_could_be_pruned = true;	/* have not yet proven otherwise */
-	*xmin_commit_status_ok = false;		/* have not yet proven otherwise */
+	*xmin_commit_status_ok = false; /* have not yet proven otherwise */
 
 	/* If xmin is normal, it should be within valid range */
 	xmin = HeapTupleHeaderGetXmin(tuphdr);
@@ -1837,7 +1837,7 @@ check_tuple(HeapCheckContext *ctx, bool *xmin_commit_status_ok,
 	 * therefore cannot check it.
 	 */
 	if (!check_tuple_visibility(ctx, xmin_commit_status_ok,
-							xmin_commit_status))
+								xmin_commit_status))
 		return;
 
 	/*
@@ -1897,8 +1897,8 @@ FullTransactionIdFromXidAndCtx(TransactionId xid, const HeapCheckContext *ctx)
 	diff = (int32) (ctx->next_xid - xid);
 
 	/*
-	 * In cases of corruption we might see a 32bit xid that is before epoch
-	 * 0. We can't represent that as a 64bit xid, due to 64bit xids being
+	 * In cases of corruption we might see a 32bit xid that is before epoch 0.
+	 * We can't represent that as a 64bit xid, due to 64bit xids being
 	 * unsigned integers, without the modulo arithmetic of 32bit xid. There's
 	 * no really nice way to deal with that, but it works ok enough to use
 	 * FirstNormalFullTransactionId in that case, as a freshly initdb'd

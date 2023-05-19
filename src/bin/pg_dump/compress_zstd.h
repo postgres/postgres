@@ -18,8 +18,8 @@
 #include "compress_io.h"
 
 extern void InitCompressorZstd(CompressorState *cs,
-		const pg_compress_specification compression_spec);
+							   const pg_compress_specification compression_spec);
 extern void InitCompressFileHandleZstd(CompressFileHandle *CFH,
-		const pg_compress_specification compression_spec);
+									   const pg_compress_specification compression_spec);
 
-#endif /* COMPRESS_ZSTD_H */
+#endif							/* COMPRESS_ZSTD_H */

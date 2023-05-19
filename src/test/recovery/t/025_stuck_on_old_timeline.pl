@@ -51,8 +51,8 @@ my $node_standby = PostgreSQL::Test::Cluster->new('standby');
 $node_standby->init_from_backup(
 	$node_primary, $backup_name,
 	allows_streaming => 1,
-	has_streaming    => 1,
-	has_archiving    => 1);
+	has_streaming => 1,
+	has_archiving => 1);
 $node_standby->start;
 
 # Take backup of standby, use -Xnone so that pg_wal is empty.

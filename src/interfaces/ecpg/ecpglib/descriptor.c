@@ -210,7 +210,7 @@ get_char_item(int lineno, void *var, enum ECPGttype vartype, char *value, int va
 		case ECPGt_varchar:
 			{
 				struct ECPGgeneric_varchar *variable =
-				(struct ECPGgeneric_varchar *) var;
+					(struct ECPGgeneric_varchar *) var;
 
 				if (varcharsize == 0)
 					memcpy(variable->arr, value, strlen(value));
@@ -597,7 +597,7 @@ set_desc_attr(struct descriptor_item *desc_item, struct variable *var,
 	else
 	{
 		struct ECPGgeneric_bytea *variable =
-		(struct ECPGgeneric_bytea *) (var->value);
+			(struct ECPGgeneric_bytea *) (var->value);
 
 		desc_item->is_binary = true;
 		desc_item->data_len = variable->len;

@@ -52,16 +52,16 @@ while (<>)
 		{
 
 			# first rule for nonterminal
-			$rule_number     = $1;
+			$rule_number = $1;
 			$cur_nonterminal = $2;
-			$rhs             = $3;
+			$rhs = $3;
 		}
 		elsif (m/^\s*(\d+)\s+\|\s+(.*)$/)
 		{
 
 			# additional rule for nonterminal
 			$rule_number = $1;
-			$rhs         = $2;
+			$rhs = $2;
 		}
 	}
 

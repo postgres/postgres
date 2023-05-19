@@ -626,7 +626,7 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 static Buffer
 vm_extend(Relation rel, BlockNumber vm_nblocks)
 {
-	Buffer buf;
+	Buffer		buf;
 
 	buf = ExtendBufferedRelTo(EB_REL(rel), VISIBILITYMAP_FORKNUM, NULL,
 							  EB_CREATE_FORK_IF_NEEDED |

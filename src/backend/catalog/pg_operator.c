@@ -625,7 +625,7 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 	/* not in catalogs, different from operator, so make shell */
 
 	aclresult = object_aclcheck(NamespaceRelationId, otherNamespace, GetUserId(),
-									  ACL_CREATE);
+								ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(otherNamespace));

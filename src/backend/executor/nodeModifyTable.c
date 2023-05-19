@@ -111,7 +111,7 @@ typedef struct UpdateContext
 {
 	bool		updated;		/* did UPDATE actually occur? */
 	bool		crossPartUpdate;	/* was it a cross-partition update? */
-	TU_UpdateIndexes updateIndexes;	/* Which index updates are required? */
+	TU_UpdateIndexes updateIndexes; /* Which index updates are required? */
 
 	/*
 	 * Lock mode to acquire on the latest tuple version before performing
@@ -881,7 +881,7 @@ ExecInsert(ModifyTableContext *context,
 			{
 				TupleDesc	tdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
 				TupleDesc	plan_tdesc =
-				CreateTupleDescCopy(planSlot->tts_tupleDescriptor);
+					CreateTupleDescCopy(planSlot->tts_tupleDescriptor);
 
 				resultRelInfo->ri_Slots[resultRelInfo->ri_NumSlots] =
 					MakeSingleTupleTableSlot(tdesc, slot->tts_ops);

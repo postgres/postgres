@@ -16,10 +16,10 @@ our @EXPORT =
 
 # Constants used in the 'direction' field of the character maps
 use constant {
-	NONE         => 0,
-	TO_UNICODE   => 1,
+	NONE => 0,
+	TO_UNICODE => 1,
 	FROM_UNICODE => 2,
-	BOTH         => 3
+	BOTH => 3
 };
 
 #######################################################################
@@ -53,12 +53,12 @@ sub read_source
 			exit;
 		}
 		my $out = {
-			code      => hex($1),
-			ucs       => hex($2),
-			comment   => $4,
+			code => hex($1),
+			ucs => hex($2),
+			comment => $4,
 			direction => BOTH,
-			f         => $fname,
-			l         => $.
+			f => $fname,
+			l => $.
 		};
 
 		# Ignore pure ASCII mappings. PostgreSQL character conversion code
@@ -124,14 +124,14 @@ sub print_conversion_tables_direction
 	my $tblname;
 	if ($direction == TO_UNICODE)
 	{
-		$fname   = lc("${csname}_to_utf8.map");
+		$fname = lc("${csname}_to_utf8.map");
 		$tblname = lc("${csname}_to_unicode_tree");
 
 		print "- Writing ${csname}=>UTF8 conversion table: $fname\n";
 	}
 	else
 	{
-		$fname   = lc("utf8_to_${csname}.map");
+		$fname = lc("utf8_to_${csname}.map");
 		$tblname = lc("${csname}_from_unicode_tree");
 
 		print "- Writing UTF8=>${csname} conversion table: $fname\n";
@@ -378,10 +378,10 @@ sub print_radix_table
 
 	unshift @segments,
 	  {
-		header  => "Dummy map, for invalid values",
+		header => "Dummy map, for invalid values",
 		min_idx => 0,
 		max_idx => $widest_range,
-		label   => "dummy map"
+		label => "dummy map"
 	  };
 
 	###
@@ -397,7 +397,7 @@ sub print_radix_table
 	###
 	for (my $j = 0; $j < $#segments - 1; $j++)
 	{
-		my $seg     = $segments[$j];
+		my $seg = $segments[$j];
 		my $nextseg = $segments[ $j + 1 ];
 
 		# Count the number of zero values at the end of this segment.
@@ -527,17 +527,17 @@ sub print_radix_table
 	if ($max_val <= 0xffff)
 	{
 		$vals_per_line = 8;
-		$colwidth      = 4;
+		$colwidth = 4;
 	}
 	elsif ($max_val <= 0xffffff)
 	{
 		$vals_per_line = 4;
-		$colwidth      = 6;
+		$colwidth = 6;
 	}
 	else
 	{
 		$vals_per_line = 4;
-		$colwidth      = 8;
+		$colwidth = 8;
 	}
 
 	###
@@ -607,8 +607,10 @@ sub print_radix_table
 			# Print the next line's worth of values.
 			# XXX pad to begin at a nice boundary
 			printf $out "  /* %02x */ ", $i;
-			for (my $j = 0;
-				$j < $vals_per_line && $i <= $seg->{max_idx}; $j++)
+			for (
+				my $j = 0;
+				$j < $vals_per_line && $i <= $seg->{max_idx};
+				$j++)
 			{
 				# missing values represent zero.
 				my $val = $seg->{values}->{$i} || 0;
@@ -671,10 +673,10 @@ sub build_segments_recurse
 		push @segments,
 		  {
 			header => $header . ", leaf: ${path}xx",
-			label  => $label,
-			level  => $level,
-			depth  => $depth,
-			path   => $path,
+			label => $label,
+			level => $level,
+			depth => $depth,
+			path => $path,
 			values => $map
 		  };
 	}
@@ -696,10 +698,10 @@ sub build_segments_recurse
 		push @segments,
 		  {
 			header => $header . ", byte #$level: ${path}xx",
-			label  => $label,
-			level  => $level,
-			depth  => $depth,
-			path   => $path,
+			label => $label,
+			level => $level,
+			depth => $depth,
+			path => $path,
 			values => \%children
 		  };
 	}
@@ -789,12 +791,12 @@ sub make_charmap_combined
 		if (defined $c->{ucs_second})
 		{
 			my $entry = {
-				utf8        => ucs2utf($c->{ucs}),
+				utf8 => ucs2utf($c->{ucs}),
 				utf8_second => ucs2utf($c->{ucs_second}),
-				code        => $c->{code},
-				comment     => $c->{comment},
-				f           => $c->{f},
-				l           => $c->{l}
+				code => $c->{code},
+				comment => $c->{comment},
+				f => $c->{f},
+				l => $c->{l}
 			};
 			push @combined, $entry;
 		}

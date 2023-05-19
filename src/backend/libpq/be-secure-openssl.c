@@ -1104,8 +1104,8 @@ prepare_cert_name(char *name)
 	if (namelen > MAXLEN)
 	{
 		/*
-		 * Keep the end of the name, not the beginning, since the most specific
-		 * field is likely to give users the most information.
+		 * Keep the end of the name, not the beginning, since the most
+		 * specific field is likely to give users the most information.
 		 */
 		truncated = name + namelen - MAXLEN;
 		truncated[0] = truncated[1] = truncated[2] = '.';
@@ -1165,8 +1165,8 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 
 		/*
 		 * Get the Subject and Issuer for logging, but don't let maliciously
-		 * huge certs flood the logs, and don't reflect non-ASCII bytes into it
-		 * either.
+		 * huge certs flood the logs, and don't reflect non-ASCII bytes into
+		 * it either.
 		 */
 		subject = X509_NAME_to_cstring(X509_get_subject_name(cert));
 		sub_prepared = prepare_cert_name(subject);

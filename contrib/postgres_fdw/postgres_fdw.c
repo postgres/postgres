@@ -2024,9 +2024,8 @@ postgresGetForeignModifyBatchSize(ResultRelInfo *resultRelInfo)
 
 	/*
 	 * Should never get called when the insert is being performed on a table
-	 * that is also among the target relations of an UPDATE operation,
-	 * because postgresBeginForeignInsert() currently rejects such insert
-	 * attempts.
+	 * that is also among the target relations of an UPDATE operation, because
+	 * postgresBeginForeignInsert() currently rejects such insert attempts.
 	 */
 	Assert(fmstate == NULL || fmstate->aux_fmstate == NULL);
 
@@ -5167,15 +5166,15 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	 */
 	if (method != ANALYZE_SAMPLE_OFF)
 	{
-		bool	can_tablesample;
+		bool		can_tablesample;
 
 		reltuples = postgresGetAnalyzeInfoForForeignTable(relation,
 														  &can_tablesample);
 
 		/*
-		 * Make sure we're not choosing TABLESAMPLE when the remote relation does
-		 * not support that. But only do this for "auto" - if the user explicitly
-		 * requested BERNOULLI/SYSTEM, it's better to fail.
+		 * Make sure we're not choosing TABLESAMPLE when the remote relation
+		 * does not support that. But only do this for "auto" - if the user
+		 * explicitly requested BERNOULLI/SYSTEM, it's better to fail.
 		 */
 		if (!can_tablesample && (method == ANALYZE_SAMPLE_AUTO))
 			method = ANALYZE_SAMPLE_RANDOM;
@@ -5189,35 +5188,35 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 		else
 		{
 			/*
-			 * All supported sampling methods require sampling rate,
-			 * not target rows directly, so we calculate that using
-			 * the remote reltuples value. That's imperfect, because
-			 * it might be off a good deal, but that's not something
-			 * we can (or should) address here.
+			 * All supported sampling methods require sampling rate, not
+			 * target rows directly, so we calculate that using the remote
+			 * reltuples value. That's imperfect, because it might be off a
+			 * good deal, but that's not something we can (or should) address
+			 * here.
 			 *
-			 * If reltuples is too low (i.e. when table grew), we'll
-			 * end up sampling more rows - but then we'll apply the
-			 * local sampling, so we get the expected sample size.
-			 * This is the same outcome as without remote sampling.
+			 * If reltuples is too low (i.e. when table grew), we'll end up
+			 * sampling more rows - but then we'll apply the local sampling,
+			 * so we get the expected sample size. This is the same outcome as
+			 * without remote sampling.
 			 *
-			 * If reltuples is too high (e.g. after bulk DELETE), we
-			 * will end up sampling too few rows.
+			 * If reltuples is too high (e.g. after bulk DELETE), we will end
+			 * up sampling too few rows.
 			 *
-			 * We can't really do much better here - we could try
-			 * sampling a bit more rows, but we don't know how off
-			 * the reltuples value is so how much is "a bit more"?
+			 * We can't really do much better here - we could try sampling a
+			 * bit more rows, but we don't know how off the reltuples value is
+			 * so how much is "a bit more"?
 			 *
-			 * Furthermore, the targrows value for partitions is
-			 * determined based on table size (relpages), which can
-			 * be off in different ways too. Adjusting the sampling
-			 * rate here might make the issue worse.
+			 * Furthermore, the targrows value for partitions is determined
+			 * based on table size (relpages), which can be off in different
+			 * ways too. Adjusting the sampling rate here might make the issue
+			 * worse.
 			 */
 			sample_frac = targrows / reltuples;
 
 			/*
 			 * We should never get sampling rate outside the valid range
-			 * (between 0.0 and 1.0), because those cases should be covered
-			 * by the previous branch that sets ANALYZE_SAMPLE_OFF.
+			 * (between 0.0 and 1.0), because those cases should be covered by
+			 * the previous branch that sets ANALYZE_SAMPLE_OFF.
 			 */
 			Assert(sample_frac >= 0.0 && sample_frac <= 1.0);
 		}

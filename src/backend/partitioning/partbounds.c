@@ -2340,9 +2340,9 @@ merge_default_partitions(PartitionMap *outer_map,
 		/*
 		 * The default partitions have to be joined with each other, so merge
 		 * them.  Note that each of the default partitions isn't merged yet
-		 * (see, process_outer_partition()/process_inner_partition()), so
-		 * they should be merged successfully.  The merged partition will act
-		 * as the default partition of the join relation.
+		 * (see, process_outer_partition()/process_inner_partition()), so they
+		 * should be merged successfully.  The merged partition will act as
+		 * the default partition of the join relation.
 		 */
 		Assert(outer_merged_index == -1);
 		Assert(inner_merged_index == -1);
@@ -3193,7 +3193,7 @@ check_new_partition_bound(char *relname, Relation parent,
 								 * datums list.
 								 */
 								PartitionRangeDatum *datum =
-								list_nth(spec->upperdatums, abs(cmpval) - 1);
+									list_nth(spec->upperdatums, abs(cmpval) - 1);
 
 								/*
 								 * The new partition overlaps with the

@@ -1287,7 +1287,7 @@ dblink_get_connections(PG_FUNCTION_ARGS)
 
 	if (astate)
 		PG_RETURN_DATUM(makeArrayResult(astate,
-											  CurrentMemoryContext));
+										CurrentMemoryContext));
 	else
 		PG_RETURN_NULL();
 }

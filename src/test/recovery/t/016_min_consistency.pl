@@ -20,7 +20,7 @@ use Test::More;
 sub find_largest_lsn
 {
 	my $blocksize = int(shift);
-	my $filename  = shift;
+	my $filename = shift;
 	my ($max_hi, $max_lo) = (0, 0);
 	open(my $fh, "<:raw", $filename)
 	  or die "failed to open $filename: $!";

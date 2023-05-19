@@ -684,10 +684,10 @@ _LoadLOs(ArchiveHandle *AH)
 			tarClose(AH, th);
 
 			/*
-			 * Once we have found the first LO, stop at the first non-LO
-			 * entry (which will be 'blobs.toc').  This coding would eat all
-			 * the rest of the archive if there are no LOs ... but this
-			 * function shouldn't be called at all in that case.
+			 * Once we have found the first LO, stop at the first non-LO entry
+			 * (which will be 'blobs.toc').  This coding would eat all the
+			 * rest of the archive if there are no LOs ... but this function
+			 * shouldn't be called at all in that case.
 			 */
 			if (foundLO)
 				break;

@@ -318,6 +318,7 @@ get_altertable_subcmdinfo(PG_FUNCTION_ARGS)
 		if (OidIsValid(sub->address.objectId))
 		{
 			char	   *objdesc;
+
 			objdesc = getObjectDescription((const ObjectAddress *) &sub->address, false);
 			values[1] = CStringGetTextDatum(objdesc);
 		}

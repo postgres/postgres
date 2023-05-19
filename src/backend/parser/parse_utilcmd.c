@@ -993,7 +993,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	if (relation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 	{
 		aclresult = object_aclcheck(TypeRelationId, relation->rd_rel->reltype, GetUserId(),
-									 ACL_USAGE);
+									ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_TYPE,
 						   RelationGetRelationName(relation));
@@ -2355,7 +2355,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				 * mentioned above.
 				 */
 				Datum		attoptions =
-				get_attoptions(RelationGetRelid(index_rel), i + 1);
+					get_attoptions(RelationGetRelid(index_rel), i + 1);
 
 				defopclass = GetDefaultOpClass(attform->atttypid,
 											   index_rel->rd_rel->relam);

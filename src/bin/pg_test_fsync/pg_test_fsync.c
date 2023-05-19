@@ -623,7 +623,7 @@ static void
 print_elapse(struct timeval start_t, struct timeval stop_t, int ops)
 {
 	double		total_time = (stop_t.tv_sec - start_t.tv_sec) +
-	(stop_t.tv_usec - start_t.tv_usec) * 0.000001;
+		(stop_t.tv_usec - start_t.tv_usec) * 0.000001;
 	double		per_second = ops / total_time;
 	double		avg_op_time_us = (total_time / ops) * USECS_SEC;
 

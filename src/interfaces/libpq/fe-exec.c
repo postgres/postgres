@@ -1448,7 +1448,7 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
 	{
 		libpq_append_conn_error(conn, "%s not allowed in pipeline mode",
-						  "PQsendQuery");
+								"PQsendQuery");
 		return 0;
 	}
 
@@ -1516,7 +1516,7 @@ PQsendQueryParams(PGconn *conn,
 	if (nParams < 0 || nParams > PQ_QUERY_PARAM_MAX_LIMIT)
 	{
 		libpq_append_conn_error(conn, "number of parameters must be between 0 and %d",
-						   PQ_QUERY_PARAM_MAX_LIMIT);
+								PQ_QUERY_PARAM_MAX_LIMIT);
 		return 0;
 	}
 
@@ -1562,7 +1562,7 @@ PQsendPrepare(PGconn *conn,
 	if (nParams < 0 || nParams > PQ_QUERY_PARAM_MAX_LIMIT)
 	{
 		libpq_append_conn_error(conn, "number of parameters must be between 0 and %d",
-						   PQ_QUERY_PARAM_MAX_LIMIT);
+								PQ_QUERY_PARAM_MAX_LIMIT);
 		return 0;
 	}
 
@@ -1656,7 +1656,7 @@ PQsendQueryPrepared(PGconn *conn,
 	if (nParams < 0 || nParams > PQ_QUERY_PARAM_MAX_LIMIT)
 	{
 		libpq_append_conn_error(conn, "number of parameters must be between 0 and %d",
-						   PQ_QUERY_PARAM_MAX_LIMIT);
+								PQ_QUERY_PARAM_MAX_LIMIT);
 		return 0;
 	}
 
@@ -2103,10 +2103,9 @@ PQgetResult(PGconn *conn)
 
 			/*
 			 * We're about to return the NULL that terminates the round of
-			 * results from the current query; prepare to send the results
-			 * of the next query, if any, when we're called next.  If there's
-			 * no next element in the command queue, this gets us in IDLE
-			 * state.
+			 * results from the current query; prepare to send the results of
+			 * the next query, if any, when we're called next.  If there's no
+			 * next element in the command queue, this gets us in IDLE state.
 			 */
 			pqPipelineProcessQueue(conn);
 			res = NULL;			/* query is complete */
@@ -3051,6 +3050,7 @@ pqPipelineProcessQueue(PGconn *conn)
 			return;
 
 		case PGASYNC_IDLE:
+
 			/*
 			 * If we're in IDLE mode and there's some command in the queue,
 			 * get us into PIPELINE_IDLE mode and process normally.  Otherwise

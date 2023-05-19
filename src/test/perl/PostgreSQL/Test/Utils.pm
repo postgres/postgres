@@ -146,7 +146,7 @@ BEGIN
 	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
 	# Check if this environment is MSYS2.
 	$is_msys2 =
-	     $windows_os
+		 $windows_os
 	  && -x '/usr/bin/uname'
 	  && `uname -or` =~ /^[2-9].*Msys/;
 
@@ -211,15 +211,15 @@ INIT
 	# Hijack STDOUT and STDERR to the log file
 	open(my $orig_stdout, '>&', \*STDOUT);
 	open(my $orig_stderr, '>&', \*STDERR);
-	open(STDOUT,          '>&', $testlog);
-	open(STDERR,          '>&', $testlog);
+	open(STDOUT, '>&', $testlog);
+	open(STDERR, '>&', $testlog);
 
 	# The test output (ok ...) needs to be printed to the original STDOUT so
 	# that the 'prove' program can parse it, and display it to the user in
 	# real time. But also copy it to the log file, to provide more context
 	# in the log.
 	my $builder = Test::More->builder;
-	my $fh      = $builder->output;
+	my $fh = $builder->output;
 	tie *$fh, "PostgreSQL::Test::SimpleTee", $orig_stdout, $testlog;
 	$fh = $builder->failure_output;
 	tie *$fh, "PostgreSQL::Test::SimpleTee", $orig_stderr, $testlog;
@@ -284,7 +284,7 @@ sub tempdir
 	$prefix = "tmp_test" unless defined $prefix;
 	return File::Temp::tempdir(
 		$prefix . '_XXXX',
-		DIR     => $tmp_check,
+		DIR => $tmp_check,
 		CLEANUP => 1);
 }
 
@@ -321,7 +321,7 @@ https://postgr.es/m/20220116210241.GC756210@rfd.leadboat.com for details.
 sub has_wal_read_bug
 {
 	return
-	     $Config{osname} eq 'linux'
+		 $Config{osname} eq 'linux'
 	  && $Config{archname} =~ /^sparc/
 	  && !run_log([ qw(df -x ext4), $tmp_check ], '>', '/dev/null', '2>&1');
 }
@@ -563,10 +563,10 @@ sub string_replace_file
 	my ($filename, $find, $replace) = @_;
 	open(my $in, '<', $filename);
 	my $content;
-	while(<$in>)
+	while (<$in>)
 	{
 		$_ =~ s/$find/$replace/;
-		$content = $content.$_;
+		$content = $content . $_;
 	}
 	close $in;
 	open(my $out, '>', $filename);
@@ -595,7 +595,7 @@ sub check_mode_recursive
 	find(
 		{
 			follow_fast => 1,
-			wanted      => sub {
+			wanted => sub {
 				# Is file in the ignore list?
 				foreach my $ignore ($ignore_list ? @{$ignore_list} : [])
 				{
@@ -611,7 +611,7 @@ sub check_mode_recursive
 				unless (defined($file_stat))
 				{
 					my $is_ENOENT = $!{ENOENT};
-					my $msg       = "unable to stat $File::Find::name: $!";
+					my $msg = "unable to stat $File::Find::name: $!";
 					if ($is_ENOENT)
 					{
 						warn $msg;
@@ -682,7 +682,7 @@ sub chmod_recursive
 	find(
 		{
 			follow_fast => 1,
-			wanted      => sub {
+			wanted => sub {
 				my $file_stat = stat($File::Find::name);
 
 				if (defined($file_stat))

@@ -175,7 +175,7 @@ Datum
 ltree_in(PG_FUNCTION_ARGS)
 {
 	char	   *buf = (char *) PG_GETARG_POINTER(0);
-	ltree      *res;
+	ltree	   *res;
 
 	if ((res = parse_ltree(buf, fcinfo->context)) == NULL)
 		PG_RETURN_NULL();
@@ -584,7 +584,7 @@ parse_lquery(const char *buf, struct Node *escontext)
  */
 static bool
 finish_nodeitem(nodeitem *lptr, const char *ptr, bool is_lquery, int pos,
-	struct Node *escontext)
+				struct Node *escontext)
 {
 	if (is_lquery)
 	{
@@ -745,7 +745,7 @@ Datum
 lquery_in(PG_FUNCTION_ARGS)
 {
 	char	   *buf = (char *) PG_GETARG_POINTER(0);
-	lquery     *res;
+	lquery	   *res;
 
 	if ((res = parse_lquery(buf, fcinfo->context)) == NULL)
 		PG_RETURN_NULL();

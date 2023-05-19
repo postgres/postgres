@@ -391,7 +391,8 @@ test_streaming($node_publisher, $node_subscriber, $appname, 1);
 $node_subscriber->append_conf('postgresql.conf',
 	'logical_replication_mode = immediate');
 # Reset the log_min_messages to default.
-$node_subscriber->append_conf('postgresql.conf', "log_min_messages = warning");
+$node_subscriber->append_conf('postgresql.conf',
+	"log_min_messages = warning");
 $node_subscriber->reload;
 
 # Run a query to make sure that the reload has taken effect.

@@ -57,7 +57,7 @@ $node_publisher->safe_psql(
 
 my $publisher_connstring = $node_publisher->connstr . ' dbname=postgres';
 $node_subscriber->safe_psql('postgres',
-	    "CREATE SUBSCRIPTION tsub CONNECTION '$publisher_connstring' "
+		"CREATE SUBSCRIPTION tsub CONNECTION '$publisher_connstring' "
 	  . "PUBLICATION tpub WITH (slot_name = tpub_slot, binary = true)");
 
 # Ensure the COPY command is executed in binary format on the publisher

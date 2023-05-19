@@ -1990,7 +1990,7 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 		int			bucket = (oldSnapshotControl->head_offset
 							  + ((ts - oldSnapshotControl->head_timestamp)
 								 / USECS_PER_MINUTE))
-		% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
+			% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 
 		if (TransactionIdPrecedes(oldSnapshotControl->xid_by_minute[bucket], xmin))
 			oldSnapshotControl->xid_by_minute[bucket] = xmin;
@@ -2057,7 +2057,7 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 					/* Extend map to unused entry. */
 					int			new_tail = (oldSnapshotControl->head_offset
 											+ oldSnapshotControl->count_used)
-					% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
+						% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 
 					oldSnapshotControl->count_used++;
 					oldSnapshotControl->xid_by_minute[new_tail] = xmin;
@@ -2188,7 +2188,7 @@ SerializeSnapshot(Snapshot snapshot, char *start_address)
 	if (serialized_snapshot.subxcnt > 0)
 	{
 		Size		subxipoff = sizeof(SerializedSnapshotData) +
-		snapshot->xcnt * sizeof(TransactionId);
+			snapshot->xcnt * sizeof(TransactionId);
 
 		memcpy((TransactionId *) (start_address + subxipoff),
 			   snapshot->subxip, snapshot->subxcnt * sizeof(TransactionId));

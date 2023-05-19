@@ -897,8 +897,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	 *
 	 * XLogReader machinery is only able to handle records up to a certain
 	 * size (ignoring machine resource limitations), so make sure that we will
-	 * not emit records larger than the sizes advertised to be supported.
-	 * This cap is based on DecodeXLogRecordRequiredSpace().
+	 * not emit records larger than the sizes advertised to be supported. This
+	 * cap is based on DecodeXLogRecordRequiredSpace().
 	 */
 	if (total_len >= XLogRecordMaxSize)
 		ereport(ERROR,

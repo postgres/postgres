@@ -19,7 +19,7 @@ create table message_section_map (
 
 EOT
 
-open(my $msg, '>', "message.tmp")             || die;
+open(my $msg, '>', "message.tmp") || die;
 open(my $map, '>', "message_section_map.tmp") || die;
 
 srand(1);

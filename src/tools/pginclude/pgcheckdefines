@@ -116,7 +116,7 @@ foreach my $file (@hfiles, @cfiles)
 		my $subdir = $fpath;
 		chop $subdir;
 		my $top_builddir = "..";
-		my $tmp          = $fpath;
+		my $tmp = $fpath;
 		while (($tmp = dirname($tmp)) ne '.')
 		{
 			$top_builddir = $top_builddir . "/..";
@@ -168,7 +168,7 @@ foreach my $file (@hfiles, @cfiles)
 	# number of dots varies according to nesting depth.
 	#
 	my @includes = ();
-	my $COMPILE  = "$CC $CPPFLAGS $CFLAGS -H -E $fname";
+	my $COMPILE = "$CC $CPPFLAGS $CFLAGS -H -E $fname";
 	open $pipe, '-|', "$COMPILE 2>&1 >/dev/null"
 	  or die "can't fork: $!";
 	while (<$pipe>)

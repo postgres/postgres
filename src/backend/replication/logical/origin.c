@@ -833,7 +833,7 @@ replorigin_redo(XLogReaderState *record)
 		case XLOG_REPLORIGIN_SET:
 			{
 				xl_replorigin_set *xlrec =
-				(xl_replorigin_set *) XLogRecGetData(record);
+					(xl_replorigin_set *) XLogRecGetData(record);
 
 				replorigin_advance(xlrec->node_id,
 								   xlrec->remote_lsn, record->EndRecPtr,

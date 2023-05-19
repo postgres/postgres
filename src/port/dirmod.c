@@ -145,10 +145,10 @@ pgunlink(const char *path)
 	 * the retry loop, but that seems like over-engineering for now.
 	 *
 	 * In the special case of a STATUS_DELETE_PENDING error (file already
-	 * unlinked, but someone still has it open), we don't want to report ENOENT
-	 * to the caller immediately, because rmdir(parent) would probably fail.
-	 * We want to wait until the file truly goes away so that simple recursive
-	 * directory unlink algorithms work.
+	 * unlinked, but someone still has it open), we don't want to report
+	 * ENOENT to the caller immediately, because rmdir(parent) would probably
+	 * fail. We want to wait until the file truly goes away so that simple
+	 * recursive directory unlink algorithms work.
 	 */
 	if (lstat(path, &st) < 0)
 	{

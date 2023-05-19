@@ -38,30 +38,35 @@ $node->safe_psql('postgres', q(CREATE TABLE tbl(i int)));
 
 my $main_h = $node->background_psql('postgres');
 
-$main_h->query_safe(q(
+$main_h->query_safe(
+	q(
 BEGIN;
 INSERT INTO tbl VALUES(0);
 ));
 
 my $cic_h = $node->background_psql('postgres');
 
-$cic_h->query_until(qr/start/, q(
+$cic_h->query_until(
+	qr/start/, q(
 \echo start
 CREATE INDEX CONCURRENTLY idx ON tbl(i);
 ));
 
-$main_h->query_safe(q(
+$main_h->query_safe(
+	q(
 PREPARE TRANSACTION 'a';
 ));
 
-$main_h->query_safe(q(
+$main_h->query_safe(
+	q(
 BEGIN;
 INSERT INTO tbl VALUES(0);
 ));
 
 $node->safe_psql('postgres', q(COMMIT PREPARED 'a';));
 
-$main_h->query_safe(q(
+$main_h->query_safe(
+	q(
 PREPARE TRANSACTION 'b';
 BEGIN;
 INSERT INTO tbl VALUES(0);
@@ -69,7 +74,8 @@ INSERT INTO tbl VALUES(0);
 
 $node->safe_psql('postgres', q(COMMIT PREPARED 'b';));
 
-$main_h->query_safe(q(
+$main_h->query_safe(
+	q(
 PREPARE TRANSACTION 'c';
 COMMIT PREPARED 'c';
 ));
@@ -97,7 +103,8 @@ PREPARE TRANSACTION 'persists_forever';
 $node->restart;
 
 my $reindex_h = $node->background_psql('postgres');
-$reindex_h->query_until(qr/start/, q(
+$reindex_h->query_until(
+	qr/start/, q(
 \echo start
 DROP INDEX CONCURRENTLY idx;
 CREATE INDEX CONCURRENTLY idx ON tbl(i);

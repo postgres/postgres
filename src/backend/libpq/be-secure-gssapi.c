@@ -527,8 +527,8 @@ secure_open_gssapi(Port *port)
 
 	/*
 	 * Use the configured keytab, if there is one.  As we now require MIT
-	 * Kerberos, we might consider using the credential store extensions in the
-	 * future instead of the environment variable.
+	 * Kerberos, we might consider using the credential store extensions in
+	 * the future instead of the environment variable.
 	 */
 	if (pg_krb_server_keyfile != NULL && pg_krb_server_keyfile[0] != '\0')
 	{

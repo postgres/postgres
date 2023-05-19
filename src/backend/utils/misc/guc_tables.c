@@ -4685,8 +4685,8 @@ struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"icu_validation_level", PGC_USERSET, CLIENT_CONN_LOCALE,
-		 gettext_noop("Log level for reporting invalid ICU locale strings."),
-		 NULL
+			gettext_noop("Log level for reporting invalid ICU locale strings."),
+			NULL
 		},
 		&icu_validation_level,
 		WARNING, icu_validation_level_options,

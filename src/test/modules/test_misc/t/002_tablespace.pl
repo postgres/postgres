@@ -13,7 +13,7 @@ $node->init;
 $node->start;
 
 # Create a couple of directories to use as tablespaces.
-my $basedir      = $node->basedir();
+my $basedir = $node->basedir();
 my $TS1_LOCATION = "$basedir/ts1";
 $TS1_LOCATION =~ s/\/\.\//\//g;    # collapse foo/./bar to foo/bar
 mkdir($TS1_LOCATION);

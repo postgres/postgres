@@ -1021,7 +1021,8 @@ hashbpchar(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		Size		bsize, rsize;
+		Size		bsize,
+					rsize;
 		char	   *buf;
 
 		bsize = pg_strnxfrm(NULL, 0, keydata, keylen, mylocale);
@@ -1033,8 +1034,8 @@ hashbpchar(PG_FUNCTION_ARGS)
 
 		/*
 		 * In principle, there's no reason to include the terminating NUL
-		 * character in the hash, but it was done before and the behavior
-		 * must be preserved.
+		 * character in the hash, but it was done before and the behavior must
+		 * be preserved.
 		 */
 		result = hash_any((uint8_t *) buf, bsize + 1);
 
@@ -1076,7 +1077,8 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		Size		bsize, rsize;
+		Size		bsize,
+					rsize;
 		char	   *buf;
 
 		bsize = pg_strnxfrm(NULL, 0, keydata, keylen, mylocale);
@@ -1088,8 +1090,8 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 
 		/*
 		 * In principle, there's no reason to include the terminating NUL
-		 * character in the hash, but it was done before and the behavior
-		 * must be preserved.
+		 * character in the hash, but it was done before and the behavior must
+		 * be preserved.
 		 */
 		result = hash_any_extended((uint8_t *) buf, bsize + 1,
 								   PG_GETARG_INT64(1));

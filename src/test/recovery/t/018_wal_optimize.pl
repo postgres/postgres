@@ -24,7 +24,7 @@ sub check_orphan_relfilenodes
 
 	my $db_oid = $node->safe_psql('postgres',
 		"SELECT oid FROM pg_database WHERE datname = 'postgres'");
-	my $prefix               = "base/$db_oid/";
+	my $prefix = "base/$db_oid/";
 	my $filepaths_referenced = $node->safe_psql(
 		'postgres', "
 	   SELECT pg_relation_filepath(oid) FROM pg_class
@@ -145,7 +145,7 @@ wal_skip_threshold = 0
 	is($result, qq(20000), "wal_level = $wal_level, end-of-xact WAL");
 
 	# Data file for COPY query in subsequent tests
-	my $basedir   = $node->basedir;
+	my $basedir = $node->basedir;
 	my $copy_file = "$basedir/copy_data.txt";
 	PostgreSQL::Test::Utils::append_to_file(
 		$copy_file, qq(20000,30000

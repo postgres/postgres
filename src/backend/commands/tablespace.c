@@ -1278,7 +1278,7 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 
 			/* Check permissions, similarly complaining only if interactive */
 			aclresult = object_aclcheck(TableSpaceRelationId, curoid, GetUserId(),
-											   ACL_CREATE);
+										ACL_CREATE);
 			if (aclresult != ACLCHECK_OK)
 			{
 				if (source >= PGC_S_INTERACTIVE)
@@ -1408,7 +1408,7 @@ PrepareTempTablespaces(void)
 
 		/* Check permissions similarly */
 		aclresult = object_aclcheck(TableSpaceRelationId, curoid, GetUserId(),
-										   ACL_CREATE);
+									ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			continue;
 

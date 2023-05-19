@@ -407,8 +407,8 @@ basic_archive_shutdown(ArchiveModuleState *state)
 	MemoryContext basic_archive_context;
 
 	/*
-	 * If we didn't get to storing the pointer to our allocated state, we don't
-	 * have anything to clean up.
+	 * If we didn't get to storing the pointer to our allocated state, we
+	 * don't have anything to clean up.
 	 */
 	if (data == NULL)
 		return;

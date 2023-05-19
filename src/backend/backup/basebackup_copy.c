@@ -350,6 +350,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 
 	tupdesc = CreateTemplateTupleDesc(2);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "recptr", TEXTOID, -1, 0);
+
 	/*
 	 * int8 may seem like a surprising data type for this, but in theory int4
 	 * would not be wide enough for this, as TimeLineID is unsigned.
@@ -360,7 +361,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	tstate = begin_tup_output_tupdesc(dest, tupdesc, &TTSOpsVirtual);
 
 	/* Data row */
-	values[0]= CStringGetTextDatum(psprintf("%X/%X", LSN_FORMAT_ARGS(ptr)));
+	values[0] = CStringGetTextDatum(psprintf("%X/%X", LSN_FORMAT_ARGS(ptr)));
 	values[1] = Int64GetDatum(tli);
 	do_tup_output(tstate, values, nulls);
 

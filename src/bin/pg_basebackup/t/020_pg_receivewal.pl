@@ -66,8 +66,8 @@ $primary->psql('postgres', 'INSERT INTO test_table VALUES (1);');
 # compression involved.
 $primary->command_ok(
 	[
-		'pg_receivewal', '-D',     $stream_dir,     '--verbose',
-		'--endpos',      $nextlsn, '--synchronous', '--no-loop'
+		'pg_receivewal', '-D', $stream_dir, '--verbose',
+		'--endpos', $nextlsn, '--synchronous', '--no-loop'
 	],
 	'streaming some WAL with --synchronous');
 
@@ -92,8 +92,8 @@ SKIP:
 
 	$primary->command_ok(
 		[
-			'pg_receivewal', '-D',     $stream_dir,  '--verbose',
-			'--endpos',      $nextlsn, '--compress', 'gzip:1',
+			'pg_receivewal', '-D', $stream_dir, '--verbose',
+			'--endpos', $nextlsn, '--compress', 'gzip:1',
 			'--no-loop'
 		],
 		"streaming some WAL using ZLIB compression");
@@ -145,8 +145,8 @@ SKIP:
 	# Stream up to the given position.
 	$primary->command_ok(
 		[
-			'pg_receivewal', '-D',     $stream_dir, '--verbose',
-			'--endpos',      $nextlsn, '--no-loop', '--compress',
+			'pg_receivewal', '-D', $stream_dir, '--verbose',
+			'--endpos', $nextlsn, '--no-loop', '--compress',
 			'lz4'
 		],
 		'streaming some WAL using --compress=lz4');
@@ -191,8 +191,8 @@ chomp($nextlsn);
 $primary->psql('postgres', 'INSERT INTO test_table VALUES (4);');
 $primary->command_ok(
 	[
-		'pg_receivewal', '-D',     $stream_dir, '--verbose',
-		'--endpos',      $nextlsn, '--no-loop'
+		'pg_receivewal', '-D', $stream_dir, '--verbose',
+		'--endpos', $nextlsn, '--no-loop'
 	],
 	"streaming some WAL");
 
@@ -247,17 +247,17 @@ $primary->psql('postgres', 'INSERT INTO test_table VALUES (6);');
 # Check case where the slot does not exist.
 $primary->command_fails_like(
 	[
-		'pg_receivewal',   '-D', $slot_dir,   '--slot',
+		'pg_receivewal', '-D', $slot_dir, '--slot',
 		'nonexistentslot', '-n', '--no-sync', '--verbose',
-		'--endpos',        $nextlsn
+		'--endpos', $nextlsn
 	],
 	qr/pg_receivewal: error: replication slot "nonexistentslot" does not exist/,
 	'pg_receivewal fails with non-existing slot');
 $primary->command_ok(
 	[
-		'pg_receivewal', '-D', $slot_dir,   '--slot',
-		$slot_name,      '-n', '--no-sync', '--verbose',
-		'--endpos',      $nextlsn
+		'pg_receivewal', '-D', $slot_dir, '--slot',
+		$slot_name, '-n', '--no-sync', '--verbose',
+		'--endpos', $nextlsn
 	],
 	"WAL streamed from the slot's restart_lsn");
 ok(-e "$slot_dir/$walfile_streamed",
@@ -281,7 +281,7 @@ $standby->psql(
 $primary->wait_for_catchup($standby);
 # Get a walfilename from before the promotion to make sure it is archived
 # after promotion
-my $standby_slot         = $standby->slot($archive_slot);
+my $standby_slot = $standby->slot($archive_slot);
 my $replication_slot_lsn = $standby_slot->{'restart_lsn'};
 
 # pg_walfile_name() is not supported while in recovery, so use the primary
@@ -311,9 +311,9 @@ mkdir($timeline_dir);
 
 $standby->command_ok(
 	[
-		'pg_receivewal', '-D',     $timeline_dir, '--verbose',
-		'--endpos',      $nextlsn, '--slot',      $archive_slot,
-		'--no-sync',     '-n'
+		'pg_receivewal', '-D', $timeline_dir, '--verbose',
+		'--endpos', $nextlsn, '--slot', $archive_slot,
+		'--no-sync', '-n'
 	],
 	"Stream some wal after promoting, resuming from the slot's position");
 ok(-e "$timeline_dir/$walfile_before_promotion",

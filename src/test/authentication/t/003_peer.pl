@@ -20,7 +20,7 @@ if (!$use_unix_sockets)
 # and then execute a reload to refresh it.
 sub reset_pg_hba
 {
-	my $node       = shift;
+	my $node = shift;
 	my $hba_method = shift;
 
 	unlink($node->data_dir . '/pg_hba.conf');
@@ -33,10 +33,10 @@ sub reset_pg_hba
 # and then execute a reload to refresh it.
 sub reset_pg_ident
 {
-	my $node        = shift;
-	my $map_name    = shift;
+	my $node = shift;
+	my $map_name = shift;
 	my $system_user = shift;
-	my $pg_user     = shift;
+	my $pg_user = shift;
 
 	unlink($node->data_dir . '/pg_ident.conf');
 	$node->append_conf('pg_ident.conf', "$map_name $system_user $pg_user");

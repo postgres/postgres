@@ -1047,7 +1047,7 @@ llvm_compile_expr(ExprState *state)
 					else
 					{
 						LLVMValueRef v_value =
-						LLVMBuildLoad(b, v_resvaluep, "");
+							LLVMBuildLoad(b, v_resvaluep, "");
 
 						v_value = LLVMBuildZExt(b,
 												LLVMBuildICmp(b, LLVMIntEQ,
@@ -2127,8 +2127,7 @@ llvm_compile_expr(ExprState *state)
 
 					/*
 					 * pergroup = &aggstate->all_pergroups
-					 * [op->d.agg_trans.setoff]
-					 * [op->d.agg_trans.transno];
+					 * [op->d.agg_trans.setoff] [op->d.agg_trans.transno];
 					 */
 					v_allpergroupsp =
 						l_load_struct_gep(b, v_aggstatep,

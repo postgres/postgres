@@ -255,14 +255,14 @@ pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 			case EPIPE:
 			case ECONNRESET:
 				libpq_append_conn_error(conn, "server closed the connection unexpectedly\n"
-								   "\tThis probably means the server terminated abnormally\n"
-								   "\tbefore or while processing the request.");
+										"\tThis probably means the server terminated abnormally\n"
+										"\tbefore or while processing the request.");
 				break;
 
 			default:
 				libpq_append_conn_error(conn, "could not receive data from server: %s",
-								  SOCK_STRERROR(result_errno,
-												sebuf, sizeof(sebuf)));
+										SOCK_STRERROR(result_errno,
+													  sebuf, sizeof(sebuf)));
 				break;
 		}
 	}

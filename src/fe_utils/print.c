@@ -1295,10 +1295,11 @@ print_aligned_vertical_line(const printTableOpt *topt,
 					dwidth = Min(dwidth, Max(0, (int) (output_columns - hwidth)));
 				if (opt_border == 1)
 					dwidth = Min(dwidth, Max(0, (int) (output_columns - hwidth - 3)));
+
 				/*
-				 * Handling the xheader width for border=2 doesn't make
-				 * much sense because this format has an additional
-				 * right border, but keep this for consistency.
+				 * Handling the xheader width for border=2 doesn't make much
+				 * sense because this format has an additional right border,
+				 * but keep this for consistency.
 				 */
 				if (opt_border == 2)
 					dwidth = Min(dwidth, Max(0, (int) (output_columns - hwidth - 7)));

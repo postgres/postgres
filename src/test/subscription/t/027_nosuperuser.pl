@@ -81,7 +81,7 @@ sub grant_superuser
 # "regress_admin".  For partitioned tables, layout the partitions differently
 # on the publisher than on the subscriber.
 #
-$node_publisher  = PostgreSQL::Test::Cluster->new('publisher');
+$node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_publisher->init(allows_streaming => 'logical');
 $node_subscriber->init;
@@ -89,10 +89,10 @@ $node_publisher->start;
 $node_subscriber->start;
 $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 my %remainder_a = (
-	publisher  => 0,
+	publisher => 0,
 	subscriber => 1);
 my %remainder_b = (
-	publisher  => 1,
+	publisher => 1,
 	subscriber => 0);
 
 for my $node ($node_publisher, $node_subscriber)
@@ -197,8 +197,7 @@ publish_insert("alice.hashpart", 103);
 publish_update("alice.hashpart", 102 => 120);
 publish_delete("alice.hashpart", 101);
 expect_replication("alice.hashpart", 2, 103, 120,
-	"nosuperuser admin with privileges on role can replicate into hashpart"
-);
+	"nosuperuser admin with privileges on role can replicate into hashpart");
 
 # Force RLS on the target table and check that replication fails.
 $node_subscriber->safe_psql(
@@ -223,8 +222,7 @@ $node_subscriber->safe_psql(
 ALTER TABLE alice.unpartitioned NO FORCE ROW LEVEL SECURITY;
 ));
 expect_replication("alice.unpartitioned", 3, 11, 15,
-	"non-superuser admin can replicate insert if rls is not forced"
-);
+	"non-superuser admin can replicate insert if rls is not forced");
 
 $node_subscriber->safe_psql(
 	'postgres', qq(
@@ -237,8 +235,7 @@ expect_failure(
 	11,
 	15,
 	qr/ERROR: ( [A-Z0-9]+:)? user "regress_alice" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
-	"replication of update into table with forced rls fails"
-);
+	"replication of update into table with forced rls fails");
 $node_subscriber->safe_psql(
 	'postgres', qq(
 ALTER TABLE alice.unpartitioned NO FORCE ROW LEVEL SECURITY;
@@ -258,8 +255,7 @@ expect_failure(
 	13,
 	17,
 	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
-	"replication of insert fails if table owner lacks insert permission"
-);
+	"replication of insert fails if table owner lacks insert permission");
 
 # alice needs INSERT but not SELECT to replicate an INSERT.
 $node_subscriber->safe_psql(

@@ -389,6 +389,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	Assert(params->index_cleanup != VACOPTVALUE_UNSPECIFIED);
 	Assert(params->truncate != VACOPTVALUE_UNSPECIFIED &&
 		   params->truncate != VACOPTVALUE_AUTO);
+
 	/*
 	 * While VacuumFailSafeActive is reset to false before calling this, we
 	 * still need to reset it here due to recursive calls.
@@ -1813,12 +1814,12 @@ retry:
 		{
 			/*
 			 * We have no freeze plans to execute, so there's no added cost
-			 * from following the freeze path.  That's why it was chosen.
-			 * This is important in the case where the page only contains
-			 * totally frozen tuples at this point (perhaps only following
-			 * pruning).  Such pages can be marked all-frozen in the VM by our
-			 * caller, even though none of its tuples were newly frozen here
-			 * (note that the "no freeze" path never sets pages all-frozen).
+			 * from following the freeze path.  That's why it was chosen. This
+			 * is important in the case where the page only contains totally
+			 * frozen tuples at this point (perhaps only following pruning).
+			 * Such pages can be marked all-frozen in the VM by our caller,
+			 * even though none of its tuples were newly frozen here (note
+			 * that the "no freeze" path never sets pages all-frozen).
 			 *
 			 * We never increment the frozen_pages instrumentation counter
 			 * here, since it only counts pages with newly frozen tuples
@@ -3117,8 +3118,8 @@ dead_items_max_items(LVRelState *vacrel)
 {
 	int64		max_items;
 	int			vac_work_mem = IsAutoVacuumWorkerProcess() &&
-	autovacuum_work_mem != -1 ?
-	autovacuum_work_mem : maintenance_work_mem;
+		autovacuum_work_mem != -1 ?
+		autovacuum_work_mem : maintenance_work_mem;
 
 	if (vacrel->nindexes > 0)
 	{

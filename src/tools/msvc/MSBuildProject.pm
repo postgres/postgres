@@ -19,11 +19,11 @@ no warnings qw(redefine);    ## no critic
 sub _new
 {
 	my $classname = shift;
-	my $self      = $classname->SUPER::_new(@_);
+	my $self = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
 	$self->{filenameExtension} = '.vcxproj';
-	$self->{ToolsVersion}      = '4.0';
+	$self->{ToolsVersion} = '4.0';
 
 	return $self;
 }
@@ -51,7 +51,7 @@ EOF
 	{
 		# remove trailing backslash if necessary.
 		$sdkVersion =~ s/\\$//;
-		print $f <<EOF
+		print $f <<EOF;
     <WindowsTargetPlatformVersion>$sdkVersion</WindowsTargetPlatformVersion>
 EOF
 	}
@@ -84,8 +84,8 @@ EOF
 	$self->WriteItemDefinitionGroup(
 		$f, 'Debug',
 		{
-			defs    => "_DEBUG;DEBUG=1",
-			opt     => 'Disabled',
+			defs => "_DEBUG;DEBUG=1",
+			opt => 'Disabled',
 			strpool => 'false',
 			runtime => 'MultiThreadedDebugDLL'
 		});
@@ -93,8 +93,8 @@ EOF
 		$f,
 		'Release',
 		{
-			defs    => "",
-			opt     => 'Full',
+			defs => "",
+			opt => 'Full',
 			strpool => 'true',
 			runtime => 'MultiThreadedDLL'
 		});
@@ -141,14 +141,14 @@ sub WriteFiles
 	print $f <<EOF;
   <ItemGroup>
 EOF
-	my @grammarFiles  = ();
+	my @grammarFiles = ();
 	my @resourceFiles = ();
 	my %uniquefiles;
 	foreach my $fileNameWithPath (sort keys %{ $self->{files} })
 	{
 		confess "Bad format filename '$fileNameWithPath'\n"
 		  unless ($fileNameWithPath =~ m!^(.*)/([^/]+)\.(c|cpp|y|l|rc)$!);
-		my $dir      = $1;
+		my $dir = $1;
 		my $fileName = $2;
 		if ($fileNameWithPath =~ /\.y$/ or $fileNameWithPath =~ /\.l$/)
 		{
@@ -312,8 +312,7 @@ sub WriteItemDefinitionGroup
 
 	my $targetmachine =
 	  $self->{platform} eq 'Win32' ? 'MachineX86' : 'MachineX64';
-	my $arch =
-	  $self->{platform} eq 'Win32' ? 'x86' : 'x86_64';
+	my $arch = $self->{platform} eq 'Win32' ? 'x86' : 'x86_64';
 
 	my $includes = join ';', @{ $self->{includes} }, "";
 
@@ -421,12 +420,12 @@ no warnings qw(redefine);    ## no critic
 sub new
 {
 	my $classname = shift;
-	my $self      = $classname->SUPER::_new(@_);
+	my $self = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
-	$self->{vcver}           = '14.00';
+	$self->{vcver} = '14.00';
 	$self->{PlatformToolset} = 'v140';
-	$self->{ToolsVersion}    = '14.0';
+	$self->{ToolsVersion} = '14.0';
 
 	return $self;
 }
@@ -446,12 +445,12 @@ no warnings qw(redefine);    ## no critic
 sub new
 {
 	my $classname = shift;
-	my $self      = $classname->SUPER::_new(@_);
+	my $self = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
-	$self->{vcver}           = '15.00';
+	$self->{vcver} = '15.00';
 	$self->{PlatformToolset} = 'v141';
-	$self->{ToolsVersion}    = '15.0';
+	$self->{ToolsVersion} = '15.0';
 
 	return $self;
 }
@@ -471,12 +470,12 @@ no warnings qw(redefine);    ## no critic
 sub new
 {
 	my $classname = shift;
-	my $self      = $classname->SUPER::_new(@_);
+	my $self = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
-	$self->{vcver}           = '16.00';
+	$self->{vcver} = '16.00';
 	$self->{PlatformToolset} = 'v142';
-	$self->{ToolsVersion}    = '16.0';
+	$self->{ToolsVersion} = '16.0';
 
 	return $self;
 }
@@ -496,12 +495,12 @@ no warnings qw(redefine);    ## no critic
 sub new
 {
 	my $classname = shift;
-	my $self      = $classname->SUPER::_new(@_);
+	my $self = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
-	$self->{vcver}           = '17.00';
+	$self->{vcver} = '17.00';
 	$self->{PlatformToolset} = 'v143';
-	$self->{ToolsVersion}    = '17.0';
+	$self->{ToolsVersion} = '17.0';
 
 	return $self;
 }

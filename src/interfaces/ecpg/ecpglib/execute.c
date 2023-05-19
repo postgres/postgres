@@ -820,7 +820,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 			case ECPGt_bytea:
 				{
 					struct ECPGgeneric_bytea *variable =
-					(struct ECPGgeneric_bytea *) (var->value);
+						(struct ECPGgeneric_bytea *) (var->value);
 
 					if (!(mallocedval = (char *) ecpg_alloc(variable->len, lineno)))
 						return false;
@@ -833,7 +833,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 			case ECPGt_varchar:
 				{
 					struct ECPGgeneric_varchar *variable =
-					(struct ECPGgeneric_varchar *) (var->value);
+						(struct ECPGgeneric_varchar *) (var->value);
 
 					if (!(newcopy = (char *) ecpg_alloc(variable->len + 1, lineno)))
 						return false;

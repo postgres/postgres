@@ -37,8 +37,8 @@ $ldap->ldapadd_file('authdata.ldif');
 $ldap->ldapsetpw('uid=test1,dc=example,dc=net', 'secret1');
 $ldap->ldapsetpw('uid=test2,dc=example,dc=net', 'secret2');
 
-my ($ldap_server, $ldap_port,   $ldaps_port, $ldap_url,
-	$ldaps_url,   $ldap_basedn, $ldap_rootdn
+my ($ldap_server, $ldap_port, $ldaps_port, $ldap_url,
+	$ldaps_url, $ldap_basedn, $ldap_rootdn
 ) = $ldap->prop(qw(server port s_port url s_url basedn rootdn));
 
 # don't bother to check the server's cert (though perhaps we should)

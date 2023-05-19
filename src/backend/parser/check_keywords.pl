@@ -9,7 +9,7 @@
 use strict;
 use warnings;
 
-my $gram_filename   = $ARGV[0];
+my $gram_filename = $ARGV[0];
 my $kwlist_filename = $ARGV[1];
 
 my $errors = 0;
@@ -47,10 +47,10 @@ $, = ' ';     # set output field separator
 $\ = "\n";    # set output record separator
 
 my %keyword_categories;
-$keyword_categories{'unreserved_keyword'}     = 'UNRESERVED_KEYWORD';
-$keyword_categories{'col_name_keyword'}       = 'COL_NAME_KEYWORD';
+$keyword_categories{'unreserved_keyword'} = 'UNRESERVED_KEYWORD';
+$keyword_categories{'col_name_keyword'} = 'COL_NAME_KEYWORD';
 $keyword_categories{'type_func_name_keyword'} = 'TYPE_FUNC_NAME_KEYWORD';
-$keyword_categories{'reserved_keyword'}       = 'RESERVED_KEYWORD';
+$keyword_categories{'reserved_keyword'} = 'RESERVED_KEYWORD';
 
 open(my $gram, '<', $gram_filename) || die("Could not open : $gram_filename");
 
@@ -183,7 +183,7 @@ kwlist_line: while (<$kwlist>)
 	if ($line =~ /^PG_KEYWORD\(\"(.*)\", (.*), (.*), (.*)\)/)
 	{
 		my ($kwstring) = $1;
-		my ($kwname)   = $2;
+		my ($kwname) = $2;
 		my ($kwcat_id) = $3;
 		my ($collabel) = $4;
 

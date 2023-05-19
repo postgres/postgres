@@ -183,7 +183,7 @@ is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo)
 
 	/* See if we already cached the result. */
 	entry = (ShippableCacheEntry *)
-		hash_search(ShippableCacheHash,	&key, HASH_FIND, NULL);
+		hash_search(ShippableCacheHash, &key, HASH_FIND, NULL);
 
 	if (!entry)
 	{
@@ -196,7 +196,7 @@ is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo)
 		 * cache invalidation.
 		 */
 		entry = (ShippableCacheEntry *)
-			hash_search(ShippableCacheHash,	&key, HASH_ENTER, NULL);
+			hash_search(ShippableCacheHash, &key, HASH_ENTER, NULL);
 
 		entry->shippable = shippable;
 	}

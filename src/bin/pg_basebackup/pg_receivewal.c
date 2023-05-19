@@ -43,7 +43,7 @@
 static char *basedir = NULL;
 static int	verbose = 0;
 static int	compresslevel = 0;
-static bool	noloop = false;
+static bool noloop = false;
 static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
 static volatile sig_atomic_t time_to_stop = false;
 static bool do_create_slot = false;

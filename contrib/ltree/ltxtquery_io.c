@@ -186,8 +186,8 @@ pushval_asis(QPRS_STATE *state, int type, char *strval, int lenval, uint16 flag)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("word is too long")));
 
-	if (! pushquery(state, type, ltree_crc32_sz(strval, lenval),
-					state->curop - state->op, lenval, flag))
+	if (!pushquery(state, type, ltree_crc32_sz(strval, lenval),
+				   state->curop - state->op, lenval, flag))
 		return false;
 
 	while (state->curop - state->op + lenval + 1 >= state->lenop)
@@ -408,7 +408,7 @@ PG_FUNCTION_INFO_V1(ltxtq_in);
 Datum
 ltxtq_in(PG_FUNCTION_ARGS)
 {
-	ltxtquery *res;
+	ltxtquery  *res;
 
 	if ((res = queryin((char *) PG_GETARG_POINTER(0), fcinfo->context)) == NULL)
 		PG_RETURN_NULL();

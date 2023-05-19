@@ -20,7 +20,8 @@ if ($ENV{with_ssl} ne 'openssl')
 }
 elsif ($ENV{PG_TEST_EXTRA} !~ /\bssl\b/)
 {
-	plan skip_all => 'Potentially unsafe test SSL not enabled in PG_TEST_EXTRA';
+	plan skip_all =>
+	  'Potentially unsafe test SSL not enabled in PG_TEST_EXTRA';
 }
 
 #### Some configuration
@@ -172,9 +173,9 @@ is($result, 'CA:FALSE|t', 'extract extension from cert');
 
 # Sanity tests for sslcertmode, using ssl_client_cert_present()
 my @cases = (
-	{ opts => "sslcertmode=allow",                 present => 't' },
+	{ opts => "sslcertmode=allow", present => 't' },
 	{ opts => "sslcertmode=allow sslcert=invalid", present => 'f' },
-	{ opts => "sslcertmode=disable",               present => 'f' },);
+	{ opts => "sslcertmode=disable", present => 'f' },);
 if ($supports_sslcertmode_require)
 {
 	push(@cases, { opts => "sslcertmode=require", present => 't' });

@@ -319,7 +319,7 @@ plan_to_remove_relation_file('db2', 's1.t1_btree');
 my @cmd = ('pg_amcheck', '-p', $port);
 
 # Regular expressions to match various expected output
-my $no_output_re               = qr/^$/;
+my $no_output_re = qr/^$/;
 my $line_pointer_corruption_re = qr/line pointer/;
 my $missing_file_re = qr/could not open file ".*": No such file or directory/;
 my $index_missing_relation_fork_re =

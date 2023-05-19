@@ -330,7 +330,7 @@ static void
 SyncRepQueueInsert(int mode)
 {
 	dlist_head *queue;
-	dlist_iter iter;
+	dlist_iter	iter;
 
 	Assert(mode >= 0 && mode < NUM_SYNC_REP_WAIT_MODE);
 	queue = &WalSndCtl->SyncRepQueue[mode];
@@ -879,7 +879,7 @@ SyncRepWakeQueue(bool all, int mode)
 
 	dlist_foreach_modify(iter, &WalSndCtl->SyncRepQueue[mode])
 	{
-		PGPROC *proc = dlist_container(PGPROC, syncRepLinks, iter.cur);
+		PGPROC	   *proc = dlist_container(PGPROC, syncRepLinks, iter.cur);
 
 		/*
 		 * Assume the queue is ordered by LSN

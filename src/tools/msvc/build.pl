@@ -54,9 +54,9 @@ do "./src/tools/msvc/config.pl" if (-f "src/tools/msvc/config.pl");
 my $vcver = Mkvcbuild::mkvcbuild($config);
 
 # check what sort of build we are doing
-my $bconf     = $ENV{CONFIG}   || "Release";
-my $msbflags  = $ENV{MSBFLAGS} || "";
-my $buildwhat = $ARGV[1]       || "";
+my $bconf = $ENV{CONFIG} || "Release";
+my $msbflags = $ENV{MSBFLAGS} || "";
+my $buildwhat = $ARGV[1] || "";
 
 if (defined($ARGV[0]))
 {

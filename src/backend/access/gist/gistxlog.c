@@ -125,7 +125,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 		if (data - begin < datalen)
 		{
 			OffsetNumber off = (PageIsEmpty(page)) ? FirstOffsetNumber :
-			OffsetNumberNext(PageGetMaxOffsetNumber(page));
+				OffsetNumberNext(PageGetMaxOffsetNumber(page));
 
 			while (data - begin < datalen)
 			{

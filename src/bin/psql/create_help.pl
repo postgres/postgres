@@ -23,18 +23,18 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-my $docdir        = '';
-my $outdir        = '.';
-my $depfile       = '';
+my $docdir = '';
+my $outdir = '.';
+my $depfile = '';
 my $hfilebasename = '';
 
 GetOptions(
-	'docdir=s'   => \$docdir,
-	'outdir=s'   => \$outdir,
+	'docdir=s' => \$docdir,
+	'outdir=s' => \$outdir,
 	'basename=s' => \$hfilebasename,
-	'depfile=s'  => \$depfile,) or die "$0: wrong arguments";
+	'depfile=s' => \$depfile,) or die "$0: wrong arguments";
 
-$docdir        or die "$0: missing required argument: docdir\n";
+$docdir or die "$0: missing required argument: docdir\n";
 $hfilebasename or die "$0: missing required argument: basename\n";
 
 my $hfile = $hfilebasename . '.h';
@@ -163,11 +163,11 @@ foreach my $file (sort readdir $dh)
 		foreach my $cmdname (@cmdnames)
 		{
 			$entries{$cmdname} = {
-				cmdid       => $cmdid,
-				cmddesc     => $cmddesc,
+				cmdid => $cmdid,
+				cmddesc => $cmddesc,
 				cmdsynopsis => $cmdsynopsis,
-				params      => \@params,
-				nl_count    => $nl_count
+				params => \@params,
+				nl_count => $nl_count
 			};
 			$maxlen =
 			  ($maxlen >= length $cmdname) ? $maxlen : length $cmdname;
@@ -182,7 +182,7 @@ foreach my $file (sort readdir $dh)
 foreach (sort keys %entries)
 {
 	my $prefix = "\t" x 5 . '  ';
-	my $id     = $_;
+	my $id = $_;
 	$id =~ s/ /_/g;
 	my $synopsis = "\"$entries{$_}{cmdsynopsis}\"";
 	$synopsis =~ s/\\n/\\n"\n$prefix"/g;

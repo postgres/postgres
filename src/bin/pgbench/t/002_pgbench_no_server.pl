@@ -128,7 +128,7 @@ my @options = (
 		'invalid progress', '--progress=0',
 		[qr{-P/--progress must be in range}]
 	],
-	[ 'invalid rate',    '--rate=0.0',          [qr{invalid rate limit}] ],
+	[ 'invalid rate', '--rate=0.0', [qr{invalid rate limit}] ],
 	[ 'invalid latency', '--latency-limit=0.0', [qr{invalid latency limit}] ],
 	[
 		'invalid sampling rate', '--sampling-rate=0',
@@ -144,7 +144,7 @@ my @options = (
 		'-b se@0 -b si@0 -b tpcb@0',
 		[qr{weight must not be zero}]
 	],
-	[ 'init vs run', '-i -S',    [qr{cannot be used in initialization}] ],
+	[ 'init vs run', '-i -S', [qr{cannot be used in initialization}] ],
 	[ 'run vs init', '-S -F 90', [qr{cannot be used in benchmarking}] ],
 	[ 'ambiguous builtin', '-b s', [qr{ambiguous}] ],
 	[
@@ -257,7 +257,7 @@ pgbench(
 	[qr{^$}],
 	[
 		qr{Available builtin scripts:}, qr{tpcb-like},
-		qr{simple-update},              qr{select-only}
+		qr{simple-update}, qr{select-only}
 	],
 	'pgbench builtin list');
 
@@ -268,7 +268,7 @@ pgbench(
 	[qr{^$}],
 	[
 		qr{select-only: }, qr{SELECT abalance FROM pgbench_accounts WHERE},
-		qr{(?!UPDATE)},    qr{(?!INSERT)}
+		qr{(?!UPDATE)}, qr{(?!INSERT)}
 	],
 	'pgbench builtin listing');
 

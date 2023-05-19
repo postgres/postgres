@@ -3357,7 +3357,7 @@ checkJsonOutputFormat(ParseState *pstate, const JsonFormat *format,
 	if (format->format_type == JS_FORMAT_JSON)
 	{
 		JsonEncoding enc = format->encoding != JS_ENC_DEFAULT ?
-		format->encoding : JS_ENC_UTF8;
+			format->encoding : JS_ENC_UTF8;
 
 		if (targettype != BYTEAOID &&
 			format->encoding != JS_ENC_DEFAULT)

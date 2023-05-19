@@ -1470,8 +1470,8 @@ check_GUC_init(struct config_generic *gconf)
 	/* Flag combinations */
 
 	/*
-	 * GUC_NO_SHOW_ALL requires GUC_NOT_IN_SAMPLE, as a parameter not part
-	 * of SHOW ALL should not be hidden in postgresql.conf.sample.
+	 * GUC_NO_SHOW_ALL requires GUC_NOT_IN_SAMPLE, as a parameter not part of
+	 * SHOW ALL should not be hidden in postgresql.conf.sample.
 	 */
 	if ((gconf->flags & GUC_NO_SHOW_ALL) &&
 		!(gconf->flags & GUC_NOT_IN_SAMPLE))

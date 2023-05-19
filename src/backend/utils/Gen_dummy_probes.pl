@@ -44,7 +44,7 @@ sub Run()
 
 	# Initialize.
 	openARGV();
-	$Hold    = '';
+	$Hold = '';
 	$CondReg = 0;
 	$doPrint = $doAutoPrint;
   CYCLE:

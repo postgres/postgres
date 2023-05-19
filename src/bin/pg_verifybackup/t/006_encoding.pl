@@ -16,8 +16,8 @@ my $backup_path = $primary->backup_dir . '/test_encoding';
 $primary->command_ok(
 	[
 		'pg_basebackup', '-D',
-		$backup_path,    '--no-sync',
-		'-cfast',        '--manifest-force-encode'
+		$backup_path, '--no-sync',
+		'-cfast', '--manifest-force-encode'
 	],
 	"backup ok with forced hex encoding");
 

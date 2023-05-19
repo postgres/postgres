@@ -31,7 +31,7 @@ PG_MODULE_MAGIC;
  */
 typedef struct xl_testcustomrmgrs_message
 {
-	Size		message_size;   /* size of the message */
+	Size		message_size;	/* size of the message */
 	char		message[FLEXIBLE_ARRAY_MEMBER]; /* payload */
 } xl_testcustomrmgrs_message;
 

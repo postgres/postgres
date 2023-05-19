@@ -2256,7 +2256,7 @@ NormalizeSubWord(IspellDict *Conf, char *word, int flag)
 						{
 							/* prefix success */
 							char	   *ff = (prefix->aff[j]->flagflags & suffix->aff[i]->flagflags & FF_CROSSPRODUCT) ?
-							VoidString : prefix->aff[j]->flag;
+								VoidString : prefix->aff[j]->flag;
 
 							if (FindWord(Conf, pnewword, ff, flag))
 								cur += addToResult(forms, cur, pnewword);

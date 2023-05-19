@@ -259,7 +259,7 @@ libpqrcv_check_conninfo(const char *conninfo, bool must_use_password)
 
 	if (must_use_password)
 	{
-		bool	uses_password = false;
+		bool		uses_password = false;
 
 		for (opt = opts; opt->keyword != NULL; ++opt)
 		{

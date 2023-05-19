@@ -806,7 +806,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		AclResult	aclresult;
 
 		aclresult = object_aclcheck(TableSpaceRelationId, tablespaceId, GetUserId(),
-										   ACL_CREATE);
+									ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_TABLESPACE,
 						   get_tablespace_name(tablespaceId));
@@ -1931,7 +1931,7 @@ ExecuteTruncateGuts(List *explicit_rels,
 	resultRelInfo = resultRelInfos;
 	foreach(cell, rels)
 	{
-		UserContext	ucxt;
+		UserContext ucxt;
 
 		if (run_as_table_owner)
 			SwitchToUntrustedUser(resultRelInfo->ri_RelationDesc->rd_rel->relowner,
@@ -2143,7 +2143,7 @@ ExecuteTruncateGuts(List *explicit_rels,
 	resultRelInfo = resultRelInfos;
 	foreach(cell, rels)
 	{
-		UserContext	ucxt;
+		UserContext ucxt;
 
 		if (run_as_table_owner)
 			SwitchToUntrustedUser(resultRelInfo->ri_RelationDesc->rd_rel->relowner,
@@ -2635,7 +2635,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				if (CompressionMethodIsValid(attribute->attcompression))
 				{
 					const char *compression =
-					GetCompressionMethodName(attribute->attcompression);
+						GetCompressionMethodName(attribute->attcompression);
 
 					if (def->compression == NULL)
 						def->compression = pstrdup(compression);
@@ -13947,7 +13947,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 
 				/* New owner must have CREATE privilege on namespace */
 				aclresult = object_aclcheck(NamespaceRelationId, namespaceOid, newOwnerId,
-												  ACL_CREATE);
+											ACL_CREATE);
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, OBJECT_SCHEMA,
 								   get_namespace_name(namespaceOid));
@@ -14377,7 +14377,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		if (check_option)
 		{
 			const char *view_updatable_error =
-			view_query_is_auto_updatable(view_query, true);
+				view_query_is_auto_updatable(view_query, true);
 
 			if (view_updatable_error)
 				ereport(ERROR,
@@ -14656,7 +14656,7 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 		AclResult	aclresult;
 
 		aclresult = object_aclcheck(TableSpaceRelationId, new_tablespaceoid, GetUserId(),
-										   ACL_CREATE);
+									ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_TABLESPACE,
 						   get_tablespace_name(new_tablespaceoid));
@@ -17134,7 +17134,7 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 	if (IsA(stmt, RenameStmt))
 	{
 		aclresult = object_aclcheck(NamespaceRelationId, classform->relnamespace,
-										  GetUserId(), ACL_CREATE);
+									GetUserId(), ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_SCHEMA,
 						   get_namespace_name(classform->relnamespace));

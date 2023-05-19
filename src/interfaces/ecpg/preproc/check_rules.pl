@@ -20,16 +20,16 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-my $srcdir  = '.';
-my $parser  = '../../../backend/parser/gram.y';
-my $stamp   = '';
+my $srcdir = '.';
+my $parser = '../../../backend/parser/gram.y';
+my $stamp = '';
 my $verbose = 0;
 
 GetOptions(
 	'srcdir=s' => \$srcdir,
 	'parser=s' => \$parser,
-	'stamp=s'  => \$stamp,
-	'verbose'  => \$verbose,) or die "wrong arguments";
+	'stamp=s' => \$stamp,
+	'verbose' => \$verbose,) or die "wrong arguments";
 
 my $filename = "$srcdir/ecpg.addons";
 if ($verbose)
@@ -51,14 +51,14 @@ my %replace_line = (
 	'PrepareStmtPREPAREnameprep_type_clauseASPreparableStmt' =>
 	  'PREPARE prepared_name prep_type_clause AS PreparableStmt');
 
-my $block        = '';
-my $yaccmode     = 0;
-my $in_rule      = 0;
+my $block = '';
+my $yaccmode = 0;
+my $in_rule = 0;
 my $brace_indent = 0;
 my (@arr, %found);
-my $comment     = 0;
+my $comment = 0;
 my $non_term_id = '';
-my $cc          = 0;
+my $cc = 0;
 
 open my $parser_fh, '<', $parser or die $!;
 while (<$parser_fh>)
@@ -140,13 +140,14 @@ while (<$parser_fh>)
 			$block = '';
 			$in_rule = 0 if $arr[$fieldIndexer] eq ';';
 		}
-		elsif (($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:')
-			   || (   $fieldIndexer + 1 < $n
-					  && $arr[ $fieldIndexer + 1 ] eq ':'))
+		elsif (
+			($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:')
+			|| (   $fieldIndexer + 1 < $n
+				&& $arr[ $fieldIndexer + 1 ] eq ':'))
 		{
 			die "unterminated rule at grammar line $.\n"
 			  if $in_rule;
-			$in_rule     = 1;
+			$in_rule = 1;
 			$non_term_id = $arr[$fieldIndexer];
 			$non_term_id =~ tr/://d;
 		}

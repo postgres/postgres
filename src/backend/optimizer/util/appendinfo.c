@@ -370,7 +370,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 			if (leaf_relid)
 			{
 				RowIdentityVarInfo *ridinfo = (RowIdentityVarInfo *)
-				list_nth(context->root->row_identity_vars, var->varattno - 1);
+					list_nth(context->root->row_identity_vars, var->varattno - 1);
 
 				if (bms_is_member(leaf_relid, ridinfo->rowidrels))
 				{

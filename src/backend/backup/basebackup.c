@@ -1609,10 +1609,10 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 						 *
 						 * There's no guarantee that this will actually
 						 * happen, though: the torn write could take an
-						 * arbitrarily long time to complete. Retrying multiple
-						 * times wouldn't fix this problem, either, though
-						 * it would reduce the chances of it happening in
-						 * practice. The only real fix here seems to be to
+						 * arbitrarily long time to complete. Retrying
+						 * multiple times wouldn't fix this problem, either,
+						 * though it would reduce the chances of it happening
+						 * in practice. The only real fix here seems to be to
 						 * have some kind of interlock that allows us to wait
 						 * until we can be certain that no write to the block
 						 * is in progress. Since we don't have any such thing

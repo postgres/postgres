@@ -7,10 +7,9 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-my $outfile        = '';
+my $outfile = '';
 
-GetOptions(
-	'outfile=s'   => \$outfile) or die "$0: wrong arguments";
+GetOptions('outfile=s' => \$outfile) or die "$0: wrong arguments";
 
 open my $errcodes, '<', $ARGV[0]
   or die "$0: could not open input file '$ARGV[0]': $!\n";

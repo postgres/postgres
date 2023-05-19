@@ -700,8 +700,8 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 					}
 
 					/*
-					 * If we found a scan key eliminating the range, no need to
-					 * check additional ones.
+					 * If we found a scan key eliminating the range, no need
+					 * to check additional ones.
 					 */
 					if (!addrange)
 						break;
@@ -1223,7 +1223,7 @@ brin_build_desc(Relation rel)
 	 * Obtain BrinOpcInfo for each indexed column.  While at it, accumulate
 	 * the number of columns stored, since the number is opclass-defined.
 	 */
-	opcinfo = palloc_array(BrinOpcInfo*, tupdesc->natts);
+	opcinfo = palloc_array(BrinOpcInfo *, tupdesc->natts);
 	for (keyno = 0; keyno < tupdesc->natts; keyno++)
 	{
 		FmgrInfo   *opcInfoFn;
@@ -1801,8 +1801,8 @@ add_values_to_range(Relation idxRel, BrinDesc *bdesc, BrinMemTuple *dtup,
 		bval = &dtup->bt_columns[keyno];
 
 		/*
-		 * Does the range have actual NULL values? Either of the flags can
-		 * be set, but we ignore the state before adding first row.
+		 * Does the range have actual NULL values? Either of the flags can be
+		 * set, but we ignore the state before adding first row.
 		 *
 		 * We have to remember this, because we'll modify the flags and we
 		 * need to know if the range started as empty.
@@ -1842,12 +1842,12 @@ add_values_to_range(Relation idxRel, BrinDesc *bdesc, BrinMemTuple *dtup,
 
 		/*
 		 * If the range was had actual NULL values (i.e. did not start empty),
-		 * make sure we don't forget about the NULL values. Either the allnulls
-		 * flag is still set to true, or (if the opclass cleared it) we need to
-		 * set hasnulls=true.
+		 * make sure we don't forget about the NULL values. Either the
+		 * allnulls flag is still set to true, or (if the opclass cleared it)
+		 * we need to set hasnulls=true.
 		 *
-		 * XXX This can only happen when the opclass modified the tuple, so the
-		 * modified flag should be set.
+		 * XXX This can only happen when the opclass modified the tuple, so
+		 * the modified flag should be set.
 		 */
 		if (has_nulls && !(bval->bv_hasnulls || bval->bv_allnulls))
 		{
@@ -1859,9 +1859,9 @@ add_values_to_range(Relation idxRel, BrinDesc *bdesc, BrinMemTuple *dtup,
 	/*
 	 * After updating summaries for all the keys, mark it as not empty.
 	 *
-	 * If we're actually changing the flag value (i.e. tuple started as empty),
-	 * we should have modified the tuple. So we should not see empty range that
-	 * was not modified.
+	 * If we're actually changing the flag value (i.e. tuple started as
+	 * empty), we should have modified the tuple. So we should not see empty
+	 * range that was not modified.
 	 */
 	Assert(!dtup->bt_empty_range || modified);
 	dtup->bt_empty_range = false;

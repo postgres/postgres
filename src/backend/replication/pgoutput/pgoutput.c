@@ -887,8 +887,8 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 	 * are multiple lists (one for each operation) to which row filters will
 	 * be appended.
 	 *
-	 * FOR ALL TABLES and FOR TABLES IN SCHEMA implies "don't use row
-	 * filter expression" so it takes precedence.
+	 * FOR ALL TABLES and FOR TABLES IN SCHEMA implies "don't use row filter
+	 * expression" so it takes precedence.
 	 */
 	foreach(lc, publications)
 	{

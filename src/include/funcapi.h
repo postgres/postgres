@@ -231,6 +231,7 @@ HeapTupleGetDatum(const HeapTupleData *tuple)
 {
 	return HeapTupleHeaderGetDatum(tuple->t_data);
 }
+
 /* obsolete version of above */
 #define TupleGetDatum(_slot, _tuple)	HeapTupleGetDatum(_tuple)
 

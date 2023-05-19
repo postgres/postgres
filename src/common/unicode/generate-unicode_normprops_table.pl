@@ -108,7 +108,7 @@ foreach my $prop (sort keys %data)
 
 	# Emit the definition of the perfect hash function.
 	my $funcname = $prop . '_hash_func';
-	my $f        = PerfectHash::generate_hash_function(\@cp_packed, $funcname,
+	my $f = PerfectHash::generate_hash_function(\@cp_packed, $funcname,
 		fixed_key_length => 4);
 	printf "\n/* Perfect hash function for %s */", $prop;
 	print "\nstatic $f\n";
@@ -119,7 +119,7 @@ foreach my $prop (sort keys %data)
 	printf "\nstatic const pg_unicode_norminfo ";
 	printf "UnicodeNormInfo_%s = {\n", $prop;
 	printf "\tUnicodeNormProps_%s,\n", $prop;
-	printf "\t%s,\n",                  $funcname;
-	printf "\t%d\n",                   scalar @cp_packed;
+	printf "\t%s,\n", $funcname;
+	printf "\t%d\n", scalar @cp_packed;
 	printf "};\n";
 }

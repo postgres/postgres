@@ -37,13 +37,13 @@ while (my $line = <$in>)
 
 		push @mapping,
 		  {
-			code       => $code,
-			ucs        => $ucs1,
+			code => $code,
+			ucs => $ucs1,
 			ucs_second => $ucs2,
-			comment    => $rest,
-			direction  => BOTH,
-			f          => $in_file,
-			l          => $.
+			comment => $rest,
+			direction => BOTH,
+			f => $in_file,
+			l => $.
 		  };
 	}
 	elsif ($line =~ /^0x(\w+)\s*U\+(\w+)\s*#\s*(\S.*)?\s*$/)
@@ -51,7 +51,7 @@ while (my $line = <$in>)
 
 		# non-combined characters
 		my ($c, $u, $rest) = ($1, $2, "U+" . $2 . $3);
-		my $ucs  = hex($u);
+		my $ucs = hex($u);
 		my $code = hex($c);
 		my $direction;
 
@@ -74,12 +74,12 @@ while (my $line = <$in>)
 
 		push @mapping,
 		  {
-			code      => $code,
-			ucs       => $ucs,
-			comment   => $rest,
+			code => $code,
+			ucs => $ucs,
+			comment => $rest,
 			direction => $direction,
-			f         => $in_file,
-			l         => $.
+			f => $in_file,
+			l => $.
 		  };
 	}
 }

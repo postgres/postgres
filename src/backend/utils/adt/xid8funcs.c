@@ -519,7 +519,7 @@ pg_snapshot_recv(PG_FUNCTION_ARGS)
 	for (i = 0; i < nxip; i++)
 	{
 		FullTransactionId cur =
-		FullTransactionIdFromU64((uint64) pq_getmsgint64(buf));
+			FullTransactionIdFromU64((uint64) pq_getmsgint64(buf));
 
 		if (FullTransactionIdPrecedes(cur, last) ||
 			FullTransactionIdPrecedes(cur, xmin) ||

@@ -437,7 +437,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	if (check_option)
 	{
 		const char *view_updatable_error =
-		view_query_is_auto_updatable(viewParse, true);
+			view_query_is_auto_updatable(viewParse, true);
 
 		if (view_updatable_error)
 			ereport(ERROR,

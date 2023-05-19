@@ -3219,9 +3219,9 @@ static RecordIOData *
 allocate_record_info(MemoryContext mcxt, int ncolumns)
 {
 	RecordIOData *data = (RecordIOData *)
-	MemoryContextAlloc(mcxt,
-					   offsetof(RecordIOData, columns) +
-					   ncolumns * sizeof(ColumnIOData));
+		MemoryContextAlloc(mcxt,
+						   offsetof(RecordIOData, columns) +
+						   ncolumns * sizeof(ColumnIOData));
 
 	data->record_type = InvalidOid;
 	data->record_typmod = 0;

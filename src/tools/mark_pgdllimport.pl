@@ -28,7 +28,7 @@ use warnings;
 for my $include_file (@ARGV)
 {
 	open(my $rfh, '<', $include_file) || die "$include_file: $!";
-	my $buffer                = '';
+	my $buffer = '';
 	my $num_pgdllimport_added = 0;
 
 	while (my $raw_line = <$rfh>)

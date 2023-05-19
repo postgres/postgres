@@ -285,7 +285,7 @@ sum_free_pages(FreePageManager *fpm)
 		if (!relptr_is_null(fpm->freelist[list]))
 		{
 			FreePageSpanLeader *candidate =
-			relptr_access(base, fpm->freelist[list]);
+				relptr_access(base, fpm->freelist[list]);
 
 			do
 			{

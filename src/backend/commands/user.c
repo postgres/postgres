@@ -86,7 +86,7 @@ typedef struct
 int			Password_encryption = PASSWORD_TYPE_SCRAM_SHA_256;
 char	   *createrole_self_grant = "";
 bool		createrole_self_grant_enabled = false;
-GrantRoleOptions	createrole_self_grant_options;
+GrantRoleOptions createrole_self_grant_options;
 
 /* Hook to check passwords in CreateRole() and AlterRole() */
 check_password_hook_type check_password_hook = NULL;
@@ -169,7 +169,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	DefElem    *dadminmembers = NULL;
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
-	GrantRoleOptions	popt;
+	GrantRoleOptions popt;
 
 	/* The defaults can vary depending on the original statement type */
 	switch (stmt->stmt_type)
@@ -535,8 +535,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	 *
 	 * The grantor of record for this implicit grant is the bootstrap
 	 * superuser, which means that the CREATEROLE user cannot revoke the
-	 * grant. They can however grant the created role back to themselves
-	 * with different options, since they enjoy ADMIN OPTION on it.
+	 * grant. They can however grant the created role back to themselves with
+	 * different options, since they enjoy ADMIN OPTION on it.
 	 */
 	if (!superuser())
 	{
@@ -561,8 +561,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 					BOOTSTRAP_SUPERUSERID, &poptself);
 
 		/*
-		 * We must make the implicit grant visible to the code below, else
-		 * the additional grants will fail.
+		 * We must make the implicit grant visible to the code below, else the
+		 * additional grants will fail.
 		 */
 		CommandCounterIncrement();
 
@@ -585,8 +585,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	 * Add the specified members to this new role. adminmembers get the admin
 	 * option, rolemembers don't.
 	 *
-	 * NB: No permissions check is required here. If you have enough rights
-	 * to create a role, you can add any members you like.
+	 * NB: No permissions check is required here. If you have enough rights to
+	 * create a role, you can add any members you like.
 	 */
 	AddRoleMems(currentUserId, stmt->role, roleid,
 				rolemembers, roleSpecsToIds(rolemembers),
@@ -647,7 +647,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	DefElem    *dbypassRLS = NULL;
 	Oid			roleid;
 	Oid			currentUserId = GetUserId();
-	GrantRoleOptions	popt;
+	GrantRoleOptions popt;
 
 	check_rolespec_name(stmt->role,
 						_("Cannot alter reserved roles."));
@@ -862,7 +862,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	 */
 	if (dissuper)
 	{
-		bool	should_be_super = boolVal(dissuper->arg);
+		bool		should_be_super = boolVal(dissuper->arg);
 
 		if (!should_be_super && roleid == BOOTSTRAP_SUPERUSERID)
 			ereport(ERROR,
@@ -1021,9 +1021,9 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		shdepLockAndCheckObject(AuthIdRelationId, roleid);
 
 		/*
-		 * To mess with a superuser you gotta be superuser; otherwise you
-		 * need CREATEROLE plus admin option on the target role; unless you're
-		 * just trying to change your own settings
+		 * To mess with a superuser you gotta be superuser; otherwise you need
+		 * CREATEROLE plus admin option on the target role; unless you're just
+		 * trying to change your own settings
 		 */
 		if (roleform->rolsuper)
 		{
@@ -1037,7 +1037,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		else
 		{
 			if ((!have_createrole_privilege() ||
-				!is_admin_of_role(GetUserId(), roleid))
+				 !is_admin_of_role(GetUserId(), roleid))
 				&& roleid != GetUserId())
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -1490,14 +1490,14 @@ GrantRole(ParseState *pstate, GrantRoleStmt *stmt)
 	Oid			grantor;
 	List	   *grantee_ids;
 	ListCell   *item;
-	GrantRoleOptions	popt;
+	GrantRoleOptions popt;
 	Oid			currentUserId = GetUserId();
 
 	/* Parse options list. */
 	InitGrantRoleOptions(&popt);
 	foreach(item, stmt->opt)
 	{
-		DefElem	   *opt = (DefElem *) lfirst(item);
+		DefElem    *opt = (DefElem *) lfirst(item);
 		char	   *optval = defGetString(opt);
 
 		if (strcmp(opt->defname, "admin") == 0)
@@ -1546,8 +1546,8 @@ GrantRole(ParseState *pstate, GrantRoleStmt *stmt)
 	/*
 	 * Step through all of the granted roles and add, update, or remove
 	 * entries in pg_auth_members as appropriate. If stmt->is_grant is true,
-	 * we are adding new grants or, if they already exist, updating options
-	 * on those grants. If stmt->is_grant is false, we are revoking grants or
+	 * we are adding new grants or, if they already exist, updating options on
+	 * those grants. If stmt->is_grant is false, we are revoking grants or
 	 * removing options from them.
 	 */
 	foreach(item, stmt->granted_roles)
@@ -1848,8 +1848,8 @@ AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 										ObjectIdGetDatum(grantorId));
 
 		/*
-		 * If we found a tuple, update it with new option values, unless
-		 * there are no changes, in which case issue a WARNING.
+		 * If we found a tuple, update it with new option values, unless there
+		 * are no changes, in which case issue a WARNING.
 		 *
 		 * If we didn't find a tuple, just insert one.
 		 */
@@ -1932,8 +1932,8 @@ AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 					popt->inherit;
 			else
 			{
-				HeapTuple		mrtup;
-				Form_pg_authid	mrform;
+				HeapTuple	mrtup;
+				Form_pg_authid mrform;
 
 				mrtup = SearchSysCache1(AUTHOID, memberid);
 				if (!HeapTupleIsValid(mrtup))
@@ -2332,8 +2332,8 @@ plan_single_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
 	/*
 	 * If popt.specified == 0, we're revoking the grant entirely; otherwise,
 	 * we expect just one bit to be set, and we're revoking the corresponding
-	 * option. As of this writing, there's no syntax that would allow for
-	 * an attempt to revoke multiple options at once, and the logic below
+	 * option. As of this writing, there's no syntax that would allow for an
+	 * attempt to revoke multiple options at once, and the logic below
 	 * wouldn't work properly if such syntax were added, so assert that our
 	 * caller isn't trying to do that.
 	 */
@@ -2365,7 +2365,7 @@ plan_single_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
 			}
 			else
 			{
-				bool	revoke_admin_option_only;
+				bool		revoke_admin_option_only;
 
 				/*
 				 * Revoking the grant entirely, or ADMIN option on a grant,
@@ -2572,7 +2572,7 @@ check_createrole_self_grant(char **newval, void **extra, GucSource source)
 void
 assign_createrole_self_grant(const char *newval, void *extra)
 {
-	unsigned	options = * (unsigned *) extra;
+	unsigned	options = *(unsigned *) extra;
 
 	createrole_self_grant_enabled = (options != 0);
 	createrole_self_grant_options.specified = GRANT_ROLE_SPECIFIED_ADMIN

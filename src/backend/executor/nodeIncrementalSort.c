@@ -1007,9 +1007,9 @@ ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 	if (incrsortstate->ss.ps.instrument != NULL)
 	{
 		IncrementalSortGroupInfo *fullsortGroupInfo =
-		&incrsortstate->incsort_info.fullsortGroupInfo;
+			&incrsortstate->incsort_info.fullsortGroupInfo;
 		IncrementalSortGroupInfo *prefixsortGroupInfo =
-		&incrsortstate->incsort_info.prefixsortGroupInfo;
+			&incrsortstate->incsort_info.prefixsortGroupInfo;
 
 		fullsortGroupInfo->groupCount = 0;
 		fullsortGroupInfo->maxDiskSpaceUsed = 0;

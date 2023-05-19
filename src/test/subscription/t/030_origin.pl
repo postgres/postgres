@@ -9,10 +9,10 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my $subname_AB  = 'tap_sub_A_B';
+my $subname_AB = 'tap_sub_A_B';
 my $subname_AB2 = 'tap_sub_A_B_2';
-my $subname_BA  = 'tap_sub_B_A';
-my $subname_BC  = 'tap_sub_B_C';
+my $subname_BA = 'tap_sub_B_A';
+my $subname_BC = 'tap_sub_B_C';
 
 my $result;
 my $stdout;

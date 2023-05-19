@@ -120,7 +120,7 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 					else
 					{
 						ginxlogInsertDataInternal *insertData =
-						(ginxlogInsertDataInternal *) payload;
+							(ginxlogInsertDataInternal *) payload;
 
 						appendStringInfo(buf, " pitem: %u-%u/%u",
 										 PostingItemGetBlockNumber(&insertData->newitem),
@@ -156,7 +156,7 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 				else
 				{
 					ginxlogVacuumDataLeafPage *xlrec =
-					(ginxlogVacuumDataLeafPage *) XLogRecGetBlockData(record, 0, NULL);
+						(ginxlogVacuumDataLeafPage *) XLogRecGetBlockData(record, 0, NULL);
 
 					desc_recompress_leaf(buf, &xlrec->data);
 				}

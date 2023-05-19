@@ -10,7 +10,7 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 
 my $psql_out = '';
-my $psql_rc  = '';
+my $psql_rc = '';
 
 sub configure_and_reload
 {
@@ -49,7 +49,7 @@ $node_paris->start;
 
 # Switch to synchronous replication in both directions
 configure_and_reload($node_london, "synchronous_standby_names = 'paris'");
-configure_and_reload($node_paris,  "synchronous_standby_names = 'london'");
+configure_and_reload($node_paris, "synchronous_standby_names = 'london'");
 
 # Set up nonce names for current primary and standby nodes
 note "Initially, london is primary and paris is standby";

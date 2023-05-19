@@ -27,7 +27,7 @@ $node_primary->backup($backup_name);
 my $node_pitr = PostgreSQL::Test::Cluster->new('node_pitr');
 $node_pitr->init_from_backup(
 	$node_primary, $backup_name,
-	standby       => 0,
+	standby => 0,
 	has_restoring => 1);
 $node_pitr->append_conf(
 	'postgresql.conf', qq{

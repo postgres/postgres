@@ -315,7 +315,7 @@ int			DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm
 int			DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec);
 void		EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates);
 void		EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str);
-int			tm2timestamp(struct tm *tm, fsec_t fsec, int *tzp, timestamp *result);
+int			tm2timestamp(struct tm *tm, fsec_t fsec, int *tzp, timestamp * result);
 int			DecodeUnits(int field, char *lowtoken, int *val);
 bool		CheckDateTokenTables(void);
 void		EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates);

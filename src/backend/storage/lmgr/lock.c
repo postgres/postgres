@@ -3936,6 +3936,7 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 	dclist_foreach(proc_iter, waitQueue)
 	{
 		PGPROC	   *queued_proc = dlist_container(PGPROC, links, proc_iter.cur);
+
 		if (queued_proc == blocked_proc)
 			break;
 		data->waiter_pids[data->npids++] = queued_proc->pid;

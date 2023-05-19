@@ -34,16 +34,16 @@ $node->command_fails([ 'pg_recvlogical', '-S', 'test', '-d', 'postgres' ],
 	'pg_recvlogical needs an action');
 $node->command_fails(
 	[
-		'pg_recvlogical',           '-S',
-		'test',                     '-d',
+		'pg_recvlogical', '-S',
+		'test', '-d',
 		$node->connstr('postgres'), '--start'
 	],
 	'no destination file');
 
 $node->command_ok(
 	[
-		'pg_recvlogical',           '-S',
-		'test',                     '-d',
+		'pg_recvlogical', '-S',
+		'test', '-d',
 		$node->connstr('postgres'), '--create-slot'
 	],
 	'slot created');
@@ -67,8 +67,8 @@ $node->command_ok(
 
 $node->command_ok(
 	[
-		'pg_recvlogical',           '-S',
-		'test',                     '-d',
+		'pg_recvlogical', '-S',
+		'test', '-d',
 		$node->connstr('postgres'), '--drop-slot'
 	],
 	'slot dropped');
@@ -76,8 +76,8 @@ $node->command_ok(
 #test with two-phase option enabled
 $node->command_ok(
 	[
-		'pg_recvlogical',           '-S',
-		'test',                     '-d',
+		'pg_recvlogical', '-S',
+		'test', '-d',
 		$node->connstr('postgres'), '--create-slot',
 		'--two-phase'
 	],
@@ -94,12 +94,12 @@ chomp($nextlsn);
 
 $node->command_fails(
 	[
-		'pg_recvlogical',           '-S',
-		'test',                     '-d',
+		'pg_recvlogical', '-S',
+		'test', '-d',
 		$node->connstr('postgres'), '--start',
-		'--endpos',                 "$nextlsn",
-		'--two-phase',              '--no-loop',
-		'-f',                       '-'
+		'--endpos', "$nextlsn",
+		'--two-phase', '--no-loop',
+		'-f', '-'
 	],
 	'incorrect usage');
 

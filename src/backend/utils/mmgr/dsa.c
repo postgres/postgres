@@ -1369,7 +1369,7 @@ init_span(dsa_area *area,
 	if (DsaPointerIsValid(pool->spans[1]))
 	{
 		dsa_area_span *head = (dsa_area_span *)
-		dsa_get_address(area, pool->spans[1]);
+			dsa_get_address(area, pool->spans[1]);
 
 		head->prevspan = span_pointer;
 	}
@@ -2215,7 +2215,7 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 	if (segment_map->header->next != DSA_SEGMENT_INDEX_NONE)
 	{
 		dsa_segment_map *next =
-		get_segment_by_index(area, segment_map->header->next);
+			get_segment_by_index(area, segment_map->header->next);
 
 		Assert(next->header->bin == segment_map->header->bin);
 		next->header->prev = new_index;

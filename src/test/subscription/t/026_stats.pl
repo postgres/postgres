@@ -43,7 +43,7 @@ sub create_sub_pub_w_errors
 	]);
 
 	# Set up publication.
-	my $pub_name          = $table_name . '_pub';
+	my $pub_name = $table_name . '_pub';
 	my $publisher_connstr = $node_publisher->connstr . qq( dbname=$db);
 
 	$node_publisher->safe_psql($db,

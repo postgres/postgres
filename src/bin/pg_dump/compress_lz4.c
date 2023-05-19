@@ -44,8 +44,8 @@ typedef struct LZ4State
 
 	LZ4F_preferences_t prefs;
 
-	LZ4F_compressionContext_t	ctx;
-	LZ4F_decompressionContext_t	dtx;
+	LZ4F_compressionContext_t ctx;
+	LZ4F_decompressionContext_t dtx;
 
 	/*
 	 * Used by the Stream API's lazy initialization.
@@ -148,8 +148,8 @@ ReadDataFromArchiveLZ4(ArchiveHandle *AH, CompressorState *cs)
 	char	   *outbuf;
 	char	   *readbuf;
 	LZ4F_decompressionContext_t ctx = NULL;
-	LZ4F_decompressOptions_t	dec_opt;
-	LZ4F_errorCode_t			status;
+	LZ4F_decompressOptions_t dec_opt;
+	LZ4F_errorCode_t status;
 
 	memset(&dec_opt, 0, sizeof(dec_opt));
 	status = LZ4F_createDecompressionContext(&ctx, LZ4F_VERSION);
@@ -651,8 +651,8 @@ LZ4Stream_gets(char *ptr, int size, CompressFileHandle *CFH)
 		return NULL;
 
 	/*
-	 * Our caller expects the return string to be NULL terminated
-	 * and we know that ret is greater than zero.
+	 * Our caller expects the return string to be NULL terminated and we know
+	 * that ret is greater than zero.
 	 */
 	ptr[ret - 1] = '\0';
 

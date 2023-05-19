@@ -906,16 +906,16 @@ namecheck(const char *name)
 
 	/* Benign characters in a portable file name.  */
 	static char const benign[] =
-	"-/_"
-	"abcdefghijklmnopqrstuvwxyz"
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		"-/_"
+		"abcdefghijklmnopqrstuvwxyz"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 	/*
 	 * Non-control chars in the POSIX portable character set, excluding the
 	 * benign characters.
 	 */
 	static char const printable_and_not_benign[] =
-	" !\"#$%&'()*+,.0123456789:;<=>?@[\\]^`{|}~";
+		" !\"#$%&'()*+,.0123456789:;<=>?@[\\]^`{|}~";
 
 	char const *component = name;
 
@@ -3203,7 +3203,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 						else if (jtime == ktime)
 						{
 							char const *dup_rules_msg =
-							_("two rules for same instant");
+								_("two rules for same instant");
 
 							eats(zp->z_filename, zp->z_linenum,
 								 rp->r_filename, rp->r_linenum);
