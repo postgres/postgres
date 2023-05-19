@@ -540,7 +540,7 @@ smgrzeroextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  * smgrprefetch() -- Initiate asynchronous read of the specified block of a relation.
  *
  * In recovery only, this can return false to indicate that a file
- * doesn't	exist (presumably it has been dropped by a later WAL
+ * doesn't exist (presumably it has been dropped by a later WAL
  * record).
  */
 bool

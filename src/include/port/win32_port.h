@@ -147,7 +147,7 @@
  *			https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
  *
  *	The comprehensive exception list is included in ntstatus.h from the
- *	Windows	Driver Kit (WDK).  A subset of the list is also included in
+ *	Windows Driver Kit (WDK).  A subset of the list is also included in
  *	winnt.h from the Windows SDK.  Defining WIN32_NO_STATUS before including
  *	windows.h helps to avoid any conflicts.
  *

@@ -346,7 +346,7 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm *tm,
 					break;
 
 					/*
-					 * The	preferred  date  and  time	representation	for
+					 * The preferred date and time representation for
 					 * the current locale.
 					 */
 				case 'c':

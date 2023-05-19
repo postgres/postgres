@@ -50,7 +50,7 @@ typedef struct
 
 	/*
 	 * fields to store last variant to lexize (basically, thesaurus or similar
-	 * to, which wants	several lexemes
+	 * to, which wants several lexemes
 	 */
 
 	ParsedLex  *lastRes;

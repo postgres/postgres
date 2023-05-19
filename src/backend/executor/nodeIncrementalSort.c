@@ -69,7 +69,7 @@
  *	the entire result set is available.
  *
  *	The hybrid mode approach allows us to optimize for both very small
- *	groups (where the overhead of a new tuplesort is high) and very	large
+ *	groups (where the overhead of a new tuplesort is high) and very large
  *	groups (where we can lower cost by not having to sort on already sorted
  *	columns), albeit at some extra cost while switching between modes.
  *

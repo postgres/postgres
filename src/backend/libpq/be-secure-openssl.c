@@ -1025,7 +1025,7 @@ load_dh_file(char *filename, bool isServerStart)
  *	Load hardcoded DH parameters.
  *
  *	If DH parameters cannot be loaded from a specified file, we can load
- *	the	hardcoded DH parameters supplied with the backend to prevent
+ *	the hardcoded DH parameters supplied with the backend to prevent
  *	problems.
  */
 static DH  *

@@ -126,7 +126,7 @@ typedef struct JsonSemAction
 /*
  * pg_parse_json will parse the string in the lex calling the
  * action functions in sem at the appropriate points. It is
- * up to them to keep what state they need	in semstate. If they
+ * up to them to keep what state they need in semstate. If they
  * need access to the state of the lexer, then its pointer
  * should be passed to them as a member of whatever semstate
  * points to. If the action pointers are NULL the parser
