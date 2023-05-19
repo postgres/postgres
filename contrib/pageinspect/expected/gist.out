@@ -31,24 +31,24 @@ SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
 
 COMMIT;
 SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 0), 'test_gist_idx');
- itemoffset |   ctid    | itemlen | dead |       keys        
-------------+-----------+---------+------+-------------------
-          1 | (1,65535) |      40 | f    | (p)=((185,185))
-          2 | (2,65535) |      40 | f    | (p)=((370,370))
-          3 | (3,65535) |      40 | f    | (p)=((555,555))
-          4 | (4,65535) |      40 | f    | (p)=((740,740))
-          5 | (5,65535) |      40 | f    | (p)=((870,870))
-          6 | (6,65535) |      40 | f    | (p)=((1000,1000))
+ itemoffset |   ctid    | itemlen | dead |             keys              
+------------+-----------+---------+------+-------------------------------
+          1 | (1,65535) |      40 | f    | (p)=("(185,185),(1,1)")
+          2 | (2,65535) |      40 | f    | (p)=("(370,370),(186,186)")
+          3 | (3,65535) |      40 | f    | (p)=("(555,555),(371,371)")
+          4 | (4,65535) |      40 | f    | (p)=("(740,740),(556,556)")
+          5 | (5,65535) |      40 | f    | (p)=("(870,870),(741,741)")
+          6 | (6,65535) |      40 | f    | (p)=("(1000,1000),(871,871)")
 (6 rows)
 
 SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 1), 'test_gist_idx') LIMIT 5;
- itemoffset | ctid  | itemlen | dead |    keys     
-------------+-------+---------+------+-------------
-          1 | (0,1) |      40 | f    | (p)=((1,1))
-          2 | (0,2) |      40 | f    | (p)=((2,2))
-          3 | (0,3) |      40 | f    | (p)=((3,3))
-          4 | (0,4) |      40 | f    | (p)=((4,4))
-          5 | (0,5) |      40 | f    | (p)=((5,5))
+ itemoffset | ctid  | itemlen | dead |        keys         
+------------+-------+---------+------+---------------------
+          1 | (0,1) |      40 | f    | (p)=("(1,1),(1,1)")
+          2 | (0,2) |      40 | f    | (p)=("(2,2),(2,2)")
+          3 | (0,3) |      40 | f    | (p)=("(3,3),(3,3)")
+          4 | (0,4) |      40 | f    | (p)=("(4,4),(4,4)")
+          5 | (0,5) |      40 | f    | (p)=("(5,5),(5,5)")
 (5 rows)
 
 -- gist_page_items_bytea prints the raw key data as a bytea. The output of that is
@@ -105,6 +105,29 @@ SELECT gist_page_opaque_info(decode(repeat('00', :block_size), 'hex'));
  gist_page_opaque_info 
 -----------------------
  
+(1 row)
+
+-- Test gist_page_items with included columns.
+-- Non-leaf pages contain only the key attributes, and leaf pages contain
+-- the included attributes.
+ALTER TABLE test_gist ADD COLUMN i int DEFAULT NULL;
+CREATE INDEX test_gist_idx_inc ON test_gist
+  USING gist (p) INCLUDE (t, i);
+-- Mask the value of the key attribute to avoid alignment issues.
+SELECT regexp_replace(keys, '\(p\)=\("(.*?)"\)', '(p)=("<val>")') AS keys_nonleaf_1
+  FROM gist_page_items(get_raw_page('test_gist_idx_inc', 0), 'test_gist_idx_inc')
+  WHERE itemoffset = 1;
+ keys_nonleaf_1 
+----------------
+ (p)=("<val>")
+(1 row)
+
+SELECT keys AS keys_leaf_1
+  FROM gist_page_items(get_raw_page('test_gist_idx_inc', 1), 'test_gist_idx_inc')
+  WHERE itemoffset = 1;
+                     keys_leaf_1                      
+------------------------------------------------------
+ (p) INCLUDE (t, i)=("(1,1),(1,1)") INCLUDE (1, null)
 (1 row)
 
 DROP TABLE test_gist;

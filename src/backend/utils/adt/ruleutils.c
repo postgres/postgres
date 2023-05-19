@@ -1215,6 +1215,22 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 								  prettyFlags, false);
 }
 
+/* Internal version, extensible with flags to control its behavior */
+char *
+pg_get_indexdef_columns_extended(Oid indexrelid, bits16 flags)
+{
+	bool		pretty = ((flags & RULE_INDEXDEF_PRETTY) != 0);
+	bool		keys_only = ((flags & RULE_INDEXDEF_KEYS_ONLY) != 0);
+	int			prettyFlags;
+
+	prettyFlags = GET_PRETTY_FLAGS(pretty);
+
+	return pg_get_indexdef_worker(indexrelid, 0, NULL,
+								  true, keys_only,
+								  false, false,
+								  prettyFlags, false);
+}
+
 /*
  * Internal workhorse to decompile an index definition.
  *

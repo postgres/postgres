@@ -21,8 +21,10 @@
 #include "storage/itemptr.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/rel.h"
 #include "utils/pg_lsn.h"
+#include "utils/lsyscache.h"
+#include "utils/rel.h"
+#include "utils/ruleutils.h"
 #include "utils/varlena.h"
 
 PG_FUNCTION_INFO_V1(gist_page_opaque_info);
@@ -198,9 +200,13 @@ gist_page_items(PG_FUNCTION_ARGS)
 	Oid			indexRelid = PG_GETARG_OID(1);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	Relation	indexRel;
+	TupleDesc	tupdesc;
 	Page		page;
+	uint16		flagbits;
+	bits16		printflags = 0;
 	OffsetNumber offset;
 	OffsetNumber maxoff = InvalidOffsetNumber;
+	char	   *index_columns;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -226,6 +232,27 @@ gist_page_items(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+	flagbits = GistPageGetOpaque(page)->flags;
+
+	/*
+	 * Included attributes are added when dealing with leaf pages, discarded
+	 * for non-leaf pages as these include only data for key attributes.
+	 */
+	printflags |= RULE_INDEXDEF_PRETTY;
+	if (flagbits & F_LEAF)
+	{
+		tupdesc = RelationGetDescr(indexRel);
+	}
+	else
+	{
+		tupdesc = CreateTupleDescCopy(RelationGetDescr(indexRel));
+		tupdesc->natts = IndexRelationGetNumberOfKeyAttributes(indexRel);
+		printflags |= RULE_INDEXDEF_KEYS_ONLY;
+	}
+
+	index_columns = pg_get_indexdef_columns_extended(indexRelid,
+													 printflags);
+
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
 		elog(NOTICE, "page is deleted");
@@ -242,7 +269,8 @@ gist_page_items(PG_FUNCTION_ARGS)
 		IndexTuple	itup;
 		Datum		itup_values[INDEX_MAX_KEYS];
 		bool		itup_isnull[INDEX_MAX_KEYS];
-		char	   *key_desc;
+		StringInfoData buf;
+		int			i;
 
 		id = PageGetItemId(page, offset);
 
@@ -251,7 +279,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 
 		itup = (IndexTuple) PageGetItem(page, id);
 
-		index_deform_tuple(itup, RelationGetDescr(indexRel),
+		index_deform_tuple(itup, tupdesc,
 						   itup_values, itup_isnull);
 
 		memset(nulls, 0, sizeof(nulls));
@@ -261,9 +289,71 @@ gist_page_items(PG_FUNCTION_ARGS)
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
 		values[3] = BoolGetDatum(ItemIdIsDead(id));
 
-		key_desc = BuildIndexValueDescription(indexRel, itup_values, itup_isnull);
-		if (key_desc)
-			values[4] = CStringGetTextDatum(key_desc);
+		if (index_columns)
+		{
+			initStringInfo(&buf);
+			appendStringInfo(&buf, "(%s)=(", index_columns);
+
+			/* Most of this is copied from record_out(). */
+			for (i = 0; i < tupdesc->natts; i++)
+			{
+				char	   *value;
+				char	   *tmp;
+				bool		nq = false;
+
+				if (itup_isnull[i])
+					value = "null";
+				else
+				{
+					Oid			foutoid;
+					bool		typisvarlena;
+					Oid			typoid;
+
+					typoid = tupdesc->attrs[i].atttypid;
+					getTypeOutputInfo(typoid, &foutoid, &typisvarlena);
+					value = OidOutputFunctionCall(foutoid, itup_values[i]);
+				}
+
+				if (i == IndexRelationGetNumberOfKeyAttributes(indexRel))
+					appendStringInfoString(&buf, ") INCLUDE (");
+				else if (i > 0)
+					appendStringInfoString(&buf, ", ");
+
+				/* Check whether we need double quotes for this value */
+				nq = (value[0] == '\0');	/* force quotes for empty string */
+				for (tmp = value; *tmp; tmp++)
+				{
+					char		ch = *tmp;
+
+					if (ch == '"' || ch == '\\' ||
+						ch == '(' || ch == ')' || ch == ',' ||
+						isspace((unsigned char) ch))
+					{
+						nq = true;
+						break;
+					}
+				}
+
+				/* And emit the string */
+				if (nq)
+					appendStringInfoCharMacro(&buf, '"');
+				for (tmp = value; *tmp; tmp++)
+				{
+					char		ch = *tmp;
+
+					if (ch == '"' || ch == '\\')
+						appendStringInfoCharMacro(&buf, ch);
+					appendStringInfoCharMacro(&buf, ch);
+				}
+				if (nq)
+					appendStringInfoCharMacro(&buf, '"');
+			}
+
+			appendStringInfoChar(&buf, ')');
+
+			values[4] = CStringGetTextDatum(buf.data);
+			nulls[4] = false;
+		}
 		else
 		{
 			values[4] = (Datum) 0;
