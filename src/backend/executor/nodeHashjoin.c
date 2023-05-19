@@ -10,6 +10,51 @@
  * IDENTIFICATION
  *	  src/backend/executor/nodeHashjoin.c
  *
+ * HASH JOIN
+ *
+ * This is based on the "hybrid hash join" algorithm described shortly in the
+ * following page
+ *
+ *   https://en.wikipedia.org/wiki/Hash_join#Hybrid_hash_join
+ *
+ * and in detail in the referenced paper:
+ *
+ *   "An Adaptive Hash Join Algorithm for Multiuser Environments"
+ *   Hansjörg Zeller; Jim Gray (1990). Proceedings of the 16th VLDB conference.
+ *   Brisbane: 186–197.
+ *
+ * If the inner side tuples of a hash join do not fit in memory, the hash join
+ * can be executed in multiple batches.
+ *
+ * If the statistics on the inner side relation are accurate, planner chooses a
+ * multi-batch strategy and estimates the number of batches.
+ *
+ * The query executor measures the real size of the hashtable and increases the
+ * number of batches if the hashtable grows too large.
+ *
+ * The number of batches is always a power of two, so an increase in the number
+ * of batches doubles it.
+ *
+ * Serial hash join measures batch size lazily -- waiting until it is loading a
+ * batch to determine if it will fit in memory. While inserting tuples into the
+ * hashtable, serial hash join will, if that tuple were to exceed work_mem,
+ * dump out the hashtable and reassign them either to other batch files or the
+ * current batch resident in the hashtable.
+ *
+ * Parallel hash join, on the other hand, completes all changes to the number
+ * of batches during the build phase. If it increases the number of batches, it
+ * dumps out all the tuples from all batches and reassigns them to entirely new
+ * batch files. Then it checks every batch to ensure it will fit in the space
+ * budget for the query.
+ *
+ * In both parallel and serial hash join, the executor currently makes a best
+ * effort. If a particular batch will not fit in memory, it tries doubling the
+ * number of batches. If after a batch increase, there is a batch which
+ * retained all or none of its tuples, the executor disables growth in the
+ * number of batches globally. After growth is disabled, all batches that would
+ * have previously triggered an increase in the number of batches instead
+ * exceed the space allowed.
+ *
  * PARALLELISM
  *
  * Hash joins can participate in parallel query execution in several ways.  A
