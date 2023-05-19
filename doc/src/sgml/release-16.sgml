@@ -83,11 +83,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Change reindexedb to not process indexes on system catalogs (Simon Riggs)
+Change REINDEX DATABASE and reindexedb to not process indexes on system catalogs (Simon Riggs)
 </para>
 
 <para>
-Processing such indexes is still possible using REINDEX SYSTEM.
+Processing such indexes is still possible using REINDEX SYSTEM and reindexedb --system.
 </para>
 </listitem>
 
@@ -202,23 +202,6 @@ Remove symbolic links for the postmaster binary (Peter Eisentraut)
      <title><link linkend="ddl-partitioning">Partitioning</link></title>
 
      <itemizedlist>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2022-07-19 [2cbc3c17a] Rework logic and simplify syntax of REINDEX DATABASE/SYS
-Author: Michael Paquier <michael@paquier.xyz>
-2022-07-26 [0a5f06b84] Fix a few issues with REINDEX grammar
--->
-
-<listitem>
-<para>
-Change REINDEX DATABASE to not process indexes on system catalogs (Simon Riggs)
-</para>
-
-<para>
-Processing such indexes is still possible using REINDEX SYSTEM.
-</para>
-</listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
