@@ -88,11 +88,8 @@ restart:
 		 */
 		innerrelid = bms_singleton_member(sjinfo->min_righthand);
 
-		/*
-		 * Compute the relid set for the join we are considering.  We can
-		 * assume things are done in syntactic order.
-		 */
-		joinrelids = bms_union(sjinfo->syn_lefthand, sjinfo->syn_righthand);
+		/* Compute the relid set for the join we are considering */
+		joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
 		if (sjinfo->ojrelid != 0)
 			joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);
 
@@ -204,8 +201,8 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	if (!rel_supports_distinctness(root, innerrel))
 		return false;
 
-	/* Compute the syntactic relid set for the join we are considering */
-	inputrelids = bms_union(sjinfo->syn_lefthand, sjinfo->syn_righthand);
+	/* Compute the relid set for the join we are considering */
+	inputrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
 	Assert(sjinfo->ojrelid != 0);
 	joinrelids = bms_copy(inputrelids);
 	joinrelids = bms_add_member(joinrelids, sjinfo->ojrelid);

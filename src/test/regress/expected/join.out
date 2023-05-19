@@ -5432,6 +5432,22 @@ select d.* from d left join (select distinct * from b) s
          ->  Seq Scan on d
 (9 rows)
 
+-- join removal is not possible here
+explain (costs off)
+select 1 from a t1
+  left join (a t2 left join a t3 on t2.id = 1) on t2.id = 1;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on a t1
+   ->  Materialize
+         ->  Nested Loop Left Join
+               Join Filter: (t2.id = 1)
+               ->  Index Only Scan using a_pkey on a t2
+                     Index Cond: (id = 1)
+               ->  Seq Scan on a t3
+(8 rows)
+
 -- check join removal works when uniqueness of the join condition is enforced
 -- by a UNION
 explain (costs off)
