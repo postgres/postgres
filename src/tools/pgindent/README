@@ -14,16 +14,16 @@ PREREQUISITES:
    sibling directory src/tools/pg_bsd_indent; see the directions
    in that directory's README file.
 
-2) Install perltidy.  Please be sure it is version 20170521 (older and newer
+2) Install perltidy.  Please be sure it is version 20230309 (older and newer
    versions make different formatting choices, and we want consistency).
    You can get the correct version from
    https://cpan.metacpan.org/authors/id/S/SH/SHANCOCK/
    To install, follow the usual install process for a Perl module
    ("man perlmodinstall" explains it).  Or, if you have cpan installed,
    this should work:
-   cpan SHANCOCK/Perl-Tidy-20170521.tar.gz
+   cpan SHANCOCK/Perl-Tidy-20230309.tar.gz
    Or if you have cpanm installed, you can just use:
-   cpanm https://cpan.metacpan.org/authors/id/S/SH/SHANCOCK/Perl-Tidy-20170521.tar.gz
+   cpanm https://cpan.metacpan.org/authors/id/S/SH/SHANCOCK/Perl-Tidy-20230309.tar.gz
 
 DOING THE INDENT RUN:
 
@@ -38,7 +38,7 @@ DOING THE INDENT RUN:
 
 3) Run pgindent on the C files:
 
-	src/tools/pgindent/pgindent
+	src/tools/pgindent/pgindent .
 
    If any files generate errors, restore their original versions with
    "git checkout", and see below for cleanup ideas.

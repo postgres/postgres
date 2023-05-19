@@ -14,3 +14,4 @@
 --paren-vertical-tightness=2
 --paren-vertical-tightness-closing=2
 --noblanks-before-comments
+--valign-exclusion-list=", = => =~ |= || && if or qw unless"
