@@ -308,11 +308,15 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 	{
 		SharedTuplestoreParticipant *participant;
 		char		name[MAXPGPATH];
+		MemoryContext oldcxt;
 
 		/* Create one.  Only this backend will write into it. */
 		sts_filename(name, accessor, accessor->participant);
+
+		oldcxt = MemoryContextSwitchTo(accessor->context);
 		accessor->write_file =
 			BufFileCreateFileSet(&accessor->fileset->fs, name);
+		MemoryContextSwitchTo(oldcxt);
 
 		/* Set up the shared state for this backend's file. */
 		participant = &accessor->sts->participants[accessor->participant];
@@ -527,11 +531,15 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 			if (accessor->read_file == NULL)
 			{
 				char		name[MAXPGPATH];
+				MemoryContext oldcxt;
 
 				sts_filename(name, accessor, accessor->read_participant);
+
+				oldcxt = MemoryContextSwitchTo(accessor->context);
 				accessor->read_file =
 					BufFileOpenFileSet(&accessor->fileset->fs, name, O_RDONLY,
 									   false);
+				MemoryContextSwitchTo(oldcxt);
 			}
 
 			/* Seek and load the chunk header. */

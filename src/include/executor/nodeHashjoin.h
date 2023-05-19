@@ -29,6 +29,6 @@ extern void ExecHashJoinInitializeWorker(HashJoinState *state,
 										 ParallelWorkerContext *pwcxt);
 
 extern void ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
-								  BufFile **fileptr);
+								  BufFile **fileptr, HashJoinTable hashtable);
 
 #endif							/* NODEHASHJOIN_H */

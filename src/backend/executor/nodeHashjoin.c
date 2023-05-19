@@ -495,7 +495,8 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 					Assert(parallel_state == NULL);
 					Assert(batchno > hashtable->curbatch);
 					ExecHashJoinSaveTuple(mintuple, hashvalue,
-										  &hashtable->outerBatchFile[batchno]);
+										  &hashtable->outerBatchFile[batchno],
+										  hashtable);
 
 					if (shouldFree)
 						heap_free_minimal_tuple(mintuple);
@@ -1317,21 +1318,39 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
  * The data recorded in the file for each tuple is its hash value,
  * then the tuple in MinimalTuple format.
  *
- * Note: it is important always to call this in the regular executor
- * context, not in a shorter-lived context; else the temp file buffers
- * will get messed up.
+ * fileptr points to a batch file in one of the the hashtable arrays.
+ *
+ * The batch files (and their buffers) are allocated in the spill context
+ * created for the hashtable.
  */
 void
 ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
-					  BufFile **fileptr)
+					  BufFile **fileptr, HashJoinTable hashtable)
 {
 	BufFile    *file = *fileptr;
 
+	/*
+	 * The batch file is lazily created. If this is the first tuple
+	 * written to this batch, the batch file is created and its buffer is
+	 * allocated in the spillCxt context, NOT in the batchCxt.
+	 *
+	 * During the build phase, buffered files are created for inner
+	 * batches. Each batch's buffered file is closed (and its buffer freed)
+	 * after the batch is loaded into memory during the outer side scan.
+	 * Therefore, it is necessary to allocate the batch file buffer in a
+	 * memory context which outlives the batch itself.
+	 *
+	 * Also, we use spillCxt instead of hashCxt for a better accounting of
+	 * the spilling memory consumption.
+	 */
 	if (file == NULL)
 	{
-		/* First write to this batch file, so open it. */
+		MemoryContext	oldctx = MemoryContextSwitchTo(hashtable->spillCxt);
+
 		file = BufFileCreateTemp(false);
 		*fileptr = file;
+
+		MemoryContextSwitchTo(oldctx);
 	}
 
 	BufFileWrite(file, &hashvalue, sizeof(uint32));

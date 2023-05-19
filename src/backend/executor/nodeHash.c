@@ -484,7 +484,7 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 	 *
 	 * The hashtable control block is just palloc'd from the executor's
 	 * per-query memory context.  Everything else should be kept inside the
-	 * subsidiary hashCxt or batchCxt.
+	 * subsidiary hashCxt, batchCxt or spillCxt.
 	 */
 	hashtable = palloc_object(HashJoinTableData);
 	hashtable->nbuckets = nbuckets;
@@ -538,6 +538,10 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 												"HashBatchContext",
 												ALLOCSET_DEFAULT_SIZES);
 
+	hashtable->spillCxt = AllocSetContextCreate(hashtable->hashCxt,
+												"HashSpillContext",
+												ALLOCSET_DEFAULT_SIZES);
+
 	/* Allocate data that will live for the life of the hashjoin */
 
 	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
@@ -570,12 +574,19 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 
 	if (nbatch > 1 && hashtable->parallel_state == NULL)
 	{
+		MemoryContext oldctx;
+
 		/*
 		 * allocate and initialize the file arrays in hashCxt (not needed for
 		 * parallel case which uses shared tuplestores instead of raw files)
 		 */
+		oldctx = MemoryContextSwitchTo(hashtable->spillCxt);
+
 		hashtable->innerBatchFile = palloc0_array(BufFile *, nbatch);
 		hashtable->outerBatchFile = palloc0_array(BufFile *, nbatch);
+
+		MemoryContextSwitchTo(oldctx);
+
 		/* The files will not be opened until needed... */
 		/* ... but make sure we have temp tablespaces established for them */
 		PrepareTempTablespaces();
@@ -913,7 +924,6 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	int			oldnbatch = hashtable->nbatch;
 	int			curbatch = hashtable->curbatch;
 	int			nbatch;
-	MemoryContext oldcxt;
 	long		ninmemory;
 	long		nfreed;
 	HashMemoryChunk oldchunks;
@@ -934,13 +944,16 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 		   hashtable, nbatch, hashtable->spaceUsed);
 #endif
 
-	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
-
 	if (hashtable->innerBatchFile == NULL)
 	{
+		MemoryContext oldcxt = MemoryContextSwitchTo(hashtable->spillCxt);
+
 		/* we had no file arrays before */
 		hashtable->innerBatchFile = palloc0_array(BufFile *, nbatch);
 		hashtable->outerBatchFile = palloc0_array(BufFile *, nbatch);
+
+		MemoryContextSwitchTo(oldcxt);
+
 		/* time to establish the temp tablespaces, too */
 		PrepareTempTablespaces();
 	}
@@ -950,8 +963,6 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 		hashtable->innerBatchFile = repalloc0_array(hashtable->innerBatchFile, BufFile *, oldnbatch, nbatch);
 		hashtable->outerBatchFile = repalloc0_array(hashtable->outerBatchFile, BufFile *, oldnbatch, nbatch);
 	}
-
-	MemoryContextSwitchTo(oldcxt);
 
 	hashtable->nbatch = nbatch;
 
@@ -1024,7 +1035,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 				Assert(batchno > curbatch);
 				ExecHashJoinSaveTuple(HJTUPLE_MINTUPLE(hashTuple),
 									  hashTuple->hashvalue,
-									  &hashtable->innerBatchFile[batchno]);
+									  &hashtable->innerBatchFile[batchno],
+									  hashtable);
 
 				hashtable->spaceUsed -= hashTupleSize;
 				nfreed++;
@@ -1683,7 +1695,8 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		Assert(batchno > hashtable->curbatch);
 		ExecHashJoinSaveTuple(tuple,
 							  hashvalue,
-							  &hashtable->innerBatchFile[batchno]);
+							  &hashtable->innerBatchFile[batchno],
+							  hashtable);
 	}
 
 	if (shouldFree)
@@ -2664,7 +2677,8 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 			/* Put the tuple into a temp file for later batches */
 			Assert(batchno > hashtable->curbatch);
 			ExecHashJoinSaveTuple(tuple, hashvalue,
-								  &hashtable->innerBatchFile[batchno]);
+								  &hashtable->innerBatchFile[batchno],
+								  hashtable);
 			pfree(hashTuple);
 			hashtable->spaceUsed -= tupleSize;
 			hashtable->spaceUsedSkew -= tupleSize;
@@ -3093,8 +3107,11 @@ ExecParallelHashJoinSetUpBatches(HashJoinTable hashtable, int nbatch)
 	pstate->nbatch = nbatch;
 	batches = dsa_get_address(hashtable->area, pstate->batches);
 
-	/* Use hash join memory context. */
-	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
+	/*
+	 * Use hash join spill memory context to allocate accessors, including
+	 * buffers for the temporary files.
+	 */
+	oldcxt = MemoryContextSwitchTo(hashtable->spillCxt);
 
 	/* Allocate this backend's accessor array. */
 	hashtable->nbatch = nbatch;
@@ -3196,8 +3213,11 @@ ExecParallelHashEnsureBatchAccessors(HashJoinTable hashtable)
 	 */
 	Assert(DsaPointerIsValid(pstate->batches));
 
-	/* Use hash join memory context. */
-	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
+	/*
+	 * Use hash join spill memory context to allocate accessors, including
+	 * buffers for the temporary files.
+	 */
+	oldcxt = MemoryContextSwitchTo(hashtable->spillCxt);
 
 	/* Allocate this backend's accessor array. */
 	hashtable->nbatch = pstate->nbatch;

@@ -23,12 +23,12 @@
 /* ----------------------------------------------------------------
  *				hash-join hash table structures
  *
- * Each active hashjoin has a HashJoinTable control block, which is
- * palloc'd in the executor's per-query context.  All other storage needed
- * for the hashjoin is kept in private memory contexts, two for each hashjoin.
- * This makes it easy and fast to release the storage when we don't need it
- * anymore.  (Exception: data associated with the temp files lives in the
- * per-query context too, since we always call buffile.c in that context.)
+ * Each active hashjoin has a HashJoinTable structure, which is
+ * palloc'd in the executor's per-query context.  Other storage needed for
+ * each hashjoin is kept in child contexts, three for each hashjoin:
+ *   - HashTableContext (hashCxt): the parent hash table storage context
+ *   - HashSpillContext (spillCxt): storage for temp files buffers
+ *   - HashBatchContext (batchCxt): storage for a batch in serial hash join
  *
  * The hashtable contexts are made children of the per-query context, ensuring
  * that they will be discarded at end of statement even if the join is
@@ -36,9 +36,20 @@
  * be cleaned up by the virtual file manager in event of an error.)
  *
  * Storage that should live through the entire join is allocated from the
- * "hashCxt", while storage that is only wanted for the current batch is
- * allocated in the "batchCxt".  By resetting the batchCxt at the end of
- * each batch, we free all the per-batch storage reliably and without tedium.
+ * "hashCxt" (mainly the hashtable's metadata). Also, the "hashCxt" context is
+ * the parent of "spillCxt" and "batchCxt". It makes it easy and fast to
+ * release the storage when we don't need it anymore.
+ *
+ * Data associated with temp files is allocated in the "spillCxt" context
+ * which lives for the duration of the entire join as batch files'
+ * creation and usage may span batch execution. These files are
+ * explicitly destroyed by calling BufFileClose() when the code is done
+ * with them. The aim of this context is to help accounting for the
+ * memory allocated for temp files and their buffers.
+ *
+ * Finally, data used only during a single batch's execution is allocated
+ * in the "batchCxt". By resetting the batchCxt at the end of each batch,
+ * we free all the per-batch storage reliably and without tedium.
  *
  * During first scan of inner relation, we get its tuples from executor.
  * If nbatch > 1 then tuples that don't belong in first batch get saved
@@ -350,6 +361,7 @@ typedef struct HashJoinTableData
 
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
+	MemoryContext spillCxt;		/* context for spilling to temp files */
 
 	/* used for dense allocation of tuples (into linked chunks) */
 	HashMemoryChunk chunks;		/* one list for the whole batch */
