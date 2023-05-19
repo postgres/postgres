@@ -94,7 +94,7 @@
   rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
   rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
   rolpassword => '_null_', rolvaliduntil => '_null_' },
-{ oid => '9535', oid_symbol => 'ROLE_PG_CREATE_SUBSCRIPTION',
+{ oid => '6304', oid_symbol => 'ROLE_PG_CREATE_SUBSCRIPTION',
   rolname => 'pg_create_subscription', rolsuper => 'f', rolinherit => 't',
   rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
   rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
