@@ -285,10 +285,11 @@ in sync when changing the above synopsis!
       <term><literal>IN ROLE</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
-        The <literal>IN ROLE</literal> clause lists one or more existing
-        roles to which the new role will be immediately added as a new
-        member.  (Note that there is no option to add the new role as an
-        administrator; use a separate <command>GRANT</command> command to do that.)
+        The <literal>IN ROLE</literal> clause causes the new role to
+        be automatically added as a member of the specified existing
+        roles. (Note that there is no option to add the new role as an
+        administrator; use a separate <command>GRANT</command> command
+        to do that.)
        </para>
       </listitem>
      </varlistentry>
@@ -306,9 +307,9 @@ in sync when changing the above synopsis!
       <term><literal>ROLE</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
-        The <literal>ROLE</literal> clause lists one or more existing
-        roles which are automatically added as members of the new role.
-        (This in effect makes the new role a <quote>group</quote>.)
+        The <literal>ROLE</literal> clause causes one or more specified
+        existing roles to be automatically added as members of the new
+        role.  This in effect makes the new role a <quote>group</quote>.
        </para>
       </listitem>
      </varlistentry>
