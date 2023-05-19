@@ -104,8 +104,8 @@ static void smgrshutdown(int code, Datum arg);
 
 
 /*
- *	smgrinit(), smgrshutdown() -- Initialize or shut down storage
- *								  managers.
+ * smgrinit(), smgrshutdown() -- Initialize or shut down storage
+ *								 managers.
  *
  * Note: smgrinit is called during backend startup (normal or standalone
  * case), *not* during postmaster start.  Therefore, any resources created
@@ -142,9 +142,9 @@ smgrshutdown(int code, Datum arg)
 }
 
 /*
- *	smgropen() -- Return an SMgrRelation object, creating it if need be.
+ * smgropen() -- Return an SMgrRelation object, creating it if need be.
  *
- *		This does not attempt to actually open the underlying file.
+ * This does not attempt to actually open the underlying file.
  */
 SMgrRelation
 smgropen(RelFileLocator rlocator, BackendId backend)
@@ -245,7 +245,7 @@ smgrclearowner(SMgrRelation *owner, SMgrRelation reln)
 }
 
 /*
- *	smgrexists() -- Does the underlying file for a fork exist?
+ * smgrexists() -- Does the underlying file for a fork exist?
  */
 bool
 smgrexists(SMgrRelation reln, ForkNumber forknum)
@@ -254,7 +254,7 @@ smgrexists(SMgrRelation reln, ForkNumber forknum)
 }
 
 /*
- *	smgrclose() -- Close and delete an SMgrRelation object.
+ * smgrclose() -- Close and delete an SMgrRelation object.
  */
 void
 smgrclose(SMgrRelation reln)
@@ -284,9 +284,9 @@ smgrclose(SMgrRelation reln)
 }
 
 /*
- *	smgrrelease() -- Release all resources used by this object.
+ * smgrrelease() -- Release all resources used by this object.
  *
- *	The object remains valid.
+ * The object remains valid.
  */
 void
 smgrrelease(SMgrRelation reln)
@@ -299,9 +299,9 @@ smgrrelease(SMgrRelation reln)
 }
 
 /*
- *	smgrreleaseall() -- Release resources used by all objects.
+ * smgrreleaseall() -- Release resources used by all objects.
  *
- *	This is called for PROCSIGNAL_BARRIER_SMGRRELEASE.
+ * This is called for PROCSIGNAL_BARRIER_SMGRRELEASE.
  */
 void
 smgrreleaseall(void)
@@ -320,7 +320,7 @@ smgrreleaseall(void)
 }
 
 /*
- *	smgrcloseall() -- Close all existing SMgrRelation objects.
+ * smgrcloseall() -- Close all existing SMgrRelation objects.
  */
 void
 smgrcloseall(void)
@@ -339,8 +339,8 @@ smgrcloseall(void)
 }
 
 /*
- *	smgrcloserellocator() -- Close SMgrRelation object for given RelFileLocator,
- *					   if one exists.
+ * smgrcloserellocator() -- Close SMgrRelation object for given RelFileLocator,
+ *							if one exists.
  *
  * This has the same effects as smgrclose(smgropen(rlocator)), but it avoids
  * uselessly creating a hashtable entry only to drop it again when no
@@ -363,11 +363,11 @@ smgrcloserellocator(RelFileLocatorBackend rlocator)
 }
 
 /*
- *	smgrcreate() -- Create a new relation.
+ * smgrcreate() -- Create a new relation.
  *
- *		Given an already-created (but presumably unused) SMgrRelation,
- *		cause the underlying disk file or other storage for the fork
- *		to be created.
+ * Given an already-created (but presumably unused) SMgrRelation,
+ * cause the underlying disk file or other storage for the fork
+ * to be created.
  */
 void
 smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
@@ -376,13 +376,13 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 }
 
 /*
- *	smgrdosyncall() -- Immediately sync all forks of all given relations
+ * smgrdosyncall() -- Immediately sync all forks of all given relations
  *
- *		All forks of all given relations are synced out to the store.
+ * All forks of all given relations are synced out to the store.
  *
- *		This is equivalent to FlushRelationBuffers() for each smgr relation,
- *		then calling smgrimmedsync() for all forks of each relation, but it's
- *		significantly quicker so should be preferred when possible.
+ * This is equivalent to FlushRelationBuffers() for each smgr relation,
+ * then calling smgrimmedsync() for all forks of each relation, but it's
+ * significantly quicker so should be preferred when possible.
  */
 void
 smgrdosyncall(SMgrRelation *rels, int nrels)
@@ -411,14 +411,14 @@ smgrdosyncall(SMgrRelation *rels, int nrels)
 }
 
 /*
- *	smgrdounlinkall() -- Immediately unlink all forks of all given relations
+ * smgrdounlinkall() -- Immediately unlink all forks of all given relations
  *
- *		All forks of all given relations are removed from the store.  This
- *		should not be used during transactional operations, since it can't be
- *		undone.
+ * All forks of all given relations are removed from the store.  This
+ * should not be used during transactional operations, since it can't be
+ * undone.
  *
- *		If isRedo is true, it is okay for the underlying file(s) to be gone
- *		already.
+ * If isRedo is true, it is okay for the underlying file(s) to be gone
+ * already.
  */
 void
 smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
@@ -485,13 +485,13 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 
 
 /*
- *	smgrextend() -- Add a new block to a file.
+ * smgrextend() -- Add a new block to a file.
  *
- *		The semantics are nearly the same as smgrwrite(): write at the
- *		specified position.  However, this is to be used for the case of
- *		extending a relation (i.e., blocknum is at or beyond the current
- *		EOF).  Note that we assume writing a block beyond current EOF
- *		causes intervening file space to become filled with zeroes.
+ * The semantics are nearly the same as smgrwrite(): write at the
+ * specified position.  However, this is to be used for the case of
+ * extending a relation (i.e., blocknum is at or beyond the current
+ * EOF).  Note that we assume writing a block beyond current EOF
+ * causes intervening file space to become filled with zeroes.
  */
 void
 smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
@@ -512,11 +512,11 @@ smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 /*
- *	smgrzeroextend() -- Add new zeroed out blocks to a file.
+ * smgrzeroextend() -- Add new zeroed out blocks to a file.
  *
- *		Similar to smgrextend(), except the relation can be extended by
- *		multiple blocks at once and the added blocks will be filled with
- *		zeroes.
+ * Similar to smgrextend(), except the relation can be extended by
+ * multiple blocks at once and the added blocks will be filled with
+ * zeroes.
  */
 void
 smgrzeroextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
@@ -537,11 +537,11 @@ smgrzeroextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 /*
- *	smgrprefetch() -- Initiate asynchronous read of the specified block of a relation.
+ * smgrprefetch() -- Initiate asynchronous read of the specified block of a relation.
  *
- *		In recovery only, this can return false to indicate that a file
- *		doesn't	exist (presumably it has been dropped by a later WAL
- *		record).
+ * In recovery only, this can return false to indicate that a file
+ * doesn't	exist (presumably it has been dropped by a later WAL
+ * record).
  */
 bool
 smgrprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
@@ -550,12 +550,12 @@ smgrprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 }
 
 /*
- *	smgrread() -- read a particular block from a relation into the supplied
- *				  buffer.
+ * smgrread() -- read a particular block from a relation into the supplied
+ *				 buffer.
  *
- *		This routine is called from the buffer manager in order to
- *		instantiate pages in the shared buffer cache.  All storage managers
- *		return pages in the format that POSTGRES expects.
+ * This routine is called from the buffer manager in order to
+ * instantiate pages in the shared buffer cache.  All storage managers
+ * return pages in the format that POSTGRES expects.
  */
 void
 smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
@@ -565,19 +565,19 @@ smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 /*
- *	smgrwrite() -- Write the supplied buffer out.
+ * smgrwrite() -- Write the supplied buffer out.
  *
- *		This is to be used only for updating already-existing blocks of a
- *		relation (ie, those before the current EOF).  To extend a relation,
- *		use smgrextend().
+ * This is to be used only for updating already-existing blocks of a
+ * relation (ie, those before the current EOF).  To extend a relation,
+ * use smgrextend().
  *
- *		This is not a synchronous write -- the block is not necessarily
- *		on disk at return, only dumped out to the kernel.  However,
- *		provisions will be made to fsync the write before the next checkpoint.
+ * This is not a synchronous write -- the block is not necessarily
+ * on disk at return, only dumped out to the kernel.  However,
+ * provisions will be made to fsync the write before the next checkpoint.
  *
- *		skipFsync indicates that the caller will make other provisions to
- *		fsync the relation, so we needn't bother.  Temporary relations also
- *		do not require fsync.
+ * skipFsync indicates that the caller will make other provisions to
+ * fsync the relation, so we needn't bother.  Temporary relations also
+ * do not require fsync.
  */
 void
 smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
@@ -589,7 +589,7 @@ smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 
 /*
- *	smgrwriteback() -- Trigger kernel writeback for the supplied range of
+ * smgrwriteback() -- Trigger kernel writeback for the supplied range of
  *					   blocks.
  */
 void
@@ -601,8 +601,8 @@ smgrwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 /*
- *	smgrnblocks() -- Calculate the number of blocks in the
- *					 supplied relation.
+ * smgrnblocks() -- Calculate the number of blocks in the
+ *					supplied relation.
  */
 BlockNumber
 smgrnblocks(SMgrRelation reln, ForkNumber forknum)
@@ -622,8 +622,8 @@ smgrnblocks(SMgrRelation reln, ForkNumber forknum)
 }
 
 /*
- *	smgrnblocks_cached() -- Get the cached number of blocks in the supplied
- *							relation.
+ * smgrnblocks_cached() -- Get the cached number of blocks in the supplied
+ *						   relation.
  *
  * Returns an InvalidBlockNumber when not in recovery and when the relation
  * fork size is not cached.
@@ -642,8 +642,8 @@ smgrnblocks_cached(SMgrRelation reln, ForkNumber forknum)
 }
 
 /*
- *	smgrtruncate() -- Truncate the given forks of supplied relation to
- *					  each specified numbers of blocks
+ * smgrtruncate() -- Truncate the given forks of supplied relation to
+ *					 each specified numbers of blocks
  *
  * The truncation is done immediately, so this can't be rolled back.
  *
@@ -694,27 +694,27 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
 }
 
 /*
- *	smgrimmedsync() -- Force the specified relation to stable storage.
+ * smgrimmedsync() -- Force the specified relation to stable storage.
  *
- *		Synchronously force all previous writes to the specified relation
- *		down to disk.
+ * Synchronously force all previous writes to the specified relation
+ * down to disk.
  *
- *		This is useful for building completely new relations (eg, new
- *		indexes).  Instead of incrementally WAL-logging the index build
- *		steps, we can just write completed index pages to disk with smgrwrite
- *		or smgrextend, and then fsync the completed index file before
- *		committing the transaction.  (This is sufficient for purposes of
- *		crash recovery, since it effectively duplicates forcing a checkpoint
- *		for the completed index.  But it is *not* sufficient if one wishes
- *		to use the WAL log for PITR or replication purposes: in that case
- *		we have to make WAL entries as well.)
+ * This is useful for building completely new relations (eg, new
+ * indexes).  Instead of incrementally WAL-logging the index build
+ * steps, we can just write completed index pages to disk with smgrwrite
+ * or smgrextend, and then fsync the completed index file before
+ * committing the transaction.  (This is sufficient for purposes of
+ * crash recovery, since it effectively duplicates forcing a checkpoint
+ * for the completed index.  But it is *not* sufficient if one wishes
+ * to use the WAL log for PITR or replication purposes: in that case
+ * we have to make WAL entries as well.)
  *
- *		The preceding writes should specify skipFsync = true to avoid
- *		duplicative fsyncs.
+ * The preceding writes should specify skipFsync = true to avoid
+ * duplicative fsyncs.
  *
- *		Note that you need to do FlushRelationBuffers() first if there is
- *		any possibility that there are dirty buffers for the relation;
- *		otherwise the sync is not very meaningful.
+ * Note that you need to do FlushRelationBuffers() first if there is
+ * any possibility that there are dirty buffers for the relation;
+ * otherwise the sync is not very meaningful.
  */
 void
 smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
