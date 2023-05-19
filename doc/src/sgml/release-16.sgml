@@ -856,7 +856,7 @@ When granting role membership, require the granted-by role to be a role that has
 </para>
 
 <para>
-This is a requirement even when the superuser is granting role membership.
+This is a requirement even when a non-bootstrap superuser is granting role membership.
 </para>
 </listitem>
 
@@ -2883,7 +2883,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Change how pg_walinspect functions pg_get_wal_records_info(), pg_get_wal_stats(), and pg_get_wal_block_info() interpret ending LSNs (Bharath Rupireddy)
+Change how pg_walinspect functions pg_get_wal_records_info() and pg_get_wal_stats() interpret ending LSNs (Bharath Rupireddy)
 </para>
 
 <para>
@@ -2904,7 +2904,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
 <listitem>
 <para>
-Improve descriptions of pg_walinspect WAL record descriptions (Melanie Plageman, Peter Geoghegan)
+Add detailed descriptions of WAL records in pg_walinspect and pg_waldump (Melanie Plageman, Peter Geoghegan)
 </para>
 </listitem>
 
