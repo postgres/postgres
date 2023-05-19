@@ -52,4 +52,18 @@ SELECT gist_page_items_bytea(decode(repeat('00', :block_size), 'hex'));
 SELECT gist_page_items(decode(repeat('00', :block_size), 'hex'), 'test_gist_idx'::regclass);
 SELECT gist_page_opaque_info(decode(repeat('00', :block_size), 'hex'));
 
+-- Test gist_page_items with included columns.
+-- Non-leaf pages contain only the key attributes, and leaf pages contain
+-- the included attributes.
+ALTER TABLE test_gist ADD COLUMN i int DEFAULT NULL;
+CREATE INDEX test_gist_idx_inc ON test_gist
+  USING gist (p) INCLUDE (t, i);
+-- Mask the value of the key attribute to avoid alignment issues.
+SELECT regexp_replace(keys, '\(p\)=\("(.*?)"\)', '(p)=("<val>")') AS keys_nonleaf_1
+  FROM gist_page_items(get_raw_page('test_gist_idx_inc', 0), 'test_gist_idx_inc')
+  WHERE itemoffset = 1;
+SELECT keys AS keys_leaf_1
+  FROM gist_page_items(get_raw_page('test_gist_idx_inc', 1), 'test_gist_idx_inc')
+  WHERE itemoffset = 1;
+
 DROP TABLE test_gist;
