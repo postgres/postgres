@@ -60,6 +60,7 @@ Change assignment rules for PL/pgSQL bound cursor variables (Tom Lane)
 
 <para>
 Previously, the string value of such variables was set to match the variable name during cursor assignment;  now it will be assigned during OPEN, and will not match the variable name.
+To restore the previous behavior, assign the desired portal name to the cursor variable before OPEN.
 </para>
 </listitem>
 
@@ -257,7 +258,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow memoize atop of UNION ALL and partitions (Richard Guo)
+Allow memoize atop a UNION ALL (Richard Guo)
 </para>
 </listitem>
 
@@ -268,7 +269,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow anti-joins to be constructed on the right/outer side (Richard Guo)
+Allow anti-joins to be performed with the non-nullable input as the inner relation (Richard Guo)
 </para>
 </listitem>
 
@@ -924,7 +925,7 @@ Allow makeaclitem() to accept multiple privilege names (Robins Tharakan)
 </para>
 
 <para>
-Previously only a single privilege names, like SELECT, were supported.
+Previously only a single privilege name, like SELECT, was accepted.
 </para>
 </listitem>
 
@@ -972,11 +973,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Store server variables in a hash table (Tom Lane)
-</para>
-
-<para>
-This allows the faster addition of server variables.
+Improve performance of server variable management (Tom Lane)
 </para>
 </listitem>
 
@@ -1081,7 +1078,9 @@ Allow the postmaster to terminate children with an abort signal (Tom Lane)
 </para>
 
 <para>
-Abort normally creates a core dump.  This is controlled by send_abort_for_crash and send_abort_for_kill.  postmaster -T is now the same as setting send_abort_for_crash.
+This allows collection of a core dump for a stuck child process.
+This is controlled by send_abort_for_crash and send_abort_for_kill.
+The postmaster's -T switch is now the same as setting send_abort_for_crash.
 </para>
 </listitem>
 
@@ -1092,7 +1091,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Remove the unnecessary postmaster -n option (Tom Lane)
+Remove the non-functional postmaster -n option (Tom Lane)
 </para>
 </listitem>
 
@@ -1462,7 +1461,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Add EXPLAIN option GENERIC_PLAN to display the query's generic plan (Laurenz Albe)
+Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query (Laurenz Albe)
 </para>
 </listitem>
 
@@ -1542,7 +1541,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Add VACUUM option to skip or update all frozen statistics (Tom Lane, Nathan Bossart)
+Add VACUUM options to skip or update all frozen statistics (Tom Lane, Nathan Bossart)
 </para>
 
 <para>
@@ -1635,13 +1634,22 @@ This can improve readability for long strings of digits.
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-01 [2ceea5adb] Accept "+infinity" in date and timestamp[tz] input.
+-->
+
+<listitem>
+<para>
+Accept the spelling "+infinity" in datetime input (Vik Fearing)
+</para>
+</listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-09 [bcc704b52] Reject combining "epoch" and "infinity" with other datet
 -->
 
 <listitem>
 <para>
-Prevent the specification of "epoch" and "infinity" with other units in datetime strings (Joseph Koshakow)
+Prevent the specification of "epoch" and "infinity" together with other fields in datetime strings (Joseph Koshakow)
 </para>
 </listitem>
 
@@ -1652,7 +1660,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Remove support for datetime input that prefixes year-month-day by Y/M/D (Joseph Koshakow)
+Remove undocumented support for date input in the form
+"<literal>Y<replaceable>year</replaceable>M<replaceable>month</replaceable>D<replaceable>day</replaceable></literal>"
+(Joseph Koshakow)
 </para>
 </listitem>
 
@@ -1909,7 +1919,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow to_reg* functions to accept OIDs parameters (Tom Lane)
+Allow to_reg* functions to accept numeric OIDs as input (Tom Lane)
 </para>
 </listitem>
 
@@ -2024,7 +2034,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow ECPG variable declarations to use type names which match SQL keywords (Tom Lane)
+Allow ECPG variable declarations to use typedef names that match unreserved SQL keywords (Tom Lane)
 </para>
 
 <para>
@@ -2130,7 +2140,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow psql to detect the exit status of shell commands and queries (Corey Huinker, Tom Lane)
+Allow psql scripts to obtain the exit status of shell commands and queries
+(Corey Huinker, Tom Lane)
 </para>
 
 <para>
@@ -2558,7 +2569,11 @@ Author: Andres Freund <andres@anarazel.de>
 
 <listitem>
 <para>
-Prevent extension libraries from export their symbols by default (Andres Freund, Tom Lane)
+Prevent extension libraries from exporting their symbols by default (Andres Freund, Tom Lane)
+</para>
+
+<para>
+Functions that need to be called from the core backend or other extensions must now be explicitly marked PGDLLEXPORT.
 </para>
 </listitem>
 
@@ -2980,7 +2995,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow the schemas of dependent extensions to be referenced using the new syntax @extschema:dependent_extension_name@ (Regina Obe)
+Allow the schemas of required extensions to be referenced in extension scripts using the new syntax @extschema:referenced_extension_name@ (Regina Obe)
 </para>
 </listitem>
 
@@ -2991,11 +3006,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow dependent extensions to marked as non-relocatable using "no_relocate" (Regina Obe)
+Allow required extensions to marked as non-relocatable using "no_relocate" (Regina Obe)
 </para>
 
 <para>
-This allows @extschema:dependent_extension_name@ to be treated as a constant for the lifetime of the extension.
+This allows @extschema:referenced_extension_name@ to be treated as a constant for the lifetime of the extension.
 </para>
 </listitem>
 
