@@ -953,7 +953,6 @@ ExtendBufferedRelTo(ExtendBufferedWhat eb,
 											  buffers, &extended_by);
 
 		current_size = first_block + extended_by;
-		Assert(current_size <= extend_to);
 		Assert(num_pages != 0 || current_size >= extend_to);
 
 		for (int i = 0; i < extended_by; i++)
