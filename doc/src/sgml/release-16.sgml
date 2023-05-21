@@ -1772,7 +1772,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Change date_trunc(unit, timestamptz, time_zone) to be an immutable function (Przemysław Sztoch)
+Change date_trunc(unit, timestamptz, time_zone) to be an immutable function (Przemyslaw Sztoch)
 </para>
 
 <para>

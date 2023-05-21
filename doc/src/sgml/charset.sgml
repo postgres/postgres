@@ -1140,6 +1140,14 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
      <table id="icu-collation-levels">
       <title>ICU Collation Levels</title>
       <tgroup cols="8">
+       <colspec colname="col1" colwidth="1*"/>
+       <colspec colname="col2" colwidth="1.25*"/>
+       <colspec colname="col3" colwidth="1*"/>
+       <colspec colname="col4" colwidth="1*"/>
+       <colspec colname="col5" colwidth="1*"/>
+       <colspec colname="col6" colwidth="1*"/>
+       <colspec colname="col7" colwidth="1*"/>
+       <colspec colname="col8" colwidth="1*"/>
        <thead>
         <row>
          <entry>Level</entry>
@@ -1250,6 +1258,10 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
      <table id="icu-collation-settings-table">
       <title>ICU Collation Settings</title>
       <tgroup cols="4">
+       <colspec colname="col1" colwidth="1*"/>
+       <colspec colname="col2" colwidth="2*"/>
+       <colspec colname="col3" colwidth="2*"/>
+       <colspec colname="col4" colwidth="5*"/>
        <thead>
         <row>
          <entry>Key</entry>
@@ -1305,10 +1317,11 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           </para>
           <para>
            Full normalization is important in some cases, such as when
-           multiple accents are applied to a single character. For instance,
-           <literal>'ệ'</literal> can be composed of code points
-           <literal>U&amp;'\0065\0323\0302'</literal> or
-           <literal>U&amp;'\0065\0302\0323'</literal>. With full normalization
+           multiple accents are applied to a single character. For example,
+           the code point sequences <literal>U&amp;'\0065\0323\0302'</literal>
+           and <literal>U&amp;'\0065\0302\0323'</literal> represent
+           an <literal>e</literal> with circumflex and dot-below accents
+           applied in different orders. With full normalization
            on, these code point sequences are treated as equal; otherwise they
            are unequal.
           </para>
