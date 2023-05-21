@@ -1190,7 +1190,7 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-gss-accept-deleg" xreflabel="gss_accept_delegation">
+     <varlistentry id="guc-gss-accept-delegation" xreflabel="gss_accept_delegation">
       <term><varname>gss_accept_delegation</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>gss_accept_delegation</varname> configuration parameter</primary>

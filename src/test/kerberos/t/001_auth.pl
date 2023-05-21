@@ -496,7 +496,7 @@ test_access(
 	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
 );
 
-$node->append_conf('postgresql.conf', qq{gss_accept_deleg=off});
+$node->append_conf('postgresql.conf', qq{gss_accept_delegation=off});
 $node->restart;
 
 test_access(
@@ -520,7 +520,7 @@ test_access(
 	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, deleg_credentials=no, principal=test1\@$realm)"
 );
 
-$node->append_conf('postgresql.conf', qq{gss_accept_deleg=on});
+$node->append_conf('postgresql.conf', qq{gss_accept_delegation=on});
 $node->restart;
 
 test_access(
