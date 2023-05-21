@@ -544,12 +544,23 @@ clause_is_computable_at(PlannerInfo *root,
 						RestrictInfo *rinfo,
 						Relids eval_relids)
 {
-	Relids		clause_relids = rinfo->clause_relids;
+	Relids		clause_relids;
 	ListCell   *lc;
 
 	/* Nothing to do if no outer joins have been performed yet. */
 	if (!bms_overlap(eval_relids, root->outer_join_rels))
 		return true;
+
+	/*
+	 * For an ordinary qual clause, we consider the actual clause_relids as
+	 * explained above.  However, it's possible for multiple members of a
+	 * group of clone quals to have the same clause_relids, so for clones use
+	 * the required_relids instead to ensure we select just one of them.
+	 */
+	if (rinfo->has_clone || rinfo->is_clone)
+		clause_relids = rinfo->required_relids;
+	else
+		clause_relids = rinfo->clause_relids;
 
 	foreach(lc, root->join_info_list)
 	{
