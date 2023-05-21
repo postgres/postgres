@@ -329,7 +329,7 @@ extern PGDLLIMPORT openssl_tls_init_hook_typ openssl_tls_init_hook;
 extern bool be_gssapi_get_auth(Port *port);
 extern bool be_gssapi_get_enc(Port *port);
 extern const char *be_gssapi_get_princ(Port *port);
-extern bool be_gssapi_get_deleg(Port *port);
+extern bool be_gssapi_get_delegation(Port *port);
 
 /* Read and write to a GSSAPI-encrypted connection. */
 extern ssize_t be_gssapi_read(Port *port, void *ptr, size_t len);

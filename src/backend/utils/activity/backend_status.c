@@ -384,7 +384,7 @@ pgstat_bestart(void)
 		lbeentry.st_gss = true;
 		lgssstatus.gss_auth = be_gssapi_get_auth(MyProcPort);
 		lgssstatus.gss_enc = be_gssapi_get_enc(MyProcPort);
-		lgssstatus.gss_deleg = be_gssapi_get_deleg(MyProcPort);
+		lgssstatus.gss_delegation = be_gssapi_get_delegation(MyProcPort);
 		if (princ)
 			strlcpy(lgssstatus.gss_princ, princ, NAMEDATALEN);
 	}

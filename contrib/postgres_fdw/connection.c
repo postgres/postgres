@@ -402,7 +402,7 @@ pgfdw_security_check(const char **keywords, const char **values, UserMapping *us
 
 #ifdef ENABLE_GSS
 	/* Connected via GSSAPI with delegated credentials- all good. */
-	if (PQconnectionUsedGSSAPI(conn) && be_gssapi_get_deleg(MyProcPort))
+	if (PQconnectionUsedGSSAPI(conn) && be_gssapi_get_delegation(MyProcPort))
 		return;
 #endif
 
@@ -612,7 +612,7 @@ check_conn_params(const char **keywords, const char **values, UserMapping *user)
 
 #ifdef ENABLE_GSS
 	/* ok if the user provided their own delegated credentials */
-	if (be_gssapi_get_deleg(MyProcPort))
+	if (be_gssapi_get_delegation(MyProcPort))
 		return;
 #endif
 

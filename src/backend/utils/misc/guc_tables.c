@@ -1728,11 +1728,11 @@ struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"gss_accept_deleg", PGC_SIGHUP, CONN_AUTH_AUTH,
+		{"gss_accept_delegation", PGC_SIGHUP, CONN_AUTH_AUTH,
 			gettext_noop("Sets whether GSSAPI delegation should be accepted from the client."),
 			NULL
 		},
-		&pg_gss_accept_deleg,
+		&pg_gss_accept_delegation,
 		false,
 		NULL, NULL, NULL
 	},

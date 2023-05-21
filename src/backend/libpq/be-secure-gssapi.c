@@ -593,7 +593,7 @@ secure_open_gssapi(Port *port)
 									   GSS_C_NO_CREDENTIAL, &input,
 									   GSS_C_NO_CHANNEL_BINDINGS,
 									   &port->gss->name, NULL, &output, NULL,
-									   NULL, pg_gss_accept_deleg ? &delegated_creds : NULL);
+									   NULL, pg_gss_accept_delegation ? &delegated_creds : NULL);
 
 		if (GSS_ERROR(major))
 		{
@@ -749,7 +749,7 @@ be_gssapi_get_princ(Port *port)
  * connection.
  */
 bool
-be_gssapi_get_deleg(Port *port)
+be_gssapi_get_delegation(Port *port)
 {
 	if (!port || !port->gss)
 		return false;

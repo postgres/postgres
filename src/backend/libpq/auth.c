@@ -165,7 +165,7 @@ static int	CheckCertAuth(Port *port);
  */
 char	   *pg_krb_server_keyfile;
 bool		pg_krb_caseins_users;
-bool		pg_gss_accept_deleg;
+bool		pg_gss_accept_delegation;
 
 
 /*----------------------------------------------------------------
@@ -1003,7 +1003,7 @@ pg_GSS_recvauth(Port *port)
 										  &port->gss->outbuf,
 										  &gflags,
 										  NULL,
-										  pg_gss_accept_deleg ? &delegated_creds : NULL);
+										  pg_gss_accept_delegation ? &delegated_creds : NULL);
 
 		/* gbuf no longer used */
 		pfree(buf.data);

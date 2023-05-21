@@ -18,7 +18,7 @@
 
 extern PGDLLIMPORT char *pg_krb_server_keyfile;
 extern PGDLLIMPORT bool pg_krb_caseins_users;
-extern PGDLLIMPORT bool pg_gss_accept_deleg;
+extern PGDLLIMPORT bool pg_gss_accept_delegation;
 extern PGDLLIMPORT char *pg_krb_realm;
 
 extern void ClientAuthentication(Port *port);
