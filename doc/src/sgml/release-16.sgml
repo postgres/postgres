@@ -92,6 +92,21 @@ Processing such indexes is still possible using REINDEX SYSTEM and reindexedb --
 </listitem>
 
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-01-11 [8bf6ec3ba] Improve handling of inherited GENERATED expressions.
+-->
+
+<listitem>
+<para>
+Tighten GENERATED expression restrictions on inherited and partitioned tables (Amit Langote, Tom Lane)
+</para>
+
+<para>
+Columns of parent/partitioned and child/partition tables must all have the same generation status, though now the actual generation expressions can be different.
+</para>
+</listitem>
+
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-03-14 [5c1b66280] Rework design of functions in pg_walinspect
 -->
@@ -197,41 +212,6 @@ Remove symbolic links for the postmaster binary (Peter Eisentraut)
 
    <sect3 id="release-16-server">
     <title>Server</title>
-
-    <sect4 id="release-16-partitioning">
-     <title><link linkend="ddl-partitioning">Partitioning</link></title>
-
-     <itemizedlist>
-
-<!--
-Author: David Rowley <drowley@postgresql.org>
-2022-08-02 [3592e0ff9] Have ExecFindPartition cache the last found partition
--->
-
-<listitem>
-<para>
-Improve performance by caching RANGE and LIST partition lookups (Amit Langote, Hou Zhijie, David Rowley)
-</para>
-</listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2023-01-11 [8bf6ec3ba] Improve handling of inherited GENERATED expressions.
--->
-
-<listitem>
-<para>
-Tighten GENERATED expression restrictions on inherited and partitioned tables (Amit Langote, Tom Lane)
-</para>
-
-<para>
-Columns of parent/partitioned and child/partition tables must all have the same generation status, though now the actual generation expressions can be different.
-</para>
-</listitem>
-
-     </itemizedlist>
-
-    </sect4>
 
     <sect4 id="release-16-optimizer">
      <title>Optimizer</title>
@@ -383,6 +363,17 @@ Author: David Rowley <drowley@postgresql.org>
 <listitem>
 <para>
 Allow aggregate functions string_agg() and array_agg() to be parallelized (David Rowley)
+</para>
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2022-08-02 [3592e0ff9] Have ExecFindPartition cache the last found partition
+-->
+
+<listitem>
+<para>
+Improve performance by caching RANGE and LIST partition lookups (Amit Langote, Hou Zhijie, David Rowley)
 </para>
 </listitem>
 
@@ -1144,7 +1135,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add function pg_dissect_walfile_name() to report the segment and timeline values of WAL file names (Bharath Rupireddy)
+Add function pg_split_walfile_name() to report the segment and timeline values of WAL file names (Bharath Rupireddy)
 </para>
 </listitem>
 
@@ -1299,9 +1290,20 @@ Author: Andres Freund <andres@anarazel.de>
 <para>
 Allow logical decoding on standbys (Bertrand Drouvot, Andres Freund, Amit Khandekar)
 </para>
+</listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2023-04-08 [0fdab27ad] Allow logical decoding on standbys
+-->
+
+<listitem>
+<para>
+Add function pg_log_standby_snapshot() to force creation of a WAL snapshot (Bertrand Drouvot)
+</para>
 
 <para>
-This adds the function pg_log_standby_snapshot().  TEXT?
+WAL snapshots are required for logical slot creation so this function speeds their creation on standbys.
 </para>
 </listitem>
 
@@ -1650,6 +1652,19 @@ Remove support for datetime input that prefixes year-month-day by Y/M/D (Joseph 
 </para>
 </listitem>
 
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-12-09 [1939d2628] Add test scaffolding for soft error reporting from input
+Author: Michael Paquier <michael@paquier.xyz>
+2023-02-28 [b8da37b3a] Rework pg_input_error_message(), now renamed pg_input_er
+-->
+
+<listitem>
+<para>
+Add functions pg_input_is_valid() and pg_input_error_info() to check for type conversion errors (Tom Lane)
+</para>
+</listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -1742,7 +1757,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Add functions to add, subtract, and generate timestamptz values in a specified time zone (Przemysław Sztoch, Gurjeet Singh)
+Add functions to add, subtract, and generate timestamptz values in a specified time zone (Przemyslaw Sztoch, Gurjeet Singh)
 </para>
 
 <para>
@@ -1880,6 +1895,17 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 <listitem>
 <para>
 Add the byte specification ('B') to pg_size_bytes() (Peter Eisentraut)
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-12-27 [3ea7329c9] Simplify the implementations of the to_reg* functions.
+-->
+
+<listitem>
+<para>
+Allow to_reg* functions to accept OIDs parameters (Tom Lane)
 </para>
 </listitem>
 
