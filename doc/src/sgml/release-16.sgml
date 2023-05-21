@@ -233,6 +233,8 @@ Allow incremental sorts in more cases, including DISTINCT (David Rowley)
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
+2022-08-02 [1349d2790] Improve performance of ORDER BY / DISTINCT aggregates
+Author: David Rowley <drowley@postgresql.org>
 2022-12-20 [3226f4728] Add enable_presorted_aggregate GUC
 Author: David Rowley <drowley@postgresql.org>
 2023-01-17 [da5800d5f] Don't presort ORDER BY/DISTINCT Aggrefs with volatile fu
@@ -1631,6 +1633,8 @@ This can improve readability for long strings of digits.
 </listitem>
 
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-01-01 [2ceea5adb] Accept "+infinity" in date and timestamp[tz] input.
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-09 [bcc704b52] Reject combining "epoch" and "infinity" with other datet
 -->
