@@ -186,7 +186,7 @@ ALTER SERVER testserver1 OPTIONS (
 	--requirepeer 'value',
 	krbsrvname 'value',
 	gsslib 'value',
-	gssdeleg 'value'
+	gssdelegation 'value'
 	--replication 'value'
 );
 

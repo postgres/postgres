@@ -19,6 +19,8 @@ Running the tests
 =================
 
 NOTE: You must have given the --enable-tap-tests argument to configure.
+Also, to use "make installcheck", you must have built and installed
+contrib/dblink and contrib/postgres_fdw in addition to the core code.
 
 Run
     make check PG_TEST_EXTRA=kerberos

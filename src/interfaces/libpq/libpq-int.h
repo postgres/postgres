@@ -404,7 +404,7 @@ struct pg_conn
 	char	   *krbsrvname;		/* Kerberos service name */
 	char	   *gsslib;			/* What GSS library to use ("gssapi" or
 								 * "sspi") */
-	char	   *gssdeleg;		/* Try to delegate GSS credentials? */
+	char	   *gssdelegation;	/* Try to delegate GSS credentials? */
 	char	   *ssl_min_protocol_version;	/* minimum TLS protocol version */
 	char	   *ssl_max_protocol_version;	/* maximum TLS protocol version */
 	char	   *target_session_attrs;	/* desired session properties */

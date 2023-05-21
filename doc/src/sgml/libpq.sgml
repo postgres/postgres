@@ -2054,8 +2054,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-connect-gssdeleg" xreflabel="gssdeleg">
-      <term><literal>gssdeleg</literal></term>
+     <varlistentry id="libpq-connect-gssdelegation" xreflabel="gssdelegation">
+      <term><literal>gssdelegation</literal></term>
       <listitem>
        <para>
         Forward (delegate) GSS credentials to the server.  The default is
@@ -8271,10 +8271,10 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     <listitem>
      <para>
       <indexterm>
-       <primary><envar>PGGSSDELEG</envar></primary>
+       <primary><envar>PGGSSDELEGATION</envar></primary>
       </indexterm>
-      <envar>PGGSSDELEG</envar> behaves the same as the <xref
-      linkend="libpq-connect-gssdeleg"/> connection parameter.
+      <envar>PGGSSDELEGATION</envar> behaves the same as the <xref
+      linkend="libpq-connect-gssdelegation"/> connection parameter.
      </para>
     </listitem>
 

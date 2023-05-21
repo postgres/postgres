@@ -282,14 +282,14 @@ PerformAuthentication(Port *port)
 
 			if (princ)
 				appendStringInfo(&logmsg,
-								 _(" GSS (authenticated=%s, encrypted=%s, deleg_credentials=%s, principal=%s)"),
+								 _(" GSS (authenticated=%s, encrypted=%s, delegated_credentials=%s, principal=%s)"),
 								 be_gssapi_get_auth(port) ? _("yes") : _("no"),
 								 be_gssapi_get_enc(port) ? _("yes") : _("no"),
 								 be_gssapi_get_delegation(port) ? _("yes") : _("no"),
 								 princ);
 			else
 				appendStringInfo(&logmsg,
-								 _(" GSS (authenticated=%s, encrypted=%s, deleg_credentials=%s)"),
+								 _(" GSS (authenticated=%s, encrypted=%s, delegated_credentials=%s)"),
 								 be_gssapi_get_auth(port) ? _("yes") : _("no"),
 								 be_gssapi_get_enc(port) ? _("yes") : _("no"),
 								 be_gssapi_get_delegation(port) ? _("yes") : _("no"));

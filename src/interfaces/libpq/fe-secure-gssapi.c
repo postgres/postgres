@@ -622,18 +622,18 @@ pqsecure_open_gss(PGconn *conn)
 	if (ret != STATUS_OK)
 		return PGRES_POLLING_FAILED;
 
-	if (conn->gssdeleg && pg_strcasecmp(conn->gssdeleg, "enable") == 0)
+	if (conn->gssdelegation && pg_strcasecmp(conn->gssdelegation, "enable") == 0)
 	{
 		/* Acquire credentials if possible */
 		if (conn->gcred == GSS_C_NO_CREDENTIAL)
 			(void) pg_GSS_have_cred_cache(&conn->gcred);
 
 		/*
-		 * We have credentials and gssdeleg is enabled, so request credential
-		 * delegation.  This may or may not actually result in credentials
-		 * being delegated- it depends on if the forwardable flag has been set
-		 * in the credential and if the server is configured to accept
-		 * delegated credentials.
+		 * We have credentials and gssdelegation is enabled, so request
+		 * credential delegation.  This may or may not actually result in
+		 * credentials being delegated- it depends on if the forwardable flag
+		 * has been set in the credential and if the server is configured to
+		 * accept delegated credentials.
 		 */
 		if (conn->gcred != GSS_C_NO_CREDENTIAL)
 			gss_flags |= GSS_C_DELEG_FLAG;
