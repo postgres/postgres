@@ -17,6 +17,7 @@
 #include "nodes/nodes.h"
 #include "nodes/replnodes.h"
 #include "replication/syncrep.h"
+#include "storage/condition_variable.h"
 #include "storage/latch.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
@@ -107,6 +108,10 @@ typedef struct
 	 * Protected by SyncRepLock.
 	 */
 	bool		sync_standbys_defined;
+
+	/* used as a registry of physical / logical walsenders to wake */
+	ConditionVariable wal_flush_cv;
+	ConditionVariable wal_replay_cv;
 
 	WalSnd		walsnds[FLEXIBLE_ARRAY_MEMBER];
 } WalSndCtlData;
