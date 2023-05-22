@@ -343,8 +343,8 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"GSS-library", "", 7,	/* sizeof("gssapi") == 7 */
 	offsetof(struct pg_conn, gsslib)},
 
-	{"gssdelegation", "PGGSSDELEGATION", NULL, NULL,
-		"GSS-delegation", "", 8,	/* sizeof("disable") == 8 */
+	{"gssdelegation", "PGGSSDELEGATION", "0", NULL,
+		"GSS-delegation", "", 1,
 	offsetof(struct pg_conn, gssdelegation)},
 
 	{"replication", NULL, NULL, NULL,

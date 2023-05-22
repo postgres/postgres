@@ -97,7 +97,7 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 	if (!pg_GSS_have_cred_cache(&conn->gcred))
 		conn->gcred = GSS_C_NO_CREDENTIAL;
 
-	if (conn->gssdelegation && pg_strcasecmp(conn->gssdelegation, "enable") == 0)
+	if (conn->gssdelegation && conn->gssdelegation[0] == '1')
 		gss_flags |= GSS_C_DELEG_FLAG;
 
 	maj_stat = gss_init_sec_context(&min_stat,

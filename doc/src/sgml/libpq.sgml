@@ -2059,9 +2059,9 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <listitem>
        <para>
         Forward (delegate) GSS credentials to the server.  The default is
-        <literal>disable</literal> which means credentials will not be forwarded
-        to the server.  Set this to <literal>enable</literal> to have
-        credentials forwarded when possible.
+        <literal>0</literal> which means credentials will not be forwarded
+        to the server.  Set this to <literal>1</literal> to have credentials
+        forwarded when possible.
        </para>
       </listitem>
      </varlistentry>

@@ -798,6 +798,7 @@ initialize_environment(void)
 		unsetenv("PGCONNECT_TIMEOUT");
 		unsetenv("PGDATA");
 		unsetenv("PGDATABASE");
+		unsetenv("PGGSSDELEGATION");
 		unsetenv("PGGSSENCMODE");
 		unsetenv("PGGSSLIB");
 		/* PGHOSTADDR, see below */

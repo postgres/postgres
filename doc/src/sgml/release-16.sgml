@@ -953,7 +953,8 @@ Add support for Kerberos credential delegation (Stephen Frost)
 </para>
 
 <para>
-This is enabled with server variable gss_accept_delegation.
+This is enabled with server variable gss_accept_delegation
+and libpq connection parameter gssdelegation.
 </para>
 </listitem>
 

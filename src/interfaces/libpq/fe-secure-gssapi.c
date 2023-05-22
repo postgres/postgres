@@ -622,7 +622,7 @@ pqsecure_open_gss(PGconn *conn)
 	if (ret != STATUS_OK)
 		return PGRES_POLLING_FAILED;
 
-	if (conn->gssdelegation && pg_strcasecmp(conn->gssdelegation, "enable") == 0)
+	if (conn->gssdelegation && conn->gssdelegation[0] == '1')
 	{
 		/* Acquire credentials if possible */
 		if (conn->gcred == GSS_C_NO_CREDENTIAL)
