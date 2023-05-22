@@ -28,19 +28,21 @@ int
 main(int argc, char *argv[])
 {
 	static struct option long_options[] = {
-		{"admin", required_argument, NULL, 'a'},
+		{"with-admin", required_argument, NULL, 'a'},
 		{"connection-limit", required_argument, NULL, 'c'},
 		{"createdb", no_argument, NULL, 'd'},
 		{"no-createdb", no_argument, NULL, 'D'},
 		{"echo", no_argument, NULL, 'e'},
 		{"encrypted", no_argument, NULL, 'E'},
-		{"role", required_argument, NULL, 'g'},
+		{"role", required_argument, NULL, 'g'}, /* kept for backward
+												 * compatibility */
+		{"member-of", required_argument, NULL, 'g'},
 		{"host", required_argument, NULL, 'h'},
 		{"inherit", no_argument, NULL, 'i'},
 		{"no-inherit", no_argument, NULL, 'I'},
 		{"login", no_argument, NULL, 'l'},
 		{"no-login", no_argument, NULL, 'L'},
-		{"member", required_argument, NULL, 'm'},
+		{"with-member", required_argument, NULL, 'm'},
 		{"port", required_argument, NULL, 'p'},
 		{"pwprompt", no_argument, NULL, 'P'},
 		{"createrole", no_argument, NULL, 'r'},
@@ -414,19 +416,19 @@ help(const char *progname)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [ROLENAME]\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_("  -a, --admin=ROLE          this role will be a member of new role with admin\n"
+	printf(_("  -a, --with-admin=ROLE     ROLE will be a member of new role with admin\n"
 			 "                            option\n"));
 	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
 	printf(_("  -d, --createdb            role can create new databases\n"));
 	printf(_("  -D, --no-createdb         role cannot create databases (default)\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
-	printf(_("  -g, --role=ROLE           new role will be a member of this role\n"));
+	printf(_("  -g, --member-of=ROLE      new role will be a member of ROLE\n"));
 	printf(_("  -i, --inherit             role inherits privileges of roles it is a\n"
 			 "                            member of (default)\n"));
 	printf(_("  -I, --no-inherit          role does not inherit privileges\n"));
 	printf(_("  -l, --login               role can login (default)\n"));
 	printf(_("  -L, --no-login            role cannot login\n"));
-	printf(_("  -m, --member=ROLE         this role will be a member of new role\n"));
+	printf(_("  -m, --with-member=ROLE    ROLE will be a member of new role\n"));
 	printf(_("  -P, --pwprompt            assign a password to new role\n"));
 	printf(_("  -r, --createrole          role can create new roles\n"));
 	printf(_("  -R, --no-createrole       role cannot create roles (default)\n"));

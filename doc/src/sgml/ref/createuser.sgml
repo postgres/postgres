@@ -82,10 +82,10 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-a <replaceable class="parameter">role</replaceable></option></term>
-      <term><option>--admin=<replaceable class="parameter">role</replaceable></option></term>
+      <term><option>--with-admin=<replaceable class="parameter">role</replaceable></option></term>
       <listitem>
        <para>
-        Indicates an existing role that will be automatically added as a member of the new
+        Specifies an existing role that will be automatically added as a member of the new
         role with admin option, giving it the right to grant membership in the
         new role to others.  Multiple existing roles can be specified by
         writing multiple <option>-a</option> switches.
@@ -149,10 +149,10 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-g <replaceable class="parameter">role</replaceable></option></term>
-      <term><option>--role=<replaceable class="parameter">role</replaceable></option></term>
+      <term><option>--member-of=<replaceable class="parameter">role</replaceable></option></term>
       <listitem>
        <para>
-        Indicates the new role should be automatically added as a member
+        Specifies the new role should be automatically added as a member
         of the specified existing role. Multiple existing roles can be
         specified by writing multiple <option>-g</option> switches.
        </para>
@@ -222,10 +222,10 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-m <replaceable class="parameter">role</replaceable></option></term>
-      <term><option>--member=<replaceable class="parameter">role</replaceable></option></term>
+      <term><option>--with-member=<replaceable class="parameter">role</replaceable></option></term>
       <listitem>
        <para>
-        Indicates the specified existing role should be automatically
+        Specifies an existing role that will be automatically
         added as a member of the new role. Multiple existing roles can
         be specified by writing multiple <option>-m</option> switches.
        </para>
