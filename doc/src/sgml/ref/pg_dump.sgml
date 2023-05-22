@@ -662,7 +662,8 @@ PostgreSQL documentation
         detail string is an integer, it specifies the compression level.
         Otherwise, it should be a comma-separated list of items, each of the
         form <literal>keyword</literal> or <literal>keyword=value</literal>.
-        Currently, the only supported keyword is <literal>level</literal>.
+        Currently, the supported keywords are <literal>level</literal> and
+        <literal>long</literal>.
        </para>
 
        <para>
