@@ -18,7 +18,49 @@
    </para>
 
    <itemizedlist>
-    <listitem><para>ADD HERE</para></listitem>
+
+    <listitem>
+     <para>
+      Allow parallel execution of queries with OUTER and FULL joins
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow logical replication from standbys servers
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow logical replication subscribers to apply large transactions in parallel
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow monitoring of I/O statistics using the new pg_stat_io view
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add SQL/JSON constructors and identity functions
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance of vacuum freezing
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add support for regular expression matching of user and database names in pg_hba.conf, and user names in pg_ident.conf
+     </para>
+    </listitem>
+
    </itemizedlist>
 
    <para>
@@ -280,7 +322,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 
 <listitem>
 <para>
-Allow full and outer joins to be performed in parallel (Melanie Plageman, Thomas Munro)
+Allow outer and full joins to be performed in parallel (Melanie Plageman, Thomas Munro)
 </para>
 </listitem>
 
