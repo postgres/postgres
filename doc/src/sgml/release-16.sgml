@@ -1305,8 +1305,8 @@ Allow logical decoding on standbys (Bertrand Drouvot, Andres Freund, Amit Khande
 
 <listitem>
 <para>
-New function pg_log_standby_snapshot() forces creation of WAL snapshots.
-Snapshots are required for logical slot creation so this function speeds their creation on standbys.
+Snapshot WAL records are required for logical slot creation but cannot be created on standbys.
+The new function pg_log_standby_snapshot() creates such records, which speeds logical slot creation on standbys.
 </para>
 </listitem>
 
