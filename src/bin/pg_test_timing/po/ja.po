@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL 15)\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:17+0900\n"
+"POT-Creation-Date: 2022-07-14 10:48+0900\n"
 "PO-Revision-Date: 2022-05-10 15:27+0900\n"
 "Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
 "Language-Team: \n"

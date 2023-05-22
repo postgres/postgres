@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-17 08:45+0000\n"
-"PO-Revision-Date: 2021-08-17 10:54\n"
+"POT-Creation-Date: 2022-08-12 10:47+0000\n"
+"PO-Revision-Date: 2022-09-13 11:52\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,23 +14,28 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_14_DEV/pg_verifybackup.pot\n"
-"X-Crowdin-File-ID: 756\n"
+"X-Crowdin-File: /REL_15_STABLE/pg_verifybackup.pot\n"
+"X-Crowdin-File-ID: 928\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "збій: "
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "помилка: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "попередження: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "деталі: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "підказка: "
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
@@ -43,84 +48,88 @@ msgstr "недостатньо пам'яті\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
 
-#: ../../common/jsonapi.c:1066
+#: ../../common/jsonapi.c:1075
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "Неприпустима спеціальна послідовність \"\\%s\"."
 
-#: ../../common/jsonapi.c:1069
+#: ../../common/jsonapi.c:1078
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Символ зі значенням 0x%02x повинен бути пропущений."
 
-#: ../../common/jsonapi.c:1072
+#: ../../common/jsonapi.c:1081
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Очікувався кінець введення, але знайдено \"%s\"."
 
-#: ../../common/jsonapi.c:1075
+#: ../../common/jsonapi.c:1084
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Очікувався елемент масиву або \"]\", але знайдено \"%s\"."
 
-#: ../../common/jsonapi.c:1078
+#: ../../common/jsonapi.c:1087
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "Очікувалось \",\" або \"]\", але знайдено \"%s\"."
 
-#: ../../common/jsonapi.c:1081
+#: ../../common/jsonapi.c:1090
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "Очікувалось \":\", але знайдено \"%s\"."
 
-#: ../../common/jsonapi.c:1084
+#: ../../common/jsonapi.c:1093
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "Очікувалось значення JSON, але знайдено \"%s\"."
 
-#: ../../common/jsonapi.c:1087
+#: ../../common/jsonapi.c:1096
 msgid "The input string ended unexpectedly."
 msgstr "Несподіваний кінець вхідного рядка."
 
-#: ../../common/jsonapi.c:1089
+#: ../../common/jsonapi.c:1098
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Очікувався рядок або \"}\", але знайдено \"%s\"."
 
-#: ../../common/jsonapi.c:1092
+#: ../../common/jsonapi.c:1101
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "Очікувалось \",\" або \"}\", але знайдено \"%s\"."
 
-#: ../../common/jsonapi.c:1095
+#: ../../common/jsonapi.c:1104
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Очікувався рядок, але знайдено \"%s\"."
 
-#: ../../common/jsonapi.c:1098
+#: ../../common/jsonapi.c:1107
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "Неприпустимий маркер \"%s\"."
 
-#: ../../common/jsonapi.c:1101
+#: ../../common/jsonapi.c:1110
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 не можна перетворити в текст."
 
-#: ../../common/jsonapi.c:1103
+#: ../../common/jsonapi.c:1112
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "За \"\\u\" повинні прямувати чотири шістнадцяткових числа."
 
-#: ../../common/jsonapi.c:1106
+#: ../../common/jsonapi.c:1115
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Значення виходу Unicode не можна використовувати для значень кодових точок більше 007F, якщо кодування не UTF8."
 
-#: ../../common/jsonapi.c:1108
+#: ../../common/jsonapi.c:1117
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Старший сурогат Unicode не повинен прямувати за іншим старшим сурогатом."
 
-#: ../../common/jsonapi.c:1110
+#: ../../common/jsonapi.c:1119
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Молодший сурогат Unicode не повинен прямувати за іншим молодшим сурогатом."
+
+#: parse_manifest.c:150
+msgid "parsing failed"
+msgstr "помилка парсингу"
 
 #: parse_manifest.c:152
 msgid "manifest ended unexpectedly"
@@ -276,212 +285,206 @@ msgstr "невідповідність контрольної суми мані�
 msgid "could not parse backup manifest: %s"
 msgstr "не вдалося проаналізувати маніфест резервної копії: %s"
 
-#: pg_verifybackup.c:255 pg_verifybackup.c:265 pg_verifybackup.c:277
+#: pg_verifybackup.c:256 pg_verifybackup.c:265 pg_verifybackup.c:276
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
 #: pg_verifybackup.c:264
 #, c-format
 msgid "no backup directory specified"
 msgstr "не вказано папку резервної копії"
 
-#: pg_verifybackup.c:275
+#: pg_verifybackup.c:274
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "забагато аргументів у командному рядку (перший \"%s\")"
 
-#: pg_verifybackup.c:298
+#: pg_verifybackup.c:297
 #, c-format
-msgid "The program \"%s\" is needed by %s but was not found in the\n"
-"same directory as \"%s\".\n"
-"Check your installation."
-msgstr "Програма \"%s\" потрібна для %s, але не знайдена в тому ж каталозі, що й \"%s\".\n"
-"Перевірте вашу установку."
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
+msgstr "програма \"%s\" потрібна для %s, але не знайдена в тому ж каталозі, що й \"%s\""
 
-#: pg_verifybackup.c:303
+#: pg_verifybackup.c:300
 #, c-format
-msgid "The program \"%s\" was found by \"%s\"\n"
-"but was not the same version as %s.\n"
-"Check your installation."
-msgstr "Програма \"%s\" була знайдена \"%s\", але не була тієї ж версії, що %s.\n"
-"Перевірте вашу установку."
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
+msgstr "програма \"%s\" знайдена для \"%s\", але має відмінну версію від %s"
 
-#: pg_verifybackup.c:362
+#: pg_verifybackup.c:356
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "резервну копію успішно перевірено\n"
 
-#: pg_verifybackup.c:388 pg_verifybackup.c:724
+#: pg_verifybackup.c:382 pg_verifybackup.c:718
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: pg_verifybackup.c:392
+#: pg_verifybackup.c:386
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
 
-#: pg_verifybackup.c:412 pg_verifybackup.c:753
+#: pg_verifybackup.c:406 pg_verifybackup.c:745
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не вдалося прочитати файл \"%s\": %m"
 
-#: pg_verifybackup.c:415
+#: pg_verifybackup.c:409
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %lld"
 
-#: pg_verifybackup.c:475
+#: pg_verifybackup.c:469
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "дубльований шлях у маніфесті резервного копіювання: \"%s\""
 
-#: pg_verifybackup.c:538 pg_verifybackup.c:545
+#: pg_verifybackup.c:532 pg_verifybackup.c:539
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не вдалося відкрити каталог \"%s\": %m"
 
-#: pg_verifybackup.c:577
+#: pg_verifybackup.c:571
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "не вдалося закрити каталог \"%s\": %m"
 
-#: pg_verifybackup.c:597
+#: pg_verifybackup.c:591
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "не вдалося отримати інформацію про файл або каталог \"%s\": %m"
 
-#: pg_verifybackup.c:620
+#: pg_verifybackup.c:614
 #, c-format
 msgid "\"%s\" is not a file or directory"
 msgstr "\"%s\" не є файлом або каталогом"
 
-#: pg_verifybackup.c:630
+#: pg_verifybackup.c:624
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\" присутній на диску, але не у маніфесті"
 
-#: pg_verifybackup.c:642
+#: pg_verifybackup.c:636
 #, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
 msgstr "\"%s\" має розмір %lld на диску, але розмір %zu у маніфесті"
 
-#: pg_verifybackup.c:669
+#: pg_verifybackup.c:663
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" присутній у маніфесті, але не на диску"
 
-#: pg_verifybackup.c:732
+#: pg_verifybackup.c:726
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "не вдалося ініціалізувати контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:744
+#: pg_verifybackup.c:738
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "не вдалося оновити контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:759
+#: pg_verifybackup.c:751
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "неможливо закрити файл \"%s\": %m"
 
-#: pg_verifybackup.c:778
+#: pg_verifybackup.c:770
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "файл \"%s\" мусить містити %zu байтів, але прочитано %zu байтів"
 
-#: pg_verifybackup.c:788
+#: pg_verifybackup.c:780
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "не вдалося остаточно завершити контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:796
+#: pg_verifybackup.c:788
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "файл \"%s\" має контрольну суму довжини %d, але очікувалось %d"
 
-#: pg_verifybackup.c:800
+#: pg_verifybackup.c:792
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "невідповідність контрольної суми для файлу \"%s\""
 
-#: pg_verifybackup.c:824
+#: pg_verifybackup.c:816
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "не вдалося проаналізувати WAL для часової шкали %u"
 
-#: pg_verifybackup.c:910
+#: pg_verifybackup.c:902
 #, c-format
 msgid "%s verifies a backup against the backup manifest.\n\n"
 msgstr "%s перевіряє резервну копію відповідно до маніфесту резервного копіювання.\n\n"
 
-#: pg_verifybackup.c:911
+#: pg_verifybackup.c:903
 #, c-format
 msgid "Usage:\n"
 "  %s [OPTION]... BACKUPDIR\n\n"
 msgstr "Використання:\n"
 "  %s [OPTION]... КАТАЛОГ_КОПІЮВАННЯ\n\n"
 
-#: pg_verifybackup.c:912
+#: pg_verifybackup.c:904
 #, c-format
 msgid "Options:\n"
 msgstr "Параметри:\n"
 
-#: pg_verifybackup.c:913
+#: pg_verifybackup.c:905
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error вийти при помилці\n"
 
-#: pg_verifybackup.c:914
+#: pg_verifybackup.c:906
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH ігнорувати вказаний шлях\n"
 
-#: pg_verifybackup.c:915
+#: pg_verifybackup.c:907
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH використовувати вказаний шлях для маніфесту\n"
 
-#: pg_verifybackup.c:916
+#: pg_verifybackup.c:908
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal не намагатися аналізувати файли WAL\n"
 
-#: pg_verifybackup.c:917
+#: pg_verifybackup.c:909
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet            не друкувати жодного виводу, окрім помилок\n"
 
-#: pg_verifybackup.c:918
+#: pg_verifybackup.c:910
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums не перевіряти контрольні суми\n"
 
-#: pg_verifybackup.c:919
+#: pg_verifybackup.c:911
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=PATH використовувати вказаний шлях для файлів WAL\n"
 
-#: pg_verifybackup.c:920
+#: pg_verifybackup.c:912
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version                вивести інформацію про версію, потім вийти\n"
 
-#: pg_verifybackup.c:921
+#: pg_verifybackup.c:913
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                   показати цю довідку, потім вийти\n"
 
-#: pg_verifybackup.c:922
+#: pg_verifybackup.c:914
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: pg_verifybackup.c:923
+#: pg_verifybackup.c:915
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"

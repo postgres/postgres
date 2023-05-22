@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_verifybackup (PostgreSQL) 14\n"
+"Project-Id-Version: pg_verifybackup (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-14 19:45+0000\n"
-"PO-Revision-Date: 2021-05-24 16:53-0500\n"
+"POT-Creation-Date: 2023-05-22 07:17+0000\n"
+"PO-Revision-Date: 2023-05-22 12:06+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -19,110 +19,125 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 2.4.3\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "fatal: "
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
 
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "detalle: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "consejo: "
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
-#: ../../common/jsonapi.c:1066
+#: ../../common/jsonapi.c:1144
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "La secuencia de escape «%s» no es válida."
 
-#: ../../common/jsonapi.c:1069
+#: ../../common/jsonapi.c:1147
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Los caracteres con valor 0x%02x deben ser escapados."
 
-#: ../../common/jsonapi.c:1072
+#: ../../common/jsonapi.c:1150
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Se esperaba el fin de la entrada, se encontró «%s»."
 
-#: ../../common/jsonapi.c:1075
+#: ../../common/jsonapi.c:1153
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Se esperaba un elemento de array o «]», se encontró «%s»."
 
-#: ../../common/jsonapi.c:1078
+#: ../../common/jsonapi.c:1156
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "Se esperaba «,» o «]», se encontró «%s»."
 
-#: ../../common/jsonapi.c:1081
+#: ../../common/jsonapi.c:1159
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "Se esperaba «:», se encontró «%s»."
 
-#: ../../common/jsonapi.c:1084
+#: ../../common/jsonapi.c:1162
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "Se esperaba un valor JSON, se encontró «%s»."
 
-#: ../../common/jsonapi.c:1087
+#: ../../common/jsonapi.c:1165
 msgid "The input string ended unexpectedly."
 msgstr "La cadena de entrada terminó inesperadamente."
 
-#: ../../common/jsonapi.c:1089
+#: ../../common/jsonapi.c:1167
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Se esperaba una cadena o «}», se encontró «%s»."
 
-#: ../../common/jsonapi.c:1092
+#: ../../common/jsonapi.c:1170
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "Se esperaba «,» o «}», se encontró «%s»."
 
-#: ../../common/jsonapi.c:1095
+#: ../../common/jsonapi.c:1173
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Se esperaba una cadena, se encontró «%s»."
 
-#: ../../common/jsonapi.c:1098
+#: ../../common/jsonapi.c:1176
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "El elemento «%s» no es válido."
 
-#: ../../common/jsonapi.c:1101
+#: ../../common/jsonapi.c:1179
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 no puede ser convertido a text."
 
-#: ../../common/jsonapi.c:1103
+#: ../../common/jsonapi.c:1181
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "«\\u» debe ser seguido por cuatro dígitos hexadecimales."
 
-#: ../../common/jsonapi.c:1106
+#: ../../common/jsonapi.c:1184
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Los valores de escape Unicode no se pueden utilizar para valores de código superiores a 007F cuando la codificación no es UTF8."
 
-#: ../../common/jsonapi.c:1108
+#: ../../common/jsonapi.c:1187
+#, c-format
+msgid "Unicode escape value could not be translated to the server's encoding %s."
+msgstr "El valor de escape Unicode no pudo ser traducido a la codificación del servidor %s."
+
+#: ../../common/jsonapi.c:1190
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Un «high-surrogate» Unicode no puede venir después de un «high-surrogate»."
 
-#: ../../common/jsonapi.c:1110
+#: ../../common/jsonapi.c:1192
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Un «low-surrogate» Unicode debe seguir a un «high-surrogate»."
+
+# XXX change upstream message
+#: parse_manifest.c:150
+msgid "parsing failed"
+msgstr "procesamiento falló"
 
 #: parse_manifest.c:152
 msgid "manifest ended unexpectedly"
@@ -132,295 +147,293 @@ msgstr "el manifiesto terminó inesperadamente"
 msgid "unexpected object start"
 msgstr "inicio de objeto inesperado"
 
-#: parse_manifest.c:224
+#: parse_manifest.c:226
 msgid "unexpected object end"
 msgstr "fin de objeto inesperado"
 
-#: parse_manifest.c:251
+#: parse_manifest.c:255
 msgid "unexpected array start"
 msgstr "inicio de array inesperado"
 
-#: parse_manifest.c:274
+#: parse_manifest.c:280
 msgid "unexpected array end"
 msgstr "fin de array inesperado"
 
-#: parse_manifest.c:299
+#: parse_manifest.c:307
 msgid "expected version indicator"
 msgstr "se esperaba indicador de versión"
 
-#: parse_manifest.c:328
+#: parse_manifest.c:336
 msgid "unrecognized top-level field"
 msgstr "campo de nivel superior no reconocido"
 
-#: parse_manifest.c:347
+#: parse_manifest.c:355
 msgid "unexpected file field"
 msgstr "campo de archivo inesperado"
 
-#: parse_manifest.c:361
+#: parse_manifest.c:369
 msgid "unexpected WAL range field"
 msgstr "campo de rango de WAL inesperado"
 
-#: parse_manifest.c:367
+#: parse_manifest.c:375
 msgid "unexpected object field"
 msgstr "campo de objeto inesperado"
 
-#: parse_manifest.c:397
+#: parse_manifest.c:407
 msgid "unexpected manifest version"
 msgstr "versión de manifiesto inesperada"
 
-#: parse_manifest.c:448
+#: parse_manifest.c:458
 msgid "unexpected scalar"
 msgstr "escalar inesperado"
 
-#: parse_manifest.c:472
+#: parse_manifest.c:484
 msgid "missing path name"
 msgstr "ruta de archivo faltante"
 
-#: parse_manifest.c:475
+#: parse_manifest.c:487
 msgid "both path name and encoded path name"
 msgstr "hay ambos ruta de archivo (path name) y ruta codificada (encoded path name)"
 
-#: parse_manifest.c:477
+#: parse_manifest.c:489
 msgid "missing size"
 msgstr "tamaño faltante"
 
-#: parse_manifest.c:480
+#: parse_manifest.c:492
 msgid "checksum without algorithm"
 msgstr "suma de comprobación sin algoritmo"
 
-#: parse_manifest.c:494
+#: parse_manifest.c:506
 msgid "could not decode file name"
 msgstr "no se pudo decodificar el nombre del archivo"
 
-#: parse_manifest.c:504
+#: parse_manifest.c:516
 msgid "file size is not an integer"
 msgstr "el tamaño del archivo no es un número entero"
 
-#: parse_manifest.c:510
+#: parse_manifest.c:522
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "algoritmo de suma de comprobación no reconocido: \"%s\""
 
-#: parse_manifest.c:529
+#: parse_manifest.c:541
 #, c-format
 msgid "invalid checksum for file \"%s\": \"%s\""
 msgstr "suma de comprobación no válida para el archivo \"%s\": \"%s\""
 
-#: parse_manifest.c:572
+#: parse_manifest.c:584
 msgid "missing timeline"
 msgstr "falta el timeline"
 
-#: parse_manifest.c:574
+#: parse_manifest.c:586
 msgid "missing start LSN"
 msgstr "falta el LSN de inicio"
 
-#: parse_manifest.c:576
+#: parse_manifest.c:588
 msgid "missing end LSN"
 msgstr "falta el LSN de término"
 
-#: parse_manifest.c:582
+#: parse_manifest.c:594
 msgid "timeline is not an integer"
 msgstr "el timeline no es un número entero"
 
-#: parse_manifest.c:585
+#: parse_manifest.c:597
 msgid "could not parse start LSN"
 msgstr "no se pudo interpretar el LSN de inicio"
 
-#: parse_manifest.c:588
+#: parse_manifest.c:600
 msgid "could not parse end LSN"
 msgstr "no se pudo interpretar el LSN de término"
 
-#: parse_manifest.c:649
+#: parse_manifest.c:661
 msgid "expected at least 2 lines"
 msgstr "esperado al menos 2 líneas"
 
-#: parse_manifest.c:652
+#: parse_manifest.c:664
 msgid "last line not newline-terminated"
 msgstr "última línea no termina en nueva línea"
 
-#: parse_manifest.c:657
+#: parse_manifest.c:669
 #, c-format
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: parse_manifest.c:659
+#: parse_manifest.c:671
 #, c-format
 msgid "could not initialize checksum of manifest"
 msgstr "no se pudo inicializar la suma de verificación del manifiesto"
 
-#: parse_manifest.c:661
+#: parse_manifest.c:673
 #, c-format
 msgid "could not update checksum of manifest"
 msgstr "no se pudo actualizar la suma de verificación del manifiesto"
 
-#: parse_manifest.c:664
+#: parse_manifest.c:676
 #, c-format
 msgid "could not finalize checksum of manifest"
 msgstr "no se pudo finalizar la suma de verificación del manifiesto"
 
-#: parse_manifest.c:668
+#: parse_manifest.c:680
 #, c-format
 msgid "manifest has no checksum"
 msgstr "el manifiesto no tiene suma de comprobación"
 
-#: parse_manifest.c:672
+#: parse_manifest.c:684
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
 msgstr "suma de comprobación de manifiesto no válida: \"%s\""
 
-#: parse_manifest.c:676
+#: parse_manifest.c:688
 #, c-format
 msgid "manifest checksum mismatch"
 msgstr "discordancia en la suma de comprobación del manifiesto"
 
-#: parse_manifest.c:691
+#: parse_manifest.c:703
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "no se pudo analizar el manifiesto de la copia de seguridad: %s"
 
-#: pg_verifybackup.c:255 pg_verifybackup.c:265 pg_verifybackup.c:277
+#: pg_verifybackup.c:273 pg_verifybackup.c:282 pg_verifybackup.c:293
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Pruebe «%s --help» para mayor información.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Pruebe «%s --help» para mayor información."
 
-#: pg_verifybackup.c:264
+#: pg_verifybackup.c:281
 #, c-format
 msgid "no backup directory specified"
 msgstr "no fue especificado el directorio de respaldo"
 
-#: pg_verifybackup.c:275
+#: pg_verifybackup.c:291
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
 
-#: pg_verifybackup.c:298
+#: pg_verifybackup.c:299
 #, c-format
-msgid ""
-"The program \"%s\" is needed by %s but was not found in the\n"
-"same directory as \"%s\".\n"
-"Check your installation."
-msgstr ""
-"%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
-"directorio que «%s».\n"
-"Verifique su instalación."
+msgid "cannot specify both %s and %s"
+msgstr "no se puede especificar %s junto con %s"
 
-#: pg_verifybackup.c:303
+#: pg_verifybackup.c:319
 #, c-format
-msgid ""
-"The program \"%s\" was found by \"%s\"\n"
-"but was not the same version as %s.\n"
-"Check your installation."
-msgstr ""
-"El programa «%s» fue encontrado por «%s»,\n"
-"pero no es de la misma versión que %s.\n"
-"Verifique su instalación."
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
+msgstr "el programa «%s» es requerido por %s, pero no pudo encontrarlo en el mismo directorio que «%s»"
 
-#: pg_verifybackup.c:361
+#: pg_verifybackup.c:322
+#, c-format
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
+msgstr "el programa «%s» fue encontrado por «%s», pero no es de la misma versión que %s"
+
+#: pg_verifybackup.c:378
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "copia de seguridad verificada correctamente\n"
 
-#: pg_verifybackup.c:387 pg_verifybackup.c:723
+#: pg_verifybackup.c:404 pg_verifybackup.c:748
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: pg_verifybackup.c:391
+#: pg_verifybackup.c:408
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
-#: pg_verifybackup.c:411 pg_verifybackup.c:752
+#: pg_verifybackup.c:428 pg_verifybackup.c:779
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
-#: pg_verifybackup.c:414
+#: pg_verifybackup.c:431
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %lld"
 
-#: pg_verifybackup.c:474
+#: pg_verifybackup.c:491
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "nombre de ruta duplicado en el manifiesto de la copia de seguridad: \"%s\""
 
-#: pg_verifybackup.c:537 pg_verifybackup.c:544
+#: pg_verifybackup.c:554 pg_verifybackup.c:561
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: pg_verifybackup.c:576
+#: pg_verifybackup.c:593
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: pg_verifybackup.c:596
+#: pg_verifybackup.c:613
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo o directorio «%s»: %m"
 
-#: pg_verifybackup.c:619
+#: pg_verifybackup.c:636
 #, c-format
 msgid "\"%s\" is not a file or directory"
 msgstr "\"%s\" no es un archivo o directorio"
 
-#: pg_verifybackup.c:629
+#: pg_verifybackup.c:646
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\" está presente en el disco pero no en el manifiesto"
 
-#: pg_verifybackup.c:641
+#: pg_verifybackup.c:658
 #, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
 msgstr "\"%s\" tiene un tamaño %lld en el disco pero un tamaño %zu en el manifiesto"
 
-#: pg_verifybackup.c:668
+#: pg_verifybackup.c:689
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" está presente en el manifiesto pero no en el disco"
 
-#: pg_verifybackup.c:731
+#: pg_verifybackup.c:756
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "no se pudo inicializar la suma de verificación para el archivo «%s»"
 
-#: pg_verifybackup.c:743
+#: pg_verifybackup.c:768
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "no se pudo actualizar la suma de verificación para el archivo «%s»"
 
-#: pg_verifybackup.c:758
+#: pg_verifybackup.c:785
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "no se pudo cerrar el archivo «%s»: %m"
 
-#: pg_verifybackup.c:777
+#: pg_verifybackup.c:804
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "el archivo \"%s\" debe contener %zu bytes, pero se leyeron %zu bytes"
 
-#: pg_verifybackup.c:787
+#: pg_verifybackup.c:814
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "no se pudo finalizar la suma de verificación para el archivo «%s»"
 
-#: pg_verifybackup.c:795
+#: pg_verifybackup.c:822
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "el archivo \"%s\" tiene una suma de comprobación de longitud %d, pero se esperaba %d"
 
-#: pg_verifybackup.c:799
+#: pg_verifybackup.c:826
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "no coincide la suma de comprobación para el archivo \"%s\""
 
-#: pg_verifybackup.c:823
+#: pg_verifybackup.c:851
 #, c-format
 msgid "WAL parsing failed for timeline %u"
-msgstr "Error al analizar el WAL para el timeline %u"
+msgstr "Error al interpretar el WAL para el timeline %u"
 
-#: pg_verifybackup.c:909
+#: pg_verifybackup.c:965
+#, c-format
+msgid "%*s/%s kB (%d%%) verified"
+msgstr "%*s/%s kB (%d%%) verificados"
+
+#: pg_verifybackup.c:982
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -429,7 +442,7 @@ msgstr ""
 "%s verifica una copia de seguridad con el fichero de manifiesto de la copia de seguridad.\n"
 "\n"
 
-#: pg_verifybackup.c:910
+#: pg_verifybackup.c:983
 #, c-format
 msgid ""
 "Usage:\n"
@@ -440,57 +453,62 @@ msgstr ""
 "  %s [OPCIÓN]... BACKUPDIR\n"
 "\n"
 
-#: pg_verifybackup.c:911
+#: pg_verifybackup.c:984
 #, c-format
 msgid "Options:\n"
 msgstr "Opciones:\n"
 
-#: pg_verifybackup.c:912
+#: pg_verifybackup.c:985
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         salir inmediatamente en caso de error\n"
 
-#: pg_verifybackup.c:913
+#: pg_verifybackup.c:986
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH  ignorar la ruta indicada\n"
 
-#: pg_verifybackup.c:914
+#: pg_verifybackup.c:987
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH    usar la ruta especificada para el manifiesto\n"
 
-#: pg_verifybackup.c:915
+#: pg_verifybackup.c:988
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          no intentar analizar archivos WAL\n"
 
-#: pg_verifybackup.c:916
+#: pg_verifybackup.c:989
+#, c-format
+msgid "  -P, --progress              show progress information\n"
+msgstr "  -P, --progress              mostrar información de progreso\n"
+
+#: pg_verifybackup.c:990
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 no escribir ningún mensaje, excepto errores\n"
 
-#: pg_verifybackup.c:917
+#: pg_verifybackup.c:991
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        omitir la verificación de la suma de comprobación\n"
 
-#: pg_verifybackup.c:918
+#: pg_verifybackup.c:992
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=PATH    utilizar la ruta especificada para los archivos WAL\n"
 
-#: pg_verifybackup.c:919
+#: pg_verifybackup.c:993
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               mostrar la información de la versión, luego salir\n"
 
-#: pg_verifybackup.c:920
+#: pg_verifybackup.c:994
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  muestra esta ayuda, luego salir\n"
 
-#: pg_verifybackup.c:921
+#: pg_verifybackup.c:995
 #, c-format
 msgid ""
 "\n"
@@ -499,7 +517,7 @@ msgstr ""
 "\n"
 "Reporte errores a <%s>.\n"
 
-#: pg_verifybackup.c:922
+#: pg_verifybackup.c:996
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"

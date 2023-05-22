@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 12\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-14 19:47+0000\n"
-"PO-Revision-Date: 2021-05-19 22:07-0500\n"
+"POT-Creation-Date: 2023-05-22 07:19+0000\n"
+"PO-Revision-Date: 2023-05-22 12:06+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -84,6 +84,3 @@ msgstr "cantidad"
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "Histograma de duraciones de lectura de reloj:\n"
-
-#~ msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
-#~ msgstr "%s: la duración debe ser un número entero positivo (la duración es \"%d\")\n"

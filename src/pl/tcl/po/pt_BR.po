@@ -1,57 +1,73 @@
 # Brazilian Portuguese message translation file for pltcl
-# Copyright (C) 2009 PostgreSQL Global Development Group
+#
+# Copyright (C) 2009-2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2015.
+#
+# Euler Taveira <euler@eulerto.com>, 2009-2022.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.5\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-17 22:32-0300\n"
+"Project-Id-Version: PostgreSQL 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-09-27 13:15-0300\n"
 "PO-Revision-Date: 2009-05-06 18:00-0300\n"
-"Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
-"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
+"Last-Translator: Euler Taveira <euler@eulerto.com>\n"
+"Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pltcl.c:555
-#, c-format
-msgid "module \"unknown\" not found in pltcl_modules"
-msgstr "módulo \"unknown\" não foi encontrado em pltcl_modules"
+#: pltcl.c:463
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr "função PL/Tcl executada quando pltcl for utilizado pela primeira vez."
 
-#: pltcl.c:591
-#, c-format
-msgid "could not load module \"unknown\": %s"
-msgstr "não pôde carregar módulo \"unknown\": %s"
+#: pltcl.c:470
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr "função PL/TclU executada quando pltclu for utilizado pela primeira vez."
 
-#: pltcl.c:1047
+#: pltcl.c:637
+#, c-format
+msgid "function \"%s\" is in the wrong language"
+msgstr "função \"%s\" está na linguagem incorreta"
+
+#: pltcl.c:648
+#, c-format
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "função \"%s\" não deve ser SECURITY DEFINER"
+
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:682
+#, c-format
+msgid "processing %s parameter"
+msgstr "processando parâmetro %s"
+
+#: pltcl.c:835
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "função que tem argumento do tipo conjunto foi chamada em um contexto que não pode aceitar um conjunto"
+
+#: pltcl.c:840
+#, c-format
+msgid "materialize mode required, but it is not allowed in this context"
+msgstr "modo de materialização é requerido, mas ele não é permitido neste contexto"
+
+#: pltcl.c:1013
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "função que retorna record foi chamada em um contexto que não pode aceitar tipo record"
+
+#: pltcl.c:1296
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "não pôde dividir valor retornado do gatilho: %s"
 
-#: pltcl.c:1058
-#, c-format
-msgid "trigger's return list must have even number of elements"
-msgstr "lista de retorno do gatilho deve ter número par de elementos"
-
-#: pltcl.c:1094
-#, c-format
-msgid "unrecognized attribute \"%s\""
-msgstr "atributo \"%s\" desconhecido"
-
-#: pltcl.c:1099
-#, c-format
-msgid "cannot set system attribute \"%s\""
-msgstr "não pode definir atributo do sistema \"%s\""
-
-#: pltcl.c:1222 pltcl.c:1648
+#: pltcl.c:1377 pltcl.c:1807
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1223
+#: pltcl.c:1378
 #, c-format
 msgid ""
 "%s\n"
@@ -60,32 +76,42 @@ msgstr ""
 "%s\n"
 "na função PL/Tcl \"%s\""
 
-#: pltcl.c:1331 pltcl.c:1338
-#, c-format
-msgid "out of memory"
-msgstr "sem memória"
-
-#: pltcl.c:1386
+#: pltcl.c:1542
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: pltcl.c:1395
+#: pltcl.c:1546
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "funções PL/Tcl não podem retornar tipo %s"
 
-#: pltcl.c:1407
-#, c-format
-msgid "PL/Tcl functions cannot return composite types"
-msgstr "funções PL/Tcl não podem retornar tipos compostos"
-
-#: pltcl.c:1446
+#: pltcl.c:1585
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "funções PL/Tcl não podem aceitar tipo %s"
 
-#: pltcl.c:1564
+#: pltcl.c:1699
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "não pôde criar função interna \"%s\": %s"
+
+#: pltcl.c:3201
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "lista de nome/valor de colunas deve ter número par de elementos"
+
+#: pltcl.c:3219
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr "lsta de nome/valor de colunas contém nome de coluna inexistente \"%s\""
+
+#: pltcl.c:3226
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "não pode definir atributo do sistema \"%s\""
+
+#: pltcl.c:3232
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "não pode definir coluna gerada \"%s\""

@@ -1,0 +1,592 @@
+# Georgian message translation file for pg_amcheck
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_amcheck (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_amcheck (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-07-02 04:50+0000\n"
+"PO-Revision-Date: 2022-07-04 11:33+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "შეცდომა: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "გაფრთხილება: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "დეტალები: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "მინიშნება: "
+
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+msgid "Cancel request sent\n"
+msgstr "გაუქმების მოთხოვნა გაგზავნილია\n"
+
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+msgid "Could not send cancel request: "
+msgstr "გაუქმების მოთხოვნის გაგზავნა შეუძლებელია: "
+
+#: ../../fe_utils/connect_utils.c:91
+#, c-format
+msgid "could not connect to database %s: out of memory"
+msgstr "ბაზასთან (%s) მიერთება შეუძლებელია: არასაკმარისი მეხსიერება"
+
+#: ../../fe_utils/connect_utils.c:117
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "არასწორი მნიშვნელობა \"%s\" პარამეტრისთვის %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s არაა საზღვრებში %d-დან %d-მდე"
+
+#: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
+#: pg_amcheck.c:1647 pg_amcheck.c:2092
+#, c-format
+msgid "query failed: %s"
+msgstr "მოთხოვნის შეცდომა: %s"
+
+#: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
+#: pg_amcheck.c:571 pg_amcheck.c:1102 pg_amcheck.c:1648 pg_amcheck.c:2093
+#, c-format
+msgid "Query was: %s"
+msgstr "მოთხოვნის შინაარსი: %s"
+
+#: pg_amcheck.c:399
+#, c-format
+msgid "invalid argument for option %s"
+msgstr "არასწორი არგუმენტი პარამეტრისთვის: %s"
+
+#: pg_amcheck.c:405
+#, c-format
+msgid "invalid start block"
+msgstr "არასწორი საწყისი ბლოკი"
+
+#: pg_amcheck.c:407
+#, c-format
+msgid "start block out of bounds"
+msgstr "საწყისი ბლოკი საზღვრებს გარეთაა"
+
+#: pg_amcheck.c:414
+#, c-format
+msgid "invalid end block"
+msgstr "არასწორი ბოლო ბლოკი"
+
+#: pg_amcheck.c:416
+#, c-format
+msgid "end block out of bounds"
+msgstr "ბოლო ბლოკი საზღვრებს გარეთაა"
+
+#: pg_amcheck.c:439 pg_amcheck.c:461
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
+
+#: pg_amcheck.c:445
+#, c-format
+msgid "end block precedes start block"
+msgstr "ბოლო ბლოკი საწყის ბლოკამდე მდებარეობს"
+
+#: pg_amcheck.c:459
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")"
+
+#: pg_amcheck.c:479
+#, c-format
+msgid "cannot specify a database name with --all"
+msgstr "--all -თან ერთად ბაზის სახელს ვერ მიუთითებთ"
+
+#: pg_amcheck.c:485
+#, c-format
+msgid "cannot specify both a database name and database patterns"
+msgstr "ორივეს, ბაზის სახელსა და მის შაბლონს ვერ მიუთითებთ"
+
+#: pg_amcheck.c:513
+#, c-format
+msgid "no databases to check"
+msgstr "შემოსამოწმებელი ბაზის გარეშე"
+
+#: pg_amcheck.c:569
+#, c-format
+msgid "database \"%s\": %s"
+msgstr "ბაზა \"%s\": %s"
+
+#: pg_amcheck.c:580
+#, c-format
+msgid "skipping database \"%s\": amcheck is not installed"
+msgstr "\"%s\" ბაზის გამოტოვება: amcheck დაყენებული არაა"
+
+#: pg_amcheck.c:588
+#, c-format
+msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
+msgstr "ბაზაში \"%s\": გამოიყენება amcheck-ის ვერსია \"%s\" სქემაში \"%s\""
+
+#: pg_amcheck.c:610
+#, c-format
+msgid "no heap tables to check matching \"%s\""
+msgstr "მეხსირების ცხრილები, რომლებიც ემთხვევა \"%s\"-ს, არ არსებბს"
+
+#: pg_amcheck.c:613
+#, c-format
+msgid "no btree indexes to check matching \"%s\""
+msgstr "ორობით ხის ინდექსები, რომლებიც ემთხვევა \"%s\"-ს, არ არსებობს"
+
+#: pg_amcheck.c:616
+#, c-format
+msgid "no relations to check in schemas matching \"%s\""
+msgstr "\"%s\"-ს არც ერთი სქემა არ ემთხვევა"
+
+#: pg_amcheck.c:619
+#, c-format
+msgid "no relations to check matching \"%s\""
+msgstr "\"%s\"-ს არც ერთი ურთიერთობა არ ემთხვევა"
+
+#: pg_amcheck.c:647
+#, c-format
+msgid "no relations to check"
+msgstr "შესამოწმებელი ურთიერთობების გარეშე"
+
+#: pg_amcheck.c:730
+#, c-format
+msgid "checking heap table \"%s.%s.%s\""
+msgstr "მეხსიერების ცხრილის შემოწმება\"%s.%s.%s\""
+
+#: pg_amcheck.c:746
+#, c-format
+msgid "checking btree index \"%s.%s.%s\""
+msgstr "ორობითი ხის ინდექსის შემოწმება \"%s.%s.%s\""
+
+#: pg_amcheck.c:893
+#, c-format
+msgid "error sending command to database \"%s\": %s"
+msgstr "ბაზისთვის ბრძანების გაგზავნის შეცდომა \"%s\": %s"
+
+#: pg_amcheck.c:896
+#, c-format
+msgid "Command was: %s"
+msgstr "ბრძანება იყო: %s"
+
+#: pg_amcheck.c:1015
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
+msgstr ""
+"მეხსიერების ცხრილი \"%s.%s.%s\", ბლოკი %s, წანაცვლება %s, ატრიბუტი %s:\n"
+
+#: pg_amcheck.c:1022
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
+msgstr "მეხსიერების ცხრილი \"%s.%s.%s\", ბლოკი %s, წანაცვლება %s:\n"
+
+#: pg_amcheck.c:1028
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s:\n"
+msgstr "მეხსიერების ცხრილი \"%s.%s.%s\", ბლოკი %s:\n"
+
+#: pg_amcheck.c:1033 pg_amcheck.c:1044
+#, c-format
+msgid "heap table \"%s.%s.%s\":\n"
+msgstr "ცხრილი მეხსიერებაში \"%s.%s.%s\":\n"
+
+#: pg_amcheck.c:1048 pg_amcheck.c:1117
+#, c-format
+msgid "query was: %s\n"
+msgstr "მოთხოვნის შინაარსი: %s\n"
+
+#: pg_amcheck.c:1099
+#, c-format
+msgid ""
+"btree index \"%s.%s.%s\": btree checking function returned unexpected number "
+"of rows: %d"
+msgstr ""
+"ორობითი ხის ინდექსი\"%s.%s.%s\": ორობითი ხის შემოწმების ფუნქციამ მწკრივების "
+"მოულოდნელი რაოდენობა დააბრუნა: %d"
+
+#: pg_amcheck.c:1103
+#, c-format
+msgid "Are %s's and amcheck's versions compatible?"
+msgstr "არიან %s\"-ის და amcheck-ის ვერსიები თავსებადი?"
+
+#: pg_amcheck.c:1113
+#, c-format
+msgid "btree index \"%s.%s.%s\":\n"
+msgstr "btree index \"%s.%s.%s\":\n"
+
+#: pg_amcheck.c:1138
+#, c-format
+msgid ""
+"%s checks objects in a PostgreSQL database for corruption.\n"
+"\n"
+msgstr ""
+"%s PostgreSQL -ის ბაზაში არსებულ ობიექტებს დაზიანებებზე შეამოწმებს.\n"
+"\n"
+
+#: pg_amcheck.c:1139
+#, c-format
+msgid "Usage:\n"
+msgstr "გამოყენება:\n"
+
+#: pg_amcheck.c:1140
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [პარამეტრი]... [ბაზისსახელი]\n"
+
+#: pg_amcheck.c:1141
+#, c-format
+msgid ""
+"\n"
+"Target options:\n"
+msgstr ""
+"\n"
+"სამიზნის პარამეტრები:\n"
+
+#: pg_amcheck.c:1142
+#, c-format
+msgid "  -a, --all                       check all databases\n"
+msgstr "  -a, --all                       ყველა ბაზის შემოწმება\n"
+
+#: pg_amcheck.c:1143
+#, c-format
+msgid "  -d, --database=PATTERN          check matching database(s)\n"
+msgstr "  -d, --database=შაბლონი          შესაბამისი ბაზ(ებ)-ის შემოწმება\n"
+
+#: pg_amcheck.c:1144
+#, c-format
+msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
+msgstr "  -D, --exclude-database=შაბლონი  შესაბამისი ბაზ(ებ)ის არ-შემოწმება\n"
+
+#: pg_amcheck.c:1145
+#, c-format
+msgid "  -i, --index=PATTERN             check matching index(es)\n"
+msgstr "  -i, --index=შაბლონი             შესაბამისი ინდექს(ებ)-ის შემოწმება\n"
+
+#: pg_amcheck.c:1146
+#, c-format
+msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
+msgstr ""
+"  -I, --exclude-index=შაბლონი     შესაბამისი შაბლონ(ებ)-ის არ-შემოწმება\n"
+
+#: pg_amcheck.c:1147
+#, c-format
+msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
+msgstr ""
+"  -r, --relation=შაბლონი          შესაბამისი ურთითერთობ(ებ)-ის შემოწმება\n"
+
+#: pg_amcheck.c:1148
+#, c-format
+msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
+msgstr ""
+"  -R, --exclude-relation=შაბლონი  შესაბამისი ურთიერთობ(ებ)-ის არ-შემოწმება\n"
+
+#: pg_amcheck.c:1149
+#, c-format
+msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
+msgstr "  -s, --schema=შაბლონი            შესაბამისი სქემ(ებ)-ის შემოწმება\n"
+
+#: pg_amcheck.c:1150
+#, c-format
+msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
+msgstr ""
+"  -S, --exclude-schema=შაბლონი    შესაბამისი სქემ(ებ)-ის არ შემოწმება\n"
+
+#: pg_amcheck.c:1151
+#, c-format
+msgid "  -t, --table=PATTERN             check matching table(s)\n"
+msgstr "  -t, --table=შაბლონი             შესაბამისი ცხრილ(ებ)-ის შემოწმება\n"
+
+#: pg_amcheck.c:1152
+#, c-format
+msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
+msgstr ""
+"  -T, --exclude-table=შაბლონი     შესაბამისი ცხრილ(ებ)-ი არ შემოწმდება\n"
+
+#: pg_amcheck.c:1153
+#, c-format
+msgid ""
+"      --no-dependent-indexes      do NOT expand list of relations to include "
+"indexes\n"
+msgstr ""
+"      --no-dependent-indexes      ურთერთობების სიის დამუშავებისას ინდექსები "
+"არ დამუშავებდება\n"
+
+#: pg_amcheck.c:1154
+#, c-format
+msgid ""
+"      --no-dependent-toast        do NOT expand list of relations to include "
+"TOAST tables\n"
+msgstr ""
+"      --no-dependent-toast        ურთიერთობების სიის დამუშავებისას TOAST "
+"ცხრილები არ დამუშავდება \n"
+
+#: pg_amcheck.c:1155
+#, c-format
+msgid ""
+"      --no-strict-names           do NOT require patterns to match objects\n"
+msgstr ""
+"      --no-strict-names           მოთხოვნებში შაბლონზე დამთხვევა ჩასმული არ "
+"იქნება\n"
+
+#: pg_amcheck.c:1156
+#, c-format
+msgid ""
+"\n"
+"Table checking options:\n"
+msgstr ""
+"\n"
+"ცხრილის შემოწმების პარამეტრები:\n"
+
+#: pg_amcheck.c:1157
+#, c-format
+msgid ""
+"      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
+msgstr ""
+"      --exclude-toast-pointers    ურთიერთობის TOAST მაჩვენებლებს არ "
+"გაჰყვება\n"
+
+#: pg_amcheck.c:1158
+#, c-format
+msgid ""
+"      --on-error-stop             stop checking at end of first corrupt "
+"page\n"
+msgstr ""
+"      --on-error-stop             მუშაობის პირველი დაზიანებული გვერდის "
+"ბოლოში შეწყვეტა\n"
+
+#: pg_amcheck.c:1159
+#, c-format
+msgid ""
+"      --skip=OPTION               do NOT check \"all-frozen\" or \"all-"
+"visible\" blocks\n"
+msgstr ""
+"      --skip=პარამეტრი               \"all-frozen\" და \"all-visible\" "
+"ბლოკები არ შემოწმდება\n"
+
+#: pg_amcheck.c:1160
+#, c-format
+msgid ""
+"      --startblock=BLOCK          begin checking table(s) at the given block "
+"number\n"
+msgstr ""
+"      --startblock=ბლოკი          შემოწმების ბლოკის მითითებული ნომრიდან "
+"დაწყება\n"
+
+#: pg_amcheck.c:1161
+#, c-format
+msgid ""
+"      --endblock=BLOCK            check table(s) only up to the given block "
+"number\n"
+msgstr ""
+"      --endblock=ბლოკი            შემოწმების მითითებულ ბლოკზე დამთავრება\n"
+
+#: pg_amcheck.c:1162
+#, c-format
+msgid ""
+"\n"
+"B-tree index checking options:\n"
+msgstr ""
+"\n"
+"ორობითი ხის ინდექსის შემოწმების პარამეტრები:\n"
+
+#: pg_amcheck.c:1163
+#, c-format
+msgid ""
+"      --heapallindexed            check that all heap tuples are found "
+"within indexes\n"
+msgstr ""
+"      --heapallindexed            შემოწმება, მეხსიერების ცხრილში ყველა "
+"მონაცემი არსებობს, თუ არა\n"
+
+#: pg_amcheck.c:1164
+#, c-format
+msgid ""
+"      --parent-check              check index parent/child relationships\n"
+msgstr ""
+"      --parent-check              ინდექსის მშობელი/შვილის ურთიერთობის "
+"შემოწმება\n"
+
+#: pg_amcheck.c:1165
+#, c-format
+msgid ""
+"      --rootdescend               search from root page to refind tuples\n"
+msgstr ""
+"      --rootdescend               მონაცემების თავიდან საპოვნელად ძებნის root "
+"გვერდიდან დაწყება\n"
+
+#: pg_amcheck.c:1166
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"შეერთების პარამეტრები:\n"
+
+#: pg_amcheck.c:1167
+#, c-format
+msgid ""
+"  -h, --host=HOSTNAME             database server host or socket directory\n"
+msgstr ""
+"  -h, --host=ჰოსტის_სახელი             ბაზის სერვერის სახელი ან სოკეტის "
+"საქაღალდე\n"
+
+#: pg_amcheck.c:1168
+#, c-format
+msgid "  -p, --port=PORT                 database server port\n"
+msgstr "  -p, --port=პორტი                 ბაზის სერვერის პორტი\n"
+
+#: pg_amcheck.c:1169
+#, c-format
+msgid "  -U, --username=USERNAME         user name to connect as\n"
+msgstr ""
+"  -U, --username=მომხმარებელი         მისაერთებელი მომხმარებლის სახელი\n"
+
+#: pg_amcheck.c:1170
+#, c-format
+msgid "  -w, --no-password               never prompt for password\n"
+msgstr "  -w, --no-password               პაროლის მოთხოვნა არ მოხდება\n"
+
+#: pg_amcheck.c:1171
+#, c-format
+msgid "  -W, --password                  force password prompt\n"
+msgstr "  -W, --password                  პაროლის ყველა შემთხვევაში კითხვა\n"
+
+#: pg_amcheck.c:1172
+#, c-format
+msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
+msgstr "      --maintenance-db=ბაზისსახელი     ალტერნატიული საავარიო ბაზა\n"
+
+#: pg_amcheck.c:1173
+#, c-format
+msgid ""
+"\n"
+"Other options:\n"
+msgstr ""
+"\n"
+"სხვა პარამეტრები:\n"
+
+#: pg_amcheck.c:1174
+#, c-format
+msgid ""
+"  -e, --echo                      show the commands being sent to the "
+"server\n"
+msgstr "  -e, --echo-queries       სერვერზე გაგზავნილი ბრძანებების გამოტანა\n"
+
+#: pg_amcheck.c:1175
+#, c-format
+msgid ""
+"  -j, --jobs=NUM                  use this many concurrent connections to "
+"the server\n"
+msgstr ""
+"  -j, --jobs=რიცხვი                  სერვერთან მითითებული რაოდენობის "
+"მიერთებების გამოყენება\n"
+
+#: pg_amcheck.c:1176
+#, c-format
+msgid "  -P, --progress                  show progress information\n"
+msgstr "  -P, --progress                  მიმდინარეობის ინფორმაციის ჩვენება\n"
+
+#: pg_amcheck.c:1177
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   დამატებითი ინფორმაციის გამოტანა\n"
+
+#: pg_amcheck.c:1178
+#, c-format
+msgid ""
+"  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
+
+#: pg_amcheck.c:1179
+#, c-format
+msgid "      --install-missing           install missing extensions\n"
+msgstr "      --install-missing           ნაკლული გაფართოებების დაყენება\n"
+
+#: pg_amcheck.c:1180
+#, c-format
+msgid "  -?, --help                      show this help, then exit\n"
+msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
+
+#: pg_amcheck.c:1182
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"შეცდომების შესახებ მიწერეთ: %s\n"
+
+#: pg_amcheck.c:1183
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s-ის საწყისი გვერდია: <%s>\n"
+
+#: pg_amcheck.c:1236
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
+msgstr "%*s/%s ურთიერთობა (%d%%), %*s/%s გვერდი (%d%%) %*s"
+
+#: pg_amcheck.c:1247
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
+msgstr "%*s/%s ურთიერთობა(%d%%), %*s/%s გვერდი (%d%%) (%s%-*.*s)"
+
+#: pg_amcheck.c:1262
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
+msgstr "%*s/%s ურთიერთობა (%d%%), %*s/%s გვერდი (%d%%)"
+
+#: pg_amcheck.c:1321 pg_amcheck.c:1354
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "არასწორი სრული სახელი (ძალიან ბევრი წერტილიანი სახელი): %s"
+
+#: pg_amcheck.c:1399
+#, c-format
+msgid "improper relation name (too many dotted names): %s"
+msgstr "ურთიერთობის არასწორი სახელი (ძალიან ბევრი წერტილიანი სახელი): %s"
+
+#: pg_amcheck.c:1552 pg_amcheck.c:1691
+#, c-format
+msgid "including database \"%s\""
+msgstr "არასწორი საქაღალდე \"%s\""
+
+#: pg_amcheck.c:1673
+#, c-format
+msgid "internal error: received unexpected database pattern_id %d"
+msgstr "შიდა შეცდომა: მიღებულა ბაზის მოულოდნელი შაბლონის_id: %d"
+
+#: pg_amcheck.c:1675
+#, c-format
+msgid "no connectable databases to check matching \"%s\""
+msgstr "\"%s\"-ის დამთხვევის შესამოწმებლად მიერთებადი ბაზა არ არსებობს"
+
+#: pg_amcheck.c:2133
+#, c-format
+msgid "internal error: received unexpected relation pattern_id %d"
+msgstr "შიდა შეცდომა: მიღებულა ურთიერთობის მოულოდნელი შაბლონის_id: %d"

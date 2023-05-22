@@ -4,9 +4,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpglib (PostgreSQL 15)\n"
+"Project-Id-Version: ecpglib (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:16+0900\n"
+"POT-Creation-Date: 2022-07-14 10:48+0900\n"
 "PO-Revision-Date: 2019-06-11 09:04+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: connect.c:237
+#: connect.c:243
 msgid "empty message text"
 msgstr "メッセージテキストが空です"
 
-#: connect.c:404 connect.c:633
+#: connect.c:410 connect.c:675
 msgid "<DEFAULT>"
 msgstr "<デフォルト>"
 
-#: descriptor.c:871 misc.c:119
+#: descriptor.c:876 misc.c:119
 msgid "NULL"
 msgstr "ヌル"
 
@@ -111,7 +111,7 @@ msgstr "行番号%dにおいて、変数は配列型ではありません"
 #: error.c:123
 #, c-format
 msgid "data read from server is not an array on line %d"
-msgstr "行番号%dにおいて、サーバから読み込んだデータは配列ではありません"
+msgstr "行番号%dにおいて、サーバーから読み込んだデータは配列ではありません"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:130
@@ -185,15 +185,15 @@ msgstr "行番号%2$dにおいて、データベース\"%1$s\"に接続できま
 msgid "SQL error %d on line %d"
 msgstr "行番号%2$dにおいて、SQLエラー%1$dがあります"
 
-#: error.c:254
+#: error.c:253
 msgid "the connection to the server was lost"
-msgstr "サーバへの接続が切れました"
+msgstr "サーバーへの接続が切れました"
 
-#: error.c:346
+#: error.c:345
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQLエラー: %s\n"
 
-#: execute.c:2195 execute.c:2202
+#: execute.c:2188 execute.c:2195
 msgid "<empty>"
 msgstr "<空>"

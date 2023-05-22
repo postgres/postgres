@@ -1,0 +1,505 @@
+# Georgian message translation file for plpython
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the plpython (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plpython (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-07-02 04:38+0000\n"
+"PO-Revision-Date: 2022-09-25 19:18+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1.1\n"
+
+#: plpy_cursorobject.c:72
+#, c-format
+msgid "plpy.cursor expected a query or a plan"
+msgstr "plpy.cursor გეგმას ან მოთხოვნას მოელოდა"
+
+#: plpy_cursorobject.c:155
+#, c-format
+msgid "plpy.cursor takes a sequence as its second argument"
+msgstr "plpy.cursor მეორე არგუმენტად მიმდევრობას იღებს"
+
+#: plpy_cursorobject.c:171 plpy_spi.c:205
+#, c-format
+msgid "could not execute plan"
+msgstr "გეგმის შესრულება ვერ მოხერხდა"
+
+#: plpy_cursorobject.c:174 plpy_spi.c:208
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "მოველოდი %d არგუმენტის მიმდევრობას. მივიღე %d: %s"
+msgstr[1] "მოველოდი %d არგუმენტის მიმდევრობას. მივიღე %d: %s"
+
+#: plpy_cursorobject.c:321
+#, c-format
+msgid "iterating a closed cursor"
+msgstr "დახურული კურსორის იტერაცია"
+
+#: plpy_cursorobject.c:329 plpy_cursorobject.c:395
+#, c-format
+msgid "iterating a cursor in an aborted subtransaction"
+msgstr "კურსორის იტერაცია გაუქმებულ ტრანზაქციაში"
+
+#: plpy_cursorobject.c:387
+#, c-format
+msgid "fetch from a closed cursor"
+msgstr "დახურული კურსორიდან გამოთხოვა"
+
+#: plpy_cursorobject.c:430 plpy_spi.c:401
+#, c-format
+msgid "query result has too many rows to fit in a Python list"
+msgstr ""
+"მოთხოვნის პასუხს Python-ის სიაში ჩასატევად მეტისმეტად ბევრი მწკრივი გააჩნია"
+
+#: plpy_cursorobject.c:482
+#, c-format
+msgid "closing a cursor in an aborted subtransaction"
+msgstr "გაუქმებულ ქვეტრანზაქციაში კურსორის დახურვა"
+
+#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:530
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpy_exec.c:139
+#, c-format
+msgid "unsupported set function return mode"
+msgstr "სეტების დამბრუნებელი ფუნქციის მხარდაუჭერელი რეჟიმი"
+
+#: plpy_exec.c:140
+#, c-format
+msgid ""
+"PL/Python set-returning functions only support returning one value per call."
+msgstr ""
+"PL/Python -ის ფუნქციებს, რომლების სეტებს აბრუნებენ, თითოეულ გამოძახებაზე "
+"მხოლოდ ერთი მნიშვნელობის მხარდაჭერა გააჩნიათ."
+
+#: plpy_exec.c:153
+#, c-format
+msgid "returned object cannot be iterated"
+msgstr "დაბრუნებული ობიექტის იტერაცია შეუძლებელია"
+
+#: plpy_exec.c:154
+#, c-format
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr ""
+"PL/Python-ის ფუნქციებმა, რომლებიც სეტებს აბრუნებენ, იტერირებადი ობიექტი უნდა "
+"დააბრუნონ."
+
+#: plpy_exec.c:168
+#, c-format
+msgid "error fetching next item from iterator"
+msgstr "იტერატორიდან შემდეგი ჩანაწერის მოთხოვის შეცდომა"
+
+#: plpy_exec.c:211
+#, c-format
+msgid "PL/Python procedure did not return None"
+msgstr "PL/Python -ის პროცედურამ None არ დააბრუნა"
+
+#: plpy_exec.c:215
+#, c-format
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "PL/Python -ის ფუნქციამ, რომელიც აბრუნებს ტიპს \"void\", რაღაც დააბრუნა"
+
+#: plpy_exec.c:369 plpy_exec.c:395
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "ტრიგერის პროცედურის მოულოდნელი დაბრუნებული მნიშვნელობა"
+
+#: plpy_exec.c:370
+#, c-format
+msgid "Expected None or a string."
+msgstr "ველოდებოდი არაფერს ან სტრიქონს."
+
+#: plpy_exec.c:385
+#, c-format
+msgid ""
+"PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr ""
+"PL/Python -ის ტრიგერმა ფუნქციამ DELETE ტრიგერში \"MODIFY\" დააბრუნა. -- "
+"იგნორირებულია"
+
+#: plpy_exec.c:396
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "მოსალოდნელია არცერთი, \"OK\", \"SKIP\", ან \"MODIFY\"."
+
+#: plpy_exec.c:441
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "PyList_SetItem() -ის შეცდომა არგუმენტების მორგებისას"
+
+#: plpy_exec.c:445
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "PyDict_SetItemString() -ის შეცდომა არგუმენტების მორგებისას"
+
+#: plpy_exec.c:457
+#, c-format
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"ფუნქცია, რომელიც ჩანაწერს აბრუნებს, გამოძახებულია კონტექსტში, რომელსაც "
+"ჩანაწერის მიღება არ შეუძლია"
+
+#: plpy_exec.c:674
+#, c-format
+msgid "while creating return value"
+msgstr "დასაბრუნებელი მნიშვნელობის შექმნისას"
+
+#: plpy_exec.c:908
+#, c-format
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"] წაშლილია, მწკრივის შეცვლა შეუძლებელია"
+
+#: plpy_exec.c:913
+#, c-format
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] ლექსიკონი არაა"
+
+#: plpy_exec.c:938
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr ""
+"TD[\"new\"] ლექსიკონის გასაღები ორდინალურ მდებარეობაზე %d სტრიქონს არ "
+"წარმოადგენს"
+
+#: plpy_exec.c:945
+#, c-format
+msgid ""
+"key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
+"row"
+msgstr ""
+"\"TD[\"new\"]-ში ნაპოვნი გასაღები (%s) დამატრიგერებელი მწკრივის სვეტად არ "
+"არსებობს"
+
+#: plpy_exec.c:950
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "სისტემური ატრიბუტის დაყენების შეცდომა: \"%s\""
+
+#: plpy_exec.c:955
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "გენერირებული სვეტის დაყენება შეუძლებელია: %s"
+
+#: plpy_exec.c:1013
+#, c-format
+msgid "while modifying trigger row"
+msgstr "ტრიგერის მწკრივის შეცვლისას"
+
+#: plpy_exec.c:1071
+#, c-format
+msgid "forcibly aborting a subtransaction that has not been exited"
+msgstr "ქვეტრანზაქცია, რომელიც ჯერ არ დასრულებულა, ძალით დასრულდება"
+
+#: plpy_main.c:111
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "სესია Python-ის ერთზე მეტ ბიბლიოთეკას შეიცავს"
+
+#: plpy_main.c:112
+#, c-format
+msgid "Only one Python major version can be used in one session."
+msgstr ""
+"ერთ სესიაში Python-ის მხოლოდ ერთი ძირითადი ვერსია შეგიძლიათ გამოიყენოთ."
+
+#: plpy_main.c:124
+#, c-format
+msgid "untrapped error in initialization"
+msgstr "დაუჭერელი შეცდომა ინიციალიზაციისას"
+
+#: plpy_main.c:147
+#, c-format
+msgid "could not import \"__main__\" module"
+msgstr "\"__main__\" მოდულის შემოტანის შეცდომა"
+
+#: plpy_main.c:156
+#, c-format
+msgid "could not initialize globals"
+msgstr "გლობალების ინიციალიზაციის შეცდომა"
+
+#: plpy_main.c:354
+#, c-format
+msgid "PL/Python procedure \"%s\""
+msgstr "PL/Python -ის პროცედურა \"%s\""
+
+#: plpy_main.c:357
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "PL/Python -ის ფუნქცია \"%s\""
+
+#: plpy_main.c:365
+#, c-format
+msgid "PL/Python anonymous code block"
+msgstr "PL/Python -ის ანონიმური კოდის ბლოკი"
+
+#: plpy_plpymodule.c:168 plpy_plpymodule.c:171
+#, c-format
+msgid "could not import \"plpy\" module"
+msgstr "\"plpy\" მოდულის შემოტანის შეცდომა"
+
+#: plpy_plpymodule.c:182
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "spiexceptions მოდულის შექმნის შეცდომა"
+
+#: plpy_plpymodule.c:190
+#, c-format
+msgid "could not add the spiexceptions module"
+msgstr "spiexceptions მოდულის დამატების შეცდომა"
+
+#: plpy_plpymodule.c:257
+#, c-format
+msgid "could not generate SPI exceptions"
+msgstr "\"SPI\" გამონაკლისების გენერაციის შეცდომა"
+
+#: plpy_plpymodule.c:425
+#, c-format
+msgid "could not unpack arguments in plpy.elog"
+msgstr "plpy.elog-ში არგუმენტების გაშლის შეცდომა"
+
+#: plpy_plpymodule.c:434
+msgid "could not parse error message in plpy.elog"
+msgstr "plpy.elog-ში შეცდომის შეტყობინების დამუშავების შეცდომა"
+
+#: plpy_plpymodule.c:451
+#, c-format
+msgid "argument 'message' given by name and position"
+msgstr "არგუმენტი 'message', მოცემული სახელითა მდებარეობით"
+
+#: plpy_plpymodule.c:478
+#, c-format
+msgid "'%s' is an invalid keyword argument for this function"
+msgstr "%s ამ ფუნქციის არასწორი არგუმენტია"
+
+#: plpy_plpymodule.c:489 plpy_plpymodule.c:495
+#, c-format
+msgid "invalid SQLSTATE code"
+msgstr "არასწორი SQLSTATE კოდი"
+
+#: plpy_procedure.c:225
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "ტრიგერის ფუნქციების გამოძახება მხოლოდ ტრიგერებად შეიძლება"
+
+#: plpy_procedure.c:229
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "PL/Python ფუნქციებს ამ ტიპის დაბრუნება არ შეუძლიათ: %s"
+
+#: plpy_procedure.c:307
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "PL/Python ფუნქციებს ამ ტიპის მიღება არ შეუძლიათ: %s"
+
+#: plpy_procedure.c:397
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "\"PL/Python\"-ის ფუნქციის კომპილაციის შეცდომა: \"%s\""
+
+#: plpy_procedure.c:400
+#, c-format
+msgid "could not compile anonymous PL/Python code block"
+msgstr "\"PL/Python\"-ის კოდის ანონიმური ბლოკის კომპილაციის შეცდომა"
+
+#: plpy_resultobject.c:117 plpy_resultobject.c:143 plpy_resultobject.c:169
+#, c-format
+msgid "command did not produce a result set"
+msgstr "ბრძანებამ შედეგი არ გამოიღო"
+
+#: plpy_spi.c:56
+#, c-format
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "plpy.prepare -ის მეორე არგუმენტი მიმდევრობა უნდა იყოს"
+
+#: plpy_spi.c:98
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr ""
+"plpy.prepare: ტიპის სახელი ორდინალურ მდგომარეობაში %d სტრიქონს არ წარმოადგენს"
+
+#: plpy_spi.c:170
+#, c-format
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute გეგმას ან მოთხოვნას მოელოდა"
+
+#: plpy_spi.c:189
+#, c-format
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute მეორე არგუმენტად მიმდევრობას იღებს"
+
+#: plpy_spi.c:297
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "SPI_execute_plan -ის შეცდომა: %s"
+
+#: plpy_spi.c:339
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "SPI_execute -ის შეცდომა: %s"
+
+#: plpy_subxactobject.c:92
+#, c-format
+msgid "this subtransaction has already been entered"
+msgstr "ეს ქვეტრანზაქცია უკვე დაიწყო"
+
+#: plpy_subxactobject.c:98 plpy_subxactobject.c:156
+#, c-format
+msgid "this subtransaction has already been exited"
+msgstr "ეს ქვეტრანზაქცია უკვე დასრულდა"
+
+#: plpy_subxactobject.c:150
+#, c-format
+msgid "this subtransaction has not been entered"
+msgstr "ეს ქვეტრანზაქცია არ დაწყებულა"
+
+#: plpy_subxactobject.c:162
+#, c-format
+msgid "there is no subtransaction to exit from"
+msgstr "გამოსასვლელი ქვეტრანზაქციები არ არსებობს"
+
+#: plpy_typeio.c:587
+#, c-format
+msgid "could not import a module for Decimal constructor"
+msgstr "ათობითი კონსტრუქტორისთვის მოდულის შემოტანის პრობლემა"
+
+#: plpy_typeio.c:591
+#, c-format
+msgid "no Decimal attribute in module"
+msgstr "მოდულს ათობითს ატრიბუტი არ გააჩნია"
+
+#: plpy_typeio.c:597
+#, c-format
+msgid "conversion from numeric to Decimal failed"
+msgstr "რიცხვითიდან ათობითში გადაყვანის შეცდომა"
+
+#: plpy_typeio.c:911
+#, c-format
+msgid "could not create bytes representation of Python object"
+msgstr "\"Python\"-ის ობექტის ბაიტების რეპრეზენტაციის შექმნის შეცდომა"
+
+#: plpy_typeio.c:1048
+#, c-format
+msgid "could not create string representation of Python object"
+msgstr "\"Python\"-ის ობექტის სტრიქონების რეპრეზენტაციის შექმნის შეცდომა"
+
+#: plpy_typeio.c:1059
+#, c-format
+msgid ""
+"could not convert Python object into cstring: Python string representation "
+"appears to contain null bytes"
+msgstr ""
+"შეცდომა Python-ის ობიექტის cstring-ში გადაყვანისას: Python-ის სტრიქონის "
+"გამოხატულება ნულოვან ბაიტებს შეიცავს"
+
+#: plpy_typeio.c:1170
+#, c-format
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "მასივის ზომების რაოდენობა მაქსიმუმ დასაშვებზე (%d) დიდია"
+
+#: plpy_typeio.c:1175
+#, c-format
+msgid "could not determine sequence length for function return value"
+msgstr ""
+"ფუნქციის დაბრუნებული მნიშვნელობის მიმდევრობის სიგრძის განსაზღვრა შეუძლებელია"
+
+#: plpy_typeio.c:1180 plpy_typeio.c:1186
+#, c-format
+msgid "array size exceeds the maximum allowed"
+msgstr "მასივის ზომა მაქსიმალურ დასაშვებს აჭარბებს"
+
+#: plpy_typeio.c:1214
+#, c-format
+msgid ""
+"return value of function with array return type is not a Python sequence"
+msgstr ""
+"ფუნქციის დაბრულების მნიშვნელობა მასივის დაბრუნების ტიპით Python-ის "
+"მიმდევრობა არაა"
+
+#: plpy_typeio.c:1261
+#, c-format
+msgid "wrong length of inner sequence: has length %d, but %d was expected"
+msgstr "შიდა მიმდევრობის არასწორი სიგრძე: სიგრძე: %d. უნდა იყოს: %d"
+
+#: plpy_typeio.c:1263
+#, c-format
+msgid ""
+"To construct a multidimensional array, the inner sequences must all have the "
+"same length."
+msgstr ""
+"მრავალგანზომილებიანი მასივის ასაშენებლად ყველა შიდა მიმდევრობის სიგრძე ტოლი "
+"უნდა იყოს."
+
+#: plpy_typeio.c:1342
+#, c-format
+msgid "malformed record literal: \"%s\""
+msgstr "ჩანაწერის არასწორი სტრიქონი: %s"
+
+#: plpy_typeio.c:1343
+#, c-format
+msgid "Missing left parenthesis."
+msgstr "აკლია მარჯვენა ფრჩხილი."
+
+#: plpy_typeio.c:1344 plpy_typeio.c:1545
+#, c-format
+msgid ""
+"To return a composite type in an array, return the composite type as a "
+"Python tuple, e.g., \"[('foo',)]\"."
+msgstr ""
+"მასივში კომპოზიტური ტიპის დასაბრუნებლად კომპოზიტური ტიპი, როგორც Python-ის "
+"კოლაჟი, ისე დააბრუნეთ. მაგ: \"[('foo',)]\"."
+
+#: plpy_typeio.c:1391
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "ბმაში გასაღები %s ნაპოვნი არაა"
+
+#: plpy_typeio.c:1392
+#, c-format
+msgid ""
+"To return null in a column, add the value None to the mapping with the key "
+"named after the column."
+msgstr ""
+"სვეტში ნულის დასაბრუნებლად ამ სვეტის სახელის მქონე გასაღების მიბმას "
+"მნიშვნელობა None დაამატეთ."
+
+#: plpy_typeio.c:1445
+#, c-format
+msgid "length of returned sequence did not match number of columns in row"
+msgstr ""
+"დაბრუნებული მიმდევრობის სიგრძე მწკრივში სვეტების რაოდენობას არ ემთხვევა"
+
+#: plpy_typeio.c:1543
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "ატრიბუტი \"%s\" Python -ის ობიექტში არ არსებობს"
+
+#: plpy_typeio.c:1546
+#, c-format
+msgid ""
+"To return null in a column, let the returned object have an attribute named "
+"after column with value None."
+msgstr ""
+"სვეტში ნულის დასაბრუნებლად დასაბრუნებელ ობიექტს მიანიჭეთ სვეტის სახელის "
+"მქონე ატრიბუტი , მნიშვნელობით \"None\"."
+
+#: plpy_util.c:31
+#, c-format
+msgid "could not convert Python Unicode object to bytes"
+msgstr "\"Python Unicode\" ტიპის ობიექტის ბაიტებად გარდაქმნის შეცდომა"
+
+#: plpy_util.c:37
+#, c-format
+msgid "could not extract bytes from encoded string"
+msgstr "ბაიტების ამოღების შეცდომა კოდირებული სტრიქონიდან"

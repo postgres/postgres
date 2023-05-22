@@ -2,14 +2,14 @@
 # Copyright (C) 2014 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
-# Dennis Björklund <db@zigo.dhs.org> 2017, 2018, 2019, 2020, 2021, 2022.
+# Dennis Björklund <db@zigo.dhs.org> 2017, 2018, 2019, 2020, 2021, 2022, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-04-11 13:38+0000\n"
-"PO-Revision-Date: 2022-04-11 16:03+0200\n"
+"PO-Revision-Date: 2023-03-09 22:40+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -164,7 +164,7 @@ msgstr "kunde inte hämta $_TD"
 #: plperl.c:2302 plperl.c:2365
 #, c-format
 msgid "didn't get a return item from trigger function"
-msgstr "fick inget returvärde från utlösarfunktion"
+msgstr "fick inget returvärde från triggerfunktion"
 
 #: plperl.c:2423
 #, c-format

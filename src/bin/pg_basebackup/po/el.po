@@ -1,0 +1,1839 @@
+# Greek message translation file for pg_basebackup
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_basebackup (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_basebackup (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-04-12 16:47+0000\n"
+"PO-Revision-Date: 2023-04-14 10:40+0200\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "σφάλμα: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "προειδοποίηση: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "λεπτομέρεια: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "υπόδειξη: "
+
+#: ../../common/compression.c:130 ../../common/compression.c:139
+#: ../../common/compression.c:148
+#, c-format
+msgid "this build does not support compression with %s"
+msgstr "η παρούσα κατασκευή δεν υποστηρίζει συμπίεση με %s"
+
+#: ../../common/compression.c:203
+msgid "found empty string where a compression option was expected"
+msgstr "βρέθηκε κενή συμβολοσειρά όπου αναμενόταν μια επιλογή συμπίεσης"
+
+#: ../../common/compression.c:237
+#, c-format
+msgid "unrecognized compression option: \"%s\""
+msgstr "μη αναγνωρίσιμη παράμετρος συμπίεσης: «%s»"
+
+#: ../../common/compression.c:276
+#, c-format
+msgid "compression option \"%s\" requires a value"
+msgstr "η επιλογή συμπίεσης «%s» απαιτεί τιμή"
+
+#: ../../common/compression.c:285
+#, c-format
+msgid "value for compression option \"%s\" must be an integer"
+msgstr "η τιμή της επιλογής συμπίεσης «%s» πρέπει να είναι ακέραια"
+
+#: ../../common/compression.c:335
+#, c-format
+msgid "compression algorithm \"%s\" does not accept a compression level"
+msgstr "ο αλγόριθμος συμπίεσης «%s» δεν δέχεται επίπεδο συμπίεσης"
+
+#: ../../common/compression.c:342
+#, c-format
+msgid "compression algorithm \"%s\" expects a compression level between %d and %d (default at %d)"
+msgstr "ο αλγόριθμος συμπίεσης «%s» αναμένει ένα επίπεδο συμπίεσης μεταξύ %d και %d (προεπιλογμένο %d)"
+
+#: ../../common/compression.c:353
+#, c-format
+msgid "compression algorithm \"%s\" does not accept a worker count"
+msgstr "ο αλγόριθμος συμπίεσης «%s» δεν δέχεται μέγεθος εργατών"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#, c-format
+msgid "out of memory\n"
+msgstr "έλλειψη μνήμης\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "δεν ήταν δυνατή η αντιγραφή δείκτη null (εσωτερικό σφάλμα)\n"
+
+#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
+#: pg_receivewal.c:380 pg_recvlogical.c:341
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο «%s»: %m"
+
+#: ../../common/file_utils.c:166 pg_receivewal.c:303
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
+
+#: ../../common/file_utils.c:200 pg_receivewal.c:532
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου «%s»: %m"
+
+#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
+#: ../../common/file_utils.c:365 ../../fe_utils/recovery_gen.c:121
+#: pg_receivewal.c:447
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
+
+#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
+#: pg_recvlogical.c:196
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής fsync στο αρχείο «%s»: %m"
+
+#: ../../common/file_utils.c:383 pg_basebackup.c:2266 walmethods.c:459
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "δεν ήταν δυνατή η μετονομασία του αρχείου «%s» σε «%s»: %m"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "μη έγκυρη τιμή  «%s» για την επιλογή %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s πρέπει να βρίσκεται εντός εύρους %d..%d"
+
+#: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
+#: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
+#: ../../fe_utils/recovery_gen.c:149 pg_basebackup.c:1646
+#, c-format
+msgid "out of memory"
+msgstr "έλλειψη μνήμης"
+
+#: ../../fe_utils/recovery_gen.c:124 bbstreamer_file.c:121
+#: bbstreamer_file.c:258 pg_basebackup.c:1443 pg_basebackup.c:1737
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εγγραφή στο αρχείο «%s»: %m"
+
+#: ../../fe_utils/recovery_gen.c:133 bbstreamer_file.c:93 bbstreamer_file.c:339
+#: pg_basebackup.c:1507 pg_basebackup.c:1716
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η δημιουργία αρχείου «%s»: %m"
+
+#: bbstreamer_file.c:138 pg_recvlogical.c:635
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου «%s»: %m"
+
+#: bbstreamer_file.c:275
+#, c-format
+msgid "unexpected state while extracting archive"
+msgstr "μη αναμενόμενη κατάσταση κατά την εξαγωγή αρχειοθήκης"
+
+#: bbstreamer_file.c:298 pg_basebackup.c:696 pg_basebackup.c:740
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου «%s»: %m"
+
+#: bbstreamer_file.c:304
+#, c-format
+msgid "could not set permissions on directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση δικαιωμάτων του καταλόγου «%s»: %m"
+
+#: bbstreamer_file.c:323
+#, c-format
+msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
+msgstr "δεν ήταν δυνατή η δημιουργία συμβολικού συνδέσμου από «%s» σε «%s»: %m"
+
+#: bbstreamer_file.c:343
+#, c-format
+msgid "could not set permissions on file \"%s\": %m"
+msgstr "δεν ήταν δυνατός ο ορισμός δικαιωμάτων στο αρχείο «%s»: %m"
+
+#: bbstreamer_gzip.c:95
+#, c-format
+msgid "could not create compressed file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η δημιουργία συμπιεσμένου αρχείου «%s»: %m"
+
+#: bbstreamer_gzip.c:103
+#, c-format
+msgid "could not duplicate stdout: %m"
+msgstr "δεν ήταν δυνατή η αναπαραγωγή τυπικής εξόδου: %m"
+
+#: bbstreamer_gzip.c:107
+#, c-format
+msgid "could not open output file: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου εξόδου %m"
+
+#: bbstreamer_gzip.c:111
+#, c-format
+msgid "could not set compression level %d: %s"
+msgstr "δεν ήταν δυνατή η ρύθμιση επιπέδου συμπίεσης %d: %s"
+
+#: bbstreamer_gzip.c:116 bbstreamer_gzip.c:249
+#, c-format
+msgid "this build does not support gzip compression"
+msgstr "η παρούσα κατασκευή δεν υποστηρίζει συμπίεση gzip"
+
+#: bbstreamer_gzip.c:143
+#, c-format
+msgid "could not write to compressed file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η εγγραφή σε συμπιεσμένο αρχείο «%s»: %s"
+
+#: bbstreamer_gzip.c:167
+#, c-format
+msgid "could not close compressed file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του συμπιεσμένου αρχείου «%s»: %m"
+
+#: bbstreamer_gzip.c:245 walmethods.c:869
+#, c-format
+msgid "could not initialize compression library"
+msgstr "δεν ήταν δυνατή η αρχικοποίηση της βιβλιοθήκης συμπίεσης"
+
+#: bbstreamer_gzip.c:296 bbstreamer_lz4.c:354 bbstreamer_zstd.c:316
+#, c-format
+msgid "could not decompress data: %s"
+msgstr "δεν ήταν δυνατή η αποσυμπίεση δεδομένων: %s"
+
+#: bbstreamer_inject.c:189
+#, c-format
+msgid "unexpected state while injecting recovery settings"
+msgstr "απροσδόκητη κατάσταση κατά την έγχυση ρυθμίσεων αποκατάστασης"
+
+#: bbstreamer_lz4.c:95
+#, c-format
+msgid "could not create lz4 compression context: %s"
+msgstr "δεν ήταν δυνατή η δημιουργία lz4 περιεχομένου συμπίεσης: %s"
+
+#: bbstreamer_lz4.c:100 bbstreamer_lz4.c:298
+#, c-format
+msgid "this build does not support lz4 compression"
+msgstr "η παρούσα κατασκευή δεν υποστηρίζει συμπίεση lz4"
+
+#: bbstreamer_lz4.c:140
+#, c-format
+msgid "could not write lz4 header: %s"
+msgstr "δεν ήταν δυνατή η εγγραφή κεφαλίδας lz4: %s"
+
+#: bbstreamer_lz4.c:189 bbstreamer_zstd.c:168 bbstreamer_zstd.c:210
+#, c-format
+msgid "could not compress data: %s"
+msgstr "δεν ήταν δυνατή η συμπίεση δεδομένων: %s"
+
+#: bbstreamer_lz4.c:241
+#, c-format
+msgid "could not end lz4 compression: %s"
+msgstr "δεν ήταν δυνατός ο τερματισμός συμπίεσης lz4: %s"
+
+#: bbstreamer_lz4.c:293
+#, c-format
+msgid "could not initialize compression library: %s"
+msgstr "δεν ήταν δυνατή η αρχικοποίηση της βιβλιοθήκης συμπίεσης: %s"
+
+#: bbstreamer_tar.c:244
+#, c-format
+msgid "tar file trailer exceeds 2 blocks"
+msgstr "το αρχείο tar υπερβαίνει τα 2 μπλοκ"
+
+#: bbstreamer_tar.c:249
+#, c-format
+msgid "unexpected state while parsing tar archive"
+msgstr "μη αναμενόμενη κατάσταση κατά την ανάλυση αρχειοθήκης tar"
+
+#: bbstreamer_tar.c:296
+#, c-format
+msgid "tar member has empty name"
+msgstr "το μέλος tar έχει κενό όνομα"
+
+#: bbstreamer_tar.c:328
+#, c-format
+msgid "COPY stream ended before last file was finished"
+msgstr "η ροή COPY τερματίστηκε πριν ολοκληρωθεί το τελευταίο αρχείο"
+
+#: bbstreamer_zstd.c:85
+#, c-format
+msgid "could not create zstd compression context"
+msgstr "δεν ήταν δυνατή η δημιουργία zstd περιεχομένου συμπίεσης"
+
+#: bbstreamer_zstd.c:91
+#, c-format
+msgid "could not set zstd compression level to %d: %s"
+msgstr "δεν ήταν δυνατή η ρύθμιση επιπέδου συμπίεσης zstd σε %d: %s"
+
+#: bbstreamer_zstd.c:105
+#, c-format
+msgid "could not set compression worker count to %d: %s"
+msgstr "δεν ήταν δυνατή η ρύθμιση αριθμού εργατών συμπίεσης %d: %s"
+
+#: bbstreamer_zstd.c:116 bbstreamer_zstd.c:271
+#, c-format
+msgid "this build does not support zstd compression"
+msgstr "η παρούσα κατασκευή δεν υποστηρίζει συμπίεση zstd"
+
+#: bbstreamer_zstd.c:262
+#, c-format
+msgid "could not create zstd decompression context"
+msgstr "δεν ήταν δυνατή η δημιουργία zstd περιεχομένου αποσυμπίεσης"
+
+#: pg_basebackup.c:240
+#, c-format
+msgid "removing data directory \"%s\""
+msgstr "αφαιρείται ο κατάλογος δεδομένων «%s»"
+
+#: pg_basebackup.c:242
+#, c-format
+msgid "failed to remove data directory"
+msgstr "απέτυχε η αφαίρεση καταλόγου δεδομένων"
+
+#: pg_basebackup.c:246
+#, c-format
+msgid "removing contents of data directory \"%s\""
+msgstr "αφαιρούνται περιεχόμενα του καταλόγου δεδομένων «%s»"
+
+#: pg_basebackup.c:248
+#, c-format
+msgid "failed to remove contents of data directory"
+msgstr "απέτυχε η αφαίρεση περιεχομένων του καταλόγου δεδομένων"
+
+#: pg_basebackup.c:253
+#, c-format
+msgid "removing WAL directory \"%s\""
+msgstr "αφαίρεση καταλόγου WAL «%s»"
+
+#: pg_basebackup.c:255
+#, c-format
+msgid "failed to remove WAL directory"
+msgstr "απέτυχε η αφαίρεση καταλόγου WAL"
+
+#: pg_basebackup.c:259
+#, c-format
+msgid "removing contents of WAL directory \"%s\""
+msgstr "αφαιρούνται τα περιεχόμενα του καταλόγου WAL «%s»"
+
+#: pg_basebackup.c:261
+#, c-format
+msgid "failed to remove contents of WAL directory"
+msgstr "απέτυχε η αφαίρεση περιεχόμενων του καταλόγου WAL"
+
+#: pg_basebackup.c:267
+#, c-format
+msgid "data directory \"%s\" not removed at user's request"
+msgstr "ο κατάλογος δεδομένων «%s» δεν αφαιρείται κατα απαίτηση του χρήστη"
+
+#: pg_basebackup.c:270
+#, c-format
+msgid "WAL directory \"%s\" not removed at user's request"
+msgstr "κατάλογος WAL «%s» δεν αφαιρέθηκε κατά απαίτηση του χρήστη"
+
+#: pg_basebackup.c:274
+#, c-format
+msgid "changes to tablespace directories will not be undone"
+msgstr "οι αλλαγές στους καταλόγους πινακοχώρων δεν θα αναιρεθούν"
+
+#: pg_basebackup.c:326
+#, c-format
+msgid "directory name too long"
+msgstr "πολύ μακρύ όνομα καταλόγου"
+
+#: pg_basebackup.c:333
+#, c-format
+msgid "multiple \"=\" signs in tablespace mapping"
+msgstr "πολλαπλά σύμβολα \"=\" στην αντιστοίχιση πινακοχώρου"
+
+#: pg_basebackup.c:342
+#, c-format
+msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
+msgstr "μη έγκυρη μορφή αντιστοίχισης πινακοχώρου «%s», πρέπει να είναι «OLDDIR=NEWDIR»"
+
+#: pg_basebackup.c:361
+#, c-format
+msgid "old directory is not an absolute path in tablespace mapping: %s"
+msgstr "ο παλιός κατάλογος δεν είναι απόλυτη διαδρομή στην αντιστοίχιση πινακοχώρου: %s"
+
+#: pg_basebackup.c:365
+#, c-format
+msgid "new directory is not an absolute path in tablespace mapping: %s"
+msgstr "ο νέος κατάλογος δεν είναι μια απόλυτη διαδρομή στην αντιστοίχιση πινακοχώρου: %s"
+
+#: pg_basebackup.c:387
+#, c-format
+msgid ""
+"%s takes a base backup of a running PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s λαμβάνει ένα αντίγραφο ασφαλείας βάσης ενός διακομιστή PostgreSQL που εκτελείται.\n"
+"\n"
+
+#: pg_basebackup.c:389 pg_receivewal.c:81 pg_recvlogical.c:78
+#, c-format
+msgid "Usage:\n"
+msgstr "Χρήση:\n"
+
+#: pg_basebackup.c:390 pg_receivewal.c:82 pg_recvlogical.c:79
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]...\n"
+
+#: pg_basebackup.c:391
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output:\n"
+msgstr ""
+"\n"
+"Επιλογές που ελέγχουν το περιεχόμενο εξόδου:\n"
+
+#: pg_basebackup.c:392
+#, c-format
+msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
+msgstr "  -D, --pgdata=DIRECTORY λάβε το αντίγραφο ασφαλείας βάσης στον κατάλογο\n"
+
+#: pg_basebackup.c:393
+#, c-format
+msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
+msgstr "  -F, --format=p|t       μορφή εξόδου (απλή (προεπιλογή), tar)\n"
+
+#: pg_basebackup.c:394
+#, c-format
+msgid ""
+"  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
+"                         (in kB/s, or use suffix \"k\" or \"M\")\n"
+msgstr ""
+"  -r, --max-rate=RATE    μέγιστος ρυθμός μεταφοράς για τη μεταφορά καταλόγου δεδομένων\n"
+"                         (σε kB/s, ή χρησιμοποιήστε το επίθημα «k» ή «M»)\n"
+
+#: pg_basebackup.c:396
+#, c-format
+msgid ""
+"  -R, --write-recovery-conf\n"
+"                         write configuration for replication\n"
+msgstr ""
+"  -R, --write-recovery-conf\n"
+"                         εγγραφή των ρυθμίσεων αναπαραγωγής\n"
+
+#: pg_basebackup.c:398
+#, c-format
+msgid ""
+"  -t, --target=TARGET[:DETAIL]\n"
+"                         backup target (if other than client)\n"
+msgstr ""
+"  -t, --target=TARGET[:DETAIL]\n"
+"                         προορισμός αντιγράφων ασφαλείας (εάν είναι άλλος από τον πελάτη)\n"
+
+#: pg_basebackup.c:400
+#, c-format
+msgid ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                         relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                         μετακίνησε τον πινακοχώρο από OLDDIR σε NEWDIR\n"
+
+#: pg_basebackup.c:402
+#, c-format
+msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
+msgstr "      --waldir=WALDIR    τοποθεσία για τον κατάλογο write-ahead log\n"
+
+#: pg_basebackup.c:403
+#, c-format
+msgid ""
+"  -X, --wal-method=none|fetch|stream\n"
+"                         include required WAL files with specified method\n"
+msgstr ""
+"  -X, --wal-method=none|fetch|stream\n"
+"                         περιέλαβε τα απαιτούμενα αρχεία WAL με την ορισμένη μέθοδο\n"
+
+#: pg_basebackup.c:405
+#, c-format
+msgid "  -z, --gzip             compress tar output\n"
+msgstr "  -z, --gzip             συμπίεσε την έξοδο tar\n"
+
+#: pg_basebackup.c:406
+#, c-format
+msgid ""
+"  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
+"                         compress on client or server as specified\n"
+msgstr ""
+"  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
+"                         συμπίεσε στον πελάτη ή στον διακομιστή όπως ορίζεται\n"
+
+#: pg_basebackup.c:408
+#, c-format
+msgid "  -Z, --compress=none    do not compress tar output\n"
+msgstr ""
+"  -Z, --compress=none    να μην συμπιέσει την έξοδο tar\n"
+"\n"
+
+#: pg_basebackup.c:409
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"Γενικές επιλογές:\n"
+
+#: pg_basebackup.c:410
+#, c-format
+msgid ""
+"  -c, --checkpoint=fast|spread\n"
+"                         set fast or spread checkpointing\n"
+msgstr ""
+"  -c, --checkpoint=fast|spread\n"
+"                         όρισε fast ή spread λειτουργία λήψης σημείων ελέγχου\n"
+
+#: pg_basebackup.c:412
+#, c-format
+msgid "  -C, --create-slot      create replication slot\n"
+msgstr "  -C, --create-slot      δημιούργησε υποδοχή αναπαραγωγής\n"
+
+#: pg_basebackup.c:413
+#, c-format
+msgid "  -l, --label=LABEL      set backup label\n"
+msgstr "  -l, --label=LABEL      όρισε ετικέτα αντιγράφου ασφαλείας\n"
+
+#: pg_basebackup.c:414
+#, c-format
+msgid "  -n, --no-clean         do not clean up after errors\n"
+msgstr "  -n, --no-clean         να μην καθαριστούν σφάλματα\n"
+
+#: pg_basebackup.c:415
+#, c-format
+msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
+msgstr "  -N, --no-sync          να μην αναμένει την ασφαλή εγγραφή αλλαγών στον δίσκο\n"
+
+#: pg_basebackup.c:416
+#, c-format
+msgid "  -P, --progress         show progress information\n"
+msgstr "  -P, --progress         εμφάνισε πληροφορίες προόδου\n"
+
+#: pg_basebackup.c:417 pg_receivewal.c:91
+#, c-format
+msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
+msgstr "  -S, --slot=SLOTNAME    υποδοχή αναπαραγωγής για χρήση\n"
+
+#: pg_basebackup.c:418 pg_receivewal.c:93 pg_recvlogical.c:100
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose          περιφραστικά μηνύματα εξόδου\n"
+
+#: pg_basebackup.c:419 pg_receivewal.c:94 pg_recvlogical.c:101
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#: pg_basebackup.c:420
+#, c-format
+msgid ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                         use algorithm for manifest checksums\n"
+msgstr ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                         χρησιμοποίησε αυτόν τον αλγόριθμο για τα αθροίσματα ελέγχου διακήρυξης\n"
+
+#: pg_basebackup.c:422
+#, c-format
+msgid ""
+"      --manifest-force-encode\n"
+"                         hex encode all file names in manifest\n"
+msgstr ""
+"      --manifest-force-encode\n"
+"                         χρήση δεκαεξαδικής κωδικοποίησης για όλα\n"
+"                         τα ονόματα αρχείων στη διακήρυξη\n"
+
+#: pg_basebackup.c:424
+#, c-format
+msgid "      --no-estimate-size do not estimate backup size in server side\n"
+msgstr "      --no-estimate-size να μην εκτιμήσει το μέγεθος του αντιγράφου ασφαλείας στην πλευρά του διακομιστή\n"
+
+#: pg_basebackup.c:425
+#, c-format
+msgid "      --no-manifest      suppress generation of backup manifest\n"
+msgstr "      --no-manifest      κατάστειλε τη δημιουργία της διακήρυξης αντιγράφων ασφαλείας\n"
+
+#: pg_basebackup.c:426
+#, c-format
+msgid "      --no-slot          prevent creation of temporary replication slot\n"
+msgstr "      --no-slot          εμπόδισε την δημιουργία προσωρινής υποδοχής αναπαραγωγής\n"
+
+#: pg_basebackup.c:427
+#, c-format
+msgid ""
+"      --no-verify-checksums\n"
+"                         do not verify checksums\n"
+msgstr ""
+"      --no-verify-checksums\n"
+"                         να μην επιβεβαιώσει τα αθροίσματα ελέγχου\n"
+
+#: pg_basebackup.c:429 pg_receivewal.c:97 pg_recvlogical.c:102
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             εμφάνισε αυτό το μήνυμα βοήθειας, μετά έξοδος\n"
+
+#: pg_basebackup.c:430 pg_receivewal.c:98 pg_recvlogical.c:103
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Επιλογές σύνδεσης:\n"
+
+#: pg_basebackup.c:431 pg_receivewal.c:99
+#, c-format
+msgid "  -d, --dbname=CONNSTR   connection string\n"
+msgstr "  -d, --dbname=CONNSTR   συμβολοσειρά σύνδεσης\n"
+
+#: pg_basebackup.c:432 pg_receivewal.c:100 pg_recvlogical.c:105
+#, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME    διακομιστής βάσης δεδομένων ή κατάλογος υποδοχών\n"
+
+#: pg_basebackup.c:433 pg_receivewal.c:101 pg_recvlogical.c:106
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr "  -p, --port=PORT        θύρα διακομιστή βάσης δεδομένων\n"
+
+#: pg_basebackup.c:434
+#, c-format
+msgid ""
+"  -s, --status-interval=INTERVAL\n"
+"                         time between status packets sent to server (in seconds)\n"
+msgstr ""
+"  -s, --status-interval=INTERVAL\n"
+"                         χρόνος μεταξύ αποστολής πακέτων κατάστασης στον διακομιστή (σε δευτερόλεπτα)\n"
+
+#: pg_basebackup.c:436 pg_receivewal.c:102 pg_recvlogical.c:107
+#, c-format
+msgid "  -U, --username=NAME    connect as specified database user\n"
+msgstr "  -U, --username=NAME    σύνδεση ως ο ορισμένος χρήστης βάσης δεδομένων\n"
+
+#: pg_basebackup.c:437 pg_receivewal.c:103 pg_recvlogical.c:108
+#, c-format
+msgid "  -w, --no-password      never prompt for password\n"
+msgstr "  -w, --no-password      να μην ζητείται ποτέ κωδικός πρόσβασης\n"
+
+#: pg_basebackup.c:438 pg_receivewal.c:104 pg_recvlogical.c:109
+#, c-format
+msgid "  -W, --password         force password prompt (should happen automatically)\n"
+msgstr "  -W, --password         αναγκαστική προτροπή κωδικού πρόσβασης (πρέπει να συμβεί αυτόματα)\n"
+
+#: pg_basebackup.c:439 pg_receivewal.c:108 pg_recvlogical.c:110
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
+
+#: pg_basebackup.c:440 pg_receivewal.c:109 pg_recvlogical.c:111
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s αρχική σελίδα: <%s>\n"
+
+#: pg_basebackup.c:482
+#, c-format
+msgid "could not read from ready pipe: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση από έτοιμη pipe: %m"
+
+#: pg_basebackup.c:485 pg_basebackup.c:632 pg_basebackup.c:2180
+#: streamutil.c:444
+#, c-format
+msgid "could not parse write-ahead log location \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση της τοποθεσίας write-ahead log «%s»"
+
+#: pg_basebackup.c:591 pg_receivewal.c:663
+#, c-format
+msgid "could not finish writing WAL files: %m"
+msgstr "δεν ήταν δυνατός ο τερματισμός εγγραφής αρχείων WAL: %m"
+
+#: pg_basebackup.c:641
+#, c-format
+msgid "could not create pipe for background process: %m"
+msgstr "δεν ήταν δυνατή η δημιουργία pipe για διεργασίες παρασκηνίου : %m"
+
+#: pg_basebackup.c:674
+#, c-format
+msgid "created temporary replication slot \"%s\""
+msgstr "δημιουργήθηκε προσωρινή υποδοχή αναπαραγωγής «%s»"
+
+#: pg_basebackup.c:677
+#, c-format
+msgid "created replication slot \"%s\""
+msgstr "δημιουργήθηκε υποδοχή αναπαραγωγής «%s»"
+
+#: pg_basebackup.c:711
+#, c-format
+msgid "could not create background process: %m"
+msgstr "δεν ήταν δυνατή η δημιουργία διαδικασίας παρασκηνίου: %m"
+
+#: pg_basebackup.c:720
+#, c-format
+msgid "could not create background thread: %m"
+msgstr "δεν ήταν δυνατή η δημιουργία νήματος παρασκηνίου: %m"
+
+#: pg_basebackup.c:759
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "ο κατάλογος «%s» υπάρχει και δεν είναι άδειος"
+
+#: pg_basebackup.c:765
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η πρόσβαση του καταλόγου «%s»: %m"
+
+#: pg_basebackup.c:842
+#, c-format
+msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
+msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
+msgstr[0] "%*s/%s kB (100%%), %d/%d πινακοχώρος %*s"
+msgstr[1] "%*s/%s kB (100%%), %d/%d πινακοχώροι %*s"
+
+#: pg_basebackup.c:854
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d πινακοχώρος (%s%-*.*s)"
+msgstr[1] "%*s/%s kB (%d%%), %d/%d πινακοχώροι (%s%-*.*s)"
+
+#: pg_basebackup.c:870
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d πινακοχώρος"
+msgstr[1] "%*s/%s kB (%d%%), %d/%d πινακοχώροι"
+
+#: pg_basebackup.c:894
+#, c-format
+msgid "transfer rate \"%s\" is not a valid value"
+msgstr "η τιμή ρυθμού μεταφοράς «%s» δεν είναι έγκυρη"
+
+#: pg_basebackup.c:896
+#, c-format
+msgid "invalid transfer rate \"%s\": %m"
+msgstr "μη έγκυρος ρυθμός μεταφοράς «%s»: %m"
+
+#: pg_basebackup.c:903
+#, c-format
+msgid "transfer rate must be greater than zero"
+msgstr "ο ρυθμός μεταφοράς πρέπει να είναι μεγαλύτερος από μηδέν"
+
+#: pg_basebackup.c:933
+#, c-format
+msgid "invalid --max-rate unit: \"%s\""
+msgstr "μη έγκυρη μονάδα --max-rate: «%s»"
+
+#: pg_basebackup.c:937
+#, c-format
+msgid "transfer rate \"%s\" exceeds integer range"
+msgstr "ο ρυθμός μεταφοράς «%s» υπερβαίνει το εύρος ακεραίων"
+
+#: pg_basebackup.c:944
+#, c-format
+msgid "transfer rate \"%s\" is out of range"
+msgstr "ο ρυθμός μεταφοράς «%s» βρίσκεται εκτός εύρους τιμών"
+
+#: pg_basebackup.c:1040
+#, c-format
+msgid "could not get COPY data stream: %s"
+msgstr "δεν ήταν δυνατή η λήψη ροής δεδομένων COPY: %s"
+
+#: pg_basebackup.c:1057 pg_recvlogical.c:438 pg_recvlogical.c:610
+#: receivelog.c:981
+#, c-format
+msgid "could not read COPY data: %s"
+msgstr "δεν ήταν δυνατή η ανάγνωση δεδομένων COPY: %s"
+
+#: pg_basebackup.c:1061
+#, c-format
+msgid "background process terminated unexpectedly"
+msgstr "διεργασία παρασκηνίου τερματίστηκε απρόσμενα"
+
+#: pg_basebackup.c:1132
+#, c-format
+msgid "cannot inject manifest into a compressed tar file"
+msgstr "δεν είναι δυνατή η έγχυση διακύρηξης σε συμπιεσμένο αρχείο tarfile"
+
+#: pg_basebackup.c:1133
+#, c-format
+msgid "Use client-side compression, send the output to a directory rather than standard output, or use %s."
+msgstr "Χρησιμοποιήστε συμπίεση από την πλευρά του πελάτη, στείλτε την έξοδο σε έναν κατάλογο αντί για την τυπική έξοδο, ή χρησιμοποιήστε %s."
+
+#: pg_basebackup.c:1149
+#, c-format
+msgid "cannot parse archive \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση αρχειοθήκης «%s»"
+
+#: pg_basebackup.c:1150
+#, c-format
+msgid "Only tar archives can be parsed."
+msgstr "Μόνο οι αρχειοθήκες tar μπορούν να συμπιεστούν."
+
+#: pg_basebackup.c:1152
+#, c-format
+msgid "Plain format requires pg_basebackup to parse the archive."
+msgstr "Η απλή μορφή απαιτεί pg_basebackup για την ανάλυση του αρχείου."
+
+#: pg_basebackup.c:1154
+#, c-format
+msgid "Using - as the output directory requires pg_basebackup to parse the archive."
+msgstr "Η χρήση του - ως καταλόγου εξόδου απαιτεί την ανάλυση του αρχείου από το pg_basebackup."
+
+#: pg_basebackup.c:1156
+#, c-format
+msgid "The -R option requires pg_basebackup to parse the archive."
+msgstr "Η επιλογή -R απαιτεί pg_basebackup για την ανάλυση του αρχείου."
+
+#: pg_basebackup.c:1367
+#, c-format
+msgid "archives must precede manifest"
+msgstr "τα αρχεία πρέπει να προηγούνται του μανιφέστου"
+
+#: pg_basebackup.c:1382
+#, c-format
+msgid "invalid archive name: \"%s\""
+msgstr "άκυρη ονομασία αρχειοθήκης «%s»"
+
+#: pg_basebackup.c:1454
+#, c-format
+msgid "unexpected payload data"
+msgstr "μη αναμενόμενα δεδομένα φορτίου"
+
+#: pg_basebackup.c:1597
+#, c-format
+msgid "empty COPY message"
+msgstr "κενό μήνυμα COPY"
+
+#: pg_basebackup.c:1599
+#, c-format
+msgid "malformed COPY message of type %d, length %zu"
+msgstr "κακοσχηματισμένο μήνυμα COPY τύπου %d, μήκους %zu"
+
+#: pg_basebackup.c:1797
+#, c-format
+msgid "incompatible server version %s"
+msgstr "μη συμβατή έκδοση διακομιστή %s"
+
+#: pg_basebackup.c:1813
+#, c-format
+msgid "Use -X none or -X fetch to disable log streaming."
+msgstr "Χρησιμοποίησε -X none ή -X fetch για την απενεργοποίηση της ροής καταγραφής."
+
+#: pg_basebackup.c:1881
+#, c-format
+msgid "backup targets are not supported by this server version"
+msgstr "οι στόχοι αντιγράφων ασφαλείας δεν υποστηρίζονται από αυτήν την έκδοση διακομιστή"
+
+#: pg_basebackup.c:1884
+#, c-format
+msgid "recovery configuration cannot be written when a backup target is used"
+msgstr "δεν είναι δυνατή η σύνταξη αρχείου ρυθμίσεων αποκατάστασης όταν χρησιμοποιείται προορισμός αντιγράφων ασφαλείας"
+
+#: pg_basebackup.c:1911
+#, c-format
+msgid "server does not support server-side compression"
+msgstr "ο διακομιστής δεν υποστηρίζει συμπίεση από την πλευρά του διακομιστή"
+
+#: pg_basebackup.c:1921
+#, c-format
+msgid "initiating base backup, waiting for checkpoint to complete"
+msgstr "έναρξη δημιουργίας αντιγράφων ασφαλείας βάσης, αναμονή ολοκλήρωσης του σημείου ελέγχου"
+
+#: pg_basebackup.c:1925
+#, c-format
+msgid "waiting for checkpoint"
+msgstr "αναμονή για το σημείο ελέγχου"
+
+#: pg_basebackup.c:1938 pg_recvlogical.c:262 receivelog.c:549 receivelog.c:588
+#: streamutil.c:291 streamutil.c:364 streamutil.c:416 streamutil.c:504
+#: streamutil.c:656 streamutil.c:701
+#, c-format
+msgid "could not send replication command \"%s\": %s"
+msgstr "δεν ήταν δυνατή η αποστολή εντολής αναπαραγωγής «%s»: %s"
+
+#: pg_basebackup.c:1946
+#, c-format
+msgid "could not initiate base backup: %s"
+msgstr "δεν ήταν δυνατή η έναρξη αντιγράφου ασφαλείας βάσης: %s"
+
+#: pg_basebackup.c:1949
+#, c-format
+msgid "server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields"
+msgstr "ο διακομιστής επέστρεψε μη αναμενόμενη απόκριση στην εντολή BASE_BACKUP· έλαβε %d σειρές και %d πεδία, ανέμενε %d σειρές και %d πεδία"
+
+#: pg_basebackup.c:1955
+#, c-format
+msgid "checkpoint completed"
+msgstr "ολοκληρώθηκε το σημείο ελέγχου"
+
+#: pg_basebackup.c:1970
+#, c-format
+msgid "write-ahead log start point: %s on timeline %u"
+msgstr "σημείο εκκίνησης write-ahead: %s στην χρονογραμμή %u"
+
+#: pg_basebackup.c:1978
+#, c-format
+msgid "could not get backup header: %s"
+msgstr "δεν ήταν δυνατή η απόκτηση κεφαλίδας αντιγράφου ασφαλείας: %s"
+
+#: pg_basebackup.c:1981
+#, c-format
+msgid "no data returned from server"
+msgstr "δεν επιστράφηκαν δεδομένα από τον διακομιστή"
+
+#: pg_basebackup.c:2016
+#, c-format
+msgid "can only write single tablespace to stdout, database has %d"
+msgstr "μπορεί να γράψει μόνο έναν πινακοχώρο στην τυπική έξοδο, η βάση δεδομένων διαθέτει %d"
+
+#: pg_basebackup.c:2029
+#, c-format
+msgid "starting background WAL receiver"
+msgstr "εκκίνηση λήψης WAL στο παρασκήνιο"
+
+#: pg_basebackup.c:2111
+#, c-format
+msgid "backup failed: %s"
+msgstr "η δημιουργία αντιγράφων ασφαλείας απέτυχε: %s"
+
+#: pg_basebackup.c:2114
+#, c-format
+msgid "no write-ahead log end position returned from server"
+msgstr "δεν επιστράφηκε τελική θέση write-ahead log από τον διακομιστή"
+
+#: pg_basebackup.c:2117
+#, c-format
+msgid "write-ahead log end point: %s"
+msgstr "τελικό σημείο write-ahead log: %s"
+
+#: pg_basebackup.c:2128
+#, c-format
+msgid "checksum error occurred"
+msgstr "προέκυψε σφάλμα αθροίσματος ελέγχου"
+
+#: pg_basebackup.c:2133
+#, c-format
+msgid "final receive failed: %s"
+msgstr "απέτυχε η τελική λήψη: %s"
+
+#: pg_basebackup.c:2157
+#, c-format
+msgid "waiting for background process to finish streaming ..."
+msgstr "αναμένει τη διαδικασία παρασκηνίου να ολοκληρώσει τη ροή ..."
+
+#: pg_basebackup.c:2161
+#, c-format
+msgid "could not send command to background pipe: %m"
+msgstr "δεν ήταν δυνατή η αποστολή της εντολής σε pipe παρασκηνίου: %m"
+
+#: pg_basebackup.c:2166
+#, c-format
+msgid "could not wait for child process: %m"
+msgstr "δεν ήταν δυνατή η αναμονή απογονικής διεργασίας: %m"
+
+#: pg_basebackup.c:2168
+#, c-format
+msgid "child %d died, expected %d"
+msgstr "απόγονος %d πέθανε, ανέμενε %d"
+
+#: pg_basebackup.c:2170 streamutil.c:91 streamutil.c:197
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_basebackup.c:2190
+#, c-format
+msgid "could not wait for child thread: %m"
+msgstr "δεν ήταν δυνατή η αναμονή απογονικού νήματος: %m"
+
+#: pg_basebackup.c:2195
+#, c-format
+msgid "could not get child thread exit status: %m"
+msgstr "δεν ήταν δυνατή η απόκτηση κατάστασης εξόδου απογονικού νήματος: %m"
+
+#: pg_basebackup.c:2198
+#, c-format
+msgid "child thread exited with error %u"
+msgstr "το απογονικό νήμα εξήλθε με σφάλμα %u"
+
+#: pg_basebackup.c:2227
+#, c-format
+msgid "syncing data to disk ..."
+msgstr "συγχρονίζονται δεδομένα στο δίσκο …"
+
+#: pg_basebackup.c:2252
+#, c-format
+msgid "renaming backup_manifest.tmp to backup_manifest"
+msgstr "μετονομάζει backup_manifest.tmp σε backup_manifest"
+
+#: pg_basebackup.c:2272
+#, c-format
+msgid "base backup completed"
+msgstr "ολοκληρώθηκε το αντίγραφο ασφαλείας βάσης"
+
+#: pg_basebackup.c:2361
+#, c-format
+msgid "invalid output format \"%s\", must be \"plain\" or \"tar\""
+msgstr "μη έγκυρη μορφή εξόδου «%s», πρέπει να είναι «plain» ή «tar»"
+
+#: pg_basebackup.c:2405
+#, c-format
+msgid "invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\""
+msgstr "μη έγκυρη επιλογή μεθόδου wal «%s», πρέπει να είναι «fetch», «stream», ή «none»"
+
+#: pg_basebackup.c:2435
+#, c-format
+msgid "invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\""
+msgstr "μη έγκυρη παράμετρος σημείου ελέγχου «%s», πρέπει να είναι «fast» ή «spread»"
+
+#: pg_basebackup.c:2486 pg_basebackup.c:2498 pg_basebackup.c:2520
+#: pg_basebackup.c:2532 pg_basebackup.c:2538 pg_basebackup.c:2590
+#: pg_basebackup.c:2601 pg_basebackup.c:2611 pg_basebackup.c:2617
+#: pg_basebackup.c:2624 pg_basebackup.c:2636 pg_basebackup.c:2648
+#: pg_basebackup.c:2656 pg_basebackup.c:2669 pg_basebackup.c:2675
+#: pg_basebackup.c:2684 pg_basebackup.c:2696 pg_basebackup.c:2707
+#: pg_basebackup.c:2715 pg_receivewal.c:814 pg_receivewal.c:826
+#: pg_receivewal.c:833 pg_receivewal.c:842 pg_receivewal.c:849
+#: pg_receivewal.c:859 pg_recvlogical.c:837 pg_recvlogical.c:849
+#: pg_recvlogical.c:859 pg_recvlogical.c:866 pg_recvlogical.c:873
+#: pg_recvlogical.c:880 pg_recvlogical.c:887 pg_recvlogical.c:894
+#: pg_recvlogical.c:901 pg_recvlogical.c:908
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες."
+
+#: pg_basebackup.c:2496 pg_receivewal.c:824 pg_recvlogical.c:847
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
+
+#: pg_basebackup.c:2519
+#, c-format
+msgid "cannot specify both format and backup target"
+msgstr "δεν είναι δυνατός ο καθορισμός τόσο ενός ονόματος βάσης δεδομένων όσο και στόχου αντιγράφων ασφαλείας"
+
+#: pg_basebackup.c:2531
+#, c-format
+msgid "must specify output directory or backup target"
+msgstr "πρέπει να καθορίσετε τον κατάλογο εξόδου ή το στόχο δημιουργίας αντιγράφων ασφαλείας"
+
+#: pg_basebackup.c:2537
+#, c-format
+msgid "cannot specify both output directory and backup target"
+msgstr "δεν είναι δυνατός ο καθορισμός τόσο του καταλόγου εξόδου όσο και του προορισμού αντιγράφων ασφαλείας"
+
+#: pg_basebackup.c:2567 pg_receivewal.c:868
+#, c-format
+msgid "unrecognized compression algorithm: \"%s\""
+msgstr "μη αναγνωρίσιμος αλγόριθμος συμπίεσης: «%s»"
+
+#: pg_basebackup.c:2573 pg_receivewal.c:875
+#, c-format
+msgid "invalid compression specification: %s"
+msgstr "μη έγκυρη προδιαγραφή συμπίεσης: %s"
+
+#: pg_basebackup.c:2589
+#, c-format
+msgid "client-side compression is not possible when a backup target is specified"
+msgstr "η συμπίεση από την πλευρά του πελάτη δεν είναι δυνατή όταν έχει καθοριστεί ένας στόχος δημιουργίας αντιγράφων ασφαλείας"
+
+#: pg_basebackup.c:2600
+#, c-format
+msgid "only tar mode backups can be compressed"
+msgstr "μόνο τα αντίγραφα ασφαλείας tar μπορούν να συμπιεστούν"
+
+#: pg_basebackup.c:2610
+#, c-format
+msgid "WAL cannot be streamed when a backup target is specified"
+msgstr "δεν είναι δυνατή η ροή WAL όταν καθορίζεται στόχος αντιγράφου ασφαλείας"
+
+#: pg_basebackup.c:2616
+#, c-format
+msgid "cannot stream write-ahead logs in tar mode to stdout"
+msgstr "δεν είναι δυνατή η ροή write-ahead logs σε λειτουργία tar στην τυπική έξοδο"
+
+#: pg_basebackup.c:2623
+#, c-format
+msgid "replication slots can only be used with WAL streaming"
+msgstr "οι υποδοχές αναπαραγωγής μπορούν να χρησιμοποιηθούν μόνο με ροή WAL"
+
+#: pg_basebackup.c:2635
+#, c-format
+msgid "--no-slot cannot be used with slot name"
+msgstr "--no-slot δεν μπορεί να χρησιμοποιηθεί σε συνδυασμό με όνομα υποδοχής"
+
+#. translator: second %s is an option name
+#: pg_basebackup.c:2646 pg_receivewal.c:840
+#, c-format
+msgid "%s needs a slot to be specified using --slot"
+msgstr "%s χρειάζεται να έχει οριστεί μία υποδοχή με --slot"
+
+#: pg_basebackup.c:2654 pg_basebackup.c:2694 pg_basebackup.c:2705
+#: pg_basebackup.c:2713
+#, c-format
+msgid "%s and %s are incompatible options"
+msgstr "%s και %s αποτελούν μη συμβατές επιλογές"
+
+#: pg_basebackup.c:2668
+#, c-format
+msgid "WAL directory location cannot be specified along with a backup target"
+msgstr "η τοποθεσία του καταλόγου WAL δεν μπορεί να καθοριστεί μαζί με στόχο αντιγράφου ασφαλείας"
+
+#: pg_basebackup.c:2674
+#, c-format
+msgid "WAL directory location can only be specified in plain mode"
+msgstr "η τοποθεσία του καταλόγου WAL μπορεί να καθοριστεί μόνο σε λειτουργία plain"
+
+#: pg_basebackup.c:2683
+#, c-format
+msgid "WAL directory location must be an absolute path"
+msgstr "η τοποθεσία του καταλόγου WAL πρέπει να είναι μία πλήρης διαδρομή"
+
+#: pg_basebackup.c:2784
+#, c-format
+msgid "could not create symbolic link \"%s\": %m"
+msgstr "δεν ήταν δυνατή η δημιουργία του συμβολικού συνδέσμου «%s»: %m"
+
+#: pg_basebackup.c:2786
+#, c-format
+msgid "symlinks are not supported on this platform"
+msgstr "συμβολικοί σύνδεσμοι δεν υποστηρίζονται στην παρούσα πλατφόρμα"
+
+#: pg_receivewal.c:79
+#, c-format
+msgid ""
+"%s receives PostgreSQL streaming write-ahead logs.\n"
+"\n"
+msgstr ""
+"%s λαμβάνει ροές PostgreSQL write-ahead logs.\n"
+"\n"
+
+#: pg_receivewal.c:83 pg_recvlogical.c:84
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Επιλογές:\n"
+
+#: pg_receivewal.c:84
+#, c-format
+msgid "  -D, --directory=DIR    receive write-ahead log files into this directory\n"
+msgstr "  -D, --directory=DIR    να λάβει αρχεία write-ahead log files into this directory\n"
+
+#: pg_receivewal.c:85 pg_recvlogical.c:85
+#, c-format
+msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
+msgstr "  -E, --endpos=LSN       έξοδος μετά τη λήψη του καθορισμένου LSN\n"
+
+#: pg_receivewal.c:86 pg_recvlogical.c:89
+#, c-format
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr "      --if-not-exists    μην θεωρηθεί ώς σφάλμα η ήδη ύπαρξη υποδοχής κατά τη δημιουργία μιας υποδοχής\n"
+
+#: pg_receivewal.c:87 pg_recvlogical.c:91
+#, c-format
+msgid "  -n, --no-loop          do not loop on connection lost\n"
+msgstr "  -n, --no-loop          να μην εισέλθει σε βρόχο κατά την απώλεια σύνδεσης\n"
+
+#: pg_receivewal.c:88
+#, c-format
+msgid "      --no-sync          do not wait for changes to be written safely to disk\n"
+msgstr "      --no-sync          να μην αναμένει την ασφαλή εγγραφή αλλαγών στον δίσκο\n"
+
+#: pg_receivewal.c:89 pg_recvlogical.c:96
+#, c-format
+msgid ""
+"  -s, --status-interval=SECS\n"
+"                         time between status packets sent to server (default: %d)\n"
+msgstr ""
+"  -s, --status-interval=SECS\n"
+"                         χρόνος μεταξύ πακέτων κατάστασης που αποστέλλονται στο διακομιστή (προεπιλογή: %d)\n"
+
+#: pg_receivewal.c:92
+#, c-format
+msgid "      --synchronous      flush write-ahead log immediately after writing\n"
+msgstr "      --synchronous      flush write-ahead log αμέσως μετά τη γραφή\n"
+
+#: pg_receivewal.c:95
+#, c-format
+msgid ""
+"  -Z, --compress=METHOD[:DETAIL]\n"
+"                         compress as specified\n"
+msgstr ""
+"  -Z, --compress=METHOD[:DETAIL]\n"
+"                         συμπίεσε όπως ορίζεται\n"
+
+#: pg_receivewal.c:105
+#, c-format
+msgid ""
+"\n"
+"Optional actions:\n"
+msgstr ""
+"\n"
+"Προαιρετικές δράσεις:\n"
+
+#: pg_receivewal.c:106 pg_recvlogical.c:81
+#, c-format
+msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
+msgstr "      --create-slot      δημιούργησε μια νέα υποδοχή αναπαραγωγής (για το όνομα της υποδοχής, δείτε --slot)\n"
+
+#: pg_receivewal.c:107 pg_recvlogical.c:82
+#, c-format
+msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
+msgstr "      --drop-slot        εγκατάληψη της υποδοχής αναπαραγωγής (για το όνομα της υποδοχής δείτε --slot)\n"
+
+#: pg_receivewal.c:252
+#, c-format
+msgid "finished segment at %X/%X (timeline %u)"
+msgstr "τελείωσε το τμήμα σε %X/%X (χρονογραμμή %u)"
+
+#: pg_receivewal.c:259
+#, c-format
+msgid "stopped log streaming at %X/%X (timeline %u)"
+msgstr "διακοπή ροής αρχείων καταγραφής σε %X/%X (χρονογραμμή %u)"
+
+#: pg_receivewal.c:275
+#, c-format
+msgid "switched to timeline %u at %X/%X"
+msgstr "μεταπήδησε στη χρονογραμμή %u στο %X/%X"
+
+#: pg_receivewal.c:285
+#, c-format
+msgid "received interrupt signal, exiting"
+msgstr "λήψη σήματος διακοπής, έξοδος"
+
+#: pg_receivewal.c:317
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου «%s»: %m"
+
+#: pg_receivewal.c:384
+#, c-format
+msgid "segment file \"%s\" has incorrect size %lld, skipping"
+msgstr "το αρχείο τμήματος «%s» έχει εσφαλμένο μέγεθος %lld, θα παραληφθεί"
+
+#: pg_receivewal.c:401
+#, c-format
+msgid "could not open compressed file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του συμπιεσμένου αρχείου «%s»: %m"
+
+#: pg_receivewal.c:404
+#, c-format
+msgid "could not seek in compressed file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αναζήτηση στο συμπιεσμένο αρχείο «%s»: %m"
+
+#: pg_receivewal.c:410
+#, c-format
+msgid "could not read compressed file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμπιεσμένου αρχείου «%s»: %m"
+
+#: pg_receivewal.c:413
+#, c-format
+msgid "could not read compressed file \"%s\": read %d of %zu"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμπιεσμένου αρχείου «%s»: ανέγνωσε %d από %zu"
+
+#: pg_receivewal.c:423
+#, c-format
+msgid "compressed segment file \"%s\" has incorrect uncompressed size %d, skipping"
+msgstr "συμπιεσμένο αρχείο τμήματος «%s» έχει εσφαλμένο μη συμπιεσμένο μέγεθος %d, θα παραληφθεί"
+
+#: pg_receivewal.c:451
+#, c-format
+msgid "could not create LZ4 decompression context: %s"
+msgstr "δεν ήταν δυνατή η δημιουργία LZ4 περιεχομένου αποσυμπίεσης: %s"
+
+#: pg_receivewal.c:463
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
+
+#: pg_receivewal.c:481
+#, c-format
+msgid "could not decompress file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η αποσυμπιέση αρχείου «%s»: %s"
+
+#: pg_receivewal.c:504
+#, c-format
+msgid "could not free LZ4 decompression context: %s"
+msgstr "δεν ήταν δυνατή η απελευθέρωση LZ4 περιεχομένου αποσυμπίεσης: %s"
+
+#: pg_receivewal.c:509
+#, c-format
+msgid "compressed segment file \"%s\" has incorrect uncompressed size %zu, skipping"
+msgstr "συμπιεσμένο αρχείο τμήματος «%s» έχει εσφαλμένο μη συμπιεσμένο μέγεθος %zu, θα παραληφθεί"
+
+#: pg_receivewal.c:514
+#, c-format
+msgid "cannot check file \"%s\": compression with %s not supported by this build"
+msgstr "δεν είναι δυνατός ο έλεγχος του αρχείου «%s»: η συμπίεση με %s δεν υποστηρίζεται από αυτήν την κατασκευή"
+
+#: pg_receivewal.c:641
+#, c-format
+msgid "starting log streaming at %X/%X (timeline %u)"
+msgstr "έναρξη ροής αρχείων καταγραφής σε %X/%X (χρονογραμμή %u)"
+
+#: pg_receivewal.c:783 pg_recvlogical.c:785
+#, c-format
+msgid "could not parse end position \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση της τελικής τοποθεσίας «%s»"
+
+#: pg_receivewal.c:832
+#, c-format
+msgid "cannot use --create-slot together with --drop-slot"
+msgstr "δεν είναι δυνατή η χρήση --create-slot σε συνδυασμό με --drop-slot"
+
+#: pg_receivewal.c:848
+#, c-format
+msgid "cannot use --synchronous together with --no-sync"
+msgstr "δεν είναι δυνατή η χρήση --synchronous σε συνδυασμό με --no-sync"
+
+#: pg_receivewal.c:858
+#, c-format
+msgid "no target directory specified"
+msgstr "δεν καθορίστηκε κατάλογος δεδομένων προορισμού"
+
+#: pg_receivewal.c:882
+#, c-format
+msgid "compression with %s is not yet supported"
+msgstr "η συμπίεση με %s δεν υποστηρίζεται ακόμα"
+
+#: pg_receivewal.c:924
+#, c-format
+msgid "replication connection using slot \"%s\" is unexpectedly database specific"
+msgstr "η σύνδεση αναπαραγωγής χρησιμοποιώντας την υποδοχή «%s» είναι απροσδόκητα συνυφασμένη με βάση δεδομένων"
+
+#: pg_receivewal.c:943 pg_recvlogical.c:955
+#, c-format
+msgid "dropping replication slot \"%s\""
+msgstr "κατάργηση υποδοχής αναπαραγωγής «%s»"
+
+#: pg_receivewal.c:954 pg_recvlogical.c:965
+#, c-format
+msgid "creating replication slot \"%s\""
+msgstr "δημιουργία υποδοχής αναπαραγωγής «%s»"
+
+#: pg_receivewal.c:983 pg_recvlogical.c:989
+#, c-format
+msgid "disconnected"
+msgstr "αποσυνδέθηκε"
+
+#. translator: check source for value for %d
+#: pg_receivewal.c:987 pg_recvlogical.c:993
+#, c-format
+msgid "disconnected; waiting %d seconds to try again"
+msgstr "αποσυνδέθηκε· αναμένει %d δεύτερα για να προσπαθήσει ξανά"
+
+#: pg_recvlogical.c:76
+#, c-format
+msgid ""
+"%s controls PostgreSQL logical decoding streams.\n"
+"\n"
+msgstr ""
+"%s ελέγχει ροές λογικής αποκωδικοποίησης PostgreSQL.\n"
+"\n"
+
+#: pg_recvlogical.c:80
+#, c-format
+msgid ""
+"\n"
+"Action to be performed:\n"
+msgstr ""
+"\n"
+"Δράση που θα πραγματοποιηθεί:\n"
+
+#: pg_recvlogical.c:83
+#, c-format
+msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
+msgstr "      --start            εκκίνηση ροής σε μια υποδοχή αναπαραγωγής (για το όνομα της υποδοχής δείτε --slot)\n"
+
+#: pg_recvlogical.c:86
+#, c-format
+msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
+msgstr "   -f, --file=FILE        λάβε το log σε αυτό το αρείο, - για τυπική έξοδο\n"
+
+#: pg_recvlogical.c:87
+#, c-format
+msgid ""
+"  -F  --fsync-interval=SECS\n"
+"                         time between fsyncs to the output file (default: %d)\n"
+msgstr ""
+"  -F  --fsync-interval=SECS\n"
+"                         χρόνος μεταξύ fsyncs του αρχείου εξόδου (προεπιλογή: %d)\n"
+
+#: pg_recvlogical.c:90
+#, c-format
+msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
+msgstr "  -I, --startpos=LSN     από πού θα ξεκινήσει η ροή σε μια υπάρχουσα υποδοχή\n"
+
+#: pg_recvlogical.c:92
+#, c-format
+msgid ""
+"  -o, --option=NAME[=VALUE]\n"
+"                         pass option NAME with optional value VALUE to the\n"
+"                         output plugin\n"
+msgstr ""
+"  -o, --option=NAME[=VALUE]\n"
+"                         πέρασε την επιλογή NAME με προαιρετική τιμή VALUE στο\n"
+"                         plugin εξόδου\n"
+
+#: pg_recvlogical.c:95
+#, c-format
+msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
+msgstr "  -P, --plugin=PLUGIN   χρησιμοποίησε το plugin εξόδου PLUGIN (προεπιλογή: %s)\n"
+
+#: pg_recvlogical.c:98
+#, c-format
+msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
+msgstr "  -S, --slot=SLOTNAME    όνομα της λογικής υποδοχής αναπαραγωγής\n"
+
+#: pg_recvlogical.c:99
+#, c-format
+msgid "  -t, --two-phase        enable decoding of prepared transactions when creating a slot\n"
+msgstr "  -t, --two-phase        ενεργοποιήσε την αποκωδικοποίηση των προετοιμασμένων συναλλαγών κατά τη δημιουργία μιας υποδοχής\n"
+
+#: pg_recvlogical.c:104
+#, c-format
+msgid "  -d, --dbname=DBNAME    database to connect to\n"
+msgstr "  -d, --dbname=DBNAME    βάση δεδομένων για να συνδεθεί\n"
+
+#: pg_recvlogical.c:137
+#, c-format
+msgid "confirming write up to %X/%X, flush to %X/%X (slot %s)"
+msgstr "επιβεβαίωση εγγραφής έως %X/%X, flush σε %X/%X (υποδοχή %s)"
+
+#: pg_recvlogical.c:161 receivelog.c:366
+#, c-format
+msgid "could not send feedback packet: %s"
+msgstr "δεν ήταν δυνατή η αποστολή πακέτου σχολίων: %s"
+
+#: pg_recvlogical.c:229
+#, c-format
+msgid "starting log streaming at %X/%X (slot %s)"
+msgstr "έναρξη ροής αρχείων καταγραφής σε %X/%X (υποδοχή %s)"
+
+#: pg_recvlogical.c:271
+#, c-format
+msgid "streaming initiated"
+msgstr "έναρξη ροής"
+
+#: pg_recvlogical.c:335
+#, c-format
+msgid "could not open log file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου καταγραφής «%s»: %m"
+
+#: pg_recvlogical.c:364 receivelog.c:889
+#, c-format
+msgid "invalid socket: %s"
+msgstr "άκυρος υποδοχέας: %s"
+
+#: pg_recvlogical.c:417 receivelog.c:917
+#, c-format
+msgid "%s() failed: %m"
+msgstr "%s() απέτυχε: %m"
+
+#: pg_recvlogical.c:424 receivelog.c:967
+#, c-format
+msgid "could not receive data from WAL stream: %s"
+msgstr "δεν ήταν δυνατή η λήψη δεδομένων από τη ροή WAL: %s"
+
+#: pg_recvlogical.c:466 pg_recvlogical.c:517 receivelog.c:1011
+#: receivelog.c:1074
+#, c-format
+msgid "streaming header too small: %d"
+msgstr "πολύ μικρή κεφαλίδα ροής: %d"
+
+#: pg_recvlogical.c:501 receivelog.c:849
+#, c-format
+msgid "unrecognized streaming header: \"%c\""
+msgstr "μη αναγνωρίσιμη κεφαλίδα ροής: «%c»"
+
+#: pg_recvlogical.c:555 pg_recvlogical.c:567
+#, c-format
+msgid "could not write %d bytes to log file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εγγραφή %d bytes στο αρχείο καταγραφής «%s»: %m"
+
+#: pg_recvlogical.c:621 receivelog.c:648 receivelog.c:685
+#, c-format
+msgid "unexpected termination of replication stream: %s"
+msgstr "μη αναμενόμενος τερματισμός της ροής αναπαραγωγής: %s"
+
+#: pg_recvlogical.c:780
+#, c-format
+msgid "could not parse start position \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση της θέσης έναρξης «%s»"
+
+#: pg_recvlogical.c:858
+#, c-format
+msgid "no slot specified"
+msgstr "δεν καθορίστηκε υποδοχή"
+
+#: pg_recvlogical.c:865
+#, c-format
+msgid "no target file specified"
+msgstr "δεν καθορίστηκε αρχείο προορισμού"
+
+#: pg_recvlogical.c:872
+#, c-format
+msgid "no database specified"
+msgstr "δεν καθορίστηκε βάση δεδομένων"
+
+#: pg_recvlogical.c:879
+#, c-format
+msgid "at least one action needs to be specified"
+msgstr "πρέπει να οριστεί τουλάχιστον μία πράξη"
+
+#: pg_recvlogical.c:886
+#, c-format
+msgid "cannot use --create-slot or --start together with --drop-slot"
+msgstr "δεν είναι δυνατή η χρήση --create-slot ή --start σε συνδυασμό με --drop-slot"
+
+#: pg_recvlogical.c:893
+#, c-format
+msgid "cannot use --create-slot or --drop-slot together with --startpos"
+msgstr "δεν είναι δυνατή η χρήση --create-slot ή --start σε συνδυασμό με --startpos"
+
+#: pg_recvlogical.c:900
+#, c-format
+msgid "--endpos may only be specified with --start"
+msgstr "--endpos μπορεί να καθοριστεί μόνο με --start"
+
+#: pg_recvlogical.c:907
+#, c-format
+msgid "--two-phase may only be specified with --create-slot"
+msgstr "--two-phase μπορεί να καθοριστεί μόνο με --create-slot"
+
+#: pg_recvlogical.c:939
+#, c-format
+msgid "could not establish database-specific replication connection"
+msgstr "δεν ήταν δυνατή η δημιουργία σύνδεσης αναπαραγωγής συγκεκριμένης βάσης δεδομένων"
+
+#: pg_recvlogical.c:1033
+#, c-format
+msgid "end position %X/%X reached by keepalive"
+msgstr "τελική θέση %X/%X που επιτεύχθηκε από keepalive"
+
+#: pg_recvlogical.c:1036
+#, c-format
+msgid "end position %X/%X reached by WAL record at %X/%X"
+msgstr "τελική θέση %X/%X που επιτεύχθηκε από εγγραφή WAL στο %X/%X"
+
+#: receivelog.c:68
+#, c-format
+msgid "could not create archive status file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η δημιουργία αρχείου κατάστασης αρχειοθήκης «%s»: %s"
+
+#: receivelog.c:75
+#, c-format
+msgid "could not close archive status file \"%s\": %s"
+msgstr "δεν ήταν δυνατό το κλείσιμο αρχείου κατάστασης αρχειοθήκης «%s»: %s"
+
+#: receivelog.c:123
+#, c-format
+msgid "could not get size of write-ahead log file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η απόκτηση μεγέθους του υπάρχοντος αρχείου write-ahead log «%s»: %s"
+
+#: receivelog.c:134
+#, c-format
+msgid "could not open existing write-ahead log file \"%s\": %s"
+msgstr "δεν ήταν δυνατό το άνοιγμα του υπάρχοντος αρχείου write-ahead log «%s»: %s"
+
+#: receivelog.c:143
+#, c-format
+msgid "could not fsync existing write-ahead log file \"%s\": %s"
+msgstr "δεν ήταν δυνατό το fsync του υπάρχοντος αρχείου write-ahead log «%s»: %s"
+
+#: receivelog.c:158
+#, c-format
+msgid "write-ahead log file \"%s\" has %zd byte, should be 0 or %d"
+msgid_plural "write-ahead log file \"%s\" has %zd bytes, should be 0 or %d"
+msgstr[0] "το αρχείο write-ahead log «%s» έχει %zd byte, θα έπρεπε να είναι 0 ή %d"
+msgstr[1] "το αρχείο write-ahead log «%s» έχει %zd bytes, θα έπρεπε να είναι 0 ή %d"
+
+#: receivelog.c:174
+#, c-format
+msgid "could not open write-ahead log file \"%s\": %s"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου write-ahead log «%s»: %s"
+
+#: receivelog.c:208
+#, c-format
+msgid "could not determine seek position in file \"%s\": %s"
+msgstr "δεν ήταν δυνατός ο προσδιορισμός της θέσης αναζήτησης στο αρχείο «%s»: %s"
+
+#: receivelog.c:223
+#, c-format
+msgid "not renaming \"%s\", segment is not complete"
+msgstr "δεν μετονομάζει  «%s», το τμήμα δεν είναι πλήρες"
+
+#: receivelog.c:234 receivelog.c:323 receivelog.c:694
+#, c-format
+msgid "could not close file \"%s\": %s"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου «%s»: %s"
+
+#: receivelog.c:295
+#, c-format
+msgid "server reported unexpected history file name for timeline %u: %s"
+msgstr "ο διακομιστής ανέφερε μη αναμενόμενο όνομα αρχείου ιστορικού για την χρονογραμμή %u: %s"
+
+#: receivelog.c:303
+#, c-format
+msgid "could not create timeline history file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η δημιουργία αρχείου ιστορικού χρονογραμμής «%s»: %s"
+
+#: receivelog.c:310
+#, c-format
+msgid "could not write timeline history file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η εγγραφή αρχείου ιστορικού χρονογραμμής «%s»: %s"
+
+#: receivelog.c:400
+#, c-format
+msgid "incompatible server version %s; client does not support streaming from server versions older than %s"
+msgstr "μη συμβατή έκδοση διακομιστή %s· Ο πελάτης δεν υποστηρίζει ροή από εκδόσεις διακομιστών παλαιότερες από %s"
+
+#: receivelog.c:409
+#, c-format
+msgid "incompatible server version %s; client does not support streaming from server versions newer than %s"
+msgstr "μη συμβατή έκδοση διακομιστή %s· Ο πελάτης δεν υποστηρίζει ροή από εκδόσεις διακομιστών νεότερες από %s"
+
+#: receivelog.c:514
+#, c-format
+msgid "system identifier does not match between base backup and streaming connection"
+msgstr "το αναγνωριστικό συστήματος δεν αντιστοιχεί μεταξύ βασικού αντιγράφου ασφαλείας και σύνδεσης ροής"
+
+#: receivelog.c:522
+#, c-format
+msgid "starting timeline %u is not present in the server"
+msgstr "η χρονογραμμή εκκίνησης %u δεν υπάρχει στο διακομιστή"
+
+#: receivelog.c:561
+#, c-format
+msgid "unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields"
+msgstr "μη αναμενόμενη απόκριση στην εντολή TIMELINE_HISTORY: έλαβε %d σειρές και %d πεδία, ανέμενε %d σειρές και %d πεδία"
+
+#: receivelog.c:632
+#, c-format
+msgid "server reported unexpected next timeline %u, following timeline %u"
+msgstr "ο διακομιστής ανέφερε απροσδόκητη επόμενη χρονογραμμή %u, ακολουθώντας τη χρονογραμμή %u"
+
+#: receivelog.c:638
+#, c-format
+msgid "server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X"
+msgstr "ο διακομιστής σταμάτησε τη ροή χρονογραμμής %u στο %X/%X, αλλά ανέφερε ότι η επόμενη χρονογραμμή %u να ξεκινήσει από το %X/%X"
+
+#: receivelog.c:678
+#, c-format
+msgid "replication stream was terminated before stop point"
+msgstr "η ροή αναπαραγωγής τερματίστηκε πριν από το σημείο διακοπής"
+
+#: receivelog.c:724
+#, c-format
+msgid "unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields"
+msgstr "μη αναμενόμενο σύνολο αποτελεσμάτων μετά το τέλος της χρονογραμμής: έλαβε %d σειρές και %d πεδία, ανέμενε %d σειρές και %d πεδία"
+
+#: receivelog.c:733
+#, c-format
+msgid "could not parse next timeline's starting point \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση του σημείου εκκίνησης «%s» της επόμενης χρονογραμμής"
+
+#: receivelog.c:781 receivelog.c:1030 walmethods.c:1205
+#, c-format
+msgid "could not fsync file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής fsync στο αρχείο «%s»: %s"
+
+#: receivelog.c:1091
+#, c-format
+msgid "received write-ahead log record for offset %u with no file open"
+msgstr "έλαβε εγγραφή write-ahead log για μετατόπιση %u χωρίς ανοικτό αρχείου"
+
+#: receivelog.c:1101
+#, c-format
+msgid "got WAL data offset %08x, expected %08x"
+msgstr "έλαβε μετατόπιση δεδομένων WAL %08x, ανέμενε %08x"
+
+#: receivelog.c:1135
+#, c-format
+msgid "could not write %d bytes to WAL file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η εγγραφή %d bytes στο αρχείο WAL «%s»: %s"
+
+#: receivelog.c:1160 receivelog.c:1200 receivelog.c:1230
+#, c-format
+msgid "could not send copy-end packet: %s"
+msgstr "δεν ήταν δυνατή η αποστολή πακέτου copy-end: %s"
+
+#: streamutil.c:159
+msgid "Password: "
+msgstr "Κωδικός πρόσβασης: "
+
+#: streamutil.c:182
+#, c-format
+msgid "could not connect to server"
+msgstr "δεν ήταν δυνατή η σύνδεση με το διακομιστή"
+
+#: streamutil.c:225
+#, c-format
+msgid "could not clear search_path: %s"
+msgstr "δεν ήταν δυνατή η εκκαθάριση του search_path: %s"
+
+#: streamutil.c:241
+#, c-format
+msgid "could not determine server setting for integer_datetimes"
+msgstr "δεν ήταν δυνατός ο προσδιορισμός της ρύθμισης διακομιστή για integer_datetimes"
+
+#: streamutil.c:248
+#, c-format
+msgid "integer_datetimes compile flag does not match server"
+msgstr "η επισήμανση μεταγλώττισης integer_datetimes δεν συμφωνεί με το διακομιστή"
+
+#: streamutil.c:299
+#, c-format
+msgid "could not fetch WAL segment size: got %d rows and %d fields, expected %d rows and %d or more fields"
+msgstr "δεν ήταν δυνατή η λήψη μεγέθους τμήματος WAL: %d σειρές και %d πεδία, ανέμενε %d σειρές και %d ή περισσότερα πεδία"
+
+#: streamutil.c:309
+#, c-format
+msgid "WAL segment size could not be parsed"
+msgstr "δεν ήταν δυνατή η ανάλυση του μεγέθους του τμήματος WAL"
+
+#: streamutil.c:327
+#, c-format
+msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte"
+msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes"
+msgstr[0] "το μέγεθος τμήματος WAL πρέπει να έχει τιμή δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά ο απομακρυσμένος διακομιστής ανέφερε τιμή %d byte"
+msgstr[1] "το μέγεθος τμήματος WAL πρέπει να έχει τιμή δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά ο απομακρυσμένος διακομιστής ανέφερε τιμή %d bytes"
+
+#: streamutil.c:372
+#, c-format
+msgid "could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields"
+msgstr "δεν ήταν δυνατή η λήψη επισήμανσης πρόσβασης group: %d σειρές και %d πεδία, ανέμενε %d σειρές και %d ή περισσότερα πεδία"
+
+#: streamutil.c:381
+#, c-format
+msgid "group access flag could not be parsed: %s"
+msgstr "δεν ήταν δυνατή η ανάλυση της σημαίας πρόσβασης γκρουπ: %s"
+
+#: streamutil.c:424 streamutil.c:461
+#, c-format
+msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
+msgstr "δεν ήταν δυνατή η αναγνώριση του συστήματος: έλαβε %d σειρές και %d πεδία, ανέμενε %d σειρές και %d ή περισσότερα πεδία"
+
+#: streamutil.c:513
+#, c-format
+msgid "could not read replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
+msgstr "δεν ήταν δυνατή η ανάγνωση της υποδοχής αναπαραγωγής «%s»: έλαβε %d σειρές και %d πεδία, ανέμενε %d σειρές και %d πεδία"
+
+#: streamutil.c:525
+#, c-format
+msgid "replication slot \"%s\" does not exist"
+msgstr "η υποδοχή αναπαραγωγής «%s» δεν υπάρχει"
+
+#: streamutil.c:536
+#, c-format
+msgid "expected a physical replication slot, got type \"%s\" instead"
+msgstr "αναμένεται μια φυσική υποδοχή αναπαραγωγής, πήρε τον τύπο «%s» αντ 'αυτού"
+
+#: streamutil.c:550
+#, c-format
+msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση restart_lsn «%s» για την υποδοχή αναπαραγωγής «%s»"
+
+#: streamutil.c:667
+#, c-format
+msgid "could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
+msgstr "δεν ήταν δυνατή η δημιουργία της υποδοχής αναπαραγωγής «%s»: %d σειρές και %d πεδία, ανέμενε %d σειρές και %d πεδία"
+
+#: streamutil.c:711
+#, c-format
+msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
+msgstr "δεν ήταν δυνατή η κατάργηση της υποδοχής αναπαραγωγής «%s»: έλαβε %d σειρές και %d πεδία, ανέμενε %d σειρές και %d πεδία"
+
+#: walmethods.c:720 walmethods.c:1267
+msgid "could not compress data"
+msgstr "δεν ήταν δυνατή η συμπίεση δεδομένων"
+
+#: walmethods.c:749
+msgid "could not reset compression stream"
+msgstr "δεν ήταν δυνατή η επαναφορά της ροής συμπίεσης"
+
+#: walmethods.c:880
+msgid "implementation error: tar files can't have more than one open file"
+msgstr "σφάλμα υλοποίησης: τα αρχεία tar δεν μπορούν να έχουν περισσότερα από ένα ανοιχτά αρχεία"
+
+#: walmethods.c:894
+msgid "could not create tar header"
+msgstr "δεν ήταν δυνατή η δημιουργία κεφαλίδας tar"
+
+#: walmethods.c:910 walmethods.c:951 walmethods.c:1170 walmethods.c:1183
+msgid "could not change compression parameters"
+msgstr "δεν ήταν δυνατή η αλλαγή παραμέτρων συμπίεσης"
+
+#: walmethods.c:1055
+msgid "unlink not supported with compression"
+msgstr "το unlink δεν υποστηρίζεται με συμπίεση"
+
+#: walmethods.c:1291
+msgid "could not close compression stream"
+msgstr "δεν ήταν δυνατό το κλείσιμο της ροής συμπίεσης"
+
+#~ msgid "  -Z, --compress=0-9     compress logs with given compression level\n"
+#~ msgstr "  -Z, --compress=0-9     συμπίεσε logs με το ορισμένο επίπεδο συμπίεσης\n"
+
+#~ msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
+#~ msgstr "  -Z, --compress=0-9     συμπίεσε την έξοδο tar με το ορισμένο επίπεδο συμπίεσης\n"
+
+#~ msgid "could not get write-ahead log end position from server: %s"
+#~ msgstr "δεν ήταν δυνατή η απόκτηση τελικής θέσης write-ahead log από τον διακομιστή: %s"
+
+#~ msgid "fatal: "
+#~ msgstr "κρίσιμο: "
+
+#~ msgid "invalid compression level \"%s\""
+#~ msgstr "μη έγκυρο επίπεδο συμπίεσης «%s»"
+
+#~ msgid "invalid fsync interval \"%s\""
+#~ msgstr "μη έγκυρο διάστημα FSYNC «%s»"
+
+#~ msgid "invalid port number \"%s\""
+#~ msgstr "μη έγκυρος αριθμός πύλης: «%s»"
+
+#~ msgid "invalid status interval \"%s\""
+#~ msgstr "μη έγκυρο διάστημα status «%s»"
+
+#~ msgid "invalid tar block header size: %zu"
+#~ msgstr "μη έγκυρο μέγεθος κεφαλίδας μπλοκ tar: %zu"
+
+#~ msgid "unrecognized link indicator \"%c\""
+#~ msgstr "μη αναγνωρίσιμος δείκτης σύνδεσης «%c»"

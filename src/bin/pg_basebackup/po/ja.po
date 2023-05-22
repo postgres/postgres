@@ -9,10 +9,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_basebackup (PostgreSQL 15)\n"
+"Project-Id-Version: pg_basebackup (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:16+0900\n"
-"PO-Revision-Date: 2022-05-10 13:38+0900\n"
+"POT-Creation-Date: 2023-05-22 09:35+0900\n"
+"PO-Revision-Date: 2023-05-22 09:48+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -22,101 +22,119 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:277
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:284
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:295
+#: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:302
+#: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
 
-#: ../../common/compression.c:157
+#: ../../common/compression.c:132 ../../common/compression.c:141
+#: ../../common/compression.c:150 bbstreamer_gzip.c:116 bbstreamer_gzip.c:249
+#: bbstreamer_lz4.c:100 bbstreamer_lz4.c:298 bbstreamer_zstd.c:129
+#: bbstreamer_zstd.c:284
+#, c-format
+msgid "this build does not support compression with %s"
+msgstr "このビルドでは%sによる圧縮をサポートしていません"
+
+#: ../../common/compression.c:205
 msgid "found empty string where a compression option was expected"
 msgstr "圧縮オプションがあるはずの場所に空文字列が見つかりました"
 
-#: ../../common/compression.c:187
+#: ../../common/compression.c:244
 #, c-format
-msgid "unknown compression option \"%s\""
-msgstr "未知の圧縮オプション \"%s\""
+msgid "unrecognized compression option: \"%s\""
+msgstr "認識できない圧縮オプション: \"%s\""
 
-#: ../../common/compression.c:226
+#: ../../common/compression.c:283
 #, c-format
 msgid "compression option \"%s\" requires a value"
 msgstr "圧縮オプション\"%s\"には値が必要です"
 
-#: ../../common/compression.c:235
+#: ../../common/compression.c:292
 #, c-format
 msgid "value for compression option \"%s\" must be an integer"
 msgstr "圧縮オプション\"%s\"の値は整数でなければなりません"
 
-#: ../../common/compression.c:273
+#: ../../common/compression.c:331
+#, c-format
+msgid "value for compression option \"%s\" must be a Boolean value"
+msgstr "圧縮オプション\"%s\"の値は真偽値でなければなりません"
+
+#: ../../common/compression.c:379
 #, c-format
 msgid "compression algorithm \"%s\" does not accept a compression level"
 msgstr "圧縮アルゴリズム\"%s\"は圧縮レベルを受け付けません"
 
-#: ../../common/compression.c:277
+#: ../../common/compression.c:386
 #, c-format
-msgid "compression algorithm \"%s\" expects a compression level between %d and %d"
-msgstr "圧縮アルゴリズム\"%s\"では%dから%dまでの圧縮レベルが指定可能です"
+msgid "compression algorithm \"%s\" expects a compression level between %d and %d (default at %d)"
+msgstr "圧縮アルゴリズム\"%s\"では%dから%dまでの圧縮レベルが指定可能です(デフォルトは%d)"
 
-#: ../../common/compression.c:289
+#: ../../common/compression.c:397
 #, c-format
 msgid "compression algorithm \"%s\" does not accept a worker count"
 msgstr "圧縮アルゴリズム\"%s\"はワーカー数を受け付けません"
 
+#: ../../common/compression.c:408
+#, c-format
+msgid "compression algorithm \"%s\" does not support long-distance mode"
+msgstr "圧縮アルゴリズム\"%s\"は長距離モードをサポートしません"
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません (内部エラー)\n"
 
-#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
-#: pg_receivewal.c:380 pg_recvlogical.c:341
+#: ../../common/file_utils.c:87 ../../common/file_utils.c:447
+#: pg_receivewal.c:319 pg_recvlogical.c:339
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ファイル\"%s\"のstatに失敗しました: %m"
 
-#: ../../common/file_utils.c:166 pg_receivewal.c:303
+#: ../../common/file_utils.c:162 pg_receivewal.c:242
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/file_utils.c:200 pg_receivewal.c:534
+#: ../../common/file_utils.c:196 pg_receivewal.c:471
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
-#: ../../common/file_utils.c:365 ../../fe_utils/recovery_gen.c:121
-#: pg_receivewal.c:447
+#: ../../common/file_utils.c:228 ../../common/file_utils.c:287
+#: ../../common/file_utils.c:361 ../../fe_utils/recovery_gen.c:121
+#: pg_receivewal.c:386
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
-#: pg_recvlogical.c:196
+#: ../../common/file_utils.c:299 ../../common/file_utils.c:369
+#: pg_recvlogical.c:194
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
 
-#: ../../common/file_utils.c:383 pg_basebackup.c:2264 walmethods.c:459
+#: ../../common/file_utils.c:379 pg_basebackup.c:2237 walmethods.c:462
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
@@ -133,24 +151,24 @@ msgstr "%sは%d..%dの範囲でなければなりません"
 
 #: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
 #: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
-#: ../../fe_utils/recovery_gen.c:149 pg_basebackup.c:1643
+#: ../../fe_utils/recovery_gen.c:149 pg_basebackup.c:1609
 #, c-format
 msgid "out of memory"
 msgstr "メモリ不足です"
 
 #: ../../fe_utils/recovery_gen.c:124 bbstreamer_file.c:121
-#: bbstreamer_file.c:258 pg_basebackup.c:1440 pg_basebackup.c:1734
+#: bbstreamer_file.c:258 pg_basebackup.c:1406 pg_basebackup.c:1700
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き込めませんでした: %m"
 
-#: ../../fe_utils/recovery_gen.c:133 bbstreamer_file.c:93 bbstreamer_file.c:339
-#: pg_basebackup.c:1504 pg_basebackup.c:1713
+#: ../../fe_utils/recovery_gen.c:133 bbstreamer_file.c:93 bbstreamer_file.c:360
+#: pg_basebackup.c:1470 pg_basebackup.c:1679
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "ファイル\"%s\"を作成できませんでした: %m"
 
-#: bbstreamer_file.c:138 pg_recvlogical.c:635
+#: bbstreamer_file.c:138 pg_recvlogical.c:633
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ファイル\"%s\"をクローズできませんでした: %m"
@@ -160,22 +178,22 @@ msgstr "ファイル\"%s\"をクローズできませんでした: %m"
 msgid "unexpected state while extracting archive"
 msgstr "アーカイブの抽出中に想定外の状態"
 
-#: bbstreamer_file.c:298 pg_basebackup.c:685 pg_basebackup.c:737
+#: bbstreamer_file.c:320 pg_basebackup.c:686 pg_basebackup.c:730
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を作成できませんでした: %m"
 
-#: bbstreamer_file.c:304
+#: bbstreamer_file.c:325
 #, c-format
 msgid "could not set permissions on directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"に権限を設定できませんでした: %m"
 
-#: bbstreamer_file.c:323
+#: bbstreamer_file.c:344
 #, c-format
 msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
 msgstr "\"%s\"から\"%s\"へのシンボリックリンクを作成できませんでした: %m"
 
-#: bbstreamer_file.c:343
+#: bbstreamer_file.c:364
 #, c-format
 msgid "could not set permissions on file \"%s\": %m"
 msgstr "ファイル\"%s\"の権限を設定できませんでした: %m"
@@ -195,32 +213,27 @@ msgstr "標準出力の複製に失敗しました: %m"
 msgid "could not open output file: %m"
 msgstr "出力ファイルをオープンできませんでした: %m"
 
-#: bbstreamer_gzip.c:113
+#: bbstreamer_gzip.c:111
 #, c-format
 msgid "could not set compression level %d: %s"
 msgstr "圧縮レベルを%dに設定できませんでした: %s"
 
-#: bbstreamer_gzip.c:118 bbstreamer_gzip.c:251
-#, c-format
-msgid "this build does not support gzip compression"
-msgstr "このビルドではgzip圧縮をサポートしていません"
-
-#: bbstreamer_gzip.c:145
+#: bbstreamer_gzip.c:143
 #, c-format
 msgid "could not write to compressed file \"%s\": %s"
 msgstr "圧縮ファイル\"%s\"に書き込めませんでした: %s"
 
-#: bbstreamer_gzip.c:169
+#: bbstreamer_gzip.c:167
 #, c-format
 msgid "could not close compressed file \"%s\": %m"
 msgstr "圧縮ファイル\"%s\"をクローズすることができませんでした: %m"
 
-#: bbstreamer_gzip.c:247 walmethods.c:869
+#: bbstreamer_gzip.c:245 walmethods.c:876
 #, c-format
 msgid "could not initialize compression library"
 msgstr "圧縮ライブラリを初期化できませんでした"
 
-#: bbstreamer_gzip.c:297 bbstreamer_lz4.c:355 bbstreamer_zstd.c:319
+#: bbstreamer_gzip.c:296 bbstreamer_lz4.c:354 bbstreamer_zstd.c:329
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "データを伸張できませんでした: %s"
@@ -230,32 +243,27 @@ msgstr "データを伸張できませんでした: %s"
 msgid "unexpected state while injecting recovery settings"
 msgstr "リカバリ設定の出力中に想定外の状態"
 
-#: bbstreamer_lz4.c:96
+#: bbstreamer_lz4.c:95
 #, c-format
 msgid "could not create lz4 compression context: %s"
 msgstr "lz4圧縮コンテクストを生成できませんでした: %s"
 
-#: bbstreamer_lz4.c:101 bbstreamer_lz4.c:299
-#, c-format
-msgid "this build does not support lz4 compression"
-msgstr "このビルドではlz4圧縮をサポートしていません"
-
-#: bbstreamer_lz4.c:141
+#: bbstreamer_lz4.c:140
 #, c-format
 msgid "could not write lz4 header: %s"
 msgstr "lz4ヘッダを出力できませんでした: %s"
 
-#: bbstreamer_lz4.c:190 bbstreamer_zstd.c:171 bbstreamer_zstd.c:213
+#: bbstreamer_lz4.c:189 bbstreamer_zstd.c:181 bbstreamer_zstd.c:223
 #, c-format
 msgid "could not compress data: %s"
 msgstr "データを圧縮できませんでした: %s"
 
-#: bbstreamer_lz4.c:242
+#: bbstreamer_lz4.c:241
 #, c-format
 msgid "could not end lz4 compression: %s"
 msgstr "lz4圧縮を終了できませんでした: %s"
 
-#: bbstreamer_lz4.c:294
+#: bbstreamer_lz4.c:293
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "圧縮ライブラリを初期化できませんでした: %s"
@@ -285,126 +293,126 @@ msgstr "最後のファイルが終わる前にCOPYストリームが終了し�
 msgid "could not create zstd compression context"
 msgstr "zstd圧縮コンテクストを生成できませんでした"
 
-#: bbstreamer_zstd.c:93
+#: bbstreamer_zstd.c:91
 #, c-format
 msgid "could not set zstd compression level to %d: %s"
 msgstr "zstd圧縮レベルを%dに設定できませんでした: %s"
 
-#: bbstreamer_zstd.c:108
+#: bbstreamer_zstd.c:105
 #, c-format
 msgid "could not set compression worker count to %d: %s"
 msgstr "圧縮ワーカー数を%dに設定できませんでした: %s"
 
-#: bbstreamer_zstd.c:119 bbstreamer_zstd.c:274
+#: bbstreamer_zstd.c:116
 #, c-format
-msgid "this build does not support zstd compression"
-msgstr "このビルドではzstd圧縮をサポートしていません"
+msgid "could not enable long-distance mode: %s"
+msgstr "長距離モードを有効化できませんでした: %s"
 
-#: bbstreamer_zstd.c:265
+#: bbstreamer_zstd.c:275
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "zstd伸張コンテクストを生成できませんでした"
 
-#: pg_basebackup.c:239
+#: pg_basebackup.c:238
 #, c-format
 msgid "removing data directory \"%s\""
 msgstr "データディレクトリ\"%s\"を削除しています"
 
-#: pg_basebackup.c:241
+#: pg_basebackup.c:240
 #, c-format
 msgid "failed to remove data directory"
 msgstr "データディレクトリの削除に失敗しました"
 
-#: pg_basebackup.c:245
+#: pg_basebackup.c:244
 #, c-format
 msgid "removing contents of data directory \"%s\""
 msgstr "データディレクトリ\"%s\"の内容を削除しています"
 
-#: pg_basebackup.c:247
+#: pg_basebackup.c:246
 #, c-format
 msgid "failed to remove contents of data directory"
 msgstr "データディレクトリの中身の削除に失敗しました"
 
-#: pg_basebackup.c:252
+#: pg_basebackup.c:251
 #, c-format
 msgid "removing WAL directory \"%s\""
 msgstr "WAL ディレクトリ\"%s\"を削除しています"
 
-#: pg_basebackup.c:254
+#: pg_basebackup.c:253
 #, c-format
 msgid "failed to remove WAL directory"
 msgstr "WAL ディレクトリの削除に失敗しました"
 
-#: pg_basebackup.c:258
+#: pg_basebackup.c:257
 #, c-format
 msgid "removing contents of WAL directory \"%s\""
 msgstr "WAL ディレクトリ\"%s\"の中身を削除しています"
 
-#: pg_basebackup.c:260
+#: pg_basebackup.c:259
 #, c-format
 msgid "failed to remove contents of WAL directory"
 msgstr "WAL ディレクトリの中身の削除に失敗しました"
 
-#: pg_basebackup.c:266
+#: pg_basebackup.c:265
 #, c-format
 msgid "data directory \"%s\" not removed at user's request"
-msgstr "ユーザの要求により、データディレクトリ\"%s\"を削除しませんでした"
+msgstr "ユーザーの要求により、データディレクトリ\"%s\"を削除しませんでした"
 
-#: pg_basebackup.c:269
+#: pg_basebackup.c:268
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
-msgstr "ユーザの要求により、WAL ディレクトリ\"%s\"を削除しませんでした"
+msgstr "ユーザーの要求により、WAL ディレクトリ\"%s\"を削除しませんでした"
 
-#: pg_basebackup.c:273
+#: pg_basebackup.c:272
 #, c-format
 msgid "changes to tablespace directories will not be undone"
 msgstr "テーブル空間用ディレクトリへの変更は取り消されません"
 
-#: pg_basebackup.c:325
+#: pg_basebackup.c:324
 #, c-format
 msgid "directory name too long"
 msgstr "ディレクトリ名が長すぎます"
 
-#: pg_basebackup.c:332
+#: pg_basebackup.c:331
 #, c-format
 msgid "multiple \"=\" signs in tablespace mapping"
 msgstr "テーブル空間のマッピングに複数の\"=\"記号があります"
 
-#: pg_basebackup.c:341
+#: pg_basebackup.c:340
 #, c-format
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr "テーブル空間のマッピング形式\"%s\"が不正です。\"旧DIR=新DIR\"でなければなりません"
 
-#: pg_basebackup.c:350
+#: pg_basebackup.c:359
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr "テーブル空間のマッピングにおいて、旧ディレクトリが絶対パスではありません: %s"
 
-#: pg_basebackup.c:354
+#: pg_basebackup.c:363
 #, c-format
 msgid "new directory is not an absolute path in tablespace mapping: %s"
 msgstr "テーブル空間のマッピングにおいて、新ディレクトリが絶対パスではありません: %s"
 
-#: pg_basebackup.c:376
+#: pg_basebackup.c:385
 #, c-format
 msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%sは実行中のPostgreSQLサーバのベースバックアップを取得します。\n"
+"%sは実行中のPostgreSQLサーバーのベースバックアップを取得します。\n"
 "\n"
 
-#: pg_basebackup.c:378 pg_receivewal.c:81 pg_recvlogical.c:78
+#: pg_basebackup.c:387 pg_receivewal.c:79 pg_recvlogical.c:76
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_basebackup.c:379 pg_receivewal.c:82 pg_recvlogical.c:79
+#: pg_basebackup.c:388 pg_receivewal.c:80 pg_recvlogical.c:77
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [オプション]...\n"
 
-#: pg_basebackup.c:380
+#: pg_basebackup.c:389
 #, c-format
 msgid ""
 "\n"
@@ -413,17 +421,17 @@ msgstr ""
 "\n"
 "出力を制御するオプション:\n"
 
-#: pg_basebackup.c:381
+#: pg_basebackup.c:390
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
 msgstr "  -D, --pgdata=DIRECTORY ベースバックアップをディレクトリ内に格納\n"
 
-#: pg_basebackup.c:382
+#: pg_basebackup.c:391
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
 msgstr "  -F, --format=p|t       出力フォーマット(プレイン(デフォルト)またはtar)\n"
 
-#: pg_basebackup.c:383
+#: pg_basebackup.c:392
 #, c-format
 msgid ""
 "  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
@@ -432,7 +440,7 @@ msgstr ""
 "  -r, --max-rate=RATE    データディレクトリ転送の際の最大転送速度\n"
 "                         (kB/s 単位、または 接尾辞 \"k\" か\"M\" を使用)\n"
 
-#: pg_basebackup.c:385
+#: pg_basebackup.c:394
 #, c-format
 msgid ""
 "  -R, --write-recovery-conf\n"
@@ -441,7 +449,7 @@ msgstr ""
 "  -R, --write-recovery-conf\n"
 "                         レプリケーションのための設定を書き込む\n"
 
-#: pg_basebackup.c:387
+#: pg_basebackup.c:396
 #, c-format
 msgid ""
 "  -t, --target=TARGET[:DETAIL]\n"
@@ -450,7 +458,7 @@ msgstr ""
 "  -t, --target=ターゲット[:詳細]\n"
 "                         バックアップターゲット(クライアント以外の場合)\n"
 
-#: pg_basebackup.c:389
+#: pg_basebackup.c:398
 #, c-format
 msgid ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
@@ -459,12 +467,12 @@ msgstr ""
 "  -T, --tablespace-mapping=旧DIR=新DIR\n"
 "                         テーブル空間を旧DIRから新DIRに移動する\n"
 
-#: pg_basebackup.c:391
+#: pg_basebackup.c:400
 #, c-format
 msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
 msgstr "      --waldir=WALDIR    先行書き込みログ用ディレクトリの位置\n"
 
-#: pg_basebackup.c:392
+#: pg_basebackup.c:401
 #, c-format
 msgid ""
 "  -X, --wal-method=none|fetch|stream\n"
@@ -474,12 +482,12 @@ msgstr ""
 "                         要求されたWALファイルを指定の方式でバックアップ\n"
 "                         に含める\n"
 
-#: pg_basebackup.c:394
+#: pg_basebackup.c:403
 #, c-format
 msgid "  -z, --gzip             compress tar output\n"
 msgstr "  -z, --gzip             tar の出力を圧縮する\n"
 
-#: pg_basebackup.c:395
+#: pg_basebackup.c:404
 #, c-format
 msgid ""
 "  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
@@ -488,12 +496,12 @@ msgstr ""
 "  -Z, --compress=[{client|server}-]方式[:詳細]\n"
 "                         指定に従ってクライアント側またはサーバー側で圧縮\n"
 
-#: pg_basebackup.c:397
+#: pg_basebackup.c:406
 #, c-format
 msgid "  -Z, --compress=none    do not compress tar output\n"
 msgstr "  -Z, --compress=none    tar出力を圧縮しない\n"
 
-#: pg_basebackup.c:398
+#: pg_basebackup.c:407
 #, c-format
 msgid ""
 "\n"
@@ -502,7 +510,7 @@ msgstr ""
 "\n"
 "汎用オプション:\n"
 
-#: pg_basebackup.c:399
+#: pg_basebackup.c:408
 #, c-format
 msgid ""
 "  -c, --checkpoint=fast|spread\n"
@@ -511,47 +519,47 @@ msgstr ""
 "  -c, --checkpoint=fast|spread\n"
 "                         高速または分散チェックポイント処理の指定\n"
 
-#: pg_basebackup.c:401
+#: pg_basebackup.c:410
 #, c-format
 msgid "  -C, --create-slot      create replication slot\n"
 msgstr "  -C, --create-slot      新しいレプリケーションスロットを作成する\n"
 
-#: pg_basebackup.c:402
+#: pg_basebackup.c:411
 #, c-format
 msgid "  -l, --label=LABEL      set backup label\n"
 msgstr "  -l, --label=LABEL      バックアップラベルの設定\n"
 
-#: pg_basebackup.c:403
+#: pg_basebackup.c:412
 #, c-format
 msgid "  -n, --no-clean         do not clean up after errors\n"
 msgstr "  -n, --noclean          エラー発生後作成したファイルの削除を行わない\n"
 
-#: pg_basebackup.c:404
+#: pg_basebackup.c:413
 #, c-format
 msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --nosync           ディスクへの安全な書き込みを待機しない\n"
 
-#: pg_basebackup.c:405
+#: pg_basebackup.c:414
 #, c-format
 msgid "  -P, --progress         show progress information\n"
 msgstr "  -P, --progress         進行状況の表示\n"
 
-#: pg_basebackup.c:406 pg_receivewal.c:91
+#: pg_basebackup.c:415 pg_receivewal.c:89
 #, c-format
 msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
 msgstr "  -S, --slot=スロット名  使用するレプリケーションスロット\n"
 
-#: pg_basebackup.c:407 pg_receivewal.c:93 pg_recvlogical.c:100
+#: pg_basebackup.c:416 pg_receivewal.c:91 pg_recvlogical.c:98
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          冗長メッセージの出力\n"
 
-#: pg_basebackup.c:408 pg_receivewal.c:94 pg_recvlogical.c:101
+#: pg_basebackup.c:417 pg_receivewal.c:92 pg_recvlogical.c:99
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          バージョン情報を表示して終了\n"
 
-#: pg_basebackup.c:409
+#: pg_basebackup.c:418
 #, c-format
 msgid ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
@@ -560,7 +568,7 @@ msgstr ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 "                         目録チェックサムに使用するアルゴリズム\n"
 
-#: pg_basebackup.c:411
+#: pg_basebackup.c:420
 #, c-format
 msgid ""
 "      --manifest-force-encode\n"
@@ -569,22 +577,22 @@ msgstr ""
 "      --manifest-force-encode\n"
 "                         目録中の全てのファイル名を16進エンコードする\n"
 
-#: pg_basebackup.c:413
+#: pg_basebackup.c:422
 #, c-format
 msgid "      --no-estimate-size do not estimate backup size in server side\n"
-msgstr "      --no-estimate-size サーバ側でバックアップサイズを見積もらない\n"
+msgstr "      --no-estimate-size サーバー側でバックアップサイズを見積もらない\n"
 
-#: pg_basebackup.c:414
+#: pg_basebackup.c:423
 #, c-format
 msgid "      --no-manifest      suppress generation of backup manifest\n"
 msgstr "      --no-manifest      バックアップ目録の作成を省略する\n"
 
-#: pg_basebackup.c:415
+#: pg_basebackup.c:424
 #, c-format
 msgid "      --no-slot          prevent creation of temporary replication slot\n"
 msgstr "      --no-slot          一時レプリケーションスロットの作成を行わない\n"
 
-#: pg_basebackup.c:416
+#: pg_basebackup.c:425
 #, c-format
 msgid ""
 "      --no-verify-checksums\n"
@@ -593,12 +601,12 @@ msgstr ""
 "      --no-verify-checksums\n"
 "                         チェックサムを検証しない\n"
 
-#: pg_basebackup.c:418 pg_receivewal.c:97 pg_recvlogical.c:102
+#: pg_basebackup.c:427 pg_receivewal.c:95 pg_recvlogical.c:100
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             このヘルプを表示して終了\n"
 
-#: pg_basebackup.c:419 pg_receivewal.c:98 pg_recvlogical.c:103
+#: pg_basebackup.c:428 pg_receivewal.c:96 pg_recvlogical.c:101
 #, c-format
 msgid ""
 "\n"
@@ -607,46 +615,46 @@ msgstr ""
 "\n"
 "接続オプション:\n"
 
-#: pg_basebackup.c:420 pg_receivewal.c:99
+#: pg_basebackup.c:429 pg_receivewal.c:97
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
 msgstr "  -d, --dbname=CONNSTR   接続文字列\n"
 
-#: pg_basebackup.c:421 pg_receivewal.c:100 pg_recvlogical.c:105
+#: pg_basebackup.c:430 pg_receivewal.c:98 pg_recvlogical.c:103
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr "  -h, --host=HOSTNAME    データベースサーバホストまたはソケットディレクトリ\n"
+msgstr "  -h, --host=HOSTNAME    データベースサーバーホストまたはソケットディレクトリ\n"
 
-#: pg_basebackup.c:422 pg_receivewal.c:101 pg_recvlogical.c:106
+#: pg_basebackup.c:431 pg_receivewal.c:99 pg_recvlogical.c:104
 #, c-format
 msgid "  -p, --port=PORT        database server port number\n"
-msgstr "  -p, --port=PORT        データベースサーバのポート番号\n"
+msgstr "  -p, --port=PORT        データベースサーバーのポート番号\n"
 
-#: pg_basebackup.c:423
+#: pg_basebackup.c:432
 #, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
 "                         time between status packets sent to server (in seconds)\n"
 msgstr ""
 "  -s, --status-interval=INTERVAL\n"
-"                         サーバへ送出するステータスパケットの間隔(秒単位)\n"
+"                         サーバーへ送出するステータスパケットの間隔(秒単位)\n"
 
-#: pg_basebackup.c:425 pg_receivewal.c:102 pg_recvlogical.c:107
+#: pg_basebackup.c:434 pg_receivewal.c:100 pg_recvlogical.c:105
 #, c-format
 msgid "  -U, --username=NAME    connect as specified database user\n"
-msgstr "  -U, --username=NAME    指定したデータベースユーザで接続\n"
+msgstr "  -U, --username=NAME    指定したデータベースユーザーで接続\n"
 
-#: pg_basebackup.c:426 pg_receivewal.c:103 pg_recvlogical.c:108
+#: pg_basebackup.c:435 pg_receivewal.c:101 pg_recvlogical.c:106
 #, c-format
 msgid "  -w, --no-password      never prompt for password\n"
 msgstr "  -w, --no-password      パスワードの入力を要求しない\n"
 
-#: pg_basebackup.c:427 pg_receivewal.c:104 pg_recvlogical.c:109
+#: pg_basebackup.c:436 pg_receivewal.c:102 pg_recvlogical.c:107
 #, c-format
 msgid "  -W, --password         force password prompt (should happen automatically)\n"
 msgstr "  -W, --password         パスワード入力要求を強制(自動的に行われるはず)\n"
 
-#: pg_basebackup.c:428 pg_receivewal.c:108 pg_recvlogical.c:110
+#: pg_basebackup.c:437 pg_receivewal.c:106 pg_recvlogical.c:108
 #, c-format
 msgid ""
 "\n"
@@ -655,477 +663,472 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_basebackup.c:429 pg_receivewal.c:109 pg_recvlogical.c:111
+#: pg_basebackup.c:438 pg_receivewal.c:107 pg_recvlogical.c:109
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
 
-#: pg_basebackup.c:471
+#: pg_basebackup.c:477
 #, c-format
 msgid "could not read from ready pipe: %m"
 msgstr "準備ができたパイプからの読み込みが失敗しました: %m"
 
-#: pg_basebackup.c:474 pg_basebackup.c:621 pg_basebackup.c:2178
-#: streamutil.c:444
+#: pg_basebackup.c:480 pg_basebackup.c:622 pg_basebackup.c:2151
+#: streamutil.c:441
 #, c-format
 msgid "could not parse write-ahead log location \"%s\""
 msgstr "先行書き込みログの位置\"%s\"をパースできませんでした"
 
-#: pg_basebackup.c:580 pg_receivewal.c:665
+#: pg_basebackup.c:585 pg_receivewal.c:600
 #, c-format
 msgid "could not finish writing WAL files: %m"
 msgstr "WALファイルの書き込みを終了できませんでした: %m"
 
-#: pg_basebackup.c:630
+#: pg_basebackup.c:631
 #, c-format
 msgid "could not create pipe for background process: %m"
 msgstr "バックグランドプロセス用のパイプを作成できませんでした: \"%m"
 
-#: pg_basebackup.c:663
+#: pg_basebackup.c:664
 #, c-format
 msgid "created temporary replication slot \"%s\""
 msgstr "一時レプリケーションスロット\"%s\"を作成しました"
 
-#: pg_basebackup.c:666
+#: pg_basebackup.c:667
 #, c-format
 msgid "created replication slot \"%s\""
 msgstr "レプリケーションスロット\"%s\"を作成していました"
 
-#: pg_basebackup.c:703
-#, c-format
-msgid "log streamer with pid %d exiting"
-msgstr "PID %dのログストリーマーが終了します"
-
-#: pg_basebackup.c:708
+#: pg_basebackup.c:701
 #, c-format
 msgid "could not create background process: %m"
 msgstr "バックグラウンドプロセスを生成できませんでした: %m"
 
-#: pg_basebackup.c:717
+#: pg_basebackup.c:710
 #, c-format
 msgid "could not create background thread: %m"
 msgstr "バックグラウンドスレッドを生成できませんでした: %m"
 
-#: pg_basebackup.c:756
+#: pg_basebackup.c:749
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "ディレクトリ\"%s\"は存在しますが空ではありません"
 
-#: pg_basebackup.c:762
+#: pg_basebackup.c:755
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"にアクセスできませんでした: %m"
 
-#: pg_basebackup.c:839
+#: pg_basebackup.c:831
 #, c-format
 msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
 msgstr[0] "%*s/%s kB (100%%), %d/%d テーブル空間 %*s"
 
-#: pg_basebackup.c:851
+#: pg_basebackup.c:843
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
 msgstr[0] "%*s/%s kB (%d%%), %d/%d テーブル空間 (%s%-*.*s)"
 
-#: pg_basebackup.c:867
+#: pg_basebackup.c:859
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
 msgstr[0] "%*s/%s kB (%d%%), %d/%d テーブル空間"
 
-#: pg_basebackup.c:891
+#: pg_basebackup.c:883
 #, c-format
 msgid "transfer rate \"%s\" is not a valid value"
 msgstr "転送速度\"%s\"は無効な値です"
 
-#: pg_basebackup.c:893
+#: pg_basebackup.c:885
 #, c-format
 msgid "invalid transfer rate \"%s\": %m"
 msgstr "転送速度\"%s\"は無効です: %m"
 
-#: pg_basebackup.c:900
+#: pg_basebackup.c:892
 #, c-format
 msgid "transfer rate must be greater than zero"
 msgstr "転送速度は0より大きな値でなければなりません"
 
-#: pg_basebackup.c:930
+#: pg_basebackup.c:922
 #, c-format
 msgid "invalid --max-rate unit: \"%s\""
 msgstr "--max-rate の単位が不正です: \"%s\""
 
-#: pg_basebackup.c:934
+#: pg_basebackup.c:926
 #, c-format
 msgid "transfer rate \"%s\" exceeds integer range"
 msgstr "転送速度\"%s\"がintegerの範囲を超えています"
 
-#: pg_basebackup.c:941
+#: pg_basebackup.c:933
 #, c-format
 msgid "transfer rate \"%s\" is out of range"
 msgstr "転送速度\"%s\"が範囲外です"
 
-#: pg_basebackup.c:1037
+#: pg_basebackup.c:995
 #, c-format
 msgid "could not get COPY data stream: %s"
 msgstr "COPYデータストリームを取得できませんでした: %s"
 
-#: pg_basebackup.c:1054 pg_recvlogical.c:438 pg_recvlogical.c:610
-#: receivelog.c:981
+#: pg_basebackup.c:1012 pg_recvlogical.c:436 pg_recvlogical.c:608
+#: receivelog.c:973
 #, c-format
 msgid "could not read COPY data: %s"
 msgstr "COPYデータを読み取ることができませんでした: %s"
 
-#: pg_basebackup.c:1058
+#: pg_basebackup.c:1016
 #, c-format
 msgid "background process terminated unexpectedly"
 msgstr "バックグラウンドプロセスが突然終了しました"
 
-#: pg_basebackup.c:1129
+#: pg_basebackup.c:1087
 #, c-format
-msgid "cannot inject manifest into a compressed tarfile"
+msgid "cannot inject manifest into a compressed tar file"
 msgstr "圧縮tarファイルには目録は出力できません"
 
-#: pg_basebackup.c:1130
+#: pg_basebackup.c:1088
 #, c-format
-msgid "use client-side compression, send the output to a directory rather than standard output, or use --no-manifest"
-msgstr "クライアントサイド圧縮を使用して標準出力ではなくディレクトリに出力する、または --no-manifestを使用してください"
+msgid "Use client-side compression, send the output to a directory rather than standard output, or use %s."
+msgstr "クライアントサイド圧縮を使用して標準出力ではなくディレクトリに出力する、または %s を使用してください。"
 
-#: pg_basebackup.c:1145
+#: pg_basebackup.c:1104
 #, c-format
-msgid "unable to parse archive: %s"
-msgstr "アーカイバのパースができませんでした: %s"
+msgid "cannot parse archive \"%s\""
+msgstr "アーカイブ\"%s\"のパースができませんでした"
 
-#: pg_basebackup.c:1146
+#: pg_basebackup.c:1105
 #, c-format
 msgid "Only tar archives can be parsed."
 msgstr "tarアーカイブのみパース可能です。"
 
-#: pg_basebackup.c:1148
+#: pg_basebackup.c:1107
 #, c-format
 msgid "Plain format requires pg_basebackup to parse the archive."
 msgstr "Plainフォーマットではpg_basebackupがアーカイブをパースする必要があります。"
 
-#: pg_basebackup.c:1150
+#: pg_basebackup.c:1109
 #, c-format
 msgid "Using - as the output directory requires pg_basebackup to parse the archive."
 msgstr "出力ディレクトリに - を指定する際にはpg_basebackupがアーカイブをパースする必要があります。"
 
-#: pg_basebackup.c:1152
+#: pg_basebackup.c:1111
 #, c-format
 msgid "The -R option requires pg_basebackup to parse the archive."
 msgstr "-Rオプションを指定する場合はpg_basebackupがアーカイブをパースする必要があります。"
 
-#: pg_basebackup.c:1364
+#: pg_basebackup.c:1330
 #, c-format
-msgid "archives should precede manifest"
-msgstr "アーカイブは目録より先にあるべきです"
+msgid "archives must precede manifest"
+msgstr "アーカイブは目録より先にあるはずです"
 
-#: pg_basebackup.c:1379
+#: pg_basebackup.c:1345
 #, c-format
 msgid "invalid archive name: \"%s\""
 msgstr "不正なアーカイブ名: \"%s\""
 
-#: pg_basebackup.c:1451
+#: pg_basebackup.c:1417
 #, c-format
 msgid "unexpected payload data"
 msgstr "予期しないペイロードのデータ"
 
-#: pg_basebackup.c:1594
+#: pg_basebackup.c:1560
 #, c-format
 msgid "empty COPY message"
 msgstr "空のCOPYメッセージ"
 
-#: pg_basebackup.c:1596
+#: pg_basebackup.c:1562
 #, c-format
 msgid "malformed COPY message of type %d, length %zu"
 msgstr "タイプ%d、長さ%zuのCOPYメッセージのフォーマット異常"
 
-#: pg_basebackup.c:1794
+#: pg_basebackup.c:1760
 #, c-format
 msgid "incompatible server version %s"
-msgstr "非互換のサーババージョン \"%s\""
+msgstr "非互換のサーバーバージョン \"%s\""
 
-#: pg_basebackup.c:1810
+#: pg_basebackup.c:1776
 #, c-format
-msgid "HINT: use -X none or -X fetch to disable log streaming"
-msgstr "ヒント: -X none または -X fetch でログストリーミングを無効にできます"
+msgid "Use -X none or -X fetch to disable log streaming."
+msgstr "-X none または -X fetch でログストリーミングを無効にできます。"
 
-#: pg_basebackup.c:1878
+#: pg_basebackup.c:1844
 #, c-format
 msgid "backup targets are not supported by this server version"
-msgstr "バックアップターゲットはこのサーババージョンではサポートされません"
+msgstr "バックアップターゲットはこのサーバーバージョンではサポートされません"
 
-#: pg_basebackup.c:1881
+#: pg_basebackup.c:1847
 #, c-format
 msgid "recovery configuration cannot be written when a backup target is used"
 msgstr "バックアップターゲットが使用されている場合にはリカバリ設定は出力できません"
 
-#: pg_basebackup.c:1908
+#: pg_basebackup.c:1874
 #, c-format
 msgid "server does not support server-side compression"
 msgstr "サーバーはサーバーサイド圧縮をサポートしていません"
 
-#: pg_basebackup.c:1918
+#: pg_basebackup.c:1884
 #, c-format
 msgid "initiating base backup, waiting for checkpoint to complete"
 msgstr "ベースバックアップを開始しています - チェックポイントの完了を待機中"
 
-#: pg_basebackup.c:1935 pg_recvlogical.c:262 receivelog.c:549 receivelog.c:588
-#: streamutil.c:291 streamutil.c:364 streamutil.c:416 streamutil.c:504
-#: streamutil.c:656 streamutil.c:701
+#: pg_basebackup.c:1888
+#, c-format
+msgid "waiting for checkpoint"
+msgstr "チェックポイントを待っています"
+
+#: pg_basebackup.c:1901 pg_recvlogical.c:260 receivelog.c:543 receivelog.c:582
+#: streamutil.c:288 streamutil.c:361 streamutil.c:413 streamutil.c:501
+#: streamutil.c:653 streamutil.c:698
 #, c-format
 msgid "could not send replication command \"%s\": %s"
 msgstr "レプリケーションコマンド\"%s\"を送信できませんでした: %s"
 
-#: pg_basebackup.c:1943
+#: pg_basebackup.c:1909
 #, c-format
 msgid "could not initiate base backup: %s"
 msgstr "ベースバックアップを開始できませんでした: %s"
 
-#: pg_basebackup.c:1946
+#: pg_basebackup.c:1912
 #, c-format
 msgid "server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields"
-msgstr "サーバが BASE_BACKUP コマンドに期待していない応答を返しました; %d行 %d列を受信しましたが期待は %d列 %d行でした"
+msgstr "サーバーが BASE_BACKUP コマンドに期待していない応答を返しました; %d行 %d列を受信しましたが期待は %d列 %d行でした"
 
-#: pg_basebackup.c:1952
+#: pg_basebackup.c:1918
 #, c-format
 msgid "checkpoint completed"
 msgstr "チェックポイントが完了しました"
 
-#: pg_basebackup.c:1967
+#: pg_basebackup.c:1932
 #, c-format
 msgid "write-ahead log start point: %s on timeline %u"
 msgstr "先行書き込みログの開始ポイント: タイムライン %2$u 上の %1$s"
 
-#: pg_basebackup.c:1975
+#: pg_basebackup.c:1940
 #, c-format
 msgid "could not get backup header: %s"
 msgstr "バックアップヘッダを取得できませんでした: %s"
 
-#: pg_basebackup.c:1978
+#: pg_basebackup.c:1943
 #, c-format
 msgid "no data returned from server"
-msgstr "サーバからデータが返されませんでした"
+msgstr "サーバーからデータが返されませんでした"
 
-#: pg_basebackup.c:2013
+#: pg_basebackup.c:1986
 #, c-format
 msgid "can only write single tablespace to stdout, database has %d"
 msgstr "標準出力に書き出せるテーブル空間は１つだけですが、データベースには%d個あります"
 
-#: pg_basebackup.c:2026
+#: pg_basebackup.c:1999
 #, c-format
 msgid "starting background WAL receiver"
 msgstr "バックグランドWAL受信処理を起動します"
 
-#: pg_basebackup.c:2109
+#: pg_basebackup.c:2082
 #, c-format
 msgid "backup failed: %s"
 msgstr "バックアップが失敗しました: %s"
 
-#: pg_basebackup.c:2112
+#: pg_basebackup.c:2085
 #, c-format
 msgid "no write-ahead log end position returned from server"
-msgstr "サーバから先行書き込みログの終了位置が返されませんでした"
+msgstr "サーバーから先行書き込みログの終了位置が返されませんでした"
 
-#: pg_basebackup.c:2115
+#: pg_basebackup.c:2088
 #, c-format
 msgid "write-ahead log end point: %s"
 msgstr "先行書き込みログの終了ポイント: %s"
 
-#: pg_basebackup.c:2126
+#: pg_basebackup.c:2099
 #, c-format
 msgid "checksum error occurred"
 msgstr "チェックサムエラーが発生しました"
 
-#: pg_basebackup.c:2131
+#: pg_basebackup.c:2104
 #, c-format
 msgid "final receive failed: %s"
 msgstr "終端の受信に失敗しました: %s"
 
-#: pg_basebackup.c:2155
+#: pg_basebackup.c:2128
 #, c-format
 msgid "waiting for background process to finish streaming ..."
 msgstr "バックグランドプロセスがストリーミング処理が終わるまで待機します ..."
 
-#: pg_basebackup.c:2159
+#: pg_basebackup.c:2132
 #, c-format
 msgid "could not send command to background pipe: %m"
 msgstr "バックグランドへのパイプにコマンドを送信できませんでした: %m"
 
-#: pg_basebackup.c:2164
+#: pg_basebackup.c:2137
 #, c-format
 msgid "could not wait for child process: %m"
 msgstr "子プロセスの待機ができませんでした: %m"
 
-#: pg_basebackup.c:2166
+#: pg_basebackup.c:2139
 #, c-format
 msgid "child %d died, expected %d"
 msgstr "子プロセス %d が終了しましたが、期待していたのは %d でした"
 
-#: pg_basebackup.c:2168 streamutil.c:91 streamutil.c:197
+#: pg_basebackup.c:2141 streamutil.c:91 streamutil.c:196
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_basebackup.c:2188
+#: pg_basebackup.c:2161
 #, c-format
 msgid "could not wait for child thread: %m"
 msgstr "子スレッドの待機ができませんでした: %m"
 
-#: pg_basebackup.c:2193
+#: pg_basebackup.c:2166
 #, c-format
 msgid "could not get child thread exit status: %m"
 msgstr "子スレッドの終了ステータスを取得できませんでした: %m"
 
-#: pg_basebackup.c:2196
+#: pg_basebackup.c:2169
 #, c-format
 msgid "child thread exited with error %u"
 msgstr "子スレッドがエラー%uで終了しました"
 
-#: pg_basebackup.c:2225
+#: pg_basebackup.c:2198
 #, c-format
 msgid "syncing data to disk ..."
 msgstr "データをディスクに同期しています..."
 
-#: pg_basebackup.c:2250
+#: pg_basebackup.c:2223
 #, c-format
 msgid "renaming backup_manifest.tmp to backup_manifest"
 msgstr "backup_manifest.tmp の名前を backup_manifest に変更してください"
 
-#: pg_basebackup.c:2270
+#: pg_basebackup.c:2243
 #, c-format
 msgid "base backup completed"
 msgstr "ベースバックアップが完了しました"
 
-#: pg_basebackup.c:2359
-#, c-format
-msgid "invalid output format \"%s\", must be \"plain\" or \"tar\""
-msgstr "不正な出力フォーマット\"%s\"、\"plain\"か\"tar\"でなければなりません"
-
-#: pg_basebackup.c:2403
-#, c-format
-msgid "invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\""
-msgstr "不正な wal-method オプション\"%s\"、\"fetch\"、\"stream\" または \"none\" のいずれかでなければなりません"
-
-#: pg_basebackup.c:2433
+#: pg_basebackup.c:2326
 #, c-format
 msgid "invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\""
 msgstr "不正な checkpoint の引数\"%s\"、\"fast\" または \"spreadでなければなりません"
 
-#: pg_basebackup.c:2484 pg_basebackup.c:2496 pg_basebackup.c:2518
-#: pg_basebackup.c:2530 pg_basebackup.c:2536 pg_basebackup.c:2588
-#: pg_basebackup.c:2599 pg_basebackup.c:2609 pg_basebackup.c:2615
-#: pg_basebackup.c:2622 pg_basebackup.c:2634 pg_basebackup.c:2646
-#: pg_basebackup.c:2654 pg_basebackup.c:2667 pg_basebackup.c:2673
-#: pg_basebackup.c:2682 pg_basebackup.c:2694 pg_basebackup.c:2705
-#: pg_basebackup.c:2713 pg_receivewal.c:816 pg_receivewal.c:828
-#: pg_receivewal.c:835 pg_receivewal.c:844 pg_receivewal.c:851
-#: pg_receivewal.c:861 pg_recvlogical.c:837 pg_recvlogical.c:849
-#: pg_recvlogical.c:859 pg_recvlogical.c:866 pg_recvlogical.c:873
-#: pg_recvlogical.c:880 pg_recvlogical.c:887 pg_recvlogical.c:894
-#: pg_recvlogical.c:901 pg_recvlogical.c:908
+#: pg_basebackup.c:2344
+#, c-format
+msgid "invalid output format \"%s\", must be \"plain\" or \"tar\""
+msgstr "不正な出力フォーマット\"%s\"、\"plain\"か\"tar\"でなければなりません"
+
+#: pg_basebackup.c:2422
+#, c-format
+msgid "invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\""
+msgstr "不正な wal-method オプション\"%s\"、\"fetch\"、\"stream\" または \"none\" のいずれかでなければなりません"
+
+#: pg_basebackup.c:2457 pg_basebackup.c:2469 pg_basebackup.c:2491
+#: pg_basebackup.c:2503 pg_basebackup.c:2509 pg_basebackup.c:2561
+#: pg_basebackup.c:2572 pg_basebackup.c:2582 pg_basebackup.c:2588
+#: pg_basebackup.c:2595 pg_basebackup.c:2607 pg_basebackup.c:2619
+#: pg_basebackup.c:2627 pg_basebackup.c:2640 pg_basebackup.c:2646
+#: pg_basebackup.c:2655 pg_basebackup.c:2667 pg_basebackup.c:2678
+#: pg_basebackup.c:2686 pg_receivewal.c:748 pg_receivewal.c:760
+#: pg_receivewal.c:767 pg_receivewal.c:776 pg_receivewal.c:783
+#: pg_receivewal.c:793 pg_recvlogical.c:835 pg_recvlogical.c:847
+#: pg_recvlogical.c:857 pg_recvlogical.c:864 pg_recvlogical.c:871
+#: pg_recvlogical.c:878 pg_recvlogical.c:885 pg_recvlogical.c:892
+#: pg_recvlogical.c:899 pg_recvlogical.c:906
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_basebackup.c:2494 pg_receivewal.c:826 pg_recvlogical.c:847
+#: pg_basebackup.c:2467 pg_receivewal.c:758 pg_recvlogical.c:845
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "コマンドライン引数が多過ぎます(先頭は\"%s\"です)"
 
-#: pg_basebackup.c:2517
+#: pg_basebackup.c:2490
 #, c-format
 msgid "cannot specify both format and backup target"
 msgstr "フォーマットとバックアップターゲットの両方を同時には指定できません"
 
-#: pg_basebackup.c:2529
+#: pg_basebackup.c:2502
 #, c-format
 msgid "must specify output directory or backup target"
 msgstr "出力ディレクトリかバックアップターゲットを指定する必要があります"
 
-#: pg_basebackup.c:2535
+#: pg_basebackup.c:2508
 #, c-format
 msgid "cannot specify both output directory and backup target"
 msgstr "出力先ディレクトリとバックアップターゲットの両方を同時には指定できません"
 
-#: pg_basebackup.c:2565 pg_receivewal.c:870
+#: pg_basebackup.c:2538 pg_receivewal.c:802
 #, c-format
-msgid "unrecognized compression algorithm \"%s\""
-msgstr "認識できない圧縮アルゴリズム: \"%s\""
+msgid "unrecognized compression algorithm: \"%s\""
+msgstr "認識できない圧縮アルゴリズム\"%s\""
 
-#: pg_basebackup.c:2571 pg_receivewal.c:877
+#: pg_basebackup.c:2544 pg_receivewal.c:809
 #, c-format
 msgid "invalid compression specification: %s"
 msgstr "不正な圧縮指定: %s"
 
-#: pg_basebackup.c:2587
+#: pg_basebackup.c:2560
 #, c-format
 msgid "client-side compression is not possible when a backup target is specified"
 msgstr "バックアップターゲットが指定されているとクライアントサイド圧縮はできません"
 
-#: pg_basebackup.c:2598
+#: pg_basebackup.c:2571
 #, c-format
 msgid "only tar mode backups can be compressed"
 msgstr "tarモードでのバックアップのみが圧縮可能です"
 
-#: pg_basebackup.c:2608
+#: pg_basebackup.c:2581
 #, c-format
 msgid "WAL cannot be streamed when a backup target is specified"
 msgstr "バックアップターゲット指定されているとWALはストリーム出力できません"
 
-#: pg_basebackup.c:2614
+#: pg_basebackup.c:2587
 #, c-format
 msgid "cannot stream write-ahead logs in tar mode to stdout"
 msgstr "標準出力への tar モードでは書き込み先行ログをストリーム出力できません"
 
-#: pg_basebackup.c:2621
+#: pg_basebackup.c:2594
 #, c-format
 msgid "replication slots can only be used with WAL streaming"
 msgstr "レプリケーションスロットはWALストリーミングでのみ使用可能です"
 
-#: pg_basebackup.c:2633
+#: pg_basebackup.c:2606
 #, c-format
 msgid "--no-slot cannot be used with slot name"
 msgstr "--no-slot はスロット名と同時には指定できません"
 
 #. translator: second %s is an option name
-#: pg_basebackup.c:2644 pg_receivewal.c:842
+#: pg_basebackup.c:2617 pg_receivewal.c:774
 #, c-format
 msgid "%s needs a slot to be specified using --slot"
 msgstr "%s は --slot でスロットを指定する必要があります"
 
-#: pg_basebackup.c:2652 pg_basebackup.c:2692 pg_basebackup.c:2703
-#: pg_basebackup.c:2711
+#: pg_basebackup.c:2625 pg_basebackup.c:2665 pg_basebackup.c:2676
+#: pg_basebackup.c:2684
 #, c-format
 msgid "%s and %s are incompatible options"
 msgstr "%s と %s は非互換なオプションです"
 
-#: pg_basebackup.c:2666
+#: pg_basebackup.c:2639
 #, c-format
 msgid "WAL directory location cannot be specified along with a backup target"
 msgstr "WALディレクトリの位置はバックアップターゲットと同時には指定できません"
 
-#: pg_basebackup.c:2672
+#: pg_basebackup.c:2645
 #, c-format
 msgid "WAL directory location can only be specified in plain mode"
 msgstr "WALディレクトリの位置は plainモードでのみ指定可能です"
 
-#: pg_basebackup.c:2681
+#: pg_basebackup.c:2654
 #, c-format
 msgid "WAL directory location must be an absolute path"
 msgstr "WALディレクトリの位置は、絶対パスでなければなりません"
 
-#: pg_basebackup.c:2781
+#: pg_basebackup.c:2754
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "シンボリックリンク\"%s\"を作成できませんでした: %m"
 
-#: pg_basebackup.c:2783
-#, c-format
-msgid "symlinks are not supported on this platform"
-msgstr "このプラットフォームでシンボリックリンクはサポートされていません"
-
-#: pg_receivewal.c:79
+#: pg_receivewal.c:77
 #, c-format
 msgid ""
 "%s receives PostgreSQL streaming write-ahead logs.\n"
@@ -1134,7 +1137,7 @@ msgstr ""
 "%sはPostgreSQLの先行書き込みログストリームを受信します。\n"
 "\n"
 
-#: pg_receivewal.c:83 pg_recvlogical.c:84
+#: pg_receivewal.c:81 pg_recvlogical.c:82
 #, c-format
 msgid ""
 "\n"
@@ -1143,47 +1146,47 @@ msgstr ""
 "\n"
 "オプション:\n"
 
-#: pg_receivewal.c:84
+#: pg_receivewal.c:82
 #, c-format
 msgid "  -D, --directory=DIR    receive write-ahead log files into this directory\n"
 msgstr "  -D, --directory=DIR    受信した先行書き込みログの格納ディレクトリ\n"
 
-#: pg_receivewal.c:85 pg_recvlogical.c:85
+#: pg_receivewal.c:83 pg_recvlogical.c:83
 #, c-format
 msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
 msgstr "  -E, --endpos=LSN       指定したLSNの受信後に終了\n"
 
-#: pg_receivewal.c:86 pg_recvlogical.c:89
+#: pg_receivewal.c:84 pg_recvlogical.c:87
 #, c-format
 msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
 msgstr "　　　--if-not-exists    スロットの作成時に既に存在していてもエラーとしない\n"
 
-#: pg_receivewal.c:87 pg_recvlogical.c:91
+#: pg_receivewal.c:85 pg_recvlogical.c:89
 #, c-format
 msgid "  -n, --no-loop          do not loop on connection lost\n"
 msgstr "  -n, --no-loop          接続断の際にループしない\n"
 
-#: pg_receivewal.c:88
+#: pg_receivewal.c:86
 #, c-format
 msgid "      --no-sync          do not wait for changes to be written safely to disk\n"
 msgstr "      --no-sync          ディスクへの安全な書き込みの待機を行わない\n"
 
-#: pg_receivewal.c:89 pg_recvlogical.c:96
+#: pg_receivewal.c:87 pg_recvlogical.c:94
 #, c-format
 msgid ""
 "  -s, --status-interval=SECS\n"
 "                         time between status packets sent to server (default: %d)\n"
 msgstr ""
 "  -s, --status-interval=SECS\n"
-"                         サーバへ送出するステータスパケットの間隔\n"
+"                         サーバーへ送出するステータスパケットの間隔\n"
 "                         (デフォルト: %d)\n"
 
-#: pg_receivewal.c:92
+#: pg_receivewal.c:90
 #, c-format
 msgid "      --synchronous      flush write-ahead log immediately after writing\n"
 msgstr "      --synchronous      先行書き込みログを書き込み後直ちにフラッシュ\n"
 
-#: pg_receivewal.c:95
+#: pg_receivewal.c:93
 #, c-format
 msgid ""
 "  -Z, --compress=METHOD[:DETAIL]\n"
@@ -1192,7 +1195,7 @@ msgstr ""
 "  -Z, --compress=方式[:詳細]\n"
 "                         指定のとおり圧縮\n"
 
-#: pg_receivewal.c:105
+#: pg_receivewal.c:103
 #, c-format
 msgid ""
 "\n"
@@ -1201,177 +1204,162 @@ msgstr ""
 "\n"
 "追加の動作:\n"
 
-#: pg_receivewal.c:106 pg_recvlogical.c:81
+#: pg_receivewal.c:104 pg_recvlogical.c:79
 #, c-format
 msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
 msgstr ""
 "     --create-slot       新しいレプリケーションスロットを作成する\n"
 "                         (スロット名については --slot を参照)\n"
 
-#: pg_receivewal.c:107 pg_recvlogical.c:82
+#: pg_receivewal.c:105 pg_recvlogical.c:80
 #, c-format
 msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
 msgstr ""
 "     --drop-slot         レプリケーションスロットを削除する\n"
 "                         (スロット名については --slot を参照)\n"
 
-#: pg_receivewal.c:252
+#: pg_receivewal.c:191
 #, c-format
 msgid "finished segment at %X/%X (timeline %u)"
 msgstr "%X/%X (タイムライン %u)でセグメントが完了"
 
-#: pg_receivewal.c:259
+#: pg_receivewal.c:198
 #, c-format
 msgid "stopped log streaming at %X/%X (timeline %u)"
 msgstr "%X/%X (タイムライン %u)でログのストリーミングを停止しました"
 
-#: pg_receivewal.c:275
+#: pg_receivewal.c:214
 #, c-format
 msgid "switched to timeline %u at %X/%X"
 msgstr "%3$X/%2$Xで タイムライン%1$uに切り替えました"
 
-#: pg_receivewal.c:285
+#: pg_receivewal.c:224
 #, c-format
 msgid "received interrupt signal, exiting"
 msgstr "割り込みシグナルを受信、終了します"
 
-#: pg_receivewal.c:317
+#: pg_receivewal.c:256
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をクローズできませんでした: %m"
 
-#: pg_receivewal.c:384
+#: pg_receivewal.c:323
 #, c-format
 msgid "segment file \"%s\" has incorrect size %lld, skipping"
 msgstr "セグメントファイル\"%s\"のサイズ%lldが間違っています、スキップします"
 
-#: pg_receivewal.c:401
+#: pg_receivewal.c:340
 #, c-format
 msgid "could not open compressed file \"%s\": %m"
 msgstr "圧縮ファイル\"%s\"を開けませんでした: %m"
 
-#: pg_receivewal.c:404
+#: pg_receivewal.c:343
 #, c-format
 msgid "could not seek in compressed file \"%s\": %m"
 msgstr "圧縮ファイル\"%s\"でseekできませんでした: %m"
 
-#: pg_receivewal.c:410
+#: pg_receivewal.c:349
 #, c-format
 msgid "could not read compressed file \"%s\": %m"
 msgstr "圧縮ファイル\"%s\"を読めませんでした: %m"
 
-#: pg_receivewal.c:413
+#: pg_receivewal.c:352
 #, c-format
 msgid "could not read compressed file \"%s\": read %d of %zu"
 msgstr "圧縮ファイル\"%1$s\"を読めませんでした: %3$zuバイトのうち%2$dバイトを読み込み済み"
 
-#: pg_receivewal.c:423
+#: pg_receivewal.c:362
 #, c-format
 msgid "compressed segment file \"%s\" has incorrect uncompressed size %d, skipping"
 msgstr "圧縮セグメントファイル\"%s\"の展開後サイズ%dが不正です、スキップします"
 
-#: pg_receivewal.c:451
+#: pg_receivewal.c:390
 #, c-format
 msgid "could not create LZ4 decompression context: %s"
 msgstr "LZ4伸張コンテキストを作成できませんでした: %s"
 
-#: pg_receivewal.c:463
+#: pg_receivewal.c:402
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
-#: pg_receivewal.c:481
+#: pg_receivewal.c:420
 #, c-format
 msgid "could not decompress file \"%s\": %s"
 msgstr "ファイル\"%s\"を伸張できませんでした: %s"
 
-#: pg_receivewal.c:504
+#: pg_receivewal.c:443
 #, c-format
 msgid "could not free LZ4 decompression context: %s"
 msgstr "LZ4伸張コンテクストを解放きませんでした: %s"
 
-#: pg_receivewal.c:509
+#: pg_receivewal.c:448
 #, c-format
 msgid "compressed segment file \"%s\" has incorrect uncompressed size %zu, skipping"
 msgstr "圧縮セグメントファイル\"%s\"の伸張後のサイズ%zuが不正です、スキップします"
 
-#: pg_receivewal.c:514
+#: pg_receivewal.c:453
 #, c-format
-msgid "could not check file \"%s\""
-msgstr "ファイル\"%s\"を検証できませんでした"
+msgid "cannot check file \"%s\": compression with %s not supported by this build"
+msgstr "ファイル\"%s\"の確認ができません: %sによる圧縮はこのビルドではサポートされません"
 
-#: pg_receivewal.c:516
-#, c-format
-msgid "This build does not support compression with %s."
-msgstr "このビルドでは%sによる圧縮をサポートしていません。"
-
-#: pg_receivewal.c:643
+#: pg_receivewal.c:578
 #, c-format
 msgid "starting log streaming at %X/%X (timeline %u)"
 msgstr "%X/%X (タイムライン %u)からログのストリーミングを開始"
 
-#: pg_receivewal.c:785 pg_recvlogical.c:785
+#: pg_receivewal.c:693 pg_recvlogical.c:783
 #, c-format
 msgid "could not parse end position \"%s\""
 msgstr "終了位置\"%s\"をパースできませんでした"
 
-#: pg_receivewal.c:834
+#: pg_receivewal.c:766
 #, c-format
 msgid "cannot use --create-slot together with --drop-slot"
 msgstr "--create-slot は --drop-slot と同時には指定できません"
 
-#: pg_receivewal.c:850
+#: pg_receivewal.c:782
 #, c-format
 msgid "cannot use --synchronous together with --no-sync"
 msgstr "--synchronous は --no-sync と同時には指定できません"
 
-#: pg_receivewal.c:860
+#: pg_receivewal.c:792
 #, c-format
 msgid "no target directory specified"
 msgstr "格納先ディレクトリが指定されていません"
 
-#: pg_receivewal.c:893
-#, c-format
-msgid "no value specified for --compress, switching to default"
-msgstr "--compressに値が指定されていません、デフォルトに切り替えます"
-
-#: pg_receivewal.c:897 pg_receivewal.c:903
-#, c-format
-msgid "this build does not support compression with %s"
-msgstr "このビルドでは%sによる圧縮をサポートしていません"
-
-#: pg_receivewal.c:908
+#: pg_receivewal.c:816
 #, c-format
 msgid "compression with %s is not yet supported"
 msgstr "%sによる圧縮`まだサポートされていません"
 
-#: pg_receivewal.c:953
+#: pg_receivewal.c:859
 #, c-format
 msgid "replication connection using slot \"%s\" is unexpectedly database specific"
 msgstr "スロット\"%s\"を使用するレプリケーション接続で、想定に反してデータベースが指定されています"
 
-#: pg_receivewal.c:972 pg_recvlogical.c:955
+#: pg_receivewal.c:878 pg_recvlogical.c:954
 #, c-format
 msgid "dropping replication slot \"%s\""
 msgstr "レプリケーションスロット\"%s\"を削除しています"
 
-#: pg_receivewal.c:983 pg_recvlogical.c:965
+#: pg_receivewal.c:889 pg_recvlogical.c:964
 #, c-format
 msgid "creating replication slot \"%s\""
 msgstr "レプリケーションスロット\"%s\"を作成しています"
 
-#: pg_receivewal.c:1012 pg_recvlogical.c:989
+#: pg_receivewal.c:918 pg_recvlogical.c:988
 #, c-format
 msgid "disconnected"
 msgstr "切断しました"
 
 #. translator: check source for value for %d
-#: pg_receivewal.c:1016 pg_recvlogical.c:993
+#: pg_receivewal.c:922 pg_recvlogical.c:992
 #, c-format
 msgid "disconnected; waiting %d seconds to try again"
 msgstr "切断しました; %d秒待機して再試行します"
 
-#: pg_recvlogical.c:76
+#: pg_recvlogical.c:74
 #, c-format
 msgid ""
 "%s controls PostgreSQL logical decoding streams.\n"
@@ -1380,7 +1368,7 @@ msgstr ""
 "%s はPostgreSQLの論理デコードストリームを制御します。\n"
 "\n"
 
-#: pg_recvlogical.c:80
+#: pg_recvlogical.c:78
 #, c-format
 msgid ""
 "\n"
@@ -1389,19 +1377,19 @@ msgstr ""
 "\n"
 "実行する動作:\n"
 
-#: pg_recvlogical.c:83
+#: pg_recvlogical.c:81
 #, c-format
 msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
 msgstr ""
 "     --start             レプリケーションスロットでストリーミングを開始する\n"
 "                         (スロット名については --slot を参照)\n"
 
-#: pg_recvlogical.c:86
+#: pg_recvlogical.c:84
 #, c-format
 msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
 msgstr "  -f, --file=FILE        このファイルにログを受け取る、 - で標準出力\n"
 
-#: pg_recvlogical.c:87
+#: pg_recvlogical.c:85
 #, c-format
 msgid ""
 "  -F  --fsync-interval=SECS\n"
@@ -1410,12 +1398,12 @@ msgstr ""
 "  -F  --fsync-interval=SECS\n"
 "                         出力ファイルへのfsync時間間隔(デフォルト: %d)\n"
 
-#: pg_recvlogical.c:90
+#: pg_recvlogical.c:88
 #, c-format
 msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
 msgstr "  -I, --startpos=LSN     既存スロット内のストリーミング開始位置\n"
 
-#: pg_recvlogical.c:92
+#: pg_recvlogical.c:90
 #, c-format
 msgid ""
 "  -o, --option=NAME[=VALUE]\n"
@@ -1426,397 +1414,392 @@ msgstr ""
 "                         出力プラグインにオプションNAMEをオプション値VALUEと\n"
 "                         ともに渡す\n"
 
-#: pg_recvlogical.c:95
+#: pg_recvlogical.c:93
 #, c-format
 msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
 msgstr "  -P, --plugin=PLUGIN    出力プラグインPLUGINを使う(デフォルト: %s)\n"
 
-#: pg_recvlogical.c:98
+#: pg_recvlogical.c:96
 #, c-format
 msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
 msgstr "  -S, --slot=SLOTNAME    論理レプリケーションスロットの名前\n"
 
-#: pg_recvlogical.c:99
+#: pg_recvlogical.c:97
 #, c-format
-msgid "  -t, --two-phase        enable two-phase decoding when creating a slot\n"
-msgstr "  -t, --two-phase        スロット作成時に2相デコードを有効にする\n"
+msgid "  -t, --two-phase        enable decoding of prepared transactions when creating a slot\n"
+msgstr "  -t, --two-phase        スロット作成時にプリペアドトランザクションのデコードを有効にする\n"
 
-#: pg_recvlogical.c:104
+#: pg_recvlogical.c:102
 #, c-format
 msgid "  -d, --dbname=DBNAME    database to connect to\n"
 msgstr "  -d, --dbname=DBNAME    接続先データベース\n"
 
-#: pg_recvlogical.c:137
+#: pg_recvlogical.c:135
 #, c-format
 msgid "confirming write up to %X/%X, flush to %X/%X (slot %s)"
 msgstr "PrecPpg%X/%Xまでの書き込みと、%X/%X (スロット %s）までのフラッシュを確認しています"
 
-#: pg_recvlogical.c:161 receivelog.c:366
+#: pg_recvlogical.c:159 receivelog.c:360
 #, c-format
 msgid "could not send feedback packet: %s"
 msgstr "フィードバックパケットを送信できませんでした: %s"
 
-#: pg_recvlogical.c:229
+#: pg_recvlogical.c:227
 #, c-format
 msgid "starting log streaming at %X/%X (slot %s)"
 msgstr "%X/%X (スロット %s)からログのストリーミングを開始します"
 
-#: pg_recvlogical.c:271
+#: pg_recvlogical.c:269
 #, c-format
 msgid "streaming initiated"
 msgstr "ストリーミングを開始しました"
 
-#: pg_recvlogical.c:335
+#: pg_recvlogical.c:333
 #, c-format
 msgid "could not open log file \"%s\": %m"
 msgstr "ロックファイル\"%s\"をオープンできませんでした: %m"
 
-#: pg_recvlogical.c:364 receivelog.c:889
+#: pg_recvlogical.c:362 receivelog.c:882
 #, c-format
 msgid "invalid socket: %s"
 msgstr "無効なソケット: %s"
 
-#: pg_recvlogical.c:417 receivelog.c:917
+#: pg_recvlogical.c:415 receivelog.c:910
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() が失敗しました: %m"
 
-#: pg_recvlogical.c:424 receivelog.c:967
+#: pg_recvlogical.c:422 receivelog.c:959
 #, c-format
 msgid "could not receive data from WAL stream: %s"
 msgstr "WAL ストリームからデータを受信できませんでした: %s"
 
-#: pg_recvlogical.c:466 pg_recvlogical.c:517 receivelog.c:1011
-#: receivelog.c:1074
+#: pg_recvlogical.c:464 pg_recvlogical.c:515 receivelog.c:1003
+#: receivelog.c:1066
 #, c-format
 msgid "streaming header too small: %d"
 msgstr "ストリーミングヘッダが小さ過ぎます: %d"
 
-#: pg_recvlogical.c:501 receivelog.c:849
+#: pg_recvlogical.c:499 receivelog.c:843
 #, c-format
 msgid "unrecognized streaming header: \"%c\""
 msgstr "ストリーミングヘッダを認識できませんでした: \"%c\""
 
-#: pg_recvlogical.c:555 pg_recvlogical.c:567
+#: pg_recvlogical.c:553 pg_recvlogical.c:565
 #, c-format
 msgid "could not write %d bytes to log file \"%s\": %m"
 msgstr "%dバイトをログファイル\"%s\"に書き込めませんでした: %m"
 
-#: pg_recvlogical.c:621 receivelog.c:648 receivelog.c:685
+#: pg_recvlogical.c:619 receivelog.c:642 receivelog.c:679
 #, c-format
 msgid "unexpected termination of replication stream: %s"
 msgstr "レプリケーションストリームが突然終了しました: %s"
 
-#: pg_recvlogical.c:780
+#: pg_recvlogical.c:778
 #, c-format
 msgid "could not parse start position \"%s\""
 msgstr "開始位置\"%s\"をパースできませんでした"
 
-#: pg_recvlogical.c:858
+#: pg_recvlogical.c:856
 #, c-format
 msgid "no slot specified"
 msgstr "スロットが指定されていません"
 
-#: pg_recvlogical.c:865
+#: pg_recvlogical.c:863
 #, c-format
 msgid "no target file specified"
 msgstr "ターゲットファイルが指定されていません"
 
-#: pg_recvlogical.c:872
+#: pg_recvlogical.c:870
 #, c-format
 msgid "no database specified"
 msgstr "データベースが指定されていません"
 
-#: pg_recvlogical.c:879
+#: pg_recvlogical.c:877
 #, c-format
 msgid "at least one action needs to be specified"
 msgstr "少なくとも一つのアクションを指定する必要があります"
 
-#: pg_recvlogical.c:886
+#: pg_recvlogical.c:884
 #, c-format
 msgid "cannot use --create-slot or --start together with --drop-slot"
 msgstr "--create-slot や --start は --drop-slot と同時には指定できません"
 
-#: pg_recvlogical.c:893
+#: pg_recvlogical.c:891
 #, c-format
 msgid "cannot use --create-slot or --drop-slot together with --startpos"
 msgstr "--create-slot や --drop-slot は --startpos と同時には指定できません"
 
-#: pg_recvlogical.c:900
+#: pg_recvlogical.c:898
 #, c-format
 msgid "--endpos may only be specified with --start"
 msgstr "--endpos は --start が指定されているときにのみ指定可能です"
 
-#: pg_recvlogical.c:907
+#: pg_recvlogical.c:905
 #, c-format
 msgid "--two-phase may only be specified with --create-slot"
 msgstr "--two-phaseは--create-slotが指定されているときにのみ指定可能です"
 
-#: pg_recvlogical.c:939
+#: pg_recvlogical.c:938
 #, c-format
 msgid "could not establish database-specific replication connection"
 msgstr "データベース指定のレプリケーション接続が確立できませんでした"
 
-#: pg_recvlogical.c:1033
+#: pg_recvlogical.c:1032
 #, c-format
 msgid "end position %X/%X reached by keepalive"
 msgstr "キープアライブで終了位置 %X/%X に到達しました "
 
-#: pg_recvlogical.c:1036
+#: pg_recvlogical.c:1035
 #, c-format
 msgid "end position %X/%X reached by WAL record at %X/%X"
 msgstr "%X/%X のWALレコードで終了位置 %X/%X に到達しました"
 
-#: receivelog.c:68
+#: receivelog.c:66
 #, c-format
 msgid "could not create archive status file \"%s\": %s"
 msgstr "アーカイブステータスファイル\"%s\"を作成できませんでした: %s"
 
-#: receivelog.c:75
+#: receivelog.c:73
 #, c-format
 msgid "could not close archive status file \"%s\": %s"
 msgstr "アーカイブステータスファイル\"%s\"をクローズできませんでした: %s"
 
-#: receivelog.c:123
+#: receivelog.c:122
 #, c-format
 msgid "could not get size of write-ahead log file \"%s\": %s"
 msgstr "先行書き込みログファイル\"%s\"のサイズを取得できませんでした: %s"
 
-#: receivelog.c:134
+#: receivelog.c:133
 #, c-format
 msgid "could not open existing write-ahead log file \"%s\": %s"
 msgstr "既存の先行書き込みログファイル\"%s\"をオープンできませんでした: %s"
 
-#: receivelog.c:143
+#: receivelog.c:142
 #, c-format
 msgid "could not fsync existing write-ahead log file \"%s\": %s"
 msgstr "既存の先行書き込みログファイル\"%s\"をfsyncできませんでした: %s"
 
-#: receivelog.c:158
+#: receivelog.c:157
 #, c-format
 msgid "write-ahead log file \"%s\" has %zd byte, should be 0 or %d"
 msgid_plural "write-ahead log file \"%s\" has %zd bytes, should be 0 or %d"
 msgstr[0] "先行書き込みログファイル\"%s\"は%zdバイトですが、0または%dであるはずです"
 
-#: receivelog.c:174
+#: receivelog.c:175
 #, c-format
 msgid "could not open write-ahead log file \"%s\": %s"
 msgstr "先行書き込みログファイル\"%s\"をオープンできませんでした: %s"
 
-#: receivelog.c:208
-#, c-format
-msgid "could not determine seek position in file \"%s\": %s"
-msgstr "ファイル\"%s\"のシーク位置を取得できませんでした: %s"
-
-#: receivelog.c:223
+#: receivelog.c:216
 #, c-format
 msgid "not renaming \"%s\", segment is not complete"
 msgstr "\"%s\"の名前を変更しません、セグメントが完成していません"
 
-#: receivelog.c:234 receivelog.c:323 receivelog.c:694
+#: receivelog.c:227 receivelog.c:317 receivelog.c:688
 #, c-format
 msgid "could not close file \"%s\": %s"
 msgstr "ファイル\"%s\"をクローズできませんでした: %s"
 
-#: receivelog.c:295
+#: receivelog.c:288
 #, c-format
 msgid "server reported unexpected history file name for timeline %u: %s"
-msgstr "サーバがタイムライン%uに対する想定外の履歴ファイル名を通知してきました: %s"
+msgstr "サーバーがタイムライン%uに対する想定外の履歴ファイル名を通知してきました: %s"
 
-#: receivelog.c:303
+#: receivelog.c:297
 #, c-format
 msgid "could not create timeline history file \"%s\": %s"
 msgstr "タイムライン履歴ファイル\"%s\"を作成できませんでした: %s"
 
-#: receivelog.c:310
+#: receivelog.c:304
 #, c-format
 msgid "could not write timeline history file \"%s\": %s"
 msgstr "タイムライン履歴ファイル\"%s\"に書き込めませんでした: %s"
 
-#: receivelog.c:400
+#: receivelog.c:394
 #, c-format
 msgid "incompatible server version %s; client does not support streaming from server versions older than %s"
-msgstr "非互換のサーババージョン%s、クライアントは%sより古いサーババージョンからのストリーミングをサポートしていません"
+msgstr "非互換のサーバーバージョン%s、クライアントは%sより古いサーバーバージョンからのストリーミングをサポートしていません"
 
-#: receivelog.c:409
+#: receivelog.c:403
 #, c-format
 msgid "incompatible server version %s; client does not support streaming from server versions newer than %s"
-msgstr "非互換のサーババージョン%s、クライアントは%sより新しいサーババージョンからのストリーミングをサポートしていません"
+msgstr "非互換のサーバーバージョン%s、クライアントは%sより新しいサーバーバージョンからのストリーミングをサポートしていません"
 
-#: receivelog.c:514
+#: receivelog.c:508
 #, c-format
 msgid "system identifier does not match between base backup and streaming connection"
 msgstr "システム識別子がベースバックアップとストリーミング接続の間で一致しません"
 
-#: receivelog.c:522
+#: receivelog.c:516
 #, c-format
 msgid "starting timeline %u is not present in the server"
-msgstr "開始タイムライン%uがサーバに存在しません"
+msgstr "開始タイムライン%uがサーバーに存在しません"
 
-#: receivelog.c:561
+#: receivelog.c:555
 #, c-format
 msgid "unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "TIMELINE_HISTORYコマンドへの想定外の応答: 受信したのは%d行%d列、想定は%d行%d列"
 
-#: receivelog.c:632
+#: receivelog.c:626
 #, c-format
 msgid "server reported unexpected next timeline %u, following timeline %u"
-msgstr "サーバがタイムライン%2$uに続いて想定外のタイムライン%1$uを通知してきました"
+msgstr "サーバーがタイムライン%2$uに続いて想定外のタイムライン%1$uを通知してきました"
 
-#: receivelog.c:638
+#: receivelog.c:632
 #, c-format
 msgid "server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X"
-msgstr "サーバはタイムライン%uのストリーミングを%X/%Xで停止しました、しかし次のタイムライン%uが%X/%Xから開始すると通知してきています"
+msgstr "サーバーはタイムライン%uのストリーミングを%X/%Xで停止しました、しかし次のタイムライン%uが%X/%Xから開始すると通知してきています"
 
-#: receivelog.c:678
+#: receivelog.c:672
 #, c-format
 msgid "replication stream was terminated before stop point"
 msgstr "レプリケーションストリームが停止ポイントより前で終了しました"
 
-#: receivelog.c:724
+#: receivelog.c:718
 #, c-format
 msgid "unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "タイムライン終了後に想定外の結果セット: 受信したのは%d行%d列、想定は%d行%d列"
 
-#: receivelog.c:733
+#: receivelog.c:727
 #, c-format
 msgid "could not parse next timeline's starting point \"%s\""
 msgstr "次のタイムラインの開始ポイント\"%s\"をパースできませんでした"
 
-#: receivelog.c:781 receivelog.c:1030 walmethods.c:1203
+#: receivelog.c:775 receivelog.c:1022 walmethods.c:1201
 #, c-format
 msgid "could not fsync file \"%s\": %s"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %s"
 
-#: receivelog.c:1091
+#: receivelog.c:1083
 #, c-format
 msgid "received write-ahead log record for offset %u with no file open"
 msgstr "ファイルがオープンされていない状態で、オフセット%uに対する先行書き込みログレコードを受信しました"
 
-#: receivelog.c:1101
+#: receivelog.c:1093
 #, c-format
 msgid "got WAL data offset %08x, expected %08x"
 msgstr "WALデータオフセット%08xを受信、想定は%08x"
 
-#: receivelog.c:1135
+#: receivelog.c:1128
 #, c-format
 msgid "could not write %d bytes to WAL file \"%s\": %s"
 msgstr "WALファイル\"%2$s\"に%1$dバイト書き込めませんでした: %3$s"
 
-#: receivelog.c:1160 receivelog.c:1200 receivelog.c:1230
+#: receivelog.c:1153 receivelog.c:1193 receivelog.c:1222
 #, c-format
 msgid "could not send copy-end packet: %s"
 msgstr "コピー終端パケットを送信できませんでした: %s"
 
-#: streamutil.c:159
+#: streamutil.c:158
 msgid "Password: "
 msgstr "パスワード: "
 
-#: streamutil.c:182
+#: streamutil.c:181
 #, c-format
 msgid "could not connect to server"
-msgstr "サーバに接続できませんでした"
+msgstr "サーバーに接続できませんでした"
 
-#: streamutil.c:225
+#: streamutil.c:222
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "search_pathを消去できませんでした: %s"
 
-#: streamutil.c:241
+#: streamutil.c:238
 #, c-format
 msgid "could not determine server setting for integer_datetimes"
-msgstr "integer_datetimesのサーバ設定を取得できませんでした"
+msgstr "integer_datetimesのサーバー設定を取得できませんでした"
 
-#: streamutil.c:248
+#: streamutil.c:245
 #, c-format
 msgid "integer_datetimes compile flag does not match server"
-msgstr "integer_datetimesコンパイル時フラグがサーバと一致しません"
+msgstr "integer_datetimesコンパイル時フラグがサーバーと一致しません"
 
-#: streamutil.c:299
+#: streamutil.c:296
 #, c-format
 msgid "could not fetch WAL segment size: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "WALセグメントサイズを取得できませんでした: 受信したのは%d行で%d列、想定は%d行で%d列以上"
 
-#: streamutil.c:309
+#: streamutil.c:306
 #, c-format
 msgid "WAL segment size could not be parsed"
 msgstr "WALセグメントサイズがパースできませんでした"
 
-#: streamutil.c:327
+#: streamutil.c:324
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes"
-msgstr[0] "WALセグメントのサイズ指定は1MBと1GBの間の2の累乗でなければなりません、しかし対向サーバは%dバイトと報告してきました"
+msgstr[0] "WALセグメントのサイズ指定は1MBと1GBの間の2の累乗でなければなりません、しかし対向サーバーは%dバイトと報告してきました"
 
-#: streamutil.c:372
+#: streamutil.c:369
 #, c-format
 msgid "could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "グループアクセスフラグを取得できませんでした: 受信したのは%d行で%d列、想定は%d行で%d列以上"
 
-#: streamutil.c:381
+#: streamutil.c:378
 #, c-format
 msgid "group access flag could not be parsed: %s"
 msgstr "グループアクセスフラグがパースできませんでした: %s"
 
-#: streamutil.c:424 streamutil.c:461
+#: streamutil.c:421 streamutil.c:458
 #, c-format
 msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "システムを識別できませんでした: 受信したのは%d行%d列、想定は%d行%d列以上"
 
-#: streamutil.c:513
+#: streamutil.c:510
 #, c-format
 msgid "could not read replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "レプリケーションスロット\"%s\"を読み取れませんでした: 受信したのは%d行%d列、想定は%d行%d列"
 
-#: streamutil.c:525
+#: streamutil.c:522
 #, c-format
-msgid "could not find replication slot \"%s\""
-msgstr "レプリケーションスロット\"%s\"がありませんでした"
+msgid "replication slot \"%s\" does not exist"
+msgstr "レプリケーションスロット\"%s\"は存在しません"
 
-#: streamutil.c:536
+#: streamutil.c:533
 #, c-format
 msgid "expected a physical replication slot, got type \"%s\" instead"
 msgstr "物理レプリケーションスロットが必要ですが、タイプは\"%s\"でした"
 
-#: streamutil.c:550
+#: streamutil.c:547
 #, c-format
 msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
 msgstr "レプリケーションスロット\"%2$s\"のrestart_lsn\"%1$s\"をパースできませんでした"
 
-#: streamutil.c:667
+#: streamutil.c:664
 #, c-format
 msgid "could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "レプリケーションスロット\"%s\"を作成できませんでした: 受信したのは%d行%d列、想定は%d行%d列"
 
-#: streamutil.c:711
+#: streamutil.c:708
 #, c-format
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "レプリケーションスロット\"%s\"を削除できませんでした: 受信したのは%d行%d列、想定は%d行%d列"
 
-#: walmethods.c:720 walmethods.c:1265
+#: walmethods.c:721 walmethods.c:1264
 msgid "could not compress data"
 msgstr "データを圧縮できませんでした"
 
-#: walmethods.c:749
+#: walmethods.c:750
 msgid "could not reset compression stream"
 msgstr "圧縮ストリームをリセットできませんでした"
 
-#: walmethods.c:880
+#: walmethods.c:888
 msgid "implementation error: tar files can't have more than one open file"
-msgstr "実装エラー：tar ファイルが複数のオープンされたファイルを保持できません"
+msgstr "実装エラー: tarファイルでは2つ以上のファイルをオープンできません"
 
-#: walmethods.c:894
+#: walmethods.c:903
 msgid "could not create tar header"
-msgstr "tar ヘッダを作成できませんでした"
+msgstr "tarヘッダを生成できませんでした"
 
-#: walmethods.c:910 walmethods.c:950 walmethods.c:1169 walmethods.c:1181
+#: walmethods.c:920 walmethods.c:961 walmethods.c:1166 walmethods.c:1179
 msgid "could not change compression parameters"
-msgstr "圧縮用パラメーターを変更できませんでした"
+msgstr "圧縮パラメータを変更できませんでした"
 
-#: walmethods.c:1054
+#: walmethods.c:1052
 msgid "unlink not supported with compression"
-msgstr "圧縮モードにおける unlink はサポートしていません"
+msgstr "圧縮時のunlinkはサポートされていません"
 
-#: walmethods.c:1289
+#: walmethods.c:1288
 msgid "could not close compression stream"
 msgstr "圧縮ストリームをクローズできませんでした"

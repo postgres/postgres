@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL) 14\n"
+"Project-Id-Version: pg_controldata (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-07-14 09:48+0000\n"
-"PO-Revision-Date: 2021-05-31 11:02+0200\n"
+"POT-Creation-Date: 2023-04-14 09:20+0000\n"
+"PO-Revision-Date: 2023-04-14 13:09+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -18,33 +18,33 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #: ../../common/controldata_utils.c:73
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου «%s» για ανάγνωση: %m"
 
-#: ../../common/controldata_utils.c:89
+#: ../../common/controldata_utils.c:86
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
 
-#: ../../common/controldata_utils.c:101
+#: ../../common/controldata_utils.c:95
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: ανέγνωσε %d από %zu"
 
-#: ../../common/controldata_utils.c:117 ../../common/controldata_utils.c:259
+#: ../../common/controldata_utils.c:108 ../../common/controldata_utils.c:244
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου «%s»: %m"
 
-#: ../../common/controldata_utils.c:135
+#: ../../common/controldata_utils.c:124
 msgid "byte ordering mismatch"
 msgstr "αναντιστοιχία διάταξης byte"
 
-#: ../../common/controldata_utils.c:137
+#: ../../common/controldata_utils.c:126
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
@@ -53,21 +53,23 @@ msgid ""
 "the PostgreSQL installation would be incompatible with this data directory."
 msgstr ""
 "πιθανή αναντιστοιχία διάταξης byte\n"
-"Η διάταξη byte που χρησιμοποιείται για την αποθήκευση του αρχείου pg_control ενδέχεται να μην ταιριάζει με αυτήν\n"
-"που χρησιμοποιείται από αυτό το πρόγραμμα.  Στην περίπτωση αυτή, τα παρακάτω αποτελέσματα θα ήταν εσφαλμένα, και\n"
+"Η διάταξη byte που χρησιμοποιείται για την αποθήκευση του αρχείου pg_control "
+"ενδέχεται να μην ταιριάζει με αυτήν\n"
+"που χρησιμοποιείται από αυτό το πρόγραμμα.  Στην περίπτωση αυτή, τα παρακάτω "
+"αποτελέσματα θα ήταν εσφαλμένα, και\n"
 "η εγκατάσταση PostgreSQL θα ήταν ασύμβατη με αυτόν τον κατάλογο δεδομένων."
 
-#: ../../common/controldata_utils.c:203
+#: ../../common/controldata_utils.c:194
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
 
-#: ../../common/controldata_utils.c:224
+#: ../../common/controldata_utils.c:213
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εγγραφή αρχείου «%s»: %m"
 
-#: ../../common/controldata_utils.c:245
+#: ../../common/controldata_utils.c:232
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής fsync στο αρχείο «%s»: %m"
@@ -174,12 +176,12 @@ msgstr "μη αναγνωρίσιμος κωδικός κατάστασης"
 msgid "unrecognized wal_level"
 msgstr "μη αναγνωρίσιμο wal_level"
 
-#: pg_controldata.c:137 pg_controldata.c:155 pg_controldata.c:163
+#: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:163
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες."
 
-#: pg_controldata.c:153
+#: pg_controldata.c:154
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
@@ -197,8 +199,10 @@ msgid ""
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Το υπολογιζόμενο άθροισμα ελέγχου CRC δεν συμφωνεί με την τιμή που είναι αποθηκευμένη στο αρχείο.\n"
-"Είτε το αρχείο είναι αλλοιωμένο είτε έχει διαφορετική διάταξη από αυτή που περιμένει\n"
+"ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Το υπολογιζόμενο άθροισμα ελέγχου CRC δεν συμφωνεί με την τιμή που "
+"είναι αποθηκευμένη στο αρχείο.\n"
+"Είτε το αρχείο είναι αλλοιωμένο είτε έχει διαφορετική διάταξη από αυτή που "
+"περιμένει\n"
 "αυτό το πρόγραμμα.  Τα παρακάτω αποτελέσματα είναι αναξιόπιστα.\n"
 "\n"
 
@@ -220,13 +224,17 @@ msgid_plural ""
 "untrustworthy.\n"
 "\n"
 msgstr[0] ""
-"Το μέγεθος τμήματος WAL που είναι αποθηκευμένο στο αρχείο, %d byte, δεν είναι δύναμη\n"
-"του δύο μεταξύ 1 MB και 1 GB.  Το αρχείο είναι αλλοιωμένο και τα παρακάτω αποτελέσματα\n"
+"Το μέγεθος τμήματος WAL που είναι αποθηκευμένο στο αρχείο, %d byte, δεν είναι "
+"δύναμη\n"
+"του δύο μεταξύ 1 MB και 1 GB.  Το αρχείο είναι αλλοιωμένο και τα παρακάτω "
+"αποτελέσματα\n"
 "είναι αναξιόπιστα.\n"
 "\n"
 msgstr[1] ""
-"Το μέγεθος τμήματος WAL που είναι αποθηκευμένο στο αρχείο, %d bytes, δεν είναι δύναμη\n"
-"του δύο μεταξύ 1 MB και 1 GB.  Το αρχείο είναι αλλοιωμένο και τα παρακάτω αποτελέσματα\n"
+"Το μέγεθος τμήματος WAL που είναι αποθηκευμένο στο αρχείο, %d bytes, δεν είναι "
+"δύναμη\n"
+"του δύο μεταξύ 1 MB και 1 GB.  Το αρχείο είναι αλλοιωμένο και τα παρακάτω "
+"αποτελέσματα\n"
 "είναι αναξιόπιστα.\n"
 "\n"
 
@@ -237,8 +245,7 @@ msgstr "???"
 #: pg_controldata.c:228
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr ""
-"pg_control αριθμός έκδοσης:                        %u\n"
+msgstr "pg_control αριθμός έκδοσης:                        %u\n"
 
 #: pg_controldata.c:230
 #, c-format

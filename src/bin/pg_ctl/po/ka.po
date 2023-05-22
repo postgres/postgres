@@ -1,0 +1,854 @@
+# Georgian message translation file for pg_ctl
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_ctl (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_ctl (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-04-19 11:18+0000\n"
+"PO-Revision-Date: 2023-04-20 08:19+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: ../../common/exec.c:172
+#, c-format
+msgid "invalid binary \"%s\": %m"
+msgstr "არასწორი ბინარული ფაილი \"%s\":%m"
+
+#: ../../common/exec.c:215
+#, c-format
+msgid "could not read binary \"%s\": %m"
+msgstr "ბინარული ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/exec.c:223
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "გასაშვებად ფაილის \"%s\" პოვნა შეუძლებელია"
+
+#: ../../common/exec.c:250
+#, c-format
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "ბილიკის (\"%s\") აბსოლუტურ ფორმაში ამოხსნის შეცდომა: %m"
+
+#: ../../common/exec.c:412
+#, c-format
+msgid "%s() failed: %m"
+msgstr "%s()-ის შეცდომა: %m"
+
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+msgid "out of memory"
+msgstr "არასაკმარისი მეხსიერება"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../port/path.c:753 ../../port/path.c:791 ../../port/path.c:808
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: ../../common/wait_error.c:55
+#, c-format
+msgid "command not executable"
+msgstr "ბრძანება გაშვებადი არაა"
+
+#: ../../common/wait_error.c:59
+#, c-format
+msgid "command not found"
+msgstr "ბრძანება ვერ ვიპოვე"
+
+#: ../../common/wait_error.c:64
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "შვილეული პროცესი დასრულდა სტატუსით %d"
+
+#: ../../common/wait_error.c:72
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "შვილეული პროცესი დასრულდა გამონაკლისით 0x%X"
+
+#: ../../common/wait_error.c:76
+#, c-format
+msgid "child process was terminated by signal %d: %s"
+msgstr "პროცესი გაჩერდა სიგნალით: %d: %s"
+
+#: ../../common/wait_error.c:82
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "შვილეული პროცესი დასრულდა უცნობი სტატუსით %d"
+
+#: ../../port/path.c:775
+#, c-format
+msgid "could not get current working directory: %s\n"
+msgstr "მიმდინარე სამუშაო საქაღალდის მიღების შეცდომა: %s\n"
+
+#: pg_ctl.c:255
+#, c-format
+msgid "%s: directory \"%s\" does not exist\n"
+msgstr "%s: საქაღალდე %s არ არსებობს\n"
+
+#: pg_ctl.c:258
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s საქაღალდესთან %s წვდომის უფლება არ გაქვთ: %s\n"
+
+#: pg_ctl.c:271
+#, c-format
+msgid "%s: directory \"%s\" is not a database cluster directory\n"
+msgstr "%s: საქაღალდე \"%s\" ბაზის კლასტერის საქაღალდეს არ წარმოადგენს\n"
+
+#: pg_ctl.c:284
+#, c-format
+msgid "%s: could not open PID file \"%s\": %s\n"
+msgstr "%s: PID ფაილის (\"%s\") გახსნის შეცდომა: %s\n"
+
+#: pg_ctl.c:293
+#, c-format
+msgid "%s: the PID file \"%s\" is empty\n"
+msgstr "%s: PID ფაილი \"%s\" ცარიელია\n"
+
+#: pg_ctl.c:296
+#, c-format
+msgid "%s: invalid data in PID file \"%s\"\n"
+msgstr "%s: PID ფაილის (\"%s\") არასწორი შიგთავსი\n"
+
+#: pg_ctl.c:458 pg_ctl.c:500
+#, c-format
+msgid "%s: could not start server: %s\n"
+msgstr "%s: სერვერის გაშვების შეცდომა: %s\n"
+
+#: pg_ctl.c:478
+#, c-format
+msgid "%s: could not start server due to setsid() failure: %s\n"
+msgstr "%s: სერვერის გაშვება შეუძლებელია setsid()-ის შეცდომის გამო: %s\n"
+
+#: pg_ctl.c:548
+#, c-format
+msgid "%s: could not open log file \"%s\": %s\n"
+msgstr "%s: ჟურნალის ფაილის გახსნის შეცდომა \"%s\": %s\n"
+
+#: pg_ctl.c:565
+#, c-format
+msgid "%s: could not start server: error code %lu\n"
+msgstr "%s: სერვერის გაშვება შეუძლებელია: შეცდომის კოდი %lu\n"
+
+#: pg_ctl.c:782
+#, c-format
+msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
+msgstr "%s ბირთვის ფაილის ზომის ლიმიტის დაყენება აკრძალულია hardlimit-ის მიერ\n"
+
+#: pg_ctl.c:808
+#, c-format
+msgid "%s: could not read file \"%s\"\n"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %s\n"
+
+#: pg_ctl.c:813
+#, c-format
+msgid "%s: option file \"%s\" must have exactly one line\n"
+msgstr "%s: პარამეტრების ფაილში \"%s\" ზუსტად ერთი ხაზი უნდა იყოს\n"
+
+#: pg_ctl.c:855 pg_ctl.c:1039 pg_ctl.c:1107
+#, c-format
+msgid "%s: could not send stop signal (PID: %d): %s\n"
+msgstr "%s: გაჩერების სიგნალის გაგზავნა შეუძლებელია (PID: %d): %s\n"
+
+#: pg_ctl.c:883
+#, c-format
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\"\n"
+msgstr "პროგრამა \"%s\" სჭირდება \"%s\"-ს, მაგრამ იგივე საქაღალდეში, სადაც \"%s\", ნაპოვნი არაა\n"
+
+#: pg_ctl.c:886
+#, c-format
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s\n"
+msgstr "პროგრამა „%s“ ნაპოვნია „%s“-ის მიერ, მაგრამ ვერსია, იგივეა არაა, რაც %s\n"
+
+#: pg_ctl.c:918
+#, c-format
+msgid "%s: database system initialization failed\n"
+msgstr "%s: მონაცემთა ბაზის ინიციალიზაციის შეცდომა\n"
+
+#: pg_ctl.c:933
+#, c-format
+msgid "%s: another server might be running; trying to start server anyway\n"
+msgstr "%s: შეიძლება გაშვებულია სხვა სერვერი; გაშვებას მაინც ვეცდები\n"
+
+#: pg_ctl.c:981
+msgid "waiting for server to start..."
+msgstr "სერვერის გაშვების მოლოდინი..."
+
+#: pg_ctl.c:986 pg_ctl.c:1063 pg_ctl.c:1126 pg_ctl.c:1238
+msgid " done\n"
+msgstr " დასრულდა\n"
+
+#: pg_ctl.c:987
+msgid "server started\n"
+msgstr "სერვერი გაეშვა\n"
+
+#: pg_ctl.c:990 pg_ctl.c:996 pg_ctl.c:1243
+msgid " stopped waiting\n"
+msgstr " ლოდინი შეწყვეტილია\n"
+
+#: pg_ctl.c:991
+#, c-format
+msgid "%s: server did not start in time\n"
+msgstr "%s: სერვერი დროზე არ გაეშვა\n"
+
+#: pg_ctl.c:997
+#, c-format
+msgid ""
+"%s: could not start server\n"
+"Examine the log output.\n"
+msgstr ""
+"%s: სერვერის გაშვების შეცდომა\n"
+"შეამოწმეთ ჟურნალის ფაილი.\n"
+
+#: pg_ctl.c:1005
+msgid "server starting\n"
+msgstr "სერვერი ეშვება\n"
+
+#: pg_ctl.c:1024 pg_ctl.c:1083 pg_ctl.c:1147 pg_ctl.c:1186 pg_ctl.c:1267
+#, c-format
+msgid "%s: PID file \"%s\" does not exist\n"
+msgstr "%s: PID-ის ფაილი \"%s\" არ არსებობს\n"
+
+#: pg_ctl.c:1025 pg_ctl.c:1085 pg_ctl.c:1148 pg_ctl.c:1187 pg_ctl.c:1268
+msgid "Is server running?\n"
+msgstr "სერვერი გაშვებიულია?\n"
+
+#: pg_ctl.c:1031
+#, c-format
+msgid "%s: cannot stop server; single-user server is running (PID: %d)\n"
+msgstr "%s: სერვერის გაჩერების შეცდომა; გაშვებულია ერთმომხმარებლიანი სერვერი (PID: %d)\n"
+
+#: pg_ctl.c:1046
+msgid "server shutting down\n"
+msgstr "მიმდინარეობს სერვერის გამორთვა\n"
+
+#: pg_ctl.c:1051 pg_ctl.c:1112
+msgid "waiting for server to shut down..."
+msgstr "სერვერის გამორთვის მოლოდინი..."
+
+#: pg_ctl.c:1055 pg_ctl.c:1117
+msgid " failed\n"
+msgstr " წარუმატებელი.\n"
+
+#: pg_ctl.c:1057 pg_ctl.c:1119
+#, c-format
+msgid "%s: server does not shut down\n"
+msgstr "%s სერვერი არ გამორთულა\n"
+
+#: pg_ctl.c:1059 pg_ctl.c:1121
+msgid ""
+"HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
+"waiting for session-initiated disconnection.\n"
+msgstr ""
+"მინიშნება: \"-m fast\" პარამეტრი სესიებს მაშინვე წყვეტს,\n"
+"სესიის-ინიცირებული გათიშვის მოლოდინის გარეშე.\n"
+
+#: pg_ctl.c:1065 pg_ctl.c:1127
+msgid "server stopped\n"
+msgstr "სერვერი გამოირთო\n"
+
+#: pg_ctl.c:1086
+msgid "trying to start server anyway\n"
+msgstr "სერვერის მაინც გაშვების მცდელობა\n"
+
+#: pg_ctl.c:1095
+#, c-format
+msgid "%s: cannot restart server; single-user server is running (PID: %d)\n"
+msgstr "%s: სერვერის რესტარტი შეუძლებელია; გაშვებულია ერთმომხმარებლიანი სერვერი (PID: %d)\n"
+
+#: pg_ctl.c:1098 pg_ctl.c:1157
+msgid "Please terminate the single-user server and try again.\n"
+msgstr "შეაჩერეთ ერთმომხმარებლიანი სერვერი და თავიდან სცადეთ.\n"
+
+#: pg_ctl.c:1131
+#, c-format
+msgid "%s: old server process (PID: %d) seems to be gone\n"
+msgstr "%s: სერვერის ძველი პროცესი (PID: %d) როგორც ჩანს, მოკვდა\n"
+
+#: pg_ctl.c:1133
+msgid "starting server anyway\n"
+msgstr "სერვერის მაინც გაშვება\n"
+
+#: pg_ctl.c:1154
+#, c-format
+msgid "%s: cannot reload server; single-user server is running (PID: %d)\n"
+msgstr "%s: სერვერის გადატვირთვის შეცდომა; გაშვებულია ერთმომხმარებლიანი სერვერი (PID: %d)\n"
+
+#: pg_ctl.c:1163
+#, c-format
+msgid "%s: could not send reload signal (PID: %d): %s\n"
+msgstr "%s: გადატვირთვის სიგნალის გაგზავნის შეცდომა (PID: %d): %s\n"
+
+#: pg_ctl.c:1168
+msgid "server signaled\n"
+msgstr "სერვერს სიგნალი გაეგზავნა\n"
+
+#: pg_ctl.c:1193
+#, c-format
+msgid "%s: cannot promote server; single-user server is running (PID: %d)\n"
+msgstr "%s: სერვერის წახალისების შეცდომა; გაშვებულია ერთმომხმარებლიანი სერვერი (PID: %d)\n"
+
+#: pg_ctl.c:1201
+#, c-format
+msgid "%s: cannot promote server; server is not in standby mode\n"
+msgstr "%s:სერვერის წახალისება შეუძლებელია; სერვერი უქმე რეჟიმში არაა\n"
+
+#: pg_ctl.c:1211
+#, c-format
+msgid "%s: could not create promote signal file \"%s\": %s\n"
+msgstr "%s: წახალისების სიგნალის ფაილის (\"%s\") შექმნა შეუძლებელია: %s\n"
+
+#: pg_ctl.c:1217
+#, c-format
+msgid "%s: could not write promote signal file \"%s\": %s\n"
+msgstr "%s: წახალისების სიგნალის ფაილში (\"%s\") ჩაწერა შეუძლებელია: %s\n"
+
+#: pg_ctl.c:1225
+#, c-format
+msgid "%s: could not send promote signal (PID: %d): %s\n"
+msgstr "%s: წახალისების სიგნალის გაგზავნა შეუძლებელია(PID: %d): %s\n"
+
+#: pg_ctl.c:1228
+#, c-format
+msgid "%s: could not remove promote signal file \"%s\": %s\n"
+msgstr "%s: წახალისების სიგნალის ფაილის (\"%s\") წაშლის შეცდომა: %s\n"
+
+#: pg_ctl.c:1235
+msgid "waiting for server to promote..."
+msgstr "სერვერის დაწინაურების მოლოდინი..."
+
+#: pg_ctl.c:1239
+msgid "server promoted\n"
+msgstr "სერვერი დაწინაურდა\n"
+
+#: pg_ctl.c:1244
+#, c-format
+msgid "%s: server did not promote in time\n"
+msgstr "%s სერვერი დროზე არ დაწინაურდა\n"
+
+#: pg_ctl.c:1250
+msgid "server promoting\n"
+msgstr "სერვერის დაწინაურება\n"
+
+#: pg_ctl.c:1274
+#, c-format
+msgid "%s: cannot rotate log file; single-user server is running (PID: %d)\n"
+msgstr "%s: ჟურნალის ფაილების როტაცია შეუძლებელია; გაშვებულია ერთმომხმარებლიანი სერვერი (PID: %d)\n"
+
+#: pg_ctl.c:1284
+#, c-format
+msgid "%s: could not create log rotation signal file \"%s\": %s\n"
+msgstr "%s: ჟურნალის როტაციის სიგნალის ფაილის (\"%s\") შექმნა შეუძლებელია: %s\n"
+
+#: pg_ctl.c:1290
+#, c-format
+msgid "%s: could not write log rotation signal file \"%s\": %s\n"
+msgstr "%s: ჟურნალის როტაციის სიგნალის ფაილში (\"%s\") ჩაწერა შეუძლებელია: %s\n"
+
+#: pg_ctl.c:1298
+#, c-format
+msgid "%s: could not send log rotation signal (PID: %d): %s\n"
+msgstr "%s: ჟურნალის როტაციის სიგნალის გაგზავნის შეცდომა (PID: %d): %s\n"
+
+#: pg_ctl.c:1301
+#, c-format
+msgid "%s: could not remove log rotation signal file \"%s\": %s\n"
+msgstr "%s: ჟურნალის როტაციის სიგნალის ფაილის (\"%s\") წაშლის შეცდომა : %s\n"
+
+#: pg_ctl.c:1306
+msgid "server signaled to rotate log file\n"
+msgstr "სერვერმა გვანიშნა რომ ჟურნალის ფაილი დასატრიალებელია\n"
+
+#: pg_ctl.c:1353
+#, c-format
+msgid "%s: single-user server is running (PID: %d)\n"
+msgstr "%s: გაშვებულია ერთმომხმარებლიანი სერვერი (PID: %d)\n"
+
+#: pg_ctl.c:1367
+#, c-format
+msgid "%s: server is running (PID: %d)\n"
+msgstr "%s: სერვერი გაშვებულია (PID: %d)\n"
+
+#: pg_ctl.c:1383
+#, c-format
+msgid "%s: no server running\n"
+msgstr "%s: სერვერი გაშვებული არა\n"
+
+#: pg_ctl.c:1400
+#, c-format
+msgid "%s: could not send signal %d (PID: %d): %s\n"
+msgstr "%s: სიგნალის (%d) გაგზავნის შეცდომა (PID: %d): %s\n"
+
+#: pg_ctl.c:1431
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: საკუთარი პროგრამის გამშვები ფაილის პოვნა შეუძლებელია\n"
+
+#: pg_ctl.c:1441
+#, c-format
+msgid "%s: could not find postgres program executable\n"
+msgstr "%s: გამშვები ფაილი postgres არ არსებობს\n"
+
+#: pg_ctl.c:1511 pg_ctl.c:1545
+#, c-format
+msgid "%s: could not open service manager\n"
+msgstr "%s: სერვისის მმართველის გახსნის შეცდომა\n"
+
+#: pg_ctl.c:1517
+#, c-format
+msgid "%s: service \"%s\" already registered\n"
+msgstr "%s: სერვისი %s უკვე რეგისტრირებულია\n"
+
+#: pg_ctl.c:1528
+#, c-format
+msgid "%s: could not register service \"%s\": error code %lu\n"
+msgstr "%s: სერვისის (\"%s\") რეგისტრაციის შეცდომა: შეცდომის კოდი %lu\n"
+
+#: pg_ctl.c:1551
+#, c-format
+msgid "%s: service \"%s\" not registered\n"
+msgstr "%s: სერვისი %s უკვე რეგისტრირებულია\n"
+
+#: pg_ctl.c:1558
+#, c-format
+msgid "%s: could not open service \"%s\": error code %lu\n"
+msgstr "%s: სერვისის (%s) გახსნა შეუძლებელია: შეცდომის კოდი: %lu\n"
+
+#: pg_ctl.c:1567
+#, c-format
+msgid "%s: could not unregister service \"%s\": error code %lu\n"
+msgstr "%s: სერვისის (\"%s\") რეგისტრაციის მოხსნა შეუძლებელია: შეცდომის კოდი: %lu\n"
+
+#: pg_ctl.c:1654
+msgid "Waiting for server startup...\n"
+msgstr "სერვერის გაშვების მოლოდინი...\n"
+
+#: pg_ctl.c:1657
+msgid "Timed out waiting for server startup\n"
+msgstr "სერვერის გაშვების მოლოდინის ვადა გავიდა\n"
+
+#: pg_ctl.c:1661
+msgid "Server started and accepting connections\n"
+msgstr "სერვერი გაეშვა და მზადაა შეერთებისთვის\n"
+
+#: pg_ctl.c:1716
+#, c-format
+msgid "%s: could not start service \"%s\": error code %lu\n"
+msgstr "%s: სერვისის (%s) გაშვება შეუძლებელია: შეცდომის კოდი %lu\n"
+
+#: pg_ctl.c:1789
+#, c-format
+msgid "%s: could not open process token: error code %lu\n"
+msgstr "%s: პროცესის კოდის გახსნა შეუძლებელია: შეცდომის კოდი %lu\n"
+
+#: pg_ctl.c:1803
+#, c-format
+msgid "%s: could not allocate SIDs: error code %lu\n"
+msgstr "%s: შეცდომა SSID-ების გამოყოფისას: შეცდომის კოდი %lu\n"
+
+#: pg_ctl.c:1829
+#, c-format
+msgid "%s: could not create restricted token: error code %lu\n"
+msgstr "%s: შეზღუდული კოდის შექმნა ვერ მოხერხდა: შეცდომის კოდი %lu\n"
+
+#: pg_ctl.c:1911
+#, c-format
+msgid "%s: could not get LUIDs for privileges: error code %lu\n"
+msgstr "%s: პრივილეგიებისთვის LUID-ების მიღება შეუძლებელია: შეცდომის კოდი: %lu\n"
+
+#: pg_ctl.c:1919 pg_ctl.c:1934
+#, c-format
+msgid "%s: could not get token information: error code %lu\n"
+msgstr "%s: შეზღუდული კოდის ინფორმაციის მიღება ვერ მოხერხდა: შეცდომის კოდი %lu\n"
+
+#: pg_ctl.c:1928
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: არასაკმარისი მეხსიერება\n"
+
+#: pg_ctl.c:1958
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'.\n"
+
+#: pg_ctl.c:1966
+#, c-format
+msgid ""
+"%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s წარმოადგენს პროგრამას PostgreSQL სერვერის ინიციალიზაციის, გაშვების, გაჩერების და კონტროლისთვის.\n"
+"\n"
+
+#: pg_ctl.c:1967
+#, c-format
+msgid "Usage:\n"
+msgstr "გამოყენება:\n"
+
+#: pg_ctl.c:1968
+#, c-format
+msgid "  %s init[db]   [-D DATADIR] [-s] [-o OPTIONS]\n"
+msgstr "  %s init[db]   [-D მონაცემებისსაქაღალდე] [-s] [-o პარამეტრები]\n"
+
+#: pg_ctl.c:1969
+#, c-format
+msgid ""
+"  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
+"                    [-o OPTIONS] [-p PATH] [-c]\n"
+msgstr ""
+"  %s start      [-D მონაცემებსსაქაღალდე] [-l ფაილისსახელი] [-W] [-t წამი] [-s]\n"
+"                    [-o პარამეტრი] [-p ბილიკი] [-c]\n"
+
+#: pg_ctl.c:1971
+#, c-format
+msgid "  %s stop       [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+msgstr "  %s stop       [-D მონაცემებსსაქაღალდე] [-m გამორთვის-რეჟიმი] [-W] [-t წამი] [-s]\n"
+
+#: pg_ctl.c:1972
+#, c-format
+msgid ""
+"  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+"                    [-o OPTIONS] [-c]\n"
+msgstr ""
+"  %s restart    [-D მონაცემებსსაქაღალდე] [-m გამორთვის-რეჟიმი] [-W] [-t წამი] [-s]\n"
+"                    [-o პარამეტრები] [-c]\n"
+
+#: pg_ctl.c:1974
+#, c-format
+msgid "  %s reload     [-D DATADIR] [-s]\n"
+msgstr "  %s reload     [-D მონაცემებსსაქაღალდე] [-s]\n"
+
+#: pg_ctl.c:1975
+#, c-format
+msgid "  %s status     [-D DATADIR]\n"
+msgstr "  %s status     [-D მონაცემებსსაქაღალდე]\n"
+
+#: pg_ctl.c:1976
+#, c-format
+msgid "  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"
+msgstr "  %s promote    [-D მონაცემებისსაქაღალდე] [-W] [-t წამი] [-s]\n"
+
+#: pg_ctl.c:1977
+#, c-format
+msgid "  %s logrotate  [-D DATADIR] [-s]\n"
+msgstr "  %s logrotate  [-D მონაცემებისსაქაღალდე] [-s]\n"
+
+#: pg_ctl.c:1978
+#, c-format
+msgid "  %s kill       SIGNALNAME PID\n"
+msgstr "  %s kill       სიგნალისსახელი PID\n"
+
+#: pg_ctl.c:1980
+#, c-format
+msgid ""
+"  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
+"                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
+msgstr ""
+"  %s register   [-D მონაცემებსსაქაღალდე] [-N სერვისისსახელი] [-U მომხმარებელი] [-P პაროლი]\n"
+"                    [-S გაშვების-ტიპი] [-e წყარო] [-W] [-t წამი] [-s] [-o პარამეტრები]\n"
+
+#: pg_ctl.c:1982
+#, c-format
+msgid "  %s unregister [-N SERVICENAME]\n"
+msgstr "  %s unregister [-N სერვისისსახელი]\n"
+
+#: pg_ctl.c:1985
+#, c-format
+msgid ""
+"\n"
+"Common options:\n"
+msgstr ""
+"\n"
+"ზოგადი პარამეტრები:\n"
+
+#: pg_ctl.c:1986
+#, c-format
+msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
+msgstr " [-D, --pgdata=]DATADIR     ბაზის საცავის მდებარეობა\n"
+
+#: pg_ctl.c:1988
+#, c-format
+msgid "  -e SOURCE              event source for logging when running as a service\n"
+msgstr "  -e SOURCE              მოვლენების წყარო სერვისად გაშვებულობის დროს ჟურნალის ჩასაწერად\n"
+
+#: pg_ctl.c:1990
+#, c-format
+msgid "  -s, --silent           only print errors, no informational messages\n"
+msgstr "  -s, --silent           მხოლოდ შეცდომების გამოტანა. საინფორმაციო შეტყობინებები არ გამოჩნდება\n"
+
+#: pg_ctl.c:1991
+#, c-format
+msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
+msgstr "  -t, --timeout=წამი     -w პარამეტრის გამოყენებისას მითითებული ლოდინის დრო\n"
+
+#: pg_ctl.c:1992
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
+
+#: pg_ctl.c:1993
+#, c-format
+msgid "  -w, --wait             wait until operation completes (default)\n"
+msgstr "  -w, --wait             დალოდება ოპერაციის დასრულებამდე(ნაგულისხმები)\n"
+
+#: pg_ctl.c:1994
+#, c-format
+msgid "  -W, --no-wait          do not wait until operation completes\n"
+msgstr "  -W, --no-wait          არ დაელოდება ოპერაციის დასასრულს\n"
+
+#: pg_ctl.c:1995
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help                   ამ დახმარების ჩვენება და გასვლა\n"
+
+#: pg_ctl.c:1996
+#, c-format
+msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
+msgstr "თუ -D პარამეტრი მითითებული არაა, გამოყენებული იქნება გარემოს ცვლადი PGDATA.\n"
+
+#: pg_ctl.c:1998
+#, c-format
+msgid ""
+"\n"
+"Options for start or restart:\n"
+msgstr ""
+"\n"
+"გაშვების ან თავიდან გაშვების პარამეტრები:\n"
+
+#: pg_ctl.c:2000
+#, c-format
+msgid "  -c, --core-files       allow postgres to produce core files\n"
+msgstr "  -c, --core-files       postgres-ისთვის ბირთვის ფაილების ჩაწერის უფლების მიცემა\n"
+
+#: pg_ctl.c:2002
+#, c-format
+msgid "  -c, --core-files       not applicable on this platform\n"
+msgstr "  -c, --core-files       ამ პლატფორმაზე არ მუშაობს\n"
+
+#: pg_ctl.c:2004
+#, c-format
+msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
+msgstr "  -l, --log=ფაილისსახელი     სერვერის ჟურნალის ფაილში ჩაწერა (ან არსებული ფაილის ბოლოში მიწერა)\n"
+
+#: pg_ctl.c:2005
+#, c-format
+msgid ""
+"  -o, --options=OPTIONS  command line options to pass to postgres\n"
+"                         (PostgreSQL server executable) or initdb\n"
+msgstr ""
+"  -o, --options=OPTIONS postgres-ისთვის (PostgreSQL სერვერი) ან initdb-სთვის გადასაცემი \n"
+"                                         ბრძანების სტრიქონის პარამეტრები \n"
+
+#: pg_ctl.c:2007
+#, c-format
+msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
+msgstr "  -p ბილიკი-POSTGRES-მდე    ჩვეულებრივ საჭირო არაა\n"
+
+#: pg_ctl.c:2008
+#, c-format
+msgid ""
+"\n"
+"Options for stop or restart:\n"
+msgstr ""
+"\n"
+"გაჩერებისა და გადატვირთვის პარამეტრები:\n"
+
+#: pg_ctl.c:2009
+#, c-format
+msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
+msgstr "  -m, --mode=რეჟიმი        რეჟიმი შეიძლება იყოს: (ჭკვიანი)\"smart\", (ჩქარი)\"fast\", ან (ახლავე)\"immediate\"\n"
+
+#: pg_ctl.c:2011
+#, c-format
+msgid ""
+"\n"
+"Shutdown modes are:\n"
+msgstr ""
+"\n"
+"გამორთვის რეჟიმებია:\n"
+
+#: pg_ctl.c:2012
+#, c-format
+msgid "  smart       quit after all clients have disconnected\n"
+msgstr "  smart       გასვლა, როცა ყველა კლიენტი გაითიშება\n"
+
+#: pg_ctl.c:2013
+#, c-format
+msgid "  fast        quit directly, with proper shutdown (default)\n"
+msgstr "  fast        პირდაპირ გასვლა, სწორად გამორთვით (ნაგულისხმები)\n"
+
+#: pg_ctl.c:2014
+#, c-format
+msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
+msgstr "  immediate   სრული გათიშვის გარეშე გასვლა; დიდი ალბათობით შემდეგ გაშვებაზე მონაცემების აღდგენა მოგიწევთ\n"
+
+#: pg_ctl.c:2016
+#, c-format
+msgid ""
+"\n"
+"Allowed signal names for kill:\n"
+msgstr ""
+"\n"
+"მოსაკლავად დაშვებული სიგნალის სახელები:\n"
+
+#: pg_ctl.c:2020
+#, c-format
+msgid ""
+"\n"
+"Options for register and unregister:\n"
+msgstr ""
+"\n"
+"რეგისტრაციისა და მისი მოხსნის პარამეტრები:\n"
+
+#: pg_ctl.c:2021
+#, c-format
+msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
+msgstr "  -N სერვისისსახელი  სერვისის სახელი, რომელიც PostgreSQL სერვერი დარეგისტრირდება\n"
+
+#: pg_ctl.c:2022
+#, c-format
+msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
+msgstr "  -P პაროლი     PostgreSQL სერვერის დასარეგისტრირებელი მომხმარებლის პაროლი\n"
+
+#: pg_ctl.c:2023
+#, c-format
+msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
+msgstr "  -U მომხმარებელი     PostgreSQL სერვერის დასარეგისტრირებელი მომხმარებლის სახელი\n"
+
+#: pg_ctl.c:2024
+#, c-format
+msgid "  -S START-TYPE   service start type to register PostgreSQL server\n"
+msgstr "  -S გაშვების ტიპი   PostgreSQL სერვერის გაშვების ტიპი\n"
+
+#: pg_ctl.c:2026
+#, c-format
+msgid ""
+"\n"
+"Start types are:\n"
+msgstr ""
+"\n"
+"გაშვების ტიპები:\n"
+
+#: pg_ctl.c:2027
+#, c-format
+msgid "  auto       start service automatically during system startup (default)\n"
+msgstr "  auto       სერვისი ავტომატურად გაეშვება სისტემის ჩატვირთვისას (ნაგულისხმები)\n"
+
+#: pg_ctl.c:2028
+#, c-format
+msgid "  demand     start service on demand\n"
+msgstr "  demand     საჭიროების მიხედვით\n"
+
+#: pg_ctl.c:2031
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"შეცდომების შესახებ მიწერეთ: %s\n"
+
+#: pg_ctl.c:2032
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s-ის საწყისი გვერდია: <%s>\n"
+
+#: pg_ctl.c:2057
+#, c-format
+msgid "%s: unrecognized shutdown mode \"%s\"\n"
+msgstr "%s: მუშაობის დასრულების უცნობი რეჟიმი: \"%s\"\n"
+
+#: pg_ctl.c:2086
+#, c-format
+msgid "%s: unrecognized signal name \"%s\"\n"
+msgstr "%s: სიგნალის უცნობი სახელი: \"%s\"\n"
+
+#: pg_ctl.c:2103
+#, c-format
+msgid "%s: unrecognized start type \"%s\"\n"
+msgstr "%s: გაშვების უცნობი ტიპი \"%s\"\n"
+
+#: pg_ctl.c:2159
+#, c-format
+msgid "%s: could not determine the data directory using command \"%s\"\n"
+msgstr "%s: შეუძლებელია მონაცემების საქაღალდის პოვნა ბრძანებით \"%s\"\n"
+
+#: pg_ctl.c:2182
+#, c-format
+msgid "%s: control file appears to be corrupt\n"
+msgstr "%s: როგორც ჩანს, საკონტროლო ფაილი დაზიანებულია\n"
+
+#: pg_ctl.c:2250
+#, c-format
+msgid ""
+"%s: cannot be run as root\n"
+"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
+"own the server process.\n"
+msgstr ""
+"%s: არ შეიძლება გაშვებული როგორც root \n"
+"გთხოვთ შეხვიდეთ (მაგ. \"su\"-ის გამოყენებით) როგორც (არაპრივილეგირებული)\n"
+"მომხმარებელი, რომელიც ფლობს სერვერის პროცესს.\n"
+
+#: pg_ctl.c:2333
+#, c-format
+msgid "%s: -S option not supported on this platform\n"
+msgstr "%s: პარამეტრი -S ამ პლატფორმაზე მხარდაუჭერელია\n"
+
+#: pg_ctl.c:2370
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")\n"
+
+#: pg_ctl.c:2396
+#, c-format
+msgid "%s: missing arguments for kill mode\n"
+msgstr "%s: ნაკლული არგუმენტები მოკვლის რეჟიმისთვის\n"
+
+#: pg_ctl.c:2414
+#, c-format
+msgid "%s: unrecognized operation mode \"%s\"\n"
+msgstr "%s: ოპერაციის უცნობი რეჟიმი \"%s\"\n"
+
+#: pg_ctl.c:2424
+#, c-format
+msgid "%s: no operation specified\n"
+msgstr "%s: ოპერაცია მითითებული არაა\n"
+
+#: pg_ctl.c:2445
+#, c-format
+msgid "%s: no database directory specified and environment variable PGDATA unset\n"
+msgstr "%s: ბაზის საქაღალდე და გარემოს ცვლადი PGDATA მითითებული არაა\n"
+
+#, c-format
+#~ msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+#~ msgstr "%s: გაფრთხილება: ამ პლატფორმაზე შეზღუდული კოდების შექმნა შეუძლებელია\n"
+
+#, c-format
+#~ msgid "%s: WARNING: could not locate all job object functions in system API\n"
+#~ msgstr "%s: გაფრთხილება: სისტემურ API-ში დავალების ობიექტის ყველა ფუნქცია  არ არსებობს\n"
+
+#, c-format
+#~ msgid "could not change directory to \"%s\": %m"
+#~ msgstr "საქაღალდის %s-ზე შეცვლის შეცდომა: %m"
+
+#, c-format
+#~ msgid "could not identify current directory: %m"
+#~ msgstr "მიმდინარე საქაღალდის იდენტიფიკაციის პრობლემა: %m"
+
+#, c-format
+#~ msgid "could not read symbolic link \"%s\": %m"
+#~ msgstr "სიმბოლური ბმის \"%s\" წაკითხვის შეცდომა: %m"

@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plperl (PostgreSQL) 14\n"
+"Project-Id-Version: plperl (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-13 10:38+0000\n"
-"PO-Revision-Date: 2019-06-06 17:25-0400\n"
+"POT-Creation-Date: 2023-05-22 07:09+0000\n"
+"PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -36,189 +36,194 @@ msgstr "Código Perl de inicialización a ejecutar cuando plperl se usa por prim
 msgid "Perl initialization code to execute once when plperlu is first used."
 msgstr "Código Perl de inicialización a ejecutar cuando plperlu se usa por primera vez."
 
-#: plperl.c:646
+#: plperl.c:643
 #, c-format
 msgid "cannot allocate multiple Perl interpreters on this platform"
 msgstr "no se pueden instanciar múltiples intérpretes Perl en esta plataforma"
 
-#: plperl.c:669 plperl.c:853 plperl.c:859 plperl.c:976 plperl.c:988
-#: plperl.c:1031 plperl.c:1054 plperl.c:2136 plperl.c:2244 plperl.c:2312
-#: plperl.c:2375
+#: plperl.c:666 plperl.c:850 plperl.c:856 plperl.c:973 plperl.c:985
+#: plperl.c:1028 plperl.c:1051 plperl.c:2151 plperl.c:2259 plperl.c:2327
+#: plperl.c:2390
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plperl.c:670
+#: plperl.c:667
 #, c-format
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
 msgstr "mientras se ejecutaba PostgreSQL::InServer::SPI::bootstrap"
 
-#: plperl.c:854
+#: plperl.c:851
 #, c-format
 msgid "while parsing Perl initialization"
 msgstr "mientras se interpretaba la inicialización de Perl"
 
-#: plperl.c:860
+#: plperl.c:857
 #, c-format
 msgid "while running Perl initialization"
 msgstr "mientras se ejecutaba la inicialización de Perl"
 
-#: plperl.c:977
+#: plperl.c:974
 #, c-format
 msgid "while executing PLC_TRUSTED"
 msgstr "mientras se ejecutaba PLC_TRUSTED"
 
-#: plperl.c:989
+#: plperl.c:986
 #, c-format
 msgid "while executing utf8fix"
 msgstr "mientras se ejecutaba utf8fix"
 
-#: plperl.c:1032
+#: plperl.c:1029
 #, c-format
 msgid "while executing plperl.on_plperl_init"
 msgstr "mientras se ejecutaba plperl.on_plperl_init"
 
-#: plperl.c:1055
+#: plperl.c:1052
 #, c-format
 msgid "while executing plperl.on_plperlu_init"
 msgstr "mientras se ejecutaba plperl.on_plperlu_init"
 
-#: plperl.c:1101 plperl.c:1789
+#: plperl.c:1098 plperl.c:1804
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "el hash de Perl contiene el columna inexistente «%s»"
 
-#: plperl.c:1106 plperl.c:1794
+#: plperl.c:1103 plperl.c:1809
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
 
-#: plperl.c:1194
-#, c-format
-msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
-msgstr "el número de dimensiones del array (%d) excede el máximo permitido (%d)"
-
-#: plperl.c:1206 plperl.c:1223
+#: plperl.c:1199 plperl.c:1214 plperl.c:1231
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "los arrays multidimensionales deben tener expresiones de arrays con dimensiones coincidentes"
 
-#: plperl.c:1259
+#: plperl.c:1204
+#, c-format
+msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
+msgstr "el número de dimensiones del array (%d) excede el máximo permitido (%d)"
+
+#: plperl.c:1274
 #, c-format
 msgid "cannot convert Perl array to non-array type %s"
 msgstr "no se puede convertir un array de Perl al tipo no-array %s"
 
-#: plperl.c:1362
+#: plperl.c:1375
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
 msgstr "no se puede convertir un hash de Perl al tipo no compuesto %s"
 
-#: plperl.c:1384 plperl.c:3284
+#: plperl.c:1397 plperl.c:3315
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
 
-#: plperl.c:1443
+#: plperl.c:1458
 #, c-format
 msgid "lookup failed for type %s"
 msgstr "búsqueda del tipo %s falló"
 
-#: plperl.c:1764
+#: plperl.c:1779
 #, c-format
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new} no existe"
 
-#: plperl.c:1768
+#: plperl.c:1783
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} no es una referencia a un hash"
 
-#: plperl.c:1799
+#: plperl.c:1814
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "no se puede definir la columna generada «%s»"
 
-#: plperl.c:2011 plperl.c:2849
+#: plperl.c:2026 plperl.c:2867
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "las funciones en PL/Perl no pueden retornar el tipo %s"
 
-#: plperl.c:2024 plperl.c:2890
+#: plperl.c:2039 plperl.c:2906
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "funciones de PL/Perl no pueden aceptar el tipo %s"
 
-#: plperl.c:2141
+#: plperl.c:2156
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "no se obtuvo una referencia CODE en la compilación de la función «%s»"
 
-#: plperl.c:2232
+#: plperl.c:2247
 #, c-format
 msgid "didn't get a return item from function"
 msgstr "no se obtuvo un elemento de retorno desde la función"
 
-#: plperl.c:2276 plperl.c:2343
+#: plperl.c:2291 plperl.c:2358
 #, c-format
 msgid "couldn't fetch $_TD"
 msgstr "no se pudo obtener $_TD"
 
-#: plperl.c:2300 plperl.c:2363
+#: plperl.c:2315 plperl.c:2378
 #, c-format
 msgid "didn't get a return item from trigger function"
 msgstr "no se obtuvo un elemento de retorno desde la función de disparador"
 
-#: plperl.c:2422
+#: plperl.c:2436
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "se llamó a una función que retorna un conjunto en un contexto que no puede aceptarlo"
 
-#: plperl.c:2467
+#: plperl.c:2441
+#, c-format
+msgid "materialize mode required, but it is not allowed in this context"
+msgstr "se requiere un nodo «materialize», pero no está permitido en este contexto"
+
+#: plperl.c:2485
 #, c-format
 msgid "set-returning PL/Perl function must return reference to array or use return_next"
 msgstr "una función PL/Perl que retorna un conjunto debe retornar una referencia a un array o usar return_next"
 
-#: plperl.c:2588
+#: plperl.c:2606
 #, c-format
 msgid "ignoring modified row in DELETE trigger"
 msgstr "ignorando la tupla modificada en el disparador DELETE"
 
-#: plperl.c:2596
+#: plperl.c:2614
 #, c-format
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr "el resultado de la función disparadora en PL/Perl debe ser undef, «SKIP» o «MODIFY»"
 
-#: plperl.c:2844
+#: plperl.c:2862
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
 
-#: plperl.c:3191
+#: plperl.c:3220
 #, c-format
 msgid "query result has too many rows to fit in a Perl array"
 msgstr "el resultado de la consulta tiene demasiados registros y no entran en un array de Perl"
 
-#: plperl.c:3261
+#: plperl.c:3292
 #, c-format
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "no se puede utilizar return_next en una función sin SETOF"
 
-#: plperl.c:3335
+#: plperl.c:3366
 #, c-format
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
 msgstr "una función Perl que retorna SETOF de un tipo compuesto debe invocar return_next con una referencia a un hash"
 
-#: plperl.c:4110
+#: plperl.c:4148
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "función PL/Perl «%s»"
 
-#: plperl.c:4122
+#: plperl.c:4160
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "compilación de la función PL/Perl «%s»"
 
-#: plperl.c:4131
+#: plperl.c:4169
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "bloque de código anónimo de PL/Perl"

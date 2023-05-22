@@ -1,0 +1,200 @@
+# Georgian message translation file for ecpglib
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the ecpglib (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ecpglib (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-07-02 08:50+0200\n"
+"PO-Revision-Date: 2022-07-04 13:16+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1\n"
+
+#: connect.c:239
+msgid "empty message text"
+msgstr "შეტყობინების ცარიელი ტექსტი"
+
+#: connect.c:406 connect.c:635
+msgid "<DEFAULT>"
+msgstr "<ნაგულისხმები>"
+
+#: descriptor.c:871 misc.c:119
+msgid "NULL"
+msgstr "არაფერი"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:33
+#, c-format
+msgid "no data found on line %d"
+msgstr "%d-ე ხაზზე მონაცემები ნაპოვნი არაა"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:40
+#, c-format
+msgid "out of memory on line %d"
+msgstr "%d-ე ხაზზე მეხსიერება საკმარისი არაა"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:47
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "მხარდაუჭერელი ტიპი \"%s\" %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:54
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "%d-ე ხაზზე მეტისმეტად ბევრი არგუმენტია"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:61
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "%d-ე ხაზზე არგუმენტები საკმარისი არაა"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:68
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "მთელი რიცხვის შეყვანის არასწორი ფორმატი: \"%s\",  %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:75
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "უნიშნო მთელი რიცხვის შეყვანის არასწორი ფორმატი: \"%s\",  %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:82
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "წილადი რიცხვის შეყვანის არასწორი ფორმატი: \"%s\",  %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:90
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "ლოგიკური ტიპის მიშვნეობის შეყვანის არასწორი ფორმატი: \"%s\",  %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:95
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "%d-ე ხაზზე ლოგიკური მნიშვნელობის გარდაქმნის შეცდომა: არასწორი ზომა"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:102
+#, c-format
+msgid "empty query on line %d"
+msgstr "%d-ეხაზე მოთხოვნა ცარიელია"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:109
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "%d-ე ხაზზე ნულოვანი მნიშვნელობა, ინდიკატორის გარეშე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:116
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "%d-ე ხაზზე ცვლადს მასივის ტიპი არ გააჩნია"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:123
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "%d-ე ხაზზე სერვერიდან წაკითხული მონაცემი მასივი არაა"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:130
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "%d-ე ხაზზე ცვლადების მასივის ჩასმა მხარდაუჭერელია"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:137
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "შეერთება სახელით \"%s\" არ არსებობს. %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "შეერთება \"%s\" დაკავშირებული არაა. %d -ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:151
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "ოპერატორის არასწორი სახელი: \"%s\" . %d -ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:158
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "დესკრიპტორი \"%s\" არ არსებობს. %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:165
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "%d-ე ხაზზე დესკრიპტორი ინდექსის დიაპაზონს გარეთაა"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:172
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "დესკრიპტორის უცნობი ჩანაწერი \"%s\" %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:179
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "%d -ე ხაზზე ცვლადს რიცხვითი ტიპი არ გააჩნია"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:186
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "%d -ე ხაზზე ცვლადს სტრიქონის ტიპი არ გააჩნია"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:193
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "%d -ე ხაზზე ტრანზაქციის დამუშავების შეცდომა"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:200
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "ბაზასთან (\"%s\") მიერთების შეცდომა %d-ე ხაზზე"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:207
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "%d-ე ხაზზე SQL-ის შეცდომა: %d"
+
+#: error.c:253
+msgid "the connection to the server was lost"
+msgstr "სერვერთან კავშირი დაკარგულია"
+
+#: error.c:345
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "SQL-ის შეცდომა: %s\n"
+
+#: execute.c:2195 execute.c:2202
+msgid "<empty>"
+msgstr "<empty>"

@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 14\n"
+"Project-Id-Version: pltcl (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-13 10:38+0000\n"
-"PO-Revision-Date: 2019-06-06 17:26-0400\n"
+"POT-Creation-Date: 2023-05-22 07:08+0000\n"
+"PO-Revision-Date: 2023-05-22 12:06+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -20,11 +20,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.0.2\n"
 
-#: pltcl.c:465
+#: pltcl.c:462
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "función PL/Tcl a ejecutar cuando se use pltcl por primera vez."
 
-#: pltcl.c:472
+#: pltcl.c:469
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "función PL/TclU a ejecutar cuando se use pltclu por primera vez."
 
@@ -44,27 +44,32 @@ msgstr "la función «%s» no debe ser SECURITY DEFINER"
 msgid "processing %s parameter"
 msgstr "procesando el parámetro %s"
 
-#: pltcl.c:835
+#: pltcl.c:834
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "se llamó una función que retorna un conjunto en un contexto que no puede aceptarlo"
 
-#: pltcl.c:1008
+#: pltcl.c:839
+#, c-format
+msgid "materialize mode required, but it is not allowed in this context"
+msgstr "se requiere un nodo «materialize», pero no está permitido en este contexto"
+
+#: pltcl.c:1012
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
 
-#: pltcl.c:1292
+#: pltcl.c:1295
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "no se pudo separar el valor de retorno del disparador: %s"
 
-#: pltcl.c:1373 pltcl.c:1803
+#: pltcl.c:1376 pltcl.c:1803
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1374
+#: pltcl.c:1377
 #, c-format
 msgid ""
 "%s\n"
@@ -73,17 +78,17 @@ msgstr ""
 "%s\n"
 "en función PL/Tcl \"%s\""
 
-#: pltcl.c:1538
+#: pltcl.c:1540
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
 
-#: pltcl.c:1542
+#: pltcl.c:1544
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
 
-#: pltcl.c:1581
+#: pltcl.c:1583
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"

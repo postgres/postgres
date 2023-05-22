@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-10 08:49+0000\n"
-"PO-Revision-Date: 2021-08-17 10:54\n"
+"POT-Creation-Date: 2022-08-12 10:51+0000\n"
+"PO-Revision-Date: 2022-09-13 11:52\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,34 +14,34 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_14_DEV/pg_controldata.pot\n"
-"X-Crowdin-File-ID: 744\n"
+"X-Crowdin-File: /REL_15_STABLE/pg_controldata.pot\n"
+"X-Crowdin-File-ID: 924\n"
 
 #: ../../common/controldata_utils.c:73
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не вдалося відкрити файл \"%s\" для читання: %m"
 
-#: ../../common/controldata_utils.c:89
+#: ../../common/controldata_utils.c:86
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не вдалося прочитати файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:101
+#: ../../common/controldata_utils.c:95
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %zu"
 
-#: ../../common/controldata_utils.c:117 ../../common/controldata_utils.c:259
+#: ../../common/controldata_utils.c:108 ../../common/controldata_utils.c:244
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "неможливо закрити файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:135
+#: ../../common/controldata_utils.c:124
 msgid "byte ordering mismatch"
 msgstr "неправильний порядок байтів"
 
-#: ../../common/controldata_utils.c:137
+#: ../../common/controldata_utils.c:126
 #, c-format
 msgid "possible byte ordering mismatch\n"
 "The byte ordering used to store the pg_control file might not match the one\n"
@@ -50,17 +50,17 @@ msgid "possible byte ordering mismatch\n"
 msgstr "можлива помилка у послідовності байтів.\n"
 "Порядок байтів, що використовують для зберігання файлу pg_control, може не відповідати тому, який використовується цією програмою. У такому випадку результати нижче будуть неправильним, і інсталяція PostgreSQL буде несумісною з цим каталогом даних."
 
-#: ../../common/controldata_utils.c:203
+#: ../../common/controldata_utils.c:194
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:224
+#: ../../common/controldata_utils.c:213
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "не вдалося записати файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:245
+#: ../../common/controldata_utils.c:232
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "не вдалося fsync файл \"%s\": %m"
@@ -156,12 +156,12 @@ msgstr "невизнаний код статусу"
 msgid "unrecognized wal_level"
 msgstr "невизнаний wal_рівень"
 
-#: pg_controldata.c:137 pg_controldata.c:155 pg_controldata.c:163
+#: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:163
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
-#: pg_controldata.c:153
+#: pg_controldata.c:154
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "забагато аргументів у командному рядку (перший \"%s\")"

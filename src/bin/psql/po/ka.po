@@ -1,0 +1,6569 @@
+# Georgian message translation file for psql
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the psql (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: psql (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-04-19 11:17+0000\n"
+"PO-Revision-Date: 2023-04-20 08:18+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "შეცდომა: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "გაფრთხილება: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "დეტალები: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "მინიშნება: "
+
+#: ../../common/exec.c:172
+#, c-format
+msgid "invalid binary \"%s\": %m"
+msgstr "არასწორი ბინარული ფაილი \"%s\": %m"
+
+#: ../../common/exec.c:215
+#, c-format
+msgid "could not read binary \"%s\": %m"
+msgstr "ბინარული ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/exec.c:223
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "გასაშვებად ფაილის \"%s\" პოვნა შეუძლებელია"
+
+#: ../../common/exec.c:250
+#, c-format
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "ბილიკის (\"%s\") აბსოლუტურ ფორმაში ამოხსნის შეცდომა: %m"
+
+#: ../../common/exec.c:412
+#, c-format
+msgid "%s() failed: %m"
+msgstr "%s()-ის შეცდომა: %m"
+
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+#: command.c:1352 command.c:3437 command.c:3486 command.c:3610 input.c:226
+#: mainloop.c:80 mainloop.c:398
+#, c-format
+msgid "out of memory"
+msgstr "არასაკმარისი მეხსიერება"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "მომხმარებლის ეფექტური ID-ის (%ld) ამოხსნა შეუძლებელია: %s"
+
+#: ../../common/username.c:45 command.c:613
+msgid "user does not exist"
+msgstr "მომხმარებელი არ არსებობს"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "მომხარებლის სახელის ამოხსნის პრობლემა: შეცდომის კოდი: %lu"
+
+#: ../../common/wait_error.c:55
+#, c-format
+msgid "command not executable"
+msgstr "ბრძანება გაშვებადი არაა"
+
+#: ../../common/wait_error.c:59
+#, c-format
+msgid "command not found"
+msgstr "ბრძანება ვერ ვიპოვე"
+
+#: ../../common/wait_error.c:64
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "შვილეული პროცესი დასრულდა სტატუსით %d"
+
+#: ../../common/wait_error.c:72
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "შვილეული პროცესი დასრულდა გამონაკლისით 0x%X"
+
+#: ../../common/wait_error.c:76
+#, c-format
+msgid "child process was terminated by signal %d: %s"
+msgstr "პროცესი გაჩერდა სიგნალით: %d: %s"
+
+#: ../../common/wait_error.c:82
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "შვილეული პროცესი დასრულდა უცნობი სტატუსით %d"
+
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+msgid "Cancel request sent\n"
+msgstr "გაუქმების მოთხოვნა გაგზავნილია\n"
+
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+msgid "Could not send cancel request: "
+msgstr "გაუქმების მოთხოვნის გაგზავნა შეუძლებელია: "
+
+#: ../../fe_utils/print.c:406
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(%lu მწკრივი)"
+msgstr[1] "(%lu მწკრივი)"
+
+#: ../../fe_utils/print.c:3153
+#, c-format
+msgid "Interrupted\n"
+msgstr "შეწყვეტილია\n"
+
+#: ../../fe_utils/print.c:3217
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr "ცხრილის შემცველობაზე თავსართის დამატება შეუძლებელია: სვეტების რაოდენობა %d გადაჭარბებულია.\n"
+
+#: ../../fe_utils/print.c:3257
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr "ცხრილის შემცველობაზე უჯრედის დამატება შეუძლებელია: უჯრედების რაოდენობა %d-ზე მეტია.\n"
+
+#: ../../fe_utils/print.c:3515
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "გამოტანის არასწორი ფორმატი (შიდა შეცდომა): %d"
+
+#: ../../fe_utils/psqlscan.l:717
+#, c-format
+msgid "skipping recursive expansion of variable \"%s\""
+msgstr "რეკურსიული გაფართოების გამოტოვება ცვლადისთვის \"%s\""
+
+#: ../../port/thread.c:50 ../../port/thread.c:86
+#, c-format
+msgid "could not look up local user ID %d: %s"
+msgstr "ლოკალური მომხმარებლის ID-ის (%d) ამოხსნა შეუძლებელია: %s"
+
+#: ../../port/thread.c:55 ../../port/thread.c:91
+#, c-format
+msgid "local user with ID %d does not exist"
+msgstr "ლოკალური მომხმარებელი ID-ით %d არ არსებობს"
+
+#: command.c:234
+#, c-format
+msgid "invalid command \\%s"
+msgstr "არასწორი ბრძანება \\%s"
+
+#: command.c:236
+#, c-format
+msgid "Try \\? for help."
+msgstr "დახმარებისთვის სცადეთ \\? ."
+
+#: command.c:254
+#, c-format
+msgid "\\%s: extra argument \"%s\" ignored"
+msgstr "\\%s: დამატებითი არგუმენტი \"%s\" იგნორირებულია"
+
+#: command.c:306
+#, c-format
+msgid "\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block"
+msgstr "\\%s ბრძანება გნორირებულია; მიმდინარე \\if ბლოკიდან გამოსასვლელად გამოიყენეთ \\endif ან Control-C"
+
+#: command.c:611
+#, c-format
+msgid "could not get home directory for user ID %ld: %s"
+msgstr "მომხმარებლის, ID-ით %ld, საწყის საქაღალდეზე გადასვლის შეცდომა: %s"
+
+#: command.c:630
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %m"
+msgstr "\\%s: საქაღალდის \"%s\"-ზე შეცვლის შეცდომა: %m"
+
+#: command.c:654
+#, c-format
+msgid "You are currently not connected to a database.\n"
+msgstr "ამჟამად მონაცემთა ბაზასთან მიერთებული არ ბრძანდებით.\n"
+
+#: command.c:664
+#, c-format
+msgid "You are connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\" მისამართზე \"%s\" და პორტზე \"%s\".\n"
+
+#: command.c:667
+#, c-format
+msgid "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\" სოკეტით \"%s\" და პორტზე \"%s\".\n"
+
+#: command.c:673
+#, c-format
+msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\" ჰოსტზე \"%s\" (მისამართით \"%s\") და პორტზე \"%s\".\n"
+
+#: command.c:676
+#, c-format
+msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\" ჰოსტზე \"%s\" და პორტზე \"%s\".\n"
+
+#: command.c:1064 command.c:1157 command.c:2680
+#, c-format
+msgid "no query buffer"
+msgstr "მოთხოვნების ბაფერის გარეშე"
+
+#: command.c:1097 command.c:5676
+#, c-format
+msgid "invalid line number: %s"
+msgstr "ხაზის არასწორი ნომერი: %s"
+
+#: command.c:1235
+msgid "No changes"
+msgstr "ცვლილებების გარეშე"
+
+#: command.c:1313
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found"
+msgstr "%s: კოდირების არასწორი სახელი ან გადაყვანის პროცედურა არ არსებობს"
+
+#: command.c:1348 command.c:2150 command.c:3433 command.c:3630 command.c:5782
+#: common.c:182 common.c:231 common.c:400 common.c:1102 common.c:1120
+#: common.c:1194 common.c:1313 common.c:1351 common.c:1444 common.c:1480
+#: copy.c:486 copy.c:720 help.c:66 large_obj.c:157 large_obj.c:192
+#: large_obj.c:254 startup.c:304
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1355
+msgid "There is no previous error."
+msgstr "წინა შეცდომის გარეშე."
+
+#: command.c:1468
+#, c-format
+msgid "\\%s: missing right parenthesis"
+msgstr "\\%s: აკლია მარჯვენა მრგვალი ფრჩხილი"
+
+#: command.c:1552 command.c:1682 command.c:1986 command.c:2000 command.c:2019
+#: command.c:2201 command.c:2442 command.c:2647 command.c:2687
+#, c-format
+msgid "\\%s: missing required argument"
+msgstr "\\%s: აკლია საჭირო არგუმენტი"
+
+#: command.c:1813
+#, c-format
+msgid "\\elif: cannot occur after \\else"
+msgstr "\\elif: არ შეიძლება \\else -ის შემდეგ იყოს"
+
+#: command.c:1818
+#, c-format
+msgid "\\elif: no matching \\if"
+msgstr "\\elif: შესაბამისი \\if -ის გარეშე"
+
+#: command.c:1882
+#, c-format
+msgid "\\else: cannot occur after \\else"
+msgstr "\\else: ვერ გაჩნდება \\else -ის შემდეგ"
+
+#: command.c:1887
+#, c-format
+msgid "\\else: no matching \\if"
+msgstr "\\else: შესაბამისი \\if -ის გარეშე"
+
+#: command.c:1927
+#, c-format
+msgid "\\endif: no matching \\if"
+msgstr "\\endif: შესაბამისი \\if -ის გარეშე"
+
+#: command.c:2083
+msgid "Query buffer is empty."
+msgstr "მოთხოვნის ბაფერი ცარიელია."
+
+#: command.c:2126
+#, c-format
+msgid "Enter new password for user \"%s\": "
+msgstr "შეიყვანეთ მომხმარებლის (\"%s\") ახალი პაროლი: "
+
+#: command.c:2130
+msgid "Enter it again: "
+msgstr "შეიყვანეთ კდევ ერთხელ: "
+
+#: command.c:2139
+#, c-format
+msgid "Passwords didn't match."
+msgstr "პაროლები არ ემთხვევა."
+
+#: command.c:2236
+#, c-format
+msgid "\\%s: could not read value for variable"
+msgstr "\\%s: ცვლადის მნიშვნელობის წაკითხვის შეცდომა"
+
+#: command.c:2338
+msgid "Query buffer reset (cleared)."
+msgstr "მოთხოვნის ბაფერი ცარიელია(გასუფთავდა)."
+
+#: command.c:2360
+#, c-format
+msgid "Wrote history to file \"%s\".\n"
+msgstr "ისტორია ჩაწერილია ფაილში \"%s\".\n"
+
+#: command.c:2447
+#, c-format
+msgid "\\%s: environment variable name must not contain \"=\""
+msgstr "\\%s: გარემოს ცვლადის სახელი \"=\" -ს არ შეიძლება შეიცავდეს"
+
+#: command.c:2495
+#, c-format
+msgid "function name is required"
+msgstr "ფუნქციის სახელი აუცილებელია"
+
+#: command.c:2497
+#, c-format
+msgid "view name is required"
+msgstr "საჭიროა ხედის სახელი"
+
+#: command.c:2619
+msgid "Timing is on."
+msgstr "დროის დათვლა ჩართულია."
+
+#: command.c:2621
+msgid "Timing is off."
+msgstr "დროის დათვლა გამორთულია."
+
+#: command.c:2707 command.c:2745 command.c:4072 command.c:4075 command.c:4078
+#: command.c:4084 command.c:4086 command.c:4112 command.c:4122 command.c:4134
+#: command.c:4148 command.c:4175 command.c:4233 common.c:78 copy.c:329
+#: copy.c:401 psqlscanslash.l:788 psqlscanslash.l:800 psqlscanslash.l:818
+#, c-format
+msgid "%s: %m"
+msgstr "%s: %m"
+
+#: command.c:2734 copy.c:388
+#, c-format
+msgid "%s: %s"
+msgstr "%s: %s"
+
+#: command.c:2804 command.c:2850
+#, c-format
+msgid "\\watch: interval value is specified more than once"
+msgstr "\\watch: ინტერვალის მნიშვნელობა ერთზე მეტჯერაა მითითებული"
+
+#: command.c:2814 command.c:2860
+#, c-format
+#| msgid "incorrectly formed variable \"%s\""
+msgid "\\watch: incorrect interval value \"%s\""
+msgstr "\\watch: არასწორი ინტერვალის მნიშვნელობა \"%s\""
+
+#: command.c:2824
+#, c-format
+#| msgid "column \"%s\" specified more than once"
+msgid "\\watch: iteration count is specified more than once"
+msgstr "\\watch: იტერაციის რაოდენობა ერთზე მეტჯერაა მითითებული"
+
+#: command.c:2834
+#, c-format
+msgid "\\watch: incorrect iteration count \"%s\""
+msgstr "\\watch: არასწორი იტერაციების რაოდენობა \"%s\""
+
+#: command.c:2841
+#, c-format
+msgid "\\watch: unrecognized parameter \"%s\""
+msgstr "\\watch: უცნობი პარამეტრი \"%s\""
+
+#: command.c:3234 startup.c:243 startup.c:293
+msgid "Password: "
+msgstr "პაროლი: "
+
+#: command.c:3239 startup.c:290
+#, c-format
+msgid "Password for user %s: "
+msgstr "პაროლი მომხმარებლისთვის %s: "
+
+#: command.c:3295
+#, c-format
+msgid "Do not give user, host, or port separately when using a connection string"
+msgstr "შეერთების სტრიქონის გამოყენებისას მომხმარებლის, ჰოსტისა და და პორტის არ მითითება"
+
+#: command.c:3330
+#, c-format
+msgid "No database connection exists to re-use parameters from"
+msgstr "მონაცემთა ბაზის კავშირი პარამეტრების ხელახლა გამოსაყენებლად არ არსებობს"
+
+#: command.c:3636
+#, c-format
+msgid "Previous connection kept"
+msgstr "წინა შეერთება ჯერ კიდევ არსებობს"
+
+#: command.c:3642
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\connect: %s"
+
+#: command.c:3698
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\" მისამართზე \"%s\" და პორტზე \"%s\".\n"
+
+#: command.c:3701
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\" სოკეტით \"%s\" და პორტზე \"%s\".\n"
+
+#: command.c:3707
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\" ჰოსტზე \"%s\" (მისამართით \"%s\") და პორტზე \"%s\".\n"
+
+#: command.c:3710
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\" ჰოსტზე \"%s\" და პორტზე \"%s\".\n"
+
+#: command.c:3715
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\".\n"
+msgstr "ახლა მიერთებული ბრძანდებით ბაზასთან \"%s\" როგორც მომხმარებელი \"%s\"\n"
+
+#: command.c:3755
+#, c-format
+msgid "%s (%s, server %s)\n"
+msgstr "%s (%s, სერვერი %s)\n"
+
+#: command.c:3768
+#, c-format
+msgid ""
+"WARNING: %s major version %s, server major version %s.\n"
+"         Some psql features might not work.\n"
+msgstr ""
+"გაფრთხილება: %s ძირითადი ვერსია %s, სერვერის ძირითადი ვერსია %s.\n"
+"         psql-ის ზოგიერთმა ფუნქციამ შეიძლება არ იმუშაოს.\n"
+
+#: command.c:3805
+#, c-format
+msgid "SSL connection (protocol: %s, cipher: %s, compression: %s)\n"
+msgstr "SSL შეერთება (პროდოკოლი: %s, შიფრაცა: %s, შეკუშმვა: %s)\n"
+
+#: command.c:3806 command.c:3807
+msgid "unknown"
+msgstr "უცნობი"
+
+#: command.c:3808 help.c:42
+msgid "off"
+msgstr "გამორთული"
+
+#: command.c:3808 help.c:42
+msgid "on"
+msgstr "ჩართ"
+
+#: command.c:3822
+#, c-format
+msgid "GSSAPI-encrypted connection\n"
+msgstr "GSSAPI-ით დაშიფრული შეერთება\n"
+
+#: command.c:3842
+#, c-format
+msgid ""
+"WARNING: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters might not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+msgstr ""
+"გაფრთხილება: კონსოლის კოდირება (%u) განსხვავდება Windows კოდირებისგან(%u)\n"
+"          8-ბიტიანი სიმბოლოებმა შეიძლება სწორად არ იმუშაოს. მეტი დეტალებისთვის\n"
+"          იხილეთ psql-ის დოკუმენტაციის გვერდი გვერდი \"შენიშვნები Windows-ის მომხმარებლებისთვის\".\n"
+
+#: command.c:3947
+#, c-format
+msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number"
+msgstr "საჭიროა გარემოს ცვლადის PSQL_EDITOR_LINENUMBER_ARG დაყენება ხაზის ნომერზე"
+
+#: command.c:3977
+#, c-format
+msgid "could not start editor \"%s\""
+msgstr "რედაქტორის გაშვების შეცდომა: \"%s\""
+
+#: command.c:3979
+#, c-format
+msgid "could not start /bin/sh"
+msgstr "/bin/sh-ის გაშვების შეცდომა"
+
+#: command.c:4029
+#, c-format
+msgid "could not locate temporary directory: %s"
+msgstr "დროებითი საქაღალდის მოძებნის შეცდომა: %s"
+
+#: command.c:4056
+#, c-format
+msgid "could not open temporary file \"%s\": %m"
+msgstr "დროებითი ფაილის (\"%s\") გახსნის შეცდომა: %m"
+
+#: command.c:4392
+#, c-format
+msgid "\\pset: ambiguous abbreviation \"%s\" matches both \"%s\" and \"%s\""
+msgstr "\\pset: \"%s\"-ის არასწორი აბრევიატურა ორივეს, \"%s\"-ს და \"%s-ს ემთხვევა\""
+
+#: command.c:4412
+#, c-format
+msgid "\\pset: allowed formats are aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped"
+msgstr "\\pset: დასაშვები ფორმატებია: aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped"
+
+#: command.c:4431
+#, c-format
+msgid "\\pset: allowed line styles are ascii, old-ascii, unicode"
+msgstr "\\pset: ხაზის ნებადართული სტილებია ascii, old-ascii და unicode"
+
+#: command.c:4446
+#, c-format
+msgid "\\pset: allowed Unicode border line styles are single, double"
+msgstr "\\pset: უნიკოდის საზღვრის ხაზის ნებადართული სტილებია single და double"
+
+#: command.c:4461
+#, c-format
+msgid "\\pset: allowed Unicode column line styles are single, double"
+msgstr "\\pset: უნიკოდის სვეტის ხაზის ნებადართული სტილებია single და double"
+
+#: command.c:4476
+#, c-format
+msgid "\\pset: allowed Unicode header line styles are single, double"
+msgstr "\\pset:უნიკოდის თავსართის ხაზების ნებადართულ სტილებია single და double"
+
+#: command.c:4528
+#, c-format
+msgid "\\pset: allowed xheader_width values are full (default), column, page, or a number specifying the exact width."
+msgstr "\\pset: xheader_width-ის დაშვებული მნიშვნელობები სავსეა (ნაგულისხმები), სვეტი, გვერდი, ან რიცხვი, რომელიც ზუსტ სიგანეზე მიუთითებს."
+
+#: command.c:4542
+#, c-format
+msgid "\\pset: csv_fieldsep must be a single one-byte character"
+msgstr "\\pset: csv_fieldsep ერთი ერთბაიტიანი სიმბოლო უნდა იყოს"
+
+#: command.c:4547
+#, c-format
+msgid "\\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage return"
+msgstr "\\pset: csv_fieldsep არ შეიძლება იყოს ორმაგი ბრჭყალი, ხაზის დასასრული და კარეტის გადატანა"
+
+#: command.c:4684 command.c:4885
+#, c-format
+msgid "\\pset: unknown option: %s"
+msgstr "\\pset: არასწორი პარამეტრი: %s"
+
+#: command.c:4704
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "საზღვრის სტილი: %d\n"
+
+#: command.c:4710
+#, c-format
+msgid "Target width is unset.\n"
+msgstr "სამიზნის სიგანე დაყენებული არაა.\n"
+
+#: command.c:4712
+#, c-format
+msgid "Target width is %d.\n"
+msgstr "სამიზნის სიგანეა %d.\n"
+
+#: command.c:4719
+#, c-format
+msgid "Expanded display is on.\n"
+msgstr "გაფართოებული ეკრანი ჩართულია.\n"
+
+#: command.c:4721
+#, c-format
+msgid "Expanded display is used automatically.\n"
+msgstr "გაფართოებული ეკრანი ავტომატურად გამოიყენება.\n"
+
+#: command.c:4723
+#, c-format
+msgid "Expanded display is off.\n"
+msgstr "გაფართოებული ეკრანი გამორთულია.\n"
+
+#: command.c:4730
+#, c-format
+msgid "Expanded header width is 'full'.\n"
+msgstr "გაფართოებული თავსართის სიგანეა 'full'.\n"
+
+#: command.c:4732
+#, c-format
+msgid "Expanded header width is 'column'.\n"
+msgstr "გაფართოებული თავსართის სიგანეა 'column'.\n"
+
+#: command.c:4734
+#, c-format
+msgid "Expanded header width is 'page'.\n"
+msgstr "გაფართოებული თავსართის სიგანეა 'page'.\n"
+
+#: command.c:4736
+#, c-format
+msgid "Expanded header width is %d.\n"
+msgstr "გაფართოებული თავსართია %d.\n"
+
+#: command.c:4742
+#, c-format
+msgid "Field separator for CSV is \"%s\".\n"
+msgstr "CSV-ში ველების განმაცალკევებელია \"%s\".\n"
+
+#: command.c:4750 command.c:4758
+#, c-format
+msgid "Field separator is zero byte.\n"
+msgstr "ველების განმაცალკევებელი ნულოვანი ბაიტია.\n"
+
+#: command.c:4752
+#, c-format
+msgid "Field separator is \"%s\".\n"
+msgstr "ველების განმაცალკევებელია \"%s\".\n"
+
+#: command.c:4765
+#, c-format
+msgid "Default footer is on.\n"
+msgstr "მდგომარეობის ზოლი ჩართულია.\n"
+
+#: command.c:4767
+#, c-format
+msgid "Default footer is off.\n"
+msgstr "ნაგულისხმები ქვესართი გამორთულია\n"
+
+#: command.c:4773
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "გამოტანის ფორმატია %s.\n"
+
+#: command.c:4779
+#, c-format
+msgid "Line style is %s.\n"
+msgstr "ხაზის სტილია %s.\n"
+
+#: command.c:4786
+#, c-format
+msgid "Null display is \"%s\".\n"
+msgstr "ნულოვანია ეკრანია \"%s\".\n"
+
+#: command.c:4794
+#, c-format
+msgid "Locale-adjusted numeric output is on.\n"
+msgstr "რიცხვების ენაზე მორგებული გამოტანა ჩართულია.\n"
+
+#: command.c:4796
+#, c-format
+msgid "Locale-adjusted numeric output is off.\n"
+msgstr "რიცხვების ენაზე მორგებული გამოტანა გამორთულა.\n"
+
+#: command.c:4803
+#, c-format
+msgid "Pager is used for long output.\n"
+msgstr "გრძელი გამოტანისას გამოიყენება გვერდების გადამრთველი.\n"
+
+#: command.c:4805
+#, c-format
+msgid "Pager is always used.\n"
+msgstr "გვერდების გადამრთველი ყოველთვის გამოიყენება.\n"
+
+#: command.c:4807
+#, c-format
+msgid "Pager usage is off.\n"
+msgstr "გვერდების გადამრთველი გამორთულია.\n"
+
+#: command.c:4813
+#, c-format
+msgid "Pager won't be used for less than %d line.\n"
+msgid_plural "Pager won't be used for less than %d lines.\n"
+msgstr[0] "გვერდების გადამრთველი %d-ზე ნაკლებ ხაზზე არ მუშაობს.\n"
+msgstr[1] "გვერდების გადამრთველი %d-ზე ნაკლებ ხაზზე არ მუშაობს.\n"
+
+#: command.c:4823 command.c:4833
+#, c-format
+msgid "Record separator is zero byte.\n"
+msgstr "ჩანაწერის გამყოფი ნული ბაიტია.\n"
+
+#: command.c:4825
+#, c-format
+msgid "Record separator is <newline>.\n"
+msgstr "ჩანაწერის გამყოფია <newline>.\n"
+
+#: command.c:4827
+#, c-format
+msgid "Record separator is \"%s\".\n"
+msgstr "ჩანაწერის გამყოფია \"%s\".\n"
+
+#: command.c:4840
+#, c-format
+msgid "Table attributes are \"%s\".\n"
+msgstr "ცხრილის ატრიბუტებია \"%s\".\n"
+
+#: command.c:4843
+#, c-format
+msgid "Table attributes unset.\n"
+msgstr "ცხრილის ატრიბუტები მოხსნილია.\n"
+
+#: command.c:4850
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "სათაურია \"%s\".\n"
+
+#: command.c:4852
+#, c-format
+msgid "Title is unset.\n"
+msgstr "სათაურის დაყენება გაუქმდა.\n"
+
+#: command.c:4859
+#, c-format
+msgid "Tuples only is on.\n"
+msgstr "მხოლოდ სტრუქტურები ჩართულია.\n"
+
+#: command.c:4861
+#, c-format
+msgid "Tuples only is off.\n"
+msgstr "მხოლოდ სტრუქტურები გამორთულია.\n"
+
+#: command.c:4867
+#, c-format
+msgid "Unicode border line style is \"%s\".\n"
+msgstr "უნიკოდის საზღვრის ხაზის სტილია \"%s\".\n"
+
+#: command.c:4873
+#, c-format
+msgid "Unicode column line style is \"%s\".\n"
+msgstr "უნიკოდის სვეტის ხაზის სტილია \"%s\".\n"
+
+#: command.c:4879
+#, c-format
+msgid "Unicode header line style is \"%s\".\n"
+msgstr "უნიკოდის თავსართის ხაზის სტილია \"%s\".\n"
+
+#: command.c:5127
+#, c-format
+msgid "\\!: failed"
+msgstr "\\!: შეცდომა"
+
+#: command.c:5161
+#, c-format
+msgid "\\watch cannot be used with an empty query"
+msgstr "\\watch ცარიელი მოთხოვნით გამოყენებული ვერ იქნება"
+
+#: command.c:5193
+#, c-format
+msgid "could not set timer: %m"
+msgstr "დროის აღმრიცხველის დაყენების შეცდომა: %m"
+
+#: command.c:5256
+#, c-format
+msgid "%s\t%s (every %gs)\n"
+msgstr "%s\t%s (ყოველ %g-ში)\n"
+
+#: command.c:5259
+#, c-format
+msgid "%s (every %gs)\n"
+msgstr "%s (ყოველ %g-ში)\n"
+
+#: command.c:5327
+#, c-format
+msgid "could not wait for signals: %m"
+msgstr "სიგნალებისთვის დალოდება შეუძლებელია: %m"
+
+#: command.c:5385 command.c:5392 common.c:592 common.c:599 common.c:1083
+#, c-format
+msgid ""
+"********* QUERY **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+msgstr ""
+"********* მოთხოვნა **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+
+#: command.c:5571
+#, c-format
+msgid "\"%s.%s\" is not a view"
+msgstr "\"%s.%s\" ხედი არაა"
+
+#: command.c:5587
+#, c-format
+msgid "could not parse reloptions array"
+msgstr "reloptions მასივის დამუშავების შეცდომა"
+
+#: common.c:167
+#, c-format
+msgid "cannot escape without active connection"
+msgstr "გაქცევა აქტიური შეერთებს გარეშე შეუძლებელია"
+
+#: common.c:208
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\""
+msgstr "გარსის ბრძანება ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\""
+
+#: common.c:312
+#, c-format
+msgid "connection to server was lost"
+msgstr "სერვერთან კავშირი დაკარგულია"
+
+#: common.c:316
+#, c-format
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "სერვერთან კავშირი დაკარგულია. ვეცდები თავიდან დავიწყო: "
+
+#: common.c:321
+#, c-format
+msgid "Failed.\n"
+msgstr "წარუმატებელი.\n"
+
+#: common.c:338
+#, c-format
+msgid "Succeeded.\n"
+msgstr "წარმატებულია.\n"
+
+#: common.c:390 common.c:1021
+#, c-format
+msgid "unexpected PQresultStatus: %d"
+msgstr "მოულოდნელი PQresultStatus: %d"
+
+#: common.c:531
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "დრო: %.3f მწმ\n"
+
+#: common.c:546
+#, c-format
+msgid "Time: %.3f ms (%02d:%06.3f)\n"
+msgstr "დრო: %.3f მწმ (%02d:%06.3f)\n"
+
+#: common.c:555
+#, c-format
+msgid "Time: %.3f ms (%02d:%02d:%06.3f)\n"
+msgstr "დრო: %.3f მწმ (%02d:%02d:%06.3f)\n"
+
+#: common.c:562
+#, c-format
+msgid "Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
+msgstr "დრო: %.3f მწმ (%.0f დღე %02d:%02d:%06.3f)\n"
+
+#: common.c:586 common.c:643 common.c:1054 describe.c:6156
+#, c-format
+msgid "You are currently not connected to a database."
+msgstr "ამჟამად მონაცემთა ბაზასთან მიერთებული არ ბრძანდებით."
+
+#: common.c:674
+#, c-format
+msgid "Asynchronous notification \"%s\" with payload \"%s\" received from server process with PID %d.\n"
+msgstr "მიღებულია ასინქრონული გაფრთხილება \"%s\" შემცველობით \"%s\" სერვერის პროცესისგან PID-ით %d.\n"
+
+#: common.c:677
+#, c-format
+msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgstr "მიღებულია ასინქრონული გაფრთხილება \"%s\" სერვერის პროცესისგან PID-ით %d.\n"
+
+#: common.c:708
+#, c-format
+msgid "could not print result table: %m"
+msgstr "შედეგების ცხრილის გამოტანის შეცდომა: %m"
+
+#: common.c:728
+#, c-format
+msgid "no rows returned for \\gset"
+msgstr "\\gset -სთვის მწკრივები არ დაბრუნებულა"
+
+#: common.c:733
+#, c-format
+msgid "more than one row returned for \\gset"
+msgstr "\\gset -სთვის ერთზე მეტი მწკრივი დაბრუნდა"
+
+#: common.c:751
+#, c-format
+msgid "attempt to \\gset into specially treated variable \"%s\" ignored"
+msgstr "მცდელობა, \\gset-ი სპეციალურ ცვლადზე (\"%s\") ყოფილიყო გამოყენებული, იგნორირებულია"
+
+#: common.c:1063
+#, c-format
+msgid ""
+"***(Single step mode: verify command)*******************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)********************\n"
+msgstr ""
+"***(ერთნაბიჯიანი რეჟიმი: გადაამოწმეთ ბრძანება)*******************************************\n"
+"%s\n"
+"***(დააწექით Enter-ს გასაგრძელებლად. გასაუქმებლად კი x-ს და შემდეგ Enter-ს )********************\n"
+
+#: common.c:1146
+#, c-format
+msgid "STATEMENT:  %s"
+msgstr "ოპერატორი:   %s"
+
+#: common.c:1182
+#, c-format
+msgid "unexpected transaction status (%d)"
+msgstr "ტრანზაქციის მოულოდნელი სტატუსი (%d)"
+
+#: common.c:1335 describe.c:2026
+msgid "Column"
+msgstr "სვეტი"
+
+#: common.c:1336 describe.c:170 describe.c:358 describe.c:376 describe.c:1046
+#: describe.c:1200 describe.c:1732 describe.c:1756 describe.c:2027
+#: describe.c:3900 describe.c:4112 describe.c:4351 describe.c:4513
+#: describe.c:5788
+msgid "Type"
+msgstr "ტიპი"
+
+#: common.c:1385
+#, c-format
+msgid "The command has no result, or the result has no columns.\n"
+msgstr "ბრძანებას შედეგები არ აქვს, ან შედეგებში სვეტები არაა.\n"
+
+#: copy.c:98
+#, c-format
+msgid "\\copy: arguments required"
+msgstr "\\copy: საჭიროა არგუმენტები"
+
+#: copy.c:253
+#, c-format
+msgid "\\copy: parse error at \"%s\""
+msgstr "\\copy: დამუშავების შეცდომა: \"%s\""
+
+#: copy.c:255
+#, c-format
+msgid "\\copy: parse error at end of line"
+msgstr "\\copy: დამუშავების შეცდომა ხაზის ბოლოსთან"
+
+#: copy.c:326
+#, c-format
+msgid "could not execute command \"%s\": %m"
+msgstr "ბრძანების (\"%s\") შესრულების შეცდომა: %m"
+
+#: copy.c:342
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ფაილი \"%s\" არ არსებობს: %m"
+
+#: copy.c:346
+#, c-format
+msgid "%s: cannot copy from/to a directory"
+msgstr "%s: საქაღალდ(იდან/ში) კოპირება შეუძლებელია"
+
+#: copy.c:383
+#, c-format
+msgid "could not close pipe to external command: %m"
+msgstr "გარე ბრძანებამდე ფაიფის დახურვის შეცდომა: %m"
+
+#: copy.c:451 copy.c:461
+#, c-format
+msgid "could not write COPY data: %m"
+msgstr "შეცდომა COPY-ის მონაცემების ჩაწერისას: %m"
+
+#: copy.c:467
+#, c-format
+msgid "COPY data transfer failed: %s"
+msgstr "COPY-ის მონაცემების გადატანის შეცდომა: %s"
+
+#: copy.c:528
+msgid "canceled by user"
+msgstr "გაუქმებულია მომხმარებლის მიერ"
+
+#: copy.c:539
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself, or an EOF signal."
+msgstr ""
+"შეიყვანეთ დასაკოპირებელიმ ხაზის გადატანით დასრულებული მონაცემები.\n"
+"დაასრულეთ უკანა ხაზით და წერტილით იგივე ხაზში ხაზით, ან EOF სიგნალით."
+
+#: copy.c:682
+msgid "aborted because of read failure"
+msgstr "დასრულდა კითხვის შეცდომის გამო"
+
+#: copy.c:716
+msgid "trying to exit copy mode"
+msgstr "კოპირების რეჟიმიდან გამოსვლის მცდელობა"
+
+#: crosstabview.c:123
+#, c-format
+msgid "\\crosstabview: statement did not return a result set"
+msgstr "\\crosstabview: ოპერატორმა შედეგების სეტი არ დააბრუნა"
+
+#: crosstabview.c:129
+#, c-format
+msgid "\\crosstabview: query must return at least three columns"
+msgstr "\\crosstabview: მოთხოვნამ სულ ცოტა, სამი სვეტი უნდა დააბრუნოს"
+
+#: crosstabview.c:156
+#, c-format
+msgid "\\crosstabview: vertical and horizontal headers must be different columns"
+msgstr "\\crosstabview: ვერტიკალური და ჰორიზონტალური თავსართები სხვადასხვა სვეტებში უნდა იყოს"
+
+#: crosstabview.c:172
+#, c-format
+msgid "\\crosstabview: data column must be specified when query returns more than three columns"
+msgstr "\\crosstabview: როცა მოთხოვნა სამზე მეტ სვეტს აბრუნებს, ასევე საჭიროა მონაცემების სვეტის მითითება"
+
+#: crosstabview.c:228
+#, c-format
+msgid "\\crosstabview: maximum number of columns (%d) exceeded"
+msgstr "\\crosstabview: გადაჭარბებულია სვეტების მაქსიმალური რაოდენობა (%d)"
+
+#: crosstabview.c:397
+#, c-format
+msgid "\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\""
+msgstr "\\crosstabview: მოთხოვნის შედეგი მონაცემების მრავალ მნიშვნელობას შეიცავს მწკრივისთვის \"%s\", სვეტი \"%s\""
+
+#: crosstabview.c:645
+#, c-format
+msgid "\\crosstabview: column number %d is out of range 1..%d"
+msgstr "\\crosstabview: სვეტის რიცხვი %d დიაპაზონს 1..%d გარეთაა"
+
+#: crosstabview.c:670
+#, c-format
+msgid "\\crosstabview: ambiguous column name: \"%s\""
+msgstr "\\crosstabview: სვეტის არასწორი სახელი: \"%s\""
+
+#: crosstabview.c:678
+#, c-format
+msgid "\\crosstabview: column name not found: \"%s\""
+msgstr "\\crosstabview: სვეტის სახელი არ არსებობს: \"%s\""
+
+#: describe.c:87 describe.c:338 describe.c:630 describe.c:807 describe.c:1038
+#: describe.c:1189 describe.c:1264 describe.c:3889 describe.c:4099
+#: describe.c:4349 describe.c:4431 describe.c:4666 describe.c:4874
+#: describe.c:5116 describe.c:5360 describe.c:5430 describe.c:5441
+#: describe.c:5498 describe.c:5902 describe.c:5980
+msgid "Schema"
+msgstr "სქემა"
+
+#: describe.c:88 describe.c:167 describe.c:229 describe.c:339 describe.c:631
+#: describe.c:808 describe.c:930 describe.c:1039 describe.c:1265
+#: describe.c:3890 describe.c:4100 describe.c:4265 describe.c:4350
+#: describe.c:4432 describe.c:4595 describe.c:4667 describe.c:4875
+#: describe.c:4988 describe.c:5117 describe.c:5361 describe.c:5431
+#: describe.c:5442 describe.c:5499 describe.c:5698 describe.c:5769
+#: describe.c:5978 describe.c:6207 describe.c:6515
+msgid "Name"
+msgstr "სახელი"
+
+#: describe.c:89 describe.c:351 describe.c:369
+msgid "Result data type"
+msgstr "შედეგის მონაცემების ტიპი"
+
+#: describe.c:90 describe.c:352 describe.c:370
+msgid "Argument data types"
+msgstr "არგუმენტის მონაცემების ტიპი"
+
+#: describe.c:98 describe.c:105 describe.c:178 describe.c:243 describe.c:418
+#: describe.c:662 describe.c:823 describe.c:974 describe.c:1267 describe.c:2047
+#: describe.c:3682 describe.c:3944 describe.c:4146 describe.c:4289
+#: describe.c:4363 describe.c:4441 describe.c:4608 describe.c:4786
+#: describe.c:4924 describe.c:4997 describe.c:5118 describe.c:5269
+#: describe.c:5311 describe.c:5377 describe.c:5434 describe.c:5443
+#: describe.c:5500 describe.c:5716 describe.c:5791 describe.c:5916
+#: describe.c:5981 describe.c:7033
+msgid "Description"
+msgstr "აღწერა"
+
+#: describe.c:128
+msgid "List of aggregate functions"
+msgstr "აგრეგატული ფუნქცების სია"
+
+#: describe.c:153
+#, c-format
+msgid "The server (version %s) does not support access methods."
+msgstr "სერვერს (ვერსია %s) წვდომის მეთოდების მხარდაჭერა არ გააჩნია."
+
+#: describe.c:168
+msgid "Index"
+msgstr "ინდექსი"
+
+#: describe.c:169 describe.c:3908 describe.c:4125 describe.c:5903
+msgid "Table"
+msgstr "ცხრილი"
+
+#: describe.c:177 describe.c:5700
+msgid "Handler"
+msgstr "დამმუშავებელი"
+
+#: describe.c:201
+msgid "List of access methods"
+msgstr "წვდომის მეთოდების სია"
+
+#: describe.c:230 describe.c:404 describe.c:655 describe.c:931 describe.c:1188
+#: describe.c:3901 describe.c:4101 describe.c:4266 describe.c:4597
+#: describe.c:4989 describe.c:5699 describe.c:5770 describe.c:6208
+#: describe.c:6396 describe.c:6516 describe.c:6673 describe.c:6759
+#: describe.c:7021
+msgid "Owner"
+msgstr "მფლობელი"
+
+#: describe.c:231
+msgid "Location"
+msgstr "მდებარეობა"
+
+#: describe.c:241 describe.c:3517
+msgid "Options"
+msgstr "პარამეტრები"
+
+#: describe.c:242 describe.c:653 describe.c:972 describe.c:3943
+msgid "Size"
+msgstr "ზომა"
+
+#: describe.c:266
+msgid "List of tablespaces"
+msgstr "ცხრილის სივრცეების სია"
+
+#: describe.c:311
+#, c-format
+msgid "\\df only takes [anptwS+] as options"
+msgstr "\\df მხოლოდ [anptwS+] -ს იღებს პარამეტრად"
+
+#: describe.c:319
+#, c-format
+msgid "\\df does not take a \"%c\" option with server version %s"
+msgstr "\\df - არ იღებს \"%c\" პარამეტრს, როცა სერვერის ვერსიაა %s"
+
+#. translator: "agg" is short for "aggregate"
+#: describe.c:354 describe.c:372
+msgid "agg"
+msgstr "აგ"
+
+#: describe.c:355 describe.c:373
+msgid "window"
+msgstr "ფანჯარა"
+
+#: describe.c:356
+msgid "proc"
+msgstr "პროც"
+
+#: describe.c:357 describe.c:375
+msgid "func"
+msgstr "ფუნქც"
+
+#: describe.c:374 describe.c:1397
+msgid "trigger"
+msgstr "ტრიგერი"
+
+#: describe.c:386
+msgid "immutable"
+msgstr "დაურღვეველი"
+
+#: describe.c:387
+msgid "stable"
+msgstr "სტაბილური"
+
+#: describe.c:388
+msgid "volatile"
+msgstr "ცვალებადი"
+
+#: describe.c:389
+msgid "Volatility"
+msgstr "ცვალებადობა"
+
+#: describe.c:397
+msgid "restricted"
+msgstr "შეზღუდულია"
+
+#: describe.c:398
+msgid "safe"
+msgstr "უსაფრთხო"
+
+#: describe.c:399
+msgid "unsafe"
+msgstr "სახიფათო"
+
+#: describe.c:400
+msgid "Parallel"
+msgstr "პარალელური"
+
+#: describe.c:405
+msgid "definer"
+msgstr "აღმწერი"
+
+#: describe.c:406
+msgid "invoker"
+msgstr "ჩამწოდებელი"
+
+#: describe.c:407
+msgid "Security"
+msgstr "უსაფრთხოება"
+
+#: describe.c:412
+msgid "Language"
+msgstr "ენა"
+
+#: describe.c:415 describe.c:652
+msgid "Internal name"
+msgstr "შიდა სახელი"
+
+#: describe.c:589
+msgid "List of functions"
+msgstr "ფუნქციების სია"
+
+#: describe.c:654
+msgid "Elements"
+msgstr "ელემენტები"
+
+#: describe.c:706
+msgid "List of data types"
+msgstr "მონაცემების ტიპების სია"
+
+#: describe.c:809
+msgid "Left arg type"
+msgstr "მარცხენა არგუმენტის ტიპი"
+
+#: describe.c:810
+msgid "Right arg type"
+msgstr "მარჯვენა არგუმენტის ტიპი"
+
+#: describe.c:811
+msgid "Result type"
+msgstr "შედეგის ტიპი"
+
+#: describe.c:816 describe.c:4603 describe.c:4769 describe.c:5268
+#: describe.c:6950 describe.c:6954
+msgid "Function"
+msgstr "ფუნქცია"
+
+#: describe.c:897
+msgid "List of operators"
+msgstr "ოპერატორების სია"
+
+#: describe.c:932
+msgid "Encoding"
+msgstr "კოდირება"
+
+#: describe.c:936 describe.c:940
+msgid "Locale Provider"
+msgstr "ენის მომწოდებელი"
+
+#: describe.c:944 describe.c:4889
+msgid "Collate"
+msgstr "დაშლა"
+
+#: describe.c:945 describe.c:4890
+msgid "Ctype"
+msgstr "Ctype"
+
+#: describe.c:949 describe.c:953 describe.c:4895 describe.c:4899
+msgid "ICU Locale"
+msgstr "ICU ენა"
+
+#: describe.c:957 describe.c:961 describe.c:4904 describe.c:4908
+msgid "ICU Rules"
+msgstr "ICU წესები"
+
+#: describe.c:973
+msgid "Tablespace"
+msgstr "ცხრილების სივრცე"
+
+#: describe.c:999
+msgid "List of databases"
+msgstr "მონაცემთა ბაზების სია"
+
+#: describe.c:1040 describe.c:1191 describe.c:3891
+msgid "table"
+msgstr "ცხრილი"
+
+#: describe.c:1041 describe.c:3892
+msgid "view"
+msgstr "ხედი"
+
+#: describe.c:1042 describe.c:3893
+msgid "materialized view"
+msgstr "მატერიალიზებული ხედი"
+
+#: describe.c:1043 describe.c:1193 describe.c:3895
+msgid "sequence"
+msgstr "მიმდევრობა"
+
+#: describe.c:1044 describe.c:3897
+msgid "foreign table"
+msgstr "გარე ცხრილი"
+
+#: describe.c:1045 describe.c:3898 describe.c:4110
+msgid "partitioned table"
+msgstr "დაყოფილი ცხრილი"
+
+#: describe.c:1056
+msgid "Column privileges"
+msgstr "სვეტის წვდომები"
+
+#: describe.c:1087 describe.c:1121
+msgid "Policies"
+msgstr "წესები"
+
+#: describe.c:1150 describe.c:4519 describe.c:6618
+msgid "Access privileges"
+msgstr "წვდომები"
+
+#: describe.c:1195
+msgid "function"
+msgstr "ფუნქცია"
+
+#: describe.c:1197
+msgid "type"
+msgstr "ტიპი"
+
+#: describe.c:1199
+msgid "schema"
+msgstr "სქემა"
+
+#: describe.c:1222
+msgid "Default access privileges"
+msgstr "ნაგულისხმები წვდომები"
+
+#: describe.c:1266
+msgid "Object"
+msgstr "ობიექტი"
+
+#: describe.c:1280
+msgid "table constraint"
+msgstr "ცხრილის შეზღუდვები"
+
+#: describe.c:1304
+msgid "domain constraint"
+msgstr "დომენის შეზღუდვები"
+
+#: describe.c:1328
+msgid "operator class"
+msgstr "ოპერატორის კლასი"
+
+#: describe.c:1352
+msgid "operator family"
+msgstr "ოპერატორის ოჯახი"
+
+#: describe.c:1375
+msgid "rule"
+msgstr "წესი"
+
+#: describe.c:1421
+msgid "Object descriptions"
+msgstr "ობიექტების აღწერა"
+
+#: describe.c:1486 describe.c:4016
+#, c-format
+msgid "Did not find any relation named \"%s\"."
+msgstr "ურთიერთობა სახელით \"%s\" არ არსებობს."
+
+#: describe.c:1489 describe.c:4019
+#, c-format
+msgid "Did not find any relations."
+msgstr "ურთიერთობები ნაპოვნი არაა."
+
+#: describe.c:1685
+#, c-format
+msgid "Did not find any relation with OID %s."
+msgstr "ურთიერთობები, რომლის OID=%s, არ არსებობს."
+
+#: describe.c:1733 describe.c:1757
+msgid "Start"
+msgstr "დაწყება"
+
+#: describe.c:1734 describe.c:1758
+msgid "Minimum"
+msgstr "მინიმუმი"
+
+#: describe.c:1735 describe.c:1759
+msgid "Maximum"
+msgstr "მაქსიმუმი"
+
+#: describe.c:1736 describe.c:1760
+msgid "Increment"
+msgstr "გაზრდა"
+
+#: describe.c:1737 describe.c:1761 describe.c:1890 describe.c:4435
+#: describe.c:4780 describe.c:4913 describe.c:4918 describe.c:6661
+msgid "yes"
+msgstr "დიახ"
+
+#: describe.c:1738 describe.c:1762 describe.c:1891 describe.c:4435
+#: describe.c:4777 describe.c:4913 describe.c:6662
+msgid "no"
+msgstr "არა"
+
+#: describe.c:1739 describe.c:1763
+msgid "Cycles?"
+msgstr "ციკლები?"
+
+#: describe.c:1740 describe.c:1764
+msgid "Cache"
+msgstr "კეში"
+
+#: describe.c:1805
+#, c-format
+msgid "Owned by: %s"
+msgstr "მფლობელი: %s"
+
+#: describe.c:1809
+#, c-format
+msgid "Sequence for identity column: %s"
+msgstr "იდენტიფიკაციის სვეტის მიმდევრობა: %s"
+
+#: describe.c:1817
+#, c-format
+msgid "Unlogged sequence \"%s.%s\""
+msgstr "ჟურნალში არ-ჩაწერილი მიმდევრომა \"%s.%s\""
+
+#: describe.c:1820
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "მიმდევრობა \"%s.%s\""
+
+#: describe.c:1963
+#, c-format
+msgid "Unlogged table \"%s.%s\""
+msgstr "ჟურნალში არ-ჩაწერილი ცხრილი \"%s.%s\""
+
+#: describe.c:1966
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "ცხრილი \"%s.%s\""
+
+#: describe.c:1970
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "ხედი \"%s.%s\""
+
+#: describe.c:1975
+#, c-format
+msgid "Unlogged materialized view \"%s.%s\""
+msgstr "ჟურნალში არ-ჩაწერილი მატერიალიზებული ხედი \"%s.%s\""
+
+#: describe.c:1978
+#, c-format
+msgid "Materialized view \"%s.%s\""
+msgstr "მატერიალიზებული ხედი \"%s.%s\""
+
+#: describe.c:1983
+#, c-format
+msgid "Unlogged index \"%s.%s\""
+msgstr "ჟურნალში არ-ჩაწერილი ინდექსი \"%s.%s\""
+
+#: describe.c:1986
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "ინდექსი \"%s.%s\""
+
+#: describe.c:1991
+#, c-format
+msgid "Unlogged partitioned index \"%s.%s\""
+msgstr "ჟურნალში არ-ჩაწერილი დაყოფილი ინდექსი \"%s.%s\""
+
+#: describe.c:1994
+#, c-format
+msgid "Partitioned index \"%s.%s\""
+msgstr "დაყოფილი ინდექი \"%s.%s\""
+
+#: describe.c:1998
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "TOAST ცხრილი \"%s.%s\""
+
+#: describe.c:2002
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "კომპოზიტის ტიპი \"%s.%s\""
+
+#: describe.c:2006
+#, c-format
+msgid "Foreign table \"%s.%s\""
+msgstr "გარე ცხრილი \"%s.%s\""
+
+#: describe.c:2011
+#, c-format
+msgid "Unlogged partitioned table \"%s.%s\""
+msgstr "ჟურნალში არ-ჩაწერილი დაყოფილი ცხრილი \"%s.%s\""
+
+#: describe.c:2014
+#, c-format
+msgid "Partitioned table \"%s.%s\""
+msgstr "დაყოფილი ცხრილი \"%s.%s\""
+
+#: describe.c:2030 describe.c:4352
+msgid "Collation"
+msgstr "კოლაცია"
+
+#: describe.c:2031 describe.c:4353
+msgid "Nullable"
+msgstr "განულებადი"
+
+#: describe.c:2032 describe.c:4354
+msgid "Default"
+msgstr "ნაგულისხმევი"
+
+#: describe.c:2035
+msgid "Key?"
+msgstr "გასაღები?"
+
+#: describe.c:2037 describe.c:4674 describe.c:4685
+msgid "Definition"
+msgstr "განმარტება"
+
+#: describe.c:2039 describe.c:5715 describe.c:5790 describe.c:5856
+#: describe.c:5915
+msgid "FDW options"
+msgstr "FDW -ის მორგება"
+
+#: describe.c:2041
+msgid "Storage"
+msgstr "საცავი"
+
+#: describe.c:2043
+msgid "Compression"
+msgstr "შეკუმშვა"
+
+#: describe.c:2045
+msgid "Stats target"
+msgstr "სამიზნის სტატისტიკა"
+
+#: describe.c:2181
+#, c-format
+msgid "Partition of: %s %s%s"
+msgstr "დანაყოფი: %s %s%s"
+
+#: describe.c:2194
+msgid "No partition constraint"
+msgstr "დანაყოფის შეზღუდვების გარეშე"
+
+#: describe.c:2196
+#, c-format
+msgid "Partition constraint: %s"
+msgstr "დანაყოფის შეზღუდვა: %s"
+
+#: describe.c:2220
+#, c-format
+msgid "Partition key: %s"
+msgstr "დანაყოფს გასაღები: %s"
+
+#: describe.c:2246
+#, c-format
+msgid "Owning table: \"%s.%s\""
+msgstr "ცხრილის მფლობელი: \"%s.%s\""
+
+#: describe.c:2315
+msgid "primary key, "
+msgstr "ძირითადი გასაღები. "
+
+#: describe.c:2318
+msgid "unique"
+msgstr "უნიკალური"
+
+#: describe.c:2320
+msgid " nulls not distinct"
+msgstr " ნულები განსხვავებული არაა"
+
+#: describe.c:2321
+msgid ", "
+msgstr ", "
+
+#: describe.c:2328
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "ცხრილისთვის \"%s.%s\""
+
+#: describe.c:2332
+#, c-format
+msgid ", predicate (%s)"
+msgstr ", პრედიკატი (%s)"
+
+#: describe.c:2335
+msgid ", clustered"
+msgstr ", დაკლასტერებული"
+
+#: describe.c:2338
+msgid ", invalid"
+msgstr ", არასწორი"
+
+#: describe.c:2341
+msgid ", deferrable"
+msgstr ", deferrable"
+
+#: describe.c:2344
+msgid ", initially deferred"
+msgstr ", თავიდან გადადებული"
+
+#: describe.c:2347
+msgid ", replica identity"
+msgstr ", რეპლიკის იდენტიფიკატორი"
+
+#: describe.c:2401
+msgid "Indexes:"
+msgstr "ინდექსები:"
+
+#: describe.c:2484
+msgid "Check constraints:"
+msgstr "შეამოწმეთ შეზღუდვები:"
+
+#: describe.c:2552
+msgid "Foreign-key constraints:"
+msgstr "გარე-გასაღების შეზღუდვები:"
+
+#: describe.c:2615
+msgid "Referenced by:"
+msgstr "ბმული გარედან:"
+
+#: describe.c:2665
+msgid "Policies:"
+msgstr "წესები:"
+
+#: describe.c:2668
+msgid "Policies (forced row security enabled):"
+msgstr "წესები (მწკრივების გაძლიერებული დაცვა ჩართულია):"
+
+#: describe.c:2671
+msgid "Policies (row security enabled): (none)"
+msgstr "წესები (მწკრივების დაცვა ჩართულია): (არცერთი)"
+
+#: describe.c:2674
+msgid "Policies (forced row security enabled): (none)"
+msgstr "წესები (მწკრივების გაძლიერებული დაცვა ჩართულია: (არცერთი)"
+
+#: describe.c:2677
+msgid "Policies (row security disabled):"
+msgstr "წესები (მწკრივების უსაფრთხოება გამორთულია)"
+
+#: describe.c:2737 describe.c:2841
+msgid "Statistics objects:"
+msgstr "სტატისტიკის ობიექტები:"
+
+#: describe.c:2943 describe.c:3096
+msgid "Rules:"
+msgstr "წესები:"
+
+#: describe.c:2946
+msgid "Disabled rules:"
+msgstr "გამორთული წესები:"
+
+#: describe.c:2949
+msgid "Rules firing always:"
+msgstr "ყოველთვის გაშვებადი წესები:"
+
+#: describe.c:2952
+msgid "Rules firing on replica only:"
+msgstr "მხოლოდ რეპლიკაზე გაშვებადი წესები:"
+
+#: describe.c:3031 describe.c:5051
+msgid "Publications:"
+msgstr "გამოცემები:"
+
+#: describe.c:3079
+msgid "View definition:"
+msgstr "აღწერის ნახვა:"
+
+#: describe.c:3242
+msgid "Triggers:"
+msgstr "ტრიგერები:"
+
+#: describe.c:3245
+msgid "Disabled user triggers:"
+msgstr "მომხმარებლის გამორთული ტრიგერები:"
+
+#: describe.c:3248
+msgid "Disabled internal triggers:"
+msgstr "გამორთული შიდა ტრიგერები:"
+
+#: describe.c:3251
+msgid "Triggers firing always:"
+msgstr "ყოველთვის გაშვებადი ტრიგერები:"
+
+#: describe.c:3254
+msgid "Triggers firing on replica only:"
+msgstr "მხოლოდ რეპლიკაზე გაშვებადი ტრიგერები:"
+
+#: describe.c:3325
+#, c-format
+msgid "Server: %s"
+msgstr "სერვერი: %s"
+
+#: describe.c:3333
+#, c-format
+msgid "FDW options: (%s)"
+msgstr "FDW პარამეტრები: (%s)"
+
+#: describe.c:3354
+msgid "Inherits"
+msgstr "მემკვიდრეობით"
+
+#: describe.c:3419
+#, c-format
+msgid "Number of partitions: %d"
+msgstr "დანაყოფების რიცხვი: %d"
+
+#: describe.c:3428
+#, c-format
+msgid "Number of partitions: %d (Use \\d+ to list them.)"
+msgstr "დანაყოფების რიცხვი: %d (სიის მისაღებად გამოიყენეთ \\d+.)"
+
+#: describe.c:3430
+#, c-format
+msgid "Number of child tables: %d (Use \\d+ to list them.)"
+msgstr "შვილეული ცხრილების რიცხვი: %d (სიის გამოსატანად გამოიყენეთ \\d+ )"
+
+#: describe.c:3437
+msgid "Child tables"
+msgstr "შვილეული ცხრილები"
+
+#: describe.c:3437
+msgid "Partitions"
+msgstr "დანაყოფები"
+
+#: describe.c:3470
+#, c-format
+msgid "Typed table of type: %s"
+msgstr "ტიპიზირებული ცხრილის ტიპი: %s"
+
+#: describe.c:3486
+msgid "Replica Identity"
+msgstr "რეპლიკის იდენტიფიკატორი"
+
+#: describe.c:3499
+msgid "Has OIDs: yes"
+msgstr "აქვს OID-ები: დიახ"
+
+#: describe.c:3508
+#, c-format
+msgid "Access method: %s"
+msgstr "წვდომის მეთოდი: %s"
+
+#: describe.c:3585
+#, c-format
+msgid "Tablespace: \"%s\""
+msgstr "ცხრილების სივრცე: \"%s\""
+
+#. translator: before this string there's an index description like
+#. '"foo_pkey" PRIMARY KEY, btree (a)'
+#: describe.c:3597
+#, c-format
+msgid ", tablespace \"%s\""
+msgstr ", ცხრილების სივრცე: \"%s\""
+
+#: describe.c:3674
+msgid "List of roles"
+msgstr "როლების სია"
+
+#: describe.c:3676
+msgid "Role name"
+msgstr "როლის სახელი"
+
+#: describe.c:3677
+msgid "Attributes"
+msgstr "ატრიბუტები"
+
+#: describe.c:3679
+msgid "Member of"
+msgstr "წარმოადგენს წევრს"
+
+#: describe.c:3690
+msgid "Superuser"
+msgstr "ზემომხმარებელი"
+
+#: describe.c:3693
+msgid "No inheritance"
+msgstr "მემკვიდრეობითობის გარეშე"
+
+#: describe.c:3696
+msgid "Create role"
+msgstr "როლის შექმნა"
+
+#: describe.c:3699
+msgid "Create DB"
+msgstr "ბაზის შექმნა"
+
+#: describe.c:3702
+msgid "Cannot login"
+msgstr "შესვლა შეუძლებელია"
+
+#: describe.c:3705
+msgid "Replication"
+msgstr "რეპლიკაცია"
+
+#: describe.c:3709
+msgid "Bypass RLS"
+msgstr "RLS-ის გამოტოვება"
+
+#: describe.c:3718
+msgid "No connections"
+msgstr "შეერთებების გარეშე"
+
+#: describe.c:3720
+#, c-format
+msgid "%d connection"
+msgid_plural "%d connections"
+msgstr[0] "%d შეერთება"
+msgstr[1] "%d შეერთება"
+
+#: describe.c:3730
+msgid "Password valid until "
+msgstr "პაროლს ვადა "
+
+#: describe.c:3780
+msgid "Role"
+msgstr "როლი"
+
+#: describe.c:3781
+msgid "Database"
+msgstr "მონაცემთა ბაზა"
+
+#: describe.c:3782
+msgid "Settings"
+msgstr "მორგება"
+
+#: describe.c:3785
+msgid "User set"
+msgstr "მომხმარებელი დაყენებულია"
+
+#: describe.c:3812
+#, c-format
+msgid "Did not find any settings for role \"%s\" and database \"%s\"."
+msgstr "როლისთვის \"%s\" და ბაზისთვის \"%s\" პარამეტრები ნაპოვნი არაა."
+
+#: describe.c:3815
+#, c-format
+msgid "Did not find any settings for role \"%s\"."
+msgstr "როლისთვის (\"%s\") პარამეტრები ნაპოვნი არაა."
+
+#: describe.c:3818
+#, c-format
+msgid "Did not find any settings."
+msgstr "პარამეტრები ნაპოვნი არაა."
+
+#: describe.c:3823
+msgid "List of settings"
+msgstr "პარამეტრების სია"
+
+#: describe.c:3894
+msgid "index"
+msgstr "ინდექსი"
+
+#: describe.c:3896
+msgid "TOAST table"
+msgstr "TOAST ცხრილი"
+
+#: describe.c:3899 describe.c:4111
+msgid "partitioned index"
+msgstr "დაყოფილი ინდექსი"
+
+#: describe.c:3919
+msgid "permanent"
+msgstr "მუდმივი"
+
+#: describe.c:3920
+msgid "temporary"
+msgstr "დროებითი"
+
+#: describe.c:3921
+msgid "unlogged"
+msgstr "ჟურნალში არ-ჩაწერილი"
+
+#: describe.c:3922
+msgid "Persistence"
+msgstr "შენახვა"
+
+#: describe.c:3938
+msgid "Access method"
+msgstr "წვდომის მეთოდი"
+
+#: describe.c:4024
+msgid "List of relations"
+msgstr "ურთიერთობების სია"
+
+#: describe.c:4072
+#, c-format
+msgid "The server (version %s) does not support declarative table partitioning."
+msgstr "სერვერს (ვერსია %s) ცხრილების დეკლარატიულ დაყოფის მხარდაჭერა არ გააჩნია."
+
+#: describe.c:4083
+msgid "List of partitioned indexes"
+msgstr "დაყოფილი ინდექსების სია"
+
+#: describe.c:4085
+msgid "List of partitioned tables"
+msgstr "დაყოფილი ცხრილების სია"
+
+#: describe.c:4089
+msgid "List of partitioned relations"
+msgstr "დაყოფილი ურთიერთობების სია"
+
+#: describe.c:4120
+msgid "Parent name"
+msgstr "მშობლის სახელი"
+
+#: describe.c:4133
+msgid "Leaf partition size"
+msgstr "ბოლო დანაყოფის ზომა"
+
+#: describe.c:4136 describe.c:4142
+msgid "Total size"
+msgstr "ჯამური ზომა"
+
+#: describe.c:4267
+msgid "Trusted"
+msgstr "სანდო"
+
+#: describe.c:4276
+msgid "Internal language"
+msgstr "შიდა ენა"
+
+#: describe.c:4277
+msgid "Call handler"
+msgstr "გამოძახების დამმუშავებელი"
+
+#: describe.c:4278 describe.c:5701
+msgid "Validator"
+msgstr "შემმოწმებელი"
+
+#: describe.c:4279
+msgid "Inline handler"
+msgstr "ჩადგმული კოდის დამმუშავებელი"
+
+#: describe.c:4314
+msgid "List of languages"
+msgstr "ენების სია"
+
+#: describe.c:4355
+msgid "Check"
+msgstr "შემოწმება"
+
+#: describe.c:4399
+msgid "List of domains"
+msgstr "დომენების სია"
+
+#: describe.c:4433
+msgid "Source"
+msgstr "წყარო"
+
+#: describe.c:4434
+msgid "Destination"
+msgstr "დანიშნულება"
+
+#: describe.c:4436 describe.c:6663
+msgid "Default?"
+msgstr "ნაგულისხმები?"
+
+#: describe.c:4478
+msgid "List of conversions"
+msgstr "გადაყვანების სია"
+
+#: describe.c:4506
+msgid "Parameter"
+msgstr "პარამეტრი"
+
+#: describe.c:4507
+msgid "Value"
+msgstr "მნიშვნელობა"
+
+#: describe.c:4514
+msgid "Context"
+msgstr "კონტექსტი"
+
+#: describe.c:4547
+msgid "List of configuration parameters"
+msgstr "კონფიგურაციის პარამეტრების სია"
+
+#: describe.c:4549
+msgid "List of non-default configuration parameters"
+msgstr "კონფიგურაციის არანაგულისხმებადი პარამეტრების სია"
+
+#: describe.c:4576
+#, c-format
+msgid "The server (version %s) does not support event triggers."
+msgstr "სერვერს (ვერსია %s) მოვლენის ტრიგერების მხარდაჭერა არ გააჩნია."
+
+#: describe.c:4596
+msgid "Event"
+msgstr "მოვლენა"
+
+#: describe.c:4598
+msgid "enabled"
+msgstr "ჩართულია"
+
+#: describe.c:4599
+msgid "replica"
+msgstr "რეპლიკა"
+
+#: describe.c:4600
+msgid "always"
+msgstr "ყოველთვის"
+
+#: describe.c:4601
+msgid "disabled"
+msgstr "გამორთულია"
+
+#: describe.c:4602 describe.c:6517
+msgid "Enabled"
+msgstr "ჩართულია"
+
+#: describe.c:4604
+msgid "Tags"
+msgstr "ჭდეები"
+
+#: describe.c:4628
+msgid "List of event triggers"
+msgstr "მოვლენების ტრიგერების სია"
+
+#: describe.c:4655
+#, c-format
+msgid "The server (version %s) does not support extended statistics."
+msgstr "სერვერს (ვერსია %s) გაფართოებული სტატისტიკის მხარდაჭერა არ გააჩნია."
+
+#: describe.c:4692
+msgid "Ndistinct"
+msgstr "Ndistinct"
+
+#: describe.c:4693
+msgid "Dependencies"
+msgstr "დამოკიდებულებები"
+
+#: describe.c:4703
+msgid "MCV"
+msgstr "MCV"
+
+#: describe.c:4727
+msgid "List of extended statistics"
+msgstr "გაფართოებული სტატისტიკის სია"
+
+#: describe.c:4754
+msgid "Source type"
+msgstr "წყაროს ტიპი"
+
+#: describe.c:4755
+msgid "Target type"
+msgstr "სამიზნის ტიპი"
+
+#: describe.c:4779
+msgid "in assignment"
+msgstr "მინიჭებაში"
+
+#: describe.c:4781
+msgid "Implicit?"
+msgstr "აშკარა?"
+
+#: describe.c:4840
+msgid "List of casts"
+msgstr "კასტების სია"
+
+#: describe.c:4880 describe.c:4884
+msgid "Provider"
+msgstr "სერვისის მომწოდებელი"
+
+#: describe.c:4914 describe.c:4919
+msgid "Deterministic?"
+msgstr "დეტერმნისტული?"
+
+#: describe.c:4959
+msgid "List of collations"
+msgstr "კოლაციების სია"
+
+#: describe.c:5021
+msgid "List of schemas"
+msgstr "სქემების სია"
+
+#: describe.c:5138
+msgid "List of text search parsers"
+msgstr "ტექსტური ძებნის დამმუშავებლების სია"
+
+#: describe.c:5188
+#, c-format
+msgid "Did not find any text search parser named \"%s\"."
+msgstr "ტექსტის ძებნის დამმუშავებელი სახელით \"%s\" არ არსებობს."
+
+#: describe.c:5191
+#, c-format
+msgid "Did not find any text search parsers."
+msgstr "ტექსტის ძებნის დამმუშავებლები ვერ ვიპოვე."
+
+#: describe.c:5266
+msgid "Start parse"
+msgstr "დამუშავების დაწყება"
+
+#: describe.c:5267
+msgid "Method"
+msgstr "მეთოდი"
+
+#: describe.c:5271
+msgid "Get next token"
+msgstr "შემდეგი კოდის მიღება"
+
+#: describe.c:5273
+msgid "End parse"
+msgstr "დამუშავების დასასრული"
+
+#: describe.c:5275
+msgid "Get headline"
+msgstr "ამონაწერის მიღება"
+
+#: describe.c:5277
+msgid "Get token types"
+msgstr "კოდის ტიპების მიღება"
+
+#: describe.c:5288
+#, c-format
+msgid "Text search parser \"%s.%s\""
+msgstr "ტექსტის ძებნის დამმუშავებელი \"%s.%s\""
+
+#: describe.c:5291
+#, c-format
+msgid "Text search parser \"%s\""
+msgstr "ტექსტის ძებნის დამმუშავებელი \"%s\""
+
+#: describe.c:5310
+msgid "Token name"
+msgstr "კოდის სახელი"
+
+#: describe.c:5324
+#, c-format
+msgid "Token types for parser \"%s.%s\""
+msgstr "კოდის ტიპები დამმუშავებლისთვის \"%s.%s\""
+
+#: describe.c:5327
+#, c-format
+msgid "Token types for parser \"%s\""
+msgstr "კოდის ტიპები დამმუშავებლისთვის \"%s\""
+
+#: describe.c:5371
+msgid "Template"
+msgstr "ნიმუში"
+
+#: describe.c:5372
+msgid "Init options"
+msgstr "ინიციალიზაციის პარამეტრები"
+
+#: describe.c:5399
+msgid "List of text search dictionaries"
+msgstr "ტექსტის ძებნის ლექსიკონების სია"
+
+#: describe.c:5432
+msgid "Init"
+msgstr "ერთეული"
+
+#: describe.c:5433
+msgid "Lexize"
+msgstr "ლექსით გამოყოფა"
+
+#: describe.c:5465
+msgid "List of text search templates"
+msgstr "ტექსტის ძებნის შაბლონების სია"
+
+#: describe.c:5520
+msgid "List of text search configurations"
+msgstr "ტექსტის ძებნის კონფიგურაციების სია"
+
+#: describe.c:5571
+#, c-format
+msgid "Did not find any text search configuration named \"%s\"."
+msgstr "ტექსტის ძებნის კონფიგურაცია სახელით \"%s\" არ არსებობს."
+
+#: describe.c:5574
+#, c-format
+msgid "Did not find any text search configurations."
+msgstr "ტექსტის ძებნის არცერთი კონფიგურაცია ნაპოვნი არაა."
+
+#: describe.c:5640
+msgid "Token"
+msgstr "ტოკენი"
+
+#: describe.c:5641
+msgid "Dictionaries"
+msgstr "ლექსიკონები"
+
+#: describe.c:5652
+#, c-format
+msgid "Text search configuration \"%s.%s\""
+msgstr "ტექსტის ძებნის კონფიგურაცია \"%s.%s\""
+
+#: describe.c:5655
+#, c-format
+msgid "Text search configuration \"%s\""
+msgstr "ტექსტის ძებნის კონფიგურაცია \"%s\""
+
+#: describe.c:5659
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s.%s\""
+msgstr ""
+"\n"
+"დამმუშავებელი: \"%s.%s\""
+
+#: describe.c:5662
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s\""
+msgstr ""
+"\n"
+"დამუშავებელი: \"%s\""
+
+#: describe.c:5743
+msgid "List of foreign-data wrappers"
+msgstr "გარე მონაცემების გადამტანების სია"
+
+#: describe.c:5771
+msgid "Foreign-data wrapper"
+msgstr "გარე-მონაცემების გადამტანი"
+
+#: describe.c:5789 describe.c:5979
+msgid "Version"
+msgstr "ვერსია"
+
+#: describe.c:5820
+msgid "List of foreign servers"
+msgstr "გარე სერვერების სია"
+
+#: describe.c:5845 describe.c:5904
+msgid "Server"
+msgstr "სერვერი"
+
+#: describe.c:5846
+msgid "User name"
+msgstr "მომხმარებლის სახელი"
+
+#: describe.c:5876
+msgid "List of user mappings"
+msgstr "მომხმარებლების მიმაგრებების სია"
+
+#: describe.c:5949
+msgid "List of foreign tables"
+msgstr "გარე ცხრილების სია"
+
+#: describe.c:6001
+msgid "List of installed extensions"
+msgstr "დაყენებული გაფართოებების სია"
+
+#: describe.c:6049
+#, c-format
+msgid "Did not find any extension named \"%s\"."
+msgstr "გაფართოება სახელით \"%s\" არ არსებობს."
+
+#: describe.c:6052
+#, c-format
+msgid "Did not find any extensions."
+msgstr "გაფართოებების პოვნა შეუძლებელია."
+
+#: describe.c:6096
+msgid "Object description"
+msgstr "ობიექტის აღწერა"
+
+#: describe.c:6106
+#, c-format
+msgid "Objects in extension \"%s\""
+msgstr "ობიექტები გაფართებაში \"%s\""
+
+#: describe.c:6147
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "არასწორი სრული სახელი (ძალიან ბევრი წერტილიანი სახელი): %s"
+
+#: describe.c:6161
+#, c-format
+msgid "cross-database references are not implemented: %s"
+msgstr "ბაზებს შორის ბმულები განხორციელებული არაა: %s"
+
+#: describe.c:6192 describe.c:6319
+#, c-format
+msgid "The server (version %s) does not support publications."
+msgstr "სერვერს (ვერსია %s) გამოცემების მხარდაჭერა არ გააჩნია."
+
+#: describe.c:6209 describe.c:6397
+msgid "All tables"
+msgstr "ყველა ცხრილი"
+
+#: describe.c:6210 describe.c:6398
+msgid "Inserts"
+msgstr "ჩასმები"
+
+#: describe.c:6211 describe.c:6399
+msgid "Updates"
+msgstr "განახლებები"
+
+#: describe.c:6212 describe.c:6400
+msgid "Deletes"
+msgstr "წაშლები"
+
+#: describe.c:6216 describe.c:6402
+msgid "Truncates"
+msgstr "შეკვეცები"
+
+#: describe.c:6220 describe.c:6404
+msgid "Via root"
+msgstr "Root-ის გავლით"
+
+#: describe.c:6242
+msgid "List of publications"
+msgstr "გამოცემების სია"
+
+#: describe.c:6366
+#, c-format
+msgid "Did not find any publication named \"%s\"."
+msgstr "გამოცემა სახელით \"%s\" არ არსებობს."
+
+#: describe.c:6369
+#, c-format
+msgid "Did not find any publications."
+msgstr "გამოცემების გარეშე."
+
+#: describe.c:6393
+#, c-format
+msgid "Publication %s"
+msgstr "პუბლიკაცია %s"
+
+#: describe.c:6446
+msgid "Tables:"
+msgstr "ცხრილები:"
+
+#: describe.c:6458
+msgid "Tables from schemas:"
+msgstr "ცხრილები სქემებიდან:"
+
+#: describe.c:6502
+#, c-format
+msgid "The server (version %s) does not support subscriptions."
+msgstr "სერვერს (ვერსია %s) გამოწერების მხარდაჭერა არ გააჩნია."
+
+#: describe.c:6518
+msgid "Publication"
+msgstr "გამოცება"
+
+#: describe.c:6527
+msgid "Binary"
+msgstr "ბინარული"
+
+#: describe.c:6536 describe.c:6540
+msgid "Streaming"
+msgstr "გაადაცემა"
+
+#: describe.c:6548
+msgid "Two-phase commit"
+msgstr "ორ-ფაზიანი გადაცემა"
+
+#: describe.c:6549
+msgid "Disable on error"
+msgstr "გამორთვა შეცდომის შემთხვევაში"
+
+#: describe.c:6555
+msgid "Origin"
+msgstr "საწყისი"
+
+#: describe.c:6556
+msgid "Run as Owner?"
+msgstr "გავუშვა მფლობელით?"
+
+#: describe.c:6561
+msgid "Synchronous commit"
+msgstr "სინქრონული გადაგზავნა"
+
+#: describe.c:6562
+msgid "Conninfo"
+msgstr "შეერთ. ინფო"
+
+#: describe.c:6568
+msgid "Skip LSN"
+msgstr "LSN-ის გამოტოვება"
+
+#: describe.c:6595
+msgid "List of subscriptions"
+msgstr "გამოწერების სია"
+
+#: describe.c:6657 describe.c:6753 describe.c:6846 describe.c:6941
+msgid "AM"
+msgstr "AM"
+
+#: describe.c:6658
+msgid "Input type"
+msgstr "შეყვანის ტიპი"
+
+#: describe.c:6659
+msgid "Storage type"
+msgstr "საცავის ტიპი"
+
+#: describe.c:6660
+msgid "Operator class"
+msgstr "ოპერატორის კლასი"
+
+#: describe.c:6672 describe.c:6754 describe.c:6847 describe.c:6942
+msgid "Operator family"
+msgstr "ოპერატორის ოჯახი"
+
+#: describe.c:6708
+msgid "List of operator classes"
+msgstr "ოპერატორის კლასების სია"
+
+#: describe.c:6755
+msgid "Applicable types"
+msgstr "განკუთვნილი ტიპები"
+
+#: describe.c:6797
+msgid "List of operator families"
+msgstr "ოპერატორის ოჯახების სია"
+
+#: describe.c:6848
+msgid "Operator"
+msgstr "ოპერატორი"
+
+#: describe.c:6849
+msgid "Strategy"
+msgstr "სტრატეგია"
+
+#: describe.c:6850
+msgid "ordering"
+msgstr "დალაგება"
+
+#: describe.c:6851
+msgid "search"
+msgstr "ძებნა"
+
+#: describe.c:6852
+msgid "Purpose"
+msgstr "მიზანი"
+
+#: describe.c:6857
+msgid "Sort opfamily"
+msgstr "ოპერატორის ოჯახის დალაგება"
+
+#: describe.c:6896
+msgid "List of operators of operator families"
+msgstr "ოპერატორის ოჯახების ოპერატორების სია"
+
+#: describe.c:6943
+msgid "Registered left type"
+msgstr "რეგისტრირებული მარცხენა ტიპი"
+
+#: describe.c:6944
+msgid "Registered right type"
+msgstr "რეგისტრირებული მარჯვენა ტიპი"
+
+#: describe.c:6945
+msgid "Number"
+msgstr "რიცხვი"
+
+#: describe.c:6989
+msgid "List of support functions of operator families"
+msgstr "ოპერატორის ოჯახების ფუნქციების სია"
+
+#: describe.c:7020
+msgid "ID"
+msgstr "ID"
+
+#: describe.c:7041
+msgid "Large objects"
+msgstr "დიდი ობიექტები"
+
+#: help.c:75
+msgid ""
+"psql is the PostgreSQL interactive terminal.\n"
+"\n"
+msgstr ""
+"psql PostgreSQL-ის ინტერაქტიური ტერმინალია.\n"
+"\n"
+
+#: help.c:76 help.c:394 help.c:478 help.c:521
+msgid "Usage:\n"
+msgstr "გამოყენება:\n"
+
+#: help.c:77
+msgid ""
+"  psql [OPTION]... [DBNAME [USERNAME]]\n"
+"\n"
+msgstr ""
+"  psql [პარამეტრი]... [ბაზისსახელი [მომხმსახელი]]\n"
+"\n"
+
+#: help.c:79
+msgid "General options:\n"
+msgstr "ზოგადი პარამეტრები:\n"
+
+#: help.c:84
+msgid "  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"
+msgstr "  -c, --command=ბრძანება    მხოლოდ ერთი (SQL ან შიდა) ბრძანების გაშვება და გასვლა\n"
+
+#: help.c:85
+#, c-format
+msgid "  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgstr "  -d, --dbname=ბაზისსახელი      მისაერთებელი ბაზის სახელი (ნაგულისხმები: \"%s\")\n"
+
+#: help.c:87
+msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
+msgstr "  -f, --file=ფალისსახელი      ბრძანებების ფაილიდან შესრულება და გასვლა\n"
+
+#: help.c:88
+msgid "  -l, --list               list available databases, then exit\n"
+msgstr "  -l, --list               ხელმისაწვდომი ბაზების სიის გამოტანა და გასვლა\n"
+
+#: help.c:89
+msgid ""
+"  -v, --set=, --variable=NAME=VALUE\n"
+"                           set psql variable NAME to VALUE\n"
+"                           (e.g., -v ON_ERROR_STOP=1)\n"
+msgstr ""
+"  -v, --set=, --variable=სახელი=მნიშვნელობა\n"
+"                           psql -ის მითითებული სახელის მქონე ცვლადისთვის მითითებული მნიშვნელობის მინიჭება\n"
+"                           (მაგ:, -v ON_ERROR_STOP=1)\n"
+
+#: help.c:92
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
+
+#: help.c:93
+msgid "  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"
+msgstr "  -X, --no-psqlrc          გაშვებისას წასაკითხი ფაილის (~/.psqlrc) წაკითხვის შეცდომა\n"
+
+#: help.c:94
+msgid ""
+"  -1 (\"one\"), --single-transaction\n"
+"                           execute as a single transaction (if non-interactive)\n"
+msgstr ""
+"  -1 (\"one\"), --single-transaction\n"
+"                           როგორც ერთი ტრანზაქციის, ისე გაშვება (თუ არაინტერაქტიურია)\n"
+
+#: help.c:96
+msgid "  -?, --help[=options]     show this help, then exit\n"
+msgstr "  -?, --help[=პარამეტრები]     ამ დახმარების ჩვენება და გასვლა\n"
+
+#: help.c:97
+msgid "      --help=commands      list backslash commands, then exit\n"
+msgstr "      --help=commands      \"\\\"-ით დაწყებული ბრძანებების ჩვენება და გასვლა\n"
+
+#: help.c:98
+msgid "      --help=variables     list special variables, then exit\n"
+msgstr "      --help=variables     განსაკუთრებული ცვლადების სიის გამოტანა და გასვლა\n"
+
+#: help.c:100
+msgid ""
+"\n"
+"Input and output options:\n"
+msgstr ""
+"\n"
+"შეტანისა და გამოტანის პარამეტრები:\n"
+
+#: help.c:101
+msgid "  -a, --echo-all           echo all input from script\n"
+msgstr "  -a, --echo-all           სკრიპტიდან წაკითხულის ეკრანზე ჩვენება\n"
+
+#: help.c:102
+msgid "  -b, --echo-errors        echo failed commands\n"
+msgstr "  -b, --echo-errors        შეცდომის გამომტანი ბრძანებების ჩვენება\n"
+
+#: help.c:103
+msgid "  -e, --echo-queries       echo commands sent to server\n"
+msgstr "  -e, --echo-queries       სერვერზე გაგზავნილი ბრძანებების გამოტანა\n"
+
+#: help.c:104
+msgid "  -E, --echo-hidden        display queries that internal commands generate\n"
+msgstr "  -E, --echo-hidden        შიდა ბრძანებების მიერ გენერირებული მოთხოვნების გამოტანა\n"
+
+#: help.c:105
+msgid "  -L, --log-file=FILENAME  send session log to file\n"
+msgstr "  -L, --log-file=FILENAME  სესიის ჟურნალის ფაილში ჩაწერა\n"
+
+#: help.c:106
+msgid "  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgstr "  -n, --no-readline        ბრძანების სტრიქონის დამატებითი კონტროლის (readline) გამორთვა\n"
+
+#: help.c:107
+msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
+msgstr "  -o, --output=FILENAME    მოთხოვნის შედეგების ფაილში ჩაწერა (ან |ფაიფში)\n"
+
+#: help.c:108
+msgid "  -q, --quiet              run quietly (no messages, only query output)\n"
+msgstr "  -q, --quiet              ჩუმად გაშვება (შეტყობინებების გარეშე, მხოლოდ მოთხოვნის შედეგები)\n"
+
+#: help.c:109
+msgid "  -s, --single-step        single-step mode (confirm each query)\n"
+msgstr "  -s, --single-step        ერთნაბიჯიანი რეჟიმი (თითოეული მოთხოვნის დადასტურება)\n"
+
+#: help.c:110
+msgid "  -S, --single-line        single-line mode (end of line terminates SQL command)\n"
+msgstr "  -S, --single-line        ერთხაზიანი რეჟიმი (ხაზის დასრულება SQL-ის ბრძანებასაც ასრულებს)\n"
+
+#: help.c:112
+msgid ""
+"\n"
+"Output format options:\n"
+msgstr ""
+"\n"
+"გამოტანის ფორმატის მორგება:\n"
+
+#: help.c:113
+msgid "  -A, --no-align           unaligned table output mode\n"
+msgstr "  -A, --no-align           ცხრილის დაულაგებლად გამოტანის რეჟიმი\n"
+
+#: help.c:114
+msgid "      --csv                CSV (Comma-Separated Values) table output mode\n"
+msgstr "      --csv                CSV (მძიმით გამოყოფილი მნიშვნელობები) ცხრილის გამოტანის რეჟიმი\n"
+
+#: help.c:115
+#, c-format
+msgid ""
+"  -F, --field-separator=STRING\n"
+"                           field separator for unaligned output (default: \"%s\")\n"
+msgstr ""
+"  -F, --field-separator=სტრიქონი\n"
+"                           ველების გამყოფ სიმბოლო დაულაგებელი გამოტანისთვის (ნაგულისხმები: \"%s\")\n"
+
+#: help.c:118
+msgid "  -H, --html               HTML table output mode\n"
+msgstr "  -H, --html               HTML ცხრილის გამოტანის რეჟიმი\n"
+
+#: help.c:119
+msgid "  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"
+msgstr "  -P, --pset=ცვლ[=არგ]     ცვლ გამოტანის პარამეტრის არგ-ზე დაყენება (იხ, \\pset ბრძანება)\n"
+
+#: help.c:120
+msgid ""
+"  -R, --record-separator=STRING\n"
+"                           record separator for unaligned output (default: newline)\n"
+msgstr ""
+"  -R, --record-separator=სტრიქონი\n"
+"                           ჩანაწერების გამყოფი დაულაგებელი გამოტანისთვის (ნაგულისხმები: ახალი ხაზი)\n"
+
+#: help.c:122
+msgid "  -t, --tuples-only        print rows only\n"
+msgstr "  -t, --tuples-only        მხოლოდ მწკრივების გამოტანა\n"
+
+#: help.c:123
+msgid "  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"
+msgstr "  -T, --table-attr=ტექსტი    HTML ცხრილის ჭდის ატრიბუტების დაყენება (მაგ: სიგრძე, საზღვარი)\n"
+
+#: help.c:124
+msgid "  -x, --expanded           turn on expanded table output\n"
+msgstr "  -x, --expanded           ცხრილის გაფართოებული გამოტანის ჩართვა\n"
+
+#: help.c:125
+msgid ""
+"  -z, --field-separator-zero\n"
+"                           set field separator for unaligned output to zero byte\n"
+msgstr ""
+"  -z, --field-separator-zero\n"
+"                           დაულაგებელი გამოტანის ველების გამყოფად ნულოვანი ბაიტის დაყენება\n"
+
+#: help.c:127
+msgid ""
+"  -0, --record-separator-zero\n"
+"                           set record separator for unaligned output to zero byte\n"
+msgstr ""
+"  -0, --record-separator-zero\n"
+"                           დაულაგებელი გამოტანის ჩანაწერების გამყოფის ნულოვან ბაიტზე დაყენება\n"
+
+#: help.c:130
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"შეერთების პარამეტრები:\n"
+
+#: help.c:133
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n"
+msgstr "  -h, --host=HOSTNAME      მონაცემთა ბაზის სერვერის ჰოსტის ან სოკეტის საქაღალდე (ნაგულისხმები: \"%s\")\n"
+
+#: help.c:134
+msgid "local socket"
+msgstr "ლოკალური სოკეტი"
+
+#: help.c:137
+#, c-format
+msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
+msgstr "  -p, --port=PORT          მონაცემთა ბაზის სერვერის პორტი (ნაგულისხმები: \"%s\")\n"
+
+#: help.c:140
+#, c-format
+msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
+msgstr "  -U, --username=მომხმარებელი  ბაზის მომხმარებლის სახელი (ნაგულისხმები: \"%s\")\n"
+
+#: help.c:142
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, --no-password        არასოდეს მკითხო პაროლი\n"
+
+#: help.c:143
+msgid "  -W, --password           force password prompt (should happen automatically)\n"
+msgstr "  -W, --password           პაროლის ყოველთვის კითხვა (ავტომატურად უნდა ხდებოდეს)\n"
+
+#: help.c:145
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
+"commands) from within psql, or consult the psql section in the PostgreSQL\n"
+"documentation.\n"
+"\n"
+msgstr ""
+"\n"
+"psql-ის შესახებ დამატებითი ინფორმაციის მისაღებად \n"
+"აკრიფეთ \"\\?\" (შიდა ბრძანებებისთვის) ან \"\\help\" (SQL ბრძანებებისთვის), \n"
+"ან გაეცანით \"psql\" განყოფილებას PostgreSQL-ის დოკუმენტაციაში.\n"
+"\n"
+
+#: help.c:148
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr "შეცდომების შესახებ მიწერეთ: <%s>\n"
+
+#: help.c:149
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s-ის საწყისი გვერდია: <%s>\n"
+
+#: help.c:191
+msgid "General\n"
+msgstr "ზოგადი\n"
+
+#: help.c:192
+#| msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
+msgid "  \\bind [PARAM]...       set query parameters\n"
+msgstr "  \\bind [PARAM]...       მოთხოვნის პარამეტრების დაყენება\n"
+
+#: help.c:193
+msgid "  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgstr "  \\copyright             აჩვენებს PostgreSQL-ის გამოყენებისა და დისტრიბუციის პირობებს\n"
+
+#: help.c:194
+msgid "  \\crosstabview [COLUMNS] execute query and display result in crosstab\n"
+msgstr "  \\crosstabview [სვეტები] შეასრულებს მოთხოვნას და შედეგს crosstab-ში აჩვენებს\n"
+
+#: help.c:195
+msgid "  \\errverbose            show most recent error message at maximum verbosity\n"
+msgstr "  \\errverbose            ბოლო შეცდომის დეტალების მაქსიმალურად ჩვენება\n"
+
+#: help.c:196
+msgid ""
+"  \\g [(OPTIONS)] [FILE]  execute query (and send result to file or |pipe);\n"
+"                         \\g with no arguments is equivalent to a semicolon\n"
+msgstr ""
+"  \\g [(პარამეტრი)] [ფაილი]  მოთხოვნის შესრულება (და შედეგის ფაილში ან |ფაიფში გაგზავნა;\n"
+"                         \\g არგუმენტების გარეშე იგივეა, რაც წერტილმძიმე\n"
+
+#: help.c:198
+msgid "  \\gdesc                 describe result of query, without executing it\n"
+msgstr "  \\gdesc                 მოთხოვნის შედეგის აღწერა მისი შესრულების გარეშე\n"
+
+#: help.c:199
+msgid "  \\gexec                 execute query, then execute each value in its result\n"
+msgstr "  \\gexec                 ჯერ მოთხოვნის, მერე კი მისი თითოეული შედეგის შესრულება\n"
+
+#: help.c:200
+msgid "  \\gset [PREFIX]         execute query and store result in psql variables\n"
+msgstr "  \\gset [პრეფიქსი]         მოთხოვნის შესრულება და შედეგის psql-ის ცვლადებში შენახვა\n"
+
+#: help.c:201
+msgid "  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n"
+msgstr "  \\gx [(პარამეტრები)] [ფაილი] როგორც \\g, მაგრამ გამოტანის რეჟიმი უფრო ფართო იქნება\n"
+
+#: help.c:202
+msgid "  \\q                     quit psql\n"
+msgstr "  \\q                     psql-დან გასვლა\n"
+
+#: help.c:203
+msgid "  \\watch [[i=]SEC] [c=N] execute query every SEC seconds, up to N times\n"
+msgstr "  \\watch [[i=]SEC] [c=N] მოთხოვნის ყოველ SEC წამში ერთხელ გაშვება, N-ჯერ\n"
+
+#: help.c:204 help.c:212 help.c:224 help.c:234 help.c:241 help.c:297 help.c:305
+#: help.c:325 help.c:338 help.c:347
+msgid "\n"
+msgstr "\n"
+
+#: help.c:206
+msgid "Help\n"
+msgstr "დახმარება\n"
+
+#: help.c:208
+msgid "  \\? [commands]          show help on backslash commands\n"
+msgstr "  \\? [commands]          დახმარება \"\\\"-ით დაწყებული ბრძანებების შესახებ\n"
+
+#: help.c:209
+msgid "  \\? options             show help on psql command-line options\n"
+msgstr "  \\? options             დახმარება psql-ის ბრძანების სტრიქონის შესახებ\n"
+
+#: help.c:210
+msgid "  \\? variables           show help on special variables\n"
+msgstr "  \\? variables           დახმარების ჩვენება განსაკუთრებული ცვლადების შესახებ\n"
+
+#: help.c:211
+msgid "  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"
+msgstr "  \\h [სახელი]              SQL ბრძანებების დახმარება, * ყველა ბრძანებისთვის\n"
+
+#: help.c:214
+msgid "Query Buffer\n"
+msgstr "მოთხოვნების ბაფერი\n"
+
+#: help.c:215
+msgid "  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n"
+msgstr "  \\e [ფაილი] [ხაზი]       მოთხოვნების ბაფერის (ან ფაილის) გარე რედაქტორში გახსნა\n"
+
+#: help.c:216
+msgid "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
+msgstr "  \\ef [ფუნქცსახელი [ხაზი]]  ფუნქციის აღწერის გარე რედაქტორში ჩასწორება\n"
+
+#: help.c:217
+msgid "  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"
+msgstr "  \\ev [ხედისსახელი [ხაზი]]  ხედის აღწერის გარე რედაქტორით ჩასწორება\n"
+
+#: help.c:218
+msgid "  \\p                     show the contents of the query buffer\n"
+msgstr "  \\p                     მოთხოვნების ბაფერის შემცველობის ჩვენება\n"
+
+#: help.c:219
+msgid "  \\r                     reset (clear) the query buffer\n"
+msgstr "  \\r                     მოთხოვნების ბაფერის გასუფთავება\n"
+
+#: help.c:221
+msgid "  \\s [FILE]              display history or save it to file\n"
+msgstr "  \\s [ფაილი]              ისტორიის ჩვენება ან ფაილში შენახვა\n"
+
+#: help.c:223
+msgid "  \\w FILE                write query buffer to file\n"
+msgstr "  \\w FILE                მოთხოვნების ბაფერის ფაილში ჩაწერა\n"
+
+#: help.c:226
+msgid "Input/Output\n"
+msgstr "შეტანა/გამოტანა\n"
+
+#: help.c:227
+msgid "  \\copy ...              perform SQL COPY with data stream to the client host\n"
+msgstr "  \\copy ...              SQL COPY -ის შესრულება მონაცემების ნაკადით კლიენტის ჰოსტამდე\n"
+
+#: help.c:228
+msgid "  \\echo [-n] [STRING]    write string to standard output (-n for no newline)\n"
+msgstr "  \\echo [-n] [სტრიქონი]    სტრიქონის სტანდარტულ გამოტანაზე გაშვება(ხაზის გადატანის გარეშე -n )\n"
+
+#: help.c:229
+msgid "  \\i FILE                execute commands from file\n"
+msgstr "  \\i                 ბრძანებების ფაილიდან შესრულება\n"
+
+#: help.c:230
+msgid "  \\ir FILE               as \\i, but relative to location of current script\n"
+msgstr "  \\ir ფაილი               იგივე, რაც \\i, მაგრამ სკრიპტის მიმდინარე ადგილიდან დამოკიდებულებით\n"
+
+#: help.c:231
+msgid "  \\o [FILE]              send all query results to file or |pipe\n"
+msgstr "  \\o [ფაილი]              მოთხოვნის ყველა შედეგის ფაილში ან |ფაიფში გაგზავნა\n"
+
+#: help.c:232
+msgid "  \\qecho [-n] [STRING]   write string to \\o output stream (-n for no newline)\n"
+msgstr "  \\qecho [-n] [striqoni]   სტრიქონის \\o გამოტანის ნაკადში ჩაწერა (-n ახალი ხაზების გარეშე)\n"
+
+#: help.c:233
+msgid "  \\warn [-n] [STRING]    write string to standard error (-n for no newline)\n"
+msgstr "  \\warn [-n] [სტრიქონი]    სტრიქონის სტანდარტულ შეცდომაზე გადამოტანა (-n გადატანის გარეშე)\n"
+
+#: help.c:236
+msgid "Conditional\n"
+msgstr "პირობითი\n"
+
+#: help.c:237
+msgid "  \\if EXPR               begin conditional block\n"
+msgstr "  \\if EXPR               პირობის შემცველი ბლოკის დასაწყისი\n"
+
+#: help.c:238
+msgid "  \\elif EXPR             alternative within current conditional block\n"
+msgstr "  \\elif EXPR             ალტერნატიული პირობა მიმდინარე პირობით ბლოკში\n"
+
+#: help.c:239
+msgid "  \\else                  final alternative within current conditional block\n"
+msgstr "  \\else                  პირობის მიმდინარე ბლოკის ალტერნატიული გზა\n"
+
+#: help.c:240
+msgid "  \\endif                 end conditional block\n"
+msgstr "  \\endif                 პირობის შემცველი ბლოკის დასასრული\n"
+
+#: help.c:243
+msgid "Informational\n"
+msgstr "საინფორმაციო\n"
+
+#: help.c:244
+msgid "  (options: S = show system objects, + = additional detail)\n"
+msgstr "  (პარამეტრები: S = სისტემური ობიექტების ჩვენება, + = დამატებითი დეტალები)\n"
+
+#: help.c:245
+msgid "  \\d[S+]                 list tables, views, and sequences\n"
+msgstr "  \\d[S+]                 ცხრილების, ხედებისა და მიმდევრობების სია\n"
+
+#: help.c:246
+msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
+msgstr "  \\d[S+]  NAME           ცხრილის, ხედის, მიმდევრობის ან ინდექსის აღწერა\n"
+
+#: help.c:247
+msgid "  \\da[S]  [PATTERN]      list aggregates\n"
+msgstr "  \\da[S]  [PATTERN]      აგრეგატების სია\n"
+
+#: help.c:248
+msgid "  \\dA[+]  [PATTERN]      list access methods\n"
+msgstr "  \\dA[+]  [PATTERN]      წვდომის მეთოდების სია\n"
+
+#: help.c:249
+msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"
+msgstr "  \\dAc[+] [AMPTRN [TYPEPTRN]]  ოპერატორის კლასების სია\n"
+
+#: help.c:250
+msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"
+msgstr "  \\dAf[+] [AMPTRN [TYPEPTRN]]  ოპერატორების ოჯახების სია\n"
+
+#: help.c:251
+msgid "  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"
+msgstr "  \\dAo[+] [AMPTRN [OPFPTRN]]   ოპერატორების ოჯახების ოპერატორების სია\n"
+
+#: help.c:252
+msgid "  \\dAp[+] [AMPTRN [OPFPTRN]]   list support functions of operator families\n"
+msgstr "  \\dAp[+] [AMPTRN [OPFPTRN]]   ოპერატორის ოჯახების მხარდაჭერის ფუნქციების სია\n"
+
+#: help.c:253
+msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
+msgstr "  \\db[+]  [PATTERN]      ცხრილის სივრცეების სია\n"
+
+#: help.c:254
+msgid "  \\dc[S+] [PATTERN]      list conversions\n"
+msgstr "  \\dc[S+] [PATTERN]      გადაყვანების სია\n"
+
+#: help.c:255
+msgid "  \\dconfig[+] [PATTERN]  list configuration parameters\n"
+msgstr "  \\dconfig[+] [PATTERN]  კონფიგურაციის პარამეტრების სია\n"
+
+#: help.c:256
+msgid "  \\dC[+]  [PATTERN]      list casts\n"
+msgstr "  \\dC[+]  [PATTERN]      კასტების სია\n"
+
+#: help.c:257
+msgid "  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
+msgstr "  \\dd[S]  [შაბლონი]      ობიექტის აღწერის ჩვენება, რომელიც სხვაგან არსადაა ნაჩვენები\n"
+
+#: help.c:258
+msgid "  \\dD[S+] [PATTERN]      list domains\n"
+msgstr "  \\dD[S+] [PATTERN]      დომენების სია\n"
+
+#: help.c:259
+msgid "  \\ddp    [PATTERN]      list default privileges\n"
+msgstr "  \\ddp    [შაბლონი]      ნაგულისხმები პრივილეგიების სია\n"
+
+#: help.c:260
+msgid "  \\dE[S+] [PATTERN]      list foreign tables\n"
+msgstr "  \\dE[S+] [შაბლონი]      გარე ცხრილების სია\n"
+
+#: help.c:261
+msgid "  \\des[+] [PATTERN]      list foreign servers\n"
+msgstr "  \\des[+] [შაბლონი]      გარე სერვერების სია\n"
+
+#: help.c:262
+msgid "  \\det[+] [PATTERN]      list foreign tables\n"
+msgstr "  \\det[+] [შაბლონი]      გარე ცხრილების სია\n"
+
+#: help.c:263
+msgid "  \\deu[+] [PATTERN]      list user mappings\n"
+msgstr "  \\deu[+] [PATTERN]      მომხმარებლების მომხმარებლის სია\n"
+
+#: help.c:264
+msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
+msgstr "  \\dew[+] [შაბლონი]      გარე მონაცემების გადამტანების სია\n"
+
+#: help.c:265
+msgid ""
+"  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
+"                         list [only agg/normal/procedure/trigger/window] functions\n"
+msgstr ""
+"  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
+"                         ფუნქციების [მხოლოდ agg/normal/procedure/trigger/window] სია\n"
+
+#: help.c:267
+msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
+msgstr "  \\dF[+]  [შაბლონი]      ტექსტის ძებნის კონფიგურაციების სია\n"
+
+#: help.c:268
+msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
+msgstr "  \\dFd[+] [შაბლონი]      ტექსტის ძებნის ლექსიკონების სია\n"
+
+#: help.c:269
+msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
+msgstr "  \\dFp[+] [PATTERN]      ტექსტის ძებნის დამმუშავებლების სია\n"
+
+#: help.c:270
+msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
+msgstr "  \\dFt[+] [შაბლონი]      ტექსტის ძებნის შაბლონების სია\n"
+
+#: help.c:271
+msgid "  \\dg[S+] [PATTERN]      list roles\n"
+msgstr "  \\dg[S+] [შაბლონი]      როლების სია\n"
+
+#: help.c:272
+msgid "  \\di[S+] [PATTERN]      list indexes\n"
+msgstr "  \\di[S+] [შაბლონი]      ინდექსების სია\n"
+
+#: help.c:273
+msgid "  \\dl[+]                 list large objects, same as \\lo_list\n"
+msgstr "  \\dl[+]                 დიდი ობიექტების სია. იგივე, რაც \\lo_list\n"
+
+#: help.c:274
+msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
+msgstr "  \\dL[S+] [შაბლონი]      პროცედურული ენების სია\n"
+
+#: help.c:275
+msgid "  \\dm[S+] [PATTERN]      list materialized views\n"
+msgstr "  \\dm[S+] [შაბლონი]      მატერიალიზებული ხედების სია\n"
+
+#: help.c:276
+msgid "  \\dn[S+] [PATTERN]      list schemas\n"
+msgstr "  \\dn[S+] [შაბლონი]      სქემების სია\n"
+
+#: help.c:277
+msgid ""
+"  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
+"                         list operators\n"
+msgstr ""
+"  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
+"                         ოპერატორების სია\n"
+
+#: help.c:279
+msgid "  \\dO[S+] [PATTERN]      list collations\n"
+msgstr "  \\dO[S+] [შაბლონი]      კოლაციების სია\n"
+
+#: help.c:280
+msgid "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgstr "  \\dp     [შაბლონი]      ცხრილის, ხედის და მიმდევრობის წვდომის უფლებების სია\n"
+
+#: help.c:281
+msgid "  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n"
+msgstr "  \\dP[itn+] [შაბლონი]    [მხოლოდ ინდექსი/ცხრილი] დაყოფილი ურთიერთობების სია [n=ჩადგმული]\n"
+
+#: help.c:282
+msgid "  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n"
+msgstr "  \\drds [ROLEPTRN [DBPTRN]] თითოეული ბაზის როლის პარამეტრების სია\n"
+
+#: help.c:283
+msgid "  \\dRp[+] [PATTERN]      list replication publications\n"
+msgstr "  \\dRp[+] [შაბლონი]      რეპლიკაციის გამოცემების სია\n"
+
+#: help.c:284
+msgid "  \\dRs[+] [PATTERN]      list replication subscriptions\n"
+msgstr "  \\dRs[+] [შაბლონი]      რეპლიკაციის გამოწერების სია\n"
+
+#: help.c:285
+msgid "  \\ds[S+] [PATTERN]      list sequences\n"
+msgstr "  \\ds[S+] [შაბლონი]      მიმდევრობების სია\n"
+
+#: help.c:286
+msgid "  \\dt[S+] [PATTERN]      list tables\n"
+msgstr "  \\dt[S+] [შაბლონი]      ცხრილების სია\n"
+
+#: help.c:287
+msgid "  \\dT[S+] [PATTERN]      list data types\n"
+msgstr "  \\dT[S+] [შაბლონი]      მონაცემის ტიპების სია\n"
+
+#: help.c:288
+msgid "  \\du[S+] [PATTERN]      list roles\n"
+msgstr "  \\du[S+] [შაბლონი]      როლების სია\n"
+
+#: help.c:289
+msgid "  \\dv[S+] [PATTERN]      list views\n"
+msgstr "  \\dv[S+] [შაბლონი]      ხედების სია\n"
+
+#: help.c:290
+msgid "  \\dx[+]  [PATTERN]      list extensions\n"
+msgstr "  \\dx[+]  [შაბლონი]      გაფართოებების სია\n"
+
+#: help.c:291
+msgid "  \\dX     [PATTERN]      list extended statistics\n"
+msgstr "  \\dX     [შაბლონი]      გაფართოებული სტატისტიკის სია\n"
+
+#: help.c:292
+msgid "  \\dy[+]  [PATTERN]      list event triggers\n"
+msgstr "  \\dy[+]  [შაბლონი]      მოვლენის ტრიგერების სია\n"
+
+#: help.c:293
+msgid "  \\l[+]   [PATTERN]      list databases\n"
+msgstr "  \\l[+]   [შაბლონი]      მონაცემთა ბაზების სია\n"
+
+#: help.c:294
+msgid "  \\sf[+]  FUNCNAME       show a function's definition\n"
+msgstr "  \\sf[+]  FUNCNAME       ფუნქციის აღწერის ჩვენება\n"
+
+#: help.c:295
+msgid "  \\sv[+]  VIEWNAME       show a view's definition\n"
+msgstr "  \\sv[+]  ხედისსახელი       ხედის აღწერის ჩვენება\n"
+
+#: help.c:296
+msgid "  \\z      [PATTERN]      same as \\dp\n"
+msgstr "  \\z      [შაბლონი]      იგივე, რაც \\dp\n"
+
+#: help.c:299
+msgid "Large Objects\n"
+msgstr "დიდი ობიექტები\n"
+
+#: help.c:300
+msgid "  \\lo_export LOBOID FILE write large object to file\n"
+msgstr "  \\lo_export LOBOID FILE დიდი ობიექტის ფაილში ჩაწერა\n"
+
+#: help.c:301
+msgid ""
+"  \\lo_import FILE [COMMENT]\n"
+"                         read large object from file\n"
+msgstr ""
+"  \\lo_import ფაილი [კომენტარი]\n"
+"                         დიდი ობიექტის ფაილიდან წაკითხვა\n"
+
+#: help.c:303
+msgid "  \\lo_list[+]            list large objects\n"
+msgstr "  \\lo_list[+]            დიდი ობიექტების სია\n"
+
+#: help.c:304
+msgid "  \\lo_unlink LOBOID      delete a large object\n"
+msgstr "  \\lo_unlink LOBOID      დიდი ობიექტის წაშლა\n"
+
+#: help.c:307
+msgid "Formatting\n"
+msgstr "ფორმატირება\n"
+
+#: help.c:308
+msgid "  \\a                     toggle between unaligned and aligned output mode\n"
+msgstr "  \\a                     სწორებულ და გაუსწორებელ რეჟიმებს შორის გადართვა\n"
+
+#: help.c:309
+msgid "  \\C [STRING]            set table title, or unset if none\n"
+msgstr "  \\C [სტრიქონი]            ცხრილის სათაურის დაყენება. ან წაშლა, თუ მითითებული არაა\n"
+
+#: help.c:310
+msgid "  \\f [STRING]            show or set field separator for unaligned query output\n"
+msgstr "  \\f [სტრიქონი]            მოთხოვნის შედეგის დაულაგებელი გამოტანის ველების გამყოფის დაყენება ან ჩვენება\n"
+
+#: help.c:311
+#, c-format
+msgid "  \\H                     toggle HTML output mode (currently %s)\n"
+msgstr "  \\H                     HTML გამოტანის რეჟიმის გადართვა (მიმდინარე %s)\n"
+
+#: help.c:313
+msgid ""
+"  \\pset [NAME [VALUE]]   set table output option\n"
+"                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
+"                         fieldsep_zero|footer|format|linestyle|null|\n"
+"                         numericlocale|pager|pager_min_lines|recordsep|\n"
+"                         recordsep_zero|tableattr|title|tuples_only|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|\n"
+"                         unicode_header_linestyle)\n"
+msgstr ""
+"  \\pset [სახელი [მნიშვნელობა]]   ცხრილის გამოტანის პარამეტრის დაყენება\n"
+"                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
+"                         fieldsep_zero|footer|format|linestyle|null|\n"
+"                         numericlocale|pager|pager_min_lines|recordsep|\n"
+"                         recordsep_zero|tableattr|title|tuples_only|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|\n"
+"                         unicode_header_linestyle)\n"
+
+#: help.c:320
+#, c-format
+msgid "  \\t [on|off]            show only rows (currently %s)\n"
+msgstr "  \\t [on|off]            მხოლოდ მწკრივების ჩვენება(ამჟამად %s)\n"
+
+#: help.c:322
+msgid "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgstr "  \\T [STRING]            HTML-ის <table> ჭდის ატრიბუტების დაყენება. ან გასუფთავება, თუ მითითებული არაფერია\n"
+
+#: help.c:323
+#, c-format
+msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
+msgstr "  \\x [on|off|auto]       გაფართოებული გამოტანის გადართვა (ამჟამად %s)\n"
+
+#: help.c:324
+msgid "auto"
+msgstr "ავტომატური"
+
+#: help.c:327
+msgid "Connection\n"
+msgstr "შეერთება\n"
+
+#: help.c:329
+#, c-format
+msgid ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently \"%s\")\n"
+msgstr ""
+"  \\c[onnect] {[ბაზისსახელი|- მომხმარებელი|- ჰოსტი|- პორტ|-] | conninfo}\n"
+"                         ახალ ბაზასთან მიერთება (მიმდინარე \"%s\")\n"
+
+#: help.c:333
+msgid ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently no connection)\n"
+msgstr ""
+"  \\c[onnect] {[ბაზისსახელი|- მომხმარებელი|- ჰოსტი|- პორტ|-] | conninfo}\n"
+"                         ახალ ბაზასთან მიერთება (მიმდინარე შეერთება არ არსებობს)\n"
+
+#: help.c:335
+msgid "  \\conninfo              display information about current connection\n"
+msgstr "  \\conninfo              მიმდინარე შეერთების შესახებ ინფორმაციის გამოტანა\n"
+
+#: help.c:336
+msgid "  \\encoding [ENCODING]   show or set client encoding\n"
+msgstr "  \\encoding [კოდირება]   კლიენტის კოდირების ჩვენება ან დაყენება\n"
+
+#: help.c:337
+msgid "  \\password [USERNAME]   securely change the password for a user\n"
+msgstr "  \\password [მომხმარებელი]   მომხმარებლის პაროლის უსაფრთხოდ შეცვლა\n"
+
+#: help.c:340
+msgid "Operating System\n"
+msgstr "ოპერაციული სისტემა\n"
+
+#: help.c:341
+msgid "  \\cd [DIR]              change the current working directory\n"
+msgstr "  \\cd [საქ]              მიმდინარე საქაღალდის შეცვლა\n"
+
+#: help.c:342
+msgid "  \\getenv PSQLVAR ENVVAR fetch environment variable\n"
+msgstr "  \\getenv PSQLVAR ENVVAR გარემოს ცვლადის გამოთხოვა\n"
+
+#: help.c:343
+msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
+msgstr "  \\setenv სახელი [მნიშვნელობა]   გარემოს ცვლადის დაყენება ან მოხსნა\n"
+
+#: help.c:344
+#, c-format
+msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
+msgstr "  \\timing [on|off]       ბრძანებების ტაიმერის გადართვა (ამჟამად %s)\n"
+
+#: help.c:346
+msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
+msgstr "  \\! [ბრძანება]           გარსის ბრძანების შესრულება ან ინტერაქტიური გარსის გაშვება\n"
+
+#: help.c:349
+msgid "Variables\n"
+msgstr "ცვლადები\n"
+
+#: help.c:350
+msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
+msgstr "  \\prompt [ტექსტი] სახელი    მომხმარებლისთვის შიდა ცვლადის დაყენების შეთავაზება\n"
+
+#: help.c:351
+msgid "  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"
+msgstr "  \\set [სახელი [მნიშვნელობა]]    დააყენებს შიდა ცვლადს, ან, თუ პარამეტრები მითითებული არაა, მათ სიას გამოიტანს\n"
+
+#: help.c:352
+msgid "  \\unset NAME            unset (delete) internal variable\n"
+msgstr "  \\unset სახელი            შიდა ცვლადის მოხსნა (წაშლა)\n"
+
+#: help.c:391
+msgid ""
+"List of specially treated variables\n"
+"\n"
+msgstr ""
+"განსაკუთრებულად მოსაპყრობი ცვლადების სია\n"
+"\n"
+
+#: help.c:393
+msgid "psql variables:\n"
+msgstr "psql-ის ცვლადები:\n"
+
+#: help.c:395
+msgid ""
+"  psql --set=NAME=VALUE\n"
+"  or \\set NAME VALUE inside psql\n"
+"\n"
+msgstr ""
+"  psql --set=სახელი=მნიშვნელობა\n"
+"  ან \\set სახელი მნიშვნელობა psql-ის შიგნით\n"
+"\n"
+
+#: help.c:397
+msgid ""
+"  AUTOCOMMIT\n"
+"    if set, successful SQL commands are automatically committed\n"
+msgstr ""
+"  AUTOCOMMIT\n"
+"    iთუ დაყენებულია, წარმატებული SQL ბრძანებები ავტომატურად იქნება გადაცემული\n"
+
+#: help.c:399
+msgid ""
+"  COMP_KEYWORD_CASE\n"
+"    determines the case used to complete SQL key words\n"
+"    [lower, upper, preserve-lower, preserve-upper]\n"
+msgstr ""
+"  COMP_KEYWORD_CASE\n"
+"    განსაზღვრავს სიმბოლოების ზომას SQL-ის საკვანძო სიტყვების დასრულებისას\n"
+"    [პატარა (lower), upper (დიდი), პატარის_შენარჩუნება (preserve-lower), დიდის_შენარჩუნება (preserve-upper)]\n"
+
+#: help.c:402
+msgid ""
+"  DBNAME\n"
+"    the currently connected database name\n"
+msgstr ""
+"  DBNAME\n"
+"    ბაზის სახელი, რომელთანაც ამჟამად მიერთებული ბრძანდებით\n"
+
+#: help.c:404
+msgid ""
+"  ECHO\n"
+"    controls what input is written to standard output\n"
+"    [all, errors, none, queries]\n"
+msgstr ""
+"  ECHO\n"
+"    აკონტროლებს, შეყვანილიდან რა გამოჩნდება სტანდარტულ გამოტანაზე\n"
+"    [all(ყველაფერი), errors(შეცდომები), none(არაფერი), queries(მოთხოვნები)]\n"
+
+#: help.c:407
+msgid ""
+"  ECHO_HIDDEN\n"
+"    if set, display internal queries executed by backslash commands;\n"
+"    if set to \"noexec\", just show them without execution\n"
+msgstr ""
+"  ECHO_HIDDEN\n"
+"    თუ დაყენებულია, \\-ით დაწყებული შიდა მოთხოვნები ნაჩვენები იქნება;\n"
+"    თუ მნიშვნელობაა 'noexe', შიდა ბრძანებები ნაჩვენები იქნება, მაგრამ შესრულებული არა\n"
+
+#: help.c:410
+msgid ""
+"  ENCODING\n"
+"    current client character set encoding\n"
+msgstr ""
+"  ENCODING\n"
+"    მიმდინარე კლიენტის სიმბოლოების კოდირება\n"
+
+#: help.c:412
+msgid ""
+"  ERROR\n"
+"    true if last query failed, else false\n"
+msgstr ""
+"  ERROR\n"
+"    1, თუ ბოლო მოთხოვნა ავარიული იყო. არადა 0\n"
+
+#: help.c:414
+msgid ""
+"  FETCH_COUNT\n"
+"    the number of result rows to fetch and display at a time (0 = unlimited)\n"
+msgstr ""
+"  FETCH_COUNT\n"
+"    შედეგის გამოსათხოვი მწკრივების რაოდენობა ერთი ჩვენებისთვის (0=უსასრულო)\n"
+
+#: help.c:416
+msgid ""
+"  HIDE_TABLEAM\n"
+"    if set, table access methods are not displayed\n"
+msgstr ""
+"  HIDE_TABLEAM\n"
+"    თუ დაყენებულა, ცხრილის წვდომის მეთოდები ნაჩვენები არ იქნება\n"
+
+#: help.c:418
+msgid ""
+"  HIDE_TOAST_COMPRESSION\n"
+"    if set, compression methods are not displayed\n"
+msgstr ""
+"  HIDE_TOAST_COMPRESSION\n"
+"    თუ ჩართულია, შეკუმშვის მეთოდები ნაჩვენები არ იქნება\n"
+
+#: help.c:420
+msgid ""
+"  HISTCONTROL\n"
+"    controls command history [ignorespace, ignoredups, ignoreboth]\n"
+msgstr ""
+"  HISTCONTROL\n"
+"    ბრძანებების ისტორიის კონროლი[ignorespace, ignoredups, ignoreboth]\n"
+
+#: help.c:422
+msgid ""
+"  HISTFILE\n"
+"    file name used to store the command history\n"
+msgstr ""
+"  HISTFILE\n"
+"    ბრძანებების ისტორიის შესანახი ფაილის სახელი\n"
+
+#: help.c:424
+msgid ""
+"  HISTSIZE\n"
+"    maximum number of commands to store in the command history\n"
+msgstr ""
+"  HISTSIZE\n"
+"    ისტორიაში შენახული ბრძანებების მაქსიმალური რაოდენობა\n"
+
+#: help.c:426
+msgid ""
+"  HOST\n"
+"    the currently connected database server host\n"
+msgstr ""
+"  HOST\n"
+"    ამჟამად მიერთებული მონაცემთა ბაზის სერვერის ჰოსტი\n"
+
+#: help.c:428
+msgid ""
+"  IGNOREEOF\n"
+"    number of EOFs needed to terminate an interactive session\n"
+msgstr ""
+"  IGNOREEOF\n"
+"    ინტერაქტიური სესიის დასამთავრებლად საჭირო EOF-ების რაოდენობა\n"
+
+#: help.c:430
+msgid ""
+"  LASTOID\n"
+"    value of the last affected OID\n"
+msgstr ""
+"  LASTOID\n"
+"    უკანასკნელად შეცვლილი OID-ის მნიშვნელობა\n"
+
+#: help.c:432
+msgid ""
+"  LAST_ERROR_MESSAGE\n"
+"  LAST_ERROR_SQLSTATE\n"
+"    message and SQLSTATE of last error, or empty string and \"00000\" if none\n"
+msgstr ""
+"  LAST_ERROR_MESSAGE\n"
+"  LAST_ERROR_SQLSTATE\n"
+"    უკანასკნელი შეცდომის შეტყობინება და SQLSTATE. თუ შეცდომა არ არსებობს, დაბრუნდება ცარიელი სტრიქონი და \"00000\"\n"
+
+#: help.c:435
+msgid ""
+"  ON_ERROR_ROLLBACK\n"
+"    if set, an error doesn't stop a transaction (uses implicit savepoints)\n"
+msgstr ""
+"  ON_ERROR_ROLLBACK\n"
+"    თუ დაყენებულია, შეცდომა ტრანზაქციას არ გააჩერებს (გამოიყენება არაპირდაპირი შესანახი წერტილები)\n"
+
+#: help.c:437
+msgid ""
+"  ON_ERROR_STOP\n"
+"    stop batch execution after error\n"
+msgstr ""
+"  ON_ERROR_STOP\n"
+"    ბრძანებების პაკეტის შესრულების შეწყვეტა პირველივე შეცდომის შემდეგ\n"
+
+#: help.c:439
+msgid ""
+"  PORT\n"
+"    server port of the current connection\n"
+msgstr ""
+"  პორტი\n"
+"    სერვერის პორტი მიმდინარე შეერთებისთვის\n"
+
+#: help.c:441
+msgid ""
+"  PROMPT1\n"
+"    specifies the standard psql prompt\n"
+msgstr ""
+"  PROMPT1\n"
+"    psql-ის ბრძანების სტრიქონის აღწერა\n"
+
+#: help.c:443
+msgid ""
+"  PROMPT2\n"
+"    specifies the prompt used when a statement continues from a previous line\n"
+msgstr ""
+"  PROMPT2\n"
+"    ბრძანების სტრიქონის მითითება, როცა ბრძანება წინა ხაზიდან გრძელდება\n"
+
+#: help.c:445
+msgid ""
+"  PROMPT3\n"
+"    specifies the prompt used during COPY ... FROM STDIN\n"
+msgstr ""
+"  PROMPT3\n"
+"    specifies the prompt used during COPY ... FROM STDIN\n"
+
+#: help.c:447
+msgid ""
+"  QUIET\n"
+"    run quietly (same as -q option)\n"
+msgstr ""
+"  QUIET\n"
+"    ჩუმი ოპერაციები(იგივე, რაც პარამეტრი -q)\n"
+
+#: help.c:449
+msgid ""
+"  ROW_COUNT\n"
+"    number of rows returned or affected by last query, or 0\n"
+msgstr ""
+"  ROW_COUNT\n"
+"    ბოლო მოთხოვნის მიერ დაბრუნებული ან შეცვლილი მწკრივები. ან 0\n"
+
+#: help.c:451
+msgid ""
+"  SERVER_VERSION_NAME\n"
+"  SERVER_VERSION_NUM\n"
+"    server's version (in short string or numeric format)\n"
+msgstr ""
+"  SERVER_VERSION_NAME\n"
+"  SERVER_VERSION_NUM\n"
+"    სერვერის ვერსია(მოკლე სტრიქონის ან რიცხვით ფორმატში)\n"
+
+#: help.c:454
+msgid ""
+"  SHELL_ERROR\n"
+"    true if the last shell command failed, false if it succeeded\n"
+msgstr ""
+"  SHELL_ERROR\n"
+"    true, თუ ბოლო მოთხოვნა ავარიული იყო. არადა false\n"
+
+#: help.c:456
+#| msgid ""
+#| "  SHELL\n"
+#| "    shell used by the \\! command\n"
+msgid ""
+"  SHELL_EXIT_CODE\n"
+"    exit status of the last shell command\n"
+msgstr ""
+"  SHELL_EXIT_CODE\n"
+"    გარსის ბოლო ბრძანების გამოსვლის სტატუსი\n"
+
+#: help.c:458
+msgid ""
+"  SHOW_ALL_RESULTS\n"
+"    show all results of a combined query (\\;) instead of only the last\n"
+msgstr ""
+"  SHOW_ALL_RESULTS\n"
+"    მხოლოდ ბოლოს მაგიერ კომბინირებული მოთხოვნის ყველა შედეგის ჩვენება (\\;)\n"
+
+#: help.c:460
+msgid ""
+"  SHOW_CONTEXT\n"
+"    controls display of message context fields [never, errors, always]\n"
+msgstr ""
+"  SHOW_CONTEXT\n"
+"    შეტყობინების კონტექსტის ველების ჩვენების კონტროლი[never, errors, always]\n"
+
+#: help.c:462
+msgid ""
+"  SINGLELINE\n"
+"    if set, end of line terminates SQL commands (same as -S option)\n"
+msgstr ""
+"  SINGLELINE\n"
+"    iთუ დაყენებულია, ხაზის დაბოლოება SQL-ის ბრძანებასაც დაასრულებს (იგივე, რაც -S პარამეტრი)\n"
+
+#: help.c:464
+msgid ""
+"  SINGLESTEP\n"
+"    single-step mode (same as -s option)\n"
+msgstr ""
+"  SINGLESTEP\n"
+"    ერთნაბიჯიანი რეჟიმი. (იგივე, რაც -s პარამეტრი)\n"
+
+#: help.c:466
+msgid ""
+"  SQLSTATE\n"
+"    SQLSTATE of last query, or \"00000\" if no error\n"
+msgstr ""
+"  SQLSTATE\n"
+"    უკანასკნელი მოთხოვნის SQLSTATE. \"00000\", თუ შეცდომა არ მომხდარა\n"
+
+#: help.c:468
+msgid ""
+"  USER\n"
+"    the currently connected database user\n"
+msgstr ""
+"  USER\n"
+"    ბაზასთან მიერთებული მომხმარებლის სახელი\n"
+
+#: help.c:470
+msgid ""
+"  VERBOSITY\n"
+"    controls verbosity of error reports [default, verbose, terse, sqlstate]\n"
+msgstr ""
+"  VERBOSITY\n"
+"    შეცდომის ანგარშების დეტალურობის კონტროლი [default, verbose, terse, sqlstate]\n"
+
+#: help.c:472
+msgid ""
+"  VERSION\n"
+"  VERSION_NAME\n"
+"  VERSION_NUM\n"
+"    psql's version (in verbose string, short string, or numeric format)\n"
+msgstr ""
+"  VERSION\n"
+"  VERSION_NAME\n"
+"  VERSION_NUM\n"
+"    psql-ის ვერსია (სრული ვერსია, მოკლე ვერსია თუ რიცხვითი ფორმატი)\n"
+
+#: help.c:477
+msgid ""
+"\n"
+"Display settings:\n"
+msgstr ""
+"\n"
+"ჩვენების პარამეტრები:\n"
+
+#: help.c:479
+msgid ""
+"  psql --pset=NAME[=VALUE]\n"
+"  or \\pset NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  psql --pset=სახ[=მნიშვნ]\n"
+"  ან \\pset სახ [მიშნვნ] psql-ში\n"
+"\n"
+
+#: help.c:481
+msgid ""
+"  border\n"
+"    border style (number)\n"
+msgstr ""
+"  border\n"
+"    საზღვრის სტილი (რიცხვი)\n"
+
+#: help.c:483
+msgid ""
+"  columns\n"
+"    target width for the wrapped format\n"
+msgstr ""
+"  columns\n"
+"    სამიზნის სიგანე გადატანილი ფორმატისთვის\n"
+
+#: help.c:485
+msgid ""
+"  expanded (or x)\n"
+"    expanded output [on, off, auto]\n"
+msgstr ""
+"  expanded (or x)\n"
+"    გაფართოებული გამოტანა [on, off, auto]\n"
+
+#: help.c:487
+#, c-format
+msgid ""
+"  fieldsep\n"
+"    field separator for unaligned output (default \"%s\")\n"
+msgstr ""
+"  fieldsep\n"
+"    ველების გამყოფი დაულაგების გამოტანისათვის (ნაგულისხმები \"%s\")\n"
+
+#: help.c:490
+msgid ""
+"  fieldsep_zero\n"
+"    set field separator for unaligned output to a zero byte\n"
+msgstr ""
+"  fieldsep_zero\n"
+"    დაულაგებელი გამოტანის ველების გამყოფის ნულოვან ბაიტზე დაყენება\n"
+
+#: help.c:492
+msgid ""
+"  footer\n"
+"    enable or disable display of the table footer [on, off]\n"
+msgstr ""
+"  footer\n"
+"    ცხრილის მინაწერების ჩვენების ჩაართ/გამორთ[on, off]\n"
+
+#: help.c:494
+msgid ""
+"  format\n"
+"    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
+msgstr ""
+"  format\n"
+"    გამოტანის ფორმატის დაყენება [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
+
+#: help.c:496
+msgid ""
+"  linestyle\n"
+"    set the border line drawing style [ascii, old-ascii, unicode]\n"
+msgstr ""
+"  linestyle\n"
+"    საზღვრის ხაზის ხატვის სტილი [ascii, old-ascii, unicode]\n"
+
+#: help.c:498
+msgid ""
+"  null\n"
+"    set the string to be printed in place of a null value\n"
+msgstr ""
+"  null\n"
+"    ნულოვანი ბაიტის მიერ ნაჩვენები სიმბოლო\n"
+
+#: help.c:500
+msgid ""
+"  numericlocale\n"
+"    enable display of a locale-specific character to separate groups of digits\n"
+msgstr ""
+"  numericlocale\n"
+"    ციფრის ჯგუფების გასაყოფად ენის სპეციფიკური სიმბოლოს გამოყენება\n"
+
+#: help.c:502
+msgid ""
+"  pager\n"
+"    control when an external pager is used [yes, no, always]\n"
+msgstr ""
+"  pager\n"
+"    გვერდების გარე გადამრთველის გამოყენება[yes, no, always]\n"
+
+#: help.c:504
+msgid ""
+"  recordsep\n"
+"    record (line) separator for unaligned output\n"
+msgstr ""
+"  recordsep\n"
+"    დაულაგებელი გამოტანის ჩანაწერების(ხაზების) გამყოფი\n"
+
+#: help.c:506
+msgid ""
+"  recordsep_zero\n"
+"    set record separator for unaligned output to a zero byte\n"
+msgstr ""
+"  recordsep_zero\n"
+"    დაულაგებელი გამოტანის ველების გამყოფის ნულოვან ბაიტზე დაყენება\n"
+
+#: help.c:508
+msgid ""
+"  tableattr (or T)\n"
+"    specify attributes for table tag in html format, or proportional\n"
+"    column widths for left-aligned data types in latex-longtable format\n"
+msgstr ""
+"  tableattr (or T)\n"
+"    მიუთითებს HTML ფორმატის table ჭდის ატრიბუტებს ან სვეტების პოპორციულ სიგანეს\n"
+"     მარცხნივ სწორებული მონაცემების ტიპებისთვის latex-longtable ფორმატში\n"
+
+#: help.c:511
+msgid ""
+"  title\n"
+"    set the table title for subsequently printed tables\n"
+msgstr ""
+"  title\n"
+"    ცხრილის სათაურის დაყენება შემდგომ დაბეჭდილი ცხრილებისთვის\n"
+
+#: help.c:513
+msgid ""
+"  tuples_only\n"
+"    if set, only actual table data is shown\n"
+msgstr ""
+"  tuples_only\n"
+"    თუ დაყენებულია, ნაჩვენები იქნება მხოლოდ მიმდინარე მონაცემები\n"
+
+#: help.c:515
+msgid ""
+"  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"    set the style of Unicode line drawing [single, double]\n"
+msgstr ""
+"  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"    უნიკოდის ხაზის დახატვის სტილი [single, double]\n"
+
+#: help.c:520
+msgid ""
+"\n"
+"Environment variables:\n"
+msgstr ""
+"\n"
+"გარემოს ცვლადები:\n"
+
+#: help.c:524
+msgid ""
+"  NAME=VALUE [NAME=VALUE] psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  სახელი=მნიშვნელობა [სახელი=მნიშვნელობა ] psql ...\n"
+"  ან \\setenv სახელი[მნიშვნელობა ] psql-ის სიგნით\n"
+"\n"
+
+#: help.c:526
+msgid ""
+"  set NAME=VALUE\n"
+"  psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  set სახელი=მნიშვნელობა\n"
+"  psql ...\n"
+"  ან \\setenv სახელი [მნიშვნელობა] psql-ში\n"
+"\n"
+
+#: help.c:529
+msgid ""
+"  COLUMNS\n"
+"    number of columns for wrapped format\n"
+msgstr ""
+"  COLUMNS\n"
+"    გადასატანი ფორმატის სვეტების რაოდენობა\n"
+
+#: help.c:531
+msgid ""
+"  PGAPPNAME\n"
+"    same as the application_name connection parameter\n"
+msgstr ""
+"  PGAPPNAME\n"
+"    იგივე, რაც შეერთების პარამეტრი აპლიკაციის_სახელი\n"
+
+#: help.c:533
+msgid ""
+"  PGDATABASE\n"
+"    same as the dbname connection parameter\n"
+msgstr ""
+"  PGDATABASE\n"
+"    იგივე, რაც შეერთების dbname პარამეტრი\n"
+
+#: help.c:535
+msgid ""
+"  PGHOST\n"
+"    same as the host connection parameter\n"
+msgstr ""
+"  PGHOST\n"
+"    იგივე, რაც ჰოსტი შეერთების პარამეტრებში\n"
+
+#: help.c:537
+msgid ""
+"  PGPASSFILE\n"
+"    password file name\n"
+msgstr ""
+"  PGPASSFILE\n"
+"    პაროლების ფაილის სახელი\n"
+
+#: help.c:539
+msgid ""
+"  PGPASSWORD\n"
+"    connection password (not recommended)\n"
+msgstr ""
+"  PGPASSWORD\n"
+"    შეერთების პაროლი (რეკომენდებული არაა)\n"
+
+#: help.c:541
+msgid ""
+"  PGPORT\n"
+"    same as the port connection parameter\n"
+msgstr ""
+"  PGPORT\n"
+"    იგივე, რაც პორტი შეერთების პარამეტრებში\n"
+
+#: help.c:543
+msgid ""
+"  PGUSER\n"
+"    same as the user connection parameter\n"
+msgstr ""
+"  PGUSER\n"
+"    იგივე, რაც მომხმარებლის სახელი შეერთების პარამეტრებში\n"
+
+#: help.c:545
+msgid ""
+"  PSQL_EDITOR, EDITOR, VISUAL\n"
+"    editor used by the \\e, \\ef, and \\ev commands\n"
+msgstr ""
+"  PSQL_EDITOR, EDITOR, VISUAL\n"
+"    \\e, \\ef, და \\ev ბრძანების მიერ გამოყენებული რედაქტორი\n"
+
+#: help.c:547
+msgid ""
+"  PSQL_EDITOR_LINENUMBER_ARG\n"
+"    how to specify a line number when invoking the editor\n"
+msgstr ""
+"  PSQL_EDITOR_LINENUMBER_ARG\n"
+"    რედაქტორის გამოძახებისას ხაზის ნომრის მითითების ხერხი\n"
+
+#: help.c:549
+msgid ""
+"  PSQL_HISTORY\n"
+"    alternative location for the command history file\n"
+msgstr ""
+"  PSQL_HISTORY\n"
+"    ბრძანებების ისტორიის ფაილის ალტერნატიული მდებარეობა\n"
+
+#: help.c:551
+msgid ""
+"  PSQL_PAGER, PAGER\n"
+"    name of external pager program\n"
+msgstr ""
+"  PSQL_PAGER, PAGER\n"
+"    გვერდების გადამრთველი გარე პროგრამის სახელი\n"
+
+#: help.c:554
+msgid ""
+"  PSQL_WATCH_PAGER\n"
+"    name of external pager program used for \\watch\n"
+msgstr ""
+"  PSQL_WATCH_PAGER\n"
+"    \\watch-ისთვის გამოყენებული გვერდების გადამრთველი გარე პროგრამა\n"
+
+#: help.c:557
+msgid ""
+"  PSQLRC\n"
+"    alternative location for the user's .psqlrc file\n"
+msgstr ""
+"  PSQLRC\n"
+"    მომხმარებლის .psqlrc ფაილის ალტერნატიული მდებარეობა\n"
+
+#: help.c:559
+msgid ""
+"  SHELL\n"
+"    shell used by the \\! command\n"
+msgstr ""
+"  SHELL\n"
+"    \\! ბრძანების მიერ გამოყენებული გარსი\n"
+
+#: help.c:561
+msgid ""
+"  TMPDIR\n"
+"    directory for temporary files\n"
+msgstr ""
+"  TMPDIR\n"
+"    დროებითი ფაილების საქაღალდე\n"
+
+#: help.c:621
+msgid "Available help:\n"
+msgstr "ხელმისაწვდომი დახმარება:\n"
+
+#: help.c:716
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+"URL: %s\n"
+"\n"
+msgstr ""
+"ბრძანება:     %s\n"
+"აღწერა: %s\n"
+"სინტაქსი:\n"
+"%s\n"
+"\n"
+"URL: %s\n"
+"\n"
+
+#: help.c:739
+#, c-format
+msgid ""
+"No help available for \"%s\".\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"\"%s\"-ისთვის დახმარება მიუწვდომელია.\n"
+"ხელმისაწვდომი დახმარების სანახავად სცადეთ \\h .\n"
+
+#: input.c:216
+#, c-format
+msgid "could not read from input file: %m"
+msgstr "შემოსატანი ფაილის წაკითხვის შეცდომა: %m"
+
+#: input.c:477 input.c:515
+#, c-format
+msgid "could not save history to file \"%s\": %m"
+msgstr "ისტორიის ფაილის (\"%s\") შენახვის შეცდომა: %m"
+
+#: input.c:534
+#, c-format
+msgid "history is not supported by this installation"
+msgstr "ამ აგებას ისტორიის მხარდაჭერა არ გააჩნია"
+
+#: large_obj.c:65
+#, c-format
+msgid "%s: not connected to a database"
+msgstr "%s: ბაზასთან მიერთებული არ ბრძანდებით"
+
+#: large_obj.c:84
+#, c-format
+msgid "%s: current transaction is aborted"
+msgstr "%s: მიმდინარე ტრანზაქცია ავარიულად დასრულდა"
+
+#: large_obj.c:87
+#, c-format
+msgid "%s: unknown transaction status"
+msgstr "%s: ტრანზაქციის უცნობი სტატუსი"
+
+#: mainloop.c:133
+#, c-format
+msgid "\\if: escaped"
+msgstr "\\if: -დან გამოსვლა"
+
+#: mainloop.c:192
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "%s-დან გასასვლელად გამოიყენეთ \"\\q\".\n"
+
+#: mainloop.c:214
+msgid ""
+"The input is a PostgreSQL custom-format dump.\n"
+"Use the pg_restore command-line client to restore this dump to a database.\n"
+msgstr ""
+"შეყვანილია PostgreSQL-ის საკუთარი ფორმატის გამოტვირთვა\n"
+"გამოტვირთული ბაზის აღსადგენად CLI-ის ბრძანება pg_restore გამოიყენეთ .\n"
+
+#: mainloop.c:295
+msgid "Use \\? for help or press control-C to clear the input buffer."
+msgstr "დახმარებისთვის გამოიყენეთ \\? ან დააწექით Control-C-ს შეყვანის ბაფერის გასასუფთავებლად."
+
+#: mainloop.c:297
+msgid "Use \\? for help."
+msgstr "დახმარებისთვის გამოიყენეთ \\?."
+
+#: mainloop.c:301
+msgid "You are using psql, the command-line interface to PostgreSQL."
+msgstr "იყენებთ psql-ს, PostgreSQL-ის ბრძანების სტრიქონის ინტერფეისს."
+
+#: mainloop.c:302
+#, c-format
+msgid ""
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help with psql commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+msgstr ""
+"აკრიფეთ:  \\copyright გავრცელების წესებისთვის\n"
+"       \\h SQL-ის ბრძანებების შესახებ დახმარებისთვის\n"
+"       \\? psql-ის ბრძანებების შესახებ დახმარებისთვის\n"
+"       \\g ან დაასრულეთ წერტილმძიმით, მოთხოვნის შესასრულებლად\n"
+"       \\q გასვლა\n"
+
+#: mainloop.c:326
+msgid "Use \\q to quit."
+msgstr "გასასვლელად გამოიყენეთ \\q."
+
+#: mainloop.c:329 mainloop.c:353
+msgid "Use control-D to quit."
+msgstr "გასასვლელა გამოიყენეთ Control-D."
+
+#: mainloop.c:331 mainloop.c:355
+msgid "Use control-C to quit."
+msgstr "გასასვლელა გამოიყენეთ Control-C."
+
+#: mainloop.c:459 mainloop.c:618
+#, c-format
+msgid "query ignored; use \\endif or Ctrl-C to exit current \\if block"
+msgstr "მოთხოვნა იგნორირებულია; მიმდინარე \\if ბლოკიდან გამოსასვლელად გამოიყენეთ \\endif ან Ctrl-C"
+
+#: mainloop.c:636
+#, c-format
+msgid "reached EOF without finding closing \\endif(s)"
+msgstr "მიღწეულია EOF დამხურავი \\endif-ების პოვნის გარეშე"
+
+#: psqlscanslash.l:640
+#, c-format
+msgid "unterminated quoted string"
+msgstr "ბრჭყალებში ჩასმული ციტატის დაუსრულებელი სტრიქონი"
+
+#: psqlscanslash.l:825
+#, c-format
+msgid "%s: out of memory"
+msgstr "%s: არასაკმარისი მეხსიერება"
+
+#: sql_help.c:35 sql_help.c:38 sql_help.c:41 sql_help.c:65 sql_help.c:66
+#: sql_help.c:68 sql_help.c:70 sql_help.c:81 sql_help.c:83 sql_help.c:85
+#: sql_help.c:113 sql_help.c:119 sql_help.c:121 sql_help.c:123 sql_help.c:125
+#: sql_help.c:126 sql_help.c:130 sql_help.c:132 sql_help.c:134 sql_help.c:239
+#: sql_help.c:241 sql_help.c:242 sql_help.c:244 sql_help.c:246 sql_help.c:249
+#: sql_help.c:251 sql_help.c:253 sql_help.c:255 sql_help.c:267 sql_help.c:268
+#: sql_help.c:269 sql_help.c:271 sql_help.c:320 sql_help.c:322 sql_help.c:324
+#: sql_help.c:326 sql_help.c:395 sql_help.c:400 sql_help.c:402 sql_help.c:444
+#: sql_help.c:446 sql_help.c:449 sql_help.c:451 sql_help.c:520 sql_help.c:525
+#: sql_help.c:530 sql_help.c:535 sql_help.c:540 sql_help.c:594 sql_help.c:596
+#: sql_help.c:598 sql_help.c:600 sql_help.c:602 sql_help.c:605 sql_help.c:607
+#: sql_help.c:610 sql_help.c:621 sql_help.c:623 sql_help.c:667 sql_help.c:669
+#: sql_help.c:671 sql_help.c:674 sql_help.c:676 sql_help.c:678 sql_help.c:715
+#: sql_help.c:719 sql_help.c:723 sql_help.c:742 sql_help.c:745 sql_help.c:748
+#: sql_help.c:777 sql_help.c:789 sql_help.c:797 sql_help.c:800 sql_help.c:803
+#: sql_help.c:818 sql_help.c:821 sql_help.c:850 sql_help.c:855 sql_help.c:860
+#: sql_help.c:865 sql_help.c:870 sql_help.c:897 sql_help.c:899 sql_help.c:901
+#: sql_help.c:903 sql_help.c:906 sql_help.c:908 sql_help.c:955 sql_help.c:1001
+#: sql_help.c:1006 sql_help.c:1011 sql_help.c:1016 sql_help.c:1021
+#: sql_help.c:1040 sql_help.c:1051 sql_help.c:1053 sql_help.c:1073
+#: sql_help.c:1083 sql_help.c:1084 sql_help.c:1086 sql_help.c:1088
+#: sql_help.c:1100 sql_help.c:1104 sql_help.c:1106 sql_help.c:1118
+#: sql_help.c:1120 sql_help.c:1122 sql_help.c:1124 sql_help.c:1143
+#: sql_help.c:1145 sql_help.c:1149 sql_help.c:1153 sql_help.c:1157
+#: sql_help.c:1160 sql_help.c:1161 sql_help.c:1162 sql_help.c:1165
+#: sql_help.c:1168 sql_help.c:1170 sql_help.c:1310 sql_help.c:1312
+#: sql_help.c:1315 sql_help.c:1318 sql_help.c:1320 sql_help.c:1322
+#: sql_help.c:1325 sql_help.c:1328 sql_help.c:1445 sql_help.c:1447
+#: sql_help.c:1449 sql_help.c:1452 sql_help.c:1473 sql_help.c:1476
+#: sql_help.c:1479 sql_help.c:1482 sql_help.c:1486 sql_help.c:1488
+#: sql_help.c:1490 sql_help.c:1492 sql_help.c:1506 sql_help.c:1509
+#: sql_help.c:1511 sql_help.c:1513 sql_help.c:1523 sql_help.c:1525
+#: sql_help.c:1535 sql_help.c:1537 sql_help.c:1547 sql_help.c:1550
+#: sql_help.c:1573 sql_help.c:1575 sql_help.c:1577 sql_help.c:1579
+#: sql_help.c:1582 sql_help.c:1584 sql_help.c:1587 sql_help.c:1590
+#: sql_help.c:1641 sql_help.c:1685 sql_help.c:1688 sql_help.c:1690
+#: sql_help.c:1692 sql_help.c:1695 sql_help.c:1697 sql_help.c:1699
+#: sql_help.c:1702 sql_help.c:1754 sql_help.c:1770 sql_help.c:2003
+#: sql_help.c:2072 sql_help.c:2091 sql_help.c:2104 sql_help.c:2162
+#: sql_help.c:2170 sql_help.c:2180 sql_help.c:2207 sql_help.c:2239
+#: sql_help.c:2257 sql_help.c:2285 sql_help.c:2396 sql_help.c:2442
+#: sql_help.c:2467 sql_help.c:2490 sql_help.c:2494 sql_help.c:2528
+#: sql_help.c:2548 sql_help.c:2570 sql_help.c:2584 sql_help.c:2605
+#: sql_help.c:2634 sql_help.c:2669 sql_help.c:2694 sql_help.c:2741
+#: sql_help.c:3036 sql_help.c:3049 sql_help.c:3066 sql_help.c:3082
+#: sql_help.c:3122 sql_help.c:3176 sql_help.c:3180 sql_help.c:3182
+#: sql_help.c:3189 sql_help.c:3208 sql_help.c:3235 sql_help.c:3270
+#: sql_help.c:3282 sql_help.c:3291 sql_help.c:3335 sql_help.c:3349
+#: sql_help.c:3377 sql_help.c:3385 sql_help.c:3397 sql_help.c:3407
+#: sql_help.c:3415 sql_help.c:3423 sql_help.c:3431 sql_help.c:3439
+#: sql_help.c:3448 sql_help.c:3459 sql_help.c:3467 sql_help.c:3475
+#: sql_help.c:3483 sql_help.c:3491 sql_help.c:3501 sql_help.c:3510
+#: sql_help.c:3519 sql_help.c:3527 sql_help.c:3537 sql_help.c:3548
+#: sql_help.c:3556 sql_help.c:3565 sql_help.c:3576 sql_help.c:3585
+#: sql_help.c:3593 sql_help.c:3601 sql_help.c:3609 sql_help.c:3617
+#: sql_help.c:3625 sql_help.c:3633 sql_help.c:3641 sql_help.c:3649
+#: sql_help.c:3657 sql_help.c:3665 sql_help.c:3682 sql_help.c:3691
+#: sql_help.c:3699 sql_help.c:3716 sql_help.c:3731 sql_help.c:4043
+#: sql_help.c:4153 sql_help.c:4182 sql_help.c:4198 sql_help.c:4200
+#: sql_help.c:4703 sql_help.c:4751 sql_help.c:4909
+msgid "name"
+msgstr "სახელი"
+
+#: sql_help.c:36 sql_help.c:39 sql_help.c:42 sql_help.c:331 sql_help.c:1851
+#: sql_help.c:3350 sql_help.c:4471
+msgid "aggregate_signature"
+msgstr "აგრეგატის სახელმოწერა"
+
+#: sql_help.c:37 sql_help.c:67 sql_help.c:82 sql_help.c:120 sql_help.c:254
+#: sql_help.c:272 sql_help.c:403 sql_help.c:450 sql_help.c:529 sql_help.c:577
+#: sql_help.c:595 sql_help.c:622 sql_help.c:675 sql_help.c:744 sql_help.c:799
+#: sql_help.c:820 sql_help.c:859 sql_help.c:909 sql_help.c:956 sql_help.c:1010
+#: sql_help.c:1042 sql_help.c:1052 sql_help.c:1087 sql_help.c:1107
+#: sql_help.c:1121 sql_help.c:1171 sql_help.c:1319 sql_help.c:1446
+#: sql_help.c:1489 sql_help.c:1510 sql_help.c:1524 sql_help.c:1536
+#: sql_help.c:1549 sql_help.c:1576 sql_help.c:1642 sql_help.c:1696
+msgid "new_name"
+msgstr "ახალი_სახელი"
+
+#: sql_help.c:40 sql_help.c:69 sql_help.c:84 sql_help.c:122 sql_help.c:252
+#: sql_help.c:270 sql_help.c:401 sql_help.c:486 sql_help.c:534 sql_help.c:624
+#: sql_help.c:633 sql_help.c:698 sql_help.c:718 sql_help.c:747 sql_help.c:802
+#: sql_help.c:864 sql_help.c:907 sql_help.c:1015 sql_help.c:1054
+#: sql_help.c:1085 sql_help.c:1105 sql_help.c:1119 sql_help.c:1169
+#: sql_help.c:1383 sql_help.c:1448 sql_help.c:1491 sql_help.c:1512
+#: sql_help.c:1574 sql_help.c:1691 sql_help.c:3022
+msgid "new_owner"
+msgstr "ახალი_მფლობელი"
+
+#: sql_help.c:43 sql_help.c:71 sql_help.c:86 sql_help.c:256 sql_help.c:323
+#: sql_help.c:452 sql_help.c:539 sql_help.c:677 sql_help.c:722 sql_help.c:750
+#: sql_help.c:805 sql_help.c:869 sql_help.c:1020 sql_help.c:1089
+#: sql_help.c:1123 sql_help.c:1321 sql_help.c:1493 sql_help.c:1514
+#: sql_help.c:1526 sql_help.c:1538 sql_help.c:1578 sql_help.c:1698
+msgid "new_schema"
+msgstr "ახალი_სქემა"
+
+#: sql_help.c:44 sql_help.c:1915 sql_help.c:3351 sql_help.c:4500
+msgid "where aggregate_signature is:"
+msgstr "სადაც aggregate_signature არის:"
+
+#: sql_help.c:45 sql_help.c:48 sql_help.c:51 sql_help.c:341 sql_help.c:354
+#: sql_help.c:358 sql_help.c:374 sql_help.c:377 sql_help.c:380 sql_help.c:521
+#: sql_help.c:526 sql_help.c:531 sql_help.c:536 sql_help.c:541 sql_help.c:851
+#: sql_help.c:856 sql_help.c:861 sql_help.c:866 sql_help.c:871 sql_help.c:1002
+#: sql_help.c:1007 sql_help.c:1012 sql_help.c:1017 sql_help.c:1022
+#: sql_help.c:1869 sql_help.c:1886 sql_help.c:1892 sql_help.c:1916
+#: sql_help.c:1919 sql_help.c:1922 sql_help.c:2073 sql_help.c:2092
+#: sql_help.c:2095 sql_help.c:2397 sql_help.c:2606 sql_help.c:3352
+#: sql_help.c:3355 sql_help.c:3358 sql_help.c:3449 sql_help.c:3538
+#: sql_help.c:3566 sql_help.c:3918 sql_help.c:4370 sql_help.c:4477
+#: sql_help.c:4484 sql_help.c:4490 sql_help.c:4501 sql_help.c:4504
+#: sql_help.c:4507
+msgid "argmode"
+msgstr "არგრეჟიმი"
+
+#: sql_help.c:46 sql_help.c:49 sql_help.c:52 sql_help.c:342 sql_help.c:355
+#: sql_help.c:359 sql_help.c:375 sql_help.c:378 sql_help.c:381 sql_help.c:522
+#: sql_help.c:527 sql_help.c:532 sql_help.c:537 sql_help.c:542 sql_help.c:852
+#: sql_help.c:857 sql_help.c:862 sql_help.c:867 sql_help.c:872 sql_help.c:1003
+#: sql_help.c:1008 sql_help.c:1013 sql_help.c:1018 sql_help.c:1023
+#: sql_help.c:1870 sql_help.c:1887 sql_help.c:1893 sql_help.c:1917
+#: sql_help.c:1920 sql_help.c:1923 sql_help.c:2074 sql_help.c:2093
+#: sql_help.c:2096 sql_help.c:2398 sql_help.c:2607 sql_help.c:3353
+#: sql_help.c:3356 sql_help.c:3359 sql_help.c:3450 sql_help.c:3539
+#: sql_help.c:3567 sql_help.c:4478 sql_help.c:4485 sql_help.c:4491
+#: sql_help.c:4502 sql_help.c:4505 sql_help.c:4508
+msgid "argname"
+msgstr "არგსახელი"
+
+#: sql_help.c:47 sql_help.c:50 sql_help.c:53 sql_help.c:343 sql_help.c:356
+#: sql_help.c:360 sql_help.c:376 sql_help.c:379 sql_help.c:382 sql_help.c:523
+#: sql_help.c:528 sql_help.c:533 sql_help.c:538 sql_help.c:543 sql_help.c:853
+#: sql_help.c:858 sql_help.c:863 sql_help.c:868 sql_help.c:873 sql_help.c:1004
+#: sql_help.c:1009 sql_help.c:1014 sql_help.c:1019 sql_help.c:1024
+#: sql_help.c:1871 sql_help.c:1888 sql_help.c:1894 sql_help.c:1918
+#: sql_help.c:1921 sql_help.c:1924 sql_help.c:2399 sql_help.c:2608
+#: sql_help.c:3354 sql_help.c:3357 sql_help.c:3360 sql_help.c:3451
+#: sql_help.c:3540 sql_help.c:3568 sql_help.c:4479 sql_help.c:4486
+#: sql_help.c:4492 sql_help.c:4503 sql_help.c:4506 sql_help.c:4509
+msgid "argtype"
+msgstr "არგტიპი"
+
+#: sql_help.c:114 sql_help.c:398 sql_help.c:475 sql_help.c:487 sql_help.c:950
+#: sql_help.c:1102 sql_help.c:1507 sql_help.c:1636 sql_help.c:1669
+#: sql_help.c:1722 sql_help.c:1786 sql_help.c:1973 sql_help.c:1980
+#: sql_help.c:2288 sql_help.c:2338 sql_help.c:2345 sql_help.c:2354
+#: sql_help.c:2443 sql_help.c:2670 sql_help.c:2763 sql_help.c:3051
+#: sql_help.c:3236 sql_help.c:3258 sql_help.c:3398 sql_help.c:3754
+#: sql_help.c:3962 sql_help.c:4197 sql_help.c:4199 sql_help.c:4976
+msgid "option"
+msgstr "მორგება"
+
+#: sql_help.c:115 sql_help.c:951 sql_help.c:1637 sql_help.c:2444
+#: sql_help.c:2671 sql_help.c:3237 sql_help.c:3399
+msgid "where option can be:"
+msgstr "სადაც option შეიძლება იყოს:"
+
+#: sql_help.c:116 sql_help.c:2220
+msgid "allowconn"
+msgstr "შეერთ_ნებართვ"
+
+#: sql_help.c:117 sql_help.c:952 sql_help.c:1638 sql_help.c:2221
+#: sql_help.c:2445 sql_help.c:2672 sql_help.c:3238
+msgid "connlimit"
+msgstr "შეერთ_ლიმიტი"
+
+#: sql_help.c:118 sql_help.c:2222
+msgid "istemplate"
+msgstr "შაბლონია"
+
+#: sql_help.c:124 sql_help.c:612 sql_help.c:680 sql_help.c:694 sql_help.c:1324
+#: sql_help.c:1376 sql_help.c:4203
+msgid "new_tablespace"
+msgstr "ცხრილების_ახალი_სივრცე"
+
+#: sql_help.c:127 sql_help.c:131 sql_help.c:133 sql_help.c:549 sql_help.c:551
+#: sql_help.c:552 sql_help.c:876 sql_help.c:878 sql_help.c:879 sql_help.c:959
+#: sql_help.c:964 sql_help.c:967 sql_help.c:1029 sql_help.c:1031
+#: sql_help.c:1032 sql_help.c:1182 sql_help.c:1185 sql_help.c:1645
+#: sql_help.c:1650 sql_help.c:1653 sql_help.c:2409 sql_help.c:2612
+#: sql_help.c:3930 sql_help.c:4221 sql_help.c:4382 sql_help.c:4691
+msgid "configuration_parameter"
+msgstr "კონფიგურაციის_პარამეტრი"
+
+#: sql_help.c:128 sql_help.c:129 sql_help.c:399 sql_help.c:470 sql_help.c:476
+#: sql_help.c:488 sql_help.c:550 sql_help.c:604 sql_help.c:686 sql_help.c:696
+#: sql_help.c:877 sql_help.c:905 sql_help.c:960 sql_help.c:961 sql_help.c:1030
+#: sql_help.c:1103 sql_help.c:1148 sql_help.c:1152 sql_help.c:1156
+#: sql_help.c:1159 sql_help.c:1164 sql_help.c:1167 sql_help.c:1183
+#: sql_help.c:1184 sql_help.c:1355 sql_help.c:1378 sql_help.c:1426
+#: sql_help.c:1451 sql_help.c:1508 sql_help.c:1592 sql_help.c:1646
+#: sql_help.c:1647 sql_help.c:1670 sql_help.c:2289 sql_help.c:2339
+#: sql_help.c:2346 sql_help.c:2355 sql_help.c:2410 sql_help.c:2411
+#: sql_help.c:2475 sql_help.c:2478 sql_help.c:2512 sql_help.c:2613
+#: sql_help.c:2614 sql_help.c:2637 sql_help.c:2764 sql_help.c:2803
+#: sql_help.c:2913 sql_help.c:2926 sql_help.c:2940 sql_help.c:2981
+#: sql_help.c:3008 sql_help.c:3025 sql_help.c:3052 sql_help.c:3259
+#: sql_help.c:3963 sql_help.c:4692 sql_help.c:4693 sql_help.c:4694
+#: sql_help.c:4695
+msgid "value"
+msgstr "მნიშვნელობა"
+
+#: sql_help.c:201
+msgid "target_role"
+msgstr "სამიზნე_როლი"
+
+#: sql_help.c:202 sql_help.c:914 sql_help.c:2273 sql_help.c:2642
+#: sql_help.c:2719 sql_help.c:2724 sql_help.c:3893 sql_help.c:3902
+#: sql_help.c:3921 sql_help.c:3933 sql_help.c:4345 sql_help.c:4354
+#: sql_help.c:4373 sql_help.c:4385
+msgid "schema_name"
+msgstr "სქემის_სახელი"
+
+#: sql_help.c:203
+msgid "abbreviated_grant_or_revoke"
+msgstr "შეთავაზება_GRANT_ან_REVOKE"
+
+#: sql_help.c:204
+msgid "where abbreviated_grant_or_revoke is one of:"
+msgstr "სადაც abbreviated_grant_or_revoke ერთ-ერთია სიიდან:"
+
+#: sql_help.c:205 sql_help.c:206 sql_help.c:207 sql_help.c:208 sql_help.c:209
+#: sql_help.c:210 sql_help.c:211 sql_help.c:212 sql_help.c:213 sql_help.c:214
+#: sql_help.c:575 sql_help.c:611 sql_help.c:679 sql_help.c:823 sql_help.c:971
+#: sql_help.c:1323 sql_help.c:1657 sql_help.c:2448 sql_help.c:2449
+#: sql_help.c:2450 sql_help.c:2451 sql_help.c:2452 sql_help.c:2586
+#: sql_help.c:2675 sql_help.c:2676 sql_help.c:2677 sql_help.c:2678
+#: sql_help.c:2679 sql_help.c:3241 sql_help.c:3242 sql_help.c:3243
+#: sql_help.c:3244 sql_help.c:3245 sql_help.c:3942 sql_help.c:3946
+#: sql_help.c:4394 sql_help.c:4398 sql_help.c:4713
+msgid "role_name"
+msgstr "როლის_სახელი"
+
+#: sql_help.c:240 sql_help.c:463 sql_help.c:913 sql_help.c:1339 sql_help.c:1341
+#: sql_help.c:1393 sql_help.c:1405 sql_help.c:1430 sql_help.c:1687
+#: sql_help.c:2242 sql_help.c:2246 sql_help.c:2358 sql_help.c:2363
+#: sql_help.c:2471 sql_help.c:2641 sql_help.c:2780 sql_help.c:2785
+#: sql_help.c:2787 sql_help.c:2908 sql_help.c:2921 sql_help.c:2935
+#: sql_help.c:2944 sql_help.c:2956 sql_help.c:2985 sql_help.c:3994
+#: sql_help.c:4009 sql_help.c:4011 sql_help.c:4098 sql_help.c:4101
+#: sql_help.c:4103 sql_help.c:4564 sql_help.c:4565 sql_help.c:4574
+#: sql_help.c:4621 sql_help.c:4622 sql_help.c:4623 sql_help.c:4624
+#: sql_help.c:4625 sql_help.c:4626 sql_help.c:4666 sql_help.c:4667
+#: sql_help.c:4672 sql_help.c:4677 sql_help.c:4821 sql_help.c:4822
+#: sql_help.c:4831 sql_help.c:4878 sql_help.c:4879 sql_help.c:4880
+#: sql_help.c:4881 sql_help.c:4882 sql_help.c:4883 sql_help.c:4937
+#: sql_help.c:4939 sql_help.c:5007 sql_help.c:5067 sql_help.c:5068
+#: sql_help.c:5077 sql_help.c:5124 sql_help.c:5125 sql_help.c:5126
+#: sql_help.c:5127 sql_help.c:5128 sql_help.c:5129
+msgid "expression"
+msgstr "გამსახულება"
+
+#: sql_help.c:243
+msgid "domain_constraint"
+msgstr "დომენის_შეზღუდვა"
+
+#: sql_help.c:245 sql_help.c:247 sql_help.c:250 sql_help.c:478 sql_help.c:479
+#: sql_help.c:1316 sql_help.c:1363 sql_help.c:1364 sql_help.c:1365
+#: sql_help.c:1392 sql_help.c:1404 sql_help.c:1421 sql_help.c:1857
+#: sql_help.c:1859 sql_help.c:2245 sql_help.c:2357 sql_help.c:2362
+#: sql_help.c:2943 sql_help.c:2955 sql_help.c:4006
+msgid "constraint_name"
+msgstr "შეზღუდვის_სახელი"
+
+#: sql_help.c:248 sql_help.c:1317
+msgid "new_constraint_name"
+msgstr "ახალი_შეზღუდვის_სახელი"
+
+#: sql_help.c:321 sql_help.c:1101
+msgid "new_version"
+msgstr "ახალი_მნიშვნელობა"
+
+#: sql_help.c:325 sql_help.c:327
+msgid "member_object"
+msgstr "წევრი_ობიექტი"
+
+#: sql_help.c:328
+msgid "where member_object is:"
+msgstr "სადაც member_object არის:"
+
+#: sql_help.c:329 sql_help.c:334 sql_help.c:335 sql_help.c:336 sql_help.c:337
+#: sql_help.c:338 sql_help.c:339 sql_help.c:344 sql_help.c:348 sql_help.c:350
+#: sql_help.c:352 sql_help.c:361 sql_help.c:362 sql_help.c:363 sql_help.c:364
+#: sql_help.c:365 sql_help.c:366 sql_help.c:367 sql_help.c:368 sql_help.c:371
+#: sql_help.c:372 sql_help.c:1849 sql_help.c:1854 sql_help.c:1861
+#: sql_help.c:1862 sql_help.c:1863 sql_help.c:1864 sql_help.c:1865
+#: sql_help.c:1866 sql_help.c:1867 sql_help.c:1872 sql_help.c:1874
+#: sql_help.c:1878 sql_help.c:1880 sql_help.c:1884 sql_help.c:1889
+#: sql_help.c:1890 sql_help.c:1897 sql_help.c:1898 sql_help.c:1899
+#: sql_help.c:1900 sql_help.c:1901 sql_help.c:1902 sql_help.c:1903
+#: sql_help.c:1904 sql_help.c:1905 sql_help.c:1906 sql_help.c:1907
+#: sql_help.c:1912 sql_help.c:1913 sql_help.c:4467 sql_help.c:4472
+#: sql_help.c:4473 sql_help.c:4474 sql_help.c:4475 sql_help.c:4481
+#: sql_help.c:4482 sql_help.c:4487 sql_help.c:4488 sql_help.c:4493
+#: sql_help.c:4494 sql_help.c:4495 sql_help.c:4496 sql_help.c:4497
+#: sql_help.c:4498
+msgid "object_name"
+msgstr "ობიექტის_სახელი"
+
+#: sql_help.c:330 sql_help.c:1850 sql_help.c:4470
+msgid "aggregate_name"
+msgstr "აგრეგატის სახელი"
+
+#: sql_help.c:332 sql_help.c:1852 sql_help.c:2138 sql_help.c:2142
+#: sql_help.c:2144 sql_help.c:3368
+msgid "source_type"
+msgstr "წყაროს_ტიპი"
+
+#: sql_help.c:333 sql_help.c:1853 sql_help.c:2139 sql_help.c:2143
+#: sql_help.c:2145 sql_help.c:3369
+msgid "target_type"
+msgstr "სამიზნის_ტიპი"
+
+#: sql_help.c:340 sql_help.c:787 sql_help.c:1868 sql_help.c:2140
+#: sql_help.c:2183 sql_help.c:2261 sql_help.c:2529 sql_help.c:2560
+#: sql_help.c:3128 sql_help.c:4369 sql_help.c:4476 sql_help.c:4593
+#: sql_help.c:4597 sql_help.c:4601 sql_help.c:4604 sql_help.c:4850
+#: sql_help.c:4854 sql_help.c:4858 sql_help.c:4861 sql_help.c:5096
+#: sql_help.c:5100 sql_help.c:5104 sql_help.c:5107
+msgid "function_name"
+msgstr "ფუნქციის_სახელი"
+
+#: sql_help.c:345 sql_help.c:780 sql_help.c:1875 sql_help.c:2553
+msgid "operator_name"
+msgstr "ოპერატორის_სახელი"
+
+#: sql_help.c:346 sql_help.c:716 sql_help.c:720 sql_help.c:724 sql_help.c:1876
+#: sql_help.c:2530 sql_help.c:3492
+msgid "left_type"
+msgstr "მარჯვენა ტიპი"
+
+#: sql_help.c:347 sql_help.c:717 sql_help.c:721 sql_help.c:725 sql_help.c:1877
+#: sql_help.c:2531 sql_help.c:3493
+msgid "right_type"
+msgstr "სწორი_ტიპი"
+
+#: sql_help.c:349 sql_help.c:351 sql_help.c:743 sql_help.c:746 sql_help.c:749
+#: sql_help.c:778 sql_help.c:790 sql_help.c:798 sql_help.c:801 sql_help.c:804
+#: sql_help.c:1410 sql_help.c:1879 sql_help.c:1881 sql_help.c:2550
+#: sql_help.c:2571 sql_help.c:2961 sql_help.c:3502 sql_help.c:3511
+msgid "index_method"
+msgstr "ინდექსის_მეთოდი"
+
+#: sql_help.c:353 sql_help.c:1885 sql_help.c:4483
+msgid "procedure_name"
+msgstr "პროცედურის სახელი"
+
+#: sql_help.c:357 sql_help.c:1891 sql_help.c:3917 sql_help.c:4489
+msgid "routine_name"
+msgstr "ქვეპროგრამის სახელი"
+
+#: sql_help.c:369 sql_help.c:1382 sql_help.c:1908 sql_help.c:2405
+#: sql_help.c:2611 sql_help.c:2916 sql_help.c:3095 sql_help.c:3673
+#: sql_help.c:3939 sql_help.c:4391
+msgid "type_name"
+msgstr "ტიპის სახელი"
+
+#: sql_help.c:370 sql_help.c:1909 sql_help.c:2404 sql_help.c:2610
+#: sql_help.c:3096 sql_help.c:3326 sql_help.c:3674 sql_help.c:3924
+#: sql_help.c:4376
+msgid "lang_name"
+msgstr "ენის_სახელი"
+
+#: sql_help.c:373
+msgid "and aggregate_signature is:"
+msgstr "და აგრეგატული_ხელმოწერა არის:"
+
+#: sql_help.c:396 sql_help.c:2005 sql_help.c:2286
+msgid "handler_function"
+msgstr "დამმუშავებელი_ფუნქცია"
+
+#: sql_help.c:397 sql_help.c:2287
+msgid "validator_function"
+msgstr "შემმოწმებელი_ფუნქცია"
+
+#: sql_help.c:445 sql_help.c:524 sql_help.c:668 sql_help.c:854 sql_help.c:1005
+#: sql_help.c:1311 sql_help.c:1583
+msgid "action"
+msgstr "ქმედება"
+
+#: sql_help.c:447 sql_help.c:454 sql_help.c:458 sql_help.c:459 sql_help.c:462
+#: sql_help.c:464 sql_help.c:465 sql_help.c:466 sql_help.c:468 sql_help.c:471
+#: sql_help.c:473 sql_help.c:474 sql_help.c:672 sql_help.c:682 sql_help.c:684
+#: sql_help.c:687 sql_help.c:689 sql_help.c:690 sql_help.c:912 sql_help.c:1082
+#: sql_help.c:1313 sql_help.c:1331 sql_help.c:1335 sql_help.c:1336
+#: sql_help.c:1340 sql_help.c:1342 sql_help.c:1343 sql_help.c:1344
+#: sql_help.c:1345 sql_help.c:1347 sql_help.c:1350 sql_help.c:1351
+#: sql_help.c:1353 sql_help.c:1356 sql_help.c:1358 sql_help.c:1359
+#: sql_help.c:1406 sql_help.c:1408 sql_help.c:1415 sql_help.c:1424
+#: sql_help.c:1429 sql_help.c:1433 sql_help.c:1434 sql_help.c:1686
+#: sql_help.c:1689 sql_help.c:1693 sql_help.c:1731 sql_help.c:1856
+#: sql_help.c:1970 sql_help.c:1976 sql_help.c:1989 sql_help.c:1990
+#: sql_help.c:1991 sql_help.c:2336 sql_help.c:2349 sql_help.c:2402
+#: sql_help.c:2470 sql_help.c:2476 sql_help.c:2509 sql_help.c:2640
+#: sql_help.c:2749 sql_help.c:2784 sql_help.c:2786 sql_help.c:2898
+#: sql_help.c:2907 sql_help.c:2917 sql_help.c:2920 sql_help.c:2930
+#: sql_help.c:2934 sql_help.c:2957 sql_help.c:2959 sql_help.c:2966
+#: sql_help.c:2979 sql_help.c:2984 sql_help.c:2988 sql_help.c:2989
+#: sql_help.c:3005 sql_help.c:3131 sql_help.c:3271 sql_help.c:3896
+#: sql_help.c:3897 sql_help.c:3993 sql_help.c:4008 sql_help.c:4010
+#: sql_help.c:4012 sql_help.c:4097 sql_help.c:4100 sql_help.c:4102
+#: sql_help.c:4348 sql_help.c:4349 sql_help.c:4469 sql_help.c:4630
+#: sql_help.c:4636 sql_help.c:4638 sql_help.c:4887 sql_help.c:4893
+#: sql_help.c:4895 sql_help.c:4936 sql_help.c:4938 sql_help.c:4940
+#: sql_help.c:4995 sql_help.c:5133 sql_help.c:5139 sql_help.c:5141
+msgid "column_name"
+msgstr "სვეტის_სახელი"
+
+#: sql_help.c:448 sql_help.c:673 sql_help.c:1314 sql_help.c:1694
+msgid "new_column_name"
+msgstr "ახალი_სვეტის_სახელი"
+
+#: sql_help.c:453 sql_help.c:545 sql_help.c:681 sql_help.c:875 sql_help.c:1026
+#: sql_help.c:1330 sql_help.c:1593
+msgid "where action is one of:"
+msgstr "და როცა ქმედება არის ერთერთი სიიდან:"
+
+#: sql_help.c:455 sql_help.c:460 sql_help.c:1074 sql_help.c:1332
+#: sql_help.c:1337 sql_help.c:1595 sql_help.c:1599 sql_help.c:2240
+#: sql_help.c:2337 sql_help.c:2549 sql_help.c:2742 sql_help.c:2899
+#: sql_help.c:3178 sql_help.c:4154
+msgid "data_type"
+msgstr "მონაცემების_ტიპი"
+
+#: sql_help.c:456 sql_help.c:461 sql_help.c:1333 sql_help.c:1338
+#: sql_help.c:1596 sql_help.c:1600 sql_help.c:2241 sql_help.c:2340
+#: sql_help.c:2472 sql_help.c:2901 sql_help.c:2909 sql_help.c:2922
+#: sql_help.c:2936 sql_help.c:3179 sql_help.c:3185 sql_help.c:4003
+msgid "collation"
+msgstr "კოლაცია"
+
+#: sql_help.c:457 sql_help.c:1334 sql_help.c:2341 sql_help.c:2350
+#: sql_help.c:2902 sql_help.c:2918 sql_help.c:2931
+msgid "column_constraint"
+msgstr "სვეტის_შეზღუდვა"
+
+#: sql_help.c:467 sql_help.c:609 sql_help.c:683 sql_help.c:1352 sql_help.c:4989
+msgid "integer"
+msgstr "მთელი რიცხვი"
+
+#: sql_help.c:469 sql_help.c:472 sql_help.c:685 sql_help.c:688 sql_help.c:1354
+#: sql_help.c:1357
+msgid "attribute_option"
+msgstr "ატრიბუტის პარამეტრი"
+
+#: sql_help.c:477 sql_help.c:1361 sql_help.c:2342 sql_help.c:2351
+#: sql_help.c:2903 sql_help.c:2919 sql_help.c:2932
+msgid "table_constraint"
+msgstr "ცხრილის_შეზღუდვები"
+
+#: sql_help.c:480 sql_help.c:481 sql_help.c:482 sql_help.c:483 sql_help.c:1366
+#: sql_help.c:1367 sql_help.c:1368 sql_help.c:1369 sql_help.c:1910
+msgid "trigger_name"
+msgstr "ტრიგერის_სახელი"
+
+#: sql_help.c:484 sql_help.c:485 sql_help.c:1380 sql_help.c:1381
+#: sql_help.c:2343 sql_help.c:2348 sql_help.c:2906 sql_help.c:2929
+msgid "parent_table"
+msgstr "მშობელი_ცხრილი"
+
+#: sql_help.c:544 sql_help.c:601 sql_help.c:670 sql_help.c:874 sql_help.c:1025
+#: sql_help.c:1552 sql_help.c:2272
+msgid "extension_name"
+msgstr "გაფართოების სახელი"
+
+#: sql_help.c:546 sql_help.c:1027 sql_help.c:2406
+msgid "execution_cost"
+msgstr "გაშვების_ფასი"
+
+#: sql_help.c:547 sql_help.c:1028 sql_help.c:2407
+msgid "result_rows"
+msgstr "მწკრივები_შედეგში"
+
+#: sql_help.c:548 sql_help.c:2408
+msgid "support_function"
+msgstr "დამხმარე_ფუნქცია"
+
+#: sql_help.c:570 sql_help.c:572 sql_help.c:949 sql_help.c:957 sql_help.c:962
+#: sql_help.c:965 sql_help.c:968 sql_help.c:1635 sql_help.c:1643
+#: sql_help.c:1648 sql_help.c:1651 sql_help.c:1654 sql_help.c:2720
+#: sql_help.c:2722 sql_help.c:2725 sql_help.c:2726 sql_help.c:3894
+#: sql_help.c:3895 sql_help.c:3899 sql_help.c:3900 sql_help.c:3903
+#: sql_help.c:3904 sql_help.c:3906 sql_help.c:3907 sql_help.c:3909
+#: sql_help.c:3910 sql_help.c:3912 sql_help.c:3913 sql_help.c:3915
+#: sql_help.c:3916 sql_help.c:3922 sql_help.c:3923 sql_help.c:3925
+#: sql_help.c:3926 sql_help.c:3928 sql_help.c:3929 sql_help.c:3931
+#: sql_help.c:3932 sql_help.c:3934 sql_help.c:3935 sql_help.c:3937
+#: sql_help.c:3938 sql_help.c:3940 sql_help.c:3941 sql_help.c:3943
+#: sql_help.c:3944 sql_help.c:4346 sql_help.c:4347 sql_help.c:4351
+#: sql_help.c:4352 sql_help.c:4355 sql_help.c:4356 sql_help.c:4358
+#: sql_help.c:4359 sql_help.c:4361 sql_help.c:4362 sql_help.c:4364
+#: sql_help.c:4365 sql_help.c:4367 sql_help.c:4368 sql_help.c:4374
+#: sql_help.c:4375 sql_help.c:4377 sql_help.c:4378 sql_help.c:4380
+#: sql_help.c:4381 sql_help.c:4383 sql_help.c:4384 sql_help.c:4386
+#: sql_help.c:4387 sql_help.c:4389 sql_help.c:4390 sql_help.c:4392
+#: sql_help.c:4393 sql_help.c:4395 sql_help.c:4396
+msgid "role_specification"
+msgstr "როლის_შემოწმება"
+
+#: sql_help.c:571 sql_help.c:573 sql_help.c:1667 sql_help.c:2208
+#: sql_help.c:2728 sql_help.c:3256 sql_help.c:3707 sql_help.c:4723
+msgid "user_name"
+msgstr "მომხმარებლის_სახელი"
+
+#: sql_help.c:574 sql_help.c:970 sql_help.c:1656 sql_help.c:2727
+#: sql_help.c:3945 sql_help.c:4397
+msgid "where role_specification can be:"
+msgstr "სადაც როლის_სპეციფიკაცია შეიძლება იყოს ერთ-ერთი სიიდან:"
+
+#: sql_help.c:576
+msgid "group_name"
+msgstr "ჯგუფის_სახელი"
+
+#: sql_help.c:597 sql_help.c:1427 sql_help.c:2219 sql_help.c:2479
+#: sql_help.c:2513 sql_help.c:2914 sql_help.c:2927 sql_help.c:2941
+#: sql_help.c:2982 sql_help.c:3009 sql_help.c:3021 sql_help.c:3936
+#: sql_help.c:4388
+msgid "tablespace_name"
+msgstr "ცხრილების_სივრცის_სახელი"
+
+#: sql_help.c:599 sql_help.c:692 sql_help.c:1374 sql_help.c:1384
+#: sql_help.c:1422 sql_help.c:1785 sql_help.c:1788
+msgid "index_name"
+msgstr "ინდექსის_სახელი"
+
+#: sql_help.c:603 sql_help.c:606 sql_help.c:695 sql_help.c:697 sql_help.c:1377
+#: sql_help.c:1379 sql_help.c:1425 sql_help.c:2477 sql_help.c:2511
+#: sql_help.c:2912 sql_help.c:2925 sql_help.c:2939 sql_help.c:2980
+#: sql_help.c:3007
+msgid "storage_parameter"
+msgstr "საცავის_პარამეტრი"
+
+#: sql_help.c:608
+msgid "column_number"
+msgstr "სვეტის_ნომერი"
+
+#: sql_help.c:632 sql_help.c:1873 sql_help.c:4480
+msgid "large_object_oid"
+msgstr "დიდი_ობიექტის_oid"
+
+#: sql_help.c:691 sql_help.c:1360 sql_help.c:2900
+msgid "compression_method"
+msgstr "შეკუმშვის_მეთოდი"
+
+#: sql_help.c:693 sql_help.c:1375
+msgid "new_access_method"
+msgstr "წვდომის_ახალი_მეთოდი"
+
+#: sql_help.c:726 sql_help.c:2534
+msgid "res_proc"
+msgstr "შეზღუდვის_პროცედურა"
+
+#: sql_help.c:727 sql_help.c:2535
+msgid "join_proc"
+msgstr "შეერთების_პროცედურა"
+
+#: sql_help.c:779 sql_help.c:791 sql_help.c:2552
+msgid "strategy_number"
+msgstr "სტრატეგიის_ნომერი"
+
+#: sql_help.c:781 sql_help.c:782 sql_help.c:785 sql_help.c:786 sql_help.c:792
+#: sql_help.c:793 sql_help.c:795 sql_help.c:796 sql_help.c:2554 sql_help.c:2555
+#: sql_help.c:2558 sql_help.c:2559
+msgid "op_type"
+msgstr "ოპ_ტიპი"
+
+#: sql_help.c:783 sql_help.c:2556
+msgid "sort_family_name"
+msgstr "დალაგების_ოჯახის_სახელი"
+
+#: sql_help.c:784 sql_help.c:794 sql_help.c:2557
+msgid "support_number"
+msgstr "დამხმარე_რიცხვი"
+
+#: sql_help.c:788 sql_help.c:2141 sql_help.c:2561 sql_help.c:3098
+#: sql_help.c:3100
+msgid "argument_type"
+msgstr "არგუმენტის_ტიპი"
+
+#: sql_help.c:819 sql_help.c:822 sql_help.c:911 sql_help.c:1041 sql_help.c:1081
+#: sql_help.c:1548 sql_help.c:1551 sql_help.c:1730 sql_help.c:1784
+#: sql_help.c:1787 sql_help.c:1858 sql_help.c:1883 sql_help.c:1896
+#: sql_help.c:1911 sql_help.c:1969 sql_help.c:1975 sql_help.c:2335
+#: sql_help.c:2347 sql_help.c:2468 sql_help.c:2508 sql_help.c:2585
+#: sql_help.c:2639 sql_help.c:2696 sql_help.c:2748 sql_help.c:2781
+#: sql_help.c:2788 sql_help.c:2897 sql_help.c:2915 sql_help.c:2928
+#: sql_help.c:3004 sql_help.c:3124 sql_help.c:3305 sql_help.c:3528
+#: sql_help.c:3577 sql_help.c:3683 sql_help.c:3892 sql_help.c:3898
+#: sql_help.c:3959 sql_help.c:3991 sql_help.c:4344 sql_help.c:4350
+#: sql_help.c:4468 sql_help.c:4579 sql_help.c:4581 sql_help.c:4643
+#: sql_help.c:4682 sql_help.c:4836 sql_help.c:4838 sql_help.c:4900
+#: sql_help.c:4934 sql_help.c:4994 sql_help.c:5082 sql_help.c:5084
+#: sql_help.c:5146
+msgid "table_name"
+msgstr "ცხრილის_სახელი"
+
+#: sql_help.c:824 sql_help.c:2587
+msgid "using_expression"
+msgstr "გამოყენების_გამოხატულება"
+
+#: sql_help.c:825 sql_help.c:2588
+msgid "check_expression"
+msgstr "გამოსახულების_შემოწმება"
+
+#: sql_help.c:898 sql_help.c:900 sql_help.c:902 sql_help.c:2635
+msgid "publication_object"
+msgstr "გამოცემის_ობიექტი"
+
+#: sql_help.c:904 sql_help.c:2636
+msgid "publication_parameter"
+msgstr "გამოცემის_პარამეტრი"
+
+#: sql_help.c:910 sql_help.c:2638
+msgid "where publication_object is one of:"
+msgstr "სადაც პუბლიკაციის_ობიექტი ერთერთია სიიდან:"
+
+#: sql_help.c:953 sql_help.c:1639 sql_help.c:2446 sql_help.c:2673
+#: sql_help.c:3239
+msgid "password"
+msgstr "პაროლი"
+
+#: sql_help.c:954 sql_help.c:1640 sql_help.c:2447 sql_help.c:2674
+#: sql_help.c:3240
+msgid "timestamp"
+msgstr "დროის შტამპი"
+
+#: sql_help.c:958 sql_help.c:963 sql_help.c:966 sql_help.c:969 sql_help.c:1644
+#: sql_help.c:1649 sql_help.c:1652 sql_help.c:1655 sql_help.c:3905
+#: sql_help.c:4357
+msgid "database_name"
+msgstr "ბაზის_სახელი"
+
+#: sql_help.c:1075 sql_help.c:2743
+msgid "increment"
+msgstr "გაზრდა"
+
+#: sql_help.c:1076 sql_help.c:2744
+msgid "minvalue"
+msgstr "მინ_მნიშვნელობა"
+
+#: sql_help.c:1077 sql_help.c:2745
+msgid "maxvalue"
+msgstr "მაქს_მნიშვნელობა"
+
+#: sql_help.c:1078 sql_help.c:2746 sql_help.c:4577 sql_help.c:4680
+#: sql_help.c:4834 sql_help.c:5011 sql_help.c:5080
+msgid "start"
+msgstr "დაწყება"
+
+#: sql_help.c:1079 sql_help.c:1349
+msgid "restart"
+msgstr "გადატვრთვა"
+
+#: sql_help.c:1080 sql_help.c:2747
+msgid "cache"
+msgstr "კეში"
+
+#: sql_help.c:1125
+msgid "new_target"
+msgstr "ახალი_სამიზნე"
+
+#: sql_help.c:1144 sql_help.c:2800
+msgid "conninfo"
+msgstr "შეერთ_ინფო"
+
+#: sql_help.c:1146 sql_help.c:1150 sql_help.c:1154 sql_help.c:2801
+msgid "publication_name"
+msgstr "გამოცემის_სახელი"
+
+#: sql_help.c:1147 sql_help.c:1151 sql_help.c:1155
+msgid "publication_option"
+msgstr "გამოცემის_მორგება"
+
+#: sql_help.c:1158
+msgid "refresh_option"
+msgstr "განახლების_პარამეტრები"
+
+#: sql_help.c:1163 sql_help.c:2802
+msgid "subscription_parameter"
+msgstr "გამოწერის_პარამეტრი"
+
+#: sql_help.c:1166
+msgid "skip_option"
+msgstr "პარამეტრის_გამოტოვება"
+
+#: sql_help.c:1326 sql_help.c:1329
+msgid "partition_name"
+msgstr "დანაყოფის_სახელი"
+
+#: sql_help.c:1327 sql_help.c:2352 sql_help.c:2933
+msgid "partition_bound_spec"
+msgstr "დანაყოფის_საზღვრის_მითითება"
+
+#: sql_help.c:1346 sql_help.c:1396 sql_help.c:2947
+msgid "sequence_options"
+msgstr "მიმდევრობის_პარამეტრები"
+
+#: sql_help.c:1348
+msgid "sequence_option"
+msgstr "მიმდევრობის_პარამეტრი"
+
+#: sql_help.c:1362
+msgid "table_constraint_using_index"
+msgstr "ცხრილის_შეზღუდვა_ინდექსით"
+
+#: sql_help.c:1370 sql_help.c:1371 sql_help.c:1372 sql_help.c:1373
+msgid "rewrite_rule_name"
+msgstr "გადაწერის_წესის_სახელი"
+
+#: sql_help.c:1385 sql_help.c:2364 sql_help.c:2972
+msgid "and partition_bound_spec is:"
+msgstr "და დანაყოფის_საზღვარის_სპეციფიკაცია არის:"
+
+#: sql_help.c:1386 sql_help.c:1387 sql_help.c:1388 sql_help.c:2365
+#: sql_help.c:2366 sql_help.c:2367 sql_help.c:2973 sql_help.c:2974
+#: sql_help.c:2975
+msgid "partition_bound_expr"
+msgstr "დანაყოფის_საზღვრის_გამოსახულება"
+
+#: sql_help.c:1389 sql_help.c:1390 sql_help.c:2368 sql_help.c:2369
+#: sql_help.c:2976 sql_help.c:2977
+msgid "numeric_literal"
+msgstr "რიცხვითი_მუდმივა"
+
+#: sql_help.c:1391
+msgid "and column_constraint is:"
+msgstr "და სვეტის_შეზღუდვა არის:"
+
+#: sql_help.c:1394 sql_help.c:2359 sql_help.c:2400 sql_help.c:2609
+#: sql_help.c:2945
+msgid "default_expr"
+msgstr "ნაგულისხმები_გამოსახულება"
+
+#: sql_help.c:1395 sql_help.c:2360 sql_help.c:2946
+msgid "generation_expr"
+msgstr "გენერირებული_გამოსახულება"
+
+#: sql_help.c:1397 sql_help.c:1398 sql_help.c:1407 sql_help.c:1409
+#: sql_help.c:1413 sql_help.c:2948 sql_help.c:2949 sql_help.c:2958
+#: sql_help.c:2960 sql_help.c:2964
+msgid "index_parameters"
+msgstr "ინდექსის_პარამეტრები"
+
+#: sql_help.c:1399 sql_help.c:1416 sql_help.c:2950 sql_help.c:2967
+msgid "reftable"
+msgstr "მიბმების_ცხრილი"
+
+#: sql_help.c:1400 sql_help.c:1417 sql_help.c:2951 sql_help.c:2968
+msgid "refcolumn"
+msgstr "მიბმული_სვეტი"
+
+#: sql_help.c:1401 sql_help.c:1402 sql_help.c:1418 sql_help.c:1419
+#: sql_help.c:2952 sql_help.c:2953 sql_help.c:2969 sql_help.c:2970
+msgid "referential_action"
+msgstr "მიბმის_ქმედებები"
+
+#: sql_help.c:1403 sql_help.c:2361 sql_help.c:2954
+msgid "and table_constraint is:"
+msgstr "და table_constraint არის:"
+
+#: sql_help.c:1411 sql_help.c:2962
+msgid "exclude_element"
+msgstr "ელემენტის_ამოღება"
+
+#: sql_help.c:1412 sql_help.c:2963 sql_help.c:4575 sql_help.c:4678
+#: sql_help.c:4832 sql_help.c:5009 sql_help.c:5078
+msgid "operator"
+msgstr "ოპერატორი"
+
+#: sql_help.c:1414 sql_help.c:2480 sql_help.c:2965
+msgid "predicate"
+msgstr "პრედიკატი"
+
+#: sql_help.c:1420
+msgid "and table_constraint_using_index is:"
+msgstr "და table_constraint_using_index არის:"
+
+#: sql_help.c:1423 sql_help.c:2978
+msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
+msgstr "ინდექსის_პარამეტრები UNIQUE, PRIMARY KEY და EXCLUDE შეზღუდვებში:"
+
+#: sql_help.c:1428 sql_help.c:2983
+msgid "exclude_element in an EXCLUDE constraint is:"
+msgstr "ელემენტის_ამოღება EXCLUDE შეზღუდვაში წარმოადგენს:"
+
+#: sql_help.c:1431 sql_help.c:2473 sql_help.c:2910 sql_help.c:2923
+#: sql_help.c:2937 sql_help.c:2986 sql_help.c:4004
+msgid "opclass"
+msgstr "ოპერატ_კლასი"
+
+#: sql_help.c:1432 sql_help.c:2987
+msgid "referential_action in a FOREIGN KEY/REFERENCES constraint is:"
+msgstr "მიბმის ქმედება FOREIGN KEY/REFERENCES შეზღუდვაში წარმოადგენს:"
+
+#: sql_help.c:1450 sql_help.c:1453 sql_help.c:3024
+msgid "tablespace_option"
+msgstr "ცხრილების_სივრცის_პარამეტრი"
+
+#: sql_help.c:1474 sql_help.c:1477 sql_help.c:1483 sql_help.c:1487
+msgid "token_type"
+msgstr "კოდის_ტიპი"
+
+#: sql_help.c:1475 sql_help.c:1478
+msgid "dictionary_name"
+msgstr "ლექსიკონის_სახელი"
+
+#: sql_help.c:1480 sql_help.c:1484
+msgid "old_dictionary"
+msgstr "ძველი_ლექსიკონი"
+
+#: sql_help.c:1481 sql_help.c:1485
+msgid "new_dictionary"
+msgstr "ახალი_ლექსიკონი"
+
+#: sql_help.c:1580 sql_help.c:1594 sql_help.c:1597 sql_help.c:1598
+#: sql_help.c:3177
+msgid "attribute_name"
+msgstr "ატრიბუტის_სახელი"
+
+#: sql_help.c:1581
+msgid "new_attribute_name"
+msgstr "ახალი_ატრიბუტის_სახელი"
+
+#: sql_help.c:1585 sql_help.c:1589
+msgid "new_enum_value"
+msgstr "ათვლის_ახალი_მნიშვნელობა"
+
+#: sql_help.c:1586
+msgid "neighbor_enum_value"
+msgstr "მეზობლად_ათვლის_მნიშვნელობა"
+
+#: sql_help.c:1588
+msgid "existing_enum_value"
+msgstr "აღრიცხვის_არსებული_მნიშვნელობა"
+
+#: sql_help.c:1591
+msgid "property"
+msgstr "თვისება"
+
+#: sql_help.c:1668 sql_help.c:2344 sql_help.c:2353 sql_help.c:2759
+#: sql_help.c:3257 sql_help.c:3708 sql_help.c:3914 sql_help.c:3960
+#: sql_help.c:4366
+msgid "server_name"
+msgstr "სერვერის_სახელი"
+
+#: sql_help.c:1700 sql_help.c:1703 sql_help.c:3272
+msgid "view_option_name"
+msgstr "ხედის_პარამეტრის_სახელი"
+
+#: sql_help.c:1701 sql_help.c:3273
+msgid "view_option_value"
+msgstr "ხედის_პარამეტრის_მნიშვნელობა"
+
+#: sql_help.c:1723 sql_help.c:1724 sql_help.c:4977 sql_help.c:4978
+msgid "table_and_columns"
+msgstr "ცხრილი_და სვეტები"
+
+#: sql_help.c:1725 sql_help.c:1789 sql_help.c:1981 sql_help.c:3757
+#: sql_help.c:4201 sql_help.c:4979
+msgid "where option can be one of:"
+msgstr "სადაც option შეიძლება იყოს ერთ-ერთი სიიდან:"
+
+#: sql_help.c:1726 sql_help.c:1727 sql_help.c:1790 sql_help.c:1983
+#: sql_help.c:1986 sql_help.c:2167 sql_help.c:3758 sql_help.c:3759
+#: sql_help.c:3760 sql_help.c:3761 sql_help.c:3762 sql_help.c:3763
+#: sql_help.c:3764 sql_help.c:3765 sql_help.c:3766 sql_help.c:4202
+#: sql_help.c:4204 sql_help.c:4980 sql_help.c:4981 sql_help.c:4982
+#: sql_help.c:4983 sql_help.c:4984 sql_help.c:4985 sql_help.c:4986
+#: sql_help.c:4987 sql_help.c:4988 sql_help.c:4990 sql_help.c:4991
+msgid "boolean"
+msgstr "ლოგიკური"
+
+#: sql_help.c:1728 sql_help.c:4992
+msgid "size"
+msgstr "ზომა"
+
+#: sql_help.c:1729 sql_help.c:4993
+msgid "and table_and_columns is:"
+msgstr "და table_and_columns არის:"
+
+#: sql_help.c:1745 sql_help.c:4739 sql_help.c:4741 sql_help.c:4765
+msgid "transaction_mode"
+msgstr "ტრანზაქციის_რეჟიმი"
+
+#: sql_help.c:1746 sql_help.c:4742 sql_help.c:4766
+msgid "where transaction_mode is one of:"
+msgstr "სადაც transaction_mode შეიძლება იყოს ერთ-ერთი სიიდან:"
+
+#: sql_help.c:1755 sql_help.c:4585 sql_help.c:4594 sql_help.c:4598
+#: sql_help.c:4602 sql_help.c:4605 sql_help.c:4842 sql_help.c:4851
+#: sql_help.c:4855 sql_help.c:4859 sql_help.c:4862 sql_help.c:5088
+#: sql_help.c:5097 sql_help.c:5101 sql_help.c:5105 sql_help.c:5108
+msgid "argument"
+msgstr "არგიმენტი"
+
+#: sql_help.c:1855
+msgid "relation_name"
+msgstr "ურთიერთობის_სახელი"
+
+#: sql_help.c:1860 sql_help.c:3908 sql_help.c:4360
+msgid "domain_name"
+msgstr "დომენის_სახელი"
+
+#: sql_help.c:1882
+msgid "policy_name"
+msgstr "წესის_სახელი"
+
+#: sql_help.c:1895
+msgid "rule_name"
+msgstr "წესის_სახელი"
+
+#: sql_help.c:1914 sql_help.c:4499
+msgid "string_literal"
+msgstr "სტრიქონი_მუდმივა"
+
+#: sql_help.c:1939 sql_help.c:4163 sql_help.c:4413
+msgid "transaction_id"
+msgstr "ტრანზაქციის_id"
+
+#: sql_help.c:1971 sql_help.c:1978 sql_help.c:4030
+msgid "filename"
+msgstr "ფაილის სახელი"
+
+#: sql_help.c:1972 sql_help.c:1979 sql_help.c:2698 sql_help.c:2699
+#: sql_help.c:2700
+msgid "command"
+msgstr "ბრძანება"
+
+#: sql_help.c:1974 sql_help.c:2697 sql_help.c:3127 sql_help.c:3308
+#: sql_help.c:4014 sql_help.c:4091 sql_help.c:4094 sql_help.c:4568
+#: sql_help.c:4570 sql_help.c:4671 sql_help.c:4673 sql_help.c:4825
+#: sql_help.c:4827 sql_help.c:4943 sql_help.c:5071 sql_help.c:5073
+msgid "condition"
+msgstr "მდგომარეობა"
+
+#: sql_help.c:1977 sql_help.c:2514 sql_help.c:3010 sql_help.c:3274
+#: sql_help.c:3292 sql_help.c:3995
+msgid "query"
+msgstr "მოთხოვნა"
+
+#: sql_help.c:1982
+msgid "format_name"
+msgstr "ფორმატის_სახელი"
+
+#: sql_help.c:1984
+msgid "delimiter_character"
+msgstr "გამყოფი_სიმბოლო"
+
+#: sql_help.c:1985
+msgid "null_string"
+msgstr "ნულოვანი_სტრიქონი"
+
+#: sql_help.c:1987
+msgid "quote_character"
+msgstr "ციტატის_სიმბოლო"
+
+#: sql_help.c:1988
+msgid "escape_character"
+msgstr "სპეციალური_სიმბოლო"
+
+#: sql_help.c:1992
+msgid "encoding_name"
+msgstr "კოდირების-სახელი"
+
+#: sql_help.c:1993
+#| msgid "null_string"
+msgid "default_string"
+msgstr "default_string"
+
+#: sql_help.c:2004
+msgid "access_method_type"
+msgstr "წვდომის_მეთოდის_ტიპი"
+
+#: sql_help.c:2075 sql_help.c:2094 sql_help.c:2097
+msgid "arg_data_type"
+msgstr "არგ_მონაც_ტიპი"
+
+#: sql_help.c:2076 sql_help.c:2098 sql_help.c:2106
+msgid "sfunc"
+msgstr "მდგომარეობის_ფუნქცია"
+
+#: sql_help.c:2077 sql_help.c:2099 sql_help.c:2107
+msgid "state_data_type"
+msgstr "მდგომარეობის_მონაცემების_ტიპი"
+
+#: sql_help.c:2078 sql_help.c:2100 sql_help.c:2108
+msgid "state_data_size"
+msgstr "მდგომარეობის_მონაცემების_ზომა"
+
+#: sql_help.c:2079 sql_help.c:2101 sql_help.c:2109
+msgid "ffunc"
+msgstr "დასრულების ფუნქცია"
+
+#: sql_help.c:2080 sql_help.c:2110
+msgid "combinefunc"
+msgstr "კომბინ_ფუნქც"
+
+#: sql_help.c:2081 sql_help.c:2111
+msgid "serialfunc"
+msgstr "დესერიალიზაციის_ფუნქცია"
+
+#: sql_help.c:2082 sql_help.c:2112
+msgid "deserialfunc"
+msgstr "დესერიალიზაციის_ფუნქც"
+
+#: sql_help.c:2083 sql_help.c:2102 sql_help.c:2113
+msgid "initial_condition"
+msgstr "საწყისი_მდგომარეობა"
+
+#: sql_help.c:2084 sql_help.c:2114
+msgid "msfunc"
+msgstr "გადაადგ_მდგომ_ფუნქცია"
+
+#: sql_help.c:2085 sql_help.c:2115
+msgid "minvfunc"
+msgstr "გადაადგ_მინ_მნიშვნ_ფუნქცია"
+
+#: sql_help.c:2086 sql_help.c:2116
+msgid "mstate_data_type"
+msgstr "გადაადგ_მონაც_ტიპი"
+
+#: sql_help.c:2087 sql_help.c:2117
+msgid "mstate_data_size"
+msgstr "გადაადგ_მონაც_ზომ"
+
+#: sql_help.c:2088 sql_help.c:2118
+msgid "mffunc"
+msgstr "გადადგ_დასრულ_ფუნქცია"
+
+#: sql_help.c:2089 sql_help.c:2119
+msgid "minitial_condition"
+msgstr "გადაადგ­_დასაწყ_ფუნქცია"
+
+#: sql_help.c:2090 sql_help.c:2120
+msgid "sort_operator"
+msgstr "დალაგების_ოპერატორი"
+
+#: sql_help.c:2103
+msgid "or the old syntax"
+msgstr "ან ძველი სინტაქსი"
+
+#: sql_help.c:2105
+msgid "base_type"
+msgstr "საბაზისო_ტიპი"
+
+#: sql_help.c:2163 sql_help.c:2212
+msgid "locale"
+msgstr "ენა"
+
+#: sql_help.c:2164 sql_help.c:2213
+msgid "lc_collate"
+msgstr "lc_collate"
+
+#: sql_help.c:2165 sql_help.c:2214
+msgid "lc_ctype"
+msgstr "lc_ctype"
+
+#: sql_help.c:2166 sql_help.c:4466
+msgid "provider"
+msgstr "მომწოდებელი"
+
+#: sql_help.c:2168
+msgid "rules"
+msgstr "წესები"
+
+#: sql_help.c:2169 sql_help.c:2274
+msgid "version"
+msgstr "ვერსია"
+
+#: sql_help.c:2171
+msgid "existing_collation"
+msgstr "არსებული_კოლაცია"
+
+#: sql_help.c:2181
+msgid "source_encoding"
+msgstr "წყაროს_კოდირება"
+
+#: sql_help.c:2182
+msgid "dest_encoding"
+msgstr "სამიზნე_კოდირება"
+
+#: sql_help.c:2209 sql_help.c:3050
+msgid "template"
+msgstr "შაბლონი"
+
+#: sql_help.c:2210
+msgid "encoding"
+msgstr "კოდირება"
+
+#: sql_help.c:2211
+msgid "strategy"
+msgstr "სტრატეგია"
+
+#: sql_help.c:2215
+msgid "icu_locale"
+msgstr "icu_ენა"
+
+#: sql_help.c:2216
+#| msgid "icu_locale"
+msgid "icu_rules"
+msgstr "icu_rules"
+
+#: sql_help.c:2217
+msgid "locale_provider"
+msgstr "ენის_მომწოდებელი"
+
+#: sql_help.c:2218
+msgid "collation_version"
+msgstr "კოლაციის ვერსია"
+
+#: sql_help.c:2223
+msgid "oid"
+msgstr "oid"
+
+#: sql_help.c:2243
+msgid "constraint"
+msgstr "შეზღუდვა"
+
+#: sql_help.c:2244
+msgid "where constraint is:"
+msgstr "სადაც constraint არის:"
+
+#: sql_help.c:2258 sql_help.c:2695 sql_help.c:3123
+msgid "event"
+msgstr "მოვლენა"
+
+#: sql_help.c:2259
+msgid "filter_variable"
+msgstr "ფილტრის_ცვლადი"
+
+#: sql_help.c:2260
+msgid "filter_value"
+msgstr "ფილტრის_მნიშვნელობა"
+
+#: sql_help.c:2356 sql_help.c:2942
+msgid "where column_constraint is:"
+msgstr "სადაც column_constraint არის:"
+
+#: sql_help.c:2401
+msgid "rettype"
+msgstr "დაბრუნების_ტიპი"
+
+#: sql_help.c:2403
+msgid "column_type"
+msgstr "სვეტის_ტიპი"
+
+#: sql_help.c:2412 sql_help.c:2615
+msgid "definition"
+msgstr "აღწერა"
+
+#: sql_help.c:2413 sql_help.c:2616
+msgid "obj_file"
+msgstr "ობიექტის_ფაილი"
+
+#: sql_help.c:2414 sql_help.c:2617
+msgid "link_symbol"
+msgstr "სიმბოლოს_მიბმა"
+
+#: sql_help.c:2415 sql_help.c:2618
+msgid "sql_body"
+msgstr "sql_ის_სხეული"
+
+#: sql_help.c:2453 sql_help.c:2680 sql_help.c:3246
+msgid "uid"
+msgstr "uid"
+
+#: sql_help.c:2469 sql_help.c:2510 sql_help.c:2911 sql_help.c:2924
+#: sql_help.c:2938 sql_help.c:3006
+msgid "method"
+msgstr "მეთოდი"
+
+#: sql_help.c:2474
+msgid "opclass_parameter"
+msgstr "ოპერატ_კლასის_პარამეტრი"
+
+#: sql_help.c:2491
+msgid "call_handler"
+msgstr "გამოძახების_დამმუშავებელი"
+
+#: sql_help.c:2492
+msgid "inline_handler"
+msgstr "ჩადგმული_კოდის_დამმუშავებელი"
+
+#: sql_help.c:2493
+msgid "valfunction"
+msgstr "მნიშვნფუნქცია"
+
+#: sql_help.c:2532
+msgid "com_op"
+msgstr "კომუტ_ოპერ"
+
+#: sql_help.c:2533
+msgid "neg_op"
+msgstr "უარყ_ოპერატ"
+
+#: sql_help.c:2551
+msgid "family_name"
+msgstr "ოჯახის_სახელი"
+
+#: sql_help.c:2562
+msgid "storage_type"
+msgstr "საცავის_ტიპი"
+
+#: sql_help.c:2701 sql_help.c:3130
+msgid "where event can be one of:"
+msgstr "სადაც event შეიძლება იყოს ერთ-ერთი:"
+
+#: sql_help.c:2721 sql_help.c:2723
+msgid "schema_element"
+msgstr "სქემის_ელემენტი"
+
+#: sql_help.c:2760
+msgid "server_type"
+msgstr "სერვერის_ტიპი"
+
+#: sql_help.c:2761
+msgid "server_version"
+msgstr "სერვერის_ვერსია"
+
+#: sql_help.c:2762 sql_help.c:3911 sql_help.c:4363
+msgid "fdw_name"
+msgstr "fdw_name"
+
+#: sql_help.c:2779 sql_help.c:2782
+msgid "statistics_name"
+msgstr "სტატისტიკის_სახელი"
+
+#: sql_help.c:2783
+msgid "statistics_kind"
+msgstr "სტატისტიკის_ტიპი"
+
+#: sql_help.c:2799
+msgid "subscription_name"
+msgstr "გამოწერის_სახელი"
+
+#: sql_help.c:2904
+msgid "source_table"
+msgstr "წყაროს_ცხრილი"
+
+#: sql_help.c:2905
+msgid "like_option"
+msgstr "მსგავსების_პარამეტრი"
+
+#: sql_help.c:2971
+msgid "and like_option is:"
+msgstr "და like_option არის:"
+
+#: sql_help.c:3023
+msgid "directory"
+msgstr "საქაღალდე"
+
+#: sql_help.c:3037
+msgid "parser_name"
+msgstr "დამმუშავებლის_სახელი"
+
+#: sql_help.c:3038
+msgid "source_config"
+msgstr "წყაროს_კონფიგურაცია"
+
+#: sql_help.c:3067
+msgid "start_function"
+msgstr "გაშვების_ფუნქცია"
+
+#: sql_help.c:3068
+msgid "gettoken_function"
+msgstr "კოდის_მიღების_ფუნქცია"
+
+#: sql_help.c:3069
+msgid "end_function"
+msgstr "დასრულების ფუნქცია"
+
+#: sql_help.c:3070
+msgid "lextypes_function"
+msgstr "ლექს_ტიპების_ფუნქცია"
+
+#: sql_help.c:3071
+msgid "headline_function"
+msgstr "headline_function"
+
+#: sql_help.c:3083
+msgid "init_function"
+msgstr "ინიციალიზაციის_ფუნქცია"
+
+#: sql_help.c:3084
+msgid "lexize_function"
+msgstr "ლექსით_გამოყოფის_ფუნქცია"
+
+#: sql_help.c:3097
+msgid "from_sql_function_name"
+msgstr "sql_ფუნქციის_სახელიდან"
+
+#: sql_help.c:3099
+msgid "to_sql_function_name"
+msgstr "ფუნქციის_სახელი_sql_ში"
+
+#: sql_help.c:3125
+msgid "referenced_table_name"
+msgstr "მიბმული_ცხრილის_სახელი"
+
+#: sql_help.c:3126
+msgid "transition_relation_name"
+msgstr "გარდამავალი_ურთიერთობის_სახელი"
+
+#: sql_help.c:3129
+msgid "arguments"
+msgstr "არგუმენტები"
+
+#: sql_help.c:3181
+msgid "label"
+msgstr "ჭდე"
+
+#: sql_help.c:3183
+msgid "subtype"
+msgstr "ქვეტიპი"
+
+#: sql_help.c:3184
+msgid "subtype_operator_class"
+msgstr "ქვეტიპის_ოპერატორის_კლასი"
+
+#: sql_help.c:3186
+msgid "canonical_function"
+msgstr "კანონიკური_ფუნქცია"
+
+#: sql_help.c:3187
+msgid "subtype_diff_function"
+msgstr "ქვეტიპის_სხვაობის_ფუნქცია"
+
+#: sql_help.c:3188
+msgid "multirange_type_name"
+msgstr "მრავალდიაპაზონიანი_ტიპის_სახელი"
+
+#: sql_help.c:3190
+msgid "input_function"
+msgstr "შეყვანის_ფუნქცია"
+
+#: sql_help.c:3191
+msgid "output_function"
+msgstr "გამოტანის_ფუნქცია"
+
+#: sql_help.c:3192
+msgid "receive_function"
+msgstr "მიღების_ფუნქცია"
+
+#: sql_help.c:3193
+msgid "send_function"
+msgstr "საწყისი_მნიშვნელობის_ფუნქცია"
+
+#: sql_help.c:3194
+msgid "type_modifier_input_function"
+msgstr "ტიპის_მოდიფიკატორის_შემყვანის_ფუნქცია"
+
+#: sql_help.c:3195
+msgid "type_modifier_output_function"
+msgstr "ტიპის_მოტიფიკატორის_გამოტანის_ფუნქცია"
+
+#: sql_help.c:3196
+msgid "analyze_function"
+msgstr "ფუნქციის_ანალიზი"
+
+#: sql_help.c:3197
+msgid "subscript_function"
+msgstr "ინდექსით_მიმართვის_ფუნქცია"
+
+#: sql_help.c:3198
+msgid "internallength"
+msgstr "შიდასიგრძე"
+
+#: sql_help.c:3199
+msgid "alignment"
+msgstr "სწორება"
+
+#: sql_help.c:3200
+msgid "storage"
+msgstr "საცავი"
+
+#: sql_help.c:3201
+msgid "like_type"
+msgstr "მსგავსების_ტიპი"
+
+#: sql_help.c:3202
+msgid "category"
+msgstr "კატეგორია"
+
+#: sql_help.c:3203
+msgid "preferred"
+msgstr "რჩეული"
+
+#: sql_help.c:3204
+msgid "default"
+msgstr "ნაგულისხმები"
+
+#: sql_help.c:3205
+msgid "element"
+msgstr "ელემენტი"
+
+#: sql_help.c:3206
+msgid "delimiter"
+msgstr "გამყოფი"
+
+#: sql_help.c:3207
+msgid "collatable"
+msgstr "დალაგებადი"
+
+#: sql_help.c:3304 sql_help.c:3990 sql_help.c:4080 sql_help.c:4563
+#: sql_help.c:4665 sql_help.c:4820 sql_help.c:4933 sql_help.c:5066
+msgid "with_query"
+msgstr "მოთხოვნით"
+
+#: sql_help.c:3306 sql_help.c:3992 sql_help.c:4582 sql_help.c:4588
+#: sql_help.c:4591 sql_help.c:4595 sql_help.c:4599 sql_help.c:4607
+#: sql_help.c:4839 sql_help.c:4845 sql_help.c:4848 sql_help.c:4852
+#: sql_help.c:4856 sql_help.c:4864 sql_help.c:4935 sql_help.c:5085
+#: sql_help.c:5091 sql_help.c:5094 sql_help.c:5098 sql_help.c:5102
+#: sql_help.c:5110
+msgid "alias"
+msgstr "მეტსახელი"
+
+#: sql_help.c:3307 sql_help.c:4567 sql_help.c:4609 sql_help.c:4611
+#: sql_help.c:4615 sql_help.c:4617 sql_help.c:4618 sql_help.c:4619
+#: sql_help.c:4670 sql_help.c:4824 sql_help.c:4866 sql_help.c:4868
+#: sql_help.c:4872 sql_help.c:4874 sql_help.c:4875 sql_help.c:4876
+#: sql_help.c:4942 sql_help.c:5070 sql_help.c:5112 sql_help.c:5114
+#: sql_help.c:5118 sql_help.c:5120 sql_help.c:5121 sql_help.c:5122
+msgid "from_item"
+msgstr "ჩანაწერიდან"
+
+#: sql_help.c:3309 sql_help.c:3792 sql_help.c:4130 sql_help.c:4944
+msgid "cursor_name"
+msgstr "კურსორის_სახელი"
+
+#: sql_help.c:3310 sql_help.c:3998 sql_help.c:4945
+msgid "output_expression"
+msgstr "გამოტანის_გამოსახულება"
+
+#: sql_help.c:3311 sql_help.c:3999 sql_help.c:4566 sql_help.c:4668
+#: sql_help.c:4823 sql_help.c:4946 sql_help.c:5069
+msgid "output_name"
+msgstr "გამოტანს_სახელი"
+
+#: sql_help.c:3327
+msgid "code"
+msgstr "კოდი"
+
+#: sql_help.c:3732
+msgid "parameter"
+msgstr "Პარამეტრი"
+
+#: sql_help.c:3755 sql_help.c:3756 sql_help.c:4155
+msgid "statement"
+msgstr "ოპერატორი"
+
+#: sql_help.c:3791 sql_help.c:4129
+msgid "direction"
+msgstr "მიმართულება"
+
+#: sql_help.c:3793 sql_help.c:4131
+msgid "where direction can be one of:"
+msgstr "სადაც მიმართულება შეიძლება იყოს ერთ-ერთი:"
+
+#: sql_help.c:3794 sql_help.c:3795 sql_help.c:3796 sql_help.c:3797
+#: sql_help.c:3798 sql_help.c:4132 sql_help.c:4133 sql_help.c:4134
+#: sql_help.c:4135 sql_help.c:4136 sql_help.c:4576 sql_help.c:4578
+#: sql_help.c:4679 sql_help.c:4681 sql_help.c:4833 sql_help.c:4835
+#: sql_help.c:5010 sql_help.c:5012 sql_help.c:5079 sql_help.c:5081
+msgid "count"
+msgstr "რაოდენობა"
+
+#: sql_help.c:3901 sql_help.c:4353
+msgid "sequence_name"
+msgstr "მიმდევრობის _სახელი"
+
+#: sql_help.c:3919 sql_help.c:4371
+msgid "arg_name"
+msgstr "არგ_სახელი"
+
+#: sql_help.c:3920 sql_help.c:4372
+msgid "arg_type"
+msgstr "არგ_ტიპი"
+
+#: sql_help.c:3927 sql_help.c:4379
+msgid "loid"
+msgstr "loid"
+
+#: sql_help.c:3958
+msgid "remote_schema"
+msgstr "დაშორებული_სქემა"
+
+#: sql_help.c:3961
+msgid "local_schema"
+msgstr "ლოკალური_სქემა"
+
+#: sql_help.c:3996
+msgid "conflict_target"
+msgstr "კონფლიქტის_ობიექტი"
+
+#: sql_help.c:3997
+msgid "conflict_action"
+msgstr "ქმედება_კონფლიქტის_დროს"
+
+#: sql_help.c:4000
+msgid "where conflict_target can be one of:"
+msgstr "სადაც conflict_target შეიძლება იყოს სიიდან:"
+
+#: sql_help.c:4001
+msgid "index_column_name"
+msgstr "ინდექსის_სვეტის_სახელი"
+
+#: sql_help.c:4002
+msgid "index_expression"
+msgstr "გამოსახულების_ინდექსი"
+
+#: sql_help.c:4005
+msgid "index_predicate"
+msgstr "ინდექსის_პრედიკატი"
+
+#: sql_help.c:4007
+msgid "and conflict_action is one of:"
+msgstr "და conflict_action შეიძლება იყოს სიიდან:"
+
+#: sql_help.c:4013 sql_help.c:4941
+msgid "sub-SELECT"
+msgstr "ქვე-SELECT"
+
+#: sql_help.c:4022 sql_help.c:4144 sql_help.c:4917
+msgid "channel"
+msgstr "არხი"
+
+#: sql_help.c:4044
+msgid "lockmode"
+msgstr "ბლოკის_რეჟიმი"
+
+#: sql_help.c:4045
+msgid "where lockmode is one of:"
+msgstr "სადაც lockmode ერთერთია სიიდან:"
+
+#: sql_help.c:4081
+msgid "target_table_name"
+msgstr "სამიზნე ცხრილის სახელი"
+
+#: sql_help.c:4082
+msgid "target_alias"
+msgstr "სამიზნე_მეტსახელი"
+
+#: sql_help.c:4083
+msgid "data_source"
+msgstr "მონაცემების_წყარო"
+
+#: sql_help.c:4084 sql_help.c:4612 sql_help.c:4869 sql_help.c:5115
+msgid "join_condition"
+msgstr "შეერთების პირობა"
+
+#: sql_help.c:4085
+msgid "when_clause"
+msgstr "პირობა_როდის"
+
+#: sql_help.c:4086
+msgid "where data_source is:"
+msgstr "სადაც data_source არის:"
+
+#: sql_help.c:4087
+msgid "source_table_name"
+msgstr "წყაროს_ცხრილის_სახელი"
+
+#: sql_help.c:4088
+msgid "source_query"
+msgstr "წყაროს_მოთხოვნა"
+
+#: sql_help.c:4089
+msgid "source_alias"
+msgstr "წყაროს_მეტსახელი"
+
+#: sql_help.c:4090
+msgid "and when_clause is:"
+msgstr "და when_clause არის:"
+
+#: sql_help.c:4092
+msgid "merge_update"
+msgstr "განახლების_შერწყმა"
+
+#: sql_help.c:4093
+msgid "merge_delete"
+msgstr "წაშლის_შერწყმა"
+
+#: sql_help.c:4095
+msgid "merge_insert"
+msgstr "ჩასმის_შერწყმა"
+
+#: sql_help.c:4096
+msgid "and merge_insert is:"
+msgstr "და merge_insert არის:"
+
+#: sql_help.c:4099
+msgid "and merge_update is:"
+msgstr "და merge_update არის:"
+
+#: sql_help.c:4104
+msgid "and merge_delete is:"
+msgstr "და merge_delete არის:"
+
+#: sql_help.c:4145
+msgid "payload"
+msgstr "შემცველობა"
+
+#: sql_help.c:4172
+msgid "old_role"
+msgstr "ძველი_როლი"
+
+#: sql_help.c:4173
+msgid "new_role"
+msgstr "ახალი_როლი"
+
+#: sql_help.c:4212 sql_help.c:4421 sql_help.c:4429
+msgid "savepoint_name"
+msgstr "შენახვის_წერტილის_სახელი"
+
+#: sql_help.c:4569 sql_help.c:4627 sql_help.c:4826 sql_help.c:4884
+#: sql_help.c:5072 sql_help.c:5130
+msgid "grouping_element"
+msgstr "დაჯგუფების_ელემენტი"
+
+#: sql_help.c:4571 sql_help.c:4674 sql_help.c:4828 sql_help.c:5074
+msgid "window_name"
+msgstr "ფანჯრის_სახელი"
+
+#: sql_help.c:4572 sql_help.c:4675 sql_help.c:4829 sql_help.c:5075
+msgid "window_definition"
+msgstr "ფანჯრის_აღწერა"
+
+#: sql_help.c:4573 sql_help.c:4587 sql_help.c:4631 sql_help.c:4676
+#: sql_help.c:4830 sql_help.c:4844 sql_help.c:4888 sql_help.c:5076
+#: sql_help.c:5090 sql_help.c:5134
+msgid "select"
+msgstr "არჩევა"
+
+#: sql_help.c:4580 sql_help.c:4837 sql_help.c:5083
+msgid "where from_item can be one of:"
+msgstr "სადაც from_item შეიძლება იყოს სიიდან ერთი:"
+
+#: sql_help.c:4583 sql_help.c:4589 sql_help.c:4592 sql_help.c:4596
+#: sql_help.c:4608 sql_help.c:4840 sql_help.c:4846 sql_help.c:4849
+#: sql_help.c:4853 sql_help.c:4865 sql_help.c:5086 sql_help.c:5092
+#: sql_help.c:5095 sql_help.c:5099 sql_help.c:5111
+msgid "column_alias"
+msgstr "სვეტის_მეტსახელი"
+
+#: sql_help.c:4584 sql_help.c:4841 sql_help.c:5087
+msgid "sampling_method"
+msgstr "სემპლინგის_მეთოდი"
+
+#: sql_help.c:4586 sql_help.c:4843 sql_help.c:5089
+msgid "seed"
+msgstr "საწყისი მნიშვნელობა"
+
+#: sql_help.c:4590 sql_help.c:4629 sql_help.c:4847 sql_help.c:4886
+#: sql_help.c:5093 sql_help.c:5132
+msgid "with_query_name"
+msgstr "მოთხოვნის_სახელით"
+
+#: sql_help.c:4600 sql_help.c:4603 sql_help.c:4606 sql_help.c:4857
+#: sql_help.c:4860 sql_help.c:4863 sql_help.c:5103 sql_help.c:5106
+#: sql_help.c:5109
+msgid "column_definition"
+msgstr "სვეტის_აღწერა"
+
+#: sql_help.c:4610 sql_help.c:4616 sql_help.c:4867 sql_help.c:4873
+#: sql_help.c:5113 sql_help.c:5119
+msgid "join_type"
+msgstr "შეერთების_ტიპი"
+
+#: sql_help.c:4613 sql_help.c:4870 sql_help.c:5116
+msgid "join_column"
+msgstr "სვეტების შეერთება"
+
+#: sql_help.c:4614 sql_help.c:4871 sql_help.c:5117
+msgid "join_using_alias"
+msgstr "მეტსახელით_შეერთბა"
+
+#: sql_help.c:4620 sql_help.c:4877 sql_help.c:5123
+msgid "and grouping_element can be one of:"
+msgstr "და grouping_element შეძლება იყოს სიიდან ერთი:"
+
+#: sql_help.c:4628 sql_help.c:4885 sql_help.c:5131
+msgid "and with_query is:"
+msgstr "და with_query არის:"
+
+#: sql_help.c:4632 sql_help.c:4889 sql_help.c:5135
+msgid "values"
+msgstr "მნიშვნელობები"
+
+#: sql_help.c:4633 sql_help.c:4890 sql_help.c:5136
+msgid "insert"
+msgstr "ჩასმა"
+
+#: sql_help.c:4634 sql_help.c:4891 sql_help.c:5137
+msgid "update"
+msgstr "განახლება"
+
+#: sql_help.c:4635 sql_help.c:4892 sql_help.c:5138
+msgid "delete"
+msgstr "წაშლა"
+
+#: sql_help.c:4637 sql_help.c:4894 sql_help.c:5140
+msgid "search_seq_col_name"
+msgstr "ბოლო_ძებნის_სვეტის_სახელი"
+
+#: sql_help.c:4639 sql_help.c:4896 sql_help.c:5142
+msgid "cycle_mark_col_name"
+msgstr "ციკლის_ნიშნიანი_სვეტის_სახელი"
+
+#: sql_help.c:4640 sql_help.c:4897 sql_help.c:5143
+msgid "cycle_mark_value"
+msgstr "ციკლის ნიშნის მნიშვნელობა"
+
+#: sql_help.c:4641 sql_help.c:4898 sql_help.c:5144
+msgid "cycle_mark_default"
+msgstr "ციკლის_ნაგულისხმები_ნიშანი"
+
+#: sql_help.c:4642 sql_help.c:4899 sql_help.c:5145
+msgid "cycle_path_col_name"
+msgstr "ციკლის_ბილიკის_სვეტის_სახელი"
+
+#: sql_help.c:4669
+msgid "new_table"
+msgstr "ახალი_ცხრილის"
+
+#: sql_help.c:4740
+msgid "snapshot_id"
+msgstr "სწრაფი_ასლის_id"
+
+#: sql_help.c:5008
+msgid "sort_expression"
+msgstr "დალაგების_გამოსახულება"
+
+#: sql_help.c:5152 sql_help.c:6136
+msgid "abort the current transaction"
+msgstr "მიმდინარე ტრანზაქციის გაუქმება"
+
+#: sql_help.c:5158
+msgid "change the definition of an aggregate function"
+msgstr "აგრეგატული ფუნქციის აღწერის შექმნა"
+
+#: sql_help.c:5164
+msgid "change the definition of a collation"
+msgstr "კოლაციის აღწერის შეცვლა"
+
+#: sql_help.c:5170
+msgid "change the definition of a conversion"
+msgstr "გადაყვანის აღწერის შეცვლა"
+
+#: sql_help.c:5176
+msgid "change a database"
+msgstr "მონაცემთა ბაზის შეცვლა"
+
+#: sql_help.c:5182
+msgid "define default access privileges"
+msgstr "წვდომის ნაგულისხმები უფლებების აღწერა"
+
+#: sql_help.c:5188
+msgid "change the definition of a domain"
+msgstr "დომენის აღწერის შეცვლა"
+
+#: sql_help.c:5194
+msgid "change the definition of an event trigger"
+msgstr "დომენის აღწერის შეცვლა"
+
+#: sql_help.c:5200
+msgid "change the definition of an extension"
+msgstr "გაფართოების აღწერის შეცვლა"
+
+#: sql_help.c:5206
+msgid "change the definition of a foreign-data wrapper"
+msgstr "გარე-მონაცემების გადამტანის აღწერის შეცვლა"
+
+#: sql_help.c:5212
+msgid "change the definition of a foreign table"
+msgstr "გარე ცხრილის აღწერის შეცვლა"
+
+#: sql_help.c:5218
+msgid "change the definition of a function"
+msgstr "ფუნქციის აღწერის შეცვლა"
+
+#: sql_help.c:5224
+msgid "change role name or membership"
+msgstr "როლის სახელის ან წევრობის შეცვლა"
+
+#: sql_help.c:5230
+msgid "change the definition of an index"
+msgstr "ინდექსის აღწერის შეცვლა"
+
+#: sql_help.c:5236
+msgid "change the definition of a procedural language"
+msgstr "პროცედურული ენის აღწერის შეცვლა"
+
+#: sql_help.c:5242
+msgid "change the definition of a large object"
+msgstr "დიდი ობიექტის აღწერის შეცვლა"
+
+#: sql_help.c:5248
+msgid "change the definition of a materialized view"
+msgstr "მატერიალიზებული ხედის აღწერის შეცვლა"
+
+#: sql_help.c:5254
+msgid "change the definition of an operator"
+msgstr "ოპერატორის აღწერის შეცვლა"
+
+#: sql_help.c:5260
+msgid "change the definition of an operator class"
+msgstr "ოპერატორის კლასის აღწერის შეცვლა"
+
+#: sql_help.c:5266
+msgid "change the definition of an operator family"
+msgstr "ოპერატორის ოჯახის აღწერის შეცვლა"
+
+#: sql_help.c:5272
+msgid "change the definition of a row-level security policy"
+msgstr "მწკრივის-დონის-უსაფრთხოების წესების აღწერის შეცვლა"
+
+#: sql_help.c:5278
+msgid "change the definition of a procedure"
+msgstr "პროცედურის აღწერის შეცვლა"
+
+#: sql_help.c:5284
+msgid "change the definition of a publication"
+msgstr "გამოცემის აღწერის შეცვლა"
+
+#: sql_help.c:5290 sql_help.c:5392
+msgid "change a database role"
+msgstr "მონაცემთა ბაზის როლის შეცვლა"
+
+#: sql_help.c:5296
+msgid "change the definition of a routine"
+msgstr "ქვეპროგრამის აღწერის შეცვლა"
+
+#: sql_help.c:5302
+msgid "change the definition of a rule"
+msgstr "წესის აღწერის შეცვლა"
+
+#: sql_help.c:5308
+msgid "change the definition of a schema"
+msgstr "სქემის აღწერის შეცვლა"
+
+#: sql_help.c:5314
+msgid "change the definition of a sequence generator"
+msgstr "მიმდევრობის გენერატორის აღწერის შეცვლა"
+
+#: sql_help.c:5320
+msgid "change the definition of a foreign server"
+msgstr "გარე სერვერის აღწერის შეცვლა"
+
+#: sql_help.c:5326
+msgid "change the definition of an extended statistics object"
+msgstr "სტატისტიკის გაფართოებული ობიექტის აღწერის შეცვლა"
+
+#: sql_help.c:5332
+msgid "change the definition of a subscription"
+msgstr "გამოწერის აღწერის შეცვლა"
+
+#: sql_help.c:5338
+msgid "change a server configuration parameter"
+msgstr "სერვერის კონფიგურაციის პარამეტრის შეცვლა"
+
+#: sql_help.c:5344
+msgid "change the definition of a table"
+msgstr "ცხრილის აღწერის შეცვლა"
+
+#: sql_help.c:5350
+msgid "change the definition of a tablespace"
+msgstr "ცხრილების სივრცის აღწერის შეცვლა"
+
+#: sql_help.c:5356
+msgid "change the definition of a text search configuration"
+msgstr "ტექსტის ძებნის კონფიგურაციის აღწერის შეცვლა"
+
+#: sql_help.c:5362
+msgid "change the definition of a text search dictionary"
+msgstr "ტექსტის ძებნის ლექსიკონის აღწერის შეცვლა"
+
+#: sql_help.c:5368
+msgid "change the definition of a text search parser"
+msgstr "ტექსტის ძებნის დამმუშავებლის აღწერს შეცვლა"
+
+#: sql_help.c:5374
+msgid "change the definition of a text search template"
+msgstr "ტექსტის ძებნის შაბლონის აღწერის შეცვლა"
+
+#: sql_help.c:5380
+msgid "change the definition of a trigger"
+msgstr "ტრიგერის აღწერის შეცვლა"
+
+#: sql_help.c:5386
+msgid "change the definition of a type"
+msgstr "ტიპის აღწერის შეცვლა"
+
+#: sql_help.c:5398
+msgid "change the definition of a user mapping"
+msgstr "მომხარებლის მიბმის აღწერის შეცვლა"
+
+#: sql_help.c:5404
+msgid "change the definition of a view"
+msgstr "ხედის აღწერის შეცვლა"
+
+#: sql_help.c:5410
+msgid "collect statistics about a database"
+msgstr "მონაცემების სტატისტიკის მოგროვება"
+
+#: sql_help.c:5416 sql_help.c:6214
+msgid "start a transaction block"
+msgstr "ტრანზაქციის ბლოკის დაწყება"
+
+#: sql_help.c:5422
+msgid "invoke a procedure"
+msgstr "პროცედურის ჩაწოდება"
+
+#: sql_help.c:5428
+msgid "force a write-ahead log checkpoint"
+msgstr "წინასწარ-ჩაწერად ჟურნალში საკონტროლო წერტილის დასმა"
+
+#: sql_help.c:5434
+msgid "close a cursor"
+msgstr "კურსორის დახურვა"
+
+#: sql_help.c:5440
+msgid "cluster a table according to an index"
+msgstr "ცხრილის გადაჯგუფება ინდექსის მიხედვით"
+
+#: sql_help.c:5446
+msgid "define or change the comment of an object"
+msgstr "ობიექტის კომენტარის აღწერა ან შეცვლა"
+
+#: sql_help.c:5452 sql_help.c:6010
+msgid "commit the current transaction"
+msgstr "მიმდინარე ტრანზაქციის გადაცემა"
+
+#: sql_help.c:5458
+msgid "commit a transaction that was earlier prepared for two-phase commit"
+msgstr "წინასწარ ორ ფაზაში გადასაცემად მომზადებული ტრანზაქციის გადაცემა"
+
+#: sql_help.c:5464
+msgid "copy data between a file and a table"
+msgstr "მონაცემების კოპირება ფაილსა და ცხრილს შორის"
+
+#: sql_help.c:5470
+msgid "define a new access method"
+msgstr "წვდომის ახალი მეთოდის აღწერა"
+
+#: sql_help.c:5476
+msgid "define a new aggregate function"
+msgstr "ახალი აგრეგატული ფუნქციის აღწერა"
+
+#: sql_help.c:5482
+msgid "define a new cast"
+msgstr "ახალი კასტის აღწერა"
+
+#: sql_help.c:5488
+msgid "define a new collation"
+msgstr "ახალი კოლაციის აღწერა"
+
+#: sql_help.c:5494
+msgid "define a new encoding conversion"
+msgstr "კოდირების ახალი გადაყვანის აღწერა"
+
+#: sql_help.c:5500
+msgid "create a new database"
+msgstr "ახალი მონაცემთა ბაზის შექმნა"
+
+#: sql_help.c:5506
+msgid "define a new domain"
+msgstr "ახალი დომენის შექმნა"
+
+#: sql_help.c:5512
+msgid "define a new event trigger"
+msgstr "მოვლენის ახალი ტრიგერის აღწერა"
+
+#: sql_help.c:5518
+msgid "install an extension"
+msgstr "გაფართოების დაყენება"
+
+#: sql_help.c:5524
+msgid "define a new foreign-data wrapper"
+msgstr "გარე მონაცემების ახალი გადამტანის აღწერა"
+
+#: sql_help.c:5530
+msgid "define a new foreign table"
+msgstr "მონაცემების გარე ცხრილის აღწერა"
+
+#: sql_help.c:5536
+msgid "define a new function"
+msgstr "ახალი ფუნქციის აღწერა"
+
+#: sql_help.c:5542 sql_help.c:5602 sql_help.c:5704
+msgid "define a new database role"
+msgstr "მონაცემთა ბაზის ახალი როლის აღწერა"
+
+#: sql_help.c:5548
+msgid "define a new index"
+msgstr "ახალი ინდექსის აღწერა"
+
+#: sql_help.c:5554
+msgid "define a new procedural language"
+msgstr "ახალი პროცედურული ენის აღწერა"
+
+#: sql_help.c:5560
+msgid "define a new materialized view"
+msgstr "ახალი მატერიალიზებული ხედის აღწერა"
+
+#: sql_help.c:5566
+msgid "define a new operator"
+msgstr "ახალი ოპერატორის აღწერა"
+
+#: sql_help.c:5572
+msgid "define a new operator class"
+msgstr "ოპერატორის ახალი კლასის აღწერა"
+
+#: sql_help.c:5578
+msgid "define a new operator family"
+msgstr "ოპერატორის ახალი ოჯახის აღწერა"
+
+#: sql_help.c:5584
+msgid "define a new row-level security policy for a table"
+msgstr "ცხრილისთვის ახალი მწკრივის-დონის-უსაფრთხოების წესის აღწერა"
+
+#: sql_help.c:5590
+msgid "define a new procedure"
+msgstr "ახალი პროცედურის აღწერა"
+
+#: sql_help.c:5596
+msgid "define a new publication"
+msgstr "ახალი გამოცემის აღწერა"
+
+#: sql_help.c:5608
+msgid "define a new rewrite rule"
+msgstr "ახალი გადაწერის წესის აღწერა"
+
+#: sql_help.c:5614
+msgid "define a new schema"
+msgstr "ახალი სქემის აღწერა"
+
+#: sql_help.c:5620
+msgid "define a new sequence generator"
+msgstr "მიმდევრობის ახალი გენერატორის აღწერა"
+
+#: sql_help.c:5626
+msgid "define a new foreign server"
+msgstr "ახალი გარე სერვერის აღწერა"
+
+#: sql_help.c:5632
+msgid "define extended statistics"
+msgstr "გაფართოებული სტატისტიკის აღწერა"
+
+#: sql_help.c:5638
+msgid "define a new subscription"
+msgstr "ახალი გამოწერის აღწერა"
+
+#: sql_help.c:5644
+msgid "define a new table"
+msgstr "ახალი ცხრილის აღწერა"
+
+#: sql_help.c:5650 sql_help.c:6172
+msgid "define a new table from the results of a query"
+msgstr "მოთხოვნის შედეგებიდან ახალი ცხრილის აღწერა"
+
+#: sql_help.c:5656
+msgid "define a new tablespace"
+msgstr "ცხრილების ახალი სივრცის აღწერა"
+
+#: sql_help.c:5662
+msgid "define a new text search configuration"
+msgstr "ტექსტის ძებნის ახალი კონფიგურაციის აღწერა"
+
+#: sql_help.c:5668
+msgid "define a new text search dictionary"
+msgstr "ტექსტის ძებნის ახალ ლექსიკონის აღწერა"
+
+#: sql_help.c:5674
+msgid "define a new text search parser"
+msgstr "ტექსტის ძებნის ახალი დამმუშავებლის აღწერა"
+
+#: sql_help.c:5680
+msgid "define a new text search template"
+msgstr "ტექსტის ძებნის ახალი შაბლონის აღწერა"
+
+#: sql_help.c:5686
+msgid "define a new transform"
+msgstr "ახალი გარდაქმნის აღწერა"
+
+#: sql_help.c:5692
+msgid "define a new trigger"
+msgstr "ახალი ტრიგერის აღწერა"
+
+#: sql_help.c:5698
+msgid "define a new data type"
+msgstr "მონაცემების ახალი ტიპის აღწერა"
+
+#: sql_help.c:5710
+msgid "define a new mapping of a user to a foreign server"
+msgstr "მომხმარებლის გარე სერვერთან ახალი ბმის აღწერა"
+
+#: sql_help.c:5716
+msgid "define a new view"
+msgstr "ახალი ხედის აღწერა"
+
+#: sql_help.c:5722
+msgid "deallocate a prepared statement"
+msgstr "მომზადებული ოპერატორის გათავისუფლება"
+
+#: sql_help.c:5728
+msgid "define a cursor"
+msgstr "კურსორის აღწერა"
+
+#: sql_help.c:5734
+msgid "delete rows of a table"
+msgstr "ცხრილში მწკრივების წაშლა"
+
+#: sql_help.c:5740
+msgid "discard session state"
+msgstr "სესიის მდგომარეობის მოშორება"
+
+#: sql_help.c:5746
+msgid "execute an anonymous code block"
+msgstr "კოდის ანონიმური ბლოკის შესრულება"
+
+#: sql_help.c:5752
+msgid "remove an access method"
+msgstr "წვდომის მეთოდის წაშლა"
+
+#: sql_help.c:5758
+msgid "remove an aggregate function"
+msgstr "აგრეგატული ფუნქციის წაშლა"
+
+#: sql_help.c:5764
+msgid "remove a cast"
+msgstr "კასტის წაშლა"
+
+#: sql_help.c:5770
+msgid "remove a collation"
+msgstr "კოლაციის წაშლა"
+
+#: sql_help.c:5776
+msgid "remove a conversion"
+msgstr "გადაყვანის წაშლა"
+
+#: sql_help.c:5782
+msgid "remove a database"
+msgstr "მონაცემთა ბაზის წაშლა"
+
+#: sql_help.c:5788
+msgid "remove a domain"
+msgstr "დომენის წაშლა"
+
+#: sql_help.c:5794
+msgid "remove an event trigger"
+msgstr "მოვლენის ტრიგერის წაშლა"
+
+#: sql_help.c:5800
+msgid "remove an extension"
+msgstr "გაფართოების წაშლა"
+
+#: sql_help.c:5806
+msgid "remove a foreign-data wrapper"
+msgstr "გარე-მონაცემების გადამტანის წაშლა"
+
+#: sql_help.c:5812
+msgid "remove a foreign table"
+msgstr "გარე ცხრილის წაშლა"
+
+#: sql_help.c:5818
+msgid "remove a function"
+msgstr "ფუნქციის წაშლა"
+
+#: sql_help.c:5824 sql_help.c:5890 sql_help.c:5992
+msgid "remove a database role"
+msgstr "მონაცემთა ბაზის როლის წაშლა"
+
+#: sql_help.c:5830
+msgid "remove an index"
+msgstr "ინდექსის წაშლა"
+
+#: sql_help.c:5836
+msgid "remove a procedural language"
+msgstr "პროცედურული ენის წაშლა"
+
+#: sql_help.c:5842
+msgid "remove a materialized view"
+msgstr "მატერიალიზებული ხედის წაშლა"
+
+#: sql_help.c:5848
+msgid "remove an operator"
+msgstr "ოპერატორის წაშლა"
+
+#: sql_help.c:5854
+msgid "remove an operator class"
+msgstr "ოპერატორის კლასის წაშლა"
+
+#: sql_help.c:5860
+msgid "remove an operator family"
+msgstr "ოპერატორის ოჯახის წაშლა"
+
+#: sql_help.c:5866
+msgid "remove database objects owned by a database role"
+msgstr "მონაცემთა ბაზის როლის მფლობელობაში მყოფი ბაზის ობიექტების წაშლა"
+
+#: sql_help.c:5872
+msgid "remove a row-level security policy from a table"
+msgstr "ცხრილიდან მწკრივის-დონის უსაფრთხოების წესის წაშლა"
+
+#: sql_help.c:5878
+msgid "remove a procedure"
+msgstr "პროცედურის წაშლა"
+
+#: sql_help.c:5884
+msgid "remove a publication"
+msgstr "გამოცემის წაშლა"
+
+#: sql_help.c:5896
+msgid "remove a routine"
+msgstr "წესრიგის წაშლა"
+
+#: sql_help.c:5902
+msgid "remove a rewrite rule"
+msgstr "გადაწერის წესის წაშლა"
+
+#: sql_help.c:5908
+msgid "remove a schema"
+msgstr "სქემის წაშლა"
+
+#: sql_help.c:5914
+msgid "remove a sequence"
+msgstr "მიმდევრობის წაშლა"
+
+#: sql_help.c:5920
+msgid "remove a foreign server descriptor"
+msgstr "გარე სერვერის დესკრიპტორის წაშლა"
+
+#: sql_help.c:5926
+msgid "remove extended statistics"
+msgstr "გაფართოებული სტატისტიკის წაშლა"
+
+#: sql_help.c:5932
+msgid "remove a subscription"
+msgstr "გამოწერის წაშლა"
+
+#: sql_help.c:5938
+msgid "remove a table"
+msgstr "ცხრილის წაშლა"
+
+#: sql_help.c:5944
+msgid "remove a tablespace"
+msgstr "ცხრილების სივრცის წაშლა"
+
+#: sql_help.c:5950
+msgid "remove a text search configuration"
+msgstr "ტექსტის ძებნის კონფიგურაციის წაშლა"
+
+#: sql_help.c:5956
+msgid "remove a text search dictionary"
+msgstr "ტექსტის ძებნის ლექსიკონის წაშლა"
+
+#: sql_help.c:5962
+msgid "remove a text search parser"
+msgstr "ტექსტის ძებნის დამმუშავებლის წაშლა"
+
+#: sql_help.c:5968
+msgid "remove a text search template"
+msgstr "ტექსტის ძებნის შაბლონის წაშლა"
+
+#: sql_help.c:5974
+msgid "remove a transform"
+msgstr "გარდაქმნის წაშლა"
+
+#: sql_help.c:5980
+msgid "remove a trigger"
+msgstr "ტრიგერის წაშლა"
+
+#: sql_help.c:5986
+msgid "remove a data type"
+msgstr "მონაცემების ტიპის წაშლა"
+
+#: sql_help.c:5998
+msgid "remove a user mapping for a foreign server"
+msgstr "მომხმარებლის გარე სერვერისთვის მიბმის წაშლა"
+
+#: sql_help.c:6004
+msgid "remove a view"
+msgstr "ხედის წაშლა"
+
+#: sql_help.c:6016
+msgid "execute a prepared statement"
+msgstr "მზა ოპერატორის შესრულება"
+
+#: sql_help.c:6022
+msgid "show the execution plan of a statement"
+msgstr "ოპერატორის შესრულების გეგმის ჩვენება"
+
+#: sql_help.c:6028
+msgid "retrieve rows from a query using a cursor"
+msgstr "კურსორის გამოყენებით მოთხოვნიდან მწკრივების მიღება"
+
+#: sql_help.c:6034
+msgid "define access privileges"
+msgstr "წვდომის უფლებების აღწერა"
+
+#: sql_help.c:6040
+msgid "import table definitions from a foreign server"
+msgstr "ცხრილის აღწერების უცხო სერვერიდან შემოტანა"
+
+#: sql_help.c:6046
+msgid "create new rows in a table"
+msgstr "ცხრილში ახალი მწკრივების შექმნა"
+
+#: sql_help.c:6052
+msgid "listen for a notification"
+msgstr "შეტყობინების მოლოდინი"
+
+#: sql_help.c:6058
+msgid "load a shared library file"
+msgstr "გაზიარებული ბიბლიოთეკის ფაილის ჩატვირთვა"
+
+#: sql_help.c:6064
+msgid "lock a table"
+msgstr "ცხრილის დაბლოკვა"
+
+#: sql_help.c:6070
+msgid "conditionally insert, update, or delete rows of a table"
+msgstr "ცხრილის მწკრივების ჩასმა, განახლება ან წაშლა პირობის მიხედვით"
+
+#: sql_help.c:6076
+msgid "position a cursor"
+msgstr "კურსორის მოთავსება"
+
+#: sql_help.c:6082
+msgid "generate a notification"
+msgstr "შეტყობინების გენერაცია"
+
+#: sql_help.c:6088
+msgid "prepare a statement for execution"
+msgstr "ოპერატორის გასაშვებად მომზადება"
+
+#: sql_help.c:6094
+msgid "prepare the current transaction for two-phase commit"
+msgstr "ტრანზაქციის მომზადება ორ ფაზაში გადასაცემად"
+
+#: sql_help.c:6100
+msgid "change the ownership of database objects owned by a database role"
+msgstr "ბაზის როლის მფლობელობაში მყოფი ბაზის ობიექტების მფლობელის შეცვლა"
+
+#: sql_help.c:6106
+msgid "replace the contents of a materialized view"
+msgstr "მატერიალიზებული ხედის შემცველობის ჩანაცვლება"
+
+#: sql_help.c:6112
+msgid "rebuild indexes"
+msgstr "ინდექსების თავიდან აგება"
+
+#: sql_help.c:6118
+msgid "release a previously defined savepoint"
+msgstr "ადრე აღწერილი შენახვის წერტილის მოხსნა"
+
+#: sql_help.c:6124
+msgid "restore the value of a run-time parameter to the default value"
+msgstr "გაშვების პარამეტრის მნიშვნელობის საწყის მნიშვნელობაზე აღდგენა"
+
+#: sql_help.c:6130
+msgid "remove access privileges"
+msgstr "წვდომის უფლებების წაშლა"
+
+#: sql_help.c:6142
+msgid "cancel a transaction that was earlier prepared for two-phase commit"
+msgstr "წინასწარ ორ ფაზაში გადასაცემად მომზადებული ტრანზაქციის გაუქმება"
+
+#: sql_help.c:6148
+msgid "roll back to a savepoint"
+msgstr "შენახვის წერტილზე დაბრუნება"
+
+#: sql_help.c:6154
+msgid "define a new savepoint within the current transaction"
+msgstr "ახალი შესანახი წერტილის აღწერა მიმდინარე ტრანზაქციაში"
+
+#: sql_help.c:6160
+msgid "define or change a security label applied to an object"
+msgstr "ობიექტზე გადატარებული უსაფრთხოების ჭდის აღწერა ან შეცვლა"
+
+#: sql_help.c:6166 sql_help.c:6220 sql_help.c:6256
+msgid "retrieve rows from a table or view"
+msgstr "მწკრივის მიღება ცხრილიდან ან ხედიდან"
+
+#: sql_help.c:6178
+msgid "change a run-time parameter"
+msgstr "გაშვების პარამეტრის შეცვლა"
+
+#: sql_help.c:6184
+msgid "set constraint check timing for the current transaction"
+msgstr "მიმდინარე ტრანზაქციის შეზღუდვის შემოწმების დროის დაყენება"
+
+#: sql_help.c:6190
+msgid "set the current user identifier of the current session"
+msgstr "მიმდინარე სესიის მიმდინარე მომხმარებლის იდენტიფიკატორის დაყენება"
+
+#: sql_help.c:6196
+msgid "set the session user identifier and the current user identifier of the current session"
+msgstr "სესიის მომხმარებლის იდენტიფიკატორისა და მიმდინარე სესიის მიმდინარე მომხმარებლის იდენტიფიკატორის დაყენება"
+
+#: sql_help.c:6202
+msgid "set the characteristics of the current transaction"
+msgstr "მიმდინარე ტრანზაქციის თვისებების დაყენება"
+
+#: sql_help.c:6208
+msgid "show the value of a run-time parameter"
+msgstr "გაშვების პარამეტრის მნიშვნელობის ჩვენება"
+
+#: sql_help.c:6226
+msgid "empty a table or set of tables"
+msgstr "ცხრილის ან ცხრილების სეტის დაცარიელება"
+
+#: sql_help.c:6232
+msgid "stop listening for a notification"
+msgstr "გაფრთხილებების მოსმენის შეწყვეტა"
+
+#: sql_help.c:6238
+msgid "update rows of a table"
+msgstr "ცხრილის მწკრივების განახლება"
+
+#: sql_help.c:6244
+msgid "garbage-collect and optionally analyze a database"
+msgstr "ნაგვის-მოგროვება და ბაზის არასავალდებულო ანალიზი"
+
+#: sql_help.c:6250
+msgid "compute a set of rows"
+msgstr "მწკრივების სეტის გამოთვლა"
+
+#: startup.c:220
+#, c-format
+msgid "-1 can only be used in non-interactive mode"
+msgstr "-1 მხოლოდ არაინტერაქტიურ რეჟიმში შეიძლება იყოს გამოყენებული"
+
+#: startup.c:343
+#, c-format
+msgid "could not open log file \"%s\": %m"
+msgstr "ჟურნალის ფაილის გახსნის შეცდომა \"%s\": %m"
+
+#: startup.c:460
+#, c-format
+msgid ""
+"Type \"help\" for help.\n"
+"\n"
+msgstr ""
+"დახმარებისთვის აკრიფეთ \"help\".\n"
+"\n"
+
+#: startup.c:612
+#, c-format
+msgid "could not set printing parameter \"%s\""
+msgstr "გამოტანის პარამეტრის დაყენების შეცდომა: \"%s\""
+
+#: startup.c:719
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
+
+#: startup.c:735
+#, c-format
+msgid "extra command-line argument \"%s\" ignored"
+msgstr "ბრძანების სტრიქონის დამატებითი არგუმენტი \"%s\" იგნორირებულია"
+
+#: startup.c:783
+#, c-format
+msgid "could not find own program executable"
+msgstr "საკუთარი პროგრამის გამშვები ფაილის პოვნა შეუძლებელია"
+
+#: tab-complete.c:6080
+#, c-format
+msgid ""
+"tab completion query failed: %s\n"
+"Query was:\n"
+"%s"
+msgstr ""
+"ჩანართის დაბრუნების მოთხოვნის შეცდომა: %s\n"
+"მოთხოვნის ტექსტი:\n"
+"%s"
+
+#: variables.c:139
+#, c-format
+msgid "unrecognized value \"%s\" for \"%s\": Boolean expected"
+msgstr "მნიშვნელობა \"%s\" \"%s\"-სთვის მიუღებელია: ველოდებოდი ლოგიკურ მნიშვნელობას"
+
+#: variables.c:176
+#, c-format
+msgid "invalid value \"%s\" for \"%s\": integer expected"
+msgstr "არასწორი მნიშვნელობა \"%s\" \"%s\"-სთვის (უნდა იყოს მთელი რიცხვი)"
+
+#: variables.c:224
+#, c-format
+msgid "invalid variable name: \"%s\""
+msgstr "ცვლადის არასწორი სახელი: \"%s\""
+
+#: variables.c:418
+#, c-format
+msgid ""
+"unrecognized value \"%s\" for \"%s\"\n"
+"Available values are: %s."
+msgstr ""
+"\"%s\" არასწორი მნიშვნელობაა \"%s\"-სთვის\n"
+"შესაძლო მნიშვნელობებია: %s."
+
+#~ msgid "Source code"
+#~ msgstr "საწყისი კოდი"
+
+#, c-format
+#~ msgid "\\watch cannot be used with COPY"
+#~ msgstr "\\watch -ს COPY-სთან ერთად ვერ გამოყენებთ"
+
+#, c-format
+#~ msgid "could not change directory to \"%s\": %m"
+#~ msgstr "საქაღალდის %s-ზე შეცვლის შეცდომა: %m"
+
+#, c-format
+#~ msgid "could not identify current directory: %m"
+#~ msgstr "მიმდინარე საქაღალდის იდენტიფიკაციის პრობლემა: %m"
+
+#, c-format
+#~ msgid "could not read symbolic link \"%s\": %m"
+#~ msgstr "სიმბოლური ბმის \"%s\" წაკითხვის შეცდომა: %m"
+
+#~ msgid "text"
+#~ msgstr "ტექსტი"
+
+#~ msgid "timezone"
+#~ msgstr "დროის_სარტყელი"
+
+#~ msgid "where direction can be empty or one of:"
+#~ msgstr "სადაც direction შეიძლება იყოს ცარიელი, ან ერთ-ერთი სიიდან::"

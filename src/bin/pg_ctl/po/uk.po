@@ -2,11 +2,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-10 08:46+0000\n"
-"PO-Revision-Date: 2021-08-17 10:54\n"
+"POT-Creation-Date: 2023-04-24 03:48+0000\n"
+"PO-Revision-Date: 2023-04-24 09:25+0200\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
-"Language: uk_UA\n"
+"Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,121 +14,112 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_14_DEV/pg_ctl.pot\n"
-"X-Crowdin-File-ID: 740\n"
+"X-Crowdin-File: /REL_15_STABLE/pg_ctl.pot\n"
+"X-Crowdin-File-ID: 878\n"
 
-#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "не вдалося визначити поточний каталог: %m"
+msgid "invalid binary \"%s\": %m"
+msgstr "невірний бінарний файл \"%s\": %m"
 
-#: ../../common/exec.c:155
+#: ../../common/exec.c:215
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "невірний бінарний файл \"%s\""
+msgid "could not read binary \"%s\": %m"
+msgstr "неможливо прочитати бінарний файл \"%s\": %m"
 
-#: ../../common/exec.c:205
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "неможливо прочитати бінарний файл \"%s\""
-
-#: ../../common/exec.c:213
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "неможливо знайти \"%s\" для виконання"
 
-#: ../../common/exec.c:269 ../../common/exec.c:308
-#, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "не вдалося змінити каталог на \"%s\": %m"
+#: ../../common/exec.c:250
+#, fuzzy, c-format
+#| msgid "could not reopen file \"%s\" as stderr: %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "не вдалося повторно відкрити файл \"%s\" як stderr: %m"
 
-#: ../../common/exec.c:286
-#, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "не можливо прочитати символічне послання \"%s\": %m"
-
-#: ../../common/exec.c:409
+#: ../../common/exec.c:412
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() помилка: %m"
 
-#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
-#: ../../port/path.c:632 ../../port/path.c:670 ../../port/path.c:687
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../port/path.c:753 ../../port/path.c:791 ../../port/path.c:808
 #, c-format
 msgid "out of memory\n"
 msgstr "недостатньо пам'яті\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
 
-#: ../../common/wait_error.c:45
+#: ../../common/wait_error.c:55
 #, c-format
 msgid "command not executable"
 msgstr "неможливо виконати команду"
 
-#: ../../common/wait_error.c:49
+#: ../../common/wait_error.c:59
 #, c-format
 msgid "command not found"
 msgstr "команду не знайдено"
 
-#: ../../common/wait_error.c:54
+#: ../../common/wait_error.c:64
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "дочірній процес завершився з кодом виходу %d"
 
-#: ../../common/wait_error.c:62
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "дочірній процес перервано через помилку 0х%X"
 
-#: ../../common/wait_error.c:66
+#: ../../common/wait_error.c:76
 #, c-format
 msgid "child process was terminated by signal %d: %s"
 msgstr "дочірній процес перервано через сигнал %d: %s"
 
-#: ../../common/wait_error.c:72
+#: ../../common/wait_error.c:82
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочірній процес завершився з невизнаним статусом %d"
 
-#: ../../port/path.c:654
+#: ../../port/path.c:775
 #, c-format
 msgid "could not get current working directory: %s\n"
 msgstr "не вдалося отримати поточний робочий каталог: %s\n"
 
-#: pg_ctl.c:258
+#: pg_ctl.c:255
 #, c-format
 msgid "%s: directory \"%s\" does not exist\n"
 msgstr "%s: директорія \"%s\" не існує\n"
 
-#: pg_ctl.c:261
+#: pg_ctl.c:258
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: немає доступу до каталогу \"%s\": %s\n"
 
-#: pg_ctl.c:274
+#: pg_ctl.c:271
 #, c-format
 msgid "%s: directory \"%s\" is not a database cluster directory\n"
 msgstr "%s: каталог \"%s\" не є каталогом кластера бази даних\n"
 
-#: pg_ctl.c:287
+#: pg_ctl.c:284
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
 msgstr "%s: не вдалося відкрити файл PID \"%s\": %s\n"
 
-#: pg_ctl.c:296
+#: pg_ctl.c:293
 #, c-format
 msgid "%s: the PID file \"%s\" is empty\n"
 msgstr "%s: файл PID \"%s\" пустий\n"
 
-#: pg_ctl.c:299
+#: pg_ctl.c:296
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
 msgstr "%s: невірні дані у файлі PID \"%s\"\n"
@@ -153,678 +144,687 @@ msgstr "%s: не вдалося відкрити файл журналу \"%s\":
 msgid "%s: could not start server: error code %lu\n"
 msgstr "%s: не вдалося запустити сервер: код помилки %lu\n"
 
-#: pg_ctl.c:712
+#: pg_ctl.c:782
 #, c-format
 msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
 msgstr "%s: не вдалося встановити обмеження на розмір файлу; заборонено жорстким лімітом\n"
 
-#: pg_ctl.c:738
+#: pg_ctl.c:808
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
 msgstr "%s: не вдалося прочитати файл \"%s\"\n"
 
-#: pg_ctl.c:743
+#: pg_ctl.c:813
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
 msgstr "%s: файл параметрів \"%s\" повинен містити рівно один рядок\n"
 
-#: pg_ctl.c:785 pg_ctl.c:974 pg_ctl.c:1070
+#: pg_ctl.c:855 pg_ctl.c:1039 pg_ctl.c:1107
 #, c-format
-msgid "%s: could not send stop signal (PID: %ld): %s\n"
-msgstr "%s: не вдалося надіслати стоп-сигнал (PID: %ld): %s\n"
+msgid "%s: could not send stop signal (PID: %d): %s\n"
+msgstr "%s: не вдалося надіслати стоп-сигнал (PID: %d): %s\n"
 
-#: pg_ctl.c:813
+#: pg_ctl.c:883
 #, c-format
-msgid "The program \"%s\" is needed by %s but was not found in the\n"
-"same directory as \"%s\".\n"
-"Check your installation.\n"
-msgstr "Програма \"%s\" потрібна для %s, але не знайдена в тому ж каталозі, що й \"%s\".\n"
-"Перевірте вашу установку.\n"
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\"\n"
+msgstr "програма \"%s\" потрібна для %s, але не знайдена в тому ж каталозі, що й \"%s\"\n"
 
-#: pg_ctl.c:818
+#: pg_ctl.c:886
 #, c-format
-msgid "The program \"%s\" was found by \"%s\"\n"
-"but was not the same version as %s.\n"
-"Check your installation.\n"
-msgstr "Програма \"%s\" була знайдена \"%s\", але не була тієї ж версії, що %s.\n"
-"Перевірте вашу установку.\n"
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s\n"
+msgstr "програма \"%s\" знайдена для \"%s\", але має відмінну версію від %s\n"
 
-#: pg_ctl.c:851
+#: pg_ctl.c:918
 #, c-format
 msgid "%s: database system initialization failed\n"
 msgstr "%s: не вдалося виконати ініціалізацію системи бази даних\n"
 
-#: pg_ctl.c:866
+#: pg_ctl.c:933
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
 msgstr "%s: мабуть, інший сервер вже працює; у будь-якому разі спробуємо запустити сервер\n"
 
-#: pg_ctl.c:914
+#: pg_ctl.c:981
 msgid "waiting for server to start..."
 msgstr "очікується запуск серверу..."
 
-#: pg_ctl.c:919 pg_ctl.c:1024 pg_ctl.c:1116 pg_ctl.c:1241
+#: pg_ctl.c:986 pg_ctl.c:1063 pg_ctl.c:1126 pg_ctl.c:1238
 msgid " done\n"
 msgstr " готово\n"
 
-#: pg_ctl.c:920
+#: pg_ctl.c:987
 msgid "server started\n"
 msgstr "сервер запущено\n"
 
-#: pg_ctl.c:923 pg_ctl.c:929 pg_ctl.c:1246
+#: pg_ctl.c:990 pg_ctl.c:996 pg_ctl.c:1243
 msgid " stopped waiting\n"
 msgstr " очікування припинено\n"
 
-#: pg_ctl.c:924
+#: pg_ctl.c:991
 #, c-format
 msgid "%s: server did not start in time\n"
 msgstr "%s: сервер не було запущено вчасно\n"
 
-#: pg_ctl.c:930
+#: pg_ctl.c:997
 #, c-format
-msgid "%s: could not start server\n"
+msgid ""
+"%s: could not start server\n"
 "Examine the log output.\n"
-msgstr "%s: неможливо запустити сервер\n"
+msgstr ""
+"%s: неможливо запустити сервер\n"
 "Передивіться протокол виконання.\n"
 
-#: pg_ctl.c:938
+#: pg_ctl.c:1005
 msgid "server starting\n"
 msgstr "запуск серверу\n"
 
-#: pg_ctl.c:959 pg_ctl.c:1046 pg_ctl.c:1137 pg_ctl.c:1176 pg_ctl.c:1270
+#: pg_ctl.c:1024 pg_ctl.c:1083 pg_ctl.c:1147 pg_ctl.c:1186 pg_ctl.c:1267
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
 msgstr "%s: файл PID \"%s\" не існує\n"
 
-#: pg_ctl.c:960 pg_ctl.c:1048 pg_ctl.c:1138 pg_ctl.c:1177 pg_ctl.c:1271
+#: pg_ctl.c:1025 pg_ctl.c:1085 pg_ctl.c:1148 pg_ctl.c:1187 pg_ctl.c:1268
 msgid "Is server running?\n"
 msgstr "Сервер працює?\n"
 
-#: pg_ctl.c:966
+#: pg_ctl.c:1031
 #, c-format
-msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
-msgstr "%s: не можливо зупинити сервер; сервер запущений в режимі single-user (PID: %ld)\n"
+msgid "%s: cannot stop server; single-user server is running (PID: %d)\n"
+msgstr "%s: не можливо зупинити сервер; сервер запущений в режимі single-user (PID: %d)\n"
 
-#: pg_ctl.c:981
+#: pg_ctl.c:1046
 msgid "server shutting down\n"
 msgstr "сервер зупиняється\n"
 
-#: pg_ctl.c:996 pg_ctl.c:1085
-msgid "WARNING: online backup mode is active\n"
-"Shutdown will not complete until pg_stop_backup() is called.\n\n"
-msgstr "ПОПЕРЕДЖЕННЯ: режим онлайн копіювання активний\n"
-"Зупинку не буде завершено поки не буде викликано pg_stop_backup().\n\n"
-
-#: pg_ctl.c:1000 pg_ctl.c:1089
+#: pg_ctl.c:1051 pg_ctl.c:1112
 msgid "waiting for server to shut down..."
 msgstr "очікується зупинка серверу..."
 
-#: pg_ctl.c:1016 pg_ctl.c:1107
+#: pg_ctl.c:1055 pg_ctl.c:1117
 msgid " failed\n"
 msgstr " помилка\n"
 
-#: pg_ctl.c:1018 pg_ctl.c:1109
+#: pg_ctl.c:1057 pg_ctl.c:1119
 #, c-format
 msgid "%s: server does not shut down\n"
 msgstr "%s: сервер не зупинено\n"
 
-#: pg_ctl.c:1020 pg_ctl.c:1111
-msgid "HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
+#: pg_ctl.c:1059 pg_ctl.c:1121
+msgid ""
+"HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 "waiting for session-initiated disconnection.\n"
 msgstr "ПІДКАЗКА: Режим \"-m fast\" закриває сесії відразу, не чекаючи на відключення ініційовані сесіями.\n"
 
-#: pg_ctl.c:1026 pg_ctl.c:1117
+#: pg_ctl.c:1065 pg_ctl.c:1127
 msgid "server stopped\n"
 msgstr "сервер зупинено\n"
 
-#: pg_ctl.c:1049
+#: pg_ctl.c:1086
 msgid "trying to start server anyway\n"
 msgstr "спроба запуску серверу в будь-якому разі\n"
 
-#: pg_ctl.c:1058
+#: pg_ctl.c:1095
 #, c-format
-msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
-msgstr "%s: не можливо перезапустити сервер; сервер запущений в режимі single-user (PID: %ld)\n"
+msgid "%s: cannot restart server; single-user server is running (PID: %d)\n"
+msgstr "%s: не можливо перезапустити сервер; сервер запущений в режимі single-user (PID: %d)\n"
 
-#: pg_ctl.c:1061 pg_ctl.c:1147
+#: pg_ctl.c:1098 pg_ctl.c:1157
 msgid "Please terminate the single-user server and try again.\n"
 msgstr "Будь ласка, припиніть однокористувацький сервер та спробуйте ще раз.\n"
 
-#: pg_ctl.c:1121
+#: pg_ctl.c:1131
 #, c-format
-msgid "%s: old server process (PID: %ld) seems to be gone\n"
-msgstr "%s: старий серверний процес (PID: %ld), здається, зник\n"
+msgid "%s: old server process (PID: %d) seems to be gone\n"
+msgstr "%s: старий серверний процес (PID: %d), здається, зник\n"
 
-#: pg_ctl.c:1123
+#: pg_ctl.c:1133
 msgid "starting server anyway\n"
 msgstr "запуск серверу в будь-якому разі\n"
 
-#: pg_ctl.c:1144
+#: pg_ctl.c:1154
 #, c-format
-msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
-msgstr "%s: неможливо перезавантажити сервер; сервер запущено в однокористувацькому режимі (PID: %ld)\n"
+msgid "%s: cannot reload server; single-user server is running (PID: %d)\n"
+msgstr "%s: неможливо перезавантажити сервер; сервер запущено в однокористувацькому режимі (PID: %d)\n"
 
-#: pg_ctl.c:1153
+#: pg_ctl.c:1163
 #, c-format
-msgid "%s: could not send reload signal (PID: %ld): %s\n"
-msgstr "%s: не можливо надіслати сигнал перезавантаження (PID: %ld): %s\n"
+msgid "%s: could not send reload signal (PID: %d): %s\n"
+msgstr "%s: не можливо надіслати сигнал перезавантаження (PID: %d): %s\n"
 
-#: pg_ctl.c:1158
+#: pg_ctl.c:1168
 msgid "server signaled\n"
 msgstr "серверу надіслано сигнал\n"
 
-#: pg_ctl.c:1183
+#: pg_ctl.c:1193
 #, c-format
-msgid "%s: cannot promote server; single-user server is running (PID: %ld)\n"
-msgstr "%s: неможливо підвищити сервер; сервер запущено в режимі single-user (PID: %ld)\n"
+msgid "%s: cannot promote server; single-user server is running (PID: %d)\n"
+msgstr "%s: неможливо підвищити сервер; сервер запущено в режимі single-user (PID: %d)\n"
 
-#: pg_ctl.c:1191
+#: pg_ctl.c:1201
 #, c-format
 msgid "%s: cannot promote server; server is not in standby mode\n"
 msgstr "%s: неможливо підвищити сервер; сервер запущено не в режимі резерву\n"
 
-#: pg_ctl.c:1201
+#: pg_ctl.c:1211
 #, c-format
 msgid "%s: could not create promote signal file \"%s\": %s\n"
 msgstr "%s: неможливо створити файл \"%s\" із сигналом для підвищення: %s\n"
 
-#: pg_ctl.c:1207
+#: pg_ctl.c:1217
 #, c-format
 msgid "%s: could not write promote signal file \"%s\": %s\n"
 msgstr "%s: неможливо записати файл \"%s\" із сигналом для підвищення: %s\n"
 
-#: pg_ctl.c:1215
+#: pg_ctl.c:1225
 #, c-format
-msgid "%s: could not send promote signal (PID: %ld): %s\n"
-msgstr "%s: неможливо надіслати сигнал підвищення (PID: %ld): %s\n"
+msgid "%s: could not send promote signal (PID: %d): %s\n"
+msgstr "%s: неможливо надіслати сигнал підвищення (PID: %d): %s\n"
 
-#: pg_ctl.c:1218
+#: pg_ctl.c:1228
 #, c-format
 msgid "%s: could not remove promote signal file \"%s\": %s\n"
 msgstr "%s: неможливо видалити файл \"%s\" із сигналом для підвищення: %s\n"
 
-#: pg_ctl.c:1228
+#: pg_ctl.c:1235
 msgid "waiting for server to promote..."
 msgstr "очікується підвищення серверу..."
 
-#: pg_ctl.c:1242
+#: pg_ctl.c:1239
 msgid "server promoted\n"
 msgstr "сервер підвищено\n"
 
-#: pg_ctl.c:1247
+#: pg_ctl.c:1244
 #, c-format
 msgid "%s: server did not promote in time\n"
 msgstr "%s: сервер не було підвищено вчасно\n"
 
-#: pg_ctl.c:1253
+#: pg_ctl.c:1250
 msgid "server promoting\n"
 msgstr "сервер підвищується\n"
 
-#: pg_ctl.c:1277
+#: pg_ctl.c:1274
 #, c-format
-msgid "%s: cannot rotate log file; single-user server is running (PID: %ld)\n"
-msgstr "%s: не можливо розвернути файл журналу; сервер працює в режимі одного користувача (PID: %ld)\n"
+msgid "%s: cannot rotate log file; single-user server is running (PID: %d)\n"
+msgstr "%s: не можливо розвернути файл журналу; сервер працює в режимі одного користувача (PID: %d)\n"
 
-#: pg_ctl.c:1287
+#: pg_ctl.c:1284
 #, c-format
 msgid "%s: could not create log rotation signal file \"%s\": %s\n"
 msgstr "%s: не вдалося створити файл сигналу розвороту журналу \"%s\": %s\n"
 
-#: pg_ctl.c:1293
+#: pg_ctl.c:1290
 #, c-format
 msgid "%s: could not write log rotation signal file \"%s\": %s\n"
 msgstr "%s: не вдалося записати у файл сигналу розвороту журналу \"%s\": %s\n"
 
-#: pg_ctl.c:1301
+#: pg_ctl.c:1298
 #, c-format
-msgid "%s: could not send log rotation signal (PID: %ld): %s\n"
-msgstr "%s: не вдалося надіслати сигнал розвороту журналу (PID: %ld): %s\n"
+msgid "%s: could not send log rotation signal (PID: %d): %s\n"
+msgstr "%s: не вдалося надіслати сигнал розвороту журналу (PID: %d): %s\n"
 
-#: pg_ctl.c:1304
+#: pg_ctl.c:1301
 #, c-format
 msgid "%s: could not remove log rotation signal file \"%s\": %s\n"
 msgstr "%s: не вдалося видалити файл сигналу розвороту журналу \"%s\": %s\n"
 
-#: pg_ctl.c:1309
+#: pg_ctl.c:1306
 msgid "server signaled to rotate log file\n"
 msgstr "серверу надіслано сигнал для розворот файлу журналу\n"
 
-#: pg_ctl.c:1356
+#: pg_ctl.c:1353
 #, c-format
-msgid "%s: single-user server is running (PID: %ld)\n"
-msgstr "%s: однокористувацький сервер працює (PID: %ld)\n"
+msgid "%s: single-user server is running (PID: %d)\n"
+msgstr "%s: однокористувацький сервер працює (PID: %d)\n"
 
-#: pg_ctl.c:1370
+#: pg_ctl.c:1367
 #, c-format
-msgid "%s: server is running (PID: %ld)\n"
-msgstr "%s: сервер працює (PID: %ld)\n"
+msgid "%s: server is running (PID: %d)\n"
+msgstr "%s: сервер працює (PID: %d)\n"
 
-#: pg_ctl.c:1386
+#: pg_ctl.c:1383
 #, c-format
 msgid "%s: no server running\n"
 msgstr "%s: сервер не працює \n"
 
-#: pg_ctl.c:1403
+#: pg_ctl.c:1400
 #, c-format
-msgid "%s: could not send signal %d (PID: %ld): %s\n"
-msgstr "%s: не вдалося надіслати сигнал %d (PID: %ld): %s\n"
+msgid "%s: could not send signal %d (PID: %d): %s\n"
+msgstr "%s: не вдалося надіслати сигнал %d (PID: %d): %s\n"
 
-#: pg_ctl.c:1434
+#: pg_ctl.c:1431
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: не вдалося знайти ехе файл власної програми\n"
 
-#: pg_ctl.c:1444
+#: pg_ctl.c:1441
 #, c-format
 msgid "%s: could not find postgres program executable\n"
 msgstr "%s: не вдалося знайти виконану програму postgres\n"
 
-#: pg_ctl.c:1514 pg_ctl.c:1548
+#: pg_ctl.c:1511 pg_ctl.c:1545
 #, c-format
 msgid "%s: could not open service manager\n"
 msgstr "%s: не вдалося відкрити менеджер служб\n"
 
-#: pg_ctl.c:1520
+#: pg_ctl.c:1517
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
 msgstr "%s: служба \"%s\" вже зареєстрована \n"
 
-#: pg_ctl.c:1531
+#: pg_ctl.c:1528
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
 msgstr "%s: не вдалося зареєструвати службу \"%s\": код помилки %lu\n"
 
-#: pg_ctl.c:1554
+#: pg_ctl.c:1551
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
 msgstr "%s: служба \"%s\" не зареєстрована \n"
 
-#: pg_ctl.c:1561
+#: pg_ctl.c:1558
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
 msgstr "%s: не вдалося відкрити службу \"%s\": код помилки %lu\n"
 
-#: pg_ctl.c:1570
+#: pg_ctl.c:1567
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
 msgstr "%s: не вдалося видалити службу \"%s\": код помилки %lu\n"
 
-#: pg_ctl.c:1657
+#: pg_ctl.c:1654
 msgid "Waiting for server startup...\n"
 msgstr "Очікування запуску сервера...\n"
 
-#: pg_ctl.c:1660
+#: pg_ctl.c:1657
 msgid "Timed out waiting for server startup\n"
 msgstr "Перевищено час очікування запуску сервера\n"
 
-#: pg_ctl.c:1664
+#: pg_ctl.c:1661
 msgid "Server started and accepting connections\n"
 msgstr "Сервер запущений і приймає з'єднання\n"
 
-#: pg_ctl.c:1719
+#: pg_ctl.c:1716
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
 msgstr "%s: не вдалося почати службу \"%s\": код помилки %lu\n"
 
 #: pg_ctl.c:1789
 #, c-format
-msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: УВАГА: не вдалося створити обмежені токени на цій платформі\n"
-
-#: pg_ctl.c:1802
-#, c-format
 msgid "%s: could not open process token: error code %lu\n"
 msgstr "%s: не вдалося відкрити токен процесу: код помилки %lu\n"
 
-#: pg_ctl.c:1816
+#: pg_ctl.c:1803
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
 msgstr "%s: не вдалося виділити SID: код помилки %lu\n"
 
-#: pg_ctl.c:1843
+#: pg_ctl.c:1829
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
 msgstr "%s: не вдалося створити обмежений токен: код помилки %lu\n"
 
-#: pg_ctl.c:1874
-#, c-format
-msgid "%s: WARNING: could not locate all job object functions in system API\n"
-msgstr "%s: ПОПЕРЕДЖЕННЯ: не вдалося знайти усі робочі функції у системному API для завдань\n"
-
-#: pg_ctl.c:1971
+#: pg_ctl.c:1911
 #, c-format
 msgid "%s: could not get LUIDs for privileges: error code %lu\n"
 msgstr "%s: не вдалося отримати LUIDs для прав: код помилки %lu\n"
 
-#: pg_ctl.c:1979 pg_ctl.c:1994
+#: pg_ctl.c:1919 pg_ctl.c:1934
 #, c-format
 msgid "%s: could not get token information: error code %lu\n"
 msgstr "%s: не вдалося отримати інформацію токену: код помилки %lu\n"
 
-#: pg_ctl.c:1988
+#: pg_ctl.c:1928
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: бракує пам'яті\n"
 
-#: pg_ctl.c:2018
+#: pg_ctl.c:1958
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
-#: pg_ctl.c:2026
+#: pg_ctl.c:1966
 #, c-format
-msgid "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n\n"
-msgstr "%s - це утиліта для ініціалізації, запуску, зупинки і контролю серверу PostgreSQL.\n\n"
+msgid ""
+"%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s - це утиліта для ініціалізації, запуску, зупинки і контролю серверу PostgreSQL.\n"
+"\n"
 
-#: pg_ctl.c:2027
+#: pg_ctl.c:1967
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
 
-#: pg_ctl.c:2028
+#: pg_ctl.c:1968
 #, c-format
 msgid "  %s init[db]   [-D DATADIR] [-s] [-o OPTIONS]\n"
 msgstr "  %s init[db]   [-D КАТАЛОГ-ДАНИХ] [-s] [-o ПАРАМЕТРИ]\n"
 
-#: pg_ctl.c:2029
+#: pg_ctl.c:1969
 #, c-format
-msgid "  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
+msgid ""
+"  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-p PATH] [-c]\n"
-msgstr "  %s start [-D КАТАЛОГ-ДАНИХ] [-l ІМ'Я-ФАЙЛ] [-W] [-t СЕК] [-s]\n"
+msgstr ""
+"  %s start [-D КАТАЛОГ-ДАНИХ] [-l ІМ'Я-ФАЙЛ] [-W] [-t СЕК] [-s]\n"
 "                    [-o ПАРАМЕТРИ] [-p ШЛЯХ] [-c]\n"
 
-#: pg_ctl.c:2031
+#: pg_ctl.c:1971
 #, c-format
 msgid "  %s stop       [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 msgstr "  %s stop [-D КАТАЛОГ-ДАНИХ] [-m РЕЖИМ-ЗУПИНКИ] [-W] [-t СЕК] [-s]\n"
 
-#: pg_ctl.c:2032
+#: pg_ctl.c:1972
 #, c-format
-msgid "  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+msgid ""
+"  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-c]\n"
-msgstr "  %s restart [-D КАТАЛОГ-ДАНИХ] [-m РЕЖИМ-ЗУПИНКИ] [-W] [-t СЕК] [-s]\n"
+msgstr ""
+"  %s restart [-D КАТАЛОГ-ДАНИХ] [-m РЕЖИМ-ЗУПИНКИ] [-W] [-t СЕК] [-s]\n"
 "                    [-o ПАРАМЕТРИ] [-c]\n"
 
-#: pg_ctl.c:2034
+#: pg_ctl.c:1974
 #, c-format
 msgid "  %s reload     [-D DATADIR] [-s]\n"
 msgstr "  %s reload [-D КАТАЛОГ-ДАНИХ] [-s]\n"
 
-#: pg_ctl.c:2035
+#: pg_ctl.c:1975
 #, c-format
 msgid "  %s status     [-D DATADIR]\n"
 msgstr "  %s status     [-D DATADIR]\n"
 
-#: pg_ctl.c:2036
+#: pg_ctl.c:1976
 #, c-format
 msgid "  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"
 msgstr "  %s promote [-D КАТАЛОГ-ДАНИХ] [-W] [-t СЕК] [-s]\n"
 
-#: pg_ctl.c:2037
+#: pg_ctl.c:1977
 #, c-format
 msgid "  %s logrotate  [-D DATADIR] [-s]\n"
 msgstr "  %s logrotate  [-D DATADIR] [-s]\n"
 
-#: pg_ctl.c:2038
+#: pg_ctl.c:1978
 #, c-format
 msgid "  %s kill       SIGNALNAME PID\n"
 msgstr "  %s kill       ІМ'Я-СИГНАЛУ PID\n"
 
-#: pg_ctl.c:2040
+#: pg_ctl.c:1980
 #, c-format
-msgid "  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
+msgid ""
+"  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
 "                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
-msgstr "  %s register [-D КАТАЛОГ-ДАНИХ] [-N ІМ'Я-СЛУЖБИ] [-U ІМ'Я-КОРИСТУВАЧА] [-P ПАРОЛЬ]\n"
+msgstr ""
+"  %s register [-D КАТАЛОГ-ДАНИХ] [-N ІМ'Я-СЛУЖБИ] [-U ІМ'Я-КОРИСТУВАЧА] [-P ПАРОЛЬ]\n"
 "                  [-S ТИП-ЗАПУСКУ] [-e ДЖЕРЕЛО] [-W] [-t СЕК] [-s] [-o ПАРАМЕТРИ]\n"
 
-#: pg_ctl.c:2042
+#: pg_ctl.c:1982
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
 msgstr "  %s unregister [-N ІМ'Я-СЛУЖБИ]\n"
 
-#: pg_ctl.c:2045
+#: pg_ctl.c:1985
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Common options:\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Загальні параметри:\n"
 
-#: pg_ctl.c:2046
+#: pg_ctl.c:1986
 #, c-format
 msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
 msgstr "  -D, --pgdata=КАТАЛОГ-ДАНИХ    розташування простору зберігання бази даних\n"
 
-#: pg_ctl.c:2048
+#: pg_ctl.c:1988
 #, c-format
 msgid "  -e SOURCE              event source for logging when running as a service\n"
 msgstr "  -e ДЖЕРЕЛО             джерело подій для протоколу при запуску в якості послуги\n"
 
-#: pg_ctl.c:2050
+#: pg_ctl.c:1990
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr "  -s, --silent         виводити лише помилки, без інформаційних повідомлень\n"
 
-#: pg_ctl.c:2051
+#: pg_ctl.c:1991
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
 msgstr "  -t, --timeout=СЕК   час очікування при використанні -w параметра\n"
 
-#: pg_ctl.c:2052
+#: pg_ctl.c:1992
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version            вивести інформацію про версію і вийти\n"
 
-#: pg_ctl.c:2053
+#: pg_ctl.c:1993
 #, c-format
 msgid "  -w, --wait             wait until operation completes (default)\n"
 msgstr "  -w, --wait         чекати завершення операції (за замовчуванням)\n"
 
-#: pg_ctl.c:2054
+#: pg_ctl.c:1994
 #, c-format
 msgid "  -W, --no-wait          do not wait until operation completes\n"
 msgstr "  -W, --no-wait     не чекати завершення операції\n"
 
-#: pg_ctl.c:2055
+#: pg_ctl.c:1995
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help              показати цю довідку потім вийти\n"
 
-#: pg_ctl.c:2056
+#: pg_ctl.c:1996
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
 msgstr "Якщо -D параметр пропущено, використовувати змінну середовища PGDATA.\n"
 
-#: pg_ctl.c:2058
+#: pg_ctl.c:1998
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Options for start or restart:\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Параметри запуску або перезапуску:\n"
 
-#: pg_ctl.c:2060
+#: pg_ctl.c:2000
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
 msgstr "  -c, --core-files   дозволяти postgres створювати дампи пам'яті\n"
 
-#: pg_ctl.c:2062
+#: pg_ctl.c:2002
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
 msgstr "  -c, --core-files      недопустимо цією платформою\n"
 
-#: pg_ctl.c:2064
+#: pg_ctl.c:2004
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr "  -l, --log=ФАЙЛ     записувати (або додавати) протокол служби до ФАЙЛ\n"
 
-#: pg_ctl.c:2065
+#: pg_ctl.c:2005
 #, c-format
-msgid "  -o, --options=OPTIONS  command line options to pass to postgres\n"
+msgid ""
+"  -o, --options=OPTIONS  command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr "  -o, --options=ПАРАМЕТРИ параметри командного рядку для PostgreSQL або initdb\n"
 
-#: pg_ctl.c:2067
+#: pg_ctl.c:2007
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
 msgstr "  -p ШЛЯХ-ДО-СЕРВЕРУ   зазвичай зайвий\n"
 
-#: pg_ctl.c:2068
+#: pg_ctl.c:2008
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Options for stop or restart:\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Параметри припинення або перезапуску:\n"
 
-#: pg_ctl.c:2069
+#: pg_ctl.c:2009
 #, c-format
 msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr "  -m, --mode=РЕЖИМ    РЕЖИМ може бути \"smart\", \"fast\", або \"immediate\"\n"
 
-#: pg_ctl.c:2071
+#: pg_ctl.c:2011
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Shutdown modes are:\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Режими зупинки:\n"
 
-#: pg_ctl.c:2072
+#: pg_ctl.c:2012
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart       вийти після від'єднання усіх клієнтів\n"
 
-#: pg_ctl.c:2073
+#: pg_ctl.c:2013
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
 msgstr "  fast        вийти негайно з коректним вимкненням (за замовченням)\n"
 
-#: pg_ctl.c:2074
+#: pg_ctl.c:2014
 #, c-format
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
 msgstr "  immediate   вийти негайно без повної процедури. Приведе до відновлення під час перезапуску\n"
 
-#: pg_ctl.c:2076
+#: pg_ctl.c:2016
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Allowed signal names for kill:\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Дозволенні сигнали для команди kill:\n"
 
-#: pg_ctl.c:2080
+#: pg_ctl.c:2020
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Options for register and unregister:\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Параметри для реєстрації і видалення: \n"
 
-#: pg_ctl.c:2081
+#: pg_ctl.c:2021
 #, c-format
 msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr "  -N ІМ'Я-СЛУЖБИ  ім'я служби під яким зареєструвати сервер PostgreSQL\n"
 
-#: pg_ctl.c:2082
+#: pg_ctl.c:2022
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
 msgstr "  -P ПАРОЛЬ     пароль облікового запису для реєстрації серверу PostgreSQL\n"
 
-#: pg_ctl.c:2083
+#: pg_ctl.c:2023
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
 msgstr "  -U КОРИСТУВАЧ     ім'я користувача під яким зареєструвати сервер PostgreSQL\n"
 
-#: pg_ctl.c:2084
+#: pg_ctl.c:2024
 #, c-format
 msgid "  -S START-TYPE   service start type to register PostgreSQL server\n"
 msgstr "  -S ТИП-ЗАПУСКУ   тип запуску служби для реєстрації серверу PostgreSQL\n"
 
-#: pg_ctl.c:2086
+#: pg_ctl.c:2026
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Start types are:\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Типи запуску:\n"
 
-#: pg_ctl.c:2087
+#: pg_ctl.c:2027
 #, c-format
 msgid "  auto       start service automatically during system startup (default)\n"
 msgstr "  auto       запускати сервер автоматично під час запуску системи (за замовчуванням)\n"
 
-#: pg_ctl.c:2088
+#: pg_ctl.c:2028
 #, c-format
 msgid "  demand     start service on demand\n"
 msgstr "  demand     запускати сервер за потреби\n"
 
-#: pg_ctl.c:2091
+#: pg_ctl.c:2031
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Report bugs to <%s>.\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: pg_ctl.c:2092
+#: pg_ctl.c:2032
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"
 
-#: pg_ctl.c:2117
+#: pg_ctl.c:2057
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
 msgstr "%s: невідомий режим завершення \"%s\"\n"
 
-#: pg_ctl.c:2146
+#: pg_ctl.c:2086
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
 msgstr "%s: невідомий сигнал \"%s\"\n"
 
-#: pg_ctl.c:2163
+#: pg_ctl.c:2103
 #, c-format
 msgid "%s: unrecognized start type \"%s\"\n"
 msgstr "%s: невідомий тип запуску \"%s\"\n"
 
-#: pg_ctl.c:2218
+#: pg_ctl.c:2159
 #, c-format
 msgid "%s: could not determine the data directory using command \"%s\"\n"
 msgstr "%s: неможливо визначити каталог даних за допомогою команди \"%s\"\n"
 
-#: pg_ctl.c:2242
+#: pg_ctl.c:2182
 #, c-format
 msgid "%s: control file appears to be corrupt\n"
 msgstr "%s: контрольний файл видається пошкодженим\n"
 
-#: pg_ctl.c:2310
+#: pg_ctl.c:2250
 #, c-format
-msgid "%s: cannot be run as root\n"
+msgid ""
+"%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
-msgstr "%s: не може бути запущеним від ім'я супер-користувача\n"
+msgstr ""
+"%s: не може бути запущеним від ім'я супер-користувача\n"
 " Будь ласка увійдіть (використовуючи наприклад, \"su\") як (непривілейований) користувач який буде мати\n"
 "свій серверний процес. \n"
 
-#: pg_ctl.c:2393
+#: pg_ctl.c:2333
 #, c-format
 msgid "%s: -S option not supported on this platform\n"
 msgstr "%s: параметр -S не підтримується цією платформою\n"
 
-#: pg_ctl.c:2430
+#: pg_ctl.c:2370
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: забагато аргументів у командному рядку (перший \"%s\")\n"
 
-#: pg_ctl.c:2456
+#: pg_ctl.c:2396
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
 msgstr "%s: відсутні аргументи для режиму kill\n"
 
-#: pg_ctl.c:2474
+#: pg_ctl.c:2414
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
 msgstr "%s: невідомий режим роботи \"%s\"\n"
 
-#: pg_ctl.c:2484
+#: pg_ctl.c:2424
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s: команда не вказана\n"
 
-#: pg_ctl.c:2505
+#: pg_ctl.c:2445
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: не вказано каталог даних і змінна середовища PGDATA не встановлена\n"
-

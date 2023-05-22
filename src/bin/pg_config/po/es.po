@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config (PostgreSQL) 14\n"
+"Project-Id-Version: pg_config (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-14 19:46+0000\n"
-"PO-Revision-Date: 2021-05-20 23:11-0500\n"
+"POT-Creation-Date: 2023-05-22 07:18+0000\n"
+"PO-Revision-Date: 2023-05-22 12:05+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -27,42 +27,32 @@ msgstr ""
 msgid "not recorded"
 msgstr "no registrado"
 
-#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "no se pudo identificar el directorio actual: %m"
+msgid "invalid binary \"%s\": %m"
+msgstr "binario «%s» no válido: %m"
 
-#: ../../common/exec.c:155
+#: ../../common/exec.c:215
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "el binario «%s» no es válido"
+msgid "could not read binary \"%s\": %m"
+msgstr "no se pudo leer el binario «%s»: %m"
 
-#: ../../common/exec.c:205
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "no se pudo leer el binario «%s»"
-
-#: ../../common/exec.c:213
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "no se pudo encontrar un «%s» para ejecutar"
 
-#: ../../common/exec.c:269 ../../common/exec.c:308
+#: ../../common/exec.c:250
 #, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "no se pudo cambiar al directorio «%s»: %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "no se pudo resolver la ruta «%s» a forma absoluta: %m"
 
-#: ../../common/exec.c:286
-#, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "no se pudo leer el enlace simbólico «%s»: %m"
-
-#: ../../common/exec.c:409
+#: ../../common/exec.c:412
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() falló: %m"
 
-#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
 msgid "out of memory"
 msgstr "memoria agotada"
 
@@ -287,6 +277,3 @@ msgstr "%s: no se pudo encontrar el ejecutable propio\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: el argumento no es válido: %s\n"
-
-#~ msgid "pclose failed: %m"
-#~ msgstr "pclose falló: %m"

@@ -1,0 +1,117 @@
+# Georgian message translation file for pltcl
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pltcl (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pltcl (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-07-06 23:08+0000\n"
+"PO-Revision-Date: 2022-07-07 06:12+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1\n"
+
+#: pltcl.c:463
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr "PL/Tcl ფუნქცია, როლის გამოძახებაც ერთხელ, pltcl-ის პირველი გამოყენებისას ხდება."
+
+#: pltcl.c:470
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr "PL/TclU ფუნქცია, როლის გამოძახებაც ერთხელ, pltclu -ის პირველი გამოყენებისას ხდება."
+
+#: pltcl.c:637
+#, c-format
+msgid "function \"%s\" is in the wrong language"
+msgstr "ფუნქცია \"%s\" არასწორ ენაზეა"
+
+#: pltcl.c:648
+#, c-format
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "ფუნქცია \"%s\" არ უნდა იყოს SECURITY DEFINER"
+
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:682
+#, c-format
+msgid "processing %s parameter"
+msgstr "პარამეტრის დამუშავება: %s"
+
+#: pltcl.c:835
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "სეტ-ღირებული ფუნქცია, რომელსაც ეწოდება კონტექსტში, რომელსაც არ შეუძლია მიიღოს ნაკრები"
+
+#: pltcl.c:840
+#, c-format
+msgid "materialize mode required, but it is not allowed in this context"
+msgstr "საჭიროა მატერიალიზებული რეჟიმი, მაგრამ ამ კონტექსტში ეს დაუშვებელია"
+
+#: pltcl.c:1013
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "ფუნქცია, რომელიც ჩანაწერს აბრუნებს, გამოძახებულია კონტექსტში, რომელსაც ჩანაწერის მიღება არ შეუძლია"
+
+#: pltcl.c:1296
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "ტრიგერიდან დაბრუნებული მნიშვნელობის დაყოფა შეუძლებელია: %s"
+
+#: pltcl.c:1377 pltcl.c:1807
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1378
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"PL/Tcl-ის ფუნქციაში\"%s\""
+
+#: pltcl.c:1542
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "ტრიგერის ფუნქციების გამოძახება მხოლოდ ტრიგერებად შეიძლება"
+
+#: pltcl.c:1546
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl ფუნქციას %s ტიპის დაბრუნება არ შეუძლია"
+
+#: pltcl.c:1585
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl ფუნქციას %s ტიპის მიღება არ შეუძლია"
+
+#: pltcl.c:1699
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "შიდა პროცედურის (\"%s\") შექმნის შეცდომა: %s"
+
+#: pltcl.c:3201
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "სვეტის სახელი/მნიშვნელობების სიას ელემენტების ლუწი რაოდენობა უნდა ჰქონდეს"
+
+#: pltcl.c:3219
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr "სვეტის სახელი/მნიშვნელობების სია შეიცავს სვეტის არარსებულ სახელს „%s“"
+
+#: pltcl.c:3226
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "სისტემური ატრიბუტის დაყენების შეცდომა: \"%s\""
+
+#: pltcl.c:3232
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "გენერირებული სვეტის დაყენება შეუძლებელია: %s"

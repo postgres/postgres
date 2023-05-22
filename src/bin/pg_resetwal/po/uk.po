@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-17 08:47+0000\n"
-"PO-Revision-Date: 2021-08-17 10:54\n"
+"POT-Creation-Date: 2022-08-12 10:49+0000\n"
+"PO-Revision-Date: 2022-09-13 11:52\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,23 +14,28 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_14_DEV/pg_resetwal.pot\n"
-"X-Crowdin-File-ID: 762\n"
+"X-Crowdin-File: /REL_15_STABLE/pg_resetwal.pot\n"
+"X-Crowdin-File-ID: 880\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "збій: "
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "помилка: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "попередження: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "деталі: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "підказка: "
 
 #: ../../common/restricted_token.c:64
 #, c-format
@@ -67,130 +72,130 @@ msgstr "не вдалося запустити процес для команд�
 msgid "could not re-execute with restricted token: error code %lu"
 msgstr "не вдалося перезапустити з обмеженим токеном: код помилки %lu"
 
-#: ../../common/restricted_token.c:194
+#: ../../common/restricted_token.c:193
 #, c-format
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "не вдалося отримати код завершення підпроцесу: код помилки %lu"
 
 #. translator: the second %s is a command line argument (-e, etc)
-#: pg_resetwal.c:162 pg_resetwal.c:177 pg_resetwal.c:192 pg_resetwal.c:207
-#: pg_resetwal.c:214 pg_resetwal.c:238 pg_resetwal.c:253 pg_resetwal.c:261
-#: pg_resetwal.c:286 pg_resetwal.c:300
+#: pg_resetwal.c:163 pg_resetwal.c:176 pg_resetwal.c:189 pg_resetwal.c:202
+#: pg_resetwal.c:209 pg_resetwal.c:228 pg_resetwal.c:241 pg_resetwal.c:249
+#: pg_resetwal.c:269 pg_resetwal.c:280
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "неприпустимий аргумент для параметру %s"
 
-#: pg_resetwal.c:163 pg_resetwal.c:178 pg_resetwal.c:193 pg_resetwal.c:208
-#: pg_resetwal.c:215 pg_resetwal.c:239 pg_resetwal.c:254 pg_resetwal.c:262
-#: pg_resetwal.c:287 pg_resetwal.c:301 pg_resetwal.c:327 pg_resetwal.c:340
-#: pg_resetwal.c:348
+#: pg_resetwal.c:164 pg_resetwal.c:177 pg_resetwal.c:190 pg_resetwal.c:203
+#: pg_resetwal.c:210 pg_resetwal.c:229 pg_resetwal.c:242 pg_resetwal.c:250
+#: pg_resetwal.c:270 pg_resetwal.c:281 pg_resetwal.c:303 pg_resetwal.c:316
+#: pg_resetwal.c:323
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
 #: pg_resetwal.c:168
 #, c-format
 msgid "transaction ID epoch (-e) must not be -1"
 msgstr "епоха ID транзакції (-e) не повинна бути -1"
 
-#: pg_resetwal.c:183
+#: pg_resetwal.c:181
 #, c-format
 msgid "oldest transaction ID (-u) must be greater than or equal to %u"
-msgstr ""
+msgstr "найстаріший ID транзакції (-u) має бути більший або рівним %u"
 
-#: pg_resetwal.c:198
+#: pg_resetwal.c:194
 #, c-format
 msgid "transaction ID (-x) must be greater than or equal to %u"
-msgstr ""
+msgstr "ID транзакції (-x) має бути більшим чи рівним %u"
 
-#: pg_resetwal.c:222 pg_resetwal.c:229
+#: pg_resetwal.c:216 pg_resetwal.c:220
 #, c-format
 msgid "transaction ID (-c) must be either 0 or greater than or equal to 2"
 msgstr "ID транзакції (-c) повинен дорівнювати 0, бути більшим за або дорівнювати 2"
 
-#: pg_resetwal.c:244
+#: pg_resetwal.c:233
 #, c-format
 msgid "OID (-o) must not be 0"
 msgstr "OID (-o) не може бути 0"
 
-#: pg_resetwal.c:267
+#: pg_resetwal.c:254
 #, c-format
 msgid "multitransaction ID (-m) must not be 0"
 msgstr "ID мультитранзакції (-m) не повинен бути 0"
 
-#: pg_resetwal.c:277
+#: pg_resetwal.c:261
 #, c-format
 msgid "oldest multitransaction ID (-m) must not be 0"
 msgstr "найстарший ID мультитранзакції (-m) не повинен бути 0"
 
-#: pg_resetwal.c:292
+#: pg_resetwal.c:274
 #, c-format
 msgid "multitransaction offset (-O) must not be -1"
 msgstr "зсув мультитранзакції (-O) не повинен бути -1"
 
-#: pg_resetwal.c:316
+#: pg_resetwal.c:296
 #, c-format
 msgid "argument of --wal-segsize must be a number"
 msgstr "аргумент --wal-segsize повинен бути числом"
 
-#: pg_resetwal.c:321
+#: pg_resetwal.c:298
 #, c-format
 msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
 msgstr "аргумент --wal-segsize повинен бути ступенем 2 між 1 і 1024"
 
-#: pg_resetwal.c:338
+#: pg_resetwal.c:314
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "забагато аргументів у командному рядку (перший \"%s\")"
 
-#: pg_resetwal.c:347
+#: pg_resetwal.c:322
 #, c-format
 msgid "no data directory specified"
 msgstr "каталог даних не вказано"
 
-#: pg_resetwal.c:361
+#: pg_resetwal.c:336
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "\"root\" не може це виконувати"
 
-#: pg_resetwal.c:362
+#: pg_resetwal.c:337
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "Запускати %s треба від суперкористувача PostgreSQL."
 
-#: pg_resetwal.c:373
+#: pg_resetwal.c:347
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "не вдалося прочитати дозволи на каталог \"%s\": %m"
 
-#: pg_resetwal.c:382
+#: pg_resetwal.c:353
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "не вдалося змінити каталог на \"%s\": %m"
 
-#: pg_resetwal.c:398 pg_resetwal.c:553 pg_resetwal.c:604
+#: pg_resetwal.c:366 pg_resetwal.c:518 pg_resetwal.c:566
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не вдалося відкрити файл \"%s\" для читання: %m"
 
-#: pg_resetwal.c:405
+#: pg_resetwal.c:371
 #, c-format
 msgid "lock file \"%s\" exists"
 msgstr "файл блокування \"%s\" вже існує"
 
-#: pg_resetwal.c:406
+#: pg_resetwal.c:372
 #, c-format
 msgid "Is a server running?  If not, delete the lock file and try again."
 msgstr "Чи запущений сервер? Якщо ні, видаліть файл блокування і спробуйте знову."
 
-#: pg_resetwal.c:501
+#: pg_resetwal.c:467
 #, c-format
 msgid "\n"
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr "\n"
 "Якщо ці значення виглядають допустимими, використайте -f, щоб провести перевстановлення.\n"
 
-#: pg_resetwal.c:513
+#: pg_resetwal.c:479
 #, c-format
 msgid "The database server was not shut down cleanly.\n"
 "Resetting the write-ahead log might cause data to be lost.\n"
@@ -199,32 +204,32 @@ msgstr "Сервер баз даних був зупинений некорек�
 "Очищення журналу передзапису може привести до втрати даних.\n"
 "Якщо ви все одно хочете продовжити, використайте параметр -f.\n"
 
-#: pg_resetwal.c:527
+#: pg_resetwal.c:493
 #, c-format
 msgid "Write-ahead log reset\n"
 msgstr "Журнал передзапису скинуто\n"
 
-#: pg_resetwal.c:562
+#: pg_resetwal.c:525
 #, c-format
 msgid "unexpected empty file \"%s\""
 msgstr "неочікуваний порожній файл \"%s\""
 
-#: pg_resetwal.c:564 pg_resetwal.c:620
+#: pg_resetwal.c:527 pg_resetwal.c:581
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не вдалося прочитати файл \"%s\": %m"
 
-#: pg_resetwal.c:573
+#: pg_resetwal.c:535
 #, c-format
 msgid "data directory is of wrong version"
 msgstr "каталог даних неправильної версії"
 
-#: pg_resetwal.c:574
+#: pg_resetwal.c:536
 #, c-format
 msgid "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\"."
 msgstr "Файл \"%s\" містить \"%s\", який не сумісний з версією цієї програми \"%s\"."
 
-#: pg_resetwal.c:607
+#: pg_resetwal.c:569
 #, c-format
 msgid "If you are sure the data directory path is correct, execute\n"
 "  touch %s\n"
@@ -233,12 +238,12 @@ msgstr "Якщо Ви впевнені, що шлях каталогу дани�
 " touch %s\n"
 "і спробуйте знову."
 
-#: pg_resetwal.c:638
+#: pg_resetwal.c:597
 #, c-format
 msgid "pg_control exists but has invalid CRC; proceed with caution"
 msgstr "pg_control існує, але має недопустимий CRC; продовжуйте з обережністю"
 
-#: pg_resetwal.c:647
+#: pg_resetwal.c:606
 #, c-format
 msgid "pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
 msgid_plural "pg_control specifies invalid WAL segment size (%d bytes); proceed with caution"
@@ -247,380 +252,382 @@ msgstr[1] "pg_control вказує неприпустимий розмір се�
 msgstr[2] "pg_control вказує неприпустимий розмір сегмента WAL (%d байтів); продовжуйте з обережністю"
 msgstr[3] "pg_control вказує неприпустимий розмір сегмента WAL (%d байтів); продовжуйте з обережністю"
 
-#: pg_resetwal.c:658
+#: pg_resetwal.c:617
 #, c-format
 msgid "pg_control exists but is broken or wrong version; ignoring it"
 msgstr "pg_control існує, але зламаний або неправильної версії; ігнорується"
 
-#: pg_resetwal.c:753
+#: pg_resetwal.c:712
 #, c-format
 msgid "Guessed pg_control values:\n\n"
 msgstr "Припустимі значення pg_control:\n\n"
 
-#: pg_resetwal.c:755
+#: pg_resetwal.c:714
 #, c-format
 msgid "Current pg_control values:\n\n"
 msgstr "Поточні значення pg_control:\n\n"
 
-#: pg_resetwal.c:757
+#: pg_resetwal.c:716
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control номер версії:            %u\n"
 
-#: pg_resetwal.c:759
+#: pg_resetwal.c:718
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Номер версії каталогу:               %u\n"
 
-#: pg_resetwal.c:761
+#: pg_resetwal.c:720
 #, c-format
 msgid "Database system identifier:           %llu\n"
 msgstr "Системний ідентифікатор бази даних:           %llu\n"
 
-#: pg_resetwal.c:763
+#: pg_resetwal.c:722
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Останній TimeLineID контрольної точки: %u\n"
 
-#: pg_resetwal.c:765
+#: pg_resetwal.c:724
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "Останній full_page_writes контрольної точки: %s\n"
 
-#: pg_resetwal.c:766
+#: pg_resetwal.c:725
 msgid "off"
 msgstr "вимк"
 
-#: pg_resetwal.c:766
+#: pg_resetwal.c:725
 msgid "on"
 msgstr "увімк"
 
-#: pg_resetwal.c:767
+#: pg_resetwal.c:726
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "Останній NextXID контрольної точки: %u%u\n"
 
-#: pg_resetwal.c:770
+#: pg_resetwal.c:729
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Останній NextOID контрольної точки: %u\n"
 
-#: pg_resetwal.c:772
+#: pg_resetwal.c:731
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "Останній NextMultiXactId контрольної точки: %u\n"
 
-#: pg_resetwal.c:774
+#: pg_resetwal.c:733
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "Останній NextMultiOffset контрольної точки: %u\n"
 
-#: pg_resetwal.c:776
+#: pg_resetwal.c:735
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "Останній oldestXID контрольної точки: %u\n"
 
-#: pg_resetwal.c:778
+#: pg_resetwal.c:737
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "Остання DB останнього oldestXID контрольної точки: %u\n"
 
-#: pg_resetwal.c:780
+#: pg_resetwal.c:739
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "Останній oldestActiveXID контрольної точки: %u\n"
 
-#: pg_resetwal.c:782
+#: pg_resetwal.c:741
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "Останній oldestMultiXid контрольної точки: %u \n"
 
-#: pg_resetwal.c:784
+#: pg_resetwal.c:743
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "Остання DB останньої oldestMulti контрольної точки: %u\n"
 
-#: pg_resetwal.c:786
+#: pg_resetwal.c:745
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "Останній oldestCommitTsXid контрольної точки:%u\n"
 
-#: pg_resetwal.c:788
+#: pg_resetwal.c:747
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "Останній newestCommitTsXid контрольної точки: %u\n"
 
-#: pg_resetwal.c:790
+#: pg_resetwal.c:749
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Максимальне вирівнювання даних: %u\n"
 
-#: pg_resetwal.c:793
+#: pg_resetwal.c:752
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Розмір блоку бази даних: %u\n"
 
-#: pg_resetwal.c:795
+#: pg_resetwal.c:754
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Блоків на сегмент великого відношення: %u\n"
 
-#: pg_resetwal.c:797
+#: pg_resetwal.c:756
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Pозмір блоку WAL: %u\n"
 
-#: pg_resetwal.c:799 pg_resetwal.c:885
+#: pg_resetwal.c:758 pg_resetwal.c:844
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Байтів на сегмент WAL: %u\n"
 
-#: pg_resetwal.c:801
+#: pg_resetwal.c:760
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Максимальна довжина ідентифікаторів:  %u\n"
 
-#: pg_resetwal.c:803
+#: pg_resetwal.c:762
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Максимальна кількість стовпців в індексі: %u\n"
 
-#: pg_resetwal.c:805
+#: pg_resetwal.c:764
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Максимальний розмір сегменту TOAST: %u\n"
 
-#: pg_resetwal.c:807
+#: pg_resetwal.c:766
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "Розмір сегменту великих обїєктів: %u\n"
 
-#: pg_resetwal.c:810
+#: pg_resetwal.c:769
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Дата/час типу сховища: %s\n"
 
-#: pg_resetwal.c:811
+#: pg_resetwal.c:770
 msgid "64-bit integers"
 msgstr "64-бітні цілі"
 
-#: pg_resetwal.c:812
+#: pg_resetwal.c:771
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Передача аргументу Float8:      %s\n"
 
-#: pg_resetwal.c:813
+#: pg_resetwal.c:772
 msgid "by reference"
 msgstr "за посиланням"
 
-#: pg_resetwal.c:813
+#: pg_resetwal.c:772
 msgid "by value"
 msgstr "за значенням"
 
-#: pg_resetwal.c:814
+#: pg_resetwal.c:773
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "Версія контрольних сум сторінок даних:      %u\n"
 
-#: pg_resetwal.c:828
+#: pg_resetwal.c:787
 #, c-format
 msgid "\n\n"
 "Values to be changed:\n\n"
 msgstr "\n\n"
 "Значення, що потребують зміни:\n\n"
 
-#: pg_resetwal.c:832
+#: pg_resetwal.c:791
 #, c-format
 msgid "First log segment after reset:        %s\n"
 msgstr "Перший сегмент журналу після скидання:        %s\n"
 
-#: pg_resetwal.c:836
+#: pg_resetwal.c:795
 #, c-format
 msgid "NextMultiXactId:                      %u\n"
 msgstr "NextMultiXactId:                       %u\n"
 
-#: pg_resetwal.c:838
+#: pg_resetwal.c:797
 #, c-format
 msgid "OldestMultiXid:                       %u\n"
 msgstr "OldestMultiXid:                       %u\n"
 
-#: pg_resetwal.c:840
+#: pg_resetwal.c:799
 #, c-format
 msgid "OldestMulti's DB:                     %u\n"
 msgstr "OldestMulti's DB:                     %u\n"
 
-#: pg_resetwal.c:846
+#: pg_resetwal.c:805
 #, c-format
 msgid "NextMultiOffset:                      %u\n"
 msgstr "NextMultiOffset:                      %u\n"
 
-#: pg_resetwal.c:852
+#: pg_resetwal.c:811
 #, c-format
 msgid "NextOID:                              %u\n"
 msgstr "NextOID:                                %u\n"
 
-#: pg_resetwal.c:858
+#: pg_resetwal.c:817
 #, c-format
 msgid "NextXID:                              %u\n"
 msgstr "NextXID:                               %u\n"
 
-#: pg_resetwal.c:860
+#: pg_resetwal.c:819
 #, c-format
 msgid "OldestXID:                            %u\n"
 msgstr "OldestXID:                            %u\n"
 
-#: pg_resetwal.c:862
+#: pg_resetwal.c:821
 #, c-format
 msgid "OldestXID's DB:                       %u\n"
 msgstr "OldestXID's DB:                        %u\n"
 
-#: pg_resetwal.c:868
+#: pg_resetwal.c:827
 #, c-format
 msgid "NextXID epoch:                        %u\n"
 msgstr "Епоха NextXID:                        %u\n"
 
-#: pg_resetwal.c:874
+#: pg_resetwal.c:833
 #, c-format
 msgid "oldestCommitTsXid:                    %u\n"
 msgstr "oldestCommitTsXid:                   %u\n"
 
-#: pg_resetwal.c:879
+#: pg_resetwal.c:838
 #, c-format
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                     %u\n"
 
-#: pg_resetwal.c:965 pg_resetwal.c:1033 pg_resetwal.c:1080
+#: pg_resetwal.c:922 pg_resetwal.c:981 pg_resetwal.c:1016
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не вдалося відкрити каталог \"%s\": %m"
 
-#: pg_resetwal.c:1000 pg_resetwal.c:1053 pg_resetwal.c:1103
+#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не вдалося прочитати каталог \"%s\": %m"
 
-#: pg_resetwal.c:1006 pg_resetwal.c:1059 pg_resetwal.c:1109
+#: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "не вдалося закрити каталог \"%s\": %m"
 
-#: pg_resetwal.c:1045 pg_resetwal.c:1095
+#: pg_resetwal.c:990 pg_resetwal.c:1028
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "не вдалося видалити файл \"%s\": %m"
 
-#: pg_resetwal.c:1176
+#: pg_resetwal.c:1100
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: pg_resetwal.c:1186 pg_resetwal.c:1199
+#: pg_resetwal.c:1108 pg_resetwal.c:1120
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "не вдалося записати файл \"%s\": %m"
 
-#: pg_resetwal.c:1206
+#: pg_resetwal.c:1125
 #, c-format
 msgid "fsync error: %m"
 msgstr "помилка fsync: %m"
 
-#: pg_resetwal.c:1217
+#: pg_resetwal.c:1134
 #, c-format
 msgid "%s resets the PostgreSQL write-ahead log.\n\n"
 msgstr "%s скидає журнал передзапису PostgreSQL.\n\n"
 
-#: pg_resetwal.c:1218
+#: pg_resetwal.c:1135
 #, c-format
 msgid "Usage:\n"
 "  %s [OPTION]... DATADIR\n\n"
 msgstr "Використання:\n"
 "  %s [OPTION]... КАТАЛОГ_ДАНИХ\n\n"
 
-#: pg_resetwal.c:1219
+#: pg_resetwal.c:1136
 #, c-format
 msgid "Options:\n"
 msgstr "Параметри:\n"
 
-#: pg_resetwal.c:1220
+#: pg_resetwal.c:1137
 #, c-format
 msgid "  -c, --commit-timestamp-ids=XID,XID\n"
 "                                   set oldest and newest transactions bearing\n"
 "                                   commit timestamp (zero means no change)\n"
-msgstr ""
+msgstr "  -c, --commit-timestamp-ids=XID,XID\n"
+"                                   встановити найстарішу та найновішу транзакції\n"
+"                                   затвердити позначку часу (нуль означає залишити без змін)\n"
 
-#: pg_resetwal.c:1223
+#: pg_resetwal.c:1140
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
-msgstr ""
+msgstr " [-D, --pgdata=]DATADIR            каталог даних\n"
 
-#: pg_resetwal.c:1224
+#: pg_resetwal.c:1141
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
-msgstr ""
+msgstr "  -e, --epoch=XIDEPOCH             встановити наступну епоху ID транзакцій\n"
 
-#: pg_resetwal.c:1225
+#: pg_resetwal.c:1142
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
-msgstr ""
+msgstr "  -f, --force                      примусово виконати оновлення\n"
 
-#: pg_resetwal.c:1226
+#: pg_resetwal.c:1143
 #, c-format
 msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
-msgstr ""
+msgstr "  -l, --next-wal-file=WALFILE      задати мінімальне початкове розташування для нового WAL\n"
 
-#: pg_resetwal.c:1227
+#: pg_resetwal.c:1144
 #, c-format
 msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
-msgstr ""
+msgstr "  -m, --multixact-ids=MXID,MXID    задати ID наступної і найстарішої мультитранзакції\n"
 
-#: pg_resetwal.c:1228
+#: pg_resetwal.c:1145
 #, c-format
 msgid "  -n, --dry-run                    no update, just show what would be done\n"
-msgstr ""
+msgstr "  -n, --dry-run                    без оновлень, просто показати, що буде зроблено\n"
 
-#: pg_resetwal.c:1229
+#: pg_resetwal.c:1146
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
-msgstr ""
+msgstr "  -o, --next-oid=OID               задати наступний OID\n"
 
-#: pg_resetwal.c:1230
+#: pg_resetwal.c:1147
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
-msgstr ""
+msgstr "  -O, --multixact-offset=OFFSET    задати зсув наступної мультитранзакції\n"
 
-#: pg_resetwal.c:1231
+#: pg_resetwal.c:1148
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
-msgstr ""
+msgstr "  -u, --oldest-transaction-id=XID  задати ID найстарішої транзакції\n"
 
-#: pg_resetwal.c:1232
+#: pg_resetwal.c:1149
 #, c-format
 msgid "  -V, --version                    output version information, then exit\n"
-msgstr ""
+msgstr "  -V, --version                    вивести інформацію про версію і вийти\n"
 
-#: pg_resetwal.c:1233
+#: pg_resetwal.c:1150
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
-msgstr ""
+msgstr "  -x, --next-transaction-id=XID    задати ID наступної транзакції\n"
 
-#: pg_resetwal.c:1234
+#: pg_resetwal.c:1151
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
-msgstr ""
+msgstr "      --wal-segsize=SIZE           розмір сегментів WAL, у мегабайтах\n"
 
-#: pg_resetwal.c:1235
+#: pg_resetwal.c:1152
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
-msgstr ""
+msgstr "  -?, --help                       показати цю довідку і вийти\n"
 
-#: pg_resetwal.c:1236
+#: pg_resetwal.c:1153
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: pg_resetwal.c:1237
+#: pg_resetwal.c:1154
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"

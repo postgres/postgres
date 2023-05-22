@@ -1,14 +1,14 @@
 # German message translation file for pg_config
-# Peter Eisentraut <peter@eisentraut.org>, 2004 - 2021.
+# Peter Eisentraut <peter@eisentraut.org>, 2004 - 2023.
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 14\n"
+"Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-04-29 03:16+0000\n"
-"PO-Revision-Date: 2021-04-29 06:58+0200\n"
+"POT-Creation-Date: 2023-04-22 16:18+0000\n"
+"PO-Revision-Date: 2023-04-22 23:05+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -23,42 +23,32 @@ msgstr ""
 msgid "not recorded"
 msgstr "nicht aufgezeichnet"
 
-#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %m"
+msgid "invalid binary \"%s\": %m"
+msgstr "ungültige Programmdatei »%s«: %m"
 
-#: ../../common/exec.c:155
+#: ../../common/exec.c:215
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "ungültige Programmdatei »%s«"
+msgid "could not read binary \"%s\": %m"
+msgstr "konnte Programmdatei »%s« nicht lesen: %m"
 
-#: ../../common/exec.c:205
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "konnte Programmdatei »%s« nicht lesen"
-
-#: ../../common/exec.c:213
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "konnte kein »%s« zum Ausführen finden"
 
-#: ../../common/exec.c:269 ../../common/exec.c:308
+#: ../../common/exec.c:250
 #, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "konnte nicht in Verzeichnis »%s« wechseln: %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "konnte Pfad »%s« nicht in absolute Form auflösen: %m"
 
-#: ../../common/exec.c:286
-#, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %m"
-
-#: ../../common/exec.c:409
+#: ../../common/exec.c:412
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() fehlgeschlagen: %m"
 
-#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 

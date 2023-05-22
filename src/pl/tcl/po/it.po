@@ -16,9 +16,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-22 07:37+0000\n"
-"PO-Revision-Date: 2017-05-29 17:51+0100\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-09-26 08:08+0000\n"
+"PO-Revision-Date: 2022-09-26 15:04+0200\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -26,53 +26,58 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
-#: pltcl.c:459
+#: pltcl.c:463
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "Funzione PL/Tcl da richiamare una volta quando pltcl è usato la prima volta."
 
-#: pltcl.c:466
+#: pltcl.c:470
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "Funzione PL/TclU da richiamare una volta quando pltcl è usato la prima volta."
 
-#: pltcl.c:629
+#: pltcl.c:637
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "la funzione \"%s\" è nel linguaggio sbagliato"
 
-#: pltcl.c:640
+#: pltcl.c:648
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "la funzione \"%s\" non può essere SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:674
+#: pltcl.c:682
 #, c-format
 msgid "processing %s parameter"
 msgstr "esecuzione del parametro %s"
 
-#: pltcl.c:830
+#: pltcl.c:835
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "funzione che restituisce insiemi richiamata in un contesto che non può accettare un insieme"
 
-#: pltcl.c:994
+#: pltcl.c:840
+#, c-format
+msgid "materialize mode required, but it is not allowed in this context"
+msgstr "necessaria modalità materializzata, ma non ammessa in questo contesto"
+
+#: pltcl.c:1013
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "funzione che restituisce record richiamata in un contesto che non può accettare record"
 
-#: pltcl.c:1263
+#: pltcl.c:1296
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "divisione del valore di ritorno del trigger fallita: %s"
 
-#: pltcl.c:1343 pltcl.c:1771
+#: pltcl.c:1377 pltcl.c:1807
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1344
+#: pltcl.c:1378
 #, c-format
 msgid ""
 "%s\n"
@@ -81,37 +86,42 @@ msgstr ""
 "%s\n"
 "nella funzione PL/Tcl \"%s\""
 
-#: pltcl.c:1509
+#: pltcl.c:1542
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "le funzioni trigger possono essere chiamate esclusivamente da trigger"
 
-#: pltcl.c:1513
+#: pltcl.c:1546
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "le funzioni PL/Tcl non possono restituire il tipo %s"
 
-#: pltcl.c:1549
+#: pltcl.c:1585
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "le funzioni PL/Tcl non possono accettare il tipo %s"
 
-#: pltcl.c:1663
+#: pltcl.c:1699
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "creazione della procedura interna \"%s\" fallita: %s"
 
-#: pltcl.c:3100
+#: pltcl.c:3201
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "la lista nome/valore di colonne deve avere un numero di elementi pari"
 
-#: pltcl.c:3118
+#: pltcl.c:3219
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "la lista nome/valore di elementi contiene un nome di colonna inesistente \"%s\""
 
-#: pltcl.c:3125
+#: pltcl.c:3226
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "non è possibile impostare l'attributo di sistema \"%s\""
+
+#: pltcl.c:3232
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "non è possibile modificare la colonna ereditata \"%s\""

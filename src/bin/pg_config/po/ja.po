@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config (PostgreSQL 15)\n"
+"Project-Id-Version: pg_config (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:16+0900\n"
-"PO-Revision-Date: 2022-05-10 13:47+0900\n"
+"POT-Creation-Date: 2023-03-24 09:21+0900\n"
+"PO-Revision-Date: 2023-03-24 14:10+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -25,42 +25,32 @@ msgstr ""
 msgid "not recorded"
 msgstr "記録されていません"
 
-#: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "カレントディレクトリを識別できませんでした: %m"
+msgid "invalid binary \"%s\": %m"
+msgstr "不正なバイナリ\"%s\": %m"
 
-#: ../../common/exec.c:168
+#: ../../common/exec.c:215
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "バイナリ\"%s\"は無効です"
+msgid "could not read binary \"%s\": %m"
+msgstr "バイナリ\"%s\"を読み取れませんでした: %m"
 
-#: ../../common/exec.c:218
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "バイナリ\"%s\"を読み取れませんでした"
-
-#: ../../common/exec.c:226
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "実行する\"%s\"がありませんでした"
 
-#: ../../common/exec.c:282 ../../common/exec.c:321
+#: ../../common/exec.c:250
 #, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "ディレクトリ\"%s\"に移動できませんでした: %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "パス\"%s\"を絶対パス形式に変換できませんでした: %m"
 
-#: ../../common/exec.c:299
-#, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "シンボリックリンク\"%s\"を読めませんでした: %m"
-
-#: ../../common/exec.c:422
+#: ../../common/exec.c:412
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s()が失敗しました: %m"
 
-#: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
 msgid "out of memory"
 msgstr "メモリ不足です"
 
@@ -97,7 +87,7 @@ msgstr "オプション:\n"
 #: pg_config.c:78
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir              ユーザ実行ファイルの場所を表示\n"
+msgstr "  --bindir              ユーザー実行ファイルの場所を表示\n"
 
 #: pg_config.c:79
 #, c-format
@@ -124,7 +114,7 @@ msgstr "  --pkgincludedir       その他のCヘッダファイルの場所を�
 #: pg_config.c:84
 #, c-format
 msgid "  --includedir-server   show location of C header files for the server\n"
-msgstr "  --includedir-server   サーバ用Cヘッダファイルの場所を表示\n"
+msgstr "  --includedir-server   サーバー用Cヘッダファイルの場所を表示\n"
 
 #: pg_config.c:85
 #, c-format
@@ -255,39 +245,3 @@ msgstr "%s: 実行ファイル自体がありませんでした\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: 無効な引数です: %s\n"
-
-#~ msgid "pclose failed: %m"
-#~ msgstr "pcloseが失敗しました: %m"
-
-#~ msgid "could not identify current directory: %s"
-#~ msgstr "現在のディレクトリを認識できませんでした: %s"
-
-#~ msgid "could not change directory to \"%s\": %s"
-#~ msgstr "ディレクトリ\"%s\"に移動できませんでした: %s"
-
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "シンボリックリンク\"%s\"を読み取ることができませんでした"
-
-#~ msgid "pclose failed: %s"
-#~ msgstr "pcloseが失敗しました: %s"
-
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "子プロセスがシグナル%dで終了しました"
-
-#~ msgid "child process exited with unrecognized status %d"
-#~ msgstr "子プロセスが未知のステータス%dで終了しました"
-
-#~ msgid "child process exited with exit code %d"
-#~ msgstr "子プロセスが終了コード%dで終了しました"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "子プロセスが例外0x%Xで終了しました"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "子プロセスがシグナル%sで終了しました"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "ディレクトリ\"%s\"に移動できませんでした"
-
-#~ msgid "  --help                show this help, then exit\n"
-#~ msgstr "  --help                ヘルプを表示し、終了します\n"

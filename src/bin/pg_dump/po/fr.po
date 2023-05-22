@@ -2446,7 +2446,7 @@ msgstr "les options « -d/--dbname » et « -f/--file » ne peuvent pas être ut
 #: pg_restore.c:338
 #, c-format
 msgid "options -C/--create and -1/--single-transaction cannot be used together"
-msgstr "les options « -c/--clean » et « -a/--data-only » ne peuvent pas être utilisées ensemble"
+msgstr "les options « -C/--create » et « -1/--single-transaction » ne peuvent pas être utilisées ensemble"
 
 #: pg_restore.c:342
 #, c-format

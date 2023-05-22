@@ -1,14 +1,14 @@
 # Swedish message translation file for pltcl
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-04-11 13:38+0000\n"
-"PO-Revision-Date: 2022-04-11 16:11+0200\n"
+"PO-Revision-Date: 2023-03-09 22:42+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -59,7 +59,7 @@ msgstr "en funktion med post som värde anropades i sammanhang där poster inte 
 #: pltcl.c:1297
 #, c-format
 msgid "could not split return value from trigger: %s"
-msgstr "kunde inte dela på returvärde och utlösare: %s"
+msgstr "kunde inte dela på returvärde från trigger: %s"
 
 #: pltcl.c:1378 pltcl.c:1808
 #, c-format

@@ -1,0 +1,261 @@
+# Georgian message translation file for pg_config
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_config (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_config (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-04-19 11:17+0000\n"
+"PO-Revision-Date: 2023-04-20 08:19+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: ../../common/config_info.c:134 ../../common/config_info.c:142
+#: ../../common/config_info.c:150 ../../common/config_info.c:158
+#: ../../common/config_info.c:166 ../../common/config_info.c:174
+#: ../../common/config_info.c:182 ../../common/config_info.c:190
+msgid "not recorded"
+msgstr "ჩაწერილი არაა"
+
+#: ../../common/exec.c:172
+#, c-format
+msgid "invalid binary \"%s\": %m"
+msgstr "არასწორი ბინარული ფაილი \"%s\": %m"
+
+#: ../../common/exec.c:215
+#, c-format
+msgid "could not read binary \"%s\": %m"
+msgstr "ბინარული ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/exec.c:223
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "გასაშვებად ფაილის \"%s\" პოვნა შეუძლებელია"
+
+#: ../../common/exec.c:250
+#, c-format
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "ბილიკის (\"%s\") აბსოლუტურ ფორმაში ამოხსნის შეცდომა: %m"
+
+#: ../../common/exec.c:412
+#, c-format
+msgid "%s() failed: %m"
+msgstr "%s()-ის შეცდომა: %m"
+
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+msgid "out of memory"
+msgstr "არასაკმარისი მეხსიერება"
+
+#: pg_config.c:74
+#, c-format
+msgid ""
+"\n"
+"%s provides information about the installed version of PostgreSQL.\n"
+"\n"
+msgstr ""
+"\n"
+"%s ინფორმაცია PostgreSQL-ის დაყენებული ვერსიის შესახებ.\n"
+"\n"
+
+#: pg_config.c:75
+#, c-format
+msgid "Usage:\n"
+msgstr "გამოყენება:\n"
+
+#: pg_config.c:76
+#, c-format
+msgid ""
+"  %s [OPTION]...\n"
+"\n"
+msgstr ""
+"  %s [პარამეტრი]...\n"
+"\n"
+
+#: pg_config.c:77
+#, c-format
+msgid "Options:\n"
+msgstr "პარამეტრები:\n"
+
+#: pg_config.c:78
+#, c-format
+msgid "  --bindir              show location of user executables\n"
+msgstr "  --bindir              მომხმარებლების გამშვები ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:79
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir              დოკუმენტაციის ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:80
+#, c-format
+msgid "  --htmldir             show location of HTML documentation files\n"
+msgstr "  --htmldir             HTML დოკუმენტაციის ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:81
+#, c-format
+msgid ""
+"  --includedir          show location of C header files of the client\n"
+"                        interfaces\n"
+msgstr ""
+"  --includedir          კლიენტსი ინტერფეისის C თავსართის ფაილების მდებარეობის\n"
+"                        ჩვენება\n"
+
+#: pg_config.c:83
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr "  --pkgincludedir       დარჩენილი C თავსართის ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:84
+#, c-format
+msgid "  --includedir-server   show location of C header files for the server\n"
+msgstr "  --includedir-server   სერვერის C-ის თავსართის ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:85
+#, c-format
+msgid "  --libdir              show location of object code libraries\n"
+msgstr "  --libdir              ობიექტის კოდის ბიბლიოთეკების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:86
+#, c-format
+msgid "  --pkglibdir           show location of dynamically loadable modules\n"
+msgstr "  --pkglibdir           დინამიკურად ჩატვირთვადი მოდულების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:87
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir           ენის მხარდაჭერის ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:88
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir              სახელმძღვანელოს ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:89
+#, c-format
+msgid "  --sharedir            show location of architecture-independent support files\n"
+msgstr "  --sharedir            არქიტექტურისგან დამოუკიდებელი მხარდაჭერის ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:90
+#, c-format
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir          სისტემური კონფიგურაციის ფაილების მდებარეობის ჩვენება\n"
+
+#: pg_config.c:91
+#, c-format
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr "  --pgxs                გაფართოების makefile-ის მდებარეობის ჩვენება\n"
+
+#: pg_config.c:92
+#, c-format
+msgid ""
+"  --configure           show options given to \"configure\" script when\n"
+"                        PostgreSQL was built\n"
+msgstr ""
+"  --configure           PostgreSQL-ის აგებისას \"configure\" სკრიპტისთვის გადაცემული\n"
+"                        პარამეტრების ჩვენება\n"
+
+#: pg_config.c:94
+#, c-format
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr "  --cc                  PostgreSQL-ის აგებისას გამოყენებული CC-ის მნიშვნელობის ჩვენება\n"
+
+#: pg_config.c:95
+#, c-format
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cppflags            PostgreSQL-ის აგებისას გამოყენებული CPPFLAGS-ის ჩვენება\n"
+
+#: pg_config.c:96
+#, c-format
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cflags              PostgreSQL-ის აგებისას გამოყენებული CFLAGS-ის ჩვენება\n"
+
+#: pg_config.c:97
+#, c-format
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --cflags_sl           PostgreSQL-ის აგებისას გამოყენებული CFLAGS_SL-ის ჩვენება\n"
+
+#: pg_config.c:98
+#, c-format
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             PostgreSQL -ის აგებისას გამოყენებული LDFLAGS-ის მნიშვნელობა\n"
+
+#: pg_config.c:99
+#, c-format
+msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
+msgstr "  --ldflags_ex            PostgreSQL -ის აგებისას გამოყენებული LDFLAGS_EX-ის მნიშვნელობა\n"
+
+#: pg_config.c:100
+#, c-format
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --ldflags_sl           PostgreSQL-ის აგებისას გამოყენებული LDFLAGS_SL-ის ჩვენება\n"
+
+#: pg_config.c:101
+#, c-format
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs                PostgreSQL-ის აგებისას გამოყენებული LIBS-ის ჩვენება\n"
+
+#: pg_config.c:102
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version             PostgreSQL-ის ვერსიის ჩვენება\n"
+
+#: pg_config.c:103
+#, c-format
+msgid "  -?, --help            show this help, then exit\n"
+msgstr "  -?, --help                   ამ დახმარების ჩვენება და გასვლა\n"
+
+#: pg_config.c:104
+#, c-format
+msgid ""
+"\n"
+"With no arguments, all known items are shown.\n"
+"\n"
+msgstr ""
+"\n"
+"თუ არგუმენტებს არ მიუთითებთ, ნაჩვენები იქნება ყველა ცნობილი ჩანაწერი.\n"
+"\n"
+
+#: pg_config.c:105
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr "შეცდომების შესახებ მიწერეთ: <%s>\n"
+
+#: pg_config.c:106
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s-ის საწყისი გვერდია: <%s>\n"
+
+#: pg_config.c:112
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'.\n"
+
+#: pg_config.c:154
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: საკუთარი პროგრამის გამშვები ფაილის პოვნა შეუძლებელია\n"
+
+#: pg_config.c:181
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: არასწორი არგუმენტი: %s\n"
+
+#, c-format
+#~ msgid "could not change directory to \"%s\": %m"
+#~ msgstr "საქაღალდის %s-ზე შეცვლის შეცდომა: %m"
+
+#, c-format
+#~ msgid "could not identify current directory: %m"
+#~ msgstr "მიმდინარე საქაღალდის იდენტიფიკაციის პრობლემა: %m"
+
+#, c-format
+#~ msgid "could not read symbolic link \"%s\": %m"
+#~ msgstr "სიმბოლური ბმის \"%s\" წაკითხვის შეცდომა: %m"

@@ -4,13 +4,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2002-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Andrey Sudnik <sudnikand@gmail.com>, 2011.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 06:29+0300\n"
-"PO-Revision-Date: 2021-08-14 07:04+0300\n"
+"POT-Creation-Date: 2022-08-27 14:52+0300\n"
+"PO-Revision-Date: 2022-09-05 13:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -25,26 +25,26 @@ msgstr ""
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не удалось открыть файл \"%s\" для чтения: %m"
 
-#: ../../common/controldata_utils.c:89
+#: ../../common/controldata_utils.c:86
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:101
+#: ../../common/controldata_utils.c:95
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "не удалось прочитать файл \"%s\" (прочитано байт: %d из %zu)"
 
-#: ../../common/controldata_utils.c:117 ../../common/controldata_utils.c:259
+#: ../../common/controldata_utils.c:108 ../../common/controldata_utils.c:244
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "не удалось закрыть файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:135
+#: ../../common/controldata_utils.c:124
 msgid "byte ordering mismatch"
 msgstr "несоответствие порядка байт"
 
-#: ../../common/controldata_utils.c:137
+#: ../../common/controldata_utils.c:126
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
@@ -58,17 +58,17 @@ msgstr ""
 "этой программой. В этом случае результаты будут неверными и\n"
 "установленный PostgreSQL будет несовместим с этим каталогом данных."
 
-#: ../../common/controldata_utils.c:203
+#: ../../common/controldata_utils.c:194
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:224
+#: ../../common/controldata_utils.c:213
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "не удалось записать файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:245
+#: ../../common/controldata_utils.c:232
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "не удалось синхронизировать с ФС файл \"%s\": %m"
@@ -176,12 +176,12 @@ msgstr "нераспознанный код состояния"
 msgid "unrecognized wal_level"
 msgstr "нераспознанный уровень WAL"
 
-#: pg_controldata.c:137 pg_controldata.c:155 pg_controldata.c:163
+#: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:163
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Для дополнительной информации попробуйте \"%s --help\"."
 
-#: pg_controldata.c:153
+#: pg_controldata.c:154
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "слишком много аргументов командной строки (первый: \"%s\")"

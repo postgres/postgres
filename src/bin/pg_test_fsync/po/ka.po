@@ -1,0 +1,226 @@
+# Georgian message translation file for pg_test_fsync
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_test_fsync (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_test_fsync (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-07-02 04:51+0000\n"
+"PO-Revision-Date: 2022-07-05 05:20+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "შეცდომა: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "გაფრთხილება: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "დეტალები: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "მინიშნება: "
+
+#. translator: maintain alignment with NA_FORMAT
+#: pg_test_fsync.c:32
+#, c-format
+msgid "%13.3f ops/sec  %6.0f usecs/op\n"
+msgstr "%13.3f ოპ/წმ  %6.0f მკწმ/ოპ\n"
+
+#: pg_test_fsync.c:50
+#, c-format
+msgid "could not create thread for alarm"
+msgstr "გაფრთხილების ძაფის შექმნა შეუძლებელია"
+
+#: pg_test_fsync.c:95
+#, c-format
+msgid "%s: %m"
+msgstr "%s: %m"
+
+#: pg_test_fsync.c:159
+#, c-format
+msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
+msgstr "გამოყენება: %s [-f ფაილისსახელი] [-s წამიტესტი]\n"
+
+#: pg_test_fsync.c:185
+#, c-format
+msgid "invalid argument for option %s"
+msgstr "არასწორი არგუმენტი პარამეტრისთვის: %s"
+
+#: pg_test_fsync.c:186 pg_test_fsync.c:198 pg_test_fsync.c:207
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
+
+#: pg_test_fsync.c:192
+#, c-format
+msgid "%s must be in range %u..%u"
+msgstr "%s- %u-დან %u-მდე დიაპაზონში უნდა იყოს"
+
+#: pg_test_fsync.c:205
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")"
+
+#: pg_test_fsync.c:211
+#, c-format
+msgid "%u second per test\n"
+msgid_plural "%u seconds per test\n"
+msgstr[0] "%u second per test\n"
+msgstr[1] "%u seconds per test\n"
+
+#: pg_test_fsync.c:216
+#, c-format
+msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
+msgstr "ამ პლატფორმაზე O_DIRECT მხარდაჭერილია open_datasync და open_sync-სთვის.\n"
+
+#: pg_test_fsync.c:218
+#, c-format
+msgid "F_NOCACHE supported on this platform for open_datasync and open_sync.\n"
+msgstr "ამ პლატფორმაზე F_NOCACHE მხარდაჭერილია open_datasync და open_sync-სთვის.\n"
+
+#: pg_test_fsync.c:220
+#, c-format
+msgid "Direct I/O is not supported on this platform.\n"
+msgstr "DIRECT I/O ამ პლატფორმაზე მხარდაჭერილი არაა.\n"
+
+#: pg_test_fsync.c:245 pg_test_fsync.c:336 pg_test_fsync.c:361
+#: pg_test_fsync.c:385 pg_test_fsync.c:529 pg_test_fsync.c:541
+#: pg_test_fsync.c:557 pg_test_fsync.c:563 pg_test_fsync.c:585
+msgid "could not open output file"
+msgstr "გამოტანის ფაილის გახსნის შეცდომა"
+
+#: pg_test_fsync.c:249 pg_test_fsync.c:319 pg_test_fsync.c:345
+#: pg_test_fsync.c:370 pg_test_fsync.c:394 pg_test_fsync.c:433
+#: pg_test_fsync.c:492 pg_test_fsync.c:531 pg_test_fsync.c:559
+#: pg_test_fsync.c:590
+msgid "write failed"
+msgstr "ჩაწერის შეცდომა"
+
+#: pg_test_fsync.c:253 pg_test_fsync.c:372 pg_test_fsync.c:396
+#: pg_test_fsync.c:533 pg_test_fsync.c:565
+msgid "fsync failed"
+msgstr "fsync-ის შეცდომა"
+
+#: pg_test_fsync.c:292
+#, c-format
+msgid ""
+"\n"
+"Compare file sync methods using one %dkB write:\n"
+msgstr ""
+"\n"
+"სინქრნიზაციის მეთოდების შედარება ერთი %dკბ ჩაწერით:\n"
+
+#: pg_test_fsync.c:294
+#, c-format
+msgid ""
+"\n"
+"Compare file sync methods using two %dkB writes:\n"
+msgstr ""
+"\n"
+"სინქრნიზაციის მეთოდების შედარება ორი %dკბ ჩაწერით:\n"
+
+#: pg_test_fsync.c:295
+#, c-format
+msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
+msgstr "(wal_sync_method -ის რჩეული მიმდევრობით, fdatasync-ის გარდა, რომელიც ლინუქსზე ნაგულისხმებია)\n"
+
+#: pg_test_fsync.c:306 pg_test_fsync.c:413 pg_test_fsync.c:480
+msgid "n/a*"
+msgstr "n/a*"
+
+#: pg_test_fsync.c:325 pg_test_fsync.c:351 pg_test_fsync.c:401
+#: pg_test_fsync.c:439 pg_test_fsync.c:498
+msgid "n/a"
+msgstr "n/a"
+
+#: pg_test_fsync.c:444
+#, c-format
+msgid ""
+"* This file system and its mount options do not support direct\n"
+"  I/O, e.g. ext4 in journaled mode.\n"
+msgstr ""
+"* ამ ფაილურ სისტემას და მის მიმაგრების პარამეტრებს პირდაპირი შეტანა/გამოტანის\n"
+"მხარდაჭერა არ გააჩნიათ. მაგ: ext4 ჟურნალის მხარდაჭერით.\n"
+
+#: pg_test_fsync.c:452
+#, c-format
+msgid ""
+"\n"
+"Compare open_sync with different write sizes:\n"
+msgstr ""
+"\n"
+"open_sync-ის შედარება ჩაწერის სხვაფასხვა ზომებით:\n"
+
+#: pg_test_fsync.c:453
+#, c-format
+msgid ""
+"(This is designed to compare the cost of writing 16kB in different write\n"
+"open_sync sizes.)\n"
+msgstr ""
+"(განკუთვნილია 16კბ-ის ჩაწერის ფასის გასარკვევად \n"
+"open_sync-ის სხვადსხვა ზომების დროს.)\n"
+
+#: pg_test_fsync.c:456
+msgid " 1 * 16kB open_sync write"
+msgstr " 1 * 16კბ open_sync ჩაწერა"
+
+#: pg_test_fsync.c:457
+msgid " 2 *  8kB open_sync writes"
+msgstr " 2 *  8კბ open_sync ჩაწერა"
+
+#: pg_test_fsync.c:458
+msgid " 4 *  4kB open_sync writes"
+msgstr " 4 *  4კბ open_sync ჩაწერა"
+
+#: pg_test_fsync.c:459
+msgid " 8 *  2kB open_sync writes"
+msgstr " 8 *  2კბ open_sync ჩაწერა"
+
+#: pg_test_fsync.c:460
+msgid "16 *  1kB open_sync writes"
+msgstr "16 *  1კბ open_sync ჩაწერა"
+
+#: pg_test_fsync.c:514
+#, c-format
+msgid ""
+"\n"
+"Test if fsync on non-write file descriptor is honored:\n"
+msgstr ""
+"\n"
+"შემოწმება, ხდება თუ არა fsync ფაილის მითითებით, რომელიც კთხვისთვისაა გახსნილი.\n"
+
+#: pg_test_fsync.c:515
+#, c-format
+msgid ""
+"(If the times are similar, fsync() can sync data written on a different\n"
+"descriptor.)\n"
+msgstr ""
+"(თუ დროები ჰგვანან, fsync()-ს შეუძლია მონაცემების სინქრონიზაცია,\n"
+"რომელიც სხვა დესკრიპტორით ჩაიწერა)\n"
+
+#: pg_test_fsync.c:580
+#, c-format
+msgid ""
+"\n"
+"Non-sync'ed %dkB writes:\n"
+msgstr ""
+"\n"
+"არასინქრონიზებული %dკბ ჩაწერები:\n"

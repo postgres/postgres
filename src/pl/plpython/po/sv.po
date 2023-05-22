@@ -1,14 +1,14 @@
 # Swedish message translation file for plpython
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-04-11 01:08+0000\n"
-"PO-Revision-Date: 2021-11-07 10:38+0100\n"
+"PO-Revision-Date: 2023-03-09 22:41+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -107,7 +107,7 @@ msgstr "PL/Python-funktion med returtyp \"void\" returnerade inte None"
 #: plpy_exec.c:371 plpy_exec.c:397
 #, c-format
 msgid "unexpected return value from trigger procedure"
-msgstr "oväntat returvärde från utlösarprocedur"
+msgstr "oväntat returvärde från triggerprocedur"
 
 #: plpy_exec.c:372
 #, c-format
@@ -117,7 +117,7 @@ msgstr "Förväntade None eller en sträng."
 #: plpy_exec.c:387
 #, c-format
 msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
-msgstr "PL/Python-utlösarfunktion returnerade \"MODIFY\" i en DELETE-utlösare -- ignorerad"
+msgstr "PL/Python-triggerfunktion returnerade \"MODIFY\" i en DELETE-trigger -- ignorerad"
 
 #: plpy_exec.c:398
 #, c-format
@@ -162,7 +162,7 @@ msgstr "TD[\"new\"] dictionary-nyckel vid numerisk position %d är inte en strä
 #: plpy_exec.c:949
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
-msgstr "nyckel \"%s\" hittad i TD[\"new\"] finns inte som en kolumn i den utlösande raden"
+msgstr "nyckel \"%s\" hittad i TD[\"new\"] finns inte som en kolumn i den triggande raden"
 
 #: plpy_exec.c:954
 #, c-format
@@ -177,7 +177,7 @@ msgstr "kan inte sätta genererad kolumn \"%s\""
 #: plpy_exec.c:1017
 #, c-format
 msgid "while modifying trigger row"
-msgstr "vid modifiering av utlösande rad"
+msgstr "vid modifiering av triggerrad"
 
 #: plpy_exec.c:1075
 #, c-format
