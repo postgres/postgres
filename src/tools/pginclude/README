@@ -1,5 +1,12 @@
 src/tools/pginclude/README
 
+NOTE: headerscheck and cpluspluscheck are in current use, and any
+problems they find should generally get fixed.  The other scripts
+in this directory have not been used in some time, and have issues.
+pgrminclude in particular has a history of creating more problems
+than it fixes.  Be very wary of applying their results blindly.
+
+
 pginclude
 =========
 
@@ -71,10 +78,10 @@ the top-level build directory after completing a build.  You should
 have included "--with-perl --with-python" in your configure options,
 else you're likely to get errors about related headers not being found.
 
-A limitation of the current script is that it doesn't know which headers
-are for frontend or backend, so it tests everything with postgres.h
-as prerequisite, even if postgres_fe.h would be more appropriate.  Also
-note that the contents of macros are not checked; this is intentional.
+A limitation of the current script is that it doesn't know exactly which
+headers are for frontend or backend; when in doubt it uses postgres.h as
+prerequisite, even if postgres_fe.h or c.h would be more appropriate.
+Also note that the contents of macros are not checked; this is intentional.
 
 
 cpluspluscheck
@@ -97,7 +104,7 @@ If you are using a non-g++-compatible C++ compiler, you may need to
 override the script's CXXFLAGS setting by setting a suitable environment
 value.
 
-A limitation of the current script is that it doesn't know which headers
-are for frontend or backend, so it tests everything with postgres.h
-as prerequisite, even if postgres_fe.h would be more appropriate.  Also
-note that the contents of macros are not checked; this is intentional.
+A limitation of the current script is that it doesn't know exactly which
+headers are for frontend or backend; when in doubt it uses postgres.h as
+prerequisite, even if postgres_fe.h or c.h would be more appropriate.
+Also note that the contents of macros are not checked; this is intentional.
