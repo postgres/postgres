@@ -106,9 +106,12 @@ $(SQLSCRIPT): snowball_create.pl snowball_func.sql.in snowball.sql.in
 
 distprep: $(SQLSCRIPT)
 
-install: all installdirs install-lib
-	$(INSTALL_DATA) $(SQLSCRIPT) '$(DESTDIR)$(datadir)'
+install: all installdirs install-lib install-script
 	$(INSTALL_DATA) $(addprefix $(srcdir)/stopwords/,$(stop_files)) '$(DESTDIR)$(datadir)/$(DICTDIR)'
+
+# $(SQLSCRIPT) might be in the srcdir or the build dir
+install-script: $(SQLSCRIPT)
+	$(INSTALL_DATA) $< '$(DESTDIR)$(datadir)'
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(datadir)' '$(DESTDIR)$(datadir)/$(DICTDIR)'
