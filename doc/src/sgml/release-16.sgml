@@ -2530,7 +2530,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Allow ASCII string detection to use vector operations on x86-64 architectures (John Naylor)
+Allow ASCII string detection to use vector operations (John Naylor)
 </para>
 </listitem>
 
@@ -2541,7 +2541,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Allow JSON string processing to use vector operations on x86-64 architectures (John Naylor)
+Allow JSON string parsing to use vector operations (John Naylor)
 </para>
 
 <para>
@@ -2558,7 +2558,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Allow arrays searches to use vector operations on x86-64 architectures (John Naylor)
+Allow array searches to use vector operations (John Naylor)
 </para>
 </listitem>
 
