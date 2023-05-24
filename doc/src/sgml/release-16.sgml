@@ -2569,7 +2569,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Allow xid/subxid searches to use vector operations on x86-64 architectures (Nathan Bossart)
+Allow xid/subxid searches to use vector operations (Nathan Bossart)
 </para>
 </listitem>
 
