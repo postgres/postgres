@@ -34,8 +34,7 @@ main(int argc, char *argv[])
 		{"no-createdb", no_argument, NULL, 'D'},
 		{"echo", no_argument, NULL, 'e'},
 		{"encrypted", no_argument, NULL, 'E'},
-		{"role", required_argument, NULL, 'g'}, /* kept for backward
-												 * compatibility */
+		{"role", required_argument, NULL, 'g'},
 		{"member-of", required_argument, NULL, 'g'},
 		{"host", required_argument, NULL, 'h'},
 		{"inherit", no_argument, NULL, 'i'},
@@ -423,6 +422,7 @@ help(const char *progname)
 	printf(_("  -D, --no-createdb         role cannot create databases (default)\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -g, --member-of=ROLE      new role will be a member of ROLE\n"));
+	printf(_("  --role=ROLE               (same as --member-of, deprecated)\n"));
 	printf(_("  -i, --inherit             role inherits privileges of roles it is a\n"
 			 "                            member of (default)\n"));
 	printf(_("  -I, --no-inherit          role does not inherit privileges\n"));

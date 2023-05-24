@@ -150,6 +150,7 @@ PostgreSQL documentation
      <varlistentry>
       <term><option>-g <replaceable class="parameter">role</replaceable></option></term>
       <term><option>--member-of=<replaceable class="parameter">role</replaceable></option></term>
+      <term><option>--role=<replaceable class="parameter">role</replaceable></option> (deprecated)</term>
       <listitem>
        <para>
         Specifies the new role should be automatically added as a member

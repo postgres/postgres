@@ -71,7 +71,7 @@ $node->issues_sql_like(
 $node->issues_sql_like(
 	[ 'createuser', '--role', 'regress_user1', 'regress_user11' ],
 	qr/statement: CREATE ROLE regress_user11 NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN NOREPLICATION NOBYPASSRLS IN ROLE regress_user1;/,
-	'--role (for backward compatibility)');
+	'--role');
 $node->issues_sql_like(
 	[ 'createuser', '--member-of', 'regress_user1', 'regress_user12' ],
 	qr/statement: CREATE ROLE regress_user12 NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN NOREPLICATION NOBYPASSRLS IN ROLE regress_user1;/,
