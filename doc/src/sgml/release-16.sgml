@@ -27,7 +27,7 @@
 
     <listitem>
      <para>
-      Allow logical replication from standbys servers
+      Allow logical replication from standby servers
      </para>
     </listitem>
 
@@ -126,11 +126,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Change REINDEX DATABASE and reindexedb to not process indexes on system catalogs (Simon Riggs)
+Change REINDEX DATABASE and reindexdb to not process indexes on system catalogs (Simon Riggs)
 </para>
 
 <para>
-Processing such indexes is still possible using REINDEX SYSTEM and reindexedb --system.
+Processing such indexes is still possible using REINDEX SYSTEM and reindexdb --system.
 </para>
 </listitem>
 
@@ -593,7 +593,7 @@ Create subscription statistics entries at subscription creation time so stats_re
 </para>
 
 <para>
-Previously entries were created only created when the first statistics were reported.
+Previously entries were created only when the first statistics were reported.
 </para>
 </listitem>
 
@@ -777,7 +777,7 @@ Simplify permissions for LOCK TABLE (Jeff Davis)
 </para>
 
 <para>
-Previously the ability to perform LOCK TABLE at various lock levels was bound to specific query-type permissions.  For example, UPDATE could could perform all lock levels except ACCESS SHARE, which
+Previously the ability to perform LOCK TABLE at various lock levels was bound to specific query-type permissions.  For example, UPDATE could perform all lock levels except ACCESS SHARE, which
 required SELECT permissions.  Now UPDATE can issue all lock levels.  MORE?
 </para>
 </listitem>
@@ -808,7 +808,7 @@ Restrict the privileges of CREATEROLE roles (Robert Haas)
 </para>
 
 <para>
-Previously roles with CREATEROLE privileges could change many aspects of any non-superuser role.  Such changes, including adding members, are now require the role requesting the change to have ADMIN OPTION
+Previously roles with CREATEROLE privileges could change many aspects of any non-superuser role.  Such changes, including adding members, now require the role requesting the change to have ADMIN OPTION
 permission.
 </para>
 </listitem>
@@ -946,7 +946,7 @@ Add dependency tracking of grantors for GRANT records (Robert Haas)
 </para>
 
 <para>
-This will guarantee that pg_auth_members.grantor values is always valid.
+This guarantees that pg_auth_members.grantor values are always valid.
 </para>
 </listitem>
 
@@ -3017,7 +3017,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow required extensions to marked as non-relocatable using "no_relocate" (Regina Obe)
+Allow required extensions to be marked as non-relocatable using "no_relocate" (Regina Obe)
 </para>
 
 <para>
