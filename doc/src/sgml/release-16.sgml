@@ -474,6 +474,28 @@ Improve the speed of updating the process title (David Rowley)
 </para>
 </listitem>
 
+<!--
+Author: John Naylor <john.naylor@postgresql.org>
+2022-08-11 [37a6e5df3] Optimize xid/subxid searches in XidInMVCCSnapshot().
+Author: John Naylor <john.naylor@postgresql.org>
+2022-08-26 [121d2d3d7] Use SSE2 in is_valid_ascii() where available.
+Author: John Naylor <john.naylor@postgresql.org>
+2022-08-10 [b6ef16756] Introduce optimized routine for linear searches of array
+Author: John Naylor <john.naylor@postgresql.org>
+2022-08-26 [e813e0e16] Add optimized functions for linear search within byte ar
+-->
+
+<listitem>
+<para>
+Allow xid/subxid searches and ASCII string detection to use vector operations (Nathan Bossart)
+</para>
+
+<para>
+ASCII detection is particularly useful for COPY FROM.  Vector operations are also used for some C array searches.
+</para>
+
+</listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -1782,6 +1804,17 @@ The IS JSON checks include checks for values, arrays, objects, scalars, and uniq
 </listitem>
 
 <!--
+Author: John Naylor <john.naylor@postgresql.org>
+2022-09-02 [0a8de93a4] Speed up lexing of long JSON strings
+-->
+
+<listitem>
+<para>
+Allow JSON string parsing to use vector operations (John Naylor)
+</para>
+</listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-19 [5a617d75d] Fix ts_headline() to handle ORs and phrase queries more 
 -->
@@ -2520,56 +2553,6 @@ Author: John Naylor <john.naylor@postgresql.org>
 <listitem>
 <para>
 Add support for Advanced SIMD (Single Instruction Multiple Data) (NEON) instructions on ARM architectures (Nathan Bossart)
-</para>
-</listitem>
-
-<!--
-Author: John Naylor <john.naylor@postgresql.org>
-2022-08-26 [121d2d3d7] Use SSE2 in is_valid_ascii() where available.
--->
-
-<listitem>
-<para>
-Allow ASCII string detection to use vector operations (John Naylor)
-</para>
-</listitem>
-
-<!--
-Author: John Naylor <john.naylor@postgresql.org>
-2022-09-02 [0a8de93a4] Speed up lexing of long JSON strings
--->
-
-<listitem>
-<para>
-Allow JSON string parsing to use vector operations (John Naylor)
-</para>
-
-<para>
-ARM?
-</para>
-</listitem>
-
-<!--
-Author: John Naylor <john.naylor@postgresql.org>
-2022-08-10 [b6ef16756] Introduce optimized routine for linear searches of array
-Author: John Naylor <john.naylor@postgresql.org>
-2022-08-26 [e813e0e16] Add optimized functions for linear search within byte ar
--->
-
-<listitem>
-<para>
-Allow array searches to use vector operations (John Naylor)
-</para>
-</listitem>
-
-<!--
-Author: John Naylor <john.naylor@postgresql.org>
-2022-08-11 [37a6e5df3] Optimize xid/subxid searches in XidInMVCCSnapshot().
--->
-
-<listitem>
-<para>
-Allow xid/subxid searches to use vector operations (Nathan Bossart)
 </para>
 </listitem>
 
