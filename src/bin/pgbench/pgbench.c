@@ -3071,6 +3071,27 @@ chooseScript(TState *thread)
 }
 
 /*
+ * Allocate space for CState->prepared: we need one boolean for each command
+ * of each script.
+ */
+static void
+allocCStatePrepared(CState *st)
+{
+	Assert(st->prepared == NULL);
+
+	st->prepared = pg_malloc(sizeof(bool *) * num_scripts);
+	for (int i = 0; i < num_scripts; i++)
+	{
+		ParsedScript *script = &sql_script[i];
+		int			numcmds;
+
+		for (numcmds = 0; script->commands[numcmds] != NULL; numcmds++)
+			;
+		st->prepared[i] = pg_malloc0(sizeof(bool) * numcmds);
+	}
+}
+
+/*
  * Prepare the SQL command from st->use_file at command_num.
  */
 static void
@@ -3082,23 +3103,8 @@ prepareCommand(CState *st, int command_num)
 	if (command->type != SQL_COMMAND)
 		return;
 
-	/*
-	 * If not already done, allocate space for 'prepared' flags: one boolean
-	 * for each command of each script.
-	 */
 	if (!st->prepared)
-	{
-		st->prepared = pg_malloc(sizeof(bool *) * num_scripts);
-		for (int i = 0; i < num_scripts; i++)
-		{
-			ParsedScript *script = &sql_script[i];
-			int			numcmds;
-
-			for (numcmds = 0; script->commands[numcmds] != NULL; numcmds++)
-				;
-			st->prepared[i] = pg_malloc0(sizeof(bool) * numcmds);
-		}
-	}
+		allocCStatePrepared(st);
 
 	if (!st->prepared[st->use_file][command_num])
 	{
@@ -3130,13 +3136,15 @@ prepareCommandsInPipeline(CState *st)
 	Assert(commands[st->command]->type == META_COMMAND &&
 		   commands[st->command]->meta == META_STARTPIPELINE);
 
+	if (!st->prepared)
+		allocCStatePrepared(st);
+
 	/*
 	 * We set the 'prepared' flag on the \startpipeline itself to flag that we
 	 * don't need to do this next time without calling prepareCommand(), even
 	 * though we don't actually prepare this command.
 	 */
-	if (st->prepared &&
-		st->prepared[st->use_file][st->command])
+	if (st->prepared[st->use_file][st->command])
 		return;
 
 	for (j = st->command + 1; commands[j] != NULL; j++)
