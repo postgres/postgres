@@ -117,7 +117,7 @@ $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
 $node->command_fails(
 	[qw|vacuumdb -Zt funcidx postgres|],
-	'unqualifed name via functional index');
+	'unqualified name via functional index');
 
 $node->command_fails(
 	[ 'vacuumdb', '--analyze', '--table', 'vactable(c)', 'postgres' ],
