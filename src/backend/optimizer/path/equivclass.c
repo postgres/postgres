@@ -197,9 +197,12 @@ process_equivalence(PlannerInfo *root,
 				make_restrictinfo(root,
 								  (Expr *) ntest,
 								  restrictinfo->is_pushed_down,
+								  restrictinfo->has_clone,
+								  restrictinfo->is_clone,
 								  restrictinfo->pseudoconstant,
 								  restrictinfo->security_level,
 								  NULL,
+								  restrictinfo->incompatible_relids,
 								  restrictinfo->outer_relids);
 		}
 		return false;
@@ -1972,7 +1975,8 @@ create_join_clause(PlannerInfo *root,
  * clause into the regular processing, because otherwise the join will be
  * seen as a clauseless join and avoided during join order searching.
  * We handle this by generating a constant-TRUE clause that is marked with
- * required_relids that make it a join between the correct relations.
+ * the same required_relids etc as the removed outer-join clause, thus
+ * making it a join clause between the correct relations.
  */
 void
 reconsider_outer_join_clauses(PlannerInfo *root)
@@ -2001,10 +2005,13 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 				/* throw back a dummy replacement clause (see notes above) */
 				rinfo = make_restrictinfo(root,
 										  (Expr *) makeBoolConst(true, false),
-										  true, /* is_pushed_down */
+										  rinfo->is_pushed_down,
+										  rinfo->has_clone,
+										  rinfo->is_clone,
 										  false,	/* pseudoconstant */
 										  0,	/* security_level */
 										  rinfo->required_relids,
+										  rinfo->incompatible_relids,
 										  rinfo->outer_relids);
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}
@@ -2026,10 +2033,13 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 				/* throw back a dummy replacement clause (see notes above) */
 				rinfo = make_restrictinfo(root,
 										  (Expr *) makeBoolConst(true, false),
-										  true, /* is_pushed_down */
+										  rinfo->is_pushed_down,
+										  rinfo->has_clone,
+										  rinfo->is_clone,
 										  false,	/* pseudoconstant */
 										  0,	/* security_level */
 										  rinfo->required_relids,
+										  rinfo->incompatible_relids,
 										  rinfo->outer_relids);
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}
@@ -2051,10 +2061,13 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 				/* throw back a dummy replacement clause (see notes above) */
 				rinfo = make_restrictinfo(root,
 										  (Expr *) makeBoolConst(true, false),
-										  true, /* is_pushed_down */
+										  rinfo->is_pushed_down,
+										  rinfo->has_clone,
+										  rinfo->is_clone,
 										  false,	/* pseudoconstant */
 										  0,	/* security_level */
 										  rinfo->required_relids,
+										  rinfo->incompatible_relids,
 										  rinfo->outer_relids);
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}

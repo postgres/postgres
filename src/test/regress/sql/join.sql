@@ -508,6 +508,12 @@ select * from onek t1
     left join onek t3 on t2.unique1 = t3.unique1
     left join onek t4 on t3.unique1 = t4.unique1 and t2.unique2 = t4.unique2;
 
+explain (costs off)
+select * from int8_tbl t1 left join
+    (int8_tbl t2 left join int8_tbl t3 full join int8_tbl t4 on false on false)
+    left join int8_tbl t5 on t2.q1 = t5.q1
+on t2.q2 = 123;
+
 --
 -- check a case where we formerly got confused by conflicting sort orders
 -- in redundant merge join path keys

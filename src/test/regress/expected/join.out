@@ -2568,6 +2568,27 @@ select * from onek t1
          ->  Seq Scan on onek t4
 (13 rows)
 
+explain (costs off)
+select * from int8_tbl t1 left join
+    (int8_tbl t2 left join int8_tbl t3 full join int8_tbl t4 on false on false)
+    left join int8_tbl t5 on t2.q1 = t5.q1
+on t2.q2 = 123;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on int8_tbl t1
+   ->  Materialize
+         ->  Nested Loop Left Join
+               Join Filter: (t2.q1 = t5.q1)
+               ->  Nested Loop Left Join
+                     Join Filter: false
+                     ->  Seq Scan on int8_tbl t2
+                           Filter: (q2 = 123)
+                     ->  Result
+                           One-Time Filter: false
+               ->  Seq Scan on int8_tbl t5
+(12 rows)
+
 --
 -- check a case where we formerly got confused by conflicting sort orders
 -- in redundant merge join path keys

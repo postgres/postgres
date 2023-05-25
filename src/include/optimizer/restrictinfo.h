@@ -19,14 +19,18 @@
 
 /* Convenience macro for the common case of a valid-everywhere qual */
 #define make_simple_restrictinfo(root, clause)  \
-	make_restrictinfo(root, clause, true, false, 0, NULL, NULL)
+	make_restrictinfo(root, clause, true, false, false, false, 0, \
+		NULL, NULL, NULL)
 
 extern RestrictInfo *make_restrictinfo(PlannerInfo *root,
 									   Expr *clause,
 									   bool is_pushed_down,
+									   bool has_clone,
+									   bool is_clone,
 									   bool pseudoconstant,
 									   Index security_level,
 									   Relids required_relids,
+									   Relids incompatible_relids,
 									   Relids outer_relids);
 extern RestrictInfo *commute_restrictinfo(RestrictInfo *rinfo, Oid comm_op);
 extern bool restriction_is_or_clause(RestrictInfo *restrictinfo);
@@ -39,9 +43,6 @@ extern void extract_actual_join_clauses(List *restrictinfo_list,
 										Relids joinrelids,
 										List **joinquals,
 										List **otherquals);
-extern bool clause_is_computable_at(PlannerInfo *root,
-									RestrictInfo *rinfo,
-									Relids eval_relids);
 extern bool join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel);
 extern bool join_clause_is_movable_into(RestrictInfo *rinfo,
 										Relids currentrelids,

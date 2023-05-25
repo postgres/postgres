@@ -539,14 +539,13 @@ set includes the A/B join relid which is not in the input.  However,
 if we form B/C after A/B, then both forms of the clause are applicable
 so far as that test can tell.  We have to look more closely to notice
 that the "Pbc" clause form refers to relation B which is no longer
-directly accessible.  While this check is straightforward, it's not
-especially cheap (see clause_is_computable_at()).  To avoid doing it
-unnecessarily, we mark the variant versions of a redundant clause as
-either "has_clone" or "is_clone".  When considering a clone clause,
-we must check clause_is_computable_at() to disentangle which version
-to apply at the current join level.  (In debug builds, we also Assert
-that non-clone clauses are validly computable at the current level;
-but that seems too expensive for production usage.)
+directly accessible.  While such a check could be performed using the
+per-relation RelOptInfo.nulling_relids data, it would be annoyingly
+expensive to do over and over as we consider different join paths.
+To make this simple and reliable, we compute an "incompatible_relids"
+set for each variant version (clone) of a redundant clause.  A clone
+clause should not be applied if any of the outer-join relids listed in
+incompatible_relids has already been computed below the current join.
 
 
 Optimizer Functions

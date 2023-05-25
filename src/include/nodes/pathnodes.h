@@ -2430,6 +2430,15 @@ typedef struct LimitPath
  * conditions.  Possibly we should rename it to reflect that meaning?  But
  * see also the comments for RINFO_IS_PUSHED_DOWN, below.)
  *
+ * There is also an incompatible_relids field, which is a set of outer-join
+ * relids above which we cannot evaluate the clause (because they might null
+ * Vars it uses that should not be nulled yet).  In principle this could be
+ * filled in any RestrictInfo as the set of OJ relids that appear above the
+ * clause and null Vars that it uses.  In practice we only bother to populate
+ * it for "clone" clauses, as it's currently only needed to prevent multiple
+ * clones of the same clause from being accepted for evaluation at the same
+ * join level.
+ *
  * There is also an outer_relids field, which is NULL except for outer join
  * clauses; for those, it is the set of relids on the outer side of the
  * clause's outer join.  (These are rels that the clause cannot be applied to
@@ -2536,6 +2545,9 @@ typedef struct RestrictInfo
 
 	/* The set of relids required to evaluate the clause: */
 	Relids		required_relids;
+
+	/* Relids above which we cannot evaluate the clause (see comment above) */
+	Relids		incompatible_relids;
 
 	/* If an outer-join clause, the outer-side relations, else NULL: */
 	Relids		outer_relids;

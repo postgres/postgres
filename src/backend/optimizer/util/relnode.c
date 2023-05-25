@@ -1346,27 +1346,21 @@ subbuild_joinrel_restrictlist(PlannerInfo *root,
 				Assert(!RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids));
 				if (!bms_is_subset(rinfo->required_relids, both_input_relids))
 					continue;
-				if (!clause_is_computable_at(root, rinfo, both_input_relids))
+				if (bms_overlap(rinfo->incompatible_relids, both_input_relids))
 					continue;
 			}
 			else
 			{
 				/*
 				 * For non-clone clauses, we just Assert it's OK.  These might
-				 * be either join or filter clauses.
+				 * be either join or filter clauses; if it's a join clause
+				 * then it should not refer to the current join's output.
+				 * (There is little point in checking incompatible_relids,
+				 * because it'll be NULL.)
 				 */
-#ifdef USE_ASSERT_CHECKING
-				if (RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
-					Assert(clause_is_computable_at(root, rinfo,
-												   joinrel->relids));
-				else
-				{
-					Assert(bms_is_subset(rinfo->required_relids,
-										 both_input_relids));
-					Assert(clause_is_computable_at(root, rinfo,
-												   both_input_relids));
-				}
-#endif
+				Assert(RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids) ||
+					   bms_is_subset(rinfo->required_relids,
+									 both_input_relids));
 			}
 
 			/*

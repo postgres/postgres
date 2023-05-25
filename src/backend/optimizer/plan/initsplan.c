@@ -109,6 +109,7 @@ static void distribute_quals_to_rels(PlannerInfo *root, List *clauses,
 									 Relids qualscope,
 									 Relids ojscope,
 									 Relids outerjoin_nonnullable,
+									 Relids incompatible_relids,
 									 bool allow_equivalence,
 									 bool has_clone,
 									 bool is_clone,
@@ -120,6 +121,7 @@ static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									Relids qualscope,
 									Relids ojscope,
 									Relids outerjoin_nonnullable,
+									Relids incompatible_relids,
 									bool allow_equivalence,
 									bool has_clone,
 									bool is_clone,
@@ -1132,7 +1134,8 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem)
 								 jtitem,
 								 NULL,
 								 root->qual_security_level,
-								 jtitem->qualscope, NULL, NULL,
+								 jtitem->qualscope,
+								 NULL, NULL, NULL,
 								 true, false, false,
 								 NULL);
 
@@ -1143,7 +1146,8 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem)
 								 jtitem,
 								 NULL,
 								 root->qual_security_level,
-								 jtitem->qualscope, NULL, NULL,
+								 jtitem->qualscope,
+								 NULL, NULL, NULL,
 								 true, false, false,
 								 NULL);
 	}
@@ -1226,6 +1230,7 @@ deconstruct_distribute(PlannerInfo *root, JoinTreeItem *jtitem)
 								 root->qual_security_level,
 								 jtitem->qualscope,
 								 ojscope, jtitem->nonnullable_rels,
+								 NULL,	/* incompatible_relids */
 								 true,	/* allow_equivalence */
 								 false, false,	/* not clones */
 								 postponed_oj_qual_list);
@@ -1284,6 +1289,7 @@ process_security_barrier_quals(PlannerInfo *root,
 								 security_level,
 								 jtitem->qualscope,
 								 jtitem->qualscope,
+								 NULL,
 								 NULL,
 								 true,
 								 false, false,	/* not clones */
@@ -1887,6 +1893,7 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 	{
 		Relids		joins_above;
 		Relids		joins_below;
+		Relids		incompatible_joins;
 		Relids		joins_so_far;
 		List	   *quals;
 		int			save_last_rinfo_serial;
@@ -1919,6 +1926,15 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 			quals = (List *) remove_nulling_relids((Node *) quals,
 												   joins_below,
 												   NULL);
+
+		/*
+		 * We'll need to mark the lower versions of the quals as not safe to
+		 * apply above not-yet-processed joins of the stack.  This prevents
+		 * possibly applying a cloned qual at the wrong join level.
+		 */
+		incompatible_joins = bms_union(joins_below, joins_above);
+		incompatible_joins = bms_add_member(incompatible_joins,
+											sjinfo->ojrelid);
 
 		/*
 		 * Each time we produce RestrictInfo(s) from these quals, reset the
@@ -1979,13 +1995,19 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 			 * relation B will appear nulled by the syntactically-upper OJ
 			 * within the Pbc clause, but those of relation C will not.  (In
 			 * the notation used by optimizer/README, we're converting a qual
-			 * of the form Pbc to Pb*c.)
+			 * of the form Pbc to Pb*c.)  Of course, we must also remove that
+			 * bit from the incompatible_joins value, else we'll make a qual
+			 * that can't be placed anywhere.
 			 */
 			if (above_sjinfo)
+			{
 				quals = (List *)
 					add_nulling_relids((Node *) quals,
 									   sjinfo->syn_lefthand,
 									   bms_make_singleton(othersj->ojrelid));
+				incompatible_joins = bms_del_member(incompatible_joins,
+													othersj->ojrelid);
+			}
 
 			/* Compute qualscope and ojscope for this join level */
 			this_qualscope = bms_union(qualscope, joins_so_far);
@@ -2027,6 +2049,7 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 									 root->qual_security_level,
 									 this_qualscope,
 									 this_ojscope, nonnullable_rels,
+									 bms_copy(incompatible_joins),
 									 allow_equivalence,
 									 has_clone,
 									 is_clone,
@@ -2039,13 +2062,17 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 			 * Vars coming from the lower join's RHS.  (Again, we are
 			 * converting a qual of the form Pbc to Pb*c, but now we are
 			 * putting back bits that were there in the parser output and were
-			 * temporarily stripped above.)
+			 * temporarily stripped above.)  Update incompatible_joins too.
 			 */
 			if (below_sjinfo)
+			{
 				quals = (List *)
 					add_nulling_relids((Node *) quals,
 									   othersj->syn_righthand,
 									   bms_make_singleton(othersj->ojrelid));
+				incompatible_joins = bms_del_member(incompatible_joins,
+													othersj->ojrelid);
+			}
 
 			/* ... and track joins processed so far */
 			joins_so_far = bms_add_member(joins_so_far, othersj->ojrelid);
@@ -2060,6 +2087,7 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 								 root->qual_security_level,
 								 qualscope,
 								 ojscope, nonnullable_rels,
+								 NULL,	/* incompatible_relids */
 								 true,	/* allow_equivalence */
 								 false, false,	/* not clones */
 								 NULL); /* no more postponement */
@@ -2086,6 +2114,7 @@ distribute_quals_to_rels(PlannerInfo *root, List *clauses,
 						 Relids qualscope,
 						 Relids ojscope,
 						 Relids outerjoin_nonnullable,
+						 Relids incompatible_relids,
 						 bool allow_equivalence,
 						 bool has_clone,
 						 bool is_clone,
@@ -2104,6 +2133,7 @@ distribute_quals_to_rels(PlannerInfo *root, List *clauses,
 								qualscope,
 								ojscope,
 								outerjoin_nonnullable,
+								incompatible_relids,
 								allow_equivalence,
 								has_clone,
 								is_clone,
@@ -2135,6 +2165,9 @@ distribute_quals_to_rels(PlannerInfo *root, List *clauses,
  *		base+OJ rels appearing on the outer (nonnullable) side of the join
  *		(for FULL JOIN this includes both sides of the join, and must in fact
  *		equal qualscope)
+ * 'incompatible_relids': the set of outer-join relid(s) that must not be
+ *		computed below this qual.  We only bother to compute this for
+ *		"clone" quals, otherwise it can be left NULL.
  * 'allow_equivalence': true if it's okay to convert clause into an
  *		EquivalenceClass
  * 'has_clone': has_clone property to assign to the qual
@@ -2159,6 +2192,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable,
+						Relids incompatible_relids,
 						bool allow_equivalence,
 						bool has_clone,
 						bool is_clone,
@@ -2377,14 +2411,13 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	restrictinfo = make_restrictinfo(root,
 									 (Expr *) clause,
 									 is_pushed_down,
+									 has_clone,
+									 is_clone,
 									 pseudoconstant,
 									 security_level,
 									 relids,
+									 incompatible_relids,
 									 outerjoin_nonnullable);
-
-	/* Apply appropriate clone marking, too */
-	restrictinfo->has_clone = has_clone;
-	restrictinfo->is_clone = is_clone;
 
 	/*
 	 * If it's a join clause, add vars used in the clause to targetlists of
@@ -2750,9 +2783,12 @@ process_implied_equality(PlannerInfo *root,
 	restrictinfo = make_restrictinfo(root,
 									 (Expr *) clause,
 									 true,	/* is_pushed_down */
+									 false, /* !has_clone */
+									 false, /* !is_clone */
 									 pseudoconstant,
 									 security_level,
 									 relids,
+									 NULL,	/* incompatible_relids */
 									 NULL); /* outer_relids */
 
 	/*
@@ -2841,9 +2877,12 @@ build_implied_join_equality(PlannerInfo *root,
 	restrictinfo = make_restrictinfo(root,
 									 clause,
 									 true,	/* is_pushed_down */
+									 false, /* !has_clone */
+									 false, /* !is_clone */
 									 false, /* pseudoconstant */
 									 security_level,	/* security_level */
 									 qualscope, /* required_relids */
+									 NULL,	/* incompatible_relids */
 									 NULL); /* outer_relids */
 
 	/* Set mergejoinability/hashjoinability flags */

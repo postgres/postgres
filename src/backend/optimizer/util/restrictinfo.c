@@ -25,16 +25,22 @@ static RestrictInfo *make_restrictinfo_internal(PlannerInfo *root,
 												Expr *clause,
 												Expr *orclause,
 												bool is_pushed_down,
+												bool has_clone,
+												bool is_clone,
 												bool pseudoconstant,
 												Index security_level,
 												Relids required_relids,
+												Relids incompatible_relids,
 												Relids outer_relids);
 static Expr *make_sub_restrictinfos(PlannerInfo *root,
 									Expr *clause,
 									bool is_pushed_down,
+									bool has_clone,
+									bool is_clone,
 									bool pseudoconstant,
 									Index security_level,
 									Relids required_relids,
+									Relids incompatible_relids,
 									Relids outer_relids);
 
 
@@ -43,15 +49,11 @@ static Expr *make_sub_restrictinfos(PlannerInfo *root,
  *
  * Build a RestrictInfo node containing the given subexpression.
  *
- * The is_pushed_down and pseudoconstant flags for the
+ * The is_pushed_down, has_clone, is_clone, and pseudoconstant flags for the
  * RestrictInfo must be supplied by the caller, as well as the correct values
- * for security_level and outer_relids.
+ * for security_level, incompatible_relids, and outer_relids.
  * required_relids can be NULL, in which case it defaults to the actual clause
  * contents (i.e., clause_relids).
- *
- * Note that there aren't options to set the has_clone and is_clone flags:
- * we always initialize those to false.  There's just one place that wants
- * something different, so making all callers pass them seems inconvenient.
  *
  * We initialize fields that depend only on the given subexpression, leaving
  * others that depend on context (or may never be needed at all) to be filled
@@ -61,9 +63,12 @@ RestrictInfo *
 make_restrictinfo(PlannerInfo *root,
 				  Expr *clause,
 				  bool is_pushed_down,
+				  bool has_clone,
+				  bool is_clone,
 				  bool pseudoconstant,
 				  Index security_level,
 				  Relids required_relids,
+				  Relids incompatible_relids,
 				  Relids outer_relids)
 {
 	/*
@@ -74,9 +79,12 @@ make_restrictinfo(PlannerInfo *root,
 		return (RestrictInfo *) make_sub_restrictinfos(root,
 													   clause,
 													   is_pushed_down,
+													   has_clone,
+													   is_clone,
 													   pseudoconstant,
 													   security_level,
 													   required_relids,
+													   incompatible_relids,
 													   outer_relids);
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
@@ -86,9 +94,12 @@ make_restrictinfo(PlannerInfo *root,
 									  clause,
 									  NULL,
 									  is_pushed_down,
+									  has_clone,
+									  is_clone,
 									  pseudoconstant,
 									  security_level,
 									  required_relids,
+									  incompatible_relids,
 									  outer_relids);
 }
 
@@ -102,9 +113,12 @@ make_restrictinfo_internal(PlannerInfo *root,
 						   Expr *clause,
 						   Expr *orclause,
 						   bool is_pushed_down,
+						   bool has_clone,
+						   bool is_clone,
 						   bool pseudoconstant,
 						   Index security_level,
 						   Relids required_relids,
+						   Relids incompatible_relids,
 						   Relids outer_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
@@ -114,10 +128,11 @@ make_restrictinfo_internal(PlannerInfo *root,
 	restrictinfo->orclause = orclause;
 	restrictinfo->is_pushed_down = is_pushed_down;
 	restrictinfo->pseudoconstant = pseudoconstant;
-	restrictinfo->has_clone = false;	/* may get set by caller */
-	restrictinfo->is_clone = false; /* may get set by caller */
+	restrictinfo->has_clone = has_clone;
+	restrictinfo->is_clone = is_clone;
 	restrictinfo->can_join = false; /* may get set below */
 	restrictinfo->security_level = security_level;
+	restrictinfo->incompatible_relids = incompatible_relids;
 	restrictinfo->outer_relids = outer_relids;
 
 	/*
@@ -244,9 +259,9 @@ make_restrictinfo_internal(PlannerInfo *root,
  * implicit-AND lists at top level of RestrictInfo lists.  Only ORs and
  * simple clauses are valid RestrictInfos.
  *
- * The same is_pushed_down and pseudoconstant flag
+ * The same is_pushed_down, has_clone, is_clone, and pseudoconstant flag
  * values can be applied to all RestrictInfo nodes in the result.  Likewise
- * for security_level and outer_relids.
+ * for security_level, incompatible_relids, and outer_relids.
  *
  * The given required_relids are attached to our top-level output,
  * but any OR-clause constituents are allowed to default to just the
@@ -256,9 +271,12 @@ static Expr *
 make_sub_restrictinfos(PlannerInfo *root,
 					   Expr *clause,
 					   bool is_pushed_down,
+					   bool has_clone,
+					   bool is_clone,
 					   bool pseudoconstant,
 					   Index security_level,
 					   Relids required_relids,
+					   Relids incompatible_relids,
 					   Relids outer_relids)
 {
 	if (is_orclause(clause))
@@ -271,17 +289,23 @@ make_sub_restrictinfos(PlannerInfo *root,
 							 make_sub_restrictinfos(root,
 													lfirst(temp),
 													is_pushed_down,
+													has_clone,
+													is_clone,
 													pseudoconstant,
 													security_level,
 													NULL,
+													incompatible_relids,
 													outer_relids));
 		return (Expr *) make_restrictinfo_internal(root,
 												   clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
+												   has_clone,
+												   is_clone,
 												   pseudoconstant,
 												   security_level,
 												   required_relids,
+												   incompatible_relids,
 												   outer_relids);
 	}
 	else if (is_andclause(clause))
@@ -294,9 +318,12 @@ make_sub_restrictinfos(PlannerInfo *root,
 							  make_sub_restrictinfos(root,
 													 lfirst(temp),
 													 is_pushed_down,
+													 has_clone,
+													 is_clone,
 													 pseudoconstant,
 													 security_level,
 													 required_relids,
+													 incompatible_relids,
 													 outer_relids));
 		return make_andclause(andlist);
 	}
@@ -305,9 +332,12 @@ make_sub_restrictinfos(PlannerInfo *root,
 												   clause,
 												   NULL,
 												   is_pushed_down,
+												   has_clone,
+												   is_clone,
 												   pseudoconstant,
 												   security_level,
 												   required_relids,
+												   incompatible_relids,
 												   outer_relids);
 }
 
@@ -513,75 +543,10 @@ extract_actual_join_clauses(List *restrictinfo_list,
 		{
 			/* joinquals shouldn't have been marked pseudoconstant */
 			Assert(!rinfo->pseudoconstant);
-			Assert(!rinfo_is_constant_true(rinfo));
-			*joinquals = lappend(*joinquals, rinfo->clause);
+			if (!rinfo_is_constant_true(rinfo))
+				*joinquals = lappend(*joinquals, rinfo->clause);
 		}
 	}
-}
-
-/*
- * clause_is_computable_at
- *		Test whether a clause is computable at a given evaluation level.
- *
- * There are two conditions for whether an expression can actually be
- * evaluated at a given join level: the evaluation context must include
- * all the relids (both base and OJ) used by the expression, and we must
- * not have already evaluated any outer joins that null Vars/PHVs of the
- * expression and are not listed in their nullingrels.
- *
- * This function checks the second condition; we assume the caller already
- * saw to the first one.
- *
- * For speed reasons, we don't individually examine each Var/PHV of the
- * expression, but just look at the overall clause_relids (the union of the
- * varnos and varnullingrels).  This could give a misleading answer if the
- * Vars of a given varno don't all have the same varnullingrels; but that
- * really shouldn't happen within a single scalar expression or RestrictInfo
- * clause.  Despite that, this is still annoyingly expensive :-(
- */
-bool
-clause_is_computable_at(PlannerInfo *root,
-						RestrictInfo *rinfo,
-						Relids eval_relids)
-{
-	Relids		clause_relids;
-	ListCell   *lc;
-
-	/* Nothing to do if no outer joins have been performed yet. */
-	if (!bms_overlap(eval_relids, root->outer_join_rels))
-		return true;
-
-	/*
-	 * For an ordinary qual clause, we consider the actual clause_relids as
-	 * explained above.  However, it's possible for multiple members of a
-	 * group of clone quals to have the same clause_relids, so for clones use
-	 * the required_relids instead to ensure we select just one of them.
-	 */
-	if (rinfo->has_clone || rinfo->is_clone)
-		clause_relids = rinfo->required_relids;
-	else
-		clause_relids = rinfo->clause_relids;
-
-	foreach(lc, root->join_info_list)
-	{
-		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
-
-		/* Ignore outer joins that are not yet performed. */
-		if (!bms_is_member(sjinfo->ojrelid, eval_relids))
-			continue;
-
-		/* OK if clause lists it (we assume all Vars in it agree). */
-		if (bms_is_member(sjinfo->ojrelid, clause_relids))
-			continue;
-
-		/* Else, trouble if clause mentions any nullable Vars. */
-		if (bms_overlap(clause_relids, sjinfo->min_righthand) ||
-			(sjinfo->jointype == JOIN_FULL &&
-			 bms_overlap(clause_relids, sjinfo->min_lefthand)))
-			return false;		/* doesn't work */
-	}
-
-	return true;				/* OK */
 }
 
 /*

@@ -267,7 +267,10 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 								 orclause,
 								 true,
 								 false,
+								 false,
+								 false,
 								 join_or_rinfo->security_level,
+								 NULL,
 								 NULL,
 								 NULL);
 
