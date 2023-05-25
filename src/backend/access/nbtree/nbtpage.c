@@ -2415,24 +2415,22 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 
 			if (!leftsibvalid)
 			{
-				if (target != leafblkno)
-				{
-					/* we have only a pin on target, but pin+lock on leafbuf */
-					ReleaseBuffer(buf);
-					_bt_relbuf(rel, leafbuf);
-				}
-				else
-				{
-					/* we have only a pin on leafbuf */
-					ReleaseBuffer(leafbuf);
-				}
-
+				/*
+				 * This is known to fail in the field; sibling link corruption
+				 * is relatively common.  Press on with vacuuming rather than
+				 * just throwing an ERROR.
+				 */
 				ereport(LOG,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
 						 errmsg_internal("valid left sibling for deletion target could not be located: "
-										 "left sibling %u of target %u with leafblkno %u and scanblkno %u in index \"%s\"",
+										 "left sibling %u of target %u with leafblkno %u and scanblkno %u on level %u of index \"%s\"",
 										 leftsib, target, leafblkno, scanblkno,
-										 RelationGetRelationName(rel))));
+										 targetlevel, RelationGetRelationName(rel))));
+
+				/* Must release all pins and locks on failure exit */
+				ReleaseBuffer(buf);
+				if (target != leafblkno)
+					_bt_relbuf(rel, leafbuf);
 
 				return false;
 			}
@@ -2507,13 +2505,40 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	rbuf = _bt_getbuf(rel, rightsib, BT_WRITE);
 	page = BufferGetPage(rbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	/*
+	 * Validate target's right sibling page.  Its left link must point back to
+	 * the target page.
+	 */
 	if (opaque->btpo_prev != target)
-		ereport(ERROR,
+	{
+		/*
+		 * This is known to fail in the field; sibling link corruption is
+		 * relatively common.  Press on with vacuuming rather than just
+		 * throwing an ERROR (same approach used for left-sibling's-right-link
+		 * validation check a moment ago).
+		 */
+		ereport(LOG,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg_internal("right sibling's left-link doesn't match: "
-								 "block %u links to %u instead of expected %u in index \"%s\"",
-								 rightsib, opaque->btpo_prev, target,
-								 RelationGetRelationName(rel))));
+								 "right sibling %u of target %u with leafblkno %u "
+								 "and scanblkno %u spuriously links to non-target %u "
+								 "on level %u of index \"%s\"",
+								 rightsib, target, leafblkno,
+								 scanblkno, opaque->btpo_prev,
+								 targetlevel, RelationGetRelationName(rel))));
+
+		/* Must release all pins and locks on failure exit */
+		if (BufferIsValid(lbuf))
+			_bt_relbuf(rel, lbuf);
+		_bt_relbuf(rel, rbuf);
+		_bt_relbuf(rel, buf);
+		if (target != leafblkno)
+			_bt_relbuf(rel, leafbuf);
+
+		return false;
+	}
+
 	rightsib_is_rightmost = P_RIGHTMOST(opaque);
 	*rightsib_empty = (P_FIRSTDATAKEY(opaque) > PageGetMaxOffsetNumber(page));
 
@@ -2737,6 +2762,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 */
 	_bt_pendingfsm_add(vstate, target, safexid);
 
+	/* Success - hold on to lock on leafbuf (might also have been target) */
 	return true;
 }
 
