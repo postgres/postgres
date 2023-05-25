@@ -790,6 +790,8 @@ $node->pgbench(
 		'001_pgbench_pipeline_prep' => q{
 -- test startpipeline
 \startpipeline
+\endpipeline
+\startpipeline
 } . "select 1;\n" x 10 . q{
 \endpipeline
 }
