@@ -1017,7 +1017,7 @@ CREATE COLLATION german (provider = icu, locale = 'de-DE');
     </para>
     <para>
      New ICU collations can customize collation behavior extensively by
-     including collation attributes in the langugage tag. See <xref
+     including collation attributes in the language tag. See <xref
      linkend="icu-custom-collations"/> for details and examples.
     </para>
    </sect4>
