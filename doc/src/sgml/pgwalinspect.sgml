@@ -154,8 +154,9 @@ block_ref        |
       function will raise an error. For example:
 <screen>
 postgres=# SELECT * FROM pg_get_wal_stats('0/1E847D00', '0/1E84F500')
-             WHERE count > 0 LIMIT 1 AND
-                   "resource_manager/record_type" = 'Transaction';
+           WHERE count > 0 AND
+                 "resource_manager/record_type" = 'Transaction'
+           LIMIT 1;
 -[ RECORD 1 ]----------------+-------------------
 resource_manager/record_type | Transaction
 count                        | 2
