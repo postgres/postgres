@@ -2354,42 +2354,13 @@ icu_validate_locale(const char *loc_str)
 }
 
 /*
- * Determine default ICU locale by opening the default collator and reading
- * its locale.
- *
- * NB: The default collator (opened using NULL) is different from the collator
- * for the root locale (opened with "", "und", or "root"). The former depends
- * on the environment (useful at initdb time) and the latter does not.
+ * Determine the default ICU locale
  */
 static char *
 default_icu_locale(void)
 {
 #ifdef USE_ICU
-	UCollator  *collator;
-	UErrorCode	status;
-	const char *valid_locale;
-	char	   *default_locale;
-
-	status = U_ZERO_ERROR;
-	collator = ucol_open(NULL, &status);
-	if (U_FAILURE(status))
-		pg_fatal("could not open collator for default locale: %s",
-				 u_errorName(status));
-
-	status = U_ZERO_ERROR;
-	valid_locale = ucol_getLocaleByType(collator, ULOC_VALID_LOCALE,
-										&status);
-	if (U_FAILURE(status))
-	{
-		ucol_close(collator);
-		pg_fatal("could not determine default ICU locale");
-	}
-
-	default_locale = pg_strdup(valid_locale);
-
-	ucol_close(collator);
-
-	return default_locale;
+	return pg_strdup(uloc_getDefault());
 #else
 	pg_fatal("ICU is not supported in this build");
 #endif
