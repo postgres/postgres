@@ -386,11 +386,12 @@ initdb --locale-provider=icu --icu-locale=en
      linkend="icu-language-tag">Language Tag</link>.
 
 <programlisting>
-CREATE COLLATION mycollation1 (PROVIDER = icu, LOCALE = 'ja-JP');
-CREATE COLLATION mycollation2 (PROVIDER = icu, LOCALE = 'fr');
+CREATE COLLATION mycollation1 (provider = icu, locale = 'ja-JP');
+CREATE COLLATION mycollation2 (provider = icu, locale = 'fr');
 </programlisting>
     </para>
    </sect3>
+
    <sect3 id="icu-canonicalization">
     <title>Locale Canonicalization and Validation</title>
     <para>
@@ -399,14 +400,14 @@ CREATE COLLATION mycollation2 (PROVIDER = icu, LOCALE = 'fr');
      language tag if not already in that form. For instance,
 
 <screen>
-CREATE COLLATION mycollation3 (PROVIDER = icu, LOCALE = 'en-US-u-kn-true');
+CREATE COLLATION mycollation3 (provider = icu, locale = 'en-US-u-kn-true');
 NOTICE:  using standard form "en-US-u-kn" for locale "en-US-u-kn-true"
-CREATE COLLATION mycollation4 (PROVIDER = icu, LOCALE = 'de_DE.utf8');
+CREATE COLLATION mycollation4 (provider = icu, locale = 'de_DE.utf8');
 NOTICE:  using standard form "de-DE" for locale "de_DE.utf8"
 </screen>
 
-     If you see this notice, ensure that the <symbol>PROVIDER</symbol> and
-     <symbol>LOCALE</symbol> are the expected result. For consistent results
+     If you see this notice, ensure that the <symbol>provider</symbol> and
+     <symbol>locale</symbol> are the expected result. For consistent results
      when using the ICU provider, specify the canonical <link
      linkend="icu-language-tag">language tag</link> instead of relying on the
      transformation.
@@ -427,7 +428,7 @@ NOTICE:  using standard form "de-DE" for locale "de_DE.utf8"
      the following warning:
 
 <screen>
-CREATE COLLATION nonsense (PROVIDER = icu, LOCALE = 'nonsense');
+CREATE COLLATION nonsense (provider = icu, locale = 'nonsense');
 WARNING:  ICU locale "nonsense" has unknown language "nonsense"
 HINT:  To disable ICU locale validation, set parameter icu_validation_level to DISABLED.
 CREATE COLLATION
@@ -438,6 +439,7 @@ CREATE COLLATION
      still be created, but the behavior may not be what the user intended.
     </para>
    </sect3>
+
    <sect3 id="icu-language-tag">
     <title>Language Tag</title>
     <para>
@@ -484,7 +486,7 @@ CREATE COLLATION
      of digits as a single number:
 
 <screen>
-CREATE COLLATION mycollation5 (PROVIDER = icu, DETERMINISTIC = false, LOCALE = 'en-US-u-kn-ks-level2');
+CREATE COLLATION mycollation5 (provider = icu, deterministic = false, locale = 'en-US-u-kn-ks-level2');
 SELECT 'aB' = 'Ab' COLLATE mycollation5 as result;
  result
 --------
@@ -1109,16 +1111,16 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
 
 <programlisting>
 -- ignore differences in accents and case
-CREATE COLLATION ignore_accent_case (PROVIDER = icu, DETERMINISTIC = false, LOCALE = 'und-u-ks-level1');
+CREATE COLLATION ignore_accent_case (provider = icu, deterministic = false, locale = 'und-u-ks-level1');
 SELECT 'Å' = 'A' COLLATE ignore_accent_case; -- true
 SELECT 'z' = 'Z' COLLATE ignore_accent_case; -- true
 
 -- upper case letters sort before lower case.
-CREATE COLLATION upper_first (PROVIDER=icu, LOCALE = 'und-u-kf-upper');
+CREATE COLLATION upper_first (provider = icu, locale = 'und-u-kf-upper');
 SELECT 'B' &lt; 'b' COLLATE upper_first; -- true
 
 -- treat digits numerically and ignore punctuation
-CREATE COLLATION num_ignore_punct (PROVIDER = icu, DETERMINISTIC = false, LOCALE = 'und-u-ka-shifted-kn');
+CREATE COLLATION num_ignore_punct (provider = icu, deterministic = false, locale = 'und-u-ka-shifted-kn');
 SELECT 'id-45' &lt; 'id-123' COLLATE num_ignore_punct; -- true
 SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
 </programlisting>
@@ -1135,6 +1137,13 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
      "levels". Treatment of each level is controlled by the <link
      linkend="icu-collation-settings-table">collation settings</link>. Higher
      levels correspond to finer textual features.
+    </para>
+    <para>
+     <xref linkend="icu-collation-levels"/> shows which textual feature
+     differences are considered significant when determining equality at the
+     given level. The unicode character <literal>U+2063</literal> is an
+     invisible separator, and as seen in the table, is ignored for at all
+     levels of comparison less than <literal>identic</literal>.
     </para>
     <para>
      <table id="icu-collation-levels">
@@ -1215,20 +1224,13 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
       </tgroup>
      </table>
 
-     The above table shows which textual feature differences are
-     considered significant when determining equality at the given level. The
-     unicode character <literal>U+2063</literal> is an invisible separator,
-     and as seen in the table, is ignored for at all levels of comparison less
-     than <literal>identic</literal>.
-    </para>
-    <para>
      At every level, even with full normalization off, basic normalization is
      performed. For example, <literal>'á'</literal> may be composed of the
      code points <literal>U&amp;'\0061\0301'</literal> or the single code
      point <literal>U&amp;'\00E1'</literal>, and those sequences will be
      considered equal even at the <literal>identic</literal> level. To treat
      any difference in code point representation as distinct, use a collation
-     created with <symbol>DETERMINISTIC</symbol> set to
+     created with <symbol>deterministic</symbol> set to
      <literal>true</literal>.
     </para>
     <sect4 id="icu-collation-level-examples">
@@ -1236,9 +1238,9 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
      <para>
 
 <programlisting>
-CREATE COLLATION level3 (PROVIDER=icu, DETERMINISTIC=false, LOCALE='und-u-ka-shifted-ks-level3');
-CREATE COLLATION level4 (PROVIDER=icu, DETERMINISTIC=false, LOCALE='und-u-ka-shifted-ks-level4');
-CREATE COLLATION identic (PROVIDER=icu, DETERMINISTIC=false, LOCALE='und-u-ka-shifted-ks-identic');
+CREATE COLLATION level3 (provider = icu, deterministic = false, locale = 'und-u-ka-shifted-ks-level3');
+CREATE COLLATION level4 (provider = icu, deterministic = false, locale = 'und-u-ka-shifted-ks-level4');
+CREATE COLLATION identic (provider = icu, deterministic = false, locale = 'und-u-ka-shifted-ks-identic');
 
 -- invisible separator ignored at all levels except identic
 SELECT 'ab' = U&amp;'a\2063b' COLLATE level4; -- true
@@ -1252,8 +1254,14 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
      </para>
     </sect4>
    </sect3>
+
    <sect3 id="icu-collation-settings">
     <title>Collation Settings for an ICU Locale</title>
+    <para>
+     <xref linkend="icu-collation-settings-table"/> shows the available
+     collation settings, which can be used as part of a language tag to
+     customize a collation.
+    </para>
     <para>
      <table id="icu-collation-settings-table">
       <title>ICU Collation Settings</title>
@@ -1272,14 +1280,11 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
        </thead>
        <tbody>
         <row>
-         <entry><literal>ks</literal></entry>
-         <entry><literal>level1</literal>, <literal>level2</literal>, <literal>level3</literal>, <literal>level4</literal>, <literal>identic</literal></entry>
-         <entry><literal>level3</literal></entry>
+         <entry><literal>co</literal></entry>
+         <entry><literal>emoji</literal>, <literal>phonebk</literal>, <literal>standard</literal>, <replaceable>...</replaceable></entry>
+         <entry><literal>standard</literal></entry>
          <entry>
-          Sensitivity (or "strength") when determining equality, with
-          <literal>level1</literal> the least sensitive to differences and
-          <literal>identic</literal> the most sensitive to differences. See
-          <xref linkend="icu-collation-levels"/> for details.
+          Collation type. See <xref linkend="icu-external-references"/> for additional options and details.
          </entry>
         </row>
         <row>
@@ -1302,29 +1307,6 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           Backwards comparison for the level 2 differences. For example,
           locale <literal>und-u-kb</literal> sorts <literal>'àe'</literal>
           before <literal>'aé'</literal>.
-         </entry>
-        </row>
-        <row>
-         <entry><literal>kk</literal></entry>
-         <entry><literal>true</literal>, <literal>false</literal></entry>
-         <entry><literal>false</literal></entry>
-         <entry>
-          <para>
-           Enable full normalization; may affect performance. Basic
-           normalization is performed even when set to
-           <literal>false</literal>. Locales for languages that require full
-           normalization typically enable it by default.
-          </para>
-          <para>
-           Full normalization is important in some cases, such as when
-           multiple accents are applied to a single character. For example,
-           the code point sequences <literal>U&amp;'\0065\0323\0302'</literal>
-           and <literal>U&amp;'\0065\0302\0323'</literal> represent
-           an <literal>e</literal> with circumflex and dot-below accents
-           applied in different orders. With full normalization
-           on, these code point sequences are treated as equal; otherwise they
-           are unequal.
-          </para>
          </entry>
         </row>
         <row>
@@ -1369,6 +1351,29 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
          </entry>
         </row>
         <row>
+         <entry><literal>kk</literal></entry>
+         <entry><literal>true</literal>, <literal>false</literal></entry>
+         <entry><literal>false</literal></entry>
+         <entry>
+          <para>
+           Enable full normalization; may affect performance. Basic
+           normalization is performed even when set to
+           <literal>false</literal>. Locales for languages that require full
+           normalization typically enable it by default.
+          </para>
+          <para>
+           Full normalization is important in some cases, such as when
+           multiple accents are applied to a single character. For example,
+           the code point sequences <literal>U&amp;'\0065\0323\0302'</literal>
+           and <literal>U&amp;'\0065\0302\0323'</literal> represent
+           an <literal>e</literal> with circumflex and dot-below accents
+           applied in different orders. With full normalization
+           on, these code point sequences are treated as equal; otherwise they
+           are unequal.
+          </para>
+         </entry>
+        </row>
+        <row>
          <entry><literal>kr</literal></entry>
          <entry>
           <literal>space</literal>, <literal>punct</literal>,
@@ -1394,6 +1399,17 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
          </entry>
         </row>
         <row>
+         <entry><literal>ks</literal></entry>
+         <entry><literal>level1</literal>, <literal>level2</literal>, <literal>level3</literal>, <literal>level4</literal>, <literal>identic</literal></entry>
+         <entry><literal>level3</literal></entry>
+         <entry>
+          Sensitivity (or "strength") when determining equality, with
+          <literal>level1</literal> the least sensitive to differences and
+          <literal>identic</literal> the most sensitive to differences. See
+          <xref linkend="icu-collation-levels"/> for details.
+         </entry>
+        </row>
+        <row>
          <entry><literal>kv</literal></entry>
          <entry>
           <literal>space</literal>, <literal>punct</literal>,
@@ -1410,14 +1426,6 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           to <literal>level3</literal> or lower to take effect.
          </entry>
         </row>
-        <row>
-         <entry><literal>co</literal></entry>
-         <entry><literal>emoji</literal>, <literal>phonebk</literal>, <literal>standard</literal>, <replaceable>...</replaceable></entry>
-         <entry><literal>standard</literal></entry>
-         <entry>
-          Collation type. See <xref linkend="icu-external-references"/> for additional options and details.
-         </entry>
-        </row>
        </tbody>
       </tgroup>
      </table>
@@ -1428,7 +1436,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
     <note>
      <para>
       For many collation settings, you must create the collation with
-      <option>DETERMINISTIC</option> set to <literal>false</literal> for the
+      <option>deterministic</option> set to <literal>false</literal> for the
       setting to have the desired effect (see <xref
       linkend="collation-nondeterministic"/>). Additionally, some settings
       only take effect when the key <literal>ka</literal> is set to
@@ -1437,6 +1445,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
      </para>
     </note>
    </sect3>
+
    <sect3 id="icu-locale-examples">
     <title>Examples</title>
     <para>
@@ -1487,6 +1496,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
      </variablelist>
     </para>
    </sect3>
+
    <sect3 id="icu-external-references">
     <title>External References for ICU</title>
     <para>
