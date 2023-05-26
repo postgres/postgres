@@ -5320,6 +5320,22 @@ select a1.id from
  Seq Scan on a a1
 (1 row)
 
+explain (costs off)
+select 1 from a t1
+    left join a t2 on true
+   inner join a t3 on true
+    left join a t4 on t2.id = t4.id and t2.id = t3.id;
+             QUERY PLAN             
+------------------------------------
+ Nested Loop
+   ->  Nested Loop Left Join
+         ->  Seq Scan on a t1
+         ->  Materialize
+               ->  Seq Scan on a t2
+   ->  Materialize
+         ->  Seq Scan on a t3
+(7 rows)
+
 -- another example (bug #17781)
 explain (costs off)
 select ss1.f1
