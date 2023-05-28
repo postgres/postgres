@@ -1294,7 +1294,7 @@ Determine the ICU default locale from the environment (Jeff Davis)
 </para>
 
 <para>
-However, ICU doesn't support the C local so UTF-8 is used in such cases.  Previously the default was always UTF-8.
+However, ICU doesn't support the C locale so UTF-8 is used in such cases.  Previously the default was always UTF-8.
 </para>
 </listitem>
 
@@ -1335,8 +1335,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Add Windows process the system collations (Jose Santamaria Flecha)
-ADD THIS?
+Allow Windows to import system locales automatically (Juan José Santamaría Flecha)
+</para>
+
+<para>
+Previously, only ICU locales could be imported on Windows.
 </para>
 </listitem>
 
