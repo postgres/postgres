@@ -1361,13 +1361,11 @@ Author: Andres Freund <andres@anarazel.de>
 2023-04-07 [be87200ef] Support invalidating replication slots due to horizon an
 Author: Andres Freund <andres@anarazel.de>
 2023-04-08 [26669757b] Handle logical slot conflicts on standby
-Author: Andres Freund <andres@anarazel.de>
-2023-04-08 [0fdab27ad] Allow logical decoding on standbys
 -->
 
 <listitem>
 <para>
-Allow logical decoding on standbys (Bertrand Drouvot, Andres Freund, Amit Khandekar, Bertrand Drouvot)
+Allow logical decoding on standbys (Bertrand Drouvot, Andres Freund, Amit Khandekar)
 </para>
 </listitem>
 
