@@ -322,7 +322,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 
 <listitem>
 <para>
-Allow outer and full joins to be performed in parallel (Melanie Plageman, Thomas Munro)
+Allow parallelization of FULL and internal right OUTER hash joins (Melanie Plageman, Thomas Munro)
 </para>
 </listitem>
 
