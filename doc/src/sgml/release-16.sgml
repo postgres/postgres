@@ -2800,6 +2800,17 @@ Adjust pg_attribute columns for efficiency (Peter Eisentraut)
 </para>
 </listitem>
 
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2022-08-29 [c6e0fe1f2] Improve performance of and reduce overheads of memory ma
+-->
+
+<listitem>
+<para>
+Reduce overhead of memory allocations (Andres Freund, David Rowley)
+</para>
+</listitem>
+
     </itemizedlist>
 
    </sect3>
