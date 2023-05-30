@@ -2838,12 +2838,12 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Allow auto_explain to log query parameters used in executing prepared statements (Dagfinn Ilmari Mannsåker)
+Allow auto_explain to log values passed to parameterized statements (Dagfinn Ilmari Mannsåker)
 </para>
 
 <para>
-This is controlled by auto_explain.log_parameter_max_length, and by default query parameters will be logged with no length restriction.
-SHOULD THIS BE MORE CLEARLY IDENTIFIED AS CONTROLLING THE EXECUTION OF PREPARED STATEMENTS?
+This affects queries using server-side PRAPARE/EXECUTE and client-side parse/bind.  Logging is controlled by auto_explain.log_parameter_max_length;  by default query parameters will
+be logged with no length restriction.
 </para>
 </listitem>
 
