@@ -1459,7 +1459,7 @@ Allow logical replication subscribers to process only changes that have no origi
 </para>
 
 <para>
-This can be used to avoid replication loops.
+This can be used to avoid replication loops.  This is controlled by the new CREATE SUBSCRIPTION "origin" option.
 </para>
 </listitem>
 
