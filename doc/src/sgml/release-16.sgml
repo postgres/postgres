@@ -21,7 +21,7 @@
 
     <listitem>
      <para>
-      Allow parallel execution of queries with OUTER and FULL joins
+      Allow parallelization of FULL and internal right OUTER hash joins
      </para>
     </listitem>
 
@@ -494,6 +494,17 @@ Allow xid/subxid searches and ASCII string detection to use vector operations (N
 ASCII detection is particularly useful for COPY FROM.  Vector operations are also used for some C array searches.
 </para>
 
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2022-08-29 [c6e0fe1f2] Improve performance of and reduce overheads of memory ma
+-->
+
+<listitem>
+<para>
+Reduce overhead of memory allocations (Andres Freund, David Rowley)
+</para>
 </listitem>
 
      </itemizedlist>
@@ -2797,17 +2808,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 <listitem>
 <para>
 Adjust pg_attribute columns for efficiency (Peter Eisentraut)
-</para>
-</listitem>
-
-<!--
-Author: David Rowley <drowley@postgresql.org>
-2022-08-29 [c6e0fe1f2] Improve performance of and reduce overheads of memory ma
--->
-
-<listitem>
-<para>
-Reduce overhead of memory allocations (Andres Freund, David Rowley)
 </para>
 </listitem>
 
