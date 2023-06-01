@@ -2164,6 +2164,21 @@ Add "FOREIGN" designation to psql \d+ for foreign table children and partitions 
 </listitem>
 
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-03-02 [3dfae91f7] Show "internal name" not "source code" in psql's \df+ co
+-->
+
+<listitem>
+<para>
+Prevent \df+ from showing function source code (Isaac Morland)
+</para>
+
+<para>
+Function bodies are more easily viewed with \ev and \ef.
+</para>
+</listitem>
+
+<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2022-11-15 [5b66de343] psql: Add command to use extended query protocol
 -->
