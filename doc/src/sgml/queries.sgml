@@ -858,7 +858,7 @@ ORDER BY p;
     </para>
 
     <para>
-     A <literal>LATERAL</literal> item can appear at top level in the
+     A <literal>LATERAL</literal> item can appear at the top level in the
      <literal>FROM</literal> list, or within a <literal>JOIN</literal> tree.  In the latter
      case it can also refer to any items that are on the left-hand side of a
      <literal>JOIN</literal> that it is on the right-hand side of.
