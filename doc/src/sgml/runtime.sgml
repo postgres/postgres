@@ -2015,6 +2015,19 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </para>
 
   <para>
+   To prevent server spoofing from occurring when using
+   <link linkend="auth-password">scram-sha-256</link> password authentication
+   over a network, you should ensure that you connect to the server using SSL
+   and with one of the anti-spoofing methods described in the previous
+   paragraph. Additionally, the SCRAM implementation in
+   <application>libpq</application> cannot protect the entire authentication
+   exchange, but using the <literal>channel_binding=require</literal> connection
+   parameter provides a mitigation against server spoofing. An attacker that
+   uses a rogue server to intercept a SCRAM exchange can use offline analysis to
+   potentially determine the hashed password from the client.
+  </para>
+
+  <para>
     To prevent spoofing with GSSAPI, the server must be configured to accept
     only <literal>hostgssenc</literal> connections
     (<xref linkend="auth-pg-hba-conf"/>) and use <literal>gss</literal>
