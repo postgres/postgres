@@ -1233,9 +1233,9 @@ repairDependencyLoop(DumpableObject **loop,
 								"there are circular foreign-key constraints among these tables:",
 								nLoop));
 		for (i = 0; i < nLoop; i++)
-			pg_log_info("  %s", loop[i]->name);
-		pg_log_info("You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.");
-		pg_log_info("Consider using a full dump instead of a --data-only dump to avoid this problem.");
+			pg_log_warning_detail("%s", loop[i]->name);
+		pg_log_warning_hint("You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.");
+		pg_log_warning_hint("Consider using a full dump instead of a --data-only dump to avoid this problem.");
 		if (nLoop > 1)
 			removeObjectDependency(loop[0], loop[1]->dumpId);
 		else					/* must be a self-dependency */
@@ -1253,7 +1253,7 @@ repairDependencyLoop(DumpableObject **loop,
 		char		buf[1024];
 
 		describeDumpableObject(loop[i], buf, sizeof(buf));
-		pg_log_info("  %s", buf);
+		pg_log_warning_detail("%s", buf);
 	}
 
 	if (nLoop > 1)
