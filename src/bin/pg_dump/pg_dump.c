@@ -6073,6 +6073,7 @@ getAggregates(Archive *fout, int *numAggs)
 						  agginfo[i].aggfn.argtypes,
 						  agginfo[i].aggfn.nargs);
 		}
+		agginfo[i].aggfn.postponed_def = false; /* might get set during sort */
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(agginfo[i].aggfn.dobj), fout);
@@ -6303,6 +6304,7 @@ getFuncs(Archive *fout, int *numFuncs)
 			parseOidArray(PQgetvalue(res, i, i_proargtypes),
 						  finfo[i].argtypes, finfo[i].nargs);
 		}
+		finfo[i].postponed_def = false; /* might get set during sort */
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(finfo[i].dobj), fout);
@@ -12691,7 +12693,8 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 								  .namespace = finfo->dobj.namespace->dobj.name,
 								  .owner = finfo->rolname,
 								  .description = keyword,
-								  .section = SECTION_PRE_DATA,
+								  .section = finfo->postponed_def ?
+								  SECTION_POST_DATA : SECTION_PRE_DATA,
 								  .createStmt = q->data,
 								  .dropStmt = delqry->data));
 

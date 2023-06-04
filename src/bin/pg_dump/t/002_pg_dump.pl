@@ -1957,6 +1957,27 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'Check ordering of a function that depends on a primary key' => {
+		create_order => 41,
+		create_sql => '
+			CREATE TABLE dump_test.ordering_table (id int primary key, data int);
+			CREATE FUNCTION dump_test.ordering_func ()
+			RETURNS SETOF dump_test.ordering_table
+			LANGUAGE sql BEGIN ATOMIC
+			SELECT * FROM dump_test.ordering_table GROUP BY id; END;',
+		regexp => qr/^
+			\QALTER TABLE ONLY dump_test.ordering_table\E
+			\n\s+\QADD CONSTRAINT ordering_table_pkey PRIMARY KEY (id);\E
+			.*^
+			\QCREATE FUNCTION dump_test.ordering_func\E/xms,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
 	'CREATE PROCEDURE dump_test.ptest1' => {
 		create_order => 41,
 		create_sql   => 'CREATE PROCEDURE dump_test.ptest1(a int)
@@ -2167,6 +2188,25 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike =>
 		  { exclude_dump_test_schema => 1, no_toast_compression => 1, },
+	},
+
+	'Check ordering of a matview that depends on a primary key' => {
+		create_order => 42,
+		create_sql => '
+			CREATE MATERIALIZED VIEW dump_test.ordering_view AS
+				SELECT * FROM dump_test.ordering_table GROUP BY id;',
+		regexp => qr/^
+			\QALTER TABLE ONLY dump_test.ordering_table\E
+			\n\s+\QADD CONSTRAINT ordering_table_pkey PRIMARY KEY (id);\E
+			.*^
+			\QCREATE MATERIALIZED VIEW dump_test.ordering_view AS\E
+			\n\s+\QSELECT ordering_table.id,\E/xms,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
 	},
 
 	'CREATE POLICY p1 ON test_table' => {
