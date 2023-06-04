@@ -5072,8 +5072,9 @@ DROP TABLE products CASCADE;
   </para>
 
   <para>
-   For user-defined functions, <productname>PostgreSQL</productname> tracks
-   dependencies associated with a function's externally-visible properties,
+   For a user-defined function or procedure whose body is defined as a string
+   literal, <productname>PostgreSQL</productname> tracks
+   dependencies associated with the function's externally-visible properties,
    such as its argument and result types, but <emphasis>not</emphasis> dependencies
    that could only be known by examining the function body.  As an example,
    consider this situation:
@@ -5100,6 +5101,23 @@ CREATE FUNCTION get_color_note (rainbow) RETURNS text AS
    there are also benefits.  The function is still valid in some sense if the
    table is missing, though executing it would cause an error; creating a new
    table of the same name would allow the function to work again.
+  </para>
+
+  <para>
+   On the other hand, for a SQL-language function or procedure whose body
+   is written in SQL-standard style, the body is parsed at function
+   definition time and all dependencies recognized by the parser are
+   stored.  Thus, if we write the function above as
+
+<programlisting>
+CREATE FUNCTION get_color_note (rainbow) RETURNS text
+BEGIN ATOMIC
+  SELECT note FROM my_colors WHERE color = $1;
+END;
+</programlisting>
+
+   then the function's dependency on the <structname>my_colors</structname>
+   table will be known and enforced by <command>DROP</command>.
   </para>
  </sect1>
 
