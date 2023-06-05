@@ -46,7 +46,6 @@
  * A "minimal" tuple is handled similarly to a palloc'd regular tuple.
  * At present, minimal tuples never are stored in buffers, so there is no
  * parallel to case 1.  Note that a minimal tuple has no "system columns".
- * (Actually, it could have an OID, but we have no need to access the OID.)
  *
  * A "virtual" tuple is an optimization used to minimize physical data copying
  * in a nest of plan nodes.  Until materialized pass-by-reference Datums in
