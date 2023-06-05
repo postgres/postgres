@@ -4863,7 +4863,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_seq_scan</structfield> <type>timestamptz</type>
+       <structfield>last_seq_scan</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
        The time of the last sequential scan on this table, based on the
@@ -4891,7 +4891,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_idx_scan</structfield> <type>timestamptz</type>
+       <structfield>last_idx_scan</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
        The time of the last index scan on this table, based on the
@@ -5170,7 +5170,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_idx_scan</structfield> <type>timestamptz</type>
+       <structfield>last_idx_scan</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
        The time of the last scan on this index, based on the
