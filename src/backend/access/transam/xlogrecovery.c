@@ -2621,7 +2621,7 @@ recoveryStopsAfter(XLogReaderState *record)
 	uint8		info;
 	uint8		xact_info;
 	uint8		rmid;
-	TimestampTz recordXtime;
+	TimestampTz recordXtime = 0;
 
 	/*
 	 * Ignore recovery target settings when not in archive recovery (meaning
