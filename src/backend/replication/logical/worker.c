@@ -3562,6 +3562,12 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 					int			c;
 					StringInfoData s;
 
+					if (ConfigReloadPending)
+					{
+						ConfigReloadPending = false;
+						ProcessConfigFile(PGC_SIGHUP);
+					}
+
 					/* Reset timeout. */
 					last_recv_timestamp = GetCurrentTimestamp();
 					ping_sent = false;
