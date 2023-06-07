@@ -950,18 +950,14 @@ include_dir 'conf.d'
         the operating system should send a TCP keepalive message to the client.
         If this value is specified without units, it is taken as seconds.
         A value of 0 (the default) selects the operating system's default.
+        On Windows, setting a value of 0 will set this parameter to 2 hours,
+        since Windows does not provide a way to read the system default value.
         This parameter is supported only on systems that support
         <symbol>TCP_KEEPIDLE</symbol> or an equivalent socket option, and on
         Windows; on other systems, it must be zero.
         In sessions connected via a Unix-domain socket, this parameter is
         ignored and always reads as zero.
        </para>
-       <note>
-        <para>
-         On Windows, setting a value of 0 will set this parameter to 2 hours,
-         since Windows does not provide a way to read the system default value.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -977,18 +973,14 @@ include_dir 'conf.d'
         that has not been acknowledged by the client should be retransmitted.
         If this value is specified without units, it is taken as seconds.
         A value of 0 (the default) selects the operating system's default.
+        On Windows, setting a value of 0 will set this parameter to 1 second,
+        since Windows does not provide a way to read the system default value.
         This parameter is supported only on systems that support
         <symbol>TCP_KEEPINTVL</symbol> or an equivalent socket option, and on
         Windows; on other systems, it must be zero.
         In sessions connected via a Unix-domain socket, this parameter is
         ignored and always reads as zero.
        </para>
-       <note>
-        <para>
-         On Windows, setting a value of 0 will set this parameter to 1 second,
-         since Windows does not provide a way to read the system default value.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -1004,16 +996,11 @@ include_dir 'conf.d'
         the server's connection to the client is considered dead.
         A value of 0 (the default) selects the operating system's default.
         This parameter is supported only on systems that support
-        <symbol>TCP_KEEPCNT</symbol> or an equivalent socket option;
+        <symbol>TCP_KEEPCNT</symbol> or an equivalent socket option (which does not include Windows);
         on other systems, it must be zero.
         In sessions connected via a Unix-domain socket, this parameter is
         ignored and always reads as zero.
        </para>
-       <note>
-        <para>
-         This parameter is not supported on Windows, and must be zero.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -1030,15 +1017,10 @@ include_dir 'conf.d'
         If this value is specified without units, it is taken as milliseconds.
         A value of 0 (the default) selects the operating system's default.
         This parameter is supported only on systems that support
-        <symbol>TCP_USER_TIMEOUT</symbol>; on other systems, it must be zero.
+        <symbol>TCP_USER_TIMEOUT</symbol> (which does not include Windows); on other systems, it must be zero.
         In sessions connected via a Unix-domain socket, this parameter is
         ignored and always reads as zero.
        </para>
-       <note>
-        <para>
-         This parameter is not supported on Windows, and must be zero.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
