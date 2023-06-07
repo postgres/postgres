@@ -81,7 +81,7 @@ pg_leftmost_one_pos64(uint64 word)
 #error must have a working 64-bit integer datatype
 #endif							/* HAVE_LONG_INT_64 */
 
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_ARM64))
 	unsigned long result;
 	bool		non_zero;
 
@@ -152,7 +152,7 @@ pg_rightmost_one_pos64(uint64 word)
 #error must have a working 64-bit integer datatype
 #endif							/* HAVE_LONG_INT_64 */
 
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_ARM64))
 	unsigned long result;
 	bool		non_zero;
 
