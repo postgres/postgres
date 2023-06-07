@@ -359,7 +359,7 @@ CREATE SCHEMA test_schema;
 do $$
 BEGIN
   EXECUTE 'CREATE COLLATION test0 (locale = ' ||
-          quote_literal(current_setting('lc_collate')) || ');';
+          quote_literal((SELECT datcollate FROM pg_database WHERE datname = current_database())) || ');';
 END
 $$;
 CREATE COLLATION test0 FROM "C"; -- fail, duplicate name
@@ -368,9 +368,9 @@ CREATE COLLATION IF NOT EXISTS test0 (locale = 'foo'); -- ok, skipped
 do $$
 BEGIN
   EXECUTE 'CREATE COLLATION test1 (lc_collate = ' ||
-          quote_literal(current_setting('lc_collate')) ||
+          quote_literal((SELECT datcollate FROM pg_database WHERE datname = current_database())) ||
           ', lc_ctype = ' ||
-          quote_literal(current_setting('lc_ctype')) || ');';
+          quote_literal((SELECT datctype FROM pg_database WHERE datname = current_database())) || ');';
 END
 $$;
 CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail, need lc_ctype

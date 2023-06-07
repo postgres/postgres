@@ -483,10 +483,6 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 							 quote_identifier(name))));
 	}
 
-	/* Make the locale settings visible as GUC variables, too */
-	SetConfigOption("lc_collate", collate, PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
-	SetConfigOption("lc_ctype", ctype, PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
-
 	ReleaseSysCache(tup);
 }
 

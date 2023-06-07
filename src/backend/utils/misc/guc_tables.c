@@ -563,8 +563,6 @@ static char *syslog_ident_str;
 static double phony_random_seed;
 static char *client_encoding_string;
 static char *datestyle_string;
-static char *locale_collate;
-static char *locale_ctype;
 static char *server_encoding_string;
 static char *server_version_string;
 static int	server_version_num;
@@ -4047,30 +4045,6 @@ struct config_string ConfigureNamesString[] =
 		},
 		&bonjour_name,
 		"",
-		NULL, NULL, NULL
-	},
-
-	/* See main.c about why defaults for LC_foo are not all alike */
-
-	{
-		{"lc_collate", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Shows the collation order locale."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
-		},
-		&locale_collate,
-		"C",
-		NULL, NULL, NULL
-	},
-
-	{
-		{"lc_ctype", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Shows the character classification and case conversion locale."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
-		},
-		&locale_ctype,
-		"C",
 		NULL, NULL, NULL
 	},
 

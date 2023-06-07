@@ -8,8 +8,8 @@
  * to the "tr-TR-x-icu" collation where it will succeed.
  */
 SELECT getdatabaseencoding() <> 'UTF8' OR
-       current_setting('lc_ctype') = 'C' OR
-       (SELECT datlocprovider='i' FROM pg_database
+       (SELECT (datlocprovider = 'c' AND datctype = 'C') OR datlocprovider = 'i'
+        FROM pg_database
         WHERE datname=current_database())
        AS skip_test \gset
 \if :skip_test

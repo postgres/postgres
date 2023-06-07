@@ -10788,38 +10788,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-lc-collate" xreflabel="lc_collate">
-      <term><varname>lc_collate</varname> (<type>string</type>)
-      <indexterm>
-       <primary><varname>lc_collate</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Reports the locale in which sorting of textual data is done.
-        See <xref linkend="locale"/> for more information.
-        This value is determined when a database is created.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-lc-ctype" xreflabel="lc_ctype">
-      <term><varname>lc_ctype</varname> (<type>string</type>)
-      <indexterm>
-       <primary><varname>lc_ctype</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Reports the locale that determines character classifications.
-        See <xref linkend="locale"/> for more information.
-        This value is determined when a database is created.
-        Ordinarily this will be the same as <varname>lc_collate</varname>,
-        but for special applications it might be set differently.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-max-function-args" xreflabel="max_function_args">
       <term><varname>max_function_args</varname> (<type>integer</type>)
       <indexterm>
