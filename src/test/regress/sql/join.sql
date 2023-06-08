@@ -2153,6 +2153,40 @@ where ss.stringu2 !~* ss.case1;
 
 rollback;
 
+-- test cases where we can remove a join, but not a PHV computed at it
+begin;
+
+create temp table t (a int unique, b int);
+insert into t values (1,1), (2,2);
+
+explain (costs off)
+select 1
+from t t1
+  left join (select t2.a, 1 as c
+             from t t2 left join t t3 on t2.a = t3.a) s
+  on true
+  left join t t4 on true
+where s.a < s.c;
+
+explain (costs off)
+select t1.a, s.*
+from t t1
+  left join lateral (select t2.a, coalesce(t1.a, 1) as c
+                     from t t2 left join t t3 on t2.a = t3.a) s
+  on true
+  left join t t4 on true
+where s.a < s.c;
+
+select t1.a, s.*
+from t t1
+  left join lateral (select t2.a, coalesce(t1.a, 1) as c
+                     from t t2 left join t t3 on t2.a = t3.a) s
+  on true
+  left join t t4 on true
+where s.a < s.c;
+
+rollback;
+
 -- test case to expose miscomputation of required relid set for a PHV
 explain (verbose, costs off)
 select i8.*, ss.v, t.unique2

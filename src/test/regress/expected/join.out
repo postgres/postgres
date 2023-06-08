@@ -5843,6 +5843,63 @@ where ss.stringu2 !~* ss.case1;
 (1 row)
 
 rollback;
+-- test cases where we can remove a join, but not a PHV computed at it
+begin;
+create temp table t (a int unique, b int);
+insert into t values (1,1), (2,2);
+explain (costs off)
+select 1
+from t t1
+  left join (select t2.a, 1 as c
+             from t t2 left join t t3 on t2.a = t3.a) s
+  on true
+  left join t t4 on true
+where s.a < s.c;
+             QUERY PLAN              
+-------------------------------------
+ Nested Loop Left Join
+   ->  Nested Loop
+         ->  Seq Scan on t t1
+         ->  Materialize
+               ->  Seq Scan on t t2
+                     Filter: (a < 1)
+   ->  Materialize
+         ->  Seq Scan on t t4
+(8 rows)
+
+explain (costs off)
+select t1.a, s.*
+from t t1
+  left join lateral (select t2.a, coalesce(t1.a, 1) as c
+                     from t t2 left join t t3 on t2.a = t3.a) s
+  on true
+  left join t t4 on true
+where s.a < s.c;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Nested Loop Left Join
+   ->  Nested Loop
+         ->  Seq Scan on t t1
+         ->  Seq Scan on t t2
+               Filter: (a < COALESCE(t1.a, 1))
+   ->  Materialize
+         ->  Seq Scan on t t4
+(7 rows)
+
+select t1.a, s.*
+from t t1
+  left join lateral (select t2.a, coalesce(t1.a, 1) as c
+                     from t t2 left join t t3 on t2.a = t3.a) s
+  on true
+  left join t t4 on true
+where s.a < s.c;
+ a | a | c 
+---+---+---
+ 2 | 1 | 2
+ 2 | 1 | 2
+(2 rows)
+
+rollback;
 -- test case to expose miscomputation of required relid set for a PHV
 explain (verbose, costs off)
 select i8.*, ss.v, t.unique2
