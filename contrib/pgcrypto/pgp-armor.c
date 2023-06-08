@@ -165,7 +165,7 @@ pg_base64_enc_len(unsigned srclen)
 	/*
 	 * 3 bytes will be converted to 4, linefeed after 76 chars
 	 */
-	return (srclen + 2) * 4 / 3 + srclen / (76 * 3 / 4);
+	return (srclen + 2) / 3 * 4 + srclen / (76 * 3 / 4);
 }
 
 static unsigned

@@ -224,7 +224,7 @@ int
 pg_b64_enc_len(int srclen)
 {
 	/* 3 bytes will be converted to 4 */
-	return (srclen + 2) * 4 / 3;
+	return (srclen + 2) / 3 * 4;
 }
 
 /*

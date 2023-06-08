@@ -385,7 +385,7 @@ static uint64
 pg_base64_enc_len(const char *src, size_t srclen)
 {
 	/* 3 bytes will be converted to 4, linefeed after 76 chars */
-	return ((uint64) srclen + 2) * 4 / 3 + (uint64) srclen / (76 * 3 / 4);
+	return ((uint64) srclen + 2) / 3 * 4 + (uint64) srclen / (76 * 3 / 4);
 }
 
 static uint64
