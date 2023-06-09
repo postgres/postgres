@@ -70,8 +70,8 @@ sub revoke_superuser
 
 # Create publisher and subscriber nodes with schemas owned and published by
 # "regress_alice" but subscribed and replicated by different role
-# "regress_admin".  For partitioned tables, layout the partitions differently
-# on the publisher than on the subscriber.
+# "regress_admin" and "regress_admin2". For partitioned tables, layout the
+# partitions differently on the publisher than on the subscriber.
 #
 $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
@@ -86,6 +86,7 @@ for my $node ($node_publisher, $node_subscriber)
 	$node->safe_psql(
 		'postgres', qq(
   CREATE ROLE regress_admin SUPERUSER LOGIN;
+  CREATE ROLE regress_admin2 SUPERUSER LOGIN;
   CREATE ROLE regress_alice NOSUPERUSER LOGIN;
   GRANT CREATE ON DATABASE postgres TO regress_alice;
   SET SESSION AUTHORIZATION regress_alice;
@@ -191,5 +192,38 @@ GRANT regress_alice TO regress_admin WITH INHERIT TRUE, SET FALSE;
 ));
 expect_replication("alice.unpartitioned", 3, 7, 13,
 	"with INHERIT but not SET ROLE can replicate");
+
+# Remove the subscrition and truncate the table for the initial data sync
+# tests.
+$node_subscriber->safe_psql(
+	    'postgres', qq(
+DROP SUBSCRIPTION admin_sub;
+TRUNCATE alice.unpartitioned;
+));
+
+# Create a new subscription "admin_sub" owned by regress_admin2. It's
+# disabled so that we revoke superuser privilege after creation.
+$node_subscriber->safe_psql(
+    'postgres', qq(
+SET SESSION AUTHORIZATION regress_admin2;
+CREATE SUBSCRIPTION admin_sub CONNECTION '$publisher_connstr' PUBLICATION alice
+WITH (run_as_owner = false, password_required = false, copy_data = true, enabled = false);
+));
+
+# Revoke superuser privilege for "regress_admin2", and give it the
+# ability to SET ROLE. Then enable the subscription "admin_sub".
+revoke_superuser("regress_admin2");
+$node_subscriber->safe_psql(
+    'postgres', qq(
+GRANT regress_alice TO regress_admin2 WITH INHERIT FALSE, SET TRUE;
+ALTER SUBSCRIPTION admin_sub ENABLE;
+));
+
+# Because the initial data sync is working as the table owner, all
+# data should be copied.
+$node_subscriber->wait_for_subscription_sync($node_publisher,
+					     'admin_sub');
+expect_replication("alice.unpartitioned", 3, 7, 13,
+		   "table owner can do the initial data copy");
 
 done_testing();
