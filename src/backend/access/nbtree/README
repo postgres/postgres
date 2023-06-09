@@ -17,9 +17,9 @@ The basic Lehman & Yao Algorithm
 Compared to a classic B-tree, L&Y adds a right-link pointer to each page,
 to the page's right sibling.  It also adds a "high key" to each page, which
 is an upper bound on the keys that are allowed on that page.  These two
-additions make it possible detect a concurrent page split, which allows the
-tree to be searched without holding any read locks (except to keep a single
-page from being modified while reading it).
+additions make it possible to detect a concurrent page split, which allows
+the tree to be searched without holding any read locks (except to keep a
+single page from being modified while reading it).
 
 When a search follows a downlink to a child page, it compares the page's
 high key with the search key.  If the search key is greater than the high
