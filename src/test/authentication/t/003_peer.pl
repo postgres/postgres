@@ -69,17 +69,6 @@ sub test_role
 	}
 }
 
-# Find $pattern in log file of $node.
-sub find_in_log
-{
-	my ($node, $offset, $pattern) = @_;
-
-	my $log = PostgreSQL::Test::Utils::slurp_file($node->logfile, $offset);
-	return 0 if (length($log) <= 0);
-
-	return $log =~ m/$pattern/;
-}
-
 my $node = PostgreSQL::Test::Cluster->new('node');
 $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
@@ -91,9 +80,9 @@ reset_pg_hba($node, 'peer');
 # Check if peer authentication is supported on this platform.
 my $log_offset = -s $node->logfile;
 $node->psql('postgres');
-if (find_in_log(
-		$node, $log_offset,
-		qr/peer authentication is not supported on this platform/))
+if ($node->log_contains(
+		qr/peer authentication is not supported on this platform/,
+		$log_offset))
 {
 	plan skip_all => 'peer authentication is not supported on this platform';
 }

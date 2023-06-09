@@ -161,8 +161,7 @@ $node_primary->wait_for_catchup($node_standby);
 
 $node_standby->stop;
 
-ok( !find_in_log(
-		$node_standby,
+ok( !$node_standby->log_contains(
 		"requested WAL segment [0-9A-F]+ has already been removed"),
 	'check that required WAL segments are still available');
 
@@ -184,9 +183,8 @@ $node_primary->safe_psql('postgres', "CHECKPOINT;");
 my $invalidated = 0;
 for (my $i = 0; $i < 10 * $PostgreSQL::Test::Utils::timeout_default; $i++)
 {
-	if (find_in_log(
-			$node_primary, 'invalidating obsolete replication slot "rep1"',
-			$logstart))
+	if ($node_primary->log_contains(
+			'invalidating obsolete replication slot "rep1"', $logstart))
 	{
 		$invalidated = 1;
 		last;
@@ -207,7 +205,7 @@ is($result, "rep1|f|t|lost|",
 my $checkpoint_ended = 0;
 for (my $i = 0; $i < 10 * $PostgreSQL::Test::Utils::timeout_default; $i++)
 {
-	if (find_in_log($node_primary, "checkpoint complete: ", $logstart))
+	if ($node_primary->log_contains("checkpoint complete: ", $logstart))
 	{
 		$checkpoint_ended = 1;
 		last;
@@ -237,8 +235,7 @@ $node_standby->start;
 my $failed = 0;
 for (my $i = 0; $i < 10 * $PostgreSQL::Test::Utils::timeout_default; $i++)
 {
-	if (find_in_log(
-			$node_standby,
+	if ($node_standby->log_contains(
 			"requested WAL segment [0-9A-F]+ has already been removed",
 			$logstart))
 	{
@@ -381,8 +378,7 @@ my $msg_logged = 0;
 my $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {
-	if (find_in_log(
-			$node_primary3,
+	if ($node_primary3->log_contains(
 			"terminating process $senderpid to release replication slot \"rep3\"",
 			$logstart))
 	{
@@ -406,9 +402,8 @@ $msg_logged = 0;
 $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {
-	if (find_in_log(
-			$node_primary3, 'invalidating obsolete replication slot "rep3"',
-			$logstart))
+	if ($node_primary3->log_contains(
+			'invalidating obsolete replication slot "rep3"', $logstart))
 	{
 		$msg_logged = 1;
 		last;
@@ -444,20 +439,6 @@ sub get_log_size
 	my ($node) = @_;
 
 	return (stat $node->logfile)[7];
-}
-
-# find $pat in logfile of $node after $off-th byte
-sub find_in_log
-{
-	my ($node, $pat, $off) = @_;
-
-	$off = 0 unless defined $off;
-	my $log = PostgreSQL::Test::Utils::slurp_file($node->logfile);
-	return 0 if (length($log) <= $off);
-
-	$log = substr($log, $off);
-
-	return $log =~ m/$pat/;
 }
 
 done_testing();

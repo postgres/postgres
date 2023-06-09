@@ -2547,6 +2547,22 @@ sub log_check
 
 =pod
 
+=item log_contains(pattern, offset)
+
+Find pattern in logfile of node after offset byte.
+
+=cut
+
+sub log_contains
+{
+	my ($self, $pattern, $offset) = @_;
+
+	return PostgreSQL::Test::Utils::slurp_file($self->logfile, $offset) =~
+	  m/$pattern/;
+}
+
+=pod
+
 =item $node->run_log(...)
 
 Runs a shell command like PostgreSQL::Test::Utils::run_log, but with connection parameters set
