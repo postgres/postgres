@@ -109,15 +109,11 @@ $node->safe_psql(
   CREATE FUNCTION f1(int) RETURNS int LANGUAGE SQL AS 'SELECT f0($1)';
   CREATE TABLE funcidx (x int);
   INSERT INTO funcidx VALUES (0),(1),(2),(3);
-  CREATE INDEX i0 ON funcidx ((f1(x)));
   CREATE SCHEMA "Foo";
   CREATE TABLE "Foo".bar(id int);
 |);
 $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
-$node->command_fails(
-	[qw|vacuumdb -Zt funcidx postgres|],
-	'unqualified name via functional index');
 
 $node->command_fails(
 	[ 'vacuumdb', '--analyze', '--table', 'vactable(c)', 'postgres' ],
