@@ -165,8 +165,7 @@ $node_master->wait_for_catchup($node_standby, 'replay', $start_lsn);
 
 $node_standby->stop;
 
-ok( !find_in_log(
-		$node_standby,
+ok( !$node_standby->log_contains(
 		"requested WAL segment [0-9A-F]+ has already been removed"),
 	'check that required WAL segments are still available');
 
@@ -188,8 +187,7 @@ $node_master->safe_psql('postgres', "CHECKPOINT;");
 my $invalidated = 0;
 for (my $i = 0; $i < 10000; $i++)
 {
-	if (find_in_log(
-			$node_master,
+	if ($node_master->log_contains(
 			"invalidating slot \"rep1\" because its restart_lsn [0-9A-F/]+ exceeds max_slot_wal_keep_size",
 			$logstart))
 	{
@@ -212,7 +210,7 @@ is($result, "rep1|f|t|lost|",
 my $checkpoint_ended = 0;
 for (my $i = 0; $i < 10000; $i++)
 {
-	if (find_in_log($node_master, "checkpoint complete: ", $logstart))
+	if ($node_master->log_contains("checkpoint complete: ", $logstart))
 	{
 		$checkpoint_ended = 1;
 		last;
@@ -242,8 +240,7 @@ $node_standby->start;
 my $failed = 0;
 for (my $i = 0; $i < 10000; $i++)
 {
-	if (find_in_log(
-			$node_standby,
+	if ($node_standby->log_contains(
 			"requested WAL segment [0-9A-F]+ has already been removed",
 			$logstart))
 	{
@@ -317,18 +314,4 @@ sub get_log_size
 	my ($node) = @_;
 
 	return (stat $node->logfile)[7];
-}
-
-# find $pat in logfile of $node after $off-th byte
-sub find_in_log
-{
-	my ($node, $pat, $off) = @_;
-
-	$off = 0 unless defined $off;
-	my $log = TestLib::slurp_file($node->logfile);
-	return 0 if (length($log) <= $off);
-
-	$log = substr($log, $off);
-
-	return $log =~ m/$pat/;
 }
