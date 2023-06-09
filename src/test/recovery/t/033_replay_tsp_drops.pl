@@ -138,21 +138,11 @@ while ($max_attempts-- >= 0)
 {
 	last
 	  if (
-		find_in_log(
-			$node_standby, qr!WARNING: ( [A-Z0-9]+:)? creating missing directory: pg_tblspc/!,
+		$node_standby->log_contains(
+			qr!WARNING: ( [A-Z0-9]+:)? creating missing directory: pg_tblspc/!,
 			$logstart));
 	usleep(100_000);
 }
 ok($max_attempts > 0, "invalid directory creation is detected");
 
 done_testing();
-
-# find $pat in logfile of $node after $off-th byte
-sub find_in_log
-{
-	my ($node, $pat, $off) = @_;
-
-	my $log = PostgreSQL::Test::Utils::slurp_file($node->logfile, $off);
-
-	return $log =~ m/$pat/;
-}
