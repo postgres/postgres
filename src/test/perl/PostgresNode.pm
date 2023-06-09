@@ -2470,6 +2470,21 @@ sub log_check
 
 =pod
 
+=item $node->log_contains(pattern, offset)
+
+Find pattern in logfile of node after offset byte.
+
+=cut
+
+sub log_contains
+{
+	my ($self, $pattern, $offset) = @_;
+
+	return TestLib::slurp_file($self->logfile, $offset) =~ m/$pattern/;
+}
+
+=pod
+
 =item $node->run_log(...)
 
 Runs a shell command like TestLib::run_log, but with connection parameters set
