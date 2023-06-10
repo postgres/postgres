@@ -111,7 +111,7 @@ generated_catalog_headers = custom_target('generated_catalog_headers',
   output: output_files,
   install_dir: output_install,
   input: input,
-  depend_files: bki_data_f,
+  depend_files: bki_data_f + catalog_pm,
   build_by_default: true,
   install: true,
   command: [

@@ -28,6 +28,7 @@ update_unicode_targets += \
   custom_target('unicode_norm_table.h',
     input: [unicode_data['UnicodeData.txt'], unicode_data['CompositionExclusions.txt']],
     output: ['unicode_norm_table.h', 'unicode_norm_hashfunc.h'],
+    depend_files: perfect_hash_pm,
     command: [
       perl, files('generate-unicode_norm_table.pl'),
       '--outdir', '@OUTDIR@', '@INPUT@'],
@@ -38,6 +39,7 @@ update_unicode_targets += \
   custom_target('unicode_nonspacing_table.h',
     input: [unicode_data['UnicodeData.txt']],
     output: ['unicode_nonspacing_table.h'],
+    depend_files: perfect_hash_pm,
     command: [perl, files('generate-unicode_nonspacing_table.pl'), '@INPUT@'],
     build_by_default: false,
     capture: true,
@@ -56,6 +58,7 @@ update_unicode_targets += \
   custom_target('unicode_normprops_table.h',
     input: [unicode_data['DerivedNormalizationProps.txt']],
     output: ['unicode_normprops_table.h'],
+    depend_files: perfect_hash_pm,
     command: [perl, files('generate-unicode_normprops_table.pl'), '@INPUT@'],
     build_by_default: false,
     capture: true,

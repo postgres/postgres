@@ -54,8 +54,8 @@ endif
 common_kwlist = custom_target('kwlist',
   input: files('../include/parser/kwlist.h'),
   output: 'kwlist_d.h',
-  command: [perl, '-I', '@SOURCE_ROOT@/src/tools', files('../tools/gen_keywordlist.pl'),
-      '--extern', '--output', '@OUTDIR@', '@INPUT@'])
+  depend_files: gen_kwlist_deps,
+  command: [gen_kwlist_cmd, '--extern'])
 generated_sources += common_kwlist
 common_sources += common_kwlist
 

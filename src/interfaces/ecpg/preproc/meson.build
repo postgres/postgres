@@ -69,14 +69,8 @@ c_kwlist = custom_target('c_kwlist_d.h',
   input: ['c_kwlist.h'],
   output: ['c_kwlist_d.h'],
   depends: check_rules,
-  command: [
-    perl,
-    '-I', '@SOURCE_ROOT@/src/tools',
-    '@SOURCE_ROOT@/src/tools/gen_keywordlist.pl',
-    '--output', '@OUTDIR@',
-    '--varname', 'ScanCKeywords',
-    '--no-case-fold', '@INPUT0@',
-  ],
+  depend_files: gen_kwlist_deps,
+  command: [gen_kwlist_cmd, '--varname', 'ScanCKeywords', '--no-case-fold'],
 )
 generated_sources += c_kwlist
 ecpg_sources += c_kwlist
@@ -84,13 +78,8 @@ ecpg_sources += c_kwlist
 ecpg_kwlist = custom_target('ecpg_kwlist_d.h',
   input: ['ecpg_kwlist.h'],
   output: ['ecpg_kwlist_d.h'],
-  command: [
-    perl, '-I',
-    '@SOURCE_ROOT@/src/tools',
-    '@SOURCE_ROOT@/src/tools/gen_keywordlist.pl',
-    '--output', '@OUTDIR@',
-    '--varname', 'ScanECPGKeywords', '@INPUT0@',
-  ]
+  depend_files: gen_kwlist_deps,
+  command: [gen_kwlist_cmd, '--varname', 'ScanECPGKeywords'],
 )
 generated_sources += ecpg_kwlist
 ecpg_sources += ecpg_kwlist

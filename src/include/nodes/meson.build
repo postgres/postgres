@@ -50,6 +50,7 @@ node_support_install = [
 generated_nodes = custom_target('nodetags.h',
   input: node_support_input,
   output: node_support_output,
+  depend_files: catalog_pm,
   command: [
     perl, files('../../backend/nodes/gen_node_support.pl'),
     '-o', '@OUTDIR@',
