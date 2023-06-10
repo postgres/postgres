@@ -575,8 +575,6 @@ DefineIndex(Oid relationId,
 	int			root_save_nestlevel;
 
 	root_save_nestlevel = NewGUCNestLevel();
-	SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
-					PGC_S_SESSION);
 
 	/*
 	 * Some callers need us to run with an empty default_tablespace; this is a
@@ -1302,8 +1300,6 @@ DefineIndex(Oid relationId,
 				SetUserIdAndSecContext(childrel->rd_rel->relowner,
 									   child_save_sec_context | SECURITY_RESTRICTED_OPERATION);
 				child_save_nestlevel = NewGUCNestLevel();
-				SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
-								PGC_S_SESSION);
 
 				/*
 				 * Don't try to create indexes on foreign tables, though. Skip
@@ -3757,8 +3753,6 @@ ReindexRelationConcurrently(Oid relationOid, ReindexParams *params)
 		SetUserIdAndSecContext(heapRel->rd_rel->relowner,
 							   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 		save_nestlevel = NewGUCNestLevel();
-		SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
-						PGC_S_SESSION);
 
 		/* determine safety of this index for set_indexsafe_procflags */
 		idx->safe = (indexRel->rd_indexprs == NIL &&
