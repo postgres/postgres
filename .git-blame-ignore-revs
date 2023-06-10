@@ -197,6 +197,9 @@ f99a569a2ee3763b4ae174e81250c95ca0fdcbb6 # 2006-10-04 00:30:14 +0000
 1dc34982511d91ef8a2b71bdcb870f067c1b3da9 # 2005-10-15 02:49:52 +0000
 # Standard pgindent run for 8.1.
 
+b3364fc81b78538006da3b3ad5680530d2af8c47 # 2005-09-22 20:44:36 +0000
+# pgindent new GIST index code, per request from Tom.
+
 15d3f9f6b7849a70281f151f0def7a6d335767d7 # 2004-08-30 02:54:42 +0000
 # Another pgindent run with lib typedefs added.
 
