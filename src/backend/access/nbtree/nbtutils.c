@@ -87,7 +87,7 @@ static int	_bt_keep_natts(Relation rel, IndexTuple lastleft,
  *		field themselves.
  */
 BTScanInsert
-_bt_mkscankey(Relation rel, Relation heaprel, IndexTuple itup)
+_bt_mkscankey(Relation rel, IndexTuple itup)
 {
 	BTScanInsert key;
 	ScanKey		skey;
@@ -112,7 +112,7 @@ _bt_mkscankey(Relation rel, Relation heaprel, IndexTuple itup)
 	key = palloc(offsetof(BTScanInsertData, scankeys) +
 				 sizeof(ScanKeyData) * indnkeyatts);
 	if (itup)
-		_bt_metaversion(rel, heaprel, &key->heapkeyspace, &key->allequalimage);
+		_bt_metaversion(rel, &key->heapkeyspace, &key->allequalimage);
 	else
 	{
 		/* Utility statement callers can set these fields themselves */
@@ -1761,8 +1761,7 @@ _bt_killitems(IndexScanDesc scan)
 
 		droppedpin = true;
 		/* Attempt to re-read the buffer, getting pin and lock. */
-		buf = _bt_getbuf(scan->indexRelation, scan->heapRelation,
-						 so->currPos.currPage, BT_READ);
+		buf = _bt_getbuf(scan->indexRelation, so->currPos.currPage, BT_READ);
 
 		page = BufferGetPage(buf);
 		if (BufferGetLSNAtomic(buf) == so->currPos.lsn)

@@ -566,7 +566,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 
 	wstate.heap = btspool->heap;
 	wstate.index = btspool->index;
-	wstate.inskey = _bt_mkscankey(wstate.index, btspool->heap, NULL);
+	wstate.inskey = _bt_mkscankey(wstate.index, NULL);
 	/* _bt_mkscankey() won't set allequalimage without metapage */
 	wstate.inskey->allequalimage = _bt_allequalimage(wstate.index, true);
 	wstate.btws_use_wal = RelationNeedsWAL(wstate.index);

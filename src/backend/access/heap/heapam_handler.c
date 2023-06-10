@@ -731,14 +731,9 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 								 *multi_cutoff);
 
 
-	/*
-	 * Set up sorting if wanted. NewHeap is being passed to
-	 * tuplesort_begin_cluster(), it could have been OldHeap too. It does not
-	 * really matter, as the goal is to have a heap relation being passed to
-	 * _bt_log_reuse_page() (which should not be called from this code path).
-	 */
+	/* Set up sorting if wanted */
 	if (use_sort)
-		tuplesort = tuplesort_begin_cluster(oldTupDesc, OldIndex, NewHeap,
+		tuplesort = tuplesort_begin_cluster(oldTupDesc, OldIndex,
 											maintenance_work_mem,
 											NULL, TUPLESORT_NONE);
 	else

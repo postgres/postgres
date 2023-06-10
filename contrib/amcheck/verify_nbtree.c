@@ -183,7 +183,6 @@ static inline bool invariant_l_nontarget_offset(BtreeCheckState *state,
 												OffsetNumber upperbound);
 static Page palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum);
 static inline BTScanInsert bt_mkscankey_pivotsearch(Relation rel,
-													Relation heaprel,
 													IndexTuple itup);
 static ItemId PageGetItemIdCareful(BtreeCheckState *state, BlockNumber block,
 								   Page page, OffsetNumber offset);
@@ -332,7 +331,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 							RelationGetRelationName(indrel))));
 
 		/* Extract metadata from metapage, and sanitize it in passing */
-		_bt_metaversion(indrel, heaprel, &heapkeyspace, &allequalimage);
+		_bt_metaversion(indrel, &heapkeyspace, &allequalimage);
 		if (allequalimage && !heapkeyspace)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -1259,7 +1258,7 @@ bt_target_page_check(BtreeCheckState *state)
 		}
 
 		/* Build insertion scankey for current page offset */
-		skey = bt_mkscankey_pivotsearch(state->rel, state->heaprel, itup);
+		skey = bt_mkscankey_pivotsearch(state->rel, itup);
 
 		/*
 		 * Make sure tuple size does not exceed the relevant BTREE_VERSION
@@ -1769,7 +1768,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 	 * memory remaining allocated.
 	 */
 	firstitup = (IndexTuple) PageGetItem(rightpage, rightitem);
-	return bt_mkscankey_pivotsearch(state->rel, state->heaprel, firstitup);
+	return bt_mkscankey_pivotsearch(state->rel, firstitup);
 }
 
 /*
@@ -2682,7 +2681,7 @@ bt_rootdescend(BtreeCheckState *state, IndexTuple itup)
 	Buffer		lbuf;
 	bool		exists;
 
-	key = _bt_mkscankey(state->rel, state->heaprel, itup);
+	key = _bt_mkscankey(state->rel, itup);
 	Assert(key->heapkeyspace && key->scantid != NULL);
 
 	/*
@@ -2695,7 +2694,7 @@ bt_rootdescend(BtreeCheckState *state, IndexTuple itup)
 	 */
 	Assert(state->readonly && state->rootdescend);
 	exists = false;
-	stack = _bt_search(state->rel, state->heaprel, key, &lbuf, BT_READ, NULL);
+	stack = _bt_search(state->rel, NULL, key, &lbuf, BT_READ, NULL);
 
 	if (BufferIsValid(lbuf))
 	{
@@ -3134,11 +3133,11 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
  * the scankey is greater.
  */
 static inline BTScanInsert
-bt_mkscankey_pivotsearch(Relation rel, Relation heaprel, IndexTuple itup)
+bt_mkscankey_pivotsearch(Relation rel, IndexTuple itup)
 {
 	BTScanInsert skey;
 
-	skey = _bt_mkscankey(rel, heaprel, itup);
+	skey = _bt_mkscankey(rel, itup);
 	skey->pivotsearch = true;
 
 	return skey;

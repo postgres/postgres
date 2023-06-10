@@ -38,10 +38,9 @@
 #include "utils/snapmgr.h"
 
 static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
-static void _bt_log_reuse_page(Relation rel, Relation heaprel, BlockNumber blkno,
-							   FullTransactionId safexid);
-static void _bt_delitems_delete(Relation rel, Relation heaprel, Buffer buf,
+static void _bt_delitems_delete(Relation rel, Buffer buf,
 								TransactionId snapshotConflictHorizon,
+								bool isCatalogRel,
 								OffsetNumber *deletable, int ndeletable,
 								BTVacuumPosting *updatable, int nupdatable);
 static char *_bt_delitems_update(BTVacuumPosting *updatable, int nupdatable,
@@ -177,7 +176,7 @@ _bt_getmeta(Relation rel, Buffer metabuf)
  * index tuples needed to be deleted.
  */
 bool
-_bt_vacuum_needs_cleanup(Relation rel, Relation heaprel)
+_bt_vacuum_needs_cleanup(Relation rel)
 {
 	Buffer		metabuf;
 	Page		metapg;
@@ -190,7 +189,7 @@ _bt_vacuum_needs_cleanup(Relation rel, Relation heaprel)
 	 *
 	 * Note that we deliberately avoid using cached version of metapage here.
 	 */
-	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 	btm_version = metad->btm_version;
@@ -230,7 +229,7 @@ _bt_vacuum_needs_cleanup(Relation rel, Relation heaprel)
  * finalized.
  */
 void
-_bt_set_cleanup_info(Relation rel, Relation heaprel, BlockNumber num_delpages)
+_bt_set_cleanup_info(Relation rel, BlockNumber num_delpages)
 {
 	Buffer		metabuf;
 	Page		metapg;
@@ -254,7 +253,7 @@ _bt_set_cleanup_info(Relation rel, Relation heaprel, BlockNumber num_delpages)
 	 * no longer used as of PostgreSQL 14.  We set it to -1.0 on rewrite, just
 	 * to be consistent.
 	 */
-	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 
@@ -326,6 +325,9 @@ _bt_set_cleanup_info(Relation rel, Relation heaprel, BlockNumber num_delpages)
  *		NOTE that the returned root page will have only a read lock set
  *		on it even if access = BT_WRITE!
  *
+ *		If access = BT_WRITE, heaprel must be set; otherwise caller can just
+ *		pass NULL.  See _bt_allocbuf for an explanation.
+ *
  *		The returned page is not necessarily the true root --- it could be
  *		a "fast root" (a page that is alone in its level due to deletions).
  *		Also, if the root page is split while we are "in flight" to it,
@@ -349,6 +351,8 @@ _bt_getroot(Relation rel, Relation heaprel, int access)
 	uint32		rootlevel;
 	BTMetaPageData *metad;
 
+	Assert(access == BT_READ || heaprel != NULL);
+
 	/*
 	 * Try to use previously-cached metapage data to find the root.  This
 	 * normally saves one buffer access per index search, which is a very
@@ -369,7 +373,7 @@ _bt_getroot(Relation rel, Relation heaprel, int access)
 		Assert(rootblkno != P_NONE);
 		rootlevel = metad->btm_fastlevel;
 
-		rootbuf = _bt_getbuf(rel, heaprel, rootblkno, BT_READ);
+		rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
 		rootpage = BufferGetPage(rootbuf);
 		rootopaque = BTPageGetOpaque(rootpage);
 
@@ -395,7 +399,7 @@ _bt_getroot(Relation rel, Relation heaprel, int access)
 		rel->rd_amcache = NULL;
 	}
 
-	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 	metad = _bt_getmeta(rel, metabuf);
 
 	/* if no root page initialized yet, do it */
@@ -436,7 +440,7 @@ _bt_getroot(Relation rel, Relation heaprel, int access)
 		 * the new root page.  Since this is the first page in the tree, it's
 		 * a leaf as well as the root.
 		 */
-		rootbuf = _bt_getbuf(rel, heaprel, P_NEW, BT_WRITE);
+		rootbuf = _bt_allocbuf(rel, heaprel);
 		rootblkno = BufferGetBlockNumber(rootbuf);
 		rootpage = BufferGetPage(rootbuf);
 		rootopaque = BTPageGetOpaque(rootpage);
@@ -573,7 +577,7 @@ _bt_getroot(Relation rel, Relation heaprel, int access)
  * moving to the root --- that'd deadlock against any concurrent root split.)
  */
 Buffer
-_bt_gettrueroot(Relation rel, Relation heaprel)
+_bt_gettrueroot(Relation rel)
 {
 	Buffer		metabuf;
 	Page		metapg;
@@ -595,7 +599,7 @@ _bt_gettrueroot(Relation rel, Relation heaprel)
 		pfree(rel->rd_amcache);
 	rel->rd_amcache = NULL;
 
-	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
 	metaopaque = BTPageGetOpaque(metapg);
 	metad = BTPageGetMeta(metapg);
@@ -668,7 +672,7 @@ _bt_gettrueroot(Relation rel, Relation heaprel)
  *		about updating previously cached data.
  */
 int
-_bt_getrootheight(Relation rel, Relation heaprel)
+_bt_getrootheight(Relation rel)
 {
 	BTMetaPageData *metad;
 
@@ -676,7 +680,7 @@ _bt_getrootheight(Relation rel, Relation heaprel)
 	{
 		Buffer		metabuf;
 
-		metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
+		metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 		metad = _bt_getmeta(rel, metabuf);
 
 		/*
@@ -732,7 +736,7 @@ _bt_getrootheight(Relation rel, Relation heaprel)
  *		pg_upgrade'd from Postgres 12.
  */
 void
-_bt_metaversion(Relation rel, Relation heaprel, bool *heapkeyspace, bool *allequalimage)
+_bt_metaversion(Relation rel, bool *heapkeyspace, bool *allequalimage)
 {
 	BTMetaPageData *metad;
 
@@ -740,7 +744,7 @@ _bt_metaversion(Relation rel, Relation heaprel, bool *heapkeyspace, bool *allequ
 	{
 		Buffer		metabuf;
 
-		metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_READ);
+		metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 		metad = _bt_getmeta(rel, metabuf);
 
 		/*
@@ -821,37 +825,7 @@ _bt_checkpage(Relation rel, Buffer buf)
 }
 
 /*
- * Log the reuse of a page from the FSM.
- */
-static void
-_bt_log_reuse_page(Relation rel, Relation heaprel, BlockNumber blkno,
-				   FullTransactionId safexid)
-{
-	xl_btree_reuse_page xlrec_reuse;
-
-	/*
-	 * Note that we don't register the buffer with the record, because this
-	 * operation doesn't modify the page. This record only exists to provide a
-	 * conflict point for Hot Standby.
-	 */
-
-	/* XLOG stuff */
-	xlrec_reuse.isCatalogRel = RelationIsAccessibleInLogicalDecoding(heaprel);
-	xlrec_reuse.locator = rel->rd_locator;
-	xlrec_reuse.block = blkno;
-	xlrec_reuse.snapshotConflictHorizon = safexid;
-
-	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec_reuse, SizeOfBtreeReusePage);
-
-	XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE);
-}
-
-/*
- *	_bt_getbuf() -- Get a buffer by block number for read or write.
- *
- *		blkno == P_NEW means to get an unallocated index page.  The page
- *		will be initialized before returning it.
+ *	_bt_getbuf() -- Get an existing block in a buffer, for read or write.
  *
  *		The general rule in nbtree is that it's never okay to access a
  *		page without holding both a buffer pin and a buffer lock on
@@ -860,136 +834,165 @@ _bt_log_reuse_page(Relation rel, Relation heaprel, BlockNumber blkno,
  *		When this routine returns, the appropriate lock is set on the
  *		requested buffer and its reference count has been incremented
  *		(ie, the buffer is "locked and pinned").  Also, we apply
- *		_bt_checkpage to sanity-check the page (except in P_NEW case),
- *		and perform Valgrind client requests that help Valgrind detect
- *		unsafe page accesses.
+ *		_bt_checkpage to sanity-check the page, and perform Valgrind
+ *		client requests that help Valgrind detect unsafe page accesses.
  *
  *		Note: raw LockBuffer() calls are disallowed in nbtree; all
  *		buffer lock requests need to go through wrapper functions such
  *		as _bt_lockbuf().
  */
 Buffer
-_bt_getbuf(Relation rel, Relation heaprel, BlockNumber blkno, int access)
+_bt_getbuf(Relation rel, BlockNumber blkno, int access)
 {
 	Buffer		buf;
 
-	if (blkno != P_NEW)
+	Assert(BlockNumberIsValid(blkno));
+
+	/* Read an existing block of the relation */
+	buf = ReadBuffer(rel, blkno);
+	_bt_lockbuf(rel, buf, access);
+	_bt_checkpage(rel, buf);
+
+	return buf;
+}
+
+/*
+ *	_bt_allocbuf() -- Allocate a new block/page.
+ *
+ * Returns a write-locked buffer containing an unallocated nbtree page.
+ *
+ * Callers are required to pass a valid heaprel.  We need heaprel so that we
+ * can handle generating a snapshotConflictHorizon that makes reusing a page
+ * from the FSM safe for queries that may be running on standbys.
+ */
+Buffer
+_bt_allocbuf(Relation rel, Relation heaprel)
+{
+	Buffer		buf;
+	BlockNumber blkno;
+	Page		page;
+
+	Assert(heaprel != NULL);
+
+	/*
+	 * First see if the FSM knows of any free pages.
+	 *
+	 * We can't trust the FSM's report unreservedly; we have to check that the
+	 * page is still free.  (For example, an already-free page could have been
+	 * re-used between the time the last VACUUM scanned it and the time the
+	 * VACUUM made its FSM updates.)
+	 *
+	 * In fact, it's worse than that: we can't even assume that it's safe to
+	 * take a lock on the reported page.  If somebody else has a lock on it,
+	 * or even worse our own caller does, we could deadlock.  (The own-caller
+	 * scenario is actually not improbable. Consider an index on a serial or
+	 * timestamp column.  Nearly all splits will be at the rightmost page, so
+	 * it's entirely likely that _bt_split will call us while holding a lock
+	 * on the page most recently acquired from FSM. A VACUUM running
+	 * concurrently with the previous split could well have placed that page
+	 * back in FSM.)
+	 *
+	 * To get around that, we ask for only a conditional lock on the reported
+	 * page.  If we fail, then someone else is using the page, and we may
+	 * reasonably assume it's not free.  (If we happen to be wrong, the worst
+	 * consequence is the page will be lost to use till the next VACUUM, which
+	 * is no big problem.)
+	 */
+	for (;;)
 	{
-		/* Read an existing block of the relation */
+		blkno = GetFreeIndexPage(rel);
+		if (blkno == InvalidBlockNumber)
+			break;
 		buf = ReadBuffer(rel, blkno);
-		_bt_lockbuf(rel, buf, access);
-		_bt_checkpage(rel, buf);
-	}
-	else
-	{
-		Page		page;
-
-		Assert(access == BT_WRITE);
-
-		/*
-		 * First see if the FSM knows of any free pages.
-		 *
-		 * We can't trust the FSM's report unreservedly; we have to check that
-		 * the page is still free.  (For example, an already-free page could
-		 * have been re-used between the time the last VACUUM scanned it and
-		 * the time the VACUUM made its FSM updates.)
-		 *
-		 * In fact, it's worse than that: we can't even assume that it's safe
-		 * to take a lock on the reported page.  If somebody else has a lock
-		 * on it, or even worse our own caller does, we could deadlock.  (The
-		 * own-caller scenario is actually not improbable. Consider an index
-		 * on a serial or timestamp column.  Nearly all splits will be at the
-		 * rightmost page, so it's entirely likely that _bt_split will call us
-		 * while holding a lock on the page most recently acquired from FSM. A
-		 * VACUUM running concurrently with the previous split could well have
-		 * placed that page back in FSM.)
-		 *
-		 * To get around that, we ask for only a conditional lock on the
-		 * reported page.  If we fail, then someone else is using the page,
-		 * and we may reasonably assume it's not free.  (If we happen to be
-		 * wrong, the worst consequence is the page will be lost to use till
-		 * the next VACUUM, which is no big problem.)
-		 */
-		for (;;)
+		if (_bt_conditionallockbuf(rel, buf))
 		{
-			blkno = GetFreeIndexPage(rel);
-			if (blkno == InvalidBlockNumber)
-				break;
-			buf = ReadBuffer(rel, blkno);
-			if (_bt_conditionallockbuf(rel, buf))
-			{
-				page = BufferGetPage(buf);
+			page = BufferGetPage(buf);
 
+			/*
+			 * It's possible to find an all-zeroes page in an index.  For
+			 * example, a backend might successfully extend the relation one
+			 * page and then crash before it is able to make a WAL entry for
+			 * adding the page.  If we find a zeroed page then reclaim it
+			 * immediately.
+			 */
+			if (PageIsNew(page))
+			{
+				/* Okay to use page.  Initialize and return it. */
+				_bt_pageinit(page, BufferGetPageSize(buf));
+				return buf;
+			}
+
+			if (BTPageIsRecyclable(page, heaprel))
+			{
 				/*
-				 * It's possible to find an all-zeroes page in an index.  For
-				 * example, a backend might successfully extend the relation
-				 * one page and then crash before it is able to make a WAL
-				 * entry for adding the page.  If we find a zeroed page then
-				 * reclaim it immediately.
+				 * If we are generating WAL for Hot Standby then create a WAL
+				 * record that will allow us to conflict with queries running
+				 * on standby, in case they have snapshots older than safexid
+				 * value
 				 */
-				if (PageIsNew(page))
+				if (RelationNeedsWAL(rel) && XLogStandbyInfoActive())
 				{
-					/* Okay to use page.  Initialize and return it. */
-					_bt_pageinit(page, BufferGetPageSize(buf));
-					return buf;
-				}
+					xl_btree_reuse_page xlrec_reuse;
 
-				if (BTPageIsRecyclable(page, heaprel))
-				{
 					/*
-					 * If we are generating WAL for Hot Standby then create a
-					 * WAL record that will allow us to conflict with queries
-					 * running on standby, in case they have snapshots older
-					 * than safexid value
+					 * Note that we don't register the buffer with the record,
+					 * because this operation doesn't modify the page (that
+					 * already happened, back when VACUUM deleted the page).
+					 * This record only exists to provide a conflict point for
+					 * Hot Standby.  See record REDO routine comments.
 					 */
-					if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
-						_bt_log_reuse_page(rel, heaprel, blkno,
-										   BTPageGetDeleteXid(page));
+					xlrec_reuse.locator = rel->rd_locator;
+					xlrec_reuse.block = blkno;
+					xlrec_reuse.snapshotConflictHorizon = BTPageGetDeleteXid(page);
+					xlrec_reuse.isCatalogRel =
+						RelationIsAccessibleInLogicalDecoding(heaprel);
 
-					/* Okay to use page.  Re-initialize and return it. */
-					_bt_pageinit(page, BufferGetPageSize(buf));
-					return buf;
+					XLogBeginInsert();
+					XLogRegisterData((char *) &xlrec_reuse, SizeOfBtreeReusePage);
+
+					XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE);
 				}
-				elog(DEBUG2, "FSM returned nonrecyclable page");
-				_bt_relbuf(rel, buf);
+
+				/* Okay to use page.  Re-initialize and return it. */
+				_bt_pageinit(page, BufferGetPageSize(buf));
+				return buf;
 			}
-			else
-			{
-				elog(DEBUG2, "FSM returned nonlockable page");
-				/* couldn't get lock, so just drop pin */
-				ReleaseBuffer(buf);
-			}
+			elog(DEBUG2, "FSM returned nonrecyclable page");
+			_bt_relbuf(rel, buf);
 		}
-
-		/*
-		 * Extend the relation by one page. Need to use RBM_ZERO_AND_LOCK or
-		 * we risk a race condition against btvacuumscan --- see comments
-		 * therein. This forces us to repeat the valgrind request that
-		 * _bt_lockbuf() otherwise would make, as we can't use _bt_lockbuf()
-		 * without introducing a race.
-		 */
-		buf = ExtendBufferedRel(EB_REL(rel), MAIN_FORKNUM, NULL,
-								EB_LOCK_FIRST);
-		if (!RelationUsesLocalBuffers(rel))
-			VALGRIND_MAKE_MEM_DEFINED(BufferGetPage(buf), BLCKSZ);
-
-		/* Initialize the new page before returning it */
-		page = BufferGetPage(buf);
-		Assert(PageIsNew(page));
-		_bt_pageinit(page, BufferGetPageSize(buf));
+		else
+		{
+			elog(DEBUG2, "FSM returned nonlockable page");
+			/* couldn't get lock, so just drop pin */
+			ReleaseBuffer(buf);
+		}
 	}
 
-	/* ref count and lock type are correct */
+	/*
+	 * Extend the relation by one page. Need to use RBM_ZERO_AND_LOCK or we
+	 * risk a race condition against btvacuumscan --- see comments therein.
+	 * This forces us to repeat the valgrind request that _bt_lockbuf()
+	 * otherwise would make, as we can't use _bt_lockbuf() without introducing
+	 * a race.
+	 */
+	buf = ExtendBufferedRel(EB_REL(rel), MAIN_FORKNUM, NULL, EB_LOCK_FIRST);
+	if (!RelationUsesLocalBuffers(rel))
+		VALGRIND_MAKE_MEM_DEFINED(BufferGetPage(buf), BLCKSZ);
+
+	/* Initialize the new page before returning it */
+	page = BufferGetPage(buf);
+	Assert(PageIsNew(page));
+	_bt_pageinit(page, BufferGetPageSize(buf));
+
 	return buf;
 }
 
 /*
  *	_bt_relandgetbuf() -- release a locked buffer and get another one.
  *
- * This is equivalent to _bt_relbuf followed by _bt_getbuf, with the
- * exception that blkno may not be P_NEW.  Also, if obuf is InvalidBuffer
- * then it reduces to just _bt_getbuf; allowing this case simplifies some
- * callers.
+ * This is equivalent to _bt_relbuf followed by _bt_getbuf.  Also, if obuf is
+ * InvalidBuffer then it reduces to just _bt_getbuf; allowing this case
+ * simplifies some callers.
  *
  * The original motivation for using this was to avoid two entries to the
  * bufmgr when one would do.  However, now it's mainly just a notational
@@ -1001,7 +1004,7 @@ _bt_relandgetbuf(Relation rel, Buffer obuf, BlockNumber blkno, int access)
 {
 	Buffer		buf;
 
-	Assert(blkno != P_NEW);
+	Assert(BlockNumberIsValid(blkno));
 	if (BufferIsValid(obuf))
 		_bt_unlockbuf(rel, obuf);
 	buf = ReleaseAndReadBuffer(obuf, rel, blkno);
@@ -1272,14 +1275,14 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
  * (a version that lacks the TIDs that are to be deleted).
  *
  * This is nearly the same as _bt_delitems_vacuum as far as what it does to
- * the page, but it needs its own snapshotConflictHorizon (caller gets this
- * from tableam).  This is used by the REDO routine to generate recovery
+ * the page, but it needs its own snapshotConflictHorizon and isCatalogRel
+ * (from the tableam).  This is used by the REDO routine to generate recovery
  * conflicts.  The other difference is that only _bt_delitems_vacuum will
  * clear page's VACUUM cycle ID.
  */
 static void
-_bt_delitems_delete(Relation rel, Relation heaprel, Buffer buf,
-					TransactionId snapshotConflictHorizon,
+_bt_delitems_delete(Relation rel, Buffer buf,
+					TransactionId snapshotConflictHorizon, bool isCatalogRel,
 					OffsetNumber *deletable, int ndeletable,
 					BTVacuumPosting *updatable, int nupdatable)
 {
@@ -1343,10 +1346,10 @@ _bt_delitems_delete(Relation rel, Relation heaprel, Buffer buf,
 		XLogRecPtr	recptr;
 		xl_btree_delete xlrec_delete;
 
-		xlrec_delete.isCatalogRel = RelationIsAccessibleInLogicalDecoding(heaprel);
 		xlrec_delete.snapshotConflictHorizon = snapshotConflictHorizon;
 		xlrec_delete.ndeleted = ndeletable;
 		xlrec_delete.nupdated = nupdatable;
+		xlrec_delete.isCatalogRel = isCatalogRel;
 
 		XLogBeginInsert();
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
@@ -1517,6 +1520,7 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
 {
 	Page		page = BufferGetPage(buf);
 	TransactionId snapshotConflictHorizon;
+	bool		isCatalogRel;
 	OffsetNumber postingidxoffnum = InvalidOffsetNumber;
 	int			ndeletable = 0,
 				nupdatable = 0;
@@ -1525,6 +1529,7 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
 
 	/* Use tableam interface to determine which tuples to delete first */
 	snapshotConflictHorizon = table_index_delete_tuples(heapRel, delstate);
+	isCatalogRel = RelationIsAccessibleInLogicalDecoding(heapRel);
 
 	/* Should not WAL-log snapshotConflictHorizon unless it's required */
 	if (!XLogStandbyInfoActive())
@@ -1670,8 +1675,8 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
 	}
 
 	/* Physically delete tuples (or TIDs) using deletable (or updatable) */
-	_bt_delitems_delete(rel, heapRel, buf, snapshotConflictHorizon, deletable,
-						ndeletable, updatable, nupdatable);
+	_bt_delitems_delete(rel, buf, snapshotConflictHorizon, isCatalogRel,
+						deletable, ndeletable, updatable, nupdatable);
 
 	/* be tidy */
 	for (int i = 0; i < nupdatable; i++)
@@ -1692,8 +1697,7 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
  * same level must always be locked left to right to avoid deadlocks.
  */
 static bool
-_bt_leftsib_splitflag(Relation rel, Relation heaprel, BlockNumber leftsib,
-					  BlockNumber target)
+_bt_leftsib_splitflag(Relation rel, BlockNumber leftsib, BlockNumber target)
 {
 	Buffer		buf;
 	Page		page;
@@ -1704,7 +1708,7 @@ _bt_leftsib_splitflag(Relation rel, Relation heaprel, BlockNumber leftsib,
 	if (leftsib == P_NONE)
 		return false;
 
-	buf = _bt_getbuf(rel, heaprel, leftsib, BT_READ);
+	buf = _bt_getbuf(rel, leftsib, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = BTPageGetOpaque(page);
 
@@ -1750,7 +1754,7 @@ _bt_leftsib_splitflag(Relation rel, Relation heaprel, BlockNumber leftsib,
  * to-be-deleted subtree.)
  */
 static bool
-_bt_rightsib_halfdeadflag(Relation rel, Relation heaprel, BlockNumber leafrightsib)
+_bt_rightsib_halfdeadflag(Relation rel, BlockNumber leafrightsib)
 {
 	Buffer		buf;
 	Page		page;
@@ -1759,7 +1763,7 @@ _bt_rightsib_halfdeadflag(Relation rel, Relation heaprel, BlockNumber leafrights
 
 	Assert(leafrightsib != P_NONE);
 
-	buf = _bt_getbuf(rel, heaprel, leafrightsib, BT_READ);
+	buf = _bt_getbuf(rel, leafrightsib, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = BTPageGetOpaque(page);
 
@@ -1948,18 +1952,18 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 				 * marked with INCOMPLETE_SPLIT flag before proceeding
 				 */
 				Assert(leafblkno == scanblkno);
-				if (_bt_leftsib_splitflag(rel, vstate->info->heaprel, leftsib, leafblkno))
+				if (_bt_leftsib_splitflag(rel, leftsib, leafblkno))
 				{
 					ReleaseBuffer(leafbuf);
 					return;
 				}
 
 				/* we need an insertion scan key for the search, so build one */
-				itup_key = _bt_mkscankey(rel, vstate->info->heaprel, targetkey);
+				itup_key = _bt_mkscankey(rel, targetkey);
 				/* find the leftmost leaf page with matching pivot/high key */
 				itup_key->pivotsearch = true;
-				stack = _bt_search(rel, vstate->info->heaprel, itup_key,
-								   &sleafbuf, BT_READ, NULL);
+				stack = _bt_search(rel, NULL, itup_key, &sleafbuf, BT_READ,
+								   NULL);
 				/* won't need a second lock or pin on leafbuf */
 				_bt_relbuf(rel, sleafbuf);
 
@@ -1990,7 +1994,8 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 			 * leafbuf page half-dead.
 			 */
 			Assert(P_ISLEAF(opaque) && !P_IGNORE(opaque));
-			if (!_bt_mark_page_halfdead(rel, vstate->info->heaprel, leafbuf, stack))
+			if (!_bt_mark_page_halfdead(rel, vstate->info->heaprel, leafbuf,
+										stack))
 			{
 				_bt_relbuf(rel, leafbuf);
 				return;
@@ -2053,7 +2058,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 		if (!rightsib_empty)
 			break;
 
-		leafbuf = _bt_getbuf(rel, vstate->info->heaprel, rightsib, BT_WRITE);
+		leafbuf = _bt_getbuf(rel, rightsib, BT_WRITE);
 	}
 }
 
@@ -2065,6 +2070,10 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
  * half-dead.  The final to-be-deleted subtree is usually just leafbuf itself,
  * but may include additional internal pages (at most one per level of the
  * tree below the root).
+ *
+ * Caller must pass a valid heaprel, since it's just about possible that our
+ * call to _bt_lock_subtree_parent will need to allocate a new index page to
+ * complete a page split.  Every call to _bt_allocbuf needs to pass a heaprel.
  *
  * Returns 'false' if leafbuf is unsafe to delete, usually because leafbuf is
  * the rightmost child of its parent (and parent has more than one downlink).
@@ -2094,6 +2103,7 @@ _bt_mark_page_halfdead(Relation rel, Relation heaprel, Buffer leafbuf,
 	Assert(!P_RIGHTMOST(opaque) && !P_ISROOT(opaque) &&
 		   P_ISLEAF(opaque) && !P_IGNORE(opaque) &&
 		   P_FIRSTDATAKEY(opaque) > PageGetMaxOffsetNumber(page));
+	Assert(heaprel != NULL);
 
 	/*
 	 * Save info about the leaf page.
@@ -2108,7 +2118,7 @@ _bt_mark_page_halfdead(Relation rel, Relation heaprel, Buffer leafbuf,
 	 * delete the downlink.  It would fail the "right sibling of target page
 	 * is also the next child in parent page" cross-check below.
 	 */
-	if (_bt_rightsib_halfdeadflag(rel, heaprel, leafrightsib))
+	if (_bt_rightsib_halfdeadflag(rel, leafrightsib))
 	{
 		elog(DEBUG1, "could not delete page %u because its right sibling %u is half-dead",
 			 leafblkno, leafrightsib);
@@ -2352,7 +2362,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 		Assert(target != leafblkno);
 
 		/* Fetch the block number of the target's left sibling */
-		buf = _bt_getbuf(rel, vstate->info->heaprel, target, BT_READ);
+		buf = _bt_getbuf(rel, target, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = BTPageGetOpaque(page);
 		leftsib = opaque->btpo_prev;
@@ -2379,7 +2389,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 		_bt_lockbuf(rel, leafbuf, BT_WRITE);
 	if (leftsib != P_NONE)
 	{
-		lbuf = _bt_getbuf(rel, vstate->info->heaprel, leftsib, BT_WRITE);
+		lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
 		page = BufferGetPage(lbuf);
 		opaque = BTPageGetOpaque(page);
 		while (P_ISDELETED(opaque) || opaque->btpo_next != target)
@@ -2427,7 +2437,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 			CHECK_FOR_INTERRUPTS();
 
 			/* step right one page */
-			lbuf = _bt_getbuf(rel, vstate->info->heaprel, leftsib, BT_WRITE);
+			lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
 			page = BufferGetPage(lbuf);
 			opaque = BTPageGetOpaque(page);
 		}
@@ -2491,7 +2501,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 * And next write-lock the (current) right sibling.
 	 */
 	rightsib = opaque->btpo_next;
-	rbuf = _bt_getbuf(rel, vstate->info->heaprel, rightsib, BT_WRITE);
+	rbuf = _bt_getbuf(rel, rightsib, BT_WRITE);
 	page = BufferGetPage(rbuf);
 	opaque = BTPageGetOpaque(page);
 
@@ -2538,7 +2548,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 * of doing so are slim, and the locking considerations daunting.)
 	 *
 	 * We can safely acquire a lock on the metapage here --- see comments for
-	 * _bt_newroot().
+	 * _bt_newlevel().
 	 */
 	if (leftsib == P_NONE && rightsib_is_rightmost)
 	{
@@ -2547,8 +2557,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 		if (P_RIGHTMOST(opaque))
 		{
 			/* rightsib will be the only one left on the level */
-			metabuf = _bt_getbuf(rel, vstate->info->heaprel, BTREE_METAPAGE,
-								 BT_WRITE);
+			metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 			metapg = BufferGetPage(metabuf);
 			metad = BTPageGetMeta(metapg);
 
@@ -2906,7 +2915,7 @@ _bt_lock_subtree_parent(Relation rel, Relation heaprel, BlockNumber child,
 	 *
 	 * Note: We deliberately avoid completing incomplete splits here.
 	 */
-	if (_bt_leftsib_splitflag(rel, heaprel, leftsibparent, parent))
+	if (_bt_leftsib_splitflag(rel, leftsibparent, parent))
 		return false;
 
 	/* Recurse to examine child page's grandparent page */
@@ -2976,6 +2985,7 @@ _bt_pendingfsm_finalize(Relation rel, BTVacState *vstate)
 	Relation	heaprel = vstate->info->heaprel;
 
 	Assert(stats->pages_newly_deleted >= vstate->npendingpages);
+	Assert(heaprel != NULL);
 
 	if (vstate->npendingpages == 0)
 	{

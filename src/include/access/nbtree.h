@@ -293,11 +293,14 @@ BTPageIsRecyclable(Page page, Relation heaprel)
 	BTPageOpaque opaque;
 
 	Assert(!PageIsNew(page));
+	Assert(heaprel != NULL);
 
 	/* Recycling okay iff page is deleted and safexid is old enough */
 	opaque = BTPageGetOpaque(page);
 	if (P_ISDELETED(opaque))
 	{
+		FullTransactionId safexid = BTPageGetDeleteXid(page);
+
 		/*
 		 * The page was deleted, but when? If it was just deleted, a scan
 		 * might have seen the downlink to it, and will read the page later.
@@ -308,7 +311,7 @@ BTPageIsRecyclable(Page page, Relation heaprel)
 		 * anyone. If not, then no scan that's still in progress could have
 		 * seen its downlink, and we can recycle it.
 		 */
-		return GlobalVisCheckRemovableFullXid(heaprel, BTPageGetDeleteXid(page));
+		return GlobalVisCheckRemovableFullXid(heaprel, safexid);
 	}
 
 	return false;
@@ -1194,18 +1197,17 @@ extern OffsetNumber _bt_findsplitloc(Relation rel, Page origpage,
  */
 extern void _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level,
 							 bool allequalimage);
-extern bool _bt_vacuum_needs_cleanup(Relation rel, Relation heaprel);
-extern void _bt_set_cleanup_info(Relation rel, Relation heaprel,
-								 BlockNumber num_delpages);
+extern bool _bt_vacuum_needs_cleanup(Relation rel);
+extern void _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages);
 extern void _bt_upgrademetapage(Page page);
 extern Buffer _bt_getroot(Relation rel, Relation heaprel, int access);
-extern Buffer _bt_gettrueroot(Relation rel, Relation heaprel);
-extern int	_bt_getrootheight(Relation rel, Relation heaprel);
-extern void _bt_metaversion(Relation rel, Relation heaprel, bool *heapkeyspace,
+extern Buffer _bt_gettrueroot(Relation rel);
+extern int	_bt_getrootheight(Relation rel);
+extern void _bt_metaversion(Relation rel, bool *heapkeyspace,
 							bool *allequalimage);
 extern void _bt_checkpage(Relation rel, Buffer buf);
-extern Buffer _bt_getbuf(Relation rel, Relation heaprel, BlockNumber blkno,
-						 int access);
+extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);
+extern Buffer _bt_allocbuf(Relation rel, Relation heaprel);
 extern Buffer _bt_relandgetbuf(Relation rel, Buffer obuf,
 							   BlockNumber blkno, int access);
 extern void _bt_relbuf(Relation rel, Buffer buf);
@@ -1237,13 +1239,13 @@ extern OffsetNumber _bt_binsrch_insert(Relation rel, BTInsertState insertstate);
 extern int32 _bt_compare(Relation rel, BTScanInsert key, Page page, OffsetNumber offnum);
 extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
-extern Buffer _bt_get_endpoint(Relation rel, Relation heaprel, uint32 level,
-							   bool rightmost, Snapshot snapshot);
+extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
+							   Snapshot snapshot);
 
 /*
  * prototypes for functions in nbtutils.c
  */
-extern BTScanInsert _bt_mkscankey(Relation rel, Relation heaprel, IndexTuple itup);
+extern BTScanInsert _bt_mkscankey(Relation rel, IndexTuple itup);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_preprocess_array_keys(IndexScanDesc scan);
 extern void _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir);

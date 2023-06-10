@@ -59,7 +59,7 @@ static Buffer _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key,
 						IndexTuple nposting, uint16 postingoff);
 static void _bt_insert_parent(Relation rel, Relation heaprel, Buffer buf,
 							  Buffer rbuf, BTStack stack, bool isroot, bool isonly);
-static Buffer _bt_newroot(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf);
+static Buffer _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf);
 static inline bool _bt_pgaddtup(Page page, Size itemsize, IndexTuple itup,
 								OffsetNumber itup_off, bool newfirstdataitem);
 static void _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
@@ -110,7 +110,7 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 	bool		checkingunique = (checkUnique != UNIQUE_CHECK_NO);
 
 	/* we need an insertion scan key to do our search, so build one */
-	itup_key = _bt_mkscankey(rel, heapRel, itup);
+	itup_key = _bt_mkscankey(rel, itup);
 
 	if (checkingunique)
 	{
@@ -1024,13 +1024,15 @@ _bt_findinsertloc(Relation rel,
  * indexes.
  */
 static void
-_bt_stepright(Relation rel, Relation heaprel, BTInsertState insertstate, BTStack stack)
+_bt_stepright(Relation rel, Relation heaprel, BTInsertState insertstate,
+			  BTStack stack)
 {
 	Page		page;
 	BTPageOpaque opaque;
 	Buffer		rbuf;
 	BlockNumber rblkno;
 
+	Assert(heaprel != NULL);
 	page = BufferGetPage(insertstate->buf);
 	opaque = BTPageGetOpaque(page);
 
@@ -1145,7 +1147,7 @@ _bt_insertonpg(Relation rel,
 
 	/*
 	 * Every internal page should have exactly one negative infinity item at
-	 * all times.  Only _bt_split() and _bt_newroot() should add items that
+	 * all times.  Only _bt_split() and _bt_newlevel() should add items that
 	 * become negative infinity items through truncation, since they're the
 	 * only routines that allocate new internal pages.
 	 */
@@ -1250,14 +1252,14 @@ _bt_insertonpg(Relation rel,
 		 * only one on its tree level, but was not the root, it may have been
 		 * the "fast root".  We need to ensure that the fast root link points
 		 * at or above the current page.  We can safely acquire a lock on the
-		 * metapage here --- see comments for _bt_newroot().
+		 * metapage here --- see comments for _bt_newlevel().
 		 */
 		if (unlikely(split_only_page))
 		{
 			Assert(!isleaf);
 			Assert(BufferIsValid(cbuf));
 
-			metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_WRITE);
+			metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 			metapg = BufferGetPage(metabuf);
 			metad = BTPageGetMeta(metapg);
 
@@ -1421,7 +1423,7 @@ _bt_insertonpg(Relation rel,
 		 * call _bt_getrootheight while holding a buffer lock.
 		 */
 		if (BlockNumberIsValid(blockcache) &&
-			_bt_getrootheight(rel, heaprel) >= BTREE_FASTPATH_MIN_LEVEL)
+			_bt_getrootheight(rel) >= BTREE_FASTPATH_MIN_LEVEL)
 			RelationSetTargetBlock(rel, blockcache);
 	}
 
@@ -1715,7 +1717,7 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	 * way because it avoids an unnecessary PANIC when either origpage or its
 	 * existing sibling page are corrupt.
 	 */
-	rbuf = _bt_getbuf(rel, heaprel, P_NEW, BT_WRITE);
+	rbuf = _bt_allocbuf(rel, heaprel);
 	rightpage = BufferGetPage(rbuf);
 	rightpagenumber = BufferGetBlockNumber(rbuf);
 	/* rightpage was initialized by _bt_getbuf */
@@ -1888,7 +1890,7 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	 */
 	if (!isrightmost)
 	{
-		sbuf = _bt_getbuf(rel, heaprel, oopaque->btpo_next, BT_WRITE);
+		sbuf = _bt_getbuf(rel, oopaque->btpo_next, BT_WRITE);
 		spage = BufferGetPage(sbuf);
 		sopaque = BTPageGetOpaque(spage);
 		if (sopaque->btpo_prev != origpagenumber)
@@ -2102,6 +2104,8 @@ _bt_insert_parent(Relation rel,
 				  bool isroot,
 				  bool isonly)
 {
+	Assert(heaprel != NULL);
+
 	/*
 	 * Here we have to do something Lehman and Yao don't talk about: deal with
 	 * a root split and construction of a new root.  If our stack is empty
@@ -2121,8 +2125,8 @@ _bt_insert_parent(Relation rel,
 
 		Assert(stack == NULL);
 		Assert(isonly);
-		/* create a new root node and update the metapage */
-		rootbuf = _bt_newroot(rel, heaprel, buf, rbuf);
+		/* create a new root node one level up and update the metapage */
+		rootbuf = _bt_newlevel(rel, heaprel, buf, rbuf);
 		/* release the split buffers */
 		_bt_relbuf(rel, rootbuf);
 		_bt_relbuf(rel, rbuf);
@@ -2161,8 +2165,7 @@ _bt_insert_parent(Relation rel,
 					 BlockNumberIsValid(RelationGetTargetBlock(rel))));
 
 			/* Find the leftmost page at the next level up */
-			pbuf = _bt_get_endpoint(rel, heaprel, opaque->btpo_level + 1, false,
-									NULL);
+			pbuf = _bt_get_endpoint(rel, opaque->btpo_level + 1, false, NULL);
 			/* Set up a phony stack entry pointing there */
 			stack = &fakestack;
 			stack->bts_blkno = BufferGetBlockNumber(pbuf);
@@ -2230,6 +2233,9 @@ _bt_insert_parent(Relation rel,
  *
  * On entry, 'lbuf' must be locked in write-mode.  On exit, it is unlocked
  * and unpinned.
+ *
+ * Caller must provide a valid heaprel, since finishing a page split requires
+ * allocating a new page if and when the parent page splits in turn.
  */
 void
 _bt_finish_split(Relation rel, Relation heaprel, Buffer lbuf, BTStack stack)
@@ -2243,9 +2249,10 @@ _bt_finish_split(Relation rel, Relation heaprel, Buffer lbuf, BTStack stack)
 	bool		wasonly;
 
 	Assert(P_INCOMPLETE_SPLIT(lpageop));
+	Assert(heaprel != NULL);
 
 	/* Lock right sibling, the one missing the downlink */
-	rbuf = _bt_getbuf(rel, heaprel, lpageop->btpo_next, BT_WRITE);
+	rbuf = _bt_getbuf(rel, lpageop->btpo_next, BT_WRITE);
 	rpage = BufferGetPage(rbuf);
 	rpageop = BTPageGetOpaque(rpage);
 
@@ -2257,7 +2264,7 @@ _bt_finish_split(Relation rel, Relation heaprel, Buffer lbuf, BTStack stack)
 		BTMetaPageData *metad;
 
 		/* acquire lock on the metapage */
-		metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_WRITE);
+		metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 		metapg = BufferGetPage(metabuf);
 		metad = BTPageGetMeta(metapg);
 
@@ -2323,10 +2330,11 @@ _bt_getstackbuf(Relation rel, Relation heaprel, BTStack stack, BlockNumber child
 		Page		page;
 		BTPageOpaque opaque;
 
-		buf = _bt_getbuf(rel, heaprel, blkno, BT_WRITE);
+		buf = _bt_getbuf(rel, blkno, BT_WRITE);
 		page = BufferGetPage(buf);
 		opaque = BTPageGetOpaque(page);
 
+		Assert(heaprel != NULL);
 		if (P_INCOMPLETE_SPLIT(opaque))
 		{
 			_bt_finish_split(rel, heaprel, buf, stack->bts_parent);
@@ -2415,7 +2423,7 @@ _bt_getstackbuf(Relation rel, Relation heaprel, BTStack stack, BlockNumber child
 }
 
 /*
- *	_bt_newroot() -- Create a new root page for the index.
+ *	_bt_newlevel() -- Create a new level above root page.
  *
  *		We've just split the old root page and need to create a new one.
  *		In order to do this, we add a new root page to the file, then lock
@@ -2433,7 +2441,7 @@ _bt_getstackbuf(Relation rel, Relation heaprel, BTStack stack, BlockNumber child
  *		lbuf, rbuf & rootbuf.
  */
 static Buffer
-_bt_newroot(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
+_bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 {
 	Buffer		rootbuf;
 	Page		lpage,
@@ -2459,12 +2467,12 @@ _bt_newroot(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 	lopaque = BTPageGetOpaque(lpage);
 
 	/* get a new root page */
-	rootbuf = _bt_getbuf(rel, heaprel, P_NEW, BT_WRITE);
+	rootbuf = _bt_allocbuf(rel, heaprel);
 	rootpage = BufferGetPage(rootbuf);
 	rootblknum = BufferGetBlockNumber(rootbuf);
 
 	/* acquire lock on the metapage */
-	metabuf = _bt_getbuf(rel, heaprel, BTREE_METAPAGE, BT_WRITE);
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 

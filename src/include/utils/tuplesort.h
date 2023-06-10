@@ -399,9 +399,7 @@ extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,
 											int workMem, SortCoordinate coordinate,
 											int sortopt);
 extern Tuplesortstate *tuplesort_begin_cluster(TupleDesc tupDesc,
-											   Relation indexRel,
-											   Relation heaprel,
-											   int workMem,
+											   Relation indexRel, int workMem,
 											   SortCoordinate coordinate,
 											   int sortopt);
 extern Tuplesortstate *tuplesort_begin_index_btree(Relation heapRel,

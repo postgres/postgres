@@ -462,7 +462,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 					 * For btrees, get tree height while we have the index
 					 * open
 					 */
-					info->tree_height = _bt_getrootheight(indexRelation, relation);
+					info->tree_height = _bt_getrootheight(indexRelation);
 				}
 				else
 				{
