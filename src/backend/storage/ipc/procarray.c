@@ -644,6 +644,7 @@ ProcArrayClearTransaction(PGPROC *proc)
 	/* redundant, but just in case */
 	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 	pgxact->delayChkpt = false;
+	proc->delayChkptEnd = false;
 
 	/* Clear the subtransaction-XID cache too */
 	pgxact->nxids = 0;
