@@ -947,6 +947,7 @@ ProcArrayClearTransaction(PGPROC *proc)
 
 	Assert(!(proc->statusFlags & PROC_VACUUM_STATE_MASK));
 	Assert(!proc->delayChkpt);
+	Assert(!proc->delayChkptEnd);
 
 	/*
 	 * Need to increment completion count even though transaction hasn't
