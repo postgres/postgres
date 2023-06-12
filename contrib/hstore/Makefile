@@ -15,7 +15,7 @@ PGFILEDESC = "hstore - key/value pair data type"
 
 HEADERS = hstore.h
 
-REGRESS = hstore
+REGRESS = hstore hstore_utf8
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

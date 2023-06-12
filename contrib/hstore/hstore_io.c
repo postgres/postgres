@@ -10,6 +10,7 @@
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
+#include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
 #include "utils/jsonapi.h"
@@ -87,7 +88,7 @@ get_val(HSParser *state, bool ignoreeq, bool *escaped)
 			{
 				st = GV_WAITESCIN;
 			}
-			else if (!isspace((unsigned char) *(state->ptr)))
+			else if (!scanner_isspace((unsigned char) *(state->ptr)))
 			{
 				*(state->cur) = *(state->ptr);
 				state->cur++;
@@ -110,7 +111,7 @@ get_val(HSParser *state, bool ignoreeq, bool *escaped)
 				state->ptr--;
 				return true;
 			}
-			else if (isspace((unsigned char) *(state->ptr)))
+			else if (scanner_isspace((unsigned char) *(state->ptr)))
 			{
 				return true;
 			}
@@ -218,7 +219,7 @@ parse_hstore(HSParser *state)
 			{
 				elog(ERROR, "Unexpected end of string");
 			}
-			else if (!isspace((unsigned char) *(state->ptr)))
+			else if (!scanner_isspace((unsigned char) *(state->ptr)))
 			{
 				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
 			}
@@ -266,7 +267,7 @@ parse_hstore(HSParser *state)
 			{
 				return;
 			}
-			else if (!isspace((unsigned char) *(state->ptr)))
+			else if (!scanner_isspace((unsigned char) *(state->ptr)))
 			{
 				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
 			}
