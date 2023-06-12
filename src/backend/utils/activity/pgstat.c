@@ -615,10 +615,21 @@ pgstat_report_stat(bool force)
 	 */
 	Assert(!pgStatLocal.shmem->is_shutdown);
 
-	now = GetCurrentTransactionStopTimestamp();
-
-	if (!force)
+	if (force)
 	{
+		/*
+		 * Stats reports are forced either when it's been too long since stats
+		 * have been reported or in processes that force stats reporting to
+		 * happen at specific points (including shutdown). In the former case
+		 * the transaction stop time might be quite old, in the latter it
+		 * would never get cleared.
+		 */
+		now = GetCurrentTimestamp();
+	}
+	else
+	{
+		now = GetCurrentTransactionStopTimestamp();
+
 		if (pending_since > 0 &&
 			TimestampDifferenceExceeds(pending_since, now, PGSTAT_MAX_INTERVAL))
 		{
