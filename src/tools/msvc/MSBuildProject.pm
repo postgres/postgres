@@ -381,7 +381,7 @@ EOF
 		print $f <<EOF;
     <PreLinkEvent>
       <Message>Generate DEF file</Message>
-      <Command>perl src\\tools\\msvc\\gendef.pl --arch $arch --deffile $cfgname\\$self->{name}\\$self->{name}.def $cfgname\\$self->{name}</Command>
+      <Command>perl src\\tools\\msvc\\gendef.pl --arch $arch --deffile $cfgname\\$self->{name}\\$self->{name}.def --tempdir $cfgname\\$self->{name} $cfgname\\$self->{name}</Command>
     </PreLinkEvent>
 EOF
 	}
