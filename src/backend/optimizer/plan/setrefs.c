@@ -2289,9 +2289,11 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 			 * the outer-join level at which they are used, Vars seen in the
 			 * NestLoopParam expression may have nullingrels that are just a
 			 * subset of those in the Vars actually available from the outer
-			 * side.  Not checking this exactly is a bit grotty, but the work
-			 * needed to make things match up perfectly seems well out of
-			 * proportion to the value.
+			 * side.  Another case that can cause that to happen is explained
+			 * in the comments for process_subquery_nestloop_params.  Not
+			 * checking this exactly is a bit grotty, but the work needed to
+			 * make things match up perfectly seems well out of proportion to
+			 * the value.
 			 */
 			nlp->paramval = (Var *) fix_upper_expr(root,
 												   (Node *) nlp->paramval,

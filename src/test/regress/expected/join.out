@@ -2589,6 +2589,24 @@ on t2.q2 = 123;
                ->  Seq Scan on int8_tbl t5
 (12 rows)
 
+explain (costs off)
+select * from int8_tbl t1
+    left join int8_tbl t2 on true
+    left join lateral
+      (select * from int8_tbl t3 where t3.q1 = t2.q1 offset 0) s
+      on t2.q1 = 1;
+                QUERY PLAN                 
+-------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on int8_tbl t1
+   ->  Materialize
+         ->  Nested Loop Left Join
+               Join Filter: (t2.q1 = 1)
+               ->  Seq Scan on int8_tbl t2
+               ->  Seq Scan on int8_tbl t3
+                     Filter: (q1 = t2.q1)
+(8 rows)
+
 --
 -- check a case where we formerly got confused by conflicting sort orders
 -- in redundant merge join path keys

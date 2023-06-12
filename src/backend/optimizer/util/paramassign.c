@@ -421,8 +421,26 @@ replace_nestloop_param_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
  * provide these values.  This differs from replace_nestloop_param_var in
  * that the PARAM_EXEC slots to use have already been determined.
  *
+ * An additional complication is that the subplan_params may contain
+ * nullingrel markers that need adjustment.  This occurs if we have applied
+ * outer join identity 3,
+ *		(A leftjoin B on (Pab)) leftjoin C on (Pb*c)
+ *		= A leftjoin (B leftjoin C on (Pbc)) on (Pab)
+ * and C is a subquery containing lateral references to B.  It's still safe
+ * to apply the identity, but the parser will have created those references
+ * in the form "b*" (i.e., with varnullingrels listing the A/B join), while
+ * what we will have available from the nestloop's outer side is just "b".
+ * We deal with that here by stripping the nullingrels down to what is
+ * available from the outer side according to root->curOuterRels.
+ * That fixes matters for the case of forward application of identity 3.
+ * If the identity was applied in the reverse direction, we will have
+ * subplan_params containing too few nullingrel bits rather than too many.
+ * Currently, that causes no problems because setrefs.c applies only a
+ * subset check to nullingrels in NestLoopParams, but we'd have to work
+ * harder if we ever want to tighten that check.
+ *
  * Note that we also use root->curOuterRels as an implicit parameter for
- * sanity checks.
+ * sanity checks and nullingrel adjustments.
  */
 void
 process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
@@ -449,17 +467,19 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 				nlp = (NestLoopParam *) lfirst(lc2);
 				if (nlp->paramno == pitem->paramId)
 				{
-					Assert(equal(var, nlp->paramval));
 					/* Present, so nothing to do */
 					break;
 				}
 			}
 			if (lc2 == NULL)
 			{
-				/* No, so add it */
+				/* No, so add it after adjusting its nullingrels */
+				var = copyObject(var);
+				var->varnullingrels = bms_intersect(var->varnullingrels,
+													root->curOuterRels);
 				nlp = makeNode(NestLoopParam);
 				nlp->paramno = pitem->paramId;
-				nlp->paramval = copyObject(var);
+				nlp->paramval = var;
 				root->curOuterParams = lappend(root->curOuterParams, nlp);
 			}
 		}
@@ -480,17 +500,19 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 				nlp = (NestLoopParam *) lfirst(lc2);
 				if (nlp->paramno == pitem->paramId)
 				{
-					Assert(equal(phv, nlp->paramval));
 					/* Present, so nothing to do */
 					break;
 				}
 			}
 			if (lc2 == NULL)
 			{
-				/* No, so add it */
+				/* No, so add it after adjusting its nullingrels */
+				phv = copyObject(phv);
+				phv->phnullingrels = bms_intersect(phv->phnullingrels,
+												   root->curOuterRels);
 				nlp = makeNode(NestLoopParam);
 				nlp->paramno = pitem->paramId;
-				nlp->paramval = (Var *) copyObject(phv);
+				nlp->paramval = (Var *) phv;
 				root->curOuterParams = lappend(root->curOuterParams, nlp);
 			}
 		}
