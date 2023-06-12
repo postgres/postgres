@@ -97,7 +97,6 @@ extern char *default_tablespace;
 extern char *temp_tablespaces;
 extern bool ignore_checksum_failure;
 extern bool ignore_invalid_pages;
-extern bool synchronize_seqscans;
 
 #ifdef TRACE_SYNCSCAN
 extern bool trace_syncscan;
@@ -529,8 +528,6 @@ char	   *ConfigFileName;
 char	   *HbaFileName;
 char	   *IdentFileName;
 char	   *external_pid_file;
-
-char	   *pgstat_temp_directory;
 
 char	   *application_name;
 

@@ -37,8 +37,6 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 
-static MemoryContext pendingOpsCxt; /* context for the pending ops state  */
-
 /*
  * In some contexts (currently, standalone backends and the checkpointer)
  * we keep track of pending fsync operations: we need to remember all relation
