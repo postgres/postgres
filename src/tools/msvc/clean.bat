@@ -41,7 +41,6 @@ REM Delete files created with GenerateFiles() in Solution.pm
 if exist src\include\pg_config.h del /q src\include\pg_config.h
 if exist src\include\pg_config_ext.h del /q src\include\pg_config_ext.h
 if exist src\include\pg_config_os.h del /q src\include\pg_config_os.h
-if %DIST%==1 if exist src\backend\parser\gram.h del /q src\backend\parser\gram.h
 if exist src\include\nodes\nodetags.h del /q src\include\nodes\nodetags.h
 if exist src\include\utils\errcodes.h del /q src\include\utils\errcodes.h
 if exist src\include\utils\fmgroids.h del /q src\include\utils\fmgroids.h
@@ -59,6 +58,9 @@ if %DIST%==1 if exist src\backend\utils\fmgrprotos.h del /q src\backend\utils\fm
 if %DIST%==1 if exist src\backend\utils\fmgrtab.c del /q src\backend\utils\fmgrtab.c
 if %DIST%==1 if exist src\backend\utils\fmgr-stamp del /q src\backend\utils\fmgr-stamp
 if %DIST%==1 if exist src\backend\utils\errcodes.h del /q src\backend\utils\errcodes.h
+if %DIST%==1 if exist src\backend\nodes\node-support-stamp del /q src\backend\nodes\node-support-stamp
+if %DIST%==1 for %%F IN (copy equal out queryjumble read) do if exist src\backend\nodes\%%Ffuncs.funcs.c del /q src\backend\nodes\%%Ffuncs.funcs.c
+if %DIST%==1 for %%F IN (copy equal out queryjumble read) do if exist src\backend\nodes\%%Ffuncs.switch.c del /q src\backend\nodes\%%Ffuncs.switch.c
 if %DIST%==1 if exist src\backend\nodes\nodetags.h del /q src\backend\nodes\nodetags.h
 if %DIST%==1 if exist src\backend\storage\lmgr\lwlocknames.c del /q src\backend\storage\lmgr\lwlocknames.c
 if %DIST%==1 if exist src\backend\storage\lmgr\lwlocknames.h del /q src\backend\storage\lmgr\lwlocknames.h
@@ -81,15 +83,20 @@ if %DIST%==1 if exist src\backend\catalog\pg_*_d.h del /q src\backend\catalog\pg
 if %DIST%==1 if exist src\backend\catalog\bki-stamp del /q src\backend\catalog\bki-stamp
 if %DIST%==1 if exist src\backend\parser\scan.c del /q src\backend\parser\scan.c
 if %DIST%==1 if exist src\backend\parser\gram.c del /q src\backend\parser\gram.c
+if %DIST%==1 if exist src\backend\parser\gram.h del /q src\backend\parser\gram.h
 if %DIST%==1 if exist src\backend\bootstrap\bootscanner.c del /q src\backend\bootstrap\bootscanner.c
 if %DIST%==1 if exist src\backend\bootstrap\bootparse.c del /q src\backend\bootstrap\bootparse.c
+if %DIST%==1 if exist src\backend\bootstrap\bootparse.h del /q src\backend\bootstrap\bootparse.h
 if %DIST%==1 if exist src\backend\utils\adt\jsonpath_gram.c del /q src\backend\utils\adt\jsonpath_gram.c
+if %DIST%==1 if exist src\backend\utils\adt\jsonpath_gram.h del /q src\backend\utils\adt\jsonpath_gram.h
 if %DIST%==1 if exist src\backend\utils\adt\jsonpath_scan.c del /q src\backend\utils\adt\jsonpath_scan.c
 if %DIST%==1 if exist src\backend\utils\misc\guc-file.c del /q src\backend\utils\misc\guc-file.c
 if %DIST%==1 if exist src\backend\replication\repl_scanner.c del /q src\backend\replication\repl_scanner.c
 if %DIST%==1 if exist src\backend\replication\repl_gram.c del /q src\backend\replication\repl_gram.c
+if %DIST%==1 if exist src\backend\replication\repl_gram.h del /q src\backend\replication\repl_gram.h
 if %DIST%==1 if exist src\backend\replication\syncrep_scanner.c del /q src\backend\replication\syncrep_scanner.c
 if %DIST%==1 if exist src\backend\replication\syncrep_gram.c del /q src\backend\replication\syncrep_gram.c
+if %DIST%==1 if exist src\backend\replication\syncrep_gram.h del /q src\backend\replication\syncrep_gram.h
 
 
 if exist src\interfaces\libpq\libpqdll.def del /q src\interfaces\libpq\libpqdll.def
@@ -114,11 +121,15 @@ if %DIST%==1 if exist src\fe_utils\psqlscan.c del /q src\fe_utils\psqlscan.c
 if %DIST%==1 if exist src\bin\psql\psqlscanslash.c del /q src\bin\psql\psqlscanslash.c
 if %DIST%==1 if exist src\bin\pgbench\exprscan.c del /q src\bin\pgbench\exprscan.c
 if %DIST%==1 if exist src\bin\pgbench\exprparse.c del /q src\bin\pgbench\exprparse.c
+if %DIST%==1 if exist src\bin\pgbench\exprparse.h del /q src\bin\pgbench\exprparse.h
 
 if %DIST%==1 if exist contrib\cube\cubescan.c del /q contrib\cube\cubescan.c
 if %DIST%==1 if exist contrib\cube\cubeparse.c del /q contrib\cube\cubeparse.c
+if %DIST%==1 if exist contrib\cube\cubeparse.h del /q contrib\cube\cubeparse.h
+if %DIST%==1 if exist contrib\fuzzystrmatch\daitch_mokotoff.h del /q contrib\fuzzystrmatch\daitch_mokotoff.h
 if %DIST%==1 if exist contrib\seg\segscan.c del /q contrib\seg\segscan.c
 if %DIST%==1 if exist contrib\seg\segparse.c del /q contrib\seg\segparse.c
+if %DIST%==1 if exist contrib\seg\segparse.h del /q contrib\seg\segparse.h
 
 if exist src\test\regress\tmp_check rd /s /q src\test\regress\tmp_check
 if exist contrib\spi\refint.dll del /q contrib\spi\refint.dll
@@ -128,6 +139,7 @@ if exist src\test\regress\refint.dll del /q src\test\regress\refint.dll
 if exist src\test\regress\autoinc.dll del /q src\test\regress\autoinc.dll
 if %DIST%==1 if exist src\test\isolation\specscanner.c del /q src\test\isolation\specscanner.c
 if %DIST%==1 if exist src\test\isolation\specparse.c del /q src\test\isolation\specparse.c
+if %DIST%==1 if exist src\test\isolation\specparse.h del /q src\test\isolation\specparse.h
 
 for /d %%f in (contrib\* src\bin\* src\test\* src\test\modules\*
   ) do if exist %%f\tmp_check rd /s /q %%f\tmp_check
