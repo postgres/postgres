@@ -50,6 +50,7 @@ tests += {
   'regress': {
     'sql': [
       'hstore',
+      'hstore_utf8',
     ],
   },
 }
