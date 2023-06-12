@@ -1920,6 +1920,21 @@ select jsonb_path_query('"2017-03-10T12:34:56+3:10"', '$.datetime()');
 select jsonb_path_query('"2017-03-10t12:34:56+3:10"', '$.datetime()');
 ERROR:  datetime format is not recognized: "2017-03-10t12:34:56+3:10"
 HINT:  Use a datetime template argument to specify the input data format.
+select jsonb_path_query('"2017-03-10 12:34:56.789+3:10"', '$.datetime()');
+        jsonb_path_query         
+---------------------------------
+ "2017-03-10T12:34:56.789+03:10"
+(1 row)
+
+select jsonb_path_query('"2017-03-10T12:34:56.789+3:10"', '$.datetime()');
+        jsonb_path_query         
+---------------------------------
+ "2017-03-10T12:34:56.789+03:10"
+(1 row)
+
+select jsonb_path_query('"2017-03-10t12:34:56.789+3:10"', '$.datetime()');
+ERROR:  datetime format is not recognized: "2017-03-10t12:34:56.789+3:10"
+HINT:  Use a datetime template argument to specify the input data format.
 select jsonb_path_query('"12:34:56"', '$.datetime().type()');
      jsonb_path_query     
 --------------------------
