@@ -523,7 +523,8 @@ INSERT INTO hjtest_matchbits_t2 VALUES (2);
 -- Update should create a HOT tuple. If this status bit isn't cleared, we won't
 -- correctly emit the NULL-extended unmatching tuple in full hash join.
 UPDATE hjtest_matchbits_t2 set id = 2;
-SELECT * FROM hjtest_matchbits_t1 t1 FULL JOIN hjtest_matchbits_t2 t2 ON t1.id = t2.id;
+SELECT * FROM hjtest_matchbits_t1 t1 FULL JOIN hjtest_matchbits_t2 t2 ON t1.id = t2.id
+  ORDER BY t1.id;
 -- Test serial full hash join.
 -- Resetting parallel_setup_cost should force a serial plan.
 -- Just to be safe, however, set enable_parallel_hash to off, as parallel full
