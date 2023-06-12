@@ -5,6 +5,7 @@ backend_sources = []
 backend_link_with = [pgport_srv, common_srv]
 
 generated_backend_sources = []
+post_export_backend_sources = []
 
 subdir('access')
 subdir('archive')
@@ -133,8 +134,15 @@ if dtrace.found() and host_system != 'darwin'
   )
 endif
 
+if host_system == 'windows'
+  post_export_backend_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'postgres',
+    '--FILEDESC', 'PostgreSQL Server',])
+endif
+
 postgres = executable('postgres',
   backend_input,
+  sources: post_export_backend_sources,
   objects: backend_objs,
   link_args: backend_link_args,
   link_with: backend_link_with,
