@@ -2884,38 +2884,6 @@ lo_import 152801
           </listitem>
           </varlistentry>
 
-          <varlistentry id="app-psql-meta-command-pset-xheader-width">
-          <term><literal>xheader_width</literal></term>
-          <listitem>
-          <para>
-           Sets the maximum width of the header for expanded output to one of
-           <literal>full</literal> (the default value),
-           <literal>column</literal>, <literal>page</literal>, or an
-           <replaceable class="parameter">integer value</replaceable>.
-          </para>
-
-          <para>
-           <literal>full</literal>: the expanded header is not truncated,
-           and will be as wide as the widest output line.
-          </para>
-
-          <para>
-           <literal>column</literal>: truncate the header line to the
-           width of the first column.
-          </para>
-
-          <para>
-           <literal>page</literal>: truncate the header line to the terminal
-           width.
-          </para>
-
-          <para>
-           <replaceable class="parameter">integer value</replaceable>: specify
-           the exact maximum width of the header line.
-          </para>
-          </listitem>
-          </varlistentry>
-
           <varlistentry id="app-psql-meta-command-pset-fieldsep">
           <term><literal>fieldsep</literal></term>
           <listitem>
@@ -3257,6 +3225,38 @@ lo_import 152801
           Sets the header drawing style for the <literal>unicode</literal>
           line style to one of <literal>single</literal>
           or <literal>double</literal>.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry id="app-psql-meta-command-pset-xheader-width">
+          <term><literal>xheader_width</literal></term>
+          <listitem>
+          <para>
+           Sets the maximum width of the header for expanded output to one of
+           <literal>full</literal> (the default value),
+           <literal>column</literal>, <literal>page</literal>, or an
+           <replaceable class="parameter">integer value</replaceable>.
+          </para>
+
+          <para>
+           <literal>full</literal>: the expanded header is not truncated,
+           and will be as wide as the widest output line.
+          </para>
+
+          <para>
+           <literal>column</literal>: truncate the header line to the
+           width of the first column.
+          </para>
+
+          <para>
+           <literal>page</literal>: truncate the header line to the terminal
+           width.
+          </para>
+
+          <para>
+           <replaceable class="parameter">integer value</replaceable>: specify
+           the exact maximum width of the header line.
           </para>
           </listitem>
           </varlistentry>
