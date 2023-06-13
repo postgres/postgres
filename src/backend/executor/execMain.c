@@ -595,6 +595,15 @@ ExecCheckPermissions(List *rangeTable, List *rteperminfos,
 		if (rte->perminfoindex != 0)
 		{
 			/* Sanity checks */
+
+			/*
+			 * Only relation RTEs and subquery RTEs that were once relation
+			 * RTEs (views) have their perminfoindex set.
+			 */
+			Assert(rte->rtekind == RTE_RELATION ||
+				   (rte->rtekind == RTE_SUBQUERY &&
+					rte->relkind == RELKIND_VIEW));
+
 			(void) getRTEPermissionInfo(rteperminfos, rte);
 			/* Many-to-one mapping not allowed */
 			Assert(!bms_is_member(rte->perminfoindex, indexset));

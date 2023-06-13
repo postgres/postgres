@@ -1851,11 +1851,10 @@ ApplyRetrieveRule(Query *parsetree,
 
 	/*
 	 * Clear fields that should not be set in a subquery RTE.  Note that we
-	 * leave the relid, rellockmode, and perminfoindex fields set, so that the
-	 * view relation can be appropriately locked before execution and its
-	 * permissions checked.
+	 * leave the relid, relkind, rellockmode, and perminfoindex fields set, so
+	 * that the view relation can be appropriately locked before execution and
+	 * its permissions checked.
 	 */
-	rte->relkind = 0;
 	rte->tablesample = NULL;
 	rte->inh = false;			/* must not be set for a subquery */
 

@@ -1056,13 +1056,13 @@ typedef struct RangeTblEntry
 	 * this RTE in the containing struct's list of same; 0 if permissions need
 	 * not be checked for this RTE.
 	 *
-	 * As a special case, relid, rellockmode, and perminfoindex can also be
-	 * set (nonzero) in an RTE_SUBQUERY RTE.  This occurs when we convert an
-	 * RTE_RELATION RTE naming a view into an RTE_SUBQUERY containing the
-	 * view's query.  We still need to perform run-time locking and permission
-	 * checks on the view, even though it's not directly used in the query
-	 * anymore, and the most expedient way to do that is to retain these
-	 * fields from the old state of the RTE.
+	 * As a special case, relid, relkind, rellockmode, and perminfoindex can
+	 * also be set (nonzero) in an RTE_SUBQUERY RTE.  This occurs when we
+	 * convert an RTE_RELATION RTE naming a view into an RTE_SUBQUERY
+	 * containing the view's query.  We still need to perform run-time locking
+	 * and permission checks on the view, even though it's not directly used
+	 * in the query anymore, and the most expedient way to do that is to
+	 * retain these fields from the old state of the RTE.
 	 *
 	 * As a special case, RTE_NAMEDTUPLESTORE can also set relid to indicate
 	 * that the tuple format of the tuplestore is the same as the referenced
