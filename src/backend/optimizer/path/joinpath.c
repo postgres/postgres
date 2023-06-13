@@ -421,12 +421,33 @@ have_unsafe_outer_join_ref(PlannerInfo *root,
 
 /*
  * paraminfo_get_equal_hashops
- *		Determine if param_info and innerrel's lateral_vars can be hashed.
- *		Returns true the hashing is possible, otherwise return false.
+ *		Determine if the clauses in param_info and innerrel's lateral_vars
+ *		can be hashed.
+ *		Returns true if hashing is possible, otherwise false.
  *
- * Additionally we also collect the outer exprs and the hash operators for
- * each parameter to innerrel.  These set in 'param_exprs', 'operators' and
- * 'binary_mode' when we return true.
+ * Additionally, on success we collect the outer expressions and the
+ * appropriate equality operators for each hashable parameter to innerrel.
+ * These are returned in parallel lists in *param_exprs and *operators.
+ * We also set *binary_mode to indicate whether strict binary matching is
+ * required.
+ *
+ * A complication is that innerrel's lateral_vars may contain nullingrel
+ * markers that need adjustment.  This occurs if we have applied outer join
+ * identity 3,
+ *		(A leftjoin B on (Pab)) leftjoin C on (Pb*c)
+ *		= A leftjoin (B leftjoin C on (Pbc)) on (Pab)
+ * and C contains lateral references to B.  It's still safe to apply the
+ * identity, but the parser will have created those references in the form
+ * "b*" (i.e., with varnullingrels listing the A/B join), while what we will
+ * have available from the nestloop's outer side is just "b".  We deal with
+ * that here by stripping the nullingrels down to what is available from the
+ * outer side according to outerrel->relids.
+ * That fixes matters for the case of forward application of identity 3.
+ * If the identity was applied in the reverse direction, we will have
+ * innerrel's lateral_vars containing too few nullingrel bits rather than
+ * too many.  Currently, that causes no problems because setrefs.c applies
+ * only a subset check to nullingrels in NestLoopParams, but we'd have to
+ * work harder if we ever want to tighten that check.
  */
 static bool
 paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
@@ -441,6 +462,7 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 	*operators = NIL;
 	*binary_mode = false;
 
+	/* Add join clauses from param_info to the hash key */
 	if (param_info != NULL)
 	{
 		List	   *clauses = param_info->ppi_clauses;
@@ -510,7 +532,7 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 		Node	   *expr = (Node *) lfirst(lc);
 		TypeCacheEntry *typentry;
 
-		/* Reject if there are any volatile functions */
+		/* Reject if there are any volatile functions in PHVs */
 		if (contain_volatile_functions(expr))
 		{
 			list_free(*operators);
@@ -521,13 +543,32 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 		typentry = lookup_type_cache(exprType(expr),
 									 TYPECACHE_HASH_PROC | TYPECACHE_EQ_OPR);
 
-		/* can't use a memoize node without a valid hash equals operator */
+		/* can't use memoize without a valid hash proc and equals operator */
 		if (!OidIsValid(typentry->hash_proc) || !OidIsValid(typentry->eq_opr))
 		{
 			list_free(*operators);
 			list_free(*param_exprs);
 			return false;
 		}
+
+		/* OK, but adjust its nullingrels before adding it to result */
+		expr = copyObject(expr);
+		if (IsA(expr, Var))
+		{
+			Var		   *var = (Var *) expr;
+
+			var->varnullingrels = bms_intersect(var->varnullingrels,
+												outerrel->relids);
+		}
+		else if (IsA(expr, PlaceHolderVar))
+		{
+			PlaceHolderVar *phv = (PlaceHolderVar *) expr;
+
+			phv->phnullingrels = bms_intersect(phv->phnullingrels,
+											   outerrel->relids);
+		}
+		else
+			Assert(false);
 
 		*operators = lappend_oid(*operators, typentry->eq_opr);
 		*param_exprs = lappend(*param_exprs, expr);

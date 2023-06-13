@@ -521,6 +521,13 @@ select * from int8_tbl t1
       (select * from int8_tbl t3 where t3.q1 = t2.q1 offset 0) s
       on t2.q1 = 1;
 
+explain (costs off)
+select * from onek t1
+    left join onek t2 on true
+    left join lateral
+      (select * from onek t3 where t3.two = t2.two offset 0) s
+      on t2.unique1 = 1;
+
 --
 -- check a case where we formerly got confused by conflicting sort orders
 -- in redundant merge join path keys
