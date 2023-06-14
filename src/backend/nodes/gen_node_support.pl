@@ -924,9 +924,9 @@ foreach my $n (@node_types)
 	  . "\t\t\t\t_out${n}(str, obj);\n"
 	  . "\t\t\t\tbreak;\n";
 
-	print $rfs "\telse if (MATCH(\"$N\", "
+	print $rfs "\tif (MATCH(\"$N\", "
 	  . length($N) . "))\n"
-	  . "\t\treturn_value = _read${n}();\n"
+	  . "\t\treturn (Node *) _read${n}();\n"
 	  unless $no_read;
 
 	next if elem $n, @custom_read_write;
