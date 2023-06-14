@@ -87,11 +87,10 @@ find `pwd`/ \( -name tmp_install -prune -o -name tmp_check -prune \) \
 	-o -name "*.sql" -o -name "*.p[lm]" \) -type f -print |
 	xargs $PROG $TAGS_OPT $TAGS_FILE $FLAGS $IGNORE_IDENTIFIES
 
-# Exuberant tags has a header that we cannot sort in with the other entries
-# so we skip the sort step
-# Why are we sorting this?  I guess some tag implementation need this,
-# particularly for append mode.  bjm 2012-02-24
-if [ ! "$IS_EXUBERANT" ]
+# Sorting non-Exuberant ctags file allows for fast searching of the tags file.
+# Since etags file has a header that we cannot sort in with the other entries
+# we skip the sort step.
+if [ ! "$IS_EXUBERANT" -a ! "$EMACS_MODE" ]
 then	LC_ALL=C
 	export LC_ALL
 	sort $TAGS_FILE >/tmp/$$ && mv /tmp/$$ $TAGS_FILE
