@@ -564,12 +564,12 @@ mdzeroextend(SMgrRelation reln, ForkNumber forknum,
 		Assert(segstartblock + numblocks <= RELSEG_SIZE);
 
 		/*
-		 * If available and useful, use posix_fallocate() (via FileAllocate())
+		 * If available and useful, use posix_fallocate() (via FileFallocate())
 		 * to extend the relation. That's often more efficient than using
 		 * write(), as it commonly won't cause the kernel to allocate page
 		 * cache space for the extended pages.
 		 *
-		 * However, we don't use FileAllocate() for small extensions, as it
+		 * However, we don't use FileFallocate() for small extensions, as it
 		 * defeats delayed allocation on some filesystems. Not clear where
 		 * that decision should be made though? For now just use a cutoff of
 		 * 8, anything between 4 and 8 worked OK in some local testing.
