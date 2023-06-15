@@ -566,6 +566,8 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
   6343
 (1 row)
 
+INSERT INTO test__int SELECT array(SELECT x FROM generate_series(1, 1001) x); -- should fail
+ERROR:  input array is too big (199 maximum allowed, 1001 current), use gist__intbig_ops opclass instead
 DROP INDEX text_idx;
 CREATE INDEX text_idx on test__int using gist (a gist__int_ops(numranges = 0));
 ERROR:  value 0 out of bounds for option "numranges"
