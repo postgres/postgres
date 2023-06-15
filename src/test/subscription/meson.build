@@ -39,6 +39,7 @@ tests += {
       't/030_origin.pl',
       't/031_column_list.pl',
       't/032_subscribe_use_index.pl',
+      't/033_run_as_table_owner.pl',
       't/100_bugs.pl',
     ],
   },
