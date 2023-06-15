@@ -2766,7 +2766,7 @@ convert_real_from_base_unit(double base_value, int base_unit,
 const char *
 get_config_unit_name(int flags)
 {
-	switch (flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME))
+	switch (flags & GUC_UNIT)
 	{
 		case 0:
 			return NULL;		/* GUC has no units */
@@ -2802,7 +2802,7 @@ get_config_unit_name(int flags)
 			return "min";
 		default:
 			elog(ERROR, "unrecognized GUC units value: %d",
-				 flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME));
+				 flags & GUC_UNIT);
 			return NULL;
 	}
 }
