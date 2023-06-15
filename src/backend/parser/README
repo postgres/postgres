@@ -20,7 +20,6 @@ parse_cte.c	handle Common Table Expressions (WITH clauses)
 parse_expr.c	handle expressions like col, col + 3, x = 3 or x = 4
 parse_enr.c	handle ephemeral named rels (trigger transition tables, ...)
 parse_func.c	handle functions, table.column and column identifiers
-parse_jsontable.c handle JSON_TABLE
 parse_merge.c	handle MERGE
 parse_node.c	create nodes for various structures
 parse_oper.c	handle operators in expressions
