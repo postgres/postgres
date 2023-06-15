@@ -1262,6 +1262,12 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	relstate = GetSubscriptionRelState(MyLogicalRepWorker->subid,
 									   MyLogicalRepWorker->relid,
 									   &relstate_lsn);
+
+	/* Is the use of a password mandatory? */
+	must_use_password = MySubscription->passwordrequired &&
+		!superuser_arg(MySubscription->owner);
+
+	/* Note that the superuser_arg call can access the DB */
 	CommitTransactionCommand();
 
 	SpinLockAcquire(&MyLogicalRepWorker->relmutex);
@@ -1287,10 +1293,6 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 									MyLogicalRepWorker->relid,
 									slotname,
 									NAMEDATALEN);
-
-	/* Is the use of a password mandatory? */
-	must_use_password = MySubscription->passwordrequired &&
-		!superuser_arg(MySubscription->owner);
 
 	/*
 	 * Here we use the slot name instead of the subscription name as the
