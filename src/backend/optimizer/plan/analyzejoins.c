@@ -39,6 +39,8 @@ static void remove_rel_from_query(PlannerInfo *root, int relid,
 								  SpecialJoinInfo *sjinfo);
 static void remove_rel_from_restrictinfo(RestrictInfo *rinfo,
 										 int relid, int ojrelid);
+static void remove_rel_from_eclass(EquivalenceClass *ec,
+								   int relid, int ojrelid);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 static bool rel_supports_distinctness(PlannerInfo *root, RelOptInfo *rel);
 static bool rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel,
@@ -512,6 +514,18 @@ remove_rel_from_query(PlannerInfo *root, int relid, SpecialJoinInfo *sjinfo)
 	}
 
 	/*
+	 * Likewise remove references from EquivalenceClasses.
+	 */
+	foreach(l, root->eq_classes)
+	{
+		EquivalenceClass *ec = (EquivalenceClass *) lfirst(l);
+
+		if (bms_is_member(relid, ec->ec_relids) ||
+			bms_is_member(ojrelid, ec->ec_relids))
+			remove_rel_from_eclass(ec, relid, ojrelid);
+	}
+
+	/*
 	 * There may be references to the rel in root->fkey_list, but if so,
 	 * match_foreign_keys_to_quals() will get rid of them.
 	 */
@@ -581,6 +595,60 @@ remove_rel_from_restrictinfo(RestrictInfo *rinfo, int relid, int ojrelid)
 			}
 		}
 	}
+}
+
+/*
+ * Remove any references to relid or ojrelid from the EquivalenceClass.
+ *
+ * Like remove_rel_from_restrictinfo, we don't worry about cleaning out
+ * any nullingrel bits in contained Vars and PHVs.  (This might have to be
+ * improved sometime.)  We do need to fix the EC and EM relid sets to ensure
+ * that implied join equalities will be generated at the appropriate join
+ * level(s).
+ */
+static void
+remove_rel_from_eclass(EquivalenceClass *ec, int relid, int ojrelid)
+{
+	ListCell   *lc;
+
+	/* Fix up the EC's overall relids */
+	ec->ec_relids = bms_del_member(ec->ec_relids, relid);
+	ec->ec_relids = bms_del_member(ec->ec_relids, ojrelid);
+
+	/*
+	 * Fix up the member expressions.  Any non-const member that ends with
+	 * empty em_relids must be a Var or PHV of the removed relation.  We don't
+	 * need it anymore, so we can drop it.
+	 */
+	foreach(lc, ec->ec_members)
+	{
+		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc);
+
+		if (bms_is_member(relid, cur_em->em_relids) ||
+			bms_is_member(ojrelid, cur_em->em_relids))
+		{
+			Assert(!cur_em->em_is_const);
+			cur_em->em_relids = bms_del_member(cur_em->em_relids, relid);
+			cur_em->em_relids = bms_del_member(cur_em->em_relids, ojrelid);
+			if (bms_is_empty(cur_em->em_relids))
+				ec->ec_members = foreach_delete_current(ec->ec_members, lc);
+		}
+	}
+
+	/* Fix up the source clauses, in case we can re-use them later */
+	foreach(lc, ec->ec_sources)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		remove_rel_from_restrictinfo(rinfo, relid, ojrelid);
+	}
+
+	/*
+	 * Rather than expend code on fixing up any already-derived clauses, just
+	 * drop them.  (At this point, any such clauses would be base restriction
+	 * clauses, which we'd not need anymore anyway.)
+	 */
+	ec->ec_derives = NIL;
 }
 
 /*

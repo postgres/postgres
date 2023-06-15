@@ -5882,6 +5882,37 @@ where ss.stringu2 !~* ss.case1;
 (1 row)
 
 rollback;
+-- another join removal bug: we must clean up EquivalenceClasses too
+begin;
+create temp table t (a int unique);
+insert into t values (1);
+explain (costs off)
+select 1
+from t t1
+  left join (select 2 as c
+             from t t2 left join t t3 on t2.a = t3.a) s
+    on true
+where t1.a = s.c;
+          QUERY PLAN          
+------------------------------
+ Nested Loop Left Join
+   Filter: (t1.a = (2))
+   ->  Seq Scan on t t1
+   ->  Materialize
+         ->  Seq Scan on t t2
+(5 rows)
+
+select 1
+from t t1
+  left join (select 2 as c
+             from t t2 left join t t3 on t2.a = t3.a) s
+    on true
+where t1.a = s.c;
+ ?column? 
+----------
+(0 rows)
+
+rollback;
 -- test cases where we can remove a join, but not a PHV computed at it
 begin;
 create temp table t (a int unique, b int);

@@ -2167,6 +2167,29 @@ where ss.stringu2 !~* ss.case1;
 
 rollback;
 
+-- another join removal bug: we must clean up EquivalenceClasses too
+begin;
+
+create temp table t (a int unique);
+insert into t values (1);
+
+explain (costs off)
+select 1
+from t t1
+  left join (select 2 as c
+             from t t2 left join t t3 on t2.a = t3.a) s
+    on true
+where t1.a = s.c;
+
+select 1
+from t t1
+  left join (select 2 as c
+             from t t2 left join t t3 on t2.a = t3.a) s
+    on true
+where t1.a = s.c;
+
+rollback;
+
 -- test cases where we can remove a join, but not a PHV computed at it
 begin;
 
