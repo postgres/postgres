@@ -110,6 +110,8 @@ SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
 SELECT count(*) from test__int WHERE a @@ '20 | !21';
 SELECT count(*) from test__int WHERE a @@ '!20 & !21';
 
+INSERT INTO test__int SELECT array(SELECT x FROM generate_series(1, 1001) x); -- should fail
+
 DROP INDEX text_idx;
 CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops );
 
