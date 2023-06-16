@@ -124,7 +124,10 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies the locale to be used in this database.  This is equivalent
-        to specifying both <option>--lc-collate</option> and <option>--lc-ctype</option>.
+        to specifying <option>--lc-collate</option>,
+        <option>--lc-ctype</option>, and <option>--icu-locale</option> to the
+        same value. Some locales are only valid for ICU and must be set with
+        <option>--icu-locale</option>.
        </para>
       </listitem>
      </varlistentry>

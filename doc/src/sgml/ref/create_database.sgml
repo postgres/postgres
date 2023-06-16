@@ -145,8 +145,22 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <term><replaceable class="parameter">locale</replaceable></term>
       <listitem>
        <para>
-        This is a shortcut for setting <symbol>LC_COLLATE</symbol>
-        and <symbol>LC_CTYPE</symbol> at once.
+        Sets the default collation order and character classification in the
+        new database.  Collation affects the sort order applied to strings,
+        e.g., in queries with <literal>ORDER BY</literal>, as well as the order used in indexes
+        on text columns.  Character classification affects the categorization
+        of characters, e.g., lower, upper, and digit.  Also sets the
+        associated aspects of the operating system environment,
+        <literal>LC_COLLATE</literal> and <literal>LC_CTYPE</literal>.  The
+        default is the same setting as the template database.  See <xref
+        linkend="collation-managing-create-libc"/> and <xref
+        linkend="collation-managing-create-icu"/> for details.
+       </para>
+       <para>
+        Can be overridden by setting <xref
+        linkend="create-database-lc-collate"/>, <xref
+        linkend="create-database-lc-ctype"/>, or <xref
+        linkend="create-database-icu-locale"/> individually.
        </para>
        <tip>
         <para>
@@ -164,11 +178,17 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <term><replaceable class="parameter">lc_collate</replaceable></term>
       <listitem>
        <para>
-        Collation order (<literal>LC_COLLATE</literal>) to use in the new database.
-        This affects the sort order applied to strings, e.g., in queries with
-        ORDER BY, as well as the order used in indexes on text columns.
-        The default is to use the collation order of the template database.
-        See below for additional restrictions.
+        Sets <literal>LC_COLLATE</literal> in the database server's operating
+        system environment.  The default is the setting of <xref
+        linkend="create-database-locale"/> if specified, otherwise the same
+        setting as the template database.  See below for additional
+        restrictions.
+       </para>
+       <para>
+        If <xref linkend="create-database-locale-provider"/> is
+        <literal>libc</literal>, also sets the default collation order to use
+        in the new database, overriding the setting <xref
+        linkend="create-database-locale"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -176,10 +196,17 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <term><replaceable class="parameter">lc_ctype</replaceable></term>
       <listitem>
        <para>
-        Character classification (<literal>LC_CTYPE</literal>) to use in the new
-        database. This affects the categorization of characters, e.g., lower,
-        upper and digit. The default is to use the character classification of
-        the template database. See below for additional restrictions.
+        Sets <literal>LC_CTYPE</literal> in the database server's operating
+        system environment.  The default is the setting of <xref
+        linkend="create-database-locale"/> if specified, otherwise the same
+        setting as the template database.  See below for additional
+        restrictions.
+       </para>
+       <para>
+        If <xref linkend="create-database-locale-provider"/> is
+        <literal>libc</literal>, also sets the default character
+        classification to use in the new database, overriding the setting
+        <xref linkend="create-database-locale"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -188,7 +215,13 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <term><replaceable class="parameter">icu_locale</replaceable></term>
       <listitem>
        <para>
-        Specifies the ICU locale ID if the ICU locale provider is used.
+        Specifies the ICU locale (see <xref
+        linkend="collation-managing-create-icu"/>) for the database default
+        collation order and character classification, overriding the setting
+        <xref linkend="create-database-locale"/>.  The <link
+        linkend="create-database-locale-provider">locale provider</link> must be ICU.  The default
+        is the setting of <xref linkend="create-database-locale"/> if
+        specified; otherwise the same setting as the template database.
        </para>
       </listitem>
      </varlistentry>

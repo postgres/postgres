@@ -111,6 +111,17 @@ if ($ENV{with_icu} eq 'yes')
 		],
 		'option --icu-locale');
 
+	command_like(
+		[
+			'initdb', '--no-sync', '-A', 'trust',
+			'--locale-provider=icu', '--locale=und',
+			'--lc-collate=C', '--lc-ctype=C', '--lc-messages=C',
+			'--lc-numeric=C', '--lc-monetary=C', '--lc-time=C',
+			"$tempdir/data4"
+		],
+		qr/^\s+ICU locale:\s+und\n/ms,
+		'options --locale-provider=icu --locale=und --lc-*=C');
+
 	command_fails_like(
 		[
 			'initdb', '--no-sync',

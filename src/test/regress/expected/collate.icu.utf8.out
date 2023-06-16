@@ -1194,9 +1194,9 @@ SELECT 'coté' < 'côte' COLLATE "und-x-icu", 'coté' > 'côte' COLLATE testcoll
 (1 row)
 
 CREATE COLLATION testcoll_lower_first (provider = icu, locale = '@colCaseFirst=lower');
-NOTICE:  using standard form "und-u-kf-lower" for locale "@colCaseFirst=lower"
+NOTICE:  using standard form "und-u-kf-lower" for ICU locale "@colCaseFirst=lower"
 CREATE COLLATION testcoll_upper_first (provider = icu, locale = '@colCaseFirst=upper');
-NOTICE:  using standard form "und-u-kf-upper" for locale "@colCaseFirst=upper"
+NOTICE:  using standard form "und-u-kf-upper" for ICU locale "@colCaseFirst=upper"
 SELECT 'aaa' < 'AAA' COLLATE testcoll_lower_first, 'aaa' > 'AAA' COLLATE testcoll_upper_first;
  ?column? | ?column? 
 ----------+----------
@@ -1204,7 +1204,7 @@ SELECT 'aaa' < 'AAA' COLLATE testcoll_lower_first, 'aaa' > 'AAA' COLLATE testcol
 (1 row)
 
 CREATE COLLATION testcoll_shifted (provider = icu, locale = '@colAlternate=shifted');
-NOTICE:  using standard form "und-u-ka-shifted" for locale "@colAlternate=shifted"
+NOTICE:  using standard form "und-u-ka-shifted" for ICU locale "@colAlternate=shifted"
 SELECT 'de-luge' < 'deanza' COLLATE "und-x-icu", 'de-luge' > 'deanza' COLLATE testcoll_shifted;
  ?column? | ?column? 
 ----------+----------
@@ -1221,12 +1221,12 @@ SELECT 'A-21' > 'A-123' COLLATE "und-x-icu", 'A-21' < 'A-123' COLLATE testcoll_n
 (1 row)
 
 CREATE COLLATION testcoll_error1 (provider = icu, locale = '@colNumeric=lower');
-NOTICE:  using standard form "und-u-kn-lower" for locale "@colNumeric=lower"
+NOTICE:  using standard form "und-u-kn-lower" for ICU locale "@colNumeric=lower"
 ERROR:  could not open collator for locale "und-u-kn-lower": U_ILLEGAL_ARGUMENT_ERROR
 -- test that attributes not handled by icu_set_collation_attributes()
 -- (handled by ucol_open() directly) also work
 CREATE COLLATION testcoll_de_phonebook (provider = icu, locale = 'de@collation=phonebook');
-NOTICE:  using standard form "de-u-co-phonebk" for locale "de@collation=phonebook"
+NOTICE:  using standard form "de-u-co-phonebk" for ICU locale "de@collation=phonebook"
 SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE testcoll_de_phonebook;
  ?column? | ?column? 
 ----------+----------
@@ -1235,7 +1235,7 @@ SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE tes
 
 -- rules
 CREATE COLLATION testcoll_rules1 (provider = icu, locale = '', rules = '&a < g');
-NOTICE:  using standard form "und" for locale ""
+NOTICE:  using standard form "und" for ICU locale ""
 CREATE TABLE test7 (a text);
 -- example from https://unicode-org.github.io/icu/userguide/collation/customization/#syntax
 INSERT INTO test7 VALUES ('Abernathy'), ('apple'), ('bird'), ('Boston'), ('Graham'), ('green');
@@ -1263,13 +1263,13 @@ SELECT * FROM test7 ORDER BY a COLLATE testcoll_rules1;
 
 DROP TABLE test7;
 CREATE COLLATION testcoll_rulesx (provider = icu, locale = '', rules = '!!wrong!!');
-NOTICE:  using standard form "und" for locale ""
+NOTICE:  using standard form "und" for ICU locale ""
 ERROR:  could not open collator for locale "und" with rules "!!wrong!!": U_INVALID_FORMAT_ERROR
 -- nondeterministic collations
 CREATE COLLATION ctest_det (provider = icu, locale = '', deterministic = true);
-NOTICE:  using standard form "und" for locale ""
+NOTICE:  using standard form "und" for ICU locale ""
 CREATE COLLATION ctest_nondet (provider = icu, locale = '', deterministic = false);
-NOTICE:  using standard form "und" for locale ""
+NOTICE:  using standard form "und" for ICU locale ""
 CREATE TABLE test6 (a int, b text);
 -- same string in different normal forms
 INSERT INTO test6 VALUES (1, U&'\00E4bc');
@@ -1319,9 +1319,9 @@ SELECT * FROM test6a WHERE b = ARRAY['äbc'] COLLATE ctest_nondet;
 (2 rows)
 
 CREATE COLLATION case_sensitive (provider = icu, locale = '');
-NOTICE:  using standard form "und" for locale ""
+NOTICE:  using standard form "und" for ICU locale ""
 CREATE COLLATION case_insensitive (provider = icu, locale = '@colStrength=secondary', deterministic = false);
-NOTICE:  using standard form "und-u-ks-level2" for locale "@colStrength=secondary"
+NOTICE:  using standard form "und-u-ks-level2" for ICU locale "@colStrength=secondary"
 SELECT 'abc' <= 'ABC' COLLATE case_sensitive, 'abc' >= 'ABC' COLLATE case_sensitive;
  ?column? | ?column? 
 ----------+----------

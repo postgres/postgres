@@ -116,9 +116,10 @@ PostgreSQL documentation
   <para>
    To choose a different locale for the cluster, use the option
    <option>--locale</option>.  There are also individual options
-   <option>--lc-*</option> (see below) to set values for the individual locale
-   categories.  Note that inconsistent settings for different locale
-   categories can give nonsensical results, so this should be used with care.
+   <option>--lc-*</option> and <option>--icu-locale</option> (see below) to
+   set values for the individual locale categories.  Note that inconsistent
+   settings for different locale categories can give nonsensical results, so
+   this should be used with care.
   </para>
 
   <para>

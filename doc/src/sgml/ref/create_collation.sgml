@@ -85,9 +85,16 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
 
      <listitem>
       <para>
-       This is a shortcut for setting <symbol>LC_COLLATE</symbol>
-       and <symbol>LC_CTYPE</symbol> at once.  If you specify this,
-       you cannot specify either of those parameters.
+       The locale name for this collation. See <xref
+       linkend="collation-managing-create-libc"/> and <xref
+       linkend="collation-managing-create-icu"/> for details.
+      </para>
+      <para>
+       If <replaceable>provider</replaceable> is <literal>libc</literal>, this
+       is a shortcut for setting <symbol>LC_COLLATE</symbol> and
+       <symbol>LC_CTYPE</symbol> at once.  If you specify
+       <replaceable>locale</replaceable>, you cannot specify either of those
+       parameters.
       </para>
      </listitem>
     </varlistentry>
@@ -97,8 +104,9 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
 
      <listitem>
       <para>
-       Use the specified operating system locale for
-       the <symbol>LC_COLLATE</symbol> locale category.
+       If <replaceable>provider</replaceable> is <literal>libc</literal>, use
+       the specified operating system locale for the
+       <symbol>LC_COLLATE</symbol> locale category.
       </para>
      </listitem>
     </varlistentry>
@@ -108,8 +116,9 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
 
      <listitem>
       <para>
-       Use the specified operating system locale for
-       the <symbol>LC_CTYPE</symbol> locale category.
+       If <replaceable>provider</replaceable> is <literal>libc</literal>, use
+       the specified operating system locale for the <symbol>LC_CTYPE</symbol>
+       locale category.
       </para>
      </listitem>
     </varlistentry>

@@ -276,7 +276,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 				if (langtag && strcmp(colliculocale, langtag) != 0)
 				{
 					ereport(NOTICE,
-							(errmsg("using standard form \"%s\" for locale \"%s\"",
+							(errmsg("using standard form \"%s\" for ICU locale \"%s\"",
 									langtag, colliculocale)));
 
 					colliculocale = langtag;

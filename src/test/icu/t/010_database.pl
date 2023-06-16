@@ -51,17 +51,36 @@ b),
 	'sort by explicit collation upper first');
 
 
-# Test error cases in CREATE DATABASE involving locale-related options
+# Test that LOCALE='C' works for ICU
+is( $node1->psql(
+		'postgres',
+		q{CREATE DATABASE dbicu1 LOCALE_PROVIDER icu LOCALE 'C' TEMPLATE template0 ENCODING UTF8}
+	),
+	0,
+	"C locale works for ICU");
 
-my ($ret, $stdout, $stderr) = $node1->psql('postgres',
-	q{CREATE DATABASE dbicu LOCALE_PROVIDER icu LOCALE 'C' TEMPLATE template0 ENCODING UTF8}
-);
+# Test that LOCALE works for ICU locales if LC_COLLATE and LC_CTYPE
+# are specified
+is( $node1->psql(
+		'postgres',
+		q{CREATE DATABASE dbicu2 LOCALE_PROVIDER icu LOCALE '@colStrength=primary'
+      LC_COLLATE='C' LC_CTYPE='C' TEMPLATE template0 ENCODING UTF8}
+	),
+	0,
+	"LOCALE works for ICU locales if LC_COLLATE and LC_CTYPE are specified");
+
+# Test that ICU-specific LOCALE without LC_COLLATE and LC_CTYPE must
+# be specified with ICU_LOCALE
+my ($ret, $stdout, $stderr) = $node1->psql(
+	'postgres',
+	q{CREATE DATABASE dbicu3 LOCALE_PROVIDER icu LOCALE '@colStrength=primary'
+      TEMPLATE template0 ENCODING UTF8});
 isnt($ret, 0,
-	"ICU locale must be specified for ICU provider: exit code not 0");
+	"ICU-specific locale must be specified with ICU_LOCALE: exit code not 0");
 like(
 	$stderr,
-	qr/ERROR:  ICU locale must be specified/,
-	"ICU locale must be specified for ICU provider: error message");
+	qr/ERROR:  invalid LC_COLLATE locale name/,
+	"ICU-specific locale must be specified with ICU_LOCALE: error message");
 
 
 done_testing();
