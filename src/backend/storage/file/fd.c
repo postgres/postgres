@@ -415,10 +415,18 @@ pg_fsync(int fd)
 int
 pg_fsync_no_writethrough(int fd)
 {
-	if (enableFsync)
-		return fsync(fd);
-	else
+	int		rc;
+
+	if (!enableFsync)
 		return 0;
+
+retry:
+	rc = fsync(fd);
+
+	if (rc == -1 && errno == EINTR)
+		goto retry;
+
+	return rc;
 }
 
 /*
@@ -448,10 +456,18 @@ pg_fsync_writethrough(int fd)
 int
 pg_fdatasync(int fd)
 {
-	if (enableFsync)
-		return fdatasync(fd);
-	else
+	int		rc;
+
+	if (!enableFsync)
 		return 0;
+
+retry:
+	rc = fdatasync(fd);
+
+	if (rc == -1 && errno == EINTR)
+		goto retry;
+
+	return rc;
 }
 
 /*
@@ -483,6 +499,7 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 		if (not_implemented_by_kernel)
 			return;
 
+retry:
 		/*
 		 * sync_file_range(SYNC_FILE_RANGE_WRITE), currently linux specific,
 		 * tells the OS that writeback for the specified blocks should be
@@ -497,6 +514,9 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 		if (rc != 0)
 		{
 			int			elevel;
+
+			if (rc == EINTR)
+				goto retry;
 
 			/*
 			 * For systems that don't have an implementation of
@@ -630,31 +650,53 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 }
 
 /*
+ * Truncate an open file to a given length.
+ */
+static int
+pg_ftruncate(int fd, off_t length)
+{
+	int			ret;
+
+retry:
+	ret = ftruncate(fd, length);
+
+	if (ret == -1 && errno == EINTR)
+		goto retry;
+
+	return ret;
+}
+
+/*
  * Truncate a file to a given length by name.
  */
 int
 pg_truncate(const char *path, off_t length)
 {
+	int			ret;
 #ifdef WIN32
 	int			save_errno;
-	int			ret;
 	int			fd;
 
 	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
 	if (fd >= 0)
 	{
-		ret = ftruncate(fd, length);
+		ret = pg_ftruncate(fd, length);
 		save_errno = errno;
 		CloseTransientFile(fd);
 		errno = save_errno;
 	}
 	else
 		ret = -1;
+#else
+
+retry:
+	ret = truncate(path, length);
+
+	if (ret == -1 && errno == EINTR)
+		goto retry;
+#endif
 
 	return ret;
-#else
-	return truncate(path, length);
-#endif
 }
 
 /*
@@ -2001,10 +2043,14 @@ FilePrefetch(File file, off_t offset, off_t amount, uint32 wait_event_info)
 	if (returnCode < 0)
 		return returnCode;
 
+retry:
 	pgstat_report_wait_start(wait_event_info);
 	returnCode = posix_fadvise(VfdCache[file].fd, offset, amount,
 							   POSIX_FADV_WILLNEED);
 	pgstat_report_wait_end();
+
+	if (returnCode == EINTR)
+		goto retry;
 
 	return returnCode;
 #else
@@ -2281,12 +2327,15 @@ FileFallocate(File file, off_t offset, off_t amount, uint32 wait_event_info)
 	if (returnCode < 0)
 		return -1;
 
+retry:
 	pgstat_report_wait_start(wait_event_info);
 	returnCode = posix_fallocate(VfdCache[file].fd, offset, amount);
 	pgstat_report_wait_end();
 
 	if (returnCode == 0)
 		return 0;
+	else if (returnCode == EINTR)
+		goto retry;
 
 	/* for compatibility with %m printing etc */
 	errno = returnCode;
@@ -2334,7 +2383,7 @@ FileTruncate(File file, off_t offset, uint32 wait_event_info)
 		return returnCode;
 
 	pgstat_report_wait_start(wait_event_info);
-	returnCode = ftruncate(VfdCache[file].fd, offset);
+	returnCode = pg_ftruncate(VfdCache[file].fd, offset);
 	pgstat_report_wait_end();
 
 	if (returnCode == 0 && VfdCache[file].fileSize > offset)
