@@ -6503,6 +6503,23 @@ left join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
          Output: j2.id1, j2.id2
 (8 rows)
 
+create unique index j1_id2_idx on j1(id2) where id2 is not null;
+-- ensure we don't use a partial unique index as unique proofs
+explain (verbose, costs off)
+select * from j1
+inner join j2 on j1.id2 = j2.id2;
+                QUERY PLAN                
+------------------------------------------
+ Nested Loop
+   Output: j1.id1, j1.id2, j2.id1, j2.id2
+   Join Filter: (j1.id2 = j2.id2)
+   ->  Seq Scan on public.j2
+         Output: j2.id1, j2.id2
+   ->  Seq Scan on public.j1
+         Output: j1.id1, j1.id2
+(7 rows)
+
+drop index j1_id2_idx;
 -- validate logic in merge joins which skips mark and restore.
 -- it should only do this if all quals which were used to detect the unique
 -- are present as join quals, and not plain quals.
