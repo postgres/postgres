@@ -32,7 +32,9 @@ sub configure_and_reload
 
 # Setup london node
 my $node_london = get_new_node("london");
-$node_london->init(allows_streaming => 1);
+# Archiving is used to provide coverage with the creation of .partial segments
+# done at the end of recovery and the recovery of two-phase transactions.
+$node_london->init(allows_streaming => 1, has_archiving => 1);
 $node_london->append_conf(
 	'postgresql.conf', qq(
 	max_prepared_transactions = 10
