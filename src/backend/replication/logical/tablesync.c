@@ -1253,7 +1253,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	WalRcvExecResult *res;
 	char		originname[NAMEDATALEN];
 	RepOriginId originid;
-	UserContext	ucxt;
+	UserContext ucxt;
 	bool		must_use_password;
 	bool		run_as_owner;
 
@@ -1437,8 +1437,8 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	}
 
 	/*
-	 * Make sure that the copy command runs as the table owner, unless
-	 * the user has opted out of that behaviour.
+	 * Make sure that the copy command runs as the table owner, unless the
+	 * user has opted out of that behaviour.
 	 */
 	run_as_owner = MySubscription->runasowner;
 	if (!run_as_owner)
@@ -1482,7 +1482,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 						res->err)));
 	walrcv_clear_result(res);
 
-	if(!run_as_owner)
+	if (!run_as_owner)
 		RestoreUserContext(&ucxt);
 
 	table_close(rel, NoLock);

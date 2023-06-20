@@ -601,7 +601,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				values[26] = CStringGetTextDatum(beentry->st_gssstatus->gss_princ);
 				values[27] = BoolGetDatum(beentry->st_gssstatus->gss_enc);	/* GSS Encryption in use */
 				values[28] = BoolGetDatum(beentry->st_gssstatus->gss_delegation);	/* GSS credentials
-																				 * delegated */
+																					 * delegated */
 			}
 			else
 			{

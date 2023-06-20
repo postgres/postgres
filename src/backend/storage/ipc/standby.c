@@ -1197,9 +1197,9 @@ standby_redo(XLogReaderState *record)
 		/*
 		 * The startup process currently has no convenient way to schedule
 		 * stats to be reported. XLOG_RUNNING_XACTS records issued at a
-		 * regular cadence, making this a convenient location to report
-		 * stats. While these records aren't generated with wal_level=minimal,
-		 * stats also cannot be accessed during WAL replay.
+		 * regular cadence, making this a convenient location to report stats.
+		 * While these records aren't generated with wal_level=minimal, stats
+		 * also cannot be accessed during WAL replay.
 		 */
 		pgstat_report_stat(true);
 	}

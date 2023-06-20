@@ -89,12 +89,14 @@ if ($ENV{with_icu} eq 'yes')
 
 	$node2->command_ok(
 		[
-			'createdb', '-T', 'template0', '--locale-provider', 'icu',
-			'--locale', 'en', '--lc-collate', 'C', '--lc-ctype', 'C',
-			'foobar57'
+			'createdb', '-T',
+			'template0', '--locale-provider',
+			'icu', '--locale',
+			'en', '--lc-collate',
+			'C', '--lc-ctype',
+			'C', 'foobar57'
 		],
-		'create database with locale as ICU locale'
-	);
+		'create database with locale as ICU locale');
 }
 else
 {

@@ -415,7 +415,7 @@ pg_fsync(int fd)
 int
 pg_fsync_no_writethrough(int fd)
 {
-	int		rc;
+	int			rc;
 
 	if (!enableFsync)
 		return 0;
@@ -456,7 +456,7 @@ pg_fsync_writethrough(int fd)
 int
 pg_fdatasync(int fd)
 {
-	int		rc;
+	int			rc;
 
 	if (!enableFsync)
 		return 0;
@@ -500,6 +500,7 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 			return;
 
 retry:
+
 		/*
 		 * sync_file_range(SYNC_FILE_RANGE_WRITE), currently linux specific,
 		 * tells the OS that writeback for the specified blocks should be
