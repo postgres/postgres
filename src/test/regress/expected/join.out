@@ -2531,20 +2531,45 @@ select * from int4_tbl t1
     on s.f1 = t1.f1;
                    QUERY PLAN                    
 -------------------------------------------------
- Nested Loop Left Join
-   Join Filter: (t2.f1 > 1)
-   ->  Hash Right Join
-         Hash Cond: (t2.f1 = t1.f1)
+ Hash Right Join
+   Hash Cond: (t2.f1 = t1.f1)
+   ->  Nested Loop Left Join
+         Join Filter: (t2.f1 > 1)
          ->  Nested Loop Left Join
                Join Filter: (t2.f1 > 0)
                Filter: (t3.f1 IS NULL)
                ->  Seq Scan on int4_tbl t2
                ->  Materialize
                      ->  Seq Scan on int4_tbl t3
+         ->  Seq Scan on tenk1 t4
+   ->  Hash
+         ->  Seq Scan on int4_tbl t1
+(13 rows)
+
+explain (costs off)
+select * from int4_tbl t1
+  left join ((select t2.f1 from int4_tbl t2
+                left join int4_tbl t3 on t2.f1 > 0
+                where t2.f1 <> coalesce(t3.f1, -1)) s
+             left join tenk1 t4 on s.f1 > 1)
+    on s.f1 = t1.f1;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (t2.f1 > 1)
+   ->  Hash Right Join
+         Hash Cond: (t2.f1 = t1.f1)
+         ->  Nested Loop Left Join
+               Join Filter: (t2.f1 > 0)
+               Filter: (t2.f1 <> COALESCE(t3.f1, '-1'::integer))
+               ->  Seq Scan on int4_tbl t2
+               ->  Materialize
+                     ->  Seq Scan on int4_tbl t3
          ->  Hash
                ->  Seq Scan on int4_tbl t1
-   ->  Seq Scan on tenk1 t4
-(13 rows)
+   ->  Materialize
+         ->  Seq Scan on tenk1 t4
+(14 rows)
 
 explain (costs off)
 select * from onek t1

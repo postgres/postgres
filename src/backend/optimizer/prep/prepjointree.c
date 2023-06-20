@@ -3213,6 +3213,8 @@ remove_useless_result_rtes(PlannerInfo *root)
  * jtnode is the current jointree node.  If it could be valid to merge
  * its quals into those of the parent node, parent_quals should point to
  * the parent's quals list; otherwise, pass NULL for parent_quals.
+ * (Note that in some cases, parent_quals points to the quals of a parent
+ * more than one level up in the tree.)
  */
 static Node *
 remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
@@ -3316,13 +3318,22 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 		int			varno;
 
 		/*
-		 * First, recurse.  We can accept pushed-up FromExpr quals from either
-		 * child if the jointype is INNER, and we can accept them from the RHS
-		 * child if the jointype is LEFT.
+		 * First, recurse.  We can absorb pushed-up FromExpr quals from either
+		 * child into this node if the jointype is INNER, since then this is
+		 * equivalent to a FromExpr.  When the jointype is LEFT, we can absorb
+		 * quals from the RHS child into the current node, as they're
+		 * essentially degenerate quals of the outer join.  Moreover, if we've
+		 * been passed down a parent_quals pointer then we can allow quals of
+		 * the LHS child to be absorbed into the parent.  (This is important
+		 * to ensure we remove single-child FromExprs immediately below
+		 * commutable left joins.)  For other jointypes, we can't move child
+		 * quals up, or at least there's no particular reason to.
 		 */
 		j->larg = remove_useless_results_recurse(root, j->larg,
 												 (j->jointype == JOIN_INNER) ?
-												 &j->quals : NULL,
+												 &j->quals :
+												 (j->jointype == JOIN_LEFT) ?
+												 parent_quals : NULL,
 												 dropped_outer_joins);
 		j->rarg = remove_useless_results_recurse(root, j->rarg,
 												 (j->jointype == JOIN_INNER ||
