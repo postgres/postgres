@@ -109,8 +109,8 @@
        dirty read
        <indexterm><primary>dirty read</primary></indexterm>
       </term>
-     <listitem>
-      <para>
+      <listitem>
+       <para>
         A transaction reads data written by a concurrent uncommitted transaction.
        </para>
       </listitem>
@@ -121,8 +121,8 @@
        nonrepeatable read
        <indexterm><primary>nonrepeatable read</primary></indexterm>
       </term>
-     <listitem>
-      <para>
+      <listitem>
+       <para>
         A transaction re-reads data it has previously read and finds that data
         has been modified by another transaction (that committed since the
         initial read).
@@ -135,8 +135,8 @@
        phantom read
        <indexterm><primary>phantom read</primary></indexterm>
       </term>
-     <listitem>
-      <para>
+      <listitem>
+       <para>
         A transaction re-executes a query returning a set of rows that satisfy a
         search condition and finds that the set of rows satisfying the condition
         has changed due to another recently-committed transaction.
@@ -149,8 +149,8 @@
        serialization anomaly
        <indexterm><primary>serialization anomaly</primary></indexterm>
       </term>
-     <listitem>
-      <para>
+      <listitem>
+       <para>
         The result of successfully committing a group of transactions
         is inconsistent with all possible orderings of running those
         transactions one at a time.
@@ -1750,9 +1750,9 @@ SELECT pg_advisory_lock(q.id) FROM
      changes in the table.  A repeatable read transaction's snapshot is actually
      frozen at the start of its first query or data-modification command
      (<literal>SELECT</literal>, <literal>INSERT</literal>,
-     <literal>UPDATE</literal>, or <literal>DELETE</literal>), so
-     it is possible to obtain locks explicitly before the snapshot is
-     frozen.
+     <literal>UPDATE</literal>, <literal>DELETE</literal>, or
+     <literal>MERGE</literal>), so it is possible to obtain locks explicitly
+     before the snapshot is frozen.
     </para>
    </sect2>
   </sect1>
