@@ -5689,7 +5689,11 @@ StartupXLOG(void)
 	TrimCLOG();
 	TrimMultiXact();
 
-	/* Reload shared-memory state for prepared transactions */
+	/*
+	 * Reload shared-memory state for prepared transactions.  This needs to
+	 * happen before renaming the last partial segment of the old timeline as
+	 * it may be possible that we have to recovery some transactions from it.
+	 */
 	RecoverPreparedTransactions();
 
 	/* Shut down xlogreader */
