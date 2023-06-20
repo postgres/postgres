@@ -2625,6 +2625,23 @@ select * from int8_tbl t1
 (7 rows)
 
 explain (costs off)
+select * from int8_tbl t1
+    left join int8_tbl t2 on true
+    left join lateral
+      (select t2.q1 from int8_tbl t3) s
+      on t2.q1 = 1;
+                QUERY PLAN                 
+-------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on int8_tbl t1
+   ->  Materialize
+         ->  Nested Loop Left Join
+               Join Filter: (t2.q1 = 1)
+               ->  Seq Scan on int8_tbl t2
+               ->  Seq Scan on int8_tbl t3
+(7 rows)
+
+explain (costs off)
 select * from onek t1
     left join onek t2 on true
     left join lateral

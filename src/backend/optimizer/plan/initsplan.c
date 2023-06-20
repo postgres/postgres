@@ -580,12 +580,22 @@ create_lateral_join_info(PlannerInfo *root)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
 		Relids		eval_at = phinfo->ph_eval_at;
+		Relids		lateral_refs;
 		int			varno;
 
 		if (phinfo->ph_lateral == NULL)
 			continue;			/* PHV is uninteresting if no lateral refs */
 
 		found_laterals = true;
+
+		/*
+		 * Include only baserels not outer joins in the evaluation sites'
+		 * lateral relids.  This avoids problems when outer join order gets
+		 * rearranged, and it should still ensure that the lateral values are
+		 * available when needed.
+		 */
+		lateral_refs = bms_intersect(phinfo->ph_lateral, root->all_baserels);
+		Assert(!bms_is_empty(lateral_refs));
 
 		if (bms_get_singleton_member(eval_at, &varno))
 		{
@@ -594,10 +604,10 @@ create_lateral_join_info(PlannerInfo *root)
 
 			brel->direct_lateral_relids =
 				bms_add_members(brel->direct_lateral_relids,
-								phinfo->ph_lateral);
+								lateral_refs);
 			brel->lateral_relids =
 				bms_add_members(brel->lateral_relids,
-								phinfo->ph_lateral);
+								lateral_refs);
 		}
 		else
 		{
@@ -610,7 +620,7 @@ create_lateral_join_info(PlannerInfo *root)
 				if (brel == NULL)
 					continue;	/* ignore outer joins in eval_at */
 				brel->lateral_relids = bms_add_members(brel->lateral_relids,
-													   phinfo->ph_lateral);
+													   lateral_refs);
 			}
 		}
 	}
