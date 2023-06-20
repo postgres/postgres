@@ -115,7 +115,7 @@ static void vac_truncate_clog(TransactionId frozenXID,
 							  TransactionId lastSaneFrozenXid,
 							  MultiXactId lastSaneMinMulti);
 static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
-					   bool skip_privs, BufferAccessStrategy bstrategy);
+					   BufferAccessStrategy bstrategy);
 static double compute_parallel_delay(void);
 static VacOptValue get_vacoptval_from_boolean(DefElem *def);
 static bool vac_tid_reaped(ItemPointer itemptr, void *state);
@@ -620,8 +620,7 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 
 			if (params->options & VACOPT_VACUUM)
 			{
-				if (!vacuum_rel(vrel->oid, vrel->relation, params, false,
-								bstrategy))
+				if (!vacuum_rel(vrel->oid, vrel->relation, params, bstrategy))
 					continue;
 			}
 
@@ -711,6 +710,13 @@ vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
 	char	   *relname;
 
 	Assert((options & (VACOPT_VACUUM | VACOPT_ANALYZE)) != 0);
+
+	/*
+	 * Privilege checks are bypassed in some cases (e.g., when recursing to a
+	 * relation's TOAST table).
+	 */
+	if (options & VACOPT_SKIP_PRIVS)
+		return true;
 
 	/*----------
 	 * A role has privileges to vacuum or analyze the relation if any of the
@@ -1953,7 +1959,7 @@ vac_truncate_clog(TransactionId frozenXID,
  */
 static bool
 vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
-		   bool skip_privs, BufferAccessStrategy bstrategy)
+		   BufferAccessStrategy bstrategy)
 {
 	LOCKMODE	lmode;
 	Relation	rel;
@@ -2040,10 +2046,9 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 * happen across multiple transactions where privileges could have changed
 	 * in-between.  Make sure to only generate logs for VACUUM in this case.
 	 */
-	if (!skip_privs &&
-		!vacuum_is_permitted_for_relation(RelationGetRelid(rel),
+	if (!vacuum_is_permitted_for_relation(RelationGetRelid(rel),
 										  rel->rd_rel,
-										  params->options & VACOPT_VACUUM))
+										  params->options & ~VACOPT_ANALYZE))
 	{
 		relation_close(rel, lmode);
 		PopActiveSnapshot();
@@ -2229,11 +2234,16 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	{
 		VacuumParams toast_vacuum_params;
 
-		/* force VACOPT_PROCESS_MAIN so vacuum_rel() processes it */
+		/*
+		 * Force VACOPT_PROCESS_MAIN so vacuum_rel() processes it.  Likewise,
+		 * set VACOPT_SKIP_PRIVS since privileges on the main relation are
+		 * sufficient to process it.
+		 */
 		memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
 		toast_vacuum_params.options |= VACOPT_PROCESS_MAIN;
+		toast_vacuum_params.options |= VACOPT_SKIP_PRIVS;
 
-		vacuum_rel(toast_relid, NULL, &toast_vacuum_params, true, bstrategy);
+		vacuum_rel(toast_relid, NULL, &toast_vacuum_params, bstrategy);
 	}
 
 	/*
