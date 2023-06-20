@@ -47,5 +47,6 @@ tests += {
       'test_extensions',
       'test_extdepend',
     ],
+    'regress_args': ['--no-locale', '--encoding=UTF8'],
   },
 }
