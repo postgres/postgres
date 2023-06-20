@@ -2630,6 +2630,11 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 							  &context);
 			break;
 
+		case T_Hash:
+			finalize_primnode((Node *) ((Hash *) plan)->hashkeys,
+							  &context);
+			break;
+
 		case T_Limit:
 			finalize_primnode(((Limit *) plan)->limitOffset,
 							  &context);
@@ -2725,7 +2730,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 			break;
 
 		case T_ProjectSet:
-		case T_Hash:
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
