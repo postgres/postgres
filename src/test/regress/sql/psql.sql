@@ -119,6 +119,14 @@ SELECT 1 AS x, 'Hello', 2 AS y, true AS "dirty\name"
 -- all on one line
 SELECT 3 AS x, 'Hello', 4 AS y, true AS "dirty\name" \gdesc \g
 
+-- test for server bug #17983 with empty statement in aborted transaction
+set search_path = default;
+begin;
+bogus;
+;
+\gdesc
+rollback;
+
 -- \gexec
 
 create temporary table gexec_test(a int, b text, c date, d float);

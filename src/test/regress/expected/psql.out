@@ -237,6 +237,17 @@ SELECT 3 AS x, 'Hello', 4 AS y, true AS "dirty\name" \gdesc \g
  3 | Hello    | 4 | t
 (1 row)
 
+-- test for server bug #17983 with empty statement in aborted transaction
+set search_path = default;
+begin;
+bogus;
+ERROR:  syntax error at or near "bogus"
+LINE 1: bogus;
+        ^
+;
+\gdesc
+The command has no result, or the result has no columns.
+rollback;
 -- \gexec
 create temporary table gexec_test(a int, b text, c date, d float);
 select format('create index on gexec_test(%I)', attname)
