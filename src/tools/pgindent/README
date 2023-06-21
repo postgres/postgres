@@ -45,7 +45,7 @@ DOING THE INDENT RUN:
 
 4) Indent the Perl code using perltidy:
 
-	src/tools/pgindent/pgperltidy
+	src/tools/pgindent/pgperltidy .
 
    If you want to use some perltidy version that's not in your PATH,
    first set the PERLTIDY environment variable to point to it.

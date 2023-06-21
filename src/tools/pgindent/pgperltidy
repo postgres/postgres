@@ -9,4 +9,4 @@ PERLTIDY=${PERLTIDY:-perltidy}
 
 . src/tools/perlcheck/find_perl_files
 
-find_perl_files | xargs $PERLTIDY --profile=src/tools/pgindent/perltidyrc
+find_perl_files "$@" | xargs $PERLTIDY --profile=src/tools/pgindent/perltidyrc

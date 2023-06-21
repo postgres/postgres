@@ -14,7 +14,7 @@ PERLCRITIC=${PERLCRITIC:-perlcritic}
 
 . src/tools/perlcheck/find_perl_files
 
-find_perl_files | xargs $PERLCRITIC \
+find_perl_files "$@" | xargs $PERLCRITIC \
 	  --quiet \
 	  --program-extensions .pl \
 	  --profile=src/tools/perlcheck/perlcriticrc

@@ -3,11 +3,15 @@
 # shell function to find all perl files in the source tree
 
 find_perl_files () {
+	if [ $# -eq 0 ]; then
+		echo 'No files to process' 1>&2
+		return
+	fi
     {
 		# take all .pl and .pm files
-		find . -type f -name '*.p[lm]' -print
+		find "$@" -type f -name '*.p[lm]' -print
 		# take executable files that file(1) thinks are perl files
-		find . -type f -perm -100 -exec file {} \; -print |
+		find "$@" -type f -perm -100 -exec file {} \; -print |
 		egrep -i ':.*perl[0-9]*\>' |
 		cut -d: -f1
 	} | sort -u | grep -v '^\./\.git/'
