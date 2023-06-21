@@ -1578,7 +1578,8 @@ ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err)
 			 errmsg("could not connect to publisher when attempting to "
 					"drop replication slot \"%s\": %s", slotname, err),
 	/* translator: %s is an SQL ALTER command */
-			 errhint("Use %s to disassociate the subscription from the slot.",
+			 errhint("Use %s to disable the subscription, and then use %s to disassociate it from the slot.",
+					 "ALTER SUBSCRIPTION ... DISABLE",
 					 "ALTER SUBSCRIPTION ... SET (slot_name = NONE)")));
 }
 
