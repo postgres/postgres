@@ -78,9 +78,11 @@
 /*
  * We must skip "overhead" operations that involve database access when the
  * cached plan's subject statement is a transaction control command.
+ * For the convenience of postgres.c, treat empty statements as control
+ * commands too.
  */
 #define IsTransactionStmtPlan(plansource)  \
-	((plansource)->raw_parse_tree && \
+	((plansource)->raw_parse_tree == NULL || \
 	 IsA((plansource)->raw_parse_tree->stmt, TransactionStmt))
 
 /*
