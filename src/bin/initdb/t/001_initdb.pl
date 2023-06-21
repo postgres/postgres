@@ -103,6 +103,11 @@ SKIP:
 
 if ($ENV{with_icu} eq 'yes')
 {
+	command_fails_like(
+		[ 'initdb', '--no-sync', '--locale-provider=icu', "$tempdir/data2" ],
+		qr/initdb: error: ICU locale must be specified/,
+		'locale provider ICU requires --icu-locale');
+
 	command_ok(
 		[
 			'initdb', '--no-sync',

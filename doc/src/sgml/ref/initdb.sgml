@@ -93,24 +93,10 @@ PostgreSQL documentation
   </para>
 
   <para>
-   By default, <command>initdb</command> uses the ICU library to provide
-   locale services if the server was built with ICU support; otherwise it uses
-   the <literal>libc</literal> locale provider (see <xref
-   linkend="locale-providers"/>). To choose the specific ICU locale ID to
-   apply, use the option <option>--icu-locale</option>.  Note that for
-   implementation reasons and to support legacy code,
-   <command>initdb</command> will still select and initialize libc locale
-   settings when the ICU locale provider is used.
-  </para>
-
-  <para>
-   Alternatively, <command>initdb</command> can use the locale provider
-   <literal>libc</literal>. To select this option, specify
-   <literal>--locale-provider=libc</literal>, or build the server without ICU
-   support. The <literal>libc</literal> locale provider takes the locale
-   settings from the environment, and determines the encoding from the locale
-   settings.  This is almost always sufficient, unless there are special
-   requirements.
+   By default, <command>initdb</command> uses the locale provider
+   <literal>libc</literal> (see <xref linkend="locale-providers"/>). The
+   <literal>libc</literal> locale provider takes the locale settings from the
+   environment, and determines the encoding from the locale settings.
   </para>
 
   <para>
@@ -120,6 +106,16 @@ PostgreSQL documentation
    set values for the individual locale categories.  Note that inconsistent
    settings for different locale categories can give nonsensical results, so
    this should be used with care.
+  </para>
+
+  <para>
+   Alternatively, <command>initdb</command> can use the ICU library to provide
+   locale services by specifying <literal>--locale-provider=icu</literal>. The
+   server must be built with ICU support. To choose the specific ICU locale ID
+   to apply, use the option <option>--icu-locale</option>.  Note that for
+   implementation reasons and to support legacy code,
+   <command>initdb</command> will still select and initialize libc locale
+   settings when the ICU locale provider is used.
   </para>
 
   <para>
@@ -251,11 +247,6 @@ PostgreSQL documentation
         Specifies the ICU locale when the ICU provider is used. Locale support
         is described in <xref linkend="locale"/>.
        </para>
-       <para>
-        If this option is not specified, the locale is inherited from the
-        environment in which <command>initdb</command> runs. The environment's
-        locale is matched to a similar ICU locale name, if possible.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -330,9 +321,8 @@ PostgreSQL documentation
         This option sets the locale provider for databases created in the new
         cluster.  It can be overridden in the <command>CREATE
         DATABASE</command> command when new databases are subsequently
-        created.  The default is <literal>icu</literal> if the server was
-        built with ICU support; otherwise the default is
-        <literal>libc</literal> (see <xref linkend="locale-providers"/>).
+        created.  The default is <literal>libc</literal> (see <xref
+        linkend="locale-providers"/>).
        </para>
       </listitem>
      </varlistentry>

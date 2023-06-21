@@ -143,11 +143,7 @@ static char *lc_monetary = NULL;
 static char *lc_numeric = NULL;
 static char *lc_time = NULL;
 static char *lc_messages = NULL;
-#ifdef USE_ICU
-static char locale_provider = COLLPROVIDER_ICU;
-#else
 static char locale_provider = COLLPROVIDER_LIBC;
-#endif
 static char *icu_locale = NULL;
 static char *icu_rules = NULL;
 static const char *default_text_search_config = NULL;
@@ -2358,19 +2354,6 @@ icu_validate_locale(const char *loc_str)
 }
 
 /*
- * Determine the default ICU locale
- */
-static char *
-default_icu_locale(void)
-{
-#ifdef USE_ICU
-	return pg_strdup(uloc_getDefault());
-#else
-	pg_fatal("ICU is not supported in this build");
-#endif
-}
-
-/*
  * set up the locale variables
  *
  * assumes we have called setlocale(LC_ALL, "") -- see set_pglocale_pgservice
@@ -2429,10 +2412,7 @@ setlocales(void)
 
 		/* acquire default locale from the environment, if not specified */
 		if (icu_locale == NULL)
-		{
-			icu_locale = default_icu_locale();
-			printf(_("Using default ICU locale \"%s\".\n"), icu_locale);
-		}
+			pg_fatal("ICU locale must be specified");
 
 		/* canonicalize to a language tag */
 		langtag = icu_language_tag(icu_locale);
@@ -3273,7 +3253,6 @@ main(int argc, char *argv[])
 				break;
 			case 8:
 				locale = "C";
-				locale_provider = COLLPROVIDER_LIBC;
 				break;
 			case 9:
 				pwfilename = pg_strdup(optarg);

@@ -12,7 +12,7 @@ if ($ENV{with_icu} ne 'yes')
 }
 
 my $node1 = PostgreSQL::Test::Cluster->new('node1');
-$node1->init(extra => ['--locale-provider=libc']);
+$node1->init;
 $node1->start;
 
 $node1->safe_psql('postgres',
