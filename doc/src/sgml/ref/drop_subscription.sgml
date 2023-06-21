@@ -84,9 +84,11 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
    for the subscription on the remote host are released.  If this fails,
    either because the remote host is not reachable or because the remote
    replication slot cannot be dropped or does not exist or never existed,
-   the <command>DROP SUBSCRIPTION</command> command will fail.  To proceed in
-   this situation, disassociate the subscription from the replication slot by
-   executing <literal>ALTER SUBSCRIPTION ... SET (slot_name = NONE)</literal>.
+   the <command>DROP SUBSCRIPTION</command> command will fail.  To proceed
+   in this situation, first disable the subscription by executing
+   <literal>ALTER SUBSCRIPTION ... DISABLE</literal>, and then disassociate
+   it from the replication slot by executing
+   <literal>ALTER SUBSCRIPTION ... SET (slot_name = NONE)</literal>.
    After that, <command>DROP SUBSCRIPTION</command> will no longer attempt any
    actions on a remote host.  Note that if the remote replication slot still
    exists, it should then be dropped manually; otherwise it will continue to
