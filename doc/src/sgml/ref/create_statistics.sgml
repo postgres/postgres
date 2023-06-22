@@ -127,6 +127,12 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
    reading it.  Once created, however, the ownership of the statistics
    object is independent of the underlying table(s).
   </para>
+
+  <para>
+   Extended statistics are not currently used by the planner for selectivity
+   estimations made for table joins.  This limitation will likely be removed
+   in a future version of <productname>PostgreSQL</productname>.
+  </para>
  </refsect1>
 
  <refsect1 id="sql-createstatistics-examples">
