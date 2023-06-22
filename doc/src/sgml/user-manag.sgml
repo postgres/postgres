@@ -692,7 +692,8 @@ DROP ROLE doomed_role;
        <link linkend="sql-refreshmaterializedview"><command>REFRESH MATERIALIZED VIEW</command></link>,
        <link linkend="sql-reindex"><command>REINDEX</command></link>,
        and <link linkend="sql-lock"><command>LOCK TABLE</command></link> on all
-       relations.</entry>
+       relations, as if having <literal>MAINTAIN</literal> rights on those
+       objects, even without having it explicitly.</entry>
       </row>
       <row>
        <entry>pg_use_reserved_connections</entry>
