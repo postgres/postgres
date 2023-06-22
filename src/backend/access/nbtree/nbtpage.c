@@ -1610,9 +1610,19 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	itemid = PageGetItemId(page, nextoffset);
 	itup = (IndexTuple) PageGetItem(page, itemid);
 	if (BTreeInnerTupleGetDownLink(itup) != rightsib)
-		elog(ERROR, "right sibling %u of block %u is not next child %u of block %u in index \"%s\"",
-			 rightsib, target, BTreeInnerTupleGetDownLink(itup),
-			 BufferGetBlockNumber(topparent), RelationGetRelationName(rel));
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("right sibling %u of block %u is not next child %u of block %u in index \"%s\"",
+								 rightsib, target,
+								 BTreeInnerTupleGetDownLink(itup),
+								 BufferGetBlockNumber(topparent),
+								 RelationGetRelationName(rel))));
+
+		_bt_relbuf(rel, topparent);
+
+		return false;
+	}
 
 	/*
 	 * Any insert which would have gone on the leaf block will now go to its
