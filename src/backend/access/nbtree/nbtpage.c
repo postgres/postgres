@@ -2148,12 +2148,6 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 								 &topparent, &topparentrightsib))
 		return false;
 
-	/*
-	 * Check that the parent-page index items we're about to delete/overwrite
-	 * in subtree parent page contain what we expect.  This can fail if the
-	 * index has become corrupt for some reason.  We want to throw any error
-	 * before entering the critical section --- otherwise it'd be a PANIC.
-	 */
 	page = BufferGetPage(subtreeparent);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -2171,14 +2165,28 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	nextoffset = OffsetNumberNext(poffset);
 	itemid = PageGetItemId(page, nextoffset);
 	itup = (IndexTuple) PageGetItem(page, itemid);
+
+	/*
+	 * Check that the parent-page index items we're about to delete/overwrite
+	 * in subtree parent page contain what we expect.  This can fail if the
+	 * index has become corrupt for some reason.  When that happens we back
+	 * out of deletion of the leafbuf subtree.  (This is just like the case
+	 * where _bt_lock_subtree_parent() cannot "re-find" leafbuf's downlink.)
+	 */
 	if (BTreeTupleGetDownLink(itup) != topparentrightsib)
-		ereport(ERROR,
+	{
+		ereport(LOG,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg_internal("right sibling %u of block %u is not next child %u of block %u in index \"%s\"",
 								 topparentrightsib, topparent,
 								 BTreeTupleGetDownLink(itup),
 								 BufferGetBlockNumber(subtreeparent),
 								 RelationGetRelationName(rel))));
+
+		_bt_relbuf(rel, subtreeparent);
+		Assert(false);
+		return false;
+	}
 
 	/*
 	 * Any insert which would have gone on the leaf block will now go to its
@@ -2834,6 +2842,7 @@ _bt_lock_subtree_parent(Relation rel, BlockNumber child, BTStack stack,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg_internal("failed to re-find parent key in index \"%s\" for deletion target page %u",
 								 RelationGetRelationName(rel), child)));
+		Assert(false);
 		return false;
 	}
 
