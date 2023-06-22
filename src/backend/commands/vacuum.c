@@ -41,7 +41,6 @@
 #include "catalog/pg_namespace.h"
 #include "commands/cluster.h"
 #include "commands/defrem.h"
-#include "commands/tablecmds.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -721,17 +720,12 @@ vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
 	/*----------
 	 * A role has privileges to vacuum or analyze the relation if any of the
 	 * following are true:
-	 *   - the role is a superuser
-	 *   - the role owns the relation
 	 *   - the role owns the current database and the relation is not shared
-	 *   - the role has been granted the MAINTAIN privilege on the relation
-	 *   - the role has privileges to vacuum/analyze any of the relation's
-	 *     partition ancestors
+	 *   - the role has the MAINTAIN privilege on the relation
 	 *----------
 	 */
 	if ((object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared) ||
-		pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) == ACLCHECK_OK ||
-		has_partition_ancestor_privs(relid, GetUserId(), ACL_MAINTAIN))
+		pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) == ACLCHECK_OK)
 		return true;
 
 	relname = NameStr(reltuple->relname);

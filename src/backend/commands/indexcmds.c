@@ -2853,11 +2853,14 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 
 	/* Check permissions */
 	table_oid = IndexGetRelation(relId, true);
-	if (OidIsValid(table_oid) &&
-		pg_class_aclcheck(table_oid, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK &&
-		!has_partition_ancestor_privs(table_oid, GetUserId(), ACL_MAINTAIN))
-		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_INDEX,
-					   relation->relname);
+	if (OidIsValid(table_oid))
+	{
+		AclResult	aclresult;
+
+		aclresult = pg_class_aclcheck(table_oid, GetUserId(), ACL_MAINTAIN);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, OBJECT_INDEX, relation->relname);
+	}
 
 	/* Lock heap before index to avoid deadlock. */
 	if (relId != oldRelId)
@@ -3064,18 +3067,12 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			continue;
 
 		/*
-		 * The table can be reindexed if the user has been granted MAINTAIN on
-		 * the table or one of its partition ancestors or the user is a
-		 * superuser, the table owner, or the database/schema owner (but in
-		 * the latter case, only if it's not a shared relation).
-		 * pg_class_aclcheck includes the superuser case, and depending on
-		 * objectKind we already know that the user has permission to run
-		 * REINDEX on this database or schema per the permission checks at the
-		 * beginning of this routine.
+		 * We already checked privileges on the database or schema, but we
+		 * further restrict reindexing shared catalogs to roles with the
+		 * MAINTAIN privilege on the relation.
 		 */
 		if (classtuple->relisshared &&
-			pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK &&
-			!has_partition_ancestor_privs(relid, GetUserId(), ACL_MAINTAIN))
+			pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) != ACLCHECK_OK)
 			continue;
 
 		/*

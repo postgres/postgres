@@ -23,12 +23,15 @@ step s1_lock_child     { LOCK cluster_part_tab1 IN SHARE UPDATE EXCLUSIVE MODE; 
 step s1_commit         { COMMIT; }
 
 session s2
-step s2_auth           { SET ROLE regress_cluster_part; }
+step s2_auth           { SET ROLE regress_cluster_part; SET client_min_messages = ERROR; }
 step s2_cluster        { CLUSTER cluster_part_tab USING cluster_part_ind; }
 step s2_reset          { RESET ROLE; }
 
-# CLUSTER waits if locked, passes for all cases.
+# CLUSTER on the parent waits if locked, passes for all cases.
 permutation s1_begin s1_lock_parent s2_auth s2_cluster s1_commit s2_reset
 permutation s1_begin s2_auth s1_lock_parent s2_cluster s1_commit s2_reset
+
+# When taking a lock on a partition leaf, CLUSTER on the parent skips
+# the leaf, passes for all cases.
 permutation s1_begin s1_lock_child s2_auth s2_cluster s1_commit s2_reset
 permutation s1_begin s2_auth s1_lock_child s2_cluster s1_commit s2_reset

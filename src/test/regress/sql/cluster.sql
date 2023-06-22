@@ -238,6 +238,9 @@ CREATE TABLE ptnowner1 PARTITION OF ptnowner FOR VALUES IN (1);
 CREATE ROLE regress_ptnowner;
 CREATE TABLE ptnowner2 PARTITION OF ptnowner FOR VALUES IN (2);
 ALTER TABLE ptnowner1 OWNER TO regress_ptnowner;
+SET SESSION AUTHORIZATION regress_ptnowner;
+CLUSTER ptnowner USING ptnowner_i_idx;
+RESET SESSION AUTHORIZATION;
 ALTER TABLE ptnowner OWNER TO regress_ptnowner;
 CREATE TEMP TABLE ptnowner_oldnodes AS
   SELECT oid, relname, relfilenode FROM pg_partition_tree('ptnowner') AS tree

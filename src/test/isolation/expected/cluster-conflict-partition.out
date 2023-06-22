@@ -3,7 +3,7 @@ Parsed test spec with 2 sessions
 starting permutation: s1_begin s1_lock_parent s2_auth s2_cluster s1_commit s2_reset
 step s1_begin: BEGIN;
 step s1_lock_parent: LOCK cluster_part_tab IN SHARE UPDATE EXCLUSIVE MODE;
-step s2_auth: SET ROLE regress_cluster_part;
+step s2_auth: SET ROLE regress_cluster_part; SET client_min_messages = ERROR;
 step s2_cluster: CLUSTER cluster_part_tab USING cluster_part_ind; <waiting ...>
 step s1_commit: COMMIT;
 step s2_cluster: <... completed>
@@ -11,7 +11,7 @@ step s2_reset: RESET ROLE;
 
 starting permutation: s1_begin s2_auth s1_lock_parent s2_cluster s1_commit s2_reset
 step s1_begin: BEGIN;
-step s2_auth: SET ROLE regress_cluster_part;
+step s2_auth: SET ROLE regress_cluster_part; SET client_min_messages = ERROR;
 step s1_lock_parent: LOCK cluster_part_tab IN SHARE UPDATE EXCLUSIVE MODE;
 step s2_cluster: CLUSTER cluster_part_tab USING cluster_part_ind; <waiting ...>
 step s1_commit: COMMIT;
@@ -21,17 +21,15 @@ step s2_reset: RESET ROLE;
 starting permutation: s1_begin s1_lock_child s2_auth s2_cluster s1_commit s2_reset
 step s1_begin: BEGIN;
 step s1_lock_child: LOCK cluster_part_tab1 IN SHARE UPDATE EXCLUSIVE MODE;
-step s2_auth: SET ROLE regress_cluster_part;
-step s2_cluster: CLUSTER cluster_part_tab USING cluster_part_ind; <waiting ...>
+step s2_auth: SET ROLE regress_cluster_part; SET client_min_messages = ERROR;
+step s2_cluster: CLUSTER cluster_part_tab USING cluster_part_ind;
 step s1_commit: COMMIT;
-step s2_cluster: <... completed>
 step s2_reset: RESET ROLE;
 
 starting permutation: s1_begin s2_auth s1_lock_child s2_cluster s1_commit s2_reset
 step s1_begin: BEGIN;
-step s2_auth: SET ROLE regress_cluster_part;
+step s2_auth: SET ROLE regress_cluster_part; SET client_min_messages = ERROR;
 step s1_lock_child: LOCK cluster_part_tab1 IN SHARE UPDATE EXCLUSIVE MODE;
-step s2_cluster: CLUSTER cluster_part_tab USING cluster_part_ind; <waiting ...>
+step s2_cluster: CLUSTER cluster_part_tab USING cluster_part_ind;
 step s1_commit: COMMIT;
-step s2_cluster: <... completed>
 step s2_reset: RESET ROLE;

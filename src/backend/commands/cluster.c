@@ -1694,10 +1694,13 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 			continue;
 
 		/*
-		 * We already checked that the user has privileges to CLUSTER the
-		 * partitioned table when we locked it earlier, so there's no need to
-		 * check the privileges again here.
+		 * It's possible that the user does not have privileges to CLUSTER the
+		 * leaf partition despite having such privileges on the partitioned
+		 * table.  We skip any partitions which the user is not permitted to
+		 * CLUSTER.
 		 */
+		if (!cluster_is_permitted_for_relation(relid, GetUserId()))
+			continue;
 
 		/* Use a permanent memory context for the result list */
 		old_context = MemoryContextSwitchTo(cluster_context);
@@ -1720,8 +1723,7 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 static bool
 cluster_is_permitted_for_relation(Oid relid, Oid userid)
 {
-	if (pg_class_aclcheck(relid, userid, ACL_MAINTAIN) == ACLCHECK_OK ||
-		has_partition_ancestor_privs(relid, userid, ACL_MAINTAIN))
+	if (pg_class_aclcheck(relid, userid, ACL_MAINTAIN) == ACLCHECK_OK)
 		return true;
 
 	ereport(WARNING,

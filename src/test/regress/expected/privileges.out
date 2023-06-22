@@ -2928,13 +2928,13 @@ WARNING:  permission denied to analyze "maintain_test", skipping it
 VACUUM (ANALYZE) maintain_test;
 WARNING:  permission denied to vacuum "maintain_test", skipping it
 CLUSTER maintain_test USING maintain_test_a_idx;
-ERROR:  must be owner of table maintain_test
+ERROR:  permission denied for table maintain_test
 REFRESH MATERIALIZED VIEW refresh_test;
-ERROR:  must be owner of table refresh_test
+ERROR:  permission denied for table refresh_test
 REINDEX TABLE maintain_test;
-ERROR:  must be owner of table maintain_test
+ERROR:  permission denied for table maintain_test
 REINDEX INDEX maintain_test_a_idx;
-ERROR:  must be owner of index maintain_test_a_idx
+ERROR:  permission denied for index maintain_test_a_idx
 REINDEX SCHEMA reindex_test;
 ERROR:  must be owner of schema reindex_test
 RESET ROLE;
