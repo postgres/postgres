@@ -1462,9 +1462,13 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
   <para>
    The apply process on the subscriber database always runs with
-   <varname>session_replication_role</varname> set
-   to <literal>replica</literal>, which produces the usual effects on triggers
-   and constraints.
+   <link linkend="guc-session-replication-role"><varname>session_replication_role</varname></link>
+   set to <literal>replica</literal>. This means that, by default,
+   triggers and rules will not fire on a subscriber. Users can optionally choose to
+   enable triggers and rules on a table using the
+   <link linkend="sql-altertable"><command>ALTER TABLE</command></link> command
+   and the <literal>ENABLE TRIGGER</literal> and <literal>ENABLE RULE</literal>
+   clauses.
   </para>
 
   <para>
