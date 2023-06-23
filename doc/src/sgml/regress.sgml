@@ -806,7 +806,7 @@ make check PROVE_TESTS='t/001_test1.pl t/003_test3.pl'
    </para>
 
   <sect2 id="regress-tap-vars">
-   <title>Environment variables</title>
+   <title>Environment Variables</title>
 
    <para>
     Data directories are named according to the test filename, and will be

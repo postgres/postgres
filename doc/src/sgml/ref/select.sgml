@@ -2044,7 +2044,7 @@ SELECT 2+2;
   </refsect2>
 
   <refsect2>
-   <title>Omitting sub-<command>SELECT</command> aliases in <literal>FROM</literal></title>
+   <title>Omitting Sub-<command>SELECT</command> Aliases in <literal>FROM</literal></title>
 
    <para>
     According to the SQL standard, a sub-<command>SELECT</command> in the
