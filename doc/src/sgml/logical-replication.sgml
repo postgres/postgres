@@ -330,7 +330,7 @@
   </sect2>
 
   <sect2 id="logical-replication-subscription-examples">
-    <title>Examples - Setup Logical Replication</title>
+    <title>Examples: Set Up Logical Replication</title>
 
     <para>
      Create some test tables on the publisher.
@@ -524,7 +524,7 @@ test_sub=# SELECT * FROM t3;
   </sect2>
 
   <sect2 id="logical-replication-subscription-examples-deferred-slot">
-   <title>Examples - Deferred Replication Slot Creation</title>
+   <title>Examples: Deferred Replication Slot Creation</title>
 
    <para>
     There are some cases (e.g.
