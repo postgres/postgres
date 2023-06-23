@@ -961,7 +961,7 @@ test_prepared(PGconn *conn)
 		pg_fatal("pipeline sync failed: %s", PQerrorMessage(conn));
 	res = PQgetResult(conn);
 	if (res == NULL)
-		pg_fatal("expected NULL result");
+		pg_fatal("PQgetResult returned null");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("expected COMMAND_OK, got %s", PQresStatus(PQresultStatus(res)));
 
