@@ -1287,7 +1287,7 @@ ReportSlotInvalidation(ReplicationSlotInvalidationCause cause,
 			errmsg("invalidating obsolete replication slot \"%s\"",
 				   NameStr(slotname)),
 			errdetail_internal("%s", err_detail.data),
-			hint ? errhint("You might need to increase max_slot_wal_keep_size.") : 0);
+			hint ? errhint("You might need to increase %s.", "max_slot_wal_keep_size") : 0);
 
 	pfree(err_detail.data);
 }

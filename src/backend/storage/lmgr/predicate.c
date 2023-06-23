@@ -2410,7 +2410,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-				 errhint("You might need to increase max_pred_locks_per_transaction.")));
+				 errhint("You might need to increase %s.", "max_pred_locks_per_transaction")));
 	if (!found)
 		dlist_init(&target->predicateLocks);
 
@@ -2425,7 +2425,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-				 errhint("You might need to increase max_pred_locks_per_transaction.")));
+				 errhint("You might need to increase %s.", "max_pred_locks_per_transaction")));
 
 	if (!found)
 	{
@@ -3822,7 +3822,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 				ereport(ERROR,
 						(errcode(ERRCODE_OUT_OF_MEMORY),
 						 errmsg("out of shared memory"),
-						 errhint("You might need to increase max_pred_locks_per_transaction.")));
+						 errhint("You might need to increase %s.", "max_pred_locks_per_transaction")));
 			if (found)
 			{
 				Assert(predlock->commitSeqNo != 0);
