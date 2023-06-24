@@ -18,6 +18,7 @@
 
 #include "catalog/pg_collation.h"
 #include "commands/defrem.h"
+#include "miscadmin.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
 #include "tsearch/ts_type.h"
@@ -632,6 +633,12 @@ p_ishost(TParser *prs)
 
 	tmpprs->wanthost = true;
 
+	/*
+	 * Check stack depth before recursing.  (Since TParserGet() doesn't
+	 * normally recurse, we put the cost of checking here not there.)
+	 */
+	check_stack_depth();
+
 	if (TParserGet(tmpprs) && tmpprs->type == HOST)
 	{
 		prs->state->posbyte += tmpprs->lenbytetoken;
@@ -654,6 +661,12 @@ p_isURLPath(TParser *prs)
 
 	tmpprs->state = newTParserPosition(tmpprs->state);
 	tmpprs->state->state = TPS_InURLPathFirst;
+
+	/*
+	 * Check stack depth before recursing.  (Since TParserGet() doesn't
+	 * normally recurse, we put the cost of checking here not there.)
+	 */
+	check_stack_depth();
 
 	if (TParserGet(tmpprs) && tmpprs->type == URLPATH)
 	{
@@ -1697,6 +1710,8 @@ static bool
 TParserGet(TParser *prs)
 {
 	const TParserStateActionItem *item = NULL;
+
+	CHECK_FOR_INTERRUPTS();
 
 	Assert(prs->state);
 
