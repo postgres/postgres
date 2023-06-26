@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: scripts (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 09:36+0900\n"
-"PO-Revision-Date: 2023-05-22 10:16+0900\n"
+"POT-Creation-Date: 2023-05-25 11:29+0900\n"
+"PO-Revision-Date: 2023-05-25 14:22+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -144,14 +144,14 @@ msgid "Query was: %s"
 msgstr "問い合わせ: %s"
 
 #: clusterdb.c:113 clusterdb.c:132 createdb.c:144 createdb.c:163
-#: createuser.c:194 createuser.c:209 dropdb.c:104 dropdb.c:113 dropdb.c:121
+#: createuser.c:195 createuser.c:210 dropdb.c:104 dropdb.c:113 dropdb.c:121
 #: dropuser.c:95 dropuser.c:110 dropuser.c:123 pg_isready.c:97 pg_isready.c:111
 #: reindexdb.c:174 reindexdb.c:193 vacuumdb.c:277 vacuumdb.c:297
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: clusterdb.c:130 createdb.c:161 createuser.c:207 dropdb.c:119 dropuser.c:108
+#: clusterdb.c:130 createdb.c:161 createuser.c:208 dropdb.c:119 dropuser.c:108
 #: pg_isready.c:109 reindexdb.c:191 vacuumdb.c:295
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -189,7 +189,7 @@ msgid ""
 "\n"
 msgstr "%sはデータベース内で事前にクラスタ化されているすべてのテーブルをクラスタ化します。\n"
 
-#: clusterdb.c:263 createdb.c:291 createuser.c:414 dropdb.c:172 dropuser.c:170
+#: clusterdb.c:263 createdb.c:291 createuser.c:415 dropdb.c:172 dropuser.c:170
 #: pg_isready.c:226 reindexdb.c:748 vacuumdb.c:1127
 #, c-format
 msgid "Usage:\n"
@@ -200,7 +200,7 @@ msgstr "使用方法:\n"
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [オプション]... [データベース名]\n"
 
-#: clusterdb.c:265 createdb.c:293 createuser.c:416 dropdb.c:174 dropuser.c:172
+#: clusterdb.c:265 createdb.c:293 createuser.c:417 dropdb.c:174 dropuser.c:172
 #: pg_isready.c:229 reindexdb.c:750 vacuumdb.c:1129
 #, c-format
 msgid ""
@@ -220,7 +220,7 @@ msgstr "  -a, --all                 すべてのデータベースをクラス�
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       クラスタ化するデータベース\n"
 
-#: clusterdb.c:268 createuser.c:422 dropdb.c:175 dropuser.c:173
+#: clusterdb.c:268 createuser.c:423 dropdb.c:175 dropuser.c:173
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                サーバーへ送信されるコマンドを表示\n"
@@ -240,17 +240,17 @@ msgstr "  -t, --table=テーブル名    指定したテーブル(群)のみを�
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             多量のメッセージを出力\n"
 
-#: clusterdb.c:272 createuser.c:437 dropdb.c:178 dropuser.c:176
+#: clusterdb.c:272 createuser.c:439 dropdb.c:178 dropuser.c:176
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             バージョン情報を表示して終了\n"
 
-#: clusterdb.c:273 createuser.c:445 dropdb.c:180 dropuser.c:178
+#: clusterdb.c:273 createuser.c:447 dropdb.c:180 dropuser.c:178
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                このヘルプを表示して終了\n"
 
-#: clusterdb.c:274 createdb.c:309 createuser.c:446 dropdb.c:181 dropuser.c:179
+#: clusterdb.c:274 createdb.c:309 createuser.c:448 dropdb.c:181 dropuser.c:179
 #: pg_isready.c:235 reindexdb.c:765 vacuumdb.c:1158
 #, c-format
 msgid ""
@@ -260,14 +260,14 @@ msgstr ""
 "\n"
 "接続オプション:\n"
 
-#: clusterdb.c:275 createuser.c:447 dropdb.c:182 dropuser.c:180 vacuumdb.c:1159
+#: clusterdb.c:275 createuser.c:449 dropdb.c:182 dropuser.c:180 vacuumdb.c:1159
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME       データベースサーバーのホストまたはソケット\n"
 "                            ディレクトリ\n"
 
-#: clusterdb.c:276 createuser.c:448 dropdb.c:183 dropuser.c:181 vacuumdb.c:1160
+#: clusterdb.c:276 createuser.c:450 dropdb.c:183 dropuser.c:181 vacuumdb.c:1160
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           データベースサーバーのポート番号\n"
@@ -277,12 +277,12 @@ msgstr "  -p, --port=PORT           データベースサーバーのポート�
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USERNAME   このユーザー名で接続\n"
 
-#: clusterdb.c:278 createuser.c:450 dropdb.c:185 dropuser.c:183 vacuumdb.c:1162
+#: clusterdb.c:278 createuser.c:452 dropdb.c:185 dropuser.c:183 vacuumdb.c:1162
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         パスワード入力を要求しない\n"
 
-#: clusterdb.c:279 createuser.c:451 dropdb.c:186 dropuser.c:184 vacuumdb.c:1163
+#: clusterdb.c:279 createuser.c:453 dropdb.c:186 dropuser.c:184 vacuumdb.c:1163
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            パスワードプロンプトを強制表示\n"
@@ -301,7 +301,7 @@ msgstr ""
 "\n"
 "詳細は SQL コマンドの CLUSTER の説明を参照してください。\n"
 
-#: clusterdb.c:282 createdb.c:317 createuser.c:452 dropdb.c:188 dropuser.c:185
+#: clusterdb.c:282 createdb.c:317 createuser.c:454 dropdb.c:188 dropuser.c:185
 #: pg_isready.c:240 reindexdb.c:773 vacuumdb.c:1166
 #, c-format
 msgid ""
@@ -311,7 +311,7 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: clusterdb.c:283 createdb.c:318 createuser.c:453 dropdb.c:189 dropuser.c:186
+#: clusterdb.c:283 createdb.c:318 createuser.c:455 dropdb.c:189 dropuser.c:186
 #: pg_isready.c:241 reindexdb.c:774 vacuumdb.c:1167
 #, c-format
 msgid "%s home page: <%s>\n"
@@ -490,46 +490,46 @@ msgstr ""
 "\n"
 "デフォルトでは、現在のユーザー名と同名のデータベースが生成されます\n"
 
-#: createuser.c:217
+#: createuser.c:218
 msgid "Enter name of role to add: "
 msgstr "追加したいロール名を入力："
 
-#: createuser.c:232
+#: createuser.c:233
 msgid "Enter password for new role: "
 msgstr "新しいロールのためのパスワード: "
 
-#: createuser.c:233
+#: createuser.c:234
 msgid "Enter it again: "
 msgstr "もう一度入力してください："
 
-#: createuser.c:236
+#: createuser.c:237
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "パスワードがマッチしません。\n"
 
-#: createuser.c:244
+#: createuser.c:245
 msgid "Shall the new role be a superuser?"
 msgstr "新しいロールをスーパーユーザーにしますか？"
 
-#: createuser.c:259
+#: createuser.c:260
 msgid "Shall the new role be allowed to create databases?"
 msgstr "新しいロールに対してデータベースを作成する権限を与えますか？"
 
-#: createuser.c:267
+#: createuser.c:268
 msgid "Shall the new role be allowed to create more new roles?"
 msgstr "新しいロールに対して別のロールを作成する権限を与えますか？"
 
-#: createuser.c:308
+#: createuser.c:309
 #, c-format
 msgid "password encryption failed: %s"
 msgstr "パスワードの暗号化に失敗しました: %s"
 
-#: createuser.c:399
+#: createuser.c:400
 #, c-format
 msgid "creation of new role failed: %s"
 msgstr "新しいロールの作成に失敗しました: %s"
 
-#: createuser.c:413
+#: createuser.c:414
 #, c-format
 msgid ""
 "%s creates a new PostgreSQL role.\n"
@@ -538,41 +538,46 @@ msgstr ""
 "%sは新しいPostgreSQLロールを作成します。\n"
 "\n"
 
-#: createuser.c:415 dropuser.c:171
+#: createuser.c:416 dropuser.c:171
 #, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
 msgstr "  %s [オプション]... [ロール名]\n"
 
-#: createuser.c:417
+#: createuser.c:418
 #, c-format
 msgid ""
-"  -a, --admin=ROLE          this role will be a member of new role with admin\n"
+"  -a, --with-admin=ROLE     ROLE will be a member of new role with admin\n"
 "                            option\n"
 msgstr ""
-"  -a, --admin=ROLE          このロールは新しいロールのADMINオプション付きの\n"
+"  -a, --with-admin=ROLE     ROLEは新しいロールのADMINオプション付きの\n"
 "                            メンバーとなる\n"
 
-#: createuser.c:419
+#: createuser.c:420
 #, c-format
 msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr "  -c, --connection-limit=N  ロールのコネクション数制限(デフォルト: 制限なし)\n"
 
-#: createuser.c:420
+#: createuser.c:421
 #, c-format
 msgid "  -d, --createdb            role can create new databases\n"
 msgstr "  -d, --createdb            ロールは新しいデータベースを作成可\n"
 
-#: createuser.c:421
+#: createuser.c:422
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
 msgstr "  -D, --no-createdb         ロールは新しいデータベースを作成不可(デフォルト)\n"
 
-#: createuser.c:423
-#, c-format
-msgid "  -g, --role=ROLE           new role will be a member of this role\n"
-msgstr "  -g, --role=ROLE           新しいロールはこのロールのメンバーにする\n"
-
 #: createuser.c:424
+#, c-format
+msgid "  -g, --member-of=ROLE      new role will be a member of ROLE\n"
+msgstr "  -g, --member-of=ROLE      新しいロールをROLEのメンバーにする\n"
+
+#: createuser.c:425
+#, c-format
+msgid "  --role=ROLE               (same as --member-of, deprecated)\n"
+msgstr "  --role=ROLE               (--member-ofに同じ、非推奨)\n"
+
+#: createuser.c:426
 #, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
@@ -581,52 +586,52 @@ msgstr ""
 "  -i, --inherit             ロールがメンバーとなるロール群から権限を継承\n"
 "                            (デフォルト)\n"
 
-#: createuser.c:426
+#: createuser.c:428
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          権限を継承しない\n"
 
-#: createuser.c:427
+#: createuser.c:429
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr "  -l, --login               ロールはログイン可能(デフォルト)\n"
 
-#: createuser.c:428
+#: createuser.c:430
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            ロールはログイン不可\n"
 
-#: createuser.c:429
+#: createuser.c:431
 #, c-format
-msgid "  -m, --member=ROLE         this role will be a member of new role\n"
-msgstr "  -m, --member=ROLE         このロールは新しいロールのメンバとなる\n"
+msgid "  -m, --with-member=ROLE    ROLE will be a member of new role\n"
+msgstr "  -m, --with-member=ROLE    ROLEは新しいロールのメンバとなる\n"
 
-#: createuser.c:430
+#: createuser.c:432
 #, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
 msgstr "  -P, --pwprompt            新しいロールにパスワードを割り当てる\n"
 
-#: createuser.c:431
+#: createuser.c:433
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
 msgstr "  -r, --createrole          ロールは別のロールを作成可\n"
 
-#: createuser.c:432
+#: createuser.c:434
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles (default)\n"
 msgstr "  -R, --no-createrole       ロールは別のロールを作成不可(デフォルト)\n"
 
-#: createuser.c:433
+#: createuser.c:435
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           ロールをスーパーユーザーにする\n"
 
-#: createuser.c:434
+#: createuser.c:436
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
 msgstr "  -S, --no-superuser        ロールをスーパーユーザーにしない(デフォルト)\n"
 
-#: createuser.c:435
+#: createuser.c:437
 #, c-format
 msgid ""
 "  -v, --valid-until=TIMESTAMP\n"
@@ -635,19 +640,19 @@ msgstr ""
 "  -v, --valid-until=TIMESTAMP\n"
 "                            このロールのパスワード有効期限日時\n"
 
-#: createuser.c:438
+#: createuser.c:440
 #, c-format
 msgid ""
 "  --interactive             prompt for missing role name and attributes rather\n"
 "                            than using defaults\n"
 msgstr "  --interactive             デフォルトを使わず未指定のロール名や属性は入力を促す\n"
 
-#: createuser.c:440
+#: createuser.c:442
 #, c-format
 msgid "  --bypassrls               role can bypass row-level security (RLS) policy\n"
 msgstr "  --bypassrls               ロールは行セキュリティポリシー(RLS)を迂回できる\n"
 
-#: createuser.c:441
+#: createuser.c:443
 #, c-format
 msgid ""
 "  --no-bypassrls            role cannot bypass row-level security (RLS) policy\n"
@@ -656,17 +661,17 @@ msgstr ""
 "  --no-bypassrls            ロールは行セキュリティポリシー(RLS)を迂回できない\n"
 "                            (デフォルト)\n"
 
-#: createuser.c:443
+#: createuser.c:445
 #, c-format
 msgid "  --replication             role can initiate replication\n"
 msgstr "  --replication             ロールはレプリケーションを開始可能\n"
 
-#: createuser.c:444
+#: createuser.c:446
 #, c-format
 msgid "  --no-replication          role cannot initiate replication (default)\n"
 msgstr "  --no-replication          ロールはレプリケーションを開始不可 (デフォルト)\n"
 
-#: createuser.c:449
+#: createuser.c:451
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr "  -U, --username=USERNAME   このユーザーとして接続(作成対象ユーザーではない)\n"

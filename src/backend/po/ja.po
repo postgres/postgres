@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 09:34+0900\n"
-"PO-Revision-Date: 2023-05-22 09:46+0900\n"
+"POT-Creation-Date: 2023-06-19 09:31+0900\n"
+"PO-Revision-Date: 2023-06-19 09:58+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -130,7 +130,7 @@ msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
 #: ../common/controldata_utils.c:219 ../common/controldata_utils.c:224 ../common/file_utils.c:299 ../common/file_utils.c:369 access/heap/rewriteheap.c:959 access/heap/rewriteheap.c:1169 access/heap/rewriteheap.c:1274 access/transam/timeline.c:432 access/transam/timeline.c:506 access/transam/twophase.c:1764 access/transam/xlog.c:3032 access/transam/xlog.c:3227 access/transam/xlog.c:3959 access/transam/xlog.c:8141 access/transam/xlog.c:8186
-#: backup/basebackup_server.c:209 replication/logical/snapbuild.c:1791 replication/slot.c:1823 replication/slot.c:1928 storage/file/fd.c:731 storage/file/fd.c:3748 storage/smgr/md.c:1132 storage/smgr/md.c:1177 storage/sync/sync.c:453 utils/misc/guc.c:4370
+#: backup/basebackup_server.c:209 replication/logical/snapbuild.c:1791 replication/slot.c:1823 replication/slot.c:1928 storage/file/fd.c:731 storage/file/fd.c:3748 storage/smgr/md.c:1132 storage/smgr/md.c:1177 storage/sync/sync.c:451 utils/misc/guc.c:4370
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
@@ -384,7 +384,7 @@ msgid "could not get exit code from subprocess: error code %lu"
 msgstr "サブプロセスの終了コードを取得できませんでした: エラーコード %lu"
 
 #: ../common/rmtree.c:95 access/heap/rewriteheap.c:1248 access/transam/twophase.c:1703 access/transam/xlogarchive.c:120 access/transam/xlogarchive.c:393 postmaster/postmaster.c:1143 postmaster/syslogger.c:1537 replication/logical/origin.c:591 replication/logical/reorderbuffer.c:4526 replication/logical/snapbuild.c:1691 replication/logical/snapbuild.c:2121 replication/slot.c:1902 storage/file/fd.c:789 storage/file/fd.c:3275 storage/file/fd.c:3337
-#: storage/file/reinit.c:262 storage/ipc/dsm.c:316 storage/smgr/md.c:380 storage/smgr/md.c:439 storage/sync/sync.c:250 utils/time/snapmgr.c:1608
+#: storage/file/reinit.c:262 storage/ipc/dsm.c:316 storage/smgr/md.c:380 storage/smgr/md.c:439 storage/sync/sync.c:248 utils/time/snapmgr.c:1608
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "ファイル\"%s\"を削除できませんでした: %m"
@@ -873,7 +873,7 @@ msgstr "インデックス\"%s\"内に無効と判断されている内部タプ
 msgid "This is caused by an incomplete page split at crash recovery before upgrading to PostgreSQL 9.1."
 msgstr "これは、PostgreSQL 9.1へアップグレードする前のクラッシュリカバリにおける不完全なページ分割が原因で発生します。"
 
-#: access/gist/gist.c:762 access/gist/gistutil.c:801 access/gist/gistutil.c:812 access/gist/gistvacuum.c:429 access/hash/hashutil.c:227 access/hash/hashutil.c:238 access/hash/hashutil.c:250 access/hash/hashutil.c:271 access/nbtree/nbtpage.c:809 access/nbtree/nbtpage.c:820
+#: access/gist/gist.c:762 access/gist/gistutil.c:801 access/gist/gistutil.c:812 access/gist/gistvacuum.c:429 access/hash/hashutil.c:227 access/hash/hashutil.c:238 access/hash/hashutil.c:250 access/hash/hashutil.c:271 access/nbtree/nbtpage.c:813 access/nbtree/nbtpage.c:824
 #, c-format
 msgid "Please REINDEX it."
 msgstr "REINDEXを行ってください。"
@@ -893,12 +893,12 @@ msgstr "インデックス\"%2$s\"の列%1$dに対するピックスプリット
 msgid "The index is not optimal. To optimize it, contact a developer, or try to use the column as the second one in the CREATE INDEX command."
 msgstr "インデックスは最適ではありません。最適化するためには開発者に連絡するか、この列をCREATE INDEXコマンドの2番目の列としてみてください。"
 
-#: access/gist/gistutil.c:798 access/hash/hashutil.c:224 access/nbtree/nbtpage.c:806
+#: access/gist/gistutil.c:798 access/hash/hashutil.c:224 access/nbtree/nbtpage.c:810
 #, c-format
 msgid "index \"%s\" contains unexpected zero page at block %u"
 msgstr "インデックス\"%s\"のブロック%uに予期していないゼロで埋められたページがあります"
 
-#: access/gist/gistutil.c:809 access/hash/hashutil.c:235 access/hash/hashutil.c:247 access/nbtree/nbtpage.c:817
+#: access/gist/gistutil.c:809 access/hash/hashutil.c:235 access/hash/hashutil.c:247 access/nbtree/nbtpage.c:821
 #, c-format
 msgid "index \"%s\" contains corrupted page at block %u"
 msgstr "インデックス\"%s\"のブロック%uに破損したページがあります"
@@ -1288,37 +1288,37 @@ msgstr "キー %s はすでに存在します。"
 msgid "This may be because of a non-immutable index expression."
 msgstr "これは不変でないインデックス式が原因である可能性があります"
 
-#: access/nbtree/nbtpage.c:158 access/nbtree/nbtpage.c:607 parser/parse_utilcmd.c:2317
+#: access/nbtree/nbtpage.c:157 access/nbtree/nbtpage.c:611 parser/parse_utilcmd.c:2317
 #, c-format
 msgid "index \"%s\" is not a btree"
 msgstr "インデックス\"%s\"はbtreeではありません"
 
-#: access/nbtree/nbtpage.c:165 access/nbtree/nbtpage.c:614
+#: access/nbtree/nbtpage.c:164 access/nbtree/nbtpage.c:618
 #, c-format
 msgid "version mismatch in index \"%s\": file version %d, current version %d, minimal supported version %d"
 msgstr "インデックス\"%s\"におけるバージョンの不整合: ファイルバージョン %d、現在のバージョン %d、サポートされる最小のバージョン %d"
 
-#: access/nbtree/nbtpage.c:1862
+#: access/nbtree/nbtpage.c:1866
 #, c-format
 msgid "index \"%s\" contains a half-dead internal page"
 msgstr "インデックス\"%s\"に削除処理中の内部ページがあります"
 
-#: access/nbtree/nbtpage.c:1864
+#: access/nbtree/nbtpage.c:1868
 #, c-format
 msgid "This can be caused by an interrupted VACUUM in version 9.3 or older, before upgrade. Please REINDEX it."
 msgstr "これは9.3かそれ以前のバージョンで、アップグレード前にVACUUMが中断された際に起きた可能性があります。REINDEXしてください。"
 
-#: access/nbtree/nbtutils.c:2663
+#: access/nbtree/nbtutils.c:2662
 #, c-format
 msgid "index row size %zu exceeds btree version %u maximum %zu for index \"%s\""
 msgstr "インデックス行サイズ%1$zuはインデックス\"%4$s\"でのbtreeバージョン %2$u の最大値%3$zuを超えています"
 
-#: access/nbtree/nbtutils.c:2669
+#: access/nbtree/nbtutils.c:2668
 #, c-format
 msgid "Index row references tuple (%u,%u) in relation \"%s\"."
 msgstr "インデックス行はリレーション\"%3$s\"のタプル(%1$u,%2$u)を参照しています。"
 
-#: access/nbtree/nbtutils.c:2673
+#: access/nbtree/nbtutils.c:2672
 #, c-format
 msgid ""
 "Values larger than 1/3 of a buffer page cannot be indexed.\n"
@@ -2024,7 +2024,7 @@ msgstr "WALディレクトリ\"%s\"は存在しません"
 msgid "creating missing WAL directory \"%s\""
 msgstr "なかったWALディレクトリ\"%s\"を作成しています"
 
-#: access/transam/xlog.c:3800 commands/dbcommands.c:3095
+#: access/transam/xlog.c:3800 commands/dbcommands.c:3102
 #, c-format
 msgid "could not create missing directory \"%s\": %m"
 msgstr "なかったディレクトリ\"%s\"の作成に失敗しました: %m"
@@ -3385,7 +3385,7 @@ msgstr "ディレクトリ\"%s\"を作成できませんでした: %m"
 msgid "directory \"%s\" exists but is not empty"
 msgstr "ディレクトリ\"%s\"は存在しますが、空ではありません"
 
-#: backup/basebackup_server.c:125 utils/init/postinit.c:1154
+#: backup/basebackup_server.c:125 utils/init/postinit.c:1150
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"にアクセスできませんでした: %m"
@@ -4300,12 +4300,12 @@ msgstr "これは生成列を自身の値に依存させることにつながり
 msgid "generation expression is not immutable"
 msgstr "生成式は不変ではありません"
 
-#: catalog/heap.c:2796 rewrite/rewriteHandler.c:1295
+#: catalog/heap.c:2796 rewrite/rewriteHandler.c:1297
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
 msgstr "列\"%s\"の型は%sですが、デフォルト式の型は%sです"
 
-#: catalog/heap.c:2801 commands/prepare.c:334 parser/analyze.c:2704 parser/parse_target.c:593 parser/parse_target.c:874 parser/parse_target.c:884 rewrite/rewriteHandler.c:1300
+#: catalog/heap.c:2801 commands/prepare.c:334 parser/analyze.c:2704 parser/parse_target.c:593 parser/parse_target.c:874 parser/parse_target.c:884 rewrite/rewriteHandler.c:1302
 #, c-format
 msgid "You will need to rewrite or cast the expression."
 msgstr "式を書き換えるかキャストする必要があります。"
@@ -6125,17 +6125,17 @@ msgstr "\"lc_ctype\"パラメータの指定が必要です"
 msgid "parameter \"locale\" must be specified"
 msgstr "パラメータ\"locale\"の指定が必要です"
 
-#: commands/collationcmds.c:279 commands/dbcommands.c:1074
+#: commands/collationcmds.c:279 commands/dbcommands.c:1081
 #, c-format
-msgid "using standard form \"%s\" for locale \"%s\""
-msgstr "ロケール\"%s\"の標準形式\"%s\"を使用します"
+msgid "using standard form \"%s\" for ICU locale \"%s\""
+msgstr "ICUロケール\"%s\"の標準形式\"%s\"を使用します"
 
 #: commands/collationcmds.c:298
 #, c-format
 msgid "nondeterministic collations not supported with this provider"
 msgstr "非決定的照合順序はこのプロバイダではサポートされません"
 
-#: commands/collationcmds.c:303 commands/dbcommands.c:1093
+#: commands/collationcmds.c:303 commands/dbcommands.c:1100
 #, c-format
 msgid "ICU rules cannot be specified unless locale provider is ICU"
 msgstr "ICUルールはロケールプロバイダがICUでなければ指定できません"
@@ -6165,17 +6165,17 @@ msgstr "デフォルト照合順序のバーションはリフレッシュでき
 msgid "Use ALTER DATABASE ... REFRESH COLLATION VERSION instead."
 msgstr "代わりにALTER DATABASE ... REFRESH COLLATION VERSIONを使ってください。"
 
-#: commands/collationcmds.c:446 commands/dbcommands.c:2447
+#: commands/collationcmds.c:446 commands/dbcommands.c:2454
 #, c-format
 msgid "changing version from %s to %s"
 msgstr "バージョン%sから%sへの変更"
 
-#: commands/collationcmds.c:461 commands/dbcommands.c:2460
+#: commands/collationcmds.c:461 commands/dbcommands.c:2467
 #, c-format
 msgid "version has not changed"
 msgstr "バージョンが変わっていません"
 
-#: commands/collationcmds.c:494 commands/dbcommands.c:2626
+#: commands/collationcmds.c:494 commands/dbcommands.c:2633
 #, c-format
 msgid "database with OID %u does not exist"
 msgstr "OID %uのデータベースは存在しません"
@@ -6200,7 +6200,7 @@ msgstr "コマンド\"%s\"を実行できませんでした: %m"
 msgid "no usable system locales were found"
 msgstr "使用できるシステムロケールが見つかりません"
 
-#: commands/comment.c:61 commands/dbcommands.c:1594 commands/dbcommands.c:1791 commands/dbcommands.c:1901 commands/dbcommands.c:2099 commands/dbcommands.c:2337 commands/dbcommands.c:2420 commands/dbcommands.c:2530 commands/dbcommands.c:3030 utils/init/postinit.c:1025 utils/init/postinit.c:1130 utils/init/postinit.c:1147
+#: commands/comment.c:61 commands/dbcommands.c:1601 commands/dbcommands.c:1798 commands/dbcommands.c:1908 commands/dbcommands.c:2106 commands/dbcommands.c:2344 commands/dbcommands.c:2427 commands/dbcommands.c:2537 commands/dbcommands.c:3037 utils/init/postinit.c:1021 utils/init/postinit.c:1126 utils/init/postinit.c:1143
 #, c-format
 msgid "database \"%s\" does not exist"
 msgstr "データベース\"%s\"は存在しません"
@@ -6325,7 +6325,7 @@ msgstr "オプション\"%s\"の引数は列名のリストでなければなり
 msgid "argument to option \"%s\" must be a valid encoding name"
 msgstr "オプション\"%s\"の引数は有効なエンコーディング名でなければなりません"
 
-#: commands/copy.c:573 commands/dbcommands.c:859 commands/dbcommands.c:2285
+#: commands/copy.c:573 commands/dbcommands.c:859 commands/dbcommands.c:2292
 #, c-format
 msgid "option \"%s\" not recognized"
 msgstr "タイムゾーン\"%s\"を認識できません"
@@ -6885,7 +6885,7 @@ msgstr "%sは有効な符号化方式名ではありません"
 msgid "unrecognized locale provider: %s"
 msgstr "認識できない照合順序プロバイダ: %s"
 
-#: commands/dbcommands.c:932 commands/dbcommands.c:2318 commands/user.c:300 commands/user.c:740
+#: commands/dbcommands.c:932 commands/dbcommands.c:2325 commands/user.c:300 commands/user.c:740
 #, c-format
 msgid "invalid connection limit: %d"
 msgstr "不正な接続数制限: %d"
@@ -6915,276 +6915,286 @@ msgstr "データベース作成の方法\"%s\"は不正です"
 msgid "Valid strategies are \"wal_log\", and \"file_copy\"."
 msgstr "有効な方法はは\"wal_log\"と\"file_copy\"です。"
 
-#: commands/dbcommands.c:1028
+#: commands/dbcommands.c:1033
 #, c-format
 msgid "invalid server encoding %d"
 msgstr "サーバーの符号化方式%dは不正です"
 
-#: commands/dbcommands.c:1034 commands/dbcommands.c:1039
+#: commands/dbcommands.c:1039
 #, c-format
-msgid "invalid locale name: \"%s\""
-msgstr "ロケール名\"%s\"は不正です"
+msgid "invalid LC_COLLATE locale name: \"%s\""
+msgstr "LC_COLLATEのロケール名\"%s\"は不正です"
 
-#: commands/dbcommands.c:1049
+#: commands/dbcommands.c:1040 commands/dbcommands.c:1046
+#, c-format
+msgid "If the locale name is specific to ICU, use ICU_LOCALE."
+msgstr "ロケール名がICU特有のものである場合は、ICU_LOCALEを使用してください。"
+
+#: commands/dbcommands.c:1045
+#, c-format
+msgid "invalid LC_CTYPE locale name: \"%s\""
+msgstr "LC_CTYPEのロケール名\"%s\"は不正です"
+
+#: commands/dbcommands.c:1056
 #, c-format
 msgid "encoding \"%s\" is not supported with ICU provider"
 msgstr "エンコーディング\"%s\"はICUではサポートされていません"
 
-#: commands/dbcommands.c:1059
+#: commands/dbcommands.c:1066
 #, c-format
-msgid "ICU locale must be specified"
-msgstr "ICUロケールを指定しなければなりません"
+msgid "LOCALE or ICU_LOCALE must be specified"
+msgstr "LOCALEかICU_LOCALEのいずれかを指定しなければなりません"
 
-#: commands/dbcommands.c:1088
+#: commands/dbcommands.c:1095
 #, c-format
 msgid "ICU locale cannot be specified unless locale provider is ICU"
 msgstr "ICUロケールはロケールプロバイダがICUでなければ指定できません"
 
-#: commands/dbcommands.c:1111
+#: commands/dbcommands.c:1118
 #, c-format
 msgid "new encoding (%s) is incompatible with the encoding of the template database (%s)"
 msgstr "新しい符号化方式(%s)はテンプレートデータベースの符号化方式(%s)と互換性がありません"
 
-#: commands/dbcommands.c:1114
+#: commands/dbcommands.c:1121
 #, c-format
 msgid "Use the same encoding as in the template database, or use template0 as template."
 msgstr "テンプレートデータベースの符号化方式と同じものを使うか、もしくは template0 をテンプレートとして使用してください"
 
-#: commands/dbcommands.c:1119
+#: commands/dbcommands.c:1126
 #, c-format
 msgid "new collation (%s) is incompatible with the collation of the template database (%s)"
 msgstr "新しい照合順序(%s)はテンプレートデータベースの照合順序(%s)と互換性がありません"
 
-#: commands/dbcommands.c:1121
+#: commands/dbcommands.c:1128
 #, c-format
 msgid "Use the same collation as in the template database, or use template0 as template."
 msgstr "テンプレートデータベースの照合順序と同じものを使うか、もしくは template0 をテンプレートとして使用してください"
 
-#: commands/dbcommands.c:1126
+#: commands/dbcommands.c:1133
 #, c-format
 msgid "new LC_CTYPE (%s) is incompatible with the LC_CTYPE of the template database (%s)"
 msgstr "新しいLC_CTYPE(%s)はテンプレートデータベース(%s)のLC_CTYPEと互換性がありません"
 
-#: commands/dbcommands.c:1128
+#: commands/dbcommands.c:1135
 #, c-format
 msgid "Use the same LC_CTYPE as in the template database, or use template0 as template."
 msgstr "テンプレートデータベースのLC_CTYPEと同じものを使うか、もしくはtemplate0をテンプレートとして使用してください"
 
-#: commands/dbcommands.c:1133
+#: commands/dbcommands.c:1140
 #, c-format
 msgid "new locale provider (%s) does not match locale provider of the template database (%s)"
 msgstr "新しいロケール・プロバイダ(%s)はテンプレートデータベースのロケール・プロバイダ(%s)と一致しません"
 
-#: commands/dbcommands.c:1135
+#: commands/dbcommands.c:1142
 #, c-format
 msgid "Use the same locale provider as in the template database, or use template0 as template."
 msgstr "テンプレートデータベースと同じロケールプロバイダを使うか、もしくは template0 をテンプレートとして使用してください"
 
-#: commands/dbcommands.c:1147
+#: commands/dbcommands.c:1154
 #, c-format
 msgid "new ICU locale (%s) is incompatible with the ICU locale of the template database (%s)"
 msgstr "新しいICUロケール(%s)はテンプレートデータベースのICUロケール(%s)と互換性がありません"
 
-#: commands/dbcommands.c:1149
+#: commands/dbcommands.c:1156
 #, c-format
 msgid "Use the same ICU locale as in the template database, or use template0 as template."
 msgstr "テンプレートデータベースと同じICUロケールを使うか、もしくは template0 をテンプレートとして使用してください。"
 
-#: commands/dbcommands.c:1160
+#: commands/dbcommands.c:1167
 #, c-format
 msgid "new ICU collation rules (%s) are incompatible with the ICU collation rules of the template database (%s)"
 msgstr "新しいICU照合順序ルール(%s)はテンプレートデータベースのICU照合順序(%s)と互換性がありません"
 
-#: commands/dbcommands.c:1162
+#: commands/dbcommands.c:1169
 #, c-format
 msgid "Use the same ICU collation rules as in the template database, or use template0 as template."
 msgstr "テンプレートデータベースのICU照合順序ルールと同じものを使うか、もしくは template0 をテンプレートとして使用してください"
 
-#: commands/dbcommands.c:1185
+#: commands/dbcommands.c:1192
 #, c-format
 msgid "template database \"%s\" has a collation version, but no actual collation version could be determined"
 msgstr "テンプレートデータベース\"%s\"には照合順序のバージョンが設定されていますが、実際の照合順序バージョンが特定できません"
 
-#: commands/dbcommands.c:1190
+#: commands/dbcommands.c:1197
 #, c-format
 msgid "template database \"%s\" has a collation version mismatch"
 msgstr "テンプレートデータベース\"%s\"では照合順序バージョンの不一致が起きています"
 
-#: commands/dbcommands.c:1192
+#: commands/dbcommands.c:1199
 #, c-format
 msgid "The template database was created using collation version %s, but the operating system provides version %s."
 msgstr "データベース中の照合順序はバージョン%sで作成されていますが、オペレーティングシステムはバージョン%sを提供しています。"
 
-#: commands/dbcommands.c:1195
+#: commands/dbcommands.c:1202
 #, c-format
 msgid "Rebuild all objects in the template database that use the default collation and run ALTER DATABASE %s REFRESH COLLATION VERSION, or build PostgreSQL with the right library version."
 msgstr "デフォルトの照合順序を使用しているテンプレート・データベースの全てのオブジェクトを再構築して、ALTER DATABASE %s REFRESH COLLATION VERSIONを実行するか、正しいバージョンのライブラリを用いてPostgreSQLをビルドしてください。"
 
-#: commands/dbcommands.c:1231 commands/dbcommands.c:1947
+#: commands/dbcommands.c:1238 commands/dbcommands.c:1954
 #, c-format
 msgid "pg_global cannot be used as default tablespace"
 msgstr "デフォルトのテーブル空間としてpg_globalを使用できません"
 
-#: commands/dbcommands.c:1257
+#: commands/dbcommands.c:1264
 #, c-format
 msgid "cannot assign new default tablespace \"%s\""
 msgstr "新しいデフォルトのテーブル空間\"%s\"を割り当てられません"
 
-#: commands/dbcommands.c:1259
+#: commands/dbcommands.c:1266
 #, c-format
 msgid "There is a conflict because database \"%s\" already has some tables in this tablespace."
 msgstr "データベース\"%s\"のいくつかテーブルはすでにこのテーブル空間にあるため、競合しています。"
 
-#: commands/dbcommands.c:1289 commands/dbcommands.c:1820
+#: commands/dbcommands.c:1296 commands/dbcommands.c:1827
 #, c-format
 msgid "database \"%s\" already exists"
 msgstr "データベース\"%s\"はすでに存在します"
 
-#: commands/dbcommands.c:1303
+#: commands/dbcommands.c:1310
 #, c-format
 msgid "source database \"%s\" is being accessed by other users"
 msgstr "元となるデータベース\"%s\"は他のユーザーによってアクセスされています"
 
-#: commands/dbcommands.c:1325
+#: commands/dbcommands.c:1332
 #, c-format
 msgid "database OID %u is already in use by database \"%s\""
 msgstr "データベースOID %uはすでにデータベース\"%s\"で使用されています"
 
-#: commands/dbcommands.c:1331
+#: commands/dbcommands.c:1338
 #, c-format
 msgid "data directory with the specified OID %u already exists"
 msgstr "指定されたOID %uのデータディレクトリはすでに存在します"
 
-#: commands/dbcommands.c:1503 commands/dbcommands.c:1518
+#: commands/dbcommands.c:1510 commands/dbcommands.c:1525
 #, c-format
 msgid "encoding \"%s\" does not match locale \"%s\""
 msgstr "符号化方式\"%s\"がロケール\"%s\"に合いません"
 
-#: commands/dbcommands.c:1506
+#: commands/dbcommands.c:1513
 #, c-format
 msgid "The chosen LC_CTYPE setting requires encoding \"%s\"."
 msgstr "選択されたLC_CTYPEを設定するには、符号化方式\"%s\"である必要があります。"
 
-#: commands/dbcommands.c:1521
+#: commands/dbcommands.c:1528
 #, c-format
 msgid "The chosen LC_COLLATE setting requires encoding \"%s\"."
 msgstr "選択されたLC_COLLATEを設定するには、符号化方式\"%s\"である必要があります。"
 
-#: commands/dbcommands.c:1601
+#: commands/dbcommands.c:1608
 #, c-format
 msgid "database \"%s\" does not exist, skipping"
 msgstr "データベース\"%s\"は存在しません、スキップします"
 
-#: commands/dbcommands.c:1625
+#: commands/dbcommands.c:1632
 #, c-format
 msgid "cannot drop a template database"
 msgstr "テンプレートデータベースを削除できません"
 
-#: commands/dbcommands.c:1631
+#: commands/dbcommands.c:1638
 #, c-format
 msgid "cannot drop the currently open database"
 msgstr "現在オープンしているデータベースを削除できません"
 
-#: commands/dbcommands.c:1644
+#: commands/dbcommands.c:1651
 #, c-format
 msgid "database \"%s\" is used by an active logical replication slot"
 msgstr "データベース\"%s\"は有効な論理レプリケーションスロットで使用中です"
 
-#: commands/dbcommands.c:1646
+#: commands/dbcommands.c:1653
 #, c-format
 msgid "There is %d active slot."
 msgid_plural "There are %d active slots."
 msgstr[0] "%d 個のアクティブなスロットがあります。"
 
-#: commands/dbcommands.c:1660
+#: commands/dbcommands.c:1667
 #, c-format
 msgid "database \"%s\" is being used by logical replication subscription"
 msgstr "データベース\"%s\"は論理レプリケーションのサブスクリプションで使用中です"
 
-#: commands/dbcommands.c:1662
+#: commands/dbcommands.c:1669
 #, c-format
 msgid "There is %d subscription."
 msgid_plural "There are %d subscriptions."
 msgstr[0] "%d個のサブスクリプションがあります"
 
-#: commands/dbcommands.c:1683 commands/dbcommands.c:1842 commands/dbcommands.c:1969
+#: commands/dbcommands.c:1690 commands/dbcommands.c:1849 commands/dbcommands.c:1976
 #, c-format
 msgid "database \"%s\" is being accessed by other users"
 msgstr "データベース\"%s\"は他のユーザーからアクセスされています"
 
-#: commands/dbcommands.c:1802
+#: commands/dbcommands.c:1809
 #, c-format
 msgid "permission denied to rename database"
 msgstr "データベースの名前を変更する権限がありません"
 
-#: commands/dbcommands.c:1831
+#: commands/dbcommands.c:1838
 #, c-format
 msgid "current database cannot be renamed"
 msgstr "現在のデータベースの名前を変更できません"
 
-#: commands/dbcommands.c:1925
+#: commands/dbcommands.c:1932
 #, c-format
 msgid "cannot change the tablespace of the currently open database"
 msgstr "現在オープン中のデータベースのテーブルスペースは変更できません"
 
-#: commands/dbcommands.c:2031
+#: commands/dbcommands.c:2038
 #, c-format
 msgid "some relations of database \"%s\" are already in tablespace \"%s\""
 msgstr "データベース\"%s\"のリレーションの中に、テーブルスペース\"%s\"にすでに存在するものがあります"
 
-#: commands/dbcommands.c:2033
+#: commands/dbcommands.c:2040
 #, c-format
 msgid "You must move them back to the database's default tablespace before using this command."
 msgstr "このコマンドを使う前に、データベースのデフォルトのテーブルスペースに戻す必要があります。"
 
-#: commands/dbcommands.c:2160 commands/dbcommands.c:2868 commands/dbcommands.c:3132 commands/dbcommands.c:3245
+#: commands/dbcommands.c:2167 commands/dbcommands.c:2875 commands/dbcommands.c:3139 commands/dbcommands.c:3252
 #, c-format
 msgid "some useless files may be left behind in old database directory \"%s\""
 msgstr "元のデータベースのディレクトリ\"%s\"に不要なファイルが残っているかもしれません"
 
-#: commands/dbcommands.c:2221
+#: commands/dbcommands.c:2228
 #, c-format
 msgid "unrecognized DROP DATABASE option \"%s\""
 msgstr "DROP DATABASEのオプション\"%s\"が認識できません"
 
-#: commands/dbcommands.c:2299
+#: commands/dbcommands.c:2306
 #, c-format
 msgid "option \"%s\" cannot be specified with other options"
 msgstr "オプション\"%s\"は他のオプションと一緒に指定はできません"
 
-#: commands/dbcommands.c:2355
+#: commands/dbcommands.c:2362
 #, c-format
 msgid "cannot disallow connections for current database"
 msgstr "現在のデータベースへの接続は禁止できません"
 
-#: commands/dbcommands.c:2570
+#: commands/dbcommands.c:2577
 #, c-format
 msgid "permission denied to change owner of database"
 msgstr "データベースの所有者を変更する権限がありません"
 
-#: commands/dbcommands.c:2974
+#: commands/dbcommands.c:2981
 #, c-format
 msgid "There are %d other session(s) and %d prepared transaction(s) using the database."
 msgstr "他にこのデータベースを使っている %d 個のセッションと %d 個の準備済みトランザクションがあります。"
 
-#: commands/dbcommands.c:2977
+#: commands/dbcommands.c:2984
 #, c-format
 msgid "There is %d other session using the database."
 msgid_plural "There are %d other sessions using the database."
 msgstr[0] "他にこのデータベースを使っている %d 個のセッションがあります。"
 
-#: commands/dbcommands.c:2982 storage/ipc/procarray.c:3798
+#: commands/dbcommands.c:2989 storage/ipc/procarray.c:3798
 #, c-format
 msgid "There is %d prepared transaction using the database."
 msgid_plural "There are %d prepared transactions using the database."
 msgstr[0] "このデータベースを使用する準備されたトランザクションが%d存在します。"
 
-#: commands/dbcommands.c:3088
+#: commands/dbcommands.c:3095
 #, c-format
 msgid "missing directory \"%s\""
 msgstr "ディレクトリ\"%s\"がありません"
 
-#: commands/dbcommands.c:3146 commands/tablespace.c:190 commands/tablespace.c:639
+#: commands/dbcommands.c:3153 commands/tablespace.c:190 commands/tablespace.c:639
 #, c-format
 msgid "could not stat directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"のstatができませんでした: %m"
@@ -9384,7 +9394,7 @@ msgstr "サブスクリプションを作成する権限がありません"
 msgid "Only roles with privileges of the \"%s\" role may create subscriptions."
 msgstr "\"%s\"ロールの権限を持つロールのみがサブスクリプションを作成できます。"
 
-#: commands/subscriptioncmds.c:745 commands/subscriptioncmds.c:878 replication/logical/tablesync.c:1304 replication/logical/worker.c:4616
+#: commands/subscriptioncmds.c:745 commands/subscriptioncmds.c:878 replication/logical/tablesync.c:1309 replication/logical/worker.c:4622
 #, c-format
 msgid "could not connect to the publisher: %s"
 msgstr "発行サーバーへの接続ができませんでした: %s"
@@ -9512,7 +9522,7 @@ msgstr[0] "購読しているパブリケーション%sは他のパブリケー�
 msgid "Verify that initial data copied from the publisher tables did not come from other origins."
 msgstr "発行元テーブルからコピーされた初期データが異なる基点からのものでないことを確認してください。"
 
-#: commands/subscriptioncmds.c:2135 replication/logical/tablesync.c:875 replication/pgoutput/pgoutput.c:1115
+#: commands/subscriptioncmds.c:2135 replication/logical/tablesync.c:876 replication/pgoutput/pgoutput.c:1115
 #, c-format
 msgid "cannot use different column lists for table \"%s.%s\" in different publications"
 msgstr "テーブル\"%s.%s\"に対して、異なるパブリケーションで異なる列リストを使用することはできません"
@@ -10800,7 +10810,7 @@ msgstr "パーティションキーでシステム列\"%s\"は使用できませ
 msgid "cannot use generated column in partition key"
 msgstr "パーティションキーで生成カラムは使用できません"
 
-#: commands/tablecmds.c:17342 commands/tablecmds.c:17456 commands/trigger.c:663 rewrite/rewriteHandler.c:934 rewrite/rewriteHandler.c:969
+#: commands/tablecmds.c:17342 commands/tablecmds.c:17456 commands/trigger.c:663 rewrite/rewriteHandler.c:936 rewrite/rewriteHandler.c:971
 #, c-format
 msgid "Column \"%s\" is a generated column."
 msgstr "列\"%s\"は生成カラムです。"
@@ -12658,167 +12668,167 @@ msgstr "キー %s が既存のキー %s と競合しています"
 msgid "Key conflicts with existing key."
 msgstr "キーが既存のキーと衝突しています"
 
-#: executor/execMain.c:1030
+#: executor/execMain.c:1039
 #, c-format
 msgid "cannot change sequence \"%s\""
 msgstr "シーケンス\"%s\"を変更できません"
 
-#: executor/execMain.c:1036
+#: executor/execMain.c:1045
 #, c-format
 msgid "cannot change TOAST relation \"%s\""
 msgstr "TOASTリレーション\"%s\"を変更できません"
 
-#: executor/execMain.c:1054 rewrite/rewriteHandler.c:3078 rewrite/rewriteHandler.c:3965
+#: executor/execMain.c:1063 rewrite/rewriteHandler.c:3079 rewrite/rewriteHandler.c:3966
 #, c-format
 msgid "cannot insert into view \"%s\""
 msgstr "ビュー\"%s\"へは挿入(INSERT)できません"
 
-#: executor/execMain.c:1056 rewrite/rewriteHandler.c:3081 rewrite/rewriteHandler.c:3968
+#: executor/execMain.c:1065 rewrite/rewriteHandler.c:3082 rewrite/rewriteHandler.c:3969
 #, c-format
 msgid "To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule."
 msgstr "ビューへの挿入を可能にするために、INSTEAD OF INSERTトリガまたは無条件のON INSERT DO INSTEADルールを作成してください。"
 
-#: executor/execMain.c:1062 rewrite/rewriteHandler.c:3086 rewrite/rewriteHandler.c:3973
+#: executor/execMain.c:1071 rewrite/rewriteHandler.c:3087 rewrite/rewriteHandler.c:3974
 #, c-format
 msgid "cannot update view \"%s\""
 msgstr "ビュー\"%s\"は更新できません"
 
-#: executor/execMain.c:1064 rewrite/rewriteHandler.c:3089 rewrite/rewriteHandler.c:3976
+#: executor/execMain.c:1073 rewrite/rewriteHandler.c:3090 rewrite/rewriteHandler.c:3977
 #, c-format
 msgid "To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule."
 msgstr "ビューへの更新を可能にするために、INSTEAD OF UPDATEトリガまたは無条件のON UPDATE DO INSTEADルールを作成してください。"
 
-#: executor/execMain.c:1070 rewrite/rewriteHandler.c:3094 rewrite/rewriteHandler.c:3981
+#: executor/execMain.c:1079 rewrite/rewriteHandler.c:3095 rewrite/rewriteHandler.c:3982
 #, c-format
 msgid "cannot delete from view \"%s\""
 msgstr "ビュー\"%s\"からは削除できません"
 
-#: executor/execMain.c:1072 rewrite/rewriteHandler.c:3097 rewrite/rewriteHandler.c:3984
+#: executor/execMain.c:1081 rewrite/rewriteHandler.c:3098 rewrite/rewriteHandler.c:3985
 #, c-format
 msgid "To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule."
 msgstr "ビューからの削除を可能にするために、INSTEAD OF DELETEトリガまたは無条件のON DELETE DO INSTEADルールを作成してください。"
 
-#: executor/execMain.c:1083
+#: executor/execMain.c:1092
 #, c-format
 msgid "cannot change materialized view \"%s\""
 msgstr "実体化ビュー\"%s\"を変更できません"
 
-#: executor/execMain.c:1095
+#: executor/execMain.c:1104
 #, c-format
 msgid "cannot insert into foreign table \"%s\""
 msgstr "外部テーブル\"%s\"への挿入ができません"
 
-#: executor/execMain.c:1101
+#: executor/execMain.c:1110
 #, c-format
 msgid "foreign table \"%s\" does not allow inserts"
 msgstr "外部テーブル\"%s\"は挿入を許しません"
 
-#: executor/execMain.c:1108
+#: executor/execMain.c:1117
 #, c-format
 msgid "cannot update foreign table \"%s\""
 msgstr "外部テーブル \"%s\"の更新ができません"
 
-#: executor/execMain.c:1114
+#: executor/execMain.c:1123
 #, c-format
 msgid "foreign table \"%s\" does not allow updates"
 msgstr "外部テーブル\"%s\"は更新を許しません"
 
-#: executor/execMain.c:1121
+#: executor/execMain.c:1130
 #, c-format
 msgid "cannot delete from foreign table \"%s\""
 msgstr "外部テーブル\"%s\"からの削除ができません"
 
-#: executor/execMain.c:1127
+#: executor/execMain.c:1136
 #, c-format
 msgid "foreign table \"%s\" does not allow deletes"
 msgstr "外部テーブル\"%s\"は削除を許しません"
 
-#: executor/execMain.c:1138
+#: executor/execMain.c:1147
 #, c-format
 msgid "cannot change relation \"%s\""
 msgstr "リレーション\"%s\"を変更できません"
 
-#: executor/execMain.c:1165
+#: executor/execMain.c:1174
 #, c-format
 msgid "cannot lock rows in sequence \"%s\""
 msgstr "シーケンス\"%s\"では行のロックはできません"
 
-#: executor/execMain.c:1172
+#: executor/execMain.c:1181
 #, c-format
 msgid "cannot lock rows in TOAST relation \"%s\""
 msgstr "TOAST リレーション\"%s\"では行のロックはできません"
 
-#: executor/execMain.c:1179
+#: executor/execMain.c:1188
 #, c-format
 msgid "cannot lock rows in view \"%s\""
 msgstr "ビュー\"%s\"では行のロックはできません"
 
-#: executor/execMain.c:1187
+#: executor/execMain.c:1196
 #, c-format
 msgid "cannot lock rows in materialized view \"%s\""
 msgstr "実体化ビュー\"%s\"では行のロックはできません"
 
-#: executor/execMain.c:1196 executor/execMain.c:2699 executor/nodeLockRows.c:135
+#: executor/execMain.c:1205 executor/execMain.c:2708 executor/nodeLockRows.c:135
 #, c-format
 msgid "cannot lock rows in foreign table \"%s\""
 msgstr "外部テーブル\"%s\"では行のロックはできません"
 
-#: executor/execMain.c:1202
+#: executor/execMain.c:1211
 #, c-format
 msgid "cannot lock rows in relation \"%s\""
 msgstr "リレーション\"%s\"では行のロックはできません"
 
-#: executor/execMain.c:1913
+#: executor/execMain.c:1922
 #, c-format
 msgid "new row for relation \"%s\" violates partition constraint"
 msgstr "リレーション\"%s\"の新しい行はパーティション制約に違反しています"
 
-#: executor/execMain.c:1915 executor/execMain.c:1999 executor/execMain.c:2050 executor/execMain.c:2160
+#: executor/execMain.c:1924 executor/execMain.c:2008 executor/execMain.c:2059 executor/execMain.c:2169
 #, c-format
 msgid "Failing row contains %s."
 msgstr "失敗した行は%sを含みます"
 
-#: executor/execMain.c:1996
+#: executor/execMain.c:2005
 #, c-format
 msgid "null value in column \"%s\" of relation \"%s\" violates not-null constraint"
 msgstr "リレーション\"%2$s\"の列\"%1$s\"のNULL値が非NULL制約に違反しています"
 
-#: executor/execMain.c:2048
+#: executor/execMain.c:2057
 #, c-format
 msgid "new row for relation \"%s\" violates check constraint \"%s\""
 msgstr "リレーション\"%s\"の新しい行は検査制約\"%s\"に違反しています"
 
-#: executor/execMain.c:2158
+#: executor/execMain.c:2167
 #, c-format
 msgid "new row violates check option for view \"%s\""
 msgstr "新しい行はビュー\"%s\"のチェックオプションに違反しています"
 
-#: executor/execMain.c:2168
+#: executor/execMain.c:2177
 #, c-format
 msgid "new row violates row-level security policy \"%s\" for table \"%s\""
 msgstr "新しい行はテーブル\"%2$s\"行レベルセキュリティポリシ\"%1$s\"に違反しています"
 
-#: executor/execMain.c:2173
+#: executor/execMain.c:2182
 #, c-format
 msgid "new row violates row-level security policy for table \"%s\""
 msgstr "新しい行はテーブル\"%s\"の行レベルセキュリティポリシに違反しています"
 
-#: executor/execMain.c:2181
+#: executor/execMain.c:2190
 #, c-format
 msgid "target row violates row-level security policy \"%s\" (USING expression) for table \"%s\""
 msgstr "ターゲットの行はテーブル\"%s\"の行レベルセキュリティポリシ\"%s\"(USING式)に違反しています"
 
-#: executor/execMain.c:2186
+#: executor/execMain.c:2195
 #, c-format
 msgid "target row violates row-level security policy (USING expression) for table \"%s\""
 msgstr "ターゲットの行はテーブル\"%s\"の行レベルセキュリティポリシ(USING式)に違反しています"
 
-#: executor/execMain.c:2193
+#: executor/execMain.c:2202
 #, c-format
 msgid "new row violates row-level security policy \"%s\" (USING expression) for table \"%s\""
 msgstr "新しい行はテーブル\"%1$s\"の行レベルセキュリティポリシ\"%2$s\"(USING式)に違反しています"
 
-#: executor/execMain.c:2198
+#: executor/execMain.c:2207
 #, c-format
 msgid "new row violates row-level security policy (USING expression) for table \"%s\""
 msgstr "新しい行はテーブル\"%s\"の行レベルセキュリティポリシ(USING式)に違反しています"
@@ -15769,7 +15779,7 @@ msgid "cannot execute MERGE on relation \"%s\""
 msgstr "リレーション\"%s\"に対してMERGEは実行できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: optimizer/plan/initsplan.c:1392
+#: optimizer/plan/initsplan.c:1398
 #, c-format
 msgid "%s cannot be applied to the nullable side of an outer join"
 msgstr "外部結合のNULL可な側では%sを適用できません"
@@ -18146,7 +18156,7 @@ msgstr "ルールのWHERE条件に他のリレーションへの参照を持た�
 msgid "rules with WHERE conditions can only have SELECT, INSERT, UPDATE, or DELETE actions"
 msgstr "ルールのWHERE条件はSELECT、INSERT、UPDATE、DELETE動作のみを持つことができます"
 
-#: parser/parse_utilcmd.c:3143 parser/parse_utilcmd.c:3244 rewrite/rewriteHandler.c:537 rewrite/rewriteManip.c:1082
+#: parser/parse_utilcmd.c:3143 parser/parse_utilcmd.c:3244 rewrite/rewriteHandler.c:539 rewrite/rewriteManip.c:1087
 #, c-format
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
 msgstr "条件付きのUNION/INTERSECT/EXCEPT文は実装されていません"
@@ -19960,57 +19970,57 @@ msgstr "論理デコードは保存されたスナップショットを使って
 msgid "could not parse file name \"%s\""
 msgstr "ファイル名\"%s\"をパースできませんでした"
 
-#: replication/logical/tablesync.c:152
+#: replication/logical/tablesync.c:153
 #, c-format
 msgid "logical replication table synchronization worker for subscription \"%s\", table \"%s\" has finished"
 msgstr "サブスクリプション\"%s\"、テーブル\"%s\"に対する論理レプリケーションテーブル同期ワーカーが終了しました"
 
-#: replication/logical/tablesync.c:621
+#: replication/logical/tablesync.c:622
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will restart so that two_phase can be enabled"
 msgstr "two_phaseを有効化可能にするため、サブスクリプション\"%s\"に対応する論理レプリケーション適用ワーカーを再起動します"
 
-#: replication/logical/tablesync.c:796 replication/logical/tablesync.c:938
+#: replication/logical/tablesync.c:797 replication/logical/tablesync.c:939
 #, c-format
 msgid "could not fetch table info for table \"%s.%s\" from publisher: %s"
 msgstr "テーブル\"%s.%s\"のテーブル情報を発行サーバーから取得できませんでした: %s"
 
-#: replication/logical/tablesync.c:803
+#: replication/logical/tablesync.c:804
 #, c-format
 msgid "table \"%s.%s\" not found on publisher"
 msgstr "テーブル\"%s.%s\"が発行サーバー上で見つかりませんでした"
 
-#: replication/logical/tablesync.c:861
+#: replication/logical/tablesync.c:862
 #, c-format
 msgid "could not fetch column list info for table \"%s.%s\" from publisher: %s"
 msgstr "テーブル\"%s.%s\"の列リスト情報を発行サーバーから取得できませんでした: %s"
 
-#: replication/logical/tablesync.c:1040
+#: replication/logical/tablesync.c:1041
 #, c-format
 msgid "could not fetch table WHERE clause info for table \"%s.%s\" from publisher: %s"
 msgstr "テーブル\"%s.%s\"のテーブルのテーブルWHERE句を発行サーバーから取得できませんでした: %s"
 
-#: replication/logical/tablesync.c:1191
+#: replication/logical/tablesync.c:1192
 #, c-format
 msgid "could not start initial contents copy for table \"%s.%s\": %s"
 msgstr "テーブル\"%s.%s\"の初期内容のコピーを開始できませんでした: %s"
 
-#: replication/logical/tablesync.c:1398 replication/logical/worker.c:2387
-#, c-format
-msgid "user \"%s\" cannot replicate into relation with row-level security enabled: \"%s\""
-msgstr "ユーザー\"%s\"は行レベルセキュリティが有効なリレーションへのレプリケーションはできません: \"%s\""
-
-#: replication/logical/tablesync.c:1413
+#: replication/logical/tablesync.c:1393
 #, c-format
 msgid "table copy could not start transaction on publisher: %s"
 msgstr "テーブルコピー中に発行サーバー上でのトランザクション開始に失敗しました: %s"
 
-#: replication/logical/tablesync.c:1455
+#: replication/logical/tablesync.c:1435
 #, c-format
 msgid "replication origin \"%s\" already exists"
 msgstr "レプリケーション基点\"%s\"はすでに存在します"
 
-#: replication/logical/tablesync.c:1468
+#: replication/logical/tablesync.c:1468 replication/logical/worker.c:2387
+#, c-format
+msgid "user \"%s\" cannot replicate into relation with row-level security enabled: \"%s\""
+msgstr "ユーザー\"%s\"は行レベルセキュリティが有効なリレーションへのレプリケーションはできません: \"%s\""
+
+#: replication/logical/tablesync.c:1481
 #, c-format
 msgid "table copy could not finish transaction on publisher: %s"
 msgstr "テーブルコピー中に発行サーバー上でのトランザクション終了に失敗しました: %s"
@@ -20058,118 +20068,118 @@ msgstr "不正な論理レプリケーションのメッセージタイプ\"%c\"
 msgid "data stream from publisher has ended"
 msgstr "発行サーバーからのデータストリームが終了しました"
 
-#: replication/logical/worker.c:3707
+#: replication/logical/worker.c:3713
 #, c-format
 msgid "terminating logical replication worker due to timeout"
 msgstr "タイムアウトにより論理レプリケーションワーカーを終了しています"
 
 #. translator: first %s is the name of logical replication worker
-#: replication/logical/worker.c:3902
+#: replication/logical/worker.c:3908
 #, c-format
 msgid "%s for subscription \"%s\" will stop because the subscription was removed"
 msgstr "サブスクリプション\"%2$s\"が削除されたため、このサブスクリプションに対応する%1$sが停止します"
 
 #. translator: first %s is the name of logical replication worker
-#: replication/logical/worker.c:3916
+#: replication/logical/worker.c:3922
 #, c-format
 msgid "%s for subscription \"%s\" will stop because the subscription was disabled"
 msgstr "サブスクリプション\"%2$s\"が無効化されたため、このサブスクリプションに対応する%1$sが停止します"
 
-#: replication/logical/worker.c:3947
+#: replication/logical/worker.c:3953
 #, c-format
 msgid "logical replication parallel apply worker for subscription \"%s\" will stop because of a parameter change"
 msgstr "パラメータの変更があったため、サブスクリプション\"%s\"に対応する論理レプリケーション並列適用ワーカーが停止します"
 
 #. translator: first %s is the name of logical replication worker
-#: replication/logical/worker.c:3952
+#: replication/logical/worker.c:3958
 #, c-format
 msgid "%s for subscription \"%s\" will restart because of a parameter change"
 msgstr "パラメータの変更があったため、サブスクリプション\"%2$s\"に対応する%1$sが再起動します"
 
 #. translator: %s is the name of logical replication worker
-#: replication/logical/worker.c:4476
+#: replication/logical/worker.c:4482
 #, c-format
 msgid "%s for subscription %u will not start because the subscription was removed during startup"
 msgstr "サブスクリプション%2$uが起動中に削除されたため、このサブスクリプションに対応する%1$sは起動しません"
 
 #. translator: first %s is the name of logical replication worker
-#: replication/logical/worker.c:4492
+#: replication/logical/worker.c:4498
 #, c-format
 msgid "%s for subscription \"%s\" will not start because the subscription was disabled during startup"
 msgstr "サブスクリプション\"%2$s\"が起動中に無効化されたため、このサブスクリプションに対応する%1$sは起動しません"
 
-#: replication/logical/worker.c:4509
+#: replication/logical/worker.c:4515
 #, c-format
 msgid "logical replication table synchronization worker for subscription \"%s\", table \"%s\" has started"
 msgstr "サブスクリプション\"%s\"、テーブル\"%s\"に対応する論理レプリケーションテーブル同期ワーカーが起動しました"
 
 #. translator: first %s is the name of logical replication worker
-#: replication/logical/worker.c:4515
+#: replication/logical/worker.c:4521
 #, c-format
 msgid "%s for subscription \"%s\" has started"
 msgstr "サブスクリプション\"%2$s\"に対応する%1$sが起動しました"
 
-#: replication/logical/worker.c:4590
+#: replication/logical/worker.c:4596
 #, c-format
 msgid "subscription has no replication slot set"
 msgstr "サブスクリプションにレプリケーションスロットが設定されていません"
 
-#: replication/logical/worker.c:4757
+#: replication/logical/worker.c:4763
 #, c-format
 msgid "subscription \"%s\" has been disabled because of an error"
 msgstr "サブスクリプション\"%s\"はエラーのため無効化されました"
 
-#: replication/logical/worker.c:4805
+#: replication/logical/worker.c:4811
 #, c-format
 msgid "logical replication starts skipping transaction at LSN %X/%X"
 msgstr "論理レプリケーションは%X/%Xででトランザクションのスキップを開始します"
 
-#: replication/logical/worker.c:4819
+#: replication/logical/worker.c:4825
 #, c-format
 msgid "logical replication completed skipping transaction at LSN %X/%X"
 msgstr "論理レプリケーションは%X/%Xでトランザクションのスキップを完了しました"
 
-#: replication/logical/worker.c:4901
+#: replication/logical/worker.c:4907
 #, c-format
 msgid "skip-LSN of subscription \"%s\" cleared"
 msgstr "サブスクリプションの\"%s\"スキップLSNをクリアしました"
 
-#: replication/logical/worker.c:4902
+#: replication/logical/worker.c:4908
 #, c-format
 msgid "Remote transaction's finish WAL location (LSN) %X/%X did not match skip-LSN %X/%X."
 msgstr "リモートトランザクションの完了WAL位置(LSN) %X/%XがスキップLSN %X/%X と一致しません。"
 
-#: replication/logical/worker.c:4928
+#: replication/logical/worker.c:4934
 #, c-format
 msgid "processing remote data for replication origin \"%s\" during message type \"%s\""
 msgstr "メッセージタイプ \"%2$s\"でレプリケーション基点\"%1$s\"のリモートからのデータを処理中"
 
-#: replication/logical/worker.c:4932
+#: replication/logical/worker.c:4938
 #, c-format
 msgid "processing remote data for replication origin \"%s\" during message type \"%s\" in transaction %u"
 msgstr "トランザクション%3$u中、メッセージタイプ\"%2$s\"でレプリケーション基点\"%1$s\"のリモートからのデータを処理中"
 
-#: replication/logical/worker.c:4937
+#: replication/logical/worker.c:4943
 #, c-format
 msgid "processing remote data for replication origin \"%s\" during message type \"%s\" in transaction %u, finished at %X/%X"
 msgstr "%4$X/%5$Xで終了したトランザクション%3$u中、メッセージタイプ\"%2$s\"でレプリケーション基点\"%1$s\"のリモートからのデータを処理中"
 
-#: replication/logical/worker.c:4948
+#: replication/logical/worker.c:4954
 #, c-format
 msgid "processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" in transaction %u"
 msgstr "レプリケーション起点\"%1$s\"のリモートデータ処理中、トランザクション%5$uのレプリケーション対象リレーション\"%3$s.%4$s\"に対するメッセージタイプ\"%2$s\"内"
 
-#: replication/logical/worker.c:4955
+#: replication/logical/worker.c:4961
 #, c-format
 msgid "processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" in transaction %u, finished at %X/%X"
 msgstr "%6$X/%7$Xで終了したトランザクション%5$u中、レプリケーション先リレーション\"%3$s.%4$s\"に対するメッセージタイプ\"%2$s\"でレプリケーション基点\"%1$s\"のリモートからのデータを処理中"
 
-#: replication/logical/worker.c:4966
+#: replication/logical/worker.c:4972
 #, c-format
 msgid "processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" column \"%s\" in transaction %u"
 msgstr "レプリケーション起点\"%1$s\"のリモートデータ処理中、トランザクション%6$uのレプリケーション対象リレーション\"%3$s.%4$s\"、列\"%5$s\"に対するメッセージタイプ\"%2$s\"内"
 
-#: replication/logical/worker.c:4974
+#: replication/logical/worker.c:4980
 #, c-format
 msgid "processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" column \"%s\" in transaction %u, finished at %X/%X"
 msgstr "%7$X/%8$Xで終了したトランザクション%6$u中、レプリケーション先リレーション\"%3$s.%4$s\"、列\"%5$s\"に対するメッセージタイプ\"%2$s\"でレプリケーション基点\"%1$s\"のリモートからのデータを処理中"
@@ -20835,211 +20845,211 @@ msgstr "リレーション\"%2$s\"のルール\"%1$s\"は存在しません"
 msgid "renaming an ON SELECT rule is not allowed"
 msgstr "ON SELECTルールの名前を変更することはできません"
 
-#: rewrite/rewriteHandler.c:581
+#: rewrite/rewriteHandler.c:583
 #, c-format
 msgid "WITH query name \"%s\" appears in both a rule action and the query being rewritten"
 msgstr "WITH の問い合わせ名\"%s\"が、ルールのアクションと書き換えられようとしている問い合わせの両方に現れています"
 
-#: rewrite/rewriteHandler.c:608
+#: rewrite/rewriteHandler.c:610
 #, c-format
 msgid "INSERT ... SELECT rule actions are not supported for queries having data-modifying statements in WITH"
 msgstr "INSERT ... SELECTルールのアクションはWITHにデータ更新文を持つ問い合わせに対してはサポートされません"
 
-#: rewrite/rewriteHandler.c:661
+#: rewrite/rewriteHandler.c:663
 #, c-format
 msgid "cannot have RETURNING lists in multiple rules"
 msgstr "複数ルールではRETURNINGリストを持つことはできません"
 
-#: rewrite/rewriteHandler.c:893 rewrite/rewriteHandler.c:932
+#: rewrite/rewriteHandler.c:895 rewrite/rewriteHandler.c:934
 #, c-format
 msgid "cannot insert a non-DEFAULT value into column \"%s\""
 msgstr "列\"%s\"への非デフォルト値の挿入はできません"
 
-#: rewrite/rewriteHandler.c:895 rewrite/rewriteHandler.c:961
+#: rewrite/rewriteHandler.c:897 rewrite/rewriteHandler.c:963
 #, c-format
 msgid "Column \"%s\" is an identity column defined as GENERATED ALWAYS."
 msgstr "列\"%s\"は GENERATED ALWAYS として定義されています。"
 
-#: rewrite/rewriteHandler.c:897
+#: rewrite/rewriteHandler.c:899
 #, c-format
 msgid "Use OVERRIDING SYSTEM VALUE to override."
 msgstr "OVERRIDING SYSTEM VALUE を指定することで挿入を強制できます。"
 
-#: rewrite/rewriteHandler.c:959 rewrite/rewriteHandler.c:967
+#: rewrite/rewriteHandler.c:961 rewrite/rewriteHandler.c:969
 #, c-format
 msgid "column \"%s\" can only be updated to DEFAULT"
 msgstr "列\"%s\"はDEFAULTにのみ更新可能です"
 
-#: rewrite/rewriteHandler.c:1114 rewrite/rewriteHandler.c:1132
+#: rewrite/rewriteHandler.c:1116 rewrite/rewriteHandler.c:1134
 #, c-format
 msgid "multiple assignments to same column \"%s\""
 msgstr "同じ列\"%s\"に複数の代入があります"
 
-#: rewrite/rewriteHandler.c:2118 rewrite/rewriteHandler.c:4039
+#: rewrite/rewriteHandler.c:2119 rewrite/rewriteHandler.c:4040
 #, c-format
 msgid "infinite recursion detected in rules for relation \"%s\""
 msgstr "リレーション\"%s\"のルールで無限再帰を検出しました"
 
-#: rewrite/rewriteHandler.c:2203
+#: rewrite/rewriteHandler.c:2204
 #, c-format
 msgid "infinite recursion detected in policy for relation \"%s\""
 msgstr "リレーション\"%s\"のポリシで無限再帰を検出しました"
 
-#: rewrite/rewriteHandler.c:2523
+#: rewrite/rewriteHandler.c:2524
 msgid "Junk view columns are not updatable."
 msgstr "ジャンクビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2528
+#: rewrite/rewriteHandler.c:2529
 msgid "View columns that are not columns of their base relation are not updatable."
 msgstr "基底リレーションの列ではないビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2531
+#: rewrite/rewriteHandler.c:2532
 msgid "View columns that refer to system columns are not updatable."
 msgstr "システム列を参照するビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2534
+#: rewrite/rewriteHandler.c:2535
 msgid "View columns that return whole-row references are not updatable."
 msgstr "行全体参照を返すビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2595
+#: rewrite/rewriteHandler.c:2596
 msgid "Views containing DISTINCT are not automatically updatable."
 msgstr "DISTINCTを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2598
+#: rewrite/rewriteHandler.c:2599
 msgid "Views containing GROUP BY are not automatically updatable."
 msgstr "GROUP BYを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2601
+#: rewrite/rewriteHandler.c:2602
 msgid "Views containing HAVING are not automatically updatable."
 msgstr "HAVINGを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2604
+#: rewrite/rewriteHandler.c:2605
 msgid "Views containing UNION, INTERSECT, or EXCEPT are not automatically updatable."
 msgstr "UNION、INTERSECT、EXCEPTを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2607
+#: rewrite/rewriteHandler.c:2608
 msgid "Views containing WITH are not automatically updatable."
 msgstr "WITHを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2610
+#: rewrite/rewriteHandler.c:2611
 msgid "Views containing LIMIT or OFFSET are not automatically updatable."
 msgstr "LIMIT、OFFSETを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2622
+#: rewrite/rewriteHandler.c:2623
 msgid "Views that return aggregate functions are not automatically updatable."
 msgstr "集約関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2625
+#: rewrite/rewriteHandler.c:2626
 msgid "Views that return window functions are not automatically updatable."
 msgstr "ウィンドウ関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2628
+#: rewrite/rewriteHandler.c:2629
 msgid "Views that return set-returning functions are not automatically updatable."
 msgstr "集合返却関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2635 rewrite/rewriteHandler.c:2639 rewrite/rewriteHandler.c:2647
+#: rewrite/rewriteHandler.c:2636 rewrite/rewriteHandler.c:2640 rewrite/rewriteHandler.c:2648
 msgid "Views that do not select from a single table or view are not automatically updatable."
 msgstr "単一のテーブルまたはビューからselectしていないビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2650
+#: rewrite/rewriteHandler.c:2651
 msgid "Views containing TABLESAMPLE are not automatically updatable."
 msgstr "TABLESAMPLEを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2674
+#: rewrite/rewriteHandler.c:2675
 msgid "Views that have no updatable columns are not automatically updatable."
 msgstr "更新可能な列を持たないビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:3154
+#: rewrite/rewriteHandler.c:3155
 #, c-format
 msgid "cannot insert into column \"%s\" of view \"%s\""
 msgstr "ビュー\"%2$s\"の列\"%1$s\"への挿入はできません"
 
-#: rewrite/rewriteHandler.c:3162
+#: rewrite/rewriteHandler.c:3163
 #, c-format
 msgid "cannot update column \"%s\" of view \"%s\""
 msgstr "ビュー\"%2$s\"の列\"%1$s\"は更新できません"
 
-#: rewrite/rewriteHandler.c:3666
+#: rewrite/rewriteHandler.c:3667
 #, c-format
 msgid "DO INSTEAD NOTIFY rules are not supported for data-modifying statements in WITH"
 msgstr "DO INSTEAD NOTIFYルールはWITH内のデータ更新文に対してはサポートされません"
 
-#: rewrite/rewriteHandler.c:3677
+#: rewrite/rewriteHandler.c:3678
 #, c-format
 msgid "DO INSTEAD NOTHING rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は DO INSTEAD NOTHING ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3691
+#: rewrite/rewriteHandler.c:3692
 #, c-format
 msgid "conditional DO INSTEAD rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は、条件付き DO INSTEAD ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3695
+#: rewrite/rewriteHandler.c:3696
 #, c-format
 msgid "DO ALSO rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は DO ALSO ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3700
+#: rewrite/rewriteHandler.c:3701
 #, c-format
 msgid "multi-statement DO INSTEAD rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合はマルチステートメントの DO INSTEAD ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3967 rewrite/rewriteHandler.c:3975 rewrite/rewriteHandler.c:3983
+#: rewrite/rewriteHandler.c:3968 rewrite/rewriteHandler.c:3976 rewrite/rewriteHandler.c:3984
 #, c-format
 msgid "Views with conditional DO INSTEAD rules are not automatically updatable."
 msgstr "条件付きDO INSTEADルールを持つビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:4088
+#: rewrite/rewriteHandler.c:4089
 #, c-format
 msgid "cannot perform INSERT RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのINSERT RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:4090
+#: rewrite/rewriteHandler.c:4091
 #, c-format
 msgid "You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON INSERT DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:4095
+#: rewrite/rewriteHandler.c:4096
 #, c-format
 msgid "cannot perform UPDATE RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのUPDATE RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:4097
+#: rewrite/rewriteHandler.c:4098
 #, c-format
 msgid "You need an unconditional ON UPDATE DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON UPDATE DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:4102
+#: rewrite/rewriteHandler.c:4103
 #, c-format
 msgid "cannot perform DELETE RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのDELETE RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:4104
+#: rewrite/rewriteHandler.c:4105
 #, c-format
 msgid "You need an unconditional ON DELETE DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON DELETE DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:4122
+#: rewrite/rewriteHandler.c:4123
 #, c-format
 msgid "INSERT with ON CONFLICT clause cannot be used with table that has INSERT or UPDATE rules"
 msgstr "ON CONFLICT句を伴うINSERTは、INSERTまたはUPDATEルールを持つテーブルでは使えません"
 
-#: rewrite/rewriteHandler.c:4179
+#: rewrite/rewriteHandler.c:4180
 #, c-format
 msgid "WITH cannot be used in a query that is rewritten by rules into multiple queries"
 msgstr "複数問い合わせに対するルールにより書き換えられた問い合わせでは WITH を使用できません"
 
-#: rewrite/rewriteManip.c:1070
+#: rewrite/rewriteManip.c:1075
 #, c-format
 msgid "conditional utility statements are not implemented"
 msgstr "条件付きのユーティリティ文は実装されていません"
 
-#: rewrite/rewriteManip.c:1414
+#: rewrite/rewriteManip.c:1419
 #, c-format
 msgid "WHERE CURRENT OF on a view is not implemented"
 msgstr "ビューに対するWHERE CURRENT OFは実装されていません"
 
-#: rewrite/rewriteManip.c:1749
+#: rewrite/rewriteManip.c:1754
 #, c-format
 msgid "NEW variables in ON UPDATE rules cannot reference columns that are part of a multiple assignment in the subject UPDATE command"
 msgstr "ON UPDATE ルールのNEW変数は、対象のUPDATEコマンドでの複数列代入の一部となる列を参照することはできません"
@@ -21646,35 +21656,35 @@ msgstr "リカバリで競合が発生したためステートメントをキャ
 msgid "User transaction caused buffer deadlock with recovery."
 msgstr "リカバリ時にユーザーのトランザクションがバッファのデッドロックを引き起こしました。"
 
-#: storage/ipc/standby.c:1479
+#: storage/ipc/standby.c:1488
 msgid "unknown reason"
 msgstr "不明な理由"
 
-#: storage/ipc/standby.c:1484
+#: storage/ipc/standby.c:1493
 msgid "recovery conflict on buffer pin"
 msgstr "バッファピンによるリカバリ競合"
 
-#: storage/ipc/standby.c:1487
+#: storage/ipc/standby.c:1496
 msgid "recovery conflict on lock"
 msgstr "ロック上のリカバリ衝突"
 
-#: storage/ipc/standby.c:1490
+#: storage/ipc/standby.c:1499
 msgid "recovery conflict on tablespace"
 msgstr "テーブル空間上のリカバリ衝突"
 
-#: storage/ipc/standby.c:1493
+#: storage/ipc/standby.c:1502
 msgid "recovery conflict on snapshot"
 msgstr "スナップショットによるリカバリ競合"
 
-#: storage/ipc/standby.c:1496
+#: storage/ipc/standby.c:1505
 msgid "recovery conflict on replication slot"
 msgstr "レプリケーションスロットに対するリカバリ競合"
 
-#: storage/ipc/standby.c:1499
+#: storage/ipc/standby.c:1508
 msgid "recovery conflict on buffer deadlock"
 msgstr "バッファのデッドロックによるリカバリ競合"
 
-#: storage/ipc/standby.c:1502
+#: storage/ipc/standby.c:1511
 msgid "recovery conflict on database"
 msgstr "データベース上のリカバリ衝突"
 
@@ -22674,37 +22684,37 @@ msgstr "MaxFragments は 0 以上でなければなりません"
 msgid "could not unlink permanent statistics file \"%s\": %m"
 msgstr "永続統計情報ファイル\"%s\"をunlinkできませんでした: %m"
 
-#: utils/activity/pgstat.c:1241
+#: utils/activity/pgstat.c:1252
 #, c-format
 msgid "invalid statistics kind: \"%s\""
 msgstr "不正な統計情報種別: \"%s\""
 
-#: utils/activity/pgstat.c:1321
+#: utils/activity/pgstat.c:1332
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "一時統計情報ファイル\"%s\"をオープンできませんでした: %m"
 
-#: utils/activity/pgstat.c:1433
+#: utils/activity/pgstat.c:1444
 #, c-format
 msgid "could not write temporary statistics file \"%s\": %m"
 msgstr "一時統計情報ファイル\"%s\"に書き込みできませんでした: %m"
 
-#: utils/activity/pgstat.c:1442
+#: utils/activity/pgstat.c:1453
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "一時統計情報ファイル\"%s\"をクローズできませんでした: %m"
 
-#: utils/activity/pgstat.c:1450
+#: utils/activity/pgstat.c:1461
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr "一時統計情報ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
 
-#: utils/activity/pgstat.c:1499
+#: utils/activity/pgstat.c:1510
 #, c-format
 msgid "could not open statistics file \"%s\": %m"
 msgstr "統計情報ファイル\"%s\"をオープンできませんでした: %m"
 
-#: utils/activity/pgstat.c:1661
+#: utils/activity/pgstat.c:1672
 #, c-format
 msgid "corrupted statistics file \"%s\""
 msgstr "統計情報ファイル\"%s\"が破損しています"
@@ -24282,42 +24292,42 @@ msgstr "jsonpath 項目メソッド .%s() は数値にのみ適用可能です"
 msgid "jsonpath item method .%s() can only be applied to a string"
 msgstr "jsonpath 項目メソッド .%s() は文字列にのみ適用可能です"
 
-#: utils/adt/jsonpath_exec.c:1892
+#: utils/adt/jsonpath_exec.c:1901
 #, c-format
 msgid "datetime format is not recognized: \"%s\""
 msgstr "datetime書式を認識できません: \"%s\""
 
-#: utils/adt/jsonpath_exec.c:1894
+#: utils/adt/jsonpath_exec.c:1903
 #, c-format
 msgid "Use a datetime template argument to specify the input data format."
 msgstr "datetimeテンプレート引数を使って入力データフォーマットを指定してください。"
 
-#: utils/adt/jsonpath_exec.c:1962
+#: utils/adt/jsonpath_exec.c:1971
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to an object"
 msgstr "jsonpath項目メソッド .%s() はオブジェクトに対してのみ適用可能です"
 
-#: utils/adt/jsonpath_exec.c:2144
+#: utils/adt/jsonpath_exec.c:2153
 #, c-format
 msgid "could not find jsonpath variable \"%s\""
 msgstr "jsonpath変数\"%s\"が見つかりませんでした"
 
-#: utils/adt/jsonpath_exec.c:2408
+#: utils/adt/jsonpath_exec.c:2417
 #, c-format
 msgid "jsonpath array subscript is not a single numeric value"
 msgstr "jsonpath配列添え字が単一の数値ではありません"
 
-#: utils/adt/jsonpath_exec.c:2420
+#: utils/adt/jsonpath_exec.c:2429
 #, c-format
 msgid "jsonpath array subscript is out of integer range"
 msgstr "jsonpath配列の添え字が整数の範囲外です"
 
-#: utils/adt/jsonpath_exec.c:2597
+#: utils/adt/jsonpath_exec.c:2606
 #, c-format
 msgid "cannot convert value from %s to %s without time zone usage"
 msgstr "時間帯を使用せずに%sから%sへの値の変換はできません"
 
-#: utils/adt/jsonpath_exec.c:2599
+#: utils/adt/jsonpath_exec.c:2608
 #, c-format
 msgid "Use *_tz() function for time zone support."
 msgstr "*_tz() 関数を使用することで時間帯がサポートされます。"
@@ -26400,52 +26410,52 @@ msgstr "データベースは照合順序バージョン%sで作成されてい�
 msgid "Rebuild all objects in this database that use the default collation and run ALTER DATABASE %s REFRESH COLLATION VERSION, or build PostgreSQL with the right library version."
 msgstr "このデータベース内でデフォルトの照合順序を使用している全てのオブジェクトを再構築して、ALTER DATABASE %s REFRESH COLLATION VERSIONを実行するか、正しいバージョンのライブラリを用いてPostgreSQLをビルドしてください。"
 
-#: utils/init/postinit.c:895
+#: utils/init/postinit.c:891
 #, c-format
 msgid "no roles are defined in this database system"
 msgstr "データベースシステム内でロールが定義されていません"
 
-#: utils/init/postinit.c:896
+#: utils/init/postinit.c:892
 #, c-format
 msgid "You should immediately run CREATE USER \"%s\" SUPERUSER;."
 msgstr "すぐに CREATE USER \"%s\" SUPERUSER; を実行してください。"
 
-#: utils/init/postinit.c:932
+#: utils/init/postinit.c:928
 #, c-format
 msgid "must be superuser to connect in binary upgrade mode"
 msgstr "バイナリアップグレードモード中に接続するにはスーパーユーザーである必要があります"
 
-#: utils/init/postinit.c:953
+#: utils/init/postinit.c:949
 #, c-format
 msgid "remaining connection slots are reserved for roles with %s"
 msgstr "残りの接続枠は%s属性を持つロールのために予約されています"
 
-#: utils/init/postinit.c:959
+#: utils/init/postinit.c:955
 #, c-format
 msgid "remaining connection slots are reserved for roles with privileges of the \"%s\" role"
 msgstr "残りの接続枠は\"%s\"ロールの権限を持つロールのために予約されています"
 
-#: utils/init/postinit.c:971
+#: utils/init/postinit.c:967
 #, c-format
 msgid "permission denied to start WAL sender"
 msgstr "WAL送信プロセスを開始する権限がありません"
 
-#: utils/init/postinit.c:972
+#: utils/init/postinit.c:968
 #, c-format
 msgid "Only roles with the %s attribute may start a WAL sender process."
 msgstr "%s属性を持つロールのみがWAL送信プロセスを開始できます。"
 
-#: utils/init/postinit.c:1042
+#: utils/init/postinit.c:1038
 #, c-format
 msgid "database %u does not exist"
 msgstr "データベース %u は存在しません"
 
-#: utils/init/postinit.c:1131
+#: utils/init/postinit.c:1127
 #, c-format
 msgid "It seems to have just been dropped or renamed."
 msgstr "削除またはリネームされたばかりのようです。"
 
-#: utils/init/postinit.c:1149
+#: utils/init/postinit.c:1145
 #, c-format
 msgid "The database subdirectory \"%s\" is missing."
 msgstr "データベースのサブディレクトリ\"%s\"がありません。"
@@ -26777,1980 +26787,1972 @@ msgstr "SET %sは1つの引数のみを取ります"
 msgid "SET requires parameter name"
 msgstr "SETにはパラメータ名が必要です"
 
-#: utils/misc/guc_tables.c:667
+#: utils/misc/guc_tables.c:662
 msgid "Ungrouped"
 msgstr "その他"
 
-#: utils/misc/guc_tables.c:669
+#: utils/misc/guc_tables.c:664
 msgid "File Locations"
 msgstr "ファイルの位置"
 
-#: utils/misc/guc_tables.c:671
+#: utils/misc/guc_tables.c:666
 msgid "Connections and Authentication / Connection Settings"
 msgstr "接続と認証/接続設定"
 
-#: utils/misc/guc_tables.c:673
+#: utils/misc/guc_tables.c:668
 msgid "Connections and Authentication / TCP Settings"
 msgstr "接続と認証/TCP設定"
 
-#: utils/misc/guc_tables.c:675
+#: utils/misc/guc_tables.c:670
 msgid "Connections and Authentication / Authentication"
 msgstr "接続と認証/認証"
 
-#: utils/misc/guc_tables.c:677
+#: utils/misc/guc_tables.c:672
 msgid "Connections and Authentication / SSL"
 msgstr "接続と認証/SSL"
 
-#: utils/misc/guc_tables.c:679
+#: utils/misc/guc_tables.c:674
 msgid "Resource Usage / Memory"
 msgstr "使用リソース/メモリ"
 
-#: utils/misc/guc_tables.c:681
+#: utils/misc/guc_tables.c:676
 msgid "Resource Usage / Disk"
 msgstr "使用リソース/ディスク"
 
-#: utils/misc/guc_tables.c:683
+#: utils/misc/guc_tables.c:678
 msgid "Resource Usage / Kernel Resources"
 msgstr "使用リソース/カーネルリソース"
 
-#: utils/misc/guc_tables.c:685
+#: utils/misc/guc_tables.c:680
 msgid "Resource Usage / Cost-Based Vacuum Delay"
 msgstr "使用リソース / コストベースvacuum遅延"
 
-#: utils/misc/guc_tables.c:687
+#: utils/misc/guc_tables.c:682
 msgid "Resource Usage / Background Writer"
 msgstr "使用リソース / バックグラウンド・ライタ"
 
-#: utils/misc/guc_tables.c:689
+#: utils/misc/guc_tables.c:684
 msgid "Resource Usage / Asynchronous Behavior"
 msgstr "使用リソース / 非同期動作"
 
-#: utils/misc/guc_tables.c:691
+#: utils/misc/guc_tables.c:686
 msgid "Write-Ahead Log / Settings"
 msgstr "先行書き込みログ / 設定"
 
-#: utils/misc/guc_tables.c:693
+#: utils/misc/guc_tables.c:688
 msgid "Write-Ahead Log / Checkpoints"
 msgstr "先行書き込みログ / チェックポイント"
 
-#: utils/misc/guc_tables.c:695
+#: utils/misc/guc_tables.c:690
 msgid "Write-Ahead Log / Archiving"
 msgstr "先行書き込みログ / アーカイビング"
 
-#: utils/misc/guc_tables.c:697
+#: utils/misc/guc_tables.c:692
 msgid "Write-Ahead Log / Recovery"
 msgstr "先行書き込みログ / リカバリ"
 
-#: utils/misc/guc_tables.c:699
+#: utils/misc/guc_tables.c:694
 msgid "Write-Ahead Log / Archive Recovery"
 msgstr "先行書き込みログ / アーカイブリカバリ"
 
-#: utils/misc/guc_tables.c:701
+#: utils/misc/guc_tables.c:696
 msgid "Write-Ahead Log / Recovery Target"
 msgstr "先行書き込みログ / チェックポイント"
 
-#: utils/misc/guc_tables.c:703
+#: utils/misc/guc_tables.c:698
 msgid "Replication / Sending Servers"
 msgstr "レプリケーション / 送信サーバー"
 
-#: utils/misc/guc_tables.c:705
+#: utils/misc/guc_tables.c:700
 msgid "Replication / Primary Server"
 msgstr "レプリケーション / プライマリサーバー"
 
-#: utils/misc/guc_tables.c:707
+#: utils/misc/guc_tables.c:702
 msgid "Replication / Standby Servers"
 msgstr "レプリケーション / スタンバイサーバー"
 
-#: utils/misc/guc_tables.c:709
+#: utils/misc/guc_tables.c:704
 msgid "Replication / Subscribers"
 msgstr "レプリケーション / 購読サーバー"
 
-#: utils/misc/guc_tables.c:711
+#: utils/misc/guc_tables.c:706
 msgid "Query Tuning / Planner Method Configuration"
 msgstr "問い合わせのチューニング / プランナ手法設定"
 
-#: utils/misc/guc_tables.c:713
+#: utils/misc/guc_tables.c:708
 msgid "Query Tuning / Planner Cost Constants"
 msgstr "問い合わせのチューニング / プランナコスト定数"
 
-#: utils/misc/guc_tables.c:715
+#: utils/misc/guc_tables.c:710
 msgid "Query Tuning / Genetic Query Optimizer"
 msgstr "問い合わせのチューニング / 遺伝的問い合わせオプティマイザ"
 
-#: utils/misc/guc_tables.c:717
+#: utils/misc/guc_tables.c:712
 msgid "Query Tuning / Other Planner Options"
 msgstr "問い合わせのチューニング / その他のプランオプション"
 
-#: utils/misc/guc_tables.c:719
+#: utils/misc/guc_tables.c:714
 msgid "Reporting and Logging / Where to Log"
 msgstr "レポートとログ出力 / ログの出力先"
 
-#: utils/misc/guc_tables.c:721
+#: utils/misc/guc_tables.c:716
 msgid "Reporting and Logging / When to Log"
 msgstr "レポートとログ出力 / ログのタイミング"
 
-#: utils/misc/guc_tables.c:723
+#: utils/misc/guc_tables.c:718
 msgid "Reporting and Logging / What to Log"
 msgstr "レポートとログ出力 / ログの内容"
 
-#: utils/misc/guc_tables.c:725
+#: utils/misc/guc_tables.c:720
 msgid "Reporting and Logging / Process Title"
 msgstr "レポートとログ出力 / プロセス表記"
 
-#: utils/misc/guc_tables.c:727
+#: utils/misc/guc_tables.c:722
 msgid "Statistics / Monitoring"
 msgstr "統計情報 / 監視"
 
-#: utils/misc/guc_tables.c:729
+#: utils/misc/guc_tables.c:724
 msgid "Statistics / Cumulative Query and Index Statistics"
 msgstr "統計情報 / 問い合わせとインデックスの累積統計情報"
 
-#: utils/misc/guc_tables.c:731
+#: utils/misc/guc_tables.c:726
 msgid "Autovacuum"
 msgstr "自動VACUUM"
 
-#: utils/misc/guc_tables.c:733
+#: utils/misc/guc_tables.c:728
 msgid "Client Connection Defaults / Statement Behavior"
 msgstr "クライアント接続のデフォルト設定 / 文の振舞い"
 
-#: utils/misc/guc_tables.c:735
+#: utils/misc/guc_tables.c:730
 msgid "Client Connection Defaults / Locale and Formatting"
 msgstr "クライアント接続のデフォルト設定 / ロケールと整形"
 
-#: utils/misc/guc_tables.c:737
+#: utils/misc/guc_tables.c:732
 msgid "Client Connection Defaults / Shared Library Preloading"
 msgstr "クライアント接続のデフォルト設定 / ライブラリの事前読み込み"
 
-#: utils/misc/guc_tables.c:739
+#: utils/misc/guc_tables.c:734
 msgid "Client Connection Defaults / Other Defaults"
 msgstr "クライアント接続のデフォルト設定 / その他のデフォルト設定"
 
-#: utils/misc/guc_tables.c:741
+#: utils/misc/guc_tables.c:736
 msgid "Lock Management"
 msgstr "ロック管理"
 
-#: utils/misc/guc_tables.c:743
+#: utils/misc/guc_tables.c:738
 msgid "Version and Platform Compatibility / Previous PostgreSQL Versions"
 msgstr "バージョンおよびプラットフォーム間の互換性 / PostgreSQLの以前のバージョン"
 
-#: utils/misc/guc_tables.c:745
+#: utils/misc/guc_tables.c:740
 msgid "Version and Platform Compatibility / Other Platforms and Clients"
 msgstr "バージョンおよびプラットフォーム間の互換性 / 他のプラットフォームおよびクライアント"
 
-#: utils/misc/guc_tables.c:747
+#: utils/misc/guc_tables.c:742
 msgid "Error Handling"
 msgstr "エラーハンドリング"
 
-#: utils/misc/guc_tables.c:749
+#: utils/misc/guc_tables.c:744
 msgid "Preset Options"
 msgstr "事前設定オプション"
 
-#: utils/misc/guc_tables.c:751
+#: utils/misc/guc_tables.c:746
 msgid "Customized Options"
 msgstr "独自オプション"
 
-#: utils/misc/guc_tables.c:753
+#: utils/misc/guc_tables.c:748
 msgid "Developer Options"
 msgstr "開発者向けオプション"
 
-#: utils/misc/guc_tables.c:810
+#: utils/misc/guc_tables.c:805
 msgid "Enables the planner's use of sequential-scan plans."
 msgstr "プランナでのシーケンシャルスキャンプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:820
+#: utils/misc/guc_tables.c:815
 msgid "Enables the planner's use of index-scan plans."
 msgstr "プランナでのインデックススキャンプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:830
+#: utils/misc/guc_tables.c:825
 msgid "Enables the planner's use of index-only-scan plans."
 msgstr "プランナでのインデックスオンリースキャンプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:840
+#: utils/misc/guc_tables.c:835
 msgid "Enables the planner's use of bitmap-scan plans."
 msgstr "プランナでのビットマップスキャンプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:850
+#: utils/misc/guc_tables.c:845
 msgid "Enables the planner's use of TID scan plans."
 msgstr "プランナでのTIDスキャンプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:860
+#: utils/misc/guc_tables.c:855
 msgid "Enables the planner's use of explicit sort steps."
 msgstr "プランナでの明示的ソートの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:870
+#: utils/misc/guc_tables.c:865
 msgid "Enables the planner's use of incremental sort steps."
 msgstr "プランナでの差分ソート処理の使用を有効にします。"
 
-#: utils/misc/guc_tables.c:880
+#: utils/misc/guc_tables.c:875
 msgid "Enables the planner's use of hashed aggregation plans."
 msgstr "プランナでのハッシュ集約プランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:890
+#: utils/misc/guc_tables.c:885
 msgid "Enables the planner's use of materialization."
 msgstr "プランナでの実体化の使用を有効にします。"
 
-#: utils/misc/guc_tables.c:900
+#: utils/misc/guc_tables.c:895
 msgid "Enables the planner's use of memoization."
 msgstr "プランナでのメモ化の使用を有効にします。"
 
-#: utils/misc/guc_tables.c:910
+#: utils/misc/guc_tables.c:905
 msgid "Enables the planner's use of nested-loop join plans."
 msgstr "プランナでのネストループジョインプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:920
+#: utils/misc/guc_tables.c:915
 msgid "Enables the planner's use of merge join plans."
 msgstr "プランナでのマージジョインプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:930
+#: utils/misc/guc_tables.c:925
 msgid "Enables the planner's use of hash join plans."
 msgstr "プランナでのハッシュジョインプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:940
+#: utils/misc/guc_tables.c:935
 msgid "Enables the planner's use of gather merge plans."
 msgstr "プランナでのギャザーマージプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:950
+#: utils/misc/guc_tables.c:945
 msgid "Enables partitionwise join."
 msgstr "パーティション単位ジョインを有効にします。"
 
-#: utils/misc/guc_tables.c:960
+#: utils/misc/guc_tables.c:955
 msgid "Enables partitionwise aggregation and grouping."
 msgstr "パーティション単位の集約およびグルーピングを有効にします。"
 
-#: utils/misc/guc_tables.c:970
+#: utils/misc/guc_tables.c:965
 msgid "Enables the planner's use of parallel append plans."
 msgstr "プランナでの並列アペンドプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:980
+#: utils/misc/guc_tables.c:975
 msgid "Enables the planner's use of parallel hash plans."
 msgstr "プランナでの並列ハッシュプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:990
+#: utils/misc/guc_tables.c:985
 msgid "Enables plan-time and execution-time partition pruning."
 msgstr "実行計画作成時および実行時のパーティション除外処理を有効にします。"
 
-#: utils/misc/guc_tables.c:991
+#: utils/misc/guc_tables.c:986
 msgid "Allows the query planner and executor to compare partition bounds to conditions in the query to determine which partitions must be scanned."
 msgstr "実行計画時と実行時の、クエリ中の条件とパーティション境界の比較に基づいたパーティション単位のスキャン除外処理を許可します。"
 
-#: utils/misc/guc_tables.c:1002
+#: utils/misc/guc_tables.c:997
 msgid "Enables the planner's ability to produce plans which provide presorted input for ORDER BY / DISTINCT aggregate functions."
 msgstr "プランナにおいてORDER BY / DISTINCT集約関数に対してソート済みの入力を供給する実行計画の生成を有効化します。"
 
-#: utils/misc/guc_tables.c:1005
+#: utils/misc/guc_tables.c:1000
 msgid "Allows the query planner to build plans which provide presorted input for aggregate functions with an ORDER BY / DISTINCT clause.  When disabled, implicit sorts are always performed during execution."
 msgstr "問い合わせプランナがORDER BY / DISTINCT句を使用する集約関数に対してソート済みの入力を供給する実行計画を生成することを許可します。無効にすると、実行時にソートが常に暗黙的に実行されるようになります。"
 
-#: utils/misc/guc_tables.c:1017
+#: utils/misc/guc_tables.c:1012
 msgid "Enables the planner's use of async append plans."
 msgstr "プランナでの非同期アペンドプランの使用を有効にします。"
 
-#: utils/misc/guc_tables.c:1027
+#: utils/misc/guc_tables.c:1022
 msgid "Enables genetic query optimization."
 msgstr "遺伝的問い合わせ最適化を有効にします。"
 
-#: utils/misc/guc_tables.c:1028
+#: utils/misc/guc_tables.c:1023
 msgid "This algorithm attempts to do planning without exhaustive searching."
 msgstr "このアルゴリズムでは、全数探索を伴わずに行う実行計画の作成を試みます。"
 
-#: utils/misc/guc_tables.c:1039
+#: utils/misc/guc_tables.c:1034
 msgid "Shows whether the current user is a superuser."
 msgstr "現在のユーザーがスーパーユーザーかどうかを表示します。"
 
-#: utils/misc/guc_tables.c:1049
+#: utils/misc/guc_tables.c:1044
 msgid "Enables advertising the server via Bonjour."
 msgstr "Bonjour を経由したサーバーのアドバタイズを有効にします。"
 
-#: utils/misc/guc_tables.c:1058
+#: utils/misc/guc_tables.c:1053
 msgid "Collects transaction commit time."
 msgstr "トランザクションのコミット時刻を収集します。"
 
-#: utils/misc/guc_tables.c:1067
+#: utils/misc/guc_tables.c:1062
 msgid "Enables SSL connections."
 msgstr "SSL接続を有効にします。"
 
-#: utils/misc/guc_tables.c:1076
+#: utils/misc/guc_tables.c:1071
 msgid "Controls whether ssl_passphrase_command is called during server reload."
 msgstr "サーバーリロード時にも  ssl_passphrase_command を呼び出すかどうかを指定します。"
 
-#: utils/misc/guc_tables.c:1085
+#: utils/misc/guc_tables.c:1080
 msgid "Give priority to server ciphersuite order."
 msgstr "サーバー側の暗号スイート順序を優先します。"
 
-#: utils/misc/guc_tables.c:1094
+#: utils/misc/guc_tables.c:1089
 msgid "Forces synchronization of updates to disk."
 msgstr "強制的に更新をディスクに同期します。"
 
-#: utils/misc/guc_tables.c:1095
+#: utils/misc/guc_tables.c:1090
 msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This insures that a database cluster will recover to a consistent state after an operating system or hardware crash."
 msgstr "サーバーは、確実に更新が物理的にディスクに書き込まれるように複数の場所でfsync()システムコールを使用します。これにより、オペレーティングシステムやハードウェアがクラッシュした後でもデータベースクラスタは一貫した状態に復旧することができます。"
 
-#: utils/misc/guc_tables.c:1106
+#: utils/misc/guc_tables.c:1101
 msgid "Continues processing after a checksum failure."
 msgstr "チェックサムエラーの発生時に処理を継続します。"
 
-#: utils/misc/guc_tables.c:1107
+#: utils/misc/guc_tables.c:1102
 msgid "Detection of a checksum failure normally causes PostgreSQL to report an error, aborting the current transaction. Setting ignore_checksum_failure to true causes the system to ignore the failure (but still report a warning), and continue processing. This behavior could cause crashes or other serious problems. Only has an effect if checksums are enabled."
 msgstr "チェックサムエラーを検知すると、通常PostgreSQLはエラーの報告を行ない、現在のトランザクションを中断させます。ignore_checksum_failureを真に設定することによりエラーを無視します（代わりに警告を報告します）この動作はクラッシュや他の深刻な問題を引き起こすかもしれません。チェックサムが有効な場合にのみ効果があります。"
 
-#: utils/misc/guc_tables.c:1121
+#: utils/misc/guc_tables.c:1116
 msgid "Continues processing past damaged page headers."
 msgstr "破損したページヘッダがあっても処理を継続します。"
 
-#: utils/misc/guc_tables.c:1122
+#: utils/misc/guc_tables.c:1117
 msgid "Detection of a damaged page header normally causes PostgreSQL to report an error, aborting the current transaction. Setting zero_damaged_pages to true causes the system to instead report a warning, zero out the damaged page, and continue processing. This behavior will destroy data, namely all the rows on the damaged page."
 msgstr "ページヘッダの障害が分かると、通常PostgreSQLはエラーの報告を行ない、現在のトランザクションを中断させます。zero_damaged_pagesを真に設定することにより、システムは代わりに警告を報告し、障害のあるページをゼロで埋め、処理を継続します。 この動作により、障害のあったページ上にある全ての行のデータを破壊されます。"
 
-#: utils/misc/guc_tables.c:1135
+#: utils/misc/guc_tables.c:1130
 msgid "Continues recovery after an invalid pages failure."
 msgstr "不正ページエラーの発生時に処理を継続します。"
 
-#: utils/misc/guc_tables.c:1136
+#: utils/misc/guc_tables.c:1131
 msgid "Detection of WAL records having references to invalid pages during recovery causes PostgreSQL to raise a PANIC-level error, aborting the recovery. Setting ignore_invalid_pages to true causes the system to ignore invalid page references in WAL records (but still report a warning), and continue recovery. This behavior may cause crashes, data loss, propagate or hide corruption, or other serious problems. Only has an effect during recovery or in standby mode."
 msgstr "リカバリ中に不正なページへの参照を行うWALレコードを検出した場合、PostgreSQLはPANICレベルのエラーを出力してリカバリを中断します。ignore_invalid_pagesをtrueに設定するとシステムはWALレコード中の不正なページへの参照を無視してリカバリを継続します(ただし、引き続き警告は出力します)。この挙動はクラッシュ、データ損失、破壊の伝播ないしは隠蔽または他の深刻な問題を引き起こします。リカバリモードもしくはスタンバイモードでのみ有効となります。"
 
-#: utils/misc/guc_tables.c:1154
+#: utils/misc/guc_tables.c:1149
 msgid "Writes full pages to WAL when first modified after a checkpoint."
 msgstr "チェックポイントの後最初に変更された際にページ全体をWALに出力します。"
 
-#: utils/misc/guc_tables.c:1155
+#: utils/misc/guc_tables.c:1150
 msgid "A page write in process during an operating system crash might be only partially written to disk.  During recovery, the row changes stored in WAL are not enough to recover.  This option writes pages when first modified after a checkpoint to WAL so full recovery is possible."
 msgstr "ページ書き込み処理中にオペレーティングシステムがクラッシュすると、ディスクへの書き込みが一部分のみ行われる可能性があります。リカバリでは、WALに保存された行の変更だけでは完全に復旧させることができません。このオプションにより、チェックポイントの後の最初の更新時にWALにページを出力するため、完全な復旧が可能になります。"
 
-#: utils/misc/guc_tables.c:1168
+#: utils/misc/guc_tables.c:1163
 msgid "Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modification."
 msgstr "チェックポイントの後最初に更新された時に、重要な更新ではなくてもページ全体をWALに書き出します。"
 
-#: utils/misc/guc_tables.c:1178
+#: utils/misc/guc_tables.c:1173
 msgid "Writes zeroes to new WAL files before first use."
 msgstr "新しいWALファイルの使用前にゼロを書き込みます。"
 
-#: utils/misc/guc_tables.c:1188
+#: utils/misc/guc_tables.c:1183
 msgid "Recycles WAL files by renaming them."
 msgstr "WALファイルを名前を変更して再利用します。"
 
-#: utils/misc/guc_tables.c:1198
+#: utils/misc/guc_tables.c:1193
 msgid "Logs each checkpoint."
 msgstr "チェックポイントをログに記録します。"
 
-#: utils/misc/guc_tables.c:1207
+#: utils/misc/guc_tables.c:1202
 msgid "Logs each successful connection."
 msgstr "成功した接続を全てログに記録します。"
 
-#: utils/misc/guc_tables.c:1216
+#: utils/misc/guc_tables.c:1211
 msgid "Logs end of a session, including duration."
 msgstr "セッションの終了時刻とその期間をログに記録します。"
 
-#: utils/misc/guc_tables.c:1225
+#: utils/misc/guc_tables.c:1220
 msgid "Logs each replication command."
 msgstr "各レプリケーションコマンドをログに記録します。"
 
-#: utils/misc/guc_tables.c:1234
+#: utils/misc/guc_tables.c:1229
 msgid "Shows whether the running server has assertion checks enabled."
 msgstr "起動中のサーバーがアサーションチェックを有効にしているかどうかを表示します。"
 
-#: utils/misc/guc_tables.c:1245
+#: utils/misc/guc_tables.c:1240
 msgid "Terminate session on any error."
 msgstr "何からのエラーがあればセッションを終了します"
 
-#: utils/misc/guc_tables.c:1254
+#: utils/misc/guc_tables.c:1249
 msgid "Reinitialize server after backend crash."
 msgstr "バックエンドがクラッシュした後サーバーを再初期化します"
 
-#: utils/misc/guc_tables.c:1263
+#: utils/misc/guc_tables.c:1258
 msgid "Remove temporary files after backend crash."
 msgstr "バックエンドのクラッシュ後に一時ファイルを削除します。"
 
-#: utils/misc/guc_tables.c:1273
+#: utils/misc/guc_tables.c:1268
 msgid "Send SIGABRT not SIGQUIT to child processes after backend crash."
 msgstr "バックエンドのクラッシュ後にSIGQUITではなくSIGABRTを子プロセスに送信します。"
 
-#: utils/misc/guc_tables.c:1283
+#: utils/misc/guc_tables.c:1278
 msgid "Send SIGABRT not SIGKILL to stuck child processes."
 msgstr "固まっているプロセスにSIGKILLではなくSIGABRTを送信します。"
 
-#: utils/misc/guc_tables.c:1294
+#: utils/misc/guc_tables.c:1289
 msgid "Logs the duration of each completed SQL statement."
 msgstr "完了したSQL全ての実行時間をログに記録します。"
 
-#: utils/misc/guc_tables.c:1303
+#: utils/misc/guc_tables.c:1298
 msgid "Logs each query's parse tree."
 msgstr "問い合わせのパースツリーをログに記録します。"
 
-#: utils/misc/guc_tables.c:1312
+#: utils/misc/guc_tables.c:1307
 msgid "Logs each query's rewritten parse tree."
 msgstr "リライト後の問い合わせのパースツリーをログに記録します。"
 
-#: utils/misc/guc_tables.c:1321
+#: utils/misc/guc_tables.c:1316
 msgid "Logs each query's execution plan."
 msgstr "問い合わせの実行計画をログに記録します。"
 
-#: utils/misc/guc_tables.c:1330
+#: utils/misc/guc_tables.c:1325
 msgid "Indents parse and plan tree displays."
 msgstr "パースツリーと実行計画ツリーの表示をインデントします。"
 
-#: utils/misc/guc_tables.c:1339
+#: utils/misc/guc_tables.c:1334
 msgid "Writes parser performance statistics to the server log."
 msgstr "パーサの性能統計情報をサーバーログに出力します。"
 
-#: utils/misc/guc_tables.c:1348
+#: utils/misc/guc_tables.c:1343
 msgid "Writes planner performance statistics to the server log."
 msgstr "プランナの性能統計情報をサーバーログに出力します。"
 
-#: utils/misc/guc_tables.c:1357
+#: utils/misc/guc_tables.c:1352
 msgid "Writes executor performance statistics to the server log."
 msgstr "エグゼキュータの性能統計情報をサーバーログに出力します。"
 
-#: utils/misc/guc_tables.c:1366
+#: utils/misc/guc_tables.c:1361
 msgid "Writes cumulative performance statistics to the server log."
 msgstr "累積の性能統計情報をサーバーログに出力します。"
 
-#: utils/misc/guc_tables.c:1376
+#: utils/misc/guc_tables.c:1371
 msgid "Logs system resource usage statistics (memory and CPU) on various B-tree operations."
 msgstr "B-treeの各種操作に関するシステムリソース(メモリとCPU)の使用統計をログに記録します。"
 
-#: utils/misc/guc_tables.c:1388
+#: utils/misc/guc_tables.c:1383
 msgid "Collects information about executing commands."
 msgstr "実行中のコマンドに関する情報を収集します。"
 
-#: utils/misc/guc_tables.c:1389
+#: utils/misc/guc_tables.c:1384
 msgid "Enables the collection of information on the currently executing command of each session, along with the time at which that command began execution."
 msgstr "そのコマンドが実行を開始した時刻を伴った、各セッションでの現時点で実行中のコマンドに関する情報の収集を有効にします。"
 
-#: utils/misc/guc_tables.c:1399
+#: utils/misc/guc_tables.c:1394
 msgid "Collects statistics on database activity."
 msgstr "データベースの活動について統計情報を収集します。"
 
-#: utils/misc/guc_tables.c:1408
+#: utils/misc/guc_tables.c:1403
 msgid "Collects timing statistics for database I/O activity."
 msgstr "データベースのI/O処理時間に関する統計情報を収集します。"
 
-#: utils/misc/guc_tables.c:1417
+#: utils/misc/guc_tables.c:1412
 msgid "Collects timing statistics for WAL I/O activity."
 msgstr "WALのI/O処理時間に関する統計情報を収集します。"
 
-#: utils/misc/guc_tables.c:1427
+#: utils/misc/guc_tables.c:1422
 msgid "Updates the process title to show the active SQL command."
 msgstr "活動中のSQLコマンドを表示するようプロセスタイトルを更新します。"
 
-#: utils/misc/guc_tables.c:1428
+#: utils/misc/guc_tables.c:1423
 msgid "Enables updating of the process title every time a new SQL command is received by the server."
 msgstr "新しいSQLコマンドをサーバーが受信する度に行うプロセスタイトルの更新を有効にします。"
 
-#: utils/misc/guc_tables.c:1437
+#: utils/misc/guc_tables.c:1432
 msgid "Starts the autovacuum subprocess."
 msgstr "autovacuumサブプロセスを起動します。"
 
-#: utils/misc/guc_tables.c:1447
+#: utils/misc/guc_tables.c:1442
 msgid "Generates debugging output for LISTEN and NOTIFY."
 msgstr "LISTENとNOTIFYコマンドのためのデバッグ出力を生成します。"
 
-#: utils/misc/guc_tables.c:1459
+#: utils/misc/guc_tables.c:1454
 msgid "Emits information about lock usage."
 msgstr "ロック使用状況に関する情報を出力します。"
 
-#: utils/misc/guc_tables.c:1469
+#: utils/misc/guc_tables.c:1464
 msgid "Emits information about user lock usage."
 msgstr "ユーザーロックの使用状況に関する情報を出力します。"
 
-#: utils/misc/guc_tables.c:1479
+#: utils/misc/guc_tables.c:1474
 msgid "Emits information about lightweight lock usage."
 msgstr "軽量ロックの使用状況に関する情報を出力します。"
 
-#: utils/misc/guc_tables.c:1489
+#: utils/misc/guc_tables.c:1484
 msgid "Dumps information about all current locks when a deadlock timeout occurs."
 msgstr "デッドロックの発生時点の全てのロックについての情報をダンプします。"
 
-#: utils/misc/guc_tables.c:1501
+#: utils/misc/guc_tables.c:1496
 msgid "Logs long lock waits."
 msgstr "長時間のロック待機をログに記録します。"
 
-#: utils/misc/guc_tables.c:1510
+#: utils/misc/guc_tables.c:1505
 msgid "Logs standby recovery conflict waits."
 msgstr "スタンバイのリカバリ衝突による待機をログ出力します。"
 
-#: utils/misc/guc_tables.c:1519
+#: utils/misc/guc_tables.c:1514
 msgid "Logs the host name in the connection logs."
 msgstr "接続ログ内でホスト名を出力します。"
 
-#: utils/misc/guc_tables.c:1520
+#: utils/misc/guc_tables.c:1515
 msgid "By default, connection logs only show the IP address of the connecting host. If you want them to show the host name you can turn this on, but depending on your host name resolution setup it might impose a non-negligible performance penalty."
 msgstr "デフォルトでは、接続ログメッセージには接続ホストのIPアドレスのみが表示されます。 このオプションを有効にすることで、ホスト名もログに表示されるようになります。 ホスト名解決の設定によってはで、無視できないほどの性能の悪化が起きうることに注意してください。"
 
-#: utils/misc/guc_tables.c:1531
+#: utils/misc/guc_tables.c:1526
 msgid "Treats \"expr=NULL\" as \"expr IS NULL\"."
 msgstr "\"expr=NULL\"という形の式は\"expr IS NULL\"として扱います。"
 
-#: utils/misc/guc_tables.c:1532
+#: utils/misc/guc_tables.c:1527
 msgid "When turned on, expressions of the form expr = NULL (or NULL = expr) are treated as expr IS NULL, that is, they return true if expr evaluates to the null value, and false otherwise. The correct behavior of expr = NULL is to always return null (unknown)."
 msgstr "有効にした場合、expr = NULL(またはNULL = expr)という形の式はexpr IS NULLとして扱われます。つまり、exprの評価がNULL値の場合に真を、さもなくば偽を返します。expr = NULLのSQL仕様に基づいた正しい動作は常にNULL(未知)を返すことです。"
 
-#: utils/misc/guc_tables.c:1544
+#: utils/misc/guc_tables.c:1539
 msgid "Enables per-database user names."
 msgstr "データベース毎のユーザー名を許可します。"
 
-#: utils/misc/guc_tables.c:1553
+#: utils/misc/guc_tables.c:1548
 msgid "Sets the default read-only status of new transactions."
 msgstr "新しいトランザクションのリードオンリー設定のデフォルト値を設定。"
 
-#: utils/misc/guc_tables.c:1563
+#: utils/misc/guc_tables.c:1558
 msgid "Sets the current transaction's read-only status."
 msgstr "現在のトランザクションのリードオンリー設定を設定。"
 
-#: utils/misc/guc_tables.c:1573
+#: utils/misc/guc_tables.c:1568
 msgid "Sets the default deferrable status of new transactions."
 msgstr "新しいトランザクションの遅延可否設定のデフォルト値を設定。"
 
-#: utils/misc/guc_tables.c:1582
+#: utils/misc/guc_tables.c:1577
 msgid "Whether to defer a read-only serializable transaction until it can be executed with no possible serialization failures."
 msgstr "リードオンリーのシリアライズ可能なトランザクションを、シリアライズに失敗することなく実行できるまで遅延させるかどうか"
 
-#: utils/misc/guc_tables.c:1592
+#: utils/misc/guc_tables.c:1587
 msgid "Enable row security."
 msgstr "行セキュリティを有効にします。"
 
-#: utils/misc/guc_tables.c:1593
+#: utils/misc/guc_tables.c:1588
 msgid "When enabled, row security will be applied to all users."
 msgstr "有効にすると、行セキュリティが全てのユーザーに適用されます。"
 
-#: utils/misc/guc_tables.c:1601
+#: utils/misc/guc_tables.c:1596
 msgid "Check routine bodies during CREATE FUNCTION and CREATE PROCEDURE."
 msgstr "CREATE FUNCTIONおよびCREATE PROCEDUREにおいて関数本体を検査します。"
 
-#: utils/misc/guc_tables.c:1610
+#: utils/misc/guc_tables.c:1605
 msgid "Enable input of NULL elements in arrays."
 msgstr "配列内のNULL要素入力を有効化。"
 
-#: utils/misc/guc_tables.c:1611
+#: utils/misc/guc_tables.c:1606
 msgid "When turned on, unquoted NULL in an array input value means a null value; otherwise it is taken literally."
 msgstr "有効にすると、配列入力値における引用符のないNULLはNULL値を意味するようになります。さもなくば文字通りに解釈されます。"
 
-#: utils/misc/guc_tables.c:1627
+#: utils/misc/guc_tables.c:1622
 msgid "WITH OIDS is no longer supported; this can only be false."
 msgstr "WITH OIDS は今後サポートされません; false のみに設定可能です。"
 
-#: utils/misc/guc_tables.c:1637
+#: utils/misc/guc_tables.c:1632
 msgid "Start a subprocess to capture stderr output and/or csvlogs into log files."
 msgstr "標準エラー出力、CSVログ、またはその両方をログファイルに捕捉するための子プロセスを開始します。"
 
-#: utils/misc/guc_tables.c:1646
+#: utils/misc/guc_tables.c:1641
 msgid "Truncate existing log files of same name during log rotation."
 msgstr "ログローテーション時に既存の同一名称のログファイルを切り詰めます。"
 
-#: utils/misc/guc_tables.c:1657
+#: utils/misc/guc_tables.c:1652
 msgid "Emit information about resource usage in sorting."
 msgstr "ソート中にリソース使用状況に関する情報を発行します。"
 
-#: utils/misc/guc_tables.c:1671
+#: utils/misc/guc_tables.c:1666
 msgid "Generate debugging output for synchronized scanning."
 msgstr "同期スキャン処理のデバッグ出力を生成します。"
 
-#: utils/misc/guc_tables.c:1686
+#: utils/misc/guc_tables.c:1681
 msgid "Enable bounded sorting using heap sort."
 msgstr "ヒープソートを使用した境界のソート処理を有効にします"
 
-#: utils/misc/guc_tables.c:1699
+#: utils/misc/guc_tables.c:1694
 msgid "Emit WAL-related debugging output."
 msgstr "WAL関連のデバッグ出力を出力します。"
 
-#: utils/misc/guc_tables.c:1711
+#: utils/misc/guc_tables.c:1706
 msgid "Shows whether datetimes are integer based."
 msgstr "日付時刻が整数ベースかどうかを表示します。"
 
-#: utils/misc/guc_tables.c:1722
+#: utils/misc/guc_tables.c:1717
 msgid "Sets whether Kerberos and GSSAPI user names should be treated as case-insensitive."
 msgstr "KerberosおよびGSSAPIユーザー名を大文字小文字を区別して扱うかどうかを設定します。"
 
-#: utils/misc/guc_tables.c:1732
+#: utils/misc/guc_tables.c:1727
 msgid "Sets whether GSSAPI delegation should be accepted from the client."
 msgstr "GSSAPI資格証明委任をクライアントから受け付けるかどかを設定します。"
 
-#: utils/misc/guc_tables.c:1742
+#: utils/misc/guc_tables.c:1737
 msgid "Warn about backslash escapes in ordinary string literals."
 msgstr "普通の文字列リテラル内のバックスラッシュエスケープを警告します。"
 
-#: utils/misc/guc_tables.c:1752
+#: utils/misc/guc_tables.c:1747
 msgid "Causes '...' strings to treat backslashes literally."
 msgstr "'...' 文字列はバックスラッシュをそのまま扱います。"
 
-#: utils/misc/guc_tables.c:1763
+#: utils/misc/guc_tables.c:1758
 msgid "Enable synchronized sequential scans."
 msgstr "同期シーケンシャルスキャンを有効にします。"
 
-#: utils/misc/guc_tables.c:1773
+#: utils/misc/guc_tables.c:1768
 msgid "Sets whether to include or exclude transaction with recovery target."
 msgstr "リカバリ目標のトランザクションを含めるか除外するかを設定。"
 
-#: utils/misc/guc_tables.c:1783
+#: utils/misc/guc_tables.c:1778
 msgid "Allows connections and queries during recovery."
 msgstr "リカバリ中でも接続と問い合わせを受け付けます"
 
-#: utils/misc/guc_tables.c:1793
+#: utils/misc/guc_tables.c:1788
 msgid "Allows feedback from a hot standby to the primary that will avoid query conflicts."
 msgstr "問い合わせの衝突を避けるためのホットスタンバイからプライマリへのフィードバックを受け付けます"
 
-#: utils/misc/guc_tables.c:1803
+#: utils/misc/guc_tables.c:1798
 msgid "Shows whether hot standby is currently active."
 msgstr "現在ホットスタンバイが有効であるかどうかを示します。"
 
-#: utils/misc/guc_tables.c:1814
+#: utils/misc/guc_tables.c:1809
 msgid "Allows modifications of the structure of system tables."
 msgstr "システムテーブル構造の変更を許可。"
 
-#: utils/misc/guc_tables.c:1825
+#: utils/misc/guc_tables.c:1820
 msgid "Disables reading from system indexes."
 msgstr "システムインデックスの読み込みを無効にします。"
 
-#: utils/misc/guc_tables.c:1826
+#: utils/misc/guc_tables.c:1821
 msgid "It does not prevent updating the indexes, so it is safe to use.  The worst consequence is slowness."
 msgstr "これはインデックスの更新は妨げないため使用しても安全です。最も大きな悪影響は低速化です。"
 
-#: utils/misc/guc_tables.c:1837
+#: utils/misc/guc_tables.c:1832
 msgid "Allows tablespaces directly inside pg_tblspc, for testing."
 msgstr "pg_tblspc直下のテーブル空間を許可します、テスト用。"
 
-#: utils/misc/guc_tables.c:1848
+#: utils/misc/guc_tables.c:1843
 msgid "Enables backward compatibility mode for privilege checks on large objects."
 msgstr "ラージオブジェクトで権限チェックを行う際、後方互換性モードを有効にします。"
 
-#: utils/misc/guc_tables.c:1849
+#: utils/misc/guc_tables.c:1844
 msgid "Skips privilege checks when reading or modifying large objects, for compatibility with PostgreSQL releases prior to 9.0."
 msgstr "9.0 より前のPostgreSQLとの互換のため、ラージオブジェクトを読んだり変更したりする際に権限チェックをスキップする。"
 
-#: utils/misc/guc_tables.c:1859
+#: utils/misc/guc_tables.c:1854
 msgid "When generating SQL fragments, quote all identifiers."
 msgstr "SQL文を生成する時に、すべての識別子を引用符で囲みます。"
 
-#: utils/misc/guc_tables.c:1869
+#: utils/misc/guc_tables.c:1864
 msgid "Shows whether data checksums are turned on for this cluster."
 msgstr "データチェックサムがこのクラスタで有効になっているかどうかを表示します。"
 
-#: utils/misc/guc_tables.c:1880
+#: utils/misc/guc_tables.c:1875
 msgid "Add sequence number to syslog messages to avoid duplicate suppression."
 msgstr "シーケンス番号を付加することでsyslogメッセージの重複を防ぎます。"
 
-#: utils/misc/guc_tables.c:1890
+#: utils/misc/guc_tables.c:1885
 msgid "Split messages sent to syslog by lines and to fit into 1024 bytes."
 msgstr "syslogに送出するメッセージを行単位で分割して、1024バイトに収まるようにします。"
 
-#: utils/misc/guc_tables.c:1900
+#: utils/misc/guc_tables.c:1895
 msgid "Controls whether Gather and Gather Merge also run subplans."
 msgstr "Gather および Gather Merge でも下位プランを実行するかどうかを制御します。"
 
-#: utils/misc/guc_tables.c:1901
+#: utils/misc/guc_tables.c:1896
 msgid "Should gather nodes also run subplans or just gather tuples?"
 msgstr "Gather ノードでも下位プランを実行するのか、もしくはただタプルの収集のみを行うのか?"
 
-#: utils/misc/guc_tables.c:1911
+#: utils/misc/guc_tables.c:1906
 msgid "Allow JIT compilation."
 msgstr "JITコンパイルを許可します。"
 
-#: utils/misc/guc_tables.c:1922
+#: utils/misc/guc_tables.c:1917
 msgid "Register JIT-compiled functions with debugger."
 msgstr "JITコンパイルされた関数をデバッガに登録します。"
 
-#: utils/misc/guc_tables.c:1939
+#: utils/misc/guc_tables.c:1934
 msgid "Write out LLVM bitcode to facilitate JIT debugging."
 msgstr "LLVMビットコードを出力して、JITデバッグを容易にします。"
 
-#: utils/misc/guc_tables.c:1950
+#: utils/misc/guc_tables.c:1945
 msgid "Allow JIT compilation of expressions."
 msgstr "式のJITコンパイルを許可します。"
 
-#: utils/misc/guc_tables.c:1961
+#: utils/misc/guc_tables.c:1956
 msgid "Register JIT-compiled functions with perf profiler."
 msgstr "perfプロファイラにJITコンパイルされた関数を登録します。"
 
-#: utils/misc/guc_tables.c:1978
+#: utils/misc/guc_tables.c:1973
 msgid "Allow JIT compilation of tuple deforming."
 msgstr "タプル分解処理のJITコンパイルを許可します。"
 
-#: utils/misc/guc_tables.c:1989
+#: utils/misc/guc_tables.c:1984
 msgid "Whether to continue running after a failure to sync data files."
 msgstr "データファイルの同期失敗の後に処理を継続するかどうか。"
 
-#: utils/misc/guc_tables.c:1998
+#: utils/misc/guc_tables.c:1993
 msgid "Sets whether a WAL receiver should create a temporary replication slot if no permanent slot is configured."
 msgstr "永続レプリケーションスロットがない場合にWALレシーバが一時スロットを作成するかどうかを設定します。"
 
-#: utils/misc/guc_tables.c:2016
+#: utils/misc/guc_tables.c:2011
 msgid "Sets the amount of time to wait before forcing a switch to the next WAL file."
 msgstr "次のWALへの強制切り替え時間を設定します。"
 
-#: utils/misc/guc_tables.c:2027
+#: utils/misc/guc_tables.c:2022
 msgid "Sets the amount of time to wait after authentication on connection startup."
 msgstr "接続開始時の認証後の待ち時間を設定します。"
 
-#: utils/misc/guc_tables.c:2029 utils/misc/guc_tables.c:2663
+#: utils/misc/guc_tables.c:2024 utils/misc/guc_tables.c:2658
 msgid "This allows attaching a debugger to the process."
 msgstr "これによりデバッガがプロセスに接続できます。"
 
-#: utils/misc/guc_tables.c:2038
+#: utils/misc/guc_tables.c:2033
 msgid "Sets the default statistics target."
 msgstr "デフォルトの統計情報収集目標を設定。"
 
-#: utils/misc/guc_tables.c:2039
+#: utils/misc/guc_tables.c:2034
 msgid "This applies to table columns that have not had a column-specific target set via ALTER TABLE SET STATISTICS."
 msgstr "ALTER TABLE SET STATISTICS経由で列固有の目標値を持たないテーブル列についての統計情報収集目標を設定します。"
 
-#: utils/misc/guc_tables.c:2048
+#: utils/misc/guc_tables.c:2043
 msgid "Sets the FROM-list size beyond which subqueries are not collapsed."
 msgstr "副問い合わせを展開する上限のFROMリストのサイズを設定。"
 
-#: utils/misc/guc_tables.c:2050
+#: utils/misc/guc_tables.c:2045
 msgid "The planner will merge subqueries into upper queries if the resulting FROM list would have no more than this many items."
 msgstr "最終的なFROMリストがこの値より多くの要素を持たない時に、プランナは副問い合わせを上位問い合わせにマージします。"
 
-#: utils/misc/guc_tables.c:2061
+#: utils/misc/guc_tables.c:2056
 msgid "Sets the FROM-list size beyond which JOIN constructs are not flattened."
 msgstr "JOIN式を平坦化する上限のFROMリストのサイズを設定。"
 
-#: utils/misc/guc_tables.c:2063
+#: utils/misc/guc_tables.c:2058
 msgid "The planner will flatten explicit JOIN constructs into lists of FROM items whenever a list of no more than this many items would result."
 msgstr "最終的にFROMリストの項目数がこの値を超えない時には常に、プランナは明示的なJOIN構文をFROM項目のリストに組み込みます。"
 
-#: utils/misc/guc_tables.c:2074
+#: utils/misc/guc_tables.c:2069
 msgid "Sets the threshold of FROM items beyond which GEQO is used."
 msgstr "この数を超えるとGEQOを使用するFROM項目数の閾値を設定。"
 
-#: utils/misc/guc_tables.c:2084
+#: utils/misc/guc_tables.c:2079
 msgid "GEQO: effort is used to set the default for other GEQO parameters."
 msgstr "GEQO: effortは他のGEQOパラメータのデフォルトを設定するために使用されます。"
 
-#: utils/misc/guc_tables.c:2094
+#: utils/misc/guc_tables.c:2089
 msgid "GEQO: number of individuals in the population."
 msgstr "GEQO: 集団内の個体数。"
 
-#: utils/misc/guc_tables.c:2095 utils/misc/guc_tables.c:2105
+#: utils/misc/guc_tables.c:2090 utils/misc/guc_tables.c:2100
 msgid "Zero selects a suitable default value."
 msgstr "0は適切なデフォルト値を選択します。"
 
-#: utils/misc/guc_tables.c:2104
+#: utils/misc/guc_tables.c:2099
 msgid "GEQO: number of iterations of the algorithm."
 msgstr "GEQO: アルゴリズムの反復回数です。"
 
-#: utils/misc/guc_tables.c:2116
+#: utils/misc/guc_tables.c:2111
 msgid "Sets the time to wait on a lock before checking for deadlock."
 msgstr "デッドロック状態があるかどうかを調べる前にロックを待つ時間を設定。"
 
-#: utils/misc/guc_tables.c:2127
+#: utils/misc/guc_tables.c:2122
 msgid "Sets the maximum delay before canceling queries when a hot standby server is processing archived WAL data."
 msgstr "ホットスタンバイサーバーがアーカイブされた WAL データを処理している場合は、問い合わせをキャンセルする前に遅延秒数の最大値を設定。"
 
-#: utils/misc/guc_tables.c:2138
+#: utils/misc/guc_tables.c:2133
 msgid "Sets the maximum delay before canceling queries when a hot standby server is processing streamed WAL data."
 msgstr "ホットスタンバイサーバーがストリームの WAL データを処理している場合は、問い合わせをキャンセルする前に遅延秒数の最大値を設定。"
 
-#: utils/misc/guc_tables.c:2149
+#: utils/misc/guc_tables.c:2144
 msgid "Sets the minimum delay for applying changes during recovery."
 msgstr "リカバリ中の変更の適用の最小遅延時間を設定します。"
 
-#: utils/misc/guc_tables.c:2160
+#: utils/misc/guc_tables.c:2155
 msgid "Sets the maximum interval between WAL receiver status reports to the sending server."
 msgstr "WAL受信プロセスが送出側サーバーへ行う状況報告の最大間隔を設定。"
 
-#: utils/misc/guc_tables.c:2171
+#: utils/misc/guc_tables.c:2166
 msgid "Sets the maximum wait time to receive data from the sending server."
 msgstr "送出側サーバーからのデータ受信を待機する最長時間を設定。"
 
-#: utils/misc/guc_tables.c:2182
+#: utils/misc/guc_tables.c:2177
 msgid "Sets the maximum number of concurrent connections."
 msgstr "同時接続数の最大値を設定。"
 
-#: utils/misc/guc_tables.c:2193
+#: utils/misc/guc_tables.c:2188
 msgid "Sets the number of connection slots reserved for superusers."
 msgstr "スーパーユーザーによる接続用に予約される接続スロットの数を設定。"
 
-#: utils/misc/guc_tables.c:2203
+#: utils/misc/guc_tables.c:2198
 msgid "Sets the number of connection slots reserved for roles with privileges of pg_use_reserved_connections."
 msgstr "pg_use_reserved_connections権限を持つロールのために予約する接続スロットの数を設定。"
 
-#: utils/misc/guc_tables.c:2214
+#: utils/misc/guc_tables.c:2209
 msgid "Amount of dynamic shared memory reserved at startup."
 msgstr "起動時に予約される動的共有メモリの量。"
 
-#: utils/misc/guc_tables.c:2229
+#: utils/misc/guc_tables.c:2224
 msgid "Sets the number of shared memory buffers used by the server."
 msgstr "サーバーで使用される共有メモリのバッファ数を設定。"
 
-#: utils/misc/guc_tables.c:2240
+#: utils/misc/guc_tables.c:2235
 msgid "Sets the buffer pool size for VACUUM, ANALYZE, and autovacuum."
 msgstr "VACUUM, ANALYZE, および自動VACUUMで使用するバッファプールのサイズを設定します。"
 
-#: utils/misc/guc_tables.c:2251
+#: utils/misc/guc_tables.c:2246
 msgid "Shows the size of the server's main shared memory area (rounded up to the nearest MB)."
 msgstr "サーバーの主共有メモリ領域のサイズを表示します(MB単位に切り上げられます)"
 
-#: utils/misc/guc_tables.c:2262
+#: utils/misc/guc_tables.c:2257
 msgid "Shows the number of huge pages needed for the main shared memory area."
 msgstr "主共有メモリ領域に必要となるヒュージページの数を表示します。"
 
-#: utils/misc/guc_tables.c:2263
+#: utils/misc/guc_tables.c:2258
 msgid "-1 indicates that the value could not be determined."
 msgstr "-1はこの値が確定できなかったことを示します。"
 
-#: utils/misc/guc_tables.c:2273
+#: utils/misc/guc_tables.c:2268
 msgid "Sets the maximum number of temporary buffers used by each session."
 msgstr "各セッションで使用される一時バッファの最大数を設定。"
 
-#: utils/misc/guc_tables.c:2284
+#: utils/misc/guc_tables.c:2279
 msgid "Sets the TCP port the server listens on."
 msgstr "サーバーが接続を監視するTCPポートを設定。"
 
-#: utils/misc/guc_tables.c:2294
+#: utils/misc/guc_tables.c:2289
 msgid "Sets the access permissions of the Unix-domain socket."
 msgstr "Unixドメインソケットのアクセス権限を設定。"
 
-#: utils/misc/guc_tables.c:2295
+#: utils/misc/guc_tables.c:2290
 msgid "Unix-domain sockets use the usual Unix file system permission set. The parameter value is expected to be a numeric mode specification in the form accepted by the chmod and umask system calls. (To use the customary octal format the number must start with a 0 (zero).)"
 msgstr "Unixドメインソケットは、通常のUnixファイルシステム権限の設定を使います。 このパラメータ値は chmod と umask システムコールが受け付ける数値のモード指定を想定しています（慣習的な8進数書式を使うためには、0(ゼロ)で始めなくてはなりません）。 "
 
-#: utils/misc/guc_tables.c:2309
+#: utils/misc/guc_tables.c:2304
 msgid "Sets the file permissions for log files."
 msgstr "ログファイルのパーミッションを設定。"
 
-#: utils/misc/guc_tables.c:2310
+#: utils/misc/guc_tables.c:2305
 msgid "The parameter value is expected to be a numeric mode specification in the form accepted by the chmod and umask system calls. (To use the customary octal format the number must start with a 0 (zero).)"
 msgstr "このパタメータ値は chmod や umask システムコールで使えるような数値モード指定であることが想定されます（慣習的な記法である8進数書式を使う場合は先頭に0(ゼロ) をつけてください）。 "
 
-#: utils/misc/guc_tables.c:2324
+#: utils/misc/guc_tables.c:2319
 msgid "Shows the mode of the data directory."
 msgstr "データディレクトリのモードを表示します。"
 
-#: utils/misc/guc_tables.c:2325
+#: utils/misc/guc_tables.c:2320
 msgid "The parameter value is a numeric mode specification in the form accepted by the chmod and umask system calls. (To use the customary octal format the number must start with a 0 (zero).)"
 msgstr "このパタメータ値は chmod や umask システムコールが受け付ける数値形式のモード指定です（慣習的な8進形式を使う場合は先頭に0(ゼロ) をつけてください）。 "
 
-#: utils/misc/guc_tables.c:2338
+#: utils/misc/guc_tables.c:2333
 msgid "Sets the maximum memory to be used for query workspaces."
 msgstr "問い合わせの作業用空間として使用されるメモリの最大値を設定。"
 
-#: utils/misc/guc_tables.c:2339
+#: utils/misc/guc_tables.c:2334
 msgid "This much memory can be used by each internal sort operation and hash table before switching to temporary disk files."
 msgstr "内部ソート操作とハッシュテーブルで使われるメモリの量がこの量に達した時に一時ディスクファイルへの切替えを行います。"
 
-#: utils/misc/guc_tables.c:2351
+#: utils/misc/guc_tables.c:2346
 msgid "Sets the maximum memory to be used for maintenance operations."
 msgstr "保守作業で使用される最大メモリ量を設定。"
 
-#: utils/misc/guc_tables.c:2352
+#: utils/misc/guc_tables.c:2347
 msgid "This includes operations such as VACUUM and CREATE INDEX."
 msgstr "VACUUMやCREATE INDEXなどの作業が含まれます。"
 
-#: utils/misc/guc_tables.c:2362
+#: utils/misc/guc_tables.c:2357
 msgid "Sets the maximum memory to be used for logical decoding."
 msgstr "論理デコーディングで使用するメモリ量の上限を設定します。"
 
-#: utils/misc/guc_tables.c:2363
+#: utils/misc/guc_tables.c:2358
 msgid "This much memory can be used by each internal reorder buffer before spilling to disk."
 msgstr "個々の内部リオーダバッファはディスクに書き出す前にこれだけの量のメモリを使用することができます。"
 
-#: utils/misc/guc_tables.c:2379
+#: utils/misc/guc_tables.c:2374
 msgid "Sets the maximum stack depth, in kilobytes."
 msgstr "スタック長の最大値をキロバイト単位で設定。"
 
-#: utils/misc/guc_tables.c:2390
+#: utils/misc/guc_tables.c:2385
 msgid "Limits the total size of all temporary files used by each process."
 msgstr "各プロセスで使用される全ての一時ファイルの合計サイズを制限します。"
 
-#: utils/misc/guc_tables.c:2391
+#: utils/misc/guc_tables.c:2386
 msgid "-1 means no limit."
 msgstr "-1は無制限を意味します。"
 
-#: utils/misc/guc_tables.c:2401
+#: utils/misc/guc_tables.c:2396
 msgid "Vacuum cost for a page found in the buffer cache."
 msgstr "バッファキャッシュにある1つのページをVACUUM処理する際のコスト。"
 
-#: utils/misc/guc_tables.c:2411
+#: utils/misc/guc_tables.c:2406
 msgid "Vacuum cost for a page not found in the buffer cache."
 msgstr "バッファキャッシュにない1つのページをVACUUM処理する際のコスト。"
 
-#: utils/misc/guc_tables.c:2421
+#: utils/misc/guc_tables.c:2416
 msgid "Vacuum cost for a page dirtied by vacuum."
 msgstr "VACUUM処理が1つのページをダーティにした際に課すコスト。"
 
-#: utils/misc/guc_tables.c:2431
+#: utils/misc/guc_tables.c:2426
 msgid "Vacuum cost amount available before napping."
 msgstr "VACUUM処理を一時休止させるまでに使用できるコスト。"
 
-#: utils/misc/guc_tables.c:2441
+#: utils/misc/guc_tables.c:2436
 msgid "Vacuum cost amount available before napping, for autovacuum."
 msgstr "自動VACUUM用のVACUUM処理を一時休止させるまでに使用できるコスト。"
 
-#: utils/misc/guc_tables.c:2451
+#: utils/misc/guc_tables.c:2446
 msgid "Sets the maximum number of simultaneously open files for each server process."
 msgstr "各サーバープロセスで同時にオープンできるファイルの最大数を設定。"
 
-#: utils/misc/guc_tables.c:2464
+#: utils/misc/guc_tables.c:2459
 msgid "Sets the maximum number of simultaneously prepared transactions."
 msgstr "同時に準備状態にできるトランザクションの最大数を設定。"
 
-#: utils/misc/guc_tables.c:2475
+#: utils/misc/guc_tables.c:2470
 msgid "Sets the minimum OID of tables for tracking locks."
 msgstr "ロックの追跡を行うテーブルの最小のOIDを設定。"
 
-#: utils/misc/guc_tables.c:2476
+#: utils/misc/guc_tables.c:2471
 msgid "Is used to avoid output on system tables."
 msgstr "システムテーブルに関するの出力を避けるために使います。"
 
-#: utils/misc/guc_tables.c:2485
+#: utils/misc/guc_tables.c:2480
 msgid "Sets the OID of the table with unconditionally lock tracing."
 msgstr "無条件でロックの追跡を行うテーブルのOIDを設定。"
 
-#: utils/misc/guc_tables.c:2497
+#: utils/misc/guc_tables.c:2492
 msgid "Sets the maximum allowed duration of any statement."
 msgstr "あらゆる文に対して実行時間として許容する上限値を設定。"
 
-#: utils/misc/guc_tables.c:2498 utils/misc/guc_tables.c:2509 utils/misc/guc_tables.c:2520 utils/misc/guc_tables.c:2531
+#: utils/misc/guc_tables.c:2493 utils/misc/guc_tables.c:2504 utils/misc/guc_tables.c:2515 utils/misc/guc_tables.c:2526
 msgid "A value of 0 turns off the timeout."
 msgstr "0でこのタイムアウトは無効になります。 "
 
-#: utils/misc/guc_tables.c:2508
+#: utils/misc/guc_tables.c:2503
 msgid "Sets the maximum allowed duration of any wait for a lock."
 msgstr "ロックの待機の最大許容時間を設定。"
 
-#: utils/misc/guc_tables.c:2519
+#: utils/misc/guc_tables.c:2514
 msgid "Sets the maximum allowed idle time between queries, when in a transaction."
 msgstr "問い合わせ間のアイドル時間のトランザクション内における最大許容値を設定。"
 
-#: utils/misc/guc_tables.c:2530
+#: utils/misc/guc_tables.c:2525
 msgid "Sets the maximum allowed idle time between queries, when not in a transaction."
 msgstr "問い合わせ間のアイドル時間のトランザクション外における最大許容値を設定。"
 
-#: utils/misc/guc_tables.c:2541
+#: utils/misc/guc_tables.c:2536
 msgid "Minimum age at which VACUUM should freeze a table row."
 msgstr "VACUUM にテーブル行の凍結をさせる最小のトランザクションID差分。"
 
-#: utils/misc/guc_tables.c:2551
+#: utils/misc/guc_tables.c:2546
 msgid "Age at which VACUUM should scan whole table to freeze tuples."
 msgstr "行の凍結のためのテーブル全体スキャンを強制させる時のトランザクションID差分。"
 
-#: utils/misc/guc_tables.c:2561
+#: utils/misc/guc_tables.c:2556
 msgid "Minimum age at which VACUUM should freeze a MultiXactId in a table row."
 msgstr "テーブル行でのマルチトランザクションIDの凍結を強制する最小のマルチトランザクション差分。"
 
-#: utils/misc/guc_tables.c:2571
+#: utils/misc/guc_tables.c:2566
 msgid "Multixact age at which VACUUM should scan whole table to freeze tuples."
 msgstr "行の凍結のためにテーブル全体スキャンを強制する時点のマルチトランザクション差分。"
 
-#: utils/misc/guc_tables.c:2581
+#: utils/misc/guc_tables.c:2576
 msgid "Age at which VACUUM should trigger failsafe to avoid a wraparound outage."
 msgstr "VACUUMにおいて周回による停止を回避するためのフェイルセーフを実行されるまでの経過トランザクション数。"
 
-#: utils/misc/guc_tables.c:2590
+#: utils/misc/guc_tables.c:2585
 msgid "Multixact age at which VACUUM should trigger failsafe to avoid a wraparound outage."
 msgstr "VACUUMにおいて周回による停止を回避するためのフェイルセーフが実行されるまでの経過マルチトランザクション数。"
 
-#: utils/misc/guc_tables.c:2603
+#: utils/misc/guc_tables.c:2598
 msgid "Sets the maximum number of locks per transaction."
 msgstr "1トランザクション当たりのロック数の上限を設定。"
 
-#: utils/misc/guc_tables.c:2604
+#: utils/misc/guc_tables.c:2599
 msgid "The shared lock table is sized on the assumption that at most max_locks_per_transaction objects per server process or prepared transaction will need to be locked at any one time."
 msgstr "共有ロックテーブルの大きさは、最大でサーバープロセスまたは準備済みトランザクションごとにmax_locks_per_transaction個のオブジェクトがロックされる必要があるという仮定の下に決定されます。"
 
-#: utils/misc/guc_tables.c:2615
+#: utils/misc/guc_tables.c:2610
 msgid "Sets the maximum number of predicate locks per transaction."
 msgstr "1トランザクション当たりの述語ロック数の上限を設定。"
 
-#: utils/misc/guc_tables.c:2616
+#: utils/misc/guc_tables.c:2611
 msgid "The shared predicate lock table is sized on the assumption that at most max_pred_locks_per_transaction objects per server process or prepared transaction will need to be locked at any one time."
 msgstr "共有述語ロックテーブルの大きさは、最大でサーバープロセスまたは準備済みトランザクションごとにmax_pred_locks_per_transaction個のオブジェクトがいかなる時点でもロックされる必要があるという仮定の下に決められます。"
 
-#: utils/misc/guc_tables.c:2627
+#: utils/misc/guc_tables.c:2622
 msgid "Sets the maximum number of predicate-locked pages and tuples per relation."
 msgstr "1リレーション当たりで述語ロックされるページとタプルの数の上限値を設定。"
 
-#: utils/misc/guc_tables.c:2628
+#: utils/misc/guc_tables.c:2623
 msgid "If more than this total of pages and tuples in the same relation are locked by a connection, those locks are replaced by a relation-level lock."
 msgstr "あるコネクションで、同じリレーション内でロックされるページ数とタプル数の合計がこの値を超えたときには、これらのロックはリレーションレベルのロックに置き換えられます。"
 
-#: utils/misc/guc_tables.c:2638
+#: utils/misc/guc_tables.c:2633
 msgid "Sets the maximum number of predicate-locked tuples per page."
 msgstr "1ページあたりで述語ロックされるタプル数の上限値を設定。"
 
-#: utils/misc/guc_tables.c:2639
+#: utils/misc/guc_tables.c:2634
 msgid "If more than this number of tuples on the same page are locked by a connection, those locks are replaced by a page-level lock."
 msgstr "あるコネクションで 、同じページ上でロックされるタプルの数がこの値を超えたときには、これらのロックはページレベルのロックに置き換えられます。"
 
-#: utils/misc/guc_tables.c:2649
+#: utils/misc/guc_tables.c:2644
 msgid "Sets the maximum allowed time to complete client authentication."
 msgstr "クライアント認証の完了までの最大許容時間を設定。"
 
-#: utils/misc/guc_tables.c:2661
+#: utils/misc/guc_tables.c:2656
 msgid "Sets the amount of time to wait before authentication on connection startup."
 msgstr "接続開始時の認証前の待ち時間を設定します。"
 
-#: utils/misc/guc_tables.c:2673
+#: utils/misc/guc_tables.c:2668
 msgid "Buffer size for reading ahead in the WAL during recovery."
 msgstr "リカバリ中のWAL先読みバッファのサイズ。"
 
-#: utils/misc/guc_tables.c:2674
+#: utils/misc/guc_tables.c:2669
 msgid "Maximum distance to read ahead in the WAL to prefetch referenced data blocks."
 msgstr "参照先データブロックの先行読み込みのためのWAL先読みの最大量。"
 
-#: utils/misc/guc_tables.c:2684
+#: utils/misc/guc_tables.c:2679
 msgid "Sets the size of WAL files held for standby servers."
 msgstr "スタンバイサーバーのために確保するWALの量を設定します。"
 
-#: utils/misc/guc_tables.c:2695
+#: utils/misc/guc_tables.c:2690
 msgid "Sets the minimum size to shrink the WAL to."
 msgstr "WALを縮小させる際の最小のサイズを設定。"
 
-#: utils/misc/guc_tables.c:2707
+#: utils/misc/guc_tables.c:2702
 msgid "Sets the WAL size that triggers a checkpoint."
 msgstr "チェックポイントの契機となるWALのサイズを指定。"
 
-#: utils/misc/guc_tables.c:2719
+#: utils/misc/guc_tables.c:2714
 msgid "Sets the maximum time between automatic WAL checkpoints."
 msgstr "自動WALチェックポイントの最大間隔を設定。"
 
-#: utils/misc/guc_tables.c:2730
+#: utils/misc/guc_tables.c:2725
 msgid "Sets the maximum time before warning if checkpoints triggered by WAL volume happen too frequently."
 msgstr "WALの量契機のチェックポイントが高頻度で起きる場合に、警告を発するまでの回数を設定。"
 
-#: utils/misc/guc_tables.c:2732
+#: utils/misc/guc_tables.c:2727
 msgid "Write a message to the server log if checkpoints caused by the filling of WAL segment files happen more frequently than this amount of time. Zero turns off the warning."
 msgstr "チェックポイントセグメントファイルを使い切ることが原因で起きるチェックポイントがこの時間間隔よりも頻繁に発生する場合、サーバーログにメッセージを書き出します。ゼロはこの警告を無効にします。 "
 
-#: utils/misc/guc_tables.c:2745 utils/misc/guc_tables.c:2963 utils/misc/guc_tables.c:3003
+#: utils/misc/guc_tables.c:2740 utils/misc/guc_tables.c:2958 utils/misc/guc_tables.c:2998
 msgid "Number of pages after which previously performed writes are flushed to disk."
 msgstr "すでに実行された書き込みがディスクに書き出されるまでのページ数。"
 
-#: utils/misc/guc_tables.c:2756
+#: utils/misc/guc_tables.c:2751
 msgid "Sets the number of disk-page buffers in shared memory for WAL."
 msgstr "共有メモリ内に割り当てられた、WALデータ用のディスクページバッファ数を設定。"
 
-#: utils/misc/guc_tables.c:2767
+#: utils/misc/guc_tables.c:2762
 msgid "Time between WAL flushes performed in the WAL writer."
 msgstr "WALライタで実行する書き出しの時間間隔。"
 
-#: utils/misc/guc_tables.c:2778
+#: utils/misc/guc_tables.c:2773
 msgid "Amount of WAL written out by WAL writer that triggers a flush."
 msgstr "書き出しが実行されるまでにWALライタで出力するWALの量。"
 
-#: utils/misc/guc_tables.c:2789
+#: utils/misc/guc_tables.c:2784
 msgid "Minimum size of new file to fsync instead of writing WAL."
 msgstr "WALを出力する代わりにfsyncを使用する新規ファイルの最小サイズ。"
 
-#: utils/misc/guc_tables.c:2800
+#: utils/misc/guc_tables.c:2795
 msgid "Sets the maximum number of simultaneously running WAL sender processes."
 msgstr "WAL送信プロセスの最大同時実行数を設定。"
 
-#: utils/misc/guc_tables.c:2811
+#: utils/misc/guc_tables.c:2806
 msgid "Sets the maximum number of simultaneously defined replication slots."
 msgstr "同時に定義できるレプリケーションスロットの数の最大値を設定。"
 
-#: utils/misc/guc_tables.c:2821
+#: utils/misc/guc_tables.c:2816
 msgid "Sets the maximum WAL size that can be reserved by replication slots."
 msgstr "レプリケーションスロットで確保できるWALの量の最大値を設定します。"
 
-#: utils/misc/guc_tables.c:2822
+#: utils/misc/guc_tables.c:2817
 msgid "Replication slots will be marked as failed, and segments released for deletion or recycling, if this much space is occupied by WAL on disk."
 msgstr "ディスク内のWALがこの量に達すると、レプリケーションスロットは停止とマークされ、セグメントは削除あるいは再利用のために解放されます。"
 
-#: utils/misc/guc_tables.c:2834
+#: utils/misc/guc_tables.c:2829
 msgid "Sets the maximum time to wait for WAL replication."
 msgstr "WALレプリケーションを待つ時間の最大値を設定。"
 
-#: utils/misc/guc_tables.c:2845
+#: utils/misc/guc_tables.c:2840
 msgid "Sets the delay in microseconds between transaction commit and flushing WAL to disk."
 msgstr "トランザクションのコミットからWALのディスク書き出しまでの遅延時間をマイクロ秒単位で設定。"
 
-#: utils/misc/guc_tables.c:2857
+#: utils/misc/guc_tables.c:2852
 msgid "Sets the minimum number of concurrent open transactions required before performing commit_delay."
 msgstr "commit_delay の実行に必要となる、同時に開いているトランザクション数の最小値を設定。"
 
-#: utils/misc/guc_tables.c:2868
+#: utils/misc/guc_tables.c:2863
 msgid "Sets the number of digits displayed for floating-point values."
 msgstr "浮動小数点値の表示桁数を設定。"
 
-#: utils/misc/guc_tables.c:2869
+#: utils/misc/guc_tables.c:2864
 msgid "This affects real, double precision, and geometric data types. A zero or negative parameter value is added to the standard number of digits (FLT_DIG or DBL_DIG as appropriate). Any value greater than zero selects precise output mode."
 msgstr "このパラメータは、real、double precision、幾何データ型に影響します。ゼロまたは負のパラメータ値は標準的な桁数(FLT_DIG もしくは DBL_DIGどちらか適切な方)に追加されます。正の値は直接出力形式を指定します。"
 
-#: utils/misc/guc_tables.c:2881
+#: utils/misc/guc_tables.c:2876
 msgid "Sets the minimum execution time above which a sample of statements will be logged. Sampling is determined by log_statement_sample_rate."
 msgstr "文がログに出力される最小の実行時間を設定します。サンプリングについてはlog_statement_sample_rateで決定されます。"
 
-#: utils/misc/guc_tables.c:2884
+#: utils/misc/guc_tables.c:2879
 msgid "Zero logs a sample of all queries. -1 turns this feature off."
 msgstr "ゼロにすると全ての問い合わせを記録します。-1はこの機能を無効にします。"
 
-#: utils/misc/guc_tables.c:2894
+#: utils/misc/guc_tables.c:2889
 msgid "Sets the minimum execution time above which all statements will be logged."
 msgstr "全ての文のログを記録する最小の実行時間を設定。"
 
-#: utils/misc/guc_tables.c:2896
+#: utils/misc/guc_tables.c:2891
 msgid "Zero prints all queries. -1 turns this feature off."
 msgstr "ゼロにすると全ての問い合わせを出力します。-1はこの機能を無効にします。"
 
-#: utils/misc/guc_tables.c:2906
+#: utils/misc/guc_tables.c:2901
 msgid "Sets the minimum execution time above which autovacuum actions will be logged."
 msgstr "自動VACUUMの活動のログを記録する最小の実行時間を設定。"
 
-#: utils/misc/guc_tables.c:2908
+#: utils/misc/guc_tables.c:2903
 msgid "Zero prints all actions. -1 turns autovacuum logging off."
 msgstr "ゼロはすべての活動を出力します。-1は自動VACUUMのログ記録を無効にします。"
 
-#: utils/misc/guc_tables.c:2918
+#: utils/misc/guc_tables.c:2913
 msgid "Sets the maximum length in bytes of data logged for bind parameter values when logging statements."
 msgstr "問い合わせ文をログ出力する際に、出力するbindパラメータ値データの最大バイト数を設定。"
 
-#: utils/misc/guc_tables.c:2920 utils/misc/guc_tables.c:2932
+#: utils/misc/guc_tables.c:2915 utils/misc/guc_tables.c:2927
 msgid "-1 to print values in full."
 msgstr "-1 で値を全て出力します。"
 
-#: utils/misc/guc_tables.c:2930
+#: utils/misc/guc_tables.c:2925
 msgid "Sets the maximum length in bytes of data logged for bind parameter values when logging statements, on error."
 msgstr "エラー時の問い合わせ文をログ出力する際に、出力するbindパラメータ値データの最大バイト数を設定。"
 
-#: utils/misc/guc_tables.c:2942
+#: utils/misc/guc_tables.c:2937
 msgid "Background writer sleep time between rounds."
 msgstr "バックグランドライタの周期毎の待機時間"
 
-#: utils/misc/guc_tables.c:2953
+#: utils/misc/guc_tables.c:2948
 msgid "Background writer maximum number of LRU pages to flush per round."
 msgstr "バックグランドライタが1周期で書き出すLRUページ数の最大値。"
 
-#: utils/misc/guc_tables.c:2976
+#: utils/misc/guc_tables.c:2971
 msgid "Number of simultaneous requests that can be handled efficiently by the disk subsystem."
 msgstr "ディスクサブシステムが効率的に処理可能な同時並行リクエスト数"
 
-#: utils/misc/guc_tables.c:2990
+#: utils/misc/guc_tables.c:2985
 msgid "A variant of effective_io_concurrency that is used for maintenance work."
 msgstr " effective_io_concurrency の保守作業に使用される変種。"
 
-#: utils/misc/guc_tables.c:3016
+#: utils/misc/guc_tables.c:3011
 msgid "Maximum number of concurrent worker processes."
 msgstr "同時に実行されるワーカープロセス数の最大値です。"
 
-#: utils/misc/guc_tables.c:3028
+#: utils/misc/guc_tables.c:3023
 msgid "Maximum number of logical replication worker processes."
 msgstr "レプリケーションワーカープロセス数の最大値です。"
 
-#: utils/misc/guc_tables.c:3040
+#: utils/misc/guc_tables.c:3035
 msgid "Maximum number of table synchronization workers per subscription."
 msgstr "サブスクリプション毎のテーブル同期ワーカー数の最大値です。"
 
-#: utils/misc/guc_tables.c:3052
+#: utils/misc/guc_tables.c:3047
 msgid "Maximum number of parallel apply workers per subscription."
 msgstr "サブスクリプション毎のテーブル適用ワーカー数の最大値です。"
 
-#: utils/misc/guc_tables.c:3062
+#: utils/misc/guc_tables.c:3057
 msgid "Sets the amount of time to wait before forcing log file rotation."
 msgstr "ログファイルのローテーションを行う時間間隔を設定します。"
 
-#: utils/misc/guc_tables.c:3074
+#: utils/misc/guc_tables.c:3069
 msgid "Sets the maximum size a log file can reach before being rotated."
 msgstr "ローテートされるまでに許容するログファイルの最大サイズを設定します。"
 
-#: utils/misc/guc_tables.c:3086
+#: utils/misc/guc_tables.c:3081
 msgid "Shows the maximum number of function arguments."
 msgstr "関数の引数の最大数を示します。"
 
-#: utils/misc/guc_tables.c:3097
+#: utils/misc/guc_tables.c:3092
 msgid "Shows the maximum number of index keys."
 msgstr "インデックスキーの最大数を示します。"
 
-#: utils/misc/guc_tables.c:3108
+#: utils/misc/guc_tables.c:3103
 msgid "Shows the maximum identifier length."
 msgstr "識別子の最大長を示します。"
 
-#: utils/misc/guc_tables.c:3119
+#: utils/misc/guc_tables.c:3114
 msgid "Shows the size of a disk block."
 msgstr "ディスクブロックサイズを示します。"
 
-#: utils/misc/guc_tables.c:3130
+#: utils/misc/guc_tables.c:3125
 msgid "Shows the number of pages per disk file."
 msgstr "ディスクファイルごとのページ数を表示します。"
 
-#: utils/misc/guc_tables.c:3141
+#: utils/misc/guc_tables.c:3136
 msgid "Shows the block size in the write ahead log."
 msgstr "先行書き込みログ(WAL)におけるブロックサイズを表示します"
 
-#: utils/misc/guc_tables.c:3152
+#: utils/misc/guc_tables.c:3147
 msgid "Sets the time to wait before retrying to retrieve WAL after a failed attempt."
 msgstr "WALの取り出しの失敗後に再試行する回数を設定。"
 
-#: utils/misc/guc_tables.c:3164
+#: utils/misc/guc_tables.c:3159
 msgid "Shows the size of write ahead log segments."
 msgstr "先行書き込みログ(WAL)セグメントのサイズを表示します"
 
-#: utils/misc/guc_tables.c:3177
+#: utils/misc/guc_tables.c:3172
 msgid "Time to sleep between autovacuum runs."
 msgstr "自動VACUUMの実行開始間隔。"
 
-#: utils/misc/guc_tables.c:3187
+#: utils/misc/guc_tables.c:3182
 msgid "Minimum number of tuple updates or deletes prior to vacuum."
 msgstr "VACUUMを行うまでの、タプルを更新または削除した回数の最小値。"
 
-#: utils/misc/guc_tables.c:3196
+#: utils/misc/guc_tables.c:3191
 msgid "Minimum number of tuple inserts prior to vacuum, or -1 to disable insert vacuums."
 msgstr "VACUUMが行われるまでの行挿入の回数の最小値、-1で挿入契機のVACUUMを無効化します。"
 
-#: utils/misc/guc_tables.c:3205
+#: utils/misc/guc_tables.c:3200
 msgid "Minimum number of tuple inserts, updates, or deletes prior to analyze."
 msgstr "ANALYZEが実行されるまでの、タプルを挿入、更新、削除した回数の最小値。"
 
-#: utils/misc/guc_tables.c:3215
+#: utils/misc/guc_tables.c:3210
 msgid "Age at which to autovacuum a table to prevent transaction ID wraparound."
 msgstr "トランザクションID周回を防ぐためにテーブルを自動VACUUMする時点のトランザクションID差分。"
 
-#: utils/misc/guc_tables.c:3227
+#: utils/misc/guc_tables.c:3222
 msgid "Multixact age at which to autovacuum a table to prevent multixact wraparound."
 msgstr "マルチトランザクション周回を防止するためにテーブルを自動VACUUMする、マルチトランザクション差分。"
 
-#: utils/misc/guc_tables.c:3237
+#: utils/misc/guc_tables.c:3232
 msgid "Sets the maximum number of simultaneously running autovacuum worker processes."
 msgstr "自動VACUUMのワーカープロセスの最大同時実行数を設定。"
 
-#: utils/misc/guc_tables.c:3247
+#: utils/misc/guc_tables.c:3242
 msgid "Sets the maximum number of parallel processes per maintenance operation."
 msgstr "ひとつの保守作業に割り当てる並列処理プロセスの数の最大値を設定。"
 
-#: utils/misc/guc_tables.c:3257
+#: utils/misc/guc_tables.c:3252
 msgid "Sets the maximum number of parallel processes per executor node."
 msgstr "エグゼキュータノードあたりの並列処理プロセスの数の最大値を設定。"
 
-#: utils/misc/guc_tables.c:3268
+#: utils/misc/guc_tables.c:3263
 msgid "Sets the maximum number of parallel workers that can be active at one time."
 msgstr "同時に活動可能な並列処理ワーカーの数の最大値を設定。"
 
-#: utils/misc/guc_tables.c:3279
+#: utils/misc/guc_tables.c:3274
 msgid "Sets the maximum memory to be used by each autovacuum worker process."
 msgstr "自動VACUUMプロセスで使用するメモリ量の最大値を設定。"
 
-#: utils/misc/guc_tables.c:3290
+#: utils/misc/guc_tables.c:3285
 msgid "Time before a snapshot is too old to read pages changed after the snapshot was taken."
 msgstr "スナップショット取得後、更新されたページが読み取れなくなるまでの時間。"
 
-#: utils/misc/guc_tables.c:3291
+#: utils/misc/guc_tables.c:3286
 msgid "A value of -1 disables this feature."
 msgstr "-1でこの機能を無効にします。"
 
-#: utils/misc/guc_tables.c:3301
+#: utils/misc/guc_tables.c:3296
 msgid "Time between issuing TCP keepalives."
 msgstr "TCPキープアライブを発行する時間間隔。"
 
-#: utils/misc/guc_tables.c:3302 utils/misc/guc_tables.c:3313 utils/misc/guc_tables.c:3437
+#: utils/misc/guc_tables.c:3297 utils/misc/guc_tables.c:3308 utils/misc/guc_tables.c:3432
 msgid "A value of 0 uses the system default."
 msgstr "0でシステムのデフォルトを使用します。"
 
-#: utils/misc/guc_tables.c:3312
+#: utils/misc/guc_tables.c:3307
 msgid "Time between TCP keepalive retransmits."
 msgstr "TCPキープアライブの再送信の時間間隔。"
 
-#: utils/misc/guc_tables.c:3323
+#: utils/misc/guc_tables.c:3318
 msgid "SSL renegotiation is no longer supported; this can only be 0."
 msgstr "SSLの再ネゴシエーションは今後サポートされません; 0のみに設定可能です。"
 
-#: utils/misc/guc_tables.c:3334
+#: utils/misc/guc_tables.c:3329
 msgid "Maximum number of TCP keepalive retransmits."
 msgstr "TCPキープアライブの再送信回数の最大値です。"
 
-#: utils/misc/guc_tables.c:3335
+#: utils/misc/guc_tables.c:3330
 msgid "Number of consecutive keepalive retransmits that can be lost before a connection is considered dead. A value of 0 uses the system default."
 msgstr "接続が失われると判断するまでに再送信される、ひとつづきのキープアライブの数。0の場合はシステムのデフォルトを使用します。"
 
-#: utils/misc/guc_tables.c:3346
+#: utils/misc/guc_tables.c:3341
 msgid "Sets the maximum allowed result for exact search by GIN."
 msgstr "GINによる正確な検索に対して許容する結果数の最大値を設定。"
 
-#: utils/misc/guc_tables.c:3357
+#: utils/misc/guc_tables.c:3352
 msgid "Sets the planner's assumption about the total size of the data caches."
 msgstr "プランナが想定するデータキャッシュ全体のサイズを設定。"
 
-#: utils/misc/guc_tables.c:3358
+#: utils/misc/guc_tables.c:3353
 msgid "That is, the total size of the caches (kernel cache and shared buffers) used for PostgreSQL data files. This is measured in disk pages, which are normally 8 kB each."
 msgstr "つまり、PostgreSQLのデータファイルに対して使用されるキャッシュ(カーネルキャッシュおよび共有バッファ)全体の量です。これは通常8KBのディスクページを単位とします。"
 
-#: utils/misc/guc_tables.c:3369
+#: utils/misc/guc_tables.c:3364
 msgid "Sets the minimum amount of table data for a parallel scan."
 msgstr "並列スキャンを検討するテーブルデータの量の最小値を設定。"
 
-#: utils/misc/guc_tables.c:3370
+#: utils/misc/guc_tables.c:3365
 msgid "If the planner estimates that it will read a number of table pages too small to reach this limit, a parallel scan will not be considered."
 msgstr "この限度に到達できないような少ないテーブルページ数しか読み取らないとプランナが見積もった場合、並列スキャンは検討されません。"
 
-#: utils/misc/guc_tables.c:3380
+#: utils/misc/guc_tables.c:3375
 msgid "Sets the minimum amount of index data for a parallel scan."
 msgstr "並列スキャンを検討するインデックスデータの量の最小値を設定。"
 
-#: utils/misc/guc_tables.c:3381
+#: utils/misc/guc_tables.c:3376
 msgid "If the planner estimates that it will read a number of index pages too small to reach this limit, a parallel scan will not be considered."
 msgstr "この限度に到達できないような少ないページ数しか読み取らないとプランナが見積もった場合、並列スキャンは検討されません。"
 
-#: utils/misc/guc_tables.c:3392
+#: utils/misc/guc_tables.c:3387
 msgid "Shows the server version as an integer."
 msgstr "サーバーのバージョンを整数値で表示します。"
 
-#: utils/misc/guc_tables.c:3403
+#: utils/misc/guc_tables.c:3398
 msgid "Log the use of temporary files larger than this number of kilobytes."
 msgstr "このキロバイト数よりも大きな一時ファイルの使用をログに記録します。"
 
-#: utils/misc/guc_tables.c:3404
+#: utils/misc/guc_tables.c:3399
 msgid "Zero logs all files. The default is -1 (turning this feature off)."
 msgstr "ゼロにすると、全てのファイルを記録します。デフォルトは-1です(この機能を無効にします)。"
 
-#: utils/misc/guc_tables.c:3414
+#: utils/misc/guc_tables.c:3409
 msgid "Sets the size reserved for pg_stat_activity.query, in bytes."
 msgstr "pg_stat_activity.queryのために予約するサイズをバイト単位で設定。"
 
-#: utils/misc/guc_tables.c:3425
+#: utils/misc/guc_tables.c:3420
 msgid "Sets the maximum size of the pending list for GIN index."
 msgstr "GINインデックスの保留リストの最大サイズを設定。"
 
-#: utils/misc/guc_tables.c:3436
+#: utils/misc/guc_tables.c:3431
 msgid "TCP user timeout."
 msgstr "TCPユーザータイムアウト。"
 
-#: utils/misc/guc_tables.c:3447
+#: utils/misc/guc_tables.c:3442
 msgid "The size of huge page that should be requested."
 msgstr "要求が見込まれるヒュージページのサイズ。"
 
-#: utils/misc/guc_tables.c:3458
+#: utils/misc/guc_tables.c:3453
 msgid "Aggressively flush system caches for debugging purposes."
 msgstr "デバッグ目的のために積極的にシステムキャッシュを消去する。"
 
-#: utils/misc/guc_tables.c:3481
+#: utils/misc/guc_tables.c:3476
 msgid "Sets the time interval between checks for disconnection while running queries."
 msgstr "問い合わせ実行中に接続確認を行う時間間隔を設定します。"
 
-#: utils/misc/guc_tables.c:3492
+#: utils/misc/guc_tables.c:3487
 msgid "Time between progress updates for long-running startup operations."
 msgstr "起動処理が長引いた際のステータス更新の時間間隔。"
 
-#: utils/misc/guc_tables.c:3494
+#: utils/misc/guc_tables.c:3489
 msgid "0 turns this feature off."
 msgstr "ゼロにするとこの機能を無効にします。"
 
-#: utils/misc/guc_tables.c:3504
+#: utils/misc/guc_tables.c:3499
 msgid "Sets the iteration count for SCRAM secret generation."
 msgstr "SCRAMシークレット生成の際の反復回数を設定。"
 
-#: utils/misc/guc_tables.c:3524
+#: utils/misc/guc_tables.c:3519
 msgid "Sets the planner's estimate of the cost of a sequentially fetched disk page."
 msgstr "ひと続きに読み込むディスクページについてプランナで使用する見積もりコストを設定。"
 
-#: utils/misc/guc_tables.c:3535
+#: utils/misc/guc_tables.c:3530
 msgid "Sets the planner's estimate of the cost of a nonsequentially fetched disk page."
 msgstr "ひと続きでは読み込めないディスクページについてプランナで使用する見積もりコストを設定。"
 
-#: utils/misc/guc_tables.c:3546
+#: utils/misc/guc_tables.c:3541
 msgid "Sets the planner's estimate of the cost of processing each tuple (row)."
 msgstr "一つのタプル(行)の処理についてプランナで使用する見積もりコストを設定。"
 
-#: utils/misc/guc_tables.c:3557
+#: utils/misc/guc_tables.c:3552
 msgid "Sets the planner's estimate of the cost of processing each index entry during an index scan."
 msgstr "インデックススキャンにおける一つのインデックスエントリの処理についてプランナで使用する見積もりコストを設定。 "
 
-#: utils/misc/guc_tables.c:3568
+#: utils/misc/guc_tables.c:3563
 msgid "Sets the planner's estimate of the cost of processing each operator or function call."
 msgstr "一つの演算子または関数の処理についてプランナで使用する見積もりコストを設定。"
 
-#: utils/misc/guc_tables.c:3579
+#: utils/misc/guc_tables.c:3574
 msgid "Sets the planner's estimate of the cost of passing each tuple (row) from worker to leader backend."
 msgstr "並列処理ワーカーからリーダーバックエンドへの一つのタプル(行)の受け渡しについてプランナが使用する見積もりコストを設定。"
 
-#: utils/misc/guc_tables.c:3590
+#: utils/misc/guc_tables.c:3585
 msgid "Sets the planner's estimate of the cost of starting up worker processes for parallel query."
 msgstr "並列問い合わせ実行のためのワーカープロセスの起動についてプランナで使用する見積もりコストを設定。"
 
-#: utils/misc/guc_tables.c:3602
+#: utils/misc/guc_tables.c:3597
 msgid "Perform JIT compilation if query is more expensive."
 msgstr "問い合わせがこの値より高コストであればJITコンパイルを実行します。"
 
-#: utils/misc/guc_tables.c:3603
+#: utils/misc/guc_tables.c:3598
 msgid "-1 disables JIT compilation."
 msgstr "-1 でJITコンパイルを禁止します。"
 
-#: utils/misc/guc_tables.c:3613
+#: utils/misc/guc_tables.c:3608
 msgid "Optimize JIT-compiled functions if query is more expensive."
 msgstr "問い合わせがこの値より高コストであればJITコンパイルされた関数を最適化します。"
 
-#: utils/misc/guc_tables.c:3614
+#: utils/misc/guc_tables.c:3609
 msgid "-1 disables optimization."
 msgstr "-1で最適化を行わなくなります。"
 
-#: utils/misc/guc_tables.c:3624
+#: utils/misc/guc_tables.c:3619
 msgid "Perform JIT inlining if query is more expensive."
 msgstr "問い合わせがこの値より高コストであればJITコンパイルされた関数をインライン化します。"
 
-#: utils/misc/guc_tables.c:3625
+#: utils/misc/guc_tables.c:3620
 msgid "-1 disables inlining."
 msgstr "-1 でインライン化を禁止します。"
 
-#: utils/misc/guc_tables.c:3635
+#: utils/misc/guc_tables.c:3630
 msgid "Sets the planner's estimate of the fraction of a cursor's rows that will be retrieved."
 msgstr "カーソルから取り出される行数の全行に対する割合についてプランナで使用する値を設定。"
 
-#: utils/misc/guc_tables.c:3647
+#: utils/misc/guc_tables.c:3642
 msgid "Sets the planner's estimate of the average size of a recursive query's working table."
 msgstr "再帰問い合わせでプランナが使用する中間テーブルの平均見積もりサイズを設定します。"
 
-#: utils/misc/guc_tables.c:3659
+#: utils/misc/guc_tables.c:3654
 msgid "GEQO: selective pressure within the population."
 msgstr "GEQO: 集合内の選択圧力。"
 
-#: utils/misc/guc_tables.c:3670
+#: utils/misc/guc_tables.c:3665
 msgid "GEQO: seed for random path selection."
 msgstr "GEQO: ランダムパス選択用のシード"
 
-#: utils/misc/guc_tables.c:3681
+#: utils/misc/guc_tables.c:3676
 msgid "Multiple of work_mem to use for hash tables."
 msgstr "ハッシュテーブルで使用するwork_memの倍率。"
 
-#: utils/misc/guc_tables.c:3692
+#: utils/misc/guc_tables.c:3687
 msgid "Multiple of the average buffer usage to free per round."
 msgstr "周期ごとに解放するバッファ数の平均バッファ使用量に対する倍数"
 
-#: utils/misc/guc_tables.c:3702
+#: utils/misc/guc_tables.c:3697
 msgid "Sets the seed for random-number generation."
 msgstr "乱数生成用のシードを設定。"
 
-#: utils/misc/guc_tables.c:3713
+#: utils/misc/guc_tables.c:3708
 msgid "Vacuum cost delay in milliseconds."
 msgstr "ミリ秒単位のコストベースのVACUUM処理の遅延時間です。"
 
-#: utils/misc/guc_tables.c:3724
+#: utils/misc/guc_tables.c:3719
 msgid "Vacuum cost delay in milliseconds, for autovacuum."
 msgstr "自動VACUUM用のミリ秒単位のコストベースのVACUUM処理の遅延時間です。"
 
-#: utils/misc/guc_tables.c:3735
+#: utils/misc/guc_tables.c:3730
 msgid "Number of tuple updates or deletes prior to vacuum as a fraction of reltuples."
 msgstr "VACUUMが実行されるまでのタプルの更新または削除回数のreltuplesに対する割合。"
 
-#: utils/misc/guc_tables.c:3745
+#: utils/misc/guc_tables.c:3740
 msgid "Number of tuple inserts prior to vacuum as a fraction of reltuples."
 msgstr "VACUUMが実行されるまでのタプルの挿入行数のreltuplesに対する割合。"
 
-#: utils/misc/guc_tables.c:3755
+#: utils/misc/guc_tables.c:3750
 msgid "Number of tuple inserts, updates, or deletes prior to analyze as a fraction of reltuples."
 msgstr "ANALYZEが実行されるまでのタプルの更新または削除回数のreltuplesに対する割合。"
 
-#: utils/misc/guc_tables.c:3765
+#: utils/misc/guc_tables.c:3760
 msgid "Time spent flushing dirty buffers during checkpoint, as fraction of checkpoint interval."
 msgstr "チェックポイント中にダーティバッファの書き出しに使う時間のチェックポイント間隔に対する割合。"
 
-#: utils/misc/guc_tables.c:3775
+#: utils/misc/guc_tables.c:3770
 msgid "Fraction of statements exceeding log_min_duration_sample to be logged."
 msgstr "log_min_duration_sampleを超過した文のうちログ出力を行う割合。"
 
-#: utils/misc/guc_tables.c:3776
+#: utils/misc/guc_tables.c:3771
 msgid "Use a value between 0.0 (never log) and 1.0 (always log)."
 msgstr "0.0(ログ出力しない)から1.0(すべてログ出力する)の間の値を指定してください。"
 
-#: utils/misc/guc_tables.c:3785
+#: utils/misc/guc_tables.c:3780
 msgid "Sets the fraction of transactions from which to log all statements."
 msgstr "すべての文をログ出力するトランザクションの割合を設定します。"
 
-#: utils/misc/guc_tables.c:3786
+#: utils/misc/guc_tables.c:3781
 msgid "Use a value between 0.0 (never log) and 1.0 (log all statements for all transactions)."
 msgstr "0.0 (ログ出力しない)から 1.0 (全てのトランザクションの全ての文をログ出力する)の間の値を指定してください。"
 
 # hoge
-#: utils/misc/guc_tables.c:3805
+#: utils/misc/guc_tables.c:3800
 msgid "Sets the shell command that will be called to archive a WAL file."
 msgstr "WALファイルの保管のために呼び出されるシェルスクリプトを設定。"
 
-#: utils/misc/guc_tables.c:3806
+#: utils/misc/guc_tables.c:3801
 msgid "This is used only if \"archive_library\" is not set."
 msgstr "これは\"archive_library\"が設定されていない場合にのみ使用されます。"
 
 # hoge
-#: utils/misc/guc_tables.c:3815
+#: utils/misc/guc_tables.c:3810
 msgid "Sets the library that will be called to archive a WAL file."
 msgstr "WALファイルのアーカイブのために呼び出すライブラリを設定します。"
 
-#: utils/misc/guc_tables.c:3816
+#: utils/misc/guc_tables.c:3811
 msgid "An empty string indicates that \"archive_command\" should be used."
 msgstr "空文字列で\"archive_command\"を使用することを示します。"
 
 # hoge
-#: utils/misc/guc_tables.c:3825
+#: utils/misc/guc_tables.c:3820
 msgid "Sets the shell command that will be called to retrieve an archived WAL file."
 msgstr "アーカイブされたWALファイルを取り出すために呼び出すシェルコマンドを設定します。"
 
 # hoge
-#: utils/misc/guc_tables.c:3835
+#: utils/misc/guc_tables.c:3830
 msgid "Sets the shell command that will be executed at every restart point."
 msgstr "リスタートポイントの時に実行するシェルコマンドを設定。"
 
 # hoge
-#: utils/misc/guc_tables.c:3845
+#: utils/misc/guc_tables.c:3840
 msgid "Sets the shell command that will be executed once at the end of recovery."
 msgstr "リカバリ終了時に1度だけ実行されるシェルコマンドを設定。"
 
-#: utils/misc/guc_tables.c:3855
+#: utils/misc/guc_tables.c:3850
 msgid "Specifies the timeline to recover into."
 msgstr "リカバリの目標タイムラインを指定します。"
 
-#: utils/misc/guc_tables.c:3865
+#: utils/misc/guc_tables.c:3860
 msgid "Set to \"immediate\" to end recovery as soon as a consistent state is reached."
 msgstr "\"immediate\"を指定すると一貫性が確保できた時点でリカバリを終了します。"
 
-#: utils/misc/guc_tables.c:3874
+#: utils/misc/guc_tables.c:3869
 msgid "Sets the transaction ID up to which recovery will proceed."
 msgstr "リカバリを指定したトランザクションIDまで進めます。"
 
-#: utils/misc/guc_tables.c:3883
+#: utils/misc/guc_tables.c:3878
 msgid "Sets the time stamp up to which recovery will proceed."
 msgstr "リカバリを指定したタイムスタンプの時刻まで進めます。"
 
-#: utils/misc/guc_tables.c:3892
+#: utils/misc/guc_tables.c:3887
 msgid "Sets the named restore point up to which recovery will proceed."
 msgstr "リカバリを指定した名前のリストアポイントまで進めます。"
 
-#: utils/misc/guc_tables.c:3901
+#: utils/misc/guc_tables.c:3896
 msgid "Sets the LSN of the write-ahead log location up to which recovery will proceed."
 msgstr "リカバリを先行書き込みログの指定したLSNまで進めます。"
 
-#: utils/misc/guc_tables.c:3911
+#: utils/misc/guc_tables.c:3906
 msgid "Sets the connection string to be used to connect to the sending server."
 msgstr "送出側サーバーへの接続に使用する接続文字列をしています。"
 
-#: utils/misc/guc_tables.c:3922
+#: utils/misc/guc_tables.c:3917
 msgid "Sets the name of the replication slot to use on the sending server."
 msgstr "送出サーバーで使用するレプリケーションスロットの名前を設定。"
 
-#: utils/misc/guc_tables.c:3932
+#: utils/misc/guc_tables.c:3927
 msgid "Sets the client's character set encoding."
 msgstr "クライアントの文字集合の符号化方式を設定。"
 
-#: utils/misc/guc_tables.c:3943
+#: utils/misc/guc_tables.c:3938
 msgid "Controls information prefixed to each log line."
 msgstr "各ログ行の前に付ける情報を制御します。"
 
-#: utils/misc/guc_tables.c:3944
+#: utils/misc/guc_tables.c:3939
 msgid "If blank, no prefix is used."
 msgstr "もし空であればなにも付加しません。"
 
-#: utils/misc/guc_tables.c:3953
+#: utils/misc/guc_tables.c:3948
 msgid "Sets the time zone to use in log messages."
 msgstr "ログメッセージ使用するタイムゾーンを設定。"
 
-#: utils/misc/guc_tables.c:3963
+#: utils/misc/guc_tables.c:3958
 msgid "Sets the display format for date and time values."
 msgstr "日付時刻値の表示用書式を設定。"
 
-#: utils/misc/guc_tables.c:3964
+#: utils/misc/guc_tables.c:3959
 msgid "Also controls interpretation of ambiguous date inputs."
 msgstr "曖昧な日付の入力の解釈も制御します。"
 
-#: utils/misc/guc_tables.c:3975
+#: utils/misc/guc_tables.c:3970
 msgid "Sets the default table access method for new tables."
 msgstr "新規テーブルで使用されるデフォルトテーブルアクセスメソッドを設定。"
 
-#: utils/misc/guc_tables.c:3986
+#: utils/misc/guc_tables.c:3981
 msgid "Sets the default tablespace to create tables and indexes in."
 msgstr "テーブルとインデックスの作成先となるデフォルトのテーブル空間を設定。"
 
-#: utils/misc/guc_tables.c:3987
+#: utils/misc/guc_tables.c:3982
 msgid "An empty string selects the database's default tablespace."
 msgstr "空文字列はデータベースのデフォルトのテーブル空間を選択します。"
 
-#: utils/misc/guc_tables.c:3997
+#: utils/misc/guc_tables.c:3992
 msgid "Sets the tablespace(s) to use for temporary tables and sort files."
 msgstr "一時テーブルとファイルのソートで使用されるテーブル空間を設定。"
 
-#: utils/misc/guc_tables.c:4008
+#: utils/misc/guc_tables.c:4003
 msgid "Sets whether a CREATEROLE user automatically grants the role to themselves, and with which options."
 msgstr "CREATEROLEを持つユーザーが自動的にそのロールを自身にGRANTするかどうかを対象となるオプションとともに設定します"
 
-#: utils/misc/guc_tables.c:4020
+#: utils/misc/guc_tables.c:4015
 msgid "Sets the path for dynamically loadable modules."
 msgstr "動的ロード可能モジュールのパスを設定。"
 
-#: utils/misc/guc_tables.c:4021
+#: utils/misc/guc_tables.c:4016
 msgid "If a dynamically loadable module needs to be opened and the specified name does not have a directory component (i.e., the name does not contain a slash), the system will search this path for the specified file."
 msgstr "オープンする必要がある動的ロード可能なモジュールについて、指定されたファイル名にディレクトリ要素がない(つまり、名前にスラッシュが含まれない)場合、システムは指定されたファイルをこのパスから検索します。 "
 
-#: utils/misc/guc_tables.c:4034
+#: utils/misc/guc_tables.c:4029
 msgid "Sets the location of the Kerberos server key file."
 msgstr "Kerberosサーバーキーファイルの場所を設定。"
 
-#: utils/misc/guc_tables.c:4045
+#: utils/misc/guc_tables.c:4040
 msgid "Sets the Bonjour service name."
 msgstr "Bonjour サービス名を設定。"
 
-#: utils/misc/guc_tables.c:4057
-msgid "Shows the collation order locale."
-msgstr "テキストデータのソート時に使用されるロケールを表示します。"
-
-#: utils/misc/guc_tables.c:4068
-msgid "Shows the character classification and case conversion locale."
-msgstr "文字クラス分類、大文字小文字変換を決定するロケールを表示します。"
-
-#: utils/misc/guc_tables.c:4079
+#: utils/misc/guc_tables.c:4050
 msgid "Sets the language in which messages are displayed."
 msgstr "表示用メッセージの言語を設定。"
 
-#: utils/misc/guc_tables.c:4089
+#: utils/misc/guc_tables.c:4060
 msgid "Sets the locale for formatting monetary amounts."
 msgstr "通貨書式で使用するロケールを設定。 "
 
-#: utils/misc/guc_tables.c:4099
+#: utils/misc/guc_tables.c:4070
 msgid "Sets the locale for formatting numbers."
 msgstr "数字の書式で使用するロケールを設定。"
 
-#: utils/misc/guc_tables.c:4109
+#: utils/misc/guc_tables.c:4080
 msgid "Sets the locale for formatting date and time values."
 msgstr "日付と時間の書式で使用するロケールを設定。"
 
-#: utils/misc/guc_tables.c:4119
+#: utils/misc/guc_tables.c:4090
 msgid "Lists shared libraries to preload into each backend."
 msgstr "各バックエンドに事前ロードする共有ライブラリを列挙します。"
 
-#: utils/misc/guc_tables.c:4130
+#: utils/misc/guc_tables.c:4101
 msgid "Lists shared libraries to preload into server."
 msgstr "サーバーに事前ロードする共有ライブラリを列挙します。"
 
-#: utils/misc/guc_tables.c:4141
+#: utils/misc/guc_tables.c:4112
 msgid "Lists unprivileged shared libraries to preload into each backend."
 msgstr "各バックエンドに事前読み込みする非特権共有ライブラリを列挙します。"
 
-#: utils/misc/guc_tables.c:4152
+#: utils/misc/guc_tables.c:4123
 msgid "Sets the schema search order for names that are not schema-qualified."
 msgstr "スキーマ部を含まない名前に対するスキーマの検索順を設定。"
 
-#: utils/misc/guc_tables.c:4164
+#: utils/misc/guc_tables.c:4135
 msgid "Shows the server (database) character set encoding."
 msgstr "サーバー(データベース)文字セット符号化方式を表示します。"
 
-#: utils/misc/guc_tables.c:4176
+#: utils/misc/guc_tables.c:4147
 msgid "Shows the server version."
 msgstr "サーバーのバージョンを表示します。"
 
-#: utils/misc/guc_tables.c:4188
+#: utils/misc/guc_tables.c:4159
 msgid "Sets the current role."
 msgstr "現在のロールを設定。"
 
-#: utils/misc/guc_tables.c:4200
+#: utils/misc/guc_tables.c:4171
 msgid "Sets the session user name."
 msgstr "セッションユーザー名を設定。"
 
-#: utils/misc/guc_tables.c:4211
+#: utils/misc/guc_tables.c:4182
 msgid "Sets the destination for server log output."
 msgstr "サーバーログの出力先を設定。"
 
-#: utils/misc/guc_tables.c:4212
+#: utils/misc/guc_tables.c:4183
 msgid "Valid values are combinations of \"stderr\", \"syslog\", \"csvlog\", \"jsonlog\", and \"eventlog\", depending on the platform."
 msgstr "有効な値は、プラットフォームに依存しますが\"stderr\"、\"syslog\"、\"csvlog\"、\"jsonlog\"そして\"eventlog\"の組み合わせです。"
 
-#: utils/misc/guc_tables.c:4223
+#: utils/misc/guc_tables.c:4194
 msgid "Sets the destination directory for log files."
 msgstr "ログファイルの格納ディレクトリを設定。"
 
-#: utils/misc/guc_tables.c:4224
+#: utils/misc/guc_tables.c:4195
 msgid "Can be specified as relative to the data directory or as absolute path."
 msgstr "データディレクトリからの相対パスでも絶対パスでも指定できます"
 
-#: utils/misc/guc_tables.c:4234
+#: utils/misc/guc_tables.c:4205
 msgid "Sets the file name pattern for log files."
 msgstr "ログファイルのファイル名パターンを設定。"
 
-#: utils/misc/guc_tables.c:4245
+#: utils/misc/guc_tables.c:4216
 msgid "Sets the program name used to identify PostgreSQL messages in syslog."
 msgstr "syslog内でPostgreSQLのメッセージを識別するために使用されるプログラム名を設定。"
 
-#: utils/misc/guc_tables.c:4256
+#: utils/misc/guc_tables.c:4227
 msgid "Sets the application name used to identify PostgreSQL messages in the event log."
 msgstr "イベントログ内でPostgreSQLのメッセージを識別するために使用されるアプリケーション名を設定。"
 
-#: utils/misc/guc_tables.c:4267
+#: utils/misc/guc_tables.c:4238
 msgid "Sets the time zone for displaying and interpreting time stamps."
 msgstr "タイムスタンプの表示と解釈に使用するタイムゾーンを設定。"
 
-#: utils/misc/guc_tables.c:4277
+#: utils/misc/guc_tables.c:4248
 msgid "Selects a file of time zone abbreviations."
 msgstr "タイムゾーン省略形用のファイルを選択します。"
 
-#: utils/misc/guc_tables.c:4287
+#: utils/misc/guc_tables.c:4258
 msgid "Sets the owning group of the Unix-domain socket."
 msgstr "Unixドメインソケットを所有するグループを設定。"
 
-#: utils/misc/guc_tables.c:4288
+#: utils/misc/guc_tables.c:4259
 msgid "The owning user of the socket is always the user that starts the server."
 msgstr "ソケットを所有するユーザーは常にサーバーを開始したユーザーです。"
 
-#: utils/misc/guc_tables.c:4298
+#: utils/misc/guc_tables.c:4269
 msgid "Sets the directories where Unix-domain sockets will be created."
 msgstr "Unixドメインソケットの作成先ディレクトリを設定。"
 
-#: utils/misc/guc_tables.c:4309
+#: utils/misc/guc_tables.c:4280
 msgid "Sets the host name or IP address(es) to listen to."
 msgstr "接続を監視するホスト名またはIPアドレスを設定。"
 
-#: utils/misc/guc_tables.c:4324
+#: utils/misc/guc_tables.c:4295
 msgid "Sets the server's data directory."
 msgstr "サーバーのデータディレクトリを設定。"
 
-#: utils/misc/guc_tables.c:4335
+#: utils/misc/guc_tables.c:4306
 msgid "Sets the server's main configuration file."
 msgstr "サーバーのメイン設定ファイルを設定。"
 
-#: utils/misc/guc_tables.c:4346
+#: utils/misc/guc_tables.c:4317
 msgid "Sets the server's \"hba\" configuration file."
 msgstr "サーバーの\"hba\"設定ファイルを設定。"
 
-#: utils/misc/guc_tables.c:4357
+#: utils/misc/guc_tables.c:4328
 msgid "Sets the server's \"ident\" configuration file."
 msgstr "サーバーの\"ident\"設定ファイルを設定。"
 
-#: utils/misc/guc_tables.c:4368
+#: utils/misc/guc_tables.c:4339
 msgid "Writes the postmaster PID to the specified file."
 msgstr "postmasterのPIDを指定したファイルに書き込みます。"
 
-#: utils/misc/guc_tables.c:4379
+#: utils/misc/guc_tables.c:4350
 msgid "Shows the name of the SSL library."
 msgstr "SSLライブラリの名前を表示します。"
 
-#: utils/misc/guc_tables.c:4394
+#: utils/misc/guc_tables.c:4365
 msgid "Location of the SSL server certificate file."
 msgstr "SSLサーバー証明書ファイルの場所です"
 
-#: utils/misc/guc_tables.c:4404
+#: utils/misc/guc_tables.c:4375
 msgid "Location of the SSL server private key file."
 msgstr "SSLサーバー秘密鍵ファイルの場所です。"
 
-#: utils/misc/guc_tables.c:4414
+#: utils/misc/guc_tables.c:4385
 msgid "Location of the SSL certificate authority file."
 msgstr "SSL認証局ファイルの場所です"
 
-#: utils/misc/guc_tables.c:4424
+#: utils/misc/guc_tables.c:4395
 msgid "Location of the SSL certificate revocation list file."
 msgstr "SSL証明書失効リストファイルの場所です。"
 
-#: utils/misc/guc_tables.c:4434
+#: utils/misc/guc_tables.c:4405
 msgid "Location of the SSL certificate revocation list directory."
 msgstr "SSL証明書失効リストディレクトリの場所です。"
 
-#: utils/misc/guc_tables.c:4444
+#: utils/misc/guc_tables.c:4415
 msgid "Number of synchronous standbys and list of names of potential synchronous ones."
 msgstr "同期スタンバイの数と同期スタンバイ候補の名前の一覧。"
 
-#: utils/misc/guc_tables.c:4455
+#: utils/misc/guc_tables.c:4426
 msgid "Sets default text search configuration."
 msgstr "デフォルトのテキスト検索設定を設定します。"
 
-#: utils/misc/guc_tables.c:4465
+#: utils/misc/guc_tables.c:4436
 msgid "Sets the list of allowed SSL ciphers."
 msgstr "SSL暗号として許されるリストを設定。"
 
-#: utils/misc/guc_tables.c:4480
+#: utils/misc/guc_tables.c:4451
 msgid "Sets the curve to use for ECDH."
 msgstr "ECDHで使用する曲線を設定。"
 
-#: utils/misc/guc_tables.c:4495
+#: utils/misc/guc_tables.c:4466
 msgid "Location of the SSL DH parameters file."
 msgstr "SSLのDHパラメータファイルの場所です。"
 
-#: utils/misc/guc_tables.c:4506
+#: utils/misc/guc_tables.c:4477
 msgid "Command to obtain passphrases for SSL."
 msgstr "SSLのパスフレーズを取得するコマンド。"
 
-#: utils/misc/guc_tables.c:4517
+#: utils/misc/guc_tables.c:4488
 msgid "Sets the application name to be reported in statistics and logs."
 msgstr "統計やログで報告されるアプリケーション名を設定。"
 
-#: utils/misc/guc_tables.c:4528
+#: utils/misc/guc_tables.c:4499
 msgid "Sets the name of the cluster, which is included in the process title."
 msgstr "プロセスのタイトルに含まれるクラスタ名を指定。"
 
-#: utils/misc/guc_tables.c:4539
+#: utils/misc/guc_tables.c:4510
 msgid "Sets the WAL resource managers for which WAL consistency checks are done."
 msgstr "WALの整合性チェックを行う対象とするリソースマネージャを設定。"
 
-#: utils/misc/guc_tables.c:4540
+#: utils/misc/guc_tables.c:4511
 msgid "Full-page images will be logged for all data blocks and cross-checked against the results of WAL replay."
 msgstr "全ページイメージが全てのデータブロックに対して記録され、WAL再生の結果とクロスチェックされます。"
 
-#: utils/misc/guc_tables.c:4550
+#: utils/misc/guc_tables.c:4521
 msgid "JIT provider to use."
 msgstr "使用するJITプロバイダ。"
 
-#: utils/misc/guc_tables.c:4561
+#: utils/misc/guc_tables.c:4532
 msgid "Log backtrace for errors in these functions."
 msgstr "これらの関数でエラーが起きた場合にはバックトレースをログに出力します。"
 
-#: utils/misc/guc_tables.c:4572
+#: utils/misc/guc_tables.c:4543
 msgid "Use direct I/O for file access."
 msgstr "ファイルアクセスに直接I/Oを使用します。"
 
-#: utils/misc/guc_tables.c:4592
+#: utils/misc/guc_tables.c:4563
 msgid "Sets whether \"\\'\" is allowed in string literals."
 msgstr "文字列リテラルで\"\\'\"が許可されるかどうかを設定。"
 
-#: utils/misc/guc_tables.c:4602
+#: utils/misc/guc_tables.c:4573
 msgid "Sets the output format for bytea."
 msgstr "bytea の出力フォーマットを設定。"
 
-#: utils/misc/guc_tables.c:4612
+#: utils/misc/guc_tables.c:4583
 msgid "Sets the message levels that are sent to the client."
 msgstr "クライアントに送信される最小のメッセージレベルを設定。"
 
-#: utils/misc/guc_tables.c:4613 utils/misc/guc_tables.c:4709 utils/misc/guc_tables.c:4720 utils/misc/guc_tables.c:4792
+#: utils/misc/guc_tables.c:4584 utils/misc/guc_tables.c:4680 utils/misc/guc_tables.c:4691 utils/misc/guc_tables.c:4763
 msgid "Each level includes all the levels that follow it. The later the level, the fewer messages are sent."
 msgstr " 各レベルにはそのレベル以下の全てが含まれます。レベルを低くするほど、送信されるメッセージはより少なくなります。 "
 
-#: utils/misc/guc_tables.c:4623
+#: utils/misc/guc_tables.c:4594
 msgid "Enables in-core computation of query identifiers."
 msgstr "問い合わせ識別子の内部生成を有効にする。"
 
-#: utils/misc/guc_tables.c:4633
+#: utils/misc/guc_tables.c:4604
 msgid "Enables the planner to use constraints to optimize queries."
 msgstr "問い合わせの最適化の際にプランナに制約を利用させる。"
 
-#: utils/misc/guc_tables.c:4634
+#: utils/misc/guc_tables.c:4605
 msgid "Table scans will be skipped if their constraints guarantee that no rows match the query."
 msgstr "制約により、問い合わせに一致する行がないことが保証されているテーブルをスキップします。"
 
-#: utils/misc/guc_tables.c:4645
+#: utils/misc/guc_tables.c:4616
 msgid "Sets the default compression method for compressible values."
 msgstr "圧縮可能な値に対して使用されるデフォルト圧縮方式を設定。"
 
-#: utils/misc/guc_tables.c:4656
+#: utils/misc/guc_tables.c:4627
 msgid "Sets the transaction isolation level of each new transaction."
 msgstr "新規トランザクションのトランザクション分離レベルを設定。"
 
-#: utils/misc/guc_tables.c:4666
+#: utils/misc/guc_tables.c:4637
 msgid "Sets the current transaction's isolation level."
 msgstr "現在のトランザクションの分離レベルを設定。"
 
-#: utils/misc/guc_tables.c:4677
+#: utils/misc/guc_tables.c:4648
 msgid "Sets the display format for interval values."
 msgstr "インターバル値の表示フォーマットを設定。"
 
-#: utils/misc/guc_tables.c:4688
+#: utils/misc/guc_tables.c:4659
 msgid "Log level for reporting invalid ICU locale strings."
 msgstr "不正なICUロケール設定の報告に使用するログレベル。"
 
-#: utils/misc/guc_tables.c:4698
+#: utils/misc/guc_tables.c:4669
 msgid "Sets the verbosity of logged messages."
 msgstr "ログ出力メッセージの詳細度を設定。"
 
-#: utils/misc/guc_tables.c:4708
+#: utils/misc/guc_tables.c:4679
 msgid "Sets the message levels that are logged."
 msgstr "ログに出力するメッセージレベルを設定。"
 
-#: utils/misc/guc_tables.c:4719
+#: utils/misc/guc_tables.c:4690
 msgid "Causes all statements generating error at or above this level to be logged."
 msgstr "このレベル以上のエラーを発生させた全てのSQL文をログに記録します。"
 
-#: utils/misc/guc_tables.c:4730
+#: utils/misc/guc_tables.c:4701
 msgid "Sets the type of statements logged."
 msgstr "ログ出力する文の種類を設定。"
 
-#: utils/misc/guc_tables.c:4740
+#: utils/misc/guc_tables.c:4711
 msgid "Sets the syslog \"facility\" to be used when syslog enabled."
 msgstr "syslogを有効にした場合に使用するsyslog \"facility\"を設定。"
 
-#: utils/misc/guc_tables.c:4751
+#: utils/misc/guc_tables.c:4722
 msgid "Sets the session's behavior for triggers and rewrite rules."
 msgstr "トリガと書き換えルールに関するセッションの動作を設定。"
 
-#: utils/misc/guc_tables.c:4761
+#: utils/misc/guc_tables.c:4732
 msgid "Sets the current transaction's synchronization level."
 msgstr "現在のトランザクションの同期レベルを設定。"
 
-#: utils/misc/guc_tables.c:4771
+#: utils/misc/guc_tables.c:4742
 msgid "Allows archiving of WAL files using archive_command."
 msgstr "archive_command を使用したWALファイルのアーカイブ処理を許可。"
 
-#: utils/misc/guc_tables.c:4781
+#: utils/misc/guc_tables.c:4752
 msgid "Sets the action to perform upon reaching the recovery target."
 msgstr "リカバリ目標に到達した際の動作を設定。"
 
-#: utils/misc/guc_tables.c:4791
+#: utils/misc/guc_tables.c:4762
 msgid "Enables logging of recovery-related debugging information."
 msgstr "リカバリ関連のデバッグ情報の記録を行う"
 
-#: utils/misc/guc_tables.c:4808
+#: utils/misc/guc_tables.c:4779
 msgid "Collects function-level statistics on database activity."
 msgstr "データベースの動作に関して、関数レベルの統計情報を収集します。"
 
-#: utils/misc/guc_tables.c:4819
+#: utils/misc/guc_tables.c:4790
 msgid "Sets the consistency of accesses to statistics data."
 msgstr "統計情報読み出し時の一貫性レベルを設定します。"
 
-#: utils/misc/guc_tables.c:4829
+#: utils/misc/guc_tables.c:4800
 msgid "Compresses full-page writes written in WAL file with specified method."
 msgstr "WALファイルに出力される全ページ出力を指定した方式で圧縮します。"
 
-#: utils/misc/guc_tables.c:4839
+#: utils/misc/guc_tables.c:4810
 msgid "Sets the level of information written to the WAL."
 msgstr "WALに書き出される情報のレベルを設定します。"
 
-#: utils/misc/guc_tables.c:4849
+#: utils/misc/guc_tables.c:4820
 msgid "Selects the dynamic shared memory implementation used."
 msgstr "動的共有メモリで使用する実装を選択します。"
 
-#: utils/misc/guc_tables.c:4859
+#: utils/misc/guc_tables.c:4830
 msgid "Selects the shared memory implementation used for the main shared memory region."
 msgstr "主共有メモリ領域に使用する共有メモリ実装を選択します。"
 
-#: utils/misc/guc_tables.c:4869
+#: utils/misc/guc_tables.c:4840
 msgid "Selects the method used for forcing WAL updates to disk."
 msgstr "WAL更新のディスクへの書き出しを強制するめの方法を選択します。"
 
-#: utils/misc/guc_tables.c:4879
+#: utils/misc/guc_tables.c:4850
 msgid "Sets how binary values are to be encoded in XML."
 msgstr "XMLでどのようにバイナリ値を符号化するかを設定します。"
 
-#: utils/misc/guc_tables.c:4889
+#: utils/misc/guc_tables.c:4860
 msgid "Sets whether XML data in implicit parsing and serialization operations is to be considered as documents or content fragments."
 msgstr "暗黙的なパースおよび直列化操作においてXMLデータを文書とみなすか断片とみなすかを設定します。"
 
-#: utils/misc/guc_tables.c:4900
+#: utils/misc/guc_tables.c:4871
 msgid "Use of huge pages on Linux or Windows."
 msgstr "LinuxおよびWindowsでヒュージページを使用。"
 
-#: utils/misc/guc_tables.c:4910
+#: utils/misc/guc_tables.c:4881
 msgid "Prefetch referenced blocks during recovery."
 msgstr "リカバリ中に被参照ブロックの事前読み込みを行う。"
 
-#: utils/misc/guc_tables.c:4911
+#: utils/misc/guc_tables.c:4882
 msgid "Look ahead in the WAL to find references to uncached data."
 msgstr "キャッシュされていないデータへの参照の検出のためにWALの先読みを行う。"
 
-#: utils/misc/guc_tables.c:4920
+#: utils/misc/guc_tables.c:4891
 msgid "Forces the planner's use parallel query nodes."
 msgstr "プランナに並列問い合わせノードの使用を強制します。"
 
-#: utils/misc/guc_tables.c:4921
+#: utils/misc/guc_tables.c:4892
 msgid "This can be useful for testing the parallel query infrastructure by forcing the planner to generate plans which contains nodes which perform tuple communication between workers and the main process."
 msgstr "これは並列問い合わせ機構のテストの際に、プランナにワーカーとメインプロセスとの間でタプルのやり取りを行わせるノードを含む実行計画を強制的に生成させるために使用できます。"
 
-#: utils/misc/guc_tables.c:4933
+#: utils/misc/guc_tables.c:4904
 msgid "Chooses the algorithm for encrypting passwords."
 msgstr "パスワードの暗号化に使用するアルゴリズムを選択する。"
 
-#: utils/misc/guc_tables.c:4943
+#: utils/misc/guc_tables.c:4914
 msgid "Controls the planner's selection of custom or generic plan."
 msgstr "プランナでのカスタムプランと汎用プランの選択を制御。"
 
-#: utils/misc/guc_tables.c:4944
+#: utils/misc/guc_tables.c:4915
 msgid "Prepared statements can have custom and generic plans, and the planner will attempt to choose which is better.  This can be set to override the default behavior."
 msgstr "プリペアド文は個別プランと一般プランを持ち、プランナはよりよいプランの選択を試みます。これを設定することでそのデフォルト動作を変更できます。"
 
-#: utils/misc/guc_tables.c:4956
+#: utils/misc/guc_tables.c:4927
 msgid "Sets the minimum SSL/TLS protocol version to use."
 msgstr "使用する SSL/TLSプロトコルの最小バージョンを設定。"
 
-#: utils/misc/guc_tables.c:4968
+#: utils/misc/guc_tables.c:4939
 msgid "Sets the maximum SSL/TLS protocol version to use."
 msgstr "使用可能な最大の SSL/TLS プロトコルバージョンを指定します。"
 
-#: utils/misc/guc_tables.c:4980
+#: utils/misc/guc_tables.c:4951
 msgid "Sets the method for synchronizing the data directory before crash recovery."
 msgstr "クラシュリカバリ前に行うデータディレクトリの同期の方法を設定する。"
 
-#: utils/misc/guc_tables.c:4989
+#: utils/misc/guc_tables.c:4960
 msgid "Controls when to replicate or apply each change."
 msgstr "個々の更新をいつ複製または適用するかを制御します。"
 
-#: utils/misc/guc_tables.c:4990
+#: utils/misc/guc_tables.c:4961
 msgid "On the publisher, it allows streaming or serializing each change in logical decoding. On the subscriber, it allows serialization of all changes to files and notifies the parallel apply workers to read and apply them at the end of the transaction."
 msgstr "パブリッシャでは、この設定はロジカルでコーディングで個々の変更のストリーミングまたはシリアル化を実行させます。サブスクライバではすべての変更をファイルへシリアライズし、トランザクション終了時にその変更情報の読み出しおよび適用の実行をパラレルワーカーに指示するようにします。"
 
@@ -28924,17 +28926,17 @@ msgstr "共有タプルストア一時ファイルのブロック%uへのシー�
 msgid "cannot have more than %d runs for an external sort"
 msgstr "外部ソートでは%d以上のラン数は扱えません"
 
-#: utils/sort/tuplesortvariants.c:1364
+#: utils/sort/tuplesortvariants.c:1363
 #, c-format
 msgid "could not create unique index \"%s\""
 msgstr "一意インデックス\"%s\"を作成できませんでした"
 
-#: utils/sort/tuplesortvariants.c:1366
+#: utils/sort/tuplesortvariants.c:1365
 #, c-format
 msgid "Key %s is duplicated."
 msgstr "キー%sは重複しています。"
 
-#: utils/sort/tuplesortvariants.c:1367
+#: utils/sort/tuplesortvariants.c:1366
 #, c-format
 msgid "Duplicate keys exist."
 msgstr "重複したキーが存在します。"

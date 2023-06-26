@@ -7,14 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-19 17:10+0000\n"
-"PO-Revision-Date: 2023-05-19 20:48+0200\n"
+"POT-Creation-Date: 2023-06-23 12:40+0000\n"
+"PO-Revision-Date: 2023-06-23 15:13+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../port/thread.c:50 ../../port/thread.c:86
 #, c-format
@@ -79,7 +80,7 @@ msgstr "konnte Nonce nicht erzeugen"
 #: fe-exec.c:3111 fe-exec.c:4071 fe-exec.c:4235 fe-gssapi-common.c:109
 #: fe-lobj.c:870 fe-protocol3.c:204 fe-protocol3.c:228 fe-protocol3.c:256
 #: fe-protocol3.c:273 fe-protocol3.c:353 fe-protocol3.c:720 fe-protocol3.c:959
-#: fe-protocol3.c:1769 fe-protocol3.c:2169 fe-secure-common.c:110
+#: fe-protocol3.c:1770 fe-protocol3.c:2170 fe-secure-common.c:110
 #: fe-secure-gssapi.c:500 fe-secure-openssl.c:434 fe-secure-openssl.c:1285
 #, c-format
 msgid "out of memory"
@@ -782,7 +783,7 @@ msgstr "Passwort wurde aus Datei »%s« gelesen"
 msgid "row number %d is out of range 0..%d"
 msgstr "Zeilennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:528 fe-protocol3.c:1975
+#: fe-exec.c:528 fe-protocol3.c:1976
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -814,7 +815,7 @@ msgstr "Überlauf von size_t"
 msgid "command string is a null pointer"
 msgstr "Befehlszeichenkette ist ein NULL-Zeiger"
 
-#: fe-exec.c:1450 fe-exec.c:2889
+#: fe-exec.c:1450 fe-exec.c:2888
 #, c-format
 msgid "%s not allowed in pipeline mode"
 msgstr "%s im Pipeline-Modus nicht erlaubt"
@@ -849,51 +850,51 @@ msgstr "während COPY können keine Befehle aufgereiht werden"
 msgid "length must be given for binary parameter"
 msgstr "für binäre Parameter muss eine Länge angegeben werden"
 
-#: fe-exec.c:2172
+#: fe-exec.c:2171
 #, c-format
 msgid "unexpected asyncStatus: %d"
 msgstr "unerwarteter asyncStatus: %d"
 
-#: fe-exec.c:2328
+#: fe-exec.c:2327
 #, c-format
 msgid "synchronous command execution functions are not allowed in pipeline mode"
 msgstr "synchrone Befehlsausführungsfunktionen sind im Pipeline-Modus nicht erlaubt"
 
-#: fe-exec.c:2345
+#: fe-exec.c:2344
 msgid "COPY terminated by new PQexec"
 msgstr "COPY von neuem PQexec beendet"
 
-#: fe-exec.c:2361
+#: fe-exec.c:2360
 #, c-format
 msgid "PQexec not allowed during COPY BOTH"
 msgstr "PQexec ist während COPY BOTH nicht erlaubt"
 
-#: fe-exec.c:2587 fe-exec.c:2642 fe-exec.c:2710 fe-protocol3.c:1906
+#: fe-exec.c:2586 fe-exec.c:2641 fe-exec.c:2709 fe-protocol3.c:1907
 #, c-format
 msgid "no COPY in progress"
 msgstr "keine COPY in Ausführung"
 
-#: fe-exec.c:2896
+#: fe-exec.c:2895
 #, c-format
 msgid "connection in wrong state"
 msgstr "Verbindung im falschen Zustand"
 
-#: fe-exec.c:2939
+#: fe-exec.c:2938
 #, c-format
 msgid "cannot enter pipeline mode, connection not idle"
 msgstr "kann Pipeline-Modus nicht einschalten, Verbindung ist nicht inaktiv"
 
-#: fe-exec.c:2975 fe-exec.c:2996
+#: fe-exec.c:2974 fe-exec.c:2995
 #, c-format
 msgid "cannot exit pipeline mode with uncollected results"
 msgstr "kann Pipeline-Modus nicht beenden, wegen nicht eingesammelter Ergebnisse"
 
-#: fe-exec.c:2979
+#: fe-exec.c:2978
 #, c-format
 msgid "cannot exit pipeline mode while busy"
 msgstr "kann Pipeline-Modus nicht beenden während die Verbindung beschäftigt ist"
 
-#: fe-exec.c:2990
+#: fe-exec.c:2989
 #, c-format
 msgid "cannot exit pipeline mode while in COPY"
 msgstr "kann Pipeline-Modus nicht beenden während COPY aktiv ist"
@@ -1142,27 +1143,34 @@ msgstr "%s:%s"
 msgid "LINE %d: "
 msgstr "ZEILE %d: "
 
-#: fe-protocol3.c:1424
+#: fe-protocol3.c:1423
 #, c-format
-msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u\n"
-msgstr "Protokollversion nicht vom Server unterstützt: Client verwendet %u.%u, Server unterstützt bis %u.%u\n"
+msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u"
+msgstr "Protokollversion nicht vom Server unterstützt: Client verwendet %u.%u, Server unterstützt bis %u.%u"
 
-#: fe-protocol3.c:1436
+#: fe-protocol3.c:1429
+#, c-format
+msgid "protocol extension not supported by server: %s"
+msgid_plural "protocol extensions not supported by server: %s"
+msgstr[0] "Protokollerweiterung nicht vom Server unterstützt: %s"
+msgstr[1] "Protokollerweiterungen nicht vom Server unterstützt: %s"
+
+#: fe-protocol3.c:1437
 #, c-format
 msgid "invalid %s message"
 msgstr "ungültige %s-Nachricht"
 
-#: fe-protocol3.c:1801
+#: fe-protocol3.c:1802
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: Text COPY OUT nicht ausgeführt"
 
-#: fe-protocol3.c:2175
+#: fe-protocol3.c:2176
 #, c-format
 msgid "protocol error: no function result"
 msgstr "Protokollfehler: kein Funktionsergebnis"
 
-#: fe-protocol3.c:2186
+#: fe-protocol3.c:2187
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "Protokollfehler: id=0x%x"
@@ -1186,6 +1194,13 @@ msgstr "konnte IP-Adresse des Zertifikats nicht in Zeichenkette umwandeln: %s"
 #, c-format
 msgid "host name must be specified for a verified SSL connection"
 msgstr "Hostname muss angegeben werden für eine verifizierte SSL-Verbindung"
+
+#: fe-secure-common.c:286
+#, c-format
+msgid "server certificate for \"%s\" (and %d other name) does not match host name \"%s\""
+msgid_plural "server certificate for \"%s\" (and %d other names) does not match host name \"%s\""
+msgstr[0] "Server-Zertifikat für »%s« (und %d anderen Namen) stimmt nicht mit dem Hostnamen »%s« überein"
+msgstr[1] "Server-Zertifikat für »%s« (und %d andere Namen) stimmt nicht mit dem Hostnamen »%s« überein"
 
 #: fe-secure-common.c:294
 #, c-format

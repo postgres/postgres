@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 09:35+0900\n"
-"PO-Revision-Date: 2023-05-22 10:17+0900\n"
+"POT-Creation-Date: 2023-06-19 09:32+0900\n"
+"PO-Revision-Date: 2023-06-19 10:02+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -83,7 +83,7 @@ msgstr "nonce を生成できませんでした"
 #: fe-exec.c:3111 fe-exec.c:4071 fe-exec.c:4235 fe-gssapi-common.c:109
 #: fe-lobj.c:870 fe-protocol3.c:204 fe-protocol3.c:228 fe-protocol3.c:256
 #: fe-protocol3.c:273 fe-protocol3.c:353 fe-protocol3.c:720 fe-protocol3.c:959
-#: fe-protocol3.c:1769 fe-protocol3.c:2169 fe-secure-common.c:110
+#: fe-protocol3.c:1770 fe-protocol3.c:2170 fe-secure-common.c:110
 #: fe-secure-gssapi.c:500 fe-secure-openssl.c:434 fe-secure-openssl.c:1285
 #, c-format
 msgid "out of memory"
@@ -786,7 +786,7 @@ msgstr "パスワードはファイル\"%s\"から取り出しました"
 msgid "row number %d is out of range 0..%d"
 msgstr "行番号%dは0..%dの範囲を超えています"
 
-#: fe-exec.c:528 fe-protocol3.c:1975
+#: fe-exec.c:528 fe-protocol3.c:1976
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -872,7 +872,7 @@ msgstr "新たなPQexec\"によりCOPYが終了しました"
 msgid "PQexec not allowed during COPY BOTH"
 msgstr "COPY BOTH 実行中の PQexec は許可されていません"
 
-#: fe-exec.c:2586 fe-exec.c:2641 fe-exec.c:2709 fe-protocol3.c:1906
+#: fe-exec.c:2586 fe-exec.c:2641 fe-exec.c:2709 fe-protocol3.c:1907
 #, c-format
 msgid "no COPY in progress"
 msgstr "実行中のCOPYはありません"
@@ -1146,27 +1146,33 @@ msgstr "%s:%s"
 msgid "LINE %d: "
 msgstr "行 %d: "
 
-#: fe-protocol3.c:1424
+#: fe-protocol3.c:1423
 #, c-format
-msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u\n"
-msgstr "サーバーはこのプロトコルバージョンをサポートしていません。クライアントは%u.%uを使用、 サーバーは%u.%uまでをサポートします\n"
+msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u"
+msgstr "サーバーはこのプロトコルバージョンをサポートしていません。クライアントは%u.%uを使用、 サーバーは%u.%uまでをサポートします"
 
-#: fe-protocol3.c:1436
+#: fe-protocol3.c:1429
+#, c-format
+msgid "protocol extension not supported by server: %s"
+msgid_plural "protocol extensions not supported by server: %s"
+msgstr[0] "サーバーでサポートされていないプロトコル拡張: %s"
+
+#: fe-protocol3.c:1437
 #, c-format
 msgid "invalid %s message"
 msgstr "不正な%sメッセージ"
 
-#: fe-protocol3.c:1801
+#: fe-protocol3.c:1802
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: テキストのCOPY OUTを行っていません"
 
-#: fe-protocol3.c:2175
+#: fe-protocol3.c:2176
 #, c-format
 msgid "protocol error: no function result"
 msgstr "プロトコルエラー: 関数の結果がありません"
 
-#: fe-protocol3.c:2186
+#: fe-protocol3.c:2187
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "プロトコルエラー: id=0x%x"
@@ -1190,6 +1196,12 @@ msgstr "証明書のIPアドレスを文字列へ変換できませんでした:
 #, c-format
 msgid "host name must be specified for a verified SSL connection"
 msgstr "検証SSL接続ではホスト名を指定しなければなりません"
+
+#: fe-secure-common.c:286
+#, c-format
+msgid "server certificate for \"%s\" (and %d other name) does not match host name \"%s\""
+msgid_plural "server certificate for \"%s\" (and %d other names) does not match host name \"%s\""
+msgstr[0] "\"%s\"のサーバー証明書(および%d個のほかの名前)はホスト名\"%s\"と一致しません"
 
 #: fe-secure-common.c:294
 #, c-format
