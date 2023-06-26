@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>AS OF 2023-05-17, 2023-??-??</para>
+   <para>AS OF 2023-06-26, 2023-??-??</para>
   </formalpara>
 
   <sect2 id="release-16-highlights">
@@ -226,6 +226,39 @@ Remove server variable promote_trigger_file (Simon Riggs)
 
 <para>
 This was used to promote a standby to primary, but is now easier accomplished with pg_ctl promote or pg_promote().
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2023-06-07 [b0f6c4371] Remove read-only server settings lc_collate and lc_ctype
+-->
+
+<listitem>
+<para>
+Remove read-only server variables lc_collate and lc_ctype (Peter Eisentraut)
+</para>
+
+<para>
+Collations and locales can vary between databases so having them as read-only server variables was unhelpful.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2023-05-21 [2dcd1578c] Rename some createuser options.
+Author: Nathan Bossart <nathan@postgresql.org>
+2023-05-23 [381d19b3e] Document deprecated createuser option.
+-->
+
+<listitem>
+<para>
+Deprecate createuser option --role (Nathan Bossart)
+</para>
+
+<para>
+This option could be easily confused with new createuser role membership options, so option --member-of has been added with the same functionality.
+The --role option can still be used.
 </para>
 </listitem>
 
@@ -1020,6 +1053,12 @@ Previously only a single privilege name, like SELECT, was accepted.
 <!--
 Author: Stephen Frost <sfrost@snowman.net>
 2023-04-13 [6633cfb21] De-Revert "Add support for Kerberos credential delegatio
+Author: Bruce Momjian <bruce@momjian.us>
+2023-05-20 [9c0a0e2ed] rename "gss_accept_deleg" to "gss_accept_delegation".
+Author: Nathan Bossart <nathan@postgresql.org>
+2023-05-20 [f4001a553] Fix remaining references to gss_accept_deleg.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-05-21 [a2eb99a01] Expand some more uses of "deleg" to "delegation" or "del
 -->
 
 <listitem>
@@ -1306,6 +1345,21 @@ Determine the ICU default locale from the environment (Jeff Davis)
 
 <para>
 However, ICU doesn't support the C locale so UTF-8 is used in such cases.  Previously the default was always UTF-8.
+</para>
+</listitem>
+
+<!--
+Author: Jeff Davis <jdavis@postgresql.org>
+Date:   Fri Jun 16 10:27:32 2023 -0700
+-->
+
+<listitem>
+<para>
+Have CREATE DATABASE and CREATE COLLATION's LOCALE options, and initdb and createdb --locale options, control non-libc collation providers (Jeff Davis)
+</para>
+
+<para>
+Previously they only controlled libc providers.
 </para>
 </listitem>
 
@@ -2378,6 +2432,8 @@ The option is "-c name=value".
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-07-13 [08951a7c9] createuser: Add support for more clause types through ne
+Author: Nathan Bossart <nathan@postgresql.org>
+2023-05-21 [2dcd1578c] Rename some createuser options.
 -->
 
 <listitem>
@@ -2975,6 +3031,17 @@ Add pageinspect function bt_multi_page_stats() to report statistics on multiple 
 
 <para>
 This is similar to bt_page_stats() except it can report on a range of pages.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-01-02 [1fd3dd204] Add bt_multi_page_stats() function to contrib/pageinspec
+-->
+
+<listitem>
+<para>
+Add empty range output column to pageinspect function brin_page_items() (Tomas Vondra)
 </para>
 </listitem>
 
