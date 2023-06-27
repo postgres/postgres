@@ -1257,7 +1257,7 @@ pgss_store(const char *query, uint64 queryId,
 
 	/* Set up key for hashtable search */
 
-	/* memset() is required when pgssHashKey is without padding only */
+	/* clear padding */
 	memset(&key, 0, sizeof(pgssHashKey));
 
 	key.userid = GetUserId();
