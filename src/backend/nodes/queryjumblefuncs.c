@@ -97,7 +97,7 @@ CleanQuerytext(const char *query, int *location, int *len)
 }
 
 JumbleState *
-JumbleQuery(Query *query, const char *querytext)
+JumbleQuery(Query *query)
 {
 	JumbleState *jstate = NULL;
 
