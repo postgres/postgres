@@ -320,8 +320,8 @@
     uses this isolation level, a <command>SELECT</command> query
     (without a <literal>FOR UPDATE/SHARE</literal> clause) sees only data
     committed before the query began; it never sees either uncommitted
-    data or changes committed during query execution by concurrent
-    transactions.  In effect, a <command>SELECT</command> query sees
+    data or changes committed by concurrent transactions during the query's
+    execution.  In effect, a <command>SELECT</command> query sees
     a snapshot of the database as of the instant the query begins to
     run.   However, <command>SELECT</command> does see the effects
     of previous updates executed within its own transaction, even
@@ -488,8 +488,8 @@ COMMIT;
    <para>
     The <firstterm>Repeatable Read</firstterm> isolation level only sees
     data committed before the transaction began; it never sees either
-    uncommitted data or changes committed during transaction execution
-    by concurrent transactions.  (However, the query does see the
+    uncommitted data or changes committed by concurrent transactions during
+    the transaction's execution.  (However, each query does see the
     effects of previous updates executed within its own transaction,
     even though they are not yet committed.)  This is a stronger
     guarantee than is required by the <acronym>SQL</acronym> standard
