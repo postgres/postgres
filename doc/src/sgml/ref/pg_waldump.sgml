@@ -283,7 +283,7 @@ PostgreSQL documentation
        </para>
        <para>
         The full page images are saved with the following file name format:
-        <literal><replaceable>LSN</replaceable>.<replaceable>RELTABLESPACE</replaceable>.<replaceable>DATOID</replaceable>.<replaceable>RELNODE</replaceable>.<replaceable>BLKNO</replaceable><replaceable>FORK</replaceable></literal>
+        <literal><replaceable>TIMELINE</replaceable>-<replaceable>LSN</replaceable>.<replaceable>RELTABLESPACE</replaceable>.<replaceable>DATOID</replaceable>.<replaceable>RELNODE</replaceable>.<replaceable>BLKNO</replaceable><replaceable>FORK</replaceable></literal>
 
         The file names are composed of the following parts:
         <informaltable>
@@ -296,6 +296,13 @@ PostgreSQL documentation
           </thead>
 
           <tbody>
+           <row>
+            <entry>TIMELINE</entry>
+            <entry>The timeline of the WAL segment file where the record
+             is located formatted as one 8-character hexadecimal number
+             <literal>%08X</literal></entry>
+           </row>
+
            <row>
             <entry>LSN</entry>
             <entry>The <acronym>LSN</acronym> of the record with this image,

@@ -79,15 +79,16 @@ $node->command_ok(
 	'pg_waldump with --save-fullpage runs');
 
 # This regexp will match filenames formatted as:
-# XXXXXXXX-XXXXXXXX.DBOID.TLOID.NODEOID.dd_fork with the components being:
-# - WAL LSN in hex format,
-# - Tablespace OID (0 for global)
+# TLI-LSNh-LSNl.TBLSPCOID.DBOID.NODEOID.dd_fork with the components being:
+# - Timeline ID in hex format.
+# - WAL LSN in hex format, as two 8-character numbers.
+# - Tablespace OID (0 for global).
 # - Database OID.
 # - Relfilenode.
 # - Block number.
 # - Fork this block came from (vm, init, fsm, or main).
 my $file_re =
-  qr/^([0-9A-F]{8})-([0-9A-F]{8})[.][0-9]+[.][0-9]+[.][0-9]+[.][0-9]+(?:_vm|_init|_fsm|_main)?$/;
+  qr/^[0-9A-F]{8}-([0-9A-F]{8})-([0-9A-F]{8})[.][0-9]+[.][0-9]+[.][0-9]+[.][0-9]+(?:_vm|_init|_fsm|_main)?$/;
 
 my $file_count = 0;
 
