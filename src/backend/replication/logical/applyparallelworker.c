@@ -890,13 +890,13 @@ ParallelApplyWorkerMain(Datum main_arg)
 	if (!seg)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("unable to map dynamic shared memory segment")));
+				 errmsg("could not map dynamic shared memory segment")));
 
 	toc = shm_toc_attach(PG_LOGICAL_APPLY_SHM_MAGIC, dsm_segment_address(seg));
 	if (!toc)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("bad magic number in dynamic shared memory segment")));
+				 errmsg("invalid magic number in dynamic shared memory segment")));
 
 	/* Look up the shared information. */
 	shared = shm_toc_lookup(toc, PARALLEL_APPLY_KEY_SHARED, false);
