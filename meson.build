@@ -1146,7 +1146,7 @@ Use -Dreadline=disabled to disable readline support.'''.format(readline_dep))
     foreach func : check_funcs
       found = cc.has_function(func, dependencies: [readline],
         args: test_c_args, include_directories: postgres_inc)
-      cdata.set('HAVE_'+func.to_upper(), found ? 1 : false)
+      cdata.set('HAVE_' + func.to_upper(), found ? 1 : false)
     endforeach
 
     check_vars = [
@@ -1156,7 +1156,7 @@ Use -Dreadline=disabled to disable readline support.'''.format(readline_dep))
     ]
 
     foreach var : check_vars
-      cdata.set('HAVE_'+var.to_upper(),
+      cdata.set('HAVE_' + var.to_upper(),
         cc.has_header_symbol(readline_h, var,
           args: test_c_args, include_directories: postgres_inc,
           prefix: '#include <stdio.h>',
@@ -1311,7 +1311,7 @@ if sslopt in ['auto', 'openssl']
       cdata.set('USE_OPENSSL', 1,
                 description: 'Define to 1 to build with OpenSSL support. (-Dssl=openssl)')
       cdata.set('OPENSSL_API_COMPAT', '0x10001000L',
-                description: '''Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.''')
+                description: 'Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.')
       ssl_library = 'openssl'
     else
       ssl = not_found_dep
@@ -1599,8 +1599,7 @@ if cc.links('''
 
   if not buggy_int128
     cdata.set('PG_INT128_TYPE', '__int128')
-    cdata.set('ALIGNOF_PG_INT128_TYPE', cc.
-      alignment('__int128', args: test_c_args))
+    cdata.set('ALIGNOF_PG_INT128_TYPE', cc.alignment('__int128', args: test_c_args))
   endif
 endif
 
@@ -1642,8 +1641,8 @@ endif
 # We use <stdbool.h> if we have it and it declares type bool as having
 # size 1.  Otherwise, c.h will fall back to declaring bool as unsigned char.
 if cc.has_type('_Bool', args: test_c_args) \
-  and cc.has_type('bool', prefix: '#include <stdbool.h>', args: test_c_args) \
-  and cc.sizeof('bool', prefix: '#include <stdbool.h>', args: test_c_args) == 1
+    and cc.has_type('bool', prefix: '#include <stdbool.h>', args: test_c_args) \
+    and cc.sizeof('bool', prefix: '#include <stdbool.h>', args: test_c_args) == 1
   cdata.set('HAVE__BOOL', 1)
   cdata.set('PG_USE_STDBOOL', 1)
 endif
@@ -1670,7 +1669,7 @@ endforeach
 
 
 if cc.has_function_attribute('visibility:default') and \
-  cc.has_function_attribute('visibility:hidden')
+    cc.has_function_attribute('visibility:hidden')
   cdata.set('HAVE_VISIBILITY_ATTRIBUTE', 1)
 
   # Only newer versions of meson know not to apply gnu_symbol_visibility =
@@ -3046,7 +3045,7 @@ meson_install_args = meson_args + ['install'] + {
     'muon': []
 }[meson_impl]
 
-# setup tests should  be run first,
+# setup tests should be run first,
 # so define priority for these
 setup_tests_priority = 100
 test('tmp_install',
