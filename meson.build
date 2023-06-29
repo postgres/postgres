@@ -150,7 +150,7 @@ cdata.set_quoted('PG_MAJORVERSION', pg_version_major.to_string())
 cdata.set('PG_MAJORVERSION_NUM', pg_version_major)
 cdata.set('PG_MINORVERSION_NUM', pg_version_minor)
 cdata.set('PG_VERSION_NUM', pg_version_num)
-# PG_VERSION_STR is built later, it depends compiler test results
+# PG_VERSION_STR is built later, it depends on compiler test results
 cdata.set_quoted('CONFIGURE_ARGS', '')
 
 
@@ -1674,7 +1674,7 @@ if cc.has_function_attribute('visibility:default') and \
   cdata.set('HAVE_VISIBILITY_ATTRIBUTE', 1)
 
   # Only newer versions of meson know not to apply gnu_symbol_visibility =
-  # inlineshidden to C code as well... Any either way, we want to put these
+  # inlineshidden to C code as well... And either way, we want to put these
   # flags into exported files (pgxs, .pc files).
   cflags_mod += '-fvisibility=hidden'
   cxxflags_mod += ['-fvisibility=hidden', '-fvisibility-inlines-hidden']
