@@ -1131,7 +1131,7 @@ if not get_option('readline').disabled()
       error('''readline header not found
 If you have @0@ already installed, see meson-log/meson-log.txt for details on the
 failure. It is possible the compiler isn't looking in the proper directory.
-Use -Dreadline=false to disable readline support.'''.format(readline_dep))
+Use -Dreadline=disabled to disable readline support.'''.format(readline_dep))
     endif
 
     check_funcs = [
