@@ -385,7 +385,7 @@ install_files = files('src/tools/install_files')
 # https://github.com/mesonbuild/meson/issues/8511
 meson_binpath_r = run_command(python, 'src/tools/find_meson', check: true)
 
-if meson_binpath_r.returncode() != 0 or meson_binpath_r.stdout() == ''
+if meson_binpath_r.stdout() == ''
   error('huh, could not run find_meson.\nerrcode: @0@\nstdout: @1@\nstderr: @2@'.format(
     meson_binpath_r.returncode(),
     meson_binpath_r.stdout(),
