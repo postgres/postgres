@@ -2540,7 +2540,7 @@ if not nlsopt.disabled()
   # warnings if not found.
   msgfmt = find_program('msgfmt', required: nlsopt.enabled(), native: true)
 
-  # meson 0.59 has this wrapped in dependency('int')
+  # meson 0.59 has this wrapped in dependency('intl')
   if (msgfmt.found() and
       cc.check_header('libintl.h', required: nlsopt,
         args: test_c_args, include_directories: postgres_inc))
