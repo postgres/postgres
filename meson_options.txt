@@ -5,7 +5,7 @@
 option('blocksize', type : 'combo',
   choices : ['1', '2', '4', '8', '16', '32'],
   value : '8',
-  description: 'set relation block size in kB')
+  description: 'Set relation block size in kB')
 
 option('wal_blocksize', type : 'combo',
   choices: ['1', '2', '4', '8', '16', '32', '64'],
@@ -25,7 +25,7 @@ option('krb_srvnam', type : 'string', value : 'postgres',
   description : 'Default Kerberos service principal for GSSAPI')
 
 option('system_tzdata', type: 'string', value: '',
-  description: 'use system time zone data in specified directory')
+  description: 'Use system time zone data in specified directory')
 
 
 # Defaults
@@ -38,7 +38,7 @@ option('pgport', type : 'integer', value : 5432,
 # Developer options
 
 option('cassert', type : 'boolean', value: false,
-  description: 'enable assertion checks (for debugging)')
+  description: 'Enable assertion checks (for debugging)')
 
 option('tap_tests', type : 'feature', value : 'auto',
   description : 'Whether to enable tap tests')
@@ -47,43 +47,43 @@ option('PG_TEST_EXTRA', type : 'string', value: '',
   description: 'Enable selected extra tests')
 
 option('atomics', type : 'boolean', value: true,
-  description: 'whether to use atomic operations')
+  description: 'Whether to use atomic operations')
 
 option('spinlocks', type : 'boolean', value: true,
-  description: 'whether to use spinlocks')
+  description: 'Whether to use spinlocks')
 
 
 # Compilation options
 
 option('extra_include_dirs', type : 'array', value: [],
-  description: 'non-default directories to be searched for headers')
+  description: 'Non-default directories to be searched for headers')
 
 option('extra_lib_dirs', type : 'array', value: [],
-  description: 'non-default directories to be searched for libs')
+  description: 'Non-default directories to be searched for libs')
 
 option('extra_version', type : 'string', value: '',
-  description: 'append STRING to the PostgreSQL version number')
+  description: 'Append STRING to the PostgreSQL version number')
 
 option('darwin_sysroot', type : 'string', value: '',
-  description: 'select a non-default sysroot path')
+  description: 'Select a non-default sysroot path')
 
 option('rpath', type : 'boolean', value: true,
-  description: 'whether to embed shared library search path in executables')
+  description: 'Whether to embed shared library search path in executables')
 
 
 # External dependencies
 
 option('bonjour', type : 'feature', value: 'auto',
-  description: 'build with Bonjour support')
+  description: 'Build with Bonjour support')
 
 option('bsd_auth', type : 'feature', value: 'auto',
-  description: 'build with BSD Authentication support')
+  description: 'Build with BSD Authentication support')
 
 option('docs', type : 'feature', value: 'auto',
-  description: 'documentation in HTML and man page format')
+  description: 'Documentation in HTML and man page format')
 
 option('docs_pdf', type : 'feature', value: 'auto',
-  description: 'documentation in PDF format')
+  description: 'Documentation in PDF format')
 
 option('docs_html_style', type : 'combo', choices: ['simple', 'website'],
   description: 'CSS stylesheet for HTML documentation')
@@ -110,102 +110,102 @@ option('libxslt', type : 'feature', value: 'auto',
   description: 'XSLT support in contrib/xml2')
 
 option('llvm', type : 'feature', value: 'disabled',
-  description: 'whether to use llvm')
+  description: 'Whether to use llvm')
 
 option('lz4', type : 'feature', value: 'auto',
   description: 'LZ4 support')
 
 option('nls', type: 'feature', value: 'auto',
-  description: 'native language support')
+  description: 'Native language support')
 
 option('pam', type : 'feature', value: 'auto',
-  description: 'build with PAM support')
+  description: 'Build with PAM support')
 
 option('plperl', type : 'feature', value: 'auto',
-  description: 'build Perl modules (PL/Perl)')
+  description: 'Build Perl modules (PL/Perl)')
 
 option('plpython', type : 'feature', value: 'auto',
-  description: 'build Python modules (PL/Python)')
+  description: 'Build Python modules (PL/Python)')
 
 option('pltcl', type : 'feature', value: 'auto',
-  description: 'build with TCL support')
+  description: 'Build with TCL support')
 
 option('tcl_version', type : 'string', value : 'tcl',
-  description: 'specify TCL version')
+  description: 'Specify TCL version')
 
 option('readline', type : 'feature', value : 'auto',
-  description: 'use GNU Readline or BSD Libedit for editing')
+  description: 'Use GNU Readline or BSD Libedit for editing')
 
 option('selinux', type : 'feature', value : 'disabled',
-  description: 'build with SELinux support')
+  description: 'Build with SELinux support')
 
 option('ssl', type : 'combo', choices : ['auto', 'none', 'openssl'],
   value : 'auto',
-  description: 'use LIB for SSL/TLS support (openssl)')
+  description: 'Use LIB for SSL/TLS support (openssl)')
 
 option('systemd', type : 'feature', value: 'auto',
-  description: 'build with systemd support')
+  description: 'Build with systemd support')
 
 option('uuid', type : 'combo', choices : ['none', 'bsd', 'e2fs', 'ossp'],
   value : 'none',
-  description: 'build contrib/uuid-ossp using LIB')
+  description: 'Build contrib/uuid-ossp using LIB')
 
 option('zlib', type : 'feature', value: 'auto',
-  description: 'whether to use zlib')
+  description: 'Whether to use zlib')
 
 option('zstd', type : 'feature', value: 'auto',
-  description: 'whether to use zstd')
+  description: 'Whether to use zstd')
 
 
 # Programs
 
 option('BISON', type : 'array', value: ['bison', 'win_bison'],
-  description: 'path to bison binary')
+  description: 'Path to bison binary')
 
 option('DTRACE', type : 'string', value: 'dtrace',
-  description: 'path to dtrace binary')
+  description: 'Path to dtrace binary')
 
 option('FLEX', type : 'array', value: ['flex', 'win_flex'],
-  description: 'path to flex binary')
+  description: 'Path to flex binary')
 
 option('FOP', type : 'string', value: 'fop',
-  description: 'path to fop binary')
+  description: 'Path to fop binary')
 
 option('GZIP', type : 'string', value: 'gzip',
-  description: 'path to gzip binary')
+  description: 'Path to gzip binary')
 
 option('LZ4', type : 'string', value: 'lz4',
-  description: 'path to lz4 binary')
+  description: 'Path to lz4 binary')
 
 option('OPENSSL', type : 'string', value: 'openssl',
-  description: 'path to openssl binary')
+  description: 'Path to openssl binary')
 
 option('PERL', type : 'string', value: 'perl',
-  description: 'path to perl binary')
+  description: 'Path to perl binary')
 
 option('PROVE', type : 'string', value: 'prove',
-  description: 'path to prove binary')
+  description: 'Path to prove binary')
 
 option('PYTHON', type : 'array', value: ['python3', 'python'],
-  description: 'path to python binary')
+  description: 'Path to python binary')
 
 option('SED', type : 'string', value: 'gsed',
-  description: 'path to sed binary')
+  description: 'Path to sed binary')
 
 option('STRIP', type : 'string', value: 'strip',
-  description: 'path to strip binary, used for PGXS emulation')
+  description: 'Path to strip binary, used for PGXS emulation')
 
 option('TAR', type : 'string', value: 'tar',
-  description: 'path to tar binary')
+  description: 'Path to tar binary')
 
 option('XMLLINT', type : 'string', value: 'xmllint',
-  description: 'path to xmllint binary')
+  description: 'Path to xmllint binary')
 
 option('XSLTPROC', type : 'string', value: 'xsltproc',
-  description: 'path to xsltproc binary')
+  description: 'Path to xsltproc binary')
 
 option('ZSTD', type : 'string', value: 'zstd',
-  description: 'path to zstd binary')
+  description: 'Path to zstd binary')
 
 option('ZIC', type : 'string', value: 'zic',
-  description: 'path to zic binary, when cross-compiling')
+  description: 'Path to zic binary, when cross-compiling')
