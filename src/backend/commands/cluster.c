@@ -1065,6 +1065,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 				relfilenode2;
 	Oid			swaptemp;
 	char		swptmpchr;
+	Oid			relam1,
+				relam2;
 
 	/* We need writable copies of both pg_class tuples. */
 	relRelation = table_open(RelationRelationId, RowExclusiveLock);
@@ -1081,6 +1083,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 
 	relfilenode1 = relform1->relfilenode;
 	relfilenode2 = relform2->relfilenode;
+	relam1 = relform1->relam;
+	relam2 = relform2->relam;
 
 	if (OidIsValid(relfilenode1) && OidIsValid(relfilenode2))
 	{
@@ -1248,6 +1252,31 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		/* no update ... but we do still need relcache inval */
 		CacheInvalidateRelcacheByTuple(reltup1);
 		CacheInvalidateRelcacheByTuple(reltup2);
+	}
+
+	/*
+	 * Now that pg_class has been updated with its relevant information for
+	 * the swap, update the dependency of the relations to point to their new
+	 * table AM, if it has changed.
+	 */
+	if (relam1 != relam2)
+	{
+		if (changeDependencyFor(RelationRelationId,
+								r1,
+								AccessMethodRelationId,
+								relam1,
+								relam2) != 1)
+			elog(ERROR, "failed to change access method dependency for relation \"%s.%s\"",
+				 get_namespace_name(get_rel_namespace(r1)),
+				 get_rel_name(r1));
+		if (changeDependencyFor(RelationRelationId,
+								r2,
+								AccessMethodRelationId,
+								relam2,
+								relam1) != 1)
+			elog(ERROR, "failed to change access method dependency for relation \"%s.%s\"",
+				 get_namespace_name(get_rel_namespace(r2)),
+				 get_rel_name(r2));
 	}
 
 	/*
