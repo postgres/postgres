@@ -699,6 +699,17 @@ try_nestloop_path(PlannerInfo *root,
 	Relids		outer_paramrels = PATH_REQ_OUTER(outer_path);
 
 	/*
+	 * If we are forming an outer join at this join, it's nonsensical to use
+	 * an input path that uses the outer join as part of its parameterization.
+	 * (This can happen despite our join order restrictions, since those apply
+	 * to what is in an input relation not what its parameters are.)
+	 */
+	if (extra->sjinfo->ojrelid != 0 &&
+		(bms_is_member(extra->sjinfo->ojrelid, inner_paramrels) ||
+		 bms_is_member(extra->sjinfo->ojrelid, outer_paramrels)))
+		return;
+
+	/*
 	 * Paths are parameterized by top-level parents, so run parameterization
 	 * tests on the parent relids.
 	 */
@@ -909,6 +920,17 @@ try_mergejoin_path(PlannerInfo *root,
 	}
 
 	/*
+	 * If we are forming an outer join at this join, it's nonsensical to use
+	 * an input path that uses the outer join as part of its parameterization.
+	 * (This can happen despite our join order restrictions, since those apply
+	 * to what is in an input relation not what its parameters are.)
+	 */
+	if (extra->sjinfo->ojrelid != 0 &&
+		(bms_is_member(extra->sjinfo->ojrelid, PATH_REQ_OUTER(inner_path)) ||
+		 bms_is_member(extra->sjinfo->ojrelid, PATH_REQ_OUTER(outer_path))))
+		return;
+
+	/*
 	 * Check to see if proposed path is still parameterized, and reject if the
 	 * parameterization wouldn't be sensible.
 	 */
@@ -1053,6 +1075,17 @@ try_hashjoin_path(PlannerInfo *root,
 {
 	Relids		required_outer;
 	JoinCostWorkspace workspace;
+
+	/*
+	 * If we are forming an outer join at this join, it's nonsensical to use
+	 * an input path that uses the outer join as part of its parameterization.
+	 * (This can happen despite our join order restrictions, since those apply
+	 * to what is in an input relation not what its parameters are.)
+	 */
+	if (extra->sjinfo->ojrelid != 0 &&
+		(bms_is_member(extra->sjinfo->ojrelid, PATH_REQ_OUTER(inner_path)) ||
+		 bms_is_member(extra->sjinfo->ojrelid, PATH_REQ_OUTER(outer_path))))
+		return;
 
 	/*
 	 * Check to see if proposed path is still parameterized, and reject if the
