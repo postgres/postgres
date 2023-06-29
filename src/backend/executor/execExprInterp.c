@@ -1929,7 +1929,8 @@ CheckOpSlotCompatibility(ExprEvalStep *op, TupleTableSlot *slot)
  * changed: if not NULL, *changed is set to true on any update
  *
  * The returned TupleDesc is not guaranteed pinned; caller must pin it
- * to use it across any operation that might incur cache invalidation.
+ * to use it across any operation that might incur cache invalidation,
+ * including for example detoasting of input tuples.
  * (The TupleDesc is always refcounted, so just use IncrTupleDescRefCount.)
  *
  * NOTE: because composite types can change contents, we must be prepared
@@ -3033,17 +3034,6 @@ ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 void
 ExecEvalFieldStoreDeForm(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
-	TupleDesc	tupDesc;
-
-	/* Lookup tupdesc if first time through or if type changes */
-	tupDesc = get_cached_rowtype(op->d.fieldstore.fstore->resulttype, -1,
-								 op->d.fieldstore.rowcache, NULL);
-
-	/* Check that current tupdesc doesn't have more fields than we allocated */
-	if (unlikely(tupDesc->natts > op->d.fieldstore.ncolumns))
-		elog(ERROR, "too many columns in composite type %u",
-			 op->d.fieldstore.fstore->resulttype);
-
 	if (*op->resnull)
 	{
 		/* Convert null input tuple into an all-nulls row */
@@ -3059,12 +3049,27 @@ ExecEvalFieldStoreDeForm(ExprState *state, ExprEvalStep *op, ExprContext *econte
 		Datum		tupDatum = *op->resvalue;
 		HeapTupleHeader tuphdr;
 		HeapTupleData tmptup;
+		TupleDesc	tupDesc;
 
 		tuphdr = DatumGetHeapTupleHeader(tupDatum);
 		tmptup.t_len = HeapTupleHeaderGetDatumLength(tuphdr);
 		ItemPointerSetInvalid(&(tmptup.t_self));
 		tmptup.t_tableOid = InvalidOid;
 		tmptup.t_data = tuphdr;
+
+		/*
+		 * Lookup tupdesc if first time through or if type changes.  Because
+		 * we don't pin the tupdesc, we must not do this lookup until after
+		 * doing DatumGetHeapTupleHeader: that could do database access while
+		 * detoasting the datum.
+		 */
+		tupDesc = get_cached_rowtype(op->d.fieldstore.fstore->resulttype, -1,
+									 op->d.fieldstore.rowcache, NULL);
+
+		/* Check that current tupdesc doesn't have more fields than allocated */
+		if (unlikely(tupDesc->natts > op->d.fieldstore.ncolumns))
+			elog(ERROR, "too many columns in composite type %u",
+				 op->d.fieldstore.fstore->resulttype);
 
 		heap_deform_tuple(&tmptup, tupDesc,
 						  op->d.fieldstore.values,
