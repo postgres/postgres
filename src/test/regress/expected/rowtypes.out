@@ -176,6 +176,15 @@ select (fn).first, substr((fn).last, 1, 20), length((fn).last) from people;
  Jim   | abcdefghijklabcdefgh | 1200000
 (2 rows)
 
+-- try an update on a toasted composite value, too
+update people set fn.first = 'Jack';
+select (fn).first, substr((fn).last, 1, 20), length((fn).last) from people;
+ first |        substr        | length  
+-------+----------------------+---------
+ Jack  | Blow                 |       4
+ Jack  | abcdefghijklabcdefgh | 1200000
+(2 rows)
+
 -- Test row comparison semantics.  Prior to PG 8.2 we did this in a totally
 -- non-spec-compliant way.
 select ROW(1,2) < ROW(1,3) as true;

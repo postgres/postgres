@@ -87,6 +87,11 @@ insert into people select ('Jim', f1, null)::fullname, current_date from pp;
 
 select (fn).first, substr((fn).last, 1, 20), length((fn).last) from people;
 
+-- try an update on a toasted composite value, too
+update people set fn.first = 'Jack';
+
+select (fn).first, substr((fn).last, 1, 20), length((fn).last) from people;
+
 -- Test row comparison semantics.  Prior to PG 8.2 we did this in a totally
 -- non-spec-compliant way.
 
