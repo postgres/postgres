@@ -722,8 +722,6 @@ choke me
     endif
   endif
 
-  # XXX: this shouldn't be tested in the windows case, but should be tested in
-  # the dependency() success case
   if ldap.found() and cc.has_function('ldap_initialize',
       dependencies: ldap, args: test_c_args)
     cdata.set('HAVE_LDAP_INITIALIZE', 1)
