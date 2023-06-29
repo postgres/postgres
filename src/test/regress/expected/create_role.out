@@ -8,19 +8,19 @@ CREATE ROLE regress_role_normal;
 SET SESSION AUTHORIZATION regress_role_limited_admin;
 CREATE ROLE regress_nosuch_superuser SUPERUSER;
 ERROR:  permission denied to create role
-DETAIL:  Only roles with the SUPERUSER attribute may create roles with SUPERUSER.
+DETAIL:  Only roles with the SUPERUSER attribute may create roles with the SUPERUSER attribute.
 CREATE ROLE regress_nosuch_replication_bypassrls REPLICATION BYPASSRLS;
 ERROR:  permission denied to create role
-DETAIL:  Only roles with the REPLICATION attribute may create roles with REPLICATION.
+DETAIL:  Only roles with the REPLICATION attribute may create roles with the REPLICATION attribute.
 CREATE ROLE regress_nosuch_replication REPLICATION;
 ERROR:  permission denied to create role
-DETAIL:  Only roles with the REPLICATION attribute may create roles with REPLICATION.
+DETAIL:  Only roles with the REPLICATION attribute may create roles with the REPLICATION attribute.
 CREATE ROLE regress_nosuch_bypassrls BYPASSRLS;
 ERROR:  permission denied to create role
-DETAIL:  Only roles with the BYPASSRLS attribute may create roles with BYPASSRLS.
+DETAIL:  Only roles with the BYPASSRLS attribute may create roles with the BYPASSRLS attribute.
 CREATE ROLE regress_nosuch_createdb CREATEDB;
 ERROR:  permission denied to create role
-DETAIL:  Only roles with the CREATEDB attribute may create roles with CREATEDB.
+DETAIL:  Only roles with the CREATEDB attribute may create roles with the CREATEDB attribute.
 -- ok, can create a role without any special attributes
 CREATE ROLE regress_role_limited;
 -- fail, can't give it in any of the restricted attributes
@@ -71,7 +71,7 @@ NOTICE:  SYSID can no longer be specified
 -- fail, cannot grant membership in superuser role
 CREATE ROLE regress_nosuch_super IN ROLE regress_role_super;
 ERROR:  permission denied to grant role "regress_role_super"
-DETAIL:  Only roles with the SUPERUSER attribute may grant roles with SUPERUSER.
+DETAIL:  Only roles with the SUPERUSER attribute may grant roles with the SUPERUSER attribute.
 -- fail, database owner cannot have members
 CREATE ROLE regress_nosuch_dbowner IN ROLE pg_database_owner;
 ERROR:  role "pg_database_owner" cannot have explicit members
@@ -238,7 +238,7 @@ DROP ROLE regress_adminroles;
 -- fail, cannot drop ourself, nor superusers or roles we lack ADMIN for
 DROP ROLE regress_role_super;
 ERROR:  permission denied to drop role
-DETAIL:  Only roles with the SUPERUSER attribute may drop roles with SUPERUSER.
+DETAIL:  Only roles with the SUPERUSER attribute may drop roles with the SUPERUSER attribute.
 DROP ROLE regress_role_admin;
 ERROR:  current user cannot be dropped
 DROP ROLE regress_rolecreator;

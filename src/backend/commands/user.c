@@ -323,25 +323,25 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to create role"),
-					 errdetail("Only roles with the %s attribute may create roles with %s.",
+					 errdetail("Only roles with the %s attribute may create roles with the %s attribute.",
 							   "SUPERUSER", "SUPERUSER")));
 		if (createdb && !have_createdb_privilege())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to create role"),
-					 errdetail("Only roles with the %s attribute may create roles with %s.",
+					 errdetail("Only roles with the %s attribute may create roles with the %s attribute.",
 							   "CREATEDB", "CREATEDB")));
 		if (isreplication && !has_rolreplication(currentUserId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to create role"),
-					 errdetail("Only roles with the %s attribute may create roles with %s.",
+					 errdetail("Only roles with the %s attribute may create roles with the %s attribute.",
 							   "REPLICATION", "REPLICATION")));
 		if (bypassrls && !has_bypassrls_privilege(currentUserId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to create role"),
-					 errdetail("Only roles with the %s attribute may create roles with %s.",
+					 errdetail("Only roles with the %s attribute may create roles with the %s attribute.",
 							   "BYPASSRLS", "BYPASSRLS")));
 	}
 
@@ -758,7 +758,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to alter role"),
-				 errdetail("Only roles with the %s attribute may alter roles with %s.",
+				 errdetail("Only roles with the %s attribute may alter roles with the %s attribute.",
 						   "SUPERUSER", "SUPERUSER")));
 	if (!superuser() && dissuper)
 		ereport(ERROR,
@@ -1031,7 +1031,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("permission denied to alter role"),
-						 errdetail("Only roles with the %s attribute may alter roles with %s.",
+						 errdetail("Only roles with the %s attribute may alter roles with the %s attribute.",
 								   "SUPERUSER", "SUPERUSER")));
 		}
 		else
@@ -1171,7 +1171,7 @@ DropRole(DropRoleStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to drop role"),
-					 errdetail("Only roles with the %s attribute may drop roles with %s.",
+					 errdetail("Only roles with the %s attribute may drop roles with the %s attribute.",
 							   "SUPERUSER", "SUPERUSER")));
 		if (!is_admin_of_role(GetUserId(), roleid))
 			ereport(ERROR,
@@ -1426,7 +1426,7 @@ RenameRole(const char *oldname, const char *newname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to rename role"),
-					 errdetail("Only roles with the %s attribute may rename roles with %s.",
+					 errdetail("Only roles with the %s attribute may rename roles with the %s attribute.",
 							   "SUPERUSER", "SUPERUSER")));
 	}
 	else
@@ -2141,14 +2141,14 @@ check_role_membership_authorization(Oid currentUserId, Oid roleid,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("permission denied to grant role \"%s\"",
 								GetUserNameFromId(roleid, false)),
-						 errdetail("Only roles with the %s attribute may grant roles with %s.",
+						 errdetail("Only roles with the %s attribute may grant roles with the %s attribute.",
 								   "SUPERUSER", "SUPERUSER")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("permission denied to revoke role \"%s\"",
 								GetUserNameFromId(roleid, false)),
-						 errdetail("Only roles with the %s attribute may revoke roles with %s.",
+						 errdetail("Only roles with the %s attribute may revoke roles with the %s attribute.",
 								   "SUPERUSER", "SUPERUSER")));
 		}
 	}

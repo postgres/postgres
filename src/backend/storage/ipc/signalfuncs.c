@@ -122,7 +122,7 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to cancel query"),
-				 errdetail("Only roles with the %s attribute may cancel queries of roles with %s.",
+				 errdetail("Only roles with the %s attribute may cancel queries of roles with the %s attribute.",
 						   "SUPERUSER", "SUPERUSER")));
 
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
@@ -228,7 +228,7 @@ pg_terminate_backend(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to terminate process"),
-				 errdetail("Only roles with the %s attribute may terminate processes of roles with %s.",
+				 errdetail("Only roles with the %s attribute may terminate processes of roles with the %s attribute.",
 						   "SUPERUSER", "SUPERUSER")));
 
 	if (r == SIGNAL_BACKEND_NOPERMISSION)

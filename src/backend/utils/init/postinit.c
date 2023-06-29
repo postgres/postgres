@@ -946,7 +946,7 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		if (nfree < SuperuserReservedConnections)
 			ereport(FATAL,
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-					 errmsg("remaining connection slots are reserved for roles with %s",
+					 errmsg("remaining connection slots are reserved for roles with the %s attribute",
 							"SUPERUSER")));
 
 		if (!has_privs_of_role(GetUserId(), ROLE_PG_USE_RESERVED_CONNECTIONS))
