@@ -166,6 +166,24 @@ CREATE TABLE heaptable USING heap AS
   SELECT a, repeat(a::text, 100) FROM generate_series(1,9) AS a;
 SELECT amname FROM pg_class c, pg_am am
   WHERE c.relam = am.oid AND c.oid = 'heaptable'::regclass;
+-- Switching to heap2 adds new dependency entry to the AM.
+ALTER TABLE heaptable SET ACCESS METHOD heap2;
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid, refobjid, refobjsubid) as objref,
+       deptype
+  FROM pg_depend
+  WHERE classid = 'pg_class'::regclass AND
+        objid = 'heaptable'::regclass
+  ORDER BY 1, 2;
+-- Switching to heap should not have a dependency entry to the AM.
+ALTER TABLE heaptable SET ACCESS METHOD heap;
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid, refobjid, refobjsubid) as objref,
+       deptype
+  FROM pg_depend
+  WHERE classid = 'pg_class'::regclass AND
+        objid = 'heaptable'::regclass
+  ORDER BY 1, 2;
 ALTER TABLE heaptable SET ACCESS METHOD heap2;
 SELECT amname FROM pg_class c, pg_am am
   WHERE c.relam = am.oid AND c.oid = 'heaptable'::regclass;
