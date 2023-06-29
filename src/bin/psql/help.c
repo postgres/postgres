@@ -277,7 +277,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
 		  "                         list operators\n");
 	HELP0("  \\dO[S+] [PATTERN]      list collations\n");
-	HELP0("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n");
+	HELP0("  \\dp[S]  [PATTERN]      list table, view, and sequence access privileges\n");
 	HELP0("  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n");
 	HELP0("  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n");
 	HELP0("  \\dRp[+] [PATTERN]      list replication publications\n");
@@ -293,7 +293,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\l[+]   [PATTERN]      list databases\n");
 	HELP0("  \\sf[+]  FUNCNAME       show a function's definition\n");
 	HELP0("  \\sv[+]  VIEWNAME       show a view's definition\n");
-	HELP0("  \\z      [PATTERN]      same as \\dp\n");
+	HELP0("  \\z[S]   [PATTERN]      same as \\dp\n");
 	HELP0("\n");
 
 	HELP0("Large Objects\n");
