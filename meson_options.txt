@@ -2,27 +2,27 @@
 
 # Data layout influencing options
 
-option('blocksize', type : 'combo',
-  choices : ['1', '2', '4', '8', '16', '32'],
-  value : '8',
+option('blocksize', type: 'combo',
+  choices: ['1', '2', '4', '8', '16', '32'],
+  value: '8',
   description: 'Relation block size, in kilobytes')
 
-option('wal_blocksize', type : 'combo',
+option('wal_blocksize', type: 'combo',
   choices: ['1', '2', '4', '8', '16', '32', '64'],
   value: '8',
-  description : 'WAL block size, in kilobytes')
+  description: 'WAL block size, in kilobytes')
 
-option('segsize', type : 'integer', value : 1,
-  description : 'Segment size, in gigabytes')
+option('segsize', type: 'integer', value: 1,
+  description: 'Segment size, in gigabytes')
 
-option('segsize_blocks', type : 'integer', value: 0,
-  description : 'Segment size, in blocks')
+option('segsize_blocks', type: 'integer', value: 0,
+  description: 'Segment size, in blocks')
 
 
 # Miscellaneous options
 
-option('krb_srvnam', type : 'string', value : 'postgres',
-  description : 'Default Kerberos service principal for GSSAPI')
+option('krb_srvnam', type: 'string', value: 'postgres',
+  description: 'Default Kerberos service principal for GSSAPI')
 
 option('system_tzdata', type: 'string', value: '',
   description: 'Use system time zone data in specified directory')
@@ -30,182 +30,182 @@ option('system_tzdata', type: 'string', value: '',
 
 # Defaults
 
-option('pgport', type : 'integer', value : 5432,
+option('pgport', type: 'integer', value: 5432,
   min: 1, max: 65535,
-  description : 'Default port number for server and clients')
+  description: 'Default port number for server and clients')
 
 
 # Developer options
 
-option('cassert', type : 'boolean', value: false,
+option('cassert', type: 'boolean', value: false,
   description: 'Enable assertion checks (for debugging)')
 
-option('tap_tests', type : 'feature', value : 'auto',
-  description : 'Enable TAP tests')
+option('tap_tests', type: 'feature', value: 'auto',
+  description: 'Enable TAP tests')
 
-option('PG_TEST_EXTRA', type : 'string', value: '',
+option('PG_TEST_EXTRA', type: 'string', value: '',
   description: 'Enable selected extra tests')
 
-option('atomics', type : 'boolean', value: true,
+option('atomics', type: 'boolean', value: true,
   description: 'Use atomic operations')
 
-option('spinlocks', type : 'boolean', value: true,
+option('spinlocks', type: 'boolean', value: true,
   description: 'Use spinlocks')
 
 
 # Compilation options
 
-option('extra_include_dirs', type : 'array', value: [],
+option('extra_include_dirs', type: 'array', value: [],
   description: 'Non-default directories to be searched for headers')
 
-option('extra_lib_dirs', type : 'array', value: [],
+option('extra_lib_dirs', type: 'array', value: [],
   description: 'Non-default directories to be searched for libs')
 
-option('extra_version', type : 'string', value: '',
+option('extra_version', type: 'string', value: '',
   description: 'Append STRING to the PostgreSQL version number')
 
-option('darwin_sysroot', type : 'string', value: '',
+option('darwin_sysroot', type: 'string', value: '',
   description: 'Select a non-default sysroot path')
 
-option('rpath', type : 'boolean', value: true,
+option('rpath', type: 'boolean', value: true,
   description: 'Embed shared library search path in executables')
 
 
 # External dependencies
 
-option('bonjour', type : 'feature', value: 'auto',
+option('bonjour', type: 'feature', value: 'auto',
   description: 'Bonjour support')
 
-option('bsd_auth', type : 'feature', value: 'auto',
+option('bsd_auth', type: 'feature', value: 'auto',
   description: 'BSD Authentication support')
 
-option('docs', type : 'feature', value: 'auto',
+option('docs', type: 'feature', value: 'auto',
   description: 'Documentation in HTML and man page format')
 
-option('docs_pdf', type : 'feature', value: 'auto',
+option('docs_pdf', type: 'feature', value: 'auto',
   description: 'Documentation in PDF format')
 
-option('docs_html_style', type : 'combo', choices: ['simple', 'website'],
+option('docs_html_style', type: 'combo', choices: ['simple', 'website'],
   description: 'CSS stylesheet for HTML documentation')
 
-option('dtrace', type : 'feature', value: 'disabled',
+option('dtrace', type: 'feature', value: 'disabled',
   description: 'DTrace support')
 
-option('gssapi', type : 'feature', value: 'auto',
+option('gssapi', type: 'feature', value: 'auto',
   description: 'GSSAPI support')
 
-option('icu', type : 'feature', value: 'auto',
+option('icu', type: 'feature', value: 'auto',
   description: 'ICU support')
 
-option('ldap', type : 'feature', value: 'auto',
+option('ldap', type: 'feature', value: 'auto',
   description: 'LDAP support')
 
-option('libedit_preferred', type : 'boolean', value: false,
+option('libedit_preferred', type: 'boolean', value: false,
   description: 'Prefer BSD Libedit over GNU Readline')
 
-option('libxml', type : 'feature', value: 'auto',
+option('libxml', type: 'feature', value: 'auto',
   description: 'XML support')
 
-option('libxslt', type : 'feature', value: 'auto',
+option('libxslt', type: 'feature', value: 'auto',
   description: 'XSLT support in contrib/xml2')
 
-option('llvm', type : 'feature', value: 'disabled',
+option('llvm', type: 'feature', value: 'disabled',
   description: 'LLVM support')
 
-option('lz4', type : 'feature', value: 'auto',
+option('lz4', type: 'feature', value: 'auto',
   description: 'LZ4 support')
 
 option('nls', type: 'feature', value: 'auto',
   description: 'Native language support')
 
-option('pam', type : 'feature', value: 'auto',
+option('pam', type: 'feature', value: 'auto',
   description: 'PAM support')
 
-option('plperl', type : 'feature', value: 'auto',
+option('plperl', type: 'feature', value: 'auto',
   description: 'Build Perl modules (PL/Perl)')
 
-option('plpython', type : 'feature', value: 'auto',
+option('plpython', type: 'feature', value: 'auto',
   description: 'Build Python modules (PL/Python)')
 
-option('pltcl', type : 'feature', value: 'auto',
+option('pltcl', type: 'feature', value: 'auto',
   description: 'Build with Tcl support (PL/Tcl)')
 
-option('tcl_version', type : 'string', value : 'tcl',
+option('tcl_version', type: 'string', value: 'tcl',
   description: 'Tcl version')
 
-option('readline', type : 'feature', value : 'auto',
+option('readline', type: 'feature', value: 'auto',
   description: 'Use GNU Readline or BSD Libedit for editing')
 
-option('selinux', type : 'feature', value : 'disabled',
+option('selinux', type: 'feature', value: 'disabled',
   description: 'SELinux support')
 
-option('ssl', type : 'combo', choices : ['auto', 'none', 'openssl'],
-  value : 'auto',
+option('ssl', type: 'combo', choices: ['auto', 'none', 'openssl'],
+  value: 'auto',
   description: 'Use LIB for SSL/TLS support (openssl)')
 
-option('systemd', type : 'feature', value: 'auto',
+option('systemd', type: 'feature', value: 'auto',
   description: 'systemd support')
 
-option('uuid', type : 'combo', choices : ['none', 'bsd', 'e2fs', 'ossp'],
-  value : 'none',
+option('uuid', type: 'combo', choices: ['none', 'bsd', 'e2fs', 'ossp'],
+  value: 'none',
   description: 'Use LIB for contrib/uuid-ossp support')
 
-option('zlib', type : 'feature', value: 'auto',
+option('zlib', type: 'feature', value: 'auto',
   description: 'Enable zlib')
 
-option('zstd', type : 'feature', value: 'auto',
+option('zstd', type: 'feature', value: 'auto',
   description: 'Enable zstd')
 
 
 # Programs
 
-option('BISON', type : 'array', value: ['bison', 'win_bison'],
+option('BISON', type: 'array', value: ['bison', 'win_bison'],
   description: 'Path to bison binary')
 
-option('DTRACE', type : 'string', value: 'dtrace',
+option('DTRACE', type: 'string', value: 'dtrace',
   description: 'Path to dtrace binary')
 
-option('FLEX', type : 'array', value: ['flex', 'win_flex'],
+option('FLEX', type: 'array', value: ['flex', 'win_flex'],
   description: 'Path to flex binary')
 
-option('FOP', type : 'string', value: 'fop',
+option('FOP', type: 'string', value: 'fop',
   description: 'Path to fop binary')
 
-option('GZIP', type : 'string', value: 'gzip',
+option('GZIP', type: 'string', value: 'gzip',
   description: 'Path to gzip binary')
 
-option('LZ4', type : 'string', value: 'lz4',
+option('LZ4', type: 'string', value: 'lz4',
   description: 'Path to lz4 binary')
 
-option('OPENSSL', type : 'string', value: 'openssl',
+option('OPENSSL', type: 'string', value: 'openssl',
   description: 'Path to openssl binary')
 
-option('PERL', type : 'string', value: 'perl',
+option('PERL', type: 'string', value: 'perl',
   description: 'Path to perl binary')
 
-option('PROVE', type : 'string', value: 'prove',
+option('PROVE', type: 'string', value: 'prove',
   description: 'Path to prove binary')
 
-option('PYTHON', type : 'array', value: ['python3', 'python'],
+option('PYTHON', type: 'array', value: ['python3', 'python'],
   description: 'Path to python binary')
 
-option('SED', type : 'string', value: 'gsed',
+option('SED', type: 'string', value: 'gsed',
   description: 'Path to sed binary')
 
-option('STRIP', type : 'string', value: 'strip',
+option('STRIP', type: 'string', value: 'strip',
   description: 'Path to strip binary, used for PGXS emulation')
 
-option('TAR', type : 'string', value: 'tar',
+option('TAR', type: 'string', value: 'tar',
   description: 'Path to tar binary')
 
-option('XMLLINT', type : 'string', value: 'xmllint',
+option('XMLLINT', type: 'string', value: 'xmllint',
   description: 'Path to xmllint binary')
 
-option('XSLTPROC', type : 'string', value: 'xsltproc',
+option('XSLTPROC', type: 'string', value: 'xsltproc',
   description: 'Path to xsltproc binary')
 
-option('ZSTD', type : 'string', value: 'zstd',
+option('ZSTD', type: 'string', value: 'zstd',
   description: 'Path to zstd binary')
 
-option('ZIC', type : 'string', value: 'zic',
+option('ZIC', type: 'string', value: 'zic',
   description: 'Path to zic binary, when cross-compiling')
