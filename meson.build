@@ -558,7 +558,7 @@ endif
 ###############################################################
 
 bonjouropt = get_option('bonjour')
-bonjour = dependency('', required : false)
+bonjour = not_found_dep
 if cc.check_header('dns_sd.h', required: bonjouropt,
     args: test_c_args, include_directories: postgres_inc) and \
    cc.has_function('DNSServiceRegister',
