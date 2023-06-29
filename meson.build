@@ -1346,7 +1346,7 @@ if uuidopt != 'none'
     uuidfunc = 'uuid_export'
     uuidheader = 'uuid.h'
   else
-    error('huh')
+    error('unknown uuid build option value: @0@'.format(uuidopt))
   endif
 
   if not cc.has_header_symbol(uuidheader, uuidfunc, args: test_c_args, dependencies: uuid)
