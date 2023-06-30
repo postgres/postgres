@@ -422,8 +422,7 @@ heap2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	switch (info)
 	{
 		case XLOG_HEAP2_MULTI_INSERT:
-			if (!ctx->fast_forward &&
-				SnapBuildProcessChange(builder, xid, buf->origptr))
+			if (SnapBuildProcessChange(builder, xid, buf->origptr))
 				DecodeMultiInsert(ctx, buf);
 			break;
 		case XLOG_HEAP2_NEW_CID:
