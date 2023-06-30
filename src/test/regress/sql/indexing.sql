@@ -782,3 +782,29 @@ select indexrelid::regclass, indisvalid,
   where indexrelid::regclass::text like 'parted_inval%'
   order by indexrelid::regclass::text collate "C";
 drop table parted_inval_tab;
+
+-- Check setup of indisvalid across a complex partition tree on index
+-- creation.  If one index in a partition index is invalid, so should its
+-- partitioned index.
+create table parted_isvalid_tab (a int, b int) partition by range (a);
+create table parted_isvalid_tab_1 partition of parted_isvalid_tab
+  for values from (1) to (10) partition by range (a);
+create table parted_isvalid_tab_2 partition of parted_isvalid_tab
+  for values from (10) to (20) partition by range (a);
+create table parted_isvalid_tab_11 partition of parted_isvalid_tab_1
+  for values from (1) to (5);
+create table parted_isvalid_tab_12 partition of parted_isvalid_tab_1
+  for values from (5) to (10);
+-- create an invalid index on one of the partitions.
+insert into parted_isvalid_tab_11 values (1, 0);
+create index concurrently parted_isvalid_idx_11 on parted_isvalid_tab_11 ((a/b));
+-- The previous invalid index is selected, invalidating all the indexes up to
+-- the top-most parent.
+create index parted_isvalid_idx on parted_isvalid_tab ((a/b));
+select indexrelid::regclass, indisvalid,
+       indrelid::regclass, inhparent::regclass
+  from pg_index idx left join
+       pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  where indexrelid::regclass::text like 'parted_isvalid%'
+  order by indexrelid::regclass::text collate "C";
+drop table parted_isvalid_tab;
