@@ -8895,8 +8895,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2020-06-10 [c7eab0e97] Change default of password_encryption to scram-sha-256
-Author: Peter Eisentraut <peter@eisentraut.org>
-2020-06-10 [c7eab0e97] Change default of password_encryption to scram-sha-256
 -->
 
      <para>
