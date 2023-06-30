@@ -91,73 +91,88 @@ sub ParseHeader
 		# Push the data into the appropriate data structure.
 		# Caution: when adding new recognized OID-defining macros,
 		# also update src/include/catalog/renumber_oids.pl.
-		if (/^DECLARE_TOAST\(\s*(\w+),\s*(\d+),\s*(\d+)\)/)
-		{
-			push @{ $catalog{toasting} },
-			  { parent_table => $1, toast_oid => $2, toast_index_oid => $3 };
-		}
-		elsif (
-			/^DECLARE_TOAST_WITH_MACRO\(\s*(\w+),\s*(\d+),\s*(\d+),\s*(\w+),\s*(\w+)\)/
+		if (/^DECLARE_TOAST\(\s*
+			 (?<parent_table>\w+),\s*
+			 (?<toast_oid>\d+),\s*
+			 (?<toast_index_oid>\d+)\s*
+			 \)/x
 		  )
 		{
-			push @{ $catalog{toasting} },
-			  {
-				parent_table => $1,
-				toast_oid => $2,
-				toast_index_oid => $3,
-				toast_oid_macro => $4,
-				toast_index_oid_macro => $5
-			  };
+			push @{ $catalog{toasting} }, {%+};
 		}
 		elsif (
-			/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*(\w+),\s*(\d+),\s*(\w+),\s*(.+)\)/
+			/^DECLARE_TOAST_WITH_MACRO\(\s*
+			 (?<parent_table>\w+),\s*
+			 (?<toast_oid>\d+),\s*
+			 (?<toast_index_oid>\d+),\s*
+			 (?<toast_oid_macro>\w+),\s*
+			 (?<toast_index_oid_macro>\w+)\s*
+			 \)/x
+		  )
+		{
+			push @{ $catalog{toasting} }, {%+};
+		}
+		elsif (
+			/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*
+			 (?<index_name>\w+),\s*
+			 (?<index_oid>\d+),\s*
+			 (?<index_oid_macro>\w+),\s*
+			 (?<index_decl>.+)\s*
+			 \)/x
 		  )
 		{
 			push @{ $catalog{indexing} },
 			  {
 				is_unique => $1 ? 1 : 0,
 				is_pkey => $2 ? 1 : 0,
-				index_name => $3,
-				index_oid => $4,
-				index_oid_macro => $5,
-				index_decl => $6
-			  };
-		}
-		elsif (/^DECLARE_OID_DEFINING_MACRO\(\s*(\w+),\s*(\d+)\)/)
-		{
-			push @{ $catalog{other_oids} },
-			  {
-				other_name => $1,
-				other_oid => $2
+				%+,
 			  };
 		}
 		elsif (
-			/^DECLARE_(ARRAY_)?FOREIGN_KEY(_OPT)?\(\s*\(([^)]+)\),\s*(\w+),\s*\(([^)]+)\)\)/
+			/^DECLARE_OID_DEFINING_MACRO\(\s*
+			 (?<other_name>\w+),\s*
+			 (?<other_oid>\d+)\s*
+			 \)/x
+		  )
+		{
+			push @{ $catalog{other_oids} }, {%+};
+		}
+		elsif (
+			/^DECLARE_(ARRAY_)?FOREIGN_KEY(_OPT)?\(\s*
+			 \((?<fk_cols>[^)]+)\),\s*
+			 (?<pk_table>\w+),\s*
+			 \((?<pk_cols>[^)]+)\)\s*
+			 \)/x
 		  )
 		{
 			push @{ $catalog{foreign_keys} },
 			  {
 				is_array => $1 ? 1 : 0,
 				is_opt => $2 ? 1 : 0,
-				fk_cols => $3,
-				pk_table => $4,
-				pk_cols => $5
+				%+,
 			  };
 		}
-		elsif (/^CATALOG\((\w+),(\d+),(\w+)\)/)
+		elsif (
+			/^CATALOG\(\s*
+			 (?<catname>\w+),\s*
+			 (?<relation_oid>\d+),\s*
+			 (?<relation_oid_macro>\w+)\s*
+			 \)/x
+		  )
 		{
-			$catalog{catname} = $1;
-			$catalog{relation_oid} = $2;
-			$catalog{relation_oid_macro} = $3;
+			@catalog{ keys %+ } = values %+;
 
 			$catalog{bootstrap} = /BKI_BOOTSTRAP/ ? ' bootstrap' : '';
 			$catalog{shared_relation} =
 			  /BKI_SHARED_RELATION/ ? ' shared_relation' : '';
-			if (/BKI_ROWTYPE_OID\((\d+),(\w+)\)/)
+			if (/BKI_ROWTYPE_OID\(\s*
+				 (?<rowtype_oid>\d+),\s*
+				 (?<rowtype_oid_macro>\w+)\s*
+				 \)/x
+			  )
 			{
-				$catalog{rowtype_oid} = $1;
-				$catalog{rowtype_oid_clause} = " rowtype_oid $1";
-				$catalog{rowtype_oid_macro} = $2;
+				@catalog{ keys %+ } = values %+;
+				$catalog{rowtype_oid_clause} = " rowtype_oid $+{rowtype_oid}";
 			}
 			else
 			{
