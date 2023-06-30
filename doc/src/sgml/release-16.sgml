@@ -2400,21 +2400,6 @@ Options like "--compress=gzip:5".
     <itemizedlist>
 
 <!--
-Author: Jeff Davis <jdavis@postgresql.org>
-2023-03-09 [27b62377b] Use ICU by default at initdb time.
--->
-
-<listitem>
-<para>
-Have initdb use ICU by default if ICU is enabled in the binary (Jeff Davis)
-</para>
-
-<para>
-Option --locale-provider=libc can be used to disable ICU.
-</para>
-</listitem>
-
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us> 2023-03-22
 [3e51b278d] Add "-c name=value" switch to initdb.
 -->
