@@ -41,10 +41,15 @@
  * transactions we need Snapshots that see intermediate versions of the
  * catalog in a transaction. During normal operation this is achieved by using
  * CommandIds/cmin/cmax. The problem with that however is that for space
- * efficiency reasons only one value of that is stored
- * (cf. combocid.c). Since combo CIDs are only available in memory we log
- * additional information which allows us to get the original (cmin, cmax)
- * pair during visibility checks. Check the reorderbuffer.c's comment above
+ * efficiency reasons, the cmin and cmax are not included in WAL records. We
+ * cannot read the cmin/cmax from the tuple itself, either, because it is
+ * reset on crash recovery. Even if we could, we could not decode combocids
+ * which are only tracked in the original backend's memory. To work around
+ * that, heapam writes an extra WAL record (XLOG_HEAP2_NEW_CID) every time a
+ * catalog row is modified, which includes the cmin and cmax of the
+ * tuple. During decoding, we insert the ctid->(cmin,cmax) mappings into the
+ * reorder buffer, and use them at visibility checks instead of the cmin/cmax
+ * on the tuple itself. Check the reorderbuffer.c's comment above
  * ResolveCminCmaxDuringDecoding() for details.
  *
  * To facilitate all this we need our own visibility routine, as the normal
