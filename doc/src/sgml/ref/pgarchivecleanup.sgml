@@ -95,6 +95,7 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
 
      <varlistentry>
       <term><option>-d</option></term>
+      <term><option>--debug</option></term>
       <listitem>
        <para>
         Print lots of debug logging output on <filename>stderr</filename>.
@@ -104,6 +105,7 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
 
      <varlistentry>
       <term><option>-n</option></term>
+      <term><option>--dry-run</option></term>
       <listitem>
        <para>
         Print the names of the files that would have been removed on <filename>stdout</filename> (performs a dry run).
@@ -122,7 +124,8 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
      </varlistentry>
 
      <varlistentry>
-      <term><option>-x</option> <replaceable>extension</replaceable></term>
+      <term><option>-x <replaceable class="parameter">extension</replaceable></option></term>
+      <term><option>--strip-extension=<replaceable class="parameter">extension</replaceable></option></term>
       <listitem>
        <para>
         Provide an extension

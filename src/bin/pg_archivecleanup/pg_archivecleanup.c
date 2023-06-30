@@ -17,7 +17,7 @@
 
 #include "access/xlog_internal.h"
 #include "common/logging.h"
-#include "pg_getopt.h"
+#include "getopt_long.h"
 
 const char *progname;
 
@@ -252,11 +252,13 @@ usage(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_("  -d             generate debug output (verbose mode)\n"));
-	printf(_("  -n             dry run, show the names of the files that would be removed\n"));
-	printf(_("  -V, --version  output version information, then exit\n"));
-	printf(_("  -x EXT         clean up files if they have this extension\n"));
-	printf(_("  -?, --help     show this help, then exit\n"));
+	printf(_("  -d, --debug                 generate debug output (verbose mode)\n"));
+	printf(_("  -n, --dry-run               dry run, show the names of the files that would be\n"
+			 "                              removed\n"));
+	printf(_("  -V, --version               output version information, then exit\n"));
+	printf(_("  -x, --strip-extension=EXT   strip this extention before identifying files for\n"
+			 "                              clean up\n"));
+	printf(_("  -?, --help                  show this help, then exit\n"));
 	printf(_("\n"
 			 "For use as archive_cleanup_command in postgresql.conf:\n"
 			 "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
@@ -274,6 +276,12 @@ usage(void)
 int
 main(int argc, char **argv)
 {
+	static struct option long_options[] = {
+		{"debug", no_argument, NULL, 'd'},
+		{"dry-run", no_argument, NULL, 'n'},
+		{"strip-extension", required_argument, NULL, 'x'},
+		{NULL, 0, NULL, 0}
+	};
 	int			c;
 
 	pg_logging_init(argv[0]);
@@ -294,7 +302,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt(argc, argv, "dnx:")) != -1)
+	while ((c = getopt_long(argc, argv, "dnx:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
