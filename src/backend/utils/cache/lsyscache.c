@@ -3204,3 +3204,26 @@ get_index_isclustered(Oid index_oid)
 
 	return isclustered;
 }
+
+/*
+ * get_index_isvalid
+ *
+ *		Given the index OID, return pg_index.indisvalid.
+ */
+bool
+get_index_isvalid(Oid index_oid)
+{
+	bool		isvalid;
+	HeapTuple	tuple;
+	Form_pg_index rd_index;
+
+	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(index_oid));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for index %u", index_oid);
+
+	rd_index = (Form_pg_index) GETSTRUCT(tuple);
+	isvalid = rd_index->indisvalid;
+	ReleaseSysCache(tuple);
+
+	return isvalid;
+}
