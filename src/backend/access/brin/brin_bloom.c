@@ -574,7 +574,7 @@ brin_bloom_consistent(PG_FUNCTION_ARGS)
 	Oid			colloid = PG_GET_COLLATION();
 	AttrNumber	attno;
 	Datum		value;
-	Datum		matches;
+	bool		matches;
 	FmgrInfo   *finfo;
 	uint32		hashValue;
 	BloomFilter *filter;
@@ -584,6 +584,10 @@ brin_bloom_consistent(PG_FUNCTION_ARGS)
 
 	Assert(filter);
 
+	/*
+	 * Assume all scan keys match. We'll be searching for a scan key eliminating
+	 * the page range (we can stop on the first such key).
+	 */
 	matches = true;
 
 	for (keyno = 0; keyno < nkeys; keyno++)
@@ -601,9 +605,8 @@ brin_bloom_consistent(PG_FUNCTION_ARGS)
 			case BloomEqualStrategyNumber:
 
 				/*
-				 * In the equality case (WHERE col = someval), we want to
-				 * return the current page range if the minimum value in the
-				 * range <= scan key, and the maximum value >= scan key.
+				 * We want to return the current page range if the bloom filter
+				 * seems to contain the value.
 				 */
 				finfo = bloom_get_procinfo(bdesc, attno, PROCNUM_HASH);
 
@@ -614,7 +617,7 @@ brin_bloom_consistent(PG_FUNCTION_ARGS)
 			default:
 				/* shouldn't happen */
 				elog(ERROR, "invalid strategy number %d", key->sk_strategy);
-				matches = 0;
+				matches = false;
 				break;
 		}
 
@@ -622,7 +625,7 @@ brin_bloom_consistent(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	PG_RETURN_DATUM(matches);
+	PG_RETURN_BOOL(matches);
 }
 
 /*
