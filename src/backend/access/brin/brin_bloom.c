@@ -259,6 +259,48 @@ typedef struct BloomFilter
 	char		data[FLEXIBLE_ARRAY_MEMBER];
 } BloomFilter;
 
+/*
+ * bloom_filter_size
+ *		Calculate Bloom filter parameters (nbits, nbytes, nhashes).
+ *
+ * Given expected number of distinct values and desired false positive rate,
+ * calculates the optimal parameters of the Bloom filter.
+ *
+ * The resulting parameters are returned through nbytesp (number of bytes),
+ * nbitsp (number of bits) and nhashesp (number of hash functions). If a
+ * pointer is NULL, the parameter is not returned.
+ */
+static void
+bloom_filter_size(int ndistinct, double false_positive_rate,
+				  int *nbytesp, int *nbitsp, int *nhashesp)
+{
+	double	k;
+	int		nbits,
+			nbytes;
+
+	/* sizing bloom filter: -(n * ln(p)) / (ln(2))^2 */
+	nbits = ceil(-(ndistinct * log(false_positive_rate)) / pow(log(2.0), 2));
+
+	/* round m to whole bytes */
+	nbytes = ((nbits + 7) / 8);
+	nbits = nbytes * 8;
+
+	/*
+	 * round(log(2.0) * m / ndistinct), but assume round() may not be
+	 * available on Windows
+	 */
+	k = log(2.0) * nbits / ndistinct;
+	k = (k - floor(k) >= 0.5) ? ceil(k) : floor(k);
+
+	if (nbytesp)
+		*nbytesp = nbytes;
+
+	if (nbitsp)
+		*nbitsp = nbits;
+
+	if (nhashesp)
+		*nhashesp = (int) k;
+}
 
 /*
  * bloom_init
@@ -275,19 +317,15 @@ bloom_init(int ndistinct, double false_positive_rate)
 
 	int			nbits;			/* size of filter / number of bits */
 	int			nbytes;			/* size of filter / number of bytes */
-
-	double		k;				/* number of hash functions */
+	int			nhashes;		/* number of hash functions */
 
 	Assert(ndistinct > 0);
 	Assert((false_positive_rate >= BLOOM_MIN_FALSE_POSITIVE_RATE) &&
 		   (false_positive_rate < BLOOM_MAX_FALSE_POSITIVE_RATE));
 
-	/* sizing bloom filter: -(n * ln(p)) / (ln(2))^2 */
-	nbits = ceil(-(ndistinct * log(false_positive_rate)) / pow(log(2.0), 2));
-
-	/* round m to whole bytes */
-	nbytes = ((nbits + 7) / 8);
-	nbits = nbytes * 8;
+	/* calculate bloom filter size / parameters */
+	bloom_filter_size(ndistinct, false_positive_rate,
+					  &nbytes, &nbits, &nhashes);
 
 	/*
 	 * Reject filters that are obviously too large to store on a page.
@@ -311,13 +349,6 @@ bloom_init(int ndistinct, double false_positive_rate)
 			 BloomMaxFilterSize);
 
 	/*
-	 * round(log(2.0) * m / ndistinct), but assume round() may not be
-	 * available on Windows
-	 */
-	k = log(2.0) * nbits / ndistinct;
-	k = (k - floor(k) >= 0.5) ? ceil(k) : floor(k);
-
-	/*
 	 * We allocate the whole filter. Most of it is going to be 0 bits, so the
 	 * varlena is easy to compress.
 	 */
@@ -326,7 +357,7 @@ bloom_init(int ndistinct, double false_positive_rate)
 	filter = (BloomFilter *) palloc0(len);
 
 	filter->flags = 0;
-	filter->nhashes = (int) k;
+	filter->nhashes = nhashes;
 	filter->nbits = nbits;
 
 	SET_VARSIZE(filter, len);
