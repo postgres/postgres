@@ -914,15 +914,11 @@ err:
 		state->missingContrecPtr = targetPagePtr;
 
 		/*
-		 * If we got here without reporting an error, report one now so that
-		 * XLogPrefetcherReadRecord() doesn't bring us back a second time and
-		 * clobber the above state.  Otherwise, the existing error takes
-		 * precedence.
+		 * If we got here without reporting an error, make sure an error is
+		 * queued so that XLogPrefetcherReadRecord() doesn't bring us back a
+		 * second time and clobber the above state.
 		 */
-		if (!state->errormsg_buf[0])
-			report_invalid_record(state,
-								  "missing contrecord at %X/%X",
-								  LSN_FORMAT_ARGS(RecPtr));
+		state->errormsg_deferred = true;
 	}
 
 	if (decoded && decoded->oversized)
