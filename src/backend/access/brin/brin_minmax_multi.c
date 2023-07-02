@@ -1660,6 +1660,9 @@ ensure_free_space_in_buffer(BrinDesc *bdesc, Oid colloid,
 	/* build the expanded ranges */
 	eranges = build_expanded_ranges(cmpFn, colloid, range, &neranges);
 
+	/* Is the expanded representation of ranges correct? */
+	AssertCheckExpandedRanges(bdesc, colloid, attno, attr, eranges, neranges);
+
 	/* and we'll also need the 'distance' procedure */
 	distanceFn = minmax_multi_get_procinfo(bdesc, attno, PROCNUM_DISTANCE);
 
@@ -1674,6 +1677,9 @@ ensure_free_space_in_buffer(BrinDesc *bdesc, Oid colloid,
 	neranges = reduce_expanded_ranges(eranges, neranges, distances,
 									  range->maxvalues * MINMAX_BUFFER_LOAD_FACTOR,
 									  cmpFn, colloid);
+
+	/* Is the result of reducing expanded ranges correct? */
+	AssertCheckExpandedRanges(bdesc, colloid, attno, attr, eranges, neranges);
 
 	/* Make sure we've sufficiently reduced the number of ranges. */
 	Assert(count_values(eranges, neranges) <= range->maxvalues * MINMAX_BUFFER_LOAD_FACTOR);
@@ -2858,6 +2864,9 @@ brin_minmax_multi_union(PG_FUNCTION_ARGS)
 	neranges = reduce_expanded_ranges(eranges, neranges, distances,
 									  ranges_a->maxvalues,
 									  cmpFn, colloid);
+
+	/* Is the result of reducing expanded ranges correct? */
+	AssertCheckExpandedRanges(bdesc, colloid, attno, attr, eranges, neranges);
 
 	/* update the first range summary */
 	store_expanded_ranges(ranges_a, eranges, neranges);

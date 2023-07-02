@@ -466,3 +466,360 @@ EXPLAIN (COSTS OFF) SELECT * FROM brin_test_multi WHERE b = 1;
    Filter: (b = 1)
 (2 rows)
 
+-- do some inequality tests
+CREATE TABLE brin_test_multi_1 (a INT, b BIGINT) WITH (fillfactor=10);
+INSERT INTO brin_test_multi_1
+SELECT i/5 + mod(911 * i + 483, 25),
+       i/10 + mod(751 * i + 221, 41)
+  FROM generate_series(1,1000) s(i);
+CREATE INDEX brin_test_multi_1_idx_1 ON brin_test_multi_1 USING brin (a int4_minmax_multi_ops) WITH (pages_per_range=5);
+CREATE INDEX brin_test_multi_1_idx_2 ON brin_test_multi_1 USING brin (b int8_minmax_multi_ops) WITH (pages_per_range=5);
+SET enable_seqscan=off;
+-- int: less than
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a < 37;
+ count 
+-------
+   124
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a < 113;
+ count 
+-------
+   504
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a <= 177;
+ count 
+-------
+   829
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a <= 25;
+ count 
+-------
+    69
+(1 row)
+
+-- int: greater than
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a > 120;
+ count 
+-------
+   456
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a >= 180;
+ count 
+-------
+   161
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a > 71;
+ count 
+-------
+   701
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a >= 63;
+ count 
+-------
+   746
+(1 row)
+
+-- int: equals
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a = 207;
+ count 
+-------
+     3
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a = 177;
+ count 
+-------
+     5
+(1 row)
+
+-- bigint: less than
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b < 73;
+ count 
+-------
+   529
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b <= 47;
+ count 
+-------
+   279
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b < 199;
+ count 
+-------
+  1000
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b <= 150;
+ count 
+-------
+  1000
+(1 row)
+
+-- bigint: greater than
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b > 93;
+ count 
+-------
+   261
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b > 37;
+ count 
+-------
+   821
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b >= 215;
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b > 201;
+ count 
+-------
+     0
+(1 row)
+
+-- bigint: equals
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b = 88;
+ count 
+-------
+    10
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b = 103;
+ count 
+-------
+     9
+(1 row)
+
+-- now do the same, but insert the rows with the indexes already created
+-- so that we don't use the "build callback" and instead use the regular
+-- approach of adding rows into existing ranges
+TRUNCATE brin_test_multi_1;
+INSERT INTO brin_test_multi_1
+SELECT i/5 + mod(911 * i + 483, 25),
+       i/10 + mod(751 * i + 221, 41)
+  FROM generate_series(1,1000) s(i);
+-- int: less than
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a < 37;
+ count 
+-------
+   124
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a < 113;
+ count 
+-------
+   504
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a <= 177;
+ count 
+-------
+   829
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a <= 25;
+ count 
+-------
+    69
+(1 row)
+
+-- int: greater than
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a > 120;
+ count 
+-------
+   456
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a >= 180;
+ count 
+-------
+   161
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a > 71;
+ count 
+-------
+   701
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a >= 63;
+ count 
+-------
+   746
+(1 row)
+
+-- int: equals
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a = 207;
+ count 
+-------
+     3
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE a = 177;
+ count 
+-------
+     5
+(1 row)
+
+-- bigint: less than
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b < 73;
+ count 
+-------
+   529
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b <= 47;
+ count 
+-------
+   279
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b < 199;
+ count 
+-------
+  1000
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b <= 150;
+ count 
+-------
+  1000
+(1 row)
+
+-- bigint: greater than
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b > 93;
+ count 
+-------
+   261
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b > 37;
+ count 
+-------
+   821
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b >= 215;
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b > 201;
+ count 
+-------
+     0
+(1 row)
+
+-- bigint: equals
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b = 88;
+ count 
+-------
+    10
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_1 WHERE b = 103;
+ count 
+-------
+     9
+(1 row)
+
+DROP TABLE brin_test_multi_1;
+RESET enable_seqscan;
+-- do some inequality tests for varlena data types
+CREATE TABLE brin_test_multi_2 (a UUID) WITH (fillfactor=10);
+INSERT INTO brin_test_multi_2
+SELECT v::uuid FROM (SELECT row_number() OVER (ORDER BY v) c, v FROM (SELECT md5((i/13)::text) AS v FROM generate_series(1,1000) s(i)) foo) bar ORDER BY c + 25 * random();
+CREATE INDEX brin_test_multi_2_idx ON brin_test_multi_2 USING brin (a uuid_minmax_multi_ops) WITH (pages_per_range=5);
+SET enable_seqscan=off;
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a < '33e75ff0-9dd6-01bb-e69f-351039152189';
+ count 
+-------
+   195
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a > '33e75ff0-9dd6-01bb-e69f-351039152189';
+ count 
+-------
+   792
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a <= 'f457c545-a9de-d88f-18ec-ee47145a72c0';
+ count 
+-------
+   961
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a >= 'c51ce410-c124-a10e-0db5-e4b97fc2af39';
+ count 
+-------
+   272
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a = 'cfcd2084-95d5-65ef-66e7-dff9f98764da';
+ count 
+-------
+    12
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a = 'aab32389-22bc-c25a-6f60-6eb525ffdc56';
+ count 
+-------
+    13
+(1 row)
+
+-- now do the same, but insert the rows with the indexes already created
+-- so that we don't use the "build callback" and instead use the regular
+-- approach of adding rows into existing ranges
+TRUNCATE brin_test_multi_2;
+INSERT INTO brin_test_multi_2
+SELECT v::uuid FROM (SELECT row_number() OVER (ORDER BY v) c, v FROM (SELECT md5((i/13)::text) AS v FROM generate_series(1,1000) s(i)) foo) bar ORDER BY c + 25 * random();
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a < '33e75ff0-9dd6-01bb-e69f-351039152189';
+ count 
+-------
+   195
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a > '33e75ff0-9dd6-01bb-e69f-351039152189';
+ count 
+-------
+   792
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a <= 'f457c545-a9de-d88f-18ec-ee47145a72c0';
+ count 
+-------
+   961
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a >= 'c51ce410-c124-a10e-0db5-e4b97fc2af39';
+ count 
+-------
+   272
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a = 'cfcd2084-95d5-65ef-66e7-dff9f98764da';
+ count 
+-------
+    12
+(1 row)
+
+SELECT COUNT(*) FROM brin_test_multi_2 WHERE a = 'aab32389-22bc-c25a-6f60-6eb525ffdc56';
+ count 
+-------
+    13
+(1 row)
+
+DROP TABLE brin_test_multi_2;
+RESET enable_seqscan;
