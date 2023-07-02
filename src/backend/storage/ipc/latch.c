@@ -86,14 +86,12 @@
 
 /*
  * By default, we use a self-pipe with poll() and a signalfd with epoll(), if
- * available.  We avoid signalfd on illumos for now based on problem reports.
- * For testing the choice can also be manually specified.
+ * available.  For testing the choice can also be manually specified.
  */
 #if defined(WAIT_USE_POLL) || defined(WAIT_USE_EPOLL)
 #if defined(WAIT_USE_SELF_PIPE) || defined(WAIT_USE_SIGNALFD)
 /* don't overwrite manual choice */
-#elif defined(WAIT_USE_EPOLL) && defined(HAVE_SYS_SIGNALFD_H) && \
-	!defined(__illumos__)
+#elif defined(WAIT_USE_EPOLL) && defined(HAVE_SYS_SIGNALFD_H)
 #define WAIT_USE_SIGNALFD
 #else
 #define WAIT_USE_SELF_PIPE
