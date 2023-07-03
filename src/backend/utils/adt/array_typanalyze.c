@@ -263,7 +263,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	 * the number of individual elements tracked in pg_statistic ought to be
 	 * more than the number of values for a simple scalar column.
 	 */
-	num_mcelem = stats->attr->attstattarget * 10;
+	num_mcelem = stats->attstattarget * 10;
 
 	/*
 	 * We set bucket width equal to num_mcelem / 0.007 as per the comment
@@ -575,7 +575,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		count_items_count = hash_get_num_entries(count_tab);
 		if (count_items_count > 0)
 		{
-			int			num_hist = stats->attr->attstattarget;
+			int			num_hist = stats->attstattarget;
 			DECountItem **sorted_count_items;
 			int			j;
 			int			delta;

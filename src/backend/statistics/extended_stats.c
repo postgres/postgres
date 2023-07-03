@@ -366,8 +366,8 @@ statext_compute_stattarget(int stattarget, int nattrs, VacAttrStats **stats)
 	for (i = 0; i < nattrs; i++)
 	{
 		/* keep the maximum statistics target */
-		if (stats[i]->attr->attstattarget > stattarget)
-			stattarget = stats[i]->attr->attstattarget;
+		if (stats[i]->attstattarget > stattarget)
+			stattarget = stats[i]->attstattarget;
 	}
 
 	/*
@@ -534,14 +534,10 @@ examine_attribute(Node *expr)
 	bool		ok;
 
 	/*
-	 * Create the VacAttrStats struct.  Note that we only have a copy of the
-	 * fixed fields of the pg_attribute tuple.
+	 * Create the VacAttrStats struct.
 	 */
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
-
-	/* fake the attribute */
-	stats->attr = (Form_pg_attribute) palloc0(ATTRIBUTE_FIXED_PART_SIZE);
-	stats->attr->attstattarget = -1;
+	stats->attstattarget = -1;
 
 	/*
 	 * When analyzing an expression, believe the expression tree's type not
@@ -595,7 +591,6 @@ examine_attribute(Node *expr)
 	if (!ok || stats->compute_stats == NULL || stats->minrows <= 0)
 	{
 		heap_freetuple(typtuple);
-		pfree(stats->attr);
 		pfree(stats);
 		return NULL;
 	}
@@ -625,6 +620,13 @@ examine_expression(Node *expr, int stattarget)
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
 
 	/*
+	 * We can't have statistics target specified for the expression, so we
+	 * could use either the default_statistics_target, or the target computed
+	 * for the extended statistics. The second option seems more reasonable.
+	 */
+	stats->attstattarget = stattarget;
+
+	/*
 	 * When analyzing an expression, believe the expression tree's type.
 	 */
 	stats->attrtypid = exprType(expr);
@@ -637,25 +639,6 @@ examine_expression(Node *expr, int stattarget)
 	 * which case exprCollation() does the right thing.
 	 */
 	stats->attrcollid = exprCollation(expr);
-
-	/*
-	 * We don't have any pg_attribute for expressions, so let's fake something
-	 * reasonable into attstattarget, which is the only thing std_typanalyze
-	 * needs.
-	 */
-	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
-
-	/*
-	 * We can't have statistics target specified for the expression, so we
-	 * could use either the default_statistics_target, or the target computed
-	 * for the extended statistics. The second option seems more reasonable.
-	 */
-	stats->attr->attstattarget = stattarget;
-
-	/* initialize some basic fields */
-	stats->attr->attrelid = InvalidOid;
-	stats->attr->attnum = InvalidAttrNumber;
-	stats->attr->atttypid = stats->attrtypid;
 
 	typtuple = SearchSysCacheCopy1(TYPEOID,
 								   ObjectIdGetDatum(stats->attrtypid));
@@ -746,12 +729,6 @@ lookup_var_attr_stats(Relation rel, Bitmapset *attrs, List *exprs,
 			pfree(stats);
 			return NULL;
 		}
-
-		/*
-		 * Sanity check that the column is not dropped - stats should have
-		 * been removed in this case.
-		 */
-		Assert(!stats[i]->attr->attisdropped);
 
 		i++;
 	}
@@ -2237,8 +2214,7 @@ compute_expr_stats(Relation onerel, double totalrows,
 		if (tcnt > 0)
 		{
 			AttributeOpts *aopt =
-				get_attribute_options(stats->attr->attrelid,
-									  stats->attr->attnum);
+				get_attribute_options(onerel->rd_id, stats->tupattnum);
 
 			stats->exprvals = exprvals;
 			stats->exprnulls = exprnulls;

@@ -116,16 +116,12 @@ typedef struct VacAttrStats
 {
 	/*
 	 * These fields are set up by the main ANALYZE code before invoking the
-	 * type-specific typanalyze function.
-	 *
-	 * Note: do not assume that the data being analyzed has the same datatype
-	 * shown in attr, ie do not trust attr->atttypid, attlen, etc.  This is
-	 * because some index opclasses store a different type than the underlying
-	 * column/expression.  Instead use attrtypid, attrtypmod, and attrtype for
+	 * type-specific typanalyze function.  They don't necessarily match what
+	 * is in pg_attribute, because some index opclasses store a different type
+	 * than the underlying column/expression.  Therefore, use these fields for
 	 * information about the datatype being fed to the typanalyze function.
-	 * Likewise, use attrcollid not attr->attcollation.
 	 */
-	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
+	int			attstattarget;
 	Oid			attrtypid;		/* type of data being analyzed */
 	int32		attrtypmod;		/* typmod of data being analyzed */
 	Form_pg_type attrtype;		/* copy of pg_type row for attrtypid */
