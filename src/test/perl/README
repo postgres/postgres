@@ -31,8 +31,9 @@ some lesser number of seconds.
 
 Data directories will also be left behind for analysis when a test fails;
 they are named according to the test filename.  But if the environment
-variable PG_TEST_NOCLEAN is set, data directories will be retained
-regardless of test status.
+variable PG_TEST_NOCLEAN is set, the data directories will be retained
+regardless of test status.  This environment variable also prevents the
+test's temporary directories from being removed.
 
 
 Writing tests
