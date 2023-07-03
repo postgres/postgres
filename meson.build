@@ -361,6 +361,10 @@ bison_kw = {
 }
 
 flex_flags = []
+if flex.found()
+  flex_version_c = run_command(flex, '--version', check: true)
+  flex_version = flex_version_c.stdout().split(' ')[1].split('\n')[0]
+endif
 flex_wrapper = files('src/tools/pgflex')
 flex_cmd = [python, flex_wrapper,
   '--builddir', '@BUILD_ROOT@',
@@ -3370,6 +3374,7 @@ if meson.version().version_compare('>=0.57')
     {
       'bison': '@0@ @1@'.format(bison.full_path(), bison_version),
       'dtrace': dtrace,
+      'flex': '@0@ @1@'.format(flex.full_path(), flex_version),
     },
     section: 'Programs',
   )
