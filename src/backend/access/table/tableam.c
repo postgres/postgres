@@ -737,11 +737,19 @@ table_block_relation_estimate_size(Relation rel, int32 *attr_widths,
 		 * and (c) different table AMs might use different padding schemes.
 		 */
 		int32		tuple_width;
+		int			fillfactor;
+
+		/*
+		 * Without reltuples/relpages, we also need to consider fillfactor.
+		 * The other branch considers it implicitly by calculating density
+		 * from actual relpages/reltuples statistics.
+		 */
+		fillfactor = RelationGetFillFactor(rel, HEAP_DEFAULT_FILLFACTOR);
 
 		tuple_width = get_rel_data_width(rel, attr_widths);
 		tuple_width += overhead_bytes_per_tuple;
 		/* note: integer division is intentional here */
-		density = usable_bytes_per_page / tuple_width;
+		density = (usable_bytes_per_page * fillfactor / 100) / tuple_width;
 	}
 	*tuples = rint(density * (double) curpages);
 
