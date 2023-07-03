@@ -43,7 +43,7 @@ CATALOG(pg_statistic_ext,3381,StatisticExtRelationId)
 														 * object's namespace */
 
 	Oid			stxowner BKI_LOOKUP(pg_authid); /* statistics object's owner */
-	int32		stxstattarget BKI_DEFAULT(-1);	/* statistics target */
+	int16		stxstattarget BKI_DEFAULT(-1);	/* statistics target */
 
 	/*
 	 * variable-length fields start here, but we allow direct access to
