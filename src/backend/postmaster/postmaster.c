@@ -2290,15 +2290,6 @@ retry1:
 		}
 	}
 
-	/*
-	 * Truncate given database and user names to length of a Postgres name.
-	 * This avoids lookup failures when overlength names are given.
-	 */
-	if (strlen(port->database_name) >= NAMEDATALEN)
-		port->database_name[NAMEDATALEN - 1] = '\0';
-	if (strlen(port->user_name) >= NAMEDATALEN)
-		port->user_name[NAMEDATALEN - 1] = '\0';
-
 	if (am_walsender)
 		MyBackendType = B_WAL_SENDER;
 	else
