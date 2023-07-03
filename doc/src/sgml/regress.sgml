@@ -818,6 +818,8 @@ make check PROVE_TESTS='t/001_test1.pl t/003_test3.pl'
 <programlisting>
 PG_TEST_NOCLEAN=1 make -C src/bin/pg_dump check
 </programlisting>
+    This environment variable also prevents the test's temporary directories
+    from being removed.
    </para>
 
    <para>
