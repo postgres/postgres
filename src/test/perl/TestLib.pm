@@ -252,7 +252,7 @@ sub all_tests_passing
 
 Securely create a temporary directory inside C<$tmp_check>, like C<mkdtemp>,
 and return its name.  The directory will be removed automatically at the
-end of the tests.
+end of the tests, unless the environment variable PG_TEST_NOCLEAN is provided.
 
 If C<prefix> is given, the new directory is templated as C<${prefix}_XXXX>.
 Otherwise the template is C<tmp_test_XXXX>.
@@ -266,7 +266,7 @@ sub tempdir
 	return File::Temp::tempdir(
 		$prefix . '_XXXX',
 		DIR     => $tmp_check,
-		CLEANUP => 1);
+		CLEANUP => not defined $ENV{'PG_TEST_NOCLEAN'});
 }
 
 =pod
@@ -281,7 +281,8 @@ name, to avoid path length issues.
 sub tempdir_short
 {
 
-	return File::Temp::tempdir(CLEANUP => 1);
+	return File::Temp::tempdir(
+		CLEANUP => not defined $ENV{'PG_TEST_NOCLEAN'});
 }
 
 =pod
