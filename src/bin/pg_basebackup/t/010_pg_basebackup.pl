@@ -203,8 +203,12 @@ $node->command_fails(
 	'-T with invalid format fails');
 
 # Tar format doesn't support filenames longer than 100 bytes.
+# Create the test file via a short name directory so it doesn't blow the
+# Windows path limit.
+my $lftmp = PostgreSQL::Test::Utils::tempdir_short;
+dir_symlink "$pgdata", "$lftmp/pgdata";
 my $superlongname = "superlongname_" . ("x" x 100);
-my $superlongpath = "$pgdata/$superlongname";
+my $superlongpath = "$lftmp/pgdata/$superlongname";
 
 open my $file, '>', "$superlongpath"
   or die "unable to create file $superlongpath";
@@ -212,7 +216,7 @@ close $file;
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/tarbackup_l1", '-Ft' ],
 	'pg_basebackup tar with long name fails');
-unlink "$pgdata/$superlongname";
+unlink "$superlongpath";
 
 # The following tests are for symlinks.
 
