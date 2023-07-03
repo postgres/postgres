@@ -371,7 +371,6 @@ sub GenerateFiles
 		HAVE_UUID_UUID_H => undef,
 		HAVE_WCSTOMBS_L => 1,
 		HAVE_VISIBILITY_ATTRIBUTE => undef,
-		HAVE_X509_GET_SIGNATURE_NID => 1,
 		HAVE_X509_GET_SIGNATURE_INFO => undef,
 		HAVE_X86_64_POPCNTQ => undef,
 		HAVE__BOOL => undef,
@@ -488,6 +487,7 @@ sub GenerateFiles
 	if ($self->{options}->{openssl})
 	{
 		$define{USE_OPENSSL} = 1;
+		$define{HAVE_SSL_CTX_SET_CERT_CB} = 1;
 
 		my ($digit1, $digit2, $digit3) = $self->GetOpenSSLVersion();
 
@@ -508,14 +508,6 @@ sub GenerateFiles
 			$define{HAVE_HMAC_CTX_FREE} = 1;
 			$define{HAVE_HMAC_CTX_NEW} = 1;
 			$define{HAVE_OPENSSL_INIT_SSL} = 1;
-		}
-
-		# Symbols needed with OpenSSL 1.0.2 and above.
-		if (   ($digit1 >= '3' && $digit2 >= '0' && $digit3 >= '0')
-			|| ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0')
-			|| ($digit1 >= '1' && $digit2 >= '0' && $digit3 >= '2'))
-		{
-			$define{HAVE_SSL_CTX_SET_CERT_CB} = 1;
 		}
 	}
 

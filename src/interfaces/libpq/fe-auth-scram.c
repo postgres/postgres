@@ -401,7 +401,7 @@ build_client_first_message(fe_scram_state *state)
 		Assert(conn->ssl_in_use);
 		appendPQExpBufferStr(&buf, "p=tls-server-end-point");
 	}
-#ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
+#ifdef USE_SSL
 	else if (conn->channel_binding[0] != 'd' && /* disable */
 			 conn->ssl_in_use)
 	{
@@ -474,7 +474,7 @@ build_client_final_message(fe_scram_state *state)
 	 */
 	if (strcmp(state->sasl_mechanism, SCRAM_SHA_256_PLUS_NAME) == 0)
 	{
-#ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
+#ifdef USE_SSL
 		char	   *cbind_data = NULL;
 		size_t		cbind_data_len = 0;
 		size_t		cbind_header_len;
@@ -540,9 +540,9 @@ build_client_final_message(fe_scram_state *state)
 		appendPQExpBufferStr(&conn->errorMessage,
 							 "channel binding not supported by this build\n");
 		return NULL;
-#endif							/* HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH */
+#endif							/* USE_SSL */
 	}
-#ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
+#ifdef USE_SSL
 	else if (conn->channel_binding[0] != 'd' && /* disable */
 			 conn->ssl_in_use)
 		appendPQExpBufferStr(&buf, "c=eSws");	/* base64 of "y,," */

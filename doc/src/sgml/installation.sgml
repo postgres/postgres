@@ -275,7 +275,7 @@ documentation.  See standalone-profile.xsl for details.
       encrypted client connections.  <productname>OpenSSL</productname> is
       also required for random number generation on platforms that do not
       have <filename>/dev/urandom</filename> (except Windows).  The minimum
-      required version is 1.0.1.
+      required version is 1.0.2.
      </para>
     </listitem>
 

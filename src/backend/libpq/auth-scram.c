@@ -209,10 +209,9 @@ scram_get_mechanisms(Port *port, StringInfo buf)
 	/*
 	 * Advertise the mechanisms in decreasing order of importance.  So the
 	 * channel-binding variants go first, if they are supported.  Channel
-	 * binding is only supported with SSL, and only if the SSL implementation
-	 * has a function to get the certificate's hash.
+	 * binding is only supported with SSL.
 	 */
-#ifdef HAVE_BE_TLS_GET_CERTIFICATE_HASH
+#ifdef USE_SSL
 	if (port->ssl_in_use)
 	{
 		appendStringInfoString(buf, SCRAM_SHA_256_PLUS_NAME);
@@ -251,13 +250,12 @@ scram_init(Port *port, const char *selected_mech, const char *shadow_pass)
 	/*
 	 * Parse the selected mechanism.
 	 *
-	 * Note that if we don't support channel binding, either because the SSL
-	 * implementation doesn't support it or we're not using SSL at all, we
-	 * would not have advertised the PLUS variant in the first place.  If the
-	 * client nevertheless tries to select it, it's a protocol violation like
-	 * selecting any other SASL mechanism we don't support.
+	 * Note that if we don't support channel binding, or if we're not using
+	 * SSL at all, we would not have advertised the PLUS variant in the first
+	 * place.  If the client nevertheless tries to select it, it's a protocol
+	 * violation like selecting any other SASL mechanism we don't support.
 	 */
-#ifdef HAVE_BE_TLS_GET_CERTIFICATE_HASH
+#ifdef USE_SSL
 	if (strcmp(selected_mech, SCRAM_SHA_256_PLUS_NAME) == 0 && port->ssl_in_use)
 		state->channel_binding_in_use = true;
 	else
@@ -1010,7 +1008,7 @@ read_client_first_message(scram_state *state, const char *input)
 						 errmsg("malformed SCRAM message"),
 						 errdetail("The client selected SCRAM-SHA-256-PLUS, but the SCRAM message does not include channel binding data.")));
 
-#ifdef HAVE_BE_TLS_GET_CERTIFICATE_HASH
+#ifdef USE_SSL
 			if (state->port->ssl_in_use)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
@@ -1306,7 +1304,7 @@ read_client_final_message(scram_state *state, const char *input)
 	channel_binding = read_attr_value(&p, 'c');
 	if (state->channel_binding_in_use)
 	{
-#ifdef HAVE_BE_TLS_GET_CERTIFICATE_HASH
+#ifdef USE_SSL
 		const char *cbind_data = NULL;
 		size_t		cbind_data_len = 0;
 		size_t		cbind_header_len;

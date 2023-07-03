@@ -478,7 +478,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 			{
 				/* The server has offered SCRAM-SHA-256-PLUS. */
 
-#ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
+#ifdef USE_SSL
 				/*
 				 * The client supports channel binding, which is chosen if
 				 * channel_binding is not disabled.

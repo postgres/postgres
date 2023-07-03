@@ -364,7 +364,6 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 	return n;
 }
 
-#if defined(HAVE_X509_GET_SIGNATURE_NID) || defined(HAVE_X509_GET_SIGNATURE_INFO)
 char *
 pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 {
@@ -439,7 +438,6 @@ pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 
 	return cert_hash;
 }
-#endif							/* HAVE_X509_GET_SIGNATURE_NID */
 
 /* ------------------------------------------------------------ */
 /*						OpenSSL specific code					*/
@@ -1826,8 +1824,6 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
  *
  * These functions are closely modelled on the standard socket BIO in OpenSSL;
  * see sock_read() and sock_write() in OpenSSL's crypto/bio/bss_sock.c.
- * XXX OpenSSL 1.0.1e considers many more errcodes than just EINTR as reasons
- * to retry; do we need to adopt their logic for that?
  */
 
 #ifndef HAVE_BIO_GET_DATA

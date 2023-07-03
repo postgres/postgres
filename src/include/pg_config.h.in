@@ -529,9 +529,6 @@
 /* Define to 1 if you have the `X509_get_signature_info' function. */
 #undef HAVE_X509_GET_SIGNATURE_INFO
 
-/* Define to 1 if you have the `X509_get_signature_nid' function. */
-#undef HAVE_X509_GET_SIGNATURE_NID
-
 /* Define to 1 if the assembler supports X86_64's POPCNTQ instruction. */
 #undef HAVE_X86_64_POPCNTQ
 

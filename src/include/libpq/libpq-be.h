@@ -305,14 +305,8 @@ extern void be_tls_get_peer_serial(Port *port, char *ptr, size_t len);
  *
  * The result is a palloc'd hash of the server certificate with its
  * size, and NULL if there is no certificate available.
- *
- * This is not supported with old versions of OpenSSL that don't have
- * the X509_get_signature_nid() function.
  */
-#if defined(USE_OPENSSL) && (defined(HAVE_X509_GET_SIGNATURE_NID) || defined(HAVE_X509_GET_SIGNATURE_INFO))
-#define HAVE_BE_TLS_GET_CERTIFICATE_HASH
 extern char *be_tls_get_certificate_hash(Port *port, size_t *len);
-#endif
 
 /* init hook for SSL, the default sets the password callback if appropriate */
 #ifdef USE_OPENSSL

@@ -44,9 +44,6 @@ my $SERVERHOSTADDR = '127.0.0.1';
 # This is the pattern to use in pg_hba.conf to match incoming connections.
 my $SERVERHOSTCIDR = '127.0.0.1/32';
 
-# Determine whether build supports tls-server-end-point.
-my $supports_tls_server_end_point =
-  check_pg_config("#define HAVE_X509_GET_SIGNATURE_NID 1");
 # Determine whether build supports detection of hash algorithms for
 # RSA-PSS certificates.
 my $supports_rsapss_certs =
@@ -90,21 +87,9 @@ $node->connect_fails(
 	expected_stderr => qr/invalid channel_binding value: "invalid_value"/);
 $node->connect_ok("$common_connstr user=ssltestuser channel_binding=disable",
 	"SCRAM with SSL and channel_binding=disable");
-if ($supports_tls_server_end_point)
-{
-	$node->connect_ok(
-		"$common_connstr user=ssltestuser channel_binding=require",
-		"SCRAM with SSL and channel_binding=require");
-}
-else
-{
-	$node->connect_fails(
-		"$common_connstr user=ssltestuser channel_binding=require",
-		"SCRAM with SSL and channel_binding=require",
-		expected_stderr =>
-		  qr/channel binding is required, but server did not offer an authentication method that supports channel binding/
-	);
-}
+$node->connect_ok(
+	"$common_connstr user=ssltestuser channel_binding=require",
+	"SCRAM with SSL and channel_binding=require");
 
 # Now test when the user has an MD5-encrypted password; should fail
 $node->connect_fails(
@@ -152,22 +137,10 @@ $node->connect_fails(
 	expected_stderr =>
 	  qr/channel binding required but not supported by server's authentication request/
 );
-if ($supports_tls_server_end_point)
-{
-	$node->connect_ok(
-		"$common_connstr user=ssltestuser channel_binding=require require_auth=scram-sha-256",
-		"SCRAM with SSL, channel_binding=require, and require_auth=scram-sha-256"
-	);
-}
-else
-{
-	$node->connect_fails(
-		"$common_connstr user=ssltestuser channel_binding=require require_auth=scram-sha-256",
-		"SCRAM with SSL, channel_binding=require, and require_auth=scram-sha-256",
-		expected_stderr =>
-		  qr/channel binding is required, but server did not offer an authentication method that supports channel binding/
-	);
-}
+$node->connect_ok(
+	"$common_connstr user=ssltestuser channel_binding=require require_auth=scram-sha-256",
+	"SCRAM with SSL, channel_binding=require, and require_auth=scram-sha-256"
+);
 
 # Now test with a server certificate that uses the RSA-PSS algorithm.
 # This checks that the certificate can be loaded and that channel binding

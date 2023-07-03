@@ -833,14 +833,8 @@ extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
  *
  * NULL is sent back to the caller in the event of an error, with an
  * error message for the caller to consume.
- *
- * This is not supported with old versions of OpenSSL that don't have
- * the X509_get_signature_nid() function.
  */
-#if defined(USE_OPENSSL) && (defined(HAVE_X509_GET_SIGNATURE_NID) || defined(HAVE_X509_GET_SIGNATURE_INFO))
-#define HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
 extern char *pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len);
-#endif
 
 /*
  * Verify that the server certificate matches the host name we connected to.
