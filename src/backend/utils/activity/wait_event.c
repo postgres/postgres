@@ -28,7 +28,9 @@
 
 
 static const char *pgstat_get_wait_activity(WaitEventActivity w);
+static const char *pgstat_get_wait_bufferpin(WaitEventBufferPin w);
 static const char *pgstat_get_wait_client(WaitEventClient w);
+static const char *pgstat_get_wait_extension(WaitEventExtension w);
 static const char *pgstat_get_wait_ipc(WaitEventIPC w);
 static const char *pgstat_get_wait_timeout(WaitEventTimeout w);
 static const char *pgstat_get_wait_io(WaitEventIO w);
@@ -90,7 +92,7 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 		case PG_WAIT_LOCK:
 			event_type = "Lock";
 			break;
-		case PG_WAIT_BUFFER_PIN:
+		case PG_WAIT_BUFFERPIN:
 			event_type = "BufferPin";
 			break;
 		case PG_WAIT_ACTIVITY:
@@ -147,9 +149,13 @@ pgstat_get_wait_event(uint32 wait_event_info)
 		case PG_WAIT_LOCK:
 			event_name = GetLockNameFromTagType(eventId);
 			break;
-		case PG_WAIT_BUFFER_PIN:
-			event_name = "BufferPin";
-			break;
+		case PG_WAIT_BUFFERPIN:
+			{
+				WaitEventBufferPin w = (WaitEventBufferPin) wait_event_info;
+
+				event_name = pgstat_get_wait_bufferpin(w);
+				break;
+			}
 		case PG_WAIT_ACTIVITY:
 			{
 				WaitEventActivity w = (WaitEventActivity) wait_event_info;
@@ -165,8 +171,12 @@ pgstat_get_wait_event(uint32 wait_event_info)
 				break;
 			}
 		case PG_WAIT_EXTENSION:
-			event_name = "Extension";
-			break;
+			{
+				WaitEventExtension w = (WaitEventExtension) wait_event_info;
+
+				event_name = pgstat_get_wait_extension(w);
+				break;
+			}
 		case PG_WAIT_IPC:
 			{
 				WaitEventIPC w = (WaitEventIPC) wait_event_info;
@@ -255,6 +265,28 @@ pgstat_get_wait_activity(WaitEventActivity w)
 }
 
 /* ----------
+ * pgstat_get_wait_bufferpin() -
+ *
+ * Convert WaitEventBufferPin to string.
+ * ----------
+ */
+static const char *
+pgstat_get_wait_bufferpin(WaitEventBufferPin w)
+{
+	const char *event_name = "unknown wait event";
+
+	switch (w)
+	{
+		case WAIT_EVENT_BUFFER_PIN:
+			event_name = "BufferPin";
+			break;
+			/* no default case, so that compiler will warn */
+	}
+
+	return event_name;
+}
+
+/* ----------
  * pgstat_get_wait_client() -
  *
  * Convert WaitEventClient to string.
@@ -290,6 +322,28 @@ pgstat_get_wait_client(WaitEventClient w)
 			break;
 		case WAIT_EVENT_WAL_SENDER_WRITE_DATA:
 			event_name = "WalSenderWriteData";
+			break;
+			/* no default case, so that compiler will warn */
+	}
+
+	return event_name;
+}
+
+/* ----------
+ * pgstat_get_wait_extension() -
+ *
+ * Convert WaitEventExtension to string.
+ * ----------
+ */
+static const char *
+pgstat_get_wait_extension(WaitEventExtension w)
+{
+	const char *event_name = "unknown wait event";
+
+	switch (w)
+	{
+		case WAIT_EVENT_EXTENSION:
+			event_name = "Extension";
 			break;
 			/* no default case, so that compiler will warn */
 	}

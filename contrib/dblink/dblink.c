@@ -203,7 +203,7 @@ dblink_get_conn(char *conname_or_str,
 		dblink_connstr_check(connstr);
 
 		/* OK to make connection */
-		conn = libpqsrv_connect(connstr, PG_WAIT_EXTENSION);
+		conn = libpqsrv_connect(connstr, WAIT_EVENT_EXTENSION);
 
 		if (PQstatus(conn) == CONNECTION_BAD)
 		{
@@ -293,7 +293,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 	dblink_connstr_check(connstr);
 
 	/* OK to make connection */
-	conn = libpqsrv_connect(connstr, PG_WAIT_EXTENSION);
+	conn = libpqsrv_connect(connstr, WAIT_EVENT_EXTENSION);
 
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{

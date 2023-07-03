@@ -17,7 +17,7 @@
  */
 #define PG_WAIT_LWLOCK				0x01000000U
 #define PG_WAIT_LOCK				0x03000000U
-#define PG_WAIT_BUFFER_PIN			0x04000000U
+#define PG_WAIT_BUFFERPIN			0x04000000U
 #define PG_WAIT_ACTIVITY			0x05000000U
 #define PG_WAIT_CLIENT				0x06000000U
 #define PG_WAIT_EXTENSION			0x07000000U
@@ -51,6 +51,15 @@ typedef enum
 } WaitEventActivity;
 
 /* ----------
+ * Wait Events - BUFFERPIN
+ * ----------
+ */
+typedef enum
+{
+	WAIT_EVENT_BUFFER_PIN = PG_WAIT_BUFFERPIN
+} WaitEventBufferPin;
+
+/* ----------
  * Wait Events - Client
  *
  * Use this category when a process is waiting to send data to or receive data
@@ -69,6 +78,15 @@ typedef enum
 	WAIT_EVENT_WAL_SENDER_WAIT_WAL,
 	WAIT_EVENT_WAL_SENDER_WRITE_DATA,
 } WaitEventClient;
+
+/* ----------
+ * Wait Events - EXTENSION
+ * ----------
+ */
+typedef enum
+{
+	WAIT_EVENT_EXTENSION = PG_WAIT_EXTENSION
+} WaitEventExtension;
 
 /* ----------
  * Wait Events - IPC

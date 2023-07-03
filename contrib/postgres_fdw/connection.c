@@ -530,7 +530,7 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		/* OK to make connection */
 		conn = libpqsrv_connect_params(keywords, values,
 									   false,	/* expand_dbname */
-									   PG_WAIT_EXTENSION);
+									   WAIT_EVENT_EXTENSION);
 
 		if (!conn || PQstatus(conn) != CONNECTION_OK)
 			ereport(ERROR,
@@ -863,7 +863,7 @@ pgfdw_get_result(PGconn *conn, const char *query)
 									   WL_LATCH_SET | WL_SOCKET_READABLE |
 									   WL_EXIT_ON_PM_DEATH,
 									   PQsocket(conn),
-									   -1L, PG_WAIT_EXTENSION);
+									   -1L, WAIT_EVENT_EXTENSION);
 				ResetLatch(MyLatch);
 
 				CHECK_FOR_INTERRUPTS();
@@ -1567,7 +1567,7 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result,
 									   WL_LATCH_SET | WL_SOCKET_READABLE |
 									   WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 									   PQsocket(conn),
-									   cur_timeout, PG_WAIT_EXTENSION);
+									   cur_timeout, WAIT_EVENT_EXTENSION);
 				ResetLatch(MyLatch);
 
 				CHECK_FOR_INTERRUPTS();

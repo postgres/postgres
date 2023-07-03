@@ -199,7 +199,7 @@ worker_spi_main(Datum main_arg)
 		(void) WaitLatch(MyLatch,
 						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 						 worker_spi_naptime * 1000L,
-						 PG_WAIT_EXTENSION);
+						 WAIT_EVENT_EXTENSION);
 		ResetLatch(MyLatch);
 
 		CHECK_FOR_INTERRUPTS();
