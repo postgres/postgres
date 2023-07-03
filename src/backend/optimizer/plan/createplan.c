@@ -2623,12 +2623,7 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 
 	/*
 	 * Convert SortGroupClause lists into arrays of attr indexes and equality
-	 * operators, as wanted by executor.  (Note: in principle, it's possible
-	 * to drop some of the sort columns, if they were proved redundant by
-	 * pathkey logic.  However, it doesn't seem worth going out of our way to
-	 * optimize such cases.  In any case, we must *not* remove the ordering
-	 * column for RANGE OFFSET cases, as the executor needs that for in_range
-	 * tests even if it's known to be equal to some partitioning column.)
+	 * operators, as wanted by executor.
 	 */
 	partColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numPart);
 	partOperators = (Oid *) palloc(sizeof(Oid) * numPart);

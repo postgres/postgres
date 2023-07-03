@@ -1473,6 +1473,8 @@ typedef struct GroupingSet
  * if the clause originally came from WINDOW, and is NULL if it originally
  * was an OVER clause (but note that we collapse out duplicate OVERs).
  * partitionClause and orderClause are lists of SortGroupClause structs.
+ * partitionClause is sanitized by the query planner to remove any columns or
+ * expressions belonging to redundant PathKeys.
  * If we have RANGE with offset PRECEDING/FOLLOWING, the semantics of that are
  * specified by startInRangeFunc/inRangeColl/inRangeAsc/inRangeNullsFirst
  * for the start offset, or endInRangeFunc/inRange* for the end offset.

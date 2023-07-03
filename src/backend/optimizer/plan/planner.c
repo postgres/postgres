@@ -5999,6 +5999,9 @@ make_window_input_target(PlannerInfo *root,
  *		Create a pathkeys list describing the required input ordering
  *		for the given WindowClause.
  *
+ * Modifies wc's partitionClause to remove any clauses which are deemed
+ * redundant by the pathkey logic.
+ *
  * The required ordering is first the PARTITION keys, then the ORDER keys.
  * In the future we might try to implement windowing using hashing, in which
  * case the ordering could be relaxed, but for now we always sort.
@@ -6007,8 +6010,7 @@ static List *
 make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 						 List *tlist)
 {
-	List	   *window_pathkeys;
-	List	   *window_sortclauses;
+	List	   *window_pathkeys = NIL;
 
 	/* Throw error if can't sort */
 	if (!grouping_is_sortable(wc->partitionClause))
@@ -6022,12 +6024,45 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 				 errmsg("could not implement window ORDER BY"),
 				 errdetail("Window ordering columns must be of sortable datatypes.")));
 
-	/* Okay, make the combined pathkeys */
-	window_sortclauses = list_concat_copy(wc->partitionClause, wc->orderClause);
-	window_pathkeys = make_pathkeys_for_sortclauses(root,
-													window_sortclauses,
-													tlist);
-	list_free(window_sortclauses);
+	/*
+	 * First fetch the pathkeys for the PARTITION BY clause.  We can safely
+	 * remove any clauses from the wc->partitionClause for redundant pathkeys.
+	 */
+	if (wc->partitionClause != NIL)
+	{
+		bool		sortable;
+
+		window_pathkeys = make_pathkeys_for_sortclauses_extended(root,
+																 &wc->partitionClause,
+																 tlist,
+																 true,
+																 &sortable);
+
+		Assert(sortable);
+	}
+
+	/*
+	 * In principle, we could also consider removing redundant ORDER BY items
+	 * too as doing so does not alter the result of peer row checks done by
+	 * the executor.  However, we must *not* remove the ordering column for
+	 * RANGE OFFSET cases, as the executor needs that for in_range tests even
+	 * if it's known to be equal to some partitioning column.
+	 */
+	if (wc->orderClause != NIL)
+	{
+		List	   *orderby_pathkeys;
+
+		orderby_pathkeys = make_pathkeys_for_sortclauses(root,
+														 wc->orderClause,
+														 tlist);
+
+		/* Okay, make the combined pathkeys */
+		if (window_pathkeys != NIL)
+			window_pathkeys = append_pathkeys(window_pathkeys, orderby_pathkeys);
+		else
+			window_pathkeys = orderby_pathkeys;
+	}
+
 	return window_pathkeys;
 }
 
