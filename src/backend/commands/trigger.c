@@ -3986,8 +3986,8 @@ afterTriggerCheckState(AfterTriggerShared evtshared)
 static Bitmapset *
 afterTriggerCopyBitmap(Bitmapset *src)
 {
-	Bitmapset	   *dst;
-	MemoryContext	oldcxt;
+	Bitmapset  *dst;
+	MemoryContext oldcxt;
 
 	if (src == NULL)
 		return NULL;

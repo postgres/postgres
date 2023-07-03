@@ -274,9 +274,9 @@ static void
 bloom_filter_size(int ndistinct, double false_positive_rate,
 				  int *nbytesp, int *nbitsp, int *nhashesp)
 {
-	double	k;
-	int		nbits,
-			nbytes;
+	double		k;
+	int			nbits,
+				nbytes;
 
 	/* sizing bloom filter: -(n * ln(p)) / (ln(2))^2 */
 	nbits = ceil(-(ndistinct * log(false_positive_rate)) / pow(log(2.0), 2));
@@ -616,8 +616,8 @@ brin_bloom_consistent(PG_FUNCTION_ARGS)
 	Assert(filter);
 
 	/*
-	 * Assume all scan keys match. We'll be searching for a scan key eliminating
-	 * the page range (we can stop on the first such key).
+	 * Assume all scan keys match. We'll be searching for a scan key
+	 * eliminating the page range (we can stop on the first such key).
 	 */
 	matches = true;
 
@@ -636,8 +636,8 @@ brin_bloom_consistent(PG_FUNCTION_ARGS)
 			case BloomEqualStrategyNumber:
 
 				/*
-				 * We want to return the current page range if the bloom filter
-				 * seems to contain the value.
+				 * We want to return the current page range if the bloom
+				 * filter seems to contain the value.
 				 */
 				finfo = bloom_get_procinfo(bdesc, attno, PROCNUM_HASH);
 
