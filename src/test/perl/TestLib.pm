@@ -187,7 +187,7 @@ sub tempdir
 	return File::Temp::tempdir(
 		$prefix . '_XXXX',
 		DIR     => $tmp_check,
-		CLEANUP => 1);
+		CLEANUP => not defined $ENV{'PG_TEST_NOCLEAN'});
 }
 
 sub tempdir_short
@@ -195,7 +195,8 @@ sub tempdir_short
 
 	# Use a separate temp dir outside the build tree for the
 	# Unix-domain socket, to avoid file name length issues.
-	return File::Temp::tempdir(CLEANUP => 1);
+	return File::Temp::tempdir(
+		CLEANUP => not defined $ENV{'PG_TEST_NOCLEAN'});
 }
 
 =pod
