@@ -205,7 +205,7 @@ $node->command_fails(
 # Tar format doesn't support filenames longer than 100 bytes.
 # Create the test file via a short name directory so it doesn't blow the
 # Windows path limit.
-my $lftmp = PostgreSQL::Test::Utils::tempdir_short;
+my $lftmp = TestLib::tempdir_short;
 dir_symlink "$pgdata", "$lftmp/pgdata";
 my $superlongname = "superlongname_" . ("x" x 100);
 my $superlongpath = "$lftmp/pgdata/$superlongname";
