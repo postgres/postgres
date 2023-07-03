@@ -523,7 +523,7 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 
 			fexpr = makeFuncExpr(F_INT8INC, INT8OID, list_make1(fs), InvalidOid, InvalidOid, COERCE_EXPLICIT_CALL);
 
-			lfirst(list_head(search_col_rowexpr->args)) = fexpr;
+			linitial(search_col_rowexpr->args) = fexpr;
 
 			texpr = (Expr *) search_col_rowexpr;
 		}
