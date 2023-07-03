@@ -1,7 +1,15 @@
-CREATE EXTENSION unaccent;
+/*
+ * This test must be run in a database with UTF-8 encoding,
+ * because other encodings don't support all the characters used.
+ */
 
--- must have a UTF8 database
-SELECT getdatabaseencoding();
+SELECT getdatabaseencoding() <> 'UTF8'
+       AS skip_test \gset
+\if :skip_test
+\quit
+\endif
+
+CREATE EXTENSION unaccent;
 
 SET client_encoding TO 'UTF8';
 

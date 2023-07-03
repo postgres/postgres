@@ -12,10 +12,6 @@ PGFILEDESC = "unaccent - text search dictionary that removes accents"
 
 REGRESS = unaccent
 
-# We need a UTF8 database
-ENCODING = UTF8
-NO_LOCALE = 1
-
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
