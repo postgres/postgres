@@ -305,6 +305,13 @@ extern PGDLLIMPORT int vacuum_multixact_freeze_table_age;
 extern PGDLLIMPORT int vacuum_failsafe_age;
 extern PGDLLIMPORT int vacuum_multixact_failsafe_age;
 
+/*
+ * Maximum value for default_statistics_target and per-column statistics
+ * targets.  This is fairly arbitrary, mainly to prevent users from creating
+ * unreasonably large statistics that the system cannot handle well.
+ */
+#define MAX_STATISTICS_TARGET 10000
+
 /* Variables for cost-based parallel vacuum */
 extern PGDLLIMPORT pg_atomic_uint32 *VacuumSharedCostBalance;
 extern PGDLLIMPORT pg_atomic_uint32 *VacuumActiveNWorkers;

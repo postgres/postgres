@@ -165,7 +165,7 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	 * that no value has been explicitly set for this column, so ANALYZE
 	 * should use the default setting.
 	 *
-	 * int16 is sufficient because the max value is currently 10000.
+	 * int16 is sufficient for the current max value (MAX_STATISTICS_TARGET).
 	 */
 	int16		attstattarget BKI_DEFAULT(-1);
 

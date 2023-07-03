@@ -379,7 +379,7 @@ statext_compute_stattarget(int stattarget, int nattrs, VacAttrStats **stats)
 		stattarget = default_statistics_target;
 
 	/* As this point we should have a valid statistics target. */
-	Assert((stattarget >= 0) && (stattarget <= 10000));
+	Assert((stattarget >= 0) && (stattarget <= MAX_STATISTICS_TARGET));
 
 	return stattarget;
 }

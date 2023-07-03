@@ -2035,7 +2035,7 @@ struct config_int ConfigureNamesInt[] =
 						 "column-specific target set via ALTER TABLE SET STATISTICS.")
 		},
 		&default_statistics_target,
-		100, 1, 10000,
+		100, 1, MAX_STATISTICS_TARGET,
 		NULL, NULL, NULL
 	},
 	{
