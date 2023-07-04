@@ -31,7 +31,7 @@ setup
     RETURN $1;
     END;$$;
 
-    CREATE OR REPLACE FUNCTION ctoast_large_val() RETURNS TEXT LANGUAGE SQL AS 'select array_agg(md5(g::text))::text from generate_series(1, 256) g';
+    CREATE OR REPLACE FUNCTION ctoast_large_val() RETURNS text LANGUAGE SQL AS $$ select string_agg(encode(sha256(g::text::bytea),'hex'), '')::text from generate_series(1, 133) g $$;
 
     CREATE TABLE upserttest(key text, data text);
 

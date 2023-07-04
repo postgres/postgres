@@ -48,7 +48,7 @@ is($result, qq(2|2|2), 'check initial data was copied to subscriber');
 
 # Update the rows on the publisher and check the additional columns on
 # subscriber didn't change
-$node_publisher->safe_psql('postgres', "UPDATE test_tab SET b = md5(b)");
+$node_publisher->safe_psql('postgres', "UPDATE test_tab SET b = encode(sha256(b::bytea), 'hex')");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
@@ -65,7 +65,7 @@ $node_subscriber->safe_psql('postgres',
 	"UPDATE test_tab SET c = 'epoch'::timestamptz + 987654321 * interval '1s'"
 );
 $node_publisher->safe_psql('postgres',
-	"UPDATE test_tab SET b = md5(a::text)");
+	"UPDATE test_tab SET b = encode(sha256(a::text::bytea), 'hex')");
 
 $node_publisher->wait_for_catchup('tap_sub');
 

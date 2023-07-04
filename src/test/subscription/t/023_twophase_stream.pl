@@ -45,8 +45,8 @@ sub test_streaming
 	$node_publisher->safe_psql(
 		'postgres', q{
 		BEGIN;
-		INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
-		UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+		INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(3, 5) s(i);
+		UPDATE test_tab SET b = sha256(b) WHERE mod(a,2) = 0;
 		DELETE FROM test_tab WHERE mod(a,3) = 0;
 		PREPARE TRANSACTION 'test_prepared_tab';});
 
@@ -95,8 +95,8 @@ sub test_streaming
 	$node_publisher->safe_psql(
 		'postgres', q{
 		BEGIN;
-		INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
-		UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+		INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(3, 5) s(i);
+		UPDATE test_tab SET b = sha256(b) WHERE mod(a,2) = 0;
 		DELETE FROM test_tab WHERE mod(a,3) = 0;
 		PREPARE TRANSACTION 'test_prepared_tab';});
 
@@ -142,8 +142,8 @@ sub test_streaming
 	$node_publisher->safe_psql(
 		'postgres', q{
 		BEGIN;
-		INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
-		UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+		INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(3, 5) s(i);
+		UPDATE test_tab SET b = sha256(b) WHERE mod(a,2) = 0;
 		DELETE FROM test_tab WHERE mod(a,3) = 0;
 		PREPARE TRANSACTION 'test_prepared_tab';});
 
@@ -191,8 +191,8 @@ sub test_streaming
 	$node_publisher->safe_psql(
 		'postgres', q{
 		BEGIN;
-		INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
-		UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+		INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(3, 5) s(i);
+		UPDATE test_tab SET b = sha256(b) WHERE mod(a,2) = 0;
 		DELETE FROM test_tab WHERE mod(a,3) = 0;
 		PREPARE TRANSACTION 'test_prepared_tab';});
 
@@ -249,8 +249,8 @@ sub test_streaming
 	$node_publisher->safe_psql(
 		'postgres', q{
 		BEGIN;
-		INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5) s(i);
-		UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+		INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(3, 5) s(i);
+		UPDATE test_tab SET b = sha256(b) WHERE mod(a,2) = 0;
 		DELETE FROM test_tab WHERE mod(a,3) = 0;
 		PREPARE TRANSACTION 'test_prepared_tab';});
 
@@ -316,14 +316,14 @@ $node_subscriber->start;
 
 # Create some pre-existing content on publisher
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b varchar)");
+	"CREATE TABLE test_tab (a int primary key, b bytea)");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO test_tab VALUES (1, 'foo'), (2, 'bar')");
 $node_publisher->safe_psql('postgres', "CREATE TABLE test_tab_2 (a int)");
 
 # Setup structure on subscriber (columns a and b are compatible with same table name on publisher)
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b text, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
+	"CREATE TABLE test_tab (a int primary key, b bytea, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
 );
 $node_subscriber->safe_psql('postgres', "CREATE TABLE test_tab_2 (a int)");
 

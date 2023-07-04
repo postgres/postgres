@@ -8,7 +8,7 @@ setup
 
   -- consume DDL
   SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
-  CREATE OR REPLACE FUNCTION large_val() RETURNS TEXT LANGUAGE SQL AS 'select array_agg(md5(g::text))::text from generate_series(1, 80000) g';
+  CREATE OR REPLACE FUNCTION large_val() RETURNS bytea LANGUAGE SQL AS $$ select string_agg(sha256(g::text::bytea), '') from generate_series(1, 83000) g $$;
 }
 
 teardown
@@ -21,11 +21,11 @@ teardown
 session "s0"
 setup { SET synchronous_commit=on; }
 step "s0_begin" { BEGIN; }
-step "s0_ddl"   {CREATE TABLE stream_test1(data text);}
+step "s0_ddl"   {CREATE TABLE stream_test1(data bytea);}
 
 session "s2"
 setup { SET synchronous_commit=on; }
-step "s2_ddl"   {CREATE TABLE stream_test2(data text);}
+step "s2_ddl"   {CREATE TABLE stream_test2(data bytea);}
 
 # The transaction commit for s1_ddl will add the INTERNAL_SNAPSHOT change to
 # the currently running s0_ddl and we want to test that s0_ddl should not get
@@ -34,7 +34,7 @@ step "s2_ddl"   {CREATE TABLE stream_test2(data text);}
 # what gets streamed.
 session "s1"
 setup { SET synchronous_commit=on; }
-step "s1_ddl"   { CREATE TABLE stream_test(data text); }
+step "s1_ddl"   { CREATE TABLE stream_test(data bytea); }
 step "s1_begin" { BEGIN; }
 step "s1_toast_insert" {INSERT INTO stream_test SELECT large_val();}
 step "s1_commit" { COMMIT; }

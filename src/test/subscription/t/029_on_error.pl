@@ -91,13 +91,13 @@ $node_subscriber->start;
 $node_publisher->safe_psql(
 	'postgres',
 	qq[
-CREATE TABLE tbl (i INT, t TEXT);
+CREATE TABLE tbl (i INT, t BYTEA);
 INSERT INTO tbl VALUES (1, NULL);
 ]);
 $node_subscriber->safe_psql(
 	'postgres',
 	qq[
-CREATE TABLE tbl (i INT PRIMARY KEY, t TEXT);
+CREATE TABLE tbl (i INT PRIMARY KEY, t BYTEA);
 INSERT INTO tbl VALUES (1, NULL);
 ]);
 
@@ -163,10 +163,10 @@ $node_publisher->safe_psql(
 	'postgres',
 	qq[
 BEGIN;
-INSERT INTO tbl SELECT i, md5(i::text) FROM generate_series(1, 10000) s(i);
+INSERT INTO tbl SELECT i, sha256(i::text::bytea) FROM generate_series(1, 10000) s(i);
 COMMIT;
 ]);
-test_skip_lsn($node_publisher, $node_subscriber, "(4, md5(4::text))",
+test_skip_lsn($node_publisher, $node_subscriber, "(4, sha256(4::text::bytea))",
 	"4", "test skipping stream-commit");
 
 $result = $node_subscriber->safe_psql('postgres',

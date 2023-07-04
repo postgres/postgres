@@ -38,15 +38,15 @@ sub test_streaming
 	$h->query_safe(
 		q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
-	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+	INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(3, 5000) s(i);
+	UPDATE test_tab SET b = sha256(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	});
 
 	$node_publisher->safe_psql(
 		'postgres', q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(5001, 9999) s(i);
+	INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(5001, 9999) s(i);
 	DELETE FROM test_tab WHERE a > 5000;
 	COMMIT;
 	});
@@ -76,8 +76,8 @@ sub test_streaming
 	$node_publisher->safe_psql(
 		'postgres', q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(5001, 10000) s(i);
-	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+	INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(5001, 10000) s(i);
+	UPDATE test_tab SET b = sha256(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	COMMIT;
 	});
@@ -104,7 +104,7 @@ sub test_streaming
 	$offset = -s $node_subscriber->logfile;
 
 	$node_publisher->safe_psql('postgres',
-		"UPDATE test_tab SET b = md5(a::text)");
+		"UPDATE test_tab SET b = sha256(a::text::bytea)");
 
 	$node_publisher->wait_for_catchup($appname);
 
@@ -136,7 +136,7 @@ $node_subscriber->start;
 
 # Create some preexisting content on publisher
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b varchar)");
+	"CREATE TABLE test_tab (a int primary key, b bytea)");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO test_tab VALUES (1, 'foo'), (2, 'bar')");
 
@@ -144,7 +144,7 @@ $node_publisher->safe_psql('postgres', "CREATE TABLE test_tab_2 (a int)");
 
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b text, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
+	"CREATE TABLE test_tab (a int primary key, b bytea, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
 );
 
 $node_subscriber->safe_psql('postgres', "CREATE TABLE test_tab_2 (a int)");

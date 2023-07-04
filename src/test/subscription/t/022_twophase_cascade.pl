@@ -59,17 +59,17 @@ $node_C->safe_psql('postgres', "CREATE TABLE tab_full (a int PRIMARY KEY)");
 
 # Create some pre-existing content on node_A (for streaming tests)
 $node_A->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b varchar)");
+	"CREATE TABLE test_tab (a int primary key, b bytea)");
 $node_A->safe_psql('postgres',
 	"INSERT INTO test_tab VALUES (1, 'foo'), (2, 'bar')");
 
 # Create the same tables on node_B and node_C
 # columns a and b are compatible with same table name on node_A
 $node_B->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b text, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
+	"CREATE TABLE test_tab (a int primary key, b bytea, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
 );
 $node_C->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b text, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
+	"CREATE TABLE test_tab (a int primary key, b bytea, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
 );
 
 # Setup logical replication
@@ -308,8 +308,8 @@ $node_B->poll_query_until(
 $node_A->safe_psql(
 	'postgres', q{
 	BEGIN;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
-	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+	INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(3, 5000) s(i);
+	UPDATE test_tab SET b =  sha256(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	PREPARE TRANSACTION 'test_prepared_tab';});
 
@@ -371,8 +371,8 @@ $node_A->safe_psql(
 	BEGIN;
 	INSERT INTO test_tab VALUES (9999, 'foobar');
 	SAVEPOINT sp_inner;
-	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
-	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
+	INSERT INTO test_tab SELECT i, sha256(i::text::bytea) FROM generate_series(3, 5000) s(i);
+	UPDATE test_tab SET b = sha256(b) WHERE mod(a,2) = 0;
 	DELETE FROM test_tab WHERE mod(a,3) = 0;
 	ROLLBACK TO SAVEPOINT sp_inner;
 	PREPARE TRANSACTION 'outer';

@@ -59,7 +59,7 @@ $node_standby->start;
 $node_primary->safe_psql("postgres", "CREATE EXTENSION bloom;");
 $node_primary->safe_psql("postgres", "CREATE TABLE tst (i int4, t text);");
 $node_primary->safe_psql("postgres",
-	"INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series(1,100000) i;"
+	"INSERT INTO tst SELECT i%10, substr(encode(sha256(i::text::bytea), 'hex'), 1, 1) FROM generate_series(1,10000) i;"
 );
 $node_primary->safe_psql("postgres",
 	"CREATE INDEX bloomidx ON tst USING bloom (i, t) WITH (col1 = 3);");
@@ -76,7 +76,7 @@ for my $i (1 .. 10)
 	test_index_replay("vacuum $i");
 	my ($start, $end) = (100001 + ($i - 1) * 10000, 100000 + $i * 10000);
 	$node_primary->safe_psql("postgres",
-		"INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series($start,$end) i;"
+		"INSERT INTO tst SELECT i%10, substr(encode(sha256(i::text::bytea), 'hex'), 1, 1) FROM generate_series($start,$end) i;"
 	);
 	test_index_replay("insert $i");
 }
