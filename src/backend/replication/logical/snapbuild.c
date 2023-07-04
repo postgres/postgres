@@ -1950,8 +1950,12 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	if (TransactionIdPrecedes(ondisk.builder.xmin, builder->initial_xmin_horizon))
 		goto snapshot_not_interesting;
 
-	/* consistent snapshots have no next phase */
+	/*
+	 * Consistent snapshots have no next phase. Reset next_phase_at as it is
+	 * possible that an old value may remain.
+	 */
 	Assert(ondisk.builder.next_phase_at == InvalidTransactionId);
+	builder->next_phase_at = InvalidTransactionId;
 
 	/* ok, we think the snapshot is sensible, copy over everything important */
 	builder->xmin = ondisk.builder.xmin;
