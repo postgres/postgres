@@ -278,8 +278,25 @@ pqParseInput3(PGconn *conn)
 					}
 					break;
 				case '2':		/* Bind Complete */
+					/* Nothing to do for this message type */
+					break;
 				case '3':		/* Close Complete */
-					/* Nothing to do for these message types */
+					/* If we're doing PQsendClose, we're done; else ignore */
+					if (conn->cmd_queue_head &&
+						conn->cmd_queue_head->queryclass == PGQUERY_CLOSE)
+					{
+						if (!pgHavePendingResult(conn))
+						{
+							conn->result = PQmakeEmptyPGresult(conn,
+															   PGRES_COMMAND_OK);
+							if (!conn->result)
+							{
+								libpq_append_conn_error(conn, "out of memory");
+								pqSaveErrorResult(conn);
+							}
+						}
+						conn->asyncStatus = PGASYNC_READY;
+					}
 					break;
 				case 'S':		/* parameter status */
 					if (getParameterStatus(conn))

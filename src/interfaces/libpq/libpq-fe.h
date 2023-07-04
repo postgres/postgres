@@ -548,6 +548,12 @@ extern PGresult *PQdescribePortal(PGconn *conn, const char *portal);
 extern int	PQsendDescribePrepared(PGconn *conn, const char *stmt);
 extern int	PQsendDescribePortal(PGconn *conn, const char *portal);
 
+/* Close prepared statements and portals */
+extern PGresult *PQclosePrepared(PGconn *conn, const char *stmt);
+extern PGresult *PQclosePortal(PGconn *conn, const char *portal);
+extern int	PQsendClosePrepared(PGconn *conn, const char *stmt);
+extern int	PQsendClosePortal(PGconn *conn, const char *portal);
+
 /* Delete a PGresult */
 extern void PQclear(PGresult *res);
 

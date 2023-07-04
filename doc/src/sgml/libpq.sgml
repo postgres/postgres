@@ -3250,10 +3250,7 @@ PGresult *PQprepare(PGconn *conn,
 
     Prepared statements for use with <xref linkend="libpq-PQexecPrepared"/> can also
     be created by executing SQL <xref linkend="sql-prepare"/>
-    statements.  Also, although there is no <application>libpq</application>
-    function for deleting a prepared statement, the SQL <xref
-    linkend="sql-deallocate"/> statement
-    can be used for that purpose.
+    statements.
    </para>
 
    <para>
@@ -3357,6 +3354,66 @@ PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
         <xref linkend="libpq-PQftype"/>, etc. can be applied to the
         <structname>PGresult</structname> to obtain information about the result
         columns (if any) of the portal.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-PQclosePrepared">
+      <term><function>PQclosePrepared</function><indexterm><primary>PQclosePrepared</primary></indexterm></term>
+
+      <listitem>
+       <para>
+        Submits a request to close the specified prepared statement, and waits
+        for completion.
+<synopsis>
+PGresult *PQclosePrepared(PGconn *conn, const char *stmtName);
+</synopsis>
+       </para>
+
+       <para>
+        <xref linkend="libpq-PQclosePrepared"/> allows an application to close
+        a previously prepared statement. Closing a statement releases all
+        of its associated resources on the server and allows its name to be
+        reused.
+       </para>
+
+       <para>
+        <parameter>stmtName</parameter> can be <literal>""</literal> or
+        <symbol>NULL</symbol> to reference the unnamed statement. It is fine
+        if no statement exists with this name, in that case the operation is a
+        no-op. On success, a <structname>PGresult</structname> with
+        status <literal>PGRES_COMMAND_OK</literal> is returned.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-PQclosePortal">
+      <term><function>PQclosePortal</function><indexterm><primary>PQclosePortal</primary></indexterm></term>
+
+      <listitem>
+       <para>
+        Submits a request to close the specified portal, and waits for
+        completion.
+<synopsis>
+PGresult *PQclosePortal(PGconn *conn, const char *portalName);
+</synopsis>
+       </para>
+
+       <para>
+        <xref linkend="libpq-PQclosePortal"/> allows an application to trigger
+        a close of a previously created portal. Closing a portal releases all
+        of its associated resources on the server and allows its name to be
+        reused. (<application>libpq</application> does not provide any
+        direct access to portals, but you can use this function to close a
+        cursor created with a <command>DECLARE CURSOR</command> SQL command.)
+       </para>
+
+       <para>
+        <parameter>portalName</parameter> can be <literal>""</literal> or
+        <symbol>NULL</symbol> to reference the unnamed portal. It is fine
+        if no portal exists with this name, in that case the operation is a
+        no-op. On success, a <structname>PGresult</structname> with status
+        <literal>PGRES_COMMAND_OK</literal> is returned.
        </para>
       </listitem>
      </varlistentry>
@@ -4851,15 +4908,19 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
    <xref linkend="libpq-PQsendQueryParams"/>,
    <xref linkend="libpq-PQsendPrepare"/>,
    <xref linkend="libpq-PQsendQueryPrepared"/>,
-   <xref linkend="libpq-PQsendDescribePrepared"/>, and
+   <xref linkend="libpq-PQsendDescribePrepared"/>,
    <xref linkend="libpq-PQsendDescribePortal"/>,
+   <xref linkend="libpq-PQsendClosePrepared"/>, and
+   <xref linkend="libpq-PQsendClosePortal"/>,
    which can be used with <xref linkend="libpq-PQgetResult"/> to duplicate
    the functionality of
    <xref linkend="libpq-PQexecParams"/>,
    <xref linkend="libpq-PQprepare"/>,
    <xref linkend="libpq-PQexecPrepared"/>,
-   <xref linkend="libpq-PQdescribePrepared"/>, and
+   <xref linkend="libpq-PQdescribePrepared"/>,
    <xref linkend="libpq-PQdescribePortal"/>
+   <xref linkend="libpq-PQclosePrepared"/>, and
+   <xref linkend="libpq-PQclosePortal"/>
    respectively.
 
    <variablelist>
@@ -5008,6 +5069,46 @@ int PQsendDescribePortal(PGconn *conn, const char *portalName);
      </listitem>
     </varlistentry>
 
+    <varlistentry id="libpq-PQsendClosePrepared">
+     <term><function>PQsendClosePrepared</function><indexterm><primary>PQsendClosePrepared</primary></indexterm></term>
+
+     <listitem>
+      <para>
+       Submits a request to close the specified prepared statement, without
+       waiting for completion.
+<synopsis>
+int PQsendClosePrepared(PGconn *conn, const char *stmtName);
+</synopsis>
+
+       This is an asynchronous version of <xref linkend="libpq-PQclosePrepared"/>:
+       it returns 1 if it was able to dispatch the request, and 0 if not.
+       After a successful call, call <xref linkend="libpq-PQgetResult"/> to
+       obtain the results.  The function's parameters are handled
+       identically to <xref linkend="libpq-PQclosePrepared"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQsendClosePortal">
+     <term><function>PQsendClosePortal</function><indexterm><primary>PQsendClosePortal</primary></indexterm></term>
+
+     <listitem>
+      <para>
+       Submits a request to close specified portal, without waiting for
+       completion.
+<synopsis>
+int PQsendClosePortal(PGconn *conn, const char *portalName);
+</synopsis>
+
+       This is an asynchronous version of <xref linkend="libpq-PQclosePortal"/>:
+       it returns 1 if it was able to dispatch the request, and 0 if not.
+       After a successful call, call <xref linkend="libpq-PQgetResult"/> to
+       obtain the results.  The function's parameters are handled
+       identically to <xref linkend="libpq-PQclosePortal"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry id="libpq-PQgetResult">
      <term><function>PQgetResult</function><indexterm><primary>PQgetResult</primary></indexterm></term>
 
@@ -5019,7 +5120,9 @@ int PQsendDescribePortal(PGconn *conn, const char *portalName);
        <xref linkend="libpq-PQsendPrepare"/>,
        <xref linkend="libpq-PQsendQueryPrepared"/>,
        <xref linkend="libpq-PQsendDescribePrepared"/>,
-       <xref linkend="libpq-PQsendDescribePortal"/>, or
+       <xref linkend="libpq-PQsendDescribePortal"/>,
+       <xref linkend="libpq-PQsendClosePrepared"/>,
+       <xref linkend="libpq-PQsendClosePortal"/>, or
        <xref linkend="libpq-PQpipelineSync"/>
        call, and returns it.
        A null pointer is returned when the command is complete and there
@@ -5350,6 +5453,8 @@ int PQflush(PGconn *conn);
     <function>PQexecPrepared</function>,
     <function>PQdescribePrepared</function>,
     <function>PQdescribePortal</function>,
+    <function>PQclosePrepared</function>,
+    <function>PQclosePortal</function>,
     is an error condition.
     <function>PQsendQuery</function> is
     also disallowed, because it uses the simple query protocol.
@@ -5389,8 +5494,10 @@ int PQflush(PGconn *conn);
      establish a synchronization point in the pipeline,
      or when <xref linkend="libpq-PQflush"/> is called.
      The functions <xref linkend="libpq-PQsendPrepare"/>,
-     <xref linkend="libpq-PQsendDescribePrepared"/>, and
-     <xref linkend="libpq-PQsendDescribePortal"/> also work in pipeline mode.
+     <xref linkend="libpq-PQsendDescribePrepared"/>,
+     <xref linkend="libpq-PQsendDescribePortal"/>,
+     <xref linkend="libpq-PQsendClosePrepared"/>, and
+     <xref linkend="libpq-PQsendClosePortal"/> also work in pipeline mode.
      Result processing is described below.
     </para>
 

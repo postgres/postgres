@@ -5,6 +5,18 @@ B	4	ParseComplete
 B	10	ParameterDescription	 1 NNNN
 B	113	RowDescription	 4 "?column?" NNNN 0 NNNN 4 -1 0 "?column?" NNNN 0 NNNN 65535 -1 0 "numeric" NNNN 0 NNNN 65535 -1 0 "interval" NNNN 0 NNNN 16 -1 0
 B	5	ReadyForQuery	 I
+F	16	Close	 S "select_one"
+F	4	Sync
+B	4	CloseComplete
+B	5	ReadyForQuery	 I
+F	16	Describe	 S "select_one"
+F	4	Sync
+B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "26000" M "prepared statement "select_one" does not exist" F "SSSS" L "SSSS" R "SSSS" \x00
+B	5	ReadyForQuery	 I
+F	16	Close	 S "select_one"
+F	4	Sync
+B	4	CloseComplete
+B	5	ReadyForQuery	 I
 F	10	Query	 "BEGIN"
 B	10	CommandComplete	 "BEGIN"
 B	5	ReadyForQuery	 T
@@ -15,4 +27,16 @@ F	16	Describe	 P "cursor_one"
 F	4	Sync
 B	33	RowDescription	 1 "?column?" NNNN 0 NNNN 4 -1 0
 B	5	ReadyForQuery	 T
+F	16	Close	 P "cursor_one"
+F	4	Sync
+B	4	CloseComplete
+B	5	ReadyForQuery	 T
+F	16	Describe	 P "cursor_one"
+F	4	Sync
+B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "34000" M "portal "cursor_one" does not exist" F "SSSS" L "SSSS" R "SSSS" \x00
+B	5	ReadyForQuery	 E
+F	16	Close	 P "cursor_one"
+F	4	Sync
+B	4	CloseComplete
+B	5	ReadyForQuery	 E
 F	4	Terminate

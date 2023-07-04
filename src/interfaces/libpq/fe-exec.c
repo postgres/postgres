@@ -77,8 +77,8 @@ static void parseInput(PGconn *conn);
 static PGresult *getCopyResult(PGconn *conn, ExecStatusType copytype);
 static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
-static int	PQsendDescribe(PGconn *conn, char desc_type,
-						   const char *desc_target);
+static int	PQsendTypedCommand(PGconn *conn, char command, char type,
+							   const char *target);
 static int	check_field_number(const PGresult *res, int field_num);
 static void pqPipelineProcessQueue(PGconn *conn);
 static int	pqPipelineFlush(PGconn *conn);
@@ -2422,7 +2422,7 @@ PQdescribePrepared(PGconn *conn, const char *stmt)
 {
 	if (!PQexecStart(conn))
 		return NULL;
-	if (!PQsendDescribe(conn, 'S', stmt))
+	if (!PQsendTypedCommand(conn, 'D', 'S', stmt))
 		return NULL;
 	return PQexecFinish(conn);
 }
@@ -2441,7 +2441,7 @@ PQdescribePortal(PGconn *conn, const char *portal)
 {
 	if (!PQexecStart(conn))
 		return NULL;
-	if (!PQsendDescribe(conn, 'P', portal))
+	if (!PQsendTypedCommand(conn, 'D', 'P', portal))
 		return NULL;
 	return PQexecFinish(conn);
 }
@@ -2456,7 +2456,7 @@ PQdescribePortal(PGconn *conn, const char *portal)
 int
 PQsendDescribePrepared(PGconn *conn, const char *stmt)
 {
-	return PQsendDescribe(conn, 'S', stmt);
+	return PQsendTypedCommand(conn, 'D', 'S', stmt);
 }
 
 /*
@@ -2469,26 +2469,96 @@ PQsendDescribePrepared(PGconn *conn, const char *stmt)
 int
 PQsendDescribePortal(PGconn *conn, const char *portal)
 {
-	return PQsendDescribe(conn, 'P', portal);
+	return PQsendTypedCommand(conn, 'D', 'P', portal);
 }
 
 /*
- * PQsendDescribe
- *	 Common code to send a Describe command
+ * PQclosePrepared
+ *	  Close a previously prepared statement
  *
- * Available options for desc_type are
- *	 'S' to describe a prepared statement; or
- *	 'P' to describe a portal.
+ * If the query was not even sent, return NULL; conn->errorMessage is set to
+ * a relevant message.
+ * If the query was sent, a new PGresult is returned (which could indicate
+ * either success or failure).  On success, the PGresult contains status
+ * PGRES_COMMAND_OK. The user is responsible for freeing the PGresult via
+ * PQclear() when done with it.
+ */
+PGresult *
+PQclosePrepared(PGconn *conn, const char *stmt)
+{
+	if (!PQexecStart(conn))
+		return NULL;
+	if (!PQsendTypedCommand(conn, 'C', 'S', stmt))
+		return NULL;
+	return PQexecFinish(conn);
+}
+
+/*
+ * PQclosePortal
+ *	  Close a previously created portal
+ *
+ * This is exactly like PQclosePrepared, but for portals.  Note that at the
+ * moment, libpq doesn't really expose portals to the client; but this can be
+ * used with a portal created by a SQL DECLARE CURSOR command.
+ */
+PGresult *
+PQclosePortal(PGconn *conn, const char *portal)
+{
+	if (!PQexecStart(conn))
+		return NULL;
+	if (!PQsendTypedCommand(conn, 'C', 'P', portal))
+		return NULL;
+	return PQexecFinish(conn);
+}
+
+/*
+ * PQsendClosePrepared
+ *	 Submit a Close Statement command, but don't wait for it to finish
+ *
+ * Returns: 1 if successfully submitted
+ *			0 if error (conn->errorMessage is set)
+ */
+int
+PQsendClosePrepared(PGconn *conn, const char *stmt)
+{
+	return PQsendTypedCommand(conn, 'C', 'S', stmt);
+}
+
+/*
+ * PQsendClosePortal
+ *	 Submit a Close Portal command, but don't wait for it to finish
+ *
+ * Returns: 1 if successfully submitted
+ *			0 if error (conn->errorMessage is set)
+ */
+int
+PQsendClosePortal(PGconn *conn, const char *portal)
+{
+	return PQsendTypedCommand(conn, 'C', 'P', portal);
+}
+
+/*
+ * PQsendTypedCommand
+ *	 Common code to send a Describe or Close command
+ *
+ * Available options for "command" are
+ *	 'C' for Close; or
+ *	 'D' for Describe.
+ *
+ * Available options for "type" are
+ *	 'S' to run a command on a prepared statement; or
+ *	 'P' to run a command on a portal.
+ *
  * Returns 1 on success and 0 on failure.
  */
 static int
-PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
+PQsendTypedCommand(PGconn *conn, char command, char type, const char *target)
 {
 	PGcmdQueueEntry *entry = NULL;
 
-	/* Treat null desc_target as empty string */
-	if (!desc_target)
-		desc_target = "";
+	/* Treat null target as empty string */
+	if (!target)
+		target = "";
 
 	if (!PQsendQueryStart(conn, true))
 		return 0;
@@ -2497,10 +2567,10 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
 	if (entry == NULL)
 		return 0;				/* error msg already set */
 
-	/* construct the Describe message */
-	if (pqPutMsgStart('D', conn) < 0 ||
-		pqPutc(desc_type, conn) < 0 ||
-		pqPuts(desc_target, conn) < 0 ||
+	/* construct the Close message */
+	if (pqPutMsgStart(command, conn) < 0 ||
+		pqPutc(type, conn) < 0 ||
+		pqPuts(target, conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 		goto sendFailed;
 
@@ -2512,8 +2582,20 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
 			goto sendFailed;
 	}
 
-	/* remember we are doing a Describe */
-	entry->queryclass = PGQUERY_DESCRIBE;
+	/* remember if we are doing a Close or a Describe */
+	if (command == 'C')
+	{
+		entry->queryclass = PGQUERY_CLOSE;
+	}
+	else if (command == 'D')
+	{
+		entry->queryclass = PGQUERY_DESCRIBE;
+	}
+	else
+	{
+		libpq_append_conn_error(conn, "unknown command type provided");
+		goto sendFailed;
+	}
 
 	/*
 	 * Give the data a push (in pipeline mode, only if we're past the size

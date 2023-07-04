@@ -324,7 +324,7 @@ typedef enum
 	PGQUERY_PREPARE,			/* Parse only (PQprepare) */
 	PGQUERY_DESCRIBE,			/* Describe Statement or Portal */
 	PGQUERY_SYNC,				/* Sync (at end of a pipeline) */
-	PGQUERY_CLOSE
+	PGQUERY_CLOSE				/* Close Statement or Portal */
 } PGQueryClass;
 
 /*
