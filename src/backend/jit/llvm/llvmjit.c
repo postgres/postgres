@@ -233,6 +233,8 @@ llvm_release_context(JitContext *context)
 
 		pfree(jit_handle);
 	}
+
+	llvm_leave_fatal_on_oom();
 }
 
 /*
