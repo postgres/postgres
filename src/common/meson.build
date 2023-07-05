@@ -117,13 +117,14 @@ common_sources_frontend_static += files(
 # XXX: in most environments we could probably link_whole pgcommon_shlib
 # against pgcommon_static, instead of compiling twice.
 #
-# For the server build of pgcommon, depend on lwlocknames_h, because at least
-# cryptohash_openssl.c, hmac_openssl.c depend on it. That's arguably a
+# For the server build of pgcommon, depend on lwlocknames_h and because at
+# least cryptohash_openssl.c, hmac_openssl.c depend on it.
+# controldata_utils.c depends on wait_event_types_h. That's arguably a
 # layering violation, but ...
 pgcommon = {}
 pgcommon_variants = {
   '_srv': internal_lib_args + {
-    'sources': common_sources + [lwlocknames_h],
+    'sources': common_sources + [lwlocknames_h] + [wait_event_types_h],
     'dependencies': [backend_common_code],
   },
   '': default_lib_args + {

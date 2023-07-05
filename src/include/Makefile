@@ -72,7 +72,7 @@ uninstall:
 
 clean:
 	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h utils/header-stamp
-	rm -f storage/lwlocknames.h utils/probes.h
+	rm -f storage/lwlocknames.h utils/probes.h utils/wait_event_types.h
 	rm -f catalog/schemapg.h catalog/system_fk_info.h
 	rm -f catalog/pg_*_d.h catalog/header-stamp
 	rm -f nodes/nodetags.h nodes/header-stamp

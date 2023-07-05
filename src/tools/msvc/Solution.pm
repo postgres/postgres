@@ -585,6 +585,25 @@ sub GenerateFiles
 			'src/include/storage/lwlocknames.h');
 	}
 
+	if (IsNewer(
+			'src/include/utils/wait_event_types.h',
+			'src/backend/utils/activity/wait_event_names.txt'))
+	{
+		print "Generating pgstat_wait_event.c and wait_event_types.h...\n";
+		my $activ = 'src/backend/utils/activity';
+		system(
+			"perl $activ/generate-wait_event_types.pl --outdir $activ --code $activ/wait_event_names.txt"
+		);
+	}
+	if (IsNewer(
+			'src/include/utils/wait_event_types.h',
+			'src/backend/utils/activity/wait_event_types.h'))
+	{
+		copyFile(
+			'src/backend/utils/activity/wait_event_types.h',
+			'src/include/utils/wait_event_types.h');
+	}
+
 	if (IsNewer('src/include/utils/probes.h', 'src/backend/utils/probes.d'))
 	{
 		print "Generating probes.h...\n";

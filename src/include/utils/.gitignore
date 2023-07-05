@@ -3,3 +3,4 @@
 /probes.h
 /errcodes.h
 /header-stamp
+/wait_event_types.h

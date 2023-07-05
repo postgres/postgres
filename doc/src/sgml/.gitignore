@@ -17,6 +17,7 @@
 /errcodes-table.sgml
 /keywords-table.sgml
 /version.sgml
+/wait_event_types.sgml
 # Assorted byproducts from building the above
 /postgres-full.xml
 /INSTALL.html

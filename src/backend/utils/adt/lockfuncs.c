@@ -24,7 +24,8 @@
 
 /*
  * This must match enum LockTagType!  Also, be sure to document any changes
- * in the docs for the pg_locks view and for wait event types.
+ * in the docs for the pg_locks view and update the WaitEventLOCK section in
+ * src/backend/utils/activity/wait_event_names.txt.
  */
 const char *const LockTagTypeNames[] = {
 	"relation",

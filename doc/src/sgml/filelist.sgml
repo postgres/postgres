@@ -42,6 +42,7 @@
 <!ENTITY maintenance   SYSTEM "maintenance.sgml">
 <!ENTITY manage-ag     SYSTEM "manage-ag.sgml">
 <!ENTITY monitoring    SYSTEM "monitoring.sgml">
+<!ENTITY wait_event_types    SYSTEM "wait_event_types.sgml">
 <!ENTITY regress       SYSTEM "regress.sgml">
 <!ENTITY runtime       SYSTEM "runtime.sgml">
 <!ENTITY config        SYSTEM "config.sgml">

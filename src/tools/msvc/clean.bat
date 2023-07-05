@@ -46,6 +46,7 @@ if exist src\include\utils\errcodes.h del /q src\include\utils\errcodes.h
 if exist src\include\utils\fmgroids.h del /q src\include\utils\fmgroids.h
 if exist src\include\utils\fmgrprotos.h del /q src\include\utils\fmgrprotos.h
 if exist src\include\storage\lwlocknames.h del /q src\include\storage\lwlocknames.h
+if exist src\include\utils\wait_event_types.h del /q src\include\utils\wait_event_types.h
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
 if exist src\include\catalog\schemapg.h del /q src\include\catalog\schemapg.h
 if exist src\include\catalog\system_fk_info.h del /q src\include\catalog\system_fk_info.h
@@ -53,6 +54,8 @@ if exist src\include\catalog\pg_*_d.h del /q src\include\catalog\pg_*_d.h
 if exist src\include\catalog\header-stamp del /q src\include\catalog\header-stamp
 if exist doc\src\sgml\version.sgml del /q doc\src\sgml\version.sgml
 
+if %DIST%==1 if exist src\backend\utils\activity\pgstat_wait_event.c del /q src\backend\utils\activity\pgstat_wait_event.c
+if %DIST%==1 if exist src\backend\utils\activity\wait_event_types.h del /q src\backend\utils\activity\wait_event_types.h
 if %DIST%==1 if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h
 if %DIST%==1 if exist src\backend\utils\fmgrprotos.h del /q src\backend\utils\fmgrprotos.h
 if %DIST%==1 if exist src\backend\utils\fmgrtab.c del /q src\backend\utils\fmgrtab.c

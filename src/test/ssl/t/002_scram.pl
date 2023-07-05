@@ -87,8 +87,7 @@ $node->connect_fails(
 	expected_stderr => qr/invalid channel_binding value: "invalid_value"/);
 $node->connect_ok("$common_connstr user=ssltestuser channel_binding=disable",
 	"SCRAM with SSL and channel_binding=disable");
-$node->connect_ok(
-	"$common_connstr user=ssltestuser channel_binding=require",
+$node->connect_ok("$common_connstr user=ssltestuser channel_binding=require",
 	"SCRAM with SSL and channel_binding=require");
 
 # Now test when the user has an MD5-encrypted password; should fail

@@ -46,6 +46,18 @@ doc_generated += custom_target('errcodes-table.sgml',
   capture: true,
 )
 
+doc_generated += custom_target('wait_event_types.sgml',
+  input: files(
+    '../../../src/backend/utils/activity/wait_event_names.txt'),
+  output: 'wait_event_types.sgml',
+  command: [perl,
+    files('../../../src/backend/utils/activity/generate-wait_event_types.pl'),
+    '--outdir', '@OUTDIR@', '--docs', '@INPUT@'],
+  build_by_default: false,
+  install: false,
+  capture: false,
+)
+
 # FIXME: this actually has further inputs, adding depfile support to
 # generate-keywords-table.pl is probably the best way to address that
 # robustly.

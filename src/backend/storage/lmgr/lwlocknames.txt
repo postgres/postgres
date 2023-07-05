@@ -2,8 +2,8 @@
 # these are defined here.  If you add a lock, add it to the end to avoid
 # renumbering the existing locks; if you remove a lock, consider leaving a gap
 # in the numbering sequence for the benefit of DTrace and other external
-# debugging scripts.  Also, do not forget to update the list of wait events
-# in the user documentation.
+# debugging scripts.  Also, do not forget to update the section
+# WaitEventLWLock of src/backend/utils/activity/wait_event_names.txt.
 
 # 0 is available; was formerly BufFreelistLock
 ShmemIndexLock						1
