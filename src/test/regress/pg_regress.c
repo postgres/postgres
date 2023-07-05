@@ -2293,6 +2293,7 @@ regression_main(int argc, char *argv[],
 
 	if (temp_instance)
 	{
+		StringInfoData cmd;
 		FILE	   *pg_conf;
 		const char *env_wait;
 		int			wait_seconds;
@@ -2318,22 +2319,27 @@ regression_main(int argc, char *argv[],
 			make_directory(buf);
 
 		/* initdb */
-		snprintf(buf, sizeof(buf),
-				 "\"%s%sinitdb\" -D \"%s/data\" --no-clean --no-sync%s%s > \"%s/log/initdb.log\" 2>&1",
-				 bindir ? bindir : "",
-				 bindir ? "/" : "",
-				 temp_instance,
-				 debug ? " --debug" : "",
-				 nolocale ? " --no-locale" : "",
-				 outputdir);
+		initStringInfo(&cmd);
+		appendStringInfo(&cmd,
+						 "\"%s%sinitdb\" -D \"%s/data\" --no-clean --no-sync",
+						 bindir ? bindir : "",
+						 bindir ? "/" : "",
+						 temp_instance);
+		if (debug)
+			appendStringInfo(&cmd, " --debug");
+		if (nolocale)
+			appendStringInfo(&cmd, " --no-locale");
+		appendStringInfo(&cmd, " > \"%s/log/initdb.log\" 2>&1", outputdir);
 		fflush(NULL);
-		if (system(buf))
+		if (system(cmd.data))
 		{
 			bail("initdb failed\n"
 				 "# Examine \"%s/log/initdb.log\" for the reason.\n"
 				 "# Command was: %s",
-				 outputdir, buf);
+				 outputdir, cmd.data);
 		}
+
+		pfree(cmd.data);
 
 		/*
 		 * Adjust the default postgresql.conf for regression testing. The user

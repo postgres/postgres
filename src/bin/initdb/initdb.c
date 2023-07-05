@@ -309,16 +309,16 @@ void		initialize_data_directory(void);
 /*
  * macros for running pipes to postgres
  */
-#define PG_CMD_DECL		char cmd[MAXPGPATH]; FILE *cmdfd
+#define PG_CMD_DECL		FILE *cmdfd
 
-#define PG_CMD_OPEN \
+#define PG_CMD_OPEN(cmd) \
 do { \
 	cmdfd = popen_check(cmd, "w"); \
 	if (cmdfd == NULL) \
 		exit(1); /* message already printed by popen_check */ \
 } while (0)
 
-#define PG_CMD_CLOSE \
+#define PG_CMD_CLOSE() \
 do { \
 	if (pclose_check(cmdfd)) \
 		exit(1); /* message already printed by pclose_check */ \
@@ -1138,13 +1138,15 @@ test_config_settings(void)
 static bool
 test_specific_config_settings(int test_conns, int test_buffs)
 {
-	PQExpBuffer cmd = createPQExpBuffer();
+	PQExpBufferData cmd;
 	_stringlist *gnames,
 			   *gvalues;
 	int			status;
 
+	initPQExpBuffer(&cmd);
+
 	/* Set up the test postmaster invocation */
-	printfPQExpBuffer(cmd,
+	printfPQExpBuffer(&cmd,
 					  "\"%s\" --check %s %s "
 					  "-c max_connections=%d "
 					  "-c shared_buffers=%d "
@@ -1158,18 +1160,18 @@ test_specific_config_settings(int test_conns, int test_buffs)
 		 gnames != NULL;		/* assume lists have the same length */
 		 gnames = gnames->next, gvalues = gvalues->next)
 	{
-		appendPQExpBuffer(cmd, " -c %s=", gnames->str);
-		appendShellString(cmd, gvalues->str);
+		appendPQExpBuffer(&cmd, " -c %s=", gnames->str);
+		appendShellString(&cmd, gvalues->str);
 	}
 
-	appendPQExpBuffer(cmd,
+	appendPQExpBuffer(&cmd,
 					  " < \"%s\" > \"%s\" 2>&1",
 					  DEVNULL, DEVNULL);
 
 	fflush(NULL);
-	status = system(cmd->data);
+	status = system(cmd.data);
 
-	destroyPQExpBuffer(cmd);
+	termPQExpBuffer(&cmd);
 
 	return (status == 0);
 }
@@ -1469,6 +1471,7 @@ static void
 bootstrap_template1(void)
 {
 	PG_CMD_DECL;
+	PQExpBufferData cmd;
 	char	  **line;
 	char	  **bki_lines;
 	char		headerline[MAXPGPATH];
@@ -1530,16 +1533,17 @@ bootstrap_template1(void)
 	/* Also ensure backend isn't confused by this environment var: */
 	unsetenv("PGCLIENTENCODING");
 
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" --boot -X %d %s %s %s %s",
-			 backend_exec,
-			 wal_segment_size_mb * (1024 * 1024),
-			 data_checksums ? "-k" : "",
-			 boot_options, extra_options,
-			 debug ? "-d 5" : "");
+	initPQExpBuffer(&cmd);
+
+	printfPQExpBuffer(&cmd, "\"%s\" --boot %s %s", backend_exec, boot_options, extra_options);
+	appendPQExpBuffer(&cmd, " -X %d", wal_segment_size_mb * (1024 * 1024));
+	if (data_checksums)
+		appendPQExpBuffer(&cmd, " -k");
+	if (debug)
+		appendPQExpBuffer(&cmd, " -d 5");
 
 
-	PG_CMD_OPEN;
+	PG_CMD_OPEN(cmd.data);
 
 	for (line = bki_lines; *line != NULL; line++)
 	{
@@ -1547,8 +1551,9 @@ bootstrap_template1(void)
 		free(*line);
 	}
 
-	PG_CMD_CLOSE;
+	PG_CMD_CLOSE();
 
+	termPQExpBuffer(&cmd);
 	free(bki_lines);
 
 	check_ok();
@@ -2951,6 +2956,7 @@ void
 initialize_data_directory(void)
 {
 	PG_CMD_DECL;
+	PQExpBufferData cmd;
 	int			i;
 
 	setup_signals();
@@ -3014,12 +3020,11 @@ initialize_data_directory(void)
 	fputs(_("performing post-bootstrap initialization ... "), stdout);
 	fflush(stdout);
 
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s %s template1 >%s",
-			 backend_exec, backend_options, extra_options,
-			 DEVNULL);
+	initPQExpBuffer(&cmd);
+	printfPQExpBuffer(&cmd, "\"%s\" %s %s template1 >%s",
+					  backend_exec, backend_options, extra_options, DEVNULL);
 
-	PG_CMD_OPEN;
+	PG_CMD_OPEN(cmd.data);
 
 	setup_auth(cmdfd);
 
@@ -3054,7 +3059,8 @@ initialize_data_directory(void)
 
 	make_postgres(cmdfd);
 
-	PG_CMD_CLOSE;
+	PG_CMD_CLOSE();
+	termPQExpBuffer(&cmd);
 
 	check_ok();
 }
