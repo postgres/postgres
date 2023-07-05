@@ -59,7 +59,7 @@ float        ({integer}|{real})([eE]{integer})?
 \<           seg_yylval.text = "<"; return EXTENSION;
 \>           seg_yylval.text = ">"; return EXTENSION;
 \~           seg_yylval.text = "~"; return EXTENSION;
-[ \t\n\r\f]+ /* discard spaces */
+[ \t\n\r\f\v]+ /* discard spaces */
 .            return yytext[0]; /* alert parser of the garbage */
 
 %%

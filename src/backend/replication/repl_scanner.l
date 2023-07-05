@@ -73,7 +73,7 @@ static void addlitchar(unsigned char ychar);
 %x xd
 %x xq
 
-space			[ \t\n\r\f]
+space			[ \t\n\r\f\v]
 
 quote			'
 quotestop		{quote}

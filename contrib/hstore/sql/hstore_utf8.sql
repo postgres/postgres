@@ -17,3 +17,10 @@ SELECT E'key\u0105=>value\u0105'::hstore;
 SELECT 'keyą=>valueą'::hstore;
 SELECT 'ą=>ą'::hstore;
 SELECT 'keyąfoo=>valueą'::hstore;
+
+-- More patterns that may depend on isspace() and locales, all discarded.
+SELECT E'key\u000A=>value\u000A'::hstore; -- \n
+SELECT E'key\u0009=>value\u0009'::hstore; -- \t
+SELECT E'key\u000D=>value\u000D'::hstore; -- \r
+SELECT E'key\u000B=>value\u000B'::hstore; -- \v
+SELECT E'key\u000C=>value\u000C'::hstore; -- \f

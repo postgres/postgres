@@ -180,16 +180,16 @@ static struct _if_value
  * versions of Postgres failed to recognize -- as a comment if the input
  * did not end with a newline.
  *
- * XXX perhaps \f (formfeed) should be treated as a newline as well?
+ * non_newline_space tracks all space characters except newlines.
  *
  * XXX if you change the set of whitespace characters, fix ecpg_isspace()
  * to agree.
  */
 
-space			[ \t\n\r\f]
-horiz_space		[ \t\f]
-newline			[\n\r]
-non_newline		[^\n\r]
+space				[ \t\n\r\f\v]
+non_newline_space	[ \t\f\v]
+newline				[\n\r]
+non_newline			[^\n\r]
 
 comment			("--"{non_newline}*)
 
@@ -202,8 +202,8 @@ whitespace		({space}+|{comment})
  * it, whereas {whitespace} should generally have a * after it...
  */
 
-horiz_whitespace		({horiz_space}|{comment})
-whitespace_with_newline	({horiz_whitespace}*{newline}{whitespace}*)
+non_newline_whitespace	({non_newline_space}|{comment})
+whitespace_with_newline	({non_newline_whitespace}*{newline}{whitespace}*)
 
 quote			'
 /* If we see {quote} then {quotecontinue}, the quoted string continues */
@@ -1721,7 +1721,8 @@ ecpg_isspace(char ch)
 		ch == '\t' ||
 		ch == '\n' ||
 		ch == '\r' ||
-		ch == '\f')
+		ch == '\f' ||
+		ch == '\v')
 		return true;
 	return false;
 }

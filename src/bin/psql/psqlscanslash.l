@@ -108,7 +108,7 @@ extern void slash_yyset_column(int column_no, yyscan_t yyscanner);
 /*
  * Assorted character class definitions that should match psqlscan.l.
  */
-space			[ \t\n\r\f]
+space			[ \t\n\r\f\v]
 quote			'
 xeoctesc		[\\][0-7]{1,3}
 xehexesc		[\\]x[0-9A-Fa-f]{1,2}

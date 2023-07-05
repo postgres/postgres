@@ -761,7 +761,7 @@ appendPGArray(PQExpBuffer buffer, const char *value)
 
 			if (ch == '"' || ch == '\\' ||
 				ch == '{' || ch == '}' || ch == ',' ||
-			/* these match array_isspace(): */
+			/* these match scanner_isspace(): */
 				ch == ' ' || ch == '\t' || ch == '\n' ||
 				ch == '\r' || ch == '\v' || ch == '\f')
 			{

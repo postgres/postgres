@@ -121,6 +121,7 @@ scanner_isspace(char ch)
 		ch == '\t' ||
 		ch == '\n' ||
 		ch == '\r' ||
+		ch == '\v' ||
 		ch == '\f')
 		return true;
 	return false;

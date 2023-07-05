@@ -63,7 +63,7 @@ NaN          [nN][aA][nN]
 \(           cube_yylval = "("; return O_PAREN;
 \)           cube_yylval = ")"; return C_PAREN;
 \,           cube_yylval = ","; return COMMA;
-[ \t\n\r\f]+ /* discard spaces */
+[ \t\n\r\f\v]+ /* discard spaces */
 .            return yytext[0]; /* alert parser of the garbage */
 
 %%

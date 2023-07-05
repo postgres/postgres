@@ -742,7 +742,7 @@ typeStringToTypeName(const char *str, Node *escontext)
 	ErrorContextCallback ptserrcontext;
 
 	/* make sure we give useful error for empty input */
-	if (strspn(str, " \t\n\r\f") == strlen(str))
+	if (strspn(str, " \t\n\r\f\v") == strlen(str))
 		goto fail;
 
 	/*
