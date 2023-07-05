@@ -153,6 +153,25 @@ command_like([ 'pg_waldump', '--quiet', $node->data_dir . '/pg_wal/' . $start_wa
 command_fails_like([ 'pg_waldump', '--quiet', '-p', $node->data_dir, '--start', $start_lsn ], qr/error: error in WAL record at/, 'errors are shown with --quiet');
 
 
+# Test for: Display a message that we're skipping data if `from`
+# wasn't a pointer to the start of a record.
+{
+	# Construct a new LSN that is one byte past the original
+	# start_lsn.
+	my ($part1, $part2) = split qr{/}, $start_lsn;
+	my $lsn2 = hex $part2;
+	$lsn2++;
+	my $new_start = sprintf("%s/%X", $part1, $lsn2);
+
+	my (@cmd, $stdout, $stderr, $result);
+
+	@cmd = ( 'pg_waldump', '--start', $new_start, $node->data_dir . '/pg_wal/' . $start_walfile );
+	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
+	ok($result, "runs with start segment and start LSN specified");
+	like($stderr, qr/first record is after/, 'info message printed');
+}
+
+
 # Helper function to test various options.  Pass options as arguments.
 # Output lines are returned as array.
 sub test_pg_waldump

@@ -1220,12 +1220,12 @@ main(int argc, char **argv)
 	 */
 	if (first_record != private.startptr &&
 		XLogSegmentOffset(private.startptr, WalSegSz) != 0)
-		printf(ngettext("first record is after %X/%X, at %X/%X, skipping over %u byte\n",
-						"first record is after %X/%X, at %X/%X, skipping over %u bytes\n",
-						(first_record - private.startptr)),
-			   LSN_FORMAT_ARGS(private.startptr),
-			   LSN_FORMAT_ARGS(first_record),
-			   (uint32) (first_record - private.startptr));
+		pg_log_info(ngettext("first record is after %X/%X, at %X/%X, skipping over %u byte",
+							 "first record is after %X/%X, at %X/%X, skipping over %u bytes",
+							 (first_record - private.startptr)),
+					LSN_FORMAT_ARGS(private.startptr),
+					LSN_FORMAT_ARGS(first_record),
+					(uint32) (first_record - private.startptr));
 
 	if (config.stats == true && !config.quiet)
 		stats.startptr = first_record;
