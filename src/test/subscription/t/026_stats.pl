@@ -267,6 +267,26 @@ is( $node_subscriber->safe_psql(
 	qq(f),
 	qq(Subscription stats for subscription '$sub1_name' should be removed.));
 
+# Get subscription 2 oid
+my $sub2_oid = $node_subscriber->safe_psql($db,
+	qq(SELECT oid FROM pg_subscription WHERE subname = '$sub2_name'));
+
+# Diassociate the subscription 2 from its replication slot and drop it
+$node_subscriber->safe_psql(
+	$db,
+	qq(
+ALTER SUBSCRIPTION $sub2_name DISABLE;
+ALTER SUBSCRIPTION $sub2_name SET (slot_name = NONE);
+DROP SUBSCRIPTION $sub2_name;
+			    ));
+
+# Subscription stats for sub2 should be gone
+is( $node_subscriber->safe_psql(
+		$db, qq(SELECT pg_stat_have_stats('subscription', 0, $sub2_oid))),
+	qq(f),
+	qq(Subscription stats for subscription '$sub2_name' should be removed.));
+$node_publisher->safe_psql($db,
+	qq(SELECT pg_drop_replication_slot('$sub2_name')));
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');

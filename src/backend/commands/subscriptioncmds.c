@@ -1647,6 +1647,12 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	replorigin_drop_by_name(originname, true, false);
 
 	/*
+	 * Tell the cumulative stats system that the subscription is getting
+	 * dropped.
+	 */
+	pgstat_drop_subscription(subid);
+
+	/*
 	 * If there is no slot associated with the subscription, we can finish
 	 * here.
 	 */
@@ -1733,12 +1739,6 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		walrcv_disconnect(wrconn);
 	}
 	PG_END_TRY();
-
-	/*
-	 * Tell the cumulative stats system that the subscription is getting
-	 * dropped.
-	 */
-	pgstat_drop_subscription(subid);
 
 	table_close(rel, NoLock);
 }
