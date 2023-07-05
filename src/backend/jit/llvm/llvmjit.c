@@ -221,6 +221,8 @@ llvm_release_context(JitContext *context)
 	}
 	list_free(llvm_context->handles);
 	llvm_context->handles = NIL;
+
+	llvm_leave_fatal_on_oom();
 }
 
 /*
