@@ -121,7 +121,7 @@ BuildEventTriggerCache(void)
 	ctl.keysize = sizeof(EventTriggerEvent);
 	ctl.entrysize = sizeof(EventTriggerCacheEntry);
 	ctl.hcxt = EventTriggerCacheContext;
-	cache = hash_create("Event Trigger Cache", 32, &ctl,
+	cache = hash_create("EventTriggerCacheHash", 32, &ctl,
 						HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/*
