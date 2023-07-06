@@ -333,10 +333,10 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	 * MATERIALIZED VIEW to use parallel plans, but this is safe only because
 	 * the command is writing into a completely new table which workers won't
 	 * be able to see.  If the workers could see the table, the fact that
-	 * group locking would cause them to ignore the leader's heavyweight
-	 * GIN page locks would make this unsafe.  We'll have to fix that somehow
-	 * if we want to allow parallel inserts in general; updates and deletes
-	 * have additional problems especially around combo CIDs.)
+	 * group locking would cause them to ignore the leader's heavyweight GIN
+	 * page locks would make this unsafe.  We'll have to fix that somehow if
+	 * we want to allow parallel inserts in general; updates and deletes have
+	 * additional problems especially around combo CIDs.)
 	 *
 	 * For now, we don't try to use parallel mode if we're running inside a
 	 * parallel worker.  We might eventually be able to relax this
