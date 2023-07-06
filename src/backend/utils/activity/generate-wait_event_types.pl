@@ -185,7 +185,7 @@ if ($gen_code)
 		printf $c "}\n\n";
 	}
 
-	printf $h "#endif                          /* WAIT_EVENT_TYPES_H */";
+	printf $h "#endif                          /* WAIT_EVENT_TYPES_H */\n";
 	close $h;
 	close $c;
 
