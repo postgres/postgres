@@ -9723,6 +9723,7 @@ MarkGUCPrefixReserved(const char *className)
 			num_guc_variables--;
 			memmove(&guc_variables[i], &guc_variables[i + 1],
 					(num_guc_variables - i) * sizeof(struct config_generic *));
+			i--;
 		}
 	}
 
