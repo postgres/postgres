@@ -202,21 +202,23 @@ $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-Tfoo" ],
 	'-T with invalid format fails');
 
-# Tar format doesn't support filenames longer than 100 bytes.
-# Create the test file via a short name directory so it doesn't blow the
-# Windows path limit.
-my $lftmp = TestLib::tempdir_short;
-dir_symlink "$pgdata", "$lftmp/pgdata";
 my $superlongname = "superlongname_" . ("x" x 100);
-my $superlongpath = "$lftmp/pgdata/$superlongname";
+# Tar format doesn't support filenames longer than 100 bytes.
+SKIP:
+{
+	my $superlongpath = "$pgdata/$superlongname";
 
-open my $file, '>', "$superlongpath"
-  or die "unable to create file $superlongpath";
-close $file;
-$node->command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/tarbackup_l1", '-Ft' ],
-	'pg_basebackup tar with long name fails');
-unlink "$superlongpath";
+	skip "File path too long", 1
+	  if $windows_os && length($superlongpath) > 255;
+
+	open my $file, '>', "$superlongpath"
+	  or die "unable to create file $superlongpath";
+	close $file;
+	$node->command_fails(
+		[ 'pg_basebackup', '-D', "$tempdir/tarbackup_l1", '-Ft' ],
+		'pg_basebackup tar with long name fails');
+	unlink "$superlongpath";
+}
 
 # The following tests are for symlinks.
 
