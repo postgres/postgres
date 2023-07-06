@@ -401,6 +401,11 @@ retry:
 	on_shmem_exit(pgwin32_SharedMemoryDelete, PointerGetDatum(hmap2));
 
 	*shim = hdr;
+
+	/* Report whether huge pages are in use */
+	SetConfigOption("huge_pages_status", (flProtect & SEC_LARGE_PAGES) ?
+					"on" : "off", PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
+
 	return hdr;
 }
 

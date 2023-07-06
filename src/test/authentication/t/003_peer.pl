@@ -100,6 +100,12 @@ my $system_user =
   $node->safe_psql('postgres',
 	q(select (string_to_array(SYSTEM_USER, ':'))[2]));
 
+# While on it, check the status of huge pages, that can be either on
+# or off, but never unknown.
+my $huge_pages_status =
+  $node->safe_psql('postgres', q(SHOW huge_pages_status;));
+isnt($huge_pages_status, 'unknown', "check huge_pages_status");
+
 # Tests without the user name map.
 # Failure as connection is attempted with a database role not mapping
 # to an authorized system user.

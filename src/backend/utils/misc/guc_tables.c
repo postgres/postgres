@@ -365,6 +365,13 @@ static const struct config_enum_entry huge_pages_options[] = {
 	{NULL, 0, false}
 };
 
+static const struct config_enum_entry huge_pages_status_options[] = {
+	{"off", HUGE_PAGES_OFF, false},
+	{"on", HUGE_PAGES_ON, false},
+	{"unknown", HUGE_PAGES_UNKNOWN, false},
+	{NULL, 0, false}
+};
+
 static const struct config_enum_entry recovery_prefetch_options[] = {
 	{"off", RECOVERY_PREFETCH_OFF, false},
 	{"on", RECOVERY_PREFETCH_ON, false},
@@ -550,6 +557,7 @@ int			ssl_renegotiation_limit;
  */
 int			huge_pages = HUGE_PAGES_TRY;
 int			huge_page_size;
+int			huge_pages_status = HUGE_PAGES_UNKNOWN;
 
 /*
  * These variables are all dummies that don't do anything, except in some
@@ -4873,6 +4881,17 @@ struct config_enum ConfigureNamesEnum[] =
 		},
 		&huge_pages,
 		HUGE_PAGES_TRY, huge_pages_options,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"huge_pages_status", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Indicates the status of huge pages."),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&huge_pages_status,
+		HUGE_PAGES_UNKNOWN, huge_pages_status_options,
 		NULL, NULL, NULL
 	},
 

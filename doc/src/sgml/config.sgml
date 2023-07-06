@@ -1727,7 +1727,9 @@ include_dir 'conf.d'
         server will try to request huge pages, but fall back to the default if
         that fails. With <literal>on</literal>, failure to request huge pages
         will prevent the server from starting up. With <literal>off</literal>,
-        huge pages will not be requested.
+        huge pages will not be requested. The actual state of huge pages is
+        indicated by the server variable
+        <xref linkend="guc-huge-pages-status"/>.
        </para>
 
        <para>
@@ -10734,6 +10736,25 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         <option>--enable-cassert</option>). By
         default <productname>PostgreSQL</productname> is built without
         assertions.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-huge-pages-status" xreflabel="huge_pages_status">
+      <term><varname>huge_pages_status</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>huge_pages_status</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports the state of huge pages in the current instance:
+        <literal>on</literal>, <literal>off</literal>, or
+        <literal>unknown</literal> (if displayed with
+        <literal>postgres -C</literal>).
+        This parameter is useful to determine whether allocation of huge pages
+        was successful under <literal>huge_pages=try</literal>.
+        See <xref linkend="guc-huge-pages"/> for more information.
        </para>
       </listitem>
      </varlistentry>

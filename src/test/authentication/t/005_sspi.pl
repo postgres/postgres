@@ -21,6 +21,10 @@ $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
 $node->start;
 
+my $huge_pages_status =
+  $node->safe_psql('postgres', q(SHOW huge_pages_status;));
+isnt($huge_pages_status, 'unknown', "check huge_pages_status");
+
 # SSPI is set up by default.  Make sure it interacts correctly with
 # require_auth.
 $node->connect_ok("require_auth=sspi",

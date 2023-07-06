@@ -190,6 +190,13 @@ CreateSharedMemoryAndSemaphores(void)
 		 */
 		seghdr = PGSharedMemoryCreate(size, &shim);
 
+		/*
+		 * Make sure that huge pages are never reported as "unknown" while the
+		 * server is running.
+		 */
+		Assert(strcmp("unknown",
+					  GetConfigOption("huge_pages_status", false, false)) != 0);
+
 		InitShmemAccess(seghdr);
 
 		/*

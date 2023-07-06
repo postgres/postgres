@@ -627,6 +627,14 @@ CreateAnonymousSegment(Size *size)
 	}
 #endif
 
+	/*
+	 * Report whether huge pages are in use.  This needs to be tracked before
+	 * the second mmap() call if attempting to use huge pages failed
+	 * previously.
+	 */
+	SetConfigOption("huge_pages_status", (ptr == MAP_FAILED) ? "off" : "on",
+					PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
+
 	if (ptr == MAP_FAILED && huge_pages != HUGE_PAGES_ON)
 	{
 		/*
@@ -737,7 +745,13 @@ PGSharedMemoryCreate(Size size,
 		sysvsize = sizeof(PGShmemHeader);
 	}
 	else
+	{
 		sysvsize = size;
+
+		/* huge pages are only available with mmap */
+		SetConfigOption("huge_pages_status", "off",
+						PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
+	}
 
 	/*
 	 * Loop till we find a free IPC key.  Trust CreateDataDirLockFile() to
