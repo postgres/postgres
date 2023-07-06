@@ -597,10 +597,10 @@ deadlock detection algorithm very much, but it makes the bookkeeping more
 complicated.
 
 We choose to regard locks held by processes in the same parallel group as
-non-conflicting with the exception of relation extension and page locks.  This
-means that two processes in a parallel group can hold a self-exclusive lock on
-the same relation at the same time, or one process can acquire an AccessShareLock
-while the other already holds AccessExclusiveLock.  This might seem dangerous and
+non-conflicting with the exception of relation extension lock.  This means that
+two processes in a parallel group can hold a self-exclusive lock on the same
+relation at the same time, or one process can acquire an AccessShareLock while
+the other already holds AccessExclusiveLock.  This might seem dangerous and
 could be in some cases (more on that below), but if we didn't do this then
 parallel query would be extremely prone to self-deadlock.  For example, a
 parallel query against a relation on which the leader already had
@@ -638,23 +638,15 @@ the other is safe enough.  Problems would occur if the leader initiated
 parallelism from a point in the code at which it had some backend-private
 state that made table access from another process unsafe, for example after
 calling SetReindexProcessing and before calling ResetReindexProcessing,
-catastrophe could ensue, because the worker won't have that state.
-
-To allow parallel inserts and parallel copy, we have ensured that relation
-extension and page locks don't participate in group locking which means such
-locks can conflict among the same group members.  This is required as it is no
-safer for two related processes to extend the same relation or perform clean up
-in gin indexes at a time than for unrelated processes to do the same.  We don't
-acquire a heavyweight lock on any other object after relation extension lock
-which means such a lock can never participate in the deadlock cycle.  After
-acquiring page locks, we can acquire relation extension lock but reverse never
-happens, so those will also not participate in deadlock.  To allow for other
-parallel writes like parallel update or parallel delete, we'll either need to
-(1) further enhance the deadlock detector to handle those tuple locks in a
-different way than other types; or (2) have parallel workers use some other
-mutual exclusion method for such cases.  Currently, the parallel mode is
-strictly read-only, but now we have the infrastructure to allow parallel
-inserts and parallel copy.
+catastrophe could ensue, because the worker won't have that state.  Similarly,
+problems could occur with certain kinds of non-relation locks, such as
+GIN page locks.  It's no safer for two related processes to perform GIN clean
+up at the same time than for unrelated processes to do the same.
+However, since parallel mode is strictly read-only at present, neither this
+nor most of the similar cases can arise at present.  To allow parallel writes,
+we'll either need to (1) further enhance the deadlock detector to handle those
+types of locks in a different way than other types; or (2) have parallel
+workers use some other mutual exclusion method for such cases.
 
 Group locking adds three new members to each PGPROC: lockGroupLeader,
 lockGroupMembers, and lockGroupLink. A PGPROC's lockGroupLeader is NULL for
