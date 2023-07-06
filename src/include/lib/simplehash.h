@@ -760,7 +760,7 @@ SH_DELETE(SH_TYPE * tb, SH_KEY_TYPE key)
 SH_SCOPE void
 SH_START_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter)
 {
-	int			i;
+	uint32		i;
 	uint64		startelem = PG_UINT64_MAX;
 
 	/*
@@ -779,6 +779,7 @@ SH_START_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter)
 		}
 	}
 
+	/* we should have found an empty element */
 	Assert(startelem < SH_MAX_SIZE);
 
 	/*
