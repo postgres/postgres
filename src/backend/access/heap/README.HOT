@@ -6,7 +6,7 @@ Heap Only Tuples (HOT)
 The Heap Only Tuple (HOT) feature eliminates redundant index entries and
 allows the re-use of space taken by DELETEd or obsoleted UPDATEd tuples
 without performing a table-wide vacuum.  It does this by allowing
-single-page vacuuming, also called "defragmentation".
+single-page vacuuming, also called "defragmentation" or "pruning".
 
 Note: there is a Glossary at the end of this document that may be helpful
 for first-time readers.
@@ -31,11 +31,19 @@ corrupt index, in the form of entries pointing to tuple slots that by now
 contain some unrelated content.  In any case we would prefer to be able
 to do vacuuming without invoking any user-written code.
 
-HOT solves this problem for a restricted but useful special case:
-where a tuple is repeatedly updated in ways that do not change its
-indexed columns.  (Here, "indexed column" means any column referenced
+HOT solves this problem for two restricted but useful special cases:
+
+First, where a tuple is repeatedly updated in ways that do not change
+its indexed columns.  (Here, "indexed column" means any column referenced
 at all in an index definition, including for example columns that are
 tested in a partial-index predicate but are not stored in the index.)
+
+Second, where the modified columns are only used in indexes that do not
+contain tuple IDs, but maintain summaries of the indexed data by block.
+As these indexes don't contain references to individual tuples, they
+can't remove tuple references in VACUUM, and thus don't need to get a new
+and unique reference to a tuple.  These indexes still need to be notified
+of the new column data, but don't need a new HOT chain to be established.
 
 An additional property of HOT is that it reduces index size by avoiding
 the creation of identically-keyed index entries.  This improves search
@@ -102,16 +110,16 @@ This is safe because no index entry points to line pointer 2.  Subsequent
 insertions into the page can now recycle both line pointer 2 and the
 space formerly used by tuple 2.
 
-If an update changes any indexed column, or there is not room on the
-same page for the new tuple, then the HOT chain ends: the last member
-has a regular t_ctid link to the next version and is not marked
-HEAP_HOT_UPDATED.  (In principle we could continue a HOT chain across
-pages, but this would destroy the desired property of being able to
-reclaim space with just page-local manipulations.  Anyway, we don't
-want to have to chase through multiple heap pages to get from an index
-entry to the desired tuple, so it seems better to create a new index
-entry for the new tuple.)  If further updates occur, the next version
-could become the root of a new HOT chain.
+If an update changes any column indexed by a non-summarizing indexes, or
+if there is not room on the same page for the new tuple, then the HOT
+chain ends: the last member has a regular t_ctid link to the next version
+and is not marked HEAP_HOT_UPDATED.  (In principle we could continue a
+HOT chain across pages, but this would destroy the desired property of
+being able to reclaim space with just page-local manipulations.  Anyway,
+we don't want to have to chase through multiple heap pages to get from an
+index entry to the desired tuple, so it seems better to create a new
+index entry for the new tuple.)  If further updates occur, the next
+version could become the root of a new HOT chain.
 
 Line pointer 1 has to remain as long as there is any non-dead member of
 the chain on the page.  When there is not, it is marked "dead".
@@ -125,15 +133,28 @@ Note: we can use a "dead" line pointer for any DELETEd tuple,
 whether it was part of a HOT chain or not.  This allows space reclamation
 in advance of running VACUUM for plain DELETEs as well as HOT updates.
 
-The requirement for doing a HOT update is that none of the indexed
-columns are changed.  This is checked at execution time by comparing the
-binary representation of the old and new values.  We insist on bitwise
-equality rather than using datatype-specific equality routines.  The
-main reason to avoid the latter is that there might be multiple notions
-of equality for a datatype, and we don't know exactly which one is
-relevant for the indexes at hand.  We assume that bitwise equality
+The requirement for doing a HOT update is that indexes which point to
+the root line pointer (and thus need to be cleaned up by VACUUM when the
+tuple is dead) do not reference columns which are updated in that HOT
+chain.  Summarizing indexes (such as BRIN) are assumed to have no
+references to individual tuples and thus are ignored when checking HOT
+applicability.  The updated columns are checked at execution time by
+comparing the binary representation of the old and new values.  We insist
+on bitwise equality rather than using datatype-specific equality routines.
+The main reason to avoid the latter is that there might be multiple
+notions of equality for a datatype, and we don't know exactly which one
+is relevant for the indexes at hand.  We assume that bitwise equality
 guarantees equality for all purposes.
 
+If any columns that are included by non-summarizing indexes are updated,
+the HOT optimization is not applied, and the new tuple is inserted into
+all indexes of the table.  If none of the updated columns are included in
+the table's indexes, the HOT optimization is applied and no indexes are
+updated.  If instead the updated columns are only indexed by summarizing
+indexes, the HOT optimization is applied, but the update is propagated to
+all summarizing indexes.  (Realistically, we only need to propagate the
+update to the indexes that contain the updated values, but that is yet to
+be implemented.)
 
 Abort Cases
 -----------
