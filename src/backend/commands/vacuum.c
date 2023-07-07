@@ -697,35 +697,32 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 }
 
 /*
- * Check if the current user has privileges to vacuum or analyze the relation.
- * If not, issue a WARNING log message and return false to let the caller
- * decide what to do with this relation.  This routine is used to decide if a
- * relation can be processed for VACUUM or ANALYZE.
+ * Check if a given relation can be safely vacuumed or analyzed.  If the
+ * user is not the relation owner, issue a WARNING log message and return
+ * false to let the caller decide what to do with this relation.  This
+ * routine is used to decide if a relation can be processed for VACUUM or
+ * ANALYZE.
  */
 bool
-vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
-								 bits32 options)
+vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, bits32 options)
 {
 	char	   *relname;
 
 	Assert((options & (VACOPT_VACUUM | VACOPT_ANALYZE)) != 0);
 
 	/*
-	 * Privilege checks are bypassed in some cases (e.g., when recursing to a
-	 * relation's TOAST table).
+	 * Check permissions.
+	 *
+	 * We allow the user to vacuum or analyze a table if he is superuser, the
+	 * table owner, or the database owner (but in the latter case, only if
+	 * it's not a shared relation).  object_ownercheck includes the superuser
+	 * case.
+	 *
+	 * Note we choose to treat permissions failure as a WARNING and keep
+	 * trying to vacuum or analyze the rest of the DB --- is this appropriate?
 	 */
-	if (options & VACOPT_SKIP_PRIVS)
-		return true;
-
-	/*----------
-	 * A role has privileges to vacuum or analyze the relation if any of the
-	 * following are true:
-	 *   - the role owns the current database and the relation is not shared
-	 *   - the role has the MAINTAIN privilege on the relation
-	 *----------
-	 */
-	if ((object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared) ||
-		pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) == ACLCHECK_OK)
+	if (object_ownercheck(RelationRelationId, relid, GetUserId()) ||
+		(object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared))
 		return true;
 
 	relname = NameStr(reltuple->relname);
@@ -941,10 +938,10 @@ expand_vacuum_rel(VacuumRelation *vrel, MemoryContext vac_context,
 		classForm = (Form_pg_class) GETSTRUCT(tuple);
 
 		/*
-		 * Make a returnable VacuumRelation for this rel if the user has the
-		 * required privileges.
+		 * Make a returnable VacuumRelation for this rel if user is a proper
+		 * owner.
 		 */
-		if (vacuum_is_permitted_for_relation(relid, classForm, options))
+		if (vacuum_is_relation_owner(relid, classForm, options))
 		{
 			oldcontext = MemoryContextSwitchTo(vac_context);
 			vacrels = lappend(vacrels, makeVacuumRelation(vrel->relation,
@@ -1041,7 +1038,7 @@ get_all_vacuum_rels(MemoryContext vac_context, int options)
 			continue;
 
 		/* check permissions of relation */
-		if (!vacuum_is_permitted_for_relation(relid, classForm, options))
+		if (!vacuum_is_relation_owner(relid, classForm, options))
 			continue;
 
 		/*
@@ -2034,15 +2031,16 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	}
 
 	/*
-	 * Check if relation needs to be skipped based on privileges.  This check
+	 * Check if relation needs to be skipped based on ownership.  This check
 	 * happens also when building the relation list to vacuum for a manual
 	 * operation, and needs to be done additionally here as VACUUM could
-	 * happen across multiple transactions where privileges could have changed
-	 * in-between.  Make sure to only generate logs for VACUUM in this case.
+	 * happen across multiple transactions where relation ownership could have
+	 * changed in-between.  Make sure to only generate logs for VACUUM in this
+	 * case.
 	 */
-	if (!vacuum_is_permitted_for_relation(RelationGetRelid(rel),
-										  rel->rd_rel,
-										  params->options & ~VACOPT_ANALYZE))
+	if (!vacuum_is_relation_owner(RelationGetRelid(rel),
+								  rel->rd_rel,
+								  params->options & VACOPT_VACUUM))
 	{
 		relation_close(rel, lmode);
 		PopActiveSnapshot();
@@ -2228,14 +2226,9 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	{
 		VacuumParams toast_vacuum_params;
 
-		/*
-		 * Force VACOPT_PROCESS_MAIN so vacuum_rel() processes it.  Likewise,
-		 * set VACOPT_SKIP_PRIVS since privileges on the main relation are
-		 * sufficient to process it.
-		 */
+		/* force VACOPT_PROCESS_MAIN so vacuum_rel() processes it */
 		memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
 		toast_vacuum_params.options |= VACOPT_PROCESS_MAIN;
-		toast_vacuum_params.options |= VACOPT_SKIP_PRIVS;
 
 		vacuum_rel(toast_relid, NULL, &toast_vacuum_params, bstrategy);
 	}
