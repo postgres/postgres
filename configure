@@ -12961,7 +12961,7 @@ else
 fi
 
   fi
-  # LibreSSL does not have SSL_CTX_set_cert_cb().
+  # Function introduced in OpenSSL 1.0.2, not in LibreSSL.
   for ac_func in SSL_CTX_set_cert_cb
 do :
   ac_fn_c_check_func "$LINENO" "SSL_CTX_set_cert_cb" "ac_cv_func_SSL_CTX_set_cert_cb"
