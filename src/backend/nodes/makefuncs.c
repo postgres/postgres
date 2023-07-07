@@ -853,6 +853,10 @@ makeJsonValueExpr(Expr *expr, JsonFormat *format)
 	JsonValueExpr *jve = makeNode(JsonValueExpr);
 
 	jve->raw_expr = expr;
+
+	/*
+	 * Set after checking the format, if needed, in transformJsonValueExpr().
+	 */
 	jve->formatted_expr = NULL;
 	jve->format = format;
 
