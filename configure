@@ -15120,11 +15120,6 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_type_locale_t" >&5
 $as_echo "$pgac_cv_type_locale_t" >&6; }
-if test "$pgac_cv_type_locale_t" != no; then
-
-$as_echo "#define HAVE_LOCALE_T 1" >>confdefs.h
-
-fi
 if test "$pgac_cv_type_locale_t" = 'yes (in xlocale.h)'; then
 
 $as_echo "#define LOCALE_T_IN_XLOCALE 1" >>confdefs.h

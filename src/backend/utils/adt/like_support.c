@@ -1509,10 +1509,8 @@ pattern_char_isalpha(char c, bool is_multibyte,
 	else if (locale && locale->provider == COLLPROVIDER_ICU)
 		return IS_HIGHBIT_SET(c) ||
 			(c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-#ifdef HAVE_LOCALE_T
 	else if (locale && locale->provider == COLLPROVIDER_LIBC)
 		return isalpha_l((unsigned char) c, locale->info.lt);
-#endif
 	else
 		return isalpha((unsigned char) c);
 }

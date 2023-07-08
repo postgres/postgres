@@ -1613,12 +1613,6 @@ u_strToTitle_default_BI(UChar *dest, int32_t destCapacity,
  * in multibyte character sets.  Note that in either case we are effectively
  * assuming that the database character encoding matches the encoding implied
  * by LC_CTYPE.
- *
- * If the system provides locale_t and associated functions (which are
- * standardized by Open Group's XBD), we can support collations that are
- * neither default nor C.  The code is written to handle both combinations
- * of have-wide-characters and have-locale_t, though it's rather unlikely
- * a platform would have the latter without the former.
  */
 
 /*
@@ -1696,11 +1690,9 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 
 				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 				{
-#ifdef HAVE_LOCALE_T
 					if (mylocale)
 						workspace[curr_char] = towlower_l(workspace[curr_char], mylocale->info.lt);
 					else
-#endif
 						workspace[curr_char] = towlower(workspace[curr_char]);
 				}
 
@@ -1729,11 +1721,9 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 				 */
 				for (p = result; *p; p++)
 				{
-#ifdef HAVE_LOCALE_T
 					if (mylocale)
 						*p = tolower_l((unsigned char) *p, mylocale->info.lt);
 					else
-#endif
 						*p = pg_tolower((unsigned char) *p);
 				}
 			}
@@ -1818,11 +1808,9 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 
 				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 				{
-#ifdef HAVE_LOCALE_T
 					if (mylocale)
 						workspace[curr_char] = towupper_l(workspace[curr_char], mylocale->info.lt);
 					else
-#endif
 						workspace[curr_char] = towupper(workspace[curr_char]);
 				}
 
@@ -1851,11 +1839,9 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 				 */
 				for (p = result; *p; p++)
 				{
-#ifdef HAVE_LOCALE_T
 					if (mylocale)
 						*p = toupper_l((unsigned char) *p, mylocale->info.lt);
 					else
-#endif
 						*p = pg_toupper((unsigned char) *p);
 				}
 			}
@@ -1941,7 +1927,6 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 
 				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 				{
-#ifdef HAVE_LOCALE_T
 					if (mylocale)
 					{
 						if (wasalnum)
@@ -1951,7 +1936,6 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 						wasalnum = iswalnum_l(workspace[curr_char], mylocale->info.lt);
 					}
 					else
-#endif
 					{
 						if (wasalnum)
 							workspace[curr_char] = towlower(workspace[curr_char]);
@@ -1986,7 +1970,6 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 				 */
 				for (p = result; *p; p++)
 				{
-#ifdef HAVE_LOCALE_T
 					if (mylocale)
 					{
 						if (wasalnum)
@@ -1996,7 +1979,6 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 						wasalnum = isalnum_l((unsigned char) *p, mylocale->info.lt);
 					}
 					else
-#endif
 					{
 						if (wasalnum)
 							*p = pg_tolower((unsigned char) *p);

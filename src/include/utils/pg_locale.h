@@ -67,9 +67,7 @@ extern void cache_locale_time(void);
 
 
 /*
- * We define our own wrapper around locale_t so we can keep the same
- * function signatures for all builds, while not having to create a
- * fake version of the standard type locale_t in the global namespace.
+ * We use a discriminated union to hold either a locale_t or an ICU collator.
  * pg_locale_t is occasionally checked for truth, so make it a pointer.
  */
 struct pg_locale_struct
@@ -78,9 +76,7 @@ struct pg_locale_struct
 	bool		deterministic;
 	union
 	{
-#ifdef HAVE_LOCALE_T
 		locale_t	lt;
-#endif
 #ifdef USE_ICU
 		struct
 		{
@@ -88,7 +84,6 @@ struct pg_locale_struct
 			UCollator  *ucol;
 		}			icu;
 #endif
-		int			dummy;		/* in case we have neither LOCALE_T nor ICU */
 	}			info;
 };
 

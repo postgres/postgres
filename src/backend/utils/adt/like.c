@@ -95,10 +95,8 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 {
 	if (locale_is_c)
 		return pg_ascii_tolower(c);
-#ifdef HAVE_LOCALE_T
 	else if (locale)
 		return tolower_l(c, locale->info.lt);
-#endif
 	else
 		return pg_tolower(c);
 }

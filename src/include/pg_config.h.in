@@ -298,9 +298,6 @@
 /* Define to 1 if you have the `zstd' library (-lzstd). */
 #undef HAVE_LIBZSTD
 
-/* Define to 1 if the system has the type `locale_t'. */
-#undef HAVE_LOCALE_T
-
 /* Define to 1 if `long int' works and is 64 bits. */
 #undef HAVE_LONG_INT_64
 

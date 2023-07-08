@@ -86,9 +86,9 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_SA_LEN],
 # PGAC_TYPE_LOCALE_T
 # ------------------
 # Check for the locale_t type and find the right header file.  macOS
-# needs xlocale.h; standard is locale.h, but glibc also has an
-# xlocale.h file that we should not use.
-#
+# needs xlocale.h; standard is locale.h, but glibc <= 2.25 also had an
+# xlocale.h file that we should not use, so we check the standard
+# header first.
 AC_DEFUN([PGAC_TYPE_LOCALE_T],
 [AC_CACHE_CHECK([for locale_t], pgac_cv_type_locale_t,
 [AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
@@ -102,10 +102,6 @@ locale_t x;],
 [])],
 [pgac_cv_type_locale_t='yes (in xlocale.h)'],
 [pgac_cv_type_locale_t=no])])])
-if test "$pgac_cv_type_locale_t" != no; then
-  AC_DEFINE(HAVE_LOCALE_T, 1,
-            [Define to 1 if the system has the type `locale_t'.])
-fi
 if test "$pgac_cv_type_locale_t" = 'yes (in xlocale.h)'; then
   AC_DEFINE(LOCALE_T_IN_XLOCALE, 1,
             [Define to 1 if `locale_t' requires <xlocale.h>.])
