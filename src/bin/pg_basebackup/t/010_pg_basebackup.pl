@@ -342,9 +342,13 @@ chmod_recursive("$pgdata", 0750, 0640);
 # Create a temporary directory in the system location.
 my $sys_tempdir = PostgreSQL::Test::Utils::tempdir_short;
 
-rename("$pgdata/pg_replslot", "$sys_tempdir/pg_replslot")
+# On Windows use the short location to avoid path length issues.
+# Elsewhere use $tempdir to avoid file system boundary issues with moving.
+my $tmploc = $windows_os ? $sys_tempdir : $tempdir;
+
+rename("$pgdata/pg_replslot", "$tmploc/pg_replslot")
   or BAIL_OUT "could not move $pgdata/pg_replslot";
-dir_symlink("$sys_tempdir/pg_replslot", "$pgdata/pg_replslot")
+dir_symlink("$tmploc/pg_replslot", "$pgdata/pg_replslot")
   or BAIL_OUT "could not symlink to $pgdata/pg_replslot";
 
 $node->start;
