@@ -564,7 +564,7 @@ sub string_replace_file
 {
 	my ($filename, $find, $replace) = @_;
 	open(my $in, '<', $filename);
-	my $content;
+	my $content = '';
 	while (<$in>)
 	{
 		$_ =~ s/$find/$replace/;
