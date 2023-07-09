@@ -2611,31 +2611,6 @@ CheckLDAPAuth(Port *port)
 		pfree(filter);
 		ldap_memfree(dn);
 		ldap_msgfree(search_message);
-
-		/* Unbind and disconnect from the LDAP server */
-		r = ldap_unbind_s(ldap);
-		if (r != LDAP_SUCCESS)
-		{
-			ereport(LOG,
-					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\"",
-							fulluser, server_name)));
-			pfree(passwd);
-			pfree(fulluser);
-			return STATUS_ERROR;
-		}
-
-		/*
-		 * Need to re-initialize the LDAP connection, so that we can bind to
-		 * it with a different username.
-		 */
-		if (InitializeLDAPConnection(port, &ldap) == STATUS_ERROR)
-		{
-			pfree(passwd);
-			pfree(fulluser);
-
-			/* Error message already sent */
-			return STATUS_ERROR;
-		}
 	}
 	else
 		fulluser = psprintf("%s%s%s",
