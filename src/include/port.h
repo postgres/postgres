@@ -432,7 +432,7 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 extern size_t strnlen(const char *str, size_t maxlen);
 #endif
 
-/* thread.c */
+/* port/user.c */
 #ifndef WIN32
 extern bool pg_get_user_name(uid_t user_id, char *buffer, size_t buflen);
 extern bool pg_get_user_home_dir(uid_t user_id, char *buffer, size_t buflen);

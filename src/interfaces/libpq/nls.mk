@@ -13,7 +13,7 @@ GETTEXT_FILES    = fe-auth.c \
                    fe-secure-gssapi.c \
                    fe-secure-openssl.c \
                    win32.c \
-                   ../../port/thread.c
+                   ../../port/user.c
 GETTEXT_TRIGGERS = libpq_append_conn_error:2 \
                    libpq_append_error:2 \
                    libpq_gettext \

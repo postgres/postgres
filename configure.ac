@@ -1232,7 +1232,6 @@ fi
 #
 # For each platform, we need to know about any special compile and link
 # libraries, and whether the normal C function names are thread-safe.
-# See the comment at the top of src/port/thread.c for more information.
 # WIN32 doesn't need the pthread tests;  it always uses threads
 #
 # These tests are run before the library-tests, because linking with the

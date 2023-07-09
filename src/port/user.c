@@ -1,13 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * thread.c
+ * user.c
  *
- *		  Prototypes and macros around system calls, used to help make
- *		  threaded libraries reentrant and safe to use from threaded applications.
+ *		  Wrapper functions for user and home directory lookup.
  *
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
- * src/port/thread.c
+ * src/port/user.c
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +14,6 @@
 #include "c.h"
 
 #include <pwd.h>
-
-
-/*
- *  Historically, the code in this module had to deal with operating systems
- *  that lacked getpwuid_r().
- */
 
 #ifndef WIN32
 
