@@ -36,6 +36,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     FREEZE [ <replaceable class="parameter">boolean</replaceable> ]
     DELIMITER '<replaceable class="parameter">delimiter_character</replaceable>'
     NULL '<replaceable class="parameter">null_string</replaceable>'
+    DEFAULT '<replaceable class="parameter">default_string</replaceable>'
     HEADER [ <replaceable class="parameter">boolean</replaceable> | MATCH ]
     QUOTE '<replaceable class="parameter">quote_character</replaceable>'
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
@@ -43,7 +44,6 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     FORCE_NOT_NULL ( <replaceable class="parameter">column_name</replaceable> [, ...] )
     FORCE_NULL ( <replaceable class="parameter">column_name</replaceable> [, ...] )
     ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
-    DEFAULT '<replaceable class="parameter">default_string</replaceable>'
 </synopsis>
  </refsynopsisdiv>
 
@@ -272,6 +272,19 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
    </varlistentry>
 
    <varlistentry>
+    <term><literal>DEFAULT</literal></term>
+    <listitem>
+     <para>
+      Specifies the string that represents a default value. Each time the string
+      is found in the input file, the default value of the corresponding column
+      will be used.
+      This option is allowed only in <command>COPY FROM</command>, and only when
+      not using <literal>binary</literal> format.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>HEADER</literal></term>
     <listitem>
      <para>
@@ -365,19 +378,6 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       class="parameter">encoding_name</replaceable>.  If this option is
       omitted, the current client encoding is used. See the Notes below
       for more details.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>DEFAULT</literal></term>
-    <listitem>
-     <para>
-      Specifies the string that represents a default value. Each time the string
-      is found in the input file, the default value of the corresponding column
-      will be used.
-      This option is allowed only in <command>COPY FROM</command>, and only when
-      not using <literal>binary</literal> format.
      </para>
     </listitem>
    </varlistentry>
