@@ -154,36 +154,41 @@ static void icu_set_collation_attributes(UCollator *collator, const char *loc,
 										 UErrorCode *status);
 #endif
 
-#ifndef WIN32
 /*
  * POSIX doesn't define _l-variants of these functions, but several systems
- * have them.  We provide our own replacements here.  For Windows, we have
- * macros in win32_port.h.
+ * have them.  We provide our own replacements here.
  */
 #ifndef HAVE_MBSTOWCS_L
 static size_t
 mbstowcs_l(wchar_t *dest, const char *src, size_t n, locale_t loc)
 {
+#ifdef WIN32
+	return _mbstowcs_l(dest, src, n, loc);
+#else
 	size_t		result;
 	locale_t	save_locale = uselocale(loc);
 
 	result = mbstowcs(dest, src, n);
 	uselocale(save_locale);
 	return result;
+#endif
 }
 #endif
 #ifndef HAVE_WCSTOMBS_L
 static size_t
 wcstombs_l(char *dest, const wchar_t *src, size_t n, locale_t loc)
 {
+#ifdef WIN32
+	return _wcstombs_l(dest, src, n, loc);
+#else
 	size_t		result;
 	locale_t	save_locale = uselocale(loc);
 
 	result = wcstombs(dest, src, n);
 	uselocale(save_locale);
 	return result;
-}
 #endif
+}
 #endif
 
 /*

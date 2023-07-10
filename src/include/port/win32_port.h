@@ -455,8 +455,6 @@ extern int	_pglstat64(const char *name, struct stat *buf);
 #define strcoll_l _strcoll_l
 #define strxfrm_l _strxfrm_l
 #define wcscoll_l _wcscoll_l
-#define wcstombs_l _wcstombs_l
-#define mbstowcs_l _mbstowcs_l
 
 /*
  * Versions of libintl >= 0.18? try to replace setlocale() with a macro
