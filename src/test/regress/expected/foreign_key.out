@@ -2498,7 +2498,7 @@ ALTER TABLE ref22 ALTER CONSTRAINT ref_f1_f2_fkey
   DEFERRABLE INITIALLY IMMEDIATE;	-- fails
 ERROR:  cannot alter constraint "ref_f1_f2_fkey" on relation "ref22"
 DETAIL:  Constraint "ref_f1_f2_fkey" is derived from constraint "ref_f1_f2_fkey" of relation "ref".
-HINT:  You may alter the constraint it derives from, instead.
+HINT:  You may alter the constraint it derives from instead.
 ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey
   DEFERRABLE INITIALLY DEFERRED;
 BEGIN;
@@ -2534,7 +2534,7 @@ ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey1
   DEFERRABLE INITIALLY DEFERRED;	-- fails
 ERROR:  cannot alter constraint "ref_f1_f2_fkey1" on relation "ref"
 DETAIL:  Constraint "ref_f1_f2_fkey1" is derived from constraint "ref_f1_f2_fkey" of relation "ref".
-HINT:  You may alter the constraint it derives from, instead.
+HINT:  You may alter the constraint it derives from instead.
 ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey
   DEFERRABLE INITIALLY DEFERRED;
 INSERT INTO pt VALUES(1,2,3);

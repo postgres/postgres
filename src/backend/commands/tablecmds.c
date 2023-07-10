@@ -10912,7 +10912,7 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd, bool recurse,
 				 ancestorname && ancestortable ?
 				 errdetail("Constraint \"%s\" is derived from constraint \"%s\" of relation \"%s\".",
 						   cmdcon->conname, ancestorname, ancestortable) : 0,
-				 errhint("You may alter the constraint it derives from, instead.")));
+				 errhint("You may alter the constraint it derives from instead.")));
 	}
 
 	/*
@@ -13861,7 +13861,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("cannot change owner of index \"%s\"",
 									NameStr(tuple_class->relname)),
-							 errhint("Change the ownership of the index's table, instead.")));
+							 errhint("Change the ownership of the index's table instead.")));
 				/* quick hack to exit via the no-op path */
 				newOwnerId = tuple_class->relowner;
 			}
@@ -13873,7 +13873,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change owner of index \"%s\"",
 							NameStr(tuple_class->relname)),
-					 errhint("Change the ownership of the index's table, instead.")));
+					 errhint("Change the ownership of the index's table instead.")));
 			break;
 		case RELKIND_SEQUENCE:
 			if (!recursing &&

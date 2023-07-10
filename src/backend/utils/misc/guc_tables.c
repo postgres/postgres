@@ -1002,10 +1002,10 @@ struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"enable_presorted_aggregate", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enables the planner's ability to produce plans which "
+			gettext_noop("Enables the planner's ability to produce plans that "
 						 "provide presorted input for ORDER BY / DISTINCT aggregate "
 						 "functions."),
-			gettext_noop("Allows the query planner to build plans which provide "
+			gettext_noop("Allows the query planner to build plans that provide "
 						 "presorted input for aggregate functions with an ORDER BY / "
 						 "DISTINCT clause.  When disabled, implicit sorts are always "
 						 "performed during execution."),
@@ -4909,8 +4909,8 @@ struct config_enum ConfigureNamesEnum[] =
 		{"debug_parallel_query", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Forces the planner's use parallel query nodes."),
 			gettext_noop("This can be useful for testing the parallel query infrastructure "
-						 "by forcing the planner to generate plans which contains nodes "
-						 "which perform tuple communication between workers and the main process."),
+						 "by forcing the planner to generate plans that contain nodes "
+						 "that perform tuple communication between workers and the main process."),
 			GUC_NOT_IN_SAMPLE | GUC_EXPLAIN
 		},
 		&debug_parallel_query,

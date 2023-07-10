@@ -126,8 +126,8 @@ bbsink_zstd_begin_backup(bbsink *sink)
 		if (ZSTD_isError(ret))
 			ereport(ERROR,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("could not set compression flag for %s: %s",
-						   "long", ZSTD_getErrorName(ret)));
+					errmsg("could not enable long-distance mode: %s",
+						   ZSTD_getErrorName(ret)));
 	}
 
 	/*

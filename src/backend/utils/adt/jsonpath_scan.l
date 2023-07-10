@@ -171,13 +171,13 @@ hex_fail	\\x{hexdigit}{0,1}
 
 <xnq,xq,xvq>{unicode}*{unicodefail} {
 								jsonpath_yyerror(NULL, escontext,
-												 "invalid unicode sequence");
+												 "invalid Unicode escape sequence");
 								yyterminate();
 							}
 
 <xnq,xq,xvq>{hex_fail}		{
 								jsonpath_yyerror(NULL, escontext,
-												 "invalid hex character sequence");
+												 "invalid hexadecimal character sequence");
 								yyterminate();
 							}
 
@@ -198,7 +198,7 @@ hex_fail	\\x{hexdigit}{0,1}
 
 <xq,xvq><<EOF>>				{
 							  jsonpath_yyerror(NULL, escontext,
-											   "unexpected end of quoted string");
+											   "unterminated quoted string");
 							  yyterminate();
 							}
 
@@ -554,7 +554,7 @@ parsejsonpath(const char *str, int len, struct Node *escontext)
 	jsonpath_scanner_init(str, len);
 
 	if (jsonpath_yyparse((void *) &parseresult, escontext) != 0)
-		jsonpath_yyerror(NULL, escontext, "bogus input"); /* shouldn't happen */
+		jsonpath_yyerror(NULL, escontext, "invalid input"); /* shouldn't happen */
 
 	jsonpath_scanner_finish();
 
@@ -611,7 +611,7 @@ addUnicodeChar(int ch, struct Node *escontext)
 		else if (!pg_unicode_to_server_noerror(ch, (unsigned char *) cbuf))
 			ereturn(escontext, false,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("could not convert unicode to server encoding")));
+					 errmsg("could not convert Unicode to server encoding")));
 		addstring(false, cbuf, strlen(cbuf));
 	}
 	return true;

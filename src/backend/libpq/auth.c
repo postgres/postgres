@@ -312,7 +312,7 @@ auth_failed(Port *port, int status, const char *logdetail)
 			break;
 	}
 
-	cdetail = psprintf(_("Connection matched %s line %d: \"%s\""),
+	cdetail = psprintf(_("Connection matched file \"%s\" line %d: \"%s\""),
 					   port->hba->sourcefile, port->hba->linenumber,
 					   port->hba->rawline);
 	if (logdetail)

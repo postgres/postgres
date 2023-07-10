@@ -1703,8 +1703,8 @@ CopyReadAttributesText(CopyFromState cstate)
 
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("unexpected DEFAULT in COPY data"),
-						 errdetail("Column \"%s\" has no DEFAULT value.",
+						 errmsg("unexpected default marker in COPY data"),
+						 errdetail("Column \"%s\" has no default value.",
 								   NameStr(att->attname))));
 			}
 		}
@@ -1918,8 +1918,8 @@ endfield:
 
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("unexpected DEFAULT in COPY data"),
-						 errdetail("Column \"%s\" has no DEFAULT value.",
+						 errmsg("unexpected default marker in COPY data"),
+						 errdetail("Column \"%s\" has no default value.",
 								   NameStr(att->attname))));
 			}
 		}

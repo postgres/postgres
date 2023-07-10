@@ -950,6 +950,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			if (!has_privs_of_role(GetUserId(), ROLE_PG_CHECKPOINT))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 /* translator: %s is name of a SQL command, eg CHECKPOINT */
 						 errmsg("permission denied to execute %s command",
 								"CHECKPOINT"),
 						 errdetail("Only roles with privileges of the \"%s\" role may execute this command.",

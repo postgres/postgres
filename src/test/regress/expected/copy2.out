@@ -726,12 +726,12 @@ copy copy_default from stdin with (default '\N');
 ERROR:  NULL specification and DEFAULT specification cannot be the same
 -- cannot use DEFAULT marker in column that has no DEFAULT value
 copy copy_default from stdin with (default '\D');
-ERROR:  unexpected DEFAULT in COPY data
-DETAIL:  Column "id" has no DEFAULT value.
+ERROR:  unexpected default marker in COPY data
+DETAIL:  Column "id" has no default value.
 CONTEXT:  COPY copy_default, line 1: "\D	value	'2022-07-04'"
 copy copy_default from stdin with (format csv, default '\D');
-ERROR:  unexpected DEFAULT in COPY data
-DETAIL:  Column "id" has no DEFAULT value.
+ERROR:  unexpected default marker in COPY data
+DETAIL:  Column "id" has no default value.
 CONTEXT:  COPY copy_default, line 1: "\D,value,2022-07-04"
 -- The DEFAULT marker must be unquoted and unescaped or it's not recognized
 copy copy_default from stdin with (default '\D');
