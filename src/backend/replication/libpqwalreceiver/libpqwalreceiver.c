@@ -196,7 +196,7 @@ libpqrcv_connect(const char *conninfo, bool logical, bool must_use_password,
 				(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
 				 errmsg("password is required"),
 				 errdetail("Non-superuser cannot connect if the server does not request a password."),
-				 errhint("Target server's authentication method must be changed. or set password_required=false in the subscription attributes.")));
+				 errhint("Target server's authentication method must be changed, or set password_required=false in the subscription parameters.")));
 	}
 
 	if (logical)

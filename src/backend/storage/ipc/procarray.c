@@ -3825,7 +3825,9 @@ TerminateOtherDBBackends(Oid databaseId)
 				if (superuser_arg(proc->roleId) && !superuser())
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("must be a superuser to terminate superuser process")));
+							 errmsg("permission denied to terminate process"),
+							 errdetail("Only roles with the %s attribute may terminate processes of roles with the %s attribute.",
+									   "SUPERUSER", "SUPERUSER")));
 
 				/* Users can signal backends they have role membership in. */
 				if (!has_privs_of_role(GetUserId(), proc->roleId) &&

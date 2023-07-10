@@ -2527,7 +2527,7 @@ errdetail_recovery_conflict(void)
 			errdetail("User query might have needed to see row versions that must be removed.");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT:
-			errdetail("User was using a logical slot that must be invalidated.");
+			errdetail("User was using a logical replication slot that must be invalidated.");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
 			errdetail("User transaction caused buffer deadlock with recovery.");

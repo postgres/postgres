@@ -17,15 +17,15 @@ SELECT getdatabaseencoding();           -- just to label the results files
 -- checks for double-quoted values
 -- basic unicode input
 SELECT '"\u"'::jsonpath;		-- ERROR, incomplete escape
-ERROR:  invalid unicode sequence at or near "\u" of jsonpath input
+ERROR:  invalid Unicode escape sequence at or near "\u" of jsonpath input
 LINE 1: SELECT '"\u"'::jsonpath;
                ^
 SELECT '"\u00"'::jsonpath;		-- ERROR, incomplete escape
-ERROR:  invalid unicode sequence at or near "\u00" of jsonpath input
+ERROR:  invalid Unicode escape sequence at or near "\u00" of jsonpath input
 LINE 1: SELECT '"\u00"'::jsonpath;
                ^
 SELECT '"\u000g"'::jsonpath;	-- ERROR, g is not a hex digit
-ERROR:  invalid unicode sequence at or near "\u000" of jsonpath input
+ERROR:  invalid Unicode escape sequence at or near "\u000" of jsonpath input
 LINE 1: SELECT '"\u000g"'::jsonpath;
                ^
 SELECT '"\u0000"'::jsonpath;	-- OK, legal escape
@@ -99,15 +99,15 @@ select '"null \\u0000 escape"'::jsonpath as not_an_escape;
 -- checks for quoted key names
 -- basic unicode input
 SELECT '$."\u"'::jsonpath;		-- ERROR, incomplete escape
-ERROR:  invalid unicode sequence at or near "\u" of jsonpath input
+ERROR:  invalid Unicode escape sequence at or near "\u" of jsonpath input
 LINE 1: SELECT '$."\u"'::jsonpath;
                ^
 SELECT '$."\u00"'::jsonpath;	-- ERROR, incomplete escape
-ERROR:  invalid unicode sequence at or near "\u00" of jsonpath input
+ERROR:  invalid Unicode escape sequence at or near "\u00" of jsonpath input
 LINE 1: SELECT '$."\u00"'::jsonpath;
                ^
 SELECT '$."\u000g"'::jsonpath;	-- ERROR, g is not a hex digit
-ERROR:  invalid unicode sequence at or near "\u000" of jsonpath input
+ERROR:  invalid Unicode escape sequence at or near "\u000" of jsonpath input
 LINE 1: SELECT '$."\u000g"'::jsonpath;
                ^
 SELECT '$."\u0000"'::jsonpath;	-- OK, legal escape

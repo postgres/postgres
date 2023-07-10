@@ -1113,7 +1113,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 			if (!XactReadOnly)
 				ereport(ERROR,
 				/*- translator: %s is a CREATE_REPLICATION_SLOT statement */
-						(errmsg("%s must be called in a read only transaction",
+						(errmsg("%s must be called in a read-only transaction",
 								"CREATE_REPLICATION_SLOT ... (SNAPSHOT 'use')")));
 
 			if (FirstSnapshotSet)

@@ -1989,7 +1989,7 @@ partitioned_table_reloptions(Datum reloptions, bool validate)
 		ereport(ERROR,
 				errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				errmsg("cannot specify storage parameters for a partitioned table"),
-				errhint("Specify storage parameters for its leaf partitions, instead."));
+				errhint("Specify storage parameters for its leaf partitions instead."));
 	return NULL;
 }
 

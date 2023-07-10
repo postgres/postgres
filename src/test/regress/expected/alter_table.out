@@ -3855,7 +3855,7 @@ ERROR:  cannot alter column "b" because it is part of the partition key of relat
 -- specifying storage parameters for partitioned tables is not supported
 ALTER TABLE partitioned SET (fillfactor=100);
 ERROR:  cannot specify storage parameters for a partitioned table
-HINT:  Specify storage parameters for its leaf partitions, instead.
+HINT:  Specify storage parameters for its leaf partitions instead.
 -- partitioned table cannot participate in regular inheritance
 CREATE TABLE nonpartitioned (
 	a int,
