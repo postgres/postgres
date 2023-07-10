@@ -4059,7 +4059,7 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 		!isImplicitArray)
 		if (changeDependencyFor(TypeRelationId, typeOid,
 								NamespaceRelationId, oldNspOid, nspOid) != 1)
-			elog(ERROR, "failed to change schema dependency for type %s",
+			elog(ERROR, "could not change schema dependency for type \"%s\"",
 				 format_type_be(typeOid));
 
 	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);

@@ -1450,9 +1450,13 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 
 		/* Add or replace dependency on support function */
 		if (OidIsValid(procForm->prosupport))
-			changeDependencyFor(ProcedureRelationId, funcOid,
-								ProcedureRelationId, procForm->prosupport,
-								newsupport);
+		{
+			if (changeDependencyFor(ProcedureRelationId, funcOid,
+									ProcedureRelationId, procForm->prosupport,
+									newsupport) != 1)
+				elog(ERROR, "could not change support dependency for function %s",
+					 get_func_name(funcOid));
+		}
 		else
 		{
 			ObjectAddress referenced;

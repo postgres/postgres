@@ -1271,7 +1271,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 								AccessMethodRelationId,
 								relam1,
 								relam2) != 1)
-			elog(ERROR, "failed to change access method dependency for relation \"%s.%s\"",
+			elog(ERROR, "could not change access method dependency for relation \"%s.%s\"",
 				 get_namespace_name(get_rel_namespace(r1)),
 				 get_rel_name(r1));
 		if (changeDependencyFor(RelationRelationId,
@@ -1279,7 +1279,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 								AccessMethodRelationId,
 								relam2,
 								relam1) != 1)
-			elog(ERROR, "failed to change access method dependency for relation \"%s.%s\"",
+			elog(ERROR, "could not change access method dependency for relation \"%s.%s\"",
 				 get_namespace_name(get_rel_namespace(r2)),
 				 get_rel_name(r2));
 	}

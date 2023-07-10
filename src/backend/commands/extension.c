@@ -2944,9 +2944,11 @@ AlterExtensionNamespace(const char *extensionName, const char *newschema, Oid *o
 
 	table_close(extRel, RowExclusiveLock);
 
-	/* update dependencies to point to the new schema */
-	changeDependencyFor(ExtensionRelationId, extensionOid,
-						NamespaceRelationId, oldNspOid, nspOid);
+	/* update dependency to point to the new schema */
+	if (changeDependencyFor(ExtensionRelationId, extensionOid,
+							NamespaceRelationId, oldNspOid, nspOid) != 1)
+		elog(ERROR, "could not change schema dependency for extension %s",
+			 NameStr(extForm->extname));
 
 	InvokeObjectPostAlterHook(ExtensionRelationId, extensionOid, 0);
 
