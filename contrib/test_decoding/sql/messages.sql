@@ -19,7 +19,7 @@ COMMIT;
 
 SELECT 'ignorethis' FROM pg_logical_emit_message(true, 'test', 'czechtastic');
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1', 'include-xids', '0');
 
 -- test db filtering
 \set prevdb :DBNAME

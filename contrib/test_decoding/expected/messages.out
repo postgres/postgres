@@ -58,17 +58,23 @@ SELECT 'ignorethis' FROM pg_logical_emit_message(true, 'test', 'czechtastic');
  ignorethis
 (1 row)
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1', 'include-xids', '0');
                                 data                                
 --------------------------------------------------------------------
+ BEGIN
  message: transactional: 1 prefix: test, sz: 4 content:msg1
+ COMMIT
  message: transactional: 0 prefix: test, sz: 4 content:msg2
  message: transactional: 0 prefix: test, sz: 4 content:msg4
  message: transactional: 0 prefix: test, sz: 4 content:msg6
+ BEGIN
  message: transactional: 1 prefix: test, sz: 4 content:msg5
  message: transactional: 1 prefix: test, sz: 4 content:msg7
+ COMMIT
+ BEGIN
  message: transactional: 1 prefix: test, sz: 11 content:czechtastic
-(7 rows)
+ COMMIT
+(13 rows)
 
 -- test db filtering
 \set prevdb :DBNAME
