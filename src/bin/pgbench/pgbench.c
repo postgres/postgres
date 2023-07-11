@@ -4947,8 +4947,8 @@ initGenerateDataClientSide(PGconn *con)
 
 		/* "filler" column defaults to blank padded empty string */
 		printfPQExpBuffer(&sql,
-						  INT64_FORMAT "\t" INT64_FORMAT "\t%d\t\n",
-						  j, k / naccounts + 1, 0);
+						  INT64_FORMAT "\t" INT64_FORMAT "\t0\t\n",
+						  j, k / naccounts + 1);
 		if (PQputline(con, sql.data))
 			pg_fatal("PQputline failed");
 
