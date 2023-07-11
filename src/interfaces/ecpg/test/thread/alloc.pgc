@@ -2,14 +2,6 @@
 #include <stdlib.h>
 #include "ecpg_config.h"
 
-#ifndef ENABLE_THREAD_SAFETY
-int
-main(void)
-{
-	printf("No threading enabled.\n");
-	return 0;
-}
-#else
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -87,4 +79,3 @@ int main ()
 
 	return 0;
 }
-#endif

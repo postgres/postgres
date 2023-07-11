@@ -44,12 +44,10 @@
 
 #include <sys/stat.h>
 
-#ifdef ENABLE_THREAD_SAFETY
 #ifdef WIN32
 #include "pthread-win32.h"
 #else
 #include <pthread.h>
-#endif
 #endif
 
 /*
@@ -91,7 +89,6 @@ static bool pq_init_crypto_lib = true;
 
 static bool ssl_lib_initialized = false;
 
-#ifdef ENABLE_THREAD_SAFETY
 static long crypto_open_connections = 0;
 
 #ifndef WIN32
@@ -100,7 +97,6 @@ static pthread_mutex_t ssl_config_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t ssl_config_mutex = NULL;
 static long win32_ssl_create_mutex = 0;
 #endif
-#endif							/* ENABLE_THREAD_SAFETY */
 
 static PQsslKeyPassHook_OpenSSL_type PQsslKeyPassHook = NULL;
 static int	ssl_protocol_version_to_openssl(const char *protocol);
@@ -112,15 +108,12 @@ static int	ssl_protocol_version_to_openssl(const char *protocol);
 void
 pgtls_init_library(bool do_ssl, int do_crypto)
 {
-#ifdef ENABLE_THREAD_SAFETY
-
 	/*
 	 * Disallow changing the flags while we have open connections, else we'd
 	 * get completely confused.
 	 */
 	if (crypto_open_connections != 0)
 		return;
-#endif
 
 	pq_init_ssl_lib = do_ssl;
 	pq_init_crypto_lib = do_crypto;
@@ -718,7 +711,7 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 	return rc;
 }
 
-#if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
+#if defined(HAVE_CRYPTO_LOCK)
 /*
  *	Callback functions for OpenSSL internal locking.  (OpenSSL 1.1.0
  *	does its own locking, and doesn't need these anymore.  The
@@ -759,7 +752,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 			Assert(false);
 	}
 }
-#endif							/* ENABLE_THREAD_SAFETY && HAVE_CRYPTO_LOCK */
+#endif							/* HAVE_CRYPTO_LOCK */
 
 /*
  * Initialize SSL library.
@@ -774,7 +767,6 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 int
 pgtls_init(PGconn *conn, bool do_ssl, bool do_crypto)
 {
-#ifdef ENABLE_THREAD_SAFETY
 #ifdef WIN32
 	/* Also see similar code in fe-connect.c, default_threadlock() */
 	if (ssl_config_mutex == NULL)
@@ -840,7 +832,6 @@ pgtls_init(PGconn *conn, bool do_ssl, bool do_crypto)
 		}
 	}
 #endif							/* HAVE_CRYPTO_LOCK */
-#endif							/* ENABLE_THREAD_SAFETY */
 
 	if (!ssl_lib_initialized && do_ssl)
 	{
@@ -857,9 +848,7 @@ pgtls_init(PGconn *conn, bool do_ssl, bool do_crypto)
 		ssl_lib_initialized = true;
 	}
 
-#ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_unlock(&ssl_config_mutex);
-#endif
 	return 0;
 }
 
@@ -878,7 +867,7 @@ pgtls_init(PGconn *conn, bool do_ssl, bool do_crypto)
 static void
 destroy_ssl_system(void)
 {
-#if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
+#if defined(HAVE_CRYPTO_LOCK)
 	/* Mutex is created in pgtls_init() */
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return;

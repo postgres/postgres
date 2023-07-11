@@ -838,18 +838,6 @@ done
 IFS=$ac_save_IFS
 
 #
-# Enable thread-safe client libraries
-#
-AC_MSG_CHECKING([allow thread-safe client libraries])
-PGAC_ARG_BOOL(enable, thread-safety, yes, [disable thread-safety in client libraries])
-if test "$enable_thread_safety" = yes; then
-  AC_DEFINE([ENABLE_THREAD_SAFETY], 1,
-          [Define to 1 to build client libraries as thread-safe code. (--enable-thread-safety)])
-fi
-AC_MSG_RESULT([$enable_thread_safety])
-AC_SUBST(enable_thread_safety)
-
-#
 # ICU
 #
 AC_MSG_CHECKING([whether to build with ICU support])
@@ -1243,7 +1231,7 @@ dnl note: We have to use AS_IF here rather than plain if. The AC_CHECK_HEADER
 dnl invocation below is the first one in the script, and autoconf generates
 dnl additional code for that, which must not be inside the if-block. AS_IF
 dnl knows how to do that.
-AS_IF([test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"],
+AS_IF([test "$PORTNAME" != "win32"],
 [ # then
 AX_PTHREAD	# set thread flags
 
@@ -1258,7 +1246,7 @@ CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 LIBS="$LIBS $PTHREAD_LIBS"
 
 AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([
-pthread.h not found;  use --disable-thread-safety to disable thread safety])])
+pthread.h not found])])
 
 AC_CHECK_FUNCS([strerror_r])
 
@@ -1305,9 +1293,7 @@ AC_SEARCH_LIBS(shmget, cygipc)
 # *BSD:
 AC_SEARCH_LIBS(backtrace_symbols, execinfo)
 
-if test "$enable_thread_safety" = yes; then
-  AC_SEARCH_LIBS(pthread_barrier_wait, pthread)
-fi
+AC_SEARCH_LIBS(pthread_barrier_wait, pthread)
 
 if test "$with_readline" = yes; then
   PGAC_CHECK_READLINE
@@ -1434,7 +1420,7 @@ if test "$with_ldap" = yes ; then
     AC_CHECK_FUNC([ldap_verify_credentials],
 		  [thread_safe_libldap=yes],
 		  [thread_safe_libldap=no])
-    if test "$enable_thread_safety" = yes -a "$thread_safe_libldap" = no; then
+    if test "$thread_safe_libldap" = no; then
       # Use ldap_r for FE if available, else assume ldap is thread-safe.
       # On some platforms ldap_r fails to link without PTHREAD_LIBS.
       LIBS="$_LIBS"
@@ -1858,9 +1844,7 @@ AC_REPLACE_FUNCS(m4_normalize([
 	strnlen
 ]))
 
-if test "$enable_thread_safety" = yes; then
-  AC_REPLACE_FUNCS(pthread_barrier_wait)
-fi
+AC_REPLACE_FUNCS(pthread_barrier_wait)
 
 if test "$PORTNAME" = "win32" -o "$PORTNAME" = "cygwin"; then
 	# Cygwin and (apparently, based on test results) Mingw both

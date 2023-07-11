@@ -68,7 +68,6 @@ struct auto_mem
 	struct auto_mem *next;
 };
 
-#ifdef ENABLE_THREAD_SAFETY
 static pthread_key_t auto_mem_key;
 static pthread_once_t auto_mem_once = PTHREAD_ONCE_INIT;
 
@@ -97,12 +96,6 @@ set_auto_allocs(struct auto_mem *am)
 {
 	pthread_setspecific(auto_mem_key, am);
 }
-#else
-static struct auto_mem *auto_allocs = NULL;
-
-#define get_auto_allocs()		(auto_allocs)
-#define set_auto_allocs(am)		do { auto_allocs = (am); } while(0)
-#endif
 
 char *
 ecpg_auto_alloc(long size, int lineno)

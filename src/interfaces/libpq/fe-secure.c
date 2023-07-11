@@ -35,12 +35,10 @@
 
 #include <sys/stat.h>
 
-#ifdef ENABLE_THREAD_SAFETY
 #ifdef WIN32
 #include "pthread-win32.h"
 #else
 #include <pthread.h>
-#endif
 #endif
 
 #include "fe-auth.h"
@@ -55,8 +53,6 @@
 #ifndef WIN32
 
 #define SIGPIPE_MASKED(conn)	((conn)->sigpipe_so || (conn)->sigpipe_flag)
-
-#ifdef ENABLE_THREAD_SAFETY
 
 struct sigpipe_info
 {
@@ -90,24 +86,6 @@ struct sigpipe_info
 			pq_reset_sigpipe(&(spinfo).oldsigmask, (spinfo).sigpipe_pending, \
 							 (spinfo).got_epipe); \
 	} while (0)
-#else							/* !ENABLE_THREAD_SAFETY */
-
-#define DECLARE_SIGPIPE_INFO(spinfo) pqsigfunc spinfo = NULL
-
-#define DISABLE_SIGPIPE(conn, spinfo, failaction) \
-	do { \
-		if (!SIGPIPE_MASKED(conn)) \
-			spinfo = pqsignal(SIGPIPE, SIG_IGN); \
-	} while (0)
-
-#define REMEMBER_EPIPE(spinfo, cond)
-
-#define RESTORE_SIGPIPE(conn, spinfo) \
-	do { \
-		if (!SIGPIPE_MASKED(conn)) \
-			pqsignal(SIGPIPE, spinfo); \
-	} while (0)
-#endif							/* ENABLE_THREAD_SAFETY */
 #else							/* WIN32 */
 
 #define DECLARE_SIGPIPE_INFO(spinfo)
@@ -524,7 +502,7 @@ PQgssEncInUse(PGconn *conn)
 #endif							/* ENABLE_GSS */
 
 
-#if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
+#if !defined(WIN32)
 
 /*
  *	Block SIGPIPE for this thread.  This prevents send()/write() from exiting
@@ -608,4 +586,4 @@ pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending, bool got_epipe)
 	SOCK_ERRNO_SET(save_errno);
 }
 
-#endif							/* ENABLE_THREAD_SAFETY && !WIN32 */
+#endif							/* !WIN32 */

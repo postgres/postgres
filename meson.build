@@ -2508,17 +2508,6 @@ cdata.set_quoted('PG_VERSION_STR',
 )
 
 
-
-###############################################################
-# Threading
-###############################################################
-
-# XXX: About to rely on thread safety in the autoconf build, so not worth
-# implementing a fallback.
-cdata.set('ENABLE_THREAD_SAFETY', 1)
-
-
-
 ###############################################################
 # NLS / Gettext
 ###############################################################

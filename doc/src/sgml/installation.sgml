@@ -1306,19 +1306,6 @@ build-postgresql:
        </listitem>
       </varlistentry>
 
-      <varlistentry id="configure-option-disable-thread-safety">
-       <term><option>--disable-thread-safety</option></term>
-       <listitem>
-        <para>
-         Disable the thread-safety of client libraries.  This prevents
-         concurrent threads in <application>libpq</application> and
-         <application>ECPG</application> programs from safely controlling
-         their private connection handles.  Use this only on platforms
-         with deficient threading support.
-        </para>
-       </listitem>
-      </varlistentry>
-
      </variablelist>
 
    </sect3>

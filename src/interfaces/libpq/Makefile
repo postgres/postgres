@@ -69,11 +69,8 @@ endif
 
 ifeq ($(PORTNAME), win32)
 OBJS += \
+	pthread-win32.o \
 	win32.o
-
-ifeq ($(enable_thread_safety), yes)
-OBJS += pthread-win32.o
-endif
 endif
 
 

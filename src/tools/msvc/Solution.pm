@@ -219,7 +219,6 @@ sub GenerateFiles
 		DLSUFFIX => '".dll"',
 		ENABLE_GSS => $self->{options}->{gss} ? 1 : undef,
 		ENABLE_NLS => $self->{options}->{nls} ? 1 : undef,
-		ENABLE_THREAD_SAFETY => 1,
 		HAVE_APPEND_HISTORY => undef,
 		HAVE_ASN1_STRING_GET0_DATA => undef,
 		HAVE_ATOMICS => 1,
@@ -1209,7 +1208,7 @@ sub GetFakeConfigure
 {
 	my $self = shift;
 
-	my $cfg = '--enable-thread-safety';
+	my $cfg = '';
 	$cfg .= ' --enable-cassert' if ($self->{options}->{asserts});
 	$cfg .= ' --enable-nls' if ($self->{options}->{nls});
 	$cfg .= ' --enable-tap-tests' if ($self->{options}->{tap_tests});

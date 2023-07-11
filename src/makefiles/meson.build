@@ -52,7 +52,6 @@ pgxs_kv = {
   'abs_top_builddir': meson.build_root(),
   'abs_top_srcdir': meson.source_root(),
 
-  'enable_thread_safety': 'yes',
   'enable_rpath': get_option('rpath') ? 'yes' : 'no',
   'enable_nls': libintl.found() ? 'yes' : 'no',
   'enable_tap_tests': tap_tests_enabled ? 'yes' : 'no',

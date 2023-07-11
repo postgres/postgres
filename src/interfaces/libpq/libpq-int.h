@@ -31,14 +31,12 @@
 #include <sys/time.h>
 #endif
 
-#ifdef ENABLE_THREAD_SAFETY
 #ifdef WIN32
 #include "pthread-win32.h"
 #else
 #include <pthread.h>
 #endif
 #include <signal.h>
-#endif
 
 /* include stuff common to fe and be */
 #include "libpq/pqcomm.h"
@@ -681,15 +679,10 @@ extern int	pqPacketSend(PGconn *conn, char pack_type,
 						 const void *buf, size_t buf_len);
 extern bool pqGetHomeDirectory(char *buf, int bufsize);
 
-#ifdef ENABLE_THREAD_SAFETY
 extern pgthreadlock_t pg_g_threadlock;
 
 #define pglock_thread()		pg_g_threadlock(true)
 #define pgunlock_thread()	pg_g_threadlock(false)
-#else
-#define pglock_thread()		((void) 0)
-#define pgunlock_thread()	((void) 0)
-#endif
 
 /* === in fe-exec.c === */
 
@@ -765,7 +758,7 @@ extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
 extern ssize_t pqsecure_raw_read(PGconn *, void *ptr, size_t len);
 extern ssize_t pqsecure_raw_write(PGconn *, const void *ptr, size_t len);
 
-#if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
+#if !defined(WIN32)
 extern int	pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending);
 extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
 							 bool got_epipe);

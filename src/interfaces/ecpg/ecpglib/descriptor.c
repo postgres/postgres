@@ -19,7 +19,6 @@
 static void descriptor_free(struct descriptor *desc);
 
 /* We manage descriptors separately for each thread. */
-#ifdef ENABLE_THREAD_SAFETY
 static pthread_key_t descriptor_key;
 static pthread_once_t descriptor_once = PTHREAD_ONCE_INIT;
 
@@ -49,12 +48,6 @@ set_descriptors(struct descriptor *value)
 {
 	pthread_setspecific(descriptor_key, value);
 }
-#else
-static struct descriptor *all_descriptors = NULL;
-
-#define get_descriptors()		(all_descriptors)
-#define set_descriptors(value)	do { all_descriptors = (value); } while(0)
-#endif
 
 /* old internal convenience function that might go away later */
 static PGresult *
@@ -782,8 +775,6 @@ ECPGdeallocate_desc(int line, const char *name)
 	return false;
 }
 
-#ifdef ENABLE_THREAD_SAFETY
-
 /* Deallocate all descriptors in the list */
 static void
 descriptor_deallocate_all(struct descriptor *list)
@@ -796,7 +787,6 @@ descriptor_deallocate_all(struct descriptor *list)
 		list = next;
 	}
 }
-#endif							/* ENABLE_THREAD_SAFETY */
 
 bool
 ECPGallocate_desc(int line, const char *name)
