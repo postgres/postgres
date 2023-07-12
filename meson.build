@@ -742,8 +742,8 @@ endif
 ###############################################################
 
 llvmopt = get_option('llvm')
-if not llvmopt.disabled()
-  add_languages('cpp', required: true, native: false)
+llvm = not_found_dep
+if add_languages('cpp', required: llvmopt, native: false)
   llvm = dependency('llvm', version: '>=3.9', method: 'config-tool', required: llvmopt)
 
   if llvm.found()
@@ -757,8 +757,8 @@ if not llvmopt.disabled()
     ccache = find_program('ccache', native: true, required: false)
     clang = find_program(llvm_binpath / 'clang', required: true)
   endif
-else
-  llvm = not_found_dep
+elif llvmopt.auto()
+  message('llvm requires a C++ compiler')
 endif
 
 
