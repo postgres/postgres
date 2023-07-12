@@ -843,9 +843,9 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	}
 
 	/*
-	 * Next we add the system attributes.  Skip OID if rel has no OIDs. Skip
-	 * all for a view or type relation.  We don't bother with making datatype
-	 * dependencies here, since presumably all these types are pinned.
+	 * Next we add the system attributes.  Skip all for a view or type
+	 * relation.  We don't bother with making datatype dependencies here,
+	 * since presumably all these types are pinned.
 	 */
 	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE)
 	{
