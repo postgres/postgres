@@ -1666,67 +1666,55 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 			 attnum, relid);
 	attStruct = (Form_pg_attribute) GETSTRUCT(tuple);
 
-	if (attnum < 0)
+	/* Mark the attribute as dropped */
+	attStruct->attisdropped = true;
+
+	/*
+	 * Set the type OID to invalid.  A dropped attribute's type link cannot be
+	 * relied on (once the attribute is dropped, the type might be too).
+	 * Fortunately we do not need the type row --- the only really essential
+	 * information is the type's typlen and typalign, which are preserved in
+	 * the attribute's attlen and attalign.  We set atttypid to zero here as a
+	 * means of catching code that incorrectly expects it to be valid.
+	 */
+	attStruct->atttypid = InvalidOid;
+
+	/* Remove any NOT NULL constraint the column may have */
+	attStruct->attnotnull = false;
+
+	/* We don't want to keep stats for it anymore */
+	attStruct->attstattarget = 0;
+
+	/* Unset this so no one tries to look up the generation expression */
+	attStruct->attgenerated = '\0';
+
+	/*
+	 * Change the column name to something that isn't likely to conflict
+	 */
+	snprintf(newattname, sizeof(newattname),
+			 "........pg.dropped.%d........", attnum);
+	namestrcpy(&(attStruct->attname), newattname);
+
+	/* clear the missing value if any */
+	if (attStruct->atthasmissing)
 	{
-		/* System attribute (probably OID) ... just delete the row */
+		Datum		valuesAtt[Natts_pg_attribute] = {0};
+		bool		nullsAtt[Natts_pg_attribute] = {0};
+		bool		replacesAtt[Natts_pg_attribute] = {0};
 
-		CatalogTupleDelete(attr_rel, &tuple->t_self);
+		/* update the tuple - set atthasmissing and attmissingval */
+		valuesAtt[Anum_pg_attribute_atthasmissing - 1] =
+			BoolGetDatum(false);
+		replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
+		valuesAtt[Anum_pg_attribute_attmissingval - 1] = (Datum) 0;
+		nullsAtt[Anum_pg_attribute_attmissingval - 1] = true;
+		replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
+
+		tuple = heap_modify_tuple(tuple, RelationGetDescr(attr_rel),
+								  valuesAtt, nullsAtt, replacesAtt);
 	}
-	else
-	{
-		/* Dropping user attributes is lots harder */
 
-		/* Mark the attribute as dropped */
-		attStruct->attisdropped = true;
-
-		/*
-		 * Set the type OID to invalid.  A dropped attribute's type link
-		 * cannot be relied on (once the attribute is dropped, the type might
-		 * be too). Fortunately we do not need the type row --- the only
-		 * really essential information is the type's typlen and typalign,
-		 * which are preserved in the attribute's attlen and attalign.  We set
-		 * atttypid to zero here as a means of catching code that incorrectly
-		 * expects it to be valid.
-		 */
-		attStruct->atttypid = InvalidOid;
-
-		/* Remove any NOT NULL constraint the column may have */
-		attStruct->attnotnull = false;
-
-		/* We don't want to keep stats for it anymore */
-		attStruct->attstattarget = 0;
-
-		/* Unset this so no one tries to look up the generation expression */
-		attStruct->attgenerated = '\0';
-
-		/*
-		 * Change the column name to something that isn't likely to conflict
-		 */
-		snprintf(newattname, sizeof(newattname),
-				 "........pg.dropped.%d........", attnum);
-		namestrcpy(&(attStruct->attname), newattname);
-
-		/* clear the missing value if any */
-		if (attStruct->atthasmissing)
-		{
-			Datum		valuesAtt[Natts_pg_attribute] = {0};
-			bool		nullsAtt[Natts_pg_attribute] = {0};
-			bool		replacesAtt[Natts_pg_attribute] = {0};
-
-			/* update the tuple - set atthasmissing and attmissingval */
-			valuesAtt[Anum_pg_attribute_atthasmissing - 1] =
-				BoolGetDatum(false);
-			replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
-			valuesAtt[Anum_pg_attribute_attmissingval - 1] = (Datum) 0;
-			nullsAtt[Anum_pg_attribute_attmissingval - 1] = true;
-			replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
-
-			tuple = heap_modify_tuple(tuple, RelationGetDescr(attr_rel),
-									  valuesAtt, nullsAtt, replacesAtt);
-		}
-
-		CatalogTupleUpdate(attr_rel, &tuple->t_self, tuple);
-	}
+	CatalogTupleUpdate(attr_rel, &tuple->t_self, tuple);
 
 	/*
 	 * Because updating the pg_attribute row will trigger a relcache flush for
@@ -1736,8 +1724,7 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 
 	table_close(attr_rel, RowExclusiveLock);
 
-	if (attnum > 0)
-		RemoveStatistics(relid, attnum);
+	RemoveStatistics(relid, attnum);
 
 	relation_close(rel, NoLock);
 }
