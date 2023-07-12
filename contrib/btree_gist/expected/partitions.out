@@ -1,0 +1,82 @@
+-- Make sure we can create an exclusion constraint
+-- across a partitioned table.
+-- That code looks at strategy numbers that can differ in regular gist vs btree_gist,
+-- so we want to make sure it works here too.
+create table parttmp (
+  id int,
+  valid_at daterange,
+  exclude using gist (id with =, valid_at with &&)
+) partition by range (id);
+create table parttmp_1_to_10 partition of parttmp for values from (1) to (10);
+create table parttmp_11_to_20 partition of parttmp for values from (11) to (20);
+insert into parttmp (id, valid_at) values
+  (1, '[2000-01-01, 2000-02-01)'),
+  (1, '[2000-02-01, 2000-03-01)'),
+  (2, '[2000-01-01, 2000-02-01)'),
+  (11, '[2000-01-01, 2000-02-01)'),
+  (11, '[2000-02-01, 2000-03-01)'),
+  (12, '[2000-01-01, 2000-02-01)');
+select * from parttmp order by id, valid_at;
+ id |        valid_at         
+----+-------------------------
+  1 | [01-01-2000,02-01-2000)
+  1 | [02-01-2000,03-01-2000)
+  2 | [01-01-2000,02-01-2000)
+ 11 | [01-01-2000,02-01-2000)
+ 11 | [02-01-2000,03-01-2000)
+ 12 | [01-01-2000,02-01-2000)
+(6 rows)
+
+select * from parttmp_1_to_10 order by id, valid_at;
+ id |        valid_at         
+----+-------------------------
+  1 | [01-01-2000,02-01-2000)
+  1 | [02-01-2000,03-01-2000)
+  2 | [01-01-2000,02-01-2000)
+(3 rows)
+
+select * from parttmp_11_to_20 order by id, valid_at;
+ id |        valid_at         
+----+-------------------------
+ 11 | [01-01-2000,02-01-2000)
+ 11 | [02-01-2000,03-01-2000)
+ 12 | [01-01-2000,02-01-2000)
+(3 rows)
+
+update parttmp set valid_at = valid_at * '[2000-01-15,2000-02-15)' where id = 1;
+select * from parttmp order by id, valid_at;
+ id |        valid_at         
+----+-------------------------
+  1 | [01-15-2000,02-01-2000)
+  1 | [02-01-2000,02-15-2000)
+  2 | [01-01-2000,02-01-2000)
+ 11 | [01-01-2000,02-01-2000)
+ 11 | [02-01-2000,03-01-2000)
+ 12 | [01-01-2000,02-01-2000)
+(6 rows)
+
+select * from parttmp_1_to_10 order by id, valid_at;
+ id |        valid_at         
+----+-------------------------
+  1 | [01-15-2000,02-01-2000)
+  1 | [02-01-2000,02-15-2000)
+  2 | [01-01-2000,02-01-2000)
+(3 rows)
+
+select * from parttmp_11_to_20 order by id, valid_at;
+ id |        valid_at         
+----+-------------------------
+ 11 | [01-01-2000,02-01-2000)
+ 11 | [02-01-2000,03-01-2000)
+ 12 | [01-01-2000,02-01-2000)
+(3 rows)
+
+-- make sure the excluson constraint excludes:
+insert into parttmp (id, valid_at) values
+  (2, '[2000-01-15, 2000-02-01)');
+ERROR:  conflicting key value violates exclusion constraint "parttmp_1_to_10_id_valid_at_excl"
+DETAIL:  Key (id, valid_at)=(2, [01-15-2000,02-01-2000)) conflicts with existing key (id, valid_at)=(2, [01-01-2000,02-01-2000)).
+drop table parttmp;
+-- should fail with a good error message:
+create table parttmp (id int, valid_at daterange, exclude using gist (id with <>, valid_at with &&)) partition by range (id);
+ERROR:  cannot match partition key to index on column "id" using non-equal operator "<>"

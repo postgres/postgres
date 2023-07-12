@@ -106,12 +106,6 @@ CREATE TABLE partitioned (
 	a2 int
 ) PARTITION BY LIST (a1, a2);	-- fail
 
--- unsupported constraint type for partitioned tables
-CREATE TABLE partitioned (
-	a int,
-	EXCLUDE USING gist (a WITH &&)
-) PARTITION BY RANGE (a);
-
 -- prevent using prohibited expressions in the key
 CREATE FUNCTION retset (a int) RETURNS SETOF int AS $$ SELECT 1; $$ LANGUAGE SQL IMMUTABLE;
 CREATE TABLE partitioned (

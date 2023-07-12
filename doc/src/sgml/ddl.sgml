@@ -4216,11 +4216,13 @@ ALTER INDEX measurement_city_id_logdate_key
 
      <listitem>
       <para>
-       There is no way to create an exclusion constraint spanning the
-       whole partitioned table.  It is only possible to put such a
-       constraint on each leaf partition individually.  Again, this
-       limitation stems from not being able to enforce cross-partition
-       restrictions.
+       Similarly an exclusion constraint must include all the
+       partition key columns. Furthermore the constraint must compare those
+       columns for equality (not e.g. <literal>&amp;&amp;</literal>).
+       Again, this limitation stems from not being able to enforce
+       cross-partition restrictions. The constraint may include additional
+       columns that aren't part of the partition key, and it may compare
+       those with any operators you like.
       </para>
      </listitem>
 

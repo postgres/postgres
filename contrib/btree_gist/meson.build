@@ -88,6 +88,7 @@ tests += {
       'not_equal',
       'enum',
       'bool',
+      'partitions',
     ],
   },
 }
