@@ -174,9 +174,6 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 					  entry->rel, entry->page,
 					  entry->offset, false);
 
-		if (in != DatumGetArrayTypeP(entry->key))
-			pfree(in);
-
 		PG_RETURN_POINTER(retval);
 	}
 	else if (!ISALLTRUE(DatumGetPointer(entry->key)))
