@@ -399,7 +399,7 @@ pg_fsync(int fd)
 #endif
 
 	/* #if is to skip the sync_method test if there's no need for it */
-#if defined(HAVE_FSYNC_WRITETHROUGH) && !defined(FSYNC_WRITETHROUGH_IS_FSYNC)
+#if defined(HAVE_FSYNC_WRITETHROUGH)
 	if (sync_method == SYNC_METHOD_FSYNC_WRITETHROUGH)
 		return pg_fsync_writethrough(fd);
 	else
@@ -437,9 +437,7 @@ pg_fsync_writethrough(int fd)
 {
 	if (enableFsync)
 	{
-#ifdef WIN32
-		return _commit(fd);
-#elif defined(F_FULLFSYNC)
+#if defined(F_FULLFSYNC)
 		return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
 #else
 		errno = ENOSYS;

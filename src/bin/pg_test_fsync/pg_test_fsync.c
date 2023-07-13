@@ -605,9 +605,7 @@ signal_cleanup(SIGNAL_ARGS)
 static int
 pg_fsync_writethrough(int fd)
 {
-#ifdef WIN32
-	return _commit(fd);
-#elif defined(F_FULLFSYNC)
+#if defined(F_FULLFSYNC)
 	return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
 #else
 	errno = ENOSYS;
