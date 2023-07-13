@@ -47,9 +47,9 @@ static bool tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
  *
  * Returns how many columns to use for the index scan.
  *
- * This is not generic routine, it expects the idxrel to be a btree, non-partial
- * and have at least one column reference (i.e. cannot consist of only
- * expressions).
+ * This is not generic routine, idxrel must be PK, RI, or an index that can be
+ * used for REPLICA IDENTITY FULL table. See FindUsableIndexForReplicaIdentityFull()
+ * for details.
  *
  * By definition, replication identity of a rel meets all limitations associated
  * with that. Note that any other index could also meet these limitations.
