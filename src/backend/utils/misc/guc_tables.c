@@ -511,7 +511,7 @@ bool		check_function_bodies = true;
  * details.
  */
 bool		default_with_oids = false;
-bool		session_auth_is_superuser;
+bool		current_role_is_superuser;
 
 int			log_min_error_statement = ERROR;
 int			log_min_messages = WARNING;
@@ -1037,13 +1037,16 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		/* Not for general use --- used by SET SESSION AUTHORIZATION */
+		/*
+		 * Not for general use --- used by SET SESSION AUTHORIZATION and SET
+		 * ROLE
+		 */
 		{"is_superuser", PGC_INTERNAL, UNGROUPED,
 			gettext_noop("Shows whether the current user is a superuser."),
 			NULL,
 			GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&session_auth_is_superuser,
+		&current_role_is_superuser,
 		false,
 		NULL, NULL, NULL
 	},
