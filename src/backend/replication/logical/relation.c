@@ -779,9 +779,10 @@ RemoteRelContainsLeftMostColumnOnIdx(IndexInfo *indexInfo, AttrMap *attrmap)
 
 /*
  * Returns the oid of an index that can be used by the apply worker to scan
- * the relation. The index must be btree, non-partial, and have at least
- * one column reference (i.e. cannot consist of only expressions). These
- * limitations help to keep the index scan similar to PK/RI index scans.
+ * the relation. The index must be btree, non-partial, and the leftmost
+ * field must be a column (not an expression) that references the remote
+ * relation column. These limitations help to keep the index scan similar
+ * to PK/RI index scans.
  *
  * Note that the limitations of index scans for replica identity full only
  * adheres to a subset of the limitations of PK/RI. For example, we support
@@ -795,10 +796,6 @@ RemoteRelContainsLeftMostColumnOnIdx(IndexInfo *indexInfo, AttrMap *attrmap)
  * For partial indexes, the required changes are likely to be larger. If
  * none of the tuples satisfy the expression for the index scan, we fall-back
  * to sequential execution, which might not be a good idea in some cases.
- *
- * We also skip indexes if the remote relation does not contain the leftmost
- * column of the index. This is because in most such cases sequential scan is
- * favorable over index scan.
  *
  * We expect to call this function when REPLICA IDENTITY FULL is defined for
  * the remote relation.
