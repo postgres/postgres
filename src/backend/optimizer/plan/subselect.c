@@ -2835,8 +2835,8 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 }
 
 /*
- * finalize_primnode: add IDs of all PARAM_EXEC params appearing in the given
- * expression tree to the result set.
+ * finalize_primnode: add IDs of all PARAM_EXEC params that appear (or will
+ * appear) in the given expression tree to the result set.
  */
 static bool
 finalize_primnode(Node *node, finalize_primnode_context *context)
@@ -2853,7 +2853,26 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 		}
 		return false;			/* no more to do here */
 	}
-	if (IsA(node, SubPlan))
+	else if (IsA(node, Aggref))
+	{
+		/*
+		 * Check to see if the aggregate will be replaced by a Param
+		 * referencing a subquery output during setrefs.c.  If so, we must
+		 * account for that Param here.  (For various reasons, it's not
+		 * convenient to perform that substitution earlier than setrefs.c, nor
+		 * to perform this processing after setrefs.c.  Thus we need a wart
+		 * here.)
+		 */
+		Aggref	   *aggref = (Aggref *) node;
+		Param	   *aggparam;
+
+		aggparam = find_minmax_agg_replacement_param(context->root, aggref);
+		if (aggparam != NULL)
+			context->paramids = bms_add_member(context->paramids,
+											   aggparam->paramid);
+		/* Fall through to examine the agg's arguments */
+	}
+	else if (IsA(node, SubPlan))
 	{
 		SubPlan    *subplan = (SubPlan *) node;
 		Plan	   *plan = planner_subplan_get_plan(context->root, subplan);
