@@ -3207,7 +3207,7 @@ makeJsonByteaToTextConversion(Node *expr, JsonFormat *format, int location)
  * default format otherwise.
  */
 static Node *
-transformJsonValueExpr(ParseState *pstate, char *constructName,
+transformJsonValueExpr(ParseState *pstate, const char *constructName,
 					   JsonValueExpr *ve, JsonFormatType default_format)
 {
 	Node	   *expr = transformExprRecurse(pstate, (Node *) ve->raw_expr);
