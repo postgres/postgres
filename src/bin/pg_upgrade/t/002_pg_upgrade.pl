@@ -254,6 +254,12 @@ if (defined($ENV{oldinstall}))
 	}
 }
 
+# Create an invalid database, will be deleted below
+$oldnode->safe_psql('postgres', qq(
+  CREATE DATABASE regression_invalid;
+  UPDATE pg_database SET datconnlimit = -2 WHERE datname = 'regression_invalid';
+));
+
 # In a VPATH build, we'll be started in the source directory, but we want
 # to run pg_upgrade in the build directory so that any files generated finish
 # in it, like delete_old_cluster.{sh,bat}.
@@ -281,6 +287,26 @@ command_fails(
 ok(-d $newnode->data_dir . "/pg_upgrade_output.d",
 	"pg_upgrade_output.d/ not removed after pg_upgrade failure");
 rmtree($newnode->data_dir . "/pg_upgrade_output.d");
+
+# Check that pg_upgrade aborts when encountering an invalid database
+command_checks_all(
+	[
+		'pg_upgrade', '--no-sync', '-d', $oldnode->data_dir,
+		'-D', $newnode->data_dir, '-b', $oldbindir,
+		'-B', $newbindir, '-s', $newnode->host,
+		'-p', $oldnode->port, '-P', $newnode->port,
+		'--check',
+	],
+	1,
+	[qr/invalid/], # pg_upgrade prints errors on stdout :(
+	[qr//],
+	'invalid database causes failure');
+rmtree($newnode->data_dir . "/pg_upgrade_output.d");
+
+# And drop it, so we can continue
+$oldnode->start;
+$oldnode->safe_psql('postgres', 'DROP DATABASE regression_invalid');
+$oldnode->stop;
 
 # --check command works here, cleans up pg_upgrade_output.d.
 command_ok(

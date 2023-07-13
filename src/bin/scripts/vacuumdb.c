@@ -741,7 +741,7 @@ vacuum_all_databases(ConnParams *cparams,
 
 	conn = connectMaintenanceDatabase(cparams, progname, echo);
 	result = executeQuery(conn,
-						  "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
+						  "SELECT datname FROM pg_database WHERE datallowconn AND datconnlimit <> -2 ORDER BY 1;",
 						  echo);
 	PQfinish(conn);
 

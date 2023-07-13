@@ -49,7 +49,10 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	/* new connections allowed? */
 	bool		datallowconn;
 
-	/* max connections allowed (-1=no limit) */
+	/*
+	 * Max connections allowed. Negative values have special meaning, see
+	 * DATCONNLIMIT_* defines below.
+	 */
 	int32		datconnlimit;
 
 	/* all Xids < this are frozen in this DB */
@@ -99,5 +102,20 @@ DECLARE_UNIQUE_INDEX_PKEY(pg_database_oid_index, 2672, DatabaseOidIndexId, on pg
  */
 DECLARE_OID_DEFINING_MACRO(Template0DbOid, 4);
 DECLARE_OID_DEFINING_MACRO(PostgresDbOid, 5);
+
+/*
+ * Special values for pg_database.datconnlimit. Normal values are >= 0.
+ */
+#define		  DATCONNLIMIT_UNLIMITED	-1	/* no limit */
+
+/*
+ * A database is set to invalid partway through being dropped.  Using
+ * datconnlimit=-2 for this purpose isn't particularly clean, but is
+ * backpatchable.
+ */
+#define		  DATCONNLIMIT_INVALID_DB	-2
+
+extern bool database_is_invalid_form(Form_pg_database datform);
+extern bool database_is_invalid_oid(Oid dboid);
 
 #endif							/* PG_DATABASE_H */

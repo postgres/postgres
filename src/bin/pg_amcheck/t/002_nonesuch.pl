@@ -291,6 +291,40 @@ $node->command_checks_all(
 	'many unmatched patterns and one matched pattern under --no-strict-names'
 );
 
+
+#########################################
+# Test that an invalid / partially dropped database won't be targeted
+
+$node->safe_psql(
+	'postgres', q(
+	CREATE DATABASE regression_invalid;
+	UPDATE pg_database SET datconnlimit = -2 WHERE datname = 'regression_invalid';
+));
+
+$node->command_checks_all(
+	[
+		'pg_amcheck', '-d', 'regression_invalid'
+	],
+	1,
+	[qr/^$/],
+	[
+		qr/pg_amcheck: error: no connectable databases to check matching "regression_invalid"/,
+	],
+	'checking handling of invalid database');
+
+$node->command_checks_all(
+	[
+	    'pg_amcheck', '-d', 'postgres',
+		'-t', 'regression_invalid.public.foo',
+	],
+	1,
+	[qr/^$/],
+	[
+		qr/pg_amcheck: error: no connectable databases to check matching "regression_invalid.public.foo"/,
+	],
+	'checking handling of object in invalid database');
+
+
 #########################################
 # Test checking otherwise existent objects but in databases where they do not exist
 
