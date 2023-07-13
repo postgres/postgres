@@ -1016,8 +1016,7 @@ SS_process_ctes(PlannerInfo *root)
 
 		/*
 		 * CTE scans are not considered for parallelism (cf
-		 * set_rel_consider_parallel), and even if they were, initPlans aren't
-		 * parallel-safe.
+		 * set_rel_consider_parallel).
 		 */
 		splan->parallel_safe = false;
 		splan->setParam = NIL;
@@ -2120,8 +2119,8 @@ SS_identify_outer_params(PlannerInfo *root)
  * If any initPlans have been created in the current query level, they will
  * get attached to the Plan tree created from whichever Path we select from
  * the given rel.  Increment all that rel's Paths' costs to account for them,
- * and make sure the paths get marked as parallel-unsafe, since we can't
- * currently transmit initPlans to parallel workers.
+ * and if any of the initPlans are parallel-unsafe, mark all the rel's Paths
+ * parallel-unsafe as well.
  *
  * This is separate from SS_attach_initplans because we might conditionally
  * create more initPlans during create_plan(), depending on which Path we
@@ -2132,6 +2131,7 @@ void
 SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 {
 	Cost		initplan_cost;
+	bool		unsafe_initplans;
 	ListCell   *lc;
 
 	/* Nothing to do if no initPlans */
@@ -2140,17 +2140,10 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 
 	/*
 	 * Compute the cost increment just once, since it will be the same for all
-	 * Paths.  We assume each initPlan gets run once during top plan startup.
-	 * This is a conservative overestimate, since in fact an initPlan might be
-	 * executed later than plan startup, or even not at all.
+	 * Paths.  Also check for parallel-unsafe initPlans.
 	 */
-	initplan_cost = 0;
-	foreach(lc, root->init_plans)
-	{
-		SubPlan    *initsubplan = (SubPlan *) lfirst(lc);
-
-		initplan_cost += initsubplan->startup_cost + initsubplan->per_call_cost;
-	}
+	SS_compute_initplan_cost(root->init_plans,
+							 &initplan_cost, &unsafe_initplans);
 
 	/*
 	 * Now adjust the costs and parallel_safe flags.
@@ -2161,17 +2154,69 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 
 		path->startup_cost += initplan_cost;
 		path->total_cost += initplan_cost;
-		path->parallel_safe = false;
+		if (unsafe_initplans)
+			path->parallel_safe = false;
 	}
 
 	/*
-	 * Forget about any partial paths and clear consider_parallel, too;
-	 * they're not usable if we attached an initPlan.
+	 * Adjust partial paths' costs too, or forget them entirely if we must
+	 * consider the rel parallel-unsafe.
 	 */
-	final_rel->partial_pathlist = NIL;
-	final_rel->consider_parallel = false;
+	if (unsafe_initplans)
+	{
+		final_rel->partial_pathlist = NIL;
+		final_rel->consider_parallel = false;
+	}
+	else
+	{
+		foreach(lc, final_rel->partial_pathlist)
+		{
+			Path	   *path = (Path *) lfirst(lc);
+
+			path->startup_cost += initplan_cost;
+			path->total_cost += initplan_cost;
+		}
+	}
 
 	/* We needn't do set_cheapest() here, caller will do it */
+}
+
+/*
+ * SS_compute_initplan_cost - count up the cost delta for some initplans
+ *
+ * The total cost returned in *initplan_cost_p should be added to both the
+ * startup and total costs of the plan node the initplans get attached to.
+ * We also report whether any of the initplans are not parallel-safe.
+ *
+ * The primary user of this is SS_charge_for_initplans, but it's also
+ * used in adjusting costs when we move initplans to another plan node.
+ */
+void
+SS_compute_initplan_cost(List *init_plans,
+						 Cost *initplan_cost_p,
+						 bool *unsafe_initplans_p)
+{
+	Cost		initplan_cost;
+	bool		unsafe_initplans;
+	ListCell   *lc;
+
+	/*
+	 * We assume each initPlan gets run once during top plan startup.  This is
+	 * a conservative overestimate, since in fact an initPlan might be
+	 * executed later than plan startup, or even not at all.
+	 */
+	initplan_cost = 0;
+	unsafe_initplans = false;
+	foreach(lc, init_plans)
+	{
+		SubPlan    *initsubplan = lfirst_node(SubPlan, lc);
+
+		initplan_cost += initsubplan->startup_cost + initsubplan->per_call_cost;
+		if (!initsubplan->parallel_safe)
+			unsafe_initplans = true;
+	}
+	*initplan_cost_p = initplan_cost;
+	*unsafe_initplans_p = unsafe_initplans;
 }
 
 /*
@@ -2990,6 +3035,7 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 							   node->plan_id, prm->paramid);
 	get_first_col_type(plan, &node->firstColType, &node->firstColTypmod,
 					   &node->firstColCollation);
+	node->parallel_safe = plan->parallel_safe;
 	node->setParam = list_make1_int(prm->paramid);
 
 	root->init_plans = lappend(root->init_plans, node);

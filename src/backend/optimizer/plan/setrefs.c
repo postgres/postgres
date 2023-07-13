@@ -23,6 +23,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
+#include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_relation.h"
 #include "tcop/utility.h"
@@ -1519,19 +1520,30 @@ clean_up_removed_plan_level(Plan *parent, Plan *child)
 {
 	/*
 	 * We have to be sure we don't lose any initplans, so move any that were
-	 * attached to the parent plan to the child.  If we do move any, the child
-	 * is no longer parallel-safe.
+	 * attached to the parent plan to the child.  If any are parallel-unsafe,
+	 * the child is no longer parallel-safe.  As a cosmetic matter, also add
+	 * the initplans' run costs to the child's costs.
 	 */
 	if (parent->initPlan)
-		child->parallel_safe = false;
+	{
+		Cost		initplan_cost;
+		bool		unsafe_initplans;
 
-	/*
-	 * Attach plans this way so that parent's initplans are processed before
-	 * any pre-existing initplans of the child.  Probably doesn't matter, but
-	 * let's preserve the ordering just in case.
-	 */
-	child->initPlan = list_concat(parent->initPlan,
-								  child->initPlan);
+		SS_compute_initplan_cost(parent->initPlan,
+								 &initplan_cost, &unsafe_initplans);
+		child->startup_cost += initplan_cost;
+		child->total_cost += initplan_cost;
+		if (unsafe_initplans)
+			child->parallel_safe = false;
+
+		/*
+		 * Attach plans this way so that parent's initplans are processed
+		 * before any pre-existing initplans of the child.  Probably doesn't
+		 * matter, but let's preserve the ordering just in case.
+		 */
+		child->initPlan = list_concat(parent->initPlan,
+									  child->initPlan);
+	}
 
 	/*
 	 * We also have to transfer the parent's column labeling info into the

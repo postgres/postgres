@@ -3348,8 +3348,7 @@ create_minmaxagg_path(PlannerInfo *root,
 	/* For now, assume we are above any joins, so no parameterization */
 	pathnode->path.param_info = NULL;
 	pathnode->path.parallel_aware = false;
-	/* A MinMaxAggPath implies use of initplans, so cannot be parallel-safe */
-	pathnode->path.parallel_safe = false;
+	pathnode->path.parallel_safe = true;	/* might change below */
 	pathnode->path.parallel_workers = 0;
 	/* Result is one unordered row */
 	pathnode->path.rows = 1;
@@ -3358,13 +3357,15 @@ create_minmaxagg_path(PlannerInfo *root,
 	pathnode->mmaggregates = mmaggregates;
 	pathnode->quals = quals;
 
-	/* Calculate cost of all the initplans ... */
+	/* Calculate cost of all the initplans, and check parallel safety */
 	initplan_cost = 0;
 	foreach(lc, mmaggregates)
 	{
 		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
 
 		initplan_cost += mminfo->pathcost;
+		if (!mminfo->path->parallel_safe)
+			pathnode->path.parallel_safe = false;
 	}
 
 	/* add tlist eval cost for each output row, plus cpu_tuple_cost */
@@ -3384,6 +3385,17 @@ create_minmaxagg_path(PlannerInfo *root,
 		pathnode->path.startup_cost += qual_cost.startup;
 		pathnode->path.total_cost += qual_cost.startup + qual_cost.per_tuple;
 	}
+
+	/*
+	 * If the initplans were all parallel-safe, also check safety of the
+	 * target and quals.  (The Result node itself isn't parallelizable, but if
+	 * we are in a subquery then it can be useful for the outer query to know
+	 * that this one is parallel-safe.)
+	 */
+	if (pathnode->path.parallel_safe)
+		pathnode->path.parallel_safe =
+			is_parallel_safe(root, (Node *) target->exprs) &&
+			is_parallel_safe(root, (Node *) quals);
 
 	return pathnode;
 }

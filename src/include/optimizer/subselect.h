@@ -28,6 +28,9 @@ extern Node *SS_replace_correlation_vars(PlannerInfo *root, Node *expr);
 extern Node *SS_process_sublinks(PlannerInfo *root, Node *expr, bool isQual);
 extern void SS_identify_outer_params(PlannerInfo *root);
 extern void SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel);
+extern void SS_compute_initplan_cost(List *init_plans,
+									 Cost *initplan_cost_p,
+									 bool *unsafe_initplans_p);
 extern void SS_attach_initplans(PlannerInfo *root, Plan *plan);
 extern void SS_finalize_plan(PlannerInfo *root, Plan *plan);
 extern Param *SS_make_initplan_output_param(PlannerInfo *root,

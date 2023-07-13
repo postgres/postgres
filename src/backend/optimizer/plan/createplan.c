@@ -6481,6 +6481,8 @@ materialize_finished_plan(Plan *subplan)
 {
 	Plan	   *matplan;
 	Path		matpath;		/* dummy for result of cost_material */
+	Cost		initplan_cost;
+	bool		unsafe_initplans;
 
 	matplan = (Plan *) make_material(subplan);
 
@@ -6488,11 +6490,16 @@ materialize_finished_plan(Plan *subplan)
 	 * XXX horrid kluge: if there are any initPlans attached to the subplan,
 	 * move them up to the Material node, which is now effectively the top
 	 * plan node in its query level.  This prevents failure in
-	 * SS_finalize_plan(), which see for comments.  We don't bother adjusting
-	 * the subplan's cost estimate for this.
+	 * SS_finalize_plan(), which see for comments.
 	 */
 	matplan->initPlan = subplan->initPlan;
 	subplan->initPlan = NIL;
+
+	/* Move the initplans' cost delta, as well */
+	SS_compute_initplan_cost(matplan->initPlan,
+							 &initplan_cost, &unsafe_initplans);
+	subplan->startup_cost -= initplan_cost;
+	subplan->total_cost -= initplan_cost;
 
 	/* Set cost data */
 	cost_material(&matpath,
@@ -6500,8 +6507,8 @@ materialize_finished_plan(Plan *subplan)
 				  subplan->total_cost,
 				  subplan->plan_rows,
 				  subplan->plan_width);
-	matplan->startup_cost = matpath.startup_cost;
-	matplan->total_cost = matpath.total_cost;
+	matplan->startup_cost = matpath.startup_cost + initplan_cost;
+	matplan->total_cost = matpath.total_cost + initplan_cost;
 	matplan->plan_rows = subplan->plan_rows;
 	matplan->plan_width = subplan->plan_width;
 	matplan->parallel_aware = false;

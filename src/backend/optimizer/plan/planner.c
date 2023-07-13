@@ -432,16 +432,23 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	/*
 	 * Optionally add a Gather node for testing purposes, provided this is
 	 * actually a safe thing to do.
+	 *
+	 * We can add Gather even when top_plan has parallel-safe initPlans, but
+	 * then we have to move the initPlans to the Gather node because of
+	 * SS_finalize_plan's limitations.  That would cause cosmetic breakage of
+	 * regression tests when debug_parallel_query = regress, because initPlans
+	 * that would normally appear on the top_plan move to the Gather, causing
+	 * them to disappear from EXPLAIN output.  That doesn't seem worth kluging
+	 * EXPLAIN to hide, so skip it when debug_parallel_query = regress.
 	 */
-	if (debug_parallel_query != DEBUG_PARALLEL_OFF && top_plan->parallel_safe)
+	if (debug_parallel_query != DEBUG_PARALLEL_OFF &&
+		top_plan->parallel_safe &&
+		(top_plan->initPlan == NIL ||
+		 debug_parallel_query != DEBUG_PARALLEL_REGRESS))
 	{
 		Gather	   *gather = makeNode(Gather);
-
-		/*
-		 * Top plan must not have any initPlans, else it shouldn't have been
-		 * marked parallel-safe.
-		 */
-		Assert(top_plan->initPlan == NIL);
+		Cost		initplan_cost;
+		bool		unsafe_initplans;
 
 		gather->plan.targetlist = top_plan->targetlist;
 		gather->plan.qual = NIL;
@@ -450,6 +457,10 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 		gather->num_workers = 1;
 		gather->single_copy = true;
 		gather->invisible = (debug_parallel_query == DEBUG_PARALLEL_REGRESS);
+
+		/* Transfer any initPlans to the new top node */
+		gather->plan.initPlan = top_plan->initPlan;
+		top_plan->initPlan = NIL;
 
 		/*
 		 * Since this Gather has no parallel-aware descendants to signal to,
@@ -469,6 +480,15 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 		gather->plan.plan_width = top_plan->plan_width;
 		gather->plan.parallel_aware = false;
 		gather->plan.parallel_safe = false;
+
+		/*
+		 * Delete the initplans' cost from top_plan.  We needn't add it to the
+		 * Gather node, since the above coding already included it there.
+		 */
+		SS_compute_initplan_cost(gather->plan.initPlan,
+								 &initplan_cost, &unsafe_initplans);
+		top_plan->startup_cost -= initplan_cost;
+		top_plan->total_cost -= initplan_cost;
 
 		/* use parallel mode for parallel plans. */
 		root->glob->parallelModeNeeded = true;
