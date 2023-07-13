@@ -1590,7 +1590,7 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 						 "FROM pg_catalog.pg_database d "
 						 "LEFT OUTER JOIN exclude_raw e "
 						 "ON d.datname ~ e.rgx "
-						 "\nWHERE d.datallowconn "
+						 "\nWHERE d.datallowconn AND datconnlimit != -2 "
 						 "AND e.pattern_id IS NULL"
 						 "),"
 
