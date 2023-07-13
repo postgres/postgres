@@ -1895,6 +1895,18 @@ get_database_list(void)
 		MemoryContext oldcxt;
 
 		/*
+		 * If database has partially been dropped, we can't, nor need to,
+		 * vacuum it.
+		 */
+		if (database_is_invalid_form(pgdatabase))
+		{
+			elog(DEBUG2,
+				 "autovacuum: skipping invalid database \"%s\"",
+				 NameStr(pgdatabase->datname));
+			continue;
+		}
+
+		/*
 		 * Allocate our results in the caller's context, not the
 		 * transaction's. We do this inside the loop, and restore the original
 		 * context at the end, so that leaky things like heap_getnext() are

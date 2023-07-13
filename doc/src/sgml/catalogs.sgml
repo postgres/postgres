@@ -2647,7 +2647,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Sets maximum number of concurrent connections that can be made
-       to this database.  -1 means no limit.
+       to this database.  -1 means no limit, -2 indicates the database is
+       invalid.
       </entry>
      </row>
 
