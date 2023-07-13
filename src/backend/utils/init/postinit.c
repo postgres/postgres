@@ -982,6 +982,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	if (!bootstrap)
 	{
 		HeapTuple	tuple;
+		Form_pg_database datform;
 
 		tuple = GetDatabaseTuple(dbname);
 		if (!HeapTupleIsValid(tuple) ||
@@ -991,6 +992,15 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", dbname),
 					 errdetail("It seems to have just been dropped or renamed.")));
+
+		datform = (Form_pg_database) GETSTRUCT(tuple);
+		if (database_is_invalid_form(datform))
+		{
+			ereport(FATAL,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("cannot connect to invalid database \"%s\"", dbname),
+					errhint("Use DROP DATABASE to drop invalid databases."));
+		}
 	}
 
 	/*
