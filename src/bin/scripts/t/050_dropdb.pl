@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 13;
+use Test::More tests => 14;
 
 program_help_ok('dropdb');
 program_version_ok('dropdb');
@@ -27,3 +27,12 @@ $node->issues_sql_like(
 
 $node->command_fails([ 'dropdb', 'nonexistent' ],
 	'fails with nonexistent database');
+
+# check that invalid database can be dropped with dropdb
+$node->safe_psql(
+	'postgres', q(
+	CREATE DATABASE regression_invalid;
+	UPDATE pg_database SET datconnlimit = -2 WHERE datname = 'regression_invalid';
+));
+$node->command_ok([ 'dropdb', 'regression_invalid' ],
+  'invalid database can be dropped');
