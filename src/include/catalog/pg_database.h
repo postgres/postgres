@@ -35,7 +35,11 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	NameData	datctype;		/* LC_CTYPE setting */
 	bool		datistemplate;	/* allowed as CREATE DATABASE template? */
 	bool		datallowconn;	/* new connections allowed? */
-	int32		datconnlimit;	/* max connections allowed (-1=no limit) */
+	/*
+	 * Max connections allowed. Negative values have special meaning, see
+	 * DATCONNLIMIT_* defines below.
+	 */
+	int32		datconnlimit;
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
 	TransactionId datfrozenxid; /* all Xids < this are frozen in this DB */
 	TransactionId datminmxid;	/* all multixacts in the DB are >= this */
@@ -52,5 +56,20 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
  * ----------------
  */
 typedef FormData_pg_database *Form_pg_database;
+
+/*
+ * Special values for pg_database.datconnlimit. Normal values are >= 0.
+ */
+#define		  DATCONNLIMIT_UNLIMITED	-1	/* no limit */
+
+/*
+ * A database is set to invalid partway through being dropped.  Using
+ * datconnlimit=-2 for this purpose isn't particularly clean, but is
+ * backpatchable.
+ */
+#define		  DATCONNLIMIT_INVALID_DB	-2
+
+extern bool database_is_invalid_form(Form_pg_database datform);
+extern bool database_is_invalid_oid(Oid dboid);
 
 #endif							/* PG_DATABASE_H */
