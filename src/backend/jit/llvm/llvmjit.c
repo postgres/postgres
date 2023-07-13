@@ -722,8 +722,6 @@ llvm_compile_module(LLVMJitContext *context)
 			elog(ERROR, "failed to JIT module: %s",
 				 llvm_error_message(error));
 
-		handle->lljit = compile_orc;
-
 		/* LLVMOrcLLJITAddLLVMIRModuleWithRT takes ownership of the module */
 	}
 #elif LLVM_VERSION_MAJOR > 6
