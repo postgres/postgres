@@ -50,8 +50,11 @@
  * This implementation does not use optreset.  Instead, we guarantee that
  * it can be restarted on a new argv array after a previous call returned -1,
  * if the caller resets optind to 1 before the first call of the new series.
- * (Internally, this means we must be sure to reset "place" to EMSG before
- * returning -1.)
+ * (Internally, this means we must be sure to reset "place" to EMSG,
+ * "nonopt_start" to -1, and "force_nonopt" to false before returning -1.)
+ *
+ * Note that this routine reorders the pointers in argv (despite the const
+ * qualifier) so that all non-options will be at the end when -1 is returned.
  */
 int
 getopt_long(int argc, char *const argv[],
@@ -60,38 +63,58 @@ getopt_long(int argc, char *const argv[],
 {
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */
+	static int	nonopt_start = -1;
+	static bool force_nonopt = false;
 
 	if (!*place)
 	{							/* update scanning pointer */
-		if (optind >= argc)
+		char	  **args = (char **) argv;
+
+retry:
+
+		/*
+		 * If we are out of arguments or only non-options remain, return -1.
+		 */
+		if (optind >= argc || optind == nonopt_start)
 		{
 			place = EMSG;
+			nonopt_start = -1;
+			force_nonopt = false;
 			return -1;
 		}
 
 		place = argv[optind];
 
-		if (place[0] != '-')
+		/*
+		 * An argument is a non-option if it meets any of the following
+		 * criteria: it follows an argument that is equivalent to the string
+		 * "--", it does not start with '-', or it is equivalent to the string
+		 * "-".  When we encounter a non-option, we move it to the end of argv
+		 * (after shifting all remaining arguments over to make room), and
+		 * then we try again with the next argument.
+		 */
+		if (force_nonopt || place[0] != '-' || place[1] == '\0')
 		{
-			place = EMSG;
-			return -1;
+			for (int i = optind; i < argc - 1; i++)
+				args[i] = args[i + 1];
+			args[argc - 1] = place;
+
+			if (nonopt_start == -1)
+				nonopt_start = argc - 1;
+			else
+				nonopt_start--;
+
+			goto retry;
 		}
 
 		place++;
-
-		if (!*place)
-		{
-			/* treat "-" as not being an option */
-			place = EMSG;
-			return -1;
-		}
 
 		if (place[0] == '-' && place[1] == '\0')
 		{
 			/* found "--", treat it as end of options */
 			++optind;
-			place = EMSG;
-			return -1;
+			force_nonopt = true;
+			goto retry;
 		}
 
 		if (place[0] == '-' && place[1])
