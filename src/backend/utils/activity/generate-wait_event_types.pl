@@ -73,7 +73,7 @@ my @lines_sorted =
 foreach my $line (@lines_sorted)
 {
 	die "unable to parse wait_event_names.txt"
-	  unless $line =~ /^(\w+)\t+(\w+)\t+("\w+")\t+("\w.*\.")$/;
+	  unless $line =~ /^(\w+)\t+(\w+)\t+(\w+)\t+("\w.*\.")$/;
 
 	(   my $waitclassname,
 		my $waiteventenumname,
@@ -168,7 +168,9 @@ if ($gen_code)
 			$firstpass = 0;
 
 			printf $c "\t\t case %s:\n", $wev->[0];
-			printf $c "\t\t\t event_name = %s;\n\t\t\t break;\n", $wev->[1];
+			# Apply quotes to the wait event name string.
+			printf $c "\t\t\t event_name = \"%s\";\n\t\t\t break;\n",
+			  $wev->[1];
 		}
 
 		printf $h "\n} $waitclass;\n\n";
@@ -221,7 +223,7 @@ elsif ($gen_docs)
 		{
 			printf $s "     <row>\n";
 			printf $s "      <entry><literal>%s</literal></entry>\n",
-			  substr $wev->[1], 1, -1;
+			  $wev->[1];
 			printf $s "      <entry>%s</entry>\n", substr $wev->[2], 1, -1;
 			printf $s "     </row>\n";
 		}
