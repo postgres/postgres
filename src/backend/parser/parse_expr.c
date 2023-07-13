@@ -3521,9 +3521,9 @@ makeJsonConstructorExpr(ParseState *pstate, JsonConstructorType type,
 
 	/*
 	 * Coerce to the RETURNING type and format, if needed.  We abuse
-	 * CaseTestExpr here as placeholder to pass the result of either evaluating
-	 * 'fexpr' or whatever is produced by ExecEvalJsonConstructor() that is of
-	 * type JSON or JSONB to the coercion function.
+	 * CaseTestExpr here as placeholder to pass the result of either
+	 * evaluating 'fexpr' or whatever is produced by ExecEvalJsonConstructor()
+	 * that is of type JSON or JSONB to the coercion function.
 	 */
 	if (fexpr)
 	{
@@ -3632,6 +3632,7 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 	colref->location = ctor->location;
 
 	agg->arg = makeJsonValueExpr((Expr *) colref, ctor->format);
+
 	/*
 	 * No formatting necessary, so set formatted_expr to be the same as
 	 * raw_expr.
