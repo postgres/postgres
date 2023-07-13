@@ -1851,6 +1851,20 @@ vac_truncate_clog(TransactionId frozenXID,
 		Assert(MultiXactIdIsValid(datminmxid));
 
 		/*
+		 * If database is in the process of getting dropped, or has been
+		 * interrupted while doing so, no connections to it are possible
+		 * anymore. Therefore we don't need to take it into account here.
+		 * Which is good, because it can't be processed by autovacuum either.
+		 */
+		if (database_is_invalid_form((Form_pg_database) dbform))
+		{
+			elog(DEBUG2,
+				 "skipping invalid database \"%s\" while computing relfrozenxid",
+				 NameStr(dbform->datname));
+			continue;
+		}
+
+		/*
 		 * If things are working properly, no database should have a
 		 * datfrozenxid or datminmxid that is "in the future".  However, such
 		 * cases have been known to arise due to bugs in pg_upgrade.  If we
