@@ -85,13 +85,8 @@ foreach my $line (@lines_sorted)
 	my $trimmedwaiteventname = $waiteventenumname;
 	$trimmedwaiteventname =~ s/^WAIT_EVENT_//;
 
-	# An exception is required for LWLock and Lock as these don't require
-	# any C and header files generated.
 	die "wait event names must start with 'WAIT_EVENT_'"
-	  if ( $trimmedwaiteventname eq $waiteventenumname
-		&& $waiteventenumname !~ /^LWLock/
-		&& $waiteventenumname !~ /^Lock/);
-	$continue = ",\n";
+	  if ($trimmedwaiteventname eq $waiteventenumname);
 	push(@{ $hashwe{$waitclassname} }, @waiteventlist);
 }
 
@@ -141,8 +136,8 @@ if ($gen_code)
 		# Don't generate .c and .h files for LWLock and Lock, these are
 		# handled independently.
 		next
-		  if ( $waitclass =~ /^WaitEventLWLock$/
-			|| $waitclass =~ /^WaitEventLock$/);
+		  if ( $waitclass eq 'WaitEventLWLock'
+			|| $waitclass eq 'WaitEventLock');
 
 		my $last = $waitclass;
 		$last =~ s/^WaitEvent//;
