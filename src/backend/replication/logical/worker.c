@@ -436,20 +436,6 @@ static TransApplyAction get_transaction_apply_action(TransactionId xid,
 													 ParallelApplyWorkerInfo **winfo);
 
 /*
- * Return the name of the logical replication worker.
- */
-static const char *
-get_worker_name(void)
-{
-	if (am_tablesync_worker())
-		return _("logical replication table synchronization worker");
-	else if (am_parallel_apply_worker())
-		return _("logical replication parallel apply worker");
-	else
-		return _("logical replication apply worker");
-}
-
-/*
  * Form the origin name for the subscription.
  *
  * This is a common function for tablesync and other workers. Tablesync workers
@@ -3904,9 +3890,8 @@ maybe_reread_subscription(void)
 	if (!newsub)
 	{
 		ereport(LOG,
-		/* translator: first %s is the name of logical replication worker */
-				(errmsg("%s for subscription \"%s\" will stop because the subscription was removed",
-						get_worker_name(), MySubscription->name)));
+				(errmsg("logical replication worker for subscription \"%s\" will stop because the subscription was removed",
+						MySubscription->name)));
 
 		/* Ensure we remove no-longer-useful entry for worker's start time */
 		if (!am_tablesync_worker() && !am_parallel_apply_worker())
@@ -3918,9 +3903,8 @@ maybe_reread_subscription(void)
 	if (!newsub->enabled)
 	{
 		ereport(LOG,
-		/* translator: first %s is the name of logical replication worker */
-				(errmsg("%s for subscription \"%s\" will stop because the subscription was disabled",
-						get_worker_name(), MySubscription->name)));
+				(errmsg("logical replication worker for subscription \"%s\" will stop because the subscription was disabled",
+						MySubscription->name)));
 
 		apply_worker_exit();
 	}
@@ -3954,9 +3938,8 @@ maybe_reread_subscription(void)
 							MySubscription->name)));
 		else
 			ereport(LOG,
-			/* translator: first %s is the name of logical replication worker */
-					(errmsg("%s for subscription \"%s\" will restart because of a parameter change",
-							get_worker_name(), MySubscription->name)));
+					(errmsg("logical replication worker for subscription \"%s\" will restart because of a parameter change",
+							MySubscription->name)));
 
 		apply_worker_exit();
 	}
@@ -4478,9 +4461,8 @@ InitializeApplyWorker(void)
 	if (!MySubscription)
 	{
 		ereport(LOG,
-		/* translator: %s is the name of logical replication worker */
-				(errmsg("%s for subscription %u will not start because the subscription was removed during startup",
-						get_worker_name(), MyLogicalRepWorker->subid)));
+				(errmsg("logical replication worker for subscription %u will not start because the subscription was removed during startup",
+						MyLogicalRepWorker->subid)));
 
 		/* Ensure we remove no-longer-useful entry for worker's start time */
 		if (!am_tablesync_worker() && !am_parallel_apply_worker())
@@ -4494,9 +4476,8 @@ InitializeApplyWorker(void)
 	if (!MySubscription->enabled)
 	{
 		ereport(LOG,
-		/* translator: first %s is the name of logical replication worker */
-				(errmsg("%s for subscription \"%s\" will not start because the subscription was disabled during startup",
-						get_worker_name(), MySubscription->name)));
+				(errmsg("logical replication worker for subscription \"%s\" will not start because the subscription was disabled during startup",
+						MySubscription->name)));
 
 		apply_worker_exit();
 	}
@@ -4517,9 +4498,8 @@ InitializeApplyWorker(void)
 						get_rel_name(MyLogicalRepWorker->relid))));
 	else
 		ereport(LOG,
-		/* translator: first %s is the name of logical replication worker */
-				(errmsg("%s for subscription \"%s\" has started",
-						get_worker_name(), MySubscription->name)));
+				(errmsg("logical replication apply worker for subscription \"%s\" has started",
+						MySubscription->name)));
 
 	CommitTransactionCommand();
 }
