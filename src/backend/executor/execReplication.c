@@ -19,6 +19,7 @@
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/pg_am_d.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/nodeModifyTable.h"
@@ -40,6 +41,49 @@
 
 static bool tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 						 TypeCacheEntry **eq);
+
+/*
+ * Returns the fixed strategy number, if any, of the equality operator for the
+ * given index access method, otherwise, InvalidStrategy.
+ *
+ * Currently, only Btree and Hash indexes are supported. The other index access
+ * methods don't have a fixed strategy for equality operation - instead, the
+ * support routines of each operator class interpret the strategy numbers
+ * according to the operator class's definition.
+ */
+StrategyNumber
+get_equal_strategy_number_for_am(Oid am)
+{
+	int			ret;
+
+	switch (am)
+	{
+		case BTREE_AM_OID:
+			ret = BTEqualStrategyNumber;
+			break;
+		case HASH_AM_OID:
+			ret = HTEqualStrategyNumber;
+			break;
+		default:
+			/* XXX: Only Btree and Hash indexes are supported */
+			ret = InvalidStrategy;
+			break;
+	}
+
+	return ret;
+}
+
+/*
+ * Return the appropriate strategy number which corresponds to the equality
+ * operator.
+ */
+static StrategyNumber
+get_equal_strategy_number(Oid opclass)
+{
+	Oid			am = get_opclass_method(opclass);
+
+	return get_equal_strategy_number_for_am(am);
+}
 
 /*
  * Setup a ScanKey for a search in the relation 'rel' for a tuple 'key' that
@@ -77,6 +121,7 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		Oid			opfamily;
 		RegProcedure regop;
 		int			table_attno = indkey->values[index_attoff];
+		StrategyNumber eq_strategy;
 
 		if (!AttributeNumberIsValid(table_attno))
 		{
@@ -93,20 +138,22 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		 */
 		optype = get_opclass_input_type(opclass->values[index_attoff]);
 		opfamily = get_opclass_family(opclass->values[index_attoff]);
+		eq_strategy = get_equal_strategy_number(opclass->values[index_attoff]);
 
 		operator = get_opfamily_member(opfamily, optype,
 									   optype,
-									   BTEqualStrategyNumber);
+									   eq_strategy);
+
 		if (!OidIsValid(operator))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
-				 BTEqualStrategyNumber, optype, optype, opfamily);
+				 eq_strategy, optype, optype, opfamily);
 
 		regop = get_opcode(operator);
 
 		/* Initialize the scankey. */
 		ScanKeyInit(&skey[skey_attoff],
 					index_attoff + 1,
-					BTEqualStrategyNumber,
+					eq_strategy,
 					regop,
 					searchslot->tts_values[table_attno - 1]);
 

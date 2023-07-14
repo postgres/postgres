@@ -134,9 +134,9 @@
    to replica identity <literal>FULL</literal>, which means the entire row becomes
    the key.  When replica identity <literal>FULL</literal> is specified,
    indexes can be used on the subscriber side for searching the rows.  Candidate
-   indexes must be btree, non-partial, and the leftmost index field must be a
-   column (not an expression) that references the published table column.  These
-   restrictions on the non-unique index properties adhere to some of the
+   indexes must be btree or hash, non-partial, and the leftmost index field must
+   be a column (not an expression) that references the published table column.
+   These restrictions on the non-unique index properties adhere to some of the
    restrictions that are enforced for primary keys.  If there are no such
    suitable indexes, the search on the subscriber side can be very inefficient,
    therefore replica identity <literal>FULL</literal> should only be used as a

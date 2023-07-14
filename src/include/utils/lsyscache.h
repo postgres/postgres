@@ -106,6 +106,7 @@ extern Oid	get_opclass_family(Oid opclass);
 extern Oid	get_opclass_input_type(Oid opclass);
 extern bool get_opclass_opfamily_and_input_type(Oid opclass,
 												Oid *opfamily, Oid *opcintype);
+extern Oid	get_opclass_method(Oid opclass);
 extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
 extern Oid	get_op_rettype(Oid opno);

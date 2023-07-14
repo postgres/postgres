@@ -478,6 +478,74 @@ $node_subscriber->safe_psql('postgres', "DROP TABLE test_replica_id_full");
 # data
 # =============================================================================
 
+# =============================================================================
+# Testcase start: Subscription can use hash index
+#
+
+# create tables on pub and sub
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE test_replica_id_full (x int, y text)");
+$node_publisher->safe_psql('postgres',
+	"ALTER TABLE test_replica_id_full REPLICA IDENTITY FULL");
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE test_replica_id_full (x int, y text)");
+$node_subscriber->safe_psql('postgres',
+	"CREATE INDEX test_replica_id_full_idx ON test_replica_id_full USING HASH (x)");
+
+# insert some initial data
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO test_replica_id_full SELECT i, (i%10)::text FROM generate_series(0,10) i"
+);
+
+# create pub/sub
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub_rep_full FOR TABLE test_replica_id_full");
+$node_subscriber->safe_psql('postgres',
+	"CREATE SUBSCRIPTION tap_sub_rep_full CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_rep_full"
+);
+
+# wait for initial table synchronization to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, $appname);
+
+# delete 2 rows
+$node_publisher->safe_psql('postgres',
+	"DELETE FROM test_replica_id_full WHERE x IN (5, 6)");
+
+# update 2 rows
+$node_publisher->safe_psql('postgres',
+	"UPDATE test_replica_id_full SET x = 100, y = '200' WHERE x IN (1, 2)");
+
+# wait until the index is used on the subscriber
+$node_publisher->wait_for_catchup($appname);
+$node_subscriber->poll_query_until('postgres',
+	q{select (idx_scan = 4) from pg_stat_all_indexes where indexrelname = 'test_replica_id_full_idx';}
+  )
+  or die
+  "Timed out while waiting for check subscriber tap_sub_rep_full deletes 2 rows and updates 2 rows via index";
+
+# make sure that the subscriber has the correct data after the UPDATE
+$result = $node_subscriber->safe_psql('postgres',
+	"select count(*) from test_replica_id_full WHERE (x = 100 and y = '200')"
+);
+is($result, qq(2),
+	'ensure subscriber has the correct data at the end of the test');
+
+# make sure that the subscriber has the correct data after the first DELETE
+$result = $node_subscriber->safe_psql('postgres',
+	"select count(*) from test_replica_id_full where x in (5, 6)");
+is($result, qq(0),
+	'ensure subscriber has the correct data at the end of the test');
+
+# cleanup pub
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION tap_pub_rep_full");
+$node_publisher->safe_psql('postgres', "DROP TABLE test_replica_id_full");
+# cleanup sub
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub_rep_full");
+$node_subscriber->safe_psql('postgres', "DROP TABLE test_replica_id_full");
+
+# Testcase end: Subscription can use hash index
+# =============================================================================
+
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
 

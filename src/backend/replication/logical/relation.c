@@ -17,6 +17,9 @@
 
 #include "postgres.h"
 
+#ifdef USE_ASSERT_CHECKING
+#include "access/amapi.h"
+#endif
 #include "access/genam.h"
 #include "access/table.h"
 #include "catalog/namespace.h"
@@ -779,7 +782,7 @@ RemoteRelContainsLeftMostColumnOnIdx(IndexInfo *indexInfo, AttrMap *attrmap)
 
 /*
  * Returns the oid of an index that can be used by the apply worker to scan
- * the relation. The index must be btree, non-partial, and the leftmost
+ * the relation. The index must be btree or hash, non-partial, and the leftmost
  * field must be a column (not an expression) that references the remote
  * relation column. These limitations help to keep the index scan similar
  * to PK/RI index scans.
@@ -791,11 +794,11 @@ RemoteRelContainsLeftMostColumnOnIdx(IndexInfo *indexInfo, AttrMap *attrmap)
  * compare the tuples for non-PK/RI index scans. See
  * RelationFindReplTupleByIndex().
  *
- * XXX: There are no fundamental problems for supporting non-btree indexes.
- * We mostly need to relax the limitations in RelationFindReplTupleByIndex().
- * For partial indexes, the required changes are likely to be larger. If
- * none of the tuples satisfy the expression for the index scan, we fall-back
- * to sequential execution, which might not be a good idea in some cases.
+ * XXX: See IsIndexUsableForReplicaIdentityFull() to know the challenges in
+ * supporting indexes other than btree and hash. For partial indexes, the
+ * required changes are likely to be larger. If none of the tuples satisfy
+ * the expression for the index scan, we fall-back to sequential execution,
+ * which might not be a good idea in some cases.
  *
  * We expect to call this function when REPLICA IDENTITY FULL is defined for
  * the remote relation.
@@ -834,15 +837,43 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
 /*
  * Returns true if the index is usable for replica identity full. For details,
  * see FindUsableIndexForReplicaIdentityFull.
+ *
+ * Currently, only Btree and Hash indexes can be returned as usable. This
+ * is due to following reasons:
+ *
+ * 1) Other index access methods don't have a fixed strategy for equality
+ * operation. Refer get_equal_strategy_number_for_am().
+ *
+ * 2) For indexes other than PK and REPLICA IDENTITY, we need to match the
+ * local and remote tuples. The equality routine tuples_equal() cannot accept
+ * a datatype (e.g. point or box) that does not have a default operator class
+ * for Btree or Hash.
+ *
+ * XXX: Note that BRIN and GIN indexes do not implement "amgettuple" which
+ * will be used later to fetch the tuples. See RelationFindReplTupleByIndex().
  */
 bool
 IsIndexUsableForReplicaIdentityFull(IndexInfo *indexInfo)
 {
-	bool		is_btree = (indexInfo->ii_Am == BTREE_AM_OID);
-	bool		is_partial = (indexInfo->ii_Predicate != NIL);
-	bool		is_only_on_expression = IsIndexOnlyOnExpression(indexInfo);
+	/* Ensure that the index access method has a valid equal strategy */
+	if (get_equal_strategy_number_for_am(indexInfo->ii_Am) == InvalidStrategy)
+		return false;
+	if (indexInfo->ii_Predicate != NIL)
+		return false;
+	if (IsIndexOnlyOnExpression(indexInfo))
+		return false;
 
-	return is_btree && !is_partial && !is_only_on_expression;
+#ifdef USE_ASSERT_CHECKING
+	{
+		IndexAmRoutine *amroutine;
+
+		/* The given index access method must implement amgettuple. */
+		amroutine = GetIndexAmRoutineByAmId(indexInfo->ii_Am, false);
+		Assert(amroutine->amgettuple != NULL);
+	}
+#endif
+
+	return true;
 }
 
 /*
