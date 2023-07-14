@@ -854,7 +854,7 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 	 * authenticated user's superuserness is what matters.
 	 */
 	if (roleid != GetAuthenticatedUserId() &&
-		!GetAuthenticatedUserIsSuperuser())
+		!superuser_arg(GetAuthenticatedUserId()))
 	{
 		if (source == PGC_S_TEST)
 		{
