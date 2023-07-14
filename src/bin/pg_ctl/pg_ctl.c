@@ -2260,163 +2260,151 @@ main(int argc, char **argv)
 	if (env_wait != NULL)
 		wait_seconds = atoi(env_wait);
 
-	/*
-	 * 'Action' can be before or after args so loop over both. Some
-	 * getopt_long() implementations will reorder argv[] to place all flags
-	 * first (GNU?), but we don't rely on it. Our /port version doesn't do
-	 * that.
-	 */
-	optind = 1;
-
 	/* process command-line options */
-	while (optind < argc)
+	while ((c = getopt_long(argc, argv, "cD:e:l:m:N:o:p:P:sS:t:U:wW",
+							long_options, &option_index)) != -1)
 	{
-		while ((c = getopt_long(argc, argv, "cD:e:l:m:N:o:p:P:sS:t:U:wW",
-								long_options, &option_index)) != -1)
+		switch (c)
 		{
-			switch (c)
-			{
-				case 'D':
-					{
-						char	   *pgdata_D;
-
-						pgdata_D = pg_strdup(optarg);
-						canonicalize_path(pgdata_D);
-						setenv("PGDATA", pgdata_D, 1);
-
-						/*
-						 * We could pass PGDATA just in an environment
-						 * variable but we do -D too for clearer postmaster
-						 * 'ps' display
-						 */
-						pgdata_opt = psprintf("-D \"%s\" ", pgdata_D);
-						free(pgdata_D);
-						break;
-					}
-				case 'e':
-					event_source = pg_strdup(optarg);
-					break;
-				case 'l':
-					log_file = pg_strdup(optarg);
-					break;
-				case 'm':
-					set_mode(optarg);
-					break;
-				case 'N':
-					register_servicename = pg_strdup(optarg);
-					break;
-				case 'o':
-					/* append option? */
-					if (!post_opts)
-						post_opts = pg_strdup(optarg);
-					else
-					{
-						char	   *old_post_opts = post_opts;
-
-						post_opts = psprintf("%s %s", old_post_opts, optarg);
-						free(old_post_opts);
-					}
-					break;
-				case 'p':
-					exec_path = pg_strdup(optarg);
-					break;
-				case 'P':
-					register_password = pg_strdup(optarg);
-					break;
-				case 's':
-					silent_mode = true;
-					break;
-				case 'S':
-#ifdef WIN32
-					set_starttype(optarg);
-#else
-					write_stderr(_("%s: -S option not supported on this platform\n"),
-								 progname);
-					exit(1);
-#endif
-					break;
-				case 't':
-					wait_seconds = atoi(optarg);
-					wait_seconds_arg = true;
-					break;
-				case 'U':
-					if (strchr(optarg, '\\'))
-						register_username = pg_strdup(optarg);
-					else
-						/* Prepend .\ for local accounts */
-						register_username = psprintf(".\\%s", optarg);
-					break;
-				case 'w':
-					do_wait = true;
-					break;
-				case 'W':
-					do_wait = false;
-					break;
-				case 'c':
-					allow_core_files = true;
-					break;
-				default:
-					/* getopt_long already issued a suitable error message */
-					do_advice();
-					exit(1);
-			}
-		}
-
-		/* Process an action */
-		if (optind < argc)
-		{
-			if (ctl_command != NO_COMMAND)
-			{
-				write_stderr(_("%s: too many command-line arguments (first is \"%s\")\n"), progname, argv[optind]);
-				do_advice();
-				exit(1);
-			}
-
-			if (strcmp(argv[optind], "init") == 0
-				|| strcmp(argv[optind], "initdb") == 0)
-				ctl_command = INIT_COMMAND;
-			else if (strcmp(argv[optind], "start") == 0)
-				ctl_command = START_COMMAND;
-			else if (strcmp(argv[optind], "stop") == 0)
-				ctl_command = STOP_COMMAND;
-			else if (strcmp(argv[optind], "restart") == 0)
-				ctl_command = RESTART_COMMAND;
-			else if (strcmp(argv[optind], "reload") == 0)
-				ctl_command = RELOAD_COMMAND;
-			else if (strcmp(argv[optind], "status") == 0)
-				ctl_command = STATUS_COMMAND;
-			else if (strcmp(argv[optind], "promote") == 0)
-				ctl_command = PROMOTE_COMMAND;
-			else if (strcmp(argv[optind], "logrotate") == 0)
-				ctl_command = LOGROTATE_COMMAND;
-			else if (strcmp(argv[optind], "kill") == 0)
-			{
-				if (argc - optind < 3)
+			case 'D':
 				{
-					write_stderr(_("%s: missing arguments for kill mode\n"), progname);
-					do_advice();
-					exit(1);
+					char	   *pgdata_D;
+
+					pgdata_D = pg_strdup(optarg);
+					canonicalize_path(pgdata_D);
+					setenv("PGDATA", pgdata_D, 1);
+
+					/*
+					 * We could pass PGDATA just in an environment variable
+					 * but we do -D too for clearer postmaster 'ps' display
+					 */
+					pgdata_opt = psprintf("-D \"%s\" ", pgdata_D);
+					free(pgdata_D);
+					break;
 				}
-				ctl_command = KILL_COMMAND;
-				set_sig(argv[++optind]);
-				killproc = atol(argv[++optind]);
-			}
+			case 'e':
+				event_source = pg_strdup(optarg);
+				break;
+			case 'l':
+				log_file = pg_strdup(optarg);
+				break;
+			case 'm':
+				set_mode(optarg);
+				break;
+			case 'N':
+				register_servicename = pg_strdup(optarg);
+				break;
+			case 'o':
+				/* append option? */
+				if (!post_opts)
+					post_opts = pg_strdup(optarg);
+				else
+				{
+					char	   *old_post_opts = post_opts;
+
+					post_opts = psprintf("%s %s", old_post_opts, optarg);
+					free(old_post_opts);
+				}
+				break;
+			case 'p':
+				exec_path = pg_strdup(optarg);
+				break;
+			case 'P':
+				register_password = pg_strdup(optarg);
+				break;
+			case 's':
+				silent_mode = true;
+				break;
+			case 'S':
 #ifdef WIN32
-			else if (strcmp(argv[optind], "register") == 0)
-				ctl_command = REGISTER_COMMAND;
-			else if (strcmp(argv[optind], "unregister") == 0)
-				ctl_command = UNREGISTER_COMMAND;
-			else if (strcmp(argv[optind], "runservice") == 0)
-				ctl_command = RUN_AS_SERVICE_COMMAND;
+				set_starttype(optarg);
+#else
+				write_stderr(_("%s: -S option not supported on this platform\n"),
+							 progname);
+				exit(1);
 #endif
-			else
+				break;
+			case 't':
+				wait_seconds = atoi(optarg);
+				wait_seconds_arg = true;
+				break;
+			case 'U':
+				if (strchr(optarg, '\\'))
+					register_username = pg_strdup(optarg);
+				else
+					/* Prepend .\ for local accounts */
+					register_username = psprintf(".\\%s", optarg);
+				break;
+			case 'w':
+				do_wait = true;
+				break;
+			case 'W':
+				do_wait = false;
+				break;
+			case 'c':
+				allow_core_files = true;
+				break;
+			default:
+				/* getopt_long already issued a suitable error message */
+				do_advice();
+				exit(1);
+		}
+	}
+
+	/* Process an action */
+	if (optind < argc)
+	{
+		if (strcmp(argv[optind], "init") == 0
+			|| strcmp(argv[optind], "initdb") == 0)
+			ctl_command = INIT_COMMAND;
+		else if (strcmp(argv[optind], "start") == 0)
+			ctl_command = START_COMMAND;
+		else if (strcmp(argv[optind], "stop") == 0)
+			ctl_command = STOP_COMMAND;
+		else if (strcmp(argv[optind], "restart") == 0)
+			ctl_command = RESTART_COMMAND;
+		else if (strcmp(argv[optind], "reload") == 0)
+			ctl_command = RELOAD_COMMAND;
+		else if (strcmp(argv[optind], "status") == 0)
+			ctl_command = STATUS_COMMAND;
+		else if (strcmp(argv[optind], "promote") == 0)
+			ctl_command = PROMOTE_COMMAND;
+		else if (strcmp(argv[optind], "logrotate") == 0)
+			ctl_command = LOGROTATE_COMMAND;
+		else if (strcmp(argv[optind], "kill") == 0)
+		{
+			if (argc - optind < 3)
 			{
-				write_stderr(_("%s: unrecognized operation mode \"%s\"\n"), progname, argv[optind]);
+				write_stderr(_("%s: missing arguments for kill mode\n"), progname);
 				do_advice();
 				exit(1);
 			}
-			optind++;
+			ctl_command = KILL_COMMAND;
+			set_sig(argv[++optind]);
+			killproc = atol(argv[++optind]);
 		}
+#ifdef WIN32
+		else if (strcmp(argv[optind], "register") == 0)
+			ctl_command = REGISTER_COMMAND;
+		else if (strcmp(argv[optind], "unregister") == 0)
+			ctl_command = UNREGISTER_COMMAND;
+		else if (strcmp(argv[optind], "runservice") == 0)
+			ctl_command = RUN_AS_SERVICE_COMMAND;
+#endif
+		else
+		{
+			write_stderr(_("%s: unrecognized operation mode \"%s\"\n"), progname, argv[optind]);
+			do_advice();
+			exit(1);
+		}
+		optind++;
+	}
+
+	if (optind < argc)
+	{
+		write_stderr(_("%s: too many command-line arguments (first is \"%s\")\n"), progname, argv[optind]);
+		do_advice();
+		exit(1);
 	}
 
 	if (ctl_command == NO_COMMAND)
