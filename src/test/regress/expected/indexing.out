@@ -1486,3 +1486,66 @@ select indexrelid::regclass, indisvalid,
 (5 rows)
 
 drop table parted_isvalid_tab;
+-- Check state of replica indexes when attaching a partition.
+begin;
+create table parted_replica_tab (id int not null) partition by range (id);
+create table parted_replica_tab_1 partition of parted_replica_tab
+  for values from (1) to (10) partition by range (id);
+create table parted_replica_tab_11 partition of parted_replica_tab_1
+  for values from (1) to (5);
+create unique index parted_replica_idx
+  on only parted_replica_tab using btree (id);
+create unique index parted_replica_idx_1
+  on only parted_replica_tab_1 using btree (id);
+-- This triggers an update of pg_index.indisreplident for parted_replica_idx.
+alter table only parted_replica_tab_1 replica identity
+  using index parted_replica_idx_1;
+create unique index parted_replica_idx_11 on parted_replica_tab_11 USING btree (id);
+select indexrelid::regclass, indisvalid, indisreplident,
+       indrelid::regclass, inhparent::regclass
+  from pg_index idx left join
+       pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  where indexrelid::regclass::text like 'parted_replica%'
+  order by indexrelid::regclass::text collate "C";
+      indexrelid       | indisvalid | indisreplident |       indrelid        | inhparent 
+-----------------------+------------+----------------+-----------------------+-----------
+ parted_replica_idx    | f          | f              | parted_replica_tab    | 
+ parted_replica_idx_1  | f          | t              | parted_replica_tab_1  | 
+ parted_replica_idx_11 | t          | f              | parted_replica_tab_11 | 
+(3 rows)
+
+-- parted_replica_idx is not valid yet here, because parted_replica_idx_1
+-- is not valid.
+alter index parted_replica_idx ATTACH PARTITION parted_replica_idx_1;
+select indexrelid::regclass, indisvalid, indisreplident,
+       indrelid::regclass, inhparent::regclass
+  from pg_index idx left join
+       pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  where indexrelid::regclass::text like 'parted_replica%'
+  order by indexrelid::regclass::text collate "C";
+      indexrelid       | indisvalid | indisreplident |       indrelid        |     inhparent      
+-----------------------+------------+----------------+-----------------------+--------------------
+ parted_replica_idx    | f          | f              | parted_replica_tab    | 
+ parted_replica_idx_1  | f          | t              | parted_replica_tab_1  | parted_replica_idx
+ parted_replica_idx_11 | t          | f              | parted_replica_tab_11 | 
+(3 rows)
+
+-- parted_replica_idx becomes valid here.
+alter index parted_replica_idx_1 ATTACH PARTITION parted_replica_idx_11;
+alter table only parted_replica_tab_1 replica identity
+  using index parted_replica_idx_1;
+commit;
+select indexrelid::regclass, indisvalid, indisreplident,
+       indrelid::regclass, inhparent::regclass
+  from pg_index idx left join
+       pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  where indexrelid::regclass::text like 'parted_replica%'
+  order by indexrelid::regclass::text collate "C";
+      indexrelid       | indisvalid | indisreplident |       indrelid        |      inhparent       
+-----------------------+------------+----------------+-----------------------+----------------------
+ parted_replica_idx    | t          | f              | parted_replica_tab    | 
+ parted_replica_idx_1  | t          | t              | parted_replica_tab_1  | parted_replica_idx
+ parted_replica_idx_11 | t          | f              | parted_replica_tab_11 | parted_replica_idx_1
+(3 rows)
+
+drop table parted_replica_tab;
