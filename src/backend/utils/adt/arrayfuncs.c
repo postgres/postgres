@@ -5317,6 +5317,12 @@ accumArrayResult(ArrayBuildState *astate,
 	if (astate->nelems >= astate->alen)
 	{
 		astate->alen *= 2;
+		/* give an array-related error if we go past MaxAllocSize */
+		if (!AllocSizeIsValid(astate->alen * sizeof(Datum)))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("array size exceeds the maximum allowed (%d)",
+							(int) MaxAllocSize)));
 		astate->dvalues = (Datum *)
 			repalloc(astate->dvalues, astate->alen * sizeof(Datum));
 		astate->dnulls = (bool *)
