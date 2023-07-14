@@ -72,7 +72,7 @@ my @lines_sorted =
 # Read the sorted lines and populate the hash table
 foreach my $line (@lines_sorted)
 {
-	die "unable to parse wait_event_names.txt"
+	die "unable to parse wait_event_names.txt for line $line\n"
 	  unless $line =~ /^(\w+)\t+(\w+)\t+(\w+)\t+("\w.*\.")$/;
 
 	(   my $waitclassname,
