@@ -1392,6 +1392,7 @@ buildNSItemFromLists(RangeTblEntry *rte, Index rtindex,
 	nsitem->p_names = rte->eref;
 	nsitem->p_rte = rte;
 	nsitem->p_rtindex = rtindex;
+	nsitem->p_perminfo = NULL;
 	nsitem->p_nscolumns = nscolumns;
 	/* set default visibility flags; might get changed later */
 	nsitem->p_rel_visible = true;
