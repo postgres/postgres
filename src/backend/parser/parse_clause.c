@@ -1573,6 +1573,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 			jnsitem->p_names = j->join_using_alias;
 			jnsitem->p_rte = nsitem->p_rte;
 			jnsitem->p_rtindex = nsitem->p_rtindex;
+			jnsitem->p_perminfo = NULL;
 			/* no need to copy the first N columns, just use res_nscolumns */
 			jnsitem->p_nscolumns = res_nscolumns;
 			/* set default visibility flags; might get changed later */
