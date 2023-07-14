@@ -821,14 +821,16 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 		return false;
 	}
 
+	/*
+	 * When source == PGC_S_TEST, we don't throw a hard error for a
+	 * nonexistent user name or insufficient privileges, only a NOTICE. See
+	 * comments in guc.h.
+	 */
+
 	/* Look up the username */
 	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
 	if (!HeapTupleIsValid(roleTup))
 	{
-		/*
-		 * When source == PGC_S_TEST, we don't throw a hard error for a
-		 * nonexistent user name, only a NOTICE.  See comments in guc.h.
-		 */
 		if (source == PGC_S_TEST)
 		{
 			ereport(NOTICE,
@@ -845,6 +847,28 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 	is_superuser = roleform->rolsuper;
 
 	ReleaseSysCache(roleTup);
+
+	/*
+	 * Only superusers may SET SESSION AUTHORIZATION a role other than itself.
+	 * Note that in case of multiple SETs in a single session, the original
+	 * authenticated user's superuserness is what matters.
+	 */
+	if (roleid != GetAuthenticatedUserId() &&
+		!GetAuthenticatedUserIsSuperuser())
+	{
+		if (source == PGC_S_TEST)
+		{
+			ereport(NOTICE,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission will be denied to set session authorization \"%s\"",
+							*newval)));
+			return true;
+		}
+		GUC_check_errcode(ERRCODE_INSUFFICIENT_PRIVILEGE);
+		GUC_check_errmsg("permission denied to set session authorization \"%s\"",
+						 *newval);
+		return false;
+	}
 
 	/* Set up "extra" struct for assign_session_authorization to use */
 	myextra = (role_auth_extra *) guc_malloc(LOG, sizeof(role_auth_extra));

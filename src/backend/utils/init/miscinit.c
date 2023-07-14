@@ -582,6 +582,16 @@ GetAuthenticatedUserId(void)
 	return AuthenticatedUserId;
 }
 
+/*
+ * Return whether the authenticated user was superuser at connection start.
+ */
+bool
+GetAuthenticatedUserIsSuperuser(void)
+{
+	Assert(OidIsValid(AuthenticatedUserId));
+	return AuthenticatedUserIsSuperuser;
+}
+
 
 /*
  * GetUserIdAndSecContext/SetUserIdAndSecContext - get/set the current user ID
@@ -889,28 +899,12 @@ system_user(PG_FUNCTION_ARGS)
 /*
  * Change session auth ID while running
  *
- * Only a superuser may set auth ID to something other than himself.  Note
- * that in case of multiple SETs in a single session, the original userid's
- * superuserness is what matters.  But we set the GUC variable is_superuser
- * to indicate whether the *current* session userid is a superuser.
- *
- * Note: this is not an especially clean place to do the permission check.
- * It's OK because the check does not require catalog access and can't
- * fail during an end-of-transaction GUC reversion, but we may someday
- * have to push it up into assign_session_authorization.
+ * Note that we set the GUC variable is_superuser to indicate whether the
+ * current role is a superuser.
  */
 void
 SetSessionAuthorization(Oid userid, bool is_superuser)
 {
-	/* Must have authenticated already, else can't make permission check */
-	Assert(OidIsValid(AuthenticatedUserId));
-
-	if (userid != AuthenticatedUserId &&
-		!AuthenticatedUserIsSuperuser)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to set session authorization")));
-
 	SetSessionUserId(userid, is_superuser);
 
 	SetConfigOption("is_superuser",
