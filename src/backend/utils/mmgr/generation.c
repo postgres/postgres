@@ -61,17 +61,16 @@ typedef struct GenerationContext
 	MemoryContextData header;	/* Standard memory-context fields */
 
 	/* Generational context parameters */
-	Size		initBlockSize;	/* initial block size */
-	Size		maxBlockSize;	/* maximum block size */
-	Size		nextBlockSize;	/* next block size to allocate */
-	Size		allocChunkLimit;	/* effective chunk size limit */
+	uint32		initBlockSize;	/* initial block size */
+	uint32		maxBlockSize;	/* maximum block size */
+	uint32		nextBlockSize;	/* next block size to allocate */
+	uint32		allocChunkLimit;	/* effective chunk size limit */
 
 	GenerationBlock *block;		/* current (most recently allocated) block, or
 								 * NULL if we've just freed the most recent
 								 * block */
 	GenerationBlock *freeblock; /* pointer to a block that's being recycled,
 								 * or NULL if there's no such block. */
-	GenerationBlock *keeper;	/* keep this block over resets */
 	dlist_head	blocks;			/* list of blocks */
 } GenerationContext;
 
@@ -119,6 +118,14 @@ struct GenerationBlock
  */
 #define ExternalChunkGetBlock(chunk) \
 	(GenerationBlock *) ((char *) chunk - Generation_BLOCKHDRSZ)
+
+/* Obtain the keeper block for a generation context */
+#define KeeperBlock(set) \
+	((GenerationBlock *) (((char *) set) + \
+	MAXALIGN(sizeof(GenerationContext))))
+
+/* Check if the block is the keeper block of the given generation context */
+#define IsKeeperBlock(set, block) ((block) == (KeeperBlock(set)))
 
 /* Inlined helper functions */
 static inline void GenerationBlockInit(GenerationContext *context,
@@ -214,7 +221,7 @@ GenerationContextCreate(MemoryContext parent,
 	dlist_init(&set->blocks);
 
 	/* Fill in the initial block's block header */
-	block = (GenerationBlock *) (((char *) set) + MAXALIGN(sizeof(GenerationContext)));
+	block = KeeperBlock(set);
 	/* determine the block size and initialize it */
 	firstBlockSize = allocSize - MAXALIGN(sizeof(GenerationContext));
 	GenerationBlockInit(set, block, firstBlockSize);
@@ -228,13 +235,10 @@ GenerationContextCreate(MemoryContext parent,
 	/* No free block, yet */
 	set->freeblock = NULL;
 
-	/* Mark block as not to be released at reset time */
-	set->keeper = block;
-
 	/* Fill in GenerationContext-specific header fields */
-	set->initBlockSize = initBlockSize;
-	set->maxBlockSize = maxBlockSize;
-	set->nextBlockSize = initBlockSize;
+	set->initBlockSize = (uint32) initBlockSize;
+	set->maxBlockSize = (uint32) maxBlockSize;
+	set->nextBlockSize = (uint32) initBlockSize;
 
 	/*
 	 * Compute the allocation chunk size limit for this context.
@@ -294,14 +298,14 @@ GenerationReset(MemoryContext context)
 	{
 		GenerationBlock *block = dlist_container(GenerationBlock, node, miter.cur);
 
-		if (block == set->keeper)
+		if (IsKeeperBlock(set, block))
 			GenerationBlockMarkEmpty(block);
 		else
 			GenerationBlockFree(set, block);
 	}
 
 	/* set it so new allocations to make use of the keeper block */
-	set->block = set->keeper;
+	set->block = KeeperBlock(set);
 
 	/* Reset block size allocation sequence, too */
 	set->nextBlockSize = set->initBlockSize;
@@ -440,10 +444,10 @@ GenerationAlloc(MemoryContext context, Size size)
 			 */
 			set->freeblock = NULL;
 		}
-		else if (GenerationBlockIsEmpty(set->keeper) &&
-				 GenerationBlockFreeBytes(set->keeper) >= required_size)
+		else if (GenerationBlockIsEmpty(KeeperBlock(set)) &&
+				 GenerationBlockFreeBytes(KeeperBlock(set)) >= required_size)
 		{
-			block = set->keeper;
+			block = KeeperBlock(set);
 		}
 		else
 		{
@@ -594,7 +598,7 @@ static inline void
 GenerationBlockFree(GenerationContext *set, GenerationBlock *block)
 {
 	/* Make sure nobody tries to free the keeper block */
-	Assert(block != set->keeper);
+	Assert(!IsKeeperBlock(set, block));
 	/* We shouldn't be freeing the freeblock either */
 	Assert(block != set->freeblock);
 
@@ -691,7 +695,7 @@ GenerationFree(void *pointer)
 	set = block->context;
 
 	/* Don't try to free the keeper block, just mark it empty */
-	if (block == set->keeper)
+	if (IsKeeperBlock(set, block))
 	{
 		GenerationBlockMarkEmpty(block);
 		return;

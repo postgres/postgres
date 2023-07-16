@@ -156,11 +156,10 @@ typedef struct AllocSetContext
 	AllocBlock	blocks;			/* head of list of blocks in this set */
 	MemoryChunk *freelist[ALLOCSET_NUM_FREELISTS];	/* free chunk lists */
 	/* Allocation parameters for this context: */
-	Size		initBlockSize;	/* initial block size */
-	Size		maxBlockSize;	/* maximum block size */
-	Size		nextBlockSize;	/* next block size to allocate */
-	Size		allocChunkLimit;	/* effective chunk size limit */
-	AllocBlock	keeper;			/* keep this block over resets */
+	uint32		initBlockSize;	/* initial block size */
+	uint32		maxBlockSize;	/* maximum block size */
+	uint32		nextBlockSize;	/* next block size to allocate */
+	uint32		allocChunkLimit;	/* effective chunk size limit */
 	/* freelist this context could be put in, or -1 if not a candidate: */
 	int			freeListIndex;	/* index in context_freelists[], or -1 */
 } AllocSetContext;
@@ -240,6 +239,13 @@ typedef struct AllocBlockData
  * Contexts in a freelist are chained via their nextchild pointers.
  */
 #define MAX_FREE_CONTEXTS 100	/* arbitrary limit on freelist length */
+
+/* Obtain the keeper block for an allocation set */
+#define KeeperBlock(set) \
+	((AllocBlock) (((char *) set) + MAXALIGN(sizeof(AllocSetContext))))
+
+/* Check if the block is the keeper block of the given allocation set */
+#define IsKeeperBlock(set, block) ((block) == (KeeperBlock(set)))
 
 typedef struct AllocSetFreeList
 {
@@ -417,7 +423,7 @@ AllocSetContextCreateInternal(MemoryContext parent,
 								name);
 
 			((MemoryContext) set)->mem_allocated =
-				set->keeper->endptr - ((char *) set);
+				KeeperBlock(set)->endptr - ((char *) set);
 
 			return (MemoryContext) set;
 		}
@@ -453,7 +459,7 @@ AllocSetContextCreateInternal(MemoryContext parent,
 	 */
 
 	/* Fill in the initial block's block header */
-	block = (AllocBlock) (((char *) set) + MAXALIGN(sizeof(AllocSetContext)));
+	block = KeeperBlock(set);
 	block->aset = set;
 	block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 	block->endptr = ((char *) set) + firstBlockSize;
@@ -465,15 +471,13 @@ AllocSetContextCreateInternal(MemoryContext parent,
 
 	/* Remember block as part of block list */
 	set->blocks = block;
-	/* Mark block as not to be released at reset time */
-	set->keeper = block;
 
 	/* Finish filling in aset-specific parts of the context header */
 	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
 
-	set->initBlockSize = initBlockSize;
-	set->maxBlockSize = maxBlockSize;
-	set->nextBlockSize = initBlockSize;
+	set->initBlockSize = (uint32) initBlockSize;
+	set->maxBlockSize = (uint32) maxBlockSize;
+	set->nextBlockSize = (uint32) initBlockSize;
 	set->freeListIndex = freeListIndex;
 
 	/*
@@ -544,7 +548,7 @@ AllocSetReset(MemoryContext context)
 #endif
 
 	/* Remember keeper block size for Assert below */
-	keepersize = set->keeper->endptr - ((char *) set);
+	keepersize = KeeperBlock(set)->endptr - ((char *) set);
 
 	/* Clear chunk freelists */
 	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
@@ -552,13 +556,13 @@ AllocSetReset(MemoryContext context)
 	block = set->blocks;
 
 	/* New blocks list will be just the keeper block */
-	set->blocks = set->keeper;
+	set->blocks = KeeperBlock(set);
 
 	while (block != NULL)
 	{
 		AllocBlock	next = block->next;
 
-		if (block == set->keeper)
+		if (IsKeeperBlock(set, block))
 		{
 			/* Reset the block, but don't return it to malloc */
 			char	   *datastart = ((char *) block) + ALLOC_BLOCKHDRSZ;
@@ -614,7 +618,7 @@ AllocSetDelete(MemoryContext context)
 #endif
 
 	/* Remember keeper block size for Assert below */
-	keepersize = set->keeper->endptr - ((char *) set);
+	keepersize = KeeperBlock(set)->endptr - ((char *) set);
 
 	/*
 	 * If the context is a candidate for a freelist, put it into that freelist
@@ -663,14 +667,14 @@ AllocSetDelete(MemoryContext context)
 	{
 		AllocBlock	next = block->next;
 
-		if (block != set->keeper)
+		if (!IsKeeperBlock(set, block))
 			context->mem_allocated -= block->endptr - ((char *) block);
 
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, block->freeptr - ((char *) block));
 #endif
 
-		if (block != set->keeper)
+		if (!IsKeeperBlock(set, block))
 			free(block);
 
 		block = next;
@@ -1547,7 +1551,7 @@ AllocSetCheck(MemoryContext context)
 		long		nchunks = 0;
 		bool		has_external_chunk = false;
 
-		if (set->keeper == block)
+		if (IsKeeperBlock(set, block))
 			total_allocated += block->endptr - ((char *) set);
 		else
 			total_allocated += block->endptr - ((char *) block);
@@ -1557,7 +1561,7 @@ AllocSetCheck(MemoryContext context)
 		 */
 		if (!blk_used)
 		{
-			if (set->keeper != block)
+			if (!IsKeeperBlock(set, block))
 				elog(WARNING, "problem in alloc set %s: empty block %p",
 					 name, block);
 		}

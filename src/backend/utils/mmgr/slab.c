@@ -104,9 +104,9 @@ typedef struct SlabContext
 {
 	MemoryContextData header;	/* Standard memory-context fields */
 	/* Allocation parameters for this context: */
-	Size		chunkSize;		/* the requested (non-aligned) chunk size */
-	Size		fullChunkSize;	/* chunk size with chunk header and alignment */
-	Size		blockSize;		/* the size to make each block of chunks */
+	uint32		chunkSize;		/* the requested (non-aligned) chunk size */
+	uint32		fullChunkSize;	/* chunk size with chunk header and alignment */
+	uint32		blockSize;		/* the size to make each block of chunks */
 	int32		chunksPerBlock; /* number of chunks that fit in 1 block */
 	int32		curBlocklistIndex;	/* index into the blocklist[] element
 									 * containing the fullest, blocks */
@@ -314,7 +314,9 @@ SlabGetNextFreeChunk(SlabContext *slab, SlabBlock *block)
  * blockSize: allocation block size
  * chunkSize: allocation chunk size
  *
- * The MAXALIGN(chunkSize) may not exceed MEMORYCHUNK_MAX_VALUE
+ * The Slab_CHUNKHDRSZ + MAXALIGN(chunkSize + 1) may not exceed
+ * MEMORYCHUNK_MAX_VALUE.
+ * 'blockSize' may not exceed MEMORYCHUNK_MAX_BLOCKOFFSET.
  */
 MemoryContext
 SlabContextCreate(MemoryContext parent,
@@ -330,7 +332,7 @@ SlabContextCreate(MemoryContext parent,
 	/* ensure MemoryChunk's size is properly maxaligned */
 	StaticAssertDecl(Slab_CHUNKHDRSZ == MAXALIGN(Slab_CHUNKHDRSZ),
 					 "sizeof(MemoryChunk) is not maxaligned");
-	Assert(MAXALIGN(chunkSize) <= MEMORYCHUNK_MAX_VALUE);
+	Assert(blockSize <= MEMORYCHUNK_MAX_BLOCKOFFSET);
 
 	/*
 	 * Ensure there's enough space to store the pointer to the next free chunk
@@ -346,6 +348,8 @@ SlabContextCreate(MemoryContext parent,
 #else
 	fullChunkSize = Slab_CHUNKHDRSZ + MAXALIGN(chunkSize);
 #endif
+
+	Assert(fullChunkSize <= MEMORYCHUNK_MAX_VALUE);
 
 	/* compute the number of chunks that will fit on each block */
 	chunksPerBlock = (blockSize - Slab_BLOCKHDRSZ) / fullChunkSize;
@@ -374,9 +378,9 @@ SlabContextCreate(MemoryContext parent,
 	 */
 
 	/* Fill in SlabContext-specific header fields */
-	slab->chunkSize = chunkSize;
-	slab->fullChunkSize = fullChunkSize;
-	slab->blockSize = blockSize;
+	slab->chunkSize = (uint32) chunkSize;
+	slab->fullChunkSize = (uint32) fullChunkSize;
+	slab->blockSize = (uint32) blockSize;
 	slab->chunksPerBlock = chunksPerBlock;
 	slab->curBlocklistIndex = 0;
 
@@ -506,7 +510,7 @@ SlabAlloc(MemoryContext context, Size size)
 
 	/* make sure we only allow correct request size */
 	if (unlikely(size != slab->chunkSize))
-		elog(ERROR, "unexpected alloc chunk size %zu (expected %zu)",
+		elog(ERROR, "unexpected alloc chunk size %zu (expected %u)",
 			 size, slab->chunkSize);
 
 	/*
