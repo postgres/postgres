@@ -3318,8 +3318,8 @@ set path = ( /usr/local/pgsql/bin $path )
     <indexterm>
      <primary><envar>MANPATH</envar></primary>
     </indexterm>
-    To enable your system to find the <application>man</application>
-    documentation, you need to add lines like the following to a
+    Systems that come with the [`manpath` utility](https://manpages.ubuntu.com/manpages/jammy/en/man5/manpath.5.html#search%20path) will automatically include the <application>man</application>
+    documentation in the search path. In case `manpath` is unavailable, you need to add lines like the following to a
     shell start-up file unless you installed into a location that is
     searched by default:
 <programlisting>
