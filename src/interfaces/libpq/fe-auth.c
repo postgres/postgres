@@ -27,6 +27,7 @@
 #else
 #include <unistd.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #include <sys/socket.h>
 #ifdef HAVE_SYS_UCRED_H
