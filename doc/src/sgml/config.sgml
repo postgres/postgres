@@ -1188,58 +1188,6 @@ include_dir 'conf.d'
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
-      <term><varname>db_user_namespace</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>db_user_namespace</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        This parameter enables per-database user names.  It is off by default.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
-       </para>
-
-       <para>
-        If this is on, you should create users as <replaceable>username@dbname</replaceable>.
-        When <replaceable>username</replaceable> is passed by a connecting client,
-        <literal>@</literal> and the database name are appended to the user
-        name and that database-specific user name is looked up by the
-        server. Note that when you create users with names containing
-        <literal>@</literal> within the SQL environment, you will need to
-        quote the user name.
-       </para>
-
-       <para>
-        With this parameter enabled, you can still create ordinary global
-        users.  Simply append <literal>@</literal> when specifying the user
-        name in the client, e.g., <literal>joe@</literal>.  The <literal>@</literal>
-        will be stripped off before the user name is looked up by the
-        server.
-       </para>
-
-       <para>
-        <varname>db_user_namespace</varname> causes the client's and
-        server's user name representation to differ.
-        Authentication checks are always done with the server's user name
-        so authentication methods must be configured for the
-        server's user name, not the client's.  Because
-        <literal>md5</literal> uses the user name as salt on both the
-        client and server, <literal>md5</literal> cannot be used with
-        <varname>db_user_namespace</varname>.
-       </para>
-
-       <note>
-        <para>
-         This feature is intended as a temporary measure until a
-         complete solution is found.  At that time, this option will
-         be removed.
-        </para>
-       </note>
-      </listitem>
-     </varlistentry>
      </variablelist>
      </sect2>
 

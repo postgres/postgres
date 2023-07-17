@@ -1546,15 +1546,6 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"db_user_namespace", PGC_SIGHUP, CONN_AUTH_AUTH,
-			gettext_noop("Enables per-database user names."),
-			NULL
-		},
-		&Db_user_namespace,
-		false,
-		NULL, NULL, NULL
-	},
-	{
 		{"default_transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default read-only status of new transactions."),
 			NULL,

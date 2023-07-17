@@ -1741,19 +1741,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 	else if (strcmp(token->string, "reject") == 0)
 		parsedline->auth_method = uaReject;
 	else if (strcmp(token->string, "md5") == 0)
-	{
-		if (Db_user_namespace)
-		{
-			ereport(elevel,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled"),
-					 errcontext("line %d of configuration file \"%s\"",
-								line_num, file_name)));
-			*err_msg = "MD5 authentication is not supported when \"db_user_namespace\" is enabled";
-			return NULL;
-		}
 		parsedline->auth_method = uaMD5;
-	}
 	else if (strcmp(token->string, "scram-sha-256") == 0)
 		parsedline->auth_method = uaSCRAM;
 	else if (strcmp(token->string, "pam") == 0)

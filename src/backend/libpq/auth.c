@@ -873,11 +873,6 @@ CheckMD5Auth(Port *port, char *shadow_pass, const char **logdetail)
 	char	   *passwd;
 	int			result;
 
-	if (Db_user_namespace)
-		ereport(FATAL,
-				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-				 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
-
 	/* include the salt to use for computing the response */
 	if (!pg_strong_random(md5Salt, 4))
 	{

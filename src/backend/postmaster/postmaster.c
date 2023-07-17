@@ -236,7 +236,6 @@ int			AuthenticationTimeout = 60;
 
 bool		log_hostname;		/* for ps display and logging */
 bool		Log_connections = false;
-bool		Db_user_namespace = false;
 
 bool		enable_bonjour = false;
 char	   *bonjour_name;
@@ -2271,24 +2270,6 @@ retry1:
 	/* The database defaults to the user name. */
 	if (port->database_name == NULL || port->database_name[0] == '\0')
 		port->database_name = pstrdup(port->user_name);
-
-	if (Db_user_namespace)
-	{
-		/*
-		 * If user@, it is a global user, remove '@'. We only want to do this
-		 * if there is an '@' at the end and no earlier in the user string or
-		 * they may fake as a local user of another database attaching to this
-		 * database.
-		 */
-		if (strchr(port->user_name, '@') ==
-			port->user_name + strlen(port->user_name) - 1)
-			*strchr(port->user_name, '@') = '\0';
-		else
-		{
-			/* Append '@' and dbname */
-			port->user_name = psprintf("%s@%s", port->user_name, port->database_name);
-		}
-	}
 
 	if (am_walsender)
 		MyBackendType = B_WAL_SENDER;

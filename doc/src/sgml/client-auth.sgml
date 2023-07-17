@@ -1254,11 +1254,6 @@ omicron         bryanh                  guest1
       </para>
 
       <para>
-       The <literal>md5</literal> method cannot be used with
-       the <xref linkend="guc-db-user-namespace"/> feature.
-      </para>
-
-      <para>
        To ease transition from the <literal>md5</literal> method to the newer
        SCRAM method, if <literal>md5</literal> is specified as a method
        in <filename>pg_hba.conf</filename> but the user's password on the
