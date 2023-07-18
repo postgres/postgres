@@ -2481,11 +2481,11 @@ PrepareRedoAdd(char *buf, XLogRecPtr start_lsn,
 	/*
 	 * In the event of a crash while a checkpoint was running, it may be
 	 * possible that some two-phase data found its way to disk while its
-	 * corresponding record needs to be replayed in the follow-up recovery.
-	 * As the 2PC data was on disk, it has already been restored at the
-	 * beginning of recovery with restoreTwoPhaseData(), so skip this record
-	 * to avoid duplicates in TwoPhaseState.  If a consistent state has been
-	 * reached, the record is added to TwoPhaseState and it should have no
+	 * corresponding record needs to be replayed in the follow-up recovery. As
+	 * the 2PC data was on disk, it has already been restored at the beginning
+	 * of recovery with restoreTwoPhaseData(), so skip this record to avoid
+	 * duplicates in TwoPhaseState.  If a consistent state has been reached,
+	 * the record is added to TwoPhaseState and it should have no
 	 * corresponding file in pg_twophase.
 	 */
 	if (!XLogRecPtrIsInvalid(start_lsn))
