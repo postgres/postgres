@@ -5314,15 +5314,16 @@ CREATE FUNCTION execq(text, integer) RETURNS int8
 =&gt; INSERT INTO a VALUES (execq('INSERT INTO a VALUES (0)', 0));
 INSERT 0 1
 =&gt; SELECT execq('SELECT * FROM a', 0);
-INFO:  EXECQ:  0    -- inserted by execq
-INFO:  EXECQ:  1    -- returned by execq and inserted by upper INSERT
+INFO:  EXECQ:  0    <lineannotation>-- inserted by execq</lineannotation>
+INFO:  EXECQ:  1    <lineannotation>-- returned by execq and inserted by upper INSERT</lineannotation>
 
  execq
 -------
      2
 (1 row)
 
-=&gt; SELECT execq('INSERT INTO a SELECT x + 2 FROM a', 1);
+=&gt; SELECT execq('INSERT INTO a SELECT x + 2 FROM a RETURNING *', 1);
+INFO:  EXECQ:  2    <lineannotation>-- 0 + 2, then execution was stopped by count</lineannotation>
  execq
 -------
      1
@@ -5331,21 +5332,38 @@ INFO:  EXECQ:  1    -- returned by execq and inserted by upper INSERT
 =&gt; SELECT execq('SELECT * FROM a', 10);
 INFO:  EXECQ:  0
 INFO:  EXECQ:  1
-INFO:  EXECQ:  2    -- 0 + 2, only one row inserted - as specified
+INFO:  EXECQ:  2
 
  execq
 -------
-     3              -- 10 is the max value only, 3 is the real number of rows
+     3              <lineannotation>-- 10 is the max value only, 3 is the real number of rows</lineannotation>
 (1 row)
 
+=&gt; SELECT execq('INSERT INTO a SELECT x + 10 FROM a', 1);
+ execq
+-------
+     3              <lineannotation>-- all rows processed; count does not stop it, because nothing is returned</lineannotation>
+(1 row)
+
+=&gt; SELECT * FROM a;
+ x
+----
+  0
+  1
+  2
+ 10
+ 11
+ 12
+(6 rows)
+
 =&gt; DELETE FROM a;
-DELETE 3
+DELETE 6
 =&gt; INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
 INSERT 0 1
 =&gt; SELECT * FROM a;
  x
 ---
- 1                  -- no rows in a (0) + 1
+ 1                  <lineannotation>-- 0 (no rows in a) + 1</lineannotation>
 (1 row)
 
 =&gt; INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
@@ -5355,15 +5373,16 @@ INSERT 0 1
  x
 ---
  1
- 2                  -- there was one row in a + 1
+ 2                  <lineannotation>-- 1 (there was one row in a) + 1</lineannotation>
 (2 rows)
 
--- This demonstrates the data changes visibility rule:
+<lineannotation>-- This demonstrates the data changes visibility rule.</lineannotation>
+<lineannotation>-- execq is called twice and sees different numbers of rows each time:</lineannotation>
 
 =&gt; INSERT INTO a SELECT execq('SELECT * FROM a', 0) * x FROM a;
-INFO:  EXECQ:  1
+INFO:  EXECQ:  1    <lineannotation>-- results from first execq</lineannotation>
 INFO:  EXECQ:  2
-INFO:  EXECQ:  1
+INFO:  EXECQ:  1    <lineannotation>-- results from second execq</lineannotation>
 INFO:  EXECQ:  2
 INFO:  EXECQ:  2
 INSERT 0 2
@@ -5372,10 +5391,9 @@ INSERT 0 2
 ---
  1
  2
- 2                  -- 2 rows * 1 (x in first row)
- 6                  -- 3 rows (2 + 1 just inserted) * 2 (x in second row)
-(4 rows)               ^^^^^^
-                       rows visible to execq() in different invocations
+ 2                  <lineannotation>-- 2 rows * 1 (x in first row)</lineannotation>
+ 6                  <lineannotation>-- 3 rows (2 + 1 just inserted) * 2 (x in second row)</lineannotation>
+(4 rows)
 </programlisting>
   </para>
  </sect1>
