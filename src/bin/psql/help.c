@@ -280,6 +280,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\dp[S]  [PATTERN]      list table, view, and sequence access privileges\n");
 	HELP0("  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n");
 	HELP0("  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n");
+	HELP0("  \\drg[S] [PATTERN]      list role grants\n");
 	HELP0("  \\dRp[+] [PATTERN]      list replication publications\n");
 	HELP0("  \\dRs[+] [PATTERN]      list replication subscriptions\n");
 	HELP0("  \\ds[S+] [PATTERN]      list sequences\n");

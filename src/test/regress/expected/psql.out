@@ -6187,9 +6187,9 @@ List of text search templates
 (0 rows)
 
 \dg "no.such.role"
-           List of roles
- Role name | Attributes | Member of 
------------+------------+-----------
+     List of roles
+ Role name | Attributes 
+-----------+------------
 
 \dL "no.such.language"
           List of languages
@@ -6618,3 +6618,43 @@ cross-database references are not implemented: "no.such.database"."no.such.schem
 cross-database references are not implemented: "no.such.database"."no.such.schema"."no.such.data.type"
 \dX "no.such.database"."no.such.schema"."no.such.extended.statistics"
 cross-database references are not implemented: "no.such.database"."no.such.schema"."no.such.extended.statistics"
+-- check \drg and \du
+CREATE ROLE regress_du_role0;
+CREATE ROLE regress_du_role1;
+CREATE ROLE regress_du_role2;
+CREATE ROLE regress_du_admin;
+GRANT regress_du_role0 TO regress_du_admin WITH ADMIN TRUE;
+GRANT regress_du_role1 TO regress_du_admin WITH ADMIN TRUE;
+GRANT regress_du_role2 TO regress_du_admin WITH ADMIN TRUE;
+GRANT regress_du_role0 TO regress_du_role1 WITH ADMIN TRUE,  INHERIT TRUE,  SET TRUE  GRANTED BY regress_du_admin;
+GRANT regress_du_role0 TO regress_du_role2 WITH ADMIN TRUE,  INHERIT FALSE, SET FALSE GRANTED BY regress_du_admin;
+GRANT regress_du_role1 TO regress_du_role2 WITH ADMIN TRUE , INHERIT FALSE, SET TRUE  GRANTED BY regress_du_admin;
+GRANT regress_du_role0 TO regress_du_role1 WITH ADMIN FALSE, INHERIT TRUE,  SET FALSE GRANTED BY regress_du_role1;
+GRANT regress_du_role0 TO regress_du_role2 WITH ADMIN FALSE, INHERIT TRUE , SET TRUE  GRANTED BY regress_du_role1;
+GRANT regress_du_role0 TO regress_du_role1 WITH ADMIN FALSE, INHERIT FALSE, SET TRUE  GRANTED BY regress_du_role2;
+GRANT regress_du_role0 TO regress_du_role2 WITH ADMIN FALSE, INHERIT FALSE, SET FALSE GRANTED BY regress_du_role2;
+\drg regress_du_role*
+                             List of role grants
+    Role name     |    Member of     |       Options       |     Grantor      
+------------------+------------------+---------------------+------------------
+ regress_du_role1 | regress_du_role0 | ADMIN, INHERIT, SET | regress_du_admin
+ regress_du_role1 | regress_du_role0 | INHERIT             | regress_du_role1
+ regress_du_role1 | regress_du_role0 | SET                 | regress_du_role2
+ regress_du_role2 | regress_du_role0 | ADMIN               | regress_du_admin
+ regress_du_role2 | regress_du_role0 | INHERIT, SET        | regress_du_role1
+ regress_du_role2 | regress_du_role0 |                     | regress_du_role2
+ regress_du_role2 | regress_du_role1 | ADMIN, SET          | regress_du_admin
+(7 rows)
+
+\du regress_du_role*
+          List of roles
+    Role name     |  Attributes  
+------------------+--------------
+ regress_du_role0 | Cannot login
+ regress_du_role1 | Cannot login
+ regress_du_role2 | Cannot login
+
+DROP ROLE regress_du_role0;
+DROP ROLE regress_du_role1;
+DROP ROLE regress_du_role2;
+DROP ROLE regress_du_admin;

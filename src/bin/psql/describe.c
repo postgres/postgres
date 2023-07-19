@@ -3617,7 +3617,7 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 	PGresult   *res;
 	printTableContent cont;
 	printTableOpt myopt = pset.popt.topt;
-	int			ncols = 3;
+	int			ncols = 2;
 	int			nrows = 0;
 	int			i;
 	int			conns;
@@ -3631,11 +3631,7 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 	printfPQExpBuffer(&buf,
 					  "SELECT r.rolname, r.rolsuper, r.rolinherit,\n"
 					  "  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n"
-					  "  r.rolconnlimit, r.rolvaliduntil,\n"
-					  "  ARRAY(SELECT b.rolname\n"
-					  "        FROM pg_catalog.pg_auth_members m\n"
-					  "        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n"
-					  "        WHERE m.member = r.oid) as memberof");
+					  "  r.rolconnlimit, r.rolvaliduntil");
 
 	if (verbose)
 	{
@@ -3675,8 +3671,6 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 
 	printTableAddHeader(&cont, gettext_noop("Role name"), true, align);
 	printTableAddHeader(&cont, gettext_noop("Attributes"), true, align);
-	/* ignores implicit memberships from superuser & pg_database_owner */
-	printTableAddHeader(&cont, gettext_noop("Member of"), true, align);
 
 	if (verbose)
 		printTableAddHeader(&cont, gettext_noop("Description"), true, align);
@@ -3701,11 +3695,11 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 		if (strcmp(PQgetvalue(res, i, 5), "t") != 0)
 			add_role_attribute(&buf, _("Cannot login"));
 
-		if (strcmp(PQgetvalue(res, i, (verbose ? 10 : 9)), "t") == 0)
+		if (strcmp(PQgetvalue(res, i, (verbose ? 9 : 8)), "t") == 0)
 			add_role_attribute(&buf, _("Replication"));
 
 		if (pset.sversion >= 90500)
-			if (strcmp(PQgetvalue(res, i, (verbose ? 11 : 10)), "t") == 0)
+			if (strcmp(PQgetvalue(res, i, (verbose ? 10 : 9)), "t") == 0)
 				add_role_attribute(&buf, _("Bypass RLS"));
 
 		conns = atoi(PQgetvalue(res, i, 6));
@@ -3735,10 +3729,8 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 
 		printTableAddCell(&cont, attr[i], false, false);
 
-		printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
-
 		if (verbose)
-			printTableAddCell(&cont, PQgetvalue(res, i, 9), false, false);
+			printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
 	}
 	termPQExpBuffer(&buf);
 
@@ -3829,6 +3821,75 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 error_return:
 	termPQExpBuffer(&buf);
 	return false;
+}
+
+/*
+ * \drg
+ * Describes role grants.
+ */
+bool
+describeRoleGrants(const char *pattern, bool showSystem)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT m.rolname AS \"%s\", r.rolname AS \"%s\",\n"
+					  "  pg_catalog.concat_ws(', ',\n",
+					  gettext_noop("Role name"),
+					  gettext_noop("Member of"));
+
+	if (pset.sversion >= 160000)
+		appendPQExpBufferStr(&buf,
+							 "    CASE WHEN pam.admin_option THEN 'ADMIN' END,\n"
+							 "    CASE WHEN pam.inherit_option THEN 'INHERIT' END,\n"
+							 "    CASE WHEN pam.set_option THEN 'SET' END\n");
+	else
+		appendPQExpBufferStr(&buf,
+							 "    CASE WHEN pam.admin_option THEN 'ADMIN' END,\n"
+							 "    CASE WHEN m.rolinherit THEN 'INHERIT' END,\n"
+							 "    'SET'\n");
+
+	appendPQExpBuffer(&buf,
+					  "  ) AS \"%s\",\n"
+					  "  g.rolname AS \"%s\"\n",
+					  gettext_noop("Options"),
+					  gettext_noop("Grantor"));
+
+	appendPQExpBufferStr(&buf,
+						 "FROM pg_catalog.pg_roles m\n"
+						 "     JOIN pg_catalog.pg_auth_members pam ON (pam.member = m.oid)\n"
+						 "     LEFT JOIN pg_catalog.pg_roles r ON (pam.roleid = r.oid)\n"
+						 "     LEFT JOIN pg_catalog.pg_roles g ON (pam.grantor = g.oid)\n");
+
+	if (!showSystem && !pattern)
+		appendPQExpBufferStr(&buf, "WHERE m.rolname !~ '^pg_'\n");
+
+	if (!validateSQLNamePattern(&buf, pattern, false, false,
+								NULL, "m.rolname", NULL, NULL,
+								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
+		return false;
+	}
+
+	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 4;\n");
+
+	res = PSQLexec(buf.data);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of role grants");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
+
+	PQclear(res);
+	return true;
 }
 
 
