@@ -1622,6 +1622,19 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
      parameter of <command>CREATE PUBLICATION</command>).
     </para>
    </listitem>
+
+   <listitem>
+    <para>
+     When using
+     <link linkend="sql-altertable-replica-identity-full"><literal>REPLICA IDENTITY FULL</literal></link>
+     on published tables, it is important to note that the <literal>UPDATE</literal>
+     and <literal>DELETE</literal> operations cannot be applied to subscribers
+     if the tables include attributes with datatypes (such as point or box)
+     that do not have a default operator class for B-tree or Hash. However,
+     this limitation can be overcome by ensuring that the table has a primary
+     key or replica identity defined for it.
+    </para>
+   </listitem>
   </itemizedlist>
  </sect1>
 
