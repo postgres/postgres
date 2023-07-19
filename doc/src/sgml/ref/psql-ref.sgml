@@ -1883,6 +1883,7 @@ INSERT INTO tbl1 VALUES ($1, $2) \bind 'first value' 'second value' \g
         </listitem>
       </varlistentry>
 
+
       <varlistentry id="app-psql-meta-command-drds">
         <term><literal>\drds [ <link linkend="app-psql-patterns"><replaceable class="parameter">role-pattern</replaceable></link> [ <link linkend="app-psql-patterns"><replaceable class="parameter">database-pattern</replaceable></link> ] ]</literal></term>
         <listitem>
@@ -1904,6 +1905,27 @@ INSERT INTO tbl1 VALUES ($1, $2) \bind 'first value' 'second value' \g
         </para>
         </listitem>
       </varlistentry>
+
+
+      <varlistentry id="app-psql-meta-command-drg">
+        <term><literal>\drg[S] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <listitem>
+        <para>
+        Lists information about each granted role membership, including
+        assigned options (<literal>ADMIN</literal>,
+        <literal>INHERIT</literal> and/or <literal>SET</literal>) and grantor.
+        See the <link linkend="sql-grant"><command>GRANT</command></link>
+        command for information about role memberships.
+        </para>
+        <para>
+        By default, only grants to user-created roles are shown; supply the
+        <literal>S</literal> modifier to include system roles.
+        If <replaceable class="parameter">pattern</replaceable> is specified,
+        only grants to those roles whose names match the pattern are listed.
+        </para>
+        </listitem>
+      </varlistentry>
+
 
       <varlistentry id="app-psql-meta-command-drp">
         <term><literal>\dRp[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>

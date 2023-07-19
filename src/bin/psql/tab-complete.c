@@ -1709,7 +1709,7 @@ psql_completion(const char *text, int start, int end)
 		"\\des", "\\det", "\\deu", "\\dew", "\\dE", "\\df",
 		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl", "\\dL",
 		"\\dm", "\\dn", "\\do", "\\dO", "\\dp", "\\dP", "\\dPi", "\\dPt",
-		"\\drds", "\\dRs", "\\dRp", "\\ds",
+		"\\drds", "\\drg", "\\dRs", "\\dRp", "\\ds",
 		"\\dt", "\\dT", "\\dv", "\\du", "\\dx", "\\dX", "\\dy",
 		"\\echo", "\\edit", "\\ef", "\\elif", "\\else", "\\encoding",
 		"\\endif", "\\errverbose", "\\ev",
@@ -4731,7 +4731,9 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 	else if (TailMatchesCS("\\dT*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes);
-	else if (TailMatchesCS("\\du*") || TailMatchesCS("\\dg*"))
+	else if (TailMatchesCS("\\du*") ||
+			 TailMatchesCS("\\dg*") ||
+			 TailMatchesCS("\\drg*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	else if (TailMatchesCS("\\dv*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views);

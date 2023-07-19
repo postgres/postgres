@@ -918,6 +918,8 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 
 					free(pattern2);
 				}
+				else if (cmd[2] == 'g')
+					success = describeRoleGrants(pattern, show_system);
 				else
 					status = PSQL_CMD_UNKNOWN;
 				break;
