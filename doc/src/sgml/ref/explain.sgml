@@ -32,7 +32,6 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 EXPLAIN [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] <replaceable class="parameter">statement</replaceable>
-EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replaceable>
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
@@ -106,14 +105,6 @@ ROLLBACK;
 </programlisting>
    </para>
   </important>
-
-  <para>
-   Only the <literal>ANALYZE</literal> and <literal>VERBOSE</literal> options
-   can be specified, and only in that order, without surrounding the option
-   list in parentheses.  Prior to <productname>PostgreSQL</productname> 9.0,
-   the unparenthesized syntax was the only one supported.  It is expected that
-   all new options will be supported only in the parenthesized syntax.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -528,6 +519,16 @@ EXPLAIN (GENERIC_PLAN)
 
   <para>
    There is no <command>EXPLAIN</command> statement defined in the SQL standard.
+  </para>
+
+  <para>
+   The following syntax was used before <productname>PostgreSQL</productname>
+   version 9.0 and is still supported:
+<synopsis>
+EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replaceable>
+</synopsis>
+   Note that in this syntax, the options must be specified in exactly the order
+   shown.
   </para>
  </refsect1>
 

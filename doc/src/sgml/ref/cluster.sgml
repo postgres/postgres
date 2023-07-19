@@ -22,7 +22,6 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CLUSTER [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">index_name</replaceable> ] ]
-CLUSTER [ VERBOSE ] [ <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">index_name</replaceable> ] ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
@@ -240,12 +239,19 @@ CLUSTER;
   </para>
 
   <para>
-   The syntax
+   The following syntax was used before <productname>PostgreSQL</productname>
+   17 and is still supported:
+<synopsis>
+CLUSTER [ VERBOSE ] [ <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">index_name</replaceable> ] ]
+</synopsis>
+  </para>
+
+  <para>
+   The following syntax was used before <productname>PostgreSQL</productname>
+   8.3 and is still supported:
 <synopsis>
 CLUSTER <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
 </synopsis>
-  is also supported for compatibility with pre-8.3 <productname>PostgreSQL</productname>
-  versions.
   </para>
  </refsect1>
 

@@ -22,7 +22,6 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
-VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
@@ -89,15 +88,6 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
    allowing unused space to be returned to the operating system.  This form is
    much slower and requires an <literal>ACCESS EXCLUSIVE</literal> lock on
    each table while it is being processed.
-  </para>
-
-  <para>
-   When the option list is surrounded by parentheses, the options can be
-   written in any order.  Without parentheses, options must be specified
-   in exactly the order shown above.
-   The parenthesized syntax was added in
-   <productname>PostgreSQL</productname> 9.0;  the unparenthesized
-   syntax is deprecated.
   </para>
  </refsect1>
 
@@ -524,6 +514,16 @@ VACUUM (VERBOSE, ANALYZE) onek;
 
   <para>
    There is no <command>VACUUM</command> statement in the SQL standard.
+  </para>
+
+  <para>
+   The following syntax was used before <productname>PostgreSQL</productname>
+   version 9.0 and is still supported:
+<synopsis>
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
+</synopsis>
+   Note that in this syntax, the options must be specified in exactly the order
+   shown.
   </para>
  </refsect1>
 
