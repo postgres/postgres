@@ -21,9 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLUSTER [VERBOSE] <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">index_name</replaceable> ]
-CLUSTER ( <replaceable class="parameter">option</replaceable> [, ...] ) <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">index_name</replaceable> ]
-CLUSTER [VERBOSE]
+CLUSTER [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">index_name</replaceable> ]
+CLUSTER [ VERBOSE ] [ <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">index_name</replaceable> ] ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 

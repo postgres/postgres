@@ -11553,15 +11553,24 @@ CreateConversionStmt:
 /*****************************************************************************
  *
  *		QUERY:
- *				CLUSTER [VERBOSE] <qualified_name> [ USING <index_name> ]
- *				CLUSTER [ (options) ] <qualified_name> [ USING <index_name> ]
- *				CLUSTER [VERBOSE]
+ *				CLUSTER (options) <qualified_name> [ USING <index_name> ]
+ *				CLUSTER [VERBOSE] [ <qualified_name> [ USING <index_name> ] ]
  *				CLUSTER [VERBOSE] <index_name> ON <qualified_name> (for pre-8.3)
  *
  *****************************************************************************/
 
 ClusterStmt:
-			CLUSTER opt_verbose qualified_name cluster_index_specification
+			CLUSTER '(' utility_option_list ')' qualified_name cluster_index_specification
+				{
+					ClusterStmt *n = makeNode(ClusterStmt);
+
+					n->relation = $5;
+					n->indexname = $6;
+					n->params = $3;
+					$$ = (Node *) n;
+				}
+			/* unparenthesized VERBOSE kept for pre-14 compatibility */
+			| CLUSTER opt_verbose qualified_name cluster_index_specification
 				{
 					ClusterStmt *n = makeNode(ClusterStmt);
 
@@ -11570,16 +11579,6 @@ ClusterStmt:
 					n->params = NIL;
 					if ($2)
 						n->params = lappend(n->params, makeDefElem("verbose", NULL, @2));
-					$$ = (Node *) n;
-				}
-
-			| CLUSTER '(' utility_option_list ')' qualified_name cluster_index_specification
-				{
-					ClusterStmt *n = makeNode(ClusterStmt);
-
-					n->relation = $5;
-					n->indexname = $6;
-					n->params = $3;
 					$$ = (Node *) n;
 				}
 			| CLUSTER opt_verbose
