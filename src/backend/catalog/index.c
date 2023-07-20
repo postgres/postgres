@@ -1330,7 +1330,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	indcoloptions = (int2vector *) DatumGetPointer(colOptionDatum);
 
 	/* Fetch options of index if any */
-	classTuple = SearchSysCache1(RELOID, oldIndexId);
+	classTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(oldIndexId));
 	if (!HeapTupleIsValid(classTuple))
 		elog(ERROR, "cache lookup failed for relation %u", oldIndexId);
 	optionDatum = SysCacheGetAttr(RELOID, classTuple,

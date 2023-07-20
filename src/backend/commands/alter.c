@@ -295,7 +295,8 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 	}
 	else if (classId == SubscriptionRelationId)
 	{
-		if (SearchSysCacheExists2(SUBSCRIPTIONNAME, MyDatabaseId,
+		if (SearchSysCacheExists2(SUBSCRIPTIONNAME,
+								  ObjectIdGetDatum(MyDatabaseId),
 								  CStringGetDatum(new_name)))
 			report_name_conflict(classId, new_name);
 

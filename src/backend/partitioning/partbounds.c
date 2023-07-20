@@ -4313,7 +4313,7 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 			Datum		datum;
 			PartitionBoundSpec *bspec;
 
-			tuple = SearchSysCache1(RELOID, inhrelid);
+			tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(inhrelid));
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "cache lookup failed for relation %u", inhrelid);
 

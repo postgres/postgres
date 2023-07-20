@@ -5334,13 +5334,13 @@ get_rolespec_tuple(const RoleSpec *role)
 
 		case ROLESPEC_CURRENT_ROLE:
 		case ROLESPEC_CURRENT_USER:
-			tuple = SearchSysCache1(AUTHOID, GetUserId());
+			tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "cache lookup failed for role %u", GetUserId());
 			break;
 
 		case ROLESPEC_SESSION_USER:
-			tuple = SearchSysCache1(AUTHOID, GetSessionUserId());
+			tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetSessionUserId()));
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "cache lookup failed for role %u", GetSessionUserId());
 			break;

@@ -1718,7 +1718,7 @@ sequence_options(Oid relid)
 	Form_pg_sequence pgsform;
 	List	   *options = NIL;
 
-	pgstuple = SearchSysCache1(SEQRELID, relid);
+	pgstuple = SearchSysCache1(SEQRELID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(pgstuple))
 		elog(ERROR, "cache lookup failed for sequence %u", relid);
 	pgsform = (Form_pg_sequence) GETSTRUCT(pgstuple);
@@ -1766,7 +1766,7 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 
 	memset(isnull, 0, sizeof(isnull));
 
-	pgstuple = SearchSysCache1(SEQRELID, relid);
+	pgstuple = SearchSysCache1(SEQRELID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(pgstuple))
 		elog(ERROR, "cache lookup failed for sequence %u", relid);
 	pgsform = (Form_pg_sequence) GETSTRUCT(pgstuple);

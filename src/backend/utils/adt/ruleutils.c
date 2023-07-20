@@ -3283,7 +3283,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		HeapTuple	aggtup;
 		Form_pg_aggregate agg;
 
-		aggtup = SearchSysCache1(AGGFNOID, proc->oid);
+		aggtup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(proc->oid));
 		if (!HeapTupleIsValid(aggtup))
 			elog(ERROR, "cache lookup failed for aggregate %u",
 				 proc->oid);
