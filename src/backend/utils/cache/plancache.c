@@ -1440,7 +1440,9 @@ CachedPlanIsSimplyValid(CachedPlanSource *plansource, CachedPlan *plan,
 	 * that here we *do* check plansource->is_valid, so as to force plan
 	 * rebuild if that's become false.
 	 */
-	if (!plansource->is_valid || plan != plansource->gplan || !plan->is_valid)
+	if (!plansource->is_valid ||
+		plan == NULL || plan != plansource->gplan ||
+		!plan->is_valid)
 		return false;
 
 	Assert(plan->magic == CACHEDPLAN_MAGIC);
