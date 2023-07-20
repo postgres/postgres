@@ -26,6 +26,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/miscnodes.h"
+#include "parser/parse_coerce.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -5684,4 +5685,114 @@ json_get_first_token(text *json, bool throw_error)
 		json_errsave_error(result, lex, NULL);
 
 	return JSON_TOKEN_INVALID;	/* invalid json */
+}
+
+/*
+ * Determine how we want to print values of a given type in datum_to_json(b).
+ *
+ * Given the datatype OID, return its JsonTypeCategory, as well as the type's
+ * output function OID.  If the returned category is JSONTYPE_CAST, we return
+ * the OID of the type->JSON cast function instead.
+ */
+void
+json_categorize_type(Oid typoid, bool is_jsonb,
+					 JsonTypeCategory *tcategory, Oid *outfuncoid)
+{
+	bool		typisvarlena;
+
+	/* Look through any domain */
+	typoid = getBaseType(typoid);
+
+	*outfuncoid = InvalidOid;
+
+	switch (typoid)
+	{
+		case BOOLOID:
+			*outfuncoid = F_BOOLOUT;
+			*tcategory = JSONTYPE_BOOL;
+			break;
+
+		case INT2OID:
+		case INT4OID:
+		case INT8OID:
+		case FLOAT4OID:
+		case FLOAT8OID:
+		case NUMERICOID:
+			getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
+			*tcategory = JSONTYPE_NUMERIC;
+			break;
+
+		case DATEOID:
+			*outfuncoid = F_DATE_OUT;
+			*tcategory = JSONTYPE_DATE;
+			break;
+
+		case TIMESTAMPOID:
+			*outfuncoid = F_TIMESTAMP_OUT;
+			*tcategory = JSONTYPE_TIMESTAMP;
+			break;
+
+		case TIMESTAMPTZOID:
+			*outfuncoid = F_TIMESTAMPTZ_OUT;
+			*tcategory = JSONTYPE_TIMESTAMPTZ;
+			break;
+
+		case JSONOID:
+			getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
+			*tcategory = JSONTYPE_JSON;
+			break;
+
+		case JSONBOID:
+			getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
+			*tcategory = is_jsonb ? JSONTYPE_JSONB : JSONTYPE_JSON;
+			break;
+
+		default:
+			/* Check for arrays and composites */
+			if (OidIsValid(get_element_type(typoid)) || typoid == ANYARRAYOID
+				|| typoid == ANYCOMPATIBLEARRAYOID || typoid == RECORDARRAYOID)
+			{
+				*outfuncoid = F_ARRAY_OUT;
+				*tcategory = JSONTYPE_ARRAY;
+			}
+			else if (type_is_rowtype(typoid))	/* includes RECORDOID */
+			{
+				*outfuncoid = F_RECORD_OUT;
+				*tcategory = JSONTYPE_COMPOSITE;
+			}
+			else
+			{
+				/*
+				 * It's probably the general case.  But let's look for a cast
+				 * to json (note: not to jsonb even if is_jsonb is true), if
+				 * it's not built-in.
+				 */
+				*tcategory = JSONTYPE_OTHER;
+				if (typoid >= FirstNormalObjectId)
+				{
+					Oid			castfunc;
+					CoercionPathType ctype;
+
+					ctype = find_coercion_pathway(JSONOID, typoid,
+												  COERCION_EXPLICIT,
+												  &castfunc);
+					if (ctype == COERCION_PATH_FUNC && OidIsValid(castfunc))
+					{
+						*outfuncoid = castfunc;
+						*tcategory = JSONTYPE_CAST;
+					}
+					else
+					{
+						/* non builtin type with no cast */
+						getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
+					}
+				}
+				else
+				{
+					/* any other builtin type */
+					getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
+				}
+			}
+			break;
+	}
 }

@@ -63,4 +63,24 @@ extern Jsonb *transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
 extern text *transform_json_string_values(text *json, void *action_state,
 										  JsonTransformStringValuesAction transform_action);
 
+/* Type categories returned by json_categorize_type */
+typedef enum
+{
+	JSONTYPE_NULL,				/* null, so we didn't bother to identify */
+	JSONTYPE_BOOL,				/* boolean (built-in types only) */
+	JSONTYPE_NUMERIC,			/* numeric (ditto) */
+	JSONTYPE_DATE,				/* we use special formatting for datetimes */
+	JSONTYPE_TIMESTAMP,
+	JSONTYPE_TIMESTAMPTZ,
+	JSONTYPE_JSON,				/* JSON (and JSONB, if not is_jsonb) */
+	JSONTYPE_JSONB,				/* JSONB (if is_jsonb) */
+	JSONTYPE_ARRAY,				/* array */
+	JSONTYPE_COMPOSITE,			/* composite */
+	JSONTYPE_CAST,				/* something with an explicit cast to JSON */
+	JSONTYPE_OTHER,				/* all else */
+} JsonTypeCategory;
+
+extern void json_categorize_type(Oid typoid, bool is_jsonb,
+								 JsonTypeCategory *tcategory, Oid *outfuncoid);
+
 #endif

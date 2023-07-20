@@ -19,7 +19,6 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
-#include "parser/parse_coerce.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -37,29 +36,12 @@ typedef struct JsonbInState
 	Node	   *escontext;
 } JsonbInState;
 
-/* unlike with json categories, we need to treat json and jsonb differently */
-typedef enum					/* type categories for datum_to_jsonb */
-{
-	JSONBTYPE_NULL,				/* null, so we didn't bother to identify */
-	JSONBTYPE_BOOL,				/* boolean (built-in types only) */
-	JSONBTYPE_NUMERIC,			/* numeric (ditto) */
-	JSONBTYPE_DATE,				/* we use special formatting for datetimes */
-	JSONBTYPE_TIMESTAMP,		/* we use special formatting for timestamp */
-	JSONBTYPE_TIMESTAMPTZ,		/* ... and timestamptz */
-	JSONBTYPE_JSON,				/* JSON */
-	JSONBTYPE_JSONB,			/* JSONB */
-	JSONBTYPE_ARRAY,			/* array */
-	JSONBTYPE_COMPOSITE,		/* composite */
-	JSONBTYPE_JSONCAST,			/* something with an explicit cast to JSON */
-	JSONBTYPE_OTHER				/* all else */
-} JsonbTypeCategory;
-
 typedef struct JsonbAggState
 {
 	JsonbInState *res;
-	JsonbTypeCategory key_category;
+	JsonTypeCategory key_category;
 	Oid			key_output_func;
-	JsonbTypeCategory val_category;
+	JsonTypeCategory val_category;
 	Oid			val_output_func;
 } JsonbAggState;
 
@@ -72,19 +54,13 @@ static JsonParseErrorType jsonb_in_array_end(void *pstate);
 static JsonParseErrorType jsonb_in_object_field_start(void *pstate, char *fname, bool isnull);
 static void jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal);
 static JsonParseErrorType jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype);
-static void jsonb_categorize_type(Oid typoid,
-								  JsonbTypeCategory *tcategory,
-								  Oid *outfuncoid);
 static void composite_to_jsonb(Datum composite, JsonbInState *result);
 static void array_dim_to_jsonb(JsonbInState *result, int dim, int ndims, int *dims,
 							   Datum *vals, bool *nulls, int *valcount,
-							   JsonbTypeCategory tcategory, Oid outfuncoid);
+							   JsonTypeCategory tcategory, Oid outfuncoid);
 static void array_to_jsonb_internal(Datum array, JsonbInState *result);
-static void jsonb_categorize_type(Oid typoid,
-								  JsonbTypeCategory *tcategory,
-								  Oid *outfuncoid);
 static void datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
-						   JsonbTypeCategory tcategory, Oid outfuncoid,
+						   JsonTypeCategory tcategory, Oid outfuncoid,
 						   bool key_scalar);
 static void add_jsonb(Datum val, bool is_null, JsonbInState *result,
 					  Oid val_type, bool key_scalar);
@@ -634,112 +610,6 @@ add_indent(StringInfo out, bool indent, int level)
 
 
 /*
- * Determine how we want to render values of a given type in datum_to_jsonb.
- *
- * Given the datatype OID, return its JsonbTypeCategory, as well as the type's
- * output function OID.  If the returned category is JSONBTYPE_JSONCAST,
- * we return the OID of the relevant cast function instead.
- */
-static void
-jsonb_categorize_type(Oid typoid,
-					  JsonbTypeCategory *tcategory,
-					  Oid *outfuncoid)
-{
-	bool		typisvarlena;
-
-	/* Look through any domain */
-	typoid = getBaseType(typoid);
-
-	*outfuncoid = InvalidOid;
-
-	/*
-	 * We need to get the output function for everything except date and
-	 * timestamp types, booleans, array and composite types, json and jsonb,
-	 * and non-builtin types where there's a cast to json. In this last case
-	 * we return the oid of the cast function instead.
-	 */
-
-	switch (typoid)
-	{
-		case BOOLOID:
-			*tcategory = JSONBTYPE_BOOL;
-			break;
-
-		case INT2OID:
-		case INT4OID:
-		case INT8OID:
-		case FLOAT4OID:
-		case FLOAT8OID:
-		case NUMERICOID:
-			getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
-			*tcategory = JSONBTYPE_NUMERIC;
-			break;
-
-		case DATEOID:
-			*tcategory = JSONBTYPE_DATE;
-			break;
-
-		case TIMESTAMPOID:
-			*tcategory = JSONBTYPE_TIMESTAMP;
-			break;
-
-		case TIMESTAMPTZOID:
-			*tcategory = JSONBTYPE_TIMESTAMPTZ;
-			break;
-
-		case JSONBOID:
-			*tcategory = JSONBTYPE_JSONB;
-			break;
-
-		case JSONOID:
-			*tcategory = JSONBTYPE_JSON;
-			break;
-
-		default:
-			/* Check for arrays and composites */
-			if (OidIsValid(get_element_type(typoid)) || typoid == ANYARRAYOID
-				|| typoid == ANYCOMPATIBLEARRAYOID || typoid == RECORDARRAYOID)
-				*tcategory = JSONBTYPE_ARRAY;
-			else if (type_is_rowtype(typoid))	/* includes RECORDOID */
-				*tcategory = JSONBTYPE_COMPOSITE;
-			else
-			{
-				/* It's probably the general case ... */
-				*tcategory = JSONBTYPE_OTHER;
-
-				/*
-				 * but first let's look for a cast to json (note: not to
-				 * jsonb) if it's not built-in.
-				 */
-				if (typoid >= FirstNormalObjectId)
-				{
-					Oid			castfunc;
-					CoercionPathType ctype;
-
-					ctype = find_coercion_pathway(JSONOID, typoid,
-												  COERCION_EXPLICIT, &castfunc);
-					if (ctype == COERCION_PATH_FUNC && OidIsValid(castfunc))
-					{
-						*tcategory = JSONBTYPE_JSONCAST;
-						*outfuncoid = castfunc;
-					}
-					else
-					{
-						/* not a cast type, so just get the usual output func */
-						getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
-					}
-				}
-				else
-				{
-					/* any other builtin type */
-					getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
-				}
-				break;
-			}
-	}
-}
-
-/*
  * Turn a Datum into jsonb, adding it to the result JsonbInState.
  *
  * tcategory and outfuncoid are from a previous call to json_categorize_type,
@@ -753,7 +623,7 @@ jsonb_categorize_type(Oid typoid,
  */
 static void
 datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
-			   JsonbTypeCategory tcategory, Oid outfuncoid,
+			   JsonTypeCategory tcategory, Oid outfuncoid,
 			   bool key_scalar)
 {
 	char	   *outputstr;
@@ -770,11 +640,11 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 		jb.type = jbvNull;
 	}
 	else if (key_scalar &&
-			 (tcategory == JSONBTYPE_ARRAY ||
-			  tcategory == JSONBTYPE_COMPOSITE ||
-			  tcategory == JSONBTYPE_JSON ||
-			  tcategory == JSONBTYPE_JSONB ||
-			  tcategory == JSONBTYPE_JSONCAST))
+			 (tcategory == JSONTYPE_ARRAY ||
+			  tcategory == JSONTYPE_COMPOSITE ||
+			  tcategory == JSONTYPE_JSON ||
+			  tcategory == JSONTYPE_JSONB ||
+			  tcategory == JSONTYPE_JSON))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -782,18 +652,18 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 	}
 	else
 	{
-		if (tcategory == JSONBTYPE_JSONCAST)
+		if (tcategory == JSONTYPE_CAST)
 			val = OidFunctionCall1(outfuncoid, val);
 
 		switch (tcategory)
 		{
-			case JSONBTYPE_ARRAY:
+			case JSONTYPE_ARRAY:
 				array_to_jsonb_internal(val, result);
 				break;
-			case JSONBTYPE_COMPOSITE:
+			case JSONTYPE_COMPOSITE:
 				composite_to_jsonb(val, result);
 				break;
-			case JSONBTYPE_BOOL:
+			case JSONTYPE_BOOL:
 				if (key_scalar)
 				{
 					outputstr = DatumGetBool(val) ? "true" : "false";
@@ -807,7 +677,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					jb.val.boolean = DatumGetBool(val);
 				}
 				break;
-			case JSONBTYPE_NUMERIC:
+			case JSONTYPE_NUMERIC:
 				outputstr = OidOutputFunctionCall(outfuncoid, val);
 				if (key_scalar)
 				{
@@ -845,26 +715,26 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					}
 				}
 				break;
-			case JSONBTYPE_DATE:
+			case JSONTYPE_DATE:
 				jb.type = jbvString;
 				jb.val.string.val = JsonEncodeDateTime(NULL, val,
 													   DATEOID, NULL);
 				jb.val.string.len = strlen(jb.val.string.val);
 				break;
-			case JSONBTYPE_TIMESTAMP:
+			case JSONTYPE_TIMESTAMP:
 				jb.type = jbvString;
 				jb.val.string.val = JsonEncodeDateTime(NULL, val,
 													   TIMESTAMPOID, NULL);
 				jb.val.string.len = strlen(jb.val.string.val);
 				break;
-			case JSONBTYPE_TIMESTAMPTZ:
+			case JSONTYPE_TIMESTAMPTZ:
 				jb.type = jbvString;
 				jb.val.string.val = JsonEncodeDateTime(NULL, val,
 													   TIMESTAMPTZOID, NULL);
 				jb.val.string.len = strlen(jb.val.string.val);
 				break;
-			case JSONBTYPE_JSONCAST:
-			case JSONBTYPE_JSON:
+			case JSONTYPE_CAST:
+			case JSONTYPE_JSON:
 				{
 					/* parse the json right into the existing result object */
 					JsonLexContext *lex;
@@ -887,7 +757,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					pg_parse_json_or_ereport(lex, &sem);
 				}
 				break;
-			case JSONBTYPE_JSONB:
+			case JSONTYPE_JSONB:
 				{
 					Jsonb	   *jsonb = DatumGetJsonbP(val);
 					JsonbIterator *it;
@@ -931,7 +801,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 
 	/* Now insert jb into result, unless we did it recursively */
 	if (!is_null && !scalar_jsonb &&
-		tcategory >= JSONBTYPE_JSON && tcategory <= JSONBTYPE_JSONCAST)
+		tcategory >= JSONTYPE_JSON && tcategory <= JSONTYPE_CAST)
 	{
 		/* work has been done recursively */
 		return;
@@ -976,7 +846,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
  */
 static void
 array_dim_to_jsonb(JsonbInState *result, int dim, int ndims, int *dims, Datum *vals,
-				   bool *nulls, int *valcount, JsonbTypeCategory tcategory,
+				   bool *nulls, int *valcount, JsonTypeCategory tcategory,
 				   Oid outfuncoid)
 {
 	int			i;
@@ -1020,7 +890,7 @@ array_to_jsonb_internal(Datum array, JsonbInState *result)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-	JsonbTypeCategory tcategory;
+	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
 
 	ndim = ARR_NDIM(v);
@@ -1037,8 +907,8 @@ array_to_jsonb_internal(Datum array, JsonbInState *result)
 	get_typlenbyvalalign(element_type,
 						 &typlen, &typbyval, &typalign);
 
-	jsonb_categorize_type(element_type,
-						  &tcategory, &outfuncoid);
+	json_categorize_type(element_type, true,
+						 &tcategory, &outfuncoid);
 
 	deconstruct_array(v, element_type, typlen, typbyval,
 					  typalign, &elements, &nulls,
@@ -1084,7 +954,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 		Datum		val;
 		bool		isnull;
 		char	   *attname;
-		JsonbTypeCategory tcategory;
+		JsonTypeCategory tcategory;
 		Oid			outfuncoid;
 		JsonbValue	v;
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
@@ -1105,11 +975,12 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 
 		if (isnull)
 		{
-			tcategory = JSONBTYPE_NULL;
+			tcategory = JSONTYPE_NULL;
 			outfuncoid = InvalidOid;
 		}
 		else
-			jsonb_categorize_type(att->atttypid, &tcategory, &outfuncoid);
+			json_categorize_type(att->atttypid, true, &tcategory,
+								 &outfuncoid);
 
 		datum_to_jsonb(val, isnull, result, tcategory, outfuncoid, false);
 	}
@@ -1122,7 +993,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
  * Append JSON text for "val" to "result".
  *
  * This is just a thin wrapper around datum_to_jsonb.  If the same type will be
- * printed many times, avoid using this; better to do the jsonb_categorize_type
+ * printed many times, avoid using this; better to do the json_categorize_type
  * lookups only once.
  */
 
@@ -1130,7 +1001,7 @@ static void
 add_jsonb(Datum val, bool is_null, JsonbInState *result,
 		  Oid val_type, bool key_scalar)
 {
-	JsonbTypeCategory tcategory;
+	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
 
 	if (val_type == InvalidOid)
@@ -1140,12 +1011,12 @@ add_jsonb(Datum val, bool is_null, JsonbInState *result,
 
 	if (is_null)
 	{
-		tcategory = JSONBTYPE_NULL;
+		tcategory = JSONTYPE_NULL;
 		outfuncoid = InvalidOid;
 	}
 	else
-		jsonb_categorize_type(val_type,
-							  &tcategory, &outfuncoid);
+		json_categorize_type(val_type, true,
+							 &tcategory, &outfuncoid);
 
 	datum_to_jsonb(val, is_null, result, tcategory, outfuncoid, key_scalar);
 }
@@ -1160,33 +1031,33 @@ add_jsonb(Datum val, bool is_null, JsonbInState *result,
 bool
 to_jsonb_is_immutable(Oid typoid)
 {
-	JsonbTypeCategory tcategory;
+	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
 
-	jsonb_categorize_type(typoid, &tcategory, &outfuncoid);
+	json_categorize_type(typoid, true, &tcategory, &outfuncoid);
 
 	switch (tcategory)
 	{
-		case JSONBTYPE_NULL:
-		case JSONBTYPE_BOOL:
-		case JSONBTYPE_JSON:
-		case JSONBTYPE_JSONB:
+		case JSONTYPE_NULL:
+		case JSONTYPE_BOOL:
+		case JSONTYPE_JSON:
+		case JSONTYPE_JSONB:
 			return true;
 
-		case JSONBTYPE_DATE:
-		case JSONBTYPE_TIMESTAMP:
-		case JSONBTYPE_TIMESTAMPTZ:
+		case JSONTYPE_DATE:
+		case JSONTYPE_TIMESTAMP:
+		case JSONTYPE_TIMESTAMPTZ:
 			return false;
 
-		case JSONBTYPE_ARRAY:
+		case JSONTYPE_ARRAY:
 			return false;		/* TODO recurse into elements */
 
-		case JSONBTYPE_COMPOSITE:
+		case JSONTYPE_COMPOSITE:
 			return false;		/* TODO recurse into fields */
 
-		case JSONBTYPE_NUMERIC:
-		case JSONBTYPE_JSONCAST:
-		case JSONBTYPE_OTHER:
+		case JSONTYPE_NUMERIC:
+		case JSONTYPE_CAST:
+		case JSONTYPE_OTHER:
 			return func_volatile(outfuncoid) == PROVOLATILE_IMMUTABLE;
 	}
 
@@ -1202,7 +1073,7 @@ to_jsonb(PG_FUNCTION_ARGS)
 	Datum		val = PG_GETARG_DATUM(0);
 	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	JsonbInState result;
-	JsonbTypeCategory tcategory;
+	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
 
 	if (val_type == InvalidOid)
@@ -1210,8 +1081,8 @@ to_jsonb(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
 
-	jsonb_categorize_type(val_type,
-						  &tcategory, &outfuncoid);
+	json_categorize_type(val_type, true,
+						 &tcategory, &outfuncoid);
 
 	memset(&result, 0, sizeof(JsonbInState));
 
@@ -1636,8 +1507,8 @@ jsonb_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 									 WJB_BEGIN_ARRAY, NULL);
 		MemoryContextSwitchTo(oldcontext);
 
-		jsonb_categorize_type(arg_type, &state->val_category,
-							  &state->val_output_func);
+		json_categorize_type(arg_type, true, &state->val_category,
+							 &state->val_output_func);
 	}
 	else
 	{
@@ -1816,8 +1687,8 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("could not determine input data type")));
 
-		jsonb_categorize_type(arg_type, &state->key_category,
-							  &state->key_output_func);
+		json_categorize_type(arg_type, true, &state->key_category,
+							 &state->key_output_func);
 
 		arg_type = get_fn_expr_argtype(fcinfo->flinfo, 2);
 
@@ -1826,8 +1697,8 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("could not determine input data type")));
 
-		jsonb_categorize_type(arg_type, &state->val_category,
-							  &state->val_output_func);
+		json_categorize_type(arg_type, true, &state->val_category,
+							 &state->val_output_func);
 	}
 	else
 	{
