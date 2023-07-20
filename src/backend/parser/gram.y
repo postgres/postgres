@@ -647,7 +647,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <node>	json_format_clause_opt
 				json_value_expr
-				json_output_clause_opt
+				json_returning_clause_opt
 				json_name_and_value
 				json_aggregate_func
 %type <list>	json_name_and_value_list
@@ -15570,7 +15570,7 @@ func_expr_common_subexpr:
 			| JSON_OBJECT '(' json_name_and_value_list
 				json_object_constructor_null_clause_opt
 				json_key_uniqueness_constraint_opt
-				json_output_clause_opt ')'
+				json_returning_clause_opt ')'
 				{
 					JsonObjectConstructor *n = makeNode(JsonObjectConstructor);
 
@@ -15581,7 +15581,7 @@ func_expr_common_subexpr:
 					n->location = @1;
 					$$ = (Node *) n;
 				}
-			| JSON_OBJECT '(' json_output_clause_opt ')'
+			| JSON_OBJECT '(' json_returning_clause_opt ')'
 				{
 					JsonObjectConstructor *n = makeNode(JsonObjectConstructor);
 
@@ -15595,7 +15595,7 @@ func_expr_common_subexpr:
 			| JSON_ARRAY '('
 				json_value_expr_list
 				json_array_constructor_null_clause_opt
-				json_output_clause_opt
+				json_returning_clause_opt
 			')'
 				{
 					JsonArrayConstructor *n = makeNode(JsonArrayConstructor);
@@ -15610,7 +15610,7 @@ func_expr_common_subexpr:
 				select_no_parens
 				json_format_clause_opt
 				/* json_array_constructor_null_clause_opt */
-				json_output_clause_opt
+				json_returning_clause_opt
 			')'
 				{
 					JsonArrayQueryConstructor *n = makeNode(JsonArrayQueryConstructor);
@@ -15623,7 +15623,7 @@ func_expr_common_subexpr:
 					$$ = (Node *) n;
 				}
 			| JSON_ARRAY '('
-				json_output_clause_opt
+				json_returning_clause_opt
 			')'
 				{
 					JsonArrayConstructor *n = makeNode(JsonArrayConstructor);
@@ -16384,7 +16384,7 @@ json_encoding_clause_opt:
 			| /* EMPTY */					{ $$ = JS_ENC_DEFAULT; }
 		;
 
-json_output_clause_opt:
+json_returning_clause_opt:
 			RETURNING Typename json_format_clause_opt
 				{
 					JsonOutput *n = makeNode(JsonOutput);
@@ -16457,7 +16457,7 @@ json_aggregate_func:
 				json_name_and_value
 				json_object_constructor_null_clause_opt
 				json_key_uniqueness_constraint_opt
-				json_output_clause_opt
+				json_returning_clause_opt
 			')'
 				{
 					JsonObjectAgg *n = makeNode(JsonObjectAgg);
@@ -16475,7 +16475,7 @@ json_aggregate_func:
 				json_value_expr
 				json_array_aggregate_order_by_clause_opt
 				json_array_constructor_null_clause_opt
-				json_output_clause_opt
+				json_returning_clause_opt
 			')'
 				{
 					JsonArrayAgg *n = makeNode(JsonArrayAgg);
