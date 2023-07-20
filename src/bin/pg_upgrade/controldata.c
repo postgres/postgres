@@ -149,22 +149,23 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				 * the server was shut down cleanly, from the controldata
 				 * perspective.
 				 */
-				/* remove leading spaces */
+				/* Remove trailing newline and leading spaces */
+				(void) pg_strip_crlf(p);
 				while (*p == ' ')
 					p++;
-				if (strcmp(p, "shut down in recovery\n") == 0)
+				if (strcmp(p, "shut down in recovery") == 0)
 				{
 					if (cluster == &old_cluster)
 						pg_fatal("The source cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.");
 					else
 						pg_fatal("The target cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.");
 				}
-				else if (strcmp(p, "shut down\n") != 0)
+				else if (strcmp(p, "shut down") != 0)
 				{
 					if (cluster == &old_cluster)
-						pg_fatal("The source cluster was not shut down cleanly.");
+						pg_fatal("The source cluster was not shut down cleanly, state reported as: \"%s\"", p);
 					else
-						pg_fatal("The target cluster was not shut down cleanly.");
+						pg_fatal("The target cluster was not shut down cleanly, state reported as: \"%s\"", p);
 				}
 				got_cluster_state = true;
 			}
