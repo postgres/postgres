@@ -33,6 +33,7 @@ typedef struct JsonbInState
 {
 	JsonbParseState *parseState;
 	JsonbValue *res;
+	bool		unique_keys;
 	Node	   *escontext;
 } JsonbInState;
 
@@ -45,7 +46,8 @@ typedef struct JsonbAggState
 	Oid			val_output_func;
 } JsonbAggState;
 
-static inline Datum jsonb_from_cstring(char *json, int len, Node *escontext);
+static inline Datum jsonb_from_cstring(char *json, int len, bool unique_keys,
+									   Node *escontext);
 static bool checkStringLen(size_t len, Node *escontext);
 static JsonParseErrorType jsonb_in_object_start(void *pstate);
 static JsonParseErrorType jsonb_in_object_end(void *pstate);
@@ -76,7 +78,7 @@ jsonb_in(PG_FUNCTION_ARGS)
 {
 	char	   *json = PG_GETARG_CSTRING(0);
 
-	return jsonb_from_cstring(json, strlen(json), fcinfo->context);
+	return jsonb_from_cstring(json, strlen(json), false, fcinfo->context);
 }
 
 /*
@@ -100,7 +102,7 @@ jsonb_recv(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "unsupported jsonb version number %d", version);
 
-	return jsonb_from_cstring(str, nbytes, NULL);
+	return jsonb_from_cstring(str, nbytes, false, NULL);
 }
 
 /*
@@ -147,10 +149,11 @@ jsonb_send(PG_FUNCTION_ARGS)
  * Turns json text string into a jsonb Datum.
  */
 Datum
-jsonb_from_text(text *js)
+jsonb_from_text(text *js, bool unique_keys)
 {
 	return jsonb_from_cstring(VARDATA_ANY(js),
 							  VARSIZE_ANY_EXHDR(js),
+							  unique_keys,
 							  NULL);
 }
 
@@ -247,7 +250,7 @@ jsonb_typeof(PG_FUNCTION_ARGS)
  * instead of being thrown.
  */
 static inline Datum
-jsonb_from_cstring(char *json, int len, Node *escontext)
+jsonb_from_cstring(char *json, int len, bool unique_keys, Node *escontext)
 {
 	JsonLexContext *lex;
 	JsonbInState state;
@@ -257,6 +260,7 @@ jsonb_from_cstring(char *json, int len, Node *escontext)
 	memset(&sem, 0, sizeof(sem));
 	lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
 
+	state.unique_keys = unique_keys;
 	state.escontext = escontext;
 	sem.semstate = (void *) &state;
 
@@ -293,6 +297,7 @@ jsonb_in_object_start(void *pstate)
 	JsonbInState *_state = (JsonbInState *) pstate;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_BEGIN_OBJECT, NULL);
+	_state->parseState->unique_keys = _state->unique_keys;
 
 	return JSON_SUCCESS;
 }

@@ -1274,6 +1274,7 @@ JsonManifestWALRangeField
 JsonObjectAgg
 JsonObjectConstructor
 JsonOutput
+JsonParseExpr
 JsonParseContext
 JsonParseErrorType
 JsonPath
@@ -1295,7 +1296,9 @@ JsonPathParseResult
 JsonPathPredicateCallback
 JsonPathString
 JsonReturning
+JsonScalarExpr
 JsonSemAction
+JsonSerializeExpr
 JsonTokenType
 JsonTransformStringValuesAction
 JsonTypeCategory

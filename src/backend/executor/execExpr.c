@@ -48,6 +48,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/jsonfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
@@ -2311,6 +2312,12 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				{
 					ExecInitExprRec(ctor->func, state, resv, resnull);
 				}
+				else if ((ctor->type == JSCTOR_JSON_PARSE && !ctor->unique) ||
+						 ctor->type == JSCTOR_JSON_SERIALIZE)
+				{
+					/* Use the value of the first argument as result */
+					ExecInitExprRec(linitial(args), state, resv, resnull);
+				}
 				else
 				{
 					JsonConstructorExprState *jcstate;
@@ -2347,6 +2354,29 @@ ExecInitExprRec(Expr *node, ExprState *state,
 											&jcstate->arg_nulls[argno]);
 						}
 						argno++;
+					}
+
+					/* prepare type cache for datum_to_json[b]() */
+					if (ctor->type == JSCTOR_JSON_SCALAR)
+					{
+						bool		is_jsonb =
+							ctor->returning->format->format_type == JS_FORMAT_JSONB;
+
+						jcstate->arg_type_cache =
+							palloc(sizeof(*jcstate->arg_type_cache) * nargs);
+
+						for (int i = 0; i < nargs; i++)
+						{
+							JsonTypeCategory category;
+							Oid			outfuncid;
+							Oid			typid = jcstate->arg_types[i];
+
+							json_categorize_type(typid, is_jsonb,
+												 &category, &outfuncid);
+
+							jcstate->arg_type_cache[i].outfuncid = outfuncid;
+							jcstate->arg_type_cache[i].category = (int) category;
+						}
 					}
 
 					ExprEvalPushStep(state, &scratch);

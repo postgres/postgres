@@ -4,6 +4,22 @@ Found json=[]
 Found json=[]
 Found json={"1" : 1, "1" : "2"}
 Found json={"1": 1}
+Found json={"1": 1}
+Found json={ "a" : 1 } 
+Found json=1
+Found json={"a": 1, "a": 2}
+Found json={"a": 1, "a": 2}
+Found json={"a": 1, "a": 2}
+Found json=123.45
+Found json=true
+Found json=" 123.45"
+Found json="2020-06-07T01:02:03"
+Found json={}
+Found json={}
+Found json={ "a" : 1 } 
+Found json={ "a" : 1 } 
+Found json=1
+Found json={ "a" : 1 } 
 Found is_json[0]: true
 Found is_json[1]: false
 Found is_json[2]: true

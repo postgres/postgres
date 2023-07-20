@@ -16001,6 +16001,72 @@ table2-mapping
         <returnvalue>{"a": "1", "b": "2"}</returnvalue>
        </para></entry>
       </row>
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm><primary>json constructor</primary></indexterm>
+         <function>json</function> (
+         <replaceable>expression</replaceable>
+         <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional></optional>
+         <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional></optional>
+        </para>
+        <para>
+         Converts a given expression specified as <type>text</type> or
+         <type>bytea</type> string (in UTF8 encoding) into a JSON
+         value.  If <replaceable>expression</replaceable> is NULL, an
+         <acronym>SQL</acronym> null value is returned.
+         If <literal>WITH UNIQUE</literal> is specified, the
+         <replaceable>expression</replaceable> must not contain any duplicate
+         object keys.
+        </para>
+        <para>
+         <literal>json('{"a":123, "b":[true,"foo"], "a":"bar"}')</literal>
+         <returnvalue>{"a":123, "b":[true,"foo"], "a":"bar"}</returnvalue>
+        </para>
+       </entry>
+      </row>
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+        <indexterm><primary>json_scalar</primary></indexterm>
+        <function>json_scalar</function> (<replaceable>expression</replaceable>)
+       </para>
+       <para>
+        Converts a given SQL scalar value into a JSON scalar value.
+        If the input is NULL, an <acronym>SQL</acronym> null is returned. If
+        the input is number or a boolean value, a corresponding JSON number
+        or boolean value is returned. For any other value, a JSON string is
+        returned.
+       </para>
+       <para>
+        <literal>json_scalar(123.45)</literal>
+        <returnvalue>123.45</returnvalue>
+       </para>
+       <para>
+        <literal>json_scalar(CURRENT_TIMESTAMP)</literal>
+        <returnvalue>"2022-05-10T10:51:04.62128-04:00"</returnvalue>
+      </para></entry>
+     </row>
+     <row>
+      <entry role="func_table_entry">
+       <para role="func_signature">
+        <function>json_serialize</function> (
+        <replaceable>expression</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional>
+        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+       </para>
+       <para>
+        Converts an SQL/JSON expression into a character or binary string. The
+        <replaceable>expression</replaceable> can be of any JSON type, any
+        character string type, or <type>bytea</type> in UTF8 encoding.
+        The returned type used in <literal> RETURNING</literal> can be any
+        character string type or <type>bytea</type>. The default is
+        <type>text</type>.
+       </para>
+       <para>
+        <literal>json_serialize('{ "a" : 1 } ' RETURNING bytea)</literal>
+        <returnvalue>\x7b20226122203a2031207d20</returnvalue>
+      </para></entry>
+     </row>
      </tbody>
     </tgroup>
    </table>

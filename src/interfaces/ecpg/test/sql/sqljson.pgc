@@ -39,6 +39,66 @@ EXEC SQL END DECLARE SECTION;
   EXEC SQL SELECT JSON_OBJECT(1: 1, '2': NULL ABSENT ON NULL WITHOUT UNIQUE RETURNING jsonb) INTO :json;
   printf("Found json=%s\n", json);
 
+  EXEC SQL SELECT JSON(NULL) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON('{ "a" : 1 } ' FORMAT JSON) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON('{ "a" : 1 } ' FORMAT JSON ENCODING UTF8) INTO :json;
+  // error
+
+  EXEC SQL SELECT JSON('   1   '::jsonb) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON('   1   '::json WITH UNIQUE KEYS) INTO json;
+  // error
+
+  EXEC SQL SELECT JSON('{"a": 1, "a": 2}') INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON('{"a": 1, "a": 2}' WITH UNIQUE KEYS) INTO :json;
+  // error
+
+  EXEC SQL SELECT JSON_SCALAR(NULL) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SCALAR(NULL::int) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SCALAR(123.45) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SCALAR(true) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SCALAR(' 123.45') INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SCALAR('2020-06-07 01:02:03'::timestamp) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SCALAR('{}'::jsonb) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SERIALIZE(NULL) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SERIALIZE(JSON('{ "a" : 1 } ')) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SERIALIZE('{ "a" : 1 } ') INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SERIALIZE('1' FORMAT JSON) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING varchar) INTO :json;
+  printf("Found json=%s\n", json);
+
+  EXEC SQL SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING jsonb);
+  // error
+
   EXEC SQL WITH val (js) AS (VALUES ('{ "a": 1, "b": [{ "a": 1, "b": 0, "a": 2 }] }'))
 	  SELECT
 	  js IS JSON "IS JSON",

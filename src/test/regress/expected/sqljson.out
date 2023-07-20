@@ -1,3 +1,293 @@
+-- JSON()
+SELECT JSON();
+ERROR:  syntax error at or near ")"
+LINE 1: SELECT JSON();
+                    ^
+SELECT JSON(NULL);
+ json 
+------
+ 
+(1 row)
+
+SELECT JSON('{ "a" : 1 } ');
+     json     
+--------------
+ { "a" : 1 } 
+(1 row)
+
+SELECT JSON('{ "a" : 1 } ' FORMAT JSON);
+     json     
+--------------
+ { "a" : 1 } 
+(1 row)
+
+SELECT JSON('{ "a" : 1 } ' FORMAT JSON ENCODING UTF8);
+ERROR:  JSON ENCODING clause is only allowed for bytea input type
+LINE 1: SELECT JSON('{ "a" : 1 } ' FORMAT JSON ENCODING UTF8);
+                                   ^
+SELECT JSON('{ "a" : 1 } '::bytea FORMAT JSON ENCODING UTF8);
+     json     
+--------------
+ { "a" : 1 } 
+(1 row)
+
+SELECT pg_typeof(JSON('{ "a" : 1 } '));
+ pg_typeof 
+-----------
+ json
+(1 row)
+
+SELECT JSON('   1   '::json);
+  json   
+---------
+    1   
+(1 row)
+
+SELECT JSON('   1   '::jsonb);
+ json 
+------
+ 1
+(1 row)
+
+SELECT JSON('   1   '::json WITH UNIQUE KEYS);
+ERROR:  cannot use non-string types with WITH UNIQUE KEYS clause
+LINE 1: SELECT JSON('   1   '::json WITH UNIQUE KEYS);
+               ^
+SELECT JSON(123);
+ERROR:  cannot cast type integer to json
+LINE 1: SELECT JSON(123);
+                    ^
+SELECT JSON('{"a": 1, "a": 2}');
+       json       
+------------------
+ {"a": 1, "a": 2}
+(1 row)
+
+SELECT JSON('{"a": 1, "a": 2}' WITH UNIQUE KEYS);
+ERROR:  duplicate JSON object key value
+SELECT JSON('{"a": 1, "a": 2}' WITHOUT UNIQUE KEYS);
+       json       
+------------------
+ {"a": 1, "a": 2}
+(1 row)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123');
+         QUERY PLAN          
+-----------------------------
+ Result
+   Output: JSON('123'::json)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123' FORMAT JSON);
+         QUERY PLAN          
+-----------------------------
+ Result
+   Output: JSON('123'::json)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123'::bytea FORMAT JSON);
+                  QUERY PLAN                   
+-----------------------------------------------
+ Result
+   Output: JSON('\x313233'::bytea FORMAT JSON)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123'::bytea FORMAT JSON ENCODING UTF8);
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Result
+   Output: JSON('\x313233'::bytea FORMAT JSON ENCODING UTF8)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123' WITH UNIQUE KEYS);
+                  QUERY PLAN                  
+----------------------------------------------
+ Result
+   Output: JSON('123'::text WITH UNIQUE KEYS)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123' WITHOUT UNIQUE KEYS);
+         QUERY PLAN          
+-----------------------------
+ Result
+   Output: JSON('123'::json)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123');
+         QUERY PLAN          
+-----------------------------
+ Result
+   Output: JSON('123'::json)
+(2 rows)
+
+SELECT pg_typeof(JSON('123'));
+ pg_typeof 
+-----------
+ json
+(1 row)
+
+-- JSON_SCALAR()
+SELECT JSON_SCALAR();
+ERROR:  syntax error at or near ")"
+LINE 1: SELECT JSON_SCALAR();
+                           ^
+SELECT JSON_SCALAR(NULL);
+ json_scalar 
+-------------
+ 
+(1 row)
+
+SELECT JSON_SCALAR(NULL::int);
+ json_scalar 
+-------------
+ 
+(1 row)
+
+SELECT JSON_SCALAR(123);
+ json_scalar 
+-------------
+ 123
+(1 row)
+
+SELECT JSON_SCALAR(123.45);
+ json_scalar 
+-------------
+ 123.45
+(1 row)
+
+SELECT JSON_SCALAR(123.45::numeric);
+ json_scalar 
+-------------
+ 123.45
+(1 row)
+
+SELECT JSON_SCALAR(true);
+ json_scalar 
+-------------
+ true
+(1 row)
+
+SELECT JSON_SCALAR(false);
+ json_scalar 
+-------------
+ false
+(1 row)
+
+SELECT JSON_SCALAR(' 123.45');
+ json_scalar 
+-------------
+ " 123.45"
+(1 row)
+
+SELECT JSON_SCALAR('2020-06-07'::date);
+ json_scalar  
+--------------
+ "2020-06-07"
+(1 row)
+
+SELECT JSON_SCALAR('2020-06-07 01:02:03'::timestamp);
+      json_scalar      
+-----------------------
+ "2020-06-07T01:02:03"
+(1 row)
+
+SELECT JSON_SCALAR('{}'::json);
+ json_scalar 
+-------------
+ {}
+(1 row)
+
+SELECT JSON_SCALAR('{}'::jsonb);
+ json_scalar 
+-------------
+ {}
+(1 row)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SCALAR(123);
+         QUERY PLAN         
+----------------------------
+ Result
+   Output: JSON_SCALAR(123)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SCALAR('123');
+             QUERY PLAN             
+------------------------------------
+ Result
+   Output: JSON_SCALAR('123'::text)
+(2 rows)
+
+-- JSON_SERIALIZE()
+SELECT JSON_SERIALIZE();
+ERROR:  syntax error at or near ")"
+LINE 1: SELECT JSON_SERIALIZE();
+                              ^
+SELECT JSON_SERIALIZE(NULL);
+ json_serialize 
+----------------
+ 
+(1 row)
+
+SELECT JSON_SERIALIZE(JSON('{ "a" : 1 } '));
+ json_serialize 
+----------------
+ { "a" : 1 } 
+(1 row)
+
+SELECT JSON_SERIALIZE('{ "a" : 1 } ');
+ json_serialize 
+----------------
+ { "a" : 1 } 
+(1 row)
+
+SELECT JSON_SERIALIZE('1');
+ json_serialize 
+----------------
+ 1
+(1 row)
+
+SELECT JSON_SERIALIZE('1' FORMAT JSON);
+ json_serialize 
+----------------
+ 1
+(1 row)
+
+SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING bytea);
+       json_serialize       
+----------------------------
+ \x7b20226122203a2031207d20
+(1 row)
+
+SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING varchar);
+ json_serialize 
+----------------
+ { "a" : 1 } 
+(1 row)
+
+SELECT pg_typeof(JSON_SERIALIZE(NULL));
+ pg_typeof 
+-----------
+ text
+(1 row)
+
+-- only string types or bytea allowed
+SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING jsonb);
+ERROR:  cannot use RETURNING type jsonb in JSON_SERIALIZE()
+HINT:  Try returning a string type or bytea.
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SERIALIZE('{}');
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Result
+   Output: JSON_SERIALIZE('{}'::json RETURNING text)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SERIALIZE('{}' RETURNING bytea);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Result
+   Output: JSON_SERIALIZE('{}'::json RETURNING bytea)
+(2 rows)
+
 -- JSON_OBJECT()
 SELECT JSON_OBJECT();
  json_object 
@@ -630,6 +920,13 @@ ERROR:  duplicate JSON object key
 SELECT JSON_OBJECTAGG(k: v ABSENT ON NULL WITH UNIQUE KEYS RETURNING jsonb)
 FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
 ERROR:  duplicate JSON object key
+SELECT JSON_OBJECTAGG(k: v ABSENT ON NULL WITH UNIQUE KEYS RETURNING jsonb)
+FROM (VALUES (1, 1), (0, NULL),(4, null), (5, null),(6, null),(2, 2)) foo(k, v);
+  json_objectagg  
+------------------
+ {"1": 1, "2": 2}
+(1 row)
+
 -- Test JSON_OBJECT deparsing
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT JSON_OBJECT('foo' : '1' FORMAT JSON, 'bar' : 'baz' RETURNING json);
@@ -645,6 +942,41 @@ SELECT JSON_OBJECT('foo' : '1' FORMAT JSON, 'bar' : 'baz' RETURNING json);
 CREATE OR REPLACE VIEW public.json_object_view AS
  SELECT JSON_OBJECT('foo' : '1'::text FORMAT JSON, 'bar' : 'baz'::text RETURNING json) AS "json_object"
 DROP VIEW json_object_view;
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v WITH UNIQUE KEYS) OVER (ORDER BY k)
+FROM (VALUES (1,1), (2,2)) a(k,v);
+       a       |    json_objectagg    
+---------------+----------------------
+ {"k":1,"v":1} | { "1" : 1 }
+ {"k":2,"v":2} | { "1" : 1, "2" : 2 }
+(2 rows)
+
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v WITH UNIQUE KEYS) OVER (ORDER BY k)
+FROM (VALUES (1,1), (1,2), (2,2)) a(k,v);
+ERROR:  duplicate JSON key "1"
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v ABSENT ON NULL WITH UNIQUE KEYS)
+   OVER (ORDER BY k)
+FROM (VALUES (1,1), (1,null), (2,2)) a(k,v);
+ERROR:  duplicate JSON key "1"
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v ABSENT ON NULL)
+OVER (ORDER BY k)
+FROM (VALUES (1,1), (1,null), (2,2)) a(k,v);
+        a         |    json_objectagg    
+------------------+----------------------
+ {"k":1,"v":1}    | { "1" : 1 }
+ {"k":1,"v":null} | { "1" : 1 }
+ {"k":2,"v":2}    | { "1" : 1, "2" : 2 }
+(3 rows)
+
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v ABSENT ON NULL)
+OVER (ORDER BY k RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+FROM (VALUES (1,1), (1,null), (2,2)) a(k,v);
+        a         |    json_objectagg    
+------------------+----------------------
+ {"k":1,"v":1}    | { "1" : 1, "2" : 2 }
+ {"k":1,"v":null} | { "1" : 1, "2" : 2 }
+ {"k":2,"v":2}    | { "1" : 1, "2" : 2 }
+(3 rows)
+
 -- Test JSON_ARRAY deparsing
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT JSON_ARRAY('1' FORMAT JSON, 2 RETURNING json);

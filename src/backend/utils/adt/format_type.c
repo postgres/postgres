@@ -294,6 +294,10 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 			else
 				buf = pstrdup("character varying");
 			break;
+
+		case JSONOID:
+			buf = pstrdup("json");
+			break;
 	}
 
 	if (buf == NULL)

@@ -1953,6 +1953,18 @@ FigureColnameInternal(Node *node, char **name)
 			/* make XMLSERIALIZE act like a regular function */
 			*name = "xmlserialize";
 			return 2;
+		case T_JsonParseExpr:
+			/* make JSON act like a regular function */
+			*name = "json";
+			return 2;
+		case T_JsonScalarExpr:
+			/* make JSON_SCALAR act like a regular function */
+			*name = "json_scalar";
+			return 2;
+		case T_JsonSerializeExpr:
+			/* make JSON_SERIALIZE act like a regular function */
+			*name = "json_serialize";
+			return 2;
 		case T_JsonObjectConstructor:
 			/* make JSON_OBJECT act like a regular function */
 			*name = "json_object";
