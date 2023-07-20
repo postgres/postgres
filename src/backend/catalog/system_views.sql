@@ -970,7 +970,9 @@ CREATE VIEW pg_stat_ssl AS
             S.sslbits AS bits,
             S.ssl_client_dn AS client_dn,
             S.ssl_client_serial AS client_serial,
-            S.ssl_issuer_dn AS issuer_dn
+            S.ssl_issuer_dn AS issuer_dn,
+            S.ssl_not_before AS not_before,
+            S.ssl_not_after AS not_after
     FROM pg_stat_get_activity(NULL) AS S
     WHERE S.client_port IS NOT NULL;
 

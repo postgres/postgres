@@ -298,6 +298,8 @@ extern const char *be_tls_get_cipher(Port *port);
 extern void be_tls_get_peer_subject_name(Port *port, char *ptr, size_t len);
 extern void be_tls_get_peer_issuer_name(Port *port, char *ptr, size_t len);
 extern void be_tls_get_peer_serial(Port *port, char *ptr, size_t len);
+extern void be_tls_get_peer_not_before(Port *port, Timestamp *ptr);
+extern void be_tls_get_peer_not_after(Port *port, Timestamp *ptr);
 
 /*
  * Get the server certificate hash for SCRAM channel binding type

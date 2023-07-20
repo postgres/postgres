@@ -543,8 +543,8 @@ command_like(
 		"$common_connstr sslrootcert=invalid", '-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
-	qr{^pid,ssl,version,cipher,bits,client_dn,client_serial,issuer_dn\r?\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,_null_,_null_,_null_\r?$}mx,
+	qr{^pid,ssl,version,cipher,bits,client_dn,client_serial,issuer_dn,not_before,not_after\r?\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,_null_,_null_,_null_,_null_,_null_\r?$}mx,
 	'pg_stat_ssl view without client certificate');
 
 # Test min/max SSL protocol versions.
@@ -745,8 +745,8 @@ command_like(
 		'-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
-	qr{^pid,ssl,version,cipher,bits,client_dn,client_serial,issuer_dn\r?\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,/?CN=ssltestuser,$serialno,/?\QCN=Test CA for PostgreSQL SSL regression test client certs\E\r?$}mx,
+	qr{^pid,ssl,version,cipher,bits,client_dn,client_serial,issuer_dn,not_before,not_after\r?\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,/?CN=ssltestuser,$serialno,/?\QCN=Test CA for PostgreSQL SSL regression test client certs\E,\Q2023-06-29 01:01:01\E,\Q2050-01-01 01:01:01\E\r?$}mx,
 	'pg_stat_ssl with client certificate');
 
 # client key with wrong permissions

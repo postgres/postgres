@@ -61,6 +61,8 @@ typedef struct PgBackendSSLStatus
 	char		ssl_client_serial[NAMEDATALEN];
 
 	char		ssl_issuer_dn[NAMEDATALEN];
+	Timestamp	ssl_not_before;
+	Timestamp	ssl_not_after;
 } PgBackendSSLStatus;
 
 /*

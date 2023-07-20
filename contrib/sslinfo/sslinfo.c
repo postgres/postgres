@@ -18,6 +18,7 @@
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/timestamp.h"
 
 /*
  * On Windows, <wincrypt.h> includes a #define for X509_NAME, which breaks our
@@ -34,6 +35,7 @@ PG_MODULE_MAGIC;
 
 static Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName);
 static Datum ASN1_STRING_to_text(ASN1_STRING *str);
+static Datum ASN1_TIME_to_timestamp(ASN1_TIME *time);
 
 /*
  * Function context for data persisting over repeated calls.
@@ -222,6 +224,39 @@ X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 		return (Datum) 0;
 	data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, index));
 	return ASN1_STRING_to_text(data);
+}
+
+
+/*
+ * Converts OpenSSL ASN1_TIME structure into timestamp
+ *
+ * Parameter: time - OpenSSL ASN1_TIME structure.
+ *
+ * Returns Datum, which can be directly returned from a C language SQL
+ * function.
+ */
+static Datum
+ASN1_TIME_to_timestamp(ASN1_TIME * time)
+{
+	struct tm	tm_time;
+	struct pg_tm pgtm_time;
+	Timestamp	ts;
+
+	ASN1_TIME_to_tm(time, &tm_time);
+
+	pgtm_time.tm_sec = tm_time.tm_sec;
+	pgtm_time.tm_min = tm_time.tm_min;
+	pgtm_time.tm_hour = tm_time.tm_hour;
+	pgtm_time.tm_mday = tm_time.tm_mday;
+	pgtm_time.tm_mon = tm_time.tm_mon + 1;
+	pgtm_time.tm_year = tm_time.tm_year + 1900;
+
+	if (tm2timestamp(&pgtm_time, 0, NULL, &ts))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("failed to convert tm to timestamp")));
+
+	PG_RETURN_TIMESTAMP(ts);
 }
 
 
@@ -481,4 +516,36 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 
 	/* All done */
 	SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * Returns current client certificate notBefore timestamp in
+ * timestamp data type
+ */
+PG_FUNCTION_INFO_V1(ssl_client_get_notbefore);
+Datum
+ssl_client_get_notbefore(PG_FUNCTION_ARGS)
+{
+	X509	   *cert = MyProcPort->peer;
+
+	if (!MyProcPort->ssl_in_use || !MyProcPort->peer_cert_valid)
+		PG_RETURN_NULL();
+
+	return ASN1_TIME_to_timestamp(X509_get_notBefore(cert));
+}
+
+/*
+ * Returns current client certificate notAfter timestamp in
+ * timestamp data type
+ */
+PG_FUNCTION_INFO_V1(ssl_client_get_notafter);
+Datum
+ssl_client_get_notafter(PG_FUNCTION_ARGS)
+{
+	X509	   *cert = MyProcPort->peer;
+
+	if (!MyProcPort->ssl_in_use || !MyProcPort->peer_cert_valid)
+		PG_RETURN_NULL();
+
+	return ASN1_TIME_to_timestamp(X509_get_notAfter(cert));
 }

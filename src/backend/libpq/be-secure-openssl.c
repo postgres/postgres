@@ -36,6 +36,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/timestamp.h"
 
 /*
  * These SSL-related #includes must come after all system-provided headers.
@@ -72,6 +73,7 @@ static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
 static const char *SSLerrmessage(unsigned long ecode);
 
 static char *X509_NAME_to_cstring(X509_NAME *name);
+static Timestamp ASN1_TIME_to_timestamp(ASN1_TIME *time);
 
 static SSL_CTX *SSL_context = NULL;
 static bool SSL_initialized = false;
@@ -1407,6 +1409,24 @@ be_tls_get_peer_issuer_name(Port *port, char *ptr, size_t len)
 }
 
 void
+be_tls_get_peer_not_before(Port *port, Timestamp *ptr)
+{
+	if (port->peer)
+		*ptr = ASN1_TIME_to_timestamp(X509_get_notBefore(port->peer));
+	else
+		*ptr = 0;
+}
+
+void
+be_tls_get_peer_not_after(Port *port, Timestamp *ptr)
+{
+	if (port->peer)
+		*ptr = ASN1_TIME_to_timestamp(X509_get_notAfter(port->peer));
+	else
+		*ptr = 0;
+}
+
+void
 be_tls_get_peer_serial(Port *port, char *ptr, size_t len)
 {
 	if (port->peer)
@@ -1547,6 +1567,33 @@ X509_NAME_to_cstring(X509_NAME *name)
 		elog(ERROR, "could not free OpenSSL BIO structure");
 
 	return result;
+}
+
+/*
+ * Convert an ASN1_TIME to a Timestamp
+ */
+static Timestamp
+ASN1_TIME_to_timestamp(ASN1_TIME * time)
+{
+	struct tm	tm_time;
+	struct pg_tm pgtm_time;
+	Timestamp	ts;
+
+	ASN1_TIME_to_tm(time, &tm_time);
+
+	pgtm_time.tm_sec = tm_time.tm_sec;
+	pgtm_time.tm_min = tm_time.tm_min;
+	pgtm_time.tm_hour = tm_time.tm_hour;
+	pgtm_time.tm_mday = tm_time.tm_mday;
+	pgtm_time.tm_mon = tm_time.tm_mon + 1;
+	pgtm_time.tm_year = tm_time.tm_year + 1900;
+
+	if (tm2timestamp(&pgtm_time, 0, NULL, &ts))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp out of range")));
+
+	return ts;
 }
 
 /*

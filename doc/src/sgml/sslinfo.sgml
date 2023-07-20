@@ -240,6 +240,36 @@ emailAddress
     </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>ssl_client_get_notbefore() returns text</function>
+     <indexterm>
+      <primary>ssl_client_get_notbefore</primary>
+     </indexterm>
+    </term>
+    <listitem>
+    <para>
+     Return the <structfield>not before</structfield> UTC timestamp of the client
+     certificate.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>ssl_client_get_notafter() returns text</function>
+     <indexterm>
+      <primary>ssl_client_get_notafter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+    <para>
+     Return the <structfield>not after</structfield> UTC timestamp of the client
+     certificate.
+    </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </sect2>
 
