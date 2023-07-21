@@ -283,6 +283,11 @@ _PG_init(void)
 	BackgroundWorker worker;
 
 	/* get the configuration */
+
+	/*
+	 * These GUCs are defined even if this library is not loaded with
+	 * shared_preload_libraries, for worker_spi_launch().
+	 */
 	DefineCustomIntVariable("worker_spi.naptime",
 							"Duration between each check (in seconds).",
 							NULL,
@@ -295,6 +300,15 @@ _PG_init(void)
 							NULL,
 							NULL,
 							NULL);
+
+	DefineCustomStringVariable("worker_spi.database",
+							   "Database to connect to.",
+							   NULL,
+							   &worker_spi_database,
+							   "postgres",
+							   PGC_SIGHUP,
+							   0,
+							   NULL, NULL, NULL);
 
 	if (!process_shared_preload_libraries_in_progress)
 		return;
@@ -311,15 +325,6 @@ _PG_init(void)
 							NULL,
 							NULL,
 							NULL);
-
-	DefineCustomStringVariable("worker_spi.database",
-							   "Database to connect to.",
-							   NULL,
-							   &worker_spi_database,
-							   "postgres",
-							   PGC_POSTMASTER,
-							   0,
-							   NULL, NULL, NULL);
 
 	MarkGUCPrefixReserved("worker_spi");
 
