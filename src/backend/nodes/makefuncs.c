@@ -848,12 +848,13 @@ makeJsonFormat(JsonFormatType type, JsonEncoding encoding, int location)
  *	  creates a JsonValueExpr node
  */
 JsonValueExpr *
-makeJsonValueExpr(Expr *expr, JsonFormat *format)
+makeJsonValueExpr(Expr *raw_expr, Expr *formatted_expr,
+				  JsonFormat *format)
 {
 	JsonValueExpr *jve = makeNode(JsonValueExpr);
 
-	jve->raw_expr = expr;
-	jve->formatted_expr = NULL;
+	jve->raw_expr = raw_expr;
+	jve->formatted_expr = formatted_expr;
 	jve->format = format;
 
 	return jve;

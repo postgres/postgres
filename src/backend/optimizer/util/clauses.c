@@ -2827,25 +2827,12 @@ eval_const_expressions_mutator(Node *node,
 		case T_JsonValueExpr:
 			{
 				JsonValueExpr *jve = (JsonValueExpr *) node;
-				Node	   *raw;
+				Node	   *formatted;
 
-				raw = eval_const_expressions_mutator((Node *) jve->raw_expr,
-													 context);
-				if (raw && IsA(raw, Const))
-				{
-					Node	   *formatted;
-					Node	   *save_case_val = context->case_val;
-
-					context->case_val = raw;
-
-					formatted = eval_const_expressions_mutator((Node *) jve->formatted_expr,
-															   context);
-
-					context->case_val = save_case_val;
-
-					if (formatted && IsA(formatted, Const))
-						return formatted;
-				}
+				formatted = eval_const_expressions_mutator((Node *) jve->formatted_expr,
+														   context);
+				if (formatted && IsA(formatted, Const))
+					return formatted;
 				break;
 			}
 

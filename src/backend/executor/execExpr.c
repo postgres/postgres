@@ -2294,21 +2294,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 			{
 				JsonValueExpr *jve = (JsonValueExpr *) node;
 
-				ExecInitExprRec(jve->raw_expr, state, resv, resnull);
-
-				if (jve->formatted_expr)
-				{
-					Datum	   *innermost_caseval = state->innermost_caseval;
-					bool	   *innermost_isnull = state->innermost_casenull;
-
-					state->innermost_caseval = resv;
-					state->innermost_casenull = resnull;
-
-					ExecInitExprRec(jve->formatted_expr, state, resv, resnull);
-
-					state->innermost_caseval = innermost_caseval;
-					state->innermost_casenull = innermost_isnull;
-				}
+				Assert(jve->formatted_expr != NULL);
+				ExecInitExprRec(jve->formatted_expr, state, resv, resnull);
 				break;
 			}
 
