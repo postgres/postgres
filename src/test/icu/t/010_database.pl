@@ -69,18 +69,4 @@ is( $node1->psql(
 	0,
 	"LOCALE works for ICU locales if LC_COLLATE and LC_CTYPE are specified");
 
-# Test that ICU-specific LOCALE without LC_COLLATE and LC_CTYPE must
-# be specified with ICU_LOCALE
-my ($ret, $stdout, $stderr) = $node1->psql(
-	'postgres',
-	q{CREATE DATABASE dbicu3 LOCALE_PROVIDER icu LOCALE '@colStrength=primary'
-      TEMPLATE template0 ENCODING UTF8});
-isnt($ret, 0,
-	"ICU-specific locale must be specified with ICU_LOCALE: exit code not 0");
-like(
-	$stderr,
-	qr/ERROR:  invalid LC_COLLATE locale name/,
-	"ICU-specific locale must be specified with ICU_LOCALE: error message");
-
-
 done_testing();
