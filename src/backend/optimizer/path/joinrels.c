@@ -1640,13 +1640,15 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 											   child_rel1->relids,
 											   child_rel2->relids);
 
-		/* Build correct join relids for child join */
-		child_joinrelids = bms_union(child_rel1->relids, child_rel2->relids);
-		child_joinrelids = add_outer_joins_to_relids(root, child_joinrelids,
-													 child_sjinfo, NULL);
-
 		/* Find the AppendRelInfo structures */
-		appinfos = find_appinfos_by_relids(root, child_joinrelids, &nappinfos);
+		appinfos = find_appinfos_by_relids(root,
+										   bms_union(child_rel1->relids,
+													 child_rel2->relids),
+										   &nappinfos);
+
+		/* Build correct join relids for child join */
+		child_joinrelids = adjust_child_relids(joinrel->relids,
+											   nappinfos, appinfos);
 
 		/*
 		 * Construct restrictions applicable to the child join from those

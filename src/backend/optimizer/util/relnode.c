@@ -871,10 +871,19 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 	/* The parent joinrel should have consider_partitionwise_join set. */
 	Assert(parent_joinrel->consider_partitionwise_join);
 
+	/*
+	 * Find the AppendRelInfo structures for the child baserels.  We'll need
+	 * these for computing the child join's relid set, and later for mapping
+	 * Vars to the child rel.
+	 */
+	appinfos = find_appinfos_by_relids(root,
+									   bms_union(outer_rel->relids,
+												 inner_rel->relids),
+									   &nappinfos);
+
 	joinrel->reloptkind = RELOPT_OTHER_JOINREL;
-	joinrel->relids = bms_union(outer_rel->relids, inner_rel->relids);
-	joinrel->relids = add_outer_joins_to_relids(root, joinrel->relids, sjinfo,
-												NULL);
+	joinrel->relids = adjust_child_relids(parent_joinrel->relids,
+										  nappinfos, appinfos);
 	joinrel->rows = 0;
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	joinrel->consider_startup = (root->tuple_fraction > 0);
@@ -934,9 +943,6 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 
 	/* Compute information relevant to foreign relations. */
 	set_foreign_rel_properties(joinrel, outer_rel, inner_rel);
-
-	/* Compute information needed for mapping Vars to the child rel */
-	appinfos = find_appinfos_by_relids(root, joinrel->relids, &nappinfos);
 
 	/* Set up reltarget struct */
 	build_child_join_reltarget(root, parent_joinrel, joinrel,
