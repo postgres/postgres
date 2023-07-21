@@ -62,6 +62,52 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b =
  450 | 0450 | 450 | 0450
 (4 rows)
 
+-- left outer join, 3-way
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM prt1 t1
+  LEFT JOIN prt1 t2 ON t1.a = t2.a
+  LEFT JOIN prt1 t3 ON t2.a = t3.a;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Aggregate
+   ->  Append
+         ->  Hash Left Join
+               Hash Cond: (t2_1.a = t3_1.a)
+               ->  Hash Left Join
+                     Hash Cond: (t1_1.a = t2_1.a)
+                     ->  Seq Scan on prt1_p1 t1_1
+                     ->  Hash
+                           ->  Seq Scan on prt1_p1 t2_1
+               ->  Hash
+                     ->  Seq Scan on prt1_p1 t3_1
+         ->  Hash Left Join
+               Hash Cond: (t2_2.a = t3_2.a)
+               ->  Hash Left Join
+                     Hash Cond: (t1_2.a = t2_2.a)
+                     ->  Seq Scan on prt1_p2 t1_2
+                     ->  Hash
+                           ->  Seq Scan on prt1_p2 t2_2
+               ->  Hash
+                     ->  Seq Scan on prt1_p2 t3_2
+         ->  Hash Left Join
+               Hash Cond: (t2_3.a = t3_3.a)
+               ->  Hash Left Join
+                     Hash Cond: (t1_3.a = t2_3.a)
+                     ->  Seq Scan on prt1_p3 t1_3
+                     ->  Hash
+                           ->  Seq Scan on prt1_p3 t2_3
+               ->  Hash
+                     ->  Seq Scan on prt1_p3 t3_3
+(29 rows)
+
+SELECT COUNT(*) FROM prt1 t1
+  LEFT JOIN prt1 t2 ON t1.a = t2.a
+  LEFT JOIN prt1 t3 ON t2.a = t3.a;
+ count 
+-------
+   300
+(1 row)
+
 -- left outer join, with whole-row reference; partitionwise join does not apply
 EXPLAIN (COSTS OFF)
 SELECT t1, t2 FROM prt1 t1 LEFT JOIN prt2 t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
