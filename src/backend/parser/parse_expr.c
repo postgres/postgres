@@ -3205,6 +3205,10 @@ makeJsonByteaToTextConversion(Node *expr, JsonFormat *format, int location)
 /*
  * Transform JSON value expression using specified input JSON format or
  * default format otherwise.
+ *
+ * Returned expression is either ve->raw_expr coerced to text (if needed) or
+ * a JsonValueExpr with formatted_expr set to the coerced copy of raw_expr
+ * if the specified format requires it.
  */
 static Node *
 transformJsonValueExpr(ParseState *pstate, const char *constructName,
@@ -3303,6 +3307,10 @@ transformJsonValueExpr(ParseState *pstate, const char *constructName,
 			expr = (Node *) ve;
 		}
 	}
+
+	/* If returning a JsonValueExpr, formatted_expr must have been set. */
+	Assert(!IsA(expr, JsonValueExpr) ||
+		   ((JsonValueExpr *) expr)->formatted_expr != NULL);
 
 	return expr;
 }
@@ -3631,13 +3639,12 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 								makeString(pstrdup("a")));
 	colref->location = ctor->location;
 
-	agg->arg = makeJsonValueExpr((Expr *) colref, ctor->format);
-
 	/*
 	 * No formatting necessary, so set formatted_expr to be the same as
 	 * raw_expr.
 	 */
-	agg->arg->formatted_expr = agg->arg->raw_expr;
+	agg->arg = makeJsonValueExpr((Expr *) colref, (Expr *) colref,
+								 ctor->format);
 	agg->absent_on_null = ctor->absent_on_null;
 	agg->constructor = makeNode(JsonAggConstructor);
 	agg->constructor->agg_order = NIL;
@@ -3906,9 +3913,7 @@ transformJsonParseArg(ParseState *pstate, Node *jsexpr, JsonFormat *format,
 		expr = makeJsonByteaToTextConversion(expr, format, exprLocation(expr));
 		*exprtype = TEXTOID;
 
-		jve = makeJsonValueExpr((Expr *) raw_expr, format);
-
-		jve->formatted_expr = (Expr *) expr;
+		jve = makeJsonValueExpr((Expr *) raw_expr, (Expr *) expr, format);
 		expr = (Node *) jve;
 	}
 	else

@@ -1596,8 +1596,9 @@ typedef struct JsonReturning
  * JsonValueExpr -
  *		representation of JSON value expression (expr [FORMAT JsonFormat])
  *
- * Note that raw_expr is only there for displaying and is not evaluated by
- * ExecInterpExpr() and eval_const_exprs_mutator().
+ * The actual value is obtained by evaluating formatted_expr.  raw_expr is
+ * only there for displaying the original user-written expression and is not
+ * evaluated by ExecInterpExpr() and eval_const_exprs_mutator().
  */
 typedef struct JsonValueExpr
 {

@@ -16362,7 +16362,9 @@ opt_asymmetric: ASYMMETRIC
 json_value_expr:
 			a_expr json_format_clause_opt
 			{
-				$$ = (Node *) makeJsonValueExpr((Expr *) $1, castNode(JsonFormat, $2));
+				/* formatted_expr will be set during parse-analysis. */
+				$$ = (Node *) makeJsonValueExpr((Expr *) $1, NULL,
+												castNode(JsonFormat, $2));
 			}
 		;
 

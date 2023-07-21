@@ -225,9 +225,7 @@ exprType(const Node *expr)
 			{
 				const JsonValueExpr *jve = (const JsonValueExpr *) expr;
 
-				type = exprType((Node *)
-								(jve->formatted_expr ? jve->formatted_expr :
-								 jve->raw_expr));
+				type = exprType((Node *) jve->formatted_expr);
 			}
 			break;
 		case T_JsonConstructorExpr:
