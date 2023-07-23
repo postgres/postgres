@@ -8,6 +8,35 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Check the initial state of the data generated.  Tables for tellers and
+# branches use NULL for their filler attribute.  The table accounts uses
+# a non-NULL filler.  The history table should have no data.
+sub check_data_state
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+	my $node = shift;
+	my $type = shift;
+
+	my $sql_result = $node->safe_psql('postgres',
+		'SELECT count(*) AS null_count FROM pgbench_accounts WHERE filler IS NULL LIMIT 10;'
+	);
+	is($sql_result, '0',
+		"$type: filler column of pgbench_accounts has no NULL data");
+	$sql_result = $node->safe_psql('postgres',
+		'SELECT count(*) AS null_count FROM pgbench_branches WHERE filler IS NULL;'
+	);
+	is($sql_result, '1',
+		"$type: filler column of pgbench_branches has only NULL data");
+	$sql_result = $node->safe_psql('postgres',
+		'SELECT count(*) AS null_count FROM pgbench_tellers WHERE filler IS NULL;'
+	);
+	is($sql_result, '10',
+		"$type: filler column of pgbench_tellers has only NULL data");
+	$sql_result = $node->safe_psql('postgres',
+		'SELECT count(*) AS data_count FROM pgbench_history;');
+	is($sql_result, '0', "$type: pgbench_history has no data");
+}
+
 # start a pgbench specific server
 my $node = PostgreSQL::Test::Cluster->new('main');
 # Set to untranslated messages, to be able to compare program output with
@@ -67,6 +96,9 @@ $node->pgbench(
 	],
 	'pgbench scale 1 initialization',);
 
+# Check data state, after client-side data generation.
+check_data_state($node, 'client-side');
+
 # Again, with all possible options
 $node->pgbench(
 	'--initialize --init-steps=dtpvg --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=regress_pgbench_tap_1_ts --index-tablespace=regress_pgbench_tap_1_ts --partitions=2 --partition-method=hash',
@@ -100,6 +132,9 @@ $node->pgbench(
 		qr{done in \d+\.\d\d s }
 	],
 	'pgbench --init-steps');
+
+# Check data state, after server-side data generation.
+check_data_state($node, 'server-side');
 
 # Run all builtin scripts, for a few transactions each
 $node->pgbench(
