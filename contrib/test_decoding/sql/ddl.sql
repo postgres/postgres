@@ -414,7 +414,11 @@ UPDATE toasttable
     SET toasted_col1 = (SELECT string_agg(g.i::text, '') FROM generate_series(1, 2000) g(i))
 WHERE id = 1;
 
+-- This output is extremely wide, and using aligned mode causes psql to
+-- produce 200kB of useless dashes. Turn that off temporarily to avoid it.
+\pset format unaligned
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+\pset format aligned
 
 INSERT INTO toasttable(toasted_col1) SELECT string_agg(g.i::text, '') FROM generate_series(1, 2000) g(i);
 
@@ -426,10 +430,12 @@ WHERE id = 1;
 -- make sure we decode correctly even if the toast table is gone
 DROP TABLE toasttable;
 
+\pset format unaligned
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 
 -- done, free logical replication slot
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+\pset format aligned
 
 SELECT pg_drop_replication_slot('regression_slot');
 
