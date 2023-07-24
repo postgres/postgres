@@ -11,6 +11,11 @@
 #include <time.h>
 #include <pwd.h>
 #include <utime.h>
+#if HAVE_POLL
+#include <poll.h>
+#else
+#include <sys/select.h>
+#endif
 #ifndef WIN32
 #include <sys/stat.h>			/* for stat() */
 #include <sys/time.h>			/* for setitimer() */
@@ -40,6 +45,7 @@
 #include "large_obj.h"
 #include "libpq-fe.h"
 #include "libpq/pqcomm.h"
+#include "libpq/pqsignal.h"
 #include "mainloop.h"
 #include "portability/instr_time.h"
 #include "pqexpbuffer.h"
@@ -3252,6 +3258,169 @@ copy_previous_query(PQExpBuffer query_buf, PQExpBuffer previous_buf)
 }
 
 /*
+ * Check a file descriptor for read and/or write data, possibly waiting.
+ * If neither forRead nor forWrite are set, immediately return a timeout
+ * condition (without waiting).  Return >0 if condition is met, 0
+ * if a timeout occurred, -1 if an error or interrupt occurred.
+ *
+ * Timeout is infinite if end_time is -1.  Timeout is immediate (no blocking)
+ * if end_time is 0 (or indeed, any time before now).
+ */
+static int
+pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
+{
+	/*
+	 * We use functions in the following order if available:
+	 *   - ppoll(2) OR pselect(2)
+	 *   - poll(2) OR select(2)
+	 */
+#ifdef HAVE_POLL
+	struct pollfd input_fd;
+#ifdef HAVE_PPOLL
+	int				rc;
+	sigset_t		emptyset;
+	sigset_t		blockset;
+	sigset_t		origset;
+	struct timespec timeout;
+	struct timespec *ptr_timeout;
+#else
+	int			timeout_ms;
+#endif
+
+	if (!forRead && !forWrite)
+		return 0;
+
+	input_fd.fd = sock;
+	input_fd.events = POLLERR;
+	input_fd.revents = 0;
+
+	if (forRead)
+		input_fd.events |= POLLIN;
+	if (forWrite)
+		input_fd.events |= POLLOUT;
+
+	/* Compute appropriate timeout interval */
+#ifdef HAVE_PPOLL
+	sigemptyset(&blockset);
+	sigaddset(&blockset, SIGINT);
+	sigprocmask(SIG_BLOCK, &blockset, &origset);
+
+	if (end_time == ((time_t) -1))
+		ptr_timeout = NULL;
+	else
+	{
+		timeout.tv_sec = end_time;
+		timeout.tv_nsec = 0;
+		ptr_timeout = &timeout;
+	}
+#else
+	if (end_time == ((time_t) -1))
+		timeout_ms = -1;
+	else
+	{
+		time_t		now = time(NULL);
+
+		if (end_time > now)
+			timeout_ms = (end_time - now) * 1000;
+		else
+			timeout_ms = 0;
+	}
+#endif
+
+#ifdef HAVE_PPOLL
+	sigemptyset(&emptyset);
+	if (cancel_pressed)
+	{
+		sigprocmask(SIG_SETMASK, &origset, NULL);
+		return 1;
+	}
+
+	rc = ppoll(&input_fd, 1, ptr_timeout, &emptyset);
+	sigprocmask(SIG_SETMASK, &origset, NULL);
+	return rc;
+#else
+	return poll(&input_fd, 1, timeout_ms);
+#endif
+#else							/* !HAVE_POLL */
+
+	fd_set		input_mask;
+	fd_set		output_mask;
+	fd_set		except_mask;
+#ifdef HAVE_PSELECT
+	int 			rc;
+	sigset_t		emptyset;
+	sigset_t		blockset;
+	sigset_t		origset;
+	struct timespec timeout;
+	struct timespec *ptr_timeout;
+#else
+	struct timeval timeout;
+	struct timeval *ptr_timeout;
+#endif
+
+	if (!forRead && !forWrite)
+		return 0;
+
+	FD_ZERO(&input_mask);
+	FD_ZERO(&output_mask);
+	FD_ZERO(&except_mask);
+	if (forRead)
+		FD_SET(sock, &input_mask);
+
+	if (forWrite)
+		FD_SET(sock, &output_mask);
+	FD_SET(sock, &except_mask);
+
+	/* Compute appropriate timeout interval */
+#ifdef HAVE_PSELECT
+	sigemptyset(&blockset);
+	sigaddset(&blockset, SIGINT);
+	sigprocmask(SIG_BLOCK, &blockset, &origset);
+
+	if (end_time == ((time_t) -1))
+		ptr_timeout = NULL;
+	else
+	{
+		timeout.tv_sec = end_time;
+		timeout.tv_nsec = 0;
+		ptr_timeout = &timeout;
+	}
+#else
+	if (end_time == ((time_t) -1))
+		ptr_timeout = NULL;
+	else
+	{
+		time_t		now = time(NULL);
+
+		if (end_time > now)
+			timeout.tv_sec = end_time - now;
+		else
+			timeout.tv_sec = 0;
+		timeout.tv_usec = 0;
+		ptr_timeout = &timeout;
+	}
+#endif
+
+#ifdef HAVE_PSELECT
+	sigemptyset(&emptyset);
+	if (cancel_pressed)
+	{
+		sigprocmask(SIG_SETMASK, &origset, NULL);
+		return 1;
+	}
+
+	rc = pselect(sock + 1, &input_mask, &output_mask,
+				 &except_mask, ptr_timeout, &emptyset);
+	sigprocmask(SIG_SETMASK, &origset, NULL);
+	return rc;
+#else
+	return select(sock + 1, &input_mask, &output_mask,
+				  &except_mask, ptr_timeout);
+#endif
+#endif							/* HAVE_POLL */
+}
+
+/*
  * Ask the user for a password; 'username' is the username the
  * password is for, if one has been explicitly specified.
  * Returns a malloc'd string.
@@ -3324,6 +3493,7 @@ do_connect(enum trivalue reuse_previous_specification,
 	bool		keep_password = true;
 	bool		has_connection_string;
 	bool		reuse_previous;
+	bool		for_read;
 
 	has_connection_string = dbname ?
 		recognized_connection_string(dbname) : false;
@@ -3614,11 +3784,61 @@ do_connect(enum trivalue reuse_previous_specification,
 		values[paramnum] = NULL;
 
 		/* Note we do not want libpq to re-expand the dbname parameter */
-		n_conn = PQconnectdbParams(keywords, values, false);
+		n_conn = PQconnectStartParams(keywords, values, false);
 
 		pg_free(keywords);
 		pg_free(values);
 
+		for_read = false;
+		while (true) {
+			int		rc;
+			int		sock;
+			time_t	timeout;
+
+			if (cancel_pressed)
+				break;
+
+			sock = PQsocket(n_conn);
+			if (sock == -1)
+				break;
+
+			/*
+			 * We use ppoll(2)/pselect(2) to account for the race condition in
+			 * which SIGINT is sent after checking cancel_pressed. But on
+			 * platforms that don't have either function, we can just spin the
+			 * CPU a bit polling, so set the timeout to 1 second if we don't
+			 * have the aforementioned functions, otherwise set timeout to
+			 * a negative value indicating we will sit and wait forever.
+			 */
+#if defined(HAVE_PPOLL) || defined(HAVE_PSELECT)
+			timeout = -1;
+#else
+			timeout = 1;
+#endif
+
+			rc = pqSocketPoll(sock, for_read, !for_read, timeout);
+			if (rc == -1)
+			{
+				success = false;
+				break;
+			}
+
+			switch (PQconnectPoll(n_conn)) {
+			case PGRES_POLLING_OK:
+			case PGRES_POLLING_FAILED:
+				goto finish;
+			case PGRES_POLLING_READING:
+				for_read = true;
+				continue;
+			case PGRES_POLLING_WRITING:
+				for_read = false;
+				continue;
+			case PGRES_POLLING_ACTIVE:
+				pg_unreachable();
+			}
+		}
+
+	finish:
 		if (PQstatus(n_conn) == CONNECTION_OK)
 			break;
 

@@ -333,6 +333,9 @@
 /* Define to 1 if you have the `ppoll' function. */
 #undef HAVE_PPOLL
 
+/* Define to 1 if you have the `pselect' function. */
+#undef HAVE_PSELECT
+
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 

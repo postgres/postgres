@@ -308,6 +308,7 @@ sub GenerateFiles
 		HAVE_POSIX_FADVISE => undef,
 		HAVE_POSIX_FALLOCATE => undef,
 		HAVE_PPOLL => undef,
+		HAVE_PSELECT => undef,
 		HAVE_PTHREAD => undef,
 		HAVE_PTHREAD_BARRIER_WAIT => undef,
 		HAVE_PTHREAD_IS_THREADED_NP => undef,
