@@ -1547,9 +1547,8 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
  * *result is set to true if the lock was free, and false otherwise.
  */
 static bool
-LWLockConflictsWithVar(LWLock *lock,
-					   uint64 *valptr, uint64 oldval, uint64 *newval,
-					   bool *result)
+LWLockConflictsWithVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 oldval,
+					   uint64 *newval, bool *result)
 {
 	bool		mustwait;
 	uint64		value;
@@ -1572,13 +1571,10 @@ LWLockConflictsWithVar(LWLock *lock,
 	*result = false;
 
 	/*
-	 * Read value using the lwlock's wait list lock, as we can't generally
-	 * rely on atomic 64 bit reads/stores.  TODO: On platforms with a way to
-	 * do atomic 64 bit reads/writes the spinlock should be optimized away.
+	 * Reading this value atomically is safe even on platforms where uint64
+	 * cannot be read without observing a torn value.
 	 */
-	LWLockWaitListLock(lock);
-	value = *valptr;
-	LWLockWaitListUnlock(lock);
+	value = pg_atomic_read_u64(valptr);
 
 	if (value != oldval)
 	{
@@ -1607,7 +1603,8 @@ LWLockConflictsWithVar(LWLock *lock,
  * in shared mode, returns 'true'.
  */
 bool
-LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
+LWLockWaitForVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 oldval,
+				 uint64 *newval)
 {
 	PGPROC	   *proc = MyProc;
 	int			extraWaits = 0;
@@ -1735,28 +1732,31 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
  * LWLockUpdateVar - Update a variable and wake up waiters atomically
  *
  * Sets *valptr to 'val', and wakes up all processes waiting for us with
- * LWLockWaitForVar().  Setting the value and waking up the processes happen
- * atomically so that any process calling LWLockWaitForVar() on the same lock
- * is guaranteed to see the new value, and act accordingly.
+ * LWLockWaitForVar().  It first sets the value atomically and then wakes up
+ * waiting processes so that any process calling LWLockWaitForVar() on the same
+ * lock is guaranteed to see the new value, and act accordingly.
  *
  * The caller must be holding the lock in exclusive mode.
  */
 void
-LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
+LWLockUpdateVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 val)
 {
 	proclist_head wakeup;
 	proclist_mutable_iter iter;
 
 	PRINT_LWDEBUG("LWLockUpdateVar", lock, LW_EXCLUSIVE);
 
+	/*
+	 * Note that pg_atomic_exchange_u64 is a full barrier, so we're guaranteed
+	 * that the variable is updated before waking up waiters.
+	 */
+	pg_atomic_exchange_u64(valptr, val);
+
 	proclist_init(&wakeup);
 
 	LWLockWaitListLock(lock);
 
 	Assert(pg_atomic_read_u32(&lock->state) & LW_VAL_EXCLUSIVE);
-
-	/* Update the lock's value */
-	*valptr = val;
 
 	/*
 	 * See if there are any LW_WAIT_UNTIL_FREE waiters that need to be woken
@@ -1873,17 +1873,13 @@ LWLockRelease(LWLock *lock)
  * LWLockReleaseClearVar - release a previously acquired lock, reset variable
  */
 void
-LWLockReleaseClearVar(LWLock *lock, uint64 *valptr, uint64 val)
+LWLockReleaseClearVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 val)
 {
-	LWLockWaitListLock(lock);
-
 	/*
-	 * Set the variable's value before releasing the lock, that prevents race
-	 * a race condition wherein a new locker acquires the lock, but hasn't yet
-	 * set the variables value.
+	 * Note that pg_atomic_exchange_u64 is a full barrier, so we're guaranteed
+	 * that the variable is updated before releasing the lock.
 	 */
-	*valptr = val;
-	LWLockWaitListUnlock(lock);
+	pg_atomic_exchange_u64(valptr, val);
 
 	LWLockRelease(lock);
 }
