@@ -140,6 +140,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/genam.h"
 #include "access/table.h"
 #include "access/tableam.h"
 #include "access/twophase.h"
@@ -410,7 +411,7 @@ static void apply_handle_delete_internal(ApplyExecutionData *edata,
 										 ResultRelInfo *relinfo,
 										 TupleTableSlot *remoteslot,
 										 Oid localindexoid);
-static bool FindReplTupleInLocalRel(EState *estate, Relation localrel,
+static bool FindReplTupleInLocalRel(ApplyExecutionData *edata, Relation localrel,
 									LogicalRepRelation *remoterel,
 									Oid localidxoid,
 									TupleTableSlot *remoteslot,
@@ -2663,7 +2664,7 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1, NIL);
 	ExecOpenIndices(relinfo, false);
 
-	found = FindReplTupleInLocalRel(estate, localrel,
+	found = FindReplTupleInLocalRel(edata, localrel,
 									&relmapentry->remoterel,
 									localindexoid,
 									remoteslot, &localslot);
@@ -2816,7 +2817,7 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
 	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1, NIL);
 	ExecOpenIndices(relinfo, false);
 
-	found = FindReplTupleInLocalRel(estate, localrel, remoterel, localindexoid,
+	found = FindReplTupleInLocalRel(edata, localrel, remoterel, localindexoid,
 									remoteslot, &localslot);
 
 	/* If found delete it. */
@@ -2855,12 +2856,13 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
  * Local tuple, if found, is returned in '*localslot'.
  */
 static bool
-FindReplTupleInLocalRel(EState *estate, Relation localrel,
+FindReplTupleInLocalRel(ApplyExecutionData *edata, Relation localrel,
 						LogicalRepRelation *remoterel,
 						Oid localidxoid,
 						TupleTableSlot *remoteslot,
 						TupleTableSlot **localslot)
 {
+	EState	   *estate = edata->estate;
 	bool		found;
 
 	/*
@@ -2875,9 +2877,21 @@ FindReplTupleInLocalRel(EState *estate, Relation localrel,
 		   (remoterel->replident == REPLICA_IDENTITY_FULL));
 
 	if (OidIsValid(localidxoid))
+	{
+#ifdef USE_ASSERT_CHECKING
+		Relation	idxrel = index_open(localidxoid, AccessShareLock);
+
+		/* Index must be PK, RI, or usable for REPLICA IDENTITY FULL tables */
+		Assert(GetRelationIdentityOrPK(idxrel) == localidxoid ||
+			   IsIndexUsableForReplicaIdentityFull(BuildIndexInfo(idxrel),
+												   edata->targetRel->attrmap));
+		index_close(idxrel, AccessShareLock);
+#endif
+
 		found = RelationFindReplTupleByIndex(localrel, localidxoid,
 											 LockTupleExclusive,
 											 remoteslot, *localslot);
+	}
 	else
 		found = RelationFindReplTupleSeq(localrel, LockTupleExclusive,
 										 remoteslot, *localslot);
@@ -2995,7 +3009,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 				bool		found;
 
 				/* Get the matching local tuple from the partition. */
-				found = FindReplTupleInLocalRel(estate, partrel,
+				found = FindReplTupleInLocalRel(edata, partrel,
 												&part_entry->remoterel,
 												part_entry->localindexoid,
 												remoteslot_part, &localslot);
