@@ -1213,9 +1213,11 @@ logicalrep_read_stream_abort(StringInfo in,
 /*
  * Get string representing LogicalRepMsgType.
  */
-char *
+const char *
 logicalrep_message_type(LogicalRepMsgType action)
 {
+	static char	err_unknown[20];
+
 	switch (action)
 	{
 		case LOGICAL_REP_MSG_BEGIN:
@@ -1258,7 +1260,12 @@ logicalrep_message_type(LogicalRepMsgType action)
 			return "STREAM PREPARE";
 	}
 
-	elog(ERROR, "invalid logical replication message type \"%c\"", action);
+	/*
+	 * This message provides context in the error raised when applying a
+	 * logical message. So we can't throw an error here. Return an unknown
+	 * indicator value so that the original error is still reported.
+	 */
+	snprintf(err_unknown, sizeof(err_unknown), "??? (%d)", action);
 
-	return NULL;				/* keep compiler quiet */
+	return err_unknown;
 }
