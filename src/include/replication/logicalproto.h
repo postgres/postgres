@@ -249,6 +249,6 @@ extern void logicalrep_write_stream_abort(StringInfo out, TransactionId xid,
 										  TransactionId subxid);
 extern void logicalrep_read_stream_abort(StringInfo in, TransactionId *xid,
 										 TransactionId *subxid);
-extern char *logicalrep_message_type(LogicalRepMsgType action);
+extern const char *logicalrep_message_type(LogicalRepMsgType action);
 
 #endif							/* LOGICAL_PROTO_H */

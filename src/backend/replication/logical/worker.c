@@ -2579,7 +2579,7 @@ apply_dispatch(StringInfo s)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("invalid logical replication message type \"%c\"", action)));
+					 errmsg("invalid logical replication message type \"??? (%d)\"", action)));
 	}
 
 	/* Reset the current command */
