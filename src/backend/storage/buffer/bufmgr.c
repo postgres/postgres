@@ -1767,7 +1767,7 @@ LimitAdditionalPins(uint32 *additional_pins)
 	 */
 	max_proportional_pins -= PrivateRefCountOverflowed + REFCOUNT_ARRAY_ENTRIES;
 
-	if (max_proportional_pins < 0)
+	if (max_proportional_pins <= 0)
 		max_proportional_pins = 1;
 
 	if (*additional_pins > max_proportional_pins)
