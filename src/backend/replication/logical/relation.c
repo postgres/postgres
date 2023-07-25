@@ -732,70 +732,8 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 }
 
 /*
- * Returns true if the given index consists only of expressions such as:
- * 	CREATE INDEX idx ON table(foo(col));
- *
- * Returns false even if there is one column reference:
- * 	 CREATE INDEX idx ON table(foo(col), col_2);
- */
-static bool
-IsIndexOnlyOnExpression(IndexInfo *indexInfo)
-{
-	for (int i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
-	{
-		AttrNumber	attnum = indexInfo->ii_IndexAttrNumbers[i];
-
-		if (AttributeNumberIsValid(attnum))
-			return false;
-	}
-
-	return true;
-}
-
-/*
- * Returns true if the attrmap contains the leftmost column of the index.
- * Otherwise returns false.
- *
- * attrmap is a map of local attributes to remote ones. We can consult this
- * map to check whether the local index attribute has a corresponding remote
- * attribute.
- */
-static bool
-RemoteRelContainsLeftMostColumnOnIdx(IndexInfo *indexInfo, AttrMap *attrmap)
-{
-	AttrNumber	keycol;
-
-	Assert(indexInfo->ii_NumIndexAttrs >= 1);
-
-	keycol = indexInfo->ii_IndexAttrNumbers[0];
-	if (!AttributeNumberIsValid(keycol))
-		return false;
-
-	if (attrmap->maplen <= AttrNumberGetAttrOffset(keycol))
-		return false;
-
-	return attrmap->attnums[AttrNumberGetAttrOffset(keycol)] >= 0;
-}
-
-/*
  * Returns the oid of an index that can be used by the apply worker to scan
- * the relation. The index must be btree, non-partial, and the leftmost
- * field must be a column (not an expression) that references the remote
- * relation column. These limitations help to keep the index scan similar
- * to PK/RI index scans.
- *
- * Note that the limitations of index scans for replica identity full only
- * adheres to a subset of the limitations of PK/RI. For example, we support
- * columns that are marked as [NULL] or we are not interested in the [NOT
- * DEFERRABLE] aspect of constraints here. It works for us because we always
- * compare the tuples for non-PK/RI index scans. See
- * RelationFindReplTupleByIndex().
- *
- * XXX: There are no fundamental problems for supporting non-btree indexes.
- * We mostly need to relax the limitations in RelationFindReplTupleByIndex().
- * For partial indexes, the required changes are likely to be larger. If
- * none of the tuples satisfy the expression for the index scan, we fall-back
- * to sequential execution, which might not be a good idea in some cases.
+ * the relation.
  *
  * We expect to call this function when REPLICA IDENTITY FULL is defined for
  * the remote relation.
@@ -812,19 +750,16 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
 	{
 		Oid			idxoid = lfirst_oid(lc);
 		bool		isUsableIdx;
-		bool		containsLeftMostCol;
 		Relation	idxRel;
 		IndexInfo  *idxInfo;
 
 		idxRel = index_open(idxoid, AccessShareLock);
 		idxInfo = BuildIndexInfo(idxRel);
-		isUsableIdx = IsIndexUsableForReplicaIdentityFull(idxInfo);
-		containsLeftMostCol =
-			RemoteRelContainsLeftMostColumnOnIdx(idxInfo, attrmap);
+		isUsableIdx = IsIndexUsableForReplicaIdentityFull(idxInfo, attrmap);
 		index_close(idxRel, AccessShareLock);
 
 		/* Return the first eligible index found */
-		if (isUsableIdx && containsLeftMostCol)
+		if (isUsableIdx)
 			return idxoid;
 	}
 
@@ -832,17 +767,60 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
 }
 
 /*
- * Returns true if the index is usable for replica identity full. For details,
- * see FindUsableIndexForReplicaIdentityFull.
+ * Returns true if the index is usable for replica identity full.
+ *
+ * The index must be btree, non-partial, and the leftmost field must be a
+ * column (not an expression) that references the remote relation column.
+ * These limitations help to keep the index scan similar to PK/RI index
+ * scans.
+ *
+ * attrmap is a map of local attributes to remote ones. We can consult this
+ * map to check whether the local index attribute has a corresponding remote
+ * attribute.
+ *
+ * Note that the limitations of index scans for replica identity full only
+ * adheres to a subset of the limitations of PK/RI. For example, we support
+ * columns that are marked as [NULL] or we are not interested in the [NOT
+ * DEFERRABLE] aspect of constraints here. It works for us because we always
+ * compare the tuples for non-PK/RI index scans. See
+ * RelationFindReplTupleByIndex().
+ *
+ * XXX: There are no fundamental problems for supporting non-btree indexes.
+ * We mostly need to relax the limitations in RelationFindReplTupleByIndex().
+ * For partial indexes, the required changes are likely to be larger. If
+ * none of the tuples satisfy the expression for the index scan, we fall-back
+ * to sequential execution, which might not be a good idea in some cases.
  */
 bool
-IsIndexUsableForReplicaIdentityFull(IndexInfo *indexInfo)
+IsIndexUsableForReplicaIdentityFull(IndexInfo *indexInfo, AttrMap *attrmap)
 {
-	bool		is_btree = (indexInfo->ii_Am == BTREE_AM_OID);
-	bool		is_partial = (indexInfo->ii_Predicate != NIL);
-	bool		is_only_on_expression = IsIndexOnlyOnExpression(indexInfo);
+	AttrNumber	keycol;
 
-	return is_btree && !is_partial && !is_only_on_expression;
+	/* The index must be a Btree index */
+	if (indexInfo->ii_Am != BTREE_AM_OID)
+		return false;
+
+	/* The index must not be a partial index */
+	if (indexInfo->ii_Predicate != NIL)
+		return false;
+
+	Assert(indexInfo->ii_NumIndexAttrs >= 1);
+
+	/* The leftmost index field must not be an expression */
+	keycol = indexInfo->ii_IndexAttrNumbers[0];
+	if (!AttributeNumberIsValid(keycol))
+		return false;
+
+	/*
+	 * And the leftmost index field must reference the remote relation column.
+	 * This is because if it doesn't, the sequential scan is favorable over
+	 * index scan in most cases.
+	 */
+	if (attrmap->maplen <= AttrNumberGetAttrOffset(keycol) ||
+		attrmap->attnums[AttrNumberGetAttrOffset(keycol)] < 0)
+		return false;
+
+	return true;
 }
 
 /*

@@ -175,16 +175,7 @@ retry:
 		if (!isIdxSafeToSkipDuplicates)
 		{
 			if (eq == NULL)
-			{
-#ifdef USE_ASSERT_CHECKING
-				/* apply assertions only once for the input idxoid */
-				IndexInfo  *indexInfo = BuildIndexInfo(idxrel);
-
-				Assert(IsIndexUsableForReplicaIdentityFull(indexInfo));
-#endif
-
 				eq = palloc0(sizeof(*eq) * outslot->tts_tupleDescriptor->natts);
-			}
 
 			if (!tuples_equal(outslot, searchslot, eq))
 				continue;
