@@ -370,8 +370,8 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
 	sprintf(worker.bgw_library_name, "worker_spi");
 	sprintf(worker.bgw_function_name, "worker_spi_main");
-	snprintf(worker.bgw_name, BGW_MAXLEN, "worker_spi worker %d", i);
-	snprintf(worker.bgw_type, BGW_MAXLEN, "worker_spi");
+	snprintf(worker.bgw_name, BGW_MAXLEN, "worker_spi dynamic worker %d", i);
+	snprintf(worker.bgw_type, BGW_MAXLEN, "worker_spi dynamic");
 	worker.bgw_main_arg = Int32GetDatum(i);
 	/* set bgw_notify_pid so that we can use WaitForBackgroundWorkerStartup */
 	worker.bgw_notify_pid = MyProcPid;
