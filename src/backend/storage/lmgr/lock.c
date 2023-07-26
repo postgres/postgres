@@ -1881,7 +1881,7 @@ RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode)
 	Assert(0 < lockmethodid && lockmethodid < lengthof(LockMethods));
 
 	/* Remove proc from lock's wait queue */
-	dclist_delete_from(&waitLock->waitProcs, &proc->links);
+	dclist_delete_from_thoroughly(&waitLock->waitProcs, &proc->links);
 
 	/* Undo increments of request counts by waiting process */
 	Assert(waitLock->nRequested > 0);
