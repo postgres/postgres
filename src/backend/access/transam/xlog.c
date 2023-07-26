@@ -1495,6 +1495,17 @@ WaitXLogInsertionsToFinish(XLogRecPtr upto)
 			 * calling LWLockUpdateVar.  But if it has to sleep, it will
 			 * advertise the insertion point with LWLockUpdateVar before
 			 * sleeping.
+			 *
+			 * In this loop we are only waiting for insertions that started
+			 * before WaitXLogInsertionsToFinish was called.  The lack of
+			 * memory barriers in the loop means that we might see locks as
+			 * "unused" that have since become used.  This is fine because
+			 * they only can be used for later insertions that we would not
+			 * want to wait on anyway.  Not taking a lock to acquire the
+			 * current insertingAt value means that we might see older
+			 * insertingAt values.  This is also fine, because if we read a
+			 * value too old, we will add ourselves to the wait queue, which
+			 * contains atomic operations.
 			 */
 			if (LWLockWaitForVar(&WALInsertLocks[i].l.lock,
 								 &WALInsertLocks[i].l.insertingAt,

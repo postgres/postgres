@@ -1556,9 +1556,10 @@ LWLockConflictsWithVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 oldval,
 	/*
 	 * Test first to see if it the slot is free right now.
 	 *
-	 * XXX: the caller uses a spinlock before this, so we don't need a memory
-	 * barrier here as far as the current usage is concerned.  But that might
-	 * not be safe in general.
+	 * XXX: the unique caller of this routine, WaitXLogInsertionsToFinish()
+	 * via LWLockWaitForVar(), uses an implied barrier with a spinlock before
+	 * this, so we don't need a memory barrier here as far as the current
+	 * usage is concerned.  But that might not be safe in general.
 	 */
 	mustwait = (pg_atomic_read_u32(&lock->state) & LW_VAL_EXCLUSIVE) != 0;
 
@@ -1601,6 +1602,10 @@ LWLockConflictsWithVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 oldval,
  *
  * Note: this function ignores shared lock holders; if the lock is held
  * in shared mode, returns 'true'.
+ *
+ * Be aware that LWLockConflictsWithVar() does not include a memory barrier,
+ * hence the caller of this function may want to rely on an explicit barrier or
+ * an implied barrier via spinlock or LWLock to avoid memory ordering issues.
  */
 bool
 LWLockWaitForVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 oldval,
