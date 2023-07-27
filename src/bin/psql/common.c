@@ -589,16 +589,16 @@ PSQLexec(const char *query)
 
 	if (pset.echo_hidden != PSQL_ECHO_HIDDEN_OFF)
 	{
-		printf(_("********* QUERY **********\n"
+		printf(_("/******** QUERY *********/\n"
 				 "%s\n"
-				 "**************************\n\n"), query);
+				 "/************************/\n\n"), query);
 		fflush(stdout);
 		if (pset.logfile)
 		{
 			fprintf(pset.logfile,
-					_("********* QUERY **********\n"
+					_("/******** QUERY *********/\n"
 					  "%s\n"
-					  "**************************\n\n"), query);
+					  "/************************/\n\n"), query);
 			fflush(pset.logfile);
 		}
 
@@ -1060,9 +1060,9 @@ SendQuery(const char *query)
 		char		buf[3];
 
 		fflush(stderr);
-		printf(_("***(Single step mode: verify command)*******************************************\n"
+		printf(_("/**(Single step mode: verify command)******************************************/\n"
 				 "%s\n"
-				 "***(press return to proceed or enter x and return to cancel)********************\n"),
+				 "/**(press return to proceed or enter x and return to cancel)*******************/\n"),
 			   query);
 		fflush(stdout);
 		if (fgets(buf, sizeof(buf), stdin) != NULL)
@@ -1080,9 +1080,9 @@ SendQuery(const char *query)
 	if (pset.logfile)
 	{
 		fprintf(pset.logfile,
-				_("********* QUERY **********\n"
+				_("/******** QUERY *********/\n"
 				  "%s\n"
-				  "**************************\n\n"), query);
+				  "/************************/\n\n"), query);
 		fflush(pset.logfile);
 	}
 
