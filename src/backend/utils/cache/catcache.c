@@ -825,7 +825,10 @@ InitCatCache(int id,
 	cp->cc_nbuckets = nbuckets;
 	cp->cc_nkeys = nkeys;
 	for (i = 0; i < nkeys; ++i)
+	{
+		Assert(AttributeNumberIsValid(key[i]));
 		cp->cc_keyno[i] = key[i];
+	}
 
 	/*
 	 * new cache is initialized as far as we can go for now. print some
