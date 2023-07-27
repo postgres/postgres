@@ -3538,9 +3538,12 @@ typedef struct TransactionStmt
 	NodeTag		type;
 	TransactionStmtKind kind;	/* see above */
 	List	   *options;		/* for BEGIN/START commands */
-	char	   *savepoint_name; /* for savepoint commands */
+	/* for savepoint commands */
+	char	   *savepoint_name pg_node_attr(query_jumble_ignore);
 	char	   *gid;			/* for two-phase-commit related commands */
 	bool		chain;			/* AND CHAIN option */
+	/* token location, or -1 if unknown */
+	int			location pg_node_attr(query_jumble_location);
 } TransactionStmt;
 
 /* ----------------------

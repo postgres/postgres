@@ -197,6 +197,37 @@ SELECT pg_stat_statements_reset();
  
 (1 row)
 
+-- Savepoints
+BEGIN;
+SAVEPOINT sp1;
+SAVEPOINT sp2;
+SAVEPOINT sp3;
+SAVEPOINT sp4;
+ROLLBACK TO sp4;
+ROLLBACK TO SAVEPOINT sp4;
+ROLLBACK TRANSACTION TO SAVEPOINT sp3;
+RELEASE sp3;
+RELEASE SAVEPOINT sp2;
+ROLLBACK TO sp1;
+RELEASE SAVEPOINT sp1;
+COMMIT;
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |               query               
+-------+------+-----------------------------------
+     1 |    0 | BEGIN
+     1 |    0 | COMMIT
+     3 |    0 | RELEASE $1
+     4 |    0 | ROLLBACK TO $1
+     4 |    0 | SAVEPOINT $1
+     1 |    1 | SELECT pg_stat_statements_reset()
+(6 rows)
+
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
 -- EXPLAIN statements
 -- A Query is used, normalized by the query jumbling.
 EXPLAIN (costs off) SELECT 1;
