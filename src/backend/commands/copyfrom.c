@@ -1609,6 +1609,7 @@ BeginCopyFrom(ParseState *pstate,
 		}
 	}
 
+	cstate->defaults = (bool *) palloc0(tupDesc->natts * sizeof(bool));
 
 	/* initialize progress */
 	pgstat_progress_start_command(PROGRESS_COMMAND_COPY,
