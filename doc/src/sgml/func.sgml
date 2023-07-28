@@ -16008,7 +16008,8 @@ table2-mapping
          <function>json</function> (
          <replaceable>expression</replaceable>
          <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional></optional>
-         <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional></optional>
+         <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional></optional> )
+         <returnvalue>json</returnvalue>
         </para>
         <para>
          Converts a given expression specified as <type>text</type> or
@@ -16029,7 +16030,7 @@ table2-mapping
        <entry role="func_table_entry">
         <para role="func_signature">
         <indexterm><primary>json_scalar</primary></indexterm>
-        <function>json_scalar</function> (<replaceable>expression</replaceable>)
+        <function>json_scalar</function> ( <replaceable>expression</replaceable> )
        </para>
        <para>
         Converts a given SQL scalar value into a JSON scalar value.
@@ -16052,7 +16053,7 @@ table2-mapping
        <para role="func_signature">
         <function>json_serialize</function> (
         <replaceable>expression</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional>
-        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional> )
        </para>
        <para>
         Converts an SQL/JSON expression into a character or binary string. The
