@@ -497,6 +497,35 @@ extract_actual_join_clauses(List *restrictinfo_list,
 	}
 }
 
+/*
+ * has_pseudoconstant_clauses
+ *
+ * Returns true if 'restrictinfo_list' includes pseudoconstant clauses.
+ *
+ * This is used when we determine whether to allow extensions to consider
+ * pushing down joins in add_paths_to_joinrel().
+ */
+bool
+has_pseudoconstant_clauses(PlannerInfo *root,
+						   List *restrictinfo_list)
+{
+	ListCell   *l;
+
+	/* No need to look if we know there are no pseudoconstants */
+	if (!root->hasPseudoConstantQuals)
+		return false;
+
+	/* See if there are pseudoconstants in the RestrictInfo list */
+	foreach(l, restrictinfo_list)
+	{
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
+
+		if (rinfo->pseudoconstant)
+			return true;
+	}
+	return false;
+}
+
 
 /*
  * join_clause_is_movable_to
