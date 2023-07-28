@@ -605,19 +605,6 @@ PostgreSQL documentation
 
  </refsect1>
 
-
- <refsect1>
-  <title>Notes</title>
-
-  <para>
-   <application>vacuumdb</application> might need to connect several
-   times to the <productname>PostgreSQL</productname> server, asking
-   for a password each time. It is convenient to have a
-   <filename>~/.pgpass</filename> file in such cases. See <xref
-   linkend="libpq-pgpass"/> for more information.
-  </para>
- </refsect1>
-
  <refsect1>
   <title>Examples</title>
 

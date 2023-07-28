@@ -195,7 +195,7 @@ cluster_one_database(const ConnParams *cparams, const char *table,
 
 	PGconn	   *conn;
 
-	conn = connectDatabase(cparams, progname, echo, false, false);
+	conn = connectDatabase(cparams, progname, echo, false, true);
 
 	initPQExpBuffer(&sql);
 

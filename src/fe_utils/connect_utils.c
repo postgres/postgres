@@ -25,7 +25,7 @@
  *
  * If allow_password_reuse is true, we will try to re-use any password
  * given during previous calls to this routine.  (Callers should not pass
- * allow_password_reuse=true unless reconnecting to the same database+user
+ * allow_password_reuse=true unless reconnecting to the same host+port+user
  * as before, else we might create password exposure hazards.)
  */
 PGconn *

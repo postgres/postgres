@@ -315,7 +315,7 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 	bool		failed = false;
 	int			items_count = 0;
 
-	conn = connectDatabase(cparams, progname, echo, false, false);
+	conn = connectDatabase(cparams, progname, echo, false, true);
 
 	if (concurrently && PQserverVersion(conn) < 120000)
 	{
