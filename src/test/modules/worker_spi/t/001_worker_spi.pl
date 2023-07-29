@@ -65,9 +65,11 @@ ok( $node->poll_query_until(
 ) or die "Timed out while waiting for bgworkers to be launched";
 
 # Ask worker_spi to launch dynamic bgworkers with the library loaded, then
-# check their existence.
-my $worker1_pid = $node->safe_psql('mydb', 'SELECT worker_spi_launch(1);');
-my $worker2_pid = $node->safe_psql('mydb', 'SELECT worker_spi_launch(2);');
+# check their existence.  Use IDs that do not overlap with the schemas created
+# by the previous workers.
+my $worker1_pid = $node->safe_psql('mydb', 'SELECT worker_spi_launch(10);');
+my $worker2_pid = $node->safe_psql('mydb', 'SELECT worker_spi_launch(11);');
+
 ok( $node->poll_query_until(
 		'mydb',
 		qq[SELECT datname, count(datname)  FROM pg_stat_activity
