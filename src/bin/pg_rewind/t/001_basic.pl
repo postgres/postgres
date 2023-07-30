@@ -18,6 +18,12 @@ sub run_test
 	RewindTest::setup_cluster($test_mode);
 	RewindTest::start_primary();
 
+	# Create an in-place tablespace with some data on it.
+	primary_psql("CREATE TABLESPACE space_test LOCATION ''");
+	primary_psql("CREATE TABLE space_tbl (d text) TABLESPACE space_test");
+	primary_psql(
+		"INSERT INTO space_tbl VALUES ('in primary, before promotion')");
+
 	# Create a test table and insert a row in primary.
 	primary_psql("CREATE TABLE tbl1 (d text)");
 	primary_psql("INSERT INTO tbl1 VALUES ('in primary')");
@@ -77,6 +83,13 @@ sub run_test
 	primary_psql(
 		"insert into drop_tbl values ('in primary, after promotion')");
 	primary_psql("DROP TABLE drop_tbl");
+
+	# Insert some data in the in-place tablespace for the old primary and
+	# the standby.
+	primary_psql(
+		"INSERT INTO space_tbl VALUES ('in primary, after promotion')");
+	standby_psql(
+		"INSERT INTO space_tbl VALUES ('in standby, after promotion')");
 
 	# Before running pg_rewind, do a couple of extra tests with several
 	# option combinations.  As the code paths taken by those tests
@@ -144,6 +157,13 @@ sub run_test
 	}
 
 	RewindTest::run_pg_rewind($test_mode);
+
+	check_query(
+		'SELECT * FROM space_tbl ORDER BY d',
+		qq(in primary, before promotion
+in standby, after promotion
+),
+		'table content');
 
 	check_query(
 		'SELECT * FROM tbl1',
