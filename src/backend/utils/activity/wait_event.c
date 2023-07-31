@@ -39,6 +39,8 @@ static const char *pgstat_get_wait_io(WaitEventIO w);
 static uint32 local_my_wait_event_info;
 uint32	   *my_wait_event_info = &local_my_wait_event_info;
 
+#define WAIT_EVENT_CLASS_MASK	0xFF000000
+#define WAIT_EVENT_ID_MASK		0x0000FFFF
 
 /*
  * Configure wait event reporting to report wait events to *wait_event_info.
@@ -82,7 +84,7 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 	if (wait_event_info == 0)
 		return NULL;
 
-	classId = wait_event_info & 0xFF000000;
+	classId = wait_event_info & WAIT_EVENT_CLASS_MASK;
 
 	switch (classId)
 	{
@@ -138,8 +140,8 @@ pgstat_get_wait_event(uint32 wait_event_info)
 	if (wait_event_info == 0)
 		return NULL;
 
-	classId = wait_event_info & 0xFF000000;
-	eventId = wait_event_info & 0x0000FFFF;
+	classId = wait_event_info & WAIT_EVENT_CLASS_MASK;
+	eventId = wait_event_info & WAIT_EVENT_ID_MASK;
 
 	switch (classId)
 	{
