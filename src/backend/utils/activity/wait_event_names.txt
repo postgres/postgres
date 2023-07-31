@@ -261,7 +261,7 @@ WAIT_EVENT_BUFFER_PIN	BufferPin	"Waiting to acquire an exclusive pin on a buffer
 
 Section: ClassName - WaitEventExtension
 
-WAIT_EVENT_EXTENSION	Extension	"Waiting in an extension."
+WAIT_EVENT_DOCONLY	Extension	"Waiting in an extension."
 
 #
 # Wait events - LWLock

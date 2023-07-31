@@ -39,6 +39,28 @@ $node->poll_query_until('postgres',
 $result = $node->safe_psql('postgres', 'SELECT * FROM schema4.counted;');
 is($result, qq(total|1), 'dynamic bgworker correctly consumed tuple data');
 
+# Check the wait event used by the dynamic bgworker.  For a session without
+# the state in shared memory known, the default of "extension" is the value
+# waited on.
+$result = $node->poll_query_until(
+	'postgres',
+	qq[SELECT wait_event FROM pg_stat_activity WHERE backend_type ~ 'worker_spi';],
+	'extension');
+is($result, 1, 'dynamic bgworker has reported "extension" as wait event');
+
+# If the shared memory state is loaded (here with worker_spi_init within
+# the same connection as the one querying pg_stat_activity), the wait
+# event is the custom one.
+# The expected result is a special pattern here with a newline coming from the
+# first query where the shared memory state is set.
+$result = $node->poll_query_until(
+	'postgres',
+	qq[SELECT worker_spi_init(); SELECT wait_event FROM pg_stat_activity WHERE backend_type ~ 'worker_spi';],
+	qq[
+worker_spi_main]);
+is($result, 1,
+	'dynamic bgworker has reported "worker_spi_main" as wait event');
+
 note "testing bgworkers loaded with shared_preload_libraries";
 
 # Create the database first so as the workers can connect to it when
@@ -58,9 +80,9 @@ $node->restart;
 # Check that bgworkers have been registered and launched.
 ok( $node->poll_query_until(
 		'mydb',
-		qq[SELECT datname, count(datname) FROM pg_stat_activity
-            WHERE backend_type = 'worker_spi' GROUP BY datname;],
-		'mydb|3'),
+		qq[SELECT datname, count(datname), wait_event FROM pg_stat_activity
+            WHERE backend_type = 'worker_spi' GROUP BY datname, wait_event;],
+		'mydb|3|worker_spi_main'),
 	'bgworkers all launched'
 ) or die "Timed out while waiting for bgworkers to be launched";
 
@@ -72,10 +94,10 @@ my $worker2_pid = $node->safe_psql('mydb', 'SELECT worker_spi_launch(11);');
 
 ok( $node->poll_query_until(
 		'mydb',
-		qq[SELECT datname, count(datname)  FROM pg_stat_activity
+		qq[SELECT datname, count(datname), wait_event FROM pg_stat_activity
             WHERE backend_type = 'worker_spi dynamic' AND
-            pid IN ($worker1_pid, $worker2_pid) GROUP BY datname;],
-		'mydb|2'),
+            pid IN ($worker1_pid, $worker2_pid) GROUP BY datname, wait_event;],
+		'mydb|2|worker_spi_main'),
 	'dynamic bgworkers all launched'
 ) or die "Timed out while waiting for dynamic bgworkers to be launched";
 

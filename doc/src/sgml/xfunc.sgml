@@ -3453,6 +3453,51 @@ if (!ptr)
     </para>
    </sect2>
 
+   <sect2 id="xfunc-addin-wait-events">
+    <title>Shared Memory and Custom Wait Events</title>
+
+    <para>
+     Add-ins can define custom wait events under the wait event type
+     <literal>Extension</literal>. The add-in's shared library must be
+     preloaded by specifying it in <literal>shared_preload_libraries</literal>,
+     and register a <literal>shmem_request_hook</literal> and a
+     <literal>shmem_startup_hook</literal> in its
+     <function>_PG_init</function> function.
+     <literal>shmem_request_hook</literal> can request a shared memory size
+     to be later used at startup by calling:
+<programlisting>
+void RequestAddinShmemSpace(int size)
+</programlisting>
+    </para>
+    <para>
+     <literal>shmem_startup_hook</literal> can allocate in shared memory
+     custom wait events by calling while holding the LWLock
+     <function>AddinShmemInitLock</function> to avoid any race conditions:
+<programlisting>
+uint32 WaitEventExtensionNew(void)
+</programlisting>
+     Next, each process needs to associate the wait event allocated previously
+     to a user-facing custom string, which is something done by calling:
+<programlisting>
+void WaitEventExtensionRegisterName(uint32 wait_event_info, const char *wait_event_name)
+</programlisting>
+     An example can be found in <filename>src/test/modules/worker_spi</filename>
+     in the PostgreSQL source tree.
+    </para>
+    <para>
+     Custom wait events can be viewed in
+     <link linkend="monitoring-pg-stat-activity-view"><structname>pg_stat_activity</structname></link>:
+<screen>
+=# SELECT wait_event_type, wait_event FROM pg_stat_activity
+     WHERE backend_type ~ 'worker_spi';
+ wait_event_type |   wait_event
+-----------------+-----------------
+ Extension       | worker_spi_main
+(1 row)
+</screen>
+    </para>
+   </sect2>
+
    <sect2 id="extend-cpp">
     <title>Using C++ for Extensibility</title>
 

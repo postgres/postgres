@@ -133,10 +133,11 @@ if ($gen_code)
 	foreach my $waitclass (sort { uc($a) cmp uc($b) } keys %hashwe)
 	{
 
-		# Don't generate .c and .h files for LWLock and Lock, these are
-		# handled independently.
+		# Don't generate .c and .h files for Extension, LWLock and
+		# Lock, these are handled independently.
 		next
-		  if ( $waitclass eq 'WaitEventLWLock'
+		  if ( $waitclass eq 'WaitEventExtension'
+			|| $waitclass eq 'WaitEventLWLock'
 			|| $waitclass eq 'WaitEventLock');
 
 		my $last = $waitclass;
