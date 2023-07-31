@@ -48,8 +48,9 @@ pg_leftmost_one_pos32(uint32 word)
 	unsigned long result;
 	bool		non_zero;
 
+	Assert(word != 0);
+
 	non_zero = _BitScanReverse(&result, word);
-	Assert(non_zero);
 	return (int) result;
 #else
 	int			shift = 32 - 8;
@@ -85,8 +86,9 @@ pg_leftmost_one_pos64(uint64 word)
 	unsigned long result;
 	bool		non_zero;
 
+	Assert(word != 0);
+
 	non_zero = _BitScanReverse64(&result, word);
-	Assert(non_zero);
 	return (int) result;
 #else
 	int			shift = 64 - 8;
@@ -116,8 +118,9 @@ pg_rightmost_one_pos32(uint32 word)
 	unsigned long result;
 	bool		non_zero;
 
+	Assert(word != 0);
+
 	non_zero = _BitScanForward(&result, word);
-	Assert(non_zero);
 	return (int) result;
 #else
 	int			result = 0;
@@ -156,8 +159,9 @@ pg_rightmost_one_pos64(uint64 word)
 	unsigned long result;
 	bool		non_zero;
 
+	Assert(word != 0);
+
 	non_zero = _BitScanForward64(&result, word);
-	Assert(non_zero);
 	return (int) result;
 #else
 	int			result = 0;
