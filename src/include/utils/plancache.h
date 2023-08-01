@@ -111,7 +111,7 @@ typedef struct CachedPlanSource
 	List	   *query_list;		/* list of Query nodes, or NIL if not valid */
 	List	   *relationOids;	/* OIDs of relations the queries depend on */
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
-	struct OverrideSearchPath *search_path; /* search_path used for parsing
+	struct SearchPathMatcher *search_path;	/* search_path used for parsing
 											 * and planning */
 	MemoryContext query_context;	/* context holding the above, or NULL */
 	Oid			rewriteRoleId;	/* Role ID we did rewriting for */

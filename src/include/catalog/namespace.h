@@ -49,19 +49,19 @@ typedef enum TempNamespaceStatus
 } TempNamespaceStatus;
 
 /*
- *	Structure for xxxOverrideSearchPath functions
+ *	Structure for xxxSearchPathMatcher functions
  *
  * The generation counter is private to namespace.c and shouldn't be touched
  * by other code.  It can be initialized to zero if necessary (that means
  * "not known equal to the current active path").
  */
-typedef struct OverrideSearchPath
+typedef struct SearchPathMatcher
 {
 	List	   *schemas;		/* OIDs of explicitly named schemas */
 	bool		addCatalog;		/* implicitly prepend pg_catalog? */
 	bool		addTemp;		/* implicitly prepend temp schema? */
 	uint64		generation;		/* for quick detection of equality to active */
-} OverrideSearchPath;
+} SearchPathMatcher;
 
 /*
  * Option flag bits for RangeVarGetRelidExtended().
@@ -164,9 +164,9 @@ extern void SetTempNamespaceState(Oid tempNamespaceId,
 								  Oid tempToastNamespaceId);
 extern void ResetTempTableNamespace(void);
 
-extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);
-extern OverrideSearchPath *CopyOverrideSearchPath(OverrideSearchPath *path);
-extern bool OverrideSearchPathMatchesCurrent(OverrideSearchPath *path);
+extern SearchPathMatcher *GetSearchPathMatcher(MemoryContext context);
+extern SearchPathMatcher *CopySearchPathMatcher(SearchPathMatcher *path);
+extern bool SearchPathMatchesCurrentEnvironment(SearchPathMatcher *path);
 
 extern Oid	get_collation_oid(List *collname, bool missing_ok);
 extern Oid	get_conversion_oid(List *conname, bool missing_ok);
