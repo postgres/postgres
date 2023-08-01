@@ -120,10 +120,10 @@ tarCreateHeader(char *h, const char *filename, const char *linktarget,
 	if (linktarget && strlen(linktarget) > 99)
 		return TAR_SYMLINK_TOO_LONG;
 
-	memset(h, 0, 512);			/* assume tar header size */
+	memset(h, 0, TAR_BLOCK_SIZE);
 
 	/* Name 100 */
-	strlcpy(&h[0], filename, 100);
+	strlcpy(&h[TAR_OFFSET_NAME], filename, 100);
 	if (linktarget != NULL || S_ISDIR(mode))
 	{
 		/*
@@ -139,68 +139,68 @@ tarCreateHeader(char *h, const char *filename, const char *linktarget,
 	}
 
 	/* Mode 8 - this doesn't include the file type bits (S_IFMT)  */
-	print_tar_number(&h[100], 8, (mode & 07777));
+	print_tar_number(&h[TAR_OFFSET_MODE], 8, (mode & 07777));
 
 	/* User ID 8 */
-	print_tar_number(&h[108], 8, uid);
+	print_tar_number(&h[TAR_OFFSET_UID], 8, uid);
 
 	/* Group 8 */
-	print_tar_number(&h[116], 8, gid);
+	print_tar_number(&h[TAR_OFFSET_GID], 8, gid);
 
 	/* File size 12 */
 	if (linktarget != NULL || S_ISDIR(mode))
 		/* Symbolic link or directory has size zero */
-		print_tar_number(&h[124], 12, 0);
+		print_tar_number(&h[TAR_OFFSET_SIZE], 12, 0);
 	else
-		print_tar_number(&h[124], 12, size);
+		print_tar_number(&h[TAR_OFFSET_SIZE], 12, size);
 
 	/* Mod Time 12 */
-	print_tar_number(&h[136], 12, mtime);
+	print_tar_number(&h[TAR_OFFSET_MTIME], 12, mtime);
 
 	/* Checksum 8 cannot be calculated until we've filled all other fields */
 
 	if (linktarget != NULL)
 	{
 		/* Type - Symbolic link */
-		h[156] = '2';
+		h[TAR_OFFSET_TYPEFLAG] = TAR_FILETYPE_SYMLINK;
 		/* Link Name 100 */
-		strlcpy(&h[157], linktarget, 100);
+		strlcpy(&h[TAR_OFFSET_LINKNAME], linktarget, 100);
 	}
 	else if (S_ISDIR(mode))
 	{
 		/* Type - directory */
-		h[156] = '5';
+		h[TAR_OFFSET_TYPEFLAG] = TAR_FILETYPE_DIRECTORY;
 	}
 	else
 	{
 		/* Type - regular file */
-		h[156] = '0';
+		h[TAR_OFFSET_TYPEFLAG] = TAR_FILETYPE_PLAIN;
 	}
 
 	/* Magic 6 */
-	strcpy(&h[257], "ustar");
+	strcpy(&h[TAR_OFFSET_MAGIC], "ustar");
 
 	/* Version 2 */
-	memcpy(&h[263], "00", 2);
+	memcpy(&h[TAR_OFFSET_VERSION], "00", 2);
 
 	/* User 32 */
 	/* XXX: Do we need to care about setting correct username? */
-	strlcpy(&h[265], "postgres", 32);
+	strlcpy(&h[TAR_OFFSET_UNAME], "postgres", 32);
 
 	/* Group 32 */
 	/* XXX: Do we need to care about setting correct group name? */
-	strlcpy(&h[297], "postgres", 32);
+	strlcpy(&h[TAR_OFFSET_GNAME], "postgres", 32);
 
 	/* Major Dev 8 */
-	print_tar_number(&h[329], 8, 0);
+	print_tar_number(&h[TAR_OFFSET_DEVMAJOR], 8, 0);
 
 	/* Minor Dev 8 */
-	print_tar_number(&h[337], 8, 0);
+	print_tar_number(&h[TAR_OFFSET_DEVMINOR], 8, 0);
 
 	/* Prefix 155 - not used, leave as nulls */
 
 	/* Finally, compute and insert the checksum */
-	print_tar_number(&h[148], 8, tarChecksum(h));
+	print_tar_number(&h[TAR_OFFSET_CHECKSUM], 8, tarChecksum(h));
 
 	return TAR_OK;
 }

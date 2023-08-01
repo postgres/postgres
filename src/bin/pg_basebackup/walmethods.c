@@ -1131,7 +1131,7 @@ tar_close(Walfile *f, WalCloseMethod method)
 	 * possibly also renaming the file. We overwrite the entire current header
 	 * when done, including the checksum.
 	 */
-	print_tar_number(&(tf->header[124]), 12, filesize);
+	print_tar_number(&(tf->header[TAR_OFFSET_SIZE]), 12, filesize);
 
 	if (method == CLOSE_NORMAL)
 
@@ -1139,9 +1139,10 @@ tar_close(Walfile *f, WalCloseMethod method)
 		 * We overwrite it with what it was before if we have no tempname,
 		 * since we're going to write the buffer anyway.
 		 */
-		strlcpy(&(tf->header[0]), tf->base.pathname, 100);
+		strlcpy(&(tf->header[TAR_OFFSET_NAME]), tf->base.pathname, 100);
 
-	print_tar_number(&(tf->header[148]), 8, tarChecksum(((TarMethodFile *) f)->header));
+	print_tar_number(&(tf->header[TAR_OFFSET_CHECKSUM]), 8,
+					 tarChecksum(((TarMethodFile *) f)->header));
 	if (lseek(tar_data->fd, tf->ofs_start, SEEK_SET) != ((TarMethodFile *) f)->ofs_start)
 	{
 		f->wwmethod->lasterrno = errno;

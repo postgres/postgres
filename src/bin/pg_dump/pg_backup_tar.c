@@ -975,20 +975,20 @@ isValidTarHeader(char *header)
 	int			sum;
 	int			chk = tarChecksum(header);
 
-	sum = read_tar_number(&header[148], 8);
+	sum = read_tar_number(&header[TAR_OFFSET_CHECKSUM], 8);
 
 	if (sum != chk)
 		return false;
 
 	/* POSIX tar format */
-	if (memcmp(&header[257], "ustar\0", 6) == 0 &&
-		memcmp(&header[263], "00", 2) == 0)
+	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar\0", 6) == 0 &&
+		memcmp(&header[TAR_OFFSET_VERSION], "00", 2) == 0)
 		return true;
 	/* GNU tar format */
-	if (memcmp(&header[257], "ustar  \0", 8) == 0)
+	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar  \0", 8) == 0)
 		return true;
 	/* not-quite-POSIX format written by pre-9.3 pg_dump */
-	if (memcmp(&header[257], "ustar00\0", 8) == 0)
+	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar00\0", 8) == 0)
 		return true;
 
 	return false;
@@ -1151,7 +1151,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 
 		/* Calc checksum */
 		chk = tarChecksum(h);
-		sum = read_tar_number(&h[148], 8);
+		sum = read_tar_number(&h[TAR_OFFSET_CHECKSUM], 8);
 
 		/*
 		 * If the checksum failed, see if it is a null block. If so, silently
@@ -1175,9 +1175,9 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 	}
 
 	/* Name field is 100 bytes, might not be null-terminated */
-	strlcpy(tag, &h[0], 100 + 1);
+	strlcpy(tag, &h[TAR_OFFSET_NAME], 100 + 1);
 
-	len = read_tar_number(&h[124], 12);
+	len = read_tar_number(&h[TAR_OFFSET_SIZE], 12);
 
 	pg_log_debug("TOC Entry %s at %llu (length %llu, checksum %d)",
 				 tag, (unsigned long long) hPos, (unsigned long long) len, sum);
