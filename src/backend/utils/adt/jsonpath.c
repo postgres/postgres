@@ -962,7 +962,8 @@ jspGetNext(JsonPathItem *v, JsonPathItem *a)
 			   v->type == jpiCeiling ||
 			   v->type == jpiDouble ||
 			   v->type == jpiKeyValue ||
-			   v->type == jpiStartsWith);
+			   v->type == jpiStartsWith ||
+			   v->type == jpiLikeRegex);
 
 		if (a)
 			jspInitByBuffer(a, v->base, v->nextPos);
