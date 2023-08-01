@@ -967,11 +967,6 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	 * searched anyway.  (Listing pg_catalog explicitly in a non-first
 	 * position would be bad for security.)  Finally add pg_temp to ensure
 	 * that temp objects can't take precedence over others.
-	 *
-	 * Note: it might look tempting to use PushOverrideSearchPath for this,
-	 * but we cannot do that.  We have to actually set the search_path GUC in
-	 * case the extension script examines or changes it.  In any case, the
-	 * GUC_ACTION_SAVE method is just as convenient.
 	 */
 	initStringInfo(&pathbuf);
 	appendStringInfoString(&pathbuf, quote_identifier(schemaName));
