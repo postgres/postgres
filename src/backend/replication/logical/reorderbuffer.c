@@ -3602,8 +3602,8 @@ ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
 			rb->size > 0))
 	{
 		/*
-		 * Pick the largest transaction (or subtransaction) and evict it from
-		 * memory by streaming, if possible.  Otherwise, spill to disk.
+		 * Pick the largest transaction and evict it from memory by streaming,
+		 * if possible.  Otherwise, spill to disk.
 		 */
 		if (ReorderBufferCanStartStreaming(rb) &&
 			(txn = ReorderBufferLargestStreamableTopTXN(rb)) != NULL)
