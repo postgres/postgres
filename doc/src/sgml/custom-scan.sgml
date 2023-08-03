@@ -83,7 +83,7 @@ typedef struct CustomPath
     by <literal>nodeToString</literal>, so that debugging routines that attempt to
     print the custom path will work as designed.  <structfield>methods</structfield> must
     point to a (usually statically allocated) object implementing the required
-    custom path methods, of which there is currently only one.
+    custom path methods, which are further detailed below.
   </para>
 
   <para>
@@ -122,6 +122,23 @@ Plan *(*PlanCustomPath) (PlannerInfo *root,
     Convert a custom path to a finished plan.  The return value will generally
     be a <literal>CustomScan</literal> object, which the callback must allocate and
     initialize.  See <xref linkend="custom-scan-plan"/> for more details.
+   </para>
+
+   <para>
+<programlisting>
+List *(*ReparameterizeCustomPathByChild) (PlannerInfo *root,
+                                          List *custom_private,
+                                          RelOptInfo *child_rel);
+</programlisting>
+    This callback is called while converting a path parameterized by the
+    top-most parent of the given child relation <literal>child_rel</literal>
+    to be parameterized by the child relation.  The callback is used to
+    reparameterize any paths or translate any expression nodes saved in the
+    given <literal>custom_private</literal> member of a
+    <structname>CustomPath</structname>.  The callback may use
+    <literal>reparameterize_path_by_child</literal>,
+    <literal>adjust_appendrel_attrs</literal> or
+    <literal>adjust_appendrel_attrs_multilevel</literal> as required.
    </para>
   </sect2>
  </sect1>
