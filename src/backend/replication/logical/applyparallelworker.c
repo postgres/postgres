@@ -942,7 +942,7 @@ ParallelApplyWorkerMain(Datum main_arg)
 	MyLogicalRepWorker->last_send_time = MyLogicalRepWorker->last_recv_time =
 		MyLogicalRepWorker->reply_time = 0;
 
-	InitializeApplyWorker();
+	InitializeLogRepWorker();
 
 	InitializingApplyWorker = false;
 
