@@ -2933,8 +2933,8 @@ get_windowclause_startup_tuples(PlannerInfo *root, WindowClause *wc,
 				 * NULLs are not allowed, but currently, there's no code to
 				 * error out if there's a NULL Const.  We'll only discover
 				 * this during execution.  For now, just pretend everything is
-				 * fine and assume that just the current row/range/group will
-				 * be needed.
+				 * fine and assume that just the first row/range/group will be
+				 * needed.
 				 */
 				end_offset_value = 1.0;
 			}
@@ -3056,15 +3056,6 @@ cost_windowagg(Path *path, PlannerInfo *root,
 	total_cost = input_total_cost;
 
 	/*
-	 * Estimate how many tuples we'll need to read from the subnode before we
-	 * can output the first WindowAgg row.
-	 */
-	startup_tuples = get_windowclause_startup_tuples(root, winclause,
-													 input_tuples);
-
-	elog(DEBUG1, "startup_tuples = %g", startup_tuples);	/* XXX not for commit */
-
-	/*
 	 * Window functions are assumed to cost their stated execution cost, plus
 	 * the cost of evaluating their input expressions, per tuple.  Since they
 	 * may in fact evaluate their inputs at multiple rows during each cycle,
@@ -3124,6 +3115,9 @@ cost_windowagg(Path *path, PlannerInfo *root,
 	 * cost of the subnode, so we only need to do this when the estimated
 	 * startup tuples is above 1.0.
 	 */
+	startup_tuples = get_windowclause_startup_tuples(root, winclause,
+													 input_tuples);
+
 	if (startup_tuples > 1.0)
 		path->startup_cost += (total_cost - startup_cost) / input_tuples *
 			(startup_tuples - 1.0);
