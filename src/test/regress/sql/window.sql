@@ -1716,6 +1716,40 @@ SELECT i, b, bool_and(b) OVER w, bool_or(b) OVER w
   FROM (VALUES (1,true), (2,true), (3,false), (4,false), (5,true)) v(i,b)
   WINDOW w AS (ORDER BY i ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING);
 
+--
+-- Test WindowAgg costing takes into account the number of rows that need to
+-- be fetched before the first row can be output.
+--
+
+-- Ensure we get a cheap start up plan as the WindowAgg can output the first
+-- row after reading 1 row from the join.
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) OVER (ORDER BY t1.unique1)
+FROM tenk1 t1 INNER JOIN tenk1 t2 ON t1.unique1 = t2.tenthous
+LIMIT 1;
+
+-- Ensure we get a cheap total plan.  Lack of ORDER BY in the WindowClause
+-- means that all rows must be read from the join, so a cheap startup plan
+-- isn't a good choice.
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) OVER ()
+FROM tenk1 t1 INNER JOIN tenk1 t2 ON t1.unique1 = t2.tenthous
+LIMIT 1;
+
+-- Ensure we get a cheap total plan.  This time use UNBOUNDED FOLLOWING, which
+-- needs to read all join rows to output the first WindowAgg row.
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) OVER (ORDER BY t1.unique1 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+FROM tenk1 t1 INNER JOIN tenk1 t2 ON t1.unique1 = t2.tenthous
+LIMIT 1;
+
+-- Ensure we get a cheap total plan.  This time use 10000 FOLLOWING so we need
+-- to read all join rows.
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) OVER (ORDER BY t1.unique1 ROWS BETWEEN UNBOUNDED PRECEDING AND 10000 FOLLOWING)
+FROM tenk1 t1 INNER JOIN tenk1 t2 ON t1.unique1 = t2.tenthous
+LIMIT 1;
+
 -- Tests for problems with failure to walk or mutate expressions
 -- within window frame clauses.
 

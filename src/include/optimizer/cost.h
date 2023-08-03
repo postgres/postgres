@@ -131,7 +131,7 @@ extern void cost_agg(Path *path, PlannerInfo *root,
 					 Cost input_startup_cost, Cost input_total_cost,
 					 double input_tuples, double input_width);
 extern void cost_windowagg(Path *path, PlannerInfo *root,
-						   List *windowFuncs, int numPartCols, int numOrderCols,
+						   List *windowFuncs, WindowClause *winclause,
 						   Cost input_startup_cost, Cost input_total_cost,
 						   double input_tuples);
 extern void cost_group(Path *path, PlannerInfo *root,

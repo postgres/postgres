@@ -3457,8 +3457,7 @@ create_windowagg_path(PlannerInfo *root,
 	 */
 	cost_windowagg(&pathnode->path, root,
 				   windowFuncs,
-				   list_length(winclause->partitionClause),
-				   list_length(winclause->orderClause),
+				   winclause,
 				   subpath->startup_cost,
 				   subpath->total_cost,
 				   subpath->rows);
