@@ -3863,7 +3863,7 @@ apply_worker_exit(void)
 	 * subscription is still active, and so that we won't leak that hash table
 	 * entry if it isn't.
 	 */
-	if (!am_tablesync_worker())
+	if (am_leader_apply_worker())
 		ApplyLauncherForgetWorkerStartTime(MyLogicalRepWorker->subid);
 
 	proc_exit(0);
@@ -3906,8 +3906,9 @@ maybe_reread_subscription(void)
 						MySubscription->name)));
 
 		/* Ensure we remove no-longer-useful entry for worker's start time */
-		if (!am_tablesync_worker() && !am_parallel_apply_worker())
+		if (am_leader_apply_worker())
 			ApplyLauncherForgetWorkerStartTime(MyLogicalRepWorker->subid);
+
 		proc_exit(0);
 	}
 
@@ -4589,8 +4590,9 @@ InitializeLogRepWorker(void)
 						MyLogicalRepWorker->subid)));
 
 		/* Ensure we remove no-longer-useful entry for worker's start time */
-		if (!am_tablesync_worker() && !am_parallel_apply_worker())
+		if (am_leader_apply_worker())
 			ApplyLauncherForgetWorkerStartTime(MyLogicalRepWorker->subid);
+
 		proc_exit(0);
 	}
 
@@ -4715,7 +4717,7 @@ DisableSubscriptionAndExit(void)
 	CommitTransactionCommand();
 
 	/* Ensure we remove no-longer-useful entry for worker's start time */
-	if (!am_tablesync_worker() && !am_parallel_apply_worker())
+	if (am_leader_apply_worker())
 		ApplyLauncherForgetWorkerStartTime(MyLogicalRepWorker->subid);
 
 	/* Notify the subscription has been disabled and exit */
