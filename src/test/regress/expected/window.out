@@ -4834,17 +4834,19 @@ LIMIT 1;
 EXPLAIN (COSTS OFF)
 SELECT COUNT(*) OVER ()
 FROM tenk1 t1 INNER JOIN tenk1 t2 ON t1.unique1 = t2.tenthous
+WHERE t2.two = 1
 LIMIT 1;
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Limit
    ->  WindowAgg
          ->  Hash Join
                Hash Cond: (t1.unique1 = t2.tenthous)
                ->  Index Only Scan using tenk1_unique1 on tenk1 t1
                ->  Hash
-                     ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t2
-(7 rows)
+                     ->  Seq Scan on tenk1 t2
+                           Filter: (two = 1)
+(8 rows)
 
 -- Ensure we get a cheap total plan.  This time use UNBOUNDED FOLLOWING, which
 -- needs to read all join rows to output the first WindowAgg row.
