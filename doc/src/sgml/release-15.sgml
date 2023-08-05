@@ -649,26 +649,6 @@ Branch: REL_11_STABLE [6c7bffc09] 2023-07-18 14:04:54 +0900
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: REL_14_STABLE [f663b0091] 2023-06-20 09:36:35 +0900
-Branch: REL_13_STABLE [896012b88] 2023-06-20 09:36:58 +0900
--->
-     <para>
-      Fix possible failure while promoting a standby server, if archiving
-      is enabled and two-phase transactions need to be recovered (Julian
-      Markwort)
-     </para>
-
-     <para>
-      If any required two-phase transactions were logged in the most
-      recent (partial) log segment, promotion would fail with an incorrect
-      complaint about <quote>requested WAL segment has already been
-      removed</quote>.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 Branch: master [4b4798e13] 2023-07-04 17:57:03 +0300
 Branch: REL_16_STABLE [d431644b4] 2023-07-04 18:04:27 +0300
@@ -731,25 +711,6 @@ Branch: REL_15_STABLE [f50200c01] 2023-07-03 11:22:10 +1200
       Treat this case as plain end-of-WAL to avoid logging inaccurate
       complaints from <application>pg_waldump</application>
       and <application>walsender</application>.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: REL_14_STABLE [c6043fcbb] 2023-06-11 10:33:46 +0900
-Branch: REL_13_STABLE [37236ca06] 2023-06-11 10:33:56 +0900
-Branch: REL_12_STABLE [9920552e1] 2023-06-11 10:33:59 +0900
-Branch: REL_11_STABLE [a9c3472e0] 2023-06-11 10:34:00 +0900
--->
-     <para>
-      Fix missing reinitializations of delay-checkpoint-end flags
-      (suyu.cmj)
-     </para>
-
-     <para>
-      This could result in unnecessary delays of checkpoints, or in
-      assertion failures in assert-enabled builds.
      </para>
     </listitem>
 
@@ -998,19 +959,6 @@ Branch: REL_11_STABLE [db9813819] 2023-07-14 11:16:13 +0900
       relies on the relation cache's copy, so this is only a latent bug as
       far as Postgres itself is concerned; but there may be extensions for
       which it is a live bug.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-Branch: REL_13_STABLE [8aa9a2623] 2023-06-24 20:22:57 +0900
-Branch: REL_12_STABLE [265c9138d] 2023-06-24 20:26:56 +0900
-Branch: REL_11_STABLE [96f96398d] 2023-06-24 20:29:42 +0900
--->
-     <para>
-      Silence deprecation warnings when compiling with OpenSSL 3.0.0 or
-      later (Peter Eisentraut)
      </para>
     </listitem>
 
