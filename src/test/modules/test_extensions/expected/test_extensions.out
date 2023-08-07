@@ -1,3 +1,4 @@
+CREATE SCHEMA has$dollar;
 -- test some errors
 CREATE EXTENSION test_ext1;
 ERROR:  required extension "test_ext2" is not installed
@@ -6,35 +7,35 @@ CREATE EXTENSION test_ext1 SCHEMA test_ext1;
 ERROR:  schema "test_ext1" does not exist
 CREATE EXTENSION test_ext1 SCHEMA test_ext;
 ERROR:  schema "test_ext" does not exist
-CREATE SCHEMA test_ext;
-CREATE EXTENSION test_ext1 SCHEMA test_ext;
+CREATE EXTENSION test_ext1 SCHEMA has$dollar;
 ERROR:  extension "test_ext1" must be installed in schema "test_ext1"
 -- finally success
-CREATE EXTENSION test_ext1 SCHEMA test_ext CASCADE;
+CREATE EXTENSION test_ext1 SCHEMA has$dollar CASCADE;
 NOTICE:  installing required extension "test_ext2"
 NOTICE:  installing required extension "test_ext3"
 NOTICE:  installing required extension "test_ext5"
 NOTICE:  installing required extension "test_ext4"
 SELECT extname, nspname, extversion, extrelocatable FROM pg_extension e, pg_namespace n WHERE extname LIKE 'test_ext%' AND e.extnamespace = n.oid ORDER BY 1;
-  extname  |  nspname  | extversion | extrelocatable 
------------+-----------+------------+----------------
- test_ext1 | test_ext1 | 1.0        | f
- test_ext2 | test_ext  | 1.0        | t
- test_ext3 | test_ext  | 1.0        | t
- test_ext4 | test_ext  | 1.0        | t
- test_ext5 | test_ext  | 1.0        | t
+  extname  |  nspname   | extversion | extrelocatable 
+-----------+------------+------------+----------------
+ test_ext1 | test_ext1  | 1.0        | f
+ test_ext2 | has$dollar | 1.0        | t
+ test_ext3 | has$dollar | 1.0        | t
+ test_ext4 | has$dollar | 1.0        | t
+ test_ext5 | has$dollar | 1.0        | t
 (5 rows)
 
 CREATE EXTENSION test_ext_cyclic1 CASCADE;
 NOTICE:  installing required extension "test_ext_cyclic2"
 ERROR:  cyclic dependency detected between extensions "test_ext_cyclic1" and "test_ext_cyclic2"
-DROP SCHEMA test_ext CASCADE;
+DROP SCHEMA has$dollar CASCADE;
 NOTICE:  drop cascades to 5 other objects
 DETAIL:  drop cascades to extension test_ext3
 drop cascades to extension test_ext5
 drop cascades to extension test_ext2
 drop cascades to extension test_ext4
 drop cascades to extension test_ext1
+CREATE SCHEMA has$dollar;
 CREATE EXTENSION test_ext6;
 DROP EXTENSION test_ext6;
 CREATE EXTENSION test_ext6;
@@ -312,3 +313,10 @@ Objects in extension "test_ext_cine"
  table ext_cine_tab3
 (9 rows)
 
+--
+-- Test @extschema@ syntax.
+--
+CREATE SCHEMA "has space";
+CREATE EXTENSION test_ext_extschema SCHEMA has$dollar;
+ERROR:  invalid character in extension "test_ext_extschema" schema: must not contain any of ""$'\"
+CREATE EXTENSION test_ext_extschema SCHEMA "has space";
