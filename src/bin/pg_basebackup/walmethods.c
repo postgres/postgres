@@ -705,7 +705,7 @@ typedef struct TarMethodData
 
 #ifdef HAVE_LIBZ
 static bool
-tar_write_compressed_data(TarMethodData *tar_data, void *buf, size_t count,
+tar_write_compressed_data(TarMethodData *tar_data, const void *buf, size_t count,
 						  bool flush)
 {
 	tar_data->zp->next_in = buf;
@@ -782,8 +782,7 @@ tar_write(Walfile *f, const void *buf, size_t count)
 #ifdef HAVE_LIBZ
 	else if (f->wwmethod->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
-		if (!tar_write_compressed_data(tar_data, unconstify(void *, buf),
-									   count, false))
+		if (!tar_write_compressed_data(tar_data, buf, count, false))
 			return -1;
 		f->currpos += count;
 		return count;

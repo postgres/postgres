@@ -75,6 +75,11 @@
 #include <libintl.h>
 #endif
 
+/* Define before including zlib.h to add const decorations to zlib API. */
+#ifdef HAVE_LIBZ
+#define ZLIB_CONST
+#endif
+
 
 /* ----------------------------------------------------------------
  *				Section 1: compiler characteristics

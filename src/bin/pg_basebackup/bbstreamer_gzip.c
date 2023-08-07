@@ -269,7 +269,7 @@ bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
 	mystreamer = (bbstreamer_gzip_decompressor *) streamer;
 
 	zs = &mystreamer->zstream;
-	zs->next_in = (uint8 *) data;
+	zs->next_in = (const uint8 *) data;
 	zs->avail_in = len;
 
 	/* Process the current chunk */
