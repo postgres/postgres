@@ -611,6 +611,23 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 	}
 
 	/*
+	 * Also check the parameterized path restrictinfos for volatile functions.
+	 * Indexed functions must be immutable so shouldn't have any volatile
+	 * functions, however, with a lateral join the inner scan may not be an
+	 * index scan.
+	 */
+	if (inner_path->param_info != NULL)
+	{
+		foreach(lc, inner_path->param_info->ppi_clauses)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+			if (contain_volatile_functions((Node *) rinfo))
+				return NULL;
+		}
+	}
+
+	/*
 	 * When considering a partitionwise join, we have clauses that reference
 	 * the outerrel's top parent not outerrel itself.
 	 */
