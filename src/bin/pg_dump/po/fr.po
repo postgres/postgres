@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-05 10:29+0000\n"
-"PO-Revision-Date: 2023-05-07 16:59+0200\n"
+"POT-Creation-Date: 2023-07-25 06:44+0000\n"
+"PO-Revision-Date: 2023-07-28 20:31+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../../src/common/logging.c:236
 #, c-format
@@ -1946,10 +1946,9 @@ msgid "failed sanity check, parent table with OID %u of sequence with OID %u not
 msgstr "vérification échouée, OID %u de la table parent de l'OID %u de la séquence introuvable"
 
 #: pg_dump.c:7001
-#, fuzzy, c-format
-#| msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found"
+#, c-format
 msgid "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
-msgstr "vérification échouée, OID %u parent de la table « %s » (OID %u) introuvable"
+msgstr "vérification échouée, OID de table %u apparaissant dans partitioned introuvable"
 
 #: pg_dump.c:7067
 #, c-format
