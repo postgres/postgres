@@ -1,18 +1,20 @@
+CREATE SCHEMA has$dollar;
+
 -- test some errors
 CREATE EXTENSION test_ext1;
 CREATE EXTENSION test_ext1 SCHEMA test_ext1;
 CREATE EXTENSION test_ext1 SCHEMA test_ext;
-CREATE SCHEMA test_ext;
-CREATE EXTENSION test_ext1 SCHEMA test_ext;
+CREATE EXTENSION test_ext1 SCHEMA has$dollar;
 
 -- finally success
-CREATE EXTENSION test_ext1 SCHEMA test_ext CASCADE;
+CREATE EXTENSION test_ext1 SCHEMA has$dollar CASCADE;
 
 SELECT extname, nspname, extversion, extrelocatable FROM pg_extension e, pg_namespace n WHERE extname LIKE 'test_ext%' AND e.extnamespace = n.oid ORDER BY 1;
 
 CREATE EXTENSION test_ext_cyclic1 CASCADE;
 
-DROP SCHEMA test_ext CASCADE;
+DROP SCHEMA has$dollar CASCADE;
+CREATE SCHEMA has$dollar;
 
 CREATE EXTENSION test_ext6;
 DROP EXTENSION test_ext6;
@@ -211,6 +213,13 @@ ALTER EXTENSION test_ext_cine UPDATE TO '1.1';
 \dx+ test_ext_cine
 
 --
+-- Test @extschema@ syntax.
+--
+CREATE SCHEMA "has space";
+CREATE EXTENSION test_ext_extschema SCHEMA has$dollar;
+CREATE EXTENSION test_ext_extschema SCHEMA "has space";
+
+--
 -- Test extension with objects outside the extension's schema.
 --
 CREATE SCHEMA test_func_dep1;
@@ -245,6 +254,9 @@ DROP SCHEMA test_func_dep3;
 --
 -- Test @extschema:extname@ syntax and no_relocate option
 --
+CREATE EXTENSION test_ext_req_schema1 SCHEMA has$dollar;
+CREATE EXTENSION test_ext_req_schema3 CASCADE;
+DROP EXTENSION test_ext_req_schema1;
 CREATE SCHEMA test_s_dep;
 CREATE EXTENSION test_ext_req_schema1 SCHEMA test_s_dep;
 CREATE EXTENSION test_ext_req_schema3 CASCADE;
