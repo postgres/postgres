@@ -1,0 +1,97 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s1a s2a s1a s2b
+step s1a: 
+    SELECT CURRENT_USER;
+    SHOW search_path;
+    SELECT t FROM x;
+
+current_user    
+----------------
+regress_sp_user1
+(1 row)
+
+search_path               
+--------------------------
+"$user", regress_sp_public
+(1 row)
+
+t                         
+--------------------------
+data in regress_sp_user1.x
+(1 row)
+
+step s2a: 
+    ALTER ROLE regress_sp_user1 RENAME TO regress_sp_user2;
+
+step s1a: 
+    SELECT CURRENT_USER;
+    SHOW search_path;
+    SELECT t FROM x;
+
+current_user    
+----------------
+regress_sp_user2
+(1 row)
+
+search_path               
+--------------------------
+"$user", regress_sp_public
+(1 row)
+
+t                          
+---------------------------
+data in regress_sp_public.x
+(1 row)
+
+step s2b: 
+    ALTER ROLE regress_sp_user2 RENAME TO regress_sp_user1;
+
+
+starting permutation: s1a s3a s1a s3b
+step s1a: 
+    SELECT CURRENT_USER;
+    SHOW search_path;
+    SELECT t FROM x;
+
+current_user    
+----------------
+regress_sp_user1
+(1 row)
+
+search_path               
+--------------------------
+"$user", regress_sp_public
+(1 row)
+
+t                         
+--------------------------
+data in regress_sp_user1.x
+(1 row)
+
+step s3a: 
+    ALTER SCHEMA regress_sp_user1 RENAME TO regress_sp_user2;
+
+step s1a: 
+    SELECT CURRENT_USER;
+    SHOW search_path;
+    SELECT t FROM x;
+
+current_user    
+----------------
+regress_sp_user1
+(1 row)
+
+search_path               
+--------------------------
+"$user", regress_sp_public
+(1 row)
+
+t                          
+---------------------------
+data in regress_sp_public.x
+(1 row)
+
+step s3b: 
+    ALTER SCHEMA regress_sp_user2 RENAME TO regress_sp_user1;
+
