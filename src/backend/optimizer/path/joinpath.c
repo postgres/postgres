@@ -529,7 +529,7 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 		Node	   *expr = (Node *) lfirst(lc);
 		TypeCacheEntry *typentry;
 
-		/* Reject if there are any volatile functions in PHVs */
+		/* Reject if there are any volatile functions in lateral vars */
 		if (contain_volatile_functions(expr))
 		{
 			list_free(*operators);
