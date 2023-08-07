@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-19 11:18+0000\n"
-"PO-Revision-Date: 2023-04-20 08:19+0200\n"
+"POT-Creation-Date: 2023-07-05 06:18+0000\n"
+"PO-Revision-Date: 2023-07-05 12:31+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -67,8 +67,8 @@ msgstr "შემუმშვის პარამეტრ \"%s\"-ის ნ�
 
 #: ../../common/compression.c:331
 #, c-format
-msgid "value for compression option \"%s\" must be a boolean"
-msgstr "შეკუმშვის პარამეტრის \"%s\" მნიშვნელობა ლოგიკური უნდა იყოს"
+msgid "value for compression option \"%s\" must be a Boolean value"
+msgstr "შეკუმშვის პარამეტრის მნიშვნელობა \"%s\" ლოგიკურ მნიშვნელობას უნდა წარმოადგენდეს"
 
 #: ../../common/compression.c:379
 #, c-format
@@ -224,7 +224,7 @@ msgstr "შეკუმშული ფაილში (\"%s\") ჩაწერ�
 msgid "could not close compressed file \"%s\": %m"
 msgstr "შეკუმშული ფაილის (\"%s\") დახურვის შეცდომა: %m"
 
-#: bbstreamer_gzip.c:245
+#: bbstreamer_gzip.c:245 walmethods.c:876
 #, c-format
 msgid "could not initialize compression library"
 msgstr "შეკუმშვის ბიბლიოთეკის ინიციალიზაციის შეცდომა"
@@ -301,8 +301,8 @@ msgstr "შეკუმშვის დამხმარე პროცეს�
 
 #: bbstreamer_zstd.c:116
 #, c-format
-msgid "could not set compression flag for %s: %s"
-msgstr "%s-სთვის შეკუმშვის დონის დაყენების შეცდომა: %s"
+msgid "could not enable long-distance mode: %s"
+msgstr "long-distance რეჟიმი ვერ ჩავრთე: %s"
 
 #: bbstreamer_zstd.c:275
 #, c-format
@@ -1770,25 +1770,41 @@ msgstr "რეპლიკაციის სლოტის (\"%s\") შექ�
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "რეპლიკაციის სლოტის (\"%s\") გადაგდების შეცდომა: მივიღე %d მწკრივი და %d ველი. მოველოდი %d მწკრივს და %d ველს"
 
+#: walmethods.c:721 walmethods.c:1264
+msgid "could not compress data"
+msgstr "მონაცემების შეკუმშვის შეცდომა"
+
+#: walmethods.c:750
+msgid "could not reset compression stream"
+msgstr "შეკუმშვის ნაკადის თავიდან დაწყების შეცდომა"
+
+#: walmethods.c:888
+msgid "implementation error: tar files can't have more than one open file"
+msgstr "განხორციელების შეცდომა: tar ფაილებს ერთზე მეტი ღია ფაილი ვერ ექნებათ"
+
+#: walmethods.c:903
+msgid "could not create tar header"
+msgstr "tar-ის თავსართის შექმნის შეცდომა"
+
+#: walmethods.c:920 walmethods.c:961 walmethods.c:1166 walmethods.c:1179
+msgid "could not change compression parameters"
+msgstr "შეკუმშვის პარამეტრების შეცვლა შეუძლებელა"
+
+#: walmethods.c:1052
+msgid "unlink not supported with compression"
+msgstr "წაშლა შეკუმშვით მხარდაუჭერელია"
+
+#: walmethods.c:1288
+msgid "could not close compression stream"
+msgstr "შეკუმშვის ნაკადის დახურვის შეცდომა"
+
 #, c-format
 #~ msgid "This build does not support compression with %s."
 #~ msgstr "ამ აგებაში %s-ით შეკუმშვის მხარდაჭრა არ არსებობს."
 
-#~ msgid "could not change compression parameters"
-#~ msgstr "შეკუმშვის პარამეტრების შეცვლა შეუძლებელა"
-
 #, c-format
 #~ msgid "could not check file \"%s\""
 #~ msgstr "ფაილის შემოწმება შეუძლებელია: %s"
-
-#~ msgid "could not close compression stream"
-#~ msgstr "შეკუმშვის ნაკადის დახურვის შეცდომა"
-
-#~ msgid "could not compress data"
-#~ msgstr "მონაცემების შეკუმშვის შეცდომა"
-
-#~ msgid "could not create tar header"
-#~ msgstr "tar-ის თავსართის შექმნის შეცდომა"
 
 #, c-format
 #~ msgid "could not determine seek position in file \"%s\": %s"
@@ -1798,11 +1814,9 @@ msgstr "რეპლიკაციის სლოტის (\"%s\") გად�
 #~ msgid "could not find replication slot \"%s\""
 #~ msgstr "რეპლიკაციის სლოტი არ არსებობს: %s"
 
-#~ msgid "could not reset compression stream"
-#~ msgstr "შეკუმშვის ნაკადის თავიდან დაწყების შეცდომა"
-
-#~ msgid "implementation error: tar files can't have more than one open file"
-#~ msgstr "განხორციელების შეცდომა: tar ფაილებს ერთზე მეტი ღია ფაილი ვერ ექნებათ"
+#, c-format
+#~ msgid "could not set compression flag for %s: %s"
+#~ msgstr "%s-სთვის შეკუმშვის დონის დაყენების შეცდომა: %s"
 
 #, c-format
 #~ msgid "log streamer with pid %d exiting"
@@ -1831,6 +1845,3 @@ msgstr "რეპლიკაციის სლოტის (\"%s\") გად�
 #, c-format
 #~ msgid "unknown compression option \"%s\""
 #~ msgstr "შეკუმშვის უცნობი პარამეტრი: \"%s\""
-
-#~ msgid "unlink not supported with compression"
-#~ msgstr "წაშლა შეკუმშვით მხარდაუჭერელია"

@@ -1104,7 +1104,7 @@ msgstr "n'a pas pu déterminer le collationnement à utiliser pour le hachage de
 #: utils/adt/varchar.c:1004 utils/adt/varchar.c:1065 utils/adt/varlena.c:1499
 #, c-format
 msgid "Use the COLLATE clause to set the collation explicitly."
-msgstr "Utilisez la clause COLLARE pour configurer explicitement le collationnement."
+msgstr "Utilisez la clause COLLATE pour configurer explicitement le collationnement."
 
 #: access/hash/hashinsert.c:83
 #, c-format

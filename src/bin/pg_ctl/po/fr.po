@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:05+0200\n"
+"POT-Creation-Date: 2023-07-29 09:18+0000\n"
+"PO-Revision-Date: 2023-07-29 22:45+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -21,19 +21,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../common/exec.c:172
-#, fuzzy, c-format
-#| msgid "invalid binary \"%s\""
+#, c-format
 msgid "invalid binary \"%s\": %m"
-msgstr "binaire « %s » invalide"
+msgstr "binaire « %s » invalide : %m"
 
 #: ../../common/exec.c:215
-#, fuzzy, c-format
-#| msgid "could not read binary \"%s\""
+#, c-format
 msgid "could not read binary \"%s\": %m"
-msgstr "n'a pas pu lire le binaire « %s »"
+msgstr "n'a pas pu lire le binaire « %s » : %m"
 
 #: ../../common/exec.c:223
 #, c-format
@@ -41,10 +39,9 @@ msgid "could not find a \"%s\" to execute"
 msgstr "n'a pas pu trouver un « %s » à exécuter"
 
 #: ../../common/exec.c:250
-#, fuzzy, c-format
-#| msgid "could not reopen file \"%s\" as stderr: %m"
+#, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
-msgstr "n'a pas pu ré-ouvrir le fichier « %s » comme stderr : %m"
+msgstr "n'a pas pu résoudre le chemin « %s » en sa forme absolue : %m"
 
 #: ../../common/exec.c:412
 #, c-format
