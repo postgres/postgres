@@ -24,7 +24,7 @@
 
    <para>
     However, if you use BRIN indexes, it may be advisable to reindex them;
-    see the first changelog entry below.
+    see the third changelog entry below.
    </para>
 
    <para>
@@ -37,6 +37,72 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [cd5f2a357] 2023-08-07 06:05:56 -0700
+Branch: REL_16_STABLE [f53511010] 2023-08-07 06:05:59 -0700
+Branch: REL_15_STABLE [de494ec14] 2023-08-07 06:06:00 -0700
+Branch: REL_14_STABLE [d4648a74b] 2023-08-07 06:06:00 -0700
+Branch: REL_13_STABLE [b1b585e0f] 2023-08-07 06:06:00 -0700
+Branch: REL_12_STABLE [eb044d8f0] 2023-08-07 06:06:00 -0700
+Branch: REL_11_STABLE [919ebb023] 2023-08-07 06:06:01 -0700
+-->
+     <para>
+      Disallow substituting a schema or owner name into an extension script
+      if the name contains a quote, backslash, or dollar sign (Noah Misch)
+     </para>
+
+     <para>
+      This restriction guards against SQL-injection hazards for trusted
+      extensions.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Micah Gate,
+      Valerie Woolard, Tim Carey-Smith, and Christoph Berg for reporting
+      this problem.
+      (CVE-2023-39417)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+Branch: master [c2e08b04c] 2023-08-07 09:28:47 +0100
+Branch: REL_16_STABLE [67a007dc0] 2023-08-07 09:27:09 +0100
+Branch: REL_15_STABLE [cb2ae5741] 2023-08-07 09:24:27 +0100
+-->
+     <para>
+      Fix <command>MERGE</command> to enforce row security policies
+      properly (Dean Rasheed)
+     </para>
+
+     <para>
+      When <command>MERGE</command> performs an <literal>UPDATE</literal>
+      action, it should enforce any <literal>UPDATE</literal> or
+      <literal>SELECT</literal> RLS policies defined on the target table,
+      to be consistent with the way that a plain <command>UPDATE</command>
+      with a <literal>WHERE</literal> clause works.  Instead it was
+      enforcing <literal>INSERT</literal> RLS policies for both
+      <literal>INSERT</literal> and <literal>UPDATE</literal> actions.
+     </para>
+
+     <para>
+      In addition, when <command>MERGE</command> performs a <literal>DO
+      NOTHING</literal> action, it applied the target table's
+      <literal>DELETE</literal> RLS policies to existing rows, even though
+      those rows are not being deleted.  While it's not a security
+      problem, this could result in unwanted errors.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Dean Rasheed for reporting this problem.
+      (CVE-2023-39418)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -235,6 +301,27 @@ Branch: REL_11_STABLE [f6345f03f] 2023-06-19 13:03:17 +1200
       This could give rise to incorrect plans, since the presumed
       uniqueness of rows read from a table might not hold if the index in
       question isn't used to scan the table.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: David Rowley <drowley@postgresql.org>
+Branch: master [990c3650c] 2023-08-07 22:14:21 +1200
+Branch: REL_16_STABLE [ae89129aa] 2023-08-07 22:14:54 +1200
+Branch: REL_15_STABLE [71662373b] 2023-08-07 22:15:23 +1200
+Branch: REL_14_STABLE [bf315354e] 2023-08-07 22:15:50 +1200
+-->
+     <para>
+      Don't Memoize lateral joins with volatile join conditions
+      (Richard Guo)
+     </para>
+
+     <para>
+      Applying Memoize to a sub-plan that contains volatile filter
+      conditions is likely to lead to wrong answers.  The check to avoid
+      doing this missed some cases that can arise when
+      using <literal>LATERAL</literal>.
      </para>
     </listitem>
 
