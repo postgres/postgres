@@ -387,7 +387,11 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	 * and set them up so that we can enforce the appropriate policy depending
 	 * on the final action we take.
 	 *
-	 * We already fetched the SELECT policies above.
+	 * We already fetched the SELECT policies above, to check existing rows,
+	 * but we must also check that new rows created by UPDATE actions are
+	 * visible, if SELECT rights are required for this relation. We don't do
+	 * this for INSERT actions, since an INSERT command would only do this
+	 * check if it had a RETURNING list, and MERGE does not support RETURNING.
 	 *
 	 * We don't push the UPDATE/DELETE USING quals to the RTE because we don't
 	 * really want to apply them while scanning the relation since we don't
@@ -403,16 +407,20 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	 */
 	if (commandType == CMD_MERGE)
 	{
-		List	   *merge_permissive_policies;
-		List	   *merge_restrictive_policies;
+		List	   *merge_update_permissive_policies;
+		List	   *merge_update_restrictive_policies;
+		List	   *merge_delete_permissive_policies;
+		List	   *merge_delete_restrictive_policies;
+		List	   *merge_insert_permissive_policies;
+		List	   *merge_insert_restrictive_policies;
 
 		/*
 		 * Fetch the UPDATE policies and set them up to execute on the
 		 * existing target row before doing UPDATE.
 		 */
 		get_policies_for_relation(rel, CMD_UPDATE, user_id,
-								  &merge_permissive_policies,
-								  &merge_restrictive_policies);
+								  &merge_update_permissive_policies,
+								  &merge_update_restrictive_policies);
 
 		/*
 		 * WCO_RLS_MERGE_UPDATE_CHECK is used to check UPDATE USING quals on
@@ -420,23 +428,59 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		 */
 		add_with_check_options(rel, rt_index,
 							   WCO_RLS_MERGE_UPDATE_CHECK,
-							   merge_permissive_policies,
-							   merge_restrictive_policies,
+							   merge_update_permissive_policies,
+							   merge_update_restrictive_policies,
 							   withCheckOptions,
 							   hasSubLinks,
 							   true);
 
+		/* Enforce the WITH CHECK clauses of the UPDATE policies */
+		add_with_check_options(rel, rt_index,
+							   WCO_RLS_UPDATE_CHECK,
+							   merge_update_permissive_policies,
+							   merge_update_restrictive_policies,
+							   withCheckOptions,
+							   hasSubLinks,
+							   false);
+
 		/*
-		 * Same with DELETE policies.
+		 * Add ALL/SELECT policies as WCO_RLS_UPDATE_CHECK WCOs, to ensure
+		 * that the updated row is visible when executing an UPDATE action, if
+		 * SELECT rights are required for this relation.
+		 */
+		if (rte->requiredPerms & ACL_SELECT)
+		{
+			List	   *merge_select_permissive_policies;
+			List	   *merge_select_restrictive_policies;
+
+			get_policies_for_relation(rel, CMD_SELECT, user_id,
+									  &merge_select_permissive_policies,
+									  &merge_select_restrictive_policies);
+			add_with_check_options(rel, rt_index,
+								   WCO_RLS_UPDATE_CHECK,
+								   merge_select_permissive_policies,
+								   merge_select_restrictive_policies,
+								   withCheckOptions,
+								   hasSubLinks,
+								   true);
+		}
+
+		/*
+		 * Fetch the DELETE policies and set them up to execute on the
+		 * existing target row before doing DELETE.
 		 */
 		get_policies_for_relation(rel, CMD_DELETE, user_id,
-								  &merge_permissive_policies,
-								  &merge_restrictive_policies);
+								  &merge_delete_permissive_policies,
+								  &merge_delete_restrictive_policies);
 
+		/*
+		 * WCO_RLS_MERGE_DELETE_CHECK is used to check DELETE USING quals on
+		 * the existing target row.
+		 */
 		add_with_check_options(rel, rt_index,
 							   WCO_RLS_MERGE_DELETE_CHECK,
-							   merge_permissive_policies,
-							   merge_restrictive_policies,
+							   merge_delete_permissive_policies,
+							   merge_delete_restrictive_policies,
 							   withCheckOptions,
 							   hasSubLinks,
 							   true);
@@ -447,22 +491,13 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		 * withCheckOptions.
 		 */
 		get_policies_for_relation(rel, CMD_INSERT, user_id,
-								  &merge_permissive_policies,
-								  &merge_restrictive_policies);
+								  &merge_insert_permissive_policies,
+								  &merge_insert_restrictive_policies);
 
 		add_with_check_options(rel, rt_index,
 							   WCO_RLS_INSERT_CHECK,
-							   merge_permissive_policies,
-							   merge_restrictive_policies,
-							   withCheckOptions,
-							   hasSubLinks,
-							   false);
-
-		/* Enforce the WITH CHECK clauses of the UPDATE policies */
-		add_with_check_options(rel, rt_index,
-							   WCO_RLS_UPDATE_CHECK,
-							   merge_permissive_policies,
-							   merge_restrictive_policies,
+							   merge_insert_permissive_policies,
+							   merge_insert_restrictive_policies,
 							   withCheckOptions,
 							   hasSubLinks,
 							   false);

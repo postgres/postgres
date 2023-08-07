@@ -821,10 +821,10 @@ ALTER TABLE document ADD COLUMN dnotes text DEFAULT '';
 CREATE POLICY p1 ON document FOR SELECT USING (true);
 -- one may insert documents only authored by them
 CREATE POLICY p2 ON document FOR INSERT WITH CHECK (dauthor = current_user);
--- one may only update documents in 'novel' category
+-- one may only update documents in 'novel' category and new dlevel must be > 0
 CREATE POLICY p3 ON document FOR UPDATE
   USING (cid = (SELECT cid from category WHERE cname = 'novel'))
-  WITH CHECK (dauthor = current_user);
+  WITH CHECK (dlevel > 0);
 -- one may only delete documents in 'manga' category
 CREATE POLICY p4 ON document FOR DELETE
   USING (cid = (SELECT cid from category WHERE cname = 'manga'));
@@ -833,12 +833,12 @@ SELECT * FROM document;
 
 SET SESSION AUTHORIZATION regress_rls_bob;
 
--- Fails, since update violates WITH CHECK qual on dauthor
+-- Fails, since update violates WITH CHECK qual on dlevel
 MERGE INTO document d
 USING (SELECT 1 as sdid) s
 ON did = s.sdid
 WHEN MATCHED THEN
-	UPDATE SET dnotes = dnotes || ' notes added by merge1 ', dauthor = 'regress_rls_alice';
+	UPDATE SET dnotes = dnotes || ' notes added by merge1 ', dlevel = 0;
 
 -- Should be OK since USING and WITH CHECK quals pass
 MERGE INTO document d
@@ -847,12 +847,12 @@ ON did = s.sdid
 WHEN MATCHED THEN
 	UPDATE SET dnotes = dnotes || ' notes added by merge2 ';
 
--- Even when dauthor is updated explicitly, but to the existing value
+-- Even when dlevel is updated explicitly, but to the existing value
 MERGE INTO document d
 USING (SELECT 1 as sdid) s
 ON did = s.sdid
 WHEN MATCHED THEN
-	UPDATE SET dnotes = dnotes || ' notes added by merge3 ', dauthor = 'regress_rls_bob';
+	UPDATE SET dnotes = dnotes || ' notes added by merge3 ', dlevel = 1;
 
 -- There is a MATCH for did = 3, but UPDATE's USING qual does not allow
 -- updating an item in category 'science fiction'
@@ -891,6 +891,15 @@ WHEN MATCHED AND dnotes <> '' THEN
 	UPDATE SET dnotes = dnotes || ' notes added by merge '
 WHEN MATCHED THEN
 	DELETE;
+
+-- OK if DELETE is replaced with DO NOTHING
+MERGE INTO document d
+USING (SELECT 4 as sdid) s
+ON did = s.sdid
+WHEN MATCHED AND dnotes <> '' THEN
+	UPDATE SET dnotes = dnotes || ' notes added by merge '
+WHEN MATCHED THEN
+	DO NOTHING;
 
 SELECT * FROM document WHERE did = 4;
 
@@ -941,23 +950,48 @@ WHEN NOT MATCHED THEN
 	INSERT VALUES (12, 11, 1, 'regress_rls_bob', 'another novel');
 
 -- drop and create a new SELECT policy which prevents us from reading
--- any document except with category 'magna'
+-- any document except with category 'novel'
 RESET SESSION AUTHORIZATION;
 DROP POLICY p1 ON document;
 CREATE POLICY p1 ON document FOR SELECT
-  USING (cid = (SELECT cid from category WHERE cname = 'manga'));
+  USING (cid = (SELECT cid from category WHERE cname = 'novel'));
 
 SET SESSION AUTHORIZATION regress_rls_bob;
 
 -- MERGE can no longer see the matching row and hence attempts the
 -- NOT MATCHED action, which results in unique key violation
 MERGE INTO document d
-USING (SELECT 1 as sdid) s
+USING (SELECT 7 as sdid) s
 ON did = s.sdid
 WHEN MATCHED THEN
 	UPDATE SET dnotes = dnotes || ' notes added by merge5 '
 WHEN NOT MATCHED THEN
 	INSERT VALUES (12, 11, 1, 'regress_rls_bob', 'another novel');
+
+-- UPDATE action fails if new row is not visible
+MERGE INTO document d
+USING (SELECT 1 as sdid) s
+ON did = s.sdid
+WHEN MATCHED THEN
+	UPDATE SET dnotes = dnotes || ' notes added by merge6 ',
+			   cid = (SELECT cid from category WHERE cname = 'technology');
+
+-- but OK if new row is visible
+MERGE INTO document d
+USING (SELECT 1 as sdid) s
+ON did = s.sdid
+WHEN MATCHED THEN
+	UPDATE SET dnotes = dnotes || ' notes added by merge7 ',
+			   cid = (SELECT cid from category WHERE cname = 'novel');
+
+-- OK to insert a new row that is not visible
+MERGE INTO document d
+USING (SELECT 13 as sdid) s
+ON did = s.sdid
+WHEN MATCHED THEN
+	UPDATE SET dnotes = dnotes || ' notes added by merge8 '
+WHEN NOT MATCHED THEN
+	INSERT VALUES (13, 44, 1, 'regress_rls_bob', 'new manga');
 
 RESET SESSION AUTHORIZATION;
 -- drop the restrictive SELECT policy so that we can look at the
