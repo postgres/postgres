@@ -452,15 +452,3 @@ msgstr "no se pudo convertir el objeto Unicode de Python a bytes"
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "no se pudo extraer bytes desde la cadena codificada"
-
-#, c-format
-#~ msgid "array size exceeds the maximum allowed"
-#~ msgstr "el tamaño del array excede el máximo permitido"
-
-#, c-format
-#~ msgid "wrong length of inner sequence: has length %d, but %d was expected"
-#~ msgstr "largo incorrecto de secuencia interna: tiene largo %d, pero se esperaba %d"
-
-#, c-format
-#~ msgid "To construct a multidimensional array, the inner sequences must all have the same length."
-#~ msgstr "Para construir un array multidimensional, las secuencias internas deben tener todas el mismo largo."

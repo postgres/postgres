@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-05-07 16:49+0000\n"
-"PO-Revision-Date: 2022-10-20 09:05+0200\n"
+"PO-Revision-Date: 2023-05-24 19:23+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -775,7 +775,7 @@ msgstr "  proveedor:    %s\n"
 #: initdb.c:2367
 #, c-format
 msgid "  ICU locale:  %s\n"
-msgstr "  Locale IC:    %s\n"
+msgstr "  Locale ICU:   %s\n"
 
 #: initdb.c:2368
 #, c-format
