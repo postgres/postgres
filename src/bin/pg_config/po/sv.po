@@ -1,13 +1,13 @@
 # Swedish message translation file for pg_config.
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 14\n"
+"Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-06 22:15+0000\n"
-"PO-Revision-Date: 2021-11-07 06:44+0100\n"
+"POT-Creation-Date: 2023-08-01 14:18+0000\n"
+"PO-Revision-Date: 2023-08-01 22:12+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -23,42 +23,32 @@ msgstr ""
 msgid "not recorded"
 msgstr "ej sparad"
 
-#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "kunde inte identifiera aktuell katalog: %m"
+msgid "invalid binary \"%s\": %m"
+msgstr "ogiltig binär \"%s\": %m"
 
-#: ../../common/exec.c:155
+#: ../../common/exec.c:215
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "ogiltig binär \"%s\""
+msgid "could not read binary \"%s\": %m"
+msgstr "kunde inte läsa binär \"%s\": %m"
 
-#: ../../common/exec.c:205
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "kunde inte läsa binär \"%s\""
-
-#: ../../common/exec.c:213
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "kunde inte hitta en \"%s\" att köra"
 
-#: ../../common/exec.c:269 ../../common/exec.c:308
+#: ../../common/exec.c:250
 #, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "kunde inte byta katalog till \"%s\": %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "kunde inte skriva om sökväg \"%s\" till absolut sökväg: %m"
 
-#: ../../common/exec.c:286
-#, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "kan inte läsa symbolisk länk \"%s\": %m"
-
-#: ../../common/exec.c:409
+#: ../../common/exec.c:412
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() misslyckades: %m"
 
-#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
 msgid "out of memory"
 msgstr "slut på minne"
 
@@ -255,3 +245,15 @@ msgstr "%s: kunde inte hitta det egna programmets körbara fil\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: ogiltigt argument: %s\n"
+
+#, c-format
+#~ msgid "could not change directory to \"%s\": %m"
+#~ msgstr "kunde inte byta katalog till \"%s\": %m"
+
+#, c-format
+#~ msgid "could not identify current directory: %m"
+#~ msgstr "kunde inte identifiera aktuell katalog: %m"
+
+#, c-format
+#~ msgid "could not read symbolic link \"%s\": %m"
+#~ msgstr "kan inte läsa symbolisk länk \"%s\": %m"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-19 11:20+0000\n"
-"PO-Revision-Date: 2023-04-20 08:20+0200\n"
+"POT-Creation-Date: 2023-07-05 06:20+0000\n"
+"PO-Revision-Date: 2023-07-05 12:48+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -112,22 +112,22 @@ msgid_plural "(%lu rows)"
 msgstr[0] "(%lu მწკრივი)"
 msgstr[1] "(%lu მწკრივი)"
 
-#: ../../fe_utils/print.c:3153
+#: ../../fe_utils/print.c:3154
 #, c-format
 msgid "Interrupted\n"
 msgstr "შეწყვეტილია\n"
 
-#: ../../fe_utils/print.c:3217
+#: ../../fe_utils/print.c:3218
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "ცხრილის შემცველობაზე თავსართის დამატება შეუძლებელია: სვეტების რაოდენობა %d გადაჭარბებულია.\n"
 
-#: ../../fe_utils/print.c:3257
+#: ../../fe_utils/print.c:3258
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "ცხრილის შემცველობაზე უჯრედის დამატება შეუძლებელია: უჯრედების რაოდენობა %d-ზე მეტია.\n"
 
-#: ../../fe_utils/print.c:3515
+#: ../../fe_utils/print.c:3516
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "გამოტანის არასწორი ფორმატი (შიდა შეცდომა): %d"
@@ -143,14 +143,14 @@ msgid "Query was: %s"
 msgstr "მოთხოვნის შინაარსი: %s"
 
 #: clusterdb.c:113 clusterdb.c:132 createdb.c:144 createdb.c:163
-#: createuser.c:194 createuser.c:209 dropdb.c:104 dropdb.c:113 dropdb.c:121
+#: createuser.c:195 createuser.c:210 dropdb.c:104 dropdb.c:113 dropdb.c:121
 #: dropuser.c:95 dropuser.c:110 dropuser.c:123 pg_isready.c:97 pg_isready.c:111
 #: reindexdb.c:174 reindexdb.c:193 vacuumdb.c:277 vacuumdb.c:297
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: clusterdb.c:130 createdb.c:161 createuser.c:207 dropdb.c:119 dropuser.c:108
+#: clusterdb.c:130 createdb.c:161 createuser.c:208 dropdb.c:119 dropuser.c:108
 #: pg_isready.c:109 reindexdb.c:191 vacuumdb.c:295
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -190,7 +190,7 @@ msgstr ""
 "%s ალაგებს ბაზაში ადრე დალაგებული ცხრილებს.\n"
 "\n"
 
-#: clusterdb.c:263 createdb.c:291 createuser.c:414 dropdb.c:172 dropuser.c:170
+#: clusterdb.c:263 createdb.c:288 createuser.c:415 dropdb.c:172 dropuser.c:170
 #: pg_isready.c:226 reindexdb.c:748 vacuumdb.c:1127
 #, c-format
 msgid "Usage:\n"
@@ -201,7 +201,7 @@ msgstr "გამოყენება:\n"
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [პარამეტრი]... [ბაზისსახელი]\n"
 
-#: clusterdb.c:265 createdb.c:293 createuser.c:416 dropdb.c:174 dropuser.c:172
+#: clusterdb.c:265 createdb.c:290 createuser.c:417 dropdb.c:174 dropuser.c:172
 #: pg_isready.c:229 reindexdb.c:750 vacuumdb.c:1129
 #, c-format
 msgid ""
@@ -221,7 +221,7 @@ msgstr "  -a, --all                 ყველა ბაზის დაკლ
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=ბაზისსახელი       დასაკლასერებელი ბაზის სახელი\n"
 
-#: clusterdb.c:268 createuser.c:422 dropdb.c:175 dropuser.c:173
+#: clusterdb.c:268 createuser.c:423 dropdb.c:175 dropuser.c:173
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo-queries       სერვერზე გაგზავნილი ბრძანებების გამოტანა\n"
@@ -241,17 +241,17 @@ msgstr "  -t, --table=ცხრილი         მხოლოდ მითი
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose                   დამატებითი ინფორმაციის გამოტანა\n"
 
-#: clusterdb.c:272 createuser.c:437 dropdb.c:178 dropuser.c:176
+#: clusterdb.c:272 createuser.c:439 dropdb.c:178 dropuser.c:176
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: clusterdb.c:273 createuser.c:445 dropdb.c:180 dropuser.c:178
+#: clusterdb.c:273 createuser.c:447 dropdb.c:180 dropuser.c:178
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: clusterdb.c:274 createdb.c:309 createuser.c:446 dropdb.c:181 dropuser.c:179
+#: clusterdb.c:274 createdb.c:306 createuser.c:448 dropdb.c:181 dropuser.c:179
 #: pg_isready.c:235 reindexdb.c:765 vacuumdb.c:1158
 #, c-format
 msgid ""
@@ -261,12 +261,12 @@ msgstr ""
 "\n"
 "შეერთების პარამეტრები:\n"
 
-#: clusterdb.c:275 createuser.c:447 dropdb.c:182 dropuser.c:180 vacuumdb.c:1159
+#: clusterdb.c:275 createuser.c:449 dropdb.c:182 dropuser.c:180 vacuumdb.c:1159
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME      მონაცემთა ბაზის სერვერის ჰოსტის ან სოკეტის საქაღალდე\n"
 
-#: clusterdb.c:276 createuser.c:448 dropdb.c:183 dropuser.c:181 vacuumdb.c:1160
+#: clusterdb.c:276 createuser.c:450 dropdb.c:183 dropuser.c:181 vacuumdb.c:1160
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT          მონაცემთა ბაზის სერვერის პორტი\n"
@@ -276,12 +276,12 @@ msgstr "  -p, --port=PORT          მონაცემთა ბაზის �
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=მომხმარებელი  ბაზის მომხმარებლის სახელი\n"
 
-#: clusterdb.c:278 createuser.c:450 dropdb.c:185 dropuser.c:183 vacuumdb.c:1162
+#: clusterdb.c:278 createuser.c:452 dropdb.c:185 dropuser.c:183 vacuumdb.c:1162
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password        არასოდეს მკითხო პაროლი\n"
 
-#: clusterdb.c:279 createuser.c:451 dropdb.c:186 dropuser.c:184 vacuumdb.c:1163
+#: clusterdb.c:279 createuser.c:453 dropdb.c:186 dropuser.c:184 vacuumdb.c:1163
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password           პაროლის ყოველთვის კითხვა\n"
@@ -300,7 +300,7 @@ msgstr ""
 "\n"
 "დაკლასტერების შესახებ მეტი ინფორმაციის მიღება SQL ბრძანების, CLUSTER, დეტალებში შეგიძლიათ.\n"
 
-#: clusterdb.c:282 createdb.c:317 createuser.c:452 dropdb.c:188 dropuser.c:185
+#: clusterdb.c:282 createdb.c:314 createuser.c:454 dropdb.c:188 dropuser.c:185
 #: pg_isready.c:240 reindexdb.c:773 vacuumdb.c:1166
 #, c-format
 msgid ""
@@ -310,7 +310,7 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: clusterdb.c:283 createdb.c:318 createuser.c:453 dropdb.c:189 dropuser.c:186
+#: clusterdb.c:283 createdb.c:315 createuser.c:455 dropdb.c:189 dropuser.c:186
 #: pg_isready.c:241 reindexdb.c:774 vacuumdb.c:1167
 #, c-format
 msgid "%s home page: <%s>\n"
@@ -345,22 +345,22 @@ msgstr "%s (%s/%s) "
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "უპასუხეთ \"%s\" ან \"%s\".\n"
 
-#: createdb.c:178
+#: createdb.c:170
 #, c-format
 msgid "\"%s\" is not a valid encoding name"
 msgstr "\"%s\" კოდირების სწორ სახელს არ წარმოადგენს"
 
-#: createdb.c:253
+#: createdb.c:250
 #, c-format
 msgid "database creation failed: %s"
 msgstr "ბაზის შექმნის შეცდომა:%s"
 
-#: createdb.c:272
+#: createdb.c:269
 #, c-format
 msgid "comment creation failed (database was created): %s"
 msgstr "კომენტარის შექმნის შეცდომა (ბაზა შეიქმნა): %s"
 
-#: createdb.c:290
+#: createdb.c:287
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -369,52 +369,52 @@ msgstr ""
 "%s PostgreSQL-ის ბაზას ქმნის.\n"
 "\n"
 
-#: createdb.c:292
+#: createdb.c:289
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [პარამეტრი]... [ბაზისსახელი] [აღწერა]\n"
 
-#: createdb.c:294
+#: createdb.c:291
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=ცხრილებისსივრცე  მონაცემთა ბაზის ცხრილების ნაგულისხმები სივრცე\n"
 
-#: createdb.c:295 reindexdb.c:754
+#: createdb.c:292 reindexdb.c:754
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo-queries       სერვერზე გაგზავნილი ბრძანებების გამოტანა\n"
 
-#: createdb.c:296
+#: createdb.c:293
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  \\encoding [კოდირება]   კლიენტის კოდირების ჩვენება ან დაყენება\n"
 
-#: createdb.c:297
+#: createdb.c:294
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -l, --locale=ენა          ბაზის ენის პარამეტრები\n"
 
-#: createdb.c:298
+#: createdb.c:295
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=ენა      ბაზის LC_COLLATE პარამეტრი\n"
 
-#: createdb.c:299
+#: createdb.c:296
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=ენა        ბაზის LC_CTYPE პარამეტრი\n"
 
-#: createdb.c:300
+#: createdb.c:297
 #, c-format
 msgid "      --icu-locale=LOCALE      ICU locale setting for the database\n"
 msgstr "      --icu-locale=ენა      ბაზის ICU ენის პარამეტრი\n"
 
-#: createdb.c:301
+#: createdb.c:298
 #, c-format
 msgid "      --icu-rules=RULES        ICU rules setting for the database\n"
 msgstr "      --icu-rules=წესი      ბაზის ICU წესის პარამეტრი\n"
 
-#: createdb.c:302
+#: createdb.c:299
 #, c-format
 msgid ""
 "      --locale-provider={libc|icu}\n"
@@ -423,62 +423,62 @@ msgstr ""
 "      --locale-provider={libc|icu}\n"
 "                               ბაზის ნაგულისხმები კოლაციის ენის მომწოდებელი\n"
 
-#: createdb.c:304
+#: createdb.c:301
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=მფლობელი            ახალი ბაზის მფლობელი მომხმარებლის სახელი\n"
 
-#: createdb.c:305
+#: createdb.c:302
 #, c-format
 msgid "  -S, --strategy=STRATEGY      database creation strategy wal_log or file_copy\n"
 msgstr "  -S, --strategy=სტრატეგია      ბაზის შექმნის სტრატეგია: wal_log ან file_copy\n"
 
-#: createdb.c:306
+#: createdb.c:303
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=შაბლონი      ბაზის დასაკოპირებელი შაბლონი\n"
 
-#: createdb.c:307 reindexdb.c:763
+#: createdb.c:304 reindexdb.c:763
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: createdb.c:308 reindexdb.c:764
+#: createdb.c:305 reindexdb.c:764
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: createdb.c:310 reindexdb.c:766
+#: createdb.c:307 reindexdb.c:766
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME      მონაცემთა ბაზის სერვერის ჰოსტის ან სოკეტის საქაღალდე\n"
 
-#: createdb.c:311 reindexdb.c:767
+#: createdb.c:308 reindexdb.c:767
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT          მონაცემთა ბაზის სერვერის პორტი\n"
 
-#: createdb.c:312 reindexdb.c:768
+#: createdb.c:309 reindexdb.c:768
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=მომხმარებელი  ბაზის მომხმარებლის სახელი\n"
 
-#: createdb.c:313 reindexdb.c:769
+#: createdb.c:310 reindexdb.c:769
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password        არასოდეს მკითხო პაროლი\n"
 
-#: createdb.c:314 reindexdb.c:770
+#: createdb.c:311 reindexdb.c:770
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password           პაროლის ყოველთვის კითხვა\n"
 
-#: createdb.c:315 reindexdb.c:771
+#: createdb.c:312 reindexdb.c:771
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "      --maintenance-db=ბაზისსახელი     ალტერნატიული საავარიო ბაზა\n"
 
-#: createdb.c:316
+#: createdb.c:313
 #, c-format
 msgid ""
 "\n"
@@ -487,46 +487,46 @@ msgstr ""
 "\n"
 "ნაგულისხმებად შექმნილი ბაზის სახელად მიმდინარე მომხმარებლის სახელი გამოიყენება.\n"
 
-#: createuser.c:217
+#: createuser.c:218
 msgid "Enter name of role to add: "
 msgstr "შეიყვანეთ დასამატებელი როლის სახელი: "
 
-#: createuser.c:232
+#: createuser.c:233
 msgid "Enter password for new role: "
 msgstr "შეყვანეთ ახალი როლის პაროლი: "
 
-#: createuser.c:233
+#: createuser.c:234
 msgid "Enter it again: "
 msgstr "შეიყვანეთ კდევ ერთხელ: "
 
-#: createuser.c:236
+#: createuser.c:237
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "პაროლები არ ემთხვევა.\n"
 
-#: createuser.c:244
+#: createuser.c:245
 msgid "Shall the new role be a superuser?"
 msgstr "იქნება ახალი როლი ზემომხმარებელი?"
 
-#: createuser.c:259
+#: createuser.c:260
 msgid "Shall the new role be allowed to create databases?"
 msgstr "ექნება ახალ როლს ბაზების შექმნის უფლება?"
 
-#: createuser.c:267
+#: createuser.c:268
 msgid "Shall the new role be allowed to create more new roles?"
 msgstr "ექნება ახალ როლს სხვა როლების შექმნს უფლება?"
 
-#: createuser.c:308
+#: createuser.c:309
 #, c-format
 msgid "password encryption failed: %s"
 msgstr "პაროლის დაშიფვრის შეცდომა: %s"
 
-#: createuser.c:399
+#: createuser.c:400
 #, c-format
 msgid "creation of new role failed: %s"
 msgstr "ახალი როლის შექმნის შეცდომა: %s"
 
-#: createuser.c:413
+#: createuser.c:414
 #, c-format
 msgid ""
 "%s creates a new PostgreSQL role.\n"
@@ -535,44 +535,46 @@ msgstr ""
 "%s PostgreSQL-ის როლს ქმნის.\n"
 "\n"
 
-#: createuser.c:415 dropuser.c:171
+#: createuser.c:416 dropuser.c:171
 #, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
 msgstr "  %s [პარამეტრი]... [როლისსახელი]\n"
 
-#: createuser.c:417
+#: createuser.c:418
 #, c-format
-#| msgid ""
-#| "  -i, --inherit             role inherits privileges of roles it is a\n"
-#| "                            member of (default)\n"
 msgid ""
-"  -a, --admin=ROLE          this role will be a member of new role with admin\n"
+"  -a, --with-admin=ROLE     ROLE will be a member of new role with admin\n"
 "                            option\n"
 msgstr ""
-"  -a, --admin=როლი          ეს როლი ახალი როლის წევრი იქნება, ადმინისტრირების\n"
+"  -a, --admin=როლი          როლი ახალი როლის წევრი იქნება, ადმინისტრირების\n"
 "                            პარამეტრით\n"
 
-#: createuser.c:419
+#: createuser.c:420
 #, c-format
 msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr "  -c, --connection-limit=N  როლის შეერთებების ლიმიტი (ნაგულისხმები: ლიმიტის გარეშე)\n"
 
-#: createuser.c:420
+#: createuser.c:421
 #, c-format
 msgid "  -d, --createdb            role can create new databases\n"
 msgstr "  -d, --createdb            როლს შეუძლია ახალი ბაზების შექმნა\n"
 
-#: createuser.c:421
+#: createuser.c:422
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
 msgstr "  -D, --no-createdb         როლს ბაზების შექმნა არ შეუძლია (ნაგულისხმები)\n"
 
-#: createuser.c:423
-#, c-format
-msgid "  -g, --role=ROLE           new role will be a member of this role\n"
-msgstr "  -g, --role=როლი           ახალი როლი ამ როლის წევრი იქნება\n"
-
 #: createuser.c:424
+#, c-format
+msgid "  -g, --member-of=ROLE      new role will be a member of ROLE\n"
+msgstr "  -g, --member-of=როლი           ახალი როლი ამ როლის წევრი იქნება\n"
+
+#: createuser.c:425
+#, c-format
+msgid "  --role=ROLE               (same as --member-of, deprecated)\n"
+msgstr "  --role=როლი           (იგივე, რაც --member-of, რომელიც მოძველებულია)\n"
+
+#: createuser.c:426
 #, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
@@ -581,61 +583,61 @@ msgstr ""
 "  -i, --inherit             რომლი მემკვიდრეობით იღებს იმ როლებსაც, რომლის\n"
 "                            წევრიც თვითონაა (ნაგულისხმები)\n"
 
-#: createuser.c:426
+#: createuser.c:428
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          როლი პრივილეგიებს მემკვიდრეობით არ მიიღებს\n"
 
-#: createuser.c:427
+#: createuser.c:429
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr "  -l, --login               როლით შესვლა შეიძლება (ნაგულისხმები)\n"
 
-#: createuser.c:428
+#: createuser.c:430
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            როლს შესვლა არ შეუძლია\n"
 
-#: createuser.c:429
+#: createuser.c:431
 #, c-format
-msgid "  -m, --member=ROLE         this role will be a member of new role\n"
-msgstr "  -m, --member=როლი           ეს როლი ახალი როლის წევრი იქნება\n"
+msgid "  -m, --with-member=ROLE    ROLE will be a member of new role\n"
+msgstr "  -m, --with-member=როლი           როლი ახალი როლის წევრი იქნება\n"
 
-#: createuser.c:430
+#: createuser.c:432
 #, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
 msgstr "  -P, --pwprompt            როლისთვის პაროლის მინიჭება\n"
 
-#: createuser.c:431
+#: createuser.c:433
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
 msgstr "  -r, --createrole          როლს ახალი როლების შექმნა შეუძლია\n"
 
-#: createuser.c:432
+#: createuser.c:434
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles (default)\n"
 msgstr "  -R, --no-createrole       როლს ახალი როლების შექმნა არ შეუძლია (ნაგულისხმები)\n"
 
-#: createuser.c:433
+#: createuser.c:435
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           როლი ახალი ზემომხმარებელი იქნება\n"
 
-#: createuser.c:434
+#: createuser.c:436
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
 msgstr "  -S, --no-superuser        როლი ზემომხმარებელი არ იქნება (ნაგულისხმები)\n"
 
-#: createuser.c:435
+#: createuser.c:437
 #, c-format
 msgid ""
 "  -v, --valid-until=TIMESTAMP\n"
-"                            password expiration date for role\n"
+"                            password expiration date and time for role\n"
 msgstr ""
 "  -v, --valid-until=დროისშტამპი\n"
-"                            პაროლის ამოწურვის თარიღი როლისთვის\n"
+"                            პაროლის ამოწურვის თარიღი და დრო როლისთვის\n"
 
-#: createuser.c:438
+#: createuser.c:440
 #, c-format
 msgid ""
 "  --interactive             prompt for missing role name and attributes rather\n"
@@ -644,16 +646,13 @@ msgstr ""
 "  --interactive             ნაგულისხმები მნიშვნელობების გამოყენების მაგიერ როლის \n"
 "                            ნაკლული სახელისა და ატრიბუტების ინტერაქტიურად კითხვაs\n"
 
-#: createuser.c:440
+#: createuser.c:442
 #, c-format
 msgid "  --bypassrls               role can bypass row-level security (RLS) policy\n"
 msgstr "  --bypassrls               როლს შეუძლია აიცილოს მწკრივის დონის უსაფრთხოების (RLS) წესები\n"
 
-#: createuser.c:441
+#: createuser.c:443
 #, c-format
-#| msgid ""
-#| "  -i, --inherit             role inherits privileges of roles it is a\n"
-#| "                            member of (default)\n"
 msgid ""
 "  --no-bypassrls            role cannot bypass row-level security (RLS) policy\n"
 "                            (default)\n"
@@ -661,17 +660,17 @@ msgstr ""
 "  --no-bypassrls            როლს მწკრივის დონის უსაფრთხოების წესების (RLS) აცილება\n"
 "                            არ შეუძლია (ნაგულისხმები)\n"
 
-#: createuser.c:443
+#: createuser.c:445
 #, c-format
 msgid "  --replication             role can initiate replication\n"
 msgstr "  --replication             როლს შეუძლია რეპლიკაციის ინიცირება\n"
 
-#: createuser.c:444
+#: createuser.c:446
 #, c-format
 msgid "  --no-replication          role cannot initiate replication (default)\n"
 msgstr "  --no-replication          როლს რეპლიკაციის ინიცირება არ შეუძლია (ნაგულისხმები)\n"
 
-#: createuser.c:449
+#: createuser.c:451
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr "  -U, --username=მომხმარებელი   სერვერთან მიერთების მომხმარებლის სახელი (ის არა, რომელსაც ქმნით)\n"
@@ -1169,7 +1168,6 @@ msgstr "      --no-index-cleanup          ინდექსის ჩანა�
 
 #: vacuumdb.c:1142
 #, c-format
-#| msgid "  -P, --progress           show progress information\n"
 msgid "      --no-process-main           skip the main relation\n"
 msgstr "      --no-process-main           მთავარი ურთიერთობის გამოტოვება\n"
 

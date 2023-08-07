@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-06-07 04:08+0000\n"
-"PO-Revision-Date: 2023-06-07 09:07+0200\n"
+"POT-Creation-Date: 2023-05-17 01:38+0000\n"
+"PO-Revision-Date: 2022-09-25 19:18+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -448,3 +448,15 @@ msgstr "\"Python Unicode\" ტიპის ობიექტის ბაიტ
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "ბაიტების ამოღების შეცდომა კოდირებული სტრიქონიდან"
+
+#, c-format
+#~ msgid "To construct a multidimensional array, the inner sequences must all have the same length."
+#~ msgstr "მრავალგანზომილებიანი მასივის ასაშენებლად ყველა შიდა მიმდევრობის სიგრძე ტოლი უნდა იყოს."
+
+#, c-format
+#~ msgid "array size exceeds the maximum allowed"
+#~ msgstr "მასივის ზომა მაქსიმალურ დასაშვებს აჭარბებს"
+
+#, c-format
+#~ msgid "wrong length of inner sequence: has length %d, but %d was expected"
+#~ msgstr "შიდა მიმდევრობის არასწორი სიგრძე: სიგრძე: %d. უნდა იყოს: %d"

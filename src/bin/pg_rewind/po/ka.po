@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-19 11:21+0000\n"
-"PO-Revision-Date: 2023-04-20 08:19+0200\n"
+"POT-Creation-Date: 2023-07-05 06:21+0000\n"
+"PO-Revision-Date: 2023-07-05 12:42+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -61,8 +61,8 @@ msgstr "სტრიქონი მოულოდნელად სრულ�
 
 #: ../../common/percentrepl.c:119
 #, c-format
-msgid "String contains unexpected escape sequence \"%c\"."
-msgstr "სტრიქონი მოულოდნელ სპეციალური სიმბოლოების მიმდევრობას \"%c\" შეიცავს."
+msgid "String contains unexpected placeholder \"%%%c\"."
+msgstr "სტრიქონი მოულოდნელ ადგილმჭერს \"%%%c\" შეიცავს."
 
 #: ../../common/restricted_token.c:60
 #, c-format
@@ -840,7 +840,7 @@ msgstr "ჩანაწერის არასწორი წანაცვ�
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord მოთხოვნილია %X/%X-ის მიერ"
 
-#: xlogreader.c:676 xlogreader.c:1123
+#: xlogreader.c:676 xlogreader.c:1119
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "ჩანაწერის არასწორი სიგრძე მისამართზე %X/%X: მოველოდი მინიმუმ %u, მივიღე %u"
@@ -865,137 +865,132 @@ msgstr "contrecord ალამი მისამართზე %X/%X არ �
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "contrecord -ის არასწორი სიგრძე %u (მოველოდი %lld) მისამართზე %X/%X"
 
-#: xlogreader.c:924
-#, c-format
-msgid "missing contrecord at %X/%X"
-msgstr "contrecord მისამართზე %X/%X არ არსებობს"
-
-#: xlogreader.c:1131
+#: xlogreader.c:1127
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "რესურსის მმართველის არასწორი ID %u მისამართზე %X/%X"
 
-#: xlogreader.c:1144 xlogreader.c:1160
+#: xlogreader.c:1140 xlogreader.c:1156
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "ჩანაწერი არასწორი წინა ბმულით %X/%X მისამართზე %X/%X"
 
-#: xlogreader.c:1196
+#: xlogreader.c:1192
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "რესურსის მმართველის მონაცემების არასწორი საკონტროლო რიცხვი ჩანაწერში მისამართზე %X/%X"
 
-#: xlogreader.c:1230
+#: xlogreader.c:1226
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "არასწორი მაგიური რიცხვი %04X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
 
-#: xlogreader.c:1245 xlogreader.c:1287
+#: xlogreader.c:1241 xlogreader.c:1283
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "არასწორი საინფორმაციო ბიტები %04X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
 
-#: xlogreader.c:1261
+#: xlogreader.c:1257
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WAL ფაილი სხვა ბაზიდანაა: WAL ფაილის ბაზის იდენტიფიკატორია %llu, pg_control-ის ბაზის სისტემის იდენტიფიკატორი კი %llu"
 
-#: xlogreader.c:1269
+#: xlogreader.c:1265
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL ფაილი სხვა ბაზის სიტემიდანაა: სეგმანტის არასწორი ზომა გვერდის თავსართში"
 
-#: xlogreader.c:1275
+#: xlogreader.c:1271
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL ფაილი სხვა მონაცემთა ბაზის სისტემიდანაა: გვერდის თავსართში მითითებული XLOG_BLKSZ არასწორია"
 
-#: xlogreader.c:1307
+#: xlogreader.c:1303
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "მოულოდნელი pageaddr %X/%X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
 
-#: xlogreader.c:1333
+#: xlogreader.c:1329
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "მიმდევრობის-გარე დროის ხაზის ID %u (%u-ის შემდეგ) ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
 
-#: xlogreader.c:1739
+#: xlogreader.c:1735
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "ურიგო block_id %u მისამართზე %X/%X"
 
-#: xlogreader.c:1763
+#: xlogreader.c:1759
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA დაყენებულია, მაგრამ მონაცემები მისამართზე %X/%X არ არსებობს"
 
-#: xlogreader.c:1770
+#: xlogreader.c:1766
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA დაყენებულია, მაგრამ არსებობს მონაცემები სიგრძით %u მისამართზე %X/%X"
 
-#: xlogreader.c:1806
+#: xlogreader.c:1802
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE დაყენებულია, მაგრამ ნახვრეტის წანაცვლება %u სიგრძე %u ბლოკის ასლის სიგრძე %u მისამართზე %X/%X"
 
-#: xlogreader.c:1822
+#: xlogreader.c:1818
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE დაყენებული არაა, მაგრამ ნახვრეტის წანაცვლება %u სიგრძე %u მისანართზე %X/%X"
 
-#: xlogreader.c:1836
+#: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED დაყენებულია, მაგრამ ბლოკის ასლის სიგრძეა %u მისამართზე %X/%X"
 
-#: xlogreader.c:1851
+#: xlogreader.c:1847
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "არც BKPIMAGE_HAS_HOLE და არც BKPIMAGE_COMPRESSED დაყენებული არაა, მაგრამ ბლოკის ასლის სიგრძე %u-ა, მისამართზე %X/%X"
 
-#: xlogreader.c:1867
+#: xlogreader.c:1863
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL დაყენებულია, მაგრამ წინა მნიშვნელობა მითითებული არაა მისამართზე %X/%X"
 
-#: xlogreader.c:1879
+#: xlogreader.c:1875
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "არასწორი block_id %u %X/%X"
 
-#: xlogreader.c:1946
+#: xlogreader.c:1942
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "ჩანაწერი არასწორი სიგრძით მისამართზე %X/%X"
 
-#: xlogreader.c:1972
+#: xlogreader.c:1968
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "შეცდომა WAL ჩანაწერში მარქაფი ბლოკის, ID-ით %d, მოძებნისას"
 
-#: xlogreader.c:2056
+#: xlogreader.c:2052
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X, როცა მითითებულია არასწორი ბლოკი %d"
 
-#: xlogreader.c:2063
+#: xlogreader.c:2059
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X არასწორი მდგომარეობით, ბლოკი %d"
 
-#: xlogreader.c:2090 xlogreader.c:2107
+#: xlogreader.c:2086 xlogreader.c:2103
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "%3$s მეთოდით შეკუმშული ასლის აღდგენა მისამართზე %1$X/%2$X, ბლოკი %4$d შეუძლებელია. მხარდაუჭერელია ამ აგების მიერ"
 
-#: xlogreader.c:2116
+#: xlogreader.c:2112
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X, შეკუმშულია უცნობი მეთოდით, ბლოკი %d"
 
-#: xlogreader.c:2124
+#: xlogreader.c:2120
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "შეუძლებელია ასლის გაშლა მისამართზე %X/%X, ბლოკი %d"
@@ -1023,3 +1018,7 @@ msgstr "შეუძლებელია ასლის გაშლა მი
 #, c-format
 #~ msgid "invalid record offset at %X/%X"
 #~ msgstr "ჩანაწერის არასწორი წანაცვლება მისამართზე %X/%X"
+
+#, c-format
+#~ msgid "missing contrecord at %X/%X"
+#~ msgstr "contrecord მისამართზე %X/%X არ არსებობს"

@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL 15)\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-09 12:00+0900\n"
-"PO-Revision-Date: 2020-09-13 08:55+0200\n"
+"POT-Creation-Date: 2023-07-04 09:43+0900\n"
+"PO-Revision-Date: 2023-07-04 09:48+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -103,7 +103,7 @@ msgstr ""
 #: pg_archivecleanup.c:255
 #, c-format
 msgid "  -d             generate debug output (verbose mode)\n"
-msgstr "  -d             デバッグ情報を出力（冗長モード）\n"
+msgstr "  -d             デバッグ情報を出力(冗長モード)\n"
 
 #: pg_archivecleanup.c:256
 #, c-format
@@ -113,17 +113,17 @@ msgstr "  -n             リハーサル、削除対象のファイル名を表�
 #: pg_archivecleanup.c:257
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V, --version  バージョン情報を出力して終了\n"
+msgstr "  -V, --version  バージョン情報を表示して、終了します\n"
 
 #: pg_archivecleanup.c:258
 #, c-format
 msgid "  -x EXT         clean up files if they have this extension\n"
-msgstr "  -x EXT         この拡張子を持つファイルを削除対象とする\n"
+msgstr "  -x EXT         この拡張子を持つファイルを削除する\n"
 
 #: pg_archivecleanup.c:259
 #, c-format
 msgid "  -?, --help     show this help, then exit\n"
-msgstr "  -?, --help     このヘルプを表示して終了\n"
+msgstr "  -?, --help     このヘルプを表示して、終了します\n"
 
 #: pg_archivecleanup.c:260
 #, c-format
@@ -181,21 +181,3 @@ msgstr "保存する最古のWALファイルを指定してください"
 #, c-format
 msgid "too many command-line arguments"
 msgstr "コマンドライン引数が多すぎます"
-
-#~ msgid "%s: keeping WAL file \"%s\" and later\n"
-#~ msgstr "%s: WAL file \"%s\" とそれ以降の分を保存しています\n"
-
-#~ msgid "%s: ERROR: could not remove file \"%s\": %s\n"
-#~ msgstr "%s: エラー: ファイル \"%s\" を削除できませんでした: %s\n"
-
-#~ msgid "%s: removing file \"%s\"\n"
-#~ msgstr "%s: ファイル \"%s\" を削除しています\n"
-
-#~ msgid "%s: file \"%s\" would be removed\n"
-#~ msgstr "%s: ファイル \"%s\" は削除されます\n"
-
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "\"%s --help\"で詳細が参照できます。\n"
-
-#~ msgid "fatal: "
-#~ msgstr "致命的エラー: "

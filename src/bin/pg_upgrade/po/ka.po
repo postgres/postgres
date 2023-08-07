@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-19 11:19+0000\n"
-"PO-Revision-Date: 2023-04-20 08:19+0200\n"
+"POT-Creation-Date: 2023-07-05 06:18+0000\n"
+"PO-Revision-Date: 2023-07-05 12:44+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: check.c:69
 #, c-format
@@ -376,8 +376,8 @@ msgstr ""
 
 #: check.c:1218
 #, c-format
-msgid "Checking for incompatible aclitem data type in user tables"
-msgstr "მომხმარებლის ცხრილებში შეუთავსებელი aclitem ტიპის მონაცემების შემოწმება"
+msgid "Checking for incompatible \"aclitem\" data type in user tables"
+msgstr "მომხმარებლის ცხრილებში შეუთავსებელი \"aclitem\" ტიპის მონაცემების შემოწმება"
 
 #: check.c:1225
 #, c-format
@@ -425,7 +425,7 @@ msgstr "როლების შემოწმება, რომლები
 #, c-format
 msgid ""
 "Your installation contains roles starting with \"pg_\".\n"
-"\"pg_\" is a reserved prefix for system roles, the cluster\n"
+"\"pg_\" is a reserved prefix for system roles.  The cluster\n"
 "cannot be upgraded until these roles are renamed.\n"
 "A list of roles starting with \"pg_\" is in the file:\n"
 "    %s"
@@ -1307,14 +1307,9 @@ msgstr "საწყისი კლასტერის რეალური 
 msgid "Finding the real data directory for the target cluster"
 msgstr "სამიზნე კლასტერის რეალური მონაცემთა საქაღალდის პოვნა"
 
-#: option.c:430
+#: option.c:430 option.c:435
 #, c-format
 msgid "could not get data directory using %s: %s"
-msgstr "ვერ მივიღე მონაცემთა საქაღალდე %s გამოყენებით: %s"
-
-#: option.c:435
-#, c-format
-msgid "could not get control data directory using %s: %s"
 msgstr "ვერ მივიღე მონაცემთა საქაღალდე %s გამოყენებით: %s"
 
 #: option.c:484
@@ -1574,7 +1569,7 @@ msgstr "ვერსიის ფაილის გახსნის შეც
 msgid "could not parse version file \"%s\""
 msgstr "ვერსიის ფაილის დამუშავების შეცდომა \"%s\""
 
-#: server.c:291
+#: server.c:288
 #, c-format
 msgid ""
 "\n"
@@ -1583,7 +1578,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:295
+#: server.c:292
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1592,7 +1587,7 @@ msgstr ""
 "ვერ ვუკავშირდები საწყის postmaster-ს, რომელიც შემდეგი ბრძანებით გაეშვა:\n"
 "%s"
 
-#: server.c:299
+#: server.c:296
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1601,22 +1596,22 @@ msgstr ""
 "ვერ ვუკავშირდები სამიზნე postmaster-ს, რომელიც შემდეგი ბრძანებით გაეშვა:\n"
 "%s"
 
-#: server.c:313
+#: server.c:310
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl-ის შეცდომა საწყისი სერვერის გაშვებისას ან შეერთების შეცდომა"
 
-#: server.c:315
+#: server.c:312
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl-ის შეცდომა სამიზნე სერვერის გაშვებისას ან შეერთების შეცდომა"
 
-#: server.c:360
+#: server.c:357
 #, c-format
 msgid "out of memory"
 msgstr "არასაკმარისი მეხსიერება"
 
-#: server.c:373
+#: server.c:370
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "libpq-ის გარემოს ცვლად %s-ს არალოკალური სერვერის მნიშვნელობა: %s გააჩნია"
@@ -1843,6 +1838,10 @@ msgstr ""
 #, c-format
 #~ msgid "could not create directory \"%s\": %m\n"
 #~ msgstr "საქაღალდის (%s) შექმნის შეცდომა: %m\n"
+
+#, c-format
+#~ msgid "could not get control data directory using %s: %s"
+#~ msgstr "ვერ მივიღე მონაცემთა საქაღალდე %s გამოყენებით: %s"
 
 #, c-format
 #~ msgid "could not open file \"%s\": %s\n"
