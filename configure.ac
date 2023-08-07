@@ -1678,15 +1678,6 @@ AC_CHECK_TYPES([struct option], [], [],
 #include <getopt.h>
 #endif])
 
-if test "$with_zlib" = yes; then
-  # Check that <zlib.h> defines z_streamp (versions before about 1.0.4
-  # did not).  While we could work around the lack of z_streamp, it
-  # seems unwise to encourage people to use such old zlib versions...
-  AC_CHECK_TYPE(z_streamp, [], [AC_MSG_ERROR([zlib version is too old
-Use --without-zlib to disable zlib support.])],
-                [#include <zlib.h>])
-fi
-
 case $host_cpu in
   x86_64)
     # On x86_64, check if we can compile a popcntq instruction

@@ -1384,14 +1384,6 @@ if not zlibopt.disabled()
       args: test_c_args, include_directories: postgres_inc,
       dependencies: [zlib_t], required: zlibopt)
     warning('zlib header not found')
-  elif not cc.has_type('z_streamp',
-      dependencies: [zlib_t], prefix: '#include <zlib.h>',
-      args: test_c_args, include_directories: postgres_inc)
-    if zlibopt.enabled()
-      error('zlib version is too old')
-    else
-      warning('zlib version is too old')
-    endif
   else
     zlib = zlib_t
   endif
