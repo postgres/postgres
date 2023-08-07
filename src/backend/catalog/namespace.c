@@ -4284,9 +4284,13 @@ InitializeSearchPath(void)
 	{
 		/*
 		 * In normal mode, arrange for a callback on any syscache invalidation
-		 * of pg_namespace rows.
+		 * of pg_namespace or pg_authid rows. (Changing a role name may affect
+		 * the meaning of the special string $user.)
 		 */
 		CacheRegisterSyscacheCallback(NAMESPACEOID,
+									  NamespaceCallback,
+									  (Datum) 0);
+		CacheRegisterSyscacheCallback(AUTHOID,
 									  NamespaceCallback,
 									  (Datum) 0);
 		/* Force search path to be recomputed on next use */
