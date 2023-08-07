@@ -1,18 +1,20 @@
+CREATE SCHEMA has$dollar;
+
 -- test some errors
 CREATE EXTENSION test_ext1;
 CREATE EXTENSION test_ext1 SCHEMA test_ext1;
 CREATE EXTENSION test_ext1 SCHEMA test_ext;
-CREATE SCHEMA test_ext;
-CREATE EXTENSION test_ext1 SCHEMA test_ext;
+CREATE EXTENSION test_ext1 SCHEMA has$dollar;
 
 -- finally success
-CREATE EXTENSION test_ext1 SCHEMA test_ext CASCADE;
+CREATE EXTENSION test_ext1 SCHEMA has$dollar CASCADE;
 
 SELECT extname, nspname, extversion, extrelocatable FROM pg_extension e, pg_namespace n WHERE extname LIKE 'test_ext%' AND e.extnamespace = n.oid ORDER BY 1;
 
 CREATE EXTENSION test_ext_cyclic1 CASCADE;
 
-DROP SCHEMA test_ext CASCADE;
+DROP SCHEMA has$dollar CASCADE;
+CREATE SCHEMA has$dollar;
 
 CREATE EXTENSION test_ext6;
 DROP EXTENSION test_ext6;
@@ -209,3 +211,10 @@ CREATE EXTENSION test_ext_cine;
 ALTER EXTENSION test_ext_cine UPDATE TO '1.1';
 
 \dx+ test_ext_cine
+
+--
+-- Test @extschema@ syntax.
+--
+CREATE SCHEMA "has space";
+CREATE EXTENSION test_ext_extschema SCHEMA has$dollar;
+CREATE EXTENSION test_ext_extschema SCHEMA "has space";
