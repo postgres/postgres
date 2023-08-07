@@ -25312,7 +25312,7 @@ msgstr "设置最小执行时间，执行时间大于等于这个值的语句都
 
 #: utils/misc/guc.c:2708
 msgid "Zero prints all queries, subject to log_statement_sample_rate. -1 turns this feature off."
-msgstr "如果值设置为0，那么打印出所有查询,以og_statement_sample_rate为准. 如果设置为-1，那么将把这个功能特性关闭."
+msgstr "如果值设置为0，那么打印出所有查询,以log_statement_sample_rate为准. 如果设置为-1，那么将把这个功能特性关闭."
 
 #: utils/misc/guc.c:2719
 msgid "Sets the minimum execution time above which autovacuum actions will be logged."
