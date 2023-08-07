@@ -958,6 +958,16 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 		char	   *c_sql = read_extension_script_file(control, filename);
 		Datum		t_sql;
 
+		/*
+		 * We filter each substitution through quote_identifier().  When the
+		 * arg contains one of the following characters, no one collection of
+		 * quoting can work inside $$dollar-quoted string literals$$,
+		 * 'single-quoted string literals', and outside of any literal.  To
+		 * avoid a security snare for extension authors, error on substitution
+		 * for arguments containing these.
+		 */
+		const char *quoting_relevant_chars = "\"$'\\";
+
 		/* We use various functions that want to operate on text datums */
 		t_sql = CStringGetTextDatum(c_sql);
 
@@ -987,6 +997,11 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 											t_sql,
 											CStringGetTextDatum("@extowner@"),
 											CStringGetTextDatum(qUserName));
+			if (strpbrk(userName, quoting_relevant_chars))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid character in extension owner: must not contain any of \"%s\"",
+								quoting_relevant_chars)));
 		}
 
 		/*
@@ -998,6 +1013,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 		 */
 		if (!control->relocatable)
 		{
+			Datum		old = t_sql;
 			const char *qSchemaName = quote_identifier(schemaName);
 
 			t_sql = DirectFunctionCall3Coll(replace_text,
@@ -1005,6 +1021,11 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 											t_sql,
 											CStringGetTextDatum("@extschema@"),
 											CStringGetTextDatum(qSchemaName));
+			if (t_sql != old && strpbrk(schemaName, quoting_relevant_chars))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid character in extension \"%s\" schema: must not contain any of \"%s\"",
+								control->name, quoting_relevant_chars)));
 		}
 
 		/*
