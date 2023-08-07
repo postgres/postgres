@@ -30,7 +30,7 @@
 
    <para>
     However, if you use BRIN indexes, it may be advisable to reindex them;
-    see the first changelog entry below.
+    see the second changelog entry below.
    </para>
 
    <para>
@@ -43,6 +43,35 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [cd5f2a357] 2023-08-07 06:05:56 -0700
+Branch: REL_16_STABLE [f53511010] 2023-08-07 06:05:59 -0700
+Branch: REL_15_STABLE [de494ec14] 2023-08-07 06:06:00 -0700
+Branch: REL_14_STABLE [d4648a74b] 2023-08-07 06:06:00 -0700
+Branch: REL_13_STABLE [b1b585e0f] 2023-08-07 06:06:00 -0700
+Branch: REL_12_STABLE [eb044d8f0] 2023-08-07 06:06:00 -0700
+Branch: REL_11_STABLE [919ebb023] 2023-08-07 06:06:01 -0700
+-->
+     <para>
+      Disallow substituting a schema or owner name into an extension script
+      if the name contains a quote, backslash, or dollar sign (Noah Misch)
+     </para>
+
+     <para>
+      This restriction guards against SQL-injection hazards for trusted
+      extensions.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Micah Gate,
+      Valerie Woolard, Tim Carey-Smith, and Christoph Berg for reporting
+      this problem.
+      (CVE-2023-39417)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
