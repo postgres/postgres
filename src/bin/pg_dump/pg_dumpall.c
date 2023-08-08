@@ -1286,7 +1286,16 @@ dumpTablespaces(PGconn *conn)
 		appendPQExpBuffer(buf, " OWNER %s", fmtId(spcowner));
 
 		appendPQExpBufferStr(buf, " LOCATION ");
-		appendStringLiteralConn(buf, spclocation, conn);
+
+		/*
+		 * In-place tablespaces use a relative path, and need to be dumped
+		 * with an empty string as location.
+		 */
+		if (is_absolute_path(spclocation))
+			appendStringLiteralConn(buf, spclocation, conn);
+		else
+			appendStringLiteralConn(buf, "", conn);
+
 		appendPQExpBufferStr(buf, ";\n");
 
 		if (spcoptions && spcoptions[0] != '\0')

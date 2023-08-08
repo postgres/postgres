@@ -1907,6 +1907,22 @@ my %tests = (
 		},
 	},
 
+	'CREATE TABLESPACE regress_dump_tablespace' => {
+		create_order => 2,
+		create_sql => q(
+		    SET allow_in_place_tablespaces = on;
+			CREATE TABLESPACE regress_dump_tablespace
+			OWNER regress_dump_test_role LOCATION ''),
+		regexp =>
+		  qr/^CREATE TABLESPACE regress_dump_tablespace OWNER regress_dump_test_role LOCATION '';/m,
+		like => {
+			pg_dumpall_dbprivs => 1,
+			pg_dumpall_exclude => 1,
+			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
+		},
+	},
+
 	'CREATE DATABASE regression_invalid...' => {
 		create_order => 1,
 		create_sql => q(
