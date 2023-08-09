@@ -151,12 +151,12 @@ static int	Lock_AF_UNIX(const char *unixSocketDir, const char *unixSocketPath);
 static int	Setup_AF_UNIX(const char *sock_path);
 
 static const PQcommMethods PqCommSocketMethods = {
-	socket_comm_reset,
-	socket_flush,
-	socket_flush_if_writable,
-	socket_is_send_pending,
-	socket_putmessage,
-	socket_putmessage_noblock
+	.comm_reset = socket_comm_reset,
+	.flush = socket_flush,
+	.flush_if_writable = socket_flush_if_writable,
+	.is_send_pending = socket_is_send_pending,
+	.putmessage = socket_putmessage,
+	.putmessage_noblock = socket_putmessage_noblock
 };
 
 const PQcommMethods *PqCommMethods = &PqCommSocketMethods;
