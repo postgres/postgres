@@ -2239,7 +2239,7 @@ evalStandardFunc(CState *st,
 {
 	/* evaluate all function arguments */
 	int			nargs = 0;
-	PgBenchValue vargs[MAX_FARGS];
+	PgBenchValue vargs[MAX_FARGS] = { 0 };
 	PgBenchExprLink *l = args;
 	bool		has_null = false;
 

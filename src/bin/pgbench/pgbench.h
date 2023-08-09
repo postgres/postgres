@@ -33,7 +33,7 @@ union YYSTYPE;
  */
 typedef enum
 {
-	PGBT_NO_VALUE,
+	PGBT_NO_VALUE = 0,
 	PGBT_NULL,
 	PGBT_INT,
 	PGBT_DOUBLE,
