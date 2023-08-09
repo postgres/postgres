@@ -245,6 +245,24 @@ Collations and locales can vary between databases so having them as read-only se
 </listitem>
 
 <!--
+Author: Robert Haas <rhaas@postgresql.org>
+2023-01-10 [cf5eb37c5] Restrict the privileges of CREATEROLE users.
+Author: Robert Haas <rhaas@postgresql.org>
+2023-01-24 [f1358ca52] Adjust interaction of CREATEROLE with role properties.
+-->
+
+<listitem>
+<para>
+Restrict the privileges of CREATEROLE and its ability to modify other roles (Robert Haas)
+</para>
+
+<para>
+Previously roles with CREATEROLE privileges could change many aspects of any non-superuser role.  Such changes, including adding members, now require the role requesting the change to have ADMIN OPTION
+permission.  For example, they can now change the CREATEDB, REPLICATION, and BYPASSRLS properties only if they also have those permissions.
+</para>
+</listitem>
+
+<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2023-05-21 [2dcd1578c] Rename some createuser options.
 Author: Nathan Bossart <nathan@postgresql.org>
@@ -819,37 +837,6 @@ Allow "GRANT group_name TO user_name" to be performed with ADMIN OPTION (Robert 
 
 <para>
 Previously CREATEROLE permission was required.
-</para>
-</listitem>
-
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2023-01-10 [cf5eb37c5] Restrict the privileges of CREATEROLE users.
--->
-
-<listitem>
-<para>
-Restrict the privileges of CREATEROLE roles (Robert Haas)
-</para>
-
-<para>
-Previously roles with CREATEROLE privileges could change many aspects of any non-superuser role.  Such changes, including adding members, now require the role requesting the change to have ADMIN OPTION
-permission.
-</para>
-</listitem>
-
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2023-01-24 [f1358ca52] Adjust interaction of CREATEROLE with role properties.
--->
-
-<listitem>
-<para>
-Improve logic of CREATEROLE roles ability to control other roles (Robert Haas)
-</para>
-
-<para>
-For example, they can change the CREATEDB, REPLICATION, and BYPASSRLS properties only if they also have those permissions.
 </para>
 </listitem>
 
