@@ -2209,7 +2209,7 @@ Prevent \df+ from showing function source code (Isaac Morland)
 </para>
 
 <para>
-Function bodies are more easily viewed with \ev and \ef.
+Function bodies are more easily viewed with \sf.
 </para>
 </listitem>
 
