@@ -762,25 +762,6 @@ Provide additional details during client certificate failures (Jacob Champion)
      <itemizedlist>
 
 <!--
-Author: Jeff Davis <jdavis@postgresql.org>
-2022-12-13 [60684dd83] Add grantable MAINTAIN privilege and pg_maintain role.
-Author: Andrew Dunstan <andrew@dunslane.net>
-2022-11-28 [4441fc704] Provide non-superuser predefined roles for vacuum and an
-Author: Jeff Davis <jdavis@postgresql.org>
-2023-01-14 [ff9618e82] Fix MAINTAIN privileges for toast tables and partitions.
--->
-
-<listitem>
-<para>
-Create a predefined role and grantable privilege with permission to perform maintenance operations (Nathan Bossart)
-</para>
-
-<para>
-The predefined role is is called pg_maintain.
-</para>
-</listitem>
-
-<!--
 Author: Robert Haas <rhaas@postgresql.org>
 2023-03-30 [c3afe8cf5] Add new predefined role pg_create_subscription.
 -->
