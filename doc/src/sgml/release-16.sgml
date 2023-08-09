@@ -1211,6 +1211,21 @@ The number of reserved slots is set by server variable reserved_connections.
 </listitem>
 
 <!--
+Author: Michael Paquier <michael@paquier.xyz>
+2022-09-17 [fdd8937c0] Fix huge_pages on Windows
+-->
+
+<listitem>
+<para>
+Allow huge pages to work on newer versions of Windows 10 (Thomas Munro)
+</para>
+
+<para>
+This adds the special handling required to enable huge pages on newer versions of Windows 10.
+</para>
+</listitem>
+
+<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2023-04-08 [d4e71df6d] Add io_direct setting (developer-only).
 Author: Thomas Munro <tmunro@postgresql.org>
