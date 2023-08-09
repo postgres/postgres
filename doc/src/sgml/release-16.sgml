@@ -1370,7 +1370,7 @@ Allow custom ICU collation rules to be created (Peter Eisentraut)
 </para>
 
 <para>
-This is done using CREATE COLLATION's new new RULES clause, as well as new options for CREATE DATABASE, createdb, and initdb.
+This is done using CREATE COLLATION's new RULES clause, as well as new options for CREATE DATABASE, createdb, and initdb.
 </para>
 </listitem>
 
@@ -1471,7 +1471,7 @@ Allow parallel application of logical replication (Hou Zhijie, Wang Wei, Amit Ka
 </para>
 
 <para>
-The CREATE SUBSCRIPTION "streaming" option now supports "parallel" to enable parallel application. Perform apply of large transactions by parallel workers.  The number of parallel workers is controlled by
+The CREATE SUBSCRIPTION "streaming" option now supports "parallel" to enable application of large transactions by parallel workers.  The number of parallel workers is controlled by
 the new server variable max_parallel_apply_workers_per_subscription. Wait events LogicalParallelApplyMain, LogicalParallelApplyStateChange, and LogicalApplySendData were also added.  Column leader_pid was
 added to system view pg_stat_subscription to track parallel activity.
 </para>
@@ -1803,7 +1803,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Add support for enhanced numeric literals in SQL JSON paths (Peter Eisentraut)
+Add support for enhanced numeric literals in SQL/JSON paths (Peter Eisentraut)
 </para>
 
 <para>
