@@ -2065,6 +2065,30 @@ int main(void)
     cdata.set('USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK', 1)
     have_optimized_crc = true
   endif
+
+elif host_cpu == 'loongarch64'
+
+  prog = '''
+int main(void)
+{
+    unsigned int crc = 0;
+    crc = __builtin_loongarch_crcc_w_b_w(0, crc);
+    crc = __builtin_loongarch_crcc_w_h_w(0, crc);
+    crc = __builtin_loongarch_crcc_w_w_w(0, crc);
+    crc = __builtin_loongarch_crcc_w_d_w(0, crc);
+
+    /* return computed value, to prevent the above being optimized away */
+    return crc == 0;
+}
+'''
+
+  if cc.links(prog, name: '__builtin_loongarch_crcc_w_b_w, __builtin_loongarch_crcc_w_h_w, __builtin_loongarch_crcc_w_w_w, and __builtin_loongarch_crcc_w_d_w',
+      args: test_c_args)
+    # Use LoongArch CRC instruction unconditionally
+    cdata.set('USE_LOONGARCH_CRC32C', 1)
+    have_optimized_crc = true
+  endif
+
 endif
 
 if not have_optimized_crc

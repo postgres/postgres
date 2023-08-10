@@ -18047,6 +18047,47 @@ fi
 
 fi
 
+# Check for LoongArch CRC intrinsics to do CRC calculations.
+#
+# Check if __builtin_loongarch_crcc_* intrinsics can be used
+# with the default compiler flags.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_loongarch_crcc_w_b_w, __builtin_loongarch_crcc_w_h_w, __builtin_loongarch_crcc_w_w_w and __builtin_loongarch_crcc_w_d_w" >&5
+$as_echo_n "checking for __builtin_loongarch_crcc_w_b_w, __builtin_loongarch_crcc_w_h_w, __builtin_loongarch_crcc_w_w_w and __builtin_loongarch_crcc_w_d_w... " >&6; }
+if ${pgac_cv_loongarch_crc32c_intrinsics+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+unsigned int crc = 0;
+   crc = __builtin_loongarch_crcc_w_b_w(0, crc);
+   crc = __builtin_loongarch_crcc_w_h_w(0, crc);
+   crc = __builtin_loongarch_crcc_w_w_w(0, crc);
+   crc = __builtin_loongarch_crcc_w_d_w(0, crc);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_loongarch_crc32c_intrinsics=yes
+else
+  pgac_cv_loongarch_crc32c_intrinsics=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_loongarch_crc32c_intrinsics" >&5
+$as_echo "$pgac_cv_loongarch_crc32c_intrinsics" >&6; }
+if test x"$pgac_cv_loongarch_crc32c_intrinsics" = x"yes"; then
+  pgac_loongarch_crc32c_intrinsics=yes
+fi
+
+
 
 
 # Select CRC-32C implementation.
@@ -18063,9 +18104,12 @@ fi
 # we're not targeting such a processor, but can nevertheless produce code that
 # uses the CRC instructions, compile both, and select at runtime.
 #
-# You can override this logic by setting the appropriate USE_*_CRC32 flag to 1
+# You can skip the runtime check by setting the appropriate USE_*_CRC32 flag to 1
 # in the template or configure command line.
-if test x"$USE_SLICING_BY_8_CRC32C" = x"" && test x"$USE_SSE42_CRC32C" = x"" && test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_ARMV8_CRC32C" = x"" && test x"$USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK" = x""; then
+#
+# If we are targeting a LoongArch processor, CRC instructions are
+# always available (at least on 64 bit), so no runtime check is needed.
+if test x"$USE_SLICING_BY_8_CRC32C" = x"" && test x"$USE_SSE42_CRC32C" = x"" && test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_ARMV8_CRC32C" = x"" && test x"$USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_LOONGARCH_CRC32C" = x""; then
   # Use Intel SSE 4.2 if available.
   if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && test x"$SSE4_2_TARGETED" = x"1" ; then
     USE_SSE42_CRC32C=1
@@ -18083,10 +18127,15 @@ if test x"$USE_SLICING_BY_8_CRC32C" = x"" && test x"$USE_SSE42_CRC32C" = x"" && 
         if test x"$pgac_armv8_crc32c_intrinsics" = x"yes"; then
           USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK=1
         else
-          # fall back to slicing-by-8 algorithm, which doesn't require any
-          # special CPU support.
-          USE_SLICING_BY_8_CRC32C=1
-	fi
+          # LoongArch CRCC instructions.
+          if test x"$pgac_loongarch_crc32c_intrinsics" = x"yes"; then
+            USE_LOONGARCH_CRC32C=1
+          else
+            # fall back to slicing-by-8 algorithm, which doesn't require any
+            # special CPU support.
+            USE_SLICING_BY_8_CRC32C=1
+          fi
+        fi
       fi
     fi
   fi
@@ -18127,12 +18176,21 @@ $as_echo "#define USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK 1" >>confdefs.h
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: ARMv8 CRC instructions with runtime check" >&5
 $as_echo "ARMv8 CRC instructions with runtime check" >&6; }
       else
+        if test x"$USE_LOONGARCH_CRC32C" = x"1"; then
+
+$as_echo "#define USE_LOONGARCH_CRC32C 1" >>confdefs.h
+
+          PG_CRC32C_OBJS="pg_crc32c_loongarch.o"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: LoongArch CRCC instructions" >&5
+$as_echo "LoongArch CRCC instructions" >&6; }
+        else
 
 $as_echo "#define USE_SLICING_BY_8_CRC32C 1" >>confdefs.h
 
-        PG_CRC32C_OBJS="pg_crc32c_sb8.o"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: slicing-by-8" >&5
+          PG_CRC32C_OBJS="pg_crc32c_sb8.o"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: slicing-by-8" >&5
 $as_echo "slicing-by-8" >&6; }
+        fi
       fi
     fi
   fi

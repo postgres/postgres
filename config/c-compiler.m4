@@ -661,3 +661,36 @@ if test x"$Ac_cachevar" = x"yes"; then
 fi
 undefine([Ac_cachevar])dnl
 ])# PGAC_ARMV8_CRC32C_INTRINSICS
+
+# PGAC_LOONGARCH_CRC32C_INTRINSICS
+# ---------------------------
+# Check if the compiler supports the LoongArch CRCC instructions, using
+# __builtin_loongarch_crcc_w_b_w, __builtin_loongarch_crcc_w_h_w,
+# __builtin_loongarch_crcc_w_w_w and __builtin_loongarch_crcc_w_d_w
+# intrinsic functions.
+#
+# We test for the 8-byte variant since platforms capable of running
+# Postgres are 64-bit only (as of PG17), and we know CRC instructions
+# are available there without a runtime check.
+#
+# If the intrinsics are supported, sets pgac_loongarch_crc32c_intrinsics.
+AC_DEFUN([PGAC_LOONGARCH_CRC32C_INTRINSICS],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_loongarch_crc32c_intrinsics])])dnl
+AC_CACHE_CHECK(
+  [for __builtin_loongarch_crcc_w_b_w, __builtin_loongarch_crcc_w_h_w, __builtin_loongarch_crcc_w_w_w and __builtin_loongarch_crcc_w_d_w],
+  [Ac_cachevar],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([],
+  [unsigned int crc = 0;
+   crc = __builtin_loongarch_crcc_w_b_w(0, crc);
+   crc = __builtin_loongarch_crcc_w_h_w(0, crc);
+   crc = __builtin_loongarch_crcc_w_w_w(0, crc);
+   crc = __builtin_loongarch_crcc_w_d_w(0, crc);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;])],
+  [Ac_cachevar=yes],
+  [Ac_cachevar=no])])
+if test x"$Ac_cachevar" = x"yes"; then
+  pgac_loongarch_crc32c_intrinsics=yes
+fi
+undefine([Ac_cachevar])dnl
+])# PGAC_LOONGARCH_CRC32C_INTRINSICS

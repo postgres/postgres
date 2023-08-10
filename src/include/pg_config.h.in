@@ -714,6 +714,9 @@
 /* Define to 1 to build with LLVM based JIT support. (--with-llvm) */
 #undef USE_LLVM
 
+/* Define to 1 to use LoongArch CRCC instructions. */
+#undef USE_LOONGARCH_CRC32C
+
 /* Define to 1 to build with LZ4 support. (--with-lz4) */
 #undef USE_LZ4
 
