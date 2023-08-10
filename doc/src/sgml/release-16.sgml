@@ -864,7 +864,7 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Allow roles that create other roles to automatically inherit the new role's rights or SET ROLE to the new role (Robert Haas, Shi Yu)
+Allow roles that create other roles to automatically inherit the new role's rights or the ability to SET ROLE to the new role (Robert Haas, Shi Yu)
 </para>
 
 <para>
