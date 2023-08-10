@@ -432,6 +432,7 @@ sub GenerateFiles
 		USE_LZ4 => undef,
 		USE_LDAP => $self->{options}->{ldap} ? 1 : undef,
 		USE_LLVM => undef,
+		USE_LOONGARCH_CRC32C => undef,
 		USE_NAMED_POSIX_SEMAPHORES => undef,
 		USE_OPENSSL => undef,
 		USE_PAM => undef,
