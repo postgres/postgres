@@ -161,21 +161,6 @@ Remove pg_walinspect functions pg_get_wal_records_info_till_end_of_wal() and pg_
 </listitem>
 
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-03-17 [98ae2c84a] libpq: Remove code for SCM credential authentication
--->
-
-<listitem>
-<para>
-Remove libpq support for SCM credential authentication (Michael Paquier)
-</para>
-
-<para>
-Backend support for this authentication method was removed in PostgreSQL 9.1.
-</para>
-</listitem>
-
-<!--
 Author: David Rowley <drowley@postgresql.org>
 2023-02-15 [5352ca22e] Rename force_parallel_mode to debug_parallel_query
 Author: David Rowley <drowley@postgresql.org>
@@ -259,24 +244,6 @@ Restrict the privileges of CREATEROLE and its ability to modify other roles (Rob
 <para>
 Previously roles with CREATEROLE privileges could change many aspects of any non-superuser role.  Such changes, including adding members, now require the role requesting the change to have ADMIN OPTION
 permission.  For example, they can now change the CREATEDB, REPLICATION, and BYPASSRLS properties only if they also have those permissions.
-</para>
-</listitem>
-
-<!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2023-05-21 [2dcd1578c] Rename some createuser options.
-Author: Nathan Bossart <nathan@postgresql.org>
-2023-05-23 [381d19b3e] Document deprecated createuser option.
--->
-
-<listitem>
-<para>
-Deprecate createuser option --role (Nathan Bossart)
-</para>
-
-<para>
-This option could be easily confused with new createuser role membership options, so option --member-of has been added with the same functionality.
-The --role option can still be used.
 </para>
 </listitem>
 
@@ -2415,6 +2382,24 @@ Specifically, the new options control the valid-until date, bypassing of row-lev
 </listitem>
 
 <!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2023-05-21 [2dcd1578c] Rename some createuser options.
+Author: Nathan Bossart <nathan@postgresql.org>
+2023-05-23 [381d19b3e] Document deprecated createuser option.
+-->
+
+<listitem>
+<para>
+Deprecate createuser option --role (Nathan Bossart)
+</para>
+
+<para>
+This option could be easily confused with new createuser role membership options, so option --member-of has been added with the same functionality.
+The --role option can still be used.
+</para>
+</listitem>
+
+<!--
 Author: Andrew Dunstan <andrew@dunslane.net>
 2022-07-31 [7781f4e3e] Add - -schema and - -exclude-schema options to vacuumdb.
 -->
@@ -2741,6 +2726,21 @@ Author: Thomas Munro <tmunro@postgresql.org>
 <listitem>
 <para>
 Remove support for M68K, M88K, M32R, and SuperH CPU architectures (Thomas Munro)
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2023-03-17 [98ae2c84a] libpq: Remove code for SCM credential authentication
+-->
+
+<listitem>
+<para>
+Remove libpq support for SCM credential authentication (Michael Paquier)
+</para>
+
+<para>
+Backend support for this authentication method was removed in PostgreSQL 9.1.
 </para>
 </listitem>
 
