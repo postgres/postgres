@@ -54,6 +54,9 @@ extern List *RelationGetIndexPredicate(Relation relation);
 extern Datum *RelationGetIndexRawAttOptions(Relation indexrel);
 extern bytea **RelationGetIndexAttOptions(Relation relation, bool copy);
 
+/*
+ * Which set of columns to return by RelationGetIndexAttrBitmap.
+ */
 typedef enum IndexAttrBitmapKind
 {
 	INDEX_ATTR_BITMAP_KEY,
