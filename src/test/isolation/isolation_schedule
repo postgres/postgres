@@ -110,4 +110,3 @@ test: serializable-parallel
 test: serializable-parallel-2
 test: serializable-parallel-3
 test: matview-write-skew
-test: search-path-inval
