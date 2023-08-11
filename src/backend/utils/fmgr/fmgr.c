@@ -669,7 +669,8 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 								&isnull);
 		if (!isnull)
 		{
-			ArrayType *array;
+			ArrayType  *array;
+
 			oldcxt = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
 			array = DatumGetArrayTypeP(datum);
 			TransformGUCArray(array, &fcache->configNames,
@@ -686,7 +687,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	/* GetUserIdAndSecContext is cheap enough that no harm in a wasted call */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	if (fcache->configNames != NIL)		/* Need a new GUC nesting level */
+	if (fcache->configNames != NIL) /* Need a new GUC nesting level */
 		save_nestlevel = NewGUCNestLevel();
 	else
 		save_nestlevel = 0;		/* keep compiler quiet */
@@ -697,11 +698,11 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	forboth(lc1, fcache->configNames, lc2, fcache->configValues)
 	{
-		GucContext	 context = superuser() ? PGC_SUSET : PGC_USERSET;
-		GucSource	 source	 = PGC_S_SESSION;
-		GucAction	 action	 = GUC_ACTION_SAVE;
-		char		*name	 = lfirst(lc1);
-		char		*value	 = lfirst(lc2);
+		GucContext	context = superuser() ? PGC_SUSET : PGC_USERSET;
+		GucSource	source = PGC_S_SESSION;
+		GucAction	action = GUC_ACTION_SAVE;
+		char	   *name = lfirst(lc1);
+		char	   *value = lfirst(lc2);
 
 		(void) set_config_option(name, value,
 								 context, source,

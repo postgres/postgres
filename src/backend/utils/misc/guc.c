@@ -6280,16 +6280,16 @@ void
 ProcessGUCArray(ArrayType *array,
 				GucContext context, GucSource source, GucAction action)
 {
-	List *gucNames;
-	List *gucValues;
-	ListCell *lc1;
-	ListCell *lc2;
+	List	   *gucNames;
+	List	   *gucValues;
+	ListCell   *lc1;
+	ListCell   *lc2;
 
 	TransformGUCArray(array, &gucNames, &gucValues);
 	forboth(lc1, gucNames, lc2, gucValues)
 	{
-		char *name = lfirst(lc1);
-		char *value = lfirst(lc2);
+		char	   *name = lfirst(lc1);
+		char	   *value = lfirst(lc2);
 
 		(void) set_config_option(name, value,
 								 context, source,

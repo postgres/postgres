@@ -2246,7 +2246,7 @@ evalStandardFunc(CState *st,
 	 * This value is double braced to workaround GCC bug 53119, which seems to
 	 * exist at least on gcc (Debian 4.7.2-5) 4.7.2, 32-bit.
 	 */
-	PgBenchValue vargs[MAX_FARGS] = { { 0 } };
+	PgBenchValue vargs[MAX_FARGS] = {{0}};
 
 	for (nargs = 0; nargs < MAX_FARGS && l != NULL; nargs++, l = l->next)
 	{
