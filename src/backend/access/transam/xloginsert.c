@@ -900,7 +900,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	 * not emit records larger than the sizes advertised to be supported. This
 	 * cap is based on DecodeXLogRecordRequiredSpace().
 	 */
-	if (total_len >= XLogRecordMaxSize)
+	if (total_len > XLogRecordMaxSize)
 		ereport(ERROR,
 				(errmsg_internal("oversized WAL record"),
 				 errdetail_internal("WAL record would be %llu bytes (of maximum %u bytes); rmid %u flags %u.",
