@@ -331,12 +331,18 @@ task:
       env:
         SANITIZER_FLAGS: -fsanitize=address
 
+      # Normally, the "relation segment" code basically has no coverage in our
+      # tests, because we (quite reasonably) don't generate tables large
+      # enough in tests. We've had plenty bugs that we didn't notice due the
+      # code not being exercised much. Thus specify a very small segment size
+      # here. Use a non-power-of-two segment size, given we currently allow
+      # that.
       configure_script: |
         su postgres <<-EOF
           ./configure \
             --enable-cassert --enable-debug --enable-tap-tests \
             --enable-nls \
-            --with-segsize-blocks=8 \
+            --with-segsize-blocks=6 \
             \
             ${LINUX_CONFIGURE_FEATURES} \
             \
@@ -504,7 +510,6 @@ task:
       -Dextra_lib_dirs=${brewpath}/lib \
       -Dcassert=true \
       -Duuid=e2fs -Ddtrace=auto \
-      -Dsegsize_blocks=6 \
       -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
       build
 
