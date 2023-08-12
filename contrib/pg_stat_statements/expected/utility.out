@@ -197,6 +197,29 @@ SELECT pg_stat_statements_reset();
  
 (1 row)
 
+-- Two-phase transactions
+BEGIN;
+PREPARE TRANSACTION 'stat_trans1';
+COMMIT PREPARED 'stat_trans1';
+BEGIN;
+PREPARE TRANSACTION 'stat_trans2';
+ROLLBACK PREPARED 'stat_trans2';
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |               query               
+-------+------+-----------------------------------
+     2 |    0 | BEGIN
+     1 |    0 | COMMIT PREPARED $1
+     2 |    0 | PREPARE TRANSACTION $1
+     1 |    0 | ROLLBACK PREPARED $1
+     1 |    1 | SELECT pg_stat_statements_reset()
+(5 rows)
+
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
 -- Savepoints
 BEGIN;
 SAVEPOINT sp1;
