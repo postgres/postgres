@@ -434,7 +434,6 @@ task:
 
     CC: ccache cc
     CXX: ccache c++
-    CPPFLAGS: -DRANDOMIZE_ALLOCATED_MEMORY
     CFLAGS: -Og -ggdb
     CXXFLAGS: -Og -ggdb
 
