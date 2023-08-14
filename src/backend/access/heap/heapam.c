@@ -1776,6 +1776,7 @@ GetBulkInsertState(void)
 	bistate->current_buf = InvalidBuffer;
 	bistate->next_free = InvalidBlockNumber;
 	bistate->last_free = InvalidBlockNumber;
+	bistate->already_extended_by = 0;
 	return bistate;
 }
 
