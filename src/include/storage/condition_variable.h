@@ -56,7 +56,7 @@ extern void ConditionVariableInit(ConditionVariable *cv);
 extern void ConditionVariableSleep(ConditionVariable *cv, uint32 wait_event_info);
 extern bool ConditionVariableTimedSleep(ConditionVariable *cv, long timeout,
 										uint32 wait_event_info);
-extern void ConditionVariableCancelSleep(void);
+extern bool ConditionVariableCancelSleep(void);
 
 /*
  * Optionally, ConditionVariablePrepareToSleep can be called before entering
