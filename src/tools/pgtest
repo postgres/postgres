@@ -37,7 +37,7 @@ rm -f tmp_install/log/install.log
 	then	$MAKE "$@" 2>&1 && $MAKE "$@" check 2>&1
 		echo "$?" > "$TMP"/ret
 	fi
-) | tee  "$TMP"/0
+) | tee "$TMP"/0
 
 # Grab possible warnings from install.log
 [ -e tmp_install/log/install.log ] && cat tmp_install/log/install.log >> "$TMP"/0
