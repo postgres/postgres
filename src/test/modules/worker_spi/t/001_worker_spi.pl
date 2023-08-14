@@ -39,25 +39,11 @@ $node->poll_query_until('postgres',
 $result = $node->safe_psql('postgres', 'SELECT * FROM schema4.counted;');
 is($result, qq(total|1), 'dynamic bgworker correctly consumed tuple data');
 
-# Check the wait event used by the dynamic bgworker.  For a session without
-# the state in shared memory known, the default of "extension" is the value
-# waited on.
+# Check the wait event used by the dynamic bgworker.
 $result = $node->poll_query_until(
 	'postgres',
 	qq[SELECT wait_event FROM pg_stat_activity WHERE backend_type ~ 'worker_spi';],
-	'extension');
-is($result, 1, 'dynamic bgworker has reported "extension" as wait event');
-
-# If the shared memory state is loaded (here with worker_spi_init within
-# the same connection as the one querying pg_stat_activity), the wait
-# event is the custom one.
-# The expected result is a special pattern here with a newline coming from the
-# first query where the shared memory state is set.
-$result = $node->poll_query_until(
-	'postgres',
-	qq[SELECT worker_spi_init(); SELECT wait_event FROM pg_stat_activity WHERE backend_type ~ 'worker_spi';],
-	qq[
-worker_spi_main]);
+	qq[worker_spi_main]);
 is($result, 1,
 	'dynamic bgworker has reported "worker_spi_main" as wait event');
 

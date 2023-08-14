@@ -317,6 +317,7 @@ WAIT_EVENT_DOCONLY	LogicalRepWorker	"Waiting to read or update the state of logi
 WAIT_EVENT_DOCONLY	XactTruncation	"Waiting to execute <function>pg_xact_status</function> or update the oldest transaction ID available to it."
 WAIT_EVENT_DOCONLY	WrapLimitsVacuum	"Waiting to update limits on transaction id and multixact consumption."
 WAIT_EVENT_DOCONLY	NotifyQueueTail	"Waiting to update limit on <command>NOTIFY</command> message storage."
+WAIT_EVENT_DOCONLY	WaitEventExtension	"Waiting to read or update custom wait events information for extensions."
 
 WAIT_EVENT_DOCONLY	XactBuffer	"Waiting for I/O on a transaction status SLRU buffer."
 WAIT_EVENT_DOCONLY	CommitTsBuffer	"Waiting for I/O on a commit timestamp SLRU buffer."

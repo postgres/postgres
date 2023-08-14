@@ -1121,9 +1121,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <literal>LWLock</literal> types
      to the list shown in <xref linkend="wait-event-extension-table"/> and
      <xref linkend="wait-event-lwlock-table"/>. In some cases, the name
-     assigned by an extension will not be available in all server processes;
-     so an <literal>Extension</literal> or <literal>LWLock</literal> wait
-     event might be reported as just
+     of <literal>LWLock</literal> assigned by an extension will not be
+     available in all server processes; It might be reported as just
      <quote><literal>extension</literal></quote> rather than the
      extension-assigned name.
     </para>
