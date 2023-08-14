@@ -1264,6 +1264,17 @@ These are controlled by "include", "include_if_exists", and "include_dir".  Syst
 </listitem>
 
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-07-27 [de3f0e3fe] Eliminate fixed token-length limit in hba.c.
+-->
+
+<listitem>
+<para>
+Allow pg_hba.conf tokens to be of unlimited length (Tom Lane)
+</para>
+</listitem>
+
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-10-26 [c591300a8] Add rule_number to pg_hba_file_rules and map_number to p
 -->
@@ -2144,15 +2155,17 @@ This is controlled by xheader_width.
 <!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2023-01-07 [d913928c9] psql: Add support for \dpS and \zS.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-07-19 [d65ddaca9] Add psql \drg command to display role
 -->
 
 <listitem>
 <para>
-Allow psql's access privilege commands to show system objects (Nathan Bossart)
+Allow psql's access privilege commands to show system objects (Nathan Bossart, Pavel Luzanov)
 </para>
 
 <para>
-The options are \dpS and \zS.
+The options are \dpS, \zS, and \drg.
 </para>
 </listitem>
 
