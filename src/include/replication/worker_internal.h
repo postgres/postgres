@@ -27,9 +27,20 @@
 #include "storage/shm_toc.h"
 #include "storage/spin.h"
 
+/* Different types of worker */
+typedef enum LogicalRepWorkerType
+{
+	WORKERTYPE_UNKNOWN = 0,
+	WORKERTYPE_TABLESYNC,
+	WORKERTYPE_APPLY,
+	WORKERTYPE_PARALLEL_APPLY
+} LogicalRepWorkerType;
 
 typedef struct LogicalRepWorker
 {
+	/* What type of worker is this? */
+	LogicalRepWorkerType type;
+
 	/* Time at which this worker was launched. */
 	TimestampTz launch_time;
 
@@ -232,7 +243,8 @@ extern void logicalrep_worker_attach(int slot);
 extern LogicalRepWorker *logicalrep_worker_find(Oid subid, Oid relid,
 												bool only_running);
 extern List *logicalrep_workers_find(Oid subid, bool only_running);
-extern bool logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname,
+extern bool logicalrep_worker_launch(LogicalRepWorkerType wtype,
+									 Oid dbid, Oid subid, const char *subname,
 									 Oid userid, Oid relid,
 									 dsm_handle subworker_dsm);
 extern void logicalrep_worker_stop(Oid subid, Oid relid);
@@ -315,19 +327,19 @@ extern void pa_decr_and_wait_stream_block(void);
 extern void pa_xact_finish(ParallelApplyWorkerInfo *winfo,
 						   XLogRecPtr remote_lsn);
 
-#define isParallelApplyWorker(worker) ((worker)->leader_pid != InvalidPid)
+#define isParallelApplyWorker(worker) ((worker)->type == WORKERTYPE_PARALLEL_APPLY)
+#define isTablesyncWorker(worker) ((worker)->type == WORKERTYPE_TABLESYNC)
 
 static inline bool
 am_tablesync_worker(void)
 {
-	return OidIsValid(MyLogicalRepWorker->relid);
+	return isTablesyncWorker(MyLogicalRepWorker);
 }
 
 static inline bool
 am_leader_apply_worker(void)
 {
-	return (!am_tablesync_worker() &&
-			!isParallelApplyWorker(MyLogicalRepWorker));
+	return (MyLogicalRepWorker->type == WORKERTYPE_APPLY);
 }
 
 static inline bool
