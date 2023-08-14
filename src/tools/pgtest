@@ -18,9 +18,9 @@ trap "ret=$?; rm -rf /tmp/$$; exit $ret" 0 1 2 3 15
 mkdir /tmp/$$
 TMP="/tmp/$$"
 
-if [ "X$1" != "X-n" ]
+if [ "$1" != "-n" ]
 then	CLEAN="Y"
-else	CLEAN=""
+else	CLEAN="N"
 	shift
 fi
 
@@ -29,22 +29,22 @@ rm -f tmp_install/log/install.log
 # Run "make check" and store return code in $TMP/ret.
 # Display output but also capture it in $TMP/0.
 (
-	if [ "$CLEAN" ]
+	if [ "$CLEAN" = 'Y' ]
 	then	$MAKE "$@" clean 2>&1
-		echo "$?" > $TMP/ret
+		echo "$?" > "$TMP"/ret
 	fi
-	if [ $(cat $TMP/ret) -eq 0 ]
+	if [ "$(cat "$TMP"/ret)" -eq 0 ]
 	then	$MAKE "$@" 2>&1 && $MAKE "$@" check 2>&1
-		echo "$?" > $TMP/ret
+		echo "$?" > "$TMP"/ret
 	fi
-) | tee  $TMP/0
+) | tee  "$TMP"/0
 
 # Grab possible warnings from install.log
-[ -e tmp_install/log/install.log ] && cat tmp_install/log/install.log >> $TMP/0
+[ -e tmp_install/log/install.log ] && cat tmp_install/log/install.log >> "$TMP"/0
 
 # If success, display warnings
-if [ $(cat $TMP/ret) -eq 0 ]
-then	cat $TMP/0 |
+if [ "$(cat "$TMP"/ret)" -eq 0 ]
+then	cat "$TMP"/0 |
 	# The following grep's have to be adjusted for your setup because
 	# certain warnings are acceptable.
 	grep -i warning |
@@ -54,4 +54,4 @@ then	cat $TMP/0 |
 fi
 
 # return original make error code
-exit `cat $TMP/ret`
+exit "$(cat "$TMP"/ret)"
