@@ -283,6 +283,24 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
 		 */
 		extend_by_pages += extend_by_pages * waitcount;
 
+		/* ---
+		 * If we previously extended using the same bistate, it's very likely
+		 * we'll extend some more. Try to extend by as many pages as
+		 * before. This can be important for performance for several reasons,
+		 * including:
+		 *
+		 * - It prevents mdzeroextend() switching between extending the
+		 *   relation in different ways, which is inefficient for some
+		 *   filesystems.
+		 *
+		 * - Contention is often intermittent. Even if we currently don't see
+		 *   other waiters (see above), extending by larger amounts can
+		 *   prevent future contention.
+		 * ---
+		 */
+		if (bistate)
+			extend_by_pages = Max(extend_by_pages, bistate->already_extended_by);
+
 		/*
 		 * Can't extend by more than MAX_BUFFERS_TO_EXTEND_BY, we need to pin
 		 * them all concurrently.
@@ -409,6 +427,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
 		/* maintain bistate->current_buf */
 		IncrBufferRefCount(buffer);
 		bistate->current_buf = buffer;
+		bistate->already_extended_by += extend_by_pages;
 	}
 
 	return buffer;
