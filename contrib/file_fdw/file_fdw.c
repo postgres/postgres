@@ -581,6 +581,7 @@ fileGetForeignPaths(PlannerInfo *root,
 									 NIL,	/* no pathkeys */
 									 baserel->lateral_relids,
 									 NULL,	/* no extra plan */
+									 NIL,	/* no fdw_restrictinfo list */
 									 coptions));
 
 	/*

@@ -599,8 +599,27 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 	 * Detect whether we have any pseudoconstant quals to deal with.  Then, if
 	 * we'll need a gating Result node, it will be able to project, so there
 	 * are no requirements on the child's tlist.
+	 *
+	 * If this replaces a join, it must be a foreign scan or a custom scan,
+	 * and the FDW or the custom scan provider would have stored in the best
+	 * path the list of RestrictInfo nodes to apply to the join; check against
+	 * that list in that case.
 	 */
-	gating_clauses = get_gating_quals(root, scan_clauses);
+	if (IS_JOIN_REL(rel))
+	{
+		List	   *join_clauses;
+
+		Assert(best_path->pathtype == T_ForeignScan ||
+			   best_path->pathtype == T_CustomScan);
+		if (best_path->pathtype == T_ForeignScan)
+			join_clauses = ((ForeignPath *) best_path)->fdw_restrictinfo;
+		else
+			join_clauses = ((CustomPath *) best_path)->custom_restrictinfo;
+
+		gating_clauses = get_gating_quals(root, join_clauses);
+	}
+	else
+		gating_clauses = get_gating_quals(root, scan_clauses);
 	if (gating_clauses)
 		flags = 0;
 

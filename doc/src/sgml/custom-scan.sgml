@@ -62,6 +62,7 @@ typedef struct CustomPath
     Path      path;
     uint32    flags;
     List     *custom_paths;
+    List     *custom_restrictinfo;
     List     *custom_private;
     const CustomPathMethods *methods;
 } CustomPath;
@@ -85,6 +86,10 @@ typedef struct CustomPath
     An optional <structfield>custom_paths</structfield> is a list of <structname>Path</structname>
     nodes used by this custom-path node; these will be transformed into
     <structname>Plan</structname> nodes by planner.
+    As described below, custom paths can be created for join relations as
+    well.  In such a case, <structfield>custom_restrictinfo</structfield>
+    should be used to store the set of join clauses to apply to the join the
+    custom path replaces.  Otherwise it should be NIL.
     <structfield>custom_private</structfield> can be used to store the custom path's
     private data.  Private data should be stored in a form that can be handled
     by <literal>nodeToString</literal>, so that debugging routines that attempt to
@@ -112,6 +117,17 @@ extern PGDLLIMPORT set_join_pathlist_hook_type set_join_pathlist_hook;
    This hook will be invoked repeatedly for the same join relation, with
    different combinations of inner and outer relations; it is the
    responsibility of the hook to minimize duplicated work.
+  </para>
+
+  <para>
+   Note also that the set of join clauses to apply to the join,
+   which is passed as <literal>extra-&gt;restrictlist</literal>, varies
+   depending on the combination of inner and outer relations.  A
+   <structname>CustomPath</structname> path generated for the
+   <literal>joinrel</literal> must contain the set of join clauses it uses,
+   which will be used by the planner to convert the
+   <structname>CustomPath</structname> path into a plan, if it is selected
+   by the planner as the best path for the <literal>joinrel</literal>.
   </para>
 
   <sect2 id="custom-scan-path-callbacks">

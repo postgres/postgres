@@ -128,6 +128,7 @@ extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 											List *pathkeys,
 											Relids required_outer,
 											Path *fdw_outerpath,
+											List *fdw_restrictinfo,
 											List *fdw_private);
 extern ForeignPath *create_foreign_join_path(PlannerInfo *root, RelOptInfo *rel,
 											 PathTarget *target,
@@ -135,12 +136,14 @@ extern ForeignPath *create_foreign_join_path(PlannerInfo *root, RelOptInfo *rel,
 											 List *pathkeys,
 											 Relids required_outer,
 											 Path *fdw_outerpath,
+											 List *fdw_restrictinfo,
 											 List *fdw_private);
 extern ForeignPath *create_foreign_upper_path(PlannerInfo *root, RelOptInfo *rel,
 											  PathTarget *target,
 											  double rows, Cost startup_cost, Cost total_cost,
 											  List *pathkeys,
 											  Path *fdw_outerpath,
+											  List *fdw_restrictinfo,
 											  List *fdw_private);
 
 extern Relids calc_nestloop_required_outer(Relids outerrelids,

@@ -524,7 +524,7 @@ static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
 											  RelOptInfo *rel);
 static List *get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel);
 static void add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
-											Path *epq_path);
+											Path *epq_path, List *restrictlist);
 static void add_foreign_grouping_paths(PlannerInfo *root,
 									   RelOptInfo *input_rel,
 									   RelOptInfo *grouped_rel,
@@ -1034,11 +1034,12 @@ postgresGetForeignPaths(PlannerInfo *root,
 								   NIL, /* no pathkeys */
 								   baserel->lateral_relids,
 								   NULL,	/* no extra plan */
+								   NIL, /* no fdw_restrictinfo list */
 								   NIL);	/* no fdw_private list */
 	add_path(baserel, (Path *) path);
 
 	/* Add paths with pathkeys */
-	add_paths_with_pathkeys_for_rel(root, baserel, NULL);
+	add_paths_with_pathkeys_for_rel(root, baserel, NULL, NIL);
 
 	/*
 	 * If we're not using remote estimates, stop here.  We have no way to
@@ -1206,6 +1207,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 									   NIL, /* no pathkeys */
 									   param_info->ppi_req_outer,
 									   NULL,
+									   NIL, /* no fdw_restrictinfo list */
 									   NIL);	/* no fdw_private list */
 		add_path(baserel, (Path *) path);
 	}
@@ -5991,7 +5993,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 
 static void
 add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
-								Path *epq_path)
+								Path *epq_path, List *restrictlist)
 {
 	List	   *useful_pathkeys_list = NIL; /* List of all pathkeys */
 	ListCell   *lc;
@@ -6085,6 +6087,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 											 useful_pathkeys,
 											 rel->lateral_relids,
 											 sorted_epq_path,
+											 NIL,	/* no fdw_restrictinfo list */
 											 NIL));
 		else
 			add_path(rel, (Path *)
@@ -6096,6 +6099,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 											  useful_pathkeys,
 											  rel->lateral_relids,
 											  sorted_epq_path,
+											  restrictlist,
 											  NIL));
 	}
 }
@@ -6348,13 +6352,15 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 										NIL,	/* no pathkeys */
 										joinrel->lateral_relids,
 										epq_path,
+										extra->restrictlist,
 										NIL);	/* no fdw_private */
 
 	/* Add generated path into joinrel by add_path(). */
 	add_path(joinrel, (Path *) joinpath);
 
 	/* Consider pathkeys for the join relation */
-	add_paths_with_pathkeys_for_rel(root, joinrel, epq_path);
+	add_paths_with_pathkeys_for_rel(root, joinrel, epq_path,
+									extra->restrictlist);
 
 	/* XXX Consider parameterized paths for the join relation */
 }
@@ -6735,6 +6741,7 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 										  total_cost,
 										  NIL,	/* no pathkeys */
 										  NULL,
+										  NIL,	/* no fdw_restrictinfo list */
 										  NIL); /* no fdw_private */
 
 	/* Add generated path into grouped_rel by add_path(). */
@@ -6868,6 +6875,7 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 											 total_cost,
 											 root->sort_pathkeys,
 											 NULL,	/* no extra plan */
+											 NIL,	/* no fdw_restrictinfo list */
 											 fdw_private);
 
 	/* and add it to the ordered_rel */
@@ -6983,7 +6991,8 @@ add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
 													   path->total_cost,
 													   path->pathkeys,
 													   NULL,	/* no extra plan */
-													   NULL);	/* no fdw_private */
+													   NIL,	/* no fdw_restrictinfo list */
+													   NIL);	/* no fdw_private */
 
 				/* and add it to the final_rel */
 				add_path(final_rel, (Path *) final_path);
@@ -7103,6 +7112,7 @@ add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
 										   total_cost,
 										   pathkeys,
 										   NULL,	/* no extra plan */
+										   NIL,	/* no fdw_restrictinfo list */
 										   fdw_private);
 
 	/* and add it to the final_rel */

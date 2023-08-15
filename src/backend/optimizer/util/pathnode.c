@@ -2229,6 +2229,7 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 						List *pathkeys,
 						Relids required_outer,
 						Path *fdw_outerpath,
+						List *fdw_restrictinfo,
 						List *fdw_private)
 {
 	ForeignPath *pathnode = makeNode(ForeignPath);
@@ -2250,6 +2251,7 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.pathkeys = pathkeys;
 
 	pathnode->fdw_outerpath = fdw_outerpath;
+	pathnode->fdw_restrictinfo = fdw_restrictinfo;
 	pathnode->fdw_private = fdw_private;
 
 	return pathnode;
@@ -2273,6 +2275,7 @@ create_foreign_join_path(PlannerInfo *root, RelOptInfo *rel,
 						 List *pathkeys,
 						 Relids required_outer,
 						 Path *fdw_outerpath,
+						 List *fdw_restrictinfo,
 						 List *fdw_private)
 {
 	ForeignPath *pathnode = makeNode(ForeignPath);
@@ -2300,6 +2303,7 @@ create_foreign_join_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.pathkeys = pathkeys;
 
 	pathnode->fdw_outerpath = fdw_outerpath;
+	pathnode->fdw_restrictinfo = fdw_restrictinfo;
 	pathnode->fdw_private = fdw_private;
 
 	return pathnode;
@@ -2322,6 +2326,7 @@ create_foreign_upper_path(PlannerInfo *root, RelOptInfo *rel,
 						  double rows, Cost startup_cost, Cost total_cost,
 						  List *pathkeys,
 						  Path *fdw_outerpath,
+						  List *fdw_restrictinfo,
 						  List *fdw_private)
 {
 	ForeignPath *pathnode = makeNode(ForeignPath);
@@ -2345,6 +2350,7 @@ create_foreign_upper_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.pathkeys = pathkeys;
 
 	pathnode->fdw_outerpath = fdw_outerpath;
+	pathnode->fdw_restrictinfo = fdw_restrictinfo;
 	pathnode->fdw_private = fdw_private;
 
 	return pathnode;
@@ -4149,6 +4155,8 @@ do { \
 				FLAT_COPY_PATH(fpath, path, ForeignPath);
 				if (fpath->fdw_outerpath)
 					REPARAMETERIZE_CHILD_PATH(fpath->fdw_outerpath);
+				if (fpath->fdw_restrictinfo)
+					ADJUST_CHILD_ATTRS(fpath->fdw_restrictinfo);
 
 				/* Hand over to FDW if needed. */
 				rfpc_func =
@@ -4166,6 +4174,8 @@ do { \
 
 				FLAT_COPY_PATH(cpath, path, CustomPath);
 				REPARAMETERIZE_CHILD_PATH_LIST(cpath->custom_paths);
+				if (cpath->custom_restrictinfo)
+					ADJUST_CHILD_ATTRS(cpath->custom_restrictinfo);
 				if (cpath->methods &&
 					cpath->methods->ReparameterizeCustomPathByChild)
 					cpath->custom_private =
