@@ -5,6 +5,9 @@
 
 #include "encryption/enc_tuple.h"
 
+void PGTdeDecryptTupFull(Page page, HeapTuple tuple) 
+{
+}
 
 OffsetNumber
 PGTdePageAddItemExtended(Page page,

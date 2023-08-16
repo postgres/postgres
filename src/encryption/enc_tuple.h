@@ -11,6 +11,9 @@ PGTdePageAddItemExtended(Page page,
 					OffsetNumber offsetNumber,
 					int flags);
 
+// TODO: Empty for now
+void PGTdeDecryptTupFull(Page page, HeapTuple tuple);
+
 TupleTableSlot *
 PGTdeExecStoreBufferHeapTuple(HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
 

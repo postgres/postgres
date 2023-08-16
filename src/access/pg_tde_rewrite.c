@@ -731,6 +731,8 @@ raw_pg_tde_insert(RewriteState state, HeapTuple tup)
 		newitemid = PageGetItemId(page, newoff);
 		onpage_tup = (HeapTupleHeader) PageGetItem(page, newitemid);
 
+		// TODO: decrypt/encrypt
+
 		onpage_tup->t_ctid = tup->t_self;
 	}
 
