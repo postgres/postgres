@@ -5681,8 +5681,8 @@ pg_tde_finish_speculative(Relation relation, ItemPointer tid)
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
-	// TODO: encryption / decryption - what to do here?
-	// if we encrypt everything, we have to decrypt above, and encrypt below again
+	// TODO: in reality 4 bytes would be enough (t_ctid)
+	PGTdeDecryptTupInplace(relation->rd_locator.spcOid, page, htup, 0, sizeof(HeapTupleHeader));
 
 	Assert(HeapTupleHeaderIsSpeculative(htup));
 
@@ -5693,6 +5693,9 @@ pg_tde_finish_speculative(Relation relation, ItemPointer tid)
 	 * itself like it does on regular tuples.
 	 */
 	htup->t_ctid = *tid;
+
+	// TODO: in reality 4 bytes would be enough (t_ctid)
+	PGTdeEncryptTupInplace(relation->rd_locator.spcOid, page, htup, 0, sizeof(HeapTupleHeader));
 
 	/* XLOG stuff */
 	if (RelationNeedsWAL(relation))
@@ -6711,13 +6714,16 @@ pg_tde_freeze_execute_prepared(Relation rel, Buffer buffer,
 		HeapTupleFreeze *frz = tuples + i;
 		ItemId		itemid = PageGetItemId(page, frz->offset);
 		HeapTupleHeader htup;
+		HeapTupleHeaderData decryptedHeader;
 
 		htup = (HeapTupleHeader) PageGetItem(page, itemid);
 		// TODO: Decryption/encryption here
+		PGTdeDecryptTupTo(rel->rd_locator.spcOid, page, htup, (char*)&decryptedHeader, 0, sizeof(HeapTupleHeader));
 
 		/* Deliberately avoid relying on tuple hint bits here */
 		if (frz->checkflags & HEAP_FREEZE_CHECK_XMIN_COMMITTED)
 		{
+			// TODO: how to keep compiling both?
 			TransactionId xmin = HeapTupleHeaderGetRawXmin(htup);
 
 			Assert(!HeapTupleHeaderXminFrozen(htup));
