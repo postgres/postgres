@@ -2023,8 +2023,8 @@ check_publications_origin(WalReceiverConn *wrconn, List *publications,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("subscription \"%s\" requested copy_data with origin = NONE but might copy data that had a different origin",
 					   subname),
-				errdetail_plural("Subscribed publication %s is subscribing to other publications.",
-								 "Subscribed publications %s are subscribing to other publications.",
+				errdetail_plural("The subscription being created subscribes to a publication (%s) that contains tables that are written to by other subscriptions.",
+								 "The subscription being created subscribes to publications (%s) that contain tables that are written to by other subscriptions.",
 								 list_length(publist), pubnames->data),
 				errhint("Verify that initial data copied from the publisher tables did not come from other origins."));
 	}
