@@ -1186,7 +1186,7 @@ json_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 		if (!json_unique_check_key(&state->unique_check.check, key, 0))
 			ereport(ERROR,
 					errcode(ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE),
-					errmsg("duplicate JSON key %s", key));
+					errmsg("duplicate JSON object key value: %s", key));
 
 		if (skip)
 			PG_RETURN_POINTER(state);
@@ -1349,7 +1349,7 @@ json_build_object_worker(int nargs, Datum *args, bool *nulls, Oid *types,
 			if (!json_unique_check_key(&unique_check.check, key, 0))
 				ereport(ERROR,
 						errcode(ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE),
-						errmsg("duplicate JSON key %s", key));
+						errmsg("duplicate JSON object key value: %s", key));
 
 			if (skip)
 				continue;

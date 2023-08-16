@@ -254,17 +254,17 @@ SELECT JSON_OBJECT('a': '1', 'b': NULL, 'c': 2 ABSENT ON NULL);
 (1 row)
 
 SELECT JSON_OBJECT(1: 1, '1': NULL WITH UNIQUE);
-ERROR:  duplicate JSON key "1"
+ERROR:  duplicate JSON object key value: "1"
 SELECT JSON_OBJECT(1: 1, '1': NULL ABSENT ON NULL WITH UNIQUE);
-ERROR:  duplicate JSON key "1"
+ERROR:  duplicate JSON object key value: "1"
 SELECT JSON_OBJECT(1: 1, '1': NULL NULL ON NULL WITH UNIQUE RETURNING jsonb);
-ERROR:  duplicate JSON object key
+ERROR:  duplicate JSON object key value
 SELECT JSON_OBJECT(1: 1, '1': NULL ABSENT ON NULL WITH UNIQUE RETURNING jsonb);
-ERROR:  duplicate JSON object key
+ERROR:  duplicate JSON object key value
 SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 NULL ON NULL WITH UNIQUE);
-ERROR:  duplicate JSON key "1"
+ERROR:  duplicate JSON object key value: "1"
 SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITH UNIQUE);
-ERROR:  duplicate JSON key "1"
+ERROR:  duplicate JSON object key value: "1"
 SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITHOUT UNIQUE);
     json_object     
 --------------------
@@ -272,7 +272,7 @@ SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITHOUT UNIQUE);
 (1 row)
 
 SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITH UNIQUE RETURNING jsonb);
-ERROR:  duplicate JSON object key
+ERROR:  duplicate JSON object key value
 SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITHOUT UNIQUE RETURNING jsonb);
  json_object 
 -------------
@@ -613,10 +613,10 @@ FROM
 
 SELECT JSON_OBJECTAGG(k: v WITH UNIQUE KEYS)
 FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
-ERROR:  duplicate JSON key "1"
+ERROR:  duplicate JSON object key value: "1"
 SELECT JSON_OBJECTAGG(k: v ABSENT ON NULL WITH UNIQUE KEYS)
 FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
-ERROR:  duplicate JSON key "1"
+ERROR:  duplicate JSON object key value: "1"
 SELECT JSON_OBJECTAGG(k: v ABSENT ON NULL WITH UNIQUE KEYS)
 FROM (VALUES (1, 1), (0, NULL), (3, NULL), (2, 2), (4, NULL)) foo(k, v);
     json_objectagg    
@@ -626,10 +626,10 @@ FROM (VALUES (1, 1), (0, NULL), (3, NULL), (2, 2), (4, NULL)) foo(k, v);
 
 SELECT JSON_OBJECTAGG(k: v WITH UNIQUE KEYS RETURNING jsonb)
 FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
-ERROR:  duplicate JSON object key
+ERROR:  duplicate JSON object key value
 SELECT JSON_OBJECTAGG(k: v ABSENT ON NULL WITH UNIQUE KEYS RETURNING jsonb)
 FROM (VALUES (1, 1), (1, NULL), (2, 2)) foo(k, v);
-ERROR:  duplicate JSON object key
+ERROR:  duplicate JSON object key value
 -- Test JSON_OBJECT deparsing
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT JSON_OBJECT('foo' : '1' FORMAT JSON, 'bar' : 'baz' RETURNING json);
