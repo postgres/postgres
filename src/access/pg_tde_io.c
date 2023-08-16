@@ -63,7 +63,7 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 
-	offnum = TDE_PageAddItem(pageHeader, (Item) tuple->t_data,
+	offnum = TDE_PageAddItem(tuple->t_tableOid, pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)

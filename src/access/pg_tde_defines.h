@@ -35,8 +35,8 @@
 
 #define GetPGTdeamTableAmRoutine GetHeapamTableAmRoutine
 
-#define TDE_PageAddItem(page, item, size, offsetNumber, overwrite, is_heap) \
-	PGTdePageAddItemExtended(page, item, size, offsetNumber, \
+#define TDE_PageAddItem(oid, page, item, size, offsetNumber, overwrite, is_heap) \
+	PGTdePageAddItemExtended(oid, page, item, size, offsetNumber, \
 						((overwrite) ? PAI_OVERWRITE : 0) | \
 						((is_heap) ? PAI_IS_HEAP : 0))
 

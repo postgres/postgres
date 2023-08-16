@@ -5,7 +5,7 @@
 #include "executor/tuptable.h"
 
 OffsetNumber
-PGTdePageAddItemExtended(Page page,
+PGTdePageAddItemExtended(Oid oid, Page page,
 					Item item,
 					Size size,
 					OffsetNumber offsetNumber,
