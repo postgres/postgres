@@ -14843,6 +14843,9 @@ ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 	EnableDisableTrigger(rel, trigname, InvalidOid,
 						 fires_when, skip_system, recurse,
 						 lockmode);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), 0);
 }
 
 /*
@@ -14855,6 +14858,9 @@ ATExecEnableDisableRule(Relation rel, const char *rulename,
 						char fires_when, LOCKMODE lockmode)
 {
 	EnableDisableRule(rel, rulename, fires_when);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), 0);
 }
 
 /*
@@ -16134,6 +16140,9 @@ ATExecSetRowSecurity(Relation rel, bool rls)
 	((Form_pg_class) GETSTRUCT(tuple))->relrowsecurity = rls;
 	CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
 
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), 0);
+
 	table_close(pg_class, RowExclusiveLock);
 	heap_freetuple(tuple);
 }
@@ -16159,6 +16168,9 @@ ATExecForceNoForceRowSecurity(Relation rel, bool force_rls)
 
 	((Form_pg_class) GETSTRUCT(tuple))->relforcerowsecurity = force_rls;
 	CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), 0);
 
 	table_close(pg_class, RowExclusiveLock);
 	heap_freetuple(tuple);

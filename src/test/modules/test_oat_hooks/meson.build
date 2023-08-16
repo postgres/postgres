@@ -23,6 +23,7 @@ tests += {
   'regress': {
     'sql': [
       'test_oat_hooks',
+      'alter_table',
     ],
     'regress_args': ['--no-locale', '--encoding=UTF8'],
     'runningcheck': false,

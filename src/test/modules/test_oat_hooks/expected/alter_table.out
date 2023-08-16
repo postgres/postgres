@@ -1,0 +1,163 @@
+--
+-- OAT checks for ALTER TABLE
+--
+-- This test script fails if debug_discard_caches is enabled, because cache
+-- flushes cause extra calls of the OAT hook in recomputeNamespacePath,
+-- resulting in more NOTICE messages than are in the expected output.
+SET debug_discard_caches = 0;
+LOAD 'test_oat_hooks';
+SET test_oat_hooks.audit = true;
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [test_oat_hooks.audit]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [test_oat_hooks.audit]
+NOTICE:  in process utility: superuser finished SET
+CREATE SCHEMA test_oat_schema;
+NOTICE:  in process utility: superuser attempting CREATE SCHEMA
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in process utility: superuser finished CREATE SCHEMA
+CREATE TABLE test_oat_schema.test_oat_tab (c1 int, c2 text);
+NOTICE:  in process utility: superuser attempting CREATE TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+LINE 1: CREATE TABLE test_oat_schema.test_oat_tab (c1 int, c2 text);
+                                                      ^
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+LINE 1: CREATE TABLE test_oat_schema.test_oat_tab (c1 int, c2 text);
+                                                      ^
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [no report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [no report on violation, allowed]
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [internal]
+NOTICE:  in object access: superuser finished create (subId=0x0) [internal]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [internal]
+NOTICE:  in object access: superuser finished create (subId=0x0) [internal]
+NOTICE:  in process utility: superuser finished CREATE TABLE
+CREATE RULE test_oat_notify AS
+  ON UPDATE TO test_oat_schema.test_oat_tab
+  DO ALSO NOTIFY test_oat_tab;
+NOTICE:  in process utility: superuser attempting CREATE RULE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in process utility: superuser finished CREATE RULE
+CREATE FUNCTION test_oat_schema.test_trigger()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE'
+  THEN
+    RETURN OLD;
+  ELSE
+    RETURN NEW;
+  END IF;
+END; $$;
+NOTICE:  in process utility: superuser attempting CREATE FUNCTION
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in process utility: superuser finished CREATE FUNCTION
+CREATE TRIGGER test_oat_trigger BEFORE INSERT ON test_oat_schema.test_oat_tab
+  FOR EACH STATEMENT EXECUTE FUNCTION test_oat_schema.test_trigger();
+NOTICE:  in process utility: superuser attempting CREATE TRIGGER
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in process utility: superuser finished CREATE TRIGGER
+-- RLS
+ALTER TABLE test_oat_schema.test_oat_tab ENABLE ROW LEVEL SECURITY;
+NOTICE:  in process utility: superuser attempting ALTER TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in process utility: superuser finished ALTER TABLE
+ALTER TABLE test_oat_schema.test_oat_tab DISABLE ROW LEVEL SECURITY;
+NOTICE:  in process utility: superuser attempting ALTER TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in process utility: superuser finished ALTER TABLE
+ALTER TABLE test_oat_schema.test_oat_tab FORCE ROW LEVEL SECURITY;
+NOTICE:  in process utility: superuser attempting ALTER TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in process utility: superuser finished ALTER TABLE
+ALTER TABLE test_oat_schema.test_oat_tab NO FORCE ROW LEVEL SECURITY;
+NOTICE:  in process utility: superuser attempting ALTER TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in process utility: superuser finished ALTER TABLE
+-- Rules
+ALTER TABLE test_oat_schema.test_oat_tab DISABLE RULE test_oat_notify;
+NOTICE:  in process utility: superuser attempting ALTER TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in process utility: superuser finished ALTER TABLE
+ALTER TABLE test_oat_schema.test_oat_tab ENABLE RULE test_oat_notify;
+NOTICE:  in process utility: superuser attempting ALTER TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in process utility: superuser finished ALTER TABLE
+-- Triggers
+ALTER TABLE test_oat_schema.test_oat_tab DISABLE TRIGGER test_oat_trigger;
+NOTICE:  in process utility: superuser attempting ALTER TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in process utility: superuser finished ALTER TABLE
+ALTER TABLE test_oat_schema.test_oat_tab ENABLE TRIGGER test_oat_trigger;
+NOTICE:  in process utility: superuser attempting ALTER TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser attempting alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in object access: superuser finished alter (subId=0x0) [explicit without auxiliary object]
+NOTICE:  in process utility: superuser finished ALTER TABLE
+DROP TABLE test_oat_schema.test_oat_tab;
+NOTICE:  in process utility: superuser attempting DROP TABLE
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [report on violation, allowed]
+NOTICE:  in object access: superuser attempting drop (subId=0x0) []
+NOTICE:  in object access: superuser finished drop (subId=0x0) []
+NOTICE:  in object access: superuser attempting drop (subId=0x0) []
+NOTICE:  in object access: superuser finished drop (subId=0x0) []
+NOTICE:  in object access: superuser attempting drop (subId=0x0) []
+NOTICE:  in object access: superuser finished drop (subId=0x0) []
+NOTICE:  in object access: superuser attempting drop (subId=0x0) []
+NOTICE:  in object access: superuser finished drop (subId=0x0) []
+NOTICE:  in object access: superuser attempting drop (subId=0x0) []
+NOTICE:  in object access: superuser finished drop (subId=0x0) []
+NOTICE:  in object access: superuser attempting drop (subId=0x0) []
+NOTICE:  in object access: superuser finished drop (subId=0x0) []
+NOTICE:  in object access: superuser attempting drop (subId=0x0) []
+NOTICE:  in object access: superuser finished drop (subId=0x0) []
+NOTICE:  in process utility: superuser finished DROP TABLE
