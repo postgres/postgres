@@ -29,6 +29,9 @@
  *
  *-------------------------------------------------------------------------
  */
+
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include "pg_tdeam.h"
@@ -36,8 +39,7 @@
 #include "pg_tdetoast.h"
 #include "pg_tde_io.h"
 #include "pg_tde_visibilitymap.h"
-
-#include "pg_tde_defines.h"
+#include "encryption/enc_tuple.h"
 
 #include "access/bufmask.h"
 #include "access/genam.h"
@@ -1166,7 +1168,7 @@ pg_tde_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot 
 
 	pgstat_count_pg_tde_getnext(scan->rs_base.rs_rd);
 
-	ExecStoreBufferHeapTuple(&scan->rs_ctup, slot,
+	PGTdeExecStoreBufferHeapTuple(&scan->rs_ctup, slot,
 							 scan->rs_cbuf);
 	return true;
 }
@@ -1314,7 +1316,7 @@ pg_tde_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 	 */
 	pgstat_count_pg_tde_getnext(scan->rs_base.rs_rd);
 
-	ExecStoreBufferHeapTuple(&scan->rs_ctup, slot, scan->rs_cbuf);
+	PGTdeExecStoreBufferHeapTuple(&scan->rs_ctup, slot, scan->rs_cbuf);
 	return true;
 }
 
@@ -9298,7 +9300,7 @@ pg_tde_xlog_insert(XLogReaderState *record)
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		htup->t_ctid = target_tid;
 
-		if (PageAddItem(page, (Item) htup, newlen, xlrec->offnum,
+		if (TDE_PageAddItem(page, (Item) htup, newlen, xlrec->offnum,
 						true, true) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 
@@ -9442,7 +9444,7 @@ pg_tde_xlog_multi_insert(XLogReaderState *record)
 			ItemPointerSetBlockNumber(&htup->t_ctid, blkno);
 			ItemPointerSetOffsetNumber(&htup->t_ctid, offnum);
 
-			offnum = PageAddItem(page, (Item) htup, newlen, offnum, true, true);
+			offnum = TDE_PageAddItem(page, (Item) htup, newlen, offnum, true, true);
 			if (offnum == InvalidOffsetNumber)
 				elog(PANIC, "failed to add tuple");
 		}
@@ -9716,7 +9718,7 @@ pg_tde_xlog_update(XLogReaderState *record, bool hot_update)
 		/* Make sure there is no forward chain link in t_ctid */
 		htup->t_ctid = newtid;
 
-		offnum = PageAddItem(page, (Item) htup, newlen, offnum, true, true);
+		offnum = TDE_PageAddItem(page, (Item) htup, newlen, offnum, true, true);
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 

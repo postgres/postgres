@@ -84,6 +84,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include "pg_tdeam_xlog.h"

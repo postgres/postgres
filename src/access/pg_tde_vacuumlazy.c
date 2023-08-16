@@ -30,6 +30,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include <math.h>

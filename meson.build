@@ -8,6 +8,7 @@ pg_tde_sources = files(
         'src/access/pg_tde_rewrite.c',
         'src/access/pg_tde_vacuumlazy.c',
         'src/access/pg_tde_visibilitymap.c',
+        'src/encryption/enc_tuple.c',
 )
 
 incdir = include_directories('src')

@@ -13,11 +13,14 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include "pg_tdeam.h"
 #include "pg_tde_io.h"
 #include "pg_tde_visibilitymap.h"
+#include "encryption/enc_tuple.h"
 
 #include "access/htup_details.h"
 #include "storage/bufmgr.h"
@@ -60,7 +63,7 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 
-	offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
+	offnum = TDE_PageAddItem(pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
