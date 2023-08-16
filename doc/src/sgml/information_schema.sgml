@@ -3136,15 +3136,6 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>domain_default</structfield> <type>character_data</type>
-      </para>
-      <para>
-       Not yet implemented
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>udt_catalog</structfield> <type>sql_identifier</type>
       </para>
       <para>

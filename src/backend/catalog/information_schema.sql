@@ -2741,8 +2741,6 @@ CREATE VIEW element_types AS
            CAST(null AS character_data) AS interval_type,
            CAST(null AS cardinal_number) AS interval_precision,
 
-           CAST(null AS character_data) AS domain_default, -- XXX maybe a bug in the standard
-
            CAST(current_database() AS sql_identifier) AS udt_catalog,
            CAST(nbt.nspname AS sql_identifier) AS udt_schema,
            CAST(bt.typname AS sql_identifier) AS udt_name,
