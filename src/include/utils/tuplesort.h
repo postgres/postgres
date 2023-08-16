@@ -163,6 +163,13 @@ typedef struct
 	SortTupleComparator comparetup;
 
 	/*
+	 * Fall back to the full tuple for comparison, but only compare the first
+	 * sortkey if it was abbreviated. Otherwise, only compare second and later
+	 * sortkeys.
+	 */
+	SortTupleComparator comparetup_tiebreak;
+
+	/*
 	 * Alter datum1 representation in the SortTuple's array back from the
 	 * abbreviated key to the first column value.
 	 */

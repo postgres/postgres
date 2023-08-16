@@ -485,9 +485,6 @@ static void tuplesort_updatemax(Tuplesortstate *state);
  * is to try to sort two tuples without having to follow the pointers to the
  * comparator or the tuple.
  *
- * XXX: For now, these fall back to comparator functions that will compare the
- * leading datum a second time.
- *
  * XXX: For now, there is no specialization for cases where datum1 is
  * authoritative and we don't even need to fall back to a callback at all (that
  * would be true for types like int4/int8/timestamp/date, but not true for
@@ -513,7 +510,7 @@ qsort_tuple_unsigned_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	if (state->base.onlyKey != NULL)
 		return 0;
 
-	return state->base.comparetup(a, b, state);
+	return state->base.comparetup_tiebreak(a, b, state);
 }
 
 #if SIZEOF_DATUM >= 8
@@ -537,7 +534,7 @@ qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	if (state->base.onlyKey != NULL)
 		return 0;
 
-	return state->base.comparetup(a, b, state);
+	return state->base.comparetup_tiebreak(a, b, state);
 }
 #endif
 
@@ -561,7 +558,7 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	if (state->base.onlyKey != NULL)
 		return 0;
 
-	return state->base.comparetup(a, b, state);
+	return state->base.comparetup_tiebreak(a, b, state);
 }
 
 /*
