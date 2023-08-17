@@ -7,6 +7,10 @@
 #include "encryption/enc_tuple.h"
 #include "storage/bufmgr.h"
 
+// ================================================================
+// ACTUAL ENCRYPTION/DECRYPTION FUNCTIONS
+// ================================================================
+
 static void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to)
 {
 	const int encryptionKey = tableOid;
@@ -24,6 +28,28 @@ static void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, Hea
 		out[i] = v ^ realKey;
 	}
 }
+
+static void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to) 
+{
+	int encryptionKey = tableOid;
+	const unsigned long offset = t_data - page;
+	char realKey = (char)(encryptionKey + offset + bn);
+
+#if ENCRYPTION_DEBUG
+	fprintf(stderr, " ---- ENCRYPTING (O: %i, L: %u - K: 0x%02hhX) ----\n", encryptionKey, to - from, realKey & 0xFF);
+#endif
+	for(unsigned i = from; i < to; ++i) {
+		const char v = ((char*)(t_data))[i];
+#if ENCRYPTION_DEBUG
+	    fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", v & 0xFF, (v ^ realKey) & 0xFF);
+#endif
+		out[i] = v ^ realKey;
+	}
+}
+
+// ================================================================
+// HELPER FUNCTIONS FOR ENCRYPTION
+// ================================================================
 
 // Assumtions:
 // t_data is set
@@ -69,23 +95,6 @@ static void PGTdeDecryptTupDataOnly(BlockNumber bn, Page page, HeapTuple tuple)
 #endif
 }
 
-static void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to) 
-{
-	int encryptionKey = tableOid;
-	const unsigned long offset = t_data - page;
-	char realKey = (char)(encryptionKey + offset + bn);
-
-#if ENCRYPTION_DEBUG
-	fprintf(stderr, " ---- ENCRYPTING (O: %i, L: %u - K: 0x%02hhX) ----\n", encryptionKey, to - from, realKey & 0xFF);
-#endif
-	for(unsigned i = from; i < to; ++i) {
-		const char v = ((char*)(t_data))[i];
-#if ENCRYPTION_DEBUG
-	    fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", v & 0xFF, (v ^ realKey) & 0xFF);
-#endif
-		out[i] = v ^ realKey;
-	}
-}
 
 void PGTdeEncryptTupHeaderTo(Oid tableOid, BlockNumber bn, char* page, HeapTupleHeader in, HeapTupleHeader out) 
 {
