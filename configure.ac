@@ -1285,7 +1285,7 @@ AC_SEARCH_LIBS(socket, [socket ws2_32])
 AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 AC_SEARCH_LIBS(shm_open, rt)
 AC_SEARCH_LIBS(shm_unlink, rt)
-AC_SEARCH_LIBS(clock_gettime, [rt posix4])
+AC_SEARCH_LIBS(clock_gettime, rt)
 # Cygwin:
 AC_SEARCH_LIBS(shmget, cygipc)
 # *BSD:

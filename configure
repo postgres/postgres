@@ -12163,7 +12163,7 @@ return clock_gettime ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' rt posix4; do
+for ac_lib in '' rt; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
