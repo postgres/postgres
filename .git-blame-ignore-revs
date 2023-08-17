@@ -14,6 +14,27 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+89be0b89ae60c63856fd26d82a104781540e2312 # 2023-08-15 17:45:00 +0900
+# Fix code indentation vioaltion introduced in commit 9e9931d2b.
+
+5dc456b7dda4f7d0d7735b066607c190c74d174a # 2023-08-11 20:43:34 +0900
+# Fix code indentation violations introduced by recent commit
+
+62e9af4c63fbd36fb9af8450fb44bece76d7766f # 2023-07-25 12:35:58 +0530
+# Fix code indentation vioaltion introduced in commit d38ad8e31d.
+
+4e465aac36ce9a9533c68dbdc83e67579880e628 # 2023-07-18 14:04:31 +0900
+# Fix indentation in twophase.c
+
+328f492d2565cfbe383f13a69425d751fd79415f # 2023-07-13 22:26:10 +0900
+# Fix code indentation violation in commit b6e1157e7d
+
+69a674a170058e63e8178aec8a36a673efce8801 # 2023-07-06 11:49:18 +0530
+# Fix code indentation vioaltion introduced in commit cc32ec24fd.
+
+a4cfeeca5a97f2b5969c31aa69ba775af95ee5a3 # 2023-07-03 12:47:49 +0200
+# Fix code indentation violations
+
 b334612b8aee9f9a34378982d8938b201dfad323 # 2023-06-20 09:50:43 -0400
 # Pre-beta2 mechanical code beautification.
 
