@@ -1,6 +1,11 @@
 # contrib/pg_tde/Makefile
 
-SUBDIRS = access encryption
+MODULE_big = pg_tde
+
+tde_subdirs = access encryption
+
+OBJS = \
+	$(patsubst %.c,%.o,$(foreach dir,$(tde_subdirs), $(wildcard $(dir)/*.c)))
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
