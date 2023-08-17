@@ -11,6 +11,7 @@
 // ACTUAL ENCRYPTION/DECRYPTION FUNCTIONS
 // ================================================================
 
+// t_data and out have to be different addresses without overlap!
 static void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to)
 {
 	const int encryptionKey = tableOid;
@@ -29,10 +30,11 @@ static void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, Hea
 	}
 }
 
+// t_data and out have to be different addresses without overlap!
 static void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to) 
 {
 	int encryptionKey = tableOid;
-	const unsigned long offset = t_data - page;
+	const unsigned long offset = out - page; // TODO: we are assuming that we output to the page
 	char realKey = (char)(encryptionKey + offset + bn);
 
 #if ENCRYPTION_DEBUG
@@ -118,12 +120,12 @@ PGTdePageAddItemExtended(Oid oid,
 
 	off = PageAddItemExtended(page,item,size,offsetNumber,flags);
 
-	char* addr = ((char*)phdr) + phdr->pd_upper;
+	char* toAddr = ((char*)phdr) + phdr->pd_upper;
 
 #if FULL_TUPLE_ENCRYPTION
-	PGTdeEncryptTupInternal(oid, bn, page, addr, addr, 0, size);
+	PGTdeEncryptTupInternal(oid, bn, page, item, toAddr, 0, size);
 #else
-	PGTdeEncryptTupInternal(oid, bn, page, addr, addr, headerSize, size);
+	PGTdeEncryptTupInternal(oid, bn, page, item, toAddr, headerSize, size);
 #endif
 
 	return off;
