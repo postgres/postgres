@@ -5,48 +5,64 @@
 #include "postgres.h"
 
 #include "encryption/enc_tuple.h"
+#include "encryption/enc_aes.h"
 #include "storage/bufmgr.h"
+
+// TODO: use real keys
+static unsigned char hardcodedKey[16] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF };
 
 // ================================================================
 // ACTUAL ENCRYPTION/DECRYPTION FUNCTIONS
 // ================================================================
 
 // t_data and out have to be different addresses without overlap!
-static void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to)
+// The only difference between enc and dec is how we calculate offsetInPage
+static void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to)
 {
-	const int encryptionKey = tableOid;
-	const unsigned long offset = (char*)t_data - (char*)page;
-	const char realKey = (char)(encryptionKey + offset + bn);
+	AesInit(); // TODO: where to move this?
+
+	const uint64_t offsetInFile = (bn * BLCKSZ) + offsetInPage;
+
+	const uint64_t aesBlockNumber1 = offsetInFile / 16;
+	const uint64_t aesBlockNumber2 = (offsetInFile + (to-from) + 15) / 16;
+	const uint64_t aesBlockOffset = offsetInFile % 16;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvla"
+	unsigned char encKey[16 * (aesBlockNumber2 - aesBlockNumber1 + 1)];
+#pragma GCC diagnostic pop
+	Aes128EncryptedZeroBlocks(hardcodedKey, aesBlockNumber1, aesBlockNumber2, encKey);
 
 #if ENCRYPTION_DEBUG
-	fprintf(stderr, " ---- DECRYPTING (O: %i, L: %u, K:0x%02hhX) ----\n", encryptionKey, to - from, realKey & 0xFF);
+	fprintf(stderr, " ---- (Oid: %i, Len: %u, AesBlock: %lu, BlockOffset: %lu) ----\n", tableOid, to - from, aesBlockNumber1, aesBlockOffset);
 #endif
-	for(unsigned i = from; i < to; ++i) {
-		const char v = ((char*)(t_data))[i];
+	for(unsigned i = 0; i < to - from; ++i) {
+		const char v = ((char*)(t_data))[i + from];
+		char realKey = encKey[aesBlockOffset + i];
 #if ENCRYPTION_DEBUG
 	    fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", v & 0xFF, (v ^ realKey) & 0xFF);
 #endif
-		out[i] = v ^ realKey;
+		out[i + from] = v ^ realKey;
 	}
+}
+
+static void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to)
+{
+#if ENCRYPTION_DEBUG
+	fprintf(stderr, " >> DECRYPTING ");
+#endif
+	const unsigned long offsetInPage = (char*)t_data - (char*)page;
+	PGTdeCryptTupInternal(tableOid, bn, offsetInPage, (char*)t_data, out, from, to);
 }
 
 // t_data and out have to be different addresses without overlap!
 static void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to) 
 {
-	int encryptionKey = tableOid;
-	const unsigned long offset = out - page; // TODO: we are assuming that we output to the page
-	char realKey = (char)(encryptionKey + offset + bn);
-
 #if ENCRYPTION_DEBUG
-	fprintf(stderr, " ---- ENCRYPTING (O: %i, L: %u - K: 0x%02hhX) ----\n", encryptionKey, to - from, realKey & 0xFF);
+	fprintf(stderr, " >> ENCRYPTING ");
 #endif
-	for(unsigned i = from; i < to; ++i) {
-		const char v = ((char*)(t_data))[i];
-#if ENCRYPTION_DEBUG
-	    fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", v & 0xFF, (v ^ realKey) & 0xFF);
-#endif
-		out[i] = v ^ realKey;
-	}
+	const unsigned long offsetInPage = out - page;
+	PGTdeCryptTupInternal(tableOid, bn, offsetInPage, t_data, out, from, to);
 }
 
 // ================================================================

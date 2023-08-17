@@ -9,6 +9,7 @@ pg_tde_sources = files(
         'src/access/pg_tde_vacuumlazy.c',
         'src/access/pg_tde_visibilitymap.c',
         'src/encryption/enc_tuple.c',
+        'src/encryption/enc_aes.c',
 )
 
 incdir = include_directories('src')
@@ -20,6 +21,12 @@ pg_tde = shared_module('pg_tde',
   include_directories: incdir,
 )
 contrib_targets += pg_tde
+
+pg_tde = executable('enc_test',
+  files('src/encryption/enc_aes.c', 'src/encryption/test.c'),
+  kwargs: contrib_mod_args,
+  include_directories: incdir,
+)
 
 install_data(
   'pg_tde.control',
