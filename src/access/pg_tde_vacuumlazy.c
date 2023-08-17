@@ -39,6 +39,7 @@
 #include "pg_tdeam.h"
 #include "pg_tdeam_xlog.h"
 #include "pg_tde_visibilitymap.h"
+#include "encryption/enc_tuple.h"
 
 #include "access/amapi.h"
 #include "access/genam.h"
@@ -1654,7 +1655,7 @@ retry:
 		tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 		tuple.t_len = ItemIdGetLength(itemid);
 		tuple.t_tableOid = RelationGetRelid(rel);
-		PGTdeDecryptTupFull(page, &tuple);
+		PGTdeDecryptTupFull(blkno, page, &tuple);
 
 		/*
 		 * DEAD tuples are almost always pruned into LP_DEAD line pointers by
@@ -2057,7 +2058,7 @@ lazy_scan_noprune(LVRelState *vacrel,
 		tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 		tuple.t_len = ItemIdGetLength(itemid);
 		tuple.t_tableOid = RelationGetRelid(vacrel->rel);
-		PGTdeDecryptTupFull(page, &tuple);
+		PGTdeDecryptTupFull(blkno, page, &tuple);
 
 		switch (HeapTupleSatisfiesVacuum(&tuple, vacrel->cutoffs.OldestXmin,
 										 buf))
@@ -3291,7 +3292,7 @@ pg_tde_page_is_all_visible(LVRelState *vacrel, Buffer buf,
 		tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 		tuple.t_len = ItemIdGetLength(itemid);
 		tuple.t_tableOid = RelationGetRelid(vacrel->rel);
-		PGTdeDecryptTupFull(page, &tuple);
+		PGTdeDecryptTupFull(blockno, page, &tuple);
 
 		switch (HeapTupleSatisfiesVacuum(&tuple, vacrel->cutoffs.OldestXmin,
 										 buf))

@@ -6,7 +6,7 @@
 
 // Used by both data only and full tuple encryption
 OffsetNumber
-PGTdePageAddItemExtended(Oid oid, Page page,
+PGTdePageAddItemExtended(Oid oid, BlockNumber bn, Page page,
 					Item item,
 					Size size,
 					OffsetNumber offsetNumber,
@@ -14,9 +14,9 @@ PGTdePageAddItemExtended(Oid oid, Page page,
 
 // These 3 functions are only used with full tuple encryption, including headers
 // Without FULL_TUPLE_ENCRYPTION = 1, they default to NOP
-void PGTdeDecryptTupFull(Page page, HeapTuple tuple);
-void PGTdeDecryptTupHeaderTo(Oid tableOid, Page page, HeapTupleHeader in, HeapTupleHeader out);
-void PGTdeEncryptTupHeaderTo(Oid tableOid, char* page, HeapTupleHeader in, HeapTupleHeader out);
+void PGTdeDecryptTupFull(BlockNumber bn, Page page, HeapTuple tuple);
+void PGTdeDecryptTupHeaderTo(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader in, HeapTupleHeader out);
+void PGTdeEncryptTupHeaderTo(Oid tableOid, BlockNumber bn, char* page, HeapTupleHeader in, HeapTupleHeader out);
 
 
 // These 2 are only used by data only encryption

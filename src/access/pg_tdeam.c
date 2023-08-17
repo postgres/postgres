@@ -468,7 +468,7 @@ pg_tde_getpage(TableScanDesc sscan, BlockNumber block)
 		loctup.t_tableOid = RelationGetRelid(scan->rs_base.rs_rd);
 		loctup.t_data = (HeapTupleHeader) PageGetItem(page, lpp);
 		loctup.t_len = ItemIdGetLength(lpp);
-		PGTdeDecryptTupFull(page, &loctup);
+		PGTdeDecryptTupFull(block, page, &loctup);
 		ItemPointerSet(&(loctup.t_self), block, lineoff);
 
 		if (all_visible)
@@ -789,7 +789,7 @@ continue_page:
 			tuple->t_data = (HeapTupleHeader) PageGetItem(page, lpp);
 			tuple->t_len = ItemIdGetLength(lpp);
 			// needed? tuple->t_tableOid = RelationGetRelid(scan->rs_base.rs_rd);
-			PGTdeDecryptTupFull(page, tuple);
+			PGTdeDecryptTupFull(block, page, tuple);
 			ItemPointerSet(&(tuple->t_self), block, lineoff);
 
 			visible = HeapTupleSatisfiesVisibility(tuple,
@@ -911,7 +911,7 @@ continue_page:
 			tuple->t_data = (HeapTupleHeader) PageGetItem(page, lpp);
 			tuple->t_len = ItemIdGetLength(lpp);
 			// t_tableOid?
-			PGTdeDecryptTupFull(page, tuple);
+			PGTdeDecryptTupFull(block, page, tuple);
 			ItemPointerSet(&(tuple->t_self), block, lineoff);
 
 			/* skip any tuples that don't match the scan key */
@@ -1421,7 +1421,7 @@ pg_tde_fetch(Relation relation,
 	tuple->t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tuple->t_len = ItemIdGetLength(lp);
 	tuple->t_tableOid = RelationGetRelid(relation);
-	PGTdeDecryptTupFull(page, tuple);
+	PGTdeDecryptTupFull(BufferGetBlockNumber(buffer), page, tuple);
 
 	/*
 	 * check tuple visibility, then release lock
@@ -1542,7 +1542,7 @@ pg_tde_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		heapTuple->t_data = (HeapTupleHeader) PageGetItem(page, lp);
 		heapTuple->t_len = ItemIdGetLength(lp);
 		heapTuple->t_tableOid = RelationGetRelid(relation);
-		PGTdeDecryptTupFull(page, heapTuple);
+		PGTdeDecryptTupFull(blkno, page, heapTuple);
 		ItemPointerSet(&heapTuple->t_self, blkno, offnum);
 
 		/*
@@ -1700,7 +1700,7 @@ pg_tde_get_latest_tid(TableScanDesc sscan,
 		tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 		tp.t_len = ItemIdGetLength(lp);
 		tp.t_tableOid = RelationGetRelid(relation);
-		PGTdeDecryptTupFull(page, &tp);
+		PGTdeDecryptTupFull(BufferGetBlockNumber(buffer), page, &tp);
 
 		/*
 		 * After following a t_ctid link, we might arrive at an unrelated
@@ -2578,7 +2578,7 @@ pg_tde_delete(Relation relation, ItemPointer tid,
 	tp.t_tableOid = RelationGetRelid(relation);
 	tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tp.t_len = ItemIdGetLength(lp);
-	PGTdeDecryptTupFull(page, &tp);
+	PGTdeDecryptTupFull(block, page, &tp);
 	tp.t_self = *tid;
 
 l1:
@@ -3102,7 +3102,7 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	oldtup.t_tableOid = RelationGetRelid(relation);
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	oldtup.t_len = ItemIdGetLength(lp);
-	PGTdeDecryptTupFull(page, &oldtup);
+	PGTdeDecryptTupFull(block, page, &oldtup);
 	oldtup.t_self = *otid;
 
 	/* the new tuple is ready, except for this: */
@@ -4188,7 +4188,7 @@ pg_tde_lock_tuple(Relation relation, HeapTuple tuple,
 	tuple->t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tuple->t_len = ItemIdGetLength(lp);
 	tuple->t_tableOid = RelationGetRelid(relation);
-	PGTdeDecryptTupFull(page, tuple);
+	PGTdeDecryptTupFull(block, page, tuple);
 
 l3:
 	result = HeapTupleSatisfiesUpdate(tuple, cid, *buffer);
@@ -5683,7 +5683,7 @@ pg_tde_finish_speculative(Relation relation, ItemPointer tid)
 	START_CRIT_SECTION();
 
 	// TODO: in reality 4 bytes would be enough (t_ctid)
-	PGTdeDecryptTupHeaderTo(relation->rd_locator.spcOid, page, htup, &decrypted);
+	PGTdeDecryptTupHeaderTo(relation->rd_locator.spcOid, BufferGetBlockNumber(buffer), page, htup, &decrypted);
 	// TODO: htup should point to decrypted, and backup old pointer somewhere
 
 	Assert(HeapTupleHeaderIsSpeculative(htup));
@@ -5697,7 +5697,7 @@ pg_tde_finish_speculative(Relation relation, ItemPointer tid)
 	htup->t_ctid = *tid;
 
 	// TODO: in reality 4 bytes would be enough (t_ctid)
-	PGTdeEncryptTupHeaderTo(relation->rd_locator.spcOid, page, &decrypted, htup);
+	PGTdeEncryptTupHeaderTo(relation->rd_locator.spcOid, BufferGetBlockNumber(buffer), page, &decrypted, htup);
 
 	/* XLOG stuff */
 	if (RelationNeedsWAL(relation))
@@ -5782,7 +5782,7 @@ pg_tde_abort_speculative(Relation relation, ItemPointer tid)
 	tp.t_tableOid = RelationGetRelid(relation);
 	tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tp.t_len = ItemIdGetLength(lp);
-	PGTdeDecryptTupFull(page, &tp);
+	PGTdeDecryptTupFull(block, page, &tp);
 	tp.t_self = *tid;
 
 	/*
@@ -6720,7 +6720,7 @@ pg_tde_freeze_execute_prepared(Relation rel, Buffer buffer,
 
 		htup = (HeapTupleHeader) PageGetItem(page, itemid);
 		// TODO: Decryption/encryption here
-		PGTdeDecryptTupHeaderTo(rel->rd_locator.spcOid, page, htup, &decryptedHeader);
+		PGTdeDecryptTupHeaderTo(rel->rd_locator.spcOid, BufferGetBlockNumber(buffer), page, htup, &decryptedHeader);
 
 		/* Deliberately avoid relying on tuple hint bits here */
 		if (frz->checkflags & HEAP_FREEZE_CHECK_XMIN_COMMITTED)
@@ -9331,7 +9331,7 @@ pg_tde_xlog_insert(XLogReaderState *record)
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		htup->t_ctid = target_tid;
 
-		if (TDE_PageAddItem(target_locator.spcOid, page, (Item) htup, newlen, xlrec->offnum,
+		if (TDE_PageAddItem(target_locator.spcOid, blkno, page, (Item) htup, newlen, xlrec->offnum,
 						true, true) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 
@@ -9475,7 +9475,7 @@ pg_tde_xlog_multi_insert(XLogReaderState *record)
 			ItemPointerSetBlockNumber(&htup->t_ctid, blkno);
 			ItemPointerSetOffsetNumber(&htup->t_ctid, offnum);
 
-			offnum = TDE_PageAddItem(rlocator.spcOid, page, (Item) htup, newlen, offnum, true, true);
+			offnum = TDE_PageAddItem(rlocator.spcOid, blkno, page, (Item) htup, newlen, offnum, true, true);
 			if (offnum == InvalidOffsetNumber)
 				elog(PANIC, "failed to add tuple");
 		}
@@ -9750,7 +9750,7 @@ pg_tde_xlog_update(XLogReaderState *record, bool hot_update)
 		/* Make sure there is no forward chain link in t_ctid */
 		htup->t_ctid = newtid;
 
-		offnum = TDE_PageAddItem(rlocator.spcOid, page, (Item) htup, newlen, offnum, true, true);
+		offnum = TDE_PageAddItem(rlocator.spcOid, newblk, page, (Item) htup, newlen, offnum, true, true);
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 

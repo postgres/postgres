@@ -63,7 +63,7 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 
-	offnum = TDE_PageAddItem(tuple->t_tableOid, pageHeader, (Item) tuple->t_data,
+	offnum = TDE_PageAddItem(tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
@@ -81,11 +81,13 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	{
 		ItemId		itemId = PageGetItemId(pageHeader, offnum);
 		HeapTupleHeader item = (HeapTupleHeader) PageGetItem(pageHeader, itemId);
+		HeapTupleHeaderData decrypted;
+		// TODO: why re-feth the tuple?
 		// TODO: len. partial, we only need t_ctid
 		// tableOid?
-		PGTdeDecryptTupFull(pageHeader, item);
+		PGTdeDecryptTupHeaderTo(tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, item, &decrypted);
 
-		item->t_ctid = tuple->t_self;
+		item->t_ctid = tuple->t_self; // TODO: access & modify & reencrypt decrypted
 	}
 }
 
