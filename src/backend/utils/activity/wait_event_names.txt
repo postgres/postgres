@@ -332,7 +332,7 @@ WAIT_EVENT_DOCONLY	ReplicationOriginState	"Waiting to read or update the progres
 WAIT_EVENT_DOCONLY	ReplicationSlotIO	"Waiting for I/O on a replication slot."
 WAIT_EVENT_DOCONLY	LockFastPath	"Waiting to read or update a process' fast-path lock information."
 WAIT_EVENT_DOCONLY	BufferMapping	"Waiting to associate a data block with a buffer in the buffer pool."
-WAIT_EVENT_DOCONLY	LockManager	"Waiting to read or update information  about <quote>heavyweight</quote> locks."
+WAIT_EVENT_DOCONLY	LockManager	"Waiting to read or update information about <quote>heavyweight</quote> locks."
 WAIT_EVENT_DOCONLY	PredicateLockManager	"Waiting to access predicate lock information used by serializable transactions."
 WAIT_EVENT_DOCONLY	ParallelHashJoin	"Waiting to synchronize workers during Parallel Hash Join plan execution."
 WAIT_EVENT_DOCONLY	ParallelQueryDSA	"Waiting for parallel query dynamic shared memory allocation."
