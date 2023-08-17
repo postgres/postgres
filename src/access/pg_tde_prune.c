@@ -12,6 +12,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include "pg_tdeam.h"
@@ -339,6 +341,9 @@ pg_tde_page_prune(Relation relation, Buffer buffer,
 		htup = (HeapTupleHeader) PageGetItem(page, itemid);
 		tup.t_data = htup;
 		tup.t_len = ItemIdGetLength(itemid);
+		PGTdeDecryptTupFull(page, &tup);
+		// TODO: tableOid?
+		
 		ItemPointerSet(&(tup.t_self), blockno, offnum);
 
 		/*
@@ -612,6 +617,8 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 	{
 		Assert(prstate->htsv[rootoffnum] != -1);
 		htup = (HeapTupleHeader) PageGetItem(dp, rootlp);
+		// TODO: min len, tableOid
+		PGTdeDecryptTupFull(dp, htup);
 
 		if (HeapTupleHeaderIsHeapOnly(htup))
 		{
@@ -703,6 +710,8 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 		Assert(ItemIdIsNormal(lp));
 		Assert(prstate->htsv[offnum] != -1);
 		htup = (HeapTupleHeader) PageGetItem(dp, lp);
+		// TODO: min len, tableOid
+		PGTdeDecryptTupFull(dp, htup);
 
 		/*
 		 * Check the tuple XMIN against prior XMAX, if any
@@ -945,6 +954,8 @@ pg_tde_page_prune_execute(Buffer buffer,
 			Assert(ItemIdHasStorage(fromlp) && ItemIdIsNormal(fromlp));
 
 			htup = (HeapTupleHeader) PageGetItem(page, fromlp);
+			// TODO: min len, tableOid
+			PGTdeDecryptTupFull(page, htup);
 			Assert(!HeapTupleHeaderIsHeapOnly(htup));
 		}
 		else
@@ -973,6 +984,8 @@ pg_tde_page_prune_execute(Buffer buffer,
 		tolp = PageGetItemId(page, tooff);
 		Assert(ItemIdHasStorage(tolp) && ItemIdIsNormal(tolp));
 		htup = (HeapTupleHeader) PageGetItem(page, tolp);
+		// TODO: min len, tableOid
+		PGTdeDecryptTupFull(page, htup);
 		Assert(HeapTupleHeaderIsHeapOnly(htup));
 #endif
 
@@ -999,6 +1012,8 @@ pg_tde_page_prune_execute(Buffer buffer,
 		{
 			Assert(ItemIdIsNormal(lp));
 			htup = (HeapTupleHeader) PageGetItem(page, lp);
+			// TODO: min len, tableOid
+			PGTdeDecryptTupFull(page, htup);
 			Assert(!HeapTupleHeaderIsHeapOnly(htup));
 		}
 		else
@@ -1087,6 +1102,8 @@ page_verify_redirects(Page page)
 		Assert(ItemIdIsNormal(targitem));
 		Assert(ItemIdHasStorage(targitem));
 		htup = (HeapTupleHeader) PageGetItem(page, targitem);
+		// TODO: min len, tableOid
+		PGTdeDecryptTupFull(page, htup);
 		Assert(HeapTupleHeaderIsHeapOnly(htup));
 	}
 #endif
@@ -1132,6 +1149,8 @@ pg_tde_get_root_tuples(Page page, OffsetNumber *root_offsets)
 		if (ItemIdIsNormal(lp))
 		{
 			htup = (HeapTupleHeader) PageGetItem(page, lp);
+			// TODO: min len, tableOid
+			PGTdeDecryptTupFull(page, htup);
 
 			/*
 			 * Check if this tuple is part of a HOT-chain rooted at some other
@@ -1192,6 +1211,8 @@ pg_tde_get_root_tuples(Page page, OffsetNumber *root_offsets)
 				break;
 
 			htup = (HeapTupleHeader) PageGetItem(page, lp);
+			// TODO: min len, tableOid
+			PGTdeDecryptTupFull(page, htup);
 
 			if (TransactionIdIsValid(priorXmax) &&
 				!TransactionIdEquals(priorXmax, HeapTupleHeaderGetXmin(htup)))

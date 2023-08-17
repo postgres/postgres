@@ -13,11 +13,14 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include "pg_tdeam.h"
 #include "pg_tde_io.h"
 #include "pg_tde_visibilitymap.h"
+#include "encryption/enc_tuple.h"
 
 #include "access/htup_details.h"
 #include "storage/bufmgr.h"
@@ -60,7 +63,7 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 
-	offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
+	offnum = TDE_PageAddItem(tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
@@ -78,8 +81,13 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	{
 		ItemId		itemId = PageGetItemId(pageHeader, offnum);
 		HeapTupleHeader item = (HeapTupleHeader) PageGetItem(pageHeader, itemId);
+		HeapTupleHeaderData decrypted;
+		// TODO: why re-feth the tuple?
+		// TODO: len. partial, we only need t_ctid
+		// tableOid?
+		PGTdeDecryptTupHeaderTo(tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, item, &decrypted);
 
-		item->t_ctid = tuple->t_self;
+		item->t_ctid = tuple->t_self; // TODO: access & modify & reencrypt decrypted
 	}
 }
 

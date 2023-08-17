@@ -17,13 +17,16 @@
  *
  *-------------------------------------------------------------------------
  */
+
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include "pg_tdeam.h"
 #include "pg_tdetoast.h"
 #include "pg_tde_rewrite.h"
 
-#include "pg_tde_defines.h"
+#include "encryption/enc_tuple.h"
 
 #include "access/genam.h"
 #include "access/multixact.h"
@@ -167,7 +170,7 @@ pg_tdeam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		*call_again = !IsMVCCSnapshot(snapshot);
 
 		slot->tts_tableOid = RelationGetRelid(scan->rel);
-		ExecStoreBufferHeapTuple(&bslot->base.tupdata, slot, hscan->xs_cbuf);
+		PGTdeExecStoreBufferHeapTuple(&bslot->base.tupdata, slot, hscan->xs_cbuf);
 	}
 	else
 	{
@@ -199,7 +202,7 @@ pg_tdeam_fetch_row_version(Relation relation,
 	if (pg_tde_fetch(relation, snapshot, &bslot->base.tupdata, &buffer, false))
 	{
 		/* store in slot, transferring existing pin */
-		ExecStorePinnedBufferHeapTuple(&bslot->base.tupdata, slot, buffer);
+		PGTdeExecStorePinnedBufferHeapTuple(&bslot->base.tupdata, slot, buffer);
 		slot->tts_tableOid = RelationGetRelid(relation);
 
 		return true;
@@ -573,7 +576,7 @@ tuple_lock_retry:
 	tuple->t_tableOid = slot->tts_tableOid;
 
 	/* store in slot, transferring existing pin */
-	ExecStorePinnedBufferHeapTuple(tuple, slot, buffer);
+	PGTdeExecStorePinnedBufferHeapTuple(tuple, slot, buffer);
 
 	return result;
 }
@@ -1074,6 +1077,7 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 		targtuple->t_tableOid = RelationGetRelid(scan->rs_rd);
 		targtuple->t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 		targtuple->t_len = ItemIdGetLength(itemid);
+		PGTdeDecryptTupFull(BufferGetBlockNumber(hscan->rs_cbuf), targpage, targtuple);
 
 		switch (HeapTupleSatisfiesVacuum(targtuple, OldestXmin,
 										 hscan->rs_cbuf))
@@ -1156,7 +1160,7 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 
 		if (sample_it)
 		{
-			ExecStoreBufferHeapTuple(targtuple, slot, hscan->rs_cbuf);
+			PGTdeExecStoreBufferHeapTuple(targtuple, slot, hscan->rs_cbuf);
 			hscan->rs_cindex++;
 
 			/* note that we leave the buffer locked here! */
@@ -1636,7 +1640,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 		/* Set up for predicate or expression evaluation */
-		ExecStoreBufferHeapTuple(heapTuple, slot, hscan->rs_cbuf);
+		PGTdeExecStoreBufferHeapTuple(heapTuple, slot, hscan->rs_cbuf);
 
 		/*
 		 * In a partial index, discard tuples that don't satisfy the
@@ -2217,6 +2221,7 @@ pg_tdeam_scan_bitmap_next_block(TableScanDesc scan,
 			loctup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 			loctup.t_len = ItemIdGetLength(lp);
 			loctup.t_tableOid = scan->rs_rd->rd_id;
+			PGTdeDecryptTupFull(block, page, &loctup);
 			ItemPointerSet(&loctup.t_self, block, offnum);
 			valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
 			if (valid)
@@ -2262,6 +2267,7 @@ pg_tdeam_scan_bitmap_next_tuple(TableScanDesc scan,
 	hscan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	hscan->rs_ctup.t_len = ItemIdGetLength(lp);
 	hscan->rs_ctup.t_tableOid = scan->rs_rd->rd_id;
+	PGTdeDecryptTupFull(BufferGetBlockNumber(hscan->rs_cbuf), page, &hscan->rs_ctup);
 	ItemPointerSet(&hscan->rs_ctup.t_self, hscan->rs_cblock, targoffset);
 
 	pgstat_count_pg_tde_fetch(scan->rs_rd);
@@ -2270,7 +2276,7 @@ pg_tdeam_scan_bitmap_next_tuple(TableScanDesc scan,
 	 * Set up the result slot to point to this tuple.  Note that the slot
 	 * acquires a pin on the buffer.
 	 */
-	ExecStoreBufferHeapTuple(&hscan->rs_ctup,
+	PGTdeExecStoreBufferHeapTuple(&hscan->rs_ctup,
 							 slot,
 							 hscan->rs_cbuf);
 
@@ -2402,6 +2408,8 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 
 			tuple->t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple->t_len = ItemIdGetLength(itemid);
+			// tableOid?
+			PGTdeDecryptTupFull(BufferGetBlockNumber(hscan->rs_cbuf), page, tuple);
 			ItemPointerSet(&(tuple->t_self), blockno, tupoffset);
 
 
@@ -2424,7 +2432,7 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 			if (!pagemode)
 				LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
-			ExecStoreBufferHeapTuple(tuple, slot, hscan->rs_cbuf);
+			PGTdeExecStoreBufferHeapTuple(tuple, slot, hscan->rs_cbuf);
 
 			/* Count successfully-fetched tuples as heap fetches */
 			pgstat_count_pg_tde_getnext(scan->rs_rd);
