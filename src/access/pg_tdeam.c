@@ -5663,6 +5663,7 @@ pg_tde_finish_speculative(Relation relation, ItemPointer tid)
 	OffsetNumber offnum;
 	ItemId		lp = NULL;
 	HeapTupleHeader htup;
+	HeapTupleHeaderData decrypted;
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
@@ -5682,7 +5683,8 @@ pg_tde_finish_speculative(Relation relation, ItemPointer tid)
 	START_CRIT_SECTION();
 
 	// TODO: in reality 4 bytes would be enough (t_ctid)
-	PGTdeDecryptTupInplace(relation->rd_locator.spcOid, page, htup, 0, sizeof(HeapTupleHeader));
+	PGTdeDecryptTupHeaderTo(relation->rd_locator.spcOid, page, htup, &decrypted);
+	// TODO: htup should point to decrypted, and backup old pointer somewhere
 
 	Assert(HeapTupleHeaderIsSpeculative(htup));
 
@@ -5695,7 +5697,7 @@ pg_tde_finish_speculative(Relation relation, ItemPointer tid)
 	htup->t_ctid = *tid;
 
 	// TODO: in reality 4 bytes would be enough (t_ctid)
-	PGTdeEncryptTupInplace(relation->rd_locator.spcOid, page, htup, 0, sizeof(HeapTupleHeader));
+	PGTdeEncryptTupHeaderTo(relation->rd_locator.spcOid, page, &decrypted, htup);
 
 	/* XLOG stuff */
 	if (RelationNeedsWAL(relation))
@@ -6718,7 +6720,7 @@ pg_tde_freeze_execute_prepared(Relation rel, Buffer buffer,
 
 		htup = (HeapTupleHeader) PageGetItem(page, itemid);
 		// TODO: Decryption/encryption here
-		PGTdeDecryptTupTo(rel->rd_locator.spcOid, page, htup, (char*)&decryptedHeader, 0, sizeof(HeapTupleHeader));
+		PGTdeDecryptTupHeaderTo(rel->rd_locator.spcOid, page, htup, &decryptedHeader);
 
 		/* Deliberately avoid relying on tuple hint bits here */
 		if (frz->checkflags & HEAP_FREEZE_CHECK_XMIN_COMMITTED)

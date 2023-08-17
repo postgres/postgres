@@ -48,31 +48,10 @@ static void PGTdeDecryptTupInternal2(Page page, HeapTuple tuple, unsigned from, 
 	}
 }
 
-void PGTdeDecryptTupInplace(Oid tableOid, Page page, HeapTupleHeader t_data, unsigned from, unsigned to)
+void PGTdeDecryptTupHeaderTo(Oid tableOid, Page page, HeapTupleHeader in, HeapTupleHeader out)
 {
 #if FULL_TUPLE_ENCRYPTION
-	PGTdeDecryptTupInternal(tableOid, page, t_data, (char*)t_data, from, to);
-#endif
-}
-
-void PGTdeDecryptTupTo(Oid tableOid, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to)
-{
-#if FULL_TUPLE_ENCRYPTION
-	PGTdeDecryptTupInternal(tableOid, page, t_data, (char*)t_data, out, from, to);
-#endif
-}
-
-void PGTdeDecryptTupPartial(Page page, HeapTuple tuple, unsigned from, unsigned to)
-{
-#if FULL_TUPLE_ENCRYPTION
-	PGTdeDecryptTupInternal2(page, tuple, from, to, true);
-#endif
-}
-
-void PGTdeDecryptTupPartialInplace(Page page, HeapTuple tuple, unsigned from, unsigned to)
-{
-#if FULL_TUPLE_ENCRYPTION
-	PGTdeDecryptTupInternal2(page, tuple, from, to, false);
+	PGTdeDecryptTupInternal(tableOid, page, t_data, (char*)in, (char*)out, 0, sizeof(HeapTupleHeader));
 #endif
 }
 
@@ -90,7 +69,7 @@ static void PGTdeDecryptTupDataOnly(Page page, HeapTuple tuple)
 #endif
 }
 
-static void PGTdeEncryptTupInternal(Oid tableOid, char* page, char* t_data, unsigned from, unsigned to) 
+static void PGTdeEncryptTupInternal(Oid tableOid, char* page, char* t_data, char* out, unsigned from, unsigned to) 
 {
 	int encryptionKey = tableOid;
 	const unsigned long offset = t_data - page;
@@ -99,18 +78,19 @@ static void PGTdeEncryptTupInternal(Oid tableOid, char* page, char* t_data, unsi
 #if ENCRYPTION_DEBUG
 	fprintf(stderr, " ---- ENCRYPTING (O: %i, L: %u - K: 0x%02hhX) ----\n", encryptionKey, to - from, realKey & 0xFF);
 #endif
-	for(char* i = t_data + from; i < t_data + to; ++i) {
+	for(unsigned i = from; i < to; ++i) {
+		const char v = ((char*)(t_data))[i];
 #if ENCRYPTION_DEBUG
-	    fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", *i & 0xFF, (*i ^ realKey) & 0xFF);
+	    fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", v & 0xFF, (v ^ realKey) & 0xFF);
 #endif
-		*i ^= realKey;
+		out[i] = v ^ realKey;
 	}
 }
 
-void PGTdeEncryptTupInplace(Oid tableOid, char* page, HeapTupleHeader t_data, unsigned from, unsigned to) 
+void PGTdeEncryptTupHeaderTo(Oid tableOid, char* page, HeapTupleHeader in, HeapTupleHeader out) 
 {
 #if FULL_TUPLE_ENCRYPTION
-	PGTdeEncryptTupInternal(tableOid, page, (char*)t_data, from, to);
+	PGTdeEncryptTupInternal(tableOid, page, (char*)t_data, (char*)out 0, 0);
 #endif
 }
 
@@ -128,10 +108,12 @@ PGTdePageAddItemExtended(Oid oid,
 
 	off = PageAddItemExtended(page,item,size,offsetNumber,flags);
 
+	char* addr = ((char*)phdr) + phdr->pd_upper;
+
 #if FULL_TUPLE_ENCRYPTION
-	PGTdeEncryptTupInternal(oid, page, ((char*)phdr) + phdr->pd_upper, 0, size);
+	PGTdeEncryptTupInternal(oid, page, addr, addr, 0, size);
 #else
-	PGTdeEncryptTupInternal(oid, page, ((char*)phdr) + phdr->pd_upper, headerSize, size);
+	PGTdeEncryptTupInternal(oid, page, addr, addr, headerSize, size);
 #endif
 
 	return off;

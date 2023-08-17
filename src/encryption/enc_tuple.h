@@ -12,15 +12,11 @@ PGTdePageAddItemExtended(Oid oid, Page page,
 					OffsetNumber offsetNumber,
 					int flags);
 
-// These 6 functions are only used with full tuple encryption, including headers
+// These 3 functions are only used with full tuple encryption, including headers
 // Without FULL_TUPLE_ENCRYPTION = 1, they default to NOP
 void PGTdeDecryptTupFull(Page page, HeapTuple tuple);
-void PGTdeDecryptTupPartial(Page page, HeapTuple tuple, unsigned from, unsigned to);
-// Inplace is used for special cases where we have critical section
-void PGTdeDecryptTupPartialInplace(Page page, HeapTuple tuple, unsigned from, unsigned to);
-void PGTdeDecryptTupInplace(Oid tableOid, Page page, HeapTupleHeader t_data, unsigned from, unsigned to);
-void PGTdeDecryptTupTo(Oid tableOid, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to);
-void PGTdeEncryptTupInplace(Oid tableOid, char* page, HeapTupleHeader t_data, unsigned from, unsigned to);
+void PGTdeDecryptTupHeaderTo(Oid tableOid, Page page, HeapTupleHeader in, HeapTupleHeader out);
+void PGTdeEncryptTupHeaderTo(Oid tableOid, char* page, HeapTupleHeader in, HeapTupleHeader out);
 
 
 // These 2 are only used by data only encryption
