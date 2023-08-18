@@ -374,9 +374,6 @@ ERROR:  JSON ENCODING clause is only allowed for bytea input type
 LINE 1: SELECT JSON_OBJECT('foo': NULL::int FORMAT JSON ENCODING UTF...
                                             ^
 SELECT JSON_OBJECT('foo': NULL::json FORMAT JSON);
-WARNING:  FORMAT JSON has no effect for json and jsonb types
-LINE 1: SELECT JSON_OBJECT('foo': NULL::json FORMAT JSON);
-                                             ^
   json_object   
 ----------------
  {"foo" : null}
@@ -387,9 +384,6 @@ ERROR:  JSON ENCODING clause is only allowed for bytea input type
 LINE 1: SELECT JSON_OBJECT('foo': NULL::json FORMAT JSON ENCODING UT...
                                              ^
 SELECT JSON_OBJECT('foo': NULL::jsonb FORMAT JSON);
-WARNING:  FORMAT JSON has no effect for json and jsonb types
-LINE 1: SELECT JSON_OBJECT('foo': NULL::jsonb FORMAT JSON);
-                                              ^
   json_object  
 ---------------
  {"foo": null}

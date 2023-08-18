@@ -3257,12 +3257,7 @@ transformJsonValueExpr(ParseState *pstate, const char *constructName,
 					parser_errposition(pstate, ve->format->location));
 
 		if (exprtype == JSONOID || exprtype == JSONBOID)
-		{
 			format = JS_FORMAT_DEFAULT; /* do not format json[b] types */
-			ereport(WARNING,
-					errmsg("FORMAT JSON has no effect for json and jsonb types"),
-					parser_errposition(pstate, ve->format->location));
-		}
 		else
 			format = ve->format->format_type;
 	}
