@@ -642,7 +642,7 @@ print_db_infos(DbInfoArr *db_arr)
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
 	{
-		pg_log(PG_VERBOSE, "Database: %s", db_arr->dbs[dbnum].db_name);
+		pg_log(PG_VERBOSE, "Database: \"%s\"", db_arr->dbs[dbnum].db_name);
 		print_rel_infos(&db_arr->dbs[dbnum].rel_arr);
 	}
 }
@@ -654,7 +654,7 @@ print_rel_infos(RelInfoArr *rel_arr)
 	int			relnum;
 
 	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
-		pg_log(PG_VERBOSE, "relname: %s.%s: reloid: %u reltblspace: %s",
+		pg_log(PG_VERBOSE, "relname: \"%s.%s\", reloid: %u, reltblspace: \"%s\"",
 			   rel_arr->rels[relnum].nspname,
 			   rel_arr->rels[relnum].relname,
 			   rel_arr->rels[relnum].reloid,
