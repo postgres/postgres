@@ -435,8 +435,7 @@ task:
 
     CIRRUS_WORKING_DIR: ${HOME}/pgsql/
     CCACHE_DIR: ${HOME}/ccache
-    HOMEBREW_CACHE: ${HOME}/homebrew-cache
-    PERL5LIB: ${HOME}/perl5/lib/perl5
+    MACPORTS_CACHE: ${HOME}/macports-cache
 
     CC: ccache cc
     CXX: ccache c++
@@ -459,55 +458,43 @@ task:
     - mkdir ${HOME}/cores
     - sudo sysctl kern.corefile="${HOME}/cores/core.%P"
 
-  perl_cache:
-    folder: ~/perl5
-  cpan_install_script:
-    - perl -mIPC::Run -e 1 || cpan -T IPC::Run
-    - perl -mIO::Pty -e 1 || cpan -T IO::Pty
-  upload_caches: perl
-
-
-  # XXX: Could we instead install homebrew into a cached directory? The
-  # homebrew installation takes a good bit of time every time, even if the
-  # packages do not need to be downloaded.
-  homebrew_cache:
-    folder: $HOMEBREW_CACHE
+  # Use macports, even though homebrew is installed. The installation
+  # of the additional packages we need would take quite a while with
+  # homebrew, even if we cache the downloads. We can't cache all of
+  # homebrew, because it's already large. So we use macports. To cache
+  # the installation we create a .dmg file that we mount if it already
+  # exists.
+  # XXX: The reason for the direct p5.34* references is that we'd need
+  # the large macport tree around to figure out that p5-io-tty is
+  # actually p5.34-io-tty. Using the unversioned name works, but
+  # updates macports every time.
+  macports_cache:
+    folder: ${MACPORTS_CACHE}
   setup_additional_packages_script: |
-    brew install \
+    sh src/tools/ci/ci_macports_packages.sh \
       ccache \
-      icu4c \
-      krb5 \
-      llvm \
+      icu \
+      kerberos5 \
       lz4 \
-      make \
       meson \
       openldap \
       openssl \
-      python \
-      tcl-tk \
+      p5.34-io-tty \
+      p5.34-ipc-run \
+      tcl \
       zstd
-
-    brew cleanup -s # to reduce cache size
-  upload_caches: homebrew
+    # Make macports install visible for subsequent steps
+    echo PATH=/opt/local/sbin/:/opt/local/bin/:$PATH >> $CIRRUS_ENV
+  upload_caches: macports
 
   ccache_cache:
     folder: $CCACHE_DIR
   configure_script: |
-    brewpath="/opt/homebrew"
-    PKG_CONFIG_PATH="${brewpath}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-
-    for pkg in icu4c krb5 openldap openssl zstd ; do
-      pkgpath="${brewpath}/opt/${pkg}"
-      PKG_CONFIG_PATH="${pkgpath}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-      PATH="${pkgpath}/bin:${pkgpath}/sbin:$PATH"
-    done
-
-    export PKG_CONFIG_PATH PATH
-
+    export PKG_CONFIG_PATH="/opt/local/lib/pkgconfig/"
     meson setup \
       --buildtype=debug \
-      -Dextra_include_dirs=${brewpath}/include \
-      -Dextra_lib_dirs=${brewpath}/lib \
+      -Dextra_include_dirs=/opt/local/include \
+      -Dextra_lib_dirs=/opt/local/lib \
       -Dcassert=true \
       -Duuid=e2fs -Ddtrace=auto \
       -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
