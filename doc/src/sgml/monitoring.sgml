@@ -1103,7 +1103,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   &wait_event_types;
 
    <para>
-     Here is an example of how wait events can be viewed:
+     Here are examples of how wait events can be viewed:
 
 <programlisting>
 SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event is NOT NULL;
@@ -1112,6 +1112,18 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
  2540 | Lock            | relation
  6644 | LWLock          | ProcArray
 (2 rows)
+</programlisting>
+
+<programlisting>
+SELECT a.pid, a.wait_event, w.description
+  FROM pg_stat_activity a JOIN
+       pg_wait_events w ON (a.wait_event_type = w.type AND
+                            a.wait_event = w.name)
+  WHERE wait_event is NOT NULL and a.state = 'active';
+-[ RECORD 1 ]------------------------------------------------------------------
+pid         | 686674
+wait_event  | WALInitSync
+description | Waiting for a newly initialized WAL file to reach durable storage
 </programlisting>
    </para>
 

@@ -265,6 +265,46 @@ GetWaitEventExtensionIdentifier(uint16 eventId)
 
 
 /*
+ * Returns a list of currently defined custom wait event names for extensions.
+ * The result is a palloc'd array, with the number of elements saved in
+ * *nwaitevents.
+ */
+char	  **
+GetWaitEventExtensionNames(int *nwaitevents)
+{
+	char	  **waiteventnames;
+	WaitEventExtensionEntryByName *hentry;
+	HASH_SEQ_STATUS hash_seq;
+	int			index;
+	int			els;
+
+	LWLockAcquire(WaitEventExtensionLock, LW_SHARED);
+
+	/* Now we can safely count the number of entries */
+	els = hash_get_num_entries(WaitEventExtensionHashByName);
+
+	/* Allocate enough space for all entries */
+	waiteventnames = palloc(els * sizeof(char *));
+
+	/* Now scan the hash table to copy the data */
+	hash_seq_init(&hash_seq, WaitEventExtensionHashByName);
+
+	index = 0;
+	while ((hentry = (WaitEventExtensionEntryByName *) hash_seq_search(&hash_seq)) != NULL)
+	{
+		waiteventnames[index] = pstrdup(hentry->wait_event_name);
+		index++;
+	}
+
+	LWLockRelease(WaitEventExtensionLock);
+
+	Assert(index == els);
+
+	*nwaitevents = index;
+	return waiteventnames;
+}
+
+/*
  * Configure wait event reporting to report wait events to *wait_event_info.
  * *wait_event_info needs to be valid until pgstat_reset_wait_event_storage()
  * is called.

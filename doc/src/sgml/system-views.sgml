@@ -221,6 +221,11 @@
       <entry>views</entry>
      </row>
 
+     <row>
+      <entry><link linkend="view-pg-wait-events"><structname>pg_wait_events</structname></link></entry>
+      <entry>wait events</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -4818,6 +4823,65 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para>
       <para>
        View definition (a reconstructed <xref linkend="sql-select"/> query)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="view-pg-wait-events">
+  <title><structname>pg_wait_events</structname></title>
+
+  <indexterm zone="view-pg-wait-events">
+   <primary>pg_wait_events</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_wait_events</structname> provides description about the
+   wait events.
+  </para>
+
+  <table>
+   <title><structname>pg_wait_events</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>type</structfield> <type>text</type>
+      </para>
+      <para>
+       Wait event type
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       Wait event name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>description</structfield> <type>text</type>
+      </para>
+      <para>
+       Wait event description
       </para></entry>
      </row>
     </tbody>

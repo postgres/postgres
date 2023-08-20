@@ -47,6 +47,12 @@ $result = $node->poll_query_until(
 is($result, 1,
 	'dynamic bgworker has reported "worker_spi_main" as wait event');
 
+# Check the wait event used by the dynamic bgworker appears in pg_wait_events
+$result = $node->safe_psql('postgres',
+	q[SELECT count(*) > 0 from pg_wait_events where type = 'Extension' and name = 'worker_spi_main';]
+);
+is($result, 't', '"worker_spi_main" is reported in pg_wait_events');
+
 note "testing bgworkers loaded with shared_preload_libraries";
 
 # Create the database first so as the workers can connect to it when

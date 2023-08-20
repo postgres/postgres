@@ -4,6 +4,7 @@
 # Generate wait events support files from wait_event_names.txt:
 # - wait_event_types.h (if --code is passed)
 # - pgstat_wait_event.c (if --code is passed)
+# - wait_event_funcs_data.c (if --code is passed)
 # - wait_event_types.sgml (if --docs is passed)
 #
 # Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
@@ -98,8 +99,10 @@ if ($gen_code)
 	# multiple times.
 	my $htmp = "$output_path/wait_event_types.h.tmp$$";
 	my $ctmp = "$output_path/pgstat_wait_event.c.tmp$$";
+	my $wctmp = "$output_path/wait_event_funcs_data.c.tmp$$";
 	open my $h, '>', $htmp or die "Could not open $htmp: $!";
 	open my $c, '>', $ctmp or die "Could not open $ctmp: $!";
+	open my $wc, '>', $wctmp or die "Could not open $wctmp: $!";
 
 	my $header_comment =
 	  '/*-------------------------------------------------------------------------
@@ -129,12 +132,14 @@ if ($gen_code)
 
 	printf $c $header_comment, 'pgstat_wait_event.c';
 
+	printf $wc $header_comment, 'wait_event_funcs_data.c';
+
+	# Generate the pgstat_wait_event.c and wait_event_types.h files
 	# uc() is being used to force the comparison to be case-insensitive.
 	foreach my $waitclass (sort { uc($a) cmp uc($b) } keys %hashwe)
 	{
-
-		# Don't generate .c and .h files for Extension, LWLock and
-		# Lock, these are handled independently.
+		# Don't generate the pgstat_wait_event.c and wait_event_types.h files
+		# for Extension, LWLock and Lock, these are handled independently.
 		next
 		  if ( $waitclass eq 'WaitEventExtension'
 			|| $waitclass eq 'WaitEventLWLock'
@@ -183,14 +188,57 @@ if ($gen_code)
 		printf $c "}\n\n";
 	}
 
+	# Generate wait_event_funcs_data.c, building the contents of a static
+	# C structure holding all the information about the wait events.
+	# uc() is being used to force the comparison to be case-insensitive,
+	# even though it is not required here.
+	foreach my $waitclass (sort { uc($a) cmp uc($b) } keys %hashwe)
+	{
+		my $last = $waitclass;
+		$last =~ s/^WaitEvent//;
+
+		foreach my $wev (@{ $hashwe{$waitclass} })
+		{
+			my $new_desc = substr $wev->[2], 1, -2;
+			# Escape single quotes.
+			$new_desc =~ s/'/\\'/g;
+
+			# Replace the "quote" markups by real ones.
+			$new_desc =~ s/<quote>(.*?)<\/quote>/\\"$1\\"/g;
+
+			# Remove SGML markups.
+			$new_desc =~ s/<.*?>(.*?)<.*?>/$1/g;
+
+			# Tweak contents about links <xref linkend="text"/>
+			# on GUCs,
+			while (my ($capture) =
+				$new_desc =~ m/<xref linkend="guc-(.*?)"\/>/g)
+			{
+				$capture =~ s/-/_/g;
+				$new_desc =~ s/<xref linkend="guc-.*?"\/>/$capture/g;
+			}
+			# Then remove any reference to
+			# "see <xref linkend="text"/>".
+			$new_desc =~ s/; see.*$//;
+
+			# Build one element of the C structure holding the
+			# wait event info, as of (type, name, description).
+			printf $wc "\t{\"%s\", \"%s\", \"%s\"},\n", $last, $wev->[1],
+			  $new_desc;
+		}
+	}
+
 	printf $h "#endif                          /* WAIT_EVENT_TYPES_H */\n";
 	close $h;
 	close $c;
+	close $wc;
 
 	rename($htmp, "$output_path/wait_event_types.h")
 	  || die "rename: $htmp to $output_path/wait_event_types.h: $!";
 	rename($ctmp, "$output_path/pgstat_wait_event.c")
 	  || die "rename: $ctmp to $output_path/pgstat_wait_event.c: $!";
+	rename($wctmp, "$output_path/wait_event_funcs_data.c")
+	  || die "rename: $wctmp to $output_path/wait_event_funcs_data.c: $!";
 }
 # Generate the .sgml file.
 elsif ($gen_docs)
@@ -249,7 +297,7 @@ Usage: perl  [--output <path>] [--code ] [ --sgml ] input_file
 
 Options:
     --outdir         Output directory (default '.')
-    --code           Generate wait_event_types.h and pgstat_wait_event.c.
+    --code           Generate C and header files.
     --sgml           Generate wait_event_types.sgml.
 
 generate-wait_event_types.pl generates the SGML documentation and code

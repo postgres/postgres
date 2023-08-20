@@ -55,6 +55,7 @@ if exist src\include\catalog\header-stamp del /q src\include\catalog\header-stam
 if exist doc\src\sgml\version.sgml del /q doc\src\sgml\version.sgml
 
 if %DIST%==1 if exist src\backend\utils\activity\pgstat_wait_event.c del /q src\backend\utils\activity\pgstat_wait_event.c
+if %DIST%==1 if exist src\backend\utils\activity\wait_event_funcs_data.c del /q src\backend\utils\activity\wait_event_funcs_data.c
 if %DIST%==1 if exist src\backend\utils\activity\wait_event_types.h del /q src\backend\utils\activity\wait_event_types.h
 if %DIST%==1 if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h
 if %DIST%==1 if exist src\backend\utils\fmgrprotos.h del /q src\backend\utils\fmgrprotos.h

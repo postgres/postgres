@@ -55,6 +55,10 @@ select count(*) = 0 as ok from pg_stat_wal_receiver;
 -- a regression test run.
 select name, setting from pg_settings where name like 'enable%';
 
+-- There are always wait event descriptions for various types.
+select type, count(*) > 0 as ok FROM pg_wait_events
+  group by type order by type COLLATE "C";
+
 -- Test that the pg_timezone_names and pg_timezone_abbrevs views are
 -- more-or-less working.  We can't test their contents in any great detail
 -- without the outputs changing anytime IANA updates the underlying data,

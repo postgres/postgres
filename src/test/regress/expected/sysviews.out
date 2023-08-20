@@ -134,6 +134,22 @@ select name, setting from pg_settings where name like 'enable%';
  enable_tidscan                 | on
 (21 rows)
 
+-- There are always wait event descriptions for various types.
+select type, count(*) > 0 as ok FROM pg_wait_events
+  group by type order by type COLLATE "C";
+   type    | ok 
+-----------+----
+ Activity  | t
+ BufferPin | t
+ Client    | t
+ Extension | t
+ IO        | t
+ IPC       | t
+ LWLock    | t
+ Lock      | t
+ Timeout   | t
+(9 rows)
+
 -- Test that the pg_timezone_names and pg_timezone_abbrevs views are
 -- more-or-less working.  We can't test their contents in any great detail
 -- without the outputs changing anytime IANA updates the underlying data,

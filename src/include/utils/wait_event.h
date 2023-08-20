@@ -63,6 +63,7 @@ extern void WaitEventExtensionShmemInit(void);
 extern Size WaitEventExtensionShmemSize(void);
 
 extern uint32 WaitEventExtensionNew(const char *wait_event_name);
+extern char **GetWaitEventExtensionNames(int *nwaitevents);
 
 /* ----------
  * pgstat_report_wait_start() -

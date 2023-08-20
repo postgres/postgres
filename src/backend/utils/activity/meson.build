@@ -23,6 +23,7 @@ backend_sources += files(
 # seems nicer to not add that as an include path for the whole backend.
 waitevent_sources = files(
   'wait_event.c',
+  'wait_event_funcs.c',
 )
 
 wait_event = static_library('wait_event_names',

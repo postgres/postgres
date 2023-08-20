@@ -134,7 +134,7 @@ storage/lmgr/lwlocknames.h: storage/lmgr/generate-lwlocknames.pl storage/lmgr/lw
 	$(MAKE) -C storage/lmgr lwlocknames.h lwlocknames.c
 
 utils/activity/wait_event_types.h: utils/activity/generate-wait_event_types.pl utils/activity/wait_event_names.txt
-	$(MAKE) -C utils/activity wait_event_types.h pgstat_wait_event.c
+	$(MAKE) -C utils/activity wait_event_types.h pgstat_wait_event.c wait_event_funcs_data.c
 
 # run this unconditionally to avoid needing to know its dependencies here:
 submake-catalog-headers:
@@ -311,6 +311,7 @@ maintainer-clean: distclean
 	      storage/lmgr/lwlocknames.c \
 	      storage/lmgr/lwlocknames.h \
 	      utils/activity/pgstat_wait_event.c \
+	      utils/activity/wait_event_funcs_data.c \
 	      utils/activity/wait_event_types.h \
 	      utils/adt/jsonpath_gram.c \
 	      utils/adt/jsonpath_gram.h \
