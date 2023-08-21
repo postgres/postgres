@@ -421,7 +421,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Allow window functions to use <link linkend="syntax-window-functions"><literal>ROWS</literal></link> mode internally when <literal>RANGE</literal> mode is specified but unnecessary (David Rowley)
+Allow window functions to use the faster <link linkend="syntax-window-functions"><literal>ROWS</literal></link> mode internally when <literal>RANGE</literal> mode is active but unnecessary (David Rowley)
 </para>
 </listitem>
 
