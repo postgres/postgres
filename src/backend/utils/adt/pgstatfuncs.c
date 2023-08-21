@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "access/xlog.h"
 #include "access/xlogprefetcher.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
 #include "common/ip.h"
@@ -2117,13 +2118,17 @@ pg_stat_reset_shared(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-/* Reset a single counter in the current database */
+/*
+ * Reset a statistics for a single object, which may be of current
+ * database or shared across all databases in the cluster.
+ */
 Datum
 pg_stat_reset_single_table_counters(PG_FUNCTION_ARGS)
 {
 	Oid			taboid = PG_GETARG_OID(0);
+	Oid			dboid = (IsSharedRelation(taboid) ? InvalidOid : MyDatabaseId);
 
-	pgstat_reset(PGSTAT_KIND_RELATION, MyDatabaseId, taboid);
+	pgstat_reset(PGSTAT_KIND_RELATION, dboid, taboid);
 
 	PG_RETURN_VOID();
 }
