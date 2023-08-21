@@ -81,13 +81,8 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	{
 		ItemId		itemId = PageGetItemId(pageHeader, offnum);
 		HeapTupleHeader item = (HeapTupleHeader) PageGetItem(pageHeader, itemId);
-		HeapTupleHeaderData decrypted;
-		// TODO: why re-feth the tuple?
-		// TODO: len. partial, we only need t_ctid
-		// tableOid?
-		PGTdeDecryptTupHeaderTo(tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, item, &decrypted);
 
-		item->t_ctid = tuple->t_self; // TODO: access & modify & reencrypt decrypted
+		item->t_ctid = tuple->t_self;
 	}
 }
 

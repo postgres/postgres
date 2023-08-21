@@ -1077,7 +1077,6 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 		targtuple->t_tableOid = RelationGetRelid(scan->rs_rd);
 		targtuple->t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 		targtuple->t_len = ItemIdGetLength(itemid);
-		PGTdeDecryptTupFull(BufferGetBlockNumber(hscan->rs_cbuf), targpage, targtuple);
 
 		switch (HeapTupleSatisfiesVacuum(targtuple, OldestXmin,
 										 hscan->rs_cbuf))
@@ -2221,7 +2220,6 @@ pg_tdeam_scan_bitmap_next_block(TableScanDesc scan,
 			loctup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 			loctup.t_len = ItemIdGetLength(lp);
 			loctup.t_tableOid = scan->rs_rd->rd_id;
-			PGTdeDecryptTupFull(block, page, &loctup);
 			ItemPointerSet(&loctup.t_self, block, offnum);
 			valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
 			if (valid)
@@ -2267,7 +2265,6 @@ pg_tdeam_scan_bitmap_next_tuple(TableScanDesc scan,
 	hscan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	hscan->rs_ctup.t_len = ItemIdGetLength(lp);
 	hscan->rs_ctup.t_tableOid = scan->rs_rd->rd_id;
-	PGTdeDecryptTupFull(BufferGetBlockNumber(hscan->rs_cbuf), page, &hscan->rs_ctup);
 	ItemPointerSet(&hscan->rs_ctup.t_self, hscan->rs_cblock, targoffset);
 
 	pgstat_count_pg_tde_fetch(scan->rs_rd);
@@ -2408,8 +2405,6 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 
 			tuple->t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple->t_len = ItemIdGetLength(itemid);
-			// tableOid?
-			PGTdeDecryptTupFull(BufferGetBlockNumber(hscan->rs_cbuf), page, tuple);
 			ItemPointerSet(&(tuple->t_self), blockno, tupoffset);
 
 
