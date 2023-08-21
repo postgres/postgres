@@ -231,6 +231,24 @@ Collations and locales can vary between databases so having them as read-only se
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
+2022-08-25 [e3ce2de09] Allow grant-level control of role inheritance behavior.
+-->
+
+<listitem>
+<para>
+Role inheritance now controls the default inheritance status of member roles added during <link linkend="sql-grant"><command>GRANT</command></link> (Robert Haas)
+</para>
+
+<para>
+The role's default inheritance behavior can be overridden with the new <command>GRANT ... WITH INHERIT</command> clause.
+This allows inheritance of some roles and not others because the members' inheritance status is set at <command>GRANT</command> time.
+Previously the inheritance status of member roles was controlled only by the role's inheritance status, and
+changes to a role's inheritance status affected all previous and future member roles.
+</para>
+</listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
 2023-01-10 [cf5eb37c5] Restrict the privileges of CREATEROLE users.
 Author: Robert Haas <rhaas@postgresql.org>
 2023-01-24 [f1358ca52] Adjust interaction of CREATEROLE with role properties.
@@ -814,11 +832,11 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Allow <link linkend="sql-grant"><command>GRANT</command></link> to control role inheritance behavior (Robert Haas)
+Allow <link linkend="sql-grant"><command>GRANT</command></link> to use <literal>WITH ADMIN TRUE</literal>/<literal>FALSE</literal> syntax (Robert Haas)
 </para>
 
 <para>
-By default, role inheritance is controlled by the inheritance status of the member role.  The new <command>GRANT</command> clauses <literal>WITH INHERIT</literal> and <literal>WITH ADMIN</literal> can now override this.
+Previously only the <literal>WITH ADMIN OPTION</literal> syntax was supported.
 </para>
 </listitem>
 
