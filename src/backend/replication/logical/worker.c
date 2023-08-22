@@ -485,25 +485,34 @@ ReplicationOriginNameForLogicalRep(Oid suboid, Oid relid,
 static bool
 should_apply_changes_for_rel(LogicalRepRelMapEntry *rel)
 {
-	if (am_tablesync_worker())
-		return MyLogicalRepWorker->relid == rel->localreloid;
-	else if (am_parallel_apply_worker())
+	switch (MyLogicalRepWorker->type)
 	{
-		/* We don't synchronize rel's that are in unknown state. */
-		if (rel->state != SUBREL_STATE_READY &&
-			rel->state != SUBREL_STATE_UNKNOWN)
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("logical replication parallel apply worker for subscription \"%s\" will stop",
-							MySubscription->name),
-					 errdetail("Cannot handle streamed replication transactions using parallel apply workers until all tables have been synchronized.")));
+		case WORKERTYPE_TABLESYNC:
+			return MyLogicalRepWorker->relid == rel->localreloid;
 
-		return rel->state == SUBREL_STATE_READY;
+		case WORKERTYPE_PARALLEL_APPLY:
+			/* We don't synchronize rel's that are in unknown state. */
+			if (rel->state != SUBREL_STATE_READY &&
+				rel->state != SUBREL_STATE_UNKNOWN)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("logical replication parallel apply worker for subscription \"%s\" will stop",
+								MySubscription->name),
+						 errdetail("Cannot handle streamed replication transactions using parallel apply workers until all tables have been synchronized.")));
+
+			return rel->state == SUBREL_STATE_READY;
+
+		case WORKERTYPE_APPLY:
+			return (rel->state == SUBREL_STATE_READY ||
+					(rel->state == SUBREL_STATE_SYNCDONE &&
+					 rel->statelsn <= remote_final_lsn));
+
+		case WORKERTYPE_UNKNOWN:
+			/* Should never happen. */
+			elog(ERROR, "Unknown worker type");
 	}
-	else
-		return (rel->state == SUBREL_STATE_READY ||
-				(rel->state == SUBREL_STATE_SYNCDONE &&
-				 rel->statelsn <= remote_final_lsn));
+
+	return false;				/* dummy for compiler */
 }
 
 /*

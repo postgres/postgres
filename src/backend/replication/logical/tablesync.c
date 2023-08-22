@@ -649,18 +649,29 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 void
 process_syncing_tables(XLogRecPtr current_lsn)
 {
-	/*
-	 * Skip for parallel apply workers because they only operate on tables
-	 * that are in a READY state. See pa_can_start() and
-	 * should_apply_changes_for_rel().
-	 */
-	if (am_parallel_apply_worker())
-		return;
+	switch (MyLogicalRepWorker->type)
+	{
+		case WORKERTYPE_PARALLEL_APPLY:
 
-	if (am_tablesync_worker())
-		process_syncing_tables_for_sync(current_lsn);
-	else
-		process_syncing_tables_for_apply(current_lsn);
+			/*
+			 * Skip for parallel apply workers because they only operate on
+			 * tables that are in a READY state. See pa_can_start() and
+			 * should_apply_changes_for_rel().
+			 */
+			break;
+
+		case WORKERTYPE_TABLESYNC:
+			process_syncing_tables_for_sync(current_lsn);
+			break;
+
+		case WORKERTYPE_APPLY:
+			process_syncing_tables_for_apply(current_lsn);
+			break;
+
+		case WORKERTYPE_UNKNOWN:
+			/* Should never happen. */
+			elog(ERROR, "Unknown worker type");
+	}
 }
 
 /*

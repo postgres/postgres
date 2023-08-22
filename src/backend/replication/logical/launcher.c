@@ -468,38 +468,43 @@ retry:
 	bgw.bgw_start_time = BgWorkerStart_RecoveryFinished;
 	snprintf(bgw.bgw_library_name, MAXPGPATH, "postgres");
 
-	if (is_parallel_apply_worker)
+	switch (worker->type)
 	{
-		snprintf(bgw.bgw_function_name, BGW_MAXLEN, "ParallelApplyWorkerMain");
-		snprintf(bgw.bgw_name, BGW_MAXLEN,
-				 "logical replication parallel apply worker for subscription %u",
-				 subid);
-		snprintf(bgw.bgw_type, BGW_MAXLEN, "logical replication parallel worker");
-	}
-	else if (is_tablesync_worker)
-	{
-		snprintf(bgw.bgw_function_name, BGW_MAXLEN, "TablesyncWorkerMain");
-		snprintf(bgw.bgw_name, BGW_MAXLEN,
-				 "logical replication tablesync worker for subscription %u sync %u",
-				 subid,
-				 relid);
-		snprintf(bgw.bgw_type, BGW_MAXLEN, "logical replication tablesync worker");
-	}
-	else
-	{
-		snprintf(bgw.bgw_function_name, BGW_MAXLEN, "ApplyWorkerMain");
-		snprintf(bgw.bgw_name, BGW_MAXLEN,
-				 "logical replication apply worker for subscription %u",
-				 subid);
-		snprintf(bgw.bgw_type, BGW_MAXLEN, "logical replication apply worker");
+		case WORKERTYPE_APPLY:
+			snprintf(bgw.bgw_function_name, BGW_MAXLEN, "ApplyWorkerMain");
+			snprintf(bgw.bgw_name, BGW_MAXLEN,
+					 "logical replication apply worker for subscription %u",
+					 subid);
+			snprintf(bgw.bgw_type, BGW_MAXLEN, "logical replication apply worker");
+			break;
+
+		case WORKERTYPE_PARALLEL_APPLY:
+			snprintf(bgw.bgw_function_name, BGW_MAXLEN, "ParallelApplyWorkerMain");
+			snprintf(bgw.bgw_name, BGW_MAXLEN,
+					 "logical replication parallel apply worker for subscription %u",
+					 subid);
+			snprintf(bgw.bgw_type, BGW_MAXLEN, "logical replication parallel worker");
+
+			memcpy(bgw.bgw_extra, &subworker_dsm, sizeof(dsm_handle));
+			break;
+
+		case WORKERTYPE_TABLESYNC:
+			snprintf(bgw.bgw_function_name, BGW_MAXLEN, "TablesyncWorkerMain");
+			snprintf(bgw.bgw_name, BGW_MAXLEN,
+					 "logical replication tablesync worker for subscription %u sync %u",
+					 subid,
+					 relid);
+			snprintf(bgw.bgw_type, BGW_MAXLEN, "logical replication tablesync worker");
+			break;
+
+		case WORKERTYPE_UNKNOWN:
+			/* Should never happen. */
+			elog(ERROR, "unknown worker type");
 	}
 
 	bgw.bgw_restart_time = BGW_NEVER_RESTART;
 	bgw.bgw_notify_pid = MyProcPid;
 	bgw.bgw_main_arg = Int32GetDatum(slot);
-
-	if (is_parallel_apply_worker)
-		memcpy(bgw.bgw_extra, &subworker_dsm, sizeof(dsm_handle));
 
 	if (!RegisterDynamicBackgroundWorker(&bgw, &bgw_handle))
 	{
