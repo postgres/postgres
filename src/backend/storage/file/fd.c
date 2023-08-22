@@ -3886,7 +3886,7 @@ data_sync_elevel(int elevel)
 }
 
 bool
-check_io_direct(char **newval, void **extra, GucSource source)
+check_debug_io_direct(char **newval, void **extra, GucSource source)
 {
 	bool		result = true;
 	int			flags;
@@ -3960,7 +3960,7 @@ check_io_direct(char **newval, void **extra, GucSource source)
 	if (!result)
 		return result;
 
-	/* Save the flags in *extra, for use by assign_io_direct */
+	/* Save the flags in *extra, for use by assign_debug_io_direct */
 	*extra = guc_malloc(ERROR, sizeof(int));
 	*((int *) *extra) = flags;
 
@@ -3968,7 +3968,7 @@ check_io_direct(char **newval, void **extra, GucSource source)
 }
 
 extern void
-assign_io_direct(const char *newval, void *extra)
+assign_debug_io_direct(const char *newval, void *extra)
 {
 	int		   *flags = (int *) extra;
 
