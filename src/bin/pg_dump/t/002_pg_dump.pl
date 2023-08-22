@@ -4091,6 +4091,14 @@ $node->command_fails_like(
 	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): myhost\.mydb/,
 	'pg_dumpall: option --exclude-database rejects multipart database names');
 
+##############################################################
+# Test dumping pg_catalog (for research -- cannot be reloaded)
+
+$node->command_ok(
+	[ 'pg_dump', '-p', "$port", '-n', 'pg_catalog' ],
+	'pg_dump: option -n pg_catalog'
+);
+
 #########################################
 # Test valid database exclusion patterns
 
