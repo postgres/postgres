@@ -109,7 +109,7 @@ ssl/server-rsapss.crt: ssl/server-rsapss.key conf/server-rsapss.config
 
 # Password-protected version of server-cn-only.key
 ssl/server-password.key: ssl/server-cn-only.key
-	$(OPENSSL) rsa -aes256 -in $< -out $@ -passout 'pass:secret1'
+	$(OPENSSL) pkey -aes256 -in $< -out $@ -passout 'pass:secret1'
 
 # Key that uses the RSA-PSS algorithm
 ssl/server-rsapss.key:
@@ -122,7 +122,7 @@ ssl/client-der.key: ssl/client.key
 # Convert client.key to encrypted PEM (X.509 text) and DER (X.509 ASN.1)
 # formats to test libpq's support for the sslpassword= option.
 ssl/client-encrypted-pem.key: ssl/client.key
-	$(OPENSSL) rsa -in $< -outform PEM -aes128 -passout 'pass:dUmmyP^#+' -out $@
+	$(OPENSSL) pkey -in $< -outform PEM -aes128 -passout 'pass:dUmmyP^#+' -out $@
 # TODO Explicitly choosing -aes128 generates a key unusable to PostgreSQL with
 # OpenSSL 3.0.0, so fall back on the default for now.
 ssl/client-encrypted-der.key: ssl/client.key

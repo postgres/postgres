@@ -40,7 +40,7 @@ if openssl.found()
   custom_target('server.key',
     input: [cert[1]],
     output: ['server.key'],
-    command: [openssl, 'rsa', '-aes256', '-in', '@INPUT0@', '-out', '@OUTPUT0@', '-passout', 'pass:@0@'.format(pass)]
+    command: [openssl, 'pkey', '-aes256', '-in', '@INPUT0@', '-out', '@OUTPUT0@', '-passout', 'pass:@0@'.format(pass)]
   )
 endif
 
