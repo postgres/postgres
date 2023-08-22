@@ -75,18 +75,18 @@
 
    <title>Migration to Version 16</title>
 
-    <para>
-     A dump/restore using <xref linkend="app-pg-dumpall"/> or use of
-     <xref linkend="pgupgrade"/> or logical replication is required for
-     those wishing to migrate data from any previous release.  See <xref
-     linkend="upgrading"/> for general information on migrating to new
-     major releases.
-    </para>
+   <para>
+    A dump/restore using <xref linkend="app-pg-dumpall"/> or use of
+    <xref linkend="pgupgrade"/> or logical replication is required for
+    those wishing to migrate data from any previous release.  See <xref
+    linkend="upgrading"/> for general information on migrating to new
+    major releases.
+   </para>
 
-    <para>
-     Version 16 contains a number of changes that may affect compatibility
-     with previous releases.  Observe the following incompatibilities:
-    </para>
+   <para>
+    Version 16 contains a number of changes that may affect compatibility
+    with previous releases.  Observe the following incompatibilities:
+   </para>
 
    <itemizedlist>
 
@@ -95,27 +95,36 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-01 [d747dc85a] In plpgsql, don't preassign portal names to bound cursor
 -->
 
-<listitem>
-<para>
-Change assignment rules for <link linkend="plpgsql-open-bound-cursor"><application>PL/pgSQL</application></link> bound cursor variables (Tom Lane)
-</para>
+    <listitem>
+     <para>
+      Change assignment rules for <link
+      linkend="plpgsql-open-bound-cursor"><application>PL/pgSQL</application></link>
+      bound cursor variables (Tom Lane)
+     </para>
 
-<para>
-Previously, the string value of such variables was set to match the variable name during cursor assignment;  now it will be assigned during <link linkend="plpgsql-cursor-opening"><command>OPEN</command></link>, and will not match the variable name.
-To restore the previous behavior, assign the desired portal name to the cursor variable before <command>OPEN</command>.
-</para>
-</listitem>
+     <para>
+      Previously, the string value of such variables
+      was set to match the variable name during cursor
+      assignment;  now it will be assigned during <link
+      linkend="plpgsql-cursor-opening"><command>OPEN</command></link>,
+      and will not match the variable name.  To restore the previous
+      behavior, assign the desired portal name to the cursor variable
+      before <command>OPEN</command>.
+     </para>
+    </listitem>
 
 <!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2023-02-24 [d95952325] Disallow NULLS NOT DISTINCT indexes for primary keys
 -->
 
-<listitem>
-<para>
-Disallow <link linkend="sql-createindex"><literal>NULLS NOT DISTINCT</literal></link> indexes for primary keys (Daniel Gustafsson)
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Disallow <link linkend="sql-createindex"><literal>NULLS NOT
+      DISTINCT</literal></link> indexes for primary keys (Daniel
+      Gustafsson)
+     </para>
+    </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
@@ -124,41 +133,56 @@ Author: Michael Paquier <michael@paquier.xyz>
 2022-07-26 [0a5f06b84] Fix a few issues with REINDEX grammar
 -->
 
-<listitem>
-<para>
-Change <link linkend="sql-reindex"><command>REINDEX DATABASE</command></link> and <link linkend="app-reindexdb"><application>reindexdb</application></link> to not process indexes on system catalogs (Simon Riggs)
-</para>
+    <listitem>
+     <para>
+      Change <link linkend="sql-reindex"><command>REINDEX
+      DATABASE</command></link> and <link
+      linkend="app-reindexdb"><application>reindexdb</application></link>
+      to not process indexes on system catalogs (Simon Riggs)
+     </para>
 
-<para>
-Processing such indexes is still possible using <command>REINDEX SYSTEM</command> and <link linkend="app-reindexdb"><command>reindexdb --system</command></link>.
-</para>
-</listitem>
+     <para>
+      Processing such indexes is still possible using <command>REINDEX
+      SYSTEM</command> and <link linkend="app-reindexdb"><command>reindexdb
+      --system</command></link>.
+     </para>
+    </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-11 [8bf6ec3ba] Improve handling of inherited GENERATED expressions.
 -->
 
-<listitem>
-<para>
-Tighten <link linkend="ddl-generated-columns"><literal>GENERATED</literal></link> expression restrictions on inherited and partitioned tables (Amit Langote, Tom Lane)
-</para>
+    <listitem>
+     <para>
+      Tighten <link
+      linkend="ddl-generated-columns"><literal>GENERATED</literal></link>
+      expression restrictions on inherited and partitioned tables (Amit
+      Langote, Tom Lane)
+     </para>
 
-<para>
-Columns of parent/partitioned and child/partition tables must all have the same generation status, though now the actual generation expressions can be different.
-</para>
-</listitem>
+     <para>
+      Columns of parent/partitioned and child/partition tables must all
+      have the same generation status, though now the actual generation
+      expressions can be different.
+     </para>
+    </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-03-14 [5c1b66280] Rework design of functions in pg_walinspect
 -->
 
-<listitem>
-<para>
-Remove <link linkend="pgwalinspect"><application>pg_walinspect</application></link> functions <function>pg_get_wal_records_info_till_end_of_wal()</function> and <function>pg_get_wal_stats_till_end_of_wal()</function> (Bharath Rupireddy)
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Remove <link
+      linkend="pgwalinspect"><application>pg_walinspect</application></link>
+      functions
+      <function>pg_get_wal_records_info_till_end_of_wal()</function>
+      and <function>pg_get_wal_stats_till_end_of_wal()</function>
+      (Bharath Rupireddy)
+     </para>
+    </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
@@ -167,85 +191,105 @@ Author: David Rowley <drowley@postgresql.org>
 2023-04-14 [0981846b9] Remove old GUC name mapping for "force_parallel_mode"
 -->
 
-<listitem>
-<para>
-Rename server variable <varname>force_parallel_mode</varname> to <link linkend="guc-debug-parallel-query"><varname>debug_parallel_query</varname></link> (David Rowley)
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Rename server variable
+      <varname>force_parallel_mode</varname> to <link
+      linkend="guc-debug-parallel-query"><varname>debug_parallel_query</varname></link>
+      (David Rowley)
+     </para>
+    </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-12-02 [b23cd185f] Remove logic for converting a table to a view.
 -->
 
-<listitem>
-<para>
-Remove the ability to <link linkend="sql-createview">create views</link> manually with <literal>ON SELECT</literal> rules (Tom Lane)
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Remove the ability to <link linkend="sql-createview">create
+      views</link> manually with <literal>ON SELECT</literal> rules
+      (Tom Lane)
+     </para>
+    </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2023-04-24 [1118cd37e] Remove vacuum_defer_cleanup_age
 -->
 
-<listitem>
-<para>
-Remove the server variable <varname>vacuum_defer_cleanup_age</varname> (Andres Freund)
-</para>
+    <listitem>
+     <para>
+      Remove the server variable
+      <varname>vacuum_defer_cleanup_age</varname> (Andres Freund)
+     </para>
 
-<para>
-This has been unnecessary since <link linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</varname></link> and <link linkend="streaming-replication-slots">replication slots</link> were added.
-</para>
-</listitem>
+     <para>
+      This has been unnecessary since <link
+      linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</varname></link>
+      and <link linkend="streaming-replication-slots">replication
+      slots</link> were added.
+     </para>
+    </listitem>
 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2022-11-29 [cd4329d93] Remove promote_trigger_file.
 -->
 
-<listitem>
-<para>
-Remove server variable <varname>promote_trigger_file</varname> (Simon Riggs)
-</para>
+    <listitem>
+     <para>
+      Remove server variable <varname>promote_trigger_file</varname>
+      (Simon Riggs)
+     </para>
 
-<para>
-This was used to promote a standby to primary, but is now easier accomplished with <link linkend="app-pg-ctl"><literal>pg_ctl promote</literal></link> or <link linkend="functions-recovery-control-table"><function>pg_promote()</function></link>.
-</para>
-</listitem>
+     <para>
+      This was used to promote a standby to primary, but is now easier
+      accomplished with <link linkend="app-pg-ctl"><literal>pg_ctl
+      promote</literal></link> or <link
+      linkend="functions-recovery-control-table"><function>pg_promote()</function></link>.
+     </para>
+    </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-06-07 [b0f6c4371] Remove read-only server settings lc_collate and lc_ctype
 -->
 
-<listitem>
-<para>
-Remove read-only server variables <varname>lc_collate</varname> and <varname>lc_ctype</varname> (Peter Eisentraut)
-</para>
+    <listitem>
+     <para>
+      Remove read-only server variables <varname>lc_collate</varname>
+      and <varname>lc_ctype</varname> (Peter Eisentraut)
+     </para>
 
-<para>
-Collations and locales can vary between databases so having them as read-only server variables was unhelpful.
-</para>
-</listitem>
+     <para>
+      Collations and locales can vary between databases so having them
+      as read-only server variables was unhelpful.
+     </para>
+    </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-08-25 [e3ce2de09] Allow grant-level control of role inheritance behavior.
 -->
 
-<listitem>
-<para>
-Role inheritance now controls the default inheritance status of member roles added during <link linkend="sql-grant"><command>GRANT</command></link> (Robert Haas)
-</para>
+    <listitem>
+     <para>
+      Role inheritance now controls the default
+      inheritance status of member roles added during <link
+      linkend="sql-grant"><command>GRANT</command></link> (Robert Haas)
+     </para>
 
-<para>
-The role's default inheritance behavior can be overridden with the new <command>GRANT ... WITH INHERIT</command> clause.
-This allows inheritance of some roles and not others because the members' inheritance status is set at <command>GRANT</command> time.
-Previously the inheritance status of member roles was controlled only by the role's inheritance status, and
-changes to a role's inheritance status affected all previous and future member roles.
-</para>
-</listitem>
+     <para>
+      The role's default inheritance behavior can be overridden with the
+      new <command>GRANT ... WITH INHERIT</command> clause.  This allows
+      inheritance of some roles and not others because the members'
+      inheritance status is set at <command>GRANT</command> time.
+      Previously the inheritance status of member roles was controlled
+      only by the role's inheritance status, and changes to a role's
+      inheritance status affected all previous and future member roles.
+     </para>
+    </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
@@ -254,27 +298,35 @@ Author: Robert Haas <rhaas@postgresql.org>
 2023-01-24 [f1358ca52] Adjust interaction of CREATEROLE with role properties.
 -->
 
-<listitem>
-<para>
-Restrict the privileges of <link linkend="sql-createrole"><literal>CREATEROLE</literal></link> and its ability to modify other roles (Robert Haas)
-</para>
+    <listitem>
+     <para>
+      Restrict the privileges of <link
+      linkend="sql-createrole"><literal>CREATEROLE</literal></link>
+      and its ability to modify other roles (Robert Haas)
+     </para>
 
-<para>
-Previously roles with <literal>CREATEROLE</literal> privileges could change many aspects of any non-superuser role.  Such changes, including adding members, now require the role requesting the change to have <literal>ADMIN OPTION</literal>
-permission.  For example, they can now change the <literal>CREATEDB</literal>, <literal>REPLICATION</literal>, and <literal>BYPASSRLS</literal> properties only if they also have those permissions.
-</para>
-</listitem>
+     <para>
+      Previously roles with <literal>CREATEROLE</literal> privileges could
+      change many aspects of any non-superuser role.  Such changes,
+      including adding members, now require the role requesting
+      the change to have <literal>ADMIN OPTION</literal> permission.
+      For example, they can now change the <literal>CREATEDB</literal>,
+      <literal>REPLICATION</literal>, and <literal>BYPASSRLS</literal>
+      properties only if they also have those permissions.
+     </para>
+    </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-01-26 [37e267335] Don't install postmaster symlink anymore
 -->
 
-<listitem>
-<para>
-Remove symbolic links for the <application>postmaster</application> binary (Peter Eisentraut)
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Remove symbolic links for the <application>postmaster</application>
+      binary (Peter Eisentraut)
+     </para>
+    </listitem>
 
    </itemizedlist>
 
@@ -283,11 +335,11 @@ Remove symbolic links for the <application>postmaster</application> binary (Pete
   <sect2 id="release-16-changes">
    <title>Changes</title>
 
-   <para>
-    Below you will find a detailed account of the changes between
+    <para>
+     Below you will find a detailed account of the changes between
     <productname>PostgreSQL</productname> 16 and the previous major
     release.
-   </para>
+    </para>
 
    <sect3 id="release-16-server">
     <title>Server</title>
@@ -304,11 +356,12 @@ Author: David Rowley <drowley@postgresql.org>
 2023-01-11 [3c6fc5820] Have the planner consider Incremental Sort for DISTINCT
 -->
 
-<listitem>
-<para>
-Allow incremental sorts in more cases, including <literal>DISTINCT</literal> (David Rowley)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow incremental sorts in more cases, including
+        <literal>DISTINCT</literal> (David Rowley)
+       </para>
+      </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
@@ -319,59 +372,69 @@ Author: David Rowley <drowley@postgresql.org>
 2023-01-17 [da5800d5f] Don't presort ORDER BY/DISTINCT Aggrefs with volatile fu
 -->
 
-<listitem>
-<para>
-Add the ability for aggregates having <literal>ORDER BY</literal> or <literal>DISTINCT</literal> to use pre-sorted data (David Rowley)
-</para>
+      <listitem>
+       <para>
+        Add the ability for aggregates having <literal>ORDER BY</literal>
+        or <literal>DISTINCT</literal> to use pre-sorted data (David
+        Rowley)
+       </para>
 
-<para>
-The new server variable <link linkend="guc-enable-presorted-aggregate"><varname>enable_presorted_aggregate</varname></link> can be used to disable this.
-</para>
-</listitem>
+       <para>
+        The new server variable <link
+        linkend="guc-enable-presorted-aggregate"><varname>enable_presorted_aggregate</varname></link>
+        can be used to disable this.
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-16 [9bfd2822b] Enable use of Memoize atop an Append that came from UNIO
 -->
 
-<listitem>
-<para>
-Allow memoize atop a <literal>UNION ALL</literal> (Richard Guo)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow memoize atop a <literal>UNION ALL</literal> (Richard Guo)
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-04-05 [16dc2703c] Support "Right Anti Join" plan shapes.
 -->
 
-<listitem>
-<para>
-Allow anti-joins to be performed with the non-nullable input as the inner relation (Richard Guo)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow anti-joins to be performed with the non-nullable input as
+        the inner relation (Richard Guo)
+       </para>
+      </listitem>
 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2023-03-31 [11c2d6fdf] Parallel Hash Full Join.
 -->
 
-<listitem>
-<para>
-Allow parallelization of <link linkend="queries-join"><literal>FULL</literal></link> and internal right <literal>OUTER</literal> hash joins (Melanie Plageman, Thomas Munro)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow parallelization of <link
+        linkend="queries-join"><literal>FULL</literal></link> and internal
+        right <literal>OUTER</literal> hash joins (Melanie Plageman,
+        Thomas Munro)
+       </para>
+      </listitem>
 
 <!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
 2023-01-08 [cd9479af2] Improve GIN cost estimation
 -->
 
-<listitem>
-<para>
-Improve the accuracy of <link linkend="gin"><literal>GIN</literal></link> index access optimizer costs (Ronan Dunklau)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Improve the accuracy of <link
+        linkend="gin"><literal>GIN</literal></link> index access optimizer
+        costs (Ronan Dunklau)
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -389,11 +452,12 @@ Author: Andres Freund <andres@anarazel.de>
 2023-04-06 [26158b852] Use ExtendBufferedRelTo() in XLogReadBufferExtended()
 -->
 
-<listitem>
-<para>
-Allow more efficient addition of heap and index pages (Andres Freund)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow more efficient addition of heap and index pages (Andres
+        Freund)
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Geoghegan <pg@bowt.ie>
@@ -404,59 +468,73 @@ Author: Peter Geoghegan <pg@bowt.ie>
 2022-12-28 [1de58df4f] Add page-level freezing to VACUUM.
 -->
 
-<listitem>
-<para>
-During non-freeze operations, perform page <link linkend="vacuum-for-wraparound">freezing</link> where appropriate (Peter Geoghegan)
-</para>
+      <listitem>
+       <para>
+        During non-freeze operations, perform page <link
+        linkend="vacuum-for-wraparound">freezing</link> where appropriate
+        (Peter Geoghegan)
+       </para>
 
-<para>
-This makes full-table freeze vacuums less necessary.
-</para>
-</listitem>
+       <para>
+        This makes full-table freeze vacuums less necessary.
+       </para>
+      </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
 2022-12-23 [ed1a88dda] Allow window functions to adjust their frameOptions
 -->
 
-<listitem>
-<para>
-Allow window functions to use the faster <link linkend="syntax-window-functions"><literal>ROWS</literal></link> mode internally when <literal>RANGE</literal> mode is active but unnecessary (David Rowley)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow window functions to use the faster <link
+        linkend="syntax-window-functions"><literal>ROWS</literal></link>
+        mode internally when <literal>RANGE</literal> mode is active but
+        unnecessary (David Rowley)
+       </para>
+      </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
 2023-01-27 [456fa635a] Teach planner about more monotonic window functions
 -->
 
-<listitem>
-<para>
-Allow optimization of always-increasing window functions <link linkend="functions-window-table"><function>ntile()</function></link>, <function>cume_dist()</function> and <function>percent_rank()</function> (David Rowley)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow optimization of always-increasing window functions <link
+        linkend="functions-window-table"><function>ntile()</function></link>,
+        <function>cume_dist()</function> and
+        <function>percent_rank()</function> (David Rowley)
+       </para>
+      </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
 2023-01-23 [16fd03e95] Allow parallel aggregate on string_agg and array_agg
 -->
 
-<listitem>
-<para>
-Allow aggregate functions <link linkend="functions-aggregate-table"><function>string_agg()</function></link> and <function>array_agg()</function> to be parallelized (David Rowley)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow aggregate functions <link
+        linkend="functions-aggregate-table"><function>string_agg()</function></link>
+        and <function>array_agg()</function> to be parallelized (David
+        Rowley)
+       </para>
+      </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
 2022-08-02 [3592e0ff9] Have ExecFindPartition cache the last found partition
 -->
 
-<listitem>
-<para>
-Improve performance by caching <link linkend="ddl-partitioning-overview"><literal>RANGE</literal></link> and <literal>LIST</literal> partition lookups (Amit Langote, Hou Zhijie, David Rowley)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Improve performance by caching <link
+        linkend="ddl-partitioning-overview"><literal>RANGE</literal></link>
+        and <literal>LIST</literal> partition lookups (Amit Langote,
+        Hou Zhijie, David Rowley)
+       </para>
+      </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
@@ -467,48 +545,63 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 2023-04-28 [b72f564d8] Add unit to vacuum_buffer_usage_limit value in postgresq
 -->
 
-<listitem>
-<para>
-Allow control of the shared buffer usage by vacuum and analyze (Melanie Plageman)
-</para>
+      <listitem>
+       <para>
+        Allow control of the shared buffer usage by vacuum and analyze
+        (Melanie Plageman)
+       </para>
 
-<para>
-The <link linkend="sql-vacuum"><command>VACUUM</command></link>/<link linkend="sql-analyze"><command>ANALYZE</command></link> option is <literal>BUFFER_USAGE_LIMIT</literal>, and the <link linkend="app-vacuumdb"><application>vacuumdb</application></link> option is <option>--buffer-usage-limit</option>.  The default value is set by server variable <link linkend="guc-vacuum-buffer-usage-limit"><varname>vacuum_buffer_usage_limit</varname></link>, which also controls autovacuum.
-</para>
-</listitem>
+       <para>
+        The <link
+        linkend="sql-vacuum"><command>VACUUM</command></link>/<link
+        linkend="sql-analyze"><command>ANALYZE</command></link>
+        option is <literal>BUFFER_USAGE_LIMIT</literal>, and the <link
+        linkend="app-vacuumdb"><application>vacuumdb</application></link>
+        option is <option>--buffer-usage-limit</option>.
+        The default value is set by server variable <link
+        linkend="guc-vacuum-buffer-usage-limit"><varname>vacuum_buffer_usage_limit</varname></link>,
+        which also controls autovacuum.
+       </para>
+      </listitem>
 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2022-07-20 [9430fb407] Add wal_sync_method=fdatasync for Windows.
 -->
 
-<listitem>
-<para>
-Support <link linkend="guc-wal-sync-method"><literal>wal_sync_method=fdatasync</literal></link> on <systemitem class="osname">Windows</systemitem> (Thomas Munro)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Support <link
+        linkend="guc-wal-sync-method"><literal>wal_sync_method=fdatasync</literal></link>
+        on <systemitem class="osname">Windows</systemitem> (Thomas Munro)
+       </para>
+      </listitem>
 
 <!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2023-03-20 [19d8e2308] Ignore BRIN indexes when checking for HOT updates
 -->
 
-<listitem>
-<para>
-Allow <link linkend="storage-hot"><acronym>HOT</acronym></link> updates if only <literal>BRIN</literal>-indexed columns are updated (Matthias van de Meent, Josef Simanek, Tomas Vondra)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow <link linkend="storage-hot"><acronym>HOT</acronym></link>
+        updates if only <literal>BRIN</literal>-indexed columns are updated
+        (Matthias van de Meent, Josef Simanek, Tomas Vondra)
+       </para>
+      </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
 2023-02-20 [2cb82e2ac] Speedup and increase usability of set proc title functio
 -->
 
-<listitem>
-<para>
-Improve the speed of updating the <link linkend="guc-update-process-title">process title</link> (David Rowley)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Improve the speed of updating the <link
+        linkend="guc-update-process-title">process title</link> (David
+        Rowley)
+       </para>
+      </listitem>
 
 <!--
 Author: John Naylor <john.naylor@postgresql.org>
@@ -521,27 +614,31 @@ Author: John Naylor <john.naylor@postgresql.org>
 2022-08-26 [e813e0e16] Add optimized functions for linear search within byte ar
 -->
 
-<listitem>
-<para>
-Allow <type>xid</type>/<type>subxid</type> searches and <acronym>ASCII</acronym> string detection to use vector operations (Nathan Bossart, John Naylor)
-</para>
+      <listitem>
+       <para>
+        Allow <type>xid</type>/<type>subxid</type> searches and
+        <acronym>ASCII</acronym> string detection to use vector operations
+        (Nathan Bossart, John Naylor)
+       </para>
 
-<para>
-<acronym>ASCII</acronym> detection is particularly useful for <link linkend="sql-copy"><command>COPY FROM</command></link>.  Vector operations are also used for some C array searches.
-</para>
+       <para>
+        <acronym>ASCII</acronym> detection is particularly useful for
+        <link linkend="sql-copy"><command>COPY FROM</command></link>.
+        Vector operations are also used for some C array searches.
+       </para>
 
-</listitem>
+      </listitem>
 
 <!--
 Author: David Rowley <drowley@postgresql.org>
 2022-08-29 [c6e0fe1f2] Improve performance of and reduce overheads of memory ma
 -->
 
-<listitem>
-<para>
-Reduce overhead of memory allocations (Andres Freund, David Rowley)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Reduce overhead of memory allocations (Andres Freund, David Rowley)
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -565,56 +662,69 @@ Author: Andres Freund <andres@anarazel.de>
 2023-05-17 [093e5c57d] Add writeback to pg_stat_io
 -->
 
-<listitem>
-<para>
-Add system view <link linkend="monitoring-pg-stat-io-view"><structname>pg_stat_io</structname></link> view to track <acronym>I/O</acronym> statistics (Melanie Plageman)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add system view <link
+        linkend="monitoring-pg-stat-io-view"><structname>pg_stat_io</structname></link>
+        view to track <acronym>I/O</acronym> statistics (Melanie Plageman)
+       </para>
+      </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2022-10-14 [c03747183] pgstat: Track time of the last scan of a relation
 -->
 
-<listitem>
-<para>
-Record statistics on the last sequential and index scans on tables (Dave Page)
-</para>
+      <listitem>
+       <para>
+        Record statistics on the last sequential and index scans on tables
+        (Dave Page)
+       </para>
 
-<para>
-This information appears in <link linkend="pg-stat-all-tables-view"><structname>pg_stat_all_tables</structname></link> and <link linkend="monitoring-pg-stat-all-indexes-view"><structname>pg_stat_all_indexes</structname></link>.
-</para>
-</listitem>
+       <para>
+        This information appears in <link
+        linkend="pg-stat-all-tables-view"><structname>pg_stat_all_tables</structname></link>
+        and <link
+        linkend="monitoring-pg-stat-all-indexes-view"><structname>pg_stat_all_indexes</structname></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Geoghegan <pg@bowt.ie>
 2023-03-23 [ae4fdde13] Count updates that move row to a new page.
 -->
 
-<listitem>
-<para>
-Record statistics on the occurrence of updated rows moving to new pages (Corey Huinker)
-</para>
+      <listitem>
+       <para>
+        Record statistics on the occurrence of updated rows moving to
+        new pages (Corey Huinker)
+       </para>
 
-<para>
-The <literal>pg_stat_*_tables</literal> column is <link linkend="monitoring-pg-stat-all-tables-view"><structfield>n_tup_newpage_upd</structfield></link>.
-</para>
-</listitem>
+       <para>
+        The <literal>pg_stat_*_tables</literal> column is <link
+        linkend="monitoring-pg-stat-all-tables-view"><structfield>n_tup_newpage_upd</structfield></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Amit Kapila <akapila@postgresql.org>
 2023-01-10 [f74573969] Fix the display of lock information for specktoken.
 -->
 
-<listitem>
-<para>
-Add speculative lock information to the <link linkend="view-pg-locks"><structname>pg_locks</structname></link> system view (Masahiko Sawada, Noriyoshi Shinoda)
-</para>
+      <listitem>
+       <para>
+        Add speculative lock information to the <link
+        linkend="view-pg-locks"><structname>pg_locks</structname></link>
+        system view (Masahiko Sawada, Noriyoshi Shinoda)
+       </para>
 
-<para>
-The transaction id is displayed in the <structfield>transactionid</structfield> column and the speculative insertion token is displayed in the <structfield>objid</structfield> column.
-</para>
-</listitem>
+       <para>
+        The transaction id is displayed in the
+        <structfield>transactionid</structfield> column and
+        the speculative insertion token is displayed in the
+        <structfield>objid</structfield> column.
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
@@ -623,137 +733,166 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 2022-07-05 [6ffff0fd2] Fix pg_prepared_statements.result_types for DML statemen
 -->
 
-<listitem>
-<para>
-Add the display of prepared statement result types to the <link linkend="view-pg-prepared-statements"><structname>pg_prepared_statements</structname></link> view (Dagfinn Ilmari Mannsåker)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add the display of prepared statement result types to the <link
+        linkend="view-pg-prepared-statements"><structname>pg_prepared_statements</structname></link>
+        view (Dagfinn Ilmari Mannsåker)
+       </para>
+      </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2022-10-06 [e0b014295] Create subscription stats entry at CREATE SUBSCRIPTION t
 -->
 
-<listitem>
-<para>
-Create subscription statistics entries at subscription creation time so <link linkend="pg-stat-database-view"><structfield>stats_reset</structfield></link> is accurate (Andres Freund)
-</para>
+      <listitem>
+       <para>
+        Create subscription statistics
+        entries at subscription creation time so <link
+        linkend="pg-stat-database-view"><structfield>stats_reset</structfield></link>
+        is accurate (Andres Freund)
+       </para>
 
-<para>
-Previously entries were created only when the first statistics were reported.
-</para>
-</listitem>
+       <para>
+        Previously entries were created only when the first statistics
+        were reported.
+       </para>
+      </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2023-04-07 [704261ecc] Improve IO accounting for temp relation writes
 -->
 
-<listitem>
-<para>
-Correct the <acronym>I/O</acronym> accounting for temp relation writes shown in <link linkend="pg-stat-database-view"><structname>pg_stat_database</structname></link> (Melanie Plageman)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Correct the <acronym>I/O</acronym>
+        accounting for temp relation writes shown in <link
+        linkend="pg-stat-database-view"><structname>pg_stat_database</structname></link>
+        (Melanie Plageman)
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-12-19 [10ea0f924] Expose some information about backend subxact status.
 -->
 
-<listitem>
-<para>
-Add function <link linkend="monitoring-stats-backend-funcs-table"><function>pg_stat_get_backend_subxact()</function></link> to report on a session's subtransaction cache (Dilip Kumar)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add function <link
+        linkend="monitoring-stats-backend-funcs-table"><function>pg_stat_get_backend_subxact()</function></link>
+        to report on a session's subtransaction cache (Dilip Kumar)
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-09-29 [d7e39d72c] Use actual backend IDs in pg_stat_get_backend_idset() an
 -->
 
-<listitem>
-<para>
-Have <link linkend="monitoring-stats-backend-funcs-table"><function>pg_stat_get_backend_idset()</function></link>, <function>pg_stat_get_backend_activity()</function>, and related functions use the unchanging backend id (Nathan Bossart)
-</para>
+      <listitem>
+       <para>
+        Have <link
+        linkend="monitoring-stats-backend-funcs-table"><function>pg_stat_get_backend_idset()</function></link>,
+        <function>pg_stat_get_backend_activity()</function>, and related
+        functions use the unchanging backend id (Nathan Bossart)
+       </para>
 
-<para>
-Previously the index values might change during the lifetime of the session.
-</para>
-</listitem>
+       <para>
+        Previously the index values might change during the lifetime of
+        the session.
+       </para>
+      </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2022-08-22 [0c679464a] Add BackendType for standalone backends
 -->
 
-<listitem>
-<para>
-Report stand-alone backends with a special backend type (Melanie Plageman)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Report stand-alone backends with a special backend type (Melanie
+        Plageman)
+       </para>
+      </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2022-11-21 [92daeca45] Add wait event for pg_usleep() in perform_spin_delay()
 -->
 
-<listitem>
-<para>
-Add wait event <link linkend="wait-event-timeout-table"><literal>SpinDelay</literal></link> to report spinlock sleep delays (Andres Freund)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add wait event <link
+        linkend="wait-event-timeout-table"><literal>SpinDelay</literal></link>
+        to report spinlock sleep delays (Andres Freund)
+       </para>
+      </listitem>
 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2022-07-14 [7bae3bbf6] Create a distinct wait event for POSIX DSM allocation.
 -->
 
-<listitem>
-<para>
-Create new wait event <link linkend="wait-event-io-table"><literal>DSMAllocate</literal></link> to indicate waiting for dynamic shared memory allocation (Thomas Munro)
-</para>
+      <listitem>
+       <para>
+        Create new wait event <link
+        linkend="wait-event-io-table"><literal>DSMAllocate</literal></link>
+        to indicate waiting for dynamic shared memory allocation (Thomas
+        Munro)
+       </para>
 
-<para>
-Previously this type of wait was reported as <literal>DSMFillZeroWrite</literal>, which was also used by <function>mmap()</function> allocations.
-</para>
-</listitem>
+       <para>
+        Previously this type of wait was reported as
+        <literal>DSMFillZeroWrite</literal>, which was also used by
+        <function>mmap()</function> allocations.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-11-24 [af205152e] Add the database name to the ps display of logical WAL s
 -->
 
-<listitem>
-<para>
-Add the database name to the <link linkend="guc-update-process-title">process title</link> of logical <acronym>WAL</acronym> senders (Tatsuhiro Nakamori)
-</para>
+      <listitem>
+       <para>
+        Add the database name to the <link
+        linkend="guc-update-process-title">process title</link> of logical
+        <acronym>WAL</acronym> senders (Tatsuhiro Nakamori)
+       </para>
 
-<para>
-Physical <acronym>WAL</acronym> senders do not display a database name.
-</para>
-</listitem>
+       <para>
+        Physical <acronym>WAL</acronym> senders do not display a database
+        name.
+       </para>
+      </listitem>
 
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
 2022-07-07 [62c46eee2] Add checkpoint and REDO LSN to log_checkpoints message.
 -->
 
-<listitem>
-<para>
-Add checkpoint and <literal>REDO LSN</literal> information to <link linkend="guc-log-checkpoints"><varname>log_checkpoints</varname></link> messages (Bharath Rupireddy, Kyotaro Horiguchi)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add checkpoint and <literal>REDO LSN</literal> information to <link
+        linkend="guc-log-checkpoints"><varname>log_checkpoints</varname></link>
+        messages (Bharath Rupireddy, Kyotaro Horiguchi)
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2022-07-15 [3a0e38504] Log details for client certificate failures
 -->
 
-<listitem>
-<para>
-Provide additional details during client certificate failures (Jacob Champion)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Provide additional details during client certificate failures
+        (Jacob Champion)
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -769,11 +908,13 @@ Author: Robert Haas <rhaas@postgresql.org>
 2023-03-30 [c3afe8cf5] Add new predefined role pg_create_subscription.
 -->
 
-<listitem>
-<para>
-Add predefined role <link linkend="predefined-roles"><literal>pg_create_subscription</literal></link> with permission to create subscriptions (Robert Haas)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add predefined role <link
+        linkend="predefined-roles"><literal>pg_create_subscription</literal></link>
+        with permission to create subscriptions (Robert Haas)
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
@@ -784,61 +925,74 @@ Author: Amit Kapila <akapila@postgresql.org>
 2023-04-24 [19e65dff3] Display 'password_required' option for \dRs+ command.
 -->
 
-<listitem>
-<para>
-Allow subscriptions to not require passwords (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Allow subscriptions to not require passwords (Robert Haas)
+       </para>
 
-<para>
-This is accomplished with the option <link linkend="sql-createsubscription"><literal>password_required=false</literal></link>.
-</para>
-</listitem>
+       <para>
+        This is accomplished with the option <link
+        linkend="sql-createsubscription"><literal>password_required=false</literal></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2023-01-13 [c44f6334c] Simplify permissions for LOCK TABLE.
 -->
 
-<listitem>
-<para>
-Simplify permissions for <link linkend="sql-lock"><command>LOCK TABLE</command></link> (Jeff Davis)
-</para>
+      <listitem>
+       <para>
+        Simplify permissions for <link linkend="sql-lock"><command>LOCK
+        TABLE</command></link> (Jeff Davis)
+       </para>
 
-<para>
-Previously the ability to perform <command>LOCK TABLE</command> at various lock levels was bound to specific query-type permissions.  For example, <link linkend="sql-update"><command>UPDATE</command></link> could perform all lock levels except <literal>ACCESS SHARE</literal>, which
-required <link linkend="sql-select"><command>SELECT</command></link> permissions.  Now <command>UPDATE</command> can issue all lock levels.  MORE?
-</para>
-</listitem>
+       <para>
+        Previously the ability to perform <command>LOCK
+        TABLE</command> at various lock levels was bound to
+        specific query-type permissions.  For example, <link
+        linkend="sql-update"><command>UPDATE</command></link>
+        could perform all lock levels except
+        <literal>ACCESS SHARE</literal>, which required <link
+        linkend="sql-select"><command>SELECT</command></link> permissions.
+        Now <command>UPDATE</command> can issue all lock levels.  MORE?
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-08-22 [ce6b672e4] Make role grant system more consistent with other privil
 -->
 
-<listitem>
-<para>
-Allow <link linkend="sql-grant"><literal>GRANT group_name TO user_name</literal></link> to be performed with <literal>ADMIN OPTION</literal> (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Allow <link linkend="sql-grant"><literal>GRANT group_name TO
+        user_name</literal></link> to be performed with <literal>ADMIN
+        OPTION</literal> (Robert Haas)
+       </para>
 
-<para>
-Previously <literal>CREATEROLE</literal> permission was required.
-</para>
-</listitem>
+       <para>
+        Previously <literal>CREATEROLE</literal> permission was required.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-08-25 [e3ce2de09] Allow grant-level control of role inheritance behavior.
 -->
 
-<listitem>
-<para>
-Allow <link linkend="sql-grant"><command>GRANT</command></link> to use <literal>WITH ADMIN TRUE</literal>/<literal>FALSE</literal> syntax (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Allow <link linkend="sql-grant"><command>GRANT</command></link>
+        to use <literal>WITH ADMIN TRUE</literal>/<literal>FALSE</literal>
+        syntax (Robert Haas)
+       </para>
 
-<para>
-Previously only the <literal>WITH ADMIN OPTION</literal> syntax was supported.
-</para>
-</listitem>
+       <para>
+        Previously only the <literal>WITH ADMIN OPTION</literal> syntax
+        was supported.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
@@ -847,105 +1001,124 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2023-02-22 [e00bc6c92] doc: Add default value of createrole_self_grant
 -->
 
-<listitem>
-<para>
-Allow roles that create other roles to automatically inherit the new role's rights or the ability to <link linkend="sql-set-role"><command>SET ROLE</command></link> to the new role (Robert Haas, Shi Yu)
-</para>
+      <listitem>
+       <para>
+        Allow roles that create other roles to automatically
+        inherit the new role's rights or the ability to <link
+        linkend="sql-set-role"><command>SET ROLE</command></link> to the
+        new role (Robert Haas, Shi Yu)
+       </para>
 
-<para>
-This is controlled by server variable <link linkend="guc-createrole-self-grant"><varname>createrole_self_grant</varname></link>.
-</para>
-</listitem>
+       <para>
+        This is controlled by server variable <link
+        linkend="guc-createrole-self-grant"><varname>createrole_self_grant</varname></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-09-19 [48a257d44] Make ALTER DEFAULT PRIVILEGES require privileges, not me
 -->
 
-<listitem>
-<para>
-Prevent users from changing the default privileges of non-inherited roles (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Prevent users from changing the default privileges of non-inherited
+        roles (Robert Haas)
+       </para>
 
-<para>
-This is now only allowed for inherited roles.
-</para>
-</listitem>
-
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2022-08-22 [ce6b672e4] Make role grant system more consistent with other privil
--->
-
-<listitem>
-<para>
-When granting role membership, require the granted-by role to be a role that has appropriate permissions (Robert Haas)
-</para>
-
-<para>
-This is a requirement even when a non-bootstrap superuser is granting role membership.
-</para>
-</listitem>
+       <para>
+        This is now only allowed for inherited roles.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-08-22 [ce6b672e4] Make role grant system more consistent with other privil
 -->
 
-<listitem>
-<para>
-Allow non-superusers to grant permissions using a granted-by user that is not the current user (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        When granting role membership, require the granted-by role to be
+        a role that has appropriate permissions (Robert Haas)
+       </para>
 
-<para>
-The current user still must have sufficient permissions given by the specified granted-by user.
-</para>
-</listitem>
+       <para>
+        This is a requirement even when a non-bootstrap superuser is
+        granting role membership.
+       </para>
+      </listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2022-08-22 [ce6b672e4] Make role grant system more consistent with other privil
+-->
+
+      <listitem>
+       <para>
+        Allow non-superusers to grant permissions using a granted-by user
+        that is not the current user (Robert Haas)
+       </para>
+
+       <para>
+        The current user still must have sufficient permissions given by
+        the specified granted-by user.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-11-18 [3d14e171e] Add a SET option to the GRANT command.
 -->
 
-<listitem>
-<para>
-Add <link linkend="sql-grant"><command>GRANT</command></link> to control permission to use <link linkend="sql-set-role"><command>SET ROLE</command></link> (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Add <link linkend="sql-grant"><command>GRANT</command></link> to
+        control permission to use <link linkend="sql-set-role"><command>SET
+        ROLE</command></link> (Robert Haas)
+       </para>
 
-<para>
-This is controlled by a new <literal>GRANT ... SET</literal> option.
-</para>
-</listitem>
+       <para>
+        This is controlled by a new <literal>GRANT ... SET</literal>
+        option.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-08-22 [ce6b672e4] Make role grant system more consistent with other privil
 -->
 
-<listitem>
-<para>
-Add dependency tracking to roles which have granted privileges (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Add dependency tracking to roles which have granted privileges
+        (Robert Haas)
+       </para>
 
-<para>
-For example, removing <literal>ADMIN OPTION</literal> will fail if there are privileges using that option;  <literal>CASCADE</literal> must be used to revoke dependent permissions.
-</para>
-</listitem>
+       <para>
+        For example, removing <literal>ADMIN OPTION</literal> will fail if
+        there are privileges using that option;  <literal>CASCADE</literal>
+        must be used to revoke dependent permissions.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-08-18 [6566133c5] Ensure that pg_auth_members.grantor is always valid.
 -->
 
-<listitem>
-<para>
-Add dependency tracking of grantors for <link linkend="sql-grant"><command>GRANT</command></link> records (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Add dependency tracking of grantors for <link
+        linkend="sql-grant"><command>GRANT</command></link> records
+        (Robert Haas)
+       </para>
 
-<para>
-This guarantees that <link linkend="catalog-pg-auth-members"><structname>pg_auth_members</structname></link>.<structfield>grantor</structfield> values are always valid.
-</para>
-</listitem>
+       <para>
+        This guarantees that <link
+        linkend="catalog-pg-auth-members"><structname>pg_auth_members</structname></link>.<structfield>grantor</structfield>
+        values are always valid.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
@@ -954,45 +1127,51 @@ Author: Robert Haas <rhaas@postgresql.org>
 2022-08-31 [0101f770a] Fix a bug in roles_is_member_of.
 -->
 
-<listitem>
-<para>
-Allow multiple role membership records (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Allow multiple role membership records (Robert Haas)
+       </para>
 
-<para>
-Previously a new membership grant would remove a previous matching membership grant, even if other aspects of the grant did not match.
-</para>
-</listitem>
+       <para>
+        Previously a new membership grant would remove a previous matching
+        membership grant, even if other aspects of the grant did not match.
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-07-26 [e530be2c5] Do not allow removal of superuser privileges from bootst
 -->
 
-<listitem>
-<para>
-Prevent removal of superuser privileges for the bootstrap user (Robert Haas)
-</para>
+      <listitem>
+       <para>
+        Prevent removal of superuser privileges for the bootstrap user
+        (Robert Haas)
+       </para>
 
-<para>
-Restoring such users could lead to errors.
-</para>
-</listitem>
+       <para>
+        Restoring such users could lead to errors.
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-07-03 [b762bbde3] Allow makeaclitem() to accept multiple privilege names.
 -->
 
-<listitem>
-<para>
-Allow <link linkend="functions-aclitem-fn-table"><function>makeaclitem()</function></link> to accept multiple privilege names (Robins Tharakan)
-</para>
+      <listitem>
+       <para>
+        Allow <link
+        linkend="functions-aclitem-fn-table"><function>makeaclitem()</function></link>
+        to accept multiple privilege names (Robins Tharakan)
+       </para>
 
-<para>
-Previously only a single privilege name, like <link linkend="sql-select"><command>SELECT</command></link>, was accepted.
-</para>
-</listitem>
+       <para>
+        Previously only a single privilege name, like <link
+        linkend="sql-select"><command>SELECT</command></link>, was
+        accepted.
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -1014,26 +1193,33 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-05-21 [a2eb99a01] Expand some more uses of "deleg" to "delegation" or "del
 -->
 
-<listitem>
-<para>
-Add support for <productname>Kerberos</productname> credential delegation (Stephen Frost)
-</para>
+      <listitem>
+       <para>
+        Add support for <productname>Kerberos</productname> credential
+        delegation (Stephen Frost)
+       </para>
 
-<para>
-This is enabled with server variable <link linkend="guc-gss-accept-delegation"><varname>gss_accept_delegation</varname></link> and <application>libpq</application> connection parameter <link linkend="libpq-connect-gssdelegation"><literal>gssdelegation</literal></link>.
-</para>
-</listitem>
+       <para>
+        This is enabled with server variable <link
+        linkend="guc-gss-accept-delegation"><varname>gss_accept_delegation</varname></link>
+        and <application>libpq</application> connection parameter <link
+        linkend="libpq-connect-gssdelegation"><literal>gssdelegation</literal></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2023-03-27 [b57774300] Make SCRAM iteration count configurable
 -->
 
-<listitem>
-<para>
-Allow the <acronym>SCRAM</acronym> iteration count to be set with server variable <link linkend="guc-scram-iterations"><varname>scram_iterations</varname></link> (Daniel Gustafsson)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow the <acronym>SCRAM</acronym> iteration
+        count to be set with server variable <link
+        linkend="guc-scram-iterations"><varname>scram_iterations</varname></link>
+        (Daniel Gustafsson)
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -1042,52 +1228,62 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-10-14 [f13b2088f] Add auxiliary lists to GUC data structures for better pe
 -->
 
-<listitem>
-<para>
-Improve performance of server variable management (Tom Lane)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Improve performance of server variable management (Tom Lane)
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-09-27 [385366426] Introduce GUC_NO_RESET flag.
 -->
 
-<listitem>
-<para>
-Tighten restrictions on which server variables can be reset (Masahiko Sawada)
-</para>
+      <listitem>
+       <para>
+        Tighten restrictions on which server variables can be reset
+        (Masahiko Sawada)
+       </para>
 
-<para>
-Previously, while certain variables, like <link linkend="guc-default-transaction-isolation"><varname>transaction_isolation</varname></link>, were not affected by <link linkend="sql-reset"><command>RESET ALL</command></link>, they could be individually reset in inappropriate situations.
-</para>
-</listitem>
+       <para>
+        Previously, while certain variables, like <link
+        linkend="guc-default-transaction-isolation"><varname>transaction_isolation</varname></link>,
+        were not affected by <link linkend="sql-reset"><command>RESET
+        ALL</command></link>, they could be individually reset in
+        inappropriate situations.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-08-09 [0b039e3a8] Fix some inconsistencies with GUC categories
 -->
 
-<listitem>
-<para>
-Move various <link linkend="config-setting-configuration-file"><filename>postgresql.conf</filename></link> items into new categories (Shinya Kato)
-</para>
+      <listitem>
+       <para>
+        Move various <link
+        linkend="config-setting-configuration-file"><filename>postgresql.conf</filename></link>
+        items into new categories (Shinya Kato)
+       </para>
 
-<para>
-This also affects the categories displayed in the <link linkend="view-pg-settings"><structname>pg_settings</structname></link> view.
-</para>
-</listitem>
+       <para>
+        This also affects the categories displayed in the <link
+        linkend="view-pg-settings"><structname>pg_settings</structname></link>
+        view.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-11-25 [d13b68411] Introduce variables for initial and max nesting depth on
 -->
 
-<listitem>
-<para>
-Prevent configuration file recursion beyond 10 levels (Julien Rouhaud)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Prevent configuration file recursion beyond 10 levels (Julien
+        Rouhaud)
+       </para>
+      </listitem>
 
 <!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
@@ -1096,15 +1292,17 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2023-04-20 [a9781ae11] Fix autovacuum cost debug logging
 -->
 
-<listitem>
-<para>
-Allow <link linkend="autovacuum">autovacuum</link> to more frequently honor changes to delay settings (Melanie Plageman)
-</para>
+      <listitem>
+       <para>
+        Allow <link linkend="autovacuum">autovacuum</link> to more
+        frequently honor changes to delay settings (Melanie Plageman)
+       </para>
 
-<para>
-Rather than honor changes only at the start of each relation, honor them at the start of each block.
-</para>
-</listitem>
+       <para>
+        Rather than honor changes only at the start of each relation,
+        honor them at the start of each block.
+       </para>
+      </listitem>
 
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
@@ -1113,88 +1311,110 @@ Author: Fujii Masao <fujii@postgresql.org>
 2022-07-26 [3cabe45a8] doc: Add note about re-archiving of same WAL files in do
 -->
 
-<listitem>
-<para>
-Remove restrictions that archive files be durably renamed (Nathan Bossart)
-</para>
+      <listitem>
+       <para>
+        Remove restrictions that archive files be durably renamed
+        (Nathan Bossart)
+       </para>
 
-<para>
-The <link linkend="guc-archive-command"><varname>archive_command</varname></link> command is now more likely to be called with already-archived files after a crash.
-</para>
-</listitem>
+       <para>
+        The <link
+        linkend="guc-archive-command"><varname>archive_command</varname></link>
+        command is now more likely to be called with already-archived
+        files after a crash.
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2022-11-15 [d627ce3b7] Disallow setting archive_library and archive_command at 
 -->
 
-<listitem>
-<para>
-Prevent <link linkend="guc-archive-library"><varname>archive_library</varname></link> and <link linkend="guc-archive-command"><varname>archive_command</varname></link> from being set at the same time (Nathan Bossart)
-</para>
+      <listitem>
+       <para>
+        Prevent <link
+        linkend="guc-archive-library"><varname>archive_library</varname></link>
+        and <link
+        linkend="guc-archive-command"><varname>archive_command</varname></link>
+        from being set at the same time (Nathan Bossart)
+       </para>
 
-<para>
-Previously <varname>archive_library</varname> would override <varname>archive_command</varname>.
-</para>
-</listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2022-11-21 [51b5834cd] Provide options for postmaster to kill child processes w
--->
-
-<listitem>
-<para>
-Allow the postmaster to terminate children with an abort signal (Tom Lane)
-</para>
-
-<para>
-This allows collection of a core dump for a stuck child process.
-This is controlled by <link linkend="guc-send-abort-for-crash"><varname>send_abort_for_crash</varname></link> and <link linkend="guc-send-abort-for-kill"><varname>send_abort_for_kill</varname></link>.
-The postmaster's <option>-T</option> switch is now the same as setting <varname>send_abort_for_crash</varname>.
-</para>
-</listitem>
+       <para>
+        Previously <varname>archive_library</varname> would override
+        <varname>archive_command</varname>.
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-11-21 [51b5834cd] Provide options for postmaster to kill child processes w
 -->
 
-<listitem>
-<para>
-Remove the non-functional postmaster <option>-n</option> option (Tom Lane)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow the postmaster to terminate children with an abort signal
+        (Tom Lane)
+       </para>
+
+       <para>
+        This allows collection of a core dump for a
+        stuck child process.  This is controlled by <link
+        linkend="guc-send-abort-for-crash"><varname>send_abort_for_crash</varname></link>
+        and <link
+        linkend="guc-send-abort-for-kill"><varname>send_abort_for_kill</varname></link>.
+        The postmaster's <option>-T</option> switch is now the same as
+        setting <varname>send_abort_for_crash</varname>.
+       </para>
+      </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-11-21 [51b5834cd] Provide options for postmaster to kill child processes w
+-->
+
+      <listitem>
+       <para>
+        Remove the non-functional postmaster <option>-n</option> option
+        (Tom Lane)
+       </para>
+      </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2023-01-20 [6e2775e4d] Add new GUC reserved_connections.
 -->
 
-<listitem>
-<para>
-Allow the server to reserve backend slots for roles with <link linkend="predefined-roles"><literal>pg_use_reserved_connections</literal></link> membership (Nathan Bossart)
-</para>
+      <listitem>
+       <para>
+        Allow the server to reserve backend slots for roles with <link
+        linkend="predefined-roles"><literal>pg_use_reserved_connections</literal></link>
+        membership (Nathan Bossart)
+       </para>
 
-<para>
-The number of reserved slots is set by server variable <link linkend="guc-reserved-connections"><varname>reserved_connections</varname></link>.
-</para>
-</listitem>
+       <para>
+        The number of reserved slots is set by server variable <link
+        linkend="guc-reserved-connections"><varname>reserved_connections</varname></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-09-17 [fdd8937c0] Fix huge_pages on Windows
 -->
 
-<listitem>
-<para>
-Allow <link linkend="guc-huge-pages">huge pages</link> to work on newer versions of <systemitem class="osname">Windows 10</systemitem> (Thomas Munro)
-</para>
+      <listitem>
+       <para>
+        Allow <link linkend="guc-huge-pages">huge pages</link> to
+        work on newer versions of <systemitem class="osname">Windows
+        10</systemitem> (Thomas Munro)
+       </para>
 
-<para>
-This adds the special handling required to enable huge pages on newer versions of <systemitem class="osname">Windows 10</systemitem>.
-</para>
-</listitem>
+       <para>
+        This adds the special handling required to enable huge pages
+        on newer versions of <systemitem class="osname">Windows
+        10</systemitem>.
+       </para>
+      </listitem>
 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
@@ -1203,15 +1423,22 @@ Author: Thomas Munro <tmunro@postgresql.org>
 2023-05-15 [319bae9a8] Rename io_direct to debug_io_direct.
 -->
 
-<listitem>
-<para>
-Add <link linkend="guc-debug-io-direct"><varname>debug_io_direct</varname></link> setting for developer usage (Thomas Munro, Andres Freund, Bharath Rupireddy)
-</para>
+      <listitem>
+       <para>
+        Add <link
+        linkend="guc-debug-io-direct"><varname>debug_io_direct</varname></link>
+        setting for developer usage (Thomas Munro, Andres Freund,
+        Bharath Rupireddy)
+       </para>
 
-<para>
-While primarily for developers, <link linkend="guc-wal-sync-method"><literal>wal_sync_method=open_sync</literal></link>/<literal>open_datasync</literal> has been modified to not use direct <acronym>I/O</acronym> with <literal>wal_level=minimal</literal>;  this is now enabled with <literal>debug_io_direct=wal</literal>.
-</para>
-</listitem>
+       <para>
+        While primarily for developers, <link
+        linkend="guc-wal-sync-method"><literal>wal_sync_method=open_sync</literal></link>/<literal>open_datasync</literal>
+        has been modified to not use direct <acronym>I/O</acronym> with
+        <literal>wal_level=minimal</literal>;  this is now enabled with
+        <literal>debug_io_direct=wal</literal>.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
@@ -1220,11 +1447,14 @@ Author: Michael Paquier <michael@paquier.xyz>
 2022-12-23 [13e0d7a60] Rename pg_dissect_walfile_name() to pg_split_walfile_nam
 -->
 
-<listitem>
-<para>
-Add function <link linkend="functions-admin-backup-table"><function>pg_split_walfile_name()</function></link> to report the segment and timeline values of <acronym>WAL</acronym> file names (Bharath Rupireddy)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add function <link
+        linkend="functions-admin-backup-table"><function>pg_split_walfile_name()</function></link>
+        to report the segment and timeline values of <acronym>WAL</acronym>
+        file names (Bharath Rupireddy)
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -1240,67 +1470,85 @@ Author: Michael Paquier <michael@paquier.xyz>
 2022-10-24 [8fea86830] Add support for regexps on database and user entries in
 -->
 
-<listitem>
-<para>
-Add support for regular expression matching on database and role entries in <filename>pg_hba.conf</filename> (Bertrand Drouvot)
-</para>
+      <listitem>
+       <para>
+        Add support for regular expression matching on database and role
+        entries in <filename>pg_hba.conf</filename> (Bertrand Drouvot)
+       </para>
 
-<para>
-Regular expression patterns are prefixed with a slash.  Database and role names that begin with slashes need to be double-quoted if referenced in <filename>pg_hba.conf</filename>.
-</para>
-</listitem>
+       <para>
+        Regular expression patterns are prefixed with a slash.  Database
+        and role names that begin with slashes need to be double-quoted
+        if referenced in <filename>pg_hba.conf</filename>.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-01-20 [efb6f4a4f] Support the same patterns for pg-user in pg_ident.conf a
 -->
 
-<listitem>
-<para>
-Improve user-column handling of <link linkend="runtime-config-file-locations"><filename>pg_ident.conf</filename></link> to match <filename>pg_hba.conf</filename> (Jelte Fennema)
-</para>
+      <listitem>
+       <para>
+        Improve user-column handling of <link
+        linkend="runtime-config-file-locations"><filename>pg_ident.conf</filename></link>
+        to match <filename>pg_hba.conf</filename> (Jelte Fennema)
+       </para>
 
-<para>
-Specifically, add support for <literal>all</literal>, role membership with <literal>+</literal>, and regular expressions with a leading slash.  Any user name that matches these patterns must be double-quoted.
-</para>
-</listitem>
+       <para>
+        Specifically, add support for <literal>all</literal>, role
+        membership with <literal>+</literal>, and regular expressions
+        with a leading slash.  Any user name that matches these patterns
+        must be double-quoted.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-11-24 [a54b658ce] Add support for file inclusions in HBA and ident configu
 -->
 
-<listitem>
-<para>
-Allow include files in <filename>pg_hba.conf</filename> and <filename>pg_ident.conf</filename> (Julien Rouhaud)
-</para>
+      <listitem>
+       <para>
+        Allow include files in <filename>pg_hba.conf</filename> and
+        <filename>pg_ident.conf</filename> (Julien Rouhaud)
+       </para>
 
-<para>
-These are controlled by <literal>include</literal>, <literal>include_if_exists</literal>, and <literal>include_dir</literal>.  System views <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link> and <link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link> now display the file name.
-</para>
-</listitem>
+       <para>
+        These are controlled by <literal>include</literal>,
+        <literal>include_if_exists</literal>, and
+        <literal>include_dir</literal>.  System views <link
+        linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link>
+        and <link
+        linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link>
+        now display the file name.
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-07-27 [de3f0e3fe] Eliminate fixed token-length limit in hba.c.
 -->
 
-<listitem>
-<para>
-Allow <filename>pg_hba.conf</filename> tokens to be of unlimited length (Tom Lane)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow <filename>pg_hba.conf</filename> tokens to be of unlimited
+        length (Tom Lane)
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-10-26 [c591300a8] Add rule_number to pg_hba_file_rules and map_number to p
 -->
 
-<listitem>
-<para>
-Add rule and map numbers to the system view <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link> (Julien Rouhaud)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add rule and map numbers to the system view <link
+        linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link>
+        (Julien Rouhaud)
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -1316,75 +1564,101 @@ Author: Jeff Davis <jdavis@postgresql.org>
 2023-03-10 [c45dc7ffb] initdb: derive encoding from locale for ICU; similar to
 -->
 
-<listitem>
-<para>
-Determine the <acronym>ICU</acronym> default locale from the environment (Jeff Davis)
-</para>
+      <listitem>
+       <para>
+        Determine the <acronym>ICU</acronym> default locale from the
+        environment (Jeff Davis)
+       </para>
 
-<para>
-However, <link linkend="locale-providers"><acronym>ICU</acronym></link> doesn't support the C locale so <literal>UTF-8</literal> is used in such cases.  Previously the default was always <literal>UTF-8</literal>.
-</para>
-</listitem>
+       <para>
+        However, <link
+        linkend="locale-providers"><acronym>ICU</acronym></link> doesn't
+        support the C locale so <literal>UTF-8</literal> is used in such
+        cases.  Previously the default was always <literal>UTF-8</literal>.
+       </para>
+      </listitem>
 
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
-Date:   Fri Jun 16 10:27:32 2023 -0700
+      Date:   Fri Jun 16 10:27:32 2023 -0700
 -->
 
-<listitem>
-<para>
-Have <link linkend="sql-createdatabase"><command>CREATE DATABASE</command></link> and <link linkend="sql-createcollation"><command>CREATE COLLATION</command></link>'s <literal>LOCALE</literal> options, and <link linkend="app-initdb"><application>initdb</application></link> and <link linkend="app-createdb"><application>createdb</application></link> <option>--locale</option> options, control non-<application>libc</application> collation providers (Jeff Davis)
-</para>
+      <listitem>
+       <para>
+        Have <link linkend="sql-createdatabase"><command>CREATE
+        DATABASE</command></link> and <link
+        linkend="sql-createcollation"><command>CREATE
+        COLLATION</command></link>'s <literal>LOCALE</literal> options, and
+        <link linkend="app-initdb"><application>initdb</application></link>
+        and <link
+        linkend="app-createdb"><application>createdb</application></link>
+        <option>--locale</option> options, control
+        non-<application>libc</application> collation providers (Jeff
+        Davis)
+       </para>
 
-<para>
-Previously they only controlled <application>libc</application> providers.
-</para>
-</listitem>
+       <para>
+        Previously they only controlled <application>libc</application>
+        providers.
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-03-10 [0d21d4b9b] Add standard collation UNICODE
 -->
 
-<listitem>
-<para>
-Add predefined collations <literal>unicode</literal> and <literal>ucs_basic</literal> (Peter Eisentraut)
-</para>
+      <listitem>
+       <para>
+        Add predefined collations <literal>unicode</literal> and
+        <literal>ucs_basic</literal> (Peter Eisentraut)
+       </para>
 
-<para>
-This only works if <acronym>ICU</acronym> support is enabled.
-</para>
-</listitem>
+       <para>
+        This only works if <acronym>ICU</acronym> support is enabled.
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-03-08 [30a53b792] Allow tailoring of ICU locales with custom rules
 -->
 
-<listitem>
-<para>
-Allow custom <acronym>ICU</acronym> collation rules to be created (Peter Eisentraut)
-</para>
+      <listitem>
+       <para>
+        Allow custom <acronym>ICU</acronym> collation rules to be created
+        (Peter Eisentraut)
+       </para>
 
-<para>
-This is done using <link linkend="sql-createcollation"><command>CREATE COLLATION</command></link>'s new <literal>RULES</literal> clause, as well as new options for <link linkend="sql-createdatabase"><command>CREATE DATABASE</command></link>, <link linkend="app-createdb"><application>createdb</application></link>, and <link linkend="app-initdb"><application>initdb</application></link>.
-</para>
-</listitem>
+       <para>
+        This is done using <link
+        linkend="sql-createcollation"><command>CREATE
+        COLLATION</command></link>'s new <literal>RULES</literal>
+        clause, as well as new options for <link
+        linkend="sql-createdatabase"><command>CREATE
+        DATABASE</command></link>, <link
+        linkend="app-createdb"><application>createdb</application></link>,
+        and <link
+        linkend="app-initdb"><application>initdb</application></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-01-03 [bf03cfd16] Windows support in pg_import_system_collations
 -->
 
-<listitem>
-<para>
-Allow <systemitem class="osname">Windows</systemitem> to import system locales automatically (Juan José Santamaría Flecha)
-</para>
+      <listitem>
+       <para>
+        Allow <systemitem class="osname">Windows</systemitem> to import
+        system locales automatically (Juan José Santamaría Flecha)
+       </para>
 
-<para>
-Previously, only <acronym>ICU</acronym> locales could be imported on <systemitem class="osname">Windows</systemitem>.
-</para>
-</listitem>
+       <para>
+        Previously, only <acronym>ICU</acronym> locales could be imported
+        on <systemitem class="osname">Windows</systemitem>.
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -1406,16 +1680,20 @@ Author: Andres Freund <andres@anarazel.de>
 2023-04-08 [26669757b] Handle logical slot conflicts on standby
 -->
 
-<listitem>
-<para>
-Allow <link linkend="logicaldecoding">logical decoding</link> on standbys (Bertrand Drouvot, Andres Freund, Amit Khandekar)
-</para>
+     <listitem>
+      <para>
+       Allow <link linkend="logicaldecoding">logical decoding</link>
+       on standbys (Bertrand Drouvot, Andres Freund, Amit Khandekar)
+      </para>
 
-<para>
-Snapshot <acronym>WAL</acronym> records are required for logical slot creation but cannot be created on standbys.
-To avoid delays, the new function <link linkend="functions-snapshot-synchronization-table"><function>pg_log_standby_snapshot()</function></link> allows creation of such records.
-</para>
-</listitem>
+      <para>
+       Snapshot <acronym>WAL</acronym> records are
+       required for logical slot creation but cannot be
+       created on standbys.  To avoid delays, the new function <link
+       linkend="functions-snapshot-synchronization-table"><function>pg_log_standby_snapshot()</function></link>
+       allows creation of such records.
+      </para>
+     </listitem>
 
 <!--
 Author: Amit Kapila <akapila@postgresql.org>
@@ -1426,30 +1704,33 @@ Author: Amit Kapila <akapila@postgresql.org>
 2023-02-02 [9f2213a7c] Allow the logical_replication_mode to be used on the sub
 -->
 
-<listitem>
-<para>
-Add server variable to control how logical decoding publishers transfer changes and how subscribers apply them (Shi Yu)
-</para>
+     <listitem>
+      <para>
+       Add server variable to control how logical decoding publishers
+       transfer changes and how subscribers apply them (Shi Yu)
+      </para>
 
-<para>
-The variable is <link linkend="guc-logical-replication-mode"><varname>logical_replication_mode</varname></link>.
-</para>
-</listitem>
+      <para>
+       The variable is <link
+       linkend="guc-logical-replication-mode"><varname>logical_replication_mode</varname></link>.
+      </para>
+     </listitem>
 
 <!--
 Author: Amit Kapila <akapila@postgresql.org>
 2023-03-23 [ecb696527] Allow logical replication to copy tables in binary forma
 -->
 
-<listitem>
-<para>
-Allow logical replication initial table synchronization to copy rows in binary format (Melih Mutlu)
-</para>
+     <listitem>
+      <para>
+       Allow logical replication initial table synchronization to copy
+       rows in binary format (Melih Mutlu)
+      </para>
 
-<para>
-This is only possible for subscriptions marked as binary.
-</para>
-</listitem>
+      <para>
+       This is only possible for subscriptions marked as binary.
+      </para>
+     </listitem>
 
 <!--
 Author: Amit Kapila <akapila@postgresql.org>
@@ -1460,32 +1741,47 @@ Author: Amit Kapila <akapila@postgresql.org>
 2023-02-16 [fce003cfd] Add a new wait state and use it when sending data in the
 -->
 
-<listitem>
-<para>
-Allow parallel application of logical replication (Hou Zhijie, Wang Wei, Amit Kapila)
-</para>
+     <listitem>
+      <para>
+       Allow parallel application of logical replication (Hou Zhijie,
+       Wang Wei, Amit Kapila)
+      </para>
 
-<para>
-The <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link> <option>STREAMING</option> option now supports <literal>parallel</literal> to enable application of large transactions by parallel workers.  The number of parallel workers is controlled by
-the new server variable <link linkend="guc-max-parallel-apply-workers-per-subscription"><varname>max_parallel_apply_workers_per_subscription</varname></link>. Wait events <link linkend="wait-event-activity-table"><literal>LogicalParallelApplyMain</literal></link>, <literal>LogicalParallelApplyStateChange</literal>, and <literal>LogicalApplySendData</literal> were also added.  Column <structfield>leader_pid</structfield> was
-added to system view <link linkend="monitoring-pg-stat-subscription"><structname>pg_stat_subscription</structname></link> to track parallel activity.
-</para>
-</listitem>
+      <para>
+       The <link linkend="sql-createsubscription"><command>CREATE
+       SUBSCRIPTION</command></link> <option>STREAMING</option>
+       option now supports <literal>parallel</literal> to enable
+       application of large transactions by parallel workers.  The number
+       of parallel workers is controlled by the new server variable <link
+       linkend="guc-max-parallel-apply-workers-per-subscription"><varname>max_parallel_apply_workers_per_subscription</varname></link>.
+       Wait events <link
+       linkend="wait-event-activity-table"><literal>LogicalParallelApplyMain</literal></link>,
+       <literal>LogicalParallelApplyStateChange</literal>, and
+       <literal>LogicalApplySendData</literal> were also added.  Column
+       <structfield>leader_pid</structfield> was added to system view <link
+       linkend="monitoring-pg-stat-subscription"><structname>pg_stat_subscription</structname></link>
+       to track parallel activity.
+      </para>
+     </listitem>
 
 <!--
 Author: Amit Kapila <akapila@postgresql.org>
 2023-03-15 [89e46da5e] Allow the use of indexes other than PK and REPLICA IDENT
 -->
 
-<listitem>
-<para>
-Improve performance for <link linkend="logical-replication-architecture">logical replication apply</link> without a primary key (Onder Kalaci, Amit Kapila)
-</para>
+     <listitem>
+      <para>
+       Improve performance for <link
+       linkend="logical-replication-architecture">logical replication
+       apply</link> without a primary key (Onder Kalaci, Amit Kapila)
+      </para>
 
-<para>
-Specifically, <literal>REPLICA IDENTITY FULL</literal> can now use btree indexes rather than sequentially scanning the table to find matches.
-</para>
-</listitem>
+      <para>
+       Specifically, <literal>REPLICA IDENTITY FULL</literal> can now
+       use btree indexes rather than sequentially scanning the table to
+       find matches.
+      </para>
+     </listitem>
 
 <!--
 Author: Amit Kapila <akapila@postgresql.org>
@@ -1494,15 +1790,17 @@ Author: Amit Kapila <akapila@postgresql.org>
 2022-09-08 [875693019] Raise a warning if there is a possibility of data from m
 -->
 
-<listitem>
-<para>
-Allow logical replication subscribers to process only changes that have no origin (Vignesh C, Amit Kapila)
-</para>
+     <listitem>
+      <para>
+       Allow logical replication subscribers to process only changes that
+       have no origin (Vignesh C, Amit Kapila)
+      </para>
 
-<para>
-This can be used to avoid replication loops.  This is controlled by the new <literal>CREATE SUBSCRIPTION ... ORIGIN</literal> option.
-</para>
-</listitem>
+      <para>
+       This can be used to avoid replication loops.  This is controlled
+       by the new <literal>CREATE SUBSCRIPTION ... ORIGIN</literal> option.
+      </para>
+     </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
@@ -1511,31 +1809,44 @@ Author: Robert Haas <rhaas@postgresql.org>
 2023-04-04 [482675987] Add a run_as_owner option to subscriptions.
 -->
 
-<listitem>
-<para>
-Perform logical replication <link linkend="sql-select"><command>SELECT</command></link> and <acronym>DML</acronym> actions as the table owner (Robert Haas)
-</para>
+     <listitem>
+      <para>
+       Perform logical replication <link
+       linkend="sql-select"><command>SELECT</command></link> and
+       <acronym>DML</acronym> actions as the table owner (Robert Haas)
+      </para>
 
-<para>
-This improves security and now requires subscription owners to be either superusers or to have <link linkend="sql-set-role"><command>SET ROLE</command></link> permissions on all tables in the replication set.  The previous behavior of performing all operations
-as the subscription owner can be enabled with the subscription <link linkend="sql-createsubscription"><option>run_as_owner</option></link> option.
-</para>
-</listitem>
+      <para>
+       This improves security and now requires subscription
+       owners to be either superusers or to have <link
+       linkend="sql-set-role"><command>SET ROLE</command></link>
+       permissions on all tables in the replication set.
+       The previous behavior of performing all operations as the
+       subscription owner can be enabled with the subscription <link
+       linkend="sql-createsubscription"><option>run_as_owner</option></link>
+       option.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-22 [5a3a95385] Track logrep apply workers' last start times to avoid us
 -->
 
-<listitem>
-<para>
-Have <link linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</varname></link> operate on a per-subscription basis (Nathan Bossart)
-</para>
+     <listitem>
+      <para>
+       Have <link
+       linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</varname></link>
+       operate on a per-subscription basis (Nathan Bossart)
+      </para>
 
-<para>
-Previously the retry time was applied globally.  This also adds wait events <link linkend="wait-event-lwlock-table">><literal>LogicalRepLauncherDSA</literal></link> and <literal>LogicalRepLauncherHash</literal>.
-</para>
-</listitem>
+      <para>
+       Previously the retry time was applied
+       globally.  This also adds wait events <link
+       linkend="wait-event-lwlock-table">><literal>LogicalRepLauncherDSA</literal></link>
+       and <literal>LogicalRepLauncherHash</literal>.
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -1551,37 +1862,46 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-24 [3c05284d8] Invent GENERIC_PLAN option for EXPLAIN.
 -->
 
-<listitem>
-<para>
-Add <link linkend="sql-explain"><command>EXPLAIN</command></link> option <literal>GENERIC_PLAN</literal> to display the generic plan for a parameterized query (Laurenz Albe)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add <link linkend="sql-explain"><command>EXPLAIN</command></link>
+       option <literal>GENERIC_PLAN</literal> to display the generic plan
+       for a parameterized query (Laurenz Albe)
+      </para>
+     </listitem>
 
 <!--
 Author: Andrew Dunstan <andrew@dunslane.net>
 2023-03-13 [9f8377f7a] Add a DEFAULT option to COPY  FROM
 -->
 
-<listitem>
-<para>
-Allow a <link linkend="sql-copy"><command>COPY FROM</command></link> value to map to a column's <literal>DEFAULT</literal> (Israel Barth Rubio)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow a <link linkend="sql-copy"><command>COPY FROM</command></link>
+       value to map to a column's <literal>DEFAULT</literal> (Israel
+       Barth Rubio)
+      </para>
+     </listitem>
 
 <!--
 Author: Etsuro Fujita <efujita@postgresql.org>
 2022-10-13 [97da48246] Allow batch insertion during COPY into a foreign table.
 -->
 
-<listitem>
-<para>
-Allow <link linkend="sql-copy"><command>COPY</command></link> into foreign tables to add rows in batches (Andrey Lepikhov, Etsuro Fujita)
-</para>
+     <listitem>
+      <para>
+       Allow <link linkend="sql-copy"><command>COPY</command></link>
+       into foreign tables to add rows in batches (Andrey Lepikhov,
+       Etsuro Fujita)
+      </para>
 
-<para>
-This is controlled by the <link linkend="postgres-fdw"><application>postgres_fdw</application></link> option <link linkend="postgres-fdw-options-cost-estimation"><option>batch_size</option></link>.
-</para>
-</listitem>
+      <para>
+       This is controlled by the <link
+       linkend="postgres-fdw"><application>postgres_fdw</application></link>
+       option <link
+       linkend="postgres-fdw-options-cost-estimation"><option>batch_size</option></link>.
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
@@ -1590,56 +1910,73 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-11-10 [b9424d014] Support writing "CREATE/ALTER TABLE ... SET STORAGE DEFA
 -->
 
-<listitem>
-<para>
-Allow the <literal>STORAGE</literal> type to be specified by <link linkend="sql-createtable"><command>CREATE TABLE</command></link> (Teodor Sigaev, Aleksander Alekseev)
-</para>
+     <listitem>
+      <para>
+       Allow the <literal>STORAGE</literal> type to be specified by <link
+       linkend="sql-createtable"><command>CREATE TABLE</command></link>
+       (Teodor Sigaev, Aleksander Alekseev)
+      </para>
 
-<para>
-Previously only <link linkend="sql-altertable"><command>ALTER TABLE</command></link> could control this.
-</para>
-</listitem>
+      <para>
+       Previously only <link linkend="sql-altertable"><command>ALTER
+       TABLE</command></link> could control this.
+      </para>
+     </listitem>
 
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
 2022-07-12 [3b00a944a] Support TRUNCATE triggers on foreign tables.
 -->
 
-<listitem>
-<para>
-Allow <link linkend="sql-createtrigger">truncate triggers</link> on foreign tables (Yugo Nagata)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow <link linkend="sql-createtrigger">truncate triggers</link>
+       on foreign tables (Yugo Nagata)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-03-06 [4211fbd84] Add PROCESS_MAIN to VACUUM
 -->
 
-<listitem>
-<para>
-Allow <link linkend="sql-vacuum"><command>VACUUM</command></link> and <link linkend="app-vacuumdb"><application>vacuumdb</application></link> to only process <link linkend="storage-toast"><literal>TOAST</literal></link> tables (Nathan Bossart)
-</para>
+     <listitem>
+      <para>
+       Allow <link
+       linkend="sql-vacuum"><command>VACUUM</command></link> and <link
+       linkend="app-vacuumdb"><application>vacuumdb</application></link>
+       to only process <link
+       linkend="storage-toast"><literal>TOAST</literal></link> tables
+       (Nathan Bossart)
+      </para>
 
-<para>
-This is accomplished by having <link linkend="sql-vacuum"><command>VACUUM</command></link> turn off <literal>PROCESS_MAIN</literal> or by <link linkend="app-vacuumdb"><application>vacuumdb</application></link> using the <option>--no-process-main</option> option.
-</para>
-</listitem>
+      <para>
+       This is accomplished by having <link
+       linkend="sql-vacuum"><command>VACUUM</command></link>
+       turn off <literal>PROCESS_MAIN</literal> or by <link
+       linkend="app-vacuumdb"><application>vacuumdb</application></link>
+       using the <option>--no-process-main</option> option.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-06 [a46a7011b] Add options to control whether VACUUM runs vac_update_da
 -->
 
-<listitem>
-<para>
-Add <link linkend="sql-vacuum"><command>VACUUM</command></link> options to skip or update all <link linkend="vacuum-for-wraparound">frozen</link> statistics (Tom Lane, Nathan Bossart)
-</para>
+     <listitem>
+      <para>
+       Add <link linkend="sql-vacuum"><command>VACUUM</command></link>
+       options to skip or update all <link
+       linkend="vacuum-for-wraparound">frozen</link> statistics (Tom Lane,
+       Nathan Bossart)
+      </para>
 
-<para>
-The options are <literal>SKIP_DATABASE_STATS</literal> and <literal>ONLY_DATABASE_STATS</literal>.
-</para>
-</listitem>
+      <para>
+       The options are <literal>SKIP_DATABASE_STATS</literal> and
+       <literal>ONLY_DATABASE_STATS</literal>.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
@@ -1648,26 +1985,31 @@ Author: Michael Paquier <michael@paquier.xyz>
 2022-07-26 [0a5f06b84] Fix a few issues with REINDEX grammar
 -->
 
-<listitem>
-<para>
-Change <link linkend="sql-reindex"><command>REINDEX DATABASE</command></link> and <link linkend="sql-reindex"><command>REINDEX SYSTEM</command></link> to no longer require an argument (Simon Riggs)
-</para>
+     <listitem>
+      <para>
+       Change <link linkend="sql-reindex"><command>REINDEX
+       DATABASE</command></link> and <link
+       linkend="sql-reindex"><command>REINDEX SYSTEM</command></link>
+       to no longer require an argument (Simon Riggs)
+      </para>
 
-<para>
-Previously the database name had to be specified.
-</para>
-</listitem>
+      <para>
+       Previously the database name had to be specified.
+      </para>
+     </listitem>
 
 <!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2022-07-21 [624aa2a13] Make the name optional in CREATE STATISTICS.
 -->
 
-<listitem>
-<para>
-Allow <link linkend="sql-createstatistics"><command>CREATE STATISTICS</command></link> to generate a statistics name if none is specified (Simon Riggs)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow <link linkend="sql-createstatistics"><command>CREATE
+       STATISTICS</command></link> to generate a statistics name if none
+       is specified (Simon Riggs)
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -1683,80 +2025,90 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 2022-12-14 [6fcda9aba] Non-decimal integer literals
 -->
 
-<listitem>
-<para>
-Allow non-decimal <link linkend="sql-syntax-bit-strings">integer literals</link> (Peter Eisentraut)
-</para>
+     <listitem>
+      <para>
+       Allow non-decimal <link linkend="sql-syntax-bit-strings">integer
+       literals</link> (Peter Eisentraut)
+      </para>
 
-<para>
-For example, <literal>0x42F</literal>, <literal>0o273</literal>, and <literal>0b100101</literal>.
-</para>
-</listitem>
+      <para>
+       For example, <literal>0x42F</literal>, <literal>0o273</literal>,
+       and <literal>0b100101</literal>.
+      </para>
+     </listitem>
 
 <!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2023-01-23 [6dfacbf72] Add non-decimal integer support to type numeric.
 -->
 
-<listitem>
-<para>
-Allow <link linkend="datatype-numeric"><type>NUMERIC</type></link> to process hexadecimal, octal, and binary integers of any size (Dean Rasheed)
-</para>
+     <listitem>
+      <para>
+       Allow <link linkend="datatype-numeric"><type>NUMERIC</type></link>
+       to process hexadecimal, octal, and binary integers of any size
+       (Dean Rasheed)
+      </para>
 
-<para>
-Previously only unquoted eight-byte integers were supported with these non-decimal bases.
-</para>
-</listitem>
+      <para>
+       Previously only unquoted eight-byte integers were supported with
+       these non-decimal bases.
+      </para>
+     </listitem>
 
 <!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2023-02-04 [faff8f8e4] Allow underscores in integer and numeric constants.
 -->
 
-<listitem>
-<para>
-Allow underscores in integer and numeric <link linkend="sql-syntax-bit-strings">constants</link> (Peter Eisentraut, Dean Rasheed)
-</para>
+     <listitem>
+      <para>
+       Allow underscores in integer and numeric <link
+       linkend="sql-syntax-bit-strings">constants</link> (Peter Eisentraut,
+       Dean Rasheed)
+      </para>
 
-<para>
-This can improve readability for long strings of digits.
-</para>
-</listitem>
+      <para>
+       This can improve readability for long strings of digits.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-01 [2ceea5adb] Accept "+infinity" in date and timestamp[tz] input.
 -->
 
-<listitem>
-<para>
-Accept the spelling <literal>+infinity</literal> in datetime input (Vik Fearing)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Accept the spelling <literal>+infinity</literal> in datetime input
+       (Vik Fearing)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-09 [bcc704b52] Reject combining "epoch" and "infinity" with other datet
 -->
 
-<listitem>
-<para>
-Prevent the specification of <literal>epoch</literal> and <literal>infinity</literal> together with other fields in datetime strings (Joseph Koshakow)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Prevent the specification of <literal>epoch</literal> and
+       <literal>infinity</literal> together with other fields in datetime
+       strings (Joseph Koshakow)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-16 [5b3c59535] Tighten error checks in datetime input, and remove bogus
 -->
 
-<listitem>
-<para>
-Remove undocumented support for date input in the form
-<literal>Y<replaceable>year</replaceable>M<replaceable>month</replaceable>D<replaceable>day</replaceable></literal>
-(Joseph Koshakow)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Remove undocumented support for date input in the form
+       <literal>Y<replaceable>year</replaceable>M<replaceable>month</replaceable>D<replaceable>day</replaceable></literal>
+       (Joseph Koshakow)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -1765,11 +2117,14 @@ Author: Michael Paquier <michael@paquier.xyz>
 2023-02-28 [b8da37b3a] Rework pg_input_error_message(), now renamed pg_input_er
 -->
 
-<listitem>
-<para>
-Add functions <link linkend="functions-info-validity-table"><function>pg_input_is_valid()</function></link> and <function>pg_input_error_info()</function> to check for type conversion errors (Tom Lane)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add functions <link
+       linkend="functions-info-validity-table"><function>pg_input_is_valid()</function></link>
+       and <function>pg_input_error_info()</function> to check for type
+       conversion errors (Tom Lane)
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -1785,26 +2140,29 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2022-07-20 [bcedd8f5f] Make subquery aliases optional in the FROM clause.
 -->
 
-<listitem>
-<para>
-Allow subqueries in the <literal>FROM</literal> clause to omit aliases (Dean Rasheed)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow subqueries in the <literal>FROM</literal> clause to omit
+       aliases (Dean Rasheed)
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-03-05 [102a5c164] SQL JSON path enhanced numeric literals
 -->
 
-<listitem>
-<para>
-Add support for enhanced numeric literals in <acronym>SQL/JSON</acronym> paths (Peter Eisentraut)
-</para>
+     <listitem>
+      <para>
+       Add support for enhanced numeric literals in
+       <acronym>SQL/JSON</acronym> paths (Peter Eisentraut)
+      </para>
 
-<para>
-For example, allow hexadecimal, octal, and binary integers and underscores between digits.
-</para>
-</listitem>
+      <para>
+       For example, allow hexadecimal, octal, and binary integers and
+       underscores between digits.
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -1820,211 +2178,259 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2023-03-29 [7081ac46a] SQL/JSON: add standard JSON constructor functions
 -->
 
-<listitem>
-<para>
-Add <acronym>SQL/JSON</acronym> constructors (Nikita Glukhov, Teodor Sigaev, Oleg Bartunov, Alexander Korotkov, Amit Langote)
-</para>
+     <listitem>
+      <para>
+       Add <acronym>SQL/JSON</acronym> constructors (Nikita Glukhov,
+       Teodor Sigaev, Oleg Bartunov, Alexander Korotkov, Amit Langote)
+      </para>
 
-<para>
-The new functions <link linkend="functions-json-creation-table"><function>JSON_ARRAY()</function></link>, <link linkend="functions-aggregate-table"><function>JSON_ARRAYAGG()</function></link>, <function>JSON_OBJECT()</function>, and <function>JSON_OBJECTAGG()</function> are part of the <acronym>SQL</acronym> standard.
-</para>
-</listitem>
+      <para>
+       The new functions <link
+       linkend="functions-json-creation-table"><function>JSON_ARRAY()</function></link>,
+       <link
+       linkend="functions-aggregate-table"><function>JSON_ARRAYAGG()</function></link>,
+       <function>JSON_OBJECT()</function>, and
+       <function>JSON_OBJECTAGG()</function> are part of the
+       <acronym>SQL</acronym> standard.
+      </para>
+     </listitem>
 
 <!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2023-03-31 [6ee30209a] SQL/JSON: support the IS JSON predicate
 -->
 
-<listitem>
-<para>
-Add <acronym>SQL/JSON</acronym> object checks (Nikita Glukhov, Teodor Sigaev, Oleg Bartunov, Alexander Korotkov, Amit Langote, Andrew Dunstan)
-</para>
+     <listitem>
+      <para>
+       Add <acronym>SQL/JSON</acronym> object checks (Nikita Glukhov,
+       Teodor Sigaev, Oleg Bartunov, Alexander Korotkov, Amit Langote,
+       Andrew Dunstan)
+      </para>
 
-<para>
-The <link linkend="functions-sqljson-misc"><literal>IS JSON</literal></link> checks include checks for values, arrays, objects, scalars, and unique keys.
-</para>
-</listitem>
+      <para>
+       The <link linkend="functions-sqljson-misc"><literal>IS
+       JSON</literal></link> checks include checks for values, arrays,
+       objects, scalars, and unique keys.
+      </para>
+     </listitem>
 
 <!--
 Author: John Naylor <john.naylor@postgresql.org>
 2022-09-02 [0a8de93a4] Speed up lexing of long JSON strings
 -->
 
-<listitem>
-<para>
-Allow <acronym>JSON</acronym> string parsing to use vector operations (John Naylor)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow <acronym>JSON</acronym> string parsing to use vector
+       operations (John Naylor)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-19 [5a617d75d] Fix ts_headline() to handle ORs and phrase queries more 
 -->
 
-<listitem>
-<para>
-Improve the handling of full text highlighting function <link linkend="textsearch-functions-table"><function>ts_headline()</function></link> for <literal>OR</literal> and <literal>NOT</literal> expressions (Tom Lane)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Improve the handling of full text highlighting function <link
+       linkend="textsearch-functions-table"><function>ts_headline()</function></link>
+       for <literal>OR</literal> and <literal>NOT</literal> expressions
+       (Tom Lane)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-18 [75bd846b6] Add functions to do timestamptz arithmetic in a non-defa
 -->
 
-<listitem>
-<para>
-Add functions to add, subtract, and generate <type>timestamptz</type> values in a specified time zone (Przemyslaw Sztoch, Gurjeet Singh)
-</para>
+     <listitem>
+      <para>
+       Add functions to add, subtract, and generate
+       <type>timestamptz</type> values in a specified time zone (Przemyslaw
+       Sztoch, Gurjeet Singh)
+      </para>
 
-<para>
-The functions are <link linkend="functions-datetime-table"><function>date_add()</function></link>, <function>date_subtract()</function>, and <link linkend="functions-srf-series"><function>generate_series()</function></link>.
-</para>
-</listitem>
+      <para>
+       The functions are <link
+       linkend="functions-datetime-table"><function>date_add()</function></link>,
+       <function>date_subtract()</function>, and <link
+       linkend="functions-srf-series"><function>generate_series()</function></link>.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-11-12 [533e02e92] Fix volatility marking of timestamptz_trunc_zone.
 -->
 
-<listitem>
-<para>
-Change <link linkend="functions-datetime-table"><function>date_trunc(unit, timestamptz, time_zone)</function></link> to be an immutable function (Przemyslaw Sztoch)
-</para>
+     <listitem>
+      <para>
+       Change <link
+       linkend="functions-datetime-table"><function>date_trunc(unit,
+       timestamptz, time_zone)</function></link> to be an immutable
+       function (Przemyslaw Sztoch)
+      </para>
 
-<para>
-This allows the creation of expression indexes using this function.
-</para>
-</listitem>
+      <para>
+       This allows the creation of expression indexes using this function.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-09-29 [0823d061b] Introduce SYSTEM_USER
 -->
 
-<listitem>
-<para>
-Add server variable <link linkend="functions-info-session-table"><literal>SYSTEM_USER</literal></link> (Bertrand Drouvot)
-</para>
+     <listitem>
+      <para>
+       Add server variable <link
+       linkend="functions-info-session-table"><literal>SYSTEM_USER</literal></link>
+       (Bertrand Drouvot)
+      </para>
 
-<para>
-This reports the authentication method and its authenticated user.
-</para>
-</listitem>
+      <para>
+       This reports the authentication method and its authenticated user.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-04-07 [888f2ea0a] Add array_sample() and array_shuffle() functions.
 -->
 
-<listitem>
-<para>
-Add functions <link linkend="array-functions-table"><function>array_sample()</function></link> and <function>array_shuffle()</function> (Martin Kalcher)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add functions <link
+       linkend="array-functions-table"><function>array_sample()</function></link>
+       and <function>array_shuffle()</function> (Martin Kalcher)
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-02-22 [2ddab010c] Implement ANY_VALUE aggregate
 -->
 
-<listitem>
-<para>
-Add aggregate function <link linkend="functions-aggregate-table"><function>ANY_VALUE()</function></link> which returns any value from a set (Vik Fearing)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add aggregate function <link
+       linkend="functions-aggregate-table"><function>ANY_VALUE()</function></link>
+       which returns any value from a set (Vik Fearing)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-09 [38d81760c] Invent random_normal() to provide normally-distributed r
 -->
 
-<listitem>
-<para>
-Add function <link linkend="functions-math-random-table"><function>random_normal()</function></link> to supply normally-distributed random numbers (Paul Ramsey)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add function <link
+       linkend="functions-math-random-table"><function>random_normal()</function></link>
+       to supply normally-distributed random numbers (Paul Ramsey)
+      </para>
+     </listitem>
 
 <!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2023-03-14 [d5d574146] Add support for the error functions erf() and erfc().
 -->
 
-<listitem>
-<para>
-Add error function <link linkend="functions-math-func-table"><function>erf()</function></link> and its complement <function>erfc()</function> (Dean Rasheed)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add error function <link
+       linkend="functions-math-func-table"><function>erf()</function></link>
+       and its complement <function>erfc()</function> (Dean Rasheed)
+      </para>
+     </listitem>
 
 <!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2022-10-20 [40c7fcbbe] Improve the accuracy of numeric power() for integer expo
 -->
 
-<listitem>
-<para>
-Improve the accuracy of numeric <link linkend="functions-math-func-table"><function>power()</function></link> for integer exponents (Dean Rasheed)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Improve the accuracy of numeric <link
+       linkend="functions-math-func-table"><function>power()</function></link>
+       for integer exponents (Dean Rasheed)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-15 [483bdb2af] Support [NO] INDENT option in XMLSERIALIZE().
 -->
 
-<listitem>
-<para>
-Add <link linkend="datatype-xml-creating"><function>XMLSERIALIZE()</function></link> option <literal>INDENT</literal> to pretty-print its output (Jim Jones)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add <link
+       linkend="datatype-xml-creating"><function>XMLSERIALIZE()</function></link>
+       option <literal>INDENT</literal> to pretty-print its output
+       (Jim Jones)
+      </para>
+     </listitem>
 
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2022-10-31 [10932ed5e] Enable pg_collation_actual_version() to work on the defa
 -->
 
-<listitem>
-<para>
-Change <link linkend="functions-admin-collation"><function>pg_collation_actual_version()</function></link> to return a reasonable value for the default collation (Jeff Davis)
-</para>
+     <listitem>
+      <para>
+       Change <link
+       linkend="functions-admin-collation"><function>pg_collation_actual_version()</function></link>
+       to return a reasonable value for the default collation (Jeff Davis)
+      </para>
 
-<para>
-Previously it returned <literal>NULL</literal>.
-</para>
-</listitem>
+      <para>
+       Previously it returned <literal>NULL</literal>.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-07-29 [283129e32] Support pg_read_[binary_]file (filename, missing_ok).
 -->
 
-<listitem>
-<para>
-Allow <link linkend="functions-admin-genfile-table"><function>pg_read_file()</function></link> and <function>pg_read_binary_file()</function> to ignore missing files (Kyotaro Horiguchi)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow <link
+       linkend="functions-admin-genfile-table"><function>pg_read_file()</function></link>
+       and <function>pg_read_binary_file()</function> to ignore missing
+       files (Kyotaro Horiguchi)
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-03-07 [ce1215d9b] Add support for unit "B" to pg_size_bytes()
 -->
 
-<listitem>
-<para>
-Add byte specification (<literal>B</literal>) to <link linkend="functions-admin-dbsize"><function>pg_size_bytes()</function></link> (Peter Eisentraut)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add byte specification (<literal>B</literal>) to <link
+       linkend="functions-admin-dbsize"><function>pg_size_bytes()</function></link>
+       (Peter Eisentraut)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-12-27 [3ea7329c9] Simplify the implementations of the to_reg* functions.
 -->
 
-<listitem>
-<para>
-Allow <link linkend="functions-info-catalog-table"><function>to_reg</function></link>* functions to accept numeric <acronym>OID</acronym>s as input (Tom Lane)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow <link
+       linkend="functions-info-catalog-table"><function>to_reg</function></link>*
+       functions to accept numeric <acronym>OID</acronym>s as input
+       (Tom Lane)
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -2040,15 +2446,18 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-04-04 [d3d53f955] Add a way to get the current function's OID in pl/pgsql.
 -->
 
-<listitem>
-<para>
-Add the ability to get the current function's <acronym>OID</acronym> in <application>PL/pgSQL</application> (Pavel Stehule)
-</para>
+     <listitem>
+      <para>
+       Add the ability to get the current function's <acronym>OID</acronym>
+       in <application>PL/pgSQL</application> (Pavel Stehule)
+      </para>
 
-<para>
-This is accomplished with <link linkend="plpgsql-statements-diagnostics"><command>GET DIAGNOSTICS variable = PG_ROUTINE_OID</command></link>.
-</para>
-</listitem>
+      <para>
+       This is accomplished with <link
+       linkend="plpgsql-statements-diagnostics"><command>GET DIAGNOSTICS
+       variable = PG_ROUTINE_OID</command></link>.
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -2064,15 +2473,18 @@ Author: Michael Paquier <michael@paquier.xyz>
 2023-03-14 [3a465cc67] libpq: Add support for require_auth to control authorize
 -->
 
-<listitem>
-<para>
-Add <application>libpq</application> connection option <link linkend="libpq-connect-require-auth"><option>require_auth</option></link> to specify a list of acceptable authentication methods (Jacob Champion)
-</para>
+     <listitem>
+      <para>
+       Add <application>libpq</application> connection option <link
+       linkend="libpq-connect-require-auth"><option>require_auth</option></link>
+       to specify a list of acceptable authentication methods (Jacob
+       Champion)
+      </para>
 
-<para>
-This can also be used to disallow certain authentication methods.
-</para>
-</listitem>
+      <para>
+       This can also be used to disallow certain authentication methods.
+      </para>
+     </listitem>
 
 <!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
@@ -2081,45 +2493,55 @@ Author: Fujii Masao <fujii@postgresql.org>
 2023-04-21 [0a16512d4] doc: Add documentation for PGLOADBALANCEHOSTS environmen
 -->
 
-<listitem>
-<para>
-Allow multiple <application>libpq</application>-specified hosts to be randomly selected (Jelte Fennema)
-</para>
+     <listitem>
+      <para>
+       Allow multiple <application>libpq</application>-specified hosts
+       to be randomly selected (Jelte Fennema)
+      </para>
 
-<para>
-This is enabled with <link linkend="libpq-connect-load-balance-hosts"><literal>load_balance_hosts=random</literal></link> and can be used for load balancing.
-</para>
-</listitem>
+      <para>
+       This is enabled with <link
+       linkend="libpq-connect-load-balance-hosts"><literal>load_balance_hosts=random</literal></link>
+       and can be used for load balancing.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-03-24 [36f40ce2d] libpq: Add sslcertmode option to control client certific
 -->
 
-<listitem>
-<para>
-Add <application>libpq</application> option <link linkend="libpq-connect-sslcertmode"><option>sslcertmode</option></link> to control transmission of the client certificate (Jacob Champion)
-</para>
+     <listitem>
+      <para>
+       Add <application>libpq</application> option <link
+       linkend="libpq-connect-sslcertmode"><option>sslcertmode</option></link>
+       to control transmission of the client certificate (Jacob Champion)
+      </para>
 
-<para>
-The option values are <literal>disable</literal>, <literal>allow</literal>, and <literal>require</literal>.
-</para>
-</listitem>
+      <para>
+       The option values are <literal>disable</literal>,
+       <literal>allow</literal>, and <literal>require</literal>.
+      </para>
+     </listitem>
 
 <!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2023-04-05 [8eda73146] Allow to use system CA pool for certificate verification
 -->
 
-<listitem>
-<para>
-Allow <application>libpq</application> to use the system certificate pool for certificate verification (Jacob Champion, Thomas Habets)
-</para>
+     <listitem>
+      <para>
+       Allow <application>libpq</application> to use the system certificate
+       pool for certificate verification (Jacob Champion, Thomas Habets)
+      </para>
 
-<para>
-This is enabled with <link linkend="libpq-connect-sslrootcert"><literal>sslrootcert=system</literal></link>, which also enables <link linkend="libpq-connect-sslmode"><literal>sslmode=verify-full</literal></link>.
-</para>
-</listitem>
+      <para>
+       This is enabled with <link
+       linkend="libpq-connect-sslrootcert"><literal>sslrootcert=system</literal></link>,
+       which also enables <link
+       linkend="libpq-connect-sslmode"><literal>sslmode=verify-full</literal></link>.
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -2135,15 +2557,19 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-07-12 [83f1c7b74] Fix ECPG's handling of type names that match SQL keyword
 -->
 
-<listitem>
-<para>
-Allow <link linkend="ecpg"><command>ECPG</command></link> variable declarations to use typedef names that match unreserved <acronym>SQL</acronym> keywords (Tom Lane)
-</para>
+     <listitem>
+      <para>
+       Allow <link linkend="ecpg"><command>ECPG</command></link>
+       variable declarations to use typedef names that match unreserved
+       <acronym>SQL</acronym> keywords (Tom Lane)
+      </para>
 
-<para>
-This change does prevent keywords which match C typedef names from being processed as keywords in later <command>EXEC SQL</command> blocks.
-</para>
-</listitem>
+      <para>
+       This change does prevent keywords which match C typedef names from
+       being processed as keywords in later <command>EXEC SQL</command>
+       blocks.
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -2157,32 +2583,17 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 2022-07-25 [a45388d6e] Add xheader_width pset option to psql
 -->
 
-<listitem>
-<para>
-Allow <application>psql</application> to control the maximum width of header lines in expanded format (Platon Pronko)
-</para>
+      <listitem>
+       <para>
+        Allow <application>psql</application> to control the maximum
+        width of header lines in expanded format (Platon Pronko)
+       </para>
 
-<para>
-This is controlled by <link linkend="app-psql-meta-command-pset-xheader-width"><option>xheader_width</option></link>.
-</para>
-</listitem>
-
-<!--
-Author: Dean Rasheed <dean.a.rasheed@gmail.com>
-2023-01-07 [d913928c9] psql: Add support for \dpS and \zS.
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2023-07-19 [d65ddaca9] Add psql \drg command to display role
--->
-
-<listitem>
-<para>
-Add <application>psql</application> command <link linkend="app-psql-meta-command-drg"><command>\drg</command></link> to show role membership details (Pavel Luzanov)
-</para>
-
-<para>
-The <literal>Member of</literal> output column has been removed from <command>\du</command> and <command>\dg</command> because this new command displays this informaion in more detail.
-</para>
-</listitem>
+       <para>
+        This is controlled by <link
+        linkend="app-psql-meta-command-pset-xheader-width"><option>xheader_width</option></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
@@ -2191,82 +2602,122 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-07-19 [d65ddaca9] Add psql \drg command to display role
 -->
 
-<listitem>
-<para>
-Allow <application>psql</application>'s access privilege commands to show system objects (Nathan Bossart)
-</para>
+      <listitem>
+       <para>
+        Add <application>psql</application> command <link
+        linkend="app-psql-meta-command-drg"><command>\drg</command></link>
+        to show role membership details (Pavel Luzanov)
+       </para>
 
-<para>
-The options are <link linkend="app-psql-meta-command-dp-lc"><command>\dpS</command></link> and <link linkend="app-psql-meta-command-z"><command>\zS</command></link>.
-</para>
-</listitem>
+       <para>
+        The <literal>Member of</literal> output column has been removed
+        from <command>\du</command> and <command>\dg</command> because
+        this new command displays this informaion in more detail.
+       </para>
+      </listitem>
+
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2023-01-07 [d913928c9] psql: Add support for \dpS and \zS.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-07-19 [d65ddaca9] Add psql \drg command to display role
+-->
+
+      <listitem>
+       <para>
+        Allow <application>psql</application>'s access privilege commands
+        to show system objects (Nathan Bossart)
+       </para>
+
+       <para>
+        The options are <link
+        linkend="app-psql-meta-command-dp-lc"><command>\dpS</command></link>
+        and <link
+        linkend="app-psql-meta-command-z"><command>\zS</command></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-11-08 [bd95816f7] psql: Add information in \d+ about foreign partitions an
 -->
 
-<listitem>
-<para>
-Add <literal>FOREIGN</literal> designation to <application>psql</application> <link linkend="app-psql-meta-command-d"><command>\d+</command></link> for foreign table children and partitions (Ian Lawrence Barwick)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add <literal>FOREIGN</literal> designation
+        to <application>psql</application> <link
+        linkend="app-psql-meta-command-d"><command>\d+</command></link>
+        for foreign table children and partitions (Ian Lawrence Barwick)
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-02 [3dfae91f7] Show "internal name" not "source code" in psql's \df+ co
 -->
 
-<listitem>
-<para>
-Prevent <link linkend="app-psql-meta-command-df-uc"><command>\df+</command></link> from showing function source code (Isaac Morland)
-</para>
+      <listitem>
+       <para>
+        Prevent <link
+        linkend="app-psql-meta-command-df-uc"><command>\df+</command></link>
+        from showing function source code (Isaac Morland)
+       </para>
 
-<para>
-Function bodies are more easily viewed with <link linkend="app-psql-meta-command-sf"><command>\sf</command></link>.
-</para>
-</listitem>
+       <para>
+        Function bodies are more easily viewed with <link
+        linkend="app-psql-meta-command-sf"><command>\sf</command></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2022-11-15 [5b66de343] psql: Add command to use extended query protocol
 -->
 
-<listitem>
-<para>
-Allow <application>psql</application> to submit queries using the extended query protocol (Peter Eisentraut)
-</para>
+      <listitem>
+       <para>
+        Allow <application>psql</application> to submit queries using
+        the extended query protocol (Peter Eisentraut)
+       </para>
 
-<para>
-Passing arguments to such queries is done using the new <application>psql</application> <link linkend="app-psql-meta-command-bind"><command>\bind</command></link> command.
-</para>
-</listitem>
+       <para>
+        Passing arguments to such queries is done
+        using the new <application>psql</application> <link
+        linkend="app-psql-meta-command-bind"><command>\bind</command></link>
+        command.
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-04-06 [00beecfe8] psql: add an optional execution-count limit to \watch.
 -->
 
-<listitem>
-<para>
-Allow <application>psql</application> <link linkend="app-psql-meta-command-watch"><command>\watch</command></link> to limit the number of executions (Andrey Borodin)
-</para>
+      <listitem>
+       <para>
+        Allow <application>psql</application> <link
+        linkend="app-psql-meta-command-watch"><command>\watch</command></link>
+        to limit the number of executions (Andrey Borodin)
+       </para>
 
-<para>
-The <command>\watch</command> options can now be named when specified.
-</para>
-</listitem>
+       <para>
+        The <command>\watch</command> options can now be named when
+        specified.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-03-16 [6f9ee74d4] Improve handling of psql \watch's interval argument
 -->
 
-<listitem>
-<para>
-Detect invalid values for <application>psql</application> <link linkend="app-psql-meta-command-watch"><command>\watch</command></link>, and allow zero to specify no delay (Andrey Borodin)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Detect invalid values for <application>psql</application> <link
+        linkend="app-psql-meta-command-watch"><command>\watch</command></link>,
+        and allow zero to specify no delay (Andrey Borodin)
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -2275,16 +2726,20 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-04-06 [31ae2aa9d] psql: set SHELL_ERROR and SHELL_EXIT_CODE in more places
 -->
 
-<listitem>
-<para>
-Allow <application>psql</application> scripts to obtain the exit status of shell commands and queries
-(Corey Huinker, Tom Lane)
-</para>
+      <listitem>
+       <para>
+        Allow <application>psql</application> scripts to obtain the exit
+        status of shell commands and queries
+       (Corey Huinker, Tom Lane)
+       </para>
 
-<para>
-The new <application>psql</application> control variables are <link linkend="app-psql-variables-shell-error"><literal>SHELL_ERROR</literal></link> and <link linkend="app-psql-variables-shell-exit-code"><literal>SHELL_EXIT_CODE</literal></link>.
-</para>
-</listitem>
+       <para>
+        The new <application>psql</application> control variables are <link
+        linkend="app-psql-variables-shell-error"><literal>SHELL_ERROR</literal></link>
+        and <link
+        linkend="app-psql-variables-shell-exit-code"><literal>SHELL_EXIT_CODE</literal></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
@@ -2313,11 +2768,13 @@ Author: Amit Kapila <akapila@postgresql.org>
 2023-04-07 [96c498d2f] Add tab-completion for newly added SUBSCRIPTION options.
 -->
 
-<listitem>
-<para>
-Various <application>psql</application> tab completion improvements (Vignesh C, Aleksander Alekseev, Dagfinn Ilmari Mannsåker, Shi Yu, Michael Paquier, Ken Kato, Peter Smith)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Various <application>psql</application> tab completion improvements
+        (Vignesh C, Aleksander Alekseev, Dagfinn Ilmari Mannsåker,
+        Shi Yu, Michael Paquier, Ken Kato, Peter Smith)
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -2333,15 +2790,18 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-14 [a563c24c9] Allow pg_dump to include/exclude child tables automatica
 -->
 
-<listitem>
-<para>
-Add <application>pg_dump</application> control of dumping child tables and partitions (Gilles Darold)
-</para>
+      <listitem>
+       <para>
+        Add <application>pg_dump</application> control of dumping child
+        tables and partitions (Gilles Darold)
+       </para>
 
-<para>
-The new options are <option>--table-and-children</option>, <option>--exclude-table-and-children</option>, and <option>--exclude-table-data-and-children</option>.
-</para>
-</listitem>
+       <para>
+        The new options are <option>--table-and-children</option>,
+        <option>--exclude-table-and-children</option>, and
+        <option>--exclude-table-data-and-children</option>.
+       </para>
+      </listitem>
 
 <!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
@@ -2351,37 +2811,43 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2023-04-05 [84adc8e20] pg_dump: Add support for zstd compression-->
 
-<listitem>
-<para>
-Add <application>LZ4</application> and <application>Zstandard</application> compression to <application>pg_dump</application> (Georgios Kokolatos, Justin Pryzby)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Add <application>LZ4</application> and
+        <application>Zstandard</application> compression to
+        <application>pg_dump</application> (Georgios Kokolatos, Justin
+        Pryzby)
+       </para>
+      </listitem>
 
 <!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2023-04-06 [2820adf77] Support long distance matching for zstd compression
 -->
 
-<listitem>
-<para>
-Allow <application>pg_dump</application> and <link linkend="app-pgbasebackup"><application>pg_basebackup</application></link> to use <literal>long</literal> mode for compression (Justin Pryzby)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Allow <application>pg_dump</application> and <link
+        linkend="app-pgbasebackup"><application>pg_basebackup</application></link>
+        to use <literal>long</literal> mode for compression (Justin Pryzby)
+       </para>
+      </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-12-02 [5e73a6048] Switch pg_dump to use compression specifications
 -->
 
-<listitem>
-<para>
-Improve <application>pg_dump</application> to accept a more consistent compression syntax (Georgios Kokolatos)
-</para>
+      <listitem>
+       <para>
+        Improve <application>pg_dump</application> to accept a more
+        consistent compression syntax (Georgios Kokolatos)
+       </para>
 
-<para>
-Options like <option>--compress=gzip:5</option>.
-</para>
-</listitem>
+       <para>
+        Options like <option>--compress=gzip:5</option>.
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -2396,18 +2862,22 @@ Options like <option>--compress=gzip:5</option>.
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us> 2023-03-22
-[3e51b278d] Add "-c name=value" switch to initdb.
+     [3e51b278d] Add "-c name=value" switch to initdb.
 -->
 
-<listitem>
-<para>
-Add <link linkend="app-initdb"><application>initdb</application></link> option to set server variables for the duration of <application>initdb</application> and all future server starts (Tom Lane)
-</para>
+     <listitem>
+      <para>
+       Add <link
+       linkend="app-initdb"><application>initdb</application></link>
+       option to set server variables for the duration of
+       <application>initdb</application> and all future server starts
+       (Tom Lane)
+      </para>
 
-<para>
-The option is <option>-c name=value</option>.
-</para>
-</listitem>
+      <para>
+       The option is <option>-c name=value</option>.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
@@ -2416,15 +2886,18 @@ Author: Nathan Bossart <nathan@postgresql.org>
 2023-05-21 [2dcd1578c] Rename some createuser options.
 -->
 
-<listitem>
-<para>
-Add options to <link linkend="app-createuser"><application>createuser</application></link> to control more user options (Shinya Kato)
-</para>
+     <listitem>
+      <para>
+       Add options to <link
+       linkend="app-createuser"><application>createuser</application></link>
+       to control more user options (Shinya Kato)
+      </para>
 
-<para>
-Specifically, the new options control the valid-until date, bypassing of row-level security, and role membership.
-</para>
-</listitem>
+      <para>
+       Specifically, the new options control the valid-until date,
+       bypassing of row-level security, and role membership.
+      </para>
+     </listitem>
 
 <!--
 Author: Nathan Bossart <nathan@postgresql.org>
@@ -2433,131 +2906,161 @@ Author: Nathan Bossart <nathan@postgresql.org>
 2023-05-23 [381d19b3e] Document deprecated createuser option.
 -->
 
-<listitem>
-<para>
-Deprecate <link linkend="app-createuser"><application>createuser</application></link> option <option>--role</option> (Nathan Bossart)
-</para>
+     <listitem>
+      <para>
+       Deprecate <link
+       linkend="app-createuser"><application>createuser</application></link>
+       option <option>--role</option> (Nathan Bossart)
+      </para>
 
-<para>
-This option could be easily confused with new <application>createuser</application> role membership options, so option <option>--member-of</option> has been added with the same functionality.
-The <option>--role</option> option can still be used.
-</para>
-</listitem>
+      <para>
+       This option could be easily confused with new
+       <application>createuser</application> role membership options,
+       so option <option>--member-of</option> has been added with the
+       same functionality.  The <option>--role</option> option can still
+       be used.
+      </para>
+     </listitem>
 
 <!--
 Author: Andrew Dunstan <andrew@dunslane.net>
 2022-07-31 [7781f4e3e] Add - -schema and - -exclude-schema options to vacuumdb.
 -->
 
-<listitem>
-<para>
-Allow control of <link linkend="app-vacuumdb"><application>vacuumdb</application></link> schema processing (Gilles Darold)
-</para>
+     <listitem>
+      <para>
+       Allow control of <link
+       linkend="app-vacuumdb"><application>vacuumdb</application></link>
+       schema processing (Gilles Darold)
+      </para>
 
-<para>
-These are controlled by options <option>--schema</option> and <option>--exclude-schema</option>.
-</para>
-</listitem>
+      <para>
+       These are controlled by options <option>--schema</option> and
+       <option>--exclude-schema</option>.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-06 [a46a7011b] Add options to control whether VACUUM runs vac_update_da
 -->
 
-<listitem>
-<para>
-Use new <link linkend="sql-vacuum"><command>VACUUM</command></link> options to improve the performance of <link linkend="app-vacuumdb"><application>vacuumdb</application></link> (Tom Lane, Nathan Bossart)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Use new <link linkend="sql-vacuum"><command>VACUUM</command></link>
+       options to improve the performance of <link
+       linkend="app-vacuumdb"><application>vacuumdb</application></link>
+       (Tom Lane, Nathan Bossart)
+      </para>
+     </listitem>
 
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2023-03-09 [9637badd9] pg_upgrade: copy locale and encoding information to new 
 -->
 
-<listitem>
-<para>
-Have <link linkend="pgupgrade"><application>pg_upgrade</application></link> set the new cluster's locale and encoding (Jeff Davis)
-</para>
+     <listitem>
+      <para>
+       Have <link
+       linkend="pgupgrade"><application>pg_upgrade</application></link>
+       set the new cluster's locale and encoding (Jeff Davis)
+      </para>
 
-<para>
-This removes the requirement that the new cluster be created with the same locale and encoding settings.
-</para>
-</listitem>
+      <para>
+       This removes the requirement that the new cluster be created with
+       the same locale and encoding settings.
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2022-12-16 [746915c68] pg_upgrade: Add - -copy option
 -->
 
-<listitem>
-<para>
-Add <link linkend="pgupgrade"><application>pg_upgrade</application></link> option to specify the default transfer mode (Peter Eisentraut)
-</para>
+     <listitem>
+      <para>
+       Add <link
+       linkend="pgupgrade"><application>pg_upgrade</application></link>
+       option to specify the default transfer mode (Peter Eisentraut)
+      </para>
 
-<para>
-The option is <option>--copy</option>.
-</para>
-</listitem>
+      <para>
+       The option is <option>--copy</option>.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-11-30 [d18655cc0] Refactor code parsing compression option values (-Z/- -co
 -->
 
-<listitem>
-<para>
-Improve <link linkend="app-pgbasebackup"><application>pg_basebackup</application></link> to accept numeric compression options (Georgios Kokolatos, Michael Paquier)
-</para>
+     <listitem>
+      <para>
+       Improve <link
+       linkend="app-pgbasebackup"><application>pg_basebackup</application></link>
+       to accept numeric compression options (Georgios Kokolatos,
+       Michael Paquier)
+      </para>
 
-<para>
-Options like <option>--compress=server-5</option> are now supported.
-</para>
-</listitem>
+      <para>
+       Options like <option>--compress=server-5</option> are now supported.
+      </para>
+     </listitem>
 
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2023-04-18 [363e8f911] Fix pg_basebackup with in-place tablespaces some more.
 -->
 
-<listitem>
-<para>
-Fix <link linkend="app-pgbasebackup"><application>pg_basebackup</application></link> to handle tablespaces stored in the <envar>PGDATA</envar> directory (Robert Haas)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Fix <link
+       linkend="app-pgbasebackup"><application>pg_basebackup</application></link>
+       to handle tablespaces stored in the <envar>PGDATA</envar> directory
+       (Robert Haas)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-12-27 [d497093cb] pg_waldump: Add - -save-fullpage=PATH to save full page i
 -->
 
-<listitem>
-<para>
-Add <link linkend="pgwaldump"><application>pg_waldump</application></link> option <option>--save-fullpage</option> to dump full page images (David Christensen)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add <link
+       linkend="pgwaldump"><application>pg_waldump</application></link>
+       option <option>--save-fullpage</option> to dump full page images
+       (David Christensen)
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-03-21 [4c8044c04] pg_waldump: Allow hexadecimal values for -t/- -timeline o
 -->
 
-<listitem>
-<para>
-Allow <link linkend="pgwaldump"><application>pg_waldump</application></link> options <option>-t</option>/<option>--timeline</option> to accept hexadecimal values (Peter Eisentraut)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow <link
+       linkend="pgwaldump"><application>pg_waldump</application></link>
+       options <option>-t</option>/<option>--timeline</option> to accept
+       hexadecimal values (Peter Eisentraut)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-02-06 [d07c2948b] Add support for progress reporting to pg_verifybackup
 -->
 
-<listitem>
-<para>
-Add support for progress reporting to <link linkend="app-pgverifybackup"><application>pg_verifybackup</application></link> (Masahiko Sawada)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add support for progress reporting to <link
+       linkend="app-pgverifybackup"><application>pg_verifybackup</application></link>
+       (Masahiko Sawada)
+      </para>
+     </listitem>
 
 <!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
@@ -2566,30 +3069,38 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2023-02-27 [0a0500207] pg_rewind: Remove notice in docs about running CHECKPOIN
 -->
 
-<listitem>
-<para>
-Allow <link linkend="app-pgrewind"><application>pg_rewind</application></link> to properly track timeline changes (Heikki Linnakangas)
-</para>
+     <listitem>
+      <para>
+       Allow <link
+       linkend="app-pgrewind"><application>pg_rewind</application></link>
+       to properly track timeline changes (Heikki Linnakangas)
+      </para>
 
-<para>
-Previously if <application>pg_rewind</application> was run after a timeline switch but before a checkpoint was issued, it might incorrectly determine that a rewind was unnecessary.
-</para>
-</listitem>
+      <para>
+       Previously if <application>pg_rewind</application> was run after
+       a timeline switch but before a checkpoint was issued, it might
+       incorrectly determine that a rewind was unnecessary.
+      </para>
+     </listitem>
 
 <!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2022-09-14 [8b60db774] Handle SIGTERM in pg_receivewal and pg_recvlogical
 -->
 
-<listitem>
-<para>
-Have <link linkend="app-pgreceivewal"><application>pg_receivewal</application></link> and <link linkend="app-pgrecvlogical"><application>pg_recvlogical</application></link> cleanly exit on <literal>SIGTERM</literal> (Christoph Berg)
-</para>
+     <listitem>
+      <para>
+       Have <link
+       linkend="app-pgreceivewal"><application>pg_receivewal</application></link>
+       and <link
+       linkend="app-pgrecvlogical"><application>pg_recvlogical</application></link>
+       cleanly exit on <literal>SIGTERM</literal> (Christoph Berg)
+      </para>
 
-<para>
-This signal is often used by <application>systemd</application>.
-</para>
-</listitem>
+      <para>
+       This signal is often used by <application>systemd</application>.
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -2605,52 +3116,60 @@ Author: Jeff Davis <jdavis@postgresql.org>
 2023-04-18 [fcb21b3ac] Build ICU support by default.
 -->
 
-<listitem>
-<para>
-Build <acronym>ICU</acronym> support by default (Jeff Davis)
-</para>
+     <listitem>
+      <para>
+       Build <acronym>ICU</acronym> support by default (Jeff Davis)
+      </para>
 
-<para>
-This removes <link linkend="installation">build flag</link> <option>--with-icu</option> and adds flag <option>--without-icu</option>.
-</para>
-</listitem>
+      <para>
+       This removes <link linkend="installation">build
+       flag</link> <option>--with-icu</option> and adds flag
+       <option>--without-icu</option>.
+      </para>
+     </listitem>
 
 <!--
 Author: John Naylor <john.naylor@postgresql.org>
 2022-08-04 [56f2c7b58] Support SSE2 intrinsics where available
 -->
 
-<listitem>
-<para>
-Add support for SSE2 (Streaming <acronym>SIMD</acronym> Extensions 2) vector operations on x86-64 architectures (John Naylor)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add support for SSE2 (Streaming <acronym>SIMD</acronym> Extensions
+       2) vector operations on x86-64 architectures (John Naylor)
+      </para>
+     </listitem>
 
 <!--
 Author: John Naylor <john.naylor@postgresql.org>
 2022-08-29 [82739d4a8] Use ARM Advanced SIMD (NEON) intrinsics where available
 -->
 
-<listitem>
-<para>
-Add support for Advanced <acronym>SIMD</acronym> (Single Instruction Multiple Data) (<acronym>NEON</acronym>) instructions on <acronym>ARM</acronym> architectures (Nathan Bossart)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add support for Advanced <acronym>SIMD</acronym> (Single
+       Instruction Multiple Data) (<acronym>NEON</acronym>) instructions
+       on <acronym>ARM</acronym> architectures (Nathan Bossart)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-08-28 [36389a060] Enable RandomizedBaseAddress (ASLR) on Windows with MSVC
 -->
 
-<listitem>
-<para>
-Have <systemitem class="osname">Windows</systemitem> binaries built with <productname>MSVC</productname> use <literal>RandomizedBaseAddress</literal> (<acronym>ASLR</acronym>) (Michael Paquier)
-</para>
+     <listitem>
+      <para>
+       Have <systemitem class="osname">Windows</systemitem>
+       binaries built with <productname>MSVC</productname> use
+       <literal>RandomizedBaseAddress</literal> (<acronym>ASLR</acronym>)
+       (Michael Paquier)
+      </para>
 
-<para>
-This was already enabled on <productname>MinGW</productname> builds.
-</para>
-</listitem>
+      <para>
+       This was already enabled on <productname>MinGW</productname> builds.
+      </para>
+     </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
@@ -2659,107 +3178,119 @@ Author: Andres Freund <andres@anarazel.de>
 2022-07-17 [8cf64d35e] Mark all symbols exported from extension libraries PGDLL
 -->
 
-<listitem>
-<para>
-Prevent extension libraries from exporting their symbols by default (Andres Freund, Tom Lane)
-</para>
+     <listitem>
+      <para>
+       Prevent extension libraries from exporting their symbols by default
+       (Andres Freund, Tom Lane)
+      </para>
 
-<para>
-Functions that need to be called from the core backend or other extensions must now be explicitly marked <literal>PGDLLEXPORT</literal>.
-</para>
-</listitem>
+      <para>
+       Functions that need to be called from the core backend
+       or other extensions must now be explicitly marked
+       <literal>PGDLLEXPORT</literal>.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-07-07 [495ed0ef2] Make Windows 10 the minimal runtime requirement for WIN3
 -->
 
-<listitem>
-<para>
-Require <systemitem class="osname">Windows 10</systemitem> or newer versions (Michael Paquier, Juan José Santamaría Flecha)
-</para>
+     <listitem>
+      <para>
+       Require <systemitem class="osname">Windows 10</systemitem> or
+       newer versions (Michael Paquier, Juan José Santamaría Flecha)
+      </para>
 
-<para>
-Previously <systemitem class="osname">Windows Vista</systemitem> and <systemitem class="osname">Windows XP</systemitem> were supported.
-</para>
-</listitem>
+      <para>
+       Previously <systemitem class="osname">Windows Vista</systemitem> and
+       <systemitem class="osname">Windows XP</systemitem> were supported.
+      </para>
+     </listitem>
 
 <!--
 Author: John Naylor <john.naylor@postgresql.org>
 2022-09-14 [4c1532763] Bump minimum Perl version to 5.14
 -->
 
-<listitem>
-<para>
-Require <productname>Perl</productname> version 5.14 or later (John Naylor)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Require <productname>Perl</productname> version 5.14 or later
+       (John Naylor)
+      </para>
+     </listitem>
 
 <!--
 Author: John Naylor <john.naylor@postgresql.org>
 2022-09-09 [b086a47a2] Bump minimum version of Bison to 2.3
 -->
 
-<listitem>
-<para>
-Require <productname>Bison</productname> version 2.3 or later (John Naylor)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Require <productname>Bison</productname> version 2.3 or later
+       (John Naylor)
+      </para>
+     </listitem>
 
 <!--
 Author: John Naylor <john.naylor@postgresql.org>
 2022-09-09 [8b878bffa] Bump minimum version of Flex to 2.5.35
 -->
 
-<listitem>
-<para>
-Require <productname>Flex</productname> version 2.5.35 or later (John Naylor)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Require <productname>Flex</productname> version 2.5.35 or later
+       (John Naylor)
+      </para>
+     </listitem>
 
 <!--
 Author: Stephen Frost <sfrost@snowman.net>
 2023-04-13 [f7431bca8] Explicitly require MIT Kerberos for GSSAPI
 -->
 
-<listitem>
-<para>
-Require <acronym>MIT</acronym> Kerberos for <acronym>GSSAPI</acronym> support (Stephen Frost)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Require <acronym>MIT</acronym> Kerberos for
+       <acronym>GSSAPI</acronym> support (Stephen Frost)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-07-14 [6203583b7] Remove support for Visual Studio 2013
 -->
 
-<listitem>
-<para>
-Remove support for <productname>Visual Studio 2013</productname> (Michael Paquier)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Remove support for <productname>Visual Studio 2013</productname>
+       (Michael Paquier)
+      </para>
+     </listitem>
 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2022-07-08 [9db300ce6] Remove HP-UX port.
 -->
 
-<listitem>
-<para>
-Remove support for <systemitem class="osname">HP-UX</systemitem> (Thomas Munro)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Remove support for <systemitem class="osname">HP-UX</systemitem>
+       (Thomas Munro)
+      </para>
+     </listitem>
 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2022-07-08 [0ad5b48e5] Remove HP/Intel Itanium support.
 -->
 
-<listitem>
-<para>
-Remove support for <productname>HP/Intel Itanium</productname> (Thomas Munro)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Remove support for <productname>HP/Intel Itanium</productname>
+       (Thomas Munro)
+      </para>
+     </listitem>
 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
@@ -2768,71 +3299,88 @@ Author: Thomas Munro <tmunro@postgresql.org>
 2022-07-12 [14168d3c6] Doc: Acknowledge historically supported CPUs and OSes.
 -->
 
-<listitem>
-<para>
-Remove support for <productname>M68K</productname>, <productname>M88K</productname>, <productname>M32R</productname>, and <productname>SuperH</productname> <acronym>CPU</acronym> architectures (Thomas Munro)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Remove support for <productname>M68K</productname>,
+       <productname>M88K</productname>, <productname>M32R</productname>,
+       and <productname>SuperH</productname> <acronym>CPU</acronym>
+       architectures (Thomas Munro)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-03-17 [98ae2c84a] libpq: Remove code for SCM credential authentication
 -->
 
-<listitem>
-<para>
-Remove <link linkend="libpq"><application>libpq</application></link> support for <acronym>SCM</acronym> credential authentication (Michael Paquier)
-</para>
+     <listitem>
+      <para>
+       Remove <link linkend="libpq"><application>libpq</application></link>
+       support for <acronym>SCM</acronym> credential authentication
+       (Michael Paquier)
+      </para>
 
-<para>
-Backend support for this authentication method was removed in <productname>PostgresSQL</productname> 9.1.
-</para>
-</listitem>
+      <para>
+       Backend support for this authentication method was removed in
+       <productname>PostgresSQL</productname> 9.1.
+      </para>
+     </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2022-09-21 [e6927270c] meson: Add initial version of meson based build system
 -->
 
-<listitem>
-<para>
-Add <link linkend="install-meson"><application>meson</application></link> build system (Andres Freund, Nazir Bilal Yavuz, Peter Eisentraut)
-</para>
+     <listitem>
+      <para>
+       Add <link
+       linkend="install-meson"><application>meson</application></link>
+       build system (Andres Freund, Nazir Bilal Yavuz, Peter Eisentraut)
+      </para>
 
-<para>
-This eventually will replace the <productname>Autoconf</productname> and <systemitem class="osname">Windows</systemitem>-based <productname>MSVC</productname> build systems.
-</para>
-</listitem>
+      <para>
+       This eventually will replace the <productname>Autoconf</productname>
+       and <systemitem class="osname">Windows</systemitem>-based
+       <productname>MSVC</productname> build systems.
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2022-10-20 [c8e4030d1] Make finding openssl program a configure or meson option
 -->
 
-<listitem>
-<para>
-Allow control of the location of the <application>openssl</application> binary used by the build system (Peter Eisentraut)
-</para>
+     <listitem>
+      <para>
+       Allow control of the location of the
+       <application>openssl</application> binary used by the build system
+       (Peter Eisentraut)
+      </para>
 
-<para>
-Make finding <application>openssl</application> program a <application>configure</application> or <application>meson</application> option
-</para>
-</listitem>
+      <para>
+       Make finding <application>openssl</application>
+       program a <application>configure</application> or
+       <application>meson</application> option
+      </para>
+     </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2022-12-07 [d3b111e32] Add option to specify segment size in blocks
 -->
 
-<listitem>
-<para>
-Add build option to allow testing of small <acronym>WAL</acronym> segment sizes (Andres Freund)
-</para>
+     <listitem>
+      <para>
+       Add build option to allow testing of small <acronym>WAL</acronym>
+       segment sizes (Andres Freund)
+      </para>
 
-<para>
-The build options are <link linkend="configure-option-with-segsize"><option>--with-segsize-blocks</option></link> and <option>-Dsegsize_blocks</option>.
-</para>
-</listitem>
+      <para>
+       The build options are <link
+       linkend="configure-option-with-segsize"><option>--with-segsize-blocks</option></link>
+       and <option>-Dsegsize_blocks</option>.
+      </para>
+     </listitem>
 
 <!--
 Author: Andrew Dunstan <andrew@dunslane.net>
@@ -2851,49 +3399,60 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 2023-02-13 [b16259b3c] Remove obsolete pgindent options - -code-base and - -build
 -->
 
-<listitem>
-<para>
-Add <link linkend="source"><application>pgindent</application></link> options (Andrew Dunstan)
-</para>
+     <listitem>
+      <para>
+       Add <link
+       linkend="source"><application>pgindent</application></link> options
+       (Andrew Dunstan)
+      </para>
 
-<para>
-The new options are <option>--show-diff</option>, <option>--silent-diff</option>, <option>--commit</option>, and <option>--help</option>, and allow multiple <option>--exclude</option> options.  Also require the typedef file to be explicitly specified.  Options <option>--code-base</option> and <option>--build</option> were
-also removed.
-</para>
-</listitem>
+      <para>
+       The new options are <option>--show-diff</option>,
+       <option>--silent-diff</option>, <option>--commit</option>,
+       and <option>--help</option>, and allow multiple
+       <option>--exclude</option> options.  Also require the typedef file
+       to be explicitly specified.  Options <option>--code-base</option>
+       and <option>--build</option> were also removed.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-02-12 [4e831f4ce] Import pg_bsd_indent sources.
 -->
 
-<listitem>
-<para>
-Add <link linkend="source"><application>pg_bsd_indent</application></link> source code to the main tree (Tom Lane)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add <link
+       linkend="source"><application>pg_bsd_indent</application></link>
+       source code to the main tree (Tom Lane)
+      </para>
+     </listitem>
 
 <!--
 Author: Tatsuo Ishii <ishii@postgresql.org>
 2022-10-19 [d1e2a380c] Enhance make_ctags and make_etags.
 -->
 
-<listitem>
-<para>
-Improve <application>make_ctags</application> and <application>make_etags</application> (Yugo Nagata)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Improve <application>make_ctags</application> and
+       <application>make_etags</application> (Yugo Nagata)
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2023-03-28 [90189eefc] Save a few bytes in pg_attribute
 -->
 
-<listitem>
-<para>
-Adjust <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link> columns for efficiency (Peter Eisentraut)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Adjust <link
+       linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>
+       columns for efficiency (Peter Eisentraut)
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -2909,79 +3468,102 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-09-02 [ff720a597] Fix planner to consider matches to boolean columns in ex
 -->
 
-<listitem>
-<para>
-Improve use of extension-based indexes on boolean columns (Zongliang Quan, Tom Lane)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Improve use of extension-based indexes on boolean columns (Zongliang
+       Quan, Tom Lane)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-04-07 [a290378a3] Add support for Daitch-Mokotoff Soundex in contrib/fuzzy
 -->
 
-<listitem>
-<para>
-Add support for Daitch-Mokotoff Soundex to <link linkend="fuzzystrmatch"><application>fuzzystrmatch</application></link> (Dag Lem)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add support for Daitch-Mokotoff Soundex to <link
+       linkend="fuzzystrmatch"><application>fuzzystrmatch</application></link>
+       (Dag Lem)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2022-07-06 [d4bfe4128] autho_explain: Add GUC to log query parameters
 -->
 
-<listitem>
-<para>
-Allow <link linkend="auto-explain"><application>auto_explain</application></link> to log values passed to parameterized statements (Dagfinn Ilmari Mannsåker)
-</para>
+     <listitem>
+      <para>
+       Allow <link
+       linkend="auto-explain"><application>auto_explain</application></link>
+       to log values passed to parameterized statements (Dagfinn Ilmari
+       Mannsåker)
+      </para>
 
-<para>
-This affects queries using server-side <link linkend="sql-prepare"><command>PREPARE</command></link>/<link linkend="sql-execute"><command>EXECUTE</command></link> and client-side parse/bind.  Logging is controlled by <link linkend="auto-explain-configuration-parameters-log-parameter-max-length"><literal>auto_explain.log_parameter_max_length</literal></link>;  by default query parameters will
-be logged with no length restriction.
-</para>
-</listitem>
+      <para>
+       This affects queries using server-side <link
+       linkend="sql-prepare"><command>PREPARE</command></link>/<link
+       linkend="sql-execute"><command>EXECUTE</command></link>
+       and client-side parse/bind.  Logging is controlled by <link
+       linkend="auto-explain-configuration-parameters-log-parameter-max-length"><literal>auto_explain.log_parameter_max_length</literal></link>;
+       by default query parameters will be logged with no length
+       restriction.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-01-26 [9d2d9728b] Make auto_explain print the query identifier in verbose 
 -->
 
-<listitem>
-<para>
-Have <link linkend="auto-explain"><application>auto_explain</application></link>'s <option>log_verbose</option> mode honor the value of <link linkend="guc-compute-query-id"><varname>compute_query_id</varname></link> (Atsushi Torikoshi)
-</para>
+     <listitem>
+      <para>
+       Have <link
+       linkend="auto-explain"><application>auto_explain</application></link>'s
+       <option>log_verbose</option> mode honor the value of <link
+       linkend="guc-compute-query-id"><varname>compute_query_id</varname></link>
+       (Atsushi Torikoshi)
+      </para>
 
-<para>
-Previously even if <varname>compute_query_id</varname> was enabled, <link linkend="auto-explain-configuration-parameters-log-verbose"><option>log_verbose</option></link> was not showing the query identifier.
-</para>
-</listitem>
+      <para>
+       Previously even if
+       <varname>compute_query_id</varname> was enabled, <link
+       linkend="auto-explain-configuration-parameters-log-verbose"><option>log_verbose</option></link>
+       was not showing the query identifier.
+      </para>
+     </listitem>
 
 <!--
 Author: Andrew Dunstan <andrew@dunslane.net>
 2023-01-06 [b1665bf01] Allow hyphens in ltree labels
 -->
 
-<listitem>
-<para>
-Change the maximum length of <link linkend="ltree"><application>ltree</application></link> labels from 256 to 1000 and allow hyphens (Garen Torikian)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Change the maximum length of <link
+       linkend="ltree"><application>ltree</application></link> labels
+       from 256 to 1000 and allow hyphens (Garen Torikian)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-03-08 [daa8365a9] Reflect normalization of query strings for utilities in 
 -->
 
-<listitem>
-<para>
-Have <link linkend="pgstatstatements"><structname>pg_stat_statements</structname></link> normalize constants used in utility commands (Michael Paquier)
-</para>
+     <listitem>
+      <para>
+       Have <link
+       linkend="pgstatstatements"><structname>pg_stat_statements</structname></link>
+       normalize constants used in utility commands (Michael Paquier)
+      </para>
 
-<para>
-Previously constants appeared instead of placeholders, e.g., <literal>$1</literal>.
-</para>
-</listitem>
+      <para>
+       Previously constants appeared instead of placeholders, e.g.,
+       <literal>$1</literal>.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
@@ -2994,26 +3576,40 @@ Author: Peter Geoghegan <pg@bowt.ie>
 2023-03-31 [df4f3ab51] Add show_data option to pg_get_wal_block_info.
 -->
 
-<listitem>
-<para>
-Add <link linkend="pgwalinspect"><application>pg_walinspect</application></link> function <link linkend="pgwalinspect-funcs-pg-get-wal-block-info"><function>pg_get_wal_block_info()</function></link> to report <acronym>WAL</acronym> block information (Michael Paquier, Melanie Plageman, Bharath Rupireddy)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add <link
+       linkend="pgwalinspect"><application>pg_walinspect</application></link>
+       function <link
+       linkend="pgwalinspect-funcs-pg-get-wal-block-info"><function>pg_get_wal_block_info()</function></link>
+       to report <acronym>WAL</acronym> block information (Michael Paquier,
+       Melanie Plageman, Bharath Rupireddy)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-03-14 [5c1b66280] Rework design of functions in pg_walinspect
 -->
 
-<listitem>
-<para>
-Change how <link linkend="pgwalinspect"><application>pg_walinspect</application></link> functions <link linkend="pgwalinspect-funcs-pg-get-wal-records-info"><function>pg_get_wal_records_info()</function></link> and <link linkend="pgwalinspect-funcs-pg-get-wal-stats"><function>pg_get_wal_stats()</function></link> interpret ending <acronym>LSN</acronym>s (Bharath Rupireddy)
-</para>
+     <listitem>
+      <para>
+       Change how <link
+       linkend="pgwalinspect"><application>pg_walinspect</application></link>
+       functions <link
+       linkend="pgwalinspect-funcs-pg-get-wal-records-info"><function>pg_get_wal_records_info()</function></link>
+       and <link
+       linkend="pgwalinspect-funcs-pg-get-wal-stats"><function>pg_get_wal_stats()</function></link>
+       interpret ending <acronym>LSN</acronym>s (Bharath Rupireddy)
+      </para>
 
-<para>
-Previously ending <acronym>LSN</acronym>s which represent nonexistent <acronym>WAL</acronym> locations would generate an error, while they will now be interpreted as the end of the <acronym>WAL</acronym>.
-</para>
-</listitem>
+      <para>
+       Previously ending <acronym>LSN</acronym>s which represent
+       nonexistent <acronym>WAL</acronym> locations would generate
+       an error, while they will now be interpreted as the end of the
+       <acronym>WAL</acronym>.
+      </para>
+     </listitem>
 
 <!--
 Author: Peter Geoghegan <pg@bowt.ie>
@@ -3026,111 +3622,140 @@ Author: Peter Geoghegan <pg@bowt.ie>
 2023-04-19 [50547a3fa] Fix wal_consistency_checking enhanced desc output.
 -->
 
-<listitem>
-<para>
-Add detailed descriptions of <acronym>WAL</acronym> records in <link linkend="pgwalinspect"><application>pg_walinspect</application></link> and <link linkend="pgwaldump"><application>pg_waldump</application></link> (Melanie Plageman, Peter Geoghegan)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add detailed descriptions of <acronym>WAL</acronym> records in <link
+       linkend="pgwalinspect"><application>pg_walinspect</application></link>
+       and <link
+       linkend="pgwaldump"><application>pg_waldump</application></link>
+       (Melanie Plageman, Peter Geoghegan)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-02 [1fd3dd204] Add bt_multi_page_stats() function to contrib/pageinspec
 -->
 
-<listitem>
-<para>
-Add <link linkend="pageinspect"><application>pageinspect</application></link> function <link linkend="pageinspect-b-tree-funcs"><function>bt_multi_page_stats()</function></link> to report statistics on multiple pages (Hamid Akhtar)
-</para>
+     <listitem>
+      <para>
+       Add <link
+       linkend="pageinspect"><application>pageinspect</application></link>
+       function <link
+       linkend="pageinspect-b-tree-funcs"><function>bt_multi_page_stats()</function></link>
+       to report statistics on multiple pages (Hamid Akhtar)
+      </para>
 
-<para>
-This is similar to <function>bt_page_stats()</function> except it can report on a range of pages.
-</para>
-</listitem>
+      <para>
+       This is similar to <function>bt_page_stats()</function> except it
+       can report on a range of pages.
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-01-02 [1fd3dd204] Add bt_multi_page_stats() function to contrib/pageinspec
 -->
 
-<listitem>
-<para>
-Add empty range output column to <link linkend="pageinspect"><application>pageinspect</application></link> function <link linkend="pageinspect-brin-funcs"><function>brin_page_items()</function></link> (Tomas Vondra)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add empty range output column to <link
+       linkend="pageinspect"><application>pageinspect</application></link>
+       function <link
+       linkend="pageinspect-brin-funcs"><function>brin_page_items()</function></link>
+       (Tomas Vondra)
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-02-17 [35739b87d] Redesign archive modules
 -->
 
-<listitem>
-<para>
-Redesign archive modules to be more flexible (Nathan Bossart)
-</para>
+     <listitem>
+      <para>
+       Redesign archive modules to be more flexible (Nathan Bossart)
+      </para>
 
-<para>
-Initialization changes will require modules written for older versions of Postgres to be updated.
-</para>
-</listitem>
+      <para>
+       Initialization changes will require modules written for older
+       versions of Postgres to be updated.
+      </para>
+     </listitem>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-04-06 [1d477a907] Fix row tracking in pg_stat_statements with extended que
 -->
 
-<listitem>
-<para>
-Correct inaccurate <link linkend="pgstatstatements"><application>pg_stat_statements</application></link> row tracking extended query protocol statements (Sami Imseih)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Correct inaccurate <link
+       linkend="pgstatstatements"><application>pg_stat_statements</application></link>
+       row tracking extended query protocol statements (Sami Imseih)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-04-07 [f3fa31327] Add pg_buffercache_usage_counts() to contrib/pg_bufferca
 -->
 
-<listitem>
-<para>
-Add <link linkend="pgbuffercache"><application>pg_buffercache</application></link> function <function>pg_buffercache_usage_counts()</function> to report usage totals (Nathan Bossart)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add <link
+       linkend="pgbuffercache"><application>pg_buffercache</application></link>
+       function <function>pg_buffercache_usage_counts()</function> to
+       report usage totals (Nathan Bossart)
+      </para>
+     </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2022-10-13 [2589434ae] pg_buffercache: Add pg_buffercache_summary()
 -->
 
-<listitem>
-<para>
-Add <link linkend="pgbuffercache"><application>pg_buffercache</application></link> function <function>pg_buffercache_summary()</function> to report summarized buffer statistics (Melih Mutlu)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Add <link
+       linkend="pgbuffercache"><application>pg_buffercache</application></link>
+       function <function>pg_buffercache_summary()</function> to report
+       summarized buffer statistics (Melih Mutlu)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-20 [72a5b1fc8] Add @extschema:name@ and no_relocate options to extensio
 -->
 
-<listitem>
-<para>
-Allow the schemas of required extensions to be referenced in extension scripts using the new syntax <literal>@extschema:referenced_extension_name@</literal> (Regina Obe)
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Allow the schemas of required extensions to be
+       referenced in extension scripts using the new syntax
+       <literal>@extschema:referenced_extension_name@</literal>
+       (Regina Obe)
+      </para>
+     </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-03-20 [72a5b1fc8] Add @extschema:name@ and no_relocate options to extensio
 -->
 
-<listitem>
-<para>
-Allow required extensions to be marked as non-relocatable using <link linkend="extend-extensions-files-no-relocate"><literal>no_relocate</literal></link> (Regina Obe)
-</para>
+     <listitem>
+      <para>
+       Allow required extensions to
+       be marked as non-relocatable using <link
+       linkend="extend-extensions-files-no-relocate"><literal>no_relocate</literal></link>
+       (Regina Obe)
+      </para>
 
-<para>
-This allows <literal>@extschema:referenced_extension_name@</literal> to be treated as a constant for the lifetime of the extension.
-</para>
-</listitem>
+      <para>
+       This allows <literal>@extschema:referenced_extension_name@</literal>
+       to be treated as a constant for the lifetime of the extension.
+      </para>
+     </listitem>
 
     </itemizedlist>
 
@@ -3144,52 +3769,64 @@ Author: Etsuro Fujita <efujita@postgresql.org>
 2023-04-06 [983ec2300] postgres_fdw: Add support for parallel abort.
 -->
 
-<listitem>
-<para>
-Allow <application>postgres_fdw</application> to do aborts in parallel (Etsuro Fujita)
-</para>
+      <listitem>
+       <para>
+        Allow <application>postgres_fdw</application> to do aborts in
+        parallel (Etsuro Fujita)
+       </para>
 
-<para>
-This is enabled with <application>postgres_fdw</application> option <link linkend="postgres-fdw-options-transaction-management"><option>parallel_abort</option></link>.
-</para>
-</listitem>
+       <para>
+        This is enabled with
+        <application>postgres_fdw</application> option <link
+        linkend="postgres-fdw-options-transaction-management"><option>parallel_abort</option></link>.
+       </para>
+      </listitem>
 
 <!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2022-12-30 [8ad51b5f4] Sample postgres_fdw tables remotely during ANALYZE
 -->
 
-<listitem>
-<para>
-Make <link linkend="sql-analyze"><command>ANALYZE</command></link> on foreign <application>postgres_fdw</application> tables more efficient (Tomas Vondra)
-</para>
+      <listitem>
+       <para>
+        Make <link linkend="sql-analyze"><command>ANALYZE</command></link>
+        on foreign <application>postgres_fdw</application> tables more
+        efficient (Tomas Vondra)
+       </para>
 
-<para>
-The <application>postgres_fdw</application> option <link linkend="postgres-fdw-options-cost-estimation"><option>analyze_sampling</option></link> controls the sampling method.
-</para>
-</listitem>
+       <para>
+        The <application>postgres_fdw</application> option <link
+        linkend="postgres-fdw-options-cost-estimation"><option>analyze_sampling</option></link>
+        controls the sampling method.
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-07-17 [31e5b5029] postgres_fdw: be more wary about shippability of reg* co
 -->
 
-<listitem>
-<para>
-Restrict shipment of <link linkend="datatype-oid"><type>reg</type></link>* type constants in <application>postgres_fdw</application> to those referencing built-in objects or extensions marked as shippable (Tom Lane)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Restrict shipment of <link
+        linkend="datatype-oid"><type>reg</type></link>* type constants
+        in <application>postgres_fdw</application> to those referencing
+        built-in objects or extensions marked as shippable (Tom Lane)
+       </para>
+      </listitem>
 
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2023-01-23 [e4602483e] dblink, postgres_fdw: Handle interrupts during connectio
 -->
 
-<listitem>
-<para>
-Have <application>postgres_fdw</application> and <link linkend="dblink"><application>dblink</application></link> handle interrupts during connection establishment (Andres Freund)
-</para>
-</listitem>
+      <listitem>
+       <para>
+        Have <application>postgres_fdw</application> and <link
+        linkend="dblink"><application>dblink</application></link> handle
+        interrupts during connection establishment (Andres Freund)
+       </para>
+      </listitem>
 
      </itemizedlist>
 
