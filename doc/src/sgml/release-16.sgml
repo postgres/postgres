@@ -2176,11 +2176,28 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow <application>psql</application>'s access privilege commands to show system objects (Nathan Bossart, Pavel Luzanov)
+Add <application>psql</application> command <link linkend="app-psql-meta-command-drg"><command>\drg</command></link> to show role membership details (Pavel Luzanov)
 </para>
 
 <para>
-The options are <link linkend="app-psql-meta-command-dp-lc"><command>\dpS</command></link>, <link linkend="app-psql-meta-command-z"><command>\zS</command></link>, and <link linkend="app-psql-meta-command-drg"><command>\drg</command></link>.
+The <literal>Member of</literal> output column has been removed from <command>\du</command> and <command>\dg</command> because this new command displays this informaion in more detail.
+</para>
+</listitem>
+
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2023-01-07 [d913928c9] psql: Add support for \dpS and \zS.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2023-07-19 [d65ddaca9] Add psql \drg command to display role
+-->
+
+<listitem>
+<para>
+Allow <application>psql</application>'s access privilege commands to show system objects (Nathan Bossart)
+</para>
+
+<para>
+The options are <link linkend="app-psql-meta-command-dp-lc"><command>\dpS</command></link> and <link linkend="app-psql-meta-command-z"><command>\zS</command></link>.
 </para>
 </listitem>
 
