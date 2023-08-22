@@ -60,8 +60,12 @@
 #include "access/heaptoast.h"
 #include "access/sysattr.h"
 #include "access/tupdesc_details.h"
+#include "common/hashfn.h"
 #include "executor/tuptable.h"
+#include "utils/datum.h"
 #include "utils/expandeddatum.h"
+#include "utils/hsearch.h"
+#include "utils/memutils.h"
 
 
 /* Does att's datatype allow packing into the 1-byte-header varlena format? */
@@ -71,6 +75,57 @@
 #define VARLENA_ATT_IS_PACKABLE(att) \
 	((att)->attstorage != TYPSTORAGE_PLAIN)
 
+/*
+ * Setup for cacheing pass-by-ref missing attributes in a way that survives
+ * tupleDesc destruction.
+ */
+
+typedef struct
+{
+	int			len;
+	Datum		value;
+} missing_cache_key;
+
+static HTAB *missing_cache = NULL;
+
+static uint32
+missing_hash(const void *key, Size keysize)
+{
+	const missing_cache_key *entry = (missing_cache_key *) key;
+
+	return hash_bytes((const unsigned char *) entry->value, entry->len);
+}
+
+static int
+missing_match(const void *key1, const void *key2, Size keysize)
+{
+	const missing_cache_key *entry1 = (missing_cache_key *) key1;
+	const missing_cache_key *entry2 = (missing_cache_key *) key2;
+
+	if (entry1->len != entry2->len)
+		return entry1->len > entry2->len ? 1 : -1;
+
+	return memcmp(DatumGetPointer(entry1->value),
+				  DatumGetPointer(entry2->value),
+				  entry1->len);
+}
+
+static void
+init_missing_cache()
+{
+	HASHCTL		hash_ctl;
+
+	hash_ctl.keysize = sizeof(missing_cache_key);
+	hash_ctl.entrysize = sizeof(missing_cache_key);
+	hash_ctl.hcxt = TopMemoryContext;
+	hash_ctl.hash = missing_hash;
+	hash_ctl.match = missing_match;
+	missing_cache =
+		hash_create("Missing Values Cache",
+					32,
+					&hash_ctl,
+					HASH_ELEM | HASH_CONTEXT | HASH_FUNCTION | HASH_COMPARE);
+}
 
 /* ----------------------------------------------------------------
  *						misc support routines
@@ -102,8 +157,41 @@ getmissingattr(TupleDesc tupleDesc,
 
 		if (attrmiss->am_present)
 		{
+			missing_cache_key key;
+			missing_cache_key *entry;
+			bool		found;
+			MemoryContext oldctx;
+
 			*isnull = false;
-			return attrmiss->am_value;
+
+			/* no  need to cache by-value attributes */
+			if (att->attbyval)
+				return attrmiss->am_value;
+
+			/* set up cache if required */
+			if (missing_cache == NULL)
+				init_missing_cache();
+
+			/* check if there's a cache entry */
+			Assert(att->attlen > 0 || att->attlen == -1);
+			if (att->attlen > 0)
+				key.len = att->attlen;
+			else
+				key.len = VARSIZE_ANY(attrmiss->am_value);
+			key.value = attrmiss->am_value;
+
+			entry = hash_search(missing_cache, &key, HASH_ENTER, &found);
+
+			if (!found)
+			{
+				/* cache miss, so we need a non-transient copy of the datum */
+				oldctx = MemoryContextSwitchTo(TopMemoryContext);
+				entry->value =
+					datumCopy(attrmiss->am_value, false, att->attlen);
+				MemoryContextSwitchTo(oldctx);
+			}
+
+			return entry->value;
 		}
 	}
 
