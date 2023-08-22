@@ -13415,6 +13415,18 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 	else
 		collctype = NULL;
 
+	/*
+	 * Before version 15, collcollate and collctype were of type NAME and
+	 * non-nullable. Treat empty strings as NULL for consistency.
+	 */
+	if (fout->remoteVersion < 150000)
+	{
+		if (collcollate[0] == '\0')
+			collcollate = NULL;
+		if (collctype[0] == '\0')
+			collctype = NULL;
+	}
+
 	if (!PQgetisnull(res, 0, i_colliculocale))
 		colliculocale = PQgetvalue(res, 0, i_colliculocale);
 	else
@@ -13446,35 +13458,60 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 	if (strcmp(PQgetvalue(res, 0, i_collisdeterministic), "f") == 0)
 		appendPQExpBufferStr(q, ", deterministic = false");
 
-	if (colliculocale != NULL)
+	if (collprovider[0] == 'd')
 	{
-		appendPQExpBufferStr(q, ", locale = ");
-		appendStringLiteralAH(q, colliculocale, fout);
-	}
-	else
-	{
-		Assert(collcollate != NULL);
-		Assert(collctype != NULL);
+		if (collcollate || collctype || colliculocale || collicurules)
+			pg_log_warning("invalid collation \"%s\"", qcollname);
 
-		if (strcmp(collcollate, collctype) == 0)
+		/* no locale -- the default collation cannot be reloaded anyway */
+	}
+	else if (collprovider[0] == 'i')
+	{
+		if (fout->remoteVersion >= 150000)
+		{
+			if (collcollate || collctype || !colliculocale)
+				pg_log_warning("invalid collation \"%s\"", qcollname);
+
+			appendPQExpBufferStr(q, ", locale = ");
+			appendStringLiteralAH(q, colliculocale ? colliculocale : "",
+								  fout);
+		}
+		else
+		{
+			if (!collcollate || !collctype || colliculocale ||
+				strcmp(collcollate, collctype) != 0)
+				pg_log_warning("invalid collation \"%s\"", qcollname);
+
+			appendPQExpBufferStr(q, ", locale = ");
+			appendStringLiteralAH(q, collcollate ? collcollate : "", fout);
+		}
+
+		if (collicurules)
+		{
+			appendPQExpBufferStr(q, ", rules = ");
+			appendStringLiteralAH(q, collicurules ? collicurules : "", fout);
+		}
+	}
+	else if (collprovider[0] == 'c')
+	{
+		if (colliculocale || collicurules || !collcollate || !collctype)
+			pg_log_warning("invalid collation \"%s\"", qcollname);
+
+		if (collcollate && collctype && strcmp(collcollate, collctype) == 0)
 		{
 			appendPQExpBufferStr(q, ", locale = ");
-			appendStringLiteralAH(q, collcollate, fout);
+			appendStringLiteralAH(q, collcollate ? collcollate : "", fout);
 		}
 		else
 		{
 			appendPQExpBufferStr(q, ", lc_collate = ");
-			appendStringLiteralAH(q, collcollate, fout);
+			appendStringLiteralAH(q, collcollate ? collcollate : "", fout);
 			appendPQExpBufferStr(q, ", lc_ctype = ");
-			appendStringLiteralAH(q, collctype, fout);
+			appendStringLiteralAH(q, collctype ? collctype : "", fout);
 		}
 	}
-
-	if (collicurules)
-	{
-		appendPQExpBufferStr(q, ", rules = ");
-		appendStringLiteralAH(q, collicurules, fout);
-	}
+	else
+		pg_fatal("unrecognized collation provider '%c'", collprovider[0]);
 
 	/*
 	 * For binary upgrade, carry over the collation version.  For normal
