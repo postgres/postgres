@@ -49,6 +49,8 @@ extern bool check_cluster_name(char **newval, void **extra, GucSource source);
 extern const char *show_data_directory_mode(void);
 extern bool check_datestyle(char **newval, void **extra, GucSource source);
 extern void assign_datestyle(const char *newval, void *extra);
+extern bool check_debug_io_direct(char **newval, void **extra, GucSource source);
+extern void assign_debug_io_direct(const char *newval, void *extra);
 extern bool check_default_table_access_method(char **newval, void **extra,
 											  GucSource source);
 extern bool check_default_tablespace(char **newval, void **extra,
@@ -157,7 +159,5 @@ extern bool check_wal_consistency_checking(char **newval, void **extra,
 										   GucSource source);
 extern void assign_wal_consistency_checking(const char *newval, void *extra);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
-extern bool check_io_direct(char **newval, void **extra, GucSource source);
-extern void assign_io_direct(const char *newval, void *extra);
 
 #endif							/* GUC_HOOKS_H */
