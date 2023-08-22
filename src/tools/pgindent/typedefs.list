@@ -3409,6 +3409,7 @@ mbstr_verifier
 memoize_hash
 memoize_iterator
 metastring
+missing_cache_key
 mix_data_t
 mixedStruct
 mode_t
