@@ -2215,6 +2215,8 @@ StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
  * allow_merge: true if check constraints may be merged with existing ones
  * is_local: true if definition is local, false if it's inherited
  * is_internal: true if result of some internal process, not a user request
+ * queryString: used during expression transformation of default values and
+ *		cooked CHECK constraints
  *
  * All entries in newColDefaults will be processed.  Entries in newConstraints
  * will be processed only if they are CONSTR_CHECK type.
