@@ -81,7 +81,8 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 							  const List *attList,
 							  const List *exclusionOpNames,
 							  Oid relId,
-							  const char *accessMethodName, Oid accessMethodId,
+							  const char *accessMethodName,
+							  Oid accessMethodId,
 							  bool amcanorder,
 							  bool isconstraint,
 							  Oid ddl_userid,
@@ -274,10 +275,8 @@ CheckIndexCompatible(Oid oldId,
 	d = SysCacheGetAttrNotNull(INDEXRELID, tuple, Anum_pg_index_indclass);
 	old_indclass = (oidvector *) DatumGetPointer(d);
 
-	ret = (memcmp(old_indclass->values, opclassIds,
-				  old_natts * sizeof(Oid)) == 0 &&
-		   memcmp(old_indcollation->values, collationIds,
-				  old_natts * sizeof(Oid)) == 0);
+	ret = (memcmp(old_indclass->values, opclassIds, old_natts * sizeof(Oid)) == 0 &&
+		   memcmp(old_indcollation->values, collationIds, old_natts * sizeof(Oid)) == 0);
 
 	ReleaseSysCache(tuple);
 
@@ -603,8 +602,7 @@ DefineIndex(Oid tableId,
 	 */
 	if (!OidIsValid(parentIndexId))
 	{
-		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
-									  tableId);
+		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX, tableId);
 		pgstat_progress_update_param(PROGRESS_CREATEIDX_COMMAND,
 									 concurrent ?
 									 PROGRESS_CREATEIDX_COMMAND_CREATE_CONCURRENTLY :
@@ -1262,8 +1260,7 @@ DefineIndex(Oid tableId,
 				 */
 				if (total_parts < 0)
 				{
-					List	   *children = find_all_inheritors(tableId,
-															   NoLock, NULL);
+					List	   *children = find_all_inheritors(tableId, NoLock, NULL);
 
 					total_parts = list_length(children) - 1;
 					list_free(children);
@@ -3789,8 +3786,7 @@ ReindexRelationConcurrently(Oid relationOid, const ReindexParams *params)
 		if (indexRel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 			elog(ERROR, "cannot reindex a temporary table concurrently");
 
-		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
-									  idx->tableId);
+		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX, idx->tableId);
 
 		progress_vals[0] = PROGRESS_CREATEIDX_COMMAND_REINDEX_CONCURRENTLY;
 		progress_vals[1] = 0;	/* initializing */
@@ -4015,8 +4011,7 @@ ReindexRelationConcurrently(Oid relationOid, const ReindexParams *params)
 		 * Update progress for the index to build, with the correct parent
 		 * table involved.
 		 */
-		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
-									  newidx->tableId);
+		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX, newidx->tableId);
 		progress_vals[0] = PROGRESS_CREATEIDX_COMMAND_REINDEX_CONCURRENTLY;
 		progress_vals[1] = PROGRESS_CREATEIDX_PHASE_VALIDATE_IDXSCAN;
 		progress_vals[2] = newidx->indexId;

@@ -329,8 +329,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		to->attstattarget = -1;
 		to->attcacheoff = -1;
 		to->attislocal = true;
-		to->attcollation = (i < numkeyatts) ?
-			collationIds[i] : InvalidOid;
+		to->attcollation = (i < numkeyatts) ? collationIds[i] : InvalidOid;
 
 		/*
 		 * Set the attribute name as specified by caller.
@@ -438,8 +437,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		{
 			tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassIds[i]));
 			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "cache lookup failed for opclass %u",
-					 opclassIds[i]);
+				elog(ERROR, "cache lookup failed for opclass %u", opclassIds[i]);
 			opclassTup = (Form_pg_opclass) GETSTRUCT(tuple);
 			if (OidIsValid(opclassTup->opckeytype))
 				keyType = opclassTup->opckeytype;
@@ -1159,11 +1157,9 @@ index_create(Relation heapRelation,
 		/* The default collation is pinned, so don't bother recording it */
 		for (i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 		{
-			if (OidIsValid(collationIds[i]) &&
-				collationIds[i] != DEFAULT_COLLATION_OID)
+			if (OidIsValid(collationIds[i]) && collationIds[i] != DEFAULT_COLLATION_OID)
 			{
-				ObjectAddressSet(referenced, CollationRelationId,
-								 collationIds[i]);
+				ObjectAddressSet(referenced, CollationRelationId, collationIds[i]);
 				add_exact_object_address(&referenced, addrs);
 			}
 		}
