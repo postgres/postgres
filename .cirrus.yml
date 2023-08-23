@@ -110,15 +110,14 @@ task:
     CPUS: 4
     BUILD_JOBS: 8
     TEST_JOBS: 8
+    IMAGE_FAMILY: pg-ci-bullseye
     CCACHE_DIR: ${CIRRUS_WORKING_DIR}/ccache_dir
     # no options enabled, should be small
     CCACHE_MAXSIZE: "150M"
 
-  # Container starts up quickly, but is slower at runtime, particularly for
-  # tests. Good for the briefly running sanity check.
-  container:
-    image: $CONTAINER_REPO/linux_debian_bullseye_ci:latest
-    cpu: $CPUS
+  # While containers would start up a bit quicker, building is a bit
+  # slower. This way we don't have to maintain a container image.
+  <<: *linux_task_template
 
   ccache_cache:
     folder: $CCACHE_DIR
@@ -691,6 +690,7 @@ task:
   env:
     CPUS: 4
     BUILD_JOBS: 4
+    IMAGE_FAMILY: pg-ci-bullseye
 
     # Use larger ccache cache, as this task compiles with multiple compilers /
     # flag combinations
@@ -700,9 +700,7 @@ task:
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
     LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
 
-  container:
-    image: $CONTAINER_REPO/linux_debian_bullseye_ci:latest
-    cpu: $CPUS
+  <<: *linux_task_template
 
   sysinfo_script: |
     id
