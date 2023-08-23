@@ -134,7 +134,7 @@ gistbuildempty(Relation index)
 	Buffer		buffer;
 
 	/* Initialize the root page */
-	buffer = ExtendBufferedRel(EB_REL(index), INIT_FORKNUM, NULL,
+	buffer = ExtendBufferedRel(BMR_REL(index), INIT_FORKNUM, NULL,
 							   EB_SKIP_EXTENSION_LOCK | EB_LOCK_FIRST);
 
 	/* Initialize and xlog buffer */

@@ -92,19 +92,19 @@ typedef enum ExtendBufferedFlags
 }			ExtendBufferedFlags;
 
 /*
- * To identify the relation - either relation or smgr + relpersistence has to
- * be specified. Used via the EB_REL()/EB_SMGR() macros below. This allows us
- * to use the same function for both crash recovery and normal operation.
+ * Some functions identify relations either by relation or smgr +
+ * relpersistence.  Used via the BMR_REL()/BMR_SMGR() macros below.  This
+ * allows us to use the same function for both recovery and normal operation.
  */
-typedef struct ExtendBufferedWhat
+typedef struct BufferManagerRelation
 {
 	Relation	rel;
 	struct SMgrRelationData *smgr;
 	char		relpersistence;
-} ExtendBufferedWhat;
+} BufferManagerRelation;
 
-#define EB_REL(p_rel) ((ExtendBufferedWhat){.rel = p_rel})
-#define EB_SMGR(p_smgr, p_relpersistence) ((ExtendBufferedWhat){.smgr = p_smgr, .relpersistence = p_relpersistence})
+#define BMR_REL(p_rel) ((BufferManagerRelation){.rel = p_rel})
+#define BMR_SMGR(p_smgr, p_relpersistence) ((BufferManagerRelation){.smgr = p_smgr, .relpersistence = p_relpersistence})
 
 
 /* forward declared, to avoid having to expose buf_internals.h here */
@@ -185,18 +185,18 @@ extern void CheckBufferIsPinnedOnce(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 								   BlockNumber blockNum);
 
-extern Buffer ExtendBufferedRel(ExtendBufferedWhat eb,
+extern Buffer ExtendBufferedRel(BufferManagerRelation bmr,
 								ForkNumber forkNum,
 								BufferAccessStrategy strategy,
 								uint32 flags);
-extern BlockNumber ExtendBufferedRelBy(ExtendBufferedWhat eb,
+extern BlockNumber ExtendBufferedRelBy(BufferManagerRelation bmr,
 									   ForkNumber fork,
 									   BufferAccessStrategy strategy,
 									   uint32 flags,
 									   uint32 extend_by,
 									   Buffer *buffers,
 									   uint32 *extended_by);
-extern Buffer ExtendBufferedRelTo(ExtendBufferedWhat eb,
+extern Buffer ExtendBufferedRelTo(BufferManagerRelation bmr,
 								  ForkNumber fork,
 								  BufferAccessStrategy strategy,
 								  uint32 flags,

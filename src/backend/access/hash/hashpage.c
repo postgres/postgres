@@ -209,7 +209,7 @@ _hash_getnewbuf(Relation rel, BlockNumber blkno, ForkNumber forkNum)
 	/* smgr insists we explicitly extend the relation */
 	if (blkno == nblocks)
 	{
-		buf = ExtendBufferedRel(EB_REL(rel), forkNum, NULL,
+		buf = ExtendBufferedRel(BMR_REL(rel), forkNum, NULL,
 								EB_LOCK_FIRST | EB_SKIP_EXTENSION_LOCK);
 		if (BufferGetBlockNumber(buf) != blkno)
 			elog(ERROR, "unexpected hash relation size: %u, should be %u",

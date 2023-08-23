@@ -377,7 +377,7 @@ fill_seq_fork_with_data(Relation rel, HeapTuple tuple, ForkNumber forkNum)
 
 	/* Initialize first page of relation with special magic number */
 
-	buf = ExtendBufferedRel(EB_REL(rel), forkNum, NULL,
+	buf = ExtendBufferedRel(BMR_REL(rel), forkNum, NULL,
 							EB_LOCK_FIRST | EB_SKIP_EXTENSION_LOCK);
 	Assert(BufferGetBlockNumber(buf) == 0);
 

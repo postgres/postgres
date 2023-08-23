@@ -569,7 +569,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 	}
 	else
 	{
-		buf = ExtendBufferedRel(EB_REL(irel), MAIN_FORKNUM, NULL,
+		buf = ExtendBufferedRel(BMR_REL(irel), MAIN_FORKNUM, NULL,
 								EB_LOCK_FIRST);
 		if (BufferGetBlockNumber(buf) != mapBlk)
 		{
