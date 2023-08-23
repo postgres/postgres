@@ -308,7 +308,7 @@ LimitAdditionalLocalPins(uint32 *additional_pins)
  * temporary buffers.
  */
 BlockNumber
-ExtendBufferedRelLocal(ExtendBufferedWhat eb,
+ExtendBufferedRelLocal(BufferManagerRelation bmr,
 					   ForkNumber fork,
 					   uint32 flags,
 					   uint32 extend_by,
@@ -338,7 +338,7 @@ ExtendBufferedRelLocal(ExtendBufferedWhat eb,
 		MemSet((char *) buf_block, 0, BLCKSZ);
 	}
 
-	first_block = smgrnblocks(eb.smgr, fork);
+	first_block = smgrnblocks(bmr.smgr, fork);
 
 	if (extend_upto != InvalidBlockNumber)
 	{
@@ -357,7 +357,7 @@ ExtendBufferedRelLocal(ExtendBufferedWhat eb,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot extend relation %s beyond %u blocks",
-						relpath(eb.smgr->smgr_rlocator, fork),
+						relpath(bmr.smgr->smgr_rlocator, fork),
 						MaxBlockNumber)));
 
 	for (int i = 0; i < extend_by; i++)
@@ -371,7 +371,7 @@ ExtendBufferedRelLocal(ExtendBufferedWhat eb,
 		victim_buf_id = -buffers[i] - 1;
 		victim_buf_hdr = GetLocalBufferDescriptor(victim_buf_id);
 
-		InitBufferTag(&tag, &eb.smgr->smgr_rlocator.locator, fork, first_block + i);
+		InitBufferTag(&tag, &bmr.smgr->smgr_rlocator.locator, fork, first_block + i);
 
 		hresult = (LocalBufferLookupEnt *)
 			hash_search(LocalBufHash, (void *) &tag, HASH_ENTER, &found);
@@ -411,7 +411,7 @@ ExtendBufferedRelLocal(ExtendBufferedWhat eb,
 	io_start = pgstat_prepare_io_time();
 
 	/* actually extend relation */
-	smgrzeroextend(eb.smgr, fork, first_block, extend_by, false);
+	smgrzeroextend(bmr.smgr, fork, first_block, extend_by, false);
 
 	pgstat_count_io_op_time(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_EXTEND,
 							io_start, extend_by);

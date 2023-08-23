@@ -386,7 +386,7 @@ BloomNewBuffer(Relation index)
 	}
 
 	/* Must extend the file */
-	buffer = ExtendBufferedRel(EB_REL(index), MAIN_FORKNUM, NULL,
+	buffer = ExtendBufferedRel(BMR_REL(index), MAIN_FORKNUM, NULL,
 							   EB_LOCK_FIRST);
 
 	return buffer;

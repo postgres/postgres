@@ -440,9 +440,9 @@ ginbuildempty(Relation index)
 				MetaBuffer;
 
 	/* An empty GIN index has two pages. */
-	MetaBuffer = ExtendBufferedRel(EB_REL(index), INIT_FORKNUM, NULL,
+	MetaBuffer = ExtendBufferedRel(BMR_REL(index), INIT_FORKNUM, NULL,
 								   EB_LOCK_FIRST | EB_SKIP_EXTENSION_LOCK);
-	RootBuffer = ExtendBufferedRel(EB_REL(index), INIT_FORKNUM, NULL,
+	RootBuffer = ExtendBufferedRel(BMR_REL(index), INIT_FORKNUM, NULL,
 								   EB_LOCK_FIRST | EB_SKIP_EXTENSION_LOCK);
 
 	/* Initialize and xlog metabuffer and root buffer. */

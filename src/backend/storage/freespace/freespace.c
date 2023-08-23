@@ -612,7 +612,7 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 static Buffer
 fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 {
-	return ExtendBufferedRelTo(EB_REL(rel), FSM_FORKNUM, NULL,
+	return ExtendBufferedRelTo(BMR_REL(rel), FSM_FORKNUM, NULL,
 							   EB_CREATE_FORK_IF_NEEDED |
 							   EB_CLEAR_SIZE_CACHE,
 							   fsm_nblocks,

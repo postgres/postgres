@@ -339,7 +339,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
 	 * [auto]vacuum trying to truncate later pages as REL_TRUNCATE_MINIMUM is
 	 * way larger.
 	 */
-	first_block = ExtendBufferedRelBy(EB_REL(relation), MAIN_FORKNUM,
+	first_block = ExtendBufferedRelBy(BMR_REL(relation), MAIN_FORKNUM,
 									  bistate ? bistate->strategy : NULL,
 									  EB_LOCK_FIRST,
 									  extend_by_pages,
