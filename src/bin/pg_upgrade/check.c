@@ -28,7 +28,7 @@ static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_aclitem_data_type_usage(ClusterInfo *cluster);
 static void check_for_jsonb_9_4_usage(ClusterInfo *cluster);
 static void check_for_pg_role_prefix(ClusterInfo *cluster);
-static void check_for_new_tablespace_dir(ClusterInfo *new_cluster);
+static void check_for_new_tablespace_dir(void);
 static void check_for_user_defined_encoding_conversions(ClusterInfo *cluster);
 
 
@@ -209,7 +209,7 @@ check_new_cluster(void)
 
 	check_for_prepared_transactions(&new_cluster);
 
-	check_for_new_tablespace_dir(&new_cluster);
+	check_for_new_tablespace_dir();
 }
 
 
@@ -377,7 +377,7 @@ check_new_cluster_is_empty(void)
  * during schema restore.
  */
 static void
-check_for_new_tablespace_dir(ClusterInfo *new_cluster)
+check_for_new_tablespace_dir(void)
 {
 	int			tblnum;
 	char		new_tablespace_dir[MAXPGPATH];
@@ -390,7 +390,7 @@ check_for_new_tablespace_dir(ClusterInfo *new_cluster)
 
 		snprintf(new_tablespace_dir, MAXPGPATH, "%s%s",
 				 os_info.old_tablespaces[tblnum],
-				 new_cluster->tablespace_suffix);
+				 new_cluster.tablespace_suffix);
 
 		if (stat(new_tablespace_dir, &statbuf) == 0 || errno != ENOENT)
 			pg_fatal("new cluster tablespace directory already exists: \"%s\"",
