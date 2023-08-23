@@ -1,0 +1,50 @@
+name: postgresql-16-pgdg-package-pgxs
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    name: pg-16-pgdg-package-pgxs-build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Remove old postgres
+        run: |
+          sudo apt-get update
+          sudo apt purge postgresql-client-common postgresql-common \
+            postgresql postgresql*
+          sudo rm -rf /var/lib/postgresql /var/log/postgresql /etc/postgresql \
+            /usr/lib/postgresql /usr/include/postgresql /usr/share/postgresql \
+            /etc/postgresql
+          sudo rm -f /usr/bin/pg_config
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y libreadline6-dev systemtap-sdt-dev wget \
+            zlib1g-dev libssl-dev libpam0g-dev bison flex libipc-run-perl
+          sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
+          sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
+
+      - name: Install PG Distribution Postgresql 16
+        run: |
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt \
+            $(lsb_release -cs)-pgdg main 16" > /etc/apt/sources.list.d/pgdg.list'
+          sudo wget --quiet -O - \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc |
+            sudo apt-key add -
+          sudo apt update
+          sudo apt -y install postgresql-16 postgresql-server-dev-16
+
+      - name: Clone postgres-tde-ext repository
+        uses: actions/checkout@master
+        with:
+          path: 'src/postgres-tde-ext'
+
+      - name: Change src owner to postgres
+        run: |
+          sudo chmod o+rx ~
+          sudo chown -R postgres:postgres src
+
+      - name: Build postgres-tde-ext
+        run: |
+          sudo -u postgres bash -c 'make USE_PGXS=1'
+          sudo make USE_PGXS=1 install
+        working-directory: src/postgres-tde-ext
