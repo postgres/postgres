@@ -3740,6 +3740,32 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>to_bin</primary>
+        </indexterm>
+        <function>to_bin</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>to_bin</function> ( <type>bigint</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the number to its equivalent two's complement binary
+        representation.
+       </para>
+       <para>
+        <literal>to_bin(2147483647)</literal>
+        <returnvalue>1111111111111111111111111111111</returnvalue>
+       </para>
+       <para>
+        <literal>to_bin(-1234)</literal>
+        <returnvalue>11111111111111111111101100101110</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>to_hex</primary>
         </indexterm>
         <function>to_hex</function> ( <type>integer</type> )
@@ -3750,11 +3776,42 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Converts the number to its equivalent hexadecimal representation.
+        Converts the number to its equivalent two's complement hexadecimal
+        representation.
        </para>
        <para>
         <literal>to_hex(2147483647)</literal>
         <returnvalue>7fffffff</returnvalue>
+       </para>
+       <para>
+        <literal>to_hex(-1234)</literal>
+        <returnvalue>fffffb2e</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>to_oct</primary>
+        </indexterm>
+        <function>to_oct</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>to_oct</function> ( <type>bigint</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the number to its equivalent two's complement octal
+        representation.
+       </para>
+       <para>
+        <literal>to_oct(2147483647)</literal>
+        <returnvalue>17777777777</returnvalue>
+       </para>
+       <para>
+        <literal>to_oct(-1234)</literal>
+        <returnvalue>37777775456</returnvalue>
        </para></entry>
       </row>
 

@@ -4919,53 +4919,87 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	return result;
 }
 
-#define HEXBASE 16
 /*
- * Convert an int32 to a string containing a base 16 (hex) representation of
+ * Workhorse for to_bin, to_oct, and to_hex.  Note that base must be > 1 and <=
+ * 16.
+ */
+static inline text *
+convert_to_base(uint64 value, int base)
+{
+	const char *digits = "0123456789abcdef";
+
+	/* We size the buffer for to_bin's longest possible return value. */
+	char		buf[sizeof(uint64) * BITS_PER_BYTE];
+	char	   *const end = buf + sizeof(buf);
+	char	   *ptr = end;
+
+	Assert(base > 1);
+	Assert(base <= 16);
+
+	do
+	{
+		*--ptr = digits[value % base];
+		value /= base;
+	} while (ptr > buf && value);
+
+	return cstring_to_text_with_len(ptr, end - ptr);
+}
+
+/*
+ * Convert an integer to a string containing a base-2 (binary) representation
+ * of the number.
+ */
+Datum
+to_bin32(PG_FUNCTION_ARGS)
+{
+	uint64		value = (uint32) PG_GETARG_INT32(0);
+
+	PG_RETURN_TEXT_P(convert_to_base(value, 2));
+}
+Datum
+to_bin64(PG_FUNCTION_ARGS)
+{
+	uint64		value = (uint64) PG_GETARG_INT64(0);
+
+	PG_RETURN_TEXT_P(convert_to_base(value, 2));
+}
+
+/*
+ * Convert an integer to a string containing a base-8 (oct) representation of
+ * the number.
+ */
+Datum
+to_oct32(PG_FUNCTION_ARGS)
+{
+	uint64		value = (uint32) PG_GETARG_INT32(0);
+
+	PG_RETURN_TEXT_P(convert_to_base(value, 8));
+}
+Datum
+to_oct64(PG_FUNCTION_ARGS)
+{
+	uint64		value = (uint64) PG_GETARG_INT64(0);
+
+	PG_RETURN_TEXT_P(convert_to_base(value, 8));
+}
+
+/*
+ * Convert an integer to a string containing a base-16 (hex) representation of
  * the number.
  */
 Datum
 to_hex32(PG_FUNCTION_ARGS)
 {
-	uint32		value = (uint32) PG_GETARG_INT32(0);
-	char	   *ptr;
-	const char *digits = "0123456789abcdef";
-	char		buf[32];		/* bigger than needed, but reasonable */
+	uint64		value = (uint32) PG_GETARG_INT32(0);
 
-	ptr = buf + sizeof(buf) - 1;
-	*ptr = '\0';
-
-	do
-	{
-		*--ptr = digits[value % HEXBASE];
-		value /= HEXBASE;
-	} while (ptr > buf && value);
-
-	PG_RETURN_TEXT_P(cstring_to_text(ptr));
+	PG_RETURN_TEXT_P(convert_to_base(value, 16));
 }
-
-/*
- * Convert an int64 to a string containing a base 16 (hex) representation of
- * the number.
- */
 Datum
 to_hex64(PG_FUNCTION_ARGS)
 {
 	uint64		value = (uint64) PG_GETARG_INT64(0);
-	char	   *ptr;
-	const char *digits = "0123456789abcdef";
-	char		buf[32];		/* bigger than needed, but reasonable */
 
-	ptr = buf + sizeof(buf) - 1;
-	*ptr = '\0';
-
-	do
-	{
-		*--ptr = digits[value % HEXBASE];
-		value /= HEXBASE;
-	} while (ptr > buf && value);
-
-	PG_RETURN_TEXT_P(cstring_to_text(ptr));
+	PG_RETURN_TEXT_P(convert_to_base(value, 16));
 }
 
 /*
