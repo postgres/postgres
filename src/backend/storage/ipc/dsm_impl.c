@@ -137,7 +137,7 @@ int			min_dynamic_shared_memory;
  * Arguments:
  *	 op: The operation to be performed.
  *	 handle: The handle of an existing object, or for DSM_OP_CREATE, the
- *	   a new handle the caller wants created.
+ *	   identifier for the new handle the caller wants created.
  *	 request_size: For DSM_OP_CREATE, the requested size.  Otherwise, 0.
  *	 impl_private: Private, implementation-specific data.  Will be a pointer
  *	   to NULL for the first operation on a shared memory segment within this
