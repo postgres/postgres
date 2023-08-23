@@ -5,12 +5,6 @@
 
 
 env:
-  # Source of images / containers
-  GCP_PROJECT: pg-ci-images
-  IMAGE_PROJECT: $GCP_PROJECT
-  CONTAINER_REPO: us-docker.pkg.dev/${GCP_PROJECT}/ci
-  DISK_SIZE: 25
-
   # The lower depth accelerates git clone. Use a bit of depth so that
   # concurrent tasks and retrying older jobs have a chance of working.
   CIRRUS_CLONE_DEPTH: 500
@@ -27,45 +21,6 @@ env:
   PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
   PG_TEST_EXTRA: kerberos ldap ssl load_balance
-
-
-# Define how to run various types of tasks.
-
-# VMs provided by cirrus-ci. Each user has a limited number of "free" credits
-# for testing.
-cirrus_community_vm_template: &cirrus_community_vm_template
-  compute_engine_instance:
-    image_project: $IMAGE_PROJECT
-    image: family/$IMAGE_FAMILY
-    platform: $PLATFORM
-    cpu: $CPUS
-    disk: $DISK_SIZE
-
-
-default_linux_task_template: &linux_task_template
-  env:
-    PLATFORM: linux
-  <<: *cirrus_community_vm_template
-
-
-default_freebsd_task_template: &freebsd_task_template
-  env:
-    PLATFORM: freebsd
-  <<: *cirrus_community_vm_template
-
-
-default_windows_task_template: &windows_task_template
-  env:
-    PLATFORM: windows
-  <<: *cirrus_community_vm_template
-
-
-# macos workers provided by cirrus-ci
-default_macos_task_template: &macos_task_template
-  env:
-    PLATFORM: macos
-  macos_instance:
-    image: $IMAGE
 
 
 # What files to preserve in case tests fail

@@ -1,0 +1,73 @@
+# CI configuration file for CI utilizing cirrus-ci.org
+#
+# For instructions on how to enable the CI integration in a repository and
+# further details, see src/tools/ci/README
+#
+#
+# The actual CI tasks are defined in .cirrus.tasks.yml. To make the compute
+# resources for CI configurable on a repository level, the "final" CI
+# configuration is the combination of:
+#
+# 1) the contents of this file
+#
+# 2) if defined, the contents of the file referenced by the, repository
+#    level, REPO_CI_CONFIG_GIT_URL variable (see
+#    https://cirrus-ci.org/guide/programming-tasks/#fs for the accepted
+#    format)
+#
+# 3) .cirrus.tasks.yml
+#
+# This composition is done by .cirrus.star
+
+
+env:
+  # Source of images / containers
+  GCP_PROJECT: pg-ci-images
+  IMAGE_PROJECT: $GCP_PROJECT
+  CONTAINER_REPO: us-docker.pkg.dev/${GCP_PROJECT}/ci
+  DISK_SIZE: 25
+
+
+# Define how to run various types of tasks.
+
+# VMs provided by cirrus-ci. Each user has a limited number of "free" credits
+# for testing.
+cirrus_community_vm_template: &cirrus_community_vm_template
+  compute_engine_instance:
+    image_project: $IMAGE_PROJECT
+    image: family/$IMAGE_FAMILY
+    platform: $PLATFORM
+    cpu: $CPUS
+    disk: $DISK_SIZE
+
+
+default_linux_task_template: &linux_task_template
+  env:
+    PLATFORM: linux
+  <<: *cirrus_community_vm_template
+
+
+default_freebsd_task_template: &freebsd_task_template
+  env:
+    PLATFORM: freebsd
+  <<: *cirrus_community_vm_template
+
+
+default_windows_task_template: &windows_task_template
+  env:
+    PLATFORM: windows
+  <<: *cirrus_community_vm_template
+
+
+# macos workers provided by cirrus-ci
+default_macos_task_template: &macos_task_template
+  env:
+    PLATFORM: macos
+  macos_instance:
+    image: $IMAGE
+
+
+# Contents of REPO_CI_CONFIG_GIT_URL, if defined, will be inserted here,
+# followed by the contents .cirrus.tasks.yml. This allows
+# REPO_CI_CONFIG_GIT_URL to override how the task types above will be
+# executed, e.g. using a custom compute account or permanent workers.
