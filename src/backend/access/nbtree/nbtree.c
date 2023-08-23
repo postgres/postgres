@@ -151,6 +151,7 @@ bthandler(PG_FUNCTION_ARGS)
 void
 btbuildempty(Relation index)
 {
+	bool		allequalimage = _bt_allequalimage(index, false);
 	Buffer		metabuf;
 	Page		metapage;
 
@@ -169,7 +170,7 @@ btbuildempty(Relation index)
 	START_CRIT_SECTION();
 
 	metapage = BufferGetPage(metabuf);
-	_bt_initmetapage(metapage, P_NONE, 0, _bt_allequalimage(index, false));
+	_bt_initmetapage(metapage, P_NONE, 0, allequalimage);
 	MarkBufferDirty(metabuf);
 	log_newpage_buffer(metabuf, true);
 
