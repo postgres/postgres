@@ -1,0 +1,53 @@
+name: postgresql-16-src-meson
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    name: pg-16-src-meson-test
+    runs-on: ubuntu-22.04
+    steps:
+
+
+      - name: Remove old postgres
+        run: |
+          sudo apt purge postgresql-client-common postgresql-common \
+            postgresql postgresql*
+          sudo rm -rf /var/lib/postgresql /var/log/postgresql /etc/postgresql \
+           /usr/lib/postgresql /usr/include/postgresql /usr/share/postgresql \
+           /etc/postgresql
+          sudo rm -f /usr/bin/pg_config
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreadline6-dev systemtap-sdt-dev \
+            zlib1g-dev libssl-dev libpam0g-dev bison flex \
+            libipc-run-perl -y docbook-xsl docbook-xsl libxml2 libxml2-utils \
+            libxml2-dev libxslt-dev xsltproc libkrb5-dev libldap2-dev \
+            libsystemd-dev gettext tcl-dev libperl-dev pkg-config clang-11 \
+            llvm-11 llvm-11-dev libselinux1-dev python3-dev \
+            uuid-dev liblz4-dev meson ninja-build
+          sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
+          sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
+
+      - name: Clone postgres repository
+        uses: actions/checkout@v2
+        with:
+          repository: 'postgres/postgres'
+          ref: 'REL_16_STABLE'
+          path: 'src'
+
+      - name: Clone postgres-tde-ext repository
+        uses: actions/checkout@v2
+        with:
+          path: 'src/contrib/postgres-tde-ext'
+
+      - name: Include postgres-tde-ext in meson build
+        run: |
+          echo "subdir('postgres-tde-ext')" >> src/contrib/meson.build
+
+      - name: Build postgres
+        run: |
+          meson setup build
+          cd build && ninja
+        working-directory: src
