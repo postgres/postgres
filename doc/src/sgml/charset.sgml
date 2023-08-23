@@ -377,10 +377,13 @@ initdb --locale-provider=icu --icu-locale=en
     variants and customization options.
    </para>
   </sect2>
+
   <sect2 id="icu-locales">
    <title>ICU Locales</title>
+
    <sect3 id="icu-locale-names">
     <title>ICU Locale Names</title>
+
     <para>
      The ICU format for the locale name is a <link
      linkend="icu-language-tag">Language Tag</link>.
@@ -412,16 +415,19 @@ NOTICE:  using standard form "de-DE" for locale "de_DE.utf8"
      linkend="icu-language-tag">language tag</link> instead of relying on the
      transformation.
     </para>
+
     <para>
      A locale with no language name, or the special language name
      <literal>root</literal>, is transformed to have the language
      <literal>und</literal> ("undefined").
     </para>
+
     <para>
      ICU can transform most libc locale names, as well as some other formats,
      into language tags for easier transition to ICU. If a libc locale name is
      used in ICU, it may not have precisely the same behavior as in libc.
     </para>
+
     <para>
      If there is a problem interpreting the locale name, or if the locale name
      represents a language or region that ICU does not recognize, you will see
@@ -442,10 +448,12 @@ CREATE COLLATION
 
    <sect3 id="icu-language-tag">
     <title>Language Tag</title>
+
     <para>
      A language tag, defined in BCP 47, is a standardized identifier used to
      identify languages, regions, and other information about a locale.
     </para>
+
     <para>
      Basic language tags are simply
      <replaceable>language</replaceable><literal>-</literal><replaceable>region</replaceable>;
@@ -457,6 +465,7 @@ CREATE COLLATION
      <literal>ja-JP</literal>, <literal>de</literal>, or
      <literal>fr-CA</literal>.
     </para>
+
     <para>
      Collation settings may be included in the language tag to customize
      collation behavior. ICU allows extensive customization, such as
@@ -464,6 +473,7 @@ CREATE COLLATION
      treatment of digits within text; and many other options to satisfy a
      variety of uses.
     </para>
+
     <para>
      To include this additional collation information in a language tag,
      append <literal>-u</literal>, which indicates there are additional
@@ -477,6 +487,7 @@ CREATE COLLATION
      <literal>-</literal><replaceable>value</replaceable>, which implies a
      value of <literal>true</literal>.
     </para>
+
     <para>
      For example, the language tag <literal>en-US-u-kn-ks-level2</literal>
      means the locale with the English language in the US region, with
@@ -500,6 +511,7 @@ SELECT 'N-45' &lt; 'N-123' COLLATE mycollation5 as result;
 (1 row)
 </screen>
     </para>
+
     <para>
      See <xref linkend="icu-custom-collations"/> for details and additional
      examples of using language tags with custom collation information for the
@@ -507,6 +519,7 @@ SELECT 'N-45' &lt; 'N-123' COLLATE mycollation5 as result;
     </para>
    </sect3>
   </sect2>
+
   <sect2 id="locale-problems">
    <title>Problems</title>
 
@@ -1100,6 +1113,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
     </tip>
    </sect3>
   </sect2>
+
   <sect2 id="icu-custom-collations">
    <title>ICU Custom Collations</title>
 
@@ -1129,8 +1143,10 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
     linkend="icu-collation-settings"/>, or see <xref
     linkend="icu-external-references"/> for more details.
    </para>
+
    <sect3 id="icu-collation-comparison-levels">
     <title>ICU Comparison Levels</title>
+
     <para>
      Comparison of two strings (collation) in ICU is determined by a
      multi-level process, where textual features are grouped into
@@ -1138,6 +1154,7 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
      linkend="icu-collation-settings-table">collation settings</link>. Higher
      levels correspond to finer textual features.
     </para>
+
     <para>
      <xref linkend="icu-collation-levels"/> shows which textual feature
      differences are considered significant when determining equality at the
@@ -1145,7 +1162,7 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
      invisible separator, and as seen in the table, is ignored for at all
      levels of comparison less than <literal>identic</literal>.
     </para>
-    <para>
+
      <table id="icu-collation-levels">
       <title>ICU Collation Levels</title>
       <tgroup cols="8">
@@ -1157,6 +1174,7 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
        <colspec colname="col6" colwidth="1*"/>
        <colspec colname="col7" colwidth="1*"/>
        <colspec colname="col8" colwidth="1*"/>
+
        <thead>
         <row>
          <entry>Level</entry>
@@ -1169,6 +1187,7 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
          <entry><literal>'y' = 'z'</literal></entry>
         </row>
        </thead>
+
        <tbody>
         <row>
          <entry>level1</entry>
@@ -1224,6 +1243,7 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
       </tgroup>
      </table>
 
+    <para>
      At every level, even with full normalization off, basic normalization is
      performed. For example, <literal>'á'</literal> may be composed of the
      code points <literal>U&amp;'\0061\0301'</literal> or the single code
@@ -1233,9 +1253,9 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
      created with <symbol>deterministic</symbol> set to
      <literal>true</literal>.
     </para>
+
     <sect4 id="icu-collation-level-examples">
      <title>Collation Level Examples</title>
-     <para>
 
 <programlisting>
 CREATE COLLATION level3 (provider = icu, deterministic = false, locale = 'und-u-ka-shifted-ks-level3');
@@ -1251,18 +1271,18 @@ SELECT 'x-y' = 'x_y' COLLATE level3; -- true
 SELECT 'x-y' = 'x_y' COLLATE level4; -- false
 </programlisting>
 
-     </para>
     </sect4>
    </sect3>
 
    <sect3 id="icu-collation-settings">
     <title>Collation Settings for an ICU Locale</title>
+
     <para>
      <xref linkend="icu-collation-settings-table"/> shows the available
      collation settings, which can be used as part of a language tag to
      customize a collation.
     </para>
-    <para>
+
      <table id="icu-collation-settings-table">
       <title>ICU Collation Settings</title>
       <tgroup cols="4">
@@ -1270,6 +1290,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
        <colspec colname="col2" colwidth="2*"/>
        <colspec colname="col3" colwidth="2*"/>
        <colspec colname="col4" colwidth="5*"/>
+
        <thead>
         <row>
          <entry>Key</entry>
@@ -1278,6 +1299,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
          <entry>Description</entry>
         </row>
        </thead>
+
        <tbody>
         <row>
          <entry><literal>co</literal></entry>
@@ -1287,6 +1309,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           Collation type. See <xref linkend="icu-external-references"/> for additional options and details.
          </entry>
         </row>
+
         <row>
          <entry><literal>ka</literal></entry>
          <entry><literal>noignore</literal>, <literal>shifted</literal></entry>
@@ -1299,6 +1322,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           character classes are ignored.
          </entry>
         </row>
+
         <row>
          <entry><literal>kb</literal></entry>
          <entry><literal>true</literal>, <literal>false</literal></entry>
@@ -1309,6 +1333,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           before <literal>'aé'</literal>.
          </entry>
         </row>
+
         <row>
          <entry><literal>kc</literal></entry>
          <entry><literal>true</literal>, <literal>false</literal></entry>
@@ -1325,6 +1350,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           </para>
          </entry>
         </row>
+
         <row>
          <entry><literal>kf</literal></entry>
          <entry>
@@ -1339,6 +1365,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           the rules of the locale.
          </entry>
         </row>
+
         <row>
          <entry><literal>kn</literal></entry>
          <entry><literal>true</literal>, <literal>false</literal></entry>
@@ -1350,6 +1377,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           <literal>'id-123'</literal>.
          </entry>
         </row>
+
         <row>
          <entry><literal>kk</literal></entry>
          <entry><literal>true</literal>, <literal>false</literal></entry>
@@ -1373,6 +1401,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           </para>
          </entry>
         </row>
+
         <row>
          <entry><literal>kr</literal></entry>
          <entry>
@@ -1398,6 +1427,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           </para>
          </entry>
         </row>
+
         <row>
          <entry><literal>ks</literal></entry>
          <entry><literal>level1</literal>, <literal>level2</literal>, <literal>level3</literal>, <literal>level4</literal>, <literal>identic</literal></entry>
@@ -1409,6 +1439,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
           <xref linkend="icu-collation-levels"/> for details.
          </entry>
         </row>
+
         <row>
          <entry><literal>kv</literal></entry>
          <entry>
@@ -1429,10 +1460,13 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
        </tbody>
       </tgroup>
      </table>
-      Defaults may depend on locale. The above table is not meant to be
-      complete. See <xref linkend="icu-external-references"/> for additional
-      options and details.
+
+    <para>
+     Defaults may depend on locale. The above table is not meant to be
+     complete. See <xref linkend="icu-external-references"/> for additional
+     options and details.
     </para>
+
     <note>
      <para>
       For many collation settings, you must create the collation with
@@ -1448,7 +1482,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
 
    <sect3 id="icu-locale-examples">
     <title>Examples</title>
-    <para>
+
      <variablelist>
       <varlistentry id="collation-managing-create-icu-de-u-co-phonebk-x-icu">
        <term><literal>CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de-u-co-phonebk');</literal></term>
@@ -1494,22 +1528,21 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
        </listitem>
       </varlistentry>
      </variablelist>
-    </para>
    </sect3>
 
    <sect3 id="icu-external-references">
     <title>External References for ICU</title>
+
     <para>
      This section (<xref linkend="icu-custom-collations"/>) is only a brief
      overview of ICU behavior and language tags. Refer to the following
      documents for technical details, additional options, and new behavior:
     </para>
+
     <itemizedlist>
      <listitem>
       <para>
-       <ulink
-           url="https://www.unicode.org/reports/tr35/tr35-collation.html">Unicode
-       Technical Standard #35</ulink>
+       <ulink url="https://www.unicode.org/reports/tr35/tr35-collation.html">Unicode Technical Standard #35</ulink>
       </para>
      </listitem>
      <listitem>
@@ -1519,8 +1552,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
      </listitem>
      <listitem>
       <para>
-       <ulink url="https://github.com/unicode-org/cldr/blob/master/common/bcp47/collation.xml">CLDR
-       repository</ulink>
+       <ulink url="https://github.com/unicode-org/cldr/blob/master/common/bcp47/collation.xml">CLDR repository</ulink>
       </para>
      </listitem>
      <listitem>
