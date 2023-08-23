@@ -149,7 +149,6 @@ task:
     image: family/pg-ci-freebsd-13
     platform: freebsd
     cpu: $CPUS
-    memory: 4G
     disk: 50
 
   sysinfo_script: |
@@ -291,7 +290,6 @@ task:
     image: family/pg-ci-bullseye
     platform: linux
     cpu: $CPUS
-    memory: 4G
 
   ccache_cache:
     folder: ${CCACHE_DIR}
@@ -558,7 +556,6 @@ task:
     image: family/pg-ci-windows-ci-vs-2019
     platform: windows
     cpu: $CPUS
-    memory: 4G
 
   setup_additional_packages_script: |
     REM choco install -y --no-progress ...
@@ -606,7 +603,6 @@ task:
     image: family/pg-ci-windows-ci-mingw64
     platform: windows
     cpu: $CPUS
-    memory: 4G
 
   env:
     TEST_JOBS: 4 # higher concurrency causes occasional failures
