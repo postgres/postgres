@@ -40,99 +40,17 @@
    </itemizedlist>
 
    All other language interfaces are external projects and are distributed
-   separately. <xref linkend="language-interface-table"/> includes a list of
-   some of these projects. Note that some of these packages might not be
-   released under the same license as <productname>PostgreSQL</productname>. For more
-   information on each language interface, including licensing terms, refer to
-   its website and documentation.
+   separately. A
+   <ulink url="https://wiki.postgresql.org/wiki/List_of_drivers">list of language interfaces</ulink>
+   is maintained on the PostgreSQL wiki. Note that some of these packages are
+   not released under the same license as <productname>PostgreSQL</productname>.
+   For more information on each language interface, including licensing terms,
+   refer to its website and documentation.
   </para>
 
-  <table id="language-interface-table">
-   <title>Externally Maintained Client Interfaces</title>
-
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Language</entry>
-      <entry>Comments</entry>
-      <entry>Website</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry>DBD::Pg</entry>
-      <entry>Perl</entry>
-      <entry>Perl DBI driver</entry>
-      <entry><ulink url="https://metacpan.org/dist/DBD-Pg"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>JDBC</entry>
-      <entry>Java</entry>
-      <entry>Type 4 JDBC driver</entry>
-      <entry><ulink url="https://jdbc.postgresql.org/"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>libpqxx</entry>
-      <entry>C++</entry>
-      <entry>C++ interface</entry>
-      <entry><ulink url="https://pqxx.org/"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>node-postgres</entry>
-      <entry>JavaScript</entry>
-      <entry>Node.js driver</entry>
-      <entry><ulink url="https://node-postgres.com/"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>Npgsql</entry>
-      <entry>.NET</entry>
-      <entry>.NET data provider</entry>
-      <entry><ulink url="https://www.npgsql.org/"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>pgtcl</entry>
-      <entry>Tcl</entry>
-      <entry></entry>
-      <entry><ulink url="https://github.com/flightaware/Pgtcl"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>pgtclng</entry>
-      <entry>Tcl</entry>
-      <entry></entry>
-      <entry><ulink url="https://sourceforge.net/projects/pgtclng/"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>pq</entry>
-      <entry>Go</entry>
-      <entry>Pure Go driver for Go's database/sql</entry>
-      <entry><ulink url="https://github.com/lib/pq"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>psqlODBC</entry>
-      <entry>ODBC</entry>
-      <entry>ODBC driver</entry>
-      <entry><ulink url="https://odbc.postgresql.org/"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>psycopg</entry>
-      <entry>Python</entry>
-      <entry>DB API 2.0-compliant</entry>
-      <entry><ulink url="https://www.psycopg.org/"></ulink></entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+  <para>
+    <ulink url="https://wiki.postgresql.org/wiki/List_of_drivers"></ulink>
+  </para>
  </sect1>
 
  <sect1 id="external-admin-tools">
@@ -170,58 +88,18 @@
   <para>
    In addition, there are a number of procedural languages that are developed
    and maintained outside the core <productname>PostgreSQL</productname>
-   distribution. <xref linkend="pl-language-table"/> lists some of these
-   packages. Note that some of these projects might not be released under the same
-   license as <productname>PostgreSQL</productname>. For more information on each
-   procedural language, including licensing information, refer to its website
+   distribution. A list of
+   <ulink url="https://wiki.postgresql.org/wiki/PL_Matrix">procedural languages</ulink>
+   is maintained on the PostgreSQL wiki. Note that some of these projects are
+   not released under the same license as <productname>PostgreSQL</productname>.
+   For more information on each procedural language, including licensing
+   information, refer to its website
    and documentation.
   </para>
 
-  <table id="pl-language-table">
-   <title>Externally Maintained Procedural Languages</title>
-
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Language</entry>
-      <entry>Website</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry>PL/Java</entry>
-      <entry>Java</entry>
-      <entry><ulink url="https://tada.github.io/pljava/"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>PL/Lua</entry>
-      <entry>Lua</entry>
-      <entry><ulink url="https://github.com/pllua/pllua-ng"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>PL/R</entry>
-      <entry>R</entry>
-      <entry><ulink url="https://github.com/postgres-plr/plr"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>PL/sh</entry>
-      <entry>Unix shell</entry>
-      <entry><ulink url="https://github.com/petere/plsh"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>PL/v8</entry>
-      <entry>JavaScript</entry>
-      <entry><ulink url="https://github.com/plv8/plv8"></ulink></entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+  <para>
+   <ulink url="https://wiki.postgresql.org/wiki/PL_Matrix"></ulink>
+  </para>
  </sect1>
 
  <sect1 id="external-extensions">
