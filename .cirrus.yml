@@ -9,6 +9,7 @@ env:
   GCP_PROJECT: pg-ci-images
   IMAGE_PROJECT: $GCP_PROJECT
   CONTAINER_REPO: us-docker.pkg.dev/${GCP_PROJECT}/ci
+  DISK_SIZE: 25
 
   # The lower depth accelerates git clone. Use a bit of depth so that
   # concurrent tasks and retrying older jobs have a chance of working.
@@ -26,6 +27,45 @@ env:
   PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
   PG_TEST_EXTRA: kerberos ldap ssl load_balance
+
+
+# Define how to run various types of tasks.
+
+# VMs provided by cirrus-ci. Each user has a limited number of "free" credits
+# for testing.
+cirrus_community_vm_template: &cirrus_community_vm_template
+  compute_engine_instance:
+    image_project: $IMAGE_PROJECT
+    image: family/$IMAGE_FAMILY
+    platform: $PLATFORM
+    cpu: $CPUS
+    disk: $DISK_SIZE
+
+
+default_linux_task_template: &linux_task_template
+  env:
+    PLATFORM: linux
+  <<: *cirrus_community_vm_template
+
+
+default_freebsd_task_template: &freebsd_task_template
+  env:
+    PLATFORM: freebsd
+  <<: *cirrus_community_vm_template
+
+
+default_windows_task_template: &windows_task_template
+  env:
+    PLATFORM: windows
+  <<: *cirrus_community_vm_template
+
+
+# macos workers provided by cirrus-ci
+default_macos_task_template: &macos_task_template
+  env:
+    PLATFORM: macos
+  macos_instance:
+    image: $IMAGE
 
 
 # What files to preserve in case tests fail
@@ -136,20 +176,17 @@ task:
     CPUS: 2
     BUILD_JOBS: 3
     TEST_JOBS: 3
+    IMAGE_FAMILY: pg-ci-freebsd-13
+    DISK_SIZE: 50
 
     CCACHE_DIR: /tmp/ccache_dir
     CPPFLAGS: -DRELCACHE_FORCE_RELEASE -DCOPY_PARSE_PLAN_TREES -DWRITE_READ_PARSE_PLAN_TREES -DRAW_EXPRESSION_COVERAGE_TEST -DENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
     CFLAGS: -Og -ggdb
 
+  <<: *freebsd_task_template
+
   depends_on: SanityCheck
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*freebsd.*'
-
-  compute_engine_instance:
-    image_project: $IMAGE_PROJECT
-    image: family/pg-ci-freebsd-13
-    platform: freebsd
-    cpu: $CPUS
-    disk: 50
 
   sysinfo_script: |
     id
@@ -250,6 +287,7 @@ task:
     CPUS: 4
     BUILD_JOBS: 4
     TEST_JOBS: 8 # experimentally derived to be a decent choice
+    IMAGE_FAMILY: pg-ci-bullseye
 
     CCACHE_DIR: /tmp/ccache_dir
     DEBUGINFOD_URLS: "https://debuginfod.debian.net"
@@ -282,14 +320,10 @@ task:
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
     LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
 
+  <<: *linux_task_template
+
   depends_on: SanityCheck
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*linux.*'
-
-  compute_engine_instance:
-    image_project: $IMAGE_PROJECT
-    image: family/pg-ci-bullseye
-    platform: linux
-    cpu: $CPUS
 
   ccache_cache:
     folder: ${CCACHE_DIR}
@@ -430,6 +464,7 @@ task:
     # work OK. See
     # https://postgr.es/m/20220927040208.l3shfcidovpzqxfh%40awork3.anarazel.de
     TEST_JOBS: 8
+    IMAGE: ghcr.io/cirruslabs/macos-ventura-base:latest
 
     CIRRUS_WORKING_DIR: ${HOME}/pgsql/
     CCACHE_DIR: ${HOME}/ccache
@@ -440,11 +475,10 @@ task:
     CFLAGS: -Og -ggdb
     CXXFLAGS: -Og -ggdb
 
+  <<: *macos_task_template
+
   depends_on: SanityCheck
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(macos|darwin|osx).*'
-
-  macos_instance:
-    image: ghcr.io/cirruslabs/macos-ventura-base:latest
 
   sysinfo_script: |
     id
@@ -524,6 +558,7 @@ WINDOWS_ENVIRONMENT_BASE: &WINDOWS_ENVIRONMENT_BASE
     # Avoids port conflicts between concurrent tap test runs
     PG_TEST_USE_UNIX_SOCKETS: 1
     PG_REGRESS_SOCK_DIR: "c:/cirrus/"
+    DISK_SIZE: 50
 
   sysinfo_script: |
     chcp
@@ -547,15 +582,12 @@ task:
     # given that it explicitly prevents crash dumps from working...
     # 0x8001 is SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX
     CIRRUS_WINDOWS_ERROR_MODE: 0x8001
+    IMAGE_FAMILY: pg-ci-windows-ci-vs-2019
+
+  <<: *windows_task_template
 
   depends_on: SanityCheck
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
-
-  compute_engine_instance:
-    image_project: $IMAGE_PROJECT
-    image: family/pg-ci-windows-ci-vs-2019
-    platform: windows
-    cpu: $CPUS
 
   setup_additional_packages_script: |
     REM choco install -y --no-progress ...
@@ -598,12 +630,6 @@ task:
   # otherwise it'll be sorted before other tasks
   depends_on: SanityCheck
 
-  compute_engine_instance:
-    image_project: $IMAGE_PROJECT
-    image: family/pg-ci-windows-ci-mingw64
-    platform: windows
-    cpu: $CPUS
-
   env:
     TEST_JOBS: 4 # higher concurrency causes occasional failures
     CCACHE_DIR: C:/msys64/ccache
@@ -617,6 +643,9 @@ task:
     # Start bash in current working directory
     CHERE_INVOKING: 1
     BASH: C:\msys64\usr\bin\bash.exe -l
+    IMAGE_FAMILY: pg-ci-windows-ci-mingw64
+
+  <<: *windows_task_template
 
   ccache_cache:
     folder: ${CCACHE_DIR}
