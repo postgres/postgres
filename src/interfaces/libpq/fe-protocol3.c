@@ -34,8 +34,13 @@
  * than a couple of kilobytes).
  */
 #define VALID_LONG_MESSAGE_TYPE(id) \
-	((id) == 'T' || (id) == 'D' || (id) == 'd' || (id) == 'V' || \
-	 (id) == 'E' || (id) == 'N' || (id) == 'A')
+	((id) == PqMsg_CopyData || \
+	 (id) == PqMsg_DataRow || \
+	 (id) == PqMsg_ErrorResponse || \
+	 (id) == PqMsg_FunctionCallResponse || \
+	 (id) == PqMsg_NoticeResponse || \
+	 (id) == PqMsg_NotificationResponse || \
+	 (id) == PqMsg_RowDescription)
 
 
 static void handleSyncLoss(PGconn *conn, char id, int msgLength);
@@ -140,12 +145,12 @@ pqParseInput3(PGconn *conn)
 		 * from config file due to SIGHUP), but otherwise we hold off until
 		 * BUSY state.
 		 */
-		if (id == 'A')
+		if (id == PqMsg_NotificationResponse)
 		{
 			if (getNotify(conn))
 				return;
 		}
-		else if (id == 'N')
+		else if (id == PqMsg_NoticeResponse)
 		{
 			if (pqGetErrorNotice3(conn, false))
 				return;
@@ -165,12 +170,12 @@ pqParseInput3(PGconn *conn)
 			 * it is about to close the connection, so we don't want to just
 			 * discard it...)
 			 */
-			if (id == 'E')
+			if (id == PqMsg_ErrorResponse)
 			{
 				if (pqGetErrorNotice3(conn, false /* treat as notice */ ))
 					return;
 			}
-			else if (id == 'S')
+			else if (id == PqMsg_ParameterStatus)
 			{
 				if (getParameterStatus(conn))
 					return;
@@ -192,7 +197,7 @@ pqParseInput3(PGconn *conn)
 			 */
 			switch (id)
 			{
-				case 'C':		/* command complete */
+				case PqMsg_CommandComplete:
 					if (pqGets(&conn->workBuffer, conn))
 						return;
 					if (!pgHavePendingResult(conn))
@@ -210,13 +215,12 @@ pqParseInput3(PGconn *conn)
 								CMDSTATUS_LEN);
 					conn->asyncStatus = PGASYNC_READY;
 					break;
-				case 'E':		/* error return */
+				case PqMsg_ErrorResponse:
 					if (pqGetErrorNotice3(conn, true))
 						return;
 					conn->asyncStatus = PGASYNC_READY;
 					break;
-				case 'Z':		/* sync response, backend is ready for new
-								 * query */
+				case PqMsg_ReadyForQuery:
 					if (getReadyForQuery(conn))
 						return;
 					if (conn->pipelineStatus != PQ_PIPELINE_OFF)
@@ -246,7 +250,7 @@ pqParseInput3(PGconn *conn)
 						conn->asyncStatus = PGASYNC_IDLE;
 					}
 					break;
-				case 'I':		/* empty query */
+				case PqMsg_EmptyQueryResponse:
 					if (!pgHavePendingResult(conn))
 					{
 						conn->result = PQmakeEmptyPGresult(conn,
@@ -259,7 +263,7 @@ pqParseInput3(PGconn *conn)
 					}
 					conn->asyncStatus = PGASYNC_READY;
 					break;
-				case '1':		/* Parse Complete */
+				case PqMsg_ParseComplete:
 					/* If we're doing PQprepare, we're done; else ignore */
 					if (conn->cmd_queue_head &&
 						conn->cmd_queue_head->queryclass == PGQUERY_PREPARE)
@@ -277,10 +281,10 @@ pqParseInput3(PGconn *conn)
 						conn->asyncStatus = PGASYNC_READY;
 					}
 					break;
-				case '2':		/* Bind Complete */
+				case PqMsg_BindComplete:
 					/* Nothing to do for this message type */
 					break;
-				case '3':		/* Close Complete */
+				case PqMsg_CloseComplete:
 					/* If we're doing PQsendClose, we're done; else ignore */
 					if (conn->cmd_queue_head &&
 						conn->cmd_queue_head->queryclass == PGQUERY_CLOSE)
@@ -298,11 +302,11 @@ pqParseInput3(PGconn *conn)
 						conn->asyncStatus = PGASYNC_READY;
 					}
 					break;
-				case 'S':		/* parameter status */
+				case PqMsg_ParameterStatus:
 					if (getParameterStatus(conn))
 						return;
 					break;
-				case 'K':		/* secret key data from the backend */
+				case PqMsg_BackendKeyData:
 
 					/*
 					 * This is expected only during backend startup, but it's
@@ -314,7 +318,7 @@ pqParseInput3(PGconn *conn)
 					if (pqGetInt(&(conn->be_key), 4, conn))
 						return;
 					break;
-				case 'T':		/* Row Description */
+				case PqMsg_RowDescription:
 					if (conn->error_result ||
 						(conn->result != NULL &&
 						 conn->result->resultStatus == PGRES_FATAL_ERROR))
@@ -346,7 +350,7 @@ pqParseInput3(PGconn *conn)
 						return;
 					}
 					break;
-				case 'n':		/* No Data */
+				case PqMsg_NoData:
 
 					/*
 					 * NoData indicates that we will not be seeing a
@@ -374,11 +378,11 @@ pqParseInput3(PGconn *conn)
 						conn->asyncStatus = PGASYNC_READY;
 					}
 					break;
-				case 't':		/* Parameter Description */
+				case PqMsg_ParameterDescription:
 					if (getParamDescriptions(conn, msgLength))
 						return;
 					break;
-				case 'D':		/* Data Row */
+				case PqMsg_DataRow:
 					if (conn->result != NULL &&
 						conn->result->resultStatus == PGRES_TUPLES_OK)
 					{
@@ -405,24 +409,24 @@ pqParseInput3(PGconn *conn)
 						conn->inCursor += msgLength;
 					}
 					break;
-				case 'G':		/* Start Copy In */
+				case PqMsg_CopyInResponse:
 					if (getCopyStart(conn, PGRES_COPY_IN))
 						return;
 					conn->asyncStatus = PGASYNC_COPY_IN;
 					break;
-				case 'H':		/* Start Copy Out */
+				case PqMsg_CopyOutResponse:
 					if (getCopyStart(conn, PGRES_COPY_OUT))
 						return;
 					conn->asyncStatus = PGASYNC_COPY_OUT;
 					conn->copy_already_done = 0;
 					break;
-				case 'W':		/* Start Copy Both */
+				case PqMsg_CopyBothResponse:
 					if (getCopyStart(conn, PGRES_COPY_BOTH))
 						return;
 					conn->asyncStatus = PGASYNC_COPY_BOTH;
 					conn->copy_already_done = 0;
 					break;
-				case 'd':		/* Copy Data */
+				case PqMsg_CopyData:
 
 					/*
 					 * If we see Copy Data, just silently drop it.  This would
@@ -431,7 +435,7 @@ pqParseInput3(PGconn *conn)
 					 */
 					conn->inCursor += msgLength;
 					break;
-				case 'c':		/* Copy Done */
+				case PqMsg_CopyDone:
 
 					/*
 					 * If we see Copy Done, just silently drop it.  This is
@@ -1692,21 +1696,21 @@ getCopyDataMessage(PGconn *conn)
 		 */
 		switch (id)
 		{
-			case 'A':			/* NOTIFY */
+			case PqMsg_NotificationResponse:
 				if (getNotify(conn))
 					return 0;
 				break;
-			case 'N':			/* NOTICE */
+			case PqMsg_NoticeResponse:
 				if (pqGetErrorNotice3(conn, false))
 					return 0;
 				break;
-			case 'S':			/* ParameterStatus */
+			case PqMsg_ParameterStatus:
 				if (getParameterStatus(conn))
 					return 0;
 				break;
-			case 'd':			/* Copy Data, pass it back to caller */
+			case PqMsg_CopyData:
 				return msgLength;
-			case 'c':
+			case PqMsg_CopyDone:
 
 				/*
 				 * If this is a CopyDone message, exit COPY_OUT mode and let
@@ -1929,7 +1933,7 @@ pqEndcopy3(PGconn *conn)
 	if (conn->asyncStatus == PGASYNC_COPY_IN ||
 		conn->asyncStatus == PGASYNC_COPY_BOTH)
 	{
-		if (pqPutMsgStart('c', conn) < 0 ||
+		if (pqPutMsgStart(PqMsg_CopyDone, conn) < 0 ||
 			pqPutMsgEnd(conn) < 0)
 			return 1;
 
@@ -1940,7 +1944,7 @@ pqEndcopy3(PGconn *conn)
 		if (conn->cmd_queue_head &&
 			conn->cmd_queue_head->queryclass != PGQUERY_SIMPLE)
 		{
-			if (pqPutMsgStart('S', conn) < 0 ||
+			if (pqPutMsgStart(PqMsg_Sync, conn) < 0 ||
 				pqPutMsgEnd(conn) < 0)
 				return 1;
 		}
@@ -2023,7 +2027,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 
 	/* PQfn already validated connection state */
 
-	if (pqPutMsgStart('F', conn) < 0 || /* function call msg */
+	if (pqPutMsgStart(PqMsg_FunctionCall, conn) < 0 ||
 		pqPutInt(fnid, 4, conn) < 0 ||	/* function id */
 		pqPutInt(1, 2, conn) < 0 || /* # of format codes */
 		pqPutInt(1, 2, conn) < 0 || /* format code: BINARY */

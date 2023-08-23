@@ -174,7 +174,7 @@ ReceiveCopyBegin(CopyFromState cstate)
 	int16		format = (cstate->opts.binary ? 1 : 0);
 	int			i;
 
-	pq_beginmessage(&buf, 'G');
+	pq_beginmessage(&buf, PqMsg_CopyInResponse);
 	pq_sendbyte(&buf, format);	/* overall format */
 	pq_sendint16(&buf, natts);
 	for (i = 0; i < natts; i++)
@@ -279,13 +279,13 @@ CopyGetData(CopyFromState cstate, void *databuf, int minread, int maxread)
 					/* Validate message type and set packet size limit */
 					switch (mtype)
 					{
-						case 'd':	/* CopyData */
+						case PqMsg_CopyData:
 							maxmsglen = PQ_LARGE_MESSAGE_LIMIT;
 							break;
-						case 'c':	/* CopyDone */
-						case 'f':	/* CopyFail */
-						case 'H':	/* Flush */
-						case 'S':	/* Sync */
+						case PqMsg_CopyDone:
+						case PqMsg_CopyFail:
+						case PqMsg_Flush:
+						case PqMsg_Sync:
 							maxmsglen = PQ_SMALL_MESSAGE_LIMIT;
 							break;
 						default:
@@ -305,20 +305,20 @@ CopyGetData(CopyFromState cstate, void *databuf, int minread, int maxread)
 					/* ... and process it */
 					switch (mtype)
 					{
-						case 'd':	/* CopyData */
+						case PqMsg_CopyData:
 							break;
-						case 'c':	/* CopyDone */
+						case PqMsg_CopyDone:
 							/* COPY IN correctly terminated by frontend */
 							cstate->raw_reached_eof = true;
 							return bytesread;
-						case 'f':	/* CopyFail */
+						case PqMsg_CopyFail:
 							ereport(ERROR,
 									(errcode(ERRCODE_QUERY_CANCELED),
 									 errmsg("COPY from stdin failed: %s",
 											pq_getmsgstring(cstate->fe_msgbuf))));
 							break;
-						case 'H':	/* Flush */
-						case 'S':	/* Sync */
+						case PqMsg_Flush:
+						case PqMsg_Sync:
 
 							/*
 							 * Ignore Flush/Sync for the convenience of client

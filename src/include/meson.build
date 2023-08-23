@@ -94,6 +94,7 @@ install_headers(
 
 install_headers(
   'libpq/pqcomm.h',
+  'libpq/protocol.h',
   install_dir: dir_include_internal / 'libpq',
 )
 

@@ -2281,7 +2281,7 @@ NotifyMyFrontEnd(const char *channel, const char *payload, int32 srcPid)
 	{
 		StringInfoData buf;
 
-		pq_beginmessage(&buf, 'A');
+		pq_beginmessage(&buf, PqMsg_NotificationResponse);
 		pq_sendint32(&buf, srcPid);
 		pq_sendstring(&buf, channel);
 		pq_sendstring(&buf, payload);

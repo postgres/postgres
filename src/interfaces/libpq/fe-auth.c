@@ -586,7 +586,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 	/*
 	 * Build a SASLInitialResponse message, and send it.
 	 */
-	if (pqPutMsgStart('p', conn))
+	if (pqPutMsgStart(PqMsg_SASLInitialResponse, conn))
 		goto error;
 	if (pqPuts(selected_mechanism, conn))
 		goto error;

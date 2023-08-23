@@ -2593,7 +2593,7 @@ ReportGUCOption(struct config_generic *record)
 	{
 		StringInfoData msgbuf;
 
-		pq_beginmessage(&msgbuf, 'S');
+		pq_beginmessage(&msgbuf, PqMsg_ParameterStatus);
 		pq_sendstring(&msgbuf, record->name);
 		pq_sendstring(&msgbuf, val);
 		pq_endmessage(&msgbuf);

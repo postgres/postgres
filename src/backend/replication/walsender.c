@@ -603,7 +603,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	dest->rStartup(dest, CMD_SELECT, tupdesc);
 
 	/* Send a DataRow message */
-	pq_beginmessage(&buf, 'D');
+	pq_beginmessage(&buf, PqMsg_DataRow);
 	pq_sendint16(&buf, 2);		/* # of columns */
 	len = strlen(histfname);
 	pq_sendint32(&buf, len);	/* col1 len */
@@ -801,7 +801,7 @@ StartReplication(StartReplicationCmd *cmd)
 		WalSndSetState(WALSNDSTATE_CATCHUP);
 
 		/* Send a CopyBothResponse message, and start streaming */
-		pq_beginmessage(&buf, 'W');
+		pq_beginmessage(&buf, PqMsg_CopyBothResponse);
 		pq_sendbyte(&buf, 0);
 		pq_sendint16(&buf, 0);
 		pq_endmessage(&buf);
@@ -1294,7 +1294,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	WalSndSetState(WALSNDSTATE_CATCHUP);
 
 	/* Send a CopyBothResponse message, and start streaming */
-	pq_beginmessage(&buf, 'W');
+	pq_beginmessage(&buf, PqMsg_CopyBothResponse);
 	pq_sendbyte(&buf, 0);
 	pq_sendint16(&buf, 0);
 	pq_endmessage(&buf);
@@ -1923,11 +1923,11 @@ ProcessRepliesIfAny(void)
 		/* Validate message type and set packet size limit */
 		switch (firstchar)
 		{
-			case 'd':
+			case PqMsg_CopyData:
 				maxmsglen = PQ_LARGE_MESSAGE_LIMIT;
 				break;
-			case 'c':
-			case 'X':
+			case PqMsg_CopyDone:
+			case PqMsg_Terminate:
 				maxmsglen = PQ_SMALL_MESSAGE_LIMIT;
 				break;
 			default:
@@ -1955,7 +1955,7 @@ ProcessRepliesIfAny(void)
 				/*
 				 * 'd' means a standby reply wrapped in a CopyData packet.
 				 */
-			case 'd':
+			case PqMsg_CopyData:
 				ProcessStandbyMessage();
 				received = true;
 				break;
@@ -1964,7 +1964,7 @@ ProcessRepliesIfAny(void)
 				 * CopyDone means the standby requested to finish streaming.
 				 * Reply with CopyDone, if we had not sent that already.
 				 */
-			case 'c':
+			case PqMsg_CopyDone:
 				if (!streamingDoneSending)
 				{
 					pq_putmessage_noblock('c', NULL, 0);
@@ -1978,7 +1978,7 @@ ProcessRepliesIfAny(void)
 				/*
 				 * 'X' means that the standby is closing down the socket.
 				 */
-			case 'X':
+			case PqMsg_Terminate:
 				proc_exit(0);
 
 			default:

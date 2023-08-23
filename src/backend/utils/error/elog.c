@@ -3465,7 +3465,10 @@ send_message_to_frontend(ErrorData *edata)
 		char		tbuf[12];
 
 		/* 'N' (Notice) is for nonfatal conditions, 'E' is for errors */
-		pq_beginmessage(&msgbuf, (edata->elevel < ERROR) ? 'N' : 'E');
+		if (edata->elevel < ERROR)
+			pq_beginmessage(&msgbuf, PqMsg_NoticeResponse);
+		else
+			pq_beginmessage(&msgbuf, PqMsg_ErrorResponse);
 
 		sev = error_severity(edata->elevel);
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY);

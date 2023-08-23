@@ -69,7 +69,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 {
 	StringInfoData buf;
 
-	pq_beginmessage(&buf, 'V');
+	pq_beginmessage(&buf, PqMsg_FunctionCallResponse);
 
 	if (isnull)
 	{

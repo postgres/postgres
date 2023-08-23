@@ -614,6 +614,8 @@ sub CopyIncludeFiles
 		'src/include/', 'c.h', 'port.h', 'postgres_fe.h');
 	lcopy('src/include/libpq/pqcomm.h', $target . '/include/internal/libpq/')
 	  || croak 'Could not copy pqcomm.h';
+	lcopy('src/include/libpq/protocol.h', $target . '/include/internal/libpq/')
+	  || croak 'Could not copy protocol.h';
 
 	CopyFiles(
 		'Server headers',
