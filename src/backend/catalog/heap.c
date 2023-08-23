@@ -697,7 +697,7 @@ void
 InsertPgAttributeTuples(Relation pg_attribute_rel,
 						TupleDesc tupdesc,
 						Oid new_rel_oid,
-						Datum *attoptions,
+						const Datum *attoptions,
 						CatalogIndexState indstate)
 {
 	TupleTableSlot **slot;

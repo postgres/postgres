@@ -106,20 +106,20 @@ typedef struct
 /* non-export function prototypes */
 static bool relationHasPrimaryKey(Relation rel);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
-										  IndexInfo *indexInfo,
-										  List *indexColNames,
+										  const IndexInfo *indexInfo,
+										  const List *indexColNames,
 										  Oid accessMethodObjectId,
-										  Oid *collationObjectId,
-										  Oid *classObjectId);
+										  const Oid *collationObjectId,
+										  const Oid *classObjectId);
 static void InitializeAttributeOids(Relation indexRelation,
 									int numatts, Oid indexoid);
-static void AppendAttributeTuples(Relation indexRelation, Datum *attopts);
+static void AppendAttributeTuples(Relation indexRelation, const Datum *attopts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 								Oid parentIndexId,
-								IndexInfo *indexInfo,
-								Oid *collationOids,
-								Oid *classOids,
-								int16 *coloptions,
+								const IndexInfo *indexInfo,
+								const Oid *collationOids,
+								const Oid *classOids,
+								const int16 *coloptions,
 								bool primary,
 								bool isexclusion,
 								bool immediate,
@@ -205,9 +205,9 @@ relationHasPrimaryKey(Relation rel)
  */
 void
 index_check_primary_key(Relation heapRel,
-						IndexInfo *indexInfo,
+						const IndexInfo *indexInfo,
 						bool is_alter_table,
-						IndexStmt *stmt)
+						const IndexStmt *stmt)
 {
 	int			i;
 
@@ -284,11 +284,11 @@ index_check_primary_key(Relation heapRel,
  */
 static TupleDesc
 ConstructTupleDescriptor(Relation heapRelation,
-						 IndexInfo *indexInfo,
-						 List *indexColNames,
+						 const IndexInfo *indexInfo,
+						 const List *indexColNames,
 						 Oid accessMethodObjectId,
-						 Oid *collationObjectId,
-						 Oid *classObjectId)
+						 const Oid *collationObjectId,
+						 const Oid *classObjectId)
 {
 	int			numatts = indexInfo->ii_NumIndexAttrs;
 	int			numkeyatts = indexInfo->ii_NumIndexKeyAttrs;
@@ -516,7 +516,7 @@ InitializeAttributeOids(Relation indexRelation,
  * ----------------------------------------------------------------
  */
 static void
-AppendAttributeTuples(Relation indexRelation, Datum *attopts)
+AppendAttributeTuples(Relation indexRelation, const Datum *attopts)
 {
 	Relation	pg_attribute;
 	CatalogIndexState indstate;
@@ -551,10 +551,10 @@ static void
 UpdateIndexRelation(Oid indexoid,
 					Oid heapoid,
 					Oid parentIndexId,
-					IndexInfo *indexInfo,
-					Oid *collationOids,
-					Oid *classOids,
-					int16 *coloptions,
+					const IndexInfo *indexInfo,
+					const Oid *collationOids,
+					const Oid *classOids,
+					const int16 *coloptions,
 					bool primary,
 					bool isexclusion,
 					bool immediate,
@@ -718,12 +718,12 @@ index_create(Relation heapRelation,
 			 Oid parentConstraintId,
 			 RelFileNumber relFileNumber,
 			 IndexInfo *indexInfo,
-			 List *indexColNames,
+			 const List *indexColNames,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
-			 Oid *collationObjectId,
-			 Oid *classObjectId,
-			 int16 *coloptions,
+			 const Oid *collationObjectId,
+			 const Oid *classObjectId,
+			 const int16 *coloptions,
 			 Datum reloptions,
 			 bits16 flags,
 			 bits16 constr_flags,
@@ -1908,7 +1908,7 @@ ObjectAddress
 index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,
 						Oid parentConstraintId,
-						IndexInfo *indexInfo,
+						const IndexInfo *indexInfo,
 						const char *constraintName,
 						char constraintType,
 						bits16 constr_flags,
@@ -2537,10 +2537,10 @@ BuildDummyIndexInfo(Relation index)
  * Use build_attrmap_by_name(index2, index1) to build the attmap.
  */
 bool
-CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
-				 Oid *collations1, Oid *collations2,
-				 Oid *opfamilies1, Oid *opfamilies2,
-				 AttrMap *attmap)
+CompareIndexInfo(const IndexInfo *info1, const IndexInfo *info2,
+				 const Oid *collations1, const Oid *collations2,
+				 const Oid *opfamilies1, const Oid *opfamilies2,
+				 const AttrMap *attmap)
 {
 	int			i;
 
@@ -3559,7 +3559,7 @@ IndexGetRelation(Oid indexId, bool missing_ok)
  */
 void
 reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
-			  ReindexParams *params)
+			  const ReindexParams *params)
 {
 	Relation	iRel,
 				heapRelation;
@@ -3872,7 +3872,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
  * index rebuild.
  */
 bool
-reindex_relation(Oid relid, int flags, ReindexParams *params)
+reindex_relation(Oid relid, int flags, const ReindexParams *params)
 {
 	Relation	rel;
 	Oid			toast_relid;
@@ -4177,9 +4177,9 @@ SerializeReindexState(Size maxsize, char *start_address)
  *		Restore reindex state in a parallel worker.
  */
 void
-RestoreReindexState(void *reindexstate)
+RestoreReindexState(const void *reindexstate)
 {
-	SerializedReindexState *sistate = (SerializedReindexState *) reindexstate;
+	const SerializedReindexState *sistate = (const SerializedReindexState *) reindexstate;
 	int			c = 0;
 	MemoryContext oldcontext;
 

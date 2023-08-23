@@ -2831,7 +2831,7 @@ TSConfigIsVisible(Oid cfgid)
  * *nspname_p is set to NULL if there is no explicit schema name.
  */
 void
-DeconstructQualifiedName(List *names,
+DeconstructQualifiedName(const List *names,
 						 char **nspname_p,
 						 char **objname_p)
 {
@@ -3017,7 +3017,7 @@ CheckSetNamespace(Oid oldNspOid, Oid nspOid)
  * if we have to create or clean out the temp namespace.
  */
 Oid
-QualifiedNameGetCreationNamespace(List *names, char **objname_p)
+QualifiedNameGetCreationNamespace(const List *names, char **objname_p)
 {
 	char	   *schemaname;
 	Oid			namespaceId;
@@ -3084,7 +3084,7 @@ get_namespace_oid(const char *nspname, bool missing_ok)
  *		Utility routine to convert a qualified-name list into RangeVar form.
  */
 RangeVar *
-makeRangeVarFromNameList(List *names)
+makeRangeVarFromNameList(const List *names)
 {
 	RangeVar   *rel = makeRangeVar(NULL, NULL, -1);
 
@@ -3124,7 +3124,7 @@ makeRangeVarFromNameList(List *names)
  * but we also allow A_Star for the convenience of ColumnRef processing.
  */
 char *
-NameListToString(List *names)
+NameListToString(const List *names)
 {
 	StringInfoData string;
 	ListCell   *l;
@@ -3158,7 +3158,7 @@ NameListToString(List *names)
  * so the string could be re-parsed (eg, by textToQualifiedNameList).
  */
 char *
-NameListToQuotedString(List *names)
+NameListToQuotedString(const List *names)
 {
 	StringInfoData string;
 	ListCell   *l;

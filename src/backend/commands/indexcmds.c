@@ -71,15 +71,15 @@
 
 
 /* non-export function prototypes */
-static bool CompareOpclassOptions(Datum *opts1, Datum *opts2, int natts);
+static bool CompareOpclassOptions(const Datum *opts1, const Datum *opts2, int natts);
 static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo,
 							  Oid *typeOidP,
 							  Oid *collationOidP,
 							  Oid *classOidP,
 							  int16 *colOptionP,
-							  List *attList,
-							  List *exclusionOpNames,
+							  const List *attList,
+							  const List *exclusionOpNames,
 							  Oid relId,
 							  const char *accessMethodName, Oid accessMethodId,
 							  bool amcanorder,
@@ -88,25 +88,25 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 							  int ddl_sec_context,
 							  int *ddl_save_nestlevel);
 static char *ChooseIndexName(const char *tabname, Oid namespaceId,
-							 List *colnames, List *exclusionOpNames,
+							 const List *colnames, const List *exclusionOpNames,
 							 bool primary, bool isconstraint);
-static char *ChooseIndexNameAddition(List *colnames);
-static List *ChooseIndexColumnNames(List *indexElems);
-static void ReindexIndex(RangeVar *indexRelation, ReindexParams *params,
+static char *ChooseIndexNameAddition(const List *colnames);
+static List *ChooseIndexColumnNames(const List *indexElems);
+static void ReindexIndex(const RangeVar *indexRelation, const ReindexParams *params,
 						 bool isTopLevel);
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
 											Oid relId, Oid oldRelId, void *arg);
-static Oid	ReindexTable(RangeVar *relation, ReindexParams *params,
+static Oid	ReindexTable(const RangeVar *relation, const ReindexParams *params,
 						 bool isTopLevel);
 static void ReindexMultipleTables(const char *objectName,
-								  ReindexObjectType objectKind, ReindexParams *params);
+								  ReindexObjectType objectKind, const ReindexParams *params);
 static void reindex_error_callback(void *arg);
-static void ReindexPartitions(Oid relid, ReindexParams *params,
+static void ReindexPartitions(Oid relid, const ReindexParams *params,
 							  bool isTopLevel);
-static void ReindexMultipleInternal(List *relids,
-									ReindexParams *params);
+static void ReindexMultipleInternal(const List *relids,
+									const ReindexParams *params);
 static bool ReindexRelationConcurrently(Oid relationOid,
-										ReindexParams *params);
+										const ReindexParams *params);
 static void update_relispartition(Oid relationId, bool newval);
 static inline void set_indexsafe_procflags(void);
 
@@ -169,8 +169,8 @@ typedef struct ReindexErrorInfo
 bool
 CheckIndexCompatible(Oid oldId,
 					 const char *accessMethodName,
-					 List *attributeList,
-					 List *exclusionOpNames)
+					 const List *attributeList,
+					 const List *exclusionOpNames)
 {
 	bool		isconstraint;
 	Oid		   *typeObjectId;
@@ -349,7 +349,7 @@ CheckIndexCompatible(Oid oldId,
  * datums.  Both elements of arrays and array themselves can be NULL.
  */
 static bool
-CompareOpclassOptions(Datum *opts1, Datum *opts2, int natts)
+CompareOpclassOptions(const Datum *opts1, const Datum *opts2, int natts)
 {
 	int			i;
 
@@ -1859,8 +1859,8 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				  Oid *collationOidP,
 				  Oid *classOidP,
 				  int16 *colOptionP,
-				  List *attList,	/* list of IndexElem's */
-				  List *exclusionOpNames,
+				  const List *attList,	/* list of IndexElem's */
+				  const List *exclusionOpNames,
 				  Oid relId,
 				  const char *accessMethodName,
 				  Oid accessMethodId,
@@ -2225,7 +2225,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
  * partition key definitions.
  */
 Oid
-ResolveOpClass(List *opclass, Oid attrType,
+ResolveOpClass(const List *opclass, Oid attrType,
 			   const char *accessMethodName, Oid accessMethodId)
 {
 	char	   *schemaname;
@@ -2542,7 +2542,7 @@ ChooseRelationName(const char *name1, const char *name2,
  */
 static char *
 ChooseIndexName(const char *tabname, Oid namespaceId,
-				List *colnames, List *exclusionOpNames,
+				const List *colnames, const List *exclusionOpNames,
 				bool primary, bool isconstraint)
 {
 	char	   *indexname;
@@ -2596,7 +2596,7 @@ ChooseIndexName(const char *tabname, Oid namespaceId,
  * ChooseExtendedStatisticNameAddition.
  */
 static char *
-ChooseIndexNameAddition(List *colnames)
+ChooseIndexNameAddition(const List *colnames)
 {
 	char		buf[NAMEDATALEN * 2];
 	int			buflen = 0;
@@ -2630,7 +2630,7 @@ ChooseIndexNameAddition(List *colnames)
  * Returns a List of plain strings (char *, not String nodes).
  */
 static List *
-ChooseIndexColumnNames(List *indexElems)
+ChooseIndexColumnNames(const List *indexElems)
 {
 	List	   *result = NIL;
 	ListCell   *lc;
@@ -2691,7 +2691,7 @@ ChooseIndexColumnNames(List *indexElems)
  * each subroutine of REINDEX.
  */
 void
-ExecReindex(ParseState *pstate, ReindexStmt *stmt, bool isTopLevel)
+ExecReindex(ParseState *pstate, const ReindexStmt *stmt, bool isTopLevel)
 {
 	ReindexParams params = {0};
 	ListCell   *lc;
@@ -2786,7 +2786,7 @@ ExecReindex(ParseState *pstate, ReindexStmt *stmt, bool isTopLevel)
  *		Recreate a specific index.
  */
 static void
-ReindexIndex(RangeVar *indexRelation, ReindexParams *params, bool isTopLevel)
+ReindexIndex(const RangeVar *indexRelation, const ReindexParams *params, bool isTopLevel)
 {
 	struct ReindexIndexCallbackState state;
 	Oid			indOid;
@@ -2909,7 +2909,7 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
  *		Recreate all indexes of a table (and of its toast table, if any)
  */
 static Oid
-ReindexTable(RangeVar *relation, ReindexParams *params, bool isTopLevel)
+ReindexTable(const RangeVar *relation, const ReindexParams *params, bool isTopLevel)
 {
 	Oid			heapOid;
 	bool		result;
@@ -2968,7 +2968,7 @@ ReindexTable(RangeVar *relation, ReindexParams *params, bool isTopLevel)
  */
 static void
 ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
-					  ReindexParams *params)
+					  const ReindexParams *params)
 {
 	Oid			objectOid;
 	Relation	relationRelation;
@@ -3206,7 +3206,7 @@ reindex_error_callback(void *arg)
  * by the caller.
  */
 static void
-ReindexPartitions(Oid relid, ReindexParams *params, bool isTopLevel)
+ReindexPartitions(Oid relid, const ReindexParams *params, bool isTopLevel)
 {
 	List	   *partitions = NIL;
 	char		relkind = get_rel_relkind(relid);
@@ -3300,7 +3300,7 @@ ReindexPartitions(Oid relid, ReindexParams *params, bool isTopLevel)
  * and starts a new transaction when finished.
  */
 static void
-ReindexMultipleInternal(List *relids, ReindexParams *params)
+ReindexMultipleInternal(const List *relids, const ReindexParams *params)
 {
 	ListCell   *l;
 
@@ -3424,7 +3424,7 @@ ReindexMultipleInternal(List *relids, ReindexParams *params)
  * anyway, and a non-concurrent reindex is more efficient.
  */
 static bool
-ReindexRelationConcurrently(Oid relationOid, ReindexParams *params)
+ReindexRelationConcurrently(Oid relationOid, const ReindexParams *params)
 {
 	typedef struct ReindexIndexInfo
 	{

@@ -914,7 +914,7 @@ AllocateAttribute(void)
 void
 index_register(Oid heap,
 			   Oid ind,
-			   IndexInfo *indexInfo)
+			   const IndexInfo *indexInfo)
 {
 	IndexList  *newind;
 	MemoryContext oldcxt;

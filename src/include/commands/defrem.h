@@ -35,7 +35,7 @@ extern ObjectAddress DefineIndex(Oid relationId,
 								 bool check_not_in_use,
 								 bool skip_build,
 								 bool quiet);
-extern void ExecReindex(ParseState *pstate, ReindexStmt *stmt, bool isTopLevel);
+extern void ExecReindex(ParseState *pstate, const ReindexStmt *stmt, bool isTopLevel);
 extern char *makeObjectName(const char *name1, const char *name2,
 							const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
@@ -43,10 +43,10 @@ extern char *ChooseRelationName(const char *name1, const char *name2,
 								bool isconstraint);
 extern bool CheckIndexCompatible(Oid oldId,
 								 const char *accessMethodName,
-								 List *attributeList,
-								 List *exclusionOpNames);
+								 const List *attributeList,
+								 const List *exclusionOpNames);
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
-extern Oid	ResolveOpClass(List *opclass, Oid attrType,
+extern Oid	ResolveOpClass(const List *opclass, Oid attrType,
 						   const char *accessMethodName, Oid accessMethodId);
 
 /* commands/functioncmds.c */

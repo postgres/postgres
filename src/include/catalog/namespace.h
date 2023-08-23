@@ -136,7 +136,7 @@ extern bool TSTemplateIsVisible(Oid tmplId);
 extern Oid	get_ts_config_oid(List *names, bool missing_ok);
 extern bool TSConfigIsVisible(Oid cfgid);
 
-extern void DeconstructQualifiedName(List *names,
+extern void DeconstructQualifiedName(const List *names,
 									 char **nspname_p,
 									 char **objname_p);
 extern Oid	LookupNamespaceNoError(const char *nspname);
@@ -145,10 +145,10 @@ extern Oid	get_namespace_oid(const char *nspname, bool missing_ok);
 
 extern Oid	LookupCreationNamespace(const char *nspname);
 extern void CheckSetNamespace(Oid oldNspOid, Oid nspOid);
-extern Oid	QualifiedNameGetCreationNamespace(List *names, char **objname_p);
-extern RangeVar *makeRangeVarFromNameList(List *names);
-extern char *NameListToString(List *names);
-extern char *NameListToQuotedString(List *names);
+extern Oid	QualifiedNameGetCreationNamespace(const List *names, char **objname_p);
+extern RangeVar *makeRangeVarFromNameList(const List *names);
+extern char *NameListToString(const List *names);
+extern char *NameListToQuotedString(const List *names);
 
 extern bool isTempNamespace(Oid namespaceId);
 extern bool isTempToastNamespace(Oid namespaceId);

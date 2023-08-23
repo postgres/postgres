@@ -42,7 +42,7 @@ extern void InsertOneTuple(void);
 extern void InsertOneValue(char *value, int i);
 extern void InsertOneNull(int i);
 
-extern void index_register(Oid heap, Oid ind, IndexInfo *indexInfo);
+extern void index_register(Oid heap, Oid ind, const IndexInfo *indexInfo);
 extern void build_indices(void);
 
 extern void boot_get_type_io_data(Oid typid,
