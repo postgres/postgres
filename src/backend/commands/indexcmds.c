@@ -74,10 +74,10 @@
 static bool CompareOpclassOptions(const Datum *opts1, const Datum *opts2, int natts);
 static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo,
-							  Oid *typeOidP,
-							  Oid *collationOidP,
-							  Oid *classOidP,
-							  int16 *colOptionP,
+							  Oid *typeOids,
+							  Oid *collationOids,
+							  Oid *opclassOids,
+							  int16 *colOptions,
 							  const List *attList,
 							  const List *exclusionOpNames,
 							  Oid relId,
@@ -173,9 +173,9 @@ CheckIndexCompatible(Oid oldId,
 					 const List *exclusionOpNames)
 {
 	bool		isconstraint;
-	Oid		   *typeObjectId;
-	Oid		   *collationObjectId;
-	Oid		   *classObjectId;
+	Oid		   *typeIds;
+	Oid		   *collationIds;
+	Oid		   *opclassIds;
 	Oid			accessMethodId;
 	Oid			relationId;
 	HeapTuple	tuple;
@@ -234,12 +234,12 @@ CheckIndexCompatible(Oid oldId,
 	indexInfo = makeIndexInfo(numberOfAttributes, numberOfAttributes,
 							  accessMethodId, NIL, NIL, false, false,
 							  false, false, amsummarizing);
-	typeObjectId = palloc_array(Oid, numberOfAttributes);
-	collationObjectId = palloc_array(Oid, numberOfAttributes);
-	classObjectId = palloc_array(Oid, numberOfAttributes);
+	typeIds = palloc_array(Oid, numberOfAttributes);
+	collationIds = palloc_array(Oid, numberOfAttributes);
+	opclassIds = palloc_array(Oid, numberOfAttributes);
 	coloptions = palloc_array(int16, numberOfAttributes);
 	ComputeIndexAttrs(indexInfo,
-					  typeObjectId, collationObjectId, classObjectId,
+					  typeIds, collationIds, opclassIds,
 					  coloptions, attributeList,
 					  exclusionOpNames, relationId,
 					  accessMethodName, accessMethodId,
@@ -274,9 +274,9 @@ CheckIndexCompatible(Oid oldId,
 	d = SysCacheGetAttrNotNull(INDEXRELID, tuple, Anum_pg_index_indclass);
 	old_indclass = (oidvector *) DatumGetPointer(d);
 
-	ret = (memcmp(old_indclass->values, classObjectId,
+	ret = (memcmp(old_indclass->values, opclassIds,
 				  old_natts * sizeof(Oid)) == 0 &&
-		   memcmp(old_indcollation->values, collationObjectId,
+		   memcmp(old_indcollation->values, collationIds,
 				  old_natts * sizeof(Oid)) == 0);
 
 	ReleaseSysCache(tuple);
@@ -288,8 +288,8 @@ CheckIndexCompatible(Oid oldId,
 	irel = index_open(oldId, AccessShareLock);	/* caller probably has a lock */
 	for (i = 0; i < old_natts; i++)
 	{
-		if (IsPolymorphicType(get_opclass_input_type(classObjectId[i])) &&
-			TupleDescAttr(irel->rd_att, i)->atttypid != typeObjectId[i])
+		if (IsPolymorphicType(get_opclass_input_type(opclassIds[i])) &&
+			TupleDescAttr(irel->rd_att, i)->atttypid != typeIds[i])
 		{
 			ret = false;
 			break;
@@ -329,7 +329,7 @@ CheckIndexCompatible(Oid oldId,
 
 				op_input_types(indexInfo->ii_ExclusionOps[i], &left, &right);
 				if ((IsPolymorphicType(left) || IsPolymorphicType(right)) &&
-					TupleDescAttr(irel->rd_att, i)->atttypid != typeObjectId[i])
+					TupleDescAttr(irel->rd_att, i)->atttypid != typeIds[i])
 				{
 					ret = false;
 					break;
@@ -500,7 +500,7 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
  * consider offering one DDL command for catalog setup and a separate DDL
  * command for steps that run opaque expressions.
  *
- * 'relationId': the OID of the heap relation on which the index is to be
+ * 'tableId': the OID of the table relation on which the index is to be
  *		created
  * 'stmt': IndexStmt describing the properties of the new index.
  * 'indexRelationId': normally InvalidOid, but during bootstrap can be
@@ -523,7 +523,7 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
  * Returns the object address of the created index.
  */
 ObjectAddress
-DefineIndex(Oid relationId,
+DefineIndex(Oid tableId,
 			IndexStmt *stmt,
 			Oid indexRelationId,
 			Oid parentIndexId,
@@ -538,9 +538,9 @@ DefineIndex(Oid relationId,
 	bool		concurrent;
 	char	   *indexRelationName;
 	char	   *accessMethodName;
-	Oid		   *typeObjectId;
-	Oid		   *collationObjectId;
-	Oid		   *classObjectId;
+	Oid		   *typeIds;
+	Oid		   *collationIds;
+	Oid		   *opclassIds;
 	Oid			accessMethodId;
 	Oid			namespaceId;
 	Oid			tablespaceId;
@@ -592,7 +592,7 @@ DefineIndex(Oid relationId,
 	 * is more efficient.  Do this before any use of the concurrent option is
 	 * done.
 	 */
-	if (stmt->concurrent && get_rel_persistence(relationId) != RELPERSISTENCE_TEMP)
+	if (stmt->concurrent && get_rel_persistence(tableId) != RELPERSISTENCE_TEMP)
 		concurrent = true;
 	else
 		concurrent = false;
@@ -604,7 +604,7 @@ DefineIndex(Oid relationId,
 	if (!OidIsValid(parentIndexId))
 	{
 		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
-									  relationId);
+									  tableId);
 		pgstat_progress_update_param(PROGRESS_CREATEIDX_COMMAND,
 									 concurrent ?
 									 PROGRESS_CREATEIDX_COMMAND_CREATE_CONCURRENTLY :
@@ -649,7 +649,7 @@ DefineIndex(Oid relationId,
 	 * index build; but for concurrent builds we allow INSERT/UPDATE/DELETE
 	 * (but not VACUUM).
 	 *
-	 * NB: Caller is responsible for making sure that relationId refers to the
+	 * NB: Caller is responsible for making sure that tableId refers to the
 	 * relation on which the index should be built; except in bootstrap mode,
 	 * this will typically require the caller to have already locked the
 	 * relation.  To avoid lock upgrade hazards, that lock should be at least
@@ -660,7 +660,7 @@ DefineIndex(Oid relationId,
 	 * functions will need to be updated, too.
 	 */
 	lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
-	rel = table_open(relationId, lockmode);
+	rel = table_open(tableId, lockmode);
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
@@ -899,14 +899,14 @@ DefineIndex(Oid relationId,
 							  concurrent,
 							  amissummarizing);
 
-	typeObjectId = palloc_array(Oid, numberOfAttributes);
-	collationObjectId = palloc_array(Oid, numberOfAttributes);
-	classObjectId = palloc_array(Oid, numberOfAttributes);
+	typeIds = palloc_array(Oid, numberOfAttributes);
+	collationIds = palloc_array(Oid, numberOfAttributes);
+	opclassIds = palloc_array(Oid, numberOfAttributes);
 	coloptions = palloc_array(int16, numberOfAttributes);
 	ComputeIndexAttrs(indexInfo,
-					  typeObjectId, collationObjectId, classObjectId,
+					  typeIds, collationIds, opclassIds,
 					  coloptions, allIndexParams,
-					  stmt->excludeOpNames, relationId,
+					  stmt->excludeOpNames, tableId,
 					  accessMethodName, accessMethodId,
 					  amcanorder, stmt->isconstraint, root_save_userid,
 					  root_save_sec_context, &root_save_nestlevel);
@@ -1011,7 +1011,7 @@ DefineIndex(Oid relationId,
 					Oid			idx_opfamily;
 					Oid			idx_opcintype;
 
-					if (get_opclass_opfamily_and_input_type(classObjectId[j],
+					if (get_opclass_opfamily_and_input_type(opclassIds[j],
 															&idx_opfamily,
 															&idx_opcintype))
 					{
@@ -1181,7 +1181,7 @@ DefineIndex(Oid relationId,
 					 parentConstraintId,
 					 stmt->oldNumber, indexInfo, indexColNames,
 					 accessMethodId, tablespaceId,
-					 collationObjectId, classObjectId,
+					 collationIds, opclassIds,
 					 coloptions, reloptions,
 					 flags, constr_flags,
 					 allowSystemTableMods, !check_rights,
@@ -1262,7 +1262,7 @@ DefineIndex(Oid relationId,
 				 */
 				if (total_parts < 0)
 				{
-					List	   *children = find_all_inheritors(relationId,
+					List	   *children = find_all_inheritors(tableId,
 															   NoLock, NULL);
 
 					total_parts = list_length(children) - 1;
@@ -1674,7 +1674,7 @@ DefineIndex(Oid relationId,
 	PushActiveSnapshot(GetTransactionSnapshot());
 
 	/* Perform concurrent build of index */
-	index_concurrently_build(relationId, indexRelationId);
+	index_concurrently_build(tableId, indexRelationId);
 
 	/* we can do away with our snapshot */
 	PopActiveSnapshot();
@@ -1720,7 +1720,7 @@ DefineIndex(Oid relationId,
 	/*
 	 * Scan the index and the heap, insert any missing index entries.
 	 */
-	validate_index(relationId, indexRelationId, snapshot);
+	validate_index(tableId, indexRelationId, snapshot);
 
 	/*
 	 * Drop the reference snapshot.  We must do this before waiting out other
@@ -1855,10 +1855,10 @@ CheckPredicate(Expr *predicate)
  */
 static void
 ComputeIndexAttrs(IndexInfo *indexInfo,
-				  Oid *typeOidP,
-				  Oid *collationOidP,
-				  Oid *classOidP,
-				  int16 *colOptionP,
+				  Oid *typeOids,
+				  Oid *collationOids,
+				  Oid *opclassOids,
+				  int16 *colOptions,
 				  const List *attList,	/* list of IndexElem's */
 				  const List *exclusionOpNames,
 				  Oid relId,
@@ -1988,7 +1988,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			}
 		}
 
-		typeOidP[attn] = atttype;
+		typeOids[attn] = atttype;
 
 		/*
 		 * Included columns have no collation, no opclass and no ordering
@@ -2013,9 +2013,9 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("including column does not support NULLS FIRST/LAST options")));
 
-			classOidP[attn] = InvalidOid;
-			colOptionP[attn] = 0;
-			collationOidP[attn] = InvalidOid;
+			opclassOids[attn] = InvalidOid;
+			colOptions[attn] = 0;
+			collationOids[attn] = InvalidOid;
 			attn++;
 
 			continue;
@@ -2064,7 +2064,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 								format_type_be(atttype))));
 		}
 
-		collationOidP[attn] = attcollation;
+		collationOids[attn] = attcollation;
 
 		/*
 		 * Identify the opclass to use.  Use of ddl_userid is necessary due to
@@ -2077,10 +2077,10 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			AtEOXact_GUC(false, *ddl_save_nestlevel);
 			SetUserIdAndSecContext(ddl_userid, ddl_sec_context);
 		}
-		classOidP[attn] = ResolveOpClass(attribute->opclass,
-										 atttype,
-										 accessMethodName,
-										 accessMethodId);
+		opclassOids[attn] = ResolveOpClass(attribute->opclass,
+										   atttype,
+										   accessMethodName,
+										   accessMethodId);
 		if (OidIsValid(ddl_userid))
 		{
 			SetUserIdAndSecContext(save_userid, save_sec_context);
@@ -2132,7 +2132,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			/*
 			 * Operator must be a member of the right opfamily, too
 			 */
-			opfamily = get_opclass_family(classOidP[attn]);
+			opfamily = get_opclass_family(opclassOids[attn]);
 			strat = get_op_opfamily_strategy(opid, opfamily);
 			if (strat == 0)
 			{
@@ -2170,20 +2170,20 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		 * zero for any un-ordered index, while ordered indexes have DESC and
 		 * NULLS FIRST/LAST options.
 		 */
-		colOptionP[attn] = 0;
+		colOptions[attn] = 0;
 		if (amcanorder)
 		{
 			/* default ordering is ASC */
 			if (attribute->ordering == SORTBY_DESC)
-				colOptionP[attn] |= INDOPTION_DESC;
+				colOptions[attn] |= INDOPTION_DESC;
 			/* default null ordering is LAST for ASC, FIRST for DESC */
 			if (attribute->nulls_ordering == SORTBY_NULLS_DEFAULT)
 			{
 				if (attribute->ordering == SORTBY_DESC)
-					colOptionP[attn] |= INDOPTION_NULLS_FIRST;
+					colOptions[attn] |= INDOPTION_NULLS_FIRST;
 			}
 			else if (attribute->nulls_ordering == SORTBY_NULLS_FIRST)
-				colOptionP[attn] |= INDOPTION_NULLS_FIRST;
+				colOptions[attn] |= INDOPTION_NULLS_FIRST;
 		}
 		else
 		{
