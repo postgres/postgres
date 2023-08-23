@@ -498,6 +498,7 @@ task:
   env:
     CPUS: 4
     BUILD_JOBS: 4
+    IMAGE_FAMILY: pg-ci-bullseye
 
     # Use larger ccache cache, as this task compiles with multiple compilers /
     # flag combinations
@@ -510,9 +511,7 @@ task:
   # condition here ...
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*linux.*'
 
-  container:
-    image: $CONTAINER_REPO/linux_debian_bullseye_ci:latest
-    cpu: $CPUS
+  <<: *linux_task_template
 
   sysinfo_script: |
     id
