@@ -2,6 +2,7 @@
 #define ENCRYPTION_DEBUG 1
 
 #include "postgres.h"
+#include "utils/memutils.h"
 
 #include "encryption/enc_tuple.h"
 #include "encryption/enc_aes.h"
@@ -76,11 +77,14 @@ static void PGTdeDecryptTupInternal2(BlockNumber bn, Page page, HeapTuple tuple,
 {
 	char* newPtr = (char*)tuple->t_data;
 
-	// Most of the time we can't decrypt in place, so we allocate some memory... and leek it for now :(
 	if(allocNew)
 	{
-		newPtr = malloc(tuple->t_len);
+		MemoryContext oldctx = MemoryContextSwitchTo(CurTransactionContext);
+
+		newPtr = palloc(tuple->t_len);
 		memcpy(newPtr, tuple->t_data, tuple->t_len);
+
+		MemoryContextSwitchTo(oldctx);
 	}
 
 	PGTdeDecryptTupInternal(tuple->t_tableOid, bn, page, tuple->t_data, newPtr, from, to);
