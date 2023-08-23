@@ -1562,7 +1562,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
      </listitem>
      <listitem>
       <para>
-       <ulink url="https://unicode-org.github.io/icu/userguide/collation/api.html"></ulink>
+       <ulink url="https://unicode-org.github.io/icu/userguide/collation/"></ulink>
       </para>
      </listitem>
     </itemizedlist>
