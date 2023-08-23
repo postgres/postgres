@@ -1481,7 +1481,7 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
    </sect3>
 
    <sect3 id="icu-locale-examples">
-    <title>Examples</title>
+    <title>Collation Settings Examples</title>
 
      <variablelist>
       <varlistentry id="collation-managing-create-icu-de-u-co-phonebk-x-icu">
@@ -1528,6 +1528,62 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
        </listitem>
       </varlistentry>
      </variablelist>
+   </sect3>
+
+   <sect3 id="icu-tailoring-rules">
+    <title>ICU Tailoring Rules</title>
+
+    <para>
+     If the options provided by the collation settings shown above are not
+     sufficient, the order of collation elements can be changed with tailoring
+     rules, whose syntax is detailed at <ulink
+     url="https://unicode-org.github.io/icu/userguide/collation/customization/"></ulink>.
+    </para>
+
+    <para>
+     This small example creates a collation based on the root locale with a
+     tailoring rule:
+<programlisting>
+<![CDATA[CREATE COLLATION custom (provider = icu, locale = 'und', rules = '&V << w <<< W');]]>
+</programlisting>
+     With this rule, the letter <quote>W</quote> is sorted after
+     <quote>V</quote>, but is treated as a secondary difference similar to an
+     accent.  Rules like this are contained in the locale definitions of some
+     languages.  (Of course, if a locale definition already contains the
+     desired rules, then they don't need to be specified again explicitly.)
+    </para>
+
+    <para>
+     Here is a more complex example.  The following statement sets up a
+     collation named <literal>ebcdic</literal> with rules to sort US-ASCII
+     characters in the order of the EBCDIC encoding.
+
+<programlisting>
+<![CDATA[CREATE COLLATION ebcdic (provider = icu, locale = 'und',
+rules = $$
+& ' ' < '.' < '<' < '(' < '+' < \|
+< '&' < '!' < '$' < '*' < ')' < ';'
+< '-' < '/' < ',' < '%' < '_' < '>' < '?'
+< '`' < ':' < '#' < '@' < \' < '=' < '"'
+<*a-r < '~' <*s-z < '^' < '[' < ']'
+< '{' <*A-I < '}' <*J-R < '\' <*S-Z <*0-9
+$$);]]>
+
+SELECT c
+FROM (VALUES ('a'), ('b'), ('A'), ('B'), ('1'), ('2'), ('!'), ('^')) AS x(c)
+ORDER BY c COLLATE ebcdic;
+ c
+---
+ !
+ a
+ b
+ ^
+ A
+ B
+ 1
+ 2
+</programlisting>
+    </para>
    </sect3>
 
    <sect3 id="icu-external-references">
