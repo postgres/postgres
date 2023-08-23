@@ -195,3 +195,6 @@ endforeach
 pgport_srv = pgport['_srv']
 pgport_static = pgport['']
 pgport_shlib = pgport['_shlib']
+
+# autoconf generates the file there, ensure we get a conflict
+generated_sources_ac += {'src/port': ['pg_config_paths.h']}
