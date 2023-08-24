@@ -1283,6 +1283,115 @@ order by 1, 2;
 
 drop table p1 cascade;
 NOTICE:  drop cascades to table p1_c1
+--
+-- Test DROP behavior of multiply-defined CHECK constraints
+--
+create table p1(f1 int constraint f1_pos CHECK (f1 > 0));
+create table p1_c1 (f1 int constraint f1_pos CHECK (f1 > 0)) inherits (p1);
+NOTICE:  merging column "f1" with inherited definition
+NOTICE:  merging constraint "f1_pos" with inherited definition
+alter table p1_c1 drop constraint f1_pos;
+ERROR:  cannot drop inherited constraint "f1_pos" of relation "p1_c1"
+alter table p1 drop constraint f1_pos;
+\d p1_c1
+               Table "public.p1_c1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+Check constraints:
+    "f1_pos" CHECK (f1 > 0)
+Inherits: p1
+
+drop table p1 cascade;
+NOTICE:  drop cascades to table p1_c1
+create table p1(f1 int constraint f1_pos CHECK (f1 > 0));
+create table p2(f1 int constraint f1_pos CHECK (f1 > 0));
+create table p1p2_c1 (f1 int) inherits (p1, p2);
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging column "f1" with inherited definition
+create table p1p2_c2 (f1 int constraint f1_pos CHECK (f1 > 0)) inherits (p1, p2);
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging column "f1" with inherited definition
+NOTICE:  merging constraint "f1_pos" with inherited definition
+alter table p2 drop constraint f1_pos;
+alter table p1 drop constraint f1_pos;
+\d p1p2_c*
+              Table "public.p1p2_c1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+Inherits: p1,
+          p2
+
+              Table "public.p1p2_c2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+Check constraints:
+    "f1_pos" CHECK (f1 > 0)
+Inherits: p1,
+          p2
+
+drop table p1, p2 cascade;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table p1p2_c1
+drop cascades to table p1p2_c2
+create table p1(f1 int constraint f1_pos CHECK (f1 > 0));
+create table p1_c1() inherits (p1);
+create table p1_c2() inherits (p1);
+create table p1_c1c2() inherits (p1_c1, p1_c2);
+NOTICE:  merging multiple inherited definitions of column "f1"
+\d p1_c1c2
+              Table "public.p1_c1c2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+Check constraints:
+    "f1_pos" CHECK (f1 > 0)
+Inherits: p1_c1,
+          p1_c2
+
+alter table p1 drop constraint f1_pos;
+\d p1_c1c2
+              Table "public.p1_c1c2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+Inherits: p1_c1,
+          p1_c2
+
+drop table p1 cascade;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table p1_c1
+drop cascades to table p1_c2
+drop cascades to table p1_c1c2
+create table p1(f1 int constraint f1_pos CHECK (f1 > 0));
+create table p1_c1() inherits (p1);
+create table p1_c2(constraint f1_pos CHECK (f1 > 0)) inherits (p1);
+NOTICE:  merging constraint "f1_pos" with inherited definition
+create table p1_c1c2() inherits (p1_c1, p1_c2, p1);
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging multiple inherited definitions of column "f1"
+alter table p1_c2 drop constraint f1_pos;
+ERROR:  cannot drop inherited constraint "f1_pos" of relation "p1_c2"
+alter table p1 drop constraint f1_pos;
+alter table p1_c1c2 drop constraint f1_pos;
+ERROR:  cannot drop inherited constraint "f1_pos" of relation "p1_c1c2"
+alter table p1_c2 drop constraint f1_pos;
+\d p1_c1c2
+              Table "public.p1_c1c2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+Inherits: p1_c1,
+          p1_c2,
+          p1
+
+drop table p1 cascade;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table p1_c1
+drop cascades to table p1_c2
+drop cascades to table p1_c1c2
 -- Test that a valid child can have not-valid parent, but not vice versa
 create table invalid_check_con(f1 int);
 create table invalid_check_con_child() inherits(invalid_check_con);
