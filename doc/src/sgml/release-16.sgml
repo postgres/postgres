@@ -683,9 +683,9 @@ Author: Andres Freund <andres@anarazel.de>
 
        <para>
         This information appears in <link
-        linkend="pg-stat-all-tables-view"><structname>pg_stat_all_tables</structname></link>
+        linkend="pg-stat-all-tables-view"><structname>pg_stat_*_tables</structname></link>
         and <link
-        linkend="monitoring-pg-stat-all-indexes-view"><structname>pg_stat_all_indexes</structname></link>.
+        linkend="monitoring-pg-stat-all-indexes-view"><structname>pg_stat_*_indexes</structname></link>.
        </para>
       </listitem>
 
