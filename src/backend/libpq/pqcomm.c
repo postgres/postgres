@@ -458,6 +458,9 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 		}
 
 #ifndef WIN32
+		/* Don't give the listen socket to any subprograms we execute. */
+		if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
+			elog(FATAL, "fcntl(F_SETFD) failed on socket: %m");
 
 		/*
 		 * Without the SO_REUSEADDR flag, a new postmaster can't be started
@@ -831,7 +834,8 @@ StreamConnection(pgsocket server_fd, Port *port)
 void
 StreamClose(pgsocket sock)
 {
-	closesocket(sock);
+	if (closesocket(sock) != 0)
+		elog(LOG, "could not close client or listen socket: %m");
 }
 
 /*
