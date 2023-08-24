@@ -397,30 +397,6 @@ check: temp-install
 
 .PHONY: temp-install
 
-temp-install: | submake-generated-headers
-ifndef NO_TEMP_INSTALL
-ifneq ($(abs_top_builddir),)
-ifeq ($(MAKELEVEL),0)
-	rm -rf '$(abs_top_builddir)'/tmp_install
-	$(MKDIR_P) '$(abs_top_builddir)'/tmp_install/log
-	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install >'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
-	$(MAKE) -j1 $(if $(CHECKPREP_TOP),-C $(CHECKPREP_TOP),) checkprep >>'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
-endif
-endif
-endif
-
-# Tasks to run serially at the end of temp-install.  Some EXTRA_INSTALL
-# entries appear more than once in the tree, and parallel installs of the same
-# file can fail with EEXIST.
-checkprep:
-	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install || exit; done)
-
-PROVE = @PROVE@
-# There are common routines in src/test/perl, and some test suites have
-# extra perl modules in their own directory.
-PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/ -I $(srcdir)
-# User-supplied prove flags such as --verbose can be provided in PROVE_FLAGS.
-PROVE_FLAGS =
 
 # prepend to path if already set, else just set it
 define add_to_path
@@ -437,7 +413,35 @@ ld_library_path_var = LD_LIBRARY_PATH
 with_temp_install = \
 	PATH="$(abs_top_builddir)/tmp_install$(bindir):$(CURDIR):$$PATH" \
 	$(call add_to_path,$(strip $(ld_library_path_var)),$(abs_top_builddir)/tmp_install$(libdir)) \
+	INITDB_TEMPLATE='$(abs_top_builddir)'/tmp_install/initdb-template \
 	$(with_temp_install_extra)
+
+temp-install: | submake-generated-headers
+ifndef NO_TEMP_INSTALL
+ifneq ($(abs_top_builddir),)
+ifeq ($(MAKELEVEL),0)
+	rm -rf '$(abs_top_builddir)'/tmp_install
+	$(MKDIR_P) '$(abs_top_builddir)'/tmp_install/log
+	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install >'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
+	$(MAKE) -j1 $(if $(CHECKPREP_TOP),-C $(CHECKPREP_TOP),) checkprep >>'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
+
+	$(with_temp_install) initdb -A trust -N --no-instructions '$(abs_top_builddir)'/tmp_install/initdb-template >>'$(abs_top_builddir)'/tmp_install/log/initdb-template.log 2>&1
+endif
+endif
+endif
+
+# Tasks to run serially at the end of temp-install.  Some EXTRA_INSTALL
+# entries appear more than once in the tree, and parallel installs of the same
+# file can fail with EEXIST.
+checkprep:
+	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install || exit; done)
+
+PROVE = @PROVE@
+# There are common routines in src/test/perl, and some test suites have
+# extra perl modules in their own directory.
+PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/ -I $(srcdir)
+# User-supplied prove flags such as --verbose can be provided in PROVE_FLAGS.
+PROVE_FLAGS =
 
 ifeq ($(enable_tap_tests),yes)
 

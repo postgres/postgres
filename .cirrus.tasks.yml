@@ -109,8 +109,9 @@ task:
   test_minimal_script: |
     su postgres <<-EOF
       ulimit -c unlimited
+      meson test $MTEST_ARGS --suite setup
       meson test $MTEST_ARGS --num-processes ${TEST_JOBS} \
-        tmp_install cube/regress pg_ctl/001_start_stop
+        cube/regress pg_ctl/001_start_stop
     EOF
 
   on_failure:

@@ -3070,8 +3070,10 @@ testport = 40000
 test_env = environment()
 
 temp_install_bindir = test_install_location / get_option('bindir')
+test_initdb_template = meson.build_root() / 'tmp_install' / 'initdb-template'
 test_env.set('PG_REGRESS', pg_regress.full_path())
 test_env.set('REGRESS_SHLIB', regress_module.full_path())
+test_env.set('INITDB_TEMPLATE', test_initdb_template)
 
 # Test suites that are not safe by default but can be run if selected
 # by the user via the whitespace-separated list in variable PG_TEST_EXTRA.
@@ -3084,6 +3086,34 @@ test_env.set('PG_TEST_EXTRA', get_option('PG_TEST_EXTRA'))
 if library_path_var != ''
   test_env.prepend(library_path_var, test_install_location / get_option('libdir'))
 endif
+
+
+# Create (and remove old) initdb template directory. Tests use that, where
+# possible, to make it cheaper to run tests.
+#
+# Use python to remove the old cached initdb, as we cannot rely on a working
+# 'rm' binary on windows.
+test('initdb_cache',
+     python,
+     args: [
+       '-c', '''
+import shutil
+import sys
+import subprocess
+
+shutil.rmtree(sys.argv[1], ignore_errors=True)
+sp = subprocess.run(sys.argv[2:] + [sys.argv[1]])
+sys.exit(sp.returncode)
+''',
+       test_initdb_template,
+       temp_install_bindir / 'initdb',
+       '-A', 'trust', '-N', '--no-instructions'
+     ],
+     priority: setup_tests_priority - 1,
+     timeout: 300,
+     is_parallel: false,
+     env: test_env,
+     suite: ['setup'])
 
 
 

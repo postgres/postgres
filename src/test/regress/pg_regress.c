@@ -2295,6 +2295,7 @@ regression_main(int argc, char *argv[],
 		FILE	   *pg_conf;
 		const char *env_wait;
 		int			wait_seconds;
+		const char *initdb_template_dir;
 
 		/*
 		 * Prepare the temp instance
@@ -2316,25 +2317,66 @@ regression_main(int argc, char *argv[],
 		if (!directory_exists(buf))
 			make_directory(buf);
 
-		/* initdb */
 		initStringInfo(&cmd);
-		appendStringInfo(&cmd,
-						 "\"%s%sinitdb\" -D \"%s/data\" --no-clean --no-sync",
-						 bindir ? bindir : "",
-						 bindir ? "/" : "",
-						 temp_instance);
-		if (debug)
-			appendStringInfo(&cmd, " --debug");
-		if (nolocale)
-			appendStringInfo(&cmd, " --no-locale");
-		appendStringInfo(&cmd, " > \"%s/log/initdb.log\" 2>&1", outputdir);
-		fflush(NULL);
-		if (system(cmd.data))
+
+		/*
+		 * Create data directory.
+		 *
+		 * If available, use a previously initdb'd cluster as a template by
+		 * copying it. For a lot of tests, that's substantially cheaper.
+		 *
+		 * There's very similar code in Cluster.pm, but we can't easily de
+		 * duplicate it until we require perl at build time.
+		 */
+		initdb_template_dir = getenv("INITDB_TEMPLATE");
+		if (initdb_template_dir == NULL || nolocale || debug)
 		{
-			bail("initdb failed\n"
-				 "# Examine \"%s/log/initdb.log\" for the reason.\n"
-				 "# Command was: %s",
-				 outputdir, cmd.data);
+			note("initializing database system by running initdb");
+
+			appendStringInfo(&cmd,
+							 "\"%s%sinitdb\" -D \"%s/data\" --no-clean --no-sync",
+							 bindir ? bindir : "",
+							 bindir ? "/" : "",
+							 temp_instance);
+			if (debug)
+				appendStringInfo(&cmd, " --debug");
+			if (nolocale)
+				appendStringInfo(&cmd, " --no-locale");
+			appendStringInfo(&cmd, " > \"%s/log/initdb.log\" 2>&1", outputdir);
+			fflush(NULL);
+			if (system(cmd.data))
+			{
+				bail("initdb failed\n"
+					 "# Examine \"%s/log/initdb.log\" for the reason.\n"
+					 "# Command was: %s",
+					 outputdir, cmd.data);
+			}
+		}
+		else
+		{
+#ifndef WIN32
+			const char *copycmd = "cp -a \"%s\" \"%s/data\"";
+			int			expected_exitcode = 0;
+#else
+			const char *copycmd = "robocopy /E /NJS /NJH /NFL /NDL /NP \"%s\" \"%s/data\"";
+			int			expected_exitcode = 1;	/* 1 denotes files were copied */
+#endif
+
+			note("initializing database system by copying initdb template");
+
+			appendStringInfo(&cmd,
+							 copycmd,
+							 initdb_template_dir,
+							 temp_instance);
+			appendStringInfo(&cmd, " > \"%s/log/initdb.log\" 2>&1", outputdir);
+			fflush(NULL);
+			if (system(cmd.data) != expected_exitcode)
+			{
+				bail("copying of initdb template failed\n"
+					 "# Examine \"%s/log/initdb.log\" for the reason.\n"
+					 "# Command was: %s",
+					 outputdir, cmd.data);
+			}
 		}
 
 		pfree(cmd.data);
