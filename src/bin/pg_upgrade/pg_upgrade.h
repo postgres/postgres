@@ -22,7 +22,7 @@
 #define MAX_STRING			1024
 #define QUERY_ALLOC			8192
 
-#define MESSAGE_WIDTH		60
+#define MESSAGE_WIDTH		62
 
 #define GET_MAJOR_VERSION(v)	((v) / 100)
 
