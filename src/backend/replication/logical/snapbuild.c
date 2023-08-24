@@ -2039,7 +2039,7 @@ SnapBuildRestoreContents(int fd, char *dest, Size size, const char *path)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("could not read file \"%s\": read %d of %zu",
-							path, readBytes, sizeof(SnapBuild))));
+							path, readBytes, size)));
 	}
 }
 
