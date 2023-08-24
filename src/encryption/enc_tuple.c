@@ -1,4 +1,4 @@
-#include "access/pg_tde_defines.h"
+#include "pg_tde_defines.h"
 #define ENCRYPTION_DEBUG 1
 
 #include "postgres.h"

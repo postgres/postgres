@@ -25,8 +25,8 @@
 
 #include "postgres.h"
 
-#include "pg_tdeam.h"
-#include "pg_tdetoast.h"
+#include "access/pg_tdeam.h"
+#include "access/pg_tdetoast.h"
 
 #include "access/detoast.h"
 #include "access/genam.h"

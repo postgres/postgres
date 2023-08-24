@@ -36,9 +36,9 @@
 
 #include <math.h>
 
-#include "pg_tdeam.h"
-#include "pg_tdeam_xlog.h"
-#include "pg_tde_visibilitymap.h"
+#include "access/pg_tdeam.h"
+#include "access/pg_tdeam_xlog.h"
+#include "access/pg_tde_visibilitymap.h"
 #include "encryption/enc_tuple.h"
 
 #include "access/amapi.h"

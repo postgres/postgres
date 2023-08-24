@@ -1,4 +1,6 @@
 pg_tde_sources = files(
+        'src/pg_tde.c',
+        'src/access/pg_tde_tdemap.c',
         'src/access/pg_tdeam.c',
         'src/access/pg_tdeam_handler.c',
         'src/access/pg_tdeam_visibility.c',
@@ -12,7 +14,7 @@ pg_tde_sources = files(
         'src/encryption/enc_aes.c',
 )
 
-incdir = include_directories('src')
+incdir = include_directories('src/include')
 
 pg_tde = shared_module('pg_tde',
   pg_tde_sources,

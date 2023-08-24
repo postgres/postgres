@@ -22,9 +22,10 @@
 
 #include "postgres.h"
 
-#include "pg_tdeam.h"
-#include "pg_tdetoast.h"
-#include "pg_tde_rewrite.h"
+#include "access/pg_tdeam.h"
+#include "access/pg_tdetoast.h"
+#include "access/pg_tde_rewrite.h"
+#include "access/pg_tde_tdemap.h"
 
 #include "encryption/enc_tuple.h"
 
@@ -50,8 +51,6 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
-
-PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pg_tdeam_handler);
 
@@ -635,6 +634,13 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 	}
 
 	smgrclose(srel);
+	if (rel->rd_rel->relkind == RELKIND_RELATION ||
+		rel->rd_rel->relkind == RELKIND_MATVIEW	)
+	{
+		ereport(DEBUG2,
+		(errmsg("creating key file for relation %s", RelationGetRelationName(rel))));
+		pg_tde_create_key_fork(newrlocator, rel);
+	}
 }
 
 static void
