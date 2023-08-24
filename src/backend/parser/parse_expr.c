@@ -3276,9 +3276,9 @@ transformJsonValueExpr(ParseState *pstate, const char *constructName,
 			exprtype != BYTEAOID && typcategory != TYPCATEGORY_STRING)
 			ereport(ERROR,
 					errcode(ERRCODE_DATATYPE_MISMATCH),
-					errmsg(ve->format->format_type == JS_FORMAT_DEFAULT ?
-						   "cannot use non-string types with implicit FORMAT JSON clause" :
-						   "cannot use non-string types with explicit FORMAT JSON clause"),
+					ve->format->format_type == JS_FORMAT_DEFAULT ?
+					errmsg("cannot use non-string types with implicit FORMAT JSON clause") :
+					errmsg("cannot use non-string types with explicit FORMAT JSON clause"),
 					parser_errposition(pstate, ve->format->location >= 0 ?
 									   ve->format->location : location));
 
