@@ -57,6 +57,7 @@
 
 #include "postgres.h"
 
+#include "access/hash.h"
 #include "access/sysattr.h"
 #include "access/tupdesc_details.h"
 #include "access/tuptoaster.h"
