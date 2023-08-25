@@ -1566,15 +1566,12 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
       <listitem>
        <para>
-        Determine the <acronym>ICU</acronym> default locale from the
-        environment (Jeff Davis)
+        Determine the default encoding from the locale when using
+        <acronym>ICU</acronym> (Jeff Davis)
        </para>
 
        <para>
-        However, <link
-        linkend="locale-providers"><acronym>ICU</acronym></link> doesn't
-        support the C locale so <literal>UTF-8</literal> is used in such
-        cases.  Previously the default was always <literal>UTF-8</literal>.
+        Previously the default was always <literal>UTF-8</literal>.
        </para>
       </listitem>
 
