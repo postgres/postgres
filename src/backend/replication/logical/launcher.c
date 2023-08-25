@@ -793,6 +793,7 @@ logicalrep_worker_cleanup(LogicalRepWorker *worker)
 {
 	Assert(LWLockHeldByMeInMode(LogicalRepWorkerLock, LW_EXCLUSIVE));
 
+	worker->type = WORKERTYPE_UNKNOWN;
 	worker->in_use = false;
 	worker->proc = NULL;
 	worker->dbid = InvalidOid;
@@ -862,7 +863,7 @@ logicalrep_sync_worker_count(Oid subid)
 	{
 		LogicalRepWorker *w = &LogicalRepCtx->workers[i];
 
-		if (w->subid == subid && isTablesyncWorker(w))
+		if (isTablesyncWorker(w) && w->subid == subid)
 			res++;
 	}
 
@@ -889,7 +890,7 @@ logicalrep_pa_worker_count(Oid subid)
 	{
 		LogicalRepWorker *w = &LogicalRepCtx->workers[i];
 
-		if (w->subid == subid && isParallelApplyWorker(w))
+		if (isParallelApplyWorker(w) && w->subid == subid)
 			res++;
 	}
 

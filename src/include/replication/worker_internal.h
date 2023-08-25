@@ -327,8 +327,10 @@ extern void pa_decr_and_wait_stream_block(void);
 extern void pa_xact_finish(ParallelApplyWorkerInfo *winfo,
 						   XLogRecPtr remote_lsn);
 
-#define isParallelApplyWorker(worker) ((worker)->type == WORKERTYPE_PARALLEL_APPLY)
-#define isTablesyncWorker(worker) ((worker)->type == WORKERTYPE_TABLESYNC)
+#define isParallelApplyWorker(worker) ((worker)->in_use && \
+									   (worker)->type == WORKERTYPE_PARALLEL_APPLY)
+#define isTablesyncWorker(worker) ((worker)->in_use && \
+								   (worker)->type == WORKERTYPE_TABLESYNC)
 
 static inline bool
 am_tablesync_worker(void)
@@ -339,12 +341,14 @@ am_tablesync_worker(void)
 static inline bool
 am_leader_apply_worker(void)
 {
+	Assert(MyLogicalRepWorker->in_use);
 	return (MyLogicalRepWorker->type == WORKERTYPE_APPLY);
 }
 
 static inline bool
 am_parallel_apply_worker(void)
 {
+	Assert(MyLogicalRepWorker->in_use);
 	return isParallelApplyWorker(MyLogicalRepWorker);
 }
 
