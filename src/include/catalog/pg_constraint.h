@@ -181,6 +181,7 @@ DECLARE_ARRAY_FOREIGN_KEY((confrelid, confkey), pg_attribute, (attrelid, attnum)
 /* Valid values for contype */
 #define CONSTRAINT_CHECK			'c'
 #define CONSTRAINT_FOREIGN			'f'
+#define CONSTRAINT_NOTNULL			'n'
 #define CONSTRAINT_PRIMARY			'p'
 #define CONSTRAINT_UNIQUE			'u'
 #define CONSTRAINT_TRIGGER			't'
@@ -237,15 +238,22 @@ extern Oid	CreateConstraintEntry(const char *constraintName,
 								  bool conNoInherit,
 								  bool is_internal);
 
-extern void RemoveConstraintById(Oid conId);
-extern void RenameConstraintById(Oid conId, const char *newname);
-
 extern bool ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
 								 const char *conname);
 extern bool ConstraintNameExists(const char *conname, Oid namespaceid);
 extern char *ChooseConstraintName(const char *name1, const char *name2,
 								  const char *label, Oid namespaceid,
 								  List *others);
+
+extern HeapTuple findNotNullConstraintAttnum(Oid relid, AttrNumber attnum);
+extern HeapTuple findNotNullConstraint(Oid relid, const char *colname);
+extern AttrNumber extractNotNullColumn(HeapTuple constrTup);
+extern bool AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count);
+extern void AdjustNotNullInheritance(Oid relid, Bitmapset *columns, int count);
+extern List *RelationGetNotNullConstraints(Oid relid, bool cooked);
+
+extern void RemoveConstraintById(Oid conId);
+extern void RenameConstraintById(Oid conId, const char *newname);
 
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 									  Oid newNspId, bool isType, ObjectAddresses *objsMoved);

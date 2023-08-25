@@ -526,11 +526,11 @@ CREATE TABLE part_b PARTITION OF parted (
 	CONSTRAINT check_b CHECK (b >= 0)
 ) FOR VALUES IN ('b');
 -- conislocal should be false for any merged constraints, true otherwise
-SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass ORDER BY conislocal, coninhcount;
+SELECT conname, conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass ORDER BY coninhcount DESC, conname;
 
 -- Once check_b is added to the parent, it should be made non-local for part_b
 ALTER TABLE parted ADD CONSTRAINT check_b CHECK (b >= 0);
-SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass;
+SELECT conname, conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass ORDER BY coninhcount DESC, conname;
 
 -- Neither check_a nor check_b are droppable from part_b
 ALTER TABLE part_b DROP CONSTRAINT check_a;
@@ -540,7 +540,7 @@ ALTER TABLE part_b DROP CONSTRAINT check_b;
 -- traditional inheritance where they will be left behind, because they would
 -- be local constraints.
 ALTER TABLE parted DROP CONSTRAINT check_a, DROP CONSTRAINT check_b;
-SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass;
+SELECT conname, conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass ORDER BY coninhcount DESC, conname;
 
 -- specify PARTITION BY for a partition
 CREATE TABLE fail_part_col_not_found PARTITION OF parted FOR VALUES IN ('c') PARTITION BY RANGE (c);

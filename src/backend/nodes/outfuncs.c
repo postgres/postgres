@@ -718,6 +718,11 @@ _outConstraint(StringInfo str, const Constraint *node)
 
 		case CONSTR_NOTNULL:
 			appendStringInfoString(str, "NOT_NULL");
+			WRITE_NODE_FIELD(keys);
+			WRITE_INT_FIELD(inhcount);
+			WRITE_BOOL_FIELD(is_no_inherit);
+			WRITE_BOOL_FIELD(skip_validation);
+			WRITE_BOOL_FIELD(initially_valid);
 			break;
 
 		case CONSTR_DEFAULT:

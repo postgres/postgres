@@ -2490,6 +2490,20 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 								 conForm->connoinherit ? " NO INHERIT" : "");
 				break;
 			}
+		case CONSTRAINT_NOTNULL:
+			{
+				AttrNumber	attnum;
+
+				attnum = extractNotNullColumn(tup);
+
+				appendStringInfo(&buf, "NOT NULL %s",
+								 quote_identifier(get_attname(conForm->conrelid,
+															  attnum, false)));
+				if (((Form_pg_constraint) GETSTRUCT(tup))->connoinherit)
+					appendStringInfoString(&buf, " NO INHERIT");
+				break;
+			}
+
 		case CONSTRAINT_TRIGGER:
 
 			/*

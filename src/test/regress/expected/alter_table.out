@@ -1118,10 +1118,30 @@ ERROR:  relation "non_existent" does not exist
 -- test checking for null values and primary key
 create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
+\d atacc1
+               Table "public.atacc1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ test   | integer |           | not null | 
+Indexes:
+    "atacc1_pkey" PRIMARY KEY, btree (test)
+
 alter table atacc1 alter column test drop not null;
-ERROR:  column "test" is in a primary key
+\d atacc1
+               Table "public.atacc1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ test   | integer |           | not null | 
+Indexes:
+    "atacc1_pkey" PRIMARY KEY, btree (test)
+
 alter table atacc1 drop constraint "atacc1_pkey";
-alter table atacc1 alter column test drop not null;
+\d atacc1
+               Table "public.atacc1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ test   | integer |           |          | 
+
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;
 ERROR:  column "test" of relation "atacc1" contains null values
@@ -1194,20 +1214,6 @@ alter table only parent alter a set not null;
 ERROR:  column "a" of relation "parent" contains null values
 alter table child alter a set not null;
 ERROR:  column "a" of relation "child" contains null values
-delete from parent;
-alter table only parent alter a set not null;
-insert into parent values (NULL);
-ERROR:  null value in column "a" of relation "parent" violates not-null constraint
-DETAIL:  Failing row contains (null).
-alter table child alter a set not null;
-insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" of relation "child" violates not-null constraint
-DETAIL:  Failing row contains (null, foo).
-delete from child;
-alter table child alter a set not null;
-insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" of relation "child" violates not-null constraint
-DETAIL:  Failing row contains (null, foo).
 drop table child;
 drop table parent;
 -- test setting and removing default values
@@ -3834,6 +3840,29 @@ Referenced by:
     TABLE "ataddindex" CONSTRAINT "ataddindex_ref_id_fkey" FOREIGN KEY (ref_id) REFERENCES ataddindex(id)
 
 DROP TABLE ataddindex;
+CREATE TABLE atnotnull1 ();
+ALTER TABLE atnotnull1
+  ADD COLUMN a INT,
+  ALTER a SET NOT NULL;
+ALTER TABLE atnotnull1
+  ADD COLUMN b INT,
+  ADD NOT NULL b;
+ALTER TABLE atnotnull1
+  ADD COLUMN c INT,
+  ADD PRIMARY KEY (c);
+\d+ atnotnull1
+                                Table "public.atnotnull1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+ b      | integer |           | not null |         | plain   |              | 
+ c      | integer |           | not null |         | plain   |              | 
+Indexes:
+    "atnotnull1_pkey" PRIMARY KEY, btree (c)
+Not-null constraints:
+    "atnotnull1_a_not_null" NOT NULL "a"
+    "atnotnull1_b_not_null" NOT NULL "b"
+
 -- cannot drop column that is part of the partition key
 CREATE TABLE partitioned (
 	a int,
@@ -4351,7 +4380,6 @@ ERROR:  cannot alter inherited column "b"
 -- partitions exist
 ALTER TABLE ONLY list_parted2 ALTER b SET NOT NULL;
 ERROR:  constraint must be added to child tables too
-DETAIL:  Column "b" of relation "part_2" is not already NOT NULL.
 HINT:  Do not specify the ONLY keyword.
 ALTER TABLE ONLY list_parted2 ADD CONSTRAINT check_b CHECK (b <> 'zz');
 ERROR:  constraint must be added to child tables too

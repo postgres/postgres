@@ -196,6 +196,22 @@ INSERT INTO ATACC2 (TEST2) VALUES (3);
 INSERT INTO ATACC1 (TEST2) VALUES (3);
 DROP TABLE ATACC1 CASCADE;
 
+-- NOT NULL NO INHERIT
+CREATE TABLE ATACC1 (a int, not null a no inherit);
+CREATE TABLE ATACC2 () INHERITS (ATACC1);
+\d+ ATACC2
+DROP TABLE ATACC1, ATACC2;
+CREATE TABLE ATACC1 (a int);
+ALTER TABLE ATACC1 ADD NOT NULL a NO INHERIT;
+CREATE TABLE ATACC2 () INHERITS (ATACC1);
+\d+ ATACC2
+DROP TABLE ATACC1, ATACC2;
+CREATE TABLE ATACC1 (a int);
+CREATE TABLE ATACC2 () INHERITS (ATACC1);
+ALTER TABLE ATACC1 ADD NOT NULL a NO INHERIT;
+\d+ ATACC2
+DROP TABLE ATACC1, ATACC2;
+
 --
 -- Check constraints on INSERT INTO
 --
@@ -555,6 +571,92 @@ UPDATE deferred_excl SET f1 = 3;
 ALTER TABLE deferred_excl ADD EXCLUDE (f1 WITH =);
 
 DROP TABLE deferred_excl;
+
+-- verify constraints created for NOT NULL clauses
+CREATE TABLE notnull_tbl1 (a INTEGER NOT NULL NOT NULL);
+\d+ notnull_tbl1
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+-- no-op
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a;
+\d+ notnull_tbl1
+-- duplicate name
+ALTER TABLE notnull_tbl1 ADD COLUMN b INT CONSTRAINT notnull_tbl1_a_not_null NOT NULL;
+-- DROP NOT NULL gets rid of both the attnotnull flag and the constraint itself
+ALTER TABLE notnull_tbl1 ALTER a DROP NOT NULL;
+\d notnull_tbl1
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+-- SET NOT NULL puts both back
+ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
+\d notnull_tbl1
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+-- Doing it twice doesn't create a redundant constraint
+ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+-- Using the "table constraint" syntax also works
+ALTER TABLE notnull_tbl1 ALTER a DROP NOT NULL;
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT foobar NOT NULL a;
+\d notnull_tbl1
+select conname, contype, conkey from pg_constraint where conrelid = 'notnull_tbl1'::regclass;
+DROP TABLE notnull_tbl1;
+
+-- nope
+CREATE TABLE notnull_tbl2 (a INTEGER CONSTRAINT blah NOT NULL, b INTEGER CONSTRAINT blah NOT NULL);
+
+CREATE TABLE notnull_tbl2 (a INTEGER PRIMARY KEY);
+ALTER TABLE notnull_tbl2 ALTER a DROP NOT NULL;
+
+CREATE TABLE notnull_tbl3 (a INTEGER NOT NULL, CHECK (a IS NOT NULL));
+ALTER TABLE notnull_tbl3 ALTER A DROP NOT NULL;
+ALTER TABLE notnull_tbl3 ADD b int, ADD CONSTRAINT pk PRIMARY KEY (a, b);
+\d notnull_tbl3
+ALTER TABLE notnull_tbl3 DROP CONSTRAINT pk;
+\d notnull_tbl3
+
+-- Primary keys in parent table cause NOT NULL constraint to spawn on their
+-- children.  Verify that they work correctly.
+CREATE TABLE cnn_parent (a int, b int);
+CREATE TABLE cnn_child () INHERITS (cnn_parent);
+CREATE TABLE cnn_grandchild (NOT NULL b) INHERITS (cnn_child);
+CREATE TABLE cnn_child2 (NOT NULL a NO INHERIT) INHERITS (cnn_parent);
+CREATE TABLE cnn_grandchild2 () INHERITS (cnn_grandchild, cnn_child2);
+
+ALTER TABLE cnn_parent ADD PRIMARY KEY (b);
+\d+ cnn_grandchild
+\d+ cnn_grandchild2
+ALTER TABLE cnn_parent DROP CONSTRAINT cnn_parent_pkey;
+\set VERBOSITY terse
+DROP TABLE cnn_parent CASCADE;
+\set VERBOSITY default
+
+-- As above, but create the primary key ahead of time
+CREATE TABLE cnn_parent (a int, b int PRIMARY KEY);
+CREATE TABLE cnn_child () INHERITS (cnn_parent);
+CREATE TABLE cnn_grandchild (NOT NULL b) INHERITS (cnn_child);
+CREATE TABLE cnn_child2 (NOT NULL a NO INHERIT) INHERITS (cnn_parent);
+CREATE TABLE cnn_grandchild2 () INHERITS (cnn_grandchild, cnn_child2);
+
+ALTER TABLE cnn_parent ADD PRIMARY KEY (b);
+\d+ cnn_grandchild
+\d+ cnn_grandchild2
+ALTER TABLE cnn_parent DROP CONSTRAINT cnn_parent_pkey;
+\set VERBOSITY terse
+DROP TABLE cnn_parent CASCADE;
+\set VERBOSITY default
+
+-- As above, but create the primary key using a UNIQUE index
+CREATE TABLE cnn_parent (a int, b int);
+CREATE TABLE cnn_child () INHERITS (cnn_parent);
+CREATE TABLE cnn_grandchild (NOT NULL b) INHERITS (cnn_child);
+CREATE TABLE cnn_child2 (NOT NULL a NO INHERIT) INHERITS (cnn_parent);
+CREATE TABLE cnn_grandchild2 () INHERITS (cnn_grandchild, cnn_child2);
+
+CREATE UNIQUE INDEX b_uq ON cnn_parent (b);
+ALTER TABLE cnn_parent ADD PRIMARY KEY USING INDEX b_uq;
+\d+ cnn_grandchild
+\d+ cnn_grandchild2
+ALTER TABLE cnn_parent DROP CONSTRAINT cnn_parent_pkey;
+-- keeps these tables around, for pg_upgrade testing
+
 
 -- Comments
 -- Setup a low-level role to enforce non-superuser checks.
