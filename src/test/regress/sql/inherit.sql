@@ -823,16 +823,16 @@ select conrelid::regclass, conname, contype, coninhcount, conislocal
 --
 
 -- deinherit inh_child1
-create table inh_grandchld () inherits (inh_child1);
+create table inh_child3 () inherits (inh_child1);
 alter table inh_child1 no inherit inh_parent;
 \d+ inh_parent
 \d+ inh_child1
 \d+ inh_child2
 select conrelid::regclass, conname, contype, coninhcount, conislocal
  from pg_constraint where contype = 'n' and
- conrelid::regclass::text in ('inh_parent', 'inh_child1', 'inh_child2', 'inh_grandchld')
+ conrelid::regclass::text in ('inh_parent', 'inh_child1', 'inh_child2', 'inh_child3')
  order by 2, 1;
-drop table inh_parent, inh_child1, inh_child2, inh_grandchld;
+drop table inh_parent, inh_child1, inh_child2, inh_child3;
 
 -- a PK in parent must have a not-null in child that it can mark inherited
 create table inh_parent (a int primary key);
@@ -848,12 +848,12 @@ drop table inh_parent, inh_child;
 create table inh_parent(f1 int not null);
 create table inh_child1() inherits(inh_parent);
 create table inh_child2() inherits(inh_parent);
-create table inh_grandchld() inherits(inh_child1, inh_child2);
+create table inh_child3() inherits(inh_child1, inh_child2);
 
 -- show constraint info
 select conrelid::regclass, conname, contype, coninhcount, conislocal
  from pg_constraint where contype = 'n' and
- conrelid in ('inh_parent'::regclass, 'inh_child1'::regclass, 'inh_child2'::regclass, 'inh_grandchld'::regclass)
+ conrelid in ('inh_parent'::regclass, 'inh_child1'::regclass, 'inh_child2'::regclass, 'inh_child3'::regclass)
  order by 2, conrelid::regclass::text;
 
 drop table inh_parent cascade;
