@@ -800,8 +800,8 @@ $node->connect_ok(
 	"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
 	  . sslkey('client.key'),
 	"auth_option clientcert=verify-full succeeds with matching username and Common Name",
-	# verify-full does not provide authentication
-	log_unlike => [qr/connection authenticated:/],);
+	log_like =>
+	  [qr/connection authenticated: user="ssltestuser" method=trust/],);
 
 $node->connect_fails(
 	"$common_connstr user=anotheruser sslcert=ssl/client.crt "
@@ -818,8 +818,8 @@ $node->connect_ok(
 	"$common_connstr user=yetanotheruser sslcert=ssl/client.crt "
 	  . sslkey('client.key'),
 	"auth_option clientcert=verify-ca succeeds with mismatching username and Common Name",
-	# verify-full does not provide authentication
-	log_unlike => [qr/connection authenticated:/],);
+	log_like =>
+	  [qr/connection authenticated: user="yetanotheruser" method=trust/],);
 
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, certfile => 'server-cn-only', cafile => 'root_ca');

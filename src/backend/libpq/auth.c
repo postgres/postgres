@@ -645,6 +645,22 @@ ClientAuthentication(Port *port)
 #endif
 	}
 
+	if (Log_connections && status == STATUS_OK &&
+		!MyClientConnectionInfo.authn_id)
+	{
+		/*
+		 * Normally, if log_connections is set, the call to set_authn_id()
+		 * will log the connection.  However, if that function is never
+		 * called, perhaps because the trust method is in use, then we handle
+		 * the logging here instead.
+		 */
+		ereport(LOG,
+				errmsg("connection authenticated: user=\"%s\" method=%s "
+					   "(%s:%d)",
+					   port->user_name, hba_authname(port->hba->auth_method),
+					   port->hba->sourcefile, port->hba->linenumber));
+	}
+
 	if (ClientAuthentication_hook)
 		(*ClientAuthentication_hook) (port, status);
 

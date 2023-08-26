@@ -136,13 +136,13 @@ SKIP:
 # Create a database to test regular expression.
 $node->safe_psql('postgres', "CREATE database regex_testdb;");
 
-# For "trust" method, all users should be able to connect. These users are not
-# considered to be authenticated.
+# For "trust" method, all users should be able to connect.
 reset_pg_hba($node, 'all', 'all', 'trust');
 test_conn($node, 'user=scram_role', 'trust', 0,
-	log_unlike => [qr/connection authenticated:/]);
+	log_like =>
+	  [qr/connection authenticated: user="scram_role" method=trust/]);
 test_conn($node, 'user=md5_role', 'trust', 0,
-	log_unlike => [qr/connection authenticated:/]);
+	log_like => [qr/connection authenticated: user="md5_role" method=trust/]);
 
 # SYSTEM_USER is null when not authenticated.
 $res = $node->safe_psql('postgres', "SELECT SYSTEM_USER IS NULL;");
