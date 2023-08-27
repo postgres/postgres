@@ -237,6 +237,19 @@ DROP DOMAIN domain_stats;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 SELECT pg_stat_statements_reset();
 
+-- Execution statements
+SELECT 1 as a;
+PREPARE stat_select AS SELECT $1 AS a;
+EXECUTE stat_select (1);
+DEALLOCATE stat_select;
+PREPARE stat_select AS SELECT $1 AS a;
+EXECUTE stat_select (2);
+DEALLOCATE PREPARE stat_select;
+DEALLOCATE ALL;
+DEALLOCATE PREPARE ALL;
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+SELECT pg_stat_statements_reset();
+
 -- SET statements.
 -- These use two different strings, still they count as one entry.
 SET work_mem = '1MB';

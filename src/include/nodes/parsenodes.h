@@ -3929,8 +3929,12 @@ typedef struct ExecuteStmt
 typedef struct DeallocateStmt
 {
 	NodeTag		type;
-	char	   *name;			/* The name of the plan to remove */
-	/* NULL means DEALLOCATE ALL */
+	/* The name of the plan to remove, NULL if DEALLOCATE ALL */
+	char	   *name pg_node_attr(query_jumble_ignore);
+	/* true if DEALLOCATE ALL */
+	bool		isall;
+	/* token location, or -1 if unknown */
+	int			location pg_node_attr(query_jumble_location);
 } DeallocateStmt;
 
 /*

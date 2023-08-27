@@ -104,8 +104,7 @@ static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
  * ignores.
  */
 #define PGSS_HANDLED_UTILITY(n)		(!IsA(n, ExecuteStmt) && \
-									!IsA(n, PrepareStmt) && \
-									!IsA(n, DeallocateStmt))
+									!IsA(n, PrepareStmt))
 
 /*
  * Extension version number, for supporting older extension versions' objects
@@ -830,8 +829,7 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 	/*
 	 * Clear queryId for prepared statements related utility, as those will
-	 * inherit from the underlying statement's one (except DEALLOCATE which is
-	 * entirely untracked).
+	 * inherit from the underlying statement's one.
 	 */
 	if (query->utilityStmt)
 	{
@@ -1116,8 +1114,6 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 	 * calculated from the query tree) would be used to accumulate costs of
 	 * ensuing EXECUTEs.  This would be confusing, and inconsistent with other
 	 * cases where planning time is not included at all.
-	 *
-	 * Likewise, we don't track execution of DEALLOCATE.
 	 */
 	if (pgss_track_utility && pgss_enabled(exec_nested_level) &&
 		PGSS_HANDLED_UTILITY(parsetree))
