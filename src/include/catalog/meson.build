@@ -1,5 +1,9 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
+# Note: the order of this list determines the order in which the catalog
+# header files are assembled into postgres.bki.  BKI_BOOTSTRAP catalogs
+# must appear first, and pg_statistic before pg_statistic_ext_data, and
+# there are reputedly other, undocumented ordering dependencies.
 catalog_headers = [
   'pg_proc.h',
   'pg_type.h',
@@ -67,6 +71,7 @@ catalog_headers = [
   'pg_subscription_rel.h',
 ]
 
+# The .dat files we need can just be listed alphabetically.
 bki_data = [
   'pg_aggregate.dat',
   'pg_am.dat',

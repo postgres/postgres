@@ -55,24 +55,70 @@ include $(top_srcdir)/src/backend/common.mk
 # must appear first, and pg_statistic before pg_statistic_ext_data, and
 # there are reputedly other, undocumented ordering dependencies.
 CATALOG_HEADERS := \
-	pg_proc.h pg_type.h pg_attribute.h pg_class.h \
-	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
-	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
-	pg_language.h pg_largeobject_metadata.h pg_largeobject.h pg_aggregate.h \
-	pg_statistic.h pg_statistic_ext.h pg_statistic_ext_data.h \
-	pg_rewrite.h pg_trigger.h pg_event_trigger.h pg_description.h \
-	pg_cast.h pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
-	pg_database.h pg_db_role_setting.h pg_tablespace.h \
-	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
-	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
-	pg_ts_parser.h pg_ts_template.h pg_extension.h \
-	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
-	pg_foreign_table.h pg_policy.h pg_replication_origin.h \
-	pg_default_acl.h pg_init_privs.h pg_seclabel.h pg_shseclabel.h \
-	pg_collation.h pg_parameter_acl.h pg_partitioned_table.h \
-	pg_range.h pg_transform.h \
-	pg_sequence.h pg_publication.h pg_publication_namespace.h \
-	pg_publication_rel.h pg_subscription.h pg_subscription_rel.h
+	pg_proc.h \
+	pg_type.h \
+	pg_attribute.h \
+	pg_class.h \
+	pg_attrdef.h \
+	pg_constraint.h \
+	pg_inherits.h \
+	pg_index.h \
+	pg_operator.h \
+	pg_opfamily.h \
+	pg_opclass.h \
+	pg_am.h \
+	pg_amop.h \
+	pg_amproc.h \
+	pg_language.h \
+	pg_largeobject_metadata.h \
+	pg_largeobject.h \
+	pg_aggregate.h \
+	pg_statistic.h \
+	pg_statistic_ext.h \
+	pg_statistic_ext_data.h \
+	pg_rewrite.h \
+	pg_trigger.h \
+	pg_event_trigger.h \
+	pg_description.h \
+	pg_cast.h \
+	pg_enum.h \
+	pg_namespace.h \
+	pg_conversion.h \
+	pg_depend.h \
+	pg_database.h \
+	pg_db_role_setting.h \
+	pg_tablespace.h \
+	pg_authid.h \
+	pg_auth_members.h \
+	pg_shdepend.h \
+	pg_shdescription.h \
+	pg_ts_config.h \
+	pg_ts_config_map.h \
+	pg_ts_dict.h \
+	pg_ts_parser.h \
+	pg_ts_template.h \
+	pg_extension.h \
+	pg_foreign_data_wrapper.h \
+	pg_foreign_server.h \
+	pg_user_mapping.h \
+	pg_foreign_table.h \
+	pg_policy.h \
+	pg_replication_origin.h \
+	pg_default_acl.h \
+	pg_init_privs.h \
+	pg_seclabel.h \
+	pg_shseclabel.h \
+	pg_collation.h \
+	pg_parameter_acl.h \
+	pg_partitioned_table.h \
+	pg_range.h \
+	pg_transform.h \
+	pg_sequence.h \
+	pg_publication.h \
+	pg_publication_namespace.h \
+	pg_publication_rel.h \
+	pg_subscription.h \
+	pg_subscription_rel.h
 
 GENERATED_HEADERS := $(CATALOG_HEADERS:%.h=%_d.h) schemapg.h system_fk_info.h
 
@@ -80,13 +126,30 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, $(CATALOG_H
 
 # The .dat files we need can just be listed alphabetically.
 POSTGRES_BKI_DATA = $(addprefix $(top_srcdir)/src/include/catalog/,\
-	pg_aggregate.dat pg_am.dat pg_amop.dat pg_amproc.dat pg_authid.dat \
-	pg_cast.dat pg_class.dat pg_collation.dat pg_conversion.dat \
-	pg_database.dat pg_language.dat \
-	pg_namespace.dat pg_opclass.dat pg_operator.dat pg_opfamily.dat \
-	pg_proc.dat pg_range.dat pg_tablespace.dat \
-	pg_ts_config.dat pg_ts_config_map.dat pg_ts_dict.dat pg_ts_parser.dat \
-	pg_ts_template.dat pg_type.dat \
+	pg_aggregate.dat \
+	pg_am.dat \
+	pg_amop.dat \
+	pg_amproc.dat \
+	pg_authid.dat \
+	pg_cast.dat \
+	pg_class.dat \
+	pg_collation.dat \
+	pg_conversion.dat \
+	pg_database.dat \
+	pg_language.dat \
+	pg_namespace.dat \
+	pg_opclass.dat \
+	pg_operator.dat \
+	pg_opfamily.dat \
+	pg_proc.dat \
+	pg_range.dat \
+	pg_tablespace.dat \
+	pg_ts_config.dat \
+	pg_ts_config_map.dat \
+	pg_ts_dict.dat \
+	pg_ts_parser.dat \
+	pg_ts_template.dat \
+	pg_type.dat \
 	)
 
 all: distprep generated-header-symlinks
