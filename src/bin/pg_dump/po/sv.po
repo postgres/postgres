@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-02 03:20+0000\n"
-"PO-Revision-Date: 2023-08-02 07:41+0200\n"
+"POT-Creation-Date: 2023-08-23 12:51+0000\n"
+"PO-Revision-Date: 2023-08-23 15:31+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -1995,8 +1995,8 @@ msgstr "läser säkerhetspolicy på radnivå"
 msgid "unexpected policy command type: %c"
 msgstr "oväntad kommandotyp för policy: %c"
 
-#: pg_dump.c:4425 pg_dump.c:4760 pg_dump.c:11984 pg_dump.c:17857
-#: pg_dump.c:17859 pg_dump.c:18480
+#: pg_dump.c:4425 pg_dump.c:4760 pg_dump.c:11984 pg_dump.c:17894
+#: pg_dump.c:17896 pg_dump.c:18517
 #, c-format
 msgid "could not parse %s array"
 msgstr "kunde inte parsa arrayen %s"
@@ -2016,7 +2016,7 @@ msgstr "kunde inte hitta föräldrautökning för %s %s"
 msgid "schema with OID %u does not exist"
 msgstr "schema med OID %u existerar inte"
 
-#: pg_dump.c:6776 pg_dump.c:17121
+#: pg_dump.c:6776 pg_dump.c:17158
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "misslyckades med riktighetskontroll, föräldratabell med OID %u för sekvens med OID %u hittas inte"
@@ -2104,7 +2104,7 @@ msgstr "typtype för datatyp \"%s\" verkar vara ogiltig"
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "okänt provolatile-värde för funktion \"%s\""
 
-#: pg_dump.c:12103 pg_dump.c:13948
+#: pg_dump.c:12103 pg_dump.c:13985
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "okänt proparallel-värde för funktion \"%s\""
@@ -2154,139 +2154,149 @@ msgstr "kunde inte hitta en operator med OID %s."
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "ogiltig typ \"%c\" för accessmetod \"%s\""
 
-#: pg_dump.c:13443
+#: pg_dump.c:13455
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "okänd jämförelseleverantör: %s"
 
-#: pg_dump.c:13867
+#: pg_dump.c:13464 pg_dump.c:13473 pg_dump.c:13483 pg_dump.c:13498
+#, c-format
+msgid "invalid collation \"%s\""
+msgstr "ogiltig jämförelse \"%s\""
+
+#: pg_dump.c:13514
+#, c-format
+msgid "unrecognized collation provider '%c'"
+msgstr "okänd jämförelseleverantör: '%c'"
+
+#: pg_dump.c:13904
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "okänt aggfinalmodify-värde för aggregat \"%s\""
 
-#: pg_dump.c:13923
+#: pg_dump.c:13960
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "okänt aggmfinalmodify-värde för aggregat \"%s\""
 
-#: pg_dump.c:14640
+#: pg_dump.c:14677
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "okänd objekttyp i standardrättigheter: %d"
 
-#: pg_dump.c:14656
+#: pg_dump.c:14693
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "kunde inte parsa standard-ACL-lista (%s)"
 
-#: pg_dump.c:14738
+#: pg_dump.c:14775
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "kunde inte parsa initial ACL-lista (%s) eller default (%s) för objekt \"%s\" (%s)"
 
-#: pg_dump.c:14763
+#: pg_dump.c:14800
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "kunde inte parsa ACL-lista (%s) eller default (%s) för objekt \"%s\" (%s)"
 
-#: pg_dump.c:15304
+#: pg_dump.c:15341
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "fråga för att hämta definition av vy \"%s\" returnerade ingen data"
 
-#: pg_dump.c:15307
+#: pg_dump.c:15344
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "fråga för att hämta definition av vy \"%s\" returnerade mer än en definition"
 
-#: pg_dump.c:15314
+#: pg_dump.c:15351
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "definition av vy \"%s\" verkar vara tom (längd noll)"
 
-#: pg_dump.c:15398
+#: pg_dump.c:15435
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS stöds inte längre (tabell \"%s\")"
 
-#: pg_dump.c:16322
+#: pg_dump.c:16359
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "ogiltigt kolumnnummer %d för tabell \"%s\""
 
-#: pg_dump.c:16400
+#: pg_dump.c:16437
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "kunde inte parsa kolumn i indexstatistik"
 
-#: pg_dump.c:16402
+#: pg_dump.c:16439
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "kunde inte parsa värden i indexstatistik"
 
-#: pg_dump.c:16404
+#: pg_dump.c:16441
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "antal kolumner och värden stämmer inte i indexstatistik"
 
-#: pg_dump.c:16620
+#: pg_dump.c:16657
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "saknar index för integritetsvillkor \"%s\""
 
-#: pg_dump.c:16855
+#: pg_dump.c:16892
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "oväntad integritetsvillkorstyp: %c"
 
-#: pg_dump.c:16956 pg_dump.c:17185
+#: pg_dump.c:16993 pg_dump.c:17222
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "fråga för att hämta data för sekvens \"%s\" returnerade %d rad (förväntade 1)"
 msgstr[1] "fråga för att hämta data för sekvens \"%s\" returnerade %d rader (förväntade 1)"
 
-#: pg_dump.c:16988
+#: pg_dump.c:17025
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "okänd sekvenstyp: %s"
 
-#: pg_dump.c:17277
+#: pg_dump.c:17314
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "oväntat tgtype-värde: %d"
 
-#: pg_dump.c:17349
+#: pg_dump.c:17386
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "felaktig argumentsträng (%s) för trigger \"%s\" i tabell \"%s\""
 
-#: pg_dump.c:17618
+#: pg_dump.c:17655
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "fråga för att hämta regel \"%s\" för tabell \"%s\" misslyckades: fel antal rader returnerades"
 
-#: pg_dump.c:17771
+#: pg_dump.c:17808
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "kunde inte hitta refererad utökning %u"
 
-#: pg_dump.c:17861
+#: pg_dump.c:17898
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "antal konfigurationer och villkor stämmer inte för utökning"
 
-#: pg_dump.c:17993
+#: pg_dump.c:18030
 #, c-format
 msgid "reading dependency data"
 msgstr "läser beroendedata"
 
-#: pg_dump.c:18079
+#: pg_dump.c:18116
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "inget refererande objekt %u %u"
 
-#: pg_dump.c:18090
+#: pg_dump.c:18127
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "inget refererat objekt %u %u"

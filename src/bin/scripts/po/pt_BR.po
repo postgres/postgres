@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-27 13:15-0300\n"
-"PO-Revision-Date: 2016-06-07 06:54-0400\n"
+"PO-Revision-Date: 2023-08-17 16:32+0200\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -315,7 +315,7 @@ msgstr ""
 #: pg_isready.c:241 reindexdb.c:786 vacuumdb.c:1000
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "página web do %s: <%s>\n"
+msgstr "Página web do %s: <%s>\n"
 
 #: common.c:107
 #, c-format

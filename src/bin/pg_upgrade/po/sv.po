@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-02 03:18+0000\n"
-"PO-Revision-Date: 2023-08-02 12:02+0200\n"
+"POT-Creation-Date: 2023-08-25 07:19+0000\n"
+"PO-Revision-Date: 2023-08-27 10:30+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -40,7 +40,9 @@ msgstr ""
 msgid ""
 "\n"
 "*Clusters are compatible*"
-msgstr "\n*Klustren är kompatibla*"
+msgstr ""
+"\n"
+"*Klustren är kompatibla*"
 
 #: check.c:229
 #, c-format
@@ -141,14 +143,18 @@ msgstr "i klustret finns redan ny tablespace-katalog: \"%s\""
 msgid ""
 "\n"
 "WARNING:  new data directory should not be inside the old data directory, i.e. %s"
-msgstr "\nVARNING:  nya datakatalogen skall inte ligga inuti den gamla datakatalogen, dvs. %s"
+msgstr ""
+"\n"
+"VARNING:  nya datakatalogen skall inte ligga inuti den gamla datakatalogen, dvs. %s"
 
 #: check.c:453
 #, c-format
 msgid ""
 "\n"
 "WARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s"
-msgstr "\nVARNING:  användardefinierade tabellutrymmens plats skall inte vara i datakatalogen, dvs. %s"
+msgstr ""
+"\n"
+"VARNING:  användardefinierade tabellutrymmens plats skall inte vara i datakatalogen, dvs. %s"
 
 #: check.c:463
 #, c-format
@@ -337,7 +343,7 @@ msgstr "Letar i användartabeller efter systemdefinierade typer av sorten \"comp
 #: check.c:1136
 #, c-format
 msgid ""
-"Your installation contains system-defined composite type(s) in user tables.\n"
+"Your installation contains system-defined composite types in user tables.\n"
 "These type OIDs are not stable across PostgreSQL versions,\n"
 "so this cluster cannot currently be upgraded.  You can\n"
 "drop the problem columns and restart the upgrade.\n"
@@ -984,14 +990,18 @@ msgstr "Ingen träff hittad i nya klustret för gammal relation med OID %u i dat
 msgid ""
 "\n"
 "source databases:"
-msgstr "\nkälldatabaser:"
+msgstr ""
+"\n"
+"källdatabaser:"
 
 #: info.c:291
 #, c-format
 msgid ""
 "\n"
 "target databases:"
-msgstr "\nmåldatabaser:"
+msgstr ""
+"\n"
+"måldatabaser:"
 
 #: info.c:329
 #, c-format

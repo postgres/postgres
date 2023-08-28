@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-27 13:15-0300\n"
-"PO-Revision-Date: 2022-09-27 20:27-0300\n"
+"PO-Revision-Date: 2023-08-17 16:33+0200\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -145,7 +145,7 @@ msgstr "Relate erros a <%s>.\n"
 #: pg_checksums.c:96
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "página web do %s: <%s>\n"
+msgstr "Página web do %s: <%s>\n"
 
 #: pg_checksums.c:153
 #, c-format
