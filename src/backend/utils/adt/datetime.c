@@ -3578,6 +3578,13 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 						break;
 
 					case AGO:
+
+						/*
+						 * "ago" is only allowed to appear at the end of the
+						 * interval.
+						 */
+						if (i != nf - 1)
+							return DTERR_BAD_FORMAT;
 						is_before = true;
 						type = uval;
 						break;

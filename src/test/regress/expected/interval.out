@@ -1787,3 +1787,12 @@ SELECT extract(epoch from interval '1000000000 days');
  86400000000000.000000
 (1 row)
 
+-- "ago" can only appear once at the end of an interval.
+SELECT INTERVAL '42 days 2 seconds ago ago';
+ERROR:  invalid input syntax for type interval: "42 days 2 seconds ago ago"
+LINE 1: SELECT INTERVAL '42 days 2 seconds ago ago';
+                        ^
+SELECT INTERVAL '2 minutes ago 5 days';
+ERROR:  invalid input syntax for type interval: "2 minutes ago 5 days"
+LINE 1: SELECT INTERVAL '2 minutes ago 5 days';
+                        ^

@@ -582,3 +582,7 @@ SELECT f1,
 
 -- internal overflow test case
 SELECT extract(epoch from interval '1000000000 days');
+
+-- "ago" can only appear once at the end of an interval.
+SELECT INTERVAL '42 days 2 seconds ago ago';
+SELECT INTERVAL '2 minutes ago 5 days';
