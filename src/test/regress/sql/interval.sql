@@ -586,3 +586,7 @@ SELECT extract(epoch from interval '1000000000 days');
 -- "ago" can only appear once at the end of an interval.
 SELECT INTERVAL '42 days 2 seconds ago ago';
 SELECT INTERVAL '2 minutes ago 5 days';
+
+-- consecutive and dangling units are not allowed.
+SELECT INTERVAL 'hour 5 months';
+SELECT INTERVAL '1 year months days 5 hours';

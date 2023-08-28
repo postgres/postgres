@@ -1796,3 +1796,12 @@ SELECT INTERVAL '2 minutes ago 5 days';
 ERROR:  invalid input syntax for type interval: "2 minutes ago 5 days"
 LINE 1: SELECT INTERVAL '2 minutes ago 5 days';
                         ^
+-- consecutive and dangling units are not allowed.
+SELECT INTERVAL 'hour 5 months';
+ERROR:  invalid input syntax for type interval: "hour 5 months"
+LINE 1: SELECT INTERVAL 'hour 5 months';
+                        ^
+SELECT INTERVAL '1 year months days 5 hours';
+ERROR:  invalid input syntax for type interval: "1 year months days 5 hours"
+LINE 1: SELECT INTERVAL '1 year months days 5 hours';
+                        ^
