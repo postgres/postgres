@@ -247,7 +247,7 @@ WAIT_EVENT_WAL_WRITE	WALWrite	"Waiting for a write to a WAL file."
 
 
 #
-# Wait events - Buffer Pin
+# Wait Events - Buffer Pin
 #
 
 Section: ClassName - WaitEventBufferPin
@@ -256,7 +256,7 @@ WAIT_EVENT_BUFFER_PIN	BufferPin	"Waiting to acquire an exclusive pin on a buffer
 
 
 #
-# Wait events - Extension
+# Wait Events - Extension
 #
 
 Section: ClassName - WaitEventExtension
@@ -264,7 +264,7 @@ Section: ClassName - WaitEventExtension
 WAIT_EVENT_DOCONLY	Extension	"Waiting in an extension."
 
 #
-# Wait events - LWLock
+# Wait Events - LWLock
 #
 # This class of wait events has its own set of C structure, so these are
 # only used for the documentation.
@@ -350,7 +350,7 @@ WAIT_EVENT_DOCONLY	LogicalRepLauncherDSA	"Waiting to access logical replication 
 WAIT_EVENT_DOCONLY	LogicalRepLauncherHash	"Waiting to access logical replication launcher's shared hash table."
 
 #
-# Wait even - Lock
+# Wait Events - Lock
 #
 # This class of wait events has its own set of C structure, so these are
 # only used for the documentation.
