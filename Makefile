@@ -19,6 +19,7 @@ src/access/pg_tde_vacuumlazy.o \
 src/access/pg_tde_visibilitymap.o \
 src/access/pg_tde_rewrite.o \
 src/access/pg_tdeam_handler.o \
+src/transam/pg_tde_xact_handler.o \
 src/pg_tde.o
 
 
