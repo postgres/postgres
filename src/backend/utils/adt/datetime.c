@@ -3582,11 +3582,6 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 						type = uval;
 						break;
 
-					case RESERV:
-						tmask = (DTK_DATE_M | DTK_TIME_M);
-						*dtype = uval;
-						break;
-
 					default:
 						return DTERR_BAD_FORMAT;
 				}
