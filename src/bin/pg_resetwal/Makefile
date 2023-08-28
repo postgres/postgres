@@ -15,6 +15,8 @@ subdir = src/bin/pg_resetwal
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
+
 OBJS = \
 	$(WIN32RES) \
 	pg_resetwal.o

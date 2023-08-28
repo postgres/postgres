@@ -321,10 +321,11 @@ RetrieveWalSegSize(PGconn *conn)
 
 	if (!IsValidWalSegSize(WalSegSz))
 	{
-		pg_log_error(ngettext("WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte",
-							  "WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes",
+		pg_log_error(ngettext("remote server reported invalid WAL segment size (%d byte)",
+							  "remote server reported invalid WAL segment size (%d bytes)",
 							  WalSegSz),
 					 WalSegSz);
+		pg_log_error_detail("The WAL segment size must be a power of two between 1 MB and 1 GB.");
 		return false;
 	}
 

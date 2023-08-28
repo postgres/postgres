@@ -1023,10 +1023,14 @@ digestControlFile(ControlFileData *ControlFile, const char *content,
 	WalSegSz = ControlFile->xlog_seg_size;
 
 	if (!IsValidWalSegSize(WalSegSz))
-		pg_fatal(ngettext("WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte",
-						  "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes",
-						  WalSegSz),
-				 WalSegSz);
+	{
+		pg_log_error(ngettext("invalid WAL segment size in control file (%d byte)",
+							  "invalid WAL segment size in control file (%d bytes)",
+							  WalSegSz),
+					 WalSegSz);
+		pg_log_error_detail("The WAL segment size must be a power of two between 1 MB and 1 GB.");
+		exit(1);
+	}
 
 	/* Additional checks on control file */
 	checkControlFile(ControlFile);

@@ -158,6 +158,7 @@ extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern bool check_wal_consistency_checking(char **newval, void **extra,
 										   GucSource source);
 extern void assign_wal_consistency_checking(const char *newval, void *extra);
+extern bool check_wal_segment_size(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
 
 #endif							/* GUC_HOOKS_H */

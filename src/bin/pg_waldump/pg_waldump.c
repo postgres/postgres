@@ -252,10 +252,14 @@ search_directory(const char *directory, const char *fname)
 			WalSegSz = longhdr->xlp_seg_size;
 
 			if (!IsValidWalSegSize(WalSegSz))
-				pg_fatal(ngettext("WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte",
-								  "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes",
-								  WalSegSz),
-						 fname, WalSegSz);
+			{
+				pg_log_error(ngettext("invalid WAL segment size in WAL file \"%s\" (%d byte)",
+									  "invalid WAL segment size in WAL file \"%s\" (%d bytes)",
+									  WalSegSz),
+							 fname, WalSegSz);
+				pg_log_error_detail("The WAL segment size must be a power of two between 1 MB and 1 GB.");
+				exit(1);
+			}
 		}
 		else if (r < 0)
 			pg_fatal("could not read file \"%s\": %m",

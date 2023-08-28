@@ -1995,6 +1995,18 @@ assign_checkpoint_completion_target(double newval, void *extra)
 	CalculateCheckpointSegments();
 }
 
+bool
+check_wal_segment_size(int *newval, void **extra, GucSource source)
+{
+	if (!IsValidWalSegSize(*newval))
+	{
+		GUC_check_errdetail("The WAL segment size must be a power of two between 1 MB and 1 GB.");
+		return false;
+	}
+
+	return true;
+}
+
 /*
  * At a checkpoint, how many WAL segments to recycle as preallocated future
  * XLOG segments? Returns the highest segment that should be preallocated.
@@ -4145,10 +4157,11 @@ ReadControlFile(void)
 
 	if (!IsValidWalSegSize(wal_segment_size))
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg_plural("WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte",
-									  "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes",
+						errmsg_plural("invalid WAL segment size in control file (%d byte)",
+									  "invalid WAL segment size in control file (%d bytes)",
 									  wal_segment_size,
-									  wal_segment_size)));
+									  wal_segment_size),
+						errdetail("The WAL segment size must be a power of two between 1 MB and 1 GB.")));
 
 	snprintf(wal_segsz_str, sizeof(wal_segsz_str), "%d", wal_segment_size);
 	SetConfigOption("wal_segment_size", wal_segsz_str, PGC_INTERNAL,

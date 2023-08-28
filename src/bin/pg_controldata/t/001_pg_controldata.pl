@@ -36,11 +36,11 @@ close $fh;
 command_checks_all(
 	[ 'pg_controldata', $node->data_dir ],
 	0,
+	[qr/./],
 	[
-		qr/WARNING: Calculated CRC checksum does not match value stored in file/,
-		qr/WARNING: invalid WAL segment size/
+		qr/warning: calculated CRC checksum does not match value stored in control file/,
+		qr/warning: invalid WAL segment size/
 	],
-	[qr/^$/],
 	'pg_controldata with corrupted pg_control');
 
 done_testing();

@@ -167,24 +167,23 @@ main(int argc, char *argv[])
 	/* get a copy of the control file */
 	ControlFile = get_controlfile(DataDir, &crc_ok);
 	if (!crc_ok)
-		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
-				 "Either the file is corrupt, or it has a different layout than this program\n"
-				 "is expecting.  The results below are untrustworthy.\n\n"));
+	{
+		pg_log_warning("calculated CRC checksum does not match value stored in control file");
+		pg_log_warning_detail("Either the control file is corrupt, or it has a different layout than this program "
+							  "is expecting.  The results below are untrustworthy.");
+	}
 
 	/* set wal segment size */
 	WalSegSz = ControlFile->xlog_seg_size;
 
 	if (!IsValidWalSegSize(WalSegSz))
 	{
-		printf(_("WARNING: invalid WAL segment size\n"));
-		printf(ngettext("The WAL segment size stored in the file, %d byte, is not a power of two\n"
-						"between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
-						"untrustworthy.\n\n",
-						"The WAL segment size stored in the file, %d bytes, is not a power of two\n"
-						"between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
-						"untrustworthy.\n\n",
-						WalSegSz),
-			   WalSegSz);
+		pg_log_warning(ngettext("invalid WAL segment size in control file (%d byte)",
+								"invalid WAL segment size in control file (%d bytes)",
+								WalSegSz),
+					   WalSegSz);
+		pg_log_warning_detail("The WAL segment size must be a power of two between 1 MB and 1 GB.");
+		pg_log_warning_detail("The file is corrupt and the results below are untrustworthy.");
 	}
 
 	/*
