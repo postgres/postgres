@@ -172,40 +172,27 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 	stmt->tableElts = NIL;
 	for (i = SEQ_COL_FIRSTCOL; i <= SEQ_COL_LASTCOL; i++)
 	{
-		ColumnDef  *coldef = makeNode(ColumnDef);
-
-		coldef->inhcount = 0;
-		coldef->is_local = true;
-		coldef->is_not_null = true;
-		coldef->is_from_type = false;
-		coldef->storage = 0;
-		coldef->raw_default = NULL;
-		coldef->cooked_default = NULL;
-		coldef->collClause = NULL;
-		coldef->collOid = InvalidOid;
-		coldef->constraints = NIL;
-		coldef->location = -1;
-
-		null[i - 1] = false;
+		ColumnDef  *coldef;
 
 		switch (i)
 		{
 			case SEQ_COL_LASTVAL:
-				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
-				coldef->colname = "last_value";
+				coldef = makeColumnDef("last_value", INT8OID, -1, InvalidOid);
 				value[i - 1] = Int64GetDatumFast(seqdataform.last_value);
 				break;
 			case SEQ_COL_LOG:
-				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
-				coldef->colname = "log_cnt";
+				coldef = makeColumnDef("log_cnt", INT8OID, -1, InvalidOid);
 				value[i - 1] = Int64GetDatum((int64) 0);
 				break;
 			case SEQ_COL_CALLED:
-				coldef->typeName = makeTypeNameFromOid(BOOLOID, -1);
-				coldef->colname = "is_called";
+				coldef = makeColumnDef("is_called", BOOLOID, -1, InvalidOid);
 				value[i - 1] = BoolGetDatum(false);
 				break;
 		}
+
+		coldef->is_not_null = true;
+		null[i - 1] = false;
+
 		stmt->tableElts = lappend(stmt->tableElts, coldef);
 	}
 

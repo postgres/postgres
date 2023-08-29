@@ -2755,10 +2755,8 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				/*
 				 * No, create a new inherited column
 				 */
-				def = makeNode(ColumnDef);
-				def->colname = pstrdup(attributeName);
-				def->typeName = makeTypeNameFromOid(attribute->atttypid,
-													attribute->atttypmod);
+				def = makeColumnDef(attributeName, attribute->atttypid,
+									attribute->atttypmod, attribute->attcollation);
 				def->inhcount = 1;
 				def->is_local = false;
 				/* mark attnotnull if parent has it and it's not NO INHERIT */
@@ -2766,20 +2764,11 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					bms_is_member(parent_attno - FirstLowInvalidHeapAttributeNumber,
 								  pkattrs))
 					def->is_not_null = true;
-				def->is_from_type = false;
 				def->storage = attribute->attstorage;
-				def->raw_default = NULL;
-				def->cooked_default = NULL;
 				def->generated = attribute->attgenerated;
-				def->collClause = NULL;
-				def->collOid = attribute->attcollation;
-				def->constraints = NIL;
-				def->location = -1;
 				if (CompressionMethodIsValid(attribute->attcompression))
 					def->compression =
 						pstrdup(GetCompressionMethodName(attribute->attcompression));
-				else
-					def->compression = NULL;
 				inhSchema = lappend(inhSchema, def);
 				newattmap->attnums[parent_attno - 1] = ++child_attno;
 
