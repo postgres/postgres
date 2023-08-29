@@ -942,11 +942,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			attr->atthasdef = true;
 		}
 
-		if (colDef->identity)
-			attr->attidentity = colDef->identity;
-
-		if (colDef->generated)
-			attr->attgenerated = colDef->generated;
+		attr->attidentity = colDef->identity;
+		attr->attgenerated = colDef->generated;
 
 		if (colDef->compression)
 			attr->attcompression = GetAttributeCompression(attr->atttypid,
