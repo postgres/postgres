@@ -2709,8 +2709,7 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
  *
  * After calling this, use PQgetResult() to check command completion status.
  *
- * Returns 1 if successful, 0 if data could not be sent (only possible
- * in nonblock mode), or -1 if an error occurs.
+ * Returns 1 if successful, or -1 if an error occurs.
  */
 int
 PQputCopyEnd(PGconn *conn, const char *errormsg)
