@@ -2533,7 +2533,7 @@ AddRelationNewConstraints(Relation rel,
 			 * update its catalog status and we're done.
 			 */
 			if (AdjustNotNullInheritance1(RelationGetRelid(rel), colnum,
-										  cdef->inhcount))
+										  cdef->inhcount, cdef->is_no_inherit))
 				continue;
 
 			/*
@@ -2830,6 +2830,17 @@ AddRelationNotNullConstraints(Relation rel, List *constraints,
 
 			if (old->attnum == attnum)
 			{
+				/*
+				 * If we get a constraint from the parent, having a local NO
+				 * INHERIT one doesn't work.
+				 */
+				if (constr->is_no_inherit)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("cannot define not-null constraint on column \"%s\" with NO INHERIT",
+									strVal(linitial(constr->keys))),
+							 errdetail("The column has an inherited not-null constraint.")));
+
 				inhcount++;
 				old_notnulls = foreach_delete_current(old_notnulls, lc2);
 			}

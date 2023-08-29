@@ -2051,6 +2051,15 @@ Not-null constraints:
 Inherits: pp1,
           cc1
 
+-- cannot create table with inconsistent NO INHERIT constraint
+create table cc3 (a2 int not null no inherit) inherits (cc1);
+NOTICE:  moving and merging column "a2" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+ERROR:  cannot define not-null constraint on column "a2" with NO INHERIT
+DETAIL:  The column has an inherited not-null constraint.
+-- change NO INHERIT status of inherited constraint: no dice, it's inherited
+alter table cc2 add not null a2 no inherit;
+ERROR:  cannot change NO INHERIT status of inherited NOT NULL constraint "nn" on relation "cc2"
 -- remove constraint from cc2: no dice, it's inherited
 alter table cc2 alter column a2 drop not null;
 ERROR:  cannot drop inherited constraint "nn" of relation "cc2"

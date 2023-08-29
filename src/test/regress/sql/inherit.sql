@@ -736,6 +736,12 @@ alter table pp1 alter column f1 set not null;
 \d+ cc1
 \d+ cc2
 
+-- cannot create table with inconsistent NO INHERIT constraint
+create table cc3 (a2 int not null no inherit) inherits (cc1);
+
+-- change NO INHERIT status of inherited constraint: no dice, it's inherited
+alter table cc2 add not null a2 no inherit;
+
 -- remove constraint from cc2: no dice, it's inherited
 alter table cc2 alter column a2 drop not null;
 

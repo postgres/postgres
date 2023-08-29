@@ -669,7 +669,8 @@ extractNotNullColumn(HeapTuple constrTup)
  * If no not-null constraint is found for the column, return false.
  */
 bool
-AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count)
+AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count,
+						  bool is_no_inherit)
 {
 	HeapTuple	tup;
 
@@ -681,6 +682,19 @@ AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count)
 
 		pg_constraint = table_open(ConstraintRelationId, RowExclusiveLock);
 		conform = (Form_pg_constraint) GETSTRUCT(tup);
+
+		/*
+		 * Don't let the NO INHERIT status change (but don't complain
+		 * unnecessarily.)  In the future it might be useful to let an
+		 * inheritable constraint replace a non-inheritable one, but we'd need
+		 * to recurse to children to get it added there.
+		 */
+		if (is_no_inherit != conform->connoinherit)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("cannot change NO INHERIT status of inherited NOT NULL constraint \"%s\" on relation \"%s\"",
+						   NameStr(conform->conname), get_rel_name(relid)));
+
 		if (count > 0)
 			conform->coninhcount += count;
 
@@ -691,9 +705,9 @@ AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count)
 				 get_rel_name(relid));
 
 		/*
-		 * If the constraints are no longer inherited, mark them local.  It's
-		 * arguable that we should drop them instead, but it's hard to see
-		 * that being better.  The user can drop it manually later.
+		 * If the constraint is no longer inherited, mark it local.  It's
+		 * arguable that we should drop it instead, but it's hard to see that
+		 * being better.  The user can drop it manually later.
 		 */
 		if (conform->coninhcount == 0)
 			conform->conislocal = true;
