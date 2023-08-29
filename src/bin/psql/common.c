@@ -36,6 +36,7 @@ static int	ExecQueryAndProcessResults(const char *query,
 									   double *elapsed_msec,
 									   bool *svpt_gone_p,
 									   bool is_watch,
+									   int min_rows,
 									   const printQueryOpt *opt,
 									   FILE *printQueryFout);
 static bool command_no_begin(const char *query);
@@ -632,7 +633,7 @@ PSQLexec(const char *query)
  * e.g., because of the interrupt, -1 on error.
  */
 int
-PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout)
+PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout, int min_rows)
 {
 	bool		timing = pset.timing;
 	double		elapsed_msec = 0;
@@ -646,7 +647,7 @@ PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout)
 
 	SetCancelConn(pset.db);
 
-	res = ExecQueryAndProcessResults(query, &elapsed_msec, NULL, true, opt, printQueryFout);
+	res = ExecQueryAndProcessResults(query, &elapsed_msec, NULL, true, min_rows, opt, printQueryFout);
 
 	ResetCancelConn();
 
@@ -1134,7 +1135,7 @@ SendQuery(const char *query)
 			 pset.crosstab_flag || !is_select_command(query))
 	{
 		/* Default fetch-it-all-and-print mode */
-		OK = (ExecQueryAndProcessResults(query, &elapsed_msec, &svpt_gone, false, NULL, NULL) > 0);
+		OK = (ExecQueryAndProcessResults(query, &elapsed_msec, &svpt_gone, false, 0, NULL, NULL) > 0);
 	}
 	else
 	{
@@ -1415,11 +1416,12 @@ DescribeQuery(const char *query, double *elapsed_msec)
 static int
 ExecQueryAndProcessResults(const char *query,
 						   double *elapsed_msec, bool *svpt_gone_p,
-						   bool is_watch,
+						   bool is_watch, int min_rows,
 						   const printQueryOpt *opt, FILE *printQueryFout)
 {
 	bool		timing = pset.timing;
 	bool		success;
+	bool		return_early = false;
 	instr_time	before,
 				after;
 	PGresult   *result;
@@ -1461,6 +1463,10 @@ ExecQueryAndProcessResults(const char *query,
 
 	/* first result */
 	result = PQgetResult(pset.db);
+	if (min_rows > 0 && PQntuples(result) < min_rows)
+	{
+		return_early = true;
+	}
 
 	while (result != NULL)
 	{
@@ -1683,7 +1689,10 @@ ExecQueryAndProcessResults(const char *query,
 	if (!CheckConnection())
 		return -1;
 
-	return cancel_pressed ? 0 : success ? 1 : -1;
+	if (cancel_pressed || return_early)
+		return 0;
+
+	return success ? 1 : -1;
 }
 
 

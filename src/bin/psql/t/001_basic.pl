@@ -355,6 +355,29 @@ psql_like(
 psql_like($node, sprintf('SELECT 1 \watch c=3 i=%g', 0.01),
 	qr/1\n1\n1/, '\watch with 3 iterations');
 
+# Check \watch minimum row count
+psql_fails_like(
+	$node,
+	'SELECT 3 \watch m=x',
+	qr/incorrect minimum row count/,
+	'\watch, invalid minimum row setting');
+
+psql_fails_like(
+	$node,
+	'SELECT 3 \watch m=1 min_rows=2',
+	qr/minimum row count specified more than once/,
+	'\watch, minimum rows is specified more than once');
+
+psql_like(
+	$node,
+	q{with x as (
+		select now()-backend_start AS howlong
+		from pg_stat_activity
+		where pid = pg_backend_pid()
+	  ) select 123 from x where howlong < '2 seconds' \watch i=0.5 m=2},
+	qr/^123$/,
+	'\watch, 2 minimum rows');
+
 # Check \watch errors
 psql_fails_like(
 	$node,
