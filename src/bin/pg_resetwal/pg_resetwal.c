@@ -295,7 +295,7 @@ main(int argc, char *argv[])
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 					pg_fatal("argument of --wal-segsize must be a number");
 				if (!IsValidWalSegSize(set_wal_segsize))
-					pg_fatal("argument of --wal-segsize must be a power of 2 between 1 and 1024");
+					pg_fatal("argument of --wal-segsize must be a power of two between 1 and 1024");
 				break;
 
 			default:

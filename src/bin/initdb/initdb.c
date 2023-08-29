@@ -3356,7 +3356,7 @@ main(int argc, char *argv[])
 		if (endptr == str_wal_segment_size_mb || *endptr != '\0')
 			pg_fatal("argument of --wal-segsize must be a number");
 		if (!IsValidWalSegSize(wal_segment_size_mb * 1024 * 1024))
-			pg_fatal("argument of --wal-segsize must be a power of 2 between 1 and 1024");
+			pg_fatal("argument of --wal-segsize must be a power of two between 1 and 1024");
 	}
 
 	get_restricted_token();
