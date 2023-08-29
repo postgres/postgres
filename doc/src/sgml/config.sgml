@@ -11712,10 +11712,10 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-logical-replication-mode" xreflabel="logical_replication_mode">
-      <term><varname>logical_replication_mode</varname> (<type>enum</type>)
+     <varlistentry id="guc-debug-logical-replication-streaming" xreflabel="debug_logical_replication_streaming">
+      <term><varname>debug_logical_replication_streaming</varname> (<type>enum</type>)
       <indexterm>
-       <primary><varname>logical_replication_mode</varname> configuration parameter</primary>
+       <primary><varname>debug_logical_replication_streaming</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -11724,12 +11724,12 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         <literal>immediate</literal>. The default is <literal>buffered</literal>.
         This parameter is intended to be used to test logical decoding and
         replication of large transactions.  The effect of
-        <varname>logical_replication_mode</varname> is different for the
+        <varname>debug_logical_replication_streaming</varname> is different for the
         publisher and subscriber:
        </para>
 
        <para>
-        On the publisher side, <varname>logical_replication_mode</varname>
+        On the publisher side, <varname>debug_logical_replication_streaming</varname>
         allows streaming or serializing changes immediately in logical decoding.
         When set to <literal>immediate</literal>, stream each change if the
         <link linkend="sql-createsubscription-with-streaming"><literal>streaming</literal></link>
@@ -11742,7 +11742,7 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
 
        <para>
         On the subscriber side, if the <literal>streaming</literal> option is set to
-        <literal>parallel</literal>, <varname>logical_replication_mode</varname>
+        <literal>parallel</literal>, <varname>debug_logical_replication_streaming</varname>
         can be used to direct the leader apply worker to send changes to the
         shared memory queue or to serialize all changes to the file.  When set to
         <literal>buffered</literal>, the leader sends changes to parallel apply

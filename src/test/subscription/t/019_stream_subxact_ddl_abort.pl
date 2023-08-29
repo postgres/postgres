@@ -16,7 +16,7 @@ use Test::More;
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf('postgresql.conf',
-	'logical_replication_mode = immediate');
+	'debug_logical_replication_streaming = immediate');
 $node_publisher->start;
 
 # Create subscriber node
