@@ -372,7 +372,7 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 {
 	long	   *heap = lts->freeBlocks;
 	long		blocknum;
-	int			heapsize;
+	long		heapsize;
 	long		holeval;
 	unsigned long holepos;
 
