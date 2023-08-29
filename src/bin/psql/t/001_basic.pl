@@ -370,11 +370,11 @@ psql_fails_like(
 
 psql_like(
 	$node,
-	q{with x as (
+	sprintf(q{with x as (
 		select now()-backend_start AS howlong
 		from pg_stat_activity
 		where pid = pg_backend_pid()
-	  ) select 123 from x where howlong < '2 seconds' \watch i=0.5 m=2},
+	  ) select 123 from x where howlong < '2 seconds' \watch i=%g m=2}, 0.5),
 	qr/^123$/,
 	'\watch, 2 minimum rows');
 
