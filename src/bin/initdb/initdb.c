@@ -3350,7 +3350,7 @@ main(int argc, char *argv[])
 	check_need_password(authmethodlocal, authmethodhost);
 
 	if (!IsValidWalSegSize(wal_segment_size_mb * 1024 * 1024))
-		pg_fatal("argument of %s must be a power of 2 between 1 and 1024", "--wal-segsize");
+		pg_fatal("argument of %s must be a power of two between 1 and 1024", "--wal-segsize");
 
 	get_restricted_token();
 

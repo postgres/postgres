@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 						exit(1);
 					set_wal_segsize = wal_segsize_mb * 1024 * 1024;
 					if (!IsValidWalSegSize(set_wal_segsize))
-						pg_fatal("argument of %s must be a power of 2 between 1 and 1024", "--wal-segsize");
+						pg_fatal("argument of %s must be a power of two between 1 and 1024", "--wal-segsize");
 					break;
 				}
 
