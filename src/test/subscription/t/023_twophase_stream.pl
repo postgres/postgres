@@ -301,7 +301,7 @@ $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf(
 	'postgresql.conf', qq(
 max_prepared_transactions = 10
-logical_replication_mode = immediate
+debug_logical_replication_streaming = immediate
 ));
 $node_publisher->start;
 
@@ -389,7 +389,7 @@ test_streaming($node_publisher, $node_subscriber, $appname, 1);
 # Test serializing changes to files and notify the parallel apply worker to
 # apply them at the end of the transaction.
 $node_subscriber->append_conf('postgresql.conf',
-	'logical_replication_mode = immediate');
+	'debug_logical_replication_streaming = immediate');
 # Reset the log_min_messages to default.
 $node_subscriber->append_conf('postgresql.conf',
 	"log_min_messages = warning");

@@ -19,14 +19,14 @@
 
 /* GUC variables */
 extern PGDLLIMPORT int logical_decoding_work_mem;
-extern PGDLLIMPORT int logical_replication_mode;
+extern PGDLLIMPORT int debug_logical_replication_streaming;
 
-/* possible values for logical_replication_mode */
+/* possible values for debug_logical_replication_streaming */
 typedef enum
 {
-	LOGICAL_REP_MODE_BUFFERED,
-	LOGICAL_REP_MODE_IMMEDIATE
-}			LogicalRepMode;
+	DEBUG_LOGICAL_REP_STREAMING_BUFFERED,
+	DEBUG_LOGICAL_REP_STREAMING_IMMEDIATE
+}			DebugLogicalRepStreamingMode;
 
 /* an individual tuple, stored in one chunk of memory */
 typedef struct ReorderBufferTupleBuf

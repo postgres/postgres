@@ -1709,7 +1709,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
       <para>
        The variable is <link
-       linkend="guc-logical-replication-mode"><varname>logical_replication_mode</varname></link>.
+       linkend="guc-debug-logical-replication-streaming"><varname>debug_logical_replication_streaming</varname></link>.
       </para>
      </listitem>
 
