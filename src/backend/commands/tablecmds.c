@@ -648,7 +648,7 @@ static void refuseDupeIndexAttach(Relation parentIdx, Relation partIdx,
 static void verifyPartitionIndexNotNull(IndexInfo *iinfo, Relation partIdx);
 static List *GetParentedForeignKeyRefs(Relation partition);
 static void ATDetachCheckNoForeignKeyRefs(Relation partition);
-static char GetAttributeCompression(Oid atttypid, char *compression);
+static char GetAttributeCompression(Oid atttypid, const char *compression);
 static char GetAttributeStorage(Oid atttypid, const char *storagemode);
 
 
@@ -20094,7 +20094,7 @@ ATDetachCheckNoForeignKeyRefs(Relation partition)
  * resolve column compression specification to compression method.
  */
 static char
-GetAttributeCompression(Oid atttypid, char *compression)
+GetAttributeCompression(Oid atttypid, const char *compression)
 {
 	char		cmethod;
 
