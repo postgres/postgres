@@ -3107,7 +3107,7 @@ sys.exit(sp.returncode)
 ''',
        test_initdb_template,
        temp_install_bindir / 'initdb',
-       '-A', 'trust', '-N', '--no-instructions'
+       '-A', 'trust', '-N', '--no-instructions', '--no-locale'
      ],
      priority: setup_tests_priority - 1,
      timeout: 300,
