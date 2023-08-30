@@ -765,6 +765,8 @@ static int64 total_weight = 0;
 
 static bool verbose_errors = false; /* print verbose messages of all errors */
 
+static bool exit_on_abort = false;	/* exit when any client is aborted */
+
 /* Builtin test scripts */
 typedef struct BuiltinScript
 {
@@ -911,6 +913,7 @@ usage(void)
 		   "  -T, --time=NUM           duration of benchmark test in seconds\n"
 		   "  -v, --vacuum-all         vacuum all four standard tables before tests\n"
 		   "  --aggregate-interval=NUM aggregate data over NUM seconds\n"
+		   "  --exit-on-abort          exit when any client is aborted\n"
 		   "  --failures-detailed      report the failures grouped by basic types\n"
 		   "  --log-prefix=PREFIX      prefix for transaction time log file\n"
 		   "                           (default: \"pgbench_log\")\n"
@@ -6617,6 +6620,7 @@ main(int argc, char **argv)
 		{"failures-detailed", no_argument, NULL, 13},
 		{"max-tries", required_argument, NULL, 14},
 		{"verbose-errors", no_argument, NULL, 15},
+		{"exit-on-abort", no_argument, NULL, 16},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -6949,6 +6953,10 @@ main(int argc, char **argv)
 			case 15:			/* verbose-errors */
 				benchmarking_option_set = true;
 				verbose_errors = true;
+				break;
+			case 16:			/* exit-on-abort */
+				benchmarking_option_set = true;
+				exit_on_abort = true;
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -7559,10 +7567,17 @@ threadRun(void *arg)
 			advanceConnectionState(thread, st, &aggs);
 
 			/*
+			 * If --exit-on-abort is used, the program is going to exit
+			 * when any client is aborted.
+			 */
+			if (exit_on_abort && st->state == CSTATE_ABORTED)
+				goto done;
+			/*
 			 * If advanceConnectionState changed client to finished state,
 			 * that's one fewer client that remains.
 			 */
-			if (st->state == CSTATE_FINISHED || st->state == CSTATE_ABORTED)
+			else if (st->state == CSTATE_FINISHED ||
+					 st->state == CSTATE_ABORTED)
 				remains--;
 		}
 
@@ -7595,6 +7610,22 @@ threadRun(void *arg)
 	}
 
 done:
+	if (exit_on_abort)
+	{
+		/*
+		 * Abort if any client is not finished, meaning some error occurred.
+		 */
+		for (int i = 0; i < nstate; i++)
+		{
+			if (state[i].state != CSTATE_FINISHED)
+			{
+				pg_log_error("Run was aborted due to an error in thread %d",
+							 thread->tid);
+				exit(2);
+			}
+		}
+	}
+
 	disconnect_all(state, nstate);
 
 	if (thread->logfile)

@@ -1475,6 +1475,32 @@ SELECT pg_advisory_unlock_all();
 # Clean up
 $node->safe_psql('postgres', 'DROP TABLE first_client_table, xy;');
 
+# Test --exit-on-abort
+$node->safe_psql('postgres',
+	'CREATE TABLE counter(i int); '.
+	'INSERT INTO counter VALUES (0);'
+);
+
+$node->pgbench(
+	'-t 10 -c 2 -j 2 --exit-on-abort',
+	2,
+	[],
+	[
+		qr{division by zero},
+		qr{Run was aborted due to an error in thread}
+	],
+	'test --exit-on-abort',
+	{
+		'001_exit_on_abort' => q{
+update counter set i = i+1 returning i \gset
+\if :i = 5
+\set y 1/0
+\endif
+}
+	});
+
+# Clean up
+$node->safe_psql('postgres', 'DROP TABLE counter;');
 
 # done
 $node->safe_psql('postgres', 'DROP TABLESPACE regress_pgbench_tap_1_ts');

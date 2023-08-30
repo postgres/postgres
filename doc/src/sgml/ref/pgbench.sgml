@@ -768,6 +768,24 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       </listitem>
      </varlistentry>
 
+     <varlistentry id="pgbench-option-exit-on-abort">
+      <term><option>--exit-on-abort</option></term>
+      <listitem>
+       <para>
+        Exit immediately when any client is aborted due to some error. Without
+        this option, even when a client is aborted, other clients could
+        continue their run as specified by <option>-t</option>
+        or <option>-T</option> option, and <application>pgbench</application>
+        will print an incomplete results in this case.
+       </para>
+       <para>
+        Note that serialization failures or deadlock failures do not abort the
+        client, so they are not affected by this option.
+        See <xref linkend="failures-and-retries"/> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="pgbench-option-failures-detailed">
       <term><option>--failures-detailed</option></term>
       <listitem>
@@ -985,7 +1003,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
    benchmark such as initial connection failures also exit with status 1.
    Errors during the run such as database errors or problems in the script
    will result in exit status 2. In the latter case,
-   <application>pgbench</application> will print partial results.
+   <application>pgbench</application> will print partial results if
+   <option>--exit-on-abort</option> option is not specified.
   </para>
  </refsect1>
 
@@ -2801,14 +2820,17 @@ statement latencies in milliseconds, failures and retries:
          start a connection to the database server / the socket for connecting
          the client to the database server has become invalid). In such cases
          all clients of this thread stop while other threads continue to work.
+         However, <option>--exit-on-abort</option> is specified, all of the
+         threads stop immediately in this case.
        </para>
      </listitem>
      <listitem>
        <para>
          Direct client errors. They lead to immediate exit from
          <application>pgbench</application> with the corresponding error message
-         only in the case of an internal <application>pgbench</application>
-         error (which are supposed to never occur...). Otherwise in the worst
+         in the case of an internal <application>pgbench</application>
+         error (which are supposed to never occur...) or when
+         <option>--exit-on-abort</option> is specified. Otherwise in the worst
          case they only lead to the abortion of the failed client while other
          clients continue their run (but some client errors are handled without
          an abortion of the client and reported separately, see below). Later in
