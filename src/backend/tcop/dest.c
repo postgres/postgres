@@ -176,7 +176,7 @@ EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_o
 
 			len = BuildQueryCompletionString(completionTag, qc,
 											 force_undecorated_output);
-			pq_putmessage(PqMsg_Close, completionTag, len + 1);
+			pq_putmessage(PqMsg_CommandComplete, completionTag, len + 1);
 
 		case DestNone:
 		case DestDebug:
@@ -200,7 +200,7 @@ EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_o
 void
 EndReplicationCommand(const char *commandTag)
 {
-	pq_putmessage(PqMsg_Close, commandTag, strlen(commandTag) + 1);
+	pq_putmessage(PqMsg_CommandComplete, commandTag, strlen(commandTag) + 1);
 }
 
 /* ----------------
