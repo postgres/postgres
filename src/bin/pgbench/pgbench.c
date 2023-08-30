@@ -7567,11 +7567,12 @@ threadRun(void *arg)
 			advanceConnectionState(thread, st, &aggs);
 
 			/*
-			 * If --exit-on-abort is used, the program is going to exit
-			 * when any client is aborted.
+			 * If --exit-on-abort is used, the program is going to exit when
+			 * any client is aborted.
 			 */
 			if (exit_on_abort && st->state == CSTATE_ABORTED)
 				goto done;
+
 			/*
 			 * If advanceConnectionState changed client to finished state,
 			 * that's one fewer client that remains.
