@@ -334,6 +334,7 @@ extern uint64 pgstat_get_my_query_id(void);
  */
 extern int	pgstat_fetch_stat_numbackends(void);
 extern PgBackendStatus *pgstat_get_beentry_by_backend_id(BackendId beid);
+extern LocalPgBackendStatus *pgstat_get_local_beentry_by_backend_id(BackendId beid);
 extern LocalPgBackendStatus *pgstat_get_local_beentry_by_index(int idx);
 extern char *pgstat_clip_activity(const char *raw_activity);
 

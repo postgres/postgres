@@ -727,7 +727,7 @@ pg_stat_get_backend_subxact(PG_FUNCTION_ARGS)
 
 	BlessTupleDesc(tupdesc);
 
-	if ((local_beentry = pgstat_get_local_beentry_by_index(beid)) != NULL)
+	if ((local_beentry = pgstat_get_local_beentry_by_backend_id(beid)) != NULL)
 	{
 		/* Fill values and NULLs */
 		values[0] = Int32GetDatum(local_beentry->backend_subxact_count);
