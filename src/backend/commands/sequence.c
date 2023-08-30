@@ -172,7 +172,7 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 	stmt->tableElts = NIL;
 	for (i = SEQ_COL_FIRSTCOL; i <= SEQ_COL_LASTCOL; i++)
 	{
-		ColumnDef  *coldef;
+		ColumnDef  *coldef = NULL;
 
 		switch (i)
 		{
