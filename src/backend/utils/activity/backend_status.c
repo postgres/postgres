@@ -849,8 +849,8 @@ pgstat_read_current_status(void)
 			/*
 			 * The BackendStatusArray index is exactly the BackendId of the
 			 * source backend.  Note that this means localBackendStatusTable
-			 * is in order by backend_id.  pgstat_fetch_stat_beentry() depends
-			 * on that.
+			 * is in order by backend_id.  pgstat_get_beentry_by_backend_id()
+			 * depends on that.
 			 */
 			localentry->backend_id = i;
 			BackendIdGetTransactionIds(i,
@@ -1073,21 +1073,21 @@ cmp_lbestatus(const void *a, const void *b)
 }
 
 /* ----------
- * pgstat_fetch_stat_beentry() -
+ * pgstat_get_beentry_by_backend_id() -
  *
  *	Support function for the SQL-callable pgstat* functions. Returns
  *	our local copy of the current-activity entry for one backend,
  *	or NULL if the given beid doesn't identify any known session.
  *
  *	The beid argument is the BackendId of the desired session
- *	(note that this is unlike pgstat_fetch_stat_local_beentry()).
+ *	(note that this is unlike pgstat_get_local_beentry_by_index()).
  *
  *	NB: caller is responsible for a check if the user is permitted to see
  *	this info (especially the querystring).
  * ----------
  */
 PgBackendStatus *
-pgstat_fetch_stat_beentry(BackendId beid)
+pgstat_get_beentry_by_backend_id(BackendId beid)
 {
 	LocalPgBackendStatus key;
 	LocalPgBackendStatus *ret;
@@ -1111,13 +1111,13 @@ pgstat_fetch_stat_beentry(BackendId beid)
 
 
 /* ----------
- * pgstat_fetch_stat_local_beentry() -
+ * pgstat_get_local_beentry_by_index() -
  *
- *	Like pgstat_fetch_stat_beentry() but with locally computed additions (like
- *	xid and xmin values of the backend)
+ *	Like pgstat_get_beentry_by_backend_id() but with locally computed additions
+ *	(like xid and xmin values of the backend)
  *
- *	The beid argument is a 1-based index in the localBackendStatusTable
- *	(note that this is unlike pgstat_fetch_stat_beentry()).
+ *	The idx argument is a 1-based index in the localBackendStatusTable
+ *	(note that this is unlike pgstat_get_beentry_by_backend_id()).
  *	Returns NULL if the argument is out of range (no current caller does that).
  *
  *	NB: caller is responsible for a check if the user is permitted to see
@@ -1125,14 +1125,14 @@ pgstat_fetch_stat_beentry(BackendId beid)
  * ----------
  */
 LocalPgBackendStatus *
-pgstat_fetch_stat_local_beentry(int beid)
+pgstat_get_local_beentry_by_index(int idx)
 {
 	pgstat_read_current_status();
 
-	if (beid < 1 || beid > localNumBackends)
+	if (idx < 1 || idx > localNumBackends)
 		return NULL;
 
-	return &localBackendStatusTable[beid - 1];
+	return &localBackendStatusTable[idx - 1];
 }
 
 
@@ -1141,7 +1141,7 @@ pgstat_fetch_stat_local_beentry(int beid)
  *
  *	Support function for the SQL-callable pgstat* functions. Returns
  *	the number of sessions known in the localBackendStatusTable, i.e.
- *	the maximum 1-based index to pass to pgstat_fetch_stat_local_beentry().
+ *	the maximum 1-based index to pass to pgstat_get_local_beentry_by_index().
  * ----------
  */
 int
