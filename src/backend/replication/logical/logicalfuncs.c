@@ -181,10 +181,10 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 
 		for (i = 0; i < nelems; i += 2)
 		{
-			char	   *name = TextDatumGetCString(datum_opts[i]);
+			char	   *optname = TextDatumGetCString(datum_opts[i]);
 			char	   *opt = TextDatumGetCString(datum_opts[i + 1]);
 
-			options = lappend(options, makeDefElem(name, (Node *) makeString(opt), -1));
+			options = lappend(options, makeDefElem(optname, (Node *) makeString(opt), -1));
 		}
 	}
 

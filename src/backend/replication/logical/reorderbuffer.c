@@ -4840,16 +4840,16 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		/* stitch toast tuple back together from its parts */
 		dlist_foreach(it, &ent->chunks)
 		{
-			bool		isnull;
+			bool		cisnull;
 			ReorderBufferChange *cchange;
 			ReorderBufferTupleBuf *ctup;
 			Pointer		chunk;
 
 			cchange = dlist_container(ReorderBufferChange, node, it.cur);
 			ctup = cchange->data.tp.newtuple;
-			chunk = DatumGetPointer(fastgetattr(&ctup->tuple, 3, toast_desc, &isnull));
+			chunk = DatumGetPointer(fastgetattr(&ctup->tuple, 3, toast_desc, &cisnull));
 
-			Assert(!isnull);
+			Assert(!cisnull);
 			Assert(!VARATT_IS_EXTERNAL(chunk));
 			Assert(!VARATT_IS_SHORT(chunk));
 

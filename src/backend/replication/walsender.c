@@ -3540,7 +3540,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	for (i = 0; i < max_wal_senders; i++)
 	{
 		WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
-		XLogRecPtr	sentPtr;
+		XLogRecPtr	sent_ptr;
 		XLogRecPtr	write;
 		XLogRecPtr	flush;
 		XLogRecPtr	apply;
@@ -3564,7 +3564,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			continue;
 		}
 		pid = walsnd->pid;
-		sentPtr = walsnd->sentPtr;
+		sent_ptr = walsnd->sentPtr;
 		state = walsnd->state;
 		write = walsnd->write;
 		flush = walsnd->flush;
@@ -3607,9 +3607,9 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		{
 			values[1] = CStringGetTextDatum(WalSndGetStateString(state));
 
-			if (XLogRecPtrIsInvalid(sentPtr))
+			if (XLogRecPtrIsInvalid(sent_ptr))
 				nulls[2] = true;
-			values[2] = LSNGetDatum(sentPtr);
+			values[2] = LSNGetDatum(sent_ptr);
 
 			if (XLogRecPtrIsInvalid(write))
 				nulls[3] = true;
