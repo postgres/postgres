@@ -1089,8 +1089,32 @@ cmp_lbestatus(const void *a, const void *b)
 PgBackendStatus *
 pgstat_get_beentry_by_backend_id(BackendId beid)
 {
+	LocalPgBackendStatus *ret = pgstat_get_local_beentry_by_backend_id(beid);
+
+	if (ret)
+		return &ret->backendStatus;
+
+	return NULL;
+}
+
+
+/* ----------
+ * pgstat_get_local_beentry_by_backend_id() -
+ *
+ *	Like pgstat_get_beentry_by_backend_id() but with locally computed additions
+ *	(like xid and xmin values of the backend)
+ *
+ *	The beid argument is the BackendId of the desired session
+ *	(note that this is unlike pgstat_get_local_beentry_by_index()).
+ *
+ *	NB: caller is responsible for checking if the user is permitted to see this
+ *	info (especially the querystring).
+ * ----------
+ */
+LocalPgBackendStatus *
+pgstat_get_local_beentry_by_backend_id(BackendId beid)
+{
 	LocalPgBackendStatus key;
-	LocalPgBackendStatus *ret;
 
 	pgstat_read_current_status();
 
@@ -1099,14 +1123,8 @@ pgstat_get_beentry_by_backend_id(BackendId beid)
 	 * bsearch() to search it efficiently.
 	 */
 	key.backend_id = beid;
-	ret = (LocalPgBackendStatus *) bsearch(&key, localBackendStatusTable,
-										   localNumBackends,
-										   sizeof(LocalPgBackendStatus),
-										   cmp_lbestatus);
-	if (ret)
-		return &ret->backendStatus;
-
-	return NULL;
+	return bsearch(&key, localBackendStatusTable, localNumBackends,
+				   sizeof(LocalPgBackendStatus), cmp_lbestatus);
 }
 
 
