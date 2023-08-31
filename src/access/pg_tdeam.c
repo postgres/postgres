@@ -1168,7 +1168,7 @@ pg_tde_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot 
 
 	pgstat_count_pg_tde_getnext(scan->rs_base.rs_rd);
 
-	PGTdeExecStoreBufferHeapTuple(&scan->rs_ctup, slot,
+	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd, &scan->rs_ctup, slot,
 							 scan->rs_cbuf);
 	return true;
 }
@@ -1316,7 +1316,7 @@ pg_tde_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 	 */
 	pgstat_count_pg_tde_getnext(scan->rs_base.rs_rd);
 
-	PGTdeExecStoreBufferHeapTuple(&scan->rs_ctup, slot, scan->rs_cbuf);
+	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd, &scan->rs_ctup, slot, scan->rs_cbuf);
 	return true;
 }
 

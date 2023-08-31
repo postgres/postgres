@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "utils/rel.h"
+
 #include "storage/bufpage.h"
 #include "executor/tuptable.h"
 
@@ -14,6 +16,6 @@ PGTdePageAddItemExtended(Oid oid, BlockNumber bn, Page page,
 
 /* Wrapper functions for reading decrypted tuple into a given slot */
 TupleTableSlot *
-PGTdeExecStoreBufferHeapTuple(HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
+PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
 TupleTableSlot *
-PGTdeExecStorePinnedBufferHeapTuple(HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
+PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);

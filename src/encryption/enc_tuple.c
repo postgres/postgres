@@ -4,6 +4,7 @@
 #include "postgres.h"
 #include "utils/memutils.h"
 
+#include "access/pg_tde_tdemap.h"
 #include "encryption/enc_tuple.h"
 #include "encryption/enc_aes.h"
 #include "storage/bufmgr.h"
@@ -130,20 +131,26 @@ PGTdePageAddItemExtended(Oid oid,
 }
 
 TupleTableSlot *
-PGTdeExecStoreBufferHeapTuple(HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
+PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
 {
 	Page pageHeader;
 
 	pageHeader = BufferGetPage(buffer);
 	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple);
 
+	/* TODO: use the keys in approprate place */
+	RelKeysData *keys = GetRelationKeys(rel);
+
 	return  ExecStoreBufferHeapTuple(tuple, slot, buffer);
 }
 
 TupleTableSlot *
-PGTdeExecStorePinnedBufferHeapTuple(HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
+PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
 {
 	Page pageHeader;
+
+	/* TODO: use the keys in approprate place */
+	RelKeysData *keys = GetRelationKeys(rel);
 
 	pageHeader = BufferGetPage(buffer);
 	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple);
