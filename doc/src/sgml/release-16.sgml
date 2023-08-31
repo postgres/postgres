@@ -948,14 +948,15 @@ Author: Jeff Davis <jdavis@postgresql.org>
        </para>
 
        <para>
-        Previously the ability to perform <command>LOCK
-        TABLE</command> at various lock levels was bound to
-        specific query-type permissions.  For example, <link
+        Previously a user's ability to perform <command>LOCK
+        TABLE</command> at various lock levels was limited to the
+        lock levels required by the commands they had permission
+        to execute on the table.  For example, someone with <link
         linkend="sql-update"><command>UPDATE</command></link>
-        could perform all lock levels except
-        <literal>ACCESS SHARE</literal>, which required <link
-        linkend="sql-select"><command>SELECT</command></link> permissions.
-        Now <command>UPDATE</command> can issue all lock levels.  MORE?
+        permission could perform all lock levels except <literal>ACCESS
+        SHARE</literal>, even though it was a lesser lock level.  Now users
+        can issue lesser lock levels if they already have permission for
+        greater lock levels.
        </para>
       </listitem>
 
