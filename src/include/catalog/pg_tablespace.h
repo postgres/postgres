@@ -49,7 +49,7 @@ typedef FormData_pg_tablespace *Form_pg_tablespace;
 
 DECLARE_TOAST_WITH_MACRO(pg_tablespace, 4185, 4186, PgTablespaceToastTable, PgTablespaceToastIndex);
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_tablespace_oid_index, 2697, TablespaceOidIndexId, on pg_tablespace using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_tablespace_spcname_index, 2698, TablespaceNameIndexId, on pg_tablespace using btree(spcname name_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_tablespace_oid_index, 2697, TablespaceOidIndexId, pg_tablespace, btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_tablespace_spcname_index, 2698, TablespaceNameIndexId, pg_tablespace, btree(spcname name_ops));
 
 #endif							/* PG_TABLESPACE_H */

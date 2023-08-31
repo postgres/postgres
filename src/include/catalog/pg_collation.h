@@ -59,8 +59,8 @@ typedef FormData_pg_collation *Form_pg_collation;
 
 DECLARE_TOAST(pg_collation, 6175, 6176);
 
-DECLARE_UNIQUE_INDEX(pg_collation_name_enc_nsp_index, 3164, CollationNameEncNspIndexId, on pg_collation using btree(collname name_ops, collencoding int4_ops, collnamespace oid_ops));
-DECLARE_UNIQUE_INDEX_PKEY(pg_collation_oid_index, 3085, CollationOidIndexId, on pg_collation using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_collation_name_enc_nsp_index, 3164, CollationNameEncNspIndexId, pg_collation, btree(collname name_ops, collencoding int4_ops, collnamespace oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_collation_oid_index, 3085, CollationOidIndexId, pg_collation, btree(oid oid_ops));
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

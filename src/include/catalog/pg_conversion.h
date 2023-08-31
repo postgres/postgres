@@ -60,9 +60,9 @@ CATALOG(pg_conversion,2607,ConversionRelationId)
  */
 typedef FormData_pg_conversion *Form_pg_conversion;
 
-DECLARE_UNIQUE_INDEX(pg_conversion_default_index, 2668, ConversionDefaultIndexId, on pg_conversion using btree(connamespace oid_ops, conforencoding int4_ops, contoencoding int4_ops, oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_conversion_name_nsp_index, 2669, ConversionNameNspIndexId, on pg_conversion using btree(conname name_ops, connamespace oid_ops));
-DECLARE_UNIQUE_INDEX_PKEY(pg_conversion_oid_index, 2670, ConversionOidIndexId, on pg_conversion using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_conversion_default_index, 2668, ConversionDefaultIndexId, pg_conversion, btree(connamespace oid_ops, conforencoding int4_ops, contoencoding int4_ops, oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_conversion_name_nsp_index, 2669, ConversionNameNspIndexId, pg_conversion, btree(conname name_ops, connamespace oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_conversion_oid_index, 2670, ConversionOidIndexId, pg_conversion, btree(oid oid_ops));
 
 
 extern ObjectAddress ConversionCreate(const char *conname, Oid connamespace,

@@ -71,7 +71,7 @@ CATALOG(pg_depend,2608,DependRelationId)
  */
 typedef FormData_pg_depend *Form_pg_depend;
 
-DECLARE_INDEX(pg_depend_depender_index, 2673, DependDependerIndexId, on pg_depend using btree(classid oid_ops, objid oid_ops, objsubid int4_ops));
-DECLARE_INDEX(pg_depend_reference_index, 2674, DependReferenceIndexId, on pg_depend using btree(refclassid oid_ops, refobjid oid_ops, refobjsubid int4_ops));
+DECLARE_INDEX(pg_depend_depender_index, 2673, DependDependerIndexId, pg_depend, btree(classid oid_ops, objid oid_ops, objsubid int4_ops));
+DECLARE_INDEX(pg_depend_reference_index, 2674, DependReferenceIndexId, pg_depend, btree(refclassid oid_ops, refobjid oid_ops, refobjsubid int4_ops));
 
 #endif							/* PG_DEPEND_H */

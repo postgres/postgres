@@ -117,6 +117,7 @@ sub ParseHeader
 			 (?<index_name>\w+),\s*
 			 (?<index_oid>\d+),\s*
 			 (?<index_oid_macro>\w+),\s*
+			 (?<table_name>\w+),\s*
 			 (?<index_decl>.+)\s*
 			 \)/x
 		  )

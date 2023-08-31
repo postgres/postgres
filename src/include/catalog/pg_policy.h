@@ -52,7 +52,7 @@ typedef FormData_pg_policy *Form_pg_policy;
 
 DECLARE_TOAST(pg_policy, 4167, 4168);
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_policy_oid_index, 3257, PolicyOidIndexId, on pg_policy using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_policy_polrelid_polname_index, 3258, PolicyPolrelidPolnameIndexId, on pg_policy using btree(polrelid oid_ops, polname name_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_policy_oid_index, 3257, PolicyOidIndexId, pg_policy, btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_policy_polrelid_polname_index, 3258, PolicyPolrelidPolnameIndexId, pg_policy, btree(polrelid oid_ops, polname name_ops));
 
 #endif							/* PG_POLICY_H */

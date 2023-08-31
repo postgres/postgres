@@ -50,8 +50,8 @@ CATALOG(pg_opfamily,2753,OperatorFamilyRelationId)
  */
 typedef FormData_pg_opfamily *Form_pg_opfamily;
 
-DECLARE_UNIQUE_INDEX(pg_opfamily_am_name_nsp_index, 2754, OpfamilyAmNameNspIndexId, on pg_opfamily using btree(opfmethod oid_ops, opfname name_ops, opfnamespace oid_ops));
-DECLARE_UNIQUE_INDEX_PKEY(pg_opfamily_oid_index, 2755, OpfamilyOidIndexId, on pg_opfamily using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_opfamily_am_name_nsp_index, 2754, OpfamilyAmNameNspIndexId, pg_opfamily, btree(opfmethod oid_ops, opfname name_ops, opfnamespace oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_opfamily_oid_index, 2755, OpfamilyOidIndexId, pg_opfamily, btree(oid oid_ops));
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

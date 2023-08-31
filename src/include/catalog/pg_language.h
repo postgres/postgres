@@ -66,7 +66,7 @@ typedef FormData_pg_language *Form_pg_language;
 
 DECLARE_TOAST(pg_language, 4157, 4158);
 
-DECLARE_UNIQUE_INDEX(pg_language_name_index, 2681, LanguageNameIndexId, on pg_language using btree(lanname name_ops));
-DECLARE_UNIQUE_INDEX_PKEY(pg_language_oid_index, 2682, LanguageOidIndexId, on pg_language using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_language_name_index, 2681, LanguageNameIndexId, pg_language, btree(lanname name_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_language_oid_index, 2682, LanguageOidIndexId, pg_language, btree(oid oid_ops));
 
 #endif							/* PG_LANGUAGE_H */

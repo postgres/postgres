@@ -81,9 +81,9 @@ typedef FormData_pg_trigger *Form_pg_trigger;
 
 DECLARE_TOAST(pg_trigger, 2336, 2337);
 
-DECLARE_INDEX(pg_trigger_tgconstraint_index, 2699, TriggerConstraintIndexId, on pg_trigger using btree(tgconstraint oid_ops));
-DECLARE_UNIQUE_INDEX(pg_trigger_tgrelid_tgname_index, 2701, TriggerRelidNameIndexId, on pg_trigger using btree(tgrelid oid_ops, tgname name_ops));
-DECLARE_UNIQUE_INDEX_PKEY(pg_trigger_oid_index, 2702, TriggerOidIndexId, on pg_trigger using btree(oid oid_ops));
+DECLARE_INDEX(pg_trigger_tgconstraint_index, 2699, TriggerConstraintIndexId, pg_trigger, btree(tgconstraint oid_ops));
+DECLARE_UNIQUE_INDEX(pg_trigger_tgrelid_tgname_index, 2701, TriggerRelidNameIndexId, pg_trigger, btree(tgrelid oid_ops, tgname name_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_trigger_oid_index, 2702, TriggerOidIndexId, pg_trigger, btree(oid oid_ops));
 
 DECLARE_ARRAY_FOREIGN_KEY((tgrelid, tgattr), pg_attribute, (attrelid, attnum));
 

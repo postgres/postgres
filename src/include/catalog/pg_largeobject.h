@@ -44,7 +44,7 @@ CATALOG(pg_largeobject,2613,LargeObjectRelationId)
  */
 typedef FormData_pg_largeobject *Form_pg_largeobject;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_largeobject_loid_pn_index, 2683, LargeObjectLOidPNIndexId, on pg_largeobject using btree(loid oid_ops, pageno int4_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_largeobject_loid_pn_index, 2683, LargeObjectLOidPNIndexId, pg_largeobject, btree(loid oid_ops, pageno int4_ops));
 
 extern Oid	LargeObjectCreate(Oid loid);
 extern void LargeObjectDrop(Oid loid);

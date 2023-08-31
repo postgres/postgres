@@ -41,6 +41,6 @@ typedef FormData_pg_shseclabel * Form_pg_shseclabel;
 
 DECLARE_TOAST_WITH_MACRO(pg_shseclabel, 4060, 4061, PgShseclabelToastTable, PgShseclabelToastIndex);
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_shseclabel_object_index, 3593, SharedSecLabelObjectIndexId, on pg_shseclabel using btree(objoid oid_ops, classoid oid_ops, provider text_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_shseclabel_object_index, 3593, SharedSecLabelObjectIndexId, pg_shseclabel, btree(objoid oid_ops, classoid oid_ops, provider text_ops));
 
 #endif							/* PG_SHSECLABEL_H */
