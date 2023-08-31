@@ -12,9 +12,10 @@
 
 #include "postgres.h"
 #include "access/pg_tde_tdemap.h"
+#include "transam/pg_tde_xact_handler.h"
 #include "storage/fd.h"
 #include "utils/wait_event.h"
- 
+
 /*
  * Creates a relation fork file relfilenode.tde that contains the
  * encryption key for the relation.
@@ -52,7 +53,10 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
                          errmsg("Could not write key data to file: %s",
                                 key_file_path)));
 
-	/* For now just clode the key file.*/
+	/* Register the file for delete in case transaction Aborts */
+	RegisterFileForDeletion(key_file_path, false);
+
 	pfree(key_file_path);
+	/* For now just close the key file.*/
 	FileClose(file);
 }
