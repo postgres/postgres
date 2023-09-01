@@ -17,17 +17,17 @@
 typedef struct InternalKey
 {
     uint8   key[INTERNAL_KEY_LEN];
-    /* start and end range of the key
-     * (start_loc == 0 && end_loc == 0) -> the key if for the whole file
+    /* a start and end range of the key
+     * (start_loc == 0 && end_loc == 0) -> the key is for the whole file
      */
     Size    start_loc; 
     Size    end_loc;
 } InternalKey;
 
-#define MASTER_KEY_LEN 256
+#define MASTER_KEY_NAME_LEN 256
 typedef struct RelKeysData
 {
-    char        master_key_name[MASTER_KEY_LEN];
+    char        master_key_name[MASTER_KEY_NAME_LEN];
     Size        internal_keys_len;
     InternalKey internal_key[FLEXIBLE_ARRAY_MEMBER];
 } RelKeysData;
@@ -39,7 +39,7 @@ typedef struct RelKeysData
 /* Relation keys cache.
  * 
  * TODO: For now it is just a linked list. Data can only be added w/o any
- * ability to remove or change it. Also concider usage of more efficient data
+ * ability to remove or change it. Also consider usage of more efficient data
  * struct (hash map) in the shared memory(?) - currently allocated in the
  * TopMemoryContext of the process. 
  */

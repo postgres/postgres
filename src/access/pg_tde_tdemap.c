@@ -74,6 +74,9 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 	data->internal_keys_len = 1;
 
 	sz = SizeOfRelKeysData(data->internal_keys_len);
+	/* 
+	 * TODO: internal key(s) should be encrypted
+	 */
 	if (FileWrite(file, data, sz, 0, WAIT_EVENT_DATA_FILE_WRITE) != sz)
     	ereport(FATAL,
 				(errcode_for_file_access(),
@@ -113,6 +116,9 @@ pg_tde_get_keys_from_fork(const RelFileLocator *rlocator)
 	sz = (Size) FileSize(file);
 	keys = (RelKeysData *) MemoryContextAlloc(TopMemoryContext, sz);
 
+	/* 
+	 * TODO: internal key(s) should be encrypted
+	 */
 	nbytes = FileRead(file, keys, sz, 0, WAIT_EVENT_DATA_FILE_READ);
 	if (nbytes < 0)
 		ereport(FATAL,
