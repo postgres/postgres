@@ -8907,7 +8907,14 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 	List	   *children;
 	List	   *newconstrs = NIL;
 	ListCell   *lc;
-	IndexStmt  *stmt;
+	IndexStmt  *indexstmt;
+
+	/* No work if not creating a primary key */
+	if (!IsA(cmd->def, IndexStmt))
+		return;
+	indexstmt = castNode(IndexStmt, cmd->def);
+	if (!indexstmt->primary)
+		return;
 
 	/* No work if no legacy inheritance children are present */
 	if (rel->rd_rel->relkind != RELKIND_RELATION ||
@@ -8916,8 +8923,7 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 
 	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
 
-	stmt = castNode(IndexStmt, cmd->def);
-	foreach(lc, stmt->indexParams)
+	foreach(lc, indexstmt->indexParams)
 	{
 		IndexElem  *elem = lfirst_node(IndexElem, lc);
 		Constraint *nnconstr;
