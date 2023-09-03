@@ -268,6 +268,13 @@ pgstat_update_dbstats(TimestampTz ts)
 {
 	PgStat_StatDBEntry *dbentry;
 
+	/*
+	 * If not connected to a database yet, don't attribute time to "shared
+	 * state" (InvalidOid is used to track stats for shared relations, etc.).
+	 */
+	if (!OidIsValid(MyDatabaseId))
+		return;
+
 	dbentry = pgstat_prep_database_pending(MyDatabaseId);
 
 	/*
@@ -323,6 +330,12 @@ PgStat_StatDBEntry *
 pgstat_prep_database_pending(Oid dboid)
 {
 	PgStat_EntryRef *entry_ref;
+
+	/*
+	 * This should not report stats on database objects before having
+	 * connected to a database.
+	 */
+	Assert(!OidIsValid(dboid) || OidIsValid(MyDatabaseId));
 
 	entry_ref = pgstat_prep_pending_entry(PGSTAT_KIND_DATABASE, dboid, InvalidOid,
 										  NULL);
