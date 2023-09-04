@@ -7,9 +7,7 @@
 #include "encryption/enc_tuple.h"
 #include "encryption/enc_aes.h"
 #include "storage/bufmgr.h"
-
-// TODO: use real keys
-static unsigned char hardcodedKey[16] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF };
+#include "keyring/keyring_api.h"
 
 // ================================================================
 // ACTUAL ENCRYPTION/DECRYPTION FUNCTIONS
@@ -19,8 +17,6 @@ static unsigned char hardcodedKey[16] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x
 // The only difference between enc and dec is how we calculate offsetInPage
 static void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to)
 {
-	AesInit(); // TODO: where to move this?
-
 	const uint64_t offsetInFile = (bn * BLCKSZ) + offsetInPage;
 
 	const uint64_t aesBlockNumber1 = offsetInFile / 16;
@@ -31,7 +27,20 @@ static void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long of
 #pragma GCC diagnostic ignored "-Wvla"
 	unsigned char encKey[16 * (aesBlockNumber2 - aesBlockNumber1 + 1)];
 #pragma GCC diagnostic pop
-	Aes128EncryptedZeroBlocks(hardcodedKey, aesBlockNumber1, aesBlockNumber2, encKey);
+
+	// TODO: use master key and internal key in .tde file
+	const keyInfo* ki = NULL;
+
+	AesInit(); // TODO: where to move this?
+
+	ki = keyringGetLatestKey("master-key");
+	if(ki == NULL)
+	{
+		ki = keyringGenerateKey("master-key", 16);
+	}
+
+	// TODO: verify key length!
+	Aes128EncryptedZeroBlocks(ki->data.data, aesBlockNumber1, aesBlockNumber2, encKey);
 
 #if ENCRYPTION_DEBUG
 	fprintf(stderr, " ---- (Oid: %i, Len: %u, AesBlock: %lu, BlockOffset: %lu) ----\n", tableOid, to - from, aesBlockNumber1, aesBlockOffset);
@@ -48,20 +57,20 @@ static void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long of
 
 static void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to)
 {
+	const unsigned long offsetInPage = (char*)t_data - (char*)page;
 #if ENCRYPTION_DEBUG
 	fprintf(stderr, " >> DECRYPTING ");
 #endif
-	const unsigned long offsetInPage = (char*)t_data - (char*)page;
 	PGTdeCryptTupInternal(tableOid, bn, offsetInPage, (char*)t_data, out, from, to);
 }
 
 // t_data and out have to be different addresses without overlap!
 static void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to) 
 {
+	const unsigned long offsetInPage = out - page;
 #if ENCRYPTION_DEBUG
 	fprintf(stderr, " >> ENCRYPTING ");
 #endif
-	const unsigned long offsetInPage = out - page;
 	PGTdeCryptTupInternal(tableOid, bn, offsetInPage, t_data, out, from, to);
 }
 
@@ -109,14 +118,11 @@ PGTdePageAddItemExtended(Oid oid,
 					OffsetNumber offsetNumber,
 					int flags)
 {
-	OffsetNumber off;
+	OffsetNumber off = PageAddItemExtended(page,item,size,offsetNumber,flags);
 	PageHeader	phdr = (PageHeader) page;
 	unsigned long headerSize = sizeof(HeapTupleHeaderData);
 
-	off = PageAddItemExtended(page,item,size,offsetNumber,flags);
-
 	char* toAddr = ((char*)phdr) + phdr->pd_upper;
-
 
 	PGTdeEncryptTupInternal(oid, bn, page, item, toAddr, headerSize, size);
 

@@ -1,6 +1,10 @@
+
+# libjson-c-dev on ubuntu
+jsondep = dependency('json-c')
+
 pg_tde_sources = files(
         'src/pg_tde.c',
-        'src/transam/pg_tde_xact_handler',
+        'src/transam/pg_tde_xact_handler.c',
         'src/access/pg_tde_tdemap.c',
         'src/access/pg_tdeam.c',
         'src/access/pg_tdeam_handler.c',
@@ -11,23 +15,34 @@ pg_tde_sources = files(
         'src/access/pg_tde_rewrite.c',
         'src/access/pg_tde_vacuumlazy.c',
         'src/access/pg_tde_visibilitymap.c',
+
         'src/encryption/enc_tuple.c',
         'src/encryption/enc_aes.c',
+
+        'src/keyring/keyring_config.c',
+        'src/keyring/keyring_file.c',
+        'src/keyring/keyring_api.c',
+
+        'src/pg_tde.c',
 )
 
 incdir = include_directories('src/include')
 
+deps_update = {'dependencies': contrib_mod_args.get('dependencies') + [jsondep]}
+
+mod_args = contrib_mod_args + deps_update
+
 pg_tde = shared_module('pg_tde',
   pg_tde_sources,
   c_pch: pch_postgres_h,
-  kwargs: contrib_mod_args,
+  kwargs: mod_args,
   include_directories: incdir,
 )
 contrib_targets += pg_tde
 
-pg_tde = executable('enc_test',
+enc_test = executable('enc_test',
   files('src/encryption/enc_aes.c', 'src/encryption/test.c'),
-  kwargs: contrib_mod_args,
+  kwargs: mod_args,
   include_directories: incdir,
 )
 

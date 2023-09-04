@@ -53,7 +53,7 @@ void AesInit(void)
 }
 
 // TODO: a few things could be optimized in this. It's good enough for a prototype.
-static void AesRun(int enc, unsigned char* key, unsigned char* iv, unsigned char* in, int in_len, unsigned char* out, int* out_len)
+static void AesRun(int enc, const unsigned char* key, const unsigned char* iv, const unsigned char* in, int in_len, unsigned char* out, int* out_len)
 {
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 	EVP_CIPHER_CTX_init(ctx);
@@ -81,17 +81,17 @@ cleanup:
  	EVP_CIPHER_CTX_free(ctx);
 }
 
-void AesEncrypt(unsigned char* key, unsigned char* iv, unsigned char* in, int in_len, unsigned char* out, int* out_len)
+void AesEncrypt(const unsigned char* key, const unsigned char* iv, const unsigned char* in, int in_len, unsigned char* out, int* out_len)
 {
 	AesRun(1, key, iv, in, in_len, out, out_len);
 }
 
-void AesDecrypt(unsigned char* key, unsigned char* iv, unsigned char* in, int in_len, unsigned char* out, int* out_len)
+void AesDecrypt(const unsigned char* key, const unsigned char* iv, const unsigned char* in, int in_len, unsigned char* out, int* out_len)
 {
 	AesRun(0, key, iv, in, in_len, out, out_len);
 }
 
-void Aes128EncryptedZeroBlocks(unsigned char* key, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char* out)
+void Aes128EncryptedZeroBlocks(const unsigned char* key, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char* out)
 {
 	assert(blockNumber2 >= blockNumber1);
 	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
