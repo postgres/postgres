@@ -1089,7 +1089,7 @@ DecodeTruncate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Decode XLOG_HEAP2_MULTI_INSERT_insert record into multiple tuplebufs.
+ * Decode XLOG_HEAP2_MULTI_INSERT record into multiple tuplebufs.
  *
  * Currently MULTI_INSERT will always contain the full tuples.
  */
