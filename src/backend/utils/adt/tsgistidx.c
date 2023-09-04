@@ -730,7 +730,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 				size_alpha = SIGLENBIT(siglen) -
 					sizebitvec((cache[j].allistrue) ?
 							   GETSIGN(datum_l) :
-							   GETSIGN(cache[j].sign),
+							   cache[j].sign,
 							   siglen);
 		}
 		else
@@ -744,7 +744,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 				size_beta = SIGLENBIT(siglen) -
 					sizebitvec((cache[j].allistrue) ?
 							   GETSIGN(datum_r) :
-							   GETSIGN(cache[j].sign),
+							   cache[j].sign,
 							   siglen);
 		}
 		else
