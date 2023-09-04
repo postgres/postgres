@@ -728,7 +728,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 				size_alpha = 0;
 			else
 				size_alpha = SIGLENBIT - sizebitvec(
-													(cache[j].allistrue) ? GETSIGN(datum_l) : GETSIGN(cache[j].sign)
+													(cache[j].allistrue) ? GETSIGN(datum_l) : cache[j].sign
 					);
 		}
 		else
@@ -740,7 +740,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 				size_beta = 0;
 			else
 				size_beta = SIGLENBIT - sizebitvec(
-												   (cache[j].allistrue) ? GETSIGN(datum_r) : GETSIGN(cache[j].sign)
+												   (cache[j].allistrue) ? GETSIGN(datum_r) : cache[j].sign
 					);
 		}
 		else
