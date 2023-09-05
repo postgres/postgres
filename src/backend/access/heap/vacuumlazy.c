@@ -1588,7 +1588,7 @@ retry:
 	 * that were deleted from indexes.
 	 */
 	tuples_deleted = heap_page_prune(rel, buf, vacrel->vistest,
-									 InvalidTransactionId, 0, &nnewlpdead,
+									 &nnewlpdead,
 									 &vacrel->offnum);
 
 	/*
@@ -2875,8 +2875,7 @@ should_attempt_truncation(LVRelState *vacrel)
 {
 	BlockNumber possibly_freeable;
 
-	if (!vacrel->do_rel_truncate || VacuumFailsafeActive ||
-		old_snapshot_threshold >= 0)
+	if (!vacrel->do_rel_truncate || VacuumFailsafeActive)
 		return false;
 
 	possibly_freeable = vacrel->rel_pages - vacrel->nonempty_pages;

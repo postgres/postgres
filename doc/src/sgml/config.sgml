@@ -2709,65 +2709,6 @@ include_dir 'conf.d'
         </para>
        </listitem>
       </varlistentry>
-
-      <varlistentry id="guc-old-snapshot-threshold" xreflabel="old_snapshot_threshold">
-       <term><varname>old_snapshot_threshold</varname> (<type>integer</type>)
-       <indexterm>
-        <primary><varname>old_snapshot_threshold</varname> configuration parameter</primary>
-       </indexterm>
-       </term>
-       <listitem>
-        <para>
-         Sets the minimum amount of time that a query snapshot can be used
-         without risk of a <quote>snapshot too old</quote> error occurring
-         when using the snapshot.  Data that has been dead for longer than
-         this threshold is allowed to be vacuumed away.  This can help
-         prevent bloat in the face of snapshots which remain in use for a
-         long time.  To prevent incorrect results due to cleanup of data which
-         would otherwise be visible to the snapshot, an error is generated
-         when the snapshot is older than this threshold and the snapshot is
-         used to read a page which has been modified since the snapshot was
-         built.
-        </para>
-
-        <para>
-         If this value is specified without units, it is taken as minutes.
-         A value of <literal>-1</literal> (the default) disables this feature,
-         effectively setting the snapshot age limit to infinity.
-         This parameter can only be set at server start.
-        </para>
-
-        <para>
-         Useful values for production work probably range from a small number
-         of hours to a few days.  Small values (such as <literal>0</literal> or
-         <literal>1min</literal>) are only allowed because they may sometimes be
-         useful for testing.  While a setting as high as <literal>60d</literal> is
-         allowed, please note that in many workloads extreme bloat or
-         transaction ID wraparound may occur in much shorter time frames.
-        </para>
-
-        <para>
-         When this feature is enabled, freed space at the end of a relation
-         cannot be released to the operating system, since that could remove
-         information needed to detect the <quote>snapshot too old</quote>
-         condition.  All space allocated to a relation remains associated with
-         that relation for reuse only within that relation unless explicitly
-         freed (for example, with <command>VACUUM FULL</command>).
-        </para>
-
-        <para>
-         This setting does not attempt to guarantee that an error will be
-         generated under any particular circumstances.  In fact, if the
-         correct results can be generated from (for example) a cursor which
-         has materialized a result set, no error will be generated even if the
-         underlying rows in the referenced table have been vacuumed away.
-         Some tables cannot safely be vacuumed early, and so will not be
-         affected by this setting, such as system catalogs.  For such tables
-         this setting will neither reduce bloat nor create a possibility
-         of a <quote>snapshot too old</quote> error on scanning.
-        </para>
-       </listitem>
-      </varlistentry>
      </variablelist>
     </sect2>
    </sect1>
@@ -4782,16 +4723,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         If cascaded replication is in use the feedback is passed upstream
         until it eventually reaches the primary.  Standbys make no other use
         of feedback they receive other than to pass upstream.
-       </para>
-       <para>
-        This setting does not override the behavior of
-        <varname>old_snapshot_threshold</varname> on the primary; a snapshot on the
-        standby which exceeds the primary's age threshold can become invalid,
-        resulting in cancellation of transactions on the standby.  This is
-        because <varname>old_snapshot_threshold</varname> is intended to provide an
-        absolute limit on the time which dead rows can contribute to bloat,
-        which would otherwise be violated because of the configuration of a
-        standby.
        </para>
       </listitem>
      </varlistentry>

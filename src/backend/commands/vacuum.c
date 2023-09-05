@@ -1110,25 +1110,6 @@ vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 	 */
 	cutoffs->OldestXmin = GetOldestNonRemovableTransactionId(rel);
 
-	if (OldSnapshotThresholdActive())
-	{
-		TransactionId limit_xmin;
-		TimestampTz limit_ts;
-
-		if (TransactionIdLimitedForOldSnapshots(cutoffs->OldestXmin, rel,
-												&limit_xmin, &limit_ts))
-		{
-			/*
-			 * TODO: We should only set the threshold if we are pruning on the
-			 * basis of the increased limits.  Not as crucial here as it is
-			 * for opportunistic pruning (which often happens at a much higher
-			 * frequency), but would still be a significant improvement.
-			 */
-			SetOldSnapshotThresholdTimestamp(limit_ts, limit_xmin);
-			cutoffs->OldestXmin = limit_xmin;
-		}
-	}
-
 	Assert(TransactionIdIsNormal(cutoffs->OldestXmin));
 
 	/* Acquire OldestMxact */

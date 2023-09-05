@@ -1659,8 +1659,6 @@ OffsetVarNodes_context
 Oid
 OidOptions
 OkeysState
-OldSnapshotControlData
-OldSnapshotTimeMapping
 OldToNewMapping
 OldToNewMappingData
 OnCommitAction

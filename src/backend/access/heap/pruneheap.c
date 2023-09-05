@@ -36,18 +36,6 @@ typedef struct
 	/* tuple visibility test, initialized for the relation */
 	GlobalVisState *vistest;
 
-	/*
-	 * Thresholds set by TransactionIdLimitedForOldSnapshots() if they have
-	 * been computed (done on demand, and only if
-	 * OldSnapshotThresholdActive()). The first time a tuple is about to be
-	 * removed based on the limited horizon, old_snap_used is set to true, and
-	 * SetOldSnapshotThresholdTimestamp() is called. See
-	 * heap_prune_satisfies_vacuum().
-	 */
-	TimestampTz old_snap_ts;
-	TransactionId old_snap_xmin;
-	bool		old_snap_used;
-
 	TransactionId new_prune_xid;	/* new prune hint value for page */
 	TransactionId snapshotConflictHorizon;	/* latest xid removed */
 	int			nredirected;	/* numbers of entries in arrays below */
@@ -110,8 +98,6 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	Page		page = BufferGetPage(buffer);
 	TransactionId prune_xid;
 	GlobalVisState *vistest;
-	TransactionId limited_xmin = InvalidTransactionId;
-	TimestampTz limited_ts = 0;
 	Size		minfree;
 
 	/*
@@ -121,15 +107,6 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	 */
 	if (RecoveryInProgress())
 		return;
-
-	/*
-	 * XXX: Magic to keep old_snapshot_threshold tests appear "working". They
-	 * currently are broken, and discussion of what to do about them is
-	 * ongoing. See
-	 * https://www.postgresql.org/message-id/20200403001235.e6jfdll3gh2ygbuc%40alap3.anarazel.de
-	 */
-	if (old_snapshot_threshold == 0)
-		SnapshotTooOldMagicForTest();
 
 	/*
 	 * First check whether there's any chance there's something to prune,
@@ -143,35 +120,11 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	/*
 	 * Check whether prune_xid indicates that there may be dead rows that can
 	 * be cleaned up.
-	 *
-	 * It is OK to check the old snapshot limit before acquiring the cleanup
-	 * lock because the worst that can happen is that we are not quite as
-	 * aggressive about the cleanup (by however many transaction IDs are
-	 * consumed between this point and acquiring the lock).  This allows us to
-	 * save significant overhead in the case where the page is found not to be
-	 * prunable.
-	 *
-	 * Even if old_snapshot_threshold is set, we first check whether the page
-	 * can be pruned without. Both because
-	 * TransactionIdLimitedForOldSnapshots() is not cheap, and because not
-	 * unnecessarily relying on old_snapshot_threshold avoids causing
-	 * conflicts.
 	 */
 	vistest = GlobalVisTestFor(relation);
 
 	if (!GlobalVisTestIsRemovableXid(vistest, prune_xid))
-	{
-		if (!OldSnapshotThresholdActive())
-			return;
-
-		if (!TransactionIdLimitedForOldSnapshots(GlobalVisTestNonRemovableHorizon(vistest),
-												 relation,
-												 &limited_xmin, &limited_ts))
-			return;
-
-		if (!TransactionIdPrecedes(prune_xid, limited_xmin))
-			return;
-	}
+		return;
 
 	/*
 	 * We prune when a previous UPDATE failed to find enough space on the page
@@ -205,8 +158,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 			int			ndeleted,
 						nnewlpdead;
 
-			ndeleted = heap_page_prune(relation, buffer, vistest, limited_xmin,
-									   limited_ts, &nnewlpdead, NULL);
+			ndeleted = heap_page_prune(relation, buffer, vistest,
+									   &nnewlpdead, NULL);
 
 			/*
 			 * Report the number of tuples reclaimed to pgstats.  This is
@@ -249,9 +202,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  *
  * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
  * (see heap_prune_satisfies_vacuum and
- * HeapTupleSatisfiesVacuum). old_snap_xmin / old_snap_ts need to
- * either have been set by TransactionIdLimitedForOldSnapshots, or
- * InvalidTransactionId/0 respectively.
+ * HeapTupleSatisfiesVacuum).
  *
  * Sets *nnewlpdead for caller, indicating the number of items that were
  * newly set LP_DEAD during prune operation.
@@ -264,8 +215,6 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 int
 heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
-				TransactionId old_snap_xmin,
-				TimestampTz old_snap_ts,
 				int *nnewlpdead,
 				OffsetNumber *off_loc)
 {
@@ -291,9 +240,6 @@ heap_page_prune(Relation relation, Buffer buffer,
 	prstate.new_prune_xid = InvalidTransactionId;
 	prstate.rel = relation;
 	prstate.vistest = vistest;
-	prstate.old_snap_xmin = old_snap_xmin;
-	prstate.old_snap_ts = old_snap_ts;
-	prstate.old_snap_used = false;
 	prstate.snapshotConflictHorizon = InvalidTransactionId;
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
 	memset(prstate.marked, 0, sizeof(prstate.marked));
@@ -481,19 +427,6 @@ heap_page_prune(Relation relation, Buffer buffer,
 
 /*
  * Perform visibility checks for heap pruning.
- *
- * This is more complicated than just using GlobalVisTestIsRemovableXid()
- * because of old_snapshot_threshold. We only want to increase the threshold
- * that triggers errors for old snapshots when we actually decide to remove a
- * row based on the limited horizon.
- *
- * Due to its cost we also only want to call
- * TransactionIdLimitedForOldSnapshots() if necessary, i.e. we might not have
- * done so in heap_page_prune_opt() if pd_prune_xid was old enough. But we
- * still want to be able to remove rows that are too new to be removed
- * according to prstate->vistest, but that can be removed based on
- * old_snapshot_threshold. So we call TransactionIdLimitedForOldSnapshots() on
- * demand in here, if appropriate.
  */
 static HTSV_Result
 heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
@@ -506,53 +439,8 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 	if (res != HEAPTUPLE_RECENTLY_DEAD)
 		return res;
 
-	/*
-	 * If we are already relying on the limited xmin, there is no need to
-	 * delay doing so anymore.
-	 */
-	if (prstate->old_snap_used)
-	{
-		Assert(TransactionIdIsValid(prstate->old_snap_xmin));
-
-		if (TransactionIdPrecedes(dead_after, prstate->old_snap_xmin))
-			res = HEAPTUPLE_DEAD;
-		return res;
-	}
-
-	/*
-	 * First check if GlobalVisTestIsRemovableXid() is sufficient to find the
-	 * row dead. If not, and old_snapshot_threshold is enabled, try to use the
-	 * lowered horizon.
-	 */
 	if (GlobalVisTestIsRemovableXid(prstate->vistest, dead_after))
 		res = HEAPTUPLE_DEAD;
-	else if (OldSnapshotThresholdActive())
-	{
-		/* haven't determined limited horizon yet, requests */
-		if (!TransactionIdIsValid(prstate->old_snap_xmin))
-		{
-			TransactionId horizon =
-				GlobalVisTestNonRemovableHorizon(prstate->vistest);
-
-			TransactionIdLimitedForOldSnapshots(horizon, prstate->rel,
-												&prstate->old_snap_xmin,
-												&prstate->old_snap_ts);
-		}
-
-		if (TransactionIdIsValid(prstate->old_snap_xmin) &&
-			TransactionIdPrecedes(dead_after, prstate->old_snap_xmin))
-		{
-			/*
-			 * About to remove row based on snapshot_too_old. Need to raise
-			 * the threshold so problematic accesses would error.
-			 */
-			Assert(!prstate->old_snap_used);
-			SetOldSnapshotThresholdTimestamp(prstate->old_snap_ts,
-											 prstate->old_snap_xmin);
-			prstate->old_snap_used = true;
-			res = HEAPTUPLE_DEAD;
-		}
-	}
 
 	return res;
 }

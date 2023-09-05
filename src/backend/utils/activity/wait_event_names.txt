@@ -312,7 +312,6 @@ WAIT_EVENT_DOCONLY	CommitTsSLRU	"Waiting to access the commit timestamp SLRU cac
 WAIT_EVENT_DOCONLY	CommitTs	"Waiting to read or update the last value set for a transaction commit timestamp."
 WAIT_EVENT_DOCONLY	ReplicationOrigin	"Waiting to create, drop or use a replication origin."
 WAIT_EVENT_DOCONLY	MultiXactTruncation	"Waiting to read or truncate multixact information."
-WAIT_EVENT_DOCONLY	OldSnapshotTimeMap	"Waiting to read or update old snapshot control information."
 WAIT_EVENT_DOCONLY	LogicalRepWorker	"Waiting to read or update the state of logical replication workers."
 WAIT_EVENT_DOCONLY	XactTruncation	"Waiting to execute <function>pg_xact_status</function> or update the oldest transaction ID available to it."
 WAIT_EVENT_DOCONLY	WrapLimitsVacuum	"Waiting to update limits on transaction id and multixact consumption."

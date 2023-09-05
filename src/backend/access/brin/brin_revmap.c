@@ -79,7 +79,6 @@ brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange,
 	meta = ReadBuffer(idxrel, BRIN_METAPAGE_BLKNO);
 	LockBuffer(meta, BUFFER_LOCK_SHARE);
 	page = BufferGetPage(meta);
-	TestForOldSnapshot(snapshot, idxrel, page);
 	metadata = (BrinMetaPageData *) PageGetContents(page);
 
 	revmap = palloc(sizeof(BrinRevmap));
@@ -277,7 +276,6 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 		}
 		LockBuffer(*buf, mode);
 		page = BufferGetPage(*buf);
-		TestForOldSnapshot(snapshot, idxRel, page);
 
 		/* If we land on a revmap page, start over */
 		if (BRIN_IS_REGULAR_PAGE(page))
@@ -371,11 +369,6 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	regBuf = ReadBuffer(idxrel, ItemPointerGetBlockNumber(iptr));
 	LockBuffer(regBuf, BUFFER_LOCK_EXCLUSIVE);
 	regPg = BufferGetPage(regBuf);
-
-	/*
-	 * We're only removing data, not reading it, so there's no need to
-	 * TestForOldSnapshot here.
-	 */
 
 	/* if this is no longer a regular page, tell caller to start over */
 	if (!BRIN_IS_REGULAR_PAGE(regPg))

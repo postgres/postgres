@@ -286,8 +286,6 @@ struct GlobalVisState;
 extern void heap_page_prune_opt(Relation relation, Buffer buffer);
 extern int	heap_page_prune(Relation relation, Buffer buffer,
 							struct GlobalVisState *vistest,
-							TransactionId old_snap_xmin,
-							TimestampTz old_snap_ts,
 							int *nnewlpdead,
 							OffsetNumber *off_loc);
 extern void heap_page_prune_execute(Buffer buffer,

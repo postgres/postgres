@@ -138,7 +138,6 @@
 <!ENTITY lo              SYSTEM "lo.sgml">
 <!ENTITY ltree           SYSTEM "ltree.sgml">
 <!ENTITY oid2name        SYSTEM "oid2name.sgml">
-<!ENTITY oldsnapshot     SYSTEM "oldsnapshot.sgml">
 <!ENTITY pageinspect     SYSTEM "pageinspect.sgml">
 <!ENTITY passwordcheck   SYSTEM "passwordcheck.sgml">
 <!ENTITY pgbuffercache   SYSTEM "pgbuffercache.sgml">

@@ -150,7 +150,6 @@ CREATE EXTENSION <replaceable>extension_name</replaceable>;
  &isn;
  &lo;
  &ltree;
- &oldsnapshot;
  &pageinspect;
  &passwordcheck;
  &pgbuffercache;

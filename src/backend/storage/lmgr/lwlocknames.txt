@@ -47,7 +47,7 @@ CommitTsSLRULock					38
 CommitTsLock						39
 ReplicationOriginLock				40
 MultiXactTruncationLock				41
-OldSnapshotTimeMapLock				42
+# 42 was OldSnapshotTimeMapLock
 LogicalRepWorkerLock				43
 XactTruncationLock					44
 # 45 was XactTruncationLock until removal of BackendRandomLock

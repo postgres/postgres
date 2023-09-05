@@ -5575,20 +5575,3 @@ IssuePendingWritebacks(WritebackContext *wb_context, IOContext io_context)
 
 	wb_context->nr_pending = 0;
 }
-
-
-/*
- * Implement slower/larger portions of TestForOldSnapshot
- *
- * Smaller/faster portions are put inline, but the entire set of logic is too
- * big for that.
- */
-void
-TestForOldSnapshot_impl(Snapshot snapshot, Relation relation)
-{
-	if (RelationAllowsEarlyPruning(relation)
-		&& (snapshot)->whenTaken < GetOldSnapshotThresholdTimestamp())
-		ereport(ERROR,
-				(errcode(ERRCODE_SNAPSHOT_TOO_OLD),
-				 errmsg("snapshot too old")));
-}

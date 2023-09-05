@@ -132,7 +132,6 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		page = BufferGetPage(buffer);
-		TestForOldSnapshot(scan->xs_snapshot, scan->indexRelation, page);
 
 		if (!PageIsNew(page) && !BloomPageIsDeleted(page))
 		{

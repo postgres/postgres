@@ -346,7 +346,6 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
 	PredicateLockPage(r, BufferGetBlockNumber(buffer), scan->xs_snapshot);
 	gistcheckpage(scan->indexRelation, buffer);
 	page = BufferGetPage(buffer);
-	TestForOldSnapshot(scan->xs_snapshot, r, page);
 	opaque = GistPageGetOpaque(page);
 
 	/*
