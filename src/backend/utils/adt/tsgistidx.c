@@ -115,10 +115,15 @@ gtsvectorout(PG_FUNCTION_ARGS)
 		sprintf(outbuf, ARROUTSTR, (int) ARRNELEM(key));
 	else
 	{
-		int			siglen = GETSIGLEN(key);
-		int			cnttrue = (ISALLTRUE(key)) ? SIGLENBIT(siglen) : sizebitvec(GETSIGN(key), siglen);
+		if (ISALLTRUE(key))
+			sprintf(outbuf, "all true bits");
+		else
+		{
+			int			siglen = GETSIGLEN(key);
+			int			cnttrue = sizebitvec(GETSIGN(key), siglen);
 
-		sprintf(outbuf, SINGOUTSTR, cnttrue, (int) SIGLENBIT(siglen) - cnttrue);
+			sprintf(outbuf, SINGOUTSTR, cnttrue, (int) SIGLENBIT(siglen) - cnttrue);
+		}
 	}
 
 	PG_FREE_IF_COPY(key, 0);
