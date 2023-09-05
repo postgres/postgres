@@ -13691,7 +13691,7 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 		}
 	}
 	else
-		pg_fatal("unrecognized collation provider '%c'", collprovider[0]);
+		pg_fatal("unrecognized collation provider: %s", collprovider);
 
 	/*
 	 * For binary upgrade, carry over the collation version.  For normal
