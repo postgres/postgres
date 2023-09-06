@@ -1818,7 +1818,7 @@ Author: Robert Haas <rhaas@postgresql.org>
        This improves security and now requires subscription
        owners to be either superusers or to have <link
        linkend="sql-set-role"><command>SET ROLE</command></link>
-       permissions on all tables in the replication set.
+       permission on all roles owning tables in the replication set.
        The previous behavior of performing all operations as the
        subscription owner can be enabled with the subscription <link
        linkend="sql-createsubscription"><option>run_as_owner</option></link>
