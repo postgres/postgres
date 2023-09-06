@@ -46,12 +46,6 @@
 #include <dirent.h>
 #include <fcntl.h>
 
-typedef enum RecoveryInitSyncMethod
-{
-	RECOVERY_INIT_SYNC_METHOD_FSYNC,
-	RECOVERY_INIT_SYNC_METHOD_SYNCFS
-}			RecoveryInitSyncMethod;
-
 typedef int File;
 
 

@@ -24,6 +24,12 @@ typedef enum PGFileType
 	PGFILETYPE_LNK
 } PGFileType;
 
+typedef enum DataDirSyncMethod
+{
+	DATA_DIR_SYNC_METHOD_FSYNC,
+	DATA_DIR_SYNC_METHOD_SYNCFS
+} DataDirSyncMethod;
+
 struct iovec;					/* avoid including port/pg_iovec.h here */
 
 #ifdef FRONTEND

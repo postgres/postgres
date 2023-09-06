@@ -545,6 +545,7 @@ DR_printtup
 DR_sqlfunction
 DR_transientrel
 DWORD
+DataDirSyncMethod
 DataDumperPtr
 DataPageDeleteStack
 DatabaseInfo

@@ -41,6 +41,7 @@
 #include "commands/trigger.h"
 #include "commands/user.h"
 #include "commands/vacuum.h"
+#include "common/file_utils.h"
 #include "common/scram-common.h"
 #include "jit/jit.h"
 #include "libpq/auth.h"
@@ -430,9 +431,9 @@ StaticAssertDecl(lengthof(ssl_protocol_versions_info) == (PG_TLS1_3_VERSION + 2)
 				 "array length mismatch");
 
 static const struct config_enum_entry recovery_init_sync_method_options[] = {
-	{"fsync", RECOVERY_INIT_SYNC_METHOD_FSYNC, false},
+	{"fsync", DATA_DIR_SYNC_METHOD_FSYNC, false},
 #ifdef HAVE_SYNCFS
-	{"syncfs", RECOVERY_INIT_SYNC_METHOD_SYNCFS, false},
+	{"syncfs", DATA_DIR_SYNC_METHOD_SYNCFS, false},
 #endif
 	{NULL, 0, false}
 };
@@ -4953,7 +4954,7 @@ struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets the method for synchronizing the data directory before crash recovery."),
 		},
 		&recovery_init_sync_method,
-		RECOVERY_INIT_SYNC_METHOD_FSYNC, recovery_init_sync_method_options,
+		DATA_DIR_SYNC_METHOD_FSYNC, recovery_init_sync_method_options,
 		NULL, NULL, NULL
 	},
 
