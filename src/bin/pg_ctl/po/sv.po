@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-08-01 14:18+0000\n"
-"PO-Revision-Date: 2023-08-01 22:16+0200\n"
+"PO-Revision-Date: 2023-08-30 09:01+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -37,7 +37,7 @@ msgstr "kunde inte hitta en \"%s\" att köra"
 #: ../../common/exec.c:250
 #, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
-msgstr "kunde inte skriva om sökväg \"%s\" till absolut sökväg: %m"
+msgstr "kunde inte konvertera sökvägen \"%s\" till en absolut sökväg: %m"
 
 #: ../../common/exec.c:412
 #, c-format
@@ -168,12 +168,12 @@ msgstr "%s: kunde inte skicka stopp-signal (PID: %d): %s\n"
 #: pg_ctl.c:883
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\"\n"
-msgstr "Programmet \"%s\" behövs av %s men hittades inte i samma katalog som \"%s\"\n"
+msgstr "programmet \"%s\" behövs av %s men hittades inte i samma katalog som \"%s\"\n"
 
 #: pg_ctl.c:886
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s\n"
-msgstr "Programmet \"%s\" hittades av \"%s\" men är inte av samma version som %s.\n"
+msgstr "programmet \"%s\" hittades av \"%s\" men är inte av samma version som %s\n"
 
 #: pg_ctl.c:918
 #, c-format

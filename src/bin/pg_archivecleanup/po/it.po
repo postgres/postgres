@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:20+0000\n"
-"PO-Revision-Date: 2022-09-30 14:18+0200\n"
+"PO-Revision-Date: 2023-09-05 08:03+0200\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -104,12 +104,12 @@ msgstr ""
 #: pg_archivecleanup.c:255
 #, c-format
 msgid "  -d             generate debug output (verbose mode)\n"
-msgstr " -d genera output di debug (modalità dettagliata)\n"
+msgstr "  -d             genera output di debug (modalità dettagliata)\n"
 
 #: pg_archivecleanup.c:256
 #, c-format
 msgid "  -n             dry run, show the names of the files that would be removed\n"
-msgstr " -n dry run, mostra i nomi dei file che verrebbero rimossi\n"
+msgstr "  -n             dry run, mostra i nomi dei file che verrebbero rimossi\n"
 
 #: pg_archivecleanup.c:257
 #, c-format
@@ -119,7 +119,7 @@ msgstr "  -V --version   mostra informazioni sulla versione ed esci\n"
 #: pg_archivecleanup.c:258
 #, c-format
 msgid "  -x EXT         clean up files if they have this extension\n"
-msgstr " -x EXT ripulisce i file se hanno questa estensione\n"
+msgstr "  -x EXT         ripulisce i file se hanno questa estensione\n"
 
 #: pg_archivecleanup.c:259
 #, c-format

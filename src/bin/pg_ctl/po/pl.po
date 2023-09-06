@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 9.5)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:09+0200\n"
+"PO-Revision-Date: 2023-09-05 08:43+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -702,7 +702,7 @@ msgstr ""
 #: pg_ctl.c:2007
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
-msgstr "  -p ŚCIEŻKA-DO-POSTGRES    zwykle niekonieczna\n"
+msgstr "  -p ŚCIEŻKA-DO-POSTGRES zwykle niekonieczna\n"
 
 #: pg_ctl.c:2008
 #, c-format

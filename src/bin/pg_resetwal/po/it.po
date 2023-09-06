@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:18+0000\n"
-"PO-Revision-Date: 2022-10-02 19:06+0200\n"
+"PO-Revision-Date: 2023-09-05 08:20+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: it\n"
@@ -589,67 +589,67 @@ msgstr ""
 #: pg_resetwal.c:1140
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
-msgstr " [-D, --pgdata=]DATADIR directory dei dati\n"
+msgstr " [-D, --pgdata=]DATADIR            directory dei dati\n"
 
 #: pg_resetwal.c:1141
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
-msgstr " -e, --epoch=XIDEPOCH imposta l'epoca dell'ID transazione successiva\n"
+msgstr "  -e, --epoch=XIDEPOCH             imposta l'epoca dell'ID transazione successiva\n"
 
 #: pg_resetwal.c:1142
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
-msgstr "  -f, --force forza l'aggiornamento da eseguire\n"
+msgstr "  -f, --force                      forza l'aggiornamento da eseguire\n"
 
 #: pg_resetwal.c:1143
 #, c-format
 msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
-msgstr " -l, --next-wal-file=WALFILE imposta la posizione iniziale minima per il nuovo WAL\n"
+msgstr "  -l, --next-wal-file=WALFILE      imposta la posizione iniziale minima per il nuovo WAL\n"
 
 #: pg_resetwal.c:1144
 #, c-format
 msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
-msgstr " -m, --multixact-ids=MXID,MXID imposta l'ID multitransazione successivo e meno recente\n"
+msgstr "  -m, --multixact-ids=MXID,MXID    imposta l'ID multitransazione successivo e meno recente\n"
 
 #: pg_resetwal.c:1145
 #, c-format
 msgid "  -n, --dry-run                    no update, just show what would be done\n"
-msgstr " -n, --dry-run nessun aggiornamento, mostra solo cosa sarebbe stato fatto\n"
+msgstr "  -n, --dry-run                    nessun aggiornamento, mostra solo cosa sarebbe stato fatto\n"
 
 #: pg_resetwal.c:1146
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
-msgstr " -o, --next-oid=OID imposta l'OID successivo\n"
+msgstr "  -o, --next-oid=OID               imposta l'OID successivo\n"
 
 #: pg_resetwal.c:1147
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
-msgstr "  -O, --multixact-offset=OFFSET imposta l'offset multitransazione successivo\n"
+msgstr "  -O, --multixact-offset=OFFSET    imposta l'offset multitransazione successivo\n"
 
 #: pg_resetwal.c:1148
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
-msgstr "  -u, --oldest-transaction-id=XID imposta l'ID transazione più vecchio\n"
+msgstr "  -u, --oldest-transaction-id=XID  imposta l'ID transazione più vecchio\n"
 
 #: pg_resetwal.c:1149
 #, c-format
 msgid "  -V, --version                    output version information, then exit\n"
-msgstr "   -V, --version restituisce le informazioni sulla versione, quindi esci\n"
+msgstr "  -V, --version                    restituisce le informazioni sulla versione, quindi esci\n"
 
 #: pg_resetwal.c:1150
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
-msgstr "     -x, --next-transaction-id=XID imposta l'ID transazione successiva\n"
+msgstr "  -x, --next-transaction-id=XID    imposta l'ID transazione successiva\n"
 
 #: pg_resetwal.c:1151
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
-msgstr "       --wal-segsize=SIZE dimensione dei segmenti WAL, in megabyte \n"
+msgstr "      --wal-segsize=SIZE           dimensione dei segmenti WAL, in megabyte \n"
 
 #: pg_resetwal.c:1152
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
-msgstr " -?, --help                       mostra questo aiuto, quindi esci\n"
+msgstr "  -?, --help                       mostra questo aiuto, quindi esci\n"
 
 #: pg_resetwal.c:1153
 #, c-format

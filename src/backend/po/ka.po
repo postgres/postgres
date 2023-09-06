@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: postgres (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-08-24 08:42+0000\n"
-"PO-Revision-Date: 2023-08-24 11:47+0200\n"
+"PO-Revision-Date: 2023-09-04 07:17+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -8416,7 +8416,7 @@ msgstr "ინდექსის გამოსახულებისთვ�
 #: commands/indexcmds.c:2046 commands/tablecmds.c:17469 commands/typecmds.c:807 parser/parse_expr.c:2722 parser/parse_type.c:568 parser/parse_utilcmd.c:3774 utils/adt/misc.c:586
 #, c-format
 msgid "collations are not supported by type %s"
-msgstr "ტიპის \"%s\" კოლაციების მხარდაჭერა არ გააჩნია"
+msgstr "ტიპს \"%s\" კოლაციების მხარდაჭერა არ გააჩნია"
 
 #: commands/indexcmds.c:2111
 #, c-format

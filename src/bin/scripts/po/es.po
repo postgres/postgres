@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-05-22 07:20+0000\n"
-"PO-Revision-Date: 2023-05-22 12:06+0200\n"
+"PO-Revision-Date: 2023-09-05 07:34+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -665,7 +665,7 @@ msgstr ""
 msgid "  --bypassrls               role can bypass row-level security (RLS) policy\n"
 msgstr ""
 "  --bypassrls               el rol puede sobrepasar la política de\n"
-"                                   seguridad de registros (RLS)\n"
+"                            seguridad de registros (RLS)\n"
 
 #: createuser.c:443
 #, c-format

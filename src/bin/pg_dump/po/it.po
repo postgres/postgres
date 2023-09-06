@@ -20,7 +20,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (Postgresql) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:19+0000\n"
-"PO-Revision-Date: 2022-10-06 08:57+0200\n"
+"PO-Revision-Date: 2023-09-05 08:21+0200\n"
 "Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -1451,7 +1451,7 @@ msgstr ""
 #: pg_dump.c:1011
 #, c-format
 msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
-msgstr "   -e, --extension=PATTERN      esegue il dump solo delle estensioni specificate\n"
+msgstr "  -e, --extension=PATTERN      esegue il dump solo delle estensioni specificate\n"
 
 #: pg_dump.c:1012 pg_dumpall.c:617
 #, c-format
@@ -1461,12 +1461,12 @@ msgstr "  -E, --encoding=CODIFICA      scarica i dati nella CODIFICA indicata\n"
 #: pg_dump.c:1013
 #, c-format
 msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
-msgstr "  -n, --schema=PATTERN          esegue il dump solo degli schemi specificati\n"
+msgstr "  -n, --schema=PATTERN         esegue il dump solo degli schemi specificati\n"
 
 #: pg_dump.c:1014
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
-msgstr "  -N, --exclude-schema=PATTERN    non esegue il dump degli schemi specificati\n"
+msgstr "  -N, --exclude-schema=PATTERN non esegue il dump degli schemi specificati\n"
 
 #: pg_dump.c:1015
 #, c-format
@@ -1497,7 +1497,7 @@ msgstr "-t, --table=PATTERN               esegue il dump solo delle tabelle spec
 #: pg_dump.c:1020
 #, c-format
 msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
-msgstr "  -T, --exclude-table=PATTERN    non esegue il dump delle tabelle specificate\n"
+msgstr "  -T, --exclude-table=PATTERN  non esegue il dump delle tabelle specificate\n"
 
 #: pg_dump.c:1021 pg_dumpall.c:624
 #, c-format
@@ -1542,7 +1542,7 @@ msgstr ""
 #: pg_dump.c:1028
 #, c-format
 msgid "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
-msgstr "   --exclude-table-data=PATTERN    non esegue il dump dei dati per le tabelle specificate\n"
+msgstr "  --exclude-table-data=PATTERN non esegue il dump dei dati per le tabelle specificate\n"
 
 #: pg_dump.c:1029 pg_dumpall.c:630
 #, c-format
@@ -2447,7 +2447,7 @@ msgstr "  -d, --dbname=NOME        nome del database a cui connettersi\n"
 #: pg_restore.c:438
 #, c-format
 msgid "  -f, --file=FILENAME      output file name (- for stdout)\n"
-msgstr "  -f, --file=FILENAME nome del file di output (- per stdout)\n"
+msgstr "  -f, --file=FILENAME      nome del file di output (- per stdout)\n"
 
 #: pg_restore.c:439
 #, c-format

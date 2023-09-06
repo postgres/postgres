@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-07-29 09:20+0000\n"
-"PO-Revision-Date: 2023-07-29 22:47+0200\n"
+"PO-Revision-Date: 2023-09-05 07:51+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -1245,12 +1245,12 @@ msgstr ""
 #: vacuumdb.c:1145
 #, c-format
 msgid "  -n, --schema=PATTERN            vacuum tables in the specified schema(s) only\n"
-msgstr "  -n, --schema=MOTIF           exécute VACUUM uniquement dans les schémas indiqués\n"
+msgstr "  -n, --schema=MOTIF              exécute VACUUM uniquement dans les schémas indiqués\n"
 
 #: vacuumdb.c:1146
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN    do not vacuum tables in the specified schema(s)\n"
-msgstr "  -N, --exclude-schema=MOTIF   n'exécute pas VACUUM dans les schémas indiqués\n"
+msgstr "  -N, --exclude-schema=MOTIF      n'exécute pas VACUUM dans les schémas indiqués\n"
 
 #: vacuumdb.c:1147
 #, c-format

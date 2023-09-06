@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:20+0000\n"
-"PO-Revision-Date: 2022-09-30 14:42+0200\n"
+"PO-Revision-Date: 2023-09-05 08:02+0200\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -263,27 +263,27 @@ msgstr ""
 #: pg_amcheck.c:1142
 #, c-format
 msgid "  -a, --all                       check all databases\n"
-msgstr "   -a, --all                      controlla tutti i database\n"
+msgstr "  -a, --all                       controlla tutti i database\n"
 
 #: pg_amcheck.c:1143
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
-msgstr "   -d, --database=PATTERN        controlla i database corrispondenti\n"
+msgstr "  -d, --database=PATTERN          controlla i database corrispondenti\n"
 
 #: pg_amcheck.c:1144
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
-msgstr "  -D, --exclude-database=PATTERN   Non controlla i database corrispondenti\n"
+msgstr "  -D, --exclude-database=PATTERN  Non controlla i database corrispondenti\n"
 
 #: pg_amcheck.c:1145
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
-msgstr "   -i, --index=PATTERN           controlla gli indici corrispondenti\n"
+msgstr "  -i, --index=PATTERN             controlla gli indici corrispondenti\n"
 
 #: pg_amcheck.c:1146
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
-msgstr "  -I, --exclude-index=PATTERN      Non controlla gli indici corrispondenti\n"
+msgstr "  -I, --exclude-index=PATTERN     Non controlla gli indici corrispondenti\n"
 
 #: pg_amcheck.c:1147
 #, c-format
@@ -298,22 +298,22 @@ msgstr "  -R, --exclude-relation=PATTERN  Non controlla le relazioni corrisponde
 #: pg_amcheck.c:1149
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
-msgstr "   -s, --schema=PATTERN          controlla gli schemi corrispondenti\n"
+msgstr "  -s, --schema=PATTERN            controlla gli schemi corrispondenti\n"
 
 #: pg_amcheck.c:1150
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
-msgstr "  -S, --exclude-schema=PATTERN     Non controlla gli schemi corrispondenti\n"
+msgstr "  -S, --exclude-schema=PATTERN    Non controlla gli schemi corrispondenti\n"
 
 #: pg_amcheck.c:1151
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
-msgstr "   -t, --table=PATTERN            controlla le tabelle corrispondenti\n"
+msgstr "  -t, --table=PATTERN             controlla le tabelle corrispondenti\n"
 
 #: pg_amcheck.c:1152
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
-msgstr "   -T, --exclude-table=PATTERN      Non controlla le tabelle corrispondenti\n"
+msgstr "  -T, --exclude-table=PATTERN     Non controlla le tabelle corrispondenti\n"
 
 #: pg_amcheck.c:1153
 #, c-format
@@ -323,7 +323,7 @@ msgstr "      --no-dependent-indexes      Non espande l'elenco di relazioni per 
 #: pg_amcheck.c:1154
 #, c-format
 msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
-msgstr "     --no-dependent-toast         Non espande l'elenco delle relazioni per includere le tabelle TOAST\n"
+msgstr "      --no-dependent-toast        Non espande l'elenco delle relazioni per includere le tabelle TOAST\n"
 
 #: pg_amcheck.c:1155
 #, c-format
@@ -342,27 +342,27 @@ msgstr ""
 #: pg_amcheck.c:1157
 #, c-format
 msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
-msgstr "      --exclude-toast-pointers      NON seguono i puntatori TOAST di relazione\n"
+msgstr "      --exclude-toast-pointers    NON seguono i puntatori TOAST di relazione\n"
 
 #: pg_amcheck.c:1158
 #, c-format
 msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
-msgstr "     --on-error-stop             interrompe il controllo alla fine della prima pagina danneggiata\n"
+msgstr "      --on-error-stop             interrompe il controllo alla fine della prima pagina danneggiata\n"
 
 #: pg_amcheck.c:1159
 #, c-format
 msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
-msgstr "    --skip=OPZIONE               Non controlla i blocchi \"tutto congelato\" o \"tutto visibile\".\n"
+msgstr "      --skip=OPZIONE              Non controlla i blocchi \"tutto congelato\" o \"tutto visibile\".\n"
 
 #: pg_amcheck.c:1160
 #, c-format
 msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
-msgstr "       --startblock=BLOCCO            inizia a controllare le tabelle al numero di blocco dato\n"
+msgstr "      --startblock=BLOCCO         inizia a controllare le tabelle al numero di blocco dato\n"
 
 #: pg_amcheck.c:1161
 #, c-format
 msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
-msgstr "      --endblock=BLOCCO          controlla le tabelle solo fino al numero di blocco specificato\n"
+msgstr "      --endblock=BLOCCO           controlla le tabelle solo fino al numero di blocco specificato\n"
 
 #: pg_amcheck.c:1162
 #, c-format
@@ -376,12 +376,12 @@ msgstr ""
 #: pg_amcheck.c:1163
 #, c-format
 msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
-msgstr "      --heapallindexed              controlla che tutte le tuple dell'heap si trovino all'interno degli indici\n"
+msgstr "      --heapallindexed            controlla che tutte le tuple dell'heap si trovino all'interno degli indici\n"
 
 #: pg_amcheck.c:1164
 #, c-format
 msgid "      --parent-check              check index parent/child relationships\n"
-msgstr "      --parent-check               controlla le relazioni genitore/figlio dell'indice\n"
+msgstr "      --parent-check              controlla le relazioni genitore/figlio dell'indice\n"
 
 #: pg_amcheck.c:1165
 #, c-format
@@ -400,7 +400,7 @@ msgstr ""
 #: pg_amcheck.c:1167
 #, c-format
 msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
-msgstr "  -h, --host=HOSTNAME            host del database  o directory socket\n"
+msgstr "  -h, --host=HOSTNAME             host del database  o directory socket\n"
 
 #: pg_amcheck.c:1168
 #, c-format
@@ -410,7 +410,7 @@ msgstr "  -p, --port=PORT                 porta del server del database\n"
 #: pg_amcheck.c:1169
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
-msgstr "  -U, --username=USERNAME          nome utente con cui connettersi\n"
+msgstr "  -U, --username=USERNAME         nome utente con cui connettersi\n"
 
 #: pg_amcheck.c:1170
 #, c-format
@@ -420,12 +420,12 @@ msgstr "  -w, --no-password               non richiede mai la password\n"
 #: pg_amcheck.c:1171
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
-msgstr "  -W, --password                   forza la richiesta della password\n"
+msgstr "  -W, --password                  forza la richiesta della password\n"
 
 #: pg_amcheck.c:1172
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
-msgstr "     --maintenance-db=DBNAME      database di manutenzione alternativo\n"
+msgstr "      --maintenance-db=DBNAME     database di manutenzione alternativo\n"
 
 #: pg_amcheck.c:1173
 #, c-format
@@ -444,12 +444,12 @@ msgstr "  -e, --echo                      mostra i comandi inviati al server\n"
 #: pg_amcheck.c:1175
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
-msgstr " -j, --jobs=NUM usa questo numero di connessioni simultanee al server\n"
+msgstr "  -j, --jobs=NUM                  usa questo numero di connessioni simultanee al server\n"
 
 #: pg_amcheck.c:1176
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
-msgstr " -P, --progress mostra le informazioni sullo stato di avanzamento\n"
+msgstr "  -P, --progress                  mostra le informazioni sullo stato di avanzamento\n"
 
 #: pg_amcheck.c:1177
 #, c-format
@@ -464,7 +464,7 @@ msgstr "  -V, --version                   mostra informazioni sulla versione ed 
 #: pg_amcheck.c:1179
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
-msgstr "     --install-missing            installa le estensioni mancanti\n"
+msgstr "      --install-missing           installa le estensioni mancanti\n"
 
 #: pg_amcheck.c:1180
 #, c-format

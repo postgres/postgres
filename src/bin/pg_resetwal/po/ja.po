@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 11:15+0900\n"
-"PO-Revision-Date: 2022-09-26 15:10+0900\n"
+"POT-Creation-Date: 2023-08-30 09:20+0900\n"
+"PO-Revision-Date: 2023-08-30 09:53+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -135,8 +135,8 @@ msgstr "--wal-segsizの引数は数値でなければなりません"
 
 #: pg_resetwal.c:298
 #, c-format
-msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
-msgstr "--wal-segsizeの引数は1から1024の間の2のべき乗でなければなりません"
+msgid "argument of --wal-segsize must be a power of two between 1 and 1024"
+msgstr "--wal-segsizeの引数は1から1024までの間の2の累乗でなければなりません"
 
 #: pg_resetwal.c:314
 #, c-format
@@ -506,42 +506,42 @@ msgstr "oldestCommitTsXid:                           %u\n"
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                           %u\n"
 
-#: pg_resetwal.c:922 pg_resetwal.c:981 pg_resetwal.c:1016
+#: pg_resetwal.c:921 pg_resetwal.c:974 pg_resetwal.c:1009
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033
+#: pg_resetwal.c:947 pg_resetwal.c:988 pg_resetwal.c:1026
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036
+#: pg_resetwal.c:950 pg_resetwal.c:991 pg_resetwal.c:1029
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をクローズできませんでした: %m"
 
-#: pg_resetwal.c:990 pg_resetwal.c:1028
+#: pg_resetwal.c:983 pg_resetwal.c:1021
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "ファイル\"%s\"を削除できませんでした: %m"
 
-#: pg_resetwal.c:1100
+#: pg_resetwal.c:1093
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: pg_resetwal.c:1108 pg_resetwal.c:1120
+#: pg_resetwal.c:1101 pg_resetwal.c:1113
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: pg_resetwal.c:1125
+#: pg_resetwal.c:1118
 #, c-format
 msgid "fsync error: %m"
 msgstr "fsyncエラー: %m"
 
-#: pg_resetwal.c:1134
+#: pg_resetwal.c:1127
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -550,7 +550,7 @@ msgstr ""
 "%sはPostgreSQLの先行書き込みログをリセットします。\n"
 "\n"
 
-#: pg_resetwal.c:1135
+#: pg_resetwal.c:1128
 #, c-format
 msgid ""
 "Usage:\n"
@@ -561,12 +561,12 @@ msgstr ""
 "  %s [OPTION]... DATADIR\n"
 "\n"
 
-#: pg_resetwal.c:1136
+#: pg_resetwal.c:1129
 #, c-format
 msgid "Options:\n"
 msgstr "オプション:\n"
 
-#: pg_resetwal.c:1137
+#: pg_resetwal.c:1130
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
@@ -577,72 +577,72 @@ msgstr ""
 "                                  コミットタイムスタンプを持つ最古と最新の\n"
 "                                  トランザクション(0は変更しないことを意味する)\n"
 
-#: pg_resetwal.c:1140
+#: pg_resetwal.c:1133
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
 msgstr " [-D, --pgdata=]DATADIR           データディレクトリ\n"
 
-#: pg_resetwal.c:1141
+#: pg_resetwal.c:1134
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
 msgstr "  -e, --epoch=XIDEPOCH            次のトランザクションIDの基点を設定\n"
 
-#: pg_resetwal.c:1142
+#: pg_resetwal.c:1135
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
 msgstr "  -f, --force                     強制的に更新を実施\n"
 
-#: pg_resetwal.c:1143
+#: pg_resetwal.c:1136
 #, c-format
 msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
 msgstr "  -l, --next-wal-file=WALFILE     新しいWALの最小開始ポイントを設定\n"
 
-#: pg_resetwal.c:1144
+#: pg_resetwal.c:1137
 #, c-format
 msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
 msgstr "  -m, --multixact-ids=MXID,MXID   次および最古のマルチトランザクションIDを設定\n"
 
-#: pg_resetwal.c:1145
+#: pg_resetwal.c:1138
 #, c-format
 msgid "  -n, --dry-run                    no update, just show what would be done\n"
 msgstr "  -n, --dry-run                   更新をせず、単に何が行なわれるかを表示\n"
 
-#: pg_resetwal.c:1146
+#: pg_resetwal.c:1139
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
 msgstr "  -o, --next-oid=OID              次のOIDを設定\n"
 
-#: pg_resetwal.c:1147
+#: pg_resetwal.c:1140
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
 msgstr "  -O, --multixact-offset=OFFSET   次のマルチトランザクションオフセットを設定\n"
 
-#: pg_resetwal.c:1148
+#: pg_resetwal.c:1141
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
 msgstr "  -u, --oldest-transaction-id=XID 最古のトランザクションIDを設定\n"
 
-#: pg_resetwal.c:1149
+#: pg_resetwal.c:1142
 #, c-format
 msgid "  -V, --version                    output version information, then exit\n"
 msgstr "  -V, --version                   バージョン情報を表示して終了\n"
 
-#: pg_resetwal.c:1150
+#: pg_resetwal.c:1143
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
 msgstr "  -x, --next-transaction-id=XID   次のトランザクションIDを設定\n"
 
-#: pg_resetwal.c:1151
+#: pg_resetwal.c:1144
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=SIZE          WALセグメントのサイズ、単位はメガバイト\n"
 
-#: pg_resetwal.c:1152
+#: pg_resetwal.c:1145
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
 msgstr "  -?, --help                      このヘルプを表示して終了\n"
 
-#: pg_resetwal.c:1153
+#: pg_resetwal.c:1146
 #, c-format
 msgid ""
 "\n"
@@ -651,7 +651,7 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_resetwal.c:1154
+#: pg_resetwal.c:1147
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"

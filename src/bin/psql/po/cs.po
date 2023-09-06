@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: psql-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:14+0000\n"
-"PO-Revision-Date: 2020-11-01 00:59+0100\n"
+"PO-Revision-Date: 2023-09-05 09:51+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -2489,7 +2489,7 @@ msgstr "  -E, --echo-hidden        ukáže dotazy generované interními příka
 #: help.c:102
 #, c-format
 msgid "  -L, --log-file=FILENAME  send session log to file\n"
-msgstr "  -L, --log-file=SOUBOR  uloží záznam sezení do souboru\n"
+msgstr "  -L, --log-file=SOUBOR    uloží záznam sezení do souboru\n"
 
 #: help.c:103
 #, c-format
@@ -2751,12 +2751,12 @@ msgstr "Paměť dotazu\n"
 #: help.c:197
 #, c-format
 msgid "  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n"
-msgstr "  \\e [SOUBOR] [ŘÁDEK]           editace aktuálního dotazu (nebo souboru) v externím editoru\n"
+msgstr "  \\e [SOUBOR] [ŘÁDEK]    editace aktuálního dotazu (nebo souboru) v externím editoru\n"
 
 #: help.c:198
 #, c-format
 msgid "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
-msgstr "  \\ef [JMENOFUNKCE [ŘÁDEK]]      editace definice funkce v externím editoru\n"
+msgstr "  \\ef [JMENOFUNKCE [ŘÁDEK]]  editace definice funkce v externím editoru\n"
 
 #: help.c:199
 #, c-format
@@ -2826,10 +2826,9 @@ msgstr ""
 
 #: help.c:215
 #, c-format
-#| msgid "  \\echo [STRING]         write string to standard output\n"
 msgid "  \\warn [-n] [STRING]    write string to standard error (-n for no newline)\n"
 msgstr ""
-"  \\warn [-n] [TEXT]    vypsání textu na standardní výstup (-n pro potlačení\n"
+"  \\warn [-n] [TEXT]      vypsání textu na standardní výstup (-n pro potlačení\n"
 "                         nového řádku)\n"
 
 #: help.c:218
@@ -2938,7 +2937,7 @@ msgstr "  \\dD[S+] [PATTERN]      seznam domén\n"
 #: help.c:240
 #, c-format
 msgid "  \\ddp    [PATTERN]      list default privileges\n"
-msgstr "  \\ddp     [VZOR]         seznam implicitních privilegií\n"
+msgstr "  \\ddp     [VZOR]        seznam implicitních privilegií\n"
 
 #: help.c:241
 #, c-format
@@ -3028,7 +3027,7 @@ msgstr "  \\do[S]  [VZOR]         seznam operátorů\n"
 #: help.c:258
 #, c-format
 msgid "  \\dO[S+] [PATTERN]      list collations\n"
-msgstr "  \\dO[S+]  [VZOR]         seznam collations\n"
+msgstr "  \\dO[S+]  [VZOR]        seznam collations\n"
 
 #: help.c:259
 #, c-format
@@ -3411,7 +3410,6 @@ msgid ""
 msgstr ""
 "  HISTSIZE\n"
 "    maximální počet položek uložených v historii přkazů\n"
-"\n"
 
 #: help.c:385
 #, c-format
@@ -3587,7 +3585,6 @@ msgid ""
 msgstr ""
 "  VERBOSITY\n"
 "    určuje podrobnost chybových hlášení [default, verbose, terse, sqlstate]\n"
-"\n"
 
 #: help.c:425
 #, c-format

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-07-02 04:49+0000\n"
-"PO-Revision-Date: 2022-07-04 18:29+0200\n"
+"POT-Creation-Date: 2023-08-31 20:20+0000\n"
+"PO-Revision-Date: 2023-09-02 07:09+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -38,42 +38,32 @@ msgstr "დეტალები: "
 msgid "hint: "
 msgstr "მინიშნება: "
 
-#: ../../common/restricted_token.c:64
-#, c-format
-msgid "could not load library \"%s\": error code %lu"
-msgstr "ბიბლიოთეკის (\"%s\") ჩატვირთვის შეცდომა: შეცდომის კოდი: %lu"
-
-#: ../../common/restricted_token.c:73
-#, c-format
-msgid "cannot create restricted tokens on this platform: error code %lu"
-msgstr "ამ პლატფორმაზე შეზღუდული კოდების შექმნა შეუძლებელია: შეცდომის კოდი %lu"
-
-#: ../../common/restricted_token.c:82
+#: ../../common/restricted_token.c:60
 #, c-format
 msgid "could not open process token: error code %lu"
 msgstr "პროცესის კოდის გახსნა შეუძლებელია: შეცდომის კოდი %lu"
 
-#: ../../common/restricted_token.c:97
+#: ../../common/restricted_token.c:74
 #, c-format
 msgid "could not allocate SIDs: error code %lu"
 msgstr "შეცდომა SSID-ების გამოყოფისას: შეცდომის კოდი %lu"
 
-#: ../../common/restricted_token.c:119
+#: ../../common/restricted_token.c:94
 #, c-format
 msgid "could not create restricted token: error code %lu"
 msgstr "შეზღუდული კოდის შექმნა ვერ მოხერხდა: შეცდომის კოდი %lu"
 
-#: ../../common/restricted_token.c:140
+#: ../../common/restricted_token.c:115
 #, c-format
 msgid "could not start process for command \"%s\": error code %lu"
 msgstr "„%s“ ბრძანების პროცესის დაწყება ვერ მოხერხდა: შეცდომის კოდი %lu"
 
-#: ../../common/restricted_token.c:178
+#: ../../common/restricted_token.c:153
 #, c-format
 msgid "could not re-execute with restricted token: error code %lu"
 msgstr "შეზღუდულ კოდის ხელახლა შესრულება ვერ მოხერხდა: შეცდომის კოდი %lu"
 
-#: ../../common/restricted_token.c:193
+#: ../../common/restricted_token.c:168
 #, c-format
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "ქვეპროცესიდან გასასვლელი კოდი ვერ მივიღე: შეცდომის კოდი %lu"
@@ -141,7 +131,7 @@ msgstr "--wal-segisze -ის არგუმენტი რიცხვი უ
 
 #: pg_resetwal.c:298
 #, c-format
-msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
+msgid "argument of --wal-segsize must be a power of two between 1 and 1024"
 msgstr "--wal-segsize -ის არგუმენტი 2-ის ხარისხი უნდა იყოს 1-1024 დიაპაზონიდან"
 
 #: pg_resetwal.c:314
@@ -206,8 +196,7 @@ msgid ""
 "If you want to proceed anyway, use -f to force reset.\n"
 msgstr ""
 "მონაცემთა ბაზის სერვერი სუფთად არ გამორთულა.\n"
-"წინასწარ-ჩაწერადი ჟურნალის საწყის მნიშვნელობაზე დაბრუნებამ შეიძლება "
-"მონაცემების დაკარგვა გამოიწვიოს.\n"
+"წინასწარ-ჩაწერადი ჟურნალის საწყის მნიშვნელობაზე დაბრუნებამ შეიძლება მონაცემების დაკარგვა გამოიწვიოს.\n"
 "თუ გაგრძელება მაინც გნებავთ, გამოიყენეთ -f.\n"
 
 #: pg_resetwal.c:493
@@ -232,12 +221,8 @@ msgstr "მონაცემების საქაღალდე არა�
 
 #: pg_resetwal.c:536
 #, c-format
-msgid ""
-"File \"%s\" contains \"%s\", which is not compatible with this program's "
-"version \"%s\"."
-msgstr ""
-"ფაილი \"%s\" შეიცავს \"%s\"-ს, რომელიც ამ პროგრამის ვერსიასთან (%s) "
-"შეუთავსებელია."
+msgid "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\"."
+msgstr "ფაილი \"%s\" შეიცავს \"%s\"-ს, რომელიც ამ პროგრამის ვერსიასთან (%s) შეუთავსებელია."
 
 #: pg_resetwal.c:569
 #, c-format
@@ -246,8 +231,7 @@ msgid ""
 "  touch %s\n"
 "and try again."
 msgstr ""
-"თუ დარწმუნებული ბრძანდებით, რომ მონაცემების საქაღალდის ბილიკი სწორია, "
-"გაუშვით\n"
+"თუ დარწმუნებული ბრძანდებით, რომ მონაცემების საქაღალდის ბილიკი სწორია, გაუშვით\n"
 "  touch %s\n"
 "და თავიდან სცადეთ."
 
@@ -258,21 +242,15 @@ msgstr "pg_control არსებობს, მაგრამ გააჩნ�
 
 #: pg_resetwal.c:606
 #, c-format
-msgid ""
-"pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
-msgid_plural ""
-"pg_control specifies invalid WAL segment size (%d bytes); proceed with "
-"caution"
-msgstr[0] ""
-"pg_control WAL-ის არასწორი სეგმენტის ზომას (%d ბაიტი) მიუთითებს; ფრთხილად"
-msgstr[1] ""
-"pg_control WAL-ის არასწორი სეგმენტის ზომას (%d ბაიტი) მიუთითებს; ფრთხილად"
+msgid "pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
+msgid_plural "pg_control specifies invalid WAL segment size (%d bytes); proceed with caution"
+msgstr[0] "pg_control WAL-ის არასწორი სეგმენტის ზომას (%d ბაიტი) მიუთითებს; ფრთხილად"
+msgstr[1] "pg_control WAL-ის არასწორი სეგმენტის ზომას (%d ბაიტი) მიუთითებს; ფრთხილად"
 
 #: pg_resetwal.c:617
 #, c-format
 msgid "pg_control exists but is broken or wrong version; ignoring it"
-msgstr ""
-"pg_control არსებობს, მაგრამ ან გაფუჭებულია, ან ძველი ვერსია; იგნორირებულია"
+msgstr "pg_control არსებობს, მაგრამ ან გაფუჭებულია, ან ძველი ვერსია; იგნორირებულია"
 
 #: pg_resetwal.c:712
 #, c-format
@@ -468,8 +446,7 @@ msgstr ""
 #: pg_resetwal.c:791
 #, c-format
 msgid "First log segment after reset:        %s\n"
-msgstr ""
-"საწყის მნიშვნელობაზე დაბრუნების შემდეგ ჟურნალის პირველი სეგმენტი:   %s\n"
+msgstr "საწყის მნიშვნელობაზე დაბრუნების შემდეგ ჟურნალის პირველი სეგმენტი:   %s\n"
 
 #: pg_resetwal.c:795
 #, c-format
@@ -526,42 +503,42 @@ msgstr "oldestCommitTsXid:                    %u\n"
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                    %u\n"
 
-#: pg_resetwal.c:922 pg_resetwal.c:981 pg_resetwal.c:1016
+#: pg_resetwal.c:921 pg_resetwal.c:974 pg_resetwal.c:1009
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
 
-#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033
+#: pg_resetwal.c:947 pg_resetwal.c:988 pg_resetwal.c:1026
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
 
-#: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036
+#: pg_resetwal.c:950 pg_resetwal.c:991 pg_resetwal.c:1029
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "საქაღალდის %s-ზე დახურვის შეცდომა: %m"
 
-#: pg_resetwal.c:990 pg_resetwal.c:1028
+#: pg_resetwal.c:983 pg_resetwal.c:1021
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "ფაილის (\"%s\") წაშლის შეცდომა: %m"
 
-#: pg_resetwal.c:1100
+#: pg_resetwal.c:1093
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
-#: pg_resetwal.c:1108 pg_resetwal.c:1120
+#: pg_resetwal.c:1101 pg_resetwal.c:1113
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 
-#: pg_resetwal.c:1125
+#: pg_resetwal.c:1118
 #, c-format
 msgid "fsync error: %m"
 msgstr "fsync error: %m"
 
-#: pg_resetwal.c:1134
+#: pg_resetwal.c:1127
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -570,7 +547,7 @@ msgstr ""
 "%s PostgreSQL-ის წინასწარ-ჩაწერად ჟურნალს საწყის მნიშვნელობაზე აბრუნებს.\n"
 "\n"
 
-#: pg_resetwal.c:1135
+#: pg_resetwal.c:1128
 #, c-format
 msgid ""
 "Usage:\n"
@@ -581,108 +558,88 @@ msgstr ""
 "   %s [პარამეტრი]... [მონაცემებისსაქაღალდე]\n"
 "\n"
 
-#: pg_resetwal.c:1136
+#: pg_resetwal.c:1129
 #, c-format
 msgid "Options:\n"
 msgstr "პარამეტრები:\n"
 
-#: pg_resetwal.c:1137
+#: pg_resetwal.c:1130
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
-"                                   set oldest and newest transactions "
-"bearing\n"
+"                                   set oldest and newest transactions bearing\n"
 "                                   commit timestamp (zero means no change)\n"
 msgstr ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
-"                                   უახლესი და უძველესი ტრანზაქციების "
-"მითითება,\n"
-"                                   დროის შტამპის მატარებლით(0 ნიშნავს, რომ "
-"არ შეიცვლება)\n"
+"                                   უახლესი და უძველესი ტრანზაქციების მითითება,\n"
+"                                   დროის შტამპის მატარებლით(0 ნიშნავს, რომ არ შეიცვლება)\n"
 
-#: pg_resetwal.c:1140
+#: pg_resetwal.c:1133
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
 msgstr " [-D, --pgdata=]DATADIR     მონაცემების საქაღალდე\n"
 
-#: pg_resetwal.c:1141
+#: pg_resetwal.c:1134
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
-msgstr ""
-"  -e, --epoch=XIDEPOCH             შემდეგი ტრანზაქციის ID-ის ეპოქსი "
-"დაყენება\n"
+msgstr "  -e, --epoch=XIDEPOCH             შემდეგი ტრანზაქციის ID-ის ეპოქსი დაყენება\n"
 
-#: pg_resetwal.c:1142
+#: pg_resetwal.c:1135
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
 msgstr "  -f, --force                      ნაძალადევი განახლება\n"
 
-#: pg_resetwal.c:1143
+#: pg_resetwal.c:1136
 #, c-format
-msgid ""
-"  -l, --next-wal-file=WALFILE      set minimum starting location for new "
-"WAL\n"
-msgstr ""
-"  -l, --next-wal-file=WALFILE      ახალი WAL-ის მინიმალური საწყისი "
-"მდებარეობის დაყენება\n"
+msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
+msgstr "  -l, --next-wal-file=WALFILE      ახალი WAL-ის მინიმალური საწყისი მდებარეობის დაყენება\n"
 
-#: pg_resetwal.c:1144
+#: pg_resetwal.c:1137
 #, c-format
-msgid ""
-"  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
-msgstr ""
-"  -m, --multixact-ids=MXID,MXID    შემდეგი და უძველესი მულტრანზაქციის ID-"
-"ების დაყენება\n"
+msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
+msgstr "  -m, --multixact-ids=MXID,MXID    შემდეგი და უძველესი მულტრანზაქციის ID-ების დაყენება\n"
 
-#: pg_resetwal.c:1145
+#: pg_resetwal.c:1138
 #, c-format
-msgid ""
-"  -n, --dry-run                    no update, just show what would be done\n"
-msgstr ""
-"  -n, --dry-run                    განახლების გარეშე. უბრალოდ ნაჩვენები "
-"იქნება, რა მოხდებოდა\n"
+msgid "  -n, --dry-run                    no update, just show what would be done\n"
+msgstr "  -n, --dry-run                    განახლების გარეშე. უბრალოდ ნაჩვენები იქნება, რა მოხდებოდა\n"
 
-#: pg_resetwal.c:1146
+#: pg_resetwal.c:1139
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
 msgstr "  -o, --next-oid=OID               შემდეგი OID-ის დაყენება\n"
 
-#: pg_resetwal.c:1147
+#: pg_resetwal.c:1140
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
-msgstr ""
-"  -O, --multixact-offset=წანაცვლება    შემდეგი მულტიტრანზაქციის წანაცვლების "
-"დაყენება\n"
+msgstr "  -O, --multixact-offset=წანაცვლება    შემდეგი მულტიტრანზაქციის წანაცვლების დაყენება\n"
 
-#: pg_resetwal.c:1148
+#: pg_resetwal.c:1141
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
-msgstr ""
-"  -u, --oldest-transaction-id=XID  უძველესი ტრანზაქციის ID-ის დაყენება\n"
+msgstr "  -u, --oldest-transaction-id=XID  უძველესი ტრანზაქციის ID-ის დაყენება\n"
 
-#: pg_resetwal.c:1149
+#: pg_resetwal.c:1142
 #, c-format
-msgid ""
-"  -V, --version                    output version information, then exit\n"
+msgid "  -V, --version                    output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: pg_resetwal.c:1150
+#: pg_resetwal.c:1143
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
-msgstr ""
-"  -x, --next-transaction-id=XID    შემდეგი ტრანზაქციის ID-ის დაყენება\n"
+msgstr "  -x, --next-transaction-id=XID    შემდეგი ტრანზაქციის ID-ის დაყენება\n"
 
-#: pg_resetwal.c:1151
+#: pg_resetwal.c:1144
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=ზომა    WAL სეგმენტების ზომა, მეგაბაიტებში\n"
 
-#: pg_resetwal.c:1152
+#: pg_resetwal.c:1145
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: pg_resetwal.c:1153
+#: pg_resetwal.c:1146
 #, c-format
 msgid ""
 "\n"
@@ -691,7 +648,15 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: pg_resetwal.c:1154
+#: pg_resetwal.c:1147
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
+
+#, c-format
+#~ msgid "cannot create restricted tokens on this platform: error code %lu"
+#~ msgstr "ამ პლატფორმაზე შეზღუდული კოდების შექმნა შეუძლებელია: შეცდომის კოდი %lu"
+
+#, c-format
+#~ msgid "could not load library \"%s\": error code %lu"
+#~ msgstr "ბიბლიოთეკის (\"%s\") ჩატვირთვის შეცდომა: შეცდომის კოდი: %lu"

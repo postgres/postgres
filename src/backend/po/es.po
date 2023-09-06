@@ -399,7 +399,7 @@ msgstr "La secuencia de escape «%s» no es válida."
 #: ../common/jsonapi.c:1147
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
-msgstr "Los caracteres con valor 0x%02x deben ser escapados"
+msgstr "Los caracteres con valor 0x%02x deben ser escapados."
 
 #: ../common/jsonapi.c:1150
 #, c-format

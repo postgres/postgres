@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-08-01 14:19+0000\n"
-"PO-Revision-Date: 2023-08-01 22:11+0200\n"
+"PO-Revision-Date: 2023-09-05 09:00+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -52,7 +52,7 @@ msgstr "hittade en tom sträng där en komprimeringsinställning förväntades"
 #: ../../common/compression.c:244
 #, c-format
 msgid "unrecognized compression option: \"%s\""
-msgstr "okänd komprimeringsflagga \"%s\""
+msgstr "okänd komprimeringsflagga: \"%s\""
 
 #: ../../common/compression.c:283
 #, c-format
@@ -419,7 +419,7 @@ msgstr ""
 #: pg_basebackup.c:390
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
-msgstr "  -D, --pgdata=KATALOG ta emot basbackup till katalog\n"
+msgstr "  -D, --pgdata=KATALOG   ta emot basbackup till katalog\n"
 
 #: pg_basebackup.c:391
 #, c-format
@@ -1056,7 +1056,7 @@ msgstr "kan inte ange både utdatakatalog och backupmål"
 #: pg_basebackup.c:2538 pg_receivewal.c:802
 #, c-format
 msgid "unrecognized compression algorithm: \"%s\""
-msgstr "okänd komprimeringsalgoritm \"%s\""
+msgstr "okänd komprimeringsalgoritm: \"%s\""
 
 #: pg_basebackup.c:2544 pg_receivewal.c:809
 #, c-format

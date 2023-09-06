@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-07-29 09:21+0000\n"
-"PO-Revision-Date: 2023-07-29 22:46+0200\n"
+"PO-Revision-Date: 2023-09-05 07:49+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -542,7 +542,6 @@ msgid ""
 msgstr ""
 "  -R, --write-recovery-conf      écrit la configuration pour la réplication\n"
 "                                 (requiert --source-server)\n"
-"\n"
 
 #: pg_rewind.c:106
 #, c-format
@@ -985,7 +984,7 @@ msgstr "n'a pas pu localiser le bloc de sauvegarde d'ID %d dans l'enregistrement
 #: xlogreader.c:2052
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
-msgstr "n'a pas pu restaurer l'image ) %X/%X avec le bloc invalide %d indiqué"
+msgstr "n'a pas pu restaurer l'image à %X/%X avec le bloc invalide %d indiqué"
 
 #: xlogreader.c:2059
 #, c-format

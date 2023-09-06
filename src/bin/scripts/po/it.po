@@ -20,7 +20,7 @@ msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:19+0000\n"
-"PO-Revision-Date: 2022-10-03 20:43+0200\n"
+"PO-Revision-Date: 2023-09-05 08:41+0200\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -420,7 +420,7 @@ msgstr "      --lc-ctype=LOCALE        impostazione LC_CTYPE per il database\n"
 #: createdb.c:290
 #, c-format
 msgid "      --icu-locale=LOCALE      ICU locale setting for the database\n"
-msgstr "       --icu-locale=LOCALE Impostazione locale ICU per il database\n"
+msgstr "      --icu-locale=LOCALE      impostazione locale ICU per il database\n"
 
 #: createdb.c:291
 #, c-format
@@ -939,47 +939,47 @@ msgstr "      --concurrently           reindecizza in contemporanea\n"
 #: reindexdb.c:765
 #, c-format
 msgid "  -d, --dbname=DBNAME          database to reindex\n"
-msgstr "  -d, --dbname=database DBNAME da reindicizzare\n"
+msgstr "  -d, --dbname=DBNAME          database da reindicizzare\n"
 
 #: reindexdb.c:767
 #, c-format
 msgid "  -i, --index=INDEX            recreate specific index(es) only\n"
-msgstr "  -i, --index=INDEX ricrea solo indici specifici\n"
+msgstr "  -i, --index=INDEX            ricrea solo indici specifici\n"
 
 #: reindexdb.c:768
 #, c-format
 msgid "  -j, --jobs=NUM               use this many concurrent connections to reindex\n"
-msgstr "  -j, --jobs=NUM usa questo numero di connessioni simultanee per reindicizzare\n"
+msgstr "  -j, --jobs=NUM               usa questo numero di connessioni simultanee per reindicizzare\n"
 
 #: reindexdb.c:769
 #, c-format
 msgid "  -q, --quiet                  don't write any messages\n"
-msgstr "  -q, --quiet non scrive alcun messaggio\n"
+msgstr "  -q, --quiet                  non scrive alcun messaggio\n"
 
 #: reindexdb.c:770
 #, c-format
 msgid "  -s, --system                 reindex system catalogs only\n"
-msgstr "  -s, --system reindex solo i cataloghi di sistema\n"
+msgstr "  -s, --system                 reindex solo i cataloghi di sistema\n"
 
 #: reindexdb.c:771
 #, c-format
 msgid "  -S, --schema=SCHEMA          reindex specific schema(s) only\n"
-msgstr "  -S, --schema=SCHEMA reindicizza solo gli schemi specifici\n"
+msgstr "  -S, --schema=SCHEMA          reindicizza solo gli schemi specifici\n"
 
 #: reindexdb.c:772
 #, c-format
 msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
-msgstr "  -t, --table=TABLE solo per tabelle specifiche per reindicizzare\n"
+msgstr "  -t, --table=TABLE            solo per tabelle specifiche per reindicizzare\n"
 
 #: reindexdb.c:773
 #, c-format
 msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
-msgstr "      --tablespace=TABLESPACE   tablespace in cui vengono ricostruiti gli indici\n"
+msgstr "      --tablespace=TABLESPACE  tablespace in cui vengono ricostruiti gli indici\n"
 
 #: reindexdb.c:774
 #, c-format
 msgid "  -v, --verbose                write a lot of output\n"
-msgstr "  -v, --verbose               scrive molto output\n"
+msgstr "  -v, --verbose                scrive molto output\n"
 
 #: reindexdb.c:784
 #, c-format
@@ -1060,7 +1060,7 @@ msgstr ""
 #: vacuumdb.c:967
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
-msgstr "  -a, --all                            pulisci tutti i database\n"
+msgstr "  -a, --all                       pulisci tutti i database\n"
 
 #: vacuumdb.c:968
 #, c-format
@@ -1070,41 +1070,41 @@ msgstr "  -d, --dbname=NOMEDB             database da pulire\n"
 #: vacuumdb.c:969
 #, c-format
 msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
-msgstr "      --disable-page-skipping disabilita tutti i comportamenti di salto di pagina\n"
+msgstr "      --disable-page-skipping     disabilita tutti i comportamenti di salto di pagina\n"
 
 #: vacuumdb.c:970
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
-msgstr "  -e, --echo                        mostra i comandi inviati al server\n"
+msgstr "  -e, --echo                      mostra i comandi inviati al server\n"
 
 #: vacuumdb.c:971
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
-msgstr "  -f, --full                            esegui una pulizia completa\n"
+msgstr "  -f, --full                      esegui una pulizia completa\n"
 
 #: vacuumdb.c:972
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr ""
-"  -F, --freeze                      congela le informazioni per la transazione\n"
+"  -F, --freeze                    congela le informazioni per la transazione\n"
 "                                  sulla riga\n"
 
 #: vacuumdb.c:973
 #, c-format
 msgid "      --force-index-cleanup       always remove index entries that point to dead tuples\n"
-msgstr "      --force-index-cleanup rimuove sempre le voci di indice che puntano a tuple morte\n"
+msgstr "      --force-index-cleanup       rimuove sempre le voci di indice che puntano a tuple morte\n"
 
 #: vacuumdb.c:974
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
 msgstr ""
-"  -j, --jobs=NUM               usa questo numero di connessioni concorrenti\n"
+"  -j, --jobs=NUM                  usa questo numero di connessioni concorrenti\n"
 "                                  per effetturare il vacuum\n"
 
 #: vacuumdb.c:975
 #, c-format
 msgid "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"
-msgstr "      --min-mxid-age=MXID_AGE età minima dell'ID multixact delle tabelle da aspirare\n"
+msgstr "      --min-mxid-age=MXID_AGE     età minima dell'ID multixact delle tabelle da aspirare\n"
 
 #: vacuumdb.c:976
 #, c-format
@@ -1114,17 +1114,17 @@ msgstr "      --min-xid-age=XID_AGE       minimo ID transazione età delle tabel
 #: vacuumdb.c:977
 #, c-format
 msgid "      --no-index-cleanup          don't remove index entries that point to dead tuples\n"
-msgstr "      --no-index-cleanup non rimuove le voci di indice che puntano a tuple morte\n"
+msgstr "      --no-index-cleanup          non rimuove le voci di indice che puntano a tuple morte\n"
 
 #: vacuumdb.c:978
 #, c-format
 msgid "      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"
-msgstr "      --no-process-toast salta la tabella TOAST associata alla tabella da aspirare\n"
+msgstr "      --no-process-toast          salta la tabella TOAST associata alla tabella da aspirare\n"
 
 #: vacuumdb.c:979
 #, c-format
 msgid "      --no-truncate               don't truncate empty pages at the end of the table\n"
-msgstr "  --no-truncate                non tronca le pagine vuote alla fine della tabella\n"
+msgstr "      --no-truncate               non tronca le pagine vuote alla fine della tabella\n"
 
 #: vacuumdb.c:980
 #, c-format
@@ -1139,7 +1139,7 @@ msgstr "  -q, --quiet                     non stampare alcun messaggio\n"
 #: vacuumdb.c:982
 #, c-format
 msgid "      --skip-locked               skip relations that cannot be immediately locked\n"
-msgstr "      --skip-locked salta le relazioni che non possono essere bloccate immediatamente\n"
+msgstr "      --skip-locked               salta le relazioni che non possono essere bloccate immediatamente\n"
 
 #: vacuumdb.c:983
 #, c-format
@@ -1164,7 +1164,7 @@ msgstr "  -z, --analyze                   aggiorna le statistiche per l'ottimizz
 #: vacuumdb.c:987
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
-msgstr "  -Z, --analyze-only        aggiorna solo le statistiche; niente vacuum\n"
+msgstr "  -Z, --analyze-only              aggiorna solo le statistiche; niente vacuum\n"
 
 #: vacuumdb.c:988
 #, c-format
@@ -1172,13 +1172,13 @@ msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
 "                                  stages for faster results; no vacuum\n"
 msgstr ""
-"      --analyze-in-stages     aggiorna solo le statistiche, in fasi multiple\n"
+"      --analyze-in-stages         aggiorna solo le statistiche, in fasi multiple\n"
 "                                  per maggiore velocità, niente vacuum\n"
 
 #: vacuumdb.c:990
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
-msgstr "  -?, --help                          mostra questo aiuto ed esci\n"
+msgstr "  -?, --help                      mostra questo aiuto ed esci\n"
 
 #: vacuumdb.c:998
 #, c-format

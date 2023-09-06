@@ -283,9 +283,7 @@ msgstr "Číslo verze katalogu:                      %u\n"
 #: pg_resetwal.c:752
 #, c-format
 msgid "Database system identifier:           %llu\n"
-msgstr ""
-"Identifikátor databázového systému:           %llu\n"
-"\n"
+msgstr "Identifikátor databázového systému:        %llu\n"
 
 #: pg_resetwal.c:754
 #, c-format

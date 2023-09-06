@@ -288,7 +288,7 @@ msgstr "Número de versión de catálogo:                   %u\n"
 #: pg_resetwal.c:720
 #, c-format
 msgid "Database system identifier:           %llu\n"
-msgstr "Identificador de sistema:                   %llu\n"
+msgstr "Identificador de sistema:                        %llu\n"
 
 #: pg_resetwal.c:722
 #, c-format

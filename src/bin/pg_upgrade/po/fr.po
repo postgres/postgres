@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-07-29 09:19+0000\n"
-"PO-Revision-Date: 2023-07-30 10:37+0200\n"
+"POT-Creation-Date: 2023-09-05 17:19+0000\n"
+"PO-Revision-Date: 2023-09-05 22:03+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -348,7 +348,7 @@ msgstr "Vérification des types composites définis par le système dans les tab
 #: check.c:1136
 #, c-format
 msgid ""
-"Your installation contains system-defined composite type(s) in user tables.\n"
+"Your installation contains system-defined composite types in user tables.\n"
 "These type OIDs are not stable across PostgreSQL versions,\n"
 "so this cluster cannot currently be upgraded.  You can\n"
 "drop the problem columns and restart the upgrade.\n"
@@ -356,7 +356,7 @@ msgid ""
 "    %s"
 msgstr ""
 "Votre installation contient des types composites définis par le système dans vos tables\n"
-"utilisateurs. Les OID de ces types ne sont pas stables entre différentes versions majeures\n"
+"utilisateurs. Les OID de ces types ne sont pas stables entre différentes versions\n"
 "de PostgreSQL, donc cette instance ne peut pas être mise à jour actuellement. Vous pouvez\n"
 "supprimer les colonnes problématiques, puis relancer la mise à jour. Vous trouverez\n"
 "une liste des colonnes problématiques dans le fichier :\n"
@@ -1240,7 +1240,7 @@ msgstr ""
 #: option.c:291
 #, c-format
 msgid "  --copy                        copy files to new cluster (default)\n"
-msgstr "  --copy                        copie les fichiers vers la nouvelle instance (par défaut)\n"
+msgstr "  --copy                         copie les fichiers vers la nouvelle instance (par défaut)\n"
 
 #: option.c:292
 #, c-format

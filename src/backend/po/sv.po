@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-25 07:16+0000\n"
-"PO-Revision-Date: 2023-08-27 10:31+0200\n"
+"POT-Creation-Date: 2023-08-31 19:45+0000\n"
+"PO-Revision-Date: 2023-08-31 22:02+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -190,7 +190,7 @@ msgstr "kunde inte öppna fil \"%s\": %m"
 #: access/transam/twophase.c:1744 access/transam/twophase.c:1753
 #: access/transam/xlog.c:8755 access/transam/xlogfuncs.c:708
 #: backup/basebackup_server.c:175 backup/basebackup_server.c:268
-#: postmaster/postmaster.c:5570 postmaster/syslogger.c:1571
+#: postmaster/postmaster.c:5573 postmaster/syslogger.c:1571
 #: postmaster/syslogger.c:1584 postmaster/syslogger.c:1597
 #: utils/cache/relmapper.c:936
 #, c-format
@@ -223,8 +223,8 @@ msgstr "kunde inte fsync:a fil \"%s\": %m"
 #: access/transam/xlogrecovery.c:589 lib/dshash.c:253 libpq/auth.c:1345
 #: libpq/auth.c:1389 libpq/auth.c:1946 libpq/be-secure-gssapi.c:524
 #: postmaster/bgworker.c:352 postmaster/bgworker.c:934
-#: postmaster/postmaster.c:2534 postmaster/postmaster.c:4127
-#: postmaster/postmaster.c:5495 postmaster/postmaster.c:5866
+#: postmaster/postmaster.c:2537 postmaster/postmaster.c:4130
+#: postmaster/postmaster.c:5498 postmaster/postmaster.c:5869
 #: replication/libpqwalreceiver/libpqwalreceiver.c:308
 #: replication/logical/logical.c:208 replication/walsender.c:686
 #: storage/buffer/localbuf.c:601 storage/file/fd.c:866 storage/file/fd.c:1397
@@ -320,7 +320,7 @@ msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
 #: ../common/file_utils.c:162 ../common/pgfnames.c:48 ../common/rmtree.c:63
 #: commands/tablespace.c:734 commands/tablespace.c:744
-#: postmaster/postmaster.c:1561 storage/file/fd.c:2880
+#: postmaster/postmaster.c:1564 storage/file/fd.c:2880
 #: storage/file/reinit.c:126 utils/adt/misc.c:256 utils/misc/tzparser.c:338
 #, c-format
 msgid "could not open directory \"%s\": %m"
@@ -455,7 +455,7 @@ msgstr "tips: "
 
 #: ../common/percentrepl.c:79 ../common/percentrepl.c:85
 #: ../common/percentrepl.c:118 ../common/percentrepl.c:124
-#: postmaster/postmaster.c:2208 utils/misc/guc.c:3118 utils/misc/guc.c:3154
+#: postmaster/postmaster.c:2211 utils/misc/guc.c:3118 utils/misc/guc.c:3154
 #: utils/misc/guc.c:3224 utils/misc/guc.c:4547 utils/misc/guc.c:6721
 #: utils/misc/guc.c:6762
 #, c-format
@@ -628,7 +628,7 @@ msgstr "kunde inte sätta knutpunkt (junction) för \"%s\": %s"
 #: ../port/dirmod.c:287
 #, c-format
 msgid "could not set junction for \"%s\": %s\n"
-msgstr "kunde inte sätta knutpunkt (junktion) för \"%s\": %s\n"
+msgstr "kunde inte sätta knutpunkt (junction) för \"%s\": %s\n"
 
 #: ../port/dirmod.c:364
 #, c-format
@@ -1221,12 +1221,12 @@ msgstr "kunde inte skriva till fil \"%s\", skrev %d av %d: %m."
 #: access/transam/xlog.c:3938 access/transam/xlog.c:8744
 #: access/transam/xlogfuncs.c:702 backup/basebackup_server.c:151
 #: backup/basebackup_server.c:244 commands/dbcommands.c:518
-#: postmaster/postmaster.c:4554 postmaster/postmaster.c:5557
+#: postmaster/postmaster.c:4557 postmaster/postmaster.c:5560
 #: replication/logical/origin.c:603 replication/slot.c:1777
 #: storage/file/copydir.c:157 storage/smgr/md.c:232 utils/time/snapmgr.c:1263
 #, c-format
 msgid "could not create file \"%s\": %m"
-msgstr "kan inte skapa fil \"%s\": %m"
+msgstr "kunde inte skapa fil \"%s\": %m"
 
 #: access/heap/rewriteheap.c:1138
 #, c-format
@@ -1237,7 +1237,7 @@ msgstr "kunde inte trunkera fil \"%s\" till %u: %m"
 #: access/transam/timeline.c:424 access/transam/timeline.c:498
 #: access/transam/xlog.c:3021 access/transam/xlog.c:3218
 #: access/transam/xlog.c:3950 commands/dbcommands.c:530
-#: postmaster/postmaster.c:4564 postmaster/postmaster.c:4574
+#: postmaster/postmaster.c:4567 postmaster/postmaster.c:4577
 #: replication/logical/origin.c:615 replication/logical/origin.c:657
 #: replication/logical/origin.c:676 replication/logical/snapbuild.c:1767
 #: replication/slot.c:1812 storage/file/buffile.c:545
@@ -2890,12 +2890,12 @@ msgstr "WAL-fil är från ett annat databassystem: WAL-filens databassystemident
 #: access/transam/xlogreader.c:1265
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
-msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvuid"
+msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvud"
 
 #: access/transam/xlogreader.c:1271
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
-msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvuid"
+msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvud"
 
 #: access/transam/xlogreader.c:1303
 #, c-format
@@ -2925,7 +2925,7 @@ msgstr "BKPBLOCK_HAS_DATA är ej satt men datalängden är %u vid %X/%X"
 #: access/transam/xlogreader.c:1802
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE är satt men håloffset %u längd %u block-image-längd %u vid %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE är satt men håloffset %u längd %u blockavbildlängd %u vid %X/%X"
 
 #: access/transam/xlogreader.c:1818
 #, c-format
@@ -2935,12 +2935,12 @@ msgstr "BKPIMAGE_HAS_HOLE är inte satt men håloffset %u längd %u vid %X/%X"
 #: access/transam/xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_COMPRESSED är satt men block-image-längd %u vid %X/%X"
+msgstr "BKPIMAGE_COMPRESSED är satt men blockavbildlängd %u vid %X/%X"
 
 #: access/transam/xlogreader.c:1847
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED är satt men block-image-längd är %u vid %X/%X"
+msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED är satt men blockavbildlängd är %u vid %X/%X"
 
 #: access/transam/xlogreader.c:1863
 #, c-format
@@ -2970,22 +2970,22 @@ msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt block %d angivet"
 #: access/transam/xlogreader.c:2059
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "kunde inte återställa image vid %X/%X med ogiltigt state, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt state, block %d"
 
 #: access/transam/xlogreader.c:2086 access/transam/xlogreader.c:2103
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "kunde inte återställa image vid %X/%X, komprimerad med %s stöds inte av bygget, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med %s stöds inte av bygget, block %d"
 
 #: access/transam/xlogreader.c:2112
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
-msgstr "kunde inte återställa image vid %X/%X, komprimerad med okänd metod, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med okänd metod, block %d"
 
 #: access/transam/xlogreader.c:2120
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
-msgstr "kunde inte packa upp image vid %X/%X, block %d"
+msgstr "kunde inte packa upp avbild vid %X/%X, block %d"
 
 #: access/transam/xlogrecovery.c:547
 #, c-format
@@ -3460,7 +3460,7 @@ msgstr "Det misslyckade arkiveringskommandot var: %s"
 msgid "archive command was terminated by exception 0x%X"
 msgstr "arkiveringskommandot terminerades med avbrott 0x%X"
 
-#: archive/shell_archive.c:107 postmaster/postmaster.c:3675
+#: archive/shell_archive.c:107 postmaster/postmaster.c:3678
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "Se C-include-fil \"ntstatus.h\" för en beskrivning av det hexdecimala värdet."
@@ -3549,7 +3549,7 @@ msgstr "okänd manifestflagga: \"%s\""
 #: backup/basebackup.c:846
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
-msgstr "okänd checksum-algoritm: \"%s\""
+msgstr "okänd algoritm för kontrollsumma: \"%s\""
 
 #: backup/basebackup.c:881
 #, c-format
@@ -9368,8 +9368,8 @@ msgstr "preparerad sats \"%s\" finns inte"
 msgid "must be superuser to create custom procedural language"
 msgstr "måste vara en superuser för att skapa ett eget procedurspråk"
 
-#: commands/publicationcmds.c:131 postmaster/postmaster.c:1205
-#: postmaster/postmaster.c:1303 storage/file/fd.c:3911
+#: commands/publicationcmds.c:131 postmaster/postmaster.c:1208
+#: postmaster/postmaster.c:1306 storage/file/fd.c:3911
 #: utils/init/miscinit.c:1815
 #, c-format
 msgid "invalid list syntax in parameter \"%s\""
@@ -16374,7 +16374,7 @@ msgstr "%s kan inte appliceras på den nullbara sidan av en outer join"
 #: parser/analyze.c:3231
 #, c-format
 msgid "%s is not allowed with UNION/INTERSECT/EXCEPT"
-msgstr "%s tillåẗs inte med UNION/INTERSECT/EXCEPT"
+msgstr "%s tillåts inte med UNION/INTERSECT/EXCEPT"
 
 #: optimizer/plan/planner.c:2082 optimizer/plan/planner.c:4040
 #, c-format
@@ -19447,93 +19447,93 @@ msgstr "%s: ogiltiga datumtokentabeller, det behöver lagas\n"
 msgid "could not create I/O completion port for child queue"
 msgstr "kunde inte skapa \"I/O completion port\" för barnkö"
 
-#: postmaster/postmaster.c:1164
+#: postmaster/postmaster.c:1175
 #, c-format
 msgid "ending log output to stderr"
 msgstr "avslutar loggutmatning till stderr"
 
-#: postmaster/postmaster.c:1165
+#: postmaster/postmaster.c:1176
 #, c-format
 msgid "Future log output will go to log destination \"%s\"."
 msgstr "Framtida loggutmatning kommer gå till logg-destination \"%s\"."
 
-#: postmaster/postmaster.c:1176
+#: postmaster/postmaster.c:1187
 #, c-format
 msgid "starting %s"
 msgstr "startar %s"
 
-#: postmaster/postmaster.c:1236
+#: postmaster/postmaster.c:1239
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "kunde inte skapa lyssnande uttag (socket) för \"%s\""
 
-#: postmaster/postmaster.c:1242
+#: postmaster/postmaster.c:1245
 #, c-format
 msgid "could not create any TCP/IP sockets"
 msgstr "kunde inte skapa TCP/IP-uttag (socket)"
 
-#: postmaster/postmaster.c:1274
+#: postmaster/postmaster.c:1277
 #, c-format
 msgid "DNSServiceRegister() failed: error code %ld"
 msgstr "DNSServiceRegister() misslyckades: felkod %ld"
 
-#: postmaster/postmaster.c:1325
+#: postmaster/postmaster.c:1328
 #, c-format
 msgid "could not create Unix-domain socket in directory \"%s\""
 msgstr "kunde inte skapa unix-domän-uttag (socket) i katalog \"%s\""
 
-#: postmaster/postmaster.c:1331
+#: postmaster/postmaster.c:1334
 #, c-format
 msgid "could not create any Unix-domain sockets"
 msgstr "kunde inte skapa något Unix-domän-uttag (socket)"
 
-#: postmaster/postmaster.c:1342
+#: postmaster/postmaster.c:1345
 #, c-format
 msgid "no socket created for listening"
 msgstr "inget uttag (socket) skapat för lyssnande"
 
-#: postmaster/postmaster.c:1373
+#: postmaster/postmaster.c:1376
 #, c-format
 msgid "%s: could not change permissions of external PID file \"%s\": %s\n"
 msgstr "%s: kunde inte ändra rättigheter på extern PID-fil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:1377
+#: postmaster/postmaster.c:1380
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: kunde inte skriva extern PID-fil \"%s\": %s\n"
 
 #. translator: %s is a configuration file
-#: postmaster/postmaster.c:1405 utils/init/postinit.c:221
+#: postmaster/postmaster.c:1408 utils/init/postinit.c:221
 #, c-format
 msgid "could not load %s"
 msgstr "kunde inte ladda \"%s\""
 
-#: postmaster/postmaster.c:1431
+#: postmaster/postmaster.c:1434
 #, c-format
 msgid "postmaster became multithreaded during startup"
 msgstr "postmaster blev flertrådad under uppstart"
 
-#: postmaster/postmaster.c:1432
+#: postmaster/postmaster.c:1435
 #, c-format
 msgid "Set the LC_ALL environment variable to a valid locale."
 msgstr "Sätt omgivningsvariabeln LC_ALL till en giltig lokal."
 
-#: postmaster/postmaster.c:1533
+#: postmaster/postmaster.c:1536
 #, c-format
 msgid "%s: could not locate my own executable path"
 msgstr "%s: kunde inte hitta min egna körbara fils sökväg"
 
-#: postmaster/postmaster.c:1540
+#: postmaster/postmaster.c:1543
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr "%s: kunde inte hitta matchande postgres-binär"
 
-#: postmaster/postmaster.c:1563 utils/misc/tzparser.c:340
+#: postmaster/postmaster.c:1566 utils/misc/tzparser.c:340
 #, c-format
 msgid "This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location."
 msgstr "Detta tyder på en inkomplett PostgreSQL-installation alternativt att filen \"%s\" har flyttats bort från sin korrekta plats."
 
-#: postmaster/postmaster.c:1590
+#: postmaster/postmaster.c:1593
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -19545,460 +19545,460 @@ msgstr ""
 "men kunde inte öppna filen \"%s\": %s\n"
 
 #. translator: %s is SIGKILL or SIGABRT
-#: postmaster/postmaster.c:1887
+#: postmaster/postmaster.c:1890
 #, c-format
 msgid "issuing %s to recalcitrant children"
 msgstr "skickar %s till motsträviga barn"
 
-#: postmaster/postmaster.c:1909
+#: postmaster/postmaster.c:1912
 #, c-format
 msgid "performing immediate shutdown because data directory lock file is invalid"
 msgstr "stänger ner omedelbart då datakatalogens låsfil är ogiltig"
 
-#: postmaster/postmaster.c:1984 postmaster/postmaster.c:2012
+#: postmaster/postmaster.c:1987 postmaster/postmaster.c:2015
 #, c-format
 msgid "incomplete startup packet"
 msgstr "ofullständigt startuppaket"
 
-#: postmaster/postmaster.c:1996 postmaster/postmaster.c:2029
+#: postmaster/postmaster.c:1999 postmaster/postmaster.c:2032
 #, c-format
 msgid "invalid length of startup packet"
 msgstr "ogiltig längd på startuppaket"
 
-#: postmaster/postmaster.c:2058
+#: postmaster/postmaster.c:2061
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "misslyckades att skicka SSL-förhandlingssvar: %m"
 
-#: postmaster/postmaster.c:2076
+#: postmaster/postmaster.c:2079
 #, c-format
 msgid "received unencrypted data after SSL request"
 msgstr "tog emot okrypterad data efter SSL-förfrågan"
 
-#: postmaster/postmaster.c:2077 postmaster/postmaster.c:2121
+#: postmaster/postmaster.c:2080 postmaster/postmaster.c:2124
 #, c-format
 msgid "This could be either a client-software bug or evidence of an attempted man-in-the-middle attack."
 msgstr "Detta kan antingen vara en bug i klientens mjukvara eller bevis på ett försök att utföra en attack av typen man-in-the-middle."
 
-#: postmaster/postmaster.c:2102
+#: postmaster/postmaster.c:2105
 #, c-format
 msgid "failed to send GSSAPI negotiation response: %m"
 msgstr "misslyckades att skicka GSSAPI-förhandlingssvar: %m"
 
-#: postmaster/postmaster.c:2120
+#: postmaster/postmaster.c:2123
 #, c-format
 msgid "received unencrypted data after GSSAPI encryption request"
 msgstr "tog emot okrypterad data efter GSSAPI-krypteringsförfrågan"
 
-#: postmaster/postmaster.c:2144
+#: postmaster/postmaster.c:2147
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "inget stöd för framändans protokoll %u.%u: servern stöder %u.0 till %u.%u"
 
-#: postmaster/postmaster.c:2211
+#: postmaster/postmaster.c:2214
 #, c-format
 msgid "Valid values are: \"false\", 0, \"true\", 1, \"database\"."
 msgstr "Giltiga värden är: \"false\", 0, \"true\", 1, \"database\"."
 
-#: postmaster/postmaster.c:2252
+#: postmaster/postmaster.c:2255
 #, c-format
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr "ogiltig startpaketlayout: förväntade en terminator som sista byte"
 
-#: postmaster/postmaster.c:2269
+#: postmaster/postmaster.c:2272
 #, c-format
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "inget PostgreSQL-användarnamn angivet i startuppaketet"
 
-#: postmaster/postmaster.c:2333
+#: postmaster/postmaster.c:2336
 #, c-format
 msgid "the database system is starting up"
 msgstr "databassystemet startar upp"
 
-#: postmaster/postmaster.c:2339
+#: postmaster/postmaster.c:2342
 #, c-format
 msgid "the database system is not yet accepting connections"
 msgstr "databassystemet tar ännu inte emot anslutningar"
 
-#: postmaster/postmaster.c:2340
+#: postmaster/postmaster.c:2343
 #, c-format
 msgid "Consistent recovery state has not been yet reached."
 msgstr "Konsistent återställningstillstånd har ännu inte uppnåtts."
 
-#: postmaster/postmaster.c:2344
+#: postmaster/postmaster.c:2347
 #, c-format
 msgid "the database system is not accepting connections"
 msgstr "databassystemet tar inte emot anslutningar"
 
-#: postmaster/postmaster.c:2345
+#: postmaster/postmaster.c:2348
 #, c-format
 msgid "Hot standby mode is disabled."
 msgstr "Hot standby-läge är avstängt."
 
-#: postmaster/postmaster.c:2350
+#: postmaster/postmaster.c:2353
 #, c-format
 msgid "the database system is shutting down"
 msgstr "databassystemet stänger ner"
 
-#: postmaster/postmaster.c:2355
+#: postmaster/postmaster.c:2358
 #, c-format
 msgid "the database system is in recovery mode"
 msgstr "databassystemet är återställningsläge"
 
-#: postmaster/postmaster.c:2360 storage/ipc/procarray.c:491
+#: postmaster/postmaster.c:2363 storage/ipc/procarray.c:491
 #: storage/ipc/sinvaladt.c:306 storage/lmgr/proc.c:353
 #, c-format
 msgid "sorry, too many clients already"
 msgstr "ledsen, för många klienter"
 
-#: postmaster/postmaster.c:2447
+#: postmaster/postmaster.c:2450
 #, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "fel nyckel i avbrytbegäran för process %d"
 
-#: postmaster/postmaster.c:2459
+#: postmaster/postmaster.c:2462
 #, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "PID %d i avbrytbegäran matchade inte någon process"
 
-#: postmaster/postmaster.c:2726
+#: postmaster/postmaster.c:2729
 #, c-format
 msgid "received SIGHUP, reloading configuration files"
 msgstr "mottog SIGHUP, läser om konfigurationsfiler"
 
 #. translator: %s is a configuration file
-#: postmaster/postmaster.c:2750 postmaster/postmaster.c:2754
+#: postmaster/postmaster.c:2753 postmaster/postmaster.c:2757
 #, c-format
 msgid "%s was not reloaded"
 msgstr "%s laddades inte om"
 
-#: postmaster/postmaster.c:2764
+#: postmaster/postmaster.c:2767
 #, c-format
 msgid "SSL configuration was not reloaded"
 msgstr "SSL-konfiguration laddades inte om"
 
-#: postmaster/postmaster.c:2854
+#: postmaster/postmaster.c:2857
 #, c-format
 msgid "received smart shutdown request"
 msgstr "tog emot förfrågan om att stänga ner smart"
 
-#: postmaster/postmaster.c:2895
+#: postmaster/postmaster.c:2898
 #, c-format
 msgid "received fast shutdown request"
 msgstr "tog emot förfrågan om att stänga ner snabbt"
 
-#: postmaster/postmaster.c:2913
+#: postmaster/postmaster.c:2916
 #, c-format
 msgid "aborting any active transactions"
 msgstr "avbryter aktiva transaktioner"
 
-#: postmaster/postmaster.c:2937
+#: postmaster/postmaster.c:2940
 #, c-format
 msgid "received immediate shutdown request"
 msgstr "mottog begäran för omedelbar nedstängning"
 
-#: postmaster/postmaster.c:3013
+#: postmaster/postmaster.c:3016
 #, c-format
 msgid "shutdown at recovery target"
 msgstr "nedstängs vid återställningsmål"
 
-#: postmaster/postmaster.c:3031 postmaster/postmaster.c:3067
+#: postmaster/postmaster.c:3034 postmaster/postmaster.c:3070
 msgid "startup process"
 msgstr "uppstartprocess"
 
-#: postmaster/postmaster.c:3034
+#: postmaster/postmaster.c:3037
 #, c-format
 msgid "aborting startup due to startup process failure"
 msgstr "avbryter uppstart på grund av fel i startprocessen"
 
-#: postmaster/postmaster.c:3107
+#: postmaster/postmaster.c:3110
 #, c-format
 msgid "database system is ready to accept connections"
 msgstr "databassystemet är redo att ta emot anslutningar"
 
-#: postmaster/postmaster.c:3128
+#: postmaster/postmaster.c:3131
 msgid "background writer process"
 msgstr "bakgrundsskrivarprocess"
 
-#: postmaster/postmaster.c:3175
+#: postmaster/postmaster.c:3178
 msgid "checkpointer process"
 msgstr "checkpoint-process"
 
-#: postmaster/postmaster.c:3191
+#: postmaster/postmaster.c:3194
 msgid "WAL writer process"
 msgstr "WAL-skrivarprocess"
 
-#: postmaster/postmaster.c:3206
+#: postmaster/postmaster.c:3209
 msgid "WAL receiver process"
 msgstr "WAL-mottagarprocess"
 
-#: postmaster/postmaster.c:3221
+#: postmaster/postmaster.c:3224
 msgid "autovacuum launcher process"
 msgstr "autovacuum-startprocess"
 
-#: postmaster/postmaster.c:3239
+#: postmaster/postmaster.c:3242
 msgid "archiver process"
 msgstr "arkiveringsprocess"
 
-#: postmaster/postmaster.c:3252
+#: postmaster/postmaster.c:3255
 msgid "system logger process"
 msgstr "system-logg-process"
 
-#: postmaster/postmaster.c:3309
+#: postmaster/postmaster.c:3312
 #, c-format
 msgid "background worker \"%s\""
 msgstr "bakgrundsarbetare \"%s\""
 
-#: postmaster/postmaster.c:3388 postmaster/postmaster.c:3408
-#: postmaster/postmaster.c:3415 postmaster/postmaster.c:3433
+#: postmaster/postmaster.c:3391 postmaster/postmaster.c:3411
+#: postmaster/postmaster.c:3418 postmaster/postmaster.c:3436
 msgid "server process"
 msgstr "serverprocess"
 
-#: postmaster/postmaster.c:3487
+#: postmaster/postmaster.c:3490
 #, c-format
 msgid "terminating any other active server processes"
 msgstr "avslutar andra aktiva serverprocesser"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3662
+#: postmaster/postmaster.c:3665
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) avslutade med felkod %d"
 
-#: postmaster/postmaster.c:3664 postmaster/postmaster.c:3676
-#: postmaster/postmaster.c:3686 postmaster/postmaster.c:3697
+#: postmaster/postmaster.c:3667 postmaster/postmaster.c:3679
+#: postmaster/postmaster.c:3689 postmaster/postmaster.c:3700
 #, c-format
 msgid "Failed process was running: %s"
 msgstr "Misslyckad process körde: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3673
+#: postmaster/postmaster.c:3676
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d) terminerades av avbrott 0x%X"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3683
+#: postmaster/postmaster.c:3686
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d) terminerades av signal %d: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3695
+#: postmaster/postmaster.c:3698
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) avslutade med okänd status %d"
 
-#: postmaster/postmaster.c:3903
+#: postmaster/postmaster.c:3906
 #, c-format
 msgid "abnormal database system shutdown"
 msgstr "ej normal databasnedstängning"
 
-#: postmaster/postmaster.c:3929
+#: postmaster/postmaster.c:3932
 #, c-format
 msgid "shutting down due to startup process failure"
 msgstr "stänger ner på grund av fel i startprocessen"
 
-#: postmaster/postmaster.c:3935
+#: postmaster/postmaster.c:3938
 #, c-format
 msgid "shutting down because restart_after_crash is off"
 msgstr "stänger ner då restart_after_crash är av"
 
-#: postmaster/postmaster.c:3947
+#: postmaster/postmaster.c:3950
 #, c-format
 msgid "all server processes terminated; reinitializing"
 msgstr "alla serverprocesser är avslutade; initierar på nytt"
 
-#: postmaster/postmaster.c:4141 postmaster/postmaster.c:5459
-#: postmaster/postmaster.c:5857
+#: postmaster/postmaster.c:4144 postmaster/postmaster.c:5462
+#: postmaster/postmaster.c:5860
 #, c-format
 msgid "could not generate random cancel key"
 msgstr "kunde inte skapa slumpad avbrytningsnyckel"
 
-#: postmaster/postmaster.c:4203
+#: postmaster/postmaster.c:4206
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "kunde inte fork():a ny process for uppkoppling: %m"
 
-#: postmaster/postmaster.c:4245
+#: postmaster/postmaster.c:4248
 msgid "could not fork new process for connection: "
 msgstr "kunde inte fork():a ny process for uppkoppling: "
 
-#: postmaster/postmaster.c:4351
+#: postmaster/postmaster.c:4354
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "ansluting mottagen: värd=%s port=%s"
 
-#: postmaster/postmaster.c:4356
+#: postmaster/postmaster.c:4359
 #, c-format
 msgid "connection received: host=%s"
 msgstr "ansluting mottagen: värd=%s"
 
-#: postmaster/postmaster.c:4593
+#: postmaster/postmaster.c:4596
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "kunde inte köra serverprocess \"%s\": %m"
 
-#: postmaster/postmaster.c:4651
+#: postmaster/postmaster.c:4654
 #, c-format
 msgid "could not create backend parameter file mapping: error code %lu"
 msgstr "kunde inte skapa fil-mapping för backend-parametrar: felkod %lu"
 
-#: postmaster/postmaster.c:4660
+#: postmaster/postmaster.c:4663
 #, c-format
 msgid "could not map backend parameter memory: error code %lu"
 msgstr "kunde inte mappa minne för backend-parametrar: felkod %lu"
 
-#: postmaster/postmaster.c:4687
+#: postmaster/postmaster.c:4690
 #, c-format
 msgid "subprocess command line too long"
 msgstr "subprocessens kommando är för långt"
 
-#: postmaster/postmaster.c:4705
+#: postmaster/postmaster.c:4708
 #, c-format
 msgid "CreateProcess() call failed: %m (error code %lu)"
 msgstr "Anrop till CreateProcess() misslyckades: %m (felkod %lu)"
 
-#: postmaster/postmaster.c:4732
+#: postmaster/postmaster.c:4735
 #, c-format
 msgid "could not unmap view of backend parameter file: error code %lu"
 msgstr "kunde inte avmappa vy för backend:ens parameterfil: felkod %lu"
 
-#: postmaster/postmaster.c:4736
+#: postmaster/postmaster.c:4739
 #, c-format
 msgid "could not close handle to backend parameter file: error code %lu"
 msgstr "kunde inte stänga \"handle\" till backend:ens parameterfil: felkod %lu"
 
-#: postmaster/postmaster.c:4758
+#: postmaster/postmaster.c:4761
 #, c-format
 msgid "giving up after too many tries to reserve shared memory"
 msgstr "ger upp efter för många försök att reservera delat minne"
 
-#: postmaster/postmaster.c:4759
+#: postmaster/postmaster.c:4762
 #, c-format
 msgid "This might be caused by ASLR or antivirus software."
 msgstr "Detta kan orsakas av ASLR eller antivirusprogram."
 
-#: postmaster/postmaster.c:4932
+#: postmaster/postmaster.c:4935
 #, c-format
 msgid "SSL configuration could not be loaded in child process"
 msgstr "SSL-konfigurering kunde inte laddas i barnprocess"
 
-#: postmaster/postmaster.c:5057
+#: postmaster/postmaster.c:5060
 #, c-format
 msgid "Please report this to <%s>."
 msgstr "Rapportera gärna detta till <%s>."
 
-#: postmaster/postmaster.c:5125
+#: postmaster/postmaster.c:5128
 #, c-format
 msgid "database system is ready to accept read-only connections"
 msgstr "databassystemet är redo att ta emot read-only-anslutningar"
 
-#: postmaster/postmaster.c:5383
+#: postmaster/postmaster.c:5386
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "kunde inte starta startup-processen: %m"
 
-#: postmaster/postmaster.c:5387
+#: postmaster/postmaster.c:5390
 #, c-format
 msgid "could not fork archiver process: %m"
 msgstr "kunde inte fork:a arkivprocess: %m"
 
-#: postmaster/postmaster.c:5391
+#: postmaster/postmaster.c:5394
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "kunde inte starta process för bakgrundsskrivare: %m"
 
-#: postmaster/postmaster.c:5395
+#: postmaster/postmaster.c:5398
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "kunde inte fork:a bakgrundsprocess: %m"
 
-#: postmaster/postmaster.c:5399
+#: postmaster/postmaster.c:5402
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "kunde inte fork:a WAL-skrivprocess: %m"
 
-#: postmaster/postmaster.c:5403
+#: postmaster/postmaster.c:5406
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "kunde inte fork:a WAL-mottagarprocess: %m"
 
-#: postmaster/postmaster.c:5407
+#: postmaster/postmaster.c:5410
 #, c-format
 msgid "could not fork process: %m"
 msgstr "kunde inte fork:a process: %m"
 
-#: postmaster/postmaster.c:5608 postmaster/postmaster.c:5635
+#: postmaster/postmaster.c:5611 postmaster/postmaster.c:5638
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr "krav på databasanslutning fanns inte med vid registering"
 
-#: postmaster/postmaster.c:5619 postmaster/postmaster.c:5646
+#: postmaster/postmaster.c:5622 postmaster/postmaster.c:5649
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "ogiltigt processläge i bakgrundsarbetare"
 
-#: postmaster/postmaster.c:5731
+#: postmaster/postmaster.c:5734
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "kunde inte starta (fork) arbetarprocess: %m"
 
-#: postmaster/postmaster.c:5843
+#: postmaster/postmaster.c:5846
 #, c-format
 msgid "no slot available for new worker process"
 msgstr "ingen slot tillgänglig för ny arbetsprocess"
 
-#: postmaster/postmaster.c:6174
+#: postmaster/postmaster.c:6177
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "kunde inte duplicera uttag (socket) %d för att använda i backend: felkod %d"
 
-#: postmaster/postmaster.c:6206
+#: postmaster/postmaster.c:6209
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "kunde inte skapa ärvt uttag (socket): felkod %d\n"
 
-#: postmaster/postmaster.c:6235
+#: postmaster/postmaster.c:6238
 #, c-format
 msgid "could not open backend variables file \"%s\": %s\n"
 msgstr "kunde inte öppna bakändans variabelfil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6242
+#: postmaster/postmaster.c:6245
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "kunde inte läsa från bakändans variabelfil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6251
+#: postmaster/postmaster.c:6254
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "kunde inte ta bort fil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6268
+#: postmaster/postmaster.c:6271
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "kunde inte mappa in vy för bakgrundsvariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6277
+#: postmaster/postmaster.c:6280
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr "kunde inte avmappa vy för bakgrundsvariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6284
+#: postmaster/postmaster.c:6287
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr "kunde inte stänga \"handle\" till backend:ens parametervariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6443
+#: postmaster/postmaster.c:6446
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "kunde inte läsa avslutningskod för process\n"
 
-#: postmaster/postmaster.c:6485
+#: postmaster/postmaster.c:6488
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "kunde inte skicka barnets avslutningsstatus\n"
@@ -29568,12 +29568,12 @@ msgid "Sets the method for synchronizing the data directory before crash recover
 msgstr "Ställer in metoden för att synkronisera datakatalogen innan kraschåterställning."
 
 #: utils/misc/guc_tables.c:4960
-msgid "Controls when to replicate or apply each change."
-msgstr "Styr när man skall replikera eller applicera en ändring."
+msgid "Forces immediate streaming or serialization of changes in large transactions."
+msgstr "Tvingar omedelbar strömning eller serialisering av ändringar i stora transaktioner."
 
 #: utils/misc/guc_tables.c:4961
 msgid "On the publisher, it allows streaming or serializing each change in logical decoding. On the subscriber, it allows serialization of all changes to files and notifies the parallel apply workers to read and apply them at the end of the transaction."
-msgstr "På publiceringssidan så tillåter detta strömming eller serialisering av varje ändring i den logiska kodningen. På prenumerationsstidan så tillåter det serialisering av alla ändringar till filer samt notifiering till den parallella appliceraren att läsa in och applicera dem i slutet av transaktionen."
+msgstr "På publiceringssidan så tillåter detta strömning eller serialisering av varje ändring i den logiska kodningen. På prenumerationsstidan så tillåter det serialisering av alla ändringar till filer samt notifiering till den parallella appliceraren att läsa in och applicera dem i slutet av transaktionen."
 
 #: utils/misc/help_config.c:129
 #, c-format
@@ -29838,6 +29838,9 @@ msgstr "kan inte importera en snapshot från en annan databas"
 #, c-format
 #~ msgid "Close open transactions with multixacts soon to avoid wraparound problems."
 #~ msgstr "Stäng öppna transaktioner med multixacts snart för att undvika \"wraparound\"."
+
+#~ msgid "Controls when to replicate or apply each change."
+#~ msgstr "Styr när man skall replikera eller applicera en ändring."
 
 #, c-format
 #~ msgid "FORMAT JSON has no effect for json and jsonb types"

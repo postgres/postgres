@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:18+0000\n"
-"PO-Revision-Date: 2022-10-04 19:29+0200\n"
+"PO-Revision-Date: 2023-09-05 08:07+0200\n"
 "Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -500,7 +500,7 @@ msgstr ""
 #: pg_basebackup.c:398
 #, c-format
 msgid "  -Z, --compress=none    do not compress tar output\n"
-msgstr "  -Z, --compress=none non comprime l'output tar\n"
+msgstr "  -Z, --compress=none    non comprime l'output tar\n"
 
 #: pg_basebackup.c:399
 #, c-format
@@ -575,18 +575,18 @@ msgid ""
 "      --manifest-force-encode\n"
 "                         hex encode all file names in manifest\n"
 msgstr ""
-"      --codifica-forza-manifest\n"
+"      --manifest-force-encode\n"
 "                         hex codifica tutti i nomi di file in manifest\n"
 
 #: pg_basebackup.c:414
 #, c-format
 msgid "      --no-estimate-size do not estimate backup size in server side\n"
-msgstr "    --no-stimate-size non stima la dimensione del backup sul lato server\n"
+msgstr "      --no-estimate-size non stima la dimensione del backup sul lato server\n"
 
 #: pg_basebackup.c:415
 #, c-format
 msgid "      --no-manifest      suppress generation of backup manifest\n"
-msgstr "    --no-slot impedisci la creazione di uno slot di replica temporanea\n"
+msgstr ""
 
 #: pg_basebackup.c:416
 #, c-format

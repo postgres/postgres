@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-06-24 21:50+0000\n"
-"PO-Revision-Date: 2023-06-26 09:43+0200\n"
+"POT-Creation-Date: 2023-08-29 23:20+0000\n"
+"PO-Revision-Date: 2023-08-30 08:08+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -992,7 +992,7 @@ msgstr "Argument von --wal-segsize muss eine Zahl sein"
 
 #: initdb.c:3359
 #, c-format
-msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
+msgid "argument of --wal-segsize must be a power of two between 1 and 1024"
 msgstr "Argument von --wal-segsize muss eine Zweierpotenz zwischen 1 und 1024 sein"
 
 #: initdb.c:3373

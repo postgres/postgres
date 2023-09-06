@@ -319,7 +319,7 @@ msgstr "Ingrésela nuevamente: "
 #: command.c:2139
 #, c-format
 msgid "Passwords didn't match."
-msgstr "Las constraseñas no coinciden."
+msgstr "Las contraseñas no coinciden."
 
 #: command.c:2236
 #, c-format

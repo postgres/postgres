@@ -20,7 +20,7 @@ msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:19+0000\n"
-"PO-Revision-Date: 2022-10-02 18:31+0200\n"
+"PO-Revision-Date: 2023-09-05 07:54+0200\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -554,7 +554,7 @@ msgstr "  -g, --allow-group-access  permette read/execute di gruppo sulla direct
 #: initdb.c:2197
 #, c-format
 msgid "      --icu-locale=LOCALE   set ICU locale ID for new databases\n"
-msgstr "    --icu-locale=LOCALE imposta l'ID locale ICU per i nuovi database\n"
+msgstr "      --icu-locale=LOCALE   imposta l'ID locale ICU per i nuovi database\n"
 
 #: initdb.c:2198
 #, c-format

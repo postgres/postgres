@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-07-05 06:19+0000\n"
-"PO-Revision-Date: 2023-07-05 12:26+0200\n"
+"POT-Creation-Date: 2023-08-31 20:20+0000\n"
+"PO-Revision-Date: 2023-09-02 07:09+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -981,7 +981,7 @@ msgstr "--wal-segisze -ის არგუმენტი რიცხვი უ
 
 #: initdb.c:3359
 #, c-format
-msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
+msgid "argument of --wal-segsize must be a power of two between 1 and 1024"
 msgstr "--wal-segsize -ის არგუმენტი 2-ის ხარისხი უნდა იყოს 1-1024 დიაპაზონიდან"
 
 #: initdb.c:3373

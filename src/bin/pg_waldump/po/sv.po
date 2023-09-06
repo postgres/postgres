@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-08-02 03:17+0000\n"
-"PO-Revision-Date: 2023-08-02 08:08+0200\n"
+"PO-Revision-Date: 2023-08-30 08:59+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -470,12 +470,12 @@ msgstr "WAL-fil är från ett annat databassystem: WAL-filens databassystemident
 #: xlogreader.c:1265
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
-msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvuid"
+msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvud"
 
 #: xlogreader.c:1271
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
-msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvuid"
+msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvud"
 
 #: xlogreader.c:1303
 #, c-format
@@ -506,7 +506,7 @@ msgstr "BKPBLOCK_HAS_DATA är ej satt men datalängden är %u vid %X/%X"
 #: xlogreader.c:1802
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE är satt men håloffset %u längd %u block-image-längd %u vid %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE är satt men håloffset %u längd %u blockavbildlängd %u vid %X/%X"
 
 #: xlogreader.c:1818
 #, c-format
@@ -516,12 +516,12 @@ msgstr "BKPIMAGE_HAS_HOLE är inte satt men håloffset %u längd %u vid %X/%X"
 #: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_COMPRESSED är satt men block-image-längd %u vid %X/%X"
+msgstr "BKPIMAGE_COMPRESSED är satt men blockavbildlängd %u vid %X/%X"
 
 #: xlogreader.c:1847
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED är satt men block-image-längd är %u vid %X/%X"
+msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED är satt men blockavbildlängd är %u vid %X/%X"
 
 #: xlogreader.c:1863
 #, c-format
@@ -551,22 +551,22 @@ msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt block %d angivet"
 #: xlogreader.c:2059
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "kunde inte återställa image vid %X/%X med ogiltigt state, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt state, block %d"
 
 #: xlogreader.c:2086 xlogreader.c:2103
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "kunde inte återställa image vid %X/%X, komprimerad med %s stöds inte av bygget, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med %s stöds inte av bygget, block %d"
 
 #: xlogreader.c:2112
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
-msgstr "kunde inte återställa image vid %X/%X, komprimerad med okänd metod, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med okänd metod, block %d"
 
 #: xlogreader.c:2120
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
-msgstr "kunde inte packa upp image vid %X/%X, block %d"
+msgstr "kunde inte packa upp avbild vid %X/%X, block %d"
 
 #, c-format
 #~ msgid "invalid record offset at %X/%X"

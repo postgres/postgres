@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-04-11 19:48+0000\n"
-"PO-Revision-Date: 2022-04-11 22:01+0200\n"
+"POT-Creation-Date: 2023-08-31 19:50+0000\n"
+"PO-Revision-Date: 2023-08-31 22:00+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,62 +17,52 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/common/logging.c:280
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "varning: "
 
-#: ../../../src/common/logging.c:291
+#: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
 msgstr "detalj: "
 
-#: ../../../src/common/logging.c:298
+#: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
 msgstr "tips: "
 
-#: ../../common/restricted_token.c:64
-#, c-format
-msgid "could not load library \"%s\": error code %lu"
-msgstr "kunde inte ladda länkbibliotek \"%s\": felkod %lu"
-
-#: ../../common/restricted_token.c:73
-#, c-format
-msgid "cannot create restricted tokens on this platform: error code %lu"
-msgstr "kan inte skapa token för begränsad åtkomst på denna plattorm: felkod %lu"
-
-#: ../../common/restricted_token.c:82
+#: ../../common/restricted_token.c:60
 #, c-format
 msgid "could not open process token: error code %lu"
 msgstr "kunde inte öppna process-token: felkod %lu"
 
-#: ../../common/restricted_token.c:97
+#: ../../common/restricted_token.c:74
 #, c-format
 msgid "could not allocate SIDs: error code %lu"
 msgstr "kunde inte allokera SID: felkod %lu"
 
-#: ../../common/restricted_token.c:119
+#: ../../common/restricted_token.c:94
 #, c-format
 msgid "could not create restricted token: error code %lu"
 msgstr "kunde inte skapa token för begränsad åtkomst: felkod %lu"
 
-#: ../../common/restricted_token.c:140
+#: ../../common/restricted_token.c:115
 #, c-format
 msgid "could not start process for command \"%s\": error code %lu"
 msgstr "kunde inte starta process för kommando \"%s\": felkod %lu"
 
-#: ../../common/restricted_token.c:178
+#: ../../common/restricted_token.c:153
 #, c-format
 msgid "could not re-execute with restricted token: error code %lu"
 msgstr "kunde inte köra igen med token för begränsad åtkomst: felkod %lu"
 
-#: ../../common/restricted_token.c:193
+#: ../../common/restricted_token.c:168
 #, c-format
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "kunde inte hämta statuskod för underprocess: felkod %lu"
@@ -140,7 +130,7 @@ msgstr "argumentet till --wal-segsize måste vara ett tal"
 
 #: pg_resetwal.c:298
 #, c-format
-msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
+msgid "argument of --wal-segsize must be a power of two between 1 and 1024"
 msgstr "argumentet till --wal-segsize måste vara en tvåpotens mellan 1 och 1024"
 
 #: pg_resetwal.c:314
@@ -518,42 +508,42 @@ msgstr "oldestCommitTsXid:                    %u\n"
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                    %u\n"
 
-#: pg_resetwal.c:922 pg_resetwal.c:981 pg_resetwal.c:1016
+#: pg_resetwal.c:921 pg_resetwal.c:974 pg_resetwal.c:1009
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "kunde inte öppna katalog \"%s\": %m"
 
-#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033
+#: pg_resetwal.c:947 pg_resetwal.c:988 pg_resetwal.c:1026
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "kunde inte läsa katalog \"%s\": %m"
 
-#: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036
+#: pg_resetwal.c:950 pg_resetwal.c:991 pg_resetwal.c:1029
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "kunde inte stänga katalog \"%s\": %m"
 
-#: pg_resetwal.c:990 pg_resetwal.c:1028
+#: pg_resetwal.c:983 pg_resetwal.c:1021
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "kunde inte radera fil \"%s\": %m"
 
-#: pg_resetwal.c:1100
+#: pg_resetwal.c:1093
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: pg_resetwal.c:1108 pg_resetwal.c:1120
+#: pg_resetwal.c:1101 pg_resetwal.c:1113
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "kunde inte skriva fil \"%s\": %m"
 
-#: pg_resetwal.c:1125
+#: pg_resetwal.c:1118
 #, c-format
 msgid "fsync error: %m"
 msgstr "misslyckad fsync: %m"
 
-#: pg_resetwal.c:1134
+#: pg_resetwal.c:1127
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -562,7 +552,7 @@ msgstr ""
 "%s återställer write-ahead-log för PostgreSQL.\n"
 "\n"
 
-#: pg_resetwal.c:1135
+#: pg_resetwal.c:1128
 #, c-format
 msgid ""
 "Usage:\n"
@@ -573,12 +563,12 @@ msgstr ""
 "  %s [FLAGGA]... DATAKATALOG\n"
 "\n"
 
-#: pg_resetwal.c:1136
+#: pg_resetwal.c:1129
 #, c-format
 msgid "Options:\n"
 msgstr "Flaggor:\n"
 
-#: pg_resetwal.c:1137
+#: pg_resetwal.c:1130
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
@@ -590,72 +580,72 @@ msgstr ""
 "                                   kan ha commit-tidstämpel (noll betyder\n"
 "                                   ingen ändring)\n"
 
-#: pg_resetwal.c:1140
+#: pg_resetwal.c:1133
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
 msgstr " [-D, --pgdata=]DATADIR            datakatalog\n"
 
-#: pg_resetwal.c:1141
+#: pg_resetwal.c:1134
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
 msgstr "  -e, --epoch=XIDEPOCH             sätter epoch för nästa transaktions-ID\n"
 
-#: pg_resetwal.c:1142
+#: pg_resetwal.c:1135
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
 msgstr "  -f, --force                      framtvinga uppdatering\n"
 
-#: pg_resetwal.c:1143
+#: pg_resetwal.c:1136
 #, c-format
 msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
 msgstr "  -l, --next-wal-file=WALFIL       sätt minsta startposition för ny WAL\n"
 
-#: pg_resetwal.c:1144
+#: pg_resetwal.c:1137
 #, c-format
 msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
 msgstr "  -m, --multixact-ids=MXID,MXID    sätt nästa och äldsta multitransaktions-ID\n"
 
-#: pg_resetwal.c:1145
+#: pg_resetwal.c:1138
 #, c-format
 msgid "  -n, --dry-run                    no update, just show what would be done\n"
 msgstr "  -n, --dry-run                    ingen updatering; visa bara planerade åtgärder\n"
 
-#: pg_resetwal.c:1146
+#: pg_resetwal.c:1139
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
 msgstr "  -o, --next-oid=OID               sätt nästa OID\n"
 
-#: pg_resetwal.c:1147
+#: pg_resetwal.c:1140
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
 msgstr "  -O, --multixact-offset=OFFSET    sätt nästa multitransaktionsoffset\n"
 
-#: pg_resetwal.c:1148
+#: pg_resetwal.c:1141
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
 msgstr "  -u, --oldest-transaction-id=XID  sätt äldsta transaktions-ID\n"
 
-#: pg_resetwal.c:1149
+#: pg_resetwal.c:1142
 #, c-format
 msgid "  -V, --version                    output version information, then exit\n"
 msgstr "  -V, --version                    visa versionsinformation, avsluta sedan\n"
 
-#: pg_resetwal.c:1150
+#: pg_resetwal.c:1143
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
 msgstr "  -x, --next-transaction-id=XID    sätt nästa transaktions-ID\n"
 
-#: pg_resetwal.c:1151
+#: pg_resetwal.c:1144
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=STORLEK        storlek på WAL-segment i megabyte\n"
 
-#: pg_resetwal.c:1152
+#: pg_resetwal.c:1145
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
 msgstr "  -?, --help                       visa denna hjälp, avsluta sedan\n"
 
-#: pg_resetwal.c:1153
+#: pg_resetwal.c:1146
 #, c-format
 msgid ""
 "\n"
@@ -664,7 +654,15 @@ msgstr ""
 "\n"
 "Rapportera fel till <%s>.\n"
 
-#: pg_resetwal.c:1154
+#: pg_resetwal.c:1147
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "hemsida för %s: <%s>\n"
+
+#, c-format
+#~ msgid "cannot create restricted tokens on this platform: error code %lu"
+#~ msgstr "kan inte skapa token för begränsad åtkomst på denna plattorm: felkod %lu"
+
+#, c-format
+#~ msgid "could not load library \"%s\": error code %lu"
+#~ msgstr "kunde inte ladda länkbibliotek \"%s\": felkod %lu"

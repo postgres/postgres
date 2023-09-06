@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pgscripts-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:16+0000\n"
-"PO-Revision-Date: 2021-09-16 09:15+0200\n"
+"PO-Revision-Date: 2023-09-05 07:31+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -1071,7 +1071,7 @@ msgstr "  -F, --freeze                    zmrazí transakční informace záznam
 #: vacuumdb.c:920
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
-msgstr "  -j, --jobs=NUM               použij tento počet paralelních jobů pro vacuum\n"
+msgstr "  -j, --jobs=NUM                  použij tento počet paralelních jobů pro vacuum\n"
 
 #: vacuumdb.c:921
 #, c-format

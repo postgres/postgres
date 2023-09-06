@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-07-29 09:17+0000\n"
-"PO-Revision-Date: 2023-07-29 22:45+0200\n"
+"PO-Revision-Date: 2023-09-05 07:49+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -484,7 +484,7 @@ msgstr "  -n, --no-parse-wal          n'essaie pas d'analyse les fichiers WAL\n"
 #: pg_verifybackup.c:989
 #, c-format
 msgid "  -P, --progress              show progress information\n"
-msgstr "  -P, --progress             affiche les informations de progression\n"
+msgstr "  -P, --progress              affiche les informations de progression\n"
 
 #: pg_verifybackup.c:990
 #, c-format

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-27 14:52+0300\n"
+"POT-Creation-Date: 2023-08-28 07:59+0300\n"
 "PO-Revision-Date: 2022-09-05 13:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -45,7 +45,7 @@ msgstr "Отправить сигнал отмены не удалось: "
 msgid "could not connect to database %s: out of memory"
 msgstr "не удалось подключиться к базе %s (нехватка памяти)"
 
-#: ../../fe_utils/connect_utils.c:117
+#: ../../fe_utils/connect_utils.c:116
 #, c-format
 msgid "%s"
 msgstr "%s"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-25 02:11+0000\n"
-"PO-Revision-Date: 2023-08-25 08:39+0200\n"
+"POT-Creation-Date: 2023-08-29 23:11+0000\n"
+"PO-Revision-Date: 2023-08-30 08:22+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -175,7 +175,7 @@ msgstr "konnte Datei »%s« nicht öffnen: %m"
 #: access/transam/twophase.c:1744 access/transam/twophase.c:1753
 #: access/transam/xlog.c:8755 access/transam/xlogfuncs.c:708
 #: backup/basebackup_server.c:175 backup/basebackup_server.c:268
-#: postmaster/postmaster.c:5570 postmaster/syslogger.c:1571
+#: postmaster/postmaster.c:5573 postmaster/syslogger.c:1571
 #: postmaster/syslogger.c:1584 postmaster/syslogger.c:1597
 #: utils/cache/relmapper.c:936
 #, c-format
@@ -208,8 +208,8 @@ msgstr "konnte Datei »%s« nicht fsyncen: %m"
 #: access/transam/xlogrecovery.c:589 lib/dshash.c:253 libpq/auth.c:1345
 #: libpq/auth.c:1389 libpq/auth.c:1946 libpq/be-secure-gssapi.c:524
 #: postmaster/bgworker.c:352 postmaster/bgworker.c:934
-#: postmaster/postmaster.c:2534 postmaster/postmaster.c:4127
-#: postmaster/postmaster.c:5495 postmaster/postmaster.c:5866
+#: postmaster/postmaster.c:2537 postmaster/postmaster.c:4130
+#: postmaster/postmaster.c:5498 postmaster/postmaster.c:5869
 #: replication/libpqwalreceiver/libpqwalreceiver.c:308
 #: replication/logical/logical.c:208 replication/walsender.c:686
 #: storage/buffer/localbuf.c:601 storage/file/fd.c:866 storage/file/fd.c:1397
@@ -305,7 +305,7 @@ msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
 
 #: ../common/file_utils.c:162 ../common/pgfnames.c:48 ../common/rmtree.c:63
 #: commands/tablespace.c:734 commands/tablespace.c:744
-#: postmaster/postmaster.c:1561 storage/file/fd.c:2880
+#: postmaster/postmaster.c:1564 storage/file/fd.c:2880
 #: storage/file/reinit.c:126 utils/adt/misc.c:256 utils/misc/tzparser.c:338
 #, c-format
 msgid "could not open directory \"%s\": %m"
@@ -440,7 +440,7 @@ msgstr "Tipp: "
 
 #: ../common/percentrepl.c:79 ../common/percentrepl.c:85
 #: ../common/percentrepl.c:118 ../common/percentrepl.c:124
-#: postmaster/postmaster.c:2208 utils/misc/guc.c:3118 utils/misc/guc.c:3154
+#: postmaster/postmaster.c:2211 utils/misc/guc.c:3118 utils/misc/guc.c:3154
 #: utils/misc/guc.c:3224 utils/misc/guc.c:4547 utils/misc/guc.c:6721
 #: utils/misc/guc.c:6762
 #, c-format
@@ -1206,7 +1206,7 @@ msgstr "konnte nicht in Datei »%s« schreiben, %d von %d geschrieben: %m"
 #: access/transam/xlog.c:3938 access/transam/xlog.c:8744
 #: access/transam/xlogfuncs.c:702 backup/basebackup_server.c:151
 #: backup/basebackup_server.c:244 commands/dbcommands.c:518
-#: postmaster/postmaster.c:4554 postmaster/postmaster.c:5557
+#: postmaster/postmaster.c:4557 postmaster/postmaster.c:5560
 #: replication/logical/origin.c:603 replication/slot.c:1777
 #: storage/file/copydir.c:157 storage/smgr/md.c:232 utils/time/snapmgr.c:1263
 #, c-format
@@ -1222,7 +1222,7 @@ msgstr "konnte Datei »%s« nicht auf %u kürzen: %m"
 #: access/transam/timeline.c:424 access/transam/timeline.c:498
 #: access/transam/xlog.c:3021 access/transam/xlog.c:3218
 #: access/transam/xlog.c:3950 commands/dbcommands.c:530
-#: postmaster/postmaster.c:4564 postmaster/postmaster.c:4574
+#: postmaster/postmaster.c:4567 postmaster/postmaster.c:4577
 #: replication/logical/origin.c:615 replication/logical/origin.c:657
 #: replication/logical/origin.c:676 replication/logical/snapbuild.c:1767
 #: replication/slot.c:1812 storage/file/buffile.c:545
@@ -3443,7 +3443,7 @@ msgstr "Der fehlgeschlagene Archivbefehl war: %s"
 msgid "archive command was terminated by exception 0x%X"
 msgstr "Archivbefehl wurde durch Ausnahme 0x%X beendet"
 
-#: archive/shell_archive.c:107 postmaster/postmaster.c:3675
+#: archive/shell_archive.c:107 postmaster/postmaster.c:3678
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "Sehen Sie die Beschreibung des Hexadezimalwerts in der C-Include-Datei »ntstatus.h« nach."
@@ -9351,8 +9351,8 @@ msgstr "vorbereitete Anweisung »%s« existiert nicht"
 msgid "must be superuser to create custom procedural language"
 msgstr "nur Superuser können maßgeschneiderte prozedurale Sprachen erzeugen"
 
-#: commands/publicationcmds.c:131 postmaster/postmaster.c:1205
-#: postmaster/postmaster.c:1303 storage/file/fd.c:3911
+#: commands/publicationcmds.c:131 postmaster/postmaster.c:1208
+#: postmaster/postmaster.c:1306 storage/file/fd.c:3911
 #: utils/init/miscinit.c:1815
 #, c-format
 msgid "invalid list syntax in parameter \"%s\""
@@ -19438,93 +19438,93 @@ msgstr "%s: ungültige datetoken-Tabellen, bitte reparieren\n"
 msgid "could not create I/O completion port for child queue"
 msgstr "konnte Ein-/Ausgabe-Completion-Port für Child-Queue nicht erzeugen"
 
-#: postmaster/postmaster.c:1164
+#: postmaster/postmaster.c:1175
 #, c-format
 msgid "ending log output to stderr"
 msgstr "Logausgabe nach stderr endet"
 
-#: postmaster/postmaster.c:1165
+#: postmaster/postmaster.c:1176
 #, c-format
 msgid "Future log output will go to log destination \"%s\"."
 msgstr "Die weitere Logausgabe geht an Logziel »%s«."
 
-#: postmaster/postmaster.c:1176
+#: postmaster/postmaster.c:1187
 #, c-format
 msgid "starting %s"
 msgstr "%s startet"
 
-#: postmaster/postmaster.c:1236
+#: postmaster/postmaster.c:1239
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "konnte Listen-Socket für »%s« nicht erzeugen"
 
-#: postmaster/postmaster.c:1242
+#: postmaster/postmaster.c:1245
 #, c-format
 msgid "could not create any TCP/IP sockets"
 msgstr "konnte keine TCP/IP-Sockets erstellen"
 
-#: postmaster/postmaster.c:1274
+#: postmaster/postmaster.c:1277
 #, c-format
 msgid "DNSServiceRegister() failed: error code %ld"
 msgstr "DNSServiceRegister() fehlgeschlagen: Fehlercode %ld"
 
-#: postmaster/postmaster.c:1325
+#: postmaster/postmaster.c:1328
 #, c-format
 msgid "could not create Unix-domain socket in directory \"%s\""
 msgstr "konnte Unix-Domain-Socket in Verzeichnis »%s« nicht erzeugen"
 
-#: postmaster/postmaster.c:1331
+#: postmaster/postmaster.c:1334
 #, c-format
 msgid "could not create any Unix-domain sockets"
 msgstr "konnte keine Unix-Domain-Sockets erzeugen"
 
-#: postmaster/postmaster.c:1342
+#: postmaster/postmaster.c:1345
 #, c-format
 msgid "no socket created for listening"
 msgstr "keine Listen-Socket erzeugt"
 
-#: postmaster/postmaster.c:1373
+#: postmaster/postmaster.c:1376
 #, c-format
 msgid "%s: could not change permissions of external PID file \"%s\": %s\n"
 msgstr "%s: konnte Rechte der externen PID-Datei »%s« nicht ändern: %s\n"
 
-#: postmaster/postmaster.c:1377
+#: postmaster/postmaster.c:1380
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: konnte externe PID-Datei »%s« nicht schreiben: %s\n"
 
 #. translator: %s is a configuration file
-#: postmaster/postmaster.c:1405 utils/init/postinit.c:221
+#: postmaster/postmaster.c:1408 utils/init/postinit.c:221
 #, c-format
 msgid "could not load %s"
 msgstr "konnte %s nicht laden"
 
-#: postmaster/postmaster.c:1431
+#: postmaster/postmaster.c:1434
 #, c-format
 msgid "postmaster became multithreaded during startup"
 msgstr "Postmaster ist während des Starts multithreaded geworden"
 
-#: postmaster/postmaster.c:1432
+#: postmaster/postmaster.c:1435
 #, c-format
 msgid "Set the LC_ALL environment variable to a valid locale."
 msgstr "Setzen Sie die Umgebungsvariable LC_ALL auf eine gültige Locale."
 
-#: postmaster/postmaster.c:1533
+#: postmaster/postmaster.c:1536
 #, c-format
 msgid "%s: could not locate my own executable path"
 msgstr "%s: konnte Pfad des eigenen Programs nicht finden"
 
-#: postmaster/postmaster.c:1540
+#: postmaster/postmaster.c:1543
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr "%s: konnte kein passendes Programm »postgres« finden"
 
-#: postmaster/postmaster.c:1563 utils/misc/tzparser.c:340
+#: postmaster/postmaster.c:1566 utils/misc/tzparser.c:340
 #, c-format
 msgid "This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location."
 msgstr "Dies kann auf eine unvollständige PostgreSQL-Installation hindeuten, oder darauf, dass die Datei »%s« von ihrer richtigen Stelle verschoben worden ist."
 
-#: postmaster/postmaster.c:1590
+#: postmaster/postmaster.c:1593
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -19536,460 +19536,460 @@ msgstr ""
 "aber die Datei »%s« konnte nicht geöffnet werden: %s\n"
 
 #. translator: %s is SIGKILL or SIGABRT
-#: postmaster/postmaster.c:1887
+#: postmaster/postmaster.c:1890
 #, c-format
 msgid "issuing %s to recalcitrant children"
 msgstr "%s wird an ungehorsame Kinder gesendet"
 
-#: postmaster/postmaster.c:1909
+#: postmaster/postmaster.c:1912
 #, c-format
 msgid "performing immediate shutdown because data directory lock file is invalid"
 msgstr "führe sofortiges Herunterfahren durch, weil Sperrdatei im Datenverzeichnis ungültig ist"
 
-#: postmaster/postmaster.c:1984 postmaster/postmaster.c:2012
+#: postmaster/postmaster.c:1987 postmaster/postmaster.c:2015
 #, c-format
 msgid "incomplete startup packet"
 msgstr "unvollständiges Startpaket"
 
-#: postmaster/postmaster.c:1996 postmaster/postmaster.c:2029
+#: postmaster/postmaster.c:1999 postmaster/postmaster.c:2032
 #, c-format
 msgid "invalid length of startup packet"
 msgstr "ungültige Länge des Startpakets"
 
-#: postmaster/postmaster.c:2058
+#: postmaster/postmaster.c:2061
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "konnte SSL-Verhandlungsantwort nicht senden: %m"
 
-#: postmaster/postmaster.c:2076
+#: postmaster/postmaster.c:2079
 #, c-format
 msgid "received unencrypted data after SSL request"
 msgstr "unverschlüsselte Daten nach SSL-Anforderung empfangen"
 
-#: postmaster/postmaster.c:2077 postmaster/postmaster.c:2121
+#: postmaster/postmaster.c:2080 postmaster/postmaster.c:2124
 #, c-format
 msgid "This could be either a client-software bug or evidence of an attempted man-in-the-middle attack."
 msgstr "Das könnte entweder ein Fehler in der Client-Software oder ein Hinweis auf einen versuchten Man-in-the-Middle-Angriff sein."
 
-#: postmaster/postmaster.c:2102
+#: postmaster/postmaster.c:2105
 #, c-format
 msgid "failed to send GSSAPI negotiation response: %m"
 msgstr "konnte GSSAPI-Verhandlungsantwort nicht senden: %m"
 
-#: postmaster/postmaster.c:2120
+#: postmaster/postmaster.c:2123
 #, c-format
 msgid "received unencrypted data after GSSAPI encryption request"
 msgstr "unverschlüsselte Daten nach GSSAPI-Verschlüsselungsanforderung empfangen"
 
-#: postmaster/postmaster.c:2144
+#: postmaster/postmaster.c:2147
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "nicht unterstütztes Frontend-Protokoll %u.%u: Server unterstützt %u.0 bis %u.%u"
 
-#: postmaster/postmaster.c:2211
+#: postmaster/postmaster.c:2214
 #, c-format
 msgid "Valid values are: \"false\", 0, \"true\", 1, \"database\"."
 msgstr "Gültige Werte sind: »false«, 0, »true«, 1, »database«."
 
-#: postmaster/postmaster.c:2252
+#: postmaster/postmaster.c:2255
 #, c-format
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr "ungültiges Layout des Startpakets: Abschluss als letztes Byte erwartet"
 
-#: postmaster/postmaster.c:2269
+#: postmaster/postmaster.c:2272
 #, c-format
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "kein PostgreSQL-Benutzername im Startpaket angegeben"
 
-#: postmaster/postmaster.c:2333
+#: postmaster/postmaster.c:2336
 #, c-format
 msgid "the database system is starting up"
 msgstr "das Datenbanksystem startet"
 
-#: postmaster/postmaster.c:2339
+#: postmaster/postmaster.c:2342
 #, c-format
 msgid "the database system is not yet accepting connections"
 msgstr "das Datenbanksystem nimmt noch keine Verbindungen an"
 
-#: postmaster/postmaster.c:2340
+#: postmaster/postmaster.c:2343
 #, c-format
 msgid "Consistent recovery state has not been yet reached."
 msgstr "Konsistenter Wiederherstellungszustand wurde noch nicht erreicht."
 
-#: postmaster/postmaster.c:2344
+#: postmaster/postmaster.c:2347
 #, c-format
 msgid "the database system is not accepting connections"
 msgstr "das Datenbanksystem nimmt keine Verbindungen an"
 
-#: postmaster/postmaster.c:2345
+#: postmaster/postmaster.c:2348
 #, c-format
 msgid "Hot standby mode is disabled."
 msgstr "Hot-Standby-Modus ist deaktiviert."
 
-#: postmaster/postmaster.c:2350
+#: postmaster/postmaster.c:2353
 #, c-format
 msgid "the database system is shutting down"
 msgstr "das Datenbanksystem fährt herunter"
 
-#: postmaster/postmaster.c:2355
+#: postmaster/postmaster.c:2358
 #, c-format
 msgid "the database system is in recovery mode"
 msgstr "das Datenbanksystem ist im Wiederherstellungsmodus"
 
-#: postmaster/postmaster.c:2360 storage/ipc/procarray.c:491
+#: postmaster/postmaster.c:2363 storage/ipc/procarray.c:491
 #: storage/ipc/sinvaladt.c:306 storage/lmgr/proc.c:353
 #, c-format
 msgid "sorry, too many clients already"
 msgstr "tut mir leid, schon zu viele Verbindungen"
 
-#: postmaster/postmaster.c:2447
+#: postmaster/postmaster.c:2450
 #, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "falscher Schlüssel in Stornierungsanfrage für Prozess %d"
 
-#: postmaster/postmaster.c:2459
+#: postmaster/postmaster.c:2462
 #, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "PID %d in Stornierungsanfrage stimmte mit keinem Prozess überein"
 
-#: postmaster/postmaster.c:2726
+#: postmaster/postmaster.c:2729
 #, c-format
 msgid "received SIGHUP, reloading configuration files"
 msgstr "SIGHUP empfangen, Konfigurationsdateien werden neu geladen"
 
 #. translator: %s is a configuration file
-#: postmaster/postmaster.c:2750 postmaster/postmaster.c:2754
+#: postmaster/postmaster.c:2753 postmaster/postmaster.c:2757
 #, c-format
 msgid "%s was not reloaded"
 msgstr "%s wurde nicht neu geladen"
 
-#: postmaster/postmaster.c:2764
+#: postmaster/postmaster.c:2767
 #, c-format
 msgid "SSL configuration was not reloaded"
 msgstr "SSL-Konfiguration wurde nicht neu geladen"
 
-#: postmaster/postmaster.c:2854
+#: postmaster/postmaster.c:2857
 #, c-format
 msgid "received smart shutdown request"
 msgstr "intelligentes Herunterfahren verlangt"
 
-#: postmaster/postmaster.c:2895
+#: postmaster/postmaster.c:2898
 #, c-format
 msgid "received fast shutdown request"
 msgstr "schnelles Herunterfahren verlangt"
 
-#: postmaster/postmaster.c:2913
+#: postmaster/postmaster.c:2916
 #, c-format
 msgid "aborting any active transactions"
 msgstr "etwaige aktive Transaktionen werden abgebrochen"
 
-#: postmaster/postmaster.c:2937
+#: postmaster/postmaster.c:2940
 #, c-format
 msgid "received immediate shutdown request"
 msgstr "sofortiges Herunterfahren verlangt"
 
-#: postmaster/postmaster.c:3013
+#: postmaster/postmaster.c:3016
 #, c-format
 msgid "shutdown at recovery target"
 msgstr "Herunterfahren beim Wiederherstellungsziel"
 
-#: postmaster/postmaster.c:3031 postmaster/postmaster.c:3067
+#: postmaster/postmaster.c:3034 postmaster/postmaster.c:3070
 msgid "startup process"
 msgstr "Startprozess"
 
-#: postmaster/postmaster.c:3034
+#: postmaster/postmaster.c:3037
 #, c-format
 msgid "aborting startup due to startup process failure"
 msgstr "Serverstart abgebrochen wegen Startprozessfehler"
 
-#: postmaster/postmaster.c:3107
+#: postmaster/postmaster.c:3110
 #, c-format
 msgid "database system is ready to accept connections"
 msgstr "Datenbanksystem ist bereit, um Verbindungen anzunehmen"
 
-#: postmaster/postmaster.c:3128
+#: postmaster/postmaster.c:3131
 msgid "background writer process"
 msgstr "Background-Writer-Prozess"
 
-#: postmaster/postmaster.c:3175
+#: postmaster/postmaster.c:3178
 msgid "checkpointer process"
 msgstr "Checkpointer-Prozess"
 
-#: postmaster/postmaster.c:3191
+#: postmaster/postmaster.c:3194
 msgid "WAL writer process"
 msgstr "WAL-Schreibprozess"
 
-#: postmaster/postmaster.c:3206
+#: postmaster/postmaster.c:3209
 msgid "WAL receiver process"
 msgstr "WAL-Receiver-Prozess"
 
-#: postmaster/postmaster.c:3221
+#: postmaster/postmaster.c:3224
 msgid "autovacuum launcher process"
 msgstr "Autovacuum-Launcher-Prozess"
 
-#: postmaster/postmaster.c:3239
+#: postmaster/postmaster.c:3242
 msgid "archiver process"
 msgstr "Archivierprozess"
 
-#: postmaster/postmaster.c:3252
+#: postmaster/postmaster.c:3255
 msgid "system logger process"
 msgstr "Systemlogger-Prozess"
 
-#: postmaster/postmaster.c:3309
+#: postmaster/postmaster.c:3312
 #, c-format
 msgid "background worker \"%s\""
 msgstr "Background-Worker »%s«"
 
-#: postmaster/postmaster.c:3388 postmaster/postmaster.c:3408
-#: postmaster/postmaster.c:3415 postmaster/postmaster.c:3433
+#: postmaster/postmaster.c:3391 postmaster/postmaster.c:3411
+#: postmaster/postmaster.c:3418 postmaster/postmaster.c:3436
 msgid "server process"
 msgstr "Serverprozess"
 
-#: postmaster/postmaster.c:3487
+#: postmaster/postmaster.c:3490
 #, c-format
 msgid "terminating any other active server processes"
 msgstr "aktive Serverprozesse werden abgebrochen"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3662
+#: postmaster/postmaster.c:3665
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) beendete mit Status %d"
 
-#: postmaster/postmaster.c:3664 postmaster/postmaster.c:3676
-#: postmaster/postmaster.c:3686 postmaster/postmaster.c:3697
+#: postmaster/postmaster.c:3667 postmaster/postmaster.c:3679
+#: postmaster/postmaster.c:3689 postmaster/postmaster.c:3700
 #, c-format
 msgid "Failed process was running: %s"
 msgstr "Der fehlgeschlagene Prozess führte aus: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3673
+#: postmaster/postmaster.c:3676
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d) wurde durch Ausnahme 0x%X beendet"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3683
+#: postmaster/postmaster.c:3686
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d) wurde von Signal %d beendet: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3695
+#: postmaster/postmaster.c:3698
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) beendete mit unbekanntem Status %d"
 
-#: postmaster/postmaster.c:3903
+#: postmaster/postmaster.c:3906
 #, c-format
 msgid "abnormal database system shutdown"
 msgstr "abnormales Herunterfahren des Datenbanksystems"
 
-#: postmaster/postmaster.c:3929
+#: postmaster/postmaster.c:3932
 #, c-format
 msgid "shutting down due to startup process failure"
 msgstr "fahre herunter wegen Startprozessfehler"
 
-#: postmaster/postmaster.c:3935
+#: postmaster/postmaster.c:3938
 #, c-format
 msgid "shutting down because restart_after_crash is off"
 msgstr "fahre herunter, weil restart_after_crash aus ist"
 
-#: postmaster/postmaster.c:3947
+#: postmaster/postmaster.c:3950
 #, c-format
 msgid "all server processes terminated; reinitializing"
 msgstr "alle Serverprozesse beendet; initialisiere neu"
 
-#: postmaster/postmaster.c:4141 postmaster/postmaster.c:5459
-#: postmaster/postmaster.c:5857
+#: postmaster/postmaster.c:4144 postmaster/postmaster.c:5462
+#: postmaster/postmaster.c:5860
 #, c-format
 msgid "could not generate random cancel key"
 msgstr "konnte zufälligen Stornierungsschlüssel nicht erzeugen"
 
-#: postmaster/postmaster.c:4203
+#: postmaster/postmaster.c:4206
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "konnte neuen Prozess für Verbindung nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:4245
+#: postmaster/postmaster.c:4248
 msgid "could not fork new process for connection: "
 msgstr "konnte neuen Prozess für Verbindung nicht starten (fork-Fehler): "
 
-#: postmaster/postmaster.c:4351
+#: postmaster/postmaster.c:4354
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "Verbindung empfangen: Host=%s Port=%s"
 
-#: postmaster/postmaster.c:4356
+#: postmaster/postmaster.c:4359
 #, c-format
 msgid "connection received: host=%s"
 msgstr "Verbindung empfangen: Host=%s"
 
-#: postmaster/postmaster.c:4593
+#: postmaster/postmaster.c:4596
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "konnte Serverprozess »%s« nicht ausführen: %m"
 
-#: postmaster/postmaster.c:4651
+#: postmaster/postmaster.c:4654
 #, c-format
 msgid "could not create backend parameter file mapping: error code %lu"
 msgstr "konnte Backend-Parameter-Datei-Mapping nicht erzeugen: Fehlercode %lu"
 
-#: postmaster/postmaster.c:4660
+#: postmaster/postmaster.c:4663
 #, c-format
 msgid "could not map backend parameter memory: error code %lu"
 msgstr "konnte Backend-Parameter-Speicher nicht mappen: Fehlercode %lu"
 
-#: postmaster/postmaster.c:4687
+#: postmaster/postmaster.c:4690
 #, c-format
 msgid "subprocess command line too long"
 msgstr "Kommandozeile für Subprozess zu lang"
 
-#: postmaster/postmaster.c:4705
+#: postmaster/postmaster.c:4708
 #, c-format
 msgid "CreateProcess() call failed: %m (error code %lu)"
 msgstr "Aufruf von CreateProcess() fehlgeschlagen: %m (Fehlercode %lu)"
 
-#: postmaster/postmaster.c:4732
+#: postmaster/postmaster.c:4735
 #, c-format
 msgid "could not unmap view of backend parameter file: error code %lu"
 msgstr "konnte Sicht der Backend-Parameter-Datei nicht unmappen: Fehlercode %lu"
 
-#: postmaster/postmaster.c:4736
+#: postmaster/postmaster.c:4739
 #, c-format
 msgid "could not close handle to backend parameter file: error code %lu"
 msgstr "konnte Handle für Backend-Parameter-Datei nicht schließen: Fehlercode %lu"
 
-#: postmaster/postmaster.c:4758
+#: postmaster/postmaster.c:4761
 #, c-format
 msgid "giving up after too many tries to reserve shared memory"
 msgstr "Aufgabe nach zu vielen Versuchen, Shared Memory zu reservieren"
 
-#: postmaster/postmaster.c:4759
+#: postmaster/postmaster.c:4762
 #, c-format
 msgid "This might be caused by ASLR or antivirus software."
 msgstr "Dies kann durch ASLR oder Antivirus-Software verursacht werden."
 
-#: postmaster/postmaster.c:4932
+#: postmaster/postmaster.c:4935
 #, c-format
 msgid "SSL configuration could not be loaded in child process"
 msgstr "SSL-Konfiguration konnte im Kindprozess nicht geladen werden"
 
-#: postmaster/postmaster.c:5057
+#: postmaster/postmaster.c:5060
 #, c-format
 msgid "Please report this to <%s>."
 msgstr "Bitte berichten Sie dies an <%s>."
 
-#: postmaster/postmaster.c:5125
+#: postmaster/postmaster.c:5128
 #, c-format
 msgid "database system is ready to accept read-only connections"
 msgstr "Datenbanksystem ist bereit, um lesende Verbindungen anzunehmen"
 
-#: postmaster/postmaster.c:5383
+#: postmaster/postmaster.c:5386
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "konnte Startprozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:5387
+#: postmaster/postmaster.c:5390
 #, c-format
 msgid "could not fork archiver process: %m"
 msgstr "konnte Archivierer-Prozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:5391
+#: postmaster/postmaster.c:5394
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "konnte Background-Writer-Prozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:5395
+#: postmaster/postmaster.c:5398
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "konnte Checkpointer-Prozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:5399
+#: postmaster/postmaster.c:5402
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "konnte WAL-Writer-Prozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:5403
+#: postmaster/postmaster.c:5406
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "konnte WAL-Receiver-Prozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:5407
+#: postmaster/postmaster.c:5410
 #, c-format
 msgid "could not fork process: %m"
 msgstr "konnte Prozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:5608 postmaster/postmaster.c:5635
+#: postmaster/postmaster.c:5611 postmaster/postmaster.c:5638
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr "die Notwendigkeit, Datenbankverbindungen zu erzeugen, wurde bei der Registrierung nicht angezeigt"
 
-#: postmaster/postmaster.c:5619 postmaster/postmaster.c:5646
+#: postmaster/postmaster.c:5622 postmaster/postmaster.c:5649
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "ungültiger Verarbeitungsmodus in Background-Worker"
 
-#: postmaster/postmaster.c:5731
+#: postmaster/postmaster.c:5734
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "konnte Worker-Prozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/postmaster.c:5843
+#: postmaster/postmaster.c:5846
 #, c-format
 msgid "no slot available for new worker process"
 msgstr "kein Slot für neuen Worker-Prozess verfügbar"
 
-#: postmaster/postmaster.c:6174
+#: postmaster/postmaster.c:6177
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "konnte Socket %d nicht für Verwendung in Backend duplizieren: Fehlercode %d"
 
-#: postmaster/postmaster.c:6206
+#: postmaster/postmaster.c:6209
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "konnte geerbtes Socket nicht erzeugen: Fehlercode %d\n"
 
-#: postmaster/postmaster.c:6235
+#: postmaster/postmaster.c:6238
 #, c-format
 msgid "could not open backend variables file \"%s\": %s\n"
 msgstr "konnte Servervariablendatei »%s« nicht öffnen: %s\n"
 
-#: postmaster/postmaster.c:6242
+#: postmaster/postmaster.c:6245
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "konnte nicht aus Servervariablendatei »%s« lesen: %s\n"
 
-#: postmaster/postmaster.c:6251
+#: postmaster/postmaster.c:6254
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "konnte Datei »%s« nicht löschen: %s\n"
 
-#: postmaster/postmaster.c:6268
+#: postmaster/postmaster.c:6271
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "konnte Sicht der Backend-Variablen nicht mappen: Fehlercode %lu\n"
 
-#: postmaster/postmaster.c:6277
+#: postmaster/postmaster.c:6280
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr "konnte Sicht der Backend-Variablen nicht unmappen: Fehlercode %lu\n"
 
-#: postmaster/postmaster.c:6284
+#: postmaster/postmaster.c:6287
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr "konnte Handle für Backend-Parametervariablen nicht schließen: Fehlercode %lu\n"
 
-#: postmaster/postmaster.c:6443
+#: postmaster/postmaster.c:6446
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "konnte Exitcode des Prozesses nicht lesen\n"
 
-#: postmaster/postmaster.c:6485
+#: postmaster/postmaster.c:6488
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "konnte Child-Completion-Status nicht versenden\n"
@@ -29562,12 +29562,12 @@ msgid "Sets the method for synchronizing the data directory before crash recover
 msgstr "Setzt die Methode für das Synchronisieren des Datenverzeichnisses vor der Wiederherstellung nach einem Absturz."
 
 #: utils/misc/guc_tables.c:4960
-msgid "Controls when to replicate or apply each change."
-msgstr ""
+msgid "Forces immediate streaming or serialization of changes in large transactions."
+msgstr "Erzwingt sofortiges Streaming oder sofortige Serialisierung von Änderungen in großen Transaktionen."
 
 #: utils/misc/guc_tables.c:4961
 msgid "On the publisher, it allows streaming or serializing each change in logical decoding. On the subscriber, it allows serialization of all changes to files and notifies the parallel apply workers to read and apply them at the end of the transaction."
-msgstr ""
+msgstr "Auf dem Publikationsserver erlaubt es Streaming oder Serialisierung jeder Änderung aus logischer Dekodierung. Auf dem Subskriptionsserver erlaubt es die Serialisierung aller Änderungen in Dateien und benachrichtigt die Parallel-Apply-Worker, sie nach dem Ende der Transaktion zu lesen und anzuwenden."
 
 #: utils/misc/help_config.c:129
 #, c-format

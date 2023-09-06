@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:16+0000\n"
-"PO-Revision-Date: 2022-10-04 19:41+0200\n"
+"PO-Revision-Date: 2023-09-05 08:24+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: it\n"
@@ -448,7 +448,7 @@ msgstr "  -e, --exit-on-error          esce immediatamente in caso di errore\n"
 #: pg_verifybackup.c:906
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
-msgstr "  -i, --ignore=RELATIVE_PATH ignora il percorso indicato\n"
+msgstr "  -i, --ignore=RELATIVE_PATH   ignora il percorso indicato\n"
 
 #: pg_verifybackup.c:907
 #, c-format
@@ -473,17 +473,17 @@ msgstr "  -s, --skip-checksums         salta la verifica del checksum\n"
 #: pg_verifybackup.c:911
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
-msgstr "  -w, --wal-directory=PATH usa il percorso specificato per i file WAL\n"
+msgstr "  -w, --wal-directory=PATH     usa il percorso specificato per i file WAL\n"
 
 #: pg_verifybackup.c:912
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
-msgstr "  -V, --version restituisce le informazioni sulla versione, quindi esci\n"
+msgstr "  -V, --version                restituisce le informazioni sulla versione, quindi esci\n"
 
 #: pg_verifybackup.c:913
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
-msgstr "  -?, --help mostra questo aiuto, quindi esci\n"
+msgstr "  -?, --help                   mostra questo aiuto, quindi esci\n"
 
 #: pg_verifybackup.c:914
 #, c-format

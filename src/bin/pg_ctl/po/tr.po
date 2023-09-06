@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: pg_ctl-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:47+0200\n"
+"PO-Revision-Date: 2023-09-05 09:10+0200\n"
 "Last-Translator: Abdullah Gülner\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -639,7 +639,7 @@ msgstr "  -s, --silent           sadece hataları yazar, hiç bir bilgi mesajı 
 #: pg_ctl.c:1991
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
-msgstr "  -t, --timeout=SANİYE     -w seçeneğini kullanırken beklenecek saniye\n"
+msgstr "  -t, --timeout=SANİYE   -w seçeneğini kullanırken beklenecek saniye\n"
 
 #: pg_ctl.c:1992
 #, c-format
@@ -688,7 +688,7 @@ msgstr "  -c, --core-files       bu platformda uygulanmaz\n"
 #: pg_ctl.c:2004
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
-msgstr "  -l, --log=DOSYA_ADI     sunucu loglarını DOSYA_ADI dosyasına yaz (ya da dosyanın sonuna ekle).\n"
+msgstr "  -l, --log=DOSYA_ADI    sunucu loglarını DOSYA_ADI dosyasına yaz (ya da dosyanın sonuna ekle).\n"
 
 #: pg_ctl.c:2005
 #, c-format
@@ -702,7 +702,7 @@ msgstr ""
 #: pg_ctl.c:2007
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
-msgstr "  -p PATH-TO-POSTGRES  normalde gerekli değildir\n"
+msgstr "  -p PATH-TO-POSTGRES    normalde gerekli değildir\n"
 
 #: pg_ctl.c:2008
 #, c-format

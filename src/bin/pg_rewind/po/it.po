@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:20+0000\n"
-"PO-Revision-Date: 2022-10-05 13:58+0200\n"
+"PO-Revision-Date: 2023-09-05 08:23+0200\n"
 "Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -507,7 +507,7 @@ msgid ""
 "  -c, --restore-target-wal       use restore_command in target configuration to\n"
 "                                 retrieve WAL files from archives\n"
 msgstr ""
-"  -c, --restore-target-wal usa restore_command nella configurazione di destinazione in\n"
+"  -c, --restore-target-wal       usa restore_command nella configurazione di destinazione in\n"
 "                                 recuperare i file WAL dagli archivi\n"
 
 #: pg_rewind.c:91
@@ -536,8 +536,8 @@ msgid ""
 "  -N, --no-sync                  do not wait for changes to be written\n"
 "                                 safely to disk\n"
 msgstr ""
-"  -N, --no-sync             non aspettare che i dati siano scritti con sicurezza\n"
-"                            sul disco\n"
+"  -N, --no-sync                  non aspettare che i dati siano scritti con sicurezza\n"
+"                                 sul disco\n"
 
 #: pg_rewind.c:97
 #, c-format
@@ -550,7 +550,7 @@ msgid ""
 "  -R, --write-recovery-conf      write configuration for replication\n"
 "                                 (requires --source-server)\n"
 msgstr ""
-"  -R, --write-recovery-conf configurazione di scrittura per la replica\n"
+"  -R, --write-recovery-conf      configurazione di scrittura per la replica\n"
 "                                 (richiede --source-server)\n"
 
 #: pg_rewind.c:100
@@ -559,7 +559,7 @@ msgid ""
 "      --config-file=FILENAME     use specified main server configuration\n"
 "                                 file when running target cluster\n"
 msgstr ""
-"    --config-file=FILENAME utilizza la configurazione del server principale specificata\n"
+"      --config-file=FILENAME     utilizza la configurazione del server principale specificata\n"
 "                                 file durante l'esecuzione del cluster di destinazione\n"
 
 #: pg_rewind.c:102
@@ -570,7 +570,7 @@ msgstr "      --debug                    stampa una gran quantità di messaggi d
 #: pg_rewind.c:103
 #, c-format
 msgid "      --no-ensure-shutdown       do not automatically fix unclean shutdown\n"
-msgstr "    --no-ensure-shutdown non corregge automaticamente l'arresto non pulito\n"
+msgstr "      --no-ensure-shutdown       non corregge automaticamente l'arresto non pulito\n"
 
 #: pg_rewind.c:104
 #, c-format

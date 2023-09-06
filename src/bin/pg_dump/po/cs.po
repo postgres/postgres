@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_dump-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:16+0000\n"
-"PO-Revision-Date: 2021-09-16 09:14+0200\n"
+"PO-Revision-Date: 2023-09-05 07:29+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -2323,7 +2323,7 @@ msgstr "  -c, --clean                  odstranit (drop) databázi před jejím v
 #: pg_dumpall.c:630
 #, c-format
 msgid "  -g, --globals-only           dump only global objects, no databases\n"
-msgstr "  -g, --globals-only       dump pouze globálních objektů, ne databáze\n"
+msgstr "  -g, --globals-only           dump pouze globálních objektů, ne databáze\n"
 
 #: pg_dumpall.c:631 pg_restore.c:485
 #, c-format
@@ -2333,7 +2333,7 @@ msgstr "  -O, --no-owner               nevypisuje příkazy k nastavení vlastn�
 #: pg_dumpall.c:632
 #, c-format
 msgid "  -r, --roles-only             dump only roles, no databases or tablespaces\n"
-msgstr "  -r, --roles-only            dump pouze rolí, ne databází nebo tablespaců\n"
+msgstr "  -r, --roles-only             dump pouze rolí, ne databází nebo tablespaců\n"
 
 #: pg_dumpall.c:634
 #, c-format
@@ -2343,7 +2343,7 @@ msgstr "  -S, --superuser=JMÉNO        uživatelské jméno superuživatele pou
 #: pg_dumpall.c:635
 #, c-format
 msgid "  -t, --tablespaces-only       dump only tablespaces, no databases or roles\n"
-msgstr "  -t, --tablespaces-only      dump pouze tablespaců, ne databází nebo rolí\n"
+msgstr "  -t, --tablespaces-only       dump pouze tablespaců, ne databází nebo rolí\n"
 
 #: pg_dumpall.c:641
 #, c-format
