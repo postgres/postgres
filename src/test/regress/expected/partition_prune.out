@@ -1741,7 +1741,7 @@ drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, iboolpart, boolrangep, r
 --
 -- Use hand-rolled hash functions and operator classes to get predictable
 -- result on different machines.  See the definitions of
--- part_part_test_int4_ops and part_test_text_ops in insert.sql.
+-- part_test_int4_ops and part_test_text_ops in test_setup.sql.
 --
 create table hp (a int, b text, c int)
   partition by hash (a part_test_int4_ops, b part_test_text_ops);
