@@ -1017,7 +1017,7 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, const void *data,
 			 * cheaper than setting one that has been reset.
 			 */
 			(void) WaitLatch(MyLatch, WL_LATCH_SET | WL_EXIT_ON_PM_DEATH, 0,
-							 WAIT_EVENT_MQ_SEND);
+							 WAIT_EVENT_MESSAGE_QUEUE_SEND);
 
 			/* Reset the latch so we don't spin. */
 			ResetLatch(MyLatch);
@@ -1163,7 +1163,7 @@ shm_mq_receive_bytes(shm_mq_handle *mqh, Size bytes_needed, bool nowait,
 		 * setting one that has been reset.
 		 */
 		(void) WaitLatch(MyLatch, WL_LATCH_SET | WL_EXIT_ON_PM_DEATH, 0,
-						 WAIT_EVENT_MQ_RECEIVE);
+						 WAIT_EVENT_MESSAGE_QUEUE_RECEIVE);
 
 		/* Reset the latch so we don't spin. */
 		ResetLatch(MyLatch);
@@ -1252,7 +1252,7 @@ shm_mq_wait_internal(shm_mq *mq, PGPROC **ptr, BackgroundWorkerHandle *handle)
 
 		/* Wait to be signaled. */
 		(void) WaitLatch(MyLatch, WL_LATCH_SET | WL_EXIT_ON_PM_DEATH, 0,
-						 WAIT_EVENT_MQ_INTERNAL);
+						 WAIT_EVENT_MESSAGE_QUEUE_INTERNAL);
 
 		/* Reset the latch so we don't spin. */
 		ResetLatch(MyLatch);
