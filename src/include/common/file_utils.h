@@ -46,4 +46,8 @@ extern ssize_t pg_pwritev_with_retry(int fd,
 
 extern ssize_t pg_pwrite_zeros(int fd, size_t size, off_t offset);
 
+/* Filename components */
+#define PG_TEMP_FILES_DIR "pgsql_tmp"
+#define PG_TEMP_FILE_PREFIX "pgsql_tmp"
+
 #endif							/* FILE_UTILS_H */

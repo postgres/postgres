@@ -25,6 +25,7 @@
 
 #include "catalog/pg_tablespace.h"
 #include "commands/tablespace.h"
+#include "common/file_utils.h"
 #include "common/hashfn.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"

@@ -52,16 +52,6 @@ typedef enum
 	PG_MODE_ENABLE
 } PgChecksumMode;
 
-/*
- * Filename components.
- *
- * XXX: fd.h is not declared here as frontend side code is not able to
- * interact with the backend-side definitions for the various fsync
- * wrappers.
- */
-#define PG_TEMP_FILES_DIR "pgsql_tmp"
-#define PG_TEMP_FILE_PREFIX "pgsql_tmp"
-
 static PgChecksumMode mode = PG_MODE_CHECK;
 
 static const char *progname;

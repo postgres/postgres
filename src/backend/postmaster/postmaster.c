@@ -94,6 +94,7 @@
 #include "access/xlogrecovery.h"
 #include "catalog/pg_control.h"
 #include "common/file_perm.h"
+#include "common/file_utils.h"
 #include "common/ip.h"
 #include "common/pg_prng.h"
 #include "common/string.h"

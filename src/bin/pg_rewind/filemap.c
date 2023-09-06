@@ -27,12 +27,12 @@
 #include <unistd.h>
 
 #include "catalog/pg_tablespace_d.h"
+#include "common/file_utils.h"
 #include "common/hashfn.h"
 #include "common/string.h"
 #include "datapagemap.h"
 #include "filemap.h"
 #include "pg_rewind.h"
-#include "storage/fd.h"
 
 /*
  * Define a hash table which we can use to store information about the files
