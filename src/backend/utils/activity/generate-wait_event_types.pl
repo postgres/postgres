@@ -65,29 +65,45 @@ while (<$wait_event_names>)
 	push(@lines, $section_name . "\t" . $_);
 }
 
-# Sort the lines based on the third column.
+# Sort the lines based on the second column.
 # uc() is being used to force the comparison to be case-insensitive.
 my @lines_sorted =
-  sort { uc((split(/\t/, $a))[2]) cmp uc((split(/\t/, $b))[2]) } @lines;
+  sort { uc((split(/\t/, $a))[1]) cmp uc((split(/\t/, $b))[1]) } @lines;
 
 # Read the sorted lines and populate the hash table
 foreach my $line (@lines_sorted)
 {
 	die "unable to parse wait_event_names.txt for line $line\n"
-	  unless $line =~ /^(\w+)\t+(\w+)\t+(\w+)\t+("\w.*\.")$/;
+	  unless $line =~ /^(\w+)\t+(\w+)\t+("\w.*\.")$/;
 
-	(   my $waitclassname,
-		my $waiteventenumname,
-		my $waiteventdescription,
-		my $waitevendocsentence) = split(/\t/, $line);
+	(my $waitclassname, my $waiteventname, my $waitevendocsentence) =
+	  split(/\t/, $line);
 
+	# Generate the element name for the enums based on the
+	# description.  The C symbols are prefixed with "WAIT_EVENT_".
+	my $waiteventenumname = "WAIT_EVENT_$waiteventname";
+
+	# Build the descriptions.  These are in camel-case.
+	# LWLock and Lock classes do not need any modifications.
+	my $waiteventdescription = '';
+	if (   $waitclassname eq 'WaitEventLWLock'
+		|| $waitclassname eq 'WaitEventLock')
+	{
+		$waiteventdescription = $waiteventname;
+	}
+	else
+	{
+		my @waiteventparts = split("_", $waiteventname);
+		foreach my $waiteventpart (@waiteventparts)
+		{
+			$waiteventdescription .= substr($waiteventpart, 0, 1)
+			  . lc(substr($waiteventpart, 1, length($waiteventpart)));
+		}
+	}
+
+	# Store the event into the list for each class.
 	my @waiteventlist =
 	  [ $waiteventenumname, $waiteventdescription, $waitevendocsentence ];
-	my $trimmedwaiteventname = $waiteventenumname;
-	$trimmedwaiteventname =~ s/^WAIT_EVENT_//;
-
-	die "wait event names must start with 'WAIT_EVENT_'"
-	  if ($trimmedwaiteventname eq $waiteventenumname);
 	push(@{ $hashwe{$waitclassname} }, @waiteventlist);
 }
 
