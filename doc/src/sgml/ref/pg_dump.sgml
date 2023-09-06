@@ -1180,6 +1180,27 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--sync-method</option></term>
+      <listitem>
+       <para>
+        When set to <literal>fsync</literal>, which is the default,
+        <command>pg_dump --format=directory</command> will recursively open and
+        synchronize all files in the archive directory.
+       </para>
+       <para>
+        On Linux, <literal>syncfs</literal> may be used instead to ask the
+        operating system to synchronize the whole file system that contains the
+        archive directory.  See <xref linkend="syncfs"/> for more information
+        about using <function>syncfs()</function>.
+       </para>
+       <para>
+        This option has no effect when <option>--no-sync</option> is used or
+        <option>--format</option> is not set to <literal>directory</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--table-and-children=<replaceable class="parameter">pattern</replaceable></option></term>
       <listitem>
        <para>

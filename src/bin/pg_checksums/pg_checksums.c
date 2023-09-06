@@ -78,6 +78,7 @@ usage(void)
 	printf(_("  -f, --filenode=FILENODE  check only relation with specified filenode\n"));
 	printf(_("  -N, --no-sync            do not wait for changes to be written safely to disk\n"));
 	printf(_("  -P, --progress           show progress information\n"));
+	printf(_("      --sync-method=METHOD set method for syncing files to disk\n"));
 	printf(_("  -v, --verbose            output verbose messages\n"));
 	printf(_("  -V, --version            output version information, then exit\n"));
 	printf(_("  -?, --help               show this help, then exit\n"));
@@ -436,6 +437,7 @@ main(int argc, char *argv[])
 		{"no-sync", no_argument, NULL, 'N'},
 		{"progress", no_argument, NULL, 'P'},
 		{"verbose", no_argument, NULL, 'v'},
+		{"sync-method", required_argument, NULL, 1},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -493,6 +495,10 @@ main(int argc, char *argv[])
 				break;
 			case 'v':
 				verbose = true;
+				break;
+			case 1:
+				if (!parse_sync_method(optarg, &sync_method))
+					exit(1);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */

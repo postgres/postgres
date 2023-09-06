@@ -2467,6 +2467,7 @@ usage(const char *progname)
 	printf(_("  -N, --no-sync             do not wait for changes to be written safely to disk\n"));
 	printf(_("      --no-instructions     do not print instructions for next steps\n"));
 	printf(_("  -s, --show                show internal settings\n"));
+	printf(_("      --sync-method=METHOD  set method for syncing files to disk\n"));
 	printf(_("  -S, --sync-only           only sync database files to disk, then exit\n"));
 	printf(_("\nOther options:\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
@@ -3107,6 +3108,7 @@ main(int argc, char *argv[])
 		{"locale-provider", required_argument, NULL, 15},
 		{"icu-locale", required_argument, NULL, 16},
 		{"icu-rules", required_argument, NULL, 17},
+		{"sync-method", required_argument, NULL, 18},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -3286,6 +3288,10 @@ main(int argc, char *argv[])
 				break;
 			case 17:
 				icu_rules = pg_strdup(optarg);
+				break;
+			case 18:
+				if (!parse_sync_method(optarg, &sync_method))
+					exit(1);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */

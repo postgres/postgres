@@ -16,6 +16,7 @@ use Test::More;
 my $tempdir = PostgreSQL::Test::Utils::tempdir;
 my $xlogdir = "$tempdir/pgxlog";
 my $datadir = "$tempdir/data";
+my $supports_syncfs = check_pg_config("#define HAVE_SYNCFS 1");
 
 program_help_ok('initdb');
 program_version_ok('initdb');
@@ -81,6 +82,17 @@ command_fails([ 'pg_checksums', '-D', $datadir ],
 
 command_ok([ 'initdb', '-S', $datadir ], 'sync only');
 command_fails([ 'initdb', $datadir ], 'existing data directory');
+
+if ($supports_syncfs)
+{
+	command_ok([ 'initdb', '-S', $datadir, '--sync-method', 'syncfs' ],
+		'sync method syncfs');
+}
+else
+{
+	command_fails([ 'initdb', '-S', $datadir, '--sync-method', 'syncfs' ],
+		'sync method syncfs');
+}
 
 # Check group access on PGDATA
 SKIP:

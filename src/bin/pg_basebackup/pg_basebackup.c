@@ -425,6 +425,8 @@ usage(void)
 	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
 	printf(_("      --no-verify-checksums\n"
 			 "                         do not verify checksums\n"));
+	printf(_("      --sync-method=METHOD\n"
+			 "                         set method for syncing files to disk\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=CONNSTR   connection string\n"));
@@ -2282,6 +2284,7 @@ main(int argc, char **argv)
 		{"no-manifest", no_argument, NULL, 5},
 		{"manifest-force-encode", no_argument, NULL, 6},
 		{"manifest-checksums", required_argument, NULL, 7},
+		{"sync-method", required_argument, NULL, 8},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -2452,6 +2455,10 @@ main(int argc, char **argv)
 				break;
 			case 7:
 				manifest_checksums = pg_strdup(optarg);
+				break;
+			case 8:
+				if (!parse_sync_method(optarg, &sync_method))
+					exit(1);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */

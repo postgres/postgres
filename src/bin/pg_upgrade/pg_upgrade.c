@@ -192,8 +192,10 @@ main(int argc, char **argv)
 	{
 		prep_status("Sync data directory to disk");
 		exec_prog(UTILITY_LOG_FILE, NULL, true, true,
-				  "\"%s/initdb\" --sync-only \"%s\"", new_cluster.bindir,
-				  new_cluster.pgdata);
+				  "\"%s/initdb\" --sync-only \"%s\" --sync-method %s",
+				  new_cluster.bindir,
+				  new_cluster.pgdata,
+				  user_opts.sync_method);
 		check_ok();
 	}
 
