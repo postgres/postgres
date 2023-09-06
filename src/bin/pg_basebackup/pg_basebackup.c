@@ -148,6 +148,7 @@ static bool verify_checksums = true;
 static bool manifest = true;
 static bool manifest_force_encode = false;
 static char *manifest_checksums = NULL;
+static DataDirSyncMethod sync_method = DATA_DIR_SYNC_METHOD_FSYNC;
 
 static bool success = false;
 static bool made_new_pgdata = false;
@@ -2199,11 +2200,11 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		if (format == 't')
 		{
 			if (strcmp(basedir, "-") != 0)
-				(void) fsync_dir_recurse(basedir);
+				(void) sync_dir_recurse(basedir, sync_method);
 		}
 		else
 		{
-			(void) fsync_pgdata(basedir, serverVersion);
+			(void) sync_pgdata(basedir, serverVersion, sync_method);
 		}
 	}
 

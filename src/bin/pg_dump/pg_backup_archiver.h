@@ -312,6 +312,7 @@ struct _archiveHandle
 	pg_compress_specification compression_spec; /* Requested specification for
 												 * compression */
 	bool		dosync;			/* data requested to be synced on sight */
+	DataDirSyncMethod sync_method;
 	ArchiveMode mode;			/* File mode - r or w */
 	void	   *formatData;		/* Header data specific to file format */
 

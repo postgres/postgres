@@ -613,7 +613,7 @@ _CloseArchive(ArchiveHandle *AH)
 		 * individually. Just recurse once through all the files generated.
 		 */
 		if (AH->dosync)
-			fsync_dir_recurse(ctx->directory);
+			sync_dir_recurse(ctx->directory, AH->sync_method);
 	}
 	AH->FH = NULL;
 }

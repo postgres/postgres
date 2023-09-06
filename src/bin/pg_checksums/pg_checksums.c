@@ -44,6 +44,7 @@ static char *only_filenode = NULL;
 static bool do_sync = true;
 static bool verbose = false;
 static bool showprogress = false;
+static DataDirSyncMethod sync_method = DATA_DIR_SYNC_METHOD_FSYNC;
 
 typedef enum
 {
@@ -623,7 +624,7 @@ main(int argc, char *argv[])
 		if (do_sync)
 		{
 			pg_log_info("syncing data directory");
-			fsync_pgdata(DataDir, PG_VERSION_NUM);
+			sync_pgdata(DataDir, PG_VERSION_NUM, sync_method);
 		}
 
 		pg_log_info("updating control file");

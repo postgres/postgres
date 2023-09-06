@@ -24,6 +24,7 @@
 #define PG_BACKUP_H
 
 #include "common/compression.h"
+#include "common/file_utils.h"
 #include "fe_utils/simple_list.h"
 #include "libpq-fe.h"
 
@@ -307,7 +308,8 @@ extern Archive *OpenArchive(const char *FileSpec, const ArchiveFormat fmt);
 extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
 							  const pg_compress_specification compression_spec,
 							  bool dosync, ArchiveMode mode,
-							  SetupWorkerPtrType setupDumpWorker);
+							  SetupWorkerPtrType setupDumpWorker,
+							  DataDirSyncMethod sync_method);
 
 /* The --list option */
 extern void PrintTOCSummary(Archive *AHX);

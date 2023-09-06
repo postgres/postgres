@@ -286,9 +286,9 @@ remove_target_symlink(const char *path)
  *
  * We do this once, for the whole data directory, for performance reasons.  At
  * the end of pg_rewind's run, the kernel is likely to already have flushed
- * most dirty buffers to disk.  Additionally fsync_pgdata uses a two-pass
- * approach (only initiating writeback in the first pass), which often reduces
- * the overall amount of IO noticeably.
+ * most dirty buffers to disk.  Additionally sync_pgdata uses a two-pass
+ * approach when fsync is specified (only initiating writeback in the first
+ * pass), which often reduces the overall amount of IO noticeably.
  */
 void
 sync_target_dir(void)
@@ -296,7 +296,7 @@ sync_target_dir(void)
 	if (!do_sync || dry_run)
 		return;
 
-	fsync_pgdata(datadir_target, PG_VERSION_NUM);
+	sync_pgdata(datadir_target, PG_VERSION_NUM, sync_method);
 }
 
 

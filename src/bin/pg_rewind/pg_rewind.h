@@ -13,6 +13,7 @@
 
 #include "access/timeline.h"
 #include "common/logging.h"
+#include "common/file_utils.h"
 #include "datapagemap.h"
 #include "libpq-fe.h"
 #include "storage/block.h"
@@ -24,6 +25,7 @@ extern bool showprogress;
 extern bool dry_run;
 extern bool do_sync;
 extern int	WalSegSz;
+extern DataDirSyncMethod sync_method;
 
 /* Target history */
 extern TimeLineHistoryEntry *targetHistory;
