@@ -8564,6 +8564,14 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
+       If the format provides fewer fractional digits than the number being
+       formatted, <function>to_char()</function> will round the number to
+       the specified number of fractional digits.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        The pattern characters <literal>S</literal>, <literal>L</literal>, <literal>D</literal>,
        and <literal>G</literal> represent the sign, currency symbol, decimal point,
        and thousands separator characters defined by the current locale
