@@ -661,7 +661,8 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 	 * Create replication slot if requested
 	 */
 	if (temp_replication_slot && !replication_slot)
-		replication_slot = psprintf("pg_basebackup_%d", (int) PQbackendPID(param->bgconn));
+		replication_slot = psprintf("pg_basebackup_%u",
+									(unsigned int) PQbackendPID(param->bgconn));
 	if (temp_replication_slot || create_slot)
 	{
 		if (!CreateReplicationSlot(param->bgconn, replication_slot, NULL,
