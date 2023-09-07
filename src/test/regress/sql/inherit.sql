@@ -921,6 +921,27 @@ select conrelid::regclass, contype, conname,
 drop table inh_p1, inh_p2, inh_p3, inh_p4 cascade;
 
 --
+-- Mixed ownership inheritance tree
+--
+create role regress_alice;
+create role regress_bob;
+grant all on schema public to regress_alice, regress_bob;
+grant regress_alice to regress_bob;
+set session authorization regress_alice;
+create table inh_parent (a int not null);
+set session authorization regress_bob;
+create table inh_child () inherits (inh_parent);
+set session authorization regress_alice;
+-- alice can't do this: she doesn't own inh_child
+alter table inh_parent alter a drop not null;
+set session authorization regress_bob;
+alter table inh_parent alter a drop not null;
+reset session authorization;
+drop table inh_parent, inh_child;
+revoke all on schema public from regress_alice, regress_bob;
+drop role regress_alice, regress_bob;
+
+--
 -- Check use of temporary tables with inheritance trees
 --
 create table inh_perm_parent (a1 int);

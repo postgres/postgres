@@ -542,8 +542,7 @@ static void GetForeignKeyCheckTriggers(Relation trigrel,
 									   Oid *insertTriggerOid,
 									   Oid *updateTriggerOid);
 static void ATExecDropConstraint(Relation rel, const char *constrName,
-								 DropBehavior behavior,
-								 bool recurse, bool recursing,
+								 DropBehavior behavior, bool recurse,
 								 bool missing_ok, LOCKMODE lockmode);
 static ObjectAddress dropconstraint_internal(Relation rel,
 											 HeapTuple constraintTup, DropBehavior behavior,
@@ -5236,7 +5235,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 			break;
 		case AT_DropConstraint: /* DROP CONSTRAINT */
 			ATExecDropConstraint(rel, cmd->name, cmd->behavior,
-								 cmd->recurse, false,
+								 cmd->recurse,
 								 cmd->missing_ok, lockmode);
 			break;
 		case AT_AlterColumnType:	/* ALTER COLUMN TYPE */
@@ -12263,8 +12262,7 @@ createForeignKeyCheckTriggers(Oid myRelOid, Oid refRelOid,
  */
 static void
 ATExecDropConstraint(Relation rel, const char *constrName,
-					 DropBehavior behavior,
-					 bool recurse, bool recursing,
+					 DropBehavior behavior, bool recurse,
 					 bool missing_ok, LOCKMODE lockmode)
 {
 	Relation	conrel;
@@ -12272,10 +12270,6 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	ScanKeyData skey[3];
 	HeapTuple	tuple;
 	bool		found = false;
-
-	/* At top level, permission check was done in ATPrepCmd, else do it */
-	if (recursing)
-		ATSimplePermissions(AT_DropConstraint, rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
 	conrel = table_open(ConstraintRelationId, RowExclusiveLock);
 
@@ -12302,7 +12296,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	{
 		List	   *readyRels = NIL;
 
-		dropconstraint_internal(rel, tuple, behavior, recurse, recursing,
+		dropconstraint_internal(rel, tuple, behavior, recurse, false,
 								missing_ok, &readyRels, lockmode);
 		found = true;
 	}
@@ -12352,6 +12346,10 @@ dropconstraint_internal(Relation rel, HeapTuple constraintTup, DropBehavior beha
 	if (list_member_oid(*readyRels, RelationGetRelid(rel)))
 		return InvalidObjectAddress;
 	*readyRels = lappend_oid(*readyRels, RelationGetRelid(rel));
+
+	/* At top level, permission check was done in ATPrepCmd, else do it */
+	if (recursing)
+		ATSimplePermissions(AT_DropConstraint, rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
 	conrel = table_open(ConstraintRelationId, RowExclusiveLock);
 
