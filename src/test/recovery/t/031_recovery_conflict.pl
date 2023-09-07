@@ -109,8 +109,8 @@ like($res, qr/^0$/m, "$sect: cursor with conflicting pin established");
 # to check the log starting now for recovery conflict messages
 my $log_location = -s $node_standby->logfile;
 
-# VACUUM on the primary
-$node_primary->safe_psql($test_db, qq[VACUUM $table1;]);
+# VACUUM FREEZE on the primary
+$node_primary->safe_psql($test_db, qq[VACUUM FREEZE $table1;]);
 
 # Wait for catchup. Existing connection will be terminated before replay is
 # finished, so waiting for catchup ensures that there is no race between
@@ -144,8 +144,8 @@ like($res, qr/^0$/m, "$sect: cursor with conflicting snapshot established");
 $node_primary->safe_psql($test_db,
 	qq[UPDATE $table1 SET a = a + 1 WHERE a > 2;]);
 
-# VACUUM, pruning those dead tuples
-$node_primary->safe_psql($test_db, qq[VACUUM $table1;]);
+# VACUUM FREEZE, pruning those dead tuples
+$node_primary->safe_psql($test_db, qq[VACUUM FREEZE $table1;]);
 
 # Wait for attempted replay of PRUNE records
 $node_primary->wait_for_replay_catchup($node_standby);
@@ -264,9 +264,9 @@ SELECT 'waiting' FROM pg_locks WHERE locktype = 'relation' AND NOT granted;
 ], 'waiting'),
 	"$sect: lock acquisition is waiting");
 
-# VACUUM will prune away rows, causing a buffer pin conflict, while standby
-# psql is waiting on lock
-$node_primary->safe_psql($test_db, qq[VACUUM $table1;]);
+# VACUUM FREEZE will prune away rows, causing a buffer pin conflict, while
+# standby psql is waiting on lock
+$node_primary->safe_psql($test_db, qq[VACUUM FREEZE $table1;]);
 $node_primary->wait_for_replay_catchup($node_standby);
 
 check_conflict_log("User transaction caused buffer deadlock with recovery.");
