@@ -161,9 +161,8 @@ static bool EchoQuery = false;	/* -E switch */
 static bool UseSemiNewlineNewline = false;	/* -j switch */
 
 /* whether or not, and why, we were canceled by conflict with recovery */
-static bool RecoveryConflictPending = false;
-static bool RecoveryConflictRetryable = true;
-static ProcSignalReason RecoveryConflictReason;
+static volatile sig_atomic_t RecoveryConflictPending = false;
+static volatile sig_atomic_t RecoveryConflictPendingReasons[NUM_PROCSIGNALS];
 
 /* reused buffer to pass to SendRowDescriptionMessage() */
 static MemoryContext row_description_context = NULL;
@@ -182,7 +181,6 @@ static bool check_log_statement(List *stmt_list);
 static int	errdetail_execute(List *raw_parsetree_list);
 static int	errdetail_params(ParamListInfo params);
 static int	errdetail_abort(void);
-static int	errdetail_recovery_conflict(void);
 static void bind_param_error_callback(void *arg);
 static void start_xact_command(void);
 static void finish_xact_command(void);
@@ -2510,9 +2508,9 @@ errdetail_abort(void)
  * Add an errdetail() line showing conflict source.
  */
 static int
-errdetail_recovery_conflict(void)
+errdetail_recovery_conflict(ProcSignalReason reason)
 {
-	switch (RecoveryConflictReason)
+	switch (reason)
 	{
 		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
 			errdetail("User was holding shared buffer pin for too long.");
@@ -3040,143 +3038,203 @@ FloatExceptionHandler(SIGNAL_ARGS)
 }
 
 /*
- * RecoveryConflictInterrupt: out-of-line portion of recovery conflict
- * handling following receipt of SIGUSR1. Designed to be similar to die()
- * and StatementCancelHandler(). Called only by a normal user backend
- * that begins a transaction during recovery.
+ * Tell the next CHECK_FOR_INTERRUPTS() to check for a particular type of
+ * recovery conflict.  Runs in a SIGUSR1 handler.
  */
 void
-RecoveryConflictInterrupt(ProcSignalReason reason)
+HandleRecoveryConflictInterrupt(ProcSignalReason reason)
 {
-	int			save_errno = errno;
+	RecoveryConflictPendingReasons[reason] = true;
+	RecoveryConflictPending = true;
+	InterruptPending = true;
+	/* latch will be set by procsignal_sigusr1_handler */
+}
 
-	/*
-	 * Don't joggle the elbow of proc_exit
-	 */
-	if (!proc_exit_inprogress)
+/*
+ * Check one individual conflict reason.
+ */
+static void
+ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
+{
+	switch (reason)
 	{
-		RecoveryConflictReason = reason;
-		switch (reason)
-		{
-			case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
+		case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
 
+			/*
+			 * If we aren't waiting for a lock we can never deadlock.
+			 */
+			if (!IsWaitingForLock())
+				return;
+
+			/* Intentional fall through to check wait for pin */
+			/* FALLTHROUGH */
+
+		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
+
+			/*
+			 * If PROCSIG_RECOVERY_CONFLICT_BUFFERPIN is requested but we
+			 * aren't blocking the Startup process there is nothing more to
+			 * do.
+			 *
+			 * When PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK is requested,
+			 * if we're waiting for locks and the startup process is not
+			 * waiting for buffer pin (i.e., also waiting for locks), we set
+			 * the flag so that ProcSleep() will check for deadlocks.
+			 */
+			if (!HoldingBufferPinThatDelaysRecovery())
+			{
+				if (reason == PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK &&
+					GetStartupBufferPinWaitBufId() < 0)
+					CheckDeadLockAlert();
+				return;
+			}
+
+			MyProc->recoveryConflictPending = true;
+
+			/* Intentional fall through to error handling */
+			/* FALLTHROUGH */
+
+		case PROCSIG_RECOVERY_CONFLICT_LOCK:
+		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
+		case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
+
+			/*
+			 * If we aren't in a transaction any longer then ignore.
+			 */
+			if (!IsTransactionOrTransactionBlock())
+				return;
+
+			/* FALLTHROUGH */
+
+		case PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT:
+
+			/*
+			 * If we're not in a subtransaction then we are OK to throw an
+			 * ERROR to resolve the conflict.  Otherwise drop through to the
+			 * FATAL case.
+			 *
+			 * PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT is a special case that
+			 * always throws an ERROR (ie never promotes to FATAL), though it
+			 * still has to respect QueryCancelHoldoffCount, so it shares this
+			 * code path.  Logical decoding slots are only acquired while
+			 * performing logical decoding.  During logical decoding no user
+			 * controlled code is run.  During [sub]transaction abort, the
+			 * slot is released.  Therefore user controlled code cannot
+			 * intercept an error before the replication slot is released.
+			 *
+			 * XXX other times that we can throw just an ERROR *may* be
+			 * PROCSIG_RECOVERY_CONFLICT_LOCK if no locks are held in parent
+			 * transactions
+			 *
+			 * PROCSIG_RECOVERY_CONFLICT_SNAPSHOT if no snapshots are held by
+			 * parent transactions and the transaction is not
+			 * transaction-snapshot mode
+			 *
+			 * PROCSIG_RECOVERY_CONFLICT_TABLESPACE if no temp files or
+			 * cursors open in parent transactions
+			 */
+			if (reason == PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT ||
+				!IsSubTransaction())
+			{
 				/*
-				 * If we aren't waiting for a lock we can never deadlock.
+				 * If we already aborted then we no longer need to cancel.  We
+				 * do this here since we do not wish to ignore aborted
+				 * subtransactions, which must cause FATAL, currently.
 				 */
-				if (!IsWaitingForLock())
+				if (IsAbortedTransactionBlockState())
 					return;
 
-				/* Intentional fall through to check wait for pin */
-				/* FALLTHROUGH */
-
-			case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
-
 				/*
-				 * If PROCSIG_RECOVERY_CONFLICT_BUFFERPIN is requested but we
-				 * aren't blocking the Startup process there is nothing more
-				 * to do.
-				 *
-				 * When PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK is
-				 * requested, if we're waiting for locks and the startup
-				 * process is not waiting for buffer pin (i.e., also waiting
-				 * for locks), we set the flag so that ProcSleep() will check
-				 * for deadlocks.
+				 * If a recovery conflict happens while we are waiting for
+				 * input from the client, the client is presumably just
+				 * sitting idle in a transaction, preventing recovery from
+				 * making progress.  We'll drop through to the FATAL case
+				 * below to dislodge it, in that case.
 				 */
-				if (!HoldingBufferPinThatDelaysRecovery())
+				if (!DoingCommandRead)
 				{
-					if (reason == PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK &&
-						GetStartupBufferPinWaitBufId() < 0)
-						CheckDeadLockAlert();
-					return;
-				}
-
-				MyProc->recoveryConflictPending = true;
-
-				/* Intentional fall through to error handling */
-				/* FALLTHROUGH */
-
-			case PROCSIG_RECOVERY_CONFLICT_LOCK:
-			case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
-			case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
-
-				/*
-				 * If we aren't in a transaction any longer then ignore.
-				 */
-				if (!IsTransactionOrTransactionBlock())
-					return;
-
-				/*
-				 * If we can abort just the current subtransaction then we are
-				 * OK to throw an ERROR to resolve the conflict. Otherwise
-				 * drop through to the FATAL case.
-				 *
-				 * XXX other times that we can throw just an ERROR *may* be
-				 * PROCSIG_RECOVERY_CONFLICT_LOCK if no locks are held in
-				 * parent transactions
-				 *
-				 * PROCSIG_RECOVERY_CONFLICT_SNAPSHOT if no snapshots are held
-				 * by parent transactions and the transaction is not
-				 * transaction-snapshot mode
-				 *
-				 * PROCSIG_RECOVERY_CONFLICT_TABLESPACE if no temp files or
-				 * cursors open in parent transactions
-				 */
-				if (!IsSubTransaction())
-				{
-					/*
-					 * If we already aborted then we no longer need to cancel.
-					 * We do this here since we do not wish to ignore aborted
-					 * subtransactions, which must cause FATAL, currently.
-					 */
-					if (IsAbortedTransactionBlockState())
+					/* Avoid losing sync in the FE/BE protocol. */
+					if (QueryCancelHoldoffCount != 0)
+					{
+						/*
+						 * Re-arm and defer this interrupt until later.  See
+						 * similar code in ProcessInterrupts().
+						 */
+						RecoveryConflictPendingReasons[reason] = true;
+						RecoveryConflictPending = true;
+						InterruptPending = true;
 						return;
+					}
 
-					RecoveryConflictPending = true;
-					QueryCancelPending = true;
-					InterruptPending = true;
+					/*
+					 * We are cleared to throw an ERROR.  Either it's the
+					 * logical slot case, or we have a top-level transaction
+					 * that we can abort and a conflict that isn't inherently
+					 * non-retryable.
+					 */
+					LockErrorCleanup();
+					pgstat_report_recovery_conflict(reason);
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("canceling statement due to conflict with recovery"),
+							 errdetail_recovery_conflict(reason)));
 					break;
 				}
+			}
 
-				/* Intentional fall through to session cancel */
-				/* FALLTHROUGH */
+			/* Intentional fall through to session cancel */
+			/* FALLTHROUGH */
 
-			case PROCSIG_RECOVERY_CONFLICT_DATABASE:
-				RecoveryConflictPending = true;
-				ProcDiePending = true;
-				InterruptPending = true;
-				break;
+		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
 
-			case PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT:
-				RecoveryConflictPending = true;
-				QueryCancelPending = true;
-				InterruptPending = true;
-				break;
+			/*
+			 * Retrying is not possible because the database is dropped, or we
+			 * decided above that we couldn't resolve the conflict with an
+			 * ERROR and fell through.  Terminate the session.
+			 */
+			pgstat_report_recovery_conflict(reason);
+			ereport(FATAL,
+					(errcode(reason == PROCSIG_RECOVERY_CONFLICT_DATABASE ?
+							 ERRCODE_DATABASE_DROPPED :
+							 ERRCODE_T_R_SERIALIZATION_FAILURE),
+					 errmsg("terminating connection due to conflict with recovery"),
+					 errdetail_recovery_conflict(reason),
+					 errhint("In a moment you should be able to reconnect to the"
+							 " database and repeat your command.")));
+			break;
 
-			default:
-				elog(FATAL, "unrecognized conflict mode: %d",
-					 (int) reason);
-		}
-
-		Assert(RecoveryConflictPending && (QueryCancelPending || ProcDiePending));
-
-		/*
-		 * All conflicts apart from database cause dynamic errors where the
-		 * command or transaction can be retried at a later point with some
-		 * potential for success. No need to reset this, since non-retryable
-		 * conflict errors are currently FATAL.
-		 */
-		if (reason == PROCSIG_RECOVERY_CONFLICT_DATABASE)
-			RecoveryConflictRetryable = false;
+		default:
+			elog(FATAL, "unrecognized conflict mode: %d", (int) reason);
 	}
+}
 
+/*
+ * Check each possible recovery conflict reason.
+ */
+static void
+ProcessRecoveryConflictInterrupts(void)
+{
 	/*
-	 * Set the process latch. This function essentially emulates signal
-	 * handlers like die() and StatementCancelHandler() and it seems prudent
-	 * to behave similarly as they do.
+	 * We don't need to worry about joggling the elbow of proc_exit, because
+	 * proc_exit_prepare() holds interrupts, so ProcessInterrupts() won't call
+	 * us.
 	 */
-	SetLatch(MyLatch);
+	Assert(!proc_exit_inprogress);
+	Assert(InterruptHoldoffCount == 0);
+	Assert(RecoveryConflictPending);
 
-	errno = save_errno;
+	RecoveryConflictPending = false;
+
+	for (ProcSignalReason reason = PROCSIG_RECOVERY_CONFLICT_FIRST;
+		 reason <= PROCSIG_RECOVERY_CONFLICT_LAST;
+		 reason++)
+	{
+		if (RecoveryConflictPendingReasons[reason])
+		{
+			RecoveryConflictPendingReasons[reason] = false;
+			ProcessRecoveryConflictInterrupt(reason);
+		}
+	}
 }
 
 /*
@@ -3231,24 +3289,6 @@ ProcessInterrupts(void)
 			 */
 			proc_exit(1);
 		}
-		else if (RecoveryConflictPending && RecoveryConflictRetryable)
-		{
-			pgstat_report_recovery_conflict(RecoveryConflictReason);
-			ereport(FATAL,
-					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-					 errmsg("terminating connection due to conflict with recovery"),
-					 errdetail_recovery_conflict()));
-		}
-		else if (RecoveryConflictPending)
-		{
-			/* Currently there is only one non-retryable recovery conflict */
-			Assert(RecoveryConflictReason == PROCSIG_RECOVERY_CONFLICT_DATABASE);
-			pgstat_report_recovery_conflict(RecoveryConflictReason);
-			ereport(FATAL,
-					(errcode(ERRCODE_DATABASE_DROPPED),
-					 errmsg("terminating connection due to conflict with recovery"),
-					 errdetail_recovery_conflict()));
-		}
 		else if (IsBackgroundWorker)
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
@@ -3292,30 +3332,12 @@ ProcessInterrupts(void)
 	}
 
 	/*
-	 * If a recovery conflict happens while we are waiting for input from the
-	 * client, the client is presumably just sitting idle in a transaction,
-	 * preventing recovery from making progress.  Terminate the connection to
-	 * dislodge it.
-	 */
-	if (RecoveryConflictPending && DoingCommandRead)
-	{
-		QueryCancelPending = false; /* this trumps QueryCancel */
-		RecoveryConflictPending = false;
-		LockErrorCleanup();
-		pgstat_report_recovery_conflict(RecoveryConflictReason);
-		ereport(FATAL,
-				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-				 errmsg("terminating connection due to conflict with recovery"),
-				 errdetail_recovery_conflict(),
-				 errhint("In a moment you should be able to reconnect to the"
-						 " database and repeat your command.")));
-	}
-
-	/*
 	 * Don't allow query cancel interrupts while reading input from the
 	 * client, because we might lose sync in the FE/BE protocol.  (Die
 	 * interrupts are OK, because we won't read any further messages from the
 	 * client in that case.)
+	 *
+	 * See similar logic in ProcessRecoveryConflictInterrupts().
 	 */
 	if (QueryCancelPending && QueryCancelHoldoffCount != 0)
 	{
@@ -3374,16 +3396,6 @@ ProcessInterrupts(void)
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling autovacuum task")));
 		}
-		if (RecoveryConflictPending)
-		{
-			RecoveryConflictPending = false;
-			LockErrorCleanup();
-			pgstat_report_recovery_conflict(RecoveryConflictReason);
-			ereport(ERROR,
-					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-					 errmsg("canceling statement due to conflict with recovery"),
-					 errdetail_recovery_conflict()));
-		}
 
 		/*
 		 * If we are reading a command from the client, just ignore the cancel
@@ -3398,6 +3410,9 @@ ProcessInterrupts(void)
 					 errmsg("canceling statement due to user request")));
 		}
 	}
+
+	if (RecoveryConflictPending)
+		ProcessRecoveryConflictInterrupts();
 
 	if (IdleInTransactionSessionTimeoutPending)
 	{
