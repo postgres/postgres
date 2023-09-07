@@ -160,7 +160,7 @@ RelKeysData *
 GetRelationKeys(Relation rel)
 {
 	RelKeys		*curr;
-	RelKeys		*prev;
+	RelKeys		*prev = NULL;
 	RelKeys		*new;
 	RelKeysData *keys;
 
@@ -185,8 +185,9 @@ GetRelationKeys(Relation rel)
 	new = (RelKeys *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeys));
 	new->rel_id = rel_id;
 	new->keys = keys;
+	new->next = NULL; 
 
-	if (tde_rel_keys_map == NULL)
+	if (prev == NULL)
 		tde_rel_keys_map = new;
 	else
 		prev->next = new;
