@@ -170,7 +170,7 @@ SET
  JIT:
    Functions: 3
    Options: Inlining false, Optimization false, Expressions true, Deforming true
-   Timing: Generation 1.259 ms, Inlining 0.000 ms, Optimization 0.797 ms, Emission 5.048 ms, Total 7.104 ms
+   Timing: Generation 1.259 ms (Deform 0.000 ms), Inlining 0.000 ms, Optimization 0.797 ms, Emission 5.048 ms, Total 7.104 ms
  Execution Time: 7.416 ms
 </screen>
    As visible here, <acronym>JIT</acronym> was used, but inlining and

@@ -121,7 +121,9 @@ llvm_compile_expr(ExprState *state)
 	LLVMValueRef v_aggnulls;
 
 	instr_time	starttime;
+	instr_time	deform_starttime;
 	instr_time	endtime;
+	instr_time	deform_endtime;
 
 	llvm_enter_fatal_on_oom();
 
@@ -315,10 +317,14 @@ llvm_compile_expr(ExprState *state)
 					 */
 					if (tts_ops && desc && (context->base.flags & PGJIT_DEFORM))
 					{
+						INSTR_TIME_SET_CURRENT(deform_starttime);
 						l_jit_deform =
 							slot_compile_deform(context, desc,
 												tts_ops,
 												op->d.fetch.last_var);
+						INSTR_TIME_SET_CURRENT(deform_endtime);
+						INSTR_TIME_ACCUM_DIFF(context->base.instr.deform_counter,
+											  deform_endtime, deform_starttime);
 					}
 
 					if (l_jit_deform)

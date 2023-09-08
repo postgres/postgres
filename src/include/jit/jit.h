@@ -32,6 +32,9 @@ typedef struct JitInstrumentation
 	/* accumulated time to generate code */
 	instr_time	generation_counter;
 
+	/* accumulated time to deform tuples, included into generation_counter */
+	instr_time	deform_counter;
+
 	/* accumulated time for inlining */
 	instr_time	inlining_counter;
 

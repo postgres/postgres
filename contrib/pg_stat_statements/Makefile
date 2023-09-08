@@ -7,6 +7,7 @@ OBJS = \
 
 EXTENSION = pg_stat_statements
 DATA = pg_stat_statements--1.4.sql \
+	pg_stat_statements--1.10--1.11.sql \
 	pg_stat_statements--1.9--1.10.sql pg_stat_statements--1.8--1.9.sql \
 	pg_stat_statements--1.7--1.8.sql pg_stat_statements--1.6--1.7.sql \
 	pg_stat_statements--1.5--1.6.sql pg_stat_statements--1.4--1.5.sql \
