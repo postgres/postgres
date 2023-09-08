@@ -285,6 +285,14 @@ is( $node_subscriber->safe_psql(
 		$db, qq(SELECT pg_stat_have_stats('subscription', 0, $sub2_oid))),
 	qq(f),
 	qq(Subscription stats for subscription '$sub2_name' should be removed.));
+
+# Since disabling subscription doesn't wait for walsender to release the replication
+# slot and exit, wait for the slot to become inactive.
+$node_publisher->poll_query_until(
+	$db,
+	qq(SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = '$sub2_name' AND active_pid IS NULL))
+) or die "slot never became inactive";
+
 $node_publisher->safe_psql($db,
 	qq(SELECT pg_drop_replication_slot('$sub2_name')));
 
