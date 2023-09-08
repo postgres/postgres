@@ -555,7 +555,7 @@ U&amp;'d!0061t!+000061' UESCAPE '!'
     <para>
      While the standard syntax for specifying string constants is usually
      convenient, it can be difficult to understand when the desired string
-     contains many single quotes or backslashes, since each of those must
+     contains many single quotes, since each of those must
      be doubled. To allow more readable queries in such situations,
      <productname>PostgreSQL</productname> provides another way, called
      <quote>dollar quoting</quote>, to write string constants.
