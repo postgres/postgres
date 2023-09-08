@@ -1231,16 +1231,15 @@ extern void _bt_pendingfsm_finalize(Relation rel, BTVacState *vstate);
  * prototypes for functions in nbtsearch.c
  */
 extern BTStack _bt_search(Relation rel, Relation heaprel, BTScanInsert key,
-						  Buffer *bufP, int access, Snapshot snapshot);
+						  Buffer *bufP, int access);
 extern Buffer _bt_moveright(Relation rel, Relation heaprel, BTScanInsert key,
 							Buffer buf, bool forupdate, BTStack stack,
-							int access, Snapshot snapshot);
+							int access);
 extern OffsetNumber _bt_binsrch_insert(Relation rel, BTInsertState insertstate);
 extern int32 _bt_compare(Relation rel, BTScanInsert key, Page page, OffsetNumber offnum);
 extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
-extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
-							   Snapshot snapshot);
+extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost);
 
 /*
  * prototypes for functions in nbtutils.c

@@ -1962,8 +1962,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 				itup_key = _bt_mkscankey(rel, targetkey);
 				/* find the leftmost leaf page with matching pivot/high key */
 				itup_key->pivotsearch = true;
-				stack = _bt_search(rel, NULL, itup_key, &sleafbuf, BT_READ,
-								   NULL);
+				stack = _bt_search(rel, NULL, itup_key, &sleafbuf, BT_READ);
 				/* won't need a second lock or pin on leafbuf */
 				_bt_relbuf(rel, sleafbuf);
 

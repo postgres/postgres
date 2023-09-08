@@ -378,7 +378,7 @@ _bt_search_insert(Relation rel, Relation heaprel, BTInsertState insertstate)
 
 	/* Cannot use optimization -- descend tree, return proper descent stack */
 	return _bt_search(rel, heaprel, insertstate->itup_key, &insertstate->buf,
-					  BT_WRITE, NULL);
+					  BT_WRITE);
 }
 
 /*
@@ -2165,7 +2165,7 @@ _bt_insert_parent(Relation rel,
 					 BlockNumberIsValid(RelationGetTargetBlock(rel))));
 
 			/* Find the leftmost page at the next level up */
-			pbuf = _bt_get_endpoint(rel, opaque->btpo_level + 1, false, NULL);
+			pbuf = _bt_get_endpoint(rel, opaque->btpo_level + 1, false);
 			/* Set up a phony stack entry pointing there */
 			stack = &fakestack;
 			stack->bts_blkno = BufferGetBlockNumber(pbuf);

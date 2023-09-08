@@ -202,7 +202,7 @@ typedef struct
  */
 
 extern GinBtreeStack *ginFindLeafPage(GinBtree btree, bool searchMode,
-									  bool rootConflictCheck, Snapshot snapshot);
+									  bool rootConflictCheck);
 extern Buffer ginStepRight(Buffer buffer, Relation index, int lockmode);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
 extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack,
@@ -230,7 +230,7 @@ extern void GinPageDeletePostingItem(Page page, OffsetNumber offset);
 extern void ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
 								  ItemPointerData *items, uint32 nitem,
 								  GinStatsData *buildStats);
-extern GinBtreeStack *ginScanBeginPostingTree(GinBtree btree, Relation index, BlockNumber rootBlkno, Snapshot snapshot);
+extern GinBtreeStack *ginScanBeginPostingTree(GinBtree btree, Relation index, BlockNumber rootBlkno);
 extern void ginDataFillRoot(GinBtree btree, Page root, BlockNumber lblkno, Page lpage, BlockNumber rblkno, Page rpage);
 
 /*

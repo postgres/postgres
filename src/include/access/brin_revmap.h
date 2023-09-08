@@ -24,7 +24,7 @@
 typedef struct BrinRevmap BrinRevmap;
 
 extern BrinRevmap *brinRevmapInitialize(Relation idxrel,
-										BlockNumber *pagesPerRange, Snapshot snapshot);
+										BlockNumber *pagesPerRange);
 extern void brinRevmapTerminate(BrinRevmap *revmap);
 
 extern void brinRevmapExtend(BrinRevmap *revmap,
@@ -35,7 +35,7 @@ extern void brinSetHeapBlockItemptr(Buffer buf, BlockNumber pagesPerRange,
 									BlockNumber heapBlk, ItemPointerData tid);
 extern BrinTuple *brinGetTupleForHeapBlock(BrinRevmap *revmap,
 										   BlockNumber heapBlk, Buffer *buf, OffsetNumber *off,
-										   Size *size, int mode, Snapshot snapshot);
+										   Size *size, int mode);
 extern bool brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk);
 
 #endif							/* BRIN_REVMAP_H */

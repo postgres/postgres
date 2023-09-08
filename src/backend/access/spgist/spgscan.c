@@ -815,7 +815,7 @@ spgTestLeafTuple(SpGistScanOpaque so,
  */
 static void
 spgWalk(Relation index, SpGistScanOpaque so, bool scanWholeIndex,
-		storeRes_func storeRes, Snapshot snapshot)
+		storeRes_func storeRes)
 {
 	Buffer		buffer = InvalidBuffer;
 	bool		reportedSome = false;
@@ -949,7 +949,7 @@ spggetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	so->tbm = tbm;
 	so->ntids = 0;
 
-	spgWalk(scan->indexRelation, so, true, storeBitmap, scan->xs_snapshot);
+	spgWalk(scan->indexRelation, so, true, storeBitmap);
 
 	return so->ntids;
 }
@@ -1070,8 +1070,7 @@ spggettuple(IndexScanDesc scan, ScanDirection dir)
 		}
 		so->iPtr = so->nPtrs = 0;
 
-		spgWalk(scan->indexRelation, so, false, storeGettuple,
-				scan->xs_snapshot);
+		spgWalk(scan->indexRelation, so, false, storeGettuple);
 
 		if (so->nPtrs == 0)
 			break;				/* must have completed scan */

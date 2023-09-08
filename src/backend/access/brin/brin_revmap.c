@@ -68,8 +68,7 @@ static void revmap_physical_extend(BrinRevmap *revmap);
  * brinRevmapTerminate when caller is done with it.
  */
 BrinRevmap *
-brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange,
-					 Snapshot snapshot)
+brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange)
 {
 	BrinRevmap *revmap;
 	Buffer		meta;
@@ -194,8 +193,7 @@ brinSetHeapBlockItemptr(Buffer buf, BlockNumber pagesPerRange,
  */
 BrinTuple *
 brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
-						 Buffer *buf, OffsetNumber *off, Size *size, int mode,
-						 Snapshot snapshot)
+						 Buffer *buf, OffsetNumber *off, Size *size, int mode)
 {
 	Relation	idxRel = revmap->rm_irel;
 	BlockNumber mapBlk;
@@ -339,7 +337,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	OffsetNumber regOffset;
 	ItemId		lp;
 
-	revmap = brinRevmapInitialize(idxrel, &pagesPerRange, NULL);
+	revmap = brinRevmapInitialize(idxrel, &pagesPerRange);
 
 	revmapBlk = revmap_get_blkno(revmap, heapBlk);
 	if (!BlockNumberIsValid(revmapBlk))

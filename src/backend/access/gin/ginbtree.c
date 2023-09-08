@@ -78,7 +78,7 @@ ginTraverseLock(Buffer buffer, bool searchMode)
  */
 GinBtreeStack *
 ginFindLeafPage(GinBtree btree, bool searchMode,
-				bool rootConflictCheck, Snapshot snapshot)
+				bool rootConflictCheck)
 {
 	GinBtreeStack *stack;
 

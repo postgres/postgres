@@ -67,7 +67,7 @@ moveRightIfItNeeded(GinBtreeData *btree, GinBtreeStack *stack, Snapshot snapshot
  */
 static void
 scanPostingTree(Relation index, GinScanEntry scanEntry,
-				BlockNumber rootPostingTree, Snapshot snapshot)
+				BlockNumber rootPostingTree)
 {
 	GinBtreeData btree;
 	GinBtreeStack *stack;
@@ -75,7 +75,7 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 	Page		page;
 
 	/* Descend to the leftmost leaf page */
-	stack = ginScanBeginPostingTree(&btree, index, rootPostingTree, snapshot);
+	stack = ginScanBeginPostingTree(&btree, index, rootPostingTree);
 	buffer = stack->buffer;
 
 	IncrBufferRefCount(buffer); /* prevent unpin in freeGinBtreeStack */
@@ -244,8 +244,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			PredicateLockPage(btree->index, rootPostingTree, snapshot);
 
 			/* Collect all the TIDs in this entry's posting tree */
-			scanPostingTree(btree->index, scanEntry, rootPostingTree,
-							snapshot);
+			scanPostingTree(btree->index, scanEntry, rootPostingTree);
 
 			/*
 			 * We lock again the entry page and while it was unlocked insert
@@ -344,7 +343,7 @@ restartScanEntry:
 	ginPrepareEntryScan(&btreeEntry, entry->attnum,
 						entry->queryKey, entry->queryCategory,
 						ginstate);
-	stackEntry = ginFindLeafPage(&btreeEntry, true, false, snapshot);
+	stackEntry = ginFindLeafPage(&btreeEntry, true, false);
 	page = BufferGetPage(stackEntry->buffer);
 
 	/* ginFindLeafPage() will have already checked snapshot age. */
@@ -419,7 +418,7 @@ restartScanEntry:
 			needUnlock = false;
 
 			stack = ginScanBeginPostingTree(&entry->btree, ginstate->index,
-											rootPostingTree, snapshot);
+											rootPostingTree);
 			entry->buffer = stack->buffer;
 
 			/*
@@ -652,7 +651,7 @@ startScan(IndexScanDesc scan)
  */
 static void
 entryLoadMoreItems(GinState *ginstate, GinScanEntry entry,
-				   ItemPointerData advancePast, Snapshot snapshot)
+				   ItemPointerData advancePast)
 {
 	Page		page;
 	int			i;
@@ -697,7 +696,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry,
 						   OffsetNumberNext(GinItemPointerGetOffsetNumber(&advancePast)));
 		}
 		entry->btree.fullScan = false;
-		stack = ginFindLeafPage(&entry->btree, true, false, snapshot);
+		stack = ginFindLeafPage(&entry->btree, true, false);
 
 		/* we don't need the stack, just the buffer. */
 		entry->buffer = stack->buffer;
@@ -807,7 +806,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry,
  */
 static void
 entryGetItem(GinState *ginstate, GinScanEntry entry,
-			 ItemPointerData advancePast, Snapshot snapshot)
+			 ItemPointerData advancePast)
 {
 	Assert(!entry->isFinished);
 
@@ -938,7 +937,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			/* If we've processed the current batch, load more items */
 			while (entry->offset >= entry->nlist)
 			{
-				entryLoadMoreItems(ginstate, entry, advancePast, snapshot);
+				entryLoadMoreItems(ginstate, entry, advancePast);
 
 				if (entry->isFinished)
 				{
@@ -989,7 +988,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
  */
 static void
 keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
-		   ItemPointerData advancePast, Snapshot snapshot)
+		   ItemPointerData advancePast)
 {
 	ItemPointerData minItem;
 	ItemPointerData curPageLossy;
@@ -1036,7 +1035,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 		 */
 		if (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0)
 		{
-			entryGetItem(ginstate, entry, advancePast, snapshot);
+			entryGetItem(ginstate, entry, advancePast);
 			if (entry->isFinished)
 				continue;
 		}
@@ -1111,7 +1110,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 
 		if (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0)
 		{
-			entryGetItem(ginstate, entry, advancePast, snapshot);
+			entryGetItem(ginstate, entry, advancePast);
 			if (entry->isFinished)
 				continue;
 		}
@@ -1334,8 +1333,7 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 			}
 
 			/* Fetch the next item for this key that is > advancePast. */
-			keyGetItem(&so->ginstate, so->tempCtx, key, advancePast,
-					   scan->xs_snapshot);
+			keyGetItem(&so->ginstate, so->tempCtx, key, advancePast);
 
 			if (key->isFinished)
 				return false;
