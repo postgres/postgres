@@ -352,6 +352,8 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  * You cannot use both PG_CATCH() and PG_FINALLY() in the same
  * PG_TRY()/PG_END_TRY() block.
  *
+ * There cannot be a return statement in the block of code following PG_TRY().
+ *
  * Note: while the system will correctly propagate any new ereport(ERROR)
  * occurring in the recovery section, there is a small limit on the number
  * of levels this will work for.  It's best to keep the error recovery
