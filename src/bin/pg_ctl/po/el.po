@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:04+0200\n"
+"POT-Creation-Date: 2023-08-14 23:18+0000\n"
+"PO-Revision-Date: 2023-08-15 13:37+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../common/exec.c:172
 #, c-format
@@ -36,10 +36,9 @@ msgid "could not find a \"%s\" to execute"
 msgstr "δεν βρέθηκε το αρχείο «%s» για να εκτελεστεί"
 
 #: ../../common/exec.c:250
-#, fuzzy, c-format
-#| msgid "could not rename file \"%s\" to \"%s\": %m"
+#, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
-msgstr "δεν ήταν δυνατή η μετονομασία του αρχείου «%s» σε «%s»: %m"
+msgstr "δεν δύναται η επίλυση διαδρομής «%s» σε απόλυτη μορφή: %m"
 
 #: ../../common/exec.c:412
 #, c-format
@@ -170,7 +169,7 @@ msgstr "%s: δεν ήταν δυνατή η αποστολή σήματος δι
 #: pg_ctl.c:883
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\"\n"
-msgstr "Το πρόγραμμα «%s» απαιτείται από %s αλλά δεν βρέθηκε στον ίδιο κατάλογο με το «%s».\n"
+msgstr "το πρόγραμμα «%s» χρειάζεται από %s αλλά δεν βρέθηκε στον ίδιο κατάλογο με το «%s»\n"
 
 #: pg_ctl.c:886
 #, c-format

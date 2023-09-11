@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-12 08:19+0000\n"
-"PO-Revision-Date: 2023-04-12 11:22+0200\n"
+"POT-Creation-Date: 2023-08-14 23:19+0000\n"
+"PO-Revision-Date: 2023-08-15 11:59+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -40,85 +40,77 @@ msgstr "λεπτομέρεια: "
 msgid "hint: "
 msgstr "υπόδειξη: "
 
-#: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "δεν ήταν δυνατή η αναγνώριση του τρέχοντος καταλόγου: %m"
+msgid "invalid binary \"%s\": %m"
+msgstr "μη έγκυρο δυαδικό αρχείο «%s»: %m"
 
-#: ../../common/exec.c:168
+#: ../../common/exec.c:215
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "μη έγκυρο δυαδικό αρχείο «%s»"
+msgid "could not read binary \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου «%s»: %m"
 
-#: ../../common/exec.c:218
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου «%s»"
-
-#: ../../common/exec.c:226
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "δεν βρέθηκε το αρχείο «%s» για να εκτελεστεί"
 
-#: ../../common/exec.c:282 ../../common/exec.c:321
+#: ../../common/exec.c:250
 #, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο «%s»: %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "δεν δύναται η επίλυση διαδρομής «%s» σε απόλυτη μορφή: %m"
 
-#: ../../common/exec.c:299
-#, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
-
-#: ../../common/exec.c:422
+#: ../../common/exec.c:412
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() απέτυχε: %m"
 
-#: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
-#: initdb.c:334
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+#: initdb.c:349
 #, c-format
 msgid "out of memory"
 msgstr "έλλειψη μνήμης"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
 msgid "out of memory\n"
 msgstr "έλλειψη μνήμης\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "δεν ήταν δυνατή η αντιγραφή δείκτη null (εσωτερικό σφάλμα)\n"
 
-#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
+#: ../../common/file_utils.c:87 ../../common/file_utils.c:447
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο «%s»: %m"
 
-#: ../../common/file_utils.c:166 ../../common/pgfnames.c:48
+#: ../../common/file_utils.c:162 ../../common/pgfnames.c:48
+#: ../../common/rmtree.c:63
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
 
-#: ../../common/file_utils.c:200 ../../common/pgfnames.c:69
+#: ../../common/file_utils.c:196 ../../common/pgfnames.c:69
+#: ../../common/rmtree.c:104
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου «%s»: %m"
 
-#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
-#: ../../common/file_utils.c:365
+#: ../../common/file_utils.c:228 ../../common/file_utils.c:287
+#: ../../common/file_utils.c:361
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
 
-#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
+#: ../../common/file_utils.c:299 ../../common/file_utils.c:369
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής fsync στο αρχείο «%s»: %m"
 
-#: ../../common/file_utils.c:383
+#: ../../common/file_utils.c:379
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "δεν ήταν δυνατή η μετονομασία του αρχείου «%s» σε «%s»: %m"
@@ -128,55 +120,45 @@ msgstr "δεν ήταν δυνατή η μετονομασία του αρχεί
 msgid "could not close directory \"%s\": %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου «%s»: %m"
 
-#: ../../common/restricted_token.c:64
-#, c-format
-msgid "could not load library \"%s\": error code %lu"
-msgstr "δεν ήταν δυνατή η φόρτωση της βιβλιοθήκης «%s»: κωδικός σφάλματος %lu"
-
-#: ../../common/restricted_token.c:73
-#, c-format
-msgid "cannot create restricted tokens on this platform: error code %lu"
-msgstr "δεν ήταν δυνατή η δημιουργία διακριτικών περιορισμού στην παρούσα πλατφόρμα: κωδικός σφάλματος %lu"
-
-#: ../../common/restricted_token.c:82
+#: ../../common/restricted_token.c:60
 #, c-format
 msgid "could not open process token: error code %lu"
 msgstr "δεν ήταν δυνατό το άνοιγμα διακριτικού διεργασίας: κωδικός σφάλματος %lu"
 
-#: ../../common/restricted_token.c:97
+#: ../../common/restricted_token.c:74
 #, c-format
 msgid "could not allocate SIDs: error code %lu"
 msgstr "δεν ήταν δυνατή η εκχώρηση SID: κωδικός σφάλματος %lu"
 
-#: ../../common/restricted_token.c:119
+#: ../../common/restricted_token.c:94
 #, c-format
 msgid "could not create restricted token: error code %lu"
 msgstr "δεν ήταν δυνατή η δημιουργία διακριτικού διεργασίας: κωδικός σφάλματος %lu"
 
-#: ../../common/restricted_token.c:140
+#: ../../common/restricted_token.c:115
 #, c-format
 msgid "could not start process for command \"%s\": error code %lu"
 msgstr "δεν ήταν δυνατή η εκκίνηση διεργασίας για την εντολή «%s»: κωδικός σφάλματος %lu"
 
-#: ../../common/restricted_token.c:178
+#: ../../common/restricted_token.c:153
 #, c-format
 msgid "could not re-execute with restricted token: error code %lu"
 msgstr "δεν ήταν δυνατή η επανεκκίνηση με διακριτικό περιορισμού: κωδικός σφάλματος %lu"
 
-#: ../../common/restricted_token.c:193
+#: ../../common/restricted_token.c:168
 #, c-format
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "δεν ήταν δυνατή η απόκτηση κωδικού εξόδου από την υποδιεργασία: κωδικός σφάλματος %lu"
 
-#: ../../common/rmtree.c:79
+#: ../../common/rmtree.c:95
 #, c-format
-msgid "could not stat file or directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο ή κατάλογο «%s»: %m"
+msgid "could not remove file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου «%s»: %m"
 
-#: ../../common/rmtree.c:101 ../../common/rmtree.c:113
+#: ../../common/rmtree.c:122
 #, c-format
-msgid "could not remove file or directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η αφαίρεση αρχείου ή καταλόγου «%s»: %m"
+msgid "could not remove directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση του καταλόγου «%s»: %m"
 
 #: ../../common/username.c:43
 #, c-format
@@ -192,289 +174,314 @@ msgstr "ο χρήστης δεν υπάρχει"
 msgid "user name lookup failure: error code %lu"
 msgstr "αποτυχία αναζήτησης ονόματος χρήστη: κωδικός σφάλματος %lu"
 
-#: ../../common/wait_error.c:45
+#: ../../common/wait_error.c:55
 #, c-format
 msgid "command not executable"
 msgstr "εντολή μη εκτελέσιμη"
 
-#: ../../common/wait_error.c:49
+#: ../../common/wait_error.c:59
 #, c-format
 msgid "command not found"
 msgstr "εντολή δεν βρέθηκε"
 
-#: ../../common/wait_error.c:54
+#: ../../common/wait_error.c:64
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "απόγονος διεργασίας τερμάτισε με κωδικό εξόδου %d"
 
-#: ../../common/wait_error.c:62
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "απόγονος διεργασίας τερματίστηκε με εξαίρεση 0x%X"
 
-#: ../../common/wait_error.c:66
+#: ../../common/wait_error.c:76
 #, c-format
 msgid "child process was terminated by signal %d: %s"
 msgstr "απόγονος διεργασίας τερματίστηκε με σήμα %d: %s"
 
-#: ../../common/wait_error.c:72
+#: ../../common/wait_error.c:82
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "απόγονος διεργασίας τερμάτισε με μη αναγνωρίσιμη κατάσταση %d"
 
-#: ../../port/dirmod.c:221
+#: ../../port/dirmod.c:287
 #, c-format
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "δεν ήταν δυνατός ο ορισμός διασταύρωσης για «%s»: %s\n"
 
-#: ../../port/dirmod.c:298
+#: ../../port/dirmod.c:367
 #, c-format
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "δεν ήταν δυνατή η απόκτηση διασταύρωσης για «%s»: %s\n"
 
-#: initdb.c:464 initdb.c:1459
+#: initdb.c:618 initdb.c:1613
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου «%s» για ανάγνωση: %m"
 
-#: initdb.c:505 initdb.c:809 initdb.c:829
+#: initdb.c:662 initdb.c:966 initdb.c:986
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου «%s» για εγγραφή: %m"
 
-#: initdb.c:509 initdb.c:812 initdb.c:831
+#: initdb.c:666 initdb.c:969 initdb.c:988
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εγγραφή αρχείου «%s»: %m"
 
-#: initdb.c:513
+#: initdb.c:670
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου «%s»: %m"
 
-#: initdb.c:529
+#: initdb.c:686
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής «%s»: %m"
 
-#: initdb.c:547
+#: initdb.c:704
 #, c-format
 msgid "removing data directory \"%s\""
 msgstr "αφαιρείται ο κατάλογος δεδομένων «%s»"
 
-#: initdb.c:549
+#: initdb.c:706
 #, c-format
 msgid "failed to remove data directory"
 msgstr "απέτυχε η αφαίρεση καταλόγου δεδομένων"
 
-#: initdb.c:553
+#: initdb.c:710
 #, c-format
 msgid "removing contents of data directory \"%s\""
 msgstr "αφαιρούνται περιεχόμενα του καταλόγου δεδομένων «%s»"
 
-#: initdb.c:556
+#: initdb.c:713
 #, c-format
 msgid "failed to remove contents of data directory"
 msgstr "απέτυχε η αφαίρεση περιεχομένων του καταλόγου δεδομένων"
 
-#: initdb.c:561
+#: initdb.c:718
 #, c-format
 msgid "removing WAL directory \"%s\""
 msgstr "αφαίρεση καταλόγου WAL «%s»"
 
-#: initdb.c:563
+#: initdb.c:720
 #, c-format
 msgid "failed to remove WAL directory"
 msgstr "απέτυχε η αφαίρεση καταλόγου WAL"
 
-#: initdb.c:567
+#: initdb.c:724
 #, c-format
 msgid "removing contents of WAL directory \"%s\""
 msgstr "αφαιρούνται τα περιεχόμενα του καταλόγου WAL «%s»"
 
-#: initdb.c:569
+#: initdb.c:726
 #, c-format
 msgid "failed to remove contents of WAL directory"
 msgstr "απέτυχε η αφαίρεση περιεχόμενων του καταλόγου WAL"
 
-#: initdb.c:576
+#: initdb.c:733
 #, c-format
 msgid "data directory \"%s\" not removed at user's request"
 msgstr "ο κατάλογος δεδομένων «%s» δεν αφαιρείται κατα απαίτηση του χρήστη"
 
-#: initdb.c:580
+#: initdb.c:737
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
 msgstr "ο κατάλογος WAL «%s» δεν αφαιρέθηκε κατά απαίτηση του χρήστη"
 
-#: initdb.c:598
+#: initdb.c:755
 #, c-format
 msgid "cannot be run as root"
 msgstr "δεν δύναται η εκτέλεση ως υπερχρήστης"
 
-#: initdb.c:599
+#: initdb.c:756
 #, c-format
 msgid "Please log in (using, e.g., \"su\") as the (unprivileged) user that will own the server process."
 msgstr "Παρακαλώ συνδεθείτε (χρησιμοποιώντας, π.χ. την εντολή «su») ως ο (μη προνομιούχος) χρήστης που θα είναι κάτοχος της διεργασίας του διακομιστή."
 
-#: initdb.c:631
+#: initdb.c:788
 #, c-format
 msgid "\"%s\" is not a valid server encoding name"
 msgstr "«%s» δεν είναι έγκυρο όνομα κωδικοποίησης διακομιστή"
 
-#: initdb.c:775
+#: initdb.c:932
 #, c-format
 msgid "file \"%s\" does not exist"
 msgstr "το αρχείο «%s» δεν υπάρχει"
 
-#: initdb.c:776 initdb.c:781 initdb.c:788
+#: initdb.c:933 initdb.c:938 initdb.c:945
 #, c-format
 msgid "This might mean you have a corrupted installation or identified the wrong directory with the invocation option -L."
 msgstr "Αυτό μπορεί να σημαίνει ότι έχετε μια κατεστραμμένη εγκατάσταση ή ορίσατε λάθος κατάλογο με την επιλογή επίκλησης -L."
 
-#: initdb.c:780
+#: initdb.c:937
 #, c-format
 msgid "could not access file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η πρόσβαση του αρχείο «%s»: %m"
 
-#: initdb.c:787
+#: initdb.c:944
 #, c-format
 msgid "file \"%s\" is not a regular file"
 msgstr "το αρχείο «%s» δεν είναι ένα κανονικό αρχείο"
 
-#: initdb.c:922
+#: initdb.c:1077
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
 msgstr "επιλογή εφαρμογής δυναμικής κοινόχρηστης μνήμης ... "
 
-#: initdb.c:931
+#: initdb.c:1086
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "επιλογή προκαθορισμένης τιμής max_connections ... "
 
-#: initdb.c:962
+#: initdb.c:1106
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "επιλογή προκαθορισμένης τιμής shared_buffers ... "
 
-#: initdb.c:996
+#: initdb.c:1129
 #, c-format
 msgid "selecting default time zone ... "
 msgstr "επιλογή προκαθορισμένης ζώνης ώρας ... "
 
-#: initdb.c:1030
+#: initdb.c:1206
 msgid "creating configuration files ... "
 msgstr "δημιουργία αρχείων ρύθμισης ... "
 
-#: initdb.c:1188 initdb.c:1204 initdb.c:1287 initdb.c:1299
+#: initdb.c:1367 initdb.c:1381 initdb.c:1448 initdb.c:1459
 #, c-format
 msgid "could not change permissions of \"%s\": %m"
 msgstr "δεν ήταν δυνατή η αλλαγή δικαιωμάτων του «%s»: %m"
 
-#: initdb.c:1319
+#: initdb.c:1477
 #, c-format
 msgid "running bootstrap script ... "
 msgstr "εκτέλεση σεναρίου bootstrap ... "
 
-#: initdb.c:1331
+#: initdb.c:1489
 #, c-format
 msgid "input file \"%s\" does not belong to PostgreSQL %s"
 msgstr "το αρχείο εισόδου «%s» δεν ανήκει στην PostgreSQL %s"
 
-#: initdb.c:1333
+#: initdb.c:1491
 #, c-format
 msgid "Specify the correct path using the option -L."
 msgstr "Καθορίστε τη σωστή διαδρομή χρησιμοποιώντας την επιλογή -L."
 
-#: initdb.c:1437
+#: initdb.c:1591
 msgid "Enter new superuser password: "
 msgstr "Εισάγετε νέο κωδικό πρόσβασης υπερχρήστη: "
 
-#: initdb.c:1438
+#: initdb.c:1592
 msgid "Enter it again: "
 msgstr "Εισάγετε ξανά: "
 
-#: initdb.c:1441
+#: initdb.c:1595
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Οι κωδικοί πρόσβασης δεν είναι ίδιοι.\n"
 
-#: initdb.c:1465
+#: initdb.c:1619
 #, c-format
 msgid "could not read password from file \"%s\": %m"
 msgstr "δεν ήταν δυνατή η ανάγνωση κωδικού πρόσβασης από το αρχείο «%s»: %m"
 
-#: initdb.c:1468
+#: initdb.c:1622
 #, c-format
 msgid "password file \"%s\" is empty"
 msgstr "αρχείο κωδικών πρόσβασης «%s» είναι άδειο"
 
-#: initdb.c:1915
+#: initdb.c:2034
 #, c-format
 msgid "caught signal\n"
 msgstr "συνελήφθει σήμα\n"
 
-#: initdb.c:1921
+#: initdb.c:2040
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "δεν ήταν δυνατή η εγγραφή στην απογονική διεργασία: %s\n"
 
-#: initdb.c:1929
+#: initdb.c:2048
 #, c-format
 msgid "ok\n"
 msgstr "εντάξει\n"
 
-#: initdb.c:2018
+#: initdb.c:2137
 #, c-format
 msgid "setlocale() failed"
 msgstr "setlocale() απέτυχε"
 
-#: initdb.c:2036
+#: initdb.c:2155
 #, c-format
 msgid "failed to restore old locale \"%s\""
 msgstr "απέτυχε να επαναφέρει την παλαιά εντοπιότητα «%s»"
 
-#: initdb.c:2043
+#: initdb.c:2163
 #, c-format
 msgid "invalid locale name \"%s\""
 msgstr "άκυρη ονομασία εντοπιότητας «%s»"
 
-#: initdb.c:2054
+#: initdb.c:2164
+#, c-format
+msgid "If the locale name is specific to ICU, use --icu-locale."
+msgstr "Αν το όνομα της εντοπιότητας είναι συγκεκριμένο για το ICU, χρησιμοποιήστε --icu-locale."
+
+#: initdb.c:2177
 #, c-format
 msgid "invalid locale settings; check LANG and LC_* environment variables"
 msgstr "μη έγκυρες ρυθμίσεις εντοπιότητας, ελέγξτε τις μεταβλητές περιβάλλοντος LANG και LC_*"
 
-#: initdb.c:2080 initdb.c:2104
+#: initdb.c:2203 initdb.c:2227
 #, c-format
 msgid "encoding mismatch"
 msgstr "αναντιστοιχία κωδικοποίησης"
 
-#: initdb.c:2081
+#: initdb.c:2204
 #, c-format
 msgid "The encoding you selected (%s) and the encoding that the selected locale uses (%s) do not match. This would lead to misbehavior in various character string processing functions."
 msgstr "Η κωδικοποίηση που επιλέξατε (%s) και η κωδικοποίηση που χρησιμοποιεί η επιλεγμένη τοπική γλώσσα (%s) δεν ταιριάζουν. Αυτό θα οδηγούσε σε κακή συμπεριφορά σε διάφορες λειτουργίες επεξεργασίας συμβολοσειρών χαρακτήρων."
 
-#: initdb.c:2086 initdb.c:2107
+#: initdb.c:2209 initdb.c:2230
 #, c-format
 msgid "Rerun %s and either do not specify an encoding explicitly, or choose a matching combination."
 msgstr "Επανεκτελέστε %s και είτε μην καθορίσετε ρητά μια κωδικοποίηση, είτε επιλέξτε ταιριαστό συνδυασμό."
 
-#: initdb.c:2105
+#: initdb.c:2228
 #, c-format
 msgid "The encoding you selected (%s) is not supported with the ICU provider."
 msgstr "Η κωδικοποίηση που επιλέξατε (%s) δεν υποστηρίζεται από τον πάροχο ICU."
 
-#: initdb.c:2169
+#: initdb.c:2279
 #, c-format
-msgid "ICU locale must be specified"
-msgstr "ICU εντοπιότητα πρέπει να έχει καθοριστεί"
+msgid "could not convert locale name \"%s\" to language tag: %s"
+msgstr "δεν δύναται η μετατροπή ονόματος locale «%s» σε ετικέτα γλώσσας: %s"
 
-#: initdb.c:2176
+#: initdb.c:2285 initdb.c:2337 initdb.c:2416
 #, c-format
 msgid "ICU is not supported in this build"
 msgstr "ICU δεν υποστηρίζεται σε αυτήν την πλατφόρμα"
 
-#: initdb.c:2187
+#: initdb.c:2308
+#, c-format
+msgid "could not get language from locale \"%s\": %s"
+msgstr "δεν δύναται ο ορισμός της γλώσσας από το locale «%s»: %s"
+
+#: initdb.c:2334
+#, c-format
+msgid "locale \"%s\" has unknown language \"%s\""
+msgstr "εντοπιότητα «%s» έχει άγνωστη γλώσσα «%s»"
+
+#: initdb.c:2400
+#, c-format
+msgid "ICU locale must be specified"
+msgstr "ICU εντοπιότητα πρέπει να έχει καθοριστεί"
+
+#: initdb.c:2404
+#, c-format
+msgid "Using language tag \"%s\" for ICU locale \"%s\".\n"
+msgstr "Χρήση ετικέτας γλώσσας «%s» για την εντοπιότητα ICU «%s».\n"
+
+#: initdb.c:2427
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -483,17 +490,17 @@ msgstr ""
 "%s αρχικοποιεί μία συστάδα PostgreSQL βάσης δεδομένων.\n"
 "\n"
 
-#: initdb.c:2188
+#: initdb.c:2428
 #, c-format
 msgid "Usage:\n"
 msgstr "Χρήση:\n"
 
-#: initdb.c:2189
+#: initdb.c:2429
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [ΕΠΙΛΟΓH]... [DATADIR]\n"
 
-#: initdb.c:2190
+#: initdb.c:2430
 #, c-format
 msgid ""
 "\n"
@@ -502,52 +509,57 @@ msgstr ""
 "\n"
 "Επιλογές:\n"
 
-#: initdb.c:2191
+#: initdb.c:2431
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=METHOD         προκαθορισμένη μέθοδος ταυτοποίησης για τοπικές συνδέσεις\n"
 
-#: initdb.c:2192
+#: initdb.c:2432
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
 msgstr "      --auth-host=METHOD    προκαθορισμένη μέθοδος ταυτοποίησης για τοπικές συνδέσεις πρωτοκόλλου TCP/IP\n"
 
-#: initdb.c:2193
+#: initdb.c:2433
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
 msgstr "      --auth-local=METHOD   προκαθορισμένη μέθοδος ταυτοποίησης για συνδέσεις τοπικής υποδοχής\n"
 
-#: initdb.c:2194
+#: initdb.c:2434
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATADIR     τοποθεσία για αυτή τη συστάδα βάσης δεδομένων\n"
 
-#: initdb.c:2195
+#: initdb.c:2435
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=ENCODING   όρισε την προκαθορισμένη κωδικοποίηση για καινούριες βάσεις δεδομένων\n"
 
-#: initdb.c:2196
+#: initdb.c:2436
 #, c-format
 msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
 msgstr "  -g, --allow-group-access  επέτρεψε εγγραφή/ανάγνωση για την ομάδα στο κατάλογο δεδομένων\n"
 
-#: initdb.c:2197
+#: initdb.c:2437
 #, c-format
 msgid "      --icu-locale=LOCALE   set ICU locale ID for new databases\n"
-msgstr "      --locale=LOCALE       όρισε την ICU εντοπιότητα για καινούριες βάσεις δεδομένων\n"
+msgstr "      --icu-locale=LOCALE   όρισε την ICU εντοπιότητα για καινούριες βάσεις δεδομένων\n"
 
-#: initdb.c:2198
+#: initdb.c:2438
+#, c-format
+msgid "      --icu-rules=RULES     set additional ICU collation rules for new databases\n"
+msgstr "      --icu-rules=RULES     όρισε πρόσθετους κανόνες ταξινόμησης ICU για νέες βάσεις δεδομένων\n"
+
+#: initdb.c:2439
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
 msgstr "  -k, --data-checksums      χρησιμοποίησε αθροίσματα ελέγχου σελίδων δεδομένων\n"
 
-#: initdb.c:2199
+#: initdb.c:2440
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=LOCALE       όρισε την προκαθορισμένη εντοπιότητα για καινούριες βάσεις δεδομένων\n"
 
-#: initdb.c:2200
+#: initdb.c:2441
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -560,12 +572,12 @@ msgstr ""
 "                            όρισε την προκαθορισμένη εντοπιότητα για τις σχετικές κατηγορίες\n"
 "                            καινούριων βάσεων δεδομένων (προκαθορισμένη τιμή διαβάζεται από το περιβάλλον)\n"
 
-#: initdb.c:2204
+#: initdb.c:2445
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           ισοδύναμο με --locale=C\n"
 
-#: initdb.c:2205
+#: initdb.c:2446
 #, c-format
 msgid ""
 "      --locale-provider={libc|icu}\n"
@@ -574,12 +586,12 @@ msgstr ""
 "      --locale-provider={libc|icu}\n"
 "                            όρισε τον προκαθορισμένο πάροχο εντοπιότητας για νέες βάσεις δεδομένων\n"
 
-#: initdb.c:2207
+#: initdb.c:2448
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=FILE         διάβασε τον κωδικό πρόσβασης για τον νέο υπερχρήστη από το αρχείο\n"
 
-#: initdb.c:2208
+#: initdb.c:2449
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -588,27 +600,27 @@ msgstr ""
 "  -T, --text-search-config=CFG\n"
 "                            προκαθορισμένη ρύθμιση αναζήτησης κειμένου\n"
 
-#: initdb.c:2210
+#: initdb.c:2451
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAME       όνομα υπερχρήστη βάσης δεδομένων\n"
 
-#: initdb.c:2211
+#: initdb.c:2452
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            προτροπή για κωδικό πρόσβασης για τον νέο υπερχρήστη\n"
 
-#: initdb.c:2212
+#: initdb.c:2453
 #, c-format
 msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr "  -X, --waldir=WALDIR       τοποθεσία για τον κατάλογο write-ahead log\n"
 
-#: initdb.c:2213
+#: initdb.c:2454
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=SIZE    μέγεθος των τμημάτων WAL, σε megabytes\n"
 
-#: initdb.c:2214
+#: initdb.c:2455
 #, c-format
 msgid ""
 "\n"
@@ -617,47 +629,52 @@ msgstr ""
 "\n"
 "Λιγότερο συχνά χρησιμοποιούμενες επιλογές:\n"
 
-#: initdb.c:2215
+#: initdb.c:2456
+#, c-format
+msgid "  -c, --set NAME=VALUE      override default setting for server parameter\n"
+msgstr "  -c, --set NAME=VALUE      παράκαμψε την προεπιλεγμένη ρύθμιση για την παράμετρο του διακομιστή\n"
+
+#: initdb.c:2457
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               δημιούργησε πολλές καταγραφές αποσφαλμάτωσης\n"
 
-#: initdb.c:2216
+#: initdb.c:2458
 #, c-format
 msgid "      --discard-caches      set debug_discard_caches=1\n"
 msgstr "      --discard-caches      όρισε debug_discard_caches=1\n"
 
-#: initdb.c:2217
+#: initdb.c:2459
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTORY              τοποθεσία εύρεσης αρχείων εισόδου\n"
 
-#: initdb.c:2218
+#: initdb.c:2460
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
 msgstr "  -n, --no-clean            να μην καθαριστούν σφάλματα\n"
 
-#: initdb.c:2219
+#: initdb.c:2461
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync             να μην αναμένει την ασφαλή εγγραφή αλλαγών στον δίσκο\n"
 
-#: initdb.c:2220
+#: initdb.c:2462
 #, c-format
 msgid "      --no-instructions     do not print instructions for next steps\n"
 msgstr "      --no-instructions     να μην εκτυπώσει οδηγίες για τα επόμενα βήματα\n"
 
-#: initdb.c:2221
+#: initdb.c:2463
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                δείξε τις εσωτερικές ρυθμίσεις\n"
 
-#: initdb.c:2222
+#: initdb.c:2464
 #, c-format
 msgid "  -S, --sync-only           only sync database files to disk, then exit\n"
 msgstr "  -S, --sync-only           συγχρόνισε μόνο αρχεία της βάσης δεδομένων στον δίσκο, στη συνέχεια έξοδος\n"
 
-#: initdb.c:2223
+#: initdb.c:2465
 #, c-format
 msgid ""
 "\n"
@@ -666,17 +683,17 @@ msgstr ""
 "\n"
 "Άλλες επιλογές:\n"
 
-#: initdb.c:2224
+#: initdb.c:2466
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
 
-#: initdb.c:2225
+#: initdb.c:2467
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
 
-#: initdb.c:2226
+#: initdb.c:2468
 #, c-format
 msgid ""
 "\n"
@@ -687,7 +704,7 @@ msgstr ""
 "Εάν δεν έχει καθοριστεί ο κατάλογος δεδομένων, χρησιμοποιείται η\n"
 "μεταβλητή περιβάλλοντος PGDATA.\n"
 
-#: initdb.c:2228
+#: initdb.c:2470
 #, c-format
 msgid ""
 "\n"
@@ -696,72 +713,72 @@ msgstr ""
 "\n"
 "Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
 
-#: initdb.c:2229
+#: initdb.c:2471
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s αρχική σελίδα: <%s>\n"
 
-#: initdb.c:2257
+#: initdb.c:2499
 #, c-format
 msgid "invalid authentication method \"%s\" for \"%s\" connections"
 msgstr "μη έγκυρη μέθοδος ταυτοποίησης «%s» για συνδέσεις «%s»"
 
-#: initdb.c:2271
+#: initdb.c:2513
 #, c-format
 msgid "must specify a password for the superuser to enable password authentication"
 msgstr "απαιτείται ο καθορισμός κωδικού πρόσβασης για τον υπερχρήστη για να την ενεργοποίηση του ελέγχου ταυτότητας κωδικού πρόσβασης"
 
-#: initdb.c:2290
+#: initdb.c:2532
 #, c-format
 msgid "no data directory specified"
 msgstr "δεν ορίστηκε κατάλογος δεδομένων"
 
-#: initdb.c:2291
+#: initdb.c:2533
 #, c-format
 msgid "You must identify the directory where the data for this database system will reside.  Do this with either the invocation option -D or the environment variable PGDATA."
 msgstr "Πρέπει να προσδιορίσετε τον κατάλογο όπου θα αποθηκεύονται τα δεδομένα. Κάντε το είτε με την επιλογή κλήσης -D ή με τη μεταβλητή περιβάλλοντος PGDATA."
 
-#: initdb.c:2308
+#: initdb.c:2550
 #, c-format
 msgid "could not set environment"
 msgstr "δεν ήταν δυνατή η ρύθμιση περιβάλλοντος"
 
-#: initdb.c:2326
+#: initdb.c:2568
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "το πρόγραμμα «%s» απαιτείται από το %s αλλά δεν βρέθηκε στον ίδιο κατάλογο με το «%s»."
 
-#: initdb.c:2329
+#: initdb.c:2571
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "το πρόγραμμα «%s» βρέθηκε από το «%s» αλλά δεν ήταν η ίδια έκδοση με το %s"
 
-#: initdb.c:2344
+#: initdb.c:2586
 #, c-format
 msgid "input file location must be an absolute path"
 msgstr "η τοποθεσία του αρχείου εισόδου πρέπει να είναι μία πλήρης διαδρομή"
 
-#: initdb.c:2361
+#: initdb.c:2603
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "Η συστάδα βάσης δεδομένων θα αρχικοποιηθεί με εντοπιότητα «%s».\n"
 
-#: initdb.c:2364
+#: initdb.c:2606
 #, c-format
 msgid "The database cluster will be initialized with this locale configuration:\n"
 msgstr "Η συστάδα βάσης δεδομένων θα αρχικοποιηθεί με αυτή τη ρύθμιση εντοπιότητας:\n"
 
-#: initdb.c:2365
+#: initdb.c:2607
 #, c-format
 msgid "  provider:    %s\n"
 msgstr "  πάροχος:    %s\n"
 
-#: initdb.c:2367
+#: initdb.c:2609
 #, c-format
 msgid "  ICU locale:  %s\n"
 msgstr "  ICU εντοπιότητα:  %s\n"
 
-#: initdb.c:2368
+#: initdb.c:2610
 #, c-format
 msgid ""
 "  LC_COLLATE:  %s\n"
@@ -778,27 +795,22 @@ msgstr ""
 "  LC_NUMERIC:  %s\n"
 "  LC_TIME:     %s\n"
 
-#: initdb.c:2385
-#, c-format
-msgid "The default database encoding has been set to \"%s\".\n"
-msgstr "Η προεπιλεγμένη κωδικοποίηση βάσης δεδομένων έχει οριστεί ως «%s».\n"
-
-#: initdb.c:2397
+#: initdb.c:2640
 #, c-format
 msgid "could not find suitable encoding for locale \"%s\""
 msgstr "δεν μπόρεσε να βρεθεί κατάλληλη κωδικοποίηση για την εντοπιότητα «%s»"
 
-#: initdb.c:2399
+#: initdb.c:2642
 #, c-format
 msgid "Rerun %s with the -E option."
 msgstr "Επανεκτελέστε %s με την επιλογή -E."
 
-#: initdb.c:2400 initdb.c:3021 initdb.c:3041
+#: initdb.c:2643 initdb.c:3176 initdb.c:3284 initdb.c:3304
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες."
 
-#: initdb.c:2412
+#: initdb.c:2655
 #, c-format
 msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
@@ -807,112 +819,107 @@ msgstr ""
 "Η κωδικοποίηση «%s» που υπονοείται από τις τοπικές ρυθμίσεις δεν επιτρέπεται ως κωδικοποίηση από την πλευρά του διακομιστή.\n"
 "Η προεπιλεγμένη κωδικοποίηση βάσης δεδομένων θα οριστεί σε «%s».\n"
 
-#: initdb.c:2417
+#: initdb.c:2660
 #, c-format
 msgid "locale \"%s\" requires unsupported encoding \"%s\""
 msgstr "εντοπιότητα «%s» προαπαιτεί τη μην υποστηριζόμενη κωδικοποίηση«%s»"
 
-#: initdb.c:2419
+#: initdb.c:2662
 #, c-format
 msgid "Encoding \"%s\" is not allowed as a server-side encoding."
 msgstr "Η κωδικοποίηση «%s» δεν επιτρέπεται ως κωδικοποίηση από την πλευρά του διακομιστή."
 
-#: initdb.c:2421
+#: initdb.c:2664
 #, c-format
 msgid "Rerun %s with a different locale selection."
 msgstr "Επανεκτελέστε %s με διαφορετική επιλογή εντοπιότητας."
 
-#: initdb.c:2429
+#: initdb.c:2672
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr "Η προεπιλεγμένη κωδικοποίηση βάσης δεδομένων έχει οριστεί ως «%s».\n"
 
-#: initdb.c:2498
+#: initdb.c:2741
 #, c-format
 msgid "could not find suitable text search configuration for locale \"%s\""
 msgstr "δεν ήταν δυνατή η εύρεση κατάλληλων ρυθμίσεων για την μηχανή αναζήτησης για την εντοπιότητα «%s»"
 
-#: initdb.c:2509
+#: initdb.c:2752
 #, c-format
 msgid "suitable text search configuration for locale \"%s\" is unknown"
 msgstr "οι κατάλληλες ρυθμίσεις για την μηχανή αναζήτησης για την εντοπιότητα «%s» δεν είναι γνωστές"
 
-#: initdb.c:2514
+#: initdb.c:2757
 #, c-format
 msgid "specified text search configuration \"%s\" might not match locale \"%s\""
 msgstr "η ορισμένη ρύθμιση μηχανής αναζήτησης «%s» μπορεί να μην ταιριάζει με την εντοπιότητα «%s»"
 
-#: initdb.c:2519
+#: initdb.c:2762
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "Η προκαθορισμένη ρύθμιση μηχανής αναζήτησης θα οριστεί ως «%s».\n"
 
-#: initdb.c:2562 initdb.c:2633
+#: initdb.c:2805 initdb.c:2876
 #, c-format
 msgid "creating directory %s ... "
 msgstr "δημιουργία καταλόγου %s ... "
 
-#: initdb.c:2567 initdb.c:2638 initdb.c:2690 initdb.c:2746
+#: initdb.c:2810 initdb.c:2881 initdb.c:2929 initdb.c:2985
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου «%s»: %m"
 
-#: initdb.c:2576 initdb.c:2648
+#: initdb.c:2819 initdb.c:2891
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "διορθώνονται τα δικαιώματα του υπάρχοντος καταλόγου %s ... "
 
-#: initdb.c:2581 initdb.c:2653
+#: initdb.c:2824 initdb.c:2896
 #, c-format
 msgid "could not change permissions of directory \"%s\": %m"
 msgstr "δεν ήταν δυνατή η αλλαγή δικαιωμάτων του καταλόγου «%s»: %m"
 
-#: initdb.c:2593 initdb.c:2665
+#: initdb.c:2836 initdb.c:2908
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "ο κατάλογος «%s» υπάρχει και δεν είναι άδειος"
 
-#: initdb.c:2597
+#: initdb.c:2840
 #, c-format
 msgid "If you want to create a new database system, either remove or empty the directory \"%s\" or run %s with an argument other than \"%s\"."
 msgstr "Αν θέλετε να δημιουργήσετε ένα νέο σύστημα βάσεων δεδομένων, είτε αφαιρέστε ή αδειάστε τον κατάλογο «%s» είτε εκτελέστε το %s με ένα άλλο όρισμα εκτός από το «%s» ."
 
-#: initdb.c:2605 initdb.c:2675 initdb.c:3058
+#: initdb.c:2848 initdb.c:2918 initdb.c:3325
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "δεν ήταν δυνατή η πρόσβαση του καταλόγου «%s»: %m"
 
-#: initdb.c:2626
+#: initdb.c:2869
 #, c-format
 msgid "WAL directory location must be an absolute path"
 msgstr "η τοποθεσία του καταλόγου WAL πρέπει να είναι μία πλήρης διαδρομή"
 
-#: initdb.c:2669
+#: initdb.c:2912
 #, c-format
 msgid "If you want to store the WAL there, either remove or empty the directory \"%s\"."
 msgstr "Εάν θέλετε να αποθηκεύσετε το WAL εκεί, είτε αφαιρέστε ή αδειάστε τον κατάλογο «%s»."
 
-#: initdb.c:2680
+#: initdb.c:2922
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "δεν ήταν δυνατή η δημιουργία του συμβολικού συνδέσμου «%s»: %m"
 
-#: initdb.c:2683
-#, c-format
-msgid "symlinks are not supported on this platform"
-msgstr "συμβολικοί σύνδεσμοι δεν υποστηρίζονται στην παρούσα πλατφόρμα"
-
-#: initdb.c:2702
+#: initdb.c:2941
 #, c-format
 msgid "It contains a dot-prefixed/invisible file, perhaps due to it being a mount point."
 msgstr "Περιέχει ένα αρχείο με πρόθεμα κουκκίδας/αόρατο, ίσως επειδή είναι ένα σημείο προσάρτησης."
 
-#: initdb.c:2704
+#: initdb.c:2943
 #, c-format
 msgid "It contains a lost+found directory, perhaps due to it being a mount point."
 msgstr "Περιέχει έναν κατάλογο lost+found, ίσως επειδή είναι ένα σημείο προσάρτησης."
 
-#: initdb.c:2706
+#: initdb.c:2945
 #, c-format
 msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
@@ -921,65 +928,70 @@ msgstr ""
 "Δεν προτείνεται η άμεση χρήση ενός σημείου προσάρτησης ως καταλόγου δεδομένων.\n"
 "Δημιουργείστε έναν υποκατάλογο υπό του σημείου προσάρτησης."
 
-#: initdb.c:2732
+#: initdb.c:2971
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "δημιουργία υποκαταλόγων ... "
 
-#: initdb.c:2775
+#: initdb.c:3014
 msgid "performing post-bootstrap initialization ... "
 msgstr "πραγματοποίηση σταδίου αρχικοποίησης post-bootstrap ... "
 
-#: initdb.c:2940
+#: initdb.c:3175
+#, c-format
+msgid "-c %s requires a value"
+msgstr "-c %s απαιτεί μια τιμή"
+
+#: initdb.c:3200
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Εκτέλεση σε λειτουργία αποσφαλμάτωσης.\n"
 
-#: initdb.c:2944
+#: initdb.c:3204
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Εκτέλεση σε λειτουργία μη καθαρισμού.  Τα σφάλματα δεν θα καθαριστούν.\n"
 
-#: initdb.c:3014
+#: initdb.c:3274
 #, c-format
 msgid "unrecognized locale provider: %s"
 msgstr "μη αναγνωρίσιμος πάροχος εντοπιότητας: %s"
 
-#: initdb.c:3039
+#: initdb.c:3302
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
-#: initdb.c:3046
+#: initdb.c:3309 initdb.c:3313
 #, c-format
 msgid "%s cannot be specified unless locale provider \"%s\" is chosen"
 msgstr "%s δεν είναι δυνατό να καθοριστεί, εκτός εάν επιλεγεί «%s» ως πάροχος εντοπιότητας"
 
-#: initdb.c:3060 initdb.c:3137
+#: initdb.c:3327 initdb.c:3404
 msgid "syncing data to disk ... "
 msgstr "συγχρονίζονται δεδομένα στο δίσκο ... "
 
-#: initdb.c:3068
+#: initdb.c:3335
 #, c-format
 msgid "password prompt and password file cannot be specified together"
 msgstr "η προτροπή κωδικού εισόδου και το αρχείο κωδικού εισόδου δεν δύναται να οριστούν ταυτόχρονα"
 
-#: initdb.c:3090
+#: initdb.c:3357
 #, c-format
 msgid "argument of --wal-segsize must be a number"
 msgstr "η παράμετρος --wal-segsize πρέπει να είναι αριθμός"
 
-#: initdb.c:3092
+#: initdb.c:3359
 #, c-format
 msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
 msgstr "η παράμετρος --wal-segsize πρέπει να έχει τιμή δύναμης 2 μεταξύ 1 και 1024"
 
-#: initdb.c:3106
+#: initdb.c:3373
 #, c-format
 msgid "superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\""
 msgstr "το όνομα υπερχρήστη «%s» δεν επιτρέπεται, τα ονόματα ρόλων δεν δύναται να αρχίζουν με «pg_»"
 
-#: initdb.c:3108
+#: initdb.c:3375
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -990,17 +1002,17 @@ msgstr ""
 "Αυτός ο χρήστης πρέπει επίσης να κατέχει τη διαδικασία διακομιστή.\n"
 "\n"
 
-#: initdb.c:3124
+#: initdb.c:3391
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "Τα αθροίσματα ελέγχου σελίδων δεδομένων είναι ενεργοποιημένα.\n"
 
-#: initdb.c:3126
+#: initdb.c:3393
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "Τα αθροίσματα ελέγχου των σελίδων δεδομένων είναι απενεργοποιημένα.\n"
 
-#: initdb.c:3143
+#: initdb.c:3410
 #, c-format
 msgid ""
 "\n"
@@ -1011,22 +1023,22 @@ msgstr ""
 "Ο συγχρονισμός με το δίσκο παραλείφθηκε.\n"
 "Ο κατάλογος δεδομένων ενδέχεται να αλλοιωθεί εάν καταρρεύσει το λειτουργικού συστήματος.\n"
 
-#: initdb.c:3148
+#: initdb.c:3415
 #, c-format
 msgid "enabling \"trust\" authentication for local connections"
 msgstr "ενεργοποιείται η μέθοδος ταυτοποίησης «trust» για τοπικές συνδέσεις"
 
-#: initdb.c:3149
+#: initdb.c:3416
 #, c-format
 msgid "You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb."
 msgstr "Μπορείτε να το αλλάξετε αυτό τροποποιώντας το pg_hba.conf ή χρησιμοποιώντας την επιλογή -A ή --auth-local και --auth-host, την επόμενη φορά που θα εκτελέσετε το initdb."
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3179
+#: initdb.c:3446
 msgid "logfile"
 msgstr "logfile"
 
-#: initdb.c:3181
+#: initdb.c:3448
 #, c-format
 msgid ""
 "\n"
@@ -1044,8 +1056,41 @@ msgstr ""
 #~ msgid "      --clobber-cache       use cache-clobbering debug option\n"
 #~ msgstr "      --clobber-cache       χρησιμοποίησε την επιλογή εντοπισμού σφαλμάτων cache-clobbering\n"
 
+#~ msgid "The default database encoding has been set to \"%s\".\n"
+#~ msgstr "Η προεπιλεγμένη κωδικοποίηση βάσης δεδομένων έχει οριστεί ως «%s».\n"
+
+#~ msgid "cannot create restricted tokens on this platform: error code %lu"
+#~ msgstr "δεν ήταν δυνατή η δημιουργία διακριτικών περιορισμού στην παρούσα πλατφόρμα: κωδικός σφάλματος %lu"
+
+#~ msgid "could not change directory to \"%s\": %m"
+#~ msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο «%s»: %m"
+
+#~ msgid "could not identify current directory: %m"
+#~ msgstr "δεν ήταν δυνατή η αναγνώριση του τρέχοντος καταλόγου: %m"
+
+#~ msgid "could not load library \"%s\": error code %lu"
+#~ msgstr "δεν ήταν δυνατή η φόρτωση της βιβλιοθήκης «%s»: κωδικός σφάλματος %lu"
+
+#~ msgid "could not read binary \"%s\""
+#~ msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου «%s»"
+
+#~ msgid "could not read symbolic link \"%s\": %m"
+#~ msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
+
+#~ msgid "could not remove file or directory \"%s\": %m"
+#~ msgstr "δεν ήταν δυνατή η αφαίρεση αρχείου ή καταλόγου «%s»: %m"
+
+#~ msgid "could not stat file or directory \"%s\": %m"
+#~ msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο ή κατάλογο «%s»: %m"
+
 #~ msgid "fatal: "
 #~ msgstr "κρίσιμο: "
 
+#~ msgid "invalid binary \"%s\""
+#~ msgstr "μη έγκυρο δυαδικό αρχείο «%s»"
+
 #~ msgid "pclose failed: %m"
 #~ msgstr "απέτυχε η εντολή pclose: %m"
+
+#~ msgid "symlinks are not supported on this platform"
+#~ msgstr "συμβολικοί σύνδεσμοι δεν υποστηρίζονται στην παρούσα πλατφόρμα"

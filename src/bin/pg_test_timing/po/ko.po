@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 12\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-09 20:15+0000\n"
-"PO-Revision-Date: 2020-02-10 09:59+0900\n"
+"POT-Creation-Date: 2023-09-07 05:50+0000\n"
+"PO-Revision-Date: 2023-05-30 12:39+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -17,61 +17,66 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pg_test_timing.c:55
+#: pg_test_timing.c:59
 #, c-format
 msgid "Usage: %s [-d DURATION]\n"
 msgstr "사용법: %s [-d 간격]\n"
 
-#: pg_test_timing.c:75 pg_test_timing.c:87 pg_test_timing.c:104
+#: pg_test_timing.c:81
+#, c-format
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s: %s 옵션의 잘못된 인자\n"
+
+#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "더 자세한 정보는 \"%s --help\" 명령을 이용하세요.\n"
 
-#: pg_test_timing.c:85
+#: pg_test_timing.c:90
+#, c-format
+msgid "%s: %s must be in range %u..%u\n"
+msgstr "%s: %s 값은 %u부터 %u까지 지정할 수 있습니다.\n"
+
+#: pg_test_timing.c:107
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: 너무 많은 명령행 인자를 사용했습니다 (시작은 \"%s\")\n"
 
-#: pg_test_timing.c:94
+#: pg_test_timing.c:115
 #, c-format
-msgid "Testing timing overhead for %d second.\n"
-msgid_plural "Testing timing overhead for %d seconds.\n"
-msgstr[0] "%d초 동안 타이밍 오버해더 검사.\n"
+msgid "Testing timing overhead for %u second.\n"
+msgid_plural "Testing timing overhead for %u seconds.\n"
+msgstr[0] "%u초 동안 타이밍 오버해더 검사.\n"
 
-#: pg_test_timing.c:102
-#, c-format
-msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
-msgstr "%s: 간격은 양수여야 합니다. (간격: \"%d\")\n"
-
-#: pg_test_timing.c:140
+#: pg_test_timing.c:151
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "거꾸로 흐른 감지된 클럭.\n"
 
-#: pg_test_timing.c:141
+#: pg_test_timing.c:152
 #, c-format
 msgid "Time warp: %d ms\n"
 msgstr "간격: %d ms\n"
 
-#: pg_test_timing.c:164
+#: pg_test_timing.c:175
 #, c-format
 msgid "Per loop time including overhead: %0.2f ns\n"
 msgstr "오버헤더를 포함한 루프 시간: %0.2f ns\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:186
 msgid "< us"
 msgstr "< us"
 
-#: pg_test_timing.c:176
+#: pg_test_timing.c:187
 #, no-c-format
 msgid "% of total"
 msgstr "% of total"
 
-#: pg_test_timing.c:177
+#: pg_test_timing.c:188
 msgid "count"
 msgstr "회"
 
-#: pg_test_timing.c:186
+#: pg_test_timing.c:197
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "타이밍 간견 히스토그램:\n"

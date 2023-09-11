@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: initdb (PostgreSQL) 13\n"
+"Project-Id-Version: initdb (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-10-05 01:16+0000\n"
-"PO-Revision-Date: 2020-10-05 17:52+0900\n"
+"POT-Creation-Date: 2023-09-07 05:50+0000\n"
+"PO-Revision-Date: 2023-09-08 16:09+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <kr@postgresql.org>\n"
 "Language: ko\n"
@@ -15,100 +15,97 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../../src/common/logging.c:236
-#, c-format
-msgid "fatal: "
-msgstr "심각: "
-
-#: ../../../src/common/logging.c:243
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "오류: "
 
-#: ../../../src/common/logging.c:250
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "경고: "
 
-#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
+#: ../../../src/common/logging.c:294
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "현재 디렉터리를 알 수 없음: %m"
+msgid "detail: "
+msgstr "상세정보: "
 
-#: ../../common/exec.c:156
+#: ../../../src/common/logging.c:301
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "\"%s\" 파일은 잘못된 바이너리 파일입니다"
+msgid "hint: "
+msgstr "힌트: "
 
-#: ../../common/exec.c:206
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not read binary \"%s\""
-msgstr "\"%s\" 바이너리 파일을 읽을 수 없음"
+msgid "invalid binary \"%s\": %m"
+msgstr "\"%s\" 파일은 잘못된 바이너리 파일임: %m"
 
-#: ../../common/exec.c:214
+#: ../../common/exec.c:215
+#, c-format
+msgid "could not read binary \"%s\": %m"
+msgstr "\"%s\" 바이너리 파일을 읽을 수 없음: %m"
+
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "\"%s\" 실행 파일을 찾을 수 없음"
 
-#: ../../common/exec.c:270 ../../common/exec.c:309
+#: ../../common/exec.c:250
 #, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "\"%s\" 이름의 디렉터리로 이동할 수 없습니다: %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "\"%s\" 경로를 절대 경로로 바꿀 수 없음: %m"
 
-#: ../../common/exec.c:287
+#: ../../common/exec.c:412
 #, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "\"%s\" 심볼릭 링크 파일을 읽을 수 없음: %m"
+msgid "%s() failed: %m"
+msgstr "%s() 실패: %m"
 
-#: ../../common/exec.c:410
-#, c-format
-msgid "pclose failed: %m"
-msgstr "pclose 실패: %m"
-
-#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
-#: initdb.c:325
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+#: initdb.c:349
 #, c-format
 msgid "out of memory"
 msgstr "메모리 부족"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
 msgid "out of memory\n"
 msgstr "메모리 부족\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null 포인터를 중복할 수 없음 (내부 오류)\n"
 
-#: ../../common/file_utils.c:79 ../../common/file_utils.c:181
+#: ../../common/file_utils.c:87 ../../common/file_utils.c:447
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "\"%s\" 파일의 상태값을 알 수 없음: %m"
 
-#: ../../common/file_utils.c:158 ../../common/pgfnames.c:48
+#: ../../common/file_utils.c:162 ../../common/pgfnames.c:48
+#: ../../common/rmtree.c:63
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리 열 수 없음: %m"
 
-#: ../../common/file_utils.c:192 ../../common/pgfnames.c:69
+#: ../../common/file_utils.c:196 ../../common/pgfnames.c:69
+#: ../../common/rmtree.c:104
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
 
-#: ../../common/file_utils.c:224 ../../common/file_utils.c:283
-#: ../../common/file_utils.c:357
+#: ../../common/file_utils.c:228 ../../common/file_utils.c:287
+#: ../../common/file_utils.c:361
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "\"%s\" 파일을 열 수 없음: %m"
 
-#: ../../common/file_utils.c:295 ../../common/file_utils.c:365
+#: ../../common/file_utils.c:299 ../../common/file_utils.c:369
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "\"%s\" 파일 fsync 실패: %m"
 
-#: ../../common/file_utils.c:375
+#: ../../common/file_utils.c:379
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
@@ -118,55 +115,45 @@ msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
 msgid "could not close directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리를 닫을 수 없음: %m"
 
-#: ../../common/restricted_token.c:64
-#, c-format
-msgid "could not load library \"%s\": error code %lu"
-msgstr "\"%s\" 라이브러리를 불러 올 수 없음: 오류 코드 %lu"
-
-#: ../../common/restricted_token.c:73
-#, c-format
-msgid "cannot create restricted tokens on this platform: error code %lu"
-msgstr "이 운영체제에서 restricted token을 만들 수 없음: 오류 코드 %lu"
-
-#: ../../common/restricted_token.c:82
+#: ../../common/restricted_token.c:60
 #, c-format
 msgid "could not open process token: error code %lu"
 msgstr "프로세스 토큰을 열 수 없음: 오류 코드 %lu"
 
-#: ../../common/restricted_token.c:97
+#: ../../common/restricted_token.c:74
 #, c-format
 msgid "could not allocate SIDs: error code %lu"
 msgstr "SID를 할당할 수 없음: 오류 코드 %lu"
 
-#: ../../common/restricted_token.c:119
+#: ../../common/restricted_token.c:94
 #, c-format
 msgid "could not create restricted token: error code %lu"
 msgstr "제한된 토큰을 만들 수 없음: 오류 코드 %lu"
 
-#: ../../common/restricted_token.c:140
+#: ../../common/restricted_token.c:115
 #, c-format
 msgid "could not start process for command \"%s\": error code %lu"
 msgstr "\"%s\" 명령용 프로세스를 시작할 수 없음: 오류 코드 %lu"
 
-#: ../../common/restricted_token.c:178
+#: ../../common/restricted_token.c:153
 #, c-format
 msgid "could not re-execute with restricted token: error code %lu"
 msgstr "제한된 토큰으로 재실행할 수 없음: 오류 코드 %lu"
 
-#: ../../common/restricted_token.c:194
+#: ../../common/restricted_token.c:168
 #, c-format
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "하위 프로세스의 종료 코드를 구할 수 없음: 오류 코드 %lu"
 
-#: ../../common/rmtree.c:79
+#: ../../common/rmtree.c:95
 #, c-format
-msgid "could not stat file or directory \"%s\": %m"
-msgstr "파일 또는 디렉터리 \"%s\"의 상태를 확인할 수 없음: %m"
+msgid "could not remove file \"%s\": %m"
+msgstr "\"%s\" 파일을 지울 수 없음: %m"
 
-#: ../../common/rmtree.c:101 ../../common/rmtree.c:113
+#: ../../common/rmtree.c:122
 #, c-format
-msgid "could not remove file or directory \"%s\": %m"
-msgstr "\"%s\" 파일 또는 디렉터리를 지울 수 없음: %m"
+msgid "could not remove directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 지울 수 없음: %m"
 
 #: ../../common/username.c:43
 #, c-format
@@ -182,285 +169,333 @@ msgstr "사용자 없음"
 msgid "user name lookup failure: error code %lu"
 msgstr "사용자 이름 찾기 실패: 오류 코드 %lu"
 
-#: ../../common/wait_error.c:45
+#: ../../common/wait_error.c:55
 #, c-format
 msgid "command not executable"
 msgstr "명령을 실행할 수 없음"
 
-#: ../../common/wait_error.c:49
+#: ../../common/wait_error.c:59
 #, c-format
 msgid "command not found"
 msgstr "해당 명령어 없음"
 
-#: ../../common/wait_error.c:54
+#: ../../common/wait_error.c:64
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "하위 프로세스가 종료되었음, 종료 코드 %d"
 
-#: ../../common/wait_error.c:62
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "0x%X 예외로 하위 프로세스가 종료되었음."
 
-#: ../../common/wait_error.c:66
+#: ../../common/wait_error.c:76
 #, c-format
 msgid "child process was terminated by signal %d: %s"
 msgstr "하위 프로세스가 종료되었음, 시그널 %d: %s"
 
-#: ../../common/wait_error.c:72
+#: ../../common/wait_error.c:82
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "하위 프로세스가 종료되었음, 알수 없는 상태 %d"
 
-#: ../../port/dirmod.c:221
+#: ../../port/dirmod.c:287
 #, c-format
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "\"%s\" 파일의 연결을 설정할 수 없음: %s\n"
 
-#: ../../port/dirmod.c:298
+#: ../../port/dirmod.c:367
 #, c-format
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "\"%s\" 파일의 정션을 구할 수 없음: %s\n"
 
-#: initdb.c:481 initdb.c:1505
+#: initdb.c:618 initdb.c:1613
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "\"%s\" 파일 일기 모드로 열기 실패: %m"
 
-#: initdb.c:536 initdb.c:846 initdb.c:872
+#: initdb.c:662 initdb.c:966 initdb.c:986
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "\"%s\" 파일 열기 실패: %m"
 
-#: initdb.c:543 initdb.c:550 initdb.c:852 initdb.c:877
+#: initdb.c:666 initdb.c:969 initdb.c:988
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "\"%s\" 파일 쓰기 실패: %m"
 
-#: initdb.c:568
+#: initdb.c:670
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "\"%s\" 파일을 닫을 수 없음: %m"
+
+#: initdb.c:686
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "\"%s\" 명령을 실행할 수 없음: %m"
 
-#: initdb.c:586
+#: initdb.c:704
 #, c-format
 msgid "removing data directory \"%s\""
 msgstr "\"%s\" 데이터 디렉터리를 지우는 중"
 
-#: initdb.c:588
+#: initdb.c:706
 #, c-format
 msgid "failed to remove data directory"
 msgstr "데이터 디렉터리를 지우는데 실패"
 
-#: initdb.c:592
+#: initdb.c:710
 #, c-format
 msgid "removing contents of data directory \"%s\""
 msgstr "\"%s\" 데이터 디렉터리 안의 내용을 지우는 중"
 
-#: initdb.c:595
+#: initdb.c:713
 #, c-format
 msgid "failed to remove contents of data directory"
 msgstr "데이터 디렉터리 내용을 지우는데 실패"
 
-#: initdb.c:600
+#: initdb.c:718
 #, c-format
 msgid "removing WAL directory \"%s\""
 msgstr "\"%s\" WAL 디렉터리를 지우는 중"
 
-#: initdb.c:602
+#: initdb.c:720
 #, c-format
 msgid "failed to remove WAL directory"
 msgstr "WAL 디렉터리를 지우는데 실패"
 
-#: initdb.c:606
+#: initdb.c:724
 #, c-format
 msgid "removing contents of WAL directory \"%s\""
 msgstr "\"%s\" WAL 디렉터리 안의 내용을 지우는 중"
 
-#: initdb.c:608
+#: initdb.c:726
 #, c-format
 msgid "failed to remove contents of WAL directory"
 msgstr "WAL 디렉터리 내용을 지우는데 실패"
 
-#: initdb.c:615
+#: initdb.c:733
 #, c-format
 msgid "data directory \"%s\" not removed at user's request"
 msgstr "\"%s\" 데이터 디렉터리가 사용자의 요청으로 삭제되지 않았음"
 
-#: initdb.c:619
+#: initdb.c:737
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
 msgstr "\"%s\" WAL 디렉터리가 사용자의 요청으로 삭제되지 않았음"
 
-#: initdb.c:637
+#: initdb.c:755
 #, c-format
 msgid "cannot be run as root"
 msgstr "root 권한으로 실행할 수 없음"
 
-#: initdb.c:639
+#: initdb.c:756
 #, c-format
 msgid ""
-"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
-"own the server process.\n"
+"Please log in (using, e.g., \"su\") as the (unprivileged) user that will own "
+"the server process."
 msgstr ""
-"시스템관리자 권한이 없는, 서버프로세스의 소유주가 될 일반 사용자로\n"
-"로그인 해서(\"su\" 같은 명령 이용) 실행하십시오.\n"
+"시스템관리자 권한이 없는, 서버프로세스의 소유주가 될 일반 사용자로 로그인 해"
+"서(\"su\" 같은 명령 이용) 실행하십시오."
 
-#: initdb.c:672
+#: initdb.c:788
 #, c-format
 msgid "\"%s\" is not a valid server encoding name"
 msgstr "\"%s\" 인코딩은 서버 인코딩 이름을 사용할 수 없음"
 
-#: initdb.c:805
+#: initdb.c:932
 #, c-format
 msgid "file \"%s\" does not exist"
 msgstr "\"%s\" 파일 없음"
 
-#: initdb.c:807 initdb.c:814 initdb.c:823
+#: initdb.c:933 initdb.c:938 initdb.c:945
 #, c-format
 msgid ""
-"This might mean you have a corrupted installation or identified\n"
-"the wrong directory with the invocation option -L.\n"
+"This might mean you have a corrupted installation or identified the wrong "
+"directory with the invocation option -L."
 msgstr ""
-"설치가 잘못되었거나 &ndash;L 호출 옵션으로 식별한 디렉터리가\n"
-"잘못되었을 수 있습니다.\n"
+"설치가 잘못되었거나 -L 호출 옵션으로 지정한 디렉터리가 잘못되었을 수 있습니"
+"다."
 
-#: initdb.c:812
+#: initdb.c:937
 #, c-format
 msgid "could not access file \"%s\": %m"
 msgstr "\"%s\" 파일에 액세스할 수 없음: %m"
 
-#: initdb.c:821
+#: initdb.c:944
 #, c-format
 msgid "file \"%s\" is not a regular file"
 msgstr "\"%s\" 파일은 일반 파일이 아님"
 
-#: initdb.c:966
+#: initdb.c:1077
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
 msgstr "사용할 동적 공유 메모리 관리방식을 선택하는 중 ... "
 
-#: initdb.c:975
+#: initdb.c:1086
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "max_connections 초기값을 선택하는 중 ..."
 
-#: initdb.c:1006
+#: initdb.c:1106
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "기본 shared_buffers를 선택하는 중... "
 
-#: initdb.c:1040
+#: initdb.c:1129
 #, c-format
 msgid "selecting default time zone ... "
 msgstr "기본 지역 시간대를 선택 중 ... "
 
-#: initdb.c:1074
+#: initdb.c:1206
 msgid "creating configuration files ... "
 msgstr "환경설정 파일을 만드는 중 ..."
 
-#: initdb.c:1227 initdb.c:1246 initdb.c:1332 initdb.c:1347
+#: initdb.c:1367 initdb.c:1381 initdb.c:1448 initdb.c:1459
 #, c-format
 msgid "could not change permissions of \"%s\": %m"
 msgstr "\"%s\" 접근 권한을 바꿀 수 없음: %m"
 
-#: initdb.c:1369
+#: initdb.c:1477
 #, c-format
 msgid "running bootstrap script ... "
 msgstr "부트스트랩 스크립트 실행 중 ... "
 
-#: initdb.c:1381
+#: initdb.c:1489
 #, c-format
 msgid "input file \"%s\" does not belong to PostgreSQL %s"
 msgstr "\"%s\" 입력 파일이 PostgreSQL %s 용이 아님"
 
-#: initdb.c:1384
+#: initdb.c:1491
 #, c-format
-msgid ""
-"Check your installation or specify the correct path using the option -L.\n"
-msgstr "설치상태를 확인해 보고, -L 옵션으로 바른 경로를 지정하십시오.\n"
+msgid "Specify the correct path using the option -L."
+msgstr "-L 옵션으로 바른 경로를 지정하십시오."
 
-#: initdb.c:1482
+#: initdb.c:1591
 msgid "Enter new superuser password: "
 msgstr "새 superuser 암호를 입력하십시오:"
 
-#: initdb.c:1483
+#: initdb.c:1592
 msgid "Enter it again: "
 msgstr "암호 확인:"
 
-#: initdb.c:1486
+#: initdb.c:1595
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "암호가 서로 틀립니다.\n"
 
-#: initdb.c:1512
+#: initdb.c:1619
 #, c-format
 msgid "could not read password from file \"%s\": %m"
 msgstr "\"%s\" 파일에서 암호를 읽을 수 없음: %m"
 
-#: initdb.c:1515
+#: initdb.c:1622
 #, c-format
 msgid "password file \"%s\" is empty"
 msgstr "\"%s\" 패스워드 파일이 비어있음"
 
-#: initdb.c:2043
+#: initdb.c:2034
 #, c-format
 msgid "caught signal\n"
 msgstr "시스템의 간섭 신호(signal) 받았음\n"
 
-#: initdb.c:2049
+#: initdb.c:2040
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "하위 프로세스에 쓸 수 없음: %s\n"
 
-#: initdb.c:2057
+#: initdb.c:2048
 #, c-format
 msgid "ok\n"
 msgstr "완료\n"
 
 # # search5 끝
 # # advance 부분
-#: initdb.c:2147
+#: initdb.c:2137
 #, c-format
 msgid "setlocale() failed"
 msgstr "setlocale() 실패"
 
-#: initdb.c:2168
+#: initdb.c:2155
 #, c-format
 msgid "failed to restore old locale \"%s\""
 msgstr "\"%s\" 옛 로케일을 복원할 수 없음"
 
-#: initdb.c:2177
+#: initdb.c:2163
 #, c-format
 msgid "invalid locale name \"%s\""
 msgstr "\"%s\" 로케일 이름이 잘못됨"
 
-#: initdb.c:2188
+#: initdb.c:2164
+#, c-format
+msgid "If the locale name is specific to ICU, use --icu-locale."
+msgstr "ICU 로케일 이름을 사용하려면, --icu-locale 옵션을 사용하세요."
+
+#: initdb.c:2177
 #, c-format
 msgid "invalid locale settings; check LANG and LC_* environment variables"
 msgstr "잘못된 로케일 설정; LANG 또는 LC_* OS 환경 변수를 확인하세요"
 
-#: initdb.c:2215
+#: initdb.c:2203 initdb.c:2227
 #, c-format
 msgid "encoding mismatch"
 msgstr "인코딩 불일치"
 
-#: initdb.c:2217
+#: initdb.c:2204
 #, c-format
 msgid ""
-"The encoding you selected (%s) and the encoding that the\n"
-"selected locale uses (%s) do not match.  This would lead to\n"
-"misbehavior in various character string processing functions.\n"
-"Rerun %s and either do not specify an encoding explicitly,\n"
-"or choose a matching combination.\n"
+"The encoding you selected (%s) and the encoding that the selected locale "
+"uses (%s) do not match. This would lead to misbehavior in various character "
+"string processing functions."
 msgstr ""
-"선택한 인코딩(%s)과 선택한 로케일에서 사용하는\n"
-"인코딩(%s)이 일치하지 않습니다.  이로 인해\n"
-"여러 문자열 처리 함수에 오작동이 발생할 수 있습니다.\n"
-"%s을(를) 다시 실행하고 인코딩을 명시적으로 지정하지 않거나\n"
-"일치하는 조합을 선택하십시오.\n"
+"선택한 인코딩(%s)과 선택한 로케일에서 사용하는 인코딩(%s)이 일치하지 않습니"
+"다.  이로 인해 여러 문자열 처리 함수에 오작동이 발생할 수 있습니다."
 
-#: initdb.c:2289
+#: initdb.c:2209 initdb.c:2230
+#, c-format
+msgid ""
+"Rerun %s and either do not specify an encoding explicitly, or choose a "
+"matching combination."
+msgstr ""
+"암묵적으로 지정된 인코딩이 마음에 들지 않으면 지정할 수 있는 인코딩을 지정해"
+"서 %s 작업을 다시 하세요."
+
+#: initdb.c:2228
+#, c-format
+msgid "The encoding you selected (%s) is not supported with the ICU provider."
+msgstr "지정한 %s 인코딩을 ICU 제공자가 지원하지 않습니다."
+
+#: initdb.c:2279
+#, c-format
+msgid "could not convert locale name \"%s\" to language tag: %s"
+msgstr "\"%s\" 로케일 이름을 로케일 태그로 바꿀 수 없음: %s"
+
+#: initdb.c:2285 initdb.c:2337 initdb.c:2416
+#, c-format
+msgid "ICU is not supported in this build"
+msgstr "ICU 지원 기능을 뺀 채로 서버가 만들어졌습니다."
+
+#: initdb.c:2308
+#, c-format
+msgid "could not get language from locale \"%s\": %s"
+msgstr "\"%s\" 로케일에서 언어를 찾을 수 없음: %s"
+
+#: initdb.c:2334
+#, c-format
+msgid "locale \"%s\" has unknown language \"%s\""
+msgstr "\"%s\" 로케일은 \"%s\" 라는 알 수 없는 언어를 사용함"
+
+#: initdb.c:2400
+#, c-format
+msgid "ICU locale must be specified"
+msgstr "ICU 로케일을 지정해야합니다."
+
+#: initdb.c:2404
+#, c-format
+msgid "Using language tag \"%s\" for ICU locale \"%s\".\n"
+msgstr "\"%s\" 로케일 태그를 사용함, 해당 ICU 로케일: \"%s\"\n"
+
+#: initdb.c:2427
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -469,17 +504,17 @@ msgstr ""
 "%s PostgreSQL 데이터베이스 클러스터를 초기화 하는 프로그램.\n"
 "\n"
 
-#: initdb.c:2290
+#: initdb.c:2428
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: initdb.c:2291
+#: initdb.c:2429
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [옵션]... [DATADIR]\n"
 
-#: initdb.c:2292
+#: initdb.c:2430
 #, c-format
 msgid ""
 "\n"
@@ -488,50 +523,69 @@ msgstr ""
 "\n"
 "옵션들:\n"
 
-#: initdb.c:2293
+#: initdb.c:2431
 #, c-format
 msgid ""
 "  -A, --auth=METHOD         default authentication method for local "
 "connections\n"
 msgstr "  -A, --auth=METHOD         로컬 연결의 기본 인증 방법\n"
 
-#: initdb.c:2294
+#: initdb.c:2432
 #, c-format
 msgid ""
 "      --auth-host=METHOD    default authentication method for local TCP/IP "
 "connections\n"
 msgstr "      --auth-host=METHOD    local TCP/IP 연결에 대한 기본 인증 방법\n"
 
-#: initdb.c:2295
+#: initdb.c:2433
 #, c-format
 msgid ""
 "      --auth-local=METHOD   default authentication method for local-socket "
 "connections\n"
 msgstr "      --auth-local=METHOD   local-socket 연결에 대한 기본 인증 방법\n"
 
-#: initdb.c:2296
+#: initdb.c:2434
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATADIR     새 데이터베이스 클러스터를 만들 디렉터리\n"
 
-#: initdb.c:2297
+#: initdb.c:2435
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=ENCODING   새 데이터베이스의 기본 인코딩\n"
 
-#: initdb.c:2298
+#: initdb.c:2436
 #, c-format
 msgid ""
 "  -g, --allow-group-access  allow group read/execute on data directory\n"
 msgstr ""
 "  -g, --allow-group-access  데이터 디렉터리를 그룹이 읽고 접근할 있게 함\n"
 
-#: initdb.c:2299
+#: initdb.c:2437
+#, c-format
+msgid "      --icu-locale=LOCALE   set ICU locale ID for new databases\n"
+msgstr "      --icu-locale=LOCALE   새 데이터베이스의 ICU 로케일 ID 지정\n"
+
+#: initdb.c:2438
+#, c-format
+msgid ""
+"      --icu-rules=RULES     set additional ICU collation rules for new "
+"databases\n"
+msgstr ""
+"      --icu-rules=RULES     새 데이터베이스의 추가 ICU 문자열 정렬 규칙을 지"
+"정\n"
+
+#: initdb.c:2439
+#, c-format
+msgid "  -k, --data-checksums      use data page checksums\n"
+msgstr "  -k, --data-checksums      자료 페이지 체크섬 사용\n"
+
+#: initdb.c:2440
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=LOCALE       새 데이터베이스의 기본 로케일 설정\n"
 
-#: initdb.c:2300
+#: initdb.c:2441
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -545,18 +599,27 @@ msgstr ""
 "                            새 데이터베이스의 각 범주에 기본 로케일 설정\n"
 "                            (환경에서 가져온 기본 값)\n"
 
-#: initdb.c:2304
+#: initdb.c:2445
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           -locale=C와 같음\n"
 
-#: initdb.c:2305
+#: initdb.c:2446
+#, c-format
+msgid ""
+"      --locale-provider={libc|icu}\n"
+"                            set default locale provider for new databases\n"
+msgstr ""
+"      --locale-provider={libc|icu}\n"
+"                            새 데이터베이스의 로케일 제공자 지정\n"
+
+#: initdb.c:2448
 #, c-format
 msgid ""
 "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=FILE         파일에서 새 superuser의 암호 읽기\n"
 
-#: initdb.c:2306
+#: initdb.c:2449
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -565,29 +628,29 @@ msgstr ""
 "  -T, --text-search-config=CFG\n"
 "                            기본 텍스트 검색 구성\n"
 
-#: initdb.c:2308
+#: initdb.c:2451
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAME       데이터베이스 superuser 이름\n"
 
-#: initdb.c:2309
+#: initdb.c:2452
 #, c-format
 msgid ""
 "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            새 superuser 암호를 입력 받음\n"
 
-#: initdb.c:2310
+#: initdb.c:2453
 #, c-format
 msgid ""
 "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr "  -X, --waldir=WALDIR       트랜잭션 로그 디렉터리 위치\n"
 
-#: initdb.c:2311
+#: initdb.c:2454
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=SIZE    WAL 조각 파일 크기, MB단위\n"
 
-#: initdb.c:2312
+#: initdb.c:2455
 #, c-format
 msgid ""
 "\n"
@@ -596,27 +659,33 @@ msgstr ""
 "\n"
 "덜 일반적으로 사용되는 옵션들:\n"
 
-#: initdb.c:2313
+#: initdb.c:2456
+#, c-format
+msgid ""
+"  -c, --set NAME=VALUE      override default setting for server parameter\n"
+msgstr "  -c, --set NAME=VALUE      서버 매개 변수 기본 설정을 바꿈\n"
+
+#: initdb.c:2457
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               디버깅에 필요한 정보들도 함께 출력함\n"
 
-#: initdb.c:2314
+#: initdb.c:2458
 #, c-format
-msgid "  -k, --data-checksums      use data page checksums\n"
-msgstr "  -k, --data-checksums      자료 페이지 체크섬 사용\n"
+msgid "      --discard-caches      set debug_discard_caches=1\n"
+msgstr "      --discard-caches      debug_discard_caches=1 지정\n"
 
-#: initdb.c:2315
+#: initdb.c:2459
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTORY              입력파일들이 있는 디렉터리\n"
 
-#: initdb.c:2316
+#: initdb.c:2460
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
 msgstr "  -n, --no-clean            오류가 발생되었을 경우 그대로 둠\n"
 
-#: initdb.c:2317
+#: initdb.c:2461
 #, c-format
 msgid ""
 "  -N, --no-sync             do not wait for changes to be written safely to "
@@ -624,17 +693,23 @@ msgid ""
 msgstr ""
 "  -N, --no-sync             작업 완료 뒤 디스크 동기화 작업을 하지 않음\n"
 
-#: initdb.c:2318
+#: initdb.c:2462
+#, c-format
+msgid "      --no-instructions     do not print instructions for next steps\n"
+msgstr "      --no-instructions     다음 작업을 위해 구성 정보를 출력 안함\n"
+
+#: initdb.c:2463
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                내부 설정값들을 보여줌\n"
 
-#: initdb.c:2319
+#: initdb.c:2464
 #, c-format
-msgid "  -S, --sync-only           only sync data directory\n"
-msgstr "  -S, --sync-only           데이터 디렉터리만 동기화\n"
+msgid ""
+"  -S, --sync-only           only sync database files to disk, then exit\n"
+msgstr "  -S, --sync-only           데이터 디렉터리만 동기화하고 마침\n"
 
-#: initdb.c:2320
+#: initdb.c:2465
 #, c-format
 msgid ""
 "\n"
@@ -643,17 +718,17 @@ msgstr ""
 "\n"
 "기타 옵션:\n"
 
-#: initdb.c:2321
+#: initdb.c:2466
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             버전 정보를 보여주고 마침\n"
 
-#: initdb.c:2322
+#: initdb.c:2467
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                이 도움말을 보여주고 마침\n"
 
-#: initdb.c:2323
+#: initdb.c:2468
 #, c-format
 msgid ""
 "\n"
@@ -663,7 +738,7 @@ msgstr ""
 "\n"
 "데이터 디렉터리를 지정하지 않으면, PGDATA 환경 변수값을 사용합니다.\n"
 
-#: initdb.c:2325
+#: initdb.c:2470
 #, c-format
 msgid ""
 "\n"
@@ -672,104 +747,117 @@ msgstr ""
 "\n"
 "문제점 보고 주소: <%s>\n"
 
-#: initdb.c:2326
+#: initdb.c:2471
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 홈페이지: <%s>\n"
 
-#: initdb.c:2354
+#: initdb.c:2499
 #, c-format
 msgid "invalid authentication method \"%s\" for \"%s\" connections"
 msgstr "\"%s\" 인증 방법은 \"%s\" 연결에서는 사용할 수 없음"
 
-#: initdb.c:2370
+#: initdb.c:2513
 #, c-format
-msgid "must specify a password for the superuser to enable %s authentication"
-msgstr "%s 인증방식을 사용하려면, 반드시 superuser의 암호를 지정해야함"
+msgid ""
+"must specify a password for the superuser to enable password authentication"
+msgstr "비밀번호 인증방식을 사용하려면, 반드시 superuser의 암호를 지정해야함"
 
-#: initdb.c:2397
+#: initdb.c:2532
 #, c-format
 msgid "no data directory specified"
 msgstr "데이터 디렉터리를 지정하지 않았음"
 
-#: initdb.c:2399
+#: initdb.c:2533
 #, c-format
 msgid ""
-"You must identify the directory where the data for this database system\n"
-"will reside.  Do this with either the invocation option -D or the\n"
-"environment variable PGDATA.\n"
+"You must identify the directory where the data for this database system will "
+"reside.  Do this with either the invocation option -D or the environment "
+"variable PGDATA."
 msgstr ""
-"이 작업을 진행하려면, 반드시 이 데이터 디렉터리를 지정해 주어야합니다.\n"
-"지정하는 방법은 -D 옵션의 값이나, PGDATA 환경 변수값으로 지정해 주면 됩니"
-"다.\n"
+"이 작업을 진행하려면, 반드시 이 데이터 디렉터리를 지정해 주어야합니다. 지정하"
+"는 방법은 -D 옵션의 값이나, PGDATA 환경 변수값으로 지정해 주면 됩니 다."
 
-#: initdb.c:2434
+#: initdb.c:2550
+#, c-format
+msgid "could not set environment"
+msgstr "환경 변수를 지정할 수 없음"
+
+#: initdb.c:2568
 #, c-format
 msgid ""
-"The program \"%s\" is needed by %s but was not found in the\n"
-"same directory as \"%s\".\n"
-"Check your installation."
+"program \"%s\" is needed by %s but was not found in the same directory as "
+"\"%s\""
 msgstr ""
-"\"%s\" 프로그램이 %s 작업에서 필요합니다. 그런데, 이 파일이\n"
-"\"%s\" 파일이 있는 디렉터리안에 없습니다.\n"
-"설치 상태를 확인해 주십시오."
+"\"%s\" 프로그램이 %s 작업에서 필요합니다. 그런데, 이 파일이 \"%s\" 파일이 있"
+"는 디렉터리안에 없습니다."
 
-#: initdb.c:2439
+#: initdb.c:2571
 #, c-format
-msgid ""
-"The program \"%s\" was found by \"%s\"\n"
-"but was not the same version as %s.\n"
-"Check your installation."
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr ""
-"\"%s\" 프로그램을 \"%s\" 작업 때문에 찾았지만 이 파일은\n"
-"%s 프로그램의 버전과 다릅니다.\n"
-"설치 상태를 확인해 주십시오."
+"\"%s\" 프로그램을 \"%s\" 작업 때문에 찾았지만 이 파일은 %s 프로그램의 버전과 "
+"다릅니다."
 
-#: initdb.c:2458
+#: initdb.c:2586
 #, c-format
 msgid "input file location must be an absolute path"
 msgstr "입력 파일 위치는 반드시 절대경로여야함"
 
-#: initdb.c:2475
+#: initdb.c:2603
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "데이터베이스 클러스터는 \"%s\" 로케일으로 초기화될 것입니다.\n"
 
-#: initdb.c:2478
+#: initdb.c:2606
 #, c-format
 msgid ""
-"The database cluster will be initialized with locales\n"
-"  COLLATE:  %s\n"
-"  CTYPE:    %s\n"
-"  MESSAGES: %s\n"
-"  MONETARY: %s\n"
-"  NUMERIC:  %s\n"
-"  TIME:     %s\n"
-msgstr ""
-"데이터베이스 클러스터는 다음 로케일으로 초기화될 것입니다.\n"
-"  COLLATE:  %s\n"
-"  CTYPE:    %s\n"
-"  MESSAGES: %s\n"
-"  MONETARY: %s\n"
-"  NUMERIC:  %s\n"
-"  TIME:     %s\n"
+"The database cluster will be initialized with this locale configuration:\n"
+msgstr "데이터베이스 클러스터는 아래 로케일 환경으로 초기화될 것입니다:\n"
 
-#: initdb.c:2502
+#: initdb.c:2607
+#, c-format
+msgid "  provider:    %s\n"
+msgstr "  제공자:    %s\n"
+
+#: initdb.c:2609
+#, c-format
+msgid "  ICU locale:  %s\n"
+msgstr "  ICU 로케일:  %s\n"
+
+#: initdb.c:2610
+#, c-format
+msgid ""
+"  LC_COLLATE:  %s\n"
+"  LC_CTYPE:    %s\n"
+"  LC_MESSAGES: %s\n"
+"  LC_MONETARY: %s\n"
+"  LC_NUMERIC:  %s\n"
+"  LC_TIME:     %s\n"
+msgstr ""
+"  LC_COLLATE:  %s\n"
+"  LC_CTYPE:    %s\n"
+"  LC_MESSAGES: %s\n"
+"  LC_MONETARY: %s\n"
+"  LC_NUMERIC:  %s\n"
+"  LC_TIME:     %s\n"
+
+#: initdb.c:2640
 #, c-format
 msgid "could not find suitable encoding for locale \"%s\""
 msgstr "\"%s\" 로케일에 알맞은 인코딩을 찾을 수 없음"
 
-#: initdb.c:2504
+#: initdb.c:2642
 #, c-format
-msgid "Rerun %s with the -E option.\n"
-msgstr "-E 옵션으로 %s 지정해 주십시오.\n"
+msgid "Rerun %s with the -E option."
+msgstr "-E 옵션 지정해서 %s 작업을 다시 하세요."
 
-#: initdb.c:2505 initdb.c:3127 initdb.c:3148
+#: initdb.c:2643 initdb.c:3176 initdb.c:3284 initdb.c:3304
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "보다 자세한 정보를 보려면 \"%s --help\" 옵션을 사용하십시오.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
 
-#: initdb.c:2518
+#: initdb.c:2655
 #, c-format
 msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
@@ -778,180 +866,189 @@ msgstr ""
 "\"%s\" 인코딩을 서버측 인코딩으로 사용할 수 없습니다.\n"
 "기본 데이터베이스는 \"%s\" 인코딩으로 지정됩니다.\n"
 
-#: initdb.c:2523
+#: initdb.c:2660
 #, c-format
 msgid "locale \"%s\" requires unsupported encoding \"%s\""
 msgstr "\"%s\" 로케일은 지원하지 않는 \"%s\" 인코딩을 필요로 함"
 
-#: initdb.c:2526
+#: initdb.c:2662
 #, c-format
-msgid ""
-"Encoding \"%s\" is not allowed as a server-side encoding.\n"
-"Rerun %s with a different locale selection.\n"
-msgstr ""
-"\"%s\" 인코딩을 서버측 인코딩으로 사용할 수 없습니다.\n"
-"다른 로케일을 선택하고 %s을(를) 다시 실행하십시오.\n"
+msgid "Encoding \"%s\" is not allowed as a server-side encoding."
+msgstr "\"%s\" 인코딩을 서버측 인코딩으로 사용할 수 없습니다."
 
-#: initdb.c:2535
+#: initdb.c:2664
+#, c-format
+msgid "Rerun %s with a different locale selection."
+msgstr "다른 로케일을 지정해서 %s 작업을 다시 하세요."
+
+#: initdb.c:2672
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr "기본 데이터베이스 인코딩은 \"%s\" 인코딩으로 설정되었습니다.\n"
 
-#: initdb.c:2597
+#: initdb.c:2741
 #, c-format
 msgid "could not find suitable text search configuration for locale \"%s\""
 msgstr "\"%s\" 로케일에 알맞은 전문검색 설정을 찾을 수 없음"
 
-#: initdb.c:2608
+#: initdb.c:2752
 #, c-format
 msgid "suitable text search configuration for locale \"%s\" is unknown"
 msgstr "\"%s\" 로케일에 알맞은 전문검색 설정을 알 수 없음"
 
-#: initdb.c:2613
+#: initdb.c:2757
 #, c-format
 msgid ""
 "specified text search configuration \"%s\" might not match locale \"%s\""
 msgstr "지정한 \"%s\" 전문검색 설정은 \"%s\" 로케일과 일치하지 않음"
 
-#: initdb.c:2618
+#: initdb.c:2762
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "기본 텍스트 검색 구성이 \"%s\"(으)로 설정됩니다.\n"
 
-#: initdb.c:2662 initdb.c:2744
+#: initdb.c:2805 initdb.c:2876
 #, c-format
 msgid "creating directory %s ... "
 msgstr "%s 디렉터리 만드는 중 ..."
 
-#: initdb.c:2668 initdb.c:2750 initdb.c:2815 initdb.c:2877
+#: initdb.c:2810 initdb.c:2881 initdb.c:2929 initdb.c:2985
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리를 만들 수 없음: %m"
 
-#: initdb.c:2679 initdb.c:2762
+#: initdb.c:2819 initdb.c:2891
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "이미 있는 %s 디렉터리의 액세스 권한을 고치는 중 ..."
 
-#: initdb.c:2685 initdb.c:2768
+#: initdb.c:2824 initdb.c:2896
 #, c-format
 msgid "could not change permissions of directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리의 액세스 권한을 바꿀 수 없습니다: %m"
 
-#: initdb.c:2699 initdb.c:2782
+#: initdb.c:2836 initdb.c:2908
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "\"%s\" 디렉터리가 있지만 비어 있지 않음"
 
-#: initdb.c:2704
+#: initdb.c:2840
 #, c-format
 msgid ""
-"If you want to create a new database system, either remove or empty\n"
-"the directory \"%s\" or run %s\n"
-"with an argument other than \"%s\".\n"
+"If you want to create a new database system, either remove or empty the "
+"directory \"%s\" or run %s with an argument other than \"%s\"."
 msgstr ""
-"새로운 데이터베이스 시스템을 만들려면\n"
-"\"%s\" 디렉터리를 제거하거나 비우십시오. 또는 %s을(를)\n"
-"\"%s\" 이외의 인수를 사용하여 실행하십시오.\n"
+"새로운 데이터베이스 시스템을 만들려면 \"%s\" 디렉터리를 제거하거나 비우십시"
+"오. 또는 %s 작업을 \"%s\" 디렉터리가 아닌 것으로 지정해서 하세요."
 
-#: initdb.c:2712 initdb.c:2794 initdb.c:3163
+#: initdb.c:2848 initdb.c:2918 initdb.c:3325
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리를 액세스할 수 없습니다: %m"
 
-#: initdb.c:2735
+#: initdb.c:2869
 #, c-format
 msgid "WAL directory location must be an absolute path"
 msgstr "WAL 디렉터리 위치는 절대 경로여야 함"
 
-#: initdb.c:2787
+#: initdb.c:2912
 #, c-format
 msgid ""
-"If you want to store the WAL there, either remove or empty the directory\n"
-"\"%s\".\n"
+"If you want to store the WAL there, either remove or empty the directory \"%s"
+"\"."
 msgstr ""
-"트랜잭션 로그를 해당 위치에 저장하려면\n"
-"\"%s\" 디렉터리를 제거하거나 비우십시오.\n"
+"트랜잭션 로그를 해당 위치에 저장하려면 \"%s\" 디렉터리를 제거하거나 비우십시"
+"오."
 
-#: initdb.c:2801
+#: initdb.c:2922
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "\"%s\" 심벌릭 링크를 만들 수 없음: %m"
 
-#: initdb.c:2806
-#, c-format
-msgid "symlinks are not supported on this platform"
-msgstr "이 플랫폼에서는 심볼 링크가 지원되지 않음"
-
-#: initdb.c:2830
+#: initdb.c:2941
 #, c-format
 msgid ""
 "It contains a dot-prefixed/invisible file, perhaps due to it being a mount "
-"point.\n"
+"point."
 msgstr ""
 "점(.)으로 시작하는 숨은 파일이 포함되어 있습니다. 마운트 최상위 디렉터리 같습"
-"니다.\n"
+"니다."
 
-#: initdb.c:2833
+#: initdb.c:2943
 #, c-format
 msgid ""
-"It contains a lost+found directory, perhaps due to it being a mount point.\n"
-msgstr "lost-found 디렉터리가 있습니다. 마운트 최상위 디렉터리 같습니다.\n"
+"It contains a lost+found directory, perhaps due to it being a mount point."
+msgstr "lost-found 디렉터리가 있습니다. 마운트 최상위 디렉터리 같습니다."
 
-#: initdb.c:2836
+#: initdb.c:2945
 #, c-format
 msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
-"Create a subdirectory under the mount point.\n"
+"Create a subdirectory under the mount point."
 msgstr ""
 "마운트 최상위 디렉터리를 데이터 디렉터리로 사용하는 것은 권장하지 않습니다.\n"
-"하위 디렉터리를 만들어서 그것을 데이터 디렉터리로 사용하세요.\n"
+"하위 디렉터리를 만들어서 그것을 데이터 디렉터리로 사용하세요."
 
-#: initdb.c:2862
+#: initdb.c:2971
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "하위 디렉터리 만드는 중 ..."
 
-#: initdb.c:2908
+#: initdb.c:3014
 msgid "performing post-bootstrap initialization ... "
 msgstr "부트스트랩 다음 초기화 작업 중 ... "
 
-#: initdb.c:3065
+#: initdb.c:3175
+#, c-format
+msgid "-c %s requires a value"
+msgstr "-c %s 설정은 값을 필요로 합니다."
+
+#: initdb.c:3200
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "디버그 모드로 실행 중.\n"
 
-#: initdb.c:3069
+#: initdb.c:3204
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
 msgstr "지저분 모드로 실행 중.  오류가 발생되어도 뒷정리를 안합니다.\n"
 
-#: initdb.c:3146
+#: initdb.c:3274
+#, c-format
+msgid "unrecognized locale provider: %s"
+msgstr "알 수 없는 로케일 제공자 이름: %s"
+
+#: initdb.c:3302
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "너무 많은 명령행 인자를 지정했습니다. (처음 \"%s\")"
 
-#: initdb.c:3167 initdb.c:3256
+#: initdb.c:3309 initdb.c:3313
+#, c-format
+msgid "%s cannot be specified unless locale provider \"%s\" is chosen"
+msgstr "%s 옵션은 \"%s\" 로케일 제공자를 사용할 때만 사용할 수 있습니다."
+
+#: initdb.c:3327 initdb.c:3404
 msgid "syncing data to disk ... "
 msgstr "자료를 디스크에 동기화 하는 중 ... "
 
-#: initdb.c:3176
+#: initdb.c:3335
 #, c-format
 msgid "password prompt and password file cannot be specified together"
 msgstr ""
 "암호를 입력받는 옵션과 암호를 파일에서 가져오는 옵션은 동시에 사용될 수 없음"
 
-#: initdb.c:3201
+#: initdb.c:3357
 #, c-format
 msgid "argument of --wal-segsize must be a number"
 msgstr "--wal-segsize 옵션 값은 숫자여야 함"
 
-#: initdb.c:3206
+#: initdb.c:3359
 #, c-format
-msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
+msgid "argument of --wal-segsize must be a power of two between 1 and 1024"
 msgstr "--wal-segsize 옵션값은 1에서 1024사이 2^n 값이여야 함"
 
-#: initdb.c:3223
+#: initdb.c:3373
 #, c-format
 msgid ""
 "superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\""
@@ -959,7 +1056,7 @@ msgstr ""
 "\"%s\" 사용자는 슈퍼유저 이름으로 쓸 수 없습니다. \"pg_\"로 시작하는롤 이름"
 "은 허용하지 않음"
 
-#: initdb.c:3227
+#: initdb.c:3375
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -970,17 +1067,17 @@ msgstr ""
 "지정될 것입니다. 또한 이 사용자는 서버 프로세스의 소유주가 됩니다.\n"
 "\n"
 
-#: initdb.c:3243
+#: initdb.c:3391
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "자료 페이지 체크섬 기능 사용함.\n"
 
-#: initdb.c:3245
+#: initdb.c:3393
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "자료 페이지 체크섬 기능 사용 하지 않음\n"
 
-#: initdb.c:3262
+#: initdb.c:3410
 #, c-format
 msgid ""
 "\n"
@@ -992,27 +1089,27 @@ msgstr ""
 "이 상태에서 OS가 갑자기 중지 되면 데이터 디렉토리 안에 있는 자료가 깨질 수 있"
 "습니다.\n"
 
-#: initdb.c:3267
+#: initdb.c:3415
 #, c-format
 msgid "enabling \"trust\" authentication for local connections"
 msgstr "로컬 접속용 \"trust\" 인증을 설정 함"
 
-#: initdb.c:3268
+#: initdb.c:3416
 #, c-format
 msgid ""
-"You can change this by editing pg_hba.conf or using the option -A, or\n"
-"--auth-local and --auth-host, the next time you run initdb.\n"
+"You can change this by editing pg_hba.conf or using the option -A, or --auth-"
+"local and --auth-host, the next time you run initdb."
 msgstr ""
-"이 값을 바꾸려면, pg_hba.conf 파일을 수정하든지,\n"
-"다음번 initdb 명령을 사용할 때, -A 옵션 또는 --auth-local,\n"
-"--auth-host 옵션을 사용해서 인증 방법을 지정할 수 있습니다.\n"
+"이 값을 바꾸려면, pg_hba.conf 파일을 수정하든지, 다음번 initdb 명령을 사용할 "
+"때, -A 옵션 또는 --auth-local, --auth-host 옵션을 사용해서 initdb 작업을 하세"
+"요."
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3293
+#: initdb.c:3446
 msgid "logfile"
 msgstr "로그파일"
 
-#: initdb.c:3295
+#: initdb.c:3448
 #, c-format
 msgid ""
 "\n"
@@ -1026,3 +1123,15 @@ msgstr ""
 "\n"
 "    %s\n"
 "\n"
+
+#, c-format
+#~ msgid "Using default ICU locale \"%s\".\n"
+#~ msgstr "기본 ICU 로케일로 \"%s\" 사용함.\n"
+
+#, c-format
+#~ msgid "could not open collator for default locale: %s"
+#~ msgstr "기본 로케일용 문자열 정렬 규칙을 열 수 없음: %s"
+
+#, c-format
+#~ msgid "could not determine default ICU locale"
+#~ msgstr "기본 ICU 로케일을 결정할 수 없음"

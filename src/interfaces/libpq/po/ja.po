@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-06-19 09:32+0900\n"
-"PO-Revision-Date: 2023-06-19 10:02+0900\n"
+"PO-Revision-Date: 2023-08-23 07:41+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -1345,7 +1345,7 @@ msgid ""
 "Either provide the file, use the system's trusted roots with sslrootcert=system, or change sslmode to disable server certificate verification."
 msgstr ""
 "ルート証明書ファイルを特定するためのホームディレクトリが取得できませんでした\n"
-"ファイルを用意する、 sslrootcert=systemでしすてむの信頼済みルート証明書を使用する、または sslmode を変更してサーバー証明書の検証を無効にしてください。"
+"ファイルを用意する、 sslrootcert=systemでシステムの信頼済みルート証明書を使用する、または sslmode を変更してサーバー証明書の検証を無効にしてください。"
 
 #: fe-secure-openssl.c:1148
 #, c-format
@@ -1354,7 +1354,7 @@ msgid ""
 "Either provide the file, use the system's trusted roots with sslrootcert=system, or change sslmode to disable server certificate verification."
 msgstr ""
 "ルート証明書ファイル\"%s\"が存在しません\n"
-"ファイルを用意する、sslrootcert=systemでしすてむの信頼済みルート証明書を使用する、またはsslmodeを変更してサーバー証明書の検証を無効にしてください。"
+"ファイルを用意する、sslrootcert=systemでシステムの信頼済みルート証明書を使用する、またはsslmodeを変更してサーバー証明書の検証を無効にしてください。"
 
 #: fe-secure-openssl.c:1183
 #, c-format
