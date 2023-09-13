@@ -94,9 +94,11 @@ ALTER SUBSCRIPTION regress_testsub SET PUBLICATION testpub2, testpub3 WITH (refr
 ALTER SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist2';
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = 'newname');
 ALTER SUBSCRIPTION regress_testsub SET (password_required = false);
+ALTER SUBSCRIPTION regress_testsub SET (run_as_owner = true);
 \dRs+
 
 ALTER SUBSCRIPTION regress_testsub SET (password_required = true);
+ALTER SUBSCRIPTION regress_testsub SET (run_as_owner = false);
 
 -- fail
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = '');

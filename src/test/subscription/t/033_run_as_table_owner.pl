@@ -193,6 +193,37 @@ GRANT regress_alice TO regress_admin WITH INHERIT TRUE, SET FALSE;
 expect_replication("alice.unpartitioned", 3, 7, 13,
 	"with INHERIT but not SET ROLE can replicate");
 
+# Similar to the previous test, remove all privileges again and instead,
+# give the ability to SET ROLE to regress_alice.
+$node_subscriber->safe_psql(
+	'postgres', qq(
+SET SESSION AUTHORIZATION regress_alice;
+REVOKE ALL PRIVILEGES ON alice.unpartitioned FROM regress_admin;
+RESET SESSION AUTHORIZATION;
+GRANT regress_alice TO regress_admin WITH INHERIT FALSE, SET TRUE;
+));
+
+# Because replication is running as the subscription owner in this test,
+# the above grant doesn't help.
+publish_insert("alice.unpartitioned", 14);
+expect_failure(
+	"alice.unpartitioned",
+	3,
+	7,
+	13,
+	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
+	"with no privileges cannot replicate");
+
+# Allow the replication to run as table owner and check that things start
+# working.
+$node_subscriber->safe_psql(
+	'postgres', qq(
+ALTER SUBSCRIPTION admin_sub SET (run_as_owner = false);
+));
+
+expect_replication("alice.unpartitioned", 4, 7, 14,
+	"can replicate after setting run_as_owner to false");
+
 # Remove the subscrition and truncate the table for the initial data sync
 # tests.
 $node_subscriber->safe_psql(
@@ -222,7 +253,7 @@ ALTER SUBSCRIPTION admin_sub ENABLE;
 # Because the initial data sync is working as the table owner, all
 # data should be copied.
 $node_subscriber->wait_for_subscription_sync($node_publisher, 'admin_sub');
-expect_replication("alice.unpartitioned", 3, 7, 13,
+expect_replication("alice.unpartitioned", 4, 7, 14,
 	"table owner can do the initial data copy");
 
 done_testing();

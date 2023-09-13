@@ -1204,6 +1204,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						= true;
 				}
 
+				if (IsSet(opts.specified_opts, SUBOPT_RUN_AS_OWNER))
+				{
+					values[Anum_pg_subscription_subrunasowner - 1] =
+						BoolGetDatum(opts.runasowner);
+					replaces[Anum_pg_subscription_subrunasowner - 1] = true;
+				}
+
 				if (IsSet(opts.specified_opts, SUBOPT_ORIGIN))
 				{
 					values[Anum_pg_subscription_suborigin - 1] =
