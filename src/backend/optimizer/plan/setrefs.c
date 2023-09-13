@@ -1775,7 +1775,7 @@ fix_expr_common(PlannerInfo *root, Node *node)
 		set_sa_opfuncid(saop);
 		record_plan_function_dependency(root, saop->opfuncid);
 
-		if (!OidIsValid(saop->hashfuncid))
+		if (OidIsValid(saop->hashfuncid))
 			record_plan_function_dependency(root, saop->hashfuncid);
 	}
 	else if (IsA(node, Const))
