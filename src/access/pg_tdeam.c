@@ -656,7 +656,7 @@ pg_tde_gettup_advance_block(HeapScanDesc scan, BlockNumber block, ScanDirection 
 			if (block == scan->rs_startblock)
 				return InvalidBlockNumber;
 
-			/* check if the limit imposed by pg_tde_setscanlimits() is met */
+			/* check if the limit imposed by heap_setscanlimits() is met */
 			if (scan->rs_numblocks != InvalidBlockNumber)
 			{
 				if (--scan->rs_numblocks == 0)
@@ -1781,6 +1781,7 @@ GetBulkInsertState(void)
 	bistate->current_buf = InvalidBuffer;
 	bistate->next_free = InvalidBlockNumber;
 	bistate->last_free = InvalidBlockNumber;
+	bistate->already_extended_by = 0;
 	return bistate;
 }
 
