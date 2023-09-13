@@ -81,6 +81,10 @@
 #include <shlwapi.h>
 #endif
 
+/* Error triggered for locale-sensitive subroutines */
+#define		PGLOCALE_SUPPORT_ERROR(provider) \
+	elog(ERROR, "unsupported collprovider for %s: %c", __func__, provider)
+
 /*
  * This should be large enough that most strings will fit, but small enough
  * that we feel comfortable putting it on the stack
@@ -2031,7 +2035,7 @@ pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale)
 #endif
 	else
 		/* shouldn't happen */
-		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
 
 	return result;
 }
@@ -2067,7 +2071,7 @@ pg_strncoll(const char *arg1, size_t len1, const char *arg2, size_t len2,
 #endif
 	else
 		/* shouldn't happen */
-		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
 
 	return result;
 }
@@ -2086,7 +2090,7 @@ pg_strxfrm_libc(char *dest, const char *src, size_t destsize,
 		return strxfrm(dest, src, destsize);
 #else
 	/* shouldn't happen */
-	elog(ERROR, "unsupported collprovider: %c", locale->provider);
+	PGLOCALE_SUPPORT_ERROR(locale->provider);
 	return 0;					/* keep compiler quiet */
 #endif
 }
@@ -2282,7 +2286,7 @@ pg_strxfrm_enabled(pg_locale_t locale)
 		return true;
 	else
 		/* shouldn't happen */
-		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
 
 	return false;				/* keep compiler quiet */
 }
@@ -2314,7 +2318,7 @@ pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
 #endif
 	else
 		/* shouldn't happen */
-		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
 
 	return result;
 }
@@ -2351,7 +2355,7 @@ pg_strnxfrm(char *dest, size_t destsize, const char *src, size_t srclen,
 #endif
 	else
 		/* shouldn't happen */
-		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
 
 	return result;
 }
@@ -2369,7 +2373,7 @@ pg_strxfrm_prefix_enabled(pg_locale_t locale)
 		return true;
 	else
 		/* shouldn't happen */
-		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
 
 	return false;				/* keep compiler quiet */
 }
@@ -2393,16 +2397,14 @@ pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
 {
 	size_t		result = 0;		/* keep compiler quiet */
 
-	if (!locale || locale->provider == COLLPROVIDER_LIBC)
-		elog(ERROR, "collprovider '%c' does not support pg_strxfrm_prefix()",
-			 locale->provider);
+	if (!locale)
+		PGLOCALE_SUPPORT_ERROR(COLLPROVIDER_LIBC);
 #ifdef USE_ICU
 	else if (locale->provider == COLLPROVIDER_ICU)
 		result = pg_strnxfrm_prefix_icu(dest, src, -1, destsize, locale);
 #endif
 	else
-		/* shouldn't happen */
-		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
 
 	return result;
 }
@@ -2430,16 +2432,14 @@ pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 {
 	size_t		result = 0;		/* keep compiler quiet */
 
-	if (!locale || locale->provider == COLLPROVIDER_LIBC)
-		elog(ERROR, "collprovider '%c' does not support pg_strnxfrm_prefix()",
-			 locale->provider);
+	if (!locale)
+		PGLOCALE_SUPPORT_ERROR(COLLPROVIDER_LIBC);
 #ifdef USE_ICU
 	else if (locale->provider == COLLPROVIDER_ICU)
 		result = pg_strnxfrm_prefix_icu(dest, src, -1, destsize, locale);
 #endif
 	else
-		/* shouldn't happen */
-		elog(ERROR, "unsupported collprovider: %c", locale->provider);
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
 
 	return result;
 }
