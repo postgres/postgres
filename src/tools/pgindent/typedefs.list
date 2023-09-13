@@ -1898,6 +1898,7 @@ ReadExtraTocPtrType
 ReadFunc
 ReassignOwnedStmt
 RecheckForeignScan_function
+RecordCacheArrayEntry
 RecordCacheEntry
 RecordCompareData
 RecordIOData
