@@ -263,10 +263,15 @@ static const dshash_parameters srtr_typmod_table_params = {
 /* hashtable for recognizing registered record types */
 static HTAB *RecordCacheHash = NULL;
 
-/* arrays of info about registered record types, indexed by assigned typmod */
-static TupleDesc *RecordCacheArray = NULL;
-static uint64 *RecordIdentifierArray = NULL;
-static int32 RecordCacheArrayLen = 0;	/* allocated length of above arrays */
+typedef struct RecordCacheArrayEntry
+{
+	uint64		id;
+	TupleDesc	tupdesc;
+} RecordCacheArrayEntry;
+
+/* array of info about registered record types, indexed by assigned typmod */
+static RecordCacheArrayEntry *RecordCacheArray = NULL;
+static int32 RecordCacheArrayLen = 0;	/* allocated length of above array */
 static int32 NextRecordTypmod = 0;	/* number of entries used */
 
 /*
@@ -1525,10 +1530,8 @@ ensure_record_cache_typmod_slot_exists(int32 typmod)
 {
 	if (RecordCacheArray == NULL)
 	{
-		RecordCacheArray = (TupleDesc *)
-			MemoryContextAllocZero(CacheMemoryContext, 64 * sizeof(TupleDesc));
-		RecordIdentifierArray = (uint64 *)
-			MemoryContextAllocZero(CacheMemoryContext, 64 * sizeof(uint64));
+		RecordCacheArray = (RecordCacheArrayEntry *)
+			MemoryContextAllocZero(CacheMemoryContext, 64 * sizeof(RecordCacheArrayEntry));
 		RecordCacheArrayLen = 64;
 	}
 
@@ -1539,14 +1542,11 @@ ensure_record_cache_typmod_slot_exists(int32 typmod)
 		while (typmod >= newlen)
 			newlen *= 2;
 
-		RecordCacheArray = (TupleDesc *) repalloc(RecordCacheArray,
-												  newlen * sizeof(TupleDesc));
+		RecordCacheArray = (RecordCacheArrayEntry *)
+			repalloc(RecordCacheArray,
+					 newlen * sizeof(RecordCacheArrayEntry));
 		memset(RecordCacheArray + RecordCacheArrayLen, 0,
-			   (newlen - RecordCacheArrayLen) * sizeof(TupleDesc));
-		RecordIdentifierArray = (uint64 *) repalloc(RecordIdentifierArray,
-													newlen * sizeof(uint64));
-		memset(RecordIdentifierArray + RecordCacheArrayLen, 0,
-			   (newlen - RecordCacheArrayLen) * sizeof(uint64));
+			   (newlen - RecordCacheArrayLen) * sizeof(RecordCacheArrayEntry));
 		RecordCacheArrayLen = newlen;
 	}
 }
@@ -1584,8 +1584,8 @@ lookup_rowtype_tupdesc_internal(Oid type_id, int32 typmod, bool noError)
 		{
 			/* It is already in our local cache? */
 			if (typmod < RecordCacheArrayLen &&
-				RecordCacheArray[typmod] != NULL)
-				return RecordCacheArray[typmod];
+				RecordCacheArray[typmod].tupdesc != NULL)
+				return RecordCacheArray[typmod].tupdesc;
 
 			/* Are we attached to a shared record typmod registry? */
 			if (CurrentSession->shared_typmod_registry != NULL)
@@ -1611,19 +1611,19 @@ lookup_rowtype_tupdesc_internal(Oid type_id, int32 typmod, bool noError)
 					 * Our local array can now point directly to the TupleDesc
 					 * in shared memory, which is non-reference-counted.
 					 */
-					RecordCacheArray[typmod] = tupdesc;
+					RecordCacheArray[typmod].tupdesc = tupdesc;
 					Assert(tupdesc->tdrefcount == -1);
 
 					/*
 					 * We don't share tupdesc identifiers across processes, so
 					 * assign one locally.
 					 */
-					RecordIdentifierArray[typmod] = ++tupledesc_id_counter;
+					RecordCacheArray[typmod].id = ++tupledesc_id_counter;
 
 					dshash_release_lock(CurrentSession->shared_typmod_table,
 										entry);
 
-					return RecordCacheArray[typmod];
+					return RecordCacheArray[typmod].tupdesc;
 				}
 			}
 		}
@@ -1834,10 +1834,10 @@ assign_record_type_typmod(TupleDesc tupDesc)
 		ensure_record_cache_typmod_slot_exists(entDesc->tdtypmod);
 	}
 
-	RecordCacheArray[entDesc->tdtypmod] = entDesc;
+	RecordCacheArray[entDesc->tdtypmod].tupdesc = entDesc;
 
 	/* Assign a unique tupdesc identifier, too. */
-	RecordIdentifierArray[entDesc->tdtypmod] = ++tupledesc_id_counter;
+	RecordCacheArray[entDesc->tdtypmod].id = ++tupledesc_id_counter;
 
 	/* Fully initialized; create the hash table entry */
 	recentry = (RecordCacheEntry *) hash_search(RecordCacheHash,
@@ -1886,10 +1886,10 @@ assign_record_type_identifier(Oid type_id, int32 typmod)
 		 * It's a transient record type, so look in our record-type table.
 		 */
 		if (typmod >= 0 && typmod < RecordCacheArrayLen &&
-			RecordCacheArray[typmod] != NULL)
+			RecordCacheArray[typmod].tupdesc != NULL)
 		{
-			Assert(RecordIdentifierArray[typmod] != 0);
-			return RecordIdentifierArray[typmod];
+			Assert(RecordCacheArray[typmod].id != 0);
+			return RecordCacheArray[typmod].id;
 		}
 
 		/* For anonymous or unrecognized record type, generate a new ID */
@@ -1969,7 +1969,7 @@ SharedRecordTypmodRegistryInit(SharedRecordTypmodRegistry *registry,
 		TupleDesc	tupdesc;
 		bool		found;
 
-		tupdesc = RecordCacheArray[typmod];
+		tupdesc = RecordCacheArray[typmod].tupdesc;
 		if (tupdesc == NULL)
 			continue;
 
