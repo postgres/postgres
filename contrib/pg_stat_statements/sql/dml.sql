@@ -73,4 +73,23 @@ MERGE INTO pgss_dml_tab USING pgss_dml_tab st ON (st.a = pgss_dml_tab.a AND st.a
 DROP TABLE pgss_dml_tab;
 
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+
+-- check that [temp] table relation extensions are tracked as writes
+CREATE TABLE pgss_extend_tab (a int, b text);
+CREATE TEMP TABLE pgss_extend_temp_tab (a int, b text);
+SELECT pg_stat_statements_reset();
+INSERT INTO pgss_extend_tab (a, b) SELECT generate_series(1, 1000), 'something';
+INSERT INTO pgss_extend_temp_tab (a, b) SELECT generate_series(1, 1000), 'something';
+WITH sizes AS (
+  SELECT
+    pg_relation_size('pgss_extend_tab') / current_setting('block_size')::int8 AS rel_size,
+    pg_relation_size('pgss_extend_temp_tab') / current_setting('block_size')::int8 AS temp_rel_size
+)
+SELECT
+    SUM(local_blks_written) >= (SELECT temp_rel_size FROM sizes) AS temp_written_ok,
+    SUM(local_blks_dirtied) >= (SELECT temp_rel_size FROM sizes) AS temp_dirtied_ok,
+    SUM(shared_blks_written) >= (SELECT rel_size FROM sizes) AS written_ok,
+    SUM(shared_blks_dirtied) >= (SELECT rel_size FROM sizes) AS dirtied_ok
+FROM pg_stat_statements;
+
 SELECT pg_stat_statements_reset();
