@@ -321,6 +321,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	slot->candidate_xmin_lsn = InvalidXLogRecPtr;
 	slot->candidate_restart_valid = InvalidXLogRecPtr;
 	slot->candidate_restart_lsn = InvalidXLogRecPtr;
+	slot->last_saved_confirmed_flush = InvalidXLogRecPtr;
 
 	/*
 	 * Create the slot on disk.  We haven't actually marked the slot allocated
@@ -1572,11 +1573,13 @@ restart:
 /*
  * Flush all replication slots to disk.
  *
- * This needn't actually be part of a checkpoint, but it's a convenient
- * location.
+ * It is convenient to flush dirty replication slots at the time of checkpoint.
+ * Additionally, in case of a shutdown checkpoint, we also identify the slots
+ * for which the confirmed_flush LSN has been updated since the last time it
+ * was saved and flush them.
  */
 void
-CheckPointReplicationSlots(void)
+CheckPointReplicationSlots(bool is_shutdown)
 {
 	int			i;
 
@@ -1601,6 +1604,30 @@ CheckPointReplicationSlots(void)
 
 		/* save the slot to disk, locking is handled in SaveSlotToPath() */
 		sprintf(path, "pg_replslot/%s", NameStr(s->data.name));
+
+		/*
+		 * Slot's data is not flushed each time the confirmed_flush LSN is
+		 * updated as that could lead to frequent writes.  However, we decide
+		 * to force a flush of all logical slot's data at the time of shutdown
+		 * if the confirmed_flush LSN is changed since we last flushed it to
+		 * disk.  This helps in avoiding an unnecessary retreat of the
+		 * confirmed_flush LSN after restart.
+		 */
+		if (is_shutdown && SlotIsLogical(s))
+		{
+			SpinLockAcquire(&s->mutex);
+
+			Assert(s->data.confirmed_flush >= s->last_saved_confirmed_flush);
+
+			if (s->data.invalidated == RS_INVAL_NONE &&
+				s->data.confirmed_flush != s->last_saved_confirmed_flush)
+			{
+				s->just_dirtied = true;
+				s->dirty = true;
+			}
+			SpinLockRelease(&s->mutex);
+		}
+
 		SaveSlotToPath(s, path, LOG);
 	}
 	LWLockRelease(ReplicationSlotAllocationLock);
@@ -1873,11 +1900,12 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 
 	/*
 	 * Successfully wrote, unset dirty bit, unless somebody dirtied again
-	 * already.
+	 * already and remember the confirmed_flush LSN value.
 	 */
 	SpinLockAcquire(&slot->mutex);
 	if (!slot->just_dirtied)
 		slot->dirty = false;
+	slot->last_saved_confirmed_flush = cp.slotdata.confirmed_flush;
 	SpinLockRelease(&slot->mutex);
 
 	LWLockRelease(&slot->io_in_progress_lock);
@@ -2074,6 +2102,7 @@ RestoreSlotFromDisk(const char *name)
 		/* initialize in memory state */
 		slot->effective_xmin = cp.slotdata.xmin;
 		slot->effective_catalog_xmin = cp.slotdata.catalog_xmin;
+		slot->last_saved_confirmed_flush = cp.slotdata.confirmed_flush;
 
 		slot->candidate_catalog_xmin = InvalidTransactionId;
 		slot->candidate_xmin_lsn = InvalidXLogRecPtr;
