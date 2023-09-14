@@ -823,9 +823,9 @@ CREATE VIEW constraint_column_usage AS
             AND r.relkind IN ('r', 'p')
             AND NOT a.attisdropped
 
-	UNION ALL
+        UNION ALL
 
-	/* not-null constraints */
+        /* not-null constraints */
         SELECT DISTINCT nr.nspname, r.relname, r.relowner, a.attname, nc.nspname, c.conname
           FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc, pg_constraint c
           WHERE nr.oid = r.relnamespace
