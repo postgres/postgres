@@ -431,7 +431,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 
 	*extended_by = extend_by;
 
-	pgBufferUsage.temp_blks_written += extend_by;
+	pgBufferUsage.local_blks_written += extend_by;
 
 	return first_block;
 }

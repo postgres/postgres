@@ -139,6 +139,33 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    1 | SELECT pg_stat_statements_reset()
 (10 rows)
 
+-- check that [temp] table relation extensions are tracked as writes
+CREATE TABLE pgss_extend_tab (a int, b text);
+CREATE TEMP TABLE pgss_extend_temp_tab (a int, b text);
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+INSERT INTO pgss_extend_tab (a, b) SELECT generate_series(1, 1000), 'something';
+INSERT INTO pgss_extend_temp_tab (a, b) SELECT generate_series(1, 1000), 'something';
+WITH sizes AS (
+  SELECT
+    pg_relation_size('pgss_extend_tab') / current_setting('block_size')::int8 AS rel_size,
+    pg_relation_size('pgss_extend_temp_tab') / current_setting('block_size')::int8 AS temp_rel_size
+)
+SELECT
+    SUM(local_blks_written) >= (SELECT temp_rel_size FROM sizes) AS temp_written_ok,
+    SUM(local_blks_dirtied) >= (SELECT temp_rel_size FROM sizes) AS temp_dirtied_ok,
+    SUM(shared_blks_written) >= (SELECT rel_size FROM sizes) AS written_ok,
+    SUM(shared_blks_dirtied) >= (SELECT rel_size FROM sizes) AS dirtied_ok
+FROM pg_stat_statements;
+ temp_written_ok | temp_dirtied_ok | written_ok | dirtied_ok 
+-----------------+-----------------+------------+------------
+ t               | t               | t          | t
+(1 row)
+
 SELECT pg_stat_statements_reset();
  pg_stat_statements_reset 
 --------------------------
