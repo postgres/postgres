@@ -290,7 +290,7 @@ extern int	pg_tde_page_prune(Relation relation, Buffer buffer,
 							TimestampTz old_snap_ts,
 							int *nnewlpdead,
 							OffsetNumber *off_loc);
-extern void pg_tde_page_prune_execute(Buffer buffer,
+extern void pg_tde_page_prune_execute(Relation rel, Buffer buffer,
 									OffsetNumber *redirected, int nredirected,
 									OffsetNumber *nowdead, int ndead,
 									OffsetNumber *nowunused, int nunused);

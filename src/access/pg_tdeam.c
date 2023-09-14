@@ -8799,6 +8799,7 @@ pg_tde_xlog_prune(XLogReaderState *record)
 		int			ndead;
 		int			nunused;
 		Size		datalen;
+		Relation	reln;
 
 		redirected = (OffsetNumber *) XLogRecGetBlockData(record, 0, &datalen);
 
@@ -8811,7 +8812,8 @@ pg_tde_xlog_prune(XLogReaderState *record)
 		Assert(nunused >= 0);
 
 		/* Update all line pointers per the record, and repair fragmentation */
-		pg_tde_page_prune_execute(buffer,
+		reln = CreateFakeRelcacheEntry(rlocator);
+		pg_tde_page_prune_execute(reln, buffer,
 								redirected, nredirected,
 								nowdead, ndead,
 								nowunused, nunused);

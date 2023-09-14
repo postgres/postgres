@@ -10,8 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-#define TDE_FORK_DEBUG 1
-
 #include "postgres.h"
 #include "access/pg_tde_tdemap.h"
 #include "transam/pg_tde_xact_handler.h"

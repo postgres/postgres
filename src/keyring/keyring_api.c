@@ -1,6 +1,4 @@
 
-#define KEYRING_DEBUG 1
-
 #include "keyring/keyring_api.h"
 #include "keyring/keyring_file.h"
 
