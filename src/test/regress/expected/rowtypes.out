@@ -1241,6 +1241,66 @@ select r, r is null as isnull, r is not null as isnotnull from r;
 (6 rows)
 
 --
+-- Check parsing of indirect references to composite values (bug #18077)
+--
+explain (verbose, costs off)
+with cte(c) as materialized (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select * from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+                 QUERY PLAN                 
+--------------------------------------------
+ CTE Scan on cte
+   Output: cte.c
+   Filter: ((SubPlan 3) IS NOT NULL)
+   CTE cte
+     ->  Result
+           Output: '(1,2)'::record
+   SubPlan 3
+     ->  Result
+           Output: cte.c
+           One-Time Filter: $2
+           InitPlan 2 (returns $2)
+             ->  Result
+                   Output: ((cte.c).f1 > 0)
+(13 rows)
+
+with cte(c) as materialized (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select * from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+   c   
+-------
+ (1,2)
+(1 row)
+
+-- Also check deparsing of such cases
+create view composite_v as
+with cte(c) as materialized (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select 1 as one from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+select pg_get_viewdef('composite_v', true);
+                     pg_get_viewdef                     
+--------------------------------------------------------
+  WITH cte(c) AS MATERIALIZED (                        +
+          SELECT ROW(1, 2) AS "row"                    +
+         ), cte2(c) AS (                               +
+          SELECT cte.c                                 +
+            FROM cte                                   +
+         )                                             +
+  SELECT 1 AS one                                      +
+    FROM cte2 t                                        +
+   WHERE (( SELECT s.c1                                +
+            FROM ( SELECT t.c AS c1) s                 +
+           WHERE ( SELECT (s.c1).f1 > 0))) IS NOT NULL;
+(1 row)
+
+drop view composite_v;
+--
 -- Tests for component access / FieldSelect
 --
 CREATE TABLE compositetable(a text, b text);
