@@ -606,12 +606,9 @@ heapam_relation_set_new_filelocator(Relation rel,
 
 	/*
 	 * If required, set up an init fork for an unlogged table so that it can
-	 * be correctly reinitialized on restart.  An immediate sync is required
-	 * even if the page has been logged, because the write did not go through
-	 * shared_buffers and therefore a concurrent checkpoint may have moved the
-	 * redo pointer past our xlog record.  Recovery may as well remove it
-	 * while replaying, for example, XLOG_DBASE_CREATE* or XLOG_TBLSPC_CREATE
-	 * record. Therefore, logging is necessary even if wal_level=minimal.
+	 * be correctly reinitialized on restart.  Recovery may remove it while
+	 * replaying, for example, an XLOG_DBASE_CREATE* or XLOG_TBLSPC_CREATE
+	 * record.  Therefore, logging is necessary even if wal_level=minimal.
 	 */
 	if (persistence == RELPERSISTENCE_UNLOGGED)
 	{
@@ -620,7 +617,6 @@ heapam_relation_set_new_filelocator(Relation rel,
 			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
 		smgrcreate(srel, INIT_FORKNUM, false);
 		log_smgrcreate(newrlocator, INIT_FORKNUM);
-		smgrimmedsync(srel, INIT_FORKNUM);
 	}
 
 	smgrclose(srel);
