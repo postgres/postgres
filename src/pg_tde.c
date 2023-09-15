@@ -16,6 +16,7 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/shmem.h"
+#include "access/pg_tde_ddl.h"
 
 #include "keyring/keyring_config.h"
 #include "keyring/keyring_api.h"
@@ -62,4 +63,5 @@ void
 
     RegisterXactCallback(pg_tde_xact_callback, NULL);
     RegisterSubXactCallback(pg_tde_subxact_callback, NULL);
+	SetupTdeDDLHooks();
 }

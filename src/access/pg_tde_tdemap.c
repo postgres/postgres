@@ -22,6 +22,19 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
+static inline char* pg_tde_get_key_file_path(const RelFileLocator *newrlocator);
+
+
+void
+pg_tde_delete_key_fork(Relation rel)
+{
+	char    *key_file_path = pg_tde_get_key_file_path(&rel->rd_locator);
+    if (!key_file_path)
+        ereport(ERROR,
+                (errmsg("failed to get key file path")));
+	RegisterFileForDeletion(key_file_path, true);
+	pfree(key_file_path);
+}
 /*
  * Creates a relation fork file relfilenode.tde that contains the
  * encryption key for the relation.
@@ -32,19 +45,16 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 	/* TODO: should be a user defined */ 
 	static const char *MasterKeyName = "master-key";
 
-	char		*rel_file_path;
 	char		*key_file_path;
 	File		file = -1;
 	InternalKey int_key = {0};
 	RelKeysData *data;
 	size_t 		sz;
 
-	/* We get a relation name for MAIN fork and manually append the
-	 * .tde postfix to the file name
-	 */
-	rel_file_path = relpathperm(*newrlocator, MAIN_FORKNUM);
-	key_file_path = psprintf("%s."TDE_FORK_EXT, rel_file_path);
-	pfree(rel_file_path);
+    key_file_path = pg_tde_get_key_file_path(newrlocator);
+    if (!key_file_path)
+        ereport(ERROR,
+                (errmsg("failed to get key file path")));
 
 	file = PathNameOpenFile(key_file_path, O_RDWR | O_CREAT | PG_BINARY);
 	if (file < 0)
@@ -81,27 +91,30 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
                 errmsg("could not write key data to file \"%s\": %m",
                 		key_file_path)));
 
+	/* Register the file for delete in case transaction Aborts */
+	RegisterFileForDeletion(key_file_path, false);
+
 	pfree(key_file_path);
 	pfree(data);
 	FileClose(file);
 }
 
 /*
- * Reads tde keys for the relatoin from a fork file.
+ * Reads tde keys for the relation fork file.
  */
 RelKeysData *
 pg_tde_get_keys_from_fork(const RelFileLocator *rlocator)
 {
-	char		*rel_file_path;
 	char		*key_file_path;
 	File		file = -1;
 	Size		sz;
 	int			nbytes;
 	RelKeysData *keys;
 
-	rel_file_path = relpathperm(*rlocator, MAIN_FORKNUM);
-	key_file_path = psprintf("%s."TDE_FORK_EXT, rel_file_path);
-	pfree(rel_file_path);
+    key_file_path = pg_tde_get_key_file_path(rlocator);
+    if (!key_file_path)
+        ereport(ERROR,
+                (errmsg("failed to get key file path")));
 
 	file = PathNameOpenFile(key_file_path, O_RDONLY | PG_BINARY);
 	if (file < 0)
@@ -135,9 +148,6 @@ pg_tde_get_keys_from_fork(const RelFileLocator *rlocator)
 		ereport(DEBUG2,
 			(errmsg("fork file keys: [%lu] %s: %s", i+1, keys->master_key_name, tde_sprint_key(&keys->internal_key[i]))));
 #endif
-
-	/* Register the file for delete in case transaction Aborts */
-	RegisterFileForDeletion(key_file_path, false);
 
 	pfree(key_file_path);
 	/* For now just close the key file.*/
@@ -205,4 +215,23 @@ tde_sprint_key(InternalKey *k)
 	sprintf(buf+i, "[%lu, %lu]", k->start_loc, k->end_loc);
 
 	return buf;
+}
+
+/* returns the palloc'd key (TDE relation fork) file path */
+static inline char*
+pg_tde_get_key_file_path(const RelFileLocator *newrlocator)
+{
+    char        *rel_file_path;
+    char        *key_file_path = NULL;
+
+    /* We get a relation name for MAIN fork and manually append the
+     * .tde postfix to the file name
+     */
+    rel_file_path = relpathperm(*newrlocator, MAIN_FORKNUM);
+    if (rel_file_path)
+    {
+        key_file_path = psprintf("%s."TDE_FORK_EXT, rel_file_path);
+        pfree(rel_file_path);
+    }
+    return key_file_path;
 }

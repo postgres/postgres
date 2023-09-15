@@ -45,7 +45,7 @@ pg_tde_xact_callback(XactEvent event, void *arg)
     }
     else if (event == XACT_EVENT_COMMIT)
     {
-        cleanup_pending_deletes(true);
+        do_pending_deletes(true);
         pending_delete_cleanup();
     }
     else if (event == XACT_EVENT_PREPARE)
