@@ -50,7 +50,7 @@ int keyringFilePreloadCache(void)
 	return 1;
 }
 
-int keyringFileStoreKey(const keyInfo*)
+int keyringFileStoreKey(const keyInfo* ki)
 {
 	// First very basic prototype: we just dump the cache to disk
 	FILE* f = fopen(keyringFileDataFileName, "w");

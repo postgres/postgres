@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: 'postgres/postgres'
-          ref: '93dcdfa88f5f9befb781558920e02d3ee86dc629'
+          ref: 'a81e5516fa4bc53e332cb35eefe231147c0e1749'
           path: 'src'
 
       - name: Clone postgres-tde-ext repository
