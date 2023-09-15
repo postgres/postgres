@@ -2630,3 +2630,9 @@ pg_tdeam_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&pg_tdeam_methods);
 }
+
+bool
+is_pg_tde_rel(Relation rel)
+{
+	return (rel->rd_tableam == (TableAmRoutine *) &pg_tdeam_methods);
+}

@@ -50,6 +50,7 @@ typedef struct RelKeys
     struct RelKeys *next;
 } RelKeys;
 
+extern void pg_tde_delete_key_fork(Relation rel);
 extern void pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel);
 extern RelKeysData *pg_tde_get_keys_from_fork(const RelFileLocator *rlocator);
 extern RelKeysData *GetRelationKeys(Relation rel);

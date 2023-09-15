@@ -329,4 +329,7 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
 extern void HeapCheckForSerializableConflictOut(bool visible, Relation relation, HeapTuple tuple,
 												Buffer buffer, Snapshot snapshot);
 
+/* Defined in pg_tdeam_handler.c */
+extern bool is_pg_tde_rel(Relation rel);
+
 #endif							/* PG_TDEAM_H */
