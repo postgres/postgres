@@ -29,15 +29,17 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
-
-#include "pg_tdeam.h"
-#include "pg_tdeam_xlog.h"
-#include "pg_tdetoast.h"
-#include "pg_tde_io.h"
-#include "pg_tde_visibilitymap.h"
 
 #include "pg_tde_defines.h"
+
+#include "postgres.h"
+
+#include "access/pg_tdeam.h"
+#include "access/pg_tdeam_xlog.h"
+#include "access/pg_tdetoast.h"
+#include "access/pg_tde_io.h"
+#include "access/pg_tde_visibilitymap.h"
+#include "encryption/enc_tuple.h"
 
 #include "access/bufmask.h"
 #include "access/genam.h"
@@ -654,7 +656,7 @@ pg_tde_gettup_advance_block(HeapScanDesc scan, BlockNumber block, ScanDirection 
 			if (block == scan->rs_startblock)
 				return InvalidBlockNumber;
 
-			/* check if the limit imposed by pg_tde_setscanlimits() is met */
+			/* check if the limit imposed by heap_setscanlimits() is met */
 			if (scan->rs_numblocks != InvalidBlockNumber)
 			{
 				if (--scan->rs_numblocks == 0)
@@ -1166,7 +1168,7 @@ pg_tde_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot 
 
 	pgstat_count_pg_tde_getnext(scan->rs_base.rs_rd);
 
-	ExecStoreBufferHeapTuple(&scan->rs_ctup, slot,
+	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd, &scan->rs_ctup, slot,
 							 scan->rs_cbuf);
 	return true;
 }
@@ -1314,7 +1316,7 @@ pg_tde_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 	 */
 	pgstat_count_pg_tde_getnext(scan->rs_base.rs_rd);
 
-	ExecStoreBufferHeapTuple(&scan->rs_ctup, slot, scan->rs_cbuf);
+	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd, &scan->rs_ctup, slot, scan->rs_cbuf);
 	return true;
 }
 
@@ -1779,6 +1781,7 @@ GetBulkInsertState(void)
 	bistate->current_buf = InvalidBuffer;
 	bistate->next_free = InvalidBlockNumber;
 	bistate->last_free = InvalidBlockNumber;
+	bistate->already_extended_by = 0;
 	return bistate;
 }
 
@@ -5916,6 +5919,7 @@ pg_tde_inplace_update(Relation relation, HeapTuple tuple)
 		elog(ERROR, "invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
+	// encryption / decryption here: HOW?
 
 	oldlen = ItemIdGetLength(lp) - htup->t_hoff;
 	newlen = tuple->t_len - tuple->t_data->t_hoff;
@@ -6698,6 +6702,7 @@ pg_tde_freeze_execute_prepared(Relation rel, Buffer buffer,
 		/* Deliberately avoid relying on tuple hint bits here */
 		if (frz->checkflags & HEAP_FREEZE_CHECK_XMIN_COMMITTED)
 		{
+			// TODO: how to keep compiling both?
 			TransactionId xmin = HeapTupleHeaderGetRawXmin(htup);
 
 			Assert(!HeapTupleHeaderXminFrozen(htup));
@@ -6735,6 +6740,7 @@ pg_tde_freeze_execute_prepared(Relation rel, Buffer buffer,
 		HeapTupleHeader htup;
 
 		htup = (HeapTupleHeader) PageGetItem(page, itemid);
+		// TODO: Decryption/encryption here
 		pg_tde_execute_freeze_tuple(htup, frz);
 	}
 
@@ -7611,6 +7617,7 @@ index_delete_check_htid(TM_IndexDeleteOp *delstate,
 
 		Assert(ItemIdIsNormal(iid));
 		htup = (HeapTupleHeader) PageGetItem(page, iid);
+		// TODO: Decryption/encryption here
 
 		if (unlikely(HeapTupleHeaderIsHeapOnly(htup)))
 			ereport(ERROR,
@@ -7898,6 +7905,7 @@ pg_tde_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
 				break;
 
 			htup = (HeapTupleHeader) PageGetItem(page, lp);
+			// TODO: Decryption/encryption here
 
 			/*
 			 * Check the tuple XMIN against prior XMAX, if any
@@ -8792,6 +8800,7 @@ pg_tde_xlog_prune(XLogReaderState *record)
 		int			ndead;
 		int			nunused;
 		Size		datalen;
+		Relation	reln;
 
 		redirected = (OffsetNumber *) XLogRecGetBlockData(record, 0, &datalen);
 
@@ -8804,7 +8813,8 @@ pg_tde_xlog_prune(XLogReaderState *record)
 		Assert(nunused >= 0);
 
 		/* Update all line pointers per the record, and repair fragmentation */
-		pg_tde_page_prune_execute(buffer,
+		reln = CreateFakeRelcacheEntry(rlocator);
+		pg_tde_page_prune_execute(reln, buffer,
 								redirected, nredirected,
 								nowdead, ndead,
 								nowunused, nunused);
@@ -9103,6 +9113,7 @@ pg_tde_xlog_freeze_page(XLogReaderState *record)
 
 				lp = PageGetItemId(page, offset);
 				tuple = (HeapTupleHeader) PageGetItem(page, lp);
+				// TODO: Decryption/encryption here
 				pg_tde_execute_freeze_tuple(tuple, &frz);
 			}
 		}
@@ -9184,6 +9195,7 @@ pg_tde_xlog_delete(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
+		// TODO: Decryption/encryption here
 
 		htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
 		htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
@@ -9298,7 +9310,7 @@ pg_tde_xlog_insert(XLogReaderState *record)
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		htup->t_ctid = target_tid;
 
-		if (PageAddItem(page, (Item) htup, newlen, xlrec->offnum,
+		if (TDE_PageAddItem(target_locator.spcOid, blkno, page, (Item) htup, newlen, xlrec->offnum,
 						true, true) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 
@@ -9442,7 +9454,7 @@ pg_tde_xlog_multi_insert(XLogReaderState *record)
 			ItemPointerSetBlockNumber(&htup->t_ctid, blkno);
 			ItemPointerSetOffsetNumber(&htup->t_ctid, offnum);
 
-			offnum = PageAddItem(page, (Item) htup, newlen, offnum, true, true);
+			offnum = TDE_PageAddItem(rlocator.spcOid, blkno, page, (Item) htup, newlen, offnum, true, true);
 			if (offnum == InvalidOffsetNumber)
 				elog(PANIC, "failed to add tuple");
 		}
@@ -9565,6 +9577,7 @@ pg_tde_xlog_update(XLogReaderState *record, bool hot_update)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
+		// TODO: Decryption/encryption here
 
 		oldtup.t_data = htup;
 		oldtup.t_len = ItemIdGetLength(lp);
@@ -9716,7 +9729,7 @@ pg_tde_xlog_update(XLogReaderState *record, bool hot_update)
 		/* Make sure there is no forward chain link in t_ctid */
 		htup->t_ctid = newtid;
 
-		offnum = PageAddItem(page, (Item) htup, newlen, offnum, true, true);
+		offnum = TDE_PageAddItem(rlocator.spcOid, newblk, page, (Item) htup, newlen, offnum, true, true);
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 
@@ -9776,6 +9789,7 @@ pg_tde_xlog_confirm(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
+		// TODO: Decryption/encryption here
 
 		/*
 		 * Confirm tuple as actually inserted
@@ -9833,6 +9847,7 @@ pg_tde_xlog_lock(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
+		// TODO: Decryption/encryption here
 
 		htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
 		htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
@@ -9906,6 +9921,7 @@ pg_tde_xlog_lock_updated(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
+		// TODO: Decryption/encryption here
 
 		htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
 		htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
@@ -9947,6 +9963,7 @@ pg_tde_xlog_inplace(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
+		// TODO: Decryption/encryption here
 
 		oldlen = ItemIdGetLength(lp) - htup->t_hoff;
 		if (oldlen != newlen)

@@ -290,7 +290,7 @@ extern int	pg_tde_page_prune(Relation relation, Buffer buffer,
 							TimestampTz old_snap_ts,
 							int *nnewlpdead,
 							OffsetNumber *off_loc);
-extern void pg_tde_page_prune_execute(Buffer buffer,
+extern void pg_tde_page_prune_execute(Relation rel, Buffer buffer,
 									OffsetNumber *redirected, int nredirected,
 									OffsetNumber *nowdead, int ndead,
 									OffsetNumber *nowunused, int nunused);
@@ -328,5 +328,8 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
 										  CommandId *cmin, CommandId *cmax);
 extern void HeapCheckForSerializableConflictOut(bool visible, Relation relation, HeapTuple tuple,
 												Buffer buffer, Snapshot snapshot);
+
+/* Defined in pg_tdeam_handler.c */
+extern bool is_pg_tde_rel(Relation rel);
 
 #endif							/* PG_TDEAM_H */

@@ -13,11 +13,14 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
-#include "pg_tdeam.h"
-#include "pg_tde_io.h"
-#include "pg_tde_visibilitymap.h"
+#include "access/pg_tdeam.h"
+#include "access/pg_tde_io.h"
+#include "access/pg_tde_visibilitymap.h"
+#include "encryption/enc_tuple.h"
 
 #include "access/htup_details.h"
 #include "storage/bufmgr.h"
@@ -60,7 +63,7 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 
-	offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
+	offnum = TDE_PageAddItem(tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
@@ -284,6 +287,24 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
 		 */
 		extend_by_pages += extend_by_pages * waitcount;
 
+		/* ---
+		 * If we previously extended using the same bistate, it's very likely
+		 * we'll extend some more. Try to extend by as many pages as
+		 * before. This can be important for performance for several reasons,
+		 * including:
+		 *
+		 * - It prevents mdzeroextend() switching between extending the
+		 *   relation in different ways, which is inefficient for some
+		 *   filesystems.
+		 *
+		 * - Contention is often intermittent. Even if we currently don't see
+		 *   other waiters (see above), extending by larger amounts can
+		 *   prevent future contention.
+		 * ---
+		 */
+		if (bistate)
+			extend_by_pages = Max(extend_by_pages, bistate->already_extended_by);
+
 		/*
 		 * Can't extend by more than MAX_BUFFERS_TO_EXTEND_BY, we need to pin
 		 * them all concurrently.
@@ -322,7 +343,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
 	 * [auto]vacuum trying to truncate later pages as REL_TRUNCATE_MINIMUM is
 	 * way larger.
 	 */
-	first_block = ExtendBufferedRelBy(EB_REL(relation), MAIN_FORKNUM,
+	first_block = ExtendBufferedRelBy(BMR_REL(relation), MAIN_FORKNUM,
 									  bistate ? bistate->strategy : NULL,
 									  EB_LOCK_FIRST,
 									  extend_by_pages,
@@ -410,6 +431,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
 		/* maintain bistate->current_buf */
 		IncrBufferRefCount(buffer);
 		bistate->current_buf = buffer;
+		bistate->already_extended_by += extend_by_pages;
 	}
 
 	return buffer;

@@ -84,10 +84,12 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
-#include "pg_tdeam_xlog.h"
-#include "pg_tde_visibilitymap.h"
+#include "access/pg_tdeam_xlog.h"
+#include "access/pg_tde_visibilitymap.h"
 
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
@@ -629,7 +631,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 {
 	Buffer		buf;
 
-	buf = ExtendBufferedRelTo(EB_REL(rel), VISIBILITYMAP_FORKNUM, NULL,
+	buf = ExtendBufferedRelTo(BMR_REL(rel), VISIBILITYMAP_FORKNUM, NULL,
 							  EB_CREATE_FORK_IF_NEEDED |
 							  EB_CLEAR_SIZE_CACHE,
 							  vm_nblocks,

@@ -64,9 +64,11 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
-#include "pg_tdeam.h"
+#include "access/pg_tdeam.h"
 
 #include "access/htup_details.h"
 #include "access/multixact.h"

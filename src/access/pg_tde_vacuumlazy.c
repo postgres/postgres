@@ -30,13 +30,16 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include <math.h>
 
-#include "pg_tdeam.h"
-#include "pg_tdeam_xlog.h"
-#include "pg_tde_visibilitymap.h"
+#include "access/pg_tdeam.h"
+#include "access/pg_tdeam_xlog.h"
+#include "access/pg_tde_visibilitymap.h"
+#include "encryption/enc_tuple.h"
 
 #include "access/amapi.h"
 #include "access/genam.h"
@@ -2017,6 +2020,7 @@ lazy_scan_noprune(LVRelState *vacrel,
 
 		*hastup = true;			/* page prevents rel truncation */
 		tupleheader = (HeapTupleHeader) PageGetItem(page, itemid);
+		// TODO: decrypt
 		if (pg_tde_tuple_should_freeze(tupleheader, &vacrel->cutoffs,
 									 &NoFreezePageRelfrozenXid,
 									 &NoFreezePageRelminMxid))

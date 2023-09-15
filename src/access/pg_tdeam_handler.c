@@ -17,13 +17,17 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
-
-#include "pg_tdeam.h"
-#include "pg_tdetoast.h"
-#include "pg_tde_rewrite.h"
 
 #include "pg_tde_defines.h"
+
+#include "postgres.h"
+
+#include "access/pg_tdeam.h"
+#include "access/pg_tdetoast.h"
+#include "access/pg_tde_rewrite.h"
+#include "access/pg_tde_tdemap.h"
+
+#include "encryption/enc_tuple.h"
 
 #include "access/genam.h"
 #include "access/multixact.h"
@@ -47,8 +51,6 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
-
-PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pg_tdeam_handler);
 
@@ -167,7 +169,7 @@ pg_tdeam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		*call_again = !IsMVCCSnapshot(snapshot);
 
 		slot->tts_tableOid = RelationGetRelid(scan->rel);
-		ExecStoreBufferHeapTuple(&bslot->base.tupdata, slot, hscan->xs_cbuf);
+		PGTdeExecStoreBufferHeapTuple(scan->rel, &bslot->base.tupdata, slot, hscan->xs_cbuf);
 	}
 	else
 	{
@@ -199,7 +201,7 @@ pg_tdeam_fetch_row_version(Relation relation,
 	if (pg_tde_fetch(relation, snapshot, &bslot->base.tupdata, &buffer, false))
 	{
 		/* store in slot, transferring existing pin */
-		ExecStorePinnedBufferHeapTuple(&bslot->base.tupdata, slot, buffer);
+		PGTdeExecStorePinnedBufferHeapTuple(relation, &bslot->base.tupdata, slot, buffer);
 		slot->tts_tableOid = RelationGetRelid(relation);
 
 		return true;
@@ -573,7 +575,7 @@ tuple_lock_retry:
 	tuple->t_tableOid = slot->tts_tableOid;
 
 	/* store in slot, transferring existing pin */
-	ExecStorePinnedBufferHeapTuple(tuple, slot, buffer);
+	PGTdeExecStorePinnedBufferHeapTuple(relation, tuple, slot, buffer);
 
 	return result;
 }
@@ -632,6 +634,13 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 	}
 
 	smgrclose(srel);
+	if (rel->rd_rel->relkind == RELKIND_RELATION ||
+		rel->rd_rel->relkind == RELKIND_MATVIEW	)
+	{
+		ereport(DEBUG2,
+		(errmsg("creating key file for relation %s", RelationGetRelationName(rel))));
+		pg_tde_create_key_fork(newrlocator, rel);
+	}
 }
 
 static void
@@ -1156,7 +1165,7 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 
 		if (sample_it)
 		{
-			ExecStoreBufferHeapTuple(targtuple, slot, hscan->rs_cbuf);
+			PGTdeExecStoreBufferHeapTuple(scan->rs_rd, targtuple, slot, hscan->rs_cbuf);
 			hscan->rs_cindex++;
 
 			/* note that we leave the buffer locked here! */
@@ -1636,7 +1645,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 		/* Set up for predicate or expression evaluation */
-		ExecStoreBufferHeapTuple(heapTuple, slot, hscan->rs_cbuf);
+		PGTdeExecStoreBufferHeapTuple(heapRelation, heapTuple, slot, hscan->rs_cbuf);
 
 		/*
 		 * In a partial index, discard tuples that don't satisfy the
@@ -2270,7 +2279,7 @@ pg_tdeam_scan_bitmap_next_tuple(TableScanDesc scan,
 	 * Set up the result slot to point to this tuple.  Note that the slot
 	 * acquires a pin on the buffer.
 	 */
-	ExecStoreBufferHeapTuple(&hscan->rs_ctup,
+	PGTdeExecStoreBufferHeapTuple(scan->rs_rd, &hscan->rs_ctup,
 							 slot,
 							 hscan->rs_cbuf);
 
@@ -2424,7 +2433,7 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 			if (!pagemode)
 				LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
-			ExecStoreBufferHeapTuple(tuple, slot, hscan->rs_cbuf);
+			PGTdeExecStoreBufferHeapTuple(scan->rs_rd, tuple, slot, hscan->rs_cbuf);
 
 			/* Count successfully-fetched tuples as heap fetches */
 			pgstat_count_pg_tde_getnext(scan->rs_rd);
@@ -2620,4 +2629,10 @@ Datum
 pg_tdeam_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&pg_tdeam_methods);
+}
+
+bool
+is_pg_tde_rel(Relation rel)
+{
+	return (rel->rd_tableam == (TableAmRoutine *) &pg_tdeam_methods);
 }
