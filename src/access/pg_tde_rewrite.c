@@ -711,7 +711,7 @@ raw_pg_tde_insert(RewriteState state, HeapTuple tup)
 	}
 
 	/* And now we can insert the tuple into the page */
-	newoff = TDE_PageAddItem(heaptup->t_tableOid, BufferGetBlockNumber(state->rs_buffer), page, (Item) heaptup->t_data, heaptup->t_len,
+	newoff = TDE_PageAddItem(heaptup->t_tableOid, state->rs_blockno, page, (Item) heaptup->t_data, heaptup->t_len,
 						 InvalidOffsetNumber, false, true);
 	if (newoff == InvalidOffsetNumber)
 		elog(ERROR, "failed to add tuple");
