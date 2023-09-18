@@ -1417,7 +1417,6 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 	}
 	else
 	{
-		Assert(0); // TODO: to be implemented with encryption
 		PGAlignedBlock scratch;
 		char	   *scratchptr = scratch.data;
 
@@ -1491,6 +1490,30 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 			ItemId		lp;
 
 			itemidptr = &itemidbase[i];
+			if(copy_head < copy_tail) { // TODO: recheck this condition
+				// We leave the original loop as-is, and recrypt tuples one by one
+				// This is definitely not the fastest, but simple
+				Oid tableOid = RelationGetRelid(rel);
+				BlockNumber bn = BufferGetBlockNumber(buffer);
+				unsigned long headerSize = sizeof(HeapTupleHeaderData);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvla"
+				char tmpData[itemidptr->alignedlen];
+#pragma GCC diagnostic pop
+
+#ifdef ENCRYPTION_DEBUG
+				fprintf(stderr, " >>>> [non-sorted] RELOCATING FROM %u to %u tail %u\n", copy_head, upper, copy_tail);
+				/* Decrypt with old offset */
+				fprintf(stderr, " >>>>> DECRYPTING\n");
+#endif
+				PGTdeCryptTupInternal(tableOid, bn, copy_head, scratchptr + copy_head, tmpData, headerSize, itemidptr->len);
+				/* Reencrypt with new offset */
+#ifdef ENCRYPTION_DEBUG
+				fprintf(stderr, " >>>>> ENCRYPTING\n");
+#endif
+				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, scratchptr + copy_head, headerSize, itemidptr->len);
+			}
+
 			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
 
 			/* copy pending tuples when we detect a gap */
@@ -1516,6 +1539,29 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 			lp->lp_off = upper;
 		}
 
+		/* Recrypt the remaining chunk */
+		if(copy_head < copy_tail) { // TODO: recheck this condition
+			Oid tableOid = RelationGetRelid(rel);
+			BlockNumber bn = BufferGetBlockNumber(buffer);
+			unsigned long headerSize = sizeof(HeapTupleHeaderData);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvla"
+			char tmpData[itemidptr->alignedlen];
+#pragma GCC diagnostic pop
+
+#ifdef ENCRYPTION_DEBUG
+			fprintf(stderr, " >>>> [non-sorted] RELOCATING FROM %u to %u tail %u\n", copy_head, upper, copy_tail);
+			/* Decrypt with old offset */
+			fprintf(stderr, " >>>>> DECRYPTING\n");
+#endif
+			PGTdeCryptTupInternal(tableOid, bn, copy_head, scratchptr + copy_head, tmpData, headerSize, itemidptr->len);
+			/* Reencrypt with new offset */
+#ifdef ENCRYPTION_DEBUG
+			fprintf(stderr, " >>>>> ENCRYPTING\n");
+#endif
+			PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, scratchptr + copy_head, headerSize, itemidptr->len);
+		}
+		
 		/* Copy the remaining chunk */
 		memcpy((char *) page + upper,
 			   scratchptr + copy_head,

@@ -48,7 +48,7 @@ void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInP
 	for(unsigned i = 0; i < to - from; ++i) {
 		const char v = ((char*)(t_data))[i + from];
 		char realKey = encKey[aesBlockOffset + i];
-#if ENCRYPTION_DEBUG
+#if ENCRYPTION_DEBUG > 1
 	    fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", v & 0xFF, (v ^ realKey) & 0xFF);
 #endif
 		out[i + from] = v ^ realKey;
