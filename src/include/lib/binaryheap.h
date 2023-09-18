@@ -59,8 +59,11 @@ extern void binaryheap_build(binaryheap *heap);
 extern void binaryheap_add(binaryheap *heap, bh_node_type d);
 extern bh_node_type binaryheap_first(binaryheap *heap);
 extern bh_node_type binaryheap_remove_first(binaryheap *heap);
+extern void binaryheap_remove_node(binaryheap *heap, int n);
 extern void binaryheap_replace_first(binaryheap *heap, bh_node_type d);
 
 #define binaryheap_empty(h)			((h)->bh_size == 0)
+#define binaryheap_size(h)			((h)->bh_size)
+#define binaryheap_get_node(h, n)	((h)->bh_nodes[n])
 
 #endif							/* BINARYHEAP_H */

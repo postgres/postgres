@@ -216,6 +216,35 @@ binaryheap_remove_first(binaryheap *heap)
 }
 
 /*
+ * binaryheap_remove_node
+ *
+ * Removes the nth (zero based) node from the heap.  The caller must ensure
+ * that there are at least (n + 1) nodes in the heap.  O(log n) worst case.
+ */
+void
+binaryheap_remove_node(binaryheap *heap, int n)
+{
+	int			cmp;
+
+	Assert(!binaryheap_empty(heap) && heap->bh_has_heap_property);
+	Assert(n >= 0 && n < heap->bh_size);
+
+	/* compare last node to the one that is being removed */
+	cmp = heap->bh_compare(heap->bh_nodes[--heap->bh_size],
+						   heap->bh_nodes[n],
+						   heap->bh_arg);
+
+	/* remove the last node, placing it in the vacated entry */
+	heap->bh_nodes[n] = heap->bh_nodes[heap->bh_size];
+
+	/* sift as needed to preserve the heap property */
+	if (cmp > 0)
+		sift_up(heap, n);
+	else if (cmp < 0)
+		sift_down(heap, n);
+}
+
+/*
  * binaryheap_replace_first
  *
  * Replace the topmost element of a non-empty heap, preserving the heap
