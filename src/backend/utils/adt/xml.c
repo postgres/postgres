@@ -2761,6 +2761,10 @@ cursor_to_xmlschema(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
 				 errmsg("cursor \"%s\" does not exist", name)));
+	if (portal->tupDesc == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("portal \"%s\" does not return tuples", name)));
 
 	xmlschema = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc,
 													   InvalidOid, nulls,
