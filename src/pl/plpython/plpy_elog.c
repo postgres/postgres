@@ -107,9 +107,6 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 		}
 		primary = emsg.data;
 
-		/* Since we have a format string, we cannot have a SPI detail. */
-		Assert(detail == NULL);
-
 		/* If there's an exception message, it goes in the detail. */
 		if (xmsg)
 			detail = xmsg;
