@@ -12,10 +12,22 @@
 #define BINARYHEAP_H
 
 /*
+ * We provide a Datum-based API for backend code and a void *-based API for
+ * frontend code (since the Datum definitions are not available to frontend
+ * code).  You should typically avoid using bh_node_type directly and instead
+ * use Datum or void * as appropriate.
+ */
+#ifdef FRONTEND
+typedef void *bh_node_type;
+#else
+typedef Datum bh_node_type;
+#endif
+
+/*
  * For a max-heap, the comparator must return <0 iff a < b, 0 iff a == b,
  * and >0 iff a > b.  For a min-heap, the conditions are reversed.
  */
-typedef int (*binaryheap_comparator) (Datum a, Datum b, void *arg);
+typedef int (*binaryheap_comparator) (bh_node_type a, bh_node_type b, void *arg);
 
 /*
  * binaryheap
@@ -34,7 +46,7 @@ typedef struct binaryheap
 	bool		bh_has_heap_property;	/* debugging cross-check */
 	binaryheap_comparator bh_compare;
 	void	   *bh_arg;
-	Datum		bh_nodes[FLEXIBLE_ARRAY_MEMBER];
+	bh_node_type bh_nodes[FLEXIBLE_ARRAY_MEMBER];
 } binaryheap;
 
 extern binaryheap *binaryheap_allocate(int capacity,
@@ -42,12 +54,12 @@ extern binaryheap *binaryheap_allocate(int capacity,
 									   void *arg);
 extern void binaryheap_reset(binaryheap *heap);
 extern void binaryheap_free(binaryheap *heap);
-extern void binaryheap_add_unordered(binaryheap *heap, Datum d);
+extern void binaryheap_add_unordered(binaryheap *heap, bh_node_type d);
 extern void binaryheap_build(binaryheap *heap);
-extern void binaryheap_add(binaryheap *heap, Datum d);
-extern Datum binaryheap_first(binaryheap *heap);
-extern Datum binaryheap_remove_first(binaryheap *heap);
-extern void binaryheap_replace_first(binaryheap *heap, Datum d);
+extern void binaryheap_add(binaryheap *heap, bh_node_type d);
+extern bh_node_type binaryheap_first(binaryheap *heap);
+extern bh_node_type binaryheap_remove_first(binaryheap *heap);
+extern void binaryheap_replace_first(binaryheap *heap, bh_node_type d);
 
 #define binaryheap_empty(h)			((h)->bh_size == 0)
 

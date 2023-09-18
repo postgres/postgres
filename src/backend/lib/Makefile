@@ -13,7 +13,6 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = \
-	binaryheap.o \
 	bipartite_match.o \
 	bloomfilter.o \
 	dshash.o \

@@ -6,15 +6,22 @@
  * Portions Copyright (c) 2012-2023, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/lib/binaryheap.c
+ *	  src/common/binaryheap.c
  *
  *-------------------------------------------------------------------------
  */
 
+#ifdef FRONTEND
+#include "postgres_fe.h"
+#else
 #include "postgres.h"
+#endif
 
 #include <math.h>
 
+#ifdef FRONTEND
+#include "common/logging.h"
+#endif
 #include "lib/binaryheap.h"
 
 static void sift_down(binaryheap *heap, int node_off);
@@ -34,7 +41,7 @@ binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
 	int			sz;
 	binaryheap *heap;
 
-	sz = offsetof(binaryheap, bh_nodes) + sizeof(Datum) * capacity;
+	sz = offsetof(binaryheap, bh_nodes) + sizeof(bh_node_type) * capacity;
 	heap = (binaryheap *) palloc(sz);
 	heap->bh_space = capacity;
 	heap->bh_compare = compare;
@@ -106,10 +113,16 @@ parent_offset(int i)
  * afterwards.
  */
 void
-binaryheap_add_unordered(binaryheap *heap, Datum d)
+binaryheap_add_unordered(binaryheap *heap, bh_node_type d)
 {
 	if (heap->bh_size >= heap->bh_space)
+	{
+#ifdef FRONTEND
+		pg_fatal("out of binary heap slots");
+#else
 		elog(ERROR, "out of binary heap slots");
+#endif
+	}
 	heap->bh_has_heap_property = false;
 	heap->bh_nodes[heap->bh_size] = d;
 	heap->bh_size++;
@@ -138,10 +151,16 @@ binaryheap_build(binaryheap *heap)
  * the heap property.
  */
 void
-binaryheap_add(binaryheap *heap, Datum d)
+binaryheap_add(binaryheap *heap, bh_node_type d)
 {
 	if (heap->bh_size >= heap->bh_space)
+	{
+#ifdef FRONTEND
+		pg_fatal("out of binary heap slots");
+#else
 		elog(ERROR, "out of binary heap slots");
+#endif
+	}
 	heap->bh_nodes[heap->bh_size] = d;
 	heap->bh_size++;
 	sift_up(heap, heap->bh_size - 1);
@@ -154,7 +173,7 @@ binaryheap_add(binaryheap *heap, Datum d)
  * without modifying the heap. The caller must ensure that this
  * routine is not used on an empty heap. Always O(1).
  */
-Datum
+bh_node_type
 binaryheap_first(binaryheap *heap)
 {
 	Assert(!binaryheap_empty(heap) && heap->bh_has_heap_property);
@@ -169,10 +188,10 @@ binaryheap_first(binaryheap *heap)
  * that this routine is not used on an empty heap. O(log n) worst
  * case.
  */
-Datum
+bh_node_type
 binaryheap_remove_first(binaryheap *heap)
 {
-	Datum		result;
+	bh_node_type result;
 
 	Assert(!binaryheap_empty(heap) && heap->bh_has_heap_property);
 
@@ -204,7 +223,7 @@ binaryheap_remove_first(binaryheap *heap)
  * sifting the new node down.
  */
 void
-binaryheap_replace_first(binaryheap *heap, Datum d)
+binaryheap_replace_first(binaryheap *heap, bh_node_type d)
 {
 	Assert(!binaryheap_empty(heap) && heap->bh_has_heap_property);
 
@@ -221,7 +240,7 @@ binaryheap_replace_first(binaryheap *heap, Datum d)
 static void
 sift_up(binaryheap *heap, int node_off)
 {
-	Datum		node_val = heap->bh_nodes[node_off];
+	bh_node_type node_val = heap->bh_nodes[node_off];
 
 	/*
 	 * Within the loop, the node_off'th array entry is a "hole" that
@@ -232,7 +251,7 @@ sift_up(binaryheap *heap, int node_off)
 	{
 		int			cmp;
 		int			parent_off;
-		Datum		parent_val;
+		bh_node_type parent_val;
 
 		/*
 		 * If this node is smaller than its parent, the heap condition is
@@ -264,7 +283,7 @@ sift_up(binaryheap *heap, int node_off)
 static void
 sift_down(binaryheap *heap, int node_off)
 {
-	Datum		node_val = heap->bh_nodes[node_off];
+	bh_node_type node_val = heap->bh_nodes[node_off];
 
 	/*
 	 * Within the loop, the node_off'th array entry is a "hole" that
