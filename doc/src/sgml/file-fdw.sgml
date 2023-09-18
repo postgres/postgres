@@ -279,4 +279,20 @@ OPTIONS ( filename 'log/pglog.csv', format 'csv' );
   </para>
  </example>
 
+ <example>
+  <title>Create a Foreign Table with an option on a column</title>
+  <para>
+   To set the <literal>force_null</literal> option for a column, use the
+   <literal>OPTIONS</literal> keyword.
+  </para>
+<programlisting>
+CREATE FOREIGN TABLE films (
+ code char(5) NOT NULL,
+ title text NOT NULL,
+ rating text OPTIONS (force_null 'true')
+) SERVER film_server
+OPTIONS ( filename 'films/db.csv', format 'csv' );
+</programlisting>
+ </example>
+
 </sect1>
