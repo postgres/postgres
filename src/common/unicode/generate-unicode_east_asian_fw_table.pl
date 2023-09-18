@@ -23,7 +23,7 @@ foreach my $line (<ARGV>)
 	chomp $line;
 	$line =~ s/\s*#.*$//;
 	next if $line eq '';
-	my ($codepoint, $width) = split ';', $line;
+	my ($codepoint, $width) = split /\s*;\s*/, $line;
 
 	if ($codepoint =~ /\.\./)
 	{
