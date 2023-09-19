@@ -76,7 +76,7 @@
 #endif
 
 /* word break characters */
-#define WORD_BREAKS		"\t\n@$><=;|&{() "
+#define WORD_BREAKS		"\t\n@><=;|&{() "
 
 /*
  * Since readline doesn't let us pass any state through to the tab completion
@@ -6061,7 +6061,7 @@ identifier_needs_quotes(const char *ident)
 	/* Check syntax. */
 	if (!((ident[0] >= 'a' && ident[0] <= 'z') || ident[0] == '_'))
 		return true;
-	if (strspn(ident, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(ident))
+	if (strspn(ident, "abcdefghijklmnopqrstuvwxyz0123456789_$") != strlen(ident))
 		return true;
 
 	/*
