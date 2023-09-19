@@ -1390,9 +1390,21 @@ ImportSnapshot(const char *idstr)
 
 	f = AllocateFile(path, PG_BINARY_R);
 	if (!f)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid snapshot identifier: \"%s\"", idstr)));
+	{
+		/*
+		 * If file is missing while identifier has a correct format, avoid
+		 * system errors.
+		 */
+		if (errno == ENOENT)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("snapshot \"%s\" does not exist", idstr)));
+		else
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open file \"%s\" for reading: %m",
+							path)));
+	}
 
 	/* get the size of the file so that we know how much memory we need */
 	if (fstat(fileno(f), &stat_buf))
