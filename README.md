@@ -4,7 +4,7 @@ This is an experimental encrypted access method for Postgres 16.
 
 ## Latest test release
 
-To download the latest build of the main branch, use the `HEAD` release from releases.
+To download the latest build of the main branch, use the `HEAD` release from [releases](https://github.com/Percona-Lab/postgres-tde-ext/releases).
 
 Builds are available in a tar.gz format, containing only the required files, and as a deb package.
 The deb package is built againts the pgdg16 release, but this dependency is not yet enforced in the package.
