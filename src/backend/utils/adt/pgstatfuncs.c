@@ -709,14 +709,10 @@ pg_stat_get_backend_subxact(PG_FUNCTION_ARGS)
 {
 #define PG_STAT_GET_SUBXACT_COLS	2
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_SUBXACT_COLS];
-	bool		nulls[PG_STAT_GET_SUBXACT_COLS];
+	Datum		values[PG_STAT_GET_SUBXACT_COLS] = {0};
+	bool		nulls[PG_STAT_GET_SUBXACT_COLS] = {0};
 	int32		beid = PG_GETARG_INT32(0);
 	LocalPgBackendStatus *local_beentry;
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_SUBXACT_COLS);
