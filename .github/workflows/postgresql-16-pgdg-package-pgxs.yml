@@ -1,5 +1,9 @@
 name: postgresql-16-pgdg-package-pgxs
-on: [pull_request, workflow_dispatch]
+on: 
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   build:
@@ -49,3 +53,57 @@ jobs:
           sudo -u postgres bash -c 'make USE_PGXS=1'
           sudo make USE_PGXS=1 install
         working-directory: src/postgres-tde-ext
+
+      - name: Create release directory
+        run: |
+          sudo mkdir pgtde-pgdg16
+          sudo mkdir -p pgtde-pgdg16/usr/lib/postgresql/16/lib/
+          sudo mkdir -p pgtde-pgdg16/share/postgresql/16/extension/
+          sudo cp /usr/share/postgresql/16/extension/pg_tde* pgtde-pgdg16/share/postgresql/16/extension/
+          sudo cp /usr/lib/postgresql/16/lib/pg_tde* pgtde-pgdg16/usr/lib/postgresql/16/lib/
+
+      - name: Upload tgz
+        uses: actions/upload-artifact@v3
+        with:
+          name: pg_tde_pgdg16_binary
+          path: pgtde-pgdg16
+
+      - name: Create deb
+        run: |
+          sudo mkdir pgtde-pgdg16/DEBIAN
+          sudo sh -c 'echo "Package: pgtde-pgdg16" > pgtde-pgdg16/DEBIAN/control'
+          sudo sh -c 'echo "Version: 0.1" >> pgtde-pgdg16/DEBIAN/control'
+          sudo sh -c 'echo "Architecture: amd64" >> pgtde-pgdg16/DEBIAN/control'
+          sudo sh -c 'echo "Maintainer: Percona" >> pgtde-pgdg16/DEBIAN/control'
+          sudo sh -c 'echo "Description: Experimental pg_tde extension" >> pgtde-pgdg16/DEBIAN/control'
+          sudo dpkg-deb --build --root-owner-group pgtde-pgdg16
+
+      - name: Test deb
+        run: |
+          sudo rm -rf /usr/share/postgresql/16/extension/pg_tde*
+          sudo rm -rf /usr/lib/postgresql/16/lib/pg_tde*
+          sudo dpkg -i --debug=7777 pgtde-pgdg16.deb
+
+      - name: Upload deb
+        uses: actions/upload-artifact@v3
+        with:
+          name: pg_tde_deb
+          path: pgtde-pgdg16.deb
+
+      - name: Create tgz
+        run: |
+          cd pgtde-pgdg16 && sudo tar -czvf ../pgtde-pgdg16.tar.gz .
+
+      - name: Publish release
+        uses: ncipollo/release-action@v1
+        # Only try and deploy on merged code
+        if: "github.repository == 'Percona-Lab/postgres-tde-ext' && github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule')"
+        with:
+          artifacts: "pgtde-pgdg16.tar.gz,pgtde-pgdg16.deb"
+          omitBody: true
+          allowUpdates: true
+          generateReleaseNotes: true
+          makeLatest: true
+          tag: "latest"
+          name: "HEAD"
+          replacesArtifacts: true

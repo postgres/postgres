@@ -2,9 +2,16 @@
 
 This is an experimental encrypted access method for Postgres 16.
 
+## Latest test release
+
+To download the latest build of the main branch, use the `HEAD` release from [releases](https://github.com/Percona-Lab/postgres-tde-ext/releases).
+
+Builds are available in a tar.gz format, containing only the required files, and as a deb package.
+The deb package is built againts the pgdg16 release, but this dependency is not yet enforced in the package.
+
 ## Installation steps
 
-1. Build and install the plugin either with make or meson (see build steps)
+1. Build and install the plugin either with make or meson (see build steps), or download a release
 2. Add pg_tde to the preload libraries: `ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';`
 3. Restart the postgres server
 4. Create the extension: `CREATE EXTENSION pg_tde;`
