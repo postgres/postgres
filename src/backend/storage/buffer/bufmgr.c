@@ -955,7 +955,7 @@ ExtendBufferedRelTo(BufferManagerRelation bmr,
 		current_size = first_block + extended_by;
 		Assert(num_pages != 0 || current_size >= extend_to);
 
-		for (int i = 0; i < extended_by; i++)
+		for (uint32 i = 0; i < extended_by; i++)
 		{
 			if (first_block + i != extend_to - 1)
 				ReleaseBuffer(buffers[i]);
@@ -1938,7 +1938,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 	 * This needs to happen before we extend the relation, because as soon as
 	 * we do, other backends can start to read in those pages.
 	 */
-	for (int i = 0; i < extend_by; i++)
+	for (uint32 i = 0; i < extend_by; i++)
 	{
 		Buffer		victim_buf = buffers[i];
 		BufferDesc *victim_buf_hdr = GetBufferDescriptor(victim_buf - 1);
@@ -2070,7 +2070,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 							io_start, extend_by);
 
 	/* Set BM_VALID, terminate IO, and wake up any waiters */
-	for (int i = 0; i < extend_by; i++)
+	for (uint32 i = 0; i < extend_by; i++)
 	{
 		Buffer		buf = buffers[i];
 		BufferDesc *buf_hdr = GetBufferDescriptor(buf - 1);
