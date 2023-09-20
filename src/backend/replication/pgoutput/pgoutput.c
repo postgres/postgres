@@ -2262,8 +2262,8 @@ rel_sync_cache_relation_cb(Datum arg, Oid relid)
 
 	/*
 	 * We can get here if the plugin was used in SQL interface as the
-	 * RelSchemaSyncCache is destroyed when the decoding finishes, but there
-	 * is no way to unregister the relcache invalidation callback.
+	 * RelationSyncCache is destroyed when the decoding finishes, but there is
+	 * no way to unregister the relcache invalidation callback.
 	 */
 	if (RelationSyncCache == NULL)
 		return;
@@ -2314,8 +2314,8 @@ rel_sync_cache_publication_cb(Datum arg, int cacheid, uint32 hashvalue)
 
 	/*
 	 * We can get here if the plugin was used in SQL interface as the
-	 * RelSchemaSyncCache is destroyed when the decoding finishes, but there
-	 * is no way to unregister the invalidation callbacks.
+	 * RelationSyncCache is destroyed when the decoding finishes, but there is
+	 * no way to unregister the invalidation callbacks.
 	 */
 	if (RelationSyncCache == NULL)
 		return;
