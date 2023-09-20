@@ -127,24 +127,30 @@ initTrie(const char *filename)
 				 * src and trg are sequences of one or more non-whitespace
 				 * characters, separated by whitespace.  Whitespace at start
 				 * or end of line is ignored.  If trg is omitted, an empty
-				 * string is used as the replacement.
+				 * string is used as the replacement.  trg can be optionally
+				 * quoted, in which case whitespaces are included in it.
 				 *
 				 * We use a simple state machine, with states
 				 *	0	initial (before src)
 				 *	1	in src
 				 *	2	in whitespace after src
-				 *	3	in trg
-				 *	4	in whitespace after trg
-				 *	-1	syntax error detected
+				 *	3	in trg (non-quoted)
+				 *	4	in trg (quoted)
+				 *	5	in whitespace after trg
+				 *	-1	syntax error detected (two strings)
+				 *	-2	syntax error detected (unfinished quoted string)
 				 *----------
 				 */
 				int			state;
 				char	   *ptr;
 				char	   *src = NULL;
 				char	   *trg = NULL;
+				char	   *trgstore = NULL;
 				int			ptrlen;
 				int			srclen = 0;
 				int			trglen = 0;
+				int			trgstorelen = 0;
+				bool		trgquoted = false;
 
 				state = 0;
 				for (ptr = line; *ptr; ptr += ptrlen)
@@ -156,8 +162,10 @@ initTrie(const char *filename)
 						if (state == 1)
 							state = 2;
 						else if (state == 3)
-							state = 4;
-						continue;
+							state = 5;
+						/* whitespaces are OK in quoted area */
+						if (state != 4)
+							continue;
 					}
 					switch (state)
 					{
@@ -173,13 +181,40 @@ initTrie(const char *filename)
 							break;
 						case 2:
 							/* start of trg */
+							if (*ptr == '"')
+							{
+								trgquoted = true;
+								state = 4;
+							}
+							else
+								state = 3;
+
 							trg = ptr;
 							trglen = ptrlen;
-							state = 3;
 							break;
 						case 3:
-							/* continue trg */
+							/* continue non-quoted trg */
 							trglen += ptrlen;
+							break;
+						case 4:
+							/* continue quoted trg */
+							trglen += ptrlen;
+
+							/*
+							 * If this is a quote, consider it as the end of
+							 * trg except if the follow-up character is itself
+							 * a quote.
+							 */
+							if (*ptr == '"')
+							{
+								if (*(ptr + 1) == '"')
+								{
+									ptr++;
+									trglen += 1;
+								}
+								else
+									state = 5;
+							}
 							break;
 						default:
 							/* bogus line format */
@@ -195,15 +230,46 @@ initTrie(const char *filename)
 					trglen = 0;
 				}
 
+				/* If still in a quoted area, fallback to an error */
+				if (state == 4)
+					state = -2;
+
+				/* If trg was quoted, remove its quotes and unescape it */
+				if (trgquoted && state > 0)
+				{
+					/* Ignore first and end quotes */
+					trgstore = palloc0(sizeof(char *) * trglen - 2);
+					trgstorelen = 0;
+					for (int i = 1; i < trglen - 1; i++)
+					{
+						trgstore[trgstorelen] = trg[i];
+						trgstorelen++;
+						/* skip second double quotes */
+						if (trg[i] == '"' && trg[i + 1] == '"')
+							i++;
+					}
+				}
+				else
+				{
+					trgstore = palloc0(sizeof(char *) * trglen);
+					trgstorelen = trglen;
+					memcpy(trgstore, trg, trgstorelen);
+				}
+
 				if (state > 0)
 					rootTrie = placeChar(rootTrie,
 										 (unsigned char *) src, srclen,
-										 trg, trglen);
-				else if (state < 0)
+										 trgstore, trgstorelen);
+				else if (state == -1)
 					ereport(WARNING,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("invalid syntax: more than two strings in unaccent rule")));
+				else if (state == -2)
+					ereport(WARNING,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid syntax: unfinished quoted string in unaccent rule")));
 
+				pfree(trgstore);
 				pfree(line);
 			}
 			skip = false;

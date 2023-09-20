@@ -51,6 +51,18 @@ SELECT unaccent('℗'); -- sound recording copyright
  (P)
 (1 row)
 
+SELECT unaccent('1½'); -- math expression with whitespace
+ unaccent 
+----------
+ 1 1/2
+(1 row)
+
+SELECT unaccent('〝'); -- quote
+ unaccent 
+----------
+ "
+(1 row)
+
 SELECT unaccent('unaccent', 'foobar');
  unaccent 
 ----------
@@ -93,6 +105,18 @@ SELECT unaccent('unaccent', '℗');
  (P)
 (1 row)
 
+SELECT unaccent('unaccent', '1½');
+ unaccent 
+----------
+ 1 1/2
+(1 row)
+
+SELECT unaccent('unaccent', '〝');
+ unaccent 
+----------
+ "
+(1 row)
+
 SELECT ts_lexize('unaccent', 'foobar');
  ts_lexize 
 -----------
@@ -133,6 +157,18 @@ SELECT ts_lexize('unaccent', '℗');
  ts_lexize 
 -----------
  {(P)}
+(1 row)
+
+SELECT ts_lexize('unaccent', '1½');
+ ts_lexize 
+-----------
+ {"1 1/2"}
+(1 row)
+
+SELECT ts_lexize('unaccent', '〝');
+ ts_lexize 
+-----------
+ {"\""}
 (1 row)
 
 -- Controversial case.  Black-Letter Capital H (U+210C) is translated by

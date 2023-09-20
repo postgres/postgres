@@ -20,6 +20,8 @@ SELECT unaccent('˃˖˗˜');
 SELECT unaccent('À');  -- Remove combining diacritical 0x0300
 SELECT unaccent('℃℉'); -- degree signs
 SELECT unaccent('℗'); -- sound recording copyright
+SELECT unaccent('1½'); -- math expression with whitespace
+SELECT unaccent('〝'); -- quote
 
 SELECT unaccent('unaccent', 'foobar');
 SELECT unaccent('unaccent', 'ёлка');
@@ -28,6 +30,8 @@ SELECT unaccent('unaccent', '˃˖˗˜');
 SELECT unaccent('unaccent', 'À');
 SELECT unaccent('unaccent', '℃℉');
 SELECT unaccent('unaccent', '℗');
+SELECT unaccent('unaccent', '1½');
+SELECT unaccent('unaccent', '〝');
 
 SELECT ts_lexize('unaccent', 'foobar');
 SELECT ts_lexize('unaccent', 'ёлка');
@@ -36,6 +40,8 @@ SELECT ts_lexize('unaccent', '˃˖˗˜');
 SELECT ts_lexize('unaccent', 'À');
 SELECT ts_lexize('unaccent', '℃℉');
 SELECT ts_lexize('unaccent', '℗');
+SELECT ts_lexize('unaccent', '1½');
+SELECT ts_lexize('unaccent', '〝');
 
 -- Controversial case.  Black-Letter Capital H (U+210C) is translated by
 -- Latin-ASCII.xml as 'x', but it should be 'H'.

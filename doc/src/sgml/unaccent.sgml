@@ -86,6 +86,22 @@
 
    <listitem>
     <para>
+     Some characters, like numeric symbols, may require whitespaces in their
+     translation rule. It is possible to use double quotes around the translated
+     characters in this case. A double quote needs to be escaped with a second
+     double quote when including one in the translated character. For example:
+<programlisting>
+&frac14;      " 1/4"
+&frac12;      " 1/2"
+&frac34;      " 3/4"
+&ldquo;       """"
+&rdquo;       """"
+</programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      As with other <productname>PostgreSQL</productname> text search configuration files,
      the rules file must be stored in UTF-8 encoding.  The data is
      automatically translated into the current database's encoding when

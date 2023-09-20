@@ -58,6 +58,10 @@ COMBINING_MARK_RANGES = ((0x0300, 0x0362),   # Mn: Accents, IPA
 
 def print_record(codepoint, letter):
     if letter:
+        # If the letter has whitespace or double quotes, escape double
+        # quotes and apply more quotes around it.
+        if (' ' in letter) or ('"' in letter):
+            letter = '"' + letter.replace('"', '""') + '"'
         output = chr(codepoint) + "\t" + letter
     else:
         output = chr(codepoint)
