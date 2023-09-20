@@ -27,7 +27,7 @@ ANALYZE [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
 
     VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
     SKIP_LOCKED [ <replaceable class="parameter">boolean</replaceable> ]
-    BUFFER_USAGE_LIMIT [ <replaceable class="parameter">size</replaceable> ]
+    BUFFER_USAGE_LIMIT <replaceable class="parameter">size</replaceable>
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -128,9 +128,9 @@ ANALYZE [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
      <para>
       Specifies an amount of memory in kilobytes.  Sizes may also be specified
       as a string containing the numerical size followed by any one of the
-      following memory units: <literal>kB</literal> (kilobytes),
-      <literal>MB</literal> (megabytes), <literal>GB</literal> (gigabytes), or
-      <literal>TB</literal> (terabytes).
+      following memory units: <literal>B</literal> (bytes),
+      <literal>kB</literal> (kilobytes), <literal>MB</literal> (megabytes),
+      <literal>GB</literal> (gigabytes), or <literal>TB</literal> (terabytes).
      </para>
     </listitem>
    </varlistentry>

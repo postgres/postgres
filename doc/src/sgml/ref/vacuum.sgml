@@ -38,7 +38,7 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
     PARALLEL <replaceable class="parameter">integer</replaceable>
     SKIP_DATABASE_STATS [ <replaceable class="parameter">boolean</replaceable> ]
     ONLY_DATABASE_STATS [ <replaceable class="parameter">boolean</replaceable> ]
-    BUFFER_USAGE_LIMIT [ <replaceable class="parameter">size</replaceable> ]
+    BUFFER_USAGE_LIMIT <replaceable class="parameter">size</replaceable>
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -389,9 +389,9 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
      <para>
       Specifies an amount of memory in kilobytes.  Sizes may also be specified
       as a string containing the numerical size followed by any one of the
-      following memory units: <literal>kB</literal> (kilobytes),
-      <literal>MB</literal> (megabytes), <literal>GB</literal> (gigabytes), or
-      <literal>TB</literal> (terabytes).
+      following memory units: <literal>B</literal> (bytes),
+      <literal>kB</literal> (kilobytes), <literal>MB</literal> (megabytes),
+      <literal>GB</literal> (gigabytes), or <literal>TB</literal> (terabytes).
      </para>
     </listitem>
    </varlistentry>
