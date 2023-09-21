@@ -79,9 +79,6 @@ GetConnection(void)
 	/*
 	 * Merge the connection info inputs given in form of connection string,
 	 * options and default values (dbname=replication, replication=true, etc.)
-	 * Explicitly discard any dbname value in the connection string;
-	 * otherwise, PQconnectdbParams() would interpret that value as being
-	 * itself a connection string.
 	 */
 	i = 0;
 	if (connection_string)
@@ -92,18 +89,24 @@ GetConnection(void)
 
 		for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 		{
-			if (conn_opt->val != NULL && conn_opt->val[0] != '\0' &&
-				strcmp(conn_opt->keyword, "dbname") != 0)
+			if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
 				argcount++;
 		}
 
 		keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
 		values = pg_malloc0((argcount + 1) * sizeof(*values));
 
+		/*
+		 * Set dbname here already, so it can be overridden by a dbname in the
+		 * connection string.
+		 */
+		keywords[i] = "dbname";
+		values[i] = "replication";
+		i++;
+
 		for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 		{
-			if (conn_opt->val != NULL && conn_opt->val[0] != '\0' &&
-				strcmp(conn_opt->keyword, "dbname") != 0)
+			if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
 			{
 				keywords[i] = conn_opt->keyword;
 				values[i] = conn_opt->val;
@@ -115,11 +118,11 @@ GetConnection(void)
 	{
 		keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
 		values = pg_malloc0((argcount + 1) * sizeof(*values));
+		keywords[i] = "dbname";
+		values[i] = dbname;
+		i++;
 	}
 
-	keywords[i] = "dbname";
-	values[i] = dbname == NULL ? "replication" : dbname;
-	i++;
 	keywords[i] = "replication";
 	values[i] = dbname == NULL ? "true" : "database";
 	i++;
@@ -171,7 +174,11 @@ GetConnection(void)
 			values[i] = NULL;
 		}
 
-		tmpconn = PQconnectdbParams(keywords, values, true);
+		/*
+		 * Only expand dbname when we did not already parse the argument as a
+		 * connection string ourselves.
+		 */
+		tmpconn = PQconnectdbParams(keywords, values, !connection_string);
 
 		/*
 		 * If there is too little memory even to allocate the PGconn object
