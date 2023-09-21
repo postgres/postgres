@@ -42,9 +42,9 @@ int keyringFilePreloadCache(void)
 	{
 		fread(cache, keyringCacheMemorySize(), 1, f);
 		fclose(f);
-		elog(WARNING, "Keyring file %s found, existing keys are available, %u.", keyringFileDataFileName, cache->keyCount);
+		elog(INFO, "Keyring file '%s' found, existing keys are available, %u.", keyringFileDataFileName, cache->keyCount);
 	} else {
-		elog(WARNING, "Keyring file %s not found, not loading existing keys.", keyringFileDataFileName);
+		elog(WARNING, "Keyring file '%s' not found, not loading existing keys.", keyringFileDataFileName);
 	}
 
 	return 1;
@@ -52,11 +52,16 @@ int keyringFilePreloadCache(void)
 
 int keyringFileStoreKey(const keyInfo* ki)
 {
+	if (strlen(keyringFileDataFileName) == 0) {
+		elog(ERROR, "Keyring datafile is not set");
+		return false;
+	}
+
 	// First very basic prototype: we just dump the cache to disk
 	FILE* f = fopen(keyringFileDataFileName, "w");
 	if(f == NULL)
 	{
-		elog(ERROR, "Couldn't write keyring data: %s", keyringFileDataFileName);
+		elog(ERROR, "Couldn't write keyring data into '%s'", keyringFileDataFileName);
 		return false;
 	}
 

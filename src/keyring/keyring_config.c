@@ -24,10 +24,9 @@ static bool keyringCheckConfigFile(char **newval, void **extra, GucSource source
 		return 0;
 	}
 
-	if(access(*newval, W_OK) != 0)
+	if(access(*newval, W_OK) == 0)
 	{
-		elog(WARNING, "The file referenced by pg_tde.keyringConfigFile is writable to the database process");
-		return 0;
+		elog(WARNING, "The file referenced by pg_tde.keyringConfigFile is writable for the database process");
 	}
 
 	return 1;
