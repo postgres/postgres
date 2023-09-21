@@ -244,7 +244,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
      </para>
 
      <para>
-      This was used to promote a standby to primary, but is now easier
+      This was used to promote a standby to primary, but is now more easily
       accomplished with <link linkend="app-pg-ctl"><literal>pg_ctl
       promote</literal></link> or <link
       linkend="functions-recovery-control-table"><function>pg_promote()</function></link>.
