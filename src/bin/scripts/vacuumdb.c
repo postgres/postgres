@@ -85,6 +85,8 @@ static void help(const char *progname);
 
 void		check_objfilter(void);
 
+static char *escape_quotes(const char *src);
+
 /* For analyze-in-stages mode */
 #define ANALYZE_NO_STAGE	-1
 #define ANALYZE_NUM_STAGES	3
@@ -270,7 +272,7 @@ main(int argc, char *argv[])
 				vacopts.process_main = false;
 				break;
 			case 13:
-				vacopts.buffer_usage_limit = pg_strdup(optarg);
+				vacopts.buffer_usage_limit = escape_quotes(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -450,6 +452,20 @@ check_objfilter(void)
 	if ((objfilter & OBJFILTER_SCHEMA) &&
 		(objfilter & OBJFILTER_SCHEMA_EXCLUDE))
 		pg_fatal("cannot vacuum all tables in schema(s) and exclude schema(s) at the same time");
+}
+
+/*
+ * Returns a newly malloc'd version of 'src' with escaped single quotes and
+ * backslashes.
+ */
+static char *
+escape_quotes(const char *src)
+{
+	char	   *result = escape_single_quotes_ascii(src);
+
+	if (!result)
+		pg_fatal("out of memory");
+	return result;
 }
 
 /*
@@ -962,6 +978,13 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 			if (vacopts->verbose)
 			{
 				appendPQExpBuffer(sql, "%sVERBOSE", sep);
+				sep = comma;
+			}
+			if (vacopts->buffer_usage_limit)
+			{
+				Assert(serverVersion >= 160000);
+				appendPQExpBuffer(sql, "%sBUFFER_USAGE_LIMIT '%s'", sep,
+								  vacopts->buffer_usage_limit);
 				sep = comma;
 			}
 			if (sep != paren)
