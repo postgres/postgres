@@ -85,10 +85,8 @@ switch_server_cert(
 	passphrase_cmd => 'echo wrongpassword',
 	restart => 'no');
 
-command_fails(
-	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
-	'restart fails with password-protected key file with wrong password');
-$node->_update_pid(0);
+$result = $node->restart(fail_ok => 1);
+is($result, 0, 'restart fails with password-protected key file with wrong password');
 
 switch_server_cert(
 	$node,
@@ -98,10 +96,8 @@ switch_server_cert(
 	passphrase_cmd => 'echo secret1',
 	restart => 'no');
 
-command_ok(
-	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
-	'restart succeeds with password-protected key file');
-$node->_update_pid(1);
+$result = $node->restart(fail_ok => 1);
+is($result, 1, 'restart succeeds with password-protected key file');
 
 # Test compatibility of SSL protocols.
 # TLSv1.1 is lower than TLSv1.2, so it won't work.
@@ -109,17 +105,16 @@ $node->append_conf(
 	'postgresql.conf',
 	qq{ssl_min_protocol_version='TLSv1.2'
 ssl_max_protocol_version='TLSv1.1'});
-command_fails(
-	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
-	'restart fails with incorrect SSL protocol bounds');
+$result = $node->restart(fail_ok => 1);
+is($result, 0, 'restart fails with incorrect SSL protocol bounds');
+
 # Go back to the defaults, this works.
 $node->append_conf(
 	'postgresql.conf',
 	qq{ssl_min_protocol_version='TLSv1.2'
 ssl_max_protocol_version=''});
-command_ok(
-	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
-	'restart succeeds with correct SSL protocol bounds');
+$result = $node->restart(fail_ok => 1);
+is($result, 1, 'restart succeeds with correct SSL protocol bounds');
 
 ### Run client-side tests.
 ###

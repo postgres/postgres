@@ -1035,17 +1035,18 @@ sub reload
 
 =item $node->restart()
 
-Wrapper for pg_ctl restart
+Wrapper for pg_ctl restart.
+
+With optional extra param fail_ok => 1, returns 0 for failure
+instead of bailing out.
 
 =cut
 
 sub restart
 {
-	my ($self) = @_;
-	my $port = $self->port;
-	my $pgdata = $self->data_dir;
-	my $logfile = $self->logfile;
+	my ($self, %params) = @_;
 	my $name = $self->name;
+	my $ret;
 
 	local %ENV = $self->_get_env(PGAPPNAME => undef);
 
@@ -1053,11 +1054,25 @@ sub restart
 
 	# -w is now the default but having it here does no harm and helps
 	# compatibility with older versions.
-	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-w', '-D', $pgdata,
-		'-l', $logfile, 'restart');
+	$ret = PostgreSQL::Test::Utils::system_log(
+		'pg_ctl', '-w', '-D', $self->data_dir,
+		'-l', $self->logfile, 'restart');
+
+	if ($ret != 0)
+	{
+		print "# pg_ctl restart failed; logfile:\n";
+		print PostgreSQL::Test::Utils::slurp_file($self->logfile);
+
+		# pg_ctl could have timed out, so check to see if there's a pid file;
+		# otherwise our END block will fail to shut down the new postmaster.
+		$self->_update_pid(-1);
+
+		BAIL_OUT("pg_ctl restart failed") unless $params{fail_ok};
+		return 0;
+	}
 
 	$self->_update_pid(1);
-	return;
+	return 1;
 }
 
 =pod
