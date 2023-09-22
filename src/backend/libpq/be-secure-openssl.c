@@ -615,8 +615,11 @@ aloop:
 		bio = BIO_new(BIO_s_mem());
 		if (!bio)
 		{
-			pfree(port->peer_cn);
-			port->peer_cn = NULL;
+			if (port->peer_cn != NULL)
+			{
+				pfree(port->peer_cn);
+				port->peer_cn = NULL;
+			}
 			return -1;
 		}
 
@@ -627,12 +630,15 @@ aloop:
 		 * which make regular expression matching a bit easier. Also note that
 		 * it prints the Subject fields in reverse order.
 		 */
-		X509_NAME_print_ex(bio, x509name, 0, XN_FLAG_RFC2253);
-		if (BIO_get_mem_ptr(bio, &bio_buf) <= 0)
+		if (X509_NAME_print_ex(bio, x509name, 0, XN_FLAG_RFC2253) == -1 ||
+			BIO_get_mem_ptr(bio, &bio_buf) <= 0)
 		{
 			BIO_free(bio);
-			pfree(port->peer_cn);
-			port->peer_cn = NULL;
+			if (port->peer_cn != NULL)
+			{
+				pfree(port->peer_cn);
+				port->peer_cn = NULL;
+			}
 			return -1;
 		}
 		peer_dn = MemoryContextAlloc(TopMemoryContext, bio_buf->length + 1);
@@ -646,8 +652,11 @@ aloop:
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("SSL certificate's distinguished name contains embedded null")));
 			pfree(peer_dn);
-			pfree(port->peer_cn);
-			port->peer_cn = NULL;
+			if (port->peer_cn != NULL)
+			{
+				pfree(port->peer_cn);
+				port->peer_cn = NULL;
+			}
 			return -1;
 		}
 
