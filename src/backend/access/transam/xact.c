@@ -2940,8 +2940,8 @@ CommitTransactionCommand(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	if (s->chain)
-		SaveTransactionCharacteristics();
+	/* Must save in case we need to restore below */
+	SaveTransactionCharacteristics();
 
 	switch (s->blockState)
 	{
