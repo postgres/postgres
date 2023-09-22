@@ -1,0 +1,1 @@
+CREATE EXTENSION pg_tde;
