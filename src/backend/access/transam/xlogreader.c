@@ -168,6 +168,9 @@ XLogReaderFree(XLogReaderState *state)
  * XLOG_BLCKSZ, and make sure it's at least 5*Max(BLCKSZ, XLOG_BLCKSZ) to start
  * with.  (That is enough for all "normal" records, but very large commit or
  * abort records might need more space.)
+ *
+ * Note: This routine should *never* be called for xl_tot_len until the header
+ * of the record has been fully validated.
  */
 static bool
 allocate_recordbuf(XLogReaderState *state, uint32 reclength)
@@ -176,25 +179,6 @@ allocate_recordbuf(XLogReaderState *state, uint32 reclength)
 
 	newSize += XLOG_BLCKSZ - (newSize % XLOG_BLCKSZ);
 	newSize = Max(newSize, 5 * Max(BLCKSZ, XLOG_BLCKSZ));
-
-#ifndef FRONTEND
-
-	/*
-	 * Note that in much unlucky circumstances, the random data read from a
-	 * recycled segment can cause this routine to be called with a size
-	 * causing a hard failure at allocation.  For a standby, this would cause
-	 * the instance to stop suddenly with a hard failure, preventing it to
-	 * retry fetching WAL from one of its sources which could allow it to move
-	 * on with replay without a manual restart. If the data comes from a past
-	 * recycled segment and is still valid, then the allocation may succeed
-	 * but record checks are going to fail so this would be short-lived.  If
-	 * the allocation fails because of a memory shortage, then this is not a
-	 * hard failure either per the guarantee given by MCXT_ALLOC_NO_OOM.
-	 */
-	if (!AllocSizeIsValid(newSize))
-		return false;
-
-#endif
 
 	if (state->readRecordBuf)
 		pfree(state->readRecordBuf);
@@ -396,15 +380,7 @@ restart:
 	}
 	else
 	{
-		/* XXX: more validation should be done here */
-		if (total_len < SizeOfXLogRecord)
-		{
-			report_invalid_record(state,
-								  "invalid record length at %X/%X: wanted %u, got %u",
-								  LSN_FORMAT_ARGS(RecPtr),
-								  (uint32) SizeOfXLogRecord, total_len);
-			goto err;
-		}
+		/* We'll validate the header once we have the next page. */
 		gotheader = false;
 	}
 
@@ -420,16 +396,11 @@ restart:
 		assembled = true;
 
 		/*
-		 * Enlarge readRecordBuf as needed.
+		 * We always have space for a couple of pages, enough to validate a
+		 * boundary-spanning record header.
 		 */
-		if (total_len > state->readRecordBufSize &&
-			!allocate_recordbuf(state, total_len))
-		{
-			/* We treat this as a "bogus data" condition */
-			report_invalid_record(state, "record length %u at %X/%X too long",
-								  total_len, LSN_FORMAT_ARGS(RecPtr));
-			goto err;
-		}
+		Assert(state->readRecordBufSize >= XLOG_BLCKSZ * 2);
+		Assert(state->readRecordBufSize >= len);
 
 		/* Copy the first fragment of the record from the first page. */
 		memcpy(state->readRecordBuf,
@@ -525,8 +496,36 @@ restart:
 					goto err;
 				gotheader = true;
 			}
-		} while (gotlen < total_len);
 
+			/*
+			 * We might need a bigger buffer.  We have validated the record
+			 * header, in the case that it split over a page boundary.  We've
+			 * also cross-checked total_len against xlp_rem_len on the second
+			 * page, and verified xlp_pageaddr on both.
+			 */
+			Assert(gotheader);
+			if (total_len > state->readRecordBufSize)
+			{
+				char		save_copy[XLOG_BLCKSZ * 2];
+
+				/*
+				 * Save and restore the data we already had.  It can't be more
+				 * than two pages.
+				 */
+				Assert(gotlen <= lengthof(save_copy));
+				Assert(gotlen <= state->readRecordBufSize);
+				memcpy(save_copy, state->readRecordBuf, gotlen);
+				if (!allocate_recordbuf(state, total_len))
+				{
+					/* We treat this as a "bogus data" condition */
+					report_invalid_record(state, "record length %u at %X/%X too long",
+										  total_len, LSN_FORMAT_ARGS(RecPtr));
+					goto err;
+				}
+				memcpy(state->readRecordBuf, save_copy, gotlen);
+				buffer = state->readRecordBuf + gotlen;
+			}
+		} while (gotlen < total_len);
 		Assert(gotheader);
 
 		record = (XLogRecord *) state->readRecordBuf;
