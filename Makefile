@@ -44,4 +44,5 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-SHLIB_LINK += $(filter -lcrypto -lssl, -ljson-c $(LIBS))
+SHLIB_LINK += $(filter -lcrypto -lssl, $(LIBS))
+SHLIB_LINK += -ljson-c
