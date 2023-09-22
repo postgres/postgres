@@ -43,6 +43,7 @@ tests += {
       't/035_standby_logical_decoding.pl',
       't/036_truncated_dropped.pl',
       't/037_invalid_database.pl',
+      't/039_end_of_wal.pl',
     ],
   },
 }
