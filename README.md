@@ -1,6 +1,6 @@
 # pg_tde
 
-This is an experimental encrypted access method for Postgres 16.
+This is an `experimental` encrypted access method for PostgreSQL 16.
 
 ## Latest test release
 
@@ -11,13 +11,38 @@ The deb package is built againts the pgdg16 release, but this dependency is not 
 
 ## Installation steps
 
-1. Build and install the plugin either with make or meson (see build steps), or download a release
-2. Add pg_tde to the preload libraries: `ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';`
-3. Restart the postgres server
-4. Create the extension: `CREATE EXTENSION pg_tde;`
+1. Build and install the plugin with make [from source](#build-from-source), or download a [release](https://github.com/Percona-Lab/postgres-tde-ext/releases) and [install the package](#install-from-package)
+2. `pg_tde` needs to be loaded at the start time. The extension requires additional shared memory; therefore,  add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` instance.
+
+Use the [ALTER SYSTEM](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter.
+
+```sql
+ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
+```
+
+3. Start or restart the `postgresql` instance to apply the changes.
+
+* On Debian and Ubuntu:
+
+```sh
+sudo systemctl restart postgresql.service
+```
+
+4. Create the extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command. Using this command requires the privileges of a superuser or a database owner. Connect to `psql` as a superuser for a database and run the following command:
+
+```sql
+CREATE EXTENSION pg_tde;
+```
+
 5. Set the location of the keyring configuration file in postgresql.conf: `pg_tde.keyringConfigFile = '/where/to/put/the/keyring.json'`
-6. Create the keyring configuration file (see example keyring configuration)
-7. Restart the postgres server
+6. Create the keyring configuration file [(see example keyring configuration)](#keyring-configuration)
+7. Start or restart the `postgresql` instance to apply the changes.
+
+* On Debian and Ubuntu:
+
+```sh
+sudo systemctl restart postgresql.service
+```
 
 ## Keyring configuration
 
@@ -33,12 +58,43 @@ This datafile is created and managed by Postgres, the only requirement is that p
 
 This setup is intended for developmenet, and stores the keys unencrypted in the specified data file.
 
-## Build steps
+## Build from source
 
-1. Install libjson-c-dev, for example on Ubuntu/Debian: `apt install libjon-c-dev`
-2. Install or build postgresql 16 (see reference commit below)
+1. To build `pg_tde` from source code, you require the following on Ubuntu/Debian:
+
+```sh
+sudo apt install make gcc libjson-c-dev postgresql-server-dev-16
+```
+
+2. Install or build postgresql 16 [(see reference commit below)](#base-commit)
 3. If postgres is installed in a non standard directory, set the `PG_CONFIG` environment variable to point to the `pg_config` executable
-4. In the pg_tde directory: `make USE_PGXS=1` and `make USE_PGXS=1 install`
+
+4. Clone the repository, build and install it with the following commands:  
+
+```
+git clone git://github.com/Percona-Lab/postgres-tde-ext
+```
+
+Compile and install the extension
+
+```
+cd postgres-tde-ext
+make USE_PGXS=1
+sudo make USE_PGXS=1 install
+```
+
+## Install from package
+
+1. Download the latest [release package](https://github.com/Percona-Lab/postgres-tde-ext/releases)
+
+``` sh
+wget https://github.com/Percona-Lab/postgres-tde-ext/releases/download/latest/pgtde-pgdg16.deb
+```
+2. Install the package
+
+``` sh
+sudo dpkg -i pgtde-pgdg16.deb
+```
 
 ## Base commit
 
