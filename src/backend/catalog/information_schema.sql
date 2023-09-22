@@ -435,8 +435,7 @@ CREATE VIEW check_constraints AS
     SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
            CAST(rs.nspname AS sql_identifier) AS constraint_schema,
            CAST(con.conname AS sql_identifier) AS constraint_name,
-           CAST(substring(pg_get_constraintdef(con.oid) from 7) AS character_data)
-             AS check_clause
+           CAST(pg_get_expr(con.conbin, coalesce(c.oid, 0)) AS character_data) AS check_clause
     FROM pg_constraint con
            LEFT OUTER JOIN pg_namespace rs ON (rs.oid = con.connamespace)
            LEFT OUTER JOIN pg_class c ON (c.oid = con.conrelid)
