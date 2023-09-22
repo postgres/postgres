@@ -1893,8 +1893,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </indexterm>
 
   <para>
-   The catalog <structname>pg_class</structname> catalogs tables and most
-   everything else that has columns or is otherwise similar to a
+   The catalog <structname>pg_class</structname> describes tables and
+   other objects that have columns or are otherwise similar to a
    table.  This includes indexes (but see also <link
    linkend="catalog-pg-index"><structname>pg_index</structname></link>),
    sequences (but see also <link
@@ -1902,8 +1902,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    views, materialized views, composite types, and TOAST tables;
    see <structfield>relkind</structfield>.
    Below, when we mean all of these kinds of objects we speak of
-   <quote>relations</quote>.  Not all columns are meaningful for all relation
-   types.
+   <quote>relations</quote>.  Not all of <structname>pg_class</structname>'s
+   columns are meaningful for all relation kinds.
   </para>
 
   <table>
