@@ -33,6 +33,7 @@ our @EXPORT = qw(
   check_mode_recursive
   chmod_recursive
   check_pg_config
+  scan_server_header
   system_or_bail
   system_log
   run_log
@@ -457,6 +458,39 @@ sub chmod_recursive
 		},
 		$dir);
 	return;
+}
+
+# Returns an array that stores all the matches of the given regular expression
+# within the PostgreSQL installation's C<header_path>.  This can be used to
+# retrieve specific value patterns from the installation's header files.
+sub scan_server_header
+{
+	my ($header_path, $regexp) = @_;
+
+	my ($stdout, $stderr);
+	my $result = IPC::Run::run [ 'pg_config', '--includedir-server' ], '>',
+	  \$stdout, '2>', \$stderr
+	  or die "could not execute pg_config";
+	chomp($stdout);
+	$stdout =~ s/\r$//;
+
+	open my $header_h, '<', "$stdout/$header_path" or die "$!";
+
+	my @match = undef;
+	while (<$header_h>)
+	{
+		my $line = $_;
+
+		if (@match = $line =~ /^$regexp/)
+		{
+			last;
+		}
+	}
+
+	close $header_h;
+	die "could not find match in header $header_path\n"
+	  unless @match;
+	return @match;
 }
 
 # Check presence of a given regexp within pg_config.h for the installation
