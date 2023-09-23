@@ -958,7 +958,7 @@ explain (verbose, costs off)
 with x as materialized (select * from int4_tbl)
 select * from (with y as (select * from x) select * from y) ss;
 
--- Ensure that we inline the currect CTE when there are
+-- Ensure that we inline the correct CTE when there are
 -- multiple CTEs with the same name
 explain (verbose, costs off)
 with x as (select 1 as y)
