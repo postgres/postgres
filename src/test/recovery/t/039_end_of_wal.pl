@@ -13,6 +13,13 @@ use Fcntl qw(SEEK_SET);
 
 use integer;    # causes / operator to use integer math
 
+# Is this a big-endian system ("network" byte order)?  We can't use 'Q' in
+# pack() calls because it's not available in some perl builds, so we need to
+# break 64 bit LSN values into two 'I' values.  Fortunately we don't need to
+# deal with high values, so we can just write 0 for the high order 32 bits, but
+# we need to know the endianness to do that.
+my $BIG_ENDIAN = pack("L", 0x12345678) eq pack("N", 0x12345678);
+
 # Header size of record header.
 my $RECORD_HEADER_SIZE = 24;
 
@@ -125,13 +132,16 @@ sub build_record_header
 	# This needs to follow the structure XLogRecord:
 	# I for xl_tot_len
 	# I for xl_xid
-	# Q for xl_prev
+	# II for xl_prev
 	# C for xl_info
 	# C for xl_rmid
 	# BB for two bytes of padding
 	# I for xl_crc
-	return pack("IIQCCBBI",
-		$xl_tot_len, $xl_xid, $xl_prev, $xl_info, $xl_rmid, 0, 0, $xl_crc);
+	return pack("IIIICCBBI",
+		$xl_tot_len, $xl_xid,
+		$BIG_ENDIAN ? 0        : $xl_prev,
+		$BIG_ENDIAN ? $xl_prev : 0,
+		$xl_info, $xl_rmid, 0, 0, $xl_crc);
 }
 
 # Build a fake WAL page header, based on the data given by the caller
@@ -149,10 +159,12 @@ sub build_page_header
 	# S for xlp_magic
 	# S for xlp_info
 	# I for xlp_tli
-	# Q for xlp_pageaddr
+	# II for xlp_pageaddr
 	# I for xlp_rem_len
-	return pack("SSIQI",
-		$xlp_magic, $xlp_info, $xlp_tli, $xlp_pageaddr, $xlp_rem_len);
+	return pack("SSIIII",
+		$xlp_magic, $xlp_info, $xlp_tli,
+		$BIG_ENDIAN ? 0             : $xlp_pageaddr,
+		$BIG_ENDIAN ? $xlp_pageaddr : 0, $xlp_rem_len);
 }
 
 # Make sure we are far away enough from the end of a page that we could insert
