@@ -678,18 +678,22 @@ vacuum_one_database(ConnParams *cparams,
 	/* Used to match the tables or schemas listed by the user */
 	if (objects_listed)
 	{
-		appendPQExpBufferStr(&catalog_query, " JOIN listed_objects"
-							 " ON listed_objects.object_oid ");
-
-		if (objfilter & OBJFILTER_SCHEMA_EXCLUDE)
-			appendPQExpBufferStr(&catalog_query, "OPERATOR(pg_catalog.!=) ");
-		else
-			appendPQExpBufferStr(&catalog_query, "OPERATOR(pg_catalog.=) ");
+		appendPQExpBufferStr(&catalog_query, " LEFT JOIN listed_objects"
+							 " ON listed_objects.object_oid"
+							 " OPERATOR(pg_catalog.=) ");
 
 		if (objfilter & OBJFILTER_TABLE)
 			appendPQExpBufferStr(&catalog_query, "c.oid\n");
 		else
 			appendPQExpBufferStr(&catalog_query, "ns.oid\n");
+
+		if (objfilter & OBJFILTER_SCHEMA_EXCLUDE)
+			appendPQExpBuffer(&catalog_query,
+							  " WHERE listed_objects.object_oid IS NULL\n");
+		else
+			appendPQExpBuffer(&catalog_query,
+							  " WHERE listed_objects.object_oid IS NOT NULL\n");
+		has_where = true;
 	}
 
 	/*
@@ -700,9 +704,11 @@ vacuum_one_database(ConnParams *cparams,
 	 */
 	if ((objfilter & OBJFILTER_TABLE) == 0)
 	{
-		appendPQExpBufferStr(&catalog_query, " WHERE c.relkind OPERATOR(pg_catalog.=) ANY (array["
-							 CppAsString2(RELKIND_RELATION) ", "
-							 CppAsString2(RELKIND_MATVIEW) "])\n");
+		appendPQExpBuffer(&catalog_query,
+						  " %s c.relkind OPERATOR(pg_catalog.=) ANY (array["
+						  CppAsString2(RELKIND_RELATION) ", "
+						  CppAsString2(RELKIND_MATVIEW) "])\n",
+						  has_where ? "AND" : "WHERE");
 		has_where = true;
 	}
 

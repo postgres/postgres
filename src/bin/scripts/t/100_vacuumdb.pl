@@ -112,6 +112,8 @@ $node->safe_psql(
   CREATE INDEX i0 ON funcidx ((f1(x)));
   CREATE SCHEMA "Foo";
   CREATE TABLE "Foo".bar(id int);
+  CREATE SCHEMA "Bar";
+  CREATE TABLE "Bar".baz(id int);
 |);
 $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
@@ -160,9 +162,20 @@ $node->issues_sql_like(
 	qr/VACUUM \(SKIP_DATABASE_STATS\) "Foo".bar/,
 	'vacuumdb --schema');
 $node->issues_sql_like(
+	[ 'vacuumdb', '--schema', '"Foo"', '--schema', '"Bar"', 'postgres' ],
+	qr/VACUUM\ \(SKIP_DATABASE_STATS\)\ "Foo".bar
+		.*VACUUM\ \(SKIP_DATABASE_STATS\)\ "Bar".baz
+	/sx,
+	'vacuumdb multiple --schema switches');
+$node->issues_sql_like(
 	[ 'vacuumdb', '--exclude-schema', '"Foo"', 'postgres' ],
-	qr/(?:(?!VACUUM "Foo".bar).)*/,
+	qr/^(?!.*VACUUM \(SKIP_DATABASE_STATS\) "Foo".bar).*$/s,
 	'vacuumdb --exclude-schema');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--exclude-schema', '"Foo"', '--exclude-schema', '"Bar"', 'postgres' ],
+	qr/^(?!.*VACUUM\ \(SKIP_DATABASE_STATS\)\ "Foo".bar
+	| VACUUM\ \(SKIP_DATABASE_STATS\)\ "Bar".baz).*$/sx,
+	'vacuumdb multiple --exclude-schema switches');
 $node->command_fails_like(
 	[ 'vacuumdb', '-N', 'pg_catalog', '-t', 'pg_class', 'postgres', ],
 	qr/cannot vacuum specific table\(s\) and exclude schema\(s\) at the same time/,
