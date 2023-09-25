@@ -470,6 +470,7 @@ $ENV{CONFIG}="Debug";
 <userinput>vcregress isolationcheck</userinput>
 <userinput>vcregress bincheck</userinput>
 <userinput>vcregress recoverycheck</userinput>
+<userinput>vcregress taptest</userinput>
 </screen>
 
    To change the schedule used (default is parallel), append it to the
@@ -478,14 +479,21 @@ $ENV{CONFIG}="Debug";
 <userinput>vcregress check serial</userinput>
 </screen>
 
+   <command>vcregress taptest</command> can be used to run the TAP tests
+   of a target directory, like:
+<screen>
+<userinput>vcregress taptest src\bin\initdb\</userinput>
+</screen>
+
    For more information about the regression tests, see
    <xref linkend="regress"/>.
   </para>
 
   <para>
-   Running the regression tests on client programs, with
-   <command>vcregress bincheck</command>, or on recovery tests, with
-   <command>vcregress recoverycheck</command>, requires an additional Perl module
+   Running the regression tests on client programs with
+   <command>vcregress bincheck</command>, on recovery tests with
+   <command>vcregress recoverycheck</command>, or TAP tests specified with
+   <command>vcregress taptest</command> requires an additional Perl module
    to be installed:
    <variablelist>
     <varlistentry>
