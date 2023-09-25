@@ -1913,9 +1913,9 @@ my %tests = (
 		    CREATE DATABASE regression_invalid;
 			UPDATE pg_database SET datconnlimit = -2 WHERE datname = 'regression_invalid'),
 		regexp => qr/^CREATE DATABASE regression_invalid/m,
-		not_like => {
-			pg_dumpall_dbprivs => 1,
-		},
+
+		# invalid databases should never be dumped
+		like => {},
 	},
 
 	'CREATE ACCESS METHOD gist2' => {
