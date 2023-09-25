@@ -653,6 +653,15 @@ restart:
 	}
 	else
 	{
+		/* There may be no next page if it's too small. */
+		if (total_len < SizeOfXLogRecord)
+		{
+			report_invalid_record(state,
+								  "invalid record length at %X/%X: expected at least %u, got %u",
+								  LSN_FORMAT_ARGS(RecPtr),
+								  (uint32) SizeOfXLogRecord, total_len);
+			goto err;
+		}
 		/* We'll validate the header once we have the next page. */
 		gotheader = false;
 	}
@@ -1189,6 +1198,8 @@ static bool
 ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)
 {
 	pg_crc32c	crc;
+
+	Assert(record->xl_tot_len >= SizeOfXLogRecord);
 
 	/* Calculate the CRC */
 	INIT_CRC32C(crc);
