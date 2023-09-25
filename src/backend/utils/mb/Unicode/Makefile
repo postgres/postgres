@@ -25,8 +25,8 @@ include $(top_builddir)/src/Makefile.global
 # define the build and clean rules below.
 #
 # Note that while each script call produces two output files, to be
-# parallel-make safe we need to split this into two rules.  (See for
-# example gram.y for more explanation.)
+# parallel-make safe we need to split this into two rules.  (See notes
+# in src/backend/parser/Makefile about rules with multiple outputs.)
 #
 define map_rule
 MAPS += $(1)_to_utf8.map utf8_to_$(1).map
