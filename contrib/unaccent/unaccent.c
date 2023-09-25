@@ -238,7 +238,7 @@ initTrie(const char *filename)
 				if (trgquoted && state > 0)
 				{
 					/* Ignore first and end quotes */
-					trgstore = palloc0(sizeof(char *) * trglen - 2);
+					trgstore = (char *) palloc(sizeof(char) * (trglen - 2));
 					trgstorelen = 0;
 					for (int i = 1; i < trglen - 1; i++)
 					{
@@ -251,7 +251,7 @@ initTrie(const char *filename)
 				}
 				else
 				{
-					trgstore = palloc0(sizeof(char *) * trglen);
+					trgstore = (char *) palloc(sizeof(char) * trglen);
 					trgstorelen = trglen;
 					memcpy(trgstore, trg, trgstorelen);
 				}
