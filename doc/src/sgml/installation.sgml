@@ -1681,7 +1681,7 @@ build-postgresql:
        <term><option>--with-segsize-blocks=SEGSIZE_BLOCKS</option></term>
        <listitem>
         <para>
-         Specify the segment size in blocks. If both
+         Specify the relation segment size in blocks. If both
          <option>--with-segsize</option> and this option are specified, this
          option wins.
 
@@ -3178,7 +3178,7 @@ ninja install
        <term><option>-Dsegsize_blocks=SEGSIZE_BLOCKS</option></term>
        <listitem>
         <para>
-         Specify the segment size in blocks. If both
+         Specify the relation segment size in blocks. If both
          <option>-Dsegsize</option> and this option are specified, this option
          wins.
 
