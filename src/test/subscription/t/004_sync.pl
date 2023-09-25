@@ -80,7 +80,7 @@ $node_subscriber->safe_psql('postgres',
 
 # wait for it to start
 $node_subscriber->poll_query_until('postgres',
-	"SELECT pid IS NOT NULL FROM pg_stat_subscription WHERE subname = 'tap_sub2' AND relid IS NULL"
+	"SELECT pid IS NOT NULL FROM pg_stat_subscription WHERE subname = 'tap_sub2' AND worker_type = 'apply'"
 ) or die "Timed out while waiting for subscriber to start";
 
 # and drop both subscriptions
