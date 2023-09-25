@@ -706,6 +706,7 @@
 #xmloption = 'content'
 #gin_pending_list_limit = 4MB
 #createrole_self_grant = ''		# set and/or inherit
+#event_triggers = on
 
 # - Locale and Formatting -
 

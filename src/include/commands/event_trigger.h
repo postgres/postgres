@@ -29,6 +29,8 @@ typedef struct EventTriggerData
 	CommandTag	tag;
 } EventTriggerData;
 
+extern PGDLLIMPORT bool event_triggers;
+
 #define AT_REWRITE_ALTER_PERSISTENCE	0x01
 #define AT_REWRITE_DEFAULT_VAL			0x02
 #define AT_REWRITE_COLUMN_REWRITE		0x04

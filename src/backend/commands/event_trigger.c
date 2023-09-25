@@ -72,6 +72,9 @@ typedef struct EventTriggerQueryState
 
 static EventTriggerQueryState *currentEventTriggerState = NULL;
 
+/* GUC parameter */
+bool		event_triggers = true;
+
 /* Support for dropped objects */
 typedef struct SQLDropObject
 {
@@ -657,8 +660,11 @@ EventTriggerDDLCommandStart(Node *parsetree)
 	 * wherein event triggers are disabled.  (Or we could implement
 	 * heapscan-and-sort logic for that case, but having disaster recovery
 	 * scenarios depend on code that's otherwise untested isn't appetizing.)
+	 *
+	 * Additionally, event triggers can be disabled with a superuser-only GUC
+	 * to make fixing database easier as per 1 above.
 	 */
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster || !event_triggers)
 		return;
 
 	runlist = EventTriggerCommonSetup(parsetree,
@@ -692,9 +698,9 @@ EventTriggerDDLCommandEnd(Node *parsetree)
 
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
-	 * triggers are disabled in single user mode.
+	 * triggers are disabled in single user mode or via GUC.
 	 */
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster || !event_triggers)
 		return;
 
 	/*
@@ -740,9 +746,9 @@ EventTriggerSQLDrop(Node *parsetree)
 
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
-	 * triggers are disabled in single user mode.
+	 * triggers are disabled in single user mode or via a GUC.
 	 */
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster || !event_triggers)
 		return;
 
 	/*
@@ -811,9 +817,9 @@ EventTriggerTableRewrite(Node *parsetree, Oid tableOid, int reason)
 
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
-	 * triggers are disabled in single user mode.
+	 * triggers are disabled in single user mode or via a GUC.
 	 */
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster || !event_triggers)
 		return;
 
 	/*

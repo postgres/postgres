@@ -9425,6 +9425,25 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-event-triggers" xreflabel="event_triggers">
+      <term><varname>event_triggers</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>event_triggers</varname></primary>
+       <secondary>configuration parameter</secondary>
+     </indexterm>
+     </term>
+     <listitem>
+      <para>
+       Allow temporarily disabling execution of event triggers in order to
+       troubleshoot and repair faulty event triggers. All event triggers will
+       be disabled by setting it to <literal>false</literal>. Setting the value
+       to <literal>true</literal> allows all event triggers to fire, this
+       is the default value. Only superusers and users with the appropriate
+       <literal>SET</literal> privilege can change this setting.
+      </para>
+     </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
      <sect2 id="runtime-config-client-format">

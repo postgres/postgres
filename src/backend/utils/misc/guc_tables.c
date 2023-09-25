@@ -37,6 +37,7 @@
 #include "catalog/namespace.h"
 #include "catalog/storage.h"
 #include "commands/async.h"
+#include "commands/event_trigger.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/user.h"
@@ -1997,6 +1998,16 @@ struct config_bool ConfigureNamesBool[] =
 		},
 		&wal_receiver_create_temp_slot,
 		false,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"event_triggers", PGC_SUSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Enables event triggers."),
+			gettext_noop("When enabled, event triggers will fire for all applicable statements."),
+		},
+		&event_triggers,
+		true,
 		NULL, NULL, NULL
 	},
 
