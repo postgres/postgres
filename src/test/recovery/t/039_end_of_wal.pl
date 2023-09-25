@@ -281,6 +281,19 @@ ok( $node->log_contains(
 		$log_size),
 	"xl_tot_len short");
 
+# xl_tot_len in final position, not big enough to span into a new page but
+# also not eligible for regular record header validation
+emit_message($node, 0);
+$end_lsn = advance_to_record_splitting_zone($node);
+$node->stop('immediate');
+write_wal($node, $TLI, $end_lsn, build_record_header(1));
+$log_size = -s $node->logfile;
+$node->start;
+ok( $node->log_contains(
+		"invalid record length at .*: expected at least 24, got 1", $log_size
+	),
+	"xl_tot_len short at end-of-page");
+
 # Need more pages, but xl_prev check fails first.
 emit_message($node, 0);
 $end_lsn = advance_out_of_record_splitting_zone($node);
