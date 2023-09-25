@@ -1171,8 +1171,8 @@ help(const char *progname)
 	printf(_("      --no-process-main           skip the main relation\n"));
 	printf(_("      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"));
 	printf(_("      --no-truncate               don't truncate empty pages at the end of the table\n"));
-	printf(_("  -n, --schema=PATTERN            vacuum tables in the specified schema(s) only\n"));
-	printf(_("  -N, --exclude-schema=PATTERN    do not vacuum tables in the specified schema(s)\n"));
+	printf(_("  -n, --schema=SCHEMA             vacuum tables in the specified schema(s) only\n"));
+	printf(_("  -N, --exclude-schema=SCHEMA     do not vacuum tables in the specified schema(s)\n"));
 	printf(_("  -P, --parallel=PARALLEL_WORKERS use this many background workers for vacuum, if available\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("      --skip-locked               skip relations that cannot be immediately locked\n"));
