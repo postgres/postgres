@@ -891,7 +891,7 @@ invalid_syntax:
  * so that caller can parse the rest.  Otherwise, it's an error if anything
  * but whitespace follows.
  *
- * typname is what is reported in error messges.
+ * typname is what is reported in error messages.
  *
  * If escontext points to an ErrorSaveContext node, that is filled instead
  * of throwing an error; the caller must check SOFT_ERROR_OCCURRED()
@@ -978,7 +978,7 @@ uint32in_subr(const char *s, char **endloc,
  * so that caller can parse the rest.  Otherwise, it's an error if anything
  * but whitespace follows.
  *
- * typname is what is reported in error messges.
+ * typname is what is reported in error messages.
  *
  * If escontext points to an ErrorSaveContext node, that is filled instead
  * of throwing an error; the caller must check SOFT_ERROR_OCCURRED()
