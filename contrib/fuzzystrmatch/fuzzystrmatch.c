@@ -55,7 +55,7 @@ static void _soundex(const char *instr, char *outstr);
 #define SOUNDEX_LEN 4
 
 /*									ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-static const char *soundex_table = "01230120022455012623010202";
+static const char *const soundex_table = "01230120022455012623010202";
 
 static char
 soundex_code(char letter)

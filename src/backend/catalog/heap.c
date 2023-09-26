@@ -228,7 +228,7 @@ static const FormData_pg_attribute a6 = {
 	.attislocal = true,
 };
 
-static const FormData_pg_attribute *SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6};
+static const FormData_pg_attribute *const SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6};
 
 /*
  * This function returns a Form_pg_attribute pointer for a system attribute.

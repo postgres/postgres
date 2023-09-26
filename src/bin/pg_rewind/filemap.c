@@ -85,7 +85,7 @@ struct exclude_list_item
  * they are defined in backend-only headers.  So this list is maintained
  * with a best effort in mind.
  */
-static const char *excludeDirContents[] =
+static const char *const excludeDirContents[] =
 {
 	/*
 	 * Skip temporary statistics files. PG_STAT_TMP_DIR must be skipped

@@ -38,7 +38,7 @@
 static const char oom_buffer[1] = "";
 
 /* Need a char * for unconstify() compatibility */
-static const char *oom_buffer_ptr = oom_buffer;
+static const char *const oom_buffer_ptr = oom_buffer;
 
 
 /*

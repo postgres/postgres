@@ -178,8 +178,8 @@ pg_base64_dec_len(unsigned srclen)
  * PGP armor
  */
 
-static const char *armor_header = "-----BEGIN PGP MESSAGE-----\n";
-static const char *armor_footer = "\n-----END PGP MESSAGE-----\n";
+static const char *const armor_header = "-----BEGIN PGP MESSAGE-----\n";
+static const char *const armor_footer = "\n-----END PGP MESSAGE-----\n";
 
 /* CRC24 implementation from rfc2440 */
 #define CRC24_INIT 0x00b704ceL

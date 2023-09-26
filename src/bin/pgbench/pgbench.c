@@ -231,7 +231,7 @@ typedef enum
 } partition_method_t;
 
 static partition_method_t partition_method = PART_NONE;
-static const char *PARTITION_METHOD[] = {"none", "range", "hash"};
+static const char *const PARTITION_METHOD[] = {"none", "range", "hash"};
 
 /* random seed used to initialize base_random_sequence */
 int64		random_seed = -1;
@@ -709,7 +709,7 @@ typedef enum QueryMode
 } QueryMode;
 
 static QueryMode querymode = QUERY_SIMPLE;
-static const char *QUERYMODE[] = {"simple", "extended", "prepared"};
+static const char *const QUERYMODE[] = {"simple", "extended", "prepared"};
 
 /*
  * struct Command represents one command in a script.

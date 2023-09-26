@@ -31,7 +31,7 @@
 #define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup,mask,decode) \
   name,
 
-static const char *RmgrNames[RM_MAX_ID + 1] = {
+static const char *const RmgrNames[RM_MAX_ID + 1] = {
 #include "access/rmgrlist.h"
 };
 
