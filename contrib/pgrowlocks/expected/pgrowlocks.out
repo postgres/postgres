@@ -136,10 +136,10 @@ a|b
 (2 rows)
 
 step s2_rowlocks: SELECT locked_row, multi, modes FROM pgrowlocks('multixact_conflict');
-locked_row|multi|modes              
-----------+-----+-------------------
-(0,1)     |t    |{"Key Share",Share}
-(0,2)     |t    |{"Key Share",Share}
+locked_row|multi|modes                        
+----------+-----+-----------------------------
+(0,1)     |t    |{"For Key Share","For Share"}
+(0,2)     |t    |{"For Key Share","For Share"}
 (2 rows)
 
 step s1_commit: COMMIT;
@@ -161,10 +161,10 @@ a|b
 (2 rows)
 
 step s2_rowlocks: SELECT locked_row, multi, modes FROM pgrowlocks('multixact_conflict');
-locked_row|multi|modes                            
-----------+-----+---------------------------------
-(0,1)     |t    |{"Key Share","For No Key Update"}
-(0,2)     |t    |{"Key Share","For No Key Update"}
+locked_row|multi|modes                                
+----------+-----+-------------------------------------
+(0,1)     |t    |{"For Key Share","For No Key Update"}
+(0,2)     |t    |{"For Key Share","For No Key Update"}
 (2 rows)
 
 step s1_commit: COMMIT;
@@ -186,10 +186,10 @@ a|b
 (2 rows)
 
 step s2_rowlocks: SELECT locked_row, multi, modes FROM pgrowlocks('multixact_conflict');
-locked_row|multi|modes                     
-----------+-----+--------------------------
-(0,1)     |t    |{"Key Share","For Update"}
-(0,2)     |t    |{"Key Share","For Update"}
+locked_row|multi|modes                         
+----------+-----+------------------------------
+(0,1)     |t    |{"For Key Share","For Update"}
+(0,2)     |t    |{"For Key Share","For Update"}
 (2 rows)
 
 step s1_commit: COMMIT;
@@ -205,10 +205,10 @@ a|b
 
 step s1_updatea: UPDATE multixact_conflict SET a = 10 WHERE a = 1;
 step s2_rowlocks: SELECT locked_row, multi, modes FROM pgrowlocks('multixact_conflict');
-locked_row|multi|modes               
-----------+-----+--------------------
-(0,1)     |t    |{"Key Share",Update}
-(0,2)     |f    |{"For Key Share"}   
+locked_row|multi|modes                   
+----------+-----+------------------------
+(0,1)     |t    |{"For Key Share",Update}
+(0,2)     |f    |{"For Key Share"}       
 (2 rows)
 
 step s1_commit: COMMIT;
@@ -224,10 +224,10 @@ a|b
 
 step s1_updateb: UPDATE multixact_conflict SET b = 11 WHERE b = 4;
 step s2_rowlocks: SELECT locked_row, multi, modes FROM pgrowlocks('multixact_conflict');
-locked_row|multi|modes                        
-----------+-----+-----------------------------
-(0,1)     |f    |{"For Key Share"}            
-(0,2)     |t    |{"Key Share","No Key Update"}
+locked_row|multi|modes                            
+----------+-----+---------------------------------
+(0,1)     |f    |{"For Key Share"}                
+(0,2)     |t    |{"For Key Share","No Key Update"}
 (2 rows)
 
 step s1_commit: COMMIT;

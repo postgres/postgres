@@ -200,10 +200,10 @@ pgrowlocks(PG_FUNCTION_ARGS)
 								snprintf(buf, NCHARS, "For No Key Update");
 								break;
 							case MultiXactStatusForShare:
-								snprintf(buf, NCHARS, "Share");
+								snprintf(buf, NCHARS, "For Share");
 								break;
 							case MultiXactStatusForKeyShare:
-								snprintf(buf, NCHARS, "Key Share");
+								snprintf(buf, NCHARS, "For Key Share");
 								break;
 						}
 						strcat(values[Atnum_modes], buf);

@@ -74,7 +74,7 @@ pgrowlocks(text) returns setof record
       <entry><structfield>modes</structfield></entry>
       <entry><type>text[]</type></entry>
       <entry>Lock mode of lockers (more than one if multitransaction),
-       an array of <literal>Key Share</literal>, <literal>Share</literal>,
+       an array of <literal>For Key Share</literal>, <literal>For Share</literal>,
        <literal>For No Key Update</literal>, <literal>No Key Update</literal>,
        <literal>For Update</literal>, <literal>Update</literal>.</entry>
      </row>
