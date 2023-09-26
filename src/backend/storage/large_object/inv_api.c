@@ -58,11 +58,11 @@
 bool		lo_compat_privileges;
 
 /*
- * All accesses to pg_largeobject and its index make use of a single Relation
- * reference, so that we only need to open pg_relation once per transaction.
- * To avoid problems when the first such reference occurs inside a
- * subtransaction, we execute a slightly klugy maneuver to assign ownership of
- * the Relation reference to TopTransactionResourceOwner.
+ * All accesses to pg_largeobject and its index make use of a single
+ * Relation reference.  To guarantee that the relcache entry remains
+ * in the cache, on the first reference inside a subtransaction, we
+ * execute a slightly klugy maneuver to assign ownership of the
+ * Relation reference to TopTransactionResourceOwner.
  */
 static Relation lo_heap_r = NULL;
 static Relation lo_index_r = NULL;
