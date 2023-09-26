@@ -1900,7 +1900,8 @@ MINUTE TO SECOND
       <literal>America/New_York</literal>. In this case specifying the date
       is required in order to determine whether standard or daylight-savings
       time applies.  The appropriate time zone offset is recorded in the
-      <type>time with time zone</type> value.
+      <type>time with time zone</type> value and is output as stored;
+      it is not adjusted to the active time zone.
      </para>
 
       <table id="datatype-datetime-time-table">
