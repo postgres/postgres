@@ -353,7 +353,7 @@ static void RangeVarCallbackForTruncate(const RangeVar *relation,
 static List *MergeAttributes(List *schema, List *supers, char relpersistence,
 							 bool is_partition, List **supconstr,
 							 List **supnotnulls);
-static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
+static List *MergeCheckConstraint(List *constraints, const char *name, Node *expr);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void StoreCatalogInheritance(Oid relationId, List *supers,
@@ -2913,24 +2913,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 									   name,
 									   RelationGetRelationName(relation))));
 
-				/* check for duplicate */
-				if (!MergeCheckConstraint(constraints, name, expr))
-				{
-					/* nope, this is a new one */
-					CookedConstraint *cooked;
-
-					cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
-					cooked->contype = CONSTR_CHECK;
-					cooked->conoid = InvalidOid;	/* until created */
-					cooked->name = pstrdup(name);
-					cooked->attnum = 0; /* not used for constraints */
-					cooked->expr = expr;
-					cooked->skip_validation = false;
-					cooked->is_local = false;
-					cooked->inhcount = 1;
-					cooked->is_no_inherit = false;
-					constraints = lappend(constraints, cooked);
-				}
+				constraints = MergeCheckConstraint(constraints, name, expr);
 			}
 		}
 
@@ -3277,13 +3260,17 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
  *
  * constraints is a list of CookedConstraint structs for previous constraints.
  *
- * Returns true if merged (constraint is a duplicate), or false if it's
- * got a so-far-unique name, or throws error if conflict.
+ * If the new constraint matches an existing one, then the existing
+ * constraint's inheritance count is updated.  If there is a conflict (same
+ * name but different expression), throw an error.  If the constraint neither
+ * matches nor conflicts with an existing one, a new constraint is appended to
+ * the list.
  */
-static bool
-MergeCheckConstraint(List *constraints, char *name, Node *expr)
+static List *
+MergeCheckConstraint(List *constraints, const char *name, Node *expr)
 {
 	ListCell   *lc;
+	CookedConstraint *newcon;
 
 	foreach(lc, constraints)
 	{
@@ -3297,13 +3284,13 @@ MergeCheckConstraint(List *constraints, char *name, Node *expr)
 
 		if (equal(expr, ccon->expr))
 		{
-			/* OK to merge */
+			/* OK to merge constraint with existing */
 			ccon->inhcount++;
 			if (ccon->inhcount < 0)
 				ereport(ERROR,
 						errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						errmsg("too many inheritance parents"));
-			return true;
+			return constraints;
 		}
 
 		ereport(ERROR,
@@ -3312,7 +3299,16 @@ MergeCheckConstraint(List *constraints, char *name, Node *expr)
 						name)));
 	}
 
-	return false;
+	/*
+	 * Constraint couldn't be merged with an existing one and also didn't
+	 * conflict with an existing one, so add it as a new one to the list.
+	 */
+	newcon = palloc0_object(CookedConstraint);
+	newcon->contype = CONSTR_CHECK;
+	newcon->name = pstrdup(name);
+	newcon->expr = expr;
+	newcon->inhcount = 1;
+	return lappend(constraints, newcon);
 }
 
 
