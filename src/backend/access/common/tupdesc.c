@@ -782,12 +782,12 @@ TupleDescInitEntryCollation(TupleDesc desc,
 /*
  * BuildDescForRelation
  *
- * Given a relation schema (list of ColumnDef nodes), build a TupleDesc.
+ * Given a list of ColumnDef nodes, build a TupleDesc.
  *
  * Note: tdtypeid will need to be filled in later on.
  */
 TupleDesc
-BuildDescForRelation(List *schema)
+BuildDescForRelation(const List *columns)
 {
 	int			natts;
 	AttrNumber	attnum;
@@ -803,13 +803,13 @@ BuildDescForRelation(List *schema)
 	/*
 	 * allocate a new tuple descriptor
 	 */
-	natts = list_length(schema);
+	natts = list_length(columns);
 	desc = CreateTemplateTupleDesc(natts);
 	has_not_null = false;
 
 	attnum = 0;
 
-	foreach(l, schema)
+	foreach(l, columns)
 	{
 		ColumnDef  *entry = lfirst(l);
 		AclResult	aclresult;
@@ -891,7 +891,7 @@ BuildDescForRelation(List *schema)
  * with functions returning RECORD.
  */
 TupleDesc
-BuildDescFromLists(List *names, List *types, List *typmods, List *collations)
+BuildDescFromLists(const List *names, const List *types, const List *typmods, const List *collations)
 {
 	int			natts;
 	AttrNumber	attnum;
