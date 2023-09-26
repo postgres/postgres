@@ -1834,9 +1834,10 @@ include_dir 'conf.d'
         (such as a sort or hash table) before writing to temporary disk files.
         If this value is specified without units, it is taken as kilobytes.
         The default value is four megabytes (<literal>4MB</literal>).
-        Note that for a complex query, several sort or hash operations might be
-        running in parallel; each operation will generally be allowed
-        to use as much memory as this value specifies before it starts
+        Note that a complex query might perform several sort and hash
+        operations at the same time, with each operation generally being
+        allowed to use as much memory as this value specifies before
+        it starts
         to write data into temporary files.  Also, several running
         sessions could be doing such operations concurrently.
         Therefore, the total memory used could be many times the value
@@ -1850,7 +1851,7 @@ include_dir 'conf.d'
        <para>
         Hash-based operations are generally more sensitive to memory
         availability than equivalent sort-based operations.  The
-        memory available for hash tables is computed by multiplying
+        memory limit for a hash table is computed by multiplying
         <varname>work_mem</varname> by
         <varname>hash_mem_multiplier</varname>.  This makes it
         possible for hash-based operations to use an amount of memory
