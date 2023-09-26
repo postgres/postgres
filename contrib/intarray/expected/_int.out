@@ -876,4 +876,95 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
   6343
 (1 row)
 
+DROP INDEX text_idx;
+-- Repeat the same queries with an extended data set. The data set is the
+-- same that we used before, except that each element in the array is
+-- repeated three times, offset by 1000 and 2000. For example, {1, 5}
+-- becomes {1, 1001, 2001, 5, 1005, 2005}.
+--
+-- That has proven to be unreasonably effective at exercising codepaths in
+-- core GiST code related to splitting parent pages, which is not covered by
+-- other tests. This is a bit out-of-place as the point is to test core GiST
+-- code rather than this extension, but there is no suitable GiST opclass in
+-- core that would reach the same codepaths.
+CREATE TABLE more__int AS SELECT
+   -- Leave alone NULLs, empty arrays and the one row that we use to test
+   -- equality
+   CASE WHEN a IS NULL OR a = '{}' OR a = '{73,23,20}' THEN a ELSE
+     (select array_agg(u) || array_agg(u + 1000) || array_agg(u + 2000) from (select unnest(a) u) x)
+   END AS a, a as b
+   FROM test__int;
+CREATE INDEX ON more__int using gist (a gist__int_ops(numranges = 252));
+SELECT count(*) from more__int WHERE a && '{23,50}';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from more__int WHERE a @@ '23|50';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from more__int WHERE a @> '{23,50}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from more__int WHERE a @@ '23&50';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from more__int WHERE a @> '{20,23}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from more__int WHERE a <@ '{73,23,20}';
+ count 
+-------
+    10
+(1 row)
+
+SELECT count(*) from more__int WHERE a = '{73,23,20}';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) from more__int WHERE a @@ '50&68';
+ count 
+-------
+     9
+(1 row)
+
+SELECT count(*) from more__int WHERE a @> '{20,23}' or a @> '{50,68}';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from more__int WHERE a @@ '(20&23)|(50&68)';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from more__int WHERE a @@ '20 | !21';
+ count 
+-------
+  6566
+(1 row)
+
+SELECT count(*) from more__int WHERE a @@ '!20 & !21';
+ count 
+-------
+  6343
+(1 row)
+
 RESET enable_seqscan;
