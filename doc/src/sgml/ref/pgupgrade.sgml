@@ -370,8 +370,8 @@ NET STOP postgresql-&majorversion;
     </para>
 
     <para>
-     Streaming replication and log-shipping standby servers can
-     remain running until a later step.
+     Streaming replication and log-shipping standby servers must be
+     running during this shutdown so they receive all changes.
     </para>
    </step>
 
@@ -384,8 +384,6 @@ NET STOP postgresql-&majorversion;
      servers are caught up by running <application>pg_controldata</application>
      against the old primary and standby clusters.  Verify that the
      <quote>Latest checkpoint location</quote> values match in all clusters.
-     (There will be a mismatch if old standby servers were shut down
-     before the old primary or if the old standby servers are still running.)
      Also, make sure <varname>wal_level</varname> is not set to
      <literal>minimal</literal> in the <filename>postgresql.conf</filename> file on the
      new primary cluster.
