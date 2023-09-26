@@ -131,6 +131,9 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       eliminates groups that do not satisfy the given condition.  (See
       <xref linkend="sql-groupby"/> and
       <xref linkend="sql-having"/> below.)
+      Although query output columns are nominally computed in the next
+      step, they can also be referenced (by name or ordinal number)
+      in the <literal>GROUP BY</literal> clause.
      </para>
     </listitem>
 
