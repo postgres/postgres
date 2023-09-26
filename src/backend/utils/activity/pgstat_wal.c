@@ -38,11 +38,22 @@ static WalUsage prevWalUsage;
  *
  * Must be called by processes that generate WAL, that do not call
  * pgstat_report_stat(), like walwriter.
+ *
+ * "force" set to true ensures that the statistics are flushed; note that
+ * this needs to acquire the pgstat shmem LWLock, waiting on it.  When
+ * set to false, the statistics may not be flushed if the lock could not
+ * be acquired.
  */
 void
 pgstat_report_wal(bool force)
 {
-	pgstat_flush_wal(force);
+	bool		nowait;
+
+	/* like in pgstat.c, don't wait for lock acquisition when !force */
+	nowait = !force;
+
+	/* flush wal stats */
+	pgstat_flush_wal(nowait);
 }
 
 /*
