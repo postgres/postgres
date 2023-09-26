@@ -1697,9 +1697,10 @@ include_dir 'conf.d'
         (such as a sort or hash table) before writing to temporary disk files.
         If this value is specified without units, it is taken as kilobytes.
         The default value is four megabytes (<literal>4MB</literal>).
-        Note that for a complex query, several sort or hash operations might be
-        running in parallel; each operation will be allowed to use as much memory
-        as this value specifies before it starts to write data into temporary
+        Note that a complex query might perform several sort and hash
+        operations at the same time, with each operation generally being
+        allowed to use as much memory as this value specifies before it
+        starts to write data into temporary
         files. Also, several running sessions could be doing such operations
         concurrently.  Therefore, the total memory used could be many
         times the value of <varname>work_mem</varname>; it is necessary to
