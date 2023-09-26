@@ -3369,8 +3369,8 @@ Author: Andres Freund <andres@anarazel.de>
 
      <listitem>
       <para>
-       Add build option to allow testing of small <acronym>WAL</acronym>
-       segment sizes (Andres Freund)
+       Add build option to allow testing of small table segment sizes
+       (Andres Freund)
       </para>
 
       <para>
