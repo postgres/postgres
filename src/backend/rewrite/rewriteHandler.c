@@ -1246,21 +1246,7 @@ build_column_default(Relation rel, int attrno)
 	 */
 	if (att_tup->atthasdef)
 	{
-		if (rd_att->constr && rd_att->constr->num_defval > 0)
-		{
-			AttrDefault *defval = rd_att->constr->defval;
-			int			ndef = rd_att->constr->num_defval;
-
-			while (--ndef >= 0)
-			{
-				if (attrno == defval[ndef].adnum)
-				{
-					/* Found it, convert string representation to node tree. */
-					expr = stringToNode(defval[ndef].adbin);
-					break;
-				}
-			}
-		}
+		expr = TupleDescGetDefault(rd_att, attrno);
 		if (expr == NULL)
 			elog(ERROR, "default expression not found for attribute %d of relation \"%s\"",
 				 attrno, RelationGetRelationName(rel));

@@ -1358,20 +1358,11 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 				 (table_like_clause->options & CREATE_TABLE_LIKE_GENERATED) :
 				 (table_like_clause->options & CREATE_TABLE_LIKE_DEFAULTS)))
 			{
-				Node	   *this_default = NULL;
-				AttrDefault *attrdef = constr->defval;
+				Node	   *this_default;
 				AlterTableCmd *atsubcmd;
 				bool		found_whole_row;
 
-				/* Find default in constraint structure */
-				for (int i = 0; i < constr->num_defval; i++)
-				{
-					if (attrdef[i].adnum == parent_attno)
-					{
-						this_default = stringToNode(attrdef[i].adbin);
-						break;
-					}
-				}
+				this_default = TupleDescGetDefault(tupleDesc, parent_attno);
 				if (this_default == NULL)
 					elog(ERROR, "default expression not found for attribute %d of relation \"%s\"",
 						 parent_attno, RelationGetRelationName(relation));

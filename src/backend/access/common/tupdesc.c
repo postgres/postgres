@@ -927,3 +927,28 @@ BuildDescFromLists(const List *names, const List *types, const List *typmods, co
 
 	return desc;
 }
+
+/*
+ * Get default expression (or NULL if none) for the given attribute number.
+ */
+Node *
+TupleDescGetDefault(TupleDesc tupdesc, AttrNumber attnum)
+{
+	Node	   *result = NULL;
+
+	if (tupdesc->constr)
+	{
+		AttrDefault *attrdef = tupdesc->constr->defval;
+
+		for (int i = 0; i < tupdesc->constr->num_defval; i++)
+		{
+			if (attrdef[i].adnum == attnum)
+			{
+				result = stringToNode(attrdef[i].adbin);
+				break;
+			}
+		}
+	}
+
+	return result;
+}

@@ -2795,22 +2795,9 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 			 */
 			if (attribute->atthasdef)
 			{
-				Node	   *this_default = NULL;
+				Node	   *this_default;
 
-				/* Find default in constraint structure */
-				if (constr != NULL)
-				{
-					AttrDefault *attrdef = constr->defval;
-
-					for (int i = 0; i < constr->num_defval; i++)
-					{
-						if (attrdef[i].adnum == parent_attno)
-						{
-							this_default = stringToNode(attrdef[i].adbin);
-							break;
-						}
-					}
-				}
+				this_default = TupleDescGetDefault(tupleDesc, parent_attno);
 				if (this_default == NULL)
 					elog(ERROR, "default expression not found for attribute %d of relation \"%s\"",
 						 parent_attno, RelationGetRelationName(relation));
