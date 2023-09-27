@@ -82,7 +82,6 @@ static void pgoutput_stream_prepare_txn(LogicalDecodingContext *ctx,
 
 static bool publications_valid;
 static bool in_streaming;
-static bool publish_no_origin;
 
 static List *LoadPublications(List *pubnames);
 static void publication_invalidation_cb(Datum arg, int cacheid,
@@ -381,21 +380,23 @@ parse_output_parameters(List *options, PGOutputData *data)
 		}
 		else if (strcmp(defel->defname, "origin") == 0)
 		{
+			char	   *origin;
+
 			if (origin_option_given)
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
 						errmsg("conflicting or redundant options"));
 			origin_option_given = true;
 
-			data->origin = defGetString(defel);
-			if (pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_NONE) == 0)
-				publish_no_origin = true;
-			else if (pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_ANY) == 0)
-				publish_no_origin = false;
+			origin = defGetString(defel);
+			if (pg_strcasecmp(origin, LOGICALREP_ORIGIN_NONE) == 0)
+				data->publish_no_origin = true;
+			else if (pg_strcasecmp(origin, LOGICALREP_ORIGIN_ANY) == 0)
+				data->publish_no_origin = false;
 			else
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("unrecognized origin value: \"%s\"", data->origin));
+						errmsg("unrecognized origin value: \"%s\"", origin));
 		}
 		else
 			elog(ERROR, "unrecognized pgoutput option: %s", defel->defname);
@@ -1673,7 +1674,9 @@ static bool
 pgoutput_origin_filter(LogicalDecodingContext *ctx,
 					   RepOriginId origin_id)
 {
-	if (publish_no_origin && origin_id != InvalidRepOriginId)
+	PGOutputData *data = (PGOutputData *) ctx->output_plugin_private;
+
+	if (data->publish_no_origin && origin_id != InvalidRepOriginId)
 		return true;
 
 	return false;

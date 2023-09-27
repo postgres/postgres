@@ -124,3 +124,25 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot_no_lsn', NULL, NUL
 SELECT pg_replication_origin_session_reset();
 SELECT pg_drop_replication_slot('regression_slot_no_lsn');
 SELECT pg_replication_origin_drop('regress_test_decoding: regression_slot_no_lsn');
+
+-- Test that the pgoutput correctly filters changes corresponding to the provided origin value.
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'pgoutput');
+CREATE PUBLICATION pub FOR TABLE target_tbl;
+SELECT pg_replication_origin_create('regress_test_decoding: regression_slot');
+
+-- mark session as replaying
+SELECT pg_replication_origin_session_setup('regress_test_decoding: regression_slot');
+
+INSERT INTO target_tbl(data) VALUES ('test data');
+
+-- The replayed change will be filtered.
+SELECT count(*) = 0 FROM pg_logical_slot_peek_binary_changes('regression_slot', NULL, NULL, 'proto_version', '4', 'publication_names', 'pub', 'origin', 'none');
+
+-- The replayed change will be output if the origin value is not specified.
+SELECT count(*) != 0 FROM pg_logical_slot_peek_binary_changes('regression_slot', NULL, NULL, 'proto_version', '4', 'publication_names', 'pub');
+
+-- Clean up
+SELECT pg_replication_origin_session_reset();
+SELECT pg_drop_replication_slot('regression_slot');
+SELECT pg_replication_origin_drop('regress_test_decoding: regression_slot');
+DROP PUBLICATION pub;
