@@ -30,7 +30,9 @@ endif
 update-unicode: unaccent.rules
 
 # Allow running this even without --with-python
-PYTHON ?= python
+ifeq ($(PYTHON),)
+PYTHON = python
+endif
 
 unaccent.rules: generate_unaccent_rules.py ../../src/common/unicode/UnicodeData.txt Latin-ASCII.xml
 	$(PYTHON) $< --unicode-data-file $(word 2,$^) --latin-ascii-file $(word 3,$^) >$@
