@@ -44,36 +44,36 @@ l_ptr(LLVMTypeRef t)
  * Emit constant integer.
  */
 static inline LLVMValueRef
-l_int8_const(int8 i)
+l_int8_const(LLVMContextRef lc, int8 i)
 {
-	return LLVMConstInt(LLVMInt8Type(), i, false);
+	return LLVMConstInt(LLVMInt8TypeInContext(lc), i, false);
 }
 
 /*
  * Emit constant integer.
  */
 static inline LLVMValueRef
-l_int16_const(int16 i)
+l_int16_const(LLVMContextRef lc, int16 i)
 {
-	return LLVMConstInt(LLVMInt16Type(), i, false);
+	return LLVMConstInt(LLVMInt16TypeInContext(lc), i, false);
 }
 
 /*
  * Emit constant integer.
  */
 static inline LLVMValueRef
-l_int32_const(int32 i)
+l_int32_const(LLVMContextRef lc, int32 i)
 {
-	return LLVMConstInt(LLVMInt32Type(), i, false);
+	return LLVMConstInt(LLVMInt32TypeInContext(lc), i, false);
 }
 
 /*
  * Emit constant integer.
  */
 static inline LLVMValueRef
-l_int64_const(int64 i)
+l_int64_const(LLVMContextRef lc, int64 i)
 {
-	return LLVMConstInt(LLVMInt64Type(), i, false);
+	return LLVMConstInt(LLVMInt64TypeInContext(lc), i, false);
 }
 
 /*
@@ -137,12 +137,15 @@ l_bb_before_v(LLVMBasicBlockRef r, const char *fmt,...)
 {
 	char		buf[512];
 	va_list		args;
+	LLVMContextRef lc;
 
 	va_start(args, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 
-	return LLVMInsertBasicBlock(r, buf);
+	lc = LLVMGetTypeContext(LLVMTypeOf(LLVMGetBasicBlockParent(r)));
+
+	return LLVMInsertBasicBlockInContext(lc, r, buf);
 }
 
 /* separate, because pg_attribute_printf(2, 3) can't appear in definition */
@@ -157,12 +160,15 @@ l_bb_append_v(LLVMValueRef f, const char *fmt,...)
 {
 	char		buf[512];
 	va_list		args;
+	LLVMContextRef lc;
 
 	va_start(args, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 
-	return LLVMAppendBasicBlock(f, buf);
+	lc = LLVMGetTypeContext(LLVMTypeOf(f));
+
+	return LLVMAppendBasicBlockInContext(lc, f, buf);
 }
 
 /*
@@ -174,7 +180,7 @@ l_callsite_ro(LLVMValueRef f)
 	const char	argname[] = "readonly";
 	LLVMAttributeRef ref;
 
-	ref = LLVMCreateStringAttribute(LLVMGetGlobalContext(),
+	ref = LLVMCreateStringAttribute(LLVMGetTypeContext(LLVMTypeOf(f)),
 									argname,
 									sizeof(argname) - 1,
 									NULL, 0);
@@ -194,7 +200,7 @@ l_callsite_alwaysinline(LLVMValueRef f)
 
 	id = LLVMGetEnumAttributeKindForName(argname,
 										 sizeof(argname) - 1);
-	attr = LLVMCreateEnumAttribute(LLVMGetGlobalContext(), id, 0);
+	attr = LLVMCreateEnumAttribute(LLVMGetTypeContext(LLVMTypeOf(f)), id, 0);
 	LLVMAddCallSiteAttribute(f, LLVMAttributeFunctionIndex, attr);
 }
 
