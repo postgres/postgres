@@ -82,7 +82,6 @@ static void pgoutput_stream_prepare_txn(LogicalDecodingContext *ctx,
 
 static bool publications_valid;
 static bool in_streaming;
-static bool publish_no_origin;
 
 static List *LoadPublications(List *pubnames);
 static void publication_invalidation_cb(Datum arg, int cacheid,
@@ -388,11 +387,9 @@ parse_output_parameters(List *options, PGOutputData *data)
 			origin_option_given = true;
 
 			data->origin = defGetString(defel);
-			if (pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_NONE) == 0)
-				publish_no_origin = true;
-			else if (pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_ANY) == 0)
-				publish_no_origin = false;
-			else
+
+			if (pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_NONE) != 0 &&
+				pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_ANY) != 0)
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("unrecognized origin value: \"%s\"", data->origin));
@@ -1673,7 +1670,10 @@ static bool
 pgoutput_origin_filter(LogicalDecodingContext *ctx,
 					   RepOriginId origin_id)
 {
-	if (publish_no_origin && origin_id != InvalidRepOriginId)
+	PGOutputData *data = (PGOutputData *) ctx->output_plugin_private;
+
+	if (data->origin && (pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_NONE) == 0) &&
+		origin_id != InvalidRepOriginId)
 		return true;
 
 	return false;
