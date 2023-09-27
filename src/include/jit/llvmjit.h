@@ -55,9 +55,6 @@ typedef struct LLVMJitContext
 	List	   *handles;
 } LLVMJitContext;
 
-/* llvm module containing information about types */
-extern PGDLLIMPORT LLVMModuleRef llvm_types_module;
-
 /* type and struct definitions */
 extern PGDLLIMPORT LLVMTypeRef TypeParamBool;
 extern PGDLLIMPORT LLVMTypeRef TypePGFunction;

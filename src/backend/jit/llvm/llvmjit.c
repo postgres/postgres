@@ -77,7 +77,7 @@ LLVMTypeRef StructAggStatePerTransData;
 
 LLVMValueRef AttributeTemplate;
 
-LLVMModuleRef llvm_types_module = NULL;
+static LLVMModuleRef llvm_types_module = NULL;
 
 static bool llvm_session_initialized = false;
 static size_t llvm_generation = 0;
