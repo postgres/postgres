@@ -628,8 +628,10 @@ typedef struct BTArrayKeyInfo
 
 typedef struct BTScanOpaqueData
 {
-	/* these fields are set by _bt_preprocess_keys(): */
+	/* all fields (except arraysStarted) are set by _bt_preprocess_keys(): */
 	bool		qual_ok;		/* false if qual can never be satisfied */
+	bool		arraysStarted;	/* Started array keys, but have yet to "reach
+								 * past the end" of all arrays? */
 	int			numberOfKeys;	/* number of preprocessed scan keys */
 	ScanKey		keyData;		/* array of preprocessed scan keys */
 

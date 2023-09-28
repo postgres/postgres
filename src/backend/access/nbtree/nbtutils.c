@@ -534,6 +534,8 @@ _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir)
 			curArrayKey->cur_elem = 0;
 		skey->sk_argument = curArrayKey->elem_values[curArrayKey->cur_elem];
 	}
+
+	so->arraysStarted = true;
 }
 
 /*
@@ -593,6 +595,14 @@ _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir)
 	if (scan->parallel_scan != NULL)
 		_bt_parallel_advance_array_keys(scan);
 
+	/*
+	 * When no new array keys were found, the scan is "past the end" of the
+	 * array keys.  _bt_start_array_keys can still "restart" the array keys if
+	 * a rescan is required.
+	 */
+	if (!found)
+		so->arraysStarted = false;
+
 	return found;
 }
 
@@ -646,8 +656,13 @@ _bt_restore_array_keys(IndexScanDesc scan)
 	 * If we changed any keys, we must redo _bt_preprocess_keys.  That might
 	 * sound like overkill, but in cases with multiple keys per index column
 	 * it seems necessary to do the full set of pushups.
+	 *
+	 * Also do this whenever the scan's set of array keys "wrapped around" at
+	 * the end of the last primitive index scan.  There won't have been a call
+	 * to _bt_preprocess_keys from some other place following wrap around, so
+	 * we do it for ourselves.
 	 */
-	if (changed)
+	if (changed || !so->arraysStarted)
 	{
 		_bt_preprocess_keys(scan);
 		/* The mark should have been set on a consistent set of keys... */
