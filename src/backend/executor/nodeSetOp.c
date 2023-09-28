@@ -582,13 +582,9 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 void
 ExecEndSetOp(SetOpState *node)
 {
-	/* clean up tuple table */
-	ExecClearTuple(node->ps.ps_ResultTupleSlot);
-
 	/* free subsidiary stuff including hashtable */
 	if (node->tableContext)
 		MemoryContextDelete(node->tableContext);
-	ExecFreeExprContext(&node->ps);
 
 	ExecEndNode(outerPlanState(node));
 }

@@ -656,18 +656,6 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	scanDesc = node->ss.ss_currentScanDesc;
 
 	/*
-	 * Free the exprcontext
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-
-	/*
-	 * clear out tuple table slots
-	 */
-	if (node->ss.ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-
-	/*
 	 * close down subplans
 	 */
 	ExecEndNode(outerPlanState(node));

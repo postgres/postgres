@@ -2686,23 +2686,6 @@ ExecEndWindowAgg(WindowAggState *node)
 
 	release_partition(node);
 
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-	ExecClearTuple(node->first_part_slot);
-	ExecClearTuple(node->agg_row_slot);
-	ExecClearTuple(node->temp_slot_1);
-	ExecClearTuple(node->temp_slot_2);
-	if (node->framehead_slot)
-		ExecClearTuple(node->framehead_slot);
-	if (node->frametail_slot)
-		ExecClearTuple(node->frametail_slot);
-
-	/*
-	 * Free both the expr contexts.
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-	node->ss.ps.ps_ExprContext = node->tmpcontext;
-	ExecFreeExprContext(&node->ss.ps);
-
 	for (i = 0; i < node->numaggs; i++)
 	{
 		if (node->peragg[i].aggcontext != node->aggcontext)

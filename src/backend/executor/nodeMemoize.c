@@ -1091,15 +1091,6 @@ ExecEndMemoize(MemoizeState *node)
 	/* Remove the cache context */
 	MemoryContextDelete(node->tableContext);
 
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-	/* must drop pointer to cache result tuple */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-
-	/*
-	 * free exprcontext
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-
 	/*
 	 * shut down the subplan
 	 */

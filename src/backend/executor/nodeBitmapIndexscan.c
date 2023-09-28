@@ -185,14 +185,6 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	indexScanDesc = node->biss_ScanDesc;
 
 	/*
-	 * Free the exprcontext ... now dead code, see ExecFreeExprContext
-	 */
-#ifdef NOT_USED
-	if (node->biss_RuntimeContext)
-		FreeExprContext(node->biss_RuntimeContext, true);
-#endif
-
-	/*
 	 * close the index relation (no-op if we didn't open it)
 	 */
 	if (indexScanDesc)

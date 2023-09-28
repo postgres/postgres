@@ -241,16 +241,6 @@ void
 ExecEndResult(ResultState *node)
 {
 	/*
-	 * Free the exprcontext
-	 */
-	ExecFreeExprContext(&node->ps);
-
-	/*
-	 * clean out the tuple table
-	 */
-	ExecClearTuple(node->ps.ps_ResultTupleSlot);
-
-	/*
 	 * shut down subplans
 	 */
 	ExecEndNode(outerPlanState(node));

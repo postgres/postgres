@@ -320,30 +320,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 }
 
 /* ----------------------------------------------------------------
- *		ExecEndValuesScan
- *
- *		frees any storage allocated through C routines.
- * ----------------------------------------------------------------
- */
-void
-ExecEndValuesScan(ValuesScanState *node)
-{
-	/*
-	 * Free both exprcontexts
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-	node->ss.ps.ps_ExprContext = node->rowcontext;
-	ExecFreeExprContext(&node->ss.ps);
-
-	/*
-	 * clean out the tuple table
-	 */
-	if (node->ss.ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-}
-
-/* ----------------------------------------------------------------
  *		ExecReScanValuesScan
  *
  *		Rescans the relation.

@@ -331,18 +331,6 @@ ExecEndTidRangeScan(TidRangeScanState *node)
 
 	if (scan != NULL)
 		table_endscan(scan);
-
-	/*
-	 * Free the exprcontext
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-
-	/*
-	 * clear out tuple table slots
-	 */
-	if (node->ss.ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 }
 
 /* ----------------------------------------------------------------

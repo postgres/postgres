@@ -304,13 +304,6 @@ ExecEndSort(SortState *node)
 			   "shutting down sort node");
 
 	/*
-	 * clean out the tuple table
-	 */
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-	/* must drop pointer to sort result tuple */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-
-	/*
 	 * Release tuplesort resources
 	 */
 	if (node->tuplesortstate != NULL)

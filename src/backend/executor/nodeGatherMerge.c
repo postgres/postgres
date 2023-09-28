@@ -290,9 +290,6 @@ ExecEndGatherMerge(GatherMergeState *node)
 {
 	ExecEndNode(outerPlanState(node));	/* let children clean up first */
 	ExecShutdownGatherMerge(node);
-	ExecFreeExprContext(&node->ps);
-	if (node->ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ps.ps_ResultTupleSlot);
 }
 
 /* ----------------------------------------------------------------

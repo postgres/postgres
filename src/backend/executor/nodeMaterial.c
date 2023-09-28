@@ -240,11 +240,6 @@ void
 ExecEndMaterial(MaterialState *node)
 {
 	/*
-	 * clean out the tuple table
-	 */
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-
-	/*
 	 * Release tuplestore resources
 	 */
 	if (node->tuplestorestate != NULL)

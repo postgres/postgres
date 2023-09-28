@@ -214,18 +214,6 @@ void
 ExecEndTableFuncScan(TableFuncScanState *node)
 {
 	/*
-	 * Free the exprcontext
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-
-	/*
-	 * clean out the tuple table
-	 */
-	if (node->ss.ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-
-	/*
 	 * Release tuplestore resources
 	 */
 	if (node->tupstore != NULL)

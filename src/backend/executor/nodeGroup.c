@@ -228,11 +228,6 @@ ExecEndGroup(GroupState *node)
 {
 	PlanState  *outerPlan;
 
-	ExecFreeExprContext(&node->ss.ps);
-
-	/* clean up tuple table */
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-
 	outerPlan = outerPlanState(node);
 	ExecEndNode(outerPlan);
 }

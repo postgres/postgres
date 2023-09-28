@@ -524,26 +524,11 @@ ExecEndFunctionScan(FunctionScanState *node)
 	int			i;
 
 	/*
-	 * Free the exprcontext
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-
-	/*
-	 * clean out the tuple table
-	 */
-	if (node->ss.ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-
-	/*
 	 * Release slots and tuplestore resources
 	 */
 	for (i = 0; i < node->nfuncs; i++)
 	{
 		FunctionScanPerFuncState *fs = &node->funcstates[i];
-
-		if (fs->func_slot)
-			ExecClearTuple(fs->func_slot);
 
 		if (fs->tstore != NULL)
 		{

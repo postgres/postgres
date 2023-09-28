@@ -868,18 +868,6 @@ ExecEndHashJoin(HashJoinState *node)
 	}
 
 	/*
-	 * Free the exprcontext
-	 */
-	ExecFreeExprContext(&node->js.ps);
-
-	/*
-	 * clean out the tuple table
-	 */
-	ExecClearTuple(node->js.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->hj_OuterTupleSlot);
-	ExecClearTuple(node->hj_HashTupleSlot);
-
-	/*
 	 * clean up subtrees
 	 */
 	ExecEndNode(outerPlanState(node));

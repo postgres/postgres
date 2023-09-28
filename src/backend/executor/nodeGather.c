@@ -250,9 +250,6 @@ ExecEndGather(GatherState *node)
 {
 	ExecEndNode(outerPlanState(node));	/* let children clean up first */
 	ExecShutdownGather(node);
-	ExecFreeExprContext(&node->ps);
-	if (node->ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ps.ps_ResultTupleSlot);
 }
 
 /*

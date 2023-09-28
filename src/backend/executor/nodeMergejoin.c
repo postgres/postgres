@@ -1644,17 +1644,6 @@ ExecEndMergeJoin(MergeJoinState *node)
 			   "ending node processing");
 
 	/*
-	 * Free the exprcontext
-	 */
-	ExecFreeExprContext(&node->js.ps);
-
-	/*
-	 * clean out the tuple table
-	 */
-	ExecClearTuple(node->js.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->mj_MarkedTupleSlot);
-
-	/*
 	 * shut down the subplans
 	 */
 	ExecEndNode(innerPlanState(node));

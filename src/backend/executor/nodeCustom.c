@@ -129,13 +129,6 @@ ExecEndCustomScan(CustomScanState *node)
 {
 	Assert(node->methods->EndCustomScan != NULL);
 	node->methods->EndCustomScan(node);
-
-	/* Free the exprcontext */
-	ExecFreeExprContext(&node->ss.ps);
-
-	/* Clean out the tuple table */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 }
 
 void

@@ -189,18 +189,6 @@ ExecEndSampleScan(SampleScanState *node)
 		node->tsmroutine->EndSampleScan(node);
 
 	/*
-	 * Free the exprcontext
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-
-	/*
-	 * clean out the tuple table
-	 */
-	if (node->ss.ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-
-	/*
 	 * close heap scan
 	 */
 	if (node->ss.ss_currentScanDesc)

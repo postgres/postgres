@@ -534,7 +534,6 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 void
 ExecEndLimit(LimitState *node)
 {
-	ExecFreeExprContext(&node->ps);
 	ExecEndNode(outerPlanState(node));
 }
 

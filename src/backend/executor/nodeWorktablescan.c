@@ -182,28 +182,6 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 }
 
 /* ----------------------------------------------------------------
- *		ExecEndWorkTableScan
- *
- *		frees any storage allocated through C routines.
- * ----------------------------------------------------------------
- */
-void
-ExecEndWorkTableScan(WorkTableScanState *node)
-{
-	/*
-	 * Free exprcontext
-	 */
-	ExecFreeExprContext(&node->ss.ps);
-
-	/*
-	 * clean out the tuple table
-	 */
-	if (node->ss.ps.ps_ResultTupleSlot)
-		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-}
-
-/* ----------------------------------------------------------------
  *		ExecReScanWorkTableScan
  *
  *		Rescans the relation.

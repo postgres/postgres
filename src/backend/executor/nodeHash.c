@@ -416,11 +416,6 @@ ExecEndHash(HashState *node)
 	PlanState  *outerPlan;
 
 	/*
-	 * free exprcontext
-	 */
-	ExecFreeExprContext(&node->ps);
-
-	/*
 	 * shut down the subplan
 	 */
 	outerPlan = outerPlanState(node);
