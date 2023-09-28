@@ -1043,6 +1043,8 @@ typedef struct BTScanOpaqueData
 
 	/* workspace for SK_SEARCHARRAY support */
 	ScanKey		arrayKeyData;	/* modified copy of scan->keyData */
+	bool		arraysStarted;	/* Started array keys, but have yet to "reach
+								 * past the end" of all arrays? */
 	int			numArrayKeys;	/* number of equality-type array keys (-1 if
 								 * there are any unsatisfiable array keys) */
 	int			arrayKeyCount;	/* count indicating number of array scan keys
