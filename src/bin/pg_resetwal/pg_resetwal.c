@@ -458,20 +458,22 @@ main(int argc, char *argv[])
 	if (minXlogSegNo > newXlogSegNo)
 		newXlogSegNo = minXlogSegNo;
 
-	/*
-	 * If we had to guess anything, and -f was not given, just print the
-	 * guessed values and exit.  Also print if -n is given.
-	 */
-	if ((guessed && !force) || noupdate)
+	if (noupdate)
 	{
 		PrintNewControlValues();
-		if (!noupdate)
-		{
-			printf(_("\nIf these values seem acceptable, use -f to force reset.\n"));
-			exit(1);
-		}
-		else
-			exit(0);
+		exit(0);
+	}
+
+	/*
+	 * If we had to guess anything, and -f was not given, just print the
+	 * guessed values and exit.
+	 */
+	if (guessed && !force)
+	{
+		PrintNewControlValues();
+		pg_log_error("not proceeding because control file values were guessed");
+		pg_log_error_hint("If these values seem acceptable, use -f to force reset.");
+		exit(1);
 	}
 
 	/*
@@ -479,9 +481,9 @@ main(int argc, char *argv[])
 	 */
 	if (ControlFile.state != DB_SHUTDOWNED && !force)
 	{
-		printf(_("The database server was not shut down cleanly.\n"
-				 "Resetting the write-ahead log might cause data to be lost.\n"
-				 "If you want to proceed anyway, use -f to force reset.\n"));
+		pg_log_error("database server was not shut down cleanly");
+		pg_log_error_detail("Resetting the write-ahead log might cause data to be lost.");
+		pg_log_error_hint("If you want to proceed anyway, use -f to force reset.");
 		exit(1);
 	}
 
