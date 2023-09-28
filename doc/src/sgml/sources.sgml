@@ -105,7 +105,8 @@ less -x4
 
    <para>
     There are two required elements for every message: a severity level
-    (ranging from <literal>DEBUG</literal> to <literal>PANIC</literal>) and a primary
+    (ranging from <literal>DEBUG</literal> to <literal>PANIC</literal>, defined
+    in <filename>src/include/utils/elog.h</filename>) and a primary
     message text.  In addition there are optional elements, the most
     common of which is an error identifier code that follows the SQL spec's
     SQLSTATE conventions.
