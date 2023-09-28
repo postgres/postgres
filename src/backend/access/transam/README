@@ -324,7 +324,7 @@ changes much more often than its xid, having GetSnapshotData look at xmins
 can lead to a lot of unnecessary cacheline ping-pong.  Instead
 GetSnapshotData updates approximate thresholds (one that guarantees that all
 deleted rows older than it can be removed, another determining that deleted
-rows newer than it can not be removed). GlobalVisTest* uses those threshold
+rows newer than it can not be removed). GlobalVisTest* uses those thresholds
 to make invisibility decision, falling back to ComputeXidHorizons if
 necessary.
 
