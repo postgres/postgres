@@ -1135,7 +1135,8 @@ usage(void)
 
 	printf(_("\nOptions:\n"));
 	printf(_(" [-D, --pgdata=]DATADIR  data directory\n"));
-	printf(_("  -f, --force            force update to be done\n"));
+	printf(_("  -f, --force            force update to be done even after unclean shutdown or\n"
+			 "                         if pg_control values had to be guessed\n"));
 	printf(_("  -n, --dry-run          no update, just show what would be done\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));

@@ -52,19 +52,31 @@ PostgreSQL documentation
   </para>
 
   <para>
-   After running this command, it should be possible to start the server,
+   Some options, such as <option>--wal-segsize</option> (see below), can also
+   be used to modify certain global settings of a database cluster without the
+   need to rerun <command>initdb</command>.  This can be done safely on an
+   otherwise sound database cluster, if none of the dangerous modes mentioned
+   below are used.
+  </para>
+
+  <para>
+   If <command>pg_resetwal</command> is used on a data directory where the
+   server has been cleanly shut down and the control file is sound, then it
+   will have no effect on the contents of the database system, except that no
+   longer used WAL files are cleared away.  Any other use is potentially
+   dangerous and must be done with great care.  <command>pg_resetwal</command>
+   will require the <option>-f</option> (force) option to be specified before
+   working on a data directory in an unclean shutdown state or with a
+   corrupted control file.
+  </para>
+
+  <para>
+   After running this command on a data directory with corrupted WAL or a
+   corrupted control file, it should be possible to start the server,
    but bear in mind that the database might contain inconsistent data due to
    partially-committed transactions.  You should immediately dump your data,
    run <command>initdb</command>, and restore.  After restore, check for
    inconsistencies and repair as needed.
-  </para>
-
-  <para>
-   This utility can only be run by the user who installed the server, because
-   it requires read/write access to the data directory.
-   For safety reasons, you must specify the data directory on the command line.
-   <command>pg_resetwal</command> does not use the environment variable
-   <envar>PGDATA</envar>.
   </para>
 
   <para>
@@ -82,6 +94,11 @@ PostgreSQL documentation
    execute any data-modifying operations in the database before you dump,
    as any such action is likely to make the corruption worse.
   </para>
+
+  <para>
+   This utility can only be run by the user who installed the server, because
+   it requires read/write access to the data directory.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -89,12 +106,29 @@ PostgreSQL documentation
 
   <variablelist>
    <varlistentry>
+    <term><replaceable class="parameter">datadir</replaceable></term>
+    <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
+    <term><option>--pgdata=<replaceable class="parameter">datadir</replaceable></option></term>
+    <listitem>
+     <para>
+      Specifies the location of the database directory.
+      For safety reasons, you must specify the data directory on the command
+      line.  <command>pg_resetwal</command> does not use the environment
+      variable <envar>PGDATA</envar>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><option>-f</option></term>
     <term><option>--force</option></term>
     <listitem>
      <para>
-      Force <command>pg_resetwal</command> to proceed even if it cannot determine
-      valid data for <filename>pg_control</filename>, as explained above.
+      Force <command>pg_resetwal</command> to proceed even in situations where
+      it could be dangerous, as explained above.  Specifically, this option is
+      required to proceed if the server had not been cleanly shut down or if
+      <command>pg_resetwal</command> cannot determine valid data for
+      <filename>pg_control</filename>.
      </para>
     </listitem>
    </varlistentry>
@@ -282,6 +316,12 @@ PostgreSQL documentation
       Set the new WAL segment size, in megabytes.  The value must be set to a
       power of 2 between 1 and 1024 (megabytes).  See the same option of <xref
       linkend="app-initdb"/> for more information.
+     </para>
+
+     <para>
+      This option can also be used to change the WAL segment size of an
+      existing database cluster, avoiding the need to
+      re-<command>initdb</command>.
      </para>
 
      <note>
