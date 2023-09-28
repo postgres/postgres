@@ -164,11 +164,36 @@ DECLARE
 BEGIN
   SELECT (i + j)::int INTO r;
 END; $$ LANGUAGE plpgsql;
+-- Overloaded functions.
+CREATE OR REPLACE PROCEDURE overload(i int) AS $$
+DECLARE
+  r int;
+BEGIN
+  SELECT (i + i)::int INTO r;
+END; $$ LANGUAGE plpgsql;
+CREATE OR REPLACE PROCEDURE overload(i text) AS $$
+DECLARE
+  r text;
+BEGIN
+  SELECT i::text INTO r;
+END; $$ LANGUAGE plpgsql;
+-- Mix of IN/OUT parameters.
+CREATE OR REPLACE PROCEDURE in_out(i int, i2 OUT int, i3 INOUT int) AS $$
+DECLARE
+  r int;
+BEGIN
+  i2 := i;
+  i3 := i3 + i;
+END; $$ LANGUAGE plpgsql;
 SELECT pg_stat_statements_reset();
 CALL sum_one(3);
 CALL sum_one(199);
 CALL sum_two(1,1);
 CALL sum_two(1,2);
+CALL overload(1);
+CALL overload('A');
+CALL in_out(1, NULL, 1);
+CALL in_out(2, 1, 2);
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 -- COPY
