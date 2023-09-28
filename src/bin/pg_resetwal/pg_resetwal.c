@@ -6,8 +6,7 @@
  *
  * The theory of operation is fairly simple:
  *	  1. Read the existing pg_control (which will include the last
- *		 checkpoint record).  If it is an old format then update to
- *		 current format.
+ *		 checkpoint record).
  *	  2. If pg_control is corrupt, attempt to intuit reasonable values,
  *		 by scanning the old xlog if necessary.
  *	  3. Modify pg_control to reflect a "shutdown" state with a checkpoint
