@@ -345,16 +345,16 @@ main(int argc, char *argv[])
 
 	get_restricted_token();
 
+	if (chdir(DataDir) < 0)
+		pg_fatal("could not change directory to \"%s\": %m",
+				 DataDir);
+
 	/* Set mask based on PGDATA permissions */
 	if (!GetDataDirectoryCreatePerm(DataDir))
 		pg_fatal("could not read permissions of directory \"%s\": %m",
 				 DataDir);
 
 	umask(pg_mode_mask);
-
-	if (chdir(DataDir) < 0)
-		pg_fatal("could not change directory to \"%s\": %m",
-				 DataDir);
 
 	/* Check that data directory matches our server version */
 	CheckDataVersion();
