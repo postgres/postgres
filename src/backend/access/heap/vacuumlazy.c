@@ -1544,12 +1544,11 @@ lazy_scan_prune(LVRelState *vacrel,
 	ItemId		itemid;
 	HeapTupleData tuple;
 	HTSV_Result res;
-	int			tuples_deleted,
-				tuples_frozen,
+	PruneResult presult;
+	int			tuples_frozen,
 				lpdead_items,
 				live_tuples,
 				recently_dead_tuples;
-	int			nnewlpdead;
 	HeapPageFreeze pagefrz;
 	int64		fpi_before = pgWalUsage.wal_fpi;
 	OffsetNumber deadoffsets[MaxHeapTuplesPerPage];
@@ -1572,7 +1571,6 @@ retry:
 	pagefrz.FreezePageRelminMxid = vacrel->NewRelminMxid;
 	pagefrz.NoFreezePageRelfrozenXid = vacrel->NewRelfrozenXid;
 	pagefrz.NoFreezePageRelminMxid = vacrel->NewRelminMxid;
-	tuples_deleted = 0;
 	tuples_frozen = 0;
 	lpdead_items = 0;
 	live_tuples = 0;
@@ -1581,15 +1579,12 @@ retry:
 	/*
 	 * Prune all HOT-update chains in this page.
 	 *
-	 * We count tuples removed by the pruning step as tuples_deleted.  Its
-	 * final value can be thought of as the number of tuples that have been
-	 * deleted from the table.  It should not be confused with lpdead_items;
+	 * We count the number of tuples removed from the page by the pruning step
+	 * in presult.ndeleted. It should not be confused with lpdead_items;
 	 * lpdead_items's final value can be thought of as the number of tuples
 	 * that were deleted from indexes.
 	 */
-	tuples_deleted = heap_page_prune(rel, buf, vacrel->vistest,
-									 &nnewlpdead,
-									 &vacrel->offnum);
+	heap_page_prune(rel, buf, vacrel->vistest, &presult, &vacrel->offnum);
 
 	/*
 	 * Now scan the page to collect LP_DEAD items and check for tuples
@@ -1929,7 +1924,7 @@ retry:
 	}
 
 	/* Finally, add page-local counts to whole-VACUUM counts */
-	vacrel->tuples_deleted += tuples_deleted;
+	vacrel->tuples_deleted += presult.ndeleted;
 	vacrel->tuples_frozen += tuples_frozen;
 	vacrel->lpdead_items += lpdead_items;
 	vacrel->live_tuples += live_tuples;

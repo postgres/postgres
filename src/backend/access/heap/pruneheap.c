@@ -155,15 +155,13 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		 */
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
-			int			ndeleted,
-						nnewlpdead;
+			PruneResult presult;
 
-			ndeleted = heap_page_prune(relation, buffer, vistest,
-									   &nnewlpdead, NULL);
+			heap_page_prune(relation, buffer, vistest, &presult, NULL);
 
 			/*
 			 * Report the number of tuples reclaimed to pgstats.  This is
-			 * ndeleted minus the number of newly-LP_DEAD-set items.
+			 * presult.ndeleted minus the number of newly-LP_DEAD-set items.
 			 *
 			 * We derive the number of dead tuples like this to avoid totally
 			 * forgetting about items that were set to LP_DEAD, since they
@@ -175,9 +173,9 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 			 * tracks ndeleted, since it will set the same LP_DEAD items to
 			 * LP_UNUSED separately.
 			 */
-			if (ndeleted > nnewlpdead)
+			if (presult.ndeleted > presult.nnewlpdead)
 				pgstat_update_heap_dead_tuples(relation,
-											   ndeleted - nnewlpdead);
+											   presult.ndeleted - presult.nnewlpdead);
 		}
 
 		/* And release buffer lock */
@@ -204,21 +202,19 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * (see heap_prune_satisfies_vacuum and
  * HeapTupleSatisfiesVacuum).
  *
- * Sets *nnewlpdead for caller, indicating the number of items that were
- * newly set LP_DEAD during prune operation.
- *
  * off_loc is the offset location required by the caller to use in error
  * callback.
  *
- * Returns the number of tuples deleted from the page during this call.
+ * presult contains output parameters needed by callers such as the number of
+ * tuples removed and the number of line pointers newly marked LP_DEAD.
+ * heap_page_prune() is responsible for initializing it.
  */
-int
+void
 heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
-				int *nnewlpdead,
+				PruneResult *presult,
 				OffsetNumber *off_loc)
 {
-	int			ndeleted = 0;
 	Page		page = BufferGetPage(buffer);
 	BlockNumber blockno = BufferGetBlockNumber(buffer);
 	OffsetNumber offnum,
@@ -243,6 +239,9 @@ heap_page_prune(Relation relation, Buffer buffer,
 	prstate.snapshotConflictHorizon = InvalidTransactionId;
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
 	memset(prstate.marked, 0, sizeof(prstate.marked));
+
+	presult->ndeleted = 0;
+	presult->nnewlpdead = 0;
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	tup.t_tableOid = RelationGetRelid(prstate.rel);
@@ -318,7 +317,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 			continue;
 
 		/* Process this item or chain of items */
-		ndeleted += heap_prune_chain(buffer, offnum, &prstate);
+		presult->ndeleted += heap_prune_chain(buffer, offnum, &prstate);
 	}
 
 	/* Clear the offset information once we have processed the given page. */
@@ -419,9 +418,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 	END_CRIT_SECTION();
 
 	/* Record number of newly-set-LP_DEAD items for caller */
-	*nnewlpdead = prstate.ndead;
-
-	return ndeleted;
+	presult->nnewlpdead = prstate.ndead;
 }
 
 

@@ -2151,6 +2151,7 @@ ProjectionPath
 PromptInterruptContext
 ProtocolVersion
 PrsStorage
+PruneResult
 PruneState
 PruneStepResult
 PsqlScanCallbacks
