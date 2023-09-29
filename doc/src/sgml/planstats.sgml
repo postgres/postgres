@@ -30,8 +30,6 @@
   <para>
    The examples shown below use tables in the <productname>PostgreSQL</productname>
    regression test database.
-   The outputs shown are taken from version 8.3.
-   The behavior of earlier (or later) versions might vary.
    Note also that since <command>ANALYZE</command> uses random sampling
    while producing statistics, the results will change slightly after
    any new <command>ANALYZE</command>.
