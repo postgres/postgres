@@ -1067,9 +1067,9 @@ postgres=# SELECT postgres_fdw_disconnect_all();
       of any length and contain even non-ASCII characters.  However when
       it's passed to and used as <varname>application_name</varname>
       in a foreign server, note that it will be truncated to less than
-      <symbol>NAMEDATALEN</symbol> characters and anything other than
-      printable ASCII characters will be replaced with question
-      marks (<literal>?</literal>).
+      <symbol>NAMEDATALEN</symbol> characters.
+      Anything other than printable ASCII characters are replaced with <link
+      linkend="sql-syntax-strings-escape">C-style hexadecimal escapes</link>.
       See <xref linkend="guc-application-name"/> for details.
      </para>
 

@@ -6893,8 +6893,9 @@ local0.*    /var/log/postgresql
         and included in CSV log entries.  It can also be included in regular
         log entries via the <xref linkend="guc-log-line-prefix"/> parameter.
         Only printable ASCII characters may be used in the
-        <varname>application_name</varname> value. Other characters will be
-        replaced with question marks (<literal>?</literal>).
+        <varname>application_name</varname> value.
+        Other characters are replaced with <link
+        linkend="sql-syntax-strings-escape">C-style hexadecimal escapes</link>.
        </para>
       </listitem>
      </varlistentry>
@@ -7890,10 +7891,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The name can be any string of less
         than <symbol>NAMEDATALEN</symbol> characters (64 characters in a standard
         build). Only printable ASCII characters may be used in the
-        <varname>cluster_name</varname> value. Other characters will be
-        replaced with question marks (<literal>?</literal>).  No name is shown
-        if this parameter is set to the empty string <literal>''</literal> (which is
-        the default). This parameter can only be set at server start.
+        <varname>cluster_name</varname> value.
+        Other characters are replaced with <link
+        linkend="sql-syntax-strings-escape">C-style hexadecimal escapes</link>.
+        No name is shown if this parameter is set to the empty string
+        <literal>''</literal> (which is the default).
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
