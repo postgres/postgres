@@ -41,6 +41,7 @@ static void
     if (rel != NULL)
     {
         if ((rel->rd_rel->relkind == RELKIND_RELATION ||
+            rel->rd_rel->relkind == RELKIND_TOASTVALUE ||
             rel->rd_rel->relkind == RELKIND_MATVIEW) &&
             (subId == 0) && is_pg_tde_rel(rel))
             {
