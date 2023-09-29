@@ -15,7 +15,7 @@
 
 // t_data and out have to be different addresses without overlap!
 // The only difference between enc and dec is how we calculate offsetInPage
-void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to)
+void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to, RelKeysData* keys)
 {
 	const uint64_t offsetInFile = (bn * BLCKSZ) + offsetInPage;
 
@@ -28,19 +28,10 @@ void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInP
 	unsigned char encKey[16 * (aesBlockNumber2 - aesBlockNumber1 + 1)];
 #pragma GCC diagnostic pop
 
-	// TODO: use master key and internal key in .tde file
-	const keyInfo* ki = NULL;
-
 	AesInit(); // TODO: where to move this?
 
-	ki = keyringGetLatestKey("master-key");
-	if(ki == NULL)
-	{
-		ki = keyringGenerateKey("master-key", 16);
-	}
-
 	// TODO: verify key length!
-	Aes128EncryptedZeroBlocks(ki->data.data, aesBlockNumber1, aesBlockNumber2, encKey);
+	Aes128EncryptedZeroBlocks2(&(keys->internal_key[0].ctx), keys->internal_key[0].key, aesBlockNumber1, aesBlockNumber2, encKey);
 
 #if ENCRYPTION_DEBUG
 	fprintf(stderr, " ---- (Oid: %i, Offset: %lu Len: %u, AesBlock: %lu, BlockOffset: %lu) ----\n", tableOid, offsetInPage, to - from, aesBlockNumber1, aesBlockOffset);
@@ -55,23 +46,23 @@ void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInP
 	}
 }
 
-void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to)
+void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to, RelKeysData* keys)
 {
 	const unsigned long offsetInPage = (char*)t_data - (char*)page;
 #if ENCRYPTION_DEBUG
 	fprintf(stderr, " >> DECRYPTING ");
 #endif
-	PGTdeCryptTupInternal(tableOid, bn, offsetInPage, (char*)t_data, out, from, to);
+	PGTdeCryptTupInternal(tableOid, bn, offsetInPage, (char*)t_data, out, from, to, keys);
 }
 
 // t_data and out have to be different addresses without overlap!
-void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to) 
+void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to, RelKeysData* keys) 
 {
 	const unsigned long offsetInPage = out - page;
 #if ENCRYPTION_DEBUG
 	fprintf(stderr, " >> ENCRYPTING ");
 #endif
-	PGTdeCryptTupInternal(tableOid, bn, offsetInPage, t_data, out, from, to);
+	PGTdeCryptTupInternal(tableOid, bn, offsetInPage, t_data, out, from, to, keys);
 }
 
 // ================================================================
@@ -82,7 +73,7 @@ void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_d
 // t_data is set
 // t_len is valid (at most the actual length ; less is okay for partial)
 // t_tableOid is set
-static void PGTdeDecryptTupInternal2(BlockNumber bn, Page page, HeapTuple tuple, unsigned from, unsigned to, bool allocNew)
+static void PGTdeDecryptTupInternal2(BlockNumber bn, Page page, HeapTuple tuple, unsigned from, unsigned to, bool allocNew, RelKeysData* keys)
 {
 	char* newPtr = (char*)tuple->t_data;
 
@@ -96,7 +87,7 @@ static void PGTdeDecryptTupInternal2(BlockNumber bn, Page page, HeapTuple tuple,
 		MemoryContextSwitchTo(oldctx);
 	}
 
-	PGTdeDecryptTupInternal(tuple->t_tableOid, bn, page, tuple->t_data, newPtr, from, to);
+	PGTdeDecryptTupInternal(tuple->t_tableOid, bn, page, tuple->t_data, newPtr, from, to, keys);
 
 	if(allocNew)
 	{
@@ -104,13 +95,14 @@ static void PGTdeDecryptTupInternal2(BlockNumber bn, Page page, HeapTuple tuple,
 	}
 }
 
-static void PGTdeDecryptTupData(BlockNumber bn, Page page, HeapTuple tuple) 
+static void PGTdeDecryptTupData(BlockNumber bn, Page page, HeapTuple tuple, RelKeysData* keys) 
 {
-	PGTdeDecryptTupInternal2(bn, page, tuple, tuple->t_data->t_hoff, tuple->t_len, true);
+	PGTdeDecryptTupInternal2(bn, page, tuple, tuple->t_data->t_hoff, tuple->t_len, true, keys);
 }
 
 OffsetNumber
-PGTdePageAddItemExtended(Oid oid,
+PGTdePageAddItemExtended(RelFileLocator rel,
+					Oid oid,
 					BlockNumber bn, 
 					Page page,
 					Item item,
@@ -124,35 +116,35 @@ PGTdePageAddItemExtended(Oid oid,
 
 	char* toAddr = ((char*)phdr) + phdr->pd_upper;
 
-	PGTdeEncryptTupInternal(oid, bn, page, item, toAddr, headerSize, size);
+	RelKeysData *keys = GetRelationKeys(rel);
+
+	PGTdeEncryptTupInternal(oid, bn, page, item, toAddr, headerSize, size, keys);
 
 	return off;
 }
 
 TupleTableSlot *
-PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
+PGTdeExecStoreBufferHeapTuple(RelFileLocator rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
 {
 	Page pageHeader;
 
-	pageHeader = BufferGetPage(buffer);
-	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple);
-
-	/* TODO: use the keys in approprate place */
 	RelKeysData *keys = GetRelationKeys(rel);
+
+	pageHeader = BufferGetPage(buffer);
+	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple, keys);
 
 	return  ExecStoreBufferHeapTuple(tuple, slot, buffer);
 }
 
 TupleTableSlot *
-PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
+PGTdeExecStorePinnedBufferHeapTuple(RelFileLocator rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
 {
 	Page pageHeader;
 
-	/* TODO: use the keys in approprate place */
 	RelKeysData *keys = GetRelationKeys(rel);
 
 	pageHeader = BufferGetPage(buffer);
-	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple);
+	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple, keys);
 
 	return  ExecStorePinnedBufferHeapTuple(tuple, slot, buffer);
 }

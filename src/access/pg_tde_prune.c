@@ -1269,6 +1269,7 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 	Offset		copy_head;
 	itemIdCompact itemidptr;
 	int			i;
+	RelKeysData *keys = GetRelationKeys(rel->rd_locator);
 
 	/* Code within will not work correctly if nitems == 0 */
 	Assert(nitems > 0);
@@ -1349,12 +1350,12 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 				// Decrypt with old offset
 				fprintf(stderr, " >>>>> DECRYPTING\n");
 #endif
-				PGTdeCryptTupInternal(tableOid, bn, copy_head, (char*)(page) + copy_head, tmpData, headerSize, itemidptr->len);
+				PGTdeCryptTupInternal(tableOid, bn, copy_head, (char*)(page) + copy_head, tmpData, headerSize, itemidptr->len, keys);
 				// Reencrypt with new offset
 #ifdef ENCRYPTION_DEBUG
 				fprintf(stderr, " >>>>> ENCRYPTING\n");
 #endif
-				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, (char*)page + copy_head, headerSize, itemidptr->len);
+				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, (char*)page + copy_head, headerSize, itemidptr->len, keys);
 
 			}
 
@@ -1402,12 +1403,12 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 				// Decrypt with old offset
 				fprintf(stderr, " >>>>> DECRYPTING\n");
 #endif
-				PGTdeCryptTupInternal(tableOid, bn, copy_head, (char*)(page) + copy_head, tmpData, headerSize, itemidptr->len);
+				PGTdeCryptTupInternal(tableOid, bn, copy_head, (char*)(page) + copy_head, tmpData, headerSize, itemidptr->len, keys);
 				// Reencrypt with new offset
 #ifdef ENCRYPTION_DEBUG
 				fprintf(stderr, " >>>>> ENCRYPTING\n");
 #endif
-				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, (char*)page + copy_head, headerSize, itemidptr->len);
+				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, (char*)page + copy_head, headerSize, itemidptr->len, keys);
 			}
 
 		/* move the remaining tuples. */
@@ -1506,12 +1507,12 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 				/* Decrypt with old offset */
 				fprintf(stderr, " >>>>> DECRYPTING\n");
 #endif
-				PGTdeCryptTupInternal(tableOid, bn, copy_head, scratchptr + copy_head, tmpData, headerSize, itemidptr->len);
+				PGTdeCryptTupInternal(tableOid, bn, copy_head, scratchptr + copy_head, tmpData, headerSize, itemidptr->len, keys);
 				/* Reencrypt with new offset */
 #ifdef ENCRYPTION_DEBUG
 				fprintf(stderr, " >>>>> ENCRYPTING\n");
 #endif
-				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, scratchptr + copy_head, headerSize, itemidptr->len);
+				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, scratchptr + copy_head, headerSize, itemidptr->len, keys);
 			}
 
 			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
@@ -1554,12 +1555,12 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 			/* Decrypt with old offset */
 			fprintf(stderr, " >>>>> DECRYPTING\n");
 #endif
-			PGTdeCryptTupInternal(tableOid, bn, copy_head, scratchptr + copy_head, tmpData, headerSize, itemidptr->len);
+			PGTdeCryptTupInternal(tableOid, bn, copy_head, scratchptr + copy_head, tmpData, headerSize, itemidptr->len, keys);
 			/* Reencrypt with new offset */
 #ifdef ENCRYPTION_DEBUG
 			fprintf(stderr, " >>>>> ENCRYPTING\n");
 #endif
-			PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, scratchptr + copy_head, headerSize, itemidptr->len);
+			PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, scratchptr + copy_head, headerSize, itemidptr->len, keys);
 		}
 		
 		/* Copy the remaining chunk */

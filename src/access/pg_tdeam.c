@@ -1168,7 +1168,7 @@ pg_tde_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot 
 
 	pgstat_count_pg_tde_getnext(scan->rs_base.rs_rd);
 
-	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd, &scan->rs_ctup, slot,
+	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd->rd_locator, &scan->rs_ctup, slot,
 							 scan->rs_cbuf);
 	return true;
 }
@@ -1316,7 +1316,7 @@ pg_tde_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 	 */
 	pgstat_count_pg_tde_getnext(scan->rs_base.rs_rd);
 
-	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd, &scan->rs_ctup, slot, scan->rs_cbuf);
+	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd->rd_locator, &scan->rs_ctup, slot, scan->rs_cbuf);
 	return true;
 }
 
@@ -9310,7 +9310,7 @@ pg_tde_xlog_insert(XLogReaderState *record)
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		htup->t_ctid = target_tid;
 
-		if (TDE_PageAddItem(target_locator.spcOid, blkno, page, (Item) htup, newlen, xlrec->offnum,
+		if (TDE_PageAddItem(target_locator, target_locator.spcOid, blkno, page, (Item) htup, newlen, xlrec->offnum,
 						true, true) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 
@@ -9454,7 +9454,7 @@ pg_tde_xlog_multi_insert(XLogReaderState *record)
 			ItemPointerSetBlockNumber(&htup->t_ctid, blkno);
 			ItemPointerSetOffsetNumber(&htup->t_ctid, offnum);
 
-			offnum = TDE_PageAddItem(rlocator.spcOid, blkno, page, (Item) htup, newlen, offnum, true, true);
+			offnum = TDE_PageAddItem(rlocator, rlocator.spcOid, blkno, page, (Item) htup, newlen, offnum, true, true);
 			if (offnum == InvalidOffsetNumber)
 				elog(PANIC, "failed to add tuple");
 		}
@@ -9729,7 +9729,7 @@ pg_tde_xlog_update(XLogReaderState *record, bool hot_update)
 		/* Make sure there is no forward chain link in t_ctid */
 		htup->t_ctid = newtid;
 
-		offnum = TDE_PageAddItem(rlocator.spcOid, newblk, page, (Item) htup, newlen, offnum, true, true);
+		offnum = TDE_PageAddItem(rlocator, rlocator.spcOid, newblk, page, (Item) htup, newlen, offnum, true, true);
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 

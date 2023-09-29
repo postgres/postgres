@@ -22,6 +22,8 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
+#include "pg_tde_defines.h"
+
 static inline char* pg_tde_get_key_file_path(const RelFileLocator *newrlocator);
 
 
@@ -165,23 +167,22 @@ RelKeys *tde_rel_keys_map = NULL;
  * the tde fork file and populates cache.
  */
 RelKeysData *
-GetRelationKeys(Relation rel)
+GetRelationKeys(RelFileLocator rel)
 {
 	RelKeys		*curr;
 	RelKeys		*prev = NULL;
 	RelKeys		*new;
 	RelKeysData *keys;
 
-	Oid rel_id = RelationGetRelid(rel);
+	Oid rel_id = rel.relNumber;
 	for (curr = tde_rel_keys_map; curr != NULL; curr = curr->next)
 	{
 		if (curr->rel_id == rel_id) {
 #if TDE_FORK_DEBUG
 			ereport(DEBUG2,
-					(errmsg("TDE: cache hit, \"%s\" %s |  rel %s (%d)",
+					(errmsg("TDE: cache hit, \"%s\" %s | (%d)",
 							curr->keys->master_key_name,
 							tde_sprint_key(&curr->keys->internal_key[0]), 
-							RelationGetRelationName(rel), 
 							rel_id)));
 #endif
 			return curr->keys;
@@ -189,9 +190,9 @@ GetRelationKeys(Relation rel)
 		prev = curr;
 	}
 
-	keys = pg_tde_get_keys_from_fork(&rel->rd_locator);
+	keys = pg_tde_get_keys_from_fork(&rel);
 	new = (RelKeys *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeys));
-	new->rel_id = rel_id;
+	new->rel_id = rel.relNumber;
 	new->keys = keys;
 	new->next = NULL; 
 

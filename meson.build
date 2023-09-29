@@ -47,6 +47,12 @@ enc_test = executable('enc_test',
   include_directories: incdir,
 )
 
+pg_tde_perf = executable('enc_perf_test',
+  files('src/encryption/enc_aes.c', 'src/encryption/test_perf.c'),
+  kwargs: contrib_mod_args,
+  include_directories: incdir,
+)
+
 install_data(
   'pg_tde.control',
   'pg_tde--1.0.sql',

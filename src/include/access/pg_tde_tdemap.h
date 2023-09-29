@@ -22,6 +22,7 @@ typedef struct InternalKey
      */
     Size    start_loc; 
     Size    end_loc;
+	void*   ctx; // TODO: shouldn't be here / written to the disk
 } InternalKey;
 
 #define MASTER_KEY_NAME_LEN 256
@@ -53,6 +54,6 @@ typedef struct RelKeys
 extern void pg_tde_delete_key_fork(Relation rel);
 extern void pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel);
 extern RelKeysData *pg_tde_get_keys_from_fork(const RelFileLocator *rlocator);
-extern RelKeysData *GetRelationKeys(Relation rel);
+extern RelKeysData *GetRelationKeys(RelFileLocator rel);
 const char * tde_sprint_key(InternalKey *k);
 #endif                            /* PG_TDE_MAP_H */

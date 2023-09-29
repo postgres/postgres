@@ -5,14 +5,16 @@
 
 #include "storage/bufpage.h"
 #include "executor/tuptable.h"
+#include "executor/tuptable.h"
+#include "access/pg_tde_tdemap.h"
 
-void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to);
-void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to);
-void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to);
+void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to, RelKeysData* keys);
+void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to, RelKeysData* keys);
+void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to, RelKeysData* keys);
 
 /* A wrapper to encrypt a tuple before adding it to the buffer */
 OffsetNumber
-PGTdePageAddItemExtended(Oid oid, BlockNumber bn, Page page,
+PGTdePageAddItemExtended(RelFileLocator rel, Oid oid, BlockNumber bn, Page page,
 					Item item,
 					Size size,
 					OffsetNumber offsetNumber,
@@ -20,6 +22,6 @@ PGTdePageAddItemExtended(Oid oid, BlockNumber bn, Page page,
 
 /* Wrapper functions for reading decrypted tuple into a given slot */
 TupleTableSlot *
-PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
+PGTdeExecStoreBufferHeapTuple(RelFileLocator rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
 TupleTableSlot *
-PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
+PGTdeExecStorePinnedBufferHeapTuple(RelFileLocator rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);

@@ -19,9 +19,9 @@
  * ----------
 */
 
-#define ENCRYPTION_DEBUG 1
-#define KEYRING_DEBUG 1
-#define TDE_FORK_DEBUG 1
+#define ENCRYPTION_DEBUG 0
+#define KEYRING_DEBUG 0
+#define TDE_FORK_DEBUG 0
 
 #define pg_tde_fill_tuple heap_fill_tuple
 #define pg_tde_form_tuple heap_form_tuple
@@ -39,8 +39,8 @@
 
 #define GetPGTdeamTableAmRoutine GetHeapamTableAmRoutine
 
-#define TDE_PageAddItem(oid, blkno, page, item, size, offsetNumber, overwrite, is_heap) \
-	PGTdePageAddItemExtended(oid, blkno, page, item, size, offsetNumber, \
+#define TDE_PageAddItem(rel, oid, blkno, page, item, size, offsetNumber, overwrite, is_heap) \
+	PGTdePageAddItemExtended(rel, oid, blkno, page, item, size, offsetNumber, \
 						((overwrite) ? PAI_OVERWRITE : 0) | \
 						((is_heap) ? PAI_IS_HEAP : 0))
 
