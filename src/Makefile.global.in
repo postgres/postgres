@@ -589,19 +589,27 @@ endif
 libpq = -L$(libpq_builddir) -lpq
 
 # libpq_pgport is for use by client executables (not libraries) that use libpq.
-# We force clients to pull symbols from the non-shared libraries libpgport
-# and libpgcommon rather than pulling some libpgport symbols from libpq just
-# because libpq uses those functions too.  This makes applications less
-# dependent on changes in libpq's usage of pgport (on platforms where we
-# don't have symbol export control for libpq).  To do this we link to
-# pgport before libpq.  This does cause duplicate -lpgport's to appear
-# on client link lines, since that also appears in $(LIBS).
+# We used to use this to force libpgport and libpgcommon to be linked before
+# libpq, ensuring that clients would pull symbols from those libraries rather
+# than possibly getting them from libpq (and thereby having an unwanted
+# dependency on which symbols libpq uses).  However, now that we can prevent
+# libpq from exporting those symbols on all platforms of interest, we don't
+# worry about that anymore.  The previous technique resulted in duplicate
+# libraries in link commands, since those libraries also appear in $(LIBS).
+# Some platforms warn about that, so avoiding those warnings is now more
+# important.  Hence, $(libpq_pgport) is now equivalent to $(libpq), but we
+# still recommend using it for client executables in case some other reason
+# appears to handle them differently.
+libpq_pgport = $(libpq)
+
 # libpq_pgport_shlib is the same idea, but for use in client shared libraries.
+# We need those clients to use the shlib variants.  (Ideally, users of this
+# macro would strip libpgport and libpgcommon from $(LIBS), but no harm is
+# done if they don't, since they will have satisfied all their references
+# from these libraries.)
 ifdef PGXS
-libpq_pgport = -L$(libdir) -lpgcommon -lpgport $(libpq)
 libpq_pgport_shlib = -L$(libdir) -lpgcommon_shlib -lpgport_shlib $(libpq)
 else
-libpq_pgport = -L$(top_builddir)/src/common -lpgcommon -L$(top_builddir)/src/port -lpgport $(libpq)
 libpq_pgport_shlib = -L$(top_builddir)/src/common -lpgcommon_shlib -L$(top_builddir)/src/port -lpgport_shlib $(libpq)
 endif
 
