@@ -406,9 +406,8 @@ find_base_rel(PlannerInfo *root, int relid)
 {
 	RelOptInfo *rel;
 
-	Assert(relid > 0);
-
-	if (relid < root->simple_rel_array_size)
+	/* use an unsigned comparison to prevent negative array element access */
+	if ((uint32) relid < (uint32) root->simple_rel_array_size)
 	{
 		rel = root->simple_rel_array[relid];
 		if (rel)
@@ -432,9 +431,8 @@ find_base_rel(PlannerInfo *root, int relid)
 RelOptInfo *
 find_base_rel_ignore_join(PlannerInfo *root, int relid)
 {
-	Assert(relid > 0);
-
-	if (relid < root->simple_rel_array_size)
+	/* use an unsigned comparison to prevent negative array element access */
+	if ((uint32) relid < (uint32) root->simple_rel_array_size)
 	{
 		RelOptInfo *rel;
 		RangeTblEntry *rte;
