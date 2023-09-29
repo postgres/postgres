@@ -8,9 +8,11 @@
 #include "executor/tuptable.h"
 #include "access/pg_tde_tdemap.h"
 
+/* TODO: clean up external interface. Now are too much of similar functions */
 void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to, RelKeysData* keys);
 void PGTdeEncryptTupInternal(Oid tableOid, BlockNumber bn, char* page, char* t_data, char* out, unsigned from, unsigned to, RelKeysData* keys);
 void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to, RelKeysData* keys);
+void PGTdeDecryptTupData(BlockNumber bn, Page page, HeapTuple tuple, RelKeysData* keys);
 
 /* A wrapper to encrypt a tuple before adding it to the buffer */
 OffsetNumber

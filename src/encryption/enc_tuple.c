@@ -95,7 +95,7 @@ static void PGTdeDecryptTupInternal2(BlockNumber bn, Page page, HeapTuple tuple,
 	}
 }
 
-static void PGTdeDecryptTupData(BlockNumber bn, Page page, HeapTuple tuple, RelKeysData* keys) 
+void PGTdeDecryptTupData(BlockNumber bn, Page page, HeapTuple tuple, RelKeysData* keys) 
 {
 	PGTdeDecryptTupInternal2(bn, page, tuple, tuple->t_data->t_hoff, tuple->t_len, true, keys);
 }

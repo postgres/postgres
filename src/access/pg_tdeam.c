@@ -3095,6 +3095,9 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
+	/* decrypt the old tuple */
+	RelKeysData *keys = GetRelationKeys(relation->rd_locator);
+	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), page, &oldtup, keys);
 
 	/* the new tuple is ready, except for this: */
 	newtup->t_tableOid = RelationGetRelid(relation);
@@ -4011,7 +4014,6 @@ HeapDetermineColumnsInfo(Relation relation,
 		 */
 		value1 = pg_tde_getattr(oldtup, attrnum, tupdesc, &isnull1);
 		value2 = pg_tde_getattr(newtup, attrnum, tupdesc, &isnull2);
-
 		if (!pg_tde_attr_equals(tupdesc, attrnum, value1,
 							  value2, isnull1, isnull2))
 		{
