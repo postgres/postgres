@@ -25,11 +25,12 @@
 #include "pg_tde_defines.h"
 
 static inline char* pg_tde_get_key_file_path(const RelFileLocator *newrlocator);
-
+static void put_keys_into_map(Oid rel_id, RelKeysData *keys);
 
 void
 pg_tde_delete_key_fork(Relation rel)
 {
+	/* TODO: delete related internal keys from cache */
 	char    *key_file_path = pg_tde_get_key_file_path(&rel->rd_locator);
     if (!key_file_path)
         ereport(ERROR,
@@ -77,7 +78,9 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 		(errmsg("internal_key: %s", tde_sprint_key(&int_key))));
 #endif
 
-	data = (RelKeysData *) palloc(SizeOfRelKeysData(2));
+	/* Allocate in TopMemoryContext and don't pfree sice we add it to
+	 * the cache as well */
+	data = (RelKeysData *) MemoryContextAlloc(TopMemoryContext, SizeOfRelKeysData(1));
 
 	strcpy(data->master_key_name, MasterKeyName);
 	data->internal_key[0] = int_key;
@@ -96,8 +99,10 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 	/* Register the file for delete in case transaction Aborts */
 	RegisterFileForDeletion(key_file_path, false);
 
+	/* Add to the cache */
+	put_keys_into_map(newrlocator->relNumber, data);
+
 	pfree(key_file_path);
-	pfree(data);
 	FileClose(file);
 }
 
@@ -191,8 +196,19 @@ GetRelationKeys(RelFileLocator rel)
 	}
 
 	keys = pg_tde_get_keys_from_fork(&rel);
+
+	put_keys_into_map(rel.relNumber, keys);
+
+	return keys;
+}
+
+static void
+put_keys_into_map(Oid rel_id, RelKeysData *keys) {
+	RelKeys		*new;
+	RelKeys		*prev = NULL;
+
 	new = (RelKeys *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeys));
-	new->rel_id = rel.relNumber;
+	new->rel_id = rel_id;
 	new->keys = keys;
 	new->next = NULL; 
 
@@ -200,8 +216,6 @@ GetRelationKeys(RelFileLocator rel)
 		tde_rel_keys_map = new;
 	else
 		prev->next = new;
-
-	return keys;
 }
 
 const char *
