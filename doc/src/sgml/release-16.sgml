@@ -967,7 +967,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
       <listitem>
        <para>
-        Allow <link linkend="sql-grant"><literal>ALTER GROUP group_name
+        Allow <link linkend="sql-altergroup"><literal>ALTER GROUP group_name
         ADD USER user_name</literal></link> to be performed with <literal>ADMIN
         OPTION</literal> (Robert Haas)
        </para>
