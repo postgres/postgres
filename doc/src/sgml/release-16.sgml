@@ -967,8 +967,8 @@ Author: Robert Haas <rhaas@postgresql.org>
 
       <listitem>
        <para>
-        Allow <link linkend="sql-grant"><literal>GRANT group_name TO
-        user_name</literal></link> to be performed with <literal>ADMIN
+        Allow <link linkend="sql-grant"><literal>ALTER GROUP group_name
+        ADD USER user_name</literal></link> to be performed with <literal>ADMIN
         OPTION</literal> (Robert Haas)
        </para>
 
