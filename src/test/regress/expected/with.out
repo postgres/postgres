@@ -3015,28 +3015,30 @@ WITH cte_basic AS MATERIALIZED (SELECT 1 a, 'cte_basic val' b)
 MERGE INTO m USING (select 0 k, 'merge source SubPlan' v offset 0) o ON m.k=o.k
 WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_basic WHERE cte_basic.a = m.k LIMIT 1)
 WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Merge on public.m
    CTE cte_basic
      ->  Result
            Output: 1, 'cte_basic val'::text
    ->  Hash Right Join
-         Output: m.ctid, (0), ('merge source SubPlan'::text)
-         Hash Cond: (m.k = (0))
+         Output: m.ctid, o.k, o.v, o.*
+         Hash Cond: (m.k = o.k)
          ->  Seq Scan on public.m
                Output: m.ctid, m.k
          ->  Hash
-               Output: (0), ('merge source SubPlan'::text)
-               ->  Result
-                     Output: 0, 'merge source SubPlan'::text
+               Output: o.k, o.v, o.*
+               ->  Subquery Scan on o
+                     Output: o.k, o.v, o.*
+                     ->  Result
+                           Output: 0, 'merge source SubPlan'::text
    SubPlan 2
      ->  Limit
            Output: ((cte_basic.b || ' merge update'::text))
            ->  CTE Scan on cte_basic
                  Output: (cte_basic.b || ' merge update'::text)
                  Filter: (cte_basic.a = m.k)
-(19 rows)
+(21 rows)
 
 -- InitPlan
 WITH cte_init AS MATERIALIZED (SELECT 1 a, 'cte_init val' b)
@@ -3056,8 +3058,8 @@ WITH cte_init AS MATERIALIZED (SELECT 1 a, 'cte_init val' b)
 MERGE INTO m USING (select 1 k, 'merge source InitPlan' v offset 0) o ON m.k=o.k
 WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_init WHERE a = 1 LIMIT 1)
 WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
-                          QUERY PLAN                           
----------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Merge on public.m
    CTE cte_init
      ->  Result
@@ -3069,15 +3071,17 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
                  Output: (cte_init.b || ' merge update'::text)
                  Filter: (cte_init.a = 1)
    ->  Hash Right Join
-         Output: m.ctid, (1), ('merge source InitPlan'::text)
-         Hash Cond: (m.k = (1))
+         Output: m.ctid, o.k, o.v, o.*
+         Hash Cond: (m.k = o.k)
          ->  Seq Scan on public.m
                Output: m.ctid, m.k
          ->  Hash
-               Output: (1), ('merge source InitPlan'::text)
-               ->  Result
-                     Output: 1, 'merge source InitPlan'::text
-(19 rows)
+               Output: o.k, o.v, o.*
+               ->  Subquery Scan on o
+                     Output: o.k, o.v, o.*
+                     ->  Result
+                           Output: 1, 'merge source InitPlan'::text
+(21 rows)
 
 -- MERGE source comes from CTE:
 WITH merge_source_cte AS MATERIALIZED (SELECT 15 a, 'merge_source_cte val' b)
@@ -3111,14 +3115,14 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.a, o.b || (SELECT merge_source_cte.*::text
      ->  CTE Scan on merge_source_cte merge_source_cte_2
            Output: ((merge_source_cte_2.*)::text || ' merge insert'::text)
    ->  Hash Right Join
-         Output: m.ctid, merge_source_cte.a, merge_source_cte.b
+         Output: m.ctid, merge_source_cte.a, merge_source_cte.b, merge_source_cte.*
          Hash Cond: (m.k = merge_source_cte.a)
          ->  Seq Scan on public.m
                Output: m.ctid, m.k
          ->  Hash
-               Output: merge_source_cte.a, merge_source_cte.b
+               Output: merge_source_cte.a, merge_source_cte.b, merge_source_cte.*
                ->  CTE Scan on merge_source_cte
-                     Output: merge_source_cte.a, merge_source_cte.b
+                     Output: merge_source_cte.a, merge_source_cte.b, merge_source_cte.*
 (20 rows)
 
 DROP TABLE m;

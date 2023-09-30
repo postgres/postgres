@@ -1829,11 +1829,11 @@ MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
  Merge on public.pa_target t
    Merge on public.pa_targetp t_1
    ->  Hash Left Join
-         Output: s.sid, t_1.tableoid, t_1.ctid
+         Output: s.sid, s.ctid, t_1.tableoid, t_1.ctid
          Inner Unique: true
          Hash Cond: (s.sid = t_1.tid)
          ->  Seq Scan on public.pa_source s
-               Output: s.sid
+               Output: s.sid, s.ctid
          ->  Hash
                Output: t_1.tid, t_1.tableoid, t_1.ctid
                ->  Seq Scan on public.pa_targetp t_1
@@ -1859,11 +1859,11 @@ MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
 --------------------------------------------
  Merge on public.pa_target t
    ->  Hash Left Join
-         Output: s.sid, t.ctid
+         Output: s.sid, s.ctid, t.ctid
          Inner Unique: true
          Hash Cond: (s.sid = t.tid)
          ->  Seq Scan on public.pa_source s
-               Output: s.sid
+               Output: s.sid, s.ctid
          ->  Hash
                Output: t.tid, t.ctid
                ->  Result

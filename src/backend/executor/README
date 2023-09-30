@@ -26,7 +26,7 @@ unnecessarily (for example, Sort does not rescan its input if no parameters
 of the input have changed, since it can just reread its stored sorted data).
 
 For a SELECT, it is only necessary to deliver the top-level result tuples
-to the client.  For INSERT/UPDATE/DELETE, the actual table modification
+to the client.  For INSERT/UPDATE/DELETE/MERGE, the actual table modification
 operations happen in a top-level ModifyTable plan node.  If the query
 includes a RETURNING clause, the ModifyTable node delivers the computed
 RETURNING rows as output, otherwise it returns nothing.  Handling INSERT
@@ -353,8 +353,8 @@ EvalPlanQual (READ COMMITTED Update Checking)
 For simple SELECTs, the executor need only pay attention to tuples that are
 valid according to the snapshot seen by the current transaction (ie, they
 were inserted by a previously committed transaction, and not deleted by any
-previously committed transaction).  However, for UPDATE and DELETE it is not
-cool to modify or delete a tuple that's been modified by an open or
+previously committed transaction).  However, for UPDATE, DELETE, and MERGE it
+is not cool to modify or delete a tuple that's been modified by an open or
 concurrently-committed transaction.  If we are running in SERIALIZABLE
 isolation level then we just raise an error when this condition is seen to
 occur.  In READ COMMITTED isolation level, we must work a lot harder.
@@ -378,14 +378,14 @@ we're doing UPDATE).  If no tuple is returned, then the modified tuple(s)
 fail the quals, so we ignore the current result tuple and continue the
 original query.
 
-In UPDATE/DELETE, only the target relation needs to be handled this way.
+In UPDATE/DELETE/MERGE, only the target relation needs to be handled this way.
 In SELECT FOR UPDATE, there may be multiple relations flagged FOR UPDATE,
 so we obtain lock on the current tuple version in each such relation before
 executing the recheck.
 
 It is also possible that there are relations in the query that are not
-to be locked (they are neither the UPDATE/DELETE target nor specified to
-be locked in SELECT FOR UPDATE/SHARE).  When re-running the test query
+to be locked (they are neither the UPDATE/DELETE/MERGE target nor specified
+to be locked in SELECT FOR UPDATE/SHARE).  When re-running the test query
 we want to use the same rows from these relations that were joined to
 the locked rows.  For ordinary relations this can be implemented relatively
 cheaply by including the row TID in the join outputs and re-fetching that
