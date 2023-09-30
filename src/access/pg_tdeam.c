@@ -1875,6 +1875,12 @@ pg_tde_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 */
 	CheckForSerializableConflictIn(relation, NULL, InvalidBlockNumber);
 
+	/* 
+	 * Make sure relation keys in the cahce to avoid pallocs in
+	 * the critical section. 
+	*/
+	GetRelationKeys(relation->rd_locator);
+
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
@@ -2206,6 +2212,12 @@ pg_tde_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 
 		if (starting_with_empty_page && (options & HEAP_INSERT_FROZEN))
 			all_frozen_set = true;
+
+		/* 
+		 * Make sure relation keys in the cahce to avoid pallocs in
+		 * the critical section. 
+		*/
+		GetRelationKeys(relation->rd_locator);
 
 		/* NO EREPORT(ERROR) from here till changes are logged */
 		START_CRIT_SECTION();
@@ -3735,6 +3747,12 @@ l2:
 										   bms_overlap(modified_attrs, id_attrs) ||
 										   id_has_external,
 										   &old_key_copied);
+
+	/* 
+	 * Make sure relation keys in the cahce to avoid pallocs in
+	 * the critical section. 
+	*/
+	GetRelationKeys(relation->rd_locator);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
