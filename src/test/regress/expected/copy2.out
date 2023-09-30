@@ -520,6 +520,50 @@ BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NULL(b));
 ERROR:  FORCE_NULL column "b" not referenced by COPY
 ROLLBACK;
+-- should succeed with no effect ("b" remains an empty string, "c" remains NULL)
+BEGIN;
+COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL *, FORCE_NULL *);
+COMMIT;
+SELECT b, c FROM forcetest WHERE a = 4;
+ b |  c   
+---+------
+   | NULL
+(1 row)
+
+-- should succeed with effect ("b" remains an empty string)
+BEGIN;
+COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL *);
+COMMIT;
+SELECT b, c FROM forcetest WHERE a = 5;
+ b | c 
+---+---
+   | 
+(1 row)
+
+-- should succeed with effect ("c" remains NULL)
+BEGIN;
+COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NULL *);
+COMMIT;
+SELECT b, c FROM forcetest WHERE a = 6;
+ b |  c   
+---+------
+ b | NULL
+(1 row)
+
+-- should fail with "conflicting or redundant options" error
+BEGIN;
+COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL *, FORCE_NOT_NULL(b));
+ERROR:  conflicting or redundant options
+LINE 1: ...c) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL *, FORCE_NOT_...
+                                                             ^
+ROLLBACK;
+-- should fail with "conflicting or redundant options" error
+BEGIN;
+COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NULL *, FORCE_NULL(b));
+ERROR:  conflicting or redundant options
+LINE 1: ... b, c) FROM STDIN WITH (FORMAT csv, FORCE_NULL *, FORCE_NULL...
+                                                             ^
+ROLLBACK;
 \pset null ''
 -- test case with whole-row Var in a check constraint
 create table check_con_tbl (f1 int);

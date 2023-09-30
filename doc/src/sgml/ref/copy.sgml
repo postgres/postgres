@@ -41,8 +41,8 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     QUOTE '<replaceable class="parameter">quote_character</replaceable>'
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
     FORCE_QUOTE { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
-    FORCE_NOT_NULL ( <replaceable class="parameter">column_name</replaceable> [, ...] )
-    FORCE_NULL ( <replaceable class="parameter">column_name</replaceable> [, ...] )
+    FORCE_NOT_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
+    FORCE_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
 </synopsis>
  </refsynopsisdiv>
@@ -350,6 +350,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       In the default case where the null string is empty, this means that
       empty values will be read as zero-length strings rather than nulls,
       even when they are not quoted.
+      If <literal>*</literal> is specified, the option will be applied to all columns.
       This option is allowed only in <command>COPY FROM</command>, and only when
       using <literal>CSV</literal> format.
      </para>
@@ -364,6 +365,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       if it has been quoted, and if a match is found set the value to
       <literal>NULL</literal>. In the default case where the null string is empty,
       this converts a quoted empty string into NULL.
+      If <literal>*</literal> is specified, the option will be applied to all columns.
       This option is allowed only in <command>COPY FROM</command>, and only when
       using <literal>CSV</literal> format.
      </para>

@@ -582,10 +582,7 @@ BeginCopyTo(ParseState *pstate,
 	cstate->opts.force_quote_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (cstate->opts.force_quote_all)
 	{
-		int			i;
-
-		for (i = 0; i < num_phys_attrs; i++)
-			cstate->opts.force_quote_flags[i] = true;
+		MemSet(cstate->opts.force_quote_flags, true, num_phys_attrs * sizeof(bool));
 	}
 	else if (cstate->opts.force_quote)
 	{

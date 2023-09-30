@@ -3419,9 +3419,17 @@ copy_opt_item:
 				{
 					$$ = makeDefElem("force_not_null", (Node *) $4, @1);
 				}
+			| FORCE NOT NULL_P '*'
+				{
+					$$ = makeDefElem("force_not_null", (Node *) makeNode(A_Star), @1);
+				}
 			| FORCE NULL_P columnList
 				{
 					$$ = makeDefElem("force_null", (Node *) $3, @1);
+				}
+			| FORCE NULL_P '*'
+				{
+					$$ = makeDefElem("force_null", (Node *) makeNode(A_Star), @1);
 				}
 			| ENCODING Sconst
 				{
