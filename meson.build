@@ -224,7 +224,7 @@ elif host_system == 'darwin'
   library_path_var = 'DYLD_LIBRARY_PATH'
 
   export_file_format = 'darwin'
-  export_fmt = '-exported_symbols_list=@0@'
+  export_fmt = '-Wl,-exported_symbols_list,@0@'
 
   mod_link_args_fmt = ['-bundle_loader', '@0@']
   mod_link_with_dir = 'bindir'
