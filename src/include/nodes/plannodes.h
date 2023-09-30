@@ -1089,7 +1089,7 @@ typedef struct Limit
  * doing a separate remote query to lock each selected row is usually pretty
  * unappealing, so early locking remains a credible design choice for FDWs.
  *
- * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we have to uniquely
+ * When doing UPDATE/DELETE/MERGE/SELECT FOR UPDATE/SHARE, we have to uniquely
  * identify all the source rows, not only those from the target relations, so
  * that we can perform EvalPlanQual rechecking at need.  For plain tables we
  * can just fetch the TID, much as for a target relation; this case is
@@ -1118,7 +1118,7 @@ typedef enum RowMarkType
  * PlanRowMark -
  *	   plan-time representation of FOR [KEY] UPDATE/SHARE clauses
  *
- * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we create a separate
+ * When doing UPDATE/DELETE/MERGE/SELECT FOR UPDATE/SHARE, we create a separate
  * PlanRowMark node for each non-target relation in the query.  Relations that
  * are not specified as FOR UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
  * regular tables or supported foreign tables) or ROW_MARK_COPY (if not).
