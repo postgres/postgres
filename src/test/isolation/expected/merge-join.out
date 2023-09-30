@@ -1,0 +1,148 @@
+Parsed test spec with 2 sessions
+
+starting permutation: b1 m1 s1 c1 b2 m2 s2 c2
+step b1: BEGIN ISOLATION LEVEL READ COMMITTED;
+step m1: MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val);
+step s1: SELECT * FROM tgt;
+id|val
+--+---
+ 1| 10
+ 2| 20
+ 3| 30
+(3 rows)
+
+step c1: COMMIT;
+step b2: BEGIN ISOLATION LEVEL READ COMMITTED;
+step m2: MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val);
+step s2: SELECT * FROM tgt;
+id|val
+--+---
+ 1| 10
+ 2| 20
+ 3| 30
+(3 rows)
+
+step c2: COMMIT;
+
+starting permutation: b1 b2 m1 hj ex m2 c1 c2 s1
+step b1: BEGIN ISOLATION LEVEL READ COMMITTED;
+step b2: BEGIN ISOLATION LEVEL READ COMMITTED;
+step m1: MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val);
+step hj: SET LOCAL enable_mergejoin = off; SET LOCAL enable_nestloop = off;
+step ex: EXPLAIN (verbose, costs off)
+           MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val);
+QUERY PLAN                                         
+---------------------------------------------------
+Merge on public.tgt                                
+  ->  Hash Left Join                               
+        Output: tgt.ctid, src.val, src.id, src.ctid
+        Inner Unique: true                         
+        Hash Cond: (src.id = tgt.id)               
+        ->  Seq Scan on public.src                 
+              Output: src.val, src.id, src.ctid    
+        ->  Hash                                   
+              Output: tgt.ctid, tgt.id             
+              ->  Seq Scan on public.tgt           
+                    Output: tgt.ctid, tgt.id       
+(11 rows)
+
+step m2: MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val); <waiting ...>
+step c1: COMMIT;
+step m2: <... completed>
+step c2: COMMIT;
+step s1: SELECT * FROM tgt;
+id|val
+--+---
+ 1| 10
+ 2| 20
+ 3| 30
+(3 rows)
+
+
+starting permutation: b1 b2 m1 mj ex m2 c1 c2 s1
+step b1: BEGIN ISOLATION LEVEL READ COMMITTED;
+step b2: BEGIN ISOLATION LEVEL READ COMMITTED;
+step m1: MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val);
+step mj: SET LOCAL enable_hashjoin = off; SET LOCAL enable_nestloop = off;
+step ex: EXPLAIN (verbose, costs off)
+           MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val);
+QUERY PLAN                                         
+---------------------------------------------------
+Merge on public.tgt                                
+  ->  Merge Left Join                              
+        Output: tgt.ctid, src.val, src.id, src.ctid
+        Inner Unique: true                         
+        Merge Cond: (src.id = tgt.id)              
+        ->  Index Scan using src_pkey on public.src
+              Output: src.val, src.id, src.ctid    
+        ->  Index Scan using tgt_pkey on public.tgt
+              Output: tgt.ctid, tgt.id             
+(9 rows)
+
+step m2: MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val); <waiting ...>
+step c1: COMMIT;
+step m2: <... completed>
+step c2: COMMIT;
+step s1: SELECT * FROM tgt;
+id|val
+--+---
+ 1| 10
+ 2| 20
+ 3| 30
+(3 rows)
+
+
+starting permutation: b1 b2 m1 nl ex m2 c1 c2 s1
+step b1: BEGIN ISOLATION LEVEL READ COMMITTED;
+step b2: BEGIN ISOLATION LEVEL READ COMMITTED;
+step m1: MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val);
+step nl: SET LOCAL enable_hashjoin = off; SET LOCAL enable_mergejoin = off;
+step ex: EXPLAIN (verbose, costs off)
+           MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val);
+QUERY PLAN                                         
+---------------------------------------------------
+Merge on public.tgt                                
+  ->  Nested Loop Left Join                        
+        Output: tgt.ctid, src.val, src.id, src.ctid
+        Inner Unique: true                         
+        ->  Seq Scan on public.src                 
+              Output: src.val, src.id, src.ctid    
+        ->  Index Scan using tgt_pkey on public.tgt
+              Output: tgt.ctid, tgt.id             
+              Index Cond: (tgt.id = src.id)        
+(9 rows)
+
+step m2: MERGE INTO tgt USING src ON tgt.id = src.id
+             WHEN MATCHED THEN UPDATE SET val = src.val
+             WHEN NOT MATCHED THEN INSERT VALUES (src.id, src.val); <waiting ...>
+step c1: COMMIT;
+step m2: <... completed>
+step c2: COMMIT;
+step s1: SELECT * FROM tgt;
+id|val
+--+---
+ 1| 10
+ 2| 20
+ 3| 30
+(3 rows)
+

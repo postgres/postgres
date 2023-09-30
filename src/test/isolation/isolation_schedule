@@ -51,6 +51,7 @@ test: merge-insert-update
 test: merge-delete
 test: merge-update
 test: merge-match-recheck
+test: merge-join
 test: delete-abort-savept
 test: delete-abort-savept-2
 test: aborted-keyrevoke
