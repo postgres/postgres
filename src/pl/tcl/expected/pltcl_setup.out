@@ -119,7 +119,7 @@ CREATE OPERATOR CLASS tcl_int4_ops
 -- for initialization problems.
 --
 create function tcl_date_week(int4,int4,int4) returns text as $$
-    return [clock format [clock scan "$2/$3/$1"] -format "%U"]
+    return [clock format [clock scan "$2/$3/$1" -gmt 1] -format "%U" -gmt 1]
 $$ language pltcl immutable;
 select tcl_date_week(2010,1,26);
  tcl_date_week 
