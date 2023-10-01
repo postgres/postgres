@@ -68,8 +68,8 @@ typedef struct XLogRecord
  * in length if we ignore any allocation overhead of the XLogReader.
  *
  * To accommodate some overhead, this value allows for 4M of allocation
- * overhead, that should be plenty enough for what
- * DecodeXLogRecordRequiredSpace() expects as extra.
+ * overhead, that should be plenty enough for what the XLogReader
+ * infrastructure expects as extra.
  */
 #define XLogRecordMaxSize	(1020 * 1024 * 1024)
 

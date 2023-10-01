@@ -897,8 +897,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	 *
 	 * XLogReader machinery is only able to handle records up to a certain
 	 * size (ignoring machine resource limitations), so make sure that we will
-	 * not emit records larger than the sizes advertised to be supported. This
-	 * cap is based on DecodeXLogRecordRequiredSpace().
+	 * not emit records larger than the sizes advertised to be supported.
 	 */
 	if (total_len > XLogRecordMaxSize)
 		ereport(ERROR,
@@ -1339,10 +1338,12 @@ InitXLogInsert(void)
 
 	/*
 	 * Check that any records assembled can be decoded.  This is capped based
-	 * on what XLogReader would require at its maximum bound.  This code path
+	 * on what XLogReader would require at its maximum bound.  The XLOG_BLCKSZ
+	 * addend covers the larger allocate_recordbuf() demand.  This code path
 	 * is called once per backend, more than enough for this check.
 	 */
-	size_t		max_required = DecodeXLogRecordRequiredSpace(XLogRecordMaxSize);
+	size_t		max_required =
+		DecodeXLogRecordRequiredSpace(XLogRecordMaxSize + XLOG_BLCKSZ);
 
 	Assert(AllocSizeIsValid(max_required));
 #endif
