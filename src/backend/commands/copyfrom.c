@@ -1571,7 +1571,14 @@ BeginCopyFrom(ParseState *pstate,
 		/* Get default info if available */
 		defexprs[attnum - 1] = NULL;
 
-		if (!att->attgenerated)
+		/*
+		 * We only need the default values for columns that do not appear in
+		 * the column list, unless the DEFAULT option was given. We never need
+		 * default values for generated columns.
+		 */
+		if ((cstate->opts.default_print != NULL ||
+			 !list_member_int(cstate->attnumlist, attnum)) &&
+			!att->attgenerated)
 		{
 			Expr	   *defexpr = (Expr *) build_column_default(cstate->rel,
 																attnum);

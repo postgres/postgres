@@ -268,3 +268,18 @@ a	c	b
 
 SELECT * FROM header_copytest ORDER BY a;
 drop table header_copytest;
+
+-- test COPY with overlong column defaults
+create temp table oversized_column_default (
+    col1 varchar(5) DEFAULT 'more than 5 chars',
+    col2 varchar(5));
+-- normal COPY should work
+copy oversized_column_default from stdin;
+\.
+-- error if the column is excluded
+copy oversized_column_default (col2) from stdin;
+\.
+-- error if the DEFAULT option is given
+copy oversized_column_default from stdin (default '');
+\.
+drop table oversized_column_default;
