@@ -1337,6 +1337,12 @@ BeginCopyFrom(ParseState *pstate,
 		cstate->need_transcoding = true;
 		cstate->conversion_proc = FindDefaultConversionProc(cstate->file_encoding,
 															GetDatabaseEncoding());
+		if (!OidIsValid(cstate->conversion_proc))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("default conversion function for encoding \"%s\" to \"%s\" does not exist",
+							pg_encoding_to_char(cstate->file_encoding),
+							pg_encoding_to_char(GetDatabaseEncoding()))));
 	}
 
 	cstate->copy_src = COPY_FILE;	/* default */
