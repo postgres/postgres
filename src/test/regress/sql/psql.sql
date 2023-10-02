@@ -87,6 +87,10 @@ select 1 as var1, NULL as var2, 3 as var3 \gset
 select 10 as test01, 20 as test02 from generate_series(1,3) \gset
 select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 
+-- \gset returns no tuples
+select a from generate_series(1, 10) as a where a = 11 \gset
+\echo :ROW_COUNT
+
 -- \gset should work in FETCH_COUNT mode too
 \set FETCH_COUNT 1
 

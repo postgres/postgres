@@ -1659,9 +1659,9 @@ ExecQueryAndProcessResults(const char *query,
 											tuples_fout, printQueryFout);
 		}
 
-		/* set variables on last result if all went well */
-		if (!is_watch && last && success)
-			SetResultVariables(result, true);
+		/* set variables from last result */
+		if (!is_watch && last)
+			SetResultVariables(result, success);
 
 		ClearOrSaveResult(result);
 		result = next_result;

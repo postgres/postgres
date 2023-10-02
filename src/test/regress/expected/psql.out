@@ -171,6 +171,11 @@ select 10 as test01, 20 as test02 from generate_series(1,3) \gset
 more than one row returned for \gset
 select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 no rows returned for \gset
+-- \gset returns no tuples
+select a from generate_series(1, 10) as a where a = 11 \gset
+no rows returned for \gset
+\echo :ROW_COUNT
+0
 -- \gset should work in FETCH_COUNT mode too
 \set FETCH_COUNT 1
 select 1 as x, 2 as y \gset pref01_ \\ \echo :pref01_x
