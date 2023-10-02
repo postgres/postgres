@@ -242,6 +242,7 @@ BackgroundWriterMain(void)
 
 		/* Report pending statistics to the cumulative stats system */
 		pgstat_report_bgwriter();
+		pgstat_report_wal(true);
 
 		if (FirstCallSinceLastCheckpoint())
 		{
