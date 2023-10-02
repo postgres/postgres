@@ -173,7 +173,7 @@ $node_primary->safe_psql('postgres',
 	"ALTER SYSTEM SET max_wal_size='40MB'; SELECT pg_reload_conf()");
 
 # Advance WAL again. The slot loses the oldest segment by the next checkpoint
-my $logstart = get_log_size($node_primary);
+my $logstart = -s $node_primary->logfile;
 advance_wal($node_primary, 7);
 
 # Now create another checkpoint and wait until the WARNING is issued
@@ -229,7 +229,7 @@ $node_primary->safe_psql('postgres',
 is($oldestseg, $redoseg, "check that segments have been removed");
 
 # The standby no longer can connect to the primary
-$logstart = get_log_size($node_standby);
+$logstart = -s $node_standby->logfile;
 $node_standby->start;
 
 my $failed = 0;
@@ -368,7 +368,7 @@ my $receiverpid = $node_standby3->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_activity WHERE backend_type = 'walreceiver'");
 like($receiverpid, qr/^[0-9]+$/, "have walreceiver pid $receiverpid");
 
-$logstart = get_log_size($node_primary3);
+$logstart = -s $node_primary3->logfile;
 # freeze walsender and walreceiver. Slot will still be active, but walreceiver
 # won't get anything anymore.
 kill 'STOP', $senderpid, $receiverpid;
@@ -431,14 +431,6 @@ sub advance_wal
 			"CREATE TABLE t (); DROP TABLE t; SELECT pg_switch_wal();");
 	}
 	return;
-}
-
-# return the size of logfile of $node in bytes
-sub get_log_size
-{
-	my ($node) = @_;
-
-	return (stat $node->logfile)[7];
 }
 
 done_testing();
