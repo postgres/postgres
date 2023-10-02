@@ -247,6 +247,7 @@ BackgroundWriterMain(void)
 		 * Send off activity statistics to the stats collector
 		 */
 		pgstat_send_bgwriter();
+		pgstat_send_wal(true);
 
 		if (FirstCallSinceLastCheckpoint())
 		{
