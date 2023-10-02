@@ -198,7 +198,32 @@ typedef struct PruneResult
 {
 	int			ndeleted;		/* Number of tuples deleted from the page */
 	int			nnewlpdead;		/* Number of newly LP_DEAD items */
+
+	/*
+	 * Tuple visibility is only computed once for each tuple, for correctness
+	 * and efficiency reasons; see comment in heap_page_prune() for details.
+	 * This is of type int8[], instead of HTSV_Result[], so we can use -1 to
+	 * indicate no visibility has been computed, e.g. for LP_DEAD items.
+	 *
+	 * This needs to be MaxHeapTuplesPerPage + 1 long as FirstOffsetNumber is
+	 * 1. Otherwise every access would need to subtract 1.
+	 */
+	int8		htsv[MaxHeapTuplesPerPage + 1];
 } PruneResult;
+
+/*
+ * Pruning calculates tuple visibility once and saves the results in an array
+ * of int8. See PruneResult.htsv for details. This helper function is meant to
+ * guard against examining visibility status array members which have not yet
+ * been computed.
+ */
+static inline HTSV_Result
+htsv_get_valid_status(int status)
+{
+	Assert(status >= HEAPTUPLE_DEAD &&
+		   status <= HEAPTUPLE_DELETE_IN_PROGRESS);
+	return (HTSV_Result) status;
+}
 
 /* ----------------
  *		function prototypes for heap access method

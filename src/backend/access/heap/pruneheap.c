@@ -53,16 +53,6 @@ typedef struct
 	 * 1. Otherwise every access would need to subtract 1.
 	 */
 	bool		marked[MaxHeapTuplesPerPage + 1];
-
-	/*
-	 * Tuple visibility is only computed once for each tuple, for correctness
-	 * and efficiency reasons; see comment in heap_page_prune() for details.
-	 * This is of type int8[], instead of HTSV_Result[], so we can use -1 to
-	 * indicate no visibility has been computed, e.g. for LP_DEAD items.
-	 *
-	 * Same indexing as ->marked.
-	 */
-	int8		htsv[MaxHeapTuplesPerPage + 1];
 } PruneState;
 
 /* Local functions */
@@ -71,6 +61,7 @@ static HTSV_Result heap_prune_satisfies_vacuum(PruneState *prstate,
 											   Buffer buffer);
 static int	heap_prune_chain(Buffer buffer,
 							 OffsetNumber rootoffnum,
+							 int8 *htsv,
 							 PruneState *prstate);
 static void heap_prune_record_prunable(PruneState *prstate, TransactionId xid);
 static void heap_prune_record_redirect(PruneState *prstate,
@@ -240,6 +231,10 @@ heap_page_prune(Relation relation, Buffer buffer,
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
 	memset(prstate.marked, 0, sizeof(prstate.marked));
 
+	/*
+	 * presult->htsv is not initialized here because all ntuple spots in the
+	 * array will be set either to a valid HTSV_Result value or -1.
+	 */
 	presult->ndeleted = 0;
 	presult->nnewlpdead = 0;
 
@@ -276,7 +271,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 		/* Nothing to do if slot doesn't contain a tuple */
 		if (!ItemIdIsNormal(itemid))
 		{
-			prstate.htsv[offnum] = -1;
+			presult->htsv[offnum] = -1;
 			continue;
 		}
 
@@ -292,8 +287,8 @@ heap_page_prune(Relation relation, Buffer buffer,
 		if (off_loc)
 			*off_loc = offnum;
 
-		prstate.htsv[offnum] = heap_prune_satisfies_vacuum(&prstate, &tup,
-														   buffer);
+		presult->htsv[offnum] = heap_prune_satisfies_vacuum(&prstate, &tup,
+															buffer);
 	}
 
 	/* Scan the page */
@@ -317,7 +312,8 @@ heap_page_prune(Relation relation, Buffer buffer,
 			continue;
 
 		/* Process this item or chain of items */
-		presult->ndeleted += heap_prune_chain(buffer, offnum, &prstate);
+		presult->ndeleted += heap_prune_chain(buffer, offnum,
+											  presult->htsv, &prstate);
 	}
 
 	/* Clear the offset information once we have processed the given page. */
@@ -446,6 +442,8 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 /*
  * Prune specified line pointer or a HOT chain originating at line pointer.
  *
+ * Tuple visibility information is provided in htsv.
+ *
  * If the item is an index-referenced tuple (i.e. not a heap-only tuple),
  * the HOT chain is pruned by removing all DEAD tuples at the start of the HOT
  * chain.  We also prune any RECENTLY_DEAD tuples preceding a DEAD tuple.
@@ -473,7 +471,8 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
  * Returns the number of tuples (to be) deleted from the page.
  */
 static int
-heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
+heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum,
+				 int8 *htsv, PruneState *prstate)
 {
 	int			ndeleted = 0;
 	Page		dp = (Page) BufferGetPage(buffer);
@@ -494,7 +493,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 	 */
 	if (ItemIdIsNormal(rootlp))
 	{
-		Assert(prstate->htsv[rootoffnum] != -1);
+		Assert(htsv[rootoffnum] != -1);
 		htup = (HeapTupleHeader) PageGetItem(dp, rootlp);
 
 		if (HeapTupleHeaderIsHeapOnly(htup))
@@ -517,7 +516,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 			 * either here or while following a chain below.  Whichever path
 			 * gets there first will mark the tuple unused.
 			 */
-			if (prstate->htsv[rootoffnum] == HEAPTUPLE_DEAD &&
+			if (htsv[rootoffnum] == HEAPTUPLE_DEAD &&
 				!HeapTupleHeaderIsHotUpdated(htup))
 			{
 				heap_prune_record_unused(prstate, rootoffnum);
@@ -585,7 +584,6 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 			break;
 
 		Assert(ItemIdIsNormal(lp));
-		Assert(prstate->htsv[offnum] != -1);
 		htup = (HeapTupleHeader) PageGetItem(dp, lp);
 
 		/*
@@ -605,7 +603,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 		 */
 		tupdead = recent_dead = false;
 
-		switch ((HTSV_Result) prstate->htsv[offnum])
+		switch (htsv_get_valid_status(htsv[offnum]))
 		{
 			case HEAPTUPLE_DEAD:
 				tupdead = true;
