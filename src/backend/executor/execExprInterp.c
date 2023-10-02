@@ -1177,29 +1177,27 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			/* call input function (similar to InputFunctionCall) */
 			if (!op->d.iocoerce.finfo_in->fn_strict || str != NULL)
 			{
-				FunctionCallInfo fcinfo_in;
-				Datum		d;
+				bool		error;
 
-				fcinfo_in = op->d.iocoerce.fcinfo_data_in;
-				fcinfo_in->args[0].value = PointerGetDatum(str);
-				fcinfo_in->args[0].isnull = *op->resnull;
-				/* second and third arguments are already set up */
+				/*
+				 * InputFunctionCallSafe() writes directly into *op->resvalue.
+				 * Return NULL if an error is reported.
+				 */
+				error = !InputFunctionCallSafe(op->d.iocoerce.finfo_in, str,
+											   op->d.iocoerce.typioparam, -1,
+											   (Node *) op->d.iocoerce.escontext,
+											   op->resvalue);
+				if (error)
+					*op->resnull = true;
 
-				fcinfo_in->isnull = false;
-				d = FunctionCallInvoke(fcinfo_in);
-				*op->resvalue = d;
-
-				/* Should get null result if and only if str is NULL */
-				if (str == NULL)
-				{
+				/*
+				 * Should get null result if and only if str is NULL or if we
+				 * got an error above.
+				 */
+				if (str == NULL || error)
 					Assert(*op->resnull);
-					Assert(fcinfo_in->isnull);
-				}
 				else
-				{
 					Assert(!*op->resnull);
-					Assert(!fcinfo_in->isnull);
-				}
 			}
 
 			EEO_NEXT();
@@ -3745,7 +3743,7 @@ ExecEvalConstraintCheck(ExprState *state, ExprEvalStep *op)
 {
 	if (!*op->d.domaincheck.checknull &&
 		!DatumGetBool(*op->d.domaincheck.checkvalue))
-		ereport(ERROR,
+		errsave((Node *) op->d.domaincheck.escontext,
 				(errcode(ERRCODE_CHECK_VIOLATION),
 				 errmsg("value for domain %s violates check constraint \"%s\"",
 						format_type_be(op->d.domaincheck.resulttype),

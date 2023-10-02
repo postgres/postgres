@@ -59,6 +59,7 @@ AggStatePerTransData StructAggStatePerTransData;
 ExprContext StructExprContext;
 ExprEvalStep StructExprEvalStep;
 ExprState	StructExprState;
+FmgrInfo	StructFmgrInfo;
 FunctionCallInfoBaseData StructFunctionCallInfoData;
 HeapTupleData StructHeapTupleData;
 MemoryContextData StructMemoryContextData;
@@ -66,6 +67,7 @@ TupleTableSlot StructTupleTableSlot;
 HeapTupleTableSlot StructHeapTupleTableSlot;
 MinimalTupleTableSlot StructMinimalTupleTableSlot;
 TupleDescData StructTupleDescData;
+ErrorSaveContext StructErrorSaveContext;
 
 
 /*
@@ -136,6 +138,7 @@ void	   *referenced_functions[] =
 	ExecEvalJsonConstructor,
 	ExecEvalJsonIsPredicate,
 	MakeExpandedObjectReadOnlyInternal,
+	InputFunctionCallSafe,
 	slot_getmissingattrs,
 	slot_getsomeattrs_int,
 	strlen,
