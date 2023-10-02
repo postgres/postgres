@@ -1251,9 +1251,14 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_IOCOERCE:
 				{
-					FunctionCallInfo fcinfo_out;
-					LLVMValueRef v_fn_out;
-					LLVMValueRef v_fcinfo_out;
+					FunctionCallInfo fcinfo_out,
+								fcinfo_in;
+					LLVMValueRef v_fn_out,
+								v_fn_in;
+					LLVMValueRef v_fcinfo_out,
+								v_fcinfo_in;
+					LLVMValueRef v_fcinfo_in_isnullp;
+					LLVMValueRef v_retval;
 					LLVMValueRef v_resvalue;
 					LLVMValueRef v_resnull;
 
@@ -1266,6 +1271,7 @@ llvm_compile_expr(ExprState *state)
 					LLVMBasicBlockRef b_inputcall;
 
 					fcinfo_out = op->d.iocoerce.fcinfo_data_out;
+					fcinfo_in = op->d.iocoerce.fcinfo_data_in;
 
 					b_skipoutput = l_bb_before_v(opblocks[opno + 1],
 												 "op.%d.skipoutputnull", opno);
@@ -1277,7 +1283,14 @@ llvm_compile_expr(ExprState *state)
 												"op.%d.inputcall", opno);
 
 					v_fn_out = llvm_function_reference(context, b, mod, fcinfo_out);
+					v_fn_in = llvm_function_reference(context, b, mod, fcinfo_in);
 					v_fcinfo_out = l_ptr_const(fcinfo_out, l_ptr(StructFunctionCallInfoData));
+					v_fcinfo_in = l_ptr_const(fcinfo_in, l_ptr(StructFunctionCallInfoData));
+
+					v_fcinfo_in_isnullp =
+						LLVMBuildStructGEP(b, v_fcinfo_in,
+										   FIELDNO_FUNCTIONCALLINFODATA_ISNULL,
+										   "v_fcinfo_in_isnull");
 
 					/* output functions are not called on nulls */
 					v_resnull = LLVMBuildLoad(b, v_resnullp, "");
@@ -1343,44 +1356,24 @@ llvm_compile_expr(ExprState *state)
 						LLVMBuildBr(b, b_inputcall);
 					}
 
-					/*
-					 * Call the input function.
-					 *
-					 * If op->d.iocoerce.escontext references an
-					 * ErrorSaveContext, InputFunctionCallSafe() would return
-					 * false upon encountering an error.
-					 */
 					LLVMPositionBuilderAtEnd(b, b_inputcall);
-					{
-						Oid			ioparam = op->d.iocoerce.typioparam;
-						LLVMValueRef v_params[6];
-						LLVMValueRef v_success;
+					/* set arguments */
+					/* arg0: output */
+					LLVMBuildStore(b, v_output,
+								   l_funcvaluep(b, v_fcinfo_in, 0));
+					LLVMBuildStore(b, v_resnull,
+								   l_funcnullp(b, v_fcinfo_in, 0));
 
-						v_params[0] = l_ptr_const(op->d.iocoerce.finfo_in,
-												  l_ptr(StructFmgrInfo));
-						v_params[1] = v_output;
-						v_params[2] = l_oid_const(lc, ioparam);
-						v_params[3] = l_int32_const(lc, -1);
-						v_params[4] = l_ptr_const(op->d.iocoerce.escontext,
-												  l_ptr(StructErrorSaveContext));
+					/* arg1: ioparam: preset in execExpr.c */
+					/* arg2: typmod: preset in execExpr.c  */
 
-						/*
-						 * InputFunctionCallSafe() will write directly into
-						 * *op->resvalue.
-						 */
-						v_params[5] = v_resvaluep;
+					/* reset fcinfo_in->isnull */
+					LLVMBuildStore(b, l_sbool_const(0), v_fcinfo_in_isnullp);
+					/* and call function */
+					v_retval = LLVMBuildCall(b, v_fn_in, &v_fcinfo_in, 1,
+											 "funccall_iocoerce_in");
 
-						v_success = LLVMBuildCall(b, llvm_pg_func(mod, "InputFunctionCallSafe"),
-												  v_params, lengthof(v_params),
-												  "funccall_iocoerce_in_safe");
-
-						/*
-						 * Return null if InputFunctionCallSafe() encountered
-						 * an error.
-						 */
-						v_resnullp = LLVMBuildICmp(b, LLVMIntEQ, v_success,
-												   l_sbool_const(0), "");
-					}
+					LLVMBuildStore(b, v_retval, v_resvaluep);
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
 					break;

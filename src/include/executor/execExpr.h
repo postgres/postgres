@@ -16,7 +16,6 @@
 
 #include "executor/nodeAgg.h"
 #include "nodes/execnodes.h"
-#include "nodes/miscnodes.h"
 
 /* forward references to avoid circularity */
 struct ExprEvalStep;
@@ -417,8 +416,7 @@ typedef struct ExprEvalStep
 			FunctionCallInfo fcinfo_data_out;
 			/* lookup and call info for result type's input function */
 			FmgrInfo   *finfo_in;
-			Oid			typioparam;
-			ErrorSaveContext *escontext;
+			FunctionCallInfo fcinfo_data_in;
 		}			iocoerce;
 
 		/* for EEOP_SQLVALUEFUNCTION */
@@ -549,7 +547,6 @@ typedef struct ExprEvalStep
 			bool	   *checknull;
 			/* OID of domain type */
 			Oid			resulttype;
-			ErrorSaveContext *escontext;
 		}			domaincheck;
 
 		/* for EEOP_CONVERT_ROWTYPE */

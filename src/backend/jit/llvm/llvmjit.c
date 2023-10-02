@@ -70,14 +70,12 @@ LLVMTypeRef StructHeapTupleTableSlot;
 LLVMTypeRef StructMinimalTupleTableSlot;
 LLVMTypeRef StructMemoryContextData;
 LLVMTypeRef StructFunctionCallInfoData;
-LLVMTypeRef StructFmgrInfo;
 LLVMTypeRef StructExprContext;
 LLVMTypeRef StructExprEvalStep;
 LLVMTypeRef StructExprState;
 LLVMTypeRef StructAggState;
 LLVMTypeRef StructAggStatePerGroupData;
 LLVMTypeRef StructAggStatePerTransData;
-LLVMTypeRef StructErrorSaveContext;
 
 LLVMValueRef AttributeTemplate;
 
@@ -1120,7 +1118,6 @@ llvm_create_types(void)
 	StructExprEvalStep = llvm_pg_var_type("StructExprEvalStep");
 	StructExprState = llvm_pg_var_type("StructExprState");
 	StructFunctionCallInfoData = llvm_pg_var_type("StructFunctionCallInfoData");
-	StructFmgrInfo = llvm_pg_var_type("StructFmgrInfo");
 	StructMemoryContextData = llvm_pg_var_type("StructMemoryContextData");
 	StructTupleTableSlot = llvm_pg_var_type("StructTupleTableSlot");
 	StructHeapTupleTableSlot = llvm_pg_var_type("StructHeapTupleTableSlot");
@@ -1130,7 +1127,6 @@ llvm_create_types(void)
 	StructAggState = llvm_pg_var_type("StructAggState");
 	StructAggStatePerGroupData = llvm_pg_var_type("StructAggStatePerGroupData");
 	StructAggStatePerTransData = llvm_pg_var_type("StructAggStatePerTransData");
-	StructErrorSaveContext = llvm_pg_var_type("StructErrorSaveContext");
 
 	AttributeTemplate = LLVMGetNamedFunction(llvm_types_module, "AttributeTemplate");
 }

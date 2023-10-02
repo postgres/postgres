@@ -86,15 +86,6 @@ l_sizet_const(size_t i)
 }
 
 /*
- * Emit constant oid.
- */
-static inline LLVMValueRef
-l_oid_const(LLVMContextRef lc, Oid i)
-{
-	return LLVMConstInt(LLVMInt32TypeInContext(lc), i, false);
-}
-
-/*
  * Emit constant boolean, as used for storage (e.g. global vars, structs).
  */
 static inline LLVMValueRef

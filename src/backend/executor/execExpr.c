@@ -139,7 +139,6 @@ ExecInitExpr(Expr *node, PlanState *parent)
 	state->expr = node;
 	state->parent = parent;
 	state->ext_params = NULL;
-	state->escontext = NULL;
 
 	/* Insert setup steps as needed */
 	ExecCreateExprSetupSteps(state, (Node *) node);
@@ -177,7 +176,6 @@ ExecInitExprWithParams(Expr *node, ParamListInfo ext_params)
 	state->expr = node;
 	state->parent = NULL;
 	state->ext_params = ext_params;
-	state->escontext = NULL;
 
 	/* Insert setup steps as needed */
 	ExecCreateExprSetupSteps(state, (Node *) node);
@@ -230,7 +228,6 @@ ExecInitQual(List *qual, PlanState *parent)
 	state->expr = (Expr *) qual;
 	state->parent = parent;
 	state->ext_params = NULL;
-	state->escontext = NULL;
 
 	/* mark expression as to be used with ExecQual() */
 	state->flags = EEO_FLAG_IS_QUAL;
@@ -376,7 +373,6 @@ ExecBuildProjectionInfo(List *targetList,
 	state->expr = (Expr *) targetList;
 	state->parent = parent;
 	state->ext_params = NULL;
-	state->escontext = NULL;
 
 	state->resultslot = slot;
 
@@ -548,7 +544,6 @@ ExecBuildUpdateProjection(List *targetList,
 		state->expr = NULL;		/* not used */
 	state->parent = parent;
 	state->ext_params = NULL;
-	state->escontext = NULL;
 
 	state->resultslot = slot;
 
@@ -1554,6 +1549,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
 				Oid			iofunc;
 				bool		typisvarlena;
+				Oid			typioparam;
+				FunctionCallInfo fcinfo_in;
 
 				/* evaluate argument into step's result area */
 				ExecInitExprRec(iocoerce->arg, state, resv, resnull);
@@ -1582,13 +1579,25 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* lookup the result type's input function */
 				scratch.d.iocoerce.finfo_in = palloc0(sizeof(FmgrInfo));
+				scratch.d.iocoerce.fcinfo_data_in = palloc0(SizeForFunctionCallInfo(3));
+
 				getTypeInputInfo(iocoerce->resulttype,
-								 &iofunc, &scratch.d.iocoerce.typioparam);
+								 &iofunc, &typioparam);
 				fmgr_info(iofunc, scratch.d.iocoerce.finfo_in);
 				fmgr_info_set_expr((Node *) node, scratch.d.iocoerce.finfo_in);
+				InitFunctionCallInfoData(*scratch.d.iocoerce.fcinfo_data_in,
+										 scratch.d.iocoerce.finfo_in,
+										 3, InvalidOid, NULL, NULL);
 
-				/* Set ErrorSaveContext if passed by the caller. */
-				scratch.d.iocoerce.escontext = state->escontext;
+				/*
+				 * We can preload the second and third arguments for the input
+				 * function, since they're constants.
+				 */
+				fcinfo_in = scratch.d.iocoerce.fcinfo_data_in;
+				fcinfo_in->args[1].value = ObjectIdGetDatum(typioparam);
+				fcinfo_in->args[1].isnull = false;
+				fcinfo_in->args[2].value = Int32GetDatum(-1);
+				fcinfo_in->args[2].isnull = false;
 
 				ExprEvalPushStep(state, &scratch);
 				break;
@@ -1619,7 +1628,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				elemstate->expr = acoerce->elemexpr;
 				elemstate->parent = state->parent;
 				elemstate->ext_params = state->ext_params;
-				state->escontext = NULL;
 
 				elemstate->innermost_caseval = (Datum *) palloc(sizeof(Datum));
 				elemstate->innermost_casenull = (bool *) palloc(sizeof(bool));
@@ -3298,8 +3306,6 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 	/* we'll allocate workspace only if needed */
 	scratch->d.domaincheck.checkvalue = NULL;
 	scratch->d.domaincheck.checknull = NULL;
-	/* Set ErrorSaveContext if passed by the caller. */
-	scratch->d.domaincheck.escontext = state->escontext;
 
 	/*
 	 * Evaluate argument - it's fine to directly store it into resv/resnull,
