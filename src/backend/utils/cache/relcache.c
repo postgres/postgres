@@ -5821,35 +5821,6 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 	MemoryContextSwitchTo(oldcxt);
 }
 
-/*
- * RelationGetIndexRawAttOptions -- get AM/opclass-specific options for the index
- */
-Datum *
-RelationGetIndexRawAttOptions(Relation indexrel)
-{
-	Oid			indexrelid = RelationGetRelid(indexrel);
-	int16		natts = RelationGetNumberOfAttributes(indexrel);
-	Datum	   *options = NULL;
-	int16		attnum;
-
-	for (attnum = 1; attnum <= natts; attnum++)
-	{
-		if (indexrel->rd_indam->amoptsprocnum == 0)
-			continue;
-
-		if (!OidIsValid(index_getprocid(indexrel, attnum,
-										indexrel->rd_indam->amoptsprocnum)))
-			continue;
-
-		if (!options)
-			options = palloc0(sizeof(Datum) * natts);
-
-		options[attnum - 1] = get_attoptions(indexrelid, attnum);
-	}
-
-	return options;
-}
-
 static bytea **
 CopyIndexAttOptions(bytea **srcopts, int natts)
 {

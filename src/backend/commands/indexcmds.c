@@ -301,12 +301,14 @@ CheckIndexCompatible(Oid oldId,
 	/* Any change in opclass options break compatibility. */
 	if (ret)
 	{
-		Datum	   *oldOpclassOptions = RelationGetIndexRawAttOptions(irel);
+		Datum	   *oldOpclassOptions = palloc_array(Datum, old_natts);
+
+		for (i = 0; i < old_natts; i++)
+			oldOpclassOptions[i] = get_attoptions(oldId, i + 1);
 
 		ret = CompareOpclassOptions(oldOpclassOptions, opclassOptions, old_natts);
 
-		if (oldOpclassOptions)
-			pfree(oldOpclassOptions);
+		pfree(oldOpclassOptions);
 	}
 
 	/* Any change in exclusion operator selections breaks compatibility. */
