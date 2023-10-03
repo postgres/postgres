@@ -83,6 +83,12 @@ static int64 sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeo
 static bool sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 					 struct stat *statbuf, bool missing_ok, Oid dboid,
 					 backup_manifest_info *manifest, const char *spcoid);
+static off_t read_file_data_into_buffer(bbsink *sink,
+										const char *readfilename, int fd,
+										off_t offset, size_t length,
+										BlockNumber blkno,
+										bool verify_checksum,
+										int *checksum_failures);
 static bool verify_page_checksum(Page page, XLogRecPtr start_lsn,
 								 BlockNumber blkno,
 								 uint16 *expected_checksum);
@@ -1490,9 +1496,7 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 	BlockNumber blkno = 0;
 	int			checksum_failures = 0;
 	off_t		cnt;
-	int			i;
-	pgoff_t		len = 0;
-	char	   *page;
+	pgoff_t		bytes_done = 0;
 	int			segmentno = 0;
 	char	   *segmentpath;
 	bool		verify_checksum = false;
@@ -1513,6 +1517,12 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 	}
 
 	_tarWriteHeader(sink, tarfilename, NULL, statbuf, false);
+
+	/*
+	 * Checksums are verified in multiples of BLCKSZ, so the buffer length
+	 * should be a multiple of the block size as well.
+	 */
+	Assert((sink->bbs_buffer_length % BLCKSZ) == 0);
 
 	if (!noverify_checksums && DataChecksumsEnabled())
 	{
@@ -1551,23 +1561,21 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 	 * for a base backup we can ignore such extended data. It will be restored
 	 * from WAL.
 	 */
-	while (len < statbuf->st_size)
+	while (bytes_done < statbuf->st_size)
 	{
-		size_t		remaining = statbuf->st_size - len;
+		size_t		remaining = statbuf->st_size - bytes_done;
 
 		/* Try to read some more data. */
-		cnt = basebackup_read_file(fd, sink->bbs_buffer,
-								   Min(sink->bbs_buffer_length, remaining),
-								   len, readfilename, true);
+		cnt = read_file_data_into_buffer(sink, readfilename, fd, bytes_done,
+										 remaining,
+										 blkno + segmentno * RELSEG_SIZE,
+										 verify_checksum,
+										 &checksum_failures);
 
 		/*
-		 * The checksums are verified at block level, so we iterate over the
-		 * buffer in chunks of BLCKSZ, after making sure that
-		 * TAR_SEND_SIZE/buf is divisible by BLCKSZ and we read a multiple of
-		 * BLCKSZ bytes.
+		 * If the amount of data we were able to read was not a multiple of
+		 * BLCKSZ, we cannot verify checksums, which are block-level.
 		 */
-		Assert((sink->bbs_buffer_length % BLCKSZ) == 0);
-
 		if (verify_checksum && (cnt % BLCKSZ != 0))
 		{
 			ereport(WARNING,
@@ -1578,84 +1586,6 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 			verify_checksum = false;
 		}
 
-		if (verify_checksum)
-		{
-			for (i = 0; i < cnt / BLCKSZ; i++)
-			{
-				int			reread_cnt;
-				uint16		expected_checksum;
-
-				page = sink->bbs_buffer + BLCKSZ * i;
-
-				/* If the page is OK, go on to the next one. */
-				if (verify_page_checksum(page, sink->bbs_state->startptr,
-										 blkno + i + segmentno * RELSEG_SIZE,
-										 &expected_checksum))
-					continue;
-
-				/*
-				 * Retry the block on the first failure.  It's possible that
-				 * we read the first 4K page of the block just before postgres
-				 * updated the entire block so it ends up looking torn to us.
-				 * If, before we retry the read, the concurrent write of the
-				 * block finishes, the page LSN will be updated and we'll
-				 * realize that we should ignore this block.
-				 *
-				 * There's no guarantee that this will actually happen,
-				 * though: the torn write could take an arbitrarily long time
-				 * to complete. Retrying multiple times wouldn't fix this
-				 * problem, either, though it would reduce the chances of it
-				 * happening in practice. The only real fix here seems to be
-				 * to have some kind of interlock that allows us to wait until
-				 * we can be certain that no write to the block is in
-				 * progress. Since we don't have any such thing right now, we
-				 * just do this and hope for the best.
-				 */
-				reread_cnt =
-					basebackup_read_file(fd,
-										 sink->bbs_buffer + BLCKSZ * i,
-										 BLCKSZ, len + BLCKSZ * i,
-										 readfilename,
-										 false);
-				if (reread_cnt == 0)
-				{
-					/*
-					 * If we hit end-of-file, a concurrent truncation must
-					 * have occurred, so break out of this loop just as if the
-					 * initial fread() returned 0. We'll drop through to the
-					 * same code that handles that case. (We must fix up cnt
-					 * first, though.)
-					 */
-					cnt = BLCKSZ * i;
-					break;
-				}
-
-				/* If the page now looks OK, go on to the next one. */
-				if (verify_page_checksum(page, sink->bbs_state->startptr,
-										 blkno + i + segmentno * RELSEG_SIZE,
-										 &expected_checksum))
-					continue;
-
-				/* Handle checksum failure. */
-				checksum_failures++;
-				if (checksum_failures <= 5)
-					ereport(WARNING,
-							(errmsg("checksum verification failed in "
-									"file \"%s\", block %u: calculated "
-									"%X but expected %X",
-									readfilename, blkno + i, expected_checksum,
-									((PageHeader) page)->pd_checksum)));
-				if (checksum_failures == 5)
-					ereport(WARNING,
-							(errmsg("further checksum verification "
-									"failures in file \"%s\" will not "
-									"be reported", readfilename)));
-			}
-
-			/* Update block number for next pass through the outer loop. */
-			blkno += i;
-		}
-
 		/*
 		 * If we hit end-of-file, a concurrent truncation must have occurred.
 		 * That's not an error condition, because WAL replay will fix things
@@ -1664,6 +1594,10 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 		if (cnt == 0)
 			break;
 
+		/* Update block number and # of bytes done for next loop iteration. */
+		blkno += cnt / BLCKSZ;
+		bytes_done += cnt;
+
 		/* Archive the data we just read. */
 		bbsink_archive_contents(sink, cnt);
 
@@ -1671,14 +1605,12 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 		if (pg_checksum_update(&checksum_ctx,
 							   (uint8 *) sink->bbs_buffer, cnt) < 0)
 			elog(ERROR, "could not update checksum of base backup");
-
-		len += cnt;
 	}
 
 	/* If the file was truncated while we were sending it, pad it with zeros */
-	while (len < statbuf->st_size)
+	while (bytes_done < statbuf->st_size)
 	{
-		size_t		remaining = statbuf->st_size - len;
+		size_t		remaining = statbuf->st_size - bytes_done;
 		size_t		nbytes = Min(sink->bbs_buffer_length, remaining);
 
 		MemSet(sink->bbs_buffer, 0, nbytes);
@@ -1687,7 +1619,7 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 							   nbytes) < 0)
 			elog(ERROR, "could not update checksum of base backup");
 		bbsink_archive_contents(sink, nbytes);
-		len += nbytes;
+		bytes_done += nbytes;
 	}
 
 	/*
@@ -1695,7 +1627,7 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 	 * of data is probably not worth throttling, and is not checksummed
 	 * because it's not actually part of the file.)
 	 */
-	_tarWritePadding(sink, len);
+	_tarWritePadding(sink, bytes_done);
 
 	CloseTransientFile(fd);
 
@@ -1716,6 +1648,109 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 							(pg_time_t) statbuf->st_mtime, &checksum_ctx);
 
 	return true;
+}
+
+/*
+ * Read some more data from the file into the bbsink's buffer, verifying
+ * checksums as required.
+ *
+ * 'offset' is the file offset from which we should begin to read, and
+ * 'length' is the amount of data that should be read. The actual amount
+ * of data read will be less than the requested amount if the bbsink's
+ * buffer isn't big enough to hold it all, or if the underlying file has
+ * been truncated. The return value is the number of bytes actually read.
+ *
+ * 'blkno' is the block number of the first page in the bbsink's buffer
+ * relative to the start of the relation.
+ *
+ * 'verify_checksum' indicates whether we should try to verify checksums
+ * for the blocks we read. If we do this, we'll update *checksum_failures
+ * and issue warnings as appropriate.
+ */
+static off_t
+read_file_data_into_buffer(bbsink *sink, const char *readfilename, int fd,
+						   off_t offset, size_t length, BlockNumber blkno,
+						   bool verify_checksum, int *checksum_failures)
+{
+	off_t		cnt;
+	int			i;
+	char	   *page;
+
+	/* Try to read some more data. */
+	cnt = basebackup_read_file(fd, sink->bbs_buffer,
+							   Min(sink->bbs_buffer_length, length),
+							   offset, readfilename, true);
+
+	/* Can't verify checksums if read length is not a multiple of BLCKSZ. */
+	if (!verify_checksum || (cnt % BLCKSZ) != 0)
+		return cnt;
+
+	/* Verify checksum for each block. */
+	for (i = 0; i < cnt / BLCKSZ; i++)
+	{
+		int			reread_cnt;
+		uint16		expected_checksum;
+
+		page = sink->bbs_buffer + BLCKSZ * i;
+
+		/* If the page is OK, go on to the next one. */
+		if (verify_page_checksum(page, sink->bbs_state->startptr, blkno + i,
+								 &expected_checksum))
+			continue;
+
+		/*
+		 * Retry the block on the first failure.  It's possible that we read
+		 * the first 4K page of the block just before postgres updated the
+		 * entire block so it ends up looking torn to us. If, before we retry
+		 * the read, the concurrent write of the block finishes, the page LSN
+		 * will be updated and we'll realize that we should ignore this block.
+		 *
+		 * There's no guarantee that this will actually happen, though: the
+		 * torn write could take an arbitrarily long time to complete.
+		 * Retrying multiple times wouldn't fix this problem, either, though
+		 * it would reduce the chances of it happening in practice. The only
+		 * real fix here seems to be to have some kind of interlock that
+		 * allows us to wait until we can be certain that no write to the
+		 * block is in progress. Since we don't have any such thing right now,
+		 * we just do this and hope for the best.
+		 */
+		reread_cnt =
+			basebackup_read_file(fd, sink->bbs_buffer + BLCKSZ * i,
+								 BLCKSZ, offset + BLCKSZ * i,
+								 readfilename, false);
+		if (reread_cnt == 0)
+		{
+			/*
+			 * If we hit end-of-file, a concurrent truncation must have
+			 * occurred, so reduce cnt to reflect only the blocks already
+			 * processed and break out of this loop.
+			 */
+			cnt = BLCKSZ * i;
+			break;
+		}
+
+		/* If the page now looks OK, go on to the next one. */
+		if (verify_page_checksum(page, sink->bbs_state->startptr, blkno + i,
+								 &expected_checksum))
+			continue;
+
+		/* Handle checksum failure. */
+		(*checksum_failures)++;
+		if (*checksum_failures <= 5)
+			ereport(WARNING,
+					(errmsg("checksum verification failed in "
+							"file \"%s\", block %u: calculated "
+							"%X but expected %X",
+							readfilename, blkno + i, expected_checksum,
+							((PageHeader) page)->pd_checksum)));
+		if (*checksum_failures == 5)
+			ereport(WARNING,
+					(errmsg("further checksum verification "
+							"failures in file \"%s\" will not "
+							"be reported", readfilename)));
+	}
+
+	return cnt;
 }
 
 /*
