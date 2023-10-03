@@ -1120,7 +1120,7 @@ SELECT a.pid, a.wait_event, w.description
        pg_wait_events w ON (a.wait_event_type = w.type AND
                             a.wait_event = w.name)
   WHERE wait_event is NOT NULL and a.state = 'active';
--[ RECORD 1 ]------------------------------------------------------------------
+-[ RECORD 1 ]------------------------------------------------------&zwsp;------------
 pid         | 686674
 wait_event  | WALInitSync
 description | Waiting for a newly initialized WAL file to reach durable storage
@@ -1130,11 +1130,11 @@ description | Waiting for a newly initialized WAL file to reach durable storage
    <note>
     <para>
      Extensions can add <literal>Extension</literal> and
-     <literal>LWLock</literal> types
-     to the list shown in <xref linkend="wait-event-extension-table"/> and
+     <literal>LWLock</literal> events
+     to the lists shown in <xref linkend="wait-event-extension-table"/> and
      <xref linkend="wait-event-lwlock-table"/>. In some cases, the name
-     of <literal>LWLock</literal> assigned by an extension will not be
-     available in all server processes; It might be reported as just
+     of an <literal>LWLock</literal> assigned by an extension will not be
+     available in all server processes.  It might be reported as just
      <quote><literal>extension</literal></quote> rather than the
      extension-assigned name.
     </para>
