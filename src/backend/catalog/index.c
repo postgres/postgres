@@ -720,6 +720,7 @@ index_create(Relation heapRelation,
 			 Oid tableSpaceId,
 			 const Oid *collationIds,
 			 const Oid *opclassIds,
+			 const Datum *opclassOptions,
 			 const int16 *coloptions,
 			 Datum reloptions,
 			 bits16 flags,
@@ -1015,7 +1016,7 @@ index_create(Relation heapRelation,
 	/*
 	 * append ATTRIBUTE tuples for the index
 	 */
-	AppendAttributeTuples(indexRelation, indexInfo->ii_OpclassOptions);
+	AppendAttributeTuples(indexRelation, opclassOptions);
 
 	/* ----------------
 	 *	  update pg_index
@@ -1223,10 +1224,10 @@ index_create(Relation heapRelation,
 	indexRelation->rd_index->indnkeyatts = indexInfo->ii_NumIndexKeyAttrs;
 
 	/* Validate opclass-specific options */
-	if (indexInfo->ii_OpclassOptions)
+	if (opclassOptions)
 		for (i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 			(void) index_opclass_options(indexRelation, i + 1,
-										 indexInfo->ii_OpclassOptions[i],
+										 opclassOptions[i],
 										 true);
 
 	/*
@@ -1290,7 +1291,8 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 				classTuple;
 	Datum		indclassDatum,
 				colOptionDatum,
-				optionDatum;
+				reloptionsDatum;
+	Datum	   *opclassOptions;
 	oidvector  *indclass;
 	int2vector *indcoloptions;
 	bool		isnull;
@@ -1324,12 +1326,12 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 											Anum_pg_index_indoption);
 	indcoloptions = (int2vector *) DatumGetPointer(colOptionDatum);
 
-	/* Fetch options of index if any */
+	/* Fetch reloptions of index if any */
 	classTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(oldIndexId));
 	if (!HeapTupleIsValid(classTuple))
 		elog(ERROR, "cache lookup failed for relation %u", oldIndexId);
-	optionDatum = SysCacheGetAttr(RELOID, classTuple,
-								  Anum_pg_class_reloptions, &isnull);
+	reloptionsDatum = SysCacheGetAttr(RELOID, classTuple,
+									  Anum_pg_class_reloptions, &isnull);
 
 	/*
 	 * Fetch the list of expressions and predicates directly from the
@@ -1392,14 +1394,10 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 		newInfo->ii_IndexAttrNumbers[i] = oldInfo->ii_IndexAttrNumbers[i];
 	}
 
-	/* Extract opclass parameters for each attribute, if any */
-	if (oldInfo->ii_OpclassOptions != NULL)
-	{
-		newInfo->ii_OpclassOptions = palloc0(sizeof(Datum) *
-											 newInfo->ii_NumIndexAttrs);
-		for (int i = 0; i < newInfo->ii_NumIndexAttrs; i++)
-			newInfo->ii_OpclassOptions[i] = get_attoptions(oldIndexId, i + 1);
-	}
+	/* Extract opclass options for each attribute */
+	opclassOptions = palloc0(sizeof(Datum) * newInfo->ii_NumIndexAttrs);
+	for (int i = 0; i < newInfo->ii_NumIndexAttrs; i++)
+		opclassOptions[i] = get_attoptions(oldIndexId, i + 1);
 
 	/*
 	 * Now create the new index.
@@ -1420,8 +1418,9 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 							  tablespaceOid,
 							  indexRelation->rd_indcollation,
 							  indclass->values,
+							  opclassOptions,
 							  indcoloptions->values,
-							  optionDatum,
+							  reloptionsDatum,
 							  INDEX_CREATE_SKIP_BUILD | INDEX_CREATE_CONCURRENT,
 							  0,
 							  true, /* allow table to be a system catalog? */
@@ -2463,8 +2462,6 @@ BuildIndexInfo(Relation index)
 								 &ii->ii_ExclusionProcs,
 								 &ii->ii_ExclusionStrats);
 	}
-
-	ii->ii_OpclassOptions = RelationGetIndexRawAttOptions(index);
 
 	return ii;
 }

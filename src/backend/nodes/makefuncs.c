@@ -777,9 +777,6 @@ makeIndexInfo(int numattrs, int numkeyattrs, Oid amoid, List *expressions,
 	n->ii_ExclusionProcs = NULL;
 	n->ii_ExclusionStrats = NULL;
 
-	/* opclass options */
-	n->ii_OpclassOptions = NULL;
-
 	/* speculative inserts */
 	n->ii_UniqueOps = NULL;
 	n->ii_UniqueProcs = NULL;

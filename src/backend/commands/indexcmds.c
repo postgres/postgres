@@ -77,6 +77,7 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 							  Oid *typeOids,
 							  Oid *collationOids,
 							  Oid *opclassOids,
+							  Datum *opclassOptions,
 							  int16 *colOptions,
 							  const List *attList,
 							  const List *exclusionOpNames,
@@ -177,6 +178,7 @@ CheckIndexCompatible(Oid oldId,
 	Oid		   *typeIds;
 	Oid		   *collationIds;
 	Oid		   *opclassIds;
+	Datum	   *opclassOptions;
 	Oid			accessMethodId;
 	Oid			relationId;
 	HeapTuple	tuple;
@@ -238,9 +240,10 @@ CheckIndexCompatible(Oid oldId,
 	typeIds = palloc_array(Oid, numberOfAttributes);
 	collationIds = palloc_array(Oid, numberOfAttributes);
 	opclassIds = palloc_array(Oid, numberOfAttributes);
+	opclassOptions = palloc_array(Datum, numberOfAttributes);
 	coloptions = palloc_array(int16, numberOfAttributes);
 	ComputeIndexAttrs(indexInfo,
-					  typeIds, collationIds, opclassIds,
+					  typeIds, collationIds, opclassIds, opclassOptions,
 					  coloptions, attributeList,
 					  exclusionOpNames, relationId,
 					  accessMethodName, accessMethodId,
@@ -298,13 +301,12 @@ CheckIndexCompatible(Oid oldId,
 	/* Any change in opclass options break compatibility. */
 	if (ret)
 	{
-		Datum	   *opclassOptions = RelationGetIndexRawAttOptions(irel);
+		Datum	   *oldOpclassOptions = RelationGetIndexRawAttOptions(irel);
 
-		ret = CompareOpclassOptions(opclassOptions,
-									indexInfo->ii_OpclassOptions, old_natts);
+		ret = CompareOpclassOptions(oldOpclassOptions, opclassOptions, old_natts);
 
-		if (opclassOptions)
-			pfree(opclassOptions);
+		if (oldOpclassOptions)
+			pfree(oldOpclassOptions);
 	}
 
 	/* Any change in exclusion operator selections breaks compatibility. */
@@ -540,6 +542,7 @@ DefineIndex(Oid tableId,
 	Oid		   *typeIds;
 	Oid		   *collationIds;
 	Oid		   *opclassIds;
+	Datum	   *opclassOptions;
 	Oid			accessMethodId;
 	Oid			namespaceId;
 	Oid			tablespaceId;
@@ -900,9 +903,10 @@ DefineIndex(Oid tableId,
 	typeIds = palloc_array(Oid, numberOfAttributes);
 	collationIds = palloc_array(Oid, numberOfAttributes);
 	opclassIds = palloc_array(Oid, numberOfAttributes);
+	opclassOptions = palloc_array(Datum, numberOfAttributes);
 	coloptions = palloc_array(int16, numberOfAttributes);
 	ComputeIndexAttrs(indexInfo,
-					  typeIds, collationIds, opclassIds,
+					  typeIds, collationIds, opclassIds, opclassOptions,
 					  coloptions, allIndexParams,
 					  stmt->excludeOpNames, tableId,
 					  accessMethodName, accessMethodId,
@@ -1179,7 +1183,7 @@ DefineIndex(Oid tableId,
 					 parentConstraintId,
 					 stmt->oldNumber, indexInfo, indexColNames,
 					 accessMethodId, tablespaceId,
-					 collationIds, opclassIds,
+					 collationIds, opclassIds, opclassOptions,
 					 coloptions, reloptions,
 					 flags, constr_flags,
 					 allowSystemTableMods, !check_rights,
@@ -1855,6 +1859,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				  Oid *typeOids,
 				  Oid *collationOids,
 				  Oid *opclassOids,
+				  Datum *opclassOptions,
 				  int16 *colOptions,
 				  const List *attList,	/* list of IndexElem's */
 				  const List *exclusionOpNames,
@@ -2011,6 +2016,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 						 errmsg("including column does not support NULLS FIRST/LAST options")));
 
 			opclassOids[attn] = InvalidOid;
+			opclassOptions[attn] = (Datum) 0;
 			colOptions[attn] = 0;
 			collationOids[attn] = InvalidOid;
 			attn++;
@@ -2202,14 +2208,12 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		{
 			Assert(attn < nkeycols);
 
-			if (!indexInfo->ii_OpclassOptions)
-				indexInfo->ii_OpclassOptions =
-					palloc0_array(Datum, indexInfo->ii_NumIndexAttrs);
-
-			indexInfo->ii_OpclassOptions[attn] =
+			opclassOptions[attn] =
 				transformRelOptions((Datum) 0, attribute->opclassopts,
 									NULL, NULL, false, false);
 		}
+		else
+			opclassOptions[attn] = (Datum) 0;
 
 		attn++;
 	}
