@@ -47,7 +47,7 @@ infobits_desc(StringInfo buf, uint8 infobits, const char *keyname)
 		buf->data[buf->len] = '\0';
 	}
 
-	appendStringInfoString(buf, "]");
+	appendStringInfoChar(buf, ']');
 }
 
 static void
@@ -68,7 +68,7 @@ truncate_flags_desc(StringInfo buf, uint8 flags)
 		buf->data[buf->len] = '\0';
 	}
 
-	appendStringInfoString(buf, "]");
+	appendStringInfoChar(buf, ']');
 }
 
 static void
@@ -88,7 +88,7 @@ plan_elem_desc(StringInfo buf, void *plan, void *data)
 
 	*offsets += new_plan->ntuples;
 
-	appendStringInfo(buf, " }");
+	appendStringInfoString(buf, " }");
 }
 
 void

@@ -2339,9 +2339,9 @@ regression_main(int argc, char *argv[],
 							 bindir ? "/" : "",
 							 temp_instance);
 			if (debug)
-				appendStringInfo(&cmd, " --debug");
+				appendStringInfoString(&cmd, " --debug");
 			if (nolocale)
-				appendStringInfo(&cmd, " --no-locale");
+				appendStringInfoString(&cmd, " --no-locale");
 			appendStringInfo(&cmd, " > \"%s/log/initdb.log\" 2>&1", outputdir);
 			fflush(NULL);
 			if (system(cmd.data))

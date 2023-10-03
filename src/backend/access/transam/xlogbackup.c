@@ -58,7 +58,7 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 
 	appendStringInfo(result, "CHECKPOINT LOCATION: %X/%X\n",
 					 LSN_FORMAT_ARGS(state->checkpointloc));
-	appendStringInfo(result, "BACKUP METHOD: streamed\n");
+	appendStringInfoString(result, "BACKUP METHOD: streamed\n");
 	appendStringInfo(result, "BACKUP FROM: %s\n",
 					 state->started_in_recovery ? "standby" : "primary");
 	appendStringInfo(result, "START TIME: %s\n", startstrbuf);

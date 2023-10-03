@@ -248,5 +248,5 @@ delvacuum_desc(StringInfo buf, char *block_data,
 			((char *) updates + SizeOfBtreeUpdate +
 			 updates->ndeletedtids * sizeof(uint16));
 	}
-	appendStringInfoString(buf, "]");
+	appendStringInfoChar(buf, ']');
 }

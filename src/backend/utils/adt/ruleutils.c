@@ -10395,7 +10395,7 @@ get_func_sql_syntax(FuncExpr *expr, deparse_context *context)
 
 		case F_IS_NORMALIZED:
 			/* IS xxx NORMALIZED */
-			appendStringInfoString(buf, "(");
+			appendStringInfoChar(buf, '(');
 			get_rule_expr_paren((Node *) linitial(expr->args), context, false,
 								(Node *) expr);
 			appendStringInfoString(buf, " IS");
@@ -10884,7 +10884,7 @@ get_json_constructor(JsonConstructorExpr *ctor, deparse_context *context,
 	}
 
 	get_json_constructor_options(ctor, buf);
-	appendStringInfo(buf, ")");
+	appendStringInfoChar(buf, ')');
 }
 
 /*

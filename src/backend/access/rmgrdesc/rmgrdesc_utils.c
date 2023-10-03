@@ -37,7 +37,7 @@ array_desc(StringInfo buf, void *array, size_t elem_size, int count,
 		if (i < count - 1)
 			appendStringInfoString(buf, ", ");
 	}
-	appendStringInfoString(buf, "]");
+	appendStringInfoChar(buf, ']');
 }
 
 void
