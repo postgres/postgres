@@ -83,6 +83,9 @@ static int64 sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeo
 static bool sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 					 struct stat *statbuf, bool missing_ok, Oid dboid,
 					 backup_manifest_info *manifest, const char *spcoid);
+static bool verify_page_checksum(Page page, XLogRecPtr start_lsn,
+								 BlockNumber blkno,
+								 uint16 *expected_checksum);
 static void sendFileWithContent(bbsink *sink, const char *filename,
 								const char *content,
 								backup_manifest_info *manifest);
@@ -1485,14 +1488,11 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 {
 	int			fd;
 	BlockNumber blkno = 0;
-	bool		block_retry = false;
-	uint16		checksum;
 	int			checksum_failures = 0;
 	off_t		cnt;
 	int			i;
 	pgoff_t		len = 0;
 	char	   *page;
-	PageHeader	phdr;
 	int			segmentno = 0;
 	char	   *segmentpath;
 	bool		verify_checksum = false;
@@ -1582,94 +1582,78 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 		{
 			for (i = 0; i < cnt / BLCKSZ; i++)
 			{
+				int			reread_cnt;
+				uint16		expected_checksum;
+
 				page = sink->bbs_buffer + BLCKSZ * i;
 
+				/* If the page is OK, go on to the next one. */
+				if (verify_page_checksum(page, sink->bbs_state->startptr,
+										 blkno + i + segmentno * RELSEG_SIZE,
+										 &expected_checksum))
+					continue;
+
 				/*
-				 * Only check pages which have not been modified since the
-				 * start of the base backup. Otherwise, they might have been
-				 * written only halfway and the checksum would not be valid.
-				 * However, replaying WAL would reinstate the correct page in
-				 * this case. We also skip completely new pages, since they
-				 * don't have a checksum yet.
+				 * Retry the block on the first failure.  It's possible that
+				 * we read the first 4K page of the block just before postgres
+				 * updated the entire block so it ends up looking torn to us.
+				 * If, before we retry the read, the concurrent write of the
+				 * block finishes, the page LSN will be updated and we'll
+				 * realize that we should ignore this block.
+				 *
+				 * There's no guarantee that this will actually happen,
+				 * though: the torn write could take an arbitrarily long time
+				 * to complete. Retrying multiple times wouldn't fix this
+				 * problem, either, though it would reduce the chances of it
+				 * happening in practice. The only real fix here seems to be
+				 * to have some kind of interlock that allows us to wait until
+				 * we can be certain that no write to the block is in
+				 * progress. Since we don't have any such thing right now, we
+				 * just do this and hope for the best.
 				 */
-				if (!PageIsNew(page) && PageGetLSN(page) < sink->bbs_state->startptr)
+				reread_cnt =
+					basebackup_read_file(fd,
+										 sink->bbs_buffer + BLCKSZ * i,
+										 BLCKSZ, len + BLCKSZ * i,
+										 readfilename,
+										 false);
+				if (reread_cnt == 0)
 				{
-					checksum = pg_checksum_page((char *) page, blkno + segmentno * RELSEG_SIZE);
-					phdr = (PageHeader) page;
-					if (phdr->pd_checksum != checksum)
-					{
-						/*
-						 * Retry the block on the first failure.  It's
-						 * possible that we read the first 4K page of the
-						 * block just before postgres updated the entire block
-						 * so it ends up looking torn to us. If, before we
-						 * retry the read, the concurrent write of the block
-						 * finishes, the page LSN will be updated and we'll
-						 * realize that we should ignore this block.
-						 *
-						 * There's no guarantee that this will actually
-						 * happen, though: the torn write could take an
-						 * arbitrarily long time to complete. Retrying
-						 * multiple times wouldn't fix this problem, either,
-						 * though it would reduce the chances of it happening
-						 * in practice. The only real fix here seems to be to
-						 * have some kind of interlock that allows us to wait
-						 * until we can be certain that no write to the block
-						 * is in progress. Since we don't have any such thing
-						 * right now, we just do this and hope for the best.
-						 */
-						if (block_retry == false)
-						{
-							int			reread_cnt;
-
-							/* Reread the failed block */
-							reread_cnt =
-								basebackup_read_file(fd,
-													 sink->bbs_buffer + BLCKSZ * i,
-													 BLCKSZ, len + BLCKSZ * i,
-													 readfilename,
-													 false);
-							if (reread_cnt == 0)
-							{
-								/*
-								 * If we hit end-of-file, a concurrent
-								 * truncation must have occurred, so break out
-								 * of this loop just as if the initial fread()
-								 * returned 0. We'll drop through to the same
-								 * code that handles that case. (We must fix
-								 * up cnt first, though.)
-								 */
-								cnt = BLCKSZ * i;
-								break;
-							}
-
-							/* Set flag so we know a retry was attempted */
-							block_retry = true;
-
-							/* Reset loop to validate the block again */
-							i--;
-							continue;
-						}
-
-						checksum_failures++;
-
-						if (checksum_failures <= 5)
-							ereport(WARNING,
-									(errmsg("checksum verification failed in "
-											"file \"%s\", block %u: calculated "
-											"%X but expected %X",
-											readfilename, blkno, checksum,
-											phdr->pd_checksum)));
-						if (checksum_failures == 5)
-							ereport(WARNING,
-									(errmsg("further checksum verification "
-											"failures in file \"%s\" will not "
-											"be reported", readfilename)));
-					}
+					/*
+					 * If we hit end-of-file, a concurrent truncation must
+					 * have occurred, so break out of this loop just as if the
+					 * initial fread() returned 0. We'll drop through to the
+					 * same code that handles that case. (We must fix up cnt
+					 * first, though.)
+					 */
+					cnt = BLCKSZ * i;
+					break;
 				}
-				block_retry = false;
-				blkno++;
+
+				/* If the page now looks OK, go on to the next one. */
+				if (verify_page_checksum(page, sink->bbs_state->startptr,
+										 blkno + i + segmentno * RELSEG_SIZE,
+										 &expected_checksum))
+					continue;
+
+				/* Handle checksum failure. */
+				checksum_failures++;
+				if (checksum_failures <= 5)
+					ereport(WARNING,
+							(errmsg("checksum verification failed in "
+									"file \"%s\", block %u: calculated "
+									"%X but expected %X",
+									readfilename, blkno + i, expected_checksum,
+									((PageHeader) page)->pd_checksum)));
+				if (checksum_failures == 5)
+					ereport(WARNING,
+							(errmsg("further checksum verification "
+									"failures in file \"%s\" will not "
+									"be reported", readfilename)));
 			}
+
+			/* Update block number for next pass through the outer loop. */
+			blkno += i;
 		}
 
 		/*
@@ -1732,6 +1716,42 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 							(pg_time_t) statbuf->st_mtime, &checksum_ctx);
 
 	return true;
+}
+
+/*
+ * Try to verify the checksum for the provided page, if it seems appropriate
+ * to do so.
+ *
+ * Returns true if verification succeeds or if we decide not to check it,
+ * and false if verification fails. When return false, it also sets
+ * *expected_checksum to the computed value.
+ */
+static bool
+verify_page_checksum(Page page, XLogRecPtr start_lsn, BlockNumber blkno,
+					 uint16 *expected_checksum)
+{
+	PageHeader	phdr;
+	uint16		checksum;
+
+	/*
+	 * Only check pages which have not been modified since the start of the
+	 * base backup. Otherwise, they might have been written only halfway and
+	 * the checksum would not be valid.  However, replaying WAL would
+	 * reinstate the correct page in this case. We also skip completely new
+	 * pages, since they don't have a checksum yet.
+	 */
+	if (PageIsNew(page) || PageGetLSN(page) >= start_lsn)
+		return true;
+
+	/* Perform the actual checksum calculation. */
+	checksum = pg_checksum_page(page, blkno);
+
+	/* See whether it matches the value from the page. */
+	phdr = (PageHeader) page;
+	if (phdr->pd_checksum == checksum)
+		return true;
+	*expected_checksum = checksum;
+	return false;
 }
 
 static int64
