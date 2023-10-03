@@ -929,7 +929,7 @@ test_prepared(PGconn *conn)
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("expected COMMAND_OK, got %s", PQresStatus(PQresultStatus(res)));
 	if (PQnfields(res) != lengthof(expected_oids))
-		pg_fatal("expected %zd columns, got %d",
+		pg_fatal("expected %zu columns, got %d",
 				 lengthof(expected_oids), PQnfields(res));
 	for (int i = 0; i < PQnfields(res); i++)
 	{
