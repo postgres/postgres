@@ -29,7 +29,7 @@
 #include "utils/memutils.h"
 #endif
 
-static bool allocate_recordbuf(XLogReaderState *state, uint32 reclength);
+static void allocate_recordbuf(XLogReaderState *state, uint32 reclength);
 
 static bool ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
 								  XLogRecPtr PrevRecPtr, XLogRecord *record, bool randAccess);
@@ -114,14 +114,7 @@ XLogReaderAllocate(int wal_segment_size, XLogPageReadCB pagereadfunc,
 	 * Allocate an initial readRecordBuf of minimal size, which can later be
 	 * enlarged if necessary.
 	 */
-	if (!allocate_recordbuf(state, 0))
-	{
-		pfree(state->errormsg_buf);
-		pfree(state->readBuf);
-		pfree(state);
-		return NULL;
-	}
-
+	allocate_recordbuf(state, 0);
 	return state;
 }
 
@@ -147,7 +140,6 @@ XLogReaderFree(XLogReaderState *state)
 
 /*
  * Allocate readRecordBuf to fit a record of at least the given length.
- * Returns true if successful, false if out of memory.
  *
  * readRecordBufSize is set to the new buffer size.
  *
@@ -159,7 +151,7 @@ XLogReaderFree(XLogReaderState *state)
  * Note: This routine should *never* be called for xl_tot_len until the header
  * of the record has been fully validated.
  */
-static bool
+static void
 allocate_recordbuf(XLogReaderState *state, uint32 reclength)
 {
 	uint32		newSize = reclength;
@@ -169,15 +161,8 @@ allocate_recordbuf(XLogReaderState *state, uint32 reclength)
 
 	if (state->readRecordBuf)
 		pfree(state->readRecordBuf);
-	state->readRecordBuf =
-		(char *) palloc_extended(newSize, MCXT_ALLOC_NO_OOM);
-	if (state->readRecordBuf == NULL)
-	{
-		state->readRecordBufSize = 0;
-		return false;
-	}
+	state->readRecordBuf = (char *) palloc(newSize);
 	state->readRecordBufSize = newSize;
-	return true;
 }
 
 /*
@@ -473,14 +458,7 @@ restart:
 				Assert(gotlen <= lengthof(save_copy));
 				Assert(gotlen <= state->readRecordBufSize);
 				memcpy(save_copy, state->readRecordBuf, gotlen);
-				if (!allocate_recordbuf(state, total_len))
-				{
-					/* We treat this as a "bogus data" condition */
-					report_invalid_record(state, "record length %u at %X/%X too long",
-										  total_len,
-										  (uint32) (RecPtr >> 32), (uint32) RecPtr);
-					goto err;
-				}
+				allocate_recordbuf(state, total_len);
 				memcpy(state->readRecordBuf, save_copy, gotlen);
 				buffer = state->readRecordBuf + gotlen;
 			}
