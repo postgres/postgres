@@ -194,7 +194,7 @@ worker_spi_main(Datum main_arg)
 
 		/* First time, allocate or get the custom wait event */
 		if (worker_spi_wait_event_main == 0)
-			worker_spi_wait_event_main = WaitEventExtensionNew("worker_spi_main");
+			worker_spi_wait_event_main = WaitEventExtensionNew("WorkerSpiMain");
 
 		/*
 		 * Background workers mustn't call usleep() or any direct equivalent:

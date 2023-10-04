@@ -43,15 +43,15 @@ is($result, qq(total|1), 'dynamic bgworker correctly consumed tuple data');
 $result = $node->poll_query_until(
 	'postgres',
 	qq[SELECT wait_event FROM pg_stat_activity WHERE backend_type ~ 'worker_spi';],
-	qq[worker_spi_main]);
+	qq[WorkerSpiMain]);
 is($result, 1,
-	'dynamic bgworker has reported "worker_spi_main" as wait event');
+	'dynamic bgworker has reported "WorkerSpiMain" as wait event');
 
 # Check the wait event used by the dynamic bgworker appears in pg_wait_events
 $result = $node->safe_psql('postgres',
-	q[SELECT count(*) > 0 from pg_wait_events where type = 'Extension' and name = 'worker_spi_main';]
+	q[SELECT count(*) > 0 from pg_wait_events where type = 'Extension' and name = 'WorkerSpiMain';]
 );
-is($result, 't', '"worker_spi_main" is reported in pg_wait_events');
+is($result, 't', '"WorkerSpiMain" is reported in pg_wait_events');
 
 note "testing bgworkers loaded with shared_preload_libraries";
 
@@ -74,7 +74,7 @@ ok( $node->poll_query_until(
 		'mydb',
 		qq[SELECT datname, count(datname), wait_event FROM pg_stat_activity
             WHERE backend_type = 'worker_spi' GROUP BY datname, wait_event;],
-		'mydb|3|worker_spi_main'),
+		'mydb|3|WorkerSpiMain'),
 	'bgworkers all launched'
 ) or die "Timed out while waiting for bgworkers to be launched";
 
@@ -89,7 +89,7 @@ ok( $node->poll_query_until(
 		qq[SELECT datname, count(datname), wait_event FROM pg_stat_activity
             WHERE backend_type = 'worker_spi dynamic' AND
             pid IN ($worker1_pid, $worker2_pid) GROUP BY datname, wait_event;],
-		'mydb|2|worker_spi_main'),
+		'mydb|2|WorkerSpiMain'),
 	'dynamic bgworkers all launched'
 ) or die "Timed out while waiting for dynamic bgworkers to be launched";
 

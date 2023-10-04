@@ -3472,9 +3472,9 @@ uint32 WaitEventExtensionNew(const char *wait_event_name)
 <screen>
 =# SELECT wait_event_type, wait_event FROM pg_stat_activity
      WHERE backend_type ~ 'worker_spi';
- wait_event_type |   wait_event
------------------+-----------------
- Extension       | worker_spi_main
+ wait_event_type |  wait_event
+-----------------+---------------
+ Extension       | WorkerSpiMain
 (1 row)
 </screen>
     </para>
