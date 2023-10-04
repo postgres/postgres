@@ -40,6 +40,9 @@ static void wait_for_workers_to_become_ready(worker_state *wstate,
 											 volatile test_shm_mq_header *hdr);
 static bool check_worker_status(worker_state *wstate);
 
+/* value cached, fetched from shared memory */
+static uint32 we_bgworker_startup = 0;
+
 /*
  * Set up a dynamic shared memory segment and zero or more background workers
  * for a test run.
@@ -278,9 +281,13 @@ wait_for_workers_to_become_ready(worker_state *wstate,
 			break;
 		}
 
+		/* first time, allocate or get the custom wait event */
+		if (we_bgworker_startup == 0)
+			we_bgworker_startup = WaitEventExtensionNew("TestShmMqBgWorkerStartup");
+
 		/* Wait to be signaled. */
 		(void) WaitLatch(MyLatch, WL_LATCH_SET | WL_EXIT_ON_PM_DEATH, 0,
-						 WAIT_EVENT_EXTENSION);
+						 we_bgworker_startup);
 
 		/* Reset the latch so we don't spin. */
 		ResetLatch(MyLatch);

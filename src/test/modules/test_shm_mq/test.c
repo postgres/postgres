@@ -28,6 +28,9 @@ PG_FUNCTION_INFO_V1(test_shm_mq_pipelined);
 static void verify_message(Size origlen, char *origdata, Size newlen,
 						   char *newdata);
 
+/* value cached, fetched from shared memory */
+static uint32 we_message_queue = 0;
+
 /*
  * Simple test of the shared memory message queue infrastructure.
  *
@@ -225,6 +228,10 @@ test_shm_mq_pipelined(PG_FUNCTION_ARGS)
 
 		if (wait)
 		{
+			/* first time, allocate or get the custom wait event */
+			if (we_message_queue == 0)
+				we_message_queue = WaitEventExtensionNew("TestShmMqMessageQueue");
+
 			/*
 			 * If we made no progress, wait for one of the other processes to
 			 * which we are connected to set our latch, indicating that they
@@ -232,7 +239,7 @@ test_shm_mq_pipelined(PG_FUNCTION_ARGS)
 			 * for us to do.
 			 */
 			(void) WaitLatch(MyLatch, WL_LATCH_SET | WL_EXIT_ON_PM_DEATH, 0,
-							 WAIT_EVENT_EXTENSION);
+							 we_message_queue);
 			ResetLatch(MyLatch);
 			CHECK_FOR_INTERRUPTS();
 		}
