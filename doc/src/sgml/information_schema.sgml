@@ -917,6 +917,13 @@
    domain is the owner of the constraint.)
   </para>
 
+  <para>
+   The SQL standard considers not-null constraints to be check constraints
+   with a <literal>CHECK (<replaceable>column_name</replaceable> IS NOT
+   NULL)</literal> expression.  So not-null constraints are also included here
+   and don't have a separate view.
+  </para>
+
   <table>
    <title><structname>check_constraints</structname> Columns</title>
    <tgroup cols="1">
@@ -2116,7 +2123,9 @@
    columns in the current database that are used by some constraint.
    Only those columns are shown that are contained in a table owned by
    a currently enabled role.  For a check constraint, this view
-   identifies the columns that are used in the check expression.  For
+   identifies the columns that are used in the check expression.  For a
+   not-null constraint, this view identifies the column that the constraint is
+   defined on.  For
    a foreign key constraint, this view identifies the columns that the
    foreign key references.  For a unique or primary key constraint,
    this view identifies the constrained columns.
@@ -6856,7 +6865,7 @@ ORDER BY c.ordinal_position;
        <structfield>constraint_type</structfield> <type>character_data</type>
       </para>
       <para>
-       Type of the constraint: <literal>CHECK</literal>,
+       Type of the constraint: <literal>CHECK</literal> (includes not-null constraints),
        <literal>FOREIGN KEY</literal>, <literal>PRIMARY KEY</literal>,
        or <literal>UNIQUE</literal>
       </para></entry>
