@@ -285,7 +285,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--sync-method</option></term>
+      <term><option>--sync-method=<replaceable class="parameter">method</replaceable></option></term>
       <listitem>
        <para>
         When set to <literal>fsync</literal>, which is the default,

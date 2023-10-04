@@ -366,7 +366,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry id="app-initdb-option-sync-method">
-      <term><option>--sync-method</option></term>
+      <term><option>--sync-method=<replaceable>method</replaceable></option></term>
       <listitem>
        <para>
         When set to <literal>fsync</literal>, which is the default,
