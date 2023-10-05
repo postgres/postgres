@@ -66,7 +66,7 @@ extern PGDLLIMPORT WaitEventSet *FeBeWaitSet;
 
 extern int	StreamServerPort(int family, const char *hostName,
 							 unsigned short portNumber, const char *unixSocketDir,
-							 pgsocket ListenSocket[], int MaxListen);
+							 pgsocket ListenSocket[], int *NumListenSockets, int MaxListen);
 extern int	StreamConnection(pgsocket server_fd, Port *port);
 extern void StreamClose(pgsocket sock);
 extern void TouchSocketFiles(void);

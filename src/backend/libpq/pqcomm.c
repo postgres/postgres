@@ -311,16 +311,17 @@ socket_close(int code, Datum arg)
  * specified.  For TCP ports, hostName is either NULL for all interfaces or
  * the interface to listen on, and unixSocketDir is ignored (can be NULL).
  *
- * Successfully opened sockets are added to the ListenSocket[] array (of
- * length MaxListen), at the first position that isn't PGINVALID_SOCKET.
+ * Successfully opened sockets are appended to the ListenSockets[] array.  On
+ * entry, *NumListenSockets holds the number of elements currently in the
+ * array, and it is updated to reflect the opened sockets.  MaxListen is the
+ * allocated size of the array.
  *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
-
 int
 StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 				 const char *unixSocketDir,
-				 pgsocket ListenSocket[], int MaxListen)
+				 pgsocket ListenSockets[], int *NumListenSockets, int MaxListen)
 {
 	pgsocket	fd;
 	int			err;
@@ -335,7 +336,6 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 	struct addrinfo *addrs = NULL,
 			   *addr;
 	struct addrinfo hint;
-	int			listen_index = 0;
 	int			added = 0;
 	char		unixSocketPath[MAXPGPATH];
 #if !defined(WIN32) || defined(IPV6_V6ONLY)
@@ -401,12 +401,7 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 		}
 
 		/* See if there is still room to add 1 more socket. */
-		for (; listen_index < MaxListen; listen_index++)
-		{
-			if (ListenSocket[listen_index] == PGINVALID_SOCKET)
-				break;
-		}
-		if (listen_index >= MaxListen)
+		if (*NumListenSockets == MaxListen)
 		{
 			ereport(LOG,
 					(errmsg("could not bind to all requested addresses: MAXLISTEN (%d) exceeded",
@@ -573,7 +568,8 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 					(errmsg("listening on %s address \"%s\", port %d",
 							familyDesc, addrDesc, (int) portNumber)));
 
-		ListenSocket[listen_index] = fd;
+		ListenSockets[*NumListenSockets] = fd;
+		(*NumListenSockets)++;
 		added++;
 	}
 

@@ -227,7 +227,8 @@ int			ReservedConnections;
 
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	64
-static pgsocket ListenSocket[MAXLISTEN];
+static int	NumListenSockets = 0;
+static pgsocket *ListenSockets = NULL;
 
 /* still more option variables */
 bool		EnableSSL = false;
@@ -588,7 +589,6 @@ PostmasterMain(int argc, char *argv[])
 	int			status;
 	char	   *userDoption = NULL;
 	bool		listen_addr_saved = false;
-	int			i;
 	char	   *output_config_variable = NULL;
 
 	InitProcessGlobals();
@@ -1143,17 +1143,6 @@ PostmasterMain(int argc, char *argv[])
 						LOG_METAINFO_DATAFILE)));
 
 	/*
-	 * Initialize input sockets.
-	 *
-	 * Mark them all closed, and set up an on_proc_exit function that's
-	 * charged with closing the sockets again at postmaster shutdown.
-	 */
-	for (i = 0; i < MAXLISTEN; i++)
-		ListenSocket[i] = PGINVALID_SOCKET;
-
-	on_proc_exit(CloseServerPorts, 0);
-
-	/*
 	 * If enabled, start up syslogger collection subprocess
 	 */
 	SysLoggerPID = SysLogger_Start();
@@ -1187,7 +1176,13 @@ PostmasterMain(int argc, char *argv[])
 
 	/*
 	 * Establish input sockets.
+	 *
+	 * First set up an on_proc_exit function that's charged with closing the
+	 * sockets again at postmaster shutdown.
 	 */
+	ListenSockets = palloc(MAXLISTEN * sizeof(pgsocket));
+	on_proc_exit(CloseServerPorts, 0);
+
 	if (ListenAddresses)
 	{
 		char	   *rawstring;
@@ -1216,12 +1211,16 @@ PostmasterMain(int argc, char *argv[])
 				status = StreamServerPort(AF_UNSPEC, NULL,
 										  (unsigned short) PostPortNumber,
 										  NULL,
-										  ListenSocket, MAXLISTEN);
+										  ListenSockets,
+										  &NumListenSockets,
+										  MAXLISTEN);
 			else
 				status = StreamServerPort(AF_UNSPEC, curhost,
 										  (unsigned short) PostPortNumber,
 										  NULL,
-										  ListenSocket, MAXLISTEN);
+										  ListenSockets,
+										  &NumListenSockets,
+										  MAXLISTEN);
 
 			if (status == STATUS_OK)
 			{
@@ -1249,7 +1248,7 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef USE_BONJOUR
 	/* Register for Bonjour only if we opened TCP socket(s) */
-	if (enable_bonjour && ListenSocket[0] != PGINVALID_SOCKET)
+	if (enable_bonjour && NumListenSockets > 0)
 	{
 		DNSServiceErrorType err;
 
@@ -1313,7 +1312,9 @@ PostmasterMain(int argc, char *argv[])
 			status = StreamServerPort(AF_UNIX, NULL,
 									  (unsigned short) PostPortNumber,
 									  socketdir,
-									  ListenSocket, MAXLISTEN);
+									  ListenSockets,
+									  &NumListenSockets,
+									  MAXLISTEN);
 
 			if (status == STATUS_OK)
 			{
@@ -1339,7 +1340,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * check that we have some socket to listen on
 	 */
-	if (ListenSocket[0] == PGINVALID_SOCKET)
+	if (NumListenSockets == 0)
 		ereport(FATAL,
 				(errmsg("no socket created for listening")));
 
@@ -1487,14 +1488,9 @@ CloseServerPorts(int status, Datum arg)
 	 * before we remove the postmaster.pid lockfile; otherwise there's a race
 	 * condition if a new postmaster wants to re-use the TCP port number.
 	 */
-	for (i = 0; i < MAXLISTEN; i++)
-	{
-		if (ListenSocket[i] != PGINVALID_SOCKET)
-		{
-			StreamClose(ListenSocket[i]);
-			ListenSocket[i] = PGINVALID_SOCKET;
-		}
-	}
+	for (i = 0; i < NumListenSockets; i++)
+		StreamClose(ListenSockets[i]);
+	NumListenSockets = 0;
 
 	/*
 	 * Next, remove any filesystem entries for Unix sockets.  To avoid race
@@ -1695,29 +1691,19 @@ DetermineSleepTime(void)
 static void
 ConfigurePostmasterWaitSet(bool accept_connections)
 {
-	int			nsockets;
-
 	if (pm_wait_set)
 		FreeWaitEventSet(pm_wait_set);
 	pm_wait_set = NULL;
 
-	/* How many server sockets do we need to wait for? */
-	nsockets = 0;
-	if (accept_connections)
-	{
-		while (nsockets < MAXLISTEN &&
-			   ListenSocket[nsockets] != PGINVALID_SOCKET)
-			++nsockets;
-	}
-
-	pm_wait_set = CreateWaitEventSet(CurrentMemoryContext, 1 + nsockets);
+	pm_wait_set = CreateWaitEventSet(CurrentMemoryContext,
+									 accept_connections ? (1 + NumListenSockets) : 1);
 	AddWaitEventToSet(pm_wait_set, WL_LATCH_SET, PGINVALID_SOCKET, MyLatch,
 					  NULL);
 
 	if (accept_connections)
 	{
-		for (int i = 0; i < nsockets; i++)
-			AddWaitEventToSet(pm_wait_set, WL_SOCKET_ACCEPT, ListenSocket[i],
+		for (int i = 0; i < NumListenSockets; i++)
+			AddWaitEventToSet(pm_wait_set, WL_SOCKET_ACCEPT, ListenSockets[i],
 							  NULL, NULL);
 	}
 }
@@ -2579,14 +2565,11 @@ ClosePostmasterPorts(bool am_syslogger)
 	 * EXEC_BACKEND mode.
 	 */
 #ifndef EXEC_BACKEND
-	for (int i = 0; i < MAXLISTEN; i++)
-	{
-		if (ListenSocket[i] != PGINVALID_SOCKET)
-		{
-			StreamClose(ListenSocket[i]);
-			ListenSocket[i] = PGINVALID_SOCKET;
-		}
-	}
+	for (int i = 0; i < NumListenSockets; i++)
+		StreamClose(ListenSockets[i]);
+	NumListenSockets = 0;
+	pfree(ListenSockets);
+	ListenSockets = NULL;
 #endif
 
 	/*
