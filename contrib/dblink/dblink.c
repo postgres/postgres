@@ -130,6 +130,10 @@ static void restoreLocalGucs(int nestlevel);
 static remoteConn *pconn = NULL;
 static HTAB *remoteConnHash = NULL;
 
+/* custom wait event values, retrieved from shared memory */
+static uint32 dblink_we_connect = 0;
+static uint32 dblink_we_get_conn = 0;
+
 /*
  *	Following is list that holds multiple remote connections.
  *	Calling convention of each dblink function changes to accept
@@ -202,8 +206,12 @@ dblink_get_conn(char *conname_or_str,
 			connstr = conname_or_str;
 		dblink_connstr_check(connstr);
 
+		/* first time, allocate or get the custom wait event */
+		if (dblink_we_get_conn == 0)
+			dblink_we_get_conn = WaitEventExtensionNew("DblinkGetConnect");
+
 		/* OK to make connection */
-		conn = libpqsrv_connect(connstr, WAIT_EVENT_EXTENSION);
+		conn = libpqsrv_connect(connstr, dblink_we_get_conn);
 
 		if (PQstatus(conn) == CONNECTION_BAD)
 		{
@@ -292,8 +300,12 @@ dblink_connect(PG_FUNCTION_ARGS)
 	/* check password in connection string if not superuser */
 	dblink_connstr_check(connstr);
 
+	/* first time, allocate or get the custom wait event */
+	if (dblink_we_connect == 0)
+		dblink_we_connect = WaitEventExtensionNew("DblinkConnect");
+
 	/* OK to make connection */
-	conn = libpqsrv_connect(connstr, WAIT_EVENT_EXTENSION);
+	conn = libpqsrv_connect(connstr, dblink_we_connect);
 
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
