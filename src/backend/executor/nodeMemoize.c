@@ -158,9 +158,13 @@ static uint32
 MemoizeHash_hash(struct memoize_hash *tb, const MemoizeKey *key)
 {
 	MemoizeState *mstate = (MemoizeState *) tb->private_data;
+	ExprContext *econtext = mstate->ss.ps.ps_ExprContext;
+	MemoryContext oldcontext;
 	TupleTableSlot *pslot = mstate->probeslot;
 	uint32		hashkey = 0;
 	int			numkeys = mstate->nkeys;
+
+	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	if (mstate->binary_mode)
 	{
@@ -203,6 +207,8 @@ MemoizeHash_hash(struct memoize_hash *tb, const MemoizeKey *key)
 		}
 	}
 
+	ResetExprContext(econtext);
+	MemoryContextSwitchTo(oldcontext);
 	return murmurhash32(hashkey);
 }
 
@@ -226,7 +232,11 @@ MemoizeHash_equal(struct memoize_hash *tb, const MemoizeKey *key1,
 
 	if (mstate->binary_mode)
 	{
+		MemoryContext oldcontext;
 		int			numkeys = mstate->nkeys;
+		bool		match = true;
+
+		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 		slot_getallattrs(tslot);
 		slot_getallattrs(pslot);
@@ -236,7 +246,10 @@ MemoizeHash_equal(struct memoize_hash *tb, const MemoizeKey *key1,
 			FormData_pg_attribute *attr;
 
 			if (tslot->tts_isnull[i] != pslot->tts_isnull[i])
-				return false;
+			{
+				match = false;
+				break;
+			}
 
 			/* both NULL? they're equal */
 			if (tslot->tts_isnull[i])
@@ -246,9 +259,15 @@ MemoizeHash_equal(struct memoize_hash *tb, const MemoizeKey *key1,
 			attr = &tslot->tts_tupleDescriptor->attrs[i];
 			if (!datum_image_eq(tslot->tts_values[i], pslot->tts_values[i],
 								attr->attbyval, attr->attlen))
-				return false;
+			{
+				match = false;
+				break;
+			}
 		}
-		return true;
+
+		ResetExprContext(econtext);
+		MemoryContextSwitchTo(oldcontext);
+		return match;
 	}
 	else
 	{
