@@ -88,8 +88,7 @@ gets_interactive(const char *prompt, PQExpBuffer query_buf)
 		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
 		sigint_interrupt_enabled = true;
 
-		/* On some platforms, readline is declared as readline(char *) */
-		result = readline((char *) prompt);
+		result = readline(prompt);
 
 		/* Disable SIGINT again */
 		sigint_interrupt_enabled = false;
