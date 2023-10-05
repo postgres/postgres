@@ -1042,6 +1042,44 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </para>
  </sect2>
 
+ <sect2 id="postgres-fdw-wait-events">
+  <title>Wait Events</title>
+
+  <para>
+   <filename>postgres_fdw</filename> can report the following wait events
+   under the wait event type <literal>Extension</literal>:
+  </para>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>PostgresFdwCleanupResult</literal></term>
+    <listitem>
+     <para>
+      Waiting for transaction abort on remote server.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PostgresFdwConnect</literal></term>
+    <listitem>
+     <para>
+      Waiting to establish a connection to a remote server.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PostgresFdwGetResult</literal></term>
+    <listitem>
+     <para>
+      Waiting to receive the results of a query from a remote server.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+
  <sect2 id="postgres-fdw-configuration-parameters">
   <title>Configuration Parameters</title>
 
