@@ -34,10 +34,12 @@
 
 /* these headers are used by this particular worker's code */
 #include "access/xact.h"
+#include "commands/dbcommands.h"
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "pgstat.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/snapmgr.h"
 #include "tcop/utility.h"
@@ -52,6 +54,7 @@ PGDLLEXPORT void worker_spi_main(Datum main_arg) pg_attribute_noreturn();
 static int	worker_spi_naptime = 10;
 static int	worker_spi_total_workers = 2;
 static char *worker_spi_database = NULL;
+static char *worker_spi_role = NULL;
 
 /* value cached, fetched from shared memory */
 static uint32 worker_spi_wait_event_main = 0;
@@ -138,11 +141,23 @@ worker_spi_main(Datum main_arg)
 	worktable  *table;
 	StringInfoData buf;
 	char		name[20];
+	Oid			dboid;
+	Oid			roleoid;
+	char	   *p;
+	bits32		flags = 0;
 
 	table = palloc(sizeof(worktable));
 	sprintf(name, "schema%d", index);
 	table->schema = pstrdup(name);
 	table->name = pstrdup("counted");
+
+	/* fetch database and role OIDs, these are set for a dynamic worker */
+	p = MyBgworkerEntry->bgw_extra;
+	memcpy(&dboid, p, sizeof(Oid));
+	p += sizeof(Oid);
+	memcpy(&roleoid, p, sizeof(Oid));
+	p += sizeof(Oid);
+	memcpy(&flags, p, sizeof(bits32));
 
 	/* Establish signal handlers before unblocking signals. */
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
@@ -152,7 +167,11 @@ worker_spi_main(Datum main_arg)
 	BackgroundWorkerUnblockSignals();
 
 	/* Connect to our database */
-	BackgroundWorkerInitializeConnection(worker_spi_database, NULL, 0);
+	if (OidIsValid(dboid))
+		BackgroundWorkerInitializeConnectionByOid(dboid, roleoid, flags);
+	else
+		BackgroundWorkerInitializeConnection(worker_spi_database,
+											 worker_spi_role, flags);
 
 	elog(LOG, "%s initialized with %s.%s",
 		 MyBgworkerEntry->bgw_name, table->schema, table->name);
@@ -316,6 +335,15 @@ _PG_init(void)
 							   0,
 							   NULL, NULL, NULL);
 
+	DefineCustomStringVariable("worker_spi.role",
+							   "Role to connect with.",
+							   NULL,
+							   &worker_spi_role,
+							   NULL,
+							   PGC_SIGHUP,
+							   0,
+							   NULL, NULL, NULL);
+
 	if (!process_shared_preload_libraries_in_progress)
 		return;
 
@@ -346,6 +374,10 @@ _PG_init(void)
 
 	/*
 	 * Now fill in worker-specific data, and do the actual registrations.
+	 *
+	 * bgw_extra can optionally include a dabatase OID, a role OID and a set
+	 * of flags.  This is left empty here to fallback to the related GUCs at
+	 * startup (0 for the bgworker flags).
 	 */
 	for (int i = 1; i <= worker_spi_total_workers; i++)
 	{
@@ -364,10 +396,18 @@ Datum
 worker_spi_launch(PG_FUNCTION_ARGS)
 {
 	int32		i = PG_GETARG_INT32(0);
+	Oid			dboid = PG_GETARG_OID(1);
+	Oid			roleoid = PG_GETARG_OID(2);
 	BackgroundWorker worker;
 	BackgroundWorkerHandle *handle;
 	BgwHandleStatus status;
 	pid_t		pid;
+	char	   *p;
+	bits32		flags = 0;
+	ArrayType  *arr = PG_GETARG_ARRAYTYPE_P(3);
+	Size		ndim;
+	int			nelems;
+	Datum	   *datum_flags;
 
 	memset(&worker, 0, sizeof(worker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS |
@@ -381,6 +421,54 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	worker.bgw_main_arg = Int32GetDatum(i);
 	/* set bgw_notify_pid so that we can use WaitForBackgroundWorkerStartup */
 	worker.bgw_notify_pid = MyProcPid;
+
+	/* extract flags, if any */
+	ndim = ARR_NDIM(arr);
+	if (ndim > 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("flags array must be one-dimensional")));
+
+	if (array_contains_nulls(arr))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("flags array must not contain nulls")));
+
+	Assert(ARR_ELEMTYPE(arr) == TEXTOID);
+	deconstruct_array_builtin(arr, TEXTOID, &datum_flags, NULL, &nelems);
+
+	for (i = 0; i < nelems; i++)
+	{
+		char	   *optname = TextDatumGetCString(datum_flags[i]);
+
+		if (strcmp(optname, "ALLOWCONN") == 0)
+			flags |= BGWORKER_BYPASS_ALLOWCONN;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("incorrect flag value found in array")));
+	}
+
+	/*
+	 * Register database and role to use for the worker started in bgw_extra.
+	 * If none have been provided, this will fall back to the GUCs at startup.
+	 */
+	if (!OidIsValid(dboid))
+		dboid = get_database_oid(worker_spi_database, false);
+
+	/*
+	 * worker_spi_role is NULL by default, so this gives to worker_spi_main()
+	 * an invalid OID in this case.
+	 */
+	if (!OidIsValid(roleoid) && worker_spi_role)
+		roleoid = get_role_oid(worker_spi_role, false);
+
+	p = worker.bgw_extra;
+	memcpy(p, &dboid, sizeof(Oid));
+	p += sizeof(Oid);
+	memcpy(p, &roleoid, sizeof(Oid));
+	p += sizeof(Oid);
+	memcpy(p, &flags, sizeof(bits32));
 
 	if (!RegisterDynamicBackgroundWorker(&worker, &handle))
 		PG_RETURN_NULL();
