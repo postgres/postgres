@@ -130,7 +130,7 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 	parse.saw_version_field = false;
 
 	/* Create a JSON lexing context. */
-	lex = makeJsonLexContextCstringLen(buffer, size, PG_UTF8, true);
+	lex = makeJsonLexContextCstringLen(NULL, buffer, size, PG_UTF8, true);
 
 	/* Set up semantic actions. */
 	sem.semstate = &parse;
@@ -153,6 +153,8 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 
 	/* Verify the manifest checksum. */
 	verify_manifest_checksum(&parse, buffer, size);
+
+	freeJsonLexContext(lex);
 }
 
 /*

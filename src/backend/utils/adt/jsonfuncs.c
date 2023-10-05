@@ -526,7 +526,7 @@ pg_parse_json_or_errsave(JsonLexContext *lex, JsonSemAction *sem,
  * directly.
  */
 JsonLexContext *
-makeJsonLexContext(text *json, bool need_escapes)
+makeJsonLexContext(JsonLexContext *lex, text *json, bool need_escapes)
 {
 	/*
 	 * Most callers pass a detoasted datum, but it's not clear that they all
@@ -534,7 +534,8 @@ makeJsonLexContext(text *json, bool need_escapes)
 	 */
 	json = pg_detoast_datum_packed(json);
 
-	return makeJsonLexContextCstringLen(VARDATA_ANY(json),
+	return makeJsonLexContextCstringLen(lex,
+										VARDATA_ANY(json),
 										VARSIZE_ANY_EXHDR(json),
 										GetDatabaseEncoding(),
 										need_escapes);
@@ -725,7 +726,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *json = PG_GETARG_TEXT_PP(0);
-		JsonLexContext *lex = makeJsonLexContext(json, true);
+		JsonLexContext lex;
 		JsonSemAction *sem;
 		MemoryContext oldcontext;
 
@@ -735,7 +736,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 		state = palloc(sizeof(OkeysState));
 		sem = palloc0(sizeof(JsonSemAction));
 
-		state->lex = lex;
+		state->lex = makeJsonLexContext(&lex, json, true);
 		state->result_size = 256;
 		state->result_count = 0;
 		state->sent_count = 0;
@@ -747,12 +748,10 @@ json_object_keys(PG_FUNCTION_ARGS)
 		sem->object_field_start = okeys_object_field_start;
 		/* remainder are all NULL, courtesy of palloc0 above */
 
-		pg_parse_json_or_ereport(lex, sem);
+		pg_parse_json_or_ereport(&lex, sem);
 		/* keys are now in state->result */
 
-		pfree(lex->strval->data);
-		pfree(lex->strval);
-		pfree(lex);
+		freeJsonLexContext(&lex);
 		pfree(sem);
 
 		MemoryContextSwitchTo(oldcontext);
@@ -1096,13 +1095,13 @@ get_worker(text *json,
 		   int npath,
 		   bool normalize_results)
 {
-	JsonLexContext *lex = makeJsonLexContext(json, true);
 	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
 	GetState   *state = palloc0(sizeof(GetState));
 
 	Assert(npath >= 0);
 
-	state->lex = lex;
+	state->lex = makeJsonLexContext(NULL, json, true);
+
 	/* is it "_as_text" variant? */
 	state->normalize_results = normalize_results;
 	state->npath = npath;
@@ -1140,7 +1139,8 @@ get_worker(text *json,
 		sem->array_element_end = get_array_element_end;
 	}
 
-	pg_parse_json_or_ereport(lex, sem);
+	pg_parse_json_or_ereport(state->lex, sem);
+	freeJsonLexContext(state->lex);
 
 	return state->tresult;
 }
@@ -1842,25 +1842,23 @@ json_array_length(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_PP(0);
 	AlenState  *state;
-	JsonLexContext *lex;
+	JsonLexContext lex;
 	JsonSemAction *sem;
 
-	lex = makeJsonLexContext(json, false);
 	state = palloc0(sizeof(AlenState));
-	sem = palloc0(sizeof(JsonSemAction));
-
+	state->lex = makeJsonLexContext(&lex, json, false);
 	/* palloc0 does this for us */
 #if 0
 	state->count = 0;
 #endif
-	state->lex = lex;
 
+	sem = palloc0(sizeof(JsonSemAction));
 	sem->semstate = (void *) state;
 	sem->object_start = alen_object_start;
 	sem->scalar = alen_scalar;
 	sem->array_element_start = alen_array_element_start;
 
-	pg_parse_json_or_ereport(lex, sem);
+	pg_parse_json_or_ereport(state->lex, sem);
 
 	PG_RETURN_INT32(state->count);
 }
@@ -2049,12 +2047,11 @@ static Datum
 each_worker(FunctionCallInfo fcinfo, bool as_text)
 {
 	text	   *json = PG_GETARG_TEXT_PP(0);
-	JsonLexContext *lex;
+	JsonLexContext lex;
 	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
 	EachState  *state;
 
-	lex = makeJsonLexContext(json, true);
 	state = palloc0(sizeof(EachState));
 	sem = palloc0(sizeof(JsonSemAction));
 
@@ -2072,14 +2069,15 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 
 	state->normalize_results = as_text;
 	state->next_scalar = false;
-	state->lex = lex;
+	state->lex = makeJsonLexContext(&lex, json, true);
 	state->tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 										   "json_each temporary cxt",
 										   ALLOCSET_DEFAULT_SIZES);
 
-	pg_parse_json_or_ereport(lex, sem);
+	pg_parse_json_or_ereport(&lex, sem);
 
 	MemoryContextDelete(state->tmp_cxt);
+	freeJsonLexContext(&lex);
 
 	PG_RETURN_NULL();
 }
@@ -2299,12 +2297,13 @@ static Datum
 elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 {
 	text	   *json = PG_GETARG_TEXT_PP(0);
-
-	/* elements only needs escaped strings when as_text */
-	JsonLexContext *lex = makeJsonLexContext(json, as_text);
+	JsonLexContext lex;
 	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
 	ElementsState *state;
+
+	/* elements only needs escaped strings when as_text */
+	makeJsonLexContext(&lex, json, as_text);
 
 	state = palloc0(sizeof(ElementsState));
 	sem = palloc0(sizeof(JsonSemAction));
@@ -2323,14 +2322,15 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	state->function_name = funcname;
 	state->normalize_results = as_text;
 	state->next_scalar = false;
-	state->lex = lex;
+	state->lex = &lex;
 	state->tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 										   "json_array_elements temporary cxt",
 										   ALLOCSET_DEFAULT_SIZES);
 
-	pg_parse_json_or_ereport(lex, sem);
+	pg_parse_json_or_ereport(&lex, sem);
 
 	MemoryContextDelete(state->tmp_cxt);
+	freeJsonLexContext(&lex);
 
 	PG_RETURN_NULL();
 }
@@ -2704,7 +2704,8 @@ populate_array_json(PopulateArrayContext *ctx, char *json, int len)
 	PopulateArrayState state;
 	JsonSemAction sem;
 
-	state.lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
+	state.lex = makeJsonLexContextCstringLen(NULL, json, len,
+											 GetDatabaseEncoding(), true);
 	state.ctx = ctx;
 
 	memset(&sem, 0, sizeof(sem));
@@ -2720,7 +2721,7 @@ populate_array_json(PopulateArrayContext *ctx, char *json, int len)
 	/* number of dimensions should be already known */
 	Assert(ctx->ndims > 0 && ctx->dims);
 
-	pfree(state.lex);
+	freeJsonLexContext(state.lex);
 }
 
 /*
@@ -3547,7 +3548,6 @@ get_json_object_as_hash(char *json, int len, const char *funcname)
 	HASHCTL		ctl;
 	HTAB	   *tab;
 	JHashState *state;
-	JsonLexContext *lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
 	JsonSemAction *sem;
 
 	ctl.keysize = NAMEDATALEN;
@@ -3563,7 +3563,8 @@ get_json_object_as_hash(char *json, int len, const char *funcname)
 
 	state->function_name = funcname;
 	state->hash = tab;
-	state->lex = lex;
+	state->lex = makeJsonLexContextCstringLen(NULL, json, len,
+											  GetDatabaseEncoding(), true);
 
 	sem->semstate = (void *) state;
 	sem->array_start = hash_array_start;
@@ -3571,7 +3572,9 @@ get_json_object_as_hash(char *json, int len, const char *funcname)
 	sem->object_field_start = hash_object_field_start;
 	sem->object_field_end = hash_object_field_end;
 
-	pg_parse_json_or_ereport(lex, sem);
+	pg_parse_json_or_ereport(state->lex, sem);
+
+	freeJsonLexContext(state->lex);
 
 	return tab;
 }
@@ -3863,12 +3866,12 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	if (is_json)
 	{
 		text	   *json = PG_GETARG_TEXT_PP(json_arg_num);
-		JsonLexContext *lex;
+		JsonLexContext lex;
 		JsonSemAction *sem;
 
 		sem = palloc0(sizeof(JsonSemAction));
 
-		lex = makeJsonLexContext(json, true);
+		makeJsonLexContext(&lex, json, true);
 
 		sem->semstate = (void *) state;
 		sem->array_start = populate_recordset_array_start;
@@ -3879,9 +3882,12 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 		sem->object_start = populate_recordset_object_start;
 		sem->object_end = populate_recordset_object_end;
 
-		state->lex = lex;
+		state->lex = &lex;
 
-		pg_parse_json_or_ereport(lex, sem);
+		pg_parse_json_or_ereport(&lex, sem);
+
+		freeJsonLexContext(&lex);
+		state->lex = NULL;
 	}
 	else
 	{
@@ -4217,16 +4223,15 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_PP(0);
 	StripnullState *state;
-	JsonLexContext *lex;
+	JsonLexContext lex;
 	JsonSemAction *sem;
 
-	lex = makeJsonLexContext(json, true);
 	state = palloc0(sizeof(StripnullState));
 	sem = palloc0(sizeof(JsonSemAction));
 
+	state->lex = makeJsonLexContext(&lex, json, true);
 	state->strval = makeStringInfo();
 	state->skip_next_null = false;
-	state->lex = lex;
 
 	sem->semstate = (void *) state;
 	sem->object_start = sn_object_start;
@@ -4237,7 +4242,7 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 	sem->array_element_start = sn_array_element_start;
 	sem->object_field_start = sn_object_field_start;
 
-	pg_parse_json_or_ereport(lex, sem);
+	pg_parse_json_or_ereport(&lex, sem);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->strval->data,
 											  state->strval->len));
@@ -5433,11 +5438,11 @@ void
 iterate_json_values(text *json, uint32 flags, void *action_state,
 					JsonIterateStringValuesAction action)
 {
-	JsonLexContext *lex = makeJsonLexContext(json, true);
+	JsonLexContext lex;
 	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
 	IterateJsonStringValuesState *state = palloc0(sizeof(IterateJsonStringValuesState));
 
-	state->lex = lex;
+	state->lex = makeJsonLexContext(&lex, json, true);
 	state->action = action;
 	state->action_state = action_state;
 	state->flags = flags;
@@ -5446,7 +5451,8 @@ iterate_json_values(text *json, uint32 flags, void *action_state,
 	sem->scalar = iterate_values_scalar;
 	sem->object_field_start = iterate_values_object_field_start;
 
-	pg_parse_json_or_ereport(lex, sem);
+	pg_parse_json_or_ereport(&lex, sem);
+	freeJsonLexContext(&lex);
 }
 
 /*
@@ -5553,11 +5559,11 @@ text *
 transform_json_string_values(text *json, void *action_state,
 							 JsonTransformStringValuesAction transform_action)
 {
-	JsonLexContext *lex = makeJsonLexContext(json, true);
+	JsonLexContext lex;
 	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
 	TransformJsonStringValuesState *state = palloc0(sizeof(TransformJsonStringValuesState));
 
-	state->lex = lex;
+	state->lex = makeJsonLexContext(&lex, json, true);
 	state->strval = makeStringInfo();
 	state->action = transform_action;
 	state->action_state = action_state;
@@ -5571,7 +5577,8 @@ transform_json_string_values(text *json, void *action_state,
 	sem->array_element_start = transform_string_values_array_element_start;
 	sem->object_field_start = transform_string_values_object_field_start;
 
-	pg_parse_json_or_ereport(lex, sem);
+	pg_parse_json_or_ereport(&lex, sem);
+	freeJsonLexContext(&lex);
 
 	return cstring_to_text_with_len(state->strval->data, state->strval->len);
 }
@@ -5670,19 +5677,19 @@ transform_string_values_scalar(void *state, char *token, JsonTokenType tokentype
 JsonTokenType
 json_get_first_token(text *json, bool throw_error)
 {
-	JsonLexContext *lex;
+	JsonLexContext lex;
 	JsonParseErrorType result;
 
-	lex = makeJsonLexContext(json, false);
+	makeJsonLexContext(&lex, json, false);
 
 	/* Lex exactly one token from the input and check its type. */
-	result = json_lex(lex);
+	result = json_lex(&lex);
 
 	if (result == JSON_SUCCESS)
-		return lex->token_type;
+		return lex.token_type;
 
 	if (throw_error)
-		json_errsave_error(result, lex, NULL);
+		json_errsave_error(result, &lex, NULL);
 
 	return JSON_TOKEN_INVALID;	/* invalid json */
 }

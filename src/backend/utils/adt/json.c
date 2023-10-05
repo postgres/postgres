@@ -106,11 +106,11 @@ json_in(PG_FUNCTION_ARGS)
 {
 	char	   *json = PG_GETARG_CSTRING(0);
 	text	   *result = cstring_to_text(json);
-	JsonLexContext *lex;
+	JsonLexContext lex;
 
 	/* validate it */
-	lex = makeJsonLexContext(result, false);
-	if (!pg_parse_json_or_errsave(lex, &nullSemAction, fcinfo->context))
+	makeJsonLexContext(&lex, result, false);
+	if (!pg_parse_json_or_errsave(&lex, &nullSemAction, fcinfo->context))
 		PG_RETURN_NULL();
 
 	/* Internal representation is the same as text */
@@ -152,13 +152,14 @@ json_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	char	   *str;
 	int			nbytes;
-	JsonLexContext *lex;
+	JsonLexContext lex;
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
 	/* Validate it. */
-	lex = makeJsonLexContextCstringLen(str, nbytes, GetDatabaseEncoding(), false);
-	pg_parse_json_or_ereport(lex, &nullSemAction);
+	makeJsonLexContextCstringLen(&lex, str, nbytes, GetDatabaseEncoding(),
+								 false);
+	pg_parse_json_or_ereport(&lex, &nullSemAction);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(str, nbytes));
 }
@@ -1625,14 +1626,16 @@ json_unique_object_field_start(void *_state, char *field, bool isnull)
 bool
 json_validate(text *json, bool check_unique_keys, bool throw_error)
 {
-	JsonLexContext *lex = makeJsonLexContext(json, check_unique_keys);
+	JsonLexContext lex;
 	JsonSemAction uniqueSemAction = {0};
 	JsonUniqueParsingState state;
 	JsonParseErrorType result;
 
+	makeJsonLexContext(&lex, json, check_unique_keys);
+
 	if (check_unique_keys)
 	{
-		state.lex = lex;
+		state.lex = &lex;
 		state.stack = NULL;
 		state.id_counter = 0;
 		state.unique = true;
@@ -1644,12 +1647,12 @@ json_validate(text *json, bool check_unique_keys, bool throw_error)
 		uniqueSemAction.object_end = json_unique_object_end;
 	}
 
-	result = pg_parse_json(lex, check_unique_keys ? &uniqueSemAction : &nullSemAction);
+	result = pg_parse_json(&lex, check_unique_keys ? &uniqueSemAction : &nullSemAction);
 
 	if (result != JSON_SUCCESS)
 	{
 		if (throw_error)
-			json_errsave_error(result, lex, NULL);
+			json_errsave_error(result, &lex, NULL);
 
 		return false;			/* invalid json */
 	}
@@ -1663,6 +1666,9 @@ json_validate(text *json, bool check_unique_keys, bool throw_error)
 
 		return false;			/* not unique keys */
 	}
+
+	if (check_unique_keys)
+		freeJsonLexContext(&lex);
 
 	return true;				/* ok */
 }
@@ -1683,18 +1689,17 @@ Datum
 json_typeof(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_PP(0);
-	JsonLexContext *lex = makeJsonLexContext(json, false);
+	JsonLexContext lex;
 	char	   *type;
-	JsonTokenType tok;
 	JsonParseErrorType result;
 
 	/* Lex exactly one token from the input and check its type. */
-	result = json_lex(lex);
+	makeJsonLexContext(&lex, json, false);
+	result = json_lex(&lex);
 	if (result != JSON_SUCCESS)
-		json_errsave_error(result, lex, NULL);
-	tok = lex->token_type;
+		json_errsave_error(result, &lex, NULL);
 
-	switch (tok)
+	switch (lex.token_type)
 	{
 		case JSON_TOKEN_OBJECT_START:
 			type = "object";
@@ -1716,7 +1721,7 @@ json_typeof(PG_FUNCTION_ARGS)
 			type = "null";
 			break;
 		default:
-			elog(ERROR, "unexpected json token: %d", tok);
+			elog(ERROR, "unexpected json token: %d", lex.token_type);
 	}
 
 	PG_RETURN_TEXT_P(cstring_to_text(type));

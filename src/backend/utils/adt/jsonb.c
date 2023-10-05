@@ -252,13 +252,13 @@ jsonb_typeof(PG_FUNCTION_ARGS)
 static inline Datum
 jsonb_from_cstring(char *json, int len, bool unique_keys, Node *escontext)
 {
-	JsonLexContext *lex;
+	JsonLexContext lex;
 	JsonbInState state;
 	JsonSemAction sem;
 
 	memset(&state, 0, sizeof(state));
 	memset(&sem, 0, sizeof(sem));
-	lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
+	makeJsonLexContextCstringLen(&lex, json, len, GetDatabaseEncoding(), true);
 
 	state.unique_keys = unique_keys;
 	state.escontext = escontext;
@@ -271,7 +271,7 @@ jsonb_from_cstring(char *json, int len, bool unique_keys, Node *escontext)
 	sem.scalar = jsonb_in_scalar;
 	sem.object_field_start = jsonb_in_object_field_start;
 
-	if (!pg_parse_json_or_errsave(lex, &sem, escontext))
+	if (!pg_parse_json_or_errsave(&lex, &sem, escontext))
 		return (Datum) 0;
 
 	/* after parsing, the item member has the composed jsonb structure */
@@ -755,11 +755,11 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 			case JSONTYPE_JSON:
 				{
 					/* parse the json right into the existing result object */
-					JsonLexContext *lex;
+					JsonLexContext lex;
 					JsonSemAction sem;
 					text	   *json = DatumGetTextPP(val);
 
-					lex = makeJsonLexContext(json, true);
+					makeJsonLexContext(&lex, json, true);
 
 					memset(&sem, 0, sizeof(sem));
 
@@ -772,7 +772,8 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 					sem.scalar = jsonb_in_scalar;
 					sem.object_field_start = jsonb_in_object_field_start;
 
-					pg_parse_json_or_ereport(lex, &sem);
+					pg_parse_json_or_ereport(&lex, &sem);
+					freeJsonLexContext(&lex);
 				}
 				break;
 			case JSONTYPE_JSONB:

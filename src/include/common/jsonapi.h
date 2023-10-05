@@ -70,7 +70,11 @@ typedef enum JsonParseErrorType
  * token_terminator and prev_token_terminator point to the character
  * AFTER the end of the token, i.e. where there would be a nul byte
  * if we were using nul-terminated strings.
+ *
+ * JSONLEX_FREE_STRUCT/STRVAL are used to drive freeJsonLexContext.
  */
+#define JSONLEX_FREE_STRUCT			(1 << 0)
+#define JSONLEX_FREE_STRVAL			(1 << 1)
 typedef struct JsonLexContext
 {
 	char	   *input;
@@ -81,6 +85,7 @@ typedef struct JsonLexContext
 	char	   *prev_token_terminator;
 	JsonTokenType token_type;
 	int			lex_level;
+	bits32		flags;
 	int			line_number;	/* line number, starting from 1 */
 	char	   *line_start;		/* where that line starts within input */
 	StringInfo	strval;
@@ -151,15 +156,26 @@ extern JsonParseErrorType json_count_array_elements(JsonLexContext *lex,
 													int *elements);
 
 /*
- * constructor for JsonLexContext, with or without strval element.
- * If supplied, the strval element will contain a de-escaped version of
- * the lexeme. However, doing this imposes a performance penalty, so
- * it should be avoided if the de-escaped lexeme is not required.
+ * initializer for JsonLexContext.
+ *
+ * If a valid 'lex' pointer is given, it is initialized.  This can be used
+ * for stack-allocated structs, saving overhead.  If NULL is given, a new
+ * struct is allocated.
+ *
+ * If need_escapes is true, ->strval stores the unescaped lexemes.
+ * Unescaping is expensive, so only request it when necessary.
+ *
+ * If need_escapes is true or lex was given as NULL, then the caller is
+ * responsible for freeing the returned struct, either by calling
+ * freeJsonLexContext() or (in backend environment) via memory context
+ * cleanup.
  */
-extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
+extern JsonLexContext *makeJsonLexContextCstringLen(JsonLexContext *lex,
+													char *json,
 													int len,
 													int encoding,
 													bool need_escapes);
+extern void freeJsonLexContext(JsonLexContext *lex);
 
 /* lex one token */
 extern JsonParseErrorType json_lex(JsonLexContext *lex);
