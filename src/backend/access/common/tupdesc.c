@@ -856,6 +856,8 @@ BuildDescForRelation(const List *columns)
 		has_not_null |= entry->is_not_null;
 		att->attislocal = entry->is_local;
 		att->attinhcount = entry->inhcount;
+		att->attidentity = entry->identity;
+		att->attgenerated = entry->generated;
 	}
 
 	if (has_not_null)
