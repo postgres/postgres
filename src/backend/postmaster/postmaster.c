@@ -2565,10 +2565,13 @@ ClosePostmasterPorts(bool am_syslogger)
 	 * EXEC_BACKEND mode.
 	 */
 #ifndef EXEC_BACKEND
-	for (int i = 0; i < NumListenSockets; i++)
-		StreamClose(ListenSockets[i]);
+	if (ListenSockets)
+	{
+		for (int i = 0; i < NumListenSockets; i++)
+			StreamClose(ListenSockets[i]);
+		pfree(ListenSockets);
+	}
 	NumListenSockets = 0;
-	pfree(ListenSockets);
 	ListenSockets = NULL;
 #endif
 
