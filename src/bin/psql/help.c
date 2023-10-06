@@ -50,21 +50,9 @@
 void
 usage(unsigned short int pager)
 {
-	const char *env;
-	const char *user;
-	char	   *errstr;
 	PQExpBufferData buf;
 	int			nlcount;
 	FILE	   *output;
-
-	/* Find default user, in case we need it. */
-	user = getenv("PGUSER");
-	if (!user)
-	{
-		user = get_user_name(&errstr);
-		if (!user)
-			pg_fatal("%s", errstr);
-	}
 
 	/*
 	 * To avoid counting the output lines manually, build the output in "buf"
@@ -77,13 +65,8 @@ usage(unsigned short int pager)
 	HELP0("  psql [OPTION]... [DBNAME [USERNAME]]\n\n");
 
 	HELP0("General options:\n");
-	/* Display default database */
-	env = getenv("PGDATABASE");
-	if (!env)
-		env = user;
 	HELP0("  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n");
-	HELPN("  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n",
-		  env);
+	HELP0("  -d, --dbname=DBNAME      database name to connect to\n");
 	HELP0("  -f, --file=FILENAME      execute commands from file, then exit\n");
 	HELP0("  -l, --list               list available databases, then exit\n");
 	HELP0("  -v, --set=, --variable=NAME=VALUE\n"
@@ -128,17 +111,9 @@ usage(unsigned short int pager)
 		  "                           set record separator for unaligned output to zero byte\n");
 
 	HELP0("\nConnection options:\n");
-	/* Display default host */
-	env = getenv("PGHOST");
-	HELPN("  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n",
-		  env ? env : _("local socket"));
-	/* Display default port */
-	env = getenv("PGPORT");
-	HELPN("  -p, --port=PORT          database server port (default: \"%s\")\n",
-		  env ? env : DEF_PGPORT_STR);
-	/* Display default user */
-	HELPN("  -U, --username=USERNAME  database user name (default: \"%s\")\n",
-		  user);
+	HELP0("  -h, --host=HOSTNAME      database server host or socket directory\n");
+	HELP0("  -p, --port=PORT          database server port\n");
+	HELP0("  -U, --username=USERNAME  database user name\n");
 	HELP0("  -w, --no-password        never prompt for password\n");
 	HELP0("  -W, --password           force password prompt (should happen automatically)\n");
 
