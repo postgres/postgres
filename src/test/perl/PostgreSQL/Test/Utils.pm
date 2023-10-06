@@ -884,6 +884,15 @@ sub program_help_ok
 	ok($result, "$cmd --help exit code 0");
 	isnt($stdout, '', "$cmd --help goes to stdout");
 	is($stderr, '', "$cmd --help nothing to stderr");
+
+	# This value isn't set in stone, it reflects the current
+	# convention in use.  Most output actually tries to aim for 80.
+	my $max_line_length = 95;
+	my @long_lines = grep { length > $max_line_length } split /\n/, $stdout;
+	is(scalar @long_lines, 0, "$cmd --help maximum line length")
+	  or diag("These lines are too long (>$max_line_length):\n",
+		join("\n", @long_lines));
+
 	return;
 }
 
