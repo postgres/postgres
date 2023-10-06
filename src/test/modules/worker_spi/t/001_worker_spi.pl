@@ -104,4 +104,31 @@ postgres|myrole|WorkerSpiMain]),
 	'dynamic bgworkers all launched'
 ) or die "Timed out while waiting for dynamic bgworkers to be launched";
 
+# Check BGWORKER_BYPASS_ALLOWCONN.
+$node->safe_psql('postgres', q(ALTER DATABASE mydb ALLOW_CONNECTIONS false;));
+my $log_offset = -s $node->logfile;
+
+# bgworker cannot be launched with connection restriction.
+my $worker3_pid = $node->safe_psql('postgres',
+	qq[SELECT worker_spi_launch(12, $mydb_id, $myrole_id);]);
+$node->wait_for_log(
+	qr/database "mydb" is not currently accepting connections/, $log_offset);
+
+$result = $node->safe_psql('postgres',
+	"SELECT count(*) FROM pg_stat_activity WHERE pid = $worker3_pid;");
+is($result, '0', 'dynamic bgworker without BYPASS_ALLOWCONN not started');
+
+# bgworker bypasses the connection check, and can be launched.
+my $worker4_pid = $node->safe_psql('postgres',
+	qq[SELECT worker_spi_launch(12, $mydb_id, $myrole_id, '{"ALLOWCONN"}');]);
+ok( $node->poll_query_until(
+		'postgres',
+		qq[SELECT datname, usename, wait_event FROM pg_stat_activity
+            WHERE backend_type = 'worker_spi dynamic' AND
+            pid IN ($worker4_pid) ORDER BY datname;],
+		qq[mydb|myrole|WorkerSpiMain]),
+	'dynamic bgworker with BYPASS_ALLOWCONN started');
+
+$node->safe_psql('postgres', q(ALTER DATABASE mydb ALLOW_CONNECTIONS true;));
+
 done_testing();
