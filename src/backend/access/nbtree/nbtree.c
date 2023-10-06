@@ -407,6 +407,7 @@ btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 
 	so->markItemIndex = -1;
 	so->arrayKeyCount = 0;
+	so->firstPage = false;
 	BTScanPosUnpinIfPinned(so->markPos);
 	BTScanPosInvalidate(so->markPos);
 

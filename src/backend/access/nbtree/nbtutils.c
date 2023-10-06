@@ -1372,10 +1372,13 @@ _bt_mark_scankey_required(ScanKey skey)
  * tupnatts: number of attributes in tupnatts (high key may be truncated)
  * dir: direction we are scanning in
  * continuescan: output parameter (will be set correctly in all cases)
+ * requiredMatchedByPrecheck: indicates that scan keys required for
+ * 							  direction scan are already matched
  */
 bool
 _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
-			  ScanDirection dir, bool *continuescan)
+			  ScanDirection dir, bool *continuescan,
+			  bool requiredMatchedByPrecheck)
 {
 	TupleDesc	tupdesc;
 	BTScanOpaque so;
@@ -1396,6 +1399,29 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 		Datum		datum;
 		bool		isNull;
 		Datum		test;
+		bool		requiredSameDir = false,
+					requiredOppositeDir = false;
+
+		/*
+		 * Check if the key is required for ordered scan in the same or
+		 * opposite direction.  Save as flag variables for future usage.
+		 */
+		if (((key->sk_flags & SK_BT_REQFWD) && ScanDirectionIsForward(dir)) ||
+			((key->sk_flags & SK_BT_REQBKWD) && ScanDirectionIsBackward(dir)))
+			requiredSameDir = true;
+		else if (((key->sk_flags & SK_BT_REQFWD) && ScanDirectionIsBackward(dir)) ||
+				 ((key->sk_flags & SK_BT_REQBKWD) && ScanDirectionIsForward(dir)))
+			requiredOppositeDir = true;
+
+		/*
+		 * Is the key required for scanning for either forward or backward
+		 * direction?  If so and called told us that these types of keys are
+		 * known to be matched, skip the check.  Except for the row keys,
+		 * where NULLs could be found in the middle of matching values.
+		 */
+		if ((requiredSameDir || requiredOppositeDir) &&
+			!(key->sk_flags & SK_ROW_HEADER) && requiredMatchedByPrecheck)
+			continue;
 
 		if (key->sk_attno > tupnatts)
 		{
@@ -1444,11 +1470,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			 * scan direction, then we can conclude no further tuples will
 			 * pass, either.
 			 */
-			if ((key->sk_flags & SK_BT_REQFWD) &&
-				ScanDirectionIsForward(dir))
-				*continuescan = false;
-			else if ((key->sk_flags & SK_BT_REQBKWD) &&
-					 ScanDirectionIsBackward(dir))
+			if (requiredSameDir)
 				*continuescan = false;
 
 			/*
@@ -1498,8 +1520,23 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			return false;
 		}
 
-		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
-								 datum, key->sk_argument);
+		/*
+		 * Apply the key checking function.  When the key is required for
+		 * opposite direction scan, it must be already satisfied by
+		 * _bt_first() except for the NULLs checking, which have already done
+		 * above.
+		 */
+		if (!requiredOppositeDir)
+		{
+			test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
+									 datum, key->sk_argument);
+		}
+		else
+		{
+			test = true;
+			Assert(test == FunctionCall2Coll(&key->sk_func, key->sk_collation,
+											 datum, key->sk_argument));
+		}
 
 		if (!DatumGetBool(test))
 		{
@@ -1513,11 +1550,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			 * initial positioning in _bt_first() when they are available. See
 			 * comments in _bt_first().
 			 */
-			if ((key->sk_flags & SK_BT_REQFWD) &&
-				ScanDirectionIsForward(dir))
-				*continuescan = false;
-			else if ((key->sk_flags & SK_BT_REQBKWD) &&
-					 ScanDirectionIsBackward(dir))
+			if (requiredSameDir)
 				*continuescan = false;
 
 			/*
